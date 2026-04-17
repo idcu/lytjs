@@ -1,14 +1,14 @@
 {
   "name": "@lytjs/components",
-  "version": "3.2.0",
+  "version": "3.2.1",
   "description": "Lyt.js 官方组件库 - 提供按钮、表单、表格、弹窗、标签页等常用 UI 组件",
-  "main": "./src/index.ts",
-  "module": "./src/index.ts",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
   "exports": {
     ".": {
-      "import": "./src/index.ts",
-      "require": "./src/index.ts",
-      "default": "./src/index.ts"
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.mjs"
     }
   },
   "sideEffects": false,
@@ -21,22 +21,15 @@
   },
   "homepage": "https://gitee.com/lytjs/lytjs",
   "keywords": [
-    "lyt",
-    "lytjs",
-    "javascript",
-    "framework",
-    "frontend",
-    "vue-like",
-    "lightweight",
-    "zero-dependency",
-    "components",
-    "ui",
-    "button",
-    "form",
-    "table",
-    "modal",
-    "组件库"
+    "lyt", "lytjs", "javascript", "framework", "frontend", "vue-like",
+    "lightweight", "zero-dependency", "components", "ui", "button", "form"
   ],
+  "dependencies": {
+    "@lytjs/component": "workspace:*"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "publishConfig": {
     "access": "public"
   }

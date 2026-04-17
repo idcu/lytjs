@@ -247,7 +247,7 @@ describe('Scaffold: package.json 内容', () => {
       expect(pkg.scripts.dev).toBe('lytx dev')
       expect(pkg.scripts.build).toBe('lytx build')
       expect(pkg.scripts.preview).toBe('lytx preview')
-      expect(pkg.dependencies.lyt).toBe('^2.0.0')
+      expect(pkg.dependencies['@lytjs/lytjs']).toBe('latest')
       expect(pkg.dependencies['@lytjs/router']).toBeDefined()
       expect(pkg.dependencies['@lytjs/store']).toBeDefined()
       expect(pkg.devDependencies.typescript).toBeDefined()
@@ -351,7 +351,7 @@ describe('Scaffold: main.ts 内容', () => {
       await createProject(options)
       const main = fs.readFileSync(path.join(tmpDir, 'src', 'main.ts'), 'utf-8')
 
-      expect(main).toContain("import { createApp } from 'lyt'")
+      expect(main).toContain("import { createApp } from '@lytjs/lytjs'")
       expect(main).toContain("import App from './App.lyt'")
       expect(main).toContain("import './styles/main.css'")
       expect(main).toContain("import { router } from './router'")

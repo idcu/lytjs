@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/store",
-  "version": "3.2.0",
+  "version": "3.2.1",
   "description": "Lyt.js 内置状态管理 - 轻量级全局状态管理，支持模块化和插件扩展",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
@@ -23,21 +23,14 @@
   },
   "homepage": "https://gitee.com/lytjs/lytjs",
   "keywords": [
-    "lyt",
-    "lytjs",
-    "javascript",
-    "framework",
-    "frontend",
-    "vue-like",
-    "lightweight",
-    "zero-dependency",
-    "store",
-    "state",
-    "state-management",
-    "状态管理"
+    "lyt", "lytjs", "javascript", "framework", "frontend", "vue-like",
+    "lightweight", "zero-dependency", "store", "state", "state-management"
   ],
   "dependencies": {
     "@lytjs/reactivity": "workspace:*"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   },
   "publishConfig": {
     "access": "public"

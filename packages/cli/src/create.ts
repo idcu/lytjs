@@ -57,7 +57,7 @@ function generateIndexHtml(): string {
  * 导入 createApp，创建应用实例并挂载到 DOM
  */
 function generateMainTs(): string {
-  return `import { createApp } from 'lyt';
+  return `import { createApp } from '@lytjs/lytjs';
 import App from './App';
 
 // 创建应用实例
@@ -73,7 +73,7 @@ app.mount('#app');
  * 一个简单的 Hello World 组件示例
  */
 function generateAppTs(): string {
-  return `import { defineComponent } from 'lyt';
+  return `import { defineComponent } from '@lytjs/lytjs';
 
 // 定义根组件
 const App = defineComponent({
@@ -141,7 +141,7 @@ body {
 
 /**
  * 生成 package.json 项目配置文件内容
- * 包含 lyt 依赖和 dev/build scripts
+ * 包含 @lytjs/lytjs 依赖和 dev/build scripts
  * @param name - 项目名称
  */
 function generatePackageJson(name: string): string {
@@ -156,7 +156,7 @@ function generatePackageJson(name: string): string {
       preview: 'lyt preview',
     },
     dependencies: {
-      lyt: 'latest',
+      '@lytjs/lytjs': 'latest',
     },
     devDependencies: {
       typescript: '^5.0.0',

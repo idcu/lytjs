@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/plugins",
-  "version": "3.2.0",
+  "version": "3.2.1",
   "description": "Lyt.js 官方插件聚合包 - 统一导出国际化、认证和日志等官方插件",
   "main": "./src/index.ts",
   "module": "./src/index.ts",
@@ -21,24 +21,16 @@
   },
   "homepage": "https://gitee.com/lytjs/lytjs",
   "keywords": [
-    "lyt",
-    "lytjs",
-    "javascript",
-    "framework",
-    "frontend",
-    "vue-like",
-    "lightweight",
-    "zero-dependency",
-    "plugins",
-    "i18n",
-    "auth",
-    "logger",
-    "插件"
+    "lyt", "lytjs", "javascript", "framework", "frontend", "vue-like",
+    "lightweight", "zero-dependency", "plugins", "i18n", "auth", "logger"
   ],
   "dependencies": {
     "@lytjs/plugin-i18n": "workspace:*",
     "@lytjs/plugin-auth": "workspace:*",
     "@lytjs/plugin-logger": "workspace:*"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   },
   "publishConfig": {
     "access": "public"

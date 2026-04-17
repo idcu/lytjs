@@ -1,7 +1,7 @@
 {
   "name": "@lytjs/component",
-  "version": "3.2.0",
-  "description": "Lyt.js 组件系统 - 提供组件定义、生命周期、组合式 API、插槽和内置组件",
+  "version": "3.2.1",
+  "description": "Lyt.js 组件系统 - defineComponent、生命周期、插槽、KeepAlive、Suspense",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
   "types": "./dist/types/index.d.ts",
@@ -23,21 +23,15 @@
   },
   "homepage": "https://gitee.com/lytjs/lytjs",
   "keywords": [
-    "lyt",
-    "lytjs",
-    "javascript",
-    "framework",
-    "frontend",
-    "vue-like",
-    "lightweight",
-    "zero-dependency",
-    "component",
-    "lifecycle",
-    "composition-api",
-    "keep-alive",
-    "transition",
-    "组件"
+    "lyt", "lytjs", "javascript", "framework", "frontend", "vue-like",
+    "lightweight", "zero-dependency", "component", "defineComponent"
   ],
+  "dependencies": {
+    "@lytjs/reactivity": "workspace:*"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "publishConfig": {
     "access": "public"
   }

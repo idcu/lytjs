@@ -54,7 +54,7 @@ function generatePackageJson(options: ScaffoldOptions): string {
       preview: 'lytx preview',
     },
     dependencies: {
-      lyt: '^2.0.0',
+      '@lytjs/lytjs': 'latest',
     },
   };
 
@@ -72,11 +72,11 @@ function generatePackageJson(options: ScaffoldOptions): string {
   }
 
   if (options.router) {
-    pkg.dependencies['@lytjs/router'] = '^2.0.0';
+    pkg.dependencies['@lytjs/router'] = 'latest';
   }
 
   if (options.store) {
-    pkg.dependencies['@lytjs/store'] = '^2.0.0';
+    pkg.dependencies['@lytjs/store'] = 'latest';
   }
 
   return JSON.stringify(pkg, null, 2) + '\n';
@@ -141,7 +141,7 @@ function generateIndexHtml(options: ScaffoldOptions): string {
 function generateLytxConfig(options: ScaffoldOptions): string {
   const configLines: string[] = [
     `// Lytx 配置文件`,
-    `import { defineConfig } from 'lyt'`,
+    `import { defineConfig } from '@lytjs/lytjs'`,
     ``,
     `export default defineConfig({`,
     `  // 构建模式`,
@@ -174,7 +174,7 @@ function generateLytxConfig(options: ScaffoldOptions): string {
 function generateMainTs(options: ScaffoldOptions): string {
   const ext = options.ts ? '.ts' : '.js';
   const lines: string[] = [
-    `import { createApp } from 'lyt'`,
+    `import { createApp } from '@lytjs/lytjs'`,
     `import App from './App.lyt'`,
     `import './styles/main.css'`,
   ];
@@ -221,7 +221,7 @@ function generateAppLyt(): string {
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'lyt'
+import { defineComponent } from '@lytjs/lytjs'
 import Header from './components/Header'
 
 export default defineComponent({
@@ -245,7 +245,7 @@ export default defineComponent({
  * 生成 src/pages/index.ts (首页)
  */
 function generatePageIndex(): string {
-  return `import { defineComponent } from 'lyt'
+  return `import { defineComponent } from '@lytjs/lytjs'
 
 export default defineComponent({
   name: 'HomePage',
@@ -264,7 +264,7 @@ export default defineComponent({
  * 生成 src/pages/about.ts (关于页)
  */
 function generatePageAbout(): string {
-  return `import { defineComponent } from 'lyt'
+  return `import { defineComponent } from '@lytjs/lytjs'
 
 export default defineComponent({
   name: 'AboutPage',
@@ -283,7 +283,7 @@ export default defineComponent({
  * 生成 src/components/Header.ts
  */
 function generateComponentHeader(): string {
-  return `import { defineComponent } from 'lyt'
+  return `import { defineComponent } from '@lytjs/lytjs'
 
 export default defineComponent({
   name: 'Header',

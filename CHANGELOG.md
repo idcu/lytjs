@@ -9,22 +9,26 @@
 
 ### 修复 (Bug Fixes)
 
-- **fix(cli)**: 修复 `npx @lytjs/cli create my-app` 运行时报 `Cannot find module 'esbuild'` 的问题
-  - 将 `esbuild` 添加为 `@lytjs/cli` 的运行时依赖 (`dependencies`)
-  - 构建脚本中将 esbuild 标记为 `--external`，但 package.json 中未声明对应依赖
-  - 影响: `lyt dev`（HMR 编译）和 `lyt build`（项目构建）均依赖 esbuild
+- **fix(cli)**: 修复 `npx @lytjs/cli create my-app` 报 `Cannot find module 'esbuild'` 错误
+  - 将 `esbuild` 添加为 `@lytjs/cli` 的运行时依赖
+- **fix(cli)**: 修复脚手架模板中包名错误，`"lyt"` → `"@lytjs/lytjs"`
+  - 影响文件: create.ts（基础版脚手架）、scaffold.ts（增强版脚手架）
+  - 修复 `npm install` 报 `No matching version found for lyt@latest` 错误
+- **fix(deps)**: 修复所有包的 `workspace:*` 未替换为实际版本号的问题
+  - 影响包: core, store, agg (lytjs), plugins
+- **fix(deps)**: 修复多个包缺少 `@lytjs/*` 跨包依赖声明的问题
+  - renderer: 添加 @lytjs/reactivity, @lytjs/vdom
+  - component: 添加 @lytjs/reactivity
+  - router: 添加 @lytjs/reactivity
+  - components: 添加 @lytjs/component
+- **fix(test)**: 更新 cli-enhanced.test.ts 断言以匹配修复后的模板输出
 
 ### 改进 (Improvements)
 
-- **build**: 构建脚本新增 Step 1.5 依赖一致性校验
-  - 自动检查 `--external` 声明的模块是否在 `dependencies` / `peerDependencies` 中声明
-  - 防止未来出现同类依赖遗漏问题
 - **cli**: dev.ts 和 build.ts 添加 esbuild 缺失时的友好错误提示
-- **readme**: 重写 README.md
-  - 添加 npm version / license / node version / bundle size Badge
-  - 添加组合式 API 示例代码
-  - 完善包结构表格（含 gzip 体积数据）
-  - 添加架构图和从 Vue 3 迁移说明
+- **build**: 构建脚本新增 Step 1.5 依赖一致性校验
+- **publish**: 发布脚本改进 workspace:* 处理（备份+精确还原，避免 sed 误替换）
+- **readme**: 重写 README.md（Badge、组合式 API 示例、架构图、迁移说明）
 
 ## [3.2.0] - 2026-04-17
 

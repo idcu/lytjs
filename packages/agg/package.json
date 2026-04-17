@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/lytjs",
-  "version": "3.2.0",
+  "version": "3.2.1",
   "description": "Lyt.js - 轻写轻跑，所见即代码。零依赖超轻量前端框架聚合包",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
@@ -23,21 +23,9 @@
   },
   "homepage": "https://gitee.com/lytjs/lytjs",
   "keywords": [
-    "lyt",
-    "lytjs",
-    "javascript",
-    "framework",
-    "frontend",
-    "vue-like",
-    "lightweight",
-    "zero-dependency",
-    "reactive",
-    "vdom",
-    "前端框架"
+    "lyt", "lytjs", "javascript", "framework", "frontend", "vue-like",
+    "lightweight", "zero-dependency", "reactive", "vdom"
   ],
-  "publishConfig": {
-    "access": "public"
-  },
   "dependencies": {
     "@lytjs/reactivity": "workspace:*",
     "@lytjs/compiler": "workspace:*",
@@ -47,5 +35,11 @@
     "@lytjs/core": "workspace:*",
     "@lytjs/router": "workspace:*",
     "@lytjs/store": "workspace:*"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

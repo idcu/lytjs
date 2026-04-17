@@ -13,6 +13,7 @@ set -e
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 PACKAGES_DIR="$ROOT_DIR/packages"
+BACKUP_DIR="$ROOT_DIR/.publish-backup"
 
 # 颜色输出
 GREEN='\033[0;32m'
@@ -100,6 +101,44 @@ fi
 
 ok "All tests passed"
 
+# Step 2.5: 备份并替换 workspace:* 为实际版本号
+log ""
+log "Step 2.5: Replacing workspace:* with actual version numbers..."
+echo ""
+
+# 获取当前版本号（从根 package.json 或第一个包读取）
+CURRENT_VERSION=$(node -e "
+  const pkg = require('$ROOT_DIR/package.json');
+  console.log(pkg.version || '3.2.1');
+")
+
+# 创建备份目录
+rm -rf "$BACKUP_DIR"
+mkdir -p "$BACKUP_DIR"
+
+FIXED_COUNT=0
+for pkg in "${PUBLISH_ORDER[@]}"; do
+  pkg_json="$PACKAGES_DIR/$pkg/package.json"
+  [ ! -f "$pkg_json" ] && continue
+
+  # 检查是否包含 workspace:*
+  if grep -q '"workspace:\*"' "$pkg_json"; then
+    # 备份原始文件
+    cp "$pkg_json" "$BACKUP_DIR/$pkg.json"
+    # 替换 workspace:* 为 ^当前版本号
+    sed -i.bak "s/\"workspace:\*\"/\"^${CURRENT_VERSION}\"/g" "$pkg_json"
+    rm -f "$pkg_json.bak"
+    log "  Fixed: $pkg (workspace:* → ^${CURRENT_VERSION})"
+    FIXED_COUNT=$((FIXED_COUNT + 1))
+  fi
+done
+
+if [ $FIXED_COUNT -eq 0 ]; then
+  ok "No workspace:* references found"
+else
+  ok "Fixed $FIXED_COUNT package(s)"
+fi
+
 # Step 3: 发布每个包
 log ""
 log "Step 3: Publishing packages..."
@@ -134,7 +173,7 @@ for pkg in "${PUBLISH_ORDER[@]}"; do
 
   log "Publishing $pkg_name..."
 
-  if (cd "$pkg_dir" && npm publish $PUBLISH_ARGS --access public 2>&1); then
+  if (cd "$pkg_dir" && npm publish $PUBLISH_ARGS --access public --registry https://registry.npmjs.org 2>&1); then
     ok "$pkg_name published successfully"
     SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
   else
@@ -142,6 +181,30 @@ for pkg in "${PUBLISH_ORDER[@]}"; do
     FAIL_COUNT=$((FAIL_COUNT + 1))
   fi
 done
+
+# Step 4: 从备份还原 workspace:*（发布完成后恢复开发状态）
+log ""
+log "Step 4: Restoring workspace:* references from backup..."
+echo ""
+
+RESTORED_COUNT=0
+for backup_file in "$BACKUP_DIR"/*.json; do
+  [ ! -f "$backup_file" ] && continue
+
+  pkg_name=$(basename "$backup_file" .json)
+  pkg_json="$PACKAGES_DIR/$pkg_name/package.json"
+
+  if [ -f "$pkg_json" ]; then
+    cp "$backup_file" "$pkg_json"
+    log "  Restored: $pkg_name"
+    RESTORED_COUNT=$((RESTORED_COUNT + 1))
+  fi
+done
+
+# 清理备份目录
+rm -rf "$BACKUP_DIR"
+
+ok "Restored $RESTORED_COUNT package(s) from backup"
 
 echo ""
 log "=========================================="
@@ -151,6 +214,6 @@ if [ "$DRY_RUN" = true ]; then
 fi
 log "=========================================="
 
-if [ $FAIL_COUNT -gt 0 ]; then
+if [ "$FAIL_COUNT" -gt 0 ]; then
   exit 1
 fi
