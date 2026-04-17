@@ -4,7 +4,7 @@
  * 纯 Node.js 原生实现
  */
 
-import * as http from 'fs';
+import * as http from 'http';
 import * as fs from 'fs';
 import * as path from 'path';
 import { colorText, logger, ensureDir, readFile, writeFile } from './utils';
