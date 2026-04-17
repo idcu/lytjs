@@ -8,7 +8,7 @@ import * as http from 'http';
 import * as fs from 'fs';
 import * as path from 'path';
 import { colorText, logger, ensureDir, readFile, writeFile } from './utils';
-import { createHMRServer, getHMRClientScript, type HMRUpdate, type HMRServer } from './hmr';
+import { createHMREndpoint, getHMRClientScript, type HMRUpdate } from './hmr';
 
 // ============================================================
 // esbuild 加载（带友好错误提示）
@@ -166,9 +166,7 @@ export function startDevServer(options: DevServerOptions = {}): void {
   const rootDir = path.resolve(options.root || process.cwd());
   const enableHMR = options.hmr !== false;
 
-  // 创建 HMR 服务器
-  const hmrServer: HMRServer = createHMRServer(rootDir);
-
+  // 创建 HMR WebSocket 端点
   // 创建 HTTP 服务器
   const server = http.createServer((req, res) => {
     const result = serveStatic(req, rootDir);
@@ -176,12 +174,8 @@ export function startDevServer(options: DevServerOptions = {}): void {
     res.end(result.body);
   });
 
-  // 注册 WebSocket upgrade
-  if (enableHMR) {
-    server.on('upgrade', (req, socket, head) => {
-      hmrServer.handleUpgrade(req, socket, head);
-    });
-  }
+  // 注册 HMR WebSocket（在 server 创建之后）
+  const hmr = enableHMR ? createHMREndpoint(server) : null;
 
   server.listen(port, () => {
     console.log('');
