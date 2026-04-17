@@ -24,10 +24,13 @@
   },
   "devDependencies": {
     "esbuild": "^0.28.0",
+    "get-tsconfig": "4.14.0",
     "tsx": "^4.19.0",
     "typescript": "^6.0.2"
   },
   "pnpm": {
-    "onlyBuiltDependencies": ["esbuild"]
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
   }
 }
