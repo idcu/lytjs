@@ -157,6 +157,8 @@ if [ "$TYPES_ONLY" = false ]; then
         --outfile="$dist_dir/index.mjs" \
         --external:@lytjs/* \
         $EXTRA_EXTERNAL \
+        --drop:console --drop:debugger \
+        --legal-comments=none \
         --log-level=warning 2>&1; then
       ok "  $pkg: ESM OK"
     else
@@ -175,6 +177,8 @@ if [ "$TYPES_ONLY" = false ]; then
         --outfile="$dist_dir/index.${cjs_ext}" \
         --external:@lytjs/* \
         $EXTRA_EXTERNAL \
+        --drop:console --drop:debugger \
+        --legal-comments=none \
         --log-level=warning 2>&1; then
       ok "  $pkg: CJS OK"
     else
@@ -189,6 +193,45 @@ if [ "$TYPES_ONLY" = false ]; then
       [ "$pkg" = "lytx" ] && cjs_bin="index.cjs"
       printf '#!/usr/bin/env node\nrequire("./%s")\n' "$cjs_bin" > "$dist_dir/cli.js"
       chmod +x "$dist_dir/cli.js"
+    fi
+
+    # 为 renderer 包构建平台子路径入口（dom/ssr/native/miniapp/vapor）
+    if [ "$pkg" = "renderer" ]; then
+      RENDERER_SUBS=("dom" "ssr" "native" "miniapp" "vapor")
+      for sub in "${RENDERER_SUBS[@]}"; do
+        sub_entry="$pkg_dir/src/$sub/index.ts"
+        if [ -f "$sub_entry" ]; then
+          log "  Building $pkg/$sub..."
+          if "$ESBUILD" "$sub_entry" \
+              --bundle --minify --tree-shaking=true \
+              --platform=browser --target=es2018 \
+              --format=esm \
+              --outfile="$dist_dir/${sub}.mjs" \
+              --external:@lytjs/* \
+              --drop:console --drop:debugger \
+              --legal-comments=none \
+              --log-level=warning 2>&1; then
+            ok "  $pkg/$sub: ESM OK"
+          else
+            err "  $pkg/$sub: ESM failed"
+          fi
+          if "$ESBUILD" "$sub_entry" \
+              --bundle --minify --tree-shaking=true \
+              --platform=browser --target=es2018 \
+              --format=cjs \
+              --outfile="$dist_dir/${sub}.cjs" \
+              --external:@lytjs/* \
+              --drop:console --drop:debugger \
+              --legal-comments=none \
+              --log-level=warning 2>&1; then
+            ok "  $pkg/$sub: CJS OK"
+          else
+            err "  $pkg/$sub: CJS failed"
+          fi
+        else
+          warn "  $pkg/$sub: no src/$sub/index.ts, skipping"
+        fi
+      done
     fi
 
     SUCCESS=$((SUCCESS + 1))

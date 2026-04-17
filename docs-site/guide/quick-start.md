@@ -1,117 +1,108 @@
 # 快速开始
 
-## 通过 CDN 使用
+## 安装
 
-最简单的方式是直接在 HTML 文件中引入 Lyt.js：
+### 使用 CLI 创建项目（推荐）
+
+```bash
+npx @lytjs/cli create my-app
+cd my-app
+npm install
+npm run dev
+```
+
+### CDN 直接使用
 
 ```html
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-  <meta charset="UTF-8">
-  <title>Lyt.js 示例</title>
-  <script src="https://unpkg.com/lyt/dist/lyt.global.js"></script>
-</head>
-<body>
-  <div id="app"></div>
-  <script>
-    const { createApp, reactive, ref } = Lyt
-
-    const app = createApp({
-      state() {
-        return {
-          message: ref('Hello Lyt.js!')
-        }
-      },
-      template: `
-        <div>
-          <h1>{{ message }}</h1>
-          <input v-bind:model="message" />
-        </div>
-      `
-    })
-
-    app.mount('#app')
-  </script>
-</body>
-</html>
-```
-
-## 通过 npm 安装
-
-::: code-group
-
-```bash [npm]
-npm install lyt
-```
-
-```bash [pnpm]
-pnpm add lyt
-```
-
-```bash [yarn]
-yarn add lyt
-```
-
-:::
-
-## 创建应用
-
-### 选项式 API
-
-```ts
-import { createApp, ref } from 'lyt'
+<div id="app"></div>
+<script type="module">
+import { createApp } from 'https://esm.sh/@lytjs/core'
 
 const app = createApp({
-  name: 'MyApp',
-
-  state() {
-    return {
-      count: ref(0)
-    }
-  },
-
-  methods: {
-    increment() {
-      this.count.value++
-    }
-  },
-
   template: `
     <div>
-      <p>计数器: {{ count }}</p>
-      <button @click="increment">+1</button>
+      <h1>{{ title }}</h1>
+      <p>计数: {{ count }}</p>
+      <button @click="count++">+1</button>
     </div>
-  `
+  `,
+  state: {
+    title: 'Hello Lyt.js!',
+    count: 0
+  }
 })
 
 app.mount('#app')
+</script>
 ```
 
-### 组合式 API
+### npm 安装
 
-```ts
-import { createApp, ref, onMounted } from 'lyt'
+```bash
+# 安装核心包
+npm install @lytjs/core
+
+# 或安装聚合包（包含所有运行时）
+npm install @lytjs/lytjs
+```
+
+## 5 分钟 Todo App
+
+```javascript
+import { createApp, ref, computed } from '@lytjs/core'
 
 const app = createApp({
   setup() {
-    const count = ref(0)
+    const newTodo = ref('')
+    const todos = ref([
+      { id: 1, text: '学习 Lyt.js', done: false },
+      { id: 2, text: '构建一个应用', done: false },
+    ])
 
-    function increment() {
-      count.value++
+    const remaining = computed(() =>
+      todos.value.filter(t => !t.done).length
+    )
+
+    function addTodo() {
+      if (!newTodo.value.trim()) return
+      todos.value.push({
+        id: Date.now(),
+        text: newTodo.value,
+        done: false,
+      })
+      newTodo.value = ''
     }
 
-    onMounted(() => {
-      console.log('组件已挂载')
-    })
+    function toggleTodo(id) {
+      const todo = todos.value.find(t => t.id === id)
+      if (todo) todo.done = !todo.done
+    }
 
-    return { count, increment }
+    function removeTodo(id) {
+      todos.value = todos.value.filter(t => t.id !== id)
+    }
+
+    return { newTodo, todos, remaining, addTodo, toggleTodo, removeTodo }
   },
-
   template: `
-    <div>
-      <p>计数器: {{ count }}</p>
-      <button @click="increment">+1</button>
+    <div class="todo-app">
+      <h1>📝 Todo App</h1>
+      <p>剩余 {{ remaining }} 项</p>
+      <form @submit.prevent="addTodo">
+        <input model="newTodo" placeholder="添加新任务..." />
+        <button type="submit">添加</button>
+      </form>
+      <ul>
+        <each="todo in todos">
+          <li>
+            <input type="checkbox" :checked="todo.done" @change="toggleTodo(todo.id)" />
+            <span :style="{ textDecoration: todo.done ? 'line-through' : 'none' }">
+              {{ todo.text }}
+            </span>
+            <button @click="removeTodo(todo.id)">删除</button>
+          </li>
+        </each>
+      </ul>
     </div>
   `
 })
@@ -119,25 +110,11 @@ const app = createApp({
 app.mount('#app')
 ```
 
-## 模板语法简介
-
-Lyt.js 使用增强型 HTML 模板语法：
-
-| 指令 | 说明 | 示例 |
-|------|------|------|
-| `{{ }}` | 文本插值 | `{{ message }}` |
-| `v-if` | 条件渲染 | `<div v-if="show">内容</div>` |
-| `v-each` | 列表渲染 | `<li v-each="item in list">{{ item }}</li>` |
-| `v-bind` | 属性绑定 | `<img v-bind:src="url" />` |
-| `v-on` / `@` | 事件绑定 | `<button @click="handleClick">点击</button>` |
-| `v-bind:model` | 双向绑定 | `<input v-bind:model="value" />` |
-
-::: tip 提示
-详细的模板语法说明请参阅 [模板语法](./template-syntax) 章节。
-:::
-
 ## 下一步
 
-- 了解完整的 [模板语法](./template-syntax)
-- 深入学习 [响应式系统](./reactivity)
-- 掌握 [组件系统](./component)
+- [组合式 API 指南](./composition-api.md)
+- [选项式 API 指南](./options-api.md)
+- [响应式系统](./reactivity.md)
+- [组件系统](./components.md)
+- [路由](./router.md)
+- [状态管理](./store.md)

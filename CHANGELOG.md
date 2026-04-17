@@ -5,6 +5,28 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/)，
 版本管理遵循 [Semantic Versioning](https://semver.org/)。
 
+## [4.0.0] - 2026-04-17
+
+### ⚠️ 破坏性变更 (Breaking Changes)
+
+- **统一版本号**: 所有子包版本号统一为 4.0.0，标记 API 稳定化的首个版本
+- **API 冻结**: 公共 API 进入稳定期，后续变更将严格遵循语义化版本控制
+
+### 新增 (Features)
+
+- **API 稳定化**: 冻结所有核心包的公共 API，提供稳定的开发者契约
+- **语义化版本控制**: 引入严格的 semver 版本管理策略
+  - 主版本号：破坏性 API 变更
+  - 次版本号：向后兼容的新功能
+  - 修订号：向后兼容的 Bug 修复
+- **版本一致性**: 统一所有 18 个子包的版本号，消除版本碎片化
+
+### 改进 (Improvements)
+
+- **CONTRIBUTING.md**: 更新仓库地址为 Gitee，更新 Node.js 要求为 >=18
+- **Issue/PR 模板**: 新增 GitHub Issue 和 Pull Request 模板
+- **仓库优化**: 完善 Badge、README 结构优化
+
 ## [3.2.1] - 2026-04-17
 
 ### 修复 (Bug Fixes)

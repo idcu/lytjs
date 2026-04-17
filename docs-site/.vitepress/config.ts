@@ -5,6 +5,9 @@ export default defineConfig({
   title: 'Lyt.js',
   description: '零依赖超轻量前端框架',
 
+  // 部署配置 - 根据实际部署路径调整
+  base: '/',
+
   head: [
     ['meta', { name: 'theme-color', content: '#4f46e5' }],
     ['meta', { name: 'keywords', content: 'lyt, lytjs, 前端框架, 零依赖, 轻量' }],
@@ -18,13 +21,23 @@ export default defineConfig({
   themeConfig: {
     logo: '/logo.svg',
 
+    // 导航栏配置
     nav: [
+      { text: '首页', link: '/' },
       { text: '指南', link: '/guide/quick-start' },
       { text: 'API', link: '/api/reactivity' },
       { text: '示例', link: '/examples/counter' },
-      { text: '更新日志', link: 'https://gitee.com/lytjs/lytjs/blob/main/CHANGELOG.md' },
+      {
+        text: '更新日志',
+        link: 'https://gitee.com/lytjs/lytjs/blob/main/CHANGELOG.md',
+      },
+      {
+        text: 'GitHub',
+        link: 'https://gitee.com/lytjs/lytjs',
+      },
     ],
 
+    // 侧边栏配置
     sidebar: {
       '/guide/': [
         {
@@ -42,6 +55,13 @@ export default defineConfig({
           ],
         },
         {
+          text: 'API 风格',
+          items: [
+            { text: '组合式 API', link: '/guide/composition-api' },
+            { text: '选项式 API', link: '/guide/options-api' },
+          ],
+        },
+        {
           text: '生态',
           items: [
             { text: '路由', link: '/guide/router' },
@@ -54,6 +74,7 @@ export default defineConfig({
             { text: '单文件组件', link: '/guide/sfc' },
             { text: '服务端渲染', link: '/guide/ssr' },
             { text: 'Vapor Mode', link: '/guide/vapor-mode' },
+            { text: '从 Vue 3 迁移', link: '/guide/migration-from-vue3' },
           ],
         },
       ],
@@ -90,22 +111,31 @@ export default defineConfig({
       ],
     },
 
+    // 搜索功能
     search: {
       provider: 'local',
     },
 
+    // 社交链接
     socialLinks: [
       { icon: 'github', link: 'https://gitee.com/lytjs/lytjs' },
     ],
 
+    // 页脚
     footer: {
       message: '基于 MIT 许可发布',
       copyright: 'Copyright 2024-present Lyt.js Contributors',
     },
 
+    // 编辑链接
     editLink: {
       pattern: 'https://gitee.com/lytjs/lytjs/edit/main/docs-site/:path',
       text: '在 Gitee 上编辑此页',
+    },
+
+    // 文档页最后更新时间
+    lastUpdated: {
+      text: '最后更新于',
     },
   },
 

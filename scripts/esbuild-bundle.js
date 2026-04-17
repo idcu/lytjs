@@ -163,6 +163,12 @@ async function bundlePackage(packageName, report) {
     plugins: [lytExternalPlugin],
     sourcemap: false,
     logLevel: 'warning',
+    // 生产构建优化：移除 console.log / console.debug / console.info 和 debugger 语句
+    drop: ['console', 'debugger'],
+    // 纯标记：告知 esbuild 模块没有副作用，增强 tree-shaking
+    pure: [],
+    // 忽略注释，减少产物体积
+    legalComments: 'none',
   }
 
   const results = {}

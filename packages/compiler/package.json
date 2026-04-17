@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/compiler",
-  "version": "3.2.0",
+  "version": "4.0.0",
   "description": "Lyt.js 模板编译器 - 将模板字符串编译为渲染函数，支持指令解析和优化",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",

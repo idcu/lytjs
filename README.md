@@ -3,6 +3,8 @@
   <img src="https://img.shields.io/npm/l/@lytjs/core?style=flat-square" alt="license" />
   <img src="https://img.shields.io/node/v/@lytjs/cli?style=flat-square&color=339933" alt="node version" />
   <img src="https://img.shields.io/badge/size-34.56KB%20gzip-42b883?style=flat-square" alt="bundle size" />
+  <img src="https://img.shields.io/badge/tests-1353%2B-blue?style=flat-square" alt="tests" />
+  <img src="https://img.shields.io/badge/packages-18-orange?style=flat-square" alt="packages" />
 </p>
 
 <h1 align="center">Lyt.js</h1>
@@ -237,6 +239,25 @@ Lyt.js 的 API 高度兼容 Vue 3，迁移成本低：
 - `createRouter` / `createStore` — API 一致，配置格式兼容
 - 详见 [CONTRIBUTING.md](./CONTRIBUTING.md) 中的迁移指南
 
-## License
+## 路线图
+
+- [x] 核心 8 包 ESM gzip < 35KB
+- [x] Composition API + Options API 双模式
+- [x] SSR / SSG / Islands Architecture
+- [x] Vapor Mode（无 VDOM 编译优化）
+- [x] Signal 响应式模式
+- [x] 28+ UI 组件 + 主题系统
+- [x] 内置路由 + 状态管理
+- [x] CLI 工具 + DevTools
+- [ ] 小程序 Renderer（微信/支付宝/字节）
+- [ ] 原生移动端 Renderer
+- [ ] 核心运行时 < 15KB gzip
+- [ ] 插件市场
+
+## 贡献
+
+欢迎贡献！请阅读 [贡献指南](./CONTRIBUTING.md) 了解详情。
+
+## 许可证
 
 [MIT](./LICENSE) © idcu

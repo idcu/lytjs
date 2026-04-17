@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/lytjs",
-  "version": "3.2.1",
+  "version": "4.0.0",
   "description": "Lyt.js - 轻写轻跑，所见即代码。零依赖超轻量前端框架聚合包",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",

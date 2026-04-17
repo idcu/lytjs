@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/plugins",
-  "version": "3.2.1",
+  "version": "4.0.0",
   "description": "Lyt.js 官方插件聚合包 - 统一导出国际化、认证和日志等官方插件",
   "main": "./src/index.ts",
   "module": "./src/index.ts",

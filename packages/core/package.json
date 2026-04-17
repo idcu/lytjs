@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/core",
-  "version": "3.2.1",
+  "version": "4.0.0",
   "description": "Lyt.js 核心入口 - 整合响应式、编译器、虚拟 DOM、渲染器和组件系统",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",

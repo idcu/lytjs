@@ -6,21 +6,21 @@
 
 ### 前置要求
 
-- **Node.js** >= 16
-- **pnpm** >= 8（推荐使用 pnpm 作为包管理器）
+- **Node.js** >= 18
+- **pnpm** >= 9（推荐使用 pnpm 作为包管理器）
 
 ### 克隆与安装
 
 ```bash
-git clone https://github.com/idcu/lyt.git
-cd lyt
+git clone https://gitee.com/lytjs/lytjs.git
+cd lytjs
 pnpm install
 ```
 
 ### 项目结构
 
 ```
-lyt/
+lytjs/
 ├── packages/           # 所有子包
 │   ├── reactivity/     # 响应式系统
 │   ├── compiler/       # 模板编译器
@@ -31,7 +31,15 @@ lyt/
 │   ├── store/          # 状态管理
 │   ├── core/           # 核心入口
 │   ├── cli/            # 命令行工具
-│   └── devtools/       # 浏览器调试面板
+│   ├── devtools/       # 浏览器调试面板
+│   ├── components/     # UI 组件库
+│   ├── lytx/           # 元框架 (SSR/SSG)
+│   ├── test-utils/     # 测试框架
+│   ├── plugin-i18n/    # 国际化插件
+│   ├── plugin-auth/    # 认证授权插件
+│   ├── plugin-logger/  # 日志插件
+│   ├── plugins/        # 官方插件聚合包
+│   └── agg/            # 聚合包 (一键安装)
 ├── playground/         # 演示示例
 ├── benchmarks/         # 性能基准测试
 ├── scripts/            # 构建脚本
@@ -178,7 +186,7 @@ pnpm --filter @lytjs/reactivity test
 
 ## 问题反馈
 
-如果发现 Bug 或有功能建议，请通过 GitHub Issues 提交。提交 Issue 时请包含：
+如果发现 Bug 或有功能建议，请通过 Gitee Issues 提交。提交 Issue 时请包含：
 
 - 问题描述
 - 复现步骤
