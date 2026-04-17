@@ -15,8 +15,26 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { ensureDir, writeFile, readFile, colorText, logger } from './utils';
-// esbuild 安装在项目根目录，通过 require 引用以兼容 pnpm workspace 链接
-const esbuild = require('esbuild');
+
+// ============================================================
+// esbuild 加载（带友好错误提示）
+// ============================================================
+let esbuild: any;
+try {
+  esbuild = require('esbuild');
+} catch {
+  logger.error('缺少依赖: esbuild');
+  logger.error('');
+  logger.error('  Lyt CLI 的构建功能需要 esbuild。');
+  logger.error('');
+  logger.error('  请执行以下命令安装:');
+  logger.error(`    ${colorText('npm install esbuild --save-dev', 'brightGreen')}`);
+  logger.error('');
+  logger.error('  如果您使用 pnpm:');
+  logger.error(`    ${colorText('pnpm add esbuild -D', 'brightGreen')}`);
+  logger.error('');
+  process.exit(1);
+}
 
 // ============================================================
 // 类型定义
@@ -53,21 +71,6 @@ interface BuildStats {
 /**
  * 构建项目
  * 使用 esbuild 将源代码编译、打包、压缩后输出到指定目录
- *
- * @param options - 构建选项
- * @param options.outDir - 输出目录（默认 'dist'）
- * @param options.minify - 是否压缩（默认 false）
- * @param options.root - 项目根目录（默认当前工作目录）
- * @param options.entry - 入口文件路径（默认 'index.html'）
- *
- * 构建流程：
- *   1. 读取入口 HTML 文件
- *   2. 分析 HTML 中的脚本引用
- *   3. 使用 esbuild 打包每个脚本入口
- *   4. 去除 console.log（生产模式）
- *   5. 可选压缩
- *   6. 生成 source map
- *   7. 输出到 dist/ 目录
  */
 export async function buildProject(options: BuildOptions = {}): Promise<void> {
   const startTime = Date.now();
@@ -150,7 +153,6 @@ export async function buildProject(options: BuildOptions = {}): Promise<void> {
       });
 
       // 统计输入文件（通过 metafile）
-      // esbuild 已将结果写入 outfile，读取输出文件大小
       const outputContent = fs.readFileSync(outputJsPath, 'utf-8');
       stats.totalSize += Buffer.byteLength(outputContent, 'utf-8');
       stats.outputFiles++;
@@ -208,39 +210,23 @@ export async function buildProject(options: BuildOptions = {}): Promise<void> {
 /**
  * 复制静态资源文件到输出目录
  * 包括 CSS、图片、字体等非 JS/TS 文件
- *
- * @param rootDir - 项目根目录
- * @param outDir - 输出目录
- * @param stats - 构建统计对象
  */
 function copyStaticFiles(rootDir: string, outDir: string, stats: BuildStats): void {
   const srcDir = path.join(rootDir, 'src');
-
   if (!fs.existsSync(srcDir)) return;
 
-  /**
-   * 递归复制目录
-   * @param dir - 源目录
-   * @param base - 基础路径（用于计算相对路径）
-   */
   function copyDir(dir: string, base: string): void {
     const entries = fs.readdirSync(dir, { withFileTypes: true });
-
     for (const entry of entries) {
       const fullPath = path.join(dir, entry.name);
-
       if (entry.isDirectory()) {
-        // 跳过 node_modules
         if (entry.name === 'node_modules') continue;
         copyDir(fullPath, base);
       } else if (entry.isFile()) {
         const ext = path.extname(entry.name);
-        // 跳过 TypeScript/JavaScript 文件（已由 esbuild 打包）
         if (['.ts', '.tsx', '.js', '.jsx'].includes(ext)) continue;
-
         const relativePath = path.relative(base, fullPath);
         const outputPath = path.join(outDir, relativePath);
-
         writeFile(outputPath, fs.readFileSync(fullPath).toString('utf-8'));
         stats.outputFiles++;
         stats.totalSize += fs.statSync(fullPath).size;
@@ -253,8 +239,6 @@ function copyStaticFiles(rootDir: string, outDir: string, stats: BuildStats): vo
 
 /**
  * 格式化字节数为人类可读的字符串
- * @param bytes - 字节数
- * @returns 格式化后的字符串（如 "1.23 KB"）
  */
 function formatBytes(bytes: number): string {
   if (bytes === 0) return '0 B';

@@ -7,6 +7,7 @@
 #   2. 使用 esbuild CLI 打包所有包（ESM + CJS）
 #   3. 生成 .d.ts 类型声明文件
 #   4. 输出构建体积报告
+#   5. 验证 external 依赖与 package.json dependencies 一致性
 #
 # 用法：
 #   bash scripts/build-all.sh              # 完整构建
@@ -126,8 +127,6 @@ if [ "$TYPES_ONLY" = false ]; then
     log "  Building $pkg..."
 
     # 根据包类型选择 platform 和 external
-    # cli / lytx: Node.js 包，使用 --platform=node
-    # components: 使用相对路径导入 @lytjs/component，需要额外 external
     case "$pkg" in
       cli)
         PLATFORM="node"
@@ -147,7 +146,6 @@ if [ "$TYPES_ONLY" = false ]; then
         ;;
     esac
 
-    # 清理旧的 CJS 输出（cli 包使用 .js 替代 .cjs）
     rm -f "$dist_dir/index.cjs" 2>/dev/null
     rm -f "$dist_dir/index.js" 2>/dev/null
 
@@ -167,7 +165,7 @@ if [ "$TYPES_ONLY" = false ]; then
       continue
     fi
 
-    # CJS (.cjs) — cli 包输出为 .js 以兼容 npm bin
+    # CJS (.cjs)
     cjs_ext="cjs"
     [ "$pkg" = "cli" ] && cjs_ext="js"
     if "$ESBUILD" "$entry" \
@@ -202,6 +200,56 @@ if [ "$TYPES_ONLY" = false ]; then
   log "  =========================================="
 
   [ $FAIL -gt 0 ] && err "Build failed with $FAIL errors" && exit 1
+fi
+
+# ============================================================
+# Step 1.5: 验证 external 依赖一致性
+# ============================================================
+if [ "$TYPES_ONLY" = false ] && [ "$BUNDLE_ONLY" = false ]; then
+  header ""
+  header "  Step 1.5: Validating external dependencies..."
+  header ""
+
+  DEP_WARN=0
+
+  for pkg in "${TARGETS[@]}"; do
+    pkg_json="$PACKAGES_DIR/$pkg/package.json"
+    [ ! -f "$pkg_json" ] && continue
+
+    # 提取 --external 参数中声明的模块
+    case "$pkg" in
+      cli)
+        EXTERNAL_MODULES=("esbuild")
+        ;;
+      *)
+        EXTERNAL_MODULES=()
+        ;;
+    esac
+
+    # 检查每个 external 模块是否在 dependencies 或 peerDependencies 中声明
+    for ext_mod in "${EXTERNAL_MODULES[@]}"; do
+      # 使用 node 提取 dependencies 和 peerDependencies
+      has_dep=$(node -e "
+        const pkg = require('$pkg_json');
+        const deps = pkg.dependencies || {};
+        const peers = pkg.peerDependencies || {};
+        const has = deps['$ext_mod'] || peers['$ext_mod'];
+        process.exit(has ? 0 : 1);
+      " 2>/dev/null || echo "false")
+
+      if [ "$has_dep" = "false" ]; then
+        warn "  $pkg: '$ext_mod' is marked as --external but NOT declared in dependencies/peerDependencies"
+        DEP_WARN=$((DEP_WARN + 1))
+      fi
+    done
+  done
+
+  if [ $DEP_WARN -eq 0 ]; then
+    ok "  All external dependencies are properly declared"
+  else
+    warn "  $DEP_WARN external dependency warning(s) found"
+    warn "  Please ensure all --external modules are listed in package.json dependencies"
+  fi
 fi
 
 # ============================================================

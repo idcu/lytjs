@@ -5,6 +5,27 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/)，
 版本管理遵循 [Semantic Versioning](https://semver.org/)。
 
+## [3.2.1] - 2026-04-17
+
+### 修复 (Bug Fixes)
+
+- **fix(cli)**: 修复 `npx @lytjs/cli create my-app` 运行时报 `Cannot find module 'esbuild'` 的问题
+  - 将 `esbuild` 添加为 `@lytjs/cli` 的运行时依赖 (`dependencies`)
+  - 构建脚本中将 esbuild 标记为 `--external`，但 package.json 中未声明对应依赖
+  - 影响: `lyt dev`（HMR 编译）和 `lyt build`（项目构建）均依赖 esbuild
+
+### 改进 (Improvements)
+
+- **build**: 构建脚本新增 Step 1.5 依赖一致性校验
+  - 自动检查 `--external` 声明的模块是否在 `dependencies` / `peerDependencies` 中声明
+  - 防止未来出现同类依赖遗漏问题
+- **cli**: dev.ts 和 build.ts 添加 esbuild 缺失时的友好错误提示
+- **readme**: 重写 README.md
+  - 添加 npm version / license / node version / bundle size Badge
+  - 添加组合式 API 示例代码
+  - 完善包结构表格（含 gzip 体积数据）
+  - 添加架构图和从 Vue 3 迁移说明
+
 ## [3.2.0] - 2026-04-17
 
 ### 新增

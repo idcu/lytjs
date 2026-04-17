@@ -1,32 +1,51 @@
-# Lyt.js
+<p align="center">
+  <img src="https://img.shields.io/npm/v/@lytjs/core?style=flat-square&color=42b883" alt="npm version" />
+  <img src="https://img.shields.io/npm/l/@lytjs/core?style=flat-square" alt="license" />
+  <img src="https://img.shields.io/node/v/@lytjs/cli?style=flat-square&color=339933" alt="node version" />
+  <img src="https://img.shields.io/badge/size-34.56KB%20gzip-42b883?style=flat-square" alt="bundle size" />
+</p>
 
-> 轻写轻跑，所见即代码
+<h1 align="center">Lyt.js</h1>
 
-Lyt.js 是一个纯原生、零运行时依赖的前端框架。API 极简，运行时极致轻量，模板就是增强版 HTML，无需 JSX。
+<p align="center">
+  <strong>轻写轻跑，所见即代码</strong>
+</p>
+
+<p align="center">
+  纯原生 · 零运行时依赖 · 超轻量 · Vue 3 兼容 API
+</p>
+
+<p align="center">
+  <a href="#快速开始">快速开始</a> ·
+  <a href="#特性">特性</a> ·
+  <a href="#模板语法">模板语法</a> ·
+  <a href="#包结构">包结构</a> ·
+  <a href="https://gitee.com/lytjs/lytjs">Gitee</a>
+</p>
+
+---
 
 ## 特性
 
 - **纯原生** — 零运行时第三方依赖，所有能力用原生 JS 实现
-- **轻写轻跑** — API 极简，核心 8 包 ESM gzip 总计 34.56KB（reactivity 仅 2.86KB）
-- **所见即代码** — 增强版 HTML 模板，去掉 v- 前缀（if/each/bind/on）
+- **极致轻量** — 核心 8 包 ESM gzip 总计仅 **34.56KB**（reactivity 仅 2.86KB）
+- **所见即代码** — 增强版 HTML 模板，去掉 v- 前缀（`if` / `each` / `model` / `on:click`）
+- **双 API 模式** — 同时支持 Options API 和 Composition API，与 Vue 3 一致
 - **渐进扩展** — 架构为 SSR / 移动端 / 小程序预留 Renderer 接口
-- **开箱即用** — 内置路由、状态管理、CLI 工具、浏览器 DevTools
+- **开箱即用** — 内置路由、状态管理、CLI 工具、浏览器 DevTools、28+ 组件
 
 ## 快速开始
 
-### 安装
+### 使用 CLI 创建项目
 
 ```bash
-# 使用 CLI 创建项目
 npx @lytjs/cli create my-app
 cd my-app
 npm install
 npm run dev
 ```
 
-### 手动使用
-
-在 HTML 中直接使用：
+### CDN 直接使用
 
 ```html
 <div id="app"></div>
@@ -79,6 +98,29 @@ const Counter = defineComponent({
 })
 ```
 
+### 组合式 API
+
+```javascript
+import { defineComponent, ref, computed, watch } from '@lytjs/component'
+
+const Counter = defineComponent({
+  setup() {
+    const count = ref(0)
+    const double = computed(() => count.value * 2)
+
+    watch(count, (val) => console.log('变化:', val))
+
+    return { count, double }
+  },
+  template: `
+    <div>
+      <p>{{ count }} x 2 = {{ double }}</p>
+      <button @click="count++">+1</button>
+    </div>
+  `
+})
+```
+
 ### 响应式 API
 
 ```javascript
@@ -122,22 +164,9 @@ const counter = createStore('counter', {
 })
 ```
 
-## 包结构
-
-| 包名 | 说明 | 大小目标 |
-|------|------|---------|
-| `@lytjs/reactivity` | 响应式系统（reactive/ref/computed/watch） | ~2.5 KB |
-| `@lytjs/compiler` | 模板编译器（HTML 解析/AST/代码生成） | ~3 KB |
-| `@lytjs/vdom` | 虚拟 DOM（VNode/Diff/Block Tree） | ~2.5 KB |
-| `@lytjs/renderer` | 渲染器（DOM/SSR 抽象层） | ~1.5 KB |
-| `@lytjs/component` | 组件系统（defineComponent/生命周期/插槽） | ~1.5 KB |
-| `@lytjs/router` | 内置路由（History/Hash/守卫） | ~1.5 KB |
-| `@lytjs/store` | 内置状态管理（createStore） | ~1 KB |
-| `@lytjs/core` | 核心入口（createApp/h/插件系统） | 聚合 |
-| `@lytjs/cli` | 命令行工具（create/dev/build） | 开发工具 |
-| `@lytjs/devtools` | 浏览器调试面板（组件树/状态/事件/时间旅行） | 开发工具 |
-
 ## 模板语法
+
+Lyt.js 使用增强版 HTML 模板，去掉了 Vue 的 `v-` 前缀，更接近原生 HTML：
 
 | 功能 | Vue 3 | Lyt.js |
 |------|-------|--------|
@@ -146,8 +175,45 @@ const counter = createStore('counter', {
 | 事件绑定 | `@click="fn"` | `@click="fn"` |
 | 条件渲染 | `v-if="show"` | `if="show"` |
 | 列表渲染 | `v-for="item in list"` | `each="item in list"` |
-| 双向绑定 | `v-model="val"` | `bind="val"` |
+| 双向绑定 | `v-model="val"` | `model="val"` |
 | 插槽 | `<slot name="x">` | `<template slot="x">` |
+
+## 包结构
+
+| 包名 | 说明 | ESM gzip |
+|------|------|----------|
+| `@lytjs/reactivity` | 响应式系统（reactive/ref/computed/watch） | 2.86 KB |
+| `@lytjs/compiler` | 模板编译器（HTML 解析/AST/代码生成） | 4.60 KB |
+| `@lytjs/vdom` | 虚拟 DOM（VNode/Diff/Block Tree/PatchFlag） | 3.57 KB |
+| `@lytjs/renderer` | 渲染器（DOM/SSR/Native/MiniApp） | 9.56 KB |
+| `@lytjs/component` | 组件系统（defineComponent/生命周期/插槽） | 5.96 KB |
+| `@lytjs/core` | 核心入口（createApp/h/插件系统） | 4.12 KB |
+| `@lytjs/router` | 内置路由（History/Hash/守卫/动态路由） | 2.62 KB |
+| `@lytjs/store` | 内置状态管理（Pinia 风格） | 1.27 KB |
+| `@lytjs/cli` | 命令行工具（create/dev/build） | 开发工具 |
+| `@lytjs/devtools` | 浏览器调试面板 | 开发工具 |
+| `@lytjs/components` | UI 组件库（28+ 组件/主题系统） | - |
+| `@lytjs/lytx` | 元框架（SSR/SSG/SPA/API Routes） | - |
+| `lyt` | 聚合包（一键安装） | 34.56 KB |
+
+## 架构
+
+```
+应用层 (App Layer)
+    |-- createApp, 插件系统, 全局 API
+    |
+核心引擎层 (Engine Layer)
+    |-- @lytjs/reactivity  (Proxy 响应式系统)
+    |-- @lytjs/compiler    (模板编译: parse -> transform -> optimize -> generate)
+    |-- @lytjs/vdom        (虚拟 DOM: Block Tree + PatchFlag + LIS diff)
+    |-- @lytjs/component   (组件系统: defineComponent, Composition API)
+    |
+平台适配层 (Platform Adapter)
+    |-- DOM Renderer     (浏览器)
+    |-- SSR Renderer     (服务端)
+    |-- Native Renderer  (原生移动端 - 规划中)
+    |-- MiniApp Renderer (小程序 - 规划中)
+```
 
 ## 开发
 
@@ -160,15 +226,17 @@ pnpm build
 
 # 运行测试
 pnpm test
-
-# 性能基准测试
-pnpm benchmark
 ```
 
-## 架构
+## 从 Vue 3 迁移
 
-Lyt.js 采用三层架构：应用层（组件/路由/Store）→ 核心引擎层（响应式/编译器/VDOM）→ 平台适配层（Renderer 抽象）。所有平台差异封装在 Renderer 接口中，初期实现 DOM Renderer，后续通过实现新 Renderer 扩展到 SSR/移动端/小程序。
+Lyt.js 的 API 高度兼容 Vue 3，迁移成本低：
+
+- `defineComponent` / `ref` / `reactive` / `computed` / `watch` — 完全兼容
+- 模板语法仅需去掉 `v-` 前缀（`v-if` → `if`，`v-for` → `each`）
+- `createRouter` / `createStore` — API 一致，配置格式兼容
+- 详见 [CONTRIBUTING.md](./CONTRIBUTING.md) 中的迁移指南
 
 ## License
 
-MIT © idcu
+[MIT](./LICENSE) © idcu
