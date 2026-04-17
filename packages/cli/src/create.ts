@@ -159,6 +159,7 @@ function generatePackageJson(name: string): string {
       '@lytjs/lytjs': 'latest',
     },
     devDependencies: {
+      '@lytjs/cli': 'latest',
       typescript: '^5.0.0',
     },
   };
