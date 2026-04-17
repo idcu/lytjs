@@ -202,13 +202,13 @@ export function bindIf(
   const dispose = effect(() => {
     const value = sig()
     if (value) {
-      ;(el as any).style = (el as any).style || {}
+      (el as any).style = (el as any).style || {}
       if ((el as any).style.display === 'none') {
-        ;(el as any).style.display = ''
+        (el as any).style.display = ''
       }
-      ;(el as any).hidden = false
+      (el as any).hidden = false
     } else {
-      ;(el as any).style = (el as any).style || {}
+      (el as any).style = (el as any).style || {}
       ;(el as any).style.display = 'none'
       ;(el as any).hidden = true
     }

@@ -1,0 +1,23 @@
+{
+  "reporter": ["text", "html", "lcov"],
+  "reportsDir": "coverage",
+  "include": [
+    "packages/*/src/**/*.ts"
+  ],
+  "exclude": [
+    "packages/*/src/**/__tests__/**",
+    "packages/*/src/**/*.test.ts",
+    "packages/test-utils/**",
+    "packages/cli/**",
+    "packages/devtools/**",
+    "**/node_modules/**"
+  ],
+  "all": true,
+  "clean": true,
+  "temp-dir": "coverage/tmp",
+  "check-coverage": false,
+  "lines": 60,
+  "functions": 60,
+  "branches": 50,
+  "statements": 60
+}

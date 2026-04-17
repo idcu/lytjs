@@ -242,12 +242,12 @@ export function renderVaporNode(node: VaporNode): VaporElement {
   for (const [key, value] of Object.entries(node.props)) {
     if (key === 'style' && typeof value === 'object') {
       for (const [styleKey, styleVal] of Object.entries(value)) {
-        ;(el as any).style[styleKey] = styleVal
+        (el as any).style[styleKey] = styleVal
       }
     } else if (key === 'className' || key === 'class') {
       el.className = String(value)
     } else {
-      ;(el as any)[key] = value
+      (el as any)[key] = value
     }
   }
 
@@ -318,12 +318,12 @@ export function vaporPatch(
   for (const [key, value] of Object.entries(newNode.props)) {
     if (key === 'style' && typeof value === 'object') {
       for (const [styleKey, styleVal] of Object.entries(value)) {
-        ;(el as any).style[styleKey] = styleVal
+        (el as any).style[styleKey] = styleVal
       }
     } else if (key === 'className' || key === 'class') {
       el.className = String(value)
     } else {
-      ;(el as any)[key] = value
+      (el as any)[key] = value
     }
   }
 

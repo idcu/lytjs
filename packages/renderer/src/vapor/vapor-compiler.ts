@@ -337,7 +337,7 @@ function renderASTNode(
               if (key === 'class' || key === 'className') {
                 itemEl.className = value
               } else {
-                ;(itemEl as any)[key] = value
+                (itemEl as any)[key] = value
               }
             }
           }
@@ -360,7 +360,7 @@ function renderASTNode(
     if (node.directives?.if) {
       const condition = resolveExpression(ctx, node.directives.if)
       if (!condition) {
-        ;(el as any).style = (el as any).style || {}
+        (el as any).style = (el as any).style || {}
         ;(el as any).style.display = 'none'
         ;(el as any).hidden = true
       }
@@ -377,7 +377,7 @@ function renderASTNode(
         } else if (key === 'class' || key === 'className') {
           el.className = value
         } else {
-          ;(el as any)[key] = value
+          (el as any)[key] = value
         }
       }
     }
