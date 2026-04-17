@@ -1,0 +1,44 @@
+{
+  "name": "@lytjs/lytx",
+  "version": "3.2.0",
+  "description": "LytX - Lyt.js 元框架，支持 SSR/SSG/SPA 全栈渲染",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.mjs"
+    }
+  },
+  "bin": {
+    "lytx": "dist/cli.js"
+  },
+  "sideEffects": false,
+  "files": ["dist"],
+  "license": "MIT",
+  "author": "lytjs",
+  "repository": {
+    "type": "git",
+    "url": "https://gitee.com/lytjs/lytjs"
+  },
+  "homepage": "https://gitee.com/lytjs/lytjs",
+  "keywords": [
+    "lyt",
+    "lytjs",
+    "javascript",
+    "framework",
+    "frontend",
+    "vue-like",
+    "lightweight",
+    "zero-dependency",
+    "lytx",
+    "meta-framework",
+    "ssr",
+    "ssg",
+    "spa"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}

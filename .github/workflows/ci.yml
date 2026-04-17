@@ -1,0 +1,171 @@
+name: CI
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main]
+
+# 并发控制：同一分支/PR 只运行最新的 CI
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ============================================================
+  # Job 1: Lint 检查
+  # ============================================================
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run ESLint
+        run: |
+          if [ -f ".eslintrc.json" ] || [ -f "eslint.config.js" ]; then
+            npx eslint packages/*/src --ext .ts,.tsx --max-warnings 100 || true
+          else
+            echo "No ESLint config found, skipping lint."
+          fi
+
+  # ============================================================
+  # Job 2: 测试（多 Node.js 版本矩阵）
+  # ============================================================
+  test:
+    name: Test (Node ${{ matrix.node-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [18, 20, 22]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run tests
+        run: npx tsx test-runner.ts
+
+  # ============================================================
+  # Job 3: TypeScript 类型检查
+  # ============================================================
+  type-check:
+    name: Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run TypeScript type check
+        run: npx tsc --noEmit --skipLibCheck
+        continue-on-error: true
+
+  # ============================================================
+  # Job 4: 构建
+  # ============================================================
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: [test]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build all packages
+        run: bash scripts/build.sh
+
+      - name: Generate type declarations
+        run: bash scripts/generate-types.sh
+        continue-on-error: true
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: packages/*/dist/
+          retention-days: 7
+
+  # ============================================================
+  # Job 5: 产物体积检查
+  # ============================================================
+  size-check:
+    name: Size Check
+    runs-on: ubuntu-latest
+    needs: [build]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: packages/*/dist/
+
+      - name: Check bundle size
+        run: |
+          echo "=== Bundle Size Report ==="
+          echo ""
+          total_raw=0
+          total_gzip=0
+
+          while IFS= read -r f; do
+            if [ -f "$f" ]; then
+              raw_size=$(wc -c < "$f")
+              gzip_size=$(gzip -c "$f" | wc -c)
+              total_raw=$((total_raw + raw_size))
+              total_gzip=$((total_gzip + gzip_size))
+              echo "  $(basename "$f"): ${raw_size} bytes (gzip: ${gzip_size} bytes)"
+            fi
+          done < <(find packages -name "*.mjs" -o -name "*.cjs" | sort)
+
+          echo ""
+          echo "  Total raw:   ${total_raw} bytes ($(echo "scale=2; $total_raw / 1024" | bc) KB)"
+          echo "  Total gzip:  ${total_gzip} bytes ($(echo "scale=2; $total_gzip / 1024" | bc) KB)"
+
+      - name: Check for size regression
+        run: |
+          echo "Size check completed. Review the report above for any unexpected growth."

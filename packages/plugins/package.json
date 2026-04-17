@@ -1,0 +1,46 @@
+{
+  "name": "@lytjs/plugins",
+  "version": "3.2.0",
+  "description": "Lyt.js 官方插件聚合包 - 统一导出国际化、认证和日志等官方插件",
+  "main": "./src/index.ts",
+  "module": "./src/index.ts",
+  "exports": {
+    ".": {
+      "import": "./src/index.ts",
+      "require": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "sideEffects": false,
+  "files": ["dist"],
+  "license": "MIT",
+  "author": "lytjs",
+  "repository": {
+    "type": "git",
+    "url": "https://gitee.com/lytjs/lytjs"
+  },
+  "homepage": "https://gitee.com/lytjs/lytjs",
+  "keywords": [
+    "lyt",
+    "lytjs",
+    "javascript",
+    "framework",
+    "frontend",
+    "vue-like",
+    "lightweight",
+    "zero-dependency",
+    "plugins",
+    "i18n",
+    "auth",
+    "logger",
+    "插件"
+  ],
+  "dependencies": {
+    "@lytjs/plugin-i18n": "workspace:*",
+    "@lytjs/plugin-auth": "workspace:*",
+    "@lytjs/plugin-logger": "workspace:*"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

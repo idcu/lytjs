@@ -1,0 +1,33 @@
+{
+  "name": "lyt",
+  "version": "3.2.0",
+  "private": true,
+  "description": "Lyt.js - 轻写轻跑，所见即代码",
+  "license": "MIT",
+  "author": "idcu <idcu@qq.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://gitee.com/lytjs/lytjs"
+  },
+  "scripts": {
+    "build": "bash scripts/build-all.sh",
+    "test": "npx tsx test-runner.ts",
+    "lint": "echo \"lint TBD\"",
+    "benchmark": "echo \"benchmark TBD\"",
+    "clean": "rm -rf dist && rm -rf packages/*/dist",
+    "publish:dry-run": "bash scripts/publish.sh --dry-run",
+    "publish:all": "bash scripts/publish.sh",
+    "release": "npm run build && npm run test && npm run publish:all"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.0",
+    "tsx": "^4.19.0",
+    "typescript": "^6.0.2"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["esbuild"]
+  }
+}

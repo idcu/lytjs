@@ -1,0 +1,21 @@
+{
+  "name": "test-app",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "lytx dev",
+    "build": "lytx build",
+    "preview": "lytx preview",
+    "lint": "eslint src --ext .ts,.js"
+  },
+  "dependencies": {
+    "lyt": "^2.0.0",
+    "@lytjs/router": "^2.0.0",
+    "@lytjs/store": "^2.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "eslint": "^8.0.0"
+  }
+}

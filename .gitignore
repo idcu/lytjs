@@ -1,0 +1,52 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build output
+dist/
+es/
+lib/
+*.tsbuildinfo
+
+# Dev
+.DS_Store
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+Thumbs.db
+
+# Test coverage
+coverage/
+
+# Temp
+tmp/
+temp/
+*.tmp
+
+# Benchmark output
+benchmarks/results/
+
+# Roadmap doc (not in repo)
+lytjs-development-roadmap.md
+
+# TypeScript declaration files in src (generated, not source)
+packages/*/src/*.d.ts
+packages/*/src/*.d.ts.map
+packages/*/src/**/*.d.ts
+packages/*/src/**/*.d.ts.map
+
+# Release archives
+dist-releases/
+*.tgz
+
+# Lock files (project uses pnpm-lock.yaml)
+package-lock.json

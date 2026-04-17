@@ -1,0 +1,41 @@
+{
+  "name": "@lytjs/plugin-auth",
+  "version": "3.2.0",
+  "description": "Lyt.js 认证授权插件 - 提供登录、权限校验、路由守卫等认证功能",
+  "main": "./src/index.ts",
+  "module": "./src/index.ts",
+  "exports": {
+    ".": {
+      "import": "./src/index.ts",
+      "require": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "sideEffects": false,
+  "files": ["dist"],
+  "license": "MIT",
+  "author": "lytjs",
+  "repository": {
+    "type": "git",
+    "url": "https://gitee.com/lytjs/lytjs"
+  },
+  "homepage": "https://gitee.com/lytjs/lytjs",
+  "keywords": [
+    "lyt",
+    "lytjs",
+    "javascript",
+    "framework",
+    "frontend",
+    "vue-like",
+    "lightweight",
+    "zero-dependency",
+    "auth",
+    "authentication",
+    "authorization",
+    "permission",
+    "认证"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}

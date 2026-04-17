@@ -1,0 +1,44 @@
+{
+  "name": "@lytjs/component",
+  "version": "3.2.0",
+  "description": "Lyt.js 组件系统 - 提供组件定义、生命周期、组合式 API、插槽和内置组件",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.mjs"
+    }
+  },
+  "sideEffects": false,
+  "files": ["dist"],
+  "license": "MIT",
+  "author": "lytjs",
+  "repository": {
+    "type": "git",
+    "url": "https://gitee.com/lytjs/lytjs"
+  },
+  "homepage": "https://gitee.com/lytjs/lytjs",
+  "keywords": [
+    "lyt",
+    "lytjs",
+    "javascript",
+    "framework",
+    "frontend",
+    "vue-like",
+    "lightweight",
+    "zero-dependency",
+    "component",
+    "lifecycle",
+    "composition-api",
+    "keep-alive",
+    "transition",
+    "组件"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}

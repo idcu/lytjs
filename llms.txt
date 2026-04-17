@@ -1,0 +1,281 @@
+# Lyt.js
+
+> 零依赖超轻量前端框架 v3.1.0 | MIT | idcu <idcu@qq.com>
+> npm: `lyt` (aggregate package)
+
+## 哲学
+
+纯原生、零依赖、轻写轻跑、所见即代码。所有 17 个核心包运行时零外部依赖。
+
+## 架构
+
+三层架构: App Layer -> Engine Layer (reactivity/compiler/vdom) -> Platform Adapter (DOM/SSR/Native/MiniApp)
+
+## 模板语法 (增强 HTML, 无 v- 前缀)
+
+```html
+<div if="show" each="item in items" bind:class="cls" on:click="handle" model="val">
+  {{ expression }}
+</div>
+```
+
+- `if="condition"` 条件渲染
+- `each="item in items"` 列表渲染
+- `bind:prop="value"` 属性绑定
+- `on:event="handler"` 事件绑定
+- `model="value"` 双向绑定
+- `{{ expression }}` 插值
+
+## 核心 API 速查
+
+### 响应式 (@lytjs/reactivity)
+
+```ts
+import { reactive, ref, computed, watch, watchEffect, effect, nextTick } from '@lytjs/reactivity'
+
+const state = reactive({ count: 0 })          // 深层响应式代理
+const count = ref(0)                           // Ref 包装
+const double = computed(() => count.value * 2) // 计算属性
+watch(source, (newVal, oldVal) => {})          // 侦听器
+watchEffect(() => { /* 自动追踪依赖 */ })       // 自动侦听
+effect(() => { /* 原始副作用 */ })              // 原始副作用
+await nextTick()                               // 下一个 DOM 更新 tick
+
+// 工具函数
+toRaw(obj), isReactive(obj), isRef(r), unref(r)
+toRef(obj, key), toRefs(obj), readonly(obj)
+shallowReactive(obj), shallowRef(value), triggerRef(r)
+```
+
+### 组件 (@lytjs/component)
+
+```ts
+import { defineComponent, h, Fragment, KeepAlive, Suspense, Transition } from '@lytjs/core'
+
+// 选项式
+const Comp = defineComponent({
+  name: 'MyComp',
+  props: { title: String },
+  state: () => ({ count: 0 }),
+  computed: { double: { get() { return this.count * 2 } } },
+  methods: { inc() { this.count++ } },
+  template: '<div>{{ count }}</div>',
+  // 或 render(h, instance) { return h('div', null, this.count) }
+})
+
+// Composition API
+const Comp = defineComponent({
+  setup(props, ctx) {
+    const count = ref(0)
+    provide('key', value)
+    inject('key', defaultValue)
+    const instance = getCurrentInstance()
+    onMounted(() => {})
+    onUnmounted(() => {})
+    onUpdated(() => {})
+    onBeforeMount(() => {})
+    onBeforeUnmount(() => {})
+    return { count }
+  }
+})
+```
+
+### 应用 (@lytjs/core)
+
+```ts
+import { createApp, h, Fragment } from '@lytjs/core'
+
+const app = createApp(rootComponent, rootProps?)
+app.mount('#app')           // 挂载
+app.unmount()               // 卸载
+app.use(plugin)             // 安装插件
+app.provide(key, value)     // 应用级依赖注入
+app.inject(key, default?)   // 应用级获取
+app.component(name, comp)   // 注册全局组件
+app.directive(name, dir)    // 注册全局指令
+```
+
+### 路由 (@lytjs/router)
+
+```ts
+import { createRouter, createWebHistory, createHashHistory } from '@lytjs/router'
+
+const router = createRouter({
+  mode: 'history',  // 或 'hash'
+  routes: [
+    { path: '/', component: Home },
+    { path: '/user/:id', name: 'user', component: User, meta: { auth: true } }
+  ],
+  base: '/app'
+})
+
+router.push('/path')          // 导航
+router.replace('/path')       // 替换
+router.back() / router.forward() / router.go(n)
+router.currentRoute           // Ref<Route> 响应式当前路由
+router.beforeEach((to, from, next) => { next() })
+router.afterEach((to, from) => {})
+router.addRoute(record)       // 动态路由
+router.removeRoute(name)
+router.install(app)           // app.use(router)
+```
+
+### 状态管理 (@lytjs/store)
+
+```ts
+import { createStore, getStore, getStoreIds } from '@lytjs/store'
+
+const useCounter = createStore('counter', {
+  state: () => ({ count: 0 }),
+  getters: { double: (state) => state.count * 2 },
+  actions: { increment() { this.state.count++ } }
+})
+
+const store = useCounter()
+store.state.count              // 响应式状态
+store.getters.double           // 计算属性
+store.actions.increment()      // 调用 action
+store.$patch({ count: 1 })     // 批量更新
+store.$patch((state) => { state.count++ })  // 函数式更新
+store.$reset()                 // 重置
+store.$subscribe((mutation, state) => {})   // 订阅
+store.$dispose()               // 销毁
+store.$onAction(({ name, args }) => {})      // 拦截 action
+store.use(plugin)              // 安装插件
+getStore('counter')            // 获取 store
+getStoreIds()                  // 所有 store ID
+```
+
+### 编译器 (@lytjs/compiler)
+
+```ts
+import { compile, parseSFC, compileSFC, scopeCSS } from '@lytjs/compiler'
+
+const { code, ast } = compile('<div>{{ msg }}</div>')
+const descriptor = parseSFC(source)          // 解析 .lyt SFC
+const result = compileSFC(descriptor)        // 编译 SFC
+scopeCSS(css, id)                            // Scoped CSS
+```
+
+### 渲染器 (@lytjs/renderer)
+
+```ts
+import { createRenderer, renderToString, hydrate } from '@lytjs/renderer'
+
+const renderer = createRenderer(platformAdapter)  // DOM/SSR/Native/MiniApp
+renderToString(vnode)                              // SSR 渲染
+hydrate(vnode, container)                          // 水合
+```
+
+### Web Component 适配器 (@lytjs/adapter-web-component)
+
+```ts
+import { defineCustomElement, registerComponents, unregisterElement, isBrowser, defineCustomElementFromSFC } from '@lytjs/adapter-web-component'
+
+const MyElement = defineCustomElement(MyComponent)          // 将 Lyt 组件转为 Web Component
+registerComponents({ 'my-element': MyElement })             // 批量注册
+unregisterElement('my-element')                             // 注销自定义元素
+isBrowser                                                   // 浏览器环境检测 (boolean)
+defineCustomElementFromSFC(sfcSource)                       // 从 SFC 源码创建 Web Component
+```
+
+### WASM 编译器 (@lytjs/compiler-wasm)
+
+```ts
+import { WasmCompiler, WasmParser, WasmGenerator, WasmPlayground } from '@lytjs/compiler-wasm'
+
+const compiler = new WasmCompiler()                          // WASM 编译器实例
+const parser = new WasmParser()                              // WASM 模板解析器
+const generator = new WasmGenerator()                        // WASM 代码生成器
+const playground = new WasmPlayground()                      // WASM 交互式 Playground
+```
+
+### 插件系统增强
+
+```ts
+// 应用插件 (支持异步插件和生命周期钩子)
+app.use(plugin)                                             // 安装插件
+app.unuse(plugin)                                           // 卸载插件 (v3.1.0)
+app.isInstalled(plugin)                                     // 检测插件是否已安装 (v3.1.0)
+
+// 异步插件
+const asyncPlugin = {
+  async install(app, options) {
+    await initExternalLib()
+    app.provide('lib', lib)
+  },
+  beforeUnmount(app) { /* 卸载前钩子 */ },
+  afterUnmount(app) { /* 卸载后钩子 */ }
+}
+```
+
+### 错误码模块 (@lytjs/error-codes)
+
+```ts
+import { ErrorCodes } from '@lytjs/error-codes'
+
+ErrorCodes.CLI.INVALID_COMMAND          // CLI 错误码
+ErrorCodes.CLI.CONFIG_NOT_FOUND
+ErrorCodes.DevTools.CONNECTION_FAILED   // DevTools 错误码
+ErrorCodes.DevTools.PROTOCOL_ERROR
+ErrorCodes.Plugin.INSTALL_FAILED        // 插件错误码
+ErrorCodes.Plugin.INVALID_FORMAT
+ErrorCodes.SSR.RENDER_FAILED            // SSR 错误码
+ErrorCodes.SSR.HYDRATION_MISMATCH
+```
+
+### DevTools 新增模块 (@lytjs/devtools)
+
+```ts
+import { MemoryTracker, RenderTracker, BatchAnalyzer } from '@lytjs/devtools'
+
+const memory = new MemoryTracker()                            // 内存追踪器
+memory.start() / memory.stop() / memory.getSnapshot()
+
+const render = new RenderTracker()                            // 渲染追踪器
+render.start() / render.stop() / render.getReport()
+
+const batch = new BatchAnalyzer()                             // 批量更新分析器
+batch.analyze(updates) / batch.getMetrics()
+```
+
+### 测试框架新增断言 (@lytjs/test-utils)
+
+```ts
+import { toBeGreaterThanOrEqual, toBeLessThanOrEqual } from '@lytjs/test-utils'
+
+expect(count).toBeGreaterThanOrEqual(10)                     // >= 断言
+expect(count).toBeLessThanOrEqual(100)                       // <= 断言
+```
+
+## 核心包列表
+
+| 包 | 说明 |
+|---|---|
+| @lytjs/reactivity | Proxy 响应式系统 |
+| @lytjs/compiler | 模板编译器 |
+| @lytjs/vdom | 虚拟 DOM (Block Tree + PatchFlag + LIS diff) |
+| @lytjs/renderer | 多平台渲染器 |
+| @lytjs/component | 组件系统 + Composition API |
+| @lytjs/core | 应用创建 (createApp, h, Fragment) |
+| @lytjs/router | 响应式路由 |
+| @lytjs/store | Pinia 风格状态管理 |
+| @lytjs/cli | CLI 工具 (dev, build) |
+| @lytjs/devtools | 开发者工具 |
+| @lytjs/components | UI 组件库 |
+| @lytjs/plugin-i18n | 国际化 |
+| @lytjs/plugin-auth | 认证 |
+| @lytjs/test-utils | 测试框架 |
+| @lytjs/adapter-web-component | Web Component 适配器 |
+| @lytjs/compiler-wasm | WASM 编译器 |
+| @lytjs/error-codes | 错误码模块 |
+
+## 关键约定
+
+- 模板指令无 `v-` 前缀: `if`, `each`, `bind:`, `on:`, `model`
+- 组件 state 使用工厂函数: `state: () => ({ count: 0 })`
+- computed 使用对象形式: `computed: { double: { get() {} } }`
+- setup 返回对象合并到组件上下文, 返回函数作为渲染函数
+- Store 返回工厂函数 (use 函数模式): `const useX = createStore('x', ...); const store = useX()`
+- 路由 currentRoute 是 `Ref<Route>`, 通过 `.value` 访问
+- 所有包零运行时依赖, 纯原生实现

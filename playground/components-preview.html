@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lyt.js 组件库预览</title>
+  <style>
+    /* === CSS 变量（亮色主题） === */
+    :root {
+      --lyt-primary: #4f46e5;
+      --lyt-primary-light: #818cf8;
+      --lyt-primary-dark: #3730a3;
+      --lyt-success: #22c55e;
+      --lyt-warning: #f59e0b;
+      --lyt-danger: #ef4444;
+      --lyt-info: #3b82f6;
+      --lyt-text: #1f2937;
+      --lyt-text-secondary: #6b7280;
+      --lyt-border: #e5e7eb;
+      --lyt-bg: #ffffff;
+      --lyt-bg-secondary: #f9fafb;
+      --lyt-radius-sm: 4px;
+      --lyt-radius: 8px;
+      --lyt-radius-lg: 12px;
+      --lyt-shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+      --lyt-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      --lyt-shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
+      --lyt-font-size-sm: 12px;
+      --lyt-font-size: 14px;
+      --lyt-font-size-lg: 16px;
+      --lyt-font-size-xl: 20px;
+    }
+
+    /* === 暗色主题 === */
+    [data-theme="dark"] {
+      --lyt-text: #f9fafb;
+      --lyt-text-secondary: #9ca3af;
+      --lyt-border: #374151;
+      --lyt-bg: #111827;
+      --lyt-bg-secondary: #1f2937;
+    }
+
+    /* === Reset === */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* === 页面布局 === */
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      color: var(--lyt-text);
+      background: var(--lyt-bg-secondary);
+      line-height: 1.6;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    /* === 顶部导航 === */
+    .preview-header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 56px;
+      background: var(--lyt-bg);
+      border-bottom: 1px solid var(--lyt-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      z-index: 100;
+      box-shadow: var(--lyt-shadow-sm);
+      transition: background 0.3s, border-color 0.3s;
+    }
+    .preview-header__title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--lyt-primary);
+    }
+    .preview-header__actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .theme-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border: 1px solid var(--lyt-border);
+      border-radius: var(--lyt-radius);
+      background: var(--lyt-bg);
+      color: var(--lyt-text);
+      cursor: pointer;
+      font-size: 13px;
+      transition: all 0.3s;
+    }
+    .theme-toggle:hover {
+      border-color: var(--lyt-primary);
+      color: var(--lyt-primary);
+    }
+
+    /* === 侧边栏 === */
+    .preview-sidebar {
+      position: fixed;
+      top: 56px;
+      left: 0;
+      bottom: 0;
+      width: 220px;
+      background: var(--lyt-bg);
+      border-right: 1px solid var(--lyt-border);
+      padding: 16px 0;
+      overflow-y: auto;
+      transition: background 0.3s, border-color 0.3s;
+    }
+    .sidebar-group {
+      margin-bottom: 8px;
+    }
+    .sidebar-group__title {
+      padding: 6px 20px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--lyt-text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .sidebar-item {
+      display: block;
+      padding: 8px 20px 8px 28px;
+      color: var(--lyt-text);
+      text-decoration: none;
+      font-size: 13px;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+    .sidebar-item:hover {
+      background: var(--lyt-bg-secondary);
+      color: var(--lyt-primary);
+    }
+    .sidebar-item.active {
+      color: var(--lyt-primary);
+      background: rgba(79, 70, 229, 0.08);
+      font-weight: 600;
+      border-right: 3px solid var(--lyt-primary);
+    }
+
+    /* === 主内容区 === */
+    .preview-main {
+      margin-left: 220px;
+      margin-top: 56px;
+      padding: 24px 32px;
+      min-height: calc(100vh - 56px);
+    }
+
+    /* === 组件卡片 === */
+    .component-section {
+      margin-bottom: 32px;
+    }
+    .component-section__title {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 4px;
+      color: var(--lyt-text);
+    }
+    .component-section__desc {
+      font-size: 13px;
+      color: var(--lyt-text-secondary);
+      margin-bottom: 16px;
+    }
+    .component-card {
+      background: var(--lyt-bg);
+      border: 1px solid var(--lyt-border);
+      border-radius: var(--lyt-radius-lg);
+      padding: 24px;
+      margin-bottom: 16px;
+      box-shadow: var(--lyt-shadow-sm);
+      transition: background 0.3s, border-color 0.3s;
+    }
+    .component-card__title {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 4px;
+      color: var(--lyt-text);
+    }
+    .component-card__desc {
+      font-size: 12px;
+      color: var(--lyt-text-secondary);
+      margin-bottom: 16px;
+    }
+    .component-card__preview {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    .component-card__preview > * {
+      flex-shrink: 0;
+    }
+
+    /* === 组件样式（从各组件源码提取） === */
+    .lyt-btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      padding: 8px 16px; font-size: 14px; line-height: 1.5;
+      border: 1px solid #dcdfe6; border-radius: 4px; background-color: #fff;
+      color: #606266; cursor: pointer; transition: all 0.3s;
+      box-sizing: border-box; outline: none; white-space: nowrap; user-select: none;
+    }
+    .lyt-btn:hover { border-color: #409eff; color: #409eff; }
+    .lyt-btn--primary { background-color: #409eff; border-color: #409eff; color: #fff; }
+    .lyt-btn--primary:hover { background-color: #66b1ff; border-color: #66b1ff; color: #fff; }
+    .lyt-btn--success { background-color: #67c23a; border-color: #67c23a; color: #fff; }
+    .lyt-btn--success:hover { background-color: #85ce61; border-color: #85ce61; color: #fff; }
+    .lyt-btn--warning { background-color: #e6a23c; border-color: #e6a23c; color: #fff; }
+    .lyt-btn--warning:hover { background-color: #ebb563; border-color: #ebb563; color: #fff; }
+    .lyt-btn--danger { background-color: #f56c6c; border-color: #f56c6c; color: #fff; }
+    .lyt-btn--danger:hover { background-color: #f78989; border-color: #f78989; color: #fff; }
+    .lyt-btn--small { padding: 5px 11px; font-size: 12px; border-radius: 3px; }
+    .lyt-btn--large { padding: 12px 20px; font-size: 16px; border-radius: 4px; }
+    .lyt-btn--block { display: flex; width: 100%; }
+    .lyt-btn--disabled { opacity: 0.6; cursor: not-allowed; pointer-events: none; }
+    .lyt-btn__loading { display: inline-flex; align-items: center; }
+    .lyt-btn__loading-icon { animation: lyt-spin 1s linear infinite; }
+    @keyframes lyt-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+    .lyt-input-wrapper {
+      display: inline-flex; align-items: center; position: relative; width: 240px; box-sizing: border-box;
+    }
+    .lyt-input {
+      display: inline-block; width: 100%; height: 36px; padding: 0 12px;
+      font-size: 14px; line-height: 36px; color: #606266; background-color: #fff;
+      border: 1px solid #dcdfe6; border-radius: 4px; outline: none; transition: border-color 0.3s; box-sizing: border-box;
+    }
+    .lyt-input::placeholder { color: #c0c4cc; }
+    .lyt-input:focus { border-color: #409eff; }
+    .lyt-input--small { height: 28px; line-height: 28px; font-size: 12px; padding: 0 8px; }
+    .lyt-input--large { height: 44px; line-height: 44px; font-size: 16px; padding: 0 16px; }
+    .lyt-input-wrapper--focused .lyt-input { border-color: #409eff; }
+    .lyt-input-wrapper--disabled .lyt-input { background-color: #f5f7fa; border-color: #e4e7ed; color: #c0c4cc; cursor: not-allowed; }
+    .lyt-input__clear {
+      position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+      cursor: pointer; color: #c0c4cc; font-size: 16px; line-height: 1; transition: color 0.3s;
+    }
+    .lyt-input__clear:hover { color: #909399; }
+
+    .lyt-checkbox {
+      display: inline-flex; align-items: center; cursor: pointer; font-size: 14px;
+      color: #606266; user-select: none; white-space: nowrap;
+    }
+    .lyt-checkbox__input { display: inline-flex; align-items: center; position: relative; cursor: pointer; outline: none; }
+    .lyt-checkbox__inner {
+      display: inline-block; width: 16px; height: 16px; border: 1px solid #dcdfe6;
+      border-radius: 2px; background-color: #fff; transition: all 0.3s; position: relative;
+    }
+    .lyt-checkbox__inner::after {
+      content: ''; position: absolute; top: 2px; left: 5px; width: 4px; height: 8px;
+      border: 2px solid #fff; border-top: 0; border-left: 0;
+      transform: rotate(45deg) scale(0); transition: transform 0.2s;
+    }
+    .lyt-checkbox__input--checked .lyt-checkbox__inner { background-color: #409eff; border-color: #409eff; }
+    .lyt-checkbox__input--checked .lyt-checkbox__inner::after { transform: rotate(45deg) scale(1); }
+    .lyt-checkbox__original { position: absolute; opacity: 0; width: 0; height: 0; margin: 0; }
+    .lyt-checkbox__label { margin-left: 8px; }
+    .lyt-checkbox--disabled { cursor: not-allowed; color: #c0c4cc; }
+    .lyt-checkbox--disabled .lyt-checkbox__inner { background-color: #f5f7fa; border-color: #e4e7ed; cursor: not-allowed; }
+
+    .lyt-radio {
+      display: inline-flex; align-items: center; cursor: pointer; font-size: 14px;
+      color: #606266; user-select: none; white-space: nowrap;
+    }
+    .lyt-radio__input { display: inline-flex; align-items: center; position: relative; cursor: pointer; outline: none; }
+    .lyt-radio__inner {
+      display: inline-block; width: 16px; height: 16px; border: 1px solid #dcdfe6;
+      border-radius: 50%; background-color: #fff; transition: all 0.3s; position: relative;
+    }
+    .lyt-radio__inner::after {
+      content: ''; position: absolute; top: 50%; left: 50%; width: 8px; height: 8px;
+      border-radius: 50%; background-color: #fff; transform: translate(-50%, -50%) scale(0); transition: transform 0.2s;
+    }
+    .lyt-radio__input--checked .lyt-radio__inner { background-color: #409eff; border-color: #409eff; }
+    .lyt-radio__input--checked .lyt-radio__inner::after { transform: translate(-50%, -50%) scale(1); }
+    .lyt-radio__original { position: absolute; opacity: 0; width: 0; height: 0; margin: 0; }
+    .lyt-radio__label { margin-left: 8px; }
+
+    .lyt-select {
+      display: inline-block; position: relative; width: 240px; box-sizing: border-box; font-size: 14px;
+    }
+    .lyt-select__trigger {
+      display: flex; align-items: center; height: 36px; padding: 0 30px 0 12px;
+      border: 1px solid #dcdfe6; border-radius: 4px; background-color: #fff;
+      cursor: pointer; transition: border-color 0.3s; position: relative;
+    }
+    .lyt-select__trigger:hover { border-color: #409eff; }
+    .lyt-select__value { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #606266; }
+    .lyt-select__value--placeholder { color: #c0c4cc; }
+    .lyt-select__arrow {
+      position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+      transition: transform 0.3s; color: #c0c4cc; display: flex; align-items: center;
+    }
+    .lyt-select--disabled .lyt-select__trigger { background-color: #f5f7fa; border-color: #e4e7ed; cursor: not-allowed; color: #c0c4cc; }
+
+    .lyt-switch {
+      display: inline-flex; align-items: center; position: relative; cursor: pointer;
+      vertical-align: middle; outline: none; transition: background-color 0.3s; border-radius: 10px;
+    }
+    .lyt-switch--small { width: 36px; height: 20px; border-radius: 10px; }
+    .lyt-switch--medium { width: 48px; height: 26px; border-radius: 13px; }
+    .lyt-switch--large { width: 60px; height: 32px; border-radius: 16px; }
+    .lyt-switch--disabled { opacity: 0.6; cursor: not-allowed; }
+    .lyt-switch__core { display: flex; align-items: center; width: 100%; height: 100%; position: relative; }
+    .lyt-switch__action {
+      display: inline-block; border-radius: 50%; background-color: #fff;
+      transition: transform 0.3s; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+    }
+    .lyt-switch--small .lyt-switch__action { width: 14px; height: 14px; margin-left: 3px; }
+    .lyt-switch--medium .lyt-switch__action { width: 20px; height: 20px; margin-left: 3px; }
+    .lyt-switch--large .lyt-switch__action { width: 26px; height: 26px; margin-left: 3px; }
+    .lyt-switch--checked .lyt-switch__action { transform: translateX(100%); }
+    .lyt-switch--small.lyt-switch--checked .lyt-switch__action { transform: translateX(16px); }
+    .lyt-switch--medium.lyt-switch--checked .lyt-switch__action { transform: translateX(22px); }
+    .lyt-switch--large.lyt-switch--checked .lyt-switch__action { transform: translateX(28px); }
+
+    .lyt-alert {
+      display: flex; align-items: flex-start; padding: 12px 16px; border-radius: 4px;
+      font-size: 14px; line-height: 1.5; box-sizing: border-box; position: relative; transition: opacity 0.3s;
+      width: 100%;
+    }
+    .lyt-alert--info { background-color: #edf2fc; color: #909399; }
+    .lyt-alert--success { background-color: #f0f9eb; color: #67c23a; }
+    .lyt-alert--warning { background-color: #fdf6ec; color: #e6a23c; }
+    .lyt-alert--error { background-color: #fef0f0; color: #f56c6c; }
+    .lyt-alert__icon { display: inline-flex; align-items: center; margin-right: 8px; font-size: 16px; flex-shrink: 0; }
+    .lyt-alert__content { flex: 1; }
+    .lyt-alert__title { display: block; font-weight: 600; margin-bottom: 4px; }
+    .lyt-alert__close {
+      position: absolute; top: 12px; right: 12px; cursor: pointer; font-size: 18px;
+      color: inherit; opacity: 0.6; transition: opacity 0.3s;
+    }
+    .lyt-alert__close:hover { opacity: 1; }
+
+    .lyt-modal {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 2000;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .lyt-modal__mask {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+    }
+    .lyt-modal__dialog {
+      position: relative; background-color: #fff; border-radius: 6px;
+      box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.2); max-width: 90vw; max-height: 80vh;
+      display: flex; flex-direction: column; width: 520px;
+    }
+    .lyt-modal__header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 20px; border-bottom: 1px solid #e4e7ed;
+    }
+    .lyt-modal__title { font-size: 16px; font-weight: 600; color: #303133; }
+    .lyt-modal__close {
+      cursor: pointer; font-size: 20px; color: #909399; line-height: 1; transition: color 0.3s;
+    }
+    .lyt-modal__close:hover { color: #606266; }
+    .lyt-modal__body { padding: 20px; font-size: 14px; color: #606266; overflow-y: auto; flex: 1; }
+    .lyt-modal__footer {
+      display: flex; align-items: center; justify-content: flex-end; gap: 10px;
+      padding: 12px 20px; border-top: 1px solid #e4e7ed;
+    }
+
+    .lyt-toast {
+      display: inline-flex; align-items: center; gap: 8px; padding: 12px 20px;
+      border-radius: 6px; font-size: 14px; box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+    }
+    .lyt-toast--success { background-color: #f0f9eb; color: #67c23a; }
+    .lyt-toast--error { background-color: #fef0f0; color: #f56c6c; }
+    .lyt-toast--warning { background-color: #fdf6ec; color: #e6a23c; }
+    .lyt-toast--info { background-color: #edf2fc; color: #909399; }
+    .lyt-toast__icon { font-size: 16px; }
+
+    .lyt-tooltip { display: inline-block; position: relative; }
+    .lyt-tooltip__trigger { display: inline-block; }
+    .lyt-tooltip__popper {
+      position: absolute; z-index: 2000; padding: 8px 12px; font-size: 14px;
+      color: #fff; background-color: #303133; border-radius: 4px; max-width: 320px;
+      word-wrap: break-word; pointer-events: none; white-space: nowrap;
+    }
+    .lyt-tooltip__popper--top { bottom: calc(100% + 10px); left: 50%; transform: translateX(-50%); }
+
+    .lyt-tabs { box-sizing: border-box; }
+    .lyt-tabs__header { position: relative; }
+    .lyt-tabs__nav { display: flex; border-bottom: 2px solid #e4e7ed; }
+    .lyt-tabs__item {
+      display: inline-flex; align-items: center; gap: 4px; padding: 10px 20px;
+      font-size: 14px; color: #606266; cursor: pointer; transition: color 0.3s;
+      white-space: nowrap; position: relative;
+    }
+    .lyt-tabs__item:hover { color: #409eff; }
+    .lyt-tabs__item--active { color: #409eff; }
+    .lyt-tabs--line .lyt-tabs__item--active::after {
+      content: ''; position: absolute; bottom: -2px; left: 0; width: 100%; height: 2px; background-color: #409eff;
+    }
+    .lyt-tabs__content { padding: 16px 0; }
+
+    .lyt-breadcrumb { font-size: 14px; color: #606266; }
+    .lyt-breadcrumb__list { display: flex; align-items: center; list-style: none; margin: 0; padding: 0; flex-wrap: wrap; }
+    .lyt-breadcrumb__item { display: inline-flex; align-items: center; }
+    .lyt-breadcrumb__link { color: #409eff; text-decoration: none; transition: color 0.3s; }
+    .lyt-breadcrumb__link:hover { color: #66b1ff; text-decoration: underline; }
+    .lyt-breadcrumb__text { color: #606266; }
+    .lyt-breadcrumb__item--last .lyt-breadcrumb__text { color: #909399; }
+    .lyt-breadcrumb__separator { margin: 0 8px; color: #c0c4cc; }
+
+    .lyt-pagination {
+      display: flex; align-items: center; gap: 4px; font-size: 14px; color: #606266; flex-wrap: wrap;
+    }
+    .lyt-pagination__item {
+      display: inline-flex; align-items: center; justify-content: center; min-width: 32px; height: 32px;
+      padding: 0 6px; border: 1px solid #dcdfe6; border-radius: 4px; background-color: #fff;
+      cursor: pointer; transition: all 0.3s; user-select: none; font-size: 14px;
+    }
+    .lyt-pagination__item:hover { color: #409eff; border-color: #409eff; }
+    .lyt-pagination__item--active { background-color: #409eff; border-color: #409eff; color: #fff; }
+    .lyt-pagination__item--disabled { color: #c0c4cc; cursor: not-allowed; pointer-events: none; }
+    .lyt-pagination__item--ellipsis { border: none; cursor: default; }
+    .lyt-pagination__total { margin: 0 8px; color: #606266; }
+
+    .lyt-table-wrapper { width: 100%; overflow-x: auto; box-sizing: border-box; }
+    .lyt-table { width: 100%; border-collapse: collapse; border-spacing: 0; font-size: 14px; color: #606266; }
+    .lyt-table__th {
+      padding: 12px 16px; background-color: #f5f7fa; color: #909399; font-weight: 600;
+      text-align: left; border-bottom: 1px solid #e4e7ed; white-space: nowrap; user-select: none;
+    }
+    .lyt-table__td { padding: 12px 16px; border-bottom: 1px solid #e4e7ed; transition: background-color 0.3s; }
+    .lyt-table__row:hover .lyt-table__td { background-color: #f5f7fa; }
+    .lyt-table__row--striped .lyt-table__td { background-color: #fafafa; }
+    .lyt-table__empty { text-align: center; padding: 32px 16px; color: #909399; }
+
+    .lyt-tag {
+      display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px;
+      font-size: 12px; line-height: 1; border: 1px solid #e4e7ed; border-radius: 4px;
+      box-sizing: border-box; white-space: nowrap; transition: all 0.3s;
+    }
+    .lyt-tag--default { background-color: #ecf5ff; border-color: #e4e7ed; color: #909399; }
+    .lyt-tag--primary { background-color: #ecf5ff; border-color: #d9ecff; color: #409eff; }
+    .lyt-tag--success { background-color: #f0f9eb; border-color: #e1f3d8; color: #67c23a; }
+    .lyt-tag--warning { background-color: #fdf6ec; border-color: #faecd8; color: #e6a23c; }
+    .lyt-tag--danger { background-color: #fef0f0; border-color: #fde2e2; color: #f56c6c; }
+    .lyt-tag--info { background-color: #f4f4f5; border-color: #e9e9eb; color: #909399; }
+    .lyt-tag__close {
+      cursor: pointer; font-size: 14px; color: inherit; opacity: 0.6; border-radius: 50%;
+      transition: all 0.3s; display: inline-flex; align-items: center; justify-content: center;
+    }
+    .lyt-tag__close:hover { opacity: 1; background-color: rgba(0, 0, 0, 0.1); }
+
+    .lyt-badge { position: relative; display: inline-flex; vertical-align: middle; }
+    .lyt-badge__count {
+      position: absolute; top: -8px; right: -8px; display: inline-flex; align-items: center;
+      justify-content: center; min-width: 18px; height: 18px; padding: 0 6px; font-size: 11px;
+      line-height: 18px; color: #fff; background-color: #f56c6c; border-radius: 9px;
+      transform: translateX(50%); white-space: nowrap; box-sizing: border-box; z-index: 1;
+    }
+    .lyt-badge__count--dot { min-width: 8px; width: 8px; height: 8px; padding: 0; border-radius: 50%; top: -4px; right: -4px; }
+    .lyt-badge__count--primary { background-color: #409eff; }
+    .lyt-badge__count--success { background-color: #67c23a; }
+    .lyt-badge__count--warning { background-color: #e6a23c; }
+    .lyt-badge__count--danger { background-color: #f56c6c; }
+
+    .lyt-spin { display: inline-block; position: relative; }
+    .lyt-spin__svg { width: 100%; height: 100%; animation: lyt-spin-rotate 1s linear infinite; color: #409eff; }
+    @keyframes lyt-spin-rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    .lyt-spin__tip { margin-top: 8px; font-size: 14px; color: #606266; }
+
+    .lyt-empty {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 40px 0; box-sizing: border-box;
+    }
+    .lyt-empty__image { margin-bottom: 16px; }
+    .lyt-empty__description { margin: 0; font-size: 14px; color: #909399; line-height: 1.5; }
+
+    .lyt-divider { box-sizing: border-box; margin: 0; }
+    .lyt-divider--horizontal { display: flex; align-items: center; margin: 16px 0; border-top: 1px solid #dcdfe6; }
+    .lyt-divider--vertical {
+      display: inline-block; width: 1px; height: 1em; margin: 0 8px;
+      vertical-align: middle; border-left: 1px solid #dcdfe6;
+    }
+    .lyt-divider__text { display: inline-block; padding: 0 16px; font-size: 14px; color: #606266; white-space: nowrap; }
+    .lyt-divider--horizontal::before, .lyt-divider--horizontal::after { content: ''; flex: 1; border-top: 1px solid #dcdfe6; }
+    .lyt-divider--text-left::before { display: none; }
+    .lyt-divider--text-right::after { display: none; }
+
+    .lyt-link {
+      display: inline-flex; align-items: center; font-size: 14px; color: #606266;
+      text-decoration: none; cursor: pointer; transition: color 0.3s;
+    }
+    .lyt-link:hover { color: #409eff; }
+    .lyt-link--primary { color: #409eff; }
+    .lyt-link--success { color: #67c23a; }
+    .lyt-link--warning { color: #e6a23c; }
+    .lyt-link--danger { color: #f56c6c; }
+    .lyt-link--disabled { color: #c0c4cc; cursor: not-allowed; pointer-events: none; }
+
+    .lyt-icon {
+      display: inline-flex; align-items: center; justify-content: center;
+      font-style: normal; line-height: 1; vertical-align: middle; speak: none;
+    }
+
+    .lyt-container { box-sizing: border-box; width: 100%; }
+
+    /* === 响应式 === */
+    @media (max-width: 768px) {
+      .preview-sidebar { display: none; }
+      .preview-main { margin-left: 0; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 顶部导航 -->
+  <header class="preview-header">
+    <span class="preview-header__title">Lyt.js 组件库预览</span>
+    <div class="preview-header__actions">
+      <button class="theme-toggle" onclick="toggleTheme()">
+        <span id="theme-icon">&#9790;</span>
+        <span id="theme-label">暗色模式</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- 侧边栏 -->
+  <nav class="preview-sidebar">
+    <div class="sidebar-group">
+      <div class="sidebar-group__title">基础</div>
+      <a class="sidebar-item active" href="#button">Button 按钮</a>
+      <a class="sidebar-item" href="#icon">Icon 图标</a>
+      <a class="sidebar-item" href="#link">Link 链接</a>
+      <a class="sidebar-item" href="#container">Container 容器</a>
+      <a class="sidebar-item" href="#divider">Divider 分割线</a>
+    </div>
+    <div class="sidebar-group">
+      <div class="sidebar-group__title">表单</div>
+      <a class="sidebar-item" href="#input">Input 输入框</a>
+      <a class="sidebar-item" href="#checkbox">Checkbox 复选框</a>
+      <a class="sidebar-item" href="#radio">Radio 单选框</a>
+      <a class="sidebar-item" href="#select">Select 选择器</a>
+      <a class="sidebar-item" href="#switch">Switch 开关</a>
+    </div>
+    <div class="sidebar-group">
+      <div class="sidebar-group__title">反馈</div>
+      <a class="sidebar-item" href="#alert">Alert 警告</a>
+      <a class="sidebar-item" href="#modal">Modal 对话框</a>
+      <a class="sidebar-item" href="#toast">Toast 轻提示</a>
+      <a class="sidebar-item" href="#tooltip">Tooltip 文字提示</a>
+    </div>
+    <div class="sidebar-group">
+      <div class="sidebar-group__title">导航</div>
+      <a class="sidebar-item" href="#tabs">Tabs 标签页</a>
+      <a class="sidebar-item" href="#breadcrumb">Breadcrumb 面包屑</a>
+      <a class="sidebar-item" href="#pagination">Pagination 分页</a>
+    </div>
+    <div class="sidebar-group">
+      <div class="sidebar-group__title">数据展示</div>
+      <a class="sidebar-item" href="#table">Table 表格</a>
+      <a class="sidebar-item" href="#tag">Tag 标签</a>
+      <a class="sidebar-item" href="#badge">Badge 徽标</a>
+      <a class="sidebar-item" href="#spin">Spin 加载中</a>
+      <a class="sidebar-item" href="#empty">Empty 空状态</a>
+    </div>
+  </nav>
+
+  <!-- 主内容区 -->
+  <main class="preview-main">
+
+    <!-- ==================== 基础组件 ==================== -->
+    <div class="component-section">
+      <h1 class="component-section__title">基础组件</h1>
+      <p class="component-section__desc">基础 UI 组件，是构建页面的基本元素</p>
+    </div>
+
+    <!-- Button -->
+    <div class="component-card" id="button">
+      <div class="component-card__title">Button 按钮</div>
+      <div class="component-card__desc">常用的操作按钮，支持多种类型和尺寸</div>
+      <div class="component-card__preview">
+        <button class="lyt-btn">Default</button>
+        <button class="lyt-btn lyt-btn--primary">Primary</button>
+        <button class="lyt-btn lyt-btn--success">Success</button>
+        <button class="lyt-btn lyt-btn--warning">Warning</button>
+        <button class="lyt-btn lyt-btn--danger">Danger</button>
+        <button class="lyt-btn lyt-btn--small">Small</button>
+        <button class="lyt-btn lyt-btn--large">Large</button>
+        <button class="lyt-btn lyt-btn--disabled">Disabled</button>
+        <button class="lyt-btn lyt-btn--primary lyt-btn--loading">
+          <span class="lyt-btn__loading"><svg viewBox="0 0 1024 1024" class="lyt-btn__loading-icon" width="1em" height="1em"><path d="M512 64a32 32 0 0 1 32 32v192a32 32 0 0 1-64 0V96a32 32 0 0 1 32-32zm0 640a32 32 0 0 1 32 32v192a32 32 0 0 1-64 0V736a32 32 0 0 1 32-32zm-448-192a32 32 0 0 1 32-32h192a32 32 0 0 1 0 64H96a32 32 0 0 1-32-32zm640 0a32 32 0 0 1 32-32h192a32 32 0 0 1 0 64H736a32 32 0 0 1-32-32z"/></svg></span>
+          Loading
+        </button>
+      </div>
+    </div>
+
+    <!-- Icon -->
+    <div class="component-card" id="icon">
+      <div class="component-card__title">Icon 图标</div>
+      <div class="component-card__desc">用于展示图标的组件</div>
+      <div class="component-card__preview">
+        <i class="lyt-icon" style="font-size: 24px; color: #409eff;">&#9733;</i>
+        <i class="lyt-icon" style="font-size: 24px; color: #67c23a;">&#10003;</i>
+        <i class="lyt-icon" style="font-size: 24px; color: #e6a23c;">&#9888;</i>
+        <i class="lyt-icon" style="font-size: 24px; color: #f56c6c;">&#10007;</i>
+        <i class="lyt-icon" style="font-size: 24px; color: #909399;">&#8505;</i>
+      </div>
+    </div>
+
+    <!-- Link -->
+    <div class="component-card" id="link">
+      <div class="component-card__title">Link 链接</div>
+      <div class="component-card__desc">文字超链接</div>
+      <div class="component-card__preview">
+        <a class="lyt-link">Default Link</a>
+        <a class="lyt-link lyt-link--primary">Primary</a>
+        <a class="lyt-link lyt-link--success">Success</a>
+        <a class="lyt-link lyt-link--warning">Warning</a>
+        <a class="lyt-link lyt-link--danger">Danger</a>
+        <a class="lyt-link lyt-link--disabled">Disabled</a>
+      </div>
+    </div>
+
+    <!-- Container -->
+    <div class="component-card" id="container">
+      <div class="component-card__title">Container 容器</div>
+      <div class="component-card__desc">布局容器，用于控制内容最大宽度和居中</div>
+      <div class="component-card__preview" style="width: 100%;">
+        <div class="lyt-container" style="max-width: 400px; background: var(--lyt-bg-secondary); border: 1px dashed var(--lyt-border); padding: 16px; text-align: center; border-radius: 4px;">
+          max-width: 400px, centered
+        </div>
+      </div>
+    </div>
+
+    <!-- Divider -->
+    <div class="component-card" id="divider">
+      <div class="component-card__title">Divider 分割线</div>
+      <div class="component-card__desc">区隔内容的分割线</div>
+      <div class="component-card__preview" style="width: 100%; flex-direction: column;">
+        <div class="lyt-divider lyt-divider--horizontal"></div>
+        <div class="lyt-divider lyt-divider--horizontal">
+          <span class="lyt-divider__text">Center Text</span>
+        </div>
+        <div class="lyt-divider lyt-divider--horizontal lyt-divider--text-left">
+          <span class="lyt-divider__text">Left Text</span>
+        </div>
+        <div class="lyt-divider lyt-divider--horizontal lyt-divider--text-right">
+          <span class="lyt-divider__text">Right Text</span>
+        </div>
+        <div>
+          Text<span class="lyt-divider lyt-divider--vertical"></span>Text<span class="lyt-divider lyt-divider--vertical"></span>Text
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== 表单组件 ==================== -->
+    <div class="component-section">
+      <h1 class="component-section__title">表单组件</h1>
+      <p class="component-section__desc">用于数据输入和用户交互的表单控件</p>
+    </div>
+
+    <!-- Input -->
+    <div class="component-card" id="input">
+      <div class="component-card__title">Input 输入框</div>
+      <div class="component-card__desc">通过鼠标或键盘输入字符</div>
+      <div class="component-card__preview" style="flex-direction: column; gap: 12px;">
+        <div class="lyt-input-wrapper">
+          <input class="lyt-input" placeholder="请输入内容" />
+        </div>
+        <div class="lyt-input-wrapper">
+          <input class="lyt-input lyt-input--small" placeholder="Small 输入框" />
+        </div>
+        <div class="lyt-input-wrapper">
+          <input class="lyt-input lyt-input--large" placeholder="Large 输入框" />
+        </div>
+        <div class="lyt-input-wrapper lyt-input-wrapper--disabled">
+          <input class="lyt-input" placeholder="Disabled 输入框" disabled />
+        </div>
+      </div>
+    </div>
+
+    <!-- Checkbox -->
+    <div class="component-card" id="checkbox">
+      <div class="component-card__title">Checkbox 复选框</div>
+      <div class="component-card__desc">多选框，支持选中/未选中/半选状态</div>
+      <div class="component-card__preview">
+        <label class="lyt-checkbox">
+          <span class="lyt-checkbox__input"><span class="lyt-checkbox__inner"></span><input class="lyt-checkbox__original" type="checkbox" /></span>
+          <span class="lyt-checkbox__label">Option A</span>
+        </label>
+        <label class="lyt-checkbox">
+          <span class="lyt-checkbox__input lyt-checkbox__input--checked"><span class="lyt-checkbox__inner"></span><input class="lyt-checkbox__original" type="checkbox" checked /></span>
+          <span class="lyt-checkbox__label">Option B (checked)</span>
+        </label>
+        <label class="lyt-checkbox lyt-checkbox--disabled">
+          <span class="lyt-checkbox__input"><span class="lyt-checkbox__inner"></span><input class="lyt-checkbox__original" type="checkbox" disabled /></span>
+          <span class="lyt-checkbox__label">Disabled</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Radio -->
+    <div class="component-card" id="radio">
+      <div class="component-card__title">Radio 单选框</div>
+      <div class="component-card__desc">单选框，在一组备选项中进行单选</div>
+      <div class="component-card__preview">
+        <label class="lyt-radio">
+          <span class="lyt-radio__input"><span class="lyt-radio__inner"></span><input class="lyt-radio__original" type="radio" name="demo-radio" /></span>
+          <span class="lyt-radio__label">Option A</span>
+        </label>
+        <label class="lyt-radio">
+          <span class="lyt-radio__input lyt-radio__input--checked"><span class="lyt-radio__inner"></span><input class="lyt-radio__original" type="radio" name="demo-radio" checked /></span>
+          <span class="lyt-radio__label">Option B (checked)</span>
+        </label>
+        <label class="lyt-radio">
+          <span class="lyt-radio__input"><span class="lyt-radio__inner"></span><input class="lyt-radio__original" type="radio" name="demo-radio" /></span>
+          <span class="lyt-radio__label">Option C</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Select -->
+    <div class="component-card" id="select">
+      <div class="component-card__title">Select 选择器</div>
+      <div class="component-card__desc">下拉选择框，用于在有限选项中选择</div>
+      <div class="component-card__preview">
+        <div class="lyt-select">
+          <div class="lyt-select__trigger">
+            <span class="lyt-select__value lyt-select__value--placeholder">请选择</span>
+            <span class="lyt-select__arrow">
+              <svg viewBox="0 0 1024 1024" width="14" height="14"><path d="M488.832 344.32l-339.84 356.672a32 32 0 0 0 0 44.16l.384.384a29.44 29.44 0 0 0 42.688 0l320-335.872 319.872 335.872a29.44 29.44 0 0 0 42.688 0l.384-.384a32 32 0 0 0 0-44.16L535.168 344.32a29.44 29.44 0 0 0-46.336 0z"/></svg>
+            </span>
+          </div>
+        </div>
+        <div class="lyt-select">
+          <div class="lyt-select__trigger">
+            <span class="lyt-select__value">选项一</span>
+            <span class="lyt-select__arrow">
+              <svg viewBox="0 0 1024 1024" width="14" height="14"><path d="M488.832 344.32l-339.84 356.672a32 32 0 0 0 0 44.16l.384.384a29.44 29.44 0 0 0 42.688 0l320-335.872 319.872 335.872a29.44 29.44 0 0 0 42.688 0l.384-.384a32 32 0 0 0 0-44.16L535.168 344.32a29.44 29.44 0 0 0-46.336 0z"/></svg>
+            </span>
+          </div>
+        </div>
+        <div class="lyt-select lyt-select--disabled">
+          <div class="lyt-select__trigger">
+            <span class="lyt-select__value" style="color: #c0c4cc;">Disabled</span>
+            <span class="lyt-select__arrow">
+              <svg viewBox="0 0 1024 1024" width="14" height="14"><path d="M488.832 344.32l-339.84 356.672a32 32 0 0 0 0 44.16l.384.384a29.44 29.44 0 0 0 42.688 0l320-335.872 319.872 335.872a29.44 29.44 0 0 0 42.688 0l.384-.384a32 32 0 0 0 0-44.16L535.168 344.32a29.44 29.44 0 0 0-46.336 0z"/></svg>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Switch -->
+    <div class="component-card" id="switch">
+      <div class="component-card__title">Switch 开关</div>
+      <div class="component-card__desc">两种状态之间的切换</div>
+      <div class="component-card__preview" style="align-items: center;">
+        <div class="lyt-switch lyt-switch--small" style="background-color: #dcdfe6;">
+          <span class="lyt-switch__core"><span class="lyt-switch__action"></span></span>
+        </div>
+        <div class="lyt-switch lyt-switch--medium lyt-switch--checked" style="background-color: #409eff;">
+          <span class="lyt-switch__core"><span class="lyt-switch__action"></span></span>
+        </div>
+        <div class="lyt-switch lyt-switch--large lyt-switch--checked" style="background-color: #409eff;">
+          <span class="lyt-switch__core"><span class="lyt-switch__action"></span></span>
+        </div>
+        <div class="lyt-switch lyt-switch--medium lyt-switch--disabled" style="background-color: #dcdfe6;">
+          <span class="lyt-switch__core"><span class="lyt-switch__action"></span></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== 反馈组件 ==================== -->
+    <div class="component-section">
+      <h1 class="component-section__title">反馈组件</h1>
+      <p class="component-section__desc">用于对用户操作进行反馈的组件</p>
+    </div>
+
+    <!-- Alert -->
+    <div class="component-card" id="alert">
+      <div class="component-card__title">Alert 警告</div>
+      <div class="component-card__desc">页面中非浮层的消息提示</div>
+      <div class="component-card__preview" style="flex-direction: column; gap: 12px; width: 100%;">
+        <div class="lyt-alert lyt-alert--info">
+          <span class="lyt-alert__icon">&#8505;</span>
+          <div class="lyt-alert__content">Info: 这是一条信息提示</div>
+        </div>
+        <div class="lyt-alert lyt-alert--success">
+          <span class="lyt-alert__icon">&#10003;</span>
+          <div class="lyt-alert__content">Success: 操作成功完成</div>
+        </div>
+        <div class="lyt-alert lyt-alert--warning">
+          <span class="lyt-alert__icon">&#9888;</span>
+          <div class="lyt-alert__content">Warning: 请注意，此操作不可逆</div>
+        </div>
+        <div class="lyt-alert lyt-alert--error">
+          <span class="lyt-alert__icon">&#10007;</span>
+          <div class="lyt-alert__content">Error: 操作失败，请重试</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="component-card" id="modal">
+      <div class="component-card__title">Modal 对话框</div>
+      <div class="component-card__desc">在保留当前页面状态的情况下，告知用户并承载相关操作</div>
+      <div class="component-card__preview">
+        <button class="lyt-btn lyt-btn--primary" onclick="document.getElementById('demo-modal').style.display='flex'">打开对话框</button>
+      </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="component-card" id="toast">
+      <div class="component-card__title">Toast 轻提示</div>
+      <div class="component-card__desc">轻量级的全局反馈提示</div>
+      <div class="component-card__preview" style="flex-direction: column; gap: 8px;">
+        <div class="lyt-toast lyt-toast--success"><span class="lyt-toast__icon">&#10003;</span><span class="lyt-toast__message">Success message</span></div>
+        <div class="lyt-toast lyt-toast--error"><span class="lyt-toast__icon">&#10007;</span><span class="lyt-toast__message">Error message</span></div>
+        <div class="lyt-toast lyt-toast--warning"><span class="lyt-toast__icon">&#9888;</span><span class="lyt-toast__message">Warning message</span></div>
+        <div class="lyt-toast lyt-toast--info"><span class="lyt-toast__icon">&#8505;</span><span class="lyt-toast__message">Info message</span></div>
+      </div>
+    </div>
+
+    <!-- Tooltip -->
+    <div class="component-card" id="tooltip">
+      <div class="component-card__title">Tooltip 文字提示</div>
+      <div class="component-card__desc">鼠标悬停时显示的提示信息</div>
+      <div class="component-card__preview" style="gap: 24px; padding-top: 40px;">
+        <div class="lyt-tooltip">
+          <span class="lyt-tooltip__trigger">
+            <button class="lyt-btn">Hover me (Top)</button>
+          </span>
+          <div class="lyt-tooltip__popper lyt-tooltip__popper--top">Top tooltip content</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== 导航组件 ==================== -->
+    <div class="component-section">
+      <h1 class="component-section__title">导航组件</h1>
+      <p class="component-section__desc">用于页面导航和路由的组件</p>
+    </div>
+
+    <!-- Tabs -->
+    <div class="component-card" id="tabs">
+      <div class="component-card__title">Tabs 标签页</div>
+      <div class="component-card__desc">分隔内容上有关联但属于不同类别的数据集合</div>
+      <div class="component-card__preview" style="width: 100%;">
+        <div class="lyt-tabs lyt-tabs--line">
+          <div class="lyt-tabs__header">
+            <div class="lyt-tabs__nav">
+              <div class="lyt-tabs__item lyt-tabs__item--active"><span class="lyt-tabs__item-label">Tab 1</span></div>
+              <div class="lyt-tabs__item"><span class="lyt-tabs__item-label">Tab 2</span></div>
+              <div class="lyt-tabs__item"><span class="lyt-tabs__item-label">Tab 3</span></div>
+            </div>
+          </div>
+          <div class="lyt-tabs__content">
+            <p style="color: var(--lyt-text-secondary); font-size: 13px;">Tab 1 的内容区域</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Breadcrumb -->
+    <div class="component-card" id="breadcrumb">
+      <div class="component-card__title">Breadcrumb 面包屑</div>
+      <div class="component-card__desc">显示当前页面在系统层级结构中的位置</div>
+      <div class="component-card__preview">
+        <nav class="lyt-breadcrumb" aria-label="Breadcrumb">
+          <ol class="lyt-breadcrumb__list">
+            <li class="lyt-breadcrumb__item"><a class="lyt-breadcrumb__link" href="#">首页</a><span class="lyt-breadcrumb__separator">/</span></li>
+            <li class="lyt-breadcrumb__item"><a class="lyt-breadcrumb__link" href="#">组件</a><span class="lyt-breadcrumb__separator">/</span></li>
+            <li class="lyt-breadcrumb__item lyt-breadcrumb__item--last"><span class="lyt-breadcrumb__text">面包屑</span></li>
+          </ol>
+        </nav>
+      </div>
+    </div>
+
+    <!-- Pagination -->
+    <div class="component-card" id="pagination">
+      <div class="component-card__title">Pagination 分页</div>
+      <div class="component-card__desc">当数据量过多时，使用分页分解数据</div>
+      <div class="component-card__preview">
+        <div class="lyt-pagination">
+          <span class="lyt-pagination__item lyt-pagination__prev lyt-pagination__item--disabled">&laquo;</span>
+          <span class="lyt-pagination__item lyt-pagination__item--active">1</span>
+          <span class="lyt-pagination__item">2</span>
+          <span class="lyt-pagination__item">3</span>
+          <span class="lyt-pagination__item">4</span>
+          <span class="lyt-pagination__item">5</span>
+          <span class="lyt-pagination__item lyt-pagination__next">&raquo;</span>
+          <span class="lyt-pagination__total">共 50 条</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== 数据展示 ==================== -->
+    <div class="component-section">
+      <h1 class="component-section__title">数据展示</h1>
+      <p class="component-section__desc">用于展示数据和状态的组件</p>
+    </div>
+
+    <!-- Table -->
+    <div class="component-card" id="table">
+      <div class="component-card__title">Table 表格</div>
+      <div class="component-card__desc">用于展示多条结构类似的数据</div>
+      <div class="component-card__preview" style="width: 100%;">
+        <div class="lyt-table-wrapper">
+          <table class="lyt-table">
+            <thead>
+              <tr>
+                <th class="lyt-table__th">Name</th>
+                <th class="lyt-table__th">Age</th>
+                <th class="lyt-table__th">Address</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="lyt-table__row"><td class="lyt-table__td">Alice</td><td class="lyt-table__td">28</td><td class="lyt-table__td">Beijing</td></tr>
+              <tr class="lyt-table__row lyt-table__row--striped"><td class="lyt-table__td">Bob</td><td class="lyt-table__td">32</td><td class="lyt-table__td">Shanghai</td></tr>
+              <tr class="lyt-table__row"><td class="lyt-table__td">Charlie</td><td class="lyt-table__td">25</td><td class="lyt-table__td">Guangzhou</td></tr>
+              <tr class="lyt-table__row lyt-table__row--striped"><td class="lyt-table__td">Diana</td><td class="lyt-table__td">30</td><td class="lyt-table__td">Shenzhen</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tag -->
+    <div class="component-card" id="tag">
+      <div class="component-card__title">Tag 标签</div>
+      <div class="component-card__desc">用于标记和选择</div>
+      <div class="component-card__preview">
+        <span class="lyt-tag lyt-tag--default">Default</span>
+        <span class="lyt-tag lyt-tag--primary">Primary</span>
+        <span class="lyt-tag lyt-tag--success">Success</span>
+        <span class="lyt-tag lyt-tag--warning">Warning</span>
+        <span class="lyt-tag lyt-tag--danger">Danger</span>
+        <span class="lyt-tag lyt-tag--info">Info</span>
+        <span class="lyt-tag lyt-tag--primary">Closable<span class="lyt-tag__close">&times;</span></span>
+      </div>
+    </div>
+
+    <!-- Badge -->
+    <div class="component-card" id="badge">
+      <div class="component-card__title">Badge 徽标</div>
+      <div class="component-card__desc">出现在按钮、图标旁的数字或状态标记</div>
+      <div class="component-card__preview" style="gap: 24px; align-items: center;">
+        <span class="lyt-badge"><button class="lyt-btn">Messages</button><sup class="lyt-badge__count lyt-badge__count--danger">5</sup></span>
+        <span class="lyt-badge"><button class="lyt-btn">Updates</button><sup class="lyt-badge__count lyt-badge__count--primary">New</sup></span>
+        <span class="lyt-badge"><button class="lyt-btn">No Data</button><sup class="lyt-badge__count lyt-badge__count--dot lyt-badge__count--danger"></sup></span>
+        <span class="lyt-badge"><button class="lyt-btn">Success</button><sup class="lyt-badge__count lyt-badge__count--success">12</sup></span>
+      </div>
+    </div>
+
+    <!-- Spin -->
+    <div class="component-card" id="spin">
+      <div class="component-card__title">Spin 加载中</div>
+      <div class="component-card__desc">用于页面和区块的加载中状态</div>
+      <div class="component-card__preview" style="gap: 24px; align-items: center;">
+        <div class="lyt-spin">
+          <div style="display: flex; flex-direction: column; align-items: center;">
+            <div style="width: 20px; height: 20px;"><svg viewBox="0 0 1024 1024" class="lyt-spin__svg"><path d="M512 64a32 32 0 0 1 32 32v192a32 32 0 0 1-64 0V96a32 32 0 0 1 32-32zm0 640a32 32 0 0 1 32 32v192a32 32 0 0 1-64 0V736a32 32 0 0 1 32-32zm-448-192a32 32 0 0 1 32-32h192a32 32 0 0 1 0 64H96a32 32 0 0 1-32-32zm640 0a32 32 0 0 1 32-32h192a32 32 0 0 1 0 64H736a32 32 0 0 1-32-32z"/></svg></div>
+            <div class="lyt-spin__tip">Small</div>
+          </div>
+        </div>
+        <div class="lyt-spin">
+          <div style="display: flex; flex-direction: column; align-items: center;">
+            <div style="width: 32px; height: 32px;"><svg viewBox="0 0 1024 1024" class="lyt-spin__svg"><path d="M512 64a32 32 0 0 1 32 32v192a32 32 0 0 1-64 0V96a32 32 0 0 1 32-32zm0 640a32 32 0 0 1 32 32v192a32 32 0 0 1-64 0V736a32 32 0 0 1 32-32zm-448-192a32 32 0 0 1 32-32h192a32 32 0 0 1 0 64H96a32 32 0 0 1-32-32zm640 0a32 32 0 0 1 32-32h192a32 32 0 0 1 0 64H736a32 32 0 0 1-32-32z"/></svg></div>
+            <div class="lyt-spin__tip">Default</div>
+          </div>
+        </div>
+        <div class="lyt-spin">
+          <div style="display: flex; flex-direction: column; align-items: center;">
+            <div style="width: 48px; height: 48px;"><svg viewBox="0 0 1024 1024" class="lyt-spin__svg"><path d="M512 64a32 32 0 0 1 32 32v192a32 32 0 0 1-64 0V96a32 32 0 0 1 32-32zm0 640a32 32 0 0 1 32 32v192a32 32 0 0 1-64 0V736a32 32 0 0 1 32-32zm-448-192a32 32 0 0 1 32-32h192a32 32 0 0 1 0 64H96a32 32 0 0 1-32-32zm640 0a32 32 0 0 1 32-32h192a32 32 0 0 1 0 64H736a32 32 0 0 1-32-32z"/></svg></div>
+            <div class="lyt-spin__tip">Large</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty -->
+    <div class="component-card" id="empty">
+      <div class="component-card__title">Empty 空状态</div>
+      <div class="component-card__desc">空状态时的占位提示</div>
+      <div class="component-card__preview" style="width: 100%;">
+        <div class="lyt-empty">
+          <div class="lyt-empty__image">
+            <svg viewBox="0 0 200 200" width="120" height="120">
+              <rect x="30" y="50" width="140" height="110" rx="8" fill="#f5f7fa" stroke="#e4e7ed" stroke-width="2"/>
+              <circle cx="75" cy="95" r="16" fill="#e4e7ed"/>
+              <path d="M50 140 Q75 110 100 130 Q125 110 150 140" fill="#e4e7ed"/>
+              <circle cx="160" cy="60" r="20" fill="#f0f9eb" stroke="#e4e7ed" stroke-width="2"/>
+              <path d="M152 60 L158 66 L168 54" stroke="#67c23a" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <p class="lyt-empty__description">暂无数据</p>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Modal Demo -->
+  <div class="lyt-modal" id="demo-modal" style="display: none;" onclick="if(event.target===this) this.style.display='none'">
+    <div class="lyt-modal__mask"></div>
+    <div class="lyt-modal__dialog">
+      <div class="lyt-modal__header">
+        <span class="lyt-modal__title">对话框标题</span>
+        <span class="lyt-modal__close" onclick="document.getElementById('demo-modal').style.display='none'">&times;</span>
+      </div>
+      <div class="lyt-modal__body">
+        <p>这是一个对话框的内容区域。您可以在这里放置任何内容，包括表单、表格或其他组件。</p>
+      </div>
+      <div class="lyt-modal__footer">
+        <button class="lyt-btn" onclick="document.getElementById('demo-modal').style.display='none'">取消</button>
+        <button class="lyt-btn lyt-btn--primary" onclick="document.getElementById('demo-modal').style.display='none'">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 主题切换
+    let isDark = false;
+    function toggleTheme() {
+      isDark = !isDark;
+      document.documentElement.setAttribute('data-theme', isDark ? 'dark' : '');
+      document.getElementById('theme-icon').innerHTML = isDark ? '&#9728;' : '&#9790;';
+      document.getElementById('theme-label').textContent = isDark ? '亮色模式' : '暗色模式';
+    }
+
+    // 侧边栏导航高亮
+    const sidebarItems = document.querySelectorAll('.sidebar-item');
+    const sections = [];
+    sidebarItems.forEach(item => {
+      const href = item.getAttribute('href');
+      if (href && href.startsWith('#')) {
+        const el = document.getElementById(href.substring(1));
+        if (el) sections.push({ item, el });
+      }
+    });
+
+    function updateActiveSection() {
+      const scrollTop = window.scrollY + 100;
+      let current = sections[0];
+      for (const section of sections) {
+        if (section.el.offsetTop <= scrollTop) {
+          current = section;
+        }
+      }
+      sidebarItems.forEach(i => i.classList.remove('active'));
+      if (current) current.item.classList.add('active');
+    }
+
+    window.addEventListener('scroll', updateActiveSection);
+
+    // 点击侧边栏平滑滚动
+    sidebarItems.forEach(item => {
+      item.addEventListener('click', (e) => {
+        e.preventDefault();
+        const href = item.getAttribute('href');
+        if (href && href.startsWith('#')) {
+          const el = document.getElementById(href.substring(1));
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        }
+      });
+    });
+  </script>
+
+</body>
+</html>

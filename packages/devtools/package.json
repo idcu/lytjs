@@ -1,0 +1,41 @@
+{
+  "name": "@lytjs/devtools",
+  "version": "3.2.0",
+  "description": "Lyt.js 浏览器开发者工具 - 提供组件树检查、状态查看、性能分析和时间旅行调试",
+  "main": "./dist/index.mjs",
+  "module": "./dist/index.mjs",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.mjs",
+      "default": "./dist/index.mjs"
+    }
+  },
+  "sideEffects": false,
+  "files": ["dist"],
+  "license": "MIT",
+  "author": "lytjs",
+  "repository": {
+    "type": "git",
+    "url": "https://gitee.com/lytjs/lytjs"
+  },
+  "homepage": "https://gitee.com/lytjs/lytjs",
+  "keywords": [
+    "lyt",
+    "lytjs",
+    "javascript",
+    "framework",
+    "frontend",
+    "vue-like",
+    "lightweight",
+    "zero-dependency",
+    "devtools",
+    "debug",
+    "performance",
+    "time-travel",
+    "开发者工具"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "name": "@lytjs/plugin-i18n",
+  "version": "3.2.0",
+  "description": "Lyt.js 国际化插件 - 提供多语言支持、消息格式化和语言切换功能",
+  "main": "./src/index.ts",
+  "module": "./src/index.ts",
+  "exports": {
+    ".": {
+      "import": "./src/index.ts",
+      "require": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "sideEffects": false,
+  "files": ["dist"],
+  "license": "MIT",
+  "author": "lytjs",
+  "repository": {
+    "type": "git",
+    "url": "https://gitee.com/lytjs/lytjs"
+  },
+  "homepage": "https://gitee.com/lytjs/lytjs",
+  "keywords": [
+    "lyt",
+    "lytjs",
+    "javascript",
+    "framework",
+    "frontend",
+    "vue-like",
+    "lightweight",
+    "zero-dependency",
+    "i18n",
+    "internationalization",
+    "locale",
+    "translation",
+    "国际化"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}

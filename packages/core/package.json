@@ -1,0 +1,48 @@
+{
+  "name": "@lytjs/core",
+  "version": "3.2.0",
+  "description": "Lyt.js 核心入口 - 整合响应式、编译器、虚拟 DOM、渲染器和组件系统",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.mjs"
+    }
+  },
+  "sideEffects": false,
+  "files": ["dist"],
+  "license": "MIT",
+  "author": "lytjs",
+  "repository": {
+    "type": "git",
+    "url": "https://gitee.com/lytjs/lytjs"
+  },
+  "homepage": "https://gitee.com/lytjs/lytjs",
+  "keywords": [
+    "lyt",
+    "lytjs",
+    "javascript",
+    "framework",
+    "frontend",
+    "vue-like",
+    "lightweight",
+    "zero-dependency",
+    "core",
+    "createApp",
+    "核心"
+  ],
+  "dependencies": {
+    "@lytjs/reactivity": "workspace:*",
+    "@lytjs/compiler": "workspace:*",
+    "@lytjs/vdom": "workspace:*",
+    "@lytjs/renderer": "workspace:*",
+    "@lytjs/component": "workspace:*"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

@@ -1,0 +1,28 @@
+<template>
+  <div class="app">
+    <Header />
+    <main>
+      <h1>Hello Lyt!</h1>
+      <p>欢迎使用 Lyt 框架</p>
+    </main>
+  </div>
+</template>
+
+<script lang="ts">
+import { defineComponent } from 'lyt'
+import Header from './components/Header'
+
+export default defineComponent({
+  name: 'App',
+  components: {
+    Header,
+  },
+})
+</script>
+
+<style scoped>
+.app {
+  text-align: center;
+  padding: 20px;
+}
+</style>

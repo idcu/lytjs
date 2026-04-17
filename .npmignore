@@ -1,0 +1,12 @@
+docs/
+docs-site/
+scripts/
+*.test.ts
+__tests__/
+.vitepress/
+benchmarks/
+test-app/
+playground/
+dist-releases/
+*.tgz
+package-lock.json

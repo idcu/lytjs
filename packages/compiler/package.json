@@ -1,0 +1,43 @@
+{
+  "name": "@lytjs/compiler",
+  "version": "3.2.0",
+  "description": "Lyt.js 模板编译器 - 将模板字符串编译为渲染函数，支持指令解析和优化",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.mjs"
+    }
+  },
+  "sideEffects": false,
+  "files": ["dist"],
+  "license": "MIT",
+  "author": "lytjs",
+  "repository": {
+    "type": "git",
+    "url": "https://gitee.com/lytjs/lytjs"
+  },
+  "homepage": "https://gitee.com/lytjs/lytjs",
+  "keywords": [
+    "lyt",
+    "lytjs",
+    "javascript",
+    "framework",
+    "frontend",
+    "vue-like",
+    "lightweight",
+    "zero-dependency",
+    "compiler",
+    "template",
+    "sfc",
+    "编译器",
+    "模板"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}

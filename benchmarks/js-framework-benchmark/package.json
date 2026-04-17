@@ -1,0 +1,16 @@
+{
+  "name": "lyt-js-framework-benchmark",
+  "version": "1.0.0",
+  "description": "Lyt.js integration for js-framework-benchmark",
+  "private": true,
+  "scripts": {
+    "build": "bash build.sh",
+    "test": "cd ../.. && npx tsx test-runner.ts"
+  },
+  "keywords": [
+    "lyt",
+    "js-framework-benchmark",
+    "performance"
+  ],
+  "license": "MIT"
+}

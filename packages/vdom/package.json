@@ -1,0 +1,44 @@
+{
+  "name": "@lytjs/vdom",
+  "version": "3.2.0",
+  "description": "Lyt.js 虚拟 DOM 引擎 - 高效的虚拟节点创建、补丁算法和块级优化",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.mjs"
+    }
+  },
+  "sideEffects": false,
+  "files": ["dist"],
+  "license": "MIT",
+  "author": "lytjs",
+  "repository": {
+    "type": "git",
+    "url": "https://gitee.com/lytjs/lytjs"
+  },
+  "homepage": "https://gitee.com/lytjs/lytjs",
+  "keywords": [
+    "lyt",
+    "lytjs",
+    "javascript",
+    "framework",
+    "frontend",
+    "vue-like",
+    "lightweight",
+    "zero-dependency",
+    "vdom",
+    "virtual-dom",
+    "vnode",
+    "patch",
+    "block",
+    "虚拟DOM"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}

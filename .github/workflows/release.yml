@@ -1,0 +1,162 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+# 并发控制：同一 tag 只运行一次
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  # ============================================================
+  # Job 1: 构建与测试验证
+  # ============================================================
+  build-and-test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          registry-url: https://registry.npmjs.org/
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run tests
+        run: npx tsx test-runner.ts
+
+      - name: Build all packages
+        run: bash scripts/build.sh
+
+      - name: Generate type declarations
+        run: bash scripts/generate-types.sh
+        continue-on-error: true
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: packages/*/dist/
+          retention-days: 7
+
+  # ============================================================
+  # Job 2: 发布到 npm
+  # ============================================================
+  publish-npm:
+    name: Publish to npm
+    runs-on: ubuntu-latest
+    needs: [build-and-test]
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          registry-url: https://registry.npmjs.org/
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: packages/*/dist/
+
+      - name: Publish to npm
+        run: bash scripts/publish.sh
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  # ============================================================
+  # Job 3: Gitee 镜像同步（可选）
+  # ============================================================
+  sync-gitee:
+    name: Sync to Gitee
+    runs-on: ubuntu-latest
+    needs: [publish-npm]
+    # 仅在配置了 GITEE_TOKEN 时运行
+    if: ${{ secrets.GITEE_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Sync to Gitee
+        uses: wearerequired/git-mirror-action@master
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.GITEE_SSH_KEY }}
+        with:
+          source-repo: git@github.com:${{ github.repository }}.git
+          destination-repo: git@gitee.com:lytjs/lytjs.git
+
+  # ============================================================
+  # Job 4: 创建 GitHub Release
+  # ============================================================
+  github-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: [publish-npm]
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist-artifacts/
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          PREV_TAG=$(git tag --sort=-version:refname | grep -v "^$TAG$" | head -n 1)
+
+          if [ -n "$PREV_TAG" ]; then
+            CHANGES=$(git log "${PREV_TAG}..${TAG}" --pretty=format:"- %s (%h)" --no-merges 2>/dev/null || echo "No changelog available")
+          else
+            CHANGES=$(git log --pretty=format:"- %s (%h)" --no-merges -20 2>/dev/null || echo "No changelog available")
+          fi
+
+          echo "changes<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$CHANGES" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
+          body: |
+            ## Changes
+            ${{ steps.changelog.outputs.changes }}
+
+            ## Installation
+            ```bash
+            npm install @lyt/agg@${{ github.ref_name }}
+            ```
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-rc') || contains(github.ref_name, '-beta') || contains(github.ref_name, '-alpha') }}
+          generate_release_notes: true

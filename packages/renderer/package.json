@@ -1,0 +1,43 @@
+{
+  "name": "@lytjs/renderer",
+  "version": "3.2.0",
+  "description": "Lyt.js 渲染器抽象层 - 支持 DOM、SSR、原生和小程序多平台渲染",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.mjs"
+    }
+  },
+  "sideEffects": false,
+  "files": ["dist"],
+  "license": "MIT",
+  "author": "lytjs",
+  "repository": {
+    "type": "git",
+    "url": "https://gitee.com/lytjs/lytjs"
+  },
+  "homepage": "https://gitee.com/lytjs/lytjs",
+  "keywords": [
+    "lyt",
+    "lytjs",
+    "javascript",
+    "framework",
+    "frontend",
+    "vue-like",
+    "lightweight",
+    "zero-dependency",
+    "renderer",
+    "dom",
+    "ssr",
+    "hydration",
+    "渲染器"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}

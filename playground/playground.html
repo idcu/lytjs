@@ -1,0 +1,1354 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lyt.js Playground</title>
+  <style>
+    :root {
+      --bg-primary: #1e1e2e;
+      --bg-secondary: #181825;
+      --bg-tertiary: #313244;
+      --bg-hover: #45475a;
+      --text-primary: #cdd6f4;
+      --text-secondary: #a6adc8;
+      --text-muted: #6c7086;
+      --accent: #89b4fa;
+      --accent-hover: #74c7ec;
+      --green: #a6e3a1;
+      --red: #f38ba8;
+      --yellow: #f9e2af;
+      --border: #45475a;
+      --toolbar-h: 48px;
+      --console-h: 140px;
+      --line-num-w: 48px;
+      --font-mono: 'SF Mono', 'Fira Code', 'Cascadia Code', 'JetBrains Mono', Menlo, Monaco, 'Courier New', monospace;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: var(--font-mono);
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ========== Toolbar ========== */
+    .toolbar {
+      height: var(--toolbar-h);
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      gap: 12px;
+      flex-shrink: 0;
+      z-index: 10;
+    }
+
+    .toolbar-logo {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--accent);
+      margin-right: 8px;
+      letter-spacing: -0.5px;
+    }
+
+    .toolbar-logo span {
+      color: var(--text-muted);
+      font-weight: 400;
+    }
+
+    .toolbar-sep {
+      width: 1px;
+      height: 24px;
+      background: var(--border);
+    }
+
+    .toolbar select {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 28px 6px 10px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      cursor: pointer;
+      outline: none;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236c7086' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 8px center;
+      transition: border-color 0.2s;
+    }
+
+    .toolbar select:hover {
+      border-color: var(--accent);
+    }
+
+    .toolbar select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(137, 180, 250, 0.2);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+      outline: none;
+      white-space: nowrap;
+    }
+
+    .btn-run {
+      background: var(--accent);
+      color: var(--bg-primary);
+      border-color: var(--accent);
+      font-weight: 600;
+    }
+
+    .btn-run:hover {
+      background: var(--accent-hover);
+      border-color: var(--accent-hover);
+    }
+
+    .btn-reset {
+      background: transparent;
+      color: var(--text-secondary);
+    }
+
+    .btn-reset:hover {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+    }
+
+    .toolbar-spacer {
+      flex: 1;
+    }
+
+    .toolbar-hint {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .toolbar-hint kbd {
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 1px 5px;
+      font-size: 11px;
+    }
+
+    /* ========== Main Area ========== */
+    .main {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* ========== Editor Panel ========== */
+    .editor-panel {
+      width: 50%;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid var(--border);
+      min-width: 200px;
+    }
+
+    .panel-header {
+      height: 32px;
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
+      font-size: 12px;
+      color: var(--text-muted);
+      flex-shrink: 0;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .editor-wrapper {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .line-numbers {
+      width: var(--line-num-w);
+      background: var(--bg-secondary);
+      border-right: 1px solid var(--border);
+      padding: 12px 0;
+      overflow: hidden;
+      user-select: none;
+      flex-shrink: 0;
+    }
+
+    .line-numbers div {
+      height: 21px;
+      line-height: 21px;
+      text-align: right;
+      padding-right: 12px;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .code-editor {
+      flex: 1;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      border: none;
+      outline: none;
+      resize: none;
+      padding: 12px 16px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      line-height: 21px;
+      tab-size: 2;
+      white-space: pre;
+      overflow: auto;
+    }
+
+    .code-editor::placeholder {
+      color: var(--text-muted);
+    }
+
+    /* ========== Preview Panel ========== */
+    .preview-panel {
+      width: 50%;
+      display: flex;
+      flex-direction: column;
+      min-width: 200px;
+    }
+
+    .preview-frame {
+      flex: 1;
+      border: none;
+      background: #fff;
+    }
+
+    /* ========== Console ========== */
+    .console-panel {
+      height: var(--console-h);
+      background: var(--bg-secondary);
+      border-top: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+
+    .console-header {
+      height: 32px;
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .console-title {
+      font-size: 12px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .console-clear {
+      margin-left: auto;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      cursor: pointer;
+      padding: 2px 6px;
+      border-radius: 3px;
+    }
+
+    .console-clear:hover {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+    }
+
+    .console-output {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px 12px;
+      font-size: 12px;
+      line-height: 18px;
+    }
+
+    .console-line {
+      padding: 1px 0;
+      display: flex;
+      gap: 8px;
+    }
+
+    .console-line.log { color: var(--text-primary); }
+    .console-line.error { color: var(--red); }
+    .console-line.warn { color: var(--yellow); }
+    .console-line.info { color: var(--accent); }
+
+    .console-line .prefix {
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+
+    /* ========== Resize Handle ========== */
+    .resize-handle {
+      width: 4px;
+      cursor: col-resize;
+      background: transparent;
+      transition: background 0.2s;
+      flex-shrink: 0;
+      z-index: 5;
+    }
+
+    .resize-handle:hover,
+    .resize-handle.active {
+      background: var(--accent);
+    }
+
+    /* ========== Scrollbar ========== */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--bg-hover);
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <div class="toolbar-logo">Lyt.js <span>Playground</span></div>
+    <div class="toolbar-sep"></div>
+    <select id="exampleSelect">
+      <option value="hello">Hello World</option>
+      <option value="counter">Counter</option>
+      <option value="todo">Todo List</option>
+      <option value="component">Component</option>
+      <option value="reactive">Reactive Demo</option>
+    </select>
+    <button class="btn btn-run" id="runBtn" title="Run code (Ctrl+Enter)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+      Run
+    </button>
+    <button class="btn btn-reset" id="resetBtn" title="Reset code">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+      Reset
+    </button>
+    <div class="toolbar-spacer"></div>
+    <div class="toolbar-hint"><kbd>Ctrl</kbd>+<kbd>Enter</kbd> to run</div>
+  </div>
+
+  <!-- Main Area -->
+  <div class="main">
+    <!-- Editor -->
+    <div class="editor-panel" id="editorPanel">
+      <div class="panel-header">Editor</div>
+      <div class="editor-wrapper">
+        <div class="line-numbers" id="lineNumbers"></div>
+        <textarea
+          class="code-editor"
+          id="codeEditor"
+          spellcheck="false"
+          placeholder="// Write your Lyt.js code here..."
+        ></textarea>
+      </div>
+    </div>
+
+    <!-- Resize Handle -->
+    <div class="resize-handle" id="resizeHandle"></div>
+
+    <!-- Preview -->
+    <div class="preview-panel" id="previewPanel">
+      <div class="panel-header">Preview</div>
+      <iframe class="preview-frame" id="previewFrame" sandbox="allow-scripts allow-modals"></iframe>
+    </div>
+  </div>
+
+  <!-- Console -->
+  <div class="console-panel">
+    <div class="console-header">
+      <span class="console-title">Console</span>
+      <button class="console-clear" id="consoleClear">Clear</button>
+    </div>
+    <div class="console-output" id="consoleOutput"></div>
+  </div>
+
+  <script>
+    // ============================================================
+    // Lyt.js Playground - Core Logic
+    // ============================================================
+
+    const codeEditor = document.getElementById('codeEditor');
+    const lineNumbers = document.getElementById('lineNumbers');
+    const previewFrame = document.getElementById('previewFrame');
+    const consoleOutput = document.getElementById('consoleOutput');
+    const exampleSelect = document.getElementById('exampleSelect');
+    const runBtn = document.getElementById('runBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const consoleClear = document.getElementById('consoleClear');
+    const resizeHandle = document.getElementById('resizeHandle');
+    const editorPanel = document.getElementById('editorPanel');
+    const previewPanel = document.getElementById('previewPanel');
+
+    const STORAGE_KEY = 'lyt-playground-code';
+    const EXAMPLE_KEY = 'lyt-playground-example';
+
+    // ============================================================
+    // Line Numbers
+    // ============================================================
+
+    function updateLineNumbers() {
+      const lines = codeEditor.value.split('\n').length;
+      let html = '';
+      for (let i = 1; i <= lines; i++) {
+        html += `<div>${i}</div>`;
+      }
+      lineNumbers.innerHTML = html;
+    }
+
+    function syncScroll() {
+      lineNumbers.scrollTop = codeEditor.scrollTop;
+    }
+
+    codeEditor.addEventListener('input', () => {
+      updateLineNumbers();
+      autoSave();
+    });
+
+    codeEditor.addEventListener('scroll', syncScroll);
+
+    // Tab key support
+    codeEditor.addEventListener('keydown', (e) => {
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        const start = codeEditor.selectionStart;
+        const end = codeEditor.selectionEnd;
+        codeEditor.value = codeEditor.value.substring(0, start) + '  ' + codeEditor.value.substring(end);
+        codeEditor.selectionStart = codeEditor.selectionEnd = start + 2;
+        updateLineNumbers();
+        autoSave();
+      }
+    });
+
+    // ============================================================
+    // Console
+    // ============================================================
+
+    function appendConsole(type, args) {
+      const line = document.createElement('div');
+      line.className = `console-line ${type}`;
+      const prefix = document.createElement('span');
+      prefix.className = 'prefix';
+      const time = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      prefix.textContent = `[${time}]`;
+      const msg = document.createElement('span');
+      msg.textContent = args.map(a => {
+        if (typeof a === 'object') {
+          try { return JSON.stringify(a, null, 2); } catch { return String(a); }
+        }
+        return String(a);
+      }).join(' ');
+      line.appendChild(prefix);
+      line.appendChild(msg);
+      consoleOutput.appendChild(line);
+      consoleOutput.scrollTop = consoleOutput.scrollHeight;
+    }
+
+    function clearConsole() {
+      consoleOutput.innerHTML = '';
+    }
+
+    consoleClear.addEventListener('click', clearConsole);
+
+    // ============================================================
+    // Auto Save / Load
+    // ============================================================
+
+    function autoSave() {
+      try {
+        localStorage.setItem(STORAGE_KEY, codeEditor.value);
+        localStorage.setItem(EXAMPLE_KEY, exampleSelect.value);
+      } catch (e) { /* ignore */ }
+    }
+
+    function loadSaved() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        const savedExample = localStorage.getItem(EXAMPLE_KEY);
+        if (saved !== null) {
+          codeEditor.value = saved;
+          if (savedExample) exampleSelect.value = savedExample;
+        } else {
+          loadExample('hello');
+        }
+      } catch (e) {
+        loadExample('hello');
+      }
+      updateLineNumbers();
+    }
+
+    // ============================================================
+    // Examples
+    // ============================================================
+
+    const examples = {
+      hello: `// Hello World - Lyt.js
+const { reactive, effect, h, render } = Lyt;
+
+const state = reactive({
+  message: 'Hello, Lyt.js!',
+  subtitle: 'Lightweight reactive framework'
+});
+
+function App() {
+  return h('div', { style: {
+    fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif',
+    display: 'flex', flexDirection: 'column', alignItems: 'center',
+    justifyContent: 'center', minHeight: '100vh',
+    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    color: '#fff', padding: '20px'
+  }}, [
+    h('h1', { style: { fontSize: '48px', fontWeight: 800, marginBottom: '8px' } },
+      state.message),
+    h('p', { style: { fontSize: '16px', opacity: 0.8 } },
+      state.subtitle),
+    h('p', { style: { marginTop: '24px', fontSize: '13px', opacity: 0.6 } },
+      'Built with reactive() + effect() + h()'),
+  ]);
+}
+
+render(App, document.getElementById('app'));
+console.log('Hello World example loaded!');`,
+
+      counter: `// Counter - Lyt.js Reactive Demo
+const { reactive, effect, h, render } = Lyt;
+
+const state = reactive({
+  count: 0,
+  history: []
+});
+
+function App() {
+  const items = state.history.map((entry, i) =>
+    h('span', {
+      key: i,
+      style: {
+        display: 'inline-block', padding: '2px 8px', margin: '2px',
+        borderRadius: '4px', fontSize: '12px',
+        background: entry > 0 ? '#d4edda' : entry < 0 ? '#f8d7da' : '#e2e3e5',
+        color: entry > 0 ? '#155724' : entry < 0 ? '#721c24' : '#383d41',
+      }
+    }, (entry > 0 ? '+' : '') + entry)
+  );
+
+  return h('div', { style: {
+    fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif',
+    display: 'flex', flexDirection: 'column', alignItems: 'center',
+    justifyContent: 'center', minHeight: '100vh',
+    background: '#f8f9fa', color: '#333'
+  }}, [
+    h('h2', { style: { marginBottom: '8px', color: '#667eea' } }, 'Reactive Counter'),
+    h('div', { style: {
+      fontSize: '72px', fontWeight: 200, color: '#667eea',
+      lineHeight: 1, marginBottom: '16px', transition: 'transform 0.15s'
+    }}, String(state.count)),
+    h('div', { style: { display: 'flex', gap: '12px', marginBottom: '24px' } }, [
+      h('button', {
+        style: { padding: '10px 24px', border: 'none', borderRadius: '8px',
+          fontSize: '16px', fontWeight: 600, cursor: 'pointer',
+          background: 'linear-gradient(135deg, #667eea, #764ba2)', color: '#fff' },
+        onClick: () => { state.count++; state.history.push(1); }
+      }, '+1'),
+      h('button', {
+        style: { padding: '10px 24px', border: '1px solid #ddd', borderRadius: '8px',
+          fontSize: '16px', cursor: 'pointer', background: '#fff', color: '#667eea' },
+        onClick: () => { state.count--; state.history.push(-1); }
+      }, '-1'),
+      h('button', {
+        style: { padding: '10px 24px', border: 'none', borderRadius: '8px',
+          fontSize: '16px', cursor: 'pointer', background: '#fff0f0', color: '#e74c3c' },
+        onClick: () => { state.count = 0; state.history.length = 0; }
+      }, 'Reset'),
+    ]),
+    h('div', { style: { maxWidth: '400px', textAlign: 'center' } }, [
+      h('p', { style: { fontSize: '13px', color: '#999', marginBottom: '8px' } }, 'History:'),
+      h('div', { style: { minHeight: '30px' } }, items.length > 0 ? items : [
+        h('span', { style: { color: '#ccc', fontSize: '12px' } }, 'No actions yet')
+      ]),
+    ]),
+  ]);
+}
+
+render(App, document.getElementById('app'));
+console.log('Counter: initial count =', state.count);`,
+
+      todo: `// Todo List - Lyt.js
+const { reactive, effect, h, render } = Lyt;
+
+const state = reactive({
+  todos: [
+    { id: 1, text: 'Learn Lyt.js reactive system', done: true },
+    { id: 2, text: 'Build a component library', done: false },
+    { id: 3, text: 'Write unit tests', done: false },
+  ],
+  newTodo: '',
+  filter: 'all', // all | active | done
+  nextId: 4,
+});
+
+const filteredTodos = () => {
+  if (state.filter === 'active') return state.todos.filter(t => !t.done);
+  if (state.filter === 'done') return state.todos.filter(t => t.done);
+  return state.todos;
+};
+
+const remaining = () => state.todos.filter(t => !t.done).length;
+
+function App() {
+  const filterBtn = (label, value) => h('button', {
+    style: {
+      padding: '4px 12px', border: 'none', borderRadius: '4px',
+      fontSize: '13px', cursor: 'pointer',
+      background: state.filter === value ? '#667eea' : '#e9ecef',
+      color: state.filter === value ? '#fff' : '#495057',
+    },
+    onClick: () => { state.filter = value; }
+  }, label);
+
+  const todoItems = filteredTodos().map(todo =>
+    h('div', { key: todo.id, style: {
+      display: 'flex', alignItems: 'center', gap: '10px',
+      padding: '10px 12px', borderBottom: '1px solid #eee',
+      background: '#fff', transition: 'opacity 0.2s',
+      opacity: todo.done ? 0.6 : 1,
+    }}, [
+      h('input', {
+        type: 'checkbox', checked: todo.done,
+        style: { width: '18px', height: '18px', cursor: 'pointer' },
+        onChange: () => { todo.done = !todo.done; }
+      }),
+      h('span', { style: {
+        flex: 1, fontSize: '14px',
+        textDecoration: todo.done ? 'line-through' : 'none',
+        color: todo.done ? '#999' : '#333',
+      }}, todo.text),
+      h('button', {
+        style: { background: 'none', border: 'none', color: '#e74c3c',
+          cursor: 'pointer', fontSize: '16px', padding: '0 4px' },
+        onClick: () => {
+          const idx = state.todos.findIndex(t => t.id === todo.id);
+          if (idx > -1) state.todos.splice(idx, 1);
+        }
+      }, '\u00d7'),
+    ])
+  );
+
+  return h('div', { style: {
+    fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif',
+    maxWidth: '480px', margin: '40px auto', padding: '0 16px',
+    color: '#333',
+  }}, [
+    h('h1', { style: { fontSize: '28px', fontWeight: 700, marginBottom: '20px', color: '#667eea' } },
+      'Todo List'),
+    h('div', { style: { display: 'flex', gap: '8px', marginBottom: '16px' } }, [
+      h('input', {
+        type: 'text', placeholder: 'What needs to be done?',
+        value: state.newTodo,
+        style: { flex: 1, padding: '10px 14px', border: '1px solid #ddd',
+          borderRadius: '8px', fontSize: '14px', outline: 'none' },
+        onInput: (e) => { state.newTodo = e.target.value; },
+        onKeydown: (e) => {
+          if (e.key === 'Enter' && state.newTodo.trim()) {
+            state.todos.push({ id: state.nextId++, text: state.newTodo.trim(), done: false });
+            state.newTodo = '';
+            console.log('Todo added:', state.todos[state.todos.length - 1].text);
+          }
+        }
+      }),
+      h('button', {
+        style: { padding: '10px 20px', border: 'none', borderRadius: '8px',
+          background: 'linear-gradient(135deg, #667eea, #764ba2)',
+          color: '#fff', fontSize: '14px', fontWeight: 600, cursor: 'pointer' },
+        onClick: () => {
+          if (state.newTodo.trim()) {
+            state.todos.push({ id: state.nextId++, text: state.newTodo.trim(), done: false });
+            state.newTodo = '';
+            console.log('Todo added');
+          }
+        }
+      }, 'Add'),
+    ]),
+    h('div', { style: { display: 'flex', gap: '6px', marginBottom: '12px' } }, [
+      filterBtn('All', 'all'),
+      filterBtn('Active', 'active'),
+      filterBtn('Done', 'done'),
+      h('span', { style: { marginLeft: 'auto', fontSize: '13px', color: '#999',
+        alignSelf: 'center' } }, remaining() + ' remaining'),
+    ]),
+    h('div', { style: {
+      border: '1px solid #e9ecef', borderRadius: '8px', overflow: 'hidden',
+      background: '#fafafa',
+    }}, todoItems.length > 0 ? todoItems : [
+      h('div', { style: { padding: '24px', textAlign: 'center', color: '#ccc' } },
+        state.filter === 'all' ? 'No todos yet. Add one above!'
+          : 'No ' + state.filter + ' todos.'),
+    ]),
+  ]);
+}
+
+render(App, document.getElementById('app'));
+console.log('Todo List loaded with', state.todos.length, 'items');`,
+
+      component: `// Component Pattern - Lyt.js
+const { reactive, effect, h, render } = Lyt;
+
+// Simple component factory
+function defineComponent(options) {
+  return options;
+}
+
+// Button Component
+const LytButton = defineComponent({
+  name: 'LytButton',
+  render(props) {
+    const { label, type = 'default', onClick } = props;
+    const colors = {
+      primary: { bg: 'linear-gradient(135deg, #667eea, #764ba2)', color: '#fff' },
+      success: { bg: '#28a745', color: '#fff' },
+      danger: { bg: '#dc3545', color: '#fff' },
+      default: { bg: '#f8f9fa', color: '#333', border: '1px solid #ddd' },
+    };
+    const c = colors[type] || colors.default;
+    return h('button', {
+      style: {
+        padding: '8px 20px', border: c.border || 'none', borderRadius: '6px',
+        fontSize: '14px', fontWeight: 600, cursor: 'pointer',
+        background: c.bg, color: c.color, transition: 'opacity 0.2s',
+      },
+      onClick,
+    }, label);
+  }
+});
+
+// Card Component
+const LytCard = defineComponent({
+  name: 'LytCard',
+  render(props, slots) {
+    return h('div', {
+      style: {
+        background: '#fff', borderRadius: '12px', padding: '24px',
+        boxShadow: '0 2px 12px rgba(0,0,0,0.08)', border: '1px solid #e9ecef',
+      }
+    }, [
+      props.title ? h('h3', { style: { fontSize: '18px', fontWeight: 600,
+        marginBottom: '12px', color: '#333' } }, props.title) : null,
+      slots.default ? slots.default() : null,
+      slots.footer ? h('div', { style: {
+        marginTop: '16px', paddingTop: '12px', borderTop: '1px solid #eee',
+      }}, slots.footer()) : null,
+    ]);
+  }
+});
+
+// App State
+const state = reactive({
+  clickCount: 0,
+  showCard: true,
+});
+
+function App() {
+  return h('div', { style: {
+    fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif',
+    maxWidth: '520px', margin: '40px auto', padding: '0 16px',
+    color: '#333',
+  }}, [
+    h('h2', { style: { fontSize: '24px', fontWeight: 700, marginBottom: '20px',
+      color: '#667eea' } }, 'Component Demo'),
+
+    // Card with button
+    h(LytCard, { title: 'Interactive Card' }, {
+      default: () => [
+        h('p', { style: { color: '#666', marginBottom: '12px' } },
+          'This card uses a component pattern. Click count: ' + state.clickCount),
+        h('div', { style: { display: 'flex', gap: '8px' } }, [
+          h(LytButton, { label: 'Click Me (' + state.clickCount + ')', type: 'primary',
+            onClick: () => { state.clickCount++; console.log('Clicked!', state.clickCount); }
+          }),
+          h(LytButton, { label: 'Reset', type: 'danger',
+            onClick: () => { state.clickCount = 0; console.log('Reset!'); }
+          }),
+        ]),
+      ],
+      footer: () => [
+        h('p', { style: { fontSize: '12px', color: '#999' } },
+          'Built with defineComponent() + h()'),
+      ],
+    }),
+
+    h('div', { style: { marginTop: '16px' } }, [
+      h(LytButton, {
+        label: state.showCard ? 'Hide Card' : 'Show Card',
+        type: 'success',
+        onClick: () => { state.showCard = !state.showCard; }
+      }),
+    ]),
+
+    state.showCard ? h(LytCard, { title: 'Toggleable Card' }, {
+      default: () => [
+        h('p', { style: { color: '#666' } },
+          'This card can be toggled on and off using reactive state.'),
+      ],
+    }) : null,
+  ]);
+}
+
+render(App, document.getElementById('app'));
+console.log('Component demo loaded!');`,
+
+      reactive: `// Reactive System Demo - Lyt.js
+const { reactive, effect, computed, watch, h, render } = Lyt;
+
+const state = reactive({
+  firstName: 'Lyt',
+  lastName: 'Framework',
+  age: 1,
+  skills: ['Reactive', 'Components', 'VNode'],
+  theme: 'dark',
+});
+
+// Computed: full name
+const fullName = computed(() => state.firstName + ' ' + state.lastName);
+
+// Watch
+watch(() => state.age, (newVal, oldVal) => {
+  console.log('Age changed:', oldVal, '->', newVal);
+});
+
+// Effect: auto log
+effect(() => {
+  console.log('Name:', fullName.value);
+});
+
+function App() {
+  const skillTags = state.skills.map((skill, i) =>
+    h('span', { key: i, style: {
+      display: 'inline-block', padding: '4px 12px', margin: '2px',
+      borderRadius: '12px', fontSize: '12px', fontWeight: 500,
+      background: '#667eea', color: '#fff',
+    }}, skill)
+  );
+
+  const isDark = state.theme === 'dark';
+
+  return h('div', { style: {
+    fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif',
+    minHeight: '100vh', padding: '40px 20px',
+    background: isDark ? '#1a1a2e' : '#f8f9fa',
+    color: isDark ? '#e0e0e0' : '#333',
+    transition: 'background 0.3s, color 0.3s',
+  }}, [
+    h('h2', { style: { fontSize: '24px', fontWeight: 700, marginBottom: '24px',
+      color: '#667eea' } }, 'Reactive System Demo'),
+
+    // Full Name (computed)
+    h('div', { style: {
+      background: isDark ? '#16213e' : '#fff', borderRadius: '12px',
+      padding: '20px', marginBottom: '16px',
+      boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+    }}, [
+      h('h4', { style: { marginBottom: '12px', opacity: 0.7, fontSize: '13px' } },
+        'Computed Property'),
+      h('p', { style: { fontSize: '20px', fontWeight: 600 } }, fullName.value),
+      h('div', { style: { display: 'flex', gap: '8px', marginTop: '12px' } }, [
+        h('input', {
+          value: state.firstName, placeholder: 'First name',
+          style: { padding: '8px 12px', border: '1px solid ' + (isDark ? '#333' : '#ddd'),
+            borderRadius: '6px', fontSize: '14px', width: '140px', outline: 'none',
+            background: isDark ? '#0f3460' : '#fff',
+            color: isDark ? '#e0e0e0' : '#333',
+          },
+          onInput: (e) => { state.firstName = e.target.value; }
+        }),
+        h('input', {
+          value: state.lastName, placeholder: 'Last name',
+          style: { padding: '8px 12px', border: '1px solid ' + (isDark ? '#333' : '#ddd'),
+            borderRadius: '6px', fontSize: '14px', width: '140px', outline: 'none',
+            background: isDark ? '#0f3460' : '#fff',
+            color: isDark ? '#e0e0e0' : '#333',
+          },
+          onInput: (e) => { state.lastName = e.target.value; }
+        }),
+      ]),
+    ]),
+
+    // Age (watch)
+    h('div', { style: {
+      background: isDark ? '#16213e' : '#fff', borderRadius: '12px',
+      padding: '20px', marginBottom: '16px',
+      boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+    }}, [
+      h('h4', { style: { marginBottom: '12px', opacity: 0.7, fontSize: '13px' } },
+        'Watch (check console)'),
+      h('p', { style: { fontSize: '20px', fontWeight: 600 } }, 'Age: ' + state.age),
+      h('div', { style: { display: 'flex', gap: '8px', marginTop: '12px' } }, [
+        h('button', {
+          style: { padding: '6px 16px', border: 'none', borderRadius: '6px',
+            background: '#667eea', color: '#fff', cursor: 'pointer', fontSize: '14px' },
+          onClick: () => { state.age++; }
+        }, '+'),
+        h('button', {
+          style: { padding: '6px 16px', border: '1px solid ' + (isDark ? '#333' : '#ddd'),
+            borderRadius: '6px', cursor: 'pointer', fontSize: '14px',
+            background: isDark ? '#0f3460' : '#fff',
+            color: isDark ? '#e0e0e0' : '#333',
+          },
+          onClick: () => { if (state.age > 0) state.age--; }
+        }, '-'),
+      ]),
+    ]),
+
+    // Skills (array reactivity)
+    h('div', { style: {
+      background: isDark ? '#16213e' : '#fff', borderRadius: '12px',
+      padding: '20px', marginBottom: '16px',
+      boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+    }}, [
+      h('h4', { style: { marginBottom: '12px', opacity: 0.7, fontSize: '13px' } },
+        'Array Reactivity'),
+      h('div', { style: { minHeight: '32px' } }, skillTags),
+      h('div', { style: { display: 'flex', gap: '8px', marginTop: '12px' } }, [
+        h('input', {
+          id: 'newSkill', type: 'text', placeholder: 'New skill...',
+          style: { padding: '6px 12px', border: '1px solid ' + (isDark ? '#333' : '#ddd'),
+            borderRadius: '6px', fontSize: '14px', outline: 'none',
+            background: isDark ? '#0f3460' : '#fff',
+            color: isDark ? '#e0e0e0' : '#333',
+          },
+        }),
+        h('button', {
+          style: { padding: '6px 16px', border: 'none', borderRadius: '6px',
+            background: '#28a745', color: '#fff', cursor: 'pointer', fontSize: '14px' },
+          onClick: () => {
+            const input = document.getElementById('newSkill');
+            if (input && input.value.trim()) {
+              state.skills.push(input.value.trim());
+              console.log('Skill added:', input.value.trim());
+              input.value = '';
+            }
+          }
+        }, 'Add'),
+      ]),
+    ]),
+
+    // Theme toggle
+    h('div', { style: { textAlign: 'center', marginTop: '8px' } }, [
+      h('button', {
+        style: { padding: '8px 20px', border: '1px solid ' + (isDark ? '#333' : '#ddd'),
+          borderRadius: '6px', cursor: 'pointer', fontSize: '14px',
+          background: isDark ? '#0f3460' : '#fff',
+          color: isDark ? '#e0e0e0' : '#333',
+        },
+        onClick: () => {
+          state.theme = state.theme === 'dark' ? 'light' : 'dark';
+          console.log('Theme:', state.theme);
+        }
+      }, 'Toggle Theme: ' + state.theme),
+    ]),
+  ]);
+}
+
+render(App, document.getElementById('app'));
+console.log('Reactive demo loaded!');`,
+    };
+
+    function loadExample(name) {
+      if (examples[name]) {
+        codeEditor.value = examples[name];
+        exampleSelect.value = name;
+        updateLineNumbers();
+        autoSave();
+      }
+    }
+
+    exampleSelect.addEventListener('change', () => {
+      loadExample(exampleSelect.value);
+      runCode();
+    });
+
+    // ============================================================
+    // Run Code
+    // ============================================================
+
+    function runCode() {
+      clearConsole();
+      const code = codeEditor.value;
+
+      const iframeHTML = `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+  <script>
+    // ============================================================
+    // Lyt.js Inline Runtime
+    // ============================================================
+
+    const targetMap = new WeakMap();
+    let activeEffect = null;
+    const effectStack = [];
+    const proxyMap = new WeakMap();
+    const rawSymbol = Symbol('raw');
+    const reactiveFlag = Symbol('reactive');
+
+    function isObject(val) {
+      return val !== null && typeof val === 'object';
+    }
+
+    function hasChanged(value, oldValue) {
+      return !Object.is(value, oldValue);
+    }
+
+    function hasOwn(target, key) {
+      return Object.prototype.hasOwnProperty.call(target, key);
+    }
+
+    class ReactiveEffect {
+      constructor(fn, scheduler) {
+        this.fn = fn;
+        this.scheduler = scheduler;
+        this.deps = new Set();
+        this.active = true;
+      }
+      run() {
+        if (!this.active) return this.fn();
+        if (effectStack.includes(this)) return this.fn();
+        try {
+          effectStack.push(this);
+          activeEffect = this;
+          this.deps.forEach(dep => dep.delete(this));
+          this.deps.clear();
+          return this.fn();
+        } finally {
+          effectStack.pop();
+          activeEffect = effectStack[effectStack.length - 1] || null;
+        }
+      }
+      stop() {
+        if (this.active) {
+          this.deps.forEach(dep => dep.delete(this));
+          this.deps.clear();
+          this.active = false;
+        }
+      }
+    }
+
+    function track(target, key) {
+      if (!activeEffect) return;
+      let depsMap = targetMap.get(target);
+      if (!depsMap) { depsMap = new Map(); targetMap.set(target, depsMap); }
+      let dep = depsMap.get(key);
+      if (!dep) { dep = new Set(); depsMap.set(key, dep); }
+      if (!dep.has(activeEffect)) { dep.add(activeEffect); activeEffect.deps.add(dep); }
+    }
+
+    function trigger(target, key) {
+      const depsMap = targetMap.get(target);
+      if (!depsMap) return;
+      const effectsToRun = new Set();
+      const add = (dep) => { if (!dep) return; for (const e of dep) { if (e !== activeEffect) effectsToRun.add(e); } };
+      add(depsMap.get(key));
+      for (const effect of effectsToRun) {
+        if (effect.scheduler) effect.scheduler(effect);
+        else effect.run();
+      }
+    }
+
+    const handlers = {
+      get(target, key, receiver) {
+        if (key === rawSymbol) return target;
+        if (key === reactiveFlag) return true;
+        track(target, key);
+        const res = Reflect.get(target, key, receiver);
+        if (!isObject(res)) return res;
+        return reactive(res);
+      },
+      set(target, key, value, receiver) {
+        const oldValue = target[key];
+        const hadKey = hasOwn(target, key);
+        const result = Reflect.set(target, key, value, receiver);
+        if (hadKey ? hasChanged(value, oldValue) : true) {
+          trigger(target, key);
+        }
+        return result;
+      },
+    };
+
+    function reactive(target) {
+      if (!isObject(target)) return target;
+      const existing = proxyMap.get(target);
+      if (existing) return existing;
+      const proxy = new Proxy(target, handlers);
+      proxyMap.set(target, proxy);
+      return proxy;
+    }
+
+    function effect(fn) {
+      const _effect = new ReactiveEffect(fn);
+      _effect.run();
+      return _effect;
+    }
+
+    function computed(getter) {
+      let value;
+      let dirty = true;
+      const _effect = new ReactiveEffect(getter, () => { dirty = true; });
+      return {
+        get value() {
+          if (dirty) { value = _effect.run(); dirty = false; }
+          return value;
+        }
+      };
+    }
+
+    function watch(source, cb) {
+      let oldValue;
+      const _effect = new ReactiveEffect(() => {
+        const val = source();
+        if (oldValue !== undefined) cb(val, oldValue);
+        oldValue = val;
+      });
+      _effect.run();
+    }
+
+    function h(type, props, children) {
+      const key = props && props.key != null ? props.key : null;
+      const cleanProps = props ? Object.assign({}, props) : null;
+      if (cleanProps && 'key' in cleanProps) delete cleanProps.key;
+      return { type, props: cleanProps, children: children != null ? children : null, key, el: null };
+    }
+
+    function render(componentFn, container) {
+      let currentEl = null;
+      const run = () => {
+        const vnode = typeof componentFn === 'function' ? componentFn() : componentFn;
+        const el = createElement(vnode);
+        if (currentEl && currentEl.parentNode === container) {
+          container.replaceChild(el, currentEl);
+        } else {
+          container.innerHTML = '';
+          container.appendChild(el);
+        }
+        currentEl = el;
+      };
+      run();
+      // Set up auto re-render via MutationObserver on targetMap changes
+      // For simplicity, we use a polling approach with effect
+      // The user code should call render() manually or use effect
+      return { rerender: run };
+    }
+
+    function createElement(vnode) {
+      if (vnode == null || typeof vnode === 'boolean') return document.createDocumentFragment();
+      if (typeof vnode === 'string' || typeof vnode === 'number') return document.createTextNode(String(vnode));
+      if (Array.isArray(vnode)) {
+        const frag = document.createDocumentFragment();
+        vnode.forEach(child => { if (child != null && typeof child !== 'boolean') frag.appendChild(createElement(child)); });
+        return frag;
+      }
+
+      const { type, props, children } = vnode;
+      if (typeof type === 'function') {
+        if (type.name && type.name.startsWith('Lyt') && type.render) {
+          // Component pattern
+          const result = type.render(props || {}, {});
+          return createElement(result);
+        }
+        return createElement(type(props || {}));
+      }
+
+      const el = document.createElement(type);
+      vnode.el = el;
+
+      if (props) {
+        for (const key of Object.keys(props)) {
+          const value = props[key];
+          if (key === 'class' || key === 'className') {
+            el.className = value;
+          } else if (key === 'style' && typeof value === 'object') {
+            for (const [k, v] of Object.entries(value)) { el.style[k] = v; }
+          } else if (key.startsWith('on') && typeof value === 'function') {
+            el.addEventListener(key.slice(2).toLowerCase(), value);
+          } else if (key === 'checked' || key === 'disabled' || key === 'value') {
+            el[key] = value;
+          } else {
+            el.setAttribute(key, String(value));
+          }
+        }
+      }
+
+      if (children != null) {
+        if (Array.isArray(children)) {
+          children.forEach(child => {
+            if (child == null || typeof child === 'boolean') return;
+            el.appendChild(createElement(child));
+          });
+        } else if (typeof children === 'object') {
+          el.appendChild(createElement(children));
+        } else {
+          el.textContent = String(children);
+        }
+      }
+
+      return el;
+    }
+
+    // Expose Lyt API
+    window.Lyt = { reactive, effect, computed, watch, h, render };
+
+    // Console intercept
+    const _log = console.log;
+    const _warn = console.warn;
+    const _error = console.error;
+    const _info = console.info;
+
+    function send(type, args) {
+      window.parent.postMessage({ type: 'console', level: type, args: Array.from(args).map(a => {
+        try { return typeof a === 'object' ? JSON.parse(JSON.stringify(a)) : a; }
+        catch { return String(a); }
+      })}, '*');
+    }
+
+    console.log = function() { send('log', arguments); _log.apply(console, arguments); };
+    console.warn = function() { send('warn', arguments); _warn.apply(console, arguments); };
+    console.error = function() { send('error', arguments); _error.apply(console, arguments); };
+    console.info = function() { send('info', arguments); _info.apply(console, arguments); };
+
+    window.onerror = function(msg, url, line, col, err) {
+      send('error', [msg + (line ? ' (line ' + line + ')' : '')]);
+      return true;
+    };
+
+    window.addEventListener('unhandledrejection', function(e) {
+      send('error', ['Unhandled Promise: ' + e.reason]);
+    });
+
+    // Run user code
+    try {
+      ${code.replace(/<\/script>/gi, '<\\/script>')}
+    } catch (err) {
+      send('error', [err.message + (err.stack ? '\\n' + err.stack.split('\\n').slice(0, 3).join('\\n') : '')]);
+    }
+  <\/script>
+</body>
+</html>`;
+
+      previewFrame.srcdoc = iframeHTML;
+    }
+
+    runBtn.addEventListener('click', runCode);
+
+    resetBtn.addEventListener('click', () => {
+      loadExample(exampleSelect.value);
+      runCode();
+    });
+
+    // Keyboard shortcut
+    document.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        runCode();
+      }
+    });
+
+    // Listen for console messages from iframe
+    window.addEventListener('message', (e) => {
+      if (e.data && e.data.type === 'console') {
+        appendConsole(e.data.level, e.data.args);
+      }
+    });
+
+    // ============================================================
+    // Resize Handle
+    // ============================================================
+
+    let isResizing = false;
+    let startX = 0;
+    let startEditorWidth = 0;
+
+    resizeHandle.addEventListener('mousedown', (e) => {
+      isResizing = true;
+      startX = e.clientX;
+      startEditorWidth = editorPanel.offsetWidth;
+      resizeHandle.classList.add('active');
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      if (!isResizing) return;
+      const dx = e.clientX - startX;
+      const mainWidth = editorPanel.parentElement.offsetWidth;
+      const newWidth = Math.max(200, Math.min(mainWidth - 200, startEditorWidth + dx));
+      const pct = (newWidth / mainWidth) * 100;
+      editorPanel.style.width = pct + '%';
+      previewPanel.style.width = (100 - pct) + '%';
+    });
+
+    document.addEventListener('mouseup', () => {
+      if (isResizing) {
+        isResizing = false;
+        resizeHandle.classList.remove('active');
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+      }
+    });
+
+    // ============================================================
+    // Init
+    // ============================================================
+
+    loadSaved();
+    // Auto-run on load
+    setTimeout(runCode, 100);
+  </script>
+</body>
+</html>

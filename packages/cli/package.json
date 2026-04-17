@@ -1,0 +1,47 @@
+{
+  "name": "@lytjs/cli",
+  "version": "3.2.0",
+  "description": "Lyt.js 命令行工具 - 提供项目创建、开发服务器和构建功能",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "default": "./dist/index.mjs"
+    }
+  },
+  "bin": {
+    "lyt": "dist/cli.js"
+  },
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
+  "license": "MIT",
+  "author": "lytjs",
+  "repository": {
+    "type": "git",
+    "url": "https://gitee.com/lytjs/lytjs"
+  },
+  "homepage": "https://gitee.com/lytjs/lytjs",
+  "keywords": [
+    "lyt",
+    "lytjs",
+    "javascript",
+    "framework",
+    "frontend",
+    "vue-like",
+    "lightweight",
+    "zero-dependency",
+    "cli",
+    "scaffold",
+    "dev-server",
+    "build"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "name": "lytjs-playground",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Lyt.js 在线 Playground",
+  "scripts": {
+    "dev": "npx serve .",
+    "build": "echo 'Static site, no build needed'"
+  }
+}

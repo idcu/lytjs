@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lyt.js Playground</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>L</text></svg>" />
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-left">
+        <span class="header-title">Lyt.js Playground</span>
+        <span class="header-subtitle">轻写轻跑，所见即代码</span>
+      </div>
+      <div class="header-right">
+        <div class="shortcut-hint">
+          <span class="kbd">Ctrl</span>
+          <span>+</span>
+          <span class="kbd">Enter</span>
+          <span>\u8FD0\u884C</span>
+        </div>
+        <a class="github-link" href="https://github.com/lytjs/lyt" target="_blank" rel="noopener noreferrer">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+          GitHub
+        </a>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="main-content">
+      <!-- Editor Panel -->
+      <div class="editor-panel" id="editorPanel">
+        <div class="toolbar">
+          <div class="toolbar-left">
+            <span class="panel-label">\u7F16\u8F91\u5668</span>
+            <select class="example-select" id="exampleSelect">
+              <!-- Options populated by JS -->
+            </select>
+          </div>
+          <div class="toolbar-right">
+            <button class="btn btn-run" id="runBtn" title="\u8FD0\u884C\u4EE3\u7801 (Ctrl+Enter)">
+              <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2l10 6-10 6V2z"/></svg>
+              \u8FD0\u884C
+            </button>
+            <button class="btn btn-icon" id="clearBtn" title="\u6E05\u9664\u4EE3\u7801">
+              <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1a7 7 0 100 14A7 7 0 008 1zM6.146 5.146a.5.5 0 01.708 0L8 6.293l1.146-1.147a.5.5 0 11.708.708L8.707 7l1.147 1.146a.5.5 0 01-.708.708L8 7.707 6.854 8.854a.5.5 0 01-.708-.708L7.293 7 6.146 5.854a.5.5 0 010-.708z"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="editor-area">
+          <div class="line-numbers" id="lineNumbers"></div>
+          <textarea
+            class="editor-textarea"
+            id="editorTextarea"
+            spellcheck="false"
+            autocomplete="off"
+            autocorrect="off"
+            autocapitalize="off"
+            placeholder="\u5728\u8FD9\u91CC\u7F16\u5199 Lyt.js \u4EE3\u7801..."
+          ></textarea>
+        </div>
+      </div>
+
+      <!-- Resizable Divider -->
+      <div class="divider" id="divider"></div>
+
+      <!-- Preview Panel -->
+      <div class="preview-panel" id="previewPanel">
+        <div class="toolbar">
+          <div class="toolbar-left">
+            <span class="panel-label">\u9884\u89C8</span>
+          </div>
+          <div class="toolbar-right">
+            <button class="btn btn-icon" id="refreshBtn" title="\u5237\u65B0\u9884\u89C8">
+              <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 1 1 .908-.418A6 6 0 1 1 8 2v1z"/><path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="preview-area">
+          <iframe class="preview-iframe" id="previewIframe" sandbox="allow-scripts allow-same-origin"></iframe>
+        </div>
+        <div class="console-panel-wrapper">
+          <div class="console-toolbar">
+            <div class="console-toolbar-left">
+              <span class="panel-label">\u63A7\u5236\u53F0</span>
+              <span class="console-badge" id="consoleBadge">0</span>
+            </div>
+            <div class="toolbar-right">
+              <button class="btn btn-icon" id="clearConsoleBtn" title="\u6E05\u9664\u63A7\u5236\u53F0">
+                <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1a7 7 0 100 14A7 7 0 008 1zM6.146 5.146a.5.5 0 01.708 0L8 6.293l1.146-1.147a.5.5 0 11.708.708L8.707 7l1.147 1.146a.5.5 0 01-.708.708L8 7.707 6.854 8.854a.5.5 0 01-.708-.708L7.293 7 6.146 5.854a.5.5 0 010-.708z"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="console-output" id="consoleOutput">
+            <div class="console-empty">\u8FD0\u884C\u4EE3\u7801\u540E\u8F93\u51FA\u5C06\u663E\u793A\u5728\u8FD9\u91CC</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Status Bar -->
+    <div class="status-bar">
+      <div class="status-bar-left">
+        <div class="status-item">
+          <span class="status-dot"></span>
+          <span>Lyt.js</span>
+        </div>
+        <div class="status-item" id="statusLines">\u884C 1, \u5217 1</div>
+      </div>
+      <div class="status-bar-right">
+        <div class="status-item">\u7EAF\u539F\u751F\u96F6\u4F9D\u8D56</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lyt.js Runtime (loaded as data for injection into iframe) -->
+  <script data-runtime id="runtimeScript" src="js/lyt-runtime.js"></script>
+
+  <!-- Playground Scripts -->
+  <script src="js/examples.js"></script>
+  <script src="js/editor.js"></script>
+  <script src="js/preview.js"></script>
+
+  <script>
+    ;(function () {
+      'use strict';
+
+      // ============================================================
+      // DOM Elements
+      // ============================================================
+
+      const exampleSelect = document.getElementById('exampleSelect');
+      const runBtn = document.getElementById('runBtn');
+      const clearBtn = document.getElementById('clearBtn');
+      const refreshBtn = document.getElementById('refreshBtn');
+      const clearConsoleBtn = document.getElementById('clearConsoleBtn');
+      const editorTextarea = document.getElementById('editorTextarea');
+      const lineNumbers = document.getElementById('lineNumbers');
+      const previewIframe = document.getElementById('previewIframe');
+      const consoleOutput = document.getElementById('consoleOutput');
+      const consoleBadge = document.getElementById('consoleBadge');
+      const statusLines = document.getElementById('statusLines');
+      const divider = document.getElementById('divider');
+      const editorPanel = document.getElementById('editorPanel');
+      const previewPanel = document.getElementById('previewPanel');
+
+      // ============================================================
+      // Load Runtime Code
+      // ============================================================
+
+      let runtimeCode = '';
+
+      // Fetch the runtime script content for injection
+      fetch('js/lyt-runtime.js')
+        .then(function (res) { return res.text(); })
+        .then(function (code) {
+          runtimeCode = code;
+          // Override the preview manager's runtime getter
+          preview._getRuntimeCode = function () { return runtimeCode; };
+          // Auto-run the initial example
+          runCode();
+        })
+        .catch(function (err) {
+          console.error('Failed to load Lyt.js runtime:', err);
+          consoleOutput.innerHTML = '<div class="console-entry console-error"><span class="console-message">\u52A0\u8F7D Lyt.js \u8FD0\u884C\u65F6\u5931\u8D25: ' + err.message + '</span></div>';
+        });
+
+      // ============================================================
+      // Initialize Example Selector
+      // ============================================================
+
+      EXAMPLES.forEach(function (ex) {
+        const opt = document.createElement('option');
+        opt.value = ex.id;
+        opt.textContent = ex.name;
+        exampleSelect.appendChild(opt);
+      });
+
+      // ============================================================
+      // Initialize Editor
+      // ============================================================
+
+      const editor = new CodeEditor({
+        textarea: editorTextarea,
+        lineNumbers: lineNumbers,
+        debounceDelay: 500,
+        onRun: runCode,
+        onChange: function () {
+          // Hot reload: auto-run after debounce
+          runCode();
+        },
+      });
+
+      // Load last example or default
+      const lastExampleId = CodeEditor.getLastExampleId();
+      if (lastExampleId) {
+        const opt = exampleSelect.querySelector('option[value="' + lastExampleId + '"]');
+        if (opt) {
+          exampleSelect.value = lastExampleId;
+        }
+      }
+      editor.loadExample(exampleSelect.value);
+
+      // ============================================================
+      // Initialize Preview
+      // ============================================================
+
+      const preview = new PreviewManager({
+        iframe: previewIframe,
+        consolePanel: consoleOutput,
+      });
+
+      // Listen for console messages from iframe
+      window.addEventListener('message', function (event) {
+        preview.handleMessage(event);
+        updateConsoleBadge();
+      });
+
+      // ============================================================
+      // Run Code
+      // ============================================================
+
+      function runCode() {
+        const code = editor.getValue();
+        if (!code.trim()) return;
+        preview.run(code);
+        updateConsoleBadge();
+      }
+
+      // ============================================================
+      // Console Badge
+      // ============================================================
+
+      function updateConsoleBadge() {
+        const count = preview.getConsoleEntryCount();
+        consoleBadge.textContent = count;
+        consoleBadge.style.display = count > 0 ? 'inline-flex' : 'none';
+      }
+
+      // ============================================================
+      // Event Handlers
+      // ============================================================
+
+      // Run button
+      runBtn.addEventListener('click', runCode);
+
+      // Refresh button
+      refreshBtn.addEventListener('click', runCode);
+
+      // Clear editor
+      clearBtn.addEventListener('click', function () {
+        editor.setValue('');
+        CodeEditor.clearSaved();
+        preview.clearConsole();
+        updateConsoleBadge();
+        // Clear iframe
+        const doc = previewIframe.contentDocument || previewIframe.contentWindow.document;
+        doc.open();
+        doc.write('<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body></body></html>');
+        doc.close();
+      });
+
+      // Clear console
+      clearConsoleBtn.addEventListener('click', function () {
+        preview.clearConsole();
+        updateConsoleBadge();
+      });
+
+      // Example selector
+      exampleSelect.addEventListener('change', function () {
+        editor.loadExample(this.value);
+        runCode();
+      });
+
+      // Cursor position tracking
+      editorTextarea.addEventListener('click', updateCursorPosition);
+      editorTextarea.addEventListener('keyup', updateCursorPosition);
+
+      function updateCursorPosition() {
+        const val = editorTextarea.value;
+        const pos = editorTextarea.selectionStart;
+        const lines = val.substring(0, pos).split('\n');
+        const line = lines.length;
+        const col = lines[lines.length - 1].length + 1;
+        statusLines.textContent = '\u884C ' + line + ', \u5217 ' + col;
+      }
+
+      // ============================================================
+      // Resizable Divider
+      // ============================================================
+
+      let isDragging = false;
+      let startX = 0;
+      let startEditorWidth = 0;
+
+      divider.addEventListener('mousedown', function (e) {
+        isDragging = true;
+        startX = e.clientX;
+        startEditorWidth = editorPanel.offsetWidth;
+        divider.classList.add('active');
+        document.body.style.cursor = 'col-resize';
+        document.body.style.userSelect = 'none';
+        e.preventDefault();
+      });
+
+      document.addEventListener('mousemove', function (e) {
+        if (!isDragging) return;
+        const dx = e.clientX - startX;
+        const containerWidth = editorPanel.parentElement.offsetWidth;
+        const newWidth = Math.max(250, Math.min(containerWidth - 250, startEditorWidth + dx));
+        const percent = (newWidth / containerWidth) * 100;
+        editorPanel.style.width = percent + '%';
+        previewPanel.style.width = (100 - percent) + '%';
+      });
+
+      document.addEventListener('mouseup', function () {
+        if (!isDragging) return;
+        isDragging = false;
+        divider.classList.remove('active');
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+      });
+
+      // Touch support for divider
+      divider.addEventListener('touchstart', function (e) {
+        isDragging = true;
+        startX = e.touches[0].clientX;
+        startEditorWidth = editorPanel.offsetWidth;
+        divider.classList.add('active');
+        e.preventDefault();
+      }, { passive: false });
+
+      document.addEventListener('touchmove', function (e) {
+        if (!isDragging) return;
+        const dx = e.touches[0].clientX - startX;
+        const containerWidth = editorPanel.parentElement.offsetWidth;
+        const newWidth = Math.max(250, Math.min(containerWidth - 250, startEditorWidth + dx));
+        const percent = (newWidth / containerWidth) * 100;
+        editorPanel.style.width = percent + '%';
+        previewPanel.style.width = (100 - percent) + '%';
+      }, { passive: false });
+
+      document.addEventListener('touchend', function () {
+        if (!isDragging) return;
+        isDragging = false;
+        divider.classList.remove('active');
+      });
+
+      // ============================================================
+      // Initial state
+      // ============================================================
+
+      updateConsoleBadge();
+      updateCursorPosition();
+
+    })();
+  </script>
+</body>
+</html>

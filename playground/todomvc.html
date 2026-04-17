@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lyt.js - TodoMVC</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: #f5f5f5;
+      color: #4d4d4d;
+      min-height: 100vh;
+    }
+
+    .todoapp {
+      max-width: 550px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+
+    /* ---- Header ---- */
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .header h1 {
+      font-size: 60px;
+      font-weight: 200;
+      color: #b83f45;
+      letter-spacing: -2px;
+    }
+
+    .header p {
+      font-size: 12px;
+      color: #999;
+      margin-top: 4px;
+    }
+
+    /* ---- Input ---- */
+    .todo-input {
+      position: relative;
+    }
+
+    .todo-input input {
+      width: 100%;
+      padding: 16px 16px 16px 50px;
+      font-size: 20px;
+      font-weight: 300;
+      border: none;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      outline: none;
+      background: #fff;
+      color: #4d4d4d;
+    }
+
+    .todo-input input::placeholder {
+      color: #ccc;
+      font-style: italic;
+    }
+
+    .todo-input input:focus {
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
+    }
+
+    /* ---- Main ---- */
+    .main {
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      margin-top: 8px;
+      overflow: hidden;
+    }
+
+    /* ---- Todo List ---- */
+    .todo-list {
+      list-style: none;
+    }
+
+    .todo-item {
+      display: flex;
+      align-items: center;
+      padding: 12px 16px;
+      border-bottom: 1px solid #f0f0f0;
+      font-size: 16px;
+      transition: background 0.15s;
+    }
+
+    .todo-item:hover {
+      background: #fafafa;
+    }
+
+    .todo-item:last-child {
+      border-bottom: none;
+    }
+
+    .todo-item.completed .todo-text {
+      text-decoration: line-through;
+      color: #ccc;
+    }
+
+    .todo-checkbox {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      border: 2px solid #ddd;
+      margin-right: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.2s;
+    }
+
+    .todo-checkbox:hover {
+      border-color: #b83f45;
+    }
+
+    .todo-item.completed .todo-checkbox {
+      background: #b83f45;
+      border-color: #b83f45;
+    }
+
+    .todo-item.completed .todo-checkbox::after {
+      content: '';
+      display: block;
+      width: 6px;
+      height: 10px;
+      border: solid #fff;
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg) translate(-1px, -1px);
+    }
+
+    .todo-text {
+      flex: 1;
+      word-break: break-word;
+      line-height: 1.4;
+    }
+
+    .todo-edit-input {
+      flex: 1;
+      padding: 4px 8px;
+      font-size: 16px;
+      border: 1px solid #b83f45;
+      border-radius: 4px;
+      outline: none;
+      font-family: inherit;
+      color: #4d4d4d;
+    }
+
+    .todo-delete {
+      width: 28px;
+      height: 28px;
+      border: none;
+      background: none;
+      color: #cc9a9a;
+      font-size: 22px;
+      cursor: pointer;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: all 0.2s;
+      flex-shrink: 0;
+      margin-left: 8px;
+    }
+
+    .todo-item:hover .todo-delete {
+      opacity: 1;
+    }
+
+    .todo-delete:hover {
+      color: #b83f45;
+      background: #fff0f0;
+    }
+
+    /* ---- Footer ---- */
+    .footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 16px;
+      font-size: 13px;
+      color: #999;
+      border-top: 1px solid #f0f0f0;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .footer-count {
+      white-space: nowrap;
+    }
+
+    .footer-filters {
+      display: flex;
+      gap: 4px;
+    }
+
+    .filter-btn {
+      padding: 4px 10px;
+      border: 1px solid transparent;
+      border-radius: 4px;
+      background: none;
+      color: #999;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .filter-btn:hover {
+      border-color: #ddd;
+    }
+
+    .filter-btn.active {
+      border-color: #b83f45;
+      color: #b83f45;
+    }
+
+    .clear-completed {
+      padding: 4px 10px;
+      border: none;
+      border-radius: 4px;
+      background: none;
+      color: #999;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .clear-completed:hover {
+      color: #b83f45;
+      text-decoration: underline;
+    }
+
+    .clear-completed.hidden {
+      visibility: hidden;
+    }
+
+    /* ---- Empty State ---- */
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: #ccc;
+      font-size: 14px;
+    }
+
+    /* ---- Info ---- */
+    .info {
+      text-align: center;
+      margin-top: 30px;
+      font-size: 12px;
+      color: #bbb;
+    }
+
+    .info a {
+      color: #b83f45;
+      text-decoration: none;
+    }
+
+    .info a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+
+  <script type="module">
+    /**
+     * Lyt.js TodoMVC 示例
+     *
+     * 展示 Lyt.js 的核心功能：
+     * - Store 状态管理
+     * - 响应式数据驱动视图
+     * - 事件绑定与处理
+     * - 过滤与计算属性
+     *
+     * 使用内联的响应式系统和 Store 实现，
+     * 无需任何构建工具即可在浏览器中运行。
+     */
+
+    // ============================================================
+    // 内联响应式系统
+    // ============================================================
+
+    const targetMap = new WeakMap();
+    let activeEffect = null;
+    const effectStack = [];
+    const proxyMap = new WeakMap();
+    const rawSymbol = Symbol('raw');
+
+    function isObject(val) { return val !== null && typeof val === 'object'; }
+    function hasChanged(a, b) { return !Object.is(a, b); }
+    function hasOwn(t, k) { return Object.prototype.hasOwnProperty.call(t, k); }
+
+    class ReactiveEffect {
+      constructor(fn, scheduler) {
+        this.fn = fn;
+        this.scheduler = scheduler;
+        this.deps = new Set();
+        this.active = true;
+      }
+      run() {
+        if (!this.active) return this.fn();
+        if (effectStack.includes(this)) return this.fn();
+        try {
+          effectStack.push(this);
+          activeEffect = this;
+          this.deps.forEach(d => d.delete(this));
+          this.deps.clear();
+          return this.fn();
+        } finally {
+          effectStack.pop();
+          activeEffect = effectStack[effectStack.length - 1] || null;
+        }
+      }
+      stop() {
+        if (this.active) {
+          this.deps.forEach(d => d.delete(this));
+          this.deps.clear();
+          this.active = false;
+        }
+      }
+    }
+
+    function track(target, key) {
+      if (!activeEffect) return;
+      let dm = targetMap.get(target);
+      if (!dm) { dm = new Map(); targetMap.set(target, dm); }
+      let dep = dm.get(key);
+      if (!dep) { dep = new Set(); dm.set(key, dep); }
+      if (!dep.has(activeEffect)) { dep.add(activeEffect); activeEffect.deps.add(dep); }
+    }
+
+    function trigger(target, key, type) {
+      const dm = targetMap.get(target);
+      if (!dm) return;
+      const run = new Set();
+      const add = (d) => { if (!d) return; for (const e of d) { if (e !== activeEffect) run.add(e); } };
+      add(dm.get(key));
+      for (const e of run) {
+        if (e.scheduler) e.scheduler(e);
+        else e.run();
+      }
+    }
+
+    const handlers = {
+      get(t, k, r) {
+        if (k === rawSymbol) return t;
+        track(t, k);
+        const res = Reflect.get(t, k, r);
+        if (!isObject(res)) return res;
+        return reactive(res);
+      },
+      set(t, k, v, r) {
+        const old = t[k];
+        const had = hasOwn(t, k);
+        const result = Reflect.set(t, k, v, r);
+        if (t === r?.[rawSymbol] || t === toRaw(r)) {
+          if (had ? hasChanged(v, old) : true) trigger(t, k, had ? 'set' : 'add');
+        }
+        return result;
+      },
+    };
+
+    function reactive(target) {
+      if (!isObject(target)) return target;
+      const ex = proxyMap.get(target);
+      if (ex) return ex;
+      const p = new Proxy(target, handlers);
+      proxyMap.set(target, p);
+      return p;
+    }
+
+    function toRaw(o) {
+      const r = o && o[rawSymbol];
+      return r ? toRaw(r) : o;
+    }
+
+    function effect(fn) {
+      const e = new ReactiveEffect(fn);
+      e.run();
+      return e;
+    }
+
+    // ============================================================
+    // Store 实现
+    // ============================================================
+
+    function createStore(id, options = {}) {
+      const initialState = typeof options.state === 'function'
+        ? options.state()
+        : options.state || {};
+
+      const state = reactive({ ...initialState });
+
+      const gettersResult = {};
+      if (options.getters) {
+        for (const key of Object.keys(options.getters)) {
+          const fn = options.getters[key];
+          Object.defineProperty(gettersResult, key, {
+            get() { return fn(state); },
+            enumerable: true,
+          });
+        }
+      }
+
+      const actionsResult = {};
+      if (options.actions) {
+        for (const key of Object.keys(options.actions)) {
+          const fn = options.actions[key];
+          actionsResult[key] = function (...args) {
+            return fn.apply({ state, getters: gettersResult }, args);
+          };
+        }
+      }
+
+      return {
+        $id: id,
+        get state() { return state; },
+        get getters() { return gettersResult; },
+        get actions() { return actionsResult; },
+        $reset() {
+          for (const key of Object.keys(initialState)) {
+            state[key] = initialState[key];
+          }
+        },
+        $patch(partial) {
+          for (const key of Object.keys(partial)) {
+            state[key] = partial[key];
+          }
+        },
+      };
+    }
+
+    // ============================================================
+    // Todo Store
+    // ============================================================
+
+    const STORAGE_KEY = 'lyt-todomvc-todos';
+
+    function loadTodos() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        return raw ? JSON.parse(raw) : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function saveTodos(todos) {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(todos));
+      } catch { /* ignore */ }
+    }
+
+    const useTodoStore = createStore('todos', {
+      state: () => ({
+        todos: loadTodos(),
+        filter: 'all', // 'all' | 'active' | 'completed'
+        nextId: loadTodos().length > 0
+          ? Math.max(...loadTodos().map(t => t.id)) + 1
+          : 1,
+        editingId: null,
+      }),
+
+      getters: {
+        filteredTodos(state) {
+          if (state.filter === 'active') return state.todos.filter(t => !t.completed);
+          if (state.filter === 'completed') return state.todos.filter(t => t.completed);
+          return state.todos;
+        },
+        activeCount(state) {
+          return state.todos.filter(t => !t.completed).length;
+        },
+        completedCount(state) {
+          return state.todos.filter(t => t.completed).length;
+        },
+        hasCompleted(state) {
+          return state.todos.some(t => t.completed);
+        },
+        allCompleted(state) {
+          return state.todos.length > 0 && state.todos.every(t => t.completed);
+        },
+      },
+
+      actions: {
+        addTodo(text) {
+          const trimmed = text.trim();
+          if (!trimmed) return;
+          this.state.todos.push({
+            id: this.state.nextId++,
+            text: trimmed,
+            completed: false,
+          });
+          saveTodos(this.state.todos);
+        },
+        removeTodo(id) {
+          const idx = this.state.todos.findIndex(t => t.id === id);
+          if (idx !== -1) {
+            this.state.todos.splice(idx, 1);
+            saveTodos(this.state.todos);
+          }
+        },
+        toggleTodo(id) {
+          const todo = this.state.todos.find(t => t.id === id);
+          if (todo) {
+            todo.completed = !todo.completed;
+            saveTodos(this.state.todos);
+          }
+        },
+        toggleAll() {
+          const allDone = this.getters.allCompleted;
+          for (const todo of this.state.todos) {
+            todo.completed = !allDone;
+          }
+          saveTodos(this.state.todos);
+        },
+        updateTodo(id, text) {
+          const todo = this.state.todos.find(t => t.id === id);
+          if (todo) {
+            const trimmed = text.trim();
+            if (trimmed) {
+              todo.text = trimmed;
+              saveTodos(this.state.todos);
+            } else {
+              this.removeTodo(id);
+            }
+          }
+        },
+        setFilter(filter) {
+          this.state.filter = filter;
+        },
+        clearCompleted() {
+          this.state.todos = this.state.todos.filter(t => !t.completed);
+          saveTodos(this.state.todos);
+        },
+        startEditing(id) {
+          this.state.editingId = id;
+        },
+        stopEditing() {
+          this.state.editingId = null;
+        },
+      },
+    });
+
+    const store = useTodoStore();
+
+    // ============================================================
+    // DOM 渲染
+    // ============================================================
+
+    const container = document.getElementById('app');
+
+    function render() {
+      const { state, getters, actions } = store;
+      const filteredTodos = getters.filteredTodos;
+      const activeCount = getters.activeCount;
+      const completedCount = getters.completedCount;
+      const hasCompleted = getters.hasCompleted;
+      const allCompleted = getters.allCompleted;
+      const isEditing = (id) => state.editingId === id;
+
+      container.innerHTML = '';
+
+      // Header
+      const header = document.createElement('header');
+      header.className = 'header';
+      header.innerHTML = `
+        <h1>todos</h1>
+        <p>Powered by Lyt.js</p>
+      `;
+      container.appendChild(header);
+
+      // Input
+      const inputWrap = document.createElement('div');
+      inputWrap.className = 'todo-input';
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.placeholder = 'What needs to be done?';
+      input.autofocus = true;
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          actions.addTodo(input.value);
+          input.value = '';
+        }
+      });
+      inputWrap.appendChild(input);
+      container.appendChild(inputWrap);
+
+      // Main
+      if (state.todos.length > 0) {
+        const main = document.createElement('section');
+        main.className = 'main';
+
+        // Toggle all
+        const toggleAllLabel = document.createElement('label');
+        toggleAllLabel.className = 'todo-checkbox';
+        toggleAllLabel.style.margin = '12px 16px';
+        toggleAllLabel.style.cursor = 'pointer';
+        if (allCompleted) {
+          toggleAllLabel.style.background = '#b83f45';
+          toggleAllLabel.style.borderColor = '#b83f45';
+          toggleAllLabel.innerHTML = '<span style="display:block;width:6px;height:10px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg) translate(-1px,-1px)"></span>';
+        }
+        toggleAllLabel.addEventListener('click', () => {
+          actions.toggleAll();
+          render();
+        });
+        main.appendChild(toggleAllLabel);
+
+        // Todo list
+        const list = document.createElement('ul');
+        list.className = 'todo-list';
+
+        for (const todo of filteredTodos) {
+          const li = document.createElement('li');
+          li.className = 'todo-item' + (todo.completed ? ' completed' : '');
+
+          // Checkbox
+          const checkbox = document.createElement('div');
+          checkbox.className = 'todo-checkbox';
+          checkbox.addEventListener('click', () => {
+            actions.toggleTodo(todo.id);
+            render();
+          });
+          li.appendChild(checkbox);
+
+          if (isEditing(todo.id)) {
+            // Edit mode
+            const editInput = document.createElement('input');
+            editInput.className = 'todo-edit-input';
+            editInput.type = 'text';
+            editInput.value = todo.text;
+
+            const finishEdit = () => {
+              actions.updateTodo(todo.id, editInput.value);
+              actions.stopEditing();
+              render();
+            };
+
+            editInput.addEventListener('keydown', (e) => {
+              if (e.key === 'Enter') finishEdit();
+              if (e.key === 'Escape') {
+                actions.stopEditing();
+                render();
+              }
+            });
+            editInput.addEventListener('blur', finishEdit);
+
+            li.appendChild(editInput);
+
+            // Focus after appending
+            requestAnimationFrame(() => editInput.focus());
+          } else {
+            // Display mode
+            const text = document.createElement('span');
+            text.className = 'todo-text';
+            text.textContent = todo.text;
+            text.addEventListener('dblclick', () => {
+              actions.startEditing(todo.id);
+              render();
+            });
+            li.appendChild(text);
+          }
+
+          // Delete button
+          const deleteBtn = document.createElement('button');
+          deleteBtn.className = 'todo-delete';
+          deleteBtn.textContent = '\u00D7';
+          deleteBtn.addEventListener('click', () => {
+            actions.removeTodo(todo.id);
+            render();
+          });
+          li.appendChild(deleteBtn);
+
+          list.appendChild(li);
+        }
+
+        main.appendChild(list);
+
+        // Footer
+        const footer = document.createElement('footer');
+        footer.className = 'footer';
+
+        const countSpan = document.createElement('span');
+        countSpan.className = 'footer-count';
+        countSpan.textContent = `${activeCount} item${activeCount !== 1 ? 's' : ''} left`;
+        footer.appendChild(countSpan);
+
+        const filters = document.createElement('div');
+        filters.className = 'footer-filters';
+        for (const f of ['all', 'active', 'completed']) {
+          const btn = document.createElement('button');
+          btn.className = 'filter-btn' + (state.filter === f ? ' active' : '');
+          btn.textContent = f.charAt(0).toUpperCase() + f.slice(1);
+          btn.addEventListener('click', () => {
+            actions.setFilter(f);
+            render();
+          });
+          filters.appendChild(btn);
+        }
+        footer.appendChild(filters);
+
+        const clearBtn = document.createElement('button');
+        clearBtn.className = 'clear-completed' + (hasCompleted ? '' : ' hidden');
+        clearBtn.textContent = 'Clear completed';
+        clearBtn.addEventListener('click', () => {
+          actions.clearCompleted();
+          render();
+        });
+        footer.appendChild(clearBtn);
+
+        main.appendChild(footer);
+        container.appendChild(main);
+      } else if (state.todos.length === 0) {
+        // Empty state
+        const empty = document.createElement('div');
+        empty.className = 'main';
+        empty.innerHTML = '<div class="empty-state">No todos yet. Add one above!</div>';
+        container.appendChild(empty);
+      }
+
+      // Info
+      const info = document.createElement('footer');
+      info.className = 'info';
+      info.innerHTML = 'Double-click to edit a todo &middot; Built with <a href="#">Lyt.js</a>';
+      container.appendChild(info);
+    }
+
+    // 初始渲染
+    render();
+  </script>
+</body>
+</html>

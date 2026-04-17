@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lyt.js SSR 示例</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --border: #334155;
+      --text: #e2e8f0;
+      --text-muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-dim: #0ea5e9;
+      --green: #4ade80;
+      --red: #f87171;
+      --yellow: #fbbf24;
+      --code-bg: #0f172a;
+      --radius: 8px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+      min-height: 100vh;
+    }
+
+    header {
+      background: linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%);
+      padding: 48px 24px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    header::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+
+    header h1 {
+      font-size: 2.5rem;
+      font-weight: 800;
+      color: #fff;
+      position: relative;
+      letter-spacing: -0.5px;
+    }
+
+    header p {
+      font-size: 1.1rem;
+      color: rgba(255, 255, 255, 0.85);
+      margin-top: 12px;
+      position: relative;
+    }
+
+    .badge {
+      display: inline-block;
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(8px);
+      padding: 4px 14px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      color: #fff;
+      margin-top: 16px;
+      position: relative;
+    }
+
+    main {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 40px 24px 80px;
+    }
+
+    section {
+      margin-bottom: 48px;
+    }
+
+    h2 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    h2 .num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      background: var(--accent);
+      color: var(--bg);
+      border-radius: 50%;
+      font-size: 0.9rem;
+      font-weight: 800;
+    }
+
+    p.desc {
+      color: var(--text-muted);
+      margin-bottom: 20px;
+      font-size: 0.95rem;
+    }
+
+    .code-block {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .code-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      background: rgba(0, 0, 0, 0.2);
+      border-bottom: 1px solid var(--border);
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .code-header .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    .code-header .dot.red { background: #ef4444; }
+    .code-header .dot.yellow { background: #eab308; }
+    .code-header .dot.green { background: #22c55e; }
+
+    pre {
+      padding: 20px;
+      overflow-x: auto;
+      font-family: 'Fira Code', 'Cascadia Code', 'JetBrains Mono', 'Consolas', monospace;
+      font-size: 0.85rem;
+      line-height: 1.6;
+      color: var(--text);
+      tab-size: 2;
+    }
+
+    .kw { color: #c084fc; }
+    .fn { color: #60a5fa; }
+    .str { color: #4ade80; }
+    .cm { color: #64748b; font-style: italic; }
+    .num { color: #fb923c; }
+    .op { color: #94a3b8; }
+    .tag { color: #f472b6; }
+    .attr { color: #38bdf8; }
+
+    .output-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      margin-top: 16px;
+    }
+
+    .output-box .label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--green);
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+
+    .output-box code {
+      font-family: 'Fira Code', monospace;
+      font-size: 0.85rem;
+      color: var(--text);
+      word-break: break-all;
+    }
+
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .feature-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      transition: border-color 0.2s;
+    }
+
+    .feature-card:hover {
+      border-color: var(--accent);
+    }
+
+    .feature-card h3 {
+      font-size: 1rem;
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+
+    .feature-card p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .demo-area {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-top: 16px;
+    }
+
+    .demo-area h3 {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .demo-btn {
+      background: var(--accent);
+      color: var(--bg);
+      border: none;
+      padding: 10px 24px;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    .demo-btn:hover { background: var(--accent-dim); }
+    .demo-btn:active { transform: scale(0.97); }
+
+    .demo-result {
+      margin-top: 16px;
+      padding: 16px;
+      background: var(--code-bg);
+      border-radius: 6px;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.85rem;
+      white-space: pre-wrap;
+      word-break: break-all;
+      color: var(--green);
+      min-height: 40px;
+      border: 1px solid var(--border);
+    }
+
+    .demo-result:empty::before {
+      content: '点击上方按钮查看渲染结果...';
+      color: var(--text-muted);
+    }
+
+    footer {
+      text-align: center;
+      padding: 32px 24px;
+      border-top: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Lyt.js SSR</h1>
+  <p>服务端字符串渲染 -- 零依赖，纯原生实现</p>
+  <span class="badge">StringRenderer</span>
+</header>
+
+<main>
+
+  <!-- 概览 -->
+  <section>
+    <h2><span class="num">0</span> 概览</h2>
+    <p class="desc">
+      Lyt.js 的 SSR 方案基于 StringRenderer，将 VNode 树同步序列化为 HTML 字符串。
+      无需真实 DOM 环境，适用于 Node.js 服务端渲染场景。
+    </p>
+    <div class="feature-grid">
+      <div class="feature-card">
+        <h3>renderToString</h3>
+        <p>将 VNode 树同步渲染为完整 HTML 字符串</p>
+      </div>
+      <div class="feature-card">
+        <h3>HTML 转义</h3>
+        <p>自动转义特殊字符，防止 XSS 攻击</p>
+      </div>
+      <div class="feature-card">
+        <h3>Fragment 支持</h3>
+        <p>多根节点组件无需包裹元素</p>
+      </div>
+      <div class="feature-card">
+        <h3>属性序列化</h3>
+        <p>支持 class/style/布尔属性等多种格式</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 1. StringRenderer 基本用法 -->
+  <section>
+    <h2><span class="num">1</span> StringRenderer 基本用法</h2>
+    <p class="desc">
+      StringRenderer 是 SSR 的核心类，提供 createElement、createText、insert 和 renderToString 方法。
+      在服务端环境中，没有真实 DOM，所有操作都基于轻量描述对象。
+    </p>
+    <div class="code-block">
+      <div class="code-header">
+        <span class="dot red"></span>
+        <span class="dot yellow"></span>
+        <span class="dot green"></span>
+        <span>server.js</span>
+      </div>
+      <pre><span class="kw">import</span> { StringRenderer } <span class="kw">from</span> <span class="str">'@lyt/renderer'</span>
+
+<span class="cm">// 创建渲染器实例</span>
+<span class="kw">const</span> renderer = <span class="kw">new</span> <span class="fn">StringRenderer</span>()
+
+<span class="cm">// 创建元素描述对象（非真实 DOM）</span>
+<span class="kw">const</span> parent = renderer.<span class="fn">createElement</span>(<span class="str">'div'</span>)
+<span class="kw">const</span> text = renderer.<span class="fn">createText</span>(<span class="str">'Hello SSR'</span>)
+
+<span class="cm">// 组装节点树</span>
+renderer.<span class="fn">insert</span>(parent, text)
+<span class="cm">// parent.children = [{ type: 'text', value: 'Hello SSR' }]</span></pre>
+    </div>
+  </section>
+
+  <!-- 2. renderToString 渲染 -->
+  <section>
+    <h2><span class="num">2</span> renderToString 渲染</h2>
+    <p class="desc">
+      renderToString 接收一个 VNode，递归遍历整棵树，输出完整的 HTML 字符串。
+      支持嵌套元素、文本内容、属性序列化、自闭合标签和 Fragment。
+    </p>
+    <div class="code-block">
+      <div class="code-header">
+        <span class="dot red"></span>
+        <span class="dot yellow"></span>
+        <span class="dot green"></span>
+        <span>render.js</span>
+      </div>
+      <pre><span class="cm">// 简单元素</span>
+<span class="kw">const</span> vnode1 = { type: <span class="str">'div'</span>, props: <span class="kw">null</span>, children: <span class="str">'Hello'</span>, shapeFlag: <span class="num">9</span> }
+renderer.<span class="fn">renderToString</span>(vnode1)
+<span class="cm">// => '&lt;div&gt;Hello&lt;/div&gt;'</span>
+
+<span class="cm">// 嵌套元素</span>
+<span class="kw">const</span> vnode2 = {
+  type: <span class="str">'ul'</span>, props: { class: <span class="str">'list'</span> },
+  children: [
+    { type: <span class="str">'li'</span>, props: <span class="kw">null</span>, children: <span class="str">'Item 1'</span>, shapeFlag: <span class="num">9</span> },
+    { type: <span class="str">'li'</span>, props: <span class="kw">null</span>, children: <span class="str">'Item 2'</span>, shapeFlag: <span class="num">9</span> },
+  ],
+  shapeFlag: <span class="num">17</span>
+}
+renderer.<span class="fn">renderToString</span>(vnode2)
+<span class="cm">// => '&lt;ul class="list"&gt;&lt;li&gt;Item 1&lt;/li&gt;&lt;li&gt;Item 2&lt;/li&gt;&lt;/ul&gt;'</span>
+
+<span class="cm">// 自闭合标签</span>
+<span class="kw">const</span> vnode3 = { type: <span class="str">'img'</span>, props: { src: <span class="str">'/logo.png'</span> }, shapeFlag: <span class="num">1</span> }
+renderer.<span class="fn">renderToString</span>(vnode3)
+<span class="cm">// => '&lt;img src="/logo.png" /&gt;'</span></pre>
+    </div>
+  </section>
+
+  <!-- 3. HTML 转义（防 XSS） -->
+  <section>
+    <h2><span class="num">3</span> HTML 转义（防 XSS）</h2>
+    <p class="desc">
+      StringRenderer 自动对文本内容和属性值进行 HTML 实体转义，
+      防止用户输入的内容被当作 HTML 解析，确保安全性。
+    </p>
+    <div class="code-block">
+      <div class="code-header">
+        <span class="dot red"></span>
+        <span class="dot yellow"></span>
+        <span class="dot green"></span>
+        <span>escape.js</span>
+      </div>
+      <pre><span class="cm">// 用户输入包含恶意脚本</span>
+<span class="kw">const</span> userInput = <span class="str">'&lt;script&gt;alert("xss")&lt;/script&gt;'</span>
+
+<span class="kw">const</span> vnode = {
+  type: <span class="str">'div'</span>, props: <span class="kw">null</span>,
+  children: userInput,
+  shapeFlag: <span class="num">9</span>
+}
+
+renderer.<span class="fn">renderToString</span>(vnode)
+<span class="cm">// => '&lt;div&gt;&amp;lt;script&amp;gt;alert(&amp;quot;xss&amp;quot;)&amp;lt;/script&amp;gt;&lt;/div&gt;'</span>
+<span class="cm">// 浏览器会显示纯文本，不会执行脚本</span></pre>
+    </div>
+  </section>
+
+  <!-- 4. 交互式演示 -->
+  <section>
+    <h2><span class="num">4</span> 交互式演示</h2>
+    <p class="desc">
+      以下演示内联了 StringRenderer 的简化实现，点击按钮即可在浏览器中体验 SSR 渲染。
+    </p>
+    <div class="demo-area">
+      <h3>SSR 渲染输出</h3>
+      <button class="demo-btn" onclick="runDemo()">渲染页面</button>
+      <div class="demo-result" id="demo-result"></div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  Lyt.js SSR Example &mdash; 纯原生零依赖实现
+</footer>
+
+<script>
+// ============================================================
+//  内联 StringRenderer 简化实现
+// ============================================================
+
+const VOID_TAGS = new Set([
+  'area','base','br','col','embed','hr','img',
+  'input','link','meta','param','source','track','wbr',
+]);
+
+const ESCAPE_MAP = { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' };
+const ESCAPE_RE = /[&<>"']/g;
+
+function escapeHTML(str) {
+  return str.replace(ESCAPE_RE, ch => ESCAPE_MAP[ch]);
+}
+
+function normalizeClass(value) {
+  if (!value) return '';
+  if (typeof value === 'string') return value;
+  if (Array.isArray(value)) return value.map(normalizeClass).filter(Boolean).join(' ');
+  if (typeof value === 'object') {
+    return Object.keys(value).filter(k => value[k]).join(' ');
+  }
+  return String(value);
+}
+
+function normalizeStyle(value) {
+  if (!value) return '';
+  if (typeof value === 'string') return value;
+  if (typeof value === 'object') {
+    return Object.keys(value).filter(k => value[k])
+      .map(k => `${k.replace(/([A-Z])/g, '-$1').toLowerCase()}: ${value[k]}`)
+      .join('; ');
+  }
+  return String(value);
+}
+
+function serializeProp(key, value) {
+  if (key.startsWith('on') || key.startsWith('@')) return '';
+  if (key === 'key' || key === 'ref') return '';
+  if (value === true) return key;
+  if (value === false || value == null) return '';
+  if (key === 'class') return `class="${escapeHTML(normalizeClass(value))}"`;
+  if (key === 'style') return `style="${escapeHTML(normalizeStyle(value))}"`;
+  return `${key}="${escapeHTML(String(value))}"`;
+}
+
+function serializeProps(props) {
+  if (!props) return '';
+  const attrs = [];
+  for (const key in props) {
+    const attr = serializeProp(key, props[key]);
+    if (attr) attrs.push(attr);
+  }
+  return attrs.length ? ' ' + attrs.join(' ') : '';
+}
+
+function renderVNodeToString(vnode) {
+  if (vnode == null) return '';
+  const { type, props, children } = vnode;
+
+  if (typeof type === 'symbol' && String(type) === 'Symbol(Fragment)') {
+    return Array.isArray(children)
+      ? children.map(c => renderVNodeToString(c)).join('')
+      : '';
+  }
+
+  if (typeof type === 'symbol' && String(type).includes('Text')) {
+    return escapeHTML(String(children || ''));
+  }
+
+  if (typeof type === 'string') {
+    const propsStr = serializeProps(props);
+    if (VOID_TAGS.has(type)) return `<${type}${propsStr} />`;
+
+    let childrenStr = '';
+    const sf = vnode.shapeFlag || 0;
+    if (sf & 8) {
+      childrenStr = escapeHTML(String(children || ''));
+    } else if (sf & 16 && Array.isArray(children)) {
+      childrenStr = children.map(c => renderVNodeToString(c)).join('');
+    } else if (typeof children === 'string') {
+      childrenStr = escapeHTML(children);
+    } else if (Array.isArray(children)) {
+      childrenStr = children.map(c => renderVNodeToString(c)).join('');
+    }
+    return `<${type}${propsStr}>${childrenStr}</${type}>`;
+  }
+  return '';
+}
+
+// ============================================================
+//  演示：构建一个完整页面
+// ============================================================
+
+function h(tag, props, children) {
+  let shapeFlag = 1;
+  if (typeof children === 'string') shapeFlag |= 8;
+  else if (Array.isArray(children)) shapeFlag |= 16;
+  return { type: tag, props: props || null, children: children || null, shapeFlag };
+}
+
+function runDemo() {
+  const Fragment = Symbol('Fragment');
+
+  // 构建页面 VNode 树
+  const page = {
+    type: Fragment,
+    children: [
+      h('header', { class: 'hero' }, [
+        h('h1', { class: 'title' }, 'Lyt.js SSR Demo'),
+        h('p', { class: 'subtitle' }, 'This page was rendered by StringRenderer'),
+      ]),
+      h('main', { class: 'content' }, [
+        h('section', { class: 'card' }, [
+          h('h2', null, 'Features'),
+          h('ul', { class: 'feature-list' }, [
+            h('li', null, 'Zero dependencies'),
+            h('li', null, 'XSS protection via HTML escaping'),
+            h('li', null, 'Fragment support'),
+            h('li', null, 'Stream rendering'),
+          ]),
+        ]),
+        h('section', { class: 'card' }, [
+          h('h2', null, 'User Input (Escaped)'),
+          h('p', null, '<script>alert("xss")</script>'),
+        ]),
+        h('img', { src: 'https://via.placeholder.com/600x200?text=SSR+Image', alt: 'SSR Demo Image' }),
+        h('hr', null),
+        h('footer', null, 'Generated at ' + new Date().toISOString()),
+      ]),
+    ],
+    shapeFlag: 16,
+  };
+
+  const html = renderVNodeToString(page);
+  document.getElementById('demo-result').textContent = html;
+}
+</script>
+
+</body>
+</html>
