@@ -273,6 +273,7 @@ export function createRouter(options: RouterOptions): Router {
         // 守卫中止或重定向
         if (err?.message?.startsWith('REDIRECT:')) {
           const redirectPath = err.message.replace('REDIRECT:', '');
+          navigationInProgress = false;  // 先解锁，允许重定向导航
           if (!fromHistory) {
             history.replace(redirectPath);
           }
@@ -292,6 +293,7 @@ export function createRouter(options: RouterOptions): Router {
       } catch (err: any) {
         if (err?.message?.startsWith('REDIRECT:')) {
           const redirectPath = err.message.replace('REDIRECT:', '');
+          navigationInProgress = false;  // 先解锁，允许重定向导航
           if (!fromHistory) {
             history.replace(redirectPath);
           }

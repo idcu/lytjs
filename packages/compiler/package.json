@@ -12,6 +12,30 @@
       "require": "./dist/index.cjs",
       "default": "./dist/index.mjs"
     },
+    "./block-tree": {
+      "types": "./dist/types/block-tree-entry.d.ts",
+      "import": "./dist/block-tree-entry.mjs",
+      "require": "./dist/block-tree-entry.cjs",
+      "default": "./dist/block-tree-entry.mjs"
+    },
+    "./patch-flags": {
+      "types": "./dist/types/patch-flags-entry.d.ts",
+      "import": "./dist/patch-flags-entry.mjs",
+      "require": "./dist/patch-flags-entry.cjs",
+      "default": "./dist/patch-flags-entry.mjs"
+    },
+    "./hoist": {
+      "types": "./dist/types/hoist-entry.d.ts",
+      "import": "./dist/hoist-entry.mjs",
+      "require": "./dist/hoist-entry.cjs",
+      "default": "./dist/hoist-entry.mjs"
+    },
+    "./optimize-output": {
+      "types": "./dist/types/optimize-output-entry.d.ts",
+      "import": "./dist/optimize-output-entry.mjs",
+      "require": "./dist/optimize-output-entry.cjs",
+      "default": "./dist/optimize-output-entry.mjs"
+    },
     "./sfc": {
       "types": "./dist/types/sfc-entry.d.ts",
       "import": "./dist/sfc-entry.mjs",

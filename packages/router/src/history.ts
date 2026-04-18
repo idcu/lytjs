@@ -283,12 +283,13 @@ export function createWebHistory(base: string = '/'): RouterHistory {
     push(path: string, state?: any): void {
       const normalizedPath = normalizePath(path);
       const from = currentLocation;
+      const fullPath = (normalizedBase + normalizedPath).replace(/\/+/g, '/');
 
       // 使用 pushState 推入新状态
       window.history.pushState(
         state || null,
         '',
-        normalizedBase + normalizedPath
+        fullPath
       );
 
       // 更新当前位置
@@ -305,12 +306,13 @@ export function createWebHistory(base: string = '/'): RouterHistory {
     replace(path: string, state?: any): void {
       const normalizedPath = normalizePath(path);
       const from = currentLocation;
+      const fullPath = (normalizedBase + normalizedPath).replace(/\/+/g, '/');
 
       // 使用 replaceState 替换当前状态
       window.history.replaceState(
         state || null,
         '',
-        normalizedBase + normalizedPath
+        fullPath
       );
 
       // 更新当前位置

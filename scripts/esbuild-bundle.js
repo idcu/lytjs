@@ -154,7 +154,6 @@ async function bundlePackage(packageName, report) {
   }
 
   const baseOptions = {
-    entryPoints: [entryFile],
     bundle: true,
     minify: true,
     treeShaking: true,
@@ -171,12 +170,22 @@ async function bundlePackage(packageName, report) {
     legalComments: 'none',
   }
 
+  // 查找所有子路径入口文件 (*-entry.ts)
+  const entryFiles = [entryFile]
+  const entryDir = fs.readdirSync(srcDir)
+  for (const file of entryDir) {
+    if (file.endsWith('-entry.ts')) {
+      entryFiles.push(path.join(srcDir, file))
+    }
+  }
+
   const results = {}
 
-  // ---- ESM 格式 (.mjs) ----
+  // ---- 主入口 (index) ----
   try {
     const esmResult = await esbuild.build({
       ...baseOptions,
+      entryPoints: [entryFile],
       format: 'esm',
       outfile: path.join(distDir, 'index.mjs'),
       metafile: true,
@@ -201,10 +210,11 @@ async function bundlePackage(packageName, report) {
     results.esm = { error: err.message }
   }
 
-  // ---- CJS 格式 (.cjs) ----
+  // ---- 主入口 CJS 格式 (.cjs) ----
   try {
     const cjsResult = await esbuild.build({
       ...baseOptions,
+      entryPoints: [entryFile],
       format: 'cjs',
       outfile: path.join(distDir, 'index.cjs'),
       metafile: true,
@@ -223,6 +233,47 @@ async function bundlePackage(packageName, report) {
   } catch (err) {
     log(`  [ERROR] ${packageName} CJS build failed: ${err.message}`, 'red')
     results.cjs = { error: err.message }
+  }
+
+  // ---- 子路径入口 (*-entry.ts) ----
+  const subEntries = entryFiles.filter(f => f !== entryFile)
+  results.subEntries = {}
+  for (const subEntry of subEntries) {
+    const baseName = path.basename(subEntry, '-entry.ts')
+    const subResults = {}
+
+    // ESM
+    try {
+      await esbuild.build({
+        ...baseOptions,
+        entryPoints: [subEntry],
+        format: 'esm',
+        outfile: path.join(distDir, `${baseName}-entry.mjs`),
+      })
+      const content = fs.readFileSync(path.join(distDir, `${baseName}-entry.mjs`))
+      subResults.esm = { size: content.length, gzip: gzipSize(content) }
+    } catch (err) {
+      subResults.esm = { error: err.message }
+    }
+
+    // CJS
+    try {
+      await esbuild.build({
+        ...baseOptions,
+        entryPoints: [subEntry],
+        format: 'cjs',
+        outfile: path.join(distDir, `${baseName}-entry.cjs`),
+      })
+      const content = fs.readFileSync(path.join(distDir, `${baseName}-entry.cjs`))
+      subResults.cjs = { size: content.length, gzip: gzipSize(content) }
+    } catch (err) {
+      subResults.cjs = { error: err.message }
+    }
+
+    results.subEntries[baseName] = subResults
+    if (report) {
+      log(`  [${packageName}/${baseName}] sub-entry bundled`, 'gray')
+    }
   }
 
   return {

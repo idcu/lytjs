@@ -211,7 +211,7 @@ export function createVNode(
  */
 export function createTextVNode(text: string = ''): VNode {
   return createVNode(
-    Symbol('Text') as any,
+    Symbol.for('Text') as any,
     null,
     text,
   )
@@ -225,7 +225,7 @@ export function createTextVNode(text: string = ''): VNode {
  */
 export function createCommentVNode(text: string = ''): VNode {
   return createVNode(
-    Symbol('Comment') as any,
+    Symbol.for('Comment') as any,
     null,
     text,
   )

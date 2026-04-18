@@ -436,6 +436,7 @@ export function getSequence(arr: number[]): number[] {
 
   // 通过 parent 指针回溯，重建最长递增子序列
   const result: number[] = []
+  if (tails.length === 0) return result
   let current = tails[tails.length - 1]
 
   while (current !== -1) {

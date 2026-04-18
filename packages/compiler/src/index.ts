@@ -66,51 +66,27 @@ export type { HoistResult } from './transform/optimize';
 // ============================================================
 // 静态提升 (Static Hoisting)
 // ============================================================
-
-import { analyzeStatic, isHoistableNode, generateHoistedDecls } from './transform-static-hoist';
-export { analyzeStatic, isHoistableNode, generateHoistedDecls };
-export type { HoistResult as StaticHoistResult } from './transform-static-hoist';
+// 已拆分到子路径 @lytjs/compiler/hoist
+// import { analyzeStatic, isHoistableNode, generateHoistedDecls } from '@lytjs/compiler/hoist'
 
 // ============================================================
 // 补丁标记 (Patch Flags)
 // ============================================================
-
-import { CompilerPatchFlags, getPatchFlag, hasPatchFlag, describePatchFlag } from './patch-flags';
-export { CompilerPatchFlags, getPatchFlag, hasPatchFlag, describePatchFlag };
+// CompilerPatchFlags 枚举保留在主入口（被 optimize-output 内部使用）
+// getPatchFlag / hasPatchFlag / describePatchFlag 已拆分到子路径 @lytjs/compiler/patch-flags
+export { CompilerPatchFlags } from './patch-flags';
 
 // ============================================================
 // 块树 (Block Tree)
 // ============================================================
-
-import {
-  createBlock,
-  createVNode,
-  enterBlock,
-  exitBlock,
-  getCurrentBlock,
-  trackDynamicChild,
-  traverseBlockChildren,
-  countDynamicChildren,
-} from './block-tree';
-export {
-  createBlock,
-  createVNode,
-  enterBlock,
-  exitBlock,
-  getCurrentBlock,
-  trackDynamicChild,
-  traverseBlockChildren,
-  countDynamicChildren,
-};
-export type { Block, VNode } from './block-tree';
+// 已拆分到子路径 @lytjs/compiler/block-tree
+// import { createBlock, createVNode, ... } from '@lytjs/compiler/block-tree'
 
 // ============================================================
 // 优化输出 (Optimize Output)
 // ============================================================
-
-import { optimizeOutput, generateImportDeclarations, getHelperImportName, getAllHelperNames } from './optimize-output';
-export { optimizeOutput, generateImportDeclarations, getHelperImportName, getAllHelperNames };
-export type { OptimizeOutputOptions, OptimizeOutputResult } from './optimize-output';
+// 已拆分到子路径 @lytjs/compiler/optimize-output
+// import { optimizeOutput, ... } from '@lytjs/compiler/optimize-output'
 
 // ============================================================
 // 代码生成

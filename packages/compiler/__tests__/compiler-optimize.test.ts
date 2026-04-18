@@ -25,16 +25,19 @@ import {
   generate,
   compile,
   isStatic,
-  // 静态提升
+  CompilerPatchFlags,
+} from '../src/index'
+import {
   analyzeStatic,
   isHoistableNode,
   generateHoistedDecls,
-  // 补丁标记
-  CompilerPatchFlags,
+} from '../src/hoist-entry'
+import {
   getPatchFlag,
   hasPatchFlag,
   describePatchFlag,
-  // 块树
+} from '../src/patch-flags-entry'
+import {
   createBlock,
   createVNode,
   enterBlock,
@@ -43,13 +46,15 @@ import {
   trackDynamicChild,
   traverseBlockChildren,
   countDynamicChildren,
-  // 优化输出
+} from '../src/block-tree-entry'
+import type { Block, VNode } from '../src/block-tree-entry'
+import {
   optimizeOutput,
   generateImportDeclarations,
   getHelperImportName,
   getAllHelperNames,
-} from '../src/index'
-import type { RootNode, ElementNode, TextNode, ASTNode, Block, VNode } from '../src/index'
+} from '../src/optimize-output-entry'
+import type { RootNode, ElementNode, TextNode, ASTNode } from '../src/index'
 
 // ================================================================
 //  辅助函数

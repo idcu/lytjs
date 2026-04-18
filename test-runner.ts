@@ -143,6 +143,12 @@ import './packages/renderer/__tests__/renderer-edge-cases.test.ts'
 // Core 边界测试
 import './packages/core/__tests__/core-edge-cases.test.ts'
 
+// SSR 渲染器边界测试（直接导入 ssr-renderer 模块）
+import './packages/renderer/__tests__/ssr-renderer-edge-cases.test.ts'
+
+// createApp 集成测试（jsdom）
+import './packages/core/__tests__/create-app-integration.test.ts'
+
 // Router 边界测试
 import './packages/router/__tests__/router-edge-cases.test.ts'
 

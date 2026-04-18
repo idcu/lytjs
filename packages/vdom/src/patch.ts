@@ -73,6 +73,7 @@ export interface PatchDOMOperations extends DOMOperations {
 
 /** 已注册的 Patch DOM 操作 */
 let patchDOMOps: PatchDOMOperations | null = null
+const opsStack: (PatchDOMOperations | null)[] = []
 
 /**
  * 注册 Patch 模块的 DOM 操作
@@ -80,9 +81,20 @@ let patchDOMOps: PatchDOMOperations | null = null
  * @param ops DOM 操作函数集合
  */
 export function registerPatchDOMOperations(ops: PatchDOMOperations): void {
+  opsStack.push(patchDOMOps)
   patchDOMOps = ops
   // 同时注册给 list-diff 模块
   registerDOMOperations(ops)
+}
+
+/**
+ * 恢复上一次注册的 DOM 操作
+ */
+export function restorePatchDOMOperations(): void {
+  patchDOMOps = opsStack.pop() ?? null
+  if (patchDOMOps) {
+    registerDOMOperations(patchDOMOps)
+  }
 }
 
 /**
