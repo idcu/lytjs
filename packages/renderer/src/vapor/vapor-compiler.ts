@@ -313,7 +313,7 @@ function renderASTNode(
     const expression = node.expression || ''
     // 尝试从上下文中获取值
     const value = resolveExpression(ctx, expression)
-    el.textContent = value != null ? String(value) : ''
+    el.textContent = value !== null && value !== undefined ? String(value) : ''
     return el
   }
 
@@ -436,7 +436,7 @@ function resolveExpression(ctx: Record<string, any>, expression: string): any {
   const parts = trimmed.split('.')
   let current: any = ctx
   for (const part of parts) {
-    if (current == null) return undefined
+    if (current === null || current === undefined) return undefined
     current = current[part]
     if (typeof current === 'function' && !current.prototype && parts.indexOf(part) < parts.length - 1) {
       current = current()

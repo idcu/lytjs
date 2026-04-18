@@ -336,13 +336,13 @@ export function handleApiRequest(
   try {
     if (typeof handler === 'function') {
       // 函数格式：统一处理所有方法
-      return handler(request)
+      return handler(request) as ApiResponse
     }
 
     // 对象格式：按方法区分
     const methodHandler = (handler as ApiMethodHandlers)[request.method]
     if (methodHandler) {
-      return methodHandler(request)
+      return methodHandler(request) as ApiResponse
     }
 
     // 方法不允许

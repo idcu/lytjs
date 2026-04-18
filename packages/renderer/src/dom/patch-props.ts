@@ -85,7 +85,7 @@ export function patchClass(el: any, next: any, prev?: any): void {
  * @returns 规范化后的 class 字符串
  */
 function normalizeClass(value: any): string {
-  if (value == null) {
+  if (value === null || value === undefined) {
     return ''
   }
 
@@ -191,7 +191,7 @@ export function patchStyle(el: any, next: any, prev?: any): void {
       const prevVal = prev[key]
 
       if (nextVal !== prevVal) {
-        el.style[key] = nextVal == null ? '' : nextVal
+        el.style[key] = nextVal === null || nextVal === undefined ? '' : nextVal
       }
     }
   }
@@ -205,7 +205,7 @@ export function patchStyle(el: any, next: any, prev?: any): void {
  */
 function setStyleObject(el: any, style: Record<string, any>): void {
   for (const key in style) {
-    el.style[key] = style[key] == null ? '' : style[key]
+    el.style[key] = style[key] === null || style[key] === undefined ? '' : style[key]
   }
 }
 
@@ -303,7 +303,7 @@ export function patchDOMProp(
   }
 
   // 布尔属性处理
-  if (next === false || next == null) {
+  if (next === false || next === null || next === undefined) {
     el.removeAttribute(key)
     return
   }

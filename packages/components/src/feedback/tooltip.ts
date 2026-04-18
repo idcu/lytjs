@@ -4,7 +4,8 @@
  * Features: 箭头指向, 延迟显示
  */
 
-import { defineComponent } from '@lytjs/component'
+import { defineComponent, onUnmounted } from '@lytjs/component'
+import { reactive } from '@lytjs/reactivity'
 
 export const Tooltip = defineComponent({
   name: 'LytTooltip',

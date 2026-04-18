@@ -8,7 +8,7 @@
  *   - persist: 持久化到 localStorage
  */
 
-import { defineComponent } from '@lytjs/component'
+import { defineComponent, onMounted, onUnmounted } from '@lytjs/component'
 import {
   createTheme,
   applyTheme,
@@ -20,7 +20,7 @@ import {
   defaultDarkTheme,
   defaultLightTheme,
   type ThemeConfig,
-} from './theme.ts'
+} from './theme'
 
 const STORAGE_KEY = 'lyt-theme-dark-mode'
 

@@ -31,7 +31,7 @@ export const Badge = defineComponent({
       validator: (v: string) => ['default', 'primary', 'success', 'warning', 'danger', 'info'].includes(v),
     },
     offset: {
-      type: Array as () => [number, number],
+      type: Array as unknown as () => [number, number],
       default: undefined,
     },
   },

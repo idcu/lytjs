@@ -5,6 +5,7 @@
  */
 
 import { defineComponent } from '@lytjs/component'
+import { reactive, watch } from '@lytjs/reactivity'
 
 export const Pagination = defineComponent({
   name: 'LytPagination',
@@ -97,11 +98,11 @@ export const Pagination = defineComponent({
       if (e.key === 'Enter') handleJumper()
     }
 
-    watch(() => props.currentPage, (val) => {
+    watch(() => props.currentPage, (val: any) => {
       state.current = val
     })
 
-    watch(() => props.pageSize, (val) => {
+    watch(() => props.pageSize, (val: any) => {
       state.size = val
     })
 

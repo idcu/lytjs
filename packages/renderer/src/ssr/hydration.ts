@@ -613,7 +613,7 @@ function hydrateChildren(
       const childVNode = vnode.children[vnodeIndex]
 
       // 跳过 null/undefined VNode
-      if (childVNode == null) {
+      if (childVNode === null || childVNode === undefined) {
         vnodeIndex++
         continue
       }
@@ -1058,7 +1058,7 @@ function hydrateChildEvents(parentEl: HTMLElement, vnode: VNode): void {
 
     for (let i = 0; i < domChildren.length && vnodeIdx < vnode.children.length; i++) {
       const childVNode = vnode.children[vnodeIdx]
-      if (childVNode == null) {
+      if (childVNode === null || childVNode === undefined) {
         vnodeIdx++
         continue
       }
@@ -1403,7 +1403,7 @@ export function createHydrationIsland(
  * @returns HTML 字符串
  */
 function vnodeToString(vnode: VNode): string {
-  if (vnode == null) return ''
+  if (vnode === null || vnode === undefined) return ''
 
   const { type, props, children } = vnode
 
@@ -1488,7 +1488,7 @@ function serializeIslandProps(props: Record<string, any> | null): string {
 
     if (value === true) {
       attrs.push(key)
-    } else if (value === false || value == null) {
+    } else if (value === false || value === null || value === undefined) {
       continue
     } else if (key === 'class' && typeof value === 'string') {
       attrs.push(`class="${islandEscapeHTML(value)}"`)

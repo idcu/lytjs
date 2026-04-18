@@ -5,7 +5,8 @@
  * State: isOpen, selectedValue, searchText
  */
 
-import { defineComponent } from '@lytjs/component'
+import { defineComponent, onMounted, onUnmounted } from '@lytjs/component'
+import { reactive } from '@lytjs/reactivity'
 
 export const Select = defineComponent({
   name: 'LytSelect',
@@ -48,13 +49,13 @@ export const Select = defineComponent({
       if (props.multiple) {
         const selected = (state.selectedValue as Array<string | number>)
         return selected
-          .map((val) => {
-            const opt = props.options.find((o) => o.value === val)
+          .map((val: any) => {
+            const opt = props.options.find((o: any) => o.value === val)
             return opt ? opt.label : val
           })
           .join(', ')
       }
-      const opt = props.options.find((o) => o.value === state.selectedValue)
+      const opt = props.options.find((o: any) => o.value === state.selectedValue)
       return opt ? opt.label : ''
     }
 
@@ -137,7 +138,7 @@ export const Select = defineComponent({
 
     const filteredOptions = () => {
       if (!state.searchText) return props.options
-      return props.options.filter((o) =>
+      return props.options.filter((o: any) =>
         o.label.toLowerCase().includes(state.searchText.toLowerCase())
       )
     }

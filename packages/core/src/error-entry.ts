@@ -15,44 +15,37 @@ export {
   warnOnce,
   setDevMode,
   createMessage,
-} from '../index'
+} from './error-handling'
 
 export type {
   ErrorBoundaryOptions,
-} from '../index'
+} from './error-handling'
 
 export {
   LytErrorCodes as NewLytErrorCodes,
   ErrorCategory,
   getErrorMessage,
   getCategory,
-} from '../index'
+} from './error-codes'
 
 export type {
   ErrorCategoryType,
-} from '../index'
+} from './error-codes'
 
 export {
   LytError as NewLytError,
   createCompilerError,
   createRendererError,
   createComponentError,
-} from '../index'
+} from './lyt-error'
 
 export type {
   SourceLocation,
-} from '../index'
+} from './lyt-error'
 
 export {
   warn as warnUtil,
   warnOnce as warnOnceUtil,
-  error,
   getDevMode,
   resetWarnedMessages,
-} from '../index'
-
-export {
-  formatError,
-  getComponentStack,
-  createErrorOverlay,
-} from '../index'
+} from './error-handling'

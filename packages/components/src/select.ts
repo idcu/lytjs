@@ -5,7 +5,8 @@
  * Features: 选项列表, 搜索过滤, 多选, 占位符, 禁用选项
  */
 
-import { defineComponent } from '@lytjs/component'
+import { defineComponent, onMounted, onUnmounted } from '@lytjs/component'
+import { reactive } from '@lytjs/reactivity'
 
 export interface DropdownOption {
   label: string
@@ -73,8 +74,8 @@ export const Dropdown = defineComponent({
     const displayLabel = () => {
       if (props.multiple) {
         const selected = state.selectedValue as Array<string | number>
-        const labels = selected.map((val) => {
-          const opt = props.options.find((o) => o.value === val)
+        const labels = selected.map((val: any) => {
+          const opt = props.options.find((o: any) => o.value === val)
           return opt ? opt.label : String(val)
         })
         if (props.maxTagCount > 0 && labels.length > props.maxTagCount) {
@@ -82,7 +83,7 @@ export const Dropdown = defineComponent({
         }
         return labels.join(', ')
       }
-      const opt = props.options.find((o) => o.value === state.selectedValue)
+      const opt = props.options.find((o: any) => o.value === state.selectedValue)
       return opt ? opt.label : ''
     }
 
@@ -151,9 +152,9 @@ export const Dropdown = defineComponent({
     const filteredOptions = () => {
       if (!state.searchText) return props.options
       if (props.filterMethod) {
-        return props.options.filter((o) => props.filterMethod(state.searchText, o))
+        return props.options.filter((o: any) => props.filterMethod(state.searchText, o))
       }
-      return props.options.filter((o) =>
+      return props.options.filter((o: any) =>
         o.label.toLowerCase().includes(state.searchText.toLowerCase())
       )
     }

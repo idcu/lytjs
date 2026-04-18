@@ -101,7 +101,7 @@ export interface ComponentOptions {
   /** 组件名称 */
   name?: string;
   /** Props 声明 */
-  props?: string[] | Record<string, PropOptions | PropType | PropType[]>;
+  props?: string[] | Record<string, PropOptions | PropType | PropType[]> | any;
   /** 组件内部状态（响应式数据） */
   state?: () => Record<string, any>;
   /** 计算属性 */
@@ -124,6 +124,8 @@ export interface ComponentOptions {
   slots?: SlotChildren;
   /** 响应式模式：'proxy'（默认，基于 Proxy）或 'signal'（基于 Signal） */
   reactivityMode?: ReactivityMode;
+  /** 组件样式字符串 */
+  styles?: string;
 }
 
 /** 函数组件类型 */
@@ -204,6 +206,8 @@ export interface ComponentDefine {
   options: ComponentOptions;
   /** 标记为组件定义 */
   _isComponentDefine: true;
+  /** 允许挂载静态方法 */
+  [key: string]: any;
 }
 
 // ============================================================

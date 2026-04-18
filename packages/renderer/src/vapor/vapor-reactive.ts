@@ -60,7 +60,7 @@ export function bindText(
 ): BindingCleanup {
   const dispose = effect(() => {
     const value = sig()
-    el.textContent = value == null ? '' : String(value)
+    el.textContent = value === null || value === undefined ? '' : String(value)
   })
   return dispose
 }
@@ -108,7 +108,7 @@ export function bindAttr(
 ): BindingCleanup {
   const dispose = effect(() => {
     const value = sig()
-    if (value == null || value === false) {
+    if (value === null || value === undefined || value === false) {
       el.removeAttribute(attr)
     } else {
       el.setAttribute(attr, value === true ? '' : String(value))

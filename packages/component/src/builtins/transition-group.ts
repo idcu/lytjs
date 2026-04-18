@@ -189,14 +189,14 @@ export const TransitionGroup: ComponentDefine = defineComponent({
     // 标准化子元素为数组
     const rawChildren: any[] = Array.isArray(children)
       ? children
-      : children != null ? [children] : [];
+      : children !== null && children !== undefined ? [children] : [];
 
     // 提取当前子元素的 key 集合
     const newKeys = new Set<string>();
     for (let i = 0; i < rawChildren.length; i++) {
       const child = rawChildren[i];
       if (child && typeof child === 'object') {
-        const key = child.key != null ? String(child.key) : `__tg_${i}`;
+        const key = child.key !== null && child.key !== undefined ? String(child.key) : `__tg_${i}`;
         newKeys.add(key);
       }
     }
@@ -231,7 +231,7 @@ export const TransitionGroup: ComponentDefine = defineComponent({
         return child;
       }
 
-      const key = child.key != null ? String(child.key) : `__tg_${index}`;
+      const key = child.key !== null && child.key !== undefined ? String(child.key) : `__tg_${index}`;
       const isEntering = enteringKeys.has(key);
       const isLeaving = leavingKeys.has(key);
 

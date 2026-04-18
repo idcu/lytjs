@@ -5,7 +5,7 @@
  *   import { createWASMCompiler, tokenize, buildAST, generateRenderCode, createBrowserCompiler } from '@lytjs/compiler/wasm'
  */
 
-export { createWASMCompiler } from '../wasm-compiler'
+export { createWASMCompiler } from './wasm-compiler'
 export type {
   WASMCompiler,
   WASMCompileOptions,
@@ -14,21 +14,21 @@ export type {
   WASMCompileWarning,
   WASMTransformOptions,
   WASMGenerateOptions,
-} from '../wasm-compiler'
+} from './wasm-compiler'
 
-export { tokenize, buildAST, parseInterpolation } from '../wasm-parser'
-export type { Token, TokenLocation, Expression } from '../wasm-parser'
+export { tokenize, buildAST, parseInterpolation } from './wasm-parser'
+export type { Token, TokenLocation, Expression } from './wasm-parser'
 
 export {
   generateRenderCode,
   generateHoistedCode,
   generatePatchFlags,
-} from '../wasm-generator'
-export type { GenerateOptions as WASMGenerateOptionsInternal, HoistedCodeResult } from '../wasm-generator'
+} from './wasm-generator'
+export type { GenerateOptions as WASMGenerateOptionsInternal, HoistedCodeResult } from './wasm-generator'
 
-export { createBrowserCompiler } from '../wasm-playground'
+export { createBrowserCompiler } from './wasm-playground'
 export type {
   BrowserCompiler,
   RenderFunction,
   CompilerStats,
-} from '../wasm-playground'
+} from './wasm-playground'

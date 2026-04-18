@@ -126,7 +126,7 @@ export function applyLayout(page: PageModule, layout: LayoutModule): ComponentOp
       if (typeof pageComponent.render === 'function') {
         pageContent = pageComponent.render({}, ctx)
       } else if (typeof pageComponent === 'function') {
-        pageContent = pageComponent({}, ctx)
+        pageContent = (pageComponent as any)({}, ctx)
       } else {
         pageContent = null
       }
@@ -140,7 +140,7 @@ export function applyLayout(page: PageModule, layout: LayoutModule): ComponentOp
       if (typeof layoutComponent.render === 'function') {
         return layoutComponent.render({}, { ...ctx, slots })
       } else if (typeof layoutComponent === 'function') {
-        return layoutComponent({}, { ...ctx, slots })
+        return (layoutComponent as any)({}, { ...ctx, slots })
       }
 
       return pageContent

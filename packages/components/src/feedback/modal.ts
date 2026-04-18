@@ -5,7 +5,8 @@
  * Methods: open(), close()
  */
 
-import { defineComponent } from '@lytjs/component'
+import { defineComponent, onMounted, onUnmounted } from '@lytjs/component'
+import { reactive, watch } from '@lytjs/reactivity'
 
 export const Modal = defineComponent({
   name: 'LytModal',
@@ -90,7 +91,7 @@ export const Modal = defineComponent({
       }
     }
 
-    watch(() => props.visible, (val) => {
+    watch(() => props.visible, (val: any) => {
       if (val) open()
       else close()
     })

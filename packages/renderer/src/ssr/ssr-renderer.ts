@@ -203,7 +203,7 @@ export function serializeProp(key: string, value: any): string {
   }
 
   // 值为 false 或 null/undefined，不输出
-  if (value === false || value == null) {
+  if (value === false || value === null || value === undefined) {
     return ''
   }
 
@@ -464,7 +464,7 @@ export class StringRenderer {
  */
 function renderVNodeToString(vnode: VNode): string {
   // null 或 undefined 节点
-  if (vnode == null) {
+  if (vnode === null || vnode === undefined) {
     return ''
   }
 
@@ -586,13 +586,13 @@ function renderSlotsToString(slots: Record<string, any>): string {
       const slotContent = slotFn()
       if (Array.isArray(slotContent)) {
         parts.push(slotContent.map(vnode => renderVNodeToString(vnode as VNode)).join(''))
-      } else if (slotContent != null) {
+      } else if (slotContent !== null && slotContent !== undefined) {
         parts.push(renderVNodeToString(slotContent as VNode))
       }
     } else if (Array.isArray(slotFn)) {
       // 插槽已经是 VNode 数组
       parts.push(slotFn.map(vnode => renderVNodeToString(vnode as VNode)).join(''))
-    } else if (slotFn != null) {
+    } else if (slotFn !== null && slotFn !== undefined) {
       // 插槽是单个 VNode
       parts.push(renderVNodeToString(slotFn as VNode))
     }
@@ -748,7 +748,7 @@ function renderIslandToString(vnode: VNode, component: any): string {
  */
 async function* renderVNodeToStream(vnode: VNode): AsyncGenerator<string> {
   // null 或 undefined 节点
-  if (vnode == null) {
+  if (vnode === null || vnode === undefined) {
     return
   }
 
@@ -956,7 +956,7 @@ async function* createStreamGenerator(
   vnode: VNode,
   idPrefix: string,
 ): AsyncGenerator<string> {
-  if (vnode == null) {
+  if (vnode === null || vnode === undefined) {
     return
   }
 
@@ -1125,7 +1125,7 @@ async function* renderSuspenseBoundary(
       const slotResult = (children as any).default()
       if (Array.isArray(slotResult)) {
         childVNodes = slotResult
-      } else if (slotResult != null) {
+      } else if (slotResult !== null && slotResult !== undefined) {
         childVNodes = [slotResult]
       }
     }
@@ -1136,7 +1136,7 @@ async function* renderSuspenseBoundary(
 
   function collectAsyncPromises(vnodes: VNode[]) {
     for (const child of vnodes) {
-      if (child == null) continue
+      if (child === null || child === undefined) continue
       const childType = child.type as any
       if (childType && (childType._isAsyncComponent || childType.__asyncSetup || child.__asyncSetup)) {
         const promise = child.__asyncPromise || childType.__asyncPromise

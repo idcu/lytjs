@@ -119,6 +119,36 @@ import './packages/store/__tests__/store-edge-cases.test.ts'
 // Reactivity 边界测试
 import './packages/reactivity/__tests__/reactivity-edge-cases.test.ts'
 
+// Compiler 边界测试
+import './packages/compiler/__tests__/compiler-edge-cases.test.ts'
+
+// VDOM 边界测试
+import './packages/vdom/__tests__/vdom-edge-cases.test.ts'
+
+// Component 边界测试
+import './packages/component/__tests__/component-edge-cases.test.ts'
+
+// DevTools 边界测试
+import './packages/devtools/__tests__/devtools-edge-cases.test.ts'
+
+// LytX 边界测试
+import './packages/lytx/__tests__/lytx-edge-cases.test.ts'
+
+// Plugins 边界测试
+import './packages/plugins/__tests__/plugins-edge-cases.test.ts'
+
+// Renderer 边界测试
+import './packages/renderer/__tests__/renderer-edge-cases.test.ts'
+
+// Core 边界测试
+import './packages/core/__tests__/core-edge-cases.test.ts'
+
+// Router 边界测试
+import './packages/router/__tests__/router-edge-cases.test.ts'
+
+// CLI 边界测试
+import './packages/cli/__tests__/cli-edge-cases.test.ts'
+
 // ================================================================
 //  统一运行所有测试
 // ================================================================

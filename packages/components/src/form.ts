@@ -6,6 +6,7 @@
  */
 
 import { defineComponent } from '@lytjs/component'
+import { reactive } from '@lytjs/reactivity'
 
 /** 验证规则定义 */
 export interface FormRule {
@@ -113,7 +114,7 @@ export const Form = defineComponent({
         // 自定义验证
         if (rule.validator) {
           let errorMsg: string | null = null
-          rule.validator(value, rule, (error) => {
+          rule.validator(value, rule, (error: any) => {
             errorMsg = error || null
           })
           if (errorMsg) return errorMsg

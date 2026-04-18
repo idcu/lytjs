@@ -210,11 +210,11 @@ export const Suspense: ComponentDefine = defineComponent({
     const children = slots.default ? slots.default() : null;
     const rawChildren: any[] = Array.isArray(children)
       ? children
-      : children != null ? [children] : [];
+      : children !== null && children !== undefined ? [children] : [];
 
     // 获取 fallback 插槽内容（优先使用 fallback 插槽，其次使用 props.fallback）
     const fallbackSlot = slots.fallback ? slots.fallback() : null;
-    const fallbackContent = fallbackSlot != null
+    const fallbackContent = fallbackSlot !== null && fallbackSlot !== undefined
       ? (Array.isArray(fallbackSlot) ? fallbackSlot[0] : fallbackSlot)
       : props.fallback;
 
@@ -385,7 +385,7 @@ export const Suspense: ComponentDefine = defineComponent({
     }
 
     // 返回 fallback 内容（优先使用 fallback 插槽）
-    if (fallbackContent != null) {
+    if (fallbackContent !== null && fallbackContent !== undefined) {
       return fallbackContent;
     }
 

@@ -241,6 +241,7 @@ export function parseSFC(source: string, filename = 'anonymous.lyt'): SFCDescrip
   let searchSource = cleaned
   STYLE_OPEN_RE.lastIndex = 0
 
+  // eslint-disable-next-line no-constant-condition
   while (true) {
     const styleBlock = extractBlock(searchSource, STYLE_OPEN_RE, '</style>')
     if (!styleBlock) break

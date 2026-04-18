@@ -18,7 +18,8 @@ export type PropType =
   | typeof Boolean
   | typeof Array
   | typeof Object
-  | typeof Function;
+  | typeof Function
+  | (() => any);
 
 /** 单个 prop 的声明选项 */
 export interface PropOptions {

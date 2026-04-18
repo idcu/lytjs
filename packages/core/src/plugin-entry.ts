@@ -12,11 +12,11 @@ export {
   isPluginObject,
   isPluginFunction,
   getPluginName,
-} from '../index'
+} from './plugin'
 
 export type {
   Plugin,
   PluginObject,
   AppAPI,
   AppConfig,
-} from '../index'
+} from './plugin'

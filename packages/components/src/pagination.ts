@@ -6,6 +6,7 @@
  */
 
 import { defineComponent } from '@lytjs/component'
+import { reactive, watch } from '@lytjs/reactivity'
 
 export const Pager = defineComponent({
   name: 'LytPager',
@@ -150,11 +151,11 @@ export const Pager = defineComponent({
       }
     }
 
-    watch(() => props.currentPage, (val) => {
+    watch(() => props.currentPage, (val: any) => {
       state.current = val
     })
 
-    watch(() => props.pageSize, (val) => {
+    watch(() => props.pageSize, (val: any) => {
       state.size = val
     })
 

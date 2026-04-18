@@ -198,7 +198,7 @@ export function createStore<S extends Record<string, any> = Record<string, any>>
   const moduleStates: Record<string, any> = {};
   if (options.modules) {
     for (const moduleName of Object.keys(options.modules)) {
-      const mod = options.modules[moduleName];
+      const mod: any = options.modules[moduleName];
       const modState = typeof mod.state === 'function'
         ? (mod.state as () => Record<string, any>)()
         : mod.state || {};
@@ -235,7 +235,7 @@ export function createStore<S extends Record<string, any> = Record<string, any>>
   // 2.5 初始化模块 getters（带命名空间前缀）
   if (options.modules) {
     for (const moduleName of Object.keys(options.modules)) {
-      const mod = options.modules[moduleName];
+      const mod: any = options.modules[moduleName];
       if (mod.getters) {
         for (const key of Object.keys(mod.getters)) {
           const getterFn = mod.getters[key];
@@ -282,9 +282,9 @@ export function createStore<S extends Record<string, any> = Record<string, any>>
   // 3.5 初始化模块 actions（带命名空间前缀）
   if (options.modules) {
     for (const moduleName of Object.keys(options.modules)) {
-      const mod = options.modules[moduleName];
+      const mod: any = options.modules[moduleName];
       if (mod.actions) {
-        for (const key of Object.keys(mod.actions)) {
+        for (const key of Object.keys(mod.actions as any)) {
           const actionFn = mod.actions[key];
           const namespacedKey = `${moduleName}/${key}`;
 

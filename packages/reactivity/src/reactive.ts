@@ -99,7 +99,7 @@ const arrayInstrumentations: Record<string, Function> = {};
     // 追踪 length 依赖
     track(arr, 'length');
     // 在原始数组上执行方法
-    return arr[method](...args);
+    return (arr as any)[method](...args);
   };
 });
 
@@ -112,7 +112,7 @@ const arrayInstrumentations: Record<string, Function> = {};
   arrayInstrumentations[method] = function(this: any[], ...args: any[]) {
     // 暂停依赖收集，避免在方法内部重复收集
     pauseTracking();
-    const res = Array.prototype[method].apply(this, args);
+    const res = (Array.prototype as any)[method].apply(this, args);
     resetTracking();
     // 手动触发 length 依赖更新
     // 因为数组变异方法可能通过 [[DefineOwnProperty]] 修改 length，
@@ -419,7 +419,7 @@ export function reactive<T extends object>(
   }
 
   // 如果已经是代理对象，直接返回
-  if (target[reactiveFlag]) {
+  if ((target as any)[reactiveFlag]) {
     return target;
   }
 

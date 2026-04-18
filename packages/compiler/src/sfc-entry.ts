@@ -5,5 +5,5 @@
  *   import { parseSFC, compileSFC, scopeCSS } from '@lytjs/compiler/sfc'
  */
 
-export { parseSFC, compileSFC, scopeCSS } from '../index'
-export type { SFCDescriptor, SFCBlock, SFCStyleBlock, SFCCompileResult } from '../index'
+export { parseSFC, compileSFC, scopeCSS } from './sfc'
+export type { SFCDescriptor, SFCBlock, SFCStyleBlock, SFCCompileResult } from './sfc'

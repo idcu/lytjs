@@ -153,7 +153,7 @@ export class DOMRenderer implements LytRenderer {
    * @param ref    参考节点（插入到其前面），如果为 null 则追加到末尾
    */
   insert(parent: any, child: any, ref?: any): void {
-    if (ref != null) {
+    if (ref !== null && ref !== undefined) {
       parent.insertBefore(child, ref)
     } else {
       parent.appendChild(child)
@@ -310,7 +310,7 @@ export class DOMRenderer implements LytRenderer {
    * @param anchor 参考节点
    */
   insertBefore(parent: any, child: any, anchor: any): void {
-    if (anchor != null) {
+    if (anchor !== null && anchor !== undefined) {
       parent.insertBefore(child, anchor)
     } else {
       parent.appendChild(child)

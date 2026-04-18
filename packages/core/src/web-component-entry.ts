@@ -11,9 +11,9 @@ export {
   unregisterElement,
   isBrowser,
   defineCustomElementFromSFC,
-} from '../index'
+} from './web-component'
 
 export type {
   CustomElementOptions,
   ComponentRegistration,
-} from '../index'
+} from './web-component'

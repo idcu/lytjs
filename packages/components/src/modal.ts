@@ -5,7 +5,8 @@
  * Features: 标题, 内容插槽, 底部插槽, 遮罩关闭, 关闭按钮, 淡入淡出动画
  */
 
-import { defineComponent } from '@lytjs/component'
+import { defineComponent, onMounted, onUnmounted } from '@lytjs/component'
+import { reactive, watch } from '@lytjs/reactivity'
 
 export const Dialog = defineComponent({
   name: 'LytDialog',
@@ -108,7 +109,7 @@ export const Dialog = defineComponent({
       }
     }
 
-    watch(() => props.visible, (val) => {
+    watch(() => props.visible, (val: any) => {
       if (val) open()
       else if (state.isVisible) close()
     })

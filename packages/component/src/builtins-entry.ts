@@ -11,7 +11,7 @@ export {
   KeepAlive,
   Suspense,
   defineAsyncComponent,
-} from '../index'
+} from './builtins'
 
 export type {
   TransitionProps,
@@ -19,4 +19,4 @@ export type {
   KeepAliveProps,
   SuspenseProps,
   AsyncComponentOptions,
-} from '../index'
+} from './builtins'

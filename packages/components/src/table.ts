@@ -6,6 +6,7 @@
  */
 
 import { defineComponent } from '@lytjs/component'
+import { reactive } from '@lytjs/reactivity'
 
 export interface DataTableColumn {
   key: string

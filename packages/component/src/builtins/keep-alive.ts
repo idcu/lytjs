@@ -303,7 +303,7 @@ export const KeepAlive: ComponentDefine = defineComponent({
       || '';
 
     // 生成缓存 key（优先使用组件 key，其次使用组件名）
-    const cacheKey = rawChild.key != null
+    const cacheKey = rawChild.key !== null
       ? String(rawChild.key)
       : childName || '__default__';
 

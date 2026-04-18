@@ -3,7 +3,8 @@
  * Props: spinning, size(small/default/large), tip, delay
  */
 
-import { defineComponent } from '@lytjs/component'
+import { defineComponent, onUnmounted } from '@lytjs/component'
+import { reactive, watch } from '@lytjs/reactivity'
 
 export const Spin = defineComponent({
   name: 'LytSpin',
@@ -35,7 +36,7 @@ export const Spin = defineComponent({
 
     let delayTimer: ReturnType<typeof setTimeout> | null = null
 
-    watch(() => props.spinning, (val) => {
+    watch(() => props.spinning, (val: any) => {
       if (delayTimer) clearTimeout(delayTimer)
       if (val) {
         if (props.delay > 0) {

@@ -6,6 +6,7 @@
  */
 
 import { defineComponent } from '@lytjs/component'
+import { reactive, watch } from '@lytjs/reactivity'
 
 export const Collapse = defineComponent({
   name: 'LytCollapse',
@@ -108,7 +109,7 @@ export const Collapse = defineComponent({
     }
 
     /** 监听 activeKey 变化 */
-    watch(() => props.activeKey, (val) => {
+    watch(() => props.activeKey, (val: any) => {
       if (val !== undefined) {
         state.activeKeys = Array.isArray(val) ? [...val] : [val]
       }

@@ -464,7 +464,7 @@ export function createApp(
       // 获取挂载容器
       let el: Element;
       if (typeof container === 'string') {
-        el = document.querySelector(container);
+        el = document.querySelector(container)!;
         if (!el) {
           throw new Error(`[Lyt] 找不到挂载目标: "${container}"`);
         }

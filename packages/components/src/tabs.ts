@@ -6,6 +6,7 @@
  */
 
 import { defineComponent } from '@lytjs/component'
+import { reactive, watch } from '@lytjs/reactivity'
 
 export interface TabNavItem {
   key: string | number
@@ -107,7 +108,7 @@ export const TabNav = defineComponent({
       return item.closable !== undefined ? item.closable : props.closable
     }
 
-    watch(() => props.activeKey, (val) => {
+    watch(() => props.activeKey, (val: any) => {
       state.currentKey = val
       if (props.lazy && val) {
         state.renderedKeys.add(val)

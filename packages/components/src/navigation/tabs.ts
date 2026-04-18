@@ -6,6 +6,7 @@
  */
 
 import { defineComponent } from '@lytjs/component'
+import { reactive, watch, ref } from '@lytjs/reactivity'
 
 export const Tabs = defineComponent({
   name: 'LytTabs',
@@ -65,7 +66,7 @@ export const Tabs = defineComponent({
       emit('close', key)
     }
 
-    watch(() => props.activeKey, (val) => {
+    watch(() => props.activeKey, (val: any) => {
       state.currentKey = val
     })
 

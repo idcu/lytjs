@@ -5,6 +5,7 @@
  */
 
 import { defineComponent } from '@lytjs/component'
+import { reactive } from '@lytjs/reactivity'
 
 export const Switch = defineComponent({
   name: 'LytSwitch',

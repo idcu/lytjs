@@ -143,7 +143,7 @@ const SVG_ATTRS: Record<string, string> = {
 export function setDOMProp(el: any, key: string, value: any): void {
   // class 特殊处理
   if (key === 'class') {
-    el.className = value == null ? '' : String(value)
+    el.className = value === null || value === undefined ? '' : String(value)
     return
   }
 
@@ -151,7 +151,7 @@ export function setDOMProp(el: any, key: string, value: any): void {
   if (key === 'style') {
     if (typeof value === 'string') {
       el.style.cssText = value
-    } else if (value != null && typeof value === 'object') {
+    } else if (value !== null && value !== undefined && typeof value === 'object') {
       // 对象形式：逐项设置
       for (const styleKey in value) {
         el.style[styleKey] = value[styleKey]
@@ -197,16 +197,16 @@ export function setDOMProp(el: any, key: string, value: any): void {
   if (propKey in el) {
     // 使用 property 设置
     try {
-      el[propKey] = value == null ? '' : value
+      el[propKey] = value === null || value === undefined ? '' : value
     } catch {
       // 只读属性会抛出异常，回退到 setAttribute
-      el.setAttribute(key, value == null ? '' : String(value))
+      el.setAttribute(key, value === null || value === undefined ? '' : String(value))
     }
     return
   }
 
   // 默认使用 setAttribute
-  if (value == null || value === false) {
+  if (value === null || value === undefined || value === false) {
     el.removeAttribute(key)
   } else {
     el.setAttribute(key, String(value))
@@ -336,7 +336,7 @@ export function patchDOMProps(
     // 特殊属性单独处理
     if (key === 'class') {
       // class 由 patch-props 模块的 patchClass 处理
-      el.className = newValue == null ? '' : String(newValue)
+      el.className = newValue === null || newValue === undefined ? '' : String(newValue)
     } else if (key === 'style') {
       // style 由 patch-props 模块的 patchStyle 处理
       patchStyleInline(el, newValue, oldValue)

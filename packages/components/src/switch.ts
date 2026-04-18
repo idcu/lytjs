@@ -6,6 +6,7 @@
  */
 
 import { defineComponent } from '@lytjs/component'
+import { reactive, watch } from '@lytjs/reactivity'
 
 export const Toggle = defineComponent({
   name: 'LytToggle',
@@ -93,7 +94,7 @@ export const Toggle = defineComponent({
     })
 
     /** 监听 modelValue */
-    watch(() => props.modelValue, (val) => {
+    watch(() => props.modelValue, (val: any) => {
       if (val !== undefined) {
         state.isChecked = val === props.onValue
       }

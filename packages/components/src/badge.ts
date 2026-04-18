@@ -38,7 +38,7 @@ export const CountBadge = defineComponent({
       validator: (v: string) => ['top-right', 'top-left', 'bottom-right', 'bottom-left'].includes(v),
     },
     offset: {
-      type: Array as () => [number, number],
+      type: Array as unknown as () => [number, number],
       default: undefined,
     },
     status: {

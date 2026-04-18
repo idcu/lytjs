@@ -313,7 +313,7 @@ export function createHMRServer(rootDir: string): HMRServer {
 
       // 处理 WebSocket upgrade
       httpServer.on('upgrade', (req, socket, head) => {
-        wsServer.handleUpgrade(req, socket, head);
+        wsServer.handleUpgrade(req, socket as any, head);
       });
 
       httpServer.listen(port, () => {
@@ -378,7 +378,7 @@ export function createHMREndpoint(server: http.Server): {
   const wsServer = new SimpleWebSocketServer();
 
   server.on('upgrade', (req, socket, head) => {
-    wsServer.handleUpgrade(req, socket, head);
+    wsServer.handleUpgrade(req, socket as any, head);
   });
 
   return {

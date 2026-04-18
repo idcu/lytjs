@@ -255,7 +255,7 @@ export function cloneVNode(
   const ref = extraProps?.ref ?? vnode.ref
 
   // 从 mergedProps 中移除 key 和 ref
-  const { key: _k, ref: _r, ...cleanProps } = mergedProps
+  const { key: _k, ref: _r, ...cleanProps } = (mergedProps as Record<string, any>)
 
   return {
     type: vnode.type,

@@ -5,7 +5,8 @@
  * Features: 位置(上下左右), 延迟, 触发方式(hover/click), 内容插槽
  */
 
-import { defineComponent } from '@lytjs/component'
+import { defineComponent, onMounted, onUnmounted } from '@lytjs/component'
+import { reactive, watch } from '@lytjs/reactivity'
 
 export const Popover = defineComponent({
   name: 'LytPopover',
@@ -105,7 +106,7 @@ export const Popover = defineComponent({
       }
     }
 
-    watch(() => props.visible, (val) => {
+    watch(() => props.visible, (val: any) => {
       if (val !== undefined) {
         state.isVisible = val
       }

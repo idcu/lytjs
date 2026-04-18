@@ -107,7 +107,7 @@ function traverse(value: any, depth: number = Infinity, seen?: Set<any>): any {
   // 如果是普通对象，遍历每个属性
   else {
     for (const key of Object.keys(value)) {
-      traverse(value[key], depth - 1, seen);
+      traverse((value as any)[key], depth - 1, seen);
     }
   }
 
