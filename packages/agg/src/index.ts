@@ -30,9 +30,6 @@ export {
   createCompilerError,
   createRendererError,
   createComponentError,
-  formatError,
-  getComponentStack,
-  createErrorOverlay,
 } from '@lytjs/core/error'
 
 // core Web Component（子路径）
@@ -53,8 +50,11 @@ export { compile, parseHTML, transform, optimize, generate } from '@lytjs/compil
 // compiler SFC（子路径）
 export { parseSFC, compileSFC, scopeCSS } from '@lytjs/compiler/sfc'
 
-// renderer
-export { createRenderer, ssrRenderer, renderToString, renderToStream } from '@lytjs/renderer'
+// renderer（主入口仅含 DOM）
+export { createRenderer } from '@lytjs/renderer'
+
+// renderer SSR（子路径）
+export { ssrRenderer, renderToString, renderToStream } from '@lytjs/renderer/ssr'
 
 // component 核心
 export { defineComponent } from '@lytjs/component'

@@ -37,11 +37,10 @@ jobs:
         run: npx tsx test-runner.ts
 
       - name: Build all packages
-        run: bash scripts/build.sh
+        run: bash scripts/build-all.sh
 
       - name: Generate type declarations
-        run: bash scripts/generate-types.sh
-        continue-on-error: true
+        run: npx tsc --build packages/reactivity packages/compiler packages/vdom packages/renderer packages/component packages/core packages/router packages/store --outDir .
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
@@ -155,7 +154,7 @@ jobs:
 
             ## Installation
             ```bash
-            npm install @lyt/agg@${{ github.ref_name }}
+            npm install @lytjs/lytjs@${{ github.ref_name }}
             ```
           draft: false
           prerelease: ${{ contains(github.ref_name, '-rc') || contains(github.ref_name, '-beta') || contains(github.ref_name, '-alpha') }}

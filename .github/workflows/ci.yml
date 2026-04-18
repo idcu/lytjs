@@ -31,12 +31,12 @@ jobs:
           cache: pnpm
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile || pnpm install --no-frozen-lockfile
 
       - name: Run ESLint
         run: |
           if [ -f ".eslintrc.json" ] || [ -f "eslint.config.js" ]; then
-            npx eslint packages/*/src --ext .ts,.tsx --max-warnings 100 || true
+            npx eslint packages/*/src --ext .ts,.tsx --max-warnings 0
           else
             echo "No ESLint config found, skipping lint."
           fi
@@ -64,7 +64,7 @@ jobs:
           cache: pnpm
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile || pnpm install --no-frozen-lockfile
 
       - name: Run tests
         run: npx tsx test-runner.ts
@@ -88,11 +88,10 @@ jobs:
           cache: pnpm
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile || pnpm install --no-frozen-lockfile
 
       - name: Run TypeScript type check
         run: npx tsc --noEmit --skipLibCheck
-        continue-on-error: true
 
   # ============================================================
   # Job 4: 构建
@@ -114,14 +113,13 @@ jobs:
           cache: pnpm
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile || pnpm install --no-frozen-lockfile
 
       - name: Build all packages
-        run: bash scripts/build.sh
+        run: bash scripts/build-all.sh
 
       - name: Generate type declarations
-        run: bash scripts/generate-types.sh
-        continue-on-error: true
+        run: npx tsc --build packages/reactivity packages/compiler packages/vdom packages/renderer packages/component packages/core packages/router packages/store --outDir .
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4

@@ -490,8 +490,10 @@ export { compile, parseHTML, transform, optimize, generate } from '../compiler/d
 // compiler SFC（子路径）
 export { parseSFC, compileSFC, scopeCSS } from '../compiler/dist/types/sfc-entry';
 export type { SFCDescriptor, SFCBlock, SFCStyleBlock, SFCCompileResult } from '../compiler/dist/types/sfc-entry';
-// renderer
-export { createRenderer, ssrRenderer, renderToString, renderToStream } from '../renderer/dist/types/index';
+// renderer（主入口仅含 DOM）
+export { createRenderer } from '../renderer/dist/types/index';
+// renderer SSR（子路径）
+export { ssrRenderer, renderToString, renderToStream } from '../renderer/dist/types/ssr/index';
 // component 核心
 export { defineComponent } from '../component/dist/types/index';
 // component 内置组件（子路径）

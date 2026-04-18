@@ -146,6 +146,21 @@ import './packages/core/__tests__/core-edge-cases.test.ts'
 // Router 边界测试
 import './packages/router/__tests__/router-edge-cases.test.ts'
 
+// VDOM Patch 集成测试（jsdom）
+import './packages/vdom/__tests__/patch-integration.test.ts'
+
+// VDOM List Diff 集成测试（jsdom）
+import './packages/vdom/__tests__/list-diff-integration.test.ts'
+
+// Router createRouter 集成测试（jsdom）
+import './packages/router/__tests__/create-router-integration.test.ts'
+
+// Renderer DOM 操作集成测试（jsdom）
+import './packages/renderer/__tests__/dom-ops-integration.test.ts'
+
+// Renderer DOMRenderer 集成测试（jsdom）
+import './packages/renderer/__tests__/dom-renderer-integration.test.ts'
+
 // CLI 边界测试
 import './packages/cli/__tests__/cli-edge-cases.test.ts'
 
