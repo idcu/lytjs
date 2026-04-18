@@ -209,54 +209,11 @@ export function compile(template: string, options: CompileOptions = {}): Compile
 // ============================================================
 // SFC 单文件组件支持
 // ============================================================
-
-export { parseSFC, compileSFC, scopeCSS } from './sfc/index.ts';
-export type { SFCDescriptor, SFCBlock, SFCStyleBlock, SFCCompileResult } from './sfc/index.ts';
+// 已拆分到子路径 @lytjs/compiler/sfc
+// import { parseSFC, compileSFC, scopeCSS } from '@lytjs/compiler/sfc'
 
 // ============================================================
 // WASM 模拟层 — 浏览器端编译器
 // ============================================================
-
-import { createWASMCompiler } from './wasm-compiler';
-export { createWASMCompiler };
-export type {
-  WASMCompiler,
-  WASMCompileOptions,
-  WASMCompileResult,
-  WASMCompileError,
-  WASMCompileWarning,
-  WASMTransformOptions,
-  WASMGenerateOptions,
-} from './wasm-compiler';
-
-// ============================================================
-// WASM 模拟层 — 浏览器优化的解析器
-// ============================================================
-
-import { tokenize, buildAST, parseInterpolation } from './wasm-parser';
-export { tokenize, buildAST, parseInterpolation };
-export type { Token, TokenLocation, Expression } from './wasm-parser';
-
-// ============================================================
-// WASM 模拟层 — 浏览器优化的代码生成器
-// ============================================================
-
-import {
-  generateRenderCode,
-  generateHoistedCode,
-  generatePatchFlags,
-} from './wasm-generator';
-export { generateRenderCode, generateHoistedCode, generatePatchFlags };
-export type { GenerateOptions as WASMGenerateOptionsInternal, HoistedCodeResult } from './wasm-generator';
-
-// ============================================================
-// WASM 模拟层 — Playground 集成助手
-// ============================================================
-
-import { createBrowserCompiler } from './wasm-playground';
-export { createBrowserCompiler };
-export type {
-  BrowserCompiler,
-  RenderFunction,
-  CompilerStats,
-} from './wasm-playground';
+// 已拆分到子路径 @lytjs/compiler/wasm
+// import { createWASMCompiler, tokenize, buildAST, generateRenderCode, createBrowserCompiler } from '@lytjs/compiler/wasm'

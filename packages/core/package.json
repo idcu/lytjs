@@ -11,6 +11,24 @@
       "import": "./dist/index.mjs",
       "require": "./dist/index.cjs",
       "default": "./dist/index.mjs"
+    },
+    "./plugin": {
+      "types": "./dist/types/plugin-entry.d.ts",
+      "import": "./dist/plugin-entry.mjs",
+      "require": "./dist/plugin-entry.cjs",
+      "default": "./dist/plugin-entry.mjs"
+    },
+    "./error": {
+      "types": "./dist/types/error-entry.d.ts",
+      "import": "./dist/error-entry.mjs",
+      "require": "./dist/error-entry.cjs",
+      "default": "./dist/error-entry.mjs"
+    },
+    "./web-component": {
+      "types": "./dist/types/web-component-entry.d.ts",
+      "import": "./dist/web-component-entry.mjs",
+      "require": "./dist/web-component-entry.cjs",
+      "default": "./dist/web-component-entry.mjs"
     }
   },
   "sideEffects": false,

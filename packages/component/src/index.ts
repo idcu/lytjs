@@ -113,22 +113,8 @@ export type {
 // ============================================================
 // 内置组件
 // ============================================================
-
-export {
-  Transition,
-  TransitionGroup,
-  KeepAlive,
-  Suspense,
-  defineAsyncComponent,
-} from './builtins';
-
-export type {
-  TransitionProps,
-  TransitionGroupProps,
-  KeepAliveProps,
-  SuspenseProps,
-  AsyncComponentOptions,
-} from './builtins';
+// 已拆分到子路径 @lytjs/component/builtins
+// import { Transition, KeepAlive, Suspense, defineAsyncComponent } from '@lytjs/component/builtins'
 
 // ============================================================
 // Composition API

@@ -107,6 +107,18 @@ import './packages/core/__tests__/web-component.test.ts'
 // 日志插件测试
 import './packages/plugin-logger/__tests__/logger.test.ts'
 
+// DOM 渲染器测试
+import './packages/renderer/__tests__/dom-renderer.test.ts'
+
+// Router History 测试
+import './packages/router/__tests__/history.test.ts'
+
+// Store 边界测试
+import './packages/store/__tests__/store-edge-cases.test.ts'
+
+// Reactivity 边界测试
+import './packages/reactivity/__tests__/reactivity-edge-cases.test.ts'
+
 // ================================================================
 //  统一运行所有测试
 // ================================================================

@@ -35,108 +35,37 @@ export { ShapeFlags } from './h';
 // ============================================================
 // 插件系统
 // ============================================================
-
-export {
-  createProvidesContext,
-  installPlugin,
-  uninstallPlugin,
-  isPluginObject,
-  isPluginFunction,
-  getPluginName,
-} from './plugin';
-
-export type {
-  Plugin,
-  PluginObject,
-  AppAPI,
-  AppConfig,
-} from './plugin';
+// 已拆分到子路径 @lytjs/core/plugin
+// import { installPlugin, uninstallPlugin } from '@lytjs/core/plugin'
 
 // ============================================================
 // 错误处理（原有）
 // ============================================================
-
-export {
-  LytError,
-  LytErrorCodes,
-  ErrorBoundary,
-  handleError,
-  callWithErrorHandling,
-  warn,
-  warnOnce,
-  setDevMode,
-  createMessage,
-} from './error-handling';
-
-export type {
-  ErrorBoundaryOptions,
-} from './error-handling';
+// 已拆分到子路径 @lytjs/core/error
+// import { LytError, ErrorBoundary, handleError } from '@lytjs/core/error'
 
 // ============================================================
 // 错误码系统（新增）
 // ============================================================
-
-export {
-  LytErrorCodes as NewLytErrorCodes,
-  ErrorCategory,
-  getErrorMessage,
-  getCategory,
-} from './error-codes';
-
-export type {
-  ErrorCategoryType,
-} from './error-codes';
+// 已拆分到子路径 @lytjs/core/error
 
 // ============================================================
 // LytError 类和工厂函数（新增）
 // ============================================================
-
-export {
-  LytError as NewLytError,
-  createCompilerError,
-  createRendererError,
-  createComponentError,
-} from './lyt-error';
-
-export type {
-  SourceLocation,
-} from './lyt-error';
+// 已拆分到子路径 @lytjs/core/error
 
 // ============================================================
 // 警告工具（新增）
 // ============================================================
-
-export {
-  warn as warnUtil,
-  warnOnce as warnOnceUtil,
-  error,
-  getDevMode,
-  resetWarnedMessages,
-} from './warn';
+// 已拆分到子路径 @lytjs/core/error
 
 // ============================================================
 // 开发模式错误增强（新增）
 // ============================================================
-
-export {
-  formatError,
-  getComponentStack,
-  createErrorOverlay,
-} from './dev-error';
+// 已拆分到子路径 @lytjs/core/error
 
 // ============================================================
 // Web Component 适配器
 // ============================================================
-
-export {
-  defineCustomElement,
-  registerComponents,
-  unregisterElement,
-  isBrowser,
-  defineCustomElementFromSFC,
-} from './web-component';
-
-export type {
-  CustomElementOptions,
-  ComponentRegistration,
-} from './web-component';
+// 已拆分到子路径 @lytjs/core/web-component
+// import { defineCustomElement, registerComponents } from '@lytjs/core/web-component'

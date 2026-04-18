@@ -11,6 +11,18 @@
       "import": "./dist/index.mjs",
       "require": "./dist/index.cjs",
       "default": "./dist/index.mjs"
+    },
+    "./sfc": {
+      "types": "./dist/types/sfc-entry.d.ts",
+      "import": "./dist/sfc-entry.mjs",
+      "require": "./dist/sfc-entry.cjs",
+      "default": "./dist/sfc-entry.mjs"
+    },
+    "./wasm": {
+      "types": "./dist/types/wasm-entry.d.ts",
+      "import": "./dist/wasm-entry.mjs",
+      "require": "./dist/wasm-entry.cjs",
+      "default": "./dist/wasm-entry.mjs"
     }
   },
   "sideEffects": false,

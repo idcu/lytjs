@@ -1,0 +1,17 @@
+{
+  "template": "node",
+  "container": {
+    "node": "18"
+  },
+  "tasks": [
+    {
+      "name": "install",
+      "command": "npm install"
+    },
+    {
+      "name": "dev",
+      "command": "npm run dev",
+      "runOn": "open"
+    }
+  ]
+}

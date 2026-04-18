@@ -234,6 +234,132 @@ if [ "$TYPES_ONLY" = false ]; then
       done
     fi
 
+    # 为 compiler 包构建子路径入口（sfc/wasm）
+    if [ "$pkg" = "compiler" ]; then
+      COMPILER_SUBS=("sfc-entry" "wasm-entry")
+      COMPILER_SUB_NAMES=("sfc" "wasm")
+      for i in "${!COMPILER_SUBS[@]}"; do
+        sub="${COMPILER_SUBS[$i]}"
+        sub_name="${COMPILER_SUB_NAMES[$i]}"
+        sub_entry="$pkg_dir/src/${sub}.ts"
+        if [ -f "$sub_entry" ]; then
+          log "  Building $pkg/$sub_name..."
+          if "$ESBUILD" "$sub_entry" \
+              --bundle --minify --tree-shaking=true \
+              --platform=browser --target=es2018 \
+              --format=esm \
+              --outfile="$dist_dir/${sub}.mjs" \
+              --external:@lytjs/* \
+              --drop:console --drop:debugger \
+              --legal-comments=none \
+              --log-level=warning 2>&1; then
+            ok "  $pkg/$sub_name: ESM OK"
+          else
+            err "  $pkg/$sub_name: ESM failed"
+          fi
+          if "$ESBUILD" "$sub_entry" \
+              --bundle --minify --tree-shaking=true \
+              --platform=browser --target=es2018 \
+              --format=cjs \
+              --outfile="$dist_dir/${sub}.cjs" \
+              --external:@lytjs/* \
+              --drop:console --drop:debugger \
+              --legal-comments=none \
+              --log-level=warning 2>&1; then
+            ok "  $pkg/$sub_name: CJS OK"
+          else
+            err "  $pkg/$sub_name: CJS failed"
+          fi
+        else
+          warn "  $pkg/$sub_name: no src/${sub}.ts, skipping"
+        fi
+      done
+    fi
+
+    # 为 core 包构建子路径入口（plugin/error/web-component）
+    if [ "$pkg" = "core" ]; then
+      CORE_SUBS=("plugin-entry" "error-entry" "web-component-entry")
+      CORE_SUB_NAMES=("plugin" "error" "web-component")
+      for i in "${!CORE_SUBS[@]}"; do
+        sub="${CORE_SUBS[$i]}"
+        sub_name="${CORE_SUB_NAMES[$i]}"
+        sub_entry="$pkg_dir/src/${sub}.ts"
+        if [ -f "$sub_entry" ]; then
+          log "  Building $pkg/$sub_name..."
+          if "$ESBUILD" "$sub_entry" \
+              --bundle --minify --tree-shaking=true \
+              --platform=browser --target=es2018 \
+              --format=esm \
+              --outfile="$dist_dir/${sub}.mjs" \
+              --external:@lytjs/* \
+              --drop:console --drop:debugger \
+              --legal-comments=none \
+              --log-level=warning 2>&1; then
+            ok "  $pkg/$sub_name: ESM OK"
+          else
+            err "  $pkg/$sub_name: ESM failed"
+          fi
+          if "$ESBUILD" "$sub_entry" \
+              --bundle --minify --tree-shaking=true \
+              --platform=browser --target=es2018 \
+              --format=cjs \
+              --outfile="$dist_dir/${sub}.cjs" \
+              --external:@lytjs/* \
+              --drop:console --drop:debugger \
+              --legal-comments=none \
+              --log-level=warning 2>&1; then
+            ok "  $pkg/$sub_name: CJS OK"
+          else
+            err "  $pkg/$sub_name: CJS failed"
+          fi
+        else
+          warn "  $pkg/$sub_name: no src/${sub}.ts, skipping"
+        fi
+      done
+    fi
+
+    # 为 component 包构建子路径入口（builtins）
+    if [ "$pkg" = "component" ]; then
+      COMPONENT_SUBS=("builtins-entry")
+      COMPONENT_SUB_NAMES=("builtins")
+      for i in "${!COMPONENT_SUBS[@]}"; do
+        sub="${COMPONENT_SUBS[$i]}"
+        sub_name="${COMPONENT_SUB_NAMES[$i]}"
+        sub_entry="$pkg_dir/src/${sub}.ts"
+        if [ -f "$sub_entry" ]; then
+          log "  Building $pkg/$sub_name..."
+          if "$ESBUILD" "$sub_entry" \
+              --bundle --minify --tree-shaking=true \
+              --platform=browser --target=es2018 \
+              --format=esm \
+              --outfile="$dist_dir/${sub}.mjs" \
+              --external:@lytjs/* \
+              --drop:console --drop:debugger \
+              --legal-comments=none \
+              --log-level=warning 2>&1; then
+            ok "  $pkg/$sub_name: ESM OK"
+          else
+            err "  $pkg/$sub_name: ESM failed"
+          fi
+          if "$ESBUILD" "$sub_entry" \
+              --bundle --minify --tree-shaking=true \
+              --platform=browser --target=es2018 \
+              --format=cjs \
+              --outfile="$dist_dir/${sub}.cjs" \
+              --external:@lytjs/* \
+              --drop:console --drop:debugger \
+              --legal-comments=none \
+              --log-level=warning 2>&1; then
+            ok "  $pkg/$sub_name: CJS OK"
+          else
+            err "  $pkg/$sub_name: CJS failed"
+          fi
+        else
+          warn "  $pkg/$sub_name: no src/${sub}.ts, skipping"
+        fi
+      done
+    fi
+
     SUCCESS=$((SUCCESS + 1))
   done
 
@@ -343,15 +469,38 @@ if [ "$BUNDLE_ONLY" = false ]; then
       mkdir -p "$AGG_DIR"
       cat > "$AGG_DIR/index.d.ts" << 'AGG_EOF'
 // Lyt.js Aggregate Entry — Auto-generated
-export { createApp, h, Fragment, defineAsyncComponent } from '../core/dist/types/index';
-export type { App, ComponentOptions, VNode, Plugin, PluginObject, AppAPI, AppConfig } from '../core/dist/types/index';
+// core 核心
+export { createApp, h, Fragment } from '../core/dist/types/index';
+export type { App, ComponentOptions, VNode, DirectiveHooks, DirectiveBinding, Children, Props } from '../core/dist/types/index';
+export { ShapeFlags } from '../core/dist/types/index';
+// core 插件系统（子路径）
+export { createProvidesContext, installPlugin, uninstallPlugin, isPluginObject, isPluginFunction, getPluginName } from '../core/dist/types/plugin-entry';
+export type { Plugin, PluginObject, AppAPI, AppConfig } from '../core/dist/types/plugin-entry';
+// core 错误处理（子路径）
+export { LytError, LytErrorCodes, ErrorBoundary, handleError, callWithErrorHandling, warn, warnOnce, setDevMode, createMessage, ErrorCategory, getErrorMessage, getCategory, createCompilerError, createRendererError, createComponentError, formatError, getComponentStack, createErrorOverlay } from '../core/dist/types/error-entry';
+export type { ErrorBoundaryOptions, ErrorCategoryType, SourceLocation } from '../core/dist/types/error-entry';
+// core Web Component（子路径）
+export { defineCustomElement, registerComponents, unregisterElement, isBrowser, defineCustomElementFromSFC } from '../core/dist/types/web-component-entry';
+export type { CustomElementOptions, ComponentRegistration } from '../core/dist/types/web-component-entry';
+// reactivity
 export { reactive, ref, computed, watch, watchEffect, effect, nextTick, toRaw, isReactive, isRef, shallowReactive, shallowRef, triggerRef, unref, toRef, toRefs, readonly } from '../reactivity/dist/types/index';
 export type { Ref, ComputedRef, WatchOptions, WatchSource } from '../reactivity/dist/types/index';
-export { compile, parseHTML, transform, optimize, generate, parseSFC, compileSFC } from '../compiler/dist/types/index';
+// compiler 核心
+export { compile, parseHTML, transform, optimize, generate } from '../compiler/dist/types/index';
+// compiler SFC（子路径）
+export { parseSFC, compileSFC, scopeCSS } from '../compiler/dist/types/sfc-entry';
+export type { SFCDescriptor, SFCBlock, SFCStyleBlock, SFCCompileResult } from '../compiler/dist/types/sfc-entry';
+// renderer
 export { createRenderer, ssrRenderer, renderToString, renderToStream } from '../renderer/dist/types/index';
-export { defineComponent, defineAsyncComponent as defineAsync, Transition, TransitionGroup, KeepAlive, Suspense } from '../component/dist/types/index';
+// component 核心
+export { defineComponent } from '../component/dist/types/index';
+// component 内置组件（子路径）
+export { defineAsyncComponent, Transition, TransitionGroup, KeepAlive, Suspense } from '../component/dist/types/builtins-entry';
+export type { TransitionProps, TransitionGroupProps, KeepAliveProps, SuspenseProps, AsyncComponentOptions } from '../component/dist/types/builtins-entry';
+// router
 export { createRouter } from '../router/dist/types/index';
 export type { Router, RouterOptions, Route } from '../router/dist/types/index';
+// store
 export { createStore, getStore, getStoreIds } from '../store/dist/types/index';
 export type { StoreOptions, StoreApi } from '../store/dist/types/index';
 AGG_EOF

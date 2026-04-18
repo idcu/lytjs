@@ -1,5 +1,11 @@
 # 快速开始
 
+## 在线体验
+
+不想本地安装？直接在浏览器中体验 Lyt.js：
+
+[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/lytjs/lytjs/tree/main/examples/stackblitz-starter)
+
 ## 安装
 
 ### 使用 CLI 创建项目（推荐）
