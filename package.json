@@ -1,0 +1,52 @@
+{
+  "name": "lyt",
+  "version": "4.0.4",
+  "type": "module",
+  "private": true,
+  "description": "Lyt.js - 轻写轻跑，所见即代码",
+  "license": "MIT",
+  "author": "idcu <idcu@qq.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/idcu/lytjs"
+  },
+  "scripts": {
+    "build": "bash scripts/build-all.sh",
+    "test": "npx tsx test-runner.ts",
+    "test:coverage": "c8 --reporter=text --reporter=html --reporter=lcov npx tsx test-runner.ts",
+    "lint": "eslint packages/*/src/**/*.ts --max-warnings 100",
+    "lint:fix": "eslint packages/*/src/**/*.ts --fix --max-warnings 100",
+    "benchmark": "npx tsx benchmarks/reactivity.bench.js",
+    "clean": "rm -rf dist && rm -rf packages/*/dist",
+    "clean:temp": "rm -f check-import*.ts unified-test-runner.ts test-scaffold.mjs test-package.mjs rebuild-*.mjs && rm -rf test-projects",
+    "publish:dry-run": "bash scripts/publish.sh --dry-run",
+    "publish:all": "bash scripts/publish.sh",
+    "release": "npm run build && npm run test && npm run publish:all",
+    "pack": "node scripts/pack.js",
+    "version:check": "node scripts/version.js current",
+    "version:set": "node scripts/version.js",
+    "version:bump:patch": "node scripts/version.js bump patch",
+    "version:bump:minor": "node scripts/version.js bump minor",
+    "version:bump:major": "node scripts/version.js bump major"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "25.6.0",
+    "@typescript-eslint/parser": "8.58.2",
+    "archiver": "7.0.1",
+    "c8": "11.0.0",
+    "esbuild": "^0.28.0",
+    "eslint": "8.57.1",
+    "get-tsconfig": "4.14.0",
+    "jsdom": "29.0.2",
+    "tsx": "^4.19.0",
+    "typescript": "^6.0.2"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
+  }
+}

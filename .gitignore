@@ -1,0 +1,131 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+.pnpm-debug.log*
+
+# Build output
+dist/
+es/
+lib/
+*.tsbuildinfo
+*.tsbuildinfo.json
+
+# Dev
+.DS_Store
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+*.sublime-project
+*.sublime-workspace
+.project
+.settings/
+.classpath
+
+# OS
+Thumbs.db
+.fseventsd
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Desktop.ini
+
+# Test coverage
+coverage/
+.nyc_output/
+lcov.info
+*.lcov
+
+# Temp
+tmp/
+temp/
+*.tmp
+*.temp
+.cache/
+
+# Benchmark output
+benchmarks/results/
+
+# Roadmap doc (not in repo)
+lytjs-development-roadmap.md
+
+# TypeScript declaration files in src (generated, not source)
+packages/*/src/*.d.ts
+packages/*/src/*.d.ts.map
+packages/*/src/**/*.d.ts
+packages/*/src/**/*.d.ts.map
+
+# Release archives
+dist-releases/
+*.tgz
+*.zip
+VERSION.json
+
+# Lock files (project uses pnpm-lock.yaml)
+package-lock.json
+yarn.lock
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Editor directories and files
+*.sublime-project
+*.sublime-workspace
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OSX
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Linux
+*~
+
+# Misc
+*.bak
+*.backup
+*.orig
+*.rej
+
+# ==================== 新增的忽略规则 ====================
+
+# 临时测试文件
+check-import*.ts
+unified-test-runner.ts
+test-scaffold.mjs
+test-package.mjs
+rebuild-*.mjs
+test-runner-*.ts
+test-import*.ts
+
+# 临时测试项目
+test-projects/
+
+# 临时规划文档（可根据需要选择保留）
+PROJECT_ASSESSMENT.md
+
+
+

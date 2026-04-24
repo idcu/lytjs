@@ -1,0 +1,12 @@
+{
+  "name": "lytjs-starter",
+  "version": "4.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "npx serve .",
+    "build": "echo 'Static project, no build needed'"
+  },
+  "dependencies": {
+    "@lytjs/lytjs": "latest"
+  }
+}

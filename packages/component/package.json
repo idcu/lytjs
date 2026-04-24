@@ -1,0 +1,55 @@
+{
+  "name": "@lytjs/component",
+  "version": "4.0.4",
+  "description": "Lyt.js 组件系统 - defineComponent、生命周期、插槽、KeepAlive、Suspense",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.mjs"
+    },
+    "./builtins": {
+      "types": "./dist/types/builtins-entry.d.ts",
+      "import": "./dist/builtins-entry.mjs",
+      "require": "./dist/builtins-entry.cjs",
+      "default": "./dist/builtins-entry.mjs"
+    }
+  },
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
+  "license": "MIT",
+  "author": "lytjs",
+  "repository": {
+    "type": "git",
+    "url": "https://gitee.com/lytjs/lytjs"
+  },
+  "homepage": "https://gitee.com/lytjs/lytjs",
+  "keywords": [
+    "lyt",
+    "lytjs",
+    "javascript",
+    "framework",
+    "frontend",
+    "vue-like",
+    "lightweight",
+    "zero-dependency",
+    "component",
+    "defineComponent"
+  ],
+  "dependencies": {
+    "@lytjs/common": "workspace:*",
+    "@lytjs/reactivity": "workspace:*"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

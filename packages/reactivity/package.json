@@ -1,0 +1,53 @@
+{
+  "name": "@lytjs/reactivity",
+  "version": "4.0.4",
+  "description": "Lyt.js 响应式系统 - 提供响应式数据、计算属性、侦听器等核心响应式能力",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.mjs"
+    },
+    "./signal": {
+      "types": "./dist/types/signal.d.ts",
+      "import": "./dist/signal.mjs",
+      "require": "./dist/signal.cjs",
+      "default": "./dist/signal.mjs"
+    }
+  },
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
+  "license": "MIT",
+  "author": "lytjs",
+  "repository": {
+    "type": "git",
+    "url": "https://gitee.com/lytjs/lytjs"
+  },
+  "homepage": "https://gitee.com/lytjs/lytjs",
+  "keywords": [
+    "lyt",
+    "lytjs",
+    "javascript",
+    "framework",
+    "frontend",
+    "vue-like",
+    "lightweight",
+    "zero-dependency",
+    "reactivity",
+    "reactive",
+    "ref",
+    "computed",
+    "watch",
+    "effect",
+    "响应式"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}

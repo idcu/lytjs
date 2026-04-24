@@ -1,0 +1,77 @@
+{
+  "name": "@lytjs/core",
+  "version": "4.0.4",
+  "description": "Lyt.js 核心入口 - 整合响应式、编译器、虚拟 DOM、渲染器和组件系统",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.mjs"
+    },
+    "./plugin": {
+      "types": "./dist/types/plugin-entry.d.ts",
+      "import": "./dist/plugin-entry.mjs",
+      "require": "./dist/plugin-entry.cjs",
+      "default": "./dist/plugin-entry.mjs"
+    },
+    "./error": {
+      "types": "./dist/types/error-entry.d.ts",
+      "import": "./dist/error-entry.mjs",
+      "require": "./dist/error-entry.cjs",
+      "default": "./dist/error-entry.mjs"
+    },
+    "./web-component": {
+      "types": "./dist/types/web-component-entry.d.ts",
+      "import": "./dist/web-component-entry.mjs",
+      "require": "./dist/web-component-entry.cjs",
+      "default": "./dist/web-component-entry.mjs"
+    },
+    "./shared": {
+      "types": "./dist/types/shared-entry.d.ts",
+      "import": "./dist/shared-entry.mjs",
+      "require": "./dist/shared-entry.cjs",
+      "default": "./dist/shared-entry.mjs"
+    }
+  },
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
+  "license": "MIT",
+  "author": "lytjs",
+  "repository": {
+    "type": "git",
+    "url": "https://gitee.com/lytjs/lytjs"
+  },
+  "homepage": "https://gitee.com/lytjs/lytjs",
+  "keywords": [
+    "lyt",
+    "lytjs",
+    "javascript",
+    "framework",
+    "frontend",
+    "vue-like",
+    "lightweight",
+    "zero-dependency",
+    "core",
+    "createApp"
+  ],
+  "dependencies": {
+    "@lytjs/common": "workspace:*",
+    "@lytjs/reactivity": "workspace:*",
+    "@lytjs/compiler": "workspace:*",
+    "@lytjs/vdom": "workspace:*",
+    "@lytjs/renderer": "workspace:*",
+    "@lytjs/component": "workspace:*"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

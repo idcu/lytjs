@@ -1,0 +1,13 @@
+{
+  "name": "lytjs-router-app",
+  "version": "4.0.0",
+  "private": true,
+  "description": "Lyt.js Router Application Example",
+  "scripts": {
+    "dev": "npx serve . -p 3000",
+    "build": "echo 'Static project, no build needed'"
+  },
+  "dependencies": {
+    "@lytjs/lytjs": "latest"
+  }
+}

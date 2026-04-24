@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lyt.js Router App</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      padding: 2rem;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      color: #333;
+    }
+    .container { max-width: 800px; margin: 0 auto; }
+    h1 { color: white; margin-bottom: 1.5rem; text-align: center; text-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+    .app {
+      background: white;
+      border-radius: 12px;
+      padding: 2rem;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    }
+    .nav {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid #e0e0e0;
+      flex-wrap: wrap;
+    }
+    .nav a {
+      padding: 0.75rem 1.25rem;
+      text-decoration: none;
+      color: #666;
+      border-radius: 8px;
+      transition: all 0.2s;
+      font-weight: 500;
+    }
+    .nav a:hover {
+      background: #f0f0f0;
+      color: #333;
+    }
+    .nav a.active {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+    .page-content { min-height: 200px; }
+    .page-title {
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+      color: #333;
+    }
+    .page-text { color: #666; line-height: 1.8; margin-bottom: 1rem; }
+    .user-list { list-style: none; }
+    .user-list li {
+      padding: 1rem;
+      margin-bottom: 0.5rem;
+      background: #f5f5f5;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .user-list li:hover { background: #e8e8e8; }
+    .user-detail {
+      background: #f9f9f9;
+      padding: 1.5rem;
+      border-radius: 8px;
+    }
+    .user-detail h3 { margin-bottom: 0.5rem; }
+    .back-btn {
+      display: inline-block;
+      margin-top: 1rem;
+      padding: 0.5rem 1rem;
+      background: #667eea;
+      color: white;
+      text-decoration: none;
+      border-radius: 6px;
+      font-size: 0.9rem;
+    }
+    .back-btn:hover { background: #5568d3; }
+    .counter {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin: 1rem 0;
+    }
+    .counter button {
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+      border: none;
+      border-radius: 6px;
+      background: #667eea;
+      color: white;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .counter button:hover { background: #5568d3; }
+    .counter span {
+      font-size: 1.25rem;
+      font-weight: bold;
+      min-width: 60px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔀 Router App</h1>
+    <div id="app"></div>
+  </div>
+  
+  <script type="module">
+    import { createApp, ref, computed } from '@lytjs/core'
+    import { createRouter, createWebHashHistory } from '@lytjs/router'
+
+    // 首页组件
+    const HomePage = {
+      setup() {
+        const count = ref(0)
+        const doubleCount = computed(() => count.value * 2)
+        return { count, doubleCount }
+      },
+      template: `
+        <div>
+          <h2 class="page-title">🏠 首页</h2>
+          <p class="page-text">欢迎使用 Lyt.js 路由示例应用！</p>
+          <div class="counter">
+            <button @click="count--">-</button>
+            <span>{{ count }}</span>
+            <button @click="count++">+</button>
+          </div>
+          <p class="page-text">双倍计数: {{ doubleCount }}</p>
+        </div>
+      `
+    }
+
+    // 关于页组件
+    const AboutPage = {
+      template: `
+        <div>
+          <h2 class="page-title">📖 关于</h2>
+          <p class="page-text">这是一个使用 Lyt.js 构建的路由示例应用。</p>
+          <p class="page-text">Lyt.js 是一个轻量级的前端框架，包含以下核心功能：</p>
+          <ul style="list-style: disc; margin-left: 1.5rem; color: #666;">
+            <li>响应式系统</li>
+            <li>虚拟 DOM 和渲染器</li>
+            <li>组件系统</li>
+            <li>路由</li>
+            <li>状态管理</li>
+          </ul>
+        </div>
+      `
+    }
+
+    // 用户列表页
+    const UsersPage = {
+      setup() {
+        const users = ref([
+          { id: 1, name: '张三', email: 'zhangsan@example.com' },
+          { id: 2, name: '李四', email: 'lisi@example.com' },
+          { id: 3, name: '王五', email: 'wangwu@example.com' }
+        ])
+        const router = useRouter()
+        return { users, router }
+      },
+      template: `
+        <div>
+          <h2 class="page-title">👥 用户列表</h2>
+          <ul class="user-list">
+            <li v-for="user in users" :key="user.id" @click="router.push('/users/' + user.id)">
+              {{ user.name }} - {{ user.email }}
+            </li>
+          </ul>
+        </div>
+      `
+    }
+
+    // 用户详情页
+    const UserDetailPage = {
+      setup() {
+        const route = useRoute()
+        const router = useRouter()
+        const user = ref(null)
+        const users = {
+          1: { id: 1, name: '张三', email: 'zhangsan@example.com', bio: '前端开发工程师' },
+          2: { id: 2, name: '李四', email: 'lisi@example.com', bio: '后端开发工程师' },
+          3: { id: 3, name: '王五', email: 'wangwu@example.com', bio: '全栈开发工程师' }
+        }
+        user.value = users[route.params.id]
+        return { user, router }
+      },
+      template: `
+        <div>
+          <h2 class="page-title">👤 用户详情</h2>
+          <div v-if="user" class="user-detail">
+            <h3>{{ user.name }}</h3>
+            <p class="page-text">邮箱: {{ user.email }}</p>
+            <p class="page-text">简介: {{ user.bio }}</p>
+          </div>
+          <div v-else>
+            <p class="page-text">用户不存在</p>
+          </div>
+          <a href="#/users" class="back-btn">← 返回用户列表</a>
+        </div>
+      `
+    }
+
+    // 404页面
+    const NotFoundPage = {
+      template: `
+        <div>
+          <h2 class="page-title">❌ 404</h2>
+          <p class="page-text">抱歉，您访问的页面不存在。</p>
+          <a href="#/" class="back-btn">← 返回首页</a>
+        </div>
+      `
+    }
+
+    // 路由配置
+    const routes = [
+      { path: '/', component: HomePage },
+      { path: '/about', component: AboutPage },
+      { path: '/users', component: UsersPage },
+      { path: '/users/:id', component: UserDetailPage },
+      { path: '/:pathMatch(.*)*', component: NotFoundPage }
+    ]
+
+    const router = createRouter({
+      history: createWebHashHistory(),
+      routes
+    })
+
+    // 根组件
+    const App = {
+      setup() {
+        const route = useRoute()
+        return { route }
+      },
+      template: `
+        <div class="app">
+          <nav class="nav">
+            <a href="#/" :class="{ active: route.path === '/' }">首页</a>
+            <a href="#/about" :class="{ active: route.path === '/about' }">关于</a>
+            <a href="#/users" :class="{ active: route.path === '/users' }">用户</a>
+          </nav>
+          <div class="page-content">
+            <router-view />
+          </div>
+        </div>
+      `
+    }
+
+    const app = createApp(App)
+    app.use(router)
+    app.mount('#app')
+  </script>
+</body>
+</html>

@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lyt.js Todo App</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+      padding: 2rem; 
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      color: #333;
+    }
+    .container { max-width: 600px; margin: 0 auto; }
+    h1 { color: white; margin-bottom: 1.5rem; text-align: center; text-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+    .todo-app { 
+      background: white; 
+      border-radius: 12px; 
+      padding: 2rem; 
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2); 
+    }
+    .input-group { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; }
+    .input-group input {
+      flex: 1;
+      padding: 0.75rem 1rem;
+      font-size: 1rem;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      outline: none;
+      transition: border-color 0.3s;
+    }
+    .input-group input:focus {
+      border-color: #667eea;
+    }
+    .input-group button {
+      padding: 0.75rem 1.5rem;
+      font-size: 1rem;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: transform 0.2s;
+    }
+    .input-group button:hover {
+      transform: translateY(-2px);
+    }
+    .filters {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    .filters button {
+      padding: 0.5rem 1rem;
+      font-size: 0.875rem;
+      background: #f0f0f0;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .filters button:hover,
+    .filters button.active {
+      background: #667eea;
+      color: white;
+    }
+    .todo-list { list-style: none; }
+    .todo-item {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem;
+      border-bottom: 1px solid #f0f0f0;
+      transition: background 0.2s;
+    }
+    .todo-item:hover { background: #f9f9f9; }
+    .todo-item:last-child { border-bottom: none; }
+    .todo-item input[type="checkbox"] {
+      width: 1.25rem;
+      height: 1.25rem;
+      cursor: pointer;
+    }
+    .todo-item span {
+      flex: 1;
+      font-size: 1rem;
+      transition: all 0.2s;
+    }
+    .todo-item.completed span {
+      text-decoration: line-through;
+      color: #999;
+    }
+    .todo-item button {
+      padding: 0.5rem;
+      background: none;
+      border: none;
+      color: #e74c3c;
+      cursor: pointer;
+      font-size: 1.25rem;
+      opacity: 0.7;
+      transition: opacity 0.2s;
+    }
+    .todo-item button:hover { opacity: 1; }
+    .stats {
+      margin-top: 1.5rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid #e0e0e0;
+      display: flex;
+      justify-content: space-between;
+      color: #666;
+      font-size: 0.875rem;
+    }
+    .stats button {
+      background: none;
+      border: none;
+      color: #e74c3c;
+      cursor: pointer;
+      font-size: 0.875rem;
+      text-decoration: underline;
+    }
+    .stats button:hover { color: #c0392b; }
+    .empty-state {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: #999;
+    }
+    .empty-state p { font-size: 1.25rem; margin-bottom: 0.5rem; }
+    .empty-state small { color: #bbb; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📝 Todo App</h1>
+    <div id="app"></div>
+  </div>
+  
+  <script type="module">
+    import { createApp, ref, computed } from '@lytjs/core'
+
+    const app = createApp({
+      setup() {
+        const newTodo = ref('')
+        const todos = ref([
+          { id: 1, text: '学习 Lyt.js 响应式系统', completed: true },
+          { id: 2, text: '完成 Todo 应用示例', completed: false },
+          { id: 3, text: '探索组件系统', completed: false }
+        ])
+        const filter = ref('all')
+
+        const filteredTodos = computed(() => {
+          switch (filter.value) {
+            case 'active': return todos.value.filter(t => !t.completed)
+            case 'completed': return todos.value.filter(t => t.completed)
+            default: return todos.value
+          }
+        })
+
+        const remaining = computed(() => todos.value.filter(t => !t.completed).length)
+        const completedCount = computed(() => todos.value.filter(t => t.completed).length)
+
+        function addTodo() {
+          if (newTodo.value.trim()) {
+            todos.value.push({
+              id: Date.now(),
+              text: newTodo.value.trim(),
+              completed: false
+            })
+            newTodo.value = ''
+          }
+        }
+
+        function toggleTodo(id) {
+          const todo = todos.value.find(t => t.id === id)
+          if (todo) todo.completed = !todo.completed
+        }
+
+        function removeTodo(id) {
+          todos.value = todos.value.filter(t => t.id !== id)
+        }
+
+        function clearCompleted() {
+          todos.value = todos.value.filter(t => !t.completed)
+        }
+
+        function setFilter(f) {
+          filter.value = f
+        }
+
+        return {
+          newTodo, todos, filter, filteredTodos, remaining, completedCount,
+          addTodo, toggleTodo, removeTodo, clearCompleted, setFilter
+        }
+      },
+      template: `
+        <div class="todo-app">
+          <div class="input-group">
+            <input
+              v-model="newTodo"
+              @keyup.enter="addTodo"
+              placeholder="添加新任务..."
+            />
+            <button @click="addTodo">添加</button>
+          </div>
+
+          <div class="filters">
+            <button :class="{ active: filter === 'all' }" @click="setFilter('all')">全部</button>
+            <button :class="{ active: filter === 'active' }" @click="setFilter('active')">进行中</button>
+            <button :class="{ active: filter === 'completed' }" @click="setFilter('completed')">已完成</button>
+          </div>
+
+          <ul class="todo-list">
+            <li v-if="filteredTodos.length === 0" class="empty-state">
+              <p>暂无任务</p>
+              <small>添加你的第一个任务吧！</small>
+            </li>
+            <li
+              v-for="todo in filteredTodos"
+              :key="todo.id"
+              :class="{ completed: todo.completed }"
+              class="todo-item"
+            >
+              <input
+                type="checkbox"
+                :checked="todo.completed"
+                @change="toggleTodo(todo.id)"
+              />
+              <span>{{ todo.text }}</span>
+              <button @click="removeTodo(todo.id)">×</button>
+            </li>
+          </ul>
+
+          <div class="stats">
+            <span>{{ remaining }} 项未完成</span>
+            <span>{{ completedCount }} 项已完成</span>
+            <button v-if="completedCount > 0" @click="clearCompleted">清除已完成</button>
+          </div>
+        </div>
+      `
+    })
+
+    app.mount('#app')
+  </script>
+</body>
+</html>
