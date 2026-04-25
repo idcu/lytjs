@@ -411,13 +411,15 @@ export class DevToolsPanel {
   private statusRightEl: HTMLSpanElement;
   /** 高亮覆盖层 */
   private highlightOverlay: HTMLDivElement | null = null;
+  /** 调整大小手柄 */
+  private _resizeHandle: HTMLElement | null = null;
 
   constructor(config?: PanelConfig) {
     // 合并默认配置
     this.config = {
       width: config?.width ?? 420,
       height: config?.height ?? 560,
-      x: config?.x ?? (window.innerWidth - (config?.width ?? 420) - 20),
+      x: config?.x ?? (typeof window !== 'undefined' ? window.innerWidth - (config?.width ?? 420) - 20 : 100),
       y: config?.y ?? 60,
       minWidth: config?.minWidth ?? 320,
       minHeight: config?.minHeight ?? 200,
@@ -428,30 +430,55 @@ export class DevToolsPanel {
     this.dragState = { isDragging: false, startX: 0, startY: 0, startLeft: 0, startTop: 0 };
     this.resizeState = { isResizing: false, startX: 0, startY: 0, startWidth: 0, startHeight: 0 };
 
-    // 注入样式
-    this.styleEl = document.createElement('style');
-    this.styleEl.textContent = PANEL_STYLES;
-    document.head.appendChild(this.styleEl);
+    // 检查浏览器环境
+    const isBrowser = typeof window !== 'undefined' && typeof document !== 'undefined';
 
-    // 创建面板 DOM
-    this.panelEl = this.createPanelElement();
-    this.headerEl = this.panelEl.querySelector('.lyt-devtools-header') as HTMLDivElement;
-    this.tabsEl = this.panelEl.querySelector('.lyt-devtools-tabs') as HTMLDivElement;
-    this.contentEl = this.panelEl.querySelector('.lyt-devtools-content') as HTMLDivElement;
-    this.statusbarEl = this.panelEl.querySelector('.lyt-devtools-statusbar') as HTMLDivElement;
-    this.statusLeftEl = this.statusbarEl.querySelector('.lyt-devtools-status-left') as HTMLSpanElement;
-    this.statusRightEl = this.statusbarEl.querySelector('.lyt-devtools-status-right') as HTMLSpanElement;
+    // 注入样式
+    if (isBrowser) {
+      this.styleEl = document.createElement('style');
+      this.styleEl.textContent = PANEL_STYLES;
+      document.head.appendChild(this.styleEl);
+    } else {
+      this.styleEl = {} as HTMLStyleElement;
+    }
+
+    // 创建面板 DOM 并直接保存元素引用
+    if (isBrowser) {
+      const { panel, header, tabs, content, statusbar, statusLeft, statusRight, resizeHandle } = this.createPanelElementWithRefs();
+      this.panelEl = panel;
+      this.headerEl = header;
+      this.tabsEl = tabs;
+      this.contentEl = content;
+      this.statusbarEl = statusbar;
+      this.statusLeftEl = statusLeft;
+      this.statusRightEl = statusRight;
+      this._resizeHandle = resizeHandle;
+    } else {
+      // 在非浏览器环境下创建安全的 mock 元素
+      this.panelEl = this.createMockPanelElement();
+      this.headerEl = this.panelEl.headerEl;
+      this.tabsEl = this.panelEl.tabsEl;
+      this.contentEl = this.panelEl.contentEl;
+      this.statusbarEl = this.panelEl.statusbarEl;
+      this.statusLeftEl = this.panelEl.statusLeftEl;
+      this.statusRightEl = this.panelEl.statusRightEl;
+      this._resizeHandle = this.panelEl.resizeHandleEl;
+    }
 
     // 添加到文档
-    document.body.appendChild(this.panelEl);
+    if (isBrowser) {
+      document.body.appendChild(this.panelEl);
+    }
 
     // 绑定事件
-    this.bindDragEvents();
-    this.bindResizeEvents();
-    this.bindKeyboardEvents();
+    if (isBrowser) {
+      this.bindDragEvents();
+      this.bindResizeEvents();
+      this.bindKeyboardEvents();
 
-    // 监听窗口大小变化
-    window.addEventListener('resize', this.onWindowResize);
+      // 监听窗口大小变化
+      window.addEventListener('resize', this.onWindowResize);
+    }
   }
 
   // ============================================================
@@ -459,9 +486,18 @@ export class DevToolsPanel {
   // ============================================================
 
   /**
-   * 创建面板 DOM 结构
+   * 创建面板 DOM 结构，并返回所有元素的引用
    */
-  private createPanelElement(): HTMLDivElement {
+  private createPanelElementWithRefs(): {
+    panel: HTMLDivElement;
+    header: HTMLDivElement;
+    tabs: HTMLDivElement;
+    content: HTMLDivElement;
+    statusbar: HTMLDivElement;
+    statusLeft: HTMLSpanElement;
+    statusRight: HTMLSpanElement;
+    resizeHandle: HTMLDivElement;
+  } {
     const panel = document.createElement('div');
     panel.className = 'lyt-devtools-panel';
     panel.style.width = `${this.config.width}px`;
@@ -511,7 +547,12 @@ export class DevToolsPanel {
     for (const tab of TABS) {
       const tabEl = document.createElement('div');
       tabEl.className = `lyt-devtools-tab${tab.id === this.activeTab ? ' active' : ''}`;
-      tabEl.dataset.tab = tab.id;
+      // 安全设置 dataset
+      if (tabEl.dataset) {
+        tabEl.dataset.tab = tab.id;
+      } else {
+        tabEl.setAttribute('data-tab', tab.id);
+      }
       tabEl.innerHTML = `<span class="lyt-devtools-tab-icon">${tab.icon}</span>${tab.label}`;
       tabEl.addEventListener('click', () => this.switchTab(tab.id));
       tabs.appendChild(tabEl);
@@ -547,6 +588,57 @@ export class DevToolsPanel {
     panel.appendChild(statusbar);
     panel.appendChild(resizeHandle);
 
+    return { panel, header, tabs, content, statusbar, statusLeft, statusRight, resizeHandle };
+  }
+
+  /**
+   * 创建面板 DOM 结构（向后兼容）
+   */
+  private createPanelElement(): HTMLDivElement {
+    return this.createPanelElementWithRefs().panel;
+  }
+
+  /**
+   * 创建非浏览器环境下的 mock 面板元素
+   */
+  private createMockPanelElement(): any {
+    // 创建完整的 mock 元素结构，包含所有需要的属性
+    const createMockElement = (className: string) => ({
+      className,
+      classList: { add: () => {}, remove: () => {}, toggle: () => {}, contains: () => false },
+      style: {},
+      dataset: {},
+      querySelector: (selector: string) => {
+        // 简单的 selector 匹配
+        if (selector === '.lyt-devtools-header') return (panel as any).headerEl;
+        if (selector === '.lyt-devtools-tabs') return (panel as any).tabsEl;
+        if (selector === '.lyt-devtools-content') return (panel as any).contentEl;
+        if (selector === '.lyt-devtools-statusbar') return (panel as any).statusbarEl;
+        if (selector === '.lyt-devtools-status-left') return (panel as any).statusLeftEl;
+        if (selector === '.lyt-devtools-status-right') return (panel as any).statusRightEl;
+        if (selector === '.lyt-devtools-resize-handle') return (panel as any).resizeHandleEl;
+        return null;
+      },
+      querySelectorAll: () => [],
+      appendChild: () => {},
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      offsetLeft: 0,
+      offsetTop: 0,
+      offsetWidth: 100,
+      offsetHeight: 100,
+      getBoundingClientRect: () => ({ left: 0, top: 0, right: 100, bottom: 100, width: 100, height: 100 }),
+    });
+
+    const panel = createMockElement('lyt-devtools-panel');
+    panel.headerEl = createMockElement('lyt-devtools-header');
+    panel.tabsEl = createMockElement('lyt-devtools-tabs');
+    panel.contentEl = createMockElement('lyt-devtools-content');
+    panel.statusbarEl = createMockElement('lyt-devtools-statusbar');
+    panel.statusLeftEl = createMockElement('lyt-devtools-status-left');
+    panel.statusRightEl = createMockElement('lyt-devtools-status-right');
+    panel.resizeHandleEl = createMockElement('lyt-devtools-resize-handle');
+
     return panel;
   }
 
@@ -562,11 +654,18 @@ export class DevToolsPanel {
 
     this.activeTab = tabId;
 
+    // 检查浏览器环境
+    const isBrowser = typeof window !== 'undefined' && typeof document !== 'undefined';
+
     // 更新标签栏样式
-    const tabEls = this.tabsEl.querySelectorAll('.lyt-devtools-tab');
-    tabEls.forEach(el => {
-      el.classList.toggle('active', el.dataset.tab === tabId);
-    });
+    if (isBrowser && this.tabsEl && this.tabsEl.querySelectorAll) {
+      const tabEls = this.tabsEl.querySelectorAll('.lyt-devtools-tab');
+      tabEls.forEach(el => {
+        if (el.classList && el.dataset) {
+          el.classList.toggle('active', el.dataset.tab === tabId);
+        }
+      });
+    }
 
     // 重新渲染内容
     this.renderContent();
@@ -588,15 +687,20 @@ export class DevToolsPanel {
    * 渲染当前标签页内容
    */
   renderContent(): void {
-    // 清空内容区域
-    this.contentEl.innerHTML = '';
+    // 检查浏览器环境
+    const isBrowser = typeof window !== 'undefined' && typeof document !== 'undefined';
 
-    // 获取渲染器
-    const renderer = this.tabRenderers.get(this.activeTab);
-    if (renderer) {
-      renderer(this.contentEl);
-    } else {
-      this.contentEl.innerHTML = '<div class="lyt-devtools-empty">暂无内容</div>';
+    if (isBrowser && this.contentEl) {
+      // 清空内容区域
+      this.contentEl.innerHTML = '';
+
+      // 获取渲染器
+      const renderer = this.tabRenderers.get(this.activeTab);
+      if (renderer) {
+        renderer(this.contentEl);
+      } else {
+        this.contentEl.innerHTML = '<div class="lyt-devtools-empty">暂无内容</div>';
+      }
     }
   }
 
@@ -623,7 +727,10 @@ export class DevToolsPanel {
    */
   show(): void {
     this._visible = true;
-    this.panelEl.style.display = 'flex';
+    const isBrowser = typeof window !== 'undefined' && typeof document !== 'undefined';
+    if (isBrowser && this.panelEl && this.panelEl.style) {
+      this.panelEl.style.display = 'flex';
+    }
   }
 
   /**
@@ -631,7 +738,10 @@ export class DevToolsPanel {
    */
   hide(): void {
     this._visible = false;
-    this.panelEl.style.display = 'none';
+    const isBrowser = typeof window !== 'undefined' && typeof document !== 'undefined';
+    if (isBrowser && this.panelEl && this.panelEl.style) {
+      this.panelEl.style.display = 'none';
+    }
   }
 
   /**
@@ -661,7 +771,10 @@ export class DevToolsPanel {
    */
   toggleCollapse(): void {
     this._collapsed = !this._collapsed;
-    this.panelEl.classList.toggle('collapsed', this._collapsed);
+    const isBrowser = typeof window !== 'undefined' && typeof document !== 'undefined';
+    if (isBrowser && this.panelEl && this.panelEl.classList) {
+      this.panelEl.classList.toggle('collapsed', this._collapsed);
+    }
   }
 
   /**
@@ -679,6 +792,9 @@ export class DevToolsPanel {
    * 绑定拖拽事件
    */
   private bindDragEvents(): void {
+    const isBrowser = typeof window !== 'undefined' && typeof document !== 'undefined';
+    if (!isBrowser) return;
+
     // 鼠标按下开始拖拽
     this.headerEl.addEventListener('mousedown', (e: MouseEvent) => {
       // 不拖拽按钮
@@ -725,9 +841,12 @@ export class DevToolsPanel {
    * 绑定调整大小事件
    */
   private bindResizeEvents(): void {
-    const resizeHandle = this.panelEl.querySelector('.lyt-devtools-resize-handle') as HTMLElement;
+    const isBrowser = typeof window !== 'undefined' && typeof document !== 'undefined';
+    if (!isBrowser) return;
 
-    resizeHandle.addEventListener('mousedown', (e: MouseEvent) => {
+    if (!this._resizeHandle) return;
+
+    this._resizeHandle.addEventListener('mousedown', (e: MouseEvent) => {
       this.resizeState.isResizing = true;
       this.resizeState.startX = e.clientX;
       this.resizeState.startY = e.clientY;
@@ -770,6 +889,9 @@ export class DevToolsPanel {
    * 绑定键盘事件
    */
   private bindKeyboardEvents(): void {
+    const isBrowser = typeof window !== 'undefined' && typeof document !== 'undefined';
+    if (!isBrowser) return;
+
     document.addEventListener('keydown', (e: KeyboardEvent) => {
       // Ctrl+Shift+D 切换面板显示
       if (e.ctrlKey && e.shiftKey && e.key === 'D') {
@@ -792,6 +914,9 @@ export class DevToolsPanel {
    * 窗口大小变化时调整面板位置
    */
   private onWindowResize = (): void => {
+    const isBrowser = typeof window !== 'undefined' && typeof document !== 'undefined';
+    if (!isBrowser) return;
+
     const panelRect = this.panelEl.getBoundingClientRect();
     const maxX = window.innerWidth - 100;
     const maxY = window.innerHeight - 36;
@@ -812,23 +937,32 @@ export class DevToolsPanel {
    * 更新状态栏左侧文本
    */
   setStatusLeft(html: string): void {
-    this.statusLeftEl.innerHTML = html;
+    const isBrowser = typeof window !== 'undefined' && typeof document !== 'undefined';
+    if (isBrowser && this.statusLeftEl) {
+      this.statusLeftEl.innerHTML = html;
+    }
   }
 
   /**
    * 更新状态栏右侧文本
    */
   setStatusRight(text: string): void {
-    this.statusRightEl.textContent = text;
+    const isBrowser = typeof window !== 'undefined' && typeof document !== 'undefined';
+    if (isBrowser && this.statusRightEl) {
+      this.statusRightEl.textContent = text;
+    }
   }
 
   /**
    * 设置连接状态
    */
   setConnected(connected: boolean): void {
-    const dot = this.statusLeftEl.querySelector('.lyt-devtools-status-dot');
-    if (dot) {
-      dot.classList.toggle('disconnected', !connected);
+    const isBrowser = typeof window !== 'undefined' && typeof document !== 'undefined';
+    if (isBrowser && this.statusLeftEl && this.statusLeftEl.querySelector) {
+      const dot = this.statusLeftEl.querySelector('.lyt-devtools-status-dot');
+      if (dot && dot.classList) {
+        dot.classList.toggle('disconnected', !connected);
+      }
     }
   }
 
@@ -845,32 +979,36 @@ export class DevToolsPanel {
 
     if (!el) return;
 
-    // 创建高亮覆盖层
-    this.highlightOverlay = document.createElement('div');
-    this.highlightOverlay.style.cssText = `
-      position: fixed;
-      z-index: 999998;
-      pointer-events: none;
-      border: 2px solid #cba6f7;
-      background: rgba(203, 166, 247, 0.1);
-      border-radius: 2px;
-      transition: all 0.15s ease;
-    `;
+    const isBrowser = typeof window !== 'undefined' && typeof document !== 'undefined';
+    if (isBrowser) {
+      // 创建高亮覆盖层
+      this.highlightOverlay = document.createElement('div');
+      this.highlightOverlay.style.cssText = `
+        position: fixed;
+        z-index: 999998;
+        pointer-events: none;
+        border: 2px solid #cba6f7;
+        background: rgba(203, 166, 247, 0.1);
+        border-radius: 2px;
+        transition: all 0.15s ease;
+      `;
 
-    const rect = el.getBoundingClientRect();
-    this.highlightOverlay.style.left = `${rect.left}px`;
-    this.highlightOverlay.style.top = `${rect.top}px`;
-    this.highlightOverlay.style.width = `${rect.width}px`;
-    this.highlightOverlay.style.height = `${rect.height}px`;
+      const rect = el.getBoundingClientRect();
+      this.highlightOverlay.style.left = `${rect.left}px`;
+      this.highlightOverlay.style.top = `${rect.top}px`;
+      this.highlightOverlay.style.width = `${rect.width}px`;
+      this.highlightOverlay.style.height = `${rect.height}px`;
 
-    document.body.appendChild(this.highlightOverlay);
+      document.body.appendChild(this.highlightOverlay);
+    }
   }
 
   /**
    * 清除高亮
    */
   clearHighlight(): void {
-    if (this.highlightOverlay) {
+    const isBrowser = typeof window !== 'undefined' && typeof document !== 'undefined';
+    if (isBrowser && this.highlightOverlay) {
       this.highlightOverlay.remove();
       this.highlightOverlay = null;
     }
@@ -884,17 +1022,25 @@ export class DevToolsPanel {
    * 销毁面板，清理所有 DOM 和事件
    */
   destroy(): void {
+    const isBrowser = typeof window !== 'undefined' && typeof document !== 'undefined';
+    
     // 移除样式
-    this.styleEl.remove();
+    if (isBrowser && this.styleEl && this.styleEl.remove) {
+      this.styleEl.remove();
+    }
 
     // 移除面板
-    this.panelEl.remove();
+    if (isBrowser && this.panelEl && this.panelEl.remove) {
+      this.panelEl.remove();
+    }
 
     // 清除高亮
     this.clearHighlight();
 
     // 移除事件监听
-    window.removeEventListener('resize', this.onWindowResize);
+    if (isBrowser) {
+      window.removeEventListener('resize', this.onWindowResize);
+    }
 
     // 清空渲染器
     this.tabRenderers.clear();

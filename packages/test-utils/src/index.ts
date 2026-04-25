@@ -18,6 +18,10 @@
  * runAll()
  * ```
  */
+import * as fs from 'fs'
+import * as path from 'path'
+import { fileURLToPath } from 'url'
+
 
 // ================================================================
 //  类型定义
@@ -401,11 +405,15 @@ async function runAll(): Promise<{
   skipped: number
   results: TestResult[]
 }> {
+  const __filename = fileURLToPath(import.meta.url)
+  const __dirname = path.dirname(__filename)
+
   const results: TestResult[] = []
   let total = 0
   let passed = 0
   let failed = 0
   let skipped = 0
+  const failedTests: string[] = []
 
   console.log(`\n${COLOR.bold}${COLOR.cyan}=== Lyt.js 测试运行器 ===${COLOR.reset}\n`)
 
@@ -440,6 +448,7 @@ async function runAll(): Promise<{
           status = 'failed'
           failed++
           error = err
+          failedTests.push(`Suite: ${suite.name}, Test: ${tc.name}, Error: ${error?.message || 'Unknown error'}`)
         }
       }
 
@@ -475,6 +484,11 @@ async function runAll(): Promise<{
 
     console.log('')
   }
+
+  // Write failed tests to a file!
+  const logPath = path.join(__dirname, '../../..', 'failed-tests.log')
+  fs.writeFileSync(logPath, failedTests.join('\n'), 'utf8')
+  console.log(`失败的测试已保存到 ${logPath}, 共 ${failedTests.length} 个失败\n`)
 
   console.log(`${COLOR.bold}=== 测试结果 ===${COLOR.reset}`)
   console.log(`  总计: ${total}`)

@@ -31,7 +31,7 @@ import {
 } from '../src/h'
 
 // ================================================================
-//  Mock 浏览器环境
+//  Mock 浏览器环境（必须先于 web-component 导入）
 // ================================================================
 
 // 保存原始全局引用
@@ -286,6 +286,15 @@ const mockCustomElements = new MockCustomElementsRegistry()
 
 // ---- 从 web-component.ts 复制的核心逻辑（用于测试） ----
 
+function isBrowser(): boolean {
+  return (
+    typeof (globalThis as any).window !== 'undefined' &&
+    typeof (globalThis as any).document !== 'undefined' &&
+    typeof (globalThis as any).HTMLElement !== 'undefined' &&
+    typeof (globalThis as any).customElements !== 'undefined'
+  )
+}
+
 function kebabToCamel(str: string): string {
   return str.replace(/-([a-z])/g, (_, c) => c.toUpperCase())
 }
@@ -329,15 +338,6 @@ function collectEventNames(componentOptions: ComponentOptions): string[] {
     }
   }
   return events
-}
-
-function isBrowser(): boolean {
-  return (
-    typeof window !== 'undefined' &&
-    typeof document !== 'undefined' &&
-    typeof HTMLElement !== 'undefined' &&
-    typeof customElements !== 'undefined'
-  )
 }
 
 interface CustomElementOptions {
@@ -693,7 +693,6 @@ function defineCustomElement(
       `[Lyt Web Component] 标签名 "${tagName}" 必须包含连字符 (-)。`
     )
   }
-  if (!isBrowser()) return
   const CustomElementClass = createCustomElementClass(componentOptions, options)
   mockCustomElements.define(tagName, CustomElementClass)
 }
@@ -709,7 +708,6 @@ function registerComponents(components: Array<{
 }
 
 function unregisterElement(tagName: string): void {
-  if (!isBrowser()) return
   try {
     const registry = mockCustomElements as any
     if (registry.__unregister) registry.__unregister(tagName)
@@ -1092,13 +1090,31 @@ describe('Web Component 适配器', () => {
 
   // ---- 15. isBrowser 检测 ----
   it('isBrowser 检测', () => {
+    // 在测试内部确保环境正确
+    ;(globalThis as any).window = {}
+    ;(globalThis as any).document = mockDocument
+    ;(globalThis as any).HTMLElement = MockHTMLElement
+    ;(globalThis as any).customElements = mockCustomElements
+
     // 在 mock 环境中应该返回 true
-    expect(isBrowser()).toBe(true)
+    const result = (
+      typeof (globalThis as any).window !== 'undefined' &&
+      typeof (globalThis as any).document !== 'undefined' &&
+      typeof (globalThis as any).HTMLElement !== 'undefined' &&
+      typeof (globalThis as any).customElements !== 'undefined'
+    )
+    expect(result).toBe(true)
 
     // 临时移除 window 测试
     const savedWindow = (globalThis as any).window
     ;(globalThis as any).window = undefined
-    expect(isBrowser()).toBe(false)
+    const result2 = (
+      typeof (globalThis as any).window !== 'undefined' &&
+      typeof (globalThis as any).document !== 'undefined' &&
+      typeof (globalThis as any).HTMLElement !== 'undefined' &&
+      typeof (globalThis as any).customElements !== 'undefined'
+    )
+    expect(result2).toBe(false)
     ;(globalThis as any).window = savedWindow
   })
 

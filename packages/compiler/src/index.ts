@@ -185,8 +185,8 @@ export function compile(template: string, options: CompileOptions = {}): Compile
 // ============================================================
 // SFC 单文件组件支持
 // ============================================================
-// 已拆分到子路径 @lytjs/compiler/sfc
-// import { parseSFC, compileSFC, scopeCSS } from '@lytjs/compiler/sfc'
+export { parseSFC, compileSFC, scopeCSS } from './sfc/index';
+export type { SFCDescriptor, SFCCompileResult } from './sfc/index';
 
 // ============================================================
 // WASM 模拟层 — 浏览器端编译器

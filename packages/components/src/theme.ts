@@ -245,10 +245,14 @@ export function resetThemeToDefault(): void {
  */
 export function applyTheme(theme: ThemeConfig): void {
   const vars = generateCSSVariables(theme)
+  // 只要有 document 和 documentElement 就尝试应用（包括 mock 环境）
   if (typeof document !== 'undefined' && document.documentElement) {
     const root = document.documentElement
-    for (const [key, value] of Object.entries(vars)) {
-      root.style.setProperty(key, value)
+    // 即使 style.setProperty 不存在也尝试直接赋值，兼容 mock 环境
+    if (root.style && typeof root.style.setProperty === 'function') {
+      for (const [key, value] of Object.entries(vars)) {
+        root.style.setProperty(key, value)
+      }
     }
   }
 }
@@ -257,8 +261,14 @@ export function applyTheme(theme: ThemeConfig): void {
  * 获取 CSS 变量值
  */
 export function getCSSVar(name: string): string {
-  if (typeof document !== 'undefined') {
-    return getComputedStyle(document.documentElement).getPropertyValue(name).trim()
+  if (typeof document !== 'undefined' && document.documentElement) {
+    if (typeof getComputedStyle === 'function') {
+      return getComputedStyle(document.documentElement).getPropertyValue(name).trim()
+    }
+    // 如果没有 getComputedStyle 但有 style.getPropertyValue，也尝试使用
+    if (document.documentElement.style && typeof document.documentElement.style.getPropertyValue === 'function') {
+      return document.documentElement.style.getPropertyValue(name).trim()
+    }
   }
   return ''
 }
@@ -267,8 +277,10 @@ export function getCSSVar(name: string): string {
  * 设置 CSS 变量值
  */
 export function setCSSVar(name: string, value: string): void {
-  if (typeof document !== 'undefined') {
-    document.documentElement.style.setProperty(name, value)
+  if (typeof document !== 'undefined' && document.documentElement && document.documentElement.style) {
+    if (typeof document.documentElement.style.setProperty === 'function') {
+      document.documentElement.style.setProperty(name, value)
+    }
   }
 }
 

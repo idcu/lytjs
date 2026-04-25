@@ -327,7 +327,7 @@ describe('Divider 组件', () => {
   it('Divider 模板包含条件渲染逻辑', () => {
     const template = Divider.options.template
     expect(template).toContain('lyt-divider')
-    expect(template).toContain('lyt-divider--horizontal')
+    expect(template).toContain('lyt-divider--{direction}')
     expect(template).toContain('lyt-divider--vertical')
     expect(template).toContain('lyt-divider--dashed')
   })

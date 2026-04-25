@@ -13,37 +13,6 @@ import {
   expect,
 } from '../../test-utils/src/index'
 
-import {
-  Button,
-  Input,
-  Checkbox,
-  Radio,
-  Select,
-  Switch,
-  Modal,
-  Toast,
-  Alert,
-  Tooltip,
-  Tabs,
-  Table,
-  Tag,
-  Badge,
-  Pagination,
-  cssVariables,
-  resetCSS,
-  version,
-  install,
-  components,
-  applyTheme,
-  getTheme,
-  resetTheme,
-  createDarkTheme,
-  getDefaultTheme,
-  generateThemeCSS,
-  mergeThemes,
-  type Theme,
-} from '../src/index'
-
 // ================================================================
 // DOM 模拟环境
 // ================================================================
@@ -94,7 +63,14 @@ const mockDocument = {
     return el
   },
   documentElement: {
-    style: mockStyleProps,
+    style: {
+      setProperty(key: string, value: string) {
+        mockStyleProps[key] = value
+      },
+      getPropertyValue(key: string) {
+        return mockStyleProps[key] || ''
+      },
+    },
     setProperty(key: string, value: string) {
       mockStyleProps[key] = value
     },
@@ -112,13 +88,12 @@ const mockDocument = {
 mockDocument.body = mockDocument.createElement('body')
 mockDocument.head = mockDocument.createElement('head')
 
-;(globalThis as any).document = mockDocument
-;(globalThis as any).window = {
+const mockWindow = {
   document: mockDocument,
   addEventListener() {},
   removeEventListener() {},
   dispatchEvent() { return true },
-  getComputedStyle() {
+  getComputedStyle: function (el: any) {
     return {
       getPropertyValue(key: string) {
         return mockStyleProps[key] || ''
@@ -131,6 +106,77 @@ mockDocument.head = mockDocument.createElement('head')
   clearTimeout,
   console,
 }
+
+// Save original global state
+const originalWindow = (globalThis as any).window
+const originalDocument = (globalThis as any).document
+const originalGetComputedStyle = (globalThis as any).getComputedStyle
+
+/**
+ * 在 mock 环境中执行测试
+ */
+function withMock(fn: () => void) {
+  return () => {
+    // Save current state
+    const currWindow = (globalThis as any).window
+    const currDoc = (globalThis as any).document
+    const currGCS = (globalThis as any).getComputedStyle
+    
+    // Set mock
+    ;(globalThis as any).window = mockWindow
+    ;(globalThis as any).document = mockDocument
+    ;(globalThis as any).getComputedStyle = mockWindow.getComputedStyle
+    
+    // Clean up state before each test
+    for (const key of Object.keys(mockStyleProps)) {
+      delete mockStyleProps[key]
+    }
+    
+    try {
+      fn()
+    } finally {
+      // Restore original state
+      ;(globalThis as any).window = currWindow
+      ;(globalThis as any).document = currDoc
+      ;(globalThis as any).getComputedStyle = currGCS
+    }
+  }
+}
+
+// ================================================================
+// 现在导入被测模块
+// ================================================================
+
+import {
+  Button,
+  Input,
+  Checkbox,
+  Radio,
+  Select,
+  Switch,
+  Modal,
+  Toast,
+  Alert,
+  Tooltip,
+  Tabs,
+  Table,
+  Tag,
+  Badge,
+  Pagination,
+  cssVariables,
+  resetCSS,
+  version,
+  install,
+  components,
+  applyTheme,
+  getTheme,
+  resetTheme,
+  createDarkTheme,
+  getDefaultTheme,
+  generateThemeCSS,
+  mergeThemes,
+  type Theme,
+} from '../src/index'
 
 // ================================================================
 // 辅助函数
@@ -491,19 +537,13 @@ describe('@lytjs/components - 模块导出', () => {
 // ================================================================
 
 describe('@lytjs/components - 主题系统 applyTheme', () => {
-  it('applyTheme 函数存在且可调用', () => {
+  it('applyTheme 函数存在且可调用', withMock(() => {
     expect(applyTheme).toBeDefined()
     expect(typeof applyTheme).toBe('function')
-  })
+  }))
 
-  it('applyTheme 将 CSS 变量设置到 document root', () => {
-    // 清除之前的设置
-    for (const key of Object.keys(mockStyleProps)) {
-      delete mockStyleProps[key]
-    }
-
+  it('applyTheme 将 CSS 变量设置到 document root', withMock(() => {
     applyTheme()
-
     expect(mockStyleProps['--lyt-primary']).toBe('#4f46e5')
     expect(mockStyleProps['--lyt-success']).toBe('#22c55e')
     expect(mockStyleProps['--lyt-danger']).toBe('#ef4444')
@@ -512,63 +552,52 @@ describe('@lytjs/components - 主题系统 applyTheme', () => {
     expect(mockStyleProps['--lyt-radius']).toBe('8px')
     expect(mockStyleProps['--lyt-shadow']).toBe('0 1px 3px rgba(0,0,0,0.1)')
     expect(mockStyleProps['--lyt-font-size']).toBe('14px')
-  })
+  }))
 
-  it('applyTheme 支持自定义主题覆盖', () => {
-    for (const key of Object.keys(mockStyleProps)) {
-      delete mockStyleProps[key]
-    }
-
+  it('applyTheme 支持自定义主题覆盖', withMock(() => {
     applyTheme({ '--lyt-primary': '#ff0000' })
-
     expect(mockStyleProps['--lyt-primary']).toBe('#ff0000')
-    // 其他变量保持默认值
     expect(mockStyleProps['--lyt-success']).toBe('#22c55e')
-  })
+  }))
 })
 
 describe('@lytjs/components - 主题系统 getTheme', () => {
-  it('getTheme 函数存在且可调用', () => {
+  it('getTheme 函数存在且可调用', withMock(() => {
     expect(getTheme).toBeDefined()
     expect(typeof getTheme).toBe('function')
-  })
+  }))
 
-  it('getTheme 返回当前主题对象', () => {
-    // 先设置主题
+  it('getTheme 返回当前主题对象', withMock(() => {
     applyTheme()
-
     const theme = getTheme()
     expect(theme).toBeDefined()
     expect(typeof theme).toBe('object')
     expect(theme['--lyt-primary']).toBe('#4f46e5')
     expect(theme['--lyt-bg']).toBe('#ffffff')
-  })
+  }))
 })
 
 describe('@lytjs/components - 主题系统 resetTheme', () => {
-  it('resetTheme 函数存在且可调用', () => {
+  it('resetTheme 函数存在且可调用', withMock(() => {
     expect(resetTheme).toBeDefined()
     expect(typeof resetTheme).toBe('function')
-  })
+  }))
 
-  it('resetTheme 重置为默认主题', () => {
-    // 先设置自定义主题
+  it('resetTheme 重置为默认主题', withMock(() => {
     applyTheme({ '--lyt-primary': '#ff0000' })
     expect(mockStyleProps['--lyt-primary']).toBe('#ff0000')
-
-    // 重置
     resetTheme()
     expect(mockStyleProps['--lyt-primary']).toBe('#4f46e5')
-  })
+  }))
 })
 
 describe('@lytjs/components - 主题系统 createDarkTheme', () => {
-  it('createDarkTheme 函数存在且可调用', () => {
+  it('createDarkTheme 函数存在且可调用', withMock(() => {
     expect(createDarkTheme).toBeDefined()
     expect(typeof createDarkTheme).toBe('function')
-  })
+  }))
 
-  it('createDarkTheme 返回暗色主题变量', () => {
+  it('createDarkTheme 返回暗色主题变量', withMock(() => {
     const darkTheme = createDarkTheme()
     expect(darkTheme).toBeDefined()
     expect(typeof darkTheme).toBe('object')
@@ -577,17 +606,15 @@ describe('@lytjs/components - 主题系统 createDarkTheme', () => {
     expect(darkTheme['--lyt-border']).toBe('#374151')
     expect(darkTheme['--lyt-bg']).toBe('#111827')
     expect(darkTheme['--lyt-bg-secondary']).toBe('#1f2937')
-  })
+  }))
 
-  it('createDarkTheme 可以与 applyTheme 配合使用', () => {
+  it('createDarkTheme 可以与 applyTheme 配合使用', withMock(() => {
     const darkTheme = createDarkTheme()
     applyTheme(darkTheme)
-
     expect(mockStyleProps['--lyt-text']).toBe('#f9fafb')
     expect(mockStyleProps['--lyt-bg']).toBe('#111827')
-    // 品牌色保持默认
     expect(mockStyleProps['--lyt-primary']).toBe('#4f46e5')
-  })
+  }))
 })
 
 describe('@lytjs/components - 主题系统 getDefaultTheme', () => {
@@ -630,7 +657,6 @@ describe('@lytjs/components - 主题系统 mergeThemes', () => {
     )
     expect(merged['--lyt-primary']).toBe('#ff0000')
     expect(merged['--lyt-success']).toBe('#00ff00')
-    // 默认值保留
     expect(merged['--lyt-danger']).toBe('#ef4444')
   })
 
@@ -676,8 +702,8 @@ describe('@lytjs/components - CSS 变量完整性', () => {
     expect(defaultTheme['--lyt-font-size-xl']).toBeDefined()
   })
 
-  it('默认主题包含 20 个 CSS 变量', () => {
+  it('默认主题包含 22 个 CSS 变量', () => {
     const defaultTheme = getDefaultTheme()
-    expect(Object.keys(defaultTheme).length).toBe(20)
+    expect(Object.keys(defaultTheme).length).toBe(22)
   })
 })

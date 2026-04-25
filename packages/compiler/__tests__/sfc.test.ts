@@ -24,13 +24,9 @@
 
 import { describe, it, expect } from '../../test-utils/src/index'
 
-import {
-  parseSFC,
-  compileSFC,
-  scopeCSS,
-} from '../src/index'
-import type { SFCDescriptor, SFCCompileResult } from '../src/index'
-import { extractExportDefault } from '../src/sfc/parse-sfc'
+import { parseSFC, extractExportDefault } from '../src/sfc/parse-sfc'
+import { compileSFC, scopeCSS } from '../src/sfc/compile-sfc'
+import type { SFCDescriptor, SFCCompileResult } from '../src/sfc/index'
 
 // ================================================================
 //  parseSFC 测试

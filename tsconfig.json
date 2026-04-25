@@ -19,6 +19,8 @@
     "paths": {
       "lyt": ["packages/core/src"],
       "lyt/*": ["packages/*/src"],
+      "@lytjs/common": ["packages/common/src"],
+      "@lytjs/common/*": ["packages/common/src/*"],
       "@lytjs/reactivity": ["packages/reactivity/src"],
       "@lytjs/reactivity/*": ["packages/reactivity/src/*"],
       "@lytjs/vdom": ["packages/vdom/src"],

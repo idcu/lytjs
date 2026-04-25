@@ -28,11 +28,28 @@ const mockDocument = {
       className: '',
       innerHTML: '',
       textContent: '',
-      style: {},
+      style: {
+        setProperty() {},
+        getPropertyValue() { return '' },
+        removeProperty() {},
+        width: '',
+        height: '',
+        left: '',
+        top: '',
+        display: '',
+        cssText: '',
+      },
       childNodes: [] as any[],
       children: [] as any[],
       parentNode: null as any,
       id: '',
+      offsetLeft: 0,
+      offsetTop: 0,
+      offsetWidth: 100,
+      offsetHeight: 100,
+      getBoundingClientRect() {
+        return { left: 0, top: 0, right: 100, bottom: 100, width: 100, height: 100 }
+      },
       appendChild(child: any) {
         this.childNodes.push(child)
         this.children.push(child)
@@ -55,10 +72,52 @@ const mockDocument = {
       classList: {
         add() {},
         remove() {},
+        toggle() {},
         contains() { return false },
       },
-      querySelector() { return null },
-      querySelectorAll() { return [] },
+      dataset: {},
+      querySelector(selector: string) {
+        // Simple selector matching: class or tag
+        const matches: any[] = []
+        const traverse = (node: any) => {
+          if (selector.startsWith('.')) {
+            const cls = selector.slice(1)
+            if (node.className?.includes(cls)) {
+              matches.push(node)
+            }
+          } else if (node.tagName === selector.toUpperCase()) {
+            matches.push(node)
+          }
+          for (const child of node.children || []) {
+            traverse(child)
+          }
+        }
+        for (const child of this.children) {
+          traverse(child)
+        }
+        return matches[0] || null
+      },
+      querySelectorAll(selector: string) {
+        const matches: any[] = []
+        const traverse = (node: any) => {
+          if (selector.startsWith('.')) {
+            const cls = selector.slice(1)
+            if (node.className?.includes(cls)) {
+              matches.push(node)
+            }
+          } else if (node.tagName === selector.toUpperCase()) {
+            matches.push(node)
+          }
+          for (const child of node.children || []) {
+            traverse(child)
+          }
+        }
+        for (const child of this.children) {
+          traverse(child)
+        }
+        return matches
+      },
+      remove() {},
     }
     el.id = `mock-el-${++mockIdCounter}`
     mockElements.push(el)
@@ -98,11 +157,13 @@ mockDocument.head = mockDocument.createElement('head')
 ;(globalThis as any).document = mockDocument
 ;(globalThis as any).window = {
   document: mockDocument,
+  innerWidth: 1920,
+  innerHeight: 1080,
   addEventListener() {},
   removeEventListener() {},
-  dispatchEvent() { return true },
-  getComputedStyle() { return {} },
-  requestAnimationFrame(fn: Function) { return setTimeout(fn, 0) },
+  dispatchEvent() { return true; },
+  getComputedStyle() { return {}; },
+  requestAnimationFrame(fn: Function) { return setTimeout(fn, 0); },
   cancelAnimationFrame() {},
   setTimeout,
   clearTimeout,

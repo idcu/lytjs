@@ -33,6 +33,7 @@ const PACKAGES_DIR = path.join(ROOT_DIR, 'packages');
 
 /** 所有包名列表 */
 const ALL_PACKAGES = [
+  'common',
   'core',
   'reactivity',
   'vdom',
@@ -47,6 +48,7 @@ const ALL_PACKAGES = [
 
 /** 包名 -> 入口文件映射 */
 const PACKAGE_ENTRIES = {
+  common: 'src/index.ts',
   core: 'src/index.ts',
   reactivity: 'src/index.ts',
   vdom: 'src/index.ts',

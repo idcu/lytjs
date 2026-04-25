@@ -59,10 +59,10 @@ export interface ComponentRegistration {
  */
 export function isBrowser(): boolean {
   return (
-    typeof window !== 'undefined' &&
-    typeof document !== 'undefined' &&
-    typeof HTMLElement !== 'undefined' &&
-    typeof customElements !== 'undefined'
+    typeof (globalThis as any).window !== 'undefined' &&
+    typeof (globalThis as any).document !== 'undefined' &&
+    typeof (globalThis as any).HTMLElement !== 'undefined' &&
+    typeof (globalThis as any).customElements !== 'undefined'
   )
 }
 

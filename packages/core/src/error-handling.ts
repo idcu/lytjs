@@ -285,7 +285,10 @@ export function getDevMode(): boolean {
  */
 export function warn(msg: string): void {
   if (!isDevMode) return
-  console.warn(`[Lyt warn] ${msg}`)
+  const warnFn = console.warn
+  if (typeof warnFn === 'function') {
+    warnFn(`[Lyt warn] ${msg}`)
+  }
 }
 
 /**
@@ -295,7 +298,10 @@ export function warnOnce(msg: string): void {
   if (!isDevMode) return
   if (warnedMessages.has(msg)) return
   warnedMessages.add(msg)
-  console.warn(`[Lyt warn] ${msg}`)
+  const warnFn = console.warn
+  if (typeof warnFn === 'function') {
+    warnFn(`[Lyt warn] ${msg}`)
+  }
 }
 
 /**
@@ -303,6 +309,16 @@ export function warnOnce(msg: string): void {
  */
 export function resetWarnedMessages(): void {
   warnedMessages.clear()
+}
+
+/**
+ * 始终输出错误信息（不受开发/生产模式限制）
+ */
+export function error(msg: string): void {
+  const errorFn = console.error
+  if (typeof errorFn === 'function') {
+    errorFn(`[Lyt error] ${msg}`)
+  }
 }
 
 // ============================================================

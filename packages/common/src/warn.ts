@@ -1,3 +1,4 @@
+
 /**
  * Lyt.js 警告与错误输出工具
  *
@@ -38,7 +39,10 @@ const warnedMessages: Set<string> = new Set();
  */
 export function warn(msg: string): void {
   if (!isDevMode) return;
-  console.warn(`[Lyt warn] ${msg}`);
+  const warnFn = console.warn;
+  if (typeof warnFn === 'function') {
+    warnFn(`[Lyt warn] ${msg}`);
+  }
 }
 
 /**
@@ -48,14 +52,20 @@ export function warnOnce(msg: string): void {
   if (!isDevMode) return;
   if (warnedMessages.has(msg)) return;
   warnedMessages.add(msg);
-  console.warn(`[Lyt warn] ${msg}`);
+  const warnFn = console.warn;
+  if (typeof warnFn === 'function') {
+    warnFn(`[Lyt warn] ${msg}`);
+  }
 }
 
 /**
  * 始终输出错误信息（不受开发/生产模式限制）
  */
 export function error(msg: string): void {
-  console.error(`[Lyt error] ${msg}`);
+  const errorFn = console.error;
+  if (typeof errorFn === 'function') {
+    errorFn(`[Lyt error] ${msg}`);
+  }
 }
 
 /**
@@ -64,3 +74,4 @@ export function error(msg: string): void {
 export function resetWarnedMessages(): void {
   warnedMessages.clear();
 }
+

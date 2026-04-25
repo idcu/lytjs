@@ -425,8 +425,8 @@ function createAuth(options: AuthOptions): Auth {
         return
       }
 
-      // 未登录且未触发自动跳转，触发未授权回调
-      if (onUnauthorized) {
+      // 只有当 requiresAuth 为 true 且未登录时才触发未授权回调
+      if (requiresAuth && onUnauthorized) {
         onUnauthorized()
       }
 

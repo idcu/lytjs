@@ -5,7 +5,8 @@
  * Slots: none
  */
 
-import { defineComponent, ref, computed } from '@lytjs/reactivity'
+import { defineComponent } from '@lytjs/component'
+import { ref, computed } from '@lytjs/reactivity'
 
 export const TimePicker = defineComponent({
   name: 'LytTimePicker',

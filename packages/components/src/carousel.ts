@@ -5,7 +5,8 @@
  * Slots: default, prev, next
  */
 
-import { defineComponent, ref, watch, onMounted, onUnmounted } from '@lytjs/reactivity'
+import { defineComponent, onMounted, onUnmounted } from '@lytjs/component'
+import { ref, watch } from '@lytjs/reactivity'
 
 export const Carousel = defineComponent({
   name: 'LytCarousel',

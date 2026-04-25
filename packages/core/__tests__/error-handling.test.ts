@@ -26,27 +26,39 @@ import {
   expect,
 } from '../../test-utils/src/index'
 
+// ================================================================
+//  辅助函数：重置开发模式和全局处理器
+// ================================================================
+
+// 先从 error-handling 导入
 import {
   LytError,
   LytErrorCodes,
   ErrorBoundary,
   handleError,
   callWithErrorHandling,
-  warn,
-  warnOnce,
-  setDevMode,
+  warn as warnEH,
+  warnOnce as warnOnceEH,
+  setDevMode as setDevModeEH,
   createMessage,
   createLytError,
   ErrorCodes,
-  resetWarnedMessages,
+  resetWarnedMessages as resetWarnedMessagesEH,
 } from '../src/error-handling'
 
-// ================================================================
-//  辅助函数：重置开发模式和全局处理器
-// ================================================================
+// 再从 warn.ts 导入
+import {
+  warn as warnUtil,
+  warnOnce as warnOnceUtil,
+  error as errorUtil,
+  setDevMode as setDevModeUtil,
+  getDevMode,
+  resetWarnedMessages as resetWarnedMessagesUtil,
+} from '../src/warn'
 
 function resetState(): void {
-  setDevMode(true)
+  setDevModeEH(true)
+  setDevModeUtil(true)
   ErrorBoundary.globalHandler = null
 }
 
@@ -302,38 +314,43 @@ describe('ErrorBoundary 全局处理器', () => {
 describe('warn 警告系统', () => {
 
   it('warn 开发模式输出', () => {
-    setDevMode(true)
+    setDevModeEH(true)
+    setDevModeUtil(true)
     // warn 在开发模式下调用 console.warn
     // 我们无法直接断言 console.warn 的输出，但可以确保不抛错
-    warn('这是一条开发警告')
+    warnEH('这是一条开发警告')
     expect(true).toBe(true)
   })
 
   it('warn 生产模式不输出', () => {
-    setDevMode(false)
+    setDevModeEH(false)
+    setDevModeUtil(false)
     // 生产模式下 warn 不应调用 console.warn
     // 同样无法直接断言，但确保不抛错
-    warn('这条警告不应该输出')
+    warnEH('这条警告不应该输出')
     expect(true).toBe(true)
     // 恢复开发模式
-    setDevMode(true)
+    setDevModeEH(true)
+    setDevModeUtil(true)
   })
 
   it('warnOnce 只警告一次', () => {
-    setDevMode(true)
+    setDevModeEH(true)
+    setDevModeUtil(true)
     // warnOnce 内部去重，多次调用同一条消息只输出一次
-    warnOnce('只警告一次的消息')
-    warnOnce('只警告一次的消息')
-    warnOnce('只警告一次的消息')
+    warnOnceEH('只警告一次的消息')
+    warnOnceEH('只警告一次的消息')
+    warnOnceEH('只警告一次的消息')
     // 不抛错即通过
     expect(true).toBe(true)
   })
 
   it('warnOnce 不同消息各自独立', () => {
-    setDevMode(true)
-    warnOnce('消息A')
-    warnOnce('消息B')
-    warnOnce('消息A') // 重复
+    setDevModeEH(true)
+    setDevModeUtil(true)
+    warnOnceEH('消息A')
+    warnOnceEH('消息B')
+    warnOnceEH('消息A') // 重复
     // 不抛错即通过
     expect(true).toBe(true)
   })
@@ -342,7 +359,8 @@ describe('warn 警告系统', () => {
 describe('handleError 统一处理', () => {
 
   it('handleError 处理 LytError', () => {
-    setDevMode(true)
+    setDevModeEH(true)
+    setDevModeUtil(true)
     ErrorBoundary.globalHandler = null
 
     const err = new LytError(LytErrorCodes.RENDER_ERROR, '渲染失败')
@@ -352,7 +370,8 @@ describe('handleError 统一处理', () => {
   })
 
   it('handleError 处理普通 Error', () => {
-    setDevMode(true)
+    setDevModeEH(true)
+    setDevModeUtil(true)
     ErrorBoundary.globalHandler = null
 
     const err = new Error('普通错误')
@@ -374,14 +393,16 @@ describe('handleError 统一处理', () => {
   })
 
   it('handleError 生产模式不输出到 console', () => {
-    setDevMode(false)
+    setDevModeEH(false)
+    setDevModeUtil(false)
     ErrorBoundary.globalHandler = null
 
     // 生产模式下不调用 console.error
     handleError(new LytError(LytErrorCodes.NOT_FOUND, '未找到'), null)
     expect(true).toBe(true)
 
-    setDevMode(true)
+    setDevModeEH(true)
+    setDevModeUtil(true)
   })
 })
 
@@ -576,8 +597,10 @@ describe('createLytError 工厂函数', () => {
 describe('warnOnce 去重验证', () => {
 
   it('warnOnce 同一消息只输出一次（通过 console.warn 拦截验证）', () => {
-    resetWarnedMessages()
-    setDevMode(true)
+    resetWarnedMessagesEH()
+    resetWarnedMessagesUtil()
+    setDevModeEH(true)
+    setDevModeUtil(true)
 
     let warnCount = 0
     const originalWarn = console.warn
@@ -586,9 +609,9 @@ describe('warnOnce 去重验证', () => {
       originalWarn.apply(console, args)
     }
 
-    warnOnce('去重测试消息')
-    warnOnce('去重测试消息')
-    warnOnce('去重测试消息')
+    warnOnceEH('去重测试消息')
+    warnOnceEH('去重测试消息')
+    warnOnceEH('去重测试消息')
 
     expect(warnCount).toBe(1)
 
@@ -596,8 +619,10 @@ describe('warnOnce 去重验证', () => {
   })
 
   it('warnOnce 不同消息各自独立计数', () => {
-    resetWarnedMessages()
-    setDevMode(true)
+    resetWarnedMessagesEH()
+    resetWarnedMessagesUtil()
+    setDevModeEH(true)
+    setDevModeUtil(true)
 
     let warnCount = 0
     const originalWarn = console.warn
@@ -606,9 +631,9 @@ describe('warnOnce 去重验证', () => {
       originalWarn.apply(console, args)
     }
 
-    warnOnce('消息X')
-    warnOnce('消息Y')
-    warnOnce('消息X') // 重复，不计数
+    warnOnceEH('消息X')
+    warnOnceEH('消息Y')
+    warnOnceEH('消息X') // 重复，不计数
 
     expect(warnCount).toBe(2)
 
@@ -616,8 +641,10 @@ describe('warnOnce 去重验证', () => {
   })
 
   it('warnOnce 生产模式不输出', () => {
-    resetWarnedMessages()
-    setDevMode(false)
+    resetWarnedMessagesEH()
+    resetWarnedMessagesUtil()
+    setDevModeEH(false)
+    setDevModeUtil(false)
 
     let warnCount = 0
     const originalWarn = console.warn
@@ -626,18 +653,21 @@ describe('warnOnce 去重验证', () => {
       originalWarn.apply(console, args)
     }
 
-    warnOnce('生产模式消息')
-    warnOnce('生产模式消息')
+    warnOnceEH('生产模式消息')
+    warnOnceEH('生产模式消息')
 
     expect(warnCount).toBe(0)
 
     console.warn = originalWarn
-    setDevMode(true)
+    setDevModeEH(true)
+    setDevModeUtil(true)
   })
 
   it('resetWarnedMessages 重置后可以重新警告', () => {
-    resetWarnedMessages()
-    setDevMode(true)
+    resetWarnedMessagesEH()
+    resetWarnedMessagesUtil()
+    setDevModeEH(true)
+    setDevModeUtil(true)
 
     let warnCount = 0
     const originalWarn = console.warn
@@ -646,13 +676,14 @@ describe('warnOnce 去重验证', () => {
       originalWarn.apply(console, args)
     }
 
-    warnOnce('可重置的消息')
-    warnOnce('可重置的消息') // 重复
+    warnOnceEH('可重置的消息')
+    warnOnceEH('可重置的消息') // 重复
     expect(warnCount).toBe(1)
 
-    resetWarnedMessages()
+    resetWarnedMessagesEH()
+    resetWarnedMessagesUtil()
 
-    warnOnce('可重置的消息') // 重置后应再次输出
+    warnOnceEH('可重置的消息') // 重置后应再次输出
     expect(warnCount).toBe(2)
 
     console.warn = originalWarn
@@ -1032,15 +1063,6 @@ describe('createComponentError 工厂函数', () => {
 // ================================================================
 //  新增测试：warn 工具 (warn.ts)
 // ================================================================
-
-import {
-  warn as warnUtil,
-  warnOnce as warnOnceUtil,
-  error as errorUtil,
-  setDevMode as setDevModeUtil,
-  getDevMode,
-  resetWarnedMessages as resetWarnedMessagesUtil,
-} from '../src/warn'
 
 describe('warn 工具函数 (warn.ts)', () => {
 

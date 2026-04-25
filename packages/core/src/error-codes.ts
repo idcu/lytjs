@@ -11,4 +11,4 @@ export {
   type ErrorCategoryType,
   getErrorMessage,
   getCategory,
-} from '@lytjs/common'
+} from '../../common/src/error-codes'
