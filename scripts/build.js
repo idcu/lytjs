@@ -34,16 +34,27 @@ const PACKAGES_DIR = path.join(ROOT_DIR, 'packages');
 /** 所有包名列表 */
 const ALL_PACKAGES = [
   'common',
-  'core',
   'reactivity',
   'vdom',
+  'compiler',
   'renderer',
   'component',
-  'compiler',
+  'core',
   'router',
   'store',
-  'devtools',
   'cli',
+  'devtools',
+  'components',
+  'plugin-i18n',
+  'plugin-auth',
+  'plugin-logger',
+  'plugin-theme',
+  'plugin-storage',
+  'test-utils',
+  'plugins',
+  'lytjs',
+  'lytx',
+  'vscode-extension',
 ];
 
 /** 包名 -> 入口文件映射 */

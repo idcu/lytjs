@@ -102,7 +102,7 @@ export interface WatchOptions {
 /** 响应式模式 */
 export type ReactivityMode = 'proxy' | 'signal';
 
-/** 组件选项（选项式 API） */
+/** 组件选项类型（保持向后兼容） */
 export interface ComponentOptions {
   /** 组件名称 */
   name?: string;
@@ -121,9 +121,20 @@ export interface ComponentOptions {
   /** 渲染函数（优先于 template） */
   render?: RenderFunction;
   /** 初始化函数（setup 阶段调用） */
-  init?: (this: ComponentPublicInstance, props: Record<string, any>, state: Record<string, any>) => void | Record<string, any>;
+  init?: (
+    this: ComponentPublicInstance,
+    props: Record<string, any>,
+    state: Record<string, any>,
+  ) => void | Record<string, any>;
   /** Composition API setup 函数 */
-  setup?: SetupFunction;
+  setup?: (
+    props: Record<string, any>,
+    ctx: {
+      attrs: Record<string, any>;
+      slots: Slots;
+      emit: (event: string, ...args: any[]) => void;
+    },
+  ) => any;
   /** Emits 声明 */
   emits?: EmitsOptions;
   /** 默认插槽内容（由父组件传入） */
@@ -134,13 +145,19 @@ export interface ComponentOptions {
   styles?: string;
 }
 
-/** 函数组件类型 */
-export type FunctionalComponent = (props: Record<string, any>, context: { slots: Slots; emit: EmitFunction }) => any;
+/** 函数组件类型（保持简单，向后兼容） */
+export type FunctionalComponent = (
+  props: Record<string, any>,
+  context: {
+    slots: Slots;
+    emit: (event: string, ...args: any[]) => void;
+  },
+) => any;
 
 /** emit 函数类型 */
 export type EmitFunction = (event: string, ...args: any[]) => boolean;
 
-/** 组件公共实例（对外暴露给用户的接口） */
+/** 组件公共实例（保持简单，向后兼容） */
 export interface ComponentPublicInstance {
   /** 组件名称 */
   $name?: string;
@@ -160,6 +177,8 @@ export interface ComponentPublicInstance {
   $unmount: () => void;
   /** 设置状态 */
   $setState: (partial: Record<string, any>) => void;
+  /** 允许访问其他属性 */
+  [key: string]: any;
 }
 
 /** 组件内部实例（框架内部使用） */
@@ -204,7 +223,7 @@ export interface ComponentInternalInstance extends LifecycleInstance {
   _lifecycleHooks?: Record<string, Function[]>;
 }
 
-/** defineComponent 的返回类型 */
+/** defineComponent 的返回类型（保持简单，向后兼容） */
 export interface ComponentDefine {
   /** 组件名称 */
   name?: string;
@@ -227,47 +246,60 @@ export interface ComponentDefine {
  *
  * 接收组件选项对象，返回标准化的组件定义。
  * 支持的选项：
- * - name: 组件名称
- * - props: 属性声明（数组或对象形式）
- * - state: 响应式数据工厂函数
- * - computed: 计算属性
- * - watch: 侦听器
- * - methods: 方法
- * - template: 模板字符串
- * - render: 渲染函数
- * - init: 初始化函数
- * - emits: 事件声明
- * - slots: 默认插槽
+ *   - name: 组件名称
+ *   - props: 属性声明（数组或对象形式）
+ *   - state: 响应式数据工厂函数
+ *   - computed: 计算属性
+ *   - watch: 侦听器
+ *   - methods: 方法
+ *   - template: 模板字符串
+ *   - render: 渲染函数
+ *   - init: 初始化函数
+ *   - emits: 事件声明
+ *   - slots: 默认插槽
  *
  * @param options - 组件选项
  * @returns 组件定义对象
  *
  * @example
- * ```ts
- * const MyComponent = defineComponent({
- *   name: 'MyComponent',
- *   props: {
- *     title: { type: String, default: 'Hello' },
- *     count: { type: Number, required: true }
- *   },
- *   state() {
- *     return { inner: 0 };
- *   },
- *   methods: {
- *     increment() {
- *       this.$setState({ inner: this.$state.inner + 1 });
+ *   ```ts
+ *   const MyComponent = defineComponent({
+ *     name: 'MyComponent',
+ *     props: {
+ *       title: { type: String, default: 'Hello' },
+ *       count: { type: Number, required: true }
+ *     },
+ *     state() {
+ *       return { inner: 0 };
+ *     },
+ *     methods: {
+ *       increment() {
+ *         this.$setState({ inner: this.$state.inner + 1 });
+ *       }
+ *     },
+ *     init(props, state) {
+ *       console.log('组件初始化', props.title);
  *     }
- *   },
- *   init(props, state) {
- *     console.log('组件初始化', props.title);
- *   }
- * });
- * ```
+ *   });
+ *   ```
  */
 export function defineComponent(options: ComponentOptions): ComponentDefine {
   return {
     name: options.name,
     options: options,
+    _isComponentDefine: true,
+  };
+}
+
+/**
+ * 定义函数组件
+ *
+ * @param fn - 函数组件
+ * @returns 组件定义对象
+ */
+export function defineFunctionalComponent(fn: FunctionalComponent): ComponentDefine {
+  return {
+    options: fn as any,
     _isComponentDefine: true,
   };
 }

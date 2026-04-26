@@ -1,14 +1,16 @@
 {
   "name": "@lytjs/plugin-i18n",
-  "version": "4.0.5",
+  "version": "4.1.0",
   "description": "Lyt.js 国际化插件 - 提供多语言支持、消息格式化和语言切换功能",
-  "main": "./src/index.ts",
-  "module": "./src/index.ts",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/types/index.d.ts",
   "exports": {
     ".": {
-      "import": "./src/index.ts",
-      "require": "./src/index.ts",
-      "default": "./src/index.ts"
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.mjs"
     }
   },
   "sideEffects": false,

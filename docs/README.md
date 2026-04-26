@@ -204,9 +204,14 @@ docs/
 
 Lyt.js 是一个纯原生、零依赖、超轻量的前端框架，与 Vue 3 兼容的 API。
 
+### 当前版本
+- **版本**：4.0.5
+- **更新日期**：2026-04-27
+- **测试覆盖**：2815+ 个测试，核心模块覆盖率 >95%
+
 ### 包列表
 
-Lyt.js 包含 23 个精心设计的包：
+Lyt.js 包含 24 个精心设计的包：
 
 **核心引擎包 (8)**：
 - @lytjs/reactivity - 响应式系统（reactive/ref/computed/watch/Signal）
@@ -218,7 +223,7 @@ Lyt.js 包含 23 个精心设计的包：
 - @lytjs/common - 公共工具库（类型检查/对象操作/事件发射器/订阅管理/缓存/调度器）
 - @lytjs/lytjs - 聚合包（一键安装全部核心运行时）
 
-**功能包 (7)**：
+**功能包 (8)**：
 - @lytjs/router - 内置路由系统（History/Hash/导航守卫/动态路由/嵌套路由）
 - @lytjs/store - 内置状态管理（Pinia 风格 API/模块化/actions/getters/插件）
 - @lytjs/components - UI 组件库（38+ 组件/主题系统/亮色/暗色/自定义）
@@ -226,6 +231,7 @@ Lyt.js 包含 23 个精心设计的包：
 - @lytjs/devtools - 浏览器开发者工具（组件树/状态查看/性能分析/时间旅行）
 - @lytjs/lytx - 元框架（SSR/SSG/SPA/API Routes/全栈渲染）
 - @lytjs/test-utils - 测试工具库
+- lytjs-vscode - VSCode 扩展（语法高亮/代码补全/类型检查）
 
 **插件包 (6)**：
 - @lytjs/plugin-i18n - 国际化插件

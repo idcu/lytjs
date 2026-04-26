@@ -1,0 +1,79 @@
+{
+  "name": "lytjs-vscode",
+  "displayName": "Lyt.js Language Support",
+  "description": "VSCode extension for Lyt.js - provides syntax highlighting, type checking, and code completion",
+  "version": "4.1.0",
+  "publisher": "lytjs",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Linters",
+    "Snippets"
+  ],
+  "activationEvents": [
+    "onLanguage:lyt",
+    "onCommand:lytjs.showWelcome"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "lyt",
+        "aliases": [
+          "Lyt.js",
+          "lyt"
+        ],
+        "extensions": [
+          ".lyt"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "lyt",
+        "scopeName": "source.lyt",
+        "path": "./syntaxes/lyt.tmLanguage.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "lytjs.showWelcome",
+        "title": "Lyt.js: Show Welcome"
+      }
+    ],
+    "configuration": {
+      "title": "Lyt.js",
+      "properties": {
+        "lytjs.enableTypeChecking": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable type checking for .lyt files"
+        },
+        "lytjs.enableAutoComplete": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable code completion for .lyt files"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run build",
+    "build": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/node": "^18.x",
+    "@types/vscode": "^1.80.0",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@lytjs/compiler": "workspace:*",
+    "@lytjs/component": "workspace:*"
+  }
+}

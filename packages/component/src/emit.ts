@@ -29,6 +29,27 @@ export interface EmitInstance {
   props?: Record<string, any>;
 }
 
+/**
+ * 从事件处理器类型提取事件类型
+ * 例如：
+ * - { onClick: (e: MouseEvent) => void } → { click: (e: MouseEvent) => void }
+ */
+export type ExtractEmitsFromHandlers<Handlers> = {
+  [K in keyof Handlers as K extends `on${infer E}`
+    ? Uncapitalize<E>
+    : never]: Handlers[K] extends (...args: infer Args) => any
+      ? (...args: Args) => void
+      : never;
+};
+
+/**
+ * 定义 emits 类型的工具函数
+ * 用于类型安全的事件声明
+ */
+export function defineEmits<T extends EmitsOptions>(emits: T): T {
+  return emits;
+}
+
 // ============================================================
 // 内部工具
 // ============================================================

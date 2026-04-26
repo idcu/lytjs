@@ -1,14 +1,16 @@
 {
   "name": "@lytjs/plugins",
-  "version": "4.0.5",
+  "version": "4.1.0",
   "description": "Lyt.js 官方插件聚合包 - 统一导出国际化、认证、日志、存储和主题等官方插件",
-  "main": "./src/index.ts",
-  "module": "./src/index.ts",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/types/index.d.ts",
   "exports": {
     ".": {
-      "import": "./src/index.ts",
-      "require": "./src/index.ts",
-      "default": "./src/index.ts"
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.mjs"
     }
   },
   "sideEffects": false,

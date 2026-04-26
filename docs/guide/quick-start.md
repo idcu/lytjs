@@ -80,7 +80,7 @@ npm run dev
 npm install @lytjs/core
 
 # 或安装聚合包（包含所有运行时，如路由、状态管理等）
-npm install @lytjs/agg
+npm install @lytjs/lytjs
 ```
 
 ## 项目结构

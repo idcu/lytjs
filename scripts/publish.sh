@@ -56,8 +56,9 @@ PUBLISH_ORDER=(
   plugin-storage
   test-utils
   plugins
-  agg
+  lytjs
   lytx
+  vscode-extension
 )
 
 log "Lyt.js Publishing Pipeline"

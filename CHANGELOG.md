@@ -1,13 +1,48 @@
+---
+
 # Changelog
 
-本项目的所有重要变更都将记录在此文件中。
+## 本项目的所有重要变更都将记录在此文件中。
 
-格式基于 [Keep a Changelog](https://keepachangelog.com/)，
-版本管理遵循 [Semantic Versioning](https://semver.org/)。
+### 格式基于 [Keep a Changelog](https://keepachangelog.com/)，版本管理遵循 [Semantic Versioning](https://semver.org/)。
 
-## [4.0.5] - 2026-04-26
+## [4.1.0] - 2026-04-27
 
-### 文档更新 (Documentation)
+### 新增 (Features)
+
+- **基准测试基础设施完善** - 添加 Vapor Mode 基准测试和完整测试套件
+  - `benchmarks/vapor.bench.js` - Vapor Mode 性能基准测试
+  - `benchmarks/vdom.bench.js` - Virtual DOM 性能基准测试
+  - `npm run benchmark:all` - 一键运行所有基准测试
+
+- **文档站基础设施完善** - 添加 VitePress 配置和 GitHub Pages 部署工作流
+  - 完整的 VitePress 文档站配置
+  - GitHub Actions 自动部署到 GitHub Pages
+  - 文档结构优化
+
+### 修复 (Bug Fixes)
+
+- **TypeScript 错误修复** - 解决所有 TypeScript 编译错误
+  - `@lytjs/renderer` - 修复 vapor-compiler.ts 中 root.children 可选类型处理
+  - `@lytjs/store` - 修复 create-store.ts 中 mergeObjects 类型断言
+  - `@lytjs/test-utils` - 删除冗余测试文件 (index2.ts, index3.ts, simple-test.ts)
+
+---
+
+## [4.0.5] - 2026-04-27
+
+### 文档全面更新 (Documentation)
+
+- **文档编码验证**: 完整检查项目中所有 67 个 Markdown 文档文件，验证均使用 UTF-8 编码，无 BOM，无乱码问题，中文显示正常
+- **docs/README.md 更新**: 添加当前版本信息、更新日期、测试覆盖信息，确保与项目状态一致
+- **docs/project/PROJECT_SUMMARY.md 更新**: 更新最后更新日期为 2026-04-27，添加总测试数和文档验证信息
+- **所有文档状态确认**: 检查并确认所有文档内容完整，信息准确，与当前项目版本 4.0.5 保持一致
+
+### 工具 (Tools)
+
+- **添加编码检查脚本**: 创建 `check-encoding.mjs` 脚本，用于验证项目中所有 Markdown 文件的编码格式，自动检测并修复 BOM 问题
+
+## [4.0.5] - 2026-04-26 文档更新 (Documentation)
 
 - **README.md 全面更新**：
   - 更新了完整的项目概述

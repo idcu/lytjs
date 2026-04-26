@@ -49,7 +49,8 @@ lytjs/
 │   ├── devtools/             # 开发者工具
 │   ├── components/           # UI 组件库
 │   ├── lytx/                 # 元框架
-│   ├── agg/                  # 聚合包
+│   ├── lytjs/                # 聚合包
+│   ├── vscode-extension/     # VSCode 扩展
 │   ├── plugin-*              # 官方插件
 │   └── test-utils/           # 测试工具
 ├── examples/                 # 示例项目
@@ -62,7 +63,7 @@ lytjs/
 ### 1.2 包依赖关系图
 
 ```
-agg (聚合包)
+lytjs (聚合包)
 │
 ├── core (整合包)
 │   ├── component (组件系统)
@@ -503,7 +504,7 @@ export function createApp(rootComponent) {
   ├─ core → 依赖 compiler + renderer + component
   ├─ router → 依赖 reactivity
   ├─ store → 依赖 reactivity
-  └─ agg → 依赖上面所有
+  └─ lytjs → 依赖上面所有
   ↓
 【3】生成 TypeScript 类型声明（.d.ts）
   ↓
@@ -668,7 +669,7 @@ ALL_PACKAGES=(
   reactivity vdom compiler renderer component core
   router store cli devtools components
   plugin-i18n plugin-auth plugin-logger
-  test-utils plugins agg lytx
+  test-utils plugins lytjs lytx vscode-extension
   animation  # ← 添加你的包
 )
 ```
@@ -684,9 +685,9 @@ ALL_PACKAGES=(
 }
 ```
 
-#### 步骤 6：在 agg 聚合包中导出（可选）
+#### 步骤 6：在 lytjs 聚合包中导出（可选）
 
-编辑 `packages/agg/src/index.ts`（如果需要统一导出）
+编辑 `packages/lytjs/src/index.ts`（如果需要统一导出）
 
 ---
 

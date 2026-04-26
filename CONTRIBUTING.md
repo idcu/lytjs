@@ -51,7 +51,8 @@ lytjs/
 │   ├── cli/            # 命令行工具
 │   ├── devtools/       # 开发者工具
 │   ├── components/     # UI 组件库
-│   └── agg/            # 聚合包
+│   ├── lytjs/          # 聚合包
+│   └── vscode-extension/ # VSCode 扩展
 ├── benchmarks/         # 性能基准测试
 ├── docs/               # 综合文档（VitePress）
 │   ├── guide/          # 用户指南

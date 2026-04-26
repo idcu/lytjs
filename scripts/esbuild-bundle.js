@@ -32,6 +32,7 @@ const PACKAGES_DIR = path.join(ROOT_DIR, 'packages')
 
 /** 需要打包的核心运行时包 */
 const CORE_PACKAGES = [
+  'common',
   'reactivity',
   'vdom',
   'compiler',
@@ -40,7 +41,7 @@ const CORE_PACKAGES = [
   'core',
   'router',
   'store',
-  'agg',
+  'lytjs',
 ]
 
 /** @lyt/* 包名前缀，用于 external 匹配 */

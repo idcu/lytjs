@@ -46,8 +46,10 @@ ALL_PACKAGES=(
   common reactivity vdom compiler renderer component core
   router store cli devtools components
   plugin-i18n plugin-auth plugin-logger plugin-theme plugin-storage
-  test-utils plugins agg lytx
+  test-utils plugins lytjs lytx vscode-extension
 )
+
+# ============================================================
 # 解析参数
 # ============================================================
 CLEAN=false
@@ -484,7 +486,7 @@ if [ "$BUNDLE_ONLY" = false ]; then
   if [ ! -f "$TSC" ]; then
     warn "TypeScript not found. Skipping type declarations."
   else
-    TYPE_PKGS=(common reactivity vdom compiler renderer component core router store)
+    TYPE_PKGS=(common reactivity vdom compiler renderer component core router store cli devtools components plugin-i18n plugin-auth plugin-logger plugin-theme plugin-storage test-utils plugins lytx)
 
     if [ -n "$FILTER" ]; then
       FT=()
@@ -514,12 +516,12 @@ if [ "$BUNDLE_ONLY" = false ]; then
       fi
     done
 
-    # agg 聚合包声明
-    if [ -z "$FILTER" ] && [ -d "$PACKAGES_DIR/agg" ]; then
-      log "  Generating declarations for agg..."
-      AGG_DIR="$PACKAGES_DIR/agg/dist/types"
-      mkdir -p "$AGG_DIR"
-      cat > "$AGG_DIR/index.d.ts" << 'AGG_EOF'
+    # lytjs 聚合包声明
+  if [ -z "$FILTER" ] && [ -d "$PACKAGES_DIR/lytjs" ]; then
+    log "  Generating declarations for lytjs..."
+    AGG_DIR="$PACKAGES_DIR/lytjs/dist/types"
+    mkdir -p "$AGG_DIR"
+    cat > "$AGG_DIR/index.d.ts" << 'AGG_EOF'
 // Lyt.js Aggregate Entry — Auto-generated
 // common 公共工具
 export * from '../common/dist/types/index';
@@ -562,7 +564,7 @@ export type { Router, RouterOptions, Route } from '../router/dist/types/index';
 export { createStore, getStore, getStoreIds } from '../store/dist/types/index';
 export type { StoreOptions, StoreApi } from '../store/dist/types/index';
 AGG_EOF
-      ok "  agg: declarations OK"
+      ok "  lytjs: declarations OK"
     fi
 
     echo ""

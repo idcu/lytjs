@@ -79,7 +79,7 @@
 
 ## 🔗 项目结构概览
 
-Lyt.js 包含 23 个精心设计的包：
+Lyt.js 包含 24 个精心设计的包：
 
 ```
 lytjs/
@@ -104,7 +104,8 @@ lytjs/
 │   ├── plugins/       # 插件集合
 │   ├── common/        # 通用工具
 │   ├── test-utils/    # 测试工具
-│   └── agg/           # 聚合包（一键安装全部）
+│   ├── lytjs/         # 聚合包（一键安装全部）
+│   └── vscode-extension/ # VSCode 扩展
 ├── docs/              # 文档（你在这里）
 │   ├── guide/         # 用户指南
 │   ├── api/           # API 参考

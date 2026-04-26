@@ -152,7 +152,8 @@ lytjs/
 │   ├── devtools/                 # 开发者工具
 │   ├── components/               # UI 组件库
 │   ├── lytx/                     # 元框架
-│   └── agg/                      # 聚合包
+│   ├── lytjs/                    # 聚合包
+│   └── vscode-extension/         # VSCode 扩展
 ├── examples/                      # 示例项目
 ├── benchmarks/                    # 性能基准
 ├── tests/                         # 测试文件

@@ -189,6 +189,16 @@ export { parseSFC, compileSFC, scopeCSS } from './sfc/index';
 export type { SFCDescriptor, SFCCompileResult } from './sfc/index';
 
 // ============================================================
+// TypeScript 类型声明生成
+// ============================================================
+export {
+  generateTypeDeclarations,
+  generateDtsForLytFile,
+  createTypePlugin,
+} from './typescript';
+export type { TypeGenerateOptions } from './typescript';
+
+// ============================================================
 // WASM 模拟层 — 浏览器端编译器
 // ============================================================
 // 已拆分到子路径 @lytjs/compiler/wasm

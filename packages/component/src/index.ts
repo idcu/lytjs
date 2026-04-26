@@ -11,6 +11,7 @@
 
 export {
   defineComponent,
+  defineFunctionalComponent,
   createComponentInstance,
   setupComponent,
   setupStatefulComponent,
@@ -61,12 +62,14 @@ export {
   normalizeEmits,
   camelizeToHyphen,
   hyphenToCamel,
+  defineEmits,
 } from './emit';
 
 export type {
   EmitsOptions,
   NormalizedEmitsOptions,
   EmitInstance,
+  ExtractEmitsFromHandlers,
 } from './emit';
 
 // ============================================================

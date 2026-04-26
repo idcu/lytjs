@@ -19,7 +19,7 @@ export interface VaporComponentInstance {
   /** 组件选项 */
   options: VaporComponentOptions
   /** 组件上下文（setup 返回值） */
-  ctx: Record<string, any>
+  ctx: Record<string, unknown>
   /** 根 DOM 元素 */
   el: VaporElement | null
   /** 是否已挂载 */
@@ -160,7 +160,7 @@ export function renderVaporComponent(component: VaporComponentOptions): VaporEle
  */
 function createVaporElementForComponent(
   tag: string,
-  props?: Record<string, any>,
+  props?: Record<string, unknown>,
   ...children: (VaporNode | string)[]
 ): VaporNode {
   const node: VaporNode = {

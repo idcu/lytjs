@@ -37,7 +37,7 @@ Lyt.js 采用**分层设计**，从底层到上层分为三个主要层次：
 | `@lytjs/renderer` | 渲染器，负责虚拟 DOM 到真实 DOM | ~5.0KB | reactivity |
 | `@lytjs/component` | 组件系统，defineComponent、生命周期等 | ~3.5KB | reactivity, renderer |
 | `@lytjs/core` | 核心入口，createApp、h 函数等 | ~2.1KB | compiler, renderer, component |
-| `@lytjs/agg` | 聚合包，一键安装全部 | ~28.6KB | 以上全部 |
+| `@lytjs/lytjs` | 聚合包，一键安装全部 | ~28.6KB | 以上全部 |
 
 ### 功能包（按需使用）
 
@@ -87,7 +87,7 @@ Lyt.js 采用**分层设计**，从底层到上层分为三个主要层次：
 Lyt.js 的模块设计遵循**单向依赖、低耦合**原则：
 
 ```
-agg (聚合)
+lytjs (聚合)
   ↑
   ├── core
   │     ↑
@@ -109,7 +109,7 @@ agg (聚合)
 - `reactivity` 是最底层，被所有其他模块依赖
 - 各功能模块（router、store）只依赖 reactivity，不互相依赖
 - core 模块负责整合核心能力
-- agg 模块只是聚合导出，不包含逻辑
+- lytjs 模块只是聚合导出，不包含逻辑
 
 ## 🎯 设计理念
 
@@ -150,7 +150,8 @@ lytjs/
 │   ├── devtools/         # 开发者工具
 │   ├── components/       # UI 组件库
 │   ├── lytx/             # 元框架
-│   └── agg/              # 聚合包
+│   ├── lytjs/            # 聚合包
+│   └── vscode-extension/ # VSCode 扩展
 ├── benchmarks/            # 性能基准
 ├── docs/                 # 文档（你在这里）
 │   ├── api/              # API 参考

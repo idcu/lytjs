@@ -18,26 +18,72 @@
     "noEmit": false,
     "noEmitOnError": false,
     "paths": {
-      "@lytjs/common": ["./src"],
-    "@lytjs/common/*": ["./src/*"],
-      "@lytjs/reactivity": ["../reactivity/dist/types"],
-      "@lytjs/reactivity/*": ["../reactivity/dist/types/*"],
-      "@lytjs/vdom": ["../vdom/dist/types"],
-      "@lytjs/vdom/*": ["../vdom/dist/types/*"],
-      "@lytjs/compiler": ["../compiler/dist/types"],
-      "@lytjs/compiler/*": ["../compiler/dist/types/*"],
-      "@lytjs/renderer": ["../renderer/dist/types"],
-      "@lytjs/renderer/*": ["../renderer/dist/types/*"],
-      "@lytjs/component": ["../component/dist/types"],
-      "@lytjs/component/*": ["../component/dist/types/*"],
-      "@lytjs/core": ["../core/dist/types"],
-      "@lytjs/core/*": ["../core/dist/types/*"],
-      "@lytjs/router": ["../router/dist/types"],
-      "@lytjs/router/*": ["../router/dist/types/*"],
-      "@lytjs/store": ["../store/dist/types"],
-      "@lytjs/store/*": ["../store/dist/types/*"]
-    }
+      "@lytjs/common": [
+        "./src"
+      ],
+      "@lytjs/common/*": [
+        "./src/*"
+      ],
+      "@lytjs/reactivity": [
+        "../reactivity/dist/types"
+      ],
+      "@lytjs/reactivity/*": [
+        "../reactivity/dist/types/*"
+      ],
+      "@lytjs/vdom": [
+        "../vdom/dist/types"
+      ],
+      "@lytjs/vdom/*": [
+        "../vdom/dist/types/*"
+      ],
+      "@lytjs/compiler": [
+        "../compiler/dist/types"
+      ],
+      "@lytjs/compiler/*": [
+        "../compiler/dist/types/*"
+      ],
+      "@lytjs/renderer": [
+        "../renderer/dist/types"
+      ],
+      "@lytjs/renderer/*": [
+        "../renderer/dist/types/*"
+      ],
+      "@lytjs/component": [
+        "../component/dist/types"
+      ],
+      "@lytjs/component/*": [
+        "../component/dist/types/*"
+      ],
+      "@lytjs/core": [
+        "../core/dist/types"
+      ],
+      "@lytjs/core/*": [
+        "../core/dist/types/*"
+      ],
+      "@lytjs/router": [
+        "../router/dist/types"
+      ],
+      "@lytjs/router/*": [
+        "../router/dist/types/*"
+      ],
+      "@lytjs/store": [
+        "../store/dist/types"
+      ],
+      "@lytjs/store/*": [
+        "../store/dist/types/*"
+      ]
+    },
+    "types": [
+      "node"
+    ],
+    "ignoreDeprecations": "6.0"
   },
-  "include": ["src/**/*.ts"],
-  "exclude": ["node_modules", "dist", "**/__tests__"]
+  "include": [
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/__tests__"
+  ]
 }

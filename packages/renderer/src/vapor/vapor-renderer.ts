@@ -31,15 +31,15 @@ import {
 export type VaporBindingType = 'text' | 'prop' | 'attr' | 'class' | 'style' | 'event'
 
 /** Vapor 绑定描述 */
-export interface VaporBinding {
+export interface VaporBinding<T = unknown> {
   /** 绑定类型 */
   type: VaporBindingType
   /** 目标属性名或事件名 */
   target: string
   /** 绑定的响应式信号 */
-  signal?: Signal<any>
+  signal?: Signal<T>
   /** 计算值表达式 */
-  expression?: () => any
+  expression?: () => T
 }
 
 /** Vapor 节点 — 代表一个直接 DOM 绑定 */
@@ -51,11 +51,11 @@ export interface VaporNode {
   /** 子节点 */
   children: VaporNode[]
   /** 静态属性 */
-  props: Record<string, any>
+  props: Record<string, unknown>
   /** 事件处理器 */
   events: Record<string, Function>
   /** 响应式绑定列表 */
-  bindings: VaporBinding[]
+  bindings: VaporBinding<unknown>[]
   /** 文本内容（静态） */
   text?: string
   /** 节点 key（用于列表渲染） */
@@ -75,9 +75,9 @@ export interface VaporComponentOptions {
   /** 组件名称 */
   name?: string
   /** 初始化函数，返回组件上下文 */
-  setup?: () => Record<string, any>
+  setup?: () => Record<string, unknown>
   /** 渲染函数，接收上下文和 createElement 函数 */
-  render?: (ctx: Record<string, any>, h: typeof createVaporElement) => VaporNode | VaporNode[]
+  render?: (ctx: Record<string, unknown>, h: typeof createVaporElement) => VaporNode | VaporNode[]
   /** 模板字符串（需要编译器） */
   template?: string
   /** 子组件 */
@@ -148,7 +148,7 @@ export function getVaporDOMFactory(): (tag: string) => VaporElement {
  */
 export function createVaporElement(
   tag: string,
-  props?: Record<string, any>,
+  props?: Record<string, unknown>,
   ...children: (VaporNode | string)[]
 ): VaporNode {
   const node: VaporNode = {
@@ -168,13 +168,13 @@ export function createVaporElement(
       } else if (isSignal(value)) {
         // 信号绑定
         if (key === 'textContent' || key === 'text') {
-          node.bindings.push({ type: 'text', target: 'textContent', signal: value as Signal<any> });
+          node.bindings.push({ type: 'text', target: 'textContent', signal: value as Signal<unknown> });
         } else if (key === 'className' || key === 'class') {
-          node.bindings.push({ type: 'class', target: 'className', signal: value as Signal<any> });
+          node.bindings.push({ type: 'class', target: 'className', signal: value as Signal<unknown> });
         } else if (key === 'style') {
-          node.bindings.push({ type: 'style', target: 'style', signal: value as Signal<any> });
+          node.bindings.push({ type: 'style', target: 'style', signal: value as Signal<unknown> });
         } else {
-          node.bindings.push({ type: 'prop', target: key, signal: value as Signal<any> });
+          node.bindings.push({ type: 'prop', target: key, signal: value as Signal<unknown> });
         }
       } else {
         node.props[key] = value;
@@ -206,11 +206,12 @@ export function createVaporElement(
  *
  * Signal 是一个函数，且具有 _subscribe 或 set 方法。
  */
-function isSignal(value: any): boolean {
+function isSignal(value: unknown): value is Signal<unknown> {
   if (typeof value !== 'function') return false;
   // Signal 特征：有 _subscribe 方法（所有 signal/computed 都有）
   // 或者有 set 方法（WritableSignal）
-  return !!(value._subscribe || value.set) && !value.toString().startsWith('class');
+  const sig = value as unknown as Record<string, unknown>;
+  return !!(sig._subscribe || sig.set) && !value.toString().startsWith('class');
 }
 
 // ================================================================
@@ -228,7 +229,7 @@ function isSignal(value: any): boolean {
 export function renderVaporNode(node: VaporNode): VaporElement {
   if (node.tag === '#text') {
     // 文本节点
-    const el = domFactory('#text') as any;
+    const el = domFactory('#text') as VaporElement;
     el.textContent = node.text || '';
     el.nodeType = 3;
     return el;
@@ -237,17 +238,18 @@ export function renderVaporNode(node: VaporNode): VaporElement {
   // 创建 DOM 元素
   const el = domFactory(node.tag);
   node.el = el;
+  const elRecord = el as Record<string, unknown>;
 
   // 应用静态属性
   for (const [key, value] of Object.entries(node.props)) {
-    if (key === 'style' && typeof value === 'object') {
-      for (const [styleKey, styleVal] of Object.entries(value)) {
-        (el as any).style[styleKey] = styleVal;
+    if (key === 'style' && typeof value === 'object' && value !== null) {
+      for (const [styleKey, styleVal] of Object.entries(value as Record<string, string>)) {
+        (elRecord.style as Record<string, string>)[styleKey] = styleVal;
       }
     } else if (key === 'className' || key === 'class') {
       el.className = String(value);
     } else {
-      (el as any)[key] = value;
+      elRecord[key] = value;
     }
   }
 
@@ -314,17 +316,18 @@ export function vaporPatch(
   // tag 相同，更新属性
   const el = oldNode.el || renderVaporNode(oldNode);
   newNode.el = el;
+  const elRecord = el as Record<string, unknown>;
 
   // 更新静态属性
   for (const [key, value] of Object.entries(newNode.props)) {
-    if (key === 'style' && typeof value === 'object') {
-      for (const [styleKey, styleVal] of Object.entries(value)) {
-        (el as any).style[styleKey] = styleVal;
+    if (key === 'style' && typeof value === 'object' && value !== null) {
+      for (const [styleKey, styleVal] of Object.entries(value as Record<string, string>)) {
+        (elRecord.style as Record<string, string>)[styleKey] = styleVal;
       }
     } else if (key === 'className' || key === 'class') {
       el.className = String(value);
     } else {
-      (el as any)[key] = value;
+      elRecord[key] = value;
     }
   }
 

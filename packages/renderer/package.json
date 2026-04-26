@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/renderer",
-  "version": "4.0.5",
+  "version": "4.1.0",
   "description": "Lyt.js 渲染器 - 多平台渲染抽象层（DOM/SSR/Native/MiniApp）",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",

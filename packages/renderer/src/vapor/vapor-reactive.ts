@@ -29,6 +29,7 @@ export interface VaporElement {
   removeEventListener(event: string, handler: Function): void
   appendChild(child: VaporElement): void
   insertBefore(child: VaporElement, ref: VaporElement | null): void
+  replaceChild(newChild: VaporElement, oldChild: VaporElement): VaporElement
   removeChild(child: VaporElement): void
   nextSibling: VaporElement | null
   firstChild: VaporElement | null
@@ -37,7 +38,7 @@ export interface VaporElement {
   value?: string
   checked?: boolean
   disabled?: boolean
-  [key: string]: any
+  [key: string]: unknown
 }
 
 /** 绑定清理函数 */
@@ -54,9 +55,9 @@ export type BindingCleanup = () => void
  * @param sig   响应式信号
  * @returns 清理函数
  */
-export function bindText(
+export function bindText<T>(
   el: VaporElement,
-  sig: Signal<any>
+  sig: Signal<T>
 ): BindingCleanup {
   const dispose = effect(() => {
     const value = sig();
@@ -77,14 +78,14 @@ export function bindText(
  * @param sig   响应式信号
  * @returns 清理函数
  */
-export function bindProp(
+export function bindProp<T>(
   el: VaporElement,
   prop: string,
-  sig: Signal<any>
+  sig: Signal<T>
 ): BindingCleanup {
   const dispose = effect(() => {
     const value = sig()
-    ;(el as any)[prop] = value;
+    ;(el as Record<string, unknown>)[prop] = value;
   });
   return dispose;
 }
@@ -101,10 +102,10 @@ export function bindProp(
  * @param sig   响应式信号
  * @returns 清理函数
  */
-export function bindAttr(
+export function bindAttr<T>(
   el: VaporElement,
   attr: string,
-  sig: Signal<any>
+  sig: Signal<T>
 ): BindingCleanup {
   const dispose = effect(() => {
     const value = sig();
@@ -133,9 +134,9 @@ export function bindAttr(
  * @param sig   响应式信号
  * @returns 清理函数
  */
-export function bindClass(
+export function bindClass<T>(
   el: VaporElement,
-  sig: Signal<any>
+  sig: Signal<T>
 ): BindingCleanup {
   const dispose = effect(() => {
     const value = sig();
@@ -145,8 +146,9 @@ export function bindClass(
       el.className = value.filter(Boolean).join(' ');
     } else if (typeof value === 'object' && value !== null) {
       const classes: string[] = [];
-      for (const key of Object.keys(value)) {
-        if (value[key]) {
+      const obj = value as Record<string, unknown>;
+      for (const key of Object.keys(obj)) {
+        if (obj[key]) {
           classes.push(key);
         }
       }
@@ -195,22 +197,23 @@ export function bindEvent(
  * @param sig   响应式信号
  * @returns 清理函数
  */
-export function bindIf(
+export function bindIf<T>(
   el: VaporElement,
-  sig: Signal<any>
+  sig: Signal<T>
 ): BindingCleanup {
   const dispose = effect(() => {
     const value = sig();
+    const elRecord = el as Record<string, unknown>;
     if (value) {
-      (el as any).style = (el as any).style || {};
-      if ((el as any).style.display === 'none') {
-        (el as any).style.display = '';
+      elRecord.style = elRecord.style || {};
+      if ((elRecord.style as Record<string, string>).display === 'none') {
+        (elRecord.style as Record<string, string>).display = '';
       }
-      (el as any).hidden = false;
+      elRecord.hidden = false;
     } else {
-      (el as any).style = (el as any).style || {}
-      ;(el as any).style.display = 'none'
-      ;(el as any).hidden = true;
+      elRecord.style = elRecord.style || {};
+      (elRecord.style as Record<string, string>).display = 'none';
+      elRecord.hidden = true;
     }
   });
   return dispose;

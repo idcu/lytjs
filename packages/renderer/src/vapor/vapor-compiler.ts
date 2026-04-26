@@ -20,7 +20,7 @@ import { getVaporDOMFactory } from './vapor-renderer';
 // ================================================================
 
 /** 编译后的渲染函数 */
-export type VaporRenderFunction = (ctx: Record<string, any>) => VaporElement
+export type VaporRenderFunction = (ctx: Record<string, unknown>) => VaporElement
 
 /** AST 节点类型 */
 type ASTNodeType = 'element' | 'text' | 'interpolation' | 'fragment'
@@ -260,7 +260,7 @@ export function compileToVapor(template: string): VaporCompileResult {
  * 从 AST 生成渲染函数
  */
 function generateRenderFunction(ast: ASTNode): VaporRenderFunction {
-  return function vaporRender(ctx: Record<string, any>): VaporElement {
+  return function vaporRender(ctx: Record<string, unknown>): VaporElement {
     const factory = getVaporDOMFactory();
     return renderASTNode(ast, ctx, factory);
   };
@@ -271,7 +271,7 @@ function generateRenderFunction(ast: ASTNode): VaporRenderFunction {
  */
 function renderASTNode(
   node: ASTNode,
-  ctx: Record<string, any>,
+  ctx: Record<string, unknown>,
   factory: (tag: string) => VaporElement
 ): VaporElement {
   if (node.type === 'fragment') {
@@ -280,31 +280,32 @@ function renderASTNode(
       return renderASTNode(node.children[0], ctx, factory);
     }
     // 多个子节点：创建一个容器
-    const container = factory('div') as any;
+    const container = factory('div') as Record<string, unknown>;
     container.nodeType = 11; // DocumentFragment
+    container.childNodes = container.childNodes || [];
     if (node.children) {
       for (const child of node.children) {
         const childEl = renderASTNode(child, ctx, factory);
-        container.appendChild(childEl);
+        container.appendChild ? (container as VaporElement).appendChild(childEl) : (container.childNodes as VaporElement[]).push(childEl);
       }
     }
-    return container;
+    return container as VaporElement;
   }
 
   if (node.type === 'text') {
-    const el = factory('#text') as any;
+    const el = factory('#text') as Record<string, unknown>;
     el.textContent = node.text || '';
     el.nodeType = 3;
-    return el;
+    return el as VaporElement;
   }
 
   if (node.type === 'interpolation') {
-    const el = factory('span') as any;
+    const el = factory('span') as Record<string, unknown>;
     const expression = node.expression || '';
     // 尝试从上下文中获取值
     const value = resolveExpression(ctx, expression);
     el.textContent = value !== null && value !== undefined ? String(value) : '';
-    return el;
+    return el as VaporElement;
   }
 
   if (node.type === 'element') {
@@ -313,21 +314,21 @@ function renderASTNode(
       const { item, expression } = node.directives.each;
       const array = resolveExpression(ctx, expression);
       // 创建一个容器来承载所有重复的元素
-      const container = factory('#fragment') as any;
+      const container = factory('#fragment') as Record<string, unknown>;
       container.childNodes = [];
       container.nodeType = 11;
       if (Array.isArray(array)) {
         for (let i = 0; i < array.length; i++) {
           const itemCtx = { ...ctx, [item]: array[i], index: i };
           // 为每个 item 创建一个新的元素实例
-          const itemEl = factory(node.tag || 'div');
+          const itemEl = factory(node.tag || 'div') as Record<string, unknown>;
           // 复制静态属性
           if (node.props) {
             for (const [key, value] of Object.entries(node.props)) {
               if (key === 'class' || key === 'className') {
                 itemEl.className = value;
               } else {
-                (itemEl as any)[key] = value;
+                itemEl[key] = value;
               }
             }
           }
@@ -335,24 +336,25 @@ function renderASTNode(
           if (node.children) {
             for (const child of node.children) {
               const childEl = renderASTNode(child, itemCtx, factory);
-              itemEl.appendChild(childEl);
+              (itemEl as VaporElement).appendChild(childEl);
             }
           }
-          container.appendChild(itemEl);
+          (container as VaporElement).appendChild(itemEl as VaporElement);
         }
       }
-      return container;
+      return container as VaporElement;
     }
 
     const el = factory(node.tag || 'div');
+    const elRecord = el as Record<string, unknown>;
 
     // 处理 v-if 指令
     if (node.directives?.if) {
       const condition = resolveExpression(ctx, node.directives.if);
       if (!condition) {
-        (el as any).style = (el as any).style || {}
-        ;(el as any).style.display = 'none'
-        ;(el as any).hidden = true;
+        elRecord.style = elRecord.style || {};
+        (elRecord.style as Record<string, string>).display = 'none';
+        elRecord.hidden = true;
       }
     }
 
@@ -362,12 +364,12 @@ function renderASTNode(
         if (key.startsWith(':')) {
           // 动态属性绑定
           const propName = key.slice(1);
-          const propValue = resolveExpression(ctx, value)
-          ;(el as any)[propName] = propValue;
+          const propValue = resolveExpression(ctx, value);
+          elRecord[propName] = propValue;
         } else if (key === 'class' || key === 'className') {
           el.className = value;
         } else {
-          (el as any)[key] = value;
+          elRecord[key] = value;
         }
       }
     }
@@ -387,8 +389,8 @@ function renderASTNode(
       for (const child of node.children) {
         const childEl = renderASTNode(child, ctx, factory);
         // 如果子节点是片段（nodeType 11），将其子元素展开到当前元素
-        if ((childEl as any).nodeType === 11 && (childEl as any).childNodes) {
-          for (const fragmentChild of (childEl as any).childNodes) {
+        if ((childEl as Record<string, unknown>).nodeType === 11 && (childEl as Record<string, unknown>).childNodes) {
+          for (const fragmentChild of (childEl as Record<string, unknown>).childNodes as VaporElement[]) {
             el.appendChild(fragmentChild);
           }
         } else {
@@ -409,7 +411,7 @@ function renderASTNode(
  *
  * 支持简单属性访问和点号路径。
  */
-function resolveExpression(ctx: Record<string, any>, expression: string): any {
+function resolveExpression(ctx: Record<string, unknown>, expression: string): unknown {
   const trimmed = expression.trim();
 
   // 处理简单标识符
@@ -417,19 +419,19 @@ function resolveExpression(ctx: Record<string, any>, expression: string): any {
     const value = ctx[trimmed];
     // 如果值是 Signal，调用它获取当前值
     if (typeof value === 'function' && !value.prototype) {
-      return value();
+      return (value as () => unknown)();
     }
     return value;
   }
 
   // 处理点号路径: a.b.c
   const parts = trimmed.split('.');
-  let current: any = ctx;
+  let current: unknown = ctx;
   for (const part of parts) {
     if (current === null || current === undefined) return undefined;
-    current = current[part];
+    current = (current as Record<string, unknown>)[part];
     if (typeof current === 'function' && !current.prototype && parts.indexOf(part) < parts.length - 1) {
-      current = current();
+      current = (current as () => unknown)();
     }
   }
   return current;

@@ -50,9 +50,10 @@
       "@lytjs/plugin-logger": ["packages/plugin-logger/src"],
       "@lytjs/test-utils": ["packages/test-utils/src"],
       "@lytjs/plugins": ["packages/plugins/src"],
-      "@lytjs/agg": ["packages/agg/src"]
+      "@lytjs/lytjs": ["packages/lytjs/src"],
+      "lytjs-vscode": ["packages/vscode-extension/src"]
     }
   },
   "include": ["packages/*/src"],
-  "exclude": ["node_modules", "dist", "**/__tests__"]
+  "exclude": ["node_modules", "dist", "**/__tests__", "packages/vscode-extension"]
 }

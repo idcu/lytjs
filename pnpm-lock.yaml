@@ -48,36 +48,6 @@ importers:
         specifier: ^8.59.0
         version: 8.59.0(eslint@10.2.1)(typescript@6.0.2)
 
-  packages/agg:
-    dependencies:
-      '@lytjs/common':
-        specifier: workspace:*
-        version: link:../common
-      '@lytjs/compiler':
-        specifier: workspace:*
-        version: link:../compiler
-      '@lytjs/component':
-        specifier: workspace:*
-        version: link:../component
-      '@lytjs/core':
-        specifier: workspace:*
-        version: link:../core
-      '@lytjs/reactivity':
-        specifier: workspace:*
-        version: link:../reactivity
-      '@lytjs/renderer':
-        specifier: workspace:*
-        version: link:../renderer
-      '@lytjs/router':
-        specifier: workspace:*
-        version: link:../router
-      '@lytjs/store':
-        specifier: workspace:*
-        version: link:../store
-      '@lytjs/vdom':
-        specifier: workspace:*
-        version: link:../vdom
-
   packages/cli:
     dependencies:
       esbuild:
@@ -125,6 +95,36 @@ importers:
         version: link:../vdom
 
   packages/devtools: {}
+
+  packages/lytjs:
+    dependencies:
+      '@lytjs/common':
+        specifier: workspace:*
+        version: link:../common
+      '@lytjs/compiler':
+        specifier: workspace:*
+        version: link:../compiler
+      '@lytjs/component':
+        specifier: workspace:*
+        version: link:../component
+      '@lytjs/core':
+        specifier: workspace:*
+        version: link:../core
+      '@lytjs/reactivity':
+        specifier: workspace:*
+        version: link:../reactivity
+      '@lytjs/renderer':
+        specifier: workspace:*
+        version: link:../renderer
+      '@lytjs/router':
+        specifier: workspace:*
+        version: link:../router
+      '@lytjs/store':
+        specifier: workspace:*
+        version: link:../store
+      '@lytjs/vdom':
+        specifier: workspace:*
+        version: link:../vdom
 
   packages/lytx: {}
 
@@ -188,6 +188,25 @@ importers:
   packages/test-utils: {}
 
   packages/vdom: {}
+
+  packages/vscode-extension:
+    dependencies:
+      '@lytjs/compiler':
+        specifier: workspace:*
+        version: link:../compiler
+      '@lytjs/component':
+        specifier: workspace:*
+        version: link:../component
+    devDependencies:
+      '@types/node':
+        specifier: ^18.x
+        version: 18.19.130
+      '@types/vscode':
+        specifier: ^1.80.0
+        version: 1.116.0
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
 
 packages:
 
@@ -814,8 +833,14 @@ packages:
   '@types/json-schema@7.0.15':
     resolution: {integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==}
 
+  '@types/node@18.19.130':
+    resolution: {integrity: sha512-GRaXQx6jGfL8sKfaIDD6OupbIHBr9jv7Jnaml9tB7l4v068PAOXqfcujMMo5PhbIs6ggR1XODELqahT2R8v0fg==}
+
   '@types/node@25.6.0':
     resolution: {integrity: sha512-+qIYRKdNYJwY3vRCZMdJbPLJAtGjQBudzZzdzwQYkEPQd+PJGixUL5QfvCLDaULoLv+RhT3LDkwEfKaAkgSmNQ==}
+
+  '@types/vscode@1.116.0':
+    resolution: {integrity: sha512-sYHp4MO6BqJ2PD7Hjt0hlIS3tMaYsVPJrd0RUjDJ8HtOYnyJIEej0bLSccM8rE77WrC+Xox/kdBwEFDO8MsxNA==}
 
   '@typescript-eslint/eslint-plugin@8.59.0':
     resolution: {integrity: sha512-HyAZtpdkgZwpq8Sz3FSUvCR4c+ScbuWa9AksK2Jweub7w4M3yTz4O11AqVJzLYjy/B9ZWPyc81I+mOdJU/bDQw==}
@@ -1556,10 +1581,18 @@ packages:
       eslint: ^8.57.0 || ^9.0.0 || ^10.0.0
       typescript: '>=4.8.4 <6.1.0'
 
+  typescript@5.9.3:
+    resolution: {integrity: sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==}
+    engines: {node: '>=14.17'}
+    hasBin: true
+
   typescript@6.0.2:
     resolution: {integrity: sha512-bGdAIrZ0wiGDo5l8c++HWtbaNCWTS4UTv7RaTH/ThVIgjkveJt83m74bBHMJkuCbslY8ixgLBVZJIOiQlQTjfQ==}
     engines: {node: '>=14.17'}
     hasBin: true
+
+  undici-types@5.26.5:
+    resolution: {integrity: sha512-JlCMO+ehdEIKqlFxk6IfVoAUVmgz7cU7zD/h9XZ0qzeosSHmUJVOzSQvvYSYWXkFXC+IfLKSIffhv0sVZup6pA==}
 
   undici-types@7.19.2:
     resolution: {integrity: sha512-qYVnV5OEm2AW8cJMCpdV20CDyaN3g0AjDlOGf1OW4iaDEx8MwdtChUp4zu4H0VP3nDRF/8RKWH+IPp9uW0YGZg==}
@@ -2004,9 +2037,15 @@ snapshots:
 
   '@types/json-schema@7.0.15': {}
 
+  '@types/node@18.19.130':
+    dependencies:
+      undici-types: 5.26.5
+
   '@types/node@25.6.0':
     dependencies:
       undici-types: 7.19.2
+
+  '@types/vscode@1.116.0': {}
 
   '@typescript-eslint/eslint-plugin@8.59.0(@typescript-eslint/parser@8.59.0(eslint@10.2.1)(typescript@6.0.2))(eslint@10.2.1)(typescript@6.0.2)':
     dependencies:
@@ -2866,7 +2905,11 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  typescript@5.9.3: {}
+
   typescript@6.0.2: {}
+
+  undici-types@5.26.5: {}
 
   undici-types@7.19.2: {}
 

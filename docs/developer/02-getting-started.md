@@ -17,7 +17,8 @@ lytjs/
 │   ├── router/            # 路由
 │   ├── store/             # 状态管理
 │   ├── cli/               # 命令行工具
-│   └── agg/               # 聚合包
+│   ├── lytjs/             # 聚合包
+│   └── vscode-extension/  # VSCode 扩展
 ├── benchmarks/            # 性能基准
 ├── docs/                  # 文档（你在这里）
 │   ├── api/              # API 参考
