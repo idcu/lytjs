@@ -37,7 +37,7 @@ const DEFAULT_THEME = {
   '--lyt-font-size': '14px',
   '--lyt-font-size-lg': '16px',
   '--lyt-font-size-xl': '20px',
-} as const
+} as const;
 
 export type Theme = Record<string, string>
 
@@ -48,23 +48,23 @@ export type Theme = Record<string, string>
  * @param theme - 部分主题配置，将与默认主题合并
  */
 export function applyTheme(theme: Partial<Theme> = {}): void {
-  const merged = { ...DEFAULT_THEME, ...theme }
+  const merged = { ...DEFAULT_THEME, ...theme };
   if (typeof document === 'undefined' || !document.documentElement) {
-    return
+    return;
   }
-  const root = document.documentElement
+  const root = document.documentElement;
   for (const [key, value] of Object.entries(merged)) {
     // Try root.style.setProperty first
     if (root.style && typeof root.style.setProperty === 'function') {
-      root.style.setProperty(key, value)
+      root.style.setProperty(key, value);
     } 
     // Try root.setProperty (for the test mock)
     else if (typeof (root as any).setProperty === 'function') {
-      (root as any).setProperty(key, value)
+      (root as any).setProperty(key, value);
     }
     // Fallback to direct assignment
     else if (root.style) {
-      (root.style as any)[key] = value
+      (root.style as any)[key] = value;
     }
   }
 }
@@ -76,34 +76,34 @@ export function applyTheme(theme: Partial<Theme> = {}): void {
  * @returns 当前主题对象
  */
 export function getTheme(): Theme {
-  const theme: Theme = {}
+  const theme: Theme = {};
   if (typeof document === 'undefined' || !document.documentElement) {
-    return { ...DEFAULT_THEME }
+    return { ...DEFAULT_THEME };
   }
-  const root = document.documentElement
+  const root = document.documentElement;
   
   for (const key of Object.keys(DEFAULT_THEME)) {
     if (typeof getComputedStyle === 'function') {
-      theme[key] = getComputedStyle(root).getPropertyValue(key).trim()
+      theme[key] = getComputedStyle(root).getPropertyValue(key).trim();
     } else if (root.style && typeof root.style.getPropertyValue === 'function') {
-      theme[key] = root.style.getPropertyValue(key).trim()
+      theme[key] = root.style.getPropertyValue(key).trim();
     } else {
       // 兼容 mock 环境：直接读取或返回默认值
-      theme[key] = (root.style as any)[key] || DEFAULT_THEME[key as keyof typeof DEFAULT_THEME]
+      theme[key] = (root.style as any)[key] || DEFAULT_THEME[key as keyof typeof DEFAULT_THEME];
     }
     // 确保不会返回空字符串
     if (!theme[key]) {
-      theme[key] = DEFAULT_THEME[key as keyof typeof DEFAULT_THEME]
+      theme[key] = DEFAULT_THEME[key as keyof typeof DEFAULT_THEME];
     }
   }
-  return theme
+  return theme;
 }
 
 /**
  * 重置主题为默认值
  */
 export function resetTheme(): void {
-  applyTheme(DEFAULT_THEME)
+  applyTheme(DEFAULT_THEME);
 }
 
 /**
@@ -119,7 +119,7 @@ export function createDarkTheme(): Theme {
     '--lyt-border': '#374151',
     '--lyt-bg': '#111827',
     '--lyt-bg-secondary': '#1f2937',
-  }
+  };
 }
 
 /**
@@ -128,7 +128,7 @@ export function createDarkTheme(): Theme {
  * @returns 默认主题对象
  */
 export function getDefaultTheme(): Theme {
-  return { ...DEFAULT_THEME }
+  return { ...DEFAULT_THEME };
 }
 
 /**
@@ -138,10 +138,10 @@ export function getDefaultTheme(): Theme {
  * @returns CSS :root 规则字符串
  */
 export function generateThemeCSS(theme: Partial<Theme> = {}): string {
-  const merged = { ...DEFAULT_THEME, ...theme }
+  const merged = { ...DEFAULT_THEME, ...theme };
   return `:root {\n${Object.entries(merged)
     .map(([key, value]) => `  ${key}: ${value};`)
-    .join('\n')}\n}`
+    .join('\n')}\n}`;
 }
 
 /**
@@ -152,5 +152,5 @@ export function generateThemeCSS(theme: Partial<Theme> = {}): string {
  * @returns 合并后的主题
  */
 export function mergeThemes(...themes: Partial<Theme>[]): Theme {
-  return { ...DEFAULT_THEME, ...themes.reduce((acc, t) => ({ ...acc, ...t }), {}) }
+  return { ...DEFAULT_THEME, ...themes.reduce((acc, t) => ({ ...acc, ...t }), {}) };
 }

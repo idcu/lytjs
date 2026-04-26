@@ -10,7 +10,7 @@
 import {
   defineComponent,
   type ComponentDefine,
-} from '../define-component'
+} from '../define-component';
 
 // ============================================================
 // 类型定义
@@ -57,12 +57,12 @@ export const ErrorBoundaryComponent: ComponentDefine = defineComponent({
 
   setup(props: ErrorBoundaryProps, { slots, emit }: any) {
     // 内部错误列表
-    const errors: ErrorEntry[] = []
-    let hasError = false
+    const errors: ErrorEntry[] = [];
+    let hasError = false;
     /** 累计错误计数（用于自动禁用） */
-    let totalErrorCount = 0
+    let totalErrorCount = 0;
     /** 是否已自动禁用 */
-    let disabled = false
+    let disabled = false;
 
     /**
      * 捕获子组件渲染错误（同步）
@@ -72,49 +72,49 @@ export const ErrorBoundaryComponent: ComponentDefine = defineComponent({
      * @param info  错误来源信息
      */
     function captureError(error: Error, vm: any, info: string): void {
-      if (disabled) return
+      if (disabled) return;
 
       const entry: ErrorEntry = {
         error,
         vm,
         info: info || '',
         timestamp: Date.now(),
-      }
-      errors.push(entry)
-      hasError = true
-      totalErrorCount++
+      };
+      errors.push(entry);
+      hasError = true;
+      totalErrorCount++;
 
       // 限制最大错误记录数
-      const maxErrors = props.maxErrors ?? 100
+      const maxErrors = props.maxErrors ?? 100;
       if (errors.length > maxErrors) {
-        errors.splice(0, errors.length - maxErrors)
+        errors.splice(0, errors.length - maxErrors);
       }
 
       // 检查是否超过自动禁用阈值
-      const maxCount = props.maxErrorCount ?? Infinity
+      const maxCount = props.maxErrorCount ?? Infinity;
       if (totalErrorCount >= maxCount) {
-        disabled = true
+        disabled = true;
       }
 
       // 调用 onErrorCaptured 回调（通过 props）
       if (props.onErrorCaptured) {
-        const result = props.onErrorCaptured(error, vm, info)
-        if (result === true) return
+        const result = props.onErrorCaptured(error, vm, info);
+        if (result === true) return;
       }
 
       // 调用 onError 回调
       if (props.onError) {
-        props.onError(error, vm, info)
+        props.onError(error, vm, info);
       }
 
       // 通知错误状态变化
       if (props.onErrorChange) {
-        props.onErrorChange(true, error)
+        props.onErrorChange(true, error);
       }
 
       // 触发事件
       if (emit) {
-        emit('error', error, vm, info)
+        emit('error', error, vm, info);
       }
     }
 
@@ -126,31 +126,31 @@ export const ErrorBoundaryComponent: ComponentDefine = defineComponent({
      * @param info    错误来源信息
      */
     function captureAsyncError(promise: Promise<any>, vm: any, info: string): void {
-      if (disabled) return
+      if (disabled) return;
 
       promise.catch((error: any) => {
-        const err = error instanceof Error ? error : new Error(String(error))
-        captureError(err, vm, info)
-      })
+        const err = error instanceof Error ? error : new Error(String(error));
+        captureError(err, vm, info);
+      });
     }
 
     /**
      * 重置错误状态
      */
     function resetError(): void {
-      errors.length = 0
-      hasError = false
+      errors.length = 0;
+      hasError = false;
       // 注意：totalErrorCount 不重置，防止无限循环
       // disabled 状态也不重置
 
       if (props.onErrorChange) {
-        props.onErrorChange(false, null)
+        props.onErrorChange(false, null);
       }
       if (props.onReset) {
-        props.onReset()
+        props.onReset();
       }
       if (emit) {
-        emit('reset')
+        emit('reset');
       }
     }
 
@@ -158,16 +158,16 @@ export const ErrorBoundaryComponent: ComponentDefine = defineComponent({
      * 完全重置（包括禁用状态），用于测试
      */
     function fullReset(): void {
-      errors.length = 0
-      hasError = false
-      totalErrorCount = 0
-      disabled = false
+      errors.length = 0;
+      hasError = false;
+      totalErrorCount = 0;
+      disabled = false;
 
       if (props.onErrorChange) {
-        props.onErrorChange(false, null)
+        props.onErrorChange(false, null);
       }
       if (emit) {
-        emit('reset')
+        emit('reset');
       }
     }
 
@@ -175,36 +175,36 @@ export const ErrorBoundaryComponent: ComponentDefine = defineComponent({
      * 获取所有错误
      */
     function getErrors(): ErrorEntry[] {
-      return errors.slice()
+      return errors.slice();
     }
 
     /**
      * 获取最后一次错误
      */
     function getLastErrors(): ErrorEntry | null {
-      if (errors.length === 0) return null
-      return { ...errors[errors.length - 1] }
+      if (errors.length === 0) return null;
+      return { ...errors[errors.length - 1] };
     }
 
     /**
      * 获取错误数量
      */
     function getErrorCount(): number {
-      return errors.length
+      return errors.length;
     }
 
     /**
      * 获取累计错误计数
      */
     function getTotalErrorCount(): number {
-      return totalErrorCount
+      return totalErrorCount;
     }
 
     /**
      * 是否已自动禁用
      */
     function isDisabled(): boolean {
-      return disabled
+      return disabled;
     }
 
     /**
@@ -221,30 +221,30 @@ export const ErrorBoundaryComponent: ComponentDefine = defineComponent({
             errors: getErrors(),
             resetError,
             disabled: true,
-          })
+          });
         }
-        return 'ErrorBoundary has been disabled due to too many errors.'
+        return 'ErrorBoundary has been disabled due to too many errors.';
       }
 
       if (hasError) {
         // 优先使用 fallback slot
         if (slots && slots.fallback) {
-          return slots.fallback({ errors: getErrors(), resetError, disabled: false })
+          return slots.fallback({ errors: getErrors(), resetError, disabled: false });
         }
         // 其次使用 fallback prop
         if (props.fallback) {
-          return props.fallback
+          return props.fallback;
         }
         // 默认降级内容
-        return 'Something went wrong.'
+        return 'Something went wrong.';
       }
 
       // 正常渲染默认 slot
       if (slots && slots.default) {
-        return slots.default()
+        return slots.default();
       }
 
-      return null
+      return null;
     }
 
     return {
@@ -259,6 +259,6 @@ export const ErrorBoundaryComponent: ComponentDefine = defineComponent({
       getTotalErrorCount,
       isDisabled,
       render,
-    }
+    };
   },
-})
+});

@@ -30,7 +30,7 @@ const DOM_PROPS: Record<string, string> = {
   htmlFor: 'htmlFor',
   httpEquiv: 'httpEquiv',
   tabIndex: 'tabIndex',
-}
+};
 
 /**
  * 布尔类型属性集合
@@ -64,7 +64,7 @@ const BOOLEAN_ATTRS: Record<string, boolean> = {
   required: true,
   reversed: true,
   selected: true,
-}
+};
 
 /**
  * 需要特殊处理的 SVG 属性名映射
@@ -119,7 +119,7 @@ const SVG_ATTRS: Record<string, string> = {
   'xlink:title': 'xlinkTitle',
   'xml:lang': 'xmlLang',
   'xml:space': 'xmlSpace',
-}
+};
 
 /* ================================================================
  *  智能属性设置
@@ -143,23 +143,23 @@ const SVG_ATTRS: Record<string, string> = {
 export function setDOMProp(el: any, key: string, value: any): void {
   // class 特殊处理
   if (key === 'class') {
-    el.className = value === null || value === undefined ? '' : String(value)
-    return
+    el.className = value === null || value === undefined ? '' : String(value);
+    return;
   }
 
   // style 特殊处理
   if (key === 'style') {
     if (typeof value === 'string') {
-      el.style.cssText = value
+      el.style.cssText = value;
     } else if (value !== null && value !== undefined && typeof value === 'object') {
       // 对象形式：逐项设置
       for (const styleKey in value) {
-        el.style[styleKey] = value[styleKey]
+        el.style[styleKey] = value[styleKey];
       }
     } else {
-      el.style.cssText = ''
+      el.style.cssText = '';
     }
-    return
+    return;
   }
 
   // 事件属性特殊处理（on* 或 @*）
@@ -167,49 +167,49 @@ export function setDOMProp(el: any, key: string, value: any): void {
     // 事件由 patch-events 模块处理，此处仅做基本绑定
     const eventName = key.startsWith('@')
       ? key.slice(1).toLowerCase()
-      : key.slice(2).toLowerCase()
+      : key.slice(2).toLowerCase();
     if (typeof value === 'function') {
-      el.addEventListener(eventName, value)
+      el.addEventListener(eventName, value);
     }
-    return
+    return;
   }
 
   // 布尔属性处理
   if (key in BOOLEAN_ATTRS) {
     if (value) {
-      el.setAttribute(key, '')
+      el.setAttribute(key, '');
       // 同时设置 property（某些场景需要）
       if (key in el) {
-        el[key] = true
+        el[key] = true;
       }
     } else {
-      el.removeAttribute(key)
+      el.removeAttribute(key);
       if (key in el) {
-        el[key] = false
+        el[key] = false;
       }
     }
-    return
+    return;
   }
 
   // DOM property 处理
   // 检查属性名是否在 DOM_PROPS 映射中，或者元素上是否存在该 property
-  const propKey = DOM_PROPS[key] || key
+  const propKey = DOM_PROPS[key] || key;
   if (propKey in el) {
     // 使用 property 设置
     try {
-      el[propKey] = value === null || value === undefined ? '' : value
+      el[propKey] = value === null || value === undefined ? '' : value;
     } catch {
       // 只读属性会抛出异常，回退到 setAttribute
-      el.setAttribute(key, value === null || value === undefined ? '' : String(value))
+      el.setAttribute(key, value === null || value === undefined ? '' : String(value));
     }
-    return
+    return;
   }
 
   // 默认使用 setAttribute
   if (value === null || value === undefined || value === false) {
-    el.removeAttribute(key)
+    el.removeAttribute(key);
   } else {
-    el.setAttribute(key, String(value))
+    el.setAttribute(key, String(value));
   }
 }
 
@@ -230,14 +230,14 @@ export function setDOMProp(el: any, key: string, value: any): void {
 export function removeDOMProp(el: any, key: string): void {
   // class 特殊处理
   if (key === 'class') {
-    el.className = ''
-    return
+    el.className = '';
+    return;
   }
 
   // style 特殊处理
   if (key === 'style') {
-    el.style.cssText = ''
-    return
+    el.style.cssText = '';
+    return;
   }
 
   // 事件属性特殊处理
@@ -245,43 +245,43 @@ export function removeDOMProp(el: any, key: string): void {
     // 事件移除由 patch-events 模块处理
     const eventName = key.startsWith('@')
       ? key.slice(1).toLowerCase()
-      : key.slice(2).toLowerCase()
+      : key.slice(2).toLowerCase();
     // 尝试从缓存中获取并移除
-    const invokers = el._vei
+    const invokers = el._vei;
     if (invokers) {
-      const eventKey = 'on' + eventName.charAt(0).toUpperCase() + eventName.slice(1)
-      const invoker = invokers[eventKey]
+      const eventKey = 'on' + eventName.charAt(0).toUpperCase() + eventName.slice(1);
+      const invoker = invokers[eventKey];
       if (invoker) {
-        el.removeEventListener(eventName, invoker)
-        invokers[eventKey] = undefined
+        el.removeEventListener(eventName, invoker);
+        invokers[eventKey] = undefined;
       }
     }
-    return
+    return;
   }
 
   // 布尔属性处理
   if (key in BOOLEAN_ATTRS) {
-    el.removeAttribute(key)
+    el.removeAttribute(key);
     if (key in el) {
-      el[key] = false
+      el[key] = false;
     }
-    return
+    return;
   }
 
   // DOM property 处理
-  const propKey = DOM_PROPS[key] || key
+  const propKey = DOM_PROPS[key] || key;
   if (propKey in el) {
     try {
-      el[propKey] = ''
+      el[propKey] = '';
     } catch {
       // 只读属性回退到 removeAttribute
-      el.removeAttribute(key)
+      el.removeAttribute(key);
     }
-    return
+    return;
   }
 
   // 默认使用 removeAttribute
-  el.removeAttribute(key)
+  el.removeAttribute(key);
 }
 
 /* ================================================================
@@ -295,7 +295,7 @@ export function removeDOMProp(el: any, key: string): void {
  * @returns 是否为事件属性
  */
 function isEventKey(key: string): boolean {
-  return key.startsWith('on') || key.startsWith('@')
+  return key.startsWith('on') || key.startsWith('@');
 }
 
 /**
@@ -312,61 +312,61 @@ function isEventKey(key: string): boolean {
 export function patchDOMProps(
   el: any,
   oldProps: Record<string, any> | null,
-  newProps: Record<string, any> | null,
+  newProps: Record<string, any> | null
 ): void {
-  const oldKeys = oldProps ? Object.keys(oldProps) : []
-  const newKeys = newProps ? Object.keys(newProps) : []
+  const oldKeys = oldProps ? Object.keys(oldProps) : [];
+  const newKeys = newProps ? Object.keys(newProps) : [];
 
   // 遍历新 props，更新变化的属性
   for (let i = 0; i < newKeys.length; i++) {
-    const key = newKeys[i]
-    const newValue = newProps![key]
-    const oldValue = oldProps ? oldProps[key] : undefined
+    const key = newKeys[i];
+    const newValue = newProps![key];
+    const oldValue = oldProps ? oldProps[key] : undefined;
 
     // 跳过 key 和 ref（它们不属于 DOM 属性）
     if (key === 'key' || key === 'ref') {
-      continue
+      continue;
     }
 
     // 值未变化，跳过
     if (newValue === oldValue) {
-      continue
+      continue;
     }
 
     // 特殊属性单独处理
     if (key === 'class') {
       // class 由 patch-props 模块的 patchClass 处理
-      el.className = newValue === null || newValue === undefined ? '' : String(newValue)
+      el.className = newValue === null || newValue === undefined ? '' : String(newValue);
     } else if (key === 'style') {
       // style 由 patch-props 模块的 patchStyle 处理
-      patchStyleInline(el, newValue, oldValue)
+      patchStyleInline(el, newValue, oldValue);
     } else if (isEventKey(key)) {
       // 事件由 patch-events 模块处理
       // 此处不处理，留给上层调用
     } else {
-      setDOMProp(el, key, newValue)
+      setDOMProp(el, key, newValue);
     }
   }
 
   // 遍历旧 props，移除在新 props 中不存在的属性
   for (let i = 0; i < oldKeys.length; i++) {
-    const key = oldKeys[i]
+    const key = oldKeys[i];
 
     // 跳过 key 和 ref
     if (key === 'key' || key === 'ref') {
-      continue
+      continue;
     }
 
     // 如果新 props 中没有这个 key
     if (!newProps || !(key in newProps)) {
       if (key === 'class') {
-        el.className = ''
+        el.className = '';
       } else if (key === 'style') {
-        el.style.cssText = ''
+        el.style.cssText = '';
       } else if (isEventKey(key)) {
         // 事件移除由 patch-events 模块处理
       } else {
-        removeDOMProp(el, key)
+        removeDOMProp(el, key);
       }
     }
   }
@@ -381,13 +381,13 @@ export function patchDOMProps(
  */
 function patchStyleInline(el: any, newStyle: any, oldStyle: any): void {
   if (!newStyle || (typeof newStyle === 'string' && !newStyle.trim())) {
-    el.style.cssText = ''
-    return
+    el.style.cssText = '';
+    return;
   }
 
   if (typeof newStyle === 'string') {
-    el.style.cssText = newStyle
-    return
+    el.style.cssText = newStyle;
+    return;
   }
 
   // 对象形式：逐项对比
@@ -395,14 +395,14 @@ function patchStyleInline(el: any, newStyle: any, oldStyle: any): void {
     // 移除旧 style 中存在但新 style 中不存在的属性
     for (const key in oldStyle) {
       if (!(key in newStyle)) {
-        el.style[key] = ''
+        el.style[key] = '';
       }
     }
   }
 
   // 设置新 style
   for (const key in newStyle) {
-    el.style[key] = newStyle[key]
+    el.style[key] = newStyle[key];
   }
 }
 
@@ -444,7 +444,7 @@ export function isSVGElement(tag: string): boolean {
     tag === 'animate' ||
     tag === 'animateTransform' ||
     tag === 'animateMotion'
-  )
+  );
 }
 
 /**
@@ -456,5 +456,5 @@ export function isSVGElement(tag: string): boolean {
  * @returns camelCase 属性名
  */
 export function getSVGPropName(attr: string): string {
-  return SVG_ATTRS[attr] || attr
+  return SVG_ATTRS[attr] || attr;
 }

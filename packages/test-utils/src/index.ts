@@ -405,9 +405,6 @@ async function runAll(): Promise<{
   skipped: number
   results: TestResult[]
 }> {
-  const __filename = fileURLToPath(import.meta.url)
-  const __dirname = path.dirname(__filename)
-
   const results: TestResult[] = []
   let total = 0
   let passed = 0
@@ -486,7 +483,7 @@ async function runAll(): Promise<{
   }
 
   // Write failed tests to a file!
-  const logPath = path.join(__dirname, '../../..', 'failed-tests.log')
+  const logPath = path.join(process.cwd(), 'failed-tests.log')
   fs.writeFileSync(logPath, failedTests.join('\n'), 'utf8')
   console.log(`失败的测试已保存到 ${logPath}, 共 ${failedTests.length} 个失败\n`)
 

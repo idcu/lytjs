@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/devtools",
-  "version": "4.0.4",
+  "version": "4.0.5",
   "description": "Lyt.js 浏览器开发者工具 - 提供组件树检查、状态查看、性能分析和时间旅行调试",
   "main": "./dist/index.mjs",
   "module": "./dist/index.mjs",

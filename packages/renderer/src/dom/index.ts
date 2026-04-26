@@ -7,23 +7,23 @@
  */
 
 // ---- 核心接口与类型 ----
-export type { LytRenderer, RendererInstance } from '../renderer-interfaces'
-export type { VNode } from '../vnode'
+export type { LytRenderer, RendererInstance } from '../renderer-interfaces';
+export type { VNode } from '../vnode';
 
 // ---- 核心函数与常量 ----
 export {
   createRenderer,
-} from '../create-renderer'
+} from '../create-renderer';
 export {
   Fragment,
   Text,
   Comment,
   ShapeFlags,
   PatchFlags,
-} from '../vnode'
+} from '../vnode';
 
 // ---- DOM 渲染器 ----
-export { DOMRenderer, domRenderer } from './dom-renderer'
+export { DOMRenderer, domRenderer } from './dom-renderer';
 
 // ---- DOM 操作辅助 ----
 export {
@@ -32,7 +32,7 @@ export {
   patchDOMProps,
   isSVGElement,
   getSVGPropName,
-} from './dom-ops'
+} from './dom-ops';
 
 // ---- 属性精确更新 ----
 export {
@@ -44,7 +44,7 @@ export {
   patchAllProps,
   patchElementProps,
   PatchFlags as PatchPropFlags,
-} from './patch-props'
+} from './patch-props';
 
 // ---- 事件系统 ----
 export {
@@ -55,5 +55,5 @@ export {
   getEventInvokers,
   patchEvent,
   removeAllEventListeners,
-} from './patch-events'
-export type { ParsedEvent, EventInvoker } from './patch-events'
+} from './patch-events';
+export type { ParsedEvent, EventInvoker } from './patch-events';

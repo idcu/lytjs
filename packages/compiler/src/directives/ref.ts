@@ -18,8 +18,8 @@
  *   组件挂载后，通过 this.$refs.container 可以访问对应的 DOM 元素。
  */
 
-import type { ASTNode, ElementNode, DirectiveNode } from '../ast/nodes'
-import type { TransformContext } from '../transform/transform'
+import type { ASTNode, ElementNode, DirectiveNode } from '../ast/nodes';
+import type { TransformContext } from '../transform/transform';
 
 // ================================================================
 //  类型定义
@@ -60,23 +60,23 @@ export interface RefTransformResult {
  * @param context 转换上下文
  */
 export function transformRef(node: ASTNode, context: TransformContext): void {
-  if (node.type !== 'Element') return
+  if (node.type !== 'Element') return;
 
   // 查找 v-ref 指令
-  const refDirective = (node as ElementNode).directives.find(d => d.name === 'ref')
-  if (!refDirective) return
+  const refDirective = (node as ElementNode).directives.find(d => d.name === 'ref');
+  if (!refDirective) return;
 
   // 解析 ref 信息
-  const refInfo = parseRefDirective(refDirective)
+  const refInfo = parseRefDirective(refDirective);
 
   // 生成 ref 注册代码
-  const code = generateRefCode(refInfo)
+  const code = generateRefCode(refInfo);
 
   // 将转换结果存储在节点上
   Object.assign(node, {
     refInfo,
     refCode: code,
-  })
+  });
 
   // 收集辅助函数
   context.root.helpers.add('createRef')
@@ -84,7 +84,7 @@ export function transformRef(node: ASTNode, context: TransformContext): void {
   // 从指令列表中移除 v-ref（已处理）
   ;(node as ElementNode).directives = (node as ElementNode).directives.filter(
     d => d !== refDirective
-  )
+  );
 }
 
 // ================================================================
@@ -100,16 +100,16 @@ export function transformRef(node: ASTNode, context: TransformContext): void {
  * @returns 引用信息
  */
 export function parseRefDirective(directive: DirectiveNode): RefInfo {
-  const value = directive.value || ''
+  const value = directive.value || '';
 
   // 判断是否为动态引用
   // 动态引用：包含点号访问、方括号访问或函数调用
-  const isDynamic = /\./.test(value) || /\[/.test(value) || /\(/.test(value)
+  const isDynamic = /\./.test(value) || /\[/.test(value) || /\(/.test(value);
 
   return {
     name: value,
     isDynamic,
-  }
+  };
 }
 
 // ================================================================
@@ -129,12 +129,12 @@ export function parseRefDirective(directive: DirectiveNode): RefInfo {
 export function generateRefCode(refInfo: RefInfo): string {
   if (refInfo.isDynamic) {
     // 动态引用：ref: _ctx.expr
-    const value = wrapContextAccess(refInfo.name)
-    return `ref: ${value}`
+    const value = wrapContextAccess(refInfo.name);
+    return `ref: ${value}`;
   }
 
   // 静态引用：ref: 'name'
-  return `ref: '${refInfo.name}'`
+  return `ref: '${refInfo.name}'`;
 }
 
 // ================================================================
@@ -148,19 +148,19 @@ export function generateRefCode(refInfo: RefInfo): string {
  * @returns 包装后的表达式
  */
 function wrapContextAccess(expr: string): string {
-  expr = expr.trim()
+  expr = expr.trim();
 
   if (expr.startsWith('_ctx.')) {
-    return expr
+    return expr;
   }
 
   if (expr.includes('(') || expr.includes('=>') || expr.includes('[')) {
-    return expr
+    return expr;
   }
 
   if (/^\w+(\.\w+)*$/.test(expr)) {
-    return `_ctx.${expr}`
+    return `_ctx.${expr}`;
   }
 
-  return expr
+  return expr;
 }

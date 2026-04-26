@@ -4,8 +4,8 @@
  * Events: close
  */
 
-import { defineComponent } from '@lytjs/component'
-import { reactive } from '@lytjs/reactivity'
+import { defineComponent } from '@lytjs/component';
+import { reactive } from '@lytjs/reactivity';
 
 export const Alert = defineComponent({
   name: 'LytAlert',
@@ -33,21 +33,21 @@ export const Alert = defineComponent({
   setup(props, { emit, slots }) {
     const state = reactive({
       visible: true,
-    })
+    });
 
     const handleClose = () => {
-      state.visible = false
-      emit('close')
-    }
+      state.visible = false;
+      emit('close');
+    };
 
     const iconMap: Record<string, string> = {
       success: '&#10003;',
       warning: '&#9888;',
       error: '&#10007;',
       info: '&#8505;',
-    }
+    };
 
-    return { state, handleClose, iconMap, slots }
+    return { state, handleClose, iconMap, slots };
   },
 
   template: `
@@ -106,4 +106,4 @@ export const Alert = defineComponent({
     }
     .lyt-alert__close:hover { opacity: 1; }
   `,
-})
+});

@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/plugin-theme",
-  "version": "4.0.4",
+  "version": "4.0.5",
   "description": "Lyt.js 主题切换插件 - 支持亮色/暗色主题和自定义主题",
   "main": "./src/index.ts",
   "module": "./src/index.ts",

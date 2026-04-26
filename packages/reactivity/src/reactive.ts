@@ -295,7 +295,7 @@ const readonlyHandlers: ProxyHandler<object> = {
       `Set operation on key "${String(key)}" failed: target is readonly.`,
       target
     );
-    return true;
+    return false;
   },
 
   deleteProperty(target: object, key: string | symbol): boolean {
@@ -304,7 +304,7 @@ const readonlyHandlers: ProxyHandler<object> = {
       `Delete operation on key "${String(key)}" failed: target is readonly.`,
       target
     );
-    return true;
+    return false;
   },
 
   has(target: object, key: string | symbol): boolean {

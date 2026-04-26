@@ -3,7 +3,7 @@
  * Props: name(图标名), size, color, spin(旋转)
  */
 
-import { defineComponent } from '@lytjs/component'
+import { defineComponent } from '@lytjs/component';
 
 export const Icon = defineComponent({
   name: 'LytIcon',
@@ -29,13 +29,13 @@ export const Icon = defineComponent({
 
   setup(props) {
     const computedStyle = () => {
-      const style: Record<string, string> = {}
-      if (props.size) style.fontSize = props.size
-      if (props.color) style.color = props.color
-      return style
-    }
+      const style: Record<string, string> = {};
+      if (props.size) style.fontSize = props.size;
+      if (props.color) style.color = props.color;
+      return style;
+    };
 
-    return { props, computedStyle }
+    return { props, computedStyle };
   },
 
   template: `
@@ -64,4 +64,4 @@ export const Icon = defineComponent({
       to { transform: rotate(360deg); }
     }
   `,
-})
+});

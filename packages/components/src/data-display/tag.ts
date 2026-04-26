@@ -4,8 +4,8 @@
  * Events: close
  */
 
-import { defineComponent } from '@lytjs/component'
-import { reactive } from '@lytjs/reactivity'
+import { defineComponent } from '@lytjs/component';
+import { reactive } from '@lytjs/reactivity';
 
 export const Tag = defineComponent({
   name: 'LytTag',
@@ -34,13 +34,13 @@ export const Tag = defineComponent({
   setup(props, { emit, slots }) {
     const state = reactive({
       visible: true,
-    })
+    });
 
     const handleClose = (e: Event) => {
-      e.stopPropagation()
-      state.visible = false
-      emit('close')
-    }
+      e.stopPropagation();
+      state.visible = false;
+      emit('close');
+    };
 
     const tagStyle = () => {
       if (props.color) {
@@ -48,14 +48,14 @@ export const Tag = defineComponent({
           backgroundColor: props.color + '15',
           borderColor: props.color,
           color: props.color,
-        }
+        };
       }
-      return {}
-    }
+      return {};
+    };
 
-    const hasCustomColor = () => !!props.color
+    const hasCustomColor = () => !!props.color;
 
-    return { state, handleClose, tagStyle, hasCustomColor, slots }
+    return { state, handleClose, tagStyle, hasCustomColor, slots };
   },
 
   template: `
@@ -107,4 +107,4 @@ export const Tag = defineComponent({
     }
     .lyt-tag__close:hover { opacity: 1; background-color: rgba(0, 0, 0, 0.1); }
   `,
-})
+});

@@ -4,8 +4,8 @@
  * Events: change
  */
 
-import { defineComponent } from '@lytjs/component'
-import { reactive } from '@lytjs/reactivity'
+import { defineComponent } from '@lytjs/component';
+import { reactive } from '@lytjs/reactivity';
 
 export const Checkbox = defineComponent({
   name: 'LytCheckbox',
@@ -36,16 +36,16 @@ export const Checkbox = defineComponent({
   setup(props, { emit, slots }) {
     const state = reactive({
       isChecked: props.modelValue !== undefined ? props.modelValue : props.checked,
-    })
+    });
 
-    const handleChange = (e: Event) => {
-      if (props.disabled) return
-      state.isChecked = !state.isChecked
-      emit('change', state.isChecked)
-      emit('update:modelValue', state.isChecked)
-    }
+    const handleChange = (_e: Event) => {
+      if (props.disabled) return;
+      state.isChecked = !state.isChecked;
+      emit('change', state.isChecked);
+      emit('update:modelValue', state.isChecked);
+    };
 
-    return { state, handleChange, slots }
+    return { state, handleChange, slots };
   },
 
   template: `
@@ -147,4 +147,4 @@ export const Checkbox = defineComponent({
       border-color: var(--lyt-color-muted);
     }
   `,
-})
+});

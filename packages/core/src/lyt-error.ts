@@ -11,4 +11,4 @@ export {
   createCompilerError,
   createRendererError,
   createComponentError,
-} from '../../common/src/lyt-error'
+} from '@lytjs/common'

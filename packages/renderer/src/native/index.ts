@@ -6,21 +6,21 @@
  */
 
 // ---- 核心接口与类型 ----
-export type { LytRenderer, RendererInstance } from '../renderer-interfaces'
-export type { VNode } from '../vnode'
+export type { LytRenderer, RendererInstance } from '../renderer-interfaces';
+export type { VNode } from '../vnode';
 
 // ---- 核心函数与常量 ----
 export {
   createRenderer,
-} from '../create-renderer'
+} from '../create-renderer';
 export {
   Fragment,
   Text,
   Comment,
   ShapeFlags,
   PatchFlags,
-} from '../vnode'
+} from '../vnode';
 
 // ---- 移动端支持 ----
-export { NativeRenderer, nativeRenderer } from './native-renderer'
-export type { NativeNode } from './native-renderer'
+export { NativeRenderer, nativeRenderer } from './native-renderer';
+export type { NativeNode } from './native-renderer';

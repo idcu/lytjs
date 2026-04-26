@@ -20,8 +20,8 @@
  *   → renderSlot(slots, 'header', { title }, () => [h('h1', null, title)])
  */
 
-import type { ASTNode, ElementNode, DirectiveNode } from '../ast/nodes'
-import type { TransformContext } from '../transform/transform'
+import type { ASTNode, ElementNode, DirectiveNode } from '../ast/nodes';
+import type { TransformContext } from '../transform/transform';
 
 // ================================================================
 //  类型定义
@@ -67,23 +67,23 @@ export interface SlotTransformResult {
  * @param context 转换上下文
  */
 export function transformSlot(node: ASTNode, context: TransformContext): void {
-  if (node.type !== 'Element') return
+  if (node.type !== 'Element') return;
 
   // 查找 v-slot 指令
-  const slotDirective = (node as ElementNode).directives.find(d => d.name === 'slot')
-  if (!slotDirective) return
+  const slotDirective = (node as ElementNode).directives.find(d => d.name === 'slot');
+  if (!slotDirective) return;
 
   // 解析插槽信息
-  const slotInfo = parseSlotDirective(slotDirective, node as ElementNode)
+  const slotInfo = parseSlotDirective(slotDirective, node as ElementNode);
 
   // 生成插槽代码
-  const code = generateSlotCode(slotInfo)
+  const code = generateSlotCode(slotInfo);
 
   // 将转换结果存储在节点上
   Object.assign(node, {
     slotInfo,
     slotCode: code,
-  })
+  });
 
   // 收集辅助函数
   context.root.helpers.add('renderSlot')
@@ -91,7 +91,7 @@ export function transformSlot(node: ASTNode, context: TransformContext): void {
   // 从指令列表中移除 v-slot（已处理）
   ;(node as ElementNode).directives = (node as ElementNode).directives.filter(
     d => d !== slotDirective
-  )
+  );
 }
 
 // ================================================================
@@ -115,21 +115,21 @@ export function transformSlot(node: ASTNode, context: TransformContext): void {
  */
 export function parseSlotDirective(
   directive: DirectiveNode,
-  node: ElementNode,
+  node: ElementNode
 ): SlotInfo {
   // 解析插槽名称
-  const name = directive.arg || 'default'
+  const name = directive.arg || 'default';
 
   // 解析作用域 props
-  const value = directive.value || ''
-  const isScoped = value.length > 0
+  const value = directive.value || '';
+  const isScoped = value.length > 0;
 
   return {
     name,
     props: value,
     isScoped,
     node,
-  }
+  };
 }
 
 // ================================================================
@@ -148,18 +148,18 @@ export function parseSlotDirective(
  * @returns 生成的代码字符串
  */
 export function generateSlotCode(slot: SlotInfo): string {
-  const { name, props, isScoped, node } = slot
+  const { name, props, isScoped, node } = slot;
 
   // 生成子节点渲染函数
-  const childrenCode = generateSlotChildren(node)
+  const childrenCode = generateSlotChildren(node);
 
   if (isScoped) {
     // 作用域插槽：renderSlot(slots, 'name', propsExpr, (props) => [...])
-    return `renderSlot(slots, '${name}', ${props}, (${props}) => ${childrenCode})`
+    return `renderSlot(slots, '${name}', ${props}, (${props}) => ${childrenCode})`;
   }
 
   // 普通插槽：renderSlot(slots, 'name', null, () => [...])
-  return `renderSlot(slots, '${name}', null, () => ${childrenCode})`
+  return `renderSlot(slots, '${name}', null, () => ${childrenCode})`;
 }
 
 /**
@@ -172,37 +172,37 @@ export function generateSlotCode(slot: SlotInfo): string {
  */
 function generateSlotChildren(node: ElementNode): string {
   if (node.children.length === 0) {
-    return '[]'
+    return '[]';
   }
 
   if (node.children.length === 1) {
-    const child = node.children[0]
+    const child = node.children[0];
     if (child.type === 'Text') {
       // 文本子节点
       if (child.isExpression) {
-        return wrapContextAccess(child.content.replace(/\{\{|\}\}/g, '').trim())
+        return wrapContextAccess(child.content.replace(/\{\{|\}\}/g, '').trim());
       }
-      return `'${escapeString(child.content)}'`
+      return `'${escapeString(child.content)}'`;
     }
     // 元素子节点
-    return `_createVNode('${child.tag}')`
+    return `_createVNode('${child.tag}')`;
   }
 
   // 多个子节点
-  const parts: string[] = []
+  const parts: string[] = [];
   for (const child of node.children) {
     if (child.type === 'Text') {
       if (child.isExpression) {
-        parts.push(wrapContextAccess(child.content.replace(/\{\{|\}\}/g, '').trim()))
+        parts.push(wrapContextAccess(child.content.replace(/\{\{|\}\}/g, '').trim()));
       } else {
-        parts.push(`'${escapeString(child.content)}'`)
+        parts.push(`'${escapeString(child.content)}'`);
       }
     } else if (child.type === 'Element') {
-      parts.push(`_createVNode('${child.tag}')`)
+      parts.push(`_createVNode('${child.tag}')`);
     }
   }
 
-  return `[${parts.join(', ')}]`
+  return `[${parts.join(', ')}]`;
 }
 
 // ================================================================
@@ -213,11 +213,11 @@ function generateSlotChildren(node: ElementNode): string {
  * 将表达式包装为上下文访问形式
  */
 function wrapContextAccess(expr: string): string {
-  expr = expr.trim()
-  if (expr.startsWith('_ctx.')) return expr
-  if (expr.includes('(') || expr.includes('=>')) return expr
-  if (/^\w+(\.\w+)*$/.test(expr)) return `_ctx.${expr}`
-  return expr
+  expr = expr.trim();
+  if (expr.startsWith('_ctx.')) return expr;
+  if (expr.includes('(') || expr.includes('=>')) return expr;
+  if (/^\w+(\.\w+)*$/.test(expr)) return `_ctx.${expr}`;
+  return expr;
 }
 
 /**
@@ -228,5 +228,5 @@ function escapeString(str: string): string {
     .replace(/\\/g, '\\\\')
     .replace(/'/g, "\\'")
     .replace(/\n/g, '\\n')
-    .replace(/\r/g, '\\r')
+    .replace(/\r/g, '\\r');
 }

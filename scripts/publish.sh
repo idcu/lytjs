@@ -37,6 +37,7 @@ done
 
 # 按依赖顺序排列的发布包列表
 PUBLISH_ORDER=(
+  common
   reactivity
   vdom
   compiler
@@ -51,6 +52,8 @@ PUBLISH_ORDER=(
   plugin-i18n
   plugin-auth
   plugin-logger
+  plugin-theme
+  plugin-storage
   test-utils
   plugins
   agg
@@ -102,7 +105,7 @@ if [ ! -f "$TSX" ]; then
   fi
 fi
 
-if ! "$TSX" "$ROOT_DIR/test-runner.ts" 2>&1; then
+if ! "$TSX" "$ROOT_DIR/tests/test-runner.ts" 2>&1; then
   err "Tests failed. Aborting publish."
   exit 1
 fi

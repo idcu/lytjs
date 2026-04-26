@@ -15,29 +15,29 @@ export function isStringOrNumber(val: unknown): val is string | number {
 /**
  * 判断值是否为数组
  */
-export function isArray(val: unknown): val is any[] {
+export function isArray(val: unknown): val is unknown[] {
   return Array.isArray(val);
 }
 
 /**
  * 判断值是否为函数
  */
-export function isFunction(val: unknown): val is Function {
+export function isFunction(val: unknown): val is (...args: unknown[]) => unknown {
   return typeof val === 'function';
 }
 
 /**
  * 判断值是否为普通对象（非数组、非null）
  */
-export function isPlainObject(val: unknown): val is Record<string, any> {
+export function isPlainObject(val: unknown): val is Record<string, unknown> {
   return val !== null && typeof val === 'object' && !Array.isArray(val);
 }
 
 /**
  * 判断值是否为 Promise
  */
-export function isPromise(val: unknown): val is Promise<any> {
-  return val !== null && typeof val === 'object' && typeof (val as any).then === 'function';
+export function isPromise(val: unknown): val is Promise<unknown> {
+  return val !== null && typeof val === 'object' && typeof (val as Record<string, unknown>).then === 'function';
 }
 
 /**
@@ -105,11 +105,11 @@ export function isObject(val: unknown): val is object {
 /**
  * 判断是否是 VNode
  */
-export function isVNode(val: unknown): val is any {
+export function isVNode(val: unknown): val is { type: unknown; shapeFlag: unknown; [key: string]: unknown } {
   return (
     val !== null &&
     typeof val === 'object' &&
-    (val as any).type !== undefined &&
-    (val as any).shapeFlag !== undefined
+    (val as Record<string, unknown>).type !== undefined &&
+    (val as Record<string, unknown>).shapeFlag !== undefined
   );
 }

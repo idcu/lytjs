@@ -19,29 +19,29 @@ export const cssVariables = {
   borderRadiusRound: '20px',
   shadow: '0 2px 12px 0 rgba(0, 0, 0, 0.1)',
   transitionDuration: '0.3s',
-}
+};
 
 /**
  * 将 CSS 变量注入到 document root
  */
 export function injectCSSVariables(custom?: Partial<typeof cssVariables>): void {
-  const vars = { ...cssVariables, ...custom }
-  const root = document.documentElement
+  const vars = { ...cssVariables, ...custom };
+  const root = document.documentElement;
   Object.entries(vars).forEach(([key, value]) => {
-    const cssKey = `--lyt-${key.replace(/([A-Z])/g, '-$1').toLowerCase()}`
-    root.style.setProperty(cssKey, value)
-  })
+    const cssKey = `--lyt-${key.replace(/([A-Z])/g, '-$1').toLowerCase()}`;
+    root.style.setProperty(cssKey, value);
+  });
 }
 
 /**
  * 生成 CSS 自定义属性字符串
  */
 export function generateCSSVariableString(custom?: Partial<typeof cssVariables>): string {
-  const vars = { ...cssVariables, ...custom }
+  const vars = { ...cssVariables, ...custom };
   return `:root {\n${Object.entries(vars)
     .map(
       ([key, value]) =>
         `  --lyt-${key.replace(/([A-Z])/g, '-$1').toLowerCase()}: ${value};`
     )
-    .join('\n')}\n}`
+    .join('\n')}\n}`;
 }

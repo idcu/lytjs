@@ -5,7 +5,7 @@
  * Features: 自动消失, 队列显示
  */
 
-import { defineComponent } from '@lytjs/component'
+import { defineComponent } from '@lytjs/component';
 
 interface ToastInstance {
   id: number
@@ -17,33 +17,33 @@ interface ToastInstance {
   timer: ReturnType<typeof setTimeout> | null
 }
 
-let toastId = 0
-const toastQueue: ToastInstance[] = []
-let toastContainer: HTMLDivElement | null = null
+let toastId = 0;
+const toastQueue: ToastInstance[] = [];
+let toastContainer: HTMLDivElement | null = null;
 
 function getContainer(): HTMLDivElement {
   if (!toastContainer) {
-    toastContainer = document.createElement('div')
-    toastContainer.className = 'lyt-toast-container'
-    document.body.appendChild(toastContainer)
+    toastContainer = document.createElement('div');
+    toastContainer.className = 'lyt-toast-container';
+    document.body.appendChild(toastContainer);
   }
-  return toastContainer
+  return toastContainer;
 }
 
 function removeToast(instance: ToastInstance) {
-  instance.visible = false
-  const el = document.getElementById(`lyt-toast-${instance.id}`)
+  instance.visible = false;
+  const el = document.getElementById(`lyt-toast-${instance.id}`);
   if (el) {
-    el.classList.remove('lyt-toast--visible')
+    el.classList.remove('lyt-toast--visible');
     setTimeout(() => {
-      el.remove()
-      const index = toastQueue.indexOf(instance)
-      if (index > -1) toastQueue.splice(index, 1)
+      el.remove();
+      const index = toastQueue.indexOf(instance);
+      if (index > -1) toastQueue.splice(index, 1);
       if (toastQueue.length === 0 && toastContainer) {
-        toastContainer.remove()
-        toastContainer = null
+        toastContainer.remove();
+        toastContainer = null;
       }
-    }, 300)
+    }, 300);
   }
 }
 
@@ -53,7 +53,7 @@ function createToast(options: {
   duration?: number
   position?: string
 }): ToastInstance {
-  const id = ++toastId
+  const id = ++toastId;
   const instance: ToastInstance = {
     id,
     message: options.message,
@@ -62,39 +62,39 @@ function createToast(options: {
     duration: options.duration !== undefined ? options.duration : 3000,
     visible: true,
     timer: null,
-  }
+  };
 
-  const container = getContainer()
-  const el = document.createElement('div')
-  el.id = `lyt-toast-${id}`
-  el.className = `lyt-toast lyt-toast--${instance.type} lyt-toast--${instance.position}`
+  const container = getContainer();
+  const el = document.createElement('div');
+  el.id = `lyt-toast-${id}`;
+  el.className = `lyt-toast lyt-toast--${instance.type} lyt-toast--${instance.position}`;
 
   const iconMap: Record<string, string> = {
     success: '&#10003;',
     error: '&#10007;',
     warning: '&#9888;',
     info: '&#8505;',
-  }
+  };
 
   el.innerHTML = `
     <span class="lyt-toast__icon">${iconMap[instance.type] || ''}</span>
     <span class="lyt-toast__message">${instance.message}</span>
-  `
+  `;
 
-  container.appendChild(el)
+  container.appendChild(el);
 
   requestAnimationFrame(() => {
-    el.classList.add('lyt-toast--visible')
-  })
+    el.classList.add('lyt-toast--visible');
+  });
 
   if (instance.duration > 0) {
     instance.timer = setTimeout(() => {
-      removeToast(instance)
-    }, instance.duration)
+      removeToast(instance);
+    }, instance.duration);
   }
 
-  toastQueue.push(instance)
-  return instance
+  toastQueue.push(instance);
+  return instance;
 }
 
 export const Toast = defineComponent({
@@ -128,18 +128,18 @@ export const Toast = defineComponent({
         type: options?.type || props.type,
         duration: options?.duration !== undefined ? options.duration : props.duration,
         position: options?.position || props.position,
-      })
-    }
+      });
+    };
 
-    const success = (message: string, duration?: number) => show({ message, type: 'success', duration })
-    const error = (message: string, duration?: number) => show({ message, type: 'error', duration })
-    const warning = (message: string, duration?: number) => show({ message, type: 'warning', duration })
-    const info = (message: string, duration?: number) => show({ message, type: 'info', duration })
+    const success = (message: string, duration?: number) => show({ message, type: 'success', duration });
+    const error = (message: string, duration?: number) => show({ message, type: 'error', duration });
+    const warning = (message: string, duration?: number) => show({ message, type: 'warning', duration });
+    const info = (message: string, duration?: number) => show({ message, type: 'info', duration });
 
-    return { show, success, error, warning, info }
+    return { show, success, error, warning, info };
   },
 
-  template: `<div></div>`,
+  template: '<div></div>',
 
   styles: `
     .lyt-toast-container {
@@ -184,22 +184,22 @@ export const Toast = defineComponent({
     .lyt-toast__icon { font-size: var(--lyt-font-size-lg); }
     .lyt-toast__message { line-height: 1.4; }
   `,
-})
+});
 
 // 静态方法挂载
 Toast.show = (options: { message: string; type?: string; duration?: number; position?: string }) =>
-  createToast(options)
+  createToast(options);
 Toast.success = (message: string, duration?: number) =>
-  createToast({ message, type: 'success', duration })
+  createToast({ message, type: 'success', duration });
 Toast.error = (message: string, duration?: number) =>
-  createToast({ message, type: 'error', duration })
+  createToast({ message, type: 'error', duration });
 Toast.warning = (message: string, duration?: number) =>
-  createToast({ message, type: 'warning', duration })
+  createToast({ message, type: 'warning', duration });
 Toast.info = (message: string, duration?: number) =>
-  createToast({ message, type: 'info', duration })
+  createToast({ message, type: 'info', duration });
 Toast.closeAll = () => {
   toastQueue.forEach((instance) => {
-    if (instance.timer) clearTimeout(instance.timer)
-    removeToast(instance)
-  })
-}
+    if (instance.timer) clearTimeout(instance.timer);
+    removeToast(instance);
+  });
+};

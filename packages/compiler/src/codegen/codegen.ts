@@ -368,9 +368,9 @@ function generateProps(node: ElementNode, ctx: CodegenContext): string {
         const modifierHandlers = event.modifiers.map(mod => {
           switch (mod) {
             case 'stop':
-              return `$event.stopPropagation()`;
+              return '$event.stopPropagation()';
             case 'prevent':
-              return `$event.preventDefault()`;
+              return '$event.preventDefault()';
             case 'capture':
               return null; // 在 props 中标记 capture: true
             case 'once':

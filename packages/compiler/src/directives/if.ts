@@ -16,8 +16,8 @@
  *   → (show ? h('div', null, 'A') : (other ? h('div', null, 'B') : h('div', null, 'C')))
  */
 
-import type { ASTNode, ElementNode } from '../ast/nodes'
-import type { TransformContext } from '../transform/transform'
+import type { ASTNode, ElementNode } from '../ast/nodes';
+import type { TransformContext } from '../transform/transform';
 
 // ================================================================
 //  类型定义
@@ -61,26 +61,26 @@ export interface IfTransformResult {
  * @param context 转换上下文
  */
 export function transformIf(node: ASTNode, context: TransformContext): void {
-  if (node.type !== 'Element') return
+  if (node.type !== 'Element') return;
 
   // 查找 v-if 指令
-  const ifDirective = (node as ElementNode).directives.find(d => d.name === 'if')
-  if (!ifDirective) return
+  const ifDirective = (node as ElementNode).directives.find(d => d.name === 'if');
+  if (!ifDirective) return;
 
   // 收集 if 链的所有分支
-  const branches = collectIfBranches(node as ElementNode, context)
+  const branches = collectIfBranches(node as ElementNode, context);
 
-  if (branches.length === 0) return
+  if (branches.length === 0) return;
 
   // 生成条件表达式代码
-  const code = generateConditionalCode(branches)
+  const code = generateConditionalCode(branches);
 
   // 将转换结果存储在节点上
   Object.assign(node, {
     ifCondition: ifDirective.value,
     ifBranches: branches,
     ifCode: code,
-  })
+  });
 
   // 收集辅助函数
   context.root.helpers.add('createConditionalVNode')
@@ -88,7 +88,7 @@ export function transformIf(node: ASTNode, context: TransformContext): void {
   // 从指令列表中移除 v-if（已处理）
   ;(node as ElementNode).directives = (node as ElementNode).directives.filter(
     d => d !== ifDirective
-  )
+  );
 }
 
 // ================================================================
@@ -106,29 +106,29 @@ export function transformIf(node: ASTNode, context: TransformContext): void {
  */
 function collectIfBranches(
   startNode: ElementNode,
-  context: TransformContext,
+  context: TransformContext
 ): IfBranch[] {
-  const branches: IfBranch[] = []
+  const branches: IfBranch[] = [];
 
   // 添加 v-if 分支
-  const ifDirective = startNode.directives.find(d => d.name === 'if')
-  if (!ifDirective) return branches
+  const ifDirective = startNode.directives.find(d => d.name === 'if');
+  if (!ifDirective) return branches;
 
   branches.push({
     condition: ifDirective.value,
     node: startNode,
     type: 'if',
-  })
+  });
 
   // 查找后续的 v-else-if 和 v-else 分支
-  const siblings = getSiblingNodes(startNode, context)
-  const startIndex = siblings.indexOf(startNode)
+  const siblings = getSiblingNodes(startNode, context);
+  const startIndex = siblings.indexOf(startNode);
 
   for (let i = startIndex + 1; i < siblings.length; i++) {
-    const sibling = siblings[i]
-    if (sibling.type !== 'Element') break
+    const sibling = siblings[i];
+    if (sibling.type !== 'Element') break;
 
-    const elseIfDirective = sibling.directives.find(d => d.name === 'if')
+    const elseIfDirective = sibling.directives.find(d => d.name === 'if');
     if (elseIfDirective) {
       // 检查是否有 else-if 或 else 修饰符
       // 在 Lyt.js 中，v-else-if 和 v-else 通过 v-if 指令的 arg 区分
@@ -137,27 +137,27 @@ function collectIfBranches(
           condition: elseIfDirective.value,
           node: sibling,
           type: 'else-if',
-        })
+        });
         // 从指令列表中移除
-        sibling.directives = sibling.directives.filter(d => d !== elseIfDirective)
-        continue
+        sibling.directives = sibling.directives.filter(d => d !== elseIfDirective);
+        continue;
       } else if (elseIfDirective.arg === 'else') {
         branches.push({
           condition: '',
           node: sibling,
           type: 'else',
-        })
+        });
         // 从指令列表中移除
-        sibling.directives = sibling.directives.filter(d => d !== elseIfDirective)
-        break
+        sibling.directives = sibling.directives.filter(d => d !== elseIfDirective);
+        break;
       }
     }
 
     // 遇到非 if 指令的节点，停止收集
-    break
+    break;
   }
 
-  return branches
+  return branches;
 }
 
 /**
@@ -169,18 +169,18 @@ function collectIfBranches(
  */
 function getSiblingNodes(node: ElementNode, context: TransformContext): ASTNode[] {
   // 从父节点获取兄弟节点
-  const parent = context.parent
-  if (!parent) return [node]
+  const parent = context.parent;
+  if (!parent) return [node];
 
   if (parent.type === 'Root') {
-    return parent.children
+    return parent.children;
   }
 
   if (parent.type === 'Element') {
-    return parent.children
+    return parent.children;
   }
 
-  return [node]
+  return [node];
 }
 
 // ================================================================
@@ -199,34 +199,34 @@ function getSiblingNodes(node: ElementNode, context: TransformContext): ASTNode[
  * @returns 生成的条件表达式代码字符串
  */
 export function generateConditionalCode(branches: IfBranch[]): string {
-  if (branches.length === 0) return 'null'
+  if (branches.length === 0) return 'null';
   if (branches.length === 1) {
     // 只有 v-if，没有 v-else
-    const branch = branches[0]
-    return `(${branch.condition} ? _createVNode(${branch.node.tag}) : null)`
+    const branch = branches[0];
+    return `(${branch.condition} ? _createVNode(${branch.node.tag}) : null)`;
   }
 
   // 构建嵌套三元表达式
-  let code = ''
+  let code = '';
 
   for (let i = 0; i < branches.length; i++) {
-    const branch = branches[i]
+    const branch = branches[i];
 
     if (i === 0) {
       // 第一个分支（v-if）
-      code = `(${branch.condition} ? _createVNode(${branch.node.tag}) : `
+      code = `(${branch.condition} ? _createVNode(${branch.node.tag}) : `;
     } else if (i === branches.length - 1) {
       // 最后一个分支（v-else 或最后一个 v-else-if）
       if (branch.type === 'else') {
-        code += `_createVNode(${branch.node.tag}))`
+        code += `_createVNode(${branch.node.tag}))`;
       } else {
-        code += `(${branch.condition} ? _createVNode(${branch.node.tag}) : null))`
+        code += `(${branch.condition} ? _createVNode(${branch.node.tag}) : null))`;
       }
     } else {
       // 中间分支（v-else-if）
-      code += `(${branch.condition} ? _createVNode(${branch.node.tag}) : `
+      code += `(${branch.condition} ? _createVNode(${branch.node.tag}) : `;
     }
   }
 
-  return code
+  return code;
 }

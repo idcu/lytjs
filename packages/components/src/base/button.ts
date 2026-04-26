@@ -5,7 +5,7 @@
  * Slots: default, icon
  */
 
-import { defineComponent } from '@lytjs/component'
+import { defineComponent } from '@lytjs/component';
 
 export const Button = defineComponent({
   name: 'LytButton',
@@ -41,11 +41,11 @@ export const Button = defineComponent({
 
   setup(props, { emit, slots }) {
     const handleClick = (e: Event) => {
-      if (props.disabled || props.loading) return
-      emit('click', e)
-    }
+      if (props.disabled || props.loading) return;
+      emit('click', e);
+    };
 
-    return { props, handleClick, slots }
+    return { props, handleClick, slots };
   },
 
   template: `
@@ -102,4 +102,4 @@ export const Button = defineComponent({
     .lyt-btn__loading-icon { animation: lyt-spin 1s linear infinite; }
     @keyframes lyt-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
   `,
-})
+});

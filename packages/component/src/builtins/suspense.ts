@@ -72,14 +72,14 @@ interface SuspenseState {
 /**
  * 判断值是否为函数
  */
-function isFunction(val: unknown): val is Function {
+function _isFunction(val: unknown): val is Function {
   return typeof val === 'function';
 }
 
 /**
  * 判断值是否为普通对象
  */
-function isPlainObject(val: unknown): val is Record<string, any> {
+function _isPlainObject(val: unknown): val is Record<string, any> {
   return val !== null && typeof val === 'object' && !Array.isArray(val);
 }
 
@@ -105,7 +105,7 @@ function isAsyncComponent(vnode: any): boolean {
   }
 
   // 检查 setup 函数返回 Promise
-  if (type && type.options && isFunction(type.options.setup)) {
+  if (type && type.options && _isFunction(type.options.setup)) {
     const setupResult = type.options.setup;
     // 注意：这里不实际调用 setup，只检查标记
     if ((setupResult as any).__isAsync) return true;
@@ -250,7 +250,7 @@ export const Suspense: ComponentDefine = defineComponent({
       state.pendingDescendants = asyncChildren.length;
 
       // 触发 onPending 回调
-      if (isFunction(props.onPending)) {
+      if (_isFunction(props.onPending)) {
         props.onPending();
       }
 
@@ -262,7 +262,7 @@ export const Suspense: ComponentDefine = defineComponent({
             // 超时后显示 fallback
             if (!state.isShowingFallback) {
               state.isShowingFallback = true;
-              if (isFunction(props.onFallback)) {
+              if (_isFunction(props.onFallback)) {
                 props.onFallback();
               }
             }
@@ -339,7 +339,7 @@ export const Suspense: ComponentDefine = defineComponent({
       clearPendingState(state as SuspenseState, props);
 
       // 触发 onResolve 回调
-      if (isFunction(props.onResolve)) {
+      if (_isFunction(props.onResolve)) {
         props.onResolve();
       }
 
@@ -357,7 +357,7 @@ export const Suspense: ComponentDefine = defineComponent({
           clearPendingState(state as SuspenseState, props);
 
           // 触发 onResolve 回调
-          if (isFunction(props.onResolve)) {
+          if (_isFunction(props.onResolve)) {
             props.onResolve();
           }
 
@@ -380,7 +380,7 @@ export const Suspense: ComponentDefine = defineComponent({
     // 显示 fallback
     state.isShowingFallback = true;
 
-    if (isFunction(props.onFallback)) {
+    if (_isFunction(props.onFallback)) {
       props.onFallback();
     }
 
@@ -406,7 +406,7 @@ export const Suspense: ComponentDefine = defineComponent({
  * @param state - Suspense 内部状态
  * @param props - Suspense props
  */
-function clearPendingState(state: SuspenseState, props: SuspenseProps): void {
+function clearPendingState(state: SuspenseState, _props: SuspenseProps): void {
   // 清除超时定时器
   if (state.timeoutId !== null) {
     window.clearTimeout(state.timeoutId);

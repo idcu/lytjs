@@ -3,7 +3,7 @@
  * Props: count, maxCount, dot, showZero, type, offset
  */
 
-import { defineComponent } from '@lytjs/component'
+import { defineComponent } from '@lytjs/component';
 
 export const Badge = defineComponent({
   name: 'LytBadge',
@@ -38,27 +38,27 @@ export const Badge = defineComponent({
 
   setup(props, { slots }) {
     const displayCount = () => {
-      if (props.dot) return ''
-      if (props.count > props.maxCount) return `${props.maxCount}+`
-      return String(props.count)
-    }
+      if (props.dot) return '';
+      if (props.count > props.maxCount) return `${props.maxCount}+`;
+      return String(props.count);
+    };
 
     const showBadge = () => {
-      if (props.dot) return true
-      if (props.count === 0) return props.showZero
-      return true
-    }
+      if (props.dot) return true;
+      if (props.count === 0) return props.showZero;
+      return true;
+    };
 
     const badgeStyle = () => {
-      const style: Record<string, string> = {}
+      const style: Record<string, string> = {};
       if (props.offset) {
-        style.top = `${props.offset[0]}px`
-        style.right = `${props.offset[1]}px`
+        style.top = `${props.offset[0]}px`;
+        style.right = `${props.offset[1]}px`;
       }
-      return style
-    }
+      return style;
+    };
 
-    return { displayCount, showBadge, badgeStyle, slots }
+    return { displayCount, showBadge, badgeStyle, slots };
   },
 
   template: `
@@ -115,4 +115,4 @@ export const Badge = defineComponent({
     .lyt-badge__count--info { background-color: var(--lyt-color-info); }
     .lyt-badge__count--default { background-color: var(--lyt-color-info); }
   `,
-})
+});

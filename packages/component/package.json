@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/component",
-  "version": "4.0.4",
+  "version": "4.0.5",
   "description": "Lyt.js 组件系统 - defineComponent、生命周期、插槽、KeepAlive、Suspense",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",

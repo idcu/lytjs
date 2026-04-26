@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/store",
-  "version": "4.0.4",
+  "version": "4.0.5",
   "description": "Lyt.js 内置状态管理 - 轻量级全局状态管理，支持模块化和插件扩展",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",

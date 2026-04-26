@@ -12,8 +12,8 @@ import { isPlainObject, isArray, isFunction } from './is';
  * 将源对象的属性合并到目标对象
  */
 export function mergeObjects(
-  target: Record<string, any>,
-  source: Record<string, any>
+  target: Record<string, unknown>,
+  source: Record<string, unknown>
 ): void {
   const keys = Object.keys(source);
   for (let i = 0; i < keys.length; i++) {
@@ -25,9 +25,9 @@ export function mergeObjects(
  * 深合并对象
  */
 export function deepMerge(
-  target: Record<string, any>,
-  source: Record<string, any>
-): Record<string, any> {
+  target: Record<string, unknown>,
+  source: Record<string, unknown>
+): Record<string, unknown> {
   const result = { ...target };
   for (const key in source) {
     const sourceVal = source[key];
@@ -43,8 +43,8 @@ export function deepMerge(
 /**
  * 创建对象快照（浅克隆）
  */
-export function createSnapshot(obj: Record<string, any>): Record<string, any> {
-  const snapshot: Record<string, any> = {};
+export function createSnapshot(obj: Record<string, unknown>): Record<string, unknown> {
+  const snapshot: Record<string, unknown> = {};
   for (const key in obj) {
     const val = obj[key];
     if (isPlainObject(val)) {
@@ -62,16 +62,16 @@ export function createSnapshot(obj: Record<string, any>): Record<string, any> {
  * 比较两个对象的差异
  */
 export function diffObjects(
-  oldObj: Record<string, any>,
-  newObj: Record<string, any>
+  oldObj: Record<string, unknown>,
+  newObj: Record<string, unknown>
 ): {
-  added: Record<string, any>;
-  removed: Record<string, any>;
-  changed: Record<string, { old: any; new: any }>;
+  added: Record<string, unknown>;
+  removed: Record<string, unknown>;
+  changed: Record<string, { old: unknown; new: unknown }>;
 } {
-  const added: Record<string, any> = {};
-  const removed: Record<string, any> = {};
-  const changed: Record<string, { old: any; new: any }> = {};
+  const added: Record<string, unknown> = {};
+  const removed: Record<string, unknown> = {};
+  const changed: Record<string, { old: unknown; new: unknown }> = {};
   const allKeys = new Set([...Object.keys(oldObj), ...Object.keys(newObj)]);
 
   for (const key of allKeys) {
@@ -95,7 +95,7 @@ export function diffObjects(
 /**
  * 选取对象的部分属性
  */
-export function pick<T extends Record<string, any>, K extends keyof T>(
+export function pick<T extends Record<string, unknown>, K extends keyof T>(
   obj: T,
   keys: K[]
 ): Pick<T, K> {
@@ -111,15 +111,15 @@ export function pick<T extends Record<string, any>, K extends keyof T>(
 /**
  * 排除对象的部分属性
  */
-export function omit<T extends Record<string, any>, K extends keyof T>(
+export function omit<T extends Record<string, unknown>, K extends keyof T>(
   obj: T,
   keys: K[]
 ): Omit<T, K> {
-  const result = { ...obj } as Omit<T, K>;
+  const result = { ...obj };
   for (const key of keys) {
-    delete (result as any)[key];
+    delete result[key];
   }
-  return result;
+  return result as Omit<T, K>;
 }
 
 /**
@@ -131,11 +131,11 @@ export function deepClone<T>(obj: T): T {
   }
 
   if (isArray(obj)) {
-    return (obj as any[]).map(item => deepClone(item)) as T;
+    return (obj as unknown[]).map(item => deepClone(item)) as T;
   }
 
   if (isPlainObject(obj)) {
-    const cloned: Record<string, any> = {};
+    const cloned: Record<string, unknown> = {};
     for (const key in obj) {
       cloned[key] = deepClone(obj[key]);
     }
@@ -148,16 +148,16 @@ export function deepClone<T>(obj: T): T {
 /**
  * 判断两个对象是否相等（浅比较）
  */
-export function shallowEqual(a: any, b: any): boolean {
+export function shallowEqual(a: unknown, b: unknown): boolean {
   if (a === b) return true;
   if (typeof a !== 'object' || a === null || typeof b !== 'object' || b === null) return false;
 
-  const keysA = Object.keys(a);
-  const keysB = Object.keys(b);
+  const keysA = Object.keys(a as Record<string, unknown>);
+  const keysB = Object.keys(b as Record<string, unknown>);
   if (keysA.length !== keysB.length) return false;
 
   for (const key of keysA) {
-    if (!Object.prototype.hasOwnProperty.call(b, key) || a[key] !== b[key]) {
+    if (!Object.prototype.hasOwnProperty.call(b, key) || (a as Record<string, unknown>)[key] !== (b as Record<string, unknown>)[key]) {
       return false;
     }
   }
@@ -168,17 +168,17 @@ export function shallowEqual(a: any, b: any): boolean {
 /**
  * 判断两个对象是否相等（深比较）
  */
-export function deepEqual(a: any, b: any): boolean {
+export function deepEqual(a: unknown, b: unknown): boolean {
   if (a === b) return true;
   if (typeof a !== 'object' || a === null || typeof b !== 'object' || b === null) return false;
 
-  const keysA = Object.keys(a);
-  const keysB = Object.keys(b);
+  const keysA = Object.keys(a as Record<string, unknown>);
+  const keysB = Object.keys(b as Record<string, unknown>);
   if (keysA.length !== keysB.length) return false;
 
   for (const key of keysA) {
     if (!Object.prototype.hasOwnProperty.call(b, key)) return false;
-    if (!deepEqual(a[key], b[key])) return false;
+    if (!deepEqual((a as Record<string, unknown>)[key], (b as Record<string, unknown>)[key])) return false;
   }
 
   return true;
@@ -187,42 +187,43 @@ export function deepEqual(a: any, b: any): boolean {
 /**
  * 安全获取嵌套属性
  */
-export function get<T = any>(
-  obj: Record<string, any>,
+export function get<T = unknown>(
+  obj: Record<string, unknown>,
   path: string | string[],
   defaultValue?: T
 ): T | undefined {
   const keys = isArray(path) ? path : path.split('.');
-  let current: any = obj;
+  let current: unknown = obj;
 
   for (const key of keys) {
     if (current === null || current === undefined) {
       return defaultValue;
     }
-    current = current[key];
+    current = (current as Record<string, unknown>)[key];
   }
 
-  return current === undefined ? defaultValue : current;
+  return (current === undefined ? defaultValue : current) as T | undefined;
 }
 
 /**
  * 安全设置嵌套属性
  */
 export function set(
-  obj: Record<string, any>,
+  obj: Record<string, unknown>,
   path: string | string[],
-  value: any
+  value: unknown
 ): void {
   const keys = isArray(path) ? path : path.split('.');
-  let current: any = obj;
+  let current: unknown = obj;
 
   for (let i = 0; i < keys.length - 1; i++) {
     const key = keys[i];
-    if (!(key in current) || !isPlainObject(current[key])) {
-      current[key] = {};
+    const currentObj = current as Record<string, unknown>;
+    if (!(key in currentObj) || !isPlainObject(currentObj[key])) {
+      currentObj[key] = {};
     }
-    current = current[key];
+    current = currentObj[key];
   }
 
-  current[keys[keys.length - 1]] = value;
+  (current as Record<string, unknown>)[keys[keys.length - 1]] = value;
 }

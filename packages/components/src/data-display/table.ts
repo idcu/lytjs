@@ -5,8 +5,8 @@
  * Features: 排序, 斑马纹, 悬浮高亮
  */
 
-import { defineComponent } from '@lytjs/component'
-import { reactive } from '@lytjs/reactivity'
+import { defineComponent } from '@lytjs/component';
+import { reactive } from '@lytjs/reactivity';
 
 export const Table = defineComponent({
   name: 'LytTable',
@@ -49,64 +49,64 @@ export const Table = defineComponent({
     const state = reactive({
       sortKey: '',
       sortOrder: '' as '' | 'asc' | 'desc',
-    })
+    });
 
     const handleSort = (column: { key: string; sortable?: boolean }) => {
-      if (!column.sortable) return
+      if (!column.sortable) return;
 
       if (state.sortKey === column.key) {
-        if (state.sortOrder === 'asc') state.sortOrder = 'desc'
-        else if (state.sortOrder === 'desc') state.sortOrder = ''
-        else state.sortOrder = 'asc'
+        if (state.sortOrder === 'asc') state.sortOrder = 'desc';
+        else if (state.sortOrder === 'desc') state.sortOrder = '';
+        else state.sortOrder = 'asc';
       } else {
-        state.sortKey = column.key
-        state.sortOrder = 'asc'
+        state.sortKey = column.key;
+        state.sortOrder = 'asc';
       }
 
-      emit('sort', { key: state.sortKey, order: state.sortOrder })
-    }
+      emit('sort', { key: state.sortKey, order: state.sortOrder });
+    };
 
     const sortedData = () => {
-      if (!state.sortKey || !state.sortOrder) return props.data
+      if (!state.sortKey || !state.sortOrder) return props.data;
 
       const sorted = [...props.data].sort((a, b) => {
-        const aVal = a[state.sortKey]
-        const bVal = b[state.sortKey]
+        const aVal = a[state.sortKey];
+        const bVal = b[state.sortKey];
 
-        if (aVal === bVal) return 0
-        if (aVal === null || aVal === undefined) return 1
-        if (bVal === null || bVal === undefined) return -1
+        if (aVal === bVal) return 0;
+        if (aVal === null || aVal === undefined) return 1;
+        if (bVal === null || bVal === undefined) return -1;
 
         if (typeof aVal === 'number' && typeof bVal === 'number') {
-          return aVal - bVal
+          return aVal - bVal;
         }
 
-        const aStr = String(aVal)
-        const bStr = String(bVal)
-        return aStr.localeCompare(bStr)
-      })
+        const aStr = String(aVal);
+        const bStr = String(bVal);
+        return aStr.localeCompare(bStr);
+      });
 
-      if (state.sortOrder === 'desc') sorted.reverse()
-      return sorted
-    }
+      if (state.sortOrder === 'desc') sorted.reverse();
+      return sorted;
+    };
 
     const getCellValue = (row: Record<string, any>, key: string) => {
-      return row[key] !== undefined ? row[key] : ''
-    }
+      return row[key] !== undefined ? row[key] : '';
+    };
 
     const getSortIcon = (column: { key: string; sortable?: boolean }) => {
-      if (!column.sortable) return ''
-      if (state.sortKey !== column.key) return '&#8693;'
-      if (state.sortOrder === 'asc') return '&#8593;'
-      if (state.sortOrder === 'desc') return '&#8595;'
-      return '&#8693;'
-    }
+      if (!column.sortable) return '';
+      if (state.sortKey !== column.key) return '&#8693;';
+      if (state.sortOrder === 'asc') return '&#8593;';
+      if (state.sortOrder === 'desc') return '&#8595;';
+      return '&#8693;';
+    };
 
     const handleRowClick = (row: Record<string, any>, index: number) => {
-      emit('rowClick', { row, index })
-    }
+      emit('rowClick', { row, index });
+    };
 
-    return { state, handleSort, sortedData, getCellValue, getSortIcon, handleRowClick, slots }
+    return { state, handleSort, sortedData, getCellValue, getSortIcon, handleRowClick, slots };
   },
 
   template: `
@@ -204,4 +204,4 @@ export const Table = defineComponent({
     }
     .lyt-table-wrapper--bordered .lyt-table { border: 1px solid var(--lyt-color-border); }
   `,
-})
+});

@@ -3,8 +3,8 @@
  * Props: spinning, size(small/default/large), tip, delay
  */
 
-import { defineComponent, onUnmounted } from '@lytjs/component'
-import { reactive, watch } from '@lytjs/reactivity'
+import { defineComponent, onUnmounted } from '@lytjs/component';
+import { reactive, watch } from '@lytjs/reactivity';
 
 export const Spin = defineComponent({
   name: 'LytSpin',
@@ -32,30 +32,30 @@ export const Spin = defineComponent({
   setup(props, { slots }) {
     const state = reactive({
       visible: props.spinning,
-    })
+    });
 
-    let delayTimer: ReturnType<typeof setTimeout> | null = null
+    let delayTimer: ReturnType<typeof setTimeout> | null = null;
 
     watch(() => props.spinning, (val: any) => {
-      if (delayTimer) clearTimeout(delayTimer)
+      if (delayTimer) clearTimeout(delayTimer);
       if (val) {
         if (props.delay > 0) {
           delayTimer = setTimeout(() => {
-            state.visible = true
-          }, props.delay)
+            state.visible = true;
+          }, props.delay);
         } else {
-          state.visible = true
+          state.visible = true;
         }
       } else {
-        state.visible = false
+        state.visible = false;
       }
-    })
+    });
 
     onUnmounted(() => {
-      if (delayTimer) clearTimeout(delayTimer)
-    })
+      if (delayTimer) clearTimeout(delayTimer);
+    });
 
-    return { state, slots }
+    return { state, slots };
   },
 
   template: `
@@ -120,4 +120,4 @@ export const Spin = defineComponent({
     }
     .lyt-spin__content--hidden { opacity: 0.5; user-select: none; }
   `,
-})
+});

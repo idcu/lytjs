@@ -19,10 +19,10 @@
  * 同时实现了 PatchDOMOperations 接口，用于向 @lytjs/vdom 的 patch 系统注册。
  */
 
-import type { LytRenderer } from '../renderer-interfaces'
-import { setDOMProp, removeDOMProp, isSVGElement } from './dom-ops'
-import { patchClass, patchStyle, patchProp, patchAllProps, patchElementProps } from './patch-props'
-import { patchEvent, removeAllEventListeners } from './patch-events'
+import type { LytRenderer } from '../renderer-interfaces';
+import { setDOMProp, removeDOMProp, isSVGElement } from './dom-ops';
+import { patchClass, patchStyle, patchProp, patchAllProps as _patchAllProps, patchElementProps as _patchElementProps } from './patch-props';
+import { patchEvent as _patchEvent, removeAllEventListeners } from './patch-events';
 
 /* ================================================================
  *  DOMRenderer 实现
@@ -46,9 +46,9 @@ export class DOMRenderer implements LytRenderer {
   createElement(tag: string): any {
     // SVG 元素需要使用 createElementNS
     if (isSVGElement(tag)) {
-      return document.createElementNS('http://www.w3.org/2000/svg', tag)
+      return document.createElementNS('http://www.w3.org/2000/svg', tag);
     }
-    return document.createElement(tag)
+    return document.createElement(tag);
   }
 
   /**
@@ -58,7 +58,7 @@ export class DOMRenderer implements LytRenderer {
    * @returns DOM 文本节点
    */
   createText(text: string): any {
-    return document.createTextNode(text)
+    return document.createTextNode(text);
   }
 
   /**
@@ -68,7 +68,7 @@ export class DOMRenderer implements LytRenderer {
    * @returns DOM 注释节点
    */
   createComment(text: string): any {
-    return document.createComment(text)
+    return document.createComment(text);
   }
 
   /**
@@ -85,7 +85,7 @@ export class DOMRenderer implements LytRenderer {
    * @param val 属性值
    */
   setAttribute(el: any, key: string, val: any): void {
-    setDOMProp(el, key, val)
+    setDOMProp(el, key, val);
   }
 
   /**
@@ -95,7 +95,7 @@ export class DOMRenderer implements LytRenderer {
    * @param key 属性名
    */
   removeAttribute(el: any, key: string): void {
-    removeDOMProp(el, key)
+    removeDOMProp(el, key);
   }
 
   /**
@@ -110,10 +110,10 @@ export class DOMRenderer implements LytRenderer {
    */
   setStyle(el: any, style: object): void {
     if (typeof style === 'string') {
-      el.style.cssText = style
+      el.style.cssText = style;
     } else if (style && typeof style === 'object') {
       for (const key in style) {
-        el.style[key] = (style as any)[key]
+        el.style[key] = (style as any)[key];
       }
     }
   }
@@ -130,18 +130,18 @@ export class DOMRenderer implements LytRenderer {
    */
   setClass(el: any, cls: string | object): void {
     if (typeof cls === 'string') {
-      el.className = cls
+      el.className = cls;
     } else if (cls && typeof cls === 'object') {
       // 对象形式：收集值为 truthy 的 key
-      let result = ''
+      let result = '';
       for (const key in cls) {
         if ((cls as any)[key]) {
-          result += (result ? ' ' : '') + key
+          result += (result ? ' ' : '') + key;
         }
       }
-      el.className = result
+      el.className = result;
     } else {
-      el.className = ''
+      el.className = '';
     }
   }
 
@@ -154,9 +154,9 @@ export class DOMRenderer implements LytRenderer {
    */
   insert(parent: any, child: any, ref?: any): void {
     if (ref !== null && ref !== undefined) {
-      parent.insertBefore(child, ref)
+      parent.insertBefore(child, ref);
     } else {
-      parent.appendChild(child)
+      parent.appendChild(child);
     }
   }
 
@@ -167,7 +167,7 @@ export class DOMRenderer implements LytRenderer {
    */
   remove(child: any): void {
     if (child.parentNode) {
-      child.parentNode.removeChild(child)
+      child.parentNode.removeChild(child);
     }
   }
 
@@ -179,7 +179,7 @@ export class DOMRenderer implements LytRenderer {
    * @param newChild 替换的新节点
    */
   replace(parent: any, oldChild: any, newChild: any): void {
-    parent.replaceChild(newChild, oldChild)
+    parent.replaceChild(newChild, oldChild);
   }
 
   /**
@@ -191,7 +191,7 @@ export class DOMRenderer implements LytRenderer {
    * @param options 事件选项（可选）
    */
   addEventListener(el: any, event: string, handler: Function, options?: any): void {
-    el.addEventListener(event, handler as EventListener, options)
+    el.addEventListener(event, handler as EventListener, options);
   }
 
   /**
@@ -202,7 +202,7 @@ export class DOMRenderer implements LytRenderer {
    * @param handler 事件处理函数
    */
   removeEventListener(el: any, event: string, handler: Function): void {
-    el.removeEventListener(event, handler as EventListener)
+    el.removeEventListener(event, handler as EventListener);
   }
 
   /**
@@ -213,7 +213,7 @@ export class DOMRenderer implements LytRenderer {
    * @param cb 回调函数
    */
   nextTick(cb: Function): void {
-    Promise.resolve().then(cb as () => void)
+    Promise.resolve().then(cb as () => void);
   }
 
   /**
@@ -223,7 +223,7 @@ export class DOMRenderer implements LytRenderer {
    * @returns 父节点，如果没有则返回 null
    */
   parentNode(el: any): any {
-    return el.parentNode
+    return el.parentNode;
   }
 
   /**
@@ -233,7 +233,7 @@ export class DOMRenderer implements LytRenderer {
    * @returns 下一个兄弟节点，如果没有则返回 null
    */
   nextSibling(el: any): any {
-    return el.nextSibling
+    return el.nextSibling;
   }
 
   /**
@@ -243,7 +243,7 @@ export class DOMRenderer implements LytRenderer {
    * @returns 匹配的第一个元素，如果没有则返回 null
    */
   querySelector(selector: string): any {
-    return document.querySelector(selector)
+    return document.querySelector(selector);
   }
 
   /* ---- PatchDOMOperations 接口实现 ---- */
@@ -256,7 +256,7 @@ export class DOMRenderer implements LytRenderer {
    * @param oldValue 旧的 class 值
    */
   setClassWithOld(el: any, value: any, oldValue: any): void {
-    patchClass(el, value, oldValue)
+    patchClass(el, value, oldValue);
   }
 
   /**
@@ -267,7 +267,7 @@ export class DOMRenderer implements LytRenderer {
    * @param oldValue 旧的 style 值
    */
   setStyleWithOld(el: any, value: any, oldValue: any): void {
-    patchStyle(el, value, oldValue)
+    patchStyle(el, value, oldValue);
   }
 
   /**
@@ -279,7 +279,7 @@ export class DOMRenderer implements LytRenderer {
    * @param oldValue 旧值
    */
   setAttributeWithOld(el: any, key: string, value: any, oldValue: any): void {
-    patchProp(el, key, value, oldValue)
+    patchProp(el, key, value, oldValue);
   }
 
   /**
@@ -289,7 +289,7 @@ export class DOMRenderer implements LytRenderer {
    * @param text 文本内容
    */
   setElementText(el: any, text: string): void {
-    el.textContent = text
+    el.textContent = text;
   }
 
   /**
@@ -299,7 +299,7 @@ export class DOMRenderer implements LytRenderer {
    * @param text 文本内容
    */
   setText(node: any, text: string): void {
-    node.nodeValue = text
+    node.nodeValue = text;
   }
 
   /**
@@ -311,9 +311,9 @@ export class DOMRenderer implements LytRenderer {
    */
   insertBefore(parent: any, child: any, anchor: any): void {
     if (anchor !== null && anchor !== undefined) {
-      parent.insertBefore(child, anchor)
+      parent.insertBefore(child, anchor);
     } else {
-      parent.appendChild(child)
+      parent.appendChild(child);
     }
   }
 
@@ -324,7 +324,7 @@ export class DOMRenderer implements LytRenderer {
    * @param child  子节点
    */
   removeChild(parent: any, child: any): void {
-    parent.removeChild(child)
+    parent.removeChild(child);
   }
 
   /**
@@ -334,7 +334,7 @@ export class DOMRenderer implements LytRenderer {
    * @param anchor 锚点 DOM 元素
    */
   setAnchor(vnode: any, anchor: any): void {
-    vnode.anchor = anchor
+    vnode.anchor = anchor;
   }
 
   /**
@@ -344,7 +344,7 @@ export class DOMRenderer implements LytRenderer {
    * @returns 下一个兄弟节点
    */
   getNextSibling(node: any): any {
-    return node.nextSibling
+    return node.nextSibling;
   }
 
   /**
@@ -353,7 +353,7 @@ export class DOMRenderer implements LytRenderer {
    * @param el DOM 元素
    */
   cleanupEvents(el: any): void {
-    removeAllEventListeners(el)
+    removeAllEventListeners(el);
   }
 }
 
@@ -367,4 +367,4 @@ export class DOMRenderer implements LytRenderer {
  * 大多数场景下只需要一个 DOMRenderer 实例，
  * 因此导出一个预创建的单例供直接使用。
  */
-export const domRenderer = new DOMRenderer()
+export const domRenderer = new DOMRenderer();

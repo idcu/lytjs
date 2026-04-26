@@ -7,8 +7,8 @@
  * 每个绑定函数返回一个清理函数，用于在卸载时取消订阅。
  */
 
-import type { Signal } from '@lytjs/reactivity/signal'
-import { effect } from '@lytjs/reactivity/signal'
+import type { Signal } from '@lytjs/reactivity/signal';
+import { effect } from '@lytjs/reactivity/signal';
 
 // ================================================================
 //  类型定义
@@ -59,10 +59,10 @@ export function bindText(
   sig: Signal<any>
 ): BindingCleanup {
   const dispose = effect(() => {
-    const value = sig()
-    el.textContent = value === null || value === undefined ? '' : String(value)
-  })
-  return dispose
+    const value = sig();
+    el.textContent = value === null || value === undefined ? '' : String(value);
+  });
+  return dispose;
 }
 
 // ================================================================
@@ -84,9 +84,9 @@ export function bindProp(
 ): BindingCleanup {
   const dispose = effect(() => {
     const value = sig()
-    ;(el as any)[prop] = value
-  })
-  return dispose
+    ;(el as any)[prop] = value;
+  });
+  return dispose;
 }
 
 // ================================================================
@@ -107,14 +107,14 @@ export function bindAttr(
   sig: Signal<any>
 ): BindingCleanup {
   const dispose = effect(() => {
-    const value = sig()
+    const value = sig();
     if (value === null || value === undefined || value === false) {
-      el.removeAttribute(attr)
+      el.removeAttribute(attr);
     } else {
-      el.setAttribute(attr, value === true ? '' : String(value))
+      el.setAttribute(attr, value === true ? '' : String(value));
     }
-  })
-  return dispose
+  });
+  return dispose;
 }
 
 // ================================================================
@@ -138,24 +138,24 @@ export function bindClass(
   sig: Signal<any>
 ): BindingCleanup {
   const dispose = effect(() => {
-    const value = sig()
+    const value = sig();
     if (typeof value === 'string') {
-      el.className = value
+      el.className = value;
     } else if (Array.isArray(value)) {
-      el.className = value.filter(Boolean).join(' ')
+      el.className = value.filter(Boolean).join(' ');
     } else if (typeof value === 'object' && value !== null) {
-      const classes: string[] = []
+      const classes: string[] = [];
       for (const key of Object.keys(value)) {
         if (value[key]) {
-          classes.push(key)
+          classes.push(key);
         }
       }
-      el.className = classes.join(' ')
+      el.className = classes.join(' ');
     } else {
-      el.className = ''
+      el.className = '';
     }
-  })
-  return dispose
+  });
+  return dispose;
 }
 
 // ================================================================
@@ -175,10 +175,10 @@ export function bindEvent(
   event: string,
   handler: Function
 ): BindingCleanup {
-  el.addEventListener(event, handler)
+  el.addEventListener(event, handler);
   return () => {
-    el.removeEventListener(event, handler)
-  }
+    el.removeEventListener(event, handler);
+  };
 }
 
 // ================================================================
@@ -200,20 +200,20 @@ export function bindIf(
   sig: Signal<any>
 ): BindingCleanup {
   const dispose = effect(() => {
-    const value = sig()
+    const value = sig();
     if (value) {
-      (el as any).style = (el as any).style || {}
+      (el as any).style = (el as any).style || {};
       if ((el as any).style.display === 'none') {
-        (el as any).style.display = ''
+        (el as any).style.display = '';
       }
-      (el as any).hidden = false
+      (el as any).hidden = false;
     } else {
       (el as any).style = (el as any).style || {}
       ;(el as any).style.display = 'none'
-      ;(el as any).hidden = true
+      ;(el as any).hidden = true;
     }
-  })
-  return dispose
+  });
+  return dispose;
 }
 
 // ================================================================
@@ -239,38 +239,38 @@ export function bindEach<T>(
   keyFn?: (item: T, index: number) => string | number
 ): BindingCleanup {
   // 当前渲染的元素和 key 映射
-  let currentElements: VaporElement[] = []
-  let currentKeys: (string | number)[] = []
-  const elementByKey = new Map<string | number, VaporElement>()
+  let currentElements: VaporElement[] = [];
+  let currentKeys: (string | number)[] = [];
+  const elementByKey = new Map<string | number, VaporElement>();
 
   const dispose = effect(() => {
-    const items = sig()
-    if (!Array.isArray(items)) return
+    const items = sig();
+    if (!Array.isArray(items)) return;
 
     const newKeys = items.map((item, i) =>
       keyFn ? keyFn(item, i) : i
-    )
+    );
 
     // 快速路径：长度相同且所有 key 相同 -> 原地更新
     if (newKeys.length === currentKeys.length) {
-      let allSame = true
+      let allSame = true;
       for (let i = 0; i < newKeys.length; i++) {
         if (newKeys[i] !== currentKeys[i]) {
-          allSame = false
-          break
+          allSame = false;
+          break;
         }
       }
       if (allSame) {
         // 原地更新
         for (let i = 0; i < items.length; i++) {
-          const newEl = renderItem(items[i], i)
-          const oldEl = currentElements[i]
+          const newEl = renderItem(items[i], i);
+          const oldEl = currentElements[i];
           if (oldEl && oldEl.parentNode === container) {
-            container.replaceChild(newEl, oldEl)
+            container.replaceChild(newEl, oldEl);
           }
-          currentElements[i] = newEl
+          currentElements[i] = newEl;
         }
-        return
+        return;
       }
     }
 
@@ -278,33 +278,33 @@ export function bindEach<T>(
     // 清除旧元素
     for (const el of currentElements) {
       if (el.parentNode === container) {
-        container.removeChild(el)
+        container.removeChild(el);
       }
     }
-    elementByKey.clear()
-    currentElements = []
-    currentKeys = []
+    elementByKey.clear();
+    currentElements = [];
+    currentKeys = [];
 
     // 创建新元素
     for (let i = 0; i < items.length; i++) {
-      const el = renderItem(items[i], i)
-      container.appendChild(el)
-      currentElements.push(el)
-      currentKeys.push(newKeys[i])
-      elementByKey.set(newKeys[i], el)
+      const el = renderItem(items[i], i);
+      container.appendChild(el);
+      currentElements.push(el);
+      currentKeys.push(newKeys[i]);
+      elementByKey.set(newKeys[i], el);
     }
-  })
+  });
 
   return () => {
-    dispose()
+    dispose();
     // 清除所有子元素
     for (const el of currentElements) {
       if (el.parentNode === container) {
-        container.removeChild(el)
+        container.removeChild(el);
       }
     }
-    currentElements = []
-    currentKeys = []
-    elementByKey.clear()
-  }
+    currentElements = [];
+    currentKeys = [];
+    elementByKey.clear();
+  };
 }

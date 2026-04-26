@@ -13,10 +13,10 @@ import {
 
 import {
   type TransitionProps,
-  nextFrame,
+  nextFrame as _nextFrame,
   addTransitionClass,
   removeTransitionClass,
-  getTransitionInfo,
+  getTransitionInfo as _getTransitionInfo,
   whenTransitionEnds,
 } from './transition';
 
@@ -47,14 +47,14 @@ interface FLIPPosition {
 /**
  * 判断值是否为函数
  */
-function isFunction(val: unknown): val is Function {
+function _isFunction(val: unknown): val is Function {
   return typeof val === 'function';
 }
 
 /**
  * 判断值是否为普通对象
  */
-function isPlainObject(val: unknown): val is Record<string, any> {
+function _isPlainObject(val: unknown): val is Record<string, any> {
   return val !== null && typeof val === 'object' && !Array.isArray(val);
 }
 
@@ -70,7 +70,7 @@ function isPlainObject(val: unknown): val is Record<string, any> {
  * @param positions - 旧位置记录数组
  * @param moveClass - 移动过渡类名
  */
-function performFLIP(positions: FLIPPosition[], moveClass: string): void {
+function _performFLIP(positions: FLIPPosition[], moveClass: string): void {
   for (let i = 0; i < positions.length; i++) {
     const { rect: oldRect, el } = positions[i];
 

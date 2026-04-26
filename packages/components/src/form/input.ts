@@ -5,8 +5,8 @@
  * State: value, focused, hovering
  */
 
-import { defineComponent } from '@lytjs/component'
-import { reactive } from '@lytjs/reactivity'
+import { defineComponent } from '@lytjs/component';
+import { reactive } from '@lytjs/reactivity';
 
 export const Input = defineComponent({
   name: 'LytInput',
@@ -53,69 +53,69 @@ export const Input = defineComponent({
       value: props.modelValue,
       focused: false,
       hovering: false,
-    })
+    });
 
-    const isTextarea = () => props.type === 'textarea'
+    const isTextarea = () => props.type === 'textarea';
 
     const showClear = () =>
       props.clearable &&
       !props.disabled &&
       !props.readonly &&
       state.value.length > 0 &&
-      state.hovering
+      state.hovering;
 
     const handleInput = (e: Event) => {
-      const target = e.target as HTMLInputElement
-      state.value = target.value
-      emit('input', state.value)
-      emit('update:modelValue', state.value)
-    }
+      const target = e.target as HTMLInputElement;
+      state.value = target.value;
+      emit('input', state.value);
+      emit('update:modelValue', state.value);
+    };
 
-    const handleChange = (e: Event) => {
-      emit('change', state.value)
-    }
+    const handleChange = (_e: Event) => {
+      emit('change', state.value);
+    };
 
     const handleFocus = (e: FocusEvent) => {
-      state.focused = true
-      emit('focus', e)
-    }
+      state.focused = true;
+      emit('focus', e);
+    };
 
     const handleBlur = (e: FocusEvent) => {
-      state.focused = false
-      emit('blur', e)
-    }
+      state.focused = false;
+      emit('blur', e);
+    };
 
     const handleClear = () => {
-      state.value = ''
-      emit('input', '')
-      emit('update:modelValue', '')
-      emit('clear')
-    }
+      state.value = '';
+      emit('input', '');
+      emit('update:modelValue', '');
+      emit('clear');
+    };
 
     const handleMouseEnter = () => {
-      state.hovering = true
-    }
+      state.hovering = true;
+    };
 
     const handleMouseLeave = () => {
-      state.hovering = false
-    }
+      state.hovering = false;
+    };
 
     const handleKeydown = (e: KeyboardEvent) => {
       if (isTextarea()) {
-        const target = e.target as HTMLTextAreaElement
+        const target = e.target as HTMLTextAreaElement;
         requestAnimationFrame(() => {
-          target.style.height = 'auto'
-          target.style.height = target.scrollHeight + 'px'
-        })
+          target.style.height = 'auto';
+          target.style.height = target.scrollHeight + 'px';
+        });
       }
-    }
+    };
 
     return {
       state, isTextarea, showClear,
       handleInput, handleChange, handleFocus, handleBlur,
       handleClear, handleMouseEnter, handleMouseLeave, handleKeydown,
       slots,
-    }
+    };
   },
 
   template: `
@@ -211,4 +211,4 @@ export const Input = defineComponent({
     }
     .lyt-input__clear:hover { color: var(--lyt-color-info); }
   `,
-})
+});

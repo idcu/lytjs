@@ -20,7 +20,7 @@
 - [路由](./guide/router.md) - 路由系统使用指南
 - [状态管理](./guide/store.md) - Pinia 风格状态管理
 - [服务端渲染](./guide/ssr.md) - SSR/SSG 使用指南
-- [Vapor Mode](./guide/vapor-mode.md) - 无虚拟 DOM 编译模式
+- [Vapor 模式](./guide/vapor-mode.md) - 无虚拟 DOM 编译模式
 - [组件库](./guide/components.md) - 组件库使用指南
 - [性能优化](./guide/performance.md) - 性能优化指南
 - [部署](./guide/deployment.md) - 应用部署指南
@@ -131,12 +131,12 @@
 
 ```
 docs/
-├── README.md                          # 本文档，总索引
-├── DOCUMENTATION_INDEX.md             # 完整文档索引
-├── index.md                           # 文档网站首页
-├── roadmap.md                         # 发展规划
-├── DEPLOY.md                          # 部署指南
-├── guide/                             # 用户指南
+├── README.md                 # 本文档，总索引
+├── DOCUMENTATION_INDEX.md   # 完整文档索引
+├── index.md                 # 文档网站首页
+├── roadmap.md               # 发展规划
+├── DEPLOY.md                # 部署指南
+├── guide/                   # 用户指南
 │   ├── quick-start.md
 │   ├── template-syntax.md
 │   ├── reactivity.md
@@ -155,7 +155,7 @@ docs/
 │   ├── comparison.md
 │   ├── migration-from-vue3.md
 │   └── advanced-topics.md
-├── api/                               # API 参考文档
+├── api/                     # API 参考文档
 │   ├── core.md
 │   ├── reactivity.md
 │   ├── compiler.md
@@ -167,7 +167,7 @@ docs/
 │   ├── devtools.md
 │   ├── web-component.md
 │   └── plugin.md
-├── developer/                         # 开发者文档
+├── developer/               # 开发者文档
 │   ├── README.md
 │   ├── 01-architecture-overview.md
 │   ├── 02-getting-started.md
@@ -184,12 +184,12 @@ docs/
 │   │   └── 02-store.md
 │   └── advanced/
 │       └── 01-module-assembly.md
-├── examples/                          # 示例文档
+├── examples/                # 示例文档
 │   ├── counter.md
 │   ├── theme-switch.md
 │   ├── todo-app.md
 │   └── components-showcase.md
-└── project/                           # 项目文档
+└── project/                 # 项目文档
     ├── PROJECT_SUMMARY.md
     ├── WEB_FOUNDTATION_PLAN.md
     ├── PROGRESS_UPDATE.md
@@ -208,34 +208,48 @@ Lyt.js 是一个纯原生、零依赖、超轻量的前端框架，与 Vue 3 兼
 
 Lyt.js 包含 23 个精心设计的包：
 
-**核心引擎包**：
-- `@lytjs/reactivity` - 响应式系统
-- `@lytjs/compiler` - 模板编译器
-- `@lytjs/vdom` - 虚拟 DOM
-- `@lytjs/renderer` - 渲染器
-- `@lytjs/component` - 组件系统
-- `@lytjs/core` - 核心入口
+**核心引擎包 (8)**：
+- @lytjs/reactivity - 响应式系统（reactive/ref/computed/watch/Signal）
+- @lytjs/compiler - 模板编译器（HTML 解析/AST/代码生成/静态提升）
+- @lytjs/vdom - 虚拟 DOM（VNode/Diff/Block Tree/Patch Flag/LIS）
+- @lytjs/renderer - 渲染器主入口（DOM/SSR/Vapor/MiniApp/Native）
+- @lytjs/component - 组件系统（defineComponent/生命周期/插槽/KeepAlive/Suspense/Teleport）
+- @lytjs/core - 核心入口（createApp/h/插件系统/Web Component）
+- @lytjs/common - 公共工具库（类型检查/对象操作/事件发射器/订阅管理/缓存/调度器）
+- @lytjs/lytjs - 聚合包（一键安装全部核心运行时）
 
-**功能包**：
-- `@lytjs/router` - 内置路由系统
-- `@lytjs/store` - 内置状态管理
-- `@lytjs/components` - UI 组件库（38+ 组件）
-- `@lytjs/cli` - 命令行工具
-- `@lytjs/devtools` - 开发者工具
-- `@lytjs/lytx` - 元框架（SSR/SSG）
+**功能包 (7)**：
+- @lytjs/router - 内置路由系统（History/Hash/导航守卫/动态路由/嵌套路由）
+- @lytjs/store - 内置状态管理（Pinia 风格 API/模块化/actions/getters/插件）
+- @lytjs/components - UI 组件库（38+ 组件/主题系统/亮色/暗色/自定义）
+- @lytjs/cli - 命令行工具（create/dev/build/scaffold）
+- @lytjs/devtools - 浏览器开发者工具（组件树/状态查看/性能分析/时间旅行）
+- @lytjs/lytx - 元框架（SSR/SSG/SPA/API Routes/全栈渲染）
+- @lytjs/test-utils - 测试工具库
 
-**插件包**：
-- `@lytjs/plugin-i18n` - 国际化插件
-- `@lytjs/plugin-auth` - 认证插件
-- `@lytjs/plugin-logger` - 日志插件
-- `@lytjs/plugin-storage` - 存储插件
-- `@lytjs/plugin-theme` - 主题插件
-- `@lytjs/plugins` - 插件集合
+**插件包 (6)**：
+- @lytjs/plugin-i18n - 国际化插件
+- @lytjs/plugin-auth - 认证插件
+- @lytjs/plugin-logger - 日志插件
+- @lytjs/plugin-storage - 存储插件
+- @lytjs/plugin-theme - 主题插件
+- @lytjs/plugins - 插件聚合包（统一导出所有官方插件）
 
-**工具包**：
-- `@lytjs/common` - 通用工具
-- `@lytjs/test-utils` - 测试工具
-- `@lytjs/agg` - 聚合包（一键安装全部）
+### 组件列表
+
+Lyt.js 提供 38+ 个精心设计的组件：
+
+**基础组件 (5)**：Button, Icon, Link, Container, Divider
+
+**表单组件 (10)**：Input, Checkbox, Radio, Select, Switch, Form, DatePicker, TimePicker, Calendar, Dropdown
+
+**反馈组件 (7)**：Modal, Toast, Alert, Tooltip, Dialog, Notification, Popover
+
+**导航组件 (6)**：Tabs, Breadcrumb, Pagination, TabNav, Pager, Carousel
+
+**数据展示组件 (8)**：Table, Tag, Badge, Spin, Empty, Avatar, CountBadge, DataTable
+
+**扩展组件 (7)**：Collapse, Toggle, Progress, Slider, Upload, Tree, ThemeProvider
 
 ### 快速开始
 
@@ -261,8 +275,8 @@ npm run dev
 
 ## 💡 需要帮助？
 
-- 遇到问题？查看 [Issue](../../.github/ISSUE_TEMPLATE/)
-- 有建议？创建 [Feature Request](../../.github/ISSUE_TEMPLATE/feature_request.md)
+- 遇到问题？查看 Issue
+- 有建议？创建 Feature Request
 - 想讨论？参与社区讨论
 
 ---
@@ -270,3 +284,8 @@ npm run dev
 ## 📄 许可证
 
 MIT License © Lyt.js Team
+
+---
+
+**文档版本**: 2.0
+**最后更新**: 2026-04-26

@@ -131,14 +131,14 @@ export const resetCSS = `/* Lyt.js Component Reset */
 *, *::before, *::after {
   box-sizing: border-box;
 }
-`
+`;
 
 /**
  * 将 reset CSS 注入到 document head
  */
 export function injectResetCSS(): HTMLStyleElement {
-  const style = document.createElement('style')
-  style.textContent = resetCSS
-  document.head.appendChild(style)
-  return style
+  const style = document.createElement('style');
+  style.textContent = resetCSS;
+  document.head.appendChild(style);
+  return style;
 }

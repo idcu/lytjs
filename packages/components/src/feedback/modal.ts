@@ -5,8 +5,8 @@
  * Methods: open(), close()
  */
 
-import { defineComponent, onMounted, onUnmounted } from '@lytjs/component'
-import { reactive, watch } from '@lytjs/reactivity'
+import { defineComponent, onMounted, onUnmounted } from '@lytjs/component';
+import { reactive, watch } from '@lytjs/reactivity';
 
 export const Modal = defineComponent({
   name: 'LytModal',
@@ -50,62 +50,62 @@ export const Modal = defineComponent({
     const state = reactive({
       isVisible: props.visible,
       isAnimating: false,
-    })
+    });
 
     const open = () => {
-      state.isVisible = true
-      state.isAnimating = true
-      document.body.style.overflow = 'hidden'
-      emit('update:visible', true)
-    }
+      state.isVisible = true;
+      state.isAnimating = true;
+      document.body.style.overflow = 'hidden';
+      emit('update:visible', true);
+    };
 
     const close = () => {
-      state.isAnimating = false
+      state.isAnimating = false;
       setTimeout(() => {
-        state.isVisible = false
-        document.body.style.overflow = ''
-        emit('update:visible', false)
-        emit('close')
-      }, 300)
-    }
+        state.isVisible = false;
+        document.body.style.overflow = '';
+        emit('update:visible', false);
+        emit('close');
+      }, 300);
+    };
 
     const handleConfirm = () => {
-      emit('confirm')
-      close()
-    }
+      emit('confirm');
+      close();
+    };
 
     const handleCancel = () => {
-      emit('cancel')
-      close()
-    }
+      emit('cancel');
+      close();
+    };
 
     const handleMaskClick = () => {
       if (props.maskClosable) {
-        close()
+        close();
       }
-    }
+    };
 
     const handleKeydown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && state.isVisible) {
-        close()
+        close();
       }
-    }
+    };
 
     watch(() => props.visible, (val: any) => {
-      if (val) open()
-      else close()
-    })
+      if (val) open();
+      else close();
+    });
 
     onMounted(() => {
-      document.addEventListener('keydown', handleKeydown)
-    })
+      document.addEventListener('keydown', handleKeydown);
+    });
 
     onUnmounted(() => {
-      document.removeEventListener('keydown', handleKeydown)
-      document.body.style.overflow = ''
-    })
+      document.removeEventListener('keydown', handleKeydown);
+      document.body.style.overflow = '';
+    });
 
-    return { state, open, close, handleConfirm, handleCancel, handleMaskClick, slots }
+    return { state, open, close, handleConfirm, handleCancel, handleMaskClick, slots };
   },
 
   template: `
@@ -211,4 +211,4 @@ export const Modal = defineComponent({
       border-top: 1px solid var(--lyt-color-border);
     }
   `,
-})
+});

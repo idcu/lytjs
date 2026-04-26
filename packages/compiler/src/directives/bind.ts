@@ -19,8 +19,8 @@
  *   → model: { value: _ctx.message, callback: $event => _ctx.message = $event.trim() }
  */
 
-import type { ASTNode, ElementNode, DirectiveNode } from '../ast/nodes'
-import type { TransformContext } from '../transform/transform'
+import type { ASTNode, ElementNode, DirectiveNode } from '../ast/nodes';
+import type { TransformContext } from '../transform/transform';
 
 // ================================================================
 //  类型定义
@@ -63,7 +63,7 @@ export interface BindTransformResult {
 // ================================================================
 
 /** v-model 支持的修饰符集合 */
-const MODEL_MODIFIERS = new Set(['trim', 'number', 'lazy'])
+const MODEL_MODIFIERS = new Set(['trim', 'number', 'lazy']);
 
 // ================================================================
 //  转换函数
@@ -85,24 +85,24 @@ const MODEL_MODIFIERS = new Set(['trim', 'number', 'lazy'])
  * @param context 转换上下文
  */
 export function transformBind(node: ASTNode, context: TransformContext): void {
-  if (node.type !== 'Element') return
+  if (node.type !== 'Element') return;
 
   // 查找所有 v-bind 指令
-  const bindDirectives = (node as ElementNode).directives.filter(d => d.name === 'bind')
-  if (bindDirectives.length === 0) return
+  const bindDirectives = (node as ElementNode).directives.filter(d => d.name === 'bind');
+  if (bindDirectives.length === 0) return;
 
-  const bindings: BindingInfo[] = []
-  let modelBinding: ModelBinding | null = null
+  const bindings: BindingInfo[] = [];
+  let modelBinding: ModelBinding | null = null;
 
   for (const bind of bindDirectives) {
-    const isModel = bind.arg === 'model'
-    const modifiers = bind.modifiers || []
+    const isModel = bind.arg === 'model';
+    const modifiers = bind.modifiers || [];
 
     // 验证修饰符
     if (isModel) {
       for (const mod of modifiers) {
         if (!MODEL_MODIFIERS.has(mod)) {
-          console.warn(`[lyt] 未知的 v-model 修饰符: "${mod}"`)
+          console.warn(`[lyt] 未知的 v-model 修饰符: "${mod}"`);
         }
       }
     }
@@ -112,19 +112,19 @@ export function transformBind(node: ASTNode, context: TransformContext): void {
       value: bind.value,
       isModel,
       modifiers,
-    }
+    };
 
-    bindings.push(binding)
+    bindings.push(binding);
 
     // 如果是双向绑定，生成 model 信息
     if (isModel) {
-      modelBinding = generateModelBinding(bind)
-      context.root.helpers.add('createModelBinding')
+      modelBinding = generateModelBinding(bind);
+      context.root.helpers.add('createModelBinding');
     }
   }
 
   // 生成绑定代码
-  const code = generateBindCode(bindings, modelBinding)
+  const code = generateBindCode(bindings, modelBinding);
 
   // 将转换结果存储在节点上
   Object.assign(node, {
@@ -136,7 +136,7 @@ export function transformBind(node: ASTNode, context: TransformContext): void {
   // 从指令列表中移除所有 v-bind（已处理）
   ;(node as ElementNode).directives = (node as ElementNode).directives.filter(
     d => d.name !== 'bind'
-  )
+  );
 }
 
 // ================================================================
@@ -156,28 +156,28 @@ export function transformBind(node: ASTNode, context: TransformContext): void {
  * @returns 模型绑定信息
  */
 export function generateModelBinding(directive: DirectiveNode): ModelBinding {
-  const value = wrapContextAccess(directive.value)
-  const modifiers = directive.modifiers || []
+  const value = wrapContextAccess(directive.value);
+  const modifiers = directive.modifiers || [];
 
   // 构建回调表达式
-  let eventValue = '$event'
+  let eventValue = '$event';
 
   // 应用修饰符到事件值
   if (modifiers.includes('trim')) {
-    eventValue = `$event.trim()`
+    eventValue = '$event.trim()';
   }
   if (modifiers.includes('number')) {
-    eventValue = `Number($event)`
+    eventValue = 'Number($event)';
   }
 
   // 构建回调
-  const callback = `$event => ${value} = ${eventValue}`
+  const callback = `$event => ${value} = ${eventValue}`;
 
   return {
     value,
     callback,
     modifiers,
-  }
+  };
 }
 
 // ================================================================
@@ -197,9 +197,9 @@ export function generateModelBinding(directive: DirectiveNode): ModelBinding {
  */
 export function generateBindCode(
   bindings: BindingInfo[],
-  modelBinding: ModelBinding | null,
+  modelBinding: ModelBinding | null
 ): string {
-  const parts: string[] = []
+  const parts: string[] = [];
 
   for (const binding of bindings) {
     if (binding.isModel) {
@@ -207,16 +207,16 @@ export function generateBindCode(
       if (modelBinding) {
         parts.push(
           `model: { value: ${modelBinding.value}, callback: ${modelBinding.callback} }`
-        )
+        );
       }
     } else {
       // 普通动态绑定
-      const value = wrapContextAccess(binding.value)
-      parts.push(`'${binding.arg}': ${value}`)
+      const value = wrapContextAccess(binding.value);
+      parts.push(`'${binding.arg}': ${value}`);
     }
   }
 
-  return parts.length > 0 ? `{ ${parts.join(', ')} }` : ''
+  return parts.length > 0 ? `{ ${parts.join(', ')} }` : '';
 }
 
 // ================================================================
@@ -230,19 +230,19 @@ export function generateBindCode(
  * @returns 包装后的表达式
  */
 function wrapContextAccess(expr: string): string {
-  expr = expr.trim()
+  expr = expr.trim();
 
   if (expr.startsWith('_ctx.')) {
-    return expr
+    return expr;
   }
 
   if (expr.includes('(') || expr.includes('=>') || expr.includes('[')) {
-    return expr
+    return expr;
   }
 
   if (/^\w+(\.\w+)*$/.test(expr)) {
-    return `_ctx.${expr}`
+    return `_ctx.${expr}`;
   }
 
-  return expr
+  return expr;
 }

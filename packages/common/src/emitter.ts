@@ -6,12 +6,12 @@
  */
 
 export class EventEmitter {
-  private events: Map<string, Set<Function>> = new Map();
+  private events: Map<string, Set<(...args: unknown[]) => unknown>> = new Map();
 
   /**
    * 注册事件监听器
    */
-  on(event: string, callback: Function): () => void {
+  on(event: string, callback: (...args: unknown[]) => unknown): () => void {
     if (!this.events.has(event)) {
       this.events.set(event, new Set());
     }
@@ -22,8 +22,8 @@ export class EventEmitter {
   /**
    * 注册一次性事件监听器
    */
-  once(event: string, callback: Function): () => void {
-    const wrapper = (...args: any[]) => {
+  once(event: string, callback: (...args: unknown[]) => unknown): () => void {
+    const wrapper = (...args: unknown[]) => {
       callback(...args);
       this.off(event, wrapper);
     };
@@ -34,7 +34,7 @@ export class EventEmitter {
   /**
    * 移除事件监听器
    */
-  off(event: string, callback?: Function): void {
+  off(event: string, callback?: (...args: unknown[]) => unknown): void {
     if (!callback) {
       this.events.delete(event);
     } else {
@@ -45,7 +45,7 @@ export class EventEmitter {
   /**
    * 触发事件
    */
-  emit(event: string, ...args: any[]): void {
+  emit(event: string, ...args: unknown[]): void {
     const callbacks = this.events.get(event);
     if (callbacks) {
       callbacks.forEach((cb) => cb(...args));
@@ -63,7 +63,7 @@ export class EventEmitter {
   /**
    * 获取事件的所有监听器
    */
-  getListeners(event: string): Function[] {
+  getListeners(event: string): ((...args: unknown[]) => unknown)[] {
     const callbacks = this.events.get(event);
     return callbacks ? [...callbacks] : [];
   }

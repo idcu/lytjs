@@ -9,7 +9,7 @@
 // ======================== 类型定义 ========================
 
 /** 调度任务函数类型 */
-export type SchedulerJob = (...args: any[]) => void;
+export type SchedulerJob = (...args: unknown[]) => void;
 
 // ======================== 内部状态 ========================
 
@@ -88,9 +88,9 @@ function flushJobs(): void {
   // 将 Set 转为数组并排序
   // 如果 job 有 id 属性，按 id 升序排列；没有 id 的排在前面
   const sortedQueue = [...queue].sort((a, b) => {
-    const aId = (a as any).id;
-    const bId = (b as any).id;
-    if (aId !== null && aId !== undefined && bId !== null && bId !== undefined) return aId - bId;
+    const aId = (a as { id?: unknown }).id;
+    const bId = (b as { id?: unknown }).id;
+    if (typeof aId === 'number' && typeof bId === 'number') return aId - bId;
     if (aId !== null && aId !== undefined) return -1;
     if (bId !== null && bId !== undefined) return 1;
     return 0;

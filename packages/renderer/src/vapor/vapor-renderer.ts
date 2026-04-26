@@ -11,8 +11,8 @@
  *   - 信号变化时，直接操作对应的 DOM 属性
  */
 
-import type { Signal } from '@lytjs/reactivity/signal'
-import type { VaporElement, BindingCleanup } from './vapor-reactive'
+import type { Signal } from '@lytjs/reactivity/signal';
+import type { VaporElement, BindingCleanup } from './vapor-reactive';
 import {
   bindText,
   bindProp,
@@ -21,7 +21,7 @@ import {
   bindEvent,
   bindIf,
   bindEach,
-} from './vapor-reactive'
+} from './vapor-reactive';
 
 // ================================================================
 //  类型定义
@@ -113,23 +113,23 @@ export interface VaporApp {
 let domFactory: (tag: string) => VaporElement = (tag: string) => {
   // 默认实现：尝试使用全局 document
   if (typeof document !== 'undefined') {
-    return document.createElement(tag) as unknown as VaporElement
+    return document.createElement(tag) as unknown as VaporElement;
   }
-  throw new Error('[lyt:vapor] 未设置 DOM 工厂函数。在非浏览器环境中请调用 setVaporDOMFactory()')
-}
+  throw new Error('[lyt:vapor] 未设置 DOM 工厂函数。在非浏览器环境中请调用 setVaporDOMFactory()');
+};
 
 /**
  * 设置自定义 DOM 工厂函数（用于测试环境）
  */
 export function setVaporDOMFactory(factory: (tag: string) => VaporElement): void {
-  domFactory = factory
+  domFactory = factory;
 }
 
 /**
  * 获取当前 DOM 工厂函数
  */
 export function getVaporDOMFactory(): (tag: string) => VaporElement {
-  return domFactory
+  return domFactory;
 }
 
 // ================================================================
@@ -157,27 +157,27 @@ export function createVaporElement(
     props: {},
     events: {},
     bindings: [],
-  }
+  };
 
   if (props) {
     for (const [key, value] of Object.entries(props)) {
       if (key.startsWith('on') && typeof value === 'function' && !isSignal(value)) {
         // 事件绑定（排除 Signal）
-        const eventName = key.slice(2).toLowerCase()
-        node.events[eventName] = value
+        const eventName = key.slice(2).toLowerCase();
+        node.events[eventName] = value;
       } else if (isSignal(value)) {
         // 信号绑定
         if (key === 'textContent' || key === 'text') {
-          node.bindings.push({ type: 'text', target: 'textContent', signal: value as Signal<any> })
+          node.bindings.push({ type: 'text', target: 'textContent', signal: value as Signal<any> });
         } else if (key === 'className' || key === 'class') {
-          node.bindings.push({ type: 'class', target: 'className', signal: value as Signal<any> })
+          node.bindings.push({ type: 'class', target: 'className', signal: value as Signal<any> });
         } else if (key === 'style') {
-          node.bindings.push({ type: 'style', target: 'style', signal: value as Signal<any> })
+          node.bindings.push({ type: 'style', target: 'style', signal: value as Signal<any> });
         } else {
-          node.bindings.push({ type: 'prop', target: key, signal: value as Signal<any> })
+          node.bindings.push({ type: 'prop', target: key, signal: value as Signal<any> });
         }
       } else {
-        node.props[key] = value
+        node.props[key] = value;
       }
     }
   }
@@ -192,13 +192,13 @@ export function createVaporElement(
         events: {},
         bindings: [],
         text: child,
-      })
+      });
     } else {
-      node.children.push(child)
+      node.children.push(child);
     }
   }
 
-  return node
+  return node;
 }
 
 /**
@@ -207,10 +207,10 @@ export function createVaporElement(
  * Signal 是一个函数，且具有 _subscribe 或 set 方法。
  */
 function isSignal(value: any): boolean {
-  if (typeof value !== 'function') return false
+  if (typeof value !== 'function') return false;
   // Signal 特征：有 _subscribe 方法（所有 signal/computed 都有）
   // 或者有 set 方法（WritableSignal）
-  return !!(value._subscribe || value.set) && !value.toString().startsWith('class')
+  return !!(value._subscribe || value.set) && !value.toString().startsWith('class');
 }
 
 // ================================================================
@@ -228,56 +228,57 @@ function isSignal(value: any): boolean {
 export function renderVaporNode(node: VaporNode): VaporElement {
   if (node.tag === '#text') {
     // 文本节点
-    const el = domFactory('#text') as any
-    el.textContent = node.text || ''
-    el.nodeType = 3
-    return el
+    const el = domFactory('#text') as any;
+    el.textContent = node.text || '';
+    el.nodeType = 3;
+    return el;
   }
 
   // 创建 DOM 元素
-  const el = domFactory(node.tag)
-  node.el = el
+  const el = domFactory(node.tag);
+  node.el = el;
 
   // 应用静态属性
   for (const [key, value] of Object.entries(node.props)) {
     if (key === 'style' && typeof value === 'object') {
       for (const [styleKey, styleVal] of Object.entries(value)) {
-        (el as any).style[styleKey] = styleVal
+        (el as any).style[styleKey] = styleVal;
       }
     } else if (key === 'className' || key === 'class') {
-      el.className = String(value)
+      el.className = String(value);
     } else {
-      (el as any)[key] = value
+      (el as any)[key] = value;
     }
   }
 
   // 建立响应式绑定
   for (const binding of node.bindings) {
+    if (!binding.signal) continue;
     if (binding.type === 'text') {
-      bindText(el, binding.signal!)
+      bindText(el, binding.signal);
     } else if (binding.type === 'prop') {
-      bindProp(el, binding.target, binding.signal!)
+      bindProp(el, binding.target, binding.signal);
     } else if (binding.type === 'attr') {
-      bindAttr(el, binding.target, binding.signal!)
+      bindAttr(el, binding.target, binding.signal);
     } else if (binding.type === 'class') {
-      bindClass(el, binding.signal!)
+      bindClass(el, binding.signal);
     } else if (binding.type === 'style') {
-      bindProp(el, 'style', binding.signal!)
+      bindProp(el, 'style', binding.signal);
     }
   }
 
   // 绑定事件
   for (const [eventName, handler] of Object.entries(node.events)) {
-    bindEvent(el, eventName, handler)
+    bindEvent(el, eventName, handler);
   }
 
   // 递归渲染子节点
   for (const child of node.children) {
-    const childEl = renderVaporNode(child)
-    el.appendChild(childEl)
+    const childEl = renderVaporNode(child);
+    el.appendChild(childEl);
   }
 
-  return el
+  return el;
 }
 
 // ================================================================
@@ -302,71 +303,71 @@ export function vaporPatch(
 ): void {
   // 如果 tag 不同，直接替换
   if (oldNode.tag !== newNode.tag) {
-    const newEl = renderVaporNode(newNode)
+    const newEl = renderVaporNode(newNode);
     if (oldNode.el && oldNode.el.parentNode === parentEl) {
-      parentEl.removeChild(oldNode.el)
+      parentEl.removeChild(oldNode.el);
     }
-    parentEl.appendChild(newEl)
-    return
+    parentEl.appendChild(newEl);
+    return;
   }
 
   // tag 相同，更新属性
-  const el = oldNode.el || renderVaporNode(oldNode)
-  newNode.el = el
+  const el = oldNode.el || renderVaporNode(oldNode);
+  newNode.el = el;
 
   // 更新静态属性
   for (const [key, value] of Object.entries(newNode.props)) {
     if (key === 'style' && typeof value === 'object') {
       for (const [styleKey, styleVal] of Object.entries(value)) {
-        (el as any).style[styleKey] = styleVal
+        (el as any).style[styleKey] = styleVal;
       }
     } else if (key === 'className' || key === 'class') {
-      el.className = String(value)
+      el.className = String(value);
     } else {
-      (el as any)[key] = value
+      (el as any)[key] = value;
     }
   }
 
   // 更新文本
   if (newNode.text !== undefined) {
-    el.textContent = newNode.text
+    el.textContent = newNode.text;
   }
 
   // 更新事件
   // 先移除旧事件
   for (const [eventName, handler] of Object.entries(oldNode.events)) {
     if (!newNode.events[eventName]) {
-      el.removeEventListener(eventName, handler)
+      el.removeEventListener(eventName, handler);
     }
   }
   // 添加新事件
   for (const [eventName, handler] of Object.entries(newNode.events)) {
     if (oldNode.events[eventName] !== handler) {
       if (oldNode.events[eventName]) {
-        el.removeEventListener(eventName, oldNode.events[eventName])
+        el.removeEventListener(eventName, oldNode.events[eventName]);
       }
-      el.addEventListener(eventName, handler)
+      el.addEventListener(eventName, handler);
     }
   }
 
   // 更新子节点
-  const maxLen = Math.max(oldNode.children.length, newNode.children.length)
+  const maxLen = Math.max(oldNode.children.length, newNode.children.length);
   for (let i = 0; i < maxLen; i++) {
-    const oldChild = oldNode.children[i]
-    const newChild = newNode.children[i]
+    const oldChild = oldNode.children[i];
+    const newChild = newNode.children[i];
 
     if (!oldChild && newChild) {
       // 新增子节点
-      const childEl = renderVaporNode(newChild)
-      el.appendChild(childEl)
+      const childEl = renderVaporNode(newChild);
+      el.appendChild(childEl);
     } else if (oldChild && !newChild) {
       // 删除子节点
       if (oldChild.el && oldChild.el.parentNode === el) {
-        el.removeChild(oldChild.el)
+        el.removeChild(oldChild.el);
       }
     } else if (oldChild && newChild) {
       // 更新子节点
-      vaporPatch(oldChild, newChild, el)
+      vaporPatch(oldChild, newChild, el);
     }
   }
 }
@@ -386,38 +387,38 @@ export function vaporMount(
   container: VaporContainer,
   component: VaporComponentOptions
 ): () => void {
-  const ctx = component.setup ? component.setup() : {}
+  const ctx = component.setup ? component.setup() : {};
 
   // 生命周期钩子
-  if (component.beforeMount) component.beforeMount()
+  if (component.beforeMount) component.beforeMount();
 
   // 渲染
-  let rootNodes: VaporNode[]
+  let rootNodes: VaporNode[];
   if (component.render) {
-    const result = component.render(ctx, createVaporElement)
-    rootNodes = Array.isArray(result) ? result : [result]
+    const result = component.render(ctx, createVaporElement);
+    rootNodes = Array.isArray(result) ? result : [result];
   } else {
-    rootNodes = []
+    rootNodes = [];
   }
 
   // 将 VaporNode 渲染为 DOM 并挂载
-  const elements: VaporElement[] = []
+  const elements: VaporElement[] = [];
   for (const node of rootNodes) {
-    const el = renderVaporNode(node)
-    container.appendChild(el)
-    elements.push(el)
+    const el = renderVaporNode(node);
+    container.appendChild(el);
+    elements.push(el);
   }
 
-  if (component.mounted) component.mounted()
+  if (component.mounted) component.mounted();
 
   // 返回卸载函数
   return () => {
-    if (component.beforeUnmount) component.beforeUnmount()
+    if (component.beforeUnmount) component.beforeUnmount();
     for (const el of elements) {
-      container.removeChild(el)
+      container.removeChild(el);
     }
-    if (component.unmounted) component.unmounted()
-  }
+    if (component.unmounted) component.unmounted();
+  };
 }
 
 // ================================================================
@@ -432,9 +433,9 @@ export {
   bindEvent,
   bindIf,
   bindEach,
-}
+};
 
 export type {
   VaporElement,
   BindingCleanup,
-}
+};

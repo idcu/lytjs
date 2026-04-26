@@ -3,7 +3,7 @@
  * Props: items(数组 [{label, href}]), separator
  */
 
-import { defineComponent } from '@lytjs/component'
+import { defineComponent } from '@lytjs/component';
 
 export const Breadcrumb = defineComponent({
   name: 'LytBreadcrumb',
@@ -20,9 +20,9 @@ export const Breadcrumb = defineComponent({
   },
 
   setup(props, { slots }) {
-    const isLast = (index: number) => index === props.items.length - 1
+    const isLast = (index: number) => index === props.items.length - 1;
 
-    return { props, isLast, slots }
+    return { props, isLast, slots };
   },
 
   template: `
@@ -75,4 +75,4 @@ export const Breadcrumb = defineComponent({
       opacity: 0.5;
     }
   `,
-})
+});

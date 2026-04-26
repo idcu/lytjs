@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/components",
-  "version": "4.0.4",
+  "version": "4.0.5",
   "description": "Lyt.js 官方组件库 - 提供按钮、表单、表格、弹窗、标签页等常用 UI 组件",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",

@@ -113,7 +113,7 @@ const ShapeFlags = {
   TEXT_CHILDREN: 8,
   ARRAY_CHILDREN: 16,
   SLOTS_CHILDREN: 32,
-}
+};
 
 // ================================================================
 //  全局状态
@@ -125,12 +125,12 @@ const ShapeFlags = {
  * 当 isHydrating 为 true 时，渲染器会复用已有的 DOM 节点
  * 而不是创建新的 DOM 节点。
  */
-let _isHydrating: boolean = false
+let _isHydrating: boolean = false;
 
 /**
  * 注水完成回调列表
  */
-const hydrateCallbacks: Array<() => void> = []
+const hydrateCallbacks: Array<() => void> = [];
 
 /**
  * 注水统计信息
@@ -139,7 +139,7 @@ let _hydrateStats: HydrateResult = {
   success: true,
   mismatches: 0,
   hydratedNodes: 0,
-}
+};
 
 // ================================================================
 //  公共 API
@@ -151,7 +151,7 @@ let _hydrateStats: HydrateResult = {
  * @returns 是否正在注水
  */
 export function isHydrating(): boolean {
-  return _isHydrating
+  return _isHydrating;
 }
 
 /**
@@ -160,7 +160,7 @@ export function isHydrating(): boolean {
  * @param value 是否处于注水模式
  */
 export function setHydrating(value: boolean): void {
-  _isHydrating = value
+  _isHydrating = value;
 }
 
 /**
@@ -169,7 +169,7 @@ export function setHydrating(value: boolean): void {
  * @returns 注水结果统计
  */
 export function getHydrateStats(): HydrateResult {
-  return { ..._hydrateStats }
+  return { ..._hydrateStats };
 }
 
 /**
@@ -180,7 +180,7 @@ export function resetHydrateStats(): void {
     success: true,
     mismatches: 0,
     hydratedNodes: 0,
-  }
+  };
 }
 
 /**
@@ -191,10 +191,10 @@ export function resetHydrateStats(): void {
 export function onHydrated(cb: () => void): void {
   if (_isHydrating) {
     // 正在注水中，加入回调队列
-    hydrateCallbacks.push(cb)
+    hydrateCallbacks.push(cb);
   } else {
     // 已完成注水，立即执行
-    cb()
+    cb();
   }
 }
 
@@ -230,60 +230,60 @@ export function onHydrated(cb: () => void): void {
 export function hydrate(
   app: App,
   container: Element,
-  options: HydrateOptions = {},
+  options: HydrateOptions = {}
 ): HydrateResult {
   // 重置统计信息
-  resetHydrateStats()
+  resetHydrateStats();
 
   // 注册注水完成回调
   if (options.onHydrated) {
-    hydrateCallbacks.push(options.onHydrated)
+    hydrateCallbacks.push(options.onHydrated);
   }
 
   // 开启注水模式
-  _isHydrating = true
+  _isHydrating = true;
 
   try {
     // 获取容器中的第一个子元素（服务端渲染的根节点）
-    const serverRoot = container.firstElementChild
+    const serverRoot = container.firstElementChild;
 
     if (!serverRoot) {
       // 容器为空，回退到普通挂载
-      console.warn('[lyt] 容器为空，回退到客户端渲染')
-      _isHydrating = false
-      app.mount(container)
-      _hydrateStats.success = false
-      fireHydratedCallbacks()
-      return _hydrateStats
+      console.warn('[lyt] 容器为空，回退到客户端渲染');
+      _isHydrating = false;
+      app.mount(container);
+      _hydrateStats.success = false;
+      fireHydratedCallbacks();
+      return _hydrateStats;
     }
 
     // 获取应用的根 VNode
     // 如果应用已有 _vnode，使用它；否则通过 mount 获取
     if (!app._vnode) {
       // 暂时挂载以获取 VNode（注水模式下不会创建 DOM）
-      app.mount(container)
+      app.mount(container);
     }
 
     // 对比并注水根节点
     if (app._vnode) {
-      hydrateNode(serverRoot as HTMLElement, app._vnode, options)
+      hydrateNode(serverRoot as HTMLElement, app._vnode, options);
     }
 
     // 注水完成
-    _isHydrating = false
-    fireHydratedCallbacks()
-    return _hydrateStats
+    _isHydrating = false;
+    fireHydratedCallbacks();
+    return _hydrateStats;
   } catch (error) {
     // 注水失败，回退到客户端渲染
-    console.error('[lyt] 注水失败，回退到客户端渲染:', error)
-    _isHydrating = false
-    _hydrateStats.success = false
+    console.error('[lyt] 注水失败，回退到客户端渲染:', error);
+    _isHydrating = false;
+    _hydrateStats.success = false;
 
     // 清空容器，重新挂载
-    container.innerHTML = ''
-    app.mount(container)
-    fireHydratedCallbacks()
-    return _hydrateStats
+    container.innerHTML = '';
+    app.mount(container);
+    fireHydratedCallbacks();
+    return _hydrateStats;
   }
 }
 
@@ -291,12 +291,12 @@ export function hydrate(
  * 触发所有注水完成回调
  */
 function fireHydratedCallbacks(): void {
-  const callbacks = hydrateCallbacks.splice(0)
+  const callbacks = hydrateCallbacks.splice(0);
   for (const cb of callbacks) {
     try {
-      cb()
+      cb();
     } catch (error) {
-      console.error('[lyt] onHydrated 回调执行失败:', error)
+      console.error('[lyt] onHydrated 回调执行失败:', error);
     }
   }
 }
@@ -317,36 +317,36 @@ function fireHydratedCallbacks(): void {
 function hydrateNode(
   domNode: HTMLElement | Text | Comment,
   vnode: VNode,
-  options: HydrateOptions,
+  options: HydrateOptions
 ): void {
   // Fragment 处理
   if (isFragmentVNode(vnode)) {
-    hydrateFragment(domNode, vnode, options)
-    return
+    hydrateFragment(domNode, vnode, options);
+    return;
   }
 
   // 文本节点处理
   if (isTextVNode(vnode)) {
-    hydrateTextNode(domNode, vnode, options)
-    return
+    hydrateTextNode(domNode, vnode, options);
+    return;
   }
 
   // 注释节点处理
   if (isCommentVNode(vnode)) {
-    hydrateCommentNode(domNode, vnode, options)
-    return
+    hydrateCommentNode(domNode, vnode, options);
+    return;
   }
 
   // 组件节点处理
   if (isComponentVNode(vnode)) {
-    hydrateComponentNode(domNode, vnode, options)
-    return
+    hydrateComponentNode(domNode, vnode, options);
+    return;
   }
 
   // 元素节点处理
   if (typeof vnode.type === 'string') {
-    hydrateElementNode(domNode as HTMLElement, vnode, options)
-    return
+    hydrateElementNode(domNode as HTMLElement, vnode, options);
+    return;
   }
 }
 
@@ -367,35 +367,35 @@ function hydrateNode(
 function hydrateElementNode(
   domNode: HTMLElement,
   vnode: VNode,
-  options: HydrateOptions,
+  options: HydrateOptions
 ): void {
   // 检查标签名是否匹配
-  const domTag = domNode.tagName.toLowerCase()
-  const vnodeTag = (vnode.type as string).toLowerCase()
+  const domTag = domNode.tagName.toLowerCase();
+  const vnodeTag = (vnode.type as string).toLowerCase();
 
   if (domTag !== vnodeTag) {
-    handleMismatch(domNode, vnode, `标签不匹配: DOM "${domTag}" vs VNode "${vnodeTag}"`, options)
-    return
+    handleMismatch(domNode, vnode, `标签不匹配: DOM "${domTag}" vs VNode "${vnodeTag}"`, options);
+    return;
   }
 
   // 将 DOM 元素引用保存到 VNode（复用 DOM）
-  vnode.el = domNode
+  vnode.el = domNode;
 
   // 绑定事件处理器
   if (vnode.props) {
-    bindEvents(domNode, vnode.props)
+    bindEvents(domNode, vnode.props);
   }
 
   // 处理 ref
   if (vnode.ref) {
-    setRef(domNode, vnode.ref)
+    setRef(domNode, vnode.ref);
   }
 
   // 递归注水子节点
-  hydrateChildren(domNode, vnode, options)
+  hydrateChildren(domNode, vnode, options);
 
   // 更新统计
-  _hydrateStats.hydratedNodes++
+  _hydrateStats.hydratedNodes++;
 }
 
 /**
@@ -410,31 +410,31 @@ function hydrateElementNode(
 function hydrateTextNode(
   domNode: HTMLElement | Text | Comment,
   vnode: VNode,
-  options: HydrateOptions,
+  options: HydrateOptions
 ): void {
   // 检查是否为文本节点
   if (domNode.nodeType !== 3) {
-    handleMismatch(domNode, vnode, '期望文本节点', options)
-    return
+    handleMismatch(domNode, vnode, '期望文本节点', options);
+    return;
   }
 
   // 将 DOM 节点引用保存到 VNode
-  vnode.el = domNode
+  vnode.el = domNode;
 
   // 对比文本内容
-  const domText = domNode.nodeValue || ''
-  const vnodeText = String(vnode.children || '')
+  const domText = domNode.nodeValue || '';
+  const vnodeText = String(vnode.children || '');
 
   if (domText !== vnodeText) {
     // 文本不匹配，以客户端 VNode 为准更新
-    domNode.nodeValue = vnodeText
+    domNode.nodeValue = vnodeText;
     if (options.strict) {
-      console.warn(`[lyt] 注水文本不匹配: DOM "${domText}" vs VNode "${vnodeText}"`)
+      console.warn(`[lyt] 注水文本不匹配: DOM "${domText}" vs VNode "${vnodeText}"`);
     }
   }
 
   // 更新统计
-  _hydrateStats.hydratedNodes++
+  _hydrateStats.hydratedNodes++;
 }
 
 /**
@@ -449,28 +449,28 @@ function hydrateTextNode(
 function hydrateCommentNode(
   domNode: HTMLElement | Text | Comment,
   vnode: VNode,
-  options: HydrateOptions,
+  options: HydrateOptions
 ): void {
   // 检查是否为注释节点
   if (domNode.nodeType !== 8) {
-    handleMismatch(domNode, vnode, '期望注释节点', options)
-    return
+    handleMismatch(domNode, vnode, '期望注释节点', options);
+    return;
   }
 
   // 将 DOM 节点引用保存到 VNode
-  vnode.el = domNode
+  vnode.el = domNode;
 
   // 对比注释内容
-  const domText = domNode.nodeValue || ''
-  const vnodeText = String(vnode.children || '')
+  const domText = domNode.nodeValue || '';
+  const vnodeText = String(vnode.children || '');
 
   if (domText !== vnodeText) {
     // 注释不匹配，以客户端 VNode 为准更新
-    domNode.nodeValue = vnodeText
+    domNode.nodeValue = vnodeText;
   }
 
   // 更新统计
-  _hydrateStats.hydratedNodes++
+  _hydrateStats.hydratedNodes++;
 }
 
 /**
@@ -486,25 +486,25 @@ function hydrateCommentNode(
 function hydrateFragment(
   domNode: HTMLElement | Text | Comment,
   vnode: VNode,
-  options: HydrateOptions,
+  options: HydrateOptions
 ): void {
-  if (!Array.isArray(vnode.children)) return
+  if (!Array.isArray(vnode.children)) return;
 
   // 获取 Fragment 的所有 DOM 子节点
-  const domChildren = Array.from(domNode.childNodes)
+  const domChildren = Array.from(domNode.childNodes);
 
   // 逐个对比注水
   for (let i = 0; i < vnode.children.length; i++) {
-    const childVNode = vnode.children[i]
-    const childDom = domChildren[i]
+    const childVNode = vnode.children[i];
+    const childDom = domChildren[i];
 
     if (!childDom) {
-      console.warn(`[lyt] Fragment 子节点数量不匹配: VNode 有 ${vnode.children.length} 个子节点，DOM 只有 ${domChildren.length} 个`)
-      _hydrateStats.mismatches++
-      break
+      console.warn(`[lyt] Fragment 子节点数量不匹配: VNode 有 ${vnode.children.length} 个子节点，DOM 只有 ${domChildren.length} 个`);
+      _hydrateStats.mismatches++;
+      break;
     }
 
-    hydrateNode(childDom as HTMLElement, childVNode, options)
+    hydrateNode(childDom as HTMLElement, childVNode, options);
   }
 }
 
@@ -522,26 +522,26 @@ function hydrateFragment(
 function hydrateComponentNode(
   domNode: HTMLElement | Text | Comment,
   vnode: VNode,
-  options: HydrateOptions,
+  options: HydrateOptions
 ): void {
   // 如果组件有 subTree，注水 subTree
   if (vnode.component && vnode.component.subTree) {
-    hydrateNode(domNode, vnode.component.subTree, options)
-    vnode.el = vnode.component.subTree.el
-    return
+    hydrateNode(domNode, vnode.component.subTree, options);
+    vnode.el = vnode.component.subTree.el;
+    return;
   }
 
   // 如果组件类型是函数（函数式组件），尝试调用获取 subTree
-  const component = vnode.type as any
+  const component = vnode.type as any;
   if (typeof component === 'function') {
     try {
       const subTree = component(vnode.props || {}, {
         slots: vnode.children || {},
-      })
+      });
       if (subTree) {
-        hydrateNode(domNode, subTree, options)
-        vnode.el = subTree.el
-        return
+        hydrateNode(domNode, subTree, options);
+        vnode.el = subTree.el;
+        return;
       }
     } catch {
       // 函数式组件调用失败，跳过
@@ -554,11 +554,11 @@ function hydrateComponentNode(
       const subTree = component.render(vnode.props || {}, {
         slots: vnode.children || {},
         emit: () => {},
-      })
+      });
       if (subTree) {
-        hydrateNode(domNode, subTree, options)
-        vnode.el = subTree.el
-        return
+        hydrateNode(domNode, subTree, options);
+        vnode.el = subTree.el;
+        return;
       }
     } catch {
       // 组件 render 调用失败，跳过
@@ -566,7 +566,7 @@ function hydrateComponentNode(
   }
 
   // 无法获取 subTree，标记为 mismatch
-  handleMismatch(domNode, vnode, '组件无法获取 subTree', options)
+  handleMismatch(domNode, vnode, '组件无法获取 subTree', options);
 }
 
 /**
@@ -582,52 +582,52 @@ function hydrateComponentNode(
 function hydrateChildren(
   parentEl: HTMLElement,
   vnode: VNode,
-  options: HydrateOptions,
+  options: HydrateOptions
 ): void {
-  if (!vnode.children) return
+  if (!vnode.children) return;
 
-  const shapeFlag = vnode.shapeFlag || 0
+  const shapeFlag = vnode.shapeFlag || 0;
 
   // 文本子节点
   if (typeof vnode.children === 'string' || (shapeFlag & ShapeFlags.TEXT_CHILDREN)) {
-    const textContent = parentEl.textContent || ''
-    const vnodeText = String(vnode.children || '')
+    const textContent = parentEl.textContent || '';
+    const vnodeText = String(vnode.children || '');
 
     if (textContent !== vnodeText) {
       // 文本不匹配，以客户端 VNode 为准更新
-      parentEl.textContent = vnodeText
+      parentEl.textContent = vnodeText;
       if (options.strict) {
-        console.warn(`[lyt] 注水子节点文本不匹配: DOM "${textContent}" vs VNode "${vnodeText}"`)
+        console.warn(`[lyt] 注水子节点文本不匹配: DOM "${textContent}" vs VNode "${vnodeText}"`);
       }
     }
-    return
+    return;
   }
 
   // 数组子节点
   if (Array.isArray(vnode.children)) {
-    const domChildren = Array.from(parentEl.childNodes)
+    const domChildren = Array.from(parentEl.childNodes);
 
     // 跳过非元素/文本节点（如注释节点），只匹配实际子节点
-    let vnodeIndex = 0
+    let vnodeIndex = 0;
     for (let i = 0; i < domChildren.length && vnodeIndex < vnode.children.length; i++) {
-      const childVNode = vnode.children[vnodeIndex]
+      const childVNode = vnode.children[vnodeIndex];
 
       // 跳过 null/undefined VNode
       if (childVNode === null || childVNode === undefined) {
-        vnodeIndex++
-        continue
+        vnodeIndex++;
+        continue;
       }
 
-      hydrateNode(domChildren[i] as HTMLElement, childVNode, options)
-      vnodeIndex++
+      hydrateNode(domChildren[i] as HTMLElement, childVNode, options);
+      vnodeIndex++;
     }
 
     // 检查子节点数量是否匹配
     if (vnodeIndex < vnode.children.length) {
       console.warn(
-        `[lyt] 子节点数量不匹配: VNode 有 ${vnode.children.length} 个，DOM 只有 ${domChildren.length} 个`,
-      )
-      _hydrateStats.mismatches++
+        `[lyt] 子节点数量不匹配: VNode 有 ${vnode.children.length} 个，DOM 只有 ${domChildren.length} 个`
+      );
+      _hydrateStats.mismatches++;
     }
   }
 
@@ -657,12 +657,12 @@ function hydrateChildren(
  */
 function bindEvents(el: HTMLElement, props: Record<string, any>): void {
   for (const key in props) {
-    const value = props[key]
+    const value = props[key];
 
     // 事件属性（on* 或 @*）
     if (key.startsWith('on') && typeof value === 'function') {
-      const eventName = key.slice(2).toLowerCase()
-      el.addEventListener(eventName, value)
+      const eventName = key.slice(2).toLowerCase();
+      el.addEventListener(eventName, value);
     }
   }
 }
@@ -675,13 +675,13 @@ function bindEvents(el: HTMLElement, props: Record<string, any>): void {
  * @param el    DOM 元素
  * @param props 属性对象
  */
-function unbindEvents(el: HTMLElement, props: Record<string, any>): void {
+function _unbindEvents(el: HTMLElement, props: Record<string, any>): void {
   for (const key in props) {
-    const value = props[key]
+    const value = props[key];
 
     if (key.startsWith('on') && typeof value === 'function') {
-      const eventName = key.slice(2).toLowerCase()
-      el.removeEventListener(eventName, value)
+      const eventName = key.slice(2).toLowerCase();
+      el.removeEventListener(eventName, value);
     }
   }
 }
@@ -701,9 +701,9 @@ function unbindEvents(el: HTMLElement, props: Record<string, any>): void {
  */
 function setRef(el: HTMLElement, ref: any): void {
   if (typeof ref === 'function') {
-    ref(el)
+    ref(el);
   } else if (ref && typeof ref === 'object') {
-    ref.current = el
+    ref.current = el;
   }
 }
 
@@ -715,39 +715,39 @@ function setRef(el: HTMLElement, ref: any): void {
  * 判断 VNode 是否为 Fragment 类型
  */
 function isFragmentVNode(vnode: VNode): boolean {
-  return typeof vnode.type === 'symbol' && String(vnode.type) === 'Symbol(Fragment)'
+  return typeof vnode.type === 'symbol' && String(vnode.type) === 'Symbol(Fragment)';
 }
 
 /**
  * 判断 VNode 是否为文本类型
  */
 function isTextVNode(vnode: VNode): boolean {
-  return typeof vnode.type === 'symbol' && String(vnode.type).includes('Text')
+  return typeof vnode.type === 'symbol' && String(vnode.type).includes('Text');
 }
 
 /**
  * 判断 VNode 是否为注释类型
  */
 function isCommentVNode(vnode: VNode): boolean {
-  return typeof vnode.type === 'symbol' && String(vnode.type).includes('Comment')
+  return typeof vnode.type === 'symbol' && String(vnode.type).includes('Comment');
 }
 
 /**
  * 判断 VNode 是否为组件类型
  */
 function isComponentVNode(vnode: VNode): boolean {
-  const shapeFlag = vnode.shapeFlag || 0
+  const shapeFlag = vnode.shapeFlag || 0;
   if (shapeFlag & (ShapeFlags.STATEFUL_COMPONENT | ShapeFlags.FUNCTIONAL_COMPONENT)) {
-    return true
+    return true;
   }
   // 兜底：通过 type 判断
   if (typeof vnode.type === 'object' && vnode.type !== null) {
-    return true
+    return true;
   }
   if (typeof vnode.type === 'function') {
-    return true
+    return true;
   }
-  return false
+  return false;
 }
 
 // ================================================================
@@ -769,16 +769,16 @@ function handleMismatch(
   domNode: HTMLElement | Text | Comment,
   vnode: VNode,
   message: string,
-  options: HydrateOptions,
+  options: HydrateOptions
 ): void {
-  const fullMessage = `[lyt] 注水不匹配: ${message}`
+  const fullMessage = `[lyt] 注水不匹配: ${message}`;
 
-  _hydrateStats.mismatches++
+  _hydrateStats.mismatches++;
 
   if (options.strict) {
-    throw new Error(fullMessage)
+    throw new Error(fullMessage);
   } else {
-    console.warn(fullMessage)
+    console.warn(fullMessage);
   }
 }
 
@@ -824,10 +824,10 @@ interface IslandState {
 }
 
 /** 全局 island 注册表 */
-const islandRegistry = new Map<string, IslandState>()
+const islandRegistry = new Map<string, IslandState>();
 
 /** 全局 island 组件映射（id → component） */
-const islandComponentMap = new Map<string, ComponentOptions>()
+const islandComponentMap = new Map<string, ComponentOptions>();
 
 /** HTML 转义映射 */
 const ISLAND_ESCAPE_MAP: Record<string, string> = {
@@ -836,14 +836,14 @@ const ISLAND_ESCAPE_MAP: Record<string, string> = {
   '>': '&gt;',
   '"': '&quot;',
   "'": '&#39;',
-}
-const ISLAND_ESCAPE_RE = /[&<>"']/g
+};
+const ISLAND_ESCAPE_RE = /[&<>"']/g;
 
 /**
  * HTML 转义（Island 内部使用）
  */
 function islandEscapeHTML(str: string): string {
-  return str.replace(ISLAND_ESCAPE_RE, (ch) => ISLAND_ESCAPE_MAP[ch])
+  return str.replace(ISLAND_ESCAPE_RE, (ch) => ISLAND_ESCAPE_MAP[ch]);
 }
 
 /**
@@ -865,46 +865,46 @@ function islandEscapeHTML(str: string): string {
 export function hydrateIsland(
   selector: string,
   component: ComponentOptions,
-  options: HydrationOptions = {},
+  options: HydrationOptions = {}
 ): HydrateResult {
-  const container = typeof document !== 'undefined' ? document : null
+  const container = typeof document !== 'undefined' ? document : null;
   if (!container) {
     // 非 DOM 环境，返回失败
-    return { success: false, mismatches: 0, hydratedNodes: 0 }
+    return { success: false, mismatches: 0, hydratedNodes: 0 };
   }
 
-  const el = container.querySelector(selector) as HTMLElement | null
+  const el = container.querySelector(selector) as HTMLElement | null;
   if (!el) {
-    console.warn(`[lyt] hydrateIsland: 未找到匹配元素 "${selector}"`)
-    return { success: false, mismatches: 0, hydratedNodes: 0 }
+    console.warn(`[lyt] hydrateIsland: 未找到匹配元素 "${selector}"`);
+    return { success: false, mismatches: 0, hydratedNodes: 0 };
   }
 
-  const islandId = el.getAttribute('data-hydrate')
+  const islandId = el.getAttribute('data-hydrate');
   if (!islandId) {
-    console.warn('[lyt] hydrateIsland: 元素缺少 data-hydrate 属性')
-    return { success: false, mismatches: 0, hydratedNodes: 0 }
+    console.warn('[lyt] hydrateIsland: 元素缺少 data-hydrate 属性');
+    return { success: false, mismatches: 0, hydratedNodes: 0 };
   }
 
   // 检查是否已注水
   if (el.hasAttribute('data-hydrated')) {
-    return { success: true, mismatches: 0, hydratedNodes: 0 }
+    return { success: true, mismatches: 0, hydratedNodes: 0 };
   }
 
   // 解析 props
-  const props = parseIslandProps(islandId, container)
+  const props = parseIslandProps(islandId, container);
   if (props === null) {
-    console.warn(`[lyt] hydrateIsland: 无法解析 island "${islandId}" 的 props`)
-    return { success: false, mismatches: 0, hydratedNodes: 0 }
+    console.warn(`[lyt] hydrateIsland: 无法解析 island "${islandId}" 的 props`);
+    return { success: false, mismatches: 0, hydratedNodes: 0 };
   }
 
   // 检查懒注水策略
-  const hydrateWhen = el.getAttribute('data-hydrate-when')
+  const hydrateWhen = el.getAttribute('data-hydrate-when');
   if (hydrateWhen || options.lazy) {
-    return scheduleLazyHydration(el, islandId, component, props, hydrateWhen || 'visible', options)
+    return scheduleLazyHydration(el, islandId, component, props, hydrateWhen || 'visible', options);
   }
 
   // 立即注水
-  return performIslandHydration(el, islandId, component, props, options)
+  return performIslandHydration(el, islandId, component, props, options);
 }
 
 /**
@@ -918,28 +918,28 @@ export function hydrateIsland(
  */
 function parseIslandProps(islandId: string, container: Document | HTMLElement): Record<string, any> | null {
   const scriptEl = container.querySelector(
-    `script[type="application/json"][data-hydrate-props="${islandId}"]`,
-  )
+    `script[type="application/json"][data-hydrate-props="${islandId}"]`
+  );
   if (!scriptEl) {
     // 尝试从 data-props 属性解析
-    const islandEl = container.querySelector(`[data-hydrate="${islandId}"]`)
+    const islandEl = container.querySelector(`[data-hydrate="${islandId}"]`);
     if (islandEl) {
-      const propsAttr = islandEl.getAttribute('data-props')
+      const propsAttr = islandEl.getAttribute('data-props');
       if (propsAttr) {
         try {
-          return JSON.parse(propsAttr)
+          return JSON.parse(propsAttr);
         } catch {
-          return null
+          return null;
         }
       }
     }
-    return {}
+    return {};
   }
 
   try {
-    return JSON.parse(scriptEl.textContent || '{}')
+    return JSON.parse(scriptEl.textContent || '{}');
   } catch {
-    return null
+    return null;
   }
 }
 
@@ -958,59 +958,59 @@ function performIslandHydration(
   islandId: string,
   component: ComponentOptions,
   props: Record<string, any>,
-  options: HydrationOptions,
+  options: HydrationOptions
 ): HydrateResult {
-  const result: HydrateResult = { success: true, mismatches: 0, hydratedNodes: 0 }
+  const result: HydrateResult = { success: true, mismatches: 0, hydratedNodes: 0 };
 
   try {
     // 开启注水模式
-    _isHydrating = true
+    _isHydrating = true;
 
     // 获取组件渲染结果
-    let clientVNode: VNode | null = null
+    let clientVNode: VNode | null = null;
 
     if (typeof component.render === 'function') {
       clientVNode = component.render(props, {
         slots: component.slots || {},
         emit: () => {},
-      })
+      });
     } else if (typeof component.setup === 'function') {
       const setupResult = component.setup(props, {
         emit: () => {},
         slots: component.slots || {},
-      })
+      });
       if (typeof setupResult === 'function') {
-        clientVNode = setupResult()
+        clientVNode = setupResult();
       }
     }
 
     if (!clientVNode) {
-      console.warn(`[lyt] island "${islandId}": 组件未返回 VNode`)
-      _isHydrating = false
-      result.success = false
-      return result
+      console.warn(`[lyt] island "${islandId}": 组件未返回 VNode`);
+      _isHydrating = false;
+      result.success = false;
+      return result;
     }
 
     // Hydration mismatch 检测（开发模式）
     if (options.dev !== false) {
-      const mismatches = detectHydrationMismatch(el, clientVNode, islandId)
-      result.mismatches = mismatches
+      const mismatches = detectHydrationMismatch(el, clientVNode, islandId);
+      result.mismatches = mismatches;
     }
 
     // 注水 VNode 到 DOM
-    hydrateNode(el, clientVNode, options)
-    result.hydratedNodes = _hydrateStats.hydratedNodes
+    hydrateNode(el, clientVNode, options);
+    result.hydratedNodes = _hydrateStats.hydratedNodes;
 
     // 绑定事件
     if (clientVNode.props) {
-      bindEvents(el, clientVNode.props)
+      bindEvents(el, clientVNode.props);
     }
 
     // 递归注水子节点中的事件
-    hydrateChildEvents(el, clientVNode)
+    hydrateChildEvents(el, clientVNode);
 
     // 标记为已注水
-    el.setAttribute('data-hydrated', '')
+    el.setAttribute('data-hydrated', '');
 
     // 注册 island 状态
     const islandState: IslandState = {
@@ -1021,23 +1021,23 @@ function performIslandHydration(
       timeoutId: null,
       observer: null,
       interactionHandler: null,
-    }
-    islandRegistry.set(islandId, islandState)
-    islandComponentMap.set(islandId, component)
+    };
+    islandRegistry.set(islandId, islandState);
+    islandComponentMap.set(islandId, component);
 
-    _isHydrating = false
+    _isHydrating = false;
 
     // 触发回调
     if (options.onHydrated) {
-      options.onHydrated()
+      options.onHydrated();
     }
 
-    return result
+    return result;
   } catch (error) {
-    _isHydrating = false
-    console.error(`[lyt] island "${islandId}" 注水失败:`, error)
-    result.success = false
-    return result
+    _isHydrating = false;
+    console.error(`[lyt] island "${islandId}" 注水失败:`, error);
+    result.success = false;
+    return result;
   }
 }
 
@@ -1050,44 +1050,44 @@ function performIslandHydration(
  * @param vnode    VNode
  */
 function hydrateChildEvents(parentEl: HTMLElement, vnode: VNode): void {
-  if (!vnode.children || typeof vnode.children === 'string') return
+  if (!vnode.children || typeof vnode.children === 'string') return;
 
   if (Array.isArray(vnode.children)) {
-    const domChildren = Array.from(parentEl.children)
-    let vnodeIdx = 0
+    const domChildren = Array.from(parentEl.children);
+    let vnodeIdx = 0;
 
     for (let i = 0; i < domChildren.length && vnodeIdx < vnode.children.length; i++) {
-      const childVNode = vnode.children[vnodeIdx]
+      const childVNode = vnode.children[vnodeIdx];
       if (childVNode === null || childVNode === undefined) {
-        vnodeIdx++
-        continue
+        vnodeIdx++;
+        continue;
       }
 
       if (typeof childVNode.type === 'string' && childVNode.props) {
-        bindEvents(domChildren[i] as HTMLElement, childVNode.props)
+        bindEvents(domChildren[i] as HTMLElement, childVNode.props);
         // 递归处理子节点
-        hydrateChildEvents(domChildren[i] as HTMLElement, childVNode)
+        hydrateChildEvents(domChildren[i] as HTMLElement, childVNode);
       } else if (typeof childVNode.type === 'object' || typeof childVNode.type === 'function') {
         // 组件节点，尝试获取 subTree
-        const comp = childVNode.type as any
+        const comp = childVNode.type as any;
         if (typeof comp === 'function') {
           try {
-            const subTree = comp(childVNode.props || {}, { slots: childVNode.children || {} })
+            const subTree = comp(childVNode.props || {}, { slots: childVNode.children || {} });
             if (subTree && domChildren[i]) {
-              hydrateChildEvents(domChildren[i] as HTMLElement, subTree)
+              hydrateChildEvents(domChildren[i] as HTMLElement, subTree);
             }
           } catch { /* skip */ }
         } else if (comp && typeof comp.render === 'function') {
           try {
-            const subTree = comp.render(childVNode.props || {}, { slots: childVNode.children || {}, emit: () => {} })
+            const subTree = comp.render(childVNode.props || {}, { slots: childVNode.children || {}, emit: () => {} });
             if (subTree && domChildren[i]) {
-              hydrateChildEvents(domChildren[i] as HTMLElement, subTree)
+              hydrateChildEvents(domChildren[i] as HTMLElement, subTree);
             }
           } catch { /* skip */ }
         }
       }
 
-      vnodeIdx++
+      vnodeIdx++;
     }
   }
 }
@@ -1114,18 +1114,18 @@ function scheduleLazyHydration(
   component: ComponentOptions,
   props: Record<string, any>,
   hydrateWhen: string,
-  options: HydrationOptions,
+  options: HydrationOptions
 ): HydrateResult {
-  const result: HydrateResult = { success: true, mismatches: 0, hydratedNodes: 0 }
+  const result: HydrateResult = { success: true, mismatches: 0, hydratedNodes: 0 };
 
   // 设置超时
-  let timeoutId: ReturnType<typeof setTimeout> | null = null
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
   if (options.timeout && options.timeout > 0) {
     timeoutId = setTimeout(() => {
       // 超时后强制注水
-      cleanupLazyResources(el, islandId)
-      performIslandHydration(el, islandId, component, props, options)
-    }, options.timeout)
+      cleanupLazyResources(el, islandId);
+      performIslandHydration(el, islandId, component, props, options);
+    }, options.timeout);
   }
 
   const islandState: IslandState = {
@@ -1136,9 +1136,9 @@ function scheduleLazyHydration(
     timeoutId,
     observer: null,
     interactionHandler: null,
-  }
-  islandRegistry.set(islandId, islandState)
-  islandComponentMap.set(islandId, component)
+  };
+  islandRegistry.set(islandId, islandState);
+  islandComponentMap.set(islandId, component);
 
   switch (hydrateWhen) {
     case 'visible': {
@@ -1148,100 +1148,100 @@ function scheduleLazyHydration(
           (entries) => {
             for (const entry of entries) {
               if (entry.isIntersecting) {
-                observer.unobserve(entry.target)
-                islandState.observer = null
-                if (timeoutId) clearTimeout(timeoutId)
-                islandState.timeoutId = null
-                performIslandHydration(el, islandId, component, props, options)
+                observer.unobserve(entry.target);
+                islandState.observer = null;
+                if (timeoutId) clearTimeout(timeoutId);
+                islandState.timeoutId = null;
+                performIslandHydration(el, islandId, component, props, options);
               }
             }
           },
-          { rootMargin: '200px' },
-        )
-        observer.observe(el)
-        islandState.observer = observer
+          { rootMargin: '200px' }
+        );
+        observer.observe(el);
+        islandState.observer = observer;
       } else {
         // 不支持 IntersectionObserver，直接注水
-        if (timeoutId) clearTimeout(timeoutId)
-        performIslandHydration(el, islandId, component, props, options)
+        if (timeoutId) clearTimeout(timeoutId);
+        performIslandHydration(el, islandId, component, props, options);
       }
-      break
+      break;
     }
 
     case 'idle': {
       // 使用 requestIdleCallback
       const scheduleIdle = (cb: () => void) => {
         if (typeof requestIdleCallback !== 'undefined') {
-          requestIdleCallback(cb, { timeout: options.timeout || 2000 })
+          requestIdleCallback(cb, { timeout: options.timeout || 2000 });
         } else {
-          setTimeout(cb, 1)
+          setTimeout(cb, 1);
         }
-      }
+      };
       scheduleIdle(() => {
-        if (timeoutId) clearTimeout(timeoutId)
-        islandState.timeoutId = null
+        if (timeoutId) clearTimeout(timeoutId);
+        islandState.timeoutId = null;
         if (!el.hasAttribute('data-hydrated')) {
-          performIslandHydration(el, islandId, component, props, options)
+          performIslandHydration(el, islandId, component, props, options);
         }
-      })
-      break
+      });
+      break;
     }
 
     case 'interaction': {
       // 首次用户交互时注水
       const handler = () => {
-        if (timeoutId) clearTimeout(timeoutId)
-        islandState.timeoutId = null
-        islandState.interactionHandler = null
-        document.removeEventListener('click', handler)
-        document.removeEventListener('keydown', handler)
-        document.removeEventListener('scroll', handler)
-        document.removeEventListener('touchstart', handler)
+        if (timeoutId) clearTimeout(timeoutId);
+        islandState.timeoutId = null;
+        islandState.interactionHandler = null;
+        document.removeEventListener('click', handler);
+        document.removeEventListener('keydown', handler);
+        document.removeEventListener('scroll', handler);
+        document.removeEventListener('touchstart', handler);
         if (!el.hasAttribute('data-hydrated')) {
-          performIslandHydration(el, islandId, component, props, options)
+          performIslandHydration(el, islandId, component, props, options);
         }
-      }
-      document.addEventListener('click', handler, { once: false, passive: true })
-      document.addEventListener('keydown', handler, { once: false, passive: true })
-      document.addEventListener('scroll', handler, { once: false, passive: true })
-      document.addEventListener('touchstart', handler, { once: false, passive: true })
-      islandState.interactionHandler = handler
-      break
+      };
+      document.addEventListener('click', handler, { once: false, passive: true });
+      document.addEventListener('keydown', handler, { once: false, passive: true });
+      document.addEventListener('scroll', handler, { once: false, passive: true });
+      document.addEventListener('touchstart', handler, { once: false, passive: true });
+      islandState.interactionHandler = handler;
+      break;
     }
 
     default: {
       // 未知策略，直接注水
-      if (timeoutId) clearTimeout(timeoutId)
-      performIslandHydration(el, islandId, component, props, options)
+      if (timeoutId) clearTimeout(timeoutId);
+      performIslandHydration(el, islandId, component, props, options);
     }
   }
 
-  return result
+  return result;
 }
 
 /**
  * 清理懒注水资源
  */
 function cleanupLazyResources(el: HTMLElement, islandId: string): void {
-  const state = islandRegistry.get(islandId)
-  if (!state) return
+  const state = islandRegistry.get(islandId);
+  if (!state) return;
 
   if (state.observer) {
-    state.observer.disconnect()
-    state.observer = null
+    state.observer.disconnect();
+    state.observer = null;
   }
 
   if (state.timeoutId !== null) {
-    clearTimeout(state.timeoutId)
-    state.timeoutId = null
+    clearTimeout(state.timeoutId);
+    state.timeoutId = null;
   }
 
   if (state.interactionHandler) {
-    document.removeEventListener('click', state.interactionHandler)
-    document.removeEventListener('keydown', state.interactionHandler)
-    document.removeEventListener('scroll', state.interactionHandler)
-    document.removeEventListener('touchstart', state.interactionHandler)
-    state.interactionHandler = null
+    document.removeEventListener('click', state.interactionHandler);
+    document.removeEventListener('keydown', state.interactionHandler);
+    document.removeEventListener('scroll', state.interactionHandler);
+    document.removeEventListener('touchstart', state.interactionHandler);
+    state.interactionHandler = null;
   }
 }
 
@@ -1255,31 +1255,36 @@ function cleanupLazyResources(el: HTMLElement, islandId: string): void {
  * @returns 注水结果汇总
  */
 export function hydrateAllIslands(options: HydrationOptions = {}): HydrateResult {
-  const container = typeof document !== 'undefined' ? document : null
+  const container = typeof document !== 'undefined' ? document : null;
   if (!container) {
-    return { success: false, mismatches: 0, hydratedNodes: 0 }
+    return { success: false, mismatches: 0, hydratedNodes: 0 };
   }
 
-  const islands = container.querySelectorAll('[data-hydrate]:not([data-hydrated])')
-  const totalResult: HydrateResult = { success: true, mismatches: 0, hydratedNodes: 0 }
+  const islands = container.querySelectorAll('[data-hydrate]:not([data-hydrated])');
+  const totalResult: HydrateResult = { success: true, mismatches: 0, hydratedNodes: 0 };
 
   islands.forEach((el) => {
-    const islandId = el.getAttribute('data-hydrate')!
-    const component = islandComponentMap.get(islandId)
+    const islandId = el.getAttribute('data-hydrate');
+    if (!islandId) {
+      console.warn('[lyt] hydrateAllIslands: 元素缺少 data-hydrate 属性');
+      totalResult.success = false;
+      return;
+    }
+    const component = islandComponentMap.get(islandId);
 
     if (!component) {
-      console.warn(`[lyt] hydrateAllIslands: 未找到 island "${islandId}" 的组件注册`)
-      totalResult.success = false
-      return
+      console.warn(`[lyt] hydrateAllIslands: 未找到 island "${islandId}" 的组件注册`);
+      totalResult.success = false;
+      return;
     }
 
-    const result = hydrateIsland(`[data-hydrate="${islandId}"]`, component, options)
-    totalResult.mismatches += result.mismatches
-    totalResult.hydratedNodes += result.hydratedNodes
-    if (!result.success) totalResult.success = false
-  })
+    const result = hydrateIsland(`[data-hydrate="${islandId}"]`, component, options);
+    totalResult.mismatches += result.mismatches;
+    totalResult.hydratedNodes += result.hydratedNodes;
+    if (!result.success) totalResult.success = false;
+  });
 
-  return totalResult
+  return totalResult;
 }
 
 /**
@@ -1289,7 +1294,7 @@ export function hydrateAllIslands(options: HydrationOptions = {}): HydrateResult
  * @param component 组件定义
  */
 export function registerIslandComponent(id: string, component: ComponentOptions): void {
-  islandComponentMap.set(id, component)
+  islandComponentMap.set(id, component);
 }
 
 /**
@@ -1300,38 +1305,38 @@ export function registerIslandComponent(id: string, component: ComponentOptions)
  * @param islandId island 标识符
  */
 export function unmountIsland(islandId: string): void {
-  const state = islandRegistry.get(islandId)
-  if (!state) return
+  const state = islandRegistry.get(islandId);
+  if (!state) return;
 
   // 清理懒注水资源
   const el = typeof document !== 'undefined'
     ? document.querySelector(`[data-hydrate="${islandId}"]`)
-    : null
+    : null;
 
   if (el) {
-    cleanupLazyResources(el as HTMLElement, islandId)
+    cleanupLazyResources(el as HTMLElement, islandId);
     // 移除已注水标记
-    el.removeAttribute('data-hydrated')
+    el.removeAttribute('data-hydrated');
   }
 
   // 从注册表移除
-  islandRegistry.delete(islandId)
-  islandComponentMap.delete(islandId)
+  islandRegistry.delete(islandId);
+  islandComponentMap.delete(islandId);
 }
 
 /**
  * 获取 island 注册表（测试用）
  */
 export function getIslandRegistry(): Map<string, IslandState> {
-  return islandRegistry
+  return islandRegistry;
 }
 
 /**
  * 清空 island 注册表（测试用）
  */
 export function clearIslandRegistry(): void {
-  islandRegistry.clear()
-  islandComponentMap.clear()
+  islandRegistry.clear();
+  islandComponentMap.clear();
 }
 
 // ================================================================
@@ -1366,34 +1371,34 @@ export function createHydrationIsland(
   component: ComponentOptions,
   props: Record<string, any> = {},
   tag: string = 'div',
-  hydrateWhen?: string,
+  hydrateWhen?: string
 ): string {
-  const islandId = component.name || 'anonymous'
+  const islandId = component.name || 'anonymous';
 
   // 序列化 props 为 JSON
-  const propsJSON = JSON.stringify(props)
-  const propsAttr = islandEscapeHTML(propsJSON)
+  const propsJSON = JSON.stringify(props);
+  const propsAttr = islandEscapeHTML(propsJSON);
 
   // 渲染组件内容
-  let content = ''
+  let content = '';
   if (typeof component.render === 'function') {
     const vnode = component.render(props, {
       slots: component.slots || {},
       emit: () => {},
-    })
-    content = vnodeToString(vnode)
+    });
+    content = vnodeToString(vnode);
   }
 
   // 构建 data-hydrate-when 属性
-  const whenAttr = hydrateWhen ? ` data-hydrate-when="${hydrateWhen}"` : ''
+  const whenAttr = hydrateWhen ? ` data-hydrate-when="${hydrateWhen}"` : '';
 
   // 构建 island HTML
-  const html = `<${tag} data-hydrate="${islandId}" data-props="${propsAttr}"${whenAttr}>${content}</${tag}>`
+  const html = `<${tag} data-hydrate="${islandId}" data-props="${propsAttr}"${whenAttr}>${content}</${tag}>`;
 
   // 构建 props script 标签
-  const scriptTag = `<script type="application/json" data-hydrate-props="${islandId}">${propsJSON}</script>`
+  const scriptTag = `<script type="application/json" data-hydrate-props="${islandId}">${propsJSON}</script>`;
 
-  return html + scriptTag
+  return html + scriptTag;
 }
 
 /**
@@ -1403,68 +1408,68 @@ export function createHydrationIsland(
  * @returns HTML 字符串
  */
 function vnodeToString(vnode: VNode): string {
-  if (vnode === null || vnode === undefined) return ''
+  if (vnode === null || vnode === undefined) return '';
 
-  const { type, props, children } = vnode
+  const { type, props, children } = vnode;
 
   // Fragment
   if (typeof type === 'symbol' && String(type) === 'Symbol(Fragment)') {
     if (Array.isArray(children)) {
-      return children.map(c => vnodeToString(c as VNode)).join('')
+      return children.map(c => vnodeToString(c as VNode)).join('');
     }
-    return ''
+    return '';
   }
 
   // Text
   if (typeof type === 'symbol' && String(type).includes('Text')) {
-    return islandEscapeHTML(String(children || ''))
+    return islandEscapeHTML(String(children || ''));
   }
 
   // Comment
   if (typeof type === 'symbol' && String(type).includes('Comment')) {
-    return `<!--${String(children || '')}-->`
+    return `<!--${String(children || '')}-->`;
   }
 
   // Element
   if (typeof type === 'string') {
-    const propsStr = serializeIslandProps(props)
+    const propsStr = serializeIslandProps(props);
     const VOID_TAGS = new Set([
       'area', 'base', 'br', 'col', 'embed', 'hr', 'img',
       'input', 'link', 'meta', 'param', 'source', 'track', 'wbr',
-    ])
+    ]);
 
     if (VOID_TAGS.has(type)) {
-      return `<${type}${propsStr} />`
+      return `<${type}${propsStr} />`;
     }
 
-    let childrenStr = ''
+    let childrenStr = '';
     if (typeof children === 'string') {
-      childrenStr = islandEscapeHTML(children)
+      childrenStr = islandEscapeHTML(children);
     } else if (Array.isArray(children)) {
-      childrenStr = children.map(c => vnodeToString(c as VNode)).join('')
+      childrenStr = children.map(c => vnodeToString(c as VNode)).join('');
     } else if (typeof children === 'number') {
-      childrenStr = islandEscapeHTML(String(children))
+      childrenStr = islandEscapeHTML(String(children));
     }
 
-    return `<${type}${propsStr}>${childrenStr}</${type}>`
+    return `<${type}${propsStr}>${childrenStr}</${type}>`;
   }
 
   // Component (function)
   if (typeof type === 'function') {
-    const subTree = (type as any)(props || {}, { slots: children || {} })
-    return vnodeToString(subTree)
+    const subTree = (type as any)(props || {}, { slots: children || {} });
+    return vnodeToString(subTree);
   }
 
   // Component (object)
   if (typeof type === 'object' && type !== null) {
-    const comp = type as any
+    const comp = type as any;
     if (typeof comp.render === 'function') {
-      const subTree = comp.render(props || {}, { slots: children || {}, emit: () => {} })
-      return vnodeToString(subTree)
+      const subTree = comp.render(props || {}, { slots: children || {}, emit: () => {} });
+      return vnodeToString(subTree);
     }
   }
 
-  return ''
+  return '';
 }
 
 /**
@@ -1474,32 +1479,32 @@ function vnodeToString(vnode: VNode): string {
  * @returns HTML 属性字符串
  */
 function serializeIslandProps(props: Record<string, any> | null): string {
-  if (!props) return ''
+  if (!props) return '';
 
-  const attrs: string[] = []
+  const attrs: string[] = [];
 
   for (const key in props) {
-    const value = props[key]
+    const value = props[key];
 
     // 跳过事件、内部属性
-    if (key.startsWith('on') || key.startsWith('@') || key === 'key' || key === 'ref') continue
-    if (key === '__vccOpts' || key.startsWith('__')) continue
-    if (key === 'dangerouslySetInnerHTML' || key === 'innerHTML') continue
+    if (key.startsWith('on') || key.startsWith('@') || key === 'key' || key === 'ref') continue;
+    if (key === '__vccOpts' || key.startsWith('__')) continue;
+    if (key === 'dangerouslySetInnerHTML' || key === 'innerHTML') continue;
 
     if (value === true) {
-      attrs.push(key)
+      attrs.push(key);
     } else if (value === false || value === null || value === undefined) {
-      continue
+      continue;
     } else if (key === 'class' && typeof value === 'string') {
-      attrs.push(`class="${islandEscapeHTML(value)}"`)
+      attrs.push(`class="${islandEscapeHTML(value)}"`);
     } else if (key === 'style' && typeof value === 'string') {
-      attrs.push(`style="${islandEscapeHTML(value)}"`)
+      attrs.push(`style="${islandEscapeHTML(value)}"`);
     } else {
-      attrs.push(`${key}="${islandEscapeHTML(String(value))}"`)
+      attrs.push(`${key}="${islandEscapeHTML(String(value))}"`);
     }
   }
 
-  return attrs.length > 0 ? ' ' + attrs.join(' ') : ''
+  return attrs.length > 0 ? ' ' + attrs.join(' ') : '';
 }
 
 // ================================================================
@@ -1519,7 +1524,7 @@ interface MismatchWarning {
 }
 
 /** 已记录的 mismatch 警告 */
-const mismatchWarnings: MismatchWarning[] = []
+const mismatchWarnings: MismatchWarning[] = [];
 
 /**
  * 检测 hydration mismatch
@@ -1535,38 +1540,38 @@ const mismatchWarnings: MismatchWarning[] = []
 function detectHydrationMismatch(
   serverEl: HTMLElement,
   clientVNode: VNode,
-  islandId: string,
+  islandId: string
 ): number {
-  let mismatches = 0
+  let mismatches = 0;
 
   // 获取服务端 HTML
-  const serverHTML = getServerHTML(serverEl)
+  const serverHTML = getServerHTML(serverEl);
 
   // 获取客户端 HTML
-  const clientHTML = vnodeToString(clientVNode)
+  const clientHTML = vnodeToString(clientVNode);
 
   // 对比
   if (serverHTML !== clientHTML) {
-    mismatches++
+    mismatches++;
 
     const warning: MismatchWarning = {
       islandId,
       expected: clientHTML,
       actual: serverHTML,
       suggestion: generateMismatchSuggestion(serverHTML, clientHTML, islandId),
-    }
+    };
 
-    mismatchWarnings.push(warning)
+    mismatchWarnings.push(warning);
 
     console.warn(
       `[lyt] Hydration mismatch in island "${islandId}":\n` +
       `  服务端: ${serverHTML}\n` +
       `  客户端: ${clientHTML}\n` +
-      `  建议: ${warning.suggestion}`,
-    )
+      `  建议: ${warning.suggestion}`
+    );
   }
 
-  return mismatches
+  return mismatches;
 }
 
 /**
@@ -1574,12 +1579,12 @@ function detectHydrationMismatch(
  */
 function getServerHTML(el: HTMLElement): string {
   // 克隆元素，移除 island 属性后获取 innerHTML
-  const clone = el.cloneNode(true) as HTMLElement
-  clone.removeAttribute('data-hydrate')
-  clone.removeAttribute('data-props')
-  clone.removeAttribute('data-hydrate-when')
-  clone.removeAttribute('data-hydrated')
-  return clone.innerHTML
+  const clone = el.cloneNode(true) as HTMLElement;
+  clone.removeAttribute('data-hydrate');
+  clone.removeAttribute('data-props');
+  clone.removeAttribute('data-hydrate-when');
+  clone.removeAttribute('data-hydrated');
+  return clone.innerHTML;
 }
 
 /**
@@ -1588,28 +1593,28 @@ function getServerHTML(el: HTMLElement): string {
 function generateMismatchSuggestion(
   serverHTML: string,
   clientHTML: string,
-  islandId: string,
+  islandId: string
 ): string {
   // 检查常见问题
   if (serverHTML.trim() === '') {
-    return `服务端渲染为空，请检查组件 "${islandId}" 的服务端渲染逻辑`
+    return `服务端渲染为空，请检查组件 "${islandId}" 的服务端渲染逻辑`;
   }
   if (clientHTML.trim() === '') {
-    return `客户端渲染为空，请检查组件 "${islandId}" 的 render 函数`
+    return `客户端渲染为空，请检查组件 "${islandId}" 的 render 函数`;
   }
 
   // 检查是否是时间/随机值导致的差异
-  const timePattern = /\d{10,13}/
+  const timePattern = /\d{10,13}/;
   if (timePattern.test(serverHTML) || timePattern.test(clientHTML)) {
-    return '检测到时间戳差异，考虑使用统一的时间源或延迟注水'
+    return '检测到时间戳差异，考虑使用统一的时间源或延迟注水';
   }
 
   // 检查是否是属性顺序差异
   if (normalizeForComparison(serverHTML) === normalizeForComparison(clientHTML)) {
-    return 'HTML 内容相同但属性顺序不同，这不影响功能但可能导致 mismatch 警告'
+    return 'HTML 内容相同但属性顺序不同，这不影响功能但可能导致 mismatch 警告';
   }
 
-  return `请确保组件 "${islandId}" 在服务端和客户端渲染相同的输出`
+  return `请确保组件 "${islandId}" 在服务端和客户端渲染相同的输出`;
 }
 
 /**
@@ -1619,19 +1624,19 @@ function normalizeForComparison(html: string): string {
   return html
     .replace(/\s+/g, ' ')
     .replace(/>\s+</g, '><')
-    .trim()
+    .trim();
 }
 
 /**
  * 获取所有 mismatch 警告（测试用）
  */
 export function getMismatchWarnings(): MismatchWarning[] {
-  return [...mismatchWarnings]
+  return [...mismatchWarnings];
 }
 
 /**
  * 清空 mismatch 警告（测试用）
  */
 export function clearMismatchWarnings(): void {
-  mismatchWarnings.length = 0
+  mismatchWarnings.length = 0;
 }

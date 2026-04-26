@@ -4,8 +4,8 @@
  * Features: 箭头指向, 延迟显示
  */
 
-import { defineComponent, onUnmounted } from '@lytjs/component'
-import { reactive } from '@lytjs/reactivity'
+import { defineComponent, onUnmounted } from '@lytjs/component';
+import { reactive } from '@lytjs/reactivity';
 
 export const Tooltip = defineComponent({
   name: 'LytTooltip',
@@ -34,59 +34,59 @@ export const Tooltip = defineComponent({
   setup(props, { slots }) {
     const state = reactive({
       visible: false,
-    })
+    });
 
-    let delayTimer: ReturnType<typeof setTimeout> | null = null
+    let delayTimer: ReturnType<typeof setTimeout> | null = null;
 
     const show = () => {
-      if (delayTimer) clearTimeout(delayTimer)
+      if (delayTimer) clearTimeout(delayTimer);
       if (props.delay > 0) {
         delayTimer = setTimeout(() => {
-          state.visible = true
-        }, props.delay)
+          state.visible = true;
+        }, props.delay);
       } else {
-        state.visible = true
+        state.visible = true;
       }
-    }
+    };
 
     const hide = () => {
-      if (delayTimer) clearTimeout(delayTimer)
-      state.visible = false
-    }
+      if (delayTimer) clearTimeout(delayTimer);
+      state.visible = false;
+    };
 
     const toggle = () => {
-      if (state.visible) hide()
-      else show()
-    }
+      if (state.visible) hide();
+      else show();
+    };
 
     const handleMouseEnter = () => {
-      if (props.trigger === 'hover') show()
-    }
+      if (props.trigger === 'hover') show();
+    };
 
     const handleMouseLeave = () => {
-      if (props.trigger === 'hover') hide()
-    }
+      if (props.trigger === 'hover') hide();
+    };
 
     const handleClick = () => {
-      if (props.trigger === 'click') toggle()
-    }
+      if (props.trigger === 'click') toggle();
+    };
 
     const handleFocus = () => {
-      if (props.trigger === 'focus') show()
-    }
+      if (props.trigger === 'focus') show();
+    };
 
     const handleBlur = () => {
-      if (props.trigger === 'focus') hide()
-    }
+      if (props.trigger === 'focus') hide();
+    };
 
     onUnmounted(() => {
-      if (delayTimer) clearTimeout(delayTimer)
-    })
+      if (delayTimer) clearTimeout(delayTimer);
+    });
 
     return {
       state, handleMouseEnter, handleMouseLeave,
       handleClick, handleFocus, handleBlur, slots,
-    }
+    };
   },
 
   template: `
@@ -184,4 +184,4 @@ export const Tooltip = defineComponent({
       border-right-color: var(--lyt-color-fg);
     }
   `,
-})
+});

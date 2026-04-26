@@ -3,7 +3,7 @@
  * Props: description, image
  */
 
-import { defineComponent } from '@lytjs/component'
+import { defineComponent } from '@lytjs/component';
 
 export const Empty = defineComponent({
   name: 'LytEmpty',
@@ -20,9 +20,9 @@ export const Empty = defineComponent({
   },
 
   setup(props, { slots }) {
-    const hasImage = () => !!props.image
+    const hasImage = () => !!props.image;
 
-    return { props, hasImage, slots }
+    return { props, hasImage, slots };
   },
 
   template: `
@@ -78,4 +78,4 @@ export const Empty = defineComponent({
       margin-top: 16px;
     }
   `,
-})
+});

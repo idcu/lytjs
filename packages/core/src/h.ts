@@ -103,11 +103,11 @@ function normalizeChildren(vnode: VNode, children: any): void {
         for (let j = 0; j < child.length; j++) {
           const c = child[j];
           if (c !== null && c !== undefined && typeof c !== 'boolean') {
-            normalized.push(isVNode(c) ? c : createVNode(String(c)));
+            normalized.push(isVNode(c) ? (c as unknown as VNode) : createVNode(String(c)));
           }
         }
       } else if (isVNode(child)) {
-        normalized.push(child);
+        normalized.push(child as unknown as VNode);
       } else {
         normalized.push(createVNode(String(child)));
       }

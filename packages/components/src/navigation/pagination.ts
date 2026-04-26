@@ -4,8 +4,8 @@
  * Events: change, pageSizeChange
  */
 
-import { defineComponent } from '@lytjs/component'
-import { reactive, watch } from '@lytjs/reactivity'
+import { defineComponent } from '@lytjs/component';
+import { reactive, watch } from '@lytjs/reactivity';
 
 export const Pagination = defineComponent({
   name: 'LytPagination',
@@ -38,79 +38,79 @@ export const Pagination = defineComponent({
       current: props.currentPage,
       size: props.pageSize,
       jumperValue: '',
-    })
+    });
 
-    const totalPages = () => Math.max(1, Math.ceil(props.total / state.size))
+    const totalPages = () => Math.max(1, Math.ceil(props.total / state.size));
 
     const pages = () => {
-      const total = totalPages()
-      const current = state.current
-      const result: (number | string)[] = []
+      const total = totalPages();
+      const current = state.current;
+      const result: (number | string)[] = [];
 
       if (total <= 7) {
-        for (let i = 1; i <= total; i++) result.push(i)
+        for (let i = 1; i <= total; i++) result.push(i);
       } else {
-        result.push(1)
-        if (current > 4) result.push('...')
-        const start = Math.max(2, current - 2)
-        const end = Math.min(total - 1, current + 2)
-        for (let i = start; i <= end; i++) result.push(i)
-        if (current < total - 3) result.push('...')
-        result.push(total)
+        result.push(1);
+        if (current > 4) result.push('...');
+        const start = Math.max(2, current - 2);
+        const end = Math.min(total - 1, current + 2);
+        for (let i = start; i <= end; i++) result.push(i);
+        if (current < total - 3) result.push('...');
+        result.push(total);
       }
 
-      return result
-    }
+      return result;
+    };
 
     const goTo = (page: number) => {
-      const total = totalPages()
-      if (page < 1) page = 1
-      if (page > total) page = total
-      state.current = page
-      emit('change', page)
-      emit('update:currentPage', page)
-    }
+      const total = totalPages();
+      if (page < 1) page = 1;
+      if (page > total) page = total;
+      state.current = page;
+      emit('change', page);
+      emit('update:currentPage', page);
+    };
 
-    const handlePrev = () => goTo(state.current - 1)
-    const handleNext = () => goTo(state.current + 1)
+    const handlePrev = () => goTo(state.current - 1);
+    const handleNext = () => goTo(state.current + 1);
     const handlePageClick = (page: number | string) => {
-      if (typeof page === 'number') goTo(page)
-    }
+      if (typeof page === 'number') goTo(page);
+    };
 
     const handleSizeChange = (e: Event) => {
-      const target = e.target as HTMLSelectElement
-      state.size = Number(target.value)
-      state.current = 1
-      emit('pageSizeChange', state.size)
-      emit('update:pageSize', state.size)
-      emit('change', 1)
-    }
+      const target = e.target as HTMLSelectElement;
+      state.size = Number(target.value);
+      state.current = 1;
+      emit('pageSizeChange', state.size);
+      emit('update:pageSize', state.size);
+      emit('change', 1);
+    };
 
     const handleJumper = () => {
-      const page = parseInt(state.jumperValue, 10)
+      const page = parseInt(state.jumperValue, 10);
       if (!isNaN(page)) {
-        goTo(page)
-        state.jumperValue = ''
+        goTo(page);
+        state.jumperValue = '';
       }
-    }
+    };
 
     const handleJumperKeydown = (e: KeyboardEvent) => {
-      if (e.key === 'Enter') handleJumper()
-    }
+      if (e.key === 'Enter') handleJumper();
+    };
 
     watch(() => props.currentPage, (val: any) => {
-      state.current = val
-    })
+      state.current = val;
+    });
 
     watch(() => props.pageSize, (val: any) => {
-      state.size = val
-    })
+      state.size = val;
+    });
 
     return {
       state, totalPages, pages,
       goTo, handlePrev, handleNext, handlePageClick,
       handleSizeChange, handleJumper, handleJumperKeydown,
-    }
+    };
   },
 
   template: `
@@ -217,4 +217,4 @@ export const Pagination = defineComponent({
     }
     .lyt-pagination__jumper-input:focus { border-color: var(--lyt-color-primary); }
   `,
-})
+});

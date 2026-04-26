@@ -11,7 +11,7 @@
  *   - 支持条件渲染（wx:if / a:if / tt:if）、列表渲染（wx:for / a:for / tt:for）
  */
 
-import type { LytRenderer } from '../renderer-interfaces'
+import type { LytRenderer } from '../renderer-interfaces';
 
 /* ================================================================
  *  小程序模板节点描述
@@ -75,7 +75,7 @@ const DIRECTIVE_MAP: Record<string, { attr: string; prefix?: string }> = {
   'class':      { attr: 'class' },
   'style':      { attr: 'style' },
   'show':       { attr: 'hidden' }, // v-show → hidden（取反）
-}
+};
 
 /* ================================================================
  *  事件映射
@@ -100,7 +100,7 @@ const EVENT_PREFIX_MAP: Record<string, string> = {
   'touchmove': 'touchmove',
   'scroll': 'scroll',
   'longpress': 'longpress',
-}
+};
 
 /* ================================================================
  *  HTML 标签到小程序组件的映射
@@ -136,7 +136,7 @@ const MINIAPP_COMPONENT_MAP: Record<string, string> = {
   'header': 'view', 'footer': 'view', 'nav': 'view',
   'main': 'view', 'section': 'view',
   'article': 'view', 'aside': 'view',
-}
+};
 
 /* ================================================================
  *  平台条件前缀配置
@@ -147,7 +147,7 @@ const PLATFORM_PREFIX: Record<string, { if: string; else: string; for: string; f
   wechat:    { if: 'wx:if',    else: 'wx:else',    for: 'wx:for',    forKey: 'wx:key',    bind: 'bind',    catch: 'catch' },
   alipay:    { if: 'a:if',     else: 'a:else',     for: 'a:for',     forKey: 'a:key',     bind: 'on',      catch: 'catchEvent' },
   bytedance: { if: 'tt:if',    else: 'tt:else',    for: 'tt:for',    forKey: 'tt:key',    bind: 'bind',    catch: 'catch' },
-}
+};
 
 /* ================================================================
  *  MiniAppRenderer 实现
@@ -185,14 +185,14 @@ export class MiniAppRenderer implements LytRenderer {
    * @returns MiniAppNode 描述对象
    */
   createElement(tag: string): MiniAppNode {
-    const miniTag = MINIAPP_COMPONENT_MAP[tag] || tag
+    const miniTag = MINIAPP_COMPONENT_MAP[tag] || tag;
     return {
       tag: miniTag,
       attrs: {},
       children: [],
       bindEvents: {},
       modelBindings: {},
-    }
+    };
   }
 
   /**
@@ -208,7 +208,7 @@ export class MiniAppRenderer implements LytRenderer {
       text,
       bindEvents: {},
       modelBindings: {},
-    }
+    };
   }
 
   /**
@@ -224,7 +224,7 @@ export class MiniAppRenderer implements LytRenderer {
       text,
       bindEvents: {},
       modelBindings: {},
-    }
+    };
   }
 
   /* --------------------------------------------------
@@ -238,77 +238,77 @@ export class MiniAppRenderer implements LytRenderer {
    * @param val 属性值
    */
   setAttribute(el: MiniAppNode, key: string, val: any): void {
-    if (!el) return
+    if (!el) return;
 
     // Lyt.js 指令处理
     if (key.startsWith('lyt:')) {
-      const directive = key.slice(4)
-      this._applyDirective(el, directive, val)
-      return
+      const directive = key.slice(4);
+      this._applyDirective(el, directive, val);
+      return;
     }
 
     // v-if / v-else 指令（兼容 Vue 风格）
     if (key === 'v-if' || key === 'if') {
-      el.wxIf = String(val)
-      return
+      el.wxIf = String(val);
+      return;
     }
     if (key === 'v-else' || key === 'else') {
-      el.attrs['wx:else'] = ''
-      return
+      el.attrs['wx:else'] = '';
+      return;
     }
 
     // v-for 指令
     if (key === 'v-for' || key === 'each') {
       // 解析 "item in list" 或 "(item, index) in list" 语法
-      const forExpr = String(val)
-      const match = forExpr.match(/(?:\((\w+),\s*(\w+)\)|(\w+))\s+in\s+(.+)/)
+      const forExpr = String(val);
+      const match = forExpr.match(/(?:\((\w+),\s*(\w+)\)|(\w+))\s+in\s+(.+)/);
       if (match) {
-        el.wxFor = match[4] || match[3]
-        el.wxForKey = match[1] || match[3]
+        el.wxFor = match[4] || match[3];
+        el.wxForKey = match[1] || match[3];
       } else {
-        el.wxFor = forExpr
+        el.wxFor = forExpr;
       }
-      return
+      return;
     }
 
     // 事件属性（onClick → 存储为 tap，序列化时按平台加前缀）
     if (key.startsWith('on') && typeof val === 'function') {
-      const domEvent = key.slice(2).toLowerCase()
-      const miniEvent = EVENT_PREFIX_MAP[domEvent] || domEvent
-      el.bindEvents[miniEvent] = val.name || 'handleEvent'
-      return
+      const domEvent = key.slice(2).toLowerCase();
+      const miniEvent = EVENT_PREFIX_MAP[domEvent] || domEvent;
+      el.bindEvents[miniEvent] = val.name || 'handleEvent';
+      return;
     }
 
     // v-model 双向绑定
     if (key === 'v-model' || key === 'model') {
-      el.modelBindings['value'] = String(val)
-      return
+      el.modelBindings['value'] = String(val);
+      return;
     }
 
     // class / style 直接设置
     if (key === 'class' || key === 'className') {
-      el.attrs['class'] = String(val)
-      return
+      el.attrs['class'] = String(val);
+      return;
     }
     if (key === 'style') {
       if (typeof val === 'object' && val !== null) {
         // 对象样式转字符串
-        el.attrs['style'] = this._styleObjectToString(val)
+        el.attrs['style'] = this._styleObjectToString(val);
       } else {
-        el.attrs['style'] = String(val)
+        el.attrs['style'] = String(val);
       }
-      return
+      return;
     }
 
     // src → src（小程序 image 组件使用 src）
     // href → url（小程序 navigator 组件使用 url）
     if (key === 'href' && el.tag === 'navigator') {
-      el.attrs['url'] = String(val)
-      return
+      el.attrs['url'] = String(val);
+      return;
     }
 
     // 其他属性直接设置
-    el.attrs[key] = String(val)
+    el.attrs[key] = String(val);
   }
 
   /**
@@ -317,19 +317,19 @@ export class MiniAppRenderer implements LytRenderer {
    * @param key 属性名
    */
   removeAttribute(el: MiniAppNode, key: string): void {
-    if (!el) return
+    if (!el) return;
 
     if (key === 'v-if' || key === 'if') {
-      delete el.wxIf
+      delete el.wxIf;
     } else if (key === 'v-for' || key === 'each') {
-      delete el.wxFor
-      delete el.wxForKey
+      delete el.wxFor;
+      delete el.wxForKey;
     } else if (key.startsWith('on')) {
-      const domEvent = key.slice(2).toLowerCase()
-      const miniEvent = EVENT_PREFIX_MAP[domEvent] || domEvent
-      delete el.bindEvents[miniEvent]
+      const domEvent = key.slice(2).toLowerCase();
+      const miniEvent = EVENT_PREFIX_MAP[domEvent] || domEvent;
+      delete el.bindEvents[miniEvent];
     } else {
-      delete el.attrs[key]
+      delete el.attrs[key];
     }
   }
 
@@ -339,9 +339,9 @@ export class MiniAppRenderer implements LytRenderer {
    * @param style 样式对象
    */
   setStyle(el: MiniAppNode, style: object): void {
-    if (!el) return
-    const styleStr = this._styleObjectToString(style as Record<string, string>)
-    el.attrs['style'] = styleStr
+    if (!el) return;
+    const styleStr = this._styleObjectToString(style as Record<string, string>);
+    el.attrs['style'] = styleStr;
   }
 
   /**
@@ -350,15 +350,15 @@ export class MiniAppRenderer implements LytRenderer {
    * @param cls class 值（字符串或对象）
    */
   setClass(el: MiniAppNode, cls: string | object): void {
-    if (!el) return
+    if (!el) return;
     if (typeof cls === 'string') {
-      el.attrs['class'] = cls
+      el.attrs['class'] = cls;
     } else if (typeof cls === 'object' && cls !== null) {
-      const classList: string[] = []
+      const classList: string[] = [];
       for (const [name, value] of Object.entries(cls)) {
-        if (value) classList.push(name)
+        if (value) classList.push(name);
       }
-      el.attrs['class'] = classList.join(' ')
+      el.attrs['class'] = classList.join(' ');
     }
   }
 
@@ -373,27 +373,27 @@ export class MiniAppRenderer implements LytRenderer {
    * @param ref    参考节点（插入到其前面），可选
    */
   insert(parent: MiniAppNode, child: MiniAppNode, ref?: MiniAppNode): void {
-    if (!parent || !child) return
+    if (!parent || !child) return;
 
     // 清除旧父节点引用
     if (child._parent) {
-      const oldParent = child._parent
-      const idx = oldParent.children.indexOf(child)
-      if (idx !== -1) oldParent.children.splice(idx, 1)
+      const oldParent = child._parent;
+      const idx = oldParent.children.indexOf(child);
+      if (idx !== -1) oldParent.children.splice(idx, 1);
     }
 
     // 设置新父节点引用
-    child._parent = parent
+    child._parent = parent;
 
     if (ref) {
-      const idx = parent.children.indexOf(ref)
+      const idx = parent.children.indexOf(ref);
       if (idx !== -1) {
-        parent.children.splice(idx, 0, child)
+        parent.children.splice(idx, 0, child);
       } else {
-        parent.children.push(child)
+        parent.children.push(child);
       }
     } else {
-      parent.children.push(child)
+      parent.children.push(child);
     }
   }
 
@@ -402,14 +402,14 @@ export class MiniAppRenderer implements LytRenderer {
    * @param child 要移除的节点
    */
   remove(child: MiniAppNode): void {
-    if (!child || !child._parent) return
+    if (!child || !child._parent) return;
 
-    const parent = child._parent
-    const idx = parent.children.indexOf(child)
+    const parent = child._parent;
+    const idx = parent.children.indexOf(child);
     if (idx !== -1) {
-      parent.children.splice(idx, 1)
+      parent.children.splice(idx, 1);
     }
-    child._parent = undefined
+    child._parent = undefined;
   }
 
   /**
@@ -419,13 +419,13 @@ export class MiniAppRenderer implements LytRenderer {
    * @param newChild 替换的新节点
    */
   replace(parent: MiniAppNode, oldChild: MiniAppNode, newChild: MiniAppNode): void {
-    if (!parent || !oldChild || !newChild) return
+    if (!parent || !oldChild || !newChild) return;
 
-    const idx = parent.children.indexOf(oldChild)
+    const idx = parent.children.indexOf(oldChild);
     if (idx !== -1) {
-      oldChild._parent = undefined
-      newChild._parent = parent
-      parent.children[idx] = newChild
+      oldChild._parent = undefined;
+      newChild._parent = parent;
+      parent.children[idx] = newChild;
     }
   }
 
@@ -440,12 +440,12 @@ export class MiniAppRenderer implements LytRenderer {
    * @param handler 事件处理函数
    * @param options 事件选项（可选）
    */
-  addEventListener(el: MiniAppNode, event: string, handler: Function, options?: any): void {
-    if (!el) return
+  addEventListener(el: MiniAppNode, event: string, handler: Function, _options?: any): void {
+    if (!el) return;
     // 存储为平台无关的事件名（如 tap），序列化时按平台加前缀
-    const miniEvent = EVENT_PREFIX_MAP[event] || event
+    const miniEvent = EVENT_PREFIX_MAP[event] || event;
     // 小程序中事件处理函数名必须是字符串（模板中引用）
-    el.bindEvents[miniEvent] = handler.name || 'handleEvent'
+    el.bindEvents[miniEvent] = handler.name || 'handleEvent';
   }
 
   /**
@@ -454,10 +454,10 @@ export class MiniAppRenderer implements LytRenderer {
    * @param event   DOM 事件名
    * @param handler 事件处理函数
    */
-  removeEventListener(el: MiniAppNode, event: string, handler: Function): void {
-    if (!el) return
-    const miniEvent = EVENT_PREFIX_MAP[event] || event
-    delete el.bindEvents[miniEvent]
+  removeEventListener(el: MiniAppNode, event: string, _handler: Function): void {
+    if (!el) return;
+    const miniEvent = EVENT_PREFIX_MAP[event] || event;
+    delete el.bindEvents[miniEvent];
   }
 
   /* --------------------------------------------------
@@ -469,7 +469,7 @@ export class MiniAppRenderer implements LytRenderer {
    * @param cb 回调函数
    */
   nextTick(cb: Function): void {
-    Promise.resolve().then(() => cb())
+    Promise.resolve().then(() => cb());
   }
 
   /**
@@ -478,7 +478,7 @@ export class MiniAppRenderer implements LytRenderer {
    * @returns 父节点，无父节点时返回 null
    */
   parentNode(el: MiniAppNode): MiniAppNode | null {
-    return el?._parent ?? null
+    return el?._parent ?? null;
   }
 
   /**
@@ -487,12 +487,12 @@ export class MiniAppRenderer implements LytRenderer {
    * @returns 下一个兄弟节点，无时返回 null
    */
   nextSibling(el: MiniAppNode): MiniAppNode | null {
-    if (!el || !el._parent) return null
-    const siblings = el._parent.children
-    const idx = siblings.indexOf(el)
+    if (!el || !el._parent) return null;
+    const siblings = el._parent.children;
+    const idx = siblings.indexOf(el);
     return idx !== -1 && idx + 1 < siblings.length
       ? siblings[idx + 1]
-      : null
+      : null;
   }
 
   /**
@@ -501,9 +501,9 @@ export class MiniAppRenderer implements LytRenderer {
    * @param text 文本内容
    */
   setText(node: MiniAppNode, text: string): void {
-    if (!node) return
+    if (!node) return;
     if (node.tag === '__text__') {
-      node.text = text
+      node.text = text;
     }
   }
 
@@ -516,25 +516,25 @@ export class MiniAppRenderer implements LytRenderer {
    * @param nextValue 新属性值
    */
   patchProp(el: MiniAppNode, key: string, prevValue: any, nextValue: any): void {
-    if (!el) return
+    if (!el) return;
 
     // 移除属性
     if (nextValue === null || nextValue === undefined) {
-      this.removeAttribute(el, key)
-      return
+      this.removeAttribute(el, key);
+      return;
     }
 
     // 新增或更新属性
     if (key === 'style') {
-      this.setStyle(el, nextValue)
+      this.setStyle(el, nextValue);
     } else if (key === 'class' || key === 'className') {
-      this.setClass(el, nextValue)
+      this.setClass(el, nextValue);
     } else if (key.startsWith('on') && typeof nextValue === 'function') {
-      const domEvent = key.slice(2).toLowerCase()
-      const miniEvent = EVENT_PREFIX_MAP[domEvent] || domEvent
-      el.bindEvents[miniEvent] = nextValue.name || 'handleEvent'
+      const domEvent = key.slice(2).toLowerCase();
+      const miniEvent = EVENT_PREFIX_MAP[domEvent] || domEvent;
+      el.bindEvents[miniEvent] = nextValue.name || 'handleEvent';
     } else {
-      this.setAttribute(el, key, nextValue)
+      this.setAttribute(el, key, nextValue);
     }
   }
 
@@ -543,9 +543,9 @@ export class MiniAppRenderer implements LytRenderer {
    * @param selector CSS 选择器
    * @returns 匹配的第一个节点，未找到返回 null
    */
-  querySelector(selector: string): MiniAppNode | null {
+  querySelector(_selector: string): MiniAppNode | null {
     // 原型实现：需要持有根节点引用才能遍历
-    return null
+    return null;
   }
 
   /* --------------------------------------------------
@@ -562,73 +562,73 @@ export class MiniAppRenderer implements LytRenderer {
    */
   renderToMiniAppTree(vnode: any): MiniAppNode {
     if (!vnode) {
-      return this.createComment('empty vnode')
+      return this.createComment('empty vnode');
     }
 
     // 文本节点
     if (typeof vnode === 'string') {
-      return this.createText(vnode)
+      return this.createText(vnode);
     }
 
     // 注释节点
     if (vnode.type === Symbol.for('lyt.comment') || vnode.type === 'comment') {
-      return this.createComment(vnode.children || '')
+      return this.createComment(vnode.children || '');
     }
 
     // 文本节点（Symbol 形式）
     if (vnode.type === Symbol.for('lyt.text') || vnode.type === 'text') {
-      return this.createText(vnode.children || '')
+      return this.createText(vnode.children || '');
     }
 
     // Fragment 节点
     if (vnode.type === Symbol.for('lyt.fragment') || vnode.type === 'fragment') {
-      const fragment = this.createElement('__fragment__')
+      const fragment = this.createElement('__fragment__');
       if (Array.isArray(vnode.children)) {
         for (const child of vnode.children) {
-          this.insert(fragment, this.renderToMiniAppTree(child))
+          this.insert(fragment, this.renderToMiniAppTree(child));
         }
       }
-      return fragment
+      return fragment;
     }
 
     // 普通 HTML 元素
     if (typeof vnode.type === 'string') {
-      const node = this.createElement(vnode.type)
+      const node = this.createElement(vnode.type);
 
       // 处理 props
       if (vnode.props) {
         for (const [key, val] of Object.entries(vnode.props)) {
-          if (key === 'key' || key === 'ref') continue
-          this.setAttribute(node, key, val)
+          if (key === 'key' || key === 'ref') continue;
+          this.setAttribute(node, key, val);
         }
       }
 
       // 处理 children
       if (vnode.children) {
         if (typeof vnode.children === 'string') {
-          this.insert(node, this.createText(vnode.children))
+          this.insert(node, this.createText(vnode.children));
         } else if (Array.isArray(vnode.children)) {
           for (const child of vnode.children) {
-            this.insert(node, this.renderToMiniAppTree(child))
+            this.insert(node, this.renderToMiniAppTree(child));
           }
         }
       }
 
-      return node
+      return node;
     }
 
     // 组件节点
     if (typeof vnode.type === 'object' || typeof vnode.type === 'function') {
-      const node = this.createElement('div')
+      const node = this.createElement('div');
       if (Array.isArray(vnode.children)) {
         for (const child of vnode.children) {
-          this.insert(node, this.renderToMiniAppTree(child))
+          this.insert(node, this.renderToMiniAppTree(child));
         }
       }
-      return node
+      return node;
     }
 
-    return this.createComment('unknown vnode type')
+    return this.createComment('unknown vnode type');
   }
 
   /**
@@ -639,7 +639,7 @@ export class MiniAppRenderer implements LytRenderer {
    * @returns WXML 模板字符串
    */
   serializeToWXML(node: MiniAppNode, indent: number = 0): string {
-    return this._serializeToTemplate(node, indent, 'wechat')
+    return this._serializeToTemplate(node, indent, 'wechat');
   }
 
   /**
@@ -650,7 +650,7 @@ export class MiniAppRenderer implements LytRenderer {
    * @returns AXML 模板字符串
    */
   serializeToAXML(node: MiniAppNode, indent: number = 0): string {
-    return this._serializeToTemplate(node, indent, 'alipay')
+    return this._serializeToTemplate(node, indent, 'alipay');
   }
 
   /**
@@ -661,7 +661,7 @@ export class MiniAppRenderer implements LytRenderer {
    * @returns TTML 模板字符串
    */
   serializeToTTML(node: MiniAppNode, indent: number = 0): string {
-    return this._serializeToTemplate(node, indent, 'bytedance')
+    return this._serializeToTemplate(node, indent, 'bytedance');
   }
 
   /**
@@ -672,7 +672,7 @@ export class MiniAppRenderer implements LytRenderer {
    * @returns 对应平台的模板字符串
    */
   getPlatformTemplate(node: MiniAppNode, platform: 'wechat' | 'alipay' | 'bytedance'): string {
-    return this._serializeToTemplate(node, 0, platform)
+    return this._serializeToTemplate(node, 0, platform);
   }
 
   /**
@@ -684,29 +684,29 @@ export class MiniAppRenderer implements LytRenderer {
    * @returns 小程序模板属性字符串（如 'wx:if="{{condition}}"'）
    */
   mapDirective(lytDirective: string, value: string, platform: string = 'wechat'): string {
-    const prefix = PLATFORM_PREFIX[platform] || PLATFORM_PREFIX.wechat
-    const dir = DIRECTIVE_MAP[lytDirective]
-    if (!dir) return ''
+    const prefix = PLATFORM_PREFIX[platform] || PLATFORM_PREFIX.wechat;
+    const dir = DIRECTIVE_MAP[lytDirective];
+    if (!dir) return '';
 
     switch (lytDirective) {
       case 'if':
-        return `${prefix.if}="{{${value}}}"`
+        return `${prefix.if}="{{${value}}}"`;
       case 'else':
-        return `${prefix.else}`
+        return `${prefix.else}`;
       case 'each': {
         // 解析 "item in list" 语法
-        const match = value.match(/(?:\((\w+),\s*(\w+)\)|(\w+))\s+in\s+(.+)/)
+        const match = value.match(/(?:\((\w+),\s*(\w+)\)|(\w+))\s+in\s+(.+)/);
         if (match) {
-          const item = match[1] || match[3]
-          const dataSource = match[4] || match[3]
-          return `${prefix.for}="{{${dataSource}}}" ${prefix.forKey}="{{${item}}}"`
+          const item = match[1] || match[3];
+          const dataSource = match[4] || match[3];
+          return `${prefix.for}="{{${dataSource}}}" ${prefix.forKey}="{{${item}}}"`;
         }
-        return `${prefix.for}="{{${value}}}"`
+        return `${prefix.for}="{{${value}}}"`;
       }
       case 'show':
-        return `hidden="{{!${value}}}"`
+        return `hidden="{{!${value}}}"`;
       default:
-        return `${dir.attr}="${value}"`
+        return `${dir.attr}="${value}"`;
     }
   }
 
@@ -718,13 +718,13 @@ export class MiniAppRenderer implements LytRenderer {
    * @returns 小程序事件绑定字符串（如 'bindtap'）
    */
   mapEvent(lytEvent: string, platform: string = 'wechat'): string {
-    const prefix = PLATFORM_PREFIX[platform] || PLATFORM_PREFIX.wechat
-    const miniEvent = EVENT_PREFIX_MAP[lytEvent] || lytEvent
+    const prefix = PLATFORM_PREFIX[platform] || PLATFORM_PREFIX.wechat;
+    const miniEvent = EVENT_PREFIX_MAP[lytEvent] || lytEvent;
     // 支付宝小程序使用 onTap / onInput 等 camelCase 形式
     if (prefix.bind === 'on') {
-      return `on${miniEvent.charAt(0).toUpperCase()}${miniEvent.slice(1)}`
+      return `on${miniEvent.charAt(0).toUpperCase()}${miniEvent.slice(1)}`;
     }
-    return `${prefix.bind}${miniEvent}`
+    return `${prefix.bind}${miniEvent}`;
   }
 
   /* --------------------------------------------------
@@ -737,27 +737,27 @@ export class MiniAppRenderer implements LytRenderer {
   private _applyDirective(el: MiniAppNode, directive: string, value: any): void {
     switch (directive) {
       case 'if':
-        el.wxIf = String(value)
-        break
+        el.wxIf = String(value);
+        break;
       case 'else':
-        el.attrs['wx:else'] = ''
-        break
+        el.attrs['wx:else'] = '';
+        break;
       case 'each': {
-        const forExpr = String(value)
-        const match = forExpr.match(/(?:\((\w+),\s*(\w+)\)|(\w+))\s+in\s+(.+)/)
+        const forExpr = String(value);
+        const match = forExpr.match(/(?:\((\w+),\s*(\w+)\)|(\w+))\s+in\s+(.+)/);
         if (match) {
-          el.wxFor = match[4] || match[3]
-          el.wxForKey = match[1] || match[3]
+          el.wxFor = match[4] || match[3];
+          el.wxForKey = match[1] || match[3];
         } else {
-          el.wxFor = forExpr
+          el.wxFor = forExpr;
         }
-        break
+        break;
       }
       case 'show':
-        el.attrs['hidden'] = String(value)
-        break
+        el.attrs['hidden'] = String(value);
+        break;
       default:
-        el.attrs[directive] = String(value)
+        el.attrs[directive] = String(value);
     }
   }
 
@@ -768,10 +768,10 @@ export class MiniAppRenderer implements LytRenderer {
     return Object.entries(style)
       .map(([key, val]) => {
         // kebab-case 转换
-        const cssKey = key.replace(/([A-Z])/g, '-$1').toLowerCase()
-        return `${cssKey}: ${val}`
+        const cssKey = key.replace(/([A-Z])/g, '-$1').toLowerCase();
+        return `${cssKey}: ${val}`;
       })
-      .join('; ')
+      .join('; ');
   }
 
   /**
@@ -783,49 +783,49 @@ export class MiniAppRenderer implements LytRenderer {
    * @returns 模板字符串
    */
   private _serializeToTemplate(node: MiniAppNode, indent: number, platform: string): string {
-    const spaces = '  '.repeat(indent)
-    const prefix = PLATFORM_PREFIX[platform] || PLATFORM_PREFIX.wechat
+    const spaces = '  '.repeat(indent);
+    const prefix = PLATFORM_PREFIX[platform] || PLATFORM_PREFIX.wechat;
 
     // 文本节点
     if (node.tag === '__text__') {
-      return `${spaces}${node.text || ''}`
+      return `${spaces}${node.text || ''}`;
     }
 
     // 注释节点
     if (node.tag === '__comment__') {
-      return `${spaces}<!-- ${node.text || ''} -->`
+      return `${spaces}<!-- ${node.text || ''} -->`;
     }
 
     // Fragment 节点：直接展开子节点
     if (node.tag === '__fragment__') {
       return node.children
         .map(child => this._serializeToTemplate(child, indent, platform))
-        .join('\n')
+        .join('\n');
     }
 
     // 构建属性字符串
-    const attrParts: string[] = []
+    const attrParts: string[] = [];
 
     // 普通属性
     for (const [key, val] of Object.entries(node.attrs)) {
       // 转换平台特定的条件/列表属性
       if (key === 'wx:else') {
-        attrParts.push(prefix.else)
-        continue
+        attrParts.push(prefix.else);
+        continue;
       }
-      attrParts.push(`${key}="${val}"`)
+      attrParts.push(`${key}="${val}"`);
     }
 
     // 条件渲染
     if (node.wxIf) {
-      attrParts.unshift(`${prefix.if}="{{${node.wxIf}}}"`)
+      attrParts.unshift(`${prefix.if}="{{${node.wxIf}}}"`);
     }
 
     // 列表渲染
     if (node.wxFor) {
-      attrParts.unshift(`${prefix.for}="{{${node.wxFor}}}"`)
+      attrParts.unshift(`${prefix.for}="{{${node.wxFor}}}"`);
       if (node.wxForKey) {
-        attrParts.unshift(`${prefix.forKey}="{{${node.wxForKey}}}"`)
+        attrParts.unshift(`${prefix.forKey}="{{${node.wxForKey}}}"`);
       }
     }
 
@@ -834,33 +834,33 @@ export class MiniAppRenderer implements LytRenderer {
       // 支付宝小程序使用 onTap / onInput 等 camelCase 形式
       const eventBinding = prefix.bind === 'on'
         ? `on${eventName.charAt(0).toUpperCase()}${eventName.slice(1)}`
-        : `${prefix.bind}${eventName}`
-      attrParts.push(`${eventBinding}="${handlerName}"`)
+        : `${prefix.bind}${eventName}`;
+      attrParts.push(`${eventBinding}="${handlerName}"`);
     }
 
     // 双向绑定
     for (const [modelKey, modelVal] of Object.entries(node.modelBindings)) {
-      attrParts.push(`model:${modelKey}="{{${modelVal}}}"`)
+      attrParts.push(`model:${modelKey}="{{${modelVal}}}"`);
     }
 
-    const attrStr = attrParts.length > 0 ? ' ' + attrParts.join(' ') : ''
+    const attrStr = attrParts.length > 0 ? ' ' + attrParts.join(' ') : '';
 
     // 自闭合标签（无子节点且不是容器类标签）
-    const selfClosingTags = new Set(['image', 'input'])
+    const selfClosingTags = new Set(['image', 'input']);
     if (node.children.length === 0 && selfClosingTags.has(node.tag)) {
-      return `${spaces}<${node.tag}${attrStr} />`
+      return `${spaces}<${node.tag}${attrStr} />`;
     }
 
     // 有子节点的标签
     if (node.children.length === 0) {
-      return `${spaces}<${node.tag}${attrStr}></${node.tag}>`
+      return `${spaces}<${node.tag}${attrStr}></${node.tag}>`;
     }
 
     const childrenStr = node.children
       .map(child => this._serializeToTemplate(child, indent + 1, platform))
-      .join('\n')
+      .join('\n');
 
-    return `${spaces}<${node.tag}${attrStr}>\n${childrenStr}\n${spaces}</${node.tag}>`
+    return `${spaces}<${node.tag}${attrStr}>\n${childrenStr}\n${spaces}</${node.tag}>`;
   }
 }
 
@@ -882,7 +882,7 @@ export type MiniAppPlatform = 'wechat' | 'alipay' | 'bytedance'
  * @returns MiniAppRenderer 实例
  */
 export function createMiniAppRenderer(): MiniAppRenderer {
-  return new MiniAppRenderer()
+  return new MiniAppRenderer();
 }
 
 /* ================================================================
@@ -890,4 +890,4 @@ export function createMiniAppRenderer(): MiniAppRenderer {
  * ================================================================ */
 
 /** 小程序渲染器单例 */
-export const miniAppRenderer = new MiniAppRenderer()
+export const miniAppRenderer = new MiniAppRenderer();

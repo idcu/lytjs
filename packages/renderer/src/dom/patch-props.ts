@@ -13,7 +13,7 @@
  *   - patchProp(el, key, next, prev, instance) — 统一属性更新入口
  */
 
-import { patchEvent, normalizeEventName, getEventKey } from './patch-events'
+import { patchEvent } from './patch-events';
 
 /* ================================================================
  *  PatchFlag 常量（本地副本）
@@ -71,10 +71,10 @@ export const enum PatchFlags {
  */
 export function patchClass(el: any, next: any, prev?: any): void {
   // 将各种形式的 class 值规范化为字符串
-  const nextClass = normalizeClass(next)
+  const nextClass = normalizeClass(next);
 
   if (nextClass !== prev) {
-    el.className = nextClass
+    el.className = nextClass;
   }
 }
 
@@ -86,37 +86,37 @@ export function patchClass(el: any, next: any, prev?: any): void {
  */
 function normalizeClass(value: any): string {
   if (value === null || value === undefined) {
-    return ''
+    return '';
   }
 
   if (typeof value === 'string') {
-    return value
+    return value;
   }
 
   if (typeof value === 'object') {
     if (Array.isArray(value)) {
       // 数组形式：递归规范化每个元素
-      let result = ''
+      let result = '';
       for (let i = 0; i < value.length; i++) {
-        const normalized = normalizeClass(value[i])
+        const normalized = normalizeClass(value[i]);
         if (normalized) {
-          result += (result ? ' ' : '') + normalized
+          result += (result ? ' ' : '') + normalized;
         }
       }
-      return result
+      return result;
     }
 
     // 对象形式：收集值为 truthy 的 key
-    let result = ''
+    let result = '';
     for (const key in value) {
       if (value[key]) {
-        result += (result ? ' ' : '') + key
+        result += (result ? ' ' : '') + key;
       }
     }
-    return result
+    return result;
   }
 
-  return String(value)
+  return String(value);
 }
 
 /* ================================================================
@@ -143,37 +143,37 @@ function normalizeClass(value: any): string {
 export function patchStyle(el: any, next: any, prev?: any): void {
   // 新值为 null/undefined → 清空 style
   if (!next) {
-    el.style.cssText = ''
-    return
+    el.style.cssText = '';
+    return;
   }
 
   // 旧值为 null/undefined → 直接设置新值
   if (!prev) {
     if (typeof next === 'string') {
-      el.style.cssText = next
+      el.style.cssText = next;
     } else if (typeof next === 'object') {
-      setStyleObject(el, next)
+      setStyleObject(el, next);
     }
-    return
+    return;
   }
 
   // 新旧类型不同 → 清空旧值，设置新值
   if (typeof next !== typeof prev) {
-    el.style.cssText = ''
+    el.style.cssText = '';
     if (typeof next === 'string') {
-      el.style.cssText = next
+      el.style.cssText = next;
     } else if (typeof next === 'object') {
-      setStyleObject(el, next)
+      setStyleObject(el, next);
     }
-    return
+    return;
   }
 
   // 新旧都是字符串 → 直接替换
   if (typeof next === 'string') {
     if (next !== prev) {
-      el.style.cssText = next
+      el.style.cssText = next;
     }
-    return
+    return;
   }
 
   // 新旧都是对象 → 逐项 diff
@@ -181,17 +181,17 @@ export function patchStyle(el: any, next: any, prev?: any): void {
     // 移除旧 style 中存在但新 style 中不存在的属性
     for (const key in prev) {
       if (!(key in next)) {
-        el.style[key] = ''
+        el.style[key] = '';
       }
     }
 
     // 设置新 style 中变化或新增的属性
     for (const key in next) {
-      const nextVal = next[key]
-      const prevVal = prev[key]
+      const nextVal = next[key];
+      const prevVal = prev[key];
 
       if (nextVal !== prevVal) {
-        el.style[key] = nextVal === null || nextVal === undefined ? '' : nextVal
+        el.style[key] = nextVal === null || nextVal === undefined ? '' : nextVal;
       }
     }
   }
@@ -205,7 +205,7 @@ export function patchStyle(el: any, next: any, prev?: any): void {
  */
 function setStyleObject(el: any, style: Record<string, any>): void {
   for (const key in style) {
-    el.style[key] = style[key] === null || style[key] === undefined ? '' : style[key]
+    el.style[key] = style[key] === null || style[key] === undefined ? '' : style[key];
   }
 }
 
@@ -228,12 +228,12 @@ export function patchEventOnElement(
   el: any,
   next: any,
   prev?: any,
-  instance?: any,
+  instance?: any
 ): void {
   // next 和 prev 需要从 key 中提取事件名
   // 但此函数的调用场景中，事件名已由上层传入
   // 此处直接使用 patchEvent
-  patchEvent(el, '', next, prev, instance)
+  patchEvent(el, '', next, prev, instance);
 }
 
 /* ================================================================
@@ -244,7 +244,7 @@ export function patchEventOnElement(
  * 需要跳过的属性名集合
  * 这些属性由专门的函数处理，不在此处处理
  */
-const SKIP_PROPS = new Set(['class', 'style', 'key', 'ref'])
+const SKIP_PROPS = new Set(['class', 'style', 'key', 'ref']);
 
 /**
  * 判断一个 key 是否为事件属性
@@ -254,7 +254,7 @@ const SKIP_PROPS = new Set(['class', 'style', 'key', 'ref'])
  */
 function isEventProp(key: string): boolean {
   return key.length > 2 && (key[0] === 'o' || key[0] === 'O' || key[0] === '@') &&
-    (key[1] === 'n' || key[1] === 'N')
+    (key[1] === 'n' || key[1] === 'N');
 }
 
 /**
@@ -277,47 +277,47 @@ export function patchDOMProp(
   key: string,
   next: any,
   prev?: any,
-  instance?: any,
+  instance?: any
 ): void {
   // 跳过特殊属性
   if (SKIP_PROPS.has(key)) {
-    return
+    return;
   }
 
   // class 处理
   if (key === 'class') {
-    patchClass(el, next, prev)
-    return
+    patchClass(el, next, prev);
+    return;
   }
 
   // style 处理
   if (key === 'style') {
-    patchStyle(el, next, prev)
-    return
+    patchStyle(el, next, prev);
+    return;
   }
 
   // 事件处理
   if (isEventProp(key)) {
-    patchEvent(el, key, next, prev, instance)
-    return
+    patchEvent(el, key, next, prev, instance);
+    return;
   }
 
   // 布尔属性处理
   if (next === false || next === null || next === undefined) {
-    el.removeAttribute(key)
-    return
+    el.removeAttribute(key);
+    return;
   }
 
   // 普通 DOM 属性
   // 优先使用 property 设置，回退到 attribute
   if (key in el) {
     try {
-      el[key] = next
+      el[key] = next;
     } catch {
-      el.setAttribute(key, String(next))
+      el.setAttribute(key, String(next));
     }
   } else {
-    el.setAttribute(key, String(next))
+    el.setAttribute(key, String(next));
   }
 }
 
@@ -342,9 +342,9 @@ export function patchProp(
   key: string,
   next: any,
   prev?: any,
-  instance?: any,
+  instance?: any
 ): void {
-  patchDOMProp(el, key, next, prev, instance)
+  patchDOMProp(el, key, next, prev, instance);
 }
 
 /* ================================================================
@@ -366,21 +366,21 @@ export function patchAllProps(
   el: any,
   oldProps: Record<string, any> | null,
   newProps: Record<string, any> | null,
-  instance?: any,
+  instance?: any
 ): void {
   // 遍历新 props，更新变化的属性
   if (newProps) {
     for (const key in newProps) {
       // 跳过 key 和 ref
       if (key === 'key' || key === 'ref') {
-        continue
+        continue;
       }
 
-      const next = newProps[key]
-      const prev = oldProps ? oldProps[key] : undefined
+      const next = newProps[key];
+      const prev = oldProps ? oldProps[key] : undefined;
 
       if (next !== prev) {
-        patchProp(el, key, next, prev, instance)
+        patchProp(el, key, next, prev, instance);
       }
     }
   }
@@ -390,12 +390,12 @@ export function patchAllProps(
     for (const key in oldProps) {
       // 跳过 key 和 ref
       if (key === 'key' || key === 'ref') {
-        continue
+        continue;
       }
 
       // 如果新 props 中没有这个 key
       if (!newProps || !(key in newProps)) {
-        patchProp(el, key, null, oldProps[key], instance)
+        patchProp(el, key, null, oldProps[key], instance);
       }
     }
   }
@@ -424,42 +424,42 @@ export function patchElementProps(
   el: any,
   oldVNode: any,
   newVNode: any,
-  instance?: any,
+  instance?: any
 ): void {
-  const oldProps = oldVNode.props || {}
-  const newProps = newVNode.props || {}
-  const { patchFlag, dynamicProps } = newVNode
+  const oldProps = oldVNode.props || {};
+  const newProps = newVNode.props || {};
+  const { patchFlag, dynamicProps } = newVNode;
 
   // 无 patchFlag → 全量 diff
   if (!patchFlag || patchFlag === PatchFlags.HOISTED) {
-    patchAllProps(el, oldProps, newProps, instance)
-    return
+    patchAllProps(el, oldProps, newProps, instance);
+    return;
   }
 
   // BAIL → 退出优化，全量 diff
   if (patchFlag === PatchFlags.BAIL) {
-    patchAllProps(el, oldProps, newProps, instance)
-    return
+    patchAllProps(el, oldProps, newProps, instance);
+    return;
   }
 
   // TEXT 标记 → 只更新文本内容
   if (patchFlag & PatchFlags.TEXT) {
     if (oldVNode.children !== newVNode.children) {
-      el.textContent = newVNode.children
+      el.textContent = newVNode.children;
     }
   }
 
   // CLASS 标记 → 只更新 class
   if (patchFlag & PatchFlags.CLASS) {
     if (oldProps.class !== newProps.class) {
-      patchClass(el, newProps.class, oldProps.class)
+      patchClass(el, newProps.class, oldProps.class);
     }
   }
 
   // STYLE 标记 → 只更新 style
   if (patchFlag & PatchFlags.STYLE) {
     if (oldProps.style !== newProps.style) {
-      patchStyle(el, newProps.style, oldProps.style)
+      patchStyle(el, newProps.style, oldProps.style);
     }
   }
 
@@ -467,12 +467,12 @@ export function patchElementProps(
   if (patchFlag & PatchFlags.PROPS) {
     if (dynamicProps) {
       for (let i = 0; i < dynamicProps.length; i++) {
-        const key = dynamicProps[i]
-        const prev = oldProps[key]
-        const next = newProps[key]
+        const key = dynamicProps[i];
+        const prev = oldProps[key];
+        const next = newProps[key];
 
         if (next !== prev) {
-          patchProp(el, key, next, prev, instance)
+          patchProp(el, key, next, prev, instance);
         }
       }
     }
@@ -480,6 +480,6 @@ export function patchElementProps(
 
   // FULL_PROPS 标记 → 全量 diff
   if (patchFlag & PatchFlags.FULL_PROPS) {
-    patchAllProps(el, oldProps, newProps, instance)
+    patchAllProps(el, oldProps, newProps, instance);
   }
 }

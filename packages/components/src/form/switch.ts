@@ -4,8 +4,8 @@
  * Events: change
  */
 
-import { defineComponent } from '@lytjs/component'
-import { reactive } from '@lytjs/reactivity'
+import { defineComponent } from '@lytjs/component';
+import { reactive } from '@lytjs/reactivity';
 
 export const Switch = defineComponent({
   name: 'LytSwitch',
@@ -41,27 +41,27 @@ export const Switch = defineComponent({
   setup(props, { emit }) {
     const state = reactive({
       isChecked: props.modelValue !== undefined ? props.modelValue : props.checked,
-    })
+    });
 
     const handleClick = () => {
-      if (props.disabled) return
-      state.isChecked = !state.isChecked
-      emit('change', state.isChecked)
-      emit('update:modelValue', state.isChecked)
-    }
+      if (props.disabled) return;
+      state.isChecked = !state.isChecked;
+      emit('change', state.isChecked);
+      emit('update:modelValue', state.isChecked);
+    };
 
     const handleKeydown = (e: KeyboardEvent) => {
       if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault()
-        handleClick()
+        e.preventDefault();
+        handleClick();
       }
-    }
+    };
 
     const switchStyle = () => ({
       backgroundColor: state.isChecked ? props.activeColor : props.inactiveColor,
-    })
+    });
 
-    return { state, handleClick, handleKeydown, switchStyle }
+    return { state, handleClick, handleKeydown, switchStyle };
   },
 
   template: `
@@ -119,4 +119,4 @@ export const Switch = defineComponent({
     .lyt-switch--medium.lyt-switch--checked .lyt-switch__action { transform: translateX(22px); }
     .lyt-switch--large.lyt-switch--checked .lyt-switch__action { transform: translateX(28px); }
   `,
-})
+});

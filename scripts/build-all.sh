@@ -45,7 +45,7 @@ header() { echo -e "${BOLD}${CYAN}$1${NC}"; }
 ALL_PACKAGES=(
   common reactivity vdom compiler renderer component core
   router store cli devtools components
-  plugin-i18n plugin-auth plugin-logger
+  plugin-i18n plugin-auth plugin-logger plugin-theme plugin-storage
   test-utils plugins agg lytx
 )
 # 解析参数
@@ -134,6 +134,10 @@ if [ "$TYPES_ONLY" = false ]; then
         PLATFORM="node"
         EXTRA_EXTERNAL=""
         ;;
+      test-utils)
+        PLATFORM="node"
+        EXTRA_EXTERNAL=""
+        ;;
       components)
         PLATFORM="browser"
         EXTRA_EXTERNAL="--external:../../component/src/index.ts"
@@ -159,8 +163,8 @@ if [ "$TYPES_ONLY" = false ]; then
       --legal-comments=none
       --log-level=warning
     )
-    # 对于 cli 包，不 drop:console，保留输出
-    if [ "$pkg" != "cli" ] && [ "$pkg" != "lytx" ]; then
+    # 对于 cli/lytx/test-utils 包，不 drop:console，保留输出
+    if [ "$pkg" != "cli" ] && [ "$pkg" != "lytx" ] && [ "$pkg" != "test-utils" ]; then
       esbuild_args+=(--drop:console --drop:debugger)
     fi
     if "$ESBUILD" "${esbuild_args[@]}" 2>&1; then
@@ -185,7 +189,7 @@ if [ "$TYPES_ONLY" = false ]; then
       --legal-comments=none
       --log-level=warning
     )
-    if [ "$pkg" != "cli" ] && [ "$pkg" != "lytx" ]; then
+    if [ "$pkg" != "cli" ] && [ "$pkg" != "lytx" ] && [ "$pkg" != "test-utils" ]; then
       esbuild_args_cjs+=(--drop:console --drop:debugger)
     fi
     if "$ESBUILD" "${esbuild_args_cjs[@]}" 2>&1; then

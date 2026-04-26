@@ -6,20 +6,20 @@
  */
 
 // ---- 核心接口与类型 ----
-export type { LytRenderer, RendererInstance } from '../renderer-interfaces'
-export type { VNode } from '../vnode'
+export type { LytRenderer, RendererInstance } from '../renderer-interfaces';
+export type { VNode } from '../vnode';
 
 // ---- 核心函数与常量 ----
 export {
   createRenderer,
-} from '../create-renderer'
+} from '../create-renderer';
 export {
   Fragment,
   Text,
   Comment,
   ShapeFlags,
   PatchFlags,
-} from '../vnode'
+} from '../vnode';
 
 // ---- Vapor Mode ----
 export {
@@ -29,7 +29,7 @@ export {
   vaporMount,
   setVaporDOMFactory,
   getVaporDOMFactory,
-} from './vapor-renderer'
+} from './vapor-renderer';
 export type {
   VaporNode,
   VaporBinding,
@@ -39,7 +39,7 @@ export type {
   VaporApp,
   VaporElement,
   BindingCleanup,
-} from './vapor-renderer'
+} from './vapor-renderer';
 
 export {
   bindText,
@@ -49,17 +49,17 @@ export {
   bindEvent,
   bindIf,
   bindEach,
-} from './vapor-reactive'
+} from './vapor-reactive';
 
 export {
   compileToVapor,
   parseTemplate,
-} from './vapor-compiler'
-export type { VaporRenderFunction, VaporCompileResult } from './vapor-compiler'
+} from './vapor-compiler';
+export type { VaporRenderFunction, VaporCompileResult } from './vapor-compiler';
 
 export {
   defineVaporComponent,
   createVaporApp,
   renderVaporComponent,
-} from './vapor-component'
-export type { VaporComponentInstance } from './vapor-component'
+} from './vapor-component';
+export type { VaporComponentInstance } from './vapor-component';

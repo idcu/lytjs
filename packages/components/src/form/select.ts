@@ -5,8 +5,8 @@
  * State: isOpen, selectedValue, searchText
  */
 
-import { defineComponent, onMounted, onUnmounted } from '@lytjs/component'
-import { reactive } from '@lytjs/reactivity'
+import { defineComponent, onMounted, onUnmounted } from '@lytjs/component';
+import { reactive } from '@lytjs/reactivity';
 
 export const Select = defineComponent({
   name: 'LytSelect',
@@ -43,111 +43,111 @@ export const Select = defineComponent({
       isOpen: false,
       selectedValue: props.multiple ? [] : props.modelValue,
       searchText: '',
-    })
+    });
 
     const displayLabel = () => {
       if (props.multiple) {
-        const selected = (state.selectedValue as Array<string | number>)
+        const selected = (state.selectedValue as Array<string | number>);
         return selected
           .map((val: any) => {
-            const opt = props.options.find((o: any) => o.value === val)
-            return opt ? opt.label : val
+            const opt = props.options.find((o: any) => o.value === val);
+            return opt ? opt.label : val;
           })
-          .join(', ')
+          .join(', ');
       }
-      const opt = props.options.find((o: any) => o.value === state.selectedValue)
-      return opt ? opt.label : ''
-    }
+      const opt = props.options.find((o: any) => o.value === state.selectedValue);
+      return opt ? opt.label : '';
+    };
 
     const hasValue = () => {
       if (props.multiple) {
-        return (state.selectedValue as Array<string | number>).length > 0
+        return (state.selectedValue as Array<string | number>).length > 0;
       }
-      return state.selectedValue !== undefined && state.selectedValue !== ''
-    }
+      return state.selectedValue !== undefined && state.selectedValue !== '';
+    };
 
     const toggleDropdown = () => {
-      if (props.disabled) return
-      state.isOpen = !state.isOpen
-    }
+      if (props.disabled) return;
+      state.isOpen = !state.isOpen;
+    };
 
     const closeDropdown = () => {
-      state.isOpen = false
-      state.searchText = ''
-    }
+      state.isOpen = false;
+      state.searchText = '';
+    };
 
     const handleSelect = (option: { label: string; value: string | number; disabled?: boolean }) => {
-      if (option.disabled) return
+      if (option.disabled) return;
 
       if (props.multiple) {
-        const selected = state.selectedValue as Array<string | number>
-        const index = selected.indexOf(option.value)
+        const selected = state.selectedValue as Array<string | number>;
+        const index = selected.indexOf(option.value);
         if (index > -1) {
-          selected.splice(index, 1)
+          selected.splice(index, 1);
         } else {
-          selected.push(option.value)
+          selected.push(option.value);
         }
-        state.selectedValue = [...selected]
+        state.selectedValue = [...selected];
       } else {
-        state.selectedValue = option.value
-        closeDropdown()
+        state.selectedValue = option.value;
+        closeDropdown();
       }
 
-      emit('select', option.value)
-      emit('change', state.selectedValue)
-      emit('update:modelValue', state.selectedValue)
-    }
+      emit('select', option.value);
+      emit('change', state.selectedValue);
+      emit('update:modelValue', state.selectedValue);
+    };
 
     const isSelected = (value: string | number) => {
       if (props.multiple) {
-        return (state.selectedValue as Array<string | number>).includes(value)
+        return (state.selectedValue as Array<string | number>).includes(value);
       }
-      return state.selectedValue === value
-    }
+      return state.selectedValue === value;
+    };
 
     const handleClear = (e: Event) => {
-      e.stopPropagation()
+      e.stopPropagation();
       if (props.multiple) {
-        state.selectedValue = []
+        state.selectedValue = [];
       } else {
-        state.selectedValue = undefined
+        state.selectedValue = undefined;
       }
-      emit('clear')
-      emit('change', state.selectedValue)
-      emit('update:modelValue', state.selectedValue)
-    }
+      emit('clear');
+      emit('change', state.selectedValue);
+      emit('update:modelValue', state.selectedValue);
+    };
 
     const handleClickOutside = () => {
       if (state.isOpen) {
-        closeDropdown()
+        closeDropdown();
       }
-    }
+    };
 
     onMounted(() => {
-      document.addEventListener('click', handleClickOutside)
-    })
+      document.addEventListener('click', handleClickOutside);
+    });
 
     onUnmounted(() => {
-      document.removeEventListener('click', handleClickOutside)
-    })
+      document.removeEventListener('click', handleClickOutside);
+    });
 
     const handleTriggerClick = (e: Event) => {
-      e.stopPropagation()
-      toggleDropdown()
-    }
+      e.stopPropagation();
+      toggleDropdown();
+    };
 
     const filteredOptions = () => {
-      if (!state.searchText) return props.options
+      if (!state.searchText) return props.options;
       return props.options.filter((o: any) =>
         o.label.toLowerCase().includes(state.searchText.toLowerCase())
-      )
-    }
+      );
+    };
 
     return {
       state, displayLabel, hasValue, toggleDropdown, closeDropdown,
       handleSelect, isSelected, handleClear, handleTriggerClick,
       filteredOptions,
-    }
+    };
   },
 
   template: `
@@ -276,4 +276,4 @@ export const Select = defineComponent({
     .lyt-select__option--empty { color: var(--lyt-color-info); text-align: center; cursor: default; }
     .lyt-select__option-check { font-size: var(--lyt-font-size-sm); }
   `,
-})
+});

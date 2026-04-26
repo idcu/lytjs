@@ -9,21 +9,24 @@ import * as fs from 'fs'
 import * as path from 'path'
 import { fileURLToPath } from 'url'
 
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+
 // 导入 @lytjs/test-utils
 import * as testUtils from '../packages/test-utils/src/index'
 
 // 把测试框架挂载到 globalThis
-;(globalThis as any).describe = testUtils.describe
-;(globalThis as any).it = testUtils.it
-;(globalThis as any).test = testUtils.test
-;(globalThis as any).skip = testUtils.skip
-;(globalThis as any).beforeEach = testUtils.beforeEach
-;(globalThis as any).afterEach = testUtils.afterEach
-;(globalThis as any).expect = testUtils.expect
-;(globalThis as any).Assertion = testUtils.Assertion
-;(globalThis as any).deepEqual = testUtils.deepEqual
-;(globalThis as any).waitFor = testUtils.waitFor
-;(globalThis as any).runAll = testUtils.runAll
+const utils = testUtils.default || testUtils
+;(globalThis as any).describe = utils.describe
+;(globalThis as any).it = utils.it
+;(globalThis as any).test = utils.test
+;(globalThis as any).skip = utils.skip
+;(globalThis as any).beforeEach = utils.beforeEach
+;(globalThis as any).afterEach = utils.afterEach
+;(globalThis as any).expect = utils.expect
+;(globalThis as any).deepEqual = utils.deepEqual
+;(globalThis as any).waitFor = utils.waitFor
+;(globalThis as any).runAll = utils.runAll
 
 // ================================================================
 //  查找并导入测试文件
@@ -60,7 +63,7 @@ async function main() {
   }
 
   // 运行所有测试
-  const result = await testUtils.runAll()
+  const result = await utils.runAll()
   process.exit(result.failed > 0 ? 1 : 0)
 }
 

@@ -127,5 +127,10 @@ test-projects/
 # 临时规划文档（可根据需要选择保留）
 PROJECT_ASSESSMENT.md
 
+# Lint 输出文件
+lint-output.txt
+lint-output-latest.txt
+lint-output-final.txt
+
 
 

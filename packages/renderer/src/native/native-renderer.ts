@@ -10,7 +10,7 @@
  *   - 提供 HTML 标签到原生组件的映射、CSS 样式到原生样式的转换
  */
 
-import type { LytRenderer } from '../renderer-interfaces'
+import type { LytRenderer } from '../renderer-interfaces';
 
 /* ================================================================
  *  LytRendererPlatform 标准接口
@@ -94,7 +94,7 @@ const NATIVE_COMPONENT_MAP: Record<string, string> = {
   'header': 'View', 'footer': 'View', 'nav': 'View',
   'main': 'View', 'section': 'View',
   'article': 'View', 'aside': 'View',
-}
+};
 
 /* ================================================================
  *  样式属性映射（CSS → 原生样式）
@@ -159,7 +159,7 @@ const STYLE_MAP: Record<string, string> = {
   'shadowOffset': 'shadowOffset',
   'shadowOpacity': 'shadowOpacity',
   'shadowRadius': 'shadowRadius',
-}
+};
 
 /* ================================================================
  *  事件映射（DOM 事件 → 原生事件）
@@ -183,18 +183,18 @@ const EVENT_MAP: Record<string, string> = {
   'submit': 'onSubmitEditing',
   'scroll': 'onScroll',
   'longpress': 'onLongPress',
-}
+};
 
 /* ================================================================
  *  自增 ID 生成器
  * ================================================================ */
 
 /** 原生节点自增 ID，用于生成 nativeId */
-let _nativeIdCounter = 0
+let _nativeIdCounter = 0;
 
 /** 生成唯一的原生视图标识 */
 function generateNativeId(): string {
-  return `native_${++_nativeIdCounter}`
+  return `native_${++_nativeIdCounter}`;
 }
 
 /* ================================================================
@@ -233,13 +233,13 @@ export class NativeRenderer implements LytRenderer {
    * @returns NativeNode 描述对象
    */
   createElement(tag: string): NativeNode {
-    const nativeType = this.getComponentType(tag)
+    const nativeType = this.getComponentType(tag);
     return {
       type: nativeType,
       props: {},
       children: [],
       nativeId: generateNativeId(),
-    }
+    };
   }
 
   /**
@@ -253,7 +253,7 @@ export class NativeRenderer implements LytRenderer {
       props: { text },
       children: [],
       nativeId: generateNativeId(),
-    }
+    };
   }
 
   /**
@@ -267,7 +267,7 @@ export class NativeRenderer implements LytRenderer {
       props: { text },
       children: [],
       nativeId: generateNativeId(),
-    }
+    };
   }
 
   /* --------------------------------------------------
@@ -281,49 +281,49 @@ export class NativeRenderer implements LytRenderer {
    * @param val 属性值
    */
   setAttribute(el: NativeNode, key: string, val: any): void {
-    if (!el) return
+    if (!el) return;
 
     // 样式属性特殊处理：合并到 props.style 中
     if (key === 'style' && typeof val === 'object' && val !== null) {
-      el.props.style = { ...(el.props.style as Record<string, any>), ...this.mapStyle(val) }
-      return
+      el.props.style = { ...(el.props.style as Record<string, any>), ...this.mapStyle(val) };
+      return;
     }
 
     // className 映射为原生 style 中的特殊字段（简化处理）
     if (key === 'className' || key === 'class') {
       // 小程序/RN 中 class 通常通过 StyleSheet 处理，此处简化存储
-      el.props.className = val
-      return
+      el.props.className = val;
+      return;
     }
 
     // 事件属性（onClick → onPress）
     if (key.startsWith('on') && typeof val === 'function') {
-      const domEvent = key.slice(2).toLowerCase()
-      const nativeEvent = this.mapEvent(domEvent)
-      el.props[nativeEvent] = val
-      return
+      const domEvent = key.slice(2).toLowerCase();
+      const nativeEvent = this.mapEvent(domEvent);
+      el.props[nativeEvent] = val;
+      return;
     }
 
     // src 属性映射为 source（Image 组件）
     if (key === 'src' && el.type === 'Image') {
-      el.props.source = { uri: val }
-      return
+      el.props.source = { uri: val };
+      return;
     }
 
     // href 属性映射
     if (key === 'href') {
-      el.props.href = val
-      return
+      el.props.href = val;
+      return;
     }
 
     // placeholder 属性
     if (key === 'placeholder') {
-      el.props.placeholder = val
-      return
+      el.props.placeholder = val;
+      return;
     }
 
     // 其他属性直接设置
-    el.props[key] = val
+    el.props[key] = val;
   }
 
   /**
@@ -332,16 +332,16 @@ export class NativeRenderer implements LytRenderer {
    * @param key 属性名
    */
   removeAttribute(el: NativeNode, key: string): void {
-    if (!el) return
+    if (!el) return;
 
     if (key === 'style') {
-      delete el.props.style
+      delete el.props.style;
     } else if (key.startsWith('on')) {
-      const domEvent = key.slice(2).toLowerCase()
-      const nativeEvent = this.mapEvent(domEvent)
-      delete el.props[nativeEvent]
+      const domEvent = key.slice(2).toLowerCase();
+      const nativeEvent = this.mapEvent(domEvent);
+      delete el.props[nativeEvent];
     } else {
-      delete el.props[key]
+      delete el.props[key];
     }
   }
 
@@ -351,9 +351,9 @@ export class NativeRenderer implements LytRenderer {
    * @param style 样式对象
    */
   setStyle(el: NativeNode, style: object): void {
-    if (!el) return
-    const nativeStyle = this.mapStyle(style as Record<string, string>)
-    el.props.style = { ...(el.props.style as Record<string, any>), ...nativeStyle }
+    if (!el) return;
+    const nativeStyle = this.mapStyle(style as Record<string, string>);
+    el.props.style = { ...(el.props.style as Record<string, any>), ...nativeStyle };
   }
 
   /**
@@ -362,17 +362,17 @@ export class NativeRenderer implements LytRenderer {
    * @param cls class 值（字符串或对象）
    */
   setClass(el: NativeNode, cls: string | object): void {
-    if (!el) return
+    if (!el) return;
     // 原生端通常使用 StyleSheet，此处简化为存储 className
     if (typeof cls === 'string') {
-      el.props.className = cls
+      el.props.className = cls;
     } else if (typeof cls === 'object' && cls !== null) {
       // 对象形式：{ active: true, disabled: false } → 'active'
-      const classList: string[] = []
+      const classList: string[] = [];
       for (const [name, value] of Object.entries(cls)) {
-        if (value) classList.push(name)
+        if (value) classList.push(name);
       }
-      el.props.className = classList.join(' ')
+      el.props.className = classList.join(' ');
     }
   }
 
@@ -387,27 +387,27 @@ export class NativeRenderer implements LytRenderer {
    * @param ref    参考节点（插入到其前面），可选
    */
   insert(parent: NativeNode, child: NativeNode, ref?: NativeNode): void {
-    if (!parent || !child) return
+    if (!parent || !child) return;
 
     // 清除旧父节点引用
     if (child._parent) {
-      const oldParent = child._parent
-      const idx = oldParent.children.indexOf(child)
-      if (idx !== -1) oldParent.children.splice(idx, 1)
+      const oldParent = child._parent;
+      const idx = oldParent.children.indexOf(child);
+      if (idx !== -1) oldParent.children.splice(idx, 1);
     }
 
     // 设置新父节点引用
-    child._parent = parent
+    child._parent = parent;
 
     if (ref) {
-      const idx = parent.children.indexOf(ref)
+      const idx = parent.children.indexOf(ref);
       if (idx !== -1) {
-        parent.children.splice(idx, 0, child)
+        parent.children.splice(idx, 0, child);
       } else {
-        parent.children.push(child)
+        parent.children.push(child);
       }
     } else {
-      parent.children.push(child)
+      parent.children.push(child);
     }
   }
 
@@ -416,14 +416,14 @@ export class NativeRenderer implements LytRenderer {
    * @param child 要移除的节点
    */
   remove(child: NativeNode): void {
-    if (!child || !child._parent) return
+    if (!child || !child._parent) return;
 
-    const parent = child._parent
-    const idx = parent.children.indexOf(child)
+    const parent = child._parent;
+    const idx = parent.children.indexOf(child);
     if (idx !== -1) {
-      parent.children.splice(idx, 1)
+      parent.children.splice(idx, 1);
     }
-    child._parent = undefined
+    child._parent = undefined;
   }
 
   /**
@@ -433,15 +433,15 @@ export class NativeRenderer implements LytRenderer {
    * @param newChild 替换的新节点
    */
   replace(parent: NativeNode, oldChild: NativeNode, newChild: NativeNode): void {
-    if (!parent || !oldChild || !newChild) return
+    if (!parent || !oldChild || !newChild) return;
 
-    const idx = parent.children.indexOf(oldChild)
+    const idx = parent.children.indexOf(oldChild);
     if (idx !== -1) {
       // 清除旧节点的父引用
-      oldChild._parent = undefined
+      oldChild._parent = undefined;
       // 设置新节点的父引用
-      newChild._parent = parent
-      parent.children[idx] = newChild
+      newChild._parent = parent;
+      parent.children[idx] = newChild;
     }
   }
 
@@ -456,11 +456,11 @@ export class NativeRenderer implements LytRenderer {
    * @param handler 事件处理函数
    * @param options 事件选项（可选）
    */
-  addEventListener(el: NativeNode, event: string, handler: Function, options?: any): void {
-    if (!el) return
-    const nativeEvent = this.mapEvent(event)
+  addEventListener(el: NativeNode, event: string, handler: Function, _options?: any): void {
+    if (!el) return;
+    const nativeEvent = this.mapEvent(event);
     // 存储事件处理器到 props 中
-    el.props[nativeEvent] = handler
+    el.props[nativeEvent] = handler;
   }
 
   /**
@@ -470,11 +470,11 @@ export class NativeRenderer implements LytRenderer {
    * @param handler 事件处理函数
    */
   removeEventListener(el: NativeNode, event: string, handler: Function): void {
-    if (!el) return
-    const nativeEvent = this.mapEvent(event)
+    if (!el) return;
+    const nativeEvent = this.mapEvent(event);
     // 仅当当前处理器匹配时才移除
     if (el.props[nativeEvent] === handler) {
-      delete el.props[nativeEvent]
+      delete el.props[nativeEvent];
     }
   }
 
@@ -488,7 +488,7 @@ export class NativeRenderer implements LytRenderer {
    */
   nextTick(cb: Function): void {
     // 使用 Promise 微任务实现
-    Promise.resolve().then(() => cb())
+    Promise.resolve().then(() => cb());
   }
 
   /**
@@ -497,7 +497,7 @@ export class NativeRenderer implements LytRenderer {
    * @returns 父节点，无父节点时返回 null
    */
   parentNode(el: NativeNode): NativeNode | null {
-    return el?._parent ?? null
+    return el?._parent ?? null;
   }
 
   /**
@@ -506,12 +506,12 @@ export class NativeRenderer implements LytRenderer {
    * @returns 下一个兄弟节点，无时返回 null
    */
   nextSibling(el: NativeNode): NativeNode | null {
-    if (!el || !el._parent) return null
-    const siblings = el._parent.children
-    const idx = siblings.indexOf(el)
+    if (!el || !el._parent) return null;
+    const siblings = el._parent.children;
+    const idx = siblings.indexOf(el);
     return idx !== -1 && idx + 1 < siblings.length
       ? siblings[idx + 1]
-      : null
+      : null;
   }
 
   /**
@@ -520,9 +520,9 @@ export class NativeRenderer implements LytRenderer {
    * @param text 文本内容
    */
   setText(node: NativeNode, text: string): void {
-    if (!node) return
+    if (!node) return;
     if (node.type === 'RawText') {
-      node.props.text = text
+      node.props.text = text;
     }
   }
 
@@ -539,26 +539,26 @@ export class NativeRenderer implements LytRenderer {
    * @param nextValue 新属性值
    */
   patchProp(el: NativeNode, key: string, prevValue: any, nextValue: any): void {
-    if (!el) return
+    if (!el) return;
 
     // 移除属性
     if (nextValue === null || nextValue === undefined) {
-      this.removeAttribute(el, key)
-      return
+      this.removeAttribute(el, key);
+      return;
     }
 
     // 新增或更新属性
     if (key === 'style') {
-      this.setStyle(el, nextValue)
+      this.setStyle(el, nextValue);
     } else if (key === 'class' || key === 'className') {
-      this.setClass(el, nextValue)
+      this.setClass(el, nextValue);
     } else if (key.startsWith('on') && typeof nextValue === 'function') {
       // 事件属性
-      const domEvent = key.slice(2).toLowerCase()
-      const nativeEvent = this.mapEvent(domEvent)
-      el.props[nativeEvent] = nextValue
+      const domEvent = key.slice(2).toLowerCase();
+      const nativeEvent = this.mapEvent(domEvent);
+      el.props[nativeEvent] = nextValue;
     } else {
-      this.setAttribute(el, key, nextValue)
+      this.setAttribute(el, key, nextValue);
     }
   }
 
@@ -567,11 +567,10 @@ export class NativeRenderer implements LytRenderer {
    * @param selector CSS 选择器（仅支持 tag 选择器）
    * @returns 匹配的第一个节点，未找到返回 null
    */
-  querySelector(selector: string): NativeNode | null {
+  querySelector(_selector: string): NativeNode | null {
     // 原型实现：仅支持简单的 tag 选择器
     // 完整实现需要遍历整棵树
-    const tag = selector.replace(/[.#\[\]]/g, '').trim()
-    return null // 需要持有根节点引用才能遍历，此处返回 null
+    return null; // 需要持有根节点引用才能遍历，此处返回 null
   }
 
   /* --------------------------------------------------
@@ -588,77 +587,77 @@ export class NativeRenderer implements LytRenderer {
    */
   renderToNativeTree(vnode: any): NativeNode {
     if (!vnode) {
-      return this.createComment('empty vnode')
+      return this.createComment('empty vnode');
     }
 
     // 文本节点
     if (typeof vnode === 'string') {
-      return this.createText(vnode)
+      return this.createText(vnode);
     }
 
     // 注释节点
     if (vnode.type === Symbol.for('lyt.comment') || vnode.type === 'comment') {
-      return this.createComment(vnode.children || '')
+      return this.createComment(vnode.children || '');
     }
 
     // 文本节点（Symbol 形式）
     if (vnode.type === Symbol.for('lyt.text') || vnode.type === 'text') {
-      return this.createText(vnode.children || '')
+      return this.createText(vnode.children || '');
     }
 
     // Fragment 节点
     if (vnode.type === Symbol.for('lyt.fragment') || vnode.type === 'fragment') {
       // Fragment 本身不创建节点，直接展开子节点
       // 此处创建一个虚拟容器
-      const fragment = this.createElement('__Fragment')
+      const fragment = this.createElement('__Fragment');
       if (Array.isArray(vnode.children)) {
         for (const child of vnode.children) {
-          const nativeChild = this.renderToNativeTree(child)
-          this.insert(fragment, nativeChild)
+          const nativeChild = this.renderToNativeTree(child);
+          this.insert(fragment, nativeChild);
         }
       }
-      return fragment
+      return fragment;
     }
 
     // 普通 HTML 元素
     if (typeof vnode.type === 'string') {
-      const node = this.createElement(vnode.type)
+      const node = this.createElement(vnode.type);
 
       // 处理 props
       if (vnode.props) {
         for (const [key, val] of Object.entries(vnode.props)) {
-          if (key === 'key' || key === 'ref') continue
-          this.setAttribute(node, key, val)
+          if (key === 'key' || key === 'ref') continue;
+          this.setAttribute(node, key, val);
         }
       }
 
       // 处理 children
       if (vnode.children) {
         if (typeof vnode.children === 'string') {
-          this.insert(node, this.createText(vnode.children))
+          this.insert(node, this.createText(vnode.children));
         } else if (Array.isArray(vnode.children)) {
           for (const child of vnode.children) {
-            this.insert(node, this.renderToNativeTree(child))
+            this.insert(node, this.renderToNativeTree(child));
           }
         }
       }
 
-      return node
+      return node;
     }
 
     // 组件节点（函数组件 / 有状态组件）
     if (typeof vnode.type === 'object' || typeof vnode.type === 'function') {
       // 原型中组件节点简化为 View 容器
-      const node = this.createElement('div')
+      const node = this.createElement('div');
       if (Array.isArray(vnode.children)) {
         for (const child of vnode.children) {
-          this.insert(node, this.renderToNativeTree(child))
+          this.insert(node, this.renderToNativeTree(child));
         }
       }
-      return node
+      return node;
     }
 
-    return this.createComment('unknown vnode type')
+    return this.createComment('unknown vnode type');
   }
 
   /**
@@ -677,11 +676,11 @@ export class NativeRenderer implements LytRenderer {
         type: n.type,
         props: { ...n.props },
         children: n.children.map(clean),
-      }
-      if (n.nativeId) obj.nativeId = n.nativeId
-      return obj
-    }
-    return JSON.stringify(clean(node), null, 2)
+      };
+      if (n.nativeId) obj.nativeId = n.nativeId;
+      return obj;
+    };
+    return JSON.stringify(clean(node), null, 2);
   }
 
   /**
@@ -694,7 +693,7 @@ export class NativeRenderer implements LytRenderer {
    * @returns 原生组件类型名
    */
   getComponentType(tag: string): string {
-    return NATIVE_COMPONENT_MAP[tag] || toPascalCase(tag)
+    return NATIVE_COMPONENT_MAP[tag] || toPascalCase(tag);
   }
 
   /**
@@ -707,19 +706,19 @@ export class NativeRenderer implements LytRenderer {
    * @returns 原生样式对象
    */
   mapStyle(cssStyle: Record<string, string>): Record<string, any> {
-    const result: Record<string, any> = {}
+    const result: Record<string, any> = {};
     for (const [cssKey, cssVal] of Object.entries(cssStyle)) {
       // 查找映射后的原生属性名
-      const nativeKey = STYLE_MAP[cssKey] || cssKey
+      const nativeKey = STYLE_MAP[cssKey] || cssKey;
 
       // 数值转换：'10px' → 10, '100%' → '100%'
       if (typeof cssVal === 'string' && /^\d+px$/.test(cssVal)) {
-        result[nativeKey] = parseInt(cssVal, 10)
+        result[nativeKey] = parseInt(cssVal, 10);
       } else {
-        result[nativeKey] = cssVal
+        result[nativeKey] = cssVal;
       }
     }
-    return result
+    return result;
   }
 
   /**
@@ -732,7 +731,7 @@ export class NativeRenderer implements LytRenderer {
    * @returns 原生事件名（如 'onPress'）
    */
   mapEvent(domEvent: string): string {
-    return EVENT_MAP[domEvent] || `on${domEvent.charAt(0).toUpperCase()}${domEvent.slice(1)}`
+    return EVENT_MAP[domEvent] || `on${domEvent.charAt(0).toUpperCase()}${domEvent.slice(1)}`;
   }
 }
 
@@ -749,7 +748,7 @@ function toPascalCase(str: string): string {
   return str
     .split('-')
     .map(part => part.charAt(0).toUpperCase() + part.slice(1))
-    .join('')
+    .join('');
 }
 
 /* ================================================================
@@ -765,7 +764,7 @@ function toPascalCase(str: string): string {
  * @returns NativeRenderer 实例
  */
 export function createNativeRenderer(): NativeRenderer {
-  return new NativeRenderer()
+  return new NativeRenderer();
 }
 
 /* ================================================================
@@ -773,4 +772,4 @@ export function createNativeRenderer(): NativeRenderer {
  * ================================================================ */
 
 /** 移动端渲染器单例 */
-export const nativeRenderer = new NativeRenderer()
+export const nativeRenderer = new NativeRenderer();

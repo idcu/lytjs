@@ -6,24 +6,24 @@
  */
 
 // ---- 核心接口与类型 ----
-export type { LytRenderer, RendererInstance } from '../renderer-interfaces'
-export type { VNode } from '../vnode'
+export type { LytRenderer, RendererInstance } from '../renderer-interfaces';
+export type { VNode } from '../vnode';
 
 // ---- 核心函数与常量 ----
 export {
   createRenderer,
-} from '../create-renderer'
+} from '../create-renderer';
 export {
   Fragment,
   Text,
   Comment,
   ShapeFlags,
   PatchFlags,
-} from '../vnode'
+} from '../vnode';
 
 // ---- SSR 支持 ----
-export { StringRenderer, ssrRenderer, renderToString, renderToStream, renderToStreamGenerator } from './ssr-renderer'
-export type { SSRVNode, SSRTextVNode, ComponentOptions, RenderToStreamOptions } from './ssr-renderer'
+export { StringRenderer, ssrRenderer, renderToString, renderToStream, renderToStreamGenerator } from './ssr-renderer';
+export type { SSRVNode, SSRTextVNode, ComponentOptions, RenderToStreamOptions } from './ssr-renderer';
 
 // ---- Hydration ----
 export {
@@ -42,5 +42,5 @@ export {
   clearIslandRegistry,
   getMismatchWarnings,
   clearMismatchWarnings,
-} from './hydration'
-export type { HydrateOptions, HydrateResult, ComponentOptions as IslandComponentOptions } from './hydration'
+} from './hydration';
+export type { HydrateOptions, HydrateResult, ComponentOptions as IslandComponentOptions } from './hydration';

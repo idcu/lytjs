@@ -4,7 +4,7 @@
  * Events: change
  */
 
-import { defineComponent } from '@lytjs/component'
+import { defineComponent } from '@lytjs/component';
 
 export const Radio = defineComponent({
   name: 'LytRadio',
@@ -39,18 +39,18 @@ export const Radio = defineComponent({
   setup(props, { emit, slots }) {
     const isChecked = () => {
       if (props.modelValue !== undefined && props.value !== undefined) {
-        return props.modelValue === props.value
+        return props.modelValue === props.value;
       }
-      return props.checked
-    }
+      return props.checked;
+    };
 
-    const handleChange = (e: Event) => {
-      if (props.disabled) return
-      emit('change', props.value)
-      emit('update:modelValue', props.value)
-    }
+    const handleChange = (_e: Event) => {
+      if (props.disabled) return;
+      emit('change', props.value);
+      emit('update:modelValue', props.value);
+    };
 
-    return { isChecked, handleChange, slots }
+    return { isChecked, handleChange, slots };
   },
 
   template: `
@@ -138,4 +138,4 @@ export const Radio = defineComponent({
       border-color: var(--lyt-color-muted);
     }
   `,
-})
+});

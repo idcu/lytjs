@@ -325,7 +325,7 @@ export const TransitionPropsKeys: string[] = [
  * @param el - 目标 DOM 元素
  * @param props - Transition 组件的 props
  */
-function performEnter(el: Element, props: TransitionProps): void {
+function _performEnter(el: Element, props: TransitionProps): void {
   const {
     name = '',
     enterFromClass = name ? `${name}-enter-from` : '',
@@ -395,7 +395,7 @@ function performEnter(el: Element, props: TransitionProps): void {
  * @param props - Transition 组件的 props
  * @param done - 过渡完成回调
  */
-function performLeave(el: Element, props: TransitionProps, done: () => void): void {
+function _performLeave(el: Element, props: TransitionProps, done: () => void): void {
   const {
     name = '',
     leaveFromClass = name ? `${name}-leave-from` : '',

@@ -18,8 +18,8 @@
  *   → renderList(items, (item, index) => h('li', null, [index, ': ', item]))
  */
 
-import type { ASTNode, ElementNode } from '../ast/nodes'
-import type { TransformContext } from '../transform/transform'
+import type { ASTNode, ElementNode } from '../ast/nodes';
+import type { TransformContext } from '../transform/transform';
 
 // ================================================================
 //  类型定义
@@ -62,27 +62,27 @@ export interface EachTransformResult {
  * @param context 转换上下文
  */
 export function transformEach(node: ASTNode, context: TransformContext): void {
-  if (node.type !== 'Element') return
+  if (node.type !== 'Element') return;
 
   // 查找 v-each 指令
-  const eachDirective = (node as ElementNode).directives.find(d => d.name === 'each')
-  if (!eachDirective) return
+  const eachDirective = (node as ElementNode).directives.find(d => d.name === 'each');
+  if (!eachDirective) return;
 
   // 解析 each 表达式
-  const expr = parseEachExpression(eachDirective.value)
+  const expr = parseEachExpression(eachDirective.value);
   if (!expr) {
-    console.warn(`[lyt] 无效的 v-each 表达式: "${eachDirective.value}"`)
-    return
+    console.warn(`[lyt] 无效的 v-each 表达式: "${eachDirective.value}"`);
+    return;
   }
 
   // 生成 renderList 调用代码
-  const code = generateEachCode(expr, node as ElementNode)
+  const code = generateEachCode(expr, node as ElementNode);
 
   // 将转换结果存储在节点上
   Object.assign(node, {
     eachInfo: expr,
     eachCode: code,
-  })
+  });
 
   // 收集辅助函数
   context.root.helpers.add('renderList')
@@ -90,7 +90,7 @@ export function transformEach(node: ASTNode, context: TransformContext): void {
   // 从指令列表中移除 v-each（已处理）
   ;(node as ElementNode).directives = (node as ElementNode).directives.filter(
     d => d !== eachDirective
-  )
+  );
 }
 
 // ================================================================
@@ -113,9 +113,9 @@ export function parseEachExpression(expr: string): EachExpression | null {
   // 匹配 "(item, index) in/of collection" 或 "item in/of collection"
   const match = expr.match(
     /^\s*(?:\((\w+)\s*,\s*(\w+)\)|(\w+))\s+(?:in|of)\s+(\S+)\s*$/
-  )
+  );
 
-  if (!match) return null
+  if (!match) return null;
 
   return {
     // 第 1 组是括号内的 item，第 3 组是无括号的 item
@@ -124,7 +124,7 @@ export function parseEachExpression(expr: string): EachExpression | null {
     index: match[2] || '',
     // 第 4 组是集合表达式
     collection: match[4],
-  }
+  };
 }
 
 // ================================================================
@@ -144,17 +144,17 @@ export function parseEachExpression(expr: string): EachExpression | null {
  */
 export function generateEachCode(expr: EachExpression, node: ElementNode): string {
   // 构建 renderList 调用
-  const collection = wrapContextAccess(expr.collection)
+  const collection = wrapContextAccess(expr.collection);
 
   // 构建迭代器函数参数
   const iteratorArgs = expr.index
     ? `(${expr.item}, ${expr.index})`
-    : `(${expr.item})`
+    : `(${expr.item})`;
 
   // 构建函数体（创建 VNode）
-  const body = `_createVNode('${node.tag}')`
+  const body = `_createVNode('${node.tag}')`;
 
-  return `renderList(${collection}, ${iteratorArgs} => ${body})`
+  return `renderList(${collection}, ${iteratorArgs} => ${body})`;
 }
 
 /**
@@ -166,22 +166,22 @@ export function generateEachCode(expr: EachExpression, node: ElementNode): strin
  * @returns 包装后的表达式
  */
 function wrapContextAccess(expr: string): string {
-  expr = expr.trim()
+  expr = expr.trim();
 
   // 已经是上下文访问形式
   if (expr.startsWith('_ctx.')) {
-    return expr
+    return expr;
   }
 
   // 包含函数调用或复杂表达式，直接返回
   if (expr.includes('(') || expr.includes('=>') || expr.includes('[')) {
-    return expr
+    return expr;
   }
 
   // 简单标识符，添加 _ctx. 前缀
   if (/^\w+(\.\w+)*$/.test(expr)) {
-    return `_ctx.${expr}`
+    return `_ctx.${expr}`;
   }
 
-  return expr
+  return expr;
 }

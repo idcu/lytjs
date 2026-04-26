@@ -3,7 +3,7 @@
  * Props: href, target, type, underline, disabled
  */
 
-import { defineComponent } from '@lytjs/component'
+import { defineComponent } from '@lytjs/component';
 
 export const Link = defineComponent({
   name: 'LytLink',
@@ -35,12 +35,12 @@ export const Link = defineComponent({
   setup(props, { slots }) {
     const handleClick = (e: Event) => {
       if (props.disabled) {
-        e.preventDefault()
-        return
+        e.preventDefault();
+        return;
       }
-    }
+    };
 
-    return { props, handleClick, slots }
+    return { props, handleClick, slots };
   },
 
   template: `
@@ -78,4 +78,4 @@ export const Link = defineComponent({
     .lyt-link--info:hover { color: var(--lyt-color-info); opacity: 0.8; }
     .lyt-link--disabled { color: var(--lyt-color-muted); cursor: not-allowed; pointer-events: none; opacity: 0.5; }
   `,
-})
+});

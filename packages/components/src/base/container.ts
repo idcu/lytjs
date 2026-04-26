@@ -3,7 +3,7 @@
  * Props: maxWidth, padding, center
  */
 
-import { defineComponent } from '@lytjs/component'
+import { defineComponent } from '@lytjs/component';
 
 export const Container = defineComponent({
   name: 'LytContainer',
@@ -28,15 +28,15 @@ export const Container = defineComponent({
       const style: Record<string, string> = {
         maxWidth: props.maxWidth,
         padding: props.padding,
-      }
+      };
       if (props.center) {
-        style.marginLeft = 'auto'
-        style.marginRight = 'auto'
+        style.marginLeft = 'auto';
+        style.marginRight = 'auto';
       }
-      return style
-    }
+      return style;
+    };
 
-    return { containerStyle, slots }
+    return { containerStyle, slots };
   },
 
   template: `
@@ -51,4 +51,4 @@ export const Container = defineComponent({
       width: 100%;
     }
   `,
-})
+});

@@ -47,31 +47,31 @@ export interface SFCDescriptor {
 // ============================================================
 
 /** 匹配 HTML 注释 */
-const COMMENT_RE = /<!--[\s\S]*?-->/g
+const COMMENT_RE = /<!--[\s\S]*?-->/g;
 
 /** 匹配 <template> 块的开始标签 */
-const TEMPLATE_OPEN_RE = /<template(\s[^>]*)?\s*>/
+const TEMPLATE_OPEN_RE = /<template(\s[^>]*)?\s*>/;
 
 /** 匹配 <template> 块的结束标签 */
-const TEMPLATE_CLOSE_RE = /<\/template>/
+const TEMPLATE_CLOSE_RE = /<\/template>/;
 
 /** 匹配 <script> 块的开始标签 */
-const SCRIPT_OPEN_RE = /<script(\s[^>]*)?\s*>/
+const SCRIPT_OPEN_RE = /<script(\s[^>]*)?\s*>/;
 
 /** 匹配 <script> 块的结束标签 */
-const SCRIPT_CLOSE_RE = /<\/script>/
+const SCRIPT_CLOSE_RE = /<\/script>/;
 
 /** 匹配 <style> 块的开始标签（含 scoped 属性） */
-const STYLE_OPEN_RE = /<style(\s[^>]*)?\s*>/
+const STYLE_OPEN_RE = /<style(\s[^>]*)?\s*>/;
 
 /** 匹配 <style> 块的结束标签 */
-const STYLE_CLOSE_RE = /<\/style>/
+const STYLE_CLOSE_RE = /<\/style>/;
 
 /** 匹配 export default { ... } 内容 */
-const EXPORT_DEFAULT_RE = /export\s+default\s*\{([\s\S]*)\}\s*$/
+const EXPORT_DEFAULT_RE = /export\s+default\s*\{([\s\S]*)\}\s*$/;
 
 /** 匹配标签属性 */
-const ATTR_RE = /(\w[\w-]*)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|(\S+)))?/g
+const ATTR_RE = /(\w[\w-]*)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|(\S+)))?/g;
 
 // ============================================================
 // 辅助函数
@@ -84,21 +84,21 @@ const ATTR_RE = /(\w[\w-]*)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|(\S+)))?/g
  * @returns 属性键值对
  */
 function parseAttrs(attrStr: string): Record<string, string> {
-  const attrs: Record<string, string> = {}
-  if (!attrStr || !attrStr.trim()) return attrs
+  const attrs: Record<string, string> = {};
+  if (!attrStr || !attrStr.trim()) return attrs;
 
-  ATTR_RE.lastIndex = 0
-  let match: RegExpExecArray | null
+  ATTR_RE.lastIndex = 0;
+  let match: RegExpExecArray | null;
   while ((match = ATTR_RE.exec(attrStr)) !== null) {
-    const name = match[1]
+    const name = match[1];
     const value = match[2] !== undefined ? match[2]
       : match[3] !== undefined ? match[3]
-      : match[4] !== undefined ? match[4]
-      : ''
-    attrs[name] = value
+        : match[4] !== undefined ? match[4]
+          : '';
+    attrs[name] = value;
   }
 
-  return attrs
+  return attrs;
 }
 
 /**
@@ -118,33 +118,33 @@ function findClosingTag(
   closeTag: string,
   startIndex: number
 ): number {
-  let depth = 1
-  let pos = startIndex
+  let depth = 1;
+  let pos = startIndex;
 
   while (pos < source.length && depth > 0) {
     // 查找下一个开始标签或结束标签
-    const nextOpen = source.slice(pos).search(openTagRe)
-    const nextClose = source.indexOf(closeTag, pos)
+    const nextOpen = source.slice(pos).search(openTagRe);
+    const nextClose = source.indexOf(closeTag, pos);
 
     if (nextClose === -1) {
-      return -1 // 没有找到闭合标签
+      return -1; // 没有找到闭合标签
     }
 
     if (nextOpen !== -1 && nextOpen + pos < nextClose) {
       // 先遇到开始标签，深度 +1
-      depth++
-      pos = nextOpen + pos + 1
+      depth++;
+      pos = nextOpen + pos + 1;
     } else {
       // 先遇到结束标签，深度 -1
-      depth--
+      depth--;
       if (depth === 0) {
-        return nextClose + closeTag.length
+        return nextClose + closeTag.length;
       }
-      pos = nextClose + closeTag.length
+      pos = nextClose + closeTag.length;
     }
   }
 
-  return -1
+  return -1;
 }
 
 /**
@@ -160,26 +160,26 @@ function extractBlock(
   openTagRe: RegExp,
   closeTag: string
 ): { content: string; start: number; end: number; attrs: Record<string, string> } | null {
-  openTagRe.lastIndex = 0
-  const openMatch = openTagRe.exec(source)
-  if (!openMatch) return null
+  openTagRe.lastIndex = 0;
+  const openMatch = openTagRe.exec(source);
+  if (!openMatch) return null;
 
-  const start = openMatch.index
-  const attrStr = openMatch[1] || ''
-  const attrs = parseAttrs(attrStr)
-  const contentStart = openMatch.index + openMatch[0].length
+  const start = openMatch.index;
+  const attrStr = openMatch[1] || '';
+  const attrs = parseAttrs(attrStr);
+  const contentStart = openMatch.index + openMatch[0].length;
 
-  const closeEnd = findClosingTag(source, openTagRe, closeTag, contentStart)
-  if (closeEnd === -1) return null
+  const closeEnd = findClosingTag(source, openTagRe, closeTag, contentStart);
+  if (closeEnd === -1) return null;
 
-  const content = source.slice(contentStart, closeEnd - closeTag.length)
+  const content = source.slice(contentStart, closeEnd - closeTag.length);
 
   return {
     content: content.trim(),
     start,
     end: closeEnd,
     attrs,
-  }
+  };
 }
 
 // ============================================================
@@ -210,41 +210,41 @@ function extractBlock(
  */
 export function parseSFC(source: string, filename = 'anonymous.lyt'): SFCDescriptor {
   // 移除 HTML 注释
-  const cleaned = source.replace(COMMENT_RE, '')
+  const cleaned = source.replace(COMMENT_RE, '');
 
   // 提取 template 块
-  const templateBlock = extractBlock(cleaned, TEMPLATE_OPEN_RE, '</template>')
+  const templateBlock = extractBlock(cleaned, TEMPLATE_OPEN_RE, '</template>');
   const template: SFCBlock | null = templateBlock
     ? {
-        type: 'template',
-        content: templateBlock.content,
-        start: templateBlock.start,
-        end: templateBlock.end,
-        attrs: templateBlock.attrs,
-      }
-    : null
+      type: 'template',
+      content: templateBlock.content,
+      start: templateBlock.start,
+      end: templateBlock.end,
+      attrs: templateBlock.attrs,
+    }
+    : null;
 
   // 提取 script 块
-  const scriptBlock = extractBlock(cleaned, SCRIPT_OPEN_RE, '</script>')
+  const scriptBlock = extractBlock(cleaned, SCRIPT_OPEN_RE, '</script>');
   const script: SFCBlock | null = scriptBlock
     ? {
-        type: 'script',
-        content: scriptBlock.content,
-        start: scriptBlock.start,
-        end: scriptBlock.end,
-        attrs: scriptBlock.attrs,
-      }
-    : null
+      type: 'script',
+      content: scriptBlock.content,
+      start: scriptBlock.start,
+      end: scriptBlock.end,
+      attrs: scriptBlock.attrs,
+    }
+    : null;
 
   // 提取所有 style 块
-  const styles: SFCStyleBlock[] = []
-  let searchSource = cleaned
-  STYLE_OPEN_RE.lastIndex = 0
+  const styles: SFCStyleBlock[] = [];
+  let searchSource = cleaned;
+  STYLE_OPEN_RE.lastIndex = 0;
 
-  // eslint-disable-next-line no-constant-condition
+   
   while (true) {
-    const styleBlock = extractBlock(searchSource, STYLE_OPEN_RE, '</style>')
-    if (!styleBlock) break
+    const styleBlock = extractBlock(searchSource, STYLE_OPEN_RE, '</style>');
+    if (!styleBlock) break;
 
     styles.push({
       type: 'style',
@@ -253,10 +253,10 @@ export function parseSFC(source: string, filename = 'anonymous.lyt'): SFCDescrip
       end: styleBlock.end,
       attrs: styleBlock.attrs,
       scoped: 'scoped' in styleBlock.attrs,
-    })
+    });
 
     // 从已提取块之后继续搜索
-    searchSource = searchSource.slice(styleBlock.end)
+    searchSource = searchSource.slice(styleBlock.end);
   }
 
   return {
@@ -264,7 +264,7 @@ export function parseSFC(source: string, filename = 'anonymous.lyt'): SFCDescrip
     template,
     script,
     styles,
-  }
+  };
 }
 
 /**
@@ -278,7 +278,7 @@ export function parseSFC(source: string, filename = 'anonymous.lyt'): SFCDescrip
  *   // → ' data() { return {} } '
  */
 export function extractExportDefault(scriptContent: string): string | null {
-  EXPORT_DEFAULT_RE.lastIndex = 0
-  const match = EXPORT_DEFAULT_RE.exec(scriptContent)
-  return match ? match[1].trim() : null
+  EXPORT_DEFAULT_RE.lastIndex = 0;
+  const match = EXPORT_DEFAULT_RE.exec(scriptContent);
+  return match ? match[1].trim() : null;
 }

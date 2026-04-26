@@ -5,8 +5,8 @@
  * Slots: default(每个 tab-pane)
  */
 
-import { defineComponent } from '@lytjs/component'
-import { reactive, watch, ref } from '@lytjs/reactivity'
+import { defineComponent } from '@lytjs/component';
+import { reactive, watch, ref } from '@lytjs/reactivity';
 
 export const Tabs = defineComponent({
   name: 'LytTabs',
@@ -30,15 +30,15 @@ export const Tabs = defineComponent({
   setup(props, { emit, slots }) {
     const state = reactive({
       currentKey: props.activeKey,
-    })
+    });
 
-    const tabs = ref<Array<{ key: string | number; label: string; closable?: boolean }>>([])
+    const tabs = ref<Array<{ key: string | number; label: string; closable?: boolean }>>([]);
 
     const parseSlots = () => {
-      const result: Array<{ key: string | number; label: string; closable?: boolean }> = []
+      const result: Array<{ key: string | number; label: string; closable?: boolean }> = [];
       // 从 slot 中解析 tab-pane 信息
       if (slots.default) {
-        const children = slots.default()
+        const children = slots.default();
         if (Array.isArray(children)) {
           children.forEach((child: any) => {
             if (child.props) {
@@ -46,31 +46,31 @@ export const Tabs = defineComponent({
                 key: child.props.tabKey || child.props.key || result.length,
                 label: child.props.tab || child.props.label || '',
                 closable: child.props.closable !== undefined ? child.props.closable : props.closable,
-              })
+              });
             }
-          })
+          });
         }
       }
-      tabs.value = result
-      return result
-    }
+      tabs.value = result;
+      return result;
+    };
 
     const handleTabClick = (key: string | number) => {
-      state.currentKey = key
-      emit('change', key)
-      emit('update:activeKey', key)
-    }
+      state.currentKey = key;
+      emit('change', key);
+      emit('update:activeKey', key);
+    };
 
     const handleTabClose = (key: string | number, e: Event) => {
-      e.stopPropagation()
-      emit('close', key)
-    }
+      e.stopPropagation();
+      emit('close', key);
+    };
 
     watch(() => props.activeKey, (val: any) => {
-      state.currentKey = val
-    })
+      state.currentKey = val;
+    });
 
-    return { state, tabs, parseSlots, handleTabClick, handleTabClose, slots }
+    return { state, tabs, parseSlots, handleTabClick, handleTabClose, slots };
   },
 
   template: `
@@ -157,4 +157,4 @@ export const Tabs = defineComponent({
       padding: 16px 0;
     }
   `,
-})
+});

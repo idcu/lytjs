@@ -3,7 +3,7 @@
  * Props: direction(horizontal/vertical), contentPosition(left/center/right), dashed
  */
 
-import { defineComponent } from '@lytjs/component'
+import { defineComponent } from '@lytjs/component';
 
 export const Divider = defineComponent({
   name: 'LytDivider',
@@ -26,7 +26,7 @@ export const Divider = defineComponent({
   },
 
   setup(props, { slots }) {
-    return { props, slots }
+    return { props, slots };
   },
 
   template: `
@@ -89,4 +89,4 @@ export const Divider = defineComponent({
     .lyt-divider--text-left::before { display: none; }
     .lyt-divider--text-right::after { display: none; }
   `,
-})
+});

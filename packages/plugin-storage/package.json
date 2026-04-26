@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/plugin-storage",
-  "version": "4.0.4",
+  "version": "4.0.5",
   "description": "Lyt.js 本地存储持久化插件 - 自动保存响应式状态到 localStorage/sessionStorage",
   "main": "./src/index.ts",
   "module": "./src/index.ts",

@@ -55,7 +55,7 @@ export interface ComponentInstance {
   update?: () => void
   /** 组件的 subTree（渲染结果 VNode） */
   subTree?: VNode
-  [key: string]: any
+  [key: string]: unknown
 }
 
 /**
@@ -63,16 +63,16 @@ export interface ComponentInstance {
  * 用于跨组件提供全局配置
  */
 export interface AppContext {
-  config?: Record<string, any>
-  provides?: Record<string, any>
-  [key: string]: any
+  config?: Record<string, unknown>
+  provides?: Record<string, unknown>
+  [key: string]: unknown
 }
 
 /**
  * Ref 回调类型
  * 当 VNode 挂载或卸载时触发
  */
-export type RefFn = (el: any) => void
+export type RefFn = (el: unknown) => void
 
 /**
  * VNode — 虚拟节点核心接口
@@ -81,19 +81,19 @@ export type RefFn = (el: any) => void
  */
 export interface VNode {
   /** 节点类型：HTML 标签字符串 | 组件对象 | Fragment Symbol | Text 等 */
-  type: string | object | symbol
+  type: string | object | symbol | Function
 
   /** 节点属性：class, style, 事件, DOM 属性等 */
-  props: Record<string, any> | null
+  props: Record<string, unknown> | null
 
   /** 子节点：文本字符串 | VNode 数组 | 插槽对象 */
-  children: string | VNode[] | Record<string, any> | null
+  children: string | VNode[] | Record<string, unknown> | null
 
   /** 节点的唯一标识，用于列表 diff 时的精确匹配 */
   key: string | number | null
 
   /** ref 回调或 ref 对象，用于获取 DOM 元素或组件实例的引用 */
-  ref: RefFn | { current: any } | null
+  ref: RefFn | { current: unknown } | null
 
   /** 形状标记，描述节点类型和子节点形态的位标记组合 */
   shapeFlag: number
@@ -141,9 +141,9 @@ export interface VNode {
  * @returns 创建的 VNode
  */
 export function createVNode(
-  type: string | object,
-  props: Record<string, any> | null = null,
-  children: string | VNode[] | Record<string, any> | null = null,
+  type: string | object | symbol | Function,
+  props: Record<string, unknown> | null = null,
+  children: string | VNode[] | Record<string, unknown> | null = null,
 ): VNode {
   // 基础形状标记：根据 type 推断节点类型
   let shapeFlag = 0
@@ -157,9 +157,9 @@ export function createVNode(
   } else if (typeof type === 'object' && type !== null) {
     // 对象类型 → 组件
     // 判断是有状态组件还是函数式组件
-    if ((type as any).setup || (type as any).__vccOpts) {
+    if ((type as Record<string, unknown>).setup || (type as Record<string, unknown>).__vccOpts) {
       shapeFlag = ShapeFlags.STATEFUL_COMPONENT
-    } else if ((type as any).render) {
+    } else if ((type as Record<string, unknown>).render) {
       shapeFlag = ShapeFlags.FUNCTIONAL_COMPONENT
     }
   } else if (typeof type === 'function') {
@@ -175,8 +175,8 @@ export function createVNode(
   }
 
   // 提取 key 和 ref
-  const key = props?.key ?? null
-  const ref = props?.ref ?? null
+  const key = (props?.key as string | number | null) ?? null
+  const ref = (props?.ref as RefFn | { current: unknown } | null) ?? null
 
   // 从 props 中移除 key 和 ref（它们不属于 DOM 属性）
   if (props) {
@@ -211,7 +211,7 @@ export function createVNode(
  */
 export function createTextVNode(text: string = ''): VNode {
   return createVNode(
-    Symbol.for('Text') as any,
+    Symbol.for('Text'),
     null,
     text,
   )
@@ -225,7 +225,7 @@ export function createTextVNode(text: string = ''): VNode {
  */
 export function createCommentVNode(text: string = ''): VNode {
   return createVNode(
-    Symbol.for('Comment') as any,
+    Symbol.for('Comment'),
     null,
     text,
   )
@@ -243,7 +243,7 @@ export function createCommentVNode(text: string = ''): VNode {
  */
 export function cloneVNode(
   vnode: VNode,
-  extraProps: Record<string, any> | null = null,
+  extraProps: Record<string, unknown> | null = null,
 ): VNode {
   // 合并 props
   const mergedProps = extraProps
@@ -251,11 +251,11 @@ export function cloneVNode(
     : vnode.props
 
   // 如果 extraProps 中有 key，使用新的 key
-  const key = extraProps?.key ?? vnode.key
-  const ref = extraProps?.ref ?? vnode.ref
+  const key = (extraProps?.key as string | number | null) ?? vnode.key
+  const ref = (extraProps?.ref as RefFn | { current: unknown } | null) ?? vnode.ref
 
   // 从 mergedProps 中移除 key 和 ref
-  const { key: _k, ref: _r, ...cleanProps } = (mergedProps as Record<string, any>)
+  const { key: _k, ref: _r, ...cleanProps } = (mergedProps as Record<string, unknown>)
 
   return {
     type: vnode.type,
@@ -310,7 +310,7 @@ export function isSameVNodeType(n1: VNode, n2: VNode): boolean {
  */
 export function normalizeChildren(
   vnode: VNode,
-  children: string | VNode[] | Record<string, any> | null,
+  children: string | VNode[] | Record<string, unknown> | null,
 ): void {
   if (children === null || children === undefined) {
     return

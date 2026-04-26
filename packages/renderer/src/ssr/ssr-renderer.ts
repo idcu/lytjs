@@ -104,7 +104,7 @@ export interface RenderToStreamOptions {
 const VOID_TAGS = new Set([
   'area', 'base', 'br', 'col', 'embed', 'hr', 'img',
   'input', 'link', 'meta', 'param', 'source', 'track', 'wbr',
-])
+]);
 
 /**
  * HTML 实体转义映射
@@ -116,12 +116,12 @@ const ESCAPE_MAP: Record<string, string> = {
   '>': '&gt;',
   '"': '&quot;',
   "'": '&#39;',
-}
+};
 
 /**
  * 需要转义的 HTML 特殊字符正则
  */
-const ESCAPE_RE = /[&<>"']/g
+const ESCAPE_RE = /[&<>"']/g;
 
 /**
  * ShapeFlags 位标记
@@ -134,10 +134,10 @@ const ShapeFlags = {
   TEXT_CHILDREN: 8,
   ARRAY_CHILDREN: 16,
   SLOTS_CHILDREN: 32,
-}
+};
 
 /** Suspense 边界计数器 */
-let suspenseBoundaryId = 0
+let suspenseBoundaryId = 0;
 
 // ================================================================
 //  HTML 转义工具
@@ -156,7 +156,7 @@ let suspenseBoundaryId = 0
  *   // → '&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;'
  */
 export function escapeHTML(str: string): string {
-  return str.replace(ESCAPE_RE, (ch) => ESCAPE_MAP[ch])
+  return str.replace(ESCAPE_RE, (ch) => ESCAPE_MAP[ch]);
 }
 
 // ================================================================
@@ -184,51 +184,51 @@ export function escapeHTML(str: string): string {
 export function serializeProp(key: string, value: any): string {
   // 事件属性在 SSR 环境下不序列化（客户端注水时绑定）
   if (key.startsWith('on') || key.startsWith('@')) {
-    return ''
+    return '';
   }
 
   // key 和 ref 不序列化（内部属性）
   if (key === 'key' || key === 'ref') {
-    return ''
+    return '';
   }
 
   // 内部属性不序列化
   if (key === '__vccOpts' || key.startsWith('__')) {
-    return ''
+    return '';
   }
 
   // 布尔属性（值为 true 时只输出属性名）
   if (value === true) {
-    return key
+    return key;
   }
 
   // 值为 false 或 null/undefined，不输出
   if (value === false || value === null || value === undefined) {
-    return ''
+    return '';
   }
 
   // class 特殊处理
   if (key === 'class') {
-    return `class="${escapeHTML(normalizeClass(value))}"`
+    return `class="${escapeHTML(normalizeClass(value))}"`;
   }
 
   // style 特殊处理
   if (key === 'style') {
-    return `style="${escapeHTML(normalizeStyle(value))}"`
+    return `style="${escapeHTML(normalizeStyle(value))}"`;
   }
 
   // dangerouslySetInnerHTML 特殊处理（不序列化到属性中，由 renderElementToString 处理）
   if (key === 'dangerouslySetInnerHTML') {
-    return ''
+    return '';
   }
 
   // innerHTML 特殊处理（不序列化到属性中，由 renderElementToString 处理）
   if (key === 'innerHTML') {
-    return ''
+    return '';
   }
 
   // 普通属性
-  return `${key}="${escapeHTML(String(value))}"`
+  return `${key}="${escapeHTML(String(value))}"`;
 }
 
 /**
@@ -244,27 +244,27 @@ export function serializeProp(key: string, value: any): string {
  * @returns 标准化后的 class 字符串
  */
 export function normalizeClass(value: any): string {
-  if (!value) return ''
+  if (!value) return '';
 
   if (typeof value === 'string') {
-    return value
+    return value;
   }
 
   if (Array.isArray(value)) {
-    return value.map(normalizeClass).filter(Boolean).join(' ')
+    return value.map(normalizeClass).filter(Boolean).join(' ');
   }
 
   if (typeof value === 'object') {
-    const classes: string[] = []
+    const classes: string[] = [];
     for (const key in value) {
       if (value[key]) {
-        classes.push(key)
+        classes.push(key);
       }
     }
-    return classes.join(' ')
+    return classes.join(' ');
   }
 
-  return String(value)
+  return String(value);
 }
 
 /**
@@ -278,25 +278,25 @@ export function normalizeClass(value: any): string {
  * @returns 标准化后的 style 字符串
  */
 export function normalizeStyle(value: any): string {
-  if (!value) return ''
+  if (!value) return '';
 
   if (typeof value === 'string') {
-    return value
+    return value;
   }
 
   if (typeof value === 'object') {
-    const styles: string[] = []
+    const styles: string[] = [];
     for (const key in value) {
       if (value[key]) {
         // 将驼峰命名转换为 kebab-case
-        const kebabKey = key.replace(/([A-Z])/g, '-$1').toLowerCase()
-        styles.push(`${kebabKey}: ${value[key]}`)
+        const kebabKey = key.replace(/([A-Z])/g, '-$1').toLowerCase();
+        styles.push(`${kebabKey}: ${value[key]}`);
       }
     }
-    return styles.join('; ')
+    return styles.join('; ');
   }
 
-  return String(value)
+  return String(value);
 }
 
 /**
@@ -308,19 +308,19 @@ export function normalizeStyle(value: any): string {
  * @returns HTML 属性字符串（如 'class="foo" id="bar"'）
  */
 export function serializeProps(props: Record<string, any> | null): string {
-  if (!props) return ''
+  if (!props) return '';
 
-  const attrs: string[] = []
+  const attrs: string[] = [];
 
   for (const key in props) {
-    const value = props[key]
-    const attr = serializeProp(key, value)
+    const value = props[key];
+    const attr = serializeProp(key, value);
     if (attr) {
-      attrs.push(attr)
+      attrs.push(attr);
     }
   }
 
-  return attrs.length > 0 ? ' ' + attrs.join(' ') : ''
+  return attrs.length > 0 ? ' ' + attrs.join(' ') : '';
 }
 
 // ================================================================
@@ -354,7 +354,7 @@ export class StringRenderer {
       tag,
       props: {},
       children: [],
-    }
+    };
   }
 
   /**
@@ -367,7 +367,7 @@ export class StringRenderer {
     return {
       type: 'text',
       value: text,
-    }
+    };
   }
 
   /**
@@ -382,7 +382,7 @@ export class StringRenderer {
     return {
       type: 'comment',
       value: text,
-    } as any
+    } as any;
   }
 
   /**
@@ -395,7 +395,7 @@ export class StringRenderer {
    * @param _ref   参考节点（SSR 中忽略）
    */
   insert(parent: SSRVNode, child: SSRVNode | SSRTextVNode, _ref?: any): void {
-    parent.children.push(child)
+    parent.children.push(child);
   }
 
   /**
@@ -419,7 +419,7 @@ export class StringRenderer {
    *   // → '<div class="app" id="root"><span>Hello</span></div>'
    */
   renderToString(vnode: VNode): string {
-    return renderVNodeToString(vnode)
+    return renderVNodeToString(vnode);
   }
 
   /**
@@ -438,7 +438,7 @@ export class StringRenderer {
    *   res.end()
    */
   async *renderToStream(vnode: VNode): AsyncGenerator<string> {
-    yield* renderVNodeToStream(vnode)
+    yield* renderVNodeToStream(vnode);
   }
 }
 
@@ -465,45 +465,45 @@ export class StringRenderer {
 function renderVNodeToString(vnode: VNode): string {
   // null 或 undefined 节点
   if (vnode === null || vnode === undefined) {
-    return ''
+    return '';
   }
 
-  const { type, props, children } = vnode
+  const { type, props, children } = vnode;
 
   // Fragment 类型 — 只渲染子节点，不生成包裹元素
   if (typeof type === 'symbol' && String(type) === 'Symbol(Fragment)') {
     if (Array.isArray(children)) {
-      return children.map(child => renderVNodeToString(child as VNode)).join('')
+      return children.map(child => renderVNodeToString(child as VNode)).join('');
     }
-    return ''
+    return '';
   }
 
   // 文本类型
   if (typeof type === 'symbol' && String(type).includes('Text')) {
-    return escapeHTML(String(children || ''))
+    return escapeHTML(String(children || ''));
   }
 
   // 注释类型
   if (typeof type === 'symbol' && String(type).includes('Comment')) {
-    return `<!--${String(children || '')}-->`
+    return `<!--${String(children || '')}-->`;
   }
 
   // 字符串类型 → HTML 元素
   if (typeof type === 'string') {
-    return renderElementToString(type, props, children, vnode)
+    return renderElementToString(type, props, children, vnode);
   }
 
   // 对象类型 → 组件
   if (typeof type === 'object' && type !== null) {
-    return renderComponentToString(vnode)
+    return renderComponentToString(vnode);
   }
 
   // 函数类型 → 函数式组件
   if (typeof type === 'function') {
-    return renderComponentToString(vnode)
+    return renderComponentToString(vnode);
   }
 
-  return ''
+  return '';
 }
 
 /**
@@ -519,51 +519,51 @@ function renderElementToString(
   tag: string,
   props: Record<string, any> | null,
   children: any,
-  vnode: VNode,
+  vnode: VNode
 ): string {
   // 序列化属性
-  const propsStr = serializeProps(props)
+  const propsStr = serializeProps(props);
 
   // 自闭合标签
   if (VOID_TAGS.has(tag)) {
-    return `<${tag}${propsStr} />`
+    return `<${tag}${propsStr} />`;
   }
 
   // 处理 dangerouslySetInnerHTML / innerHTML
   if (props && (props.dangerouslySetInnerHTML || props.innerHTML)) {
     const htmlContent = props.dangerouslySetInnerHTML
       ? props.dangerouslySetInnerHTML.__html || props.dangerouslySetInnerHTML
-      : props.innerHTML
-    return `<${tag}${propsStr}>${htmlContent}</${tag}>`
+      : props.innerHTML;
+    return `<${tag}${propsStr}>${htmlContent}</${tag}>`;
   }
 
   // 序列化子节点
-  let childrenStr = ''
+  let childrenStr = '';
 
   // 根据 shapeFlag 判断子节点类型
-  const shapeFlag = vnode.shapeFlag || 0
+  const shapeFlag = vnode.shapeFlag || 0;
 
   if (shapeFlag & ShapeFlags.TEXT_CHILDREN) {
     // 文本子节点
-    childrenStr = escapeHTML(String(children || ''))
+    childrenStr = escapeHTML(String(children || ''));
   } else if (shapeFlag & ShapeFlags.ARRAY_CHILDREN && Array.isArray(children)) {
     // 数组子节点
-    childrenStr = children.map(child => renderVNodeToString(child as VNode)).join('')
+    childrenStr = children.map(child => renderVNodeToString(child as VNode)).join('');
   } else if (shapeFlag & ShapeFlags.SLOTS_CHILDREN && typeof children === 'object' && children !== null) {
     // 插槽子节点 — 渲染默认插槽
-    childrenStr = renderSlotsToString(children)
+    childrenStr = renderSlotsToString(children);
   } else if (typeof children === 'string') {
     // 字符串子节点（无 shapeFlag 时的兜底）
-    childrenStr = escapeHTML(children)
+    childrenStr = escapeHTML(children);
   } else if (Array.isArray(children)) {
     // 数组子节点（无 shapeFlag 时的兜底）
-    childrenStr = children.map(child => renderVNodeToString(child as VNode)).join('')
+    childrenStr = children.map(child => renderVNodeToString(child as VNode)).join('');
   } else if (typeof children === 'number') {
     // 数字子节点
-    childrenStr = escapeHTML(String(children))
+    childrenStr = escapeHTML(String(children));
   }
 
-  return `<${tag}${propsStr}>${childrenStr}</${tag}>`
+  return `<${tag}${propsStr}>${childrenStr}</${tag}>`;
 }
 
 /**
@@ -576,29 +576,29 @@ function renderElementToString(
  * @returns 所有插槽内容的 HTML 字符串拼接
  */
 function renderSlotsToString(slots: Record<string, any>): string {
-  const parts: string[] = []
+  const parts: string[] = [];
 
   for (const slotName in slots) {
-    const slotFn = slots[slotName]
+    const slotFn = slots[slotName];
 
     if (typeof slotFn === 'function') {
       // 调用插槽函数获取 VNode 数组
-      const slotContent = slotFn()
+      const slotContent = slotFn();
       if (Array.isArray(slotContent)) {
-        parts.push(slotContent.map(vnode => renderVNodeToString(vnode as VNode)).join(''))
+        parts.push(slotContent.map(vnode => renderVNodeToString(vnode as VNode)).join(''));
       } else if (slotContent !== null && slotContent !== undefined) {
-        parts.push(renderVNodeToString(slotContent as VNode))
+        parts.push(renderVNodeToString(slotContent as VNode));
       }
     } else if (Array.isArray(slotFn)) {
       // 插槽已经是 VNode 数组
-      parts.push(slotFn.map(vnode => renderVNodeToString(vnode as VNode)).join(''))
+      parts.push(slotFn.map(vnode => renderVNodeToString(vnode as VNode)).join(''));
     } else if (slotFn !== null && slotFn !== undefined) {
       // 插槽是单个 VNode
-      parts.push(renderVNodeToString(slotFn as VNode))
+      parts.push(renderVNodeToString(slotFn as VNode));
     }
   }
 
-  return parts.join('')
+  return parts.join('');
 }
 
 /**
@@ -614,19 +614,19 @@ function renderSlotsToString(slots: Record<string, any>): string {
  * @returns HTML 字符串
  */
 function renderComponentToString(vnode: VNode): string {
-  const component = vnode.type as any
+  const component = vnode.type as any;
 
   // 检查是否为 Island 组件（带 __island 标记）
   if (component && component.__island) {
-    return renderIslandToString(vnode, component)
+    return renderIslandToString(vnode, component);
   }
 
   // 如果组件是函数 → 函数式组件
   if (typeof component === 'function') {
     const subTree = component(vnode.props || {}, {
       slots: vnode.children || {},
-    })
-    return renderVNodeToString(subTree)
+    });
+    return renderVNodeToString(subTree);
   }
 
   // 如果组件是对象
@@ -638,9 +638,9 @@ function renderComponentToString(vnode: VNode): string {
         {
           slots: vnode.children || {},
           emit: () => {}, // SSR 环境下 emit 为空操作
-        },
-      )
-      return renderVNodeToString(subTree)
+        }
+      );
+      return renderVNodeToString(subTree);
     }
 
     // 如果有 setup，尝试调用 setup 获取 render 函数
@@ -648,12 +648,12 @@ function renderComponentToString(vnode: VNode): string {
       const setupResult = component.setup(vnode.props || {}, {
         emit: () => {}, // SSR 环境下 emit 为空操作
         slots: vnode.children || {},
-      })
+      });
 
       // setup 返回渲染函数
       if (typeof setupResult === 'function') {
-        const subTree = setupResult()
-        return renderVNodeToString(subTree)
+        const subTree = setupResult();
+        return renderVNodeToString(subTree);
       }
 
       // setup 返回对象（响应式状态），需要调用 render
@@ -661,19 +661,19 @@ function renderComponentToString(vnode: VNode): string {
         const subTree = component.render(setupResult || {}, {
           slots: vnode.children || {},
           emit: () => {},
-        })
-        return renderVNodeToString(subTree)
+        });
+        return renderVNodeToString(subTree);
       }
     }
   }
 
   // 如果组件实例已有 subTree（已挂载的组件）
   if (vnode.component && vnode.component.subTree) {
-    return renderVNodeToString(vnode.component.subTree)
+    return renderVNodeToString(vnode.component.subTree);
   }
 
   // 兜底：输出空注释节点
-  return '<!---->'
+  return '<!---->';
 }
 
 // ================================================================
@@ -691,46 +691,46 @@ function renderComponentToString(vnode: VNode): string {
  * @returns 完整的 island HTML 字符串
  */
 function renderIslandToString(vnode: VNode, component: any): string {
-  const islandId = component.name || vnode.props?.['data-island-id'] || 'anonymous'
-  const props = vnode.props || {}
-  const hydrateWhen = props['data-hydrate-when'] || component.__hydrateWhen || ''
-  const islandTag = component.__islandTag || 'div'
+  const islandId = component.name || vnode.props?.['data-island-id'] || 'anonymous';
+  const props = vnode.props || {};
+  const hydrateWhen = props['data-hydrate-when'] || component.__hydrateWhen || '';
+  const islandTag = component.__islandTag || 'div';
 
   // 序列化 props（排除 island 内部属性）
-  const islandProps: Record<string, any> = {}
+  const islandProps: Record<string, any> = {};
   for (const key in props) {
-    if (key === 'data-hydrate-when' || key === 'data-island-id') continue
-    islandProps[key] = props[key]
+    if (key === 'data-hydrate-when' || key === 'data-island-id') continue;
+    islandProps[key] = props[key];
   }
 
-  const propsJSON = JSON.stringify(islandProps)
-  const propsAttr = escapeHTML(propsJSON)
+  const propsJSON = JSON.stringify(islandProps);
+  const propsAttr = escapeHTML(propsJSON);
 
   // 渲染组件内容
-  let content = ''
+  let content = '';
   if (typeof component.render === 'function') {
     const subTree = component.render(props, {
       slots: vnode.children || {},
       emit: () => {},
-    })
-    content = renderVNodeToString(subTree)
+    });
+    content = renderVNodeToString(subTree);
   } else if (typeof component === 'function') {
     const subTree = component(props, {
       slots: vnode.children || {},
-    })
-    content = renderVNodeToString(subTree)
+    });
+    content = renderVNodeToString(subTree);
   }
 
   // 构建 data-hydrate-when 属性
-  const whenAttr = hydrateWhen ? ` data-hydrate-when="${escapeHTML(hydrateWhen)}"` : ''
+  const whenAttr = hydrateWhen ? ` data-hydrate-when="${escapeHTML(hydrateWhen)}"` : '';
 
   // 构建 island HTML
-  const html = `<${islandTag} data-hydrate="${escapeHTML(islandId)}" data-props="${propsAttr}"${whenAttr}>${content}</${islandTag}>`
+  const html = `<${islandTag} data-hydrate="${escapeHTML(islandId)}" data-props="${propsAttr}"${whenAttr}>${content}</${islandTag}>`;
 
   // 构建 props script 标签
-  const scriptTag = `<script type="application/json" data-hydrate-props="${escapeHTML(islandId)}">${propsJSON}</script>`
+  const scriptTag = `<script type="application/json" data-hydrate-props="${escapeHTML(islandId)}">${propsJSON}</script>`;
 
-  return html + scriptTag
+  return html + scriptTag;
 }
 
 // ================================================================
@@ -749,43 +749,43 @@ function renderIslandToString(vnode: VNode, component: any): string {
 async function* renderVNodeToStream(vnode: VNode): AsyncGenerator<string> {
   // null 或 undefined 节点
   if (vnode === null || vnode === undefined) {
-    return
+    return;
   }
 
-  const { type, props, children } = vnode
+  const { type, props, children } = vnode;
 
   // Fragment 类型
   if (typeof type === 'symbol' && String(type) === 'Symbol(Fragment)') {
     if (Array.isArray(children)) {
       for (const child of children) {
-        yield* renderVNodeToStream(child as VNode)
+        yield* renderVNodeToStream(child as VNode);
       }
     }
-    return
+    return;
   }
 
   // 文本类型
   if (typeof type === 'symbol' && String(type).includes('Text')) {
-    yield escapeHTML(String(children || ''))
-    return
+    yield escapeHTML(String(children || ''));
+    return;
   }
 
   // 注释类型
   if (typeof type === 'symbol' && String(type).includes('Comment')) {
-    yield `<!--${String(children || '')}-->`
-    return
+    yield `<!--${String(children || '')}-->`;
+    return;
   }
 
   // 字符串类型 → HTML 元素
   if (typeof type === 'string') {
-    yield* renderElementToStream(type, props, children, vnode)
-    return
+    yield* renderElementToStream(type, props, children, vnode);
+    return;
   }
 
   // 对象/函数类型 → 组件
   if (typeof type === 'object' || typeof type === 'function') {
-    yield renderComponentToString(vnode)
-    return
+    yield renderComponentToString(vnode);
+    return;
   }
 }
 
@@ -807,52 +807,52 @@ async function* renderElementToStream(
   tag: string,
   props: Record<string, any> | null,
   children: any,
-  vnode: VNode,
+  vnode: VNode
 ): AsyncGenerator<string> {
   // 序列化属性
-  const propsStr = serializeProps(props)
+  const propsStr = serializeProps(props);
 
   // 自闭合标签
   if (VOID_TAGS.has(tag)) {
-    yield `<${tag}${propsStr} />`
-    return
+    yield `<${tag}${propsStr} />`;
+    return;
   }
 
   // 处理 dangerouslySetInnerHTML / innerHTML
   if (props && (props.dangerouslySetInnerHTML || props.innerHTML)) {
     const htmlContent = props.dangerouslySetInnerHTML
       ? props.dangerouslySetInnerHTML.__html || props.dangerouslySetInnerHTML
-      : props.innerHTML
-    yield `<${tag}${propsStr}>${htmlContent}</${tag}>`
-    return
+      : props.innerHTML;
+    yield `<${tag}${propsStr}>${htmlContent}</${tag}>`;
+    return;
   }
 
   // 输出开始标签
-  yield `<${tag}${propsStr}>`
+  yield `<${tag}${propsStr}>`;
 
   // 输出子节点
-  const shapeFlag = vnode.shapeFlag || 0
+  const shapeFlag = vnode.shapeFlag || 0;
 
   if (shapeFlag & ShapeFlags.TEXT_CHILDREN) {
-    yield escapeHTML(String(children || ''))
+    yield escapeHTML(String(children || ''));
   } else if (shapeFlag & ShapeFlags.ARRAY_CHILDREN && Array.isArray(children)) {
     for (const child of children) {
-      yield* renderVNodeToStream(child as VNode)
+      yield* renderVNodeToStream(child as VNode);
     }
   } else if (shapeFlag & ShapeFlags.SLOTS_CHILDREN && typeof children === 'object' && children !== null) {
-    yield renderSlotsToString(children)
+    yield renderSlotsToString(children);
   } else if (typeof children === 'string') {
-    yield escapeHTML(children)
+    yield escapeHTML(children);
   } else if (Array.isArray(children)) {
     for (const child of children) {
-      yield* renderVNodeToStream(child as VNode)
+      yield* renderVNodeToStream(child as VNode);
     }
   } else if (typeof children === 'number') {
-    yield escapeHTML(String(children))
+    yield escapeHTML(String(children));
   }
 
   // 输出闭合标签
-  yield `</${tag}>`
+  yield `</${tag}>`;
 }
 
 // ================================================================
@@ -872,7 +872,7 @@ async function* renderElementToStream(
  *   // → '<div>Hello</div>'
  */
 export function renderToString(vnode: VNode): string {
-  return renderVNodeToString(vnode)
+  return renderVNodeToString(vnode);
 }
 
 /**
@@ -898,27 +898,27 @@ export function renderToString(vnode: VNode): string {
  */
 export function renderToStream(
   vnode: VNode,
-  options?: RenderToStreamOptions,
+  options?: RenderToStreamOptions
 ): ReadableStream<string> {
-  const idPrefix = options?.suspenseIdPrefix || 'suspense'
+  const idPrefix = options?.suspenseIdPrefix || 'suspense';
 
   // 使用异步生成器创建 ReadableStream
-  const generator = createStreamGenerator(vnode, idPrefix)
+  const generator = createStreamGenerator(vnode, idPrefix);
 
   return new ReadableStream<string>({
     async pull(controller) {
-      const { value, done } = await generator.next()
+      const { value, done } = await generator.next();
       if (done) {
-        controller.close()
+        controller.close();
       } else {
-        controller.enqueue(value)
+        controller.enqueue(value);
       }
     },
 
     async cancel() {
-      await generator.return(undefined)
+      await generator.return(undefined);
     },
-  })
+  });
 }
 
 /**
@@ -939,10 +939,10 @@ export function renderToStream(
  */
 export async function* renderToStreamGenerator(
   vnode: VNode,
-  options?: RenderToStreamOptions,
+  options?: RenderToStreamOptions
 ): AsyncGenerator<string> {
-  const idPrefix = options?.suspenseIdPrefix || 'suspense'
-  yield* createStreamGenerator(vnode, idPrefix)
+  const idPrefix = options?.suspenseIdPrefix || 'suspense';
+  yield* createStreamGenerator(vnode, idPrefix);
 }
 
 /**
@@ -954,67 +954,67 @@ export async function* renderToStreamGenerator(
  */
 async function* createStreamGenerator(
   vnode: VNode,
-  idPrefix: string,
+  idPrefix: string
 ): AsyncGenerator<string> {
   if (vnode === null || vnode === undefined) {
-    return
+    return;
   }
 
-  const { type, props, children } = vnode
+  const { type, props, children } = vnode;
 
   // Fragment 类型
   if (typeof type === 'symbol' && String(type) === 'Symbol(Fragment)') {
     if (Array.isArray(children)) {
       for (const child of children) {
-        yield* createStreamGenerator(child as VNode, idPrefix)
+        yield* createStreamGenerator(child as VNode, idPrefix);
       }
     }
-    return
+    return;
   }
 
   // 文本类型
   if (typeof type === 'symbol' && String(type).includes('Text')) {
-    yield escapeHTML(String(children || ''))
-    return
+    yield escapeHTML(String(children || ''));
+    return;
   }
 
   // 注释类型
   if (typeof type === 'symbol' && String(type).includes('Comment')) {
-    yield `<!--${String(children || '')}-->`
-    return
+    yield `<!--${String(children || '')}-->`;
+    return;
   }
 
   // 字符串类型 → HTML 元素
   if (typeof type === 'string') {
-    yield* createStreamElement(type, props, children, vnode, idPrefix)
-    return
+    yield* createStreamElement(type, props, children, vnode, idPrefix);
+    return;
   }
 
   // 组件类型 → 检查是否为 Suspense 组件
   if (typeof type === 'object' && type !== null) {
-    const component = type as any
+    const component = type as any;
 
     // 检测 Suspense 组件
     if (component.name === 'Suspense' || component._isSuspense) {
-      yield* renderSuspenseBoundary(vnode, idPrefix)
-      return
+      yield* renderSuspenseBoundary(vnode, idPrefix);
+      return;
     }
 
     // 检测异步组件
     if (component._isAsyncComponent || component.__asyncSetup) {
-      yield* renderAsyncComponent(vnode, idPrefix)
-      return
+      yield* renderAsyncComponent(vnode, idPrefix);
+      return;
     }
 
     // 普通组件 → 同步渲染
-    yield renderComponentToString(vnode)
-    return
+    yield renderComponentToString(vnode);
+    return;
   }
 
   // 函数类型 → 函数式组件
   if (typeof type === 'function') {
-    yield renderComponentToString(vnode)
-    return
+    yield renderComponentToString(vnode);
+    return;
   }
 }
 
@@ -1033,51 +1033,51 @@ async function* createStreamElement(
   props: Record<string, any> | null,
   children: any,
   vnode: VNode,
-  idPrefix: string,
+  idPrefix: string
 ): AsyncGenerator<string> {
-  const propsStr = serializeProps(props)
+  const propsStr = serializeProps(props);
 
   // 自闭合标签
   if (VOID_TAGS.has(tag)) {
-    yield `<${tag}${propsStr} />`
-    return
+    yield `<${tag}${propsStr} />`;
+    return;
   }
 
   // 处理 dangerouslySetInnerHTML / innerHTML
   if (props && (props.dangerouslySetInnerHTML || props.innerHTML)) {
     const htmlContent = props.dangerouslySetInnerHTML
       ? props.dangerouslySetInnerHTML.__html || props.dangerouslySetInnerHTML
-      : props.innerHTML
-    yield `<${tag}${propsStr}>${htmlContent}</${tag}>`
-    return
+      : props.innerHTML;
+    yield `<${tag}${propsStr}>${htmlContent}</${tag}>`;
+    return;
   }
 
   // 输出开始标签
-  yield `<${tag}${propsStr}>`
+  yield `<${tag}${propsStr}>`;
 
   // 输出子节点
-  const shapeFlag = vnode.shapeFlag || 0
+  const shapeFlag = vnode.shapeFlag || 0;
 
   if (shapeFlag & ShapeFlags.TEXT_CHILDREN) {
-    yield escapeHTML(String(children || ''))
+    yield escapeHTML(String(children || ''));
   } else if (shapeFlag & ShapeFlags.ARRAY_CHILDREN && Array.isArray(children)) {
     for (const child of children) {
-      yield* createStreamGenerator(child as VNode, idPrefix)
+      yield* createStreamGenerator(child as VNode, idPrefix);
     }
   } else if (shapeFlag & ShapeFlags.SLOTS_CHILDREN && typeof children === 'object' && children !== null) {
-    yield renderSlotsToString(children)
+    yield renderSlotsToString(children);
   } else if (typeof children === 'string') {
-    yield escapeHTML(children)
+    yield escapeHTML(children);
   } else if (Array.isArray(children)) {
     for (const child of children) {
-      yield* createStreamGenerator(child as VNode, idPrefix)
+      yield* createStreamGenerator(child as VNode, idPrefix);
     }
   } else if (typeof children === 'number') {
-    yield escapeHTML(String(children))
+    yield escapeHTML(String(children));
   }
 
   // 输出闭合标签
-  yield `</${tag}>`
+  yield `</${tag}>`;
 }
 
 /**
@@ -1095,82 +1095,81 @@ async function* createStreamElement(
  */
 async function* renderSuspenseBoundary(
   vnode: VNode,
-  idPrefix: string,
+  idPrefix: string
 ): AsyncGenerator<string> {
-  const id = `${idPrefix}-${suspenseBoundaryId++}`
-  const component = vnode.type as any
-  const props = vnode.props || {}
+  const id = `${idPrefix}-${suspenseBoundaryId++}`;
+  const props = vnode.props || {};
 
   // 获取 fallback 内容
-  const fallback = props.fallback
-  let fallbackHtml = ''
+  const fallback = props.fallback;
+  let fallbackHtml = '';
 
   if (fallback) {
     // fallback 可能是 VNode 或组件
     if (typeof fallback === 'object' && fallback !== null) {
-      fallbackHtml = renderVNodeToString(fallback as VNode)
+      fallbackHtml = renderVNodeToString(fallback as VNode);
     } else if (typeof fallback === 'string') {
-      fallbackHtml = fallback
+      fallbackHtml = fallback;
     }
   }
 
   // 获取子组件（default slot）
-  const children = vnode.children
-  let childVNodes: VNode[] = []
+  const children = vnode.children;
+  let childVNodes: VNode[] = [];
 
   if (typeof children === 'object' && children !== null) {
     if (Array.isArray(children)) {
-      childVNodes = children as VNode[]
+      childVNodes = children as VNode[];
     } else if (typeof (children as any).default === 'function') {
-      const slotResult = (children as any).default()
+      const slotResult = (children as any).default();
       if (Array.isArray(slotResult)) {
-        childVNodes = slotResult
+        childVNodes = slotResult;
       } else if (slotResult !== null && slotResult !== undefined) {
-        childVNodes = [slotResult]
+        childVNodes = [slotResult];
       }
     }
   }
 
   // 收集异步 Promise
-  const asyncPromises: Promise<void>[] = []
+  const asyncPromises: Promise<void>[] = [];
 
   function collectAsyncPromises(vnodes: VNode[]) {
     for (const child of vnodes) {
-      if (child === null || child === undefined) continue
-      const childType = child.type as any
+      if (child === null || child === undefined) continue;
+      const childType = child.type as any;
       if (childType && (childType._isAsyncComponent || childType.__asyncSetup || child.__asyncSetup)) {
-        const promise = child.__asyncPromise || childType.__asyncPromise
+        const promise = child.__asyncPromise || childType.__asyncPromise;
         if (promise) {
-          asyncPromises.push(promise.then(() => {}))
+          asyncPromises.push(promise.then(() => {}));
         }
       }
     }
   }
 
-  collectAsyncPromises(childVNodes)
+  collectAsyncPromises(childVNodes);
 
   // 如果没有异步子组件，直接渲染真实内容
   if (asyncPromises.length === 0) {
     for (const child of childVNodes) {
-      yield* createStreamGenerator(child, idPrefix)
+      yield* createStreamGenerator(child, idPrefix);
     }
-    return
+    return;
   }
 
   // 有异步子组件：先输出 fallback，再等待解析后输出真实内容
   // 1. 输出 fallback 占位
-  yield `<!--${id}-fallback-->`
-  yield fallbackHtml
+  yield `<!--${id}-fallback-->`;
+  yield fallbackHtml;
 
   // 2. 等待所有异步子组件解析
-  await Promise.all(asyncPromises)
+  await Promise.all(asyncPromises);
 
   // 3. 输出真实内容
-  yield `<!--${id}-resolved-->`
+  yield `<!--${id}-resolved-->`;
   for (const child of childVNodes) {
-    yield* createStreamGenerator(child, idPrefix)
+    yield* createStreamGenerator(child, idPrefix);
   }
-  yield `<!--/${id}-->`
+  yield `<!--/${id}-->`;
 }
 
 /**
@@ -1182,23 +1181,23 @@ async function* renderSuspenseBoundary(
  */
 async function* renderAsyncComponent(
   vnode: VNode,
-  idPrefix: string,
+  _idPrefix: string
 ): AsyncGenerator<string> {
-  const component = vnode.type as any
-  const promise = vnode.__asyncPromise || component.__asyncPromise
+  const component = vnode.type as any;
+  const promise = vnode.__asyncPromise || component.__asyncPromise;
 
   if (promise) {
     try {
-      await promise
+      await promise;
     } catch {
       // 异步组件加载失败，输出空注释
-      yield '<!--async-component-error-->'
-      return
+      yield '<!--async-component-error-->';
+      return;
     }
   }
 
   // 异步组件解析完成后，渲染真实内容
-  yield renderComponentToString(vnode)
+  yield renderComponentToString(vnode);
 }
 
 // ================================================================
@@ -1206,4 +1205,4 @@ async function* renderAsyncComponent(
 // ================================================================
 
 /** 默认渲染器实例 */
-export const ssrRenderer = new StringRenderer()
+export const ssrRenderer = new StringRenderer();

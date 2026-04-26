@@ -25,8 +25,8 @@
  *   → { 'onClick': ($event) => { $event.stopPropagation(); $event.preventDefault(); _ctx.handleSubmit($event) } }
  */
 
-import type { ASTNode, ElementNode, DirectiveNode } from '../ast/nodes'
-import type { TransformContext } from '../transform/transform'
+import type { ASTNode, ElementNode, DirectiveNode } from '../ast/nodes';
+import type { TransformContext } from '../transform/transform';
 
 // ================================================================
 //  类型定义
@@ -65,16 +65,16 @@ export interface OnTransformResult {
 /** v-on 支持的事件修饰符集合 */
 const EVENT_MODIFIERS = new Set([
   'stop', 'prevent', 'capture', 'once', 'self', 'passive',
-])
+]);
 
 /** 需要特殊键名的事件修饰符 */
 const KEY_MODIFIERS = new Set([
   'enter', 'tab', 'delete', 'esc', 'space', 'up', 'down',
   'left', 'right', 'page-up', 'page-down', 'home', 'end',
-])
+]);
 
 /** 鼠标按钮修饰符 */
-const MOUSE_MODIFIERS = new Set(['left', 'middle', 'right'])
+const MOUSE_MODIFIERS = new Set(['left', 'middle', 'right']);
 
 // ================================================================
 //  事件名映射
@@ -107,7 +107,7 @@ const EVENT_NAME_MAP: Record<string, string> = {
   'touchstart': 'onTouchStart',
   'touchend': 'onTouchEnd',
   'touchmove': 'onTouchMove',
-}
+};
 
 // ================================================================
 //  转换函数
@@ -128,31 +128,31 @@ const EVENT_NAME_MAP: Record<string, string> = {
  * @param context 转换上下文
  */
 export function transformOn(node: ASTNode, context: TransformContext): void {
-  if (node.type !== 'Element') return
+  if (node.type !== 'Element') return;
 
   // 查找所有 v-on 指令
-  const onDirectives = (node as ElementNode).directives.filter(d => d.name === 'on')
-  if (onDirectives.length === 0) return
+  const onDirectives = (node as ElementNode).directives.filter(d => d.name === 'on');
+  if (onDirectives.length === 0) return;
 
-  const events: EventInfo[] = []
+  const events: EventInfo[] = [];
 
   for (const on of onDirectives) {
     // 解析事件信息
-    const eventInfo = parseEventDirective(on)
+    const eventInfo = parseEventDirective(on);
 
     if (eventInfo) {
-      events.push(eventInfo)
+      events.push(eventInfo);
     }
   }
 
   // 生成事件绑定代码
-  const code = generateEventCode(events)
+  const code = generateEventCode(events);
 
   // 将转换结果存储在节点上
   Object.assign(node, {
     events,
     eventCode: code,
-  })
+  });
 
   // 收集辅助函数
   context.root.helpers.add('createEventHandler')
@@ -160,7 +160,7 @@ export function transformOn(node: ASTNode, context: TransformContext): void {
   // 从指令列表中移除所有 v-on（已处理）
   ;(node as ElementNode).directives = (node as ElementNode).directives.filter(
     d => d.name !== 'on'
-  )
+  );
 }
 
 // ================================================================
@@ -176,29 +176,29 @@ export function transformOn(node: ASTNode, context: TransformContext): void {
  * @returns 事件信息，解析失败时返回 null
  */
 export function parseEventDirective(directive: DirectiveNode): EventInfo | null {
-  const rawName = directive.arg
+  const rawName = directive.arg;
   if (!rawName) {
-    console.warn('[lyt] v-on 指令缺少事件名')
-    return null
+    console.warn('[lyt] v-on 指令缺少事件名');
+    return null;
   }
 
   // 从原始名称中分离事件名和修饰符
   // 例如 "click.stop.prevent" → 事件名 "click"，修饰符 ["stop", "prevent"]
-  const dotIndex = rawName.indexOf('.')
-  let eventName = rawName
-  const modifiers: string[] = []
+  const dotIndex = rawName.indexOf('.');
+  let eventName = rawName;
+  const modifiers: string[] = [];
 
   if (dotIndex !== -1) {
-    eventName = rawName.slice(0, dotIndex)
-    const modifierStr = rawName.slice(dotIndex + 1)
-    modifiers.push(...modifierStr.split('.'))
+    eventName = rawName.slice(0, dotIndex);
+    const modifierStr = rawName.slice(dotIndex + 1);
+    modifiers.push(...modifierStr.split('.'));
   }
 
   // 合并指令节点上的修饰符
   if (directive.modifiers) {
     for (const mod of directive.modifiers) {
       if (!modifiers.includes(mod)) {
-        modifiers.push(mod)
+        modifiers.push(mod);
       }
     }
   }
@@ -210,17 +210,17 @@ export function parseEventDirective(directive: DirectiveNode): EventInfo | null 
       !KEY_MODIFIERS.has(mod) &&
       !MOUSE_MODIFIERS.has(mod)
     ) {
-      console.warn(`[lyt] 未知的事件修饰符: "${mod}"`)
+      console.warn(`[lyt] 未知的事件修饰符: "${mod}"`);
     }
   }
 
   // 规范化事件名
-  const normalizedKey = normalizeEventName(eventName)
+  const normalizedKey = normalizeEventName(eventName);
 
   // 解析特殊修饰符
-  const capture = modifiers.includes('capture')
-  const once = modifiers.includes('once')
-  const passive = modifiers.includes('passive')
+  const capture = modifiers.includes('capture');
+  const once = modifiers.includes('once');
+  const passive = modifiers.includes('passive');
 
   return {
     name: eventName,
@@ -230,7 +230,7 @@ export function parseEventDirective(directive: DirectiveNode): EventInfo | null 
     capture,
     once,
     passive,
-  }
+  };
 }
 
 /**
@@ -247,12 +247,12 @@ export function parseEventDirective(directive: DirectiveNode): EventInfo | null 
 export function normalizeEventName(name: string): string {
   // 检查预定义映射
   if (EVENT_NAME_MAP[name]) {
-    return EVENT_NAME_MAP[name]
+    return EVENT_NAME_MAP[name];
   }
 
   // 通用转换：将 kebab-case 转换为 camelCase，并添加 on 前缀
-  const camelName = name.replace(/-([a-z])/g, (_, c) => c.toUpperCase())
-  return `on${camelName.charAt(0).toUpperCase()}${camelName.slice(1)}`
+  const camelName = name.replace(/-([a-z])/g, (_, c) => c.toUpperCase());
+  return `on${camelName.charAt(0).toUpperCase()}${camelName.slice(1)}`;
 }
 
 // ================================================================
@@ -269,14 +269,14 @@ export function normalizeEventName(name: string): string {
  * @returns 生成的代码字符串
  */
 export function generateEventCode(events: EventInfo[]): string {
-  const parts: string[] = []
+  const parts: string[] = [];
 
   for (const event of events) {
-    const handler = generateEventHandler(event)
-    parts.push(`'${event.key}': ${handler}`)
+    const handler = generateEventHandler(event);
+    parts.push(`'${event.key}': ${handler}`);
   }
 
-  return parts.length > 0 ? `{ ${parts.join(', ')} }` : ''
+  return parts.length > 0 ? `{ ${parts.join(', ')} }` : '';
 }
 
 /**
@@ -291,41 +291,41 @@ export function generateEventCode(events: EventInfo[]): string {
  * @returns 事件处理函数代码
  */
 export function generateEventHandler(event: EventInfo): string {
-  const handler = wrapContextAccess(event.value)
-  const modifiers = event.modifiers
+  const handler = wrapContextAccess(event.value);
+  const modifiers = event.modifiers;
 
   // 没有修饰符，直接返回处理函数
   if (modifiers.length === 0) {
-    return handler
+    return handler;
   }
 
   // 收集修饰符对应的代码片段
-  const modifierCodes: string[] = []
+  const modifierCodes: string[] = [];
 
   for (const mod of modifiers) {
     switch (mod) {
       case 'stop':
-        modifierCodes.push('$event.stopPropagation()')
-        break
+        modifierCodes.push('$event.stopPropagation()');
+        break;
       case 'prevent':
-        modifierCodes.push('$event.preventDefault()')
-        break
+        modifierCodes.push('$event.preventDefault()');
+        break;
       case 'self':
         // .self 需要条件判断，特殊处理
-        modifierCodes.push('if ($event.target !== $event.currentTarget) return')
-        break
+        modifierCodes.push('if ($event.target !== $event.currentTarget) return');
+        break;
       // capture、once、passive 在 addEventListener 选项中处理，不在函数体中
     }
   }
 
   // 如果没有需要生成代码的修饰符（只有 capture/once/passive）
   if (modifierCodes.length === 0) {
-    return handler
+    return handler;
   }
 
   // 生成包装函数
-  const body = modifierCodes.join('; ') + '; ' + handler + '($event)'
-  return `($event) => { ${body} }`
+  const body = modifierCodes.join('; ') + '; ' + handler + '($event)';
+  return `($event) => { ${body} }`;
 }
 
 // ================================================================
@@ -339,19 +339,19 @@ export function generateEventHandler(event: EventInfo): string {
  * @returns 包装后的表达式
  */
 function wrapContextAccess(expr: string): string {
-  expr = expr.trim()
+  expr = expr.trim();
 
   if (expr.startsWith('_ctx.')) {
-    return expr
+    return expr;
   }
 
   if (expr.includes('(') || expr.includes('=>') || expr.includes('[')) {
-    return expr
+    return expr;
   }
 
   if (/^\w+(\.\w+)*$/.test(expr)) {
-    return `_ctx.${expr}`
+    return `_ctx.${expr}`;
   }
 
-  return expr
+  return expr;
 }

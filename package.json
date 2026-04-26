@@ -1,6 +1,6 @@
 {
   "name": "lyt",
-  "version": "4.0.4",
+  "version": "4.0.5",
   "type": "module",
   "private": true,
   "description": "Lyt.js - 轻写轻跑，所见即代码",
@@ -12,8 +12,8 @@
   },
   "scripts": {
     "build": "bash scripts/build-all.sh",
-    "test": "npx tsx test-runner.ts",
-    "test:coverage": "c8 --reporter=text --reporter=html --reporter=lcov npx tsx test-runner.ts",
+    "test": "npx tsx tests/test-runner.ts",
+    "test:coverage": "c8 --reporter=text --reporter=html --reporter=lcov npx tsx tests/test-runner.ts",
     "lint": "eslint packages/*/src/**/*.ts --max-warnings 100",
     "lint:fix": "eslint packages/*/src/**/*.ts --fix --max-warnings 100",
     "benchmark": "npx tsx benchmarks/reactivity.bench.js",
@@ -33,16 +33,19 @@
     "node": ">=18.0.0"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@types/node": "25.6.0",
-    "@typescript-eslint/parser": "8.58.2",
+    "@typescript-eslint/eslint-plugin": "^8.59.0",
+    "@typescript-eslint/parser": "8.59.0",
     "archiver": "7.0.1",
     "c8": "11.0.0",
     "esbuild": "^0.28.0",
-    "eslint": "8.57.1",
+    "eslint": "10.2.1",
     "get-tsconfig": "4.14.0",
     "jsdom": "29.0.2",
     "tsx": "^4.19.0",
-    "typescript": "^6.0.2"
+    "typescript": "^6.0.2",
+    "typescript-eslint": "^8.59.0"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
