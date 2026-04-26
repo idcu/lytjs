@@ -3,7 +3,16 @@
  * 运行方式: node --experimental-vm-modules benchmarks/reactivity.bench.js
  */
 
-import { reactive, ref, computed, watch, watchEffect, signal } from '../packages/reactivity/src/index.ts'
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+import { createRequire } from 'node:module';
+const require = createRequire(import.meta.url);
+
+const { reactive, ref, computed, watch, watchEffect, signal } = require('../packages/reactivity/dist/index.cjs');
 
 function bench(name, fn, iterations = 10000) {
   // 预热

@@ -3,8 +3,9 @@
   <img src="https://img.shields.io/npm/l/@lytjs/core?style=flat-square" alt="license">
   <img src="https://img.shields.io/node/v/@lytjs/cli?style=flat-square&color=339933" alt="node version">
   <img src="https://img.shields.io/badge/size-34.56KB%20gzip-42b883?style=flat-square" alt="bundle size">
-  <img src="https://img.shields.io/badge/tests-1353%2B-blue?style=flat-square" alt="tests">
+  <img src="https://img.shields.io/badge/tests-2815%2B-blue?style=flat-square" alt="tests">
   <img src="https://img.shields.io/badge/packages-23-orange?style=flat-square" alt="packages">
+  <img src="https://img.shields.io/badge/benchmark-ready-42b883?style=flat-square" alt="benchmark">
 </p>
 
 <h1 align="center">Lyt.js</h1>
@@ -60,10 +61,66 @@
 
 ## 测试覆盖
 
-- ✅ **1353+** 个测试用例
+- ✅ **2815+** 个测试用例
 - ✅ 核心模块测试覆盖率 >95%
 - ✅ 包含边界条件和错误处理测试
 - ✅ CI/CD 自动测试集成
+
+## 性能基准测试
+
+Lyt.js 提供完整的性能基准测试，包括：
+
+- **响应式系统基准测试**: reactive/ref/signal 的创建和更新性能
+- **VDOM 基准测试**: VNode 创建和 diff 性能
+- **js-framework-benchmark 集成**: 与主流框架的性能对比
+
+### 运行基准测试
+
+```bash
+# 响应式系统基准测试
+npm run benchmark
+
+# VDOM 性能基准测试
+node benchmarks/vdom.bench.js
+
+# js-framework-benchmark
+cd benchmarks/js-framework-benchmark
+npm run build
+```
+
+### 基准测试结果（2026-04-26）
+
+#### 响应式系统
+| 测试项 | 性能 |
+|--------|------|
+| `reactive()` 创建 | 4,210,838 ops/sec |
+| `ref()` 创建 | 1,085,131 ops/sec |
+| `reactive` 读取 | 11,432,021 ops/sec |
+| `reactive` 写入 | 1,884,009 ops/sec |
+| `computed` 求值 | 301,863 ops/sec |
+
+#### VDOM 性能
+| 测试项 | 平均耗时 |
+|--------|---------|
+| VNode 创建 (1000 个节点) | 0.0914 ms |
+| VNode 创建 (10000 个节点) | 0.6622 ms |
+| Diff 全量对比 (1000 节点, 无变化) | 0.1492 ms |
+| Diff 全量对比 (1000 节点, 全部变化) | 0.1419 ms |
+| 列表 Diff (1000 项, 头部插入 1 项) | 0.0545 ms |
+| 列表 Diff (1000 项, 反转顺序) | 0.1106 ms |
+| PatchFlag TEXT 精确更新 | 0.0005 ms |
+
+#### Vapor Mode
+| 测试项 | 性能 |
+|--------|------|
+| 简单 DOM 元素创建 | 20,959,580 ops/sec |
+| Signal 更新操作 | 8,727,839 ops/sec |
+| Vapor 模式 - 直接属性更新 | 52,866,627 ops/sec |
+
+#### 其他
+| 项目 | 结果 |
+|------|------|
+| js-framework-benchmark IIFE bundle | 8.9 KB |
 
 ## 快速开始
 

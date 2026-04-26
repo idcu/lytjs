@@ -14,8 +14,6 @@
  *   suite.print();
  */
 
-'use strict';
-
 // ============================================================
 // BenchmarkResult — 单个测试的结果
 // ============================================================
@@ -255,4 +253,4 @@ class BenchmarkSuite {
 // 导出
 // ============================================================
 
-module.exports = { BenchmarkSuite, BenchmarkResult };
+export { BenchmarkSuite, BenchmarkResult };

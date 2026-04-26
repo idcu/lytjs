@@ -128,9 +128,10 @@ test-projects/
 PROJECT_ASSESSMENT.md
 
 # Lint 输出文件
-lint-output.txt
-lint-output-latest.txt
-lint-output-final.txt
+lint-output*.txt
+
+# 开发文档（不纳入版本控制）
+Lyt.js_发展建议与开发文档.md
 
 
 

@@ -12,9 +12,7 @@
  * 纯原生零依赖实现，内联了 VDOM 系统的核心逻辑用于基准测试。
  */
 
-'use strict';
-
-const { BenchmarkSuite } = require('./runner');
+import { BenchmarkSuite } from './runner.js';
 
 // ============================================================
 // 内联 VDOM 系统（从 @lyt/vdom 提取的核心逻辑）

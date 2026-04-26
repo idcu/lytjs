@@ -3,8 +3,10 @@
   "version": "1.0.0",
   "description": "Lyt.js integration for js-framework-benchmark",
   "private": true,
+  "type": "module",
   "scripts": {
-    "build": "bash build.sh",
+    "build": "node build-benchmark-bundle.js && bash build.sh",
+    "bundle": "node build-benchmark-bundle.js",
     "test": "cd ../.. && npx tsx test-runner.ts"
   },
   "keywords": [
