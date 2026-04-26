@@ -95,7 +95,7 @@ export const Tree = defineComponent({
       default: false,
     },
     filterNodeMethod: {
-      type: Function as () => (value: string, data: any, node: TreeNode) => boolean,
+      type: Function as unknown as () => (value: string, data: any, node: TreeNode) => boolean,
       default: undefined,
     },
   },
@@ -144,7 +144,7 @@ export const Tree = defineComponent({
     }
 
     const buildTree = () => {
-      state.treeNodes = props.data.map((item) => buildTreeNode(item))
+      state.treeNodes = props.data.map((item: TreeData) => buildTreeNode(item))
       updateCheckStatus()
     }
 

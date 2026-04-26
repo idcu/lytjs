@@ -186,11 +186,11 @@ function getComponentName(instance: any): string {
 function deepClone<T>(obj: T): T {
   if (obj === null || typeof obj !== 'object') return obj;
   if (Array.isArray(obj)) return obj.map(item => deepClone(item)) as unknown as T;
-  const cloned = {} as T;
+  const cloned = {} as Record<string, any>;
   for (const key of Object.keys(obj as any)) {
     cloned[key] = deepClone((obj as any)[key]);
   }
-  return cloned;
+  return cloned as T;
 }
 
 /**
@@ -325,50 +325,52 @@ function collectComponentTree(instance: any, parentId: string | null): void {
     };
     componentMap.set(id, info);
   } else {
-    // 更新已有组件信息
-    info.parentId = parentId;
-    info.name = getComponentName(instance);
-    info.isMounted = instance.isMounted ?? false;
-    info.isUnmounted = instance.isUnmounted ?? false;
-    info.el = instance.el ?? null;
-    info.lastUpdateTime = Date.now();
+    if (info) {
+      // 更新已有组件信息
+      info.parentId = parentId;
+      info.name = getComponentName(instance);
+      info.isMounted = instance.isMounted ?? false;
+      info.isUnmounted = instance.isUnmounted ?? false;
+      info.el = instance.el ?? null;
+      info.lastUpdateTime = Date.now();
+    }
   }
 
   // 收集 props
-  if (instance.props) {
+  if (info && instance.props) {
     info.props = deepClone(instance.props);
   }
 
   // 收集 state
-  if (instance.state) {
+  if (info && instance.state) {
     info.state = deepClone(instance.state);
   }
 
   // 收集 computed 缓存
-  if (instance.computedCache) {
+  if (info && instance.computedCache) {
     info.computed = deepClone(instance.computedCache);
   }
 
   // 拦截状态变化
-  if (isNew && instance.state && typeof instance.state === 'object') {
+  if (isNew && info && instance.state && typeof instance.state === 'object') {
     interceptStateChanges(info.id, instance);
   }
 
   // 拦截 emit
-  if (isNew && instance.emit && typeof instance.emit === 'function') {
+  if (isNew && info && instance.emit && typeof instance.emit === 'function') {
     interceptEmit(info.id, instance);
   }
 
   // 通知组件创建
-  if (isNew) {
+  if (isNew && info) {
     callbacks.onComponentCreated?.(info);
-  } else {
+  } else if (info) {
     callbacks.onComponentUpdated?.(info);
   }
 
   // 递归处理子组件
   const subTree = instance.subTree;
-  if (subTree) {
+  if (subTree && info) {
     collectFromVNode(subTree, info.id);
   }
 }

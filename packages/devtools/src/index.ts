@@ -98,8 +98,8 @@ export class DevTools {
     this.config = {
       width: config?.width ?? 420,
       height: config?.height ?? 560,
-      x: config?.x ?? undefined,
-      y: config?.y ?? undefined,
+      x: config?.x ?? 0,
+      y: config?.y ?? 0,
       autoShow: config?.autoShow ?? true,
       title: config?.title ?? 'Lyt DevTools',
     };
@@ -444,10 +444,7 @@ export {
 } from './hooks';
 
 // 类型导出
-export type {
-  DevToolsConfig,
-  TabType,
-} from './panel';
+export type { TabType } from './panel';
 
 export type {
   ComponentInfo,

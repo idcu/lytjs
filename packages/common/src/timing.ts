@@ -13,7 +13,7 @@ export function debounce<T extends (...args: any[]) => any>(
   fn: T,
   delay: number
 ): (...args: Parameters<T>) => void {
-  let timer: number | null = null;
+  let timer: ReturnType<typeof setTimeout> | null = null;
   return (...args: Parameters<T>) => {
     if (timer !== null) clearTimeout(timer);
     timer = setTimeout(() => fn(...args), delay);
@@ -27,7 +27,7 @@ export function debounceImmediate<T extends (...args: any[]) => any>(
   fn: T,
   delay: number
 ): (...args: Parameters<T>) => void {
-  let timer: number | null = null;
+  let timer: ReturnType<typeof setTimeout> | null = null;
   let called = false;
 
   return (...args: Parameters<T>) => {
@@ -69,7 +69,7 @@ export function throttleWithTrailing<T extends (...args: any[]) => any>(
   delay: number
 ): (...args: Parameters<T>) => void {
   let lastTime = 0;
-  let timer: number | null = null;
+  let timer: ReturnType<typeof setTimeout> | null = null;
   let lastArgs: Parameters<T> | null = null;
 
   const execute = () => {

@@ -220,9 +220,9 @@ export class StateInspector {
       this.renderHistory(component);
     } else {
       // 渲染各分类状态
-      this.renderCategory(container, 'props', component.props, true, false, false);
-      this.renderCategory(container, 'state', component.state, false, true, false);
-      this.renderCategory(container, 'computed', component.computed, false, false, true);
+      this.renderCategory(this.container, "props", component.props, true, false, false);
+      this.renderCategory(this.container, "state", component.state, false, true, false);
+      this.renderCategory(this.container, "computed", component.computed, false, false, true);
     }
 
     // 更新状态栏

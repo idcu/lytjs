@@ -219,9 +219,9 @@ export function patchEvent(
   const eventName = parsed.name;
 
   // 获取或创建元素上的 invoker 对象
-  let invokers = el[VEI_KEY];
+  let invokers = (el as any)[VEI_KEY];
   if (!invokers) {
-    invokers = el[VEI_KEY] = {};
+    invokers = (el as any)[VEI_KEY] = {};
   }
 
   // 获取已存在的 invoker

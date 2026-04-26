@@ -514,7 +514,7 @@ export function createStore<S extends Record<string, any> = Record<string, any>>
         partialOrFn(reactiveState as S);
       } else {
         // 对象合并：使用 shared 的 mergeObjects
-        mergeObjects(reactiveState as any, partialOrFn);
+        mergeObjects(reactiveState as Record<string, unknown>, partialOrFn as Record<string, unknown>);
       }
     },
 

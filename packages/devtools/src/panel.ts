@@ -456,13 +456,13 @@ export class DevToolsPanel {
     } else {
       // 在非浏览器环境下创建安全的 mock 元素
       this.panelEl = this.createMockPanelElement();
-      this.headerEl = this.panelEl.headerEl;
-      this.tabsEl = this.panelEl.tabsEl;
-      this.contentEl = this.panelEl.contentEl;
-      this.statusbarEl = this.panelEl.statusbarEl;
-      this.statusLeftEl = this.panelEl.statusLeftEl;
-      this.statusRightEl = this.panelEl.statusRightEl;
-      this._resizeHandle = this.panelEl.resizeHandleEl;
+      this.headerEl = (this.panelEl as any).headerEl;
+      this.tabsEl = (this.panelEl as any).tabsEl;
+      this.contentEl = (this.panelEl as any).contentEl;
+      this.statusbarEl = (this.panelEl as any).statusbarEl;
+      this.statusLeftEl = (this.panelEl as any).statusLeftEl;
+      this.statusRightEl = (this.panelEl as any).statusRightEl;
+      this._resizeHandle = (this.panelEl as any).resizeHandleEl;
     }
 
     // 添加到文档
@@ -601,9 +601,12 @@ export class DevToolsPanel {
   /**
    * 创建非浏览器环境下的 mock 面板元素
    */
+  /**
+   * 创建非浏览器环境下的 mock 面板元素
+   */
   private createMockPanelElement(): any {
     // 创建完整的 mock 元素结构，包含所有需要的属性
-    const createMockElement = (className: string) => ({
+    const createMockElement = (className: string): any => ({
       className,
       classList: { add: () => {}, remove: () => {}, toggle: () => {}, contains: () => false },
       style: {},
@@ -631,13 +634,13 @@ export class DevToolsPanel {
     });
 
     const panel = createMockElement('lyt-devtools-panel');
-    panel.headerEl = createMockElement('lyt-devtools-header');
-    panel.tabsEl = createMockElement('lyt-devtools-tabs');
-    panel.contentEl = createMockElement('lyt-devtools-content');
-    panel.statusbarEl = createMockElement('lyt-devtools-statusbar');
-    panel.statusLeftEl = createMockElement('lyt-devtools-status-left');
-    panel.statusRightEl = createMockElement('lyt-devtools-status-right');
-    panel.resizeHandleEl = createMockElement('lyt-devtools-resize-handle');
+    (panel as any).headerEl = createMockElement('lyt-devtools-header');
+    (panel as any).tabsEl = createMockElement('lyt-devtools-tabs');
+    (panel as any).contentEl = createMockElement('lyt-devtools-content');
+    (panel as any).statusbarEl = createMockElement('lyt-devtools-statusbar');
+    (panel as any).statusLeftEl = createMockElement('lyt-devtools-status-left');
+    (panel as any).statusRightEl = createMockElement('lyt-devtools-status-right');
+    (panel as any).resizeHandleEl = createMockElement('lyt-devtools-resize-handle');
 
     return panel;
   }
@@ -661,8 +664,9 @@ export class DevToolsPanel {
     if (isBrowser && this.tabsEl && this.tabsEl.querySelectorAll) {
       const tabEls = this.tabsEl.querySelectorAll('.lyt-devtools-tab');
       tabEls.forEach(el => {
-        if (el.classList && el.dataset) {
-          el.classList.toggle('active', el.dataset.tab === tabId);
+        const htmlEl = el as HTMLElement;
+        if (htmlEl.classList && htmlEl.dataset) {
+          htmlEl.classList.toggle('active', htmlEl.dataset.tab === tabId);
         }
       });
     }

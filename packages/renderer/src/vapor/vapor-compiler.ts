@@ -84,7 +84,7 @@ function parseTemplate(template: string): ASTNode {
       remaining = remaining.slice(tagMatch[0].length);
 
       if (selfClosing) {
-        root.children.push(node);
+        (root.children ?? []).push(node);
         continue;
       }
 
@@ -103,7 +103,7 @@ function parseTemplate(template: string): ASTNode {
       const innerAST = parseTemplate(innerContent);
       node.children = innerAST.children || [];
 
-      root.children.push(node);
+      (root.children ?? []).push(node);
     } else {
       // 文本内容
       const nextTagIdx = remaining.indexOf('<');
@@ -122,13 +122,13 @@ function parseTemplate(template: string): ASTNode {
           const parts = parseTextInterpolation(textContent);
           for (const part of parts) {
             if (part.type === 'text') {
-              root.children.push({ type: 'text', text: part.value });
+              (root.children ?? []).push({ type: 'text', text: part.value });
             } else {
-              root.children.push({ type: 'interpolation', expression: part.value });
+              (root.children ?? []).push({ type: 'interpolation', expression: part.value });
             }
           }
         } else {
-          root.children.push({ type: 'text', text: textContent });
+          (root.children ?? []).push({ type: 'text', text: textContent });
         }
       }
     }

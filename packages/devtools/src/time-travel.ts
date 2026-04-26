@@ -79,11 +79,11 @@ function deepClone<T>(obj: T): T {
     return cloned as unknown as T;
   }
   if (Array.isArray(obj)) return obj.map(item => deepClone(item)) as unknown as T;
-  const cloned = {} as T;
+  const cloned = {} as Record<string, any>;
   for (const key of Object.keys(obj as any)) {
     cloned[key] = deepClone((obj as any)[key]);
   }
-  return cloned;
+  return cloned as T;
 }
 
 /**

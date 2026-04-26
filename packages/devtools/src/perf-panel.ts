@@ -76,8 +76,7 @@ export class PerfPanel {
       autoStartFPS: config?.autoStartFPS ?? false,
       fpsUpdateInterval: config?.fpsUpdateInterval ?? 1000,
     }
-    this.fpsUpdateInterval = this.config.fpsUpdateInterval
-
+    this.fpsUpdateInterval = this.config.fpsUpdateInterval as number
     // 创建收集器和分析器
     this.collector = new PerformanceCollector()
     this.profiler = new ComponentProfiler()

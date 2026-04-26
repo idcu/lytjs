@@ -76,10 +76,12 @@ function compileToFunction(template: string): (h: any, _ctx: any) => VNode {
   renderFn = new Function('h', '_ctx', `return ${code}`) as (h: any, _ctx: any) => VNode;
   
   // LRU: 如果超过最大大小，删除最久未使用的（Map 头部元素）
-  if (compileCache.size >= MAX_CACHE_SIZE) {
-    const firstKey = compileCache.keys().next().value;
-    compileCache.delete(firstKey);
-  }
+    if (compileCache.size >= MAX_CACHE_SIZE) {
+      const firstKey = compileCache.keys().next().value;
+      if (firstKey !== undefined) {
+        compileCache.delete(firstKey);
+      }
+    }
   
   compileCache.set(template, renderFn);
   return renderFn;
