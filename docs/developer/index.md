@@ -115,7 +115,7 @@
 
 ## 🔗 项目结构概览
 
-Lyt.js 包含 24 个精心设计的包：
+Lyt.js 包含 25 个精心设计的包：
 
 ```
 lytjs/
@@ -130,13 +130,16 @@ lytjs/
 │   ├── store/         # 状态管理
 │   ├── cli/           # 命令行工具
 │   ├── devtools/      # 开发者工具
-│   ├── components/    # UI 组件库（38+ 组件）
+│   ├── components/    # UI 组件库（50+ 组件）
 │   ├── lytx/          # 元框架（SSR/SSG）
+│   ├── ai/            # AI 辅助开发工具
+│   ├── compat/        # Vue 3 兼容层
 │   ├── plugin-i18n/   # 国际化插件
 │   ├── plugin-auth/   # 认证插件
 │   ├── plugin-logger/ # 日志插件
 │   ├── plugin-storage/ # 存储插件
 │   ├── plugin-theme/  # 主题插件
+│   ├── plugin-sdk/    # 插件开发 SDK
 │   ├── plugins/       # 插件集合
 │   ├── common/        # 通用工具
 │   ├── test-utils/    # 测试工具

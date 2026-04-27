@@ -141,12 +141,12 @@ export default defineConfig({
     },
 
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/lytjs/lytjs' }
+      { icon: 'github', link: 'https://gitee.com/lytjs/lytjs' }
     ],
 
     footer: {
       message: 'MIT License',
-      copyright: 'Copyright © 2024-present Lyt.js'
+      copyright: 'Copyright © 2026-present Lyt.js'
     }
   }
 })

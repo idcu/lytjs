@@ -4,9 +4,9 @@
 
 ---
 
-## 📚 文档分类
+## 文档分类
 
-### 🎯 用户指南 (`guide/`)
+### 用户指南 (`guide/`)
 
 面向框架使用者的文档：
 
@@ -31,7 +31,7 @@
 
 ---
 
-### 🔧 开发者文档 (`developer/`)
+### 开发者文档 (`developer/`)
 
 面向框架贡献者的文档：
 
@@ -56,7 +56,7 @@
 
 ---
 
-### 📖 API 参考 (`api/`)
+### API 参考 (`api/`)
 
 详细的 API 文档：
 
@@ -74,7 +74,7 @@
 
 ---
 
-### 💡 示例代码 (`examples/`)
+### 示例代码 (`examples/`)
 
 完整的示例代码：
 
@@ -85,58 +85,48 @@
 
 ---
 
-### 📋 项目文档 (`project/`)
+### 英文文档 (`en/`)
 
-项目相关文档：
+English documentation:
 
-- [项目总结](./project/PROJECT_SUMMARY.md) - 项目整体总结报告
-- [夯实计划](./project/WEB_FOUNDTATION_PLAN.md) - 项目开发计划和进度
-- [组件清单](./project/COMPONENTS_CHECKLIST.md) - UI 组件库清单
-- [进度更新](./project/PROGRESS_UPDATE.md) - 详细进度更新
-- [使用指南](./project/USAGE.md) - 项目使用指南
-- [打包指南](./project/PACK.md) - 项目打包指南
+- [Home](./en/index.md) - English homepage
+- [Quick Start](./en/guide/quick-start.md) - Getting started guide
+- [Comparison](./en/guide/comparison.md) - Lyt.js vs Vue 3 vs React
+- [SSR Guide](./en/guide/ssr.md) - SSR/SSG guide
+- [Migration from Vue 3](./en/guide/migration-from-vue3.md) - Vue 3 migration guide
+- [Contributing](./en/contributing.md) - Contribution guide
 
 ---
 
-### 🗺️ 其他文档
+### 其他文档
 
-- [发展规划](./roadmap.md) - 项目发展路线图
-- [部署指南](./DEPLOY.md) - GitHub Pages 部署指南
-- [文档索引](./DOCUMENTATION_INDEX.md) - 完整的文档索引
 - [首页](./index.md) - 文档网站首页
 
 ---
 
-## 🚀 快速导航
+## 快速导航
 
 ### 我是框架使用者
 
-👉 开始阅读：[快速开始](./guide/quick-start.md)
+开始阅读：[快速开始](./guide/quick-start.md)
 
 ### 我是框架开发者/贡献者
 
-👉 开始阅读：[架构总览](./developer/01-architecture-overview.md)
+开始阅读：[架构总览](./developer/01-architecture-overview.md)
 
 ### 我需要 API 参考
 
-👉 查看：[API 文档](./api/core.md)
-
-### 我想了解项目发展计划
-
-👉 查看：[发展规划](./roadmap.md)
+查看：[API 文档](./api/core.md)
 
 ---
 
-## 📚 文档体系结构
+## 文档体系结构
 
 ```
 docs/
 ├── README.md                 # 本文档，总索引
-├── DOCUMENTATION_INDEX.md   # 完整文档索引
-├── index.md                 # 文档网站首页
-├── roadmap.md               # 发展规划
-├── DEPLOY.md                # 部署指南
-├── guide/                   # 用户指南
+├── index.md                  # 文档网站首页
+├── guide/                    # 用户指南
 │   ├── quick-start.md
 │   ├── template-syntax.md
 │   ├── reactivity.md
@@ -155,7 +145,7 @@ docs/
 │   ├── comparison.md
 │   ├── migration-from-vue3.md
 │   └── advanced-topics.md
-├── api/                     # API 参考文档
+├── api/                      # API 参考文档
 │   ├── core.md
 │   ├── reactivity.md
 │   ├── compiler.md
@@ -167,8 +157,8 @@ docs/
 │   ├── devtools.md
 │   ├── web-component.md
 │   └── plugin.md
-├── developer/               # 开发者文档
-│   ├── README.md
+├── developer/                # 开发者文档
+│   ├── index.md
 │   ├── 01-architecture-overview.md
 │   ├── 02-getting-started.md
 │   ├── 03-coding-standards.md
@@ -184,23 +174,22 @@ docs/
 │   │   └── 02-store.md
 │   └── advanced/
 │       └── 01-module-assembly.md
-├── examples/                # 示例文档
+├── examples/                 # 示例文档
 │   ├── counter.md
 │   ├── theme-switch.md
 │   ├── todo-app.md
 │   └── components-showcase.md
-└── project/                 # 项目文档
-    ├── PROJECT_SUMMARY.md
-    ├── WEB_FOUNDTATION_PLAN.md
-    ├── PROGRESS_UPDATE.md
-    ├── COMPONENTS_CHECKLIST.md
-    ├── USAGE.md
-    └── PACK.md
+├── en/                       # 英文文档
+│   ├── index.md
+│   ├── contributing.md
+│   ├── guide/
+│   └── api/
+└── project/                  # 项目文档
 ```
 
 ---
 
-## 🎯 项目信息
+## 项目信息
 
 Lyt.js 是一个纯原生、零依赖、超轻量的前端框架，与 Vue 3 兼容的 API。
 
@@ -208,7 +197,6 @@ Lyt.js 是一个纯原生、零依赖、超轻量的前端框架，与 Vue 3 兼
 - **版本**：4.2.0
 - **更新日期**：2026-04-27
 - **测试覆盖**：2833+ 个测试，核心模块覆盖率 >95%
-- **文档验证**：所有 68 个文档文件编码正常，无乱码问题
 
 ### 包列表
 
@@ -224,15 +212,16 @@ Lyt.js 包含 25 个精心设计的包：
 - @lytjs/common - 公共工具库（类型检查/对象操作/事件发射器/订阅管理/缓存/调度器）
 - @lytjs/lytjs - 聚合包（一键安装全部核心运行时）
 
-**功能包 (8)**：
+**功能包 (9)**：
 - @lytjs/router - 内置路由系统（History/Hash/导航守卫/动态路由/嵌套路由）
 - @lytjs/store - 内置状态管理（Pinia 风格 API/模块化/actions/getters/插件）
-- @lytjs/components - UI 组件库（38+ 组件/主题系统/亮色/暗色/自定义）
+- @lytjs/components - UI 组件库（50+ 组件/主题系统/亮色/暗色/自定义）
 - @lytjs/cli - 命令行工具（create/dev/build/scaffold）
 - @lytjs/devtools - 浏览器开发者工具（组件树/状态查看/性能分析/时间旅行）
 - @lytjs/lytx - 元框架（SSR/SSG/SPA/API Routes/全栈渲染）
 - @lytjs/test-utils - 测试工具库
-- lytjs-vscode - VSCode 扩展（语法高亮/代码补全/类型检查）
+- @lytjs/ai - AI 辅助开发工具（代码生成/组件生成/代码补全）
+- @lytjs/compat - Vue 3 兼容层（API 兼容/SFC 转换/迁移工具）
 
 **插件包 (6)**：
 - @lytjs/plugin-i18n - 国际化插件
@@ -242,19 +231,23 @@ Lyt.js 包含 25 个精心设计的包：
 - @lytjs/plugin-theme - 主题插件
 - @lytjs/plugins - 插件聚合包（统一导出所有官方插件）
 
+**开发工具 (2)**：
+- @lytjs/plugin-sdk - 插件开发 SDK（插件管理器/验证器/注册中心/脚手架）
+- lytjs-vscode - VSCode 扩展（语法高亮/代码补全/类型检查）
+
 ### 组件列表
 
-Lyt.js 提供 38+ 个精心设计的组件：
+Lyt.js 提供 50+ 个精心设计的组件：
 
-**基础组件 (5)**：Button, Icon, Link, Container, Divider
+**基础组件 (7)**：Button, Icon, Link, Container, Divider, Menu, DropdownMenu
 
-**表单组件 (10)**：Input, Checkbox, Radio, Select, Switch, Form, DatePicker, TimePicker, Calendar, Dropdown
+**表单组件 (14)**：Input, Checkbox, Radio, Select, Switch, Form, DatePicker, TimePicker, Calendar, Dropdown, InputNumber, Cascader, Rate, ColorPicker
 
-**反馈组件 (7)**：Modal, Toast, Alert, Tooltip, Dialog, Notification, Popover
+**反馈组件 (5)**：Modal, Toast, Alert, Tooltip, Drawer
 
-**导航组件 (6)**：Tabs, Breadcrumb, Pagination, TabNav, Pager, Carousel
+**导航组件 (5)**：Tabs, Breadcrumb, Pagination, Steps, Carousel
 
-**数据展示组件 (8)**：Table, Tag, Badge, Spin, Empty, Avatar, CountBadge, DataTable
+**数据展示组件 (12)**：Table, Tag, Badge, Spin, Empty, Avatar, CountBadge, DataTable, Card, Descriptions, Result, ImagePreview, Skeleton, Timeline, Statistic
 
 **扩展组件 (7)**：Collapse, Toggle, Progress, Slider, Upload, Tree, ThemeProvider
 
@@ -270,29 +263,28 @@ npm run dev
 
 ---
 
-## 📚 贡献指南
+## 贡献指南
 
 欢迎贡献文档！请参考：
 
 - [CONTRIBUTING.md](../CONTRIBUTING.md) - 贡献指南
 - [开发者文档](./developer/) - 了解框架架构
-- [发展规划](./roadmap.md) - 了解下一步计划
 
 ---
 
-## 💡 需要帮助？
+## 需要帮助？
 
-- 遇到问题？查看 Issue
+- 遇到问题？查看 [Gitee Issues](https://gitee.com/lytjs/lytjs/issues)
 - 有建议？创建 Feature Request
 - 想讨论？参与社区讨论
 
 ---
 
-## 📄 许可证
+## 许可证
 
-MIT License © Lyt.js Team
+MIT License (c) Lyt.js Team
 
 ---
 
-**文档版本**: 2.1
+**文档版本**: 3.0
 **最后更新**: 2026-04-27

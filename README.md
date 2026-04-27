@@ -36,7 +36,7 @@
 - **所见即代码** — 增强版 HTML 模板，去掉 v- 前缀（`if` / `each` / `model` / `on:click`）
 - **双 API 模式** — 同时支持 Options API 和 Composition API，与 Vue 3 一致
 - **渐进扩展** — 架构为 SSR / 移动端 / 小程序预留 Renderer 接口
-- **开箱即用** — 内置路由、状态管理、CLI 工具、浏览器 DevTools、38+ 组件
+- **开箱即用** — 内置路由、状态管理、CLI 工具、浏览器 DevTools、50+ 组件
 
 ## 功能完成度
 
@@ -49,7 +49,7 @@
 | 组件系统 (Component) | ✅ **完成** | defineComponent/生命周期/插槽/KeepAlive/Suspense/Teleport |
 | 路由 (Router) | ✅ **完成** | History/Hash 双模式，导航守卫，动态路由，嵌套路由 |
 | 状态管理 (Store) | ✅ **完成** | Pinia 风格 API，支持模块化、actions、getters |
-| UI 组件库 (Components) | ✅ **完成** | 38+ 组件：表单/数据展示/导航/反馈/布局/扩展 |
+| UI 组件库 (Components) | ✅ **完成** | 50+ 组件：表单/数据展示/导航/反馈/布局/扩展 |
 | CLI 工具 | ✅ **完成** | create/dev/build 命令，支持项目脚手架 |
 | DevTools | ✅ **完成** | 性能采集/组件树/状态查看/渲染追踪/时间旅行调试 |
 | Web Component | ✅ **完成** | defineCustomElement，Shadow DOM 支持 |
@@ -317,18 +317,19 @@ Lyt.js 包含 25 个精心设计的包：
 | `@lytjs/common` | 公共工具库（类型检查/对象操作/事件发射器/订阅管理/缓存/调度器） | - |
 | `@lytjs/lytjs` | 聚合包（一键安装全部核心运行时） | - |
 
-### 功能包 (8)
+### 功能包 (9)
 
 | 包名 | 说明 |
 |------|------|
 | `@lytjs/router` | 内置路由（History/Hash/导航守卫/动态路由/嵌套路由） |
 | `@lytjs/store` | 内置状态管理（Pinia 风格 API/模块化/actions/getters/插件） |
-| `@lytjs/components` | UI 组件库（38+ 组件/主题系统/亮色/暗色/自定义） |
+| `@lytjs/components` | UI 组件库（50+ 组件/主题系统/亮色/暗色/自定义） |
 | `@lytjs/cli` | 命令行工具（create/dev/build/scaffold） |
 | `@lytjs/devtools` | 浏览器开发者工具（组件树/状态查看/性能分析/时间旅行） |
 | `@lytjs/lytx` | 元框架（SSR/SSG/SPA/API Routes/全栈渲染） |
 | `@lytjs/test-utils` | 测试工具库 |
-| `lytjs-vscode` | VSCode 扩展（语法高亮/代码补全/类型检查） |
+| `@lytjs/ai` | AI 辅助开发工具（代码生成/组件生成/代码补全） |
+| `@lytjs/compat` | Vue 3 兼容层（API 兼容/SFC 转换/迁移工具） |
 
 ### 插件包 (6)
 
@@ -341,17 +342,24 @@ Lyt.js 包含 25 个精心设计的包：
 | `@lytjs/plugin-theme` | 主题插件 |
 | `@lytjs/plugins` | 插件聚合包（统一导出所有官方插件） |
 
-### 组件库 (38+ 组件)
+### 开发工具 (2)
 
-**基础组件 (5):** Button, Icon, Link, Container, Divider
+| 包名 | 说明 |
+|------|------|
+| `@lytjs/plugin-sdk` | 插件开发 SDK（插件管理器/验证器/注册中心/脚手架） |
+| `lytjs-vscode` | VSCode 扩展（语法高亮/代码补全/类型检查） |
 
-**表单组件 (10):** Input, Checkbox, Radio, Select, Switch, Form, DatePicker, TimePicker, Calendar, Dropdown
+### 组件库 (50+ 组件)
 
-**反馈组件 (6):** Modal, Toast, Alert, Tooltip, Dialog, Notification, Popover
+**基础组件 (7):** Button, Icon, Link, Container, Divider, Menu, DropdownMenu
 
-**导航组件 (6):** Tabs, Breadcrumb, Pagination, TabNav, Pager, Carousel
+**表单组件 (14):** Input, Checkbox, Radio, Select, Switch, Form, DatePicker, TimePicker, Calendar, Dropdown, InputNumber, Cascader, Rate, ColorPicker
 
-**数据展示组件 (8):** Table, Tag, Badge, Spin, Empty, Avatar, CountBadge, DataTable
+**反馈组件 (5):** Modal, Toast, Alert, Tooltip, Drawer
+
+**导航组件 (5):** Tabs, Breadcrumb, Pagination, Steps, Carousel
+
+**数据展示组件 (12):** Table, Tag, Badge, Spin, Empty, Avatar, CountBadge, DataTable, Card, Descriptions, Result, ImagePreview, Skeleton, Timeline, Statistic
 
 **扩展组件 (7):** Collapse, Toggle, Progress, Slider, Upload, Tree, ThemeProvider
 
@@ -364,7 +372,9 @@ Lyt.js 包含 25 个精心设计的包：
 ├── @lytjs/store - 状态管理
 ├── @lytjs/components - UI 组件库
 ├── @lytjs/lytx - 元框架
-└── @lytjs/plugins - 官方插件
+├── @lytjs/plugins - 官方插件
+├── @lytjs/ai - AI 辅助开发
+└── @lytjs/compat - Vue 3 兼容层
 
 核心引擎层 (Engine Layer)
 ├── @lytjs/reactivity - Proxy 响应式系统 + Signal
@@ -411,16 +421,19 @@ Lyt.js 的 API 高度兼容 Vue 3，迁移成本低：
 
 ## 路线图
 
-- [x] 核心 23 个包，完整的 monorepo 架构
+- [x] 核心 25 个包，完整的 monorepo 架构
 - [x] 核心 8 包 ESM gzip < 35KB
 - [x] Composition API + Options API 双模式
 - [x] SSR / SSG / Islands Architecture
 - [x] Vapor Mode（无 VDOM 编译优化）
 - [x] Signal 响应式模式
-- [x] 38+ UI 组件 + 主题系统
+- [x] 50+ UI 组件 + 主题系统
 - [x] 内置路由 + 状态管理
 - [x] CLI 工具 + DevTools
 - [x] 官方插件（i18n/auth/logger/storage/theme）
+- [x] AI 辅助开发工具
+- [x] Vue 3 兼容层
+- [x] 插件开发 SDK
 - [ ] 小程序 Renderer（微信/支付宝/字节）
 - [ ] 原生移动端 Renderer
 - [ ] 核心运行时 < 15KB gzip

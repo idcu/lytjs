@@ -9,6 +9,13 @@
 
 ## [Unreleased]
 
+### 文档
+
+- 统一文档命名规范，删除临时性开发文档
+- 为 6 个插件包补充 README.md
+- 更新文档索引和 VitePress 配置
+- 修正 VitePress 中的仓库链接
+
 ### 新增 (Added)
 
 #### P2 生态扩展
