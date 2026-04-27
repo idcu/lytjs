@@ -1,0 +1,55 @@
+{
+  "name": "@lytjs/compat",
+  "version": "4.1.0",
+  "description": "Lyt.js Vue 3 兼容层 - 提供与 Vue 3 兼容的 API 和工具",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.mjs"
+    },
+    "./vite": {
+      "types": "./dist/types/vite.d.ts",
+      "import": "./dist/vite.mjs",
+      "require": "./dist/vite.cjs",
+      "default": "./dist/vite.mjs"
+    }
+  },
+  "bin": {
+    "vue-to-lyt": "./dist/bin/vue-to-lyt.js"
+  },
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
+  "license": "MIT",
+  "author": "lytjs",
+  "repository": {
+    "type": "git",
+    "url": "https://gitee.com/lytjs/lytjs"
+  },
+  "homepage": "https://gitee.com/lytjs/lytjs",
+  "keywords": [
+    "lyt",
+    "lytjs",
+    "vue",
+    "vue3",
+    "compatibility",
+    "migration",
+    "frontend",
+    "framework"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@lytjs/core": "workspace:*",
+    "@lytjs/reactivity": "workspace:*",
+    "@lytjs/component": "workspace:*"
+  },
+  "devDependencies": {}
+}
