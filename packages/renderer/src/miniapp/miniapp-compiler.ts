@@ -712,7 +712,7 @@ export class MiniAppCompiler {
         const dataStr = dataPropMatch[1];
         this._parseSimpleObject(dataStr, data);
       } catch (e) {
-        console.warn('[Lyt MiniApp Compiler] 解析 data 对象失败:', e instanceof Error ? e.message : e)
+        console.warn('[Lyt MiniApp Compiler] 解析 data 对象失败:', e instanceof Error ? e.message : e);
       }
     }
 
@@ -723,7 +723,7 @@ export class MiniAppCompiler {
         const dataStr = dataFuncMatch[1];
         this._parseSimpleObject(dataStr, data);
       } catch (e) {
-        console.warn('[Lyt MiniApp Compiler] 解析 data() 函数返回值失败:', e instanceof Error ? e.message : e)
+        console.warn('[Lyt MiniApp Compiler] 解析 data() 函数返回值失败:', e instanceof Error ? e.message : e);
       }
     }
 

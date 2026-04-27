@@ -34,8 +34,8 @@
  *   - 支持 hydration mismatch 检测（开发模式）
  */
 
-import { LytError, LytErrorCodes } from '@lytjs/common'
-import type { VNode } from '@lytjs/vdom'
+import { LytError, LytErrorCodes } from '@lytjs/common';
+import type { VNode } from '@lytjs/vdom';
 
 // ================================================================
 //  类型定义
@@ -282,8 +282,8 @@ export function hydrate(
  * 触发所有注水完成回调
  */
 function fireHydratedCallbacks(): void {
-  if (isFiringCallbacks) return
-  isFiringCallbacks = true
+  if (isFiringCallbacks) return;
+  isFiringCallbacks = true;
   const callbacks = hydrateCallbacks.splice(0);
   for (const cb of callbacks) {
     try {
@@ -292,7 +292,7 @@ function fireHydratedCallbacks(): void {
       console.error('[lyt] onHydrated 回调执行失败:', error);
     }
   }
-  isFiringCallbacks = false
+  isFiringCallbacks = false;
 }
 
 // ================================================================
@@ -538,7 +538,7 @@ function hydrateComponentNode(
         return;
       }
     } catch (e) {
-      console.warn('[Lyt Hydration] 函数式组件调用失败:', e instanceof Error ? e.message : e)
+      console.warn('[Lyt Hydration] 函数式组件调用失败:', e instanceof Error ? e.message : e);
     }
   }
 
@@ -555,7 +555,7 @@ function hydrateComponentNode(
         return;
       }
     } catch (e) {
-      console.warn('[Lyt Hydration] 组件 render 调用失败:', e instanceof Error ? e.message : e)
+      console.warn('[Lyt Hydration] 组件 render 调用失败:', e instanceof Error ? e.message : e);
     }
   }
 
@@ -930,7 +930,7 @@ function parseIslandProps(islandId: string, container: Document | HTMLElement): 
         try {
           return JSON.parse(propsAttr);
         } catch (e) {
-          console.warn('[Lyt Hydration] 解析 island data-props JSON 失败:', e instanceof Error ? e.message : e)
+          console.warn('[Lyt Hydration] 解析 island data-props JSON 失败:', e instanceof Error ? e.message : e);
           return null;
         }
       }
@@ -941,7 +941,7 @@ function parseIslandProps(islandId: string, container: Document | HTMLElement): 
   try {
     return JSON.parse(scriptEl.textContent || '{}');
   } catch (e) {
-    console.warn('[Lyt Hydration] 解析 island props script JSON 失败:', e instanceof Error ? e.message : e)
+    console.warn('[Lyt Hydration] 解析 island props script JSON 失败:', e instanceof Error ? e.message : e);
     return null;
   }
 }
@@ -1080,7 +1080,7 @@ function hydrateChildEvents(parentEl: HTMLElement, vnode: VNode): void {
               hydrateChildEvents(domChildren[i] as HTMLElement, subTree);
             }
           } catch (e) {
-            console.warn('[Lyt Hydration] 递归注水子节点事件 - 函数式组件调用失败:', e instanceof Error ? e.message : e)
+            console.warn('[Lyt Hydration] 递归注水子节点事件 - 函数式组件调用失败:', e instanceof Error ? e.message : e);
           }
         } else if (comp && typeof comp.render === 'function') {
           try {
@@ -1089,7 +1089,7 @@ function hydrateChildEvents(parentEl: HTMLElement, vnode: VNode): void {
               hydrateChildEvents(domChildren[i] as HTMLElement, subTree);
             }
           } catch (e) {
-            console.warn('[Lyt Hydration] 递归注水子节点事件 - 组件 render 调用失败:', e instanceof Error ? e.message : e)
+            console.warn('[Lyt Hydration] 递归注水子节点事件 - 组件 render 调用失败:', e instanceof Error ? e.message : e);
           }
         }
       }

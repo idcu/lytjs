@@ -1125,7 +1125,7 @@ async function* renderAsyncComponent(
       await promise;
     } catch (e) {
       // 异步组件加载失败，输出空注释
-      console.warn('[Lyt SSR] 异步组件加载失败:', e instanceof Error ? e.message : e)
+      console.warn('[Lyt SSR] 异步组件加载失败:', e instanceof Error ? e.message : e);
       yield '<!--async-component-error-->';
       return;
     }

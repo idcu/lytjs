@@ -7,6 +7,10 @@
 
 ## [Unreleased]
 
+### 文档 (Documentation)
+
+- 更新文档版本号到 5.0.0
+
 ## [5.0.0] - 2026-04-27
 
 ### Changed
