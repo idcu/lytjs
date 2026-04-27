@@ -6,7 +6,7 @@
 
 import * as fs from 'fs'
 import * as path from 'path'
-import type { LytConfig, AIConfig } from './types'
+import type { LytConfig, AIConfig, AIProvider } from './types'
 
 /**
  * 配置加载器类
@@ -63,7 +63,7 @@ export class ConfigLoader {
    */
   private static loadFromEnv(): LytConfig {
     const config: LytConfig = {
-      ai: {}
+      ai: { provider: 'custom' as AIProvider }
     }
 
     const envPrefix = 'LYT_'
@@ -77,12 +77,12 @@ export class ConfigLoader {
         const aiKey = configKey.slice(3)
         const mappedKey = this.mapEnvKey(aiKey)
         if (mappedKey && value !== undefined) {
-          config.ai![mappedKey as keyof AIConfig] = this.parseValue(value)
+          (config.ai as any)[mappedKey] = this.parseValue(value)
         }
       }
     }
 
-    if (Object.keys(config.ai!).length === 0) {
+    if (Object.keys(config.ai!).length === 1 && config.ai!.provider === 'custom') {
       delete config.ai
     }
 

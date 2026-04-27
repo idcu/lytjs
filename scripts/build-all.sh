@@ -46,7 +46,7 @@ ALL_PACKAGES=(
   common reactivity vdom compiler renderer component core
   router store cli devtools components
   plugin-i18n plugin-auth plugin-logger plugin-theme plugin-storage
-  test-utils plugins lytjs lytx vscode-extension
+  test-utils plugins lytjs lytx vscode-extension ai compat
 )
 
 # ============================================================
@@ -140,6 +140,14 @@ if [ "$TYPES_ONLY" = false ]; then
         PLATFORM="node"
         EXTRA_EXTERNAL=""
         ;;
+      ai)
+        PLATFORM="node"
+        EXTRA_EXTERNAL=""
+        ;;
+      compat)
+        PLATFORM="node"
+        EXTRA_EXTERNAL=""
+        ;;
       components)
         PLATFORM="browser"
         EXTRA_EXTERNAL="--external:../../component/src/index.ts"
@@ -202,12 +210,53 @@ if [ "$TYPES_ONLY" = false ]; then
       continue
     fi
 
-    # 为 cli/lytx 包生成 bin 入口脚本
-    if [ "$pkg" = "cli" ] || [ "$pkg" = "lytx" ]; then
+    # 为 cli/lytx/ai/compat 包生成 bin 入口脚本
+    if [ "$pkg" = "cli" ] || [ "$pkg" = "lytx" ] || [ "$pkg" = "ai" ] || [ "$pkg" = "compat" ]; then
       cjs_bin="index.js"
-      [ "$pkg" = "lytx" ] && cjs_bin="index.cjs"
-      printf '#!/usr/bin/env node\nrequire("./%s")\n' "$cjs_bin" > "$dist_dir/cli.js"
-      chmod +x "$dist_dir/cli.js"
+      [ "$pkg" = "lytx" ] || [ "$pkg" = "ai" ] || [ "$pkg" = "compat" ] && cjs_bin="index.cjs"
+      
+      # 构建 bin 入口
+      bin_entry=""
+      bin_out=""
+      
+      if [ "$pkg" = "cli" ]; then
+        bin_entry="$pkg_dir/src/bin/cli.ts"
+        bin_out="cli.js"
+      elif [ "$pkg" = "lytx" ]; then
+        bin_entry="$pkg_dir/src/bin/lytx.ts"
+        bin_out="lytx.js"
+      elif [ "$pkg" = "ai" ]; then
+        bin_entry="$pkg_dir/src/bin/lyt-ai.ts"
+        bin_out="lyt-ai.js"
+      elif [ "$pkg" = "compat" ]; then
+        bin_entry="$pkg_dir/src/bin/vue-to-lyt.ts"
+        bin_out="vue-to-lyt.js"
+      fi
+      
+      if [ -f "$bin_entry" ]; then
+        log "  Building $pkg bin..."
+        # 构建 bin 的 ESM
+        "$ESBUILD" "$bin_entry" \
+          --bundle --minify --tree-shaking=true \
+          --platform=node --target=ES2018 \
+          --format=esm \
+          --outfile="$dist_dir/bin/${bin_out%.js}.mjs" \
+          --external:@lytjs/* \
+          --legal-comments=none \
+          --log-level=warning >/dev/null 2>&1 && ok "  $pkg bin: ESM OK"
+        # 构建 bin 的 CJS
+        "$ESBUILD" "$bin_entry" \
+          --bundle --minify --tree-shaking=true \
+          --platform=node --target=ES2018 \
+          --format=cjs \
+          --outfile="$dist_dir/bin/${bin_out%.js}.cjs" \
+          --external:@lytjs/* \
+          --legal-comments=none \
+          --log-level=warning >/dev/null 2>&1 && ok "  $pkg bin: CJS OK"
+        # 创建可执行入口
+        printf '#!/usr/bin/env node\nrequire("./%s")\n' "${bin_out%.js}.cjs" > "$dist_dir/bin/$bin_out"
+        chmod +x "$dist_dir/bin/$bin_out"
+      fi
     fi
 
     # 为 renderer 包构建平台子路径入口（dom/ssr/native/miniapp/vapor）
@@ -486,7 +535,7 @@ if [ "$BUNDLE_ONLY" = false ]; then
   if [ ! -f "$TSC" ]; then
     warn "TypeScript not found. Skipping type declarations."
   else
-    TYPE_PKGS=(common reactivity vdom compiler renderer component core router store cli devtools components plugin-i18n plugin-auth plugin-logger plugin-theme plugin-storage test-utils plugins lytx)
+    TYPE_PKGS=(common reactivity vdom compiler renderer component core router store cli devtools components plugin-i18n plugin-auth plugin-logger plugin-theme plugin-storage test-utils plugins lytx ai compat)
 
     if [ -n "$FILTER" ]; then
       FT=()

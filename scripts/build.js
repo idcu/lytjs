@@ -40,6 +40,7 @@ const ALL_PACKAGES = [
   'renderer',
   'component',
   'core',
+  'compat',
   'router',
   'store',
   'cli',
@@ -54,6 +55,7 @@ const ALL_PACKAGES = [
   'plugins',
   'lytjs',
   'lytx',
+  'ai',
   'vscode-extension',
 ];
 

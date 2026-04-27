@@ -31,7 +31,7 @@ export class CodeCompleter {
   private getLytApiCompletions(prefix: string): CompletionItem[] {
     const completions: CompletionItem[] = []
 
-    const apiItems = [
+    const apiItems: CompletionItem[] = [
       { label: 'ref', kind: 'function', detail: 'import { ref } from "@lytjs/reactivity"', documentation: '创建响应式引用' },
       { label: 'reactive', kind: 'function', detail: 'import { reactive } from "@lytjs/reactivity"', documentation: '创建响应式对象' },
       { label: 'computed', kind: 'function', detail: 'import { computed } from "@lytjs/reactivity"', documentation: '创建计算属性' },
@@ -62,7 +62,7 @@ export class CodeCompleter {
   private getTemplateCompletions(prefix: string, context: string): CompletionItem[] {
     const completions: CompletionItem[] = []
 
-    const directiveItems = [
+    const directiveItems: CompletionItem[] = [
       { label: 'v-if', kind: 'directive', documentation: '条件渲染' },
       { label: 'v-else', kind: 'directive', documentation: '否则渲染' },
       { label: 'v-else-if', kind: 'directive', documentation: '否则如果渲染' },

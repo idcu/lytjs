@@ -168,6 +168,40 @@ const handleChange = (event) => {
 </style>
 {{/if}}`,
 
+  form: `<!-- {{ description || 'Form Component' }} -->
+<template>
+  <form class="{{ kebabName }}" v-on:submit.prevent="handleSubmit">
+    <slot></slot>
+  </form>
+</template>
+
+<script setup>
+import { defineProps, defineEmits } from '@lytjs/core'
+
+const props = defineProps({
+  modelValue: {
+    type: Object,
+    default: () => ({}),
+  },
+})
+
+const emit = defineEmits(['update:modelValue', 'submit'])
+
+const handleSubmit = () => {
+  emit('submit', props.modelValue)
+}
+</script>
+
+{{#if style}}
+<style scoped>
+.{{ kebabName }} {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+</style>
+{{/if}}`,
+
   card: `<!-- {{ description || 'Card Component' }} -->
 <template>
   <div class="{{ kebabName }}">
@@ -251,6 +285,54 @@ const props = defineProps({
 
 .{{ kebabName }}-item:last-child {
   border-bottom: none;
+}
+</style>
+{{/if}}`,
+
+  table: `<!-- {{ description || 'Table Component' }} -->
+<template>
+  <table class="{{ kebabName }}">
+    <thead>
+      <tr>
+        <slot name="header"></slot>
+      </tr>
+    </thead>
+    <tbody>
+      <tr v-each="(row, index) in data" :key="index">
+        <slot name="row" :row="row" :index="index"></slot>
+      </tr>
+    </tbody>
+  </table>
+</template>
+
+<script setup>
+import { defineProps } from '@lytjs/core'
+
+const props = defineProps({
+  data: {
+    type: Array,
+    default: () => [],
+  },
+})
+</script>
+
+{{#if style}}
+<style scoped>
+.{{ kebabName }} {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.{{ kebabName }} th,
+.{{ kebabName }} td {
+  padding: 8px 12px;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.{{ kebabName }} th {
+  font-weight: 600;
+  background: #f9fafb;
 }
 </style>
 {{/if}}`,
@@ -359,6 +441,185 @@ const handleOverlayClick = () => {
 </style>
 {{/if}}`,
 
+  dropdown: `<!-- {{ description || 'Dropdown Component' }} -->
+<template>
+  <div class="{{ kebabName }}">
+    <button v-on:click="toggle" class="{{ kebabName }}-trigger">
+      <slot name="trigger">{{ selectedLabel || 'Select' }}</slot>
+    </button>
+    <div v-if="open" class="{{ kebabName }}-menu">
+      <div
+        v-each="(item, index) in options"
+        :key="index"
+        v-on:click="selectItem(item)"
+        class="{{ kebabName }}-item"
+      >
+        {{ item.label }}
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref, defineProps, defineEmits } from '@lytjs/core'
+
+const open = ref(false)
+
+const props = defineProps({
+  modelValue: {
+    default: null,
+  },
+  options: {
+    type: Array,
+    default: () => [],
+  },
+})
+
+const emit = defineEmits(['update:modelValue', 'change'])
+
+const selectedLabel = ref('')
+
+const toggle = () => {
+  open.value = !open.value
+}
+
+const selectItem = (item) => {
+  emit('update:modelValue', item.value)
+  emit('change', item)
+  selectedLabel.value = item.label
+  open.value = false
+}
+</script>
+
+{{#if style}}
+<style scoped>
+.{{ kebabName }} {
+  position: relative;
+  display: inline-block;
+}
+
+.{{ kebabName }}-trigger {
+  padding: 8px 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  background: white;
+  cursor: pointer;
+}
+
+.{{ kebabName }}-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  min-width: 200px;
+  margin-top: 4px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+}
+
+.{{ kebabName }}-item {
+  padding: 8px 16px;
+  cursor: pointer;
+}
+
+.{{ kebabName }}-item:hover {
+  background: #f3f4f6;
+}
+</style>
+{{/if}}`,
+
+  tabs: `<!-- {{ description || 'Tabs Component' }} -->
+<template>
+  <div class="{{ kebabName }}">
+    <div class="{{ kebabName }}-headers">
+      <div
+        v-each="(tab, index) in tabs"
+        :key="index"
+        v-on:click="selectTab(index)"
+        class="{{ kebabName }}-tab"
+        :class="{ active: activeIndex === index }"
+      >
+        {{ tab.label }}
+      </div>
+    </div>
+    <div class="{{ kebabName }}-content">
+      <slot name="content" :index="activeIndex"></slot>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref, defineProps, defineEmits } from '@lytjs/core'
+
+const activeIndex = ref(0)
+
+const props = defineProps({
+  tabs: {
+    type: Array,
+    default: () => [],
+  },
+  modelValue: {
+    type: Number,
+    default: 0,
+  },
+})
+
+const emit = defineEmits(['update:modelValue', 'change'])
+
+const selectTab = (index) => {
+  activeIndex.value = index
+  emit('update:modelValue', index)
+  emit('change', index)
+}
+</script>
+
+{{#if style}}
+<style scoped>
+.{{ kebabName }}-headers {
+  display: flex;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.{{ kebabName }}-tab {
+  padding: 12px 20px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+}
+
+.{{ kebabName }}-tab.active {
+  border-bottom-color: #3b82f6;
+  color: #3b82f6;
+}
+
+.{{ kebabName }}-content {
+  padding: 16px 0;
+}
+</style>
+{{/if}}`,
+
+  navigation: `<!-- {{ description || 'Navigation Component' }} -->
+<template>
+  <nav class="{{ kebabName }}">
+    <slot></slot>
+  </nav>
+</template>
+
+<script setup>
+// Navigation component
+</script>
+
+{{#if style}}
+<style scoped>
+.{{ kebabName }} {
+  display: flex;
+  gap: 8px;
+}
+</style>
+{{/if}}`,
+
   // 默认模板
   custom: `<!-- {{ description || 'Custom Component' }} -->
 <template>
@@ -400,11 +661,6 @@ const emit = defineEmits({{{JSON.stringify(emits)}}})
 </style>
 {{/if}}`,
 }
-
-// 为缺失的类型提供默认模板
-;['form', 'table', 'dropdown', 'tabs', 'navigation'].forEach((type) => {
-  componentTemplates[type as ComponentType] = componentTemplates.custom
-})
 
 /**
  * 模板引擎类

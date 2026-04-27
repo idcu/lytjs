@@ -44,6 +44,7 @@ PUBLISH_ORDER=(
   renderer
   component
   core
+  compat
   router
   store
   cli
@@ -58,6 +59,7 @@ PUBLISH_ORDER=(
   plugins
   lytjs
   lytx
+  ai
   vscode-extension
 )
 

@@ -26,18 +26,14 @@ import {
   nextTick as lytNextTick,
 } from '@lytjs/reactivity'
 
-// 从 @lytjs/core 导入核心 API
+// 从 @lytjs/component 导入核心 API 和生命周期钩子
 import {
   provide as lytProvide,
   inject as lytInject,
-} from '@lytjs/core'
-
-// 从 @lytjs/component 导入生命周期钩子
-import {
   onMounted as lytOnMounted,
   onUpdated as lytOnUpdated,
   onUnmounted as lytOnUnmounted,
-  onBeforeMount as lytOnBeforeMount,
+  compositionOnBeforeMount as lytOnBeforeMount,
   onBeforeUpdate as lytOnBeforeUpdate,
   onBeforeUnmount as lytOnBeforeUnmount,
 } from '@lytjs/component'
@@ -156,7 +152,7 @@ export const watchEffect = lytWatchEffect
  * @see https://vuejs.org/api/reactivity-core.html#watchposteffect
  */
 export function watchPostEffect(
-  fn: (onCleanup: (cleanupFn: () => void) => void)
+  fn: (onCleanup: (cleanupFn: () => void) => void) => void
 ): () => void {
   return lytWatchEffect(fn, { flush: 'post' })
 }
@@ -166,7 +162,7 @@ export function watchPostEffect(
  * @see https://vuejs.org/api/reactivity-core.html#watchsynceffect
  */
 export function watchSyncEffect(
-  fn: (onCleanup: (cleanupFn: () => void) => void)
+  fn: (onCleanup: (cleanupFn: () => void) => void) => void
 ): () => void {
   return lytWatchEffect(fn, { flush: 'sync' })
 }

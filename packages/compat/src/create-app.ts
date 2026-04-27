@@ -68,5 +68,5 @@ export function createApp(rootComponent: any, rootProps?: any): App {
       app.provide(key, value)
       return this
     },
-  } as App
+  } as unknown as App
 }

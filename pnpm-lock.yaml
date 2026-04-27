@@ -48,6 +48,8 @@ importers:
         specifier: ^8.59.0
         version: 8.59.0(eslint@10.2.1)(typescript@6.0.2)
 
+  packages/ai: {}
+
   packages/cli:
     dependencies:
       esbuild:
@@ -55,6 +57,18 @@ importers:
         version: 0.24.2
 
   packages/common: {}
+
+  packages/compat:
+    dependencies:
+      '@lytjs/component':
+        specifier: workspace:*
+        version: link:../component
+      '@lytjs/core':
+        specifier: workspace:*
+        version: link:../core
+      '@lytjs/reactivity':
+        specifier: workspace:*
+        version: link:../reactivity
 
   packages/compiler: {}
 
