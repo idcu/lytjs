@@ -2,9 +2,21 @@
 
 # Changelog
 
-## 本项目的所有重要变更都将记录在此文件中。
+本项目的所有重要变更都将记录在此文件中。
 
-### 格式基于 [Keep a Changelog](https://keepachangelog.com/)，版本管理遵循 [Semantic Versioning](https://semver.org/)。
+格式基于 [Keep a Changelog](https://keepachangelog.com/)，
+版本管理遵循 [Semantic Versioning](https://semver.org/)。
+
+## [Unreleased]
+
+### 新增 (Features)
+
+- 添加 CHANGELOG 自动化脚本
+  - `scripts/changelog.js` - 完整的 CHANGELOG 管理工具
+  - 支持添加变更、发布版本、预览功能
+  - 在 package.json 中添加了相关脚本命令
+
+---
 
 ## [4.1.0] - 2026-04-27
 
@@ -27,6 +39,15 @@
   - `@lytjs/store` - 修复 create-store.ts 中 mergeObjects 类型断言
   - `@lytjs/test-utils` - 删除冗余测试文件 (index2.ts, index3.ts, simple-test.ts)
 
+### 改进 (Improvements)
+
+- **文档编码检查和更新** - 完善文档编码管理和更新
+  - 检查并验证所有 68 个 Markdown 文档文件编码
+  - 确认所有文档使用 UTF-8 编码，无乱码问题，中文显示正常
+  - 添加 `docs:check-encoding` 脚本命令用于检查文档编码
+  - 更新 `docs/README.md` - 版本更新为 4.1.0，测试数更新为 2833+，添加文档验证信息
+  - 更新 `docs/project/PROJECT_SUMMARY.md` - 版本更新为 4.1.0，测试数更新为 2833+，文档数更新为 68，所有包版本更新为 4.1.0，添加 v4.1.0 发布里程碑
+
 ---
 
 ## [4.0.5] - 2026-04-27
@@ -40,7 +61,7 @@
 
 ### 工具 (Tools)
 
-- **添加编码检查脚本**: 创建 `check-encoding.mjs` 脚本，用于验证项目中所有 Markdown 文件的编码格式，自动检测并修复 BOM 问题
+- **添加编码检查脚本**: 创建 `check-encoding.mjs` 脚本，用于验证项目中所有 Markdown 文档文件的编码格式，自动检测并修复 BOM 问题
 
 ## [4.0.5] - 2026-04-26 文档更新 (Documentation)
 

@@ -30,7 +30,12 @@
     "version:set": "node scripts/version.js",
     "version:bump:patch": "node scripts/version.js bump patch",
     "version:bump:minor": "node scripts/version.js bump minor",
-    "version:bump:major": "node scripts/version.js bump major"
+    "version:bump:major": "node scripts/version.js bump major",
+    "changelog": "node scripts/changelog.js",
+    "changelog:add": "node scripts/changelog.js add",
+    "changelog:release": "node scripts/changelog.js release",
+    "changelog:preview": "node scripts/changelog.js preview",
+    "docs:check-encoding": "node check-encoding.mjs"
   },
   "engines": {
     "node": ">=18.0.0"
