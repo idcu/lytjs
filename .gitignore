@@ -70,8 +70,9 @@ dist-releases/
 *.zip
 VERSION.json
 
-# Lock files (project uses pnpm-lock.yaml)
+# Lock files (project uses pnpm-lock.yaml, except docs which uses npm)
 package-lock.json
+!docs/package-lock.json
 yarn.lock
 
 # Environment variables
