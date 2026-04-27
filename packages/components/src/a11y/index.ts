@@ -51,3 +51,13 @@ export {
   findFocusableSibling,
 } from './keyboard-nav';
 export type { KeyboardHandlerOptions } from './keyboard-nav';
+
+export {
+  configureAxe,
+  runA11yCheck,
+  assertNoA11yViolations,
+  getAvailableRules,
+  getCurrentOptions,
+  resetAxeConfig,
+} from './axe-helper';
+export type { A11yViolation, A11yResult, AxeHelperOptions } from './axe-helper';

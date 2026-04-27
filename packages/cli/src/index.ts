@@ -21,7 +21,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { parseArgs, colorText, logger } from './utils';
 import { createProject as createProjectOld } from './create';
-import { createProject, type ScaffoldOptions } from './scaffold';
+import { createProject, type ScaffoldOptions, getAvailableTemplates, isValidTemplate } from './scaffold';
 import { startDevServer } from './dev';
 import { buildProject } from './build';
 import { createHMRServer, getHMRClientScript, type HMRUpdate, type HMRServer } from './hmr';
@@ -65,6 +65,8 @@ ${colorText('全局选项:', 'brightGreen')}
 ${colorText('示例:', 'brightGreen')}
   ${colorText('$', 'dim')} lytx create my-app
   ${colorText('$', 'dim')} lytx create my-app --template spa --ts --router --store
+  ${colorText('$', 'dim')} lytx create my-todo --template todo-app
+  ${colorText('$', 'dim')} lytx create my-admin --template admin-dashboard
   ${colorText('$', 'dim')} lytx dev
   ${colorText('$', 'dim')} lytx dev --port 8080 --hmr
   ${colorText('$', 'dim')} lytx build
@@ -74,7 +76,14 @@ ${colorText('示例:', 'brightGreen')}
 `;
 
 /** create 命令帮助信息 */
-const CREATE_HELP = `
+function buildCreateHelp(): string {
+  const templates = getAvailableTemplates();
+  let templateList = '';
+  for (const [key, desc] of Object.entries(templates)) {
+    templateList += `                              ${colorText(key, 'brightYellow')}  — ${desc}\n`;
+  }
+
+  return `
 ${colorText('lytx create', 'brightCyan')} - 创建新的 Lyt 项目
 
 ${colorText('用法:', 'brightGreen')}
@@ -85,18 +94,21 @@ ${colorText('参数:', 'brightGreen')}
 
 ${colorText('选项:', 'brightGreen')}
   ${colorText('--template <tpl>', 'brightYellow')}    项目模板（默认: spa）
-                              可选值: spa, ssr, ssg
-  ${colorText('--ts', 'brightYellow')}                使用 TypeScript
-  ${colorText('--router', 'brightYellow')}            包含路由
-  ${colorText('--store', 'brightYellow')}             包含状态管理
-  ${colorText('--eslint', 'brightYellow')}            包含 ESLint 配置
+${templateList}
+  ${colorText('--ts', 'brightYellow')}                使用 TypeScript（仅内置模板）
+  ${colorText('--router', 'brightYellow')}            包含路由（仅内置模板）
+  ${colorText('--store', 'brightYellow')}             包含状态管理（仅内置模板）
+  ${colorText('--eslint', 'brightYellow')}            包含 ESLint 配置（仅内置模板）
 
 ${colorText('示例:', 'brightGreen')}
   ${colorText('$', 'dim')} lytx create my-app
   ${colorText('$', 'dim')} lytx create my-app --template spa --ts --router --store
+  ${colorText('$', 'dim')} lytx create my-todo --template todo-app
+  ${colorText('$', 'dim')} lytx create my-admin --template admin-dashboard
   ${colorText('$', 'dim')} lytx create my-app --template ssr --ts
 
 `;
+}
 
 /** dev 命令帮助信息 */
 const DEV_HELP = `
@@ -196,9 +208,9 @@ function showUnknownCommand(command: string): void {
 /**
  * 解析模板类型
  */
-function parseTemplate(template: string | boolean | undefined): 'spa' | 'ssr' | 'ssg' {
-  if (typeof template === 'string' && ['spa', 'ssr', 'ssg'].includes(template)) {
-    return template as 'spa' | 'ssr' | 'ssg';
+function parseTemplate(template: string | boolean | undefined): 'spa' | 'ssr' | 'ssg' | 'todo-app' | 'admin-dashboard' {
+  if (typeof template === 'string' && isValidTemplate(template)) {
+    return template as 'spa' | 'ssr' | 'ssg' | 'todo-app' | 'admin-dashboard';
   }
   return 'spa';
 }
@@ -210,7 +222,7 @@ function parseTemplate(template: string | boolean | undefined): 'spa' | 'ssr' | 
 async function handleCreateCommand(args: ReturnType<typeof parseArgs>): Promise<void> {
   // 显示 create 命令帮助
   if (args.options.help) {
-    console.log(CREATE_HELP);
+    console.log(buildCreateHelp());
     return;
   }
 
@@ -226,14 +238,28 @@ async function handleCreateCommand(args: ReturnType<typeof parseArgs>): Promise<
   }
 
   const name = args.args[0];
+  const templateValue = typeof args.options.template === 'string' ? args.options.template : 'spa';
 
-  // 检查是否使用了增强选项
+  // 验证模板名称
+  if (!isValidTemplate(templateValue)) {
+    logger.error(`未知模板: ${colorText(templateValue, 'brightRed')}`);
+    console.log('');
+    console.log(`  可用模板：`);
+    const templates = getAvailableTemplates();
+    for (const [key, desc] of Object.entries(templates)) {
+      console.log(`    ${colorText(key, 'brightYellow')}  — ${desc}`);
+    }
+    console.log('');
+    process.exit(1);
+  }
+
+  // 检查是否使用了增强选项或示例模板
   const hasEnhancedOptions =
     args.options.ts === true ||
     args.options.router === true ||
     args.options.store === true ||
     args.options.eslint === true ||
-    (typeof args.options.template === 'string' && ['ssr', 'ssg'].includes(args.options.template));
+    (typeof args.options.template === 'string' && ['ssr', 'ssg', 'todo-app', 'admin-dashboard'].includes(args.options.template));
 
   if (hasEnhancedOptions) {
     // 使用增强版脚手架

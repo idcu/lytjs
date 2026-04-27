@@ -1,10 +1,10 @@
 /**
- * Lyt.js js-framework-benchmark - Main Entry Point
+ * Lyt.js js-framework-benchmark - Main Entry Point (Keyed)
  *
- * Exports the benchmark API for js-framework-benchmark integration.
- * This module re-exports both keyed and non-keyed benchmark functions.
+ * This is the entry point for the keyed benchmark implementation.
+ * It imports the benchmark API and sets up button event listeners.
  *
- * js-framework-benchmark expects these global functions:
+ * js-framework-benchmark expects these exports:
  * - createElement(id) -> { container, destroy }
  * - runBenchmark()
  * - addRow()
@@ -14,7 +14,17 @@
  * - selectRow(index)
  */
 
-// Re-export keyed signal benchmark as default (optimized with fine-grained signals)
+import {
+  createElement,
+  runBenchmark,
+  addRow,
+  updateEvery10thRow,
+  swapRows,
+  removeRow,
+  selectRow,
+} from './keyed-signal'
+
+// Re-export for WebDriver testing
 export {
   createElement,
   runBenchmark,
@@ -23,44 +33,43 @@ export {
   swapRows,
   removeRow,
   selectRow,
-  getData,
-  getSelected,
-} from './keyed-signal'
+}
 
-// Re-export non-keyed signal benchmark (optimized with fine-grained signals)
-export {
-  createElement as createElementNonKeyed,
-  runBenchmark as runBenchmarkNonKeyed,
-  addRow as addRowNonKeyed,
-  updateEvery10thRow as updateEvery10thRowNonKeyed,
-  swapRows as swapRowsNonKeyed,
-  removeRow as removeRowNonKeyed,
-  selectRow as selectRowNonKeyed,
-  getData as getDataNonKeyed,
-  getSelected as getSelectedNonKeyed,
-} from './non-keyed-signal'
+// ============================================================
+// Button Event Listeners
+// ============================================================
 
-// Keep original VDOM-based implementations available for comparison
-export {
-  createElement as createElementVdom,
-  runBenchmark as runBenchmarkVdom,
-  addRow as addRowVdom,
-  updateEvery10thRow as updateEvery10thRowVdom,
-  swapRows as swapRowsVdom,
-  removeRow as removeRowVdom,
-  selectRow as selectRowVdom,
-  getData as getDataVdom,
-  getSelected as getSelectedVdom,
-} from './keyed'
+// Create the benchmark instance
+createElement('main');
 
-export {
-  createElement as createElementNonKeyedVdom,
-  runBenchmark as runBenchmarkNonKeyedVdom,
-  addRow as addRowNonKeyedVdom,
-  updateEvery10thRow as updateEvery10thRowNonKeyedVdom,
-  swapRows as swapRowsNonKeyedVdom,
-  removeRow as removeRowNonKeyedVdom,
-  selectRow as selectRowNonKeyedVdom,
-  getData as getDataNonKeyedVdom,
-  getSelected as getSelectedNonKeyedVdom,
-} from './non-keyed'
+// Create 1,000 rows
+document.getElementById('run').addEventListener('click', () => {
+  runBenchmark();
+});
+
+// Create 10,000 rows
+document.getElementById('runlots').addEventListener('click', () => {
+  runBenchmark(10000);
+});
+
+// Append 1,000 rows
+document.getElementById('add').addEventListener('click', () => {
+  addRow();
+});
+
+// Update every 10th row
+document.getElementById('update').addEventListener('click', () => {
+  updateEvery10thRow();
+});
+
+// Clear all rows
+document.getElementById('clear').addEventListener('click', () => {
+  // Clear: remove all rows by destroying and recreating the element
+  const result = createElement('main');
+  result.container.innerHTML = '';
+});
+
+// Swap rows
+document.getElementById('swaprows').addEventListener('click', () => {
+  swapRows();
+});

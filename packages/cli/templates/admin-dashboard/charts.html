@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>图表页面 - Admin Dashboard</title>
+  <link rel="stylesheet" href="theme.css">
+  <style>
+    .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .chart-full { grid-column: 1 / -1; }
+    .chart-box { position: relative; width: 100%; height: 300px; }
+    .chart-box canvas { width: 100% !important; height: 100% !important; }
+    .chart-box-sm { height: 240px; }
+    .chart-legend { display: flex; gap: 16px; justify-content: center; margin-top: 12px; flex-wrap: wrap; }
+    .chart-legend-item { display: flex; align-items: center; gap: 6px; font-size: var(--text-xs); color: var(--text-secondary); }
+    .chart-legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .chart-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 16px; }
+    .chart-stat-item { text-align: center; padding: 12px; background: var(--bg-primary); border-radius: var(--radius-md); }
+    .chart-stat-value { font-size: var(--text-xl); font-weight: 700; }
+    .chart-stat-label { font-size: var(--text-xs); color: var(--text-muted); margin-top: 2px; }
+    @media (max-width: 768px) { .charts-grid { grid-template-columns: 1fr; } .chart-stats { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div class="layout">
+      <aside class="sidebar" :class="{ collapsed: sidebarCollapsed, 'mobile-open': mobileMenuOpen }">
+        <div class="sidebar-header"><div class="sidebar-logo">L</div><span class="sidebar-title">Admin Dashboard</span></div>
+        <nav class="nav-menu">
+          <div class="nav-group-title">主菜单</div>
+          <a v-for="item in mainNav" :key="item.key" class="nav-item" :class="{ active: item.key === 'charts' }" :href="item.url"><span class="nav-icon">{{ item.icon }}</span><span class="nav-label">{{ item.label }}</span></a>
+          <div class="nav-group-title">系统管理</div>
+          <a v-for="item in systemNav" :key="item.key" class="nav-item" :href="item.url"><span class="nav-icon">{{ item.icon }}</span><span class="nav-label">{{ item.label }}</span></a>
+          <div class="nav-group-title">其他</div>
+          <a v-for="item in otherNav" :key="item.key" class="nav-item" :href="item.url"><span class="nav-icon">{{ item.icon }}</span><span class="nav-label">{{ item.label }}</span></a>
+        </nav>
+        <div class="sidebar-footer">
+          <button class="theme-toggle-btn" @click="toggleTheme"><span class="nav-icon">{{ isDark ? '&#9788;' : '&#9789;' }}</span><span class="nav-label">{{ isDark ? '亮色模式' : '暗色模式' }}</span></button>
+        </div>
+      </aside>
+      <div class="mobile-overlay" :class="{ visible: mobileMenuOpen }" @click="mobileMenuOpen = false"></div>
+
+      <div class="main-content">
+        <header class="topbar">
+          <div class="topbar-left">
+            <button class="toggle-sidebar-btn" @click="toggleSidebar">&#9776;</button>
+            <div class="breadcrumb"><a href="index.html">首页</a><span class="separator">/</span><span class="current">图表页面</span></div>
+          </div>
+          <div class="topbar-right">
+            <div class="topbar-search"><span class="search-icon">&#128269;</span><input type="text" placeholder="搜索..."></div>
+            <button class="notification-btn">&#128276;</button>
+            <div class="user-menu"><div class="user-avatar">A</div><span class="user-name">管理员</span></div>
+          </div>
+        </header>
+
+        <main class="page-content">
+          <div class="page-header">
+            <h1>图表页面</h1>
+            <p>使用 Canvas 绘制的各种数据可视化图表，包括折线图、柱状图、饼图等。</p>
+          </div>
+
+          <div class="charts-grid">
+            <!-- 折线图 -->
+            <div class="card chart-full">
+              <div class="card-header">
+                <h3>用户增长趋势</h3>
+                <div class="flex gap-1">
+                  <button class="btn btn-sm" :class="lineRange === 'week' ? 'btn-primary' : 'btn-ghost'" @click="lineRange='week';drawAll()">近7天</button>
+                  <button class="btn btn-sm" :class="lineRange === 'month' ? 'btn-primary' : 'btn-ghost'" @click="lineRange='month';drawAll()">近30天</button>
+                  <button class="btn btn-sm" :class="lineRange === 'year' ? 'btn-primary' : 'btn-ghost'" @click="lineRange='year';drawAll()">近一年</button>
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="chart-box"><canvas id="lineChart"></canvas></div>
+                <div class="chart-legend">
+                  <div class="chart-legend-item"><div class="chart-legend-dot" style="background:#3b82f6;"></div>新增用户</div>
+                  <div class="chart-legend-item"><div class="chart-legend-dot" style="background:#22c55e;"></div>活跃用户</div>
+                  <div class="chart-legend-item"><div class="chart-legend-dot" style="background:#f59e0b;"></div>付费用户</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 柱状图 -->
+            <div class="card">
+              <div class="card-header"><h3>月度销售额</h3></div>
+              <div class="card-body">
+                <div class="chart-box chart-box-sm"><canvas id="barChart"></canvas></div>
+              </div>
+            </div>
+
+            <!-- 饼图 -->
+            <div class="card">
+              <div class="card-header"><h3>流量来源分布</h3></div>
+              <div class="card-body">
+                <div class="chart-box chart-box-sm"><canvas id="pieChart"></canvas></div>
+                <div class="chart-legend">
+                  <div v-for="(item, i) in pieData" :key="i" class="chart-legend-item">
+                    <div class="chart-legend-dot" :style="{ background: pieColors[i] }"></div>{{ item.name }} ({{ item.value }}%)
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 环形图 -->
+            <div class="card">
+              <div class="card-header"><h3>设备类型占比</h3></div>
+              <div class="card-body">
+                <div class="chart-box chart-box-sm"><canvas id="doughnutChart"></canvas></div>
+                <div class="chart-legend">
+                  <div v-for="(item, i) in deviceData" :key="i" class="chart-legend-item">
+                    <div class="chart-legend-dot" :style="{ background: deviceColors[i] }"></div>{{ item.name }} ({{ item.value }}%)
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 面积图 -->
+            <div class="card">
+              <div class="card-header"><h3>服务器负载监控</h3></div>
+              <div class="card-body">
+                <div class="chart-box chart-box-sm"><canvas id="areaChart"></canvas></div>
+                <div class="chart-stats">
+                  <div class="chart-stat-item"><div class="chart-stat-value" style="color:var(--success);">23%</div><div class="chart-stat-label">CPU 使用率</div></div>
+                  <div class="chart-stat-item"><div class="chart-stat-value" style="color:var(--primary);">61%</div><div class="chart-stat-label">内存使用率</div></div>
+                  <div class="chart-stat-item"><div class="chart-stat-value" style="color:var(--warning);">45%</div><div class="chart-stat-label">磁盘使用率</div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+
+      <nav class="mobile-nav">
+        <a v-for="item in mobileNav" :key="item.key" class="mobile-nav-item" :href="item.url"><span class="nav-icon">{{ item.icon }}</span><span>{{ item.label }}</span></a>
+      </nav>
+    </div>
+
+    <div class="toast-container">
+      <div v-for="toast in toasts" :key="toast.id" class="toast" :class="'toast-' + toast.type">
+        <span class="toast-icon">{{ toastIcons[toast.type] }}</span>
+        <span class="toast-message">{{ toast.message }}</span>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { createApp, ref, watch, onMounted, nextTick } from 'https://cdn.jsdelivr.net/npm/@lytjs/core@5.0.0/+esm'
+
+    const mainNav = [
+      { key: 'dashboard', icon: '&#9632;', label: '仪表盘', url: 'index.html' },
+      { key: 'users', icon: '&#128100;', label: '用户管理', url: 'users.html' },
+      { key: 'roles', icon: '&#128101;', label: '角色权限', url: 'roles.html' },
+      { key: 'table', icon: '&#128203;', label: '数据表格', url: 'table.html' },
+      { key: 'forms', icon: '&#9997;', label: '表单页面', url: 'forms.html' },
+      { key: 'charts', icon: '&#128200;', label: '图表页面', url: 'charts.html' },
+    ]
+    const systemNav = [
+      { key: 'profile', icon: '&#128100;', label: '个人设置', url: 'profile.html' },
+      { key: 'settings', icon: '&#9881;', label: '系统设置', url: 'settings.html' },
+    ]
+    const otherNav = [
+      { key: 'error', icon: '&#9888;', label: '错误页面', url: 'error.html' },
+      { key: 'login', icon: '&#128274;', label: '退出登录', url: 'login.html' },
+    ]
+    const mobileNav = [
+      { key: 'dashboard', icon: '&#9632;', label: '首页', url: 'index.html' },
+      { key: 'users', icon: '&#128100;', label: '用户', url: 'users.html' },
+      { key: 'table', icon: '&#128203;', label: '表格', url: 'table.html' },
+      { key: 'charts', icon: '&#128200;', label: '图表', url: 'charts.html' },
+      { key: 'profile', icon: '&#9881;', label: '设置', url: 'profile.html' },
+    ]
+    const toasts = ref([])
+
+    const pieData = [
+      { name: '搜索引擎', value: 42 }, { name: '直接访问', value: 25 },
+      { name: '社交媒体', value: 18 }, { name: '外部链接', value: 10 }, { name: '其他', value: 5 },
+    ]
+    const pieColors = ['#3b82f6', '#22c55e', '#f59e0b', '#8b5cf6', '#06b6d4']
+
+    const deviceData = [
+      { name: '桌面端', value: 52 }, { name: '移动端', value: 38 }, { name: '平板', value: 10 },
+    ]
+    const deviceColors = ['#3b82f6', '#22c55e', '#f59e0b']
+
+    const app = createApp({
+      setup() {
+        const sidebarCollapsed = ref(false)
+        const mobileMenuOpen = ref(false)
+        const isDark = ref(true)
+        const lineRange = ref('month')
+
+        function toggleSidebar() { if (window.innerWidth <= 768) mobileMenuOpen.value = !mobileMenuOpen.value; else sidebarCollapsed.value = !sidebarCollapsed.value }
+        function toggleTheme() { isDark.value = !isDark.value; localStorage.setItem('admin-theme', isDark.value ? 'dark' : 'light') }
+        watch(isDark, (d) => { document.documentElement.classList.toggle('light', !d); nextTick(drawAll) })
+
+        // 图表工具函数
+        function setupCanvas(id) {
+          const canvas = document.getElementById(id)
+          if (!canvas) return null
+          const ctx = canvas.getContext('2d')
+          const rect = canvas.parentElement.getBoundingClientRect()
+          const dpr = window.devicePixelRatio || 1
+          canvas.width = rect.width * dpr; canvas.height = rect.height * dpr
+          ctx.scale(dpr, dpr)
+          return { ctx, w: rect.width, h: rect.height }
+        }
+
+        function getColors() {
+          const s = getComputedStyle(document.documentElement)
+          return { text: s.getPropertyValue('--text-muted').trim(), border: s.getPropertyValue('--border').trim(), bg: s.getPropertyValue('--bg-primary').trim() }
+        }
+
+        // 折线图
+        function drawLineChart() {
+          const r = setupCanvas('lineChart'); if (!r) return
+          const { ctx, w, h } = r; const c = getColors()
+          const pad = { top: 20, right: 20, bottom: 30, left: 50 }
+          const cw = w - pad.left - pad.right, ch = h - pad.top - pad.bottom
+
+          let labels, d1, d2, d3
+          if (lineRange.value === 'week') {
+            labels = ['周一','周二','周三','周四','周五','周六','周日']
+            d1 = [120,180,150,280,320,260,380]; d2 = [80,120,100,200,240,180,280]; d3 = [30,50,40,80,100,70,120]
+          } else if (lineRange.value === 'month') {
+            labels = Array.from({length:30}, (_,i) => (i+1)+'日')
+            d1 = [120,180,150,280,320,260,380,340,300,420,380,450,400,480,520,460,500,540,480,560,600,540,580,620,560,600,640,580,620,680]
+            d2 = d1.map(v => Math.round(v * 0.7)); d3 = d1.map(v => Math.round(v * 0.3))
+          } else {
+            labels = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月']
+            d1 = [1200,1800,2200,2800,3200,3800,4200,4800,5200,5600,6000,6800]
+            d2 = d1.map(v => Math.round(v * 0.65)); d3 = d1.map(v => Math.round(v * 0.25))
+          }
+
+          const allVals = [...d1, ...d2, ...d3]
+          const maxVal = Math.max(...allVals) * 1.15
+
+          ctx.clearRect(0, 0, w, h)
+
+          // 网格
+          ctx.strokeStyle = c.border; ctx.lineWidth = 0.5
+          for (let i = 0; i <= 5; i++) {
+            const y = pad.top + (ch / 5) * i
+            ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(w - pad.right, y); ctx.stroke()
+            ctx.fillStyle = c.text; ctx.font = '11px sans-serif'; ctx.textAlign = 'right'
+            ctx.fillText(Math.round(maxVal - maxVal * (i / 5)).toLocaleString(), pad.left - 8, y + 4)
+          }
+
+          // X轴
+          ctx.textAlign = 'center'
+          const step = Math.max(1, Math.floor(labels.length / 10))
+          labels.forEach((l, i) => { if (i % step === 0 || i === labels.length - 1) ctx.fillText(l, pad.left + (cw / (labels.length - 1)) * i, h - 8) })
+
+          // 绘制线条
+          function drawLine(data, color, fill) {
+            if (fill) {
+              const grad = ctx.createLinearGradient(0, pad.top, 0, h - pad.bottom)
+              grad.addColorStop(0, color.replace(')', ',0.2)').replace('rgb', 'rgba'))
+              grad.addColorStop(1, color.replace(')', ',0.01)').replace('rgb', 'rgba'))
+              ctx.beginPath()
+              data.forEach((v, i) => {
+                const x = pad.left + (cw / (data.length - 1)) * i
+                const y = pad.top + ch - (v / maxVal) * ch
+                i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)
+              })
+              ctx.lineTo(pad.left + cw, h - pad.bottom); ctx.lineTo(pad.left, h - pad.bottom); ctx.closePath()
+              ctx.fillStyle = grad; ctx.fill()
+            }
+            ctx.beginPath()
+            data.forEach((v, i) => {
+              const x = pad.left + (cw / (data.length - 1)) * i
+              const y = pad.top + ch - (v / maxVal) * ch
+              i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)
+            })
+            ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.stroke()
+          }
+
+          drawLine(d1, 'rgb(59,130,246)', true)
+          drawLine(d2, 'rgb(34,197,94)', false)
+          drawLine(d3, 'rgb(245,158,11)', false)
+        }
+
+        // 柱状图
+        function drawBarChart() {
+          const r = setupCanvas('barChart'); if (!r) return
+          const { ctx, w, h } = r; const c = getColors()
+          const pad = { top: 20, right: 20, bottom: 30, left: 50 }
+          const cw = w - pad.left - pad.right, ch = h - pad.top - pad.bottom
+          const months = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月']
+          const values = [42,38,55,47,63,58,72,68,85,78,92,88]
+          const maxVal = Math.max(...values) * 1.2
+
+          ctx.clearRect(0, 0, w, h)
+          ctx.strokeStyle = c.border; ctx.lineWidth = 0.5
+          for (let i = 0; i <= 4; i++) {
+            const y = pad.top + (ch / 4) * i
+            ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(w - pad.right, y); ctx.stroke()
+            ctx.fillStyle = c.text; ctx.font = '11px sans-serif'; ctx.textAlign = 'right'
+            ctx.fillText(Math.round(maxVal - maxVal * (i / 4)) + '万', pad.left - 8, y + 4)
+          }
+
+          const gap = cw / months.length, barW = Math.min(28, gap * 0.5)
+          months.forEach((m, i) => {
+            const x = pad.left + gap * i + gap / 2 - barW / 2
+            const barH = (values[i] / maxVal) * ch
+            const y = pad.top + ch - barH
+            const grad = ctx.createLinearGradient(x, y, x, pad.top + ch)
+            grad.addColorStop(0, '#3b82f6'); grad.addColorStop(1, '#8b5cf6')
+            ctx.fillStyle = grad
+            ctx.beginPath()
+            const radius = 3
+            ctx.moveTo(x + radius, y); ctx.lineTo(x + barW - radius, y)
+            ctx.quadraticCurveTo(x + barW, y, x + barW, y + radius)
+            ctx.lineTo(x + barW, pad.top + ch); ctx.lineTo(x, pad.top + ch)
+            ctx.lineTo(x, y + radius); ctx.quadraticCurveTo(x, y, x + radius, y)
+            ctx.fill()
+            ctx.fillStyle = c.text; ctx.font = '10px sans-serif'; ctx.textAlign = 'center'
+            ctx.fillText(m, pad.left + gap * i + gap / 2, h - 8)
+          })
+        }
+
+        // 饼图
+        function drawPieChart() {
+          const r = setupCanvas('pieChart'); if (!r) return
+          const { ctx, w, h } = r
+          const cx = w / 2, cy = h / 2, radius = Math.min(w, h) / 2 - 20
+          const total = pieData.reduce((s, d) => s + d.value, 0)
+          let startAngle = -Math.PI / 2
+
+          ctx.clearRect(0, 0, w, h)
+          pieData.forEach((d, i) => {
+            const sliceAngle = (d.value / total) * Math.PI * 2
+            ctx.beginPath(); ctx.moveTo(cx, cy); ctx.arc(cx, cy, radius, startAngle, startAngle + sliceAngle)
+            ctx.closePath(); ctx.fillStyle = pieColors[i]; ctx.fill()
+            // 标签
+            const midAngle = startAngle + sliceAngle / 2
+            const labelR = radius * 0.65
+            const lx = cx + Math.cos(midAngle) * labelR, ly = cy + Math.sin(midAngle) * labelR
+            ctx.fillStyle = '#fff'; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
+            ctx.fillText(d.value + '%', lx, ly)
+            startAngle += sliceAngle
+          })
+        }
+
+        // 环形图
+        function drawDoughnutChart() {
+          const r = setupCanvas('doughnutChart'); if (!r) return
+          const { ctx, w, h } = r
+          const cx = w / 2, cy = h / 2, outerR = Math.min(w, h) / 2 - 20, innerR = outerR * 0.6
+          const total = deviceData.reduce((s, d) => s + d.value, 0)
+          let startAngle = -Math.PI / 2
+
+          ctx.clearRect(0, 0, w, h)
+          deviceData.forEach((d, i) => {
+            const sliceAngle = (d.value / total) * Math.PI * 2
+            ctx.beginPath(); ctx.arc(cx, cy, outerR, startAngle, startAngle + sliceAngle)
+            ctx.arc(cx, cy, innerR, startAngle + sliceAngle, startAngle, true); ctx.closePath()
+            ctx.fillStyle = deviceColors[i]; ctx.fill()
+            const midAngle = startAngle + sliceAngle / 2
+            const labelR = (outerR + innerR) / 2
+            const lx = cx + Math.cos(midAngle) * labelR, ly = cy + Math.sin(midAngle) * labelR
+            ctx.fillStyle = '#fff'; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
+            ctx.fillText(d.value + '%', lx, ly)
+            startAngle += sliceAngle
+          })
+          // 中心文字
+          ctx.fillStyle = getColors().text; ctx.font = 'bold 20px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
+          ctx.fillText(total + '%', cx, cy - 6)
+          ctx.font = '11px sans-serif'; ctx.fillText('总计', cx, cy + 14)
+        }
+
+        // 面积图
+        function drawAreaChart() {
+          const r = setupCanvas('areaChart'); if (!r) return
+          const { ctx, w, h } = r; const c = getColors()
+          const pad = { top: 20, right: 20, bottom: 30, left: 50 }
+          const cw = w - pad.left - pad.right, ch = h - pad.top - pad.bottom
+          const points = 24
+          const cpuData = Array.from({length: points}, () => Math.random() * 40 + 10)
+          const memData = Array.from({length: points}, () => Math.random() * 30 + 40)
+          const maxVal = 100
+
+          ctx.clearRect(0, 0, w, h)
+          ctx.strokeStyle = c.border; ctx.lineWidth = 0.5
+          for (let i = 0; i <= 4; i++) {
+            const y = pad.top + (ch / 4) * i
+            ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(w - pad.right, y); ctx.stroke()
+            ctx.fillStyle = c.text; ctx.font = '11px sans-serif'; ctx.textAlign = 'right'
+            ctx.fillText(Math.round(maxVal - maxVal * (i / 4)) + '%', pad.left - 8, y + 4)
+          }
+
+          function drawArea(data, color) {
+            const grad = ctx.createLinearGradient(0, pad.top, 0, h - pad.bottom)
+            grad.addColorStop(0, color.replace('1)', '0.3)')); grad.addColorStop(1, color.replace('1)', '0.02)'))
+            ctx.beginPath()
+            data.forEach((v, i) => {
+              const x = pad.left + (cw / (data.length - 1)) * i
+              const y = pad.top + ch - (v / maxVal) * ch
+              i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)
+            })
+            ctx.lineTo(pad.left + cw, h - pad.bottom); ctx.lineTo(pad.left, h - pad.bottom); ctx.closePath()
+            ctx.fillStyle = grad; ctx.fill()
+            ctx.beginPath()
+            data.forEach((v, i) => {
+              const x = pad.left + (cw / (data.length - 1)) * i
+              const y = pad.top + ch - (v / maxVal) * ch
+              i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)
+            })
+            ctx.strokeStyle = color.replace('1)', '1)'); ctx.lineWidth = 2; ctx.stroke()
+          }
+
+          drawArea(cpuData, 'rgba(34,197,94,1)')
+          drawArea(memData, 'rgba(59,130,246,1)')
+        }
+
+        function drawAll() { drawLineChart(); drawBarChart(); drawPieChart(); drawDoughnutChart(); drawAreaChart() }
+
+        onMounted(() => {
+          const savedTheme = localStorage.getItem('admin-theme')
+          if (savedTheme === 'light') { isDark.value = false; document.documentElement.classList.add('light') }
+          nextTick(drawAll)
+          window.addEventListener('resize', drawAll)
+        })
+
+        return {
+          sidebarCollapsed, mobileMenuOpen, isDark, toggleSidebar, toggleTheme, lineRange, drawAll,
+          mainNav, systemNav, otherNav, mobileNav, pieData, pieColors, deviceData, deviceColors,
+          toasts, toastIcons: { success: '&#10004;', error: '&#10008;', warning: '&#9888;', info: '&#8505;' },
+        }
+      },
+    })
+    app.mount('#app')
+  </script>
+</body>
+</html>

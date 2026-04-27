@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>用户管理 - Admin Dashboard</title>
+  <link rel="stylesheet" href="theme.css">
+  <style>
+    .user-info-cell {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .user-info-cell .user-avatar {
+      width: 32px;
+      height: 32px;
+      font-size: 0.75rem;
+    }
+    .user-info-cell .user-detail {
+      display: flex;
+      flex-direction: column;
+    }
+    .user-info-cell .user-detail .name {
+      font-weight: 500;
+      font-size: var(--text-sm);
+    }
+    .user-info-cell .user-detail .email {
+      font-size: var(--text-xs);
+      color: var(--text-muted);
+    }
+    .action-btns {
+      display: flex;
+      gap: 4px;
+    }
+    .filter-bar {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .filter-bar .form-select {
+      width: auto;
+      min-width: 120px;
+      padding: 6px 32px 6px 10px;
+      font-size: var(--text-sm);
+    }
+    .filter-bar .form-input {
+      width: 200px;
+      padding: 6px 12px;
+      font-size: var(--text-sm);
+    }
+    .selected-info {
+      font-size: var(--text-sm);
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div class="layout">
+      <!-- 侧边栏 -->
+      <aside class="sidebar" :class="{ collapsed: sidebarCollapsed, 'mobile-open': mobileMenuOpen }">
+        <div class="sidebar-header">
+          <div class="sidebar-logo">L</div>
+          <span class="sidebar-title">Admin Dashboard</span>
+        </div>
+        <nav class="nav-menu">
+          <div class="nav-group-title">主菜单</div>
+          <a v-for="item in mainNav" :key="item.key" class="nav-item" :class="{ active: item.key === 'users' }" :href="item.url">
+            <span class="nav-icon">{{ item.icon }}</span><span class="nav-label">{{ item.label }}</span>
+          </a>
+          <div class="nav-group-title">系统管理</div>
+          <a v-for="item in systemNav" :key="item.key" class="nav-item" :href="item.url">
+            <span class="nav-icon">{{ item.icon }}</span><span class="nav-label">{{ item.label }}</span>
+          </a>
+          <div class="nav-group-title">其他</div>
+          <a v-for="item in otherNav" :key="item.key" class="nav-item" :href="item.url">
+            <span class="nav-icon">{{ item.icon }}</span><span class="nav-label">{{ item.label }}</span>
+          </a>
+        </nav>
+        <div class="sidebar-footer">
+          <button class="theme-toggle-btn" @click="toggleTheme">
+            <span class="nav-icon">{{ isDark ? '&#9788;' : '&#9789;' }}</span>
+            <span class="nav-label">{{ isDark ? '亮色模式' : '暗色模式' }}</span>
+          </button>
+        </div>
+      </aside>
+      <div class="mobile-overlay" :class="{ visible: mobileMenuOpen }" @click="mobileMenuOpen = false"></div>
+
+      <div class="main-content">
+        <header class="topbar">
+          <div class="topbar-left">
+            <button class="toggle-sidebar-btn" @click="toggleSidebar">&#9776;</button>
+            <div class="breadcrumb">
+              <a href="index.html">首页</a><span class="separator">/</span><span class="current">用户管理</span>
+            </div>
+          </div>
+          <div class="topbar-right">
+            <div class="topbar-search">
+              <span class="search-icon">&#128269;</span>
+              <input type="text" placeholder="搜索..." v-model="searchQuery">
+            </div>
+            <button class="notification-btn">&#128276;</button>
+            <div class="user-menu"><div class="user-avatar">A</div><span class="user-name">管理员</span></div>
+          </div>
+        </header>
+
+        <main class="page-content">
+          <div class="page-header">
+            <h1>用户管理</h1>
+            <p>管理系统中的所有用户账户，支持搜索、筛选、新增、编辑和删除操作。</p>
+          </div>
+
+          <!-- 数据表格 -->
+          <div class="table-wrapper">
+            <div class="table-toolbar">
+              <div class="table-toolbar-left">
+                <div class="filter-bar">
+                  <input class="form-input" v-model="searchQuery" placeholder="搜索用户名/邮箱/ID...">
+                  <select class="form-select" v-model="filterRole">
+                    <option value="">全部角色</option>
+                    <option v-for="r in ROLES" :key="r" :value="r">{{ r }}</option>
+                  </select>
+                  <select class="form-select" v-model="filterStatus">
+                    <option value="">全部状态</option>
+                    <option v-for="s in STATUSES" :key="s.key" :value="s.key">{{ s.label }}</option>
+                  </select>
+                </div>
+              </div>
+              <div class="table-toolbar-right">
+                <div class="selected-info" v-if="selectedIds.size > 0">
+                  <span>已选 {{ selectedIds.size }} 项</span>
+                  <button class="btn btn-sm btn-danger" @click="handleBatchDelete">批量删除</button>
+                </div>
+                <button class="btn btn-primary" @click="openCreateModal">+ 新增用户</button>
+              </div>
+            </div>
+
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:40px;"><input type="checkbox" :checked="allSelected" @change="toggleSelectAll"></th>
+                  <th>ID</th>
+                  <th>用户信息</th>
+                  <th>角色</th>
+                  <th>部门</th>
+                  <th>状态</th>
+                  <th>创建时间</th>
+                  <th>最后登录</th>
+                  <th style="width:160px;">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="user in pagedUsers" :key="user.id" :class="{ selected: selectedIds.has(user.id) }">
+                  <td><input type="checkbox" :checked="selectedIds.has(user.id)" @change="toggleSelect(user.id)"></td>
+                  <td style="font-weight:500;">#{{ user.id }}</td>
+                  <td>
+                    <div class="user-info-cell">
+                      <div class="user-avatar">{{ user.name[0] }}</div>
+                      <div class="user-detail">
+                        <span class="name">{{ user.name }}</span>
+                        <span class="email">{{ user.email }}</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td><span class="tag tag-blue">{{ user.role }}</span></td>
+                  <td>{{ user.department }}</td>
+                  <td><span class="status-badge" :class="user.statusClass">{{ user.statusLabel }}</span></td>
+                  <td style="color:var(--text-muted);">{{ user.createdAt }}</td>
+                  <td style="color:var(--text-muted);">{{ user.lastLogin }}</td>
+                  <td>
+                    <div class="action-btns">
+                      <button class="btn btn-sm btn-ghost" @click="openEditModal(user)">编辑</button>
+                      <button class="btn btn-sm btn-ghost" @click="handleToggleStatus(user)">
+                        {{ user.status === 'active' ? '禁用' : '启用' }}
+                      </button>
+                      <button class="btn btn-sm btn-ghost" style="color:var(--danger);" @click="handleDelete(user.id)">删除</button>
+                    </div>
+                  </td>
+                </tr>
+                <tr v-if="pagedUsers.length === 0">
+                  <td colspan="9">
+                    <div class="empty-state">
+                      <div class="empty-icon">&#128269;</div>
+                      <h3>暂无数据</h3>
+                      <p>没有找到匹配的用户记录</p>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div class="table-pagination">
+              <span>共 {{ filteredUsers.length }} 条记录</span>
+              <div class="pagination-btns">
+                <button class="pagination-btn" :disabled="currentPage <= 1" @click="currentPage--">&laquo;</button>
+                <button
+                  v-for="p in Math.min(totalPages, 7)"
+                  :key="p"
+                  class="pagination-btn"
+                  :class="{ active: currentPage === p }"
+                  @click="currentPage = p"
+                >{{ p }}</button>
+                <button class="pagination-btn" :disabled="currentPage >= totalPages" @click="currentPage++">&raquo;</button>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+
+      <!-- 新增/编辑用户模态框 -->
+      <div class="modal-overlay" :class="{ visible: showModal }" @click.self="showModal = false">
+        <div class="modal">
+          <div class="modal-header">
+            <h3>{{ modalTitle }}</h3>
+            <button class="modal-close" @click="showModal = false">&times;</button>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <label class="form-label">用户名 <span class="required">*</span></label>
+              <input class="form-input" :class="{ error: formErrors.name }" v-model="userForm.name" placeholder="请输入用户名">
+              <div class="form-error" v-if="formErrors.name">{{ formErrors.name }}</div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">邮箱 <span class="required">*</span></label>
+              <input class="form-input" :class="{ error: formErrors.email }" v-model="userForm.email" placeholder="请输入邮箱">
+              <div class="form-error" v-if="formErrors.email">{{ formErrors.email }}</div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">角色</label>
+              <select class="form-select" v-model="userForm.role">
+                <option v-for="r in ROLES" :key="r" :value="r">{{ r }}</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">部门</label>
+              <select class="form-select" v-model="userForm.department">
+                <option v-for="d in DEPARTMENTS" :key="d" :value="d">{{ d }}</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">状态</label>
+              <select class="form-select" v-model="userForm.status">
+                <option v-for="s in STATUSES" :key="s.key" :value="s.key">{{ s.label }}</option>
+              </select>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-secondary" @click="showModal = false">取消</button>
+            <button class="btn btn-primary" @click="handleSave">确定</button>
+          </div>
+        </div>
+      </div>
+
+      <nav class="mobile-nav">
+        <a v-for="item in mobileNav" :key="item.key" class="mobile-nav-item" :class="{ active: item.key === 'users' }" :href="item.url">
+          <span class="nav-icon">{{ item.icon }}</span><span>{{ item.label }}</span>
+        </a>
+      </nav>
+    </div>
+
+    <div class="toast-container">
+      <div v-for="toast in toasts" :key="toast.id" class="toast" :class="'toast-' + toast.type">
+        <span class="toast-icon">{{ toastIcons[toast.type] }}</span>
+        <span class="toast-message">{{ toast.message }}</span>
+      </div>
+    </div>
+  </div>
+  <script type="module" src="users.js"></script>
+</body>
+</html>

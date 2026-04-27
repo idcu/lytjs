@@ -185,9 +185,10 @@ export function createElement(id: string): { container: any; destroy: () => void
 }
 
 /**
- * Run the non-keyed benchmark - build 1000 rows using DocumentFragment
+ * Run the non-keyed benchmark - build rows using DocumentFragment
+ * @param count - Number of rows to create (default: 1000)
  */
-export function runBenchmark(): void {
+export function runBenchmark(count: number = 1000): void {
   if (disposed || !containerEl) return
 
   // Clean up old rows
@@ -201,7 +202,7 @@ export function runBenchmark(): void {
   containerEl.innerHTML = ''
 
   // Build new data
-  const data = buildData(1000)
+  const data = buildData(count)
   selectedId = null
 
   // Create table structure

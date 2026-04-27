@@ -3,186 +3,269 @@ import { defineConfig } from 'vitepress'
 export default defineConfig({
   title: 'Lyt.js',
   description: 'Lightweight JavaScript framework',
-  lang: 'zh-CN',
 
   base: '/lytjs/',
 
   ignoreDeadLinks: true,
 
-  themeConfig: {
-    nav: [
-      { text: '指南', link: '/guide/quick-start' },
-      { text: 'API', link: '/api/core' },
-      { text: '示例', link: '/examples/counter' },
-      { text: '开发者', link: '/developer/README' },
-      { text: 'English', link: '/en/' }
-    ],
+  locales: {
+    root: {
+      label: '简体中文',
+      lang: 'zh-CN',
+      description: '轻量级 JavaScript 框架',
+      themeConfig: {
+        nav: [
+          { text: '指南', link: '/guide/quick-start' },
+          { text: 'API', link: '/api/core' },
+          { text: '示例', link: '/examples/counter' },
+          { text: '开发者', link: '/developer/README' },
+          {
+            text: 'English',
+            link: '/en/',
+            // VitePress 会自动识别 link 为其他 locale 的根路径，
+            // 并在导航栏中渲染为语言切换下拉菜单
+          }
+        ],
 
-    sidebar: {
-      '/guide/': [
-        {
-          text: '入门',
-          items: [
-            { text: '快速开始', link: '/guide/quick-start' },
-            { text: '模板语法', link: '/guide/template-syntax' },
-            { text: '组件', link: '/guide/component' },
-            { text: '组件库', link: '/guide/components' }
+        sidebar: {
+          '/guide/': [
+            {
+              text: '入门',
+              items: [
+                { text: '快速开始', link: '/guide/quick-start' },
+                { text: '模板语法', link: '/guide/template-syntax' },
+                { text: '组件', link: '/guide/component' },
+                { text: '组件库', link: '/guide/components' }
+              ]
+            },
+            {
+              text: '核心概念',
+              items: [
+                { text: '响应式系统', link: '/guide/reactivity' },
+                { text: 'Options API', link: '/guide/options-api' },
+                { text: 'Composition API', link: '/guide/composition-api' },
+                { text: '单文件组件', link: '/guide/sfc' }
+              ]
+            },
+            {
+              text: '生态',
+              items: [
+                { text: '路由', link: '/guide/router' },
+                { text: '状态管理', link: '/guide/store' },
+                { text: '服务端渲染', link: '/guide/ssr' },
+                { text: '开发工具', link: '/guide/devtools' }
+              ]
+            },
+            {
+              text: '高级主题',
+              items: [
+                { text: 'Vapor Mode', link: '/guide/vapor-mode' },
+                { text: '性能优化', link: '/guide/performance' },
+                { text: '部署', link: '/guide/deployment' },
+                { text: '常见问题', link: '/guide/faq' },
+                { text: '与其他框架对比', link: '/guide/comparison' },
+                { text: '从 Vue3 迁移', link: '/guide/migration-from-vue3' }
+              ]
+            }
+          ],
+          '/api/': [
+            {
+              text: 'API 参考',
+              items: [
+                { text: 'Core', link: '/api/core' },
+                { text: 'Reactivity', link: '/api/reactivity' },
+                { text: 'Component', link: '/api/component' },
+                { text: 'Renderer', link: '/api/renderer' },
+                { text: 'Compiler', link: '/api/compiler' },
+                { text: 'Router', link: '/api/router' },
+                { text: 'Store', link: '/api/store' },
+                { text: 'DevTools', link: '/api/devtools' },
+                { text: 'CLI', link: '/api/cli' },
+                { text: 'Plugin', link: '/api/plugin' },
+                { text: 'Web Component', link: '/api/web-component' }
+              ]
+            }
+          ],
+          '/developer/': [
+            {
+              text: '开发者指南',
+              items: [
+                { text: '架构概览', link: '/developer/01-architecture-overview' },
+                { text: '开始贡献', link: '/developer/02-getting-started' },
+                { text: '代码规范', link: '/developer/03-coding-standards' }
+              ]
+            },
+            {
+              text: '核心模块',
+              items: [
+                { text: '响应式系统', link: '/developer/core/01-reactivity' },
+                { text: '编译器', link: '/developer/core/02-compiler' },
+                { text: '渲染器', link: '/developer/core/03-renderer' },
+                { text: '组件系统', link: '/developer/core/04-component' },
+                { text: '核心', link: '/developer/core/05-core' }
+              ]
+            },
+            {
+              text: '高级主题',
+              items: [
+                { text: '模块组装', link: '/developer/advanced/01-module-assembly' }
+              ]
+            },
+            {
+              text: '特性',
+              items: [
+                { text: '路由', link: '/developer/feature/01-router' },
+                { text: '状态管理', link: '/developer/feature/02-store' }
+              ]
+            }
           ]
         },
-        {
-          text: '核心概念',
-          items: [
-            { text: '响应式系统', link: '/guide/reactivity' },
-            { text: 'Options API', link: '/guide/options-api' },
-            { text: 'Composition API', link: '/guide/composition-api' },
-            { text: '单文件组件', link: '/guide/sfc' }
-          ]
+
+        editLink: {
+          pattern: 'https://gitee.com/lytjs/lytjs/edit/main/docs/:path',
+          text: '在 Gitee 上编辑此页'
         },
-        {
-          text: '生态',
-          items: [
-            { text: '路由', link: '/guide/router' },
-            { text: '状态管理', link: '/guide/store' },
-            { text: '服务端渲染', link: '/guide/ssr' },
-            { text: '开发工具', link: '/guide/devtools' }
-          ]
+
+        footer: {
+          message: '基于 MIT 许可发布',
+          copyright: 'Copyright 2026-present Lyt.js'
         },
-        {
-          text: '高级主题',
-          items: [
-            { text: 'Vapor Mode', link: '/guide/vapor-mode' },
-            { text: '性能优化', link: '/guide/performance' },
-            { text: '部署', link: '/guide/deployment' },
-            { text: '常见问题', link: '/guide/faq' },
-            { text: '与其他框架对比', link: '/guide/comparison' },
-            { text: '从 Vue3 迁移', link: '/guide/migration-from-vue3' }
-          ]
-        }
-      ],
-      '/api/': [
-        {
-          text: 'API 参考',
-          items: [
-            { text: 'Core', link: '/api/core' },
-            { text: 'Reactivity', link: '/api/reactivity' },
-            { text: 'Component', link: '/api/component' },
-            { text: 'Renderer', link: '/api/renderer' },
-            { text: 'Compiler', link: '/api/compiler' },
-            { text: 'Router', link: '/api/router' },
-            { text: 'Store', link: '/api/store' },
-            { text: 'DevTools', link: '/api/devtools' },
-            { text: 'CLI', link: '/api/cli' },
-            { text: 'Plugin', link: '/api/plugin' },
-            { text: 'Web Component', link: '/api/web-component' }
-          ]
-        }
-      ],
-      '/developer/': [
-        {
-          text: '开发者指南',
-          items: [
-            { text: '架构概览', link: '/developer/01-architecture-overview' },
-            { text: '开始贡献', link: '/developer/02-getting-started' },
-            { text: '代码规范', link: '/developer/03-coding-standards' }
-          ]
+
+        docFooter: {
+          prev: '上一页',
+          next: '下一页'
         },
-        {
-          text: '核心模块',
-          items: [
-            { text: '响应式系统', link: '/developer/core/01-reactivity' },
-            { text: '编译器', link: '/developer/core/02-compiler' },
-            { text: '渲染器', link: '/developer/core/03-renderer' },
-            { text: '组件系统', link: '/developer/core/04-component' },
-            { text: '核心', link: '/developer/core/05-core' }
-          ]
+
+        outline: {
+          label: '页面导航',
+          level: [2, 3]
         },
-        {
-          text: '高级主题',
-          items: [
-            { text: '模块组装', link: '/developer/advanced/01-module-assembly' }
-          ]
+
+        lastUpdated: {
+          text: '最后更新于'
         },
-        {
-          text: '特性',
-          items: [
-            { text: '路由', link: '/developer/feature/01-router' },
-            { text: '状态管理', link: '/developer/feature/02-store' }
-          ]
-        }
-      ],
-      '/en/': [
-        {
-          text: 'Getting Started',
-          items: [
-            { text: 'Quick Start', link: '/en/guide/quick-start' },
-            { text: 'Template Syntax', link: '/en/guide/template-syntax' },
-            { text: 'Component System', link: '/en/guide/component' },
-            { text: 'Component Library', link: '/en/guide/components' }
-          ]
-        },
-        {
-          text: 'Core Concepts',
-          items: [
-            { text: 'Reactivity System', link: '/en/guide/reactivity' },
-            { text: 'Options API', link: '/en/guide/options-api' },
-            { text: 'Composition API', link: '/en/guide/composition-api' },
-            { text: 'Single File Components', link: '/en/guide/sfc' }
-          ]
-        },
-        {
-          text: 'Ecosystem',
-          items: [
-            { text: 'Router', link: '/en/guide/router' },
-            { text: 'State Management', link: '/en/guide/store' },
-            { text: 'SSR Guide', link: '/en/guide/ssr' },
-            { text: 'DevTools', link: '/en/guide/devtools' }
-          ]
-        },
-        {
-          text: 'Advanced Topics',
-          items: [
-            { text: 'Vapor Mode', link: '/en/guide/vapor-mode' },
-            { text: 'Performance', link: '/en/guide/performance' },
-            { text: 'Advanced Topics', link: '/en/guide/advanced-topics' },
-            { text: 'Deployment', link: '/en/guide/deployment' },
-            { text: 'FAQ', link: '/en/guide/faq' },
-            { text: 'Comparison', link: '/en/guide/comparison' },
-            { text: 'Migration from Vue 3', link: '/en/guide/migration-from-vue3' }
-          ]
-        },
-        {
-          text: 'API Reference',
-          items: [
-            { text: 'Core', link: '/en/api/core' },
-            { text: 'Reactivity', link: '/en/api/reactivity' },
-            { text: 'Component', link: '/en/api/component' },
-            { text: 'Components', link: '/en/api/components' },
-            { text: 'Renderer', link: '/en/api/renderer' },
-            { text: 'Compiler', link: '/en/api/compiler' },
-            { text: 'Router', link: '/en/api/router' },
-            { text: 'Store', link: '/en/api/store' },
-            { text: 'DevTools', link: '/en/api/devtools' },
-            { text: 'CLI', link: '/en/api/cli' },
-            { text: 'Plugin', link: '/en/api/plugin' },
-            { text: 'Web Component', link: '/en/api/web-component' }
-          ]
-        },
-        {
-          text: 'Community',
-          items: [
-            { text: 'Contributing', link: '/en/contributing' }
-          ]
-        }
-      ]
+
+        returnToTopLabel: '回到顶部',
+        sidebarMenuLabel: '菜单',
+        darkModeSwitchLabel: '主题',
+        lightModeSwitchTitle: '切换到浅色模式',
+        darkModeSwitchTitle: '切换到深色模式'
+      }
     },
+    en: {
+      label: 'English',
+      lang: 'en',
+      description: 'Lightweight JavaScript framework',
+      themeConfig: {
+        nav: [
+          { text: 'Guide', link: '/en/guide/quick-start' },
+          { text: 'API', link: '/en/api/core' },
+          { text: 'Examples', link: '/en/guide/quick-start' },
+          {
+            text: '简体中文',
+            link: '/'
+          }
+        ],
 
+        sidebar: {
+          '/en/guide/': [
+            {
+              text: 'Getting Started',
+              items: [
+                { text: 'Quick Start', link: '/en/guide/quick-start' },
+                { text: 'Template Syntax', link: '/en/guide/template-syntax' },
+                { text: 'Component System', link: '/en/guide/component' },
+                { text: 'Component Library', link: '/en/guide/components' }
+              ]
+            },
+            {
+              text: 'Core Concepts',
+              items: [
+                { text: 'Reactivity System', link: '/en/guide/reactivity' },
+                { text: 'Options API', link: '/en/guide/options-api' },
+                { text: 'Composition API', link: '/en/guide/composition-api' },
+                { text: 'Single File Components', link: '/en/guide/sfc' }
+              ]
+            },
+            {
+              text: 'Ecosystem',
+              items: [
+                { text: 'Router', link: '/en/guide/router' },
+                { text: 'State Management', link: '/en/guide/store' },
+                { text: 'SSR Guide', link: '/en/guide/ssr' },
+                { text: 'DevTools', link: '/en/guide/devtools' }
+              ]
+            },
+            {
+              text: 'Advanced Topics',
+              items: [
+                { text: 'Vapor Mode', link: '/en/guide/vapor-mode' },
+                { text: 'Performance', link: '/en/guide/performance' },
+                { text: 'Advanced Topics', link: '/en/guide/advanced-topics' },
+                { text: 'Deployment', link: '/en/guide/deployment' },
+                { text: 'FAQ', link: '/en/guide/faq' },
+                { text: 'Comparison', link: '/en/guide/comparison' },
+                { text: 'Migration from Vue 3', link: '/en/guide/migration-from-vue3' }
+              ]
+            }
+          ],
+          '/en/api/': [
+            {
+              text: 'API Reference',
+              items: [
+                { text: 'Core', link: '/en/api/core' },
+                { text: 'Reactivity', link: '/en/api/reactivity' },
+                { text: 'Component', link: '/en/api/component' },
+                { text: 'Components', link: '/en/api/components' },
+                { text: 'Renderer', link: '/en/api/renderer' },
+                { text: 'Compiler', link: '/en/api/compiler' },
+                { text: 'Router', link: '/en/api/router' },
+                { text: 'Store', link: '/en/api/store' },
+                { text: 'DevTools', link: '/en/api/devtools' },
+                { text: 'CLI', link: '/en/api/cli' },
+                { text: 'Plugin', link: '/en/api/plugin' },
+                { text: 'Web Component', link: '/en/api/web-component' }
+              ]
+            }
+          ]
+        },
+
+        editLink: {
+          pattern: 'https://gitee.com/lytjs/lytjs/edit/main/docs/:path',
+          text: 'Edit this page on Gitee'
+        },
+
+        footer: {
+          message: 'Released under the MIT License.',
+          copyright: 'Copyright 2026-present Lyt.js'
+        },
+
+        docFooter: {
+          prev: 'Previous',
+          next: 'Next'
+        },
+
+        outline: {
+          label: 'On This Page',
+          level: [2, 3]
+        },
+
+        lastUpdated: {
+          text: 'Last updated'
+        },
+
+        returnToTopLabel: 'Return to top',
+        sidebarMenuLabel: 'Menu',
+        darkModeSwitchLabel: 'Theme',
+        lightModeSwitchTitle: 'Switch to light theme',
+        darkModeSwitchTitle: 'Switch to dark theme'
+      }
+    }
+  },
+
+  themeConfig: {
     socialLinks: [
       { icon: 'github', link: 'https://gitee.com/lytjs/lytjs' }
-    ],
-
-    footer: {
-      message: 'MIT License',
-      copyright: 'Copyright © 2026-present Lyt.js'
-    }
+    ]
   }
 })

@@ -43,3 +43,59 @@ jobs:
 
       - name: Test
         run: pnpm run test
+
+      - name: Coverage Check
+        run: |
+          pnpm run test:coverage
+          # 检查行覆盖率阈值（60%）
+          COVERAGE_OUTPUT=$(pnpm run test:coverage 2>&1 || true)
+          echo "$COVERAGE_OUTPUT"
+          # c8 输出包含行覆盖率，提取并检查
+          if echo "$COVERAGE_OUTPUT" | grep -qP 'All files\s+\|'; then
+            LINE_COV=$(echo "$COVERAGE_OUTPUT" | grep -oP 'All files\s+\|\s+\K[0-9.]+' | head -1)
+            echo "Line coverage: ${LINE_COV}%"
+            if [ -n "$LINE_COV"" ]; then
+              PASS=$(echo "$LINE_COV >= 60" | bc -l 2>/dev/null || echo "1")
+              if [ "$PASS" = "0" ]; then
+                echo "::error::Line coverage ${LINE_COV}% is below threshold 60%"
+                exit 1
+              fi
+            fi
+          fi
+
+      - name: Version Consistency Check
+        run: node scripts/version.js current
+
+      - name: Size Check
+        run: |
+          if [ -f scripts/size-report.js ]; then
+            node scripts/size-report.js
+            # 检查核心 8 包 gzip 总计 < 35KB
+            TOTAL=$(node -e "
+              const { readdirSync, statSync, readFileSync } = require('fs');
+              const { join } = require('path');
+              const { gzipSync } = require('zlib');
+              const CORE = ['reactivity','vdom','compiler','renderer','component','core','router','store'];
+              const dir = join('packages');
+              let total = 0;
+              for (const pkg of CORE) {
+                try {
+                  const files = readdirSync(join(dir, pkg, 'dist'));
+                  const mjs = files.find(f => f.endsWith('.mjs'));
+                  if (mjs) {
+                    const content = readFileSync(join(dir, pkg, 'dist', mjs));
+                    total += gzipSync(content, { level: 9 }).length;
+                  }
+                } catch {}
+              }
+              console.log((total / 1024).toFixed(2));
+            ")
+            echo "Core 8 packages gzip total: ${TOTAL} KB"
+            PASS=$(echo "$TOTAL < 35" | bc -l 2>/dev/null || echo "1")
+            if [ "$PASS" = "0" ]; then
+              echo "::error::Core 8 packages gzip total ${TOTAL} KB exceeds 35 KB threshold"
+              exit 1
+            fi
+          else
+            echo "scripts/size-report.js not found, skipping size check"
+          fi

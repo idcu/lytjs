@@ -1081,3 +1081,469 @@ describe('a11y - 组件 ARIA 属性验证', () => {
     })
   }))
 })
+
+// ================================================================
+// 轻量级 a11y 规则检查器测试
+// ================================================================
+
+import {
+  configureAxe,
+  runA11yCheck,
+  assertNoA11yViolations,
+  getAvailableRules,
+  getCurrentOptions,
+  resetAxeConfig,
+} from '../src/a11y/axe-helper'
+
+/**
+ * 创建 mock 元素的辅助函数
+ */
+function createMockEl(tag: string, attrs: Record<string, string> = {}, children: any[] = []): any {
+  return {
+    tagName: tag.toUpperCase(),
+    attributes: { ...attrs },
+    textContent: attrs._textContent || '',
+    children,
+    style: attrs._style || null,
+    getAttribute(key: string) {
+      return this.attributes[key] ?? null
+    },
+    hasAttribute(key: string) {
+      return key in this.attributes
+    },
+    querySelectorAll() { return [] },
+  }
+}
+
+describe('a11y - 轻量级规则检查器 (axe-helper)', () => {
+  describe('configureAxe', withMock(() => {
+    it('应该更新配置', () => {
+      resetAxeConfig()
+      configureAxe({ rules: ['image-alt', 'form-label'] })
+      const opts = getCurrentOptions()
+      expect(opts.rules).toEqual(['image-alt', 'form-label'])
+      resetAxeConfig()
+    })
+
+    it('应该支持排除规则', () => {
+      resetAxeConfig()
+      configureAxe({ excludeRules: ['color-contrast'] })
+      const opts = getCurrentOptions()
+      expect(opts.excludeRules).toEqual(['color-contrast'])
+      resetAxeConfig()
+    })
+
+    it('应该支持自定义标签', () => {
+      resetAxeConfig()
+      configureAxe({ tags: ['custom-tag'] })
+      const opts = getCurrentOptions()
+      expect(opts.tags).toEqual(['custom-tag'])
+      resetAxeConfig()
+    })
+  }))
+
+  describe('getAvailableRules', withMock(() => {
+    it('应该返回所有可用的规则 ID', () => {
+      const rules = getAvailableRules()
+      expect(rules).toContain('interactive-name')
+      expect(rules).toContain('image-alt')
+      expect(rules).toContain('form-label')
+      expect(rules).toContain('modal-focus-trap')
+      expect(rules).toContain('aria-attr-valid-value')
+      expect(rules).toContain('color-contrast')
+      expect(rules.length).toBe(6)
+    })
+  }))
+
+  describe('resetAxeConfig', withMock(() => {
+    it('应该重置配置为默认值', () => {
+      configureAxe({ rules: ['image-alt'] })
+      resetAxeConfig()
+      const opts = getCurrentOptions()
+      expect(opts.rules).toEqual([])
+      expect(opts.excludeRules).toEqual([])
+    })
+  }))
+
+  describe('规则: interactive-name', withMock(() => {
+    it('没有可访问名称的 button 应该报告违规', () => {
+      resetAxeConfig()
+      const container = createMockEl('div', {}, [
+        createMockEl('button', {}),
+      ])
+      const result = runA11yCheck(container)
+      expect(result.passed).toBe(false)
+      expect(result.violations.some(v => v.id === 'interactive-name')).toBe(true)
+    })
+
+    it('有 aria-label 的 button 应该通过', () => {
+      resetAxeConfig()
+      const container = createMockEl('div', {}, [
+        createMockEl('button', { 'aria-label': '提交' }),
+      ])
+      const result = runA11yCheck(container)
+      expect(result.violations.some(v => v.id === 'interactive-name')).toBe(false)
+    })
+
+    it('有文本内容的 button 应该通过', () => {
+      resetAxeConfig()
+      const container = createMockEl('div', {}, [
+        createMockEl('button', { _textContent: '点击我' }),
+      ])
+      const result = runA11yCheck(container)
+      expect(result.violations.some(v => v.id === 'interactive-name')).toBe(false)
+    })
+
+    it('有 aria-labelledby 的 button 应该通过', () => {
+      resetAxeConfig()
+      const container = createMockEl('div', {}, [
+        createMockEl('button', { 'aria-labelledby': 'label-1' }),
+      ])
+      const result = runA11yCheck(container)
+      expect(result.violations.some(v => v.id === 'interactive-name')).toBe(false)
+    })
+
+    it('disabled 的 button 不应该报告违规', () => {
+      resetAxeConfig()
+      const container = createMockEl('div', {}, [
+        createMockEl('button', { disabled: '' }),
+      ])
+      const result = runA11yCheck(container)
+      expect(result.violations.some(v => v.id === 'interactive-name')).toBe(false)
+    })
+
+    it('aria-hidden 的 button 不应该报告违规', () => {
+      resetAxeConfig()
+      const container = createMockEl('div', {}, [
+        createMockEl('button', { 'aria-hidden': 'true' }),
+      ])
+      const result = runA11yCheck(container)
+      expect(result.violations.some(v => v.id === 'interactive-name')).toBe(false)
+    })
+
+    it('没有可访问名称的链接应该报告违规', () => {
+      resetAxeConfig()
+      const container = createMockEl('div', {}, [
+        createMockEl('a', { href: '#' }),
+      ])
+      const result = runA11yCheck(container)
+      expect(result.violations.some(v => v.id === 'interactive-name')).toBe(true)
+    })
+
+    it('有文本内容的链接应该通过', () => {
+      resetAxeConfig()
+      const container = createMockEl('div', {}, [
+        createMockEl('a', { href: '#', _textContent: '了解更多' }),
+      ])
+      const result = runA11yCheck(container)
+      expect(result.violations.some(v => v.id === 'interactive-name')).toBe(false)
+    })
+  }))
+
+  describe('规则: image-alt', withMock(() => {
+    it('缺少 alt 的 img 应该报告违规', () => {
+      resetAxeConfig()
+      const container = createMockEl('div', {}, [
+        createMockEl('img', { src: 'photo.jpg' }),
+      ])
+      const result = runA11yCheck(container)
+      expect(result.passed).toBe(false)
+      expect(result.violations.some(v => v.id === 'image-alt')).toBe(true)
+    })
+
+    it('有 alt 的 img 应该通过', () => {
+      resetAxeConfig()
+      const container = createMockEl('div', {}, [
+        createMockEl('img', { src: 'photo.jpg', alt: '风景照片' }),
+      ])
+      const result = runA11yCheck(container)
+      expect(result.violations.some(v => v.id === 'image-alt')).toBe(false)
+    })
+
+    it('装饰性图片 alt="" 应该通过', () => {
+      resetAxeConfig()
+      const container = createMockEl('div', {}, [
+        createMockEl('img', { src: 'divider.png', alt: '' }),
+      ])
+      const result = runA11yCheck(container)
+      expect(result.violations.some(v => v.id === 'image-alt')).toBe(false)
+    })
+
+    it('role="presentation" 的 img 应该通过', () => {
+      resetAxeConfig()
+      const container = createMockEl('div', {}, [
+        createMockEl('img', { src: 'icon.png', role: 'presentation' }),
+      ])
+      const result = runA11yCheck(container)
+      expect(result.violations.some(v => v.id === 'image-alt')).toBe(false)
+    })
+  }))
+
+  describe('规则: form-label', withMock(() => {
+    it('没有 label 的 input 应该报告违规', () => {
+      resetAxeConfig()
+      const container = createMockEl('div', {}, [
+        createMockEl('input', { type: 'text' }),
+      ])
+      const result = runA11yCheck(container)
+      expect(result.passed).toBe(false)
+      expect(result.violations.some(v => v.id === 'form-label')).toBe(true)
+    })
+
+    it('有 aria-label 的 input 应该通过', () => {
+      resetAxeConfig()
+      const container = createMockEl('div', {}, [
+        createMockEl('input', { type: 'text', 'aria-label': '用户名' }),
+      ])
+      const result = runA11yCheck(container)
+      expect(result.violations.some(v => v.id === 'form-label')).toBe(false)
+    })
+
+    it('有 aria-labelledby 的 input 应该通过', () => {
+      resetAxeConfig()
+      const container = createMockEl('div', {}, [
+        createMockEl('input', { type: 'text', 'aria-labelledby': 'label-1' }),
+      ])
+      const result = runA11yCheck(container)
+      expect(result.violations.some(v => v.id === 'form-label')).toBe(false)
+    })
+
+    it('type="hidden" 的 input 不需要 label', () => {
+      resetAxeConfig()
+      const container = createMockEl('div', {}, [
+        createMockEl('input', { type: 'hidden', name: 'csrf' }),
+      ])
+      const result = runA11yCheck(container)
+      expect(result.violations.some(v => v.id === 'form-label')).toBe(false)
+    })
+
+    it('type="submit" 的 input 不需要 label', () => {
+      resetAxeConfig()
+      const container = createMockEl('div', {}, [
+        createMockEl('input', { type: 'submit' }),
+      ])
+      const result = runA11yCheck(container)
+      expect(result.violations.some(v => v.id === 'form-label')).toBe(false)
+    })
+
+    it('没有 label 的 textarea 应该报告违规', () => {
+      resetAxeConfig()
+      const container = createMockEl('div', {}, [
+        createMockEl('textarea', {}),
+      ])
+      const result = runA11yCheck(container)
+      expect(result.violations.some(v => v.id === 'form-label')).toBe(true)
+    })
+
+    it('没有 label 的 select 应该报告违规', () => {
+      resetAxeConfig()
+      const container = createMockEl('div', {}, [
+        createMockEl('select', {}),
+      ])
+      const result = runA11yCheck(container)
+      expect(result.violations.some(v => v.id === 'form-label')).toBe(true)
+    })
+  }))
+
+  describe('规则: modal-focus-trap', withMock(() => {
+    it('有 aria-modal 和 aria-labelledby 的对话框应该通过', () => {
+      resetAxeConfig()
+      const container = createMockEl('div', {}, [
+        createMockEl('div', { role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'title-1' }),
+      ])
+      const result = runA11yCheck(container)
+      expect(result.violations.some(v => v.id === 'modal-focus-trap')).toBe(false)
+      expect(result.violations.some(v => v.id === 'dialog-label')).toBe(false)
+    })
+
+    it('缺少 aria-modal 的对话框应该报告违规', () => {
+      resetAxeConfig()
+      const container = createMockEl('div', {}, [
+        createMockEl('div', { role: 'dialog', 'aria-labelledby': 'title-1' }),
+      ])
+      const result = runA11yCheck(container)
+      expect(result.violations.some(v => v.id === 'modal-focus-trap')).toBe(true)
+    })
+
+    it('缺少标题的对话框应该报告违规', () => {
+      resetAxeConfig()
+      const container = createMockEl('div', {}, [
+        createMockEl('div', { role: 'dialog', 'aria-modal': 'true' }),
+      ])
+      const result = runA11yCheck(container)
+      expect(result.violations.some(v => v.id === 'dialog-label')).toBe(true)
+    })
+
+    it('有 aria-label 的对话框应该通过', () => {
+      resetAxeConfig()
+      const container = createMockEl('div', {}, [
+        createMockEl('div', { role: 'dialog', 'aria-modal': 'true', 'aria-label': '确认对话框' }),
+      ])
+      const result = runA11yCheck(container)
+      expect(result.violations.some(v => v.id === 'dialog-label')).toBe(false)
+    })
+  }))
+
+  describe('规则: aria-attr-valid-value', withMock(() => {
+    it('无效的布尔 ARIA 属性值应该报告违规', () => {
+      resetAxeConfig()
+      const container = createMockEl('div', {}, [
+        createMockEl('div', { 'aria-expanded': 'yes' }),
+      ])
+      const result = runA11yCheck(container)
+      expect(result.violations.some(v => v.id === 'aria-attr-valid-value')).toBe(true)
+    })
+
+    it('有效的布尔 ARIA 属性值应该通过', () => {
+      resetAxeConfig()
+      const container = createMockEl('div', {}, [
+        createMockEl('div', { 'aria-expanded': 'true', 'aria-hidden': 'false' }),
+      ])
+      const result = runA11yCheck(container)
+      expect(result.violations.some(v => v.id === 'aria-attr-valid-value')).toBe(false)
+    })
+
+    it('aria-checked="mixed" 应该通过', () => {
+      resetAxeConfig()
+      const container = createMockEl('div', {}, [
+        createMockEl('div', { 'aria-checked': 'mixed' }),
+      ])
+      const result = runA11yCheck(container)
+      expect(result.violations.some(v => v.id === 'aria-attr-valid-value')).toBe(false)
+    })
+
+    it('无效的 role 值应该报告违规', () => {
+      resetAxeConfig()
+      const container = createMockEl('div', {}, [
+        createMockEl('div', { role: 'invalid-role' }),
+      ])
+      const result = runA11yCheck(container)
+      expect(result.violations.some(v => v.id === 'aria-valid-role')).toBe(true)
+    })
+
+    it('有效的 role 值应该通过', () => {
+      resetAxeConfig()
+      const container = createMockEl('div', {}, [
+        createMockEl('div', { role: 'button' }),
+        createMockEl('div', { role: 'dialog' }),
+        createMockEl('div', { role: 'tablist' }),
+      ])
+      const result = runA11yCheck(container)
+      expect(result.violations.some(v => v.id === 'aria-valid-role')).toBe(false)
+    })
+  }))
+
+  describe('规则: color-contrast', withMock(() => {
+    it('低对比度的颜色应该报告违规', () => {
+      resetAxeConfig()
+      const container = createMockEl('div', {}, [
+        createMockEl('span', {
+          _style: { color: '#cccccc', backgroundColor: '#ffffff' },
+        }),
+      ])
+      const result = runA11yCheck(container)
+      expect(result.violations.some(v => v.id === 'color-contrast')).toBe(true)
+    })
+
+    it('高对比度的颜色应该通过', () => {
+      resetAxeConfig()
+      const container = createMockEl('div', {}, [
+        createMockEl('span', {
+          _style: { color: '#000000', backgroundColor: '#ffffff' },
+        }),
+      ])
+      const result = runA11yCheck(container)
+      expect(result.violations.some(v => v.id === 'color-contrast')).toBe(false)
+    })
+
+    it('没有内联样式的元素应该跳过检查', () => {
+      resetAxeConfig()
+      const container = createMockEl('div', {}, [
+        createMockEl('span', {}),
+      ])
+      const result = runA11yCheck(container)
+      expect(result.violations.some(v => v.id === 'color-contrast')).toBe(false)
+    })
+  }))
+
+  describe('assertNoA11yViolations', withMock(() => {
+    it('无违规时应该不抛出异常', () => {
+      resetAxeConfig()
+      const container = createMockEl('div', {}, [
+        createMockEl('button', { 'aria-label': '提交' }),
+        createMockEl('img', { src: 'photo.jpg', alt: '照片' }),
+        createMockEl('input', { type: 'text', 'aria-label': '用户名' }),
+      ])
+      expect(() => assertNoA11yViolations(container)).not.toThrow()
+    })
+
+    it('有违规时应该抛出包含详细信息的 Error', () => {
+      resetAxeConfig()
+      const container = createMockEl('div', {}, [
+        createMockEl('button', {}),  // 缺少可访问名称
+        createMockEl('img', { src: 'photo.jpg' }),  // 缺少 alt
+      ])
+      expect(() => assertNoA11yViolations(container)).toThrow()
+      try {
+        assertNoA11yViolations(container)
+      } catch (err: any) {
+        expect(err.message).toContain('2 个无障碍违规')
+        expect(err.message).toContain('interactive-name')
+        expect(err.message).toContain('image-alt')
+      }
+    })
+  }))
+
+  describe('runA11yCheck - 综合测试', withMock(() => {
+    it('应该返回正确的统计信息', () => {
+      resetAxeConfig()
+      const container = createMockEl('div', {}, [
+        createMockEl('button', { 'aria-label': '提交' }),
+        createMockEl('img', { src: 'photo.jpg', alt: '照片' }),
+        createMockEl('input', { type: 'text', 'aria-label': '用户名' }),
+        createMockEl('div', { role: 'dialog', 'aria-modal': 'true', 'aria-label': '对话框' }),
+      ])
+      const result = runA11yCheck(container)
+      expect(result.passed).toBe(true)
+      expect(result.violations.length).toBe(0)
+      expect(result.totalRules).toBe(6)
+      expect(result.passedRules).toBe(6)
+    })
+
+    it('配置排除规则后应该跳过指定规则', () => {
+      resetAxeConfig()
+      configureAxe({ excludeRules: ['image-alt'] })
+      const container = createMockEl('div', {}, [
+        createMockEl('img', { src: 'photo.jpg' }),  // 缺少 alt，但被排除
+      ])
+      const result = runA11yCheck(container)
+      expect(result.violations.some(v => v.id === 'image-alt')).toBe(false)
+      resetAxeConfig()
+    })
+
+    it('配置指定规则后应该只运行指定规则', () => {
+      resetAxeConfig()
+      configureAxe({ rules: ['image-alt'] })
+      const container = createMockEl('div', {}, [
+        createMockEl('button', {}),  // 缺少名称，但规则未运行
+        createMockEl('img', { src: 'photo.jpg' }),  // 缺少 alt
+      ])
+      const result = runA11yCheck(container)
+      expect(result.totalRules).toBe(1)
+      expect(result.violations.some(v => v.id === 'image-alt')).toBe(true)
+      expect(result.violations.some(v => v.id === 'interactive-name')).toBe(false)
+      resetAxeConfig()
+    })
+
+    it('违规项应该包含正确的 impact 级别', () => {
+      resetAxeConfig()
+      const container = createMockEl('div', {}, [
+        createMockEl('img', { src: 'photo.jpg' }),
+      ])
+      const result = runA11yCheck(container)
+      const imgViolation = result.violations.find(v => v.id === 'image-alt')
+      expect(imgViolation).toBeDefined()
+      expect(imgViolation!.impact).toBe('critical')
+    })
+  }))
+})

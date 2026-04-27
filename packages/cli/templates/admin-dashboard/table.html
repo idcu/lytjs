@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>数据表格 - Admin Dashboard</title>
+  <link rel="stylesheet" href="theme.css">
+  <style>
+    .sort-header { cursor: pointer; user-select: none; white-space: nowrap; }
+    .sort-header:hover { color: var(--text-primary); }
+    .sort-icon { margin-left: 4px; font-size: 0.65rem; opacity: 0.5; }
+    .sort-icon.active { opacity: 1; color: var(--primary); }
+    .export-dropdown { position: relative; }
+    .export-menu {
+      position: absolute; top: 100%; right: 0; margin-top: 4px;
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius-md); box-shadow: var(--shadow-lg);
+      min-width: 140px; padding: 4px; z-index: 200;
+    }
+    .export-menu .dropdown-item { padding: 8px 12px; }
+    .table-summary { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+    .summary-item { display: flex; align-items: center; gap: 6px; font-size: var(--text-sm); color: var(--text-secondary); }
+    .summary-value { font-weight: 600; color: var(--text-primary); }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div class="layout">
+      <aside class="sidebar" :class="{ collapsed: sidebarCollapsed, 'mobile-open': mobileMenuOpen }">
+        <div class="sidebar-header"><div class="sidebar-logo">L</div><span class="sidebar-title">Admin Dashboard</span></div>
+        <nav class="nav-menu">
+          <div class="nav-group-title">主菜单</div>
+          <a v-for="item in mainNav" :key="item.key" class="nav-item" :class="{ active: item.key === 'table' }" :href="item.url"><span class="nav-icon">{{ item.icon }}</span><span class="nav-label">{{ item.label }}</span></a>
+          <div class="nav-group-title">系统管理</div>
+          <a v-for="item in systemNav" :key="item.key" class="nav-item" :href="item.url"><span class="nav-icon">{{ item.icon }}</span><span class="nav-label">{{ item.label }}</span></a>
+          <div class="nav-group-title">其他</div>
+          <a v-for="item in otherNav" :key="item.key" class="nav-item" :href="item.url"><span class="nav-icon">{{ item.icon }}</span><span class="nav-label">{{ item.label }}</span></a>
+        </nav>
+        <div class="sidebar-footer">
+          <button class="theme-toggle-btn" @click="toggleTheme"><span class="nav-icon">{{ isDark ? '&#9788;' : '&#9789;' }}</span><span class="nav-label">{{ isDark ? '亮色模式' : '暗色模式' }}</span></button>
+        </div>
+      </aside>
+      <div class="mobile-overlay" :class="{ visible: mobileMenuOpen }" @click="mobileMenuOpen = false"></div>
+
+      <div class="main-content">
+        <header class="topbar">
+          <div class="topbar-left">
+            <button class="toggle-sidebar-btn" @click="toggleSidebar">&#9776;</button>
+            <div class="breadcrumb"><a href="index.html">首页</a><span class="separator">/</span><span class="current">数据表格</span></div>
+          </div>
+          <div class="topbar-right">
+            <div class="topbar-search"><span class="search-icon">&#128269;</span><input type="text" placeholder="搜索..."></div>
+            <button class="notification-btn">&#128276;</button>
+            <div class="user-menu"><div class="user-avatar">A</div><span class="user-name">管理员</span></div>
+          </div>
+        </header>
+
+        <main class="page-content">
+          <div class="page-header">
+            <h1>数据表格</h1>
+            <p>高级数据表格示例，支持排序、筛选、导出和批量操作。</p>
+          </div>
+
+          <!-- 数据汇总 -->
+          <div class="card mb-2">
+            <div class="card-body">
+              <div class="table-summary">
+                <div class="summary-item">总订单: <span class="summary-value">{{ allOrders.length }}</span></div>
+                <div class="summary-item">总金额: <span class="summary-value" style="color:var(--success);">&yen;{{ totalAmount.toLocaleString() }}</span></div>
+                <div class="summary-item">已完成: <span class="summary-value" style="color:var(--success);">{{ completedCount }}</span></div>
+                <div class="summary-item">处理中: <span class="summary-value" style="color:var(--warning);">{{ pendingCount }}</span></div>
+                <div class="summary-item">已取消: <span class="summary-value" style="color:var(--danger);">{{ cancelledCount }}</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 数据表格 -->
+          <div class="table-wrapper">
+            <div class="table-toolbar">
+              <div class="table-toolbar-left">
+                <input class="form-input" style="width:220px;" v-model="searchQuery" placeholder="搜索订单号/客户/商品...">
+                <select class="form-select" v-model="filterStatus" style="width:120px;">
+                  <option value="">全部状态</option>
+                  <option value="completed">已完成</option>
+                  <option value="pending">处理中</option>
+                  <option value="shipping">配送中</option>
+                  <option value="cancelled">已取消</option>
+                </select>
+                <select class="form-select" v-model="filterPayment" style="width:120px;">
+                  <option value="">支付方式</option>
+                  <option value="微信支付">微信支付</option>
+                  <option value="支付宝">支付宝</option>
+                  <option value="银行卡">银行卡</option>
+                  <option value="货到付款">货到付款</option>
+                </select>
+              </div>
+              <div class="table-toolbar-right">
+                <div v-if="selectedIds.size > 0" style="display:flex;align-items:center;gap:8px;margin-right:8px;">
+                  <span style="font-size:var(--text-sm);color:var(--text-secondary);">已选 {{ selectedIds.size }} 项</span>
+                  <button class="btn btn-sm btn-danger" @click="batchDelete">批量删除</button>
+                  <button class="btn btn-sm btn-secondary" @click="batchExport">批量导出</button>
+                </div>
+                <div class="export-dropdown">
+                  <button class="btn btn-secondary" @click="showExportMenu = !showExportMenu">&#128229; 导出</button>
+                  <div class="export-menu" v-if="showExportMenu">
+                    <div class="dropdown-item" @click="exportData('csv')">导出 CSV</div>
+                    <div class="dropdown-item" @click="exportData('excel')">导出 Excel</div>
+                    <div class="dropdown-item" @click="exportData('json')">导出 JSON</div>
+                  </div>
+                </div>
+                <button class="btn btn-primary" @click="showAddModal = true">+ 新增订单</button>
+              </div>
+            </div>
+
+            <div style="overflow-x:auto;">
+              <table>
+                <thead>
+                  <tr>
+                    <th style="width:40px;"><input type="checkbox" :checked="allSelected" @change="toggleSelectAll"></th>
+                    <th class="sort-header" @click="sortBy('id')">
+                      订单号 <span class="sort-icon" :class="{ active: sortKey === 'id' }">{{ sortKey === 'id' ? (sortDir === 'asc' ? '&#9650;' : '&#9660;') : '&#8693;' }}</span>
+                    </th>
+                    <th class="sort-header" @click="sortBy('customer')">
+                      客户 <span class="sort-icon" :class="{ active: sortKey === 'customer' }">{{ sortKey === 'customer' ? (sortDir === 'asc' ? '&#9650;' : '&#9660;') : '&#8693;' }}</span>
+                    </th>
+                    <th>商品</th>
+                    <th class="sort-header" @click="sortBy('amount')">
+                      金额 <span class="sort-icon" :class="{ active: sortKey === 'amount' }">{{ sortKey === 'amount' ? (sortDir === 'asc' ? '&#9650;' : '&#9660;') : '&#8693;' }}</span>
+                    </th>
+                    <th>支付方式</th>
+                    <th>状态</th>
+                    <th class="sort-header" @click="sortBy('date')">
+                      日期 <span class="sort-icon" :class="{ active: sortKey === 'date' }">{{ sortKey === 'date' ? (sortDir === 'asc' ? '&#9650;' : '&#9660;') : '&#8693;' }}</span>
+                    </th>
+                    <th style="width:100px;">操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="order in pagedOrders" :key="order.id" :class="{ selected: selectedIds.has(order.id) }">
+                    <td><input type="checkbox" :checked="selectedIds.has(order.id)" @change="toggleSelect(order.id)"></td>
+                    <td style="font-weight:500;">#{{ order.id }}</td>
+                    <td>{{ order.customer }}</td>
+                    <td>{{ order.product }}</td>
+                    <td style="font-weight:500;">&yen;{{ order.amount.toLocaleString() }}</td>
+                    <td><span class="tag tag-blue">{{ order.payment }}</span></td>
+                    <td><span class="status-badge" :class="order.statusClass">{{ order.statusLabel }}</span></td>
+                    <td style="color:var(--text-muted);">{{ order.date }}</td>
+                    <td>
+                      <div style="display:flex;gap:4px;">
+                        <button class="btn btn-sm btn-ghost" @click="viewOrder(order)">查看</button>
+                        <button class="btn btn-sm btn-ghost" style="color:var(--danger);" @click="deleteOrder(order.id)">删除</button>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr v-if="pagedOrders.length === 0">
+                    <td colspan="9">
+                      <div class="empty-state"><div class="empty-icon">&#128269;</div><h3>暂无数据</h3><p>没有找到匹配的订单</p></div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="table-pagination">
+              <span>共 {{ filteredOrders.length }} 条，每页
+                <select class="form-select" v-model="pageSize" style="width:70px;display:inline;padding:2px 24px 2px 6px;font-size:var(--text-sm);">
+                  <option :value="10">10</option>
+                  <option :value="20">20</option>
+                  <option :value="50">50</option>
+                </select> 条
+              </span>
+              <div class="pagination-btns">
+                <button class="pagination-btn" :disabled="currentPage <= 1" @click="currentPage--">&laquo;</button>
+                <button v-for="p in displayPages" :key="p" class="pagination-btn" :class="{ active: currentPage === p }" @click="currentPage = p">{{ p }}</button>
+                <button class="pagination-btn" :disabled="currentPage >= totalPages" @click="currentPage++">&raquo;</button>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+
+      <!-- 查看订单模态框 -->
+      <div class="modal-overlay" :class="{ visible: showViewModal }" @click.self="showViewModal = false">
+        <div class="modal" style="max-width:560px;">
+          <div class="modal-header"><h3>订单详情 #{{ viewOrderData.id }}</h3><button class="modal-close" @click="showViewModal = false">&times;</button></div>
+          <div class="modal-body" v-if="viewOrderData">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+              <div><div style="font-size:var(--text-xs);color:var(--text-muted);margin-bottom:4px;">客户</div><div style="font-weight:500;">{{ viewOrderData.customer }}</div></div>
+              <div><div style="font-size:var(--text-xs);color:var(--text-muted);margin-bottom:4px;">商品</div><div style="font-weight:500;">{{ viewOrderData.product }}</div></div>
+              <div><div style="font-size:var(--text-xs);color:var(--text-muted);margin-bottom:4px;">金额</div><div style="font-weight:700;font-size:var(--text-lg);color:var(--success);">&yen;{{ viewOrderData.amount.toLocaleString() }}</div></div>
+              <div><div style="font-size:var(--text-xs);color:var(--text-muted);margin-bottom:4px;">支付方式</div><div>{{ viewOrderData.payment }}</div></div>
+              <div><div style="font-size:var(--text-xs);color:var(--text-muted);margin-bottom:4px;">状态</div><div><span class="status-badge" :class="viewOrderData.statusClass">{{ viewOrderData.statusLabel }}</span></div></div>
+              <div><div style="font-size:var(--text-xs);color:var(--text-muted);margin-bottom:4px;">下单时间</div><div>{{ viewOrderData.date }}</div></div>
+            </div>
+          </div>
+          <div class="modal-footer"><button class="btn btn-secondary" @click="showViewModal = false">关闭</button></div>
+        </div>
+      </div>
+
+      <nav class="mobile-nav">
+        <a v-for="item in mobileNav" :key="item.key" class="mobile-nav-item" :href="item.url"><span class="nav-icon">{{ item.icon }}</span><span>{{ item.label }}</span></a>
+      </nav>
+    </div>
+
+    <div class="toast-container">
+      <div v-for="toast in toasts" :key="toast.id" class="toast" :class="'toast-' + toast.type">
+        <span class="toast-icon">{{ toastIcons[toast.type] }}</span>
+        <span class="toast-message">{{ toast.message }}</span>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { createApp, ref, reactive, computed, watch, onMounted } from 'https://cdn.jsdelivr.net/npm/@lytjs/core@5.0.0/+esm'
+
+    const mainNav = [
+      { key: 'dashboard', icon: '&#9632;', label: '仪表盘', url: 'index.html' },
+      { key: 'users', icon: '&#128100;', label: '用户管理', url: 'users.html' },
+      { key: 'roles', icon: '&#128101;', label: '角色权限', url: 'roles.html' },
+      { key: 'table', icon: '&#128203;', label: '数据表格', url: 'table.html' },
+      { key: 'forms', icon: '&#9997;', label: '表单页面', url: 'forms.html' },
+      { key: 'charts', icon: '&#128200;', label: '图表页面', url: 'charts.html' },
+    ]
+    const systemNav = [
+      { key: 'profile', icon: '&#128100;', label: '个人设置', url: 'profile.html' },
+      { key: 'settings', icon: '&#9881;', label: '系统设置', url: 'settings.html' },
+    ]
+    const otherNav = [
+      { key: 'error', icon: '&#9888;', label: '错误页面', url: 'error.html' },
+      { key: 'login', icon: '&#128274;', label: '退出登录', url: 'login.html' },
+    ]
+    const mobileNav = [
+      { key: 'dashboard', icon: '&#9632;', label: '首页', url: 'index.html' },
+      { key: 'users', icon: '&#128100;', label: '用户', url: 'users.html' },
+      { key: 'table', icon: '&#128203;', label: '表格', url: 'table.html' },
+      { key: 'charts', icon: '&#128200;', label: '图表', url: 'charts.html' },
+      { key: 'profile', icon: '&#9881;', label: '设置', url: 'profile.html' },
+    ]
+
+    const toasts = ref([])
+    let toastId = 0
+    function showToast(msg, type = 'info') {
+      const id = ++toastId; toasts.value.push({ id, message: msg, type })
+      setTimeout(() => { toasts.value = toasts.value.filter(t => t.id !== id) }, 3000)
+    }
+
+    // 生成订单数据
+    const products = ['MacBook Pro', 'iPhone 15', 'iPad Air', 'AirPods Pro', 'Apple Watch', '机械键盘', '显示器', '鼠标', '耳机', '摄像头']
+    const customers = ['张三', '李四', '王五', '赵六', '孙七', '周八', '吴九', '郑十', '陈一', '林二']
+    const payments = ['微信支付', '支付宝', '银行卡', '货到付款']
+    const statuses = [
+      { key: 'completed', label: '已完成', class: 'success' },
+      { key: 'pending', label: '处理中', class: 'warning' },
+      { key: 'shipping', label: '配送中', class: 'info' },
+      { key: 'cancelled', label: '已取消', class: 'danger' },
+    ]
+
+    function generateOrders(n) {
+      const orders = []
+      for (let i = 0; i < n; i++) {
+        const status = statuses[Math.floor(Math.random() * statuses.length)]
+        orders.push({
+          id: 20240001 + i,
+          customer: customers[Math.floor(Math.random() * customers.length)],
+          product: products[Math.floor(Math.random() * products.length)],
+          amount: Math.floor(Math.random() * 10000) + 50,
+          payment: payments[Math.floor(Math.random() * payments.length)],
+          status: status.key, statusLabel: status.label, statusClass: status.class,
+          date: `2024-${String(Math.floor(Math.random() * 3) + 1).padStart(2, '0')}-${String(Math.floor(Math.random() * 28) + 1).padStart(2, '0')}`,
+        })
+      }
+      return orders
+    }
+
+    const app = createApp({
+      setup() {
+        const sidebarCollapsed = ref(false)
+        const mobileMenuOpen = ref(false)
+        const isDark = ref(true)
+        function toggleSidebar() { if (window.innerWidth <= 768) mobileMenuOpen.value = !mobileMenuOpen.value; else sidebarCollapsed.value = !sidebarCollapsed.value }
+        function toggleTheme() { isDark.value = !isDark.value; localStorage.setItem('admin-theme', isDark.value ? 'dark' : 'light') }
+        watch(isDark, (d) => document.documentElement.classList.toggle('light', !d))
+
+        const allOrders = ref(generateOrders(86))
+        const searchQuery = ref('')
+        const filterStatus = ref('')
+        const filterPayment = ref('')
+        const sortKey = ref('id')
+        const sortDir = ref('desc')
+        const currentPage = ref(1)
+        const pageSize = ref(10)
+        const selectedIds = ref(new Set())
+        const showExportMenu = ref(false)
+        const showAddModal = ref(false)
+        const showViewModal = ref(false)
+        const viewOrderData = ref(null)
+
+        // 统计
+        const totalAmount = computed(() => allOrders.value.reduce((s, o) => s + o.amount, 0))
+        const completedCount = computed(() => allOrders.value.filter(o => o.status === 'completed').length)
+        const pendingCount = computed(() => allOrders.value.filter(o => o.status === 'pending').length)
+        const cancelledCount = computed(() => allOrders.value.filter(o => o.status === 'cancelled').length)
+
+        // 过滤 + 排序
+        const filteredOrders = computed(() => {
+          let list = [...allOrders.value]
+          if (searchQuery.value) {
+            const q = searchQuery.value.toLowerCase()
+            list = list.filter(o => o.id.toString().includes(q) || o.customer.includes(q) || o.product.toLowerCase().includes(q))
+          }
+          if (filterStatus.value) list = list.filter(o => o.status === filterStatus.value)
+          if (filterPayment.value) list = list.filter(o => o.payment === filterPayment.value)
+          // 排序
+          list.sort((a, b) => {
+            let va = a[sortKey.value], vb = b[sortKey.value]
+            if (typeof va === 'string') { va = va.toLowerCase(); vb = vb.toLowerCase() }
+            if (va < vb) return sortDir.value === 'asc' ? -1 : 1
+            if (va > vb) return sortDir.value === 'asc' ? 1 : -1
+            return 0
+          })
+          return list
+        })
+
+        const totalPages = computed(() => Math.ceil(filteredOrders.value.length / pageSize.value))
+        const pagedOrders = computed(() => {
+          const start = (currentPage.value - 1) * pageSize.value
+          return filteredOrders.value.slice(start, start + pageSize.value)
+        })
+        const displayPages = computed(() => {
+          const total = totalPages.value
+          const current = currentPage.value
+          if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1)
+          let pages = []
+          if (current <= 4) pages = [1, 2, 3, 4, 5, '...', total]
+          else if (current >= total - 3) pages = [1, '...', total - 4, total - 3, total - 2, total - 1, total]
+          else pages = [1, '...', current - 1, current, current + 1, '...', total]
+          return pages
+        })
+
+        const allSelected = computed(() => pagedOrders.value.length > 0 && pagedOrders.value.every(o => selectedIds.value.has(o.id)))
+        function toggleSelectAll() {
+          if (allSelected.value) pagedOrders.value.forEach(o => selectedIds.value.delete(o.id))
+          else pagedOrders.value.forEach(o => selectedIds.value.add(o.id))
+          selectedIds.value = new Set(selectedIds.value)
+        }
+        function toggleSelect(id) {
+          if (selectedIds.value.has(id)) selectedIds.value.delete(id)
+          else selectedIds.value.add(id)
+          selectedIds.value = new Set(selectedIds.value)
+        }
+
+        function sortBy(key) {
+          if (sortKey.value === key) sortDir.value = sortDir.value === 'asc' ? 'desc' : 'asc'
+          else { sortKey.value = key; sortDir.value = 'asc' }
+        }
+
+        function viewOrder(order) { viewOrderData.value = order; showViewModal.value = true }
+        function deleteOrder(id) { allOrders.value = allOrders.value.filter(o => o.id !== id); selectedIds.value.delete(id); selectedIds.value = new Set(selectedIds.value); showToast('订单已删除', 'success') }
+        function batchDelete() { const c = selectedIds.value.size; allOrders.value = allOrders.value.filter(o => !selectedIds.value.has(o.id)); selectedIds.value = new Set(); showToast(`已删除 ${c} 个订单`, 'success') }
+        function batchExport() { showToast(`正在导出 ${selectedIds.value.size} 条数据...`, 'info') }
+        function exportData(format) { showExportMenu.value = false; showToast(`正在导出 ${format.toUpperCase()} 格式数据...`, 'info') }
+
+        // 点击外部关闭导出菜单
+        function closeExportMenu(e) { if (!e.target.closest('.export-dropdown')) showExportMenu.value = false }
+
+        onMounted(() => {
+          const savedTheme = localStorage.getItem('admin-theme')
+          if (savedTheme === 'light') { isDark.value = false; document.documentElement.classList.add('light') }
+          document.addEventListener('click', closeExportMenu)
+        })
+
+        return {
+          sidebarCollapsed, mobileMenuOpen, isDark, toggleSidebar, toggleTheme,
+          mainNav, systemNav, otherNav, mobileNav,
+          allOrders, searchQuery, filterStatus, filterPayment,
+          sortKey, sortDir, currentPage, pageSize,
+          filteredOrders, totalPages, pagedOrders, displayPages,
+          selectedIds, allSelected, toggleSelectAll, toggleSelect, sortBy,
+          totalAmount, completedCount, pendingCount, cancelledCount,
+          showExportMenu, showAddModal, showViewModal, viewOrderData,
+          viewOrder, deleteOrder, batchDelete, batchExport, exportData,
+          toasts,
+          toastIcons: { success: '&#10004;', error: '&#10008;', warning: '&#9888;', info: '&#8505;' },
+        }
+      },
+    })
+    app.mount('#app')
+  </script>
+</body>
+</html>

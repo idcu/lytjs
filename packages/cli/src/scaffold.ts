@@ -4,8 +4,9 @@
  * 纯 Node.js 原生实现，不依赖任何第三方包
  */
 
+import * as fs from 'fs';
 import * as path from 'path';
-import { ensureDir, writeFile, fileExists, colorText, logger } from './utils';
+import { ensureDir, writeFile, fileExists, colorText, logger, readFile } from './utils';
 
 // ============================================================
 // 类型定义
@@ -16,7 +17,7 @@ export interface ScaffoldOptions {
   /** 项目名称 */
   name: string;
   /** 项目模板类型 */
-  template: 'spa' | 'ssr' | 'ssg';
+  template: 'spa' | 'ssr' | 'ssg' | 'todo-app' | 'admin-dashboard';
   /** 是否使用 TypeScript */
   ts: boolean;
   /** 是否包含路由 */
@@ -33,6 +34,68 @@ interface ProjectFile {
   filePath: string;
   /** 文件内容生成函数或字符串 */
   content: string;
+}
+
+// ============================================================
+// 模板注册表
+// ============================================================
+
+/**
+ * 所有可用模板的注册表
+ * 内置模板通过代码生成器创建文件
+ * 示例模板从 templates/ 目录复制文件
+ */
+const TEMPLATE_REGISTRY: Record<string, {
+  description: string;
+  type: 'builtin' | 'example';
+}> = {
+  'spa': {
+    description: '基础 SPA 单页应用（计数器示例）',
+    type: 'builtin',
+  },
+  'ssr': {
+    description: 'SSR 服务端渲染应用',
+    type: 'builtin',
+  },
+  'ssg': {
+    description: 'SSG 静态站点生成',
+    type: 'builtin',
+  },
+  'todo-app': {
+    description: 'Todo 待办事项应用（响应式 + LocalStorage 持久化）',
+    type: 'example',
+  },
+  'admin-dashboard': {
+    description: 'Admin Dashboard 企业级后台管理系统（10 个页面）',
+    type: 'example',
+  },
+};
+
+/**
+ * 获取所有可用模板列表
+ */
+export function getAvailableTemplates(): Record<string, string> {
+  const result: Record<string, string> = {};
+  for (const [key, value] of Object.entries(TEMPLATE_REGISTRY)) {
+    result[key] = value.description;
+  }
+  return result;
+}
+
+/**
+ * 检查模板是否存在
+ */
+export function isValidTemplate(template: string): boolean {
+  return template in TEMPLATE_REGISTRY;
+}
+
+/**
+ * 获取模板信息
+ */
+export function getTemplateInfo(template: string): { description: string; type: string } | null {
+  const info = TEMPLATE_REGISTRY[template];
+  if (!info) return null;
+  return { description: info.description, type: info.type };
 }
 
 // ============================================================
@@ -431,6 +494,87 @@ function generateEslintConfig(): string {
 // ============================================================
 
 /**
+ * 从模板目录复制所有文件到目标目录
+ * @param templateDir - 模板目录的绝对路径
+ * @param targetDir - 目标项目目录的绝对路径
+ */
+function copyTemplateFiles(templateDir: string, targetDir: string): void {
+  if (!fs.existsSync(templateDir)) {
+    throw new Error(`模板目录不存在: ${templateDir}`);
+  }
+
+  const entries = fs.readdirSync(templateDir, { withFileTypes: true });
+
+  for (const entry of entries) {
+    const srcPath = path.join(templateDir, entry.name);
+    const destPath = path.join(targetDir, entry.name);
+
+    if (entry.name === '.DS_Store' || entry.name === 'node_modules') {
+      continue;
+    }
+
+    if (entry.isDirectory()) {
+      copyTemplateFiles(srcPath, destPath);
+    } else {
+      ensureDir(path.dirname(destPath));
+      const content = readFile(srcPath);
+      writeFile(destPath, content);
+      logger.success(`  创建 ${path.relative(targetDir, destPath)}`);
+    }
+  }
+}
+
+/**
+ * 创建示例模板项目（从 templates/ 目录复制）
+ * @param options - 脚手架选项
+ */
+async function createExampleProject(options: ScaffoldOptions): Promise<void> {
+  const { name, template } = options;
+  const targetDir = path.resolve(process.cwd(), name);
+
+  logger.info(`正在创建 Lyt 项目: ${colorText(name, 'brightCyan')}`);
+  logger.info(`使用模板: ${colorText(template, 'brightCyan')} (${TEMPLATE_REGISTRY[template].description})`);
+
+  // 检查目标目录是否已存在
+  if (fileExists(targetDir)) {
+    logger.error(`目录 "${name}" 已存在，请选择其他名称或删除已有目录`);
+    throw new Error(`Directory "${name}" already exists`);
+  }
+
+  // 创建项目根目录
+  ensureDir(targetDir);
+
+  // 获取模板目录路径（相对于 scaffold.ts 所在位置）
+  // templates/ 目录位于 packages/cli/templates/
+  const cliDir = path.resolve(__dirname, '..');
+  const templateDir = path.join(cliDir, 'templates', template);
+
+  // 复制模板文件
+  copyTemplateFiles(templateDir, targetDir);
+
+  // 更新 package.json 中的 name 字段
+  const pkgPath = path.join(targetDir, 'package.json');
+  if (fs.existsSync(pkgPath)) {
+    const pkgContent = readFile(pkgPath);
+    const pkg = JSON.parse(pkgContent);
+    pkg.name = name;
+    writeFile(pkgPath, JSON.stringify(pkg, null, 2) + '\n');
+    logger.success(`  更新 package.json (name: ${name})`);
+  }
+
+  // 输出完成信息
+  console.log('');
+  logger.success(`项目 ${colorText(name, 'brightCyan')} 创建成功！`);
+  console.log('');
+  console.log(`  请执行以下命令启动项目：`);
+  console.log('');
+  console.log(`    ${colorText('cd', 'brightGreen')} ${name}`);
+  console.log(`    ${colorText('npm install', 'brightGreen')}`);
+  console.log(`    ${colorText('npm run dev', 'brightGreen')}`);
+  console.log('');
+}
+
+/**
  * 创建新的 Lyt 项目（增强版脚手架）
  *
  * @param options - 脚手架选项
@@ -461,6 +605,11 @@ function generateEslintConfig(): string {
  * ```
  */
 export async function createProject(options: ScaffoldOptions): Promise<void> {
+  // 示例模板：从 templates/ 目录复制
+  if (TEMPLATE_REGISTRY[options.template]?.type === 'example') {
+    return createExampleProject(options);
+  }
+
   const { name, template, ts, router, store, eslint } = options;
   const targetDir = path.resolve(process.cwd(), name);
 
