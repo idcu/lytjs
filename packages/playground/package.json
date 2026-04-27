@@ -1,0 +1,28 @@
+{
+  "name": "@lytjs/playground",
+  "version": "5.0.0",
+  "description": "Lyt.js Interactive Playground - Online code editor with live preview",
+  "main": "index.html",
+  "scripts": {
+    "dev": "npx serve .",
+    "start": "npx serve ."
+  },
+  "keywords": [
+    "lytjs",
+    "playground",
+    "online-editor",
+    "live-preview"
+  ],
+  "license": "MIT",
+  "author": "lytjs",
+  "repository": {
+    "type": "git",
+    "url": "https://gitee.com/lytjs/lytjs"
+  },
+  "homepage": "https://gitee.com/lytjs/lytjs",
+  "files": [
+    "index.html",
+    "css",
+    "js"
+  ]
+}

@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lyt.js 官方示例项目集</title>
+  <style>
+    /* ========== 全局样式 ========== */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      min-height: 100vh;
+    }
+
+    /* ========== Hero 区域 ========== */
+    .hero {
+      text-align: center;
+      padding: 4rem 1.5rem 3rem;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle at 30% 50%, rgba(59,130,246,0.08) 0%, transparent 50%),
+                  radial-gradient(circle at 70% 50%, rgba(139,92,246,0.08) 0%, transparent 50%);
+      pointer-events: none;
+    }
+    .hero-badge {
+      display: inline-block;
+      padding: 0.35rem 1rem;
+      background: rgba(59,130,246,0.15);
+      color: #60a5fa;
+      border: 1px solid rgba(59,130,246,0.3);
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      margin-bottom: 1.5rem;
+    }
+    .hero h1 {
+      font-size: 2.75rem;
+      font-weight: 800;
+      margin-bottom: 1rem;
+      background: linear-gradient(135deg, #60a5fa, #a78bfa, #f472b6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      position: relative;
+    }
+    .hero p {
+      font-size: 1.15rem;
+      color: #94a3b8;
+      max-width: 600px;
+      margin: 0 auto;
+      line-height: 1.7;
+    }
+
+    /* ========== 特性标签 ========== */
+    .features {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      padding: 0 1.5rem;
+      margin-top: 2rem;
+    }
+    .feature-tag {
+      padding: 0.35rem 0.85rem;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 6px;
+      font-size: 0.8rem;
+      color: #94a3b8;
+    }
+
+    /* ========== 示例网格 ========== */
+    .examples-section {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 3rem 1.5rem;
+    }
+    .section-title {
+      text-align: center;
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+    .section-subtitle {
+      text-align: center;
+      color: #64748b;
+      font-size: 0.95rem;
+      margin-bottom: 2.5rem;
+    }
+    .examples-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      gap: 1.5rem;
+    }
+
+    /* ========== 示例卡片 ========== */
+    .example-card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 16px;
+      overflow: hidden;
+      transition: all 0.3s;
+      text-decoration: none;
+      color: inherit;
+      display: block;
+    }
+    .example-card:hover {
+      transform: translateY(-4px);
+      border-color: #3b82f6;
+      box-shadow: 0 12px 40px rgba(59,130,246,0.15);
+    }
+    .card-preview {
+      height: 180px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 4rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .card-preview::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to bottom, transparent 60%, #1e293b);
+    }
+    .card-body { padding: 1.25rem 1.5rem 1.5rem; }
+    .card-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .card-desc {
+      font-size: 0.875rem;
+      color: #94a3b8;
+      line-height: 1.6;
+      margin-bottom: 1rem;
+    }
+    .card-tags { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+    .card-tag {
+      padding: 0.2rem 0.55rem;
+      background: rgba(59,130,246,0.1);
+      color: #60a5fa;
+      border-radius: 4px;
+      font-size: 0.72rem;
+      font-weight: 500;
+    }
+
+    /* ========== 底部 ========== */
+    .footer {
+      text-align: center;
+      padding: 2rem 1.5rem;
+      border-top: 1px solid #1e293b;
+      color: #475569;
+      font-size: 0.85rem;
+    }
+    .footer a {
+      color: #60a5fa;
+      text-decoration: none;
+    }
+    .footer a:hover { text-decoration: underline; }
+
+    /* ========== 响应式 ========== */
+    @media (max-width: 768px) {
+      .hero h1 { font-size: 2rem; }
+      .hero p { font-size: 1rem; }
+      .examples-grid { grid-template-columns: 1fr; }
+      .card-preview { height: 140px; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Hero 区域 -->
+  <div class="hero">
+    <div class="hero-badge">v5.0.0</div>
+    <h1>Lyt.js 官方示例项目集</h1>
+    <p>通过 5 个完整的示例项目，快速了解 Lyt.js 的核心特性。每个示例都是独立可运行的单 HTML 文件，使用 CDN 加载，无需构建。</p>
+    <div class="features">
+      <span class="feature-tag">createApp</span>
+      <span class="feature-tag">ref / reactive</span>
+      <span class="feature-tag">computed</span>
+      <span class="feature-tag">watch / watchEffect</span>
+      <span class="feature-tag">signal</span>
+      <span class="feature-tag">template</span>
+      <span class="feature-tag">setup()</span>
+      <span class="feature-tag">Composition API</span>
+      <span class="feature-tag">nextTick</span>
+      <span class="feature-tag">v-model</span>
+      <span class="feature-tag">v-for / v-if</span>
+      <span class="feature-tag">CDN 加载</span>
+    </div>
+  </div>
+
+  <!-- 示例列表 -->
+  <div class="examples-section">
+    <h2 class="section-title">示例项目</h2>
+    <p class="section-subtitle">点击卡片查看完整示例</p>
+
+    <div class="examples-grid">
+      <!-- 示例 1: Todo App -->
+      <a class="example-card" href="./todo-app/index.html">
+        <div class="card-preview" style="background: linear-gradient(135deg, #667eea22, #764ba222);">
+          &#128203;
+        </div>
+        <div class="card-body">
+          <div class="card-title">&#128203; Todo App</div>
+          <div class="card-desc">
+            经典待办事项应用。展示 Lyt.js 的核心响应式系统，包括 ref、computed、watchEffect，
+            以及模板语法（v-model、v-for、v-if）和 LocalStorage 持久化。
+          </div>
+          <div class="card-tags">
+            <span class="card-tag">ref</span>
+            <span class="card-tag">computed</span>
+            <span class="card-tag">watchEffect</span>
+            <span class="card-tag">v-model</span>
+            <span class="card-tag">LocalStorage</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- 示例 2: Markdown 编辑器 -->
+      <a class="example-card" href="./markdown-editor/index.html">
+        <div class="card-preview" style="background: linear-gradient(135deg, #89b4fa22, #cba6f722);">
+          &#128221;
+        </div>
+        <div class="card-body">
+          <div class="card-title">&#128221; Markdown 编辑器</div>
+          <div class="card-desc">
+            实时 Markdown 编辑器，支持分屏预览、工具栏快捷插入和键盘快捷键。
+            展示 computed 实时渲染、v-html 指令和 DOM 操作集成。
+          </div>
+          <div class="card-tags">
+            <span class="card-tag">computed</span>
+            <span class="card-tag">v-html</span>
+            <span class="card-tag">@keydown</span>
+            <span class="card-tag">DOM 操作</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- 示例 3: Dashboard -->
+      <a class="example-card" href="./dashboard/index.html">
+        <div class="card-preview" style="background: linear-gradient(135deg, #3b82f622, #8b5cf622);">
+          &#128200;
+        </div>
+        <div class="card-body">
+          <div class="card-title">&#128200; Dashboard 仪表盘</div>
+          <div class="card-desc">
+            数据仪表盘应用，包含侧边栏导航、统计卡片、数据表格和主题切换。
+            展示 watch 侦听器、CSS 变量主题系统和响应式布局。
+          </div>
+          <div class="card-tags">
+            <span class="card-tag">watch</span>
+            <span class="card-tag">computed</span>
+            <span class="card-tag">:style</span>
+            <span class="card-tag">主题切换</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- 示例 4: 电商首页 -->
+      <a class="example-card" href="./ecommerce/index.html">
+        <div class="card-preview" style="background: linear-gradient(135deg, #22c55e22, #06b6d422);">
+          &#128722;
+        </div>
+        <div class="card-body">
+          <div class="card-title">&#128722; 电商首页</div>
+          <div class="card-desc">
+            电商首页应用，包含商品列表、分类筛选、搜索过滤、价格排序和购物车。
+            展示复杂 computed 链式过滤排序和交互式 UI 状态管理。
+          </div>
+          <div class="card-tags">
+            <span class="card-tag">computed</span>
+            <span class="card-tag">v-model</span>
+            <span class="card-tag">列表渲染</span>
+            <span class="card-tag">购物车</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- 示例 5: 实时聊天 -->
+      <a class="example-card" href="./chat/index.html">
+        <div class="card-preview" style="background: linear-gradient(135deg, #f59e0b22, #ef444422);">
+          &#128172;
+        </div>
+        <div class="card-body">
+          <div class="card-title">&#128172; 实时聊天</div>
+          <div class="card-desc">
+            实时聊天应用，模拟 WebSocket 通信。展示 watchEffect 副作用自动滚动、
+            nextTick DOM 更新、模拟实时数据推送和在线状态管理。
+          </div>
+          <div class="card-tags">
+            <span class="card-tag">watchEffect</span>
+            <span class="card-tag">nextTick</span>
+            <span class="card-tag">模拟实时</span>
+            <span class="card-tag">状态管理</span>
+          </div>
+        </div>
+      </a>
+    </div>
+  </div>
+
+  <!-- 底部 -->
+  <div class="footer">
+    <p>
+      Lyt.js - 轻写轻跑，所见即代码。
+      &nbsp;|&nbsp;
+      <a href="https://gitee.com/lytjs/lytjs" target="_blank">GitHub</a>
+      &nbsp;|&nbsp;
+      <a href="https://gitee.com/lytjs/lytjs" target="_blank">Gitee</a>
+    </p>
+  </div>
+</body>
+</html>

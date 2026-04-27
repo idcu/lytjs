@@ -1,0 +1,47 @@
+{
+  "name": "@lytjs/plugin-highlight",
+  "version": "5.0.0",
+  "description": "Lyt.js 代码高亮插件 - 支持 JavaScript/TypeScript/HTML/CSS/JSON 语法高亮，零运行时依赖",
+  "main": "dist/index.mjs",
+  "module": "dist/index.mjs",
+  "types": "dist/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.mjs"
+    }
+  },
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
+  "license": "MIT",
+  "author": "lytjs",
+  "repository": {
+    "type": "git",
+    "url": "https://gitee.com/lytjs/lytjs"
+  },
+  "homepage": "https://gitee.com/lytjs",
+  "keywords": [
+    "lyt",
+    "lytjs",
+    "highlight",
+    "代码高亮",
+    "syntax",
+    "code",
+    "javascript",
+    "typescript",
+    "html",
+    "css",
+    "json",
+    "zero-dependency"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

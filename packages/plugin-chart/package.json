@@ -1,0 +1,45 @@
+{
+  "name": "@lytjs/plugin-chart",
+  "version": "5.0.0",
+  "description": "Lyt.js 图表插件 - 提供柱状图和折线图组件，使用 Canvas API 绘制，零运行时依赖",
+  "main": "dist/index.mjs",
+  "module": "dist/index.mjs",
+  "types": "dist/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.mjs"
+    }
+  },
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
+  "license": "MIT",
+  "author": "lytjs",
+  "repository": {
+    "type": "git",
+    "url": "https://gitee.com/lytjs/lytjs"
+  },
+  "homepage": "https://gitee.com/lytjs",
+  "keywords": [
+    "lyt",
+    "lytjs",
+    "chart",
+    "图表",
+    "bar",
+    "line",
+    "canvas",
+    "可视化",
+    "visualization",
+    "zero-dependency"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

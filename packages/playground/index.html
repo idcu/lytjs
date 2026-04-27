@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lyt.js Playground - Interactive Code Editor</title>
+  <meta name="description" content="Lyt.js online playground - write, edit, and preview Lyt.js code in real-time">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2342b883'/%3E%3Ctext x='16' y='22' text-anchor='middle' fill='white' font-size='16' font-weight='bold' font-family='sans-serif'%3EL%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="playground">
+    <!-- Toolbar -->
+    <header class="toolbar">
+      <div class="toolbar-brand">
+        <div class="logo">L</div>
+        <span class="brand-text">Lyt.js</span>
+        <span class="brand-version">v5.0</span>
+      </div>
+
+      <div class="toolbar-divider"></div>
+
+      <select id="template-selector" class="template-selector" title="Select an example template">
+        <!-- Populated by JS -->
+      </select>
+
+      <div class="toolbar-spacer"></div>
+
+      <div class="toolbar-actions">
+        <button id="btn-run" class="toolbar-btn" title="Run code (Ctrl+Enter)">
+          <span class="toolbar-btn-icon">&#9654;</span>
+          <span class="toolbar-btn-text">Run</span>
+        </button>
+        <button id="btn-format" class="toolbar-btn" title="Format code">
+          <span class="toolbar-btn-icon">&#9998;</span>
+          <span class="toolbar-btn-text">Format</span>
+        </button>
+        <button id="btn-share" class="toolbar-btn" title="Copy share link">
+          <span class="toolbar-btn-icon">&#128279;</span>
+          <span class="toolbar-btn-text">Share</span>
+        </button>
+        <button id="btn-fullscreen" class="toolbar-btn" title="Toggle fullscreen preview">
+          <span class="toolbar-btn-icon">&#9974;</span>
+          <span class="toolbar-btn-text">Fullscreen</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Editor Panel -->
+      <section class="editor-panel">
+        <div class="editor-panel-header">
+          <div class="tab">
+            <span class="tab-icon">&#128196;</span>
+            <span>editor.html</span>
+          </div>
+        </div>
+        <div id="editor-container">
+          <div class="editor-loading">
+            <div class="loading-spinner"></div>
+            <span>Loading editor...</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Resize Handle -->
+      <div class="resize-handle" id="resize-handle"></div>
+
+      <!-- Preview Panel -->
+      <section class="preview-panel">
+        <div class="preview-panel-header">
+          <div class="tab">
+            <span class="tab-icon">&#128065;</span>
+            <span>Preview</span>
+          </div>
+          <span class="preview-url">sandbox://localhost</span>
+        </div>
+        <iframe
+          id="preview-iframe"
+          sandbox="allow-scripts allow-modals allow-forms allow-same-origin"
+          title="Lyt.js Preview"
+        ></iframe>
+      </section>
+    </main>
+
+    <!-- Console Panel -->
+    <section class="console-panel" id="console-panel">
+      <div class="console-panel-header">
+        <button id="console-toggle" class="console-toggle active">
+          <span class="toggle-icon">&#9660;</span>
+          <span>Console</span>
+        </button>
+        <span id="console-badge" class="console-badge"></span>
+        <div class="console-spacer"></div>
+        <button id="console-clear" class="console-clear" title="Clear console">
+          &#128465; Clear
+        </button>
+      </div>
+      <div id="console-output" class="console-output">
+        <div class="console-empty">No console output</div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toast-container"></div>
+
+  <!-- Scripts -->
+  <script src="js/templates.js"></script>
+  <script src="js/editor.js"></script>
+  <script src="js/preview.js"></script>
+  <script src="js/share.js"></script>
+  <script src="js/app.js"></script>
+
+  <!-- Resize Handle Script (inline for simplicity) -->
+  <script>
+    (function() {
+      const handle = document.getElementById('resize-handle');
+      const editorPanel = document.querySelector('.editor-panel');
+      const previewPanel = document.querySelector('.preview-panel');
+      const mainContent = document.querySelector('.main-content');
+
+      let isResizing = false;
+      let startX = 0;
+      let startEditorWidth = 0;
+
+      handle.addEventListener('mousedown', (e) => {
+        isResizing = true;
+        startX = e.clientX;
+        startEditorWidth = editorPanel.getBoundingClientRect().width;
+        handle.classList.add('active');
+        document.body.style.cursor = 'col-resize';
+        document.body.style.userSelect = 'none';
+        e.preventDefault();
+      });
+
+      document.addEventListener('mousemove', (e) => {
+        if (!isResizing) return;
+        const dx = e.clientX - startX;
+        const totalWidth = mainContent.getBoundingClientRect().width;
+        const newEditorWidth = Math.max(200, Math.min(totalWidth - 200, startEditorWidth + dx));
+        const editorPercent = (newEditorWidth / totalWidth) * 100;
+        const previewPercent = 100 - editorPercent;
+        editorPanel.style.flex = 'none';
+        editorPanel.style.width = editorPercent + '%';
+        previewPanel.style.flex = 'none';
+        previewPanel.style.width = previewPercent + '%';
+        // Trigger Monaco layout
+        if (window.EditorManager && EditorManager.layout) {
+          EditorManager.layout();
+        }
+      });
+
+      document.addEventListener('mouseup', () => {
+        if (!isResizing) return;
+        isResizing = false;
+        handle.classList.remove('active');
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+      });
+
+      // Touch support
+      handle.addEventListener('touchstart', (e) => {
+        isResizing = true;
+        startX = e.touches[0].clientX;
+        startEditorWidth = editorPanel.getBoundingClientRect().width;
+        handle.classList.add('active');
+        e.preventDefault();
+      }, { passive: false });
+
+      document.addEventListener('touchmove', (e) => {
+        if (!isResizing) return;
+        const dx = e.touches[0].clientX - startX;
+        const totalWidth = mainContent.getBoundingClientRect().width;
+        const newEditorWidth = Math.max(200, Math.min(totalWidth - 200, startEditorWidth + dx));
+        const editorPercent = (newEditorWidth / totalWidth) * 100;
+        const previewPercent = 100 - editorPercent;
+        editorPanel.style.flex = 'none';
+        editorPanel.style.width = editorPercent + '%';
+        previewPanel.style.flex = 'none';
+        previewPanel.style.width = previewPercent + '%';
+        if (window.EditorManager && EditorManager.layout) {
+          EditorManager.layout();
+        }
+      }, { passive: false });
+
+      document.addEventListener('touchend', () => {
+        if (!isResizing) return;
+        isResizing = false;
+        handle.classList.remove('active');
+      });
+    })();
+  </script>
+</body>
+</html>

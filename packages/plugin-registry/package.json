@@ -1,0 +1,47 @@
+{
+  "name": "@lytjs/plugin-registry",
+  "version": "5.0.0",
+  "description": "Lyt.js 插件注册表 - 提供插件市场注册、搜索、分类和发现功能",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.mjs"
+    }
+  },
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "marketplace"
+  ],
+  "license": "MIT",
+  "author": "lytjs",
+  "repository": {
+    "type": "git",
+    "url": "https://gitee.com/lytjs/lytjs"
+  },
+  "homepage": "https://gitee.com/lytjs",
+  "keywords": [
+    "lyt",
+    "lytjs",
+    "plugin",
+    "registry",
+    "marketplace",
+    "plugin-registry",
+    "discovery",
+    "search"
+  ],
+  "dependencies": {
+    "@lytjs/plugin-sdk": "workspace:*"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

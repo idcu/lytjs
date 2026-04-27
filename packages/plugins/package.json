@@ -1,7 +1,7 @@
 {
   "name": "@lytjs/plugins",
   "version": "5.0.0",
-  "description": "Lyt.js 官方插件聚合包 - 统一导出国际化、认证、日志、存储和主题等官方插件",
+  "description": "Lyt.js 官方插件聚合包 - 统一导出国际化、认证、日志、存储、主题、图表、高亮和虚拟列表等官方插件",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
   "types": "./dist/types/index.d.ts",
@@ -23,7 +23,7 @@
     "type": "git",
     "url": "https://gitee.com/lytjs/lytjs"
   },
-  "homepage": "https://gitee.com/lytjs/lytjs",
+  "homepage": "https://gitee.com/lytjs",
   "keywords": [
     "lyt",
     "lytjs",
@@ -39,7 +39,11 @@
     "logger",
     "storage",
     "theme",
-    "dark-mode"
+    "dark-mode",
+    "chart",
+    "highlight",
+    "virtual-list",
+    "marketplace"
   ],
   "dependencies": {
     "@lytjs/plugin-i18n": "workspace:*",
@@ -47,6 +51,10 @@
     "@lytjs/plugin-logger": "workspace:*",
     "@lytjs/plugin-storage": "workspace:*",
     "@lytjs/plugin-theme": "workspace:*",
+    "@lytjs/plugin-chart": "workspace:*",
+    "@lytjs/plugin-highlight": "workspace:*",
+    "@lytjs/plugin-virtual-list": "workspace:*",
+    "@lytjs/plugin-registry": "workspace:*",
     "@lytjs/plugin-sdk": "workspace:*"
   },
   "engines": {

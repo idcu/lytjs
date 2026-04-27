@@ -46,11 +46,29 @@ export {
   getCurrentInstance,
   getCurrentScope,
   onScopeDispose,
+  // 渲染函数
+  h,
+  Fragment,
+  // 异步组件
+  defineAsyncComponent,
+  // 编译器宏（占位）
+  defineProps,
+  defineEmits,
+  withDefaults,
+  defineExpose,
+  // 组合式 API 工具
+  useSlots,
+  useAttrs,
+  useTemplateRef,
+  // 响应式工具
+  isProxy,
+  proxyRefs,
 } from './vue3-api'
 
 // 导出 SFC 转换工具
 export {
   convertVueSfcToLyt,
+  convertVueSfcToLytWithWarnings,
   VueSfcConverter,
 } from './sfc-converter'
 
@@ -84,6 +102,11 @@ export type {
   AppConfig,
   Plugin,
   Directive,
+  DirectiveBinding,
+  AsyncComponentLoader,
+  AsyncComponentOptions,
+  AsyncComponent,
+  VNode,
 } from './types'
 
 // 导出工具函数
@@ -91,3 +114,17 @@ export {
   createCompatVue,
   useCompatMode,
 } from './compat-mode'
+
+// 导出迁移工具
+export {
+  migrateVueFile,
+  analyzeVueFile,
+  formatMigrationReport,
+} from './migrate'
+
+export type {
+  MigrationIssue,
+  MigrationIssueType,
+  MigrationSeverity,
+  MigrationReport,
+} from './migrate'

@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lyt.js 电商首页</title>
+  <style>
+    /* ========== 全局样式 ========== */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f5f5f7;
+      color: #1d1d1f;
+      min-height: 100vh;
+    }
+
+    /* ========== 顶部导航 ========== */
+    .top-nav {
+      background: white;
+      border-bottom: 1px solid #e5e5ea;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .nav-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 60px;
+    }
+    .nav-brand {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #3b82f6;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .nav-search {
+      flex: 1;
+      max-width: 480px;
+      margin: 0 2rem;
+      position: relative;
+    }
+    .nav-search input {
+      width: 100%;
+      padding: 0.6rem 1rem 0.6rem 2.5rem;
+      border: 1px solid #e5e5ea;
+      border-radius: 24px;
+      font-size: 0.9rem;
+      outline: none;
+      background: #f5f5f7;
+      transition: all 0.2s;
+    }
+    .nav-search input:focus {
+      background: white;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+    }
+    .nav-search .search-icon {
+      position: absolute;
+      left: 0.85rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #86868b;
+      font-size: 0.9rem;
+    }
+    .nav-actions { display: flex; align-items: center; gap: 1rem; }
+    .cart-btn {
+      position: relative;
+      background: none;
+      border: none;
+      font-size: 1.4rem;
+      cursor: pointer;
+      padding: 0.25rem;
+      color: #1d1d1f;
+      transition: color 0.2s;
+    }
+    .cart-btn:hover { color: #3b82f6; }
+    .cart-badge {
+      position: absolute;
+      top: -4px;
+      right: -8px;
+      background: #ef4444;
+      color: white;
+      font-size: 0.65rem;
+      font-weight: 700;
+      min-width: 16px;
+      height: 16px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 4px;
+    }
+
+    /* ========== 分类标签 ========== */
+    .categories {
+      max-width: 1200px;
+      margin: 1.25rem auto 0;
+      padding: 0 1.5rem;
+      display: flex;
+      gap: 0.5rem;
+      overflow-x: auto;
+    }
+    .categories::-webkit-scrollbar { display: none; }
+    .cat-tag {
+      padding: 0.4rem 1rem;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      white-space: nowrap;
+      cursor: pointer;
+      border: 1px solid #e5e5ea;
+      background: white;
+      color: #6e6e73;
+      transition: all 0.2s;
+    }
+    .cat-tag:hover { border-color: #3b82f6; color: #3b82f6; }
+    .cat-tag.active { background: #3b82f6; color: white; border-color: #3b82f6; }
+
+    /* ========== 排序栏 ========== */
+    .sort-bar {
+      max-width: 1200px;
+      margin: 1rem auto 0;
+      padding: 0 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .result-count { font-size: 0.85rem; color: #86868b; }
+    .sort-options { display: flex; gap: 0.5rem; }
+    .sort-btn {
+      padding: 0.35rem 0.85rem;
+      font-size: 0.8rem;
+      background: white;
+      border: 1px solid #e5e5ea;
+      border-radius: 6px;
+      cursor: pointer;
+      color: #6e6e73;
+      transition: all 0.2s;
+    }
+    .sort-btn:hover { border-color: #3b82f6; color: #3b82f6; }
+    .sort-btn.active { background: #3b82f6; color: white; border-color: #3b82f6; }
+
+    /* ========== 商品网格 ========== */
+    .products-grid {
+      max-width: 1200px;
+      margin: 1rem auto 2rem;
+      padding: 0 1.5rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 1.25rem;
+    }
+
+    /* ========== 商品卡片 ========== */
+    .product-card {
+      background: white;
+      border-radius: 16px;
+      overflow: hidden;
+      transition: all 0.3s;
+      cursor: pointer;
+    }
+    .product-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 32px rgba(0,0,0,0.08);
+    }
+    .product-image {
+      width: 100%;
+      aspect-ratio: 1;
+      background: #f5f5f7;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 4rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .product-image .discount-tag {
+      position: absolute;
+      top: 0.75rem;
+      left: 0.75rem;
+      background: #ef4444;
+      color: white;
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+    }
+    .product-info { padding: 1rem; }
+    .product-name {
+      font-size: 0.95rem;
+      font-weight: 500;
+      margin-bottom: 0.35rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .product-desc {
+      font-size: 0.8rem;
+      color: #86868b;
+      margin-bottom: 0.75rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .product-bottom {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .product-price {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #ef4444;
+    }
+    .product-price .original {
+      font-size: 0.8rem;
+      color: #c7c7cc;
+      text-decoration: line-through;
+      font-weight: 400;
+      margin-left: 0.35rem;
+    }
+    .add-cart-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: #3b82f6;
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+    .add-cart-btn:hover { background: #2563eb; transform: scale(1.1); }
+
+    /* ========== 购物车抽屉 ========== */
+    .cart-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 200;
+      transition: opacity 0.3s;
+    }
+    .cart-overlay.hidden { display: none; }
+    .cart-drawer {
+      position: fixed;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: 380px;
+      max-width: 90vw;
+      background: white;
+      z-index: 201;
+      display: flex;
+      flex-direction: column;
+      transform: translateX(100%);
+      transition: transform 0.3s;
+    }
+    .cart-drawer.open { transform: translateX(0); }
+    .cart-drawer.hidden { display: none; }
+    .cart-header {
+      padding: 1.25rem;
+      border-bottom: 1px solid #e5e5ea;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .cart-header h3 { font-size: 1.1rem; }
+    .cart-close {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: #86868b;
+      padding: 0.25rem;
+    }
+    .cart-items { flex: 1; overflow-y: auto; padding: 1rem; }
+    .cart-item {
+      display: flex;
+      gap: 0.75rem;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid #f0f0f0;
+      align-items: center;
+    }
+    .cart-item-icon {
+      width: 48px;
+      height: 48px;
+      background: #f5f5f7;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      flex-shrink: 0;
+    }
+    .cart-item-info { flex: 1; min-width: 0; }
+    .cart-item-name {
+      font-size: 0.85rem;
+      font-weight: 500;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .cart-item-price { font-size: 0.85rem; color: #ef4444; font-weight: 600; }
+    .cart-item-qty {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      flex-shrink: 0;
+    }
+    .qty-btn {
+      width: 26px;
+      height: 26px;
+      border-radius: 6px;
+      border: 1px solid #e5e5ea;
+      background: white;
+      cursor: pointer;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+    }
+    .qty-btn:hover { border-color: #3b82f6; color: #3b82f6; }
+    .qty-num { font-size: 0.85rem; min-width: 20px; text-align: center; }
+    .cart-item-remove {
+      background: none;
+      border: none;
+      color: #c7c7cc;
+      cursor: pointer;
+      font-size: 1rem;
+      padding: 0.25rem;
+    }
+    .cart-item-remove:hover { color: #ef4444; }
+    .cart-footer {
+      padding: 1.25rem;
+      border-top: 1px solid #e5e5ea;
+    }
+    .cart-total {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+      font-size: 1rem;
+    }
+    .cart-total .amount { font-weight: 700; color: #ef4444; font-size: 1.15rem; }
+    .checkout-btn {
+      width: 100%;
+      padding: 0.75rem;
+      background: #3b82f6;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .checkout-btn:hover { background: #2563eb; }
+    .cart-empty {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: #86868b;
+    }
+    .cart-empty .icon { font-size: 3rem; margin-bottom: 0.5rem; }
+
+    /* ========== 响应式 ========== */
+    @media (max-width: 768px) {
+      .nav-search { margin: 0 0.75rem; }
+      .products-grid { grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
+      .product-info { padding: 0.75rem; }
+      .product-name { font-size: 0.85rem; }
+    }
+    @media (max-width: 480px) {
+      .nav-inner { padding: 0 0.75rem; }
+      .nav-search { display: none; }
+      .products-grid { grid-template-columns: repeat(2, 1fr); gap: 0.5rem; padding: 0 0.75rem; }
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <!-- 顶部导航 -->
+    <nav class="top-nav">
+      <div class="nav-inner">
+        <div class="nav-brand">&#128722; LytMall</div>
+        <div class="nav-search">
+          <span class="search-icon">&#128269;</span>
+          <input
+            v-model="searchQuery"
+            placeholder="搜索商品..."
+          />
+        </div>
+        <div class="nav-actions">
+          <button class="cart-btn" @click="toggleCart">
+            &#128722;
+            <span class="cart-badge" v-if="cartItemCount > 0">{{ cartItemCount }}</span>
+          </button>
+        </div>
+      </div>
+    </nav>
+
+    <!-- 分类标签 -->
+    <div class="categories">
+      <span
+        v-for="cat in categories"
+        :key="cat"
+        class="cat-tag"
+        :class="{ active: activeCategory === cat }"
+        @click="setCategory(cat)"
+      >{{ cat }}</span>
+    </div>
+
+    <!-- 排序栏 -->
+    <div class="sort-bar">
+      <span class="result-count">共 {{ filteredProducts.length }} 件商品</span>
+      <div class="sort-options">
+        <button
+          v-for="s in sortOptions"
+          :key="s.key"
+          class="sort-btn"
+          :class="{ active: sortBy === s.key }"
+          @click="setSortBy(s.key)"
+        >{{ s.label }}</button>
+      </div>
+    </div>
+
+    <!-- 商品网格 -->
+    <div class="products-grid">
+      <div
+        v-for="product in filteredProducts"
+        :key="product.id"
+        class="product-card"
+      >
+        <div class="product-image">
+          {{ product.emoji }}
+          <span class="discount-tag" v-if="product.discount">-{{ product.discount }}%</span>
+        </div>
+        <div class="product-info">
+          <div class="product-name">{{ product.name }}</div>
+          <div class="product-desc">{{ product.desc }}</div>
+          <div class="product-bottom">
+            <span class="product-price">
+              &yen;{{ product.price }}
+              <span class="original" v-if="product.originalPrice">&yen;{{ product.originalPrice }}</span>
+            </span>
+            <button class="add-cart-btn" @click="addToCart(product)">+</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 购物车遮罩 -->
+    <div class="cart-overlay" :class="{ hidden: !cartOpen }" @click="toggleCart"></div>
+
+    <!-- 购物车抽屉 -->
+    <div class="cart-drawer" :class="{ hidden: !cartOpen, open: cartOpen }">
+      <div class="cart-header">
+        <h3>购物车 ({{ cartItemCount }})</h3>
+        <button class="cart-close" @click="toggleCart">&times;</button>
+      </div>
+      <div class="cart-items">
+        <div v-if="cartItems.length === 0" class="cart-empty">
+          <div class="icon">&#128722;</div>
+          <p>购物车是空的</p>
+        </div>
+        <div v-for="item in cartItems" :key="item.id" class="cart-item">
+          <div class="cart-item-icon">{{ item.emoji }}</div>
+          <div class="cart-item-info">
+            <div class="cart-item-name">{{ item.name }}</div>
+            <div class="cart-item-price">&yen;{{ item.price }}</div>
+          </div>
+          <div class="cart-item-qty">
+            <button class="qty-btn" @click="updateQty(item.id, -1)">-</button>
+            <span class="qty-num">{{ item.qty }}</span>
+            <button class="qty-btn" @click="updateQty(item.id, 1)">+</button>
+          </div>
+          <button class="cart-item-remove" @click="removeFromCart(item.id)">&times;</button>
+        </div>
+      </div>
+      <div class="cart-footer" v-if="cartItems.length > 0">
+        <div class="cart-total">
+          <span>合计</span>
+          <span class="amount">&yen;{{ cartTotal }}</span>
+        </div>
+        <button class="checkout-btn" @click="checkout">去结算</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    /**
+     * Lyt.js 电商首页示例
+     *
+     * 展示的框架特性：
+     * - createApp: 创建应用实例
+     * - ref: 响应式引用
+     * - computed: 计算属性（搜索过滤、排序、购物车统计）
+     * - watch: 侦听器
+     * - template: 模板语法（v-for, v-if, v-model, :class, @click）
+     * - setup: 组合式 API
+     */
+
+    import { createApp, ref, computed, watch } from 'https://cdn.jsdelivr.net/npm/@lytjs/core@5.0.0/+esm'
+
+    // ========== 商品数据 ==========
+    const PRODUCTS = [
+      { id: 1,  name: '无线蓝牙耳机 Pro',   desc: '主动降噪，续航30小时',     price: 299,  originalPrice: 499,  discount: 40, category: '数码', emoji: '&#127911;' },
+      { id: 2,  name: '机械键盘 87键',      desc: '红轴，RGB背光',           price: 349,  originalPrice: 499,  discount: 30, category: '数码', emoji: '&#9000;' },
+      { id: 3,  name: '超轻运动跑鞋',       desc: '透气网面，缓震科技',       price: 459,  originalPrice: 699,  discount: 34, category: '运动', emoji: '&#128095;' },
+      { id: 4,  name: '智能手表 S9',        desc: '心率监测，GPS定位',        price: 1299, originalPrice: 1999, discount: 35, category: '数码', emoji: '&#9201;' },
+      { id: 5,  name: '纯棉T恤 经典款',     desc: '100%新疆长绒棉',          price: 89,   originalPrice: 129,  discount: 31, category: '服饰', emoji: '&#128085;' },
+      { id: 6,  name: '不锈钢保温杯 500ml', desc: '12小时保温，食品级材质',   price: 69,   originalPrice: 99,   discount: 30, category: '生活', emoji: '&#127861;' },
+      { id: 7,  name: '便携式蓝牙音箱',     desc: 'IPX7防水，20W大功率',      price: 199,  originalPrice: 299,  discount: 33, category: '数码', emoji: '&#128264;' },
+      { id: 8,  name: '瑜伽垫 加厚款',      desc: 'TPE环保材质，6mm厚度',     price: 79,   originalPrice: 119,  discount: 34, category: '运动', emoji: '&#129495;' },
+      { id: 9,  name: '双肩背包 大容量',     desc: '防泼水面料，15.6寸电脑仓', price: 159,  originalPrice: 239,  discount: 33, category: '生活', emoji: '&#127890;' },
+      { id: 10, name: '防晒衣 超薄款',      desc: 'UPF50+，冰丝面料',        price: 129,  originalPrice: 199,  discount: 35, category: '服饰', emoji: '&#128090;' },
+      { id: 11, name: '台灯 护眼LED',       desc: '无频闪，色温可调',         price: 149,  originalPrice: 219,  discount: 32, category: '生活', emoji: '&#128161;' },
+      { id: 12, name: '运动水壶 750ml',     desc: 'Tritan材质，弹盖设计',     price: 39,   originalPrice: 59,   discount: 34, category: '运动', emoji: '&#129380;' },
+    ]
+
+    const CATEGORIES = ['全部', '数码', '运动', '服饰', '生活']
+    const SORT_OPTIONS = [
+      { key: 'default', label: '默认' },
+      { key: 'price-asc', label: '价格升序' },
+      { key: 'price-desc', label: '价格降序' },
+      { key: 'discount', label: '折扣优先' },
+    ]
+
+    // ========== 创建应用 ==========
+    const app = createApp({
+      setup() {
+        // --- 响应式状态 ---
+        const products = ref(PRODUCTS)
+        const searchQuery = ref('')
+        const activeCategory = ref('全部')
+        const sortBy = ref('default')
+        const cartOpen = ref(false)
+        const cartItems = ref([])
+
+        // --- 静态数据 ---
+        const categories = CATEGORIES
+        const sortOptions = SORT_OPTIONS
+
+        // --- 计算属性 ---
+        // 过滤和排序后的商品列表
+        const filteredProducts = computed(() => {
+          let list = products.value
+
+          // 分类过滤
+          if (activeCategory.value !== '全部') {
+            list = list.filter(p => p.category === activeCategory.value)
+          }
+
+          // 搜索过滤
+          const q = searchQuery.value.toLowerCase().trim()
+          if (q) {
+            list = list.filter(p =>
+              p.name.toLowerCase().includes(q) ||
+              p.desc.toLowerCase().includes(q) ||
+              p.category.includes(q)
+            )
+          }
+
+          // 排序
+          const sorted = [...list]
+          switch (sortBy.value) {
+            case 'price-asc':
+              sorted.sort((a, b) => a.price - b.price)
+              break
+            case 'price-desc':
+              sorted.sort((a, b) => b.price - a.price)
+              break
+            case 'discount':
+              sorted.sort((a, b) => (b.discount || 0) - (a.discount || 0))
+              break
+          }
+
+          return sorted
+        })
+
+        // 购物车商品数量
+        const cartItemCount = computed(() =>
+          cartItems.value.reduce((sum, item) => sum + item.qty, 0)
+        )
+
+        // 购物车总价
+        const cartTotal = computed(() =>
+          cartItems.value.reduce((sum, item) => sum + item.price * item.qty, 0).toFixed(2)
+        )
+
+        // --- 方法 ---
+        /** 设置分类 */
+        function setCategory(cat) {
+          activeCategory.value = cat
+        }
+
+        /** 设置排序 */
+        function setSortBy(key) {
+          sortBy.value = key
+        }
+
+        /** 切换购物车 */
+        function toggleCart() {
+          cartOpen.value = !cartOpen.value
+        }
+
+        /** 添加到购物车 */
+        function addToCart(product) {
+          const existing = cartItems.value.find(item => item.id === product.id)
+          if (existing) {
+            existing.qty++
+          } else {
+            cartItems.value.push({ ...product, qty: 1 })
+          }
+        }
+
+        /** 更新购物车商品数量 */
+        function updateQty(id, delta) {
+          const item = cartItems.value.find(i => i.id === id)
+          if (!item) return
+          item.qty += delta
+          if (item.qty <= 0) {
+            removeFromCart(id)
+          }
+        }
+
+        /** 从购物车移除 */
+        function removeFromCart(id) {
+          cartItems.value = cartItems.value.filter(i => i.id !== id)
+        }
+
+        /** 结算 */
+        function checkout() {
+          const total = cartTotal.value
+          alert(`结算成功！总计：¥${total}`)
+          cartItems.value = []
+          cartOpen.value = false
+        }
+
+        return {
+          products, searchQuery, activeCategory, sortBy, cartOpen, cartItems,
+          categories, sortOptions,
+          filteredProducts, cartItemCount, cartTotal,
+          setCategory, setSortBy, toggleCart, addToCart, updateQty, removeFromCart, checkout,
+        }
+      },
+    })
+
+    app.mount('#app')
+  </script>
+</body>
+</html>

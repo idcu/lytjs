@@ -189,12 +189,69 @@ export type Plugin = ((app: App, ...options: any[]) => any) | { install: (app: A
  * 指令类型
  * @see https://vuejs.org/guide/reusability/custom-directives.html
  */
-export interface Directive {
-  created?: (el: any, binding: any, vnode: any, prevVnode: any) => void
-  beforeMount?: (el: any, binding: any, vnode: any, prevVnode: any) => void
-  mounted?: (el: any, binding: any, vnode: any, prevVnode: any) => void
-  beforeUpdate?: (el: any, binding: any, vnode: any, prevVnode: any) => void
-  updated?: (el: any, binding: any, vnode: any, prevVnode: any) => void
-  beforeUnmount?: (el: any, binding: any, vnode: any, prevVnode: any) => void
-  unmounted?: (el: any, binding: any, vnode: any, prevVnode: any) => void
+export interface Directive<T = any, V = any> {
+  created?: (el: any, binding: DirectiveBinding<V>, vnode: any, prevVnode: any) => void
+  beforeMount?: (el: any, binding: DirectiveBinding<V>, vnode: any, prevVnode: any) => void
+  mounted?: (el: any, binding: DirectiveBinding<V>, vnode: any, prevVnode: any) => void
+  beforeUpdate?: (el: any, binding: DirectiveBinding<V>, vnode: any, prevVnode: any) => void
+  updated?: (el: any, binding: DirectiveBinding<V>, vnode: any, prevVnode: any) => void
+  beforeUnmount?: (el: any, binding: DirectiveBinding<V>, vnode: any, prevVnode: any) => void
+  unmounted?: (el: any, binding: DirectiveBinding<V>, vnode: any, prevVnode: any) => void
+  get?: (el: T, binding: DirectiveBinding<V>, vnode: any, prevVnode: any) => V
+  set?: (el: T, binding: DirectiveBinding<V>, vnode: any, prevVnode: any, prevValue: V) => void
+}
+
+/**
+ * 指令绑定值
+ */
+export interface DirectiveBinding<V = any> {
+  instance: ComponentPublicInstance | null
+  value: V
+  oldValue: V | null
+  arg?: string
+  modifiers: Record<string, boolean>
+  dir: Directive<any, V>
+}
+
+// ==========================================
+// 异步组件类型
+// ==========================================
+
+/**
+ * 异步组件加载器
+ */
+export type AsyncComponentLoader<T = any> = () => Promise<T>
+
+/**
+ * 异步组件选项
+ */
+export interface AsyncComponentOptions<T = any> {
+  loader: AsyncComponentLoader<T>
+  loadingComponent?: any
+  errorComponent?: any
+  delay?: number
+  timeout?: number
+  suspensible?: boolean
+  onError?: (error: Error, retry: () => void, fail: () => void, attempts: number) => any
+}
+
+/**
+ * 异步组件类型
+ */
+export type AsyncComponent<T = any> = AsyncComponentOptions<T> | AsyncComponentLoader<T>
+
+// ==========================================
+// VNode 类型
+// ==========================================
+
+/**
+ * VNode 类型（简化版）
+ */
+export interface VNode {
+  type: any
+  props: Record<string, any> | null
+  children: any
+  key: string | number | null
+  ref: any
+  el: any
 }

@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 问题咨询
+    url: https://gitee.com/lytjs/lytjs/issues/new?template=question.md
+    about: 关于 Lyt.js 使用的问题，请使用问题咨询模板
+  - name: 功能请求
+    url: https://gitee.com/lytjs/lytjs/issues/new?template=feature_request.md
+    about: 提出新功能建议，请使用功能请求模板
+  - name: Bug 报告
+    url: https://gitee.com/lytjs/lytjs/issues/new?template=bug_report.md
+    about: 报告 Bug，请使用 Bug 报告模板

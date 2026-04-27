@@ -1,0 +1,97 @@
+# PR 自动标签规则
+# 当 PR 修改了对应目录的文件时，自动添加标签
+
+# 核心包
+core:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'packages/core/**'
+          - 'packages/common/**'
+          - 'packages/vdom/**'
+reactivity:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'packages/reactivity/**'
+compiler:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'packages/compiler/**'
+renderer:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'packages/renderer/**'
+component:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'packages/component/**'
+components:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'packages/components/**'
+
+# 工具和框架
+cli:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'packages/cli/**'
+devtools:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'packages/devtools/**'
+router:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'packages/router/**'
+store:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'packages/store/**'
+lytx:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'packages/lytx/**'
+ai:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'packages/ai/**'
+
+# 插件
+plugin:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'packages/plugin-*/**'
+          - 'packages/plugins/**'
+          - 'packages/plugin-sdk/**'
+
+# 测试
+tests:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'packages/**/__tests__/**'
+          - 'tests/**'
+          - 'packages/test-utils/**'
+
+# 文档
+documentation:
+  - changed-files:
+      - any-glob-to-any-file:
+          - '**/*.md'
+          - 'docs/**'
+          - 'llms.txt'
+          - 'llms-full.txt'
+
+# CI/CD
+ci:
+  - changed-files:
+      - any-glob-to-any-file:
+          - '.github/**'
+
+# 构建和配置
+build:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'scripts/**'
+          - 'tsconfig.json'
+          - 'eslint.config.js'
+          - 'package.json'
+          - 'pnpm-workspace.yaml'

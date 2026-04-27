@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lyt.js Dashboard - 数据仪表盘</title>
+  <style>
+    /* ========== CSS 变量（主题系统） ========== */
+    :root {
+      --bg-primary: #0f172a;
+      --bg-secondary: #1e293b;
+      --bg-card: #1e293b;
+      --bg-hover: #334155;
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --border: #334155;
+      --accent: #3b82f6;
+      --accent-hover: #2563eb;
+      --success: #22c55e;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --info: #06b6d4;
+      --sidebar-width: 240px;
+      --sidebar-collapsed: 64px;
+      --radius: 12px;
+      --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* 亮色主题 */
+    :root.light {
+      --bg-primary: #f8fafc;
+      --bg-secondary: #ffffff;
+      --bg-card: #ffffff;
+      --bg-hover: #f1f5f9;
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-muted: #94a3b8;
+      --border: #e2e8f0;
+    }
+
+    /* ========== 全局样式 ========== */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+      transition: background var(--transition), color var(--transition);
+    }
+
+    /* ========== 侧边栏 ========== */
+    .sidebar {
+      width: var(--sidebar-width);
+      background: var(--bg-secondary);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      transition: width var(--transition);
+      flex-shrink: 0;
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      z-index: 100;
+    }
+    .sidebar.collapsed { width: var(--sidebar-collapsed); }
+    .sidebar-header {
+      padding: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      border-bottom: 1px solid var(--border);
+      min-height: 64px;
+    }
+    .sidebar-header .logo {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 700;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+    .sidebar-header .title {
+      font-size: 1rem;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+    .sidebar.collapsed .title { display: none; }
+
+    /* 导航菜单 */
+    .nav-menu { flex: 1; padding: 0.75rem; overflow-y: auto; }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.65rem 0.75rem;
+      border-radius: 8px;
+      cursor: pointer;
+      color: var(--text-secondary);
+      transition: all 0.2s;
+      margin-bottom: 0.25rem;
+      white-space: nowrap;
+    }
+    .nav-item:hover { background: var(--bg-hover); color: var(--text-primary); }
+    .nav-item.active { background: var(--accent); color: white; }
+    .nav-item .icon { font-size: 1.2rem; flex-shrink: 0; width: 24px; text-align: center; }
+    .nav-item .label { font-size: 0.875rem; }
+    .sidebar.collapsed .label { display: none; }
+
+    /* 侧边栏底部 */
+    .sidebar-footer {
+      padding: 0.75rem;
+      border-top: 1px solid var(--border);
+    }
+    .theme-toggle {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.65rem 0.75rem;
+      border-radius: 8px;
+      cursor: pointer;
+      color: var(--text-secondary);
+      transition: all 0.2s;
+      width: 100%;
+      background: none;
+      border: none;
+      font-size: 0.875rem;
+    }
+    .theme-toggle:hover { background: var(--bg-hover); color: var(--text-primary); }
+    .theme-toggle .icon { font-size: 1.2rem; flex-shrink: 0; width: 24px; text-align: center; }
+
+    /* ========== 主内容区 ========== */
+    .main-content {
+      flex: 1;
+      margin-left: var(--sidebar-width);
+      transition: margin-left var(--transition);
+      min-height: 100vh;
+    }
+    .sidebar.collapsed ~ .main-content { margin-left: var(--sidebar-collapsed); }
+
+    /* 顶部栏 */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 1.5rem;
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .topbar-left { display: flex; align-items: center; gap: 1rem; }
+    .topbar-left .toggle-btn {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-size: 1.25rem;
+      padding: 0.25rem;
+      border-radius: 6px;
+      transition: all 0.2s;
+    }
+    .topbar-left .toggle-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+    .topbar-left .page-title { font-size: 1.1rem; font-weight: 600; }
+    .topbar-right { display: flex; align-items: center; gap: 0.75rem; }
+    .topbar-right .avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 600;
+      font-size: 0.85rem;
+    }
+
+    /* ========== 页面内容 ========== */
+    .page-content { padding: 1.5rem; }
+
+    /* ========== 统计卡片 ========== */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      transition: all 0.2s;
+    }
+    .stat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    .stat-card .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.75rem;
+    }
+    .stat-card .header .label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+    .stat-card .header .icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+    }
+    .stat-card .value {
+      font-size: 1.75rem;
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+    }
+    .stat-card .trend {
+      font-size: 0.8rem;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+    .stat-card .trend.up { color: var(--success); }
+    .stat-card .trend.down { color: var(--danger); }
+
+    /* ========== 数据表格 ========== */
+    .table-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .table-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .table-header h3 { font-size: 1rem; font-weight: 600; }
+    .table-header .search-input {
+      padding: 0.4rem 0.75rem;
+      background: var(--bg-primary);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-primary);
+      font-size: 0.85rem;
+      outline: none;
+      width: 200px;
+      transition: border-color 0.2s;
+    }
+    .table-header .search-input:focus { border-color: var(--accent); }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    thead { background: var(--bg-primary); }
+    th {
+      padding: 0.65rem 1.25rem;
+      text-align: left;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    td {
+      padding: 0.75rem 1.25rem;
+      font-size: 0.875rem;
+      border-top: 1px solid var(--border);
+    }
+    tr:hover td { background: var(--bg-hover); }
+    .status-badge {
+      display: inline-block;
+      padding: 0.2rem 0.6rem;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+    .status-badge.active { background: rgba(34,197,94,0.15); color: var(--success); }
+    .status-badge.pending { background: rgba(245,158,11,0.15); color: var(--warning); }
+    .status-badge.inactive { background: rgba(239,68,68,0.15); color: var(--danger); }
+
+    /* ========== 响应式 ========== */
+    @media (max-width: 768px) {
+      .sidebar { transform: translateX(-100%); }
+      .sidebar.mobile-open { transform: translateX(0); }
+      .main-content { margin-left: 0 !important; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .table-header { flex-direction: column; gap: 0.5rem; align-items: stretch; }
+      .table-header .search-input { width: 100%; }
+      table { font-size: 0.8rem; }
+      th, td { padding: 0.5rem 0.75rem; }
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <!-- 侧边栏 -->
+    <aside class="sidebar" :class="{ collapsed: sidebarCollapsed }">
+      <div class="sidebar-header">
+        <div class="logo">L</div>
+        <span class="title">Lyt Dashboard</span>
+      </div>
+
+      <nav class="nav-menu">
+        <div
+          v-for="item in navItems"
+          :key="item.key"
+          class="nav-item"
+          :class="{ active: currentPage === item.key }"
+          @click="navigateTo(item.key)"
+        >
+          <span class="icon">{{ item.icon }}</span>
+          <span class="label">{{ item.label }}</span>
+        </div>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button class="theme-toggle" @click="toggleTheme">
+          <span class="icon">{{ isDark ? '&#9788;' : '&#9789;' }}</span>
+          <span class="label">{{ isDark ? '亮色模式' : '暗色模式' }}</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- 主内容区 -->
+    <div class="main-content">
+      <!-- 顶部栏 -->
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="toggle-btn" @click="toggleSidebar">&#9776;</button>
+          <span class="page-title">{{ pageTitle }}</span>
+        </div>
+        <div class="topbar-right">
+          <span style="font-size:0.85rem;color:var(--text-secondary)">管理员</span>
+          <div class="avatar">A</div>
+        </div>
+      </header>
+
+      <!-- 页面内容 -->
+      <main class="page-content">
+        <!-- 统计卡片 -->
+        <div class="stats-grid">
+          <div v-for="stat in stats" :key="stat.label" class="stat-card">
+            <div class="header">
+              <span class="label">{{ stat.label }}</span>
+              <div class="icon" :style="{ background: stat.bgColor, color: stat.color }">
+                {{ stat.icon }}
+              </div>
+            </div>
+            <div class="value">{{ stat.value }}</div>
+            <div class="trend" :class="stat.trendDir">
+              {{ stat.trendDir === 'up' ? '&#9650;' : '&#9660;' }} {{ stat.trend }}
+            </div>
+          </div>
+        </div>
+
+        <!-- 数据表格 -->
+        <div class="table-card">
+          <div class="table-header">
+            <h3>最近订单</h3>
+            <input
+              class="search-input"
+              v-model="searchQuery"
+              placeholder="搜索订单..."
+            />
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>订单号</th>
+                <th>客户</th>
+                <th>金额</th>
+                <th>状态</th>
+                <th>日期</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="order in filteredOrders" :key="order.id">
+                <td style="font-weight:500">#{{ order.id }}</td>
+                <td>{{ order.customer }}</td>
+                <td>&yen;{{ order.amount.toLocaleString() }}</td>
+                <td>
+                  <span class="status-badge" :class="order.status">
+                    {{ statusText(order.status) }}
+                  </span>
+                </td>
+                <td style="color:var(--text-muted)">{{ order.date }}</td>
+              </tr>
+              <tr v-if="filteredOrders.length === 0">
+                <td colspan="5" style="text-align:center;padding:2rem;color:var(--text-muted)">
+                  未找到匹配的订单
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script type="module">
+    /**
+     * Lyt.js Dashboard 示例
+     *
+     * 展示的框架特性：
+     * - createApp: 创建应用实例
+     * - ref: 响应式引用
+     * - computed: 计算属性（搜索过滤、页面标题）
+     * - watch: 侦听器（主题切换副作用）
+     * - reactive: 响应式对象
+     * - template: 模板语法（v-for, v-if, v-model, :class, :style, @click）
+     * - setup: 组合式 API
+     */
+
+    import { createApp, ref, computed, watch } from 'https://cdn.jsdelivr.net/npm/@lytjs/core@5.0.0/+esm'
+
+    // ========== 模拟数据 ==========
+    const NAV_ITEMS = [
+      { key: 'overview', icon: '&#9632;', label: '概览' },
+      { key: 'orders',   icon: '&#128230;', label: '订单' },
+      { key: 'products', icon: '&#128722;', label: '商品' },
+      { key: 'users',    icon: '&#128100;', label: '用户' },
+      { key: 'settings', icon: '&#9881;', label: '设置' },
+    ]
+
+    const STATS = [
+      { label: '总收入',   value: '¥128,430', icon: '&#165;',  trend: '+12.5%', trendDir: 'up',   bgColor: 'rgba(59,130,246,0.15)', color: '#3b82f6' },
+      { label: '订单数',   value: '1,284',     icon: '&#128230;', trend: '+8.2%',  trendDir: 'up',   bgColor: 'rgba(34,197,94,0.15)',  color: '#22c55e' },
+      { label: '活跃用户', value: '5,672',     icon: '&#128100;', trend: '+3.1%',  trendDir: 'up',   bgColor: 'rgba(139,92,246,0.15)', color: '#8b5cf6' },
+      { label: '转化率',   value: '3.24%',     icon: '&#128200;', trend: '-0.4%',  trendDir: 'down', bgColor: 'rgba(245,158,11,0.15)', color: '#f59e0b' },
+    ]
+
+    const ORDERS = [
+      { id: '20240001', customer: '张三',   amount: 299,  status: 'active',   date: '2024-01-15' },
+      { id: '20240002', customer: '李四',   amount: 158,  status: 'pending',  date: '2024-01-14' },
+      { id: '20240003', customer: '王五',   amount: 899,  status: 'active',   date: '2024-01-14' },
+      { id: '20240004', customer: '赵六',   amount: 56,   status: 'inactive', date: '2024-01-13' },
+      { id: '20240005', customer: '孙七',   amount: 1280, status: 'active',   date: '2024-01-13' },
+      { id: '20240006', customer: '周八',   amount: 445,  status: 'pending',  date: '2024-01-12' },
+      { id: '20240007', customer: '吴九',   amount: 78,   status: 'active',   date: '2024-01-12' },
+      { id: '20240008', customer: '郑十',   amount: 366,  status: 'inactive', date: '2024-01-11' },
+    ]
+
+    // ========== 创建应用 ==========
+    const app = createApp({
+      setup() {
+        // --- 响应式状态 ---
+        const currentPage = ref('overview')       // 当前页面
+        const sidebarCollapsed = ref(false)        // 侧边栏是否折叠
+        const isDark = ref(true)                   // 是否暗色主题
+        const searchQuery = ref('')                // 搜索关键词
+
+        // --- 静态数据 ---
+        const navItems = NAV_ITEMS
+        const stats = STATS
+        const orders = ref(ORDERS)
+
+        // --- 计算属性 ---
+        // 页面标题
+        const pageTitle = computed(() => {
+          const item = navItems.find(n => n.key === currentPage.value)
+          return item ? item.label + ' - Dashboard' : 'Dashboard'
+        })
+
+        // 搜索过滤订单
+        const filteredOrders = computed(() => {
+          const q = searchQuery.value.toLowerCase().trim()
+          if (!q) return orders.value
+          return orders.value.filter(o =>
+            o.id.toLowerCase().includes(q) ||
+            o.customer.toLowerCase().includes(q) ||
+            o.status.includes(q)
+          )
+        })
+
+        // --- 方法 ---
+        /** 导航到指定页面 */
+        function navigateTo(key) {
+          currentPage.value = key
+        }
+
+        /** 切换侧边栏折叠 */
+        function toggleSidebar() {
+          sidebarCollapsed.value = !sidebarCollapsed.value
+        }
+
+        /** 切换主题 */
+        function toggleTheme() {
+          isDark.value = !isDark.value
+        }
+
+        /** 状态文本映射 */
+        function statusText(status) {
+          const map = { active: '已完成', pending: '处理中', inactive: '已取消' }
+          return map[status] || status
+        }
+
+        // --- 侦听器 ---
+        // 监听主题变化，切换 CSS 类
+        watch(isDark, (dark) => {
+          document.documentElement.classList.toggle('light', !dark)
+        })
+
+        return {
+          currentPage, sidebarCollapsed, isDark, searchQuery,
+          navItems, stats, orders,
+          pageTitle, filteredOrders,
+          navigateTo, toggleSidebar, toggleTheme, statusText,
+        }
+      },
+    })
+
+    app.mount('#app')
+  </script>
+</body>
+</html>

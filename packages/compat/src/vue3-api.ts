@@ -36,7 +36,14 @@ import {
   compositionOnBeforeMount as lytOnBeforeMount,
   onBeforeUpdate as lytOnBeforeUpdate,
   onBeforeUnmount as lytOnBeforeUnmount,
+  defineEmits as lytDefineEmits,
 } from '@lytjs/component'
+
+// 从 @lytjs/core 导入渲染函数
+import { h as lytH, Fragment as lytFragment } from '@lytjs/core'
+
+// 从 @lytjs/component/builtins 导入异步组件
+import { defineAsyncComponent as lytDefineAsyncComponent } from '@lytjs/component/builtins/async-component'
 
 // ==========================================
 // 响应式 API（直接重新导出）
@@ -319,4 +326,130 @@ export function getCurrentScope(): any {
  */
 export function onScopeDispose(fn: () => void): void {
   console.warn('[Compat: onScopeDispose is a placeholder')
+}
+
+// ==========================================
+// 渲染函数
+// ==========================================
+
+/**
+ * 创建虚拟节点
+ * @see https://vuejs.org/api/render-function.html#h
+ */
+export const h = lytH
+
+/**
+ * Fragment 片段组件
+ * @see https://vuejs.org/api/render-function.html#fragment
+ */
+export const Fragment = lytFragment
+
+// ==========================================
+// 异步组件
+// ==========================================
+
+/**
+ * 定义异步组件
+ * @see https://vuejs.org/api/general.html#defineasynccomponent
+ */
+export const defineAsyncComponent = lytDefineAsyncComponent
+
+// ==========================================
+// 编译器宏（占位）
+// ==========================================
+
+/**
+ * 定义组件 props（编译器宏占位）
+ *
+ * 在 Lyt.js 中，props 通过 defineComponent 的 props 选项定义。
+ * 此函数仅用于代码兼容，运行时返回空对象。
+ *
+ * @see https://vuejs.org/api/sfc-script-setup.html#defineprops
+ */
+export function defineProps<T = any>(): T {
+  console.warn('[Compat: defineProps is a compiler macro. Use defineComponent({ props: {...} }) instead.')
+  return {} as T
+}
+
+/**
+ * 定义组件 emits（编译器宏占位）
+ *
+ * 在 Lyt.js 中，emits 通过 defineComponent 的 emits 选项定义。
+ * 此函数包装了 @lytjs/component 的 defineEmits。
+ *
+ * @see https://vuejs.org/api/sfc-script-setup.html#defineemits
+ */
+export const defineEmits = lytDefineEmits
+
+/**
+ * 为 props 设置默认值（编译器宏占位）
+ *
+ * @see https://vuejs.org/api/sfc-script-setup.html#withdefaults
+ */
+export function withDefaults<T, D>(props: T, defaults: D): T & D {
+  console.warn('[Compat: withDefaults is a compiler macro. Use defineComponent({ props: { ...withDefaults } }) instead.')
+  return { ...props, ...defaults } as T & D
+}
+
+/**
+ * 暴露组件公共属性（编译器宏占位）
+ *
+ * 在 Lyt.js 中，setup 返回的对象自动暴露为公共属性。
+ *
+ * @see https://vuejs.org/api/sfc-script-setup.html#defineexpose
+ */
+export function defineExpose<T = any>(exposed?: T): void {
+  console.warn('[Compat: defineExpose is a compiler macro. In Lyt.js, setup return values are automatically exposed.')
+}
+
+// ==========================================
+// 组合式 API 工具函数
+// ==========================================
+
+/**
+ * 使用插槽（占位）
+ * @see https://vuejs.org/api/composition-api-setup.html#useslots
+ */
+export function useSlots(): Record<string, any> {
+  console.warn('[Compat: useSlots is a placeholder. Access slots via setup context.')
+  return {}
+}
+
+/**
+ * 使用 attrs（占位）
+ * @see https://vuejs.org/api/composition-api-setup.html#useattrs
+ */
+export function useAttrs(): Record<string, any> {
+  console.warn('[Compat: useAttrs is a placeholder. Access attrs via setup context.')
+  return {}
+}
+
+/**
+ * 使用模板引用（占位）
+ * @see https://vuejs.org/api/composition-api-setup.html#usetemplateRef
+ */
+export function useTemplateRef<T = any>(key: string): { value: T | null } {
+  console.warn('[Compat: useTemplateRef is a placeholder. Use ref() and template ref attribute instead.')
+  return { value: null }
+}
+
+// ==========================================
+// 响应式工具函数
+// ==========================================
+
+/**
+ * 检查值是否为代理对象（reactive / readonly）
+ * @see https://vuejs.org/api/reactivity-utilities.html#isproxy
+ */
+export function isProxy(value: unknown): boolean {
+  return isReactive(value) || isReadonly(value)
+}
+
+/**
+ * 将 ref 标记为不再需要跟踪
+ * @see https://vuejs.org/api/reactivity-utilities.html#toraw
+ */
+export function proxyRefs<T extends object>(objectWithRefs: T): T {
+  console.warn('[Compat: proxyRefs is a placeholder. Use reactive() or toRefs() instead.')
+  return objectWithRefs
 }

@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lyt.js Plugin Marketplace</title>
+  <style>
+    /* ===== Reset & Base ===== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --lyt-primary: #42b883;
+      --lyt-primary-hover: #3aa876;
+      --lyt-primary-light: rgba(66, 184, 131, 0.1);
+      --lyt-secondary: #35495e;
+      --lyt-bg: #ffffff;
+      --lyt-bg-secondary: #f5f7fa;
+      --lyt-bg-card: #ffffff;
+      --lyt-text: #2c3e50;
+      --lyt-text-secondary: #6c757d;
+      --lyt-text-muted: #95a5a6;
+      --lyt-border: #e1e4e8;
+      --lyt-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+      --lyt-shadow-hover: 0 4px 20px rgba(0, 0, 0, 0.12);
+      --lyt-radius: 8px;
+      --lyt-radius-sm: 6px;
+      --lyt-transition: 0.2s ease;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: var(--lyt-bg-secondary);
+      color: var(--lyt-text);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    a { color: var(--lyt-primary); text-decoration: none; }
+    a:hover { color: var(--lyt-primary-hover); }
+
+    /* ===== Header ===== */
+    .header {
+      background: linear-gradient(135deg, var(--lyt-secondary) 0%, #2c3e50 100%);
+      color: #fff;
+      padding: 0;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+
+    .header-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    .logo-icon {
+      width: 36px;
+      height: 36px;
+      background: var(--lyt-primary);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      font-weight: 800;
+      color: #fff;
+    }
+
+    .logo span { color: var(--lyt-primary); }
+
+    .header-stats {
+      display: flex;
+      gap: 20px;
+      font-size: 14px;
+      opacity: 0.85;
+    }
+
+    .header-stats strong { color: var(--lyt-primary); }
+
+    /* ===== Hero ===== */
+    .hero {
+      background: linear-gradient(135deg, var(--lyt-primary) 0%, #2ecc71 100%);
+      color: #fff;
+      text-align: center;
+      padding: 48px 24px 40px;
+    }
+
+    .hero h1 {
+      font-size: 36px;
+      font-weight: 800;
+      margin-bottom: 12px;
+      letter-spacing: -0.5px;
+    }
+
+    .hero p {
+      font-size: 18px;
+      opacity: 0.9;
+      max-width: 600px;
+      margin: 0 auto 32px;
+    }
+
+    /* ===== Search ===== */
+    .search-bar {
+      max-width: 560px;
+      margin: 0 auto;
+      position: relative;
+    }
+
+    .search-bar input {
+      width: 100%;
+      padding: 14px 20px 14px 48px;
+      border: none;
+      border-radius: 50px;
+      font-size: 16px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+      outline: none;
+      transition: box-shadow var(--lyt-transition);
+    }
+
+    .search-bar input:focus {
+      box-shadow: 0 4px 24px rgba(0,0,0,0.25);
+    }
+
+    .search-bar .search-icon {
+      position: absolute;
+      left: 18px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 18px;
+      opacity: 0.5;
+    }
+
+    /* ===== Filters ===== */
+    .filters {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px 24px 0;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .filter-label {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--lyt-text-secondary);
+      margin-right: 4px;
+    }
+
+    .filter-btn {
+      padding: 6px 16px;
+      border: 1px solid var(--lyt-border);
+      border-radius: 20px;
+      background: var(--lyt-bg);
+      color: var(--lyt-text-secondary);
+      font-size: 13px;
+      cursor: pointer;
+      transition: all var(--lyt-transition);
+      font-weight: 500;
+    }
+
+    .filter-btn:hover {
+      border-color: var(--lyt-primary);
+      color: var(--lyt-primary);
+    }
+
+    .filter-btn.active {
+      background: var(--lyt-primary);
+      color: #fff;
+      border-color: var(--lyt-primary);
+    }
+
+    /* ===== Main Content ===== */
+    .main {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .results-info {
+      font-size: 14px;
+      color: var(--lyt-text-muted);
+      margin-bottom: 16px;
+    }
+
+    /* ===== Plugin Grid ===== */
+    .plugin-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 20px;
+    }
+
+    /* ===== Plugin Card ===== */
+    .plugin-card {
+      background: var(--lyt-bg-card);
+      border: 1px solid var(--lyt-border);
+      border-radius: var(--lyt-radius);
+      padding: 24px;
+      transition: all var(--lyt-transition);
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .plugin-card:hover {
+      box-shadow: var(--lyt-shadow-hover);
+      transform: translateY(-2px);
+      border-color: var(--lyt-primary);
+    }
+
+    .plugin-card-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      margin-bottom: 12px;
+    }
+
+    .plugin-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      background: var(--lyt-primary-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      flex-shrink: 0;
+    }
+
+    .plugin-info { flex: 1; min-width: 0; }
+
+    .plugin-name {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--lyt-text);
+      margin-bottom: 2px;
+      word-break: break-all;
+    }
+
+    .plugin-version {
+      font-size: 12px;
+      color: var(--lyt-text-muted);
+      font-weight: 500;
+    }
+
+    .official-badge {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: var(--lyt-primary);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+
+    .plugin-desc {
+      font-size: 14px;
+      color: var(--lyt-text-secondary);
+      line-height: 1.5;
+      margin-bottom: 16px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .plugin-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .meta-tag {
+      display: inline-block;
+      padding: 2px 10px;
+      background: var(--lyt-bg-secondary);
+      color: var(--lyt-text-secondary);
+      font-size: 12px;
+      border-radius: 12px;
+      font-weight: 500;
+    }
+
+    .meta-tag.category {
+      background: var(--lyt-primary-light);
+      color: var(--lyt-primary);
+    }
+
+    .plugin-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 12px;
+      border-top: 1px solid var(--lyt-border);
+    }
+
+    .plugin-author {
+      font-size: 13px;
+      color: var(--lyt-text-muted);
+    }
+
+    .plugin-author strong { color: var(--lyt-text-secondary); }
+
+    .install-btn {
+      padding: 6px 16px;
+      background: var(--lyt-primary);
+      color: #fff;
+      border: none;
+      border-radius: var(--lyt-radius-sm);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all var(--lyt-transition);
+    }
+
+    .install-btn:hover {
+      background: var(--lyt-primary-hover);
+      transform: scale(1.02);
+    }
+
+    .install-btn:active { transform: scale(0.98); }
+
+    /* ===== Detail Modal ===== */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .modal-overlay.active { display: flex; }
+
+    .modal {
+      background: var(--lyt-bg);
+      border-radius: 12px;
+      max-width: 600px;
+      width: 100%;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.2);
+      animation: modalIn 0.2s ease;
+    }
+
+    @keyframes modalIn {
+      from { opacity: 0; transform: scale(0.95) translateY(10px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    .modal-header {
+      padding: 24px 24px 0;
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+    }
+
+    .modal-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 14px;
+      background: var(--lyt-primary-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      flex-shrink: 0;
+    }
+
+    .modal-title { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+    .modal-version { font-size: 14px; color: var(--lyt-text-muted); }
+
+    .modal-close {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      width: 32px;
+      height: 32px;
+      border: none;
+      background: var(--lyt-bg-secondary);
+      border-radius: 50%;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--lyt-text-secondary);
+      transition: all var(--lyt-transition);
+    }
+
+    .modal-close:hover { background: #e0e0e0; }
+
+    .modal-body { padding: 20px 24px 24px; }
+
+    .modal-desc {
+      font-size: 15px;
+      color: var(--lyt-text-secondary);
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+
+    .modal-section { margin-bottom: 20px; }
+
+    .modal-section h3 {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--lyt-text);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .modal-detail-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .detail-item {
+      font-size: 14px;
+    }
+
+    .detail-item .label {
+      color: var(--lyt-text-muted);
+      font-size: 12px;
+      display: block;
+    }
+
+    .detail-item .value {
+      color: var(--lyt-text);
+      font-weight: 500;
+    }
+
+    .install-cmd {
+      background: var(--lyt-secondary);
+      color: #fff;
+      padding: 12px 16px;
+      border-radius: var(--lyt-radius-sm);
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    .install-cmd code { flex: 1; }
+
+    .copy-btn {
+      background: rgba(255,255,255,0.15);
+      border: none;
+      color: #fff;
+      padding: 4px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      transition: background var(--lyt-transition);
+    }
+
+    .copy-btn:hover { background: rgba(255,255,255,0.25); }
+
+    /* ===== Empty State ===== */
+    .empty-state {
+      text-align: center;
+      padding: 60px 24px;
+      color: var(--lyt-text-muted);
+    }
+
+    .empty-state .icon { font-size: 48px; margin-bottom: 16px; }
+    .empty-state h3 { font-size: 18px; color: var(--lyt-text-secondary); margin-bottom: 8px; }
+
+    /* ===== Footer ===== */
+    .footer {
+      text-align: center;
+      padding: 32px 24px;
+      color: var(--lyt-text-muted);
+      font-size: 14px;
+      border-top: 1px solid var(--lyt-border);
+      margin-top: 40px;
+      background: var(--lyt-bg);
+    }
+
+    .footer a { color: var(--lyt-primary); }
+
+    /* ===== Responsive ===== */
+    @media (max-width: 768px) {
+      .hero h1 { font-size: 28px; }
+      .hero p { font-size: 16px; }
+      .plugin-grid { grid-template-columns: 1fr; }
+      .header-inner { flex-direction: column; text-align: center; }
+      .modal-detail-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-inner">
+      <div class="logo">
+        <div class="logo-icon">L</div>
+        Lyt.js <span>Marketplace</span>
+      </div>
+      <div class="header-stats">
+        <span><strong id="total-count">0</strong> 个插件</span>
+        <span><strong>8</strong> 个分类</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <section class="hero">
+    <h1>探索 Lyt.js 插件生态</h1>
+    <p>发现、安装和管理 Lyt.js 官方及社区插件，扩展你的应用能力</p>
+    <div class="search-bar">
+      <span class="search-icon">&#128269;</span>
+      <input type="text" id="search-input" placeholder="搜索插件名称、描述或关键词..." autocomplete="off">
+    </div>
+  </section>
+
+  <!-- Filters -->
+  <div class="filters" id="filters">
+    <span class="filter-label">分类：</span>
+    <button class="filter-btn active" data-category="all">全部</button>
+    <button class="filter-btn" data-category="ui">UI 组件</button>
+    <button class="filter-btn" data-category="tool">工具</button>
+    <button class="filter-btn" data-category="integration">集成</button>
+    <button class="filter-btn" data-category="theme">主题</button>
+    <button class="filter-btn" data-category="auth">认证</button>
+    <button class="filter-btn" data-category="storage">存储</button>
+    <button class="filter-btn" data-category="analytics">分析</button>
+  </div>
+
+  <!-- Main -->
+  <main class="main">
+    <div class="results-info" id="results-info"></div>
+    <div class="plugin-grid" id="plugin-grid"></div>
+    <div class="empty-state" id="empty-state" style="display:none;">
+      <div class="icon">&#128270;</div>
+      <h3>未找到匹配的插件</h3>
+      <p>尝试更换搜索关键词或筛选条件</p>
+    </div>
+  </main>
+
+  <!-- Detail Modal -->
+  <div class="modal-overlay" id="modal-overlay">
+    <div class="modal" id="modal">
+      <button class="modal-close" id="modal-close">&times;</button>
+      <div class="modal-header">
+        <div class="modal-icon" id="modal-icon"></div>
+        <div>
+          <div class="modal-title" id="modal-title"></div>
+          <div class="modal-version" id="modal-version"></div>
+        </div>
+      </div>
+      <div class="modal-body">
+        <p class="modal-desc" id="modal-desc"></p>
+
+        <div class="modal-section">
+          <h3>插件信息</h3>
+          <div class="modal-detail-grid" id="modal-details"></div>
+        </div>
+
+        <div class="modal-section">
+          <h3>关键词</h3>
+          <div class="plugin-meta" id="modal-keywords"></div>
+        </div>
+
+        <div class="modal-section">
+          <h3>安装</h3>
+          <div class="install-cmd">
+            <code id="modal-install-cmd"></code>
+            <button class="copy-btn" id="copy-btn">复制</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <p>Lyt.js Plugin Marketplace &mdash; 由 <a href="https://gitee.com/lytjs" target="_blank">Lyt.js</a> 团队维护</p>
+    <p style="margin-top:4px;">MIT License</p>
+  </footer>
+
+  <script>
+    // ============================================================
+    // 内置插件数据
+    // ============================================================
+    const PLUGINS = [
+      {
+        name: '@lytjs/plugin-i18n',
+        version: '5.0.0',
+        description: '国际化插件 - 提供多语言支持、消息格式化、参数插值、复数形式和语言切换功能。支持路径式 key、回退语言、懒加载翻译包和语言变更监听。',
+        author: 'lytjs',
+        keywords: ['i18n', '国际化', '多语言', '翻译', 'locale', 'translation'],
+        license: 'MIT',
+        main: 'dist/index.mjs',
+        lytjsVersion: '>=5.0.0',
+        category: 'tool',
+        icon: '\uD83C\uDF10',
+        homepage: 'https://gitee.com/lytjs/lytjs',
+        repository: 'https://gitee.com/lytjs/lytjs',
+        official: true,
+      },
+      {
+        name: '@lytjs/plugin-auth',
+        version: '5.0.0',
+        description: '认证授权插件 - 提供登录、登出、注册、Token 管理、角色权限检查和路由守卫功能。支持多种 Token 格式、自动刷新和未授权回调。',
+        author: 'lytjs',
+        keywords: ['auth', '认证', '授权', '登录', 'token', '权限', 'role', 'permission'],
+        license: 'MIT',
+        main: 'dist/index.mjs',
+        lytjsVersion: '>=5.0.0',
+        category: 'integration',
+        icon: '\uD83D\uDD10',
+        homepage: 'https://gitee.com/lytjs/lytjs',
+        repository: 'https://gitee.com/lytjs/lytjs',
+        official: true,
+      },
+      {
+        name: '@lytjs/plugin-logger',
+        version: '5.0.0',
+        description: '日志插件 - 提供分级日志（debug/info/warn/error）、彩色输出、持久化存储、自定义格式模板和传输管道功能。',
+        author: 'lytjs',
+        keywords: ['logger', '日志', 'debug', 'info', 'warn', 'error', 'log'],
+        license: 'MIT',
+        main: 'dist/index.mjs',
+        lytjsVersion: '>=5.0.0',
+        category: 'tool',
+        icon: '\uD83D\uDCDD',
+        homepage: 'https://gitee.com/lytjs/lytjs',
+        repository: 'https://gitee.com/lytjs/lytjs',
+        official: true,
+      },
+      {
+        name: '@lytjs/plugin-storage',
+        version: '5.0.0',
+        description: '本地存储持久化插件 - 提供带前缀的 localStorage 封装、过期时间、响应式监听和自动恢复功能。支持序列化自定义和内存降级。',
+        author: 'lytjs',
+        keywords: ['storage', '存储', 'localStorage', 'sessionStorage', '持久化', '缓存'],
+        license: 'MIT',
+        main: 'dist/index.mjs',
+        lytjsVersion: '>=5.0.0',
+        category: 'tool',
+        icon: '\uD83D\uDCBE',
+        homepage: 'https://gitee.com/lytjs/lytjs',
+        repository: 'https://gitee.com/lytjs/lytjs',
+        official: true,
+      },
+      {
+        name: '@lytjs/plugin-theme',
+        version: '5.0.0',
+        description: '主题切换插件 - 提供明暗主题切换、CSS 变量管理、系统偏好检测和动态变量功能。内置 light/dark 主题，支持自定义主题扩展。',
+        author: 'lytjs',
+        keywords: ['theme', '主题', 'dark-mode', '暗黑模式', 'CSS变量', '样式'],
+        license: 'MIT',
+        main: 'dist/index.mjs',
+        lytjsVersion: '>=5.0.0',
+        category: 'theme',
+        icon: '\uD83C\uDFA8',
+        homepage: 'https://gitee.com/lytjs/lytjs',
+        repository: 'https://gitee.com/lytjs/lytjs',
+        official: true,
+      },
+      {
+        name: '@lytjs/plugin-chart',
+        version: '5.0.0',
+        description: '图表插件 - 提供柱状图和折线图组件，使用 Canvas API 绘制，零运行时依赖。支持自定义颜色、动画和多数据系列。',
+        author: 'lytjs',
+        keywords: ['chart', '图表', 'bar', 'line', 'canvas', '可视化', 'visualization'],
+        license: 'MIT',
+        main: 'dist/index.mjs',
+        lytjsVersion: '>=5.0.0',
+        category: 'ui',
+        icon: '\uD83D\uDCCA',
+        homepage: 'https://gitee.com/lytjs/lytjs',
+        repository: 'https://gitee.com/lytjs/lytjs',
+        official: true,
+      },
+      {
+        name: '@lytjs/plugin-highlight',
+        version: '5.0.0',
+        description: '代码高亮插件 - 支持 JavaScript/TypeScript/HTML/CSS/JSON 语法高亮，使用正则表达式实现，零运行时依赖。提供行号和主题支持。',
+        author: 'lytjs',
+        keywords: ['highlight', '代码高亮', 'syntax', 'code', 'javascript', 'typescript'],
+        license: 'MIT',
+        main: 'dist/index.mjs',
+        lytjsVersion: '>=5.0.0',
+        category: 'ui',
+        icon: '\u2728',
+        homepage: 'https://gitee.com/lytjs/lytjs',
+        repository: 'https://gitee.com/lytjs/lytjs',
+        official: true,
+      },
+      {
+        name: '@lytjs/plugin-virtual-list',
+        version: '5.0.0',
+        description: '虚拟列表插件 - 提供高性能虚拟滚动列表组件，支持动态高度和大数据量渲染。适用于长列表、聊天记录和表格场景。',
+        author: 'lytjs',
+        keywords: ['virtual-list', '虚拟列表', 'virtual-scroll', '滚动', '性能', 'performance', '大数据'],
+        license: 'MIT',
+        main: 'dist/index.mjs',
+        lytjsVersion: '>=5.0.0',
+        category: 'ui',
+        icon: '\uD83D\uDCCB',
+        homepage: 'https://gitee.com/lytjs/lytjs',
+        repository: 'https://gitee.com/lytjs/lytjs',
+        official: true,
+      },
+    ];
+
+    // ============================================================
+    // 分类映射
+    // ============================================================
+    const CATEGORY_LABELS = {
+      ui: 'UI 组件',
+      tool: '工具',
+      integration: '集成',
+      theme: '主题',
+      auth: '认证',
+      storage: '存储',
+      analytics: '分析',
+      other: '其他',
+    };
+
+    // ============================================================
+    // 状态
+    // ============================================================
+    let currentCategory = 'all';
+    let currentQuery = '';
+
+    // ============================================================
+    // DOM 引用
+    // ============================================================
+    const searchInput = document.getElementById('search-input');
+    const filtersEl = document.getElementById('filters');
+    const pluginGrid = document.getElementById('plugin-grid');
+    const emptyState = document.getElementById('empty-state');
+    const resultsInfo = document.getElementById('results-info');
+    const totalCount = document.getElementById('total-count');
+    const modalOverlay = document.getElementById('modal-overlay');
+
+    // ============================================================
+    // 渲染
+    // ============================================================
+
+    function getFilteredPlugins() {
+      let result = PLUGINS;
+
+      if (currentCategory !== 'all') {
+        result = result.filter(p => p.category === currentCategory);
+      }
+
+      if (currentQuery) {
+        const q = currentQuery.toLowerCase();
+        result = result.filter(p =>
+          p.name.toLowerCase().includes(q) ||
+          p.description.toLowerCase().includes(q) ||
+          p.author.toLowerCase().includes(q) ||
+          p.keywords.some(k => k.toLowerCase().includes(q))
+        );
+      }
+
+      return result;
+    }
+
+    function renderPlugins() {
+      const filtered = getFilteredPlugins();
+      totalCount.textContent = PLUGINS.length;
+
+      if (filtered.length === 0) {
+        pluginGrid.innerHTML = '';
+        emptyState.style.display = 'block';
+        resultsInfo.textContent = '';
+        return;
+      }
+
+      emptyState.style.display = 'none';
+
+      const categoryText = currentCategory === 'all'
+        ? '所有分类'
+        : CATEGORY_LABELS[currentCategory] || currentCategory;
+      resultsInfo.textContent = `在「${categoryText}」中找到 ${filtered.length} 个插件`;
+
+      pluginGrid.innerHTML = filtered.map(plugin => `
+        <div class="plugin-card" data-name="${plugin.name}">
+          ${plugin.official ? '<span class="official-badge">Official</span>' : ''}
+          <div class="plugin-card-header">
+            <div class="plugin-icon">${plugin.icon || '?'}</div>
+            <div class="plugin-info">
+              <div class="plugin-name">${plugin.name}</div>
+              <div class="plugin-version">v${plugin.version}</div>
+            </div>
+          </div>
+          <div class="plugin-desc">${plugin.description}</div>
+          <div class="plugin-meta">
+            <span class="meta-tag category">${CATEGORY_LABELS[plugin.category] || plugin.category}</span>
+            ${plugin.keywords.slice(0, 3).map(k => `<span class="meta-tag">${k}</span>`).join('')}
+          </div>
+          <div class="plugin-footer">
+            <div class="plugin-author">by <strong>${plugin.author}</strong></div>
+            <button class="install-btn" onclick="event.stopPropagation(); copyInstall('${plugin.name}')">安装</button>
+          </div>
+        </div>
+      `).join('');
+
+      // 绑定卡片点击
+      document.querySelectorAll('.plugin-card').forEach(card => {
+        card.addEventListener('click', () => {
+          const name = card.dataset.name;
+          const plugin = PLUGINS.find(p => p.name === name);
+          if (plugin) showModal(plugin);
+        });
+      });
+    }
+
+    // ============================================================
+    // Modal
+    // ============================================================
+
+    function showModal(plugin) {
+      document.getElementById('modal-icon').textContent = plugin.icon || '?';
+      document.getElementById('modal-title').textContent = plugin.name;
+      document.getElementById('modal-version').textContent = `v${plugin.version} \u00B7 ${plugin.license}`;
+      document.getElementById('modal-desc').textContent = plugin.description;
+
+      document.getElementById('modal-details').innerHTML = `
+        <div class="detail-item">
+          <span class="label">作者</span>
+          <span class="value">${plugin.author}</span>
+        </div>
+        <div class="detail-item">
+          <span class="label">分类</span>
+          <span class="value">${CATEGORY_LABELS[plugin.category] || plugin.category}</span>
+        </div>
+        <div class="detail-item">
+          <span class="label">Lyt.js 版本</span>
+          <span class="value">${plugin.lytjsVersion}</span>
+        </div>
+        <div class="detail-item">
+          <span class="label">入口文件</span>
+          <span class="value">${plugin.main}</span>
+        </div>
+        <div class="detail-item">
+          <span class="label">主页</span>
+          <span class="value"><a href="${plugin.homepage}" target="_blank">${plugin.homepage}</a></span>
+        </div>
+        <div class="detail-item">
+          <span class="label">仓库</span>
+          <span class="value"><a href="${plugin.repository}" target="_blank">${plugin.repository}</a></span>
+        </div>
+      `;
+
+      document.getElementById('modal-keywords').innerHTML =
+        plugin.keywords.map(k => `<span class="meta-tag">${k}</span>`).join('');
+
+      document.getElementById('modal-install-cmd').textContent = `npm install ${plugin.name}`;
+      document.getElementById('copy-btn').onclick = () => copyInstall(plugin.name);
+
+      modalOverlay.classList.add('active');
+    }
+
+    function hideModal() {
+      modalOverlay.classList.remove('active');
+    }
+
+    document.getElementById('modal-close').addEventListener('click', hideModal);
+    modalOverlay.addEventListener('click', (e) => {
+      if (e.target === modalOverlay) hideModal();
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') hideModal();
+    });
+
+    // ============================================================
+    // 复制安装命令
+    // ============================================================
+
+    function copyInstall(name) {
+      const cmd = `npm install ${name}`;
+      navigator.clipboard.writeText(cmd).then(() => {
+        showToast(`已复制: ${cmd}`);
+      }).catch(() => {
+        // Fallback
+        const ta = document.createElement('textarea');
+        ta.value = cmd;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        showToast(`已复制: ${cmd}`);
+      });
+    }
+
+    function showToast(msg) {
+      const toast = document.createElement('div');
+      toast.textContent = msg;
+      toast.style.cssText = `
+        position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+        background: #35495e; color: #fff; padding: 10px 24px; border-radius: 8px;
+        font-size: 14px; z-index: 999; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        animation: modalIn 0.2s ease;
+      `;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 2000);
+    }
+
+    // ============================================================
+    // 事件绑定
+    // ============================================================
+
+    // 搜索
+    searchInput.addEventListener('input', (e) => {
+      currentQuery = e.target.value.trim();
+      renderPlugins();
+    });
+
+    // 分类过滤
+    filtersEl.addEventListener('click', (e) => {
+      const btn = e.target.closest('.filter-btn');
+      if (!btn) return;
+
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      currentCategory = btn.dataset.category;
+      renderPlugins();
+    });
+
+    // ============================================================
+    // 初始化
+    // ============================================================
+    renderPlugins();
+  </script>
+</body>
+</html>

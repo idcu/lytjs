@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lyt.js 实时聊天</title>
+  <style>
+    /* ========== 全局样式 ========== */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      height: 100vh;
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* ========== 联系人侧栏 ========== */
+    .contacts-panel {
+      width: 300px;
+      background: #1e293b;
+      border-right: 1px solid #334155;
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+    .contacts-header {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid #334155;
+    }
+    .contacts-header h2 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+    }
+    .contacts-search {
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      color: #e2e8f0;
+      font-size: 0.85rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .contacts-search:focus { border-color: #3b82f6; }
+    .contacts-list { flex: 1; overflow-y: auto; }
+
+    /* 联系人项 */
+    .contact-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.85rem 1.25rem;
+      cursor: pointer;
+      transition: background 0.15s;
+      border-bottom: 1px solid rgba(51,65,85,0.5);
+    }
+    .contact-item:hover { background: #334155; }
+    .contact-item.active { background: #3b82f6; }
+    .contact-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: white;
+      flex-shrink: 0;
+      position: relative;
+    }
+    .online-dot {
+      position: absolute;
+      bottom: 1px;
+      right: 1px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      border: 2px solid #1e293b;
+    }
+    .online-dot.online { background: #22c55e; }
+    .online-dot.offline { background: #64748b; }
+    .contact-item.active .online-dot { border-color: #3b82f6; }
+    .contact-info { flex: 1; min-width: 0; }
+    .contact-name {
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-bottom: 0.15rem;
+    }
+    .contact-last-msg {
+      font-size: 0.78rem;
+      color: #94a3b8;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .contact-item.active .contact-last-msg { color: rgba(255,255,255,0.8); }
+    .contact-time {
+      font-size: 0.7rem;
+      color: #64748b;
+      flex-shrink: 0;
+    }
+    .contact-item.active .contact-time { color: rgba(255,255,255,0.7); }
+
+    /* ========== 聊天区域 ========== */
+    .chat-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    /* 聊天头部 */
+    .chat-header {
+      padding: 0.85rem 1.5rem;
+      background: #1e293b;
+      border-bottom: 1px solid #334155;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-shrink: 0;
+    }
+    .chat-header .avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      font-weight: 600;
+      color: white;
+    }
+    .chat-header-info { flex: 1; }
+    .chat-header-name { font-size: 0.95rem; font-weight: 600; }
+    .chat-header-status { font-size: 0.75rem; color: #22c55e; }
+    .chat-header-status.offline { color: #64748b; }
+
+    /* 消息列表 */
+    .messages-area {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    /* 消息气泡 */
+    .message {
+      display: flex;
+      gap: 0.5rem;
+      max-width: 70%;
+      animation: fadeIn 0.3s ease;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .message.sent { align-self: flex-end; flex-direction: row-reverse; }
+    .message.received { align-self: flex-start; }
+    .message .bubble {
+      padding: 0.65rem 1rem;
+      border-radius: 16px;
+      font-size: 0.9rem;
+      line-height: 1.5;
+      word-break: break-word;
+    }
+    .message.sent .bubble {
+      background: #3b82f6;
+      color: white;
+      border-bottom-right-radius: 4px;
+    }
+    .message.received .bubble {
+      background: #1e293b;
+      color: #e2e8f0;
+      border-bottom-left-radius: 4px;
+    }
+    .message .time {
+      font-size: 0.65rem;
+      color: #64748b;
+      align-self: flex-end;
+      margin-top: 0.25rem;
+    }
+    .message.sent .time { text-align: right; }
+
+    /* 正在输入提示 */
+    .typing-indicator {
+      align-self: flex-start;
+      padding: 0.5rem 1rem;
+      background: #1e293b;
+      border-radius: 16px;
+      border-bottom-left-radius: 4px;
+      display: flex;
+      gap: 0.25rem;
+      align-items: center;
+    }
+    .typing-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #64748b;
+      animation: typingBounce 1.4s infinite;
+    }
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes typingBounce {
+      0%, 60%, 100% { transform: translateY(0); }
+      30% { transform: translateY(-6px); }
+    }
+
+    /* 输入区域 */
+    .input-area {
+      padding: 1rem 1.5rem;
+      background: #1e293b;
+      border-top: 1px solid #334155;
+      display: flex;
+      gap: 0.75rem;
+      align-items: flex-end;
+      flex-shrink: 0;
+    }
+    .input-area textarea {
+      flex: 1;
+      padding: 0.65rem 1rem;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      color: #e2e8f0;
+      font-size: 0.9rem;
+      outline: none;
+      resize: none;
+      max-height: 120px;
+      line-height: 1.5;
+      font-family: inherit;
+      transition: border-color 0.2s;
+    }
+    .input-area textarea:focus { border-color: #3b82f6; }
+    .send-btn {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: #3b82f6;
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-size: 1.1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+    .send-btn:hover { background: #2563eb; transform: scale(1.05); }
+    .send-btn:disabled { background: #334155; cursor: not-allowed; transform: none; }
+
+    /* ========== 空状态 ========== */
+    .empty-chat {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #64748b;
+      font-size: 1rem;
+    }
+
+    /* ========== 响应式 ========== */
+    @media (max-width: 768px) {
+      .contacts-panel { width: 72px; }
+      .contacts-header h2,
+      .contacts-search,
+      .contact-info,
+      .contact-time { display: none; }
+      .contact-item { justify-content: center; padding: 0.75rem 0; }
+      .message { max-width: 85%; }
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <!-- 联系人侧栏 -->
+    <aside class="contacts-panel">
+      <div class="contacts-header">
+        <h2>消息</h2>
+        <input
+          class="contacts-search"
+          v-model="searchQuery"
+          placeholder="搜索联系人..."
+        />
+      </div>
+      <div class="contacts-list">
+        <div
+          v-for="contact in filteredContacts"
+          :key="contact.id"
+          class="contact-item"
+          :class="{ active: activeContactId === contact.id }"
+          @click="selectContact(contact.id)"
+        >
+          <div class="contact-avatar" :style="{ background: contact.color }">
+            {{ contact.name.charAt(0) }}
+            <span class="online-dot" :class="contact.online ? 'online' : 'offline'"></span>
+          </div>
+          <div class="contact-info">
+            <div class="contact-name">{{ contact.name }}</div>
+            <div class="contact-last-msg">{{ getLastMessage(contact.id) }}</div>
+          </div>
+          <span class="contact-time">{{ getLastTime(contact.id) }}</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- 聊天区域 -->
+    <main class="chat-panel">
+      <!-- 聊天头部 -->
+      <div class="chat-header" v-if="activeContact">
+        <div class="avatar" :style="{ background: activeContact.color }">
+          {{ activeContact.name.charAt(0) }}
+        </div>
+        <div class="chat-header-info">
+          <div class="chat-header-name">{{ activeContact.name }}</div>
+          <div class="chat-header-status" :class="{ offline: !activeContact.online }">
+            {{ activeContact.online ? '在线' : '离线' }}
+          </div>
+        </div>
+      </div>
+
+      <!-- 消息列表 -->
+      <div class="messages-area" ref="messagesArea" v-if="activeContact">
+        <div
+          v-for="msg in currentMessages"
+          :key="msg.id"
+          class="message"
+          :class="msg.sender === 'me' ? 'sent' : 'received'"
+        >
+          <div>
+            <div class="bubble">{{ msg.text }}</div>
+            <div class="time">{{ msg.time }}</div>
+          </div>
+        </div>
+
+        <!-- 正在输入提示 -->
+        <div class="typing-indicator" v-if="isTyping">
+          <span class="typing-dot"></span>
+          <span class="typing-dot"></span>
+          <span class="typing-dot"></span>
+        </div>
+      </div>
+
+      <!-- 空状态 -->
+      <div class="empty-chat" v-if="!activeContact">
+        选择一个联系人开始聊天
+      </div>
+
+      <!-- 输入区域 -->
+      <div class="input-area" v-if="activeContact">
+        <textarea
+          v-model="inputText"
+          @keydown.enter.exact="sendMessage"
+          placeholder="输入消息... (Enter 发送)"
+          rows="1"
+        ></textarea>
+        <button
+          class="send-btn"
+          :disabled="!inputText.trim()"
+          @click="sendMessage"
+        >&#10148;</button>
+      </div>
+    </main>
+  </div>
+
+  <script type="module">
+    /**
+     * Lyt.js 实时聊天示例
+     *
+     * 展示的框架特性：
+     * - createApp: 创建应用实例
+     * - ref: 响应式引用
+     * - computed: 计算属性（联系人过滤、当前消息列表）
+     * - watchEffect: 副作用（自动滚动到底部）
+     * - watch: 侦听器（消息变化时自动回复）
+     * - nextTick: DOM 更新后执行操作
+     * - template: 模板语法（v-for, v-if, v-model, :class, :style, @click, @keydown）
+     * - setup: 组合式 API
+     */
+
+    import { createApp, ref, computed, watch, watchEffect, nextTick } from 'https://cdn.jsdelivr.net/npm/@lytjs/core@5.0.0/+esm'
+
+    // ========== 模拟数据 ==========
+    const CONTACTS = [
+      { id: 1, name: '张三',   color: '#3b82f6', online: true },
+      { id: 2, name: '李四',   color: '#8b5cf6', online: true },
+      { id: 3, name: '王五',   color: '#22c55e', online: false },
+      { id: 4, name: '赵六',   color: '#f59e0b', online: true },
+      { id: 5, name: '孙七',   color: '#ef4444', online: false },
+      { id: 6, name: '周八',   color: '#06b6d4', online: true },
+    ]
+
+    // 初始消息
+    const INITIAL_MESSAGES = {
+      1: [
+        { id: 1, sender: 'other', text: '你好！最近怎么样？', time: '09:30' },
+        { id: 2, sender: 'me',    text: '挺好的，在研究 Lyt.js 框架', time: '09:31' },
+        { id: 3, sender: 'other', text: '听起来不错！有什么新特性吗？', time: '09:32' },
+      ],
+      2: [
+        { id: 1, sender: 'other', text: '周末有空一起吃饭吗？', time: '昨天' },
+        { id: 2, sender: 'me',    text: '可以啊，你想去哪里？', time: '昨天' },
+      ],
+      3: [
+        { id: 1, sender: 'me',    text: '项目文档写好了吗？', time: '周一' },
+        { id: 2, sender: 'other', text: '还在写，预计明天完成', time: '周一' },
+      ],
+      4: [
+        { id: 1, sender: 'other', text: '代码审查通过了，可以合并', time: '10:15' },
+      ],
+      5: [],
+      6: [
+        { id: 1, sender: 'other', text: '新版本发布了吗？', time: '08:45' },
+        { id: 2, sender: 'me',    text: '刚发布，你看看有没有问题', time: '08:50' },
+      ],
+    }
+
+    // 模拟自动回复
+    const AUTO_REPLIES = [
+      '好的，收到！',
+      '没问题，我马上处理。',
+      '这个想法不错，我们可以讨论一下。',
+      '我正在忙，稍后回复你。',
+      '谢谢你的分享！',
+      '明白了，我看看。',
+      '有道理，我同意你的看法。',
+      '太棒了！继续保持！',
+      '我查一下，等会儿告诉你。',
+      '好的，那就这么定了。',
+    ]
+
+    // ========== 工具函数 ==========
+    /** 获取当前时间字符串 */
+    function getNowTime() {
+      const now = new Date()
+      return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
+    }
+
+    // ========== 创建应用 ==========
+    const app = createApp({
+      setup() {
+        // --- 响应式状态 ---
+        const contacts = ref(CONTACTS)
+        const activeContactId = ref(1)               // 当前选中的联系人
+        const searchQuery = ref('')                  // 搜索关键词
+        const inputText = ref('')                    // 输入框内容
+        const messages = ref({ ...INITIAL_MESSAGES }) // 所有消息 { contactId: [...] }
+        const isTyping = ref(false)                  // 对方是否正在输入
+
+        // --- 计算属性 ---
+        // 当前选中的联系人
+        const activeContact = computed(() =>
+          contacts.value.find(c => c.id === activeContactId.value)
+        )
+
+        // 搜索过滤联系人
+        const filteredContacts = computed(() => {
+          const q = searchQuery.value.toLowerCase().trim()
+          if (!q) return contacts.value
+          return contacts.value.filter(c => c.name.toLowerCase().includes(q))
+        })
+
+        // 当前联系人的消息列表
+        const currentMessages = computed(() =>
+          messages.value[activeContactId.value] || []
+        )
+
+        // --- 方法 ---
+        /** 选择联系人 */
+        function selectContact(id) {
+          activeContactId.value = id
+        }
+
+        /** 获取联系人最后一条消息 */
+        function getLastMessage(contactId) {
+          const msgs = messages.value[contactId]
+          if (!msgs || msgs.length === 0) return '暂无消息'
+          const last = msgs[msgs.length - 1]
+          const prefix = last.sender === 'me' ? '你: ' : ''
+          return prefix + last.text
+        }
+
+        /** 获取联系人最后消息时间 */
+        function getLastTime(contactId) {
+          const msgs = messages.value[contactId]
+          if (!msgs || msgs.length === 0) return ''
+          return msgs[msgs.length - 1].time
+        }
+
+        /** 发送消息 */
+        function sendMessage() {
+          const text = inputText.value.trim()
+          if (!text || !activeContact.value) return
+
+          // 添加消息
+          const contactId = activeContactId.value
+          if (!messages.value[contactId]) {
+            messages.value[contactId] = []
+          }
+          messages.value[contactId].push({
+            id: Date.now(),
+            sender: 'me',
+            text,
+            time: getNowTime(),
+          })
+          inputText.value = ''
+
+          // 模拟对方回复
+          simulateReply(contactId)
+        }
+
+        /** 模拟对方回复 */
+        function simulateReply(contactId) {
+          const contact = contacts.value.find(c => c.id === contactId)
+          if (!contact || !contact.online) return
+
+          // 显示"正在输入"
+          isTyping.value = true
+
+          // 随机延迟 1-3 秒后回复
+          const delay = 1000 + Math.random() * 2000
+          setTimeout(() => {
+            isTyping.value = false
+
+            const reply = AUTO_REPLIES[Math.floor(Math.random() * AUTO_REPLIES.length)]
+            if (!messages.value[contactId]) {
+              messages.value[contactId] = []
+            }
+            messages.value[contactId].push({
+              id: Date.now(),
+              sender: 'other',
+              text: reply,
+              time: getNowTime(),
+            })
+          }, delay)
+        }
+
+        // --- 副作用 ---
+        // 当消息变化时自动滚动到底部
+        watchEffect(() => {
+          // 读取 currentMessages 触发依赖收集
+          const msgs = currentMessages.value
+          if (msgs.length > 0) {
+            nextTick(() => {
+              const area = document.querySelector('.messages-area')
+              if (area) {
+                area.scrollTop = area.scrollHeight
+              }
+            })
+          }
+        })
+
+        return {
+          contacts, activeContactId, searchQuery, inputText, messages, isTyping,
+          activeContact, filteredContacts, currentMessages,
+          selectContact, getLastMessage, getLastTime, sendMessage,
+        }
+      },
+    })
+
+    app.mount('#app')
+  </script>
+</body>
+</html>

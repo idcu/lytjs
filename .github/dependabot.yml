@@ -1,0 +1,35 @@
+version: 2
+updates:
+  # npm 依赖自动更新
+  - package-ecosystem: 'npm'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+      time: '09:00'
+      timezone: 'Asia/Shanghai'
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: 'chore(deps)'
+      prefix-development: 'chore(deps-dev)'
+    labels:
+      - 'dependencies'
+    reviewers:
+      - 'lytjs'
+
+  # GitHub Actions 依赖自动更新
+  - package-ecosystem: 'github-actions'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+      time: '09:00'
+      timezone: 'Asia/Shanghai'
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: 'ci(deps)'
+    labels:
+      - 'dependencies'
+      - 'ci'
+    reviewers:
+      - 'lytjs'
