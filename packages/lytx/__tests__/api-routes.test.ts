@@ -5,17 +5,33 @@
  */
 
 import { describe, it, expect, beforeEach } from '../../test-utils/src/index'
+import fs from 'node:fs'
+import path from 'node:path'
+import os from 'node:os'
+import { parseApiFilePath, resolveApiRoutes, matchApiRoute, handleApiRequest, parseQueryString } from '../src/api-routes'
+import { getDefaultConfig, resolveConfig } from '../src/config'
+import {
+  corsMiddleware,
+  loggerMiddleware,
+  bodyParserMiddleware,
+  authMiddleware,
+  rateLimitMiddleware,
+  executeMiddlewareChain,
+  resolveMiddlewares,
+  clearMiddlewareState,
+  logStore,
+  createRateLimitMiddleware,
+  getMiddleware,
+  getRegisteredMiddlewareNames,
+  registerMiddleware,
+} from '../src/middleware'
+import { resolveRoutes, matchRoute } from '../src/router'
 
 // ================================================================
 //  API 路由解析测试
 // ================================================================
 
 describe('LytX - API 路由解析', () => {
-  const { parseApiFilePath, resolveApiRoutes } = require('../src/api-routes')
-  const fs = require('node:fs')
-  const path = require('node:path')
-  const os = require('node:os')
-
   let tmpDir: string
 
   beforeEach(() => {
@@ -109,8 +125,6 @@ describe('LytX - API 路由解析', () => {
 // ================================================================
 
 describe('LytX - API 路由匹配', () => {
-  const { matchApiRoute } = require('../src/api-routes')
-
   const routes = [
     { pattern: '/hello', filePath: 'hello.ts', params: [], isCatchAll: false, methods: ['GET', 'POST'], handler: () => ({ status: 200, body: {} }) },
     { pattern: '/users/:id', filePath: 'users/[id].ts', params: ['id'], isCatchAll: false, methods: ['GET', 'PUT', 'DELETE'], handler: () => ({ status: 200, body: {} }) },
@@ -182,8 +196,6 @@ describe('LytX - API 路由匹配', () => {
 // ================================================================
 
 describe('LytX - API 请求处理', () => {
-  const { handleApiRequest } = require('../src/api-routes')
-
   it('函数格式处理器应正常工作', () => {
     const route = {
       pattern: '/hello',
@@ -363,8 +375,6 @@ describe('LytX - API 请求处理', () => {
 // ================================================================
 
 describe('LytX - 查询字符串解析', () => {
-  const { parseQueryString } = require('../src/api-routes')
-
   it('应解析简单查询参数', () => {
     const query = parseQueryString('foo=bar&baz=qux')
     expect(query).toEqual({ foo: 'bar', baz: 'qux' })
@@ -386,18 +396,6 @@ describe('LytX - 查询字符串解析', () => {
 // ================================================================
 
 describe('LytX - 中间件执行', () => {
-  const {
-    corsMiddleware,
-    loggerMiddleware,
-    bodyParserMiddleware,
-    authMiddleware,
-    rateLimitMiddleware,
-    executeMiddlewareChain,
-    resolveMiddlewares,
-    clearMiddlewareState,
-    logStore,
-  } = require('../src/middleware')
-
   beforeEach(() => {
     clearMiddlewareState()
   })
@@ -517,7 +515,6 @@ describe('LytX - 中间件执行', () => {
     }
 
     // 使用极小的限制进行测试
-    const { createRateLimitMiddleware } = require('../src/middleware')
     const strictLimiter = createRateLimitMiddleware({ windowMs: 60000, maxRequests: 2 })
 
     // 前两次请求应通过
@@ -601,8 +598,6 @@ describe('LytX - 中间件执行', () => {
 // ================================================================
 
 describe('LytX - 中间件配置解析', () => {
-  const { resolveMiddlewares, getMiddleware, getRegisteredMiddlewareNames, registerMiddleware } = require('../src/middleware')
-
   it('全局中间件配置应应用于所有路径', () => {
     const config = {
       global: ['logger', 'cors'],
@@ -698,8 +693,6 @@ describe('LytX - 中间件配置解析', () => {
 // ================================================================
 
 describe('LytX - 配置加载（middleware 和 apiDir）', () => {
-  const { getDefaultConfig, resolveConfig } = require('../src/config')
-
   it('默认配置应包含 apiDir', () => {
     const config = getDefaultConfig()
     expect(config.apiDir).toBe('src/pages/api')
@@ -738,14 +731,6 @@ describe('LytX - 配置加载（middleware 和 apiDir）', () => {
 // ================================================================
 
 describe('LytX - API + 页面共存', () => {
-  const { resolveRoutes } = require('../src/router')
-  const { resolveApiRoutes } = require('../src/api-routes')
-  const { matchRoute } = require('../src/router')
-  const { matchApiRoute } = require('../src/api-routes')
-  const fs = require('node:fs')
-  const path = require('node:path')
-  const os = require('node:os')
-
   let tmpDir: string
 
   beforeEach(() => {

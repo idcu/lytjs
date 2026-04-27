@@ -19,6 +19,11 @@
 
 import { describe, it, expect } from '../../test-utils/src/index'
 import { signal, computed, batch } from '../../reactivity/src/signal'
+import { setVaporDOMFactory, getVaporDOMFactory, renderVaporNode, createVaporElement, vaporPatch } from '../src/vapor/vapor-renderer'
+import type { VaporElement } from '../src/vapor/vapor-reactive'
+import { bindText, bindProp, bindAttr, bindClass, bindEvent, bindIf, bindEach } from '../src/vapor/vapor-reactive'
+import { compileToVapor } from '../src/vapor/vapor-compiler'
+import { defineVaporComponent, createVaporApp, renderVaporComponent } from '../src/vapor/vapor-component'
 
 // ================================================================
 //  Mock DOM 实现
@@ -177,9 +182,6 @@ class MockContainer {
 //  设置 Mock DOM 工厂
 // ================================================================
 
-import { setVaporDOMFactory } from '../src/vapor/vapor-renderer'
-import type { VaporElement } from '../src/vapor/vapor-reactive'
-
 function setupMockDOM(): void {
   setVaporDOMFactory((tag: string): VaporElement => {
     return new MockElement(tag, tag === '#text' ? 3 : 1) as unknown as VaporElement
@@ -194,7 +196,6 @@ setupMockDOM()
 
 describe('Vapor Mode - bindText', () => {
   it('应该将信号值绑定到元素的 textContent', () => {
-    const { bindText } = require('../src/vapor/vapor-reactive')
     const el = new MockElement('span') as unknown as VaporElement
     const count = signal(0)
 
@@ -212,7 +213,6 @@ describe('Vapor Mode - bindText', () => {
   })
 
   it('应该处理 null 和 undefined 值', () => {
-    const { bindText } = require('../src/vapor/vapor-reactive')
     const el = new MockElement('span') as unknown as VaporElement
     const sig = signal<string | null>(null)
 
@@ -230,7 +230,6 @@ describe('Vapor Mode - bindText', () => {
   })
 
   it('应该将数字转换为字符串', () => {
-    const { bindText } = require('../src/vapor/vapor-reactive')
     const el = new MockElement('span') as unknown as VaporElement
     const num = signal(3.14)
 
@@ -244,7 +243,6 @@ describe('Vapor Mode - bindText', () => {
 
 describe('Vapor Mode - bindProp', () => {
   it('应该将信号值绑定到元素属性', () => {
-    const { bindProp } = require('../src/vapor/vapor-reactive')
     const el = new MockElement('input') as unknown as VaporElement
     const value = signal('initial')
 
@@ -259,7 +257,6 @@ describe('Vapor Mode - bindProp', () => {
   })
 
   it('应该绑定布尔属性', () => {
-    const { bindProp } = require('../src/vapor/vapor-reactive')
     const el = new MockElement('input') as unknown as VaporElement
     const disabled = signal(false)
 
@@ -276,7 +273,6 @@ describe('Vapor Mode - bindProp', () => {
 
 describe('Vapor Mode - bindAttr', () => {
   it('应该将信号值绑定到 HTML 属性', () => {
-    const { bindAttr } = require('../src/vapor/vapor-reactive')
     const el = new MockElement('div') as unknown as VaporElement
     const title = signal('tooltip')
 
@@ -291,7 +287,6 @@ describe('Vapor Mode - bindAttr', () => {
   })
 
   it('应该在值为 null 时移除属性', () => {
-    const { bindAttr } = require('../src/vapor/vapor-reactive')
     const el = new MockElement('div') as unknown as VaporElement
     const title = signal('tooltip')
 
@@ -306,7 +301,6 @@ describe('Vapor Mode - bindAttr', () => {
   })
 
   it('应该在值为 true 时设置空字符串属性', () => {
-    const { bindAttr } = require('../src/vapor/vapor-reactive')
     const el = new MockElement('input') as unknown as VaporElement
     const required = signal(true)
 
@@ -323,7 +317,6 @@ describe('Vapor Mode - bindAttr', () => {
 
 describe('Vapor Mode - bindClass', () => {
   it('应该将字符串信号绑定到 className', () => {
-    const { bindClass } = require('../src/vapor/vapor-reactive')
     const el = new MockElement('div') as unknown as VaporElement
     const cls = signal('active')
 
@@ -338,7 +331,6 @@ describe('Vapor Mode - bindClass', () => {
   })
 
   it('应该将对象信号绑定到 className', () => {
-    const { bindClass } = require('../src/vapor/vapor-reactive')
     const el = new MockElement('div') as unknown as VaporElement
     const cls = signal({ active: true, disabled: false })
 
@@ -353,7 +345,6 @@ describe('Vapor Mode - bindClass', () => {
   })
 
   it('应该将数组信号绑定到 className', () => {
-    const { bindClass } = require('../src/vapor/vapor-reactive')
     const el = new MockElement('div') as unknown as VaporElement
     const cls = signal(['a', 'b', 'c'])
 
@@ -370,7 +361,6 @@ describe('Vapor Mode - bindClass', () => {
 
 describe('Vapor Mode - bindEvent', () => {
   it('应该绑定事件处理器', () => {
-    const { bindEvent } = require('../src/vapor/vapor-reactive')
     const el = new MockElement('button') as unknown as VaporElement
     let clicked = false
     const handler = () => { clicked = true }
@@ -389,7 +379,6 @@ describe('Vapor Mode - bindEvent', () => {
   })
 
   it('应该在清理时移除事件处理器', () => {
-    const { bindEvent } = require('../src/vapor/vapor-reactive')
     const el = new MockElement('button') as unknown as VaporElement
     const handler = () => {}
 
@@ -402,7 +391,6 @@ describe('Vapor Mode - bindEvent', () => {
 
 describe('Vapor Mode - bindIf', () => {
   it('应该在信号为真时显示元素', () => {
-    const { bindIf } = require('../src/vapor/vapor-reactive')
     const el = new MockElement('div') as unknown as VaporElement
     const visible = signal(true)
 
@@ -414,7 +402,6 @@ describe('Vapor Mode - bindIf', () => {
   })
 
   it('应该在信号为假时隐藏元素', () => {
-    const { bindIf } = require('../src/vapor/vapor-reactive')
     const el = new MockElement('div') as unknown as VaporElement
     const visible = signal(false)
 
@@ -427,7 +414,6 @@ describe('Vapor Mode - bindIf', () => {
   })
 
   it('应该在信号变化时切换显示状态', () => {
-    const { bindIf } = require('../src/vapor/vapor-reactive')
     const el = new MockElement('div') as unknown as VaporElement
     const visible = signal(true)
 
@@ -448,7 +434,6 @@ describe('Vapor Mode - bindIf', () => {
 
 describe('Vapor Mode - bindEach', () => {
   it('应该根据信号数组渲染列表', () => {
-    const { bindEach } = require('../src/vapor/vapor-reactive')
     const container = new MockElement('ul') as unknown as VaporElement
     const items = signal(['a', 'b', 'c'])
 
@@ -467,7 +452,6 @@ describe('Vapor Mode - bindEach', () => {
   })
 
   it('应该在数组变化时更新列表', () => {
-    const { bindEach } = require('../src/vapor/vapor-reactive')
     const container = new MockElement('ul') as unknown as VaporElement
     const items = signal(['a', 'b'])
 
@@ -491,7 +475,6 @@ describe('Vapor Mode - bindEach', () => {
   })
 
   it('应该在清理时清除所有子元素', () => {
-    const { bindEach } = require('../src/vapor/vapor-reactive')
     const container = new MockElement('ul') as unknown as VaporElement
     const items = signal(['a', 'b', 'c'])
 
@@ -509,7 +492,6 @@ describe('Vapor Mode - bindEach', () => {
   })
 
   it('应该支持使用 keyFn 进行高效 diff', () => {
-    const { bindEach } = require('../src/vapor/vapor-reactive')
     const container = new MockElement('ul') as unknown as VaporElement
     const items = signal([
       { id: 1, text: 'a' },
@@ -543,7 +525,6 @@ describe('Vapor Mode - bindEach', () => {
   })
 
   it('应该处理空数组', () => {
-    const { bindEach } = require('../src/vapor/vapor-reactive')
     const container = new MockElement('ul') as unknown as VaporElement
     const items = signal<string[]>([])
 
@@ -568,8 +549,6 @@ describe('Vapor Mode - bindEach', () => {
 
 describe('Vapor Mode - createVaporElement', () => {
   it('应该创建基本的 Vapor 元素', () => {
-    const { createVaporElement } = require('../src/vapor/vapor-renderer')
-
     const node = createVaporElement('div')
 
     expect(node.tag).toBe('div')
@@ -580,8 +559,6 @@ describe('Vapor Mode - createVaporElement', () => {
   })
 
   it('应该创建带属性的 Vapor 元素', () => {
-    const { createVaporElement } = require('../src/vapor/vapor-renderer')
-
     const node = createVaporElement('div', { id: 'app', className: 'container' })
 
     expect(node.tag).toBe('div')
@@ -590,8 +567,6 @@ describe('Vapor Mode - createVaporElement', () => {
   })
 
   it('应该创建带子节点的 Vapor 元素', () => {
-    const { createVaporElement } = require('../src/vapor/vapor-renderer')
-
     const node = createVaporElement('div', {}, 'hello', createVaporElement('span'))
 
     expect(node.children.length).toBe(2)
@@ -601,8 +576,6 @@ describe('Vapor Mode - createVaporElement', () => {
   })
 
   it('应该识别事件绑定', () => {
-    const { createVaporElement } = require('../src/vapor/vapor-renderer')
-
     const handler = () => {}
     const node = createVaporElement('button', { onClick: handler })
 
@@ -610,7 +583,6 @@ describe('Vapor Mode - createVaporElement', () => {
   })
 
   it('应该识别信号绑定', () => {
-    const { createVaporElement } = require('../src/vapor/vapor-renderer')
     const count = signal(0)
 
     const node = createVaporElement('span', { textContent: count })
@@ -623,8 +595,6 @@ describe('Vapor Mode - createVaporElement', () => {
 
 describe('Vapor Mode - renderVaporNode', () => {
   it('应该渲染基本元素', () => {
-    const { renderVaporNode, createVaporElement } = require('../src/vapor/vapor-renderer')
-
     const node = createVaporElement('div', { id: 'test' })
     const el = renderVaporNode(node)
 
@@ -633,8 +603,6 @@ describe('Vapor Mode - renderVaporNode', () => {
   })
 
   it('应该渲染嵌套元素', () => {
-    const { renderVaporNode, createVaporElement } = require('../src/vapor/vapor-renderer')
-
     const node = createVaporElement(
       'div',
       {},
@@ -650,8 +618,6 @@ describe('Vapor Mode - renderVaporNode', () => {
   })
 
   it('应该渲染文本节点', () => {
-    const { renderVaporNode, createVaporElement } = require('../src/vapor/vapor-renderer')
-
     const node = createVaporElement('span', {}, 'text content')
     const el = renderVaporNode(node)
 
@@ -659,7 +625,6 @@ describe('Vapor Mode - renderVaporNode', () => {
   })
 
   it('应该建立信号绑定', () => {
-    const { renderVaporNode, createVaporElement } = require('../src/vapor/vapor-renderer')
     const count = signal(0)
 
     const node = createVaporElement('span', { textContent: count })
@@ -672,7 +637,6 @@ describe('Vapor Mode - renderVaporNode', () => {
   })
 
   it('应该绑定事件', () => {
-    const { renderVaporNode, createVaporElement } = require('../src/vapor/vapor-renderer')
     let clicked = false
     const handler = () => { clicked = true }
 
@@ -686,8 +650,6 @@ describe('Vapor Mode - renderVaporNode', () => {
 
 describe('Vapor Mode - vaporPatch', () => {
   it('应该更新相同 tag 的节点属性', () => {
-    const { vaporPatch, createVaporElement, renderVaporNode } = require('../src/vapor/vapor-renderer')
-
     const oldNode = createVaporElement('div', { id: 'old' })
     const newNode = createVaporElement('div', { id: 'new' })
 
@@ -701,8 +663,6 @@ describe('Vapor Mode - vaporPatch', () => {
   })
 
   it('应该替换不同 tag 的节点', () => {
-    const { vaporPatch, createVaporElement, renderVaporNode } = require('../src/vapor/vapor-renderer')
-
     const oldNode = createVaporElement('div')
     const newNode = createVaporElement('span')
 
@@ -716,8 +676,6 @@ describe('Vapor Mode - vaporPatch', () => {
   })
 
   it('应该添加新子节点', () => {
-    const { vaporPatch, createVaporElement, renderVaporNode } = require('../src/vapor/vapor-renderer')
-
     const oldNode = createVaporElement('div')
     const newNode = createVaporElement('div', {}, createVaporElement('span', {}, 'new'))
 
@@ -732,8 +690,6 @@ describe('Vapor Mode - vaporPatch', () => {
   })
 
   it('应该删除子节点', () => {
-    const { vaporPatch, createVaporElement, renderVaporNode } = require('../src/vapor/vapor-renderer')
-
     const oldNode = createVaporElement('div', {}, createVaporElement('span', {}, 'child'))
     const newNode = createVaporElement('div')
 
@@ -747,8 +703,6 @@ describe('Vapor Mode - vaporPatch', () => {
   })
 
   it('应该更新事件处理器', () => {
-    const { vaporPatch, createVaporElement, renderVaporNode } = require('../src/vapor/vapor-renderer')
-
     let clicked1 = false
     let clicked2 = false
     const handler1 = () => { clicked1 = true }
@@ -775,8 +729,6 @@ describe('Vapor Mode - vaporPatch', () => {
 
 describe('Vapor Mode - compileToVapor', () => {
   it('应该编译基本模板', () => {
-    const { compileToVapor } = require('../src/vapor/vapor-compiler')
-
     const { render, ast } = compileToVapor('<div>hello</div>')
 
     expect(ast.type).toBe('fragment')
@@ -789,8 +741,6 @@ describe('Vapor Mode - compileToVapor', () => {
   })
 
   it('应该编译带插值的模板', () => {
-    const { compileToVapor } = require('../src/vapor/vapor-compiler')
-
     const { render } = compileToVapor('<span>{{ message }}</span>')
     const el = render({ message: 'hello world' })
 
@@ -799,8 +749,6 @@ describe('Vapor Mode - compileToVapor', () => {
   })
 
   it('应该编译带事件的模板', () => {
-    const { compileToVapor } = require('../src/vapor/vapor-compiler')
-
     let clicked = false
     const { render } = compileToVapor('<button on:click="handleClick">Click</button>')
     const el = render({ handleClick: () => { clicked = true } })
@@ -811,8 +759,6 @@ describe('Vapor Mode - compileToVapor', () => {
   })
 
   it('应该编译带属性的模板', () => {
-    const { compileToVapor } = require('../src/vapor/vapor-compiler')
-
     const { render } = compileToVapor('<input type="text" id="name" />')
     const el = render({})
 
@@ -822,8 +768,6 @@ describe('Vapor Mode - compileToVapor', () => {
   })
 
   it('应该编译带 v-if 的模板', () => {
-    const { compileToVapor } = require('../src/vapor/vapor-compiler')
-
     const { render } = compileToVapor('<div v-if="show">visible</div>')
     const el = render({ show: true })
 
@@ -834,8 +778,6 @@ describe('Vapor Mode - compileToVapor', () => {
   })
 
   it('应该编译带 v-each 的模板', () => {
-    const { compileToVapor } = require('../src/vapor/vapor-compiler')
-
     const { render } = compileToVapor('<ul><li v-each="item in items">{{ item }}</li></ul>')
     const el = render({ items: ['a', 'b', 'c'] })
 
@@ -845,8 +787,6 @@ describe('Vapor Mode - compileToVapor', () => {
   })
 
   it('应该编译嵌套模板', () => {
-    const { compileToVapor } = require('../src/vapor/vapor-compiler')
-
     const { render } = compileToVapor('<div><span>nested</span></div>')
     const el = render({})
 
@@ -856,16 +796,12 @@ describe('Vapor Mode - compileToVapor', () => {
   })
 
   it('应该处理多个根节点', () => {
-    const { compileToVapor } = require('../src/vapor/vapor-compiler')
-
     const { render, ast } = compileToVapor('<div>a</div><span>b</span>')
 
     expect(ast.children!.length).toBe(2)
   })
 
   it('应该处理空模板', () => {
-    const { compileToVapor } = require('../src/vapor/vapor-compiler')
-
     const { render, ast } = compileToVapor('')
 
     expect(ast.children!.length).toBe(0)
@@ -878,8 +814,6 @@ describe('Vapor Mode - compileToVapor', () => {
 
 describe('Vapor Mode - defineVaporComponent', () => {
   it('应该返回组件选项', () => {
-    const { defineVaporComponent } = require('../src/vapor/vapor-component')
-
     const component = defineVaporComponent({
       name: 'TestComponent',
       setup: () => ({ count: signal(0) }),
@@ -894,8 +828,6 @@ describe('Vapor Mode - defineVaporComponent', () => {
 
 describe('Vapor Mode - createVaporApp', () => {
   it('应该创建 Vapor App 实例', () => {
-    const { createVaporApp } = require('../src/vapor/vapor-component')
-
     const app = createVaporApp({
       setup: () => ({ message: 'hello' }),
       render: (ctx: any, h: any) => h('div', {}, ctx.message),
@@ -906,8 +838,6 @@ describe('Vapor Mode - createVaporApp', () => {
   })
 
   it('应该挂载到容器', () => {
-    const { createVaporApp } = require('../src/vapor/vapor-component')
-
     const container = new MockContainer()
     const app = createVaporApp({
       setup: () => ({ message: 'hello' }),
@@ -922,8 +852,6 @@ describe('Vapor Mode - createVaporApp', () => {
   })
 
   it('应该从容器卸载', () => {
-    const { createVaporApp } = require('../src/vapor/vapor-component')
-
     const container = new MockContainer()
     const app = createVaporApp({
       setup: () => ({ message: 'hello' }),
@@ -938,8 +866,6 @@ describe('Vapor Mode - createVaporApp', () => {
   })
 
   it('应该调用生命周期钩子', () => {
-    const { createVaporApp } = require('../src/vapor/vapor-component')
-
     const lifecycle: string[] = []
     const container = new MockContainer()
 
@@ -960,8 +886,6 @@ describe('Vapor Mode - createVaporApp', () => {
   })
 
   it('不应该重复挂载', () => {
-    const { createVaporApp } = require('../src/vapor/vapor-component')
-
     const container = new MockContainer()
     const app = createVaporApp({
       setup: () => ({}),
@@ -975,8 +899,6 @@ describe('Vapor Mode - createVaporApp', () => {
   })
 
   it('不应该卸载未挂载的 App', () => {
-    const { createVaporApp } = require('../src/vapor/vapor-component')
-
     const app = createVaporApp({
       setup: () => ({}),
       render: (ctx: any, h: any) => h('div'),
@@ -989,8 +911,6 @@ describe('Vapor Mode - createVaporApp', () => {
 
 describe('Vapor Mode - renderVaporComponent', () => {
   it('应该使用模板渲染组件', () => {
-    const { renderVaporComponent } = require('../src/vapor/vapor-component')
-
     const el = renderVaporComponent({
       template: '<div>template content</div>',
     })
@@ -1000,8 +920,6 @@ describe('Vapor Mode - renderVaporComponent', () => {
   })
 
   it('应该使用渲染函数渲染组件', () => {
-    const { renderVaporComponent } = require('../src/vapor/vapor-component')
-
     const el = renderVaporComponent({
       setup: () => ({ count: 42 }),
       render: (ctx: any, h: any) => h('span', {}, String(ctx.count)),
@@ -1018,8 +936,6 @@ describe('Vapor Mode - renderVaporComponent', () => {
 
 describe('Vapor Mode - 嵌套组件', () => {
   it('应该渲染嵌套的 Vapor 元素', () => {
-    const { renderVaporNode, createVaporElement } = require('../src/vapor/vapor-renderer')
-
     const inner = createVaporElement('span', {}, 'inner')
     const middle = createVaporElement('div', {}, inner)
     const outer = createVaporElement('section', {}, middle)
@@ -1033,7 +949,6 @@ describe('Vapor Mode - 嵌套组件', () => {
   })
 
   it('应该支持多层嵌套的信号绑定', () => {
-    const { renderVaporNode, createVaporElement } = require('../src/vapor/vapor-renderer')
     const count = signal(0)
 
     const span = createVaporElement('span', { textContent: count })
@@ -1055,7 +970,6 @@ describe('Vapor Mode - 嵌套组件', () => {
 
 describe('Vapor Mode - 动态列表操作', () => {
   it('应该支持添加元素', () => {
-    const { bindEach } = require('../src/vapor/vapor-reactive')
     const container = new MockElement('ul') as unknown as VaporElement
     const items = signal<string[]>(['a'])
 
@@ -1074,7 +988,6 @@ describe('Vapor Mode - 动态列表操作', () => {
   })
 
   it('应该支持删除元素', () => {
-    const { bindEach } = require('../src/vapor/vapor-reactive')
     const container = new MockElement('ul') as unknown as VaporElement
     const items = signal(['a', 'b', 'c', 'd'])
 
@@ -1093,7 +1006,6 @@ describe('Vapor Mode - 动态列表操作', () => {
   })
 
   it('应该支持重新排序', () => {
-    const { bindEach } = require('../src/vapor/vapor-reactive')
     const container = new MockElement('ul') as unknown as VaporElement
     const items = signal(['a', 'b', 'c'])
 
@@ -1119,8 +1031,6 @@ describe('Vapor Mode - 动态列表操作', () => {
 
 describe('Vapor Mode - 性能测试', () => {
   it('1000 个元素渲染应该 < 50ms', () => {
-    const { renderVaporNode, createVaporElement } = require('../src/vapor/vapor-renderer')
-
     const start = performance.now()
 
     for (let i = 0; i < 1000; i++) {
@@ -1134,7 +1044,6 @@ describe('Vapor Mode - 性能测试', () => {
   })
 
   it('1000 次信号更新应该 < 20ms', () => {
-    const { bindText } = require('../src/vapor/vapor-reactive')
     const el = new MockElement('span') as unknown as VaporElement
     const count = signal(0)
 
@@ -1155,7 +1064,6 @@ describe('Vapor Mode - 性能测试', () => {
   })
 
   it('批量更新 1000 个信号应该 < 20ms', () => {
-    const { bindText } = require('../src/vapor/vapor-reactive')
     const el = new MockElement('span') as unknown as VaporElement
     const count = signal(0)
 
@@ -1184,7 +1092,6 @@ describe('Vapor Mode - 性能测试', () => {
 
 describe('Vapor Mode - 内存清理', () => {
   it('bindText 清理后信号更新不应影响 DOM', () => {
-    const { bindText } = require('../src/vapor/vapor-reactive')
     const el = new MockElement('span') as unknown as VaporElement
     const count = signal(0)
 
@@ -1202,7 +1109,6 @@ describe('Vapor Mode - 内存清理', () => {
   })
 
   it('bindEach 清理后应移除所有子元素', () => {
-    const { bindEach } = require('../src/vapor/vapor-reactive')
     const container = new MockElement('ul') as unknown as VaporElement
     const items = signal(['a', 'b', 'c'])
 
@@ -1219,8 +1125,6 @@ describe('Vapor Mode - 内存清理', () => {
   })
 
   it('Vapor App 卸载后应清除所有 DOM', () => {
-    const { createVaporApp } = require('../src/vapor/vapor-component')
-
     const container = new MockContainer()
     const app = createVaporApp({
       setup: () => ({ items: ['a', 'b', 'c'] }),
@@ -1241,8 +1145,6 @@ describe('Vapor Mode - 内存清理', () => {
 
 describe('Vapor Mode - Vapor vs VDOM 性能对比', () => {
   it('Vapor 直接 DOM 创建应该比 VDOM 更快', () => {
-    const { renderVaporNode, createVaporElement } = require('../src/vapor/vapor-renderer')
-
     // Vapor Mode: 直接创建 DOM
     const vaporStart = performance.now()
     for (let i = 0; i < 500; i++) {
@@ -1280,7 +1182,6 @@ describe('Vapor Mode - Vapor vs VDOM 性能对比', () => {
   })
 
   it('Vapor 信号更新应该比 VDOM patch 更高效', () => {
-    const { bindText } = require('../src/vapor/vapor-reactive')
     const el = new MockElement('span') as unknown as VaporElement
     const count = signal(0)
 
@@ -1319,7 +1220,6 @@ describe('Vapor Mode - Vapor vs VDOM 性能对比', () => {
 
 describe('Vapor Mode - Computed 信号绑定', () => {
   it('应该正确绑定 computed 信号', () => {
-    const { bindText } = require('../src/vapor/vapor-reactive')
     const el = new MockElement('span') as unknown as VaporElement
     const count = signal(1)
     const doubled = computed(() => count() * 2)
@@ -1341,8 +1241,6 @@ describe('Vapor Mode - Computed 信号绑定', () => {
 
 describe('Vapor Mode - setVaporDOMFactory', () => {
   it('应该允许设置自定义 DOM 工厂', () => {
-    const { setVaporDOMFactory, getVaporDOMFactory, renderVaporNode, createVaporElement } = require('../src/vapor/vapor-renderer')
-
     let factoryCalled = false
     setVaporDOMFactory((tag: string) => {
       factoryCalled = true

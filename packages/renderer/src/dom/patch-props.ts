@@ -16,6 +16,9 @@
 import { patchEvent } from './patch-events';
 import { PatchFlags } from '@lytjs/vdom';
 
+// Re-export PatchFlags for consumers
+export { PatchFlags };
+
 /* ================================================================
  *  class 更新
  * ================================================================ */

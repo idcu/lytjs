@@ -1,0 +1,45 @@
+# Source files
+src/
+tests/
+__tests__/
+*.ts
+!*.d.ts
+!*.js
+!*.mjs
+!*.cjs
+
+# Development
+.eslintrc*
+eslint.config.*
+tsconfig*.json
+.prettierrc*
+.editorconfig
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Misc
+node_modules/
+.pnpm-store/
+*.log
+coverage/
+.nyc_output/
+benchmarks/
+examples/
+playground/
+templates/
+scripts/
+docs/
+.github/
+.cursor/
+.trae/
+
+# Lock files (sub-packages use workspace protocol)
+pnpm-lock.yaml

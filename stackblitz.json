@@ -20,7 +20,7 @@
   },
   "files": {
     "index.html": {
-      "url": "https://raw.githubusercontent.com/lytjs/lytjs/main/playground/index.html"
+      "url": "https://gitee.com/lytjs/lytjs/raw/develop/playground/index.html"
     },
     "package.json": {
       "content": {

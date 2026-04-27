@@ -6,14 +6,21 @@
  */
 
 import { describe, it, expect, beforeEach } from '../../test-utils/src/index'
+import fs from 'node:fs'
+import path from 'node:path'
+import os from 'node:os'
+import { getDefaultConfig, resolveConfig, loadConfig } from '../src/config'
+import { parseFilePath, resolveRoutes, matchRoute } from '../src/router'
+import { applyLayout, createDefaultLayout, resolveLayout } from '../src/layout'
+import { createPageModule, createLayoutModule } from '../src/loader'
+import { renderPageWithModules, simpleRenderToString, generateHTMLDocument, buildStatic, buildSPA } from '../src/renderer'
+import { parseArgs } from '../src/cli'
 
 // ================================================================
 //  配置模块测试
 // ================================================================
 
 describe('LytX - 配置模块', () => {
-  const { getDefaultConfig, resolveConfig, loadConfig } = require('../src/config')
-
   it('应返回正确的默认配置', () => {
     const config = getDefaultConfig()
     expect(config.base).toBe('/')
@@ -95,11 +102,6 @@ describe('LytX - 配置模块', () => {
 // ================================================================
 
 describe('LytX - 路由解析', () => {
-  const { parseFilePath, resolveRoutes } = require('../src/router')
-  const fs = require('node:fs')
-  const path = require('node:path')
-  const os = require('node:os')
-
   let tmpDir: string
 
   beforeEach(() => {
@@ -220,8 +222,6 @@ describe('LytX - 路由解析', () => {
 // ================================================================
 
 describe('LytX - 路由匹配', () => {
-  const { matchRoute } = require('../src/router')
-
   const routes = [
     { path: '/', filePath: 'index.ts', isIndex: true, is404: false },
     { path: '/about', filePath: 'about.ts', is404: false },
@@ -290,9 +290,6 @@ describe('LytX - 路由匹配', () => {
 // ================================================================
 
 describe('LytX - 布局系统', () => {
-  const { applyLayout, createDefaultLayout, resolveLayout } = require('../src/layout')
-  const { createPageModule, createLayoutModule } = require('../src/loader')
-
   it('应正确创建内置默认布局', () => {
     const layout = createDefaultLayout('Test Site')
     expect(layout.default.name).toBe('DefaultLayout')
@@ -346,10 +343,6 @@ describe('LytX - 布局系统', () => {
 // ================================================================
 
 describe('LytX - 页面渲染', () => {
-  const { renderPageWithModules, simpleRenderToString, generateHTMLDocument } = require('../src/renderer')
-  const { createPageModule, createLayoutModule } = require('../src/loader')
-  const { getDefaultConfig } = require('../src/config')
-
   it('simpleRenderToString 应渲染简单元素', () => {
     const vnode = {
       type: 'div',
@@ -460,12 +453,6 @@ describe('LytX - 页面渲染', () => {
 // ================================================================
 
 describe('LytX - SSG 构建', () => {
-  const { buildStatic } = require('../src/renderer')
-  const { getDefaultConfig } = require('../src/config')
-  const fs = require('node:fs')
-  const path = require('node:path')
-  const os = require('node:os')
-
   let tmpDir: string
   let pagesDir: string
 
@@ -548,12 +535,6 @@ describe('LytX - SSG 构建', () => {
 // ================================================================
 
 describe('LytX - SPA 构建', () => {
-  const { buildSPA } = require('../src/renderer')
-  const { getDefaultConfig } = require('../src/config')
-  const fs = require('node:fs')
-  const path = require('node:path')
-  const os = require('node:os')
-
   let tmpDir: string
 
   beforeEach(() => {
@@ -615,8 +596,6 @@ describe('LytX - SPA 构建', () => {
 // ================================================================
 
 describe('LytX - CLI 参数解析', () => {
-  const { parseArgs } = require('../src/cli')
-
   it('应解析 dev 命令', () => {
     const args = parseArgs(['dev'])
     expect(args.command).toBe('dev')
@@ -666,8 +645,6 @@ describe('LytX - CLI 参数解析', () => {
 // ================================================================
 
 describe('LytX - 页面加载器', () => {
-  const { createPageModule, createLayoutModule } = require('../src/loader')
-
   it('createPageModule 应创建默认页面模块', () => {
     const page = createPageModule()
     expect(page.default).toBeDefined()

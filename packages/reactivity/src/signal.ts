@@ -23,10 +23,12 @@ export interface Signal<T> {
   (): T
 }
 
-/** WritableSignal — 可写信号，支持 set / update */
+/** WritableSignal — 可写信号，支持 set / update / dispose */
 export interface WritableSignal<T> extends Signal<T> {
   set(value: T): void
   update(fn: (prev: T) => T): void
+  /** 销毁信号，释放所有订阅者 */
+  dispose(): void
   /** 内部订阅方法（由 Dependency 接口使用） */
   _subscribe(subscriber: Subscriber): void
   /** 内部取消订阅方法（由 Dependency 接口使用） */
@@ -123,6 +125,11 @@ export function signal<T>(initialValue: T): WritableSignal<T> {
 
   sig._unsubscribe = function (subscriber: Subscriber): void {
     subscribers.delete(subscriber)
+  }
+
+  // 实现 dispose 方法
+  sig.dispose = function (): void {
+    subscribers.clear()
   }
 
   return sig

@@ -13,6 +13,19 @@
 - 为 6 个插件包补充 README.md
 - 更新文档索引和 VitePress 配置
 - 修正 VitePress 中的仓库链接
+- **Vapor Mode**: `bindIf()` 从 display:none 切换改为 DOM 插入/移除方式
+- **Vapor Mode**: `bindEach()` 从全量重建改为真正的 keyed diff 算法
+- **Vapor Mode**: `vaporPatch()` 支持绑定迁移和清理
+- **Vapor Mode**: `vaporMount()` 修复内存泄漏，卸载时清理所有 Signal 绑定
+- **Vapor Mode**: `renderVaporNode()` 追踪绑定清理函数
+- **Vapor Mode**: `isSignal()` 检测逻辑优化，移除不可靠的 toString hack
+- **Vapor Mode**: `defineVaporComponent()` 添加 `__vapor__` 标记
+- **错误处理**: 统一错误码体系到 `@lytjs/common`，移除 `@lytjs/core` 中的旧枚举
+- **错误处理**: `@lytjs/core/warn.ts` 改为从 `@lytjs/common` 重导出
+- **错误处理**: `dev-error.ts` 的 `getFixSuggestion()` 改用 `getCategory()` 替代硬编码范围
+- **TypeScript**: 所有子包 tsconfig.json 统一启用 `strict: true`
+- **基准测试**: js-framework-benchmark keyed 实现从全量重建优化为 keyed diff 算法
+- **基准测试**: Vapor 基准测试从模拟测试升级为基于真实 API 的完整基准
 
 ### Added
 
@@ -61,21 +74,6 @@
 - **类型系统**: 新增 `@lytjs/common/vnode-types` 统一 VNode 类型定义
 - **测试**: 新增 `@lytjs/common` 包完整单元测试
 - **示例**: 新增 SSR 渲染示例（examples/ssr-app/）
-
-### Changed
-- **Vapor Mode**: `bindIf()` 从 display:none 切换改为 DOM 插入/移除方式
-- **Vapor Mode**: `bindEach()` 从全量重建改为真正的 keyed diff 算法
-- **Vapor Mode**: `vaporPatch()` 支持绑定迁移和清理
-- **Vapor Mode**: `vaporMount()` 修复内存泄漏，卸载时清理所有 Signal 绑定
-- **Vapor Mode**: `renderVaporNode()` 追踪绑定清理函数
-- **Vapor Mode**: `isSignal()` 检测逻辑优化，移除不可靠的 toString hack
-- **Vapor Mode**: `defineVaporComponent()` 添加 `__vapor__` 标记
-- **错误处理**: 统一错误码体系到 `@lytjs/common`，移除 `@lytjs/core` 中的旧枚举
-- **错误处理**: `@lytjs/core/warn.ts` 改为从 `@lytjs/common` 重导出
-- **错误处理**: `dev-error.ts` 的 `getFixSuggestion()` 改用 `getCategory()` 替代硬编码范围
-- **TypeScript**: 所有子包 tsconfig.json 统一启用 `strict: true`
-- **基准测试**: js-framework-benchmark keyed 实现从全量重建优化为 keyed diff 算法
-- **基准测试**: Vapor 基准测试从模拟测试升级为基于真实 API 的完整基准
 
 ### Fixed
 - **Vapor Mode**: 修复 `vaporPatch()` 不处理 bindings 迁移导致响应式绑定断裂的问题

@@ -128,6 +128,10 @@ if [ "$TYPES_ONLY" = false ]; then
 
     # 根据包类型选择 platform 和 external
     case "$pkg" in
+      plugin-sdk)
+        PLATFORM="node"
+        EXTRA_EXTERNAL=""
+        ;;
       cli)
         PLATFORM="node"
         EXTRA_EXTERNAL="--external:esbuild"

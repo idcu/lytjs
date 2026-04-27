@@ -15,6 +15,9 @@
 import { isStringOrNumber, isArray, isVNode } from '@lytjs/common';
 import { Fragment } from '@lytjs/vdom';
 
+// Re-export Fragment for consumers of @lytjs/core
+export { Fragment };
+
 // ============================================================
 // 类型定义
 // ============================================================

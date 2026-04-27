@@ -3,20 +3,19 @@
  */
 
 import { describe, it, expect, beforeEach } from '@lytjs/test-utils'
+import * as isMod from '../src/is'
+import { LytErrorCodes, getErrorMessage, getCategory } from '../src/error-codes'
+import { LytError, createCompilerError, createRendererError, createComponentError } from '../src/lyt-error'
+import { EventEmitter } from '../src/emitter'
+import { nextTick, queueJob, queuePostFlushCb, clearQueue } from '../src/scheduler'
+import { LRUCache, memoize } from '../src/cache'
 
 // ================================================================
 //  is.ts 测试
 // ================================================================
 
 describe('is', () => {
-  // 需要动态导入，因为 common 包可能使用不同的导出方式
-  let is: Record<string, (val: unknown) => boolean>
-
-  beforeEach(() => {
-    // 使用 require 风格同步导入，因为 beforeEach 不支持 async
-    const mod = require('../src/is')
-    is = mod as unknown as Record<string, (val: unknown) => boolean>
-  })
+  const is = isMod as unknown as Record<string, (val: unknown) => boolean>
 
   describe('isString', () => {
     it('应该正确识别字符串', () => {
@@ -177,16 +176,7 @@ describe('is', () => {
 // ================================================================
 
 describe('error-codes', () => {
-  let errorCodes: Record<string, number>
-  let getErrorMessage: (code: number) => string
-  let getCategory: (code: number) => string
-
-  beforeEach(() => {
-    const mod = require('../src/error-codes')
-    errorCodes = mod.LytErrorCodes as unknown as Record<string, number>
-    getErrorMessage = mod.getErrorMessage as (code: number) => string
-    getCategory = mod.getCategory as (code: number) => string
-  })
+  const errorCodes = LytErrorCodes as unknown as Record<string, number>
 
   it('应该定义编译器错误码（1000-1999）', () => {
     expect(errorCodes.LYT_COMPILER_PARSE_ERROR).toBeGreaterThanOrEqual(1000)
@@ -254,18 +244,6 @@ describe('error-codes', () => {
 // ================================================================
 
 describe('LytError', () => {
-  let LytError: any
-  let createCompilerError: any
-  let LytErrorCodes: any
-
-  beforeEach(() => {
-    const mod = require('../src/lyt-error')
-    LytError = mod.LytError
-    createCompilerError = mod.createCompilerError
-    const ecMod = require('../src/error-codes')
-    LytErrorCodes = ecMod.LytErrorCodes
-  })
-
   it('应该正确创建 LytError 实例', () => {
     const err = new LytError(LytErrorCodes.LYT_COMPILER_PARSE_ERROR, '测试错误消息')
     expect(err).toBeInstanceOf(Error)
@@ -303,8 +281,6 @@ describe('LytError', () => {
   })
 
   it('createRendererError 应该创建带 vnode 详情的错误', () => {
-    const mod = require('../src/lyt-error')
-    const createRendererError = mod.createRendererError
     const fakeVNode = { type: 'div', shapeFlag: 1 }
     const err = createRendererError(
       LytErrorCodes.LYT_RENDERER_INVALID_VNODE,
@@ -315,8 +291,6 @@ describe('LytError', () => {
   })
 
   it('createComponentError 应该创建带组件名称的错误', () => {
-    const mod = require('../src/lyt-error')
-    const createComponentError = mod.createComponentError
     const err = createComponentError(
       LytErrorCodes.LYT_COMPONENT_INVALID_PROPS,
       'MyComponent',
@@ -331,13 +305,6 @@ describe('LytError', () => {
 // ================================================================
 
 describe('EventEmitter', () => {
-  let EventEmitter: any
-
-  beforeEach(() => {
-    const mod = require('../src/emitter')
-    EventEmitter = mod.EventEmitter
-  })
-
   it('应该支持 on/emit/off', () => {
     const emitter = new EventEmitter()
     let called = false
@@ -460,17 +427,7 @@ describe('EventEmitter', () => {
 // ================================================================
 
 describe('scheduler', () => {
-  let nextTick: () => Promise<void>
-  let queueJob: (job: (...args: unknown[]) => void) => void
-  let queuePostFlushCb: (cb: (...args: unknown[]) => void) => void
-  let clearQueue: () => void
-
   beforeEach(() => {
-    const mod = require('../src/scheduler')
-    nextTick = mod.nextTick
-    queueJob = mod.queueJob
-    queuePostFlushCb = mod.queuePostFlushCb
-    clearQueue = mod.clearQueue
     clearQueue()
   })
 
@@ -514,13 +471,6 @@ describe('scheduler', () => {
 // ================================================================
 
 describe('cache', () => {
-  let LRUCache: any
-
-  beforeEach(() => {
-    const mod = require('../src/cache')
-    LRUCache = mod.LRUCache
-  })
-
   it('应该支持 get/set', () => {
     const cache = new LRUCache(10)
     cache.set('key', 'value')
@@ -617,13 +567,6 @@ describe('cache', () => {
 // ================================================================
 
 describe('memoize', () => {
-  let memoize: any
-
-  beforeEach(() => {
-    const mod = require('../src/cache')
-    memoize = mod.memoize
-  })
-
   it('应该缓存函数结果', () => {
     let callCount = 0
     const fn = (x: number) => { callCount++; return x * 2 }

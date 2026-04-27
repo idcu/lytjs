@@ -22,6 +22,12 @@
     "onCommand:lytjs.createStore",
     "onCommand:lytjs.toggleTheme"
   ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://gitee.com/lytjs/lytjs.git"
+  },
+  "homepage": "https://gitee.com/lytjs/lytjs",
   "main": "./dist/extension.js",
   "contributes": {
     "languages": [

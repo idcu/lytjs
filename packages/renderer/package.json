@@ -68,6 +68,7 @@
     "ssr"
   ],
   "dependencies": {
+    "@lytjs/common": "workspace:*",
     "@lytjs/reactivity": "workspace:*",
     "@lytjs/vdom": "workspace:*"
   },
