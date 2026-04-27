@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/plugin-auth",
-  "version": "4.1.0",
+  "version": "4.2.0",
   "description": "Lyt.js 认证授权插件 - 提供登录、权限校验、路由守卫等认证功能",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",

@@ -462,7 +462,7 @@ export async function handleGenerateCommand(args: string[]): Promise<void> {
   const dir = path.dirname(outputPath);
 
   if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true);
+    fs.mkdirSync(dir, { recursive: true });
   }
 
   fs.writeFileSync(outputPath, code, 'utf-8');

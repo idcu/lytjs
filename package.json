@@ -1,6 +1,6 @@
 {
   "name": "lyt",
-  "version": "4.1.0",
+  "version": "4.2.0",
   "type": "module",
   "private": true,
   "description": "Lyt.js - 轻写轻跑，所见即代码",

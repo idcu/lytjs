@@ -2,7 +2,7 @@
   "name": "lytjs-vscode",
   "displayName": "Lyt.js Language Support",
   "description": "VSCode extension for Lyt.js - provides syntax highlighting, type checking, and code completion",
-  "version": "4.1.0",
+  "version": "4.2.0",
   "publisher": "lytjs",
   "engines": {
     "vscode": "^1.80.0"
