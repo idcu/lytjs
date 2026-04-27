@@ -1,0 +1,14 @@
+{
+  "name": "@lytjs/template-admin",
+  "version": "5.0.0",
+  "description": "Lyt.js 企业级 Admin Dashboard 模板 - 内置登录、布局、权限、图表等完整后台管理功能",
+  "main": "index.html",
+  "scripts": {
+    "dev": "lytx dev",
+    "build": "lytx build",
+    "preview": "lytx preview"
+  },
+  "keywords": ["lytjs", "admin", "dashboard", "template", "management"],
+  "license": "MIT",
+  "author": "lytjs"
+}

@@ -1,0 +1,446 @@
+<template>
+  <div class="users-page">
+    <div class="page-header">
+      <h2 class="page-title">用户管理</h2>
+    </div>
+
+    <!-- 搜索栏 -->
+    <div class="search-bar">
+      <div class="search-input-group">
+        <input
+          class="search-input"
+          type="text"
+          placeholder="搜索用户名或邮箱..."
+          bind:value="searchKeyword"
+          on:input="handleSearch"
+        />
+        <button class="btn btn-primary" on:click="handleSearch">
+          <span>🔍</span> 搜索
+        </button>
+      </div>
+      <button class="btn btn-success" on:click="handleAddUser">
+        <span>+</span> 新增用户
+      </button>
+    </div>
+
+    <!-- 用户列表 -->
+    <div class="table-card">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>用户名</th>
+            <th>邮箱</th>
+            <th>角色</th>
+            <th>状态</th>
+            <th>创建时间</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="table-row" each={user in filteredUsers}>
+            <td>
+              <div class="user-cell">
+                <div class="user-cell-avatar">{{ user.username.charAt(0) }}</div>
+                <span>{{ user.username }}</span>
+              </div>
+            </td>
+            <td>{{ user.email }}</td>
+            <td>
+              <span class="role-tag" :class="user.role">{{ user.roleName }}</span>
+            </td>
+            <td>
+              <span class="status-badge" :class="user.status ? 'active' : 'inactive'">
+                {{ user.status ? '启用' : '禁用' }}
+              </span>
+            </td>
+            <td>{{ user.createdAt }}</td>
+            <td>
+              <div class="action-buttons">
+                <button class="btn-link" on:click="handleEdit(user)">编辑</button>
+                <button class="btn-link danger" on:click="handleDelete(user)">删除</button>
+              </div>
+            </td>
+          </tr>
+          <tr if={filteredUsers.length === 0}>
+            <td colspan="6" class="empty-cell">暂无数据</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- 分页 -->
+      <div class="pagination">
+        <div class="pagination-info">
+          共 {{ total }} 条记录，第 {{ currentPage }} / {{ totalPages }} 页
+        </div>
+        <div class="pagination-buttons">
+          <button
+            class="page-btn"
+            :disabled="currentPage <= 1"
+            on:click="changePage(currentPage - 1)"
+          >
+            上一页
+          </button>
+          <button
+            class="page-btn"
+            each={page in pageNumbers}
+            :class="{ active: page === currentPage }"
+            on:click="changePage(page)"
+          >
+            {{ page }}
+          </button>
+          <button
+            class="page-btn"
+            :disabled="currentPage >= totalPages"
+            on:click="changePage(currentPage + 1)"
+          >
+            下一页
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+export default {
+  name: 'Users',
+
+  setup() {
+    const state = {
+      searchKeyword: '',
+      currentPage: 1,
+      pageSize: 10,
+      total: 0,
+      users: [
+        { id: 1, username: '张三', email: 'zhangsan@example.com', role: 'admin', roleName: '管理员', status: true, createdAt: '2024-01-15' },
+        { id: 2, username: '李四', email: 'lisi@example.com', role: 'editor', roleName: '编辑者', status: true, createdAt: '2024-02-20' },
+        { id: 3, username: '王五', email: 'wangwu@example.com', role: 'viewer', roleName: '查看者', status: false, createdAt: '2024-03-10' },
+        { id: 4, username: '赵六', email: 'zhaoliu@example.com', role: 'editor', roleName: '编辑者', status: true, createdAt: '2024-03-22' },
+        { id: 5, username: '孙七', email: 'sunqi@example.com', role: 'viewer', roleName: '查看者', status: true, createdAt: '2024-04-05' },
+        { id: 6, username: '周八', email: 'zhouba@example.com', role: 'admin', roleName: '管理员', status: true, createdAt: '2024-04-18' },
+        { id: 7, username: '吴九', email: 'wujiu@example.com', role: 'viewer', roleName: '查看者', status: false, createdAt: '2024-05-02' },
+        { id: 8, username: '郑十', email: 'zhengshi@example.com', role: 'editor', roleName: '编辑者', status: true, createdAt: '2024-05-15' },
+      ],
+    }
+
+    const filteredUsers = state.users.filter((user) => {
+      if (!state.searchKeyword) return true
+      const keyword = state.searchKeyword.toLowerCase()
+      return (
+        user.username.toLowerCase().includes(keyword) ||
+        user.email.toLowerCase().includes(keyword)
+      )
+    })
+
+    const total = filteredUsers.length
+    const totalPages = Math.ceil(total / state.pageSize)
+    const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1)
+
+    const handleSearch = () => {
+      state.currentPage = 1
+    }
+
+    const handleAddUser = () => {
+      console.log('Add user')
+    }
+
+    const handleEdit = (user: any) => {
+      console.log('Edit user:', user)
+    }
+
+    const handleDelete = (user: any) => {
+      console.log('Delete user:', user)
+    }
+
+    const changePage = (page: number) => {
+      if (page >= 1 && page <= totalPages) {
+        state.currentPage = page
+      }
+    }
+
+    return {
+      searchKeyword: state.searchKeyword,
+      currentPage: state.currentPage,
+      total,
+      totalPages,
+      pageNumbers,
+      filteredUsers,
+      handleSearch,
+      handleAddUser,
+      handleEdit,
+      handleDelete,
+      changePage,
+    }
+  },
+}
+</script>
+
+<style scoped>
+.users-page {
+  max-width: 1400px;
+}
+
+.page-header {
+  margin-bottom: 20px;
+}
+
+.page-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+/* 搜索栏 */
+.search-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  gap: 16px;
+}
+
+.search-input-group {
+  display: flex;
+  gap: 8px;
+  flex: 1;
+  max-width: 480px;
+}
+
+.search-input {
+  flex: 1;
+  height: 38px;
+  padding: 0 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 14px;
+  color: var(--text-primary);
+  background: var(--card-bg);
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.search-input:focus {
+  border-color: var(--primary-color);
+}
+
+/* 按钮 */
+.btn {
+  height: 38px;
+  padding: 0 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.btn-primary {
+  background: var(--primary-color);
+  color: #fff;
+}
+
+.btn-primary:hover {
+  opacity: 0.9;
+}
+
+.btn-success {
+  background: var(--success-color);
+  color: #fff;
+}
+
+.btn-success:hover {
+  opacity: 0.9;
+}
+
+/* 表格 */
+.table-card {
+  background: var(--card-bg);
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  overflow: hidden;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.data-table th {
+  padding: 12px 16px;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--table-header-bg);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.data-table td {
+  padding: 12px 16px;
+  font-size: 14px;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.table-row:hover td {
+  background: var(--hover-bg);
+}
+
+.user-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.user-cell-avatar {
+  width: 32px;
+  height: 32px;
+  background: var(--primary-color);
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.role-tag {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.role-tag.admin {
+  background: #ede9fe;
+  color: #7c3aed;
+}
+
+.role-tag.editor {
+  background: #dbeafe;
+  color: #2563eb;
+}
+
+.role-tag.viewer {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.status-badge.active {
+  background: #d1fae5;
+  color: #059669;
+}
+
+.status-badge.inactive {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 12px;
+}
+
+.btn-link {
+  background: none;
+  border: none;
+  font-size: 13px;
+  color: var(--primary-color);
+  cursor: pointer;
+  padding: 0;
+}
+
+.btn-link:hover {
+  text-decoration: underline;
+}
+
+.btn-link.danger {
+  color: var(--danger-color);
+}
+
+.empty-cell {
+  text-align: center;
+  padding: 40px 16px;
+  color: var(--text-disabled);
+}
+
+/* 分页 */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+}
+
+.pagination-info {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.pagination-buttons {
+  display: flex;
+  gap: 4px;
+}
+
+.page-btn {
+  min-width: 32px;
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.page-btn:hover:not(:disabled) {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.page-btn.active {
+  background: var(--primary-color);
+  color: #fff;
+  border-color: var(--primary-color);
+}
+
+.page-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* 响应式 */
+@media (max-width: 768px) {
+  .search-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .search-input-group {
+    max-width: none;
+  }
+
+  .data-table {
+    font-size: 13px;
+  }
+}
+</style>

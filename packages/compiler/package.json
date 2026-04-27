@@ -1,0 +1,81 @@
+{
+  "name": "@lytjs/compiler",
+  "version": "5.0.0",
+  "description": "Lyt.js 模板编译器 - 将模板字符串编译为渲染函数，支持指令解析和优化",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.mjs"
+    },
+    "./block-tree": {
+      "types": "./dist/types/block-tree-entry.d.ts",
+      "import": "./dist/block-tree-entry.mjs",
+      "require": "./dist/block-tree-entry.cjs",
+      "default": "./dist/block-tree-entry.mjs"
+    },
+    "./patch-flags": {
+      "types": "./dist/types/patch-flags-entry.d.ts",
+      "import": "./dist/patch-flags-entry.mjs",
+      "require": "./dist/patch-flags-entry.cjs",
+      "default": "./dist/patch-flags-entry.mjs"
+    },
+    "./hoist": {
+      "types": "./dist/types/hoist-entry.d.ts",
+      "import": "./dist/hoist-entry.mjs",
+      "require": "./dist/hoist-entry.cjs",
+      "default": "./dist/hoist-entry.mjs"
+    },
+    "./optimize-output": {
+      "types": "./dist/types/optimize-output-entry.d.ts",
+      "import": "./dist/optimize-output-entry.mjs",
+      "require": "./dist/optimize-output-entry.cjs",
+      "default": "./dist/optimize-output-entry.mjs"
+    },
+    "./sfc": {
+      "types": "./dist/types/sfc-entry.d.ts",
+      "import": "./dist/sfc-entry.mjs",
+      "require": "./dist/sfc-entry.cjs",
+      "default": "./dist/sfc-entry.mjs"
+    },
+    "./wasm": {
+      "types": "./dist/types/wasm-entry.d.ts",
+      "import": "./dist/wasm-entry.mjs",
+      "require": "./dist/wasm-entry.cjs",
+      "default": "./dist/wasm-entry.mjs"
+    }
+  },
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
+  "license": "MIT",
+  "author": "lytjs",
+  "repository": {
+    "type": "git",
+    "url": "https://gitee.com/lytjs/lytjs"
+  },
+  "homepage": "https://gitee.com/lytjs/lytjs",
+  "keywords": [
+    "lyt",
+    "lytjs",
+    "javascript",
+    "framework",
+    "frontend",
+    "vue-like",
+    "lightweight",
+    "zero-dependency",
+    "compiler",
+    "template",
+    "sfc",
+    "编译器",
+    "模板"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}

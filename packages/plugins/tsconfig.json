@@ -1,0 +1,125 @@
+{
+  "compilerOptions": {
+    "target": "ES2018",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "emitDeclarationOnly": true,
+    "outDir": "./dist/types",
+    "rootDir": "./src",
+    "allowImportingTsExtensions": true,
+    "noEmit": false,
+    "noEmitOnError": false,
+    "paths": {
+      "@lytjs/plugins": [
+        "./src"
+      ],
+      "@lytjs/plugins/*": [
+        "./src/*"
+      ],
+      "@lytjs/plugin-i18n": [
+        "../plugin-i18n/dist/types"
+      ],
+      "@lytjs/plugin-i18n/*": [
+        "../plugin-i18n/dist/types/*"
+      ],
+      "@lytjs/plugin-auth": [
+        "../plugin-auth/dist/types"
+      ],
+      "@lytjs/plugin-auth/*": [
+        "../plugin-auth/dist/types/*"
+      ],
+      "@lytjs/plugin-logger": [
+        "../plugin-logger/dist/types"
+      ],
+      "@lytjs/plugin-logger/*": [
+        "../plugin-logger/dist/types/*"
+      ],
+      "@lytjs/plugin-theme": [
+        "../plugin-theme/dist/types"
+      ],
+      "@lytjs/plugin-theme/*": [
+        "../plugin-theme/dist/types/*"
+      ],
+      "@lytjs/plugin-storage": [
+        "../plugin-storage/dist/types"
+      ],
+      "@lytjs/plugin-storage/*": [
+        "../plugin-storage/dist/types/*"
+      ],
+      "@lytjs/common": [
+        "../common/dist/types"
+      ],
+      "@lytjs/common/*": [
+        "../common/dist/types/*"
+      ],
+      "@lytjs/reactivity": [
+        "../reactivity/dist/types"
+      ],
+      "@lytjs/reactivity/*": [
+        "../reactivity/dist/types/*"
+      ],
+      "@lytjs/vdom": [
+        "../vdom/dist/types"
+      ],
+      "@lytjs/vdom/*": [
+        "../vdom/dist/types/*"
+      ],
+      "@lytjs/compiler": [
+        "../compiler/dist/types"
+      ],
+      "@lytjs/compiler/*": [
+        "../compiler/dist/types/*"
+      ],
+      "@lytjs/renderer": [
+        "../renderer/dist/types"
+      ],
+      "@lytjs/renderer/*": [
+        "../renderer/dist/types/*"
+      ],
+      "@lytjs/component": [
+        "../component/dist/types"
+      ],
+      "@lytjs/component/*": [
+        "../component/dist/types/*"
+      ],
+      "@lytjs/core": [
+        "../core/dist/types"
+      ],
+      "@lytjs/core/*": [
+        "../core/dist/types/*"
+      ],
+      "@lytjs/router": [
+        "../router/dist/types"
+      ],
+      "@lytjs/router/*": [
+        "../router/dist/types/*"
+      ],
+      "@lytjs/store": [
+        "../store/dist/types"
+      ],
+      "@lytjs/store/*": [
+        "../store/dist/types/*"
+      ]
+    },
+    "types": [
+      "node"
+    ],
+    "ignoreDeprecations": "6.0"
+  },
+  "include": [
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/__tests__"
+  ]
+}

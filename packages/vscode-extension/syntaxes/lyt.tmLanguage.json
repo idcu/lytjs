@@ -1,0 +1,147 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Lyt.js",
+  "scopeName": "source.lyt",
+  "fileTypes": [
+    "lyt"
+  ],
+  "patterns": [
+    {
+      "include": "#template"
+    },
+    {
+      "include": "#script"
+    },
+    {
+      "include": "#style"
+    },
+    {
+      "include": "#comment"
+    }
+  ],
+  "repository": {
+    "template": {
+      "begin": "(<)(template)(\\s[^>]*)?(>)",
+      "beginCaptures": {
+        "1": { "name": "punctuation.definition.tag.begin.lyt" },
+        "2": { "name": "entity.name.tag.template.lyt" },
+        "3": { "name": "meta.tag.attributes.lyt" },
+        "4": { "name": "punctuation.definition.tag.end.lyt" }
+      },
+      "end": "(</)(template)(>)",
+      "endCaptures": {
+        "1": { "name": "punctuation.definition.tag.begin.lyt" },
+        "2": { "name": "entity.name.tag.template.lyt" },
+        "3": { "name": "punctuation.definition.tag.end.lyt" }
+      },
+      "patterns": [
+        { "include": "#html-tag" },
+        { "include": "#interpolation" },
+        { "include": "#comment" }
+      ]
+    },
+    "script": {
+      "begin": "(<)(script)(\\s[^>]*)?(>)",
+      "beginCaptures": {
+        "1": { "name": "punctuation.definition.tag.begin.lyt" },
+        "2": { "name": "entity.name.tag.script.lyt" },
+        "3": { "name": "meta.tag.attributes.lyt" },
+        "4": { "name": "punctuation.definition.tag.end.lyt" }
+      },
+      "end": "(</)(script)(>)",
+      "endCaptures": {
+        "1": { "name": "punctuation.definition.tag.begin.lyt" },
+        "2": { "name": "entity.name.tag.script.lyt" },
+        "3": { "name": "punctuation.definition.tag.end.lyt" }
+      },
+      "patterns": [
+        { "include": "source.ts" }
+      ]
+    },
+    "style": {
+      "begin": "(<)(style)(\\s[^>]*)?(>)",
+      "beginCaptures": {
+        "1": { "name": "punctuation.definition.tag.begin.lyt" },
+        "2": { "name": "entity.name.tag.style.lyt" },
+        "3": { "name": "meta.tag.attributes.lyt" },
+        "4": { "name": "punctuation.definition.tag.end.lyt" }
+      },
+      "end": "(</)(style)(>)",
+      "endCaptures": {
+        "1": { "name": "punctuation.definition.tag.begin.lyt" },
+        "2": { "name": "entity.name.tag.style.lyt" },
+        "3": { "name": "punctuation.definition.tag.end.lyt" }
+      },
+      "patterns": [
+        { "include": "source.css" }
+      ]
+    },
+    "html-tag": {
+      "patterns": [
+        {
+          "begin": "(</?)([a-zA-Z0-9_-]+)",
+          "beginCaptures": {
+            "1": { "name": "punctuation.definition.tag.begin.lyt" },
+            "2": { "name": "entity.name.tag.lyt" }
+          },
+          "end": "(/?>)",
+          "endCaptures": {
+            "1": { "name": "punctuation.definition.tag.end.lyt" }
+          },
+          "patterns": [
+            { "include": "#attribute" },
+            { "include": "#interpolation" }
+          ]
+        }
+      ]
+    },
+    "attribute": {
+      "patterns": [
+        {
+          "match": "([a-zA-Z0-9_-]+)(=)(\"|')([^\"']*)(\"|')",
+          "captures": {
+            "1": { "name": "entity.other.attribute-name.lyt" },
+            "2": { "name": "punctuation.separator.key-value.lyt" },
+            "3": { "name": "punctuation.definition.string.begin.lyt" },
+            "4": { "name": "string.quoted.double.lyt" },
+            "5": { "name": "punctuation.definition.string.end.lyt" }
+          }
+        },
+        {
+          "match": "v-([a-zA-Z0-9_-]+)",
+          "name": "keyword.control.directive.lyt"
+        },
+        {
+          "match": "@([a-zA-Z0-9_-]+)",
+          "name": "keyword.control.event.lyt"
+        },
+        {
+          "match": ":([a-zA-Z0-9_-]+)",
+          "name": "keyword.control.binding.lyt"
+        }
+      ]
+    },
+    "interpolation": {
+      "begin": "\\{\\{",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.interpolation.begin.lyt" }
+      },
+      "end": "\\}\\}",
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.interpolation.end.lyt" }
+      },
+      "patterns": [
+        { "include": "source.ts" }
+      ]
+    },
+    "comment": {
+      "patterns": [
+        {
+          "begin": "<!--",
+          "end": "-->",
+          "name": "comment.block.html.lyt"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,451 @@
+# Lyt.js - 完整开发指南
+
+## 项目概述
+
+Lyt.js 是一个纯原生、零运行时依赖、超轻量的前端框架，提供与 Vue 3 兼容的 API。
+
+- 纯原生，零运行时第三方依赖
+- 核心 8 包 ESM gzip 总计仅 34.56KB
+- 所见即代码 - 增强版 HTML 模板，去掉 v- 前缀
+- 双 API 模式 - 同时支持 Options API 和 Composition API
+- 渐进扩展 - 架构为 SSR/移动端/小程序预留 Renderer 接口
+- 开箱即用 - 内置路由、状态管理、CLI 工具、浏览器 DevTools、50+ 组件
+
+## 包结构详解
+
+### 核心引擎包 (8)
+
+#### @lytjs/reactivity - 响应式系统
+
+提供完整的响应式系统：
+- reactive/ref/computed/watch/watchEffect/nextTick
+- Proxy 双重响应式模式
+
+```javascript
+import { reactive, ref, computed, watch } from '@lytjs/reactivity'
+
+// reactive() 响应式对象
+const state = reactive({ count: 0 })
+
+// ref() 响应式引用
+const count = ref(0)
+
+// computed() 计算属性
+const double = computed(() => count.value * 2)
+
+// watch() 观察数据
+watch(count, (newVal, oldVal) => {
+  console.log('count changed:', oldVal, '->', newVal)
+})
+```
+
+#### @lytjs/compiler - 模板编译器
+
+负责将 HTML 模板编译为渲染函数：
+- HTML 解析 -> AST 转换 -> 优化 -> 代码生成
+- 支持静态提升
+- 支持 v-if/v-else/v-for/v-model/v-on/v-bind（无前缀）
+
+#### @lytjs/vdom - 虚拟 DOM
+
+提供虚拟 DOM 实现：
+- VNode 创建
+- Diff 算法
+- Block Tree 优化
+- Patch Flag 优化
+- LIS 最长递增子序列算法
+
+#### @lytjs/renderer - 渲染器主入口
+
+提供多种渲染模式：
+- DOM Renderer（浏览器）
+- SSR Renderer（服务端渲染）
+- Vapor Renderer（无虚拟 DOM 编译优化）
+- MiniApp Renderer（小程序渲染）
+- Native Renderer（原生移动端，规划中）
+
+#### @lytjs/component - 组件系统
+
+完整的组件系统：
+- defineComponent
+- 生命周期钩子
+- 插槽
+- KeepAlive
+- Suspense
+- Teleport
+
+```javascript
+import { defineComponent, ref, onMounted, onUnmounted } from '@lytjs/component'
+
+const MyComponent = defineComponent({
+  name: 'MyComponent',
+  props: {
+    title: String
+  },
+  emits: ['click'],
+  setup(props, { emit }) {
+    const count = ref(0)
+
+    onMounted(() => {
+      console.log('组件已挂载')
+    })
+
+    onUnmounted(() => {
+      console.log('组件已卸载')
+    })
+
+    const handleClick = () => {
+      count.value++
+      emit('click', count.value)
+    }
+
+    return { count, handleClick }
+  },
+  template: `
+    <div class="my-component">
+      <h2>{{ title }}</h2>
+      <p>Count: {{ count }}</p>
+      <button @click="handleClick">Click me</button>
+    </div>
+  `
+})
+```
+
+#### @lytjs/core - 核心入口
+
+核心应用创建和插件系统：
+- createApp
+- h 函数
+- 插件系统（app.use/unuse）
+- Web Component 支持（defineCustomElement）
+- 提供/注入
+
+```javascript
+import { createApp, provide, inject } from '@lytjs/core'
+
+const app = createApp({
+  template: `<div>{{ message }}</div>`,
+  state: { message: 'Hello Lyt.js!' }
+})
+
+// 插件
+app.use(myPlugin)
+
+app.mount('#app')
+```
+
+#### @lytjs/common - 公共工具库
+
+提供公共工具函数和类型定义。
+
+#### @lytjs/lytjs - 聚合包
+
+一键安装全部核心运行时包。
+
+### 功能包
+
+#### @lytjs/router - 内置路由
+
+完整的路由系统：
+- History/Hash 双模式
+- 导航守卫
+- 动态路由
+- 嵌套路由
+- 路由懒加载
+
+```javascript
+import { createRouter, useRouter, useRoute } from '@lytjs/router'
+
+const router = createRouter({
+  mode: 'history',
+  routes: [
+    { path: '/', component: Home },
+    { path: '/about', component: About },
+    { path: '/user/:id', component: User }
+  ]
+})
+
+app.use(router)
+```
+
+#### @lytjs/store - 内置状态管理
+
+Pinia 风格的状态管理：
+- 模块化
+- Actions
+- Getters
+- 插件系统
+
+```javascript
+import { createStore, useStore } from '@lytjs/store'
+
+const counterStore = createStore('counter', {
+  state: { count: 0 },
+  getters: {
+    double: (s) => s.count * 2
+  },
+  actions: {
+    increment(s) { s.count++ },
+    decrement(s) { s.count-- }
+  }
+})
+```
+
+#### @lytjs/components - UI 组件库
+
+50+ 组件：
+- 基础组件：Button, Icon, Link, Container, Divider
+- 表单组件：Input, Checkbox, Radio, Select, Switch, Form, DatePicker, TimePicker, Calendar, Dropdown
+- 反馈组件：Modal, Toast, Alert, Tooltip, Dialog, Notification, Popover
+- 导航组件：Tabs, Breadcrumb, Pagination, TabNav, Carousel
+- 数据展示组件：Table, Tag, Badge, Spin, Empty, Avatar, CountBadge, DataTable
+- 扩展组件：Collapse, Toggle, Progress, Slider, Upload, Tree, ThemeProvider
+
+#### @lytjs/cli - 命令行工具
+
+完整的 CLI 工具：
+- create: 创建新项目
+- dev: 开发服务器
+- build: 构建生产版本
+- scaffold: 脚手架
+- generate: 生成代码（支持 AI）
+
+#### @lytjs/devtools - 浏览器开发者工具
+
+浏览器 DevTools 集成：
+- 性能采集
+- 组件树
+- 状态查看
+- 渲染追踪
+- 时间旅行调试
+
+#### @lytjs/lytx - 元框架
+
+完整的元框架：
+- SSR/SSG/SPA
+- API Routes
+- 全栈渲染
+- 自动导入
+- 数据获取
+- 混合渲染
+- 部署适配器
+
+#### @lytjs/ai - AI 辅助开发工具
+
+AI 辅助开发：
+- 智能组件生成
+- AI API 集成（OpenAI 兼容）
+- 提示词优化
+- CLI 集成
+
+#### @lytjs/compat - Vue 3 兼容层
+
+Vue 3 到 Lyt.js 的无缝迁移：
+- Vue 3 API 兼容层
+- SFC 单文件组件转换器
+- Vue-to-Lyt 迁移工具（vue-to-lyt）
+- 内置组件兼容
+
+#### @lytjs/plugin-sdk - 插件开发 SDK
+
+插件开发工具链：
+- PluginManager：插件管理器（注册/注销/安装/卸载/启用/禁用/搜索/更新）
+- PluginValidator：插件验证器（清单验证/配置验证/权限验证/兼容性验证）
+- PluginRegistry：插件注册中心（发布/搜索/下载/分类）
+- PluginScaffold：插件脚手架（项目创建/模板生成）
+
+## 模板语法详解
+
+Lyt.js 使用增强版 HTML 模板，去掉了 Vue 的 v- 前缀，更接近原生 HTML。
+
+### 插值
+
+```html
+<span>Message: {{ msg }}</span>
+```
+
+### 属性绑定
+
+```html
+<div :class="cls" :id="id">Hello</div>
+<img :src="imageUrl" :alt="imageAlt">
+```
+
+### 事件绑定
+
+```html
+<button @click="handleClick">Click</button>
+<input @input="handleInput" @change="handleChange">
+```
+
+### 条件渲染
+
+```html
+<div if="isVisible">Visible</div>
+<div else-if="isAlternative">Alternative</div>
+<div else>Fallback</div>
+```
+
+### 列表渲染
+
+```html
+<ul>
+  <li each="(item, index) in items" :key="index">
+    {{ index + 1 }}. {{ item }}
+  </li>
+</ul>
+```
+
+### 双向绑定
+
+```html
+<input model="username">
+<textarea model="description"></textarea>
+```
+
+### 插槽
+
+```html
+<div class="my-component">
+  <slot name="header">Header</slot>
+  <slot>Default Content</slot>
+  <slot name="footer">Footer</slot>
+</div>
+```
+
+## AI 辅助开发详解
+
+### 配置系统
+
+Lyt.js 支持三层配置：
+
+1. **配置文件** - `.lytrc.json`
+2. **环境变量** - 以 `LYT_` 开头
+3. **命令行选项** - 运行时指定
+
+#### .lytrc.json 配置
+
+```json
+{
+  "ai": {
+    "provider": "openai",
+    "apiKey": "sk-...",
+    "model": "gpt-4o",
+    "baseUrl": "https://api.openai.com/v1",
+    "temperature": 0.7,
+    "maxTokens": 2000
+  }
+}
+```
+
+#### 环境变量
+
+```bash
+LYT_AI_PROVIDER=openai
+LYT_AI_API_KEY=sk-...
+LYT_AI_MODEL=gpt-4o
+LYT_AI_BASE_URL=https://api.openai.com/v1
+```
+
+### CLI 集成
+
+```bash
+# 生成组件（使用 AI）
+lytx generate component MyButton --ai
+
+# 生成组件（不使用 AI）
+lytx generate component MyButton
+
+# 生成 Store
+lytx generate store counter --ai
+
+# 生成页面
+lytx generate page Home --ai
+
+# 生成 API Route
+lytx generate api users --ai
+```
+
+### 使用 @lytjs/ai 编程式调用
+
+```javascript
+import { AIGenerator } from '@lytjs/ai'
+
+const generator = new AIGenerator({
+  provider: 'openai',
+  apiKey: 'your-api-key',
+  model: 'gpt-4o'
+})
+
+// 生成组件
+const componentCode = await generator.generateComponent({
+  name: 'MyComponent',
+  type: 'custom',
+  description: 'A custom component'
+})
+
+// 生成 Store
+const storeCode = await generator.generateStore({
+  name: 'myStore',
+  state: { count: 0 }
+})
+
+// 生成页面
+const pageCode = await generator.generatePage({
+  name: 'HomePage',
+  layout: 'default'
+})
+```
+
+## 项目结构推荐
+
+```
+my-lyt-app/
+├── src/
+│   ├── components/
+│   │   ├── Button.lyt
+│   │   └── index.js
+│   ├── pages/
+│   │   ├── Home.lyt
+│   │   └── About.lyt
+│   ├── stores/
+│   │   └── counter.js
+│   ├── router/
+│   │   └── index.js
+│   ├── api/
+│   │   └── users.js
+│   ├── App.lyt
+│   └── main.js
+├── public/
+│   └── index.html
+├── .lytrc.json
+├── package.json
+└── vite.config.js
+```
+
+## AI IDE 集成
+
+### Trae / Cursor 集成
+
+项目包含 `.trae/` 目录，用于 AI IDE 深度集成：
+
+```
+.trae/
+├── README.md              # 集成说明
+├── context.md           # 项目上下文
+├── api-reference.md     # API 快速参考
+├── quick-start.md       # 快速入门
+├── best-practices.md   # 最佳实践
+├── ai-integration-examples.md  # AI 使用示例
+└── prompts/
+    ├── component.md      # 组件生成提示词
+    ├── store.md        # Store 生成提示词
+    ├── page.md         # 页面生成提示词
+    └── api.md          # API 生成提示词
+```
+
+## 更多资源
+
+- 官方文档: https://lyt.js.org
+- Gitee 仓库: https://gitee.com/lytjs/lytjs
+- 讨论区: Gitee Issues

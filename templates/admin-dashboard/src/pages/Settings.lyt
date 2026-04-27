@@ -1,0 +1,605 @@
+<template>
+  <div class="settings-page">
+    <div class="page-header">
+      <h2 class="page-title">系统设置</h2>
+    </div>
+
+    <div class="settings-card">
+      <!-- Tabs -->
+      <div class="tabs">
+        <button
+          class="tab-item"
+          each={tab in tabs}
+          :class="{ active: activeTab === tab.key }"
+          on:click="switchTab(tab.key)"
+        >
+          {{ tab.label }}
+        </button>
+      </div>
+
+      <!-- 基本设置 -->
+      <div class="tab-content" if={activeTab === 'basic'}>
+        <form class="settings-form" on:submit.prevent="saveBasicSettings">
+          <div class="form-group">
+            <label class="form-label">站点名称</label>
+            <input
+              class="form-input"
+              type="text"
+              placeholder="请输入站点名称"
+              bind:value="basicForm.siteName"
+            />
+            <span class="form-hint">显示在浏览器标签和登录页面</span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">站点描述</label>
+            <textarea
+              class="form-textarea"
+              placeholder="请输入站点描述"
+              bind:value="basicForm.siteDescription"
+              rows="3"
+            ></textarea>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">语言</label>
+              <select class="form-select" bind:value="basicForm.language">
+                <option value="zh-CN">简体中文</option>
+                <option value="en">English</option>
+                <option value="ja">日本語</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">时区</label>
+              <select class="form-select" bind:value="basicForm.timezone">
+                <option value="Asia/Shanghai">亚洲/上海 (UTC+8)</option>
+                <option value="America/New_York">美洲/纽约 (UTC-5)</option>
+                <option value="Europe/London">欧洲/伦敦 (UTC+0)</option>
+                <option value="Asia/Tokyo">亚洲/东京 (UTC+9)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">主题色</label>
+            <div class="color-picker-group">
+              <label class="color-option" each={color in themeColors}>
+                <input
+                  type="radio"
+                  name="themeColor"
+                  :value="color.value"
+                  bind:checked="basicForm.themeColor"
+                />
+                <span class="color-swatch" :style="{ background: color.value }"></span>
+                <span class="color-label">{{ color.label }}</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn btn-default" on:click="resetBasicSettings">重置</button>
+            <button type="submit" class="btn btn-primary">保存设置</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- 安全设置 -->
+      <div class="tab-content" if={activeTab === 'security'}>
+        <form class="settings-form" on:submit.prevent="saveSecuritySettings">
+          <div class="form-group">
+            <div class="form-group-row">
+              <label class="form-label">两步验证</label>
+              <span class="form-hint">登录时需要额外的验证码</span>
+            </div>
+            <div class="switch-row">
+              <span class="switch-label">启用两步验证</span>
+              <label class="switch">
+                <input type="checkbox" bind:checked="securityForm.twoFactor" />
+                <span class="switch-slider"></span>
+              </label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">会话超时（分钟）</label>
+            <input
+              class="form-input"
+              type="number"
+              placeholder="30"
+              bind:value="securityForm.sessionTimeout"
+            />
+            <span class="form-hint">超过此时间未操作将自动退出登录</span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">密码策略</label>
+            <div class="switch-row">
+              <span class="switch-label">要求包含大写字母</span>
+              <label class="switch">
+                <input type="checkbox" bind:checked="securityForm.requireUppercase" />
+                <span class="switch-slider"></span>
+              </label>
+            </div>
+            <div class="switch-row">
+              <span class="switch-label">要求包含特殊字符</span>
+              <label class="switch">
+                <input type="checkbox" bind:checked="securityForm.requireSpecial" />
+                <span class="switch-slider"></span>
+              </label>
+            </div>
+            <div class="switch-row">
+              <span class="switch-label">最小密码长度: {{ securityForm.minLength }} 位</span>
+              <input
+                type="range"
+                class="range-input"
+                min="6"
+                max="20"
+                bind:value="securityForm.minLength"
+              />
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn btn-default" on:click="resetSecuritySettings">重置</button>
+            <button type="submit" class="btn btn-primary">保存设置</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- 通知设置 -->
+      <div class="tab-content" if={activeTab === 'notification'}>
+        <form class="settings-form" on:submit.prevent="saveNotificationSettings">
+          <div class="form-group">
+            <label class="form-label">邮件通知</label>
+            <div class="switch-row">
+              <span class="switch-label">系统异常告警</span>
+              <label class="switch">
+                <input type="checkbox" bind:checked="notificationForm.emailAlert" />
+                <span class="switch-slider"></span>
+              </label>
+            </div>
+            <div class="switch-row">
+              <span class="switch-label">新用户注册通知</span>
+              <label class="switch">
+                <input type="checkbox" bind:checked="notificationForm.emailNewUser" />
+                <span class="switch-slider"></span>
+              </label>
+            </div>
+            <div class="switch-row">
+              <span class="switch-label">每日数据报告</span>
+              <label class="switch">
+                <input type="checkbox" bind:checked="notificationForm.emailReport" />
+                <span class="switch-slider"></span>
+              </label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">短信通知</label>
+            <div class="switch-row">
+              <span class="switch-label">安全登录提醒</span>
+              <label class="switch">
+                <input type="checkbox" bind:checked="notificationForm.smsLogin" />
+                <span class="switch-slider"></span>
+              </label>
+            </div>
+            <div class="switch-row">
+              <span class="switch-label">重要操作验证</span>
+              <label class="switch">
+                <input type="checkbox" bind:checked="notificationForm.smsOperation" />
+                <span class="switch-slider"></span>
+              </label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">系统通知</label>
+            <div class="switch-row">
+              <span class="switch-label">站内消息通知</span>
+              <label class="switch">
+                <input type="checkbox" bind:checked="notificationForm.systemMessage" />
+                <span class="switch-slider"></span>
+              </label>
+            </div>
+            <div class="switch-row">
+              <span class="switch-label">浏览器推送通知</span>
+              <label class="switch">
+                <input type="checkbox" bind:checked="notificationForm.browserPush" />
+                <span class="switch-slider"></span>
+              </label>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn btn-default" on:click="resetNotificationSettings">重置</button>
+            <button type="submit" class="btn btn-primary">保存设置</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+export default {
+  name: 'Settings',
+
+  setup() {
+    const state = {
+      activeTab: 'basic',
+      tabs: [
+        { key: 'basic', label: '基本设置' },
+        { key: 'security', label: '安全设置' },
+        { key: 'notification', label: '通知设置' },
+      ],
+      themeColors: [
+        { label: '靛蓝', value: '#4f46e5' },
+        { label: '翠绿', value: '#059669' },
+        { label: '琥珀', value: '#d97706' },
+        { label: '玫红', value: '#e11d48' },
+        { label: '紫色', value: '#7c3aed' },
+        { label: '青色', value: '#0891b2' },
+      ],
+      basicForm: {
+        siteName: 'Admin Dashboard',
+        siteDescription: 'Lyt.js 企业级后台管理系统',
+        language: 'zh-CN',
+        timezone: 'Asia/Shanghai',
+        themeColor: '#4f46e5',
+      },
+      securityForm: {
+        twoFactor: false,
+        sessionTimeout: 30,
+        requireUppercase: true,
+        requireSpecial: false,
+        minLength: 8,
+      },
+      notificationForm: {
+        emailAlert: true,
+        emailNewUser: true,
+        emailReport: false,
+        smsLogin: true,
+        smsOperation: false,
+        systemMessage: true,
+        browserPush: false,
+      },
+    }
+
+    const switchTab = (key: string) => {
+      state.activeTab = key
+    }
+
+    const saveBasicSettings = () => {
+      console.log('Save basic settings:', state.basicForm)
+    }
+
+    const resetBasicSettings = () => {
+      state.basicForm = {
+        siteName: 'Admin Dashboard',
+        siteDescription: 'Lyt.js 企业级后台管理系统',
+        language: 'zh-CN',
+        timezone: 'Asia/Shanghai',
+        themeColor: '#4f46e5',
+      }
+    }
+
+    const saveSecuritySettings = () => {
+      console.log('Save security settings:', state.securityForm)
+    }
+
+    const resetSecuritySettings = () => {
+      state.securityForm = {
+        twoFactor: false,
+        sessionTimeout: 30,
+        requireUppercase: true,
+        requireSpecial: false,
+        minLength: 8,
+      }
+    }
+
+    const saveNotificationSettings = () => {
+      console.log('Save notification settings:', state.notificationForm)
+    }
+
+    const resetNotificationSettings = () => {
+      state.notificationForm = {
+        emailAlert: true,
+        emailNewUser: true,
+        emailReport: false,
+        smsLogin: true,
+        smsOperation: false,
+        systemMessage: true,
+        browserPush: false,
+      }
+    }
+
+    return {
+      activeTab: state.activeTab,
+      tabs: state.tabs,
+      themeColors: state.themeColors,
+      basicForm: state.basicForm,
+      securityForm: state.securityForm,
+      notificationForm: state.notificationForm,
+      switchTab,
+      saveBasicSettings,
+      resetBasicSettings,
+      saveSecuritySettings,
+      resetSecuritySettings,
+      saveNotificationSettings,
+      resetNotificationSettings,
+    }
+  },
+}
+</script>
+
+<style scoped>
+.settings-page {
+  max-width: 900px;
+}
+
+.page-header {
+  margin-bottom: 20px;
+}
+
+.page-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.settings-card {
+  background: var(--card-bg);
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  overflow: hidden;
+}
+
+/* Tabs */
+.tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border-color);
+  padding: 0 20px;
+}
+
+.tab-item {
+  padding: 14px 20px;
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  position: relative;
+  transition: color 0.2s;
+}
+
+.tab-item:hover {
+  color: var(--text-primary);
+}
+
+.tab-item.active {
+  color: var(--primary-color);
+}
+
+.tab-item.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--primary-color);
+  border-radius: 2px 2px 0 0;
+}
+
+/* Tab Content */
+.tab-content {
+  padding: 24px;
+}
+
+.settings-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-group-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.form-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.form-hint {
+  font-size: 12px;
+  color: var(--text-disabled);
+}
+
+.form-input,
+.form-select,
+.form-textarea {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 14px;
+  color: var(--text-primary);
+  background: var(--card-bg);
+  outline: none;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.form-input:focus,
+.form-select:focus,
+.form-textarea:focus {
+  border-color: var(--primary-color);
+}
+
+.form-textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.form-select {
+  appearance: auto;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+/* 颜色选择 */
+.color-picker-group {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.color-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  transition: all 0.2s;
+}
+
+.color-option:has(input:checked) {
+  border-color: var(--primary-color);
+  background: var(--primary-bg);
+}
+
+.color-option input {
+  display: none;
+}
+
+.color-swatch {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid rgba(0, 0, 0, 0.1);
+}
+
+.color-label {
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+/* Switch */
+.switch-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+}
+
+.switch-label {
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+}
+
+.switch input {
+  display: none;
+}
+
+.switch-slider {
+  position: absolute;
+  inset: 0;
+  background: var(--border-color);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.switch-slider::before {
+  content: '';
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  left: 3px;
+  top: 3px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform 0.3s;
+}
+
+.switch input:checked + .switch-slider {
+  background: var(--primary-color);
+}
+
+.switch input:checked + .switch-slider::before {
+  transform: translateX(20px);
+}
+
+/* Range */
+.range-input {
+  width: 120px;
+  accent-color: var(--primary-color);
+}
+
+/* Form Actions */
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-color);
+}
+
+.btn {
+  height: 38px;
+  padding: 0 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-primary {
+  background: var(--primary-color);
+  color: #fff;
+}
+
+.btn-primary:hover {
+  opacity: 0.9;
+}
+
+.btn-default {
+  background: var(--border-color);
+  color: var(--text-primary);
+}
+
+@media (max-width: 768px) {
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+}
+</style>

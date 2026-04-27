@@ -1,0 +1,434 @@
+<template>
+  <div class="admin-layout" :class="{ 'sidebar-collapsed': sidebarCollapsed }">
+    <!-- 左侧边栏 -->
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <span class="logo-icon">L</span>
+        <span class="logo-text" if={!sidebarCollapsed}>Admin</span>
+      </div>
+      <nav class="sidebar-menu">
+        <a
+          class="menu-item"
+          each={item in menuItems}
+          :class="{ active: currentRoute === item.path }"
+          :href="item.path"
+          on:click.prevent="navigateTo(item.path)"
+        >
+          <span class="menu-icon">{{ item.icon }}</span>
+          <span class="menu-label" if={!sidebarCollapsed}>{{ item.label }}</span>
+        </a>
+      </nav>
+      <div class="sidebar-toggle" on:click="toggleSidebar">
+        <span class="toggle-icon">{{ sidebarCollapsed ? '>>' : '<<' }}</span>
+      </div>
+    </aside>
+
+    <!-- 右侧主区域 -->
+    <div class="main-area">
+      <!-- 顶部栏 -->
+      <header class="topbar">
+        <div class="topbar-left">
+          <nav class="breadcrumb">
+            <a class="breadcrumb-item" href="/dashboard">首页</a>
+            <span class="breadcrumb-separator">/</span>
+            <span class="breadcrumb-item current">{{ currentTitle }}</span>
+          </nav>
+        </div>
+        <div class="topbar-right">
+          <div class="topbar-action" on:click="toggleFullscreen" title="全屏">
+            <span>⛶</span>
+          </div>
+          <div class="topbar-action" on:click="toggleTheme" title="切换主题">
+            <span>{{ theme === 'light' ? '☀' : '☾' }}</span>
+          </div>
+          <div class="user-dropdown" on:click="toggleUserMenu">
+            <div class="user-avatar">
+              <span>管</span>
+            </div>
+            <span class="user-name">Admin</span>
+            <span class="dropdown-arrow">▾</span>
+            <div class="dropdown-menu" if={showUserMenu}>
+              <a class="dropdown-item" href="/profile" on:click.prevent="navigateTo('/profile')">
+                <span>👤</span> 个人中心
+              </a>
+              <div class="dropdown-divider"></div>
+              <a class="dropdown-item logout" on:click.prevent="handleLogout">
+                <span>🚪</span> 退出登录
+              </a>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- 主内容区 -->
+      <main class="content-area">
+        <router-view />
+      </main>
+    </div>
+  </div>
+</template>
+
+<script>
+import { inject } from '@lytjs/core'
+import { useRouter } from '@lytjs/router'
+
+export default {
+  name: 'AdminLayout',
+
+  setup() {
+    const router = useRouter()
+    const appStore = inject('appStore')
+    const userStore = inject('userStore')
+
+    const menuItems = [
+      { path: '/dashboard', label: '仪表盘', icon: '📊' },
+      { path: '/users', label: '用户管理', icon: '👥' },
+      { path: '/roles', label: '角色管理', icon: '🔑' },
+      { path: '/settings', label: '系统设置', icon: '⚙' },
+    ]
+
+    const state = {
+      showUserMenu: false,
+    }
+
+    const currentRoute = router.currentRoute.path
+    const currentTitle = router.currentRoute.meta?.title || '仪表盘'
+    const sidebarCollapsed = appStore.sidebarCollapsed
+    const theme = appStore.theme
+
+    const navigateTo = (path: string) => {
+      router.push(path)
+    }
+
+    const toggleSidebar = () => {
+      appStore.toggleSidebar()
+    }
+
+    const toggleUserMenu = () => {
+      state.showUserMenu = !state.showUserMenu
+    }
+
+    const toggleFullscreen = () => {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen()
+      } else {
+        document.exitFullscreen()
+      }
+    }
+
+    const toggleTheme = () => {
+      const newTheme = appStore.theme === 'light' ? 'dark' : 'light'
+      appStore.setTheme(newTheme)
+    }
+
+    const handleLogout = () => {
+      userStore.logout()
+      router.push('/login')
+    }
+
+    return {
+      menuItems,
+      currentRoute,
+      currentTitle,
+      sidebarCollapsed,
+      theme,
+      showUserMenu: state.showUserMenu,
+      navigateTo,
+      toggleSidebar,
+      toggleUserMenu,
+      toggleFullscreen,
+      toggleTheme,
+      handleLogout,
+    }
+  },
+}
+</script>
+
+<style scoped>
+.admin-layout {
+  display: flex;
+  min-height: 100vh;
+  background: var(--bg-color);
+}
+
+/* 侧边栏 */
+.sidebar {
+  width: var(--sidebar-width);
+  background: var(--sidebar-bg);
+  color: var(--sidebar-text);
+  display: flex;
+  flex-direction: column;
+  transition: width 0.3s ease;
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: 100;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+}
+
+.sidebar-collapsed .sidebar {
+  width: var(--sidebar-collapsed-width);
+}
+
+.sidebar-logo {
+  height: 60px;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--border-color);
+  gap: 10px;
+}
+
+.logo-icon {
+  width: 32px;
+  height: 32px;
+  background: var(--primary-color);
+  color: #fff;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.logo-text {
+  font-size: 18px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.sidebar-menu {
+  flex: 1;
+  padding: 12px 8px;
+  overflow-y: auto;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  color: var(--sidebar-text);
+  margin-bottom: 4px;
+  gap: 10px;
+}
+
+.menu-item:hover {
+  background: var(--sidebar-hover-bg);
+  color: var(--sidebar-active-text);
+}
+
+.menu-item.active {
+  background: var(--primary-color);
+  color: #fff;
+}
+
+.menu-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+  width: 24px;
+  text-align: center;
+}
+
+.menu-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 14px;
+}
+
+.sidebar-toggle {
+  padding: 12px;
+  text-align: center;
+  border-top: 1px solid var(--border-color);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.sidebar-toggle:hover {
+  background: var(--sidebar-hover-bg);
+}
+
+/* 主区域 */
+.main-area {
+  flex: 1;
+  margin-left: var(--sidebar-width);
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  transition: margin-left 0.3s ease;
+}
+
+.sidebar-collapsed .main-area {
+  margin-left: var(--sidebar-collapsed-width);
+}
+
+/* 顶部栏 */
+.topbar {
+  height: 60px;
+  background: var(--card-bg);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.breadcrumb-item {
+  color: var(--text-secondary);
+  text-decoration: none;
+}
+
+.breadcrumb-item.current {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.breadcrumb-separator {
+  color: var(--text-disabled);
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.topbar-action {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-size: 16px;
+}
+
+.topbar-action:hover {
+  background: var(--hover-bg);
+}
+
+.user-dropdown {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.user-dropdown:hover {
+  background: var(--hover-bg);
+}
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  background: var(--primary-color);
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.user-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.dropdown-arrow {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 8px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  min-width: 160px;
+  padding: 4px 0;
+  z-index: 200;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  font-size: 14px;
+  color: var(--text-primary);
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.dropdown-item:hover {
+  background: var(--hover-bg);
+}
+
+.dropdown-item.logout {
+  color: var(--danger-color);
+}
+
+.dropdown-divider {
+  height: 1px;
+  background: var(--border-color);
+  margin: 4px 0;
+}
+
+/* 内容区 */
+.content-area {
+  flex: 1;
+  padding: 24px;
+  overflow-y: auto;
+}
+
+/* 响应式 */
+@media (max-width: 768px) {
+  .sidebar {
+    transform: translateX(-100%);
+  }
+
+  .sidebar.mobile-open {
+    transform: translateX(0);
+  }
+
+  .main-area {
+    margin-left: 0;
+  }
+
+  .user-name {
+    display: none;
+  }
+}
+</style>
