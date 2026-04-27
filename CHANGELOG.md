@@ -1,5 +1,3 @@
----
-
 # Changelog
 
 本项目的所有重要变更都将记录在此文件中。
@@ -9,14 +7,14 @@
 
 ## [Unreleased]
 
-### 文档
+### Changed
 
 - 统一文档命名规范，删除临时性开发文档
 - 为 6 个插件包补充 README.md
 - 更新文档索引和 VitePress 配置
 - 修正 VitePress 中的仓库链接
 
-### 新增 (Added)
+### Added
 
 #### P2 生态扩展
 
@@ -64,7 +62,7 @@
 - **测试**: 新增 `@lytjs/common` 包完整单元测试
 - **示例**: 新增 SSR 渲染示例（examples/ssr-app/）
 
-### 变更 (Changed)
+### Changed
 - **Vapor Mode**: `bindIf()` 从 display:none 切换改为 DOM 插入/移除方式
 - **Vapor Mode**: `bindEach()` 从全量重建改为真正的 keyed diff 算法
 - **Vapor Mode**: `vaporPatch()` 支持绑定迁移和清理
@@ -79,7 +77,7 @@
 - **基准测试**: js-framework-benchmark keyed 实现从全量重建优化为 keyed diff 算法
 - **基准测试**: Vapor 基准测试从模拟测试升级为基于真实 API 的完整基准
 
-### 修复 (Fixed)
+### Fixed
 - **Vapor Mode**: 修复 `vaporPatch()` 不处理 bindings 迁移导致响应式绑定断裂的问题
 - **Vapor Mode**: 修复 `vaporMount()` 卸载时不清理 Signal 绑定导致的内存泄漏
 - **错误处理**: 修复 `dev-error.ts` 中错误码范围与实际不匹配导致修复建议错误的问题
@@ -87,7 +85,7 @@
 
 ## [4.2.0] - 2026-04-27
 
-### 新增 (Features)
+### Added
 
 - **AI 集成包 (@lytjs/ai)** - 完整的 AI 代码生成和辅助开发功能
   - AI 代码生成、组件生成、代码补全
@@ -111,7 +109,7 @@
   - 贡献指南 (CONTRIBUTING.md)
   - 行为准则 (CODE_OF_CONDUCT.md)
 
-### 修复 (Bug Fixes)
+### Fixed
 
 - **CLI 语法错误修复** - 修复 generate.ts 中的语法错误
   - `packages/cli/src/generate.ts` - 修复 missing } 语法错误
@@ -119,7 +117,7 @@
 - **CI 部署工作流修复** - 修复 develop 分支的文档部署工作流
   - `.github/workflows/deploy-docs.yml` - 工作流配置修复
 
-### 改进 (Improvements)
+### Changed
 
 - **AI 开发工具集成** - 添加 .trae 目录下的 AI 辅助开发资源
   - API 参考文档
@@ -135,10 +133,9 @@
 
 ---
 
----
 ## [4.1.0] - 2026-04-27
 
-### 新增 (Features)
+### Added
 
 - **基准测试基础设施完善** - 添加 Vapor Mode 基准测试和完整测试套件
   - `benchmarks/vapor.bench.js` - Vapor Mode 性能基准测试
@@ -150,14 +147,14 @@
   - GitHub Actions 自动部署到 GitHub Pages
   - 文档结构优化
 
-### 修复 (Bug Fixes)
+### Fixed
 
 - **TypeScript 错误修复** - 解决所有 TypeScript 编译错误
   - `@lytjs/renderer` - 修复 vapor-compiler.ts 中 root.children 可选类型处理
   - `@lytjs/store` - 修复 create-store.ts 中 mergeObjects 类型断言
   - `@lytjs/test-utils` - 删除冗余测试文件 (index2.ts, index3.ts, simple-test.ts)
 
-### 改进 (Improvements)
+### Changed
 
 - **文档编码检查和更新** - 完善文档编码管理和更新
   - 检查并验证所有 68 个 Markdown 文档文件编码
@@ -170,59 +167,29 @@
 
 ## [4.0.5] - 2026-04-27
 
-### 文档全面更新 (Documentation)
+### Changed
 
 - **文档编码验证**: 完整检查项目中所有 67 个 Markdown 文档文件，验证均使用 UTF-8 编码，无 BOM，无乱码问题，中文显示正常
-- **docs/README.md 更新**: 添加当前版本信息、更新日期、测试覆盖信息，确保与项目状态一致
-- **docs/project/PROJECT_SUMMARY.md 更新**: 更新最后更新日期为 2026-04-27，添加总测试数和文档验证信息
-- **所有文档状态确认**: 检查并确认所有文档内容完整，信息准确，与当前项目版本 4.0.5 保持一致
-
-### 工具 (Tools)
-
-- **添加编码检查脚本**: 创建 `check-encoding.mjs` 脚本，用于验证项目中所有 Markdown 文档文件的编码格式，自动检测并修复 BOM 问题
-
-## [4.0.5] - 2026-04-26 文档更新 (Documentation)
-
-- **README.md 全面更新**：
-  - 更新了完整的项目概述
-  - 完善了功能完成度表格，新增元框架 (LytX)
-  - 更新了包结构分类（核心引擎包 8 个、功能包 7 个、插件包 6 个，共 23 个包）
-  - 完善了组件列表（38+ 个组件的完整分类）
-  - 更新了架构图
-  - 完善了开发脚本说明
-
-- **docs/README.md 更新**：
-  - 完善了文档分类说明
-  - 更新了包列表信息
-  - 新增了完整的组件列表分类
-  - 更新了版本信息为 2.0
-  - 最后更新日期为 2026-04-26
-
-- **docs/project/PROJECT_SUMMARY.md 更新**：
-  - 完善了项目概述信息
-  - 更新了版本为 4.0.5
-  - 新增了完整的包列表（23 个包）
-  - 完善了项目结构说明
-  - 新增了完整的组件分类列表
-  - 更新了项目里程碑
-  - 完善了开发项目本身的脚本说明
-  - 新增了后续优化建议
-
-### 改进 (Improvements)
-
+- **README.md 全面更新**: 更新了完整的项目概述，完善了功能完成度表格，更新了包结构分类和组件列表
+- **docs/README.md 更新**: 完善了文档分类说明，更新了包列表信息，添加了完整的组件列表分类
+- **docs/project/PROJECT_SUMMARY.md 更新**: 完善了项目概述信息，新增了完整的包列表和组件分类列表
 - **编码检查**: 检查并确认所有文档文件使用 UTF-8 编码，无乱码问题，中文显示正常
 - **项目分析**: 完整分析了所有 23 个包的 package.json 和源代码结构
+
+### Added
+
+- **添加编码检查脚本**: 创建 `check-encoding.mjs` 脚本，用于验证项目中所有 Markdown 文档文件的编码格式，自动检测并修复 BOM 问题
 
 ---
 
 ## [4.0.0] - 2026-04-17
 
-### ⚠️ 破坏性变更 (Breaking Changes)
+### Breaking Changes
 
 - **统一版本号**: 所有子包版本号统一为 4.0.0，标记 API 稳定化的首个版本
 - **API 冻结**: 公共 API 进入稳定期，后续变更将严格遵循语义化版本控制
 
-### 新增 (Features)
+### Added
 
 - **API 稳定化**: 冻结所有核心包的公共 API，提供稳定的开发者契约
 - **语义化版本控制**: 引入严格的 semver 版本管理策略
@@ -231,7 +198,7 @@
   - 修订号：向后兼容的 Bug 修复
 - **版本一致性**: 统一所有 18 个子包的版本号，消除版本碎片化
 
-### 改进 (Improvements)
+### Changed
 
 - **CONTRIBUTING.md**: 更新仓库地址为 Gitee，更新 Node.js 要求为 >=18
 - **Issue/PR 模板**: 新增 GitHub Issue 和 Pull Request 模板
@@ -239,7 +206,7 @@
 
 ## [3.2.1] - 2026-04-17
 
-### 修复 (Bug Fixes)
+### Fixed
 
 - **fix(cli)**: 修复 `npx @lytjs/cli create my-app` 报 `Cannot find module 'esbuild'` 错误
   - 将 `esbuild` 添加为 `@lytjs/cli` 的运行时依赖
@@ -255,7 +222,7 @@
   - components: 添加 @lytjs/component
 - **fix(test)**: 更新 cli-enhanced.test.ts 断言以匹配修复后的模板输出
 
-### 改进 (Improvements)
+### Changed
 
 - **cli**: dev.ts 和 build.ts 添加 esbuild 缺失时的友好错误提示
 - **build**: 构建脚本新增 Step 1.5 依赖一致性校验
@@ -264,7 +231,7 @@
 
 ## [3.2.0] - 2026-04-17
 
-### 新增
+### Added
 
 - **npm 发布准备**
   - 所有 18 个子包 package.json 统一完善（version/description/exports/files/keywords/repository/homepage/publishConfig）
@@ -284,14 +251,14 @@
   - 更新 SSR 指南：添加 Islands Architecture + Partial Hydration 章节
   - 首页 features 从 6 个扩展到 12 个
 
-### 变更
+### Changed
 
 - 仓库地址全局替换：gitee.com/idcu/lytjs → gitee.com/lytjs/lytjs（20 处）
 - 文档站 editLink 指向 Gitee
 
 ## [3.1.0] - 2026-04-17
 
-### 新增
+### Added
 
 - **Web Component 适配器** (`@lytjs/core/web-component`)
   - `defineCustomElement` — 将 Lyt.js 组件注册为 Custom Element
@@ -349,12 +316,12 @@
   - 新增 `toBeGreaterThanOrEqual` 断言方法
   - 新增 `toBeLessThanOrEqual` 断言方法
 
-### 修复
+### Fixed
 
 - 修复 benchmark 测试与 web-component 测试的 mock DOM 冲突（28 个测试失败 → 0）
 - 修复 MemoryTracker 泄漏检测的时间戳精度问题
 
-### 变更
+### Changed
 
 - 测试用例：1241 → 1353（+112 个新测试）
 - 错误码：39 → 56（+17 个）
@@ -362,7 +329,7 @@
 
 ## [3.0.0] - 2026-04-17
 
-### 新增
+### Added
 
 - **Vapor Mode 实验性渲染器** (`@lytjs/renderer/vapor`)
   - 直接 DOM 操作，绕过 Virtual DOM
@@ -418,7 +385,7 @@
   - CSS 热交换 / 组件热更新 / 全量刷新
   - `lytx preview` 预览命令
 
-### 变更
+### Changed
 
 - 测试用例：736 → 1126（+390 个新测试）
 - Vapor Mode 69 个测试
@@ -432,7 +399,7 @@
 
 ## [2.0.0] - 2026-04-17
 
-### 新增
+### Added
 
 - **LytX 元框架** (`@lytjs/lytx`)
   - 文件路由系统（index/静态/嵌套/动态 `[slug]`/catch-all `[...slug]`）
@@ -484,7 +451,7 @@
   - `scripts/publish.sh` — 按依赖顺序发布（支持 --dry-run）
   - `.npmrc` / `.npmignore` 配置
 
-### 变更
+### Changed
 
 - 测试用例：488 → 736（+248 个新测试）
 - 所有包版本统一升级至 2.0.0
@@ -492,7 +459,7 @@
 
 ## [1.5.0] - 2026-04-17
 
-### 新增
+### Added
 
 - **流式 SSR** (`@lytjs/renderer`)
   - `renderToStream(vnode, options?)` — 返回 ReadableStream，支持分块 HTML 输出
@@ -546,14 +513,14 @@
   - 3 个示例页面（计数器/Todo 应用/主题切换）
   - 本地搜索、蓝靛蓝主题
 
-### 修复
+### Fixed
 
 - **测试运行器** — `runAll()` 改用 `.then()` 确保 Promise 被等待
 - **reactive.test.ts** — 汇总标题改为 `--- 响应式系统自测结果 ---` 避免与 `runAll()` 冲突
 - **SSR 测试** — 修复 `defineAsyncComponent 重试机制` 测试中永不 resolve 的 Promise
 - **test-runner.ts** — 移除 `reactive.test.ts` 重复导入
 
-### 变更
+### Changed
 
 - 测试用例：400 → 488（+88 个新测试）
 - `@lytjs/devtools` 新增 30 个性能监控测试
@@ -562,7 +529,7 @@
 
 ## [1.1.0] - 2026-04-17
 
-### 修复
+### Fixed
 
 - **测试基础设施** (`@lytjs/test-utils`)
   - 修复 Store 测试重复运行 14 次的问题（各测试文件不再自行调用 `runAll()`，由 `test-runner.ts` 统一调度）
@@ -582,7 +549,7 @@
   - `$forceUpdate()` 委托给渲染器的 update 回调
   - 同步更新 keep-alive.ts 的 `SavedComponentState` 接口和 save/restore 逻辑
 
-### 重构
+### Changed
 
 - **create-app.ts** (`@lytjs/core`) — 架构重构（评分 4.8→8.0+）
   - 删除与 `@lytjs/component` 重复的 `createComponentInstance`/`renderComponent`/`renderVNode`
@@ -602,14 +569,14 @@
   - `props.ts` — 属性处理逻辑
   - `create-renderer.ts` — createRenderer 工厂函数
 
-### 增强
+### Added
 
 - **codegen.ts** (`@lytjs/compiler`)
   - `wrapExpression` 修复字符串字面量中标识符被错误替换的边界问题（引入占位符机制）
   - 新增 `$event`/`$refs`/`$el` 等特殊标识符保护（不会被加 `_ctx.` 前缀）
   - `capitalize` 支持 kebab-case → camelCase 转换（`key-down` → `KeyDown`）
 
-### 变更
+### Changed
 
 - 所有 17 个子包版本统一升级至 1.1.0
 - 根 package.json 版本升级至 1.1.0
@@ -617,7 +584,7 @@
 
 ## [1.0.0] - 2026-04-16
 
-### 新增
+### Added
 
 - **Composition API** (`@lytjs/component`)
   - `setup()` 函数 — 在 defineComponent 中使用组合式 API
@@ -643,14 +610,14 @@
   - 事件存储修复（平台中性名称 + 序列化时加前缀）
   - 37 个测试用例
 
-### 文档
+### Changed
 
 - **迁移指南** (`docs/migration-guide.md`) — v0.x → v1.0 破坏性变更和升级步骤
 - **API 稳定性声明** (`docs/api-stability.md`) — 稳定 API 和实验性 API 清单
 - **响应式架构评估** (`docs/reactivity-evaluation.md`) — VDOM vs Signals 决策分析
 - **CONTRIBUTING.md 更新** — Composition API/SFC/插件贡献指南
 
-### 测试
+### Changed
 
 - **20/20 测试文件 100% 通过**
 - 新增测试：Composition API(34) + NativeRenderer(36) + MiniApp(37) = **107 个新测试用例**
@@ -660,7 +627,7 @@
 
 ## [0.4.0] - 2026-04-16
 
-### 新增
+### Added
 
 - **聚合包 `lyt`** (`packages/agg/`)
   - 一键安装所有运行时能力：`npm install lyt`
@@ -707,12 +674,12 @@
   - `refreshToken()` — Token 刷新（支持回调配置）
   - `hasRole()` / `hasPermission()` — 权限检查
 
-### 重构
+### Changed
 
 - **统一 16 个包的 package.json** — 标准化 name/version/main/module/types/exports/sideEffects/files
 - **版本号统一为 0.3.0** → 现更新为 0.4.0
 
-### 测试
+### Changed
 
 - **18/18 测试文件 100% 通过**
 - 新增测试：error-handling(26) + i18n(30) + auth(24) + components(50) = **130 个新测试用例**
@@ -722,7 +689,7 @@
 
 ## [0.3.0] - 2026-04-16
 
-### 新增
+### Added
 
 - **SFC 单文件组件** (`@lytjs/compiler`)
   - `parseSFC()` — 解析 `.lyt` 文件为描述符（template/script/style 块提取）
@@ -749,20 +716,20 @@
   - `params`/`query`/`meta` 深层响应式
   - 5 个响应式集成测试用例
 
-### 修复
+### Fixed
 
 - **computed 链式依赖** — 修复嵌套 computed 级联更新不触发的问题（deps 集合未正确填充）
 - **Router 导航守卫** — 暴露内部守卫数组，修复 beforeEach/afterEach/beforeResolve 不执行的问题
 - **Router redirect** — 清理类型断言，使用公共属性访问守卫
 
-### 重构
+### Changed
 
 - **CLI esbuild 集成** (`@lytjs/cli`)
   - `dev.ts`: 用 esbuild `transformSync` 替换 ~90 行正则 TS 编译
   - `build.ts`: 用 esbuild `build()` 替换 ~400 行手动打包器（含依赖图/压缩/SourceMap）
   - HMR WebSocket / HTTP 服务器 / 文件监听功能保持不变
 
-### 测试
+### Changed
 
 - **全部 15 个测试文件 100% 通过**
 - 新增测试：SFC(24) + SSR(39) + KeepAlive(31) + Router 响应式(5) = **99 个新测试用例**
@@ -772,7 +739,7 @@
 
 ## [0.2.0] - 2026-04-16
 
-### 安全修复
+### Fixed
 
 - **消除 `new Function` + `with` 安全风险** (`@lytjs/core`, `@lytjs/compiler`)
   - 编译器 codegen 改为生成 `_ctx.xxx` 形式的代码，不再依赖 `with` 作用域
@@ -780,7 +747,7 @@
   - 添加 `compileToFunction` 缓存机制，避免重复编译
   - 修复 codegen 中 props/children 位置错误的 bug
 
-### 重构
+### Changed
 
 - **Store 消除重复代码** (`@lytjs/store`)
   - 删除 ~280 行内置响应式系统，改为使用 `@lytjs/reactivity` 包
@@ -788,7 +755,7 @@
   - `use()` 方法重命名为 `$expose()` 避免与插件 `use()` 冲突
   - Store 行数从 775 行减少到 ~596 行
 
-### 新增
+### Added
 
 - **esbuild 打包系统** (`scripts/esbuild-bundle.js`)
   - 引入 esbuild 作为构建工具（唯一允许的构建依赖）
@@ -810,7 +777,7 @@
   - 修复 `triggerRef` 使用错误 target 的问题
   - 新增 20 个测试用例覆盖数组方法/shallowReactive/toRaw/isReactive/triggerRef
 
-### 修复
+### Fixed
 
 - **defineComponent computed 支持** — 支持 `{ get, set }` 对象和函数简写两种格式
 - **slots normalizeSlotValue** — 简单值（字符串/数字）不再包装为数组
@@ -820,7 +787,7 @@
 - **测试框架 runAll** — 执行后清空 suites，支持多次调用
 - **包间导入** — 所有 `@lytjs/*` 导入改为相对路径，解决 tsx 运行时解析问题
 
-### 体积报告（esbuild + minify + gzip）
+#### 体积报告（esbuild + minify + gzip）
 
 | 包 | ESM gzip | CJS gzip |
 |----|----------|----------|
@@ -838,7 +805,7 @@
 
 ## [0.1.0] - 2025-01-01
 
-### 新增
+### Added
 
 #### 核心引擎
 - **响应式系统** (`@lytjs/reactivity`)
