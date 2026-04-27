@@ -6,11 +6,16 @@
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
+    "types": ["node"],
     "declaration": true,
     "declarationMap": true,
     "outDir": "./dist",
     "rootDir": "./src",
-    "sourceMap": true
+    "sourceMap": true,
+    "paths": {
+      "@lytjs/plugin-sdk": ["../plugin-sdk/dist/types"],
+      "@lytjs/plugin-sdk/*": ["../plugin-sdk/dist/types/*"]
+    }
   },
   "include": ["src"],
   "exclude": ["node_modules", "dist", "__tests__"]

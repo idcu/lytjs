@@ -359,7 +359,7 @@ function createCustomElementClass(
       const ctx = this._createComponentContext()
 
       // 执行渲染
-      const vnode = render.call(ctx, h, ctx)
+      const vnode = render ? (render as any).call(ctx, h, ctx) : null
 
       // 渲染到容器
       if (vnode && this._container) {
@@ -378,7 +378,8 @@ function createCustomElementClass(
       // 这里提供最小化的模板编译支持
       try {
         // 动态导入编译器（如果可用）
-        const compilerModule = await import('../../compiler/src/index.js')
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const compilerModule = await import('@lytjs/compiler') as any
         const { compile } = compilerModule
         const { code } = compile(template)
         return new Function('h', '_ctx', `return ${code}`) as (h: unknown, ctx: unknown) => VNode
@@ -461,11 +462,11 @@ function createCustomElementClass(
       // 在浏览器环境中，可以利用 @lytjs/reactivity 的 effect
       try {
         // 动态导入 reactivity（如果可用）
-        import('../../reactivity/src/index.js').then((reactivityModule: any) => {
+        import('@lytjs/reactivity').then((reactivityModule: any) => {
           const { effect, stop } = reactivityModule
           const runner = effect(() => {
-            if (!this._connected || !this._container) return
-            const vnode = render.call(ctx, h, ctx)
+            if (!this._connected || !this._container || !render) return
+            const vnode = (render as any).call(ctx, h, ctx)
             if (vnode) {
               this._container.innerHTML = ''
               this._renderVNode(vnode, this._container)
@@ -554,8 +555,8 @@ function createCustomElementClass(
       this._updateScheduled = true
       Promise.resolve().then(() => {
         this._updateScheduled = false
-        if (!this._connected || !this._container) return
-        const vnode = render.call(ctx, h, ctx)
+        if (!this._connected || !this._container || !render) return
+        const vnode = (render as any).call(ctx, h, ctx)
         if (vnode) {
           this._container.innerHTML = ''
           this._renderVNode(vnode, this._container)
@@ -574,9 +575,9 @@ function createCustomElementClass(
       if (!render && componentOptions.template) {
         // 使用编译缓存，只在模板变化时重新编译
         if (this._compiledTemplate && this._compiledTemplate.template === componentOptions.template) {
-          render = this._compiledTemplate.render
+          render = this._compiledTemplate.render as any
         } else {
-          render = await this._compileTemplate(componentOptions.template)
+          render = await this._compileTemplate(componentOptions.template) as any
           if (render) {
             this._compiledTemplate = { template: componentOptions.template, render }
           }
@@ -586,7 +587,7 @@ function createCustomElementClass(
       if (!render) return
 
       const ctx = this._createComponentContext()
-      const vnode = render.call(ctx, h, ctx)
+      const vnode = render ? (render as any).call(ctx, h, ctx) : null
 
       this._container.innerHTML = ''
       if (vnode) {

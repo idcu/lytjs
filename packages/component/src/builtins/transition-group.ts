@@ -185,7 +185,7 @@ export const TransitionGroup: ComponentDefine = defineComponent({
     const slots = instance.slots;
 
     // 获取默认插槽内容（子元素列表）
-    const children = slots.default ? slots.default() : null;
+    const children = slots.default ? (slots.default as Function)() : null;
 
     // 标准化子元素为数组
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

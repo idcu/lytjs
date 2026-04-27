@@ -212,14 +212,14 @@ export const Suspense: ComponentDefine = defineComponent({
     const slots = instance.slots;
 
     // 获取默认插槽内容（子组件）
-    const children = slots.default ? slots.default() : null;
+    const children = slots.default ? (slots.default as Function)() : null;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const rawChildren: any[] = Array.isArray(children)
       ? children
       : children !== null && children !== undefined ? [children] : [];
 
     // 获取 fallback 插槽内容（优先使用 fallback 插槽，其次使用 props.fallback）
-    const fallbackSlot = slots.fallback ? slots.fallback() : null;
+    const fallbackSlot = slots.fallback ? (slots.fallback as Function)() : null;
     const fallbackContent = fallbackSlot !== null && fallbackSlot !== undefined
       ? (Array.isArray(fallbackSlot) ? fallbackSlot[0] : fallbackSlot)
       : props.fallback;

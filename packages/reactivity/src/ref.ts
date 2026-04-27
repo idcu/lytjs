@@ -88,7 +88,7 @@ export function ref<T = any>(value: T): Ref<T> {
   } as unknown as Ref<T>;
 
   // 使用 Proxy 拦截 .value 的访问
-  const proxy = new Proxy(r, refHandlers) as Ref<T>;
+  const proxy = new Proxy(r, refHandlers as any) as Ref<T>;
   refToRaw.set(proxy as object, r);
   return proxy;
 }
@@ -109,7 +109,7 @@ function convert(value: any): any {
 /** Ref 内部存储对象类型 */
 interface RefInternal<T = unknown> {
   _value: T;
-  _rawValue: T;
+  _rawValue: unknown;
   __v_isRef: true;
   [refSymbol]: true;
 }
@@ -148,7 +148,7 @@ const refHandlers: ProxyHandler<RefInternal> = {
 
       // 更新原始值和响应式值
       target._rawValue = value;
-      target._value = convert(value);
+      target._value = convert(value) as typeof target._value;
 
       // 触发更新
       trigger(target, 'value', 'set', value);
@@ -192,7 +192,7 @@ export function shallowRef<T = any>(value: T): Ref<T> {
     [shallowRefSymbol]: true,
   } as unknown as Ref<T>;
 
-  const proxy = new Proxy(r, shallowRefHandlers) as Ref<T>;
+  const proxy = new Proxy(r, shallowRefHandlers as any) as Ref<T>;
   refToRaw.set(proxy as object, r);
   return proxy;
 }
@@ -204,7 +204,7 @@ export function shallowRef<T = any>(value: T): Ref<T> {
 /** ShallowRef 内部存储对象类型 */
 interface ShallowRefInternal<T = unknown> {
   _value: T;
-  _rawValue: T;
+  _rawValue: unknown;
   __v_isRef: true;
   __v_isShallow: true;
   [refSymbol]: true;
@@ -238,7 +238,7 @@ const shallowRefHandlers: ProxyHandler<ShallowRefInternal> = {
 
       // 浅层 Ref：直接存储原始值，不调用 convert
       target._rawValue = value;
-      target._value = value;
+      target._value = value as typeof target._value;
 
       trigger(target, 'value', 'set', value);
       return true;

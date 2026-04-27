@@ -52,7 +52,7 @@ export class EventBus {
   /** 事件监听器映射 */
   private _listeners: Map<string, Set<EventCallback>> = new Map()
   /** 通配符监听器 */
-  private _wildcardListeners: Set<EventCallback> = new Map()
+  private _wildcardListeners: Set<EventCallback> = new Set()
   /** 是否已销毁 */
   private _destroyed = false
   /** 最大监听器数量（防止内存泄漏） */
@@ -265,7 +265,7 @@ export class SharedState {
   /** 监听器映射 */
   private _watchers: Map<string, Set<StateChangeCallback>> = new Map()
   /** 全局监听器 */
-  private _globalWatchers: Set<StateChangeCallback> = new Set()
+  private _globalWatchers: Set<(key: string, newValue: any, oldValue: any) => void> = new Set()
   /** 是否已销毁 */
   private _destroyed = false
 

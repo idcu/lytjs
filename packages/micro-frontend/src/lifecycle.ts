@@ -152,7 +152,7 @@ export class MicroApp {
   /** 沙箱 */
   private _sandbox: Sandbox | null = null
   /** CSS 沙箱 */
-  private _styleSandbox: MicroAppOptions['styleSandbox'] = null
+  private _styleSandbox: MicroAppOptions['styleSandbox'] = undefined
   /** 事件总线 */
   private _eventBus: EventBus | null = null
   /** 共享状态 */
@@ -172,7 +172,7 @@ export class MicroApp {
     this.lifecycle = options.lifecycle || {}
     this._props = options.props || {}
     this._sandbox = options.sandbox || null
-    this._styleSandbox = options.styleSandbox || null
+    this._styleSandbox = options.styleSandbox ?? undefined
     this._eventBus = options.eventBus || null
     this._sharedState = options.sharedState || null
     this._customMount = options.customMount
@@ -405,7 +405,7 @@ export class MicroApp {
     // 销毁 CSS 沙箱
     if (this._styleSandbox) {
       this._styleSandbox.destroy()
-      this._styleSandbox = null
+      this._styleSandbox = undefined
     }
 
     this._error = null

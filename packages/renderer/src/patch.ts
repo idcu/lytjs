@@ -72,7 +72,7 @@ export function patch(
   // 文本节点处理
   if (isTextVNode(n2)) {
     if (n2.children !== n1.children) {
-      n2.el.nodeValue = n2.children as string
+      n2.el!.nodeValue = n2.children as string
     }
     return
   }
@@ -80,7 +80,7 @@ export function patch(
   // 注释节点处理
   if (isCommentVNode(n2)) {
     if (n2.children !== n1.children) {
-      n2.el.nodeValue = n2.children as string
+      n2.el!.nodeValue = n2.children as string
     }
     return
   }
@@ -137,14 +137,14 @@ function patchElement(
     // CLASS 标记
     if (patchFlag & PatchFlags.CLASS) {
       if (oldProps.class !== newProps.class) {
-        renderer.setClass(el, newProps.class)
+        renderer.setClass(el, newProps.class as string | object)
       }
     }
 
     // STYLE 标记
     if (patchFlag & PatchFlags.STYLE) {
       if (oldProps.style !== newProps.style) {
-        renderer.setStyle(el, newProps.style || {})
+        renderer.setStyle(el, (newProps.style || {}) as object)
       }
     }
 

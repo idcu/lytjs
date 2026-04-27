@@ -76,7 +76,7 @@ export const enum PatchFlags {
 // ================================================================
 
 /** 源代码位置信息 */
-export interface SourceLocation {
+export interface VNodeSourceLocation {
   /** 起始行号 */
   start: { line: number; column: number }
   /** 结束行号 */
@@ -108,7 +108,7 @@ export interface VNodeData {
   /** 作用域 ID */
   scopeId?: string
   /** 源代码位置 */
-  loc?: SourceLocation
+  loc?: VNodeSourceLocation
 }
 
 /** VNode - 虚拟 DOM 节点 */

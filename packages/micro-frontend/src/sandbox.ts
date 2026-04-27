@@ -476,7 +476,7 @@ export function createStyleSandbox(options: StyleSandboxOptions): StyleSandbox {
 
   const styleElements: HTMLStyleElement[] = []
   let shadowRoot: ShadowRoot | null = null
-  let styleContainer: HTMLElement = container
+  let styleContainer: HTMLElement | ShadowRoot = container
 
   // 如果使用 Shadow DOM，创建 Shadow Root
   if (useShadowDOM) {

@@ -39,18 +39,18 @@ export const skipFlag = Symbol('skip');
  * WeakMap<原始对象, Proxy代理对象>
  * 确保同一个原始对象始终返回同一个代理对象
  */
-const proxyMap = new WeakMap<object, Record<string, unknown>>();
+const proxyMap = new WeakMap<object, unknown>();
 
 /**
  * 只读代理缓存 Map
  * 与 proxyMap 分开存储，因为同一个对象可以有 reactive 和 readonly 两个代理
  */
-const readonlyMap = new WeakMap<object, Record<string, unknown>>();
+const readonlyMap = new WeakMap<object, unknown>();
 
 /**
  * 浅层代理缓存 Map
  */
-const shallowReactiveMap = new WeakMap<object, Record<string, unknown>>();
+const shallowReactiveMap = new WeakMap<object, unknown>();
 
 // ======================== 工具函数 ========================
 
@@ -431,7 +431,7 @@ export function reactive<T extends object>(
   // 检查缓存，确保同一个原始对象返回同一个代理
   const existingProxy = proxyMap.get(target);
   if (existingProxy) {
-    return existingProxy;
+    return existingProxy as T;
   }
 
   // 创建代理
@@ -456,7 +456,7 @@ export function readonly<T extends object>(target: T): T {
   // 检查缓存
   const existingProxy = readonlyMap.get(target);
   if (existingProxy) {
-    return existingProxy;
+    return existingProxy as T;
   }
 
   // 标记原始对象为只读
@@ -484,7 +484,7 @@ export function shallowReactive<T extends object>(target: T): T {
   // 检查缓存
   const existingProxy = shallowReactiveMap.get(target);
   if (existingProxy) {
-    return existingProxy;
+    return existingProxy as T;
   }
 
   // 创建浅层代理

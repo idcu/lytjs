@@ -301,7 +301,7 @@ export const KeepAlive: ComponentDefine = defineComponent({
     const slots = instance.slots;
 
     // 获取默认插槽内容（子组件）
-    const children = slots.default ? slots.default() : null;
+    const children = slots.default ? (slots.default as Function)() : null;
     const rawChild = Array.isArray(children) ? children[0] : children;
 
     if (!rawChild || typeof rawChild !== 'object') {

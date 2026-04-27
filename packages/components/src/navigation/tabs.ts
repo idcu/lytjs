@@ -43,7 +43,7 @@ export const Tabs = defineComponent({
       const result: Array<{ key: string | number; label: string; closable?: boolean }> = [];
       // 从 slot 中解析 tab-pane 信息
       if (slots.default) {
-        const children = slots.default();
+        const children = (slots.default as Function)();
         if (Array.isArray(children)) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           children.forEach((child: any) => {

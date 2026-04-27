@@ -30,7 +30,7 @@ export function mountVNode(
 
   // 文本节点挂载
   if (isTextVNode(vnode)) {
-    const el = renderer.createText(vnode.children as string)
+    const el = renderer.createText(vnode.children as string) as Text
     vnode.el = el
     renderer.insert(container, el, anchor)
     return
@@ -38,7 +38,7 @@ export function mountVNode(
 
   // 注释节点挂载
   if (isCommentVNode(vnode)) {
-    const el = renderer.createComment(vnode.children as string)
+    const el = renderer.createComment(vnode.children as string) as any
     vnode.el = el
     renderer.insert(container, el, anchor)
     return
@@ -69,7 +69,7 @@ export function mountElement(
   parentComponent: any,
 ): void {
   const tag = vnode.type as string
-  const el = renderer.createElement(tag)
+  const el = renderer.createElement(tag) as Element
   vnode.el = el
 
   // 处理 props
@@ -124,7 +124,7 @@ export function mountFragment(
   const { children } = vnode
 
   // 创建起始锚点注释节点
-  const fragmentStartAnchor = renderer.createComment('')
+  const fragmentStartAnchor = renderer.createComment('') as any
   renderer.insert(container, fragmentStartAnchor, anchor)
 
   // 挂载所有子节点

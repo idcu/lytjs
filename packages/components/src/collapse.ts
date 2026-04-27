@@ -92,7 +92,7 @@ export const Collapse = defineComponent({
     const panels = () => {
       const result: Array<{ key: string | number; title: string; disabled?: boolean }> = []
       if (slots.default) {
-        const children = slots.default()
+        const children = (slots.default as Function)()
         if (Array.isArray(children)) {
           children.forEach((child: any, index: number) => {
             if (child.props) {

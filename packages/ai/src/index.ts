@@ -55,35 +55,13 @@ export type {
   OllamaProviderConfig,
 } from './providers'
 
-// 导出提示词（原有）
+// 导出提示词
 export {
   SYSTEM_PROMPT,
   generateComponentPrompt,
   generateStorePrompt,
   generatePagePrompt,
   generateAPIPrompt,
-} from './prompts'
-
-// 导出增强提示词
-export {
-  buttonComponentPrompt,
-  inputComponentPrompt,
-  selectComponentPrompt,
-  basicComponentPrompt,
-  formComponentPrompt,
-  tableComponentPrompt,
-  modalComponentPrompt,
-  compositeComponentPrompt,
-  customComponentPrompt,
-  getComponentPrompt,
-  inlineCompletionPrompt,
-  functionCompletionPrompt,
-  componentCompletionPrompt,
-  smartCompletionPrompt,
-  compileErrorFixPrompt,
-  runtimeErrorFixPrompt,
-  typeErrorFixPrompt,
-  autoFixPrompt,
 } from './prompts'
 
 // 导出类型

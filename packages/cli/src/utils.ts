@@ -205,11 +205,15 @@ export function readFile(filePath: string): string {
  * @param filePath - 文件路径
  * @param content - 要写入的内容
  */
-export function writeFile(filePath: string, content: string): void {
+export function writeFile(filePath: string, content: string | Buffer): void {
   // 确保父目录存在
   const dir = path.dirname(filePath);
   ensureDir(dir);
-  fs.writeFileSync(filePath, content, 'utf-8');
+  if (typeof content === 'string') {
+    fs.writeFileSync(filePath, content, 'utf-8');
+  } else {
+    fs.writeFileSync(filePath, content);
+  }
 }
 
 // ============================================================

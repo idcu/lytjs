@@ -38,7 +38,8 @@
       "@lytjs/core/*": ["../core/dist/types/*"],
       "@lytjs/router": ["../router/dist/types"],
       "@lytjs/router/*": ["../router/dist/types/*"],
-      "@lytjs/store": ["../store/dist/types"]
+      "@lytjs/store": ["../store/dist/types"],
+      "@lytjs/store/*": ["../store/dist/types/*"]
     }
   },
   "include": ["src/**/*.ts"],

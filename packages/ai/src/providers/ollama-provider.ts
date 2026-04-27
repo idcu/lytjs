@@ -261,7 +261,7 @@ export class OllamaProvider implements AIProviderInterface {
       if (!response.ok) return []
 
       const data = await response.json()
-      this._availableModels = (data.models || []).map((m: any) => m.name)
+      this._availableModels = ((data.models || []) as any[]).map((m: any) => m.name) || []
       return this._availableModels
     } catch {
       return []

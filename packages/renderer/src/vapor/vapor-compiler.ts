@@ -17,7 +17,7 @@ import { getVaporDOMFactory } from './vapor-renderer';
 import type { Signal } from '@lytjs/reactivity/signal';
 import { effect } from '@lytjs/reactivity/signal';
 import { bindIf, bindEach } from './vapor-reactive';
-import { LytError } from '@lytjs/common';
+import { LytError, LytErrorCodes } from '@lytjs/common';
 
 // ================================================================
 //  类型定义
@@ -97,7 +97,7 @@ function parseTemplate(template: string): ASTNode {
       const endIdx = findClosingTag(remaining, tagName);
 
       if (endIdx === -1) {
-        throw new LytError('LYT_RENDERER_VAPOR_COMPILER_ERROR', `未找到闭合标签: </${tagName}>`);
+        throw new LytError(LytErrorCodes.LYT_RENDERER_VAPOR_COMPILER_ERROR, `未找到闭合标签: </${tagName}>`);
       }
 
       const innerContent = remaining.slice(0, endIdx);
@@ -322,7 +322,7 @@ function renderASTNode(
       // 存储清理函数以便后续使用
       (el as Record<string, unknown>)._bindingCleanup = dispose;
       // 收集所有子清理函数到父级 _cleanupEffects 数组
-      collectCleanup(el, dispose);
+      collectCleanup(el as any, dispose);
     } else {
       el.textContent = value !== null && value !== undefined ? String(value) : '';
     }
@@ -342,7 +342,7 @@ function renderASTNode(
         container.nodeType = 11;
         const containerEl = container as VaporElement;
 
-        bindEach(containerEl, arrayValue, (arrayItem: unknown, index: number) => {
+        bindEach(containerEl, arrayValue as Signal<unknown[]>, (arrayItem: unknown, index: number) => {
           const itemCtx = { ...ctx, [item]: arrayItem, index };
           const itemEl = factory(node.tag || 'div');
           // 复制静态属性

@@ -121,7 +121,7 @@ class ComputedRefImpl<T> {
 
     // 如果 dirty，重新计算
     if (this._dirty) {
-      this._value = this._effect.run();
+      this._value = this._effect.run() as T;
       this._dirty = false;
     }
 
@@ -208,5 +208,5 @@ export function computed<T = any>(
   // 创建计算属性实例
   const cRef = new ComputedRefImpl(getter, setter);
 
-  return cRef as ComputedRef<T> | WritableComputedRef<T>;
+  return cRef as unknown as ComputedRef<T> | WritableComputedRef<T>;
 }

@@ -5,6 +5,7 @@
  */
 
 import type { PluginManifest } from './registry';
+import { PluginRegistry } from './registry';
 
 // ============================================================
 // 官方插件清单
@@ -147,7 +148,6 @@ export const BUILT_IN_PLUGINS: PluginManifest[] = [
  *
  * @returns 预填充官方插件的 PluginRegistry 实例
  */
-export function createDefaultRegistry(): import('./registry').PluginRegistry {
-  const { PluginRegistry } = require('./registry');
+export function createDefaultRegistry(): PluginRegistry {
   return new PluginRegistry(BUILT_IN_PLUGINS);
 }

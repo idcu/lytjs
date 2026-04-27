@@ -65,6 +65,12 @@
       ],
       "@lytjs/store/*": [
         "../store/dist/types/*"
+      ],
+      "@lytjs/common": [
+        "../common/dist/types"
+      ],
+      "@lytjs/common/*": [
+        "../common/dist/types/*"
       ]
     },
     "types": [

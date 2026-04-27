@@ -73,6 +73,25 @@ interface ChartOptions {
   yMin?: number;
 }
 
+/** 已解析的图表选项（所有属性均为必填） */
+interface ResolvedChartOptions {
+  title: string;
+  width: number;
+  height: number;
+  showGrid: boolean;
+  showLegend: boolean;
+  showValues: boolean;
+  animationDuration: number;
+  padding: {
+    top: number;
+    right: number;
+    bottom: number;
+    left: number;
+  };
+  yMax: number;
+  yMin: number;
+}
+
 /** 图表创建参数 */
 interface ChartConfig {
   /** 图表类型 */
@@ -102,7 +121,7 @@ const DEFAULT_COLORS = [
   '#ec4899', '#14b8a6', '#f97316', '#06b6d4', '#84cc16',
 ];
 
-const DEFAULT_OPTIONS: Required<ChartOptions> = {
+const DEFAULT_OPTIONS: ResolvedChartOptions = {
   title: '',
   width: 600,
   height: 400,
@@ -167,7 +186,7 @@ function formatNumber(n: number): string {
 function drawBarChart(
   ctx: CanvasRenderingContext2D,
   data: ChartData,
-  options: Required<ChartOptions>,
+  options: ResolvedChartOptions,
   progress: number
 ): void {
   const { width, height, padding, showGrid, showLegend, showValues, title } = options;
@@ -293,7 +312,7 @@ function drawBarChart(
 function drawLineChart(
   ctx: CanvasRenderingContext2D,
   data: ChartData,
-  options: Required<ChartOptions>,
+  options: ResolvedChartOptions,
   progress: number
 ): void {
   const { width, height, padding, showGrid, showLegend, showValues, title } = options;
@@ -460,16 +479,27 @@ function createChart(
     container.appendChild(canvas);
   }
 
-  const ctx = canvas.getContext('2d');
-  if (!ctx) {
-    throw new Error('[Chart] 无法获取 Canvas 2D 上下文');
-  }
+  const ctx = canvas.getContext('2d')!;
 
-  // 合并选项
-  const opts: Required<ChartOptions> = {
-    ...DEFAULT_OPTIONS,
-    ...config.options,
-    padding: { ...DEFAULT_OPTIONS.padding, ...config.options?.padding },
+  // 合并选项（逐个合并可选属性以确保非 undefined）
+  const userOpts = config.options;
+  const userPadding = userOpts?.padding;
+  const opts: ResolvedChartOptions = {
+    title: userOpts?.title ?? DEFAULT_OPTIONS.title,
+    width: userOpts?.width ?? DEFAULT_OPTIONS.width,
+    height: userOpts?.height ?? DEFAULT_OPTIONS.height,
+    showGrid: userOpts?.showGrid ?? DEFAULT_OPTIONS.showGrid,
+    showLegend: userOpts?.showLegend ?? DEFAULT_OPTIONS.showLegend,
+    showValues: userOpts?.showValues ?? DEFAULT_OPTIONS.showValues,
+    animationDuration: userOpts?.animationDuration ?? DEFAULT_OPTIONS.animationDuration,
+    padding: {
+      top: userPadding?.top ?? DEFAULT_OPTIONS.padding.top,
+      right: userPadding?.right ?? DEFAULT_OPTIONS.padding.right,
+      bottom: userPadding?.bottom ?? DEFAULT_OPTIONS.padding.bottom,
+      left: userPadding?.left ?? DEFAULT_OPTIONS.padding.left,
+    },
+    yMax: userOpts?.yMax ?? DEFAULT_OPTIONS.yMax,
+    yMin: userOpts?.yMin ?? DEFAULT_OPTIONS.yMin,
   };
 
   // 设置 Canvas 尺寸（高清屏适配）

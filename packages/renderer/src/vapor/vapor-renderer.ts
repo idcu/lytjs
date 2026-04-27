@@ -24,7 +24,7 @@ import {
   bindStyle,
   bindHTML,
 } from './vapor-reactive';
-import { LytError } from '@lytjs/common';
+import { LytError, LytErrorCodes } from '@lytjs/common';
 
 // ================================================================
 //  类型定义
@@ -120,7 +120,7 @@ let domFactory: (tag: string) => VaporElement = (tag: string) => {
   if (typeof document !== 'undefined') {
     return document.createElement(tag) as unknown as VaporElement;
   }
-  throw new LytError('LYT_RENDERER_VAPOR_ERROR', '未设置 DOM 工厂函数。在非浏览器环境中请调用 setVaporDOMFactory()');
+  throw new LytError(LytErrorCodes.LYT_RENDERER_VAPOR_ERROR, '未设置 DOM 工厂函数。在非浏览器环境中请调用 setVaporDOMFactory()');
 };
 
 /**

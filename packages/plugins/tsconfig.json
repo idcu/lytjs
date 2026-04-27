@@ -107,6 +107,36 @@
       ],
       "@lytjs/store/*": [
         "../store/dist/types/*"
+      ],
+      "@lytjs/plugin-chart": [
+        "../plugin-chart/dist/types"
+      ],
+      "@lytjs/plugin-chart/*": [
+        "../plugin-chart/dist/types/*"
+      ],
+      "@lytjs/plugin-highlight": [
+        "../plugin-highlight/dist/types"
+      ],
+      "@lytjs/plugin-highlight/*": [
+        "../plugin-highlight/dist/types/*"
+      ],
+      "@lytjs/plugin-virtual-list": [
+        "../plugin-virtual-list/dist/types"
+      ],
+      "@lytjs/plugin-virtual-list/*": [
+        "../plugin-virtual-list/dist/types/*"
+      ],
+      "@lytjs/plugin-sdk": [
+        "../plugin-sdk/dist/types"
+      ],
+      "@lytjs/plugin-sdk/*": [
+        "../plugin-sdk/dist/types/*"
+      ],
+      "@lytjs/plugin-registry": [
+        "../plugin-registry/dist/types"
+      ],
+      "@lytjs/plugin-registry/*": [
+        "../plugin-registry/dist/types/*"
       ]
     },
     "types": [

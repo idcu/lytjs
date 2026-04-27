@@ -14,13 +14,13 @@ export class AIClient {
 
   constructor(config: AIConfig) {
     this.config = {
-      provider: 'openai',
-      model: 'gpt-4o',
-      baseUrl: 'https://api.openai.com/v1',
-      temperature: 0.7,
-      maxTokens: 2000,
-      timeout: 30000,
-      ...config
+      ...config,
+      provider: config.provider || 'openai',
+      model: config.model || 'gpt-4o',
+      baseUrl: config.baseUrl || 'https://api.openai.com/v1',
+      temperature: config.temperature ?? 0.7,
+      maxTokens: config.maxTokens ?? 2000,
+      timeout: config.timeout ?? 30000,
     }
   }
 
@@ -117,7 +117,7 @@ export class AIClient {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': apiKey,
+          ...(apiKey ? { 'x-api-key': apiKey } : {}),
           'anthropic-version': '2023-06-01'
         },
         body: JSON.stringify({

@@ -259,7 +259,7 @@ export class ErrorBoundary {
     // 调用 onErrorCaptured 回调
     if (this.options.onErrorCaptured) {
       const result = this.options.onErrorCaptured(
-        error instanceof LytError ? error : new LytError(LytErrorCodes.LYT_CORE_OPERATION_FAILED, error.message),
+        error instanceof LytError ? error : new LytError(LytErrorCodes.LYT_CORE_OPERATION_FAILED as any, error.message),
         vm,
         entry.info,
       )
@@ -270,7 +270,7 @@ export class ErrorBoundary {
     // 调用 onError 回调
     if (this.options.onError) {
       this.options.onError(
-        error instanceof LytError ? error : new LytError(LytErrorCodes.LYT_CORE_OPERATION_FAILED, error.message),
+        error instanceof LytError ? error : new LytError(LytErrorCodes.LYT_CORE_OPERATION_FAILED as any, error.message),
         vm,
       )
     }

@@ -23,9 +23,9 @@ export function createApp(rootComponent: any, rootProps?: any): App {
      */
     use(plugin: Plugin, ...options: any[]) {
       if (typeof plugin === 'function') {
-        plugin(this, ...options)
+        plugin(this as App, ...options)
       } else if (plugin && typeof plugin.install === 'function') {
-        plugin.install(this, ...options)
+        plugin.install(this as App, ...options)
       }
       return this
     },

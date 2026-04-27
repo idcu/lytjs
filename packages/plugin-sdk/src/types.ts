@@ -95,7 +95,7 @@ export interface LytPlugin {
 }
 
 /** 插件运行时清单（继承静态信息，增加运行时状态） */
-export interface LytPluginManifest extends LytPlugin {
+export interface LytPluginManifest extends Omit<LytPlugin, 'config'> {
   /** 是否已安装 */
   installed: boolean;
   /** 是否已启用 */

@@ -249,7 +249,7 @@ function stripCodeBlock(raw: string): string {
 /**
  * 检测样式预处理器
  */
-function detectStylePreprocessor(code: string): ExtractedProp['stylePreprocessor'] | undefined {
+function detectStylePreprocessor(code: string): 'scss' | 'less' | 'stylus' | 'css' | undefined {
   const match = code.match(/<style\s+[^>]*(scss|less|stylus)/)
   if (match) {
     return match[1] as 'scss' | 'less' | 'stylus'
