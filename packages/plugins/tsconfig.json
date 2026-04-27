@@ -109,22 +109,22 @@
         "../store/dist/types/*"
       ],
       "@lytjs/plugin-chart": [
-        "../plugin-chart/dist/types"
+        "../plugin-chart/dist"
       ],
       "@lytjs/plugin-chart/*": [
-        "../plugin-chart/dist/types/*"
+        "../plugin-chart/dist/*"
       ],
       "@lytjs/plugin-highlight": [
-        "../plugin-highlight/dist/types"
+        "../plugin-highlight/dist"
       ],
       "@lytjs/plugin-highlight/*": [
-        "../plugin-highlight/dist/types/*"
+        "../plugin-highlight/dist/*"
       ],
       "@lytjs/plugin-virtual-list": [
-        "../plugin-virtual-list/dist/types"
+        "../plugin-virtual-list/dist"
       ],
       "@lytjs/plugin-virtual-list/*": [
-        "../plugin-virtual-list/dist/types/*"
+        "../plugin-virtual-list/dist/*"
       ],
       "@lytjs/plugin-sdk": [
         "../plugin-sdk/dist/types"
@@ -133,10 +133,10 @@
         "../plugin-sdk/dist/types/*"
       ],
       "@lytjs/plugin-registry": [
-        "../plugin-registry/dist/types"
+        "../plugin-registry/dist"
       ],
       "@lytjs/plugin-registry/*": [
-        "../plugin-registry/dist/types/*"
+        "../plugin-registry/dist/*"
       ]
     },
     "types": [

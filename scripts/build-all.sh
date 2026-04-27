@@ -541,7 +541,7 @@ if [ "$BUNDLE_ONLY" = false ]; then
   if [ ! -f "$TSC" ]; then
     warn "TypeScript not found. Skipping type declarations."
   else
-    TYPE_PKGS=(common reactivity vdom compiler renderer component core router store cli devtools components performance plugin-i18n plugin-auth plugin-logger plugin-theme plugin-storage plugin-sdk plugin-chart plugin-highlight plugin-virtual-list plugin-registry micro-frontend test-utils plugins lytx ai compat)
+    TYPE_PKGS=(common reactivity vdom compiler renderer component core router store cli devtools components performance plugin-i18n plugin-auth plugin-logger plugin-theme plugin-storage plugin-sdk plugin-chart plugin-highlight plugin-virtual-list plugin-registry micro-frontend test-utils lytx ai compat plugins)
 
     if [ -n "$FILTER" ]; then
       FT=()
