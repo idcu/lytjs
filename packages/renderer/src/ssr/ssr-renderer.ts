@@ -124,7 +124,10 @@ const ESCAPE_MAP: Record<string, string> = {
 const ESCAPE_RE = /[&<>"']/g;
 
 import { ShapeFlags } from '@lytjs/vdom';
-import { normalizeClass, normalizeStyle } from '@lytjs/common';
+import { normalizeClass as _normalizeClass, normalizeStyle as _normalizeStyle } from '@lytjs/common';
+
+/** Re-export normalizeClass and normalizeStyle for external use */
+export { _normalizeClass as normalizeClass, _normalizeStyle as normalizeStyle };
 
 /** Suspense 边界计数器 */
 let suspenseBoundaryId = 0;
@@ -208,12 +211,12 @@ export function serializeProp(key: string, value: any): string {
 
   // class 特殊处理
   if (key === 'class') {
-    return `class="${escapeHTML(normalizeClass(value))}"`;
+    return `class="${escapeHTML(_normalizeClass(value))}"`;
   }
 
   // style 特殊处理
   if (key === 'style') {
-    return `style="${escapeHTML(normalizeStyle(value))}"`;
+    return `style="${escapeHTML(_normalizeStyle(value))}"`;
   }
 
   // dangerouslySetInnerHTML 特殊处理（不序列化到属性中，由 renderElementToString 处理）

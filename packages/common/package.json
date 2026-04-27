@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/common",
-  "version": "4.2.0",
+  "version": "5.0.0",
   "description": "Lyt.js 公共工具库 - 类型检查、对象操作、事件发射器、订阅管理等基础工具",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",

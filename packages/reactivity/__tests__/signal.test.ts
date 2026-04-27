@@ -331,7 +331,7 @@ describe('Computed 循环依赖检测', () => {
     })
     aRef = a
 
-    expect(() => a()).toThrow('循环依赖')
+    expect(() => a()).toThrow('computed 在其自身的计算图中')
   })
 
   it('应该检测间接循环依赖并抛出错误', () => {
@@ -340,7 +340,7 @@ describe('Computed 循环依赖检测', () => {
     const b = computed(() => a() + 1)
     bRef = b
 
-    expect(() => a()).toThrow('循环依赖')
+    expect(() => a()).toThrow('computed 在其自身的计算图中')
   })
 })
 

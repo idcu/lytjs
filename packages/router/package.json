@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/router",
-  "version": "4.2.0",
+  "version": "5.0.0",
   "description": "Lyt.js 内置路由 - History/Hash 模式、导航守卫、动态路由",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",

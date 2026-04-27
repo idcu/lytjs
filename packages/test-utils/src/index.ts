@@ -2,8 +2,8 @@
 /**
  * Lyt.js 统一测试框架
  *
- * 在 vitest 环境下，代理到 vitest 的 describe/it/expect。
- * 同时保留自定义的断言扩展（toBeInstanceOf 等）和工具函数。
+ * 自定义轻量级测试框架，用于 Node.js 环境下运行测试。
+ * 由 test-runner.ts 统一调度，通过 globalThis 挂载到全局。
  *
  * 使用方式：
  * ```ts
@@ -18,19 +18,94 @@
  */
 
 // ================================================================
-//  从 vitest 导入核心测试 API
+//  类型定义
 // ================================================================
 
-export {
-  describe,
-  it,
-  test,
-  skip,
-  beforeEach,
-  afterEach,
-  expect,
-  vi,
-} from 'vitest'
+export interface TestCase {
+  name: string
+  fn: () => void | Promise<void>
+  skipped?: boolean
+}
+
+export interface TestResult {
+  name: string
+  suite: string
+  status: 'passed' | 'failed' | 'skipped'
+  error?: Error
+  duration: number
+}
+
+export interface TestSuite {
+  name: string
+  tests: TestCase[]
+  beforeEachFn?: (() => void)[]
+  afterEachFn?: (() => void)[]
+}
+
+// ================================================================
+//  测试注册
+// ================================================================
+
+const suites: TestSuite[] = []
+let currentSuite: TestSuite | null = null
+
+/**
+ * 注册一个测试套件
+ */
+export function describe(name: string, fn: () => void): void {
+  const suite: TestSuite = { name, tests: [], beforeEachFn: [], afterEachFn: [] }
+  const prev = currentSuite
+  currentSuite = suite
+  fn()
+  currentSuite = prev
+  suites.push(suite)
+}
+
+/**
+ * 注册一个测试用例
+ */
+export function it(name: string, fn: () => void | Promise<void>): void {
+  if (!currentSuite) throw new Error('it() must be called inside describe()')
+  currentSuite.tests.push({ name, fn })
+}
+
+/**
+ * test 是 it 的别名
+ */
+export const test = it
+
+/**
+ * 跳过一个测试用例
+ */
+export function skip(name: string, fn: () => void | Promise<void>): void {
+  if (!currentSuite) throw new Error('skip() must be called inside describe()')
+  currentSuite.tests.push({ name, fn, skipped: true })
+}
+
+/**
+ * 注册 beforeEach 钩子
+ */
+export function beforeEach(fn: () => void): void {
+  currentSuite?.beforeEachFn?.push(fn)
+}
+
+/**
+ * 注册 afterEach 钩子
+ */
+export function afterEach(fn: () => void): void {
+  currentSuite?.afterEachFn?.push(fn)
+}
+
+// ================================================================
+//  断言
+// ================================================================
+
+/**
+ * 创建一个断言对象
+ */
+export function expect(actual: any): Assertion {
+  return new Assertion(actual)
+}
 
 // ================================================================
 //  工具函数
@@ -73,32 +148,11 @@ export function waitFor(ms: number): Promise<void> {
 }
 
 // ================================================================
-//  类型定义（向后兼容）
+//  测试运行器
 // ================================================================
 
-export interface TestCase {
-  name: string
-  fn: () => void | Promise<void>
-}
-
-export interface TestResult {
-  name: string
-  suite: string
-  status: 'passed' | 'failed' | 'skipped'
-  error?: Error
-  duration: number
-}
-
-export interface TestSuite {
-  name: string
-  tests: TestCase[]
-  beforeEachFn?: (() => void)[]
-  afterEachFn?: (() => void)[]
-}
-
 /**
- * @deprecated 使用 vitest 的 describe/it/expect 代替
- * 保留此函数以向后兼容，但在 vitest 环境下为空操作
+ * 运行所有已注册的测试套件
  */
 export async function runAll(): Promise<{
   total: number
@@ -107,13 +161,87 @@ export async function runAll(): Promise<{
   skipped: number
   results: TestResult[]
 }> {
-  return { total: 0, passed: 0, failed: 0, skipped: 0, results: [] }
+  const results: TestResult[] = []
+  let passed = 0
+  let failed = 0
+  let skipped = 0
+
+  for (const suite of suites) {
+    for (const testCase of suite.tests) {
+      if (testCase.skipped) {
+        skipped++
+        results.push({
+          name: testCase.name,
+          suite: suite.name,
+          status: 'skipped',
+          duration: 0,
+        })
+        console.log(`  \x1b[33m\u2298 SKIP\x1b[0m ${suite.name} > ${testCase.name}`)
+        continue
+      }
+
+      const start = Date.now()
+      try {
+        // 运行 beforeEach 钩子
+        if (suite.beforeEachFn) {
+          for (const hook of suite.beforeEachFn) {
+            hook()
+          }
+        }
+
+        // 运行测试
+        const result = testCase.fn()
+        if (result instanceof Promise) {
+          await result
+        }
+
+        // 运行 afterEach 钩子
+        if (suite.afterEachFn) {
+          for (const hook of suite.afterEachFn) {
+            hook()
+          }
+        }
+
+        const duration = Date.now() - start
+        passed++
+        results.push({
+          name: testCase.name,
+          suite: suite.name,
+          status: 'passed',
+          duration,
+        })
+        console.log(`  \x1b[32m\u2713 PASS\x1b[0m ${suite.name} > ${testCase.name} (${duration}ms)`)
+      } catch (err: any) {
+        const duration = Date.now() - start
+        failed++
+        results.push({
+          name: testCase.name,
+          suite: suite.name,
+          status: 'failed',
+          error: err,
+          duration,
+        })
+        console.log(`  \x1b[31m\u2717 FAIL\x1b[0m ${suite.name} > ${testCase.name}`)
+        console.log(`    \x1b[31m${err.message}\x1b[0m`)
+      }
+    }
+  }
+
+  // 清空已运行的测试套件，支持多次调用
+  suites.length = 0
+
+  // 输出汇总
+  console.log('')
+  console.log(`--- 测试结果: ${passed} 通过, ${failed} 失败, ${skipped} 跳过, 共 ${passed + failed + skipped} 个 ---`)
+  console.log('')
+
+  return { total: passed + failed + skipped, passed, failed, skipped, results }
 }
 
-/**
- * Assertion 类 - 保留以向后兼容
- * @deprecated 直接使用 vitest 的 expect
- */
+// ================================================================
+//  Assertion 类
+// ================================================================
+
 export class Assertion {
   private actual: any
   private negated: boolean = false
@@ -233,6 +361,13 @@ export class Assertion {
       ? !(len === n)
       : len === n
     this._assert(pass, `期望长度为 ${n}，实际为 ${len}`)
+  }
+
+  toBeInstanceOf(cls: any): void {
+    const pass = this.negated
+      ? !(this.actual instanceof cls)
+      : this.actual instanceof cls
+    this._assert(pass, `期望 ${this._fmt(this.actual)} ${this.negated ? '不' : ''}是 ${cls.name} 的实例`)
   }
 
   private _assert(pass: boolean, message: string): void {

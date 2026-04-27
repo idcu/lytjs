@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/plugin-i18n",
-  "version": "4.2.0",
+  "version": "5.0.0",
   "description": "Lyt.js 国际化插件 - 提供多语言支持、消息格式化和语言切换功能",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",

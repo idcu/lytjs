@@ -160,9 +160,10 @@ describe('Signal State Adapter', () => {
   // ---- 11. disposeSignalState ----
   it('disposeSignalState 不抛错', () => {
     const raw = createSignalState({ x: 1 })
-    // disposeSignalState 当前是空操作，但不应抛错
+    // disposeSignalState 会清理所有 signal 并删除 key
     disposeSignalState(raw)
-    expect(raw.x()).toBe(1)
+    // dispose 后 key 已被删除
+    expect(raw.x).toBeUndefined()
   })
 
   // ---- 12. Signal state with nested objects (shallow) ----

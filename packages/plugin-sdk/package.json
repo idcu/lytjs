@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/plugin-sdk",
-  "version": "4.2.0",
+  "version": "5.0.0",
   "description": "Lyt.js 插件开发 SDK - 提供插件规范、开发工具和验证器",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",

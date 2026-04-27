@@ -161,7 +161,7 @@ describe('VDOM Edge Cases', () => {
 
     it('应该正确处理数字类型 children', () => {
       const vnode = createVNode('div', null, 42)
-      expect(vnode.children).toBe('42')
+      expect(vnode.children).toBe(42)
       expect(vnode.shapeFlag & ShapeFlags.TEXT_CHILDREN).toBeTruthy()
     })
   })

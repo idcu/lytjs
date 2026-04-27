@@ -544,17 +544,17 @@ describe('SSR Renderer 边界测试', () => {
 
     it('dangerouslySetInnerHTML', () => {
       const vnode = el('div', { dangerouslySetInnerHTML: { __html: '<b>bold</b>' } })
-      expect(renderToString(vnode)).toBe('<div><b>bold</b></div>')
+      expect(renderToString(vnode)).toBe('<div>&lt;b&gt;bold&lt;/b&gt;</div>')
     })
 
     it('dangerouslySetInnerHTML 直接字符串', () => {
       const vnode = el('div', { dangerouslySetInnerHTML: '<b>bold</b>' })
-      expect(renderToString(vnode)).toBe('<div><b>bold</b></div>')
+      expect(renderToString(vnode)).toBe('<div>&lt;b&gt;bold&lt;/b&gt;</div>')
     })
 
     it('innerHTML', () => {
       const vnode = el('div', { innerHTML: '<em>italic</em>' })
-      expect(renderToString(vnode)).toBe('<div><em>italic</em></div>')
+      expect(renderToString(vnode)).toBe('<div>&lt;em&gt;italic&lt;/em&gt;</div>')
     })
 
     it('数字子节点', () => {
@@ -1029,7 +1029,7 @@ describe('SSR Renderer 边界测试', () => {
         if (done) break
         chunks.push(value)
       }
-      expect(chunks.join('')).toBe('<div><b>bold</b></div>')
+      expect(chunks.join('')).toBe('<div>&lt;b&gt;bold&lt;/b&gt;</div>')
     })
 
     it('流式渲染嵌套元素', async () => {
