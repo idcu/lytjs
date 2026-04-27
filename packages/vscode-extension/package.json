@@ -1,7 +1,7 @@
 {
   "name": "lytjs-vscode",
   "displayName": "Lyt.js Language Support",
-  "description": "VSCode extension for Lyt.js - provides syntax highlighting, type checking, and code completion",
+  "description": "VSCode extension for Lyt.js - provides syntax highlighting, type checking, code completion, debugging, snippets, and Emmet support",
   "version": "4.2.0",
   "publisher": "lytjs",
   "engines": {
@@ -10,11 +10,17 @@
   "categories": [
     "Programming Languages",
     "Linters",
-    "Snippets"
+    "Snippets",
+    "Debuggers"
   ],
   "activationEvents": [
     "onLanguage:lyt",
-    "onCommand:lytjs.showWelcome"
+    "onCommand:lytjs.showWelcome",
+    "onDebug",
+    "onCommand:lytjs.createComponent",
+    "onCommand:lytjs.createPage",
+    "onCommand:lytjs.createStore",
+    "onCommand:lytjs.toggleTheme"
   ],
   "main": "./dist/extension.js",
   "contributes": {
@@ -38,10 +44,175 @@
         "path": "./syntaxes/lyt.tmLanguage.json"
       }
     ],
+    "snippets": [
+      {
+        "language": "lyt",
+        "path": "./snippets/lyt.json"
+      }
+    ],
     "commands": [
       {
         "command": "lytjs.showWelcome",
         "title": "Lyt.js: Show Welcome"
+      },
+      {
+        "command": "lytjs.createComponent",
+        "title": "Lyt.js: Create Component",
+        "category": "Lyt.js"
+      },
+      {
+        "command": "lytjs.createPage",
+        "title": "Lyt.js: Create Page",
+        "category": "Lyt.js"
+      },
+      {
+        "command": "lytjs.createStore",
+        "title": "Lyt.js: Create Store",
+        "category": "Lyt.js"
+      },
+      {
+        "command": "lytjs.toggleTheme",
+        "title": "Lyt.js: Toggle Theme",
+        "category": "Lyt.js"
+      }
+    ],
+    "debuggers": [
+      {
+        "type": "lytjs",
+        "label": "Lyt.js Debug",
+        "languages": [
+          "lyt",
+          "javascript",
+          "typescript"
+        ],
+        "configurationAttributes": {
+          "launch": {
+            "required": [],
+            "properties": {
+              "url": {
+                "type": "string",
+                "description": "URL to open in the browser",
+                "default": "http://localhost:5173"
+              },
+              "webRoot": {
+                "type": "string",
+                "description": "Path to the web server root",
+                "default": "${workspaceFolder}"
+              },
+              "port": {
+                "type": "number",
+                "description": "Dev server port",
+                "default": 5173
+              },
+              "sourceMaps": {
+                "type": "boolean",
+                "description": "Enable JavaScript source maps",
+                "default": true
+              },
+              "sourceMapPathOverrides": {
+                "type": "object",
+                "description": "A set of mappings for rewriting the locations of source files from what the source map says to their locations on disk"
+              },
+              "runtimeExecutable": {
+                "type": "string",
+                "description": "Runtime executable to use"
+              },
+              "runtimeArgs": {
+                "type": "array",
+                "description": "Arguments passed to the runtime executable",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "env": {
+                "type": "object",
+                "description": "Environment variables",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
+              "pathMapping": {
+                "type": "object",
+                "description": "Path mapping for the debug adapter"
+              }
+            }
+          },
+          "attach": {
+            "required": [
+              "port"
+            ],
+            "properties": {
+              "port": {
+                "type": "number",
+                "description": "Debug port to attach to",
+                "default": 9229
+              },
+              "webRoot": {
+                "type": "string",
+                "description": "Path to the web server root",
+                "default": "${workspaceFolder}"
+              },
+              "sourceMaps": {
+                "type": "boolean",
+                "description": "Enable JavaScript source maps",
+                "default": true
+              },
+              "localRoot": {
+                "type": "string",
+                "description": "Local root path for source mapping"
+              },
+              "remoteRoot": {
+                "type": "string",
+                "description": "Remote root path for source mapping",
+                "default": "/app"
+              }
+            }
+          }
+        },
+        "initialConfigurations": [
+          {
+            "type": "lytjs",
+            "request": "launch",
+            "name": "Lyt.js: Launch Dev Server",
+            "url": "http://localhost:5173",
+            "webRoot": "${workspaceFolder}",
+            "sourceMaps": true
+          },
+          {
+            "type": "lytjs",
+            "request": "attach",
+            "name": "Lyt.js: Attach to Dev Server",
+            "port": 9229,
+            "webRoot": "${workspaceFolder}",
+            "sourceMaps": true
+          }
+        ],
+        "configurationSnippets": [
+          {
+            "label": "Lyt.js: Launch Dev Server",
+            "description": "Launch and debug a Lyt.js development server",
+            "body": {
+              "type": "lytjs",
+              "request": "launch",
+              "name": "Lyt.js: Launch Dev Server",
+              "url": "http://localhost:5173",
+              "webRoot": "${workspaceFolder}",
+              "sourceMaps": true
+            }
+          },
+          {
+            "label": "Lyt.js: Attach to Dev Server",
+            "description": "Attach to a running Lyt.js development server",
+            "body": {
+              "type": "lytjs",
+              "request": "attach",
+              "name": "Lyt.js: Attach to Dev Server",
+              "port": 9229,
+              "webRoot": "${workspaceFolder}",
+              "sourceMaps": true
+            }
+          }
+        ]
       }
     ],
     "configuration": {
@@ -56,6 +227,26 @@
           "type": "boolean",
           "default": true,
           "description": "Enable code completion for .lyt files"
+        },
+        "lytjs.snippets.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable Lyt.js code snippets for .lyt files"
+        },
+        "lytjs.debug.port": {
+          "type": "number",
+          "default": 5173,
+          "description": "Default debug port for Lyt.js development server"
+        },
+        "lytjs.debug.url": {
+          "type": "string",
+          "default": "http://localhost:5173",
+          "description": "Default debug URL for Lyt.js development server"
+        },
+        "lytjs.emmet.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable Emmet support for .lyt files"
         }
       }
     }

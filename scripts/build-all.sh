@@ -45,7 +45,7 @@ header() { echo -e "${BOLD}${CYAN}$1${NC}"; }
 ALL_PACKAGES=(
   common reactivity vdom compiler renderer component core
   router store cli devtools components
-  plugin-i18n plugin-auth plugin-logger plugin-theme plugin-storage
+  plugin-i18n plugin-auth plugin-logger plugin-theme plugin-storage plugin-sdk
   test-utils plugins lytjs lytx vscode-extension ai compat
 )
 

@@ -46,7 +46,8 @@
     "@lytjs/plugin-auth": "workspace:*",
     "@lytjs/plugin-logger": "workspace:*",
     "@lytjs/plugin-storage": "workspace:*",
-    "@lytjs/plugin-theme": "workspace:*"
+    "@lytjs/plugin-theme": "workspace:*",
+    "@lytjs/plugin-sdk": "workspace:*"
   },
   "engines": {
     "node": ">=18.0.0"

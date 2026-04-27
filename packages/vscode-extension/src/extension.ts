@@ -1,10 +1,16 @@
 /**
  * Lyt.js VSCode Extension
- * 提供语法高亮、类型检查和代码补全功能
+ * 提供语法高亮、类型检查、代码补全、调试支持、代码片段和 Emmet 功能
  */
 
 import * as vscode from 'vscode';
 import { parseSFC, generateDtsForLytFile } from '@lytjs/compiler';
+import { getSnippetCompletions } from './snippets';
+import {
+  LytDebugConfigurationProvider,
+  LytDebugAdapterDescriptorFactory,
+} from './debug-provider';
+import { registerCommands } from './commands';
 
 // ============================================================
 // 激活函数
@@ -59,13 +65,75 @@ export function activate(context: vscode.ExtensionContext) {
   // 初始化诊断集合
   const diagnosticCollection = vscode.languages.createDiagnosticCollection('lytjs');
 
+  // --------------------------------------------------------
+  // 代码片段补全提供者 (SnippetCompletionItemProvider)
+  // --------------------------------------------------------
+  const snippetEnabled = () =>
+    vscode.workspace.getConfiguration('lytjs.snippets').get<boolean>('enabled') !== false;
+
+  const snippetCompletionProvider = vscode.languages.registerCompletionItemProvider(
+    { language: 'lyt', scheme: 'file' },
+    {
+      provideCompletionItems(
+        document: vscode.TextDocument,
+        position: vscode.Position,
+        token: vscode.CancellationToken,
+        context: vscode.CompletionContext
+      ) {
+        if (!snippetEnabled()) {
+          return undefined;
+        }
+        return getSnippetCompletions();
+      }
+    }
+  );
+
+  // --------------------------------------------------------
+  // Emmet 配置提供者
+  // --------------------------------------------------------
+  const emmetEnabled = () =>
+    vscode.workspace.getConfiguration('lytjs.emmet').get<boolean>('enabled') !== false;
+
+  const emmetConfigurationProvider: vscode.EmmetConfigurationProvider = {
+    getEmmetMode(document: vscode.TextDocument): string | undefined {
+      if (document.languageId === 'lyt' && emmetEnabled()) {
+        return 'html';
+      }
+      return undefined;
+    },
+  };
+
+  // --------------------------------------------------------
+  // 调试支持
+  // --------------------------------------------------------
+  const debugConfigProvider = new LytDebugConfigurationProvider();
+  const debugAdapterFactory = new LytDebugAdapterDescriptorFactory();
+
+  const debugConfigDisposable = vscode.debug.registerDebugConfigurationProvider(
+    'lytjs',
+    debugConfigProvider
+  );
+
+  const debugAdapterDisposable = vscode.debug.registerDebugAdapterDescriptorFactory(
+    'lytjs',
+    debugAdapterFactory
+  );
+
+  // --------------------------------------------------------
+  // 命令注册
+  // --------------------------------------------------------
+  registerCommands(context);
+
   // 添加到上下文订阅
   context.subscriptions.push(
     welcomeCommand,
     completionProvider,
     typeCheckProvider,
     documentChangeDisposable,
-    diagnosticCollection
+    diagnosticCollection,
+    snippetCompletionProvider,
+    debugConfigDisposable,
+    debugAdapterDisposable
   );
 
   // 保存诊断集合到全局上下文

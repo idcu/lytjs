@@ -55,6 +55,7 @@ PUBLISH_ORDER=(
   plugin-logger
   plugin-theme
   plugin-storage
+  plugin-sdk
   test-utils
   plugins
   lytjs

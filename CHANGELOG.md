@@ -10,6 +10,41 @@
 ## [Unreleased]
 
 ### 新增 (Added)
+
+#### P2 生态扩展
+
+- **组件库**: 新增 15 个 UI 组件，组件总数达到 50+
+  - 基础组件：Menu（导航菜单）、DropdownMenu（下拉菜单）
+  - 表单组件：InputNumber（数字输入框）、Cascader（级联选择器）、Rate（评分）、ColorPicker（颜色选择器）
+  - 反馈组件：Drawer（抽屉）
+  - 导航组件：Steps（步骤条）
+  - 数据展示：Card（卡片）、Descriptions（描述列表）、Result（结果页）、ImagePreview（图片预览）、Skeleton（骨架屏）、Timeline（时间线）、Statistic（统计数值）
+- **插件 SDK**: 新增 `@lytjs/plugin-sdk` 包，提供完整的插件开发工具链
+  - PluginManager：插件管理器（注册/注销/安装/卸载/启用/禁用/搜索/更新）
+  - PluginValidator：插件验证器（清单验证/配置验证/权限验证/兼容性验证）
+  - PluginRegistry：插件注册中心（发布/搜索/下载/分类）
+  - PluginScaffold：插件脚手架（项目创建/模板生成）
+- **企业级模板**: 新增 `@lytjs/template-admin` Admin Dashboard 模板
+  - 完整的后台管理系统布局（侧边栏 + 顶栏 + 内容区）
+  - 登录页、仪表盘、用户管理、角色管理、系统设置、个人中心
+  - 集成路由、状态管理、国际化、认证、日志、主题六大插件
+- **MiniApp 渲染器增强**: 小程序渲染器新增 4 个核心模块
+  - MiniAppCompiler：模板编译器（Lyt.js 模板 -> WXML/AXML/TTML）
+  - MiniAppEventBridge：事件桥接层（跨平台事件标准化）
+  - MiniAppLifecycleAdapter：生命周期适配器（Lyt.js -> 小程序生命周期映射）
+  - MiniAppUtils：工具函数集（命名转换/样式处理/JSON 配置生成）
+- **VSCode 扩展增强**: VSCode 扩展新增多项功能
+  - 15 个代码片段（组件/Composition API/响应式/生命周期/模板语法等）
+  - 调试支持（DAP 协议实现，支持 launch/attach 模式）
+  - Emmet 支持（.lyt 文件 HTML 模式）
+  - 4 个快捷命令（创建组件/创建页面/创建 Store/切换主题）
+- **国际化文档**: 新增英文版核心文档（12 个文档文件）
+  - API 文档：core、reactivity、component、router、store、components
+  - 指南文档：quick-start、comparison、ssr、migration-from-vue3
+  - 其他：首页、贡献指南
+
+#### 其他新增
+
 - **Vapor Mode**: 新增 `bindStyle()` API，支持 Signal 驱动的样式绑定（字符串和对象两种形式）
 - **Vapor Mode**: 新增 `bindHTML()` API，支持 Signal 驱动的 innerHTML 绑定
 - **Vapor Mode**: 模板编译器支持响应式 `v-if` 和 `v-each`（基于 Signal 自动更新 DOM）

@@ -4,17 +4,18 @@ export default defineConfig({
   title: 'Lyt.js',
   description: 'Lightweight JavaScript framework',
   lang: 'zh-CN',
-  
+
   base: '/lytjs/',
-  
+
   themeConfig: {
     nav: [
       { text: '指南', link: '/guide/quick-start' },
       { text: 'API', link: '/api/core' },
       { text: '示例', link: '/examples/counter' },
-      { text: '开发者', link: '/developer/README' }
+      { text: '开发者', link: '/developer/README' },
+      { text: 'English', link: '/en/' }
     ],
-    
+
     sidebar: {
       '/guide/': [
         {
@@ -106,13 +107,41 @@ export default defineConfig({
             { text: '状态管理', link: '/developer/feature/02-store' }
           ]
         }
+      ],
+      '/en/': [
+        {
+          text: 'Getting Started',
+          items: [
+            { text: 'Quick Start', link: '/en/guide/quick-start' },
+            { text: 'Comparison', link: '/en/guide/comparison' },
+            { text: 'SSR Guide', link: '/en/guide/ssr' },
+            { text: 'Migration from Vue 3', link: '/en/guide/migration-from-vue3' }
+          ]
+        },
+        {
+          text: 'API Reference',
+          items: [
+            { text: 'Core', link: '/en/api/core' },
+            { text: 'Reactivity', link: '/en/api/reactivity' },
+            { text: 'Component', link: '/en/api/component' },
+            { text: 'Router', link: '/en/api/router' },
+            { text: 'Store', link: '/en/api/store' },
+            { text: 'Components', link: '/en/api/components' }
+          ]
+        },
+        {
+          text: 'Community',
+          items: [
+            { text: 'Contributing', link: '/en/contributing' }
+          ]
+        }
       ]
     },
-    
+
     socialLinks: [
       { icon: 'github', link: 'https://github.com/lytjs/lytjs' }
     ],
-    
+
     footer: {
       message: 'MIT License',
       copyright: 'Copyright © 2024-present Lyt.js'

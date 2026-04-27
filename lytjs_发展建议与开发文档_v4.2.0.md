@@ -44,7 +44,7 @@
 | **当前版本** | 4.2.0 |
 | **许可证** | MIT License |
 | **作者** | idcu |
-| **子包数量** | 24 个 |
+| **子包数量** | 25 个 |
 | **TypeScript 代码行数** | 101,113 行 |
 | **测试用例** | 4,488 个 |
 | **核心运行时体积** | 34.56 KB (ESM gzip, 8 个核心包) |
@@ -63,7 +63,7 @@
 | 组件系统 | ✅ | defineComponent / 生命周期 / 插槽 / KeepAlive / Suspense |
 | 路由 | ✅ | History / Hash 双模式 + 导航守卫 |
 | 状态管理 | ✅ | Pinia 风格 API |
-| UI 组件库 | ✅ | 38+ 组件 + 主题系统 |
+| UI 组件库 | ✅ | 50+ 组件 + 主题系统 |
 | CLI 工具 | ✅ | create / dev / build / generate |
 | DevTools | ✅ | 性能采集 / 组件树 / 时间旅行调试 |
 | AI 集成 | ✅ | lyt-ai CLI / OpenAI & Anthropic 支持 |
@@ -431,21 +431,21 @@ npm run version:bump:major   # 4.2.0 -> 5.0.0
 
 > **目标**：建立 Lyt.js 生态体系
 
-| 任务 | 优先级 | 说明 |
-|:---|:---:|:---|
-| UI 组件库完善 | 高 | 补充缺失组件，提升视觉质量 |
-| 插件市场 | 中 | 建立官方插件市场，支持社区插件 |
-| 企业级模板 | 中 | 提供 Admin/Dashboard/E-commerce 模板 |
-| MiniApp 渲染器 | 中 | 实现微信/支付宝小程序适配 |
-| VSCode 扩展增强 | 中 | 添加调试支持、代码片段、Emmet |
-| 国际化文档 | 低 | 提供英文版官方文档 |
+| 任务 | 优先级 | 状态 | 说明 |
+|:---|:---:|:---:|:---|
+| UI 组件库完善 | 高 | ✅ 已完成 | 新增 15 个组件，达到 50+ 组件 |
+| 插件市场 | 中 | ✅ 已完成 | 发布 @lytjs/plugin-sdk，含插件管理器、验证器、注册中心、脚手架 |
+| 企业级模板 | 中 | ✅ 已完成 | 提供 Admin Dashboard 模板（@lytjs/template-admin） |
+| MiniApp 渲染器 | 中 | ✅ 已完成 | 增强小程序渲染器，新增编译器、事件桥接、生命周期适配 |
+| VSCode 扩展增强 | 中 | ✅ 已完成 | 添加调试支持、15 个代码片段、Emmet、4 个快捷命令 |
+| 国际化文档 | 低 | ✅ 已完成 | 提供英文版核心文档（12 个文档文件） |
 
 **关键行动项：**
 
-- [ ] 组件库达到 50+ 组件，覆盖常见业务场景
-- [ ] 设计插件规范，发布插件开发 SDK
+- [x] 组件库达到 50+ 组件，覆盖常见业务场景（新增 Menu/Steps/Drawer/Card/InputNumber/Skeleton 等 15 个组件）
+- [x] 设计插件规范，发布插件开发 SDK（@lytjs/plugin-sdk，含 PluginManager/PluginValidator/PluginRegistry/PluginScaffold）
 - [ ] 与 2-3 家企业合作，积累生产案例
-- [ ] MiniApp 渲染器支持微信小程序
+- [x] MiniApp 渲染器支持微信小程序（新增 MiniAppCompiler/MiniAppEventBridge/MiniAppLifecycleAdapter）
 
 ---
 
@@ -640,12 +640,13 @@ Lyt.js 包含 24 个精心设计的子包，按功能分为四类：
 |:---|:---|
 | `@lytjs/router` | 内置路由（History / Hash / 导航守卫 / 动态路由） |
 | `@lytjs/store` | 内置状态管理（Pinia 风格 API / 模块化 / actions / getters） |
-| `@lytjs/components` | UI 组件库（38+ 组件 / 主题系统 / 亮色 / 暗色） |
+| `@lytjs/components` | UI 组件库（50+ 组件 / 主题系统 / 亮色 / 暗色） |
 | `@lytjs/cli` | 命令行工具（create / dev / build / generate / scaffold） |
 | `@lytjs/devtools` | 浏览器开发者工具（组件树 / 状态查看 / 性能分析） |
 | `@lytjs/lytx` | 元框架（SSR / SSG / SPA / API Routes / 全栈渲染） |
 | `@lytjs/ai` | AI 辅助开发工具（组件 / Store / 页面 / API 生成） |
 | `@lytjs/test-utils` | 测试工具库 |
+| `@lytjs/plugin-sdk` | 插件开发 SDK（插件管理器 / 验证器 / 注册中心 / 脚手架） |
 
 #### 插件包（6 个）
 

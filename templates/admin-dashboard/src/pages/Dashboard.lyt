@@ -1,0 +1,482 @@
+<template>
+  <div class="dashboard-page">
+    <!-- 统计卡片 -->
+    <div class="stat-cards">
+      <div class="stat-card" each={stat in statistics}>
+        <div class="stat-icon" :style="{ background: stat.color }">
+          <span>{{ stat.icon }}</span>
+        </div>
+        <div class="stat-info">
+          <div class="stat-label">{{ stat.label }}</div>
+          <div class="stat-value">{{ stat.value }}</div>
+          <div class="stat-trend" :class="stat.trend > 0 ? 'up' : 'down'">
+            {{ stat.trend > 0 ? '↑' : '↓' }} {{ Math.abs(stat.trend) }}%
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 图表区域 -->
+    <div class="charts-row">
+      <div class="chart-card">
+        <div class="chart-header">
+          <h3>月度收入趋势</h3>
+          <div class="chart-actions">
+            <button class="chart-btn active">月</button>
+            <button class="chart-btn">季</button>
+            <button class="chart-btn">年</button>
+          </div>
+        </div>
+        <div class="chart-body">
+          <div class="bar-chart">
+            <div class="bar-group" each={item in monthlyData}>
+              <div class="bar" :style="{ height: item.value + '%' }">
+                <span class="bar-tooltip">{{ item.amount }}</span>
+              </div>
+              <span class="bar-label">{{ item.month }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-header">
+          <h3>访问量趋势</h3>
+          <div class="chart-actions">
+            <button class="chart-btn active">周</button>
+            <button class="chart-btn">月</button>
+          </div>
+        </div>
+        <div class="chart-body">
+          <div class="line-chart">
+            <svg viewBox="0 0 400 200" class="line-chart-svg">
+              <polyline
+                points="0,180 50,140 100,160 150,80 200,100 250,40 300,60 350,20 400,50"
+                fill="none"
+                stroke="var(--primary-color)"
+                stroke-width="2"
+              />
+              <polyline
+                points="0,180 50,140 100,160 150,80 200,100 250,40 300,60 350,20 400,50 400,200 0,200"
+                fill="url(#lineGradient)"
+                stroke="none"
+              />
+              <defs>
+                <linearGradient id="lineGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="var(--primary-color)" stop-opacity="0.3" />
+                  <stop offset="100%" stop-color="var(--primary-color)" stop-opacity="0" />
+                </linearGradient>
+              </defs>
+            </svg>
+            <div class="line-chart-labels">
+              <span each={day in weekDays}>{{ day }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 下方区域 -->
+    <div class="bottom-row">
+      <!-- 最近活动 -->
+      <div class="activity-card">
+        <div class="card-header">
+          <h3>最近活动</h3>
+          <a class="view-all" href="#">查看全部</a>
+        </div>
+        <div class="activity-list">
+          <div class="activity-item" each={item in recentActivities}>
+            <div class="activity-dot" :style="{ background: item.color }"></div>
+            <div class="activity-content">
+              <div class="activity-text">{{ item.text }}</div>
+              <div class="activity-time">{{ item.time }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 快捷操作 -->
+      <div class="quick-actions-card">
+        <div class="card-header">
+          <h3>快捷操作</h3>
+        </div>
+        <div class="quick-actions-grid">
+          <button class="quick-action-btn" each={action in quickActions} on:click="handleAction(action)">
+            <span class="action-icon">{{ action.icon }}</span>
+            <span class="action-label">{{ action.label }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+export default {
+  name: 'Dashboard',
+
+  setup() {
+    const statistics = [
+      { label: '用户总数', value: '12,846', icon: '👥', color: '#4f46e5', trend: 12.5 },
+      { label: '订单总数', value: '3,428', icon: '📦', color: '#059669', trend: 8.2 },
+      { label: '收入总额', value: '¥284,560', icon: '💰', color: '#d97706', trend: -3.1 },
+      { label: '访问量', value: '98,712', icon: '👁', color: '#dc2626', trend: 15.8 },
+    ]
+
+    const monthlyData = [
+      { month: '1月', value: 45, amount: '¥2.3万' },
+      { month: '2月', value: 62, amount: '¥3.1万' },
+      { month: '3月', value: 55, amount: '¥2.8万' },
+      { month: '4月', value: 78, amount: '¥3.9万' },
+      { month: '5月', value: 68, amount: '¥3.4万' },
+      { month: '6月', value: 90, amount: '¥4.5万' },
+      { month: '7月', value: 85, amount: '¥4.2万' },
+      { month: '8月', value: 95, amount: '¥4.8万' },
+    ]
+
+    const weekDays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
+
+    const recentActivities = [
+      { text: '新用户 张三 完成注册', time: '5 分钟前', color: '#4f46e5' },
+      { text: '订单 #20240315 已发货', time: '15 分钟前', color: '#059669' },
+      { text: '系统配置已更新', time: '1 小时前', color: '#d97706' },
+      { text: '用户 李四 修改了密码', time: '2 小时前', color: '#dc2626' },
+      { text: '新角色 编辑者 已创建', time: '3 小时前', color: '#7c3aed' },
+    ]
+
+    const quickActions = [
+      { label: '新增用户', icon: '👤', action: 'addUser' },
+      { label: '查看报表', icon: '📊', action: 'viewReports' },
+      { label: '系统配置', icon: '⚙', action: 'systemConfig' },
+      { label: '导出数据', icon: '📥', action: 'exportData' },
+    ]
+
+    const handleAction = (action: any) => {
+      console.log('Quick action:', action.action)
+    }
+
+    return {
+      statistics,
+      monthlyData,
+      weekDays,
+      recentActivities,
+      quickActions,
+      handleAction,
+    }
+  },
+}
+</script>
+
+<style scoped>
+.dashboard-page {
+  max-width: 1400px;
+}
+
+/* 统计卡片 */
+.stat-cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  background: var(--card-bg);
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  border: 1px solid var(--border-color);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.stat-label {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+
+.stat-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.stat-trend {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.stat-trend.up {
+  color: var(--success-color);
+}
+
+.stat-trend.down {
+  color: var(--danger-color);
+}
+
+/* 图表区域 */
+.charts-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.chart-card {
+  background: var(--card-bg);
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid var(--border-color);
+}
+
+.chart-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.chart-header h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.chart-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.chart-btn {
+  padding: 4px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.chart-btn.active {
+  background: var(--primary-color);
+  color: #fff;
+  border-color: var(--primary-color);
+}
+
+/* 柱状图 */
+.bar-chart {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  height: 200px;
+  padding: 0 8px;
+  gap: 12px;
+}
+
+.bar-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  justify-content: flex-end;
+}
+
+.bar {
+  width: 100%;
+  max-width: 40px;
+  background: linear-gradient(180deg, var(--primary-color), var(--primary-light));
+  border-radius: 4px 4px 0 0;
+  position: relative;
+  transition: height 0.5s ease;
+  min-height: 4px;
+}
+
+.bar:hover .bar-tooltip {
+  opacity: 1;
+  transform: translateY(-4px);
+}
+
+.bar-tooltip {
+  position: absolute;
+  top: -28px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--text-primary);
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  white-space: nowrap;
+  opacity: 0;
+  transition: all 0.2s;
+  pointer-events: none;
+}
+
+.bar-label {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+/* 折线图 */
+.line-chart {
+  height: 200px;
+  position: relative;
+}
+
+.line-chart-svg {
+  width: 100%;
+  height: calc(100% - 24px);
+}
+
+.line-chart-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+/* 下方区域 */
+.bottom-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.activity-card,
+.quick-actions-card {
+  background: var(--card-bg);
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid var(--border-color);
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.card-header h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.view-all {
+  font-size: 13px;
+  color: var(--primary-color);
+  text-decoration: none;
+}
+
+.view-all:hover {
+  text-decoration: underline;
+}
+
+/* 活动列表 */
+.activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.activity-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.activity-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-top: 6px;
+  flex-shrink: 0;
+}
+
+.activity-text {
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.activity-time {
+  font-size: 12px;
+  color: var(--text-disabled);
+  margin-top: 2px;
+}
+
+/* 快捷操作 */
+.quick-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.quick-action-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 20px 16px;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.quick-action-btn:hover {
+  border-color: var(--primary-color);
+  background: var(--primary-bg);
+  transform: translateY(-2px);
+}
+
+.action-icon {
+  font-size: 28px;
+}
+
+.action-label {
+  font-size: 13px;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+/* 响应式 */
+@media (max-width: 1200px) {
+  .stat-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .charts-row,
+  .bottom-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .stat-cards {
+    grid-template-columns: 1fr;
+  }
+}
+</style>

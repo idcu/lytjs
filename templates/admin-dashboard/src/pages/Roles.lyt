@@ -1,0 +1,457 @@
+<template>
+  <div class="roles-page">
+    <div class="page-header">
+      <h2 class="page-title">角色管理</h2>
+      <button class="btn btn-primary" on:click="handleAddRole">
+        <span>+</span> 新增角色
+      </button>
+    </div>
+
+    <!-- 角色列表 -->
+    <div class="table-card">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>角色名称</th>
+            <th>角色标识</th>
+            <th>描述</th>
+            <th>用户数</th>
+            <th>创建时间</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="table-row" each={role in roles}>
+            <td>
+              <span class="role-name">{{ role.name }}</span>
+            </td>
+            <td>
+              <code class="role-key">{{ role.key }}</code>
+            </td>
+            <td>{{ role.description }}</td>
+            <td>{{ role.userCount }}</td>
+            <td>{{ role.createdAt }}</td>
+            <td>
+              <div class="action-buttons">
+                <button class="btn-link" on:click="handleEditRole(role)">编辑</button>
+                <button class="btn-link" on:click="handleAssignPermissions(role)">权限</button>
+                <button class="btn-link danger" on:click="handleDeleteRole(role)">删除</button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 权限分配面板 -->
+    <div class="permission-panel" if={showPermissionPanel}>
+      <div class="panel-header">
+        <h3>分配权限 - {{ currentRole?.name }}</h3>
+        <button class="close-btn" on:click="closePermissionPanel">x</button>
+      </div>
+      <div class="panel-body">
+        <div class="permission-tree">
+          <div class="tree-group" each={group in permissionGroups}>
+            <div class="tree-group-header" on:click="toggleGroup(group)">
+              <span class="tree-arrow" :class="{ expanded: group.expanded }">▶</span>
+              <label class="tree-checkbox">
+                <input
+                  type="checkbox"
+                  :checked="isGroupAllChecked(group)"
+                  on:change="toggleGroupAll(group)"
+                />
+                <span class="checkbox-custom"></span>
+                <span class="tree-label">{{ group.label }}</span>
+              </label>
+            </div>
+            <div class="tree-children" if={group.expanded}>
+              <label class="tree-item" each={perm in group.children}>
+                <input
+                  type="checkbox"
+                  :checked="perm.checked"
+                  on:change="togglePermission(perm)"
+                />
+                <span class="checkbox-custom"></span>
+                <span class="tree-label">{{ perm.label }}</span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="panel-footer">
+        <button class="btn btn-default" on:click="closePermissionPanel">取消</button>
+        <button class="btn btn-primary" on:click="savePermissions">保存</button>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+export default {
+  name: 'Roles',
+
+  setup() {
+    const state = {
+      showPermissionPanel: false,
+      currentRole: null as any,
+      roles: [
+        { id: 1, name: '超级管理员', key: 'super_admin', description: '拥有系统所有权限', userCount: 2, createdAt: '2024-01-01' },
+        { id: 2, name: '管理员', key: 'admin', description: '拥有大部分管理权限', userCount: 5, createdAt: '2024-01-05' },
+        { id: 3, name: '编辑者', key: 'editor', description: '可编辑内容和管理用户', userCount: 12, createdAt: '2024-01-10' },
+        { id: 4, name: '查看者', key: 'viewer', description: '仅可查看数据', userCount: 30, createdAt: '2024-01-15' },
+      ],
+      permissionGroups: [
+        {
+          id: 'user',
+          label: '用户管理',
+          expanded: true,
+          children: [
+            { id: 'user:list', label: '查看用户列表', checked: true },
+            { id: 'user:create', label: '创建用户', checked: true },
+            { id: 'user:edit', label: '编辑用户', checked: false },
+            { id: 'user:delete', label: '删除用户', checked: false },
+          ],
+        },
+        {
+          id: 'role',
+          label: '角色管理',
+          expanded: false,
+          children: [
+            { id: 'role:list', label: '查看角色列表', checked: true },
+            { id: 'role:create', label: '创建角色', checked: false },
+            { id: 'role:edit', label: '编辑角色', checked: false },
+            { id: 'role:delete', label: '删除角色', checked: false },
+            { id: 'role:assign', label: '分配权限', checked: false },
+          ],
+        },
+        {
+          id: 'system',
+          label: '系统管理',
+          expanded: false,
+          children: [
+            { id: 'system:settings', label: '系统设置', checked: false },
+            { id: 'system:logs', label: '查看日志', checked: true },
+            { id: 'system:backup', label: '数据备份', checked: false },
+          ],
+        },
+      ],
+    }
+
+    const handleAddRole = () => {
+      console.log('Add role')
+    }
+
+    const handleEditRole = (role: any) => {
+      console.log('Edit role:', role)
+    }
+
+    const handleDeleteRole = (role: any) => {
+      console.log('Delete role:', role)
+    }
+
+    const handleAssignPermissions = (role: any) => {
+      state.currentRole = role
+      state.showPermissionPanel = true
+    }
+
+    const closePermissionPanel = () => {
+      state.showPermissionPanel = false
+      state.currentRole = null
+    }
+
+    const toggleGroup = (group: any) => {
+      group.expanded = !group.expanded
+    }
+
+    const isGroupAllChecked = (group: any) => {
+      return group.children.every((c: any) => c.checked)
+    }
+
+    const toggleGroupAll = (group: any) => {
+      const allChecked = group.children.every((c: any) => c.checked)
+      group.children.forEach((c: any) => { c.checked = !allChecked })
+    }
+
+    const togglePermission = (perm: any) => {
+      perm.checked = !perm.checked
+    }
+
+    const savePermissions = () => {
+      console.log('Save permissions for:', state.currentRole?.name)
+      closePermissionPanel()
+    }
+
+    return {
+      roles: state.roles,
+      showPermissionPanel: state.showPermissionPanel,
+      currentRole: state.currentRole,
+      permissionGroups: state.permissionGroups,
+      handleAddRole,
+      handleEditRole,
+      handleDeleteRole,
+      handleAssignPermissions,
+      closePermissionPanel,
+      toggleGroup,
+      isGroupAllChecked,
+      toggleGroupAll,
+      togglePermission,
+      savePermissions,
+    }
+  },
+}
+</script>
+
+<style scoped>
+.roles-page {
+  max-width: 1400px;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.page-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+/* 按钮 */
+.btn {
+  height: 38px;
+  padding: 0 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+}
+
+.btn-primary {
+  background: var(--primary-color);
+  color: #fff;
+}
+
+.btn-primary:hover {
+  opacity: 0.9;
+}
+
+.btn-default {
+  background: var(--border-color);
+  color: var(--text-primary);
+}
+
+/* 表格 */
+.table-card {
+  background: var(--card-bg);
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  overflow: hidden;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.data-table th {
+  padding: 12px 16px;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--table-header-bg);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.data-table td {
+  padding: 12px 16px;
+  font-size: 14px;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.table-row:hover td {
+  background: var(--hover-bg);
+}
+
+.role-name {
+  font-weight: 600;
+}
+
+.role-key {
+  background: var(--hover-bg);
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.action-buttons {
+  display: flex;
+  gap: 12px;
+}
+
+.btn-link {
+  background: none;
+  border: none;
+  font-size: 13px;
+  color: var(--primary-color);
+  cursor: pointer;
+  padding: 0;
+}
+
+.btn-link:hover {
+  text-decoration: underline;
+}
+
+.btn-link.danger {
+  color: var(--danger-color);
+}
+
+/* 权限面板 */
+.permission-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 480px;
+  height: 100vh;
+  background: var(--card-bg);
+  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.panel-header h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.close-btn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: var(--hover-bg);
+  border-radius: 6px;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+}
+
+.panel-body {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.panel-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 16px 20px;
+  border-top: 1px solid var(--border-color);
+}
+
+/* 权限树 */
+.permission-tree {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tree-group-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  cursor: pointer;
+}
+
+.tree-arrow {
+  font-size: 10px;
+  color: var(--text-disabled);
+  transition: transform 0.2s;
+  width: 16px;
+  text-align: center;
+}
+
+.tree-arrow.expanded {
+  transform: rotate(90deg);
+}
+
+.tree-checkbox,
+.tree-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--text-primary);
+  padding: 4px 0;
+}
+
+.tree-checkbox input,
+.tree-item input {
+  display: none;
+}
+
+.checkbox-custom {
+  width: 16px;
+  height: 16px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.tree-checkbox input:checked + .checkbox-custom,
+.tree-item input:checked + .checkbox-custom {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+.tree-label {
+  font-size: 14px;
+}
+
+.tree-children {
+  padding-left: 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+@media (max-width: 768px) {
+  .permission-panel {
+    width: 100%;
+  }
+}
+</style>

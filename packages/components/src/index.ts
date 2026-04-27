@@ -9,6 +9,8 @@ import { Icon } from './base/icon'
 import { Link } from './base/link'
 import { Container } from './base/container'
 import { Divider } from './base/divider'
+import { Menu } from './base/menu'
+import { DropdownMenu } from './base/dropdown-menu'
 
 // 表单组件 (form)
 import { Input } from './form/input'
@@ -16,17 +18,23 @@ import { Checkbox } from './form/checkbox'
 import { Radio } from './form/radio'
 import { Select } from './form/select'
 import { Switch } from './form/switch'
+import { InputNumber } from './form/input-number'
+import { Cascader } from './form/cascader'
+import { Rate } from './form/rate'
+import { ColorPicker } from './form/color-picker'
 
 // 反馈组件 (feedback)
 import { Modal } from './feedback/modal'
 import { Toast } from './feedback/toast'
 import { Alert } from './feedback/alert'
 import { Tooltip } from './feedback/tooltip'
+import { Drawer } from './feedback/drawer'
 
 // 导航组件 (navigation)
 import { Tabs } from './navigation/tabs'
 import { Breadcrumb } from './navigation/breadcrumb'
 import { Pagination } from './navigation/pagination'
+import { Steps } from './navigation/steps'
 
 // 数据展示 (data-display)
 import { Table } from './data-display/table'
@@ -34,6 +42,13 @@ import { Tag } from './data-display/tag'
 import { Badge } from './data-display/badge'
 import { Spin } from './data-display/spin'
 import { Empty } from './data-display/empty'
+import { Card } from './data-display/card'
+import { Descriptions } from './data-display/descriptions'
+import { Result } from './data-display/result'
+import { ImagePreview } from './data-display/image-preview'
+import { Skeleton } from './data-display/skeleton'
+import { Timeline } from './data-display/timeline'
+import { Statistic } from './data-display/statistic'
 
 // 扩展组件 (extended)
 import { DataTable, type DataTableColumn } from './table'
@@ -90,17 +105,24 @@ import {
 } from './theme'
 import { ThemeProvider } from './theme-provider'
 
-// Re-export 所有组件
+// Re-export 所有组件（50+）
 export {
-  Button, Icon, Link, Container, Divider,
-  Input, Checkbox, Radio, Select, Switch,
-  Modal, Toast, Alert, Tooltip,
-  Tabs, Breadcrumb, Pagination,
-  Table, Tag, Badge, Spin, Empty,
+  // 基础组件
+  Button, Icon, Link, Container, Divider, Menu, DropdownMenu,
+  // 表单组件
+  Input, Checkbox, Radio, Select, Switch, InputNumber, Cascader, Rate, ColorPicker,
+  // 反馈组件
+  Modal, Toast, Alert, Tooltip, Drawer,
+  // 导航组件
+  Tabs, Breadcrumb, Pagination, Steps,
+  // 数据展示
+  Table, Tag, Badge, Spin, Empty, Card, Descriptions, Result, ImagePreview, Skeleton, Timeline, Statistic,
+  // 扩展组件
   DataTable, Form, DatePicker, Dialog, Notification, Popover,
   TabNav, Collapse, Dropdown, Toggle, CountBadge, Pager,
   Progress, Slider, Upload, Tree,
   Avatar, Carousel, TimePicker, Calendar,
+  // 样式
   cssVariables, injectCSSVariables, generateCSSVariableString,
   resetCSS, injectResetCSS,
   applyTheme, getTheme, resetTheme, createDarkTheme, getDefaultTheme,
@@ -132,6 +154,8 @@ export function install(app: any): void {
       app.component('LytLink', Link)
       app.component('LytContainer', Container)
       app.component('LytDivider', Divider)
+      app.component('LytMenu', Menu)
+      app.component('LytDropdownMenu', DropdownMenu)
 
       // 表单组件
       app.component('LytInput', Input)
@@ -139,17 +163,23 @@ export function install(app: any): void {
       app.component('LytRadio', Radio)
       app.component('LytSelect', Select)
       app.component('LytSwitch', Switch)
+      app.component('LytInputNumber', InputNumber)
+      app.component('LytCascader', Cascader)
+      app.component('LytRate', Rate)
+      app.component('LytColorPicker', ColorPicker)
 
       // 反馈组件
       app.component('LytModal', Modal)
       app.component('LytToast', Toast)
       app.component('LytAlert', Alert)
       app.component('LytTooltip', Tooltip)
+      app.component('LytDrawer', Drawer)
 
       // 导航组件
       app.component('LytTabs', Tabs)
       app.component('LytBreadcrumb', Breadcrumb)
       app.component('LytPagination', Pagination)
+      app.component('LytSteps', Steps)
 
       // 数据展示
       app.component('LytTable', Table)
@@ -157,6 +187,13 @@ export function install(app: any): void {
       app.component('LytBadge', Badge)
       app.component('LytSpin', Spin)
       app.component('LytEmpty', Empty)
+      app.component('LytCard', Card)
+      app.component('LytDescriptions', Descriptions)
+      app.component('LytResult', Result)
+      app.component('LytImagePreview', ImagePreview)
+      app.component('LytSkeleton', Skeleton)
+      app.component('LytTimeline', Timeline)
+      app.component('LytStatistic', Statistic)
 
       // 扩展组件
       app.component('LytDataTable', DataTable)
@@ -185,28 +222,48 @@ export function install(app: any): void {
  * 所有组件的映射表
  */
 export const components = {
+  // 基础组件
   Button,
   Icon,
   Link,
   Container,
   Divider,
+  Menu,
+  DropdownMenu,
+  // 表单组件
   Input,
   Checkbox,
   Radio,
   Select,
   Switch,
+  InputNumber,
+  Cascader,
+  Rate,
+  ColorPicker,
+  // 反馈组件
   Modal,
   Toast,
   Alert,
   Tooltip,
+  Drawer,
+  // 导航组件
   Tabs,
   Breadcrumb,
   Pagination,
+  Steps,
+  // 数据展示
   Table,
   Tag,
   Badge,
   Spin,
   Empty,
+  Card,
+  Descriptions,
+  Result,
+  ImagePreview,
+  Skeleton,
+  Timeline,
+  Statistic,
   // 扩展组件
   DataTable,
   Form,

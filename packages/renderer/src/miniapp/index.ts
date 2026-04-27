@@ -24,3 +24,49 @@ export {
 // ---- 小程序支持 ----
 export { MiniAppRenderer, miniAppRenderer } from './miniapp-renderer';
 export type { MiniAppNode } from './miniapp-renderer';
+
+// ---- 小程序编译器 ----
+export { MiniAppCompiler } from './miniapp-compiler';
+export type {
+  MiniAppCompileResult,
+  MiniAppPageConfig,
+  MiniAppPageOutput,
+  MiniAppComponentConfig,
+  MiniAppComponentOutput,
+} from './miniapp-compiler';
+
+// ---- 小程序事件桥接 ----
+export { MiniAppEventBridge } from './miniapp-event-bridge';
+export type {
+  MiniAppNativeEvent,
+  ParsedEventArgs,
+  DataBinder,
+  BridgeHandlerMap,
+} from './miniapp-event-bridge';
+
+// ---- 小程序生命周期适配器 ----
+export { MiniAppLifecycleAdapter } from './miniapp-lifecycle';
+export type {
+  LifecycleMapping,
+  PageLifecycleHooks,
+  ComponentLifecycleHooks,
+} from './miniapp-lifecycle';
+
+// ---- 小程序工具函数 ----
+export {
+  camelToKebab,
+  kebabToCamel,
+  parseStyleObject,
+  parseClassObject,
+  generatePageJson,
+  generateComponentJson,
+  normalizeProps,
+  createWxsModule,
+  escapeHtml,
+  isNativeTag,
+} from './miniapp-utils';
+export type {
+  PageJsonConfig,
+  ComponentJsonConfig,
+  NormalizedProps,
+} from './miniapp-utils';
