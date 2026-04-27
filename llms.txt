@@ -1,0 +1,165 @@
+# Lyt.js - 轻写轻跑，所见即代码
+
+Lyt.js 是一个纯原生、零运行时依赖、超轻量的前端框架，提供与 Vue 3 兼容的 API。
+
+## 核心特性
+
+- 纯原生，零运行时第三方依赖
+- 核心 8 包 ESM gzip 总计仅 34.56KB
+- 所见即代码 - 增强版 HTML 模板，去掉 v- 前缀
+- 双 API 模式 - 同时支持 Options API 和 Composition API
+- 渐进扩展 - 架构为 SSR/移动端/小程序预留 Renderer 接口
+- 开箱即用 - 内置路由、状态管理、CLI 工具、浏览器 DevTools、38+ 组件
+
+## 包结构
+
+核心引擎包 (8):
+- @lytjs/reactivity - 响应式系统（reactive/ref/computed/watch/Signal）
+- @lytjs/compiler - 模板编译器（HTML 解析/AST/代码生成/静态提升）
+- @lytjs/vdom - 虚拟 DOM（VNode/Diff/Block Tree/Patch Flag/LIS）
+- @lytjs/renderer - 渲染器主入口（DOM/SSR/Vapor/MiniApp/Native）
+- @lytjs/component - 组件系统（defineComponent/生命周期/插槽/KeepAlive/Suspense/Teleport）
+- @lytjs/core - 核心入口（createApp/h/插件系统/Web Component）
+- @lytjs/common - 公共工具库
+- @lytjs/lytjs - 聚合包
+
+功能包:
+- @lytjs/router - 内置路由
+- @lytjs/store - 内置状态管理
+- @lytjs/components - UI 组件库
+- @lytjs/cli - 命令行工具
+- @lytjs/devtools - 浏览器开发者工具
+- @lytjs/lytx - 元框架（SSR/SSG/SPA/API Routes/全栈渲染）
+- @lytjs/test-utils - 测试工具库
+- @lytjs/ai - AI 辅助开发工具
+
+## 模板语法
+
+Lyt.js 使用增强版 HTML 模板，去掉了 Vue 的 v- 前缀:
+- 插值: {{ msg }}
+- 属性绑定: :class="cls"
+- 事件绑定: @click="fn"
+- 条件渲染: if="show"
+- 列表渲染: each="item in list"
+- 双向绑定: model="val"
+
+## AI 辅助开发
+
+Lyt.js 提供了完整的 AI 辅助开发功能:
+- CLI 集成: lytx generate 命令，支持 --ai 选项
+- 真实 AI API 集成: 支持 OpenAI 兼容 API（GPT-4o / Claude）
+- 配置系统: .lytrc.json + 环境变量 + 命令行选项
+- AI IDE 深度集成: Trae、Cursor 等
+- AI 提示词优化: 专门的组件/Store/页面提示词
+
+## 快速开始
+
+使用 CLI 创建项目:
+```bash
+npx @lytjs/cli create my-app
+cd my-app
+npm install
+npm run dev
+```
+
+CDN 直接使用:
+```html
+<div id="app"></div>
+<script type="module">
+import { createApp } from '@lytjs/core'
+
+const app = createApp({
+  template: `
+    <div>
+      <h1>{{ title }}</h1>
+      <p>计数: {{ count }}</p>
+      <button @click="count++">+1</button>
+    </div>
+  `,
+  state: {
+    title: 'Hello Lyt.js!',
+    count: 0
+  }
+})
+
+app.mount('#app')
+</script>
+```
+
+## 组件示例
+
+```javascript
+import { defineComponent, ref, computed, watch } from '@lytjs/component'
+
+const Counter = defineComponent({
+  setup() {
+    const count = ref(0)
+    const double = computed(() => count.value * 2)
+
+    watch(count, (val) => console.log('变化:', val))
+
+    return { count, double }
+  },
+  template: `
+    <div>
+      <p>{{ count }} x 2 = {{ double }}</p>
+      <button @click="count++">+1</button>
+    </div>
+  `
+})
+```
+
+## 路由示例
+
+```javascript
+import { createRouter } from '@lytjs/router'
+
+const router = createRouter({
+  mode: 'history',
+  routes: [
+    { path: '/', component: Home },
+    { path: '/about', component: About }
+  ]
+})
+
+app.use(router)
+```
+
+## 状态管理示例
+
+```javascript
+import { createStore } from '@lytjs/store'
+
+const counter = createStore('counter', {
+  state: { count: 0 },
+  getters: {
+    double: (s) => s.count * 2
+  },
+  actions: {
+    increment(s) { s.count++ }
+  }
+})
+```
+
+## AI 集成使用
+
+使用 AI 生成组件:
+```bash
+lytx generate component MyButton --ai
+lytx generate store counter --ai
+lytx generate page Home --ai
+```
+
+配置 AI (在 .lytrc.json):
+```json
+{
+  "ai": {
+    "provider": "openai",
+    "apiKey": "your-api-key",
+    "model": "gpt-4o",
+    "baseUrl": "https://api.openai.com/v1"
+  }
+}
+```
+
+更多详细信息请参考 llms-full.txt 和官方文档。

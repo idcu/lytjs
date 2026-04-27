@@ -25,6 +25,7 @@ import { createProject, type ScaffoldOptions } from './scaffold';
 import { startDevServer } from './dev';
 import { buildProject } from './build';
 import { createHMRServer, getHMRClientScript, type HMRUpdate, type HMRServer } from './hmr';
+import { handleGenerateCommand, GENERATE_HELP } from './generate';
 
 // ============================================================
 // 常量定义
@@ -55,6 +56,7 @@ ${colorText('命令:', 'brightGreen')}
   ${colorText('dev', 'brightYellow')}              启动本地开发服务器
   ${colorText('build', 'brightYellow')}            构建生产版本
   ${colorText('preview', 'brightYellow')}          预览构建结果
+  ${colorText('generate', 'brightYellow')} <type> <name> 生成代码（组件、Store、页面、API）
 
 ${colorText('全局选项:', 'brightGreen')}
   ${colorText('-h, --help', 'brightYellow')}       显示帮助信息
@@ -388,6 +390,14 @@ async function main(): Promise<void> {
 
       case 'preview':
         handlePreviewCommand(args);
+        break;
+
+      case 'generate':
+        if (args.options.help) {
+          console.log(GENERATE_HELP);
+          break;
+        }
+        await handleGenerateCommand(args.args);
         break;
 
       default:

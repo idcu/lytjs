@@ -55,6 +55,50 @@ export interface ComponentConfig {
 }
 
 /**
+ * Store 配置
+ */
+export interface StoreConfig {
+  /** Store 名称 */
+  name: string
+  /** 初始状态 */
+  state?: Record<string, any>
+  /** Getters */
+  getters?: Record<string, string>
+  /** Actions */
+  actions?: string[]
+  /** 描述 */
+  description?: string
+}
+
+/**
+ * 页面配置
+ */
+export interface PageConfig {
+  /** 页面名称 */
+  name: string
+  /** 路由路径 */
+  path?: string
+  /** 布局 */
+  layout?: string
+  /** 描述 */
+  description?: string
+}
+
+/**
+ * API 配置
+ */
+export interface APIConfig {
+  /** API 名称 */
+  name: string
+  /** 路由路径 */
+  path?: string
+  /** HTTP 方法 */
+  method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
+  /** 描述 */
+  description?: string
+}
+
+/**
  * 模板上下文
  */
 export interface TemplateContext extends ComponentConfig {
@@ -70,10 +114,65 @@ export interface TemplateContext extends ComponentConfig {
  * 生成结果
  */
 export interface GenerateResult {
-  /** 组件代码 */
+  /** 生成的代码 */
   code: string
   /** 文件路径 */
   filePath?: string
   /** 提示信息 */
   messages: string[]
+  /** 是否使用 AI 生成 */
+  usedAI?: boolean
+}
+
+/**
+ * AI 提供商类型
+ */
+export type AIProvider = 'openai' | 'anthropic' | 'custom'
+
+/**
+ * AI 配置
+ */
+export interface AIConfig {
+  /** AI 提供商 */
+  provider: AIProvider
+  /** API Key */
+  apiKey?: string
+  /** 模型名称 */
+  model?: string
+  /** API 基础 URL */
+  baseUrl?: string
+  /** 温度参数 */
+  temperature?: number
+  /** 最大 token 数 */
+  maxTokens?: number
+  /** 超时时间（毫秒） */
+  timeout?: number
+}
+
+/**
+ * Chat 消息
+ */
+export interface ChatMessage {
+  role: 'system' | 'user' | 'assistant'
+  content: string
+}
+
+/**
+ * AI 响应
+ */
+export interface AIResponse {
+  content: string
+  usage?: {
+    promptTokens?: number
+    completionTokens?: number
+    totalTokens?: number
+  }
+}
+
+/**
+ * 配置文件类型
+ */
+export interface LytConfig {
+  ai?: AIConfig
+  [key: string]: any
 }
