@@ -9,15 +9,57 @@
 
 ## [Unreleased]
 
+## [4.2.0] - 2026-04-27
+
 ### 新增 (Features)
 
-- 添加 CHANGELOG 自动化脚本
-  - `scripts/changelog.js` - 完整的 CHANGELOG 管理工具
+- **AI 集成包 (@lytjs/ai)** - 完整的 AI 代码生成和辅助开发功能
+  - AI 代码生成、组件生成、代码补全
+  - CLI 工具集成 (`lyt-ai`)
+  - 配置管理和模板引擎
+  - 支持多种 AI 模型配置
+
+- **Vue 3 兼容层 (@lytjs/compat)** - Vue 3 到 Lyt.js 的无缝迁移
+  - Vue 3 API 兼容层
+  - SFC 单文件组件转换器
+  - Vue-to-Lyt 迁移工具 (`vue-to-lyt`)
+  - 内置组件兼容
+
+- **CHANGELOG 管理工具** - 完整的自动化 CHANGELOG 管理
+  - `scripts/changelog.js` - CHANGELOG 管理脚本
   - 支持添加变更、发布版本、预览功能
   - 在 package.json 中添加了相关脚本命令
 
+- **社区基础设施完善** - 提升项目可维护性
+  - Issue 模板（Bug 报告、功能请求、问题咨询）
+  - 贡献指南 (CONTRIBUTING.md)
+  - 行为准则 (CODE_OF_CONDUCT.md)
+
+### 修复 (Bug Fixes)
+
+- **CLI 语法错误修复** - 修复 generate.ts 中的语法错误
+  - `packages/cli/src/generate.ts` - 修复 missing } 语法错误
+
+- **CI 部署工作流修复** - 修复 develop 分支的文档部署工作流
+  - `.github/workflows/deploy-docs.yml` - 工作流配置修复
+
+### 改进 (Improvements)
+
+- **AI 开发工具集成** - 添加 .trae 目录下的 AI 辅助开发资源
+  - API 参考文档
+  - 最佳实践指南
+  - 上下文提示模板
+  - 快速开始指南
+  - AI 集成示例
+
+- **LLM 友好文档更新** - 更新 llms.txt 和 llms-full.txt
+  - 添加最新功能说明
+  - 完善 API 参考文档
+  - 优化 AI 上下文信息
+
 ---
 
+---
 ## [4.1.0] - 2026-04-27
 
 ### 新增 (Features)
