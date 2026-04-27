@@ -23,7 +23,8 @@
   <a href="#特性">特性</a> ·
   <a href="#模板语法">模板语法</a> ·
   <a href="#包结构">包结构</a> ·
-  <a href="https://gitee.com/lytjs/lytjs">Gitee</a>
+  <a href="https://gitee.com/lytjs/lytjs/issues">Issues</a> ·
+  <a href="./CONTRIBUTING.md">贡献指南</a>
 </p>
 
 ---
@@ -58,6 +59,15 @@
 | 元框架 (LytX) | ✅ **完成** | 支持 SSR/SSG/SPA 全栈渲染 |
 | 小程序渲染器 | ⏳ **规划中** | 微信/支付宝/字节小程序适配 |
 | 移动端渲染器 | ⏳ **规划中** | 原生移动端适配 |
+
+## 社区
+
+欢迎加入 Lyt.js 社区！
+
+- 💬 **讨论问题**：使用 [Gitee Issues](https://gitee.com/lytjs/lytjs/issues)
+- 📝 **贡献代码**：查看 [贡献指南](./CONTRIBUTING.md)
+- ⚖️ **行为准则**：遵守 [社区准则](./CODE_OF_CONDUCT.md)
+- 🌟 **Star 支持**：如果你觉得项目有用，欢迎 Star
 
 ## 测试覆盖
 
