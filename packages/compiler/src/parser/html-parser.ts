@@ -533,7 +533,7 @@ function finishOpenTag(ctx: ParserContext, isSelfClosing: boolean = false): void
 /**
  * 将子节点添加到当前父元素或根节点
  */
-function addChild(ctx: ParserContext, node: ElementNode | TextNode): void {
+function _addChild(ctx: ParserContext, node: ElementNode | TextNode): void {
   if (ctx.currentElement) {
     ctx.currentElement.children.push(node);
   } else {

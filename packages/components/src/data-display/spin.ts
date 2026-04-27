@@ -36,6 +36,7 @@ export const Spin = defineComponent({
 
     let delayTimer: ReturnType<typeof setTimeout> | null = null;
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     watch(() => props.spinning, (val: any) => {
       if (delayTimer) clearTimeout(delayTimer);
       if (val) {

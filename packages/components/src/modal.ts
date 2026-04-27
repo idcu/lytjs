@@ -3,10 +3,14 @@
  * Props: visible, title, width, closable, maskClosable, closeOnEsc, showFooter, confirmText, cancelText, fullscreen
  * Events: open, close, confirm, cancel, update:visible
  * Features: 标题, 内容插槽, 底部插槽, 遮罩关闭, 关闭按钮, 淡入淡出动画
+ *
+ * A11y: Focus Trap、role="dialog"、aria-modal="true"、aria-labelledby、Escape 关闭
  */
 
 import { defineComponent, onMounted, onUnmounted } from '@lytjs/component'
 import { reactive, watch } from '@lytjs/reactivity'
+import { generateId } from './a11y/aria-utils'
+import { FocusTrap } from './a11y/focusTrap'
 
 export const Dialog = defineComponent({
   name: 'LytDialog',
@@ -68,6 +72,11 @@ export const Dialog = defineComponent({
       isAnimating: false,
     })
 
+    // 生成唯一 ID
+    const titleId = generateId('lyt-dialog-title')
+    const bodyId = generateId('lyt-dialog-body')
+    let focusTrap: FocusTrap | null = null
+
     const open = () => {
       state.isVisible = true
       state.isAnimating = true
@@ -77,6 +86,10 @@ export const Dialog = defineComponent({
     }
 
     const close = () => {
+      if (focusTrap) {
+        focusTrap.deactivate()
+        focusTrap = null
+      }
       state.isAnimating = false
       setTimeout(() => {
         state.isVisible = false
@@ -109,9 +122,39 @@ export const Dialog = defineComponent({
       }
     }
 
+    /** 关闭按钮键盘事件 */
+    const handleCloseKeydown = (e: KeyboardEvent) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault()
+        close()
+      }
+    }
+
+    /** 初始化 Focus Trap */
+    const initFocusTrap = () => {
+      requestAnimationFrame(() => {
+        const dialogEl = document.querySelector('.lyt-dialog__dialog') as HTMLElement
+        if (dialogEl) {
+          focusTrap = new FocusTrap({
+            container: dialogEl,
+            onEscape: () => {
+              if (props.closeOnEsc) close()
+            },
+            autoFocus: true,
+            restoreFocus: true,
+          })
+          focusTrap.activate()
+        }
+      })
+    }
+
     watch(() => props.visible, (val: any) => {
-      if (val) open()
-      else if (state.isVisible) close()
+      if (val) {
+        open()
+        initFocusTrap()
+      } else if (state.isVisible) {
+        close()
+      }
     })
 
     onMounted(() => {
@@ -120,6 +163,10 @@ export const Dialog = defineComponent({
 
     onUnmounted(() => {
       document.removeEventListener('keydown', handleKeydown)
+      if (focusTrap) {
+        focusTrap.deactivate()
+        focusTrap = null
+      }
       document.body.style.overflow = ''
     })
 
@@ -137,11 +184,12 @@ export const Dialog = defineComponent({
     return {
       state, open, close, handleConfirm, handleCancel,
       handleMaskClick, handleClose, dialogStyle, slots,
+      titleId, bodyId, handleCloseKeydown,
     }
   },
 
   template: `
-    <div class="lyt-dialog" v-if="state.isVisible" :style="{ zIndex: zIndex }">
+    <div class="lyt-dialog" v-if="state.isVisible" :style="{ zIndex: zIndex }" role="presentation">
       <div
         class="lyt-dialog__mask {state.isAnimating ? 'lyt-dialog__mask--visible' : ''}"
         @click="handleMaskClick"
@@ -150,12 +198,16 @@ export const Dialog = defineComponent({
         <div
           class="lyt-dialog__dialog {fullscreen ? 'lyt-dialog__dialog--fullscreen' : ''}"
           :style="dialogStyle()"
+          role="dialog"
+          aria-modal="true"
+          :aria-labelledby="title ? titleId : undefined"
+          :aria-describedby="bodyId"
         >
           <div class="lyt-dialog__header" v-if="title || closable">
-            <span class="lyt-dialog__title">{{ title }}</span>
-            <span class="lyt-dialog__close" v-if="closable" @click="handleClose">&times;</span>
+            <span class="lyt-dialog__title" :id="titleId">{{ title }}</span>
+            <span class="lyt-dialog__close" v-if="closable" role="button" tabindex="0" aria-label="关闭" @click="handleClose" @keydown="handleCloseKeydown">&times;</span>
           </div>
-          <div class="lyt-dialog__body">
+          <div class="lyt-dialog__body" :id="bodyId">
             <slot></slot>
           </div>
           <div class="lyt-dialog__footer" v-if="showFooter">

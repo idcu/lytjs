@@ -3,6 +3,8 @@
  * Props: type(primary/success/warning/danger/default), size(small/medium/large), disabled, loading, block, icon
  * Events: click
  * Slots: default, icon
+ *
+ * A11y: 使用原生 <button> 元素，添加 aria-disabled、aria-busy 属性
  */
 
 import { defineComponent } from '@lytjs/component';
@@ -37,6 +39,26 @@ export const Button = defineComponent({
       type: String,
       default: '',
     },
+    /** 无障碍标签，当按钮内容不足以描述时使用 */
+    ariaLabel: {
+      type: String,
+      default: '',
+    },
+    /** 是否展开弹出层 */
+    ariaExpanded: {
+      type: Boolean,
+      default: undefined,
+    },
+    /** 弹出层类型 */
+    ariaHaspopup: {
+      type: String,
+      default: '',
+    },
+    /** 关联的弹出层 ID */
+    ariaControls: {
+      type: String,
+      default: '',
+    },
   },
 
   setup(props, { emit, slots }) {
@@ -52,9 +74,15 @@ export const Button = defineComponent({
     <button
       class="lyt-btn lyt-btn--{type} lyt-btn--{size} {block ? 'lyt-btn--block' : ''} {disabled || loading ? 'lyt-btn--disabled' : ''}"
       :disabled="disabled || loading"
+      :aria-disabled="disabled || loading ? 'true' : undefined"
+      :aria-busy="loading ? 'true' : undefined"
+      :aria-label="ariaLabel || undefined"
+      :aria-expanded="ariaExpanded !== undefined ? (ariaExpanded ? 'true' : 'false') : undefined"
+      :aria-haspopup="ariaHaspopup || undefined"
+      :aria-controls="ariaControls || undefined"
       @click="handleClick"
     >
-      <span v-if="loading" class="lyt-btn__loading">
+      <span v-if="loading" class="lyt-btn__loading" aria-hidden="true">
         <svg viewBox="0 0 1024 1024" class="lyt-btn__loading-icon" width="1em" height="1em">
           <path d="M512 64a32 32 0 0 1 32 32v192a32 32 0 0 1-64 0V96a32 32 0 0 1 32-32zm0 640a32 32 0 0 1 32 32v192a32 32 0 0 1-64 0V736a32 32 0 0 1 32-32zm-448-192a32 32 0 0 1 32-32h192a32 32 0 0 1 0 64H96a32 32 0 0 1-32-32zm640 0a32 32 0 0 1 32-32h192a32 32 0 0 1 0 64H736a32 32 0 0 1-32-32z"/>
         </svg>

@@ -19,12 +19,15 @@ import {
 /** ErrorBoundary 组件的 Props 接口 */
 export interface ErrorBoundaryProps {
   /** 降级 UI 内容（错误时显示） */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   fallback?: any
   /** 最大错误记录数，默认 100 */
   maxErrors?: number
   /** 错误回调 */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onError?: (error: Error, vm: any, info: string) => void
   /** 错误捕获回调，返回 true 阻止传播 */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onErrorCaptured?: (error: Error, vm: any, info: string) => boolean | void
   /** 错误状态变化回调 */
   onErrorChange?: (hasError: boolean, error: Error | null) => void
@@ -37,6 +40,7 @@ export interface ErrorBoundaryProps {
 /** 错误记录条目 */
 interface ErrorEntry {
   error: Error
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   vm: any
   info: string
   timestamp: number
@@ -55,6 +59,7 @@ export const ErrorBoundaryComponent: ComponentDefine = defineComponent({
     maxErrorCount: { type: Number, default: Infinity },
   },
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setup(props: ErrorBoundaryProps, { slots, emit }: any) {
     // 内部错误列表
     const errors: ErrorEntry[] = [];
@@ -71,6 +76,7 @@ export const ErrorBoundaryComponent: ComponentDefine = defineComponent({
      * @param vm    组件实例
      * @param info  错误来源信息
      */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     function captureError(error: Error, vm: any, info: string): void {
       if (disabled) return;
 
@@ -125,9 +131,11 @@ export const ErrorBoundaryComponent: ComponentDefine = defineComponent({
      * @param vm      组件实例
      * @param info    错误来源信息
      */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     function captureAsyncError(promise: Promise<any>, vm: any, info: string): void {
       if (disabled) return;
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       promise.catch((error: any) => {
         const err = error instanceof Error ? error : new Error(String(error));
         captureError(err, vm, info);
@@ -213,6 +221,7 @@ export const ErrorBoundaryComponent: ComponentDefine = defineComponent({
      * - 有错误时渲染 fallback slot 或 fallback prop
      * - 自动禁用时渲染禁用提示
      */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     function render(): any {
       if (disabled) {
         // 自动禁用状态：显示禁用提示

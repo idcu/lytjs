@@ -5,7 +5,7 @@
  * 支持子菜单嵌套，水平/垂直两种模式
  */
 
-import { defineComponent, onMounted, onUnmounted } from '@lytjs/component';
+import { defineComponent } from '@lytjs/component';
 import { reactive, watch } from '@lytjs/reactivity';
 
 export const Menu = defineComponent({
@@ -40,6 +40,7 @@ export const Menu = defineComponent({
         label: string;
         icon?: string;
         disabled?: boolean;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         children?: Array<any>;
       }>,
       default: () => [],
@@ -52,12 +53,14 @@ export const Menu = defineComponent({
       openKeys: [] as Array<string | number>,
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleSelect = (item: any) => {
       if (item.disabled) return;
       state.activeKey = item.key;
       emit('select', item.key, item);
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleSubmenuClick = (item: any) => {
       if (item.disabled) return;
       const index = state.openKeys.indexOf(item.key);
@@ -81,10 +84,12 @@ export const Menu = defineComponent({
       return state.activeKey === key;
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const hasChildren = (item: any) => {
       return item.children && item.children.length > 0;
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     watch(() => props.defaultActiveKey, (val: any) => {
       state.activeKey = val;
     });

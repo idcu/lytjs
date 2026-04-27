@@ -8,6 +8,12 @@
   <img src="https://img.shields.io/badge/benchmark-66M%20ops%2Fsec-42b883?style=flat-square" alt="benchmark">
 </p>
 
+<p align="center">
+  <a href="https://gitee.com/lytjs/lytjs"><img src="https://img.shields.io/badge/Gitee-lytjs%2Flytjs-C71D23?style=flat-square&logo=gitee" alt="Gitee"></a>
+  <a href="https://github.com/idcu/lytjs"><img src="https://img.shields.io/badge/GitHub-idcu%2Flytjs-181717?style=flat-square&logo=github" alt="GitHub"></a>
+  <img src="https://img.shields.io/badge/sync-Gitee%E2%86%92GitHub-blue?style=flat-square" alt="Sync">
+</p>
+
 <h1 align="center">Lyt.js</h1>
 
 <p align="center">
@@ -25,6 +31,11 @@
   <a href="#包结构">包结构</a> ·
   <a href="https://gitee.com/lytjs/lytjs/issues">Issues</a> ·
   <a href="./CONTRIBUTING.md">贡献指南</a>
+</p>
+
+<p align="center">
+  <strong>主仓库</strong>: <a href="https://gitee.com/lytjs/lytjs">Gitee</a> |
+  <strong>镜像仓库</strong>: <a href="https://github.com/idcu/lytjs">GitHub</a> (自动同步)
 </p>
 
 ---
@@ -64,10 +75,10 @@
 
 欢迎加入 Lyt.js 社区！
 
-- 💬 **讨论问题**：使用 [Gitee Issues](https://gitee.com/lytjs/lytjs/issues)
+- 💬 **讨论问题**：使用 [Gitee Issues](https://gitee.com/lytjs/lytjs/issues) 或 [GitHub Issues](https://github.com/idcu/lytjs/issues)
 - 📝 **贡献代码**：查看 [贡献指南](./CONTRIBUTING.md)
 - ⚖️ **行为准则**：遵守 [社区准则](./CODE_OF_CONDUCT.md)
-- 🌟 **Star 支持**：如果你觉得项目有用，欢迎 Star
+- 🌟 **Star 支持**：如果你觉得项目有用，欢迎在 [Gitee](https://gitee.com/lytjs/lytjs) 或 [GitHub](https://github.com/idcu/lytjs) Star
 
 ## 测试覆盖
 

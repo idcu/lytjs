@@ -117,6 +117,7 @@ export const Rate = defineComponent({
       return {};
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     watch(() => props.value, (val: any) => {
       state.currentValue = val;
     });

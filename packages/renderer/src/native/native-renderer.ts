@@ -31,14 +31,23 @@ import {
  * 定义了渲染器与虚拟 DOM diff 算法对接所需的最小操作集。
  */
 export interface LytRendererPlatform {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   createElement(tag: string): any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   createText(text: string): any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   createComment(text: string): any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   insert(child: any, parent: any, anchor?: any): void
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   remove(child: any): void
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   patchProp(el: any, key: string, prevValue: any, nextValue: any): void
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   parentNode(child: any): any | null
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   nextSibling(child: any): any | null
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setText(node: any, text: string): void
 }
 
@@ -56,6 +65,7 @@ export interface NativeNode {
   type: string
 
   /** 原生属性（包含样式、事件等） */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   props: Record<string, any>
 
   /** 子节点列表 */
@@ -288,11 +298,13 @@ export class NativeRenderer implements LytRenderer {
    * @param key 属性名
    * @param val 属性值
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setAttribute(el: NativeNode, key: string, val: any): void {
     if (!el) return;
 
     // 样式属性特殊处理：合并到 props.style 中
     if (key === 'style' && typeof val === 'object' && val !== null) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       el.props.style = { ...(el.props.style as Record<string, any>), ...this.mapStyle(val) };
       return;
     }
@@ -361,6 +373,7 @@ export class NativeRenderer implements LytRenderer {
   setStyle(el: NativeNode, style: object): void {
     if (!el) return;
     const nativeStyle = this.mapStyle(style as Record<string, string>);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     el.props.style = { ...(el.props.style as Record<string, any>), ...nativeStyle };
   }
 
@@ -427,6 +440,7 @@ export class NativeRenderer implements LytRenderer {
    * @param handler 事件处理函数
    * @param options 事件选项（可选）
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   addEventListener(el: NativeNode, event: string, handler: Function, _options?: any): void {
     if (!el) return;
     const nativeEvent = this.mapEvent(event);
@@ -503,6 +517,7 @@ export class NativeRenderer implements LytRenderer {
    * @param prevValue 旧属性值
    * @param nextValue 新属性值
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   patchProp(el: NativeNode, key: string, prevValue: any, nextValue: any): void {
     if (!el) return;
 
@@ -550,6 +565,7 @@ export class NativeRenderer implements LytRenderer {
    * @param vnode VNode 对象
    * @returns NativeNode 树
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   renderToNativeTree(vnode: any): NativeNode {
     if (!vnode) {
       return this.createComment('empty vnode');
@@ -636,7 +652,9 @@ export class NativeRenderer implements LytRenderer {
    */
   serializeToJSON(node: NativeNode): string {
     // 递归清理内部字段并序列化
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const clean = (n: NativeNode): any => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const obj: any = {
         type: n.type,
         props: { ...n.props },
@@ -670,7 +688,9 @@ export class NativeRenderer implements LytRenderer {
    * @param cssStyle CSS 样式对象
    * @returns 原生样式对象
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   mapStyle(cssStyle: Record<string, string>): Record<string, any> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const result: Record<string, any> = {};
     for (const [cssKey, cssVal] of Object.entries(cssStyle)) {
       // 查找映射后的原生属性名

@@ -376,6 +376,7 @@ export function bindEach<T>(
       const key = newKeys[i];
       if (oldKeySet.has(key) && elementByKey.has(key)) {
         // 复用已有元素
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const existingEl = elementByKey.get(key)!;
         newElementByKey.set(key, existingEl);
         elementByKey.delete(key);
@@ -406,6 +407,7 @@ export function bindEach<T>(
     currentKeys = [];
     for (let i = 0; i < items.length; i++) {
       const key = newKeys[i];
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const el = newElementByKey.get(key)!;
       container.appendChild(el);
       currentElements.push(el);

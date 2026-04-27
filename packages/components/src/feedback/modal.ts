@@ -3,10 +3,14 @@
  * Props: visible, title, content, confirmText, cancelText, closable, maskClosable, width
  * Events: confirm, cancel, close
  * Methods: open(), close()
+ *
+ * A11y: Focus Trap、role="dialog"、aria-modal="true"、aria-labelledby、Escape 关闭
  */
 
 import { defineComponent, onMounted, onUnmounted } from '@lytjs/component';
 import { reactive, watch } from '@lytjs/reactivity';
+import { generateId } from '../a11y/aria-utils';
+import { FocusTrap } from '../a11y/focusTrap';
 
 export const Modal = defineComponent({
   name: 'LytModal',
@@ -52,6 +56,11 @@ export const Modal = defineComponent({
       isAnimating: false,
     });
 
+    // 生成唯一 ID
+    const titleId = generateId('lyt-modal-title');
+    const bodyId = generateId('lyt-modal-body');
+    let focusTrap: FocusTrap | null = null;
+
     const open = () => {
       state.isVisible = true;
       state.isAnimating = true;
@@ -60,6 +69,10 @@ export const Modal = defineComponent({
     };
 
     const close = () => {
+      if (focusTrap) {
+        focusTrap.deactivate();
+        focusTrap = null;
+      }
       state.isAnimating = false;
       setTimeout(() => {
         state.isVisible = false;
@@ -91,9 +104,38 @@ export const Modal = defineComponent({
       }
     };
 
+    /** 初始化 Focus Trap */
+    const initFocusTrap = () => {
+      requestAnimationFrame(() => {
+        const dialogEl = document.querySelector('.lyt-modal__dialog') as HTMLElement;
+        if (dialogEl) {
+          focusTrap = new FocusTrap({
+            container: dialogEl,
+            onEscape: () => close(),
+            autoFocus: true,
+            restoreFocus: true,
+          });
+          focusTrap.activate();
+        }
+      });
+    };
+
+    /** 关闭按钮键盘事件 */
+    const handleCloseKeydown = (e: KeyboardEvent) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        close();
+      }
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     watch(() => props.visible, (val: any) => {
-      if (val) open();
-      else close();
+      if (val) {
+        open();
+        initFocusTrap();
+      } else {
+        close();
+      }
     });
 
     onMounted(() => {
@@ -102,22 +144,33 @@ export const Modal = defineComponent({
 
     onUnmounted(() => {
       document.removeEventListener('keydown', handleKeydown);
+      if (focusTrap) {
+        focusTrap.deactivate();
+        focusTrap = null;
+      }
       document.body.style.overflow = '';
     });
 
-    return { state, open, close, handleConfirm, handleCancel, handleMaskClick, slots };
+    return { state, open, close, handleConfirm, handleCancel, handleMaskClick, slots, titleId, bodyId, handleCloseKeydown };
   },
 
   template: `
-    <div class="lyt-modal" v-if="state.isVisible">
+    <div class="lyt-modal" v-if="state.isVisible" role="presentation">
       <div class="lyt-modal__mask {state.isAnimating ? 'lyt-modal__mask--visible' : ''}" @click="handleMaskClick"></div>
       <div class="lyt-modal__wrapper {state.isAnimating ? 'lyt-modal__wrapper--visible' : ''}">
-        <div class="lyt-modal__dialog" :style="{ width: width }">
+        <div
+          class="lyt-modal__dialog"
+          :style="{ width: width }"
+          role="dialog"
+          aria-modal="true"
+          :aria-labelledby="title ? titleId : undefined"
+          :aria-describedby="bodyId"
+        >
           <div class="lyt-modal__header" v-if="title || closable">
-            <span class="lyt-modal__title">{{ title }}</span>
-            <span class="lyt-modal__close" v-if="closable" @click="close">&times;</span>
+            <span class="lyt-modal__title" :id="titleId">{{ title }}</span>
+            <span class="lyt-modal__close" v-if="closable" role="button" tabindex="0" aria-label="关闭" @click="close" @keydown="handleCloseKeydown">&times;</span>
           </div>
-          <div class="lyt-modal__body">
+          <div class="lyt-modal__body" :id="bodyId">
             <slot>{{ content }}</slot>
           </div>
           <div class="lyt-modal__footer">

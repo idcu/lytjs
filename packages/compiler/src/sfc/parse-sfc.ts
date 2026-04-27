@@ -53,19 +53,19 @@ const COMMENT_RE = /<!--[\s\S]*?-->/g;
 const TEMPLATE_OPEN_RE = /<template(\s[^>]*)?\s*>/;
 
 /** 匹配 <template> 块的结束标签 */
-const TEMPLATE_CLOSE_RE = /<\/template>/;
+const _TEMPLATE_CLOSE_RE = /<\/template>/;
 
 /** 匹配 <script> 块的开始标签 */
 const SCRIPT_OPEN_RE = /<script(\s[^>]*)?\s*>/;
 
 /** 匹配 <script> 块的结束标签 */
-const SCRIPT_CLOSE_RE = /<\/script>/;
+const _SCRIPT_CLOSE_RE = /<\/script>/;
 
 /** 匹配 <style> 块的开始标签（含 scoped 属性） */
 const STYLE_OPEN_RE = /<style(\s[^>]*)?\s*>/;
 
 /** 匹配 <style> 块的结束标签 */
-const STYLE_CLOSE_RE = /<\/style>/;
+const _STYLE_CLOSE_RE = /<\/style>/;
 
 /** 匹配 export default { ... } 内容（非贪婪匹配，避免跨块贪婪） */
 const EXPORT_DEFAULT_RE = /export\s+default\s*\{([\s\S]*?)\}\s*$/;

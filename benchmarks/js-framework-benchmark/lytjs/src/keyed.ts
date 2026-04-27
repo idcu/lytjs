@@ -2,26 +2,321 @@
  * Lyt.js js-framework-benchmark - Keyed Benchmark
  *
  * Implements the standard keyed benchmark for js-framework-benchmark.
- * Each row has a unique key (id), enabling efficient keyed diffing.
+ * Uses Lyt.js h() function to create VNodes and a lightweight VDOM
+ * renderer that performs keyed diffing.
  *
- * This implementation uses a proper keyed diff algorithm instead of
- * full re-rendering (innerHTML rebuild). It maintains a key -> DOM element
- * map and performs minimal DOM operations:
+ * Operations:
+ * - runBenchmark(): Create 1000 rows
+ * - addRow(): Add one row at bottom
+ * - updateEvery10thRow(): Update every 10th row (label += ' !!!')
+ * - swapRows(): Swap rows 1 and 2 (indices 0 and 1)
+ * - removeRow(): Remove last row
+ * - selectRow(index): Select row at given index
+ * - createElement(id): Initialize benchmark with container
+ * - getData(): Get current data array
+ * - getSelected(): Get selected row id
+ * - destroy(): Clean up
+ */
+
+import { h } from '@lytjs/core'
+import { buildData, getNextId, resetId } from './shared'
+
+// ============================================================
+// VNode Interface (compatible with @lytjs/core h() output)
+// ============================================================
+
+interface VNode {
+  type: string | object | symbol
+  props: Record<string, any> | null
+  children: string | VNode[] | null
+  key: string | number | null
+  ref: any
+  shapeFlag: number
+  el: any
+  component: any
+}
+
+// ============================================================
+// Lightweight VDOM Renderer (works with mock DOM and real DOM)
+// ============================================================
+
+/**
+ * Mount a VNode tree into a container element
+ */
+function mountVNode(vnode: VNode, container: any): void {
+  const el = createDOMElement(vnode)
+  vnode.el = el
+  container.appendChild(el)
+}
+
+/**
+ * Create a real (or mock) DOM element from a VNode
+ */
+function createDOMElement(vnode: VNode): any {
+  if (typeof vnode.type === 'string') {
+    const el = document.createElement(vnode.type)
+    applyProps(el, vnode.props)
+    if (typeof vnode.children === 'string') {
+      el.appendChild(document.createTextNode(vnode.children))
+    } else if (Array.isArray(vnode.children)) {
+      for (const child of vnode.children) {
+        const childEl = createDOMElement(child)
+        child.el = childEl
+        el.appendChild(childEl)
+      }
+    }
+    return el
+  }
+  return null
+}
+
+/**
+ * Apply props to a DOM element
+ */
+function applyProps(el: any, props: Record<string, any> | null): void {
+  if (!props) return
+  for (const key of Object.keys(props)) {
+    const val = props[key]
+    if (key === 'className') {
+      el.className = val
+    } else if (key === 'style' && typeof val === 'object') {
+      for (const s in val) {
+        el.style[s] = val[s]
+      }
+    } else if (key.startsWith('on') && typeof val === 'function') {
+      const eventName = key.slice(2).toLowerCase()
+      el.addEventListener(eventName, val)
+    } else if (key === 'href' || key === 'id') {
+      el.setAttribute(key, val)
+    } else {
+      el.setAttribute(key, val)
+    }
+  }
+}
+
+/**
+ * Unmount a VNode tree - remove from DOM
+ */
+function unmountVNode(container: any): void {
+  if (container.innerHTML !== undefined) {
+    container.innerHTML = ''
+  } else if (container.childNodes) {
+    container.childNodes.length = 0
+  }
+}
+
+// ============================================================
+// Keyed Diff Algorithm
+// ============================================================
+
+/**
+ * Perform a keyed diff between the current DOM state and the new VNode tree.
+ *
+ * Uses a key -> DOM element map for efficient keyed diffing:
  * - New items: create and insert
  * - Removed items: remove from DOM
  * - Moved items: use insertBefore to reorder
- * - Updated items: patch text content in place
- *
- * Operations:
- * - Create: Build 1000 rows
- * - Add: Add one row at bottom
- * - Update: Update every 10th row (label += ' !!!')
- * - Swap: Swap rows 1 and 2
- * - Remove: Remove last row
- * - Select: Select row at given index
+ * - Updated items: patch text content and className in place
  */
+function keyedPatch(
+  container: any,
+  oldVNode: VNode | null,
+  newVNode: VNode,
+): void {
+  // Get tbody from old or new VNode
+  const newTbody = findTbody(newVNode)
+  const oldTbody = oldVNode ? findTbody(oldVNode) : null
 
-import { buildData, getNextId } from './shared'
+  if (!newTbody) return
+
+  // If no old vnode, do a full mount
+  if (!oldVNode || !oldTbody) {
+    // Clear container and mount new tree
+    container.innerHTML = ''
+    mountVNode(newVNode, container)
+    return
+  }
+
+  // Build new row VNodes keyed by id
+  const newRows = newTbody.children as VNode[]
+  const oldRows = oldTbody.children as VNode[]
+
+  // Build key -> VNode maps
+  const oldKeyMap = new Map<number, VNode>()
+  for (let i = 0; i < oldRows.length; i++) {
+    const row = oldRows[i]
+    if (row.key !== null && row.key !== undefined) {
+      oldKeyMap.set(row.key as number, row)
+    }
+  }
+
+  const newKeyMap = new Map<number, VNode>()
+  for (let i = 0; i < newRows.length; i++) {
+    const row = newRows[i]
+    if (row.key !== null && row.key !== undefined) {
+      newKeyMap.set(row.key as number, row)
+    }
+  }
+
+  const tbodyEl = oldTbody.el
+
+  // Preserve el references on structural VNodes
+  newVNode.el = oldVNode.el
+  newTbody.el = oldTbody.el
+
+  // Step 1: Remove rows that are no longer in the new data
+  for (const [key, oldRow] of oldKeyMap) {
+    if (!newKeyMap.has(key)) {
+      if (oldRow.el && oldRow.el.parentNode) {
+        oldRow.el.parentNode.removeChild(oldRow.el)
+      }
+    }
+  }
+
+  // Step 2: Iterate through new rows, create/patch/reorder
+  for (let i = 0; i < newRows.length; i++) {
+    const newRow = newRows[i]
+    const rowKey = newRow.key as number
+    const oldRow = oldKeyMap.get(rowKey)
+
+    if (oldRow) {
+      // Existing row: patch in place
+      patchRowVNode(oldRow, newRow)
+      // Reorder if needed
+      const nextRef = i < newRows.length - 1
+        ? (oldKeyMap.get(newRows[i + 1].key as number)?.el ?? null)
+        : null
+
+      if (nextRef !== null) {
+        if (oldRow.el.nextSibling !== nextRef) {
+          if (oldRow.el.parentNode) {
+            oldRow.el.parentNode.removeChild(oldRow.el)
+          }
+          tbodyEl.insertBefore(oldRow.el, nextRef)
+        }
+      } else {
+        // Move to end
+        if (oldRow.el.nextSibling !== null) {
+          if (oldRow.el.parentNode) {
+            oldRow.el.parentNode.removeChild(oldRow.el)
+          }
+          tbodyEl.appendChild(oldRow.el)
+        }
+      }
+    } else {
+      // New row: create and insert
+      const trEl = createDOMElement(newRow)
+      newRow.el = trEl
+
+      // Find next reference element
+      let nextRef: any = null
+      for (let j = i + 1; j < newRows.length; j++) {
+        const refRow = oldKeyMap.get(newRows[j].key as number)
+        if (refRow && refRow.el) {
+          nextRef = refRow.el
+          break
+        }
+      }
+
+      if (nextRef) {
+        tbodyEl.insertBefore(trEl, nextRef)
+      } else {
+        tbodyEl.appendChild(trEl)
+      }
+    }
+  }
+}
+
+/**
+ * Patch an existing row VNode with new content
+ */
+function patchRowVNode(oldRow: VNode, newRow: VNode): void {
+  const oldTds = (oldRow.children as VNode[])
+  const newTds = (newRow.children as VNode[])
+
+  newRow.el = oldRow.el
+
+  for (let i = 0; i < newTds.length; i++) {
+    if (i < oldTds.length) {
+      patchElement(oldTds[i], newTds[i])
+    }
+  }
+}
+
+/**
+ * Patch an element VNode (td, a, etc.)
+ */
+function patchElement(oldVNode: VNode, newVNode: VNode): void {
+  if (!oldVNode.el) return
+
+  newVNode.el = oldVNode.el
+
+  // Patch props (className)
+  const oldProps = oldVNode.props || {}
+  const newProps = newVNode.props || {}
+
+  for (const key in newProps) {
+    if (oldProps[key] !== newProps[key]) {
+      if (key === 'className') {
+        oldVNode.el.className = newProps[key]
+      } else if (key === 'href') {
+        oldVNode.el.setAttribute(key, newProps[key])
+      }
+    }
+  }
+
+  // Patch children
+  if (typeof newVNode.children === 'string') {
+    if (typeof oldVNode.children === 'string' && oldVNode.children !== newVNode.children) {
+      // Update text of first child text node
+      const textNode = oldVNode.el.childNodes[0]
+      if (textNode) {
+        textNode.textContent = newVNode.children
+      } else {
+        oldVNode.el.appendChild(document.createTextNode(newVNode.children))
+      }
+    } else if (Array.isArray(oldVNode.children)) {
+      // Old had element children, new has text - replace
+      oldVNode.el.innerHTML = ''
+      oldVNode.el.appendChild(document.createTextNode(newVNode.children))
+    }
+  } else if (Array.isArray(newVNode.children)) {
+    if (typeof oldVNode.children === 'string') {
+      // Old was text, new has elements - replace
+      oldVNode.el.innerHTML = ''
+      for (const child of newVNode.children) {
+        const childEl = createDOMElement(child)
+        child.el = childEl
+        oldVNode.el.appendChild(childEl)
+      }
+    } else if (Array.isArray(oldVNode.children)) {
+      // Both have element children - patch each
+      for (let i = 0; i < newVNode.children.length; i++) {
+        if (i < oldVNode.children.length) {
+          patchElement(oldVNode.children[i], newVNode.children[i])
+        } else {
+          const childEl = createDOMElement(newVNode.children[i])
+          newVNode.children[i].el = childEl
+          oldVNode.el.appendChild(childEl)
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Find the tbody VNode in a VNode tree
+ */
+function findTbody(vnode: VNode): VNode | null {
+  if (vnode.type === 'tbody') return vnode
+  if (Array.isArray(vnode.children)) {
+    for (const child of vnode.children) {
+      const found = findTbody(child)
+      if (found) return found
+    }
+  }
+  return null
+}
 
 // ============================================================
 // State
@@ -30,222 +325,79 @@ import { buildData, getNextId } from './shared'
 let data: Array<{ id: number; label: string }> = []
 let selected: number | null = null
 let container: HTMLElement | null = null
-let tbody: HTMLElement | null = null
-
-/**
- * key -> row DOM element mapping for keyed diff
- */
-const rowMap = new Map<number, HTMLTableRowElement>()
-
-/**
- * Cached reference to the table head element
- */
-let thead: HTMLTableSectionElement | null = null
+let lastVNode: VNode | null = null
 
 // ============================================================
-// Row Creation & Update
+// Render Function (creates VNode tree using Lyt.js h())
 // ============================================================
 
 /**
- * Create a single <tr> element for the given data item
+ * Build the complete table VNode tree using Lyt.js h() function.
+ * Each row <tr> has a key={item.id} for keyed diffing.
  */
-function createRow(item: { id: number; label: string }, isSelected: boolean): HTMLTableRowElement {
-  const tr = document.createElement('tr')
-
-  // id column
-  const tdId = document.createElement('td')
-  tdId.className = 'id-col'
-  tdId.textContent = String(item.id)
-  tr.appendChild(tdId)
-
-  // label column
-  const tdLabel = document.createElement('td')
-  tdLabel.className = 'label-col'
-  const link = document.createElement('a')
-  link.href = '#'
-  link.textContent = item.label
-  tdLabel.appendChild(link)
-  tr.appendChild(tdLabel)
-
-  // select column
-  const tdSelect = document.createElement('td')
-  tdSelect.className = isSelected ? 'danger' : ''
-  const selectLink = document.createElement('a')
-  selectLink.href = '#'
-  selectLink.textContent = 'Select'
-  selectLink.addEventListener('click', (e) => {
-    e.preventDefault()
-    selected = item.id
-    patchSelected()
-  })
-  tdSelect.appendChild(selectLink)
-  tr.appendChild(tdSelect)
-
-  return tr
-}
-
-/**
- * Update an existing row's text content in place
- */
-function patchRow(tr: HTMLTableRowElement, item: { id: number; label: string }, isSelected: boolean): void {
-  // Update label text
-  const tdLabel = tr.children[1] as HTMLElement
-  const link = tdLabel.firstChild as HTMLAnchorElement
-  link.textContent = item.label
-
-  // Update select class
-  const tdSelect = tr.children[2] as HTMLElement
-  tdSelect.className = isSelected ? 'danger' : ''
-  // Note: click handler does NOT need re-attachment because it references
-  // the module-level `selected` variable via closure, which is always current.
-}
-
-// ============================================================
-// Keyed Diff Algorithm
-// ============================================================
-
-/**
- * Perform a keyed diff between the current DOM state and the new data array.
- *
- * Algorithm:
- * 1. Build a Set of new keys for quick lookup
- * 2. Remove rows whose keys are no longer in the new data
- * 3. Iterate through new data, creating or patching rows as needed
- * 4. Use insertBefore to maintain correct order (handles moves)
- */
-function keyedPatch(): void {
-  if (!tbody) return
-
-  const newKeys = new Set<number>()
-  for (let i = 0; i < data.length; i++) {
-    newKeys.add(data[i].id)
-  }
-
-  // Step 1: Remove rows that are no longer in the data
-  for (const [key, tr] of rowMap) {
-    if (!newKeys.has(key)) {
-      if (tr.parentNode) {
-        tr.parentNode.removeChild(tr)
-      }
-      rowMap.delete(key)
-    }
-  }
-
-  // Step 2: Iterate through new data, create/patch/reorder
-  let prevNode: Node | null = null
-
+function renderTable(): VNode {
+  const rows: VNode[] = []
   for (let i = 0; i < data.length; i++) {
     const item = data[i]
     const isSelected = selected === item.id
-
-    if (rowMap.has(item.id)) {
-      // Existing row: patch in place
-      const tr = rowMap.get(item.id)!
-
-      // Patch content
-      patchRow(tr, item, isSelected)
-
-      // Reorder if needed: insertBefore the next sibling or append
-      const nextExpected = i < data.length - 1
-        ? rowMap.get(data[i + 1].id) ?? null
-        : null
-
-      if (tr.nextSibling !== nextExpected) {
-        // Remove first to avoid duplicates in environments where
-        // insertBefore doesn't auto-remove existing children
-        if (tr.parentNode) {
-          tr.parentNode.removeChild(tr)
-        }
-        if (nextExpected) {
-          tbody.insertBefore(tr, nextExpected)
-        } else {
-          tbody.appendChild(tr)
-        }
-      }
-
-      prevNode = tr
-    } else {
-      // New row: create and insert
-      const tr = createRow(item, isSelected)
-      rowMap.set(item.id, tr)
-
-      if (prevNode && prevNode.parentNode === tbody) {
-        // Insert after prevNode
-        if (prevNode.nextSibling) {
-          tbody.insertBefore(tr, prevNode.nextSibling)
-        } else {
-          tbody.appendChild(tr)
-        }
-      } else {
-        // Insert at the correct position
-        // Find the next existing row in the new order
-        let nextRef: Node | null = null
-        for (let j = i + 1; j < data.length; j++) {
-          if (rowMap.has(data[j].id)) {
-            nextRef = rowMap.get(data[j].id)!
-            break
-          }
-        }
-        if (nextRef) {
-          tbody.insertBefore(tr, nextRef)
-        } else {
-          tbody.appendChild(tr)
-        }
-      }
-
-      prevNode = tr
-    }
+    rows.push(
+      h('tr', { key: item.id }, [
+        h('td', { className: 'id-col' }, String(item.id)),
+        h('td', { className: 'label-col' }, [
+          h('a', { href: '#' }, item.label),
+        ]),
+        h('td', {
+          className: isSelected ? 'danger' : '',
+        }, [
+          h('a', {
+            href: '#',
+            onClick: (e: any) => {
+              e.preventDefault()
+              selected = item.id
+              patchSelected()
+            },
+          }, 'Select'),
+        ]),
+      ]) as VNode,
+    )
   }
+
+  return h('table', { className: 'table table-striped table-bordered' }, [
+    h('thead', null, [
+      h('tr', null, [
+        h('th', null, 'id'),
+        h('th', null, 'label'),
+        h('th', null, ''),
+      ]),
+    ]),
+    h('tbody', null, rows),
+  ]) as VNode
 }
 
 /**
  * Patch only the selected state across all rows
- * (lightweight update - only toggles CSS class)
+ * (lightweight update - only toggles CSS class on affected rows)
  */
 function patchSelected(): void {
-  if (!tbody) return
-  for (const [key, tr] of rowMap) {
-    const tdSelect = tr.children[2] as HTMLElement
-    tdSelect.className = selected === key ? 'danger' : ''
+  if (!container || !lastVNode) return
+
+  const tbody = findTbody(lastVNode)
+  if (!tbody || !tbody.el) return
+
+  const rows = tbody.children as VNode[]
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i]
+    if (!row.el) continue
+    const tds = row.children as VNode[]
+    if (tds.length >= 3) {
+      const selectTd = tds[2]
+      const rowId = row.key as number
+      const newClass = selected === rowId ? 'danger' : ''
+      if (selectTd.el && selectTd.el.className !== newClass) {
+        selectTd.el.className = newClass
+      }
+    }
   }
-}
-
-// ============================================================
-// Initial Render
-// ============================================================
-
-/**
- * Build the full table structure (only called once during createElement)
- */
-function buildTable(): void {
-  if (!container) return
-
-  // Clear container
-  container.innerHTML = ''
-
-  const table = document.createElement('table')
-  table.className = 'table table-striped table-bordered'
-
-  // Build thead
-  thead = document.createElement('thead')
-  const headRow = document.createElement('tr')
-  const th1 = document.createElement('th')
-  th1.textContent = 'id'
-  const th2 = document.createElement('th')
-  th2.textContent = 'label'
-  const th3 = document.createElement('th')
-  th3.textContent = ''
-  headRow.appendChild(th1)
-  headRow.appendChild(th2)
-  headRow.appendChild(th3)
-  thead.appendChild(headRow)
-  table.appendChild(thead)
-
-  // Build tbody
-  tbody = document.createElement('tbody')
-  table.appendChild(tbody)
-
-  container.appendChild(table)
 }
 
 // ============================================================
@@ -259,12 +411,8 @@ export function createElement(id: string): { container: HTMLElement; destroy: ()
   container = document.getElementById(id)
   data = []
   selected = null
-  rowMap.clear()
-  tbody = null
-  thead = null
-
-  // Build the static table structure
-  buildTable()
+  lastVNode = null
+  resetId()
 
   return {
     container: container!,
@@ -272,12 +420,10 @@ export function createElement(id: string): { container: HTMLElement; destroy: ()
       if (container) {
         container.innerHTML = ''
       }
-      rowMap.clear()
       data = []
       selected = null
+      lastVNode = null
       container = null
-      tbody = null
-      thead = null
     },
   }
 }
@@ -288,7 +434,9 @@ export function createElement(id: string): { container: HTMLElement; destroy: ()
 export function runBenchmark(): void {
   data = buildData(1000)
   selected = null
-  keyedPatch()
+  const newVNode = renderTable()
+  keyedPatch(container, lastVNode, newVNode)
+  lastVNode = newVNode
 }
 
 /**
@@ -297,7 +445,9 @@ export function runBenchmark(): void {
 export function addRow(): void {
   const nextId = getNextId(data)
   data.push({ id: nextId, label: `Row ${nextId}` })
-  keyedPatch()
+  const newVNode = renderTable()
+  keyedPatch(container, lastVNode, newVNode)
+  lastVNode = newVNode
 }
 
 /**
@@ -309,7 +459,9 @@ export function updateEvery10thRow(): void {
       data[i].label += ' !!!'
     }
   }
-  keyedPatch()
+  const newVNode = renderTable()
+  keyedPatch(container, lastVNode, newVNode)
+  lastVNode = newVNode
 }
 
 /**
@@ -320,7 +472,9 @@ export function swapRows(): void {
   const temp = data[0]
   data[0] = data[1]
   data[1] = temp
-  keyedPatch()
+  const newVNode = renderTable()
+  keyedPatch(container, lastVNode, newVNode)
+  lastVNode = newVNode
 }
 
 /**
@@ -329,7 +483,9 @@ export function swapRows(): void {
 export function removeRow(): void {
   if (data.length === 0) return
   data.pop()
-  keyedPatch()
+  const newVNode = renderTable()
+  keyedPatch(container, lastVNode, newVNode)
+  lastVNode = newVNode
 }
 
 /**

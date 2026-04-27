@@ -1,0 +1,90 @@
+# Gitee -> GitHub 自动同步
+# 单向同步：Gitee 为主仓库，GitHub 为只读镜像
+# 同步方式：GitHub Actions 定时拉取 Gitee 仓库并 mirror push 到 GitHub
+
+name: Sync from Gitee
+
+on:
+  # 每 5 分钟定时同步
+  schedule:
+    - cron: '*/5 * * * *'
+  # 支持手动触发
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    # 避免多个同步任务同时运行
+    concurrency:
+      group: gitee-sync
+      cancel-in-progress: true
+
+    steps:
+      - name: Checkout GitHub repo (sparse, for config only)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: develop
+
+      - name: Sync from Gitee
+        env:
+          GITEE_TOKEN: ${{ secrets.GITEE_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "=== 开始从 Gitee 同步到 GitHub ==="
+          echo "时间: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+
+          # 配置 Git 用户信息
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # 添加 Gitee 远程仓库（使用 token 认证）
+          git remote add gitee "https://oauth2:${GITEE_TOKEN}@gitee.com/lytjs/lytjs.git" 2>/dev/null || \
+            git remote set-url gitee "https://oauth2:${GITEE_TOKEN}@gitee.com/lytjs/lytjs.git"
+
+          # 获取 Gitee 所有分支和标签
+          echo ">>> 正在从 Gitee 拉取最新代码..."
+          git fetch gitee --force --prune
+
+          # 检查是否有更新
+          GITEE_DEVELOP=$(git rev-parse gitee/develop 2>/dev/null || echo "")
+          LOCAL_DEVELOP=$(git rev-parse HEAD 2>/dev/null || echo "")
+
+          if [ "$GITEE_DEVELOP" = "$LOCAL_DEVELOP" ]; then
+            echo ">>> develop 分支已是最新，无需同步"
+            echo "Gitee develop: $GITEE_DEVELOP"
+            echo "Local develop:  $LOCAL_DEVELOP"
+          else
+            echo ">>> 检测到更新，正在同步 develop 分支..."
+            echo "Gitee develop: $GITEE_DEVELOP"
+            echo "Local develop:  $LOCAL_DEVELOP"
+
+            # 强制推送 develop 分支到 GitHub（保持与 Gitee 完全一致）
+            git push origin "gitee/develop:develop" --force
+            echo ">>> develop 分支同步完成"
+          fi
+
+          # 同步 main 分支（如果 Gitee 上存在）
+          if git ls-remote --heads gitee main | grep -q "refs/heads/main"; then
+            echo ">>> 正在同步 main 分支..."
+            git push origin "gitee/main:main" --force 2>/dev/null || \
+              echo ">>> main 分支同步跳过（可能不存在于 GitHub）"
+          fi
+
+          # 同步所有标签
+          echo ">>> 正在同步标签..."
+          git push origin --tags --force 2>/dev/null || echo ">>> 标签同步跳过"
+
+          # 同步其他分支
+          echo ">>> 正在同步其他分支..."
+          for branch in $(git branch -r | grep gitee/ | grep -v -E 'HEAD|develop|main' | sed 's/gitee\///'); do
+            branch=$(echo "$branch" | tr -d ' ')
+            echo "  同步分支: $branch"
+            git push origin "gitee/$branch:refs/heads/$branch" --force 2>/dev/null || \
+              echo "  分支 $branch 同步跳过"
+          done
+
+          echo "=== 同步完成 ==="

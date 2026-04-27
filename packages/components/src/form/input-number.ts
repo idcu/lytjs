@@ -147,6 +147,7 @@ export const InputNumber = defineComponent({
       return state.value > props.min;
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     watch(() => props.modelValue, (val: any) => {
       if (val !== undefined) {
         state.value = val;

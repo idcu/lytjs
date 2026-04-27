@@ -132,7 +132,7 @@ export interface CodegenResult {
  * @param options 代码生成选项
  * @returns 代码生成结果
  */
-export function generate(ast: RootNode, options: CodegenOptions = {}): CodegenResult {
+export function generate(ast: RootNode, _options: CodegenOptions = {}): CodegenResult {
   const ctx = new CodegenContext();
 
   // 注册辅助函数
@@ -295,8 +295,6 @@ function generateElement(node: ElementNode, ctx: CodegenContext): void {
  * 生成元素节点的内部代码（不含 v-if/v-each 包裹）
  */
 function generateElementInner(node: ElementNode, ctx: CodegenContext): void {
-  const nodeAny = node as unknown as Record<string, unknown>;
-
   // 生成 props 对象
   const propsCode = generateProps(node, ctx);
 
@@ -322,7 +320,7 @@ function generateElementInner(node: ElementNode, ctx: CodegenContext): void {
  *
  * 合并静态属性、动态绑定、事件绑定和引用
  */
-function generateProps(node: ElementNode, ctx: CodegenContext): string {
+function generateProps(node: ElementNode, _ctx: CodegenContext): string {
   const nodeAny = node as unknown as Record<string, unknown>;
   const parts: string[] = [];
 
@@ -435,7 +433,7 @@ function generateStaticProps(node: ElementNode): string {
 /**
  * 生成子节点代码（返回字符串，不直接写入上下文）
  */
-function generateChildrenCode(children: (ElementNode | TextNode)[], ctx: CodegenContext): string {
+function generateChildrenCode(children: (ElementNode | TextNode)[], _ctx: CodegenContext): string {
   if (children.length === 0) {
     return '';
   }

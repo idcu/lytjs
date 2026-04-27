@@ -37,6 +37,7 @@ export interface KeepAliveProps {
 /** 缓存条目 */
 interface CacheEntry {
   /** 缓存的 VNode（原始引用，非拷贝） */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   vnode: any;
   /** 缓存的组件实例 */
   component: ComponentInternalInstance | null;
@@ -49,18 +50,24 @@ interface CacheEntry {
 /** 组件实例状态快照 */
 interface SavedComponentState {
   /** 组件内部 state（reactive 对象的原始值） */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   state: Record<string, any>;
   /** 组件 setupState */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setupState: Record<string, any>;
   /** 计算属性引用（@lytjs/reactivity ComputedRef） */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   computedRefs: Record<string, { value: any } | (() => any)>;
   /** 子树 */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   subTree: any;
   /** 是否已挂载 */
   isMounted: boolean;
   /** watch 停止句柄列表 */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   watchStopHandles: any[];
   /** 生命周期钩子快照 */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   lifecycleHooks: Partial<Record<string, any[]>>;
 }
 
@@ -71,7 +78,7 @@ interface SavedComponentState {
 /**
  * 判断值是否为函数
  */
-function isFunction(val: unknown): val is Function {
+function _isFunction(val: unknown): val is Function {
   return typeof val === 'function';
 }
 
@@ -136,10 +143,14 @@ function deepClone<T>(obj: T): T {
     return obj;
   }
   if (Array.isArray(obj)) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return obj.map(item => deepClone(item)) as any;
   }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const result: any = {};
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   for (const key of Object.keys(obj as any)) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     result[key] = deepClone((obj as any)[key]);
   }
   return result;
@@ -161,6 +172,7 @@ function saveComponentState(component: ComponentInternalInstance): SavedComponen
     LifecycleHook.BEFORE_UNMOUNT,
     LifecycleHook.UNMOUNTED,
   ];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const lifecycleHooks: Partial<Record<string, any[]>> = {};
   for (const hook of hookNames) {
     const callbacks = component[hook];
@@ -298,7 +310,9 @@ export const KeepAlive: ComponentDefine = defineComponent({
 
     // 获取子组件名称
     const childName = rawChild.name
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       || (rawChild.type && (rawChild.type as any).name)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       || (rawChild.type && (rawChild.type as any).options && (rawChild.type as any).options.name)
       || '';
 
@@ -362,6 +376,7 @@ export const KeepAlive: ComponentDefine = defineComponent({
 
     // 使用原始 VNode 引用（不浅拷贝），保留嵌套组件的完整状态
     // 标记子 VNode 为 KeepAlive 包裹
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (rawChild as any).__keepalive = {
       cacheKey,
       shouldCache,
@@ -381,6 +396,7 @@ export const KeepAlive: ComponentDefine = defineComponent({
       // 添加到缓存（使用原始 VNode 引用）
       state.cache.set(cacheKey, {
         vnode: rawChild,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         component: null as any,
         key: cacheKey,
         savedState: null,
@@ -405,6 +421,7 @@ export const KeepAlive: ComponentDefine = defineComponent({
  * @param component - 子组件的内部实例
  */
 export function registerKeepAliveInstance(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   vnode: any,
   component: ComponentInternalInstance
 ): void {
@@ -435,6 +452,7 @@ export function registerKeepAliveInstance(
  * @param cache - KeepAlive 的缓存 Map
  */
 export function attachCacheRef(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   vnode: any,
   cache: Map<string, CacheEntry>
 ): void {
@@ -554,10 +572,13 @@ export function pruneCache(
  */
 function callActivated(component: ComponentInternalInstance): void {
   // 调用组件实例上的 activated 钩子
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   callLifecycleHook(component, 'activated' as any);
 
   // 如果组件有 onActivated 方法，也调用它
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   if (component.renderProxy && typeof (component.renderProxy as any).onActivated === 'function') {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (component.renderProxy as any).onActivated();
   }
 }
@@ -571,10 +592,13 @@ function callActivated(component: ComponentInternalInstance): void {
  */
 function callDeactivated(component: ComponentInternalInstance): void {
   // 调用组件实例上的 deactivated 钩子
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   callLifecycleHook(component, 'deactivated' as any);
 
   // 如果组件有 onDeactivated 方法，也调用它
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   if (component.renderProxy && typeof (component.renderProxy as any).onDeactivated === 'function') {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (component.renderProxy as any).onDeactivated();
   }
 }

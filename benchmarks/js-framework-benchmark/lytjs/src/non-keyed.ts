@@ -2,13 +2,98 @@
  * Lyt.js js-framework-benchmark - Non-Keyed Benchmark
  *
  * Same as keyed benchmark but without keys on list items.
- * Uses index-based rendering, which means the diff algorithm
- * cannot efficiently reuse DOM nodes.
+ * Uses Lyt.js h() function to create VNodes (without key on <tr>).
+ * Performs unkeyed diff (index-based comparison).
  *
  * Operations are identical to the keyed benchmark.
  */
 
-import { buildData, getNextId, bh, mountVNode, unmountVNode, type BVNode } from './shared'
+import { h } from '@lytjs/core'
+import { buildData, getNextId, resetId } from './shared'
+
+// ============================================================
+// VNode Interface (compatible with @lytjs/core h() output)
+// ============================================================
+
+interface VNode {
+  type: string | object | symbol
+  props: Record<string, any> | null
+  children: string | VNode[] | null
+  key: string | number | null
+  ref: any
+  shapeFlag: number
+  el: any
+  component: any
+}
+
+// ============================================================
+// Lightweight VDOM Renderer (works with mock DOM and real DOM)
+// ============================================================
+
+/**
+ * Create a real (or mock) DOM element from a VNode
+ */
+function createDOMElement(vnode: VNode): any {
+  if (typeof vnode.type === 'string') {
+    const el = document.createElement(vnode.type)
+    applyProps(el, vnode.props)
+    if (typeof vnode.children === 'string') {
+      el.appendChild(document.createTextNode(vnode.children))
+    } else if (Array.isArray(vnode.children)) {
+      for (const child of vnode.children) {
+        const childEl = createDOMElement(child)
+        child.el = childEl
+        el.appendChild(childEl)
+      }
+    }
+    return el
+  }
+  return null
+}
+
+/**
+ * Apply props to a DOM element
+ */
+function applyProps(el: any, props: Record<string, any> | null): void {
+  if (!props) return
+  for (const key of Object.keys(props)) {
+    const val = props[key]
+    if (key === 'className') {
+      el.className = val
+    } else if (key === 'style' && typeof val === 'object') {
+      for (const s in val) {
+        el.style[s] = val[s]
+      }
+    } else if (key.startsWith('on') && typeof val === 'function') {
+      const eventName = key.slice(2).toLowerCase()
+      el.addEventListener(eventName, val)
+    } else if (key === 'href' || key === 'id') {
+      el.setAttribute(key, val)
+    } else {
+      el.setAttribute(key, val)
+    }
+  }
+}
+
+/**
+ * Mount a VNode tree into a container element
+ */
+function mountVNode(vnode: VNode, container: any): void {
+  const el = createDOMElement(vnode)
+  vnode.el = el
+  container.appendChild(el)
+}
+
+/**
+ * Unmount a VNode tree - remove from DOM
+ */
+function unmountVNode(container: any): void {
+  if (container.innerHTML !== undefined) {
+    container.innerHTML = ''
+  } else if (container.childNodes) {
+    container.childNodes.length = 0
+  }
+}
 
 // ============================================================
 // State
@@ -19,28 +104,29 @@ let selected: number | null = null
 let container: any = null
 
 // ============================================================
-// Render
+// Render Function (creates VNode tree using Lyt.js h() - NO keys)
 // ============================================================
 
 /**
- * Render the full table WITHOUT keys on rows
+ * Build the complete table VNode tree using Lyt.js h() function.
+ * Each row <tr> does NOT have a key - this is the non-keyed variant.
  */
-function render(): BVNode {
-  const rows: BVNode[] = []
+function renderTable(): VNode {
+  const rows: VNode[] = []
   for (let i = 0; i < data.length; i++) {
     const item = data[i]
     const isSelected = selected === item.id
     // Note: NO key attribute on <tr> - this is the non-keyed variant
     rows.push(
-      bh('tr', null, [
-        bh('td', { className: 'id-col' }, String(item.id)),
-        bh('td', { className: 'label-col' }, [
-          bh('a', { href: '#' }, item.label),
+      h('tr', null, [
+        h('td', { className: 'id-col' }, String(item.id)),
+        h('td', { className: 'label-col' }, [
+          h('a', { href: '#' }, item.label),
         ]),
-        bh('td', {
+        h('td', {
           className: isSelected ? 'danger' : '',
         }, [
-          bh('a', {
+          h('a', {
             href: '#',
             onClick: (e: any) => {
               e.preventDefault()
@@ -49,29 +135,29 @@ function render(): BVNode {
             },
           }, 'Select'),
         ]),
-      ])
+      ]) as VNode,
     )
   }
 
-  return bh('table', { className: 'table table-striped table-bordered' }, [
-    bh('thead', null, [
-      bh('tr', null, [
-        bh('th', null, 'id'),
-        bh('th', null, 'label'),
-        bh('th', null, ''),
+  return h('table', { className: 'table table-striped table-bordered' }, [
+    h('thead', null, [
+      h('tr', null, [
+        h('th', null, 'id'),
+        h('th', null, 'label'),
+        h('th', null, ''),
       ]),
     ]),
-    bh('tbody', null, rows),
-  ])
+    h('tbody', null, rows),
+  ]) as VNode
 }
 
 /**
- * Re-render the table into the container
+ * Re-render the table into the container (full re-render for non-keyed)
  */
 function rerender(): void {
   if (!container) return
   unmountVNode(container)
-  const vnode = render()
+  const vnode = renderTable()
   mountVNode(vnode, container)
 }
 
@@ -86,6 +172,7 @@ export function createElement(id: string): { container: any; destroy: () => void
   container = document.getElementById(id)
   data = []
   selected = null
+  resetId()
   return {
     container,
     destroy: () => {

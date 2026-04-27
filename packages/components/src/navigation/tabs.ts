@@ -3,10 +3,14 @@
  * Props: activeKey, type(line/card), closable
  * Events: change, close
  * Slots: default(每个 tab-pane)
+ *
+ * A11y: Roving Tabindex、role="tablist"/"tab"/"tabpanel"、aria-selected、Arrow 键导航
  */
 
 import { defineComponent } from '@lytjs/component';
 import { reactive, watch, ref } from '@lytjs/reactivity';
+import { generateId } from '../a11y/aria-utils';
+import { handleArrowKeys } from '../a11y/keyboard-nav';
 
 export const Tabs = defineComponent({
   name: 'LytTabs',
@@ -30,6 +34,7 @@ export const Tabs = defineComponent({
   setup(props, { emit, slots }) {
     const state = reactive({
       currentKey: props.activeKey,
+      focusedIndex: 0,
     });
 
     const tabs = ref<Array<{ key: string | number; label: string; closable?: boolean }>>([]);
@@ -40,6 +45,7 @@ export const Tabs = defineComponent({
       if (slots.default) {
         const children = slots.default();
         if (Array.isArray(children)) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           children.forEach((child: any) => {
             if (child.props) {
               result.push({
@@ -55,8 +61,9 @@ export const Tabs = defineComponent({
       return result;
     };
 
-    const handleTabClick = (key: string | number) => {
+    const handleTabClick = (key: string | number, index: number) => {
       state.currentKey = key;
+      state.focusedIndex = index;
       emit('change', key);
       emit('update:activeKey', key);
     };
@@ -66,32 +73,82 @@ export const Tabs = defineComponent({
       emit('close', key);
     };
 
+    /** 键盘导航 */
+    const handleTabKeydown = (e: KeyboardEvent, index: number) => {
+      const currentTabs = parseSlots();
+      const enabledTabs = currentTabs; // 所有 tab 都是可聚焦的
+
+      switch (e.key) {
+        case 'ArrowRight':
+        case 'ArrowDown':
+          e.preventDefault();
+          state.focusedIndex = handleArrowKeys(index, enabledTabs.length, 'right', true);
+          break;
+        case 'ArrowLeft':
+        case 'ArrowUp':
+          e.preventDefault();
+          state.focusedIndex = handleArrowKeys(index, enabledTabs.length, 'left', true);
+          break;
+        case 'Home':
+          e.preventDefault();
+          state.focusedIndex = 0;
+          break;
+        case 'End':
+          e.preventDefault();
+          state.focusedIndex = enabledTabs.length - 1;
+          break;
+        case 'Enter':
+        case ' ':
+          e.preventDefault();
+          const tab = enabledTabs[index];
+          if (tab) {
+            handleTabClick(tab.key, index);
+          }
+          break;
+      }
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     watch(() => props.activeKey, (val: any) => {
       state.currentKey = val;
     });
 
-    return { state, tabs, parseSlots, handleTabClick, handleTabClose, slots };
+    return { state, tabs, parseSlots, handleTabClick, handleTabClose, handleTabKeydown, slots };
   },
 
   template: `
     <div class="lyt-tabs lyt-tabs--{type}">
       <div class="lyt-tabs__header">
-        <div class="lyt-tabs__nav">
+        <div class="lyt-tabs__nav" role="tablist" aria-orientation="horizontal">
           <div
-            v-for="tab in parseSlots()"
+            v-for="(tab, index) in parseSlots()"
             class="lyt-tabs__item {state.currentKey === tab.key ? 'lyt-tabs__item--active' : ''}"
-            @click="handleTabClick(tab.key)"
+            role="tab"
+            :id="'lyt-tab-' + index"
+            :aria-selected="state.currentKey === tab.key ? 'true' : 'false'"
+            :aria-controls="'lyt-tabpanel-' + index"
+            :tabindex="state.currentKey === tab.key ? 0 : -1"
+            @click="handleTabClick(tab.key, index)"
+            @keydown="handleTabKeydown($event, index)"
           >
             <span class="lyt-tabs__item-label">{{ tab.label }}</span>
             <span
               class="lyt-tabs__item-close"
               v-if="tab.closable"
+              role="button"
+              tabindex="-1"
+              aria-label="关闭标签页"
               @click="handleTabClose(tab.key, $event)"
             >&times;</span>
           </div>
         </div>
       </div>
-      <div class="lyt-tabs__content">
+      <div
+        class="lyt-tabs__content"
+        role="tabpanel"
+        :aria-labelledby="state.currentKey !== '' ? 'lyt-tab-' + parseSlots().findIndex(t => t.key === state.currentKey) : undefined"
+        tabindex="0"
+      >
         <slot></slot>
       </div>
     </div>

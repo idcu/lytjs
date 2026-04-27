@@ -44,6 +44,5 @@
     "@lytjs/core": "workspace:*",
     "@lytjs/reactivity": "workspace:*",
     "@lytjs/component": "workspace:*"
-  },
-  "devDependencies": {}
+  }
 }

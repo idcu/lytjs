@@ -8,7 +8,7 @@
  */
 
 import type { MiniAppPlatform } from './miniapp-renderer';
-import { generatePageJson, generateComponentJson, normalizeProps, escapeHtml } from './miniapp-utils';
+import { generatePageJson, generateComponentJson, normalizeProps } from './miniapp-utils';
 import { MINIAPP_COMPONENT_MAP } from './shared-constants';
 
 /* ================================================================
@@ -26,6 +26,7 @@ export interface MiniAppCompileResult {
   /** 提取的脚本内容 */
   script: string;
   /** 从脚本中提取的数据对象 */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data: Record<string, any>;
 }
 
@@ -36,14 +37,18 @@ export interface MiniAppPageConfig {
   /** Lyt.js 模板字符串 */
   template: string;
   /** 页面初始数据 */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data?: Record<string, any>;
   /** 页面方法 */
   methods?: Record<string, Function>;
   /** 页面加载回调 */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onLoad?: (...args: any[]) => void;
   /** 页面显示回调 */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onShow?: (...args: any[]) => void;
   /** 页面初次渲染完成回调 */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onReady?: (...args: any[]) => void;
 }
 
@@ -68,8 +73,10 @@ export interface MiniAppComponentConfig {
   /** Lyt.js 模板字符串 */
   template: string;
   /** 组件属性定义 */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   props?: string[] | Record<string, any>;
   /** 组件内部数据 */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data?: Record<string, any>;
   /** 组件方法 */
   methods?: Record<string, Function>;
@@ -294,6 +301,7 @@ export class MiniAppCompiler {
     };
 
     // 规范化 props
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let propertiesDef: Record<string, any> = {};
     let observersDef: string[] = [];
 
@@ -573,7 +581,7 @@ export class MiniAppCompiler {
    * <slot name="header"> -> <slot name="header"></slot>
    * <slot name="header">default content</slot> -> <slot name="header">default content</slot>
    */
-  private _transformSlots(template: string, prefix: { slot: string }): string {
+  private _transformSlots(template: string, _prefix: { slot: string }): string {
     // <slot name="xxx"> -> <slot name="xxx">
     // <slot> -> <slot>
     // 已经是标准小程序语法，保持不变
@@ -699,7 +707,9 @@ export class MiniAppCompiler {
    * - const data = { key: value }
    * - export default { data() { ... } }
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private _extractData(script: string): Record<string, any> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const data: Record<string, any> = {};
 
     if (!script) return data;
@@ -736,6 +746,7 @@ export class MiniAppCompiler {
    * 解析简单的 JavaScript 对象字面量，提取键值对。
    * 仅支持字符串、数字、布尔值和简单表达式。
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private _parseSimpleObject(str: string, target: Record<string, any>): void {
     // 移除首尾大括号
     const inner = str.replace(/^\s*\{/, '').replace(/\}\s*$/, '').trim();
@@ -788,6 +799,7 @@ export class MiniAppCompiler {
    * 生成页面 JS 代码
    */
   private _generatePageJs(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     data: Record<string, any>,
     methods: Record<string, Function>,
     page: MiniAppPageConfig,
@@ -853,7 +865,9 @@ export class MiniAppCompiler {
    * 生成组件 JS 代码
    */
   private _generateComponentJs(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     properties: Record<string, any>,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     data: Record<string, any>,
     methods: Record<string, Function>,
     observers: string[],

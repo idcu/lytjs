@@ -46,6 +46,7 @@ export const Steps = defineComponent({
       currentStep: props.current,
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const getStepStatus = (index: number, item?: any) => {
       if (item && item.status) return item.status;
       if (index < state.currentStep) return 'finish';
@@ -59,6 +60,7 @@ export const Steps = defineComponent({
       return String(index + 1);
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     watch(() => props.current, (val: any) => {
       state.currentStep = val;
     });

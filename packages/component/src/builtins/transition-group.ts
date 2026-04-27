@@ -54,6 +54,7 @@ function _isFunction(val: unknown): val is Function {
 /**
  * 判断值是否为普通对象
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function _isPlainObject(val: unknown): val is Record<string, any> {
   return val !== null && typeof val === 'object' && !Array.isArray(val);
 }
@@ -187,6 +188,7 @@ export const TransitionGroup: ComponentDefine = defineComponent({
     const children = slots.default ? slots.default() : null;
 
     // 标准化子元素为数组
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const rawChildren: any[] = Array.isArray(children)
       ? children
       : children !== null && children !== undefined ? [children] : [];
@@ -238,6 +240,7 @@ export const TransitionGroup: ComponentDefine = defineComponent({
       // 克隆子元素，附加过渡属性
       const cloned = { ...child };
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (cloned as any).__transition_group = {
         name: transitionName,
         appear: props.appear,

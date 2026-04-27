@@ -3,10 +3,14 @@
  * Props: options, placeholder, disabled, multiple, searchable, clearable, loading
  * Events: change, select, clear, search, update:modelValue
  * Features: 选项列表, 搜索过滤, 多选, 占位符, 禁用选项
+ *
+ * A11y: role="combobox"/"listbox"/"option"、aria-selected、aria-expanded、键盘导航
  */
 
 import { defineComponent, onMounted, onUnmounted } from '@lytjs/component'
 import { reactive } from '@lytjs/reactivity'
+import { generateId } from './a11y/aria-utils'
+import { handleArrowKeys } from './a11y/keyboard-nav'
 
 export interface DropdownOption {
   label: string
@@ -61,6 +65,16 @@ export const Dropdown = defineComponent({
       type: Function as any,
       default: null,
     },
+    /** 无障碍标签 */
+    ariaLabel: {
+      type: String,
+      default: '',
+    },
+    /** 关联的 label 元素 ID */
+    ariaLabelledby: {
+      type: String,
+      default: '',
+    },
   },
 
   setup(props, { emit }) {
@@ -68,7 +82,12 @@ export const Dropdown = defineComponent({
       isOpen: false,
       selectedValue: props.multiple ? [] : props.modelValue,
       searchText: '',
+      activeIndex: -1,
     })
+
+    // 生成唯一 ID
+    const listboxId = generateId('lyt-dropdown-listbox')
+    const triggerId = generateId('lyt-dropdown-trigger')
 
     /** 显示文本 */
     const displayLabel = () => {
@@ -100,12 +119,14 @@ export const Dropdown = defineComponent({
       if (props.disabled || props.loading) return
       state.isOpen = !state.isOpen
       if (!state.isOpen) state.searchText = ''
+      if (state.isOpen) state.activeIndex = -1
     }
 
     /** 关闭下拉 */
     const closeDropdown = () => {
       state.isOpen = false
       state.searchText = ''
+      state.activeIndex = -1
     }
 
     /** 选择选项 */
@@ -177,6 +198,77 @@ export const Dropdown = defineComponent({
       toggleDropdown()
     }
 
+    /** 键盘导航处理 */
+    const handleTriggerKeydown = (e: KeyboardEvent) => {
+      if (props.disabled || props.loading) return
+
+      switch (e.key) {
+        case 'Enter':
+        case ' ':
+          e.preventDefault()
+          toggleDropdown()
+          break
+        case 'ArrowDown':
+          e.preventDefault()
+          if (!state.isOpen) {
+            state.isOpen = true
+          }
+          state.activeIndex = 0
+          break
+        case 'ArrowUp':
+          e.preventDefault()
+          if (!state.isOpen) {
+            state.isOpen = true
+            const opts = filteredOptions()
+            state.activeIndex = opts.length - 1
+          }
+          break
+        case 'Escape':
+          if (state.isOpen) {
+            e.preventDefault()
+            closeDropdown()
+          }
+          break
+      }
+    }
+
+    const handleListKeydown = (e: KeyboardEvent) => {
+      const opts = filteredOptions()
+      const enabledOpts = opts.filter((o: any) => !o.disabled)
+
+      switch (e.key) {
+        case 'ArrowDown':
+          e.preventDefault()
+          state.activeIndex = handleArrowKeys(state.activeIndex, enabledOpts.length, 'down', true)
+          break
+        case 'ArrowUp':
+          e.preventDefault()
+          state.activeIndex = handleArrowKeys(state.activeIndex, enabledOpts.length, 'up', true)
+          break
+        case 'Enter':
+        case ' ':
+          e.preventDefault()
+          if (state.activeIndex >= 0 && state.activeIndex < enabledOpts.length) {
+            handleSelect(enabledOpts[state.activeIndex])
+          }
+          break
+        case 'Escape':
+          e.preventDefault()
+          closeDropdown()
+          break
+        case 'Home':
+          e.preventDefault()
+          state.activeIndex = 0
+          break
+        case 'End':
+          e.preventDefault()
+          state.activeIndex = enabledOpts.length - 1
+          break
+      }
+    }
+
+    const isActiveOption = (index: number) => state.activeIndex === index
+
     /** 移除多选标签 */
     const handleRemoveTag = (value: string | number, e: Event) => {
       e.stopPropagation()
@@ -202,43 +294,63 @@ export const Dropdown = defineComponent({
       state, displayLabel, hasValue, toggleDropdown, closeDropdown,
       handleSelect, isSelected, handleClear, filteredOptions,
       handleSearch, handleTriggerClick, handleRemoveTag,
+      handleTriggerKeydown, handleListKeydown, isActiveOption,
+      listboxId, triggerId,
     }
   },
 
   template: `
     <div class="lyt-dropdown {disabled ? 'lyt-dropdown--disabled' : ''} {state.isOpen ? 'lyt-dropdown--open' : ''}">
-      <div class="lyt-dropdown__trigger" @click="handleTriggerClick">
+      <div
+        class="lyt-dropdown__trigger"
+        :id="triggerId"
+        role="combobox"
+        :aria-expanded="state.isOpen ? 'true' : 'false'"
+        :aria-haspopup="multiple ? 'dialog' : 'listbox'"
+        :aria-controls="state.isOpen ? listboxId : undefined"
+        :aria-label="ariaLabel || undefined"
+        :aria-labelledby="ariaLabelledby || undefined"
+        :aria-disabled="disabled ? 'true' : undefined"
+        tabindex="0"
+        @click="handleTriggerClick"
+        @keydown="handleTriggerKeydown"
+      >
         <span class="lyt-dropdown__value {hasValue() ? '' : 'lyt-dropdown__value--placeholder'}">
           {{ hasValue() ? displayLabel() : placeholder }}
         </span>
-        <span class="lyt-dropdown__clear" v-if="clearable && hasValue() && !disabled" @click="handleClear">&times;</span>
-        <span class="lyt-dropdown__arrow {state.isOpen ? 'lyt-dropdown__arrow--open' : ''}">
+        <span class="lyt-dropdown__clear" v-if="clearable && hasValue() && !disabled" @click="handleClear" role="button" tabindex="0" aria-label="清除选择">&times;</span>
+        <span class="lyt-dropdown__arrow {state.isOpen ? 'lyt-dropdown__arrow--open' : ''}" aria-hidden="true">
           <svg viewBox="0 0 1024 1024" width="14" height="14"><path d="M488.832 344.32l-339.84 356.672a32 32 0 0 0 0 44.16l.384.384a29.44 29.44 0 0 0 42.688 0l320-335.872 319.872 335.872a29.44 29.44 0 0 0 42.688 0l.384-.384a32 32 0 0 0 0-44.16L535.168 344.32a29.44 29.44 0 0 0-46.336 0z"/></svg>
         </span>
       </div>
-      <div class="lyt-dropdown__dropdown" v-if="state.isOpen">
+      <div class="lyt-dropdown__dropdown" v-if="state.isOpen" :id="listboxId" role="listbox" :aria-multiselectable="multiple ? 'true' : undefined" :aria-labelledby="ariaLabelledby || triggerId" @keydown="handleListKeydown">
         <div class="lyt-dropdown__search-wrapper" v-if="searchable">
           <input
             class="lyt-dropdown__search"
             :value="state.searchText"
             @input="handleSearch"
             placeholder="搜索..."
+            :aria-label="'搜索选项'"
           />
         </div>
-        <ul class="lyt-dropdown__list">
+        <ul class="lyt-dropdown__list" role="presentation">
           <li
-            v-for="option in filteredOptions()"
-            class="lyt-dropdown__option {isSelected(option.value) ? 'lyt-dropdown__option--selected' : ''} {option.disabled ? 'lyt-dropdown__option--disabled' : ''}"
+            v-for="(option, index) in filteredOptions()"
+            class="lyt-dropdown__option {isSelected(option.value) ? 'lyt-dropdown__option--selected' : ''} {option.disabled ? 'lyt-dropdown__option--disabled' : ''} {isActiveOption(index) ? 'lyt-dropdown__option--active' : ''}"
+            role="option"
+            :aria-selected="isSelected(option.value) ? 'true' : 'false'"
+            :aria-disabled="option.disabled ? 'true' : undefined"
             @click="handleSelect(option)"
+            @mouseenter="state.activeIndex = index"
           >
-            <span v-if="multiple && isSelected(option.value)" class="lyt-dropdown__option-check">&#10003;</span>
+            <span v-if="multiple && isSelected(option.value)" class="lyt-dropdown__option-check" aria-hidden="true">&#10003;</span>
             <span class="lyt-dropdown__option-label">{{ option.label }}</span>
             <span class="lyt-dropdown__option-desc" v-if="option.description">{{ option.description }}</span>
           </li>
-          <li class="lyt-dropdown__option lyt-dropdown__option--empty" v-if="filteredOptions().length === 0 && !loading">
+          <li class="lyt-dropdown__option lyt-dropdown__option--empty" v-if="filteredOptions().length === 0 && !loading" role="presentation">
             无匹配数据
           </li>
-          <li class="lyt-dropdown__option lyt-dropdown__option--loading" v-if="loading">
+          <li class="lyt-dropdown__option lyt-dropdown__option--loading" v-if="loading" role="presentation">
             加载中...
           </li>
         </ul>

@@ -1,9 +1,10 @@
 {
-  "name": "lytjs-vscode",
+  "name": "@lytjs/vscode-extension",
   "displayName": "Lyt.js Language Support",
   "description": "VSCode extension for Lyt.js - provides syntax highlighting, type checking, code completion, debugging, snippets, and Emmet support",
   "version": "5.0.0",
   "publisher": "lytjs",
+  "author": "lytjs",
   "engines": {
     "vscode": "^1.80.0"
   },
@@ -25,10 +26,27 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://gitee.com/lytjs/lytjs.git"
+    "url": "https://gitee.com/lytjs/lytjs"
   },
   "homepage": "https://gitee.com/lytjs/lytjs",
+  "keywords": [
+    "lyt",
+    "lytjs",
+    "vscode",
+    "extension",
+    "syntax-highlighting",
+    "code-completion",
+    "debugger",
+    "snippets"
+  ],
   "main": "./dist/extension.js",
+  "files": [
+    "dist",
+    "language-configuration.json"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "contributes": {
     "languages": [
       {

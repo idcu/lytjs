@@ -41,6 +41,7 @@ export interface SSRVNode {
   /** 标签名 */
   tag: string
   /** 属性 */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   props: Record<string, any>
   /** 子节点 */
   children: (SSRVNode | SSRTextVNode)[]
@@ -57,17 +58,24 @@ export interface SSRTextVNode {
 /** VNode 兼容类型（与 @lytjs/vdom 和 @lytjs/renderer 的 VNode 对齐） */
 export interface VNode {
   type: string | object | symbol
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   props: Record<string, any> | null
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   children: string | VNode[] | Record<string, any> | null
   key: string | number | null
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ref: any
   shapeFlag: number
   patchFlag: number
   dynamicChildren: VNode[] | null
   dynamicProps: string[] | null
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   component: any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   el: any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   anchor: any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any
 }
 
@@ -76,14 +84,19 @@ export interface ComponentOptions {
   /** 组件名称 */
   name?: string
   /** setup 函数 */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setup?: (...args: any[]) => any
   /** render 函数 */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   render?: (...args: any[]) => VNode
   /** props 定义 */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   props?: Record<string, any>
   /** slots */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   slots?: Record<string, any>
   /** 其他组件选项 */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any
 }
 
@@ -183,6 +196,7 @@ export function escapeHTML(str: string): string {
  * @param value 属性值
  * @returns 序列化后的属性字符串（格式：key="value"），不需要序列化时返回空字符串
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function serializeProp(key: string, value: any): string {
   // 事件属性在 SSR 环境下不序列化（客户端注水时绑定）
   if (key.startsWith('on') || key.startsWith('@')) {
@@ -241,6 +255,7 @@ export function serializeProp(key: string, value: any): string {
  * @param props 属性对象
  * @returns HTML 属性字符串（如 'class="foo" id="bar"'）
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function serializeProps(props: Record<string, any> | null): string {
   if (!props) return '';
 
@@ -316,6 +331,7 @@ export class StringRenderer {
     return {
       type: 'comment',
       value: text,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any;
   }
 
@@ -328,6 +344,7 @@ export class StringRenderer {
    * @param child  子节点
    * @param _ref   参考节点（SSR 中忽略）
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   insert(parent: SSRVNode, child: SSRVNode | SSRTextVNode, _ref?: any): void {
     parent.children.push(child);
   }
@@ -451,7 +468,9 @@ function renderVNodeToString(vnode: VNode): string {
  */
 function renderElementToString(
   tag: string,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   props: Record<string, any> | null,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   children: any,
   vnode: VNode
 ): string {
@@ -509,6 +528,7 @@ function renderElementToString(
  * @param slots 插槽对象
  * @returns 所有插槽内容的 HTML 字符串拼接
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function renderSlotsToString(slots: Record<string, any>): string {
   const parts: string[] = [];
 
@@ -548,6 +568,7 @@ function renderSlotsToString(slots: Record<string, any>): string {
  * @returns HTML 字符串
  */
 function renderComponentToString(vnode: VNode): string {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const component = vnode.type as any;
 
   // 检查是否为 Island 组件（带 __island 标记）
@@ -624,6 +645,7 @@ function renderComponentToString(vnode: VNode): string {
  * @param component 组件定义（带 __island 标记）
  * @returns 完整的 island HTML 字符串
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function renderIslandToString(vnode: VNode, component: any): string {
   const islandId = component.name || vnode.props?.['data-island-id'] || 'anonymous';
   const props = vnode.props || {};
@@ -631,6 +653,7 @@ function renderIslandToString(vnode: VNode, component: any): string {
   const islandTag = component.__islandTag || 'div';
 
   // 序列化 props（排除 island 内部属性）
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const islandProps: Record<string, any> = {};
   for (const key in props) {
     if (key === 'data-hydrate-when' || key === 'data-island-id') continue;
@@ -739,7 +762,9 @@ async function* renderVNodeToStream(vnode: VNode): AsyncGenerator<string> {
  */
 async function* renderElementToStream(
   tag: string,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   props: Record<string, any> | null,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   children: any,
   vnode: VNode
 ): AsyncGenerator<string> {
@@ -926,6 +951,7 @@ async function* createStreamGenerator(
 
   // 组件类型 → 检查是否为 Suspense 组件
   if (typeof type === 'object' && type !== null) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const component = type as any;
 
     // 检测 Suspense 组件
@@ -964,7 +990,9 @@ async function* createStreamGenerator(
  */
 async function* createStreamElement(
   tag: string,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   props: Record<string, any> | null,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   children: any,
   vnode: VNode,
   idPrefix: string
@@ -1054,7 +1082,9 @@ async function* renderSuspenseBoundary(
   if (typeof children === 'object' && children !== null) {
     if (Array.isArray(children)) {
       childVNodes = children as VNode[];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } else if (typeof (children as any).default === 'function') {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const slotResult = (children as any).default();
       if (Array.isArray(slotResult)) {
         childVNodes = slotResult;
@@ -1070,6 +1100,7 @@ async function* renderSuspenseBoundary(
   function collectAsyncPromises(vnodes: VNode[]) {
     for (const child of vnodes) {
       if (child === null || child === undefined) continue;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const childType = child.type as any;
       if (childType && (childType._isAsyncComponent || childType.__asyncSetup || child.__asyncSetup)) {
         const promise = child.__asyncPromise || childType.__asyncPromise;
@@ -1117,6 +1148,7 @@ async function* renderAsyncComponent(
   vnode: VNode,
   _idPrefix: string
 ): AsyncGenerator<string> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const component = vnode.type as any;
   const promise = vnode.__asyncPromise || component.__asyncPromise;
 

@@ -189,6 +189,7 @@ export class MiniAppRenderer implements LytRenderer {
    * @param key 属性名
    * @param val 属性值
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setAttribute(el: MiniAppNode, key: string, val: any): void {
     if (!el) return;
 
@@ -357,6 +358,7 @@ export class MiniAppRenderer implements LytRenderer {
    * @param handler 事件处理函数
    * @param options 事件选项（可选）
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   addEventListener(el: MiniAppNode, event: string, handler: Function, _options?: any): void {
     if (!el) return;
     // 存储为平台无关的事件名（如 tap），序列化时按平台加前缀
@@ -427,6 +429,7 @@ export class MiniAppRenderer implements LytRenderer {
    * @param prevValue 旧属性值
    * @param nextValue 新属性值
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   patchProp(el: MiniAppNode, key: string, prevValue: any, nextValue: any): void {
     if (!el) return;
 
@@ -472,6 +475,7 @@ export class MiniAppRenderer implements LytRenderer {
    * @param vnode VNode 对象
    * @returns MiniAppNode 树
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   renderToMiniAppTree(vnode: any): MiniAppNode {
     if (!vnode) {
       return this.createComment('empty vnode');
@@ -646,6 +650,7 @@ export class MiniAppRenderer implements LytRenderer {
   /**
    * 应用 Lyt.js 指令到节点
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private _applyDirective(el: MiniAppNode, directive: string, value: any): void {
     switch (directive) {
       case 'if':

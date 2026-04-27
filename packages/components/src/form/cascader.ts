@@ -16,6 +16,7 @@ export const Cascader = defineComponent({
         value: string | number;
         label: string;
         disabled?: boolean;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         children?: Array<any>;
       }>,
       default: () => [],
@@ -64,6 +65,7 @@ export const Cascader = defineComponent({
       const labels: string[] = [];
       let currentOptions = props.options;
       for (const val of state.selectedValues) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const option = currentOptions.find((o: any) => o.value === val);
         if (option) {
           labels.push(option.label);
@@ -84,6 +86,7 @@ export const Cascader = defineComponent({
       state.isOpen = false;
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleSelect = (option: any, level: number) => {
       if (option.disabled) return;
 
@@ -102,6 +105,7 @@ export const Cascader = defineComponent({
       }
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const isActiveOption = (option: any, level: number) => {
       return state.selectedValues[level] === option.value;
     };
@@ -119,6 +123,7 @@ export const Cascader = defineComponent({
       }
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleNodeHover = (option: any, level: number) => {
       if (props.expandTrigger !== 'hover') return;
       if (option.disabled) return;
@@ -128,6 +133,7 @@ export const Cascader = defineComponent({
       }
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     watch(() => props.value, (val: any) => {
       state.selectedValues = [...val];
     });

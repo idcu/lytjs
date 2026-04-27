@@ -11,7 +11,7 @@
  */
 
 import { compile } from '../index';
-import type { SFCDescriptor, SFCStyleBlock } from './parse-sfc';
+import type { SFCDescriptor } from './parse-sfc';
 import { extractExportDefault } from './parse-sfc';
 
 // ============================================================

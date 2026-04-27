@@ -3,6 +3,8 @@
  * Props: message, type(success/error/warning/info), duration, position(top/center/bottom)
  * Methods: show(), success(), error(), warning(), info() (静态方法)
  * Features: 自动消失, 队列显示
+ *
+ * A11y: role="alert"（error/warning）、role="status"（success/info）、aria-live
  */
 
 import { defineComponent } from '@lytjs/component';
@@ -69,6 +71,12 @@ function createToast(options: {
   el.id = `lyt-toast-${id}`;
   el.className = `lyt-toast lyt-toast--${instance.type} lyt-toast--${instance.position}`;
 
+  // A11y: error 和 warning 使用 role="alert"，success 和 info 使用 role="status"
+  const isUrgent = instance.type === 'error' || instance.type === 'warning';
+  el.setAttribute('role', isUrgent ? 'alert' : 'status');
+  el.setAttribute('aria-live', isUrgent ? 'assertive' : 'polite');
+  el.setAttribute('aria-atomic', 'true');
+
   const iconMap: Record<string, string> = {
     success: '&#10003;',
     error: '&#10007;',
@@ -77,7 +85,7 @@ function createToast(options: {
   };
 
   el.innerHTML = `
-    <span class="lyt-toast__icon">${iconMap[instance.type] || ''}</span>
+    <span class="lyt-toast__icon" aria-hidden="true">${iconMap[instance.type] || ''}</span>
     <span class="lyt-toast__message">${instance.message}</span>
   `;
 

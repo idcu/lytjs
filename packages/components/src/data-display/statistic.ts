@@ -4,7 +4,6 @@
  */
 
 import { defineComponent } from '@lytjs/component';
-import { computed } from '@lytjs/reactivity';
 
 export const Statistic = defineComponent({
   name: 'LytStatistic',
@@ -15,6 +14,7 @@ export const Statistic = defineComponent({
       default: '',
     },
     value: {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       type: [String, Number] as any,
       default: 0,
     },

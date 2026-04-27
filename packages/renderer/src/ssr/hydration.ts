@@ -48,6 +48,7 @@ export interface App {
   /** 卸载函数 */
   unmount?: () => void
   /** 根组件 */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   _component?: any
   /** 根 VNode */
   _vnode?: VNode
@@ -526,6 +527,7 @@ function hydrateComponentNode(
   }
 
   // 如果组件类型是函数（函数式组件），尝试调用获取 subTree
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const component = vnode.type as any;
   if (typeof component === 'function') {
     try {
@@ -649,6 +651,7 @@ function hydrateChildren(
  * @param el    DOM 元素
  * @param props 属性对象
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function bindEvents(el: HTMLElement, props: Record<string, any>): void {
   for (const key in props) {
     const value = props[key];
@@ -669,6 +672,7 @@ function bindEvents(el: HTMLElement, props: Record<string, any>): void {
  * @param el    DOM 元素
  * @param props 属性对象
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function _unbindEvents(el: HTMLElement, props: Record<string, any>): void {
   for (const key in props) {
     const value = props[key];
@@ -693,6 +697,7 @@ function _unbindEvents(el: HTMLElement, props: Record<string, any>): void {
  * @param el  DOM 元素
  * @param ref ref 值
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function setRef(el: HTMLElement, ref: any): void {
   if (typeof ref === 'function') {
     ref(el);
@@ -788,14 +793,19 @@ export interface ComponentOptions {
   /** 组件名称 */
   name?: string
   /** setup 函数 */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setup?: (...args: any[]) => any
   /** render 函数 */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   render?: (...args: any[]) => VNode
   /** props 定义 */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   props?: Record<string, any>
   /** slots */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   slots?: Record<string, any>
   /** 其他组件选项 */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any
 }
 
@@ -806,8 +816,10 @@ interface IslandState {
   /** 是否已注水 */
   hydrated: boolean
   /** 组件实例 */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   instance: any
   /** 事件监听器（用于清理） */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   eventListeners: Array<{ el: HTMLElement; event: string; handler: any }>
   /** 超时定时器 */
   timeoutId: ReturnType<typeof setTimeout> | null
@@ -917,6 +929,7 @@ export function hydrateIsland(
  * @param container DOM 容器（document）
  * @returns 解析后的 props 对象，失败返回 null
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function parseIslandProps(islandId: string, container: Document | HTMLElement): Record<string, any> | null {
   const scriptEl = container.querySelector(
     `script[type="application/json"][data-hydrate-props="${islandId}"]`
@@ -960,6 +973,7 @@ function performIslandHydration(
   el: HTMLElement,
   islandId: string,
   component: ComponentOptions,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   props: Record<string, any>,
   options: HydrationOptions
 ): HydrateResult {
@@ -1072,6 +1086,7 @@ function hydrateChildEvents(parentEl: HTMLElement, vnode: VNode): void {
         hydrateChildEvents(domChildren[i] as HTMLElement, childVNode);
       } else if (typeof childVNode.type === 'object' || typeof childVNode.type === 'function') {
         // 组件节点，尝试获取 subTree
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const comp = childVNode.type as any;
         if (typeof comp === 'function') {
           try {
@@ -1119,6 +1134,7 @@ function scheduleLazyHydration(
   el: HTMLElement,
   islandId: string,
   component: ComponentOptions,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   props: Record<string, any>,
   hydrateWhen: string,
   options: HydrationOptions
@@ -1376,6 +1392,7 @@ export function clearIslandRegistry(): void {
  */
 export function createHydrationIsland(
   component: ComponentOptions,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   props: Record<string, any> = {},
   tag: string = 'div',
   hydrateWhen?: string
@@ -1464,12 +1481,14 @@ function vnodeToString(vnode: VNode): string {
 
   // Component (function)
   if (typeof type === 'function') {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const subTree = (type as any)(props || {}, { slots: children || {} });
     return vnodeToString(subTree);
   }
 
   // Component (object)
   if (typeof type === 'object' && type !== null) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const comp = type as any;
     if (typeof comp.render === 'function') {
       const subTree = comp.render(props || {}, { slots: children || {}, emit: () => {} });
@@ -1486,6 +1505,7 @@ function vnodeToString(vnode: VNode): string {
  * @param props 属性对象
  * @returns HTML 属性字符串
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function serializeIslandProps(props: Record<string, any> | null): string {
   if (!props) return '';
 

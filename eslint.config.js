@@ -31,24 +31,24 @@ export default tseslint.config(
       'no-control-regex': 'off',
       'no-prototype-builtins': 'off',
       'no-useless-escape': 'off',
-      'prefer-const': 'off',
-      
+      'prefer-const': 'warn',
+
       // 对于未使用变量的规则 - 更宽松一些
-      '@typescript-eslint/no-unused-vars': ['warn', { 
+      '@typescript-eslint/no-unused-vars': ['warn', {
         argsIgnorePattern: '^_',
         varsIgnorePattern: '^_', // 允许下划线开头的变量名
         caughtErrorsIgnorePattern: '^_' // 允许下划线开头的错误变量名
       }],
       '@typescript-eslint/explicit-function-return-type': 'off',
       '@typescript-eslint/explicit-module-boundary-types': 'off',
-      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/no-non-null-assertion': 'warn',
       '@typescript-eslint/no-unsafe-function-type': 'off',
       '@typescript-eslint/no-require-imports': 'off',
       '@typescript-eslint/no-unused-expressions': 'off',
       '@typescript-eslint/no-this-alias': 'off',
       '@typescript-eslint/no-empty-object-type': 'off',
-      
+
       'semi': ['warn', 'always'],
       'quotes': ['warn', 'single', { avoidEscape: true }],
       'indent': ['warn', 2, { SwitchCase: 1 }],

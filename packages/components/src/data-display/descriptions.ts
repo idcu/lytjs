@@ -43,10 +43,12 @@ export const Descriptions = defineComponent({
   },
 
   setup(props, { slots }) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const getColSpan = (item: any) => {
       return item.span || 1;
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const getCellStyle = (item: any) => {
       const span = getColSpan(item);
       if (span > 1) {

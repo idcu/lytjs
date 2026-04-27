@@ -3,6 +3,8 @@
  * Props: type(text/password/number/email/tel/textarea), placeholder, disabled, readonly, maxlength, clearable, size
  * Events: input, change, focus, blur, clear
  * State: value, focused, hovering
+ *
+ * A11y: 添加 aria-label/aria-labelledby、aria-required、aria-invalid、aria-describedby
  */
 
 import { defineComponent } from '@lytjs/component';
@@ -43,6 +45,31 @@ export const Input = defineComponent({
       validator: (v: string) => ['small', 'medium', 'large'].includes(v),
     },
     modelValue: {
+      type: String,
+      default: '',
+    },
+    /** 无障碍标签 */
+    ariaLabel: {
+      type: String,
+      default: '',
+    },
+    /** 关联的 label 元素 ID */
+    ariaLabelledby: {
+      type: String,
+      default: '',
+    },
+    /** 是否必填 */
+    required: {
+      type: Boolean,
+      default: false,
+    },
+    /** 是否验证失败 */
+    invalid: {
+      type: Boolean,
+      default: false,
+    },
+    /** 描述文本元素 ID（用于错误提示等） */
+    ariaDescribedby: {
       type: String,
       default: '',
     },
@@ -110,17 +137,25 @@ export const Input = defineComponent({
       }
     };
 
+    const handleClearKeydown = (e: KeyboardEvent) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        handleClear();
+      }
+    };
+
     return {
       state, isTextarea, showClear,
       handleInput, handleChange, handleFocus, handleBlur,
       handleClear, handleMouseEnter, handleMouseLeave, handleKeydown,
+      handleClearKeydown,
       slots,
     };
   },
 
   template: `
     <div
-      class="lyt-input-wrapper lyt-input-wrapper--{size} {state.focused ? 'lyt-input-wrapper--focused' : ''} {disabled ? 'lyt-input-wrapper--disabled' : ''}"
+      class="lyt-input-wrapper lyt-input-wrapper--{size} {state.focused ? 'lyt-input-wrapper--focused' : ''} {disabled ? 'lyt-input-wrapper--disabled' : ''} {invalid ? 'lyt-input-wrapper--invalid' : ''}"
       @mouseenter="handleMouseEnter"
       @mouseleave="handleMouseLeave"
     >
@@ -132,6 +167,12 @@ export const Input = defineComponent({
         :readonly="readonly"
         :maxlength="maxlength"
         :value="state.value"
+        :aria-label="ariaLabel || undefined"
+        :aria-labelledby="ariaLabelledby || undefined"
+        :aria-required="required ? 'true' : undefined"
+        :aria-invalid="invalid ? 'true' : undefined"
+        :aria-readonly="readonly ? 'true' : undefined"
+        :aria-describedby="ariaDescribedby || undefined"
         @input="handleInput"
         @change="handleChange"
         @focus="handleFocus"
@@ -147,6 +188,12 @@ export const Input = defineComponent({
         :readonly="readonly"
         :maxlength="maxlength"
         :value="state.value"
+        :aria-label="ariaLabel || undefined"
+        :aria-labelledby="ariaLabelledby || undefined"
+        :aria-required="required ? 'true' : undefined"
+        :aria-invalid="invalid ? 'true' : undefined"
+        :aria-readonly="readonly ? 'true' : undefined"
+        :aria-describedby="ariaDescribedby || undefined"
         @input="handleInput"
         @change="handleChange"
         @focus="handleFocus"
@@ -155,7 +202,11 @@ export const Input = defineComponent({
       <span
         v-if="showClear()"
         class="lyt-input__clear"
+        role="button"
+        tabindex="0"
+        :aria-label="'清除'"
         @click="handleClear"
+        @keydown="handleClearKeydown"
       >
         &times;
       </span>

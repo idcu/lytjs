@@ -3,6 +3,8 @@
  * Props: checked, disabled, loading, onValue, offValue, size, activeColor, inactiveColor
  * Events: change, update:modelValue
  * Features: 开关值, 禁用状态, 变更回调, 加载状态
+ *
+ * A11y: role="switch"、aria-checked、键盘支持（Space/Enter 切换）、aria-label
  */
 
 import { defineComponent } from '@lytjs/component'
@@ -57,6 +59,21 @@ export const Toggle = defineComponent({
       type: String,
       default: '',
     },
+    /** 无障碍标签 */
+    ariaLabel: {
+      type: String,
+      default: '',
+    },
+    /** 关联的 label 元素 ID */
+    ariaLabelledby: {
+      type: String,
+      default: '',
+    },
+    /** 描述文本元素 ID */
+    ariaDescribedby: {
+      type: String,
+      default: '',
+    },
   },
 
   setup(props, { emit }) {
@@ -108,7 +125,11 @@ export const Toggle = defineComponent({
       class="lyt-toggle lyt-toggle--{size} {state.isChecked ? 'lyt-toggle--checked' : ''} {disabled ? 'lyt-toggle--disabled' : ''} {loading ? 'lyt-toggle--loading' : ''}"
       :style="switchStyle()"
       role="switch"
-      :aria-checked="state.isChecked"
+      :aria-checked="state.isChecked ? 'true' : 'false'"
+      :aria-disabled="disabled || loading ? 'true' : undefined"
+      :aria-label="ariaLabel || undefined"
+      :aria-labelledby="ariaLabelledby || undefined"
+      :aria-describedby="ariaDescribedby || undefined"
       tabindex="0"
       @click="handleClick"
       @keydown="handleKeydown"

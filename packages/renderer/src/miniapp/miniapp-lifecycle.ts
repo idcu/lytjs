@@ -30,18 +30,31 @@ export interface LifecycleMapping {
  * 页面生命周期钩子集合
  */
 export interface PageLifecycleHooks {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onBeforeMount?: (...args: any[]) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onMounted?: (...args: any[]) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onUpdated?: (...args: any[]) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onUnmounted?: (...args: any[]) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onLoad?: (...args: any[]) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onShow?: (...args: any[]) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onReady?: (...args: any[]) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onHide?: (...args: any[]) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onUnload?: (...args: any[]) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onPullDownRefresh?: (...args: any[]) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onReachBottom?: (...args: any[]) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onShareAppMessage?: (...args: any[]) => any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onError?: (...args: any[]) => void;
   [key: string]: Function | undefined;
 }
@@ -50,16 +63,27 @@ export interface PageLifecycleHooks {
  * 组件生命周期钩子集合
  */
 export interface ComponentLifecycleHooks {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setup?: () => Record<string, any>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onBeforeMount?: (...args: any[]) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onMounted?: (...args: any[]) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onUpdated?: (...args: any[]) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onUnmounted?: (...args: any[]) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onErrorCaptured?: (err: Error, vm: any, info: string) => boolean | void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   created?: (...args: any[]) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   attached?: (...args: any[]) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ready?: (...args: any[]) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   moved?: (...args: any[]) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   detached?: (...args: any[]) => void;
   [key: string]: Function | undefined;
 }
@@ -285,7 +309,7 @@ export class MiniAppLifecycleAdapter {
    * @param platform 目标平台（可选，使用实例平台）
    * @returns 小程序平台的生命周期方法名
    */
-  mapLifecycle(lytHook: string, platform?: MiniAppPlatform): string {
+  mapLifecycle(lytHook: string, _platform?: MiniAppPlatform): string {
     const mapping = LIFECYCLE_MAP[lytHook];
     if (mapping) {
       return mapping.platformHook;
@@ -353,6 +377,7 @@ export class MiniAppLifecycleAdapter {
         if (pageLifecycles[platformHook]) {
           // 如果目标钩子已存在，包装为链式调用
           const existingHandler = pageLifecycles[platformHook];
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           pageLifecycles[platformHook] = function (...args: any[]) {
             existingHandler.apply(this, args);
             handler.apply(this, args);
@@ -398,9 +423,12 @@ export class MiniAppLifecycleAdapter {
    * @param hooks Lyt.js 生命周期钩子映射
    * @returns 小程序组件生命周期方法映射（包含 lifetimes 和可能的 data）
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   createComponentLifecycle(hooks: Record<string, Function>): Record<string, any> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const result: Record<string, any> = {};
     const lifetimes: Record<string, Function> = {};
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let setupData: Record<string, any> | null = null;
 
     for (const [lytHook, handler] of Object.entries(hooks)) {
@@ -421,6 +449,7 @@ export class MiniAppLifecycleAdapter {
         if (lifetimes[platformHook]) {
           // 链式调用
           const existingHandler = lifetimes[platformHook];
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           lifetimes[platformHook] = function (...args: any[]) {
             existingHandler.apply(this, args);
             handler.apply(this, args);
@@ -489,8 +518,10 @@ export class MiniAppLifecycleAdapter {
    * @param platform 目标平台（可选，使用实例平台）
    * @returns 小程序 Component 格式的组件定义
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   wrapComponent(component: any, platform?: MiniAppPlatform): any {
-    const targetPlatform = platform || this._platform;
+    const _targetPlatform = platform || this._platform;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const result: Record<string, any> = {};
 
     // 1. 处理 setup 钩子
@@ -511,20 +542,26 @@ export class MiniAppLifecycleAdapter {
     // 2. 处理 props -> properties
     if (component.props) {
       if (Array.isArray(component.props)) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const properties: Record<string, any> = {};
         for (const propName of component.props) {
           properties[propName] = { type: null };
         }
         result.properties = properties;
       } else if (typeof component.props === 'object') {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const properties: Record<string, any> = {};
         for (const [propName, propDef] of Object.entries(component.props)) {
           if (typeof propDef === 'function') {
             properties[propName] = { type: propDef.name };
           } else if (typeof propDef === 'object' && propDef !== null) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const entry: Record<string, any> = {};
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             if ((propDef as any).type) entry.type = (propDef as any).type;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             if ((propDef as any).default !== undefined) entry.value = (propDef as any).default;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             if ((propDef as any).value !== undefined) entry.value = (propDef as any).value;
             properties[propName] = entry;
           } else {
@@ -567,7 +604,7 @@ export class MiniAppLifecycleAdapter {
 
     // 5. 处理 computed（小程序无直接对应，转为 observers + data）
     if (component.computed && typeof component.computed === 'object') {
-      const observers: Record<string, string> = {};
+      const _observers: Record<string, string> = {};
       for (const [key, getter] of Object.entries(component.computed)) {
         if (typeof getter === 'function') {
           // 将 computed 转为初始化 data + observer
@@ -593,6 +630,7 @@ export class MiniAppLifecycleAdapter {
           // 多个 watcher
           const handlers = watchHandler.filter(h => typeof h === 'function');
           if (handlers.length > 0) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             result.observers[watchKey] = function (...args: any[]) {
               for (const h of handlers) {
                 h.apply(this, args);

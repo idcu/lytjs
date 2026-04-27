@@ -140,6 +140,7 @@ const SVG_ATTRS: Record<string, string> = {
  * @param key   属性名
  * @param value 属性值
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function setDOMProp(el: any, key: string, value: any): void {
   // class 特殊处理
   if (key === 'class') {
@@ -228,6 +229,7 @@ export function setDOMProp(el: any, key: string, value: any): void {
  * @param el  DOM 元素
  * @param key 属性名
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function removeDOMProp(el: any, key: string): void {
   // class 特殊处理
   if (key === 'class') {
@@ -312,8 +314,11 @@ function isEventKey(key: string): boolean {
  * @param newProps 新属性对象
  */
 export function patchDOMProps(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   el: any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   oldProps: Record<string, any> | null,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   newProps: Record<string, any> | null
 ): void {
   const oldKeys = oldProps ? Object.keys(oldProps) : [];
@@ -322,6 +327,7 @@ export function patchDOMProps(
   // 遍历新 props，更新变化的属性
   for (let i = 0; i < newKeys.length; i++) {
     const key = newKeys[i];
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const newValue = newProps![key];
     const oldValue = oldProps ? oldProps[key] : undefined;
 
@@ -381,6 +387,7 @@ export function patchDOMProps(
  * @param newStyle  新的 style 值（字符串或对象）
  * @param oldStyle  旧的 style 值（字符串或对象）
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function patchStyleInline(el: any, newStyle: any, oldStyle: any): void {
   if (!newStyle || (typeof newStyle === 'string' && !newStyle.trim())) {
     el.style.cssText = '';

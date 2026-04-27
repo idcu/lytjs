@@ -59,11 +59,14 @@ export function applyTheme(theme: Partial<Theme> = {}): void {
       root.style.setProperty(key, value);
     } 
     // Try root.setProperty (for the test mock)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     else if (typeof (root as any).setProperty === 'function') {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (root as any).setProperty(key, value);
     }
     // Fallback to direct assignment
     else if (root.style) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (root.style as any)[key] = value;
     }
   }
@@ -89,6 +92,7 @@ export function getTheme(): Theme {
       theme[key] = root.style.getPropertyValue(key).trim();
     } else {
       // 兼容 mock 环境：直接读取或返回默认值
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       theme[key] = (root.style as any)[key] || DEFAULT_THEME[key as keyof typeof DEFAULT_THEME];
     }
     // 确保不会返回空字符串

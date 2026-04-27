@@ -36,6 +36,7 @@ export { PatchFlags };
  * @param next 新的 class 值
  * @param prev 旧的 class 值（可选，用于优化）
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function patchClass(el: any, next: any, prev?: any): void {
   // 将各种形式的 class 值规范化为字符串
   const nextClass = normalizeClass(next);
@@ -51,6 +52,7 @@ export function patchClass(el: any, next: any, prev?: any): void {
  * @param value class 值（字符串、对象、数组、null/undefined）
  * @returns 规范化后的 class 字符串
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function normalizeClass(value: any): string {
   if (value === null || value === undefined) {
     return '';
@@ -107,6 +109,7 @@ function normalizeClass(value: any): string {
  * @param next 新的 style 值
  * @param prev 旧的 style 值（可选）
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function patchStyle(el: any, next: any, prev?: any): void {
   // 新值为 null/undefined → 清空 style
   if (!next) {
@@ -170,6 +173,7 @@ export function patchStyle(el: any, next: any, prev?: any): void {
  * @param el    DOM 元素
  * @param style style 对象
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function setStyleObject(el: any, style: Record<string, any>): void {
   for (const key in style) {
     el.style[key] = style[key] === null || style[key] === undefined ? '' : style[key];
@@ -192,9 +196,13 @@ function setStyleObject(el: any, style: Record<string, any>): void {
  * @param instance 组件实例（可选）
  */
 export function patchEventOnElement(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   el: any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   next: any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   prev?: any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   instance?: any
 ): void {
   // next 和 prev 需要从 key 中提取事件名
@@ -240,10 +248,14 @@ function isEventProp(key: string): boolean {
  * @param instance 组件实例（可选）
  */
 export function patchDOMProp(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   el: any,
   key: string,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   next: any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   prev?: any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   instance?: any
 ): void {
   // 跳过特殊属性
@@ -293,10 +305,14 @@ export function patchDOMProp(
  * @param instance 组件实例（可选）
  */
 export function patchProp(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   el: any,
   key: string,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   next: any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   prev?: any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   instance?: any
 ): void {
   patchDOMProp(el, key, next, prev, instance);
@@ -318,9 +334,13 @@ export function patchProp(
  * @param instance 组件实例（可选）
  */
 export function patchAllProps(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   el: any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   oldProps: Record<string, any> | null,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   newProps: Record<string, any> | null,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   instance?: any
 ): void {
   // 遍历新 props，更新变化的属性
@@ -376,9 +396,13 @@ export function patchAllProps(
  * @param instance     组件实例（可选）
  */
 export function patchElementProps(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   el: any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   oldVNode: any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   newVNode: any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   instance?: any
 ): void {
   const oldProps = oldVNode.props || {};

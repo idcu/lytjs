@@ -43,6 +43,7 @@ export class DOMRenderer implements LytRenderer {
    * @param tag HTML 标签名
    * @returns DOM 元素
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   createElement(tag: string): any {
     // SVG 元素需要使用 createElementNS
     if (isSVGElement(tag)) {
@@ -57,6 +58,7 @@ export class DOMRenderer implements LytRenderer {
    * @param text 文本内容
    * @returns DOM 文本节点
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   createText(text: string): any {
     return document.createTextNode(text);
   }
@@ -67,6 +69,7 @@ export class DOMRenderer implements LytRenderer {
    * @param text 注释内容
    * @returns DOM 注释节点
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   createComment(text: string): any {
     return document.createComment(text);
   }
@@ -84,6 +87,7 @@ export class DOMRenderer implements LytRenderer {
    * @param key 属性名
    * @param val 属性值
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setAttribute(el: any, key: string, val: any): void {
     setDOMProp(el, key, val);
   }
@@ -94,6 +98,7 @@ export class DOMRenderer implements LytRenderer {
    * @param el  DOM 元素
    * @param key 属性名
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   removeAttribute(el: any, key: string): void {
     removeDOMProp(el, key);
   }
@@ -108,6 +113,7 @@ export class DOMRenderer implements LytRenderer {
    * @param el    DOM 元素
    * @param style 样式值
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setStyle(el: any, style: object): void {
     if (typeof style === 'string') {
       el.style.cssText = style;
@@ -128,6 +134,7 @@ export class DOMRenderer implements LytRenderer {
    * @param el  DOM 元素
    * @param cls class 值
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setClass(el: any, cls: string | object): void {
     if (typeof cls === 'string') {
       el.className = cls;
@@ -152,6 +159,7 @@ export class DOMRenderer implements LytRenderer {
    * @param child  子节点
    * @param ref    参考节点（插入到其前面），如果为 null 则追加到末尾
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   insert(parent: any, child: any, ref?: any): void {
     if (ref !== null && ref !== undefined) {
       parent.insertBefore(child, ref);
@@ -165,6 +173,7 @@ export class DOMRenderer implements LytRenderer {
    *
    * @param child 要移除的节点
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   remove(child: any): void {
     if (child.parentNode) {
       child.parentNode.removeChild(child);
@@ -178,6 +187,7 @@ export class DOMRenderer implements LytRenderer {
    * @param oldChild 被替换的旧节点
    * @param newChild 替换的新节点
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   replace(parent: any, oldChild: any, newChild: any): void {
     parent.replaceChild(newChild, oldChild);
   }
@@ -222,6 +232,7 @@ export class DOMRenderer implements LytRenderer {
    * @param el DOM 元素
    * @returns 父节点，如果没有则返回 null
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   parentNode(el: any): any {
     return el.parentNode;
   }
@@ -232,6 +243,7 @@ export class DOMRenderer implements LytRenderer {
    * @param el DOM 元素
    * @returns 下一个兄弟节点，如果没有则返回 null
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   nextSibling(el: any): any {
     return el.nextSibling;
   }
@@ -242,6 +254,7 @@ export class DOMRenderer implements LytRenderer {
    * @param selector CSS 选择器
    * @returns 匹配的第一个元素，如果没有则返回 null
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   querySelector(selector: string): any {
     return document.querySelector(selector);
   }
@@ -255,6 +268,7 @@ export class DOMRenderer implements LytRenderer {
    * @param value   新的 class 值
    * @param oldValue 旧的 class 值
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setClassWithOld(el: any, value: any, oldValue: any): void {
     patchClass(el, value, oldValue);
   }
@@ -266,6 +280,7 @@ export class DOMRenderer implements LytRenderer {
    * @param value   新的 style 值
    * @param oldValue 旧的 style 值
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setStyleWithOld(el: any, value: any, oldValue: any): void {
     patchStyle(el, value, oldValue);
   }
@@ -278,6 +293,7 @@ export class DOMRenderer implements LytRenderer {
    * @param value   新值
    * @param oldValue 旧值
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setAttributeWithOld(el: any, key: string, value: any, oldValue: any): void {
     patchProp(el, key, value, oldValue);
   }
@@ -288,6 +304,7 @@ export class DOMRenderer implements LytRenderer {
    * @param el   DOM 元素
    * @param text 文本内容
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setElementText(el: any, text: string): void {
     el.textContent = text;
   }
@@ -298,6 +315,7 @@ export class DOMRenderer implements LytRenderer {
    * @param node 文本节点或注释节点
    * @param text 文本内容
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setText(node: any, text: string): void {
     node.nodeValue = text;
   }
@@ -309,6 +327,7 @@ export class DOMRenderer implements LytRenderer {
    * @param child  子节点
    * @param anchor 参考节点
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   insertBefore(parent: any, child: any, anchor: any): void {
     if (anchor !== null && anchor !== undefined) {
       parent.insertBefore(child, anchor);
@@ -323,6 +342,7 @@ export class DOMRenderer implements LytRenderer {
    * @param parent 父节点
    * @param child  子节点
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   removeChild(parent: any, child: any): void {
     parent.removeChild(child);
   }
@@ -333,6 +353,7 @@ export class DOMRenderer implements LytRenderer {
    * @param vnode  VNode
    * @param anchor 锚点 DOM 元素
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setAnchor(vnode: any, anchor: any): void {
     vnode.anchor = anchor;
   }
@@ -343,6 +364,7 @@ export class DOMRenderer implements LytRenderer {
    * @param node DOM 节点
    * @returns 下一个兄弟节点
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   getNextSibling(node: any): any {
     return node.nextSibling;
   }
@@ -352,6 +374,7 @@ export class DOMRenderer implements LytRenderer {
    *
    * @param el DOM 元素
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   cleanupEvents(el: any): void {
     removeAllEventListeners(el);
   }

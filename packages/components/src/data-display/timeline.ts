@@ -5,7 +5,6 @@
  */
 
 import { defineComponent } from '@lytjs/component';
-import { computed } from '@lytjs/reactivity';
 
 export const Timeline = defineComponent({
   name: 'LytTimeline',
@@ -49,6 +48,7 @@ export const Timeline = defineComponent({
       return index % 2 === 0 ? 'left' : 'right';
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const getDotColor = (item: any) => {
       if (item.color) return item.color;
       return 'var(--lyt-color-primary)';

@@ -8,7 +8,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { AIGenerator } from '../ai-generator';
-import { ConfigLoader } from '../config-loader';
 import type { ComponentConfig, StoreConfig, PageConfig, APIConfig } from '../types';
 
 /**
@@ -162,6 +161,7 @@ async function handleComponentCommand(args: string[]) {
     process.exit(1);
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const aiConfig: any = {};
   if (apiKey) aiConfig.apiKey = apiKey;
   if (model) aiConfig.model = model;
@@ -175,6 +175,7 @@ async function handleComponentCommand(args: string[]) {
 
   const config: ComponentConfig = {
     name,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     type: (type || 'functional') as any,
     style,
     description,
@@ -211,6 +212,7 @@ async function handleStoreCommand(args: string[]) {
     process.exit(1);
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const aiConfig: any = {};
   if (apiKey) aiConfig.apiKey = apiKey;
   if (model) aiConfig.model = model;
@@ -258,6 +260,7 @@ async function handlePageCommand(args: string[]) {
     process.exit(1);
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const aiConfig: any = {};
   if (apiKey) aiConfig.apiKey = apiKey;
   if (model) aiConfig.model = model;
@@ -304,6 +307,7 @@ async function handleAPICommand(args: string[]) {
     process.exit(1);
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const aiConfig: any = {};
   if (apiKey) aiConfig.apiKey = apiKey;
   if (model) aiConfig.model = model;

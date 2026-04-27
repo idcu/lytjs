@@ -98,10 +98,12 @@ export const Pagination = defineComponent({
       if (e.key === 'Enter') handleJumper();
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     watch(() => props.currentPage, (val: any) => {
       state.current = val;
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     watch(() => props.pageSize, (val: any) => {
       state.size = val;
     });

@@ -40,7 +40,13 @@ function readPackageJson(filePath) {
 }
 
 function writePackageJson(filePath, data) {
-  fs.writeFileSync(filePath, JSON.stringify(data, null, 2) + '\n');
+  // 保留原始文件格式（缩进、换行、字段顺序），仅替换 version 字段
+  const raw = fs.readFileSync(filePath, 'utf8');
+  const updated = raw.replace(
+    /"version"\s*:\s*"[^"]+"/,
+    `"version": "${data.version}"`
+  );
+  fs.writeFileSync(filePath, updated, 'utf8');
 }
 
 function getPackages() {

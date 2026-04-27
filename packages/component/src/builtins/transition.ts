@@ -10,7 +10,6 @@
 import {
   defineComponent,
   type ComponentDefine,
-  type ComponentOptions,
 } from '../define-component';
 
 // ============================================================
@@ -40,20 +39,28 @@ export interface TransitionProps {
   /** 离开结束类名 */
   leaveToClass?: string;
   /** 进入前钩子 */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onBeforeEnter?: (el: any) => void;
   /** 进入钩子（需调用 done 表示完成） */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onEnter?: (el: any, done: () => void) => void;
   /** 进入完成钩子 */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onAfterEnter?: (el: any) => void;
   /** 进入取消钩子 */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onEnterCancelled?: (el: any) => void;
   /** 离开前钩子 */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onBeforeLeave?: (el: any) => void;
   /** 离开钩子（需调用 done 表示完成） */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onLeave?: (el: any, done: () => void) => void;
   /** 离开完成钩子 */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onAfterLeave?: (el: any) => void;
   /** 离开取消钩子 */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onLeaveCancelled?: (el: any) => void;
 }
 
@@ -83,7 +90,8 @@ function isFunction(val: unknown): val is Function {
 /**
  * 判断值是否为普通对象
  */
-function isPlainObject(val: unknown): val is Record<string, any> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function _isPlainObject(val: unknown): val is Record<string, any> {
   return val !== null && typeof val === 'object' && !Array.isArray(val);
 }
 
@@ -140,6 +148,7 @@ export function getTransitionInfo(
   el: Element,
   expectedType?: string
 ): TransitionInfo {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const styles = (window as any).getComputedStyle(el);
   const transitionDelays: string[] = (styles.transitionDelay || '').split(', ');
   const transitionDurations: string[] = (styles.transitionDuration || '').split(', ');
@@ -495,8 +504,10 @@ export const Transition: ComponentDefine = defineComponent({
       /** 是否已首次挂载（用于 appear 判断） */
       hasAppeared: false,
       /** 旧子元素引用（用于 mode 切换时暂存） */
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       oldChild: null as any,
       /** 新子元素引用（用于 mode 切换时暂存） */
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       newChild: null as any,
     };
   },
@@ -530,6 +541,7 @@ export const Transition: ComponentDefine = defineComponent({
     if (!state.hasAppeared && props.appear) {
       state.hasAppeared = true;
       // 标记需要进入过渡
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (rawChild as any).__transition_appear = true;
     }
 
@@ -547,6 +559,7 @@ export const Transition: ComponentDefine = defineComponent({
     const clonedChild = rawChild;
     if (clonedChild && typeof clonedChild === 'object') {
       // 将过渡 props 附加到子元素上，供渲染器使用
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (clonedChild as any).__transition = {
         name: props.name,
         appear: props.appear,

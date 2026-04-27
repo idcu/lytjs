@@ -19,10 +19,13 @@ import {
 /** 异步组件配置选项 */
 export interface AsyncComponentOptions {
   /** 异步加载函数，返回 Promise<ComponentDefine | ComponentOptions> */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   loader: () => Promise<any>;
   /** 加载中显示的组件 */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   loadingComponent?: any;
   /** 加载失败显示的组件 */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   errorComponent?: any;
   /** 延迟显示 loading 的时间(ms)，默认 200 */
   delay?: number;
@@ -70,6 +73,7 @@ function isFunction(val: unknown): val is Function {
 /**
  * 判断值是否为普通对象
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function isPlainObject(val: unknown): val is Record<string, any> {
   return val !== null && typeof val === 'object' && !Array.isArray(val);
 }
@@ -83,6 +87,7 @@ function isPlainObject(val: unknown): val is Record<string, any> {
  * @param loaded - loader 返回的值
  * @returns 标准化后的 ComponentDefine
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function normalizeAsyncComponent(loaded: any): ComponentDefine {
   // 已经是 ComponentDefine
   if (loaded && loaded._isComponentDefine) {
@@ -97,6 +102,7 @@ function normalizeAsyncComponent(loaded: any): ComponentDefine {
   // 是函数（可能是 defineComponent 的返回值或函数组件）
   if (isFunction(loaded)) {
     // 如果函数有 _isComponentDefine 标记
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if ((loaded as any)._isComponentDefine) {
       return loaded;
     }
@@ -154,6 +160,7 @@ function normalizeAsyncComponent(loaded: any): ComponentDefine {
  * ```
  */
 export function defineAsyncComponent(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   options: AsyncComponentOptions | (() => Promise<any>)
 ): ComponentDefine {
   // 如果传入的是函数，包装为 AsyncComponentOptions
@@ -208,6 +215,7 @@ export function defineAsyncComponent(
 
     // 创建加载 Promise
     const loadPromise = loader()
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .then((loaded: any) => {
         // 加载成功
         asyncState.status = 'resolved';
@@ -217,6 +225,7 @@ export function defineAsyncComponent(
         // 清除定时器
         clearTimers();
 
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         return asyncState.resolvedComponent!;
       })
       .catch((error: Error) => {
@@ -402,13 +411,19 @@ export function defineAsyncComponent(
   });
 
   // 在组件定义上暴露异步标记，供 Suspense 和 SSR 流式渲染识别
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (asyncComponentWrapper as any)._isAsyncComponent = true;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (asyncComponentWrapper as any).__asyncSetup = true;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (asyncComponentWrapper as any).__suspense = true;
 
   // 暴露内部状态和加载方法（供 SSR 和测试使用）
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (asyncComponentWrapper as any)._asyncState = asyncState;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (asyncComponentWrapper as any)._load = load;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (asyncComponentWrapper as any)._clearTimers = clearTimers;
 
   return asyncComponentWrapper;

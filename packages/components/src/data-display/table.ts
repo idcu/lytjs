@@ -23,6 +23,7 @@ export const Table = defineComponent({
       default: () => [],
     },
     data: {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       type: Array as () => Array<Record<string, any>>,
       default: () => [],
     },
@@ -90,6 +91,7 @@ export const Table = defineComponent({
       return sorted;
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const getCellValue = (row: Record<string, any>, key: string) => {
       return row[key] !== undefined ? row[key] : '';
     };
@@ -102,6 +104,7 @@ export const Table = defineComponent({
       return '&#8693;';
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleRowClick = (row: Record<string, any>, index: number) => {
       emit('rowClick', { row, index });
     };

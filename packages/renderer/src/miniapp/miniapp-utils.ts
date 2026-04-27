@@ -115,6 +115,7 @@ export interface ComponentJsonConfig {
  * @returns 格式化的 JSON 字符串
  */
 export function generatePageJson(config: PageJsonConfig): string {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const json: Record<string, any> = {};
 
   if (config.navigationBarTitleText !== undefined) {
@@ -156,6 +157,7 @@ export function generatePageJson(config: PageJsonConfig): string {
  * @returns 格式化的 JSON 字符串
  */
 export function generateComponentJson(config: ComponentJsonConfig): string {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const json: Record<string, any> = {
     component: config.component !== false,
   };
@@ -176,6 +178,7 @@ export function generateComponentJson(config: ComponentJsonConfig): string {
  */
 export interface NormalizedProps {
   /** 小程序 properties 定义 */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   properties: Record<string, any>;
   /** observers 观察器列表 */
   observers: string[];
@@ -203,7 +206,9 @@ export interface NormalizedProps {
  * @param props 属性定义对象
  * @returns 规范化后的 properties 和 observers
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function normalizeProps(props: Record<string, any>): NormalizedProps {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const properties: Record<string, any> = {};
   const observers: string[] = [];
 
@@ -212,6 +217,7 @@ export function normalizeProps(props: Record<string, any>): NormalizedProps {
       // 简写形式：propName: String
       properties[propName] = { type: propDef.name };
     } else if (typeof propDef === 'object' && propDef !== null) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const propEntry: Record<string, any> = {};
 
       if (propDef.type !== undefined) {

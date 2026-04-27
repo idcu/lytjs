@@ -2,6 +2,8 @@
  * Radio 单选框
  * Props: checked, disabled, label, value, name
  * Events: change
+ *
+ * A11y: 原生 radio 提供基本键盘支持，添加 aria-describedby、inputId
  */
 
 import { defineComponent } from '@lytjs/component';
@@ -34,6 +36,21 @@ export const Radio = defineComponent({
       type: [String, Number, Boolean],
       default: undefined,
     },
+    /** 无障碍标签 */
+    ariaLabel: {
+      type: String,
+      default: '',
+    },
+    /** 描述文本元素 ID */
+    ariaDescribedby: {
+      type: String,
+      default: '',
+    },
+    /** 组件唯一 ID */
+    inputId: {
+      type: String,
+      default: '',
+    },
   },
 
   setup(props, { emit, slots }) {
@@ -63,6 +80,9 @@ export const Radio = defineComponent({
           :name="name"
           :checked="isChecked()"
           :disabled="disabled"
+          :id="inputId || undefined"
+          :aria-label="ariaLabel || undefined"
+          :aria-describedby="ariaDescribedby || undefined"
           @change="handleChange"
         />
       </span>

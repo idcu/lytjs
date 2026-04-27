@@ -103,8 +103,8 @@ function markStatic(
  */
 function markStaticText(
   node: TextNode,
-  result: HoistResult,
-  nameGenerator: () => string
+  _result: HoistResult,
+  _nameGenerator: () => string
 ): boolean {
   if (!node.isExpression) {
     // 纯文本，标记为静态

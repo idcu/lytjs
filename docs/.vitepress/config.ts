@@ -115,8 +115,38 @@ export default defineConfig({
           text: 'Getting Started',
           items: [
             { text: 'Quick Start', link: '/en/guide/quick-start' },
-            { text: 'Comparison', link: '/en/guide/comparison' },
+            { text: 'Template Syntax', link: '/en/guide/template-syntax' },
+            { text: 'Component System', link: '/en/guide/component' },
+            { text: 'Component Library', link: '/en/guide/components' }
+          ]
+        },
+        {
+          text: 'Core Concepts',
+          items: [
+            { text: 'Reactivity System', link: '/en/guide/reactivity' },
+            { text: 'Options API', link: '/en/guide/options-api' },
+            { text: 'Composition API', link: '/en/guide/composition-api' },
+            { text: 'Single File Components', link: '/en/guide/sfc' }
+          ]
+        },
+        {
+          text: 'Ecosystem',
+          items: [
+            { text: 'Router', link: '/en/guide/router' },
+            { text: 'State Management', link: '/en/guide/store' },
             { text: 'SSR Guide', link: '/en/guide/ssr' },
+            { text: 'DevTools', link: '/en/guide/devtools' }
+          ]
+        },
+        {
+          text: 'Advanced Topics',
+          items: [
+            { text: 'Vapor Mode', link: '/en/guide/vapor-mode' },
+            { text: 'Performance', link: '/en/guide/performance' },
+            { text: 'Advanced Topics', link: '/en/guide/advanced-topics' },
+            { text: 'Deployment', link: '/en/guide/deployment' },
+            { text: 'FAQ', link: '/en/guide/faq' },
+            { text: 'Comparison', link: '/en/guide/comparison' },
             { text: 'Migration from Vue 3', link: '/en/guide/migration-from-vue3' }
           ]
         },
@@ -126,9 +156,15 @@ export default defineConfig({
             { text: 'Core', link: '/en/api/core' },
             { text: 'Reactivity', link: '/en/api/reactivity' },
             { text: 'Component', link: '/en/api/component' },
+            { text: 'Components', link: '/en/api/components' },
+            { text: 'Renderer', link: '/en/api/renderer' },
+            { text: 'Compiler', link: '/en/api/compiler' },
             { text: 'Router', link: '/en/api/router' },
             { text: 'Store', link: '/en/api/store' },
-            { text: 'Components', link: '/en/api/components' }
+            { text: 'DevTools', link: '/en/api/devtools' },
+            { text: 'CLI', link: '/en/api/cli' },
+            { text: 'Plugin', link: '/en/api/plugin' },
+            { text: 'Web Component', link: '/en/api/web-component' }
           ]
         },
         {

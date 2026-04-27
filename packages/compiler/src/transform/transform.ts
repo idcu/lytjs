@@ -16,9 +16,7 @@
 import {
   type RootNode,
   type ElementNode,
-  type TextNode,
   type ASTNode,
-  type DirectiveNode,
 } from '../ast/nodes';
 
 // ============================================================

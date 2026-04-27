@@ -2,10 +2,14 @@
  * Drawer 抽屉
  * Props: visible, placement(left/right/top/bottom), title, closable, mask, maskClosable, width, height, zIndex
  * Events: open, close, afterOpen, afterClose
+ *
+ * A11y: role="dialog"、aria-modal="true"、aria-labelledby、Escape 关闭
  */
 
 import { defineComponent, onMounted, onUnmounted } from '@lytjs/component';
 import { reactive, watch } from '@lytjs/reactivity';
+import { generateId } from '../a11y/aria-utils';
+import { FocusTrap } from '../a11y/focusTrap';
 
 export const Drawer = defineComponent({
   name: 'LytDrawer',
@@ -56,6 +60,11 @@ export const Drawer = defineComponent({
       isAnimating: false,
     });
 
+    // 生成唯一 ID
+    const titleId = generateId('lyt-drawer-title');
+    const bodyId = generateId('lyt-drawer-body');
+    let focusTrap: FocusTrap | null = null;
+
     const open = () => {
       state.isVisible = true;
       requestAnimationFrame(() => {
@@ -66,6 +75,10 @@ export const Drawer = defineComponent({
     };
 
     const close = () => {
+      if (focusTrap) {
+        focusTrap.deactivate();
+        focusTrap = null;
+      }
       state.isAnimating = false;
       setTimeout(() => {
         state.isVisible = false;
@@ -85,10 +98,33 @@ export const Drawer = defineComponent({
       close();
     };
 
+    const handleCloseKeydown = (e: KeyboardEvent) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        close();
+      }
+    };
+
     const handleKeydown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && state.isVisible) {
         close();
       }
+    };
+
+    /** 初始化 Focus Trap */
+    const initFocusTrap = () => {
+      requestAnimationFrame(() => {
+        const contentEl = document.querySelector('.lyt-drawer__content') as HTMLElement;
+        if (contentEl) {
+          focusTrap = new FocusTrap({
+            container: contentEl,
+            onEscape: () => close(),
+            autoFocus: true,
+            restoreFocus: true,
+          });
+          focusTrap.activate();
+        }
+      });
     };
 
     const contentStyle = () => {
@@ -101,9 +137,14 @@ export const Drawer = defineComponent({
       return style;
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     watch(() => props.visible, (val: any) => {
-      if (val) open();
-      else close();
+      if (val) {
+        open();
+        initFocusTrap();
+      } else {
+        close();
+      }
     });
 
     onMounted(() => {
@@ -112,14 +153,18 @@ export const Drawer = defineComponent({
 
     onUnmounted(() => {
       document.removeEventListener('keydown', handleKeydown);
+      if (focusTrap) {
+        focusTrap.deactivate();
+        focusTrap = null;
+      }
       document.body.style.overflow = '';
     });
 
-    return { state, handleMaskClick, handleClose, contentStyle, slots };
+    return { state, handleMaskClick, handleClose, contentStyle, slots, titleId, bodyId, handleCloseKeydown };
   },
 
   template: `
-    <div class="lyt-drawer" v-if="state.isVisible">
+    <div class="lyt-drawer" v-if="state.isVisible" role="presentation">
       <div
         class="lyt-drawer__mask {state.isAnimating ? 'lyt-drawer__mask--visible' : ''}"
         v-if="mask"
@@ -128,12 +173,16 @@ export const Drawer = defineComponent({
       <div
         class="lyt-drawer__content lyt-drawer__content--{placement} {state.isAnimating ? 'lyt-drawer__content--open' : ''}"
         :style="contentStyle()"
+        role="dialog"
+        aria-modal="true"
+        :aria-labelledby="title ? titleId : undefined"
+        :aria-describedby="bodyId"
       >
         <div class="lyt-drawer__header" v-if="title || closable">
-          <span class="lyt-drawer__title">{{ title }}</span>
-          <span class="lyt-drawer__close" v-if="closable" @click="handleClose">&times;</span>
+          <span class="lyt-drawer__title" :id="titleId">{{ title }}</span>
+          <span class="lyt-drawer__close" v-if="closable" role="button" tabindex="0" aria-label="关闭" @click="handleClose" @keydown="handleCloseKeydown">&times;</span>
         </div>
-        <div class="lyt-drawer__body">
+        <div class="lyt-drawer__body" :id="bodyId">
           <slot></slot>
         </div>
       </div>

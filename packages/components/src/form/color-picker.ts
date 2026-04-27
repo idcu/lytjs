@@ -139,6 +139,7 @@ export const ColorPicker = defineComponent({
       if (state.isOpen) closePanel();
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     watch(() => props.value, (val: any) => {
       const hsb = hexToHsb(val);
       state.hue = hsb.h;

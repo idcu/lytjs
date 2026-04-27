@@ -186,6 +186,7 @@ const VEI_KEY = '_vei';
  * @returns invoker 对象，如果不存在则返回 null
  */
 export function getEventInvokers(el: Element): Record<string, EventInvoker> | null {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (el as any)[VEI_KEY] || null;
 }
 
@@ -219,8 +220,10 @@ export function patchEvent(
   const eventName = parsed.name;
 
   // 获取或创建元素上的 invoker 对象
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let invokers = (el as any)[VEI_KEY];
   if (!invokers) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     invokers = (el as any)[VEI_KEY] = {};
   }
 
@@ -265,6 +268,7 @@ export function patchEvent(
  *
  * @param el DOM 元素
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function removeAllEventListeners(el: any): void {
   const invokers = el[VEI_KEY];
   if (!invokers) return;

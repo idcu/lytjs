@@ -2,6 +2,8 @@
  * Switch 开关
  * Props: checked, disabled, size(small/medium/large), activeColor, inactiveColor
  * Events: change
+ *
+ * A11y: role="switch"、aria-checked、键盘支持（Space/Enter 切换）、aria-label
  */
 
 import { defineComponent } from '@lytjs/component';
@@ -36,6 +38,21 @@ export const Switch = defineComponent({
       type: Boolean,
       default: undefined,
     },
+    /** 无障碍标签 */
+    ariaLabel: {
+      type: String,
+      default: '',
+    },
+    /** 关联的 label 元素 ID */
+    ariaLabelledby: {
+      type: String,
+      default: '',
+    },
+    /** 描述文本元素 ID */
+    ariaDescribedby: {
+      type: String,
+      default: '',
+    },
   },
 
   setup(props, { emit }) {
@@ -69,7 +86,11 @@ export const Switch = defineComponent({
       class="lyt-switch lyt-switch--{size} {state.isChecked ? 'lyt-switch--checked' : ''} {disabled ? 'lyt-switch--disabled' : ''}"
       :style="switchStyle()"
       role="switch"
-      :aria-checked="state.isChecked"
+      :aria-checked="state.isChecked ? 'true' : 'false'"
+      :aria-disabled="disabled ? 'true' : undefined"
+      :aria-label="ariaLabel || undefined"
+      :aria-labelledby="ariaLabelledby || undefined"
+      :aria-describedby="ariaDescribedby || undefined"
       tabindex="0"
       @click="handleClick"
       @keydown="handleKeydown"

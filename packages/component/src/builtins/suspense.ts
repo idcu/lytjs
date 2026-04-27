@@ -20,6 +20,7 @@ import {
 /** Suspense 组件的 Props 接口 */
 export interface SuspenseProps {
   /** 异步加载时显示的占位内容 */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   fallback?: any;
   /** 超时时间(ms)，超时后显示 fallback */
   timeout?: number;
@@ -79,6 +80,7 @@ function _isFunction(val: unknown): val is Function {
 /**
  * 判断值是否为普通对象
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function _isPlainObject(val: unknown): val is Record<string, any> {
   return val !== null && typeof val === 'object' && !Array.isArray(val);
 }
@@ -91,6 +93,7 @@ function _isPlainObject(val: unknown): val is Record<string, any> {
  * @param vnode - 子组件 VNode
  * @returns 是否为异步组件
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function isAsyncComponent(vnode: any): boolean {
   if (!vnode || typeof vnode !== 'object') return false;
 
@@ -108,6 +111,7 @@ function isAsyncComponent(vnode: any): boolean {
   if (type && type.options && _isFunction(type.options.setup)) {
     const setupResult = type.options.setup;
     // 注意：这里不实际调用 setup，只检查标记
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if ((setupResult as any).__isAsync) return true;
   }
 
@@ -120,6 +124,7 @@ function isAsyncComponent(vnode: any): boolean {
  * @param vnode - 异步组件 VNode
  * @returns 加载 Promise，如果不是异步组件则返回 null
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function getAsyncPromise(vnode: any): Promise<any> | null {
   if (!vnode) return null;
 
@@ -208,6 +213,7 @@ export const Suspense: ComponentDefine = defineComponent({
 
     // 获取默认插槽内容（子组件）
     const children = slots.default ? slots.default() : null;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const rawChildren: any[] = Array.isArray(children)
       ? children
       : children !== null && children !== undefined ? [children] : [];
@@ -219,7 +225,9 @@ export const Suspense: ComponentDefine = defineComponent({
       : props.fallback;
 
     // 检测异步子组件
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const asyncChildren: any[] = [];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const syncChildren: any[] = [];
 
     for (let i = 0; i < rawChildren.length; i++) {

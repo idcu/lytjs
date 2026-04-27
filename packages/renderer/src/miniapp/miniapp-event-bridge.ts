@@ -24,14 +24,17 @@ export interface MiniAppNativeEvent {
   /** 事件目标 */
   target: {
     id: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     dataset: Record<string, any>;
   };
   /** 当前目标（冒泡路径上的当前元素） */
   currentTarget: {
     id: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     dataset: Record<string, any>;
   };
   /** 事件详情数据 */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   detail: Record<string, any>;
   /** 标记事件是否可冒泡 */
   bubbles: boolean;
@@ -50,6 +53,7 @@ export interface ParsedEventArgs {
   /** 原生事件对象 */
   nativeEvent: MiniAppNativeEvent;
   /** 事件详情数据 */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   detail: Record<string, any>;
 }
 
@@ -58,14 +62,17 @@ export interface ParsedEventArgs {
  */
 export interface DataBinder {
   /** 获取数据 */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   get: () => any;
   /** 设置数据 */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   set: (value: any) => void;
 }
 
 /**
  * 事件处理器映射
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type BridgeHandlerMap = Record<string, (...args: any[]) => void>;
 
 /* ================================================================
@@ -154,6 +161,7 @@ export class MiniAppEventBridge {
   private _platform: MiniAppPlatform;
 
   /** 组件实例引用（用于 setData 等操作） */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private _componentInstance: any;
 
   /** 自定义事件监听器映射 */
@@ -171,6 +179,7 @@ export class MiniAppEventBridge {
    * @param platform 小程序平台
    * @param componentInstance 组件实例引用（可选，用于 setData）
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   constructor(platform: MiniAppPlatform, componentInstance?: any) {
     this._platform = platform;
     this._componentInstance = componentInstance;
@@ -257,6 +266,7 @@ export class MiniAppEventBridge {
    * @param platform 目标平台（可选，使用实例平台）
    * @returns 解析后的事件参数（nativeEvent + detail）
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   parseEventArgs(args: any[], platform?: MiniAppPlatform): ParsedEventArgs {
     const targetPlatform = platform || this._platform;
     const rawEvent = args[0] || {};
@@ -299,6 +309,7 @@ export class MiniAppEventBridge {
   /**
    * 标准化事件目标对象
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private _normalizeTarget(target: any): { id: string; dataset: Record<string, any> } {
     return {
       id: target.id || '',
@@ -328,6 +339,7 @@ export class MiniAppEventBridge {
     const self = this;
 
     return {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       get(): any {
         if (!self._componentInstance) return undefined;
 
@@ -335,6 +347,7 @@ export class MiniAppEventBridge {
         return self._getNestedValue(data, dataPath);
       },
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       set(value: any): void {
         if (!self._componentInstance) return;
 
@@ -354,6 +367,7 @@ export class MiniAppEventBridge {
   /**
    * 获取嵌套对象的值
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private _getNestedValue(obj: any, path: string): any {
     const keys = path.split('.');
     let current = obj;
@@ -369,6 +383,7 @@ export class MiniAppEventBridge {
   /**
    * 设置嵌套对象的值
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private _setNestedValue(obj: any, path: string, value: any): void {
     const keys = path.split('.');
     let current = obj;
@@ -411,6 +426,7 @@ export class MiniAppEventBridge {
       const bindName = this.getBindName(lytEvent);
       const miniEvent = this.normalizeEvent(lytEvent);
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       handlers[bindName] = function (e: any, ...rest: any[]) {
         const parsed = self.parseEventArgs([e, ...rest]);
 
@@ -427,6 +443,7 @@ export class MiniAppEventBridge {
     }
 
     // 通用事件处理器
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     handlers['handleEvent'] = function (e: any) {
       const parsed = self.parseEventArgs([e]);
       return parsed;
@@ -484,6 +501,7 @@ export class MiniAppEventBridge {
   private _emitCustomEvent(
     componentName: string,
     eventName: string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     detail: Record<string, any>,
     nativeEvent?: MiniAppNativeEvent
   ): void {
@@ -521,6 +539,7 @@ export class MiniAppEventBridge {
    * @param eventName 事件名
    * @param detail 事件数据
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   $emit(eventName: string, detail?: Record<string, any>): void {
     this._emitCustomEvent('__self__', eventName, detail || {});
   }
@@ -580,6 +599,7 @@ export class MiniAppEventBridge {
    *
    * @param instance 小程序组件实例
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setComponentInstance(instance: any): void {
     this._componentInstance = instance;
   }
@@ -587,6 +607,7 @@ export class MiniAppEventBridge {
   /**
    * 获取组件实例引用
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   getComponentInstance(): any {
     return this._componentInstance;
   }

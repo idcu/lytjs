@@ -2,6 +2,8 @@
  * Checkbox 复选框
  * Props: checked, disabled, label, indeterminate
  * Events: change
+ *
+ * A11y: 原生 checkbox 提供基本键盘支持，添加 aria-checked（mixed 状态）、aria-describedby
  */
 
 import { defineComponent } from '@lytjs/component';
@@ -31,6 +33,21 @@ export const Checkbox = defineComponent({
       type: Boolean,
       default: undefined,
     },
+    /** 无障碍标签 */
+    ariaLabel: {
+      type: String,
+      default: '',
+    },
+    /** 描述文本元素 ID */
+    ariaDescribedby: {
+      type: String,
+      default: '',
+    },
+    /** 组件唯一 ID */
+    inputId: {
+      type: String,
+      default: '',
+    },
   },
 
   setup(props, { emit, slots }) {
@@ -45,7 +62,12 @@ export const Checkbox = defineComponent({
       emit('update:modelValue', state.isChecked);
     };
 
-    return { state, handleChange, slots };
+    const getAriaCheckedValue = () => {
+      if (props.indeterminate) return 'mixed';
+      return state.isChecked ? 'true' : 'false';
+    };
+
+    return { state, handleChange, getAriaCheckedValue, slots };
   },
 
   template: `
@@ -57,6 +79,10 @@ export const Checkbox = defineComponent({
           type="checkbox"
           :checked="state.isChecked"
           :disabled="disabled"
+          :id="inputId || undefined"
+          :aria-label="ariaLabel || undefined"
+          :aria-checked="getAriaCheckedValue()"
+          :aria-describedby="ariaDescribedby || undefined"
           @change="handleChange"
         />
       </span>

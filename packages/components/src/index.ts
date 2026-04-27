@@ -86,6 +86,52 @@ import {
   type Theme,
 } from './styles/theme'
 
+// 无障碍工具
+export {
+  FocusTrap,
+  createFocusTrap,
+  getFocusableElements,
+  RovingTabIndex,
+  createRovingTabIndex,
+  generateId,
+  resetIdCounter,
+  getAriaSelected,
+  getAriaExpanded,
+  getAriaChecked,
+  getAriaDisabled,
+  getAriaBusy,
+  getAriaPressed,
+  getAriaHidden,
+  getAriaRequired,
+  getAriaInvalid,
+  getAriaReadonly,
+  setAriaAttribute,
+  setAriaAttributes,
+  createAriaProps,
+  getLiveRegionProps,
+  getInputAriaProps,
+  getListboxProps,
+  getOptionProps,
+  getDialogProps,
+  getTabProps,
+  getTabPanelProps,
+  getDropdownTriggerProps,
+  getMenuItemProps,
+  createKeyboardHandler,
+  handleArrowKeys,
+  handleEscape,
+  handleActivation,
+  handleHomeEnd,
+  isKeyboardEvent,
+  findFocusableSibling,
+} from './a11y'
+
+export type {
+  FocusTrapOptions,
+  RovingTabIndexOptions,
+  KeyboardHandlerOptions,
+} from './a11y'
+
 // 新主题系统
 import {
   defaultLightTheme,
