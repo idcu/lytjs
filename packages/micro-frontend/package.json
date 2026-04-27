@@ -1,0 +1,69 @@
+{
+  "name": "@lytjs/micro-frontend",
+  "version": "5.0.0",
+  "description": "Lyt.js 微前端集成 - 沙箱隔离、通信机制、生命周期管理、qiankun/micro-app 适配",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.mjs"
+    },
+    "./sandbox": {
+      "types": "./dist/types/sandbox.d.ts",
+      "import": "./dist/sandbox.mjs",
+      "require": "./dist/sandbox.cjs",
+      "default": "./dist/sandbox.mjs"
+    },
+    "./communication": {
+      "types": "./dist/types/communication.d.ts",
+      "import": "./dist/communication.mjs",
+      "require": "./dist/communication.cjs",
+      "default": "./dist/communication.mjs"
+    },
+    "./lifecycle": {
+      "types": "./dist/types/lifecycle.d.ts",
+      "import": "./dist/lifecycle.mjs",
+      "require": "./dist/lifecycle.cjs",
+      "default": "./dist/lifecycle.mjs"
+    },
+    "./adapters": {
+      "types": "./dist/types/adapters.d.ts",
+      "import": "./dist/adapters.mjs",
+      "require": "./dist/adapters.cjs",
+      "default": "./dist/adapters.mjs"
+    }
+  },
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
+  "license": "MIT",
+  "author": "lytjs",
+  "repository": {
+    "type": "git",
+    "url": "https://gitee.com/lytjs/lytjs"
+  },
+  "homepage": "https://gitee.com/lytjs/lytjs",
+  "keywords": [
+    "lyt",
+    "lytjs",
+    "micro-frontend",
+    "micro-app",
+    "qiankun",
+    "sandbox",
+    "web-component"
+  ],
+  "dependencies": {
+    "@lytjs/core": "workspace:*"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

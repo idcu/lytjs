@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>错误页面 - Admin Dashboard</title>
+  <link rel="stylesheet" href="theme.css">
+  <style>
+    .error-page {
+      min-height: 100vh; display: flex; align-items: center; justify-content: center;
+      background: var(--bg-body); padding: 24px;
+    }
+    .error-container {
+      text-align: center; max-width: 520px; width: 100%;
+    }
+    .error-code {
+      font-size: 8rem; font-weight: 800; line-height: 1;
+      background: linear-gradient(135deg, var(--primary), #8b5cf6);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text; margin-bottom: 16px;
+    }
+    .error-title {
+      font-size: 1.5rem; font-weight: 700; margin-bottom: 8px;
+    }
+    .error-desc {
+      font-size: var(--text-base); color: var(--text-secondary); margin-bottom: 32px; line-height: 1.6;
+    }
+    .error-actions {
+      display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;
+    }
+    .error-illustration {
+      font-size: 4rem; margin-bottom: 24px; opacity: 0.6;
+    }
+    .error-tabs {
+      display: flex; justify-content: center; gap: 8px; margin-bottom: 32px;
+    }
+    .error-tab {
+      padding: 6px 16px; border-radius: var(--radius-full); font-size: var(--text-sm);
+      cursor: pointer; transition: all var(--transition-fast); border: 1px solid var(--border);
+      background: var(--bg-secondary); color: var(--text-secondary);
+    }
+    .error-tab:hover { border-color: var(--primary); color: var(--primary); }
+    .error-tab.active { background: var(--primary); border-color: var(--primary); color: white; }
+    .error-details {
+      margin-top: 32px; padding: 16px; background: var(--bg-primary); border-radius: var(--radius-md);
+      text-align: left; font-family: var(--font-mono); font-size: var(--text-xs); color: var(--text-muted);
+      line-height: 1.8; max-height: 200px; overflow-y: auto;
+    }
+    .error-details .error-line { display: flex; gap: 8px; }
+    .error-details .line-num { color: var(--text-muted); min-width: 24px; text-align: right; }
+    .error-details .error-highlight { color: var(--danger); }
+    .error-details .error-path { color: var(--primary); }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div class="error-page">
+      <div class="error-container">
+        <!-- 错误类型切换 -->
+        <div class="error-tabs">
+          <div class="error-tab" :class="{ active: errorType === 404 }" @click="errorType = 404">404</div>
+          <div class="error-tab" :class="{ active: errorType === 500 }" @click="errorType = 500">500</div>
+          <div class="error-tab" :class="{ active: errorType === 403 }" @click="errorType = 403">403</div>
+        </div>
+
+        <!-- 404 页面 -->
+        <template v-if="errorType === 404">
+          <div class="error-illustration">&#128270;</div>
+          <div class="error-code">404</div>
+          <div class="error-title">页面未找到</div>
+          <div class="error-desc">
+            抱歉，您访问的页面不存在或已被移除。<br>
+            请检查 URL 是否正确，或返回首页。
+          </div>
+        </template>
+
+        <!-- 500 页面 -->
+        <template v-if="errorType === 500">
+          <div class="error-illustration">&#9888;</div>
+          <div class="error-code">500</div>
+          <div class="error-title">服务器错误</div>
+          <div class="error-desc">
+            抱歉，服务器遇到了内部错误，无法完成您的请求。<br>
+            请稍后再试，或联系管理员。
+          </div>
+        </template>
+
+        <!-- 403 页面 -->
+        <template v-if="errorType === 403">
+          <div class="error-illustration">&#128274;</div>
+          <div class="error-code">403</div>
+          <div class="error-title">访问被拒绝</div>
+          <div class="error-desc">
+            抱歉，您没有权限访问此页面。<br>
+            请联系管理员获取相应权限。
+          </div>
+        </template>
+
+        <!-- 操作按钮 -->
+        <div class="error-actions">
+          <button class="btn btn-primary" @click="goHome">
+            &#8962; 返回首页
+          </button>
+          <button class="btn btn-secondary" @click="goBack">
+            &#8592; 返回上页
+          </button>
+          <button class="btn btn-ghost" @click="showDetails = !showDetails">
+            {{ showDetails ? '隐藏' : '查看' }}详情
+          </button>
+        </div>
+
+        <!-- 错误详情 -->
+        <div class="error-details" v-if="showDetails">
+          <div class="error-line"><span class="line-num">1</span><span class="error-path">GET</span> <span>/api/admin/users?page=1&size=10</span></div>
+          <div class="error-line"><span class="line-num">2</span><span>Status:</span> <span class="error-highlight">{{ errorType }}</span></div>
+          <div class="error-line"><span class="line-num">3</span><span>Time:</span> <span>{{ new Date().toISOString() }}</span></div>
+          <div class="error-line"><span class="line-num">4</span><span>Request-ID:</span> <span>req_{{ requestId }}</span></div>
+          <div class="error-line" v-if="errorType === 404"><span class="line-num">5</span><span class="error-highlight">Error:</span> <span>Route not found: /api/admin/users</span></div>
+          <div class="error-line" v-if="errorType === 500"><span class="line-num">5</span><span class="error-highlight">Error:</span> <span>TypeError: Cannot read properties of undefined (reading 'map')</span></div>
+          <div class="error-line" v-if="errorType === 403"><span class="line-num">5</span><span class="error-highlight">Error:</span> <span>Permission denied: insufficient privileges</span></div>
+          <div class="error-line"><span class="line-num">6</span><span>User-Agent:</span> <span>{{ navigator.userAgent.substring(0, 60) }}...</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast-container">
+      <div v-for="toast in toasts" :key="toast.id" class="toast" :class="'toast-' + toast.type">
+        <span class="toast-icon">{{ toastIcons[toast.type] }}</span>
+        <span class="toast-message">{{ toast.message }}</span>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { createApp, ref, onMounted } from 'https://cdn.jsdelivr.net/npm/@lytjs/core@5.0.0/+esm'
+
+    const toasts = ref([])
+    let toastId = 0
+    function showToast(msg, type = 'info') { const id = ++toastId; toasts.value.push({ id, message: msg, type }); setTimeout(() => { toasts.value = toasts.value.filter(t => t.id !== id) }, 3000) }
+
+    const app = createApp({
+      setup() {
+        const errorType = ref(404)
+        const showDetails = ref(false)
+        const requestId = ref('a1b2c3d4e5f6')
+
+        function goHome() { window.location.href = 'index.html' }
+        function goBack() { window.history.length > 1 ? window.history.back() : (window.location.href = 'index.html') }
+
+        onMounted(() => {
+          // 从 URL 参数获取错误类型
+          const params = new URLSearchParams(window.location.search)
+          const code = params.get('code')
+          if (code) errorType.value = parseInt(code)
+          requestId.value = Math.random().toString(36).substring(2, 14)
+        })
+
+        return {
+          errorType, showDetails, requestId, goHome, goBack,
+          toasts,
+          toastIcons: { success: '&#10004;', error: '&#10008;', warning: '&#9888;', info: '&#8505;' },
+        }
+      },
+    })
+    app.mount('#app')
+  </script>
+</body>
+</html>

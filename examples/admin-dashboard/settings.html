@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>系统设置 - Admin Dashboard</title>
+  <link rel="stylesheet" href="theme.css">
+  <style>
+    .settings-layout { display: grid; grid-template-columns: 220px 1fr; gap: 20px; }
+    .settings-menu-item {
+      display: flex; align-items: center; gap: 10px; padding: 10px 16px;
+      border-radius: var(--radius-md); cursor: pointer; color: var(--text-secondary);
+      transition: all var(--transition-fast); font-size: var(--text-sm); margin-bottom: 2px;
+    }
+    .settings-menu-item:hover { background: var(--bg-hover); color: var(--text-primary); }
+    .settings-menu-item.active { background: var(--primary-bg); color: var(--primary); font-weight: 500; }
+    .setting-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 0; border-bottom: 1px solid var(--border-light);
+    }
+    .setting-row:last-child { border-bottom: none; }
+    .setting-info { flex: 1; }
+    .setting-label { font-size: var(--text-sm); font-weight: 500; margin-bottom: 2px; }
+    .setting-desc { font-size: var(--text-xs); color: var(--text-muted); }
+    .setting-control { flex-shrink: 0; margin-left: 24px; }
+    .color-options { display: flex; gap: 8px; }
+    .color-option {
+      width: 32px; height: 32px; border-radius: 50%; cursor: pointer;
+      border: 3px solid transparent; transition: all var(--transition-fast);
+    }
+    .color-option:hover { transform: scale(1.1); }
+    .color-option.active { border-color: var(--text-primary); box-shadow: 0 0 0 2px var(--bg-card); }
+    .danger-zone { border: 1px solid var(--danger-border); border-radius: var(--radius-lg); padding: 20px; }
+    .danger-zone h3 { color: var(--danger); font-size: var(--text-md); margin-bottom: 8px; }
+    .danger-zone p { font-size: var(--text-sm); color: var(--text-secondary); margin-bottom: 16px; }
+    @media (max-width: 768px) { .settings-layout { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div class="layout">
+      <aside class="sidebar" :class="{ collapsed: sidebarCollapsed, 'mobile-open': mobileMenuOpen }">
+        <div class="sidebar-header"><div class="sidebar-logo">L</div><span class="sidebar-title">Admin Dashboard</span></div>
+        <nav class="nav-menu">
+          <div class="nav-group-title">主菜单</div>
+          <a v-for="item in mainNav" :key="item.key" class="nav-item" :href="item.url"><span class="nav-icon">{{ item.icon }}</span><span class="nav-label">{{ item.label }}</span></a>
+          <div class="nav-group-title">系统管理</div>
+          <a v-for="item in systemNav" :key="item.key" class="nav-item" :class="{ active: item.key === 'settings' }" :href="item.url"><span class="nav-icon">{{ item.icon }}</span><span class="nav-label">{{ item.label }}</span></a>
+          <div class="nav-group-title">其他</div>
+          <a v-for="item in otherNav" :key="item.key" class="nav-item" :href="item.url"><span class="nav-icon">{{ item.icon }}</span><span class="nav-label">{{ item.label }}</span></a>
+        </nav>
+        <div class="sidebar-footer">
+          <button class="theme-toggle-btn" @click="toggleTheme"><span class="nav-icon">{{ isDark ? '&#9788;' : '&#9789;' }}</span><span class="nav-label">{{ isDark ? '亮色模式' : '暗色模式' }}</span></button>
+        </div>
+      </aside>
+      <div class="mobile-overlay" :class="{ visible: mobileMenuOpen }" @click="mobileMenuOpen = false"></div>
+
+      <div class="main-content">
+        <header class="topbar">
+          <div class="topbar-left">
+            <button class="toggle-sidebar-btn" @click="toggleSidebar">&#9776;</button>
+            <div class="breadcrumb"><a href="index.html">首页</a><span class="separator">/</span><span class="current">系统设置</span></div>
+          </div>
+          <div class="topbar-right">
+            <div class="topbar-search"><span class="search-icon">&#128269;</span><input type="text" placeholder="搜索..."></div>
+            <button class="notification-btn">&#128276;</button>
+            <div class="user-menu"><div class="user-avatar">A</div><span class="user-name">管理员</span></div>
+          </div>
+        </header>
+
+        <main class="page-content">
+          <div class="page-header"><h1>系统设置</h1><p>配置系统参数、主题外观、通知和安全选项。</p></div>
+
+          <div class="settings-layout">
+            <!-- 设置菜单 -->
+            <div class="card">
+              <div class="card-body" style="padding:8px;">
+                <div v-for="item in settingsMenu" :key="item.key" class="settings-menu-item" :class="{ active: activeTab === item.key }" @click="activeTab = item.key">
+                  <span>{{ item.icon }}</span><span>{{ item.label }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 设置内容 -->
+            <div>
+              <!-- 通用设置 -->
+              <div class="card" v-if="activeTab === 'general'">
+                <div class="card-header"><h3>通用设置</h3></div>
+                <div class="card-body">
+                  <div class="form-group">
+                    <label class="form-label">站点名称</label>
+                    <input class="form-input" v-model="settings.siteName" placeholder="请输入站点名称">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">站点描述</label>
+                    <textarea class="form-textarea" v-model="settings.siteDesc" placeholder="请输入站点描述" rows="2"></textarea>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">默认语言</label>
+                    <select class="form-select" v-model="settings.language">
+                      <option value="zh-CN">简体中文</option><option value="en-US">English</option><option value="ja-JP">日本語</option>
+                    </select>
+                  </div>
+                  <div class="setting-row">
+                    <div class="setting-info"><div class="setting-label">开启注册</div><div class="setting-desc">允许新用户自行注册账户</div></div>
+                    <div class="setting-control"><label class="switch"><input type="checkbox" v-model="settings.allowRegister"><span class="switch-slider"></span></label></div>
+                  </div>
+                  <div class="setting-row">
+                    <div class="setting-info"><div class="setting-label">维护模式</div><div class="setting-desc">开启后普通用户无法访问系统</div></div>
+                    <div class="setting-control"><label class="switch"><input type="checkbox" v-model="settings.maintenance"><span class="switch-slider"></span></label></div>
+                  </div>
+                  <div class="setting-row">
+                    <div class="setting-info"><div class="setting-label">API 访问</div><div class="setting-desc">允许通过 API 接口访问系统数据</div></div>
+                    <div class="setting-control"><label class="switch"><input type="checkbox" v-model="settings.apiAccess"><span class="switch-slider"></span></label></div>
+                  </div>
+                  <div style="display:flex;justify-content:flex-end;margin-top:20px;">
+                    <button class="btn btn-primary" @click="saveSettings">保存设置</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 外观设置 -->
+              <div class="card" v-if="activeTab === 'appearance'">
+                <div class="card-header"><h3>外观设置</h3></div>
+                <div class="card-body">
+                  <div class="form-group">
+                    <label class="form-label">主题模式</label>
+                    <div style="display:flex;gap:12px;">
+                      <div v-for="mode in themeModes" :key="mode.key"
+                           style="flex:1;padding:16px;border:2px solid var(--border);border-radius:var(--radius-lg);cursor:pointer;text-align:center;transition:all var(--transition-fast);"
+                           :style="{ borderColor: settings.theme === mode.key ? 'var(--primary)' : 'var(--border)', background: settings.theme === mode.key ? 'var(--primary-bg)' : 'transparent' }"
+                           @click="settings.theme = mode.key; applyTheme(mode.key)">
+                        <div style="font-size:1.5rem;margin-bottom:8px;">{{ mode.icon }}</div>
+                        <div style="font-size:var(--text-sm);font-weight:500;">{{ mode.label }}</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">主题色</label>
+                    <div class="color-options">
+                      <div v-for="color in themeColors" :key="color.value"
+                           class="color-option" :class="{ active: settings.accentColor === color.value }"
+                           :style="{ background: color.value }"
+                           @click="settings.accentColor = color.value">
+                      </div>
+                    </div>
+                  </div>
+                  <div class="setting-row">
+                    <div class="setting-info"><div class="setting-label">侧边栏固定</div><div class="setting-desc">侧边栏始终显示在页面左侧</div></div>
+                    <div class="setting-control"><label class="switch"><input type="checkbox" v-model="settings.fixedSidebar"><span class="switch-slider"></span></label></div>
+                  </div>
+                  <div class="setting-row">
+                    <div class="setting-info"><div class="setting-label">紧凑模式</div><div class="setting-desc">减小间距，显示更多内容</div></div>
+                    <div class="setting-control"><label class="switch"><input type="checkbox" v-model="settings.compact"><span class="switch-slider"></span></label></div>
+                  </div>
+                  <div class="form-group mt-2">
+                    <label class="form-label">字体大小</label>
+                    <select class="form-select" v-model="settings.fontSize" style="width:200px;">
+                      <option value="small">小</option><option value="medium">中（默认）</option><option value="large">大</option>
+                    </select>
+                  </div>
+                  <div style="display:flex;justify-content:flex-end;margin-top:20px;">
+                    <button class="btn btn-primary" @click="saveSettings">保存设置</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 通知设置 -->
+              <div class="card" v-if="activeTab === 'notifications'">
+                <div class="card-header"><h3>通知设置</h3></div>
+                <div class="card-body">
+                  <div class="setting-row" v-for="(item, i) in notificationOptions" :key="i">
+                    <div class="setting-info">
+                      <div class="setting-label">{{ item.label }}</div>
+                      <div class="setting-desc">{{ item.desc }}</div>
+                    </div>
+                    <div class="setting-control">
+                      <label class="switch"><input type="checkbox" v-model="item.enabled"><span class="switch-slider"></span></label>
+                    </div>
+                  </div>
+                  <div style="display:flex;justify-content:flex-end;margin-top:20px;">
+                    <button class="btn btn-primary" @click="saveSettings">保存设置</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 安全设置 -->
+              <div class="card" v-if="activeTab === 'security'">
+                <div class="card-header"><h3>安全设置</h3></div>
+                <div class="card-body">
+                  <div class="setting-row">
+                    <div class="setting-info"><div class="setting-label">强制密码复杂度</div><div class="setting-desc">要求密码包含大小写字母、数字和特殊字符</div></div>
+                    <div class="setting-control"><label class="switch"><input type="checkbox" v-model="settings.passwordComplexity"><span class="switch-slider"></span></label></div>
+                  </div>
+                  <div class="setting-row">
+                    <div class="setting-info"><div class="setting-label">登录失败锁定</div><div class="setting-desc">连续5次登录失败后锁定账户30分钟</div></div>
+                    <div class="setting-control"><label class="switch"><input type="checkbox" v-model="settings.loginLockout"><span class="switch-slider"></span></label></div>
+                  </div>
+                  <div class="setting-row">
+                    <div class="setting-info"><div class="setting-label">会话超时</div><div class="setting-desc">用户无操作超过指定时间后自动退出</div></div>
+                    <div class="setting-control">
+                      <select class="form-select" v-model="settings.sessionTimeout" style="width:160px;">
+                        <option value="30">30 分钟</option><option value="60">1 小时</option><option value="120">2 小时</option><option value="480">8 小时</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="setting-row">
+                    <div class="setting-info"><div class="setting-label">IP 白名单</div><div class="setting-desc">仅允许指定 IP 地址访问后台</div></div>
+                    <div class="setting-control"><label class="switch"><input type="checkbox" v-model="settings.ipWhitelist"><span class="switch-slider"></span></label></div>
+                  </div>
+                  <div style="display:flex;justify-content:flex-end;margin-top:20px;">
+                    <button class="btn btn-primary" @click="saveSettings">保存设置</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 危险操作 -->
+              <div class="card" v-if="activeTab === 'danger'">
+                <div class="card-header"><h3>危险操作</h3></div>
+                <div class="card-body">
+                  <div class="danger-zone mb-2">
+                    <h3>清除缓存</h3>
+                    <p>清除系统所有缓存数据，可能导致页面加载变慢。</p>
+                    <button class="btn btn-secondary" @click="showToast('缓存已清除', 'success')">清除缓存</button>
+                  </div>
+                  <div class="danger-zone mb-2">
+                    <h3>重置所有设置</h3>
+                    <p>将所有系统设置恢复为默认值，此操作不可撤销。</p>
+                    <button class="btn btn-danger" @click="resetAllSettings">重置设置</button>
+                  </div>
+                  <div class="danger-zone">
+                    <h3>删除所有数据</h3>
+                    <p>永久删除系统中的所有数据，包括用户、订单、日志等。此操作不可恢复！</p>
+                    <button class="btn btn-danger" @click="showToast('此操作需要二次确认', 'warning')">删除所有数据</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+
+      <nav class="mobile-nav">
+        <a v-for="item in mobileNav" :key="item.key" class="mobile-nav-item" :href="item.url"><span class="nav-icon">{{ item.icon }}</span><span>{{ item.label }}</span></a>
+      </nav>
+    </div>
+
+    <div class="toast-container">
+      <div v-for="toast in toasts" :key="toast.id" class="toast" :class="'toast-' + toast.type">
+        <span class="toast-icon">{{ toastIcons[toast.type] }}</span>
+        <span class="toast-message">{{ toast.message }}</span>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { createApp, ref, reactive, watch, onMounted } from 'https://cdn.jsdelivr.net/npm/@lytjs/core@5.0.0/+esm'
+
+    const mainNav = [
+      { key: 'dashboard', icon: '&#9632;', label: '仪表盘', url: 'index.html' },
+      { key: 'users', icon: '&#128100;', label: '用户管理', url: 'users.html' },
+      { key: 'roles', icon: '&#128101;', label: '角色权限', url: 'roles.html' },
+      { key: 'table', icon: '&#128203;', label: '数据表格', url: 'table.html' },
+      { key: 'forms', icon: '&#9997;', label: '表单页面', url: 'forms.html' },
+      { key: 'charts', icon: '&#128200;', label: '图表页面', url: 'charts.html' },
+    ]
+    const systemNav = [
+      { key: 'profile', icon: '&#128100;', label: '个人设置', url: 'profile.html' },
+      { key: 'settings', icon: '&#9881;', label: '系统设置', url: 'settings.html' },
+    ]
+    const otherNav = [
+      { key: 'error', icon: '&#9888;', label: '错误页面', url: 'error.html' },
+      { key: 'login', icon: '&#128274;', label: '退出登录', url: 'login.html' },
+    ]
+    const mobileNav = [
+      { key: 'dashboard', icon: '&#9632;', label: '首页', url: 'index.html' },
+      { key: 'users', icon: '&#128100;', label: '用户', url: 'users.html' },
+      { key: 'table', icon: '&#128203;', label: '表格', url: 'table.html' },
+      { key: 'charts', icon: '&#128200;', label: '图表', url: 'charts.html' },
+      { key: 'profile', icon: '&#9881;', label: '设置', url: 'profile.html' },
+    ]
+
+    const toasts = ref([])
+    let toastId = 0
+    function showToast(msg, type = 'info') { const id = ++toastId; toasts.value.push({ id, message: msg, type }); setTimeout(() => { toasts.value = toasts.value.filter(t => t.id !== id) }, 3000) }
+
+    const app = createApp({
+      setup() {
+        const sidebarCollapsed = ref(false)
+        const mobileMenuOpen = ref(false)
+        const isDark = ref(true)
+        function toggleSidebar() { if (window.innerWidth <= 768) mobileMenuOpen.value = !mobileMenuOpen.value; else sidebarCollapsed.value = !sidebarCollapsed.value }
+        function toggleTheme() { isDark.value = !isDark.value; localStorage.setItem('admin-theme', isDark.value ? 'dark' : 'light') }
+        watch(isDark, (d) => document.documentElement.classList.toggle('light', !d))
+
+        const activeTab = ref('general')
+        const settingsMenu = [
+          { key: 'general', icon: '&#9881;', label: '通用设置' },
+          { key: 'appearance', icon: '&#127912;', label: '外观设置' },
+          { key: 'notifications', icon: '&#128276;', label: '通知设置' },
+          { key: 'security', icon: '&#128274;', label: '安全设置' },
+          { key: 'danger', icon: '&#9888;', label: '危险操作' },
+        ]
+
+        const settings = reactive({
+          siteName: 'Admin Dashboard', siteDesc: '基于 Lyt.js 的企业级后台管理系统',
+          language: 'zh-CN', allowRegister: true, maintenance: false, apiAccess: true,
+          theme: 'dark', accentColor: '#3b82f6', fixedSidebar: true, compact: false, fontSize: 'medium',
+          passwordComplexity: true, loginLockout: true, sessionTimeout: '60', ipWhitelist: false,
+        })
+
+        const themeModes = [
+          { key: 'dark', icon: '&#127769;', label: '暗色模式' },
+          { key: 'light', icon: '&#9728;', label: '亮色模式' },
+          { key: 'auto', icon: '&#128259;', label: '跟随系统' },
+        ]
+
+        const themeColors = [
+          { value: '#3b82f6', label: '蓝色' }, { value: '#8b5cf6', label: '紫色' },
+          { value: '#22c55e', label: '绿色' }, { value: '#f59e0b', label: '橙色' },
+          { value: '#ef4444', label: '红色' }, { value: '#06b6d4', label: '青色' },
+        ]
+
+        function applyTheme(theme) {
+          if (theme === 'dark') { isDark.value = true; document.documentElement.classList.remove('light') }
+          else if (theme === 'light') { isDark.value = false; document.documentElement.classList.add('light') }
+        }
+
+        const notificationOptions = reactive([
+          { label: '邮件通知', desc: '系统异常和重要事件通过邮件通知管理员', enabled: true },
+          { label: '短信通知', desc: '安全事件和紧急通知通过短信发送', enabled: false },
+          { label: '浏览器通知', desc: '通过浏览器推送实时通知', enabled: true },
+          { label: 'Webhook 通知', desc: '将事件推送到指定的 Webhook 地址', enabled: false },
+        ])
+
+        function saveSettings() { showToast('设置已保存', 'success') }
+        function resetAllSettings() {
+          Object.assign(settings, {
+            siteName: 'Admin Dashboard', siteDesc: '基于 Lyt.js 的企业级后台管理系统',
+            language: 'zh-CN', allowRegister: true, maintenance: false, apiAccess: true,
+            theme: 'dark', accentColor: '#3b82f6', fixedSidebar: true, compact: false, fontSize: 'medium',
+            passwordComplexity: true, loginLockout: true, sessionTimeout: '60', ipWhitelist: false,
+          })
+          showToast('所有设置已恢复默认', 'success')
+        }
+
+        onMounted(() => { const t = localStorage.getItem('admin-theme'); if (t === 'light') { isDark.value = false; document.documentElement.classList.add('light'); settings.theme = 'light' } })
+
+        return {
+          sidebarCollapsed, mobileMenuOpen, isDark, toggleSidebar, toggleTheme,
+          mainNav, systemNav, otherNav, mobileNav,
+          activeTab, settingsMenu, settings, themeModes, themeColors,
+          applyTheme, notificationOptions, saveSettings, resetAllSettings,
+          toasts, showToast,
+          toastIcons: { success: '&#10004;', error: '&#10008;', warning: '&#9888;', info: '&#8505;' },
+        }
+      },
+    })
+    app.mount('#app')
+  </script>
+</body>
+</html>

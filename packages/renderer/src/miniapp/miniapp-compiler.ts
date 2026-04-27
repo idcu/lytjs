@@ -109,6 +109,7 @@ const PLATFORM_PREFIX_MAP: Record<MiniAppPlatform, {
   else: string;
   for: string;
   forItem: string;
+  forIndex: string;
   forKey: string;
   bind: string;
   catch: string;
@@ -121,6 +122,7 @@ const PLATFORM_PREFIX_MAP: Record<MiniAppPlatform, {
     else: 'wx:else',
     for: 'wx:for',
     forItem: 'wx:for-item',
+    forIndex: 'wx:for-index',
     forKey: 'wx:key',
     bind: 'bind',
     catch: 'catch',
@@ -133,6 +135,7 @@ const PLATFORM_PREFIX_MAP: Record<MiniAppPlatform, {
     else: 'a:else',
     for: 'a:for',
     forItem: 'a:for-item',
+    forIndex: 'a:for-index',
     forKey: 'a:key',
     bind: 'on',
     catch: 'catchEvent',
@@ -145,6 +148,7 @@ const PLATFORM_PREFIX_MAP: Record<MiniAppPlatform, {
     else: 'tt:else',
     for: 'tt:for',
     forItem: 'tt:for-item',
+    forIndex: 'tt:for-index',
     forKey: 'tt:key',
     bind: 'bind',
     catch: 'catch',
@@ -470,7 +474,7 @@ export class MiniAppCompiler {
    * v-for="item in list" -> wx:for="{{list}}" wx:for-item="item" wx:key="item"
    */
   private _transformIteration(template: string, prefix: {
-    for: string; forItem: string; forKey: string;
+    for: string; forItem: string; forIndex: string; forKey: string;
   }): string {
     const transformForExpr = (expr: string): string => {
       // 匹配 "(item, index) in list" 或 "item in list"

@@ -1,0 +1,47 @@
+{
+  "name": "@lytjs/performance",
+  "version": "5.0.0",
+  "description": "Lyt.js 性能监控 SDK - Web Vitals 监控、组件渲染追踪、内存泄漏检测",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.mjs"
+    }
+  },
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
+  "license": "MIT",
+  "author": "lytjs",
+  "repository": {
+    "type": "git",
+    "url": "https://gitee.com/lytjs/lytjs"
+  },
+  "homepage": "https://gitee.com/lytjs/lytjs",
+  "keywords": [
+    "lyt",
+    "lytjs",
+    "javascript",
+    "framework",
+    "frontend",
+    "performance",
+    "web-vitals",
+    "monitoring",
+    "fcp",
+    "lcp",
+    "cls",
+    "inp",
+    "ttfb",
+    "memory-leak",
+    "zero-dependency"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}

@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>表单页面 - Admin Dashboard</title>
+  <link rel="stylesheet" href="theme.css">
+  <style>
+    .form-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .form-section { margin-bottom: 24px; }
+    .form-section-title { font-size: var(--text-md); font-weight: 600; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .form-hint-inline { display: flex; align-items: center; gap: 4px; font-size: var(--text-xs); color: var(--text-muted); margin-top: 4px; }
+    .upload-area {
+      border: 2px dashed var(--border); border-radius: var(--radius-lg); padding: 32px; text-align: center;
+      cursor: pointer; transition: all var(--transition); background: var(--bg-primary);
+    }
+    .upload-area:hover { border-color: var(--primary); background: var(--primary-bg); }
+    .upload-area .upload-icon { font-size: 2rem; margin-bottom: 8px; opacity: 0.5; }
+    .upload-area p { font-size: var(--text-sm); color: var(--text-muted); }
+    .upload-area .upload-btn { color: var(--primary); font-weight: 500; }
+    .file-list { margin-top: 12px; }
+    .file-item {
+      display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: var(--bg-primary);
+      border-radius: var(--radius-sm); margin-bottom: 6px; font-size: var(--text-sm);
+    }
+    .file-item .file-name { flex: 1; }
+    .file-item .file-size { color: var(--text-muted); font-size: var(--text-xs); }
+    .file-item .file-remove { color: var(--danger); cursor: pointer; background: none; border: none; font-size: 1rem; }
+    .rich-text-toolbar {
+      display: flex; gap: 2px; padding: 8px; border: 1px solid var(--border); border-bottom: none;
+      border-radius: var(--radius-md) var(--radius-md) 0 0; background: var(--bg-primary);
+    }
+    .rich-text-toolbar button {
+      padding: 4px 8px; background: none; border: none; color: var(--text-secondary); cursor: pointer;
+      border-radius: var(--radius-xs); font-size: var(--text-sm); font-family: var(--font-family);
+    }
+    .rich-text-toolbar button:hover { background: var(--bg-hover); color: var(--text-primary); }
+    .rich-text-editor {
+      min-height: 160px; padding: 12px; border: 1px solid var(--border); border-radius: 0 0 var(--radius-md) var(--radius-md);
+      background: var(--bg-input); color: var(--text-primary); font-size: var(--text-base); outline: none;
+      font-family: var(--font-family); line-height: 1.6;
+    }
+    .rich-text-editor:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-bg); }
+    .form-actions { display: flex; gap: 12px; justify-content: flex-end; padding-top: 16px; border-top: 1px solid var(--border); margin-top: 24px; }
+    @media (max-width: 768px) { .form-layout { grid-template-columns: 1fr; } .form-row { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div class="layout">
+      <aside class="sidebar" :class="{ collapsed: sidebarCollapsed, 'mobile-open': mobileMenuOpen }">
+        <div class="sidebar-header"><div class="sidebar-logo">L</div><span class="sidebar-title">Admin Dashboard</span></div>
+        <nav class="nav-menu">
+          <div class="nav-group-title">主菜单</div>
+          <a v-for="item in mainNav" :key="item.key" class="nav-item" :class="{ active: item.key === 'forms' }" :href="item.url"><span class="nav-icon">{{ item.icon }}</span><span class="nav-label">{{ item.label }}</span></a>
+          <div class="nav-group-title">系统管理</div>
+          <a v-for="item in systemNav" :key="item.key" class="nav-item" :href="item.url"><span class="nav-icon">{{ item.icon }}</span><span class="nav-label">{{ item.label }}</span></a>
+          <div class="nav-group-title">其他</div>
+          <a v-for="item in otherNav" :key="item.key" class="nav-item" :href="item.url"><span class="nav-icon">{{ item.icon }}</span><span class="nav-label">{{ item.label }}</span></a>
+        </nav>
+        <div class="sidebar-footer">
+          <button class="theme-toggle-btn" @click="toggleTheme"><span class="nav-icon">{{ isDark ? '&#9788;' : '&#9789;' }}</span><span class="nav-label">{{ isDark ? '亮色模式' : '暗色模式' }}</span></button>
+        </div>
+      </aside>
+      <div class="mobile-overlay" :class="{ visible: mobileMenuOpen }" @click="mobileMenuOpen = false"></div>
+
+      <div class="main-content">
+        <header class="topbar">
+          <div class="topbar-left">
+            <button class="toggle-sidebar-btn" @click="toggleSidebar">&#9776;</button>
+            <div class="breadcrumb"><a href="index.html">首页</a><span class="separator">/</span><span class="current">表单页面</span></div>
+          </div>
+          <div class="topbar-right">
+            <div class="topbar-search"><span class="search-icon">&#128269;</span><input type="text" placeholder="搜索..."></div>
+            <button class="notification-btn">&#128276;</button>
+            <div class="user-menu"><div class="user-avatar">A</div><span class="user-name">管理员</span></div>
+          </div>
+        </header>
+
+        <main class="page-content">
+          <div class="page-header">
+            <h1>表单页面</h1>
+            <p>各种表单控件示例，包含输入框、选择器、日期选择、文件上传、富文本编辑器等。</p>
+          </div>
+
+          <div class="form-layout">
+            <!-- 左列 -->
+            <div>
+              <!-- 基础输入 -->
+              <div class="card">
+                <div class="card-header"><h3>基础输入</h3></div>
+                <div class="card-body">
+                  <div class="form-section">
+                    <div class="form-group">
+                      <label class="form-label">用户名 <span class="required">*</span></label>
+                      <input class="form-input" v-model="form.username" placeholder="请输入用户名">
+                      <div class="form-hint">用户名长度 3-20 个字符</div>
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label">邮箱地址 <span class="required">*</span></label>
+                      <input class="form-input" type="email" v-model="form.email" placeholder="请输入邮箱">
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label">密码 <span class="required">*</span></label>
+                      <input class="form-input" type="password" v-model="form.password" placeholder="请输入密码">
+                    </div>
+                    <div class="form-row">
+                      <div class="form-group">
+                        <label class="form-label">手机号</label>
+                        <input class="form-input" v-model="form.phone" placeholder="请输入手机号">
+                      </div>
+                      <div class="form-group">
+                        <label class="form-label">验证码</label>
+                        <div style="display:flex;gap:8px;">
+                          <input class="form-input" v-model="form.code" placeholder="请输入验证码">
+                          <button class="btn btn-secondary" :disabled="codeCountdown > 0" @click="sendCode" style="white-space:nowrap;">
+                            {{ codeCountdown > 0 ? codeCountdown + 's' : '获取验证码' }}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label">个人网站</label>
+                      <input class="form-input" v-model="form.website" placeholder="https://example.com">
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 选择器 -->
+              <div class="card mt-2">
+                <div class="card-header"><h3>选择器</h3></div>
+                <div class="card-body">
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label class="form-label">部门</label>
+                      <select class="form-select" v-model="form.department">
+                        <option value="">请选择部门</option>
+                        <option>技术部</option><option>产品部</option><option>市场部</option><option>运营部</option><option>财务部</option>
+                      </select>
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label">职位</label>
+                      <select class="form-select" v-model="form.position">
+                        <option value="">请选择职位</option>
+                        <option>前端工程师</option><option>后端工程师</option><option>产品经理</option><option>UI 设计师</option><option>运营专员</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">技能标签</label>
+                    <div style="display:flex;flex-wrap:wrap;gap:8px;">
+                      <label v-for="skill in skillOptions" :key="skill" class="form-checkbox" style="margin:0;">
+                        <input type="checkbox" :value="skill" v-model="form.skills">
+                        <span>{{ skill }}</span>
+                      </label>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">性别</label>
+                    <div style="display:flex;gap:20px;">
+                      <label class="form-radio"><input type="radio" value="male" v-model="form.gender"> 男</label>
+                      <label class="form-radio"><input type="radio" value="female" v-model="form.gender"> 女</label>
+                      <label class="form-radio"><input type="radio" value="other" v-model="form.gender"> 其他</label>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">工作年限</label>
+                    <select class="form-select" v-model="form.experience">
+                      <option value="">请选择</option>
+                      <option>应届毕业生</option><option>1-3 年</option><option>3-5 年</option><option>5-10 年</option><option>10 年以上</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 右列 -->
+            <div>
+              <!-- 日期时间 -->
+              <div class="card">
+                <div class="card-header"><h3>日期与时间</h3></div>
+                <div class="card-body">
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label class="form-label">出生日期</label>
+                      <input class="form-input" type="date" v-model="form.birthday">
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label">入职日期</label>
+                      <input class="form-input" type="date" v-model="form.joinDate">
+                    </div>
+                  </div>
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label class="form-label">开始时间</label>
+                      <input class="form-input" type="time" v-model="form.startTime">
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label">结束时间</label>
+                      <input class="form-input" type="time" v-model="form.endTime">
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">日期范围</label>
+                    <div style="display:flex;gap:8px;align-items:center;">
+                      <input class="form-input" type="date" v-model="form.dateRangeStart">
+                      <span style="color:var(--text-muted);">至</span>
+                      <input class="form-input" type="date" v-model="form.dateRangeEnd">
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 开关与滑块 -->
+              <div class="card mt-2">
+                <div class="card-header"><h3>开关与滑块</h3></div>
+                <div class="card-body">
+                  <div class="form-group">
+                    <div style="display:flex;align-items:center;justify-content:space-between;">
+                      <div>
+                        <div style="font-size:var(--text-sm);font-weight:500;">启用通知</div>
+                        <div style="font-size:var(--text-xs);color:var(--text-muted);">接收系统消息和邮件通知</div>
+                      </div>
+                      <label class="switch"><input type="checkbox" v-model="form.notifications"><span class="switch-slider"></span></label>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <div style="display:flex;align-items:center;justify-content:space-between;">
+                      <div>
+                        <div style="font-size:var(--text-sm);font-weight:500;">公开资料</div>
+                        <div style="font-size:var(--text-xs);color:var(--text-muted);">允许其他用户查看你的资料</div>
+                      </div>
+                      <label class="switch"><input type="checkbox" v-model="form.publicProfile"><span class="switch-slider"></span></label>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">工作强度: {{ form.workload }}%</label>
+                    <input type="range" min="0" max="100" v-model="form.workload" style="width:100%;accent-color:var(--primary);">
+                  </div>
+                </div>
+              </div>
+
+              <!-- 文件上传 -->
+              <div class="card mt-2">
+                <div class="card-header"><h3>文件上传</h3></div>
+                <div class="card-body">
+                  <div class="upload-area" @click="triggerUpload">
+                    <div class="upload-icon">&#128228;</div>
+                    <p>点击或拖拽文件到此区域上传</p>
+                    <p><span class="upload-btn">点击上传</span></p>
+                    <p style="font-size:var(--text-xs);margin-top:4px;">支持 JPG、PNG、PDF，单个文件不超过 10MB</p>
+                  </div>
+                  <input type="file" ref="fileInput" style="display:none;" multiple @change="handleFileChange">
+                  <div class="file-list">
+                    <div v-for="(file, i) in uploadedFiles" :key="i" class="file-item">
+                      <span>&#128196;</span>
+                      <span class="file-name">{{ file.name }}</span>
+                      <span class="file-size">{{ file.size }}</span>
+                      <button class="file-remove" @click="removeFile(i)">&times;</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 富文本编辑器 -->
+              <div class="card mt-2">
+                <div class="card-header"><h3>富文本编辑器</h3></div>
+                <div class="card-body" style="padding:0;">
+                  <div class="rich-text-toolbar">
+                    <button @click="execCmd('bold')" title="加粗"><b>B</b></button>
+                    <button @click="execCmd('italic')" title="斜体"><i>I</i></button>
+                    <button @click="execCmd('underline')" title="下划线"><u>U</u></button>
+                    <button @click="execCmd('strikeThrough')" title="删除线"><s>S</s></button>
+                    <span style="width:1px;background:var(--border);margin:0 4px;"></span>
+                    <button @click="execCmd('insertOrderedList')" title="有序列表">&#35;</button>
+                    <button @click="execCmd('insertUnorderedList')" title="无序列表">&#8226;</button>
+                    <span style="width:1px;background:var(--border);margin:0 4px;"></span>
+                    <button @click="execCmd('justifyLeft')" title="左对齐">&#8676;</button>
+                    <button @click="execCmd('justifyCenter')" title="居中">&#8596;</button>
+                    <button @click="execCmd('justifyRight')" title="右对齐">&#8677;</button>
+                  </div>
+                  <div class="rich-text-editor" contenteditable="true" ref="editor" @input="form.content = $event.target.innerText"></div>
+                </div>
+              </div>
+
+              <!-- 提交按钮 -->
+              <div class="form-actions">
+                <button class="btn btn-secondary" @click="resetForm">重置</button>
+                <button class="btn btn-primary" @click="submitForm">提交表单</button>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+
+      <nav class="mobile-nav">
+        <a v-for="item in mobileNav" :key="item.key" class="mobile-nav-item" :href="item.url"><span class="nav-icon">{{ item.icon }}</span><span>{{ item.label }}</span></a>
+      </nav>
+    </div>
+
+    <div class="toast-container">
+      <div v-for="toast in toasts" :key="toast.id" class="toast" :class="'toast-' + toast.type">
+        <span class="toast-icon">{{ toastIcons[toast.type] }}</span>
+        <span class="toast-message">{{ toast.message }}</span>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { createApp, ref, reactive, watch, onMounted } from 'https://cdn.jsdelivr.net/npm/@lytjs/core@5.0.0/+esm'
+
+    const mainNav = [
+      { key: 'dashboard', icon: '&#9632;', label: '仪表盘', url: 'index.html' },
+      { key: 'users', icon: '&#128100;', label: '用户管理', url: 'users.html' },
+      { key: 'roles', icon: '&#128101;', label: '角色权限', url: 'roles.html' },
+      { key: 'table', icon: '&#128203;', label: '数据表格', url: 'table.html' },
+      { key: 'forms', icon: '&#9997;', label: '表单页面', url: 'forms.html' },
+      { key: 'charts', icon: '&#128200;', label: '图表页面', url: 'charts.html' },
+    ]
+    const systemNav = [
+      { key: 'profile', icon: '&#128100;', label: '个人设置', url: 'profile.html' },
+      { key: 'settings', icon: '&#9881;', label: '系统设置', url: 'settings.html' },
+    ]
+    const otherNav = [
+      { key: 'error', icon: '&#9888;', label: '错误页面', url: 'error.html' },
+      { key: 'login', icon: '&#128274;', label: '退出登录', url: 'login.html' },
+    ]
+    const mobileNav = [
+      { key: 'dashboard', icon: '&#9632;', label: '首页', url: 'index.html' },
+      { key: 'users', icon: '&#128100;', label: '用户', url: 'users.html' },
+      { key: 'table', icon: '&#128203;', label: '表格', url: 'table.html' },
+      { key: 'charts', icon: '&#128200;', label: '图表', url: 'charts.html' },
+      { key: 'profile', icon: '&#9881;', label: '设置', url: 'profile.html' },
+    ]
+
+    const toasts = ref([])
+    let toastId = 0
+    function showToast(msg, type = 'info') {
+      const id = ++toastId; toasts.value.push({ id, message: msg, type })
+      setTimeout(() => { toasts.value = toasts.value.filter(t => t.id !== id) }, 3000)
+    }
+
+    const skillOptions = ['JavaScript', 'TypeScript', 'Vue.js', 'React', 'Node.js', 'Python', 'Go', 'Rust']
+
+    const app = createApp({
+      setup() {
+        const sidebarCollapsed = ref(false)
+        const mobileMenuOpen = ref(false)
+        const isDark = ref(true)
+        function toggleSidebar() { if (window.innerWidth <= 768) mobileMenuOpen.value = !mobileMenuOpen.value; else sidebarCollapsed.value = !sidebarCollapsed.value }
+        function toggleTheme() { isDark.value = !isDark.value; localStorage.setItem('admin-theme', isDark.value ? 'dark' : 'light') }
+        watch(isDark, (d) => document.documentElement.classList.toggle('light', !d))
+
+        const form = reactive({
+          username: '', email: '', password: '', phone: '', code: '', website: '',
+          department: '', position: '', skills: [], gender: '', experience: '',
+          birthday: '', joinDate: '', startTime: '', endTime: '', dateRangeStart: '', dateRangeEnd: '',
+          notifications: true, publicProfile: false, workload: 70,
+          content: '',
+        })
+
+        const codeCountdown = ref(0)
+        function sendCode() {
+          if (!form.phone) { showToast('请先输入手机号', 'warning'); return }
+          codeCountdown.value = 60
+          const timer = setInterval(() => { codeCountdown.value--; if (codeCountdown.value <= 0) clearInterval(timer) }, 1000)
+          showToast('验证码已发送', 'success')
+        }
+
+        const uploadedFiles = ref([])
+        const fileInput = ref(null)
+        function triggerUpload() { fileInput.value && fileInput.value.click() }
+        function handleFileChange(e) {
+          const files = Array.from(e.target.files || [])
+          files.forEach(f => {
+            uploadedFiles.value.push({ name: f.name, size: (f.size / 1024).toFixed(1) + ' KB' })
+          })
+          showToast(`已上传 ${files.length} 个文件`, 'success')
+        }
+        function removeFile(i) { uploadedFiles.value.splice(i, 1) }
+
+        const editor = ref(null)
+        function execCmd(cmd) { document.execCommand(cmd, false, null) }
+
+        function submitForm() {
+          if (!form.username) { showToast('请输入用户名', 'warning'); return }
+          if (!form.email) { showToast('请输入邮箱', 'warning'); return }
+          showToast('表单提交成功！', 'success')
+        }
+        function resetForm() {
+          Object.assign(form, {
+            username: '', email: '', password: '', phone: '', code: '', website: '',
+            department: '', position: '', skills: [], gender: '', experience: '',
+            birthday: '', joinDate: '', startTime: '', endTime: '', dateRangeStart: '', dateRangeEnd: '',
+            notifications: true, publicProfile: false, workload: 70, content: '',
+          })
+          uploadedFiles.value = []
+          showToast('表单已重置', 'info')
+        }
+
+        onMounted(() => {
+          const savedTheme = localStorage.getItem('admin-theme')
+          if (savedTheme === 'light') { isDark.value = false; document.documentElement.classList.add('light') }
+        })
+
+        return {
+          sidebarCollapsed, mobileMenuOpen, isDark, toggleSidebar, toggleTheme,
+          mainNav, systemNav, otherNav, mobileNav,
+          form, skillOptions, codeCountdown, sendCode,
+          uploadedFiles, fileInput, triggerUpload, handleFileChange, removeFile,
+          editor, execCmd, submitForm, resetForm,
+          toasts,
+          toastIcons: { success: '&#10004;', error: '&#10008;', warning: '&#9888;', info: '&#8505;' },
+        }
+      },
+    })
+    app.mount('#app')
+  </script>
+</body>
+</html>

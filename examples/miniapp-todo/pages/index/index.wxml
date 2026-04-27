@@ -1,0 +1,151 @@
+<!--
+  miniapp-todo 首页模板
+
+  展示 Lyt.js 模板语法到小程序 WXML 的映射：
+    - v-if / lyt:if  →  wx:if
+    - v-for / lyt:each →  wx:for
+    - @click           →  bindtap
+    - :class           →  class
+    - v-model          →  bindinput + value
+    - v-show           →  hidden
+-->
+
+<view class="container">
+
+  <!-- 标题区域 -->
+  <view class="header">
+    <text class="title">Lyt.js Todo</text>
+    <text class="subtitle">MiniApp Renderer Demo</text>
+  </view>
+
+  <!-- 输入区域 -->
+  <view class="input-area">
+    <view class="input-wrapper">
+      <input
+        class="todo-input"
+        type="text"
+        placeholder="What needs to be done?"
+        value="{{inputValue}}"
+        bindinput="handleInput"
+        bindconfirm="handleConfirm"
+        confirm-type="done"
+        focus="{{false}}"
+      />
+      <view class="add-btn btn btn-primary" bindtap="handleAdd">
+        <text>Add</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 筛选栏 -->
+  <view class="filter-bar" wx:if="{{todos.length > 0}}">
+    <view
+      class="filter-item {{filter === 'all' ? 'active' : ''}}"
+      data-filter="all"
+      bindtap="handleFilter"
+    >
+      <text>All ({{todos.length}})</text>
+    </view>
+    <view
+      class="filter-item {{filter === 'active' ? 'active' : ''}}"
+      data-filter="active"
+      bindtap="handleFilter"
+    >
+      <text>Active ({{activeCount}})</text>
+    </view>
+    <view
+      class="filter-item {{filter === 'completed' ? 'active' : ''}}"
+      data-filter="completed"
+      bindtap="handleFilter"
+    >
+      <text>Done ({{completedCount}})</text>
+    </view>
+  </view>
+
+  <!-- 全选按钮 -->
+  <view class="toggle-all" wx:if="{{todos.length > 0}}" bindtap="handleToggleAll">
+    <text>{{todos.length > 0 && activeCount === 0 ? 'Uncheck All' : 'Check All'}}</text>
+  </view>
+
+  <!-- Todo 列表 -->
+  <view class="todo-list">
+    <!-- 空状态 -->
+    <view class="empty-state" wx:if="{{isEmpty}}">
+      <text class="empty-icon">No tasks yet</text>
+      <text class="empty-text">Add your first todo above!</text>
+    </view>
+
+    <!-- Todo 项 -->
+    <block wx:for="{{todos}}" wx:key="id">
+      <!-- 普通显示模式 -->
+      <view
+        class="todo-item {{item.completed ? 'completed' : ''}}"
+        wx:if="{{editingId !== item.id}}"
+      >
+        <!-- 完成状态切换 -->
+        <view
+          class="todo-checkbox {{item.completed ? 'checked' : ''}}"
+          data-id="{{item.id}}"
+          bindtap="handleToggle"
+        >
+          <text wx:if="{{item.completed}}">OK</text>
+        </view>
+
+        <!-- Todo 文本 -->
+        <text class="todo-text {{item.completed ? 'line-through' : ''}}">{{item.text}}</text>
+
+        <!-- 操作按钮 -->
+        <view class="todo-actions">
+          <view
+            class="action-btn edit-btn"
+            data-id="{{item.id}}"
+            bindtap="handleEdit"
+          >
+            <text>Edit</text>
+          </view>
+          <view
+            class="action-btn delete-btn"
+            data-id="{{item.id}}"
+            bindtap="handleDelete"
+          >
+            <text>Del</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 编辑模式 -->
+      <view class="todo-item editing" wx:else>
+        <input
+          class="edit-input"
+          type="text"
+          value="{{editText}}"
+          bindinput="handleEditInput"
+          bindconfirm="handleEditConfirm"
+          focus="{{true}}"
+          auto-focus="{{true}}"
+        />
+        <view class="edit-actions">
+          <view class="action-btn confirm-btn" bindtap="handleEditConfirm">
+            <text>Save</text>
+          </view>
+          <view class="action-btn cancel-btn" bindtap="handleEditCancel">
+            <text>Cancel</text>
+          </view>
+        </view>
+      </view>
+    </block>
+  </view>
+
+  <!-- 底部操作栏 -->
+  <view class="footer" wx:if="{{completedCount > 0}}">
+    <view class="clear-btn" bindtap="handleClearCompleted">
+      <text>Clear completed ({{completedCount}})</text>
+    </view>
+  </view>
+
+  <!-- 底部信息 -->
+  <view class="info-bar">
+    <text class="info-text">Powered by Lyt.js MiniApp Renderer</text>
+  </view>
+
+</view>

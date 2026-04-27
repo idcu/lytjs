@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>角色权限 - Admin Dashboard</title>
+  <link rel="stylesheet" href="theme.css">
+  <style>
+    .roles-grid {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 20px;
+    }
+    .role-list-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      border: 1px solid transparent;
+    }
+    .role-list-item:hover {
+      background: var(--bg-hover);
+    }
+    .role-list-item.active {
+      background: var(--primary-bg);
+      border-color: var(--primary-border);
+    }
+    .role-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .role-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+    }
+    .role-name {
+      font-weight: 500;
+      font-size: var(--text-sm);
+    }
+    .role-desc {
+      font-size: var(--text-xs);
+      color: var(--text-muted);
+    }
+    .role-actions {
+      display: flex;
+      gap: 4px;
+    }
+    /* 权限树 */
+    .permission-tree {
+      list-style: none;
+    }
+    .permission-module {
+      margin-bottom: 8px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+    .module-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      background: var(--bg-primary);
+      cursor: pointer;
+      font-weight: 500;
+      font-size: var(--text-sm);
+      transition: background var(--transition-fast);
+    }
+    .module-header:hover {
+      background: var(--bg-hover);
+    }
+    .module-header .module-icon {
+      font-size: 1.1rem;
+    }
+    .module-children {
+      padding: 8px 16px 8px 52px;
+      list-style: none;
+    }
+    .permission-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 0;
+      font-size: var(--text-sm);
+      color: var(--text-secondary);
+    }
+    .permission-item label {
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    @media (max-width: 768px) {
+      .roles-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div class="layout">
+      <aside class="sidebar" :class="{ collapsed: sidebarCollapsed, 'mobile-open': mobileMenuOpen }">
+        <div class="sidebar-header"><div class="sidebar-logo">L</div><span class="sidebar-title">Admin Dashboard</span></div>
+        <nav class="nav-menu">
+          <div class="nav-group-title">主菜单</div>
+          <a v-for="item in mainNav" :key="item.key" class="nav-item" :class="{ active: item.key === 'roles' }" :href="item.url"><span class="nav-icon">{{ item.icon }}</span><span class="nav-label">{{ item.label }}</span></a>
+          <div class="nav-group-title">系统管理</div>
+          <a v-for="item in systemNav" :key="item.key" class="nav-item" :href="item.url"><span class="nav-icon">{{ item.icon }}</span><span class="nav-label">{{ item.label }}</span></a>
+          <div class="nav-group-title">其他</div>
+          <a v-for="item in otherNav" :key="item.key" class="nav-item" :href="item.url"><span class="nav-icon">{{ item.icon }}</span><span class="nav-label">{{ item.label }}</span></a>
+        </nav>
+        <div class="sidebar-footer">
+          <button class="theme-toggle-btn" @click="toggleTheme"><span class="nav-icon">{{ isDark ? '&#9788;' : '&#9789;' }}</span><span class="nav-label">{{ isDark ? '亮色模式' : '暗色模式' }}</span></button>
+        </div>
+      </aside>
+      <div class="mobile-overlay" :class="{ visible: mobileMenuOpen }" @click="mobileMenuOpen = false"></div>
+
+      <div class="main-content">
+        <header class="topbar">
+          <div class="topbar-left">
+            <button class="toggle-sidebar-btn" @click="toggleSidebar">&#9776;</button>
+            <div class="breadcrumb"><a href="index.html">首页</a><span class="separator">/</span><span class="current">角色权限</span></div>
+          </div>
+          <div class="topbar-right">
+            <div class="topbar-search"><span class="search-icon">&#128269;</span><input type="text" placeholder="搜索..."></div>
+            <button class="notification-btn">&#128276;</button>
+            <div class="user-menu"><div class="user-avatar">A</div><span class="user-name">管理员</span></div>
+          </div>
+        </header>
+
+        <main class="page-content">
+          <div class="page-header flex justify-between items-center">
+            <div>
+              <h1>角色权限管理</h1>
+              <p>基于 RBAC 模型的权限管理系统，支持角色创建和细粒度权限分配。</p>
+            </div>
+            <button class="btn btn-primary" @click="showRoleModal = true">+ 新增角色</button>
+          </div>
+
+          <div class="roles-grid">
+            <!-- 角色列表 -->
+            <div class="card">
+              <div class="card-header"><h3>角色列表 ({{ roles.length }})</h3></div>
+              <div class="card-body" style="padding:8px;">
+                <div
+                  v-for="role in roles" :key="role.id"
+                  class="role-list-item"
+                  :class="{ active: selectedRole && selectedRole.id === role.id }"
+                  @click="selectRole(role)"
+                >
+                  <div class="role-info">
+                    <div class="role-icon" :style="{ background: role.bgColor, color: role.color }">{{ role.icon }}</div>
+                    <div>
+                      <div class="role-name">{{ role.name }}</div>
+                      <div class="role-desc">{{ role.userCount }} 个用户</div>
+                    </div>
+                  </div>
+                  <div class="role-actions">
+                    <button class="btn btn-sm btn-ghost" @click.stop="editRole(role)">&#9998;</button>
+                    <button class="btn btn-sm btn-ghost" style="color:var(--danger);" @click.stop="deleteRole(role.id)" v-if="!role.isSystem">&times;</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 权限配置 -->
+            <div class="card">
+              <div class="card-header">
+                <h3>{{ selectedRole ? selectedRole.name + ' - 权限配置' : '请选择角色' }}</h3>
+                <button class="btn btn-sm btn-primary" v-if="selectedRole" @click="savePermissions">保存权限</button>
+              </div>
+              <div class="card-body" v-if="selectedRole">
+                <ul class="permission-tree">
+                  <li v-for="mod in permissionModules" :key="mod.key" class="permission-module">
+                    <div class="module-header">
+                      <input type="checkbox" :checked="isModuleChecked(mod)" @change="toggleModule(mod)">
+                      <span class="module-icon">{{ mod.icon }}</span>
+                      <span>{{ mod.label }}</span>
+                      <span style="margin-left:auto;font-size:var(--text-xs);color:var(--text-muted);">{{ getModuleCheckedCount(mod) }}/{{ mod.permissions.length }}</span>
+                    </div>
+                    <ul class="module-children">
+                      <li v-for="perm in mod.permissions" :key="perm.key" class="permission-item">
+                        <label>
+                          <input type="checkbox" :checked="hasPermission(perm.key)" @change="togglePermission(perm.key)">
+                          <span>{{ perm.label }}</span>
+                        </label>
+                      </li>
+                    </ul>
+                  </li>
+                </ul>
+              </div>
+              <div class="card-body" v-else>
+                <div class="empty-state">
+                  <div class="empty-icon">&#128274;</div>
+                  <h3>未选择角色</h3>
+                  <p>请从左侧列表中选择一个角色来配置权限</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+
+      <!-- 新增/编辑角色模态框 -->
+      <div class="modal-overlay" :class="{ visible: showRoleModal }" @click.self="showRoleModal = false">
+        <div class="modal">
+          <div class="modal-header">
+            <h3>{{ editingRole ? '编辑角色' : '新增角色' }}</h3>
+            <button class="modal-close" @click="showRoleModal = false">&times;</button>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <label class="form-label">角色名称 <span class="required">*</span></label>
+              <input class="form-input" v-model="roleForm.name" placeholder="请输入角色名称">
+            </div>
+            <div class="form-group">
+              <label class="form-label">角色描述</label>
+              <textarea class="form-textarea" v-model="roleForm.description" placeholder="请输入角色描述" rows="3"></textarea>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-secondary" @click="showRoleModal = false">取消</button>
+            <button class="btn btn-primary" @click="saveRole">确定</button>
+          </div>
+        </div>
+      </div>
+
+      <nav class="mobile-nav">
+        <a v-for="item in mobileNav" :key="item.key" class="mobile-nav-item" :href="item.url"><span class="nav-icon">{{ item.icon }}</span><span>{{ item.label }}</span></a>
+      </nav>
+    </div>
+
+    <div class="toast-container">
+      <div v-for="toast in toasts" :key="toast.id" class="toast" :class="'toast-' + toast.type">
+        <span class="toast-icon">{{ toastIcons[toast.type] }}</span>
+        <span class="toast-message">{{ toast.message }}</span>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { createApp, ref, reactive, watch, onMounted } from 'https://cdn.jsdelivr.net/npm/@lytjs/core@5.0.0/+esm'
+
+    const mainNav = [
+      { key: 'dashboard', icon: '&#9632;', label: '仪表盘', url: 'index.html' },
+      { key: 'users', icon: '&#128100;', label: '用户管理', url: 'users.html' },
+      { key: 'roles', icon: '&#128101;', label: '角色权限', url: 'roles.html' },
+      { key: 'table', icon: '&#128203;', label: '数据表格', url: 'table.html' },
+      { key: 'forms', icon: '&#9997;', label: '表单页面', url: 'forms.html' },
+      { key: 'charts', icon: '&#128200;', label: '图表页面', url: 'charts.html' },
+    ]
+    const systemNav = [
+      { key: 'profile', icon: '&#128100;', label: '个人设置', url: 'profile.html' },
+      { key: 'settings', icon: '&#9881;', label: '系统设置', url: 'settings.html' },
+    ]
+    const otherNav = [
+      { key: 'error', icon: '&#9888;', label: '错误页面', url: 'error.html' },
+      { key: 'login', icon: '&#128274;', label: '退出登录', url: 'login.html' },
+    ]
+    const mobileNav = [
+      { key: 'dashboard', icon: '&#9632;', label: '首页', url: 'index.html' },
+      { key: 'users', icon: '&#128100;', label: '用户', url: 'users.html' },
+      { key: 'table', icon: '&#128203;', label: '表格', url: 'table.html' },
+      { key: 'charts', icon: '&#128200;', label: '图表', url: 'charts.html' },
+      { key: 'profile', icon: '&#9881;', label: '设置', url: 'profile.html' },
+    ]
+
+    const toasts = ref([])
+    let toastId = 0
+    function showToast(message, type = 'info') {
+      const id = ++toastId
+      toasts.value.push({ id, message, type })
+      setTimeout(() => { toasts.value = toasts.value.filter(t => t.id !== id) }, 3000)
+    }
+
+    // 权限模块定义
+    const permissionModules = [
+      {
+        key: 'dashboard', icon: '&#9632;', label: '仪表盘',
+        permissions: [
+          { key: 'dashboard:view', label: '查看仪表盘' },
+          { key: 'dashboard:export', label: '导出数据' },
+        ]
+      },
+      {
+        key: 'users', icon: '&#128100;', label: '用户管理',
+        permissions: [
+          { key: 'users:view', label: '查看用户列表' },
+          { key: 'users:create', label: '创建用户' },
+          { key: 'users:edit', label: '编辑用户' },
+          { key: 'users:delete', label: '删除用户' },
+          { key: 'users:assign-role', label: '分配角色' },
+        ]
+      },
+      {
+        key: 'roles', icon: '&#128101;', label: '角色管理',
+        permissions: [
+          { key: 'roles:view', label: '查看角色列表' },
+          { key: 'roles:create', label: '创建角色' },
+          { key: 'roles:edit', label: '编辑角色' },
+          { key: 'roles:delete', label: '删除角色' },
+          { key: 'roles:assign-perm', label: '分配权限' },
+        ]
+      },
+      {
+        key: 'content', icon: '&#128196;', label: '内容管理',
+        permissions: [
+          { key: 'content:view', label: '查看内容' },
+          { key: 'content:create', label: '创建内容' },
+          { key: 'content:edit', label: '编辑内容' },
+          { key: 'content:delete', label: '删除内容' },
+          { key: 'content:publish', label: '发布内容' },
+        ]
+      },
+      {
+        key: 'system', icon: '&#9881;', label: '系统设置',
+        permissions: [
+          { key: 'system:view', label: '查看设置' },
+          { key: 'system:edit', label: '修改设置' },
+          { key: 'system:logs', label: '查看日志' },
+          { key: 'system:backup', label: '数据备份' },
+        ]
+      },
+    ]
+
+    const app = createApp({
+      setup() {
+        const sidebarCollapsed = ref(false)
+        const mobileMenuOpen = ref(false)
+        const isDark = ref(true)
+        function toggleSidebar() {
+          if (window.innerWidth <= 768) mobileMenuOpen.value = !mobileMenuOpen.value
+          else sidebarCollapsed.value = !sidebarCollapsed.value
+        }
+        function toggleTheme() {
+          isDark.value = !isDark.value
+          localStorage.setItem('admin-theme', isDark.value ? 'dark' : 'light')
+        }
+        watch(isDark, (dark) => document.documentElement.classList.toggle('light', !dark))
+
+        // 角色
+        const roles = reactive([
+          { id: 1, name: '超级管理员', description: '拥有系统所有权限', icon: '&#128081;', color: '#f59e0b', bgColor: 'rgba(245,158,11,0.15)', userCount: 2, isSystem: true, permissions: permissionModules.flatMap(m => m.permissions.map(p => p.key)) },
+          { id: 2, name: '管理员', description: '拥有大部分管理权限', icon: '&#128119;', color: '#3b82f6', bgColor: 'rgba(59,130,246,0.15)', userCount: 5, isSystem: true, permissions: ['dashboard:view', 'dashboard:export', 'users:view', 'users:create', 'users:edit', 'users:assign-role', 'roles:view', 'content:view', 'content:create', 'content:edit', 'content:publish', 'system:view'] },
+          { id: 3, name: '编辑', description: '内容编辑权限', icon: '&#9997;', color: '#22c55e', bgColor: 'rgba(34,197,94,0.15)', userCount: 12, isSystem: false, permissions: ['dashboard:view', 'content:view', 'content:create', 'content:edit', 'content:publish'] },
+          { id: 4, name: '普通用户', description: '基本查看权限', icon: '&#128100;', color: '#06b6d4', bgColor: 'rgba(6,182,212,0.15)', userCount: 156, isSystem: false, permissions: ['dashboard:view', 'content:view'] },
+          { id: 5, name: '访客', description: '仅限查看公开内容', icon: '&#128065;', color: '#94a3b8', bgColor: 'rgba(148,163,184,0.15)', userCount: 89, isSystem: false, permissions: ['dashboard:view'] },
+        ])
+
+        const selectedRole = ref(null)
+        const showRoleModal = ref(false)
+        const editingRole = ref(null)
+        const roleForm = reactive({ name: '', description: '' })
+
+        function selectRole(role) { selectedRole.value = role }
+        function editRole(role) {
+          editingRole.value = role
+          roleForm.name = role.name
+          roleForm.description = role.description
+          showRoleModal.value = true
+        }
+        function saveRole() {
+          if (!roleForm.name.trim()) { showToast('请输入角色名称', 'warning'); return }
+          if (editingRole.value) {
+            editingRole.value.name = roleForm.name
+            editingRole.value.description = roleForm.description
+            showToast('角色已更新', 'success')
+          } else {
+            roles.push({
+              id: Date.now(), name: roleForm.name, description: roleForm.description,
+              icon: '&#128100;', color: '#8b5cf6', bgColor: 'rgba(139,92,246,0.15)',
+              userCount: 0, isSystem: false, permissions: [],
+            })
+            showToast('角色创建成功', 'success')
+          }
+          showRoleModal.value = false
+          editingRole.value = null
+        }
+        function deleteRole(id) {
+          const idx = roles.findIndex(r => r.id === id)
+          if (idx > -1) {
+            if (selectedRole.value && selectedRole.value.id === id) selectedRole.value = null
+            roles.splice(idx, 1)
+            showToast('角色已删除', 'success')
+          }
+        }
+
+        // 权限操作
+        function hasPermission(permKey) {
+          return selectedRole.value && selectedRole.value.permissions.includes(permKey)
+        }
+        function togglePermission(permKey) {
+          if (!selectedRole.value) return
+          const perms = selectedRole.value.permissions
+          const idx = perms.indexOf(permKey)
+          if (idx > -1) perms.splice(idx, 1)
+          else perms.push(permKey)
+        }
+        function isModuleChecked(mod) {
+          return mod.permissions.every(p => hasPermission(p.key))
+        }
+        function getModuleCheckedCount(mod) {
+          return mod.permissions.filter(p => hasPermission(p.key)).length
+        }
+        function toggleModule(mod) {
+          const checked = isModuleChecked(mod)
+          mod.permissions.forEach(p => {
+            const has = hasPermission(p.key)
+            if (checked && has) togglePermission(p.key)
+            else if (!checked && !has) togglePermission(p.key)
+          })
+        }
+        function savePermissions() {
+          showToast(`${selectedRole.value.name} 的权限已保存`, 'success')
+        }
+
+        onMounted(() => {
+          const savedTheme = localStorage.getItem('admin-theme')
+          if (savedTheme === 'light') { isDark.value = false; document.documentElement.classList.add('light') }
+          if (roles.length > 0) selectedRole.value = roles[0]
+        })
+
+        return {
+          sidebarCollapsed, mobileMenuOpen, isDark, toggleSidebar, toggleTheme,
+          mainNav, systemNav, otherNav, mobileNav,
+          roles, selectedRole, selectRole, editRole, deleteRole,
+          showRoleModal, editingRole, roleForm, saveRole,
+          permissionModules, hasPermission, togglePermission,
+          isModuleChecked, getModuleCheckedCount, toggleModule, savePermissions,
+          toasts,
+          toastIcons: { success: '&#10004;', error: '&#10008;', warning: '&#9888;', info: '&#8505;' },
+        }
+      },
+    })
+    app.mount('#app')
+  </script>
+</body>
+</html>

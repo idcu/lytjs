@@ -14,7 +14,7 @@
  * - selectRow(index)
  */
 
-// Re-export keyed benchmark as default
+// Re-export keyed signal benchmark as default (optimized with fine-grained signals)
 export {
   createElement,
   runBenchmark,
@@ -25,9 +25,9 @@ export {
   selectRow,
   getData,
   getSelected,
-} from './keyed'
+} from './keyed-signal'
 
-// Re-export non-keyed benchmark
+// Re-export non-keyed signal benchmark (optimized with fine-grained signals)
 export {
   createElement as createElementNonKeyed,
   runBenchmark as runBenchmarkNonKeyed,
@@ -38,4 +38,29 @@ export {
   selectRow as selectRowNonKeyed,
   getData as getDataNonKeyed,
   getSelected as getSelectedNonKeyed,
+} from './non-keyed-signal'
+
+// Keep original VDOM-based implementations available for comparison
+export {
+  createElement as createElementVdom,
+  runBenchmark as runBenchmarkVdom,
+  addRow as addRowVdom,
+  updateEvery10thRow as updateEvery10thRowVdom,
+  swapRows as swapRowsVdom,
+  removeRow as removeRowVdom,
+  selectRow as selectRowVdom,
+  getData as getDataVdom,
+  getSelected as getSelectedVdom,
+} from './keyed'
+
+export {
+  createElement as createElementNonKeyedVdom,
+  runBenchmark as runBenchmarkNonKeyedVdom,
+  addRow as addRowNonKeyedVdom,
+  updateEvery10thRow as updateEvery10thRowNonKeyedVdom,
+  swapRows as swapRowsNonKeyedVdom,
+  removeRow as removeRowNonKeyedVdom,
+  selectRow as selectRowNonKeyedVdom,
+  getData as getDataNonKeyedVdom,
+  getSelected as getSelectedNonKeyedVdom,
 } from './non-keyed'

@@ -11,6 +11,12 @@ export {
   unregisterElement,
   isBrowser,
   defineCustomElementFromSFC,
+  propsToAttributes,
+  attributesToProps,
+  eventsToCustomEvents,
+  injectStyles,
+  scopedCSS,
+  generateScopeId,
 } from './web-component'
 
 export type {

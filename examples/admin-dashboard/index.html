@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>仪表盘 - Admin Dashboard</title>
+  <link rel="stylesheet" href="theme.css">
+  <style>
+    /* ========== 仪表盘专用样式 ========== */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .chart-container {
+      position: relative;
+      width: 100%;
+      height: 280px;
+    }
+
+    .chart-container canvas {
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    /* 快捷操作 */
+    .quick-actions {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    .quick-action-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      padding: 20px 12px;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      background: var(--bg-primary);
+      border: 1px solid var(--border);
+    }
+
+    .quick-action-item:hover {
+      border-color: var(--primary);
+      background: var(--primary-bg);
+      transform: translateY(-2px);
+    }
+
+    .quick-action-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+    }
+
+    .quick-action-label {
+      font-size: var(--text-sm);
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+
+    /* 活动时间线 */
+    .activity-list {
+      list-style: none;
+    }
+
+    .activity-item {
+      display: flex;
+      gap: 12px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .activity-item:last-child {
+      border-bottom: none;
+    }
+
+    .activity-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-top: 6px;
+      flex-shrink: 0;
+    }
+
+    .activity-content {
+      flex: 1;
+    }
+
+    .activity-text {
+      font-size: var(--text-sm);
+      color: var(--text-primary);
+      margin-bottom: 2px;
+    }
+
+    .activity-time {
+      font-size: var(--text-xs);
+      color: var(--text-muted);
+    }
+
+    /* 待办事项 */
+    .todo-list {
+      list-style: none;
+    }
+
+    .todo-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .todo-item:last-child {
+      border-bottom: none;
+    }
+
+    .todo-item input[type="checkbox"] {
+      accent-color: var(--primary);
+      width: 16px;
+      height: 16px;
+    }
+
+    .todo-item .todo-text {
+      flex: 1;
+      font-size: var(--text-sm);
+    }
+
+    .todo-item .todo-text.done {
+      text-decoration: line-through;
+      color: var(--text-muted);
+    }
+
+    .todo-item .todo-tag {
+      font-size: var(--text-xs);
+    }
+
+    @media (max-width: 1024px) {
+      .dashboard-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .quick-actions {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div class="layout">
+      <!-- 侧边栏 -->
+      <aside class="sidebar" :class="{ collapsed: sidebarCollapsed, 'mobile-open': mobileMenuOpen }">
+        <div class="sidebar-header">
+          <div class="sidebar-logo">L</div>
+          <span class="sidebar-title">Admin Dashboard</span>
+        </div>
+
+        <nav class="nav-menu">
+          <div class="nav-group-title">主菜单</div>
+          <a v-for="item in mainNav" :key="item.key"
+             class="nav-item"
+             :class="{ active: item.key === 'dashboard' }"
+             :href="item.url"
+          >
+            <span class="nav-icon">{{ item.icon }}</span>
+            <span class="nav-label">{{ item.label }}</span>
+          </a>
+
+          <div class="nav-group-title">系统管理</div>
+          <a v-for="item in systemNav" :key="item.key"
+             class="nav-item"
+             :class="{ active: item.key === 'dashboard' }"
+             :href="item.url"
+          >
+            <span class="nav-icon">{{ item.icon }}</span>
+            <span class="nav-label">{{ item.label }}</span>
+          </a>
+
+          <div class="nav-group-title">其他</div>
+          <a v-for="item in otherNav" :key="item.key"
+             class="nav-item"
+             :class="{ active: item.key === 'dashboard' }"
+             :href="item.url"
+          >
+            <span class="nav-icon">{{ item.icon }}</span>
+            <span class="nav-label">{{ item.label }}</span>
+          </a>
+        </nav>
+
+        <div class="sidebar-footer">
+          <button class="theme-toggle-btn" @click="toggleTheme">
+            <span class="nav-icon">{{ isDark ? '&#9788;' : '&#9789;' }}</span>
+            <span class="nav-label">{{ isDark ? '亮色模式' : '暗色模式' }}</span>
+          </button>
+        </div>
+      </aside>
+
+      <!-- 移动端遮罩 -->
+      <div class="mobile-overlay" :class="{ visible: mobileMenuOpen }" @click="mobileMenuOpen = false"></div>
+
+      <!-- 主内容区 -->
+      <div class="main-content">
+        <!-- 顶部栏 -->
+        <header class="topbar">
+          <div class="topbar-left">
+            <button class="toggle-sidebar-btn" @click="toggleSidebar">&#9776;</button>
+            <div class="breadcrumb">
+              <a href="index.html">首页</a>
+              <span class="separator">/</span>
+              <span class="current">仪表盘</span>
+            </div>
+          </div>
+          <div class="topbar-right">
+            <div class="topbar-search">
+              <span class="search-icon">&#128269;</span>
+              <input type="text" placeholder="搜索菜单..." v-model="searchQuery">
+            </div>
+            <button class="notification-btn" @click="showNotifications = !showNotifications">
+              &#128276;
+              <span class="notification-badge" v-if="unreadCount > 0"></span>
+            </button>
+            <div class="user-menu" @click="showUserMenu = !showUserMenu">
+              <div class="user-avatar">A</div>
+              <span class="user-name">管理员</span>
+            </div>
+          </div>
+        </header>
+
+        <!-- 页面内容 -->
+        <main class="page-content">
+          <div class="page-header">
+            <h1>仪表盘</h1>
+            <p>欢迎回来，管理员。以下是今日的运营概览。</p>
+          </div>
+
+          <!-- 统计卡片 -->
+          <div class="stats-grid">
+            <div v-for="stat in stats" :key="stat.label" class="stat-card">
+              <div class="stat-card-header">
+                <span class="stat-card-label">{{ stat.label }}</span>
+                <div class="stat-card-icon" :style="{ background: stat.bgColor, color: stat.color }">
+                  {{ stat.icon }}
+                </div>
+              </div>
+              <div class="stat-card-value">{{ stat.value }}</div>
+              <div class="stat-card-trend" :class="stat.trendDir">
+                {{ stat.trendDir === 'up' ? '&#9650;' : '&#9660;' }} {{ stat.trend }}
+                <span style="color:var(--text-muted);margin-left:4px;">较昨日</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 图表区域 -->
+          <div class="dashboard-grid">
+            <div class="card">
+              <div class="card-header">
+                <h3>访问趋势</h3>
+                <div class="flex gap-1">
+                  <button class="btn btn-sm" :class="chartRange === 'week' ? 'btn-primary' : 'btn-ghost'" @click="chartRange = 'week'">近7天</button>
+                  <button class="btn btn-sm" :class="chartRange === 'month' ? 'btn-primary' : 'btn-ghost'" @click="chartRange = 'month'">近30天</button>
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="chart-container">
+                  <canvas id="lineChart"></canvas>
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h3>收入分布</h3>
+              </div>
+              <div class="card-body">
+                <div class="chart-container">
+                  <canvas id="barChart"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 快捷操作 + 活动时间线 -->
+          <div class="dashboard-grid">
+            <div class="card">
+              <div class="card-header">
+                <h3>快捷操作</h3>
+              </div>
+              <div class="card-body">
+                <div class="quick-actions">
+                  <div v-for="action in quickActions" :key="action.label" class="quick-action-item" @click="handleQuickAction(action)">
+                    <div class="quick-action-icon" :style="{ background: action.bgColor, color: action.color }">
+                      {{ action.icon }}
+                    </div>
+                    <span class="quick-action-label">{{ action.label }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h3>最近活动</h3>
+                <a href="javascript:void(0)" style="font-size:var(--text-sm);">查看全部</a>
+              </div>
+              <div class="card-body" style="padding:8px 20px;">
+                <ul class="activity-list">
+                  <li v-for="(act, i) in activities" :key="i" class="activity-item">
+                    <div class="activity-dot" :style="{ background: act.color }"></div>
+                    <div class="activity-content">
+                      <div class="activity-text">{{ act.text }}</div>
+                      <div class="activity-time">{{ act.time }}</div>
+                    </div>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <!-- 待办事项 + 用户排行 -->
+          <div class="dashboard-grid">
+            <div class="card">
+              <div class="card-header">
+                <h3>待办事项</h3>
+                <span class="text-muted" style="font-size:var(--text-sm);">{{ completedTodos }}/{{ todos.length }}</span>
+              </div>
+              <div class="card-body" style="padding:8px 20px;">
+                <ul class="todo-list">
+                  <li v-for="(todo, i) in todos" :key="i" class="todo-item">
+                    <input type="checkbox" v-model="todo.done">
+                    <span class="todo-text" :class="{ done: todo.done }">{{ todo.text }}</span>
+                    <span class="todo-tag tag" :class="'tag-' + todo.tagColor">{{ todo.tag }}</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h3>活跃用户排行</h3>
+              </div>
+              <div class="card-body">
+                <table style="width:100%;border-collapse:collapse;">
+                  <thead>
+                    <tr>
+                      <th style="text-align:left;padding:8px 0;font-size:var(--text-xs);color:var(--text-muted);font-weight:600;">排名</th>
+                      <th style="text-align:left;padding:8px 0;font-size:var(--text-xs);color:var(--text-muted);font-weight:600;">用户</th>
+                      <th style="text-align:right;padding:8px 0;font-size:var(--text-xs);color:var(--text-muted);font-weight:600;">操作次数</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="(user, i) in topUsers" :key="i" style="border-top:1px solid var(--border-light);">
+                      <td style="padding:10px 0;">
+                        <span :style="{ color: i < 3 ? 'var(--warning)' : 'var(--text-muted)', fontWeight: i < 3 ? 700 : 400 }">
+                          {{ i + 1 }}
+                        </span>
+                      </td>
+                      <td style="padding:10px 0;">
+                        <div style="display:flex;align-items:center;gap:8px;">
+                          <div class="user-avatar" style="width:28px;height:28px;font-size:0.7rem;">{{ user.name[0] }}</div>
+                          <span style="font-size:var(--text-sm);">{{ user.name }}</span>
+                        </div>
+                      </td>
+                      <td style="padding:10px 0;text-align:right;font-size:var(--text-sm);font-weight:500;">{{ user.count }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+
+      <!-- 移动端底部导航 -->
+      <nav class="mobile-nav">
+        <a v-for="item in mobileNav" :key="item.key" class="mobile-nav-item" :class="{ active: item.key === 'dashboard' }" :href="item.url">
+          <span class="nav-icon">{{ item.icon }}</span>
+          <span>{{ item.label }}</span>
+        </a>
+      </nav>
+    </div>
+
+    <!-- Toast 通知容器 -->
+    <div class="toast-container">
+      <div v-for="toast in toasts" :key="toast.id" class="toast" :class="'toast-' + toast.type">
+        <span class="toast-icon">{{ toastIcons[toast.type] }}</span>
+        <span class="toast-message">{{ toast.message }}</span>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    /**
+     * Admin Dashboard - 仪表盘页面
+     *
+     * 功能特性：
+     * - 统计卡片（用户数/订单数/收入/访问量）
+     * - Canvas 图表（折线图 + 柱状图）
+     * - 快捷操作面板
+     * - 最近活动时间线
+     * - 待办事项列表
+     * - 活跃用户排行
+     * - 侧边栏导航
+     * - 主题切换
+     * - 响应式布局
+     */
+
+    import { createApp, ref, reactive, computed, watch, onMounted, nextTick } from 'https://cdn.jsdelivr.net/npm/@lytjs/core@5.0.0/+esm'
+
+    // ========== 导航数据 ==========
+    const mainNav = [
+      { key: 'dashboard', icon: '&#9632;', label: '仪表盘', url: 'index.html' },
+      { key: 'users', icon: '&#128100;', label: '用户管理', url: 'users.html' },
+      { key: 'roles', icon: '&#128101;', label: '角色权限', url: 'roles.html' },
+      { key: 'table', icon: '&#128203;', label: '数据表格', url: 'table.html' },
+      { key: 'forms', icon: '&#9997;', label: '表单页面', url: 'forms.html' },
+      { key: 'charts', icon: '&#128200;', label: '图表页面', url: 'charts.html' },
+    ]
+
+    const systemNav = [
+      { key: 'profile', icon: '&#128100;', label: '个人设置', url: 'profile.html' },
+      { key: 'settings', icon: '&#9881;', label: '系统设置', url: 'settings.html' },
+    ]
+
+    const otherNav = [
+      { key: 'error', icon: '&#9888;', label: '错误页面', url: 'error.html' },
+      { key: 'login', icon: '&#128274;', label: '退出登录', url: 'login.html' },
+    ]
+
+    const mobileNav = [
+      { key: 'dashboard', icon: '&#9632;', label: '首页', url: 'index.html' },
+      { key: 'users', icon: '&#128100;', label: '用户', url: 'users.html' },
+      { key: 'table', icon: '&#128203;', label: '表格', url: 'table.html' },
+      { key: 'charts', icon: '&#128200;', label: '图表', url: 'charts.html' },
+      { key: 'profile', icon: '&#9881;', label: '设置', url: 'profile.html' },
+    ]
+
+    // ========== Toast 通知 ==========
+    const toasts = ref([])
+    let toastId = 0
+    function showToast(message, type = 'info') {
+      const id = ++toastId
+      toasts.value.push({ id, message, type })
+      setTimeout(() => { toasts.value = toasts.value.filter(t => t.id !== id) }, 3000)
+    }
+
+    // ========== 创建应用 ==========
+    const app = createApp({
+      setup() {
+        // --- 布局状态 ---
+        const sidebarCollapsed = ref(false)
+        const mobileMenuOpen = ref(false)
+        const isDark = ref(true)
+        const searchQuery = ref('')
+        const showNotifications = ref(false)
+        const showUserMenu = ref(false)
+        const unreadCount = ref(5)
+        const chartRange = ref('week')
+
+        function toggleSidebar() {
+          if (window.innerWidth <= 768) {
+            mobileMenuOpen.value = !mobileMenuOpen.value
+          } else {
+            sidebarCollapsed.value = !sidebarCollapsed.value
+          }
+        }
+
+        function toggleTheme() {
+          isDark.value = !isDark.value
+        }
+
+        watch(isDark, (dark) => {
+          document.documentElement.classList.toggle('light', !dark)
+          // 重绘图表
+          nextTick(() => {
+            drawLineChart()
+            drawBarChart()
+          })
+        })
+
+        // --- 统计数据 ---
+        const stats = [
+          { label: '总用户数', value: '28,461', icon: '&#128100;', trend: '+12.5%', trendDir: 'up', bgColor: 'rgba(59,130,246,0.15)', color: '#3b82f6' },
+          { label: '订单总数', value: '12,846', icon: '&#128230;', trend: '+8.2%', trendDir: 'up', bgColor: 'rgba(34,197,94,0.15)', color: '#22c55e' },
+          { label: '总收入', value: '¥86.4万', icon: '&#165;', trend: '+23.1%', trendDir: 'up', bgColor: 'rgba(139,92,246,0.15)', color: '#8b5cf6' },
+          { label: '访问量', value: '156,782', icon: '&#128065;', trend: '-3.4%', trendDir: 'down', bgColor: 'rgba(245,158,11,0.15)', color: '#f59e0b' },
+        ]
+
+        // --- 快捷操作 ---
+        const quickActions = [
+          { icon: '&#128100;', label: '新增用户', bgColor: 'rgba(59,130,246,0.15)', color: '#3b82f6', url: 'users.html' },
+          { icon: '&#128230;', label: '创建订单', bgColor: 'rgba(34,197,94,0.15)', color: '#22c55e', url: 'table.html' },
+          { icon: '&#128200;', label: '数据报表', bgColor: 'rgba(139,92,246,0.15)', color: '#8b5cf6', url: 'charts.html' },
+          { icon: '&#9997;', label: '内容发布', bgColor: 'rgba(245,158,11,0.15)', color: '#f59e0b', url: 'forms.html' },
+        ]
+
+        function handleQuickAction(action) {
+          showToast('正在跳转到: ' + action.label, 'info')
+          setTimeout(() => { window.location.href = action.url }, 800)
+        }
+
+        // --- 最近活动 ---
+        const activities = [
+          { text: '管理员 创建了新用户 "张三"', time: '5 分钟前', color: 'var(--primary)' },
+          { text: '系统 完成了数据库备份', time: '30 分钟前', color: 'var(--success)' },
+          { text: '李四 提交了订单 #20240156', time: '1 小时前', color: 'var(--warning)' },
+          { text: '王五 修改了个人资料', time: '2 小时前', color: 'var(--info)' },
+          { text: '系统 检测到异常登录尝试', time: '3 小时前', color: 'var(--danger)' },
+          { text: '赵六 上传了 3 个文件', time: '5 小时前', color: 'var(--primary)' },
+        ]
+
+        // --- 待办事项 ---
+        const todos = reactive([
+          { text: '审核新用户注册申请', done: false, tag: '紧急', tagColor: 'red' },
+          { text: '完成月度数据报表', done: false, tag: '进行中', tagColor: 'orange' },
+          { text: '更新系统安全策略', done: true, tag: '已完成', tagColor: 'green' },
+          { text: '优化数据库查询性能', done: false, tag: '待处理', tagColor: 'blue' },
+          { text: '部署 v2.1.0 版本更新', done: true, tag: '已完成', tagColor: 'green' },
+        ])
+
+        const completedTodos = computed(() => todos.filter(t => t.done).length)
+
+        // --- 活跃用户排行 ---
+        const topUsers = [
+          { name: '张三', count: 1,284 },
+          { name: '李四', count: 986 },
+          { name: '王五', count: 872 },
+          { name: '赵六', count: 654 },
+          { name: '孙七', count: 523 },
+        ]
+
+        // ========== Canvas 图表绘制 ==========
+        function getChartColors() {
+          const style = getComputedStyle(document.documentElement)
+          return {
+            text: style.getPropertyValue('--text-muted').trim(),
+            border: style.getPropertyValue('--border').trim(),
+            primary: '#3b82f6',
+            success: '#22c55e',
+            warning: '#f59e0b',
+            info: '#06b6d4',
+            purple: '#8b5cf6',
+          }
+        }
+
+        /** 绘制折线图 */
+        function drawLineChart() {
+          const canvas = document.getElementById('lineChart')
+          if (!canvas) return
+          const ctx = canvas.getContext('2d')
+          const rect = canvas.parentElement.getBoundingClientRect()
+          const dpr = window.devicePixelRatio || 1
+          canvas.width = rect.width * dpr
+          canvas.height = rect.height * dpr
+          ctx.scale(dpr, dpr)
+
+          const w = rect.width
+          const h = rect.height
+          const colors = getChartColors()
+
+          const data = chartRange.value === 'week'
+            ? [820, 932, 901, 1234, 1290, 1330, 1520]
+            : [820, 932, 901, 1234, 1290, 1330, 1520, 1430, 1200, 1380, 1520, 1680, 1450, 1320, 1560, 1780, 1650, 1890, 2010, 1870, 1750, 1920, 2100, 1980, 2200, 2350, 2180, 2400, 2520, 2680]
+          const labels = chartRange.value === 'week'
+            ? ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
+            : Array.from({ length: 30 }, (_, i) => (i + 1) + '日')
+
+          const padding = { top: 20, right: 20, bottom: 30, left: 50 }
+          const chartW = w - padding.left - padding.right
+          const chartH = h - padding.top - padding.bottom
+
+          const maxVal = Math.max(...data) * 1.1
+          const minVal = 0
+
+          // 清空
+          ctx.clearRect(0, 0, w, h)
+
+          // 网格线
+          ctx.strokeStyle = colors.border
+          ctx.lineWidth = 0.5
+          for (let i = 0; i <= 4; i++) {
+            const y = padding.top + (chartH / 4) * i
+            ctx.beginPath()
+            ctx.moveTo(padding.left, y)
+            ctx.lineTo(w - padding.right, y)
+            ctx.stroke()
+
+            // Y 轴标签
+            const val = Math.round(maxVal - (maxVal - minVal) * (i / 4))
+            ctx.fillStyle = colors.text
+            ctx.font = '11px sans-serif'
+            ctx.textAlign = 'right'
+            ctx.fillText(val.toLocaleString(), padding.left - 8, y + 4)
+          }
+
+          // X 轴标签
+          ctx.textAlign = 'center'
+          const step = Math.max(1, Math.floor(labels.length / 7))
+          labels.forEach((label, i) => {
+            if (i % step === 0 || i === labels.length - 1) {
+              const x = padding.left + (chartW / (labels.length - 1)) * i
+              ctx.fillText(label, x, h - 8)
+            }
+          })
+
+          // 渐变填充
+          const gradient = ctx.createLinearGradient(0, padding.top, 0, h - padding.bottom)
+          gradient.addColorStop(0, 'rgba(59, 130, 246, 0.3)')
+          gradient.addColorStop(1, 'rgba(59, 130, 246, 0.02)')
+
+          ctx.beginPath()
+          data.forEach((val, i) => {
+            const x = padding.left + (chartW / (data.length - 1)) * i
+            const y = padding.top + chartH - ((val - minVal) / (maxVal - minVal)) * chartH
+            if (i === 0) ctx.moveTo(x, y)
+            else ctx.lineTo(x, y)
+          })
+          ctx.lineTo(padding.left + chartW, h - padding.bottom)
+          ctx.lineTo(padding.left, h - padding.bottom)
+          ctx.closePath()
+          ctx.fillStyle = gradient
+          ctx.fill()
+
+          // 折线
+          ctx.beginPath()
+          data.forEach((val, i) => {
+            const x = padding.left + (chartW / (data.length - 1)) * i
+            const y = padding.top + chartH - ((val - minVal) / (maxVal - minVal)) * chartH
+            if (i === 0) ctx.moveTo(x, y)
+            else ctx.lineTo(x, y)
+          })
+          ctx.strokeStyle = colors.primary
+          ctx.lineWidth = 2
+          ctx.stroke()
+
+          // 数据点
+          data.forEach((val, i) => {
+            const x = padding.left + (chartW / (data.length - 1)) * i
+            const y = padding.top + chartH - ((val - minVal) / (maxVal - minVal)) * chartH
+            ctx.beginPath()
+            ctx.arc(x, y, 3, 0, Math.PI * 2)
+            ctx.fillStyle = colors.primary
+            ctx.fill()
+            ctx.strokeStyle = isDark.value ? '#1e293b' : '#ffffff'
+            ctx.lineWidth = 2
+            ctx.stroke()
+          })
+        }
+
+        /** 绘制柱状图 */
+        function drawBarChart() {
+          const canvas = document.getElementById('barChart')
+          if (!canvas) return
+          const ctx = canvas.getContext('2d')
+          const rect = canvas.parentElement.getBoundingClientRect()
+          const dpr = window.devicePixelRatio || 1
+          canvas.width = rect.width * dpr
+          canvas.height = rect.height * dpr
+          ctx.scale(dpr, dpr)
+
+          const w = rect.width
+          const h = rect.height
+          const colors = getChartColors()
+
+          const categories = ['电子产品', '服装鞋帽', '食品饮料', '家居用品', '图书文具', '运动户外']
+          const values = [42, 28, 18, 15, 12, 8]
+          const barColors = [colors.primary, colors.success, colors.warning, colors.info, colors.purple, '#ec4899']
+
+          const padding = { top: 20, right: 20, bottom: 40, left: 50 }
+          const chartW = w - padding.left - padding.right
+          const chartH = h - padding.top - padding.bottom
+          const maxVal = Math.max(...values) * 1.2
+
+          ctx.clearRect(0, 0, w, h)
+
+          // 网格线
+          ctx.strokeStyle = colors.border
+          ctx.lineWidth = 0.5
+          for (let i = 0; i <= 4; i++) {
+            const y = padding.top + (chartH / 4) * i
+            ctx.beginPath()
+            ctx.moveTo(padding.left, y)
+            ctx.lineTo(w - padding.right, y)
+            ctx.stroke()
+
+            const val = Math.round(maxVal - maxVal * (i / 4))
+            ctx.fillStyle = colors.text
+            ctx.font = '11px sans-serif'
+            ctx.textAlign = 'right'
+            ctx.fillText(val + '万', padding.left - 8, y + 4)
+          }
+
+          // 柱子
+          const barWidth = Math.min(40, chartW / categories.length * 0.5)
+          const gap = chartW / categories.length
+
+          categories.forEach((cat, i) => {
+            const x = padding.left + gap * i + gap / 2 - barWidth / 2
+            const barH = (values[i] / maxVal) * chartH
+            const y = padding.top + chartH - barH
+
+            // 圆角矩形
+            const radius = 4
+            ctx.beginPath()
+            ctx.moveTo(x + radius, y)
+            ctx.lineTo(x + barWidth - radius, y)
+            ctx.quadraticCurveTo(x + barWidth, y, x + barWidth, y + radius)
+            ctx.lineTo(x + barWidth, padding.top + chartH)
+            ctx.lineTo(x, padding.top + chartH)
+            ctx.lineTo(x, y + radius)
+            ctx.quadraticCurveTo(x, y, x + radius, y)
+            ctx.closePath()
+            ctx.fillStyle = barColors[i]
+            ctx.fill()
+
+            // X 轴标签
+            ctx.fillStyle = colors.text
+            ctx.font = '11px sans-serif'
+            ctx.textAlign = 'center'
+            ctx.fillText(cat, padding.left + gap * i + gap / 2, h - 12)
+          })
+        }
+
+        // --- 生命周期 ---
+        onMounted(() => {
+          // 从 localStorage 恢复主题
+          const savedTheme = localStorage.getItem('admin-theme')
+          if (savedTheme === 'light') {
+            isDark.value = false
+            document.documentElement.classList.add('light')
+          }
+
+          nextTick(() => {
+            drawLineChart()
+            drawBarChart()
+          })
+
+          // 窗口大小变化时重绘图表
+          window.addEventListener('resize', () => {
+            drawLineChart()
+            drawBarChart()
+          })
+        })
+
+        // 监听图表范围切换
+        watch(chartRange, () => {
+          nextTick(() => drawLineChart())
+        })
+
+        return {
+          sidebarCollapsed, mobileMenuOpen, isDark, searchQuery,
+          showNotifications, showUserMenu, unreadCount, chartRange,
+          toggleSidebar, toggleTheme,
+          mainNav, systemNav, otherNav, mobileNav,
+          stats, quickActions, handleQuickAction,
+          activities, todos, completedTodos, topUsers,
+          toasts,
+          toastIcons: { success: '&#10004;', error: '&#10008;', warning: '&#9888;', info: '&#8505;' },
+        }
+      },
+    })
+
+    app.mount('#app')
+  </script>
+</body>
+</html>

@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lyt.js 微前端示例 - 主应用</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f5f7fa;
+      color: #333;
+    }
+
+    /* 主应用头部 */
+    .main-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px 30px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .main-header h1 {
+      font-size: 24px;
+      font-weight: 600;
+    }
+
+    .main-header .subtitle {
+      font-size: 14px;
+      opacity: 0.8;
+      margin-top: 4px;
+    }
+
+    /* 导航栏 */
+    .main-nav {
+      background: white;
+      padding: 12px 30px;
+      display: flex;
+      gap: 12px;
+      border-bottom: 1px solid #e8e8e8;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    .nav-btn {
+      padding: 8px 20px;
+      border: 2px solid #667eea;
+      border-radius: 6px;
+      background: white;
+      color: #667eea;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .nav-btn:hover {
+      background: #667eea;
+      color: white;
+    }
+
+    .nav-btn.active {
+      background: #667eea;
+      color: white;
+    }
+
+    /* 控制面板 */
+    .control-panel {
+      background: white;
+      padding: 20px 30px;
+      border-bottom: 1px solid #e8e8e8;
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .control-panel label {
+      font-size: 14px;
+      font-weight: 500;
+      color: #555;
+    }
+
+    .control-panel select,
+    .control-panel input {
+      padding: 6px 12px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+
+    .control-btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 4px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .control-btn.primary {
+      background: #667eea;
+      color: white;
+    }
+
+    .control-btn.primary:hover {
+      background: #5a6fd6;
+    }
+
+    .control-btn.danger {
+      background: #ff4757;
+      color: white;
+    }
+
+    .control-btn.danger:hover {
+      background: #e8414f;
+    }
+
+    .control-btn.success {
+      background: #2ed573;
+      color: white;
+    }
+
+    .control-btn.success:hover {
+      background: #26b85f;
+    }
+
+    /* 子应用容器 */
+    .app-container {
+      padding: 30px;
+    }
+
+    .app-slot {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+      padding: 30px;
+      min-height: 400px;
+      position: relative;
+    }
+
+    .app-slot::before {
+      content: attr(data-app-name);
+      position: absolute;
+      top: -12px;
+      left: 20px;
+      background: #667eea;
+      color: white;
+      padding: 2px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .app-slot.empty::after {
+      content: '点击上方按钮加载子应用';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: #ccc;
+      font-size: 16px;
+    }
+
+    /* 通信日志 */
+    .comm-log {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 350px;
+      max-height: 300px;
+      background: #1a1a2e;
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      overflow: hidden;
+      z-index: 1000;
+    }
+
+    .comm-log-header {
+      background: #16213e;
+      color: white;
+      padding: 10px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .comm-log-body {
+      padding: 10px;
+      max-height: 250px;
+      overflow-y: auto;
+      font-family: 'Monaco', 'Menlo', monospace;
+      font-size: 12px;
+    }
+
+    .log-entry {
+      padding: 4px 8px;
+      margin-bottom: 4px;
+      border-radius: 4px;
+      color: #e0e0e0;
+    }
+
+    .log-entry.event {
+      background: rgba(102, 126, 234, 0.2);
+      border-left: 3px solid #667eea;
+    }
+
+    .log-entry.state {
+      background: rgba(46, 213, 115, 0.2);
+      border-left: 3px solid #2ed573;
+    }
+
+    .log-entry.lifecycle {
+      background: rgba(255, 165, 2, 0.2);
+      border-left: 3px solid #ffa502;
+    }
+
+    .log-time {
+      color: #888;
+      margin-right: 8px;
+    }
+
+    /* 状态指示器 */
+    .status-bar {
+      display: flex;
+      gap: 20px;
+      padding: 10px 30px;
+      background: white;
+      border-bottom: 1px solid #e8e8e8;
+      font-size: 13px;
+    }
+
+    .status-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #ccc;
+    }
+
+    .status-dot.active {
+      background: #2ed573;
+    }
+
+    .status-dot.loading {
+      background: #ffa502;
+      animation: pulse 1s infinite;
+    }
+
+    .status-dot.error {
+      background: #ff4757;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 主应用头部 -->
+  <header class="main-header">
+    <div>
+      <h1>Lyt.js 微前端示例</h1>
+      <div class="subtitle">主应用 (Base App) - 基于 Web Component 的微前端架构</div>
+    </div>
+  </header>
+
+  <!-- 导航栏 -->
+  <nav class="main-nav">
+    <button class="nav-btn active" onclick="switchApp('counter')">计数器子应用</button>
+    <button class="nav-btn" onclick="switchApp('todo')">待办事项子应用</button>
+    <button class="nav-btn" onclick="switchApp('theme')">主题切换子应用</button>
+  </nav>
+
+  <!-- 控制面板 -->
+  <div class="control-panel">
+    <label>主题：</label>
+    <select id="theme-select" onchange="changeTheme(this.value)">
+      <option value="light">浅色</option>
+      <option value="dark">深色</option>
+    </select>
+
+    <label>语言：</label>
+    <select id="lang-select" onchange="changeLang(this.value)">
+      <option value="zh">中文</option>
+      <option value="en">English</option>
+    </select>
+
+    <button class="control-btn primary" onclick="mountApp()">挂载子应用</button>
+    <button class="control-btn success" onclick="updateApp()">更新 Props</button>
+    <button class="control-btn danger" onclick="unmountApp()">卸载子应用</button>
+    <button class="control-btn" onclick="sendEvent()">发送事件</button>
+  </div>
+
+  <!-- 状态栏 -->
+  <div class="status-bar">
+    <div class="status-item">
+      <span class="status-dot" id="status-dot"></span>
+      <span id="status-text">未加载</span>
+    </div>
+    <div class="status-item">
+      <span>子应用：</span>
+      <span id="app-name">-</span>
+    </div>
+    <div class="status-item">
+      <span>通信消息：</span>
+      <span id="msg-count">0</span>
+    </div>
+  </div>
+
+  <!-- 子应用容器 -->
+  <div class="app-container">
+    <div class="app-slot empty" id="app-slot" data-app-name="子应用区域">
+      <!-- 子应用将在这里渲染 -->
+    </div>
+  </div>
+
+  <!-- 通信日志 -->
+  <div class="comm-log">
+    <div class="comm-log-header">
+      <span>通信日志</span>
+      <button onclick="clearLog()" style="background:none;border:none;color:#888;cursor:pointer;font-size:12px;">清除</button>
+    </div>
+    <div class="comm-log-body" id="comm-log"></div>
+  </div>
+
+  <!-- 子应用脚本 -->
+  <script src="child-app.js"></script>
+
+  <!-- 主应用脚本 -->
+  <script>
+    // ============================================================
+    // 主应用逻辑
+    // ============================================================
+
+    let currentApp = null
+    let currentAppName = 'counter'
+    let messageCount = 0
+
+    /**
+     * 切换子应用
+     */
+    function switchApp(appName) {
+      currentAppName = appName
+
+      // 更新导航按钮状态
+      document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'))
+      event.target.classList.add('active')
+
+      // 更新状态栏
+      document.getElementById('app-name').textContent = appName
+
+      // 如果当前有挂载的应用，先卸载
+      if (currentApp) {
+        unmountApp().then(() => mountApp())
+      }
+    }
+
+    /**
+     * 挂载子应用
+     */
+    async function mountApp() {
+      const container = document.getElementById('app-slot')
+      container.classList.remove('empty')
+      container.innerHTML = ''
+      container.setAttribute('data-app-name', currentAppName)
+
+      updateStatus('loading', '加载中...')
+
+      try {
+        // 使用 MicroApp 管理子应用
+        const { MicroApp, EventBus, SharedState, createSandbox, createStyleSandbox } = window.LytMicroFrontend
+
+        // 创建沙箱
+        const sandbox = createSandbox({ name: currentAppName })
+
+        // 创建 CSS 沙箱
+        const styleSandbox = createStyleSandbox({
+          container: container,
+        })
+
+        // 创建事件总线
+        const eventBus = new EventBus()
+
+        // 监听事件
+        eventBus.on('app:*', (data, eventName) => {
+          addLog('event', `[${eventName}] ${JSON.stringify(data)}`)
+        })
+
+        eventBus.on('app:status-change', (data) => {
+          updateStatus(data.newStatus === 'mounted' ? 'active' : 'loading', data.newStatus)
+          addLog('lifecycle', `状态: ${data.oldStatus} -> ${data.newStatus}`)
+        })
+
+        // 创建共享状态
+        const sharedState = new SharedState()
+        sharedState.set('theme', document.getElementById('theme-select').value)
+        sharedState.set('lang', document.getElementById('lang-select').value)
+
+        // 根据应用名选择组件
+        const component = window.LytChildApps[currentAppName]
+
+        // 创建 MicroApp
+        currentApp = new MicroApp({
+          name: currentAppName,
+          entry: component,
+          container: container,
+          sandbox,
+          styleSandbox,
+          eventBus,
+          sharedState,
+          props: {
+            theme: document.getElementById('theme-select').value,
+            lang: document.getElementById('lang-select').value,
+          },
+          lifecycle: {
+            beforeMount: () => addLog('lifecycle', `beforeMount: ${currentAppName}`),
+            afterMount: () => addLog('lifecycle', `afterMount: ${currentAppName}`),
+            beforeUnmount: () => addLog('lifecycle', `beforeUnmount: ${currentAppName}`),
+            afterUnmount: () => addLog('lifecycle', `afterUnmount: ${currentAppName}`),
+          },
+        })
+
+        await currentApp.mount()
+      } catch (e) {
+        updateStatus('error', '加载失败')
+        addLog('event', `错误: ${e.message}`)
+        console.error(e)
+      }
+    }
+
+    /**
+     * 卸载子应用
+     */
+    async function unmountApp() {
+      if (!currentApp) return
+
+      try {
+        await currentApp.unmount()
+        await currentApp.destroy()
+        currentApp = null
+
+        const container = document.getElementById('app-slot')
+        container.classList.add('empty')
+        container.innerHTML = ''
+
+        updateStatus('', '未加载')
+      } catch (e) {
+        console.error(e)
+      }
+    }
+
+    /**
+     * 更新子应用 Props
+     */
+    async function updateApp() {
+      if (!currentApp) {
+        alert('请先挂载子应用')
+        return
+      }
+
+      const newProps = {
+        theme: document.getElementById('theme-select').value,
+        lang: document.getElementById('lang-select').value,
+        timestamp: Date.now(),
+      }
+
+      await currentApp.update(newProps)
+      addLog('event', `更新 Props: ${JSON.stringify(newProps)}`)
+    }
+
+    /**
+     * 发送事件到子应用
+     */
+    function sendEvent() {
+      if (!currentApp) {
+        alert('请先挂载子应用')
+        return
+      }
+
+      const container = document.getElementById('app-slot')
+      container.dispatchEvent(new CustomEvent('host:ping', {
+        detail: { from: 'main-app', time: Date.now() },
+        bubbles: true,
+        composed: true,
+      }))
+
+      addLog('event', '发送 host:ping 事件')
+    }
+
+    /**
+     * 修改主题
+     */
+    function changeTheme(theme) {
+      if (currentApp) {
+        currentApp.update({ theme })
+      }
+      addLog('state', `主题变更: ${theme}`)
+    }
+
+    /**
+     * 修改语言
+     */
+    function changeLang(lang) {
+      if (currentApp) {
+        currentApp.update({ lang })
+      }
+      addLog('state', `语言变更: ${lang}`)
+    }
+
+    /**
+     * 更新状态指示器
+     */
+    function updateStatus(type, text) {
+      const dot = document.getElementById('status-dot')
+      const statusText = document.getElementById('status-text')
+      dot.className = 'status-dot'
+      if (type) dot.classList.add(type)
+      statusText.textContent = text
+    }
+
+    /**
+     * 添加通信日志
+     */
+    function addLog(type, message) {
+      messageCount++
+      document.getElementById('msg-count').textContent = messageCount
+
+      const log = document.getElementById('comm-log')
+      const entry = document.createElement('div')
+      entry.className = `log-entry ${type}`
+
+      const time = new Date().toLocaleTimeString()
+      entry.innerHTML = `<span class="log-time">${time}</span>${message}`
+
+      log.insertBefore(entry, log.firstChild)
+
+      // 限制日志条数
+      while (log.children.length > 50) {
+        log.removeChild(log.lastChild)
+      }
+    }
+
+    /**
+     * 清除日志
+     */
+    function clearLog() {
+      document.getElementById('comm-log').innerHTML = ''
+      messageCount = 0
+      document.getElementById('msg-count').textContent = '0'
+    }
+  </script>
+
+</body>
+</html>

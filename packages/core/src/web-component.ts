@@ -953,3 +953,273 @@ export async function defineCustomElementFromSFC(
   // 注册为 Custom Element
   defineCustomElement(tagName, componentOptions, mergedOptions)
 }
+
+// ============================================================
+// 属性/事件桥接工具
+// ============================================================
+
+/**
+ * 将 Props 定义转换为 observedAttributes 列表
+ *
+ * 自动将 camelCase prop 名转换为 kebab-case attribute 名，
+ * 用于 Custom Element 的 static get observedAttributes()。
+ *
+ * @param props - Props 定义对象
+ * @param exclude - 需要排除的 prop 名列表
+ * @returns kebab-case attribute 名数组
+ *
+ * @example
+ * ```ts
+ * const props = {
+ *   initialCount: { type: Number, default: 0 },
+ *   theme: { type: String, default: 'light' },
+ *   isVisible: { type: Boolean },
+ * }
+ *
+ * const attrs = propsToAttributes(props)
+ * // ['initial-count', 'theme', 'is-visible']
+ * ```
+ */
+export function propsToAttributes(
+  props: Record<string, unknown>,
+  exclude: string[] = []
+): string[] {
+  return Object.keys(props)
+    .filter(key => !exclude.includes(key))
+    .map(camelToKebab)
+}
+
+/**
+ * 将 HTML attributes 转换为组件 Props
+ *
+ * 从 DOM 元素上读取 attribute 值，进行类型推断和转换，
+ * 生成可直接传递给组件的 props 对象。
+ *
+ * @param attributes - NamedNodeMap（element.attributes）
+ * @param propMappings - 属性名映射（attribute name -> prop name）
+ * @param converters - 自定义属性值转换器
+ * @returns Props 对象
+ *
+ * @example
+ * ```ts
+ * const el = document.querySelector('lyt-counter')
+ * const props = attributesToProps(el.attributes, {
+ *   'initial-count': 'initialCount',
+ * })
+ * // { initialCount: 10, theme: 'dark' }
+ * ```
+ */
+export function attributesToProps(
+  attributes: NamedNodeMap,
+  propMappings?: Record<string, string>,
+  converters?: Record<string, (value: string) => any>
+): Record<string, unknown> {
+  const props: Record<string, unknown> = {}
+
+  for (let i = 0; i < attributes.length; i++) {
+    const attr = attributes[i]
+    const attrName = attr.name
+    const attrValue = attr.value
+
+    // 跳过事件属性（on*）
+    if (attrName.startsWith('on')) continue
+
+    // 确定属性名
+    const propName = propMappings?.[attrName] || kebabToCamel(attrName)
+
+    // 转换值
+    if (converters?.[attrName]) {
+      props[propName] = converters[attrName](attrValue)
+    } else {
+      props[propName] = parseAttributeValue(attrValue)
+    }
+  }
+
+  return props
+}
+
+/**
+ * 将 emits 定义转换为 Custom Event 配置
+ *
+ * 生成事件名映射和事件选项，用于 Custom Element 的事件转发。
+ *
+ * @param emits - emits 定义（数组或对象）
+ * @returns 事件配置映射
+ *
+ * @example
+ * ```ts
+ * const events = eventsToCustomEvents(['click', 'change', 'update:modelValue'])
+ * // {
+ * //   click: { name: 'click', options: { bubbles: true, composed: true } },
+ * //   change: { name: 'change', options: { bubbles: true, composed: true } },
+ * //   'update:modelValue': { name: 'update:modelValue', options: { bubbles: true, composed: true } },
+ * // }
+ * ```
+ */
+export function eventsToCustomEvents(
+  emits: string[] | Record<string, unknown>
+): Record<string, { name: string; options: { bubbles: boolean; composed: boolean; cancelable: boolean; detail?: any } }> {
+  const eventNames: string[] = Array.isArray(emits)
+    ? emits
+    : Object.keys(emits)
+
+  const result: Record<string, { name: string; options: { bubbles: boolean; composed: boolean; cancelable: boolean } }> = {}
+
+  for (const eventName of eventNames) {
+    result[eventName] = {
+      name: eventName,
+      options: {
+        bubbles: true,
+        composed: true, // 允许事件穿透 Shadow DOM
+        cancelable: true,
+      },
+    }
+  }
+
+  return result
+}
+
+// ============================================================
+// 样式封装工具
+// ============================================================
+
+/**
+ * 注入样式到 Shadow DOM
+ *
+ * 创建 <style> 元素并添加到 Shadow Root 中。
+ * 支持追加模式和替换模式。
+ *
+ * @param styles - CSS 样式字符串
+ * @param shadowRoot - Shadow Root 引用
+ * @param options - 注入选项
+ *
+ * @example
+ * ```ts
+ * injectStyles(':host { display: block; }', element.shadowRoot)
+ * injectStyles('.new-style { color: red; }', element.shadowRoot, { append: true })
+ * ```
+ */
+export function injectStyles(
+  styles: string,
+  shadowRoot: ShadowRoot,
+  options: { append?: boolean; id?: string } = {}
+): HTMLStyleElement | null {
+  if (!styles || !shadowRoot) return null
+
+  const { append = false, id } = options
+
+  // 如果指定了 id，先查找已有的 style 元素
+  if (id) {
+    const existing = shadowRoot.getElementById(id) as HTMLStyleElement | null
+    if (existing) {
+      existing.textContent = styles
+      return existing
+    }
+  }
+
+  const styleEl = document.createElement('style')
+  if (id) {
+    styleEl.id = id
+  }
+  styleEl.textContent = styles
+
+  if (append) {
+    shadowRoot.appendChild(styleEl)
+  } else {
+    // 插入到容器之前（如果有）
+    const container = shadowRoot.querySelector('div')
+    if (container) {
+      shadowRoot.insertBefore(styleEl, container)
+    } else {
+      shadowRoot.insertBefore(styleEl, shadowRoot.firstChild)
+    }
+  }
+
+  return styleEl
+}
+
+/**
+ * 添加 scoped 标识到 CSS
+ *
+ * 为所有选择器添加 scopeId 属性选择器前缀，
+ * 实现类似 Vue scoped CSS 的效果。
+ *
+ * @param css - 原始 CSS 字符串
+ * @param scopeId - scope 标识符（不含方括号）
+ * @returns 添加了 scoped 标识的 CSS
+ *
+ * @example
+ * ```ts
+ * const scoped = scopedCSS(
+ *   '.container { color: red; } .container .title { font-size: 16px; }',
+ *   'data-v-abc123'
+ * )
+ * // '.container[data-v-abc123] { color: red; } .container[data-v-abc123] .title[data-v-abc123] { font-size: 16px; }'
+ * ```
+ */
+export function scopedCSS(css: string, scopeId: string): string {
+  const scopeAttr = `[${scopeId}]`
+
+  return css.replace(
+    // 匹配 CSS 选择器（简化版）
+    /([^{}@/][^{}]*?)(\s*\{[^{}]*\})/g,
+    (match, selector: string, body: string) => {
+      // 跳过 @规则和 :host
+      if (selector.trim().startsWith('@') || selector.includes(':host')) {
+        return match
+      }
+
+      // 为选择器中的每个部分添加 scope 属性
+      const scopedSelector = selector
+        .split(',')
+        .map((part: string) => {
+          const trimmed = part.trim()
+          if (!trimmed || trimmed.startsWith('@')) return part
+
+          // 处理 :: 伪元素
+          const pseudoIndex = trimmed.indexOf('::')
+          const pseudo = pseudoIndex !== -1 ? trimmed.slice(pseudoIndex) : ''
+          const base = pseudoIndex !== -1 ? trimmed.slice(0, pseudoIndex) : trimmed
+
+          // 处理 : 伪类（非 ::）
+          const pseudoClassIndex = base.indexOf(':')
+          const pseudoClass = pseudoClassIndex !== -1 ? base.slice(pseudoClassIndex) : ''
+          const baseSelector = pseudoClassIndex !== -1 ? base.slice(0, pseudoClassIndex) : base
+
+          // 分割复合选择器
+          const parts = baseSelector.split(/\s+/).filter(Boolean)
+          const lastPart = parts[parts.length - 1]
+
+          if (lastPart) {
+            parts[parts.length - 1] = lastPart + scopeAttr
+          }
+
+          return parts.join(' ') + pseudoClass + pseudo
+        })
+        .join(', ')
+
+      return scopedSelector + body
+    }
+  )
+}
+
+/**
+ * 生成唯一的 scope ID
+ *
+ * @param prefix - 前缀（默认 'data-v'）
+ * @returns scope ID 字符串
+ *
+ * @example
+ * ```ts
+ * const scopeId = generateScopeId()
+ * // 'data-v-a1b2c3d4'
+ * ```
+ */
+export function generateScopeId(prefix: string = 'data-v'): string {
+  const chars = 'abcdef0123456789'
+  let id = ''
+  for (let i = 0; i < 8; i++) {
+    id += chars[Math.floor(Math.random() * chars.length)]
+  }
+  return `${prefix}-${id}`
+}

@@ -809,6 +809,263 @@ describe('js-framework-benchmark/memory', () => {
 })
 
 // ============================================================
+// Tests - Keyed Signal Benchmark (Optimized)
+// ============================================================
+
+describe('js-framework-benchmark/keyed-signal', () => {
+  let container: MockElement
+  const CONTAINER_ID = 'keyed-signal-test'
+
+  beforeEach(() => {
+    ;(globalThis as any).document = mockDocument
+    container = setupContainer(CONTAINER_ID)
+  })
+
+  afterEach(() => {
+    cleanupContainer(CONTAINER_ID)
+  })
+
+  it('createElement should create container and return handle', () => {
+    const keyed = require('../lyt/src/keyed-signal.ts')
+    const result = keyed.createElement(CONTAINER_ID)
+    expect(result.container).toBeTruthy()
+    expect(result.destroy).toBeDefined()
+  })
+
+  it('runBenchmark should render 1000 rows', () => {
+    const keyed = require('../lyt/src/keyed-signal.ts')
+    keyed.createElement(CONTAINER_ID)
+    keyed.runBenchmark()
+
+    const trCount = countTrElements(container)
+    expect(trCount).toBe(1001) // 1000 data + 1 header
+  })
+
+  it('runBenchmark should render correct row IDs', () => {
+    const keyed = require('../lyt/src/keyed-signal.ts')
+    keyed.createElement(CONTAINER_ID)
+    keyed.runBenchmark()
+
+    const ids = getRowIds(container)
+    expect(ids.length).toBe(1000)
+    expect(ids[0]).toBe(1)
+    expect(ids[999]).toBe(1000)
+  })
+
+  it('addRow should add one row (1001 total)', () => {
+    const keyed = require('../lyt/src/keyed-signal.ts')
+    keyed.createElement(CONTAINER_ID)
+    keyed.runBenchmark()
+    keyed.addRow()
+
+    const trCount = countTrElements(container)
+    expect(trCount).toBe(1002)
+    const ids = getRowIds(container)
+    expect(ids.length).toBe(1001)
+    expect(ids[1000]).toBe(1001)
+  })
+
+  it('updateEvery10thRow should update correct rows', () => {
+    const keyed = require('../lyt/src/keyed-signal.ts')
+    keyed.createElement(CONTAINER_ID)
+    keyed.runBenchmark()
+    keyed.updateEvery10thRow()
+
+    const labels = getRowLabels(container)
+    expect(labels[9]).toBe('Row 10 !!!')
+    expect(labels[19]).toBe('Row 20 !!!')
+    expect(labels[0]).toBe('Row 1')
+    expect(labels[4]).toBe('Row 5')
+  })
+
+  it('swapRows should swap rows 1 and 2', () => {
+    const keyed = require('../lyt/src/keyed-signal.ts')
+    keyed.createElement(CONTAINER_ID)
+    keyed.runBenchmark()
+
+    let ids = getRowIds(container)
+    expect(ids[0]).toBe(1)
+    expect(ids[1]).toBe(2)
+
+    keyed.swapRows()
+
+    ids = getRowIds(container)
+    expect(ids[0]).toBe(2)
+    expect(ids[1]).toBe(1)
+    expect(ids[2]).toBe(3)
+  })
+
+  it('removeRow should remove last row', () => {
+    const keyed = require('../lyt/src/keyed-signal.ts')
+    keyed.createElement(CONTAINER_ID)
+    keyed.runBenchmark()
+
+    let trCount = countTrElements(container)
+    expect(trCount).toBe(1001)
+
+    keyed.removeRow()
+
+    trCount = countTrElements(container)
+    expect(trCount).toBe(1000)
+
+    const ids = getRowIds(container)
+    expect(ids.length).toBe(999)
+    expect(ids[998]).toBe(999)
+  })
+
+  it('selectRow should mark a row as selected', () => {
+    const keyed = require('../lyt/src/keyed-signal.ts')
+    keyed.createElement(CONTAINER_ID)
+    keyed.runBenchmark()
+    keyed.selectRow(50)
+
+    const selected = getSelectedRowIndices(container)
+    expect(selected.length).toBe(1)
+    expect(selected[0]).toBe(50)
+  })
+
+  it('selectRow with different index should update selection', () => {
+    const keyed = require('../lyt/src/keyed-signal.ts')
+    keyed.createElement(CONTAINER_ID)
+    keyed.runBenchmark()
+    keyed.selectRow(10)
+    keyed.selectRow(20)
+
+    const selected = getSelectedRowIndices(container)
+    expect(selected.length).toBe(1)
+    expect(selected[0]).toBe(20)
+  })
+
+  it('destroy should clean up container', () => {
+    const keyed = require('../lyt/src/keyed-signal.ts')
+    const handle = keyed.createElement(CONTAINER_ID)
+    keyed.runBenchmark()
+
+    expect(countTrElements(container)).toBe(1001)
+
+    handle.destroy()
+
+    expect(container.childNodes.length).toBe(0)
+  })
+
+  it('getData should return current data', () => {
+    const keyed = require('../lyt/src/keyed-signal.ts')
+    keyed.createElement(CONTAINER_ID)
+    keyed.runBenchmark()
+
+    const data = keyed.getData()
+    expect(data.length).toBe(1000)
+    expect(data[0].id).toBe(1)
+  })
+
+  it('getSelected should return selected id', () => {
+    const keyed = require('../lyt/src/keyed-signal.ts')
+    keyed.createElement(CONTAINER_ID)
+    keyed.runBenchmark()
+    keyed.selectRow(42)
+
+    expect(keyed.getSelected()).toBe(43)
+  })
+})
+
+// ============================================================
+// Tests - Non-Keyed Signal Benchmark (Optimized)
+// ============================================================
+
+describe('js-framework-benchmark/non-keyed-signal', () => {
+  let container: MockElement
+  const CONTAINER_ID = 'nonkeyed-signal-test'
+
+  beforeEach(() => {
+    ;(globalThis as any).document = mockDocument
+    container = setupContainer(CONTAINER_ID)
+  })
+
+  afterEach(() => {
+    cleanupContainer(CONTAINER_ID)
+  })
+
+  it('createElement should create container and return handle', () => {
+    const nonKeyed = require('../lyt/src/non-keyed-signal.ts')
+    const result = nonKeyed.createElement(CONTAINER_ID)
+    expect(result.container).toBeTruthy()
+    expect(result.destroy).toBeDefined()
+  })
+
+  it('runBenchmark should render 1000 rows', () => {
+    const nonKeyed = require('../lyt/src/non-keyed-signal.ts')
+    nonKeyed.createElement(CONTAINER_ID)
+    nonKeyed.runBenchmark()
+
+    const trCount = countTrElements(container)
+    expect(trCount).toBe(1001)
+  })
+
+  it('addRow should add one row', () => {
+    const nonKeyed = require('../lyt/src/non-keyed-signal.ts')
+    nonKeyed.createElement(CONTAINER_ID)
+    nonKeyed.runBenchmark()
+    nonKeyed.addRow()
+
+    const ids = getRowIds(container)
+    expect(ids.length).toBe(1001)
+  })
+
+  it('updateEvery10thRow should update correct rows', () => {
+    const nonKeyed = require('../lyt/src/non-keyed-signal.ts')
+    nonKeyed.createElement(CONTAINER_ID)
+    nonKeyed.runBenchmark()
+    nonKeyed.updateEvery10thRow()
+
+    const labels = getRowLabels(container)
+    expect(labels[9]).toBe('Row 10 !!!')
+    expect(labels[0]).toBe('Row 1')
+  })
+
+  it('swapRows should swap rows 1 and 2', () => {
+    const nonKeyed = require('../lyt/src/non-keyed-signal.ts')
+    nonKeyed.createElement(CONTAINER_ID)
+    nonKeyed.runBenchmark()
+    nonKeyed.swapRows()
+
+    const ids = getRowIds(container)
+    expect(ids[0]).toBe(2)
+    expect(ids[1]).toBe(1)
+  })
+
+  it('removeRow should remove last row', () => {
+    const nonKeyed = require('../lyt/src/non-keyed-signal.ts')
+    nonKeyed.createElement(CONTAINER_ID)
+    nonKeyed.runBenchmark()
+    nonKeyed.removeRow()
+
+    const ids = getRowIds(container)
+    expect(ids.length).toBe(999)
+    expect(ids[998]).toBe(999)
+  })
+
+  it('selectRow should mark a row as selected', () => {
+    const nonKeyed = require('../lyt/src/non-keyed-signal.ts')
+    nonKeyed.createElement(CONTAINER_ID)
+    nonKeyed.runBenchmark()
+    nonKeyed.selectRow(30)
+
+    const selected = getSelectedRowIndices(container)
+    expect(selected.length).toBe(1)
+    expect(selected[0]).toBe(30)
+  })
+
+  it('destroy should clean up container', () => {
+    const nonKeyed = require('../lyt/src/non-keyed-signal.ts')
+    const handle = nonKeyed.createElement(CONTAINER_ID)
+    nonKeyed.runBenchmark()
+    handle.destroy()
+
+    expect(container.childNodes.length).toBe(0)
+  })
+})
+
+// ============================================================
 // Tests - IIFE Bundle Validation
 // ============================================================
 

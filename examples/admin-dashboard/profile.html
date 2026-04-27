@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>个人设置 - Admin Dashboard</title>
+  <link rel="stylesheet" href="theme.css">
+  <style>
+    .profile-layout { display: grid; grid-template-columns: 280px 1fr; gap: 20px; }
+    .profile-card { text-align: center; }
+    .profile-avatar-wrapper { position: relative; display: inline-block; margin-bottom: 16px; }
+    .profile-avatar {
+      width: 96px; height: 96px; border-radius: 50%;
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-weight: 700; font-size: 2rem;
+    }
+    .avatar-upload-btn {
+      position: absolute; bottom: 0; right: 0;
+      width: 28px; height: 28px; border-radius: 50%;
+      background: var(--primary); color: white; border: 2px solid var(--bg-card);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; font-size: 0.8rem; transition: transform var(--transition-fast);
+    }
+    .avatar-upload-btn:hover { transform: scale(1.1); }
+    .profile-name { font-size: var(--text-xl); font-weight: 700; margin-bottom: 4px; }
+    .profile-role { font-size: var(--text-sm); color: var(--text-muted); margin-bottom: 16px; }
+    .profile-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
+    .profile-stat { text-align: center; }
+    .profile-stat-value { font-size: var(--text-lg); font-weight: 700; }
+    .profile-stat-label { font-size: var(--text-xs); color: var(--text-muted); }
+    .profile-menu { list-style: none; margin-top: 16px; }
+    .profile-menu-item {
+      display: flex; align-items: center; gap: 10px; padding: 10px 16px;
+      border-radius: var(--radius-md); cursor: pointer; color: var(--text-secondary);
+      transition: all var(--transition-fast); font-size: var(--text-sm); margin-bottom: 2px;
+    }
+    .profile-menu-item:hover { background: var(--bg-hover); color: var(--text-primary); }
+    .profile-menu-item.active { background: var(--primary-bg); color: var(--primary); font-weight: 500; }
+    .profile-form-section { margin-bottom: 24px; }
+    .profile-form-section h3 { font-size: var(--text-md); font-weight: 600; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+    .avatar-preview { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
+    .avatar-preview-large { width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, #3b82f6, #8b5cf6); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1.5rem; }
+    @media (max-width: 768px) { .profile-layout { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div class="layout">
+      <aside class="sidebar" :class="{ collapsed: sidebarCollapsed, 'mobile-open': mobileMenuOpen }">
+        <div class="sidebar-header"><div class="sidebar-logo">L</div><span class="sidebar-title">Admin Dashboard</span></div>
+        <nav class="nav-menu">
+          <div class="nav-group-title">主菜单</div>
+          <a v-for="item in mainNav" :key="item.key" class="nav-item" :href="item.url"><span class="nav-icon">{{ item.icon }}</span><span class="nav-label">{{ item.label }}</span></a>
+          <div class="nav-group-title">系统管理</div>
+          <a v-for="item in systemNav" :key="item.key" class="nav-item" :class="{ active: item.key === 'profile' }" :href="item.url"><span class="nav-icon">{{ item.icon }}</span><span class="nav-label">{{ item.label }}</span></a>
+          <div class="nav-group-title">其他</div>
+          <a v-for="item in otherNav" :key="item.key" class="nav-item" :href="item.url"><span class="nav-icon">{{ item.icon }}</span><span class="nav-label">{{ item.label }}</span></a>
+        </nav>
+        <div class="sidebar-footer">
+          <button class="theme-toggle-btn" @click="toggleTheme"><span class="nav-icon">{{ isDark ? '&#9788;' : '&#9789;' }}</span><span class="nav-label">{{ isDark ? '亮色模式' : '暗色模式' }}</span></button>
+        </div>
+      </aside>
+      <div class="mobile-overlay" :class="{ visible: mobileMenuOpen }" @click="mobileMenuOpen = false"></div>
+
+      <div class="main-content">
+        <header class="topbar">
+          <div class="topbar-left">
+            <button class="toggle-sidebar-btn" @click="toggleSidebar">&#9776;</button>
+            <div class="breadcrumb"><a href="index.html">首页</a><span class="separator">/</span><span class="current">个人设置</span></div>
+          </div>
+          <div class="topbar-right">
+            <div class="topbar-search"><span class="search-icon">&#128269;</span><input type="text" placeholder="搜索..."></div>
+            <button class="notification-btn">&#128276;</button>
+            <div class="user-menu"><div class="user-avatar">A</div><span class="user-name">管理员</span></div>
+          </div>
+        </header>
+
+        <main class="page-content">
+          <div class="page-header"><h1>个人设置</h1><p>管理您的个人信息、头像和安全设置。</p></div>
+
+          <div class="profile-layout">
+            <!-- 左侧个人资料卡 -->
+            <div>
+              <div class="card profile-card">
+                <div class="card-body">
+                  <div class="profile-avatar-wrapper">
+                    <div class="profile-avatar">{{ profile.name[0] }}</div>
+                    <div class="avatar-upload-btn" @click="triggerAvatarUpload" title="更换头像">&#128247;</div>
+                    <input type="file" ref="avatarInput" accept="image/*" style="display:none;" @change="handleAvatarChange">
+                  </div>
+                  <div class="profile-name">{{ profile.name }}</div>
+                  <div class="profile-role">{{ profile.role }}</div>
+                  <p style="font-size:var(--text-sm);color:var(--text-secondary);margin-bottom:8px;">{{ profile.bio }}</p>
+                  <div class="profile-stats">
+                    <div class="profile-stat"><div class="profile-stat-value">128</div><div class="profile-stat-label">文章</div></div>
+                    <div class="profile-stat"><div class="profile-stat-value">1.2k</div><div class="profile-stat-label">关注者</div></div>
+                    <div class="profile-stat"><div class="profile-stat-value">86</div><div class="profile-stat-label">项目</div></div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card mt-2">
+                <div class="card-body" style="padding:8px;">
+                  <ul class="profile-menu">
+                    <li v-for="item in profileMenu" :key="item.key" class="profile-menu-item" :class="{ active: activeTab === item.key }" @click="activeTab = item.key">
+                      <span>{{ item.icon }}</span><span>{{ item.label }}</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <!-- 右侧表单 -->
+            <div>
+              <!-- 基本信息 -->
+              <div class="card" v-if="activeTab === 'basic'">
+                <div class="card-header"><h3>基本信息</h3></div>
+                <div class="card-body">
+                  <div class="form-group">
+                    <label class="form-label">头像</label>
+                    <div class="avatar-preview">
+                      <div class="avatar-preview-large">{{ profile.name[0] }}</div>
+                      <div>
+                        <div style="font-size:var(--text-sm);font-weight:500;">{{ profile.name }}</div>
+                        <div style="font-size:var(--text-xs);color:var(--text-muted);">支持 JPG、PNG 格式，不超过 2MB</div>
+                        <button class="btn btn-sm btn-secondary mt-1" @click="triggerAvatarUpload">更换头像</button>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">昵称</label>
+                    <input class="form-input" v-model="profile.name" placeholder="请输入昵称">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">邮箱</label>
+                    <input class="form-input" type="email" v-model="profile.email" placeholder="请输入邮箱">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">手机号</label>
+                    <input class="form-input" v-model="profile.phone" placeholder="请输入手机号">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">个人简介</label>
+                    <textarea class="form-textarea" v-model="profile.bio" placeholder="介绍一下自己..." rows="3"></textarea>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">个人网站</label>
+                    <input class="form-input" v-model="profile.website" placeholder="https://example.com">
+                  </div>
+                  <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px;">
+                    <button class="btn btn-secondary" @click="showToast('已取消修改', 'info')">取消</button>
+                    <button class="btn btn-primary" @click="saveProfile">保存修改</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 安全设置 -->
+              <div class="card" v-if="activeTab === 'security'">
+                <div class="card-header"><h3>安全设置</h3></div>
+                <div class="card-body">
+                  <div class="profile-form-section">
+                    <h3>修改密码</h3>
+                    <div class="form-group">
+                      <label class="form-label">当前密码</label>
+                      <input class="form-input" type="password" v-model="passwordForm.current" placeholder="请输入当前密码">
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label">新密码</label>
+                      <input class="form-input" type="password" v-model="passwordForm.newPass" placeholder="请输入新密码（至少6位）">
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label">确认新密码</label>
+                      <input class="form-input" type="password" v-model="passwordForm.confirm" placeholder="请再次输入新密码">
+                    </div>
+                    <button class="btn btn-primary" @click="changePassword">修改密码</button>
+                  </div>
+
+                  <div class="profile-form-section">
+                    <h3>两步验证</h3>
+                    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;">
+                      <div>
+                        <div style="font-size:var(--text-sm);font-weight:500;">启用两步验证</div>
+                        <div style="font-size:var(--text-xs);color:var(--text-muted);">通过手机验证码增强账户安全</div>
+                      </div>
+                      <label class="switch"><input type="checkbox" v-model="twoFactor"><span class="switch-slider"></span></label>
+                    </div>
+                  </div>
+
+                  <div class="profile-form-section">
+                    <h3>登录设备</h3>
+                    <div v-for="(device, i) in devices" :key="i" style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border-light);">
+                      <div style="display:flex;align-items:center;gap:10px;">
+                        <span style="font-size:1.2rem;">{{ device.icon }}</span>
+                        <div>
+                          <div style="font-size:var(--text-sm);font-weight:500;">{{ device.name }}</div>
+                          <div style="font-size:var(--text-xs);color:var(--text-muted);">{{ device.location }} - {{ device.time }}</div>
+                        </div>
+                      </div>
+                      <span v-if="device.current" class="tag tag-green">当前设备</span>
+                      <button v-else class="btn btn-sm btn-ghost" style="color:var(--danger);" @click="removeDevice(i)">移除</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 通知设置 -->
+              <div class="card" v-if="activeTab === 'notification'">
+                <div class="card-header"><h3>通知设置</h3></div>
+                <div class="card-body">
+                  <div v-for="(item, i) in notificationSettings" :key="i" style="display:flex;align-items:center;justify-content:space-between;padding:14px 0;" :style="{ borderBottom: i < notificationSettings.length - 1 ? '1px solid var(--border-light)' : 'none' }">
+                    <div>
+                      <div style="font-size:var(--text-sm);font-weight:500;">{{ item.label }}</div>
+                      <div style="font-size:var(--text-xs);color:var(--text-muted);">{{ item.desc }}</div>
+                    </div>
+                    <label class="switch"><input type="checkbox" v-model="item.enabled"><span class="switch-slider"></span></label>
+                  </div>
+                  <div style="display:flex;justify-content:flex-end;margin-top:20px;">
+                    <button class="btn btn-primary" @click="showToast('通知设置已保存', 'success')">保存设置</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+
+      <nav class="mobile-nav">
+        <a v-for="item in mobileNav" :key="item.key" class="mobile-nav-item" :href="item.url"><span class="nav-icon">{{ item.icon }}</span><span>{{ item.label }}</span></a>
+      </nav>
+    </div>
+
+    <div class="toast-container">
+      <div v-for="toast in toasts" :key="toast.id" class="toast" :class="'toast-' + toast.type">
+        <span class="toast-icon">{{ toastIcons[toast.type] }}</span>
+        <span class="toast-message">{{ toast.message }}</span>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { createApp, ref, reactive, watch, onMounted } from 'https://cdn.jsdelivr.net/npm/@lytjs/core@5.0.0/+esm'
+
+    const mainNav = [
+      { key: 'dashboard', icon: '&#9632;', label: '仪表盘', url: 'index.html' },
+      { key: 'users', icon: '&#128100;', label: '用户管理', url: 'users.html' },
+      { key: 'roles', icon: '&#128101;', label: '角色权限', url: 'roles.html' },
+      { key: 'table', icon: '&#128203;', label: '数据表格', url: 'table.html' },
+      { key: 'forms', icon: '&#9997;', label: '表单页面', url: 'forms.html' },
+      { key: 'charts', icon: '&#128200;', label: '图表页面', url: 'charts.html' },
+    ]
+    const systemNav = [
+      { key: 'profile', icon: '&#128100;', label: '个人设置', url: 'profile.html' },
+      { key: 'settings', icon: '&#9881;', label: '系统设置', url: 'settings.html' },
+    ]
+    const otherNav = [
+      { key: 'error', icon: '&#9888;', label: '错误页面', url: 'error.html' },
+      { key: 'login', icon: '&#128274;', label: '退出登录', url: 'login.html' },
+    ]
+    const mobileNav = [
+      { key: 'dashboard', icon: '&#9632;', label: '首页', url: 'index.html' },
+      { key: 'users', icon: '&#128100;', label: '用户', url: 'users.html' },
+      { key: 'table', icon: '&#128203;', label: '表格', url: 'table.html' },
+      { key: 'charts', icon: '&#128200;', label: '图表', url: 'charts.html' },
+      { key: 'profile', icon: '&#9881;', label: '设置', url: 'profile.html' },
+    ]
+
+    const toasts = ref([])
+    let toastId = 0
+    function showToast(msg, type = 'info') { const id = ++toastId; toasts.value.push({ id, message: msg, type }); setTimeout(() => { toasts.value = toasts.value.filter(t => t.id !== id) }, 3000) }
+
+    const app = createApp({
+      setup() {
+        const sidebarCollapsed = ref(false)
+        const mobileMenuOpen = ref(false)
+        const isDark = ref(true)
+        function toggleSidebar() { if (window.innerWidth <= 768) mobileMenuOpen.value = !mobileMenuOpen.value; else sidebarCollapsed.value = !sidebarCollapsed.value }
+        function toggleTheme() { isDark.value = !isDark.value; localStorage.setItem('admin-theme', isDark.value ? 'dark' : 'light') }
+        watch(isDark, (d) => document.documentElement.classList.toggle('light', !d))
+
+        const activeTab = ref('basic')
+        const profileMenu = [
+          { key: 'basic', icon: '&#128100;', label: '基本信息' },
+          { key: 'security', icon: '&#128274;', label: '安全设置' },
+          { key: 'notification', icon: '&#128276;', label: '通知设置' },
+        ]
+
+        const profile = reactive({ name: '管理员', email: 'admin@example.com', phone: '13800138000', bio: '全栈开发工程师，热爱开源技术', role: '超级管理员', website: 'https://example.com' })
+        const avatarInput = ref(null)
+        function triggerAvatarUpload() { avatarInput.value && avatarInput.value.click() }
+        function handleAvatarChange(e) { showToast('头像已更新', 'success') }
+        function saveProfile() { showToast('个人信息已保存', 'success') }
+
+        const passwordForm = reactive({ current: '', newPass: '', confirm: '' })
+        const twoFactor = ref(false)
+        function changePassword() {
+          if (!passwordForm.current) { showToast('请输入当前密码', 'warning'); return }
+          if (passwordForm.newPass.length < 6) { showToast('新密码至少6位', 'warning'); return }
+          if (passwordForm.newPass !== passwordForm.confirm) { showToast('两次密码不一致', 'warning'); return }
+          showToast('密码修改成功', 'success')
+          Object.assign(passwordForm, { current: '', newPass: '', confirm: '' })
+        }
+
+        const devices = reactive([
+          { icon: '&#128187;', name: 'Chrome - macOS', location: '北京', time: '当前会话', current: true },
+          { icon: '&#128241;', name: 'Safari - iPhone 15', location: '北京', time: '2小时前', current: false },
+          { icon: '&#128187;', name: 'Firefox - Windows', location: '上海', time: '1天前', current: false },
+        ])
+        function removeDevice(i) { devices.splice(i, 1); showToast('设备已移除', 'success') }
+
+        const notificationSettings = reactive([
+          { label: '系统通知', desc: '系统维护、更新等重要通知', enabled: true },
+          { label: '邮件通知', desc: '通过邮件接收重要消息', enabled: true },
+          { label: '短信通知', desc: '通过短信接收验证码和提醒', enabled: false },
+          { label: '桌面推送', desc: '浏览器桌面通知推送', enabled: true },
+          { label: '周报摘要', desc: '每周一发送上周数据摘要', enabled: false },
+          { label: '安全提醒', desc: '异常登录、密码修改等安全提醒', enabled: true },
+        ])
+
+        onMounted(() => { const t = localStorage.getItem('admin-theme'); if (t === 'light') { isDark.value = false; document.documentElement.classList.add('light') } })
+
+        return {
+          sidebarCollapsed, mobileMenuOpen, isDark, toggleSidebar, toggleTheme,
+          mainNav, systemNav, otherNav, mobileNav,
+          activeTab, profileMenu, profile, avatarInput,
+          triggerAvatarUpload, handleAvatarChange, saveProfile,
+          passwordForm, twoFactor, changePassword,
+          devices, removeDevice, notificationSettings,
+          toasts, showToast,
+          toastIcons: { success: '&#10004;', error: '&#10008;', warning: '&#9888;', info: '&#8505;' },
+        }
+      },
+    })
+    app.mount('#app')
+  </script>
+</body>
+</html>
