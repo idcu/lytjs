@@ -35,27 +35,11 @@
  */
 
 import { LytError, LytErrorCodes } from '@lytjs/common'
+import type { VNode } from '@lytjs/vdom'
 
 // ================================================================
 //  类型定义
 // ================================================================
-
-/** VNode 类型（与 @lytjs/vdom 对齐） */
-export interface VNode {
-  type: string | object | symbol
-  props: Record<string, any> | null
-  children: string | VNode[] | Record<string, any> | null
-  key: string | number | null
-  ref: any
-  shapeFlag: number
-  patchFlag: number
-  dynamicChildren: VNode[] | null
-  dynamicProps: string[] | null
-  component: any
-  el: any
-  anchor: any
-  [key: string]: any
-}
 
 /** 应用实例接口（简化版） */
 export interface App {
@@ -133,6 +117,11 @@ let _isHydrating: boolean = false;
  * 注水完成回调列表
  */
 const hydrateCallbacks: Array<() => void> = [];
+
+/**
+ * 防重入标志：避免 fireHydratedCallbacks 递归调用
+ */
+let isFiringCallbacks = false;
 
 /**
  * 注水统计信息
@@ -293,6 +282,8 @@ export function hydrate(
  * 触发所有注水完成回调
  */
 function fireHydratedCallbacks(): void {
+  if (isFiringCallbacks) return
+  isFiringCallbacks = true
   const callbacks = hydrateCallbacks.splice(0);
   for (const cb of callbacks) {
     try {
@@ -301,6 +292,7 @@ function fireHydratedCallbacks(): void {
       console.error('[lyt] onHydrated 回调执行失败:', error);
     }
   }
+  isFiringCallbacks = false
 }
 
 // ================================================================
@@ -545,8 +537,8 @@ function hydrateComponentNode(
         vnode.el = subTree.el;
         return;
       }
-    } catch {
-      // 函数式组件调用失败，跳过
+    } catch (e) {
+      console.warn('[Lyt Hydration] 函数式组件调用失败:', e instanceof Error ? e.message : e)
     }
   }
 
@@ -562,8 +554,8 @@ function hydrateComponentNode(
         vnode.el = subTree.el;
         return;
       }
-    } catch {
-      // 组件 render 调用失败，跳过
+    } catch (e) {
+      console.warn('[Lyt Hydration] 组件 render 调用失败:', e instanceof Error ? e.message : e)
     }
   }
 
@@ -849,6 +841,13 @@ function islandEscapeHTML(str: string): string {
 }
 
 /**
+ * HTML 转义（通用）
+ */
+function escapeHTML(str: string): string {
+  return str.replace(/[&<>"']/g, (ch) => ISLAND_ESCAPE_MAP[ch]);
+}
+
+/**
  * 注水特定 island（Partial Hydration）
  *
  * 通过 CSS 选择器找到服务端渲染的 island 元素，
@@ -930,7 +929,8 @@ function parseIslandProps(islandId: string, container: Document | HTMLElement): 
       if (propsAttr) {
         try {
           return JSON.parse(propsAttr);
-        } catch {
+        } catch (e) {
+          console.warn('[Lyt Hydration] 解析 island data-props JSON 失败:', e instanceof Error ? e.message : e)
           return null;
         }
       }
@@ -940,7 +940,8 @@ function parseIslandProps(islandId: string, container: Document | HTMLElement): 
 
   try {
     return JSON.parse(scriptEl.textContent || '{}');
-  } catch {
+  } catch (e) {
+    console.warn('[Lyt Hydration] 解析 island props script JSON 失败:', e instanceof Error ? e.message : e)
     return null;
   }
 }
@@ -1078,14 +1079,18 @@ function hydrateChildEvents(parentEl: HTMLElement, vnode: VNode): void {
             if (subTree && domChildren[i]) {
               hydrateChildEvents(domChildren[i] as HTMLElement, subTree);
             }
-          } catch { /* skip */ }
+          } catch (e) {
+            console.warn('[Lyt Hydration] 递归注水子节点事件 - 函数式组件调用失败:', e instanceof Error ? e.message : e)
+          }
         } else if (comp && typeof comp.render === 'function') {
           try {
             const subTree = comp.render(childVNode.props || {}, { slots: childVNode.children || {}, emit: () => {} });
             if (subTree && domChildren[i]) {
               hydrateChildEvents(domChildren[i] as HTMLElement, subTree);
             }
-          } catch { /* skip */ }
+          } catch (e) {
+            console.warn('[Lyt Hydration] 递归注水子节点事件 - 组件 render 调用失败:', e instanceof Error ? e.message : e)
+          }
         }
       }
 
@@ -1392,13 +1397,14 @@ export function createHydrationIsland(
   }
 
   // 构建 data-hydrate-when 属性
-  const whenAttr = hydrateWhen ? ` data-hydrate-when="${hydrateWhen}"` : '';
+  const whenAttr = hydrateWhen ? ` data-hydrate-when="${escapeHTML(hydrateWhen)}"` : '';
 
-  // 构建 island HTML
-  const html = `<${tag} data-hydrate="${islandId}" data-props="${propsAttr}"${whenAttr}>${content}</${tag}>`;
+  // 构建 island HTML（islandId 需要转义以防止注入）
+  const safeIslandId = escapeHTML(islandId);
+  const html = `<${tag} data-hydrate="${safeIslandId}" data-props="${propsAttr}"${whenAttr}>${content}</${tag}>`;
 
   // 构建 props script 标签
-  const scriptTag = `<script type="application/json" data-hydrate-props="${islandId}">${propsJSON}</script>`;
+  const scriptTag = `<script type="application/json" data-hydrate-props="${safeIslandId}">${propsJSON}</script>`;
 
   return html + scriptTag;
 }
@@ -1429,7 +1435,7 @@ function vnodeToString(vnode: VNode): string {
 
   // Comment
   if (typeof type === 'symbol' && String(type).includes('Comment')) {
-    return `<!--${String(children || '')}-->`;
+    return `<!--${escapeHTML(String(children || ''))}-->`;
   }
 
   // Element

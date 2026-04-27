@@ -12,6 +12,7 @@
 
 import { track, trigger, ReactiveEffect } from './effect';
 import { reactive, isObject } from './reactive';
+import { isObject as isObjectVal } from '@lytjs/common';
 
 // ======================== 类型定义 ========================
 
@@ -33,13 +34,6 @@ export interface Ref<T = any> {
 export type UnwrapRef<T> = T extends Ref<infer V> ? V : T;
 
 // ======================== 内部工具 ========================
-
-/**
- * 判断值是否为对象（非 null）
- */
-function isObjectVal(val: unknown): val is object {
-  return val !== null && typeof val === 'object';
-}
 
 /**
  * Ref Proxy 到内部存储对象的映射
@@ -91,7 +85,7 @@ export function ref<T = any>(value: T): Ref<T> {
     _rawValue: value,
     __v_isRef: true,
     [refSymbol]: true,
-  } as any;
+  } as unknown as Ref<T>;
 
   // 使用 Proxy 拦截 .value 的访问
   const proxy = new Proxy(r, refHandlers) as Ref<T>;
@@ -112,8 +106,16 @@ function convert(value: any): any {
  * Ref 的 Proxy handler
  * 拦截 get 和 set 来实现 .value 的响应式
  */
-const refHandlers: ProxyHandler<any> = {
-  get(target: any, key: string | symbol, receiver: any): any {
+/** Ref 内部存储对象类型 */
+interface RefInternal<T = unknown> {
+  _value: T;
+  _rawValue: T;
+  __v_isRef: true;
+  [refSymbol]: true;
+}
+
+const refHandlers: ProxyHandler<RefInternal> = {
+  get(target: RefInternal, key: string | symbol, receiver: unknown): unknown {
     // 访问 .value 时进行依赖收集
     if (key === 'value') {
       track(target, 'value');
@@ -134,7 +136,7 @@ const refHandlers: ProxyHandler<any> = {
     return Reflect.get(target, key, receiver);
   },
 
-  set(target: any, key: string | symbol, value: any, receiver: any): boolean {
+  set(target: RefInternal, key: string | symbol, value: unknown, receiver: unknown): boolean {
     if (key === 'value') {
       // 获取原始值（用于比较）
       const oldValue = target._rawValue;
@@ -188,7 +190,7 @@ export function shallowRef<T = any>(value: T): Ref<T> {
     __v_isShallow: true,
     [refSymbol]: true,
     [shallowRefSymbol]: true,
-  } as any;
+  } as unknown as Ref<T>;
 
   const proxy = new Proxy(r, shallowRefHandlers) as Ref<T>;
   refToRaw.set(proxy as object, r);
@@ -199,8 +201,18 @@ export function shallowRef<T = any>(value: T): Ref<T> {
  * ShallowRef 的 Proxy handler
  * 与 refHandlers 类似，但不调用 convert（不深层代理）
  */
-const shallowRefHandlers: ProxyHandler<any> = {
-  get(target: any, key: string | symbol, receiver: any): any {
+/** ShallowRef 内部存储对象类型 */
+interface ShallowRefInternal<T = unknown> {
+  _value: T;
+  _rawValue: T;
+  __v_isRef: true;
+  __v_isShallow: true;
+  [refSymbol]: true;
+  [shallowRefSymbol]: true;
+}
+
+const shallowRefHandlers: ProxyHandler<ShallowRefInternal> = {
+  get(target: ShallowRefInternal, key: string | symbol, receiver: unknown): unknown {
     if (key === 'value') {
       track(target, 'value');
       return target._value;
@@ -216,7 +228,7 @@ const shallowRefHandlers: ProxyHandler<any> = {
     return Reflect.get(target, key, receiver);
   },
 
-  set(target: any, key: string | symbol, value: any, receiver: any): boolean {
+  set(target: ShallowRefInternal, key: string | symbol, value: unknown, receiver: unknown): boolean {
     if (key === 'value') {
       const oldValue = target._rawValue;
 

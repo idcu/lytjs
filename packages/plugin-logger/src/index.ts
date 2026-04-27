@@ -49,10 +49,16 @@ interface LogEntry {
   args: any[]
 }
 
+/** 日志插件应用接口（最小化） */
+interface LoggerPluginApp {
+  use(plugin: unknown, options?: unknown): void
+  [key: string]: unknown
+}
+
 /** 日志插件实例 */
 interface Logger {
   /** 安装到 Lyt 应用 */
-  install: (app: any, options?: any) => void
+  install: (app: LoggerPluginApp, options?: LoggerOptions) => void
   /** 调试日志 */
   debug(...args: any[]): void
   /** 信息日志 */
@@ -84,7 +90,7 @@ const LOG_LEVEL_PRIORITY: Record<LogLevel, number> = {
   silent: 4,
 }
 
-/** ANSI 颜色码 */
+/** ANSI 颜色码（Node.js 环境使用） */
 const ANSI_COLORS: Record<string, string> = {
   reset: '\x1b[0m',
   gray: '\x1b[90m',     // debug - 灰色
@@ -93,6 +99,19 @@ const ANSI_COLORS: Record<string, string> = {
   red: '\x1b[31m',      // error - 红色
   bold: '\x1b[1m',
 }
+
+/** CSS 颜色样式（浏览器环境使用） */
+const CSS_COLORS: Record<string, string> = {
+  reset: '',
+  gray: 'color: gray',
+  blue: 'color: #00bcd4',
+  yellow: 'color: #ff9800',
+  red: 'color: #f44336',
+  bold: 'font-weight: bold',
+}
+
+/** 是否为浏览器环境 */
+const isBrowser = typeof window !== 'undefined'
 
 /** localStorage 中存储日志的 key */
 const STORAGE_KEY = 'lyt_logger_logs'
@@ -123,15 +142,19 @@ function serialize(args: any[]): string {
 }
 
 /**
- * 获取日志级别对应的 ANSI 颜色
+ * 获取日志级别对应的颜色
+ *
+ * 在 Node.js 环境中返回 ANSI 颜色码，
+ * 在浏览器环境中返回 CSS 样式字符串。
  */
 function getLevelColor(level: LogLevel): string {
+  const colors = isBrowser ? CSS_COLORS : ANSI_COLORS;
   switch (level) {
-    case 'debug': return ANSI_COLORS.gray
-    case 'info': return ANSI_COLORS.blue
-    case 'warn': return ANSI_COLORS.yellow
-    case 'error': return ANSI_COLORS.red
-    default: return ANSI_COLORS.reset
+    case 'debug': return colors.gray
+    case 'info': return colors.blue
+    case 'warn': return colors.yellow
+    case 'error': return colors.red
+    default: return colors.reset
   }
 }
 
@@ -248,22 +271,42 @@ function createLogger(options?: LoggerOptions): Logger {
     // 控制台彩色输出
     const color = getLevelColor(level)
     const formatted = formatMessage(entry)
-    const coloredOutput = `${color}${formatted}${ANSI_COLORS.reset}`
 
-    // 根据级别选择对应的 console 方法
-    switch (level) {
-      case 'debug':
-        console.debug(coloredOutput, ...args)
-        break
-      case 'info':
-        console.info(coloredOutput, ...args)
-        break
-      case 'warn':
-        console.warn(coloredOutput, ...args)
-        break
-      case 'error':
-        console.error(coloredOutput, ...args)
-        break
+    if (isBrowser) {
+      // 浏览器环境：使用 CSS 样式
+      const resetColor = CSS_COLORS.reset
+      const cssStyle = color || resetColor
+      switch (level) {
+        case 'debug':
+          console.debug(`%c${formatted}`, cssStyle, ...args)
+          break
+        case 'info':
+          console.info(`%c${formatted}`, cssStyle, ...args)
+          break
+        case 'warn':
+          console.warn(`%c${formatted}`, cssStyle, ...args)
+          break
+        case 'error':
+          console.error(`%c${formatted}`, cssStyle, ...args)
+          break
+      }
+    } else {
+      // Node.js 环境：使用 ANSI 颜色码
+      const coloredOutput = `${color}${formatted}${ANSI_COLORS.reset}`
+      switch (level) {
+        case 'debug':
+          console.debug(coloredOutput, ...args)
+          break
+        case 'info':
+          console.info(coloredOutput, ...args)
+          break
+        case 'warn':
+          console.warn(coloredOutput, ...args)
+          break
+        case 'error':
+          console.error(coloredOutput, ...args)
+          break
+      }
     }
 
     // 自定义传输

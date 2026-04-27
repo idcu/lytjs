@@ -378,6 +378,9 @@ function generateModuleCode(
     lines.push(']');
     lines.push('');
     lines.push('function _injectStyles() {');
+    lines.push('  if (typeof document === \'undefined\') {');
+    lines.push('    throw new Error(\'[Lyt Compiler] SFC 编译需要 DOM 环境\')');
+    lines.push('  }');
     lines.push('  for (const css of _styles) {');
     lines.push('    const style = document.createElement("style")');
     lines.push('    style.setAttribute("data-sfc-id", _sfcId)');

@@ -201,6 +201,8 @@ export function createErrorOverlay(err: Error): string {
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
 
   return `<div style="
     position: fixed;

@@ -574,8 +574,8 @@ export class MiniAppLifecycleAdapter {
           try {
             const value = getter.call(result.data);
             result.data[key] = value;
-          } catch {
-            // 忽略初始化错误
+          } catch (e) {
+            console.warn(`[Lyt MiniApp Lifecycle] computed 属性 "${key}" 初始化失败:`, e instanceof Error ? e.message : e)
           }
         }
       }

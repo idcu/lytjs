@@ -9,6 +9,7 @@
 
 import type { MiniAppPlatform } from './miniapp-renderer';
 import { generatePageJson, generateComponentJson, normalizeProps, escapeHtml } from './miniapp-utils';
+import { MINIAPP_COMPONENT_MAP } from './shared-constants';
 
 /* ================================================================
  *  类型定义
@@ -143,30 +144,6 @@ const PLATFORM_PREFIX_MAP: Record<MiniAppPlatform, {
     model: 'model',
     slot: 'slot',
   },
-};
-
-/* ================================================================
- *  HTML 标签到小程序组件映射
- * ================================================================ */
-
-const TAG_MAP: Record<string, string> = {
-  'div': 'view',
-  'span': 'text',
-  'p': 'text',
-  'h1': 'text', 'h2': 'text', 'h3': 'text',
-  'h4': 'text', 'h5': 'text', 'h6': 'text',
-  'img': 'image',
-  'input': 'input',
-  'textarea': 'textarea',
-  'button': 'button',
-  'scroll': 'scroll-view',
-  'list': 'view',
-  'a': 'navigator',
-  'ul': 'view', 'ol': 'view', 'li': 'view',
-  'form': 'form',
-  'header': 'view', 'footer': 'view', 'nav': 'view',
-  'main': 'view', 'section': 'view',
-  'article': 'view', 'aside': 'view',
 };
 
 /* ================================================================
@@ -419,7 +396,7 @@ export class MiniAppCompiler {
 
     return template.replace(tagRegex, (match, tagName: string) => {
       const lowerTag = tagName.toLowerCase();
-      const miniTag = TAG_MAP[lowerTag];
+      const miniTag = MINIAPP_COMPONENT_MAP[lowerTag];
       if (miniTag) {
         return match.replace(tagName, miniTag);
       }
@@ -497,7 +474,7 @@ export class MiniAppCompiler {
 
         let result = `${prefix.for}="{{${dataSource}}}" ${prefix.forItem}="${item}" ${prefix.forKey}="${item}"`;
         if (index) {
-          result += ` wx:for-index="${index}"`;
+          result += ` ${prefix.forIndex}="${index}"`;
         }
         return result;
       }
@@ -734,8 +711,8 @@ export class MiniAppCompiler {
         // 简单解析：提取键值对
         const dataStr = dataPropMatch[1];
         this._parseSimpleObject(dataStr, data);
-      } catch {
-        // 解析失败，忽略
+      } catch (e) {
+        console.warn('[Lyt MiniApp Compiler] 解析 data 对象失败:', e instanceof Error ? e.message : e)
       }
     }
 
@@ -745,8 +722,8 @@ export class MiniAppCompiler {
       try {
         const dataStr = dataFuncMatch[1];
         this._parseSimpleObject(dataStr, data);
-      } catch {
-        // 解析失败，忽略
+      } catch (e) {
+        console.warn('[Lyt MiniApp Compiler] 解析 data() 函数返回值失败:', e instanceof Error ? e.message : e)
       }
     }
 

@@ -45,10 +45,16 @@ interface ThemeOptions {
   debug?: boolean
 }
 
+/** 主题插件应用接口（最小化） */
+interface ThemePluginApp {
+  use(plugin: unknown, options?: unknown): void
+  [key: string]: unknown
+}
+
 /** 主题插件实例 */
 interface ThemePlugin {
   /** 安装到 Lyt 应用 */
-  install: (app: any, options?: any) => void
+  install: (app: ThemePluginApp, options?: ThemeOptions) => void
   /** 当前主题名称 */
   readonly current: string
   /** 切换到指定主题 */
@@ -120,8 +126,10 @@ const BUILT_IN_THEMES: { [key: string]: ThemeConfig } = {
 
 /**
  * 获取根元素（html）
+ * SSR 环境下 document 不可用，返回 null
  */
-function getRootElement(): HTMLElement {
+function getRootElement(): HTMLElement | null {
+  if (typeof document === 'undefined') return null
   return document.documentElement
 }
 
@@ -219,6 +227,7 @@ function createTheme(options: ThemeOptions = {}): ThemePlugin {
    */
   function applyThemeVariables(themeName: string): void {
     const root = getRootElement()
+    if (!root) return
     const config = themes[themeName]
 
     if (!config) {
@@ -348,7 +357,8 @@ function createTheme(options: ThemeOptions = {}): ThemePlugin {
   function setVariable(key: string, value: string): void {
     const cssVar = key.startsWith('--') ? key : `${cssPrefix}${key}`
     dynamicVariables[cssVar] = value
-    getRootElement().style.setProperty(cssVar, value)
+    const root = getRootElement()
+    if (root) root.style.setProperty(cssVar, value)
     log(`set variable '${cssVar}' = '${value}'`)
   }
 
@@ -358,7 +368,8 @@ function createTheme(options: ThemeOptions = {}): ThemePlugin {
   function clearVariable(key: string): void {
     const cssVar = key.startsWith('--') ? key : `${cssPrefix}${key}`
     delete dynamicVariables[cssVar]
-    getRootElement().style.removeProperty(cssVar)
+    const root = getRootElement()
+    if (root) root.style.removeProperty(cssVar)
     log(`cleared variable '${cssVar}'`)
   }
 
@@ -366,8 +377,9 @@ function createTheme(options: ThemeOptions = {}): ThemePlugin {
    * 清除所有动态 CSS 变量
    */
   function clearVariables(): void {
+    const root = getRootElement()
     Object.keys(dynamicVariables).forEach((key) => {
-      getRootElement().style.removeProperty(key)
+      if (root) root.style.removeProperty(key)
     })
     Object.keys(dynamicVariables).forEach((key) => delete dynamicVariables[key])
     // 重新应用主题变量，恢复覆盖的变量

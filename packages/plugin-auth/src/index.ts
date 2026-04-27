@@ -54,12 +54,27 @@ interface AuthOptions {
   onTokenRefreshError?: (error: Error) => void
 }
 
+/** 认证插件应用接口（最小化） */
+interface AuthPluginApp {
+  use(plugin: unknown, options?: unknown): void
+  [key: string]: unknown
+}
+
+/** 认证用户信息 */
+interface AuthUser {
+  id: string | number
+  name: string
+  email?: string
+  role?: string
+  [key: string]: unknown
+}
+
 /** 认证插件实例 */
 interface Auth {
   /** 安装到 Lyt 应用 */
-  install: (app: any, options?: any) => void
+  install: (app: AuthPluginApp, options?: AuthOptions) => void
   /** 当前用户信息 */
-  user: any | null
+  user: AuthUser | null
   /** 是否已认证 */
   isAuthenticated: boolean
   /** 当前 token */
@@ -67,13 +82,13 @@ interface Auth {
   /** 是否正在加载中 */
   loading: boolean
   /** 登录 */
-  login(credentials: Record<string, any>): Promise<any>
+  login(credentials: Record<string, unknown>): Promise<AuthUser>
   /** 登出 */
   logout(): Promise<void>
   /** 注册 */
-  register(data: Record<string, any>): Promise<any>
+  register(data: Record<string, unknown>): Promise<AuthUser>
   /** 获取当前用户信息 */
-  fetchUser(): Promise<any>
+  fetchUser(): Promise<AuthUser>
   /** 获取 token */
   getToken(): string | null
   /** 设置 token */
@@ -87,7 +102,7 @@ interface Auth {
   /** 刷新 Token */
   refreshToken(): Promise<string | null>
   /** 设置路由守卫，自动检查登录状态 */
-  setupRouterGuard(router: any): void
+  setupRouterGuard(router: Record<string, unknown>): void
 }
 
 // ======================== 工具函数 ========================

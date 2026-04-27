@@ -196,6 +196,12 @@ export function runSetup(setupFn: Function, instance: any, props: any, ctx: any)
     const result = setupFn(props, ctx)
     return result
   } finally {
+    // 组件卸载时自动清理 provideMap，避免内存泄漏
+    const hooks = instance._lifecycleHooks || (instance._lifecycleHooks = {})
+    const unmounted = hooks.unmounted || (hooks.unmounted = [])
+    unmounted.push(() => {
+      provideMap.delete(instance)
+    })
     currentSetupInstance = null
   }
 }

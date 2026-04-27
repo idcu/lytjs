@@ -29,37 +29,37 @@ import { getSequence } from '@lytjs/common'
  */
 export interface DOMOperations {
   /** 插入元素到参考节点之前 */
-  insert(child: any, parent: any, anchor: any): void
+  insert(child: unknown, parent: unknown, anchor: unknown): void
 
   /** 创建元素 */
-  createElement(tag: string): any
+  createElement(tag: string): unknown
 
   /** 创建文本节点 */
-  createText(text: string): any
+  createText(text: string): unknown
 
   /** 设置文本内容 */
-  setText(node: any, text: string): void
+  setText(node: unknown, text: string): void
 
   /** 设置元素属性 */
-  setElementText(el: any, text: string): void
+  setElementText(el: unknown, text: string): void
 
   /** 移除元素 */
-  remove(child: any): void
+  remove(child: unknown): void
 
   /** 创建注释节点 */
-  createComment(text: string): any
+  createComment(text: string): unknown
 
   /** 将子节点挂载到容器 */
-  mount(vnode: VNode, container: any, anchor: any, parentComponent: any, parentSuspense: any, isSVG: boolean, optimized: boolean): void
+  mount(vnode: VNode, container: unknown, anchor: unknown, parentComponent: unknown, parentSuspense: unknown, isSVG: boolean, optimized: boolean): void
 
   /** 对比更新子节点 */
-  patch(oldVNode: VNode, newVNode: VNode, container: any, anchor: any, parentComponent: any, parentSuspense: any, isSVG: boolean, optimized: boolean): void
+  patch(oldVNode: VNode, newVNode: VNode, container: unknown, anchor: unknown, parentComponent: unknown, parentSuspense: unknown, isSVG: boolean, optimized: boolean): void
 
   /** 卸载子节点 */
-  unmount(vnode: VNode, parentComponent: any, parentSuspense: any, doRemove?: boolean): void
+  unmount(vnode: VNode, parentComponent: unknown, parentSuspense: unknown, doRemove?: boolean): void
 
   /** 移动元素 */
-  move(vnode: VNode, container: any, anchor: any): void
+  move(vnode: VNode, container: unknown, anchor: unknown): void
 }
 
 /** 已注册的 DOM 操作实例 */

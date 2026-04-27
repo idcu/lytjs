@@ -72,6 +72,19 @@ const PACKAGE_ENTRIES = {
   store: 'src/index.ts',
   devtools: 'src/index.ts',
   cli: 'src/index.ts',
+  compat: 'src/index.ts',
+  components: 'src/index.ts',
+  ai: 'src/index.ts',
+  lytx: 'src/index.ts',
+  lytjs: 'src/index.ts',
+  plugins: 'src/index.ts',
+  'plugin-sdk': 'src/index.ts',
+  'plugin-auth': 'src/index.ts',
+  'plugin-i18n': 'src/index.ts',
+  'plugin-logger': 'src/index.ts',
+  'plugin-storage': 'src/index.ts',
+  'plugin-theme': 'src/index.ts',
+  'test-utils': 'src/index.ts',
 };
 
 // ============================================================

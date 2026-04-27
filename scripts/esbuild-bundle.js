@@ -45,7 +45,7 @@ const CORE_PACKAGES = [
 ]
 
 /** @lyt/* 包名前缀，用于 external 匹配 */
-const LYT_EXTERNAL_PREFIX = '@lyt/'
+const LYT_EXTERNAL_PREFIX = '@lytjs/'
 
 // ============================================================
 // 命令行参数解析
@@ -147,7 +147,7 @@ async function bundlePackage(packageName, report) {
   const lytExternalPlugin = {
     name: 'lyt-external',
     setup(build) {
-      build.onResolve({ filter: /^@lyt\/.*/ }, args => ({
+      build.onResolve({ filter: /^@lytjs\/.*/ }, args => ({
         path: args.path,
         external: true,
       }))
@@ -164,7 +164,7 @@ async function bundlePackage(packageName, report) {
     sourcemap: false,
     logLevel: 'warning',
     // 生产构建优化：移除 console.log / console.debug / console.info 和 debugger 语句
-    drop: ['console', 'debugger'],
+    drop: ['console.log', 'console.debug', 'console.info', 'debugger'],
     // 纯标记：告知 esbuild 模块没有副作用，增强 tree-shaking
     pure: [],
     // 忽略注释，减少产物体积

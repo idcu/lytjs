@@ -32,7 +32,7 @@ import { handleGenerateCommand, GENERATE_HELP } from './generate';
 // ============================================================
 
 /** CLI 版本号 */
-const VERSION = '0.2.0';
+const VERSION = '4.2.0';
 
 /** CLI 名称 */
 const CLI_NAME = 'lytx';

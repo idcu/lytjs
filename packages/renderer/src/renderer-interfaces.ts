@@ -27,21 +27,21 @@ export interface LytRenderer {
    * @param tag 标签名（如 'div', 'span'）
    * @returns 平台特定的元素引用
    */
-  createElement(tag: string): any
+  createElement(tag: string): unknown
 
   /**
    * 创建文本节点
    * @param text 文本内容
    * @returns 平台特定的文本节点引用
    */
-  createText(text: string): any
+  createText(text: string): unknown
 
   /**
    * 创建注释节点
    * @param text 注释内容
    * @returns 平台特定的注释节点引用
    */
-  createComment(text: string): any
+  createComment(text: string): unknown
 
   /**
    * 设置元素属性
@@ -49,28 +49,28 @@ export interface LytRenderer {
    * @param key 属性名
    * @param val 属性值
    */
-  setAttribute(el: any, key: string, val: any): void
+  setAttribute(el: unknown, key: string, val: unknown): void
 
   /**
    * 移除元素属性
    * @param el  元素引用
    * @param key 属性名
    */
-  removeAttribute(el: any, key: string): void
+  removeAttribute(el: unknown, key: string): void
 
   /**
    * 设置元素样式
    * @param el    元素引用
    * @param style 样式对象或字符串
    */
-  setStyle(el: any, style: object): void
+  setStyle(el: unknown, style: object): void
 
   /**
    * 设置元素 class
    * @param el  元素引用
    * @param cls class 值（字符串或对象）
    */
-  setClass(el: any, cls: string | object): void
+  setClass(el: unknown, cls: string | object): void
 
   /**
    * 插入子节点
@@ -78,13 +78,13 @@ export interface LytRenderer {
    * @param child  子节点
    * @param ref    参考节点（插入到其前面），可选
    */
-  insert(parent: any, child: any, ref?: any): void
+  insert(parent: unknown, child: unknown, ref?: unknown): void
 
   /**
    * 移除节点
    * @param child 要移除的节点
    */
-  remove(child: any): void
+  remove(child: unknown): void
 
   /**
    * 替换子节点
@@ -92,7 +92,7 @@ export interface LytRenderer {
    * @param oldChild 被替换的旧节点
    * @param newChild 替换的新节点
    */
-  replace(parent: any, oldChild: any, newChild: any): void
+  replace(parent: unknown, oldChild: unknown, newChild: unknown): void
 
   /**
    * 添加事件监听器
@@ -101,7 +101,7 @@ export interface LytRenderer {
    * @param handler 事件处理函数
    * @param options 事件选项（可选）
    */
-  addEventListener(el: any, event: string, handler: Function, options?: any): void
+  addEventListener(el: unknown, event: string, handler: (...args: unknown[]) => void, options?: unknown): void
 
   /**
    * 移除事件监听器
@@ -109,34 +109,34 @@ export interface LytRenderer {
    * @param event   事件名
    * @param handler 事件处理函数
    */
-  removeEventListener(el: any, event: string, handler: Function): void
+  removeEventListener(el: unknown, event: string, handler: (...args: unknown[]) => void): void
 
   /**
    * 在下一个微任务中执行回调
    * @param cb 回调函数
    */
-  nextTick(cb: Function): void
+  nextTick(cb: (...args: unknown[]) => void): void
 
   /**
    * 获取父节点
    * @param el 元素引用
    * @returns 父节点引用
    */
-  parentNode(el: any): any
+  parentNode(el: unknown): unknown
 
   /**
    * 获取下一个兄弟节点
    * @param el 元素引用
    * @returns 下一个兄弟节点引用
    */
-  nextSibling(el: any): any
+  nextSibling(el: unknown): unknown
 
   /**
    * 查询选择器
    * @param selector CSS 选择器
    * @returns 匹配的元素引用
    */
-  querySelector(selector: string): any
+  querySelector(selector: string): unknown
 }
 
 /* ================================================================
@@ -159,7 +159,7 @@ export interface RendererInstance {
    * @param vnode     VNode 树
    * @param container 容器元素
    */
-  mount(vnode: VNode, container: any): void
+  mount(vnode: VNode, container: unknown): void
 
   /**
    * 对比更新新旧 VNode
@@ -170,7 +170,7 @@ export interface RendererInstance {
    * @param newVNode 新 VNode
    * @param container 容器元素（可选）
    */
-  patch(oldVNode: VNode, newVNode: VNode, container?: any): void
+  patch(oldVNode: VNode, newVNode: VNode, container?: unknown): void
 
   /**
    * 卸载 VNode
@@ -180,5 +180,5 @@ export interface RendererInstance {
    * @param vnode     VNode
    * @param container 容器元素（可选）
    */
-  unmount(vnode: VNode, container?: any): void
+  unmount(vnode: VNode, container?: unknown): void
 }

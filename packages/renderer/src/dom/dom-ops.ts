@@ -198,8 +198,9 @@ export function setDOMProp(el: any, key: string, value: any): void {
     // 使用 property 设置
     try {
       el[propKey] = value === null || value === undefined ? '' : value;
-    } catch {
+    } catch (e) {
       // 只读属性会抛出异常，回退到 setAttribute
+      console.warn(`[Lyt DOM] 设置属性 "${key}" 失败（只读属性），回退到 setAttribute:`, e instanceof Error ? e.message : e)
       el.setAttribute(key, value === null || value === undefined ? '' : String(value));
     }
     return;
@@ -273,8 +274,9 @@ export function removeDOMProp(el: any, key: string): void {
   if (propKey in el) {
     try {
       el[propKey] = '';
-    } catch {
+    } catch (e) {
       // 只读属性回退到 removeAttribute
+      console.warn(`[Lyt DOM] 移除属性 "${key}" 失败（只读属性），回退到 removeAttribute:`, e instanceof Error ? e.message : e)
       el.removeAttribute(key);
     }
     return;

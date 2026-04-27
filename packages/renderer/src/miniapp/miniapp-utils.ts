@@ -6,39 +6,10 @@
  * 纯原生零依赖 TypeScript 实现。
  */
 
-/* ================================================================
- *  命名转换
- * ================================================================ */
+import { camelToKebab, kebabToCamel } from '@lytjs/common';
 
-/**
- * 驼峰命名转短横线命名
- *
- * @example
- * camelToKebab('fontSize') // => 'font-size'
- * camelToKebab('backgroundColor') // => 'background-color'
- * camelToKebab('borderTopWidth') // => 'border-top-width'
- *
- * @param str 驼峰命名字符串
- * @returns 短横线命名字符串
- */
-export function camelToKebab(str: string): string {
-  return str.replace(/([A-Z])/g, '-$1').toLowerCase();
-}
-
-/**
- * 短横线命名转驼峰命名
- *
- * @example
- * kebabToCamel('font-size') // => 'fontSize'
- * kebabToCamel('background-color') // => 'backgroundColor'
- * kebabToCamel('border-top-width') // => 'borderTopWidth'
- *
- * @param str 短横线命名字符串
- * @returns 驼峰命名字符串
- */
-export function kebabToCamel(str: string): string {
-  return str.replace(/-([a-z])/g, (_, char: string) => char.toUpperCase());
-}
+// 重新导出，保持向后兼容
+export { camelToKebab, kebabToCamel };
 
 /* ================================================================
  *  样式处理

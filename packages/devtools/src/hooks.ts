@@ -131,9 +131,6 @@ const callbacks: DevToolsCallbacks = {};
 /** 是否已连接 */
 let isConnected = false;
 
-/** 原始方法备份（用于拦截后恢复） */
-const originalMethods = new Map<any, Map<string, Function>>();
-
 // ============================================================
 // 工具函数
 // ============================================================

@@ -13,23 +13,30 @@ import { LytError, LytErrorCodes, getErrorMessage, getCategory } from '@lytjs/co
 //  1. 错误边界（Error Boundary）
 // ============================================================
 
+/** 组件实例接口（最小化） */
+interface ComponentInstance {
+  $options?: Record<string, unknown>
+  $parent?: ComponentInstance | null
+  [key: string]: unknown
+}
+
 export interface ErrorBoundaryOptions {
-  onError?: (error: LytError, vm: any) => void
-  onErrorCaptured?: (error: LytError, vm: any, info: string) => boolean | void
+  onError?: (error: LytError, vm: ComponentInstance) => void
+  onErrorCaptured?: (error: LytError, vm: ComponentInstance, info: string) => boolean | void
   /** 最大错误记录数，超过后自动丢弃最早的错误，默认 100 */
   maxErrors?: number
   /** 降级 UI 回调，当捕获到错误时调用，返回降级内容 */
-  fallback?: (error: Error, vm: any, info: string) => any
+  fallback?: (error: Error, vm: ComponentInstance, info: string) => unknown
 }
 
 export class ErrorBoundary {
-  private errors: Array<{ error: Error; vm: any; info: string; timestamp: number }>
+  private errors: Array<{ error: Error; vm: ComponentInstance; info: string; timestamp: number }>
   private options: ErrorBoundaryOptions
   /** 是否处于错误状态 */
   private _hasError: boolean
 
   /** 全局错误处理器 */
-  static globalHandler: ((error: Error, vm: any, info: string) => void) | null = null
+  static globalHandler: ((error: Error, vm: ComponentInstance, info: string) => void) | null = null
 
   constructor(options?: ErrorBoundaryOptions) {
     this.errors = []
@@ -45,14 +52,14 @@ export class ErrorBoundary {
   /**
    * 设置全局错误处理器
    */
-  static setGlobalHandler(handler: (error: Error, vm: any, info: string) => void): void {
+  static setGlobalHandler(handler: (error: Error, vm: ComponentInstance, info: string) => void): void {
     ErrorBoundary.globalHandler = handler
   }
 
   /**
    * 捕获错误
    */
-  capture(error: Error, vm: any, info?: string): void {
+  capture(error: Error, vm: ComponentInstance, info?: string): void {
     const entry = {
       error,
       vm,
@@ -92,7 +99,7 @@ export class ErrorBoundary {
    * 获取降级 UI 内容
    * 当配置了 fallback 回调时，使用最后捕获的错误生成降级内容
    */
-  getFallback(vm?: any): any {
+  getFallback(vm?: ComponentInstance): unknown {
     if (!this.options.fallback || this.errors.length === 0) return null
     const lastError = this.errors[this.errors.length - 1]
     return this.options.fallback(lastError.error, lastError.vm, lastError.info)
@@ -243,8 +250,10 @@ export function handleError(err: Error, vm?: any, info?: string): void {
       console.error('错误来源:', info)
     }
   } else {
-    // 生产模式：可以在此处添加错误上报逻辑
-    // 例如：reportError(err)
+    // 生产模式：上报错误
+    if (typeof reportError === 'function') {
+      reportError(err)
+    }
   }
 }
 

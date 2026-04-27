@@ -160,12 +160,24 @@ export function patchSignalState(signalState: SignalState, partial: Record<strin
 /**
  * 清理 Signal 状态（停止所有 Signal 的订阅）
  *
- * 注意：当前 Signal 实现没有显式的 dispose 方法，
- * 此函数为未来扩展预留。
+ * 遍历状态对象中的所有 Signal，调用其 dispose 方法释放资源。
+ * 调用后状态对象中的所有 Signal 将被清空。
  *
  * @param signalState - Signal 状态对象
  */
 export function disposeSignalState(signalState: SignalState): void {
-  // 当前 signal() 实现没有 dispose 方法
-  // 预留接口，未来可在此处清理
+  if (!signalState) return
+  const keys = Object.keys(signalState)
+  for (let i = 0; i < keys.length; i++) {
+    const key = keys[i]
+    const sig = signalState[key]
+    if (sig && typeof sig === 'function' && 'dispose' in (sig as object)) {
+      try {
+        (sig as WritableSignal<any>).dispose()
+      } catch {
+        // dispose 失败时静默忽略
+      }
+    }
+    delete signalState[key]
+  }
 }

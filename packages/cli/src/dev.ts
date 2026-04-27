@@ -13,21 +13,26 @@ import { createHMREndpoint, getHMRClientScript, type HMRUpdate } from './hmr';
 // ============================================================
 // esbuild 加载（带友好错误提示）
 // ============================================================
-let esbuild: any;
-try {
-  esbuild = require('esbuild');
-} catch {
-  logger.error('缺少依赖: esbuild');
-  logger.error('');
-  logger.error('  Lyt CLI 的开发服务器需要 esbuild 来实时编译 TypeScript。');
-  logger.error('');
-  logger.error('  请执行以下命令安装:');
-  logger.error(`    ${colorText('npm install esbuild --save-dev', 'brightGreen')}`);
-  logger.error('');
-  logger.error('  如果您使用 pnpm:');
-  logger.error(`    ${colorText('pnpm add esbuild -D', 'brightGreen')}`);
-  logger.error('');
-  process.exit(1);
+let esbuild: any = null;
+async function loadEsbuild(): Promise<any> {
+  if (!esbuild) {
+    try {
+      esbuild = await import('esbuild');
+    } catch {
+      logger.error('缺少依赖: esbuild');
+      logger.error('');
+      logger.error('  Lyt CLI 的开发服务器需要 esbuild 来实时编译 TypeScript。');
+      logger.error('');
+      logger.error('  请执行以下命令安装:');
+      logger.error(`    ${colorText('npm install esbuild --save-dev', 'brightGreen')}`);
+      logger.error('');
+      logger.error('  如果您使用 pnpm:');
+      logger.error(`    ${colorText('pnpm add esbuild -D', 'brightGreen')}`);
+      logger.error('');
+      process.exit(1);
+    }
+  }
+  return esbuild;
 }
 
 // ============================================================
@@ -235,10 +240,13 @@ function serveStatic(
  * @param options.root - 项目根目录（默认当前工作目录）
  * @param options.hmr - 是否启用 HMR（默认 true）
  */
-export function startDevServer(options: DevServerOptions = {}): void {
+export async function startDevServer(options: DevServerOptions = {}): Promise<void> {
   const port = options.port || 3000;
   const rootDir = path.resolve(options.root || process.cwd());
   const enableHMR = options.hmr !== false;
+
+  // 动态加载 esbuild
+  await loadEsbuild();
 
   // 创建 HMR WebSocket 端点
   // 创建 HTTP 服务器

@@ -12,6 +12,15 @@
  */
 
 import type { LytRenderer } from '../renderer-interfaces';
+import { MINIAPP_COMPONENT_MAP, EVENT_PREFIX_MAP } from './shared-constants';
+import {
+  insertChild,
+  removeChild,
+  replaceChild,
+  getParentNode,
+  getNextSibling,
+  nextTick as sharedNextTick,
+} from '../shared/abstract-renderer';
 
 /* ================================================================
  *  小程序模板节点描述
@@ -80,63 +89,6 @@ const DIRECTIVE_MAP: Record<string, { attr: string; prefix?: string }> = {
 /* ================================================================
  *  事件映射
  * ================================================================ */
-
-/**
- * DOM 事件名到小程序事件名的映射
- *
- * 小程序使用 bind/catch 前缀绑定事件，事件名与 Web 略有不同：
- *   - click → tap（微信/支付宝/字节通用）
- *   - input / change / submit 等保持一致
- */
-const EVENT_PREFIX_MAP: Record<string, string> = {
-  'click': 'tap',
-  'input': 'input',
-  'change': 'change',
-  'submit': 'submit',
-  'focus': 'focus',
-  'blur': 'blur',
-  'touchstart': 'touchstart',
-  'touchend': 'touchend',
-  'touchmove': 'touchmove',
-  'scroll': 'scroll',
-  'longpress': 'longpress',
-};
-
-/* ================================================================
- *  HTML 标签到小程序组件的映射
- * ================================================================ */
-
-/**
- * HTML 标签到小程序组件名的映射
- *
- * 小程序使用自定义组件而非 HTML 标签：
- *   - div / section / header 等 → view
- *   - span / p / h1-h6 → text
- *   - img → image
- *   - a → navigator
- *   - input → input
- *   - scroll → scroll-view
- *   - list → （小程序无直接对应，使用 view + wx:for）
- */
-const MINIAPP_COMPONENT_MAP: Record<string, string> = {
-  'div': 'view',
-  'span': 'text',
-  'p': 'text',
-  'h1': 'text', 'h2': 'text', 'h3': 'text',
-  'h4': 'text', 'h5': 'text', 'h6': 'text',
-  'img': 'image',
-  'input': 'input',
-  'textarea': 'textarea',
-  'button': 'button',
-  'scroll': 'scroll-view',
-  'list': 'view',
-  'a': 'navigator',
-  'ul': 'view', 'ol': 'view', 'li': 'view',
-  'form': 'form',
-  'header': 'view', 'footer': 'view', 'nav': 'view',
-  'main': 'view', 'section': 'view',
-  'article': 'view', 'aside': 'view',
-};
 
 /* ================================================================
  *  平台条件前缀配置
@@ -373,28 +325,7 @@ export class MiniAppRenderer implements LytRenderer {
    * @param ref    参考节点（插入到其前面），可选
    */
   insert(parent: MiniAppNode, child: MiniAppNode, ref?: MiniAppNode): void {
-    if (!parent || !child) return;
-
-    // 清除旧父节点引用
-    if (child._parent) {
-      const oldParent = child._parent;
-      const idx = oldParent.children.indexOf(child);
-      if (idx !== -1) oldParent.children.splice(idx, 1);
-    }
-
-    // 设置新父节点引用
-    child._parent = parent;
-
-    if (ref) {
-      const idx = parent.children.indexOf(ref);
-      if (idx !== -1) {
-        parent.children.splice(idx, 0, child);
-      } else {
-        parent.children.push(child);
-      }
-    } else {
-      parent.children.push(child);
-    }
+    insertChild(parent, child, ref);
   }
 
   /**
@@ -402,14 +333,7 @@ export class MiniAppRenderer implements LytRenderer {
    * @param child 要移除的节点
    */
   remove(child: MiniAppNode): void {
-    if (!child || !child._parent) return;
-
-    const parent = child._parent;
-    const idx = parent.children.indexOf(child);
-    if (idx !== -1) {
-      parent.children.splice(idx, 1);
-    }
-    child._parent = undefined;
+    removeChild(child);
   }
 
   /**
@@ -419,14 +343,7 @@ export class MiniAppRenderer implements LytRenderer {
    * @param newChild 替换的新节点
    */
   replace(parent: MiniAppNode, oldChild: MiniAppNode, newChild: MiniAppNode): void {
-    if (!parent || !oldChild || !newChild) return;
-
-    const idx = parent.children.indexOf(oldChild);
-    if (idx !== -1) {
-      oldChild._parent = undefined;
-      newChild._parent = parent;
-      parent.children[idx] = newChild;
-    }
+    replaceChild(parent, oldChild, newChild);
   }
 
   /* --------------------------------------------------
@@ -469,7 +386,7 @@ export class MiniAppRenderer implements LytRenderer {
    * @param cb 回调函数
    */
   nextTick(cb: Function): void {
-    Promise.resolve().then(() => cb());
+    sharedNextTick(cb);
   }
 
   /**
@@ -478,7 +395,7 @@ export class MiniAppRenderer implements LytRenderer {
    * @returns 父节点，无父节点时返回 null
    */
   parentNode(el: MiniAppNode): MiniAppNode | null {
-    return el?._parent ?? null;
+    return getParentNode(el) as MiniAppNode | null;
   }
 
   /**
@@ -487,12 +404,7 @@ export class MiniAppRenderer implements LytRenderer {
    * @returns 下一个兄弟节点，无时返回 null
    */
   nextSibling(el: MiniAppNode): MiniAppNode | null {
-    if (!el || !el._parent) return null;
-    const siblings = el._parent.children;
-    const idx = siblings.indexOf(el);
-    return idx !== -1 && idx + 1 < siblings.length
-      ? siblings[idx + 1]
-      : null;
+    return getNextSibling(el) as MiniAppNode | null;
   }
 
   /**

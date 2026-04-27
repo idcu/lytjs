@@ -14,10 +14,6 @@ packages.forEach(pkg => {
     const tsconfig = JSON.parse(fs.readFileSync(tsconfigPath, 'utf-8'));
     
     if (tsconfig.compilerOptions && tsconfig.compilerOptions.paths) {
-      // 确保 @lytjs/shared 的路径映射
-      tsconfig.compilerOptions.paths['@lytjs/shared'] = ['../shared/src'];
-      tsconfig.compilerOptions.paths['@lytjs/shared/*'] = ['../shared/src/*'];
-      
       fs.writeFileSync(tsconfigPath, JSON.stringify(tsconfig, null, 2));
       console.log(`Updated ${pkg}/tsconfig.json');
     }

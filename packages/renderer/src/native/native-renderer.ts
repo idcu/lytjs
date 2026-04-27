@@ -11,6 +11,14 @@
  */
 
 import type { LytRenderer } from '../renderer-interfaces';
+import {
+  insertChild,
+  removeChild,
+  replaceChild,
+  getParentNode,
+  getNextSibling,
+  nextTick as sharedNextTick,
+} from '../shared/abstract-renderer';
 
 /* ================================================================
  *  LytRendererPlatform 标准接口
@@ -387,28 +395,7 @@ export class NativeRenderer implements LytRenderer {
    * @param ref    参考节点（插入到其前面），可选
    */
   insert(parent: NativeNode, child: NativeNode, ref?: NativeNode): void {
-    if (!parent || !child) return;
-
-    // 清除旧父节点引用
-    if (child._parent) {
-      const oldParent = child._parent;
-      const idx = oldParent.children.indexOf(child);
-      if (idx !== -1) oldParent.children.splice(idx, 1);
-    }
-
-    // 设置新父节点引用
-    child._parent = parent;
-
-    if (ref) {
-      const idx = parent.children.indexOf(ref);
-      if (idx !== -1) {
-        parent.children.splice(idx, 0, child);
-      } else {
-        parent.children.push(child);
-      }
-    } else {
-      parent.children.push(child);
-    }
+    insertChild(parent, child, ref);
   }
 
   /**
@@ -416,14 +403,7 @@ export class NativeRenderer implements LytRenderer {
    * @param child 要移除的节点
    */
   remove(child: NativeNode): void {
-    if (!child || !child._parent) return;
-
-    const parent = child._parent;
-    const idx = parent.children.indexOf(child);
-    if (idx !== -1) {
-      parent.children.splice(idx, 1);
-    }
-    child._parent = undefined;
+    removeChild(child);
   }
 
   /**
@@ -433,16 +413,7 @@ export class NativeRenderer implements LytRenderer {
    * @param newChild 替换的新节点
    */
   replace(parent: NativeNode, oldChild: NativeNode, newChild: NativeNode): void {
-    if (!parent || !oldChild || !newChild) return;
-
-    const idx = parent.children.indexOf(oldChild);
-    if (idx !== -1) {
-      // 清除旧节点的父引用
-      oldChild._parent = undefined;
-      // 设置新节点的父引用
-      newChild._parent = parent;
-      parent.children[idx] = newChild;
-    }
+    replaceChild(parent, oldChild, newChild);
   }
 
   /* --------------------------------------------------
@@ -487,8 +458,7 @@ export class NativeRenderer implements LytRenderer {
    * @param cb 回调函数
    */
   nextTick(cb: Function): void {
-    // 使用 Promise 微任务实现
-    Promise.resolve().then(() => cb());
+    sharedNextTick(cb);
   }
 
   /**
@@ -497,7 +467,7 @@ export class NativeRenderer implements LytRenderer {
    * @returns 父节点，无父节点时返回 null
    */
   parentNode(el: NativeNode): NativeNode | null {
-    return el?._parent ?? null;
+    return getParentNode(el) as NativeNode | null;
   }
 
   /**
@@ -506,12 +476,7 @@ export class NativeRenderer implements LytRenderer {
    * @returns 下一个兄弟节点，无时返回 null
    */
   nextSibling(el: NativeNode): NativeNode | null {
-    if (!el || !el._parent) return null;
-    const siblings = el._parent.children;
-    const idx = siblings.indexOf(el);
-    return idx !== -1 && idx + 1 < siblings.length
-      ? siblings[idx + 1]
-      : null;
+    return getNextSibling(el) as NativeNode | null;
   }
 
   /**

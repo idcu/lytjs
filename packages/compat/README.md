@@ -51,7 +51,7 @@ createApp(App).mount('#app');
 
 ```javascript
 import {
-  ref, shallowRef, toRef, toRefs, unref, proxyRefs,
+  ref, shallowRef, toRef, toRefs, unref,
   reactive, readonly, shallowReactive,
   computed,
   watch, watchEffect, watchPostEffect, watchSyncEffect,

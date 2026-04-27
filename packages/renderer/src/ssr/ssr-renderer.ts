@@ -123,21 +123,20 @@ const ESCAPE_MAP: Record<string, string> = {
  */
 const ESCAPE_RE = /[&<>"']/g;
 
-/**
- * ShapeFlags 位标记
- * 与 @lytjs/vdom 的 ShapeFlags 保持一致
- */
-const ShapeFlags = {
-  ELEMENT: 1,
-  FUNCTIONAL_COMPONENT: 2,
-  STATEFUL_COMPONENT: 4,
-  TEXT_CHILDREN: 8,
-  ARRAY_CHILDREN: 16,
-  SLOTS_CHILDREN: 32,
-};
+import { ShapeFlags } from '@lytjs/vdom';
+import { normalizeClass, normalizeStyle } from '@lytjs/common';
 
 /** Suspense 边界计数器 */
 let suspenseBoundaryId = 0;
+
+/**
+ * 重置 Suspense 边界 ID 计数器
+ *
+ * 在服务端渲染多个独立页面时调用，避免 ID 跨请求泄漏。
+ */
+export function resetSuspenseBoundaryId(): void {
+  suspenseBoundaryId = 0;
+}
 
 // ================================================================
 //  HTML 转义工具
@@ -229,74 +228,6 @@ export function serializeProp(key: string, value: any): string {
 
   // 普通属性
   return `${key}="${escapeHTML(String(value))}"`;
-}
-
-/**
- * 标准化 class 值
- *
- * 支持多种形式的 class 输入：
- *   - 字符串：'foo bar'
- *   - 数组：['foo', 'bar']
- *   - 对象：{ foo: true, bar: false }
- *   - 混合：['foo', { bar: true }]
- *
- * @param value class 值
- * @returns 标准化后的 class 字符串
- */
-export function normalizeClass(value: any): string {
-  if (!value) return '';
-
-  if (typeof value === 'string') {
-    return value;
-  }
-
-  if (Array.isArray(value)) {
-    return value.map(normalizeClass).filter(Boolean).join(' ');
-  }
-
-  if (typeof value === 'object') {
-    const classes: string[] = [];
-    for (const key in value) {
-      if (value[key]) {
-        classes.push(key);
-      }
-    }
-    return classes.join(' ');
-  }
-
-  return String(value);
-}
-
-/**
- * 标准化 style 值
- *
- * 支持两种形式的 style 输入：
- *   - 字符串：'color: red; font-size: 14px'
- *   - 对象：{ color: 'red', fontSize: '14px' }
- *
- * @param value style 值
- * @returns 标准化后的 style 字符串
- */
-export function normalizeStyle(value: any): string {
-  if (!value) return '';
-
-  if (typeof value === 'string') {
-    return value;
-  }
-
-  if (typeof value === 'object') {
-    const styles: string[] = [];
-    for (const key in value) {
-      if (value[key]) {
-        // 将驼峰命名转换为 kebab-case
-        const kebabKey = key.replace(/([A-Z])/g, '-$1').toLowerCase();
-        styles.push(`${kebabKey}: ${value[key]}`);
-      }
-    }
-    return styles.join('; ');
-  }
-
-  return String(value);
 }
 
 /**
@@ -534,7 +465,7 @@ function renderElementToString(
     const htmlContent = props.dangerouslySetInnerHTML
       ? props.dangerouslySetInnerHTML.__html || props.dangerouslySetInnerHTML
       : props.innerHTML;
-    return `<${tag}${propsStr}>${htmlContent}</${tag}>`;
+    return `<${tag}${propsStr}>${escapeHTML(String(htmlContent))}</${tag}>`;
   }
 
   // 序列化子节点
@@ -823,7 +754,7 @@ async function* renderElementToStream(
     const htmlContent = props.dangerouslySetInnerHTML
       ? props.dangerouslySetInnerHTML.__html || props.dangerouslySetInnerHTML
       : props.innerHTML;
-    yield `<${tag}${propsStr}>${htmlContent}</${tag}>`;
+    yield `<${tag}${propsStr}>${escapeHTML(String(htmlContent))}</${tag}>`;
     return;
   }
 
@@ -1048,7 +979,7 @@ async function* createStreamElement(
     const htmlContent = props.dangerouslySetInnerHTML
       ? props.dangerouslySetInnerHTML.__html || props.dangerouslySetInnerHTML
       : props.innerHTML;
-    yield `<${tag}${propsStr}>${htmlContent}</${tag}>`;
+    yield `<${tag}${propsStr}>${escapeHTML(String(htmlContent))}</${tag}>`;
     return;
   }
 
@@ -1189,8 +1120,9 @@ async function* renderAsyncComponent(
   if (promise) {
     try {
       await promise;
-    } catch {
+    } catch (e) {
       // 异步组件加载失败，输出空注释
+      console.warn('[Lyt SSR] 异步组件加载失败:', e instanceof Error ? e.message : e)
       yield '<!--async-component-error-->';
       return;
     }

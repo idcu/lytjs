@@ -335,14 +335,14 @@ export function normalizeChildren(
  * 判断 VNode 是否为文本类型
  */
 export function isTextVNode(vnode: VNode): boolean {
-  return vnode.type === (Symbol.for('Text') || Symbol('Text'))
+  return vnode.type === Symbol.for('Text') || vnode.type === Symbol('Text')
 }
 
 /**
  * 判断 VNode 是否为注释类型
  */
 export function isCommentVNode(vnode: VNode): boolean {
-  return vnode.type === (Symbol.for('Comment') || Symbol('Comment'))
+  return vnode.type === Symbol.for('Comment') || vnode.type === Symbol('Comment')
 }
 
 // 导出 Fragment 供外部使用

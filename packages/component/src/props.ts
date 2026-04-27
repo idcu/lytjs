@@ -11,6 +11,16 @@
 // 类型定义
 // ============================================================
 
+import {
+  isPlainObject,
+  isFunction,
+  isString,
+  isBoolean,
+  isNumber,
+  isArray,
+  isObject,
+} from '@lytjs/common';
+
 /** 支持的 prop 原始类型构造器 */
 export type PropType =
   | typeof String
@@ -47,55 +57,6 @@ export type NormalizedProps = {
 // ============================================================
 // 内部工具
 // ============================================================
-
-/**
- * 判断值是否为普通对象（非数组、非 null）
- */
-function isPlainObject(val: unknown): val is Record<string, any> {
-  return val !== null && typeof val === 'object' && !Array.isArray(val);
-}
-
-/**
- * 判断值是否为函数
- */
-function isFunction(val: unknown): val is Function {
-  return typeof val === 'function';
-}
-
-/**
- * 判断值是否为字符串
- */
-function isString(val: unknown): val is string {
-  return typeof val === 'string';
-}
-
-/**
- * 判断值是否为布尔值
- */
-function isBoolean(val: unknown): val is boolean {
-  return typeof val === 'boolean';
-}
-
-/**
- * 判断值是否为数字（排除 NaN）
- */
-function isNumber(val: unknown): val is number {
-  return typeof val === 'number' && !isNaN(val);
-}
-
-/**
- * 判断值是否为数组
- */
-function isArray(val: unknown): val is any[] {
-  return Array.isArray(val);
-}
-
-/**
- * 判断值是否为对象（非 null）
- */
-function isObject(val: unknown): val is object {
-  return val !== null && typeof val === 'object';
-}
 
 /**
  * 将值转为布尔值（用于 Boolean 类型的 prop 转换）

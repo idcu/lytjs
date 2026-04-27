@@ -17,6 +17,9 @@ export type SchedulerJob = (...args: any[]) => void;
 /** 待执行的 job 队列（使用 Set 自动去重） */
 const queue: Set<SchedulerJob> = new Set();
 
+/** 队列中 job 的执行顺序索引映射，用于 O(1) 查找 job 在队列中的位置 */
+const queueIndexMap = new Map<SchedulerJob, number>();
+
 /** 正在执行的 job 队列（用于在执行过程中动态添加的 job） */
 const pendingPostFlushCbs: SchedulerJob[] = [];
 
@@ -45,9 +48,11 @@ export function queueJob(job: SchedulerJob): void {
   // 如果队列中没有该 job，且该 job 不是当前正在执行的 job，则加入队列
   if (
     !queue.has(job) ||
-    (isFlushing && flushIndex <= [...queue].indexOf(job))
+    (isFlushing && flushIndex <= (queueIndexMap.get(job) ?? -1))
   ) {
     queue.add(job);
+    // 记录 job 的执行顺序索引
+    queueIndexMap.set(job, queue.size - 1);
 
     // 如果尚未安排刷新，则安排一个微任务来刷新队列
     if (!isFlushPending) {
@@ -97,8 +102,9 @@ function flushJobs(): void {
     return 0;
   });
 
-  // 清空队列（在执行前清空，这样执行过程中新加入的 job 会触发新的遍历）
+  // 清空队列和索引映射（在执行前清空，这样执行过程中新加入的 job 会触发新的遍历）
   queue.clear();
+  queueIndexMap.clear();
   flushIndex = 0;
 
   // 依次执行每个 job
@@ -159,6 +165,7 @@ export function hasPendingJob(job: SchedulerJob): boolean {
  */
 export function clearQueue(): void {
   queue.clear();
+  queueIndexMap.clear();
   pendingPostFlushCbs.length = 0;
   isFlushing = false;
   isFlushPending = false;

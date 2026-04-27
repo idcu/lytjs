@@ -299,7 +299,7 @@ export function defineComponent(options: ComponentOptions): ComponentDefine {
  */
 export function defineFunctionalComponent(fn: FunctionalComponent): ComponentDefine {
   return {
-    options: fn as any,
+    options: fn as unknown as ComponentOptions,
     _isComponentDefine: true,
   };
 }

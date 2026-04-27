@@ -14,43 +14,7 @@
  */
 
 import { patchEvent } from './patch-events';
-
-/* ================================================================
- *  PatchFlag 常量（本地副本）
- * ================================================================ */
-
-/**
- * PatchFlag 位标记
- *
- * 与 @lytjs/vdom 的 PatchFlags 保持一致。
- * 此处重新定义以避免运行时依赖，仅用于属性更新的分发判断。
- */
-export const enum PatchFlags {
-  /** 动态文本 */
-  TEXT = 1,
-  /** 动态 class */
-  CLASS = 2,
-  /** 动态 style */
-  STYLE = 4,
-  /** 动态 props（排除 class 和 style） */
-  PROPS = 8,
-  /** 动态 props，且 props 的键名可能变化 */
-  FULL_PROPS = 16,
-  /** 稳定的 Fragment */
-  STABLE_FRAGMENT = 32,
-  /** 带 key 的 Fragment */
-  KEYED_FRAGMENT = 64,
-  /** 不带 key 的 Fragment */
-  UNKEYED_FRAGMENT = 128,
-  /** 需要 patch */
-  NEED_PATCH = 256,
-  /** 动态插槽 */
-  DYNAMIC_SLOTS = 512,
-  /** 静态提升 */
-  HOISTED = -1,
-  /** 退出优化 */
-  BAIL = -2,
-}
+import { PatchFlags } from '@lytjs/vdom';
 
 /* ================================================================
  *  class 更新
@@ -281,18 +245,6 @@ export function patchDOMProp(
 ): void {
   // 跳过特殊属性
   if (SKIP_PROPS.has(key)) {
-    return;
-  }
-
-  // class 处理
-  if (key === 'class') {
-    patchClass(el, next, prev);
-    return;
-  }
-
-  // style 处理
-  if (key === 'style') {
-    patchStyle(el, next, prev);
     return;
   }
 

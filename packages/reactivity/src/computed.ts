@@ -208,5 +208,5 @@ export function computed<T = any>(
   // 创建计算属性实例
   const cRef = new ComputedRefImpl(getter, setter);
 
-  return cRef as any;
+  return cRef as ComputedRef<T> | WritableComputedRef<T>;
 }

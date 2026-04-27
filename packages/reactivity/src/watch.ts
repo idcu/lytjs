@@ -25,7 +25,7 @@ import {
 } from './effect';
 import { isRef, Ref, unref } from './ref';
 import { isReactive, toRaw } from './reactive';
-import { queueJob, nextTick as schedulerNextTick } from '@lytjs/common';
+import { queueJob, nextTick as schedulerNextTick, isObject } from '@lytjs/common';
 
 // ======================== 类型定义 ========================
 
@@ -68,13 +68,6 @@ export interface WatchEffectOptions {
 export type WatchStopHandle = () => void;
 
 // ======================== 内部工具 ========================
-
-/**
- * 判断值是否为对象（非 null）
- */
-function isObject(val: unknown): val is object {
-  return val !== null && typeof val === 'object';
-}
 
 /**
  * 遍历对象的所有属性（包括嵌套）

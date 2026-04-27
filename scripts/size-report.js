@@ -8,7 +8,12 @@ import { readdirSync, statSync, readFileSync } from 'fs'
 import { join, extname } from 'path'
 import { gzipSync } from 'zlib'
 
-const PACKAGES_DIR = join(import.meta.dirname, '..', 'packages')
+import { fileURLToPath } from 'url'
+import { dirname } from 'path'
+
+const __dirname = dirname(fileURLToPath(import.meta.url))
+
+const PACKAGES_DIR = join(__dirname, '..', 'packages')
 const CORE_PACKAGES = [
   'reactivity', 'compiler', 'vdom', 'renderer',
   'component', 'core', 'router', 'store'

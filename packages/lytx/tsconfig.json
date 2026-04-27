@@ -17,8 +17,8 @@
     "rootDir": ".",
     "baseUrl": ".",
     "paths": {
-      "lyt": ["../../core/src"],
-      "lyt/*": ["../*/src"]
+      "@lytjs/lytx": ["./src"],
+      "@lytjs/lytx/*": ["./*"]
     }
   },
   "include": ["src"],

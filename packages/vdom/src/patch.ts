@@ -41,34 +41,34 @@ import {
  */
 export interface PatchDOMOperations extends DOMOperations {
   /** 设置元素的 class */
-  setClass(el: any, value: any, oldValue: any): void
+  setClass(el: unknown, value: unknown, oldValue: unknown): void
 
   /** 设置元素的 style */
-  setStyle(el: any, value: any, oldValue: any): void
+  setStyle(el: unknown, value: unknown, oldValue: unknown): void
 
   /** 设置元素的 DOM 属性（如 id, src, href 等） */
-  setAttribute(el: any, key: string, value: any, oldValue: any): void
+  setAttribute(el: unknown, key: string, value: unknown, oldValue: unknown): void
 
   /** 移除元素的 DOM 属性 */
-  removeAttribute(el: any, key: string): void
+  removeAttribute(el: unknown, key: string): void
 
   /** 添加事件监听器 */
-  addEventListener(el: any, event: string, handler: any): void
+  addEventListener(el: unknown, event: string, handler: unknown): void
 
   /** 移除事件监听器 */
-  removeEventListener(el: any, event: string, handler: any): void
+  removeEventListener(el: unknown, event: string, handler: unknown): void
 
   /** 将元素插入到容器中 */
-  insertBefore(parent: any, child: any, anchor: any): void
+  insertBefore(parent: unknown, child: unknown, anchor: unknown): void
 
   /** 从父容器中移除元素 */
-  removeChild(parent: any, child: any): void
+  removeChild(parent: unknown, child: unknown): void
 
   /** 设置节点锚点（Fragment 使用） */
-  setAnchor(vnode: VNode, anchor: any): void
+  setAnchor(vnode: VNode, anchor: unknown): void
 
   /** 获取下一个兄弟节点 */
-  nextSibling(node: any): any
+  nextSibling(node: unknown): unknown
 }
 
 /** 已注册的 Patch DOM 操作 */

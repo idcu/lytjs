@@ -5,10 +5,10 @@
   "private": true,
   "description": "Lyt.js - 轻写轻跑，所见即代码",
   "license": "MIT",
-  "author": "idcu <idcu@qq.com>",
+  "author": "lytjs",
   "repository": {
     "type": "git",
-    "url": "https://github.com/idcu/lytjs"
+    "url": "https://gitee.com/lytjs/lytjs"
   },
   "scripts": {
     "build": "bash scripts/build-all.sh",
@@ -43,7 +43,6 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/node": "25.6.0",
-    "@typescript-eslint/eslint-plugin": "^8.59.0",
     "@typescript-eslint/parser": "8.59.0",
     "archiver": "7.0.1",
     "c8": "11.0.0",

@@ -38,6 +38,22 @@ export function pascalCase(str: string): string {
 }
 
 /**
+ * camelToKebab - kebabCase 的别名
+ *
+ * 与 kebabCase 功能一致，提供更直观的命名。
+ * @see kebabCase
+ */
+export const camelToKebab = kebabCase;
+
+/**
+ * kebabToCamel - camelCase 的别名
+ *
+ * 与 camelCase 功能一致，提供更直观的命名。
+ * @see camelCase
+ */
+export const kebabToCamel = camelCase;
+
+/**
  * 转义正则特殊字符
  */
 export function escapeRegExp(str: string): string {
@@ -135,4 +151,72 @@ export function truncate(str: string, length: number, omission: string = '...'):
  */
 export function template(str: string, data: Record<string, any>): string {
   return str.replace(/\${([^}]+)}/g, (_, key) => data[key] ?? '');
+}
+
+/**
+ * 标准化 class 值
+ *
+ * 支持多种形式的 class 输入：
+ *   - 字符串：'foo bar'
+ *   - 数组：['foo', 'bar']
+ *   - 对象：{ foo: true, bar: false }
+ *   - 混合：['foo', { bar: true }]
+ *
+ * @param value class 值
+ * @returns 标准化后的 class 字符串
+ */
+export function normalizeClass(value: any): string {
+  if (!value) return '';
+
+  if (typeof value === 'string') {
+    return value;
+  }
+
+  if (Array.isArray(value)) {
+    return value.map(normalizeClass).filter(Boolean).join(' ');
+  }
+
+  if (typeof value === 'object') {
+    const classes: string[] = [];
+    for (const key in value) {
+      if (value[key]) {
+        classes.push(key);
+      }
+    }
+    return classes.join(' ');
+  }
+
+  return String(value);
+}
+
+/**
+ * 标准化 style 值
+ *
+ * 支持两种形式的 style 输入：
+ *   - 字符串：'color: red; font-size: 14px'
+ *   - 对象：{ color: 'red', fontSize: '14px' }
+ *
+ * @param value style 值
+ * @returns 标准化后的 style 字符串
+ */
+export function normalizeStyle(value: any): string {
+  if (!value) return '';
+
+  if (typeof value === 'string') {
+    return value;
+  }
+
+  if (typeof value === 'object') {
+    const styles: string[] = [];
+    for (const key in value) {
+      if (value[key]) {
+        // 将驼峰命名转换为 kebab-case
+        const kebabKey = key.replace(/([A-Z])/g, '-$1').toLowerCase();
+        styles.push(`${kebabKey}: ${value[key]}`);
+      }
+    }
+    return styles.join('; ');
+  }
+
+  return String(value);
 }

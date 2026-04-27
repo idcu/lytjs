@@ -169,7 +169,7 @@ export function createTextNode(content: string, loc: Position): TextNode {
   return {
     type: 'Text',
     content,
-    isExpression: /\{\{.*?\}\}/.test(content),
+    isExpression: /\{\{.*?\}\}/s.test(content),
     staticFlag: -1,
     loc,
   };

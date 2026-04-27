@@ -39,18 +39,18 @@ export const skipFlag = Symbol('skip');
  * WeakMap<原始对象, Proxy代理对象>
  * 确保同一个原始对象始终返回同一个代理对象
  */
-const proxyMap = new WeakMap<object, any>();
+const proxyMap = new WeakMap<object, Record<string, unknown>>();
 
 /**
  * 只读代理缓存 Map
  * 与 proxyMap 分开存储，因为同一个对象可以有 reactive 和 readonly 两个代理
  */
-const readonlyMap = new WeakMap<object, any>();
+const readonlyMap = new WeakMap<object, Record<string, unknown>>();
 
 /**
  * 浅层代理缓存 Map
  */
-const shallowReactiveMap = new WeakMap<object, any>();
+const shallowReactiveMap = new WeakMap<object, Record<string, unknown>>();
 
 // ======================== 工具函数 ========================
 
@@ -84,7 +84,7 @@ function hasOwn(target: object, key: string | symbol): boolean {
  * 数组方法拦截映射表
  * 对搜索类方法和变异类方法进行特殊处理
  */
-const arrayInstrumentations: Record<string, Function> = {};
+const arrayInstrumentations: Record<string, (...args: unknown[]) => unknown> = {};
 
 // 搜索类方法：需要追踪每个元素的依赖
 // includes/indexOf/lastIndexOf 内部会遍历数组元素，

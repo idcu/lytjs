@@ -25,7 +25,7 @@ import { unmount as unmountVNode, unmountChildren } from './unmount'
 export function createRenderer(renderer: LytRenderer): RendererInstance {
   /* ---- 创建绑定上下文的 unmount 函数 ---- */
 
-  function unmount(vnode: VNode, container?: any): void {
+  function unmount(vnode: VNode, container?: unknown): void {
     unmountVNode(renderer, unmount, vnode, container)
   }
 
@@ -33,37 +33,37 @@ export function createRenderer(renderer: LytRenderer): RendererInstance {
 
   // 将渲染器的内部操作注册到 @lytjs/vdom，使导入的 diff 函数可以使用
   const domOps: DOMOperations = {
-    insert(child: any, parent: any, anchor: any): void {
+    insert(child: unknown, parent: unknown, anchor: unknown): void {
       renderer.insert(parent, child, anchor)
     },
-    createElement(tag: string): any {
+    createElement(tag: string): unknown {
       return renderer.createElement(tag)
     },
-    createText(text: string): any {
+    createText(text: string): unknown {
       return renderer.createText(text)
     },
-    setText(node: any, text: string): void {
-      node.nodeValue = text
+    setText(node: unknown, text: string): void {
+      (node as Text).nodeValue = text
     },
-    setElementText(el: any, text: string): void {
-      el.textContent = text
+    setElementText(el: unknown, text: string): void {
+      (el as Element).textContent = text
     },
-    remove(child: any): void {
+    remove(child: unknown): void {
       renderer.remove(child)
     },
-    createComment(text: string): any {
+    createComment(text: string): unknown {
       return renderer.createComment(text)
     },
-    mount(vnode: VNode, container: any, anchor: any, parentComponent: any, _parentSuspense: any, _isSVG: boolean, _optimized: boolean): void {
+    mount(vnode: VNode, container: unknown, anchor: unknown, parentComponent: unknown, _parentSuspense: unknown, _isSVG: boolean, _optimized: boolean): void {
       patchFn(null, vnode, container, anchor, parentComponent)
     },
-    patch(oldVNode: VNode, newVNode: VNode, container: any, anchor: any, parentComponent: any, _parentSuspense: any, _isSVG: boolean, _optimized: boolean): void {
+    patch(oldVNode: VNode, newVNode: VNode, container: unknown, anchor: unknown, parentComponent: unknown, _parentSuspense: unknown, _isSVG: boolean, _optimized: boolean): void {
       patchFn(oldVNode, newVNode, container, anchor, parentComponent)
     },
-    unmount(vnode: VNode, _parentComponent: any, _parentSuspense: any, _doRemove?: boolean): void {
+    unmount(vnode: VNode, _parentComponent: unknown, _parentSuspense: unknown, _doRemove?: boolean): void {
       unmount(vnode)
     },
-    move(vnode: VNode, container: any, anchor: any): void {
+    move(vnode: VNode, container: unknown, anchor: unknown): void {
       renderer.insert(container, vnode.el, anchor)
     },
   }
@@ -74,9 +74,9 @@ export function createRenderer(renderer: LytRenderer): RendererInstance {
   function patchFn(
     n1: VNode | null,
     n2: VNode,
-    container: any,
-    anchor: any,
-    parentComponent: any,
+    container: unknown,
+    anchor: unknown,
+    parentComponent: unknown,
   ): void {
     patch(renderer, unmount, n1, n2, container, anchor, parentComponent)
   }
@@ -87,10 +87,10 @@ export function createRenderer(renderer: LytRenderer): RendererInstance {
     /**
      * 挂载 VNode 到容器
      */
-    mount(vnode: VNode, container: any): void {
+    mount(vnode: VNode, container: unknown): void {
       // 清空容器
-      if (container.nodeType === 1) {
-        container.textContent = ''
+      if ((container as Node).nodeType === 1) {
+        (container as Element).textContent = ''
       }
       // 挂载
       patchFn(null, vnode, container, null, null)
@@ -99,14 +99,14 @@ export function createRenderer(renderer: LytRenderer): RendererInstance {
     /**
      * 对比更新新旧 VNode
      */
-    patch(oldVNode: VNode, newVNode: VNode, container?: any): void {
-      patchFn(oldVNode, newVNode, container || oldVNode.el?.parentNode, null, null)
+    patch(oldVNode: VNode, newVNode: VNode, container?: unknown): void {
+      patchFn(oldVNode, newVNode, container || (oldVNode.el as Node)?.parentNode, null, null)
     },
 
     /**
      * 卸载 VNode
      */
-    unmount(vnode: VNode, container?: any): void {
+    unmount(vnode: VNode, container?: unknown): void {
       unmount(vnode, container)
     },
   }

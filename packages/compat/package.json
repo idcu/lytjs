@@ -11,12 +11,6 @@
       "import": "./dist/index.mjs",
       "require": "./dist/index.cjs",
       "default": "./dist/index.mjs"
-    },
-    "./vite": {
-      "types": "./dist/types/vite.d.ts",
-      "import": "./dist/vite.mjs",
-      "require": "./dist/vite.cjs",
-      "default": "./dist/vite.mjs"
     }
   },
   "bin": {

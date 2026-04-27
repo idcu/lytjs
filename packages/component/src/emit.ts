@@ -10,6 +10,8 @@
 // 类型定义
 // ============================================================
 
+import { isFunction, isArray, isPlainObject } from '@lytjs/common';
+
 /** emits 声明形式：字符串数组或带验证器的对象 */
 export type EmitsOptions = string[] | Record<string, ((...args: any[]) => boolean) | null>;
 
@@ -81,27 +83,6 @@ export function camelizeToHyphen(str: string): string {
  */
 export function hyphenToCamel(str: string): string {
   return str.replace(/-(\w)/g, (_, c) => c.toUpperCase());
-}
-
-/**
- * 判断值是否为函数
- */
-function isFunction(val: unknown): val is Function {
-  return typeof val === 'function';
-}
-
-/**
- * 判断值是否为数组
- */
-function isArray(val: unknown): val is any[] {
-  return Array.isArray(val);
-}
-
-/**
- * 判断值是否为普通对象
- */
-function isPlainObject(val: unknown): val is Record<string, any> {
-  return val !== null && typeof val === 'object' && !Array.isArray(val);
 }
 
 // ============================================================

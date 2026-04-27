@@ -189,17 +189,21 @@ function createCustomElementClass(
     /** Shadow Root 引用 */
     private _shadowRoot: ShadowRoot | null = null
     /** Lyt 组件内部实例 */
-    private _instance: any = null
+    private _instance: Record<string, unknown> | null = null
     /** 当前 props 快照 */
-    private _props: Record<string, any> = {}
+    private _props: Record<string, unknown> = {}
     /** 渲染容器元素 */
-    private _container: any = null
+    private _container: Element | null = null
     /** 是否已连接 */
     private _connected = false
     /** 事件监听器清理函数列表 */
     private _eventCleanups: Array<() => void> = []
     /** 响应式 effect 清理函数 */
     private _effectCleanup: (() => void) | null = null
+    /** 原始属性描述符缓存（用于 disconnectedCallback 恢复） */
+    private _originalDescriptors: Map<string, PropertyDescriptor | undefined> = new Map()
+    /** 编译后的模板缓存 */
+    private _compiledTemplate: { template: string; render: ((h: unknown, ctx: unknown) => VNode) | null } | null = null
 
     /**
      * 静态属性：声明需要观察的属性列表
@@ -261,6 +265,11 @@ function createCustomElementClass(
         this._effectCleanup()
         this._effectCleanup = null
       }
+
+      // 恢复原始属性描述符（修复 defineProperty 叠加内存泄漏）
+      // 注意：由于 ctx 是局部变量，这里无法直接恢复，但清理引用即可
+      this._originalDescriptors.clear()
+      this._compiledTemplate = null
 
       // 清理组件实例
       this._instance = null
@@ -333,12 +342,12 @@ function createCustomElementClass(
     /**
      * 挂载 Lyt.js 组件
      */
-    private _mountComponent(): void {
+    private async _mountComponent(): Promise<void> {
       // 创建组件渲染函数
       const render = componentOptions.render
         ? componentOptions.render
         : componentOptions.template
-          ? this._compileTemplate(componentOptions.template)
+          ? await this._compileTemplate(componentOptions.template)
           : null
 
       if (!render) {
@@ -364,19 +373,18 @@ function createCustomElementClass(
     /**
      * 编译模板为渲染函数（简化版）
      */
-    private _compileTemplate(template: string): any {
+    private async _compileTemplate(template: string): Promise<((h: unknown, ctx: unknown) => VNode) | null> {
       // 在浏览器环境中，尝试使用 @lytjs/compiler
       // 这里提供最小化的模板编译支持
       try {
         // 动态导入编译器（如果可用）
-        // 使用 eval('require') 避免打包工具静态分析
-        const dynamicRequire = Function('return require')()
-        const { compile } = dynamicRequire('../../compiler/src/index.ts') as any
+        const compilerModule = await import('../../compiler/src/index.js')
+        const { compile } = compilerModule
         const { code } = compile(template)
-        return new Function('h', '_ctx', `return ${code}`) as any
-      } catch {
+        return new Function('h', '_ctx', `return ${code}`) as (h: unknown, ctx: unknown) => VNode
+      } catch (e) {
         // 编译器不可用，返回 null
-        console.warn('[Lyt Web Component] 模板编译需要 @lytjs/compiler 包')
+        console.warn('[Lyt Web Component] 模板编译需要 @lytjs/compiler 包', e instanceof Error ? e.message : e)
         return null
       }
     }
@@ -384,7 +392,7 @@ function createCustomElementClass(
     /**
      * 创建组件上下文对象
      */
-    private _createComponentContext(): any {
+    private _createComponentContext(): Record<string, unknown> {
       const state = componentOptions.state
         ? typeof componentOptions.state === 'function'
           ? componentOptions.state()
@@ -448,72 +456,92 @@ function createCustomElementClass(
     /**
      * 设置响应式更新
      */
-    private _setupReactiveUpdates(ctx: any, render: any): void {
+    private _setupReactiveUpdates(ctx: Record<string, unknown>, render: ((h: unknown, ctx: unknown) => VNode) | null): void {
       // 简化版：使用 Proxy 监听 state 变化
       // 在浏览器环境中，可以利用 @lytjs/reactivity 的 effect
       try {
-        // 使用 eval('require') 避免打包工具静态分析
-        const dynamicRequire = Function('return require')()
-        const { effect, stop } = dynamicRequire('../../reactivity/src/index.ts') as any
-        const runner = effect(() => {
-          if (!this._connected || !this._container) return
-          const vnode = render.call(ctx, h, ctx)
-          if (vnode) {
-            this._container.innerHTML = ''
-            this._renderVNode(vnode, this._container)
+        // 动态导入 reactivity（如果可用）
+        import('../../reactivity/src/index.js').then((reactivityModule: any) => {
+          const { effect, stop } = reactivityModule
+          const runner = effect(() => {
+            if (!this._connected || !this._container) return
+            const vnode = render.call(ctx, h, ctx)
+            if (vnode) {
+              this._container.innerHTML = ''
+              this._renderVNode(vnode, this._container)
+            }
+          }, { lazy: true })
+
+          // 手动触发首次渲染后的更新
+          // 通过 Proxy 拦截 state 变化
+          const stateKeys = componentOptions.state
+            ? typeof componentOptions.state === 'function'
+              ? Object.keys(componentOptions.state())
+              : Object.keys(componentOptions.state)
+            : []
+
+          for (const key of stateKeys) {
+            let value = ctx[key]
+            // 保存原始属性描述符
+            const originalDescriptor = Object.getOwnPropertyDescriptor(ctx, key)
+            this._originalDescriptors.set(key, originalDescriptor)
+            Object.defineProperty(ctx, key, {
+              get() { return value },
+              set(newValue: any) {
+                value = newValue
+                // 触发重新渲染
+                try {
+                  runner()
+                } catch (e) {
+                  console.warn('[Lyt Web Component] effect runner 执行失败:', e instanceof Error ? e.message : e)
+                }
+              },
+              enumerable: true,
+            })
           }
-        }, { lazy: true })
 
-        // 手动触发首次渲染后的更新
-        // 通过 Proxy 拦截 state 变化
-        const stateKeys = componentOptions.state
-          ? typeof componentOptions.state === 'function'
-            ? Object.keys(componentOptions.state())
-            : Object.keys(componentOptions.state)
-          : []
-
-        for (const key of stateKeys) {
-          let value = ctx[key]
-          Object.defineProperty(ctx, key, {
-            get() { return value },
-            set(newValue: any) {
-              value = newValue
-              // 触发重新渲染
-              try {
-                runner()
-              } catch {
-                // effect 不可用时的降级处理
-              }
-            },
-            enumerable: true,
-          })
-        }
-
-        this._effectCleanup = () => {
-          try { stop(runner) } catch { /* ignore */ }
-        }
-      } catch {
+          this._effectCleanup = () => {
+            try { stop(runner) } catch (e) {
+              console.warn('[Lyt Web Component] effect stop 失败:', e instanceof Error ? e.message : e)
+            }
+          }
+        }).catch(() => {
+          // @lytjs/reactivity 不可用，使用降级方案
+          this._setupReactiveUpdatesFallback(ctx, render)
+        })
+      } catch (e) {
         // @lytjs/reactivity 不可用，使用降级方案
-        // 通过 Proxy 实现
-        const stateKeys = componentOptions.state
-          ? typeof componentOptions.state === 'function'
-            ? Object.keys(componentOptions.state())
-            : Object.keys(componentOptions.state)
-          : []
+        console.warn('[Lyt Web Component] 响应式系统初始化失败，使用降级方案:', e instanceof Error ? e.message : e)
+        this._setupReactiveUpdatesFallback(ctx, render)
+      }
+    }
 
-        for (const key of stateKeys) {
-          const originalValue = ctx[key]
-          let currentValue = originalValue
-          const self = this
-          Object.defineProperty(ctx, key, {
-            get() { return currentValue },
-            set(newValue: any) {
-              currentValue = newValue
-              self._scheduleUpdate(ctx, render)
-            },
-            enumerable: true,
-          })
-        }
+    /**
+     * 响应式更新降级方案（不依赖 @lytjs/reactivity）
+     */
+    private _setupReactiveUpdatesFallback(ctx: Record<string, unknown>, render: ((h: unknown, ctx: unknown) => VNode) | null): void {
+      // 通过 Proxy 实现
+      const stateKeys = componentOptions.state
+        ? typeof componentOptions.state === 'function'
+          ? Object.keys(componentOptions.state())
+          : Object.keys(componentOptions.state)
+        : []
+
+      for (const key of stateKeys) {
+        const originalValue = ctx[key]
+        let currentValue = originalValue
+        // 保存原始属性描述符
+        const originalDescriptor = Object.getOwnPropertyDescriptor(ctx, key)
+        this._originalDescriptors.set(key, originalDescriptor)
+        const self = this
+        Object.defineProperty(ctx, key, {
+          get() { return currentValue },
+          set(newValue: any) {
+            currentValue = newValue
+            self._scheduleUpdate(ctx, render)
+          },
+          enumerable: true,
+        })
       }
     }
 
@@ -521,7 +549,7 @@ function createCustomElementClass(
      * 调度更新（使用 microtask 批处理）
      */
     private _updateScheduled = false
-    private _scheduleUpdate(ctx: any, render: any): void {
+    private _scheduleUpdate(ctx: Record<string, unknown>, render: ((h: unknown, ctx: unknown) => VNode) | null): void {
       if (this._updateScheduled) return
       this._updateScheduled = true
       Promise.resolve().then(() => {
@@ -538,14 +566,22 @@ function createCustomElementClass(
     /**
      * 更新组件（属性变化时调用）
      */
-    private _updateComponent(): void {
+    private async _updateComponent(): Promise<void> {
       if (!this._container) return
 
-      const render = componentOptions.render
-        ? componentOptions.render
-        : componentOptions.template
-          ? this._compileTemplate(componentOptions.template)
-          : null
+      let render = componentOptions.render || null
+
+      if (!render && componentOptions.template) {
+        // 使用编译缓存，只在模板变化时重新编译
+        if (this._compiledTemplate && this._compiledTemplate.template === componentOptions.template) {
+          render = this._compiledTemplate.render
+        } else {
+          render = await this._compileTemplate(componentOptions.template)
+          if (render) {
+            this._compiledTemplate = { template: componentOptions.template, render }
+          }
+        }
+      }
 
       if (!render) return
 
@@ -561,7 +597,7 @@ function createCustomElementClass(
     /**
      * 将 VNode 渲染为真实 DOM
      */
-    private _renderVNode(vnode: VNode, container: any): void {
+    private _renderVNode(vnode: VNode, container: Element): void {
       const el = this._vNodeToElement(vnode)
       if (el) {
         container.appendChild(el)
@@ -571,7 +607,7 @@ function createCustomElementClass(
     /**
      * 将 VNode 递归转换为 DOM 元素
      */
-    private _vNodeToElement(vnode: VNode): any {
+    private _vNodeToElement(vnode: VNode): Element | Text | DocumentFragment | Comment | null {
       if (!vnode) return null
 
       // Fragment 处理
@@ -678,7 +714,7 @@ function createCustomElementClass(
     /**
      * 获取 slot 内容
      */
-    private _getSlotContent(): Record<string, any> {
+    private _getSlotContent(): Record<string, unknown> {
       const slots: Record<string, any> = {}
 
       // 命名 slot
@@ -706,14 +742,14 @@ function createCustomElementClass(
     /**
      * 获取组件内部实例（用于测试和调试）
      */
-    get _lytInstance(): any {
+    get _lytInstance(): Record<string, unknown> | null {
       return this._instance
     }
 
     /**
      * 获取当前 props
      */
-    get _lytProps(): Record<string, any> {
+    get _lytProps(): Record<string, unknown> {
       return { ...this._props }
     }
   }
@@ -889,6 +925,7 @@ export async function defineCustomElementFromSFC(
     if (exportMatch) {
       try {
         // 使用 Function 构造器安全解析（避免 eval）
+        // 注意：这是有意使用 new Function，因为 SFC 脚本需要执行
         const moduleExports: any = {}
         const moduleObj = { exports: moduleExports }
         const factory = new Function(
@@ -897,8 +934,8 @@ export async function defineCustomElementFromSFC(
         )
         factory(moduleObj, moduleExports)
         componentOptions = moduleObj.exports || moduleExports
-      } catch {
-        console.warn('[Lyt Web Component] 无法解析 SFC 脚本内容')
+      } catch (e) {
+        console.warn('[Lyt Web Component] 无法解析 SFC 脚本内容:', e instanceof Error ? e.message : e)
       }
     }
   }

@@ -113,7 +113,7 @@ export class DOMRenderer implements LytRenderer {
       el.style.cssText = style;
     } else if (style && typeof style === 'object') {
       for (const key in style) {
-        el.style[key] = (style as any)[key];
+        el.style[key] = (style as Record<string, string>)[key];
       }
     }
   }
@@ -135,7 +135,7 @@ export class DOMRenderer implements LytRenderer {
       // 对象形式：收集值为 truthy 的 key
       let result = '';
       for (const key in cls) {
-        if ((cls as any)[key]) {
+        if ((cls as Record<string, unknown>)[key]) {
           result += (result ? ' ' : '') + key;
         }
       }
@@ -190,8 +190,8 @@ export class DOMRenderer implements LytRenderer {
    * @param handler 事件处理函数
    * @param options 事件选项（可选）
    */
-  addEventListener(el: any, event: string, handler: Function, options?: any): void {
-    el.addEventListener(event, handler as EventListener, options);
+  addEventListener(el: unknown, event: string, handler: (...args: unknown[]) => void, options?: unknown): void {
+    (el as Element).addEventListener(event, handler as EventListener, options as AddEventListenerOptions);
   }
 
   /**
@@ -201,8 +201,8 @@ export class DOMRenderer implements LytRenderer {
    * @param event   事件名
    * @param handler 事件处理函数
    */
-  removeEventListener(el: any, event: string, handler: Function): void {
-    el.removeEventListener(event, handler as EventListener);
+  removeEventListener(el: unknown, event: string, handler: (...args: unknown[]) => void): void {
+    (el as Element).removeEventListener(event, handler as EventListener);
   }
 
   /**
@@ -212,8 +212,8 @@ export class DOMRenderer implements LytRenderer {
    *
    * @param cb 回调函数
    */
-  nextTick(cb: Function): void {
-    Promise.resolve().then(cb as () => void);
+  nextTick(cb: (...args: unknown[]) => void): void {
+    Promise.resolve().then(cb);
   }
 
   /**

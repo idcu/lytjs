@@ -19,21 +19,26 @@ import { ensureDir, writeFile, readFile, colorText, logger } from './utils';
 // ============================================================
 // esbuild 加载（带友好错误提示）
 // ============================================================
-let esbuild: any;
-try {
-  esbuild = require('esbuild');
-} catch {
-  logger.error('缺少依赖: esbuild');
-  logger.error('');
-  logger.error('  Lyt CLI 的构建功能需要 esbuild。');
-  logger.error('');
-  logger.error('  请执行以下命令安装:');
-  logger.error(`    ${colorText('npm install esbuild --save-dev', 'brightGreen')}`);
-  logger.error('');
-  logger.error('  如果您使用 pnpm:');
-  logger.error(`    ${colorText('pnpm add esbuild -D', 'brightGreen')}`);
-  logger.error('');
-  process.exit(1);
+let esbuild: any = null;
+async function loadEsbuild(): Promise<any> {
+  if (!esbuild) {
+    try {
+      esbuild = await import('esbuild');
+    } catch {
+      logger.error('缺少依赖: esbuild');
+      logger.error('');
+      logger.error('  Lyt CLI 的构建功能需要 esbuild。');
+      logger.error('');
+      logger.error('  请执行以下命令安装:');
+      logger.error(`    ${colorText('npm install esbuild --save-dev', 'brightGreen')}`);
+      logger.error('');
+      logger.error('  如果您使用 pnpm:');
+      logger.error(`    ${colorText('pnpm add esbuild -D', 'brightGreen')}`);
+      logger.error('');
+      process.exit(1);
+    }
+  }
+  return esbuild;
 }
 
 // ============================================================
@@ -78,6 +83,9 @@ export async function buildProject(options: BuildOptions = {}): Promise<void> {
   const outDir = path.resolve(rootDir, options.outDir || 'dist');
   const entryFile = options.entry || 'index.html';
   const shouldMinify = options.minify || false;
+
+  // 动态加载 esbuild
+  await loadEsbuild();
 
   logger.info(`开始构建项目...`);
   logger.info(`  根目录: ${colorText(rootDir, 'brightCyan')}`);
@@ -227,7 +235,13 @@ function copyStaticFiles(rootDir: string, outDir: string, stats: BuildStats): vo
         if (['.ts', '.tsx', '.js', '.jsx'].includes(ext)) continue;
         const relativePath = path.relative(base, fullPath);
         const outputPath = path.join(outDir, relativePath);
-        writeFile(outputPath, fs.readFileSync(fullPath).toString('utf-8'));
+        const isBinary = /\.(png|jpe?g|gif|svg|ico|woff2?|ttf|eot|mp[34]|webm|avi|pdf|zip|gz)$/i.test(fullPath);
+        if (isBinary) {
+          const buffer = fs.readFileSync(fullPath);
+          writeFile(outputPath, buffer);
+        } else {
+          writeFile(outputPath, fs.readFileSync(fullPath).toString('utf-8'));
+        }
         stats.outputFiles++;
         stats.totalSize += fs.statSync(fullPath).size;
       }

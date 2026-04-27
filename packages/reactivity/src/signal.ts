@@ -27,11 +27,22 @@ export interface Signal<T> {
 export interface WritableSignal<T> extends Signal<T> {
   set(value: T): void
   update(fn: (prev: T) => T): void
+  /** 内部订阅方法（由 Dependency 接口使用） */
+  _subscribe(subscriber: Subscriber): void
+  /** 内部取消订阅方法（由 Dependency 接口使用） */
+  _unsubscribe(subscriber: Subscriber): void
 }
 
 /** ComputedSignal — 只读计算信号 */
 export interface ComputedSignal<T> extends Signal<T> {
-  // 无 set/update 方法
+  /** 内部订阅方法（由 Dependency 接口使用） */
+  _subscribe(subscriber: Subscriber): void
+  /** 内部取消订阅方法（由 Dependency 接口使用） */
+  _unsubscribe(subscriber: Subscriber): void
+  /** 通知订阅者其依赖已变化 */
+  notify(): void
+  /** 标记订阅者需要重新计算/执行 */
+  _dirty: boolean
 }
 
 /** Effect 清理回调 */
@@ -106,11 +117,11 @@ export function signal<T>(initialValue: T): WritableSignal<T> {
   }
 
   // 实现 Dependency 接口
-  ;(sig as any)._subscribe = function (subscriber: Subscriber): void {
+  sig._subscribe = function (subscriber: Subscriber): void {
     subscribers.add(subscriber)
   }
 
-  ;(sig as any)._unsubscribe = function (subscriber: Subscriber): void {
+  sig._unsubscribe = function (subscriber: Subscriber): void {
     subscribers.delete(subscriber)
   }
 
@@ -178,15 +189,15 @@ export function computed<T>(fn: () => T): ComputedSignal<T> {
   }
 
   // 将 notify 和 _dirty 挂到 comp 上
-  ;(comp as any).notify = subscriberImpl.notify.bind(subscriberImpl)
-  ;(comp as any)._dirty = false
+  comp.notify = subscriberImpl.notify.bind(subscriberImpl)
+  comp._dirty = false
 
   // 实现 Dependency 接口
-  ;(comp as any)._subscribe = function (subscriber: Subscriber): void {
+  comp._subscribe = function (subscriber: Subscriber): void {
     subscribers.add(subscriber)
   }
 
-  ;(comp as any)._unsubscribe = function (subscriber: Subscriber): void {
+  comp._unsubscribe = function (subscriber: Subscriber): void {
     subscribers.delete(subscriber)
   }
 

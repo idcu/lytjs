@@ -47,6 +47,14 @@ import { createRenderer, type LytRenderer, type RendererInstance } from '@lytjs/
 // 模板编译缓存 (LRU 策略，防止内存泄漏)
 // ============================================================
 
+/**
+ * 编译缓存最大条目数。
+ *
+ * 注意：此限制仅控制缓存条目数量，不限制单个条目的大小。
+ * 每个缓存条目包含一个编译后的 render 函数，内存占用通常较小。
+ * 如果模板字符串本身非常大（如包含大量内联 SVG），单个条目的内存占用
+ * 可能较高。在极端场景下，建议避免使用超大的内联模板。
+ */
 const MAX_CACHE_SIZE = 100;
 const compileCache = new Map<string, (h: any, _ctx: any) => VNode>();
 
@@ -104,29 +112,29 @@ export interface ComponentOptions {
   /** 组件名称 */
   name?: string;
   /** Props 定义 */
-  props?: Record<string, any>;
+  props?: Record<string, unknown>;
   /** 响应式状态（对象或工厂函数） */
-  state?: Record<string, any> | (() => Record<string, any>);
+  state?: Record<string, unknown> | (() => Record<string, unknown>);
   /** 计算属性 */
-  computed?: Record<string, () => any>;
+  computed?: Record<string, (...args: unknown[]) => unknown>;
   /** 方法 */
-  methods?: Record<string, (...args: any[]) => any>;
+  methods?: Record<string, (...args: unknown[]) => unknown>;
   /** 模板字符串 */
   template?: string;
   /** 渲染函数（优先于 template） */
-  render?: (ctx: any) => VNode;
+  render?: (ctx: unknown) => VNode;
   /** setup 函数（组合式 API） */
-  setup?: (props: Record<string, any>, ctx: any) => Record<string, any> | void;
+  setup?: (props: Record<string, unknown>, ctx: unknown) => Record<string, unknown> | void;
   /** 初始化函数 */
-  init?: (this: any, props: Record<string, any>) => void;
+  init?: (this: unknown, props: Record<string, unknown>) => void;
   /** mounted 生命周期 */
-  mounted?: (this: any) => void;
+  mounted?: (this: unknown) => void;
   /** beforeUnmount 生命周期 */
-  beforeUnmount?: (this: any) => void;
+  beforeUnmount?: (this: unknown) => void;
   /** unmounted 生命周期 */
-  unmounted?: (this: any) => void;
+  unmounted?: (this: unknown) => void;
   /** 子组件 */
-  components?: Record<string, any>;
+  components?: Record<string, unknown>;
   /** 标记为组件定义 */
   _isComponentDefine?: true;
 }
@@ -474,10 +482,11 @@ export function createApp(
       // 获取挂载容器
       let el: Element;
       if (typeof container === 'string') {
-        el = document.querySelector(container)!;
-        if (!el) {
-          throw new Error(`[Lyt] 找不到挂载目标: "${container}"`);
+        const containerEl = document.querySelector(container)
+        if (!containerEl) {
+          throw new Error(`[Lyt] 挂载目标 "${container}" 未找到`)
         }
+        el = containerEl;
       } else {
         el = container;
       }
@@ -508,15 +517,7 @@ export function createApp(
 
       // 6. 将子树渲染到 DOM
       if (rootInstance.subTree) {
-        console.log('Rendering subtree:', rootInstance.subTree);
-        console.log('Subtree type:', rootInstance.subTree.type);
-        console.log('Subtree shapeFlag:', rootInstance.subTree.shapeFlag);
-        console.log('Subtree props:', rootInstance.subTree.props);
-        console.log('Subtree children:', rootInstance.subTree.children);
         renderer.mount(rootInstance.subTree, el);
-        console.log('Mounted successfully!');
-      } else {
-        console.log('No subtree to render!');
       }
 
       // 7. 设置响应式更新机制
@@ -534,7 +535,9 @@ export function createApp(
           const newVNode = rootInstance.subTree;
 
           // 清空容器并重新挂载（简化版更新策略）
-          mountedContainer.innerHTML = '';
+          while (mountedContainer.firstChild) {
+            mountedContainer.removeChild(mountedContainer.firstChild);
+          }
           renderer.mount(newVNode, mountedContainer);
         }
       }, { lazy: true });
@@ -569,7 +572,9 @@ export function createApp(
 
       // 3. 清空挂载容器
       if (mountedContainer) {
-        mountedContainer.innerHTML = '';
+        while (mountedContainer.firstChild) {
+          mountedContainer.removeChild(mountedContainer.firstChild);
+        }
       }
 
       // 4. 清理引用

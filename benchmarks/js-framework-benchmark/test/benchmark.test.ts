@@ -337,9 +337,9 @@ describe('js-framework-benchmark/shared', () => {
     ;(globalThis as any).document = mockDocument
   })
 
-  it('buildData should create correct number of items', () => {
+  it('buildData should create correct number of items', async () => {
     // Import and test the shared module's buildData
-    const { buildData } = require('../lyt/src/shared.ts')
+    const { buildData } = await import('../lyt/src/shared.ts')
     const data = buildData(100)
     expect(data.length).toBe(100)
     expect(data[0].id).toBe(1)
@@ -348,14 +348,14 @@ describe('js-framework-benchmark/shared', () => {
     expect(data[99].label).toBe('Row 100')
   })
 
-  it('getNextId should return max + 1', () => {
-    const { buildData, getNextId } = require('../lyt/src/shared.ts')
+  it('getNextId should return max + 1', async () => {
+    const { buildData, getNextId } = await import('../lyt/src/shared.ts')
     const data = buildData(10)
     expect(getNextId(data)).toBe(11)
   })
 
-  it('getNextId should handle empty array', () => {
-    const { getNextId } = require('../lyt/src/shared.ts')
+  it('getNextId should handle empty array', async () => {
+    const { getNextId } = await import('../lyt/src/shared.ts')
     expect(getNextId([])).toBe(1)
   })
 })

@@ -23,16 +23,16 @@ export interface VNode {
   type: string | object | symbol
 
   /** 节点属性 */
-  props: Record<string, any> | null
+  props: Record<string, unknown> | null
 
   /** 子节点：文本字符串 | VNode 数组 | 插槽对象 */
-  children: string | VNode[] | Record<string, any> | null
+  children: string | VNode[] | Record<string, unknown> | null
 
   /** 节点的唯一标识，用于列表 diff */
   key: string | number | null
 
   /** ref 回调或 ref 对象 */
-  ref: any
+  ref: ((el: unknown) => void) | { current: unknown } | null
 
   /** 形状标记，描述节点类型和子节点形态 */
   shapeFlag: number
@@ -47,16 +47,16 @@ export interface VNode {
   dynamicProps: string[] | null
 
   /** 关联的组件实例 */
-  component: any
+  component: { update?: () => void; subTree?: VNode; [key: string]: unknown } | null
 
   /** 应用上下文（用于 provide/inject 等跨层级通信） */
-  appContext: Record<string, any> | null
+  appContext: Record<string, unknown> | null
 
   /** 对应的真实 DOM 元素引用 */
-  el: any
+  el: Element | Text | null
 
   /** Fragment 锚点 */
-  anchor: any
+  anchor: Element | Text | null
 }
 
 /* ================================================================

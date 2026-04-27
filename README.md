@@ -4,7 +4,7 @@
   <img src="https://img.shields.io/node/v/@lytjs/cli?style=flat-square&color=339933" alt="node version">
   <img src="https://img.shields.io/badge/size-34.56KB%20gzip-42b883?style=flat-square" alt="bundle size">
   <img src="https://img.shields.io/badge/tests-2833%2B-blue?style=flat-square" alt="tests">
-  <img src="https://img.shields.io/badge/packages-24-orange?style=flat-square" alt="packages">
+  <img src="https://img.shields.io/badge/packages-25-orange?style=flat-square" alt="packages">
   <img src="https://img.shields.io/badge/benchmark-66M%20ops%2Fsec-42b883?style=flat-square" alt="benchmark">
 </p>
 
@@ -302,7 +302,7 @@ Lyt.js 使用增强版 HTML 模板，去掉了 Vue 的 `v-` 前缀，更接近�
 
 ## 包结构
 
-Lyt.js 包含 24 个精心设计的包：
+Lyt.js 包含 25 个精心设计的包：
 
 ### 核心引擎包 (8)
 

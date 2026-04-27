@@ -60,11 +60,14 @@ let effectIdCounter = 0;
 
 // ======================== 依赖存储 ========================
 
+/** 依赖映射表类型：属性名 → 依赖该属性的副作用集合 */
+export type DepsMap = Map<unknown, Set<ReactiveEffect>>;
+
 /**
  * 全局依赖映射表
  * WeakMap 保证当目标对象被垃圾回收时，对应的依赖映射也会被自动清除
  */
-const targetMap = new WeakMap<object, Map<any, Set<ReactiveEffect>>>();
+const targetMap = new WeakMap<object, DepsMap>();
 
 // ======================== ReactiveEffect 类 ========================
 
@@ -358,10 +361,17 @@ export const ITERATE_KEY = Symbol('iterate');
  * runner.effect.stop() // 停止副作用
  * ```
  */
+/** effect() 返回的 runner 类型 */
+export interface EffectRunner {
+  (): unknown;
+  effect: ReactiveEffect;
+  stop(): void;
+}
+
 export function effect(
   fn: EffectFn,
   options: ReactiveEffectOptions = {}
-): { effect: ReactiveEffect; (): any } {
+): EffectRunner {
   // 创建 ReactiveEffect 实例
   const _effect = new ReactiveEffect(fn, options);
 
@@ -371,7 +381,7 @@ export function effect(
   }
 
   // 返回一个可调用的 runner，同时挂载 effect 引用
-  const runner = _effect.run.bind(_effect) as any;
+  const runner = _effect.run.bind(_effect) as unknown as EffectRunner;
   runner.effect = _effect;
   runner.stop = () => _effect.stop();
 
@@ -383,7 +393,7 @@ export function effect(
  *
  * @param runner - effect() 返回的 runner 对象
  */
-export function stop(runner: any): void {
+export function stop(runner: EffectRunner): void {
   runner?.effect?.stop();
 }
 
@@ -391,6 +401,6 @@ export function stop(runner: any): void {
  * 获取当前 targetMap 的引用（用于调试）
  * @internal
  */
-export function getTargetMap(): WeakMap<object, Map<any, Set<ReactiveEffect>>> {
+export function getTargetMap(): WeakMap<object, DepsMap> {
   return targetMap;
 }

@@ -67,8 +67,8 @@ const STYLE_OPEN_RE = /<style(\s[^>]*)?\s*>/;
 /** 匹配 <style> 块的结束标签 */
 const STYLE_CLOSE_RE = /<\/style>/;
 
-/** 匹配 export default { ... } 内容 */
-const EXPORT_DEFAULT_RE = /export\s+default\s*\{([\s\S]*)\}\s*$/;
+/** 匹配 export default { ... } 内容（非贪婪匹配，避免跨块贪婪） */
+const EXPORT_DEFAULT_RE = /export\s+default\s*\{([\s\S]*?)\}\s*$/;
 
 /** 匹配标签属性 */
 const ATTR_RE = /(\w[\w-]*)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|(\S+)))?/g;

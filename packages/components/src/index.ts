@@ -125,29 +125,43 @@ export {
   // 样式
   cssVariables, injectCSSVariables, generateCSSVariableString,
   resetCSS, injectResetCSS,
-  applyTheme, getTheme, resetTheme, createDarkTheme, getDefaultTheme,
-  generateThemeCSS, mergeThemes,
+  // 旧主题系统（已弃用，请使用新主题系统）
+  createDarkTheme, getDefaultTheme, generateThemeCSS, mergeThemes,
+  // 新主题系统
   defaultLightTheme, defaultDarkTheme, createTheme,
   getActiveTheme, setActiveTheme, toggleDarkMode, isDarkMode,
   resetThemeToDefault, applyNewTheme, getCSSVar, setCSSVar,
   generateCSSVariables, useTheme, ThemeProvider,
 }
 
+/** @deprecated 使用 getActiveTheme 替代 */
+export { getTheme } from './styles/theme'
+/** @deprecated 使用 applyNewTheme 替代 */
+export { applyTheme } from './styles/theme'
+/** @deprecated 使用 resetThemeToDefault 替代 */
+export { resetTheme } from './styles/theme'
+export { type Theme } from './styles/theme'
+
 export type {
   DataTableColumn, FormRules, ValidateResult,
-  TabNavItem, DropdownOption, Theme, ThemeConfig,
+  TabNavItem, DropdownOption, ThemeConfig,
   UploadFile, TreeData, TreeNode,
 }
 
 /**
  * 组件版本号
  */
-export const version = '0.0.1'
+export const version = '4.2.0'
 
 /**
  * 安装所有组件（将所有组件注册到应用中）
  */
-export function install(app: any): void {
+interface LytApp {
+  component(name: string, component: unknown): void
+  [key: string]: unknown
+}
+
+export function install(app: LytApp): void {
       // 基础组件
       app.component('LytButton', Button)
       app.component('LytIcon', Icon)

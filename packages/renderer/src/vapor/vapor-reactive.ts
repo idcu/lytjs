@@ -240,9 +240,13 @@ export function bindHTML<T>(
   el: VaporElement,
   sig: Signal<T>
 ): BindingCleanup {
+  // 安全提示: 仅对可信内容使用 innerHTML，用户输入应使用 textContent
   const dispose = effect(() => {
     const value = sig();
-    el.innerHTML = value === null || value === undefined ? '' : String(value);
+    const str = value === null || value === undefined ? '' : String(value);
+    if (el.innerHTML !== str) {
+      el.innerHTML = str;
+    }
   });
   return dispose;
 }

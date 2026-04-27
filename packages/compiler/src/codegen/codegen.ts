@@ -499,6 +499,34 @@ function generateText(node: TextNode, ctx: CodegenContext): void {
 // 工具函数
 // ============================================================
 
+// ---- 模块级常量（避免每次调用 wrapExpression 时重复创建） ----
+
+/** JavaScript 关键字集合 */
+const JS_KEYWORDS = new Set([
+  'true', 'false', 'null', 'undefined', 'this', 'super',
+  'new', 'delete', 'typeof', 'instanceof', 'in', 'of',
+  'void', 'throw', 'return', 'yield', 'await', 'async',
+  'if', 'else', 'for', 'while', 'do', 'switch', 'case',
+  'break', 'continue', 'try', 'catch', 'finally',
+  'class', 'extends', 'import', 'export', 'from', 'default',
+  'var', 'let', 'const', 'function', 'debugger',
+]);
+
+/** 全局对象集合 */
+const GLOBALS = new Set([
+  'console', 'window', 'document', 'Math', 'JSON', 'Date',
+  'Array', 'Object', 'String', 'Number', 'Boolean', 'RegExp',
+  'Error', 'TypeError', 'RangeError', 'SyntaxError',
+  'Map', 'Set', 'WeakMap', 'WeakSet', 'Promise',
+  'Symbol', 'Proxy', 'Reflect', 'parseInt', 'parseFloat',
+  'isNaN', 'isFinite', 'NaN', 'Infinity',
+]);
+
+/** 特殊标识符集合（如 $event）不应加前缀 */
+const SPECIAL_IDENTS = new Set([
+  '$event', '$refs', '$el', '$emit', '$slots', '$parent', '$root',
+]);
+
 /** 插值解析片段 */
 interface InterpolationPart {
   type: 'text' | 'expression';
@@ -593,30 +621,7 @@ function wrapExpression(expr: string): string {
   }
 
   // 复杂表达式：替换所有裸标识符为 _ctx.xxx
-  // JavaScript 关键字和全局对象不应加前缀
-  const JS_KEYWORDS = new Set([
-    'true', 'false', 'null', 'undefined', 'this', 'super',
-    'new', 'delete', 'typeof', 'instanceof', 'in', 'of',
-    'void', 'throw', 'return', 'yield', 'await', 'async',
-    'if', 'else', 'for', 'while', 'do', 'switch', 'case',
-    'break', 'continue', 'try', 'catch', 'finally',
-    'class', 'extends', 'import', 'export', 'from', 'default',
-    'var', 'let', 'const', 'function', 'debugger',
-  ]);
-
-  const GLOBALS = new Set([
-    'console', 'window', 'document', 'Math', 'JSON', 'Date',
-    'Array', 'Object', 'String', 'Number', 'Boolean', 'RegExp',
-    'Error', 'TypeError', 'RangeError', 'SyntaxError',
-    'Map', 'Set', 'WeakMap', 'WeakSet', 'Promise',
-    'Symbol', 'Proxy', 'Reflect', 'parseInt', 'parseFloat',
-    'isNaN', 'isFinite', 'NaN', 'Infinity',
-  ]);
-
-  // 特殊标识符（如 $event）不应加前缀
-  const SPECIAL_IDENTS = new Set([
-    '$event', '$refs', '$el', '$emit', '$slots', '$parent', '$root',
-  ]);
+  // JavaScript 关键字和全局对象不应加前缀（使用模块级常量）
 
   // 先提取字符串字面量和模板字面量，避免替换其中的标识符
   const placeholders: string[] = [];

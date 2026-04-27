@@ -213,8 +213,6 @@ export function createVaporElement(
  * - 所有 Signal 都有 _subscribe 方法
  * - WritableSignal 额外有 set 方法
  */
-const SIGNAL_BRAND = Symbol('__lyt_signal__');
-
 function isSignal(value: unknown): value is Signal<unknown> {
   if (typeof value !== 'function') return false;
   const sig = value as unknown as Record<string, unknown>;

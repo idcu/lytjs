@@ -10,6 +10,8 @@
 // 类型定义
 // ============================================================
 
+import { isFunction, isPlainObject } from '@lytjs/common';
+
 /**
  * 插槽内容类型
  *
@@ -20,8 +22,11 @@
  * - null / undefined（空插槽）
  */
 export type SlotValue =
-  | any
-  | ((...args: any[]) => any)
+  | Function
+  | object[]
+  | string
+  | number
+  | boolean
   | null
   | undefined;
 
@@ -40,24 +45,6 @@ export interface SlotChildren {
 export interface SlotsInstance {
   /** 初始化后的插槽映射 */
   slots: Slots;
-}
-
-// ============================================================
-// 内部工具
-// ============================================================
-
-/**
- * 判断值是否为函数
- */
-function isFunction(val: unknown): val is Function {
-  return typeof val === 'function';
-}
-
-/**
- * 判断值是否为普通对象（非数组、非 null）
- */
-function isPlainObject(val: unknown): val is Record<string, any> {
-  return val !== null && typeof val === 'object' && !Array.isArray(val);
 }
 
 // ============================================================

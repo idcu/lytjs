@@ -321,6 +321,8 @@ function renderASTNode(
       (el as VaporElement).appendChild(textNode as VaporElement);
       // 存储清理函数以便后续使用
       (el as Record<string, unknown>)._bindingCleanup = dispose;
+      // 收集所有子清理函数到父级 _cleanupEffects 数组
+      collectCleanup(el, dispose);
     } else {
       el.textContent = value !== null && value !== undefined ? String(value) : '';
     }
@@ -427,6 +429,8 @@ function renderASTNode(
               elRecord[propName] = sig();
             });
             (el as Record<string, unknown>)._propBindingCleanup = dispose;
+            // 收集清理函数
+            collectCleanup(el, dispose);
           } else {
             elRecord[propName] = propValue;
           }
@@ -495,29 +499,79 @@ function resolveExpression(ctx: Record<string, unknown>, expression: string): un
 }
 
 /**
- * 从上下文中解析表达式的当前值
- *
- * 如果值是 Signal，自动调用获取当前值。
- */
-function resolveValue(ctx: Record<string, unknown>, expression: string): unknown {
-  const value = resolveExpression(ctx, expression);
-  if (typeof value === 'function') {
-    // 尝试判断是否是 Signal（有 _subscribe 属性）
-    const sig = value as unknown as Record<string, unknown>;
-    if (sig._subscribe) {
-      return (value as Signal<unknown>)();
-    }
-  }
-  return value;
-}
-
-/**
  * 判断一个值是否是 Signal
  */
 function isSignalValue(value: unknown): value is Signal<unknown> {
   if (typeof value !== 'function') return false;
   const sig = value as unknown as Record<string, unknown>;
   return !!(sig._subscribe);
+}
+
+// ================================================================
+//  清理机制
+// ================================================================
+
+/**
+ * 收集 effect 清理函数到元素的 _cleanupEffects 数组
+ *
+ * 将 dispose 函数注册到元素上，供组件卸载或重新渲染时统一清理。
+ */
+function collectCleanup(el: VaporElement, dispose: () => void): void {
+  const record = el as Record<string, unknown>;
+  if (!record._cleanupEffects) {
+    record._cleanupEffects = [];
+  }
+  (record._cleanupEffects as Array<() => void>).push(dispose);
+}
+
+/**
+ * 清理 Vapor 元素的所有 effect 绑定
+ *
+ * 在组件卸载或重新渲染时调用，停止所有响应式绑定以避免内存泄漏。
+ *
+ * @param el - 要清理的 Vapor 元素
+ */
+export function cleanupVaporElement(el: VaporElement): void {
+  const record = el as Record<string, unknown>;
+
+  // 调用所有收集的清理函数
+  const effects = record._cleanupEffects as Array<() => void> | undefined;
+  if (effects) {
+    for (const dispose of effects) {
+      try {
+        dispose();
+      } catch (e) {
+        console.warn('[Lyt Vapor] effect 清理失败:', e instanceof Error ? e.message : e);
+      }
+    }
+    record._cleanupEffects = [];
+  }
+
+  // 调用旧的清理引用（向后兼容）
+  if (typeof record._bindingCleanup === 'function') {
+    try {
+      (record._bindingCleanup as () => void)();
+    } catch (e) {
+      console.warn('[Lyt Vapor] _bindingCleanup 清理失败:', e instanceof Error ? e.message : e);
+    }
+    record._bindingCleanup = undefined;
+  }
+  if (typeof record._propBindingCleanup === 'function') {
+    try {
+      (record._propBindingCleanup as () => void)();
+    } catch (e) {
+      console.warn('[Lyt Vapor] _propBindingCleanup 清理失败:', e instanceof Error ? e.message : e);
+    }
+    record._propBindingCleanup = undefined;
+  }
+
+  // 递归清理子节点
+  const childNodes = record.childNodes as VaporElement[] | undefined;
+  if (childNodes) {
+    for (const child of childNodes) {
+      cleanupVaporElement(child);
+    }
+  }
 }
 
 // ================================================================

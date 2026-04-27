@@ -32,10 +32,16 @@ interface I18nOptions {
   legacy?: boolean
 }
 
+/** 国际化插件应用接口（最小化） */
+interface I18nPluginApp {
+  use(plugin: unknown, options?: unknown): void
+  [key: string]: unknown
+}
+
 /** 国际化插件实例 */
 interface I18n {
   /** 安装到 Lyt 应用 */
-  install: (app: any, options?: any) => void
+  install: (app: I18nPluginApp, options?: I18nOptions) => void
   /** 全局国际化 API */
   global: {
     /** 翻译函数，支持路径式 key、参数插值、回退语言、默认值、复数形式 */
@@ -220,7 +226,10 @@ function createI18n(options: I18nOptions): I18n {
     }
   }
 
-  /** 运行时合并翻译（与 mergeMessage 功能一致） */
+  /**
+   * 运行时合并翻译（与 mergeMessage 功能一致）
+   * @deprecated 请使用 mergeMessage() 代替，此方法将在未来版本中移除
+   */
   function mergeLocaleMessages(locale: string, newMessages: Record<string, string>): void {
     mergeMessage(locale, newMessages)
   }

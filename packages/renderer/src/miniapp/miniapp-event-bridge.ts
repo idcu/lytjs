@@ -494,9 +494,13 @@ export class MiniAppEventBridge {
       try {
         listener(detail, nativeEvent);
       } catch (err) {
-        // 静默处理监听器错误
+        // 静默处理监听器错误，但记录详细上下文
         if (typeof console !== 'undefined' && console.warn) {
-          console.warn(`[MiniAppEventBridge] Error in event listener for "${eventName}":`, err);
+          console.warn(
+            `[MiniAppEventBridge] Error in event listener for "${eventName}" on component "${componentName}":`,
+            err instanceof Error ? err.message : err,
+            err instanceof Error ? `\n  stack: ${err.stack}` : ''
+          );
         }
       }
     }

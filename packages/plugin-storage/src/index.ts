@@ -81,6 +81,24 @@ interface WatchOptions {
 // ======================== 工具函数 ========================
 
 /**
+ * 创建内存 Storage 实现
+ *
+ * 当 localStorage 不可用时（如 Node.js 环境、SSR 等），
+ * 使用此函数创建一个符合 Storage 接口的内存存储对象。
+ */
+function createMemoryStorage(): Storage {
+  const store: Record<string, string> = {}
+  return {
+    getItem: (key: string) => store[key] ?? null,
+    setItem: (key: string, value: string) => { store[key] = String(value) },
+    removeItem: (key: string) => { delete store[key] },
+    clear: () => { Object.keys(store).forEach(k => delete store[k]) },
+    get length() { return Object.keys(store).length },
+    key: (index: number) => Object.keys(store)[index] ?? null,
+  }
+}
+
+/**
  * 获取带前缀的 key
  */
 function getPrefixedKey(key: string, prefix: string): string {
@@ -118,7 +136,7 @@ function debounce<T extends (...args: any[]) => any>(
 function createStorage(options: StorageOptions = {}): StoragePlugin {
   const {
     prefix = 'lyt_',
-    storage = typeof localStorage !== 'undefined' ? localStorage : ({} as Storage),
+    storage = typeof localStorage !== 'undefined' ? localStorage : createMemoryStorage(),
     expire,
     debug = false,
     serialize = JSON.stringify,
@@ -289,7 +307,9 @@ function createStorage(options: StorageOptions = {}): StoragePlugin {
       return stop
     }
 
-    // 降级到简单的轮询
+    // 降级到简单的轮询方案
+    // TODO: 考虑使用 storage event 或 MutationObserver 替代轮询以提升性能
+    // 当前轮询间隔 200ms 作为最后降级手段，适用于不支持 watch API 的环境
     let currentValue = target[key]
     const interval = setInterval(() => {
       const newValue = target[key]

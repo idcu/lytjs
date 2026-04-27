@@ -13,6 +13,7 @@
  */
 
 import { isStringOrNumber, isArray, isVNode } from '@lytjs/common';
+import { Fragment } from '@lytjs/vdom';
 
 // ============================================================
 // 类型定义
@@ -61,11 +62,8 @@ export type Children = string | number | VNode | Children[];
 export type Props = Record<string, any> | null;
 
 // ============================================================
-// Fragment 支持
+// Fragment 支持（从 @lytjs/vdom 导入，确保全局唯一 Symbol）
 // ============================================================
-
-/** Fragment 标记 Symbol */
-export const Fragment = Symbol('Fragment');
 
 
 
