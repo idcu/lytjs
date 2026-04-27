@@ -28,6 +28,42 @@
 
 - [模块组装](./advanced/01-module-assembly.md) - 如何把模块组装在一起
 
+### Vapor Mode 稳定化说明
+
+> **更新日期**：2026-04-27
+>
+> Vapor Mode 已从实验性升级为稳定 API。以下是本次稳定化的主要变更：
+
+**核心 API 冻结：**
+- `bindStyle(el, sig)` -- 新增，支持 Signal 驱动的样式绑定（字符串和对象两种形式）
+- `bindHTML(el, sig)` -- 新增，支持 Signal 驱动的 innerHTML 绑定
+- `bindIf(el, sig, anchor?)` -- 重写，从 display:none 切换改为 DOM 插入/移除方式
+- `bindEach(container, sig, keyFn, renderFn)` -- 重写，从全量重建改为 keyed diff 算法
+- `renderVaporComponent(comp, container, options?)` -- 新增 `props` 参数支持
+- `defineVaporComponent()` -- 添加 `__vapor__` 标记
+
+**模板编译器增强：**
+- 支持 Signal 驱动的响应式 `v-if` 和 `v-each`
+- 支持响应式文本插值和动态属性绑定
+
+**错误处理和内存管理：**
+- `vaporPatch()` 支持绑定迁移和清理
+- `vaporMount()` 修复内存泄漏，卸载时清理所有 Signal 绑定
+- `renderVaporNode()` 追踪绑定清理函数
+
+**错误码体系：**
+- 新增 Vapor 渲染器错误码（LYT_RENDERER_VAPOR_ERROR 等）
+- 新增响应式循环依赖错误码（LYT_REACTIVITY_CIRCULAR_DEPENDENCY）
+- 统一错误码体系到 `@lytjs/common`
+
+**TypeScript：**
+- 所有子包 tsconfig.json 统一启用 `strict: true`
+- 新增 `@lytjs/common/vnode-types` 统一 VNode 类型定义
+
+详细 API 文档请参阅：
+- [Vapor Mode 指南](../guide/vapor-mode.md) -- 使用指南和最佳实践
+- [渲染器 API](../api/renderer.md#vapor-mode-api) -- 完整 API 参考
+
 ## 🎯 你将学到什么？
 
 通过阅读这些文档，你将：

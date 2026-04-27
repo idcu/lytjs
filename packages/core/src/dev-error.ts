@@ -7,6 +7,7 @@
 
 import { LytError } from './lyt-error'
 import { getDevMode } from './warn'
+import { getCategory } from '@lytjs/common'
 
 // ============================================================
 // 错误格式化
@@ -111,14 +112,15 @@ function getFixSuggestion(err: Error): string | null {
   }
 
   const code = err.code
+  const category = getCategory(code)
 
   // 编译器错误建议
-  if (code >= 1000 && code < 2000) {
+  if (category === 'COMPILER') {
     return '请检查模板语法是否正确，参考 Lyt.js 模板语法文档。'
   }
 
   // 渲染器错误建议
-  if (code >= 2000 && code < 3000) {
+  if (category === 'RENDERER') {
     if (code === 2003) {
       return '水合不匹配通常由服务端和客户端渲染结果不一致引起。请确保服务端和客户端使用相同的数据和组件版本。'
     }
@@ -126,7 +128,7 @@ function getFixSuggestion(err: Error): string | null {
   }
 
   // 组件错误建议
-  if (code >= 3000 && code < 4000) {
+  if (category === 'COMPONENT') {
     if (code === 3001) {
       return '请检查传入的 props 是否符合组件定义中的 props 声明。'
     }
@@ -137,25 +139,25 @@ function getFixSuggestion(err: Error): string | null {
   }
 
   // 路由错误建议
-  if (code >= 4000 && code < 5000) {
+  if (category === 'ROUTER') {
     return '请检查路由配置，确保路由路径已正确注册。'
   }
 
   // Store 错误建议
-  if (code >= 5000 && code < 6000) {
+  if (category === 'STORE') {
     return '请检查 Store 的创建和使用，确保 ID 唯一且 Store 未被销毁。'
   }
 
   // 响应式错误建议
-  if (code >= 6000 && code < 7000) {
-    if (code === 6004) {
+  if (category === 'REACTIVITY') {
+    if (code === 6004 || code === 6006) {
       return '请检查 computed 函数是否引用了自身，移除循环依赖。'
     }
     return '请检查响应式数据的读写操作。'
   }
 
   // 核心错误建议
-  if (code >= 7000 && code < 8000) {
+  if (category === 'CORE') {
     if (code === 7002) {
       return '请确保挂载目标容器在调用 mount() 之前已存在于 DOM 中。'
     }
@@ -163,6 +165,11 @@ function getFixSuggestion(err: Error): string | null {
       return '应用已挂载，如需重新挂载请先调用 unmount()。'
     }
     return '请检查应用配置和参数。'
+  }
+
+  // SSR 错误建议
+  if (category === 'SSR') {
+    return '请检查服务端渲染配置，确保服务端和客户端渲染结果一致。'
   }
 
   return null

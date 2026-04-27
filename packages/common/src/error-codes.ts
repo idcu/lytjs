@@ -66,6 +66,8 @@ export enum LytErrorCodes {
   LYT_REACTIVITY_EFFECT_ERROR = 6003,
   LYT_REACTIVITY_COMPUTED_CYCLE = 6004,
   LYT_REACTIVITY_EFFECT_DISPOSED = 6005,
+  LYT_REACTIVITY_CIRCULAR_DEPENDENCY = 6006,
+  LYT_REACTIVITY_SIGNAL_DISPOSED = 6007,
 
   // ============================================================
   // 核心错误 (7000-7999)
@@ -104,12 +106,19 @@ export enum LytErrorCodes {
   LYT_PLUGIN_UNINSTALL_FAILED = 10004,
 
   // ============================================================
-  // SSR 错误 (11000-11999)
+  // Vapor 渲染器错误 (11000-11099)
   // ============================================================
-  LYT_SSR_STREAM_ERROR = 11001,
-  LYT_SSR_SUSPENSE_TIMEOUT = 11002,
-  LYT_SSR_HYDRATION_ERROR = 11003,
-  LYT_SSR_ISLAND_ERROR = 11004,
+  LYT_RENDERER_VAPOR_ERROR = 11001,
+  LYT_RENDERER_VAPOR_COMPILER_ERROR = 11002,
+  LYT_RENDERER_VAPOR_COMPONENT_ERROR = 11003,
+
+  // ============================================================
+  // SSR 错误 (11100-11999)
+  // ============================================================
+  LYT_SSR_STREAM_ERROR = 11101,
+  LYT_SSR_SUSPENSE_TIMEOUT = 11102,
+  LYT_SSR_HYDRATION_ERROR = 11103,
+  LYT_SSR_ISLAND_ERROR = 11104,
 }
 
 // ============================================================
@@ -180,6 +189,8 @@ const errorMessageMap: Record<number, string> = {
   [LytErrorCodes.LYT_REACTIVITY_EFFECT_ERROR]: '副作用函数执行错误。',
   [LytErrorCodes.LYT_REACTIVITY_COMPUTED_CYCLE]: '计算属性检测到循环依赖。',
   [LytErrorCodes.LYT_REACTIVITY_EFFECT_DISPOSED]: '副作用函数已被销毁，无法再次执行。',
+  [LytErrorCodes.LYT_REACTIVITY_CIRCULAR_DEPENDENCY]: '响应式循环依赖，computed 在其自身的计算图中。',
+  [LytErrorCodes.LYT_REACTIVITY_SIGNAL_DISPOSED]: 'Signal 已被销毁，无法继续操作。',
 
   // 核心错误 (7000-7999)
   [LytErrorCodes.LYT_CORE_PLUGIN_ERROR]: '插件错误，请检查插件配置和安装逻辑。',
@@ -209,7 +220,12 @@ const errorMessageMap: Record<number, string> = {
   [LytErrorCodes.LYT_PLUGIN_INVALID]: '无效的插件，请检查插件是否满足接口要求。',
   [LytErrorCodes.LYT_PLUGIN_UNINSTALL_FAILED]: '插件卸载失败，请检查插件是否已被正确清理。',
 
-  // SSR 错误 (11000-11999)
+  // Vapor 渲染器错误 (11000-11099)
+  [LytErrorCodes.LYT_RENDERER_VAPOR_ERROR]: 'Vapor 渲染器错误，请检查 DOM 工厂函数和容器配置。',
+  [LytErrorCodes.LYT_RENDERER_VAPOR_COMPILER_ERROR]: 'Vapor 编译器错误，请检查模板语法和闭合标签。',
+  [LytErrorCodes.LYT_RENDERER_VAPOR_COMPONENT_ERROR]: 'Vapor 组件错误，请确保组件提供了 template 或 render 函数。',
+
+  // SSR 错误 (11100-11999)
   [LytErrorCodes.LYT_SSR_STREAM_ERROR]: 'SSR 流式渲染错误，请检查流管道配置。',
   [LytErrorCodes.LYT_SSR_SUSPENSE_TIMEOUT]: 'SSR Suspense 超时，请检查异步组件的加载时间。',
   [LytErrorCodes.LYT_SSR_HYDRATION_ERROR]: 'SSR 水合错误，服务端与客户端渲染结果不一致。',
@@ -231,7 +247,8 @@ function getCategoryForCode(code: number): string {
   if (code >= 8000 && code < 9000) return ErrorCategory.CLI;
   if (code >= 9000 && code < 10000) return ErrorCategory.DEVTOOLS;
   if (code >= 10000 && code < 11000) return ErrorCategory.PLUGIN;
-  if (code >= 11000 && code < 12000) return ErrorCategory.SSR;
+  if (code >= 11000 && code < 11100) return ErrorCategory.RENDERER;
+  if (code >= 11100 && code < 12000) return ErrorCategory.SSR;
   return 'UNKNOWN';
 }
 

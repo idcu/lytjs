@@ -153,6 +153,17 @@ export const Comment = Symbol('Comment')
 
 /**
  * 判断 VNode 是否为 Fragment 类型
+ *
+ * @param vnode - 待检测的虚拟节点
+ * @returns 如果节点类型为 Fragment 则返回 true
+ *
+ * @example
+ * ```ts
+ * import { isFragment, Fragment, h } from '@lytjs/renderer'
+ *
+ * const vnode = h(Fragment, null, [h('div', null, 'A'), h('div', null, 'B')])
+ * console.log(isFragment(vnode)) // true
+ * ```
  */
 export function isFragment(vnode: VNode): boolean {
   return vnode.type === Fragment
@@ -160,6 +171,17 @@ export function isFragment(vnode: VNode): boolean {
 
 /**
  * 判断 VNode 是否为文本类型
+ *
+ * @param vnode - 待检测的虚拟节点
+ * @returns 如果节点类型为 Text 则返回 true
+ *
+ * @example
+ * ```ts
+ * import { isTextVNode, Text, h } from '@lytjs/renderer'
+ *
+ * const vnode = h(Text, null, 'hello')
+ * console.log(isTextVNode(vnode)) // true
+ * ```
  */
 export function isTextVNode(vnode: VNode): boolean {
   return vnode.type === Text
@@ -167,6 +189,17 @@ export function isTextVNode(vnode: VNode): boolean {
 
 /**
  * 判断 VNode 是否为注释类型
+ *
+ * @param vnode - 待检测的虚拟节点
+ * @returns 如果节点类型为 Comment 则返回 true
+ *
+ * @example
+ * ```ts
+ * import { isCommentVNode, Comment, h } from '@lytjs/renderer'
+ *
+ * const vnode = h(Comment, null, 'conditional comment')
+ * console.log(isCommentVNode(vnode)) // true
+ * ```
  */
 export function isCommentVNode(vnode: VNode): boolean {
   return vnode.type === Comment
@@ -176,6 +209,23 @@ export function isCommentVNode(vnode: VNode): boolean {
  * 判断两个 VNode 是否为相同类型
  *
  * 相同类型的定义：type 相同且 key 相同。
+ * 在 diff 算法中，只有相同类型的 VNode 才会进行 patch 复用。
+ *
+ * @param n1 - 第一个虚拟节点
+ * @param n2 - 第二个虚拟节点
+ * @returns 如果两个节点的 type 和 key 均相同则返回 true
+ *
+ * @example
+ * ```ts
+ * import { isSameVNodeType, h } from '@lytjs/renderer'
+ *
+ * const a = h('div', { key: 'x' }, 'hello')
+ * const b = h('div', { key: 'x' }, 'world')
+ * const c = h('span', { key: 'x' }, 'hello')
+ *
+ * console.log(isSameVNodeType(a, b)) // true（type 和 key 相同）
+ * console.log(isSameVNodeType(a, c)) // false（type 不同）
+ * ```
  */
 export function isSameVNodeType(n1: VNode, n2: VNode): boolean {
   return n1.type === n2.type && n1.key === n2.key
@@ -185,6 +235,19 @@ export function isSameVNodeType(n1: VNode, n2: VNode): boolean {
  * 判断 VNode 是否为 Block
  *
  * Block 的 dynamicChildren 是非 null 的数组。
+ * Block Tree 优化允许跳过静态子树的 diff，仅更新 dynamicChildren 列表中的节点。
+ *
+ * @param vnode - 待检测的虚拟节点
+ * @returns 如果节点是 Block 则返回 true
+ *
+ * @example
+ * ```ts
+ * import { isBlock, h, openBlock } from '@lytjs/renderer'
+ *
+ * // Block 节点在编译时通过 openBlock() 创建
+ * const vnode = openBlock(() => h('div', null, h('span', null, 'dynamic')))
+ * console.log(isBlock(vnode)) // true
+ * ```
  */
 export function isBlock(vnode: VNode): boolean {
   return Array.isArray(vnode.dynamicChildren)

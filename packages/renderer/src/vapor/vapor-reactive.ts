@@ -184,39 +184,123 @@ export function bindEvent(
 }
 
 // ================================================================
-//  条件渲染绑定
+//  样式绑定
 // ================================================================
 
 /**
- * 根据信号值控制元素的显示/隐藏
+ * 将信号值绑定到元素的 style 属性
  *
- * 当信号值为真值时显示元素，假值时隐藏元素。
- * 使用 display: none 方式隐藏，保留 DOM 结构。
+ * 支持两种形式：
+ *   - 字符串：直接设置为 style.cssText
+ *   - 对象：{ color: 'red', fontSize: '14px' } -> 逐项设置
  *
  * @param el    目标 DOM 元素
  * @param sig   响应式信号
  * @returns 清理函数
  */
-export function bindIf<T>(
+export function bindStyle<T>(
   el: VaporElement,
   sig: Signal<T>
 ): BindingCleanup {
   const dispose = effect(() => {
     const value = sig();
-    const elRecord = el as Record<string, unknown>;
-    if (value) {
-      elRecord.style = elRecord.style || {};
-      if ((elRecord.style as Record<string, string>).display === 'none') {
-        (elRecord.style as Record<string, string>).display = '';
+    if (typeof value === 'string') {
+      (el as Record<string, unknown>).style = value;
+    } else if (typeof value === 'object' && value !== null) {
+      const styleObj = el.style as Record<string, string>;
+      // 先清空所有样式
+      for (const key of Object.keys(styleObj)) {
+        styleObj[key] = '';
       }
-      elRecord.hidden = false;
+      // 设置新样式
+      for (const [key, val] of Object.entries(value as Record<string, string>)) {
+        styleObj[key] = val;
+      }
     } else {
-      elRecord.style = elRecord.style || {};
-      (elRecord.style as Record<string, string>).display = 'none';
-      elRecord.hidden = true;
+      (el as Record<string, unknown>).style = '';
     }
   });
   return dispose;
+}
+
+// ================================================================
+//  HTML 绑定
+// ================================================================
+
+/**
+ * 将信号值绑定到元素的 innerHTML
+ *
+ * ⚠️ 注意：使用 innerHTML 存在 XSS 风险，请确保数据来源可信。
+ *
+ * @param el    目标 DOM 元素
+ * @param sig   响应式信号
+ * @returns 清理函数
+ */
+export function bindHTML<T>(
+  el: VaporElement,
+  sig: Signal<T>
+): BindingCleanup {
+  const dispose = effect(() => {
+    const value = sig();
+    el.innerHTML = value === null || value === undefined ? '' : String(value);
+  });
+  return dispose;
+}
+
+// ================================================================
+//  条件渲染绑定
+// ================================================================
+
+/**
+ * 根据信号值控制元素的插入/移除
+ *
+ * 当信号值为真值时插入元素到 DOM，假值时从 DOM 移除。
+ * 使用注释节点作为锚点，保持 DOM 位置稳定。
+ *
+ * @param el        目标 DOM 元素
+ * @param sig       响应式信号
+ * @param anchor    可选的锚点元素，用于定位插入位置
+ * @returns 清理函数
+ */
+export function bindIf<T>(
+  el: VaporElement,
+  sig: Signal<T>,
+  anchor?: VaporElement
+): BindingCleanup {
+  let inserted = el.parentNode !== null;
+  // 如果没有提供 anchor，在元素前插入一个注释节点作为锚点
+  let anchorNode: VaporElement | null = anchor || null;
+  if (!anchorNode && el.parentNode) {
+    // 元素已在 DOM 中，在它前面插入锚点
+    anchorNode = el.parentNode as unknown as VaporElement;
+  }
+
+  const dispose = effect(() => {
+    const value = sig();
+    if (value) {
+      if (!inserted) {
+        // 插入元素到锚点位置
+        if (anchorNode && anchorNode.parentNode) {
+          anchorNode.parentNode.insertBefore(el, anchorNode.nextSibling);
+        } else if (anchorNode) {
+          anchorNode.appendChild(el);
+        }
+        inserted = true;
+      }
+    } else {
+      if (inserted && el.parentNode) {
+        el.parentNode.removeChild(el);
+        inserted = false;
+      }
+    }
+  });
+
+  return () => {
+    dispose();
+    if (inserted && el.parentNode) {
+      el.parentNode.removeChild(el);
+    }
+  };
 }
 
 // ================================================================
@@ -272,35 +356,67 @@ export function bindEach<T>(
             container.replaceChild(newEl, oldEl);
           }
           currentElements[i] = newEl;
+          elementByKey.set(newKeys[i], newEl);
         }
         return;
       }
     }
 
-    // 完整重建（简化实现，实际可用 keyed diff 优化）
-    // 清除旧元素
+    // Keyed diff 算法
+    const oldKeySet = new Set(currentKeys);
+    const newKeySet = new Set(newKeys);
+    const newElementByKey = new Map<string | number, VaporElement>();
+
+    // 1. 创建新元素
+    for (let i = 0; i < items.length; i++) {
+      const key = newKeys[i];
+      if (oldKeySet.has(key) && elementByKey.has(key)) {
+        // 复用已有元素
+        const existingEl = elementByKey.get(key)!;
+        newElementByKey.set(key, existingEl);
+        elementByKey.delete(key);
+      } else {
+        // 创建新元素
+        const el = renderItem(items[i], i);
+        newElementByKey.set(key, el);
+      }
+    }
+
+    // 2. 移除不再存在的旧元素
+    for (const [key, el] of elementByKey) {
+      if (!newKeySet.has(key) && el.parentNode === container) {
+        container.removeChild(el);
+      }
+    }
+
+    // 3. 按新顺序重新排列
+    // 先清除容器中所有当前元素
     for (const el of currentElements) {
       if (el.parentNode === container) {
         container.removeChild(el);
       }
     }
-    elementByKey.clear();
+
+    // 按新顺序插入
     currentElements = [];
     currentKeys = [];
-
-    // 创建新元素
     for (let i = 0; i < items.length; i++) {
-      const el = renderItem(items[i], i);
+      const key = newKeys[i];
+      const el = newElementByKey.get(key)!;
       container.appendChild(el);
       currentElements.push(el);
-      currentKeys.push(newKeys[i]);
-      elementByKey.set(newKeys[i], el);
+      currentKeys.push(key);
+    }
+
+    // 更新 elementByKey
+    elementByKey.clear();
+    for (const [key, el] of newElementByKey) {
+      elementByKey.set(key, el);
     }
   });
 
   return () => {
     dispose();
-    // 清除所有子元素
     for (const el of currentElements) {
       if (el.parentNode === container) {
         container.removeChild(el);

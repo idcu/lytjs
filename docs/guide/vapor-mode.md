@@ -144,10 +144,273 @@ export function render(_ctx, container) {
 
 ### 不支持
 
-- `v-html`（使用 `dangerouslySetInnerHTML` 替代）
 - 运行时模板编译（`compile()` 函数）
 - `$refs`（使用 `ref()` + template ref 替代）
 - 递归组件（编译时需已知最大深度）
+
+## Vapor Mode 响应式绑定 API
+
+Vapor Mode 提供了一组细粒度的响应式绑定 API，基于 Signal 实现精确的 DOM 更新。
+
+### bindText(el, sig)
+
+将 Signal 的值绑定到元素的文本内容。
+
+```ts
+import { bindText } from '@lytjs/renderer/vapor'
+import { signal } from '@lytjs/reactivity'
+
+const count = signal(0)
+const el = document.querySelector('#count')
+bindText(el, count)
+// count 变化时，el.textContent 自动更新
+```
+
+### bindProp(el, key, sig)
+
+将 Signal 的值绑定到元素的属性。
+
+```ts
+import { bindProp } from '@lytjs/renderer/vapor'
+
+const placeholder = signal('请输入')
+bindProp(inputEl, 'placeholder', placeholder)
+```
+
+### bindClass(el, sig)
+
+将 Signal 的值绑定到元素的 class。
+
+```ts
+import { bindClass } from '@lytjs/renderer/vapor'
+
+const activeClass = signal('active highlighted')
+bindClass(el, activeClass)
+```
+
+### bindStyle(el, sig) {#bindstyle}
+
+将 Signal 的值绑定到元素的 style，支持字符串和对象两种形式。
+
+**字符串形式：**
+
+```ts
+import { bindStyle } from '@lytjs/renderer/vapor'
+import { signal } from '@lytjs/reactivity'
+
+const styleSig = signal('color: red; font-size: 16px')
+bindStyle(el, styleSig)
+// Signal 更新时，el.style.cssText 自动同步
+```
+
+**对象形式：**
+
+```ts
+const styleSig = signal({
+  color: 'red',
+  fontSize: '16px',
+  display: 'flex'
+})
+bindStyle(el, styleSig)
+// 仅更新发生变化的样式属性，性能更优
+```
+
+### bindHTML(el, sig) {#bindhtml}
+
+将 Signal 的值绑定到元素的 innerHTML。
+
+```ts
+import { bindHTML } from '@lytjs/renderer/vapor'
+import { signal } from '@lytjs/reactivity'
+
+const htmlSig = signal('<strong>加粗文本</strong>')
+bindHTML(el, htmlSig)
+// Signal 更新时，el.innerHTML 自动同步
+```
+
+::: warning 安全提示
+`bindHTML` 会直接设置 `innerHTML`，请确保 Signal 的值来自可信来源，避免 XSS 攻击。
+:::
+
+### bindIf(el, parentSig, anchor?) {#bindif}
+
+根据 Signal 的值控制元素的 DOM 插入/移除（非 display:none 切换）。
+
+```ts
+import { bindIf } from '@lytjs/renderer/vapor'
+import { signal } from '@lytjs/reactivity'
+
+const visible = signal(true)
+bindIf(el, visible)
+// visible 为 true 时，el 被插入到 DOM
+// visible 为 false 时，el 从 DOM 中移除
+```
+
+**参数说明：**
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| el | `Element` | 要控制的 DOM 元素 |
+| parentSig | `Signal<boolean>` | 控制可见性的 Signal |
+| anchor | `Node`（可选） | 插入位置的锚点节点 |
+
+::: tip 与旧版区别
+旧版 `bindIf` 使用 `display:none` 切换可见性，元素始终保留在 DOM 中。新版改为真正的 DOM 插入/移除，性能更优，且不会留下隐藏的 DOM 节点。
+:::
+
+### bindEach(container, sig, keyFn, renderFn) {#bindeach}
+
+基于 Signal 驱动的 keyed diff 列表渲染。
+
+```ts
+import { bindEach } from '@lytjs/renderer/vapor'
+import { signal } from '@lytjs/reactivity'
+
+const items = signal([
+  { id: 1, name: '项目 A' },
+  { id: 2, name: '项目 B' },
+  { id: 3, name: '项目 C' }
+])
+
+bindEach(
+  container,           // 父容器元素
+  items,               // Signal<Array<T>>
+  item => item.id,     // key 函数，用于标识每个列表项
+  (item, index) => {   // 渲染函数，返回 DOM 元素
+    const div = document.createElement('div')
+    div.textContent = item.name
+    return div
+  }
+)
+```
+
+::: tip 与旧版区别
+旧版 `bindEach` 在 Signal 变化时全量重建所有 DOM 节点。新版使用真正的 keyed diff 算法，仅对新增、删除和移动的节点进行 DOM 操作，大幅提升列表更新性能。
+:::
+
+### bindEvent(el, event, handler)
+
+绑定事件监听器。
+
+```ts
+import { bindEvent } from '@lytjs/renderer/vapor'
+
+bindEvent(button, 'click', () => {
+  console.log('clicked!')
+})
+```
+
+## 响应式模板编译
+
+Vapor Mode 的模板编译器现已支持基于 Signal 的响应式指令，编译后的代码会自动创建 Signal 绑定并在数据变化时更新 DOM。
+
+### 响应式 v-if
+
+模板中的 `v-if` 指令会自动编译为 `bindIf` 调用：
+
+```html
+<!-- 模板 -->
+<div v-if="show">条件内容</div>
+```
+
+```ts
+// 编译输出（伪代码）
+const show = signal(true)
+const el = createElement('div')
+el.textContent = '条件内容'
+bindIf(el, show)
+```
+
+### 响应式 v-each
+
+模板中的 `v-each` 指令会自动编译为 `bindEach` 调用（使用 keyed diff）：
+
+```html
+<!-- 模板 -->
+<ul>
+  <li v-each="item in items">{{ item.name }}</li>
+</ul>
+```
+
+```ts
+// 编译输出（伪代码）
+const items = signal([...])
+bindEach(ul, items, item => item.id, (item) => {
+  const li = createElement('li')
+  bindText(li, computed(() => item.name))
+  return li
+})
+```
+
+### 响应式文本插值
+
+`{{ }}` 插值会自动编译为 `bindText` 调用：
+
+```html
+<span>{{ message }}</span>
+```
+
+```ts
+// 编译输出
+const message = signal('Hello')
+bindText(span, message)
+```
+
+### 响应式动态属性绑定
+
+动态属性绑定会自动编译为对应的 `bindProp` / `bindClass` / `bindStyle` 调用：
+
+```html
+<div :class="activeClass" :style="styleObj" :data-id="id">
+```
+
+```ts
+// 编译输出
+bindClass(div, activeClass)
+bindStyle(div, styleObj)
+bindProp(div, 'data-id', id)
+```
+
+## renderVaporComponent() {#renderVaporComponent}
+
+`renderVaporComponent()` 用于将 Vapor 组件渲染到指定容器，现已支持 `props` 参数。
+
+```ts
+import { renderVaporComponent, defineVaporComponent } from '@lytjs/renderer/vapor'
+
+const MyComponent = defineVaporComponent({
+  props: ['title', 'count'],
+  setup(props) {
+    // props 是响应式的
+    return {}
+  },
+  template: `<div><h1>{{ title }}</h1><span>{{ count }}</span></div>`
+})
+
+// 渲染组件，传入 props
+renderVaporComponent(
+  MyComponent,
+  document.querySelector('#app'),
+  {
+    props: {
+      title: 'Hello Vapor',
+      count: signal(42)
+    }
+  }
+)
+```
+
+**参数说明：**
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| component | `VaporComponent` | Vapor 组件定义 |
+| container | `Element` | 挂载容器 |
+| options.props | `Record<string, any>` | 传入组件的 props，值可以是 Signal |
+
+::: tip 提示
+props 中的值如果是 Signal，组件内部会自动解包。非 Signal 值会保持原样传递。
+:::
 
 ## 与传统模式混合使用
 

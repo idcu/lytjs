@@ -14,6 +14,10 @@
 
 import type { VaporElement } from './vapor-reactive';
 import { getVaporDOMFactory } from './vapor-renderer';
+import type { Signal } from '@lytjs/reactivity/signal';
+import { effect } from '@lytjs/reactivity/signal';
+import { bindIf, bindEach } from './vapor-reactive';
+import { LytError } from '@lytjs/common';
 
 // ================================================================
 //  类型定义
@@ -93,7 +97,7 @@ function parseTemplate(template: string): ASTNode {
       const endIdx = findClosingTag(remaining, tagName);
 
       if (endIdx === -1) {
-        throw new Error(`[lyt:vapor:compiler] 未找到闭合标签: </${tagName}>`);
+        throw new LytError('LYT_RENDERER_VAPOR_COMPILER_ERROR', `未找到闭合标签: </${tagName}>`);
       }
 
       const innerContent = remaining.slice(0, endIdx);
@@ -302,27 +306,75 @@ function renderASTNode(
   if (node.type === 'interpolation') {
     const el = factory('span') as Record<string, unknown>;
     const expression = node.expression || '';
-    // 尝试从上下文中获取值
     const value = resolveExpression(ctx, expression);
-    el.textContent = value !== null && value !== undefined ? String(value) : '';
+
+    if (isSignalValue(value)) {
+      // 响应式文本插值
+      const sig = value as Signal<unknown>;
+      const textNode = factory('#text') as Record<string, unknown>;
+      textNode.nodeType = 3;
+      textNode.textContent = String(sig());
+      const dispose = effect(() => {
+        textNode.textContent = sig() === null || sig() === undefined ? '' : String(sig());
+      });
+      // 将文本节点包装在 span 中
+      (el as VaporElement).appendChild(textNode as VaporElement);
+      // 存储清理函数以便后续使用
+      (el as Record<string, unknown>)._bindingCleanup = dispose;
+    } else {
+      el.textContent = value !== null && value !== undefined ? String(value) : '';
+    }
     return el as VaporElement;
   }
 
   if (node.type === 'element') {
-    // 处理 v-each 指令（v-each 元素自身被重复，不创建外层元素）
+    // 处理 v-each 指令（响应式）
     if (node.directives?.each) {
       const { item, expression } = node.directives.each;
-      const array = resolveExpression(ctx, expression);
-      // 创建一个容器来承载所有重复的元素
+      const arrayValue = resolveExpression(ctx, expression);
+
+      if (isSignalValue(arrayValue)) {
+        // 响应式列表渲染：使用 bindEach
+        const container = factory('#fragment') as Record<string, unknown>;
+        container.childNodes = [];
+        container.nodeType = 11;
+        const containerEl = container as VaporElement;
+
+        bindEach(containerEl, arrayValue, (arrayItem: unknown, index: number) => {
+          const itemCtx = { ...ctx, [item]: arrayItem, index };
+          const itemEl = factory(node.tag || 'div');
+          // 复制静态属性
+          if (node.props) {
+            for (const [key, value] of Object.entries(node.props)) {
+              if (key === 'class' || key === 'className') {
+                itemEl.className = value;
+              } else {
+                (itemEl as Record<string, unknown>)[key] = value;
+              }
+            }
+          }
+          // 渲染子节点
+          if (node.children) {
+            for (const child of node.children) {
+              const childEl = renderASTNode(child, itemCtx, factory);
+              itemEl.appendChild(childEl);
+            }
+          }
+          return itemEl;
+        });
+
+        return containerEl;
+      }
+
+      // 非响应式：静态展开
+      const array = Array.isArray(arrayValue) ? arrayValue : [];
       const container = factory('#fragment') as Record<string, unknown>;
       container.childNodes = [];
       container.nodeType = 11;
-      if (Array.isArray(array)) {
+      if (array.length > 0) {
         for (let i = 0; i < array.length; i++) {
           const itemCtx = { ...ctx, [item]: array[i], index: i };
-          // 为每个 item 创建一个新的元素实例
           const itemEl = factory(node.tag || 'div') as Record<string, unknown>;
-          // 复制静态属性
           if (node.props) {
             for (const [key, value] of Object.entries(node.props)) {
               if (key === 'class' || key === 'className') {
@@ -332,7 +384,6 @@ function renderASTNode(
               }
             }
           }
-          // 渲染子节点
           if (node.children) {
             for (const child of node.children) {
               const childEl = renderASTNode(child, itemCtx, factory);
@@ -348,24 +399,37 @@ function renderASTNode(
     const el = factory(node.tag || 'div');
     const elRecord = el as Record<string, unknown>;
 
-    // 处理 v-if 指令
+    // 处理 v-if 指令（响应式）
     if (node.directives?.if) {
-      const condition = resolveExpression(ctx, node.directives.if);
-      if (!condition) {
+      const conditionValue = resolveExpression(ctx, node.directives.if);
+      if (isSignalValue(conditionValue)) {
+        // 响应式条件渲染：使用 bindIf
+        bindIf(el, conditionValue);
+      } else if (!conditionValue) {
+        // 静态条件：直接隐藏
         elRecord.style = elRecord.style || {};
         (elRecord.style as Record<string, string>).display = 'none';
         elRecord.hidden = true;
       }
     }
 
-    // 应用静态属性
+    // 应用静态属性和动态属性
     if (node.props) {
       for (const [key, value] of Object.entries(node.props)) {
         if (key.startsWith(':')) {
           // 动态属性绑定
           const propName = key.slice(1);
           const propValue = resolveExpression(ctx, value);
-          elRecord[propName] = propValue;
+          if (isSignalValue(propValue)) {
+            // 响应式属性绑定
+            const sig = propValue as Signal<unknown>;
+            const dispose = effect(() => {
+              elRecord[propName] = sig();
+            });
+            (el as Record<string, unknown>)._propBindingCleanup = dispose;
+          } else {
+            elRecord[propName] = propValue;
+          }
         } else if (key === 'class' || key === 'className') {
           el.className = value;
         } else {
@@ -410,18 +474,14 @@ function renderASTNode(
  * 从上下文中解析表达式
  *
  * 支持简单属性访问和点号路径。
+ * 如果解析结果是 Signal，返回 Signal 本身（不调用）。
  */
 function resolveExpression(ctx: Record<string, unknown>, expression: string): unknown {
   const trimmed = expression.trim();
 
   // 处理简单标识符
   if (/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(trimmed)) {
-    const value = ctx[trimmed];
-    // 如果值是 Signal，调用它获取当前值
-    if (typeof value === 'function' && !value.prototype) {
-      return (value as () => unknown)();
-    }
-    return value;
+    return ctx[trimmed];
   }
 
   // 处理点号路径: a.b.c
@@ -430,11 +490,34 @@ function resolveExpression(ctx: Record<string, unknown>, expression: string): un
   for (const part of parts) {
     if (current === null || current === undefined) return undefined;
     current = (current as Record<string, unknown>)[part];
-    if (typeof current === 'function' && !current.prototype && parts.indexOf(part) < parts.length - 1) {
-      current = (current as () => unknown)();
-    }
   }
   return current;
+}
+
+/**
+ * 从上下文中解析表达式的当前值
+ *
+ * 如果值是 Signal，自动调用获取当前值。
+ */
+function resolveValue(ctx: Record<string, unknown>, expression: string): unknown {
+  const value = resolveExpression(ctx, expression);
+  if (typeof value === 'function') {
+    // 尝试判断是否是 Signal（有 _subscribe 属性）
+    const sig = value as unknown as Record<string, unknown>;
+    if (sig._subscribe) {
+      return (value as Signal<unknown>)();
+    }
+  }
+  return value;
+}
+
+/**
+ * 判断一个值是否是 Signal
+ */
+function isSignalValue(value: unknown): value is Signal<unknown> {
+  if (typeof value !== 'function') return false;
+  const sig = value as unknown as Record<string, unknown>;
+  return !!(sig._subscribe);
 }
 
 // ================================================================

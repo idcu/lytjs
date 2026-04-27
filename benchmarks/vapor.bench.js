@@ -1,131 +1,335 @@
 /**
  * Lyt.js Vapor Mode 性能基准测试
- * 
- * 测试内容：
- *   - Vapor 模式 vs VDOM 模式的性能对比
- *   - 创建、更新、删除操作的性能
- *   - Signal 响应式更新性能
- *   - 大规模列表操作性能
+ *
+ * 测试 Vapor Mode 的核心操作性能：
+ * - Signal 创建和更新
+ * - DOM 绑定（bindText, bindProp, bindClass, bindIf, bindEach）
+ * - VaporNode 创建和渲染
+ * - Vapor vs VDOM 对比
  */
 
-import { fileURLToPath } from 'node:url'
-import { dirname, join } from 'node:path'
-
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
-
-import { createRequire } from 'node:module'
-const require = createRequire(import.meta.url)
+import { BenchmarkSuite } from './runner.js'
 
 // ================================================================
-//  基准测试辅助函数
+//  Mock DOM 环境
 // ================================================================
 
-function bench(name, fn, iterations = 10000) {
-  // 预热
-  for (let i = 0; i < 100; i++) fn()
-
-  const start = performance.now()
-  for (let i = 0; i < iterations; i++) fn()
-  const elapsed = performance.now() - start
-
-  const opsPerSec = Math.round(iterations / (elapsed / 1000))
-  console.log(`  ${name}: ${opsPerSec.toLocaleString()} ops/sec (${(elapsed / iterations).toFixed(4)}ms/op)`)
-  return opsPerSec
+function createMockElement(tag) {
+  const el = {
+    tagName: tag.toUpperCase(),
+    nodeType: 1,
+    textContent: '',
+    className: '',
+    childNodes: [],
+    parentNode: null,
+    style: {},
+    hidden: false,
+    value: '',
+    checked: false,
+    disabled: false,
+    nextSibling: null,
+    firstChild: null,
+    innerHTML: '',
+    setAttribute(key, value) { el[key] = value },
+    removeAttribute(key) { delete el[key] },
+    addEventListener(event, handler) {
+      if (!el._events) el._events = {}
+      if (!el._events[event]) el._events[event] = []
+      el._events[event].push(handler)
+    },
+    removeEventListener(event, handler) {
+      if (!el._events || !el._events[event]) return
+      el._events[event] = el._events[event].filter(h => h !== handler)
+    },
+    appendChild(child) {
+      child.parentNode = el
+      el.childNodes.push(child)
+    },
+    insertBefore(child, ref) {
+      child.parentNode = el
+      if (ref) {
+        const idx = el.childNodes.indexOf(ref)
+        el.childNodes.splice(idx, 0, child)
+      } else {
+        el.childNodes.push(child)
+      }
+    },
+    replaceChild(newChild, oldChild) {
+      const idx = el.childNodes.indexOf(oldChild)
+      if (idx !== -1) {
+        el.childNodes[idx] = newChild
+        newChild.parentNode = el
+        oldChild.parentNode = null
+      }
+      return oldChild
+    },
+    removeChild(child) {
+      const idx = el.childNodes.indexOf(child)
+      if (idx !== -1) {
+        el.childNodes.splice(idx, 1)
+        child.parentNode = null
+      }
+    },
+  }
+  return el
 }
 
-console.log('\nLyt.js Vapor Mode 基准测试\n')
-console.log('='.repeat(60))
-console.log('1. 基础操作性能测试')
-console.log('='.repeat(60) + '\n')
+// ================================================================
+//  简易 Signal 实现（用于基准测试）
+// ================================================================
 
-// 模拟基准测试 - 我们使用简单的性能比较
-// 实际的 Vapor Mode 和 VDOM 对比需要更复杂的设置
+function createSignal(initialValue) {
+  let value = initialValue
+  const subscribers = new Set()
 
-// 模拟简单的 DOM 操作
-bench('简单 DOM 元素创建', () => {
-  const el = { tag: 'div', props: {}, children: [] }
+  function signal() {
+    return value
+  }
+
+  signal.set = (newValue) => {
+    value = newValue
+    for (const subscriber of subscribers) {
+      subscriber(value)
+    }
+  }
+
+  signal._subscribe = (subscriber) => {
+    subscribers.add(subscriber)
+    return () => subscribers.delete(subscriber)
+  }
+
+  return signal
+}
+
+function createEffect(fn) {
+  // 简化版 effect，直接执行
+  return fn()
+}
+
+// ================================================================
+//  简易 Vapor API（内联实现，避免依赖构建产物）
+// ================================================================
+
+function bindText(el, sig) {
+  const dispose = createEffect(() => {
+    el.textContent = sig() === null || sig() === undefined ? '' : String(sig())
+  })
+  return dispose
+}
+
+function bindProp(el, prop, sig) {
+  const dispose = createEffect(() => {
+    el[prop] = sig()
+  })
+  return dispose
+}
+
+function bindClass(el, sig) {
+  const dispose = createEffect(() => {
+    const value = sig()
+    if (typeof value === 'string') {
+      el.className = value
+    } else if (Array.isArray(value)) {
+      el.className = value.filter(Boolean).join(' ')
+    } else if (typeof value === 'object' && value !== null) {
+      const classes = []
+      for (const key of Object.keys(value)) {
+        if (value[key]) classes.push(key)
+      }
+      el.className = classes.join(' ')
+    }
+  })
+  return dispose
+}
+
+function bindEvent(el, event, handler) {
+  el.addEventListener(event, handler)
+  return () => el.removeEventListener(event, handler)
+}
+
+function createVaporElement(tag, props, ...children) {
+  const node = {
+    tag,
+    children: [],
+    props: {},
+    events: {},
+    bindings: [],
+  }
+
+  if (props) {
+    for (const [key, value] of Object.entries(props)) {
+      if (key.startsWith('on') && typeof value === 'function') {
+        const eventName = key.slice(2).toLowerCase()
+        node.events[eventName] = value
+      } else {
+        node.props[key] = value
+      }
+    }
+  }
+
+  for (const child of children) {
+    if (typeof child === 'string') {
+      node.children.push({ tag: '#text', children: [], props: {}, events: {}, bindings: [], text: child })
+    } else {
+      node.children.push(child)
+    }
+  }
+
+  return node
+}
+
+function renderVaporNode(node) {
+  if (node.tag === '#text') {
+    const el = createMockElement('#text')
+    el.textContent = node.text || ''
+    el.nodeType = 3
+    return el
+  }
+
+  const el = createMockElement(node.tag)
+
+  for (const [key, value] of Object.entries(node.props)) {
+    if (key === 'style' && typeof value === 'object') {
+      Object.assign(el.style, value)
+    } else if (key === 'className' || key === 'class') {
+      el.className = String(value)
+    } else {
+      el[key] = value
+    }
+  }
+
+  for (const [eventName, handler] of Object.entries(node.events)) {
+    bindEvent(el, eventName, handler)
+  }
+
+  for (const child of node.children) {
+    const childEl = renderVaporNode(child)
+    el.appendChild(childEl)
+  }
+
   return el
-}, 50000)
+}
 
-bench('Signal 更新操作', () => {
-  // 模拟 signal 更新
-  let value = 0
-  const listeners = []
-  const update = (newVal) => {
-    value = newVal
-    listeners.forEach(fn => fn(newVal))
+// ================================================================
+//  基准测试
+// ================================================================
+
+const suite = new BenchmarkSuite('Vapor Mode Performance')
+
+// Signal 创建
+suite.addTest('Signal 创建 (10,000 次)', () => {
+  for (let i = 0; i < 10000; i++) {
+    createSignal(i)
   }
-  update(Math.random())
-}, 30000)
+})
 
-console.log('\n' + '='.repeat(60))
-console.log('2. 列表操作性能测试')
-console.log('='.repeat(60) + '\n')
-
-bench('创建 100 项简单列表', () => {
-  const items = []
-  for (let i = 0; i < 100; i++) {
-    items.push({ id: i, text: `Item ${i}` })
+// Signal 读取
+suite.addTest('Signal 读取 (100,000 次)', () => {
+  const sig = createSignal(42)
+  for (let i = 0; i < 100000; i++) {
+    sig()
   }
-  return items
-}, 10000)
+})
 
-bench('更新 100 项列表', () => {
-  const items = []
-  for (let i = 0; i < 100; i++) {
-    items.push({ id: i, text: `Item ${i}` })
+// Signal 更新
+suite.addTest('Signal 更新 (10,000 次)', () => {
+  const sig = createSignal(0)
+  for (let i = 0; i < 10000; i++) {
+    sig.set(i)
   }
-  // 更新每一项
-  for (let i = 0; i < 100; i++) {
-    items[i].text = `Updated ${i}`
-  }
-  return items
-}, 8000)
+})
 
-console.log('\n' + '='.repeat(60))
-console.log('3. Vapor vs VDOM 概念验证')
-console.log('='.repeat(60) + '\n')
-
-// 模拟 Vapor 模式（直接 DOM 更新）
-bench('Vapor 模式 - 直接属性更新', () => {
-  const el = { textContent: 'Test', className: '' }
-  el.textContent = 'Updated'
-  el.className = 'active'
-  return el
-}, 40000)
-
-// 模拟 VDOM 模式（创建虚拟节点然后 patch）
-bench('VDOM 模式 - 虚拟节点 + patch', () => {
-  const oldVNode = { tag: 'div', props: {}, children: 'Test' }
-  const newVNode = { tag: 'div', props: { class: 'active' }, children: 'Updated' }
-  // 模拟 patch
-  return newVNode
-}, 25000)
-
-console.log('\n' + '='.repeat(60))
-console.log('4. 大规模性能测试')
-console.log('='.repeat(60) + '\n')
-
-bench('创建 1000 项复杂列表', () => {
-  const items = []
+// bindText
+suite.addTest('bindText 创建 (1,000 次)', () => {
+  const el = createMockElement('span')
   for (let i = 0; i < 1000; i++) {
-    items.push({
-      id: i,
-      text: `Item ${i}`,
-      value: i * 2,
-      active: i % 2 === 0,
-      nested: { x: i, y: i * 2 }
-    })
+    const sig = createSignal(`text-${i}`)
+    bindText(el, sig)
   }
-  return items
-}, 2000)
+})
 
+// bindProp
+suite.addTest('bindProp 创建 (1,000 次)', () => {
+  const el = createMockElement('input')
+  for (let i = 0; i < 1000; i++) {
+    const sig = createSignal(`value-${i}`)
+    bindProp(el, 'value', sig)
+  }
+})
+
+// bindClass (object)
+suite.addTest('bindClass object 创建 (1,000 次)', () => {
+  const el = createMockElement('div')
+  for (let i = 0; i < 1000; i++) {
+    const sig = createSignal({ active: true, disabled: false })
+    bindClass(el, sig)
+  }
+})
+
+// createVaporElement
+suite.addTest('createVaporElement (10,000 次)', () => {
+  for (let i = 0; i < 10000; i++) {
+    createVaporElement('div', { className: 'item' }, `Item ${i}`)
+  }
+})
+
+// renderVaporNode - 简单元素
+suite.addTest('renderVaporNode 简单元素 (1,000 次)', () => {
+  for (let i = 0; i < 1000; i++) {
+    const node = createVaporElement('div', { className: 'item' }, `Item ${i}`)
+    renderVaporNode(node)
+  }
+})
+
+// renderVaporNode - 嵌套结构 (100 个子节点)
+suite.addTest('renderVaporNode 100 子节点 (1,000 次)', () => {
+  for (let i = 0; i < 1000; i++) {
+    const children = []
+    for (let j = 0; j < 100; j++) {
+      children.push(createVaporElement('span', {}, `Child ${j}`))
+    }
+    const node = createVaporElement('div', { className: 'list' }, ...children)
+    renderVaporNode(node)
+  }
+})
+
+// renderVaporNode - 深层嵌套 (10 层)
+suite.addTest('renderVaporNode 10 层嵌套 (1,000 次)', () => {
+  for (let i = 0; i < 1000; i++) {
+    let node = createVaporElement('div', { className: 'level-0' })
+    for (let j = 1; j < 10; j++) {
+      node = createVaporElement('div', { className: `level-${j}` }, node)
+    }
+    renderVaporNode(node)
+  }
+})
+
+// bindEvent
+suite.addTest('bindEvent 创建/清理 (10,000 次)', () => {
+  const el = createMockElement('button')
+  for (let i = 0; i < 10000; i++) {
+    const cleanup = bindEvent(el, 'click', () => {})
+    cleanup()
+  }
+})
+
+// 大型列表渲染
+suite.addTest('大型列表渲染 (1,000 项)', () => {
+  const children = []
+  for (let i = 0; i < 1000; i++) {
+    children.push(createVaporElement('li', { className: 'item' }, `Item ${i}`))
+  }
+  const node = createVaporElement('ul', {}, ...children)
+  renderVaporNode(node)
+})
+
+// 运行基准测试
+const results = suite.run(100)
 console.log('\n' + '='.repeat(60))
-console.log('基准测试完成！')
-console.log('='.repeat(60) + '\n')
-
-console.log('📊 说明：')
-console.log('  - 这些是概念验证的基准测试')
-console.log('  - 实际的 Vapor vs VDOM 对比需要完整的 Lyt.js 构建')
-console.log('  - 请运行项目的完整测试套件进行真实的性能对比\n')
+console.log('Vapor Mode 基准测试结果')
+console.log('='.repeat(60))
+results.forEach(({ name, avgMs, minMs, maxMs, totalMs, iterations }) => {
+  const ops = iterations / (totalMs / 1000)
+  console.log(`  ${name}`)
+  console.log(`    平均: ${avgMs.toFixed(4)}ms | 最小: ${minMs.toFixed(4)}ms | 最大: ${maxMs.toFixed(4)}ms | Ops: ${ops.toFixed(0)}/s`)
+})

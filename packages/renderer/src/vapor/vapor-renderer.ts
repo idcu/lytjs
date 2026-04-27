@@ -21,7 +21,10 @@ import {
   bindEvent,
   bindIf,
   bindEach,
+  bindStyle,
+  bindHTML,
 } from './vapor-reactive';
+import { LytError } from '@lytjs/common';
 
 // ================================================================
 //  类型定义
@@ -60,6 +63,8 @@ export interface VaporNode {
   text?: string
   /** 节点 key（用于列表渲染） */
   key?: string | number
+  /** 内部：绑定清理函数列表（用于 patch 时清理旧绑定） */
+  _bindingCleanups?: BindingCleanup[]
 }
 
 /** Vapor 挂载容器接口 */
@@ -115,7 +120,7 @@ let domFactory: (tag: string) => VaporElement = (tag: string) => {
   if (typeof document !== 'undefined') {
     return document.createElement(tag) as unknown as VaporElement;
   }
-  throw new Error('[lyt:vapor] 未设置 DOM 工厂函数。在非浏览器环境中请调用 setVaporDOMFactory()');
+  throw new LytError('LYT_RENDERER_VAPOR_ERROR', '未设置 DOM 工厂函数。在非浏览器环境中请调用 setVaporDOMFactory()');
 };
 
 /**
@@ -204,14 +209,17 @@ export function createVaporElement(
 /**
  * 判断一个值是否是 Signal
  *
- * Signal 是一个函数，且具有 _subscribe 或 set 方法。
+ * 通过检查 Signal 的内部特征来识别：
+ * - 所有 Signal 都有 _subscribe 方法
+ * - WritableSignal 额外有 set 方法
  */
+const SIGNAL_BRAND = Symbol('__lyt_signal__');
+
 function isSignal(value: unknown): value is Signal<unknown> {
   if (typeof value !== 'function') return false;
-  // Signal 特征：有 _subscribe 方法（所有 signal/computed 都有）
-  // 或者有 set 方法（WritableSignal）
   const sig = value as unknown as Record<string, unknown>;
-  return !!(sig._subscribe || sig.set) && !value.toString().startsWith('class');
+  // 检查 Signal 的核心特征
+  return !!(sig._subscribe) || !!(sig.set && sig._subscribe);
 }
 
 // ================================================================
@@ -253,21 +261,27 @@ export function renderVaporNode(node: VaporNode): VaporElement {
     }
   }
 
-  // 建立响应式绑定
+  // 追踪所有绑定清理函数，用于后续卸载
+  const bindingCleanups: BindingCleanup[] = [];
   for (const binding of node.bindings) {
     if (!binding.signal) continue;
+    let cleanup: BindingCleanup;
     if (binding.type === 'text') {
-      bindText(el, binding.signal);
+      cleanup = bindText(el, binding.signal);
     } else if (binding.type === 'prop') {
-      bindProp(el, binding.target, binding.signal);
+      cleanup = bindProp(el, binding.target, binding.signal);
     } else if (binding.type === 'attr') {
-      bindAttr(el, binding.target, binding.signal);
+      cleanup = bindAttr(el, binding.target, binding.signal);
     } else if (binding.type === 'class') {
-      bindClass(el, binding.signal);
+      cleanup = bindClass(el, binding.signal);
     } else if (binding.type === 'style') {
-      bindProp(el, 'style', binding.signal);
+      cleanup = bindStyle(el, binding.signal);
+    } else {
+      continue;
     }
+    bindingCleanups.push(cleanup);
   }
+  node._bindingCleanups = bindingCleanups;
 
   // 绑定事件
   for (const [eventName, handler] of Object.entries(node.events)) {
@@ -317,6 +331,35 @@ export function vaporPatch(
   const el = oldNode.el || renderVaporNode(oldNode);
   newNode.el = el;
   const elRecord = el as Record<string, unknown>;
+
+  // 清理旧绑定
+  if (oldNode._bindingCleanups) {
+    for (const cleanup of oldNode._bindingCleanups) {
+      cleanup();
+    }
+  }
+
+  // 建立新绑定
+  const newBindingCleanups: BindingCleanup[] = [];
+  for (const binding of newNode.bindings) {
+    if (!binding.signal) continue;
+    let cleanup: BindingCleanup;
+    if (binding.type === 'text') {
+      cleanup = bindText(el, binding.signal);
+    } else if (binding.type === 'prop') {
+      cleanup = bindProp(el, binding.target, binding.signal);
+    } else if (binding.type === 'attr') {
+      cleanup = bindAttr(el, binding.target, binding.signal);
+    } else if (binding.type === 'class') {
+      cleanup = bindClass(el, binding.signal);
+    } else if (binding.type === 'style') {
+      cleanup = bindStyle(el, binding.signal);
+    } else {
+      continue;
+    }
+    newBindingCleanups.push(cleanup);
+  }
+  newNode._bindingCleanups = newBindingCleanups;
 
   // 更新静态属性
   for (const [key, value] of Object.entries(newNode.props)) {
@@ -406,10 +449,14 @@ export function vaporMount(
 
   // 将 VaporNode 渲染为 DOM 并挂载
   const elements: VaporElement[] = [];
+  const allBindingCleanups: BindingCleanup[] = [];
+
   for (const node of rootNodes) {
     const el = renderVaporNode(node);
     container.appendChild(el);
     elements.push(el);
+    // 收集所有绑定清理函数
+    collectBindingCleanups(node, allBindingCleanups);
   }
 
   if (component.mounted) component.mounted();
@@ -417,11 +464,30 @@ export function vaporMount(
   // 返回卸载函数
   return () => {
     if (component.beforeUnmount) component.beforeUnmount();
+    // 清理所有 Signal 绑定
+    for (const cleanup of allBindingCleanups) {
+      cleanup();
+    }
+    // 移除 DOM 元素
     for (const el of elements) {
-      container.removeChild(el);
+      if (el.parentNode === container || (container as unknown as Record<string, unknown>) === el.parentNode) {
+        container.removeChild(el);
+      }
     }
     if (component.unmounted) component.unmounted();
   };
+}
+
+/**
+ * 递归收集 VaporNode 树中所有绑定清理函数
+ */
+function collectBindingCleanups(node: VaporNode, cleanups: BindingCleanup[]): void {
+  if (node._bindingCleanups) {
+    cleanups.push(...node._bindingCleanups);
+  }
+  for (const child of node.children) {
+    collectBindingCleanups(child, cleanups);
+  }
 }
 
 // ================================================================
@@ -436,6 +502,8 @@ export {
   bindEvent,
   bindIf,
   bindEach,
+  bindStyle,
+  bindHTML,
 };
 
 export type {

@@ -6,7 +6,7 @@
  */
 
 import type { VaporNode, VaporComponentOptions, VaporApp, VaporContainer } from './vapor-renderer';
-import { renderVaporNode, vaporMount, getVaporDOMFactory } from './vapor-renderer';
+import { renderVaporNode, vaporMount, getVaporDOMFactory, createVaporElement } from './vapor-renderer';
 import type { VaporElement } from './vapor-reactive';
 import { compileToVapor } from './vapor-compiler';
 
@@ -24,6 +24,12 @@ export interface VaporComponentInstance {
   el: VaporElement | null
   /** 是否已挂载 */
   isMounted: boolean
+  /** 父组件实例 */
+  parent: VaporComponentInstance | null
+  /** 子组件实例 */
+  children: VaporComponentInstance[]
+  /** 传递的 props */
+  props: Record<string, unknown>
   /** 卸载函数 */
   _unmount?: () => void
 }
@@ -42,6 +48,8 @@ export interface VaporComponentInstance {
  * @returns 组件构造函数
  */
 export function defineVaporComponent(options: VaporComponentOptions): VaporComponentOptions {
+  // 标记为 Vapor 组件
+  (options as Record<string, unknown>).__vapor__ = true;
   return options;
 }
 
@@ -119,10 +127,17 @@ export function createVaporApp(rootComponent: VaporComponentOptions): VaporApp {
  * 渲染 Vapor 组件为 DOM 元素
  *
  * @param component  组件选项
+ * @param props      传递给组件的 props
  * @returns 渲染后的 DOM 元素
  */
-export function renderVaporComponent(component: VaporComponentOptions): VaporElement {
-  const ctx = component.setup ? component.setup() : {};
+export function renderVaporComponent(
+  component: VaporComponentOptions,
+  props?: Record<string, unknown>
+): VaporElement {
+  // 合并 props 到上下文
+  const ctx = component.setup
+    ? { ...component.setup(), ...props }
+    : { ...props };
 
   if (component.beforeMount) component.beforeMount();
 
@@ -133,8 +148,8 @@ export function renderVaporComponent(component: VaporComponentOptions): VaporEle
     const { render } = compileToVapor(component.template);
     el = render(ctx);
   } else if (component.render) {
-    // 使用渲染函数
-    const result = component.render(ctx, createVaporElementForComponent);
+    // 使用渲染函数（使用主 createVaporElement 以支持 Signal 绑定）
+    const result = component.render(ctx, createVaporElement);
     const nodes: VaporNode[] = Array.isArray(result) ? result : [result];
     if (nodes.length === 1) {
       el = renderVaporNode(nodes[0]);
@@ -153,40 +168,6 @@ export function renderVaporComponent(component: VaporComponentOptions): VaporEle
   if (component.mounted) component.mounted();
 
   return el;
-}
-
-/**
- * 用于组件渲染函数的 createElement 辅助
- */
-function createVaporElementForComponent(
-  tag: string,
-  props?: Record<string, unknown>,
-  ...children: (VaporNode | string)[]
-): VaporNode {
-  const node: VaporNode = {
-    tag,
-    children: [],
-    props: props || {},
-    events: {},
-    bindings: [],
-  };
-
-  for (const child of children) {
-    if (typeof child === 'string') {
-      node.children.push({
-        tag: '#text',
-        children: [],
-        props: {},
-        events: {},
-        bindings: [],
-        text: child,
-      });
-    } else {
-      node.children.push(child);
-    }
-  }
-
-  return node;
 }
 
 // ================================================================

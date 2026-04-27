@@ -34,6 +34,8 @@
  *   - 支持 hydration mismatch 检测（开发模式）
  */
 
+import { LytError, LytErrorCodes } from '@lytjs/common'
+
 // ================================================================
 //  类型定义
 // ================================================================
@@ -776,7 +778,7 @@ function handleMismatch(
   _hydrateStats.mismatches++;
 
   if (options.strict) {
-    throw new Error(fullMessage);
+    throw new LytError(LytErrorCodes.LYT_SSR_HYDRATION_ERROR, fullMessage);
   } else {
     console.warn(fullMessage);
   }

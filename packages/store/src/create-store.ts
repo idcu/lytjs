@@ -124,6 +124,15 @@ const storeMap = new Map<string, StoreApi>();
  *
  * @param id - Store ID
  * @returns Store 实例或 undefined
+ *
+ * @example
+ * ```ts
+ * import { createStore, getStore } from '@lytjs/store'
+ *
+ * const useCounter = createStore('counter', { state: () => ({ count: 0 }) })
+ * const store = getStore('counter')
+ * console.log(store?.state.count) // 0
+ * ```
  */
 export function getStore<S extends Record<string, any> = Record<string, any>>(
   id: string
@@ -577,6 +586,15 @@ export function createStore<S extends Record<string, any> = Record<string, any>>
  * 获取所有已注册的 Store ID 列表
  *
  * @returns Store ID 数组
+ *
+ * @example
+ * ```ts
+ * import { createStore, getStoreIds } from '@lytjs/store'
+ *
+ * createStore('user', { state: () => ({ name: 'lyt' }) })
+ * createStore('cart', { state: () => ({ items: [] }) })
+ * console.log(getStoreIds()) // ['user', 'cart']
+ * ```
  */
 export function getStoreIds(): string[] {
   return Array.from(storeMap.keys());
@@ -587,6 +605,15 @@ export function getStoreIds(): string[] {
  *
  * 销毁所有 Store 实例并清空注册表。
  * 在测试环境的 afterEach 中调用以避免状态污染。
+ *
+ * @example
+ * ```ts
+ * import { createStore, clearAllStores } from '@lytjs/store'
+ *
+ * afterEach(() => {
+ *   clearAllStores()
+ * })
+ * ```
  */
 export function clearAllStores(): void {
   for (const [id, store] of storeMap) {

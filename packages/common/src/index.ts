@@ -42,3 +42,6 @@ export * from './warn';
 
 // 算法工具
 export * from './algorithm';
+
+// VNode 统一类型
+export * from './vnode-types';

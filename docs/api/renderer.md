@@ -290,3 +290,161 @@ const miniAppRenderer: MiniAppRenderer
 ```
 
 小程序渲染器。
+
+---
+
+## Vapor Mode API
+
+Vapor Mode 是 Lyt.js 的无虚拟 DOM 渲染模式，通过 Signal 驱动的细粒度绑定实现精确 DOM 更新。
+
+### bindStyle(el, sig)
+
+将 Signal 的值绑定到元素的 style，支持字符串和对象两种形式。
+
+```ts
+function bindStyle(el: Element, sig: Signal<string | Record<string, string>>): void
+```
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| el | `Element` | 目标 DOM 元素 |
+| sig | `Signal<string \| Record<string, string>>` | 样式 Signal（字符串或对象） |
+
+**字符串形式：** Signal 值直接设置为 `el.style.cssText`。
+
+**对象形式：** 逐属性 diff 更新，仅修改发生变化的样式属性。
+
+```ts
+import { bindStyle } from '@lytjs/renderer/vapor'
+import { signal } from '@lytjs/reactivity'
+
+// 字符串形式
+const cssSig = signal('color: red; font-size: 16px')
+bindStyle(el, cssSig)
+
+// 对象形式
+const styleSig = signal({ color: 'red', fontSize: '16px' })
+bindStyle(el, styleSig)
+```
+
+### bindHTML(el, sig)
+
+将 Signal 的值绑定到元素的 innerHTML。
+
+```ts
+function bindHTML(el: Element, sig: Signal<string>): void
+```
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| el | `Element` | 目标 DOM 元素 |
+| sig | `Signal<string>` | HTML 内容 Signal |
+
+```ts
+import { bindHTML } from '@lytjs/renderer/vapor'
+import { signal } from '@lytjs/reactivity'
+
+const htmlSig = signal('<strong>加粗文本</strong>')
+bindHTML(el, htmlSig)
+```
+
+### bindIf(el, parentSig, anchor?)
+
+根据 Signal 的值控制元素的 DOM 插入/移除。
+
+```ts
+function bindIf(el: Element, parentSig: Signal<boolean>, anchor?: Node): void
+```
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| el | `Element` | 要控制的 DOM 元素 |
+| parentSig | `Signal<boolean>` | 控制可见性的 Signal |
+| anchor | `Node`（可选） | 插入位置的锚点节点 |
+
+当 `parentSig` 为 `true` 时，元素被插入到 DOM（锚点之前）；为 `false` 时，元素从 DOM 中移除。
+
+```ts
+import { bindIf } from '@lytjs/renderer/vapor'
+import { signal } from '@lytjs/reactivity'
+
+const visible = signal(true)
+bindIf(el, visible)
+// visible 变为 false 时，el 从 DOM 移除
+// visible 变为 true 时，el 重新插入 DOM
+```
+
+### bindEach(container, sig, keyFn, renderFn)
+
+基于 Signal 驱动的 keyed diff 列表渲染。
+
+```ts
+function bindEach<T>(
+  container: Element,
+  sig: Signal<T[]>,
+  keyFn: (item: T) => string | number,
+  renderFn: (item: T, index: number) => Element
+): void
+```
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| container | `Element` | 父容器元素 |
+| sig | `Signal<T[]>` | 列表数据 Signal |
+| keyFn | `(item: T) => string \| number` | key 函数，用于标识列表项 |
+| renderFn | `(item: T, index: number) => Element` | 渲染函数，返回 DOM 元素 |
+
+使用 keyed diff 算法，仅对新增、删除和移动的节点进行 DOM 操作。
+
+```ts
+import { bindEach } from '@lytjs/renderer/vapor'
+import { signal } from '@lytjs/reactivity'
+
+const items = signal([
+  { id: 1, name: 'A' },
+  { id: 2, name: 'B' }
+])
+
+bindEach(
+  container,
+  items,
+  item => item.id,
+  (item) => {
+    const div = document.createElement('div')
+    div.textContent = item.name
+    return div
+  }
+)
+```
+
+### 其他 Vapor Mode API
+
+```ts
+// 文本绑定
+function bindText(el: Element, sig: Signal<any>): void
+
+// 属性绑定
+function bindProp(el: Element, key: string, sig: Signal<any>): void
+
+// 类名绑定
+function bindClass(el: Element, sig: Signal<string>): void
+
+// 事件绑定
+function bindEvent(el: Element, event: string, handler: Function): void
+
+// Vapor 组件定义
+function defineVaporComponent(options: VaporComponentOptions): VaporComponent
+
+// Vapor 应用创建
+function createVaporApp(component: VaporComponent): VaporApp
+
+// Vapor 组件渲染
+function renderVaporComponent(
+  component: VaporComponent,
+  container: Element,
+  options?: { props?: Record<string, any> }
+): void
+
+// Vapor 模板编译
+function compileToVapor(template: string): VaporRenderFunction
+```

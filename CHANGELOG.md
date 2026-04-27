@@ -9,6 +9,40 @@
 
 ## [Unreleased]
 
+### 新增 (Added)
+- **Vapor Mode**: 新增 `bindStyle()` API，支持 Signal 驱动的样式绑定（字符串和对象两种形式）
+- **Vapor Mode**: 新增 `bindHTML()` API，支持 Signal 驱动的 innerHTML 绑定
+- **Vapor Mode**: 模板编译器支持响应式 `v-if` 和 `v-each`（基于 Signal 自动更新 DOM）
+- **Vapor Mode**: 模板编译器支持响应式文本插值和动态属性绑定
+- **Vapor Mode**: `renderVaporComponent()` 新增 `props` 参数支持
+- **错误处理**: 新增 `callWithErrorHandlingAsync()` 异步错误处理包装器
+- **错误码**: 新增 Vapor 渲染器错误码（LYT_RENDERER_VAPOR_ERROR 等）
+- **错误码**: 新增响应式循环依赖错误码（LYT_REACTIVITY_CIRCULAR_DEPENDENCY）
+- **类型系统**: 新增 `@lytjs/common/vnode-types` 统一 VNode 类型定义
+- **测试**: 新增 `@lytjs/common` 包完整单元测试
+- **示例**: 新增 SSR 渲染示例（examples/ssr-app/）
+
+### 变更 (Changed)
+- **Vapor Mode**: `bindIf()` 从 display:none 切换改为 DOM 插入/移除方式
+- **Vapor Mode**: `bindEach()` 从全量重建改为真正的 keyed diff 算法
+- **Vapor Mode**: `vaporPatch()` 支持绑定迁移和清理
+- **Vapor Mode**: `vaporMount()` 修复内存泄漏，卸载时清理所有 Signal 绑定
+- **Vapor Mode**: `renderVaporNode()` 追踪绑定清理函数
+- **Vapor Mode**: `isSignal()` 检测逻辑优化，移除不可靠的 toString hack
+- **Vapor Mode**: `defineVaporComponent()` 添加 `__vapor__` 标记
+- **错误处理**: 统一错误码体系到 `@lytjs/common`，移除 `@lytjs/core` 中的旧枚举
+- **错误处理**: `@lytjs/core/warn.ts` 改为从 `@lytjs/common` 重导出
+- **错误处理**: `dev-error.ts` 的 `getFixSuggestion()` 改用 `getCategory()` 替代硬编码范围
+- **TypeScript**: 所有子包 tsconfig.json 统一启用 `strict: true`
+- **基准测试**: js-framework-benchmark keyed 实现从全量重建优化为 keyed diff 算法
+- **基准测试**: Vapor 基准测试从模拟测试升级为基于真实 API 的完整基准
+
+### 修复 (Fixed)
+- **Vapor Mode**: 修复 `vaporPatch()` 不处理 bindings 迁移导致响应式绑定断裂的问题
+- **Vapor Mode**: 修复 `vaporMount()` 卸载时不清理 Signal 绑定导致的内存泄漏
+- **错误处理**: 修复 `dev-error.ts` 中错误码范围与实际不匹配导致修复建议错误的问题
+- **错误处理**: 修复 `warn.ts` 重复实现导致的状态不一致问题
+
 ## [4.2.0] - 2026-04-27
 
 ### 新增 (Features)

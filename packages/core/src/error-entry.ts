@@ -11,6 +11,7 @@ export {
   ErrorBoundary,
   handleError,
   callWithErrorHandling,
+  callWithErrorHandlingAsync,
   warn,
   warnOnce,
   setDevMode,
@@ -22,7 +23,6 @@ export type {
 } from './error-handling'
 
 export {
-  LytErrorCodes as NewLytErrorCodes,
   ErrorCategory,
   getErrorMessage,
   getCategory,
@@ -33,7 +33,6 @@ export type {
 } from './error-codes'
 
 export {
-  LytError as NewLytError,
   createCompilerError,
   createRendererError,
   createComponentError,

@@ -12,6 +12,8 @@
  *   - Untrack: 在不创建订阅的情况下读取信号
  */
 
+import { LytError } from '@lytjs/common'
+
 // ================================================================
 //  类型定义
 // ================================================================
@@ -141,7 +143,7 @@ export function computed<T>(fn: () => T): ComputedSignal<T> {
     if (isDirty) {
       // 检测循环依赖
       if (isComputing) {
-        throw new Error('[lyt:signal] 检测到循环依赖: computed 在其自身的计算图中')
+        throw new LytError('LYT_REACTIVITY_CIRCULAR_DEPENDENCY', 'computed 在其自身的计算图中')
       }
       isComputing = true
 

@@ -49,6 +49,8 @@ export {
   bindEvent,
   bindIf,
   bindEach,
+  bindStyle,
+  bindHTML,
 } from './vapor-reactive';
 
 export {

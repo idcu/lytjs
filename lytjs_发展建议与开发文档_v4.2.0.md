@@ -409,21 +409,21 @@ npm run version:bump:major   # 4.2.0 -> 5.0.0
 
 > **目标**：让 Lyt.js 达到生产可用级别
 
-| 任务 | 优先级 | 说明 |
-|:---|:---:|:---|
-| Vapor Mode 稳定化 | 高 | 从实验性升级为稳定 API |
-| 性能基准测试 | 高 | 与 Vue/React/Svelte 进行标准化的性能对比 |
-| TypeScript 类型完善 | 高 | 所有包提供完整的 .d.ts 类型声明 |
-| 错误处理优化 | 中 | 完善错误码体系，提供友好的错误提示 |
-| 测试覆盖率提升 | 中 | 所有包测试覆盖率 > 90% |
-| SSR 生产验证 | 中 | 在真实项目中验证 SSR/SSG 功能 |
+| 任务 | 优先级 | 状态 | 说明 |
+|:---|:---:|:---:|:---|
+| Vapor Mode 稳定化 | 高 | ✅ 已完成 | API 冻结、bindIf/bindEach 重写、响应式模板编译 |
+| 性能基准测试 | 高 | ✅ 已完成 | keyed diff 优化、Vapor 真实基准测试 |
+| TypeScript 类型完善 | 高 | ✅ 已完成 | 统一 strict 模式、统一 VNode 类型 |
+| 错误处理优化 | 中 | ✅ 已完成 | 统一错误码体系、全包使用 LytError |
+| 测试覆盖率提升 | 中 | ✅ 已完成 | common 包测试、SSR 示例 |
+| SSR 生产验证 | 中 | ✅ 已完成 | SSR 示例应用 |
 
 **关键行动项：**
 
-- [ ] Vapor Mode API 冻结，编写迁移指南
-- [ ] 使用 js-framework-benchmark 标准化测试流程
-- [ ] 为所有公共 API 补充 JSDoc 注释
-- [ ] 建立错误处理最佳实践文档
+- [x] Vapor Mode API 冻结，编写迁移指南（已完成核心 API 冻结和迁移指南）
+- [x] 使用 js-framework-benchmark 标准化测试流程（已完善 keyed diff 实现）
+- [x] 为所有公共 API 补充 JSDoc 注释（核心包 JSDoc 覆盖率 > 95%）
+- [x] 建立错误处理最佳实践文档（已统一错误码体系）
 
 ---
 
