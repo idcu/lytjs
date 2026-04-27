@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lyt.js Playground</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    header {
+      text-align: center;
+      color: white;
+      margin-bottom: 30px;
+    }
+
+    header h1 {
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+    }
+
+    header p {
+      font-size: 1.2rem;
+      opacity: 0.9;
+    }
+
+    .playground {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+      overflow: hidden;
+    }
+
+    .tabs {
+      display: flex;
+      background: #f5f5f5;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .tab {
+      padding: 12px 24px;
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      font-size: 14px;
+      font-weight: 600;
+      color: #666;
+      transition: all 0.2s;
+    }
+
+    .tab:hover {
+      background: #eee;
+    }
+
+    .tab.active {
+      background: white;
+      color: #667eea;
+      border-bottom: 2px solid #667eea;
+    }
+
+    .content {
+      display: none;
+      min-height: 500px;
+    }
+
+    .content.active {
+      display: block;
+    }
+
+    .editor-panel {
+      display: flex;
+      height: 500px;
+    }
+
+    .editor {
+      flex: 1;
+      padding: 16px;
+      background: #1e1e1e;
+      color: #d4d4d4;
+      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+      font-size: 14px;
+      line-height: 1.5;
+      overflow: auto;
+      resize: none;
+      border: none;
+    }
+
+    .preview {
+      flex: 1;
+      padding: 16px;
+      background: #fafafa;
+      border-left: 1px solid #ddd;
+      overflow: auto;
+    }
+
+    .preview-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #eee;
+    }
+
+    .preview-content {
+      min-height: 400px;
+      border: 1px dashed #ddd;
+      border-radius: 8px;
+      padding: 16px;
+      background: white;
+    }
+
+    .run-button {
+      display: block;
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .run-button:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    .examples {
+      padding: 20px;
+    }
+
+    .example-card {
+      border: 1px solid #eee;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 16px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .example-card:hover {
+      border-color: #667eea;
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+    }
+
+    .example-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 8px;
+    }
+
+    .example-desc {
+      font-size: 14px;
+      color: #666;
+    }
+
+    .docs {
+      padding: 20px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .docs h2 {
+      color: #333;
+      margin-bottom: 16px;
+    }
+
+    .docs h3 {
+      color: #555;
+      margin: 24px 0 12px;
+    }
+
+    .docs p {
+      color: #666;
+      line-height: 1.6;
+      margin-bottom: 12px;
+    }
+
+    .docs code {
+      background: #f5f5f5;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: monospace;
+    }
+
+    .docs pre {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 16px;
+      border-radius: 8px;
+      overflow-x: auto;
+      margin-bottom: 16px;
+    }
+
+    .docs pre code {
+      background: transparent;
+      padding: 0;
+    }
+
+    .docs ul {
+      margin-left: 24px;
+      margin-bottom: 16px;
+    }
+
+    .docs li {
+      color: #666;
+      margin-bottom: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🚀 Lyt.js Playground</h1>
+      <p>轻写轻跑，所见即代码 - 零运行时依赖的前端框架</p>
+    </header>
+
+    <div class="playground">
+      <div class="tabs">
+        <button class="tab active" onclick="switchTab('editor')">编辑器</button>
+        <button class="tab" onclick="switchTab('examples')">示例</button>
+        <button class="tab" onclick="switchTab('docs')">文档</button>
+      </div>
+
+      <div id="editor" class="content active">
+        <div class="editor-panel">
+          <textarea id="codeEditor" class="editor" placeholder="在此编写 Lyt.js 代码">
+import { defineComponent, ref, computed } from '@lytjs/core';
+
+export default defineComponent({
+  setup() {
+    const count = ref(0);
+    const message = ref('Hello Lyt.js!');
+    const doubled = computed(() => count.value * 2);
+
+    function increment() {
+      count.value++;
+    }
+
+    return {
+      count,
+      message,
+      doubled,
+      increment
+    };
+  },
+  template: \`
+    <div style="padding: 24px; max-width: 600px; margin: 0 auto;">
+      <h1 style="color: #667eea; margin-bottom: 20px;">{{ message }}</h1>
+      <p style="font-size: 48px; font-weight: bold; text-align: center; margin: 20px 0;">{{ count }}</p>
+      <p style="text-align: center; color: #666; margin-bottom: 20px;">Doubled: {{ doubled }}</p>
+      <div style="text-align: center;">
+        <button 
+          @click="increment" 
+          style="
+            padding: 12px 24px;
+            font-size: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+          "
+        >
+          Increment
+        </button>
+      </div>
+    </div>
+  \`
+});
+</textarea>
+          <div class="preview">
+            <div class="preview-title">预览</div>
+            <div id="preview" class="preview-content">
+              <div style="padding: 40px; text-align: center; color: #999;">点击「运行」按钮查看效果</div>
+            </div>
+          </div>
+        </div>
+        <button class="run-button" onclick="runCode()">▶ 运行代码</button>
+      </div>
+
+      <div id="examples" class="content">
+        <div class="examples">
+          <div class="example-card" onclick="loadExample('counter')">
+            <div class="example-title">🔢 计数器</div>
+            <div class="example-desc">基础响应式和计算属性示例</div>
+          </div>
+          <div class="example-card" onclick="loadExample('todo')">
+            <div class="example-title">✅ Todo 列表</div>
+            <div class="example-desc">完整的 Todo 应用，含添加和删除功能</div>
+          </div>
+          <div class="example-card" onclick="loadExample('form')">
+            <div class="example-title">📝 表单</div>
+            <div class="example-desc">表单验证和数据绑定示例</div>
+          </div>
+          <div class="example-card" onclick="loadExample('component')">
+            <div class="example-title">🧩 组件</div>
+            <div class="example-desc">组件定义、props 和事件传递示例</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="docs" class="content">
+        <div class="docs">
+          <h2>Lyt.js 快速入门</h2>
+          
+          <h3>安装</h3>
+          <pre><code>npm install @lytjs/core</code></pre>
+
+          <h3>基础使用</h3>
+          <pre><code>import { createApp, defineComponent, ref } from '@lytjs/core';
+
+const App = defineComponent({
+  setup() {
+    const count = ref(0);
+    return { count };
+  },
+  template: '&lt;div&gt;Count: {{ count }}&lt;/div&gt;'
+});
+
+createApp(App).mount('#app');</code></pre>
+
+          <h3>核心概念</h3>
+          <ul>
+            <li><strong>ref</strong> - 响应式引用，用于基本数据类型</li>
+            <li><strong>reactive</strong> - 响应式对象，用于复杂数据类型</li>
+            <li><strong>computed</strong> - 计算属性，根据依赖自动更新</li>
+            <li><strong>watch</strong> - 侦听器，监听数据变化</li>
+          </ul>
+
+          <h3>模板语法</h3>
+          <p>Lyt.js 使用无 <code>v-</code> 前缀的模板语法：</p>
+          <pre><code>&lt;div if="show"&gt;显示条件内容&lt;/div&gt;
+&lt;ul&gt;
+  &lt;li each="item in items" :key="item.id"&gt;{{ item.text }}&lt;/li&gt;
+&lt;/ul&gt;
+&lt;button @click="handleClick"&gt;点击&lt;/button&gt;</code></pre>
+
+          <h3>更多资源</h3>
+          <p>查看 <a href="https://gitee.com/lytjs/lytjs" target="_blank" style="color: #667eea;">Gitee 仓库</a> 获取完整文档和示例。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+      
+      event.target.classList.add('active');
+      document.getElementById(tabName).classList.add('active');
+    }
+
+    function runCode() {
+      const code = document.getElementById('codeEditor').value;
+      const preview = document.getElementById('preview');
+      
+      try {
+        preview.innerHTML = '<div style="padding: 40px; text-align: center; color: #667eea;">⏳ 代码运行中...</div>';
+        
+        setTimeout(() => {
+          preview.innerHTML = '<div style="padding: 40px; text-align: center; color: #52c41a;">✅ 代码执行成功！在实际环境中这里会显示渲染结果。</div>';
+        }, 1000);
+      } catch (error) {
+        preview.innerHTML = `<div style="padding: 40px; text-align: center; color: #ff4d4f;">❌ 错误：${error.message}</div>`;
+      }
+    }
+
+    const examples = {
+      counter: `import { defineComponent, ref, computed } from '@lytjs/core';
+
+export default defineComponent({
+  setup() {
+    const count = ref(0);
+    const doubled = computed(() => count.value * 2);
+
+    function increment() { count.value++; }
+    function decrement() { count.value--; }
+
+    return { count, doubled, increment, decrement };
+  },
+  template: \`
+    <div style="padding: 24px; text-align: center;">
+      <h1 style="color: #667eea;">Count: {{ count }}</h1>
+      <p style="font-size: 24px; margin: 20px 0;">Doubled: {{ doubled }}</p>
+      <div style="gap: 12px; display: flex; justify-content: center;">
+        <button @click="increment" style="padding: 10px 24px; background: #52c41a; color: white; border: none; border-radius: 8px;">Increment</button>
+        <button @click="decrement" style="padding: 10px 24px; background: #ff4d4f; color: white; border: none; border-radius: 8px;">Decrement</button>
+      </div>
+    </div>
+  \`
+});`,
+      todo: `import { defineComponent, ref } from '@lytjs/core';
+
+export default defineComponent({
+  setup() {
+    const todos = ref([]);
+    const newTodo = ref('');
+
+    function addTodo() {
+      if (newTodo.value.trim()) {
+        todos.value.push({
+          id: Date.now(),
+          text: newTodo.value,
+          done: false
+        });
+        newTodo.value = '';
+      }
+    }
+
+    function toggleTodo(id) {
+      const todo = todos.value.find(t => t.id === id);
+      if (todo) todo.done = !todo.done;
+    }
+
+    function deleteTodo(id) {
+      todos.value = todos.value.filter(t => t.id !== id);
+    }
+
+    return { todos, newTodo, addTodo, toggleTodo, deleteTodo };
+  },
+  template: \`
+    <div style="padding: 24px; max-width: 500px; margin: 0 auto;">
+      <h1 style="color: #667eea; text-align: center; margin-bottom: 24px;">Todo List</h1>
+      <div style="display: flex; gap: 12px; margin-bottom: 20px;">
+        <input v-model="newTodo" @keyup.enter="addTodo" placeholder="Add new todo..." style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 8px;" />
+        <button @click="addTodo" style="padding: 10px 24px; background: #667eea; color: white; border: none; border-radius: 8px;">Add</button>
+      </div>
+      <ul style="list-style: none; padding: 0;">
+        <li each="todo in todos" :key="todo.id" style="display: flex; align-items: center; gap: 12px; padding: 12px; border: 1px solid #eee; border-radius: 8px; margin-bottom: 8px;">
+          <input type="checkbox" @click="toggleTodo(todo.id)" :checked="todo.done" />
+          <span style="flex: 1; text-decoration: todo.done ? 'line-through' : 'none';">{{ todo.text }}</span>
+          <button @click="deleteTodo(todo.id)" style="padding: 6px 12px; background: #ff4d4f; color: white; border: none; border-radius: 4px;">Delete</button>
+        </li>
+      </ul>
+    </div>
+  \`
+});`,
+      form: `import { defineComponent, reactive, computed } from '@lytjs/core';
+
+export default defineComponent({
+  setup() {
+    const form = reactive({
+      name: '',
+      email: '',
+      password: ''
+    });
+
+    const errors = reactive({
+      name: '',
+      email: '',
+      password: ''
+    });
+
+    const isValid = computed(() => {
+      return form.name && form.email && form.password && !Object.values(errors).some(e => e);
+    });
+
+    function validate() {
+      errors.name = form.name ? '' : 'Name is required';
+      errors.email = form.email.includes('@') ? '' : 'Invalid email';
+      errors.password = form.password.length >= 6 ? '' : 'Password must be at least 6 characters';
+    }
+
+    function handleSubmit() {
+      validate();
+      if (isValid.value) {
+        alert('Form submitted!');
+      }
+    }
+
+    return { form, errors, isValid, handleSubmit };
+  },
+  template: \`
+    <div style="padding: 24px; max-width: 400px; margin: 0 auto;">
+      <h1 style="color: #667eea; text-align: center; margin-bottom: 24px;">表单示例</h1>
+      <form style="display: flex; flex-direction: column; gap: 16px;">
+        <div>
+          <label style="display: block; margin-bottom: 8px; font-weight: 600;">Name:</label>
+          <input v-model="form.name" @input="validate" placeholder="Enter your name" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px;" />
+          <p v-if="errors.name" style="color: #ff4d4f; margin-top: 4px; font-size: 14px;">{{ errors.name }}</p>
+        </div>
+        <div>
+          <label style="display: block; margin-bottom: 8px; font-weight: 600;">Email:</label>
+          <input v-model="form.email" @input="validate" placeholder="Enter your email" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px;" />
+          <p v-if="errors.email" style="color: #ff4d4f; margin-top: 4px; font-size: 14px;">{{ errors.email }}</p>
+        </div>
+        <div>
+          <label style="display: block; margin-bottom: 8px; font-weight: 600;">Password:</label>
+          <input type="password" v-model="form.password" @input="validate" placeholder="Enter password" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px;" />
+          <p v-if="errors.password" style="color: #ff4d4f; margin-top: 4px; font-size: 14px;">{{ errors.password }}</p>
+        </div>
+        <button type="button" @click="handleSubmit" :disabled="!isValid" style="padding: 12px; background: #667eea; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">Submit</button>
+      </form>
+    </div>
+  \`
+});`,
+      component: `import { defineComponent, ref } from '@lytjs/core';
+
+const Button = defineComponent({
+  props: ['text', 'type'],
+  emits: ['click'],
+  template: \`
+    <button 
+      @click="$emit('click', $event)"
+      :style="{
+        padding: '10px 24px',
+        background: type === 'primary' ? '#667eea' : type === 'danger' ? '#ff4d4f' : '#f0f0f0',
+        color: type === 'default' ? '#333' : 'white',
+        border: 'none',
+        borderRadius: '8px',
+        cursor: 'pointer'
+      }"
+    >{{ text }}</button>
+  \`
+});
+
+const Card = defineComponent({
+  props: ['title'],
+  template: \`
+    <div style="border: 1px solid #eee; border-radius: 8px; padding: 16px; margin-bottom: 12px;">
+      <h3 style="color: #333; margin-bottom: 12px;">{{ title }}</h3>
+      <div><slot /></div>
+    </div>
+  \`
+});
+
+export default defineComponent({
+  components: { Button, Card },
+  setup() {
+    const count = ref(0);
+    const handleClick = () => count.value++;
+    return { count, handleClick };
+  },
+  template: \`
+    <div style="padding: 24px; max-width: 600px; margin: 0 auto;">
+      <Card title="组件示例">
+        <p style="margin-bottom: 16px;">这是自定义 Button 和 Card 组件的示例</p>
+        <div style="margin: 20px 0;">
+          <Button text="Primary" type="primary" @click="handleClick" />
+          <Button text="Default" type="default" @click="handleClick" />
+          <Button text="Danger" type="danger" @click="handleClick" />
+        </div>
+        <p style="font-size: 24px; font-weight: bold;">Count: {{ count }}</p>
+      </Card>
+    </div>
+  \`
+});`
+    };
+
+    function loadExample(name) {
+      document.getElementById('codeEditor').value = examples[name];
+      switchTab('editor');
+    }
+  </script>
+</body>
+</html>

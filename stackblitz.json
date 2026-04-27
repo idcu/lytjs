@@ -1,0 +1,44 @@
+{
+  "title": "Lyt.js Playground",
+  "description": "轻写轻跑，所见即代码 - 零运行时依赖的前端框架",
+  "template": "node",
+  "project": {
+    "name": "lytjs-playground",
+    "description": "Lyt.js Playground",
+    "scripts": {
+      "dev": "vite",
+      "build": "vite build",
+      "preview": "vite preview"
+    },
+    "dependencies": {
+      "@lytjs/core": "^4.2.0",
+      "@lytjs/reactivity": "^4.2.0"
+    },
+    "devDependencies": {
+      "vite": "^5.0.0"
+    }
+  },
+  "files": {
+    "index.html": {
+      "url": "https://raw.githubusercontent.com/lytjs/lytjs/main/playground/index.html"
+    },
+    "package.json": {
+      "content": {
+        "name": "lytjs-playground",
+        "version": "1.0.0",
+        "scripts": {
+          "dev": "vite",
+          "build": "vite build",
+          "preview": "vite preview"
+        },
+        "dependencies": {
+          "@lytjs/core": "^4.2.0",
+          "@lytjs/reactivity": "^4.2.0"
+        },
+        "devDependencies": {
+          "vite": "^5.0.0"
+        }
+      }
+    }
+  }
+}

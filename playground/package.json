@@ -1,0 +1,17 @@
+{
+  "name": "lytjs-playground",
+  "version": "1.0.0",
+  "description": "Lyt.js Playground - 轻写轻跑，所见即代码",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@lytjs/core": "^4.2.0",
+    "@lytjs/reactivity": "^4.2.0"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0"
+  }
+}
