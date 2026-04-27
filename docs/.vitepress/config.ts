@@ -7,6 +7,8 @@ export default defineConfig({
 
   base: '/lytjs/',
 
+  ignoreDeadLinks: true,
+
   themeConfig: {
     nav: [
       { text: '指南', link: '/guide/quick-start' },

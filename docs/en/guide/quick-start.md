@@ -424,11 +424,9 @@ const counter = createStore('counter', {
 
 ## Next Steps
 
-- [Composition API Guide](./composition-api.md)
-- [Options API Guide](./options-api.md)
-- [Reactivity System](./reactivity.md)
-- [Component System](./component.md)
-- [Router](./router.md)
-- [State Management](./store.md)
-- [Single File Components](./sfc.md)
+- [Component API](/en/api/component.md)
+- [Reactivity API](/en/api/reactivity.md)
+- [Router API](/en/api/router.md)
+- [Store API](/en/api/store.md)
 - [Server-Side Rendering](./ssr.md)
+- [Migration from Vue 3](./migration-from-vue3.md)
