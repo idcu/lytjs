@@ -11,6 +11,12 @@
       "import": "./dist/index.mjs",
       "require": "./dist/index.cjs",
       "default": "./dist/index.mjs"
+    },
+    "./block": {
+      "types": "./dist/types/block-entry.d.ts",
+      "import": "./dist/block-entry.mjs",
+      "require": "./dist/block-entry.cjs",
+      "default": "./dist/block-entry.mjs"
     }
   },
   "sideEffects": false,

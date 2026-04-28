@@ -321,8 +321,8 @@ if [ "$TYPES_ONLY" = false ]; then
 
     # 为 compiler 包构建子路径入口（sfc/wasm）
     if [ "$pkg" = "compiler" ]; then
-      COMPILER_SUBS=("sfc-entry" "wasm-entry" "block-tree-entry" "patch-flags-entry" "hoist-entry" "optimize-output-entry")
-      COMPILER_SUB_NAMES=("sfc" "wasm" "block-tree" "patch-flags" "hoist" "optimize-output")
+      COMPILER_SUBS=("sfc-entry" "wasm-entry" "block-tree-entry" "patch-flags-entry" "hoist-entry" "optimize-output-entry" "typescript-entry")
+      COMPILER_SUB_NAMES=("sfc" "wasm" "block-tree" "patch-flags" "hoist" "optimize-output" "typescript")
       for i in "${!COMPILER_SUBS[@]}"; do
         sub="${COMPILER_SUBS[$i]}"
         sub_name="${COMPILER_SUB_NAMES[$i]}"
@@ -458,6 +458,50 @@ if [ "$TYPES_ONLY" = false ]; then
       for i in "${!REACTIVITY_SUBS[@]}"; do
         sub="${REACTIVITY_SUBS[$i]}"
         sub_name="${REACTIVITY_SUB_NAMES[$i]}"
+        sub_entry="$pkg_dir/src/${sub}.ts"
+        if [ -f "$sub_entry" ]; then
+          log "  Building $pkg/$sub_name..."
+          if "$ESBUILD" "$sub_entry" \
+              --bundle --minify --tree-shaking=true \
+              --platform=browser --target=es2018,es2018 \
+              --format=esm \
+              --outfile="$dist_dir/${sub}.mjs" \
+              --external:@lytjs/* \
+              --drop:console --drop:debugger \
+              --define:process.env.NODE_ENV=\"production\" \
+              --legal-comments=none \
+              --log-level=warning 2>&1; then
+            ok "  $pkg/$sub_name: ESM OK"
+          else
+            err "  $pkg/$sub_name: ESM failed"
+          fi
+          if "$ESBUILD" "$sub_entry" \
+              --bundle --minify --tree-shaking=true \
+              --platform=browser --target=es2018,es2018 \
+              --format=cjs \
+              --outfile="$dist_dir/${sub}.cjs" \
+              --external:@lytjs/* \
+              --drop:console --drop:debugger \
+              --define:process.env.NODE_ENV=\"production\" \
+              --legal-comments=none \
+              --log-level=warning 2>&1; then
+            ok "  $pkg/$sub_name: CJS OK"
+          else
+            err "  $pkg/$sub_name: CJS failed"
+          fi
+        else
+          warn "  $pkg/$sub_name: no src/${sub}.ts, skipping"
+        fi
+      done
+    fi
+
+    # 为 vdom 包构建子路径入口（block）
+    if [ "$pkg" = "vdom" ]; then
+      VDOM_SUBS=("block-entry")
+      VDOM_SUB_NAMES=("block")
+      for i in "${!VDOM_SUBS[@]}"; do
+        sub="${VDOM_SUBS[$i]}"
+        sub_name="${VDOM_SUB_NAMES[$i]}"
         sub_entry="$pkg_dir/src/${sub}.ts"
         if [ -f "$sub_entry" ]; then
           log "  Building $pkg/$sub_name..."

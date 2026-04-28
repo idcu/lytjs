@@ -7,6 +7,7 @@
  *   - `@lytjs/renderer/native` — 移动端原生渲染
  *   - `@lytjs/renderer/miniapp`— 小程序渲染
  *   - `@lytjs/renderer/vapor`  — Vapor Mode（无虚拟 DOM）
+ *   - `@lytjs/renderer/dom`    — DOM 渲染器完整 API（子路径）
  *
  * 使用示例：
  * ```ts

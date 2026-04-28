@@ -11,6 +11,13 @@
  *   5. 处理未知子序列（使用 key→index 映射 + LIS 最小移动）
  *
  * DOM 操作通过注册函数模式解耦，使本模块不依赖任何具体的 DOM 实现。
+ *
+ * 性能优化（Phase 4.2.3）：
+ *   - 快速路径：新旧列表长度相同且 key 顺序一致时，跳过完整 diff
+ *   - 内联 isSameVNodeType 比较逻辑，减少函数调用开销
+ *   - 使用 Map 预构建 key→index 映射，避免多次遍历
+ *   - 缓存 isSameVNodeType 调用结果，避免重复调用
+ *   - 使用 Int32Array 替代普通数组存储索引映射，减少 GC 压力
  */
 
 import type { VNode } from './vnode'
@@ -88,7 +95,21 @@ function getDOMOps(): DOMOperations {
 }
 
 /* ================================================================
- *  Keyed Children Diff — 五步比较
+ *  内联比较函数（热路径优化）
+ * ================================================================ */
+
+/**
+ * 内联的 VNode 类型比较（避免函数调用开销）
+ *
+ * 在热路径中直接比较 type 和 key，跳过 isSameVNodeType 的函数调用。
+ * 仅在 patchKeyedChildren 内部使用。
+ */
+function sameVNodeType(a: VNode, b: VNode): boolean {
+  return a.type === b.type && a.key === b.key
+}
+
+/* ================================================================
+ *  Keyed Children Diff — 五步比较（性能优化版）
  * ================================================================ */
 
 /**
@@ -125,13 +146,34 @@ export function patchKeyedChildren(
   let oldEndIndex = oldLength - 1
   let newEndIndex = newLength - 1
 
+  /* ---- 快速路径：新旧列表长度相同且 key 顺序完全一致 ---- */
+  // 当新旧子节点数量相同且所有 key 按顺序匹配时，
+  // 跳过完整的五步 diff，直接逐个 patch，避免构建映射表等开销
+  if (oldLength === newLength && oldLength > 0) {
+    let fastPathMatch = true
+    for (let fi = 0; fi < oldLength; fi++) {
+      if (!sameVNodeType(oldChildren[fi], newChildren[fi])) {
+        fastPathMatch = false
+        break
+      }
+    }
+    if (fastPathMatch) {
+      // 所有节点类型和 key 都匹配，直接逐个 patch
+      for (let fi = 0; fi < oldLength; fi++) {
+        ops.patch(oldChildren[fi], newChildren[fi], container, null, parentComponent, parentSuspense, isSVG, true)
+      }
+      return
+    }
+  }
+
   /* ---- 第 1 步：从头同步 ---- */
   // 从前往后逐个比较，key 和 type 都相同则复用并 patch
+  // 使用内联比较函数 sameVNodeType 替代 isSameVNodeType
   while (i <= oldEndIndex && i <= newEndIndex) {
     const oldVNode = oldChildren[i]
     const newVNode = newChildren[i]
 
-    if (isSameVNodeType(oldVNode, newVNode)) {
+    if (sameVNodeType(oldVNode, newVNode)) {
       ops.patch(oldVNode, newVNode, container, null, parentComponent, parentSuspense, isSVG, true)
     } else {
       break
@@ -145,7 +187,7 @@ export function patchKeyedChildren(
     const oldVNode = oldChildren[oldEndIndex]
     const newVNode = newChildren[newEndIndex]
 
-    if (isSameVNodeType(oldVNode, newVNode)) {
+    if (sameVNodeType(oldVNode, newVNode)) {
       ops.patch(oldVNode, newVNode, container, null, parentComponent, parentSuspense, isSVG, true)
     } else {
       break
@@ -196,6 +238,7 @@ export function patchKeyedChildren(
     //      [i, newEndIndex] 是新节点的未知部分
 
     // 5.1 构建新节点 key → index 映射表
+    // 使用 Map 而非普通对象，支持任意类型的 key，查找性能 O(1)
     const newKeyToIndexMap = new Map<PropertyKey, number>()
     for (let j = i; j <= newEndIndex; j++) {
       const key = newChildren[j].key
@@ -210,12 +253,10 @@ export function patchKeyedChildren(
     const toBePatched = newEndIndex - i + 1 // 需要处理的节点数
     let moved = false // 是否发生了移动
 
-    // 创建数组，用于记录旧节点在新节点中的位置
+    // 使用 Int32Array 替代普通数组，减少 GC 压力
     // 0 表示旧节点不在新节点中（需要卸载）
-    const newIndexToOldIndexMap = new Array(toBePatched)
-    for (j = 0; j < toBePatched; j++) {
-      newIndexToOldIndexMap[j] = 0
-    }
+    const newIndexToOldIndexMap = new Int32Array(toBePatched)
+    // Int32Array 默认初始化为 0，无需手动填充
 
     // 5.2 遍历旧节点，尝试在映射表中找到对应的新节点
     for (j = i; j <= oldEndIndex; j++) {

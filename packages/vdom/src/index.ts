@@ -3,6 +3,9 @@
  *
  * 将所有模块的公共 API 统一导出，使用者只需从此文件导入即可。
  *
+ * 子路径导出（按需引入）：
+ *   - @lytjs/vdom/block — Block Tree 块树优化
+ *
  * 使用示例：
  * ```ts
  * import {
@@ -13,9 +16,6 @@
  *   ShapeFlags,
  *   PatchFlags,
  *   Fragment,
- *   openBlock,
- *   closeBlock,
- *   createBlock,
  * } from './src'
  * ```
  */
@@ -44,7 +44,8 @@ export type {
 export { Fragment, isFragment, isFragmentType } from './fragment'
 export type { FragmentType } from './fragment'
 
-// ---- Block Tree ----
+// ---- Block Tree（已移至子路径 @lytjs/vdom/block）----
+// 保留 re-export 以保持向后兼容性，tree-shaking 会移除未使用的导出
 export {
   openBlock,
   closeBlock,

@@ -19,7 +19,7 @@
  * @param arr 输入数组（元素为正整数，0 表示"不存在"）
  * @returns 最长递增子序列的索引数组
  */
-export function getSequence(arr: number[]): number[] {
+export function getSequence(arr: ArrayLike<number>): number[] {
   const len = arr.length;
   if (len === 0) return [];
 

@@ -79,18 +79,20 @@ export { generate } from './codegen/codegen';
 export type { CodegenOptions, CodegenResult } from './codegen/codegen';
 
 // ============================================================
-// SFC 单文件组件
+// SFC 单文件组件（已移至子路径 @lytjs/compiler/sfc）
 // ============================================================
 
+// 保留 re-export 以保持向后兼容性，tree-shaking 会移除未使用的导出
 export { parseSFC, extractExportDefault } from './sfc/parse-sfc';
 export type { SFCDescriptor, SFCBlock, SFCStyleBlock } from './sfc/parse-sfc';
 export { compileSFC, scopeCSS } from './sfc/compile-sfc';
 export type { SFCCompileResult } from './sfc/compile-sfc';
 
 // ============================================================
-// TypeScript 类型声明生成
+// TypeScript 类型声明生成（已移至子路径 @lytjs/compiler/typescript）
 // ============================================================
 
+// 保留 re-export 以保持向后兼容性，tree-shaking 会移除未使用的导出
 export { generateTypeDeclarations, generateDtsForLytFile, createTypePlugin } from './typescript';
 export type { TypeGenerateOptions } from './typescript';
 

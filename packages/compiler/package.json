@@ -47,6 +47,12 @@
       "import": "./dist/wasm-entry.mjs",
       "require": "./dist/wasm-entry.cjs",
       "default": "./dist/wasm-entry.mjs"
+    },
+    "./typescript": {
+      "types": "./dist/types/typescript-entry.d.ts",
+      "import": "./dist/typescript-entry.mjs",
+      "require": "./dist/typescript-entry.cjs",
+      "default": "./dist/typescript-entry.mjs"
     }
   },
   "sideEffects": false,

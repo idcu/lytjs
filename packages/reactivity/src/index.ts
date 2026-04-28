@@ -3,6 +3,10 @@
  *
  * 导出所有公共 API，供外部使用。
  * 纯原生零依赖实现。
+ *
+ * 子路径导出（按需引入）：
+ *   - @lytjs/reactivity/signal            — Signal 响应式系统
+ *   - @lytjs/reactivity/signal-component  — Signal 组件集成
  */
 
 // ======================== 副作用系统 ========================
@@ -76,6 +80,8 @@ export {
 } from '@lytjs/common';
 
 // ======================== Signal 响应式系统 ========================
+// Signal API 已移至子路径 @lytjs/reactivity/signal
+// 此处保留 re-export 以保持向后兼容性，tree-shaking 会移除未使用的导出
 export {
   signal,
   computed as computedSignal,
