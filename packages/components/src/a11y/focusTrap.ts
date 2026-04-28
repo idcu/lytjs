@@ -87,11 +87,13 @@ export class FocusTrap {
     this.isActive = true;
     this.isPaused = false;
 
+    const doc = (globalThis as any).document as Document;
+
     // 保存当前焦点元素
-    this.previousActiveElement = document.activeElement as HTMLElement;
+    this.previousActiveElement = doc.activeElement as HTMLElement;
 
     // 绑定键盘事件
-    document.addEventListener('keydown', this.handleKeydown);
+    doc.addEventListener('keydown', this.handleKeydown);
 
     // 自动聚焦
     if (this.autoFocus) {
@@ -109,8 +111,10 @@ export class FocusTrap {
     this.isActive = false;
     this.isPaused = false;
 
+    const doc = (globalThis as any).document as Document;
+
     // 解绑键盘事件
-    document.removeEventListener('keydown', this.handleKeydown);
+    doc.removeEventListener('keydown', this.handleKeydown);
 
     // 恢复焦点
     if (this.restoreFocus && this.previousActiveElement) {
@@ -183,7 +187,8 @@ export class FocusTrap {
 
     const first = focusable[0];
     const last = focusable[focusable.length - 1];
-    const active = document.activeElement;
+    const doc = (globalThis as any).document as Document;
+    const active = doc.activeElement;
 
     if (e.shiftKey) {
       // Shift+Tab: 如果焦点在第一个元素，跳到最后一个

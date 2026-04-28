@@ -327,7 +327,7 @@ function extractEmits(script: string): string[] | undefined {
   const arrayMatch = script.match(/defineEmits\s*\(\s*\[([\s\S]*?)\]\s*\)/)
   if (arrayMatch) {
     const content = arrayMatch[1]
-    const events = content.match(/['"](\w[\w-]*)['"]/g)
+    const events = content.match(/['"]([\w][\w:.-]*)['"]/g)
     if (events) {
       return events.map(e => e.replace(/['"]/g, ''))
     }

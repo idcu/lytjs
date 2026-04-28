@@ -907,7 +907,7 @@ describe('fix-prompts', () => {
 // ================================================================
 
 describe('provider-interface', () => {
-  it('自定义 Provider 可以实现接口', () => {
+  it('自定义 Provider 可以实现接口', async () => {
     // 创建一个 mock provider 来验证接口
     class MockProvider implements AIProviderInterface {
       readonly name = 'mock'
@@ -946,30 +946,28 @@ describe('provider-interface', () => {
     const provider = new MockProvider()
 
     // 测试 complete
-    const result = provider.complete('hello')
-    expect(result).resolves.toHaveProperty('content', 'Mock response for: hello')
+    const result = await provider.complete('hello')
+    expect(result).toHaveProperty('content', 'Mock response for: hello')
 
     // 测试 chat
-    const chatResult = provider.chat([
+    const chatResult = await provider.chat([
       { role: 'user', content: 'hi' },
     ])
-    expect(chatResult).resolves.toBeDefined()
+    expect(chatResult).toBeDefined()
 
     // 测试 stream
     const streamResult = provider.stream('test')
     const chunks: StreamChunk[] = []
-    ;(async () => {
-      for await (const chunk of streamResult) {
-        chunks.push(chunk)
-      }
-    })()
-    // stream 是异步的，我们只验证它返回一个 async generator
+    for await (const chunk of streamResult) {
+      chunks.push(chunk)
+    }
+    expect(chunks.length).toBe(3)
 
     // 测试 validateApiKey
-    expect(provider.validateApiKey()).resolves.toBe(true)
+    expect(await provider.validateApiKey()).toBe(true)
 
     // 测试错误情况
     provider.setThrow(true)
-    expect(provider.validateApiKey()).resolves.toBe(false)
+    expect(await provider.validateApiKey()).toBe(false)
   })
 })

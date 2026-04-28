@@ -22,6 +22,33 @@
  *  15. 未知语言返回转义文本
  */
 
+// DOM mock - must be before source imports
+;(globalThis as any).document = {
+  createElement(tag: string) {
+    return {
+      tagName: tag.toUpperCase(),
+      setAttribute() {},
+      appendChild() {},
+      textContent: '',
+      innerHTML: '',
+      style: {},
+      addEventListener() {},
+      removeEventListener() {},
+      querySelector() { return null },
+      querySelectorAll() { return [] },
+    }
+  },
+  getElementById(id: string) { return null },
+  documentElement: { style: { setProperty() {}, getPropertyValue() { return '' } } },
+  head: { appendChild() {} },
+  addEventListener() {},
+  removeEventListener() {},
+  dispatchEvent() { return true },
+  activeElement: null,
+  body: { appendChild() {} },
+  matchMedia() { return { matches: false, addEventListener() {}, removeEventListener() {} } },
+}
+
 import {
   describe,
   it,
@@ -320,8 +347,27 @@ describe('HIGHLIGHT_STYLES 导出', () => {
 describe('injectStyles', () => {
 
   it('调用不报错', () => {
-    // 在 Node.js 环境中 document 不可用，函数应静默返回
+    // Ensure document mock has getElementById
+    const origDoc = (globalThis as any).document
+    ;(globalThis as any).document = {
+      createElement(tag: string) {
+        return {
+          tagName: tag.toUpperCase(),
+          setAttribute() {},
+          appendChild() {},
+          textContent: '',
+          innerHTML: '',
+          style: {},
+        }
+      },
+      getElementById(id: string) { return null },
+      documentElement: { style: { setProperty() {}, getPropertyValue() { return '' } } },
+      head: { appendChild() {} },
+      addEventListener() {},
+      removeEventListener() {},
+    }
     injectStyles('light')
+    ;(globalThis as any).document = origDoc
   })
 })
 

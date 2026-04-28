@@ -370,6 +370,26 @@ export class Assertion {
     this._assert(pass, `期望 ${this._fmt(this.actual)} ${this.negated ? '不' : ''}是 ${cls.name} 的实例`)
   }
 
+  toHaveProperty(path: string, value?: any): void {
+    const parts = path.split('.')
+    let current = this.actual
+    let found = true
+    for (const part of parts) {
+      if (current === null || current === undefined || typeof current !== 'object') {
+        found = false
+        break
+      }
+      current = current[part]
+    }
+    if (value !== undefined) {
+      const pass = this.negated ? !(found && Object.is(current, value)) : (found && Object.is(current, value))
+      this._assert(pass, `期望对象${this.negated ? '不' : ''}包含属性 "${path}" 值为 ${this._fmt(value)}`)
+    } else {
+      const pass = this.negated ? !found : found
+      this._assert(pass, `期望对象${this.negated ? '不' : ''}包含属性 "${path}"`)
+    }
+  }
+
   private _assert(pass: boolean, message: string): void {
     if (!pass) {
       throw new Error(message)

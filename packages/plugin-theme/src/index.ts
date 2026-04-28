@@ -130,7 +130,9 @@ const BUILT_IN_THEMES: { [key: string]: ThemeConfig } = {
  */
 function getRootElement(): HTMLElement | null {
   if (typeof document === 'undefined') return null
-  return document.documentElement
+  const root = document.documentElement
+  if (!root || !root.style || typeof root.style.setProperty !== 'function') return null
+  return root
 }
 
 /**

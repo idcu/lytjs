@@ -623,13 +623,15 @@ const selectTab = (index) => {
   // 默认模板
   custom: `<!-- {{ description || 'Custom Component' }} -->
 <template>
-  <div class="{{ kebabName }}">
+  <div class="{{ kebabName }}" data-component="{{ pascalName }}">
     <!-- Your template here -->
     <slot></slot>
   </div>
 </template>
 
 <script setup>
+// {{ pascalName }} component
+// Usage: const {{ camelName }} = defineComponent({ ... })
 {{#if props}}
 import { defineProps } from '@lytjs/core'
 
@@ -672,18 +674,19 @@ export class TemplateEngine {
   render(template: string, context: TemplateContext): string {
     let result = template
 
-    // 简单的模板替换
-    // {{ variable }} -> value
-    result = result.replace(/\{\{(\s*)([^{}]+)(\s*)\}\}/g, (_, __, key) => {
-      const value = this.getValue(context, key.trim())
-      return value !== undefined ? String(value) : ''
-    })
-
+    // 先处理块级指令（if/each），再处理简单变量替换
     // {{#if condition}} ... {{/if}}
     result = this.processIfBlocks(result, context)
 
     // {{#each array}} ... {{/each}}
     result = this.processEachBlocks(result, context)
+
+    // 简单的模板替换
+    // {{ variable }} -> value
+    result = result.replace(/\{\{(\s*)([^{}#\/]+)(\s*)\}\}/g, (_, __, key) => {
+      const value = this.getValue(context, key.trim())
+      return value !== undefined ? String(value) : ''
+    })
 
     return result
   }
@@ -705,53 +708,141 @@ export class TemplateEngine {
   }
 
   /**
-   * 处理 if 块
+   * 处理 if 块（支持嵌套）
    */
   private processIfBlocks(template: string, context: TemplateContext): string {
-    let result = template
-    const ifRegex = /\{\{#if\s+([^}]+)\}\}([\s\S]*?)\{\{\/if\}\}/g
+    let result = ''
+    let i = 0
+    const len = template.length
 
-    let match
-    while ((match = ifRegex.exec(result)) !== null) {
-      const condition = match[1].trim()
-      const content = match[2]
-      const value = this.getValue(context, condition)
-      const replacement = value ? content : ''
-      result = result.replace(match[0], replacement)
+    while (i < len) {
+      // 查找下一个 {{#if
+      const openIdx = template.indexOf('{{#if', i)
+      if (openIdx === -1) {
+        result += template.slice(i)
+        break
+      }
+
+      // 添加 {{#if 之前的内容
+      result += template.slice(i, openIdx)
+
+      // 找到完整的 {{#if condition}}
+      const openEnd = template.indexOf('}}', openIdx)
+      if (openEnd === -1) {
+        result += template.slice(openIdx)
+        break
+      }
+      const condition = template.slice(openIdx + 5, openEnd).trim()
+
+      // 用栈找到匹配的 {{/if}}
+      let depth = 1
+      let pos = openEnd + 2
+      while (pos < len && depth > 0) {
+        const nextOpen = template.indexOf('{{#if', pos)
+        const nextClose = template.indexOf('{{/if}}', pos)
+        if (nextClose === -1) break
+        if (nextOpen !== -1 && nextOpen < nextClose) {
+          depth++
+          pos = nextOpen + 5
+        } else {
+          depth--
+          if (depth === 0) {
+            // 找到匹配的 {{/if}}
+            const content = template.slice(openEnd + 2, nextClose)
+            const value = this.getValue(context, condition)
+            // 递归处理嵌套的 if 块
+            const processed = this.processIfBlocks(content, context)
+            result += value ? processed : ''
+            pos = nextClose + 7
+          } else {
+            pos = nextClose + 7
+          }
+        }
+      }
+
+      if (depth > 0) {
+        // 没有找到匹配的 {{/if}}，保留原始内容
+        result += template.slice(openIdx, openEnd + 2)
+        i = openEnd + 2
+      } else {
+        i = pos
+      }
     }
 
     return result
   }
 
   /**
-   * 处理 each 块
+   * 处理 each 块（支持嵌套）
    */
   private processEachBlocks(template: string, context: TemplateContext): string {
-    let result = template
-    const eachRegex = /\{\{#each\s+([^}]+)\}\}([\s\S]*?)\{\{\/each\}\}/g
+    let result = ''
+    let i = 0
+    const len = template.length
 
-    let match
-    while ((match = eachRegex.exec(result)) !== null) {
-      const arrayPath = match[1].trim()
-      const content = match[2]
-      const array = this.getValue(context, arrayPath)
+    while (i < len) {
+      // 查找下一个 {{#each
+      const openIdx = template.indexOf('{{#each', i)
+      if (openIdx === -1) {
+        result += template.slice(i)
+        break
+      }
 
-      if (Array.isArray(array)) {
-        const renderedItems = array
-          .map((item, index) => {
-            // 简单的替换，将 {{ name }} 等替换为 item 的属性
-            let itemContent = content
-            // 对于 props 数组，我们需要特殊处理
-            itemContent = itemContent.replace(/\{\{(\s*)name(\s*)\}\}/g, item.name || '')
-            itemContent = itemContent.replace(/\{\{(\s*)type(\s*)\}\}/g, item.type || 'String')
-            itemContent = itemContent.replace(/\{\{(\s*)required(\s*)\}\}/g, item.required ? 'true' : 'false')
-            itemContent = itemContent.replace(/\{\{(\s*)default(\s*)\}\}/g, item.default !== undefined ? item.default : '')
-            return itemContent
-          })
-          .join('')
-        result = result.replace(match[0], renderedItems)
+      // 添加 {{#each 之前的内容
+      result += template.slice(i, openIdx)
+
+      // 找到完整的 {{#each array}}
+      const openEnd = template.indexOf('}}', openIdx)
+      if (openEnd === -1) {
+        result += template.slice(openIdx)
+        break
+      }
+      const arrayPath = template.slice(openIdx + 7, openEnd).trim()
+
+      // 用栈找到匹配的 {{/each}}
+      let depth = 1
+      let pos = openEnd + 2
+      while (pos < len && depth > 0) {
+        const nextOpen = template.indexOf('{{#each', pos)
+        const nextClose = template.indexOf('{{/each}}', pos)
+        if (nextClose === -1) break
+        if (nextOpen !== -1 && nextOpen < nextClose) {
+          depth++
+          pos = nextOpen + 7
+        } else {
+          depth--
+          if (depth === 0) {
+            // 找到匹配的 {{/each}}
+            const content = template.slice(openEnd + 2, nextClose)
+            const array = this.getValue(context, arrayPath)
+
+            if (Array.isArray(array)) {
+              const renderedItems = array
+                .map((item, index) => {
+                  let itemContent = content
+                  itemContent = itemContent.replace(/\{\{(\s*)name(\s*)\}\}/g, item.name || '')
+                  itemContent = itemContent.replace(/\{\{(\s*)type(\s*)\}\}/g, item.type || 'String')
+                  itemContent = itemContent.replace(/\{\{(\s*)required(\s*)\}\}/g, item.required ? 'true' : 'false')
+                  itemContent = itemContent.replace(/\{\{(\s*)default(\s*)\}\}/g, item.default !== undefined ? item.default : '')
+                  return itemContent
+                })
+                .join('')
+              result += renderedItems
+            }
+            // 非数组时不添加任何内容
+
+            pos = nextClose + 9
+          } else {
+            pos = nextClose + 9
+          }
+        }
+      }
+
+      if (depth > 0) {
+        result += template.slice(openIdx, openEnd + 2)
+        i = openEnd + 2
       } else {
-        result = result.replace(match[0], '')
+        i = pos
       }
     }
 

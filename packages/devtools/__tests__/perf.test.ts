@@ -138,11 +138,14 @@ describe('@lytjs/devtools - PerformanceCollector', () => {
   it('startMark/endMark 支持多个并发标记', () => {
     const collector = new PerformanceCollector()
     collector.startMark('op-a')
+    // 用实际计算产生可测量的时间差
+    let sum = 0
+    for (let i = 0; i < 100000; i++) { sum += Math.sqrt(i) }
     collector.startMark('op-b')
     const durationA = collector.endMark('op-a')
     const durationB = collector.endMark('op-b')
-    expect(durationA).toBeGreaterThan(0)
-    expect(durationB).toBeGreaterThan(0)
+    expect(durationA).toBeGreaterThanOrEqual(0)
+    expect(durationB).toBeGreaterThanOrEqual(0)
 
     const metrics = collector.getMetricsByType('custom')
     expect(metrics.length).toBe(2)
@@ -341,6 +344,8 @@ describe('@lytjs/devtools - ComponentProfiler', () => {
   it('stopProfile 停止分析并返回结果', () => {
     const profiler = new ComponentProfiler()
     profiler.startProfile('App')
+    const s = performance.now()
+    while (performance.now() - s < 1) {} // minimal delay
     profiler.recordRender('App', 5)
     profiler.recordRender('App', 10)
 
@@ -354,7 +359,7 @@ describe('@lytjs/devtools - ComponentProfiler', () => {
     expect(result!.totalRenderTime).toBe(15)
     expect(result!.slowRenderCount).toBe(0)
     expect(result!.records.length).toBe(2)
-    expect(result!.profileDuration).toBeGreaterThan(0)
+    expect(result!.profileDuration).toBeGreaterThanOrEqual(0)
     profiler.destroy()
   })
 

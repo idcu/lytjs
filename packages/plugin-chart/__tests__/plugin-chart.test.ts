@@ -18,6 +18,60 @@
  *  11. 默认选项合并
  */
 
+// DOM mock - must be before any imports that use HTMLElement/HTMLCanvasElement
+;(globalThis as any).HTMLElement = class MockHTMLElement {
+  style: Record<string, string> = {}
+  children: any[] = []
+  childNodes: any[] = []
+  innerHTML = ''
+  appendChild(child: any) { this.children.push(child); return child }
+  removeChild(child: any) {
+    const idx = this.children.indexOf(child)
+    if (idx >= 0) this.children.splice(idx, 1)
+    return child
+  }
+  setAttribute() {}
+  classList = {
+    add() {},
+    remove() {},
+    has() { return false },
+  }
+}
+;(globalThis as any).HTMLCanvasElement = class MockHTMLCanvasElement extends (globalThis as any).HTMLElement {
+  width = 600
+  height = 400
+  getContext() {
+    return {
+      clearRect() {}, fillRect() {}, fillText() {}, strokeText() {},
+      beginPath() {}, closePath() {}, moveTo() {}, lineTo() {},
+      arc() {}, arcTo() {}, fill() {}, stroke() {}, rect() {},
+      measureText() { return { width: 50 } },
+      setTransform() {},
+      fillStyle: '', strokeStyle: '', font: '', textAlign: '',
+      textBaseline: '', lineWidth: 1, lineCap: '', lineJoin: '',
+    }
+  }
+}
+;(globalThis as any).document = {
+  createElement(tag: string) {
+    if (tag === 'canvas') return new ((globalThis as any).HTMLCanvasElement)()
+    return new ((globalThis as any).HTMLElement)()
+  },
+  getElementById() { return null },
+  head: { appendChild() {} },
+  documentElement: { style: { setProperty() {}, getPropertyValue() { return '' } } },
+  addEventListener() {},
+  removeEventListener() {},
+  dispatchEvent() { return true },
+  activeElement: null,
+  body: { appendChild() {} },
+  matchMedia() { return { matches: false, addEventListener() {}, removeEventListener() {} } },
+}
+;(globalThis as any).window = globalThis
+;(globalThis as any).requestAnimationFrame = (fn: any) => setTimeout(fn, 0)
+;(globalThis as any).cancelAnimationFrame = (id: any) => clearTimeout(id)
+;(globalThis as any).performance = { now: () => Date.now() }
+
 import {
   describe,
   it,
@@ -25,99 +79,6 @@ import {
   beforeEach,
   afterEach,
 } from '../../test-utils/src/index'
-
-// ================================================================
-//  Mock：全局 DOM 环境（必须在 import 源码之前设置）
-// ================================================================
-
-function createMockCtx() {
-  const ctx: any = {
-    clearRect() {},
-    fillRect() {},
-    fillText() {},
-    strokeText() {},
-    beginPath() {},
-    closePath() {},
-    moveTo() {},
-    lineTo() {},
-    arc() {},
-    arcTo() {},
-    fill() {},
-    stroke() {},
-    rect() {},
-    measureText() { return { width: 50 } },
-    setTransform() {},
-    fillStyle: '',
-    strokeStyle: '',
-    font: '',
-    textAlign: '',
-    textBaseline: '',
-    lineWidth: 1,
-    lineCap: '',
-    lineJoin: '',
-  }
-  return ctx
-}
-
-function setupDOMMocks() {
-  // Mock HTMLCanvasElement
-  class MockHTMLCanvasElement {
-    width = 600
-    height = 400
-    style: Record<string, string> = {}
-    getContext() { return createMockCtx() }
-    setAttribute() {}
-  }
-
-  ;(globalThis as any).HTMLCanvasElement = MockHTMLCanvasElement
-  ;(globalThis as any).HTMLElement = class MockHTMLElement {
-    style: Record<string, string> = {}
-    children: any[] = []
-    childNodes: any[] = []
-    innerHTML = ''
-    appendChild(child: any) { this.children.push(child); return child }
-    removeChild(child: any) {
-      const idx = this.children.indexOf(child)
-      if (idx >= 0) this.children.splice(idx, 1)
-      return child
-    }
-    setAttribute() {}
-    classList = {
-      add() {},
-      remove() {},
-      has() { return false },
-    }
-  }
-  ;(globalThis as any).document = {
-    createElement(tag: string) {
-      if (tag === 'canvas') return new MockHTMLCanvasElement()
-      return new ((globalThis as any).HTMLElement)()
-    },
-    head: {
-      appendChild() {},
-    },
-    documentElement: {
-      appendChild() {},
-    },
-  }
-  ;(globalThis as any).window = globalThis
-  ;(globalThis as any).requestAnimationFrame = (fn: any) => setTimeout(fn, 0)
-  ;(globalThis as any).cancelAnimationFrame = (id: any) => clearTimeout(id)
-  ;(globalThis as any).performance = { now: () => Date.now() }
-}
-
-function cleanupDOMMocks() {
-  delete (globalThis as any).HTMLCanvasElement
-  delete (globalThis as any).HTMLElement
-  delete (globalThis as any).document
-  delete (globalThis as any).window
-  delete (globalThis as any).requestAnimationFrame
-  delete (globalThis as any).cancelAnimationFrame
-  delete (globalThis as any).performance
-}
-
-// 设置全局 mock
-setupDOMMocks()
 
 // 现在导入源码
 import { createChart } from '../src/index'
@@ -206,6 +167,19 @@ describe('createChart 接受 HTMLCanvasElement', () => {
 describe('createChart 接受 HTMLElement 容器', () => {
 
   it('在容器中创建 canvas 元素', () => {
+    // Ensure document.createElement returns proper mock for canvas
+    const origDoc = (globalThis as any).document
+    ;(globalThis as any).document = {
+      createElement(tag: string) {
+        if (tag === 'canvas') return new ((globalThis as any).HTMLCanvasElement)()
+        return new ((globalThis as any).HTMLElement)()
+      },
+      getElementById() { return null },
+      head: { appendChild() {} },
+      documentElement: { style: { setProperty() {}, getPropertyValue() { return '' } } },
+      addEventListener() {},
+      removeEventListener() {},
+    }
     const container = createMockContainer()
     const chart = createChart(container, {
       type: 'bar',
@@ -215,6 +189,7 @@ describe('createChart 接受 HTMLElement 容器', () => {
       },
     })
     expect(container.children.length).toBeGreaterThan(0)
+    ;(globalThis as any).document = origDoc
     chart.destroy()
   })
 })

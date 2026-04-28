@@ -19,6 +19,30 @@
  *  12. 自定义配置
  */
 
+// DOM mock - must be before source imports
+;(globalThis as any).document = {
+  createElement(tag: string) {
+    return {
+      tagName: tag.toUpperCase(),
+      style: { cssText: '', setProperty() {}, getPropertyValue() { return '' } },
+      className: '',
+      innerHTML: '',
+      textContent: '',
+      scrollTop: 0,
+      clientHeight: 400,
+      offsetHeight: 400,
+      appendChild(child: any) { return child },
+      removeChild(child: any) { return child },
+      addEventListener() {},
+      removeEventListener() {},
+      setAttribute() {},
+      getAttribute() { return null },
+      querySelector() { return null },
+      querySelectorAll() { return [] },
+    }
+  },
+}
+
 import {
   describe,
   it,
@@ -38,6 +62,8 @@ function createMockContainer() {
   const container: any = {
     children,
     childNodes: children,
+    scrollTop: 0,
+    clientHeight: 600,
     appendChild(child: any) { children.push(child); return child },
     removeChild(child: any) {
       const idx = children.indexOf(child)
@@ -195,6 +221,15 @@ describe('scrollTo 滚动到指定位置', () => {
 describe('getVisibleRange 获取可见范围', () => {
 
   it('返回包含 start 和 end 的对象', () => {
+    // Ensure document mock returns elements with scrollTop/clientHeight
+    const origCreateElement = (globalThis as any).document.createElement
+    ;(globalThis as any).document.createElement = (tag: string) => {
+      const el = origCreateElement(tag)
+      el.scrollTop = 0
+      el.clientHeight = 400
+      el.offsetHeight = 400
+      return el
+    }
     const container = createMockContainer()
     const list = createVirtualList(container, {
       items: generateItems(100),
@@ -207,6 +242,7 @@ describe('getVisibleRange 获取可见范围', () => {
     expect(typeof range.start).toBe('number')
     expect(typeof range.end).toBe('number')
     expect(range.start).toBeLessThanOrEqual(range.end)
+    ;(globalThis as any).document.createElement = origCreateElement
     list.destroy()
   })
 })
@@ -218,6 +254,15 @@ describe('getVisibleRange 获取可见范围', () => {
 describe('getScrollTop 获取滚动偏移', () => {
 
   it('返回数字', () => {
+    // Ensure document mock returns elements with scrollTop
+    const origCreateElement = (globalThis as any).document.createElement
+    ;(globalThis as any).document.createElement = (tag: string) => {
+      const el = origCreateElement(tag)
+      el.scrollTop = 0
+      el.clientHeight = 400
+      el.offsetHeight = 400
+      return el
+    }
     const container = createMockContainer()
     const list = createVirtualList(container, {
       items: generateItems(100),
@@ -226,6 +271,7 @@ describe('getScrollTop 获取滚动偏移', () => {
     })
     const scrollTop = list.getScrollTop()
     expect(typeof scrollTop).toBe('number')
+    ;(globalThis as any).document.createElement = origCreateElement
     list.destroy()
   })
 })

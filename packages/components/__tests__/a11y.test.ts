@@ -633,54 +633,80 @@ describe('a11y - Focus Trap', () => {
     })
   }))
 
-  describe('FocusTrap 类', withMock(() => {
+  describe('FocusTrap 类', () => {
+    function setupMock() {
+      const prev = (globalThis as any).document
+      const prevWin = (globalThis as any).window
+      const prevGCS = (globalThis as any).getComputedStyle
+      ;(globalThis as any).document = mockDocument
+      ;(globalThis as any).window = mockWindow
+      ;(globalThis as any).getComputedStyle = mockWindow.getComputedStyle
+      return () => {
+        ;(globalThis as any).document = prev
+        ;(globalThis as any).window = prevWin
+        ;(globalThis as any).getComputedStyle = prevGCS
+      }
+    }
+
     it('应该正确创建 FocusTrap 实例', () => {
-      const container = mockDocument.createElement('div')
-      const trap = new FocusTrap({
-        container,
-        autoFocus: false,
-        restoreFocus: false,
-      })
-      expect(trap).toBeDefined()
+      const cleanup = setupMock()
+      try {
+        const container = mockDocument.createElement('div')
+        const trap = new FocusTrap({
+          container,
+          autoFocus: false,
+          restoreFocus: false,
+        })
+        expect(trap).toBeDefined()
+      } finally { cleanup() }
     })
 
     it('activate 后应该绑定键盘事件', () => {
-      const container = mockDocument.createElement('div')
-      const trap = new FocusTrap({
-        container,
-        autoFocus: false,
-        restoreFocus: false,
-      })
-      trap.activate()
-      trap.deactivate()
+      const cleanup = setupMock()
+      try {
+        const container = mockDocument.createElement('div')
+        const trap = new FocusTrap({
+          container,
+          autoFocus: false,
+          restoreFocus: false,
+        })
+        trap.activate()
+        trap.deactivate()
+      } finally { cleanup() }
     })
 
     it('deactivate 后应该解绑键盘事件', () => {
-      const container = mockDocument.createElement('div')
-      const trap = new FocusTrap({
-        container,
-        autoFocus: false,
-        restoreFocus: false,
-      })
-      trap.activate()
-      trap.deactivate()
-      // 再次 deactivate 不应该报错
-      trap.deactivate()
+      const cleanup = setupMock()
+      try {
+        const container = mockDocument.createElement('div')
+        const trap = new FocusTrap({
+          container,
+          autoFocus: false,
+          restoreFocus: false,
+        })
+        trap.activate()
+        trap.deactivate()
+        // 再次 deactivate 不应该报错
+        trap.deactivate()
+      } finally { cleanup() }
     })
 
     it('pause/unpause 应该正常工作', () => {
-      const container = mockDocument.createElement('div')
-      const trap = new FocusTrap({
-        container,
-        autoFocus: false,
-        restoreFocus: false,
-      })
-      trap.activate()
-      trap.pause()
-      trap.unpause()
-      trap.deactivate()
+      const cleanup = setupMock()
+      try {
+        const container = mockDocument.createElement('div')
+        const trap = new FocusTrap({
+          container,
+          autoFocus: false,
+          restoreFocus: false,
+        })
+        trap.activate()
+        trap.pause()
+        trap.unpause()
+        trap.deactivate()
+      } finally { cleanup() }
     })
-  }))
+  })
 })
 
 describe('a11y - Roving Tabindex', () => {

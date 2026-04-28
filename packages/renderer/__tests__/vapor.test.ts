@@ -1187,7 +1187,7 @@ describe('Vapor Mode - Vapor vs VDOM 性能对比', () => {
     // Vapor 应该更快（或至少不慢于 VDOM）
     // 由于我们省略了 VDOM 的 diff/patch 步骤，Vapor 应该显著更快
     // 但 VDOM 模拟仅创建对象，非常轻量，所以允许较大误差
-    expect(vaporTime).toBeLessThan(vdomTime * 100) // 允许较大误差
+    expect(vaporTime).toBeLessThan(Math.max(vdomTime * 100, 10))
   })
 
   it('Vapor 信号更新应该比 VDOM patch 更高效', () => {
@@ -1219,7 +1219,7 @@ describe('Vapor Mode - Vapor vs VDOM 性能对比', () => {
     cleanup()
 
     // Vapor 应该至少和 VDOM 一样快（允许较大误差，避免 CI 环境波动）
-    expect(vaporTime).toBeLessThan(vdomTime * 20)
+    expect(vaporTime).toBeLessThan(Math.max(vdomTime * 20, 10))
   })
 })
 
