@@ -124,7 +124,7 @@ function generatePackageJson(options: ScaffoldOptions): string {
   if (options.ts) {
     pkg.devDependencies = {
       '@lytjs/cli': 'latest',
-      typescript: '^5.0.0',
+      typescript: '^5.0.1',
     };
   }
 

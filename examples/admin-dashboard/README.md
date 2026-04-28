@@ -4,7 +4,7 @@
 
 ## 技术栈
 
-- **框架**: [Lyt.js](https://gitee.com/lytjs/lytjs) v5.0.0（通过 CDN 加载）
+- **框架**: [Lyt.js](https://gitee.com/lytjs/lytjs) v5.0.1（通过 CDN 加载）
 - **响应式**: Lyt.js Reactive System（ref, reactive, computed, watch）
 - **样式**: 纯 CSS + CSS 变量（无需预处理器）
 - **图表**: 原生 Canvas API 绘制

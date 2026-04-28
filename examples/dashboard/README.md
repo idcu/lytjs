@@ -12,7 +12,7 @@
 
 ## 技术栈
 
-- **Lyt.js** `@lytjs/core` v5.0.0（CDN 加载）
+- **Lyt.js** `@lytjs/core` v5.0.1（CDN 加载）
 - 纯 HTML + CSS + JavaScript，无需构建工具
 - CSS 变量实现主题系统
 

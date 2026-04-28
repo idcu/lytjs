@@ -316,7 +316,7 @@ describe('PluginValidator', () => {
   })
 
   it('validateCompatibility - 版本不满足', () => {
-    const plugin = createTestPlugin({ lytVersion: '^5.0.0' })
+    const plugin = createTestPlugin({ lytVersion: '^5.0.1' })
     const result = PluginValidator.validateCompatibility(plugin, '4.1.0')
     expect(result.valid).toBe(false)
     expect(result.errors.some(e => e.includes('版本'))).toBe(true)

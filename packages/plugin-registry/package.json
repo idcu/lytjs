@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/plugin-registry",
-  "version": "5.0.0",
+  "version": "5.0.1",
   "description": "Lyt.js 插件注册表 - 提供插件市场注册、搜索、分类和发现功能",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",

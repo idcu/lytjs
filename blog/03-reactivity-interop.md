@@ -170,7 +170,7 @@ import { reactive, toRef, signal, effect as signalEffect } from '@lytjs/reactivi
 // Proxy 状态
 const state = reactive({
   name: 'Lyt.js',
-  version: '5.0.0',
+  version: '5.0.1',
 })
 
 // 将 Proxy 属性转换为 ref

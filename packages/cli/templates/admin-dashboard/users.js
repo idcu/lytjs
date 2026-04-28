@@ -3,7 +3,7 @@
  * 功能：数据表格、搜索筛选、分页、CRUD 操作、角色分配
  */
 
-import { createApp, ref, reactive, computed, watch, onMounted, nextTick } from 'https://cdn.jsdelivr.net/npm/@lytjs/core@5.0.0/+esm'
+import { createApp, ref, reactive, computed, watch, onMounted, nextTick } from 'https://cdn.jsdelivr.net/npm/@lytjs/core@5.0.1/+esm'
 
 // ========== 导航数据（所有页面共享） ==========
 const mainNav = [

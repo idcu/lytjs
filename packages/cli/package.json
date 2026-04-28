@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/cli",
-  "version": "5.0.0",
+  "version": "5.0.1",
   "description": "Lyt.js 命令行工具 - 提供项目创建、开发服务器和构建功能",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",

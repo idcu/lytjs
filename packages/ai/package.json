@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/ai",
-  "version": "5.0.0",
+  "version": "5.0.1",
   "description": "Lyt.js AI 辅助开发工具 - 提供智能组件生成、代码补全功能",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",

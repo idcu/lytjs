@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/performance",
-  "version": "5.0.0",
+  "version": "5.0.1",
   "description": "Lyt.js 性能监控 SDK - Web Vitals 监控、组件渲染追踪、内存泄漏检测",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",

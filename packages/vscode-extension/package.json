@@ -2,7 +2,7 @@
   "name": "@lytjs/vscode-extension",
   "displayName": "Lyt.js Language Support",
   "description": "VSCode extension for Lyt.js - provides syntax highlighting, type checking, code completion, debugging, snippets, and Emmet support",
-  "version": "5.0.0",
+  "version": "5.0.1",
   "publisher": "lytjs",
   "author": "lytjs",
   "engines": {
@@ -285,7 +285,7 @@
   "devDependencies": {
     "@types/node": "^18.x",
     "@types/vscode": "^1.80.0",
-    "typescript": "^5.0.0"
+    "typescript": "^5.0.1"
   },
   "dependencies": {
     "@lytjs/compiler": "workspace:*",

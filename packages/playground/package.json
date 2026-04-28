@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/playground",
-  "version": "5.0.0",
+  "version": "5.0.1",
   "description": "Lyt.js Interactive Playground - Online code editor with live preview",
   "main": "index.html",
   "scripts": {

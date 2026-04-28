@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/plugin-chart",
-  "version": "5.0.0",
+  "version": "5.0.1",
   "description": "Lyt.js 图表插件 - 提供柱状图和折线图组件，使用 Canvas API 绘制，零运行时依赖",
   "main": "dist/index.mjs",
   "module": "dist/index.mjs",

@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/template-admin",
-  "version": "5.0.0",
+  "version": "5.0.1",
   "description": "Lyt.js 企业级 Admin Dashboard 模板 - 内置登录、布局、权限、图表等完整后台管理功能",
   "main": "index.html",
   "scripts": {

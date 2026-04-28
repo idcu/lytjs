@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/test-utils",
-  "version": "5.0.0",
+  "version": "5.0.1",
   "description": "Lyt.js 测试工具库 - 提供组件挂载、状态模拟和断言辅助等测试工具",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",

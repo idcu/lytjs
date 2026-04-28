@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/plugin-logger",
-  "version": "5.0.0",
+  "version": "5.0.1",
   "description": "Lyt.js 日志插件 - 提供分级日志记录、日志过滤和持久化存储功能",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",

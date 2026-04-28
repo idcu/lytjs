@@ -46,7 +46,7 @@ function createTestManifest(overrides: any = {}) {
     keywords: ['test', 'plugin'],
     license: 'MIT',
     main: 'dist/index.mjs',
-    lytjsVersion: '>=5.0.0',
+    lytjsVersion: '>=5.0.1',
     category: 'tool',
     ...overrides,
   }
@@ -449,7 +449,7 @@ describe('createDefaultRegistry 创建默认注册表', () => {
     const registry = createDefaultRegistry()
     const i18n = registry.get('@lytjs/plugin-i18n')
     expect(i18n).toBeDefined()
-    expect(i18n!.version).toBe('5.0.0')
+    expect(i18n!.version).toBe('5.0.1')
     expect(i18n!.official).toBe(true)
   })
 })

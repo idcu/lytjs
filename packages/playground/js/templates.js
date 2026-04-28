@@ -22,7 +22,7 @@ const TEMPLATES = {
 <body>
   <div id="app"></div>
   <script type="module">
-    import { createApp, h } from 'https://cdn.jsdelivr.net/npm/@lytjs/lytjs@5.0.0/dist/index.mjs'
+    import { createApp, h } from 'https://cdn.jsdelivr.net/npm/@lytjs/lytjs@5.0.1/dist/index.mjs'
 
     const app = createApp({
       name: 'App',
@@ -68,7 +68,7 @@ const TEMPLATES = {
 <body>
   <div id="app"></div>
   <script type="module">
-    import { createApp, h } from 'https://cdn.jsdelivr.net/npm/@lytjs/lytjs@5.0.0/dist/index.mjs'
+    import { createApp, h } from 'https://cdn.jsdelivr.net/npm/@lytjs/lytjs@5.0.1/dist/index.mjs'
 
     const app = createApp({
       name: 'Counter',
@@ -124,7 +124,7 @@ const TEMPLATES = {
 <body>
   <div id="app"></div>
   <script type="module">
-    import { createApp, h, computed } from 'https://cdn.jsdelivr.net/npm/@lytjs/lytjs@5.0.0/dist/index.mjs'
+    import { createApp, h, computed } from 'https://cdn.jsdelivr.net/npm/@lytjs/lytjs@5.0.1/dist/index.mjs'
 
     const app = createApp({
       name: 'TodoApp',
@@ -226,7 +226,7 @@ const TEMPLATES = {
 <body>
   <div id="app"></div>
   <script type="module">
-    import { createApp, h } from 'https://cdn.jsdelivr.net/npm/@lytjs/lytjs@5.0.0/dist/index.mjs'
+    import { createApp, h } from 'https://cdn.jsdelivr.net/npm/@lytjs/lytjs@5.0.1/dist/index.mjs'
 
     const app = createApp({
       name: 'Timer',
@@ -338,7 +338,7 @@ const TEMPLATES = {
 <body>
   <div id="app"></div>
   <script type="module">
-    import { createApp, h } from 'https://cdn.jsdelivr.net/npm/@lytjs/lytjs@5.0.0/dist/index.mjs'
+    import { createApp, h } from 'https://cdn.jsdelivr.net/npm/@lytjs/lytjs@5.0.1/dist/index.mjs'
 
     const app = createApp({
       name: 'FetchData',
@@ -449,7 +449,7 @@ const TEMPLATES = {
 <body>
   <div id="app"></div>
   <script type="module">
-    import { createApp, h } from 'https://cdn.jsdelivr.net/npm/@lytjs/lytjs@5.0.0/dist/index.mjs'
+    import { createApp, h } from 'https://cdn.jsdelivr.net/npm/@lytjs/lytjs@5.0.1/dist/index.mjs'
 
     const app = createApp({
       name: 'ReactiveList',
@@ -553,7 +553,7 @@ const TEMPLATES = {
 <body>
   <div id="app"></div>
   <script type="module">
-    import { createApp, h, signal, computed, effect, batch } from 'https://cdn.jsdelivr.net/npm/@lytjs/lytjs@5.0.0/dist/index.mjs'
+    import { createApp, h, signal, computed, effect, batch } from 'https://cdn.jsdelivr.net/npm/@lytjs/lytjs@5.0.1/dist/index.mjs'
 
     const app = createApp({
       name: 'SignalDemo',
@@ -671,7 +671,7 @@ const TEMPLATES = {
 <body>
   <div id="app"></div>
   <script type="module">
-    import { createApp, h } from 'https://cdn.jsdelivr.net/npm/@lytjs/lytjs@5.0.0/dist/index.mjs'
+    import { createApp, h } from 'https://cdn.jsdelivr.net/npm/@lytjs/lytjs@5.0.1/dist/index.mjs'
 
     // Badge Component
     const Badge = {
@@ -781,7 +781,7 @@ const TEMPLATES = {
 <body>
   <div id="app"></div>
   <script type="module">
-    import { createApp, h, computed } from 'https://cdn.jsdelivr.net/npm/@lytjs/lytjs@5.0.0/dist/index.mjs'
+    import { createApp, h, computed } from 'https://cdn.jsdelivr.net/npm/@lytjs/lytjs@5.0.1/dist/index.mjs'
 
     const app = createApp({
       name: 'FormValidation',
@@ -1030,7 +1030,7 @@ const TEMPLATES = {
 <body>
   <div id="app"></div>
   <script type="module">
-    import { createApp, h } from 'https://cdn.jsdelivr.net/npm/@lytjs/lytjs@5.0.0/dist/index.mjs'
+    import { createApp, h } from 'https://cdn.jsdelivr.net/npm/@lytjs/lytjs@5.0.1/dist/index.mjs'
 
     const themes = {
       light: { name: 'Light', colors: ['#ffffff', '#f0f2f5', '#42b883', '#333333'] },
@@ -1127,7 +1127,7 @@ const TEMPLATES = {
 <body>
   <div id="app"></div>
   <script type="module">
-    import { createApp, h, computed, watch } from 'https://cdn.jsdelivr.net/npm/@lytjs/lytjs@5.0.0/dist/index.mjs'
+    import { createApp, h, computed, watch } from 'https://cdn.jsdelivr.net/npm/@lytjs/lytjs@5.0.1/dist/index.mjs'
 
     const app = createApp({
       name: 'ReactiveComputed',

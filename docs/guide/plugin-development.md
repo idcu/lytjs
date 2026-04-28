@@ -412,7 +412,7 @@ const plugin: LytPlugin = {
   "author": "your-name",
   "keywords": ["lyt", "lytjs", "plugin"],
   "peerDependencies": {
-    "@lytjs/core": ">=5.0.0"
+    "@lytjs/core": ">=5.0.1"
   }
 }
 ```

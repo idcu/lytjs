@@ -19,7 +19,7 @@
 
 Signal 并非新概念。它的思想可以追溯到 2006 年的 Microsoft .NET Reactive Extensions (Rx)，以及后来的 MobX (2015)。真正让 Signal 在前端框架中流行起来的是 Solid.js（2021），其作者 Ryan Carniato 证明了**没有虚拟 DOM 也能构建高性能的响应式 UI**。
 
-此后，Angular（v16+）、Preact（v10.4+）、Vue（v3.4 的实验性 API）纷纷引入 Signal。Lyt.js 在 v5.0.0 中原生支持 Signal，并与 Proxy 响应式系统深度集成。
+此后，Angular（v16+）、Preact（v10.4+）、Vue（v3.4 的实验性 API）纷纷引入 Signal。Lyt.js 在 v5.0.1 中原生支持 Signal，并与 Proxy 响应式系统深度集成。
 
 Signal 的核心思想很简单：**将每个值包装为一个可观察的容器，通过函数调用来读取值并自动建立依赖关系**。
 

@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/compat",
-  "version": "5.0.0",
+  "version": "5.0.1",
   "description": "Lyt.js Vue 3 兼容层 - 提供与 Vue 3 兼容的 API 和工具",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",

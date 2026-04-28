@@ -90,7 +90,7 @@ cp -r <lytjs-source>/packages/common frameworks/non-keyed/lytjs/src/common
   },
   "devDependencies": {
     "esbuild": "^0.20.0",
-    "typescript": "^5.0.0"
+    "typescript": "^5.0.1"
   }
 }
 ```

@@ -42,7 +42,7 @@ function packageJsonTemplate(options) {
         },
         devDependencies: {
             '@lytjs/core': 'workspace:*',
-            typescript: '^5.0.0',
+            typescript: '^5.0.1',
         },
         scripts: {
             build: 'tsc --noEmit && node ../../scripts/esbuild-bundle.js',
