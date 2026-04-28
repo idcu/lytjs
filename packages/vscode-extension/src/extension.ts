@@ -90,18 +90,20 @@ export function activate(context: vscode.ExtensionContext) {
 
   // --------------------------------------------------------
   // Emmet 配置提供者
+  // TODO: vscode.EmmetConfigurationProvider has been removed in @types/vscode 1.116.0.
+  // Re-enable once a replacement API is available.
   // --------------------------------------------------------
-  const emmetEnabled = () =>
-    vscode.workspace.getConfiguration('lytjs.emmet').get<boolean>('enabled') !== false;
-
-  const emmetConfigurationProvider: vscode.EmmetConfigurationProvider = {
-    getEmmetMode(document: vscode.TextDocument): string | undefined {
-      if (document.languageId === 'lyt' && emmetEnabled()) {
-        return 'html';
-      }
-      return undefined;
-    },
-  };
+  // const emmetEnabled = () =>
+  //   vscode.workspace.getConfiguration('lytjs.emmet').get<boolean>('enabled') !== false;
+  //
+  // const emmetConfigurationProvider: vscode.EmmetConfigurationProvider = {
+  //   getEmmetMode(document: vscode.TextDocument): string | undefined {
+  //     if (document.languageId === 'lyt' && emmetEnabled()) {
+  //       return 'html';
+  //     }
+  //     return undefined;
+  //   },
+  // };
 
   // --------------------------------------------------------
   // 调试支持

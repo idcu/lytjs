@@ -180,16 +180,16 @@ class LytDebugAdapter implements vscode.DebugAdapter {
   }
 
   handleMessage(message: vscode.DebugProtocolMessage): void {
-    switch (message.type) {
+    switch ((message as any).type) {
       case 'request':
-        this.handleRequest(message as vscode.DebugProtocolRequest);
+        this.handleRequest(message as any);
         break;
       default:
         break;
     }
   }
 
-  private handleRequest(request: vscode.DebugProtocolRequest): void {
+  private handleRequest(request: any): void {
     switch (request.command) {
       case 'initialize':
         this.handleInitialize(request);
@@ -242,7 +242,7 @@ class LytDebugAdapter implements vscode.DebugAdapter {
     }
   }
 
-  private handleInitialize(request: vscode.DebugProtocolRequest): void {
+  private handleInitialize(request: any): void {
     this.sendResponse(request, {
       supportsConfigurationDoneRequest: true,
       supportsEvaluateForHovers: true,
@@ -253,7 +253,7 @@ class LytDebugAdapter implements vscode.DebugAdapter {
     });
   }
 
-  private handleLaunch(request: vscode.DebugProtocolRequest): void {
+  private handleLaunch(request: any): void {
     const args = request.arguments as {
       url?: string;
       port?: number;
@@ -271,7 +271,7 @@ class LytDebugAdapter implements vscode.DebugAdapter {
     this.sendResponse(request, {});
   }
 
-  private handleAttach(request: vscode.DebugProtocolRequest): void {
+  private handleAttach(request: any): void {
     const args = request.arguments as {
       port?: number;
       webRoot?: string;
@@ -285,18 +285,18 @@ class LytDebugAdapter implements vscode.DebugAdapter {
     this.sendResponse(request, {});
   }
 
-  private handleDisconnect(request: vscode.DebugProtocolRequest): void {
+  private handleDisconnect(request: any): void {
     this.sendResponse(request, {});
     this.dispose();
   }
 
-  private handleTerminate(request: vscode.DebugProtocolRequest): void {
+  private handleTerminate(request: any): void {
     vscode.window.showInformationMessage('Lyt.js Debug: Terminated');
     this.sendResponse(request, {});
     this.dispose();
   }
 
-  private handleSetBreakpoints(request: vscode.DebugProtocolRequest): void {
+  private handleSetBreakpoints(request: any): void {
     const args = request.arguments as {
       source: { path: string };
       breakpoints: Array<{ line: number; column?: number; condition?: string }>;
@@ -311,13 +311,13 @@ class LytDebugAdapter implements vscode.DebugAdapter {
     this.sendResponse(request, { breakpoints });
   }
 
-  private handleThreads(request: vscode.DebugProtocolRequest): void {
+  private handleThreads(request: any): void {
     this.sendResponse(request, {
       threads: [{ id: 1, name: 'Main Thread' }],
     });
   }
 
-  private handleStackTrace(request: vscode.DebugProtocolRequest): void {
+  private handleStackTrace(request: any): void {
     this.sendResponse(request, {
       stackFrames: [
         {
@@ -332,7 +332,7 @@ class LytDebugAdapter implements vscode.DebugAdapter {
     });
   }
 
-  private handleScopes(request: vscode.DebugProtocolRequest): void {
+  private handleScopes(request: any): void {
     this.sendResponse(request, {
       scopes: [
         {
@@ -349,29 +349,29 @@ class LytDebugAdapter implements vscode.DebugAdapter {
     });
   }
 
-  private handleVariables(request: vscode.DebugProtocolRequest): void {
+  private handleVariables(request: any): void {
     this.sendResponse(request, {
       variables: [],
     });
   }
 
-  private handleContinue(request: vscode.DebugProtocolRequest): void {
+  private handleContinue(request: any): void {
     this.sendResponse(request, { allThreadsContinued: true });
   }
 
-  private handleNext(request: vscode.DebugProtocolRequest): void {
+  private handleNext(request: any): void {
     this.sendResponse(request, {});
   }
 
-  private handleStepIn(request: vscode.DebugProtocolRequest): void {
+  private handleStepIn(request: any): void {
     this.sendResponse(request, {});
   }
 
-  private handleStepOut(request: vscode.DebugProtocolRequest): void {
+  private handleStepOut(request: any): void {
     this.sendResponse(request, {});
   }
 
-  private handleEvaluate(request: vscode.DebugProtocolRequest): void {
+  private handleEvaluate(request: any): void {
     const args = request.arguments as {
       expression: string;
       context?: string;
@@ -384,7 +384,7 @@ class LytDebugAdapter implements vscode.DebugAdapter {
   }
 
   private sendResponse(
-    request: vscode.DebugProtocolRequest,
+    request: any,
     body: Record<string, unknown>
   ): void {
     this._onDidSendMessage.fire({
@@ -393,11 +393,11 @@ class LytDebugAdapter implements vscode.DebugAdapter {
       success: true,
       command: request.command,
       body,
-    } as vscode.DebugProtocolResponse);
+    } as any);
   }
 
   private sendEvent(event: { type: string; event: string; body?: Record<string, unknown> }): void {
-    this._onDidSendMessage.fire(event as vscode.DebugProtocolEvent);
+    this._onDidSendMessage.fire(event as any);
   }
 
   dispose(): void {

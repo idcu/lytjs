@@ -13,7 +13,7 @@
     }
   },
   "bin": {
-    "lytx": "dist/cli.js"
+    "lytx": "dist/bin/lytx.js"
   },
   "sideEffects": false,
   "files": [

@@ -50,12 +50,18 @@ PUBLISH_ORDER=(
   cli
   devtools
   components
+  performance
+  micro-frontend
   plugin-i18n
   plugin-auth
   plugin-logger
   plugin-theme
   plugin-storage
   plugin-sdk
+  plugin-chart
+  plugin-highlight
+  plugin-virtual-list
+  plugin-registry
   test-utils
   plugins
   lytjs
