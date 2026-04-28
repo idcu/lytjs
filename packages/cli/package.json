@@ -14,7 +14,7 @@
     }
   },
   "bin": {
-    "lyt": "dist/cli.js"
+    "lyt": "dist/bin/cli.js"
   },
   "sideEffects": false,
   "files": [

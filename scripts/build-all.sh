@@ -247,7 +247,7 @@ if [ "$TYPES_ONLY" = false ]; then
           --platform=node --target=ES2018 \
           --format=esm \
           --outfile="$dist_dir/bin/${bin_out%.js}.mjs" \
-          --external:@lytjs/* \
+          --external:esbuild \
           --legal-comments=none \
           --log-level=warning >/dev/null 2>&1 && ok "  $pkg bin: ESM OK"
         # 构建 bin 的 CJS
@@ -256,7 +256,7 @@ if [ "$TYPES_ONLY" = false ]; then
           --platform=node --target=ES2018 \
           --format=cjs \
           --outfile="$dist_dir/bin/${bin_out%.js}.cjs" \
-          --external:@lytjs/* \
+          --external:esbuild \
           --legal-comments=none \
           --log-level=warning >/dev/null 2>&1 && ok "  $pkg bin: CJS OK"
         # 创建可执行入口
