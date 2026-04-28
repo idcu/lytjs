@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "baseUrl": "..",
+    "paths": {
+      "@lytjs/common": ["packages/common/dist/index.mjs"],
+      "@lytjs/common/*": ["packages/common/dist/*"],
+      "@lytjs/reactivity": ["packages/reactivity/dist/index.mjs"],
+      "@lytjs/reactivity/*": ["packages/reactivity/dist/*"],
+      "@lytjs/vdom": ["packages/vdom/dist/index.mjs"],
+      "@lytjs/vdom/*": ["packages/vdom/dist/*"],
+      "@lytjs/compiler": ["packages/compiler/dist/index.mjs"],
+      "@lytjs/compiler/*": ["packages/compiler/dist/*"],
+      "@lytjs/renderer": ["packages/renderer/dist/index.mjs"],
+      "@lytjs/renderer/*": ["packages/renderer/dist/*"],
+      "@lytjs/component": ["packages/component/dist/index.mjs"],
+      "@lytjs/component/*": ["packages/component/dist/*"],
+      "@lytjs/core": ["packages/core/dist/index.mjs"],
+      "@lytjs/core/*": ["packages/core/dist/*"],
+      "@lytjs/compat": ["packages/compat/dist/index.mjs"],
+      "@lytjs/compat/*": ["packages/compat/dist/*"]
+    }
+  },
+  "include": ["./**/*.ts"]
+}

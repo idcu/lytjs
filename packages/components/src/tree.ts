@@ -340,6 +340,112 @@ export const Tree = defineComponent({
       state.treeNodes = filterNode(state.treeNodes)
     }
 
+    /**
+     * 递归渲染单个树节点的 HTML 字符串
+     * 通过 v-html 渲染，配合事件委托处理交互
+     */
+    const renderTreeNode = (node: TreeNode): string => {
+      const nodeId = String(node.id)
+      const isCurrent = state.currentKey === node.id
+      const paddingLeft = 8 + node.level * props.indent
+
+      // 节点 class
+      const nodeClasses = [
+        'lyt-tree-node',
+        isCurrent ? 'lyt-tree-node--current' : '',
+      ].filter(Boolean).join(' ')
+
+      // 内容区 class
+      const contentClasses = 'lyt-tree-node-content'
+
+      // 展开图标
+      let expandHtml = ''
+      if (!node.isLeaf) {
+        const expandClasses = [
+          'lyt-tree-node-expand',
+          node.expanded ? 'lyt-tree-node-expand--expanded' : '',
+        ].filter(Boolean).join(' ')
+        expandHtml = `<span class="${expandClasses}" data-node-id="${nodeId}" data-action="expand">&#9654;</span>`
+      } else {
+        expandHtml = '<span class="lyt-tree-node-expand-placeholder"></span>'
+      }
+
+      // 复选框
+      let checkboxHtml = ''
+      if (props.showCheckbox) {
+        const checkboxClasses = [
+          'lyt-tree-node-checkbox',
+          node.checked ? 'lyt-tree-node-checkbox--checked' : '',
+          node.indeterminate ? 'lyt-tree-node-checkbox--indeterminate' : '',
+          node.disabled ? 'lyt-tree-node-checkbox--disabled' : '',
+        ].filter(Boolean).join(' ')
+
+        let checkIcon = '&#9744;' // ☐
+        if (node.checked) checkIcon = '&#9745;' // ☑
+        else if (node.indeterminate) checkIcon = '&#9638;' // ▣
+
+        checkboxHtml = `<span class="${checkboxClasses}" data-node-id="${nodeId}" data-action="check"><span>${checkIcon}</span></span>`
+      }
+
+      // 子节点 HTML（递归）
+      let childrenHtml = ''
+      if (node.children && node.children.length > 0 && node.expanded) {
+        const childItems = node.children.map(child => renderTreeNode(child)).join('')
+        childrenHtml = `<div class="lyt-tree-node-children">${childItems}</div>`
+      }
+
+      // 组装完整节点
+      return `<div class="${nodeClasses}" data-node-id="${nodeId}">` +
+        `<div class="${contentClasses}" style="padding-left: ${paddingLeft}px" data-node-id="${nodeId}" data-action="click">` +
+          expandHtml +
+          checkboxHtml +
+          `<span class="lyt-tree-node-label">${node.label}</span>` +
+        `</div>` +
+        childrenHtml +
+      `</div>`
+    }
+
+    /**
+     * 计算整棵树的 HTML（computed，响应式更新）
+     */
+    const treeHtml = computed(() => {
+      if (state.treeNodes.length === 0) return ''
+      return state.treeNodes.map(node => renderTreeNode(node)).join('')
+    })
+
+    /**
+     * 事件委托处理函数
+     * 在根容器上统一监听 click 事件，通过 data-action 和 data-node-id 识别操作
+     */
+    const handleTreeClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement
+
+      // 向上查找最近的带有 data-action 的元素
+      const actionEl = target.closest('[data-action]') as HTMLElement | null
+      if (!actionEl) return
+
+      const action = actionEl.getAttribute('data-action')
+      const nodeId = actionEl.getAttribute('data-node-id')
+      if (!action || !nodeId) return
+
+      const node = findNode(state.treeNodes, nodeId)
+      if (!node) return
+
+      switch (action) {
+        case 'expand':
+          e.stopPropagation()
+          toggleExpand(node)
+          break
+        case 'check':
+          e.stopPropagation()
+          toggleCheck(node)
+          break
+        case 'click':
+          handleNodeClick(node)
+          break
+      }
+    }
+
     watch(() => props.data, buildTree, { deep: true, immediate: true })
     watch(() => props.defaultExpandedKeys, (val) => {
       state.expandedKeys = new Set(val)
@@ -358,64 +464,15 @@ export const Tree = defineComponent({
       findNode, setCurrentKey, setCheckedKeys, setExpandedKeys, filter,
       getLabelKey, getChildrenKey,
       slots,
+      treeHtml,
+      handleTreeClick,
     }
   },
 
   template: `
-    <div class="lyt-tree">
+    <div class="lyt-tree" @click="handleTreeClick">
       <div v-if="state.treeNodes.length === 0" class="lyt-tree-empty">{{ emptyText }}</div>
-      <template v-else>
-        <template v-for="node in state.treeNodes" :key="node.id">
-          <div class="lyt-tree-node lyt-tree-node--level-0 {state.currentKey === node.id ? 'lyt-tree-node--current' : ''}">
-            <div class="lyt-tree-node-content" @click="handleNodeClick(node)">
-              <span
-                v-if="!node.isLeaf"
-                class="lyt-tree-node-expand {node.expanded ? 'lyt-tree-node-expand--expanded' : ''}"
-                @click.stop="toggleExpand(node)"
-              >
-                ▶
-              </span>
-              <span v-else class="lyt-tree-node-expand-placeholder"></span>
-              <span
-                v-if="showCheckbox"
-                class="lyt-tree-node-checkbox {node.checked ? 'lyt-tree-node-checkbox--checked' : ''} {node.indeterminate ? 'lyt-tree-node-checkbox--indeterminate' : ''} {node.disabled ? 'lyt-tree-node-checkbox--disabled' : ''}"
-                @click.stop="toggleCheck(node)"
-              >
-                <span v-if="node.checked">☑</span>
-                <span v-else-if="node.indeterminate">▣</span>
-                <span v-else>☐</span>
-              </span>
-              <span class="lyt-tree-node-label">{node.label}</span>
-            </div>
-            <div v-if="node.children && node.expanded" class="lyt-tree-node-children">
-              <template v-for="child in node.children" :key="child.id">
-                <div class="lyt-tree-node lyt-tree-node--level-1 {state.currentKey === child.id ? 'lyt-tree-node--current' : ''}">
-                  <div class="lyt-tree-node-content" @click="handleNodeClick(child)">
-                    <span
-                      v-if="!child.isLeaf"
-                      class="lyt-tree-node-expand {child.expanded ? 'lyt-tree-node-expand--expanded' : ''}"
-                      @click.stop="toggleExpand(child)"
-                    >
-                      ▶
-                    </span>
-                    <span v-else class="lyt-tree-node-expand-placeholder"></span>
-                    <span
-                      v-if="showCheckbox"
-                      class="lyt-tree-node-checkbox {child.checked ? 'lyt-tree-node-checkbox--checked' : ''} {child.indeterminate ? 'lyt-tree-node-checkbox--indeterminate' : ''} {child.disabled ? 'lyt-tree-node-checkbox--disabled' : ''}"
-                      @click.stop="toggleCheck(child)"
-                    >
-                      <span v-if="child.checked">☑</span>
-                      <span v-else-if="child.indeterminate">▣</span>
-                      <span v-else>☐</span>
-                    </span>
-                    <span class="lyt-tree-node-label">{child.label}</span>
-                  </div>
-                </div>
-              </template>
-            </div>
-          </div>
-        </template>
-      </template>
+      <div v-else v-html="treeHtml"></div>
     </div>
   `,
 
@@ -448,9 +505,6 @@ export const Tree = defineComponent({
     .lyt-tree-node--current .lyt-tree-node-content {
       background-color: rgba(64, 158, 255, 0.1);
       color: var(--lyt-color-primary);
-    }
-    .lyt-tree-node--level-1 .lyt-tree-node-content {
-      padding-left: calc(8px + 1 * 16px);
     }
     .lyt-tree-node-expand {
       display: inline-flex;

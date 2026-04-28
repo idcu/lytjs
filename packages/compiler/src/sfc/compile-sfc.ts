@@ -6,12 +6,15 @@
  * 编译流程：
  *   1. <template> 块 → 使用 compile() 编译为 render 函数代码
  *   2. <script> 块 → 提取 export default 内容，与 render 函数合并
- *   3. <style scoped> 块 → 生成 scopedId，改写 CSS 选择器，收集样式
- *   4. 输出完整的 JS 模块字符串
+ *   3. <script setup> 块 → 编译为 Composition API setup 函数
+ *   4. <style scoped> 块 → 生成 scopedId，改写 CSS 选择器，收集样式
+ *   5. <style module> 块 → CSS Modules 编译，生成类名映射
+ *   6. 处理 :deep() / :slotted() / :global() / v-deep 等深度选择器
+ *   7. 输出完整的 JS 模块字符串
  */
 
 import { compile } from '../index';
-import type { SFCDescriptor } from './parse-sfc';
+import type { SFCDescriptor, SFCScriptBlock } from './parse-sfc';
 import { extractExportDefault } from './parse-sfc';
 
 // ============================================================
@@ -28,12 +31,35 @@ export interface SFCCompileResult {
   scopedId: string
 }
 
+/** script setup 编译结果 */
+interface ScriptSetupCompileResult {
+  /** setup 函数代码 */
+  setupCode: string
+  /** 需要暴露给模板的绑定变量 */
+  bindings: string[]
+  /** 提取的 props 定义 */
+  propsDef: string | null
+  /** 提取的 emits 定义 */
+  emitsDef: string | null
+}
+
+/** CSS Modules 编译结果 */
+interface CSSModulesResult {
+  /** 改写后的 CSS */
+  css: string
+  /** 类名映射对象代码 */
+  moduleMappingCode: string
+}
+
 // ============================================================
 // 常量
 // ============================================================
 
 /** scopedId 前缀 */
 const SCOPED_ID_PREFIX = 'data-v-';
+
+/** 编译器宏列表 */
+const COMPILER_MACROS = ['defineProps', 'defineEmits', 'defineModel', 'useTemplateRef', 'defineExpose', 'withDefaults'];
 
 // ============================================================
 // 辅助函数
@@ -60,6 +86,234 @@ function generateScopedId(filename: string, content: string): string {
 }
 
 /**
+ * 生成 CSS Modules 类名哈希
+ *
+ * @param className 原始类名
+ * @param scopedId scopedId（用作哈希种子）
+ * @returns 哈希后的类名（如 _title_3f2a1b）
+ */
+function generateModuleClassName(className: string, scopedId: string): string {
+  const seed = className + '\x00' + scopedId;
+  let hash = 5381;
+  for (let i = 0; i < seed.length; i++) {
+    hash = ((hash << 5) + hash + seed.charCodeAt(i)) & 0xffffffff;
+  }
+  const hashStr = (hash >>> 0).toString(36).slice(0, 5);
+  return `_${className}_${hashStr}`;
+}
+
+// ============================================================
+// <script setup> 编译（任务 1, 2, 3）
+// ============================================================
+
+/**
+ * 编译 <script setup> 语法糖
+ *
+ * 将 setup 代码编译为等价的 Composition API setup 函数：
+ *   1. 移除编译器宏调用（defineProps/defineEmits/defineModel/useTemplateRef）
+ *   2. 提取 defineProps 的参数生成 props 定义
+ *   3. 提取 defineEmits 的参数生成 emits 定义
+ *   4. 将 defineModel 调用转换为 ref + prop + emit 代码
+ *   5. 将剩余代码包装为 async setup(props, { emit, slots, attrs, expose }) { ... }
+ *   6. 收集需要暴露给模板的变量
+ *
+ * @param scriptContent script setup 块内容
+ * @returns 编译结果
+ */
+function compileScriptSetup(scriptContent: string): ScriptSetupCompileResult {
+  const bindings: string[] = [];
+  let propsDef: string | null = null;
+  let emitsDef: string | null = null;
+  let modelCode = '';
+  let cleanedContent = scriptContent;
+
+  // ---- 1. 提取并移除 defineProps 调用 ----
+  const definePropsMatch = cleanedContent.match(
+    /(?:const\s+\w+\s*=\s*)?defineProps\s*\(\s*(\[[\s\S]*?\]|\{[\s\S]*?\})\s*\)\s*;?\s*/m
+  );
+  if (definePropsMatch) {
+    const propsArg = definePropsMatch[1].trim();
+    propsDef = propsArg;
+    cleanedContent = cleanedContent.replace(definePropsMatch[0], '');
+  }
+
+  // ---- 2. 提取并移除 defineEmits 调用 ----
+  const defineEmitsMatch = cleanedContent.match(
+    /(?:const\s+\w+\s*=\s*)?defineEmits\s*\(\s*(\[[\s\S]*?\])\s*\)\s*;?\s*/m
+  );
+  if (defineEmitsMatch) {
+    const emitsArg = defineEmitsMatch[1].trim();
+    emitsDef = emitsArg;
+    cleanedContent = cleanedContent.replace(defineEmitsMatch[0], '');
+  }
+
+  // ---- 3. 提取并移除 defineModel 调用 ----
+  const defineModelRe = /(?:const\s+(\w+)\s*=\s*)?defineModel\s*\(\s*(?:'([^']*)'|"([^"]*)")?\s*(?:,\s*([\s\S]*?))?\)\s*;?\s*/g;
+  let modelMatch: RegExpExecArray | null;
+  const modelVars: string[] = [];
+
+  while ((modelMatch = defineModelRe.exec(cleanedContent)) !== null) {
+    const varName = modelMatch[1] || 'model';
+    const modelName = modelMatch[2] || modelMatch[3] || 'modelValue';
+    const options = modelMatch[4]?.trim() || '';
+
+    // 生成对应的 prop 名和 update 事件名
+    const updateEvent = `update:${modelName}`;
+
+    // 生成 ref 代码：读取时返回 prop 值，写入时触发 emit
+    modelCode += `  const ${varName} = new Proxy({ value: props.${modelName} }, {\n`;
+    modelCode += `    get(target, key) { return key === 'value' ? props.${modelName} : target[key] },\n`;
+    modelCode += `    set(target, key, val) { if (key === 'value') { emit('${updateEvent}', val) } else { target[key] = val } return true }\n`;
+    modelCode += `  })\n`;
+
+    modelVars.push(varName);
+
+    // 如果 defineModel 指定了非默认的 modelValue，需要添加到 props
+    if (modelName !== 'modelValue' && propsDef) {
+      // props 已有定义，需要追加
+    } else if (modelName !== 'modelValue' && !propsDef) {
+      propsDef = `['${modelName}']`;
+    }
+
+    // 添加到 emits
+    if (emitsDef) {
+      emitsDef = emitsDef.replace(/]$/, `, '${updateEvent}']`);
+    } else {
+      emitsDef = `['${updateEvent}']`;
+    }
+
+    cleanedContent = cleanedContent.replace(modelMatch[0], '');
+  }
+
+  // ---- 4. 移除 useTemplateRef 调用（运行时处理） ----
+  cleanedContent = cleanedContent.replace(
+    /(?:const\s+(\w+)\s*=\s*)?useTemplateRef\s*\(\s*(?:'([^']*)'|"([^"]*)")\s*\)\s*;?\s*/g,
+    (_match, varName: string | undefined, key1: string, key2: string) => {
+      const name = varName || '_templateRef';
+      const key = key1 || key2;
+      if (varName) {
+        bindings.push(varName);
+      }
+      return `const ${name} = __useTemplateRef('${key}');\n`;
+    }
+  );
+
+  // ---- 5. 移除 defineExpose 调用 ----
+  cleanedContent = cleanedContent.replace(
+    /defineExpose\s*\(\s*([\s\S]*?)\s*\)\s*;?\s*/g,
+    (_match, exposed: string) => {
+      return `__expose(${exposed});\n`;
+    }
+  );
+
+  // ---- 6. 移除 withDefaults 调用 ----
+  cleanedContent = cleanedContent.replace(
+    /(?:const\s+\w+\s*=\s*)?withDefaults\s*\([^)]*\)\s*;?\s*/g,
+    ''
+  );
+
+  // ---- 7. 移除剩余的编译器宏调用（未匹配到的） ----
+  for (const macro of COMPILER_MACROS) {
+    cleanedContent = cleanedContent.replace(
+      new RegExp(`(?:const\\s+\\w+\\s*=\\s*)?${macro}\\s*\\([^)]*\\)\\s*;?\\s*`, 'g'),
+      ''
+    );
+  }
+
+  // ---- 8. 收集顶层绑定变量（需要暴露给模板的） ----
+  collectTopLevelBindings(cleanedContent, bindings);
+
+  // ---- 9. 组装 setup 函数 ----
+  let setupBody = '';
+
+  // 添加 defineModel 生成的代码
+  if (modelCode) {
+    setupBody += modelCode + '\n';
+  }
+
+  // 添加用户代码
+  setupBody += cleanedContent.trim();
+
+  // 构造 setup 函数
+  let setupCode = `async function setup(props, { emit, slots, attrs, expose }) {\n`;
+  setupCode += `  const __expose = expose || (() => {});\n`;
+  setupCode += `  const __useTemplateRef = (key) => {\n`;
+  setupCode += `    const ref = { value: null };\n`;
+  setupCode += `    if (currentInstance) {\n`;
+  setupCode += `      if (!currentInstance._templateRefs) currentInstance._templateRefs = {};\n`;
+  setupCode += `      currentInstance._templateRefs[key] = ref;\n`;
+  setupCode += `    }\n`;
+  setupCode += `    return ref;\n`;
+  setupCode += `  };\n`;
+  setupCode += setupBody + '\n';
+  setupCode += `  return { ${bindings.join(', ')} };\n`;
+  setupCode += `}`;
+
+  return {
+    setupCode,
+    bindings,
+    propsDef,
+    emitsDef,
+  };
+}
+
+/**
+ * 收集顶层绑定变量
+ *
+ * 通过简单的正则分析，提取顶层 const/let/var 声明和 import 声明中的变量名。
+ *
+ * @param code 代码内容
+ * @param bindings 绑定变量列表（会被修改）
+ */
+function collectTopLevelBindings(code: string, bindings: string[]): void {
+  // 匹配 const/let/var 声明
+  const declRe = /(?:const|let|var)\s+(\w+)\s*(?:=[^=]|$)/gm;
+  let match: RegExpExecArray | null;
+  while ((match = declRe.exec(code)) !== null) {
+    const name = match[1];
+    // 排除内部变量
+    if (!name.startsWith('_') && !bindings.includes(name)) {
+      bindings.push(name);
+    }
+  }
+
+  // 匹配 import 声明中的默认导入和命名导入
+  const importDefaultRe = /import\s+(\w+)\s+from/g;
+  while ((match = importDefaultRe.exec(code)) !== null) {
+    const name = match[1];
+    if (!bindings.includes(name)) {
+      bindings.push(name);
+    }
+  }
+
+  const importNamedRe = /import\s*\{([^}]+)\}\s*from/g;
+  while ((match = importNamedRe.exec(code)) !== null) {
+    const names = match[1].split(',').map(n => {
+      const parts = n.trim().split(/\s+as\s+/);
+      return parts[parts.length - 1].trim();
+    }).filter(Boolean);
+    for (const name of names) {
+      if (!bindings.includes(name)) {
+        bindings.push(name);
+      }
+    }
+  }
+
+  // 匹配函数声明
+  const funcDeclRe = /function\s+(\w+)\s*\(/g;
+  while ((match = funcDeclRe.exec(code)) !== null) {
+    const name = match[1];
+    if (!name.startsWith('_') && !bindings.includes(name)) {
+      bindings.push(name);
+    }
+  }
+}
+
+// ============================================================
+// Scoped CSS 编译（任务 5, 7）
+// ============================================================
+
+/**
  * 改写 CSS 选择器，添加 scoped 属性选择器
  *
  * 规则：
@@ -72,6 +326,12 @@ function generateScopedId(filename: string, content: string): string {
  *   - @keyframes、@font-face 等规则不改写
  *   - ::before、::after 等伪元素在属性选择器之前
  *     .btn::before → .btn[data-v-xxx]::before
+ *   - :deep(.child) → [data-v-xxx] .child
+ *   - :slotted(.content) → .content[data-v-xxx]
+ *   - :global(.global-class) → .global-class（不加 scope）
+ *   - v-deep(.child) → [data-v-xxx] .child
+ *   - ::v-deep(.child) → [data-v-xxx] .child
+ *   - ::v-deep .child → [data-v-xxx] .child
  *
  * @param css CSS 内容
  * @param scopedId scoped 属性标识
@@ -246,11 +506,80 @@ function splitSelectorList(selectorList: string): string[] {
  * 将 scoped 属性选择器添加到最后一个简单选择器上。
  * 伪元素（::before, ::after 等）需要放在属性选择器之后。
  *
+ * 特殊处理：
+ *   - :deep(.child) → [data-v-xxx] .child
+ *   - :slotted(.content) → .content[data-v-xxx]
+ *   - :global(.global-class) → .global-class（不加 scope）
+ *   - ::v-deep(.child) → [data-v-xxx] .child
+ *   - ::v-deep .child → [data-v-xxx] .child
+ *   - v-deep(.child) → [data-v-xxx] .child（作为伪类处理）
+ *
  * @param selector 单个选择器
  * @param scopedId scoped 属性标识
  * @returns 改写后的选择器
  */
 function rewriteSingleSelector(selector: string, scopedId: string): string {
+  // ---- 处理 :global() — 不加 scope ----
+  const globalMatch = selector.match(/^(?::global\(|::v-global\()([\s\S]*?)\)$/);
+  if (globalMatch) {
+    return globalMatch[1].trim();
+  }
+
+  // ---- 处理 :deep() / ::v-deep() / v-deep() ----
+  // 模式 1: :deep(.child) 或 ::v-deep(.child) 或 v-deep(.child)
+  const deepMatch = selector.match(/^(?::deep\(|::v-deep\(|v-deep\()([\s\S]*?)\)$/);
+  if (deepMatch) {
+    return `[${scopedId}] ${deepMatch[1].trim()}`;
+  }
+
+  // 模式 2: ::v-deep .child（不带括号的旧语法）
+  const vDeepMatch = selector.match(/^::v-deep\s+(.+)$/);
+  if (vDeepMatch) {
+    return `[${scopedId}] ${vDeepMatch[1].trim()}`;
+  }
+
+  // 模式 3: 选择器中包含 :deep() 作为组合部分
+  // 例如: .parent :deep(.child) → .parent[data-v-xxx] .child
+  const deepInSelector = selector.match(/^(.+?)\s*:deep\(([\s\S]+)\)$/);
+  if (deepInSelector) {
+    const parentPart = deepInSelector[1].trim();
+    const innerPart = deepInSelector[2].trim();
+    return `${parentPart}[${scopedId}] ${innerPart}`;
+  }
+
+  // 模式 4: 选择器中包含 ::v-deep() 作为组合部分
+  const vDeepInSelector = selector.match(/^(.+?)\s*::v-deep\(([\s\S]+)\)$/);
+  if (vDeepInSelector) {
+    const parentPart = vDeepInSelector[1].trim();
+    const innerPart = vDeepInSelector[2].trim();
+    return `${parentPart}[${scopedId}] ${innerPart}`;
+  }
+
+  // ---- 处理 :slotted() ----
+  // :slotted(.content) → .content[data-v-xxx]
+  const slottedMatch = selector.match(/^:slotted\(([\s\S]*?)\)$/);
+  if (slottedMatch) {
+    return `${slottedMatch[1].trim()}[${scopedId}]`;
+  }
+
+  // :slotted 作为组合部分: .parent :slotted(.content) → .parent[data-v-xxx] .content[data-v-xxx]
+  const slottedInSelector = selector.match(/^(.+?)\s*:slotted\(([\s\S]+)\)$/);
+  if (slottedInSelector) {
+    const parentPart = slottedInSelector[1].trim();
+    const innerPart = slottedInSelector[2].trim();
+    return `${parentPart}[${scopedId}] ${innerPart}[${scopedId}]`;
+  }
+
+  // ---- 处理 :global() 作为组合部分 ----
+  const globalInSelector = selector.match(/^(.+?)\s*:global\(([\s\S]+)\)$/);
+  if (globalInSelector) {
+    const parentPart = globalInSelector[1].trim();
+    const innerPart = globalInSelector[2].trim();
+    // 父部分加 scope，global 部分不加
+    return `${parentPart}[${scopedId}] ${innerPart}`;
+  }
+
+  // ---- 标准 scoped 选择器改写 ----
   // 匹配末尾的伪元素（::before, ::after, ::first-line, ::first-letter, ::selection, ::placeholder 等）
   const pseudoElementRe = /(::(?:before|after|first-line|first-letter|selection|placeholder|backdrop|marker|spelling-error|grammar-error)[\s\S]*)$/;
   const pseudoMatch = selector.match(pseudoElementRe);
@@ -280,6 +609,68 @@ function rewriteSingleSelector(selector: string, scopedId: string): string {
 
   // 组装：baseSelector[scopedId]pseudoClass::pseudoElement
   return `${selectorBeforePseudo}[${scopedId}]${pseudoClass}${pseudoElement}`;
+}
+
+// ============================================================
+// CSS Modules 编译（任务 6）
+// ============================================================
+
+/**
+ * 编译 CSS Modules
+ *
+ * 将 CSS 类名转换为唯一哈希值，并生成类名映射对象。
+ *
+ * @param css CSS 内容
+ * @param scopedId scopedId（用作哈希种子）
+ * @returns CSS Modules 编译结果
+ */
+function compileCSSModules(css: string, scopedId: string): CSSModulesResult {
+  const classMap: Record<string, string> = {};
+
+  // 匹配 CSS 类选择器中的类名
+  // 处理 .className { ... } 和 .class1.class2 { ... } 等形式
+  let result = css;
+
+  // 匹配所有类名定义（选择器中的 .className）
+  const classRe = /\.([a-zA-Z_-][a-zA-Z0-9_-]*)/g;
+  let match: RegExpExecArray | null;
+
+  // 先收集所有需要替换的类名
+  const classNames = new Set<string>();
+  while ((match = classRe.exec(css)) !== null) {
+    const className = match[1];
+    // 排除伪类和伪元素（如 :hover, ::before）
+    if (!className.startsWith(':') && !className.startsWith('::')) {
+      classNames.add(className);
+    }
+  }
+
+  // 生成映射并替换
+  for (const className of classNames) {
+    const hashedName = generateModuleClassName(className, scopedId);
+    classMap[className] = hashedName;
+
+    // 在 CSS 中替换类名（使用全局替换）
+    // 使用负向后瞻确保不会替换已经是哈希后的类名
+    const re = new RegExp(`\\.(?![a-zA-Z0-9_-]*_)([a-zA-Z_-][a-zA-Z0-9_-]*)`, 'g');
+    result = result.replace(re, (fullMatch: string, name: string) => {
+      if (name === className) {
+        return `.${hashedName}`;
+      }
+      return fullMatch;
+    });
+  }
+
+  // 生成模块映射对象代码
+  const mappingEntries = Object.entries(classMap)
+    .map(([original, hashed]) => `  '${original}': '${hashed}'`)
+    .join(',\n');
+  const moduleMappingCode = `{\n${mappingEntries}\n}`;
+
+  return {
+    css: result,
+    moduleMappingCode,
+  };
 }
 
 // ============================================================
@@ -318,27 +709,87 @@ export function compileSFC(descriptor: SFCDescriptor): SFCCompileResult {
     renderCode = `function(_ctx) { return ${compileResult.code} }`;
   }
 
-  // 2. 提取 script 中的 export default 内容
+  // 2. 处理 script 块（区分普通 script 和 script setup）
   let scriptOptions = '{}';
+  let setupCode: string | null = null;
+  let setupBindings: string[] = [];
+
   if (script) {
-    const exported = extractExportDefault(script.content);
-    if (exported) {
-      scriptOptions = `{ ${exported} }`;
+    if (script.setup) {
+      // <script setup> 模式
+      const setupResult = compileScriptSetup(script.content);
+      setupCode = setupResult.setupCode;
+      setupBindings = setupResult.bindings;
+
+      // 构建 props 和 emits 选项
+      const optionsParts: string[] = [];
+
+      if (setupResult.propsDef) {
+        // 判断是数组形式还是对象形式
+        if (setupResult.propsDef.startsWith('[')) {
+          // 数组形式: ['prop1', 'prop2'] → 转为对象形式
+          const propsArray = setupResult.propsDef.slice(1, -1)
+            .split(',')
+            .map(p => p.trim().replace(/['"]/g, ''))
+            .filter(Boolean);
+          const propsObj = propsArray.map(p => `    ${p}: { type: null }`).join(',\n');
+          optionsParts.push(`  props: {\n${propsObj}\n  }`);
+        } else {
+          optionsParts.push(`  props: ${setupResult.propsDef}`);
+        }
+      }
+
+      if (setupResult.emitsDef) {
+        optionsParts.push(`  emits: ${setupResult.emitsDef}`);
+      }
+
+      scriptOptions = optionsParts.length > 0
+        ? `{\n${optionsParts.join(',\n')}\n}`
+        : '{}';
+    } else {
+      // 普通 <script> 模式
+      const exported = extractExportDefault(script.content);
+      if (exported) {
+        scriptOptions = `{ ${exported} }`;
+      }
     }
   }
 
-  // 3. 处理样式
+  // 3. 处理样式（scoped / module）
   const processedStyles: string[] = [];
+  const cssModuleMappings: Array<{ name: string; mappingCode: string }> = [];
+
   for (const style of styles) {
     let css = style.content;
+
+    // CSS Modules 处理
+    if (style.module) {
+      const moduleResult = compileCSSModules(css, scopedId);
+      css = moduleResult.css;
+      cssModuleMappings.push({
+        name: style.module,
+        mappingCode: moduleResult.moduleMappingCode,
+      });
+    }
+
+    // Scoped CSS 处理
     if (style.scoped) {
       css = scopeCSS(css, scopedId);
     }
+
     processedStyles.push(css);
   }
 
   // 4. 生成 JS 模块代码
-  const code = generateModuleCode(renderCode, scriptOptions, scopedId, processedStyles);
+  const code = generateModuleCode(
+    renderCode,
+    scriptOptions,
+    scopedId,
+    processedStyles,
+    setupCode,
+    setupBindings,
+    cssModuleMappings
+  );
 
   return {
     code,
@@ -354,13 +805,19 @@ export function compileSFC(descriptor: SFCDescriptor): SFCCompileResult {
  * @param scriptOptions 组件选项对象代码
  * @param scopedId scoped 属性标识
  * @param styles 样式数组
+ * @param setupCode setup 函数代码（script setup 模式）
+ * @param setupBindings setup 绑定变量列表
+ * @param cssModuleMappings CSS Modules 映射
  * @returns JS 模块代码字符串
  */
 function generateModuleCode(
   renderCode: string,
   scriptOptions: string,
   scopedId: string,
-  styles: string[]
+  styles: string[],
+  setupCode: string | null = null,
+  setupBindings: string[] = [],
+  cssModuleMappings: Array<{ name: string; mappingCode: string }> = []
 ): string {
   const lines: string[] = [];
 
@@ -375,7 +832,7 @@ function generateModuleCode(
     for (const style of styles) {
       lines.push(`  ${JSON.stringify(style)},`);
     }
-    lines.push(']');
+    lines.push(']')
     lines.push('');
     lines.push('function _injectStyles() {');
     lines.push('  if (typeof document === \'undefined\') {');
@@ -393,12 +850,46 @@ function generateModuleCode(
     lines.push('');
   }
 
-  // 组件定义
-  lines.push('export default {');
-  lines.push('  __sfcId: _sfcId,');
-  lines.push(`  render: ${renderCode},`);
-  lines.push(`  ...${scriptOptions},`);
-  lines.push('}');
+  // script setup 模式：注入 CSS Modules 映射到 setup
+  if (setupCode) {
+    // 如果有 CSS Modules，需要在 setup 中注入 $style 对象
+    if (cssModuleMappings.length > 0) {
+      // 在 setup 函数体开头注入 CSS Modules 引用
+      for (const mod of cssModuleMappings) {
+        const injectCode = `  const ${mod.name} = ${mod.mappingCode};`;
+        // 在 setup 函数体的第一行之后注入
+        setupCode = setupCode.replace(
+          /(async function setup\(props, \{ emit, slots, attrs, expose \}\) \{\n)/,
+          `$1${injectCode}\n`
+        );
+        // 将 CSS Modules 变量添加到绑定列表
+        if (!setupBindings.includes(mod.name)) {
+          setupBindings.push(mod.name);
+        }
+      }
+
+      // 更新 return 语句
+      setupCode = setupCode.replace(
+        /return \{ ([^}]+) \};/,
+        (_, bindings) => `return { ${setupBindings.join(', ')} };`
+      );
+    }
+
+    // 组件定义（script setup 模式）
+    lines.push('export default {');
+    lines.push('  __sfcId: _sfcId,');
+    lines.push(`  render: ${renderCode},`);
+    lines.push(`  ...${scriptOptions},`);
+    lines.push(`  setup: ${setupCode},`);
+    lines.push('}');
+  } else {
+    // 组件定义（普通模式）
+    lines.push('export default {');
+    lines.push('  __sfcId: _sfcId,');
+    lines.push(`  render: ${renderCode},`);
+    lines.push(`  ...${scriptOptions},`);
+    lines.push('}');
+  }
 
   return lines.join('\n');
 }

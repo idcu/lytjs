@@ -14,10 +14,7 @@
  */
 
 import { patchEvent } from './patch-events';
-import { PatchFlags } from '@lytjs/vdom';
-
-// Re-export PatchFlags for consumers
-export { PatchFlags };
+import type { PatchFlags } from '@lytjs/vdom';
 
 /* ================================================================
  *  class 更新
@@ -205,9 +202,6 @@ export function patchEventOnElement(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   instance?: any
 ): void {
-  // next 和 prev 需要从 key 中提取事件名
-  // 但此函数的调用场景中，事件名已由上层传入
-  // 此处直接使用 patchEvent
   patchEvent(el, '', next, prev, instance);
 }
 

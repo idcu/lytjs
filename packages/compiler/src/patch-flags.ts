@@ -175,22 +175,19 @@ export function hasPatchFlag(flag: number, check: number): boolean {
  * @returns 标记描述
  */
 export function describePatchFlag(flag: number): string {
-  if (flag === CompilerPatchFlags.HOISTED) return 'HOISTED';
-  if (flag === CompilerPatchFlags.BAIL) return 'BAIL';
-
-  const parts: string[] = [];
-  if (flag & CompilerPatchFlags.TEXT) parts.push('TEXT');
-  if (flag & CompilerPatchFlags.CLASS) parts.push('CLASS');
-  if (flag & CompilerPatchFlags.STYLE) parts.push('STYLE');
-  if (flag & CompilerPatchFlags.PROPS) parts.push('PROPS');
-  if (flag & CompilerPatchFlags.FULL_PROPS) parts.push('FULL_PROPS');
-  if (flag & CompilerPatchFlags.EVENT) parts.push('EVENT');
-  if (flag & CompilerPatchFlags.SLOTS) parts.push('SLOTS');
-  if (flag & CompilerPatchFlags.STABLE_FRAGMENT) parts.push('STABLE_FRAGMENT');
-  if (flag & CompilerPatchFlags.KEYED_FRAGMENT) parts.push('KEYED_FRAGMENT');
-  if (flag & CompilerPatchFlags.UNKEYED_FRAGMENT) parts.push('UNKEYED_FRAGMENT');
-  if (flag & CompilerPatchFlags.NEED_PATCH) parts.push('NEED_PATCH');
-  if (flag & CompilerPatchFlags.DYNAMIC_SLOTS) parts.push('DYNAMIC_SLOTS');
-
-  return parts.length > 0 ? parts.join(' | ') : 'NONE';
+  if (flag === CompilerPatchFlags.HOISTED) return 'HOISTED'
+  if (flag === CompilerPatchFlags.BAIL) return 'BAIL'
+  const parts: string[] = []
+  const checks: [number, string][] = [
+    [CompilerPatchFlags.TEXT, 'TEXT'], [CompilerPatchFlags.CLASS, 'CLASS'],
+    [CompilerPatchFlags.STYLE, 'STYLE'], [CompilerPatchFlags.PROPS, 'PROPS'],
+    [CompilerPatchFlags.FULL_PROPS, 'FULL_PROPS'], [CompilerPatchFlags.EVENT, 'EVENT'],
+    [CompilerPatchFlags.SLOTS, 'SLOTS'], [CompilerPatchFlags.STABLE_FRAGMENT, 'STABLE_FRAGMENT'],
+    [CompilerPatchFlags.KEYED_FRAGMENT, 'KEYED_FRAGMENT'], [CompilerPatchFlags.UNKEYED_FRAGMENT, 'UNKEYED_FRAGMENT'],
+    [CompilerPatchFlags.NEED_PATCH, 'NEED_PATCH'], [CompilerPatchFlags.DYNAMIC_SLOTS, 'DYNAMIC_SLOTS'],
+  ]
+  for (const [value, name] of checks) {
+    if (flag & value) parts.push(name)
+  }
+  return parts.length > 0 ? parts.join(' | ') : 'NONE'
 }

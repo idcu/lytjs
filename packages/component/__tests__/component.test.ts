@@ -52,6 +52,15 @@ import {
   initSlots,
   renderSlot,
   hasSlot,
+  provide,
+  inject,
+  runSetup,
+  getCurrentInstance,
+  compositionOnMounted,
+  compositionOnUnmounted,
+  compositionOnUpdated,
+  compositionOnBeforeMount,
+  compositionOnBeforeUnmount,
 } from '../src/index'
 
 import type {
@@ -513,5 +522,381 @@ describe('生命周期系统', () => {
     const prev = setCurrentInstance(instance2)
     expect(prev).toBe(instance1)
     setCurrentInstance(null)
+  })
+})
+
+// ================================================================
+//  补充测试 — defineComponent 基本定义
+// ================================================================
+
+describe('defineComponent 补充测试', () => {
+  it('无参数创建组件', () => {
+    const comp = defineComponent({})
+    expect(comp._isComponentDefine).toBe(true)
+    expect(comp.options).toBeDefined()
+  })
+
+  it('带 render 函数的组件', () => {
+    const comp = defineComponent({
+      name: 'RenderComp',
+      render(h: any) {
+        return h('div', null, 'rendered')
+      },
+    })
+    expect(comp._isComponentDefine).toBe(true)
+    expect(comp.name).toBe('RenderComp')
+  })
+
+  it('带 watch 选项的组件', () => {
+    const comp = defineComponent({
+      name: 'WatchComp',
+      state() {
+        return { count: 0 }
+      },
+      watch: {
+        count: {
+          handler() { /* watcher */ },
+          immediate: false,
+          deep: false,
+        },
+      },
+    })
+    expect(comp._isComponentDefine).toBe(true)
+    expect(comp.options.watch).toBeDefined()
+  })
+})
+
+// ================================================================
+//  补充测试 — props 验证和默认值
+// ================================================================
+
+describe('props 验证和默认值 补充测试', () => {
+  it('props 多种类型验证', () => {
+    expect(validateProp('str', { type: String }, 'hello')).toBe(true)
+    expect(validateProp('num', { type: Number }, 42)).toBe(true)
+    expect(validateProp('bool', { type: Boolean }, true)).toBe(true)
+    expect(validateProp('arr', { type: Array }, [1, 2])).toBe(true)
+    expect(validateProp('obj', { type: Object }, { a: 1 })).toBe(true)
+    expect(validateProp('fn', { type: Function }, () => {})).toBe(true)
+  })
+
+  it('props 类型不匹配返回 false', () => {
+    expect(validateProp('num', { type: Number }, 'not a number')).toBe(false)
+    expect(validateProp('str', { type: String }, 123)).toBe(false)
+  })
+
+  it('props 自定义验证器', () => {
+    const validator = (val: number) => val > 0 && val < 100
+    expect(validateProp('age', { type: Number, validator }, 50)).toBe(true)
+    expect(validateProp('age', { type: Number, validator }, 150)).toBe(false)
+  })
+
+  it('props 默认值函数', () => {
+    const result = normalizePropsOptions({
+      items: { type: Array, default: () => [1, 2, 3] },
+    })
+    expect(result.options.items.default()).toEqual([1, 2, 3])
+  })
+})
+
+// ================================================================
+//  补充测试 — setup 函数返回值
+// ================================================================
+
+describe('setup 函数返回值', () => {
+  it('setup 返回对象合并到 renderProxy', () => {
+    const comp = defineComponent({
+      name: 'SetupComp',
+      setup() {
+        return {
+          message: 'from setup',
+          count: 42,
+        }
+      },
+    })
+
+    const instance = createComponentInstance(comp)
+    setupComponent(instance)
+
+    expect((instance.renderProxy as any).message).toBe('from setup')
+    expect((instance.renderProxy as any).count).toBe(42)
+  })
+
+  it('runSetup 设置当前实例', () => {
+    const comp = defineComponent({ name: 'TestComp' })
+    const instance = createComponentInstance(comp)
+    let capturedInstance: any = null
+
+    runSetup(
+      () => {
+        capturedInstance = getCurrentInstance()
+        return {}
+      },
+      instance,
+      {},
+      {}
+    )
+
+    expect(capturedInstance).toBe(instance)
+  })
+
+  it('getCurrentInstance 在 setup 外返回 null', () => {
+    expect(getCurrentInstance()).toBe(null)
+  })
+})
+
+// ================================================================
+//  补充测试 — emits 事件触发
+// ================================================================
+
+describe('emits 事件触发 补充测试', () => {
+  it('emit 多个参数', () => {
+    const comp = defineComponent({
+      name: 'MultiArgComp',
+      emits: ['submit'],
+    })
+    const instance = createComponentInstance(comp)
+    setupComponent(instance)
+
+    let received: any[] = []
+    instance.props.onSubmit = (...args: any[]) => { received = args }
+
+    instance.emit('submit', 'data1', 'data2', 42)
+    expect(received.length).toBe(3)
+    expect(received[0]).toBe('data1')
+    expect(received[1]).toBe('data2')
+    expect(received[2]).toBe(42)
+  })
+
+  it('emit 未声明的 emits 不触发', () => {
+    const comp = defineComponent({
+      name: 'StrictComp',
+      emits: ['change'],
+    })
+    const instance = createComponentInstance(comp)
+    setupComponent(instance)
+
+    let called = false
+    instance.props.onChange = () => { called = true }
+
+    // 触发已声明的事件
+    const result1 = instance.emit('change')
+    expect(result1).toBe(true)
+    expect(called).toBe(true)
+
+    // 触发未声明的事件
+    const result2 = instance.emit('unknown')
+    expect(result2).toBe(false)
+  })
+})
+
+// ================================================================
+//  补充测试 — provide / inject
+// ================================================================
+
+describe('provide / inject', () => {
+  it('provide 和 inject 基本使用', () => {
+    const parentInstance: any = { _parent: null }
+    const childInstance: any = { _parent: parentInstance }
+
+    // 在父组件 setup 中 provide
+    const comp = defineComponent({ name: 'Parent' })
+    runSetup(
+      () => {
+        provide('theme', 'dark')
+        provide('config', { debug: true })
+        return {}
+      },
+      parentInstance,
+      {},
+      {}
+    )
+
+    // 在子组件 setup 中 inject
+    runSetup(
+      () => {
+        const theme = inject('theme')
+        const config = inject('config')
+        expect(theme).toBe('dark')
+        expect(config).toEqual({ debug: true })
+        return {}
+      },
+      childInstance,
+      {},
+      {}
+    )
+  })
+
+  it('inject 使用默认值', () => {
+    const orphanInstance: any = { _parent: null }
+
+    runSetup(
+      () => {
+        const missing = inject('nonexistent')
+        const withDefault = inject('fallback', 'default-value')
+        expect(missing).toBe(undefined)
+        expect(withDefault).toBe('default-value')
+        return {}
+      },
+      orphanInstance,
+      {},
+      {}
+    )
+  })
+
+  it('inject 沿 _parent 链向上查找', () => {
+    const grandparent: any = { _parent: null }
+    const parent: any = { _parent: grandparent }
+    const child: any = { _parent: parent }
+
+    // grandparent provide
+    runSetup(
+      () => {
+        provide('inherited', 'from-grandparent')
+        return {}
+      },
+      grandparent,
+      {},
+      {}
+    )
+
+    // child inject（跨层级）
+    runSetup(
+      () => {
+        const value = inject('inherited')
+        expect(value).toBe('from-grandparent')
+        return {}
+      },
+      child,
+      {},
+      {}
+    )
+  })
+})
+
+// ================================================================
+//  补充测试 — 生命周期钩子
+// ================================================================
+
+describe('生命周期钩子 补充测试', () => {
+  it('onBeforeMount 注册和调用（Composition API）', () => {
+    const instance: any = {}
+    let called = false
+
+    // compositionOnBeforeMount 来自 composition-api，通过 runSetup 使用
+    runSetup(
+      () => {
+        compositionOnBeforeMount(() => { called = true })
+        return {}
+      },
+      instance,
+      {},
+      {}
+    )
+
+    // onBeforeMount 注册在 _lifecycleHooks.beforeMount
+    const hooks = instance._lifecycleHooks?.beforeMount
+    expect(hooks).toBeDefined()
+    expect(hooks.length).toBe(1)
+    // 手动调用
+    hooks[0]()
+    expect(called).toBe(true)
+  })
+
+  it('onBeforeUpdate 注册和调用', () => {
+    const instance: any = {}
+    let called = false
+
+    setCurrentInstance(instance)
+    onBeforeUpdate(() => { called = true })
+    setCurrentInstance(null)
+
+    callLifecycleHook(instance, LifecycleHook.BEFORE_UPDATE)
+    expect(called).toBe(true)
+  })
+
+  it('onUpdated 注册和调用', () => {
+    const instance: any = {}
+    let called = false
+
+    setCurrentInstance(instance)
+    onUpdated(() => { called = true })
+    setCurrentInstance(null)
+
+    callLifecycleHook(instance, LifecycleHook.UPDATED)
+    expect(called).toBe(true)
+  })
+
+  it('onUnmounted 注册和调用', () => {
+    const instance: any = {}
+    let called = false
+
+    setCurrentInstance(instance)
+    onUnmounted(() => { called = true })
+    setCurrentInstance(null)
+
+    callLifecycleHook(instance, LifecycleHook.UNMOUNTED)
+    expect(called).toBe(true)
+  })
+
+  it('onBeforeUnmount 注册和调用', () => {
+    const instance: any = {}
+    let called = false
+
+    setCurrentInstance(instance)
+    onBeforeUnmount(() => { called = true })
+    setCurrentInstance(null)
+
+    callLifecycleHook(instance, LifecycleHook.BEFORE_UNMOUNT)
+    expect(called).toBe(true)
+  })
+
+  it('完整生命周期顺序', () => {
+    const instance: any = {}
+    const order: string[] = []
+
+    setCurrentInstance(instance)
+    onMounted(() => { order.push('mounted') })
+    onBeforeUpdate(() => { order.push('beforeUpdate') })
+    onUpdated(() => { order.push('updated') })
+    onBeforeUnmount(() => { order.push('beforeUnmount') })
+    onUnmounted(() => { order.push('unmounted') })
+    setCurrentInstance(null)
+
+    callLifecycleHook(instance, LifecycleHook.MOUNTED)
+    callLifecycleHook(instance, LifecycleHook.BEFORE_UPDATE)
+    callLifecycleHook(instance, LifecycleHook.UPDATED)
+    callLifecycleHook(instance, LifecycleHook.BEFORE_UNMOUNT)
+    callLifecycleHook(instance, LifecycleHook.UNMOUNTED)
+
+    expect(order).toEqual([
+      'mounted',
+      'beforeUpdate',
+      'updated',
+      'beforeUnmount',
+      'unmounted',
+    ])
+  })
+
+  it('不同实例的钩子互不干扰', () => {
+    const instance1: any = {}
+    const instance2: any = {}
+    let called1 = false
+    let called2 = false
+
+    setCurrentInstance(instance1)
+    onMounted(() => { called1 = true })
+    setCurrentInstance(null)
+
+    setCurrentInstance(instance2)
+    onMounted(() => { called2 = true })
+    setCurrentInstance(null)
+
+    callLifecycleHook(instance1, LifecycleHook.MOUNTED)
+    expect(called1).toBe(true)
+    expect(called2).toBe(false)
+
+    callLifecycleHook(instance2, LifecycleHook.MOUNTED)
+    expect(called2).toBe(true)
   })
 })

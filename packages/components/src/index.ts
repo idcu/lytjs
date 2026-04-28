@@ -71,6 +71,8 @@ import { Avatar } from './avatar'
 import { Carousel } from './carousel'
 import { TimePicker } from './time-picker'
 import { Calendar } from './calendar'
+import { JsonSchemaForm, type FormFieldSchema, type FormSchema as JsonFormSchema, type FieldValidateResult } from './json-schema-form'
+import { ProTable, type ProTableColumn, type SearchField, type ProTablePagination, type ProTableRequestParams, type ProTableRequestResult, type ProTableToolbar } from './pro-table'
 
 // 样式
 import { cssVariables, injectCSSVariables, generateCSSVariableString } from './styles/variables'
@@ -168,6 +170,8 @@ export {
   TabNav, Collapse, Dropdown, Toggle, CountBadge, Pager,
   Progress, Slider, Upload, Tree,
   Avatar, Carousel, TimePicker, Calendar,
+  // 高级组件
+  JsonSchemaForm, ProTable,
   // 样式
   cssVariables, injectCSSVariables, generateCSSVariableString,
   resetCSS, injectResetCSS,
@@ -192,6 +196,8 @@ export type {
   DataTableColumn, FormRules, ValidateResult,
   TabNavItem, DropdownOption, ThemeConfig,
   UploadFile, TreeData, TreeNode,
+  FormFieldSchema, FieldValidateResult,
+  ProTableColumn, SearchField, ProTablePagination, ProTableRequestParams, ProTableRequestResult, ProTableToolbar,
 }
 
 /**
@@ -276,6 +282,8 @@ export function install(app: LytApp): void {
       app.component('LytCarousel', Carousel)
       app.component('LytTimePicker', TimePicker)
       app.component('LytCalendar', Calendar)
+      app.component('LytJsonSchemaForm', JsonSchemaForm)
+      app.component('LytProTable', ProTable)
     }
 
 /**
@@ -345,6 +353,8 @@ export const components = {
   Carousel,
   TimePicker,
   Calendar,
+  JsonSchemaForm,
+  ProTable,
 }
 
 export default {

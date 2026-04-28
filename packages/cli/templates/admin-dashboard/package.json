@@ -1,0 +1,12 @@
+{
+  "name": "admin-dashboard",
+  "version": "0.1.0",
+  "private": true,
+  "description": "基于 Lyt.js 构建的企业级后台管理系统模板（10 个页面）",
+  "scripts": {
+    "dev": "npx serve . -p 8080",
+    "preview": "npx serve . -p 3000"
+  },
+  "keywords": ["lytjs", "admin", "dashboard", "template"],
+  "license": "MIT"
+}

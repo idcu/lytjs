@@ -31,29 +31,13 @@ import {
 
 /** 代码生成上下文，维护生成过程中的缩进和辅助函数 */
 class CodegenContext {
-  /** 生成的代码行 */
-  code: string;
-  /** 当前缩进级别 */
-  indentLevel: number;
-  /** 缩进字符串 */
-  indent: string;
-  /** 是否需要换行（用于格式化） */
-  needsNewline: boolean;
-  /** 辅助函数映射（名称 → 导入来源） */
-  helpers: Map<string, string>;
-  /** 提升的静态节点变量声明 */
-  hoistedDecls: string[];
+  code = ''
+  indentLevel = 0
+  private indent = '  '
+  private needsNewline = true
+  helpers = new Map<string, string>()
+  hoistedDecls: string[] = []
 
-  constructor() {
-    this.code = '';
-    this.indentLevel = 0;
-    this.indent = '  ';
-    this.needsNewline = true;
-    this.helpers = new Map<string, string>();
-    this.hoistedDecls = [];
-  }
-
-  /** 添加一行代码 */
   push(line: string): void {
     if (this.needsNewline) {
       this.code += this.indent.repeat(this.indentLevel);
@@ -62,27 +46,10 @@ class CodegenContext {
     this.code += line;
   }
 
-  /** 添加一行代码并换行 */
-  pushLine(line: string): void {
-    this.push(line);
-    this.newline();
-  }
-
-  /** 换行 */
-  newline(): void {
-    this.code += '\n';
-    this.needsNewline = true;
-  }
-
-  /** 增加缩进 */
-  indentIn(): void {
-    this.indentLevel++;
-  }
-
-  /** 减少缩进 */
-  indentOut(): void {
-    this.indentLevel--;
-  }
+  pushLine(line: string): void { this.push(line); this.newline(); }
+  newline(): void { this.code += '\n'; this.needsNewline = true; }
+  indentIn(): void { this.indentLevel++; }
+  indentOut(): void { this.indentLevel--; }
 }
 
 // ============================================================
@@ -499,31 +466,21 @@ function generateText(node: TextNode, ctx: CodegenContext): void {
 
 // ---- 模块级常量（避免每次调用 wrapExpression 时重复创建） ----
 
-/** JavaScript 关键字集合 */
+/** JavaScript 关键字和全局对象集合（合并以减少 Set 数量） */
 const JS_KEYWORDS = new Set([
-  'true', 'false', 'null', 'undefined', 'this', 'super',
-  'new', 'delete', 'typeof', 'instanceof', 'in', 'of',
-  'void', 'throw', 'return', 'yield', 'await', 'async',
-  'if', 'else', 'for', 'while', 'do', 'switch', 'case',
-  'break', 'continue', 'try', 'catch', 'finally',
-  'class', 'extends', 'import', 'export', 'from', 'default',
-  'var', 'let', 'const', 'function', 'debugger',
-]);
-
-/** 全局对象集合 */
-const GLOBALS = new Set([
-  'console', 'window', 'document', 'Math', 'JSON', 'Date',
-  'Array', 'Object', 'String', 'Number', 'Boolean', 'RegExp',
-  'Error', 'TypeError', 'RangeError', 'SyntaxError',
-  'Map', 'Set', 'WeakMap', 'WeakSet', 'Promise',
-  'Symbol', 'Proxy', 'Reflect', 'parseInt', 'parseFloat',
-  'isNaN', 'isFinite', 'NaN', 'Infinity',
+  'true','false','null','undefined','this','super','new','delete','typeof',
+  'instanceof','in','of','void','throw','return','yield','await','async',
+  'if','else','for','while','do','switch','case','break','continue',
+  'try','catch','finally','class','extends','import','export','from',
+  'default','var','let','const','function','debugger',
+  'console','window','document','Math','JSON','Date','Array','Object',
+  'String','Number','Boolean','RegExp','Error','Map','Set','WeakMap',
+  'WeakSet','Promise','Symbol','Proxy','Reflect','parseInt','parseFloat',
+  'isNaN','isFinite','NaN','Infinity',
 ]);
 
 /** 特殊标识符集合（如 $event）不应加前缀 */
-const SPECIAL_IDENTS = new Set([
-  '$event', '$refs', '$el', '$emit', '$slots', '$parent', '$root',
-]);
+const SPECIAL_IDENTS = new Set(['$event','$refs','$el','$emit','$slots','$parent','$root']);
 
 /** 插值解析片段 */
 interface InterpolationPart {
@@ -631,7 +588,7 @@ function wrapExpression(expr: string): string {
   // 匹配标识符（包括点号访问链），但排除已有 _ctx. 前缀的
   processed = processed.replace(/(?<!_ctx\.)(?<!\w)(\w+(?:\.\w+)*)/g, (match) => {
     // 检查是否是关键字、全局对象或特殊标识符
-    if (JS_KEYWORDS.has(match) || GLOBALS.has(match) || SPECIAL_IDENTS.has(match)) {
+    if (JS_KEYWORDS.has(match) || SPECIAL_IDENTS.has(match)) {
       return match;
     }
     // 检查是否是数字字面量

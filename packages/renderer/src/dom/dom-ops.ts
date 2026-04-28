@@ -1,124 +1,55 @@
 /**
  * Lyt.js 渲染器 — DOM 操作辅助函数
  *
- * 本模块提供 DOM 属性操作的底层辅助函数，包括：
- *   1. 智能属性设置 —— 区分 DOM property 和 HTML attribute
- *   2. 属性移除
- *   3. 属性 Diff 更新 —— 对比新旧 props，只更新变化的部分
- *   4. 事件监听器的缓存管理
- *
- * 核心设计原则：
- *   - 优先使用 DOM property（如 el.checked, el.value）
- *   - 某些属性只能通过 attribute 设置（如 el.setAttribute('class', ...)）
- *   - 事件使用 invoker 缓存模式，避免频繁 addEventListener/removeEventListener
+ * 提供 DOM 属性操作的底层辅助函数。
  */
 
 /* ================================================================
  *  常量与配置
  * ================================================================ */
 
-/**
- * 应该使用 DOM property 而非 HTML attribute 的属性名集合
- *
- * 这些属性在 DOM 中有对应的 property，直接设置 property 更高效，
- * 且能正确处理类型转换（如 checked 的布尔值）。
- */
 const DOM_PROPS: Record<string, string> = {
-  acceptCharset: 'acceptCharset',
-  accessKey: 'accessKey',
-  className: 'className',
-  htmlFor: 'htmlFor',
-  httpEquiv: 'httpEquiv',
-  tabIndex: 'tabIndex',
+  acceptCharset: 'acceptCharset', accessKey: 'accessKey',
+  className: 'className', htmlFor: 'htmlFor',
+  httpEquiv: 'httpEquiv', tabIndex: 'tabIndex',
 };
 
-/**
- * 布尔类型属性集合
- *
- * 这些属性的存在即表示 true，不存在即表示 false。
- * 设置为 false 时应该移除 attribute，而非设为 'false'。
- */
 const BOOLEAN_ATTRS: Record<string, boolean> = {
-  allowfullscreen: true,
-  async: true,
-  autofocus: true,
-  autoplay: true,
-  checked: true,
-  controls: true,
-  default: true,
-  defer: true,
-  disabled: true,
-  formnovalidate: true,
-  hidden: true,
-  inert: true,
-  ismap: true,
-  itemscope: true,
-  loop: true,
-  multiple: true,
-  muted: true,
-  nomodule: true,
-  novalidate: true,
-  open: true,
-  playsinline: true,
-  readonly: true,
-  required: true,
-  reversed: true,
+  allowfullscreen: true, async: true, autofocus: true, autoplay: true,
+  checked: true, controls: true, default: true, defer: true,
+  disabled: true, formnovalidate: true, hidden: true, inert: true,
+  ismap: true, itemscope: true, loop: true, multiple: true,
+  muted: true, nomodule: true, novalidate: true, open: true,
+  playsinline: true, readonly: true, required: true, reversed: true,
   selected: true,
 };
 
-/**
- * 需要特殊处理的 SVG 属性名映射
- * SVG 属性名使用 camelCase，但 HTML attribute 使用 kebab-case
- */
 const SVG_ATTRS: Record<string, string> = {
-  'accent-height': 'accentHeight',
-  'alignment-baseline': 'alignmentBaseline',
-  'baseline-shift': 'baselineShift',
-  'clip-path': 'clipPath',
-  'clip-rule': 'clipRule',
+  'accent-height': 'accentHeight', 'alignment-baseline': 'alignmentBaseline',
+  'baseline-shift': 'baselineShift', 'clip-path': 'clipPath', 'clip-rule': 'clipRule',
   'color-interpolation': 'colorInterpolation',
   'color-interpolation-filters': 'colorInterpolationFilters',
-  'dominant-baseline': 'dominantBaseline',
-  'enable-background': 'enableBackground',
-  'fill-opacity': 'fillOpacity',
-  'fill-rule': 'fillRule',
-  'flood-color': 'floodColor',
-  'flood-opacity': 'floodOpacity',
+  'dominant-baseline': 'dominantBaseline', 'enable-background': 'enableBackground',
+  'fill-opacity': 'fillOpacity', 'fill-rule': 'fillRule',
+  'flood-color': 'floodColor', 'flood-opacity': 'floodOpacity',
   'glyph-orientation-horizontal': 'glyphOrientationHorizontal',
   'glyph-orientation-vertical': 'glyphOrientationVertical',
-  'font-family': 'fontFamily',
-  'font-size': 'fontSize',
-  'font-style': 'fontStyle',
-  'font-variant': 'fontVariant',
-  'font-weight': 'fontWeight',
-  'image-rendering': 'imageRendering',
-  'letter-spacing': 'letterSpacing',
-  'lighting-color': 'lightingColor',
-  'marker-end': 'markerEnd',
-  'marker-mid': 'markerMid',
-  'marker-start': 'markerStart',
-  'paint-order': 'paintOrder',
-  'pointer-events': 'pointerEvents',
-  'shape-rendering': 'shapeRendering',
-  'stop-color': 'stopColor',
-  'stop-opacity': 'stopOpacity',
-  'stroke-dasharray': 'strokeDasharray',
-  'stroke-dashoffset': 'strokeDashoffset',
-  'stroke-linecap': 'strokeLinecap',
-  'stroke-linejoin': 'strokeLinejoin',
-  'stroke-miterlimit': 'strokeMiterlimit',
-  'stroke-opacity': 'strokeOpacity',
-  'stroke-width': 'strokeWidth',
-  'text-anchor': 'textAnchor',
-  'text-decoration': 'textDecoration',
-  'text-rendering': 'textRendering',
-  'transform-origin': 'transformOrigin',
-  'word-spacing': 'wordSpacing',
-  'writing-mode': 'writingMode',
-  'xlink:href': 'xlinkHref',
-  'xlink:title': 'xlinkTitle',
-  'xml:lang': 'xmlLang',
-  'xml:space': 'xmlSpace',
+  'font-family': 'fontFamily', 'font-size': 'fontSize',
+  'font-style': 'fontStyle', 'font-variant': 'fontVariant',
+  'font-weight': 'fontWeight', 'image-rendering': 'imageRendering',
+  'letter-spacing': 'letterSpacing', 'lighting-color': 'lightingColor',
+  'marker-end': 'markerEnd', 'marker-mid': 'markerMid', 'marker-start': 'markerStart',
+  'paint-order': 'paintOrder', 'pointer-events': 'pointerEvents',
+  'shape-rendering': 'shapeRendering', 'stop-color': 'stopColor',
+  'stop-opacity': 'stopOpacity', 'stroke-dasharray': 'strokeDasharray',
+  'stroke-dashoffset': 'strokeDashoffset', 'stroke-linecap': 'strokeLinecap',
+  'stroke-linejoin': 'strokeLinejoin', 'stroke-miterlimit': 'strokeMiterlimit',
+  'stroke-opacity': 'strokeOpacity', 'stroke-width': 'strokeWidth',
+  'text-anchor': 'textAnchor', 'text-decoration': 'textDecoration',
+  'text-rendering': 'textRendering', 'transform-origin': 'transformOrigin',
+  'word-spacing': 'wordSpacing', 'writing-mode': 'writingMode',
+  'xlink:href': 'xlinkHref', 'xlink:title': 'xlinkTitle',
+  'xml:lang': 'xmlLang', 'xml:space': 'xmlSpace',
 };
 
 /* ================================================================
@@ -427,32 +358,13 @@ function patchStyleInline(el: any, newStyle: any, oldStyle: any): void {
  */
 export function isSVGElement(tag: string): boolean {
   return (
-    tag === 'svg' ||
-    tag === 'path' ||
-    tag === 'circle' ||
-    tag === 'rect' ||
-    tag === 'line' ||
-    tag === 'polyline' ||
-    tag === 'polygon' ||
-    tag === 'ellipse' ||
-    tag === 'g' ||
-    tag === 'defs' ||
-    tag === 'use' ||
-    tag === 'text' ||
-    tag === 'tspan' ||
-    tag === 'clipPath' ||
-    tag === 'mask' ||
-    tag === 'filter' ||
-    tag === 'linearGradient' ||
-    tag === 'radialGradient' ||
-    tag === 'stop' ||
-    tag === 'pattern' ||
-    tag === 'symbol' ||
-    tag === 'image' ||
-    tag === 'foreignObject' ||
-    tag === 'animate' ||
-    tag === 'animateTransform' ||
-    tag === 'animateMotion'
+    tag === 'svg' || tag === 'path' || tag === 'circle' || tag === 'rect' ||
+    tag === 'line' || tag === 'polyline' || tag === 'polygon' || tag === 'ellipse' ||
+    tag === 'g' || tag === 'defs' || tag === 'use' || tag === 'text' || tag === 'tspan' ||
+    tag === 'clipPath' || tag === 'mask' || tag === 'filter' ||
+    tag === 'linearGradient' || tag === 'radialGradient' || tag === 'stop' ||
+    tag === 'pattern' || tag === 'symbol' || tag === 'image' || tag === 'foreignObject' ||
+    tag === 'animate' || tag === 'animateTransform' || tag === 'animateMotion'
   );
 }
 

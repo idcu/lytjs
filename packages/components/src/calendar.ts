@@ -1,199 +1,212 @@
 /**
- * Calendar 日历组件
- * Props: value, placeholder, disabled
- * Events: change
- * Slots: none
+ * Calendar 纯日历网格组件
+ *
+ * Props: year, month, defaultYear, defaultMonth, value, range
+ * Events: update:year, update:month, select
+ *
+ * 纯日历网格渲染组件，不包含输入框和弹窗。
+ * 支持受控模式（year/month）和非受控模式（defaultYear/defaultMonth）。
  */
 
 import { defineComponent } from '@lytjs/component'
-import { ref, computed } from '@lytjs/reactivity'
+import { ref, computed, watch } from '@lytjs/reactivity'
+import {
+  generateCalendarDays,
+  formatDate,
+  parseDate,
+  isSameDay,
+} from './calendar-utils'
 
 export const Calendar = defineComponent({
   name: 'LytCalendar',
 
   props: {
+    /** 受控模式 - 当前年份 */
+    year: {
+      type: Number,
+      default: undefined,
+    },
+    /** 受控模式 - 当前月份（0-11） */
+    month: {
+      type: Number,
+      default: undefined,
+    },
+    /** 非受控模式 - 默认年份 */
+    defaultYear: {
+      type: Number,
+      default: () => new Date().getFullYear(),
+    },
+    /** 非受控模式 - 默认月份（0-11） */
+    defaultMonth: {
+      type: Number,
+      default: () => new Date().getMonth(),
+    },
+    /** 选中日期（YYYY-MM-DD 格式字符串） */
     value: {
       type: String,
       default: '',
     },
-    placeholder: {
-      type: String,
-      default: '请选择日期',
-    },
-    disabled: {
+    /** 是否启用范围选择 */
+    range: {
       type: Boolean,
       default: false,
+    },
+    /** 范围选择 - 起始日期 */
+    rangeStart: {
+      type: String,
+      default: '',
+    },
+    /** 范围选择 - 结束日期 */
+    rangeEnd: {
+      type: String,
+      default: '',
     },
   },
 
   setup(props, { emit }) {
-    const visible = ref(false)
-    const currentDate = ref(new Date())
-    const selectedDate = ref<Date | null>(null)
+    // 内部状态（非受控模式）
+    const internalYear = ref(props.defaultYear)
+    const internalMonth = ref(props.defaultMonth)
+
+    /** 当前显示的年份（受控优先） */
+    const currentYear = computed(() => {
+      return props.year !== undefined ? props.year : internalYear.value
+    })
+
+    /** 当前显示的月份（受控优先） */
+    const currentMonth = computed(() => {
+      return props.month !== undefined ? props.month : internalMonth.value
+    })
 
     const weekDays = ['日', '一', '二', '三', '四', '五', '六']
 
-    const displayValue = computed(() => {
-      if (props.value) return props.value
-      if (selectedDate.value) {
-        const d = selectedDate.value
-        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-      }
-      return ''
+    /** 解析选中日期 */
+    const selectedDate = computed(() => {
+      return props.value ? parseDate(props.value) : null
     })
 
-    const currentYear = computed(() => currentDate.value.getFullYear())
-    const currentMonth = computed(() => currentDate.value.getMonth())
+    /** 解析范围起始日期 */
+    const rangeStartDate = computed(() => {
+      return props.rangeStart ? parseDate(props.rangeStart) : null
+    })
 
-    const openPopup = () => {
-      if (props.disabled) return
-      visible.value = true
-    }
+    /** 解析范围结束日期 */
+    const rangeEndDate = computed(() => {
+      return props.rangeEnd ? parseDate(props.rangeEnd) : null
+    })
 
-    const closePopup = () => {
-      visible.value = false
-    }
+    /** 生成日历网格数据 */
+    const calendarDays = computed(() => {
+      return generateCalendarDays(currentYear.value, currentMonth.value)
+    })
 
+    /** 上一个月 */
     const prevMonth = () => {
-      currentDate.value = new Date(currentYear.value, currentMonth.value - 1, 1)
+      let newYear = currentYear.value
+      let newMonth = currentMonth.value - 1
+      if (newMonth < 0) {
+        newMonth = 11
+        newYear--
+      }
+      // 非受控模式下更新内部状态
+      if (props.year === undefined) internalYear.value = newYear
+      if (props.month === undefined) internalMonth.value = newMonth
+      emit('update:year', newYear)
+      emit('update:month', newMonth)
     }
 
+    /** 下一个月 */
     const nextMonth = () => {
-      currentDate.value = new Date(currentYear.value, currentMonth.value + 1, 1)
-    }
-
-    const selectDate = (date: Date) => {
-      selectedDate.value = date
-      const formatted = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
-      emit('change', formatted)
-      closePopup()
-    }
-
-    const getDaysInMonth = (year: number, month: number) => {
-      return new Date(year, month + 1, 0).getDate()
-    }
-
-    const getFirstDayOfMonth = (year: number, month: number) => {
-      return new Date(year, month, 1).getDay()
-    }
-
-    const generateCalendarDays = () => {
-      const days: { date: Date | null; isCurrentMonth: boolean }[] = []
-      const year = currentYear.value
-      const month = currentMonth.value
-      const daysInMonth = getDaysInMonth(year, month)
-      const firstDay = getFirstDayOfMonth(year, month)
-
-      const prevMonthDays = getDaysInMonth(year, month - 1)
-      for (let i = firstDay - 1; i >= 0; i--) {
-        days.push({
-          date: new Date(year, month - 1, prevMonthDays - i),
-          isCurrentMonth: false,
-        })
+      let newYear = currentYear.value
+      let newMonth = currentMonth.value + 1
+      if (newMonth > 11) {
+        newMonth = 0
+        newYear++
       }
-
-      for (let i = 1; i <= daysInMonth; i++) {
-        days.push({
-          date: new Date(year, month, i),
-          isCurrentMonth: true,
-        })
-      }
-
-      const remainingDays = 42 - days.length
-      for (let i = 1; i <= remainingDays; i++) {
-        days.push({
-          date: new Date(year, month + 1, i),
-          isCurrentMonth: false,
-        })
-      }
-
-      return days
+      if (props.year === undefined) internalYear.value = newYear
+      if (props.month === undefined) internalMonth.value = newMonth
+      emit('update:year', newYear)
+      emit('update:month', newMonth)
     }
 
-    const isToday = (date: Date) => {
-      const today = new Date()
-      return (
-        date.getDate() === today.getDate() &&
-        date.getMonth() === today.getMonth() &&
-        date.getFullYear() === today.getFullYear()
-      )
+    /** 选择日期 */
+    const selectDate = (day: { date: Date; isCurrentMonth: boolean; dateStr: string }) => {
+      if (!day.isCurrentMonth) return
+      emit('select', day.dateStr, day.date)
     }
 
-    const isSelected = (date: Date) => {
+    /** 判断日期是否为今天 */
+    const isToday = (day: { date: Date }) => {
+      return isSameDay(day.date, new Date())
+    }
+
+    /** 判断日期是否被选中 */
+    const isSelected = (day: { date: Date; dateStr: string }) => {
+      if (props.range) {
+        return day.dateStr === props.rangeStart || day.dateStr === props.rangeEnd
+      }
       if (!selectedDate.value) return false
-      return (
-        date.getDate() === selectedDate.value.getDate() &&
-        date.getMonth() === selectedDate.value.getMonth() &&
-        date.getFullYear() === selectedDate.value.getFullYear()
-      )
+      return isSameDay(day.date, selectedDate.value)
     }
+
+    /** 判断日期是否在范围内 */
+    const isInRange = (day: { dateStr: string }) => {
+      if (!props.range || !props.rangeStart || !props.rangeEnd) return false
+      return day.dateStr > props.rangeStart && day.dateStr < props.rangeEnd
+    }
+
+    /** 月份标题 */
+    const monthTitle = computed(() => {
+      return `${currentYear.value}年${currentMonth.value + 1}月`
+    })
 
     return {
-      props,
-      visible,
       weekDays,
       currentYear,
       currentMonth,
-      displayValue,
-      openPopup,
-      closePopup,
+      calendarDays,
       prevMonth,
       nextMonth,
       selectDate,
-      generateCalendarDays,
       isToday,
       isSelected,
+      isInRange,
+      monthTitle,
     }
   },
 
   template: `
     <div class="lyt-calendar">
-      <input
-        type="text"
-        class="lyt-calendar__input"
-        :value="displayValue"
-        :placeholder="props.placeholder"
-        :disabled="props.disabled"
-        readonly
-        @click="openPopup"
-      />
-      <span class="lyt-calendar__icon">
-        <svg viewBox="0 0 1024 1024" width="1em" height="1em">
-          <path d="M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64zm0 820c-205.4 0-372-166.6-372-372s166.6-372 372-372 372 166.6 372 372-166.6 372-372 372z" />
-          <path d="M464 336a48 48 0 1 0 96 0 48 48 0 1 0-96 0zm304 0a48 48 0 1 0 96 0 48 48 0 1 0-96 0zM464 528a48 48 0 1 0 96 0 48 48 0 1 0-96 0zm304 0a48 48 0 1 0 96 0 48 48 0 1 0-96 0zM464 720a48 48 0 1 0 96 0 48 48 0 1 0-96 0zm304 0a48 48 0 1 0 96 0 48 48 0 1 0-96 0z" />
-        </svg>
-      </span>
-      <div v-if="visible" class="lyt-calendar__popup">
-        <div class="lyt-calendar__header">
-          <button class="lyt-calendar__btn" @click="prevMonth">
-            <svg viewBox="0 0 1024 1024" width="1em" height="1em">
-              <path d="M724 218.3L512 430.3 300 218.3 188 330.3l212 212 212 212 112-112-200-212z" />
-            </svg>
-          </button>
-          <span class="lyt-calendar__title">{{ currentYear }}年{{ currentMonth + 1 }}月</span>
-          <button class="lyt-calendar__btn" @click="nextMonth">
-            <svg viewBox="0 0 1024 1024" width="1em" height="1em">
-              <path d="M300 805.7l212-212 212-212-112-112-212 212-212-212L188 473.7l212 212 212 212 112-112-200-212z" />
-            </svg>
-          </button>
-        </div>
-        <div class="lyt-calendar__weekdays">
-          <div v-for="day in weekDays" key="day" class="lyt-calendar__weekday">{{ day }}</div>
-        </div>
-        <div class="lyt-calendar__days">
-          <div
-            v-for="day in generateCalendarDays()"
-            key="day.date.getTime()"
-            :class="[
-              'lyt-calendar__day',
-              !day.isCurrentMonth ? 'lyt-calendar__day--other' : '',
-              isToday(day.date) ? 'lyt-calendar__day--today' : '',
-              isSelected(day.date) ? 'lyt-calendar__day--selected' : ''
-            ].join(' ')"
-            @click="day.isCurrentMonth && selectDate(day.date)"
-          >
-            {{ day.date.getDate() }}
-          </div>
+      <div class="lyt-calendar__header">
+        <button class="lyt-calendar__btn" @click="prevMonth">
+          <svg viewBox="0 0 1024 1024" width="1em" height="1em">
+            <path d="M724 218.3L512 430.3 300 218.3 188 330.3l212 212 212 212 112-112-200-212z" />
+          </svg>
+        </button>
+        <span class="lyt-calendar__title">{{ monthTitle }}</span>
+        <button class="lyt-calendar__btn" @click="nextMonth">
+          <svg viewBox="0 0 1024 1024" width="1em" height="1em">
+            <path d="M300 805.7l212-212 212-212-112-112-212 212-212-212L188 473.7l212 212 212 212 112-112-200-212z" />
+          </svg>
+        </button>
+      </div>
+      <div class="lyt-calendar__weekdays">
+        <div v-for="day in weekDays" key="day" class="lyt-calendar__weekday">{{ day }}</div>
+      </div>
+      <div class="lyt-calendar__days">
+        <div
+          v-for="day in calendarDays"
+          key="day.dateStr"
+          :class="[
+            'lyt-calendar__day',
+            !day.isCurrentMonth ? 'lyt-calendar__day--other' : '',
+            isToday(day) ? 'lyt-calendar__day--today' : '',
+            isSelected(day) ? 'lyt-calendar__day--selected' : '',
+            isInRange(day) ? 'lyt-calendar__day--in-range' : ''
+          ].join(' ')"
+          @click="selectDate(day)"
+        >
+          {{ day.date.getDate() }}
         </div>
       </div>
     </div>
@@ -201,48 +214,10 @@ export const Calendar = defineComponent({
 
   styles: `
     .lyt-calendar {
-      position: relative;
       display: inline-block;
-      width: 240px;
-    }
-    .lyt-calendar__input {
-      width: 100%;
-      padding: 8px 36px 8px 12px;
-      font-size: var(--lyt-font-size-base);
-      border: 1px solid var(--lyt-color-border);
-      border-radius: var(--lyt-radius-sm);
-      box-sizing: border-box;
-      cursor: pointer;
-      outline: none;
-      transition: border-color 0.2s;
-    }
-    .lyt-calendar__input:hover {
-      border-color: var(--lyt-color-primary);
-    }
-    .lyt-calendar__input:disabled {
-      background-color: var(--lyt-color-bg-disabled);
-      cursor: not-allowed;
-    }
-    .lyt-calendar__icon {
-      position: absolute;
-      right: 12px;
-      top: 50%;
-      transform: translateY(-50%);
-      color: var(--lyt-color-muted);
-      pointer-events: none;
-    }
-    .lyt-calendar__popup {
-      position: absolute;
-      top: 100%;
-      left: 0;
-      margin-top: 4px;
-      background: white;
-      border: 1px solid var(--lyt-color-border);
-      border-radius: var(--lyt-radius-sm);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-      z-index: 1000;
-      padding: 12px;
       min-width: 280px;
+      padding: 12px;
+      box-sizing: border-box;
     }
     .lyt-calendar__header {
       display: flex;
@@ -259,17 +234,17 @@ export const Calendar = defineComponent({
       border: none;
       background: transparent;
       cursor: pointer;
-      border-radius: var(--lyt-radius-sm);
-      color: var(--lyt-color-text);
+      border-radius: var(--lyt-radius-sm, 4px);
+      color: var(--lyt-color-text, #303133);
       transition: background-color 0.2s;
     }
     .lyt-calendar__btn:hover {
-      background-color: var(--lyt-color-bg);
+      background-color: var(--lyt-color-bg, #f5f7fa);
     }
     .lyt-calendar__title {
       font-size: 16px;
       font-weight: 500;
-      color: var(--lyt-color-text);
+      color: var(--lyt-color-text, #303133);
     }
     .lyt-calendar__weekdays {
       display: grid;
@@ -280,7 +255,7 @@ export const Calendar = defineComponent({
     .lyt-calendar__weekday {
       text-align: center;
       font-size: 12px;
-      color: var(--lyt-color-muted);
+      color: var(--lyt-color-muted, #909399);
       padding: 4px 0;
     }
     .lyt-calendar__days {
@@ -292,25 +267,29 @@ export const Calendar = defineComponent({
       text-align: center;
       padding: 8px 4px;
       cursor: pointer;
-      border-radius: var(--lyt-radius-sm);
+      border-radius: var(--lyt-radius-sm, 4px);
       transition: all 0.2s;
-      color: var(--lyt-color-text);
+      color: var(--lyt-color-text, #303133);
       font-size: 14px;
     }
     .lyt-calendar__day:hover:not(.lyt-calendar__day--other) {
-      background-color: var(--lyt-color-bg);
+      background-color: var(--lyt-color-bg, #f5f7fa);
     }
     .lyt-calendar__day--other {
-      color: var(--lyt-color-muted);
+      color: var(--lyt-color-muted, #c0c4cc);
       cursor: default;
     }
     .lyt-calendar__day--today {
-      color: var(--lyt-color-primary);
+      color: var(--lyt-color-primary, #409eff);
       font-weight: 500;
     }
     .lyt-calendar__day--selected {
-      background-color: var(--lyt-color-primary);
+      background-color: var(--lyt-color-primary, #409eff);
       color: white;
+    }
+    .lyt-calendar__day--in-range {
+      background-color: var(--lyt-color-primary-light, #ecf5ff);
+      border-radius: 0;
     }
   `,
 })

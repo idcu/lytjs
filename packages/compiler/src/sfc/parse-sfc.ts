@@ -5,14 +5,16 @@
  *
  * 支持的块：
  *   - <template>  — 模板内容
- *   - <script>    — 组件脚本
- *   - <style>     — 样式（支持 scoped 属性，支持多个）
+ *   - <script>    — 组件脚本（支持 setup 属性）
+ *   - <style>     — 样式（支持 scoped、module 属性，支持多个）
  *
  * 解析规则：
  *   - 使用正则匹配提取各块
  *   - 忽略 HTML 注释（<!-- -->）
  *   - <script> 块中提取 export default { ... } 的内容
+ *   - <script setup> 块标记为 setup 模式
  *   - <style scoped> 属性会被标记
+ *   - <style module> 或 <style module="name"> 会被标记为 CSS Modules
  */
 
 // ============================================================
@@ -28,17 +30,24 @@ export interface SFCBlock {
   attrs: Record<string, string>
 }
 
+/** SFC 脚本块接口 */
+export interface SFCScriptBlock extends SFCBlock {
+  type: 'script'
+  setup: boolean
+}
+
 /** SFC 样式块接口 */
 export interface SFCStyleBlock extends SFCBlock {
   type: 'style'
   scoped: boolean
+  module: string | null
 }
 
 /** SFC 描述符 */
 export interface SFCDescriptor {
   filename: string
   template: SFCBlock | null
-  script: SFCBlock | null
+  script: SFCScriptBlock | null
   styles: SFCStyleBlock[]
 }
 
@@ -226,13 +235,14 @@ export function parseSFC(source: string, filename = 'anonymous.lyt'): SFCDescrip
 
   // 提取 script 块
   const scriptBlock = extractBlock(cleaned, SCRIPT_OPEN_RE, '</script>');
-  const script: SFCBlock | null = scriptBlock
+  const script: SFCScriptBlock | null = scriptBlock
     ? {
       type: 'script',
       content: scriptBlock.content,
       start: scriptBlock.start,
       end: scriptBlock.end,
       attrs: scriptBlock.attrs,
+      setup: 'setup' in scriptBlock.attrs,
     }
     : null;
 
@@ -246,6 +256,13 @@ export function parseSFC(source: string, filename = 'anonymous.lyt'): SFCDescrip
     const styleBlock = extractBlock(searchSource, STYLE_OPEN_RE, '</style>');
     if (!styleBlock) break;
 
+    // 检测 CSS Modules: <style module> 或 <style module="customName">
+    let moduleName: string | null = null;
+    if ('module' in styleBlock.attrs) {
+      const moduleAttr = styleBlock.attrs['module'];
+      moduleName = moduleAttr || '$style';
+    }
+
     styles.push({
       type: 'style',
       content: styleBlock.content,
@@ -253,6 +270,7 @@ export function parseSFC(source: string, filename = 'anonymous.lyt'): SFCDescrip
       end: styleBlock.end,
       attrs: styleBlock.attrs,
       scoped: 'scoped' in styleBlock.attrs,
+      module: moduleName,
     });
 
     // 从已提取块之后继续搜索

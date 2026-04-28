@@ -322,3 +322,158 @@ export const logger = {
     console.log(`${colorText('[SUCCESS]', 'green')} ${msg}`);
   },
 };
+
+// ============================================================
+// 依赖解析工具
+// ============================================================
+
+/**
+ * 解析 workspace 协议版本号
+ *
+ * 识别 `workspace:*`、`workspace:~`、`workspace:^` 前缀，
+ * 将 workspace 协议转换为实际文件路径引用（`file:../package-name`）。
+ *
+ * @param packageName - 包名（如 @lytjs/component）
+ * @param version - 版本字符串（如 workspace:*）
+ * @param workspaceRoot - 工作区根目录路径（可选，默认 process.cwd()）
+ * @returns 转换后的版本字符串（如 file:../packages/component）
+ */
+export function resolveWorkspaceProtocol(
+  packageName: string,
+  version: string,
+  workspaceRoot?: string,
+): string {
+  // 检查是否为 workspace 协议
+  if (!version.startsWith('workspace:')) {
+    return version;
+  }
+
+  const root = workspaceRoot || process.cwd();
+
+  // 提取 workspace 协议后的版本部分
+  const workspaceVersion = version.slice('workspace:'.length);
+
+  // workspace:* 或 workspace:~ 或 workspace:^ 表示使用工作区中的最新版本
+  // 转换为 file: 协议引用
+  if (workspaceVersion === '*' || workspaceVersion === '~' || workspaceVersion === '^') {
+    // 将包名转换为路径
+    // 例如: @lytjs/component -> packages/component
+    // 例如: plugin-virtual-list -> packages/plugin-virtual-list
+    const scopeMatch = packageName.match(/^@([^/]+)\/(.+)$/);
+    let relativePath: string;
+
+    if (scopeMatch) {
+      // 作用域包: @lytjs/component -> packages/component
+      relativePath = `packages/${scopeMatch[2]}`;
+    } else {
+      // 普通包: plugin-virtual-list -> packages/plugin-virtual-list
+      relativePath = `packages/${packageName}`;
+    }
+
+    return `file:${relativePath}`;
+  }
+
+  // workspace:1.2.3 等具体版本，保留原样（使用工作区中满足该版本的包）
+  // 在实际安装时，包管理器会解析到工作区中匹配的包
+  return version;
+}
+
+/**
+ * 解析 peer dependencies
+ *
+ * 读取 package.json 中的 peerDependencies 字段，
+ * 将 peer dependencies 添加到依赖列表中。
+ *
+ * @param packageJson - package.json 对象
+ * @returns peer dependencies 列表 [{ name, version }]
+ */
+export function resolvePeerDependencies(
+  packageJson: Record<string, any>,
+): Array<{ name: string; version: string }> {
+  const peerDeps = packageJson.peerDependencies;
+  if (!peerDeps || typeof peerDeps !== 'object') {
+    return [];
+  }
+
+  const result: Array<{ name: string; version: string }> = [];
+
+  for (const [name, version] of Object.entries(peerDeps)) {
+    if (typeof version === 'string') {
+      result.push({ name, version });
+    }
+  }
+
+  return result;
+}
+
+/**
+ * 增强版依赖解析
+ *
+ * 解析 package.json 中的所有依赖（dependencies、devDependencies、peerDependencies），
+ * 支持 workspace 协议转换。
+ *
+ * @param packageJson - package.json 对象
+ * @param options - 解析选项
+ * @returns 所有依赖列表 [{ name, version, type }]
+ */
+export function resolveAllDependencies(
+  packageJson: Record<string, any>,
+  options?: {
+    /** 工作区根目录路径 */
+    workspaceRoot?: string;
+    /** 是否包含 devDependencies，默认 true */
+    includeDev?: boolean;
+    /** 是否包含 peerDependencies，默认 true */
+    includePeer?: boolean;
+    /** 是否转换 workspace 协议，默认 true */
+    resolveWorkspace?: boolean;
+  },
+): Array<{ name: string; version: string; type: string }> {
+  const opts = {
+    includeDev: true,
+    includePeer: true,
+    resolveWorkspace: true,
+    ...options,
+  };
+
+  const result: Array<{ name: string; version: string; type: string }> = [];
+
+  // 解析 dependencies
+  const deps = packageJson.dependencies;
+  if (deps && typeof deps === 'object') {
+    for (const [name, version] of Object.entries(deps)) {
+      const ver = typeof version === 'string' ? version : '';
+      const resolvedVer = opts.resolveWorkspace
+        ? resolveWorkspaceProtocol(name, ver, opts.workspaceRoot)
+        : ver;
+      result.push({ name, version: resolvedVer, type: 'dependency' });
+    }
+  }
+
+  // 解析 devDependencies
+  if (opts.includeDev) {
+    const devDeps = packageJson.devDependencies;
+    if (devDeps && typeof devDeps === 'object') {
+      for (const [name, version] of Object.entries(devDeps)) {
+        const ver = typeof version === 'string' ? version : '';
+        const resolvedVer = opts.resolveWorkspace
+          ? resolveWorkspaceProtocol(name, ver, opts.workspaceRoot)
+          : ver;
+        result.push({ name, version: resolvedVer, type: 'devDependency' });
+      }
+    }
+  }
+
+  // 解析 peerDependencies
+  if (opts.includePeer) {
+    const peers = resolvePeerDependencies(packageJson);
+    for (const peer of peers) {
+      const resolvedVer = opts.resolveWorkspace
+        ? resolveWorkspaceProtocol(peer.name, peer.version, opts.workspaceRoot)
+        : peer.version;
+      result.push({ name: peer.name, version: resolvedVer, type: 'peerDependency' });
+    }
+  }
+
+  return result;
+}

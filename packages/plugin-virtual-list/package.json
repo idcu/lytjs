@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/plugin-virtual-list",
-  "version": "5.0.1",
+  "version": "5.2.0",
   "description": "Lyt.js 虚拟列表插件 - 提供高性能虚拟滚动列表组件，支持动态高度和大数据量渲染",
   "main": "dist/index.mjs",
   "module": "dist/index.mjs",

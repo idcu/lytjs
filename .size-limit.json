@@ -1,10 +1,10 @@
 [
-  { "path": "packages/reactivity/dist/index.mjs", "limit": "4 KB" },
-  { "path": "packages/vdom/dist/index.mjs", "limit": "5 KB" },
-  { "path": "packages/compiler/dist/index.mjs", "limit": "6 KB" },
-  { "path": "packages/renderer/dist/index.mjs", "limit": "12 KB" },
-  { "path": "packages/component/dist/index.mjs", "limit": "8 KB" },
-  { "path": "packages/core/dist/index.mjs", "limit": "6 KB" },
-  { "path": "packages/router/dist/index.mjs", "limit": "4 KB" },
-  { "path": "packages/store/dist/index.mjs", "limit": "2 KB" }
+  { "path": "packages/reactivity/dist/index.mjs", "limit": "3.5 KB", "gzip": true },
+  { "path": "packages/vdom/dist/index.mjs", "limit": "3.5 KB", "gzip": true },
+  { "path": "packages/compiler/dist/index.mjs", "limit": "5 KB", "gzip": true },
+  { "path": "packages/renderer/dist/index.mjs", "limit": "5.5 KB", "gzip": true },
+  { "path": "packages/component/dist/index.mjs", "limit": "4 KB", "gzip": true },
+  { "path": "packages/core/dist/index.mjs", "limit": "2.5 KB", "gzip": true },
+  { "path": "packages/router/dist/index.mjs", "limit": "2.5 KB", "gzip": true },
+  { "path": "packages/store/dist/index.mjs", "limit": "1.5 KB", "gzip": true }
 ]

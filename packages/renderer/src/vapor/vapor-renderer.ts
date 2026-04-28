@@ -502,6 +502,10 @@ export {
   bindEach,
   bindStyle,
   bindHTML,
+  bindTextCached,
+  bindPropCached,
+  bindClassCached,
+  batchDomUpdate,
 };
 
 export type {

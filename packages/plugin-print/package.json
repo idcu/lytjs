@@ -1,0 +1,38 @@
+{
+  "name": "@lytjs/plugin-print",
+  "version": "5.2.0",
+  "description": "Print optimization plugin for Lyt.js - iframe-based printing with element hiding and custom styles",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.mjs"
+    }
+  },
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
+  "license": "MIT",
+  "author": "lytjs",
+  "repository": {
+    "type": "git",
+    "url": "https://gitee.com/lytjs/lytjs"
+  },
+  "homepage": "https://gitee.com/lytjs/lytjs",
+  "keywords": [
+    "lyt",
+    "lytjs",
+    "print",
+    "printing",
+    "browser-print",
+    "iframe"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}

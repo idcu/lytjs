@@ -51,9 +51,10 @@ export {
   Fragment,
   // 异步组件
   defineAsyncComponent,
-  // 编译器宏（占位）
+  // 编译器宏
   defineProps,
   defineEmits,
+  defineModel,
   withDefaults,
   defineExpose,
   // 组合式 API 工具

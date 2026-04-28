@@ -3,10 +3,18 @@
  * Props: modelValue, format, placeholder, disabled, range, minDate, maxDate
  * Events: change, update:modelValue
  * Features: 日历弹出, 日期范围, 格式配置
+ *
+ * 日历网格渲染逻辑复用 calendar-utils.ts 中的共享函数。
  */
 
 import { defineComponent } from '@lytjs/component'
 import { reactive } from '@lytjs/reactivity'
+import {
+  generateCalendarDays,
+  formatDate,
+  formatDateWithPattern,
+  parseDate,
+} from './calendar-utils'
 
 export const DatePicker = defineComponent({
   name: 'LytDatePicker',
@@ -63,80 +71,35 @@ export const DatePicker = defineComponent({
 
     const weekDays = ['日', '一', '二', '三', '四', '五', '六']
 
-    /** 获取月份天数 */
-    const getDaysInMonth = (year: number, month: number): number => {
-      return new Date(year, month + 1, 0).getDate()
-    }
-
-    /** 获取月份第一天是星期几 */
-    const getFirstDayOfMonth = (year: number, month: number): number => {
-      return new Date(year, month, 1).getDay()
-    }
-
-    /** 格式化日期 */
-    const formatDate = (date: Date): string => {
-      const y = date.getFullYear()
-      const m = String(date.getMonth() + 1).padStart(2, '0')
-      const d = String(date.getDate()).padStart(2, '0')
-      return props.format
-        .replace('YYYY', String(y))
-        .replace('MM', m)
-        .replace('DD', d)
-    }
-
-    /** 解析日期字符串 */
-    const parseDate = (str: string): Date | null => {
-      if (!str) return null
-      const parts = str.split('-')
-      if (parts.length !== 3) return null
-      const y = parseInt(parts[0], 10)
-      const m = parseInt(parts[1], 10) - 1
-      const d = parseInt(parts[2], 10)
-      if (isNaN(y) || isNaN(m) || isNaN(d)) return null
-      return new Date(y, m, d)
-    }
-
-    /** 生成日历数据 */
+    /** 生成日历数据 - 使用共享函数 */
     const calendarDays = () => {
-      const days: Array<{ date: string; day: number; isCurrentMonth: boolean; isToday: boolean; isSelected: boolean; isDisabled: boolean }> = []
-      const totalDays = getDaysInMonth(state.currentYear, state.currentMonth)
-      const firstDay = getFirstDayOfMonth(state.currentYear, state.currentMonth)
-
+      const rawDays = generateCalendarDays(state.currentYear, state.currentMonth)
       const today = new Date()
       const todayStr = formatDate(today)
 
-      // 上月补位
-      const prevMonthDays = getDaysInMonth(
-        state.currentMonth === 0 ? state.currentYear - 1 : state.currentYear,
-        state.currentMonth === 0 ? 11 : state.currentMonth - 1
-      )
-      for (let i = firstDay - 1; i >= 0; i--) {
-        const day = prevMonthDays - i
-        const prevMonth = state.currentMonth === 0 ? 11 : state.currentMonth - 1
-        const prevYear = state.currentMonth === 0 ? state.currentYear - 1 : state.currentYear
-        const dateStr = `${prevYear}-${String(prevMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
-        days.push({ date: dateStr, day, isCurrentMonth: false, isToday: dateStr === todayStr, isSelected: false, isDisabled: false })
-      }
-
-      // 当月
-      for (let i = 1; i <= totalDays; i++) {
-        const dateStr = `${state.currentYear}-${String(state.currentMonth + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`
+      return rawDays.map(day => {
         const isSelected = props.range
-          ? (dateStr === state.rangeStart || dateStr === state.rangeEnd)
-          : dateStr === state.selectedDate
-        days.push({ date: dateStr, day: i, isCurrentMonth: true, isToday: dateStr === todayStr, isSelected, isDisabled: false })
-      }
+          ? (day.dateStr === state.rangeStart || day.dateStr === state.rangeEnd)
+          : day.dateStr === state.selectedDate
 
-      // 下月补位
-      const remaining = 42 - days.length
-      for (let i = 1; i <= remaining; i++) {
-        const nextMonth = state.currentMonth === 11 ? 0 : state.currentMonth + 1
-        const nextYear = state.currentMonth === 11 ? state.currentYear + 1 : state.currentYear
-        const dateStr = `${nextYear}-${String(nextMonth + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`
-        days.push({ date: dateStr, day: i, isCurrentMonth: false, isToday: dateStr === todayStr, isSelected: false, isDisabled: false })
-      }
+        const isDisabled = checkDateDisabled(day.dateStr)
 
-      return days
+        return {
+          date: day.dateStr,
+          day: day.date.getDate(),
+          isCurrentMonth: day.isCurrentMonth,
+          isToday: day.dateStr === todayStr,
+          isSelected,
+          isDisabled,
+        }
+      })
+    }
+
+    /** 检查日期是否被禁用（minDate / maxDate） */
+    const checkDateDisabled = (dateStr: string): boolean => {
+      if (props.minDate && dateStr < props.minDate) return true
+      if (props.maxDate && dateStr > props.maxDate) return true
+      return false
     }
 
     /** 选择日期 */

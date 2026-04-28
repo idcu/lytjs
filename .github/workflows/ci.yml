@@ -99,3 +99,7 @@ jobs:
           else
             echo "scripts/size-report.js not found, skipping size check"
           fi
+
+      - name: Size Limit Check
+        run: npx size-limit
+        continue-on-error: false

@@ -21,7 +21,7 @@
  */
 
 // ---- PatchFlag 位标记 ----
-export { PatchFlags, hasPatchFlag, describePatchFlag } from './patch-flag'
+export { PatchFlags, hasPatchFlag } from './patch-flag'
 
 // ---- VNode 系统 ----
 export {
@@ -32,8 +32,6 @@ export {
   cloneVNode,
   isSameVNodeType,
   normalizeChildren,
-  isTextVNode,
-  isCommentVNode,
 } from './vnode'
 export type {
   VNode,
@@ -52,10 +50,7 @@ export {
   closeBlock,
   createBlock,
   trackDynamicChild,
-  getCurrentBlock,
-  getBlockStackDepth,
   isBlock,
-  resetBlockStack,
 } from './block'
 export type { Block } from './block'
 

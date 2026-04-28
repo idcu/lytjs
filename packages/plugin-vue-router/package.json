@@ -1,0 +1,17 @@
+{
+  "name": "@lytjs/plugin-vue-router",
+  "version": "5.2.0",
+  "description": "Vue Router 4 compatible plugin for Lyt.js",
+  "main": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "peerDependencies": {
+    "@lytjs/core": ">=5.0.0"
+  },
+  "license": "MIT"
+}

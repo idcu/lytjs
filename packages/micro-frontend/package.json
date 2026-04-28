@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/micro-frontend",
-  "version": "5.0.1",
+  "version": "5.2.0",
   "description": "Lyt.js 微前端集成 - 沙箱隔离、通信机制、生命周期管理、qiankun/micro-app 适配",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",

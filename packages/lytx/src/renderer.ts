@@ -294,7 +294,7 @@ export function renderPageWithModules(
 /**
  * 静态站点生成（SSG）
  *
- * 预渲染所有页面为静态 HTML 文件，输出到 outDir。
+ * 预渲染所有页面为静态 HTML 文件，输出到 outDir 目录。
  *
  * @param routes 路由列表
  * @param config 配置

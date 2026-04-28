@@ -8,7 +8,7 @@
  */
 
 import type { Signal } from '@lytjs/reactivity/signal';
-import { effect } from '@lytjs/reactivity/signal';
+import { effect, batch } from '@lytjs/reactivity/signal';
 
 // ================================================================
 //  类型定义
@@ -432,4 +432,115 @@ export function bindEach<T>(
     currentKeys = [];
     elementByKey.clear();
   };
+}
+
+// ================================================================
+//  优化：内联缓存绑定（减少中间对象创建）
+// ================================================================
+
+/**
+ * 优化版文本绑定 - 使用内联缓存避免重复查找
+ *
+ * 与 bindText 相同的功能，但通过缓存上一次值避免不必要的 DOM 操作。
+ *
+ * @param el    目标 DOM 元素
+ * @param sig   响应式信号
+ * @returns 清理函数
+ */
+export function bindTextCached<T>(
+  el: VaporElement,
+  sig: Signal<T>
+): BindingCleanup {
+  let cachedValue: string | null = null;
+
+  const dispose = effect(() => {
+    const value = sig();
+    const str = value === null || value === undefined ? '' : String(value);
+    // 内联缓存：值未变化时跳过 DOM 操作
+    if (cachedValue !== str) {
+      cachedValue = str;
+      el.textContent = str;
+    }
+  });
+  return dispose;
+}
+
+/**
+ * 优化版属性绑定 - 使用内联缓存
+ *
+ * @param el    目标 DOM 元素
+ * @param prop  属性名
+ * @param sig   响应式信号
+ * @returns 清理函数
+ */
+export function bindPropCached<T>(
+  el: VaporElement,
+  prop: string,
+  sig: Signal<T>
+): BindingCleanup {
+  let cachedValue: unknown = undefined;
+  // 缓存属性引用，避免每次更新时进行属性查找
+  const elRecord = el as Record<string, unknown>;
+
+  const dispose = effect(() => {
+    const value = sig();
+    // Object.is 比较，值未变化时跳过
+    if (!Object.is(cachedValue, value)) {
+      cachedValue = value;
+      elRecord[prop] = value;
+    }
+  });
+  return dispose;
+}
+
+/**
+ * 优化版 Class 绑定 - 使用内联缓存
+ *
+ * @param el    目标 DOM 元素
+ * @param sig   响应式信号
+ * @returns 清理函数
+ */
+export function bindClassCached<T>(
+  el: VaporElement,
+  sig: Signal<T>
+): BindingCleanup {
+  let cachedClassName: string | null = null;
+
+  const dispose = effect(() => {
+    const value = sig();
+    let className: string;
+    if (typeof value === 'string') {
+      className = value;
+    } else if (Array.isArray(value)) {
+      className = value.filter(Boolean).join(' ');
+    } else if (typeof value === 'object' && value !== null) {
+      const classes: string[] = [];
+      const obj = value as Record<string, unknown>;
+      for (const key of Object.keys(obj)) {
+        if (obj[key]) {
+          classes.push(key);
+        }
+      }
+      className = classes.join(' ');
+    } else {
+      className = '';
+    }
+    if (cachedClassName !== className) {
+      cachedClassName = className;
+      el.className = className;
+    }
+  });
+  return dispose;
+}
+
+/**
+ * 批量更新多个绑定的 DOM 操作
+ *
+ * 在 batch 期间收集所有 Signal 变更，结束后统一触发 effect，
+ * 从而将多次 DOM 操作合并为一次渲染周期。
+ *
+ * @param fn  包含多个 Signal 更新的函数
+ */
+export function batchDomUpdate(fn: () => void): void {
+  batch(fn);
 }

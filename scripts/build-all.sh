@@ -47,6 +47,7 @@ ALL_PACKAGES=(
   router store cli devtools components performance
   plugin-i18n plugin-auth plugin-logger plugin-theme plugin-storage plugin-sdk
   plugin-chart plugin-highlight plugin-virtual-list plugin-registry
+  plugin-export plugin-print plugin-permission plugin-websocket
   micro-frontend
   test-utils plugins lytjs lytx vscode-extension ai compat
 )
@@ -128,38 +129,46 @@ if [ "$TYPES_ONLY" = false ]; then
     mkdir -p "$dist_dir"
     log "  Building $pkg..."
 
-    # 根据包类型选择 platform 和 external
+    # 根据包类型选择 platform、target 和 external
     case "$pkg" in
       plugin-sdk)
         PLATFORM="node"
+        TARGET="ES2018"
         EXTRA_EXTERNAL=""
         ;;
       cli)
         PLATFORM="node"
+        TARGET="ES2018"
         EXTRA_EXTERNAL="--external:esbuild"
         ;;
       lytx)
         PLATFORM="node"
+        TARGET="ES2018"
         EXTRA_EXTERNAL=""
         ;;
       test-utils)
         PLATFORM="node"
+        TARGET="ES2018"
         EXTRA_EXTERNAL=""
         ;;
       ai)
         PLATFORM="node"
+        TARGET="ES2018"
         EXTRA_EXTERNAL=""
         ;;
       compat)
         PLATFORM="node"
+        TARGET="ES2018"
         EXTRA_EXTERNAL=""
         ;;
       components)
         PLATFORM="browser"
+        TARGET="es2018,es2018"
         EXTRA_EXTERNAL="--external:../../component/src/index.ts"
         ;;
       *)
         PLATFORM="browser"
+        TARGET="es2018,es2018"
         EXTRA_EXTERNAL=""
         ;;
     esac
@@ -171,11 +180,12 @@ if [ "$TYPES_ONLY" = false ]; then
     esbuild_args=(
       "$entry"
       --bundle --minify --tree-shaking=true
-      --platform="$PLATFORM" --target=es2018
+      --platform="$PLATFORM" --target="$TARGET"
       --format=esm
       --outfile="$dist_dir/index.mjs"
       --external:@lytjs/*
       $EXTRA_EXTERNAL
+      --define:process.env.NODE_ENV=\"production\"
       --legal-comments=none
       --log-level=warning
     )
@@ -197,11 +207,12 @@ if [ "$TYPES_ONLY" = false ]; then
     esbuild_args_cjs=(
       "$entry"
       --bundle --minify --tree-shaking=true
-      --platform="$PLATFORM" --target=es2018
+      --platform="$PLATFORM" --target="$TARGET"
       --format=cjs
       --outfile="$dist_dir/index.${cjs_ext}"
       --external:@lytjs/*
       $EXTRA_EXTERNAL
+      --define:process.env.NODE_ENV=\"production\"
       --legal-comments=none
       --log-level=warning
     )
@@ -248,6 +259,7 @@ if [ "$TYPES_ONLY" = false ]; then
           --format=esm \
           --outfile="$dist_dir/bin/${bin_out%.js}.mjs" \
           --external:esbuild \
+          --define:process.env.NODE_ENV=\"production\" \
           --legal-comments=none \
           --log-level=warning >/dev/null 2>&1 && ok "  $pkg bin: ESM OK"
         # 构建 bin 的 CJS
@@ -257,6 +269,7 @@ if [ "$TYPES_ONLY" = false ]; then
           --format=cjs \
           --outfile="$dist_dir/bin/${bin_out%.js}.cjs" \
           --external:esbuild \
+          --define:process.env.NODE_ENV=\"production\" \
           --legal-comments=none \
           --log-level=warning >/dev/null 2>&1 && ok "  $pkg bin: CJS OK"
         # 创建可执行入口
@@ -274,11 +287,12 @@ if [ "$TYPES_ONLY" = false ]; then
           log "  Building $pkg/$sub..."
           if "$ESBUILD" "$sub_entry" \
               --bundle --minify --tree-shaking=true \
-              --platform=browser --target=es2018 \
+              --platform=browser --target=es2018,es2018 \
               --format=esm \
               --outfile="$dist_dir/${sub}.mjs" \
               --external:@lytjs/* \
               --drop:console --drop:debugger \
+              --define:process.env.NODE_ENV=\"production\" \
               --legal-comments=none \
               --log-level=warning 2>&1; then
             ok "  $pkg/$sub: ESM OK"
@@ -287,11 +301,12 @@ if [ "$TYPES_ONLY" = false ]; then
           fi
           if "$ESBUILD" "$sub_entry" \
               --bundle --minify --tree-shaking=true \
-              --platform=browser --target=es2018 \
+              --platform=browser --target=es2018,es2018 \
               --format=cjs \
               --outfile="$dist_dir/${sub}.cjs" \
               --external:@lytjs/* \
               --drop:console --drop:debugger \
+              --define:process.env.NODE_ENV=\"production\" \
               --legal-comments=none \
               --log-level=warning 2>&1; then
             ok "  $pkg/$sub: CJS OK"
@@ -306,8 +321,8 @@ if [ "$TYPES_ONLY" = false ]; then
 
     # 为 compiler 包构建子路径入口（sfc/wasm）
     if [ "$pkg" = "compiler" ]; then
-      COMPILER_SUBS=("sfc-entry" "wasm-entry")
-      COMPILER_SUB_NAMES=("sfc" "wasm")
+      COMPILER_SUBS=("sfc-entry" "wasm-entry" "block-tree-entry" "patch-flags-entry" "hoist-entry" "optimize-output-entry")
+      COMPILER_SUB_NAMES=("sfc" "wasm" "block-tree" "patch-flags" "hoist" "optimize-output")
       for i in "${!COMPILER_SUBS[@]}"; do
         sub="${COMPILER_SUBS[$i]}"
         sub_name="${COMPILER_SUB_NAMES[$i]}"
@@ -316,11 +331,12 @@ if [ "$TYPES_ONLY" = false ]; then
           log "  Building $pkg/$sub_name..."
           if "$ESBUILD" "$sub_entry" \
               --bundle --minify --tree-shaking=true \
-              --platform=browser --target=es2018 \
+              --platform=browser --target=es2018,es2018 \
               --format=esm \
               --outfile="$dist_dir/${sub}.mjs" \
               --external:@lytjs/* \
               --drop:console --drop:debugger \
+              --define:process.env.NODE_ENV=\"production\" \
               --legal-comments=none \
               --log-level=warning 2>&1; then
             ok "  $pkg/$sub_name: ESM OK"
@@ -329,11 +345,12 @@ if [ "$TYPES_ONLY" = false ]; then
           fi
           if "$ESBUILD" "$sub_entry" \
               --bundle --minify --tree-shaking=true \
-              --platform=browser --target=es2018 \
+              --platform=browser --target=es2018,es2018 \
               --format=cjs \
               --outfile="$dist_dir/${sub}.cjs" \
               --external:@lytjs/* \
               --drop:console --drop:debugger \
+              --define:process.env.NODE_ENV=\"production\" \
               --legal-comments=none \
               --log-level=warning 2>&1; then
             ok "  $pkg/$sub_name: CJS OK"
@@ -358,11 +375,12 @@ if [ "$TYPES_ONLY" = false ]; then
           log "  Building $pkg/$sub_name..."
           if "$ESBUILD" "$sub_entry" \
               --bundle --minify --tree-shaking=true \
-              --platform=browser --target=es2018 \
+              --platform=browser --target=es2018,es2018 \
               --format=esm \
               --outfile="$dist_dir/${sub}.mjs" \
               --external:@lytjs/* \
               --drop:console --drop:debugger \
+              --define:process.env.NODE_ENV=\"production\" \
               --legal-comments=none \
               --log-level=warning 2>&1; then
             ok "  $pkg/$sub_name: ESM OK"
@@ -371,11 +389,12 @@ if [ "$TYPES_ONLY" = false ]; then
           fi
           if "$ESBUILD" "$sub_entry" \
               --bundle --minify --tree-shaking=true \
-              --platform=browser --target=es2018 \
+              --platform=browser --target=es2018,es2018 \
               --format=cjs \
               --outfile="$dist_dir/${sub}.cjs" \
               --external:@lytjs/* \
               --drop:console --drop:debugger \
+              --define:process.env.NODE_ENV=\"production\" \
               --legal-comments=none \
               --log-level=warning 2>&1; then
             ok "  $pkg/$sub_name: CJS OK"
@@ -400,11 +419,12 @@ if [ "$TYPES_ONLY" = false ]; then
           log "  Building $pkg/$sub_name..."
           if "$ESBUILD" "$sub_entry" \
               --bundle --minify --tree-shaking=true \
-              --platform=browser --target=es2018 \
+              --platform=browser --target=es2018,es2018 \
               --format=esm \
               --outfile="$dist_dir/${sub}.mjs" \
               --external:@lytjs/* \
               --drop:console --drop:debugger \
+              --define:process.env.NODE_ENV=\"production\" \
               --legal-comments=none \
               --log-level=warning 2>&1; then
             ok "  $pkg/$sub_name: ESM OK"
@@ -413,11 +433,12 @@ if [ "$TYPES_ONLY" = false ]; then
           fi
           if "$ESBUILD" "$sub_entry" \
               --bundle --minify --tree-shaking=true \
-              --platform=browser --target=es2018 \
+              --platform=browser --target=es2018,es2018 \
               --format=cjs \
               --outfile="$dist_dir/${sub}.cjs" \
               --external:@lytjs/* \
               --drop:console --drop:debugger \
+              --define:process.env.NODE_ENV=\"production\" \
               --legal-comments=none \
               --log-level=warning 2>&1; then
             ok "  $pkg/$sub_name: CJS OK"
@@ -430,41 +451,46 @@ if [ "$TYPES_ONLY" = false ]; then
       done
     fi
 
-    # 为 reactivity 包构建子路径入口（signal）
+    # 为 reactivity 包构建子路径入口（signal, signal-component）
     if [ "$pkg" = "reactivity" ]; then
-      REACTIVITY_SUBS=("signal")
-      for sub in "${REACTIVITY_SUBS[@]}"; do
+      REACTIVITY_SUBS=("signal" "signal-component-entry")
+      REACTIVITY_SUB_NAMES=("signal" "signal-component")
+      for i in "${!REACTIVITY_SUBS[@]}"; do
+        sub="${REACTIVITY_SUBS[$i]}"
+        sub_name="${REACTIVITY_SUB_NAMES[$i]}"
         sub_entry="$pkg_dir/src/${sub}.ts"
         if [ -f "$sub_entry" ]; then
-          log "  Building $pkg/$sub..."
+          log "  Building $pkg/$sub_name..."
           if "$ESBUILD" "$sub_entry" \
               --bundle --minify --tree-shaking=true \
-              --platform=browser --target=es2018 \
+              --platform=browser --target=es2018,es2018 \
               --format=esm \
               --outfile="$dist_dir/${sub}.mjs" \
               --external:@lytjs/* \
               --drop:console --drop:debugger \
+              --define:process.env.NODE_ENV=\"production\" \
               --legal-comments=none \
               --log-level=warning 2>&1; then
-            ok "  $pkg/$sub: ESM OK"
+            ok "  $pkg/$sub_name: ESM OK"
           else
-            err "  $pkg/$sub: ESM failed"
+            err "  $pkg/$sub_name: ESM failed"
           fi
           if "$ESBUILD" "$sub_entry" \
               --bundle --minify --tree-shaking=true \
-              --platform=browser --target=es2018 \
+              --platform=browser --target=es2018,es2018 \
               --format=cjs \
               --outfile="$dist_dir/${sub}.cjs" \
               --external:@lytjs/* \
               --drop:console --drop:debugger \
+              --define:process.env.NODE_ENV=\"production\" \
               --legal-comments=none \
               --log-level=warning 2>&1; then
-            ok "  $pkg/$sub: CJS OK"
+            ok "  $pkg/$sub_name: CJS OK"
           else
-            err "  $pkg/$sub: CJS failed"
+            err "  $pkg/$sub_name: CJS failed"
           fi
         else
-          warn "  $pkg/$sub: no src/${sub}.ts, skipping"
+          warn "  $pkg/$sub_name: no src/${sub}.ts, skipping"
         fi
       done
     fi
@@ -541,7 +567,7 @@ if [ "$BUNDLE_ONLY" = false ]; then
   if [ ! -f "$TSC" ]; then
     warn "TypeScript not found. Skipping type declarations."
   else
-    TYPE_PKGS=(common reactivity vdom compiler renderer component core router store cli devtools components performance plugin-i18n plugin-auth plugin-logger plugin-theme plugin-storage plugin-sdk plugin-chart plugin-highlight plugin-virtual-list plugin-registry micro-frontend test-utils lytx ai compat plugins)
+    TYPE_PKGS=(common reactivity vdom compiler renderer component core router store cli devtools components performance plugin-i18n plugin-auth plugin-logger plugin-theme plugin-storage plugin-sdk plugin-chart plugin-highlight plugin-virtual-list plugin-registry plugin-export plugin-print plugin-permission plugin-websocket micro-frontend test-utils lytx ai compat plugins)
 
     if [ -n "$FILTER" ]; then
       FT=()

@@ -311,6 +311,40 @@ export function batch(fn: () => void): void {
 }
 
 /**
+ * 异步批量更新
+ *
+ * 与 batch 类似，但返回一个 Promise，在所有 effect 执行完毕后 resolve。
+ * 适用于需要在批量更新完成后执行后续操作的场景。
+ *
+ * @param fn 批量操作函数
+ * @returns Promise，在所有 effect 执行完毕后 resolve
+ */
+export function batchAsync(fn: () => void): Promise<void> {
+  return new Promise<void>((resolve) => {
+    batchDepth++
+    try {
+      fn()
+    } finally {
+      batchDepth--
+      if (batchDepth === 0) {
+        _flushPending()
+      }
+    }
+    // 使用微任务确保在所有同步 effect 执行完毕后 resolve
+    queueMicrotask(resolve)
+  })
+}
+
+/**
+ * 检查当前是否处于 batch 模式中
+ *
+ * @returns 是否在 batch 中
+ */
+export function isInBatch(): boolean {
+  return batchDepth > 0
+}
+
+/**
  * 刷新待执行的通知队列
  */
 function _flushPending(): void {

@@ -10,12 +10,6 @@ export {
   effect,
   stop,
   ReactiveEffect,
-  track,
-  trigger,
-  ITERATE_KEY,
-  activeEffect,
-  pauseTracking,
-  resetTracking,
 } from './effect';
 
 export type {
@@ -32,11 +26,6 @@ export {
   toRaw,
   isReactive,
   isReadonly,
-  markReadOnly,
-  markSkip,
-  reactiveFlag,
-  readonlyFlag,
-  rawSymbol,
 } from './reactive';
 
 export type { ReactiveOptions } from './reactive';
@@ -50,8 +39,6 @@ export {
   toRef,
   toRefs,
   triggerRef,
-  refSymbol,
-  shallowRefSymbol,
 } from './ref';
 
 export type { Ref, UnwrapRef } from './ref';
@@ -103,11 +90,3 @@ export type {
   ComputedSignal,
   EffectCleanup,
 } from './signal';
-
-// ======================== Signal 组件集成 ========================
-export {
-  useSignal,
-  useSignalState,
-  enterSignalComponentContext,
-  onSignalCleanup,
-} from './signal-component';

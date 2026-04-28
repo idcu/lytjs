@@ -60,106 +60,47 @@ const enum ParseState {
 
 /** 解析器上下文，维护解析过程中的状态 */
 class ParserContext {
-  /** 原始模板字符串 */
-  template: string;
-  /** 当前解析位置（字符索引） */
-  pos: number;
-  /** 当前行号 */
-  line: number;
-  /** 当前列号 */
-  column: number;
-  /** 当前解析状态 */
-  state: ParseState;
-  /** 根节点 */
-  root: RootNode;
-  /** 当前正在解析的元素节点 */
-  currentElement: ElementNode | null;
-  /** 父元素栈，用于处理嵌套标签 */
-  parentStack: ElementNode[];
-  /** 当前正在解析的文本内容缓冲区 */
-  textBuffer: string;
-  /** 文本内容的起始位置 */
-  textStart: number;
-  /** 当前正在解析的标签名缓冲区 */
-  tagNameBuffer: string;
-  /** 标签名的起始位置 */
-  tagNameStart: number;
-  /** 当前正在解析的属性名缓冲区 */
-  attrNameBuffer: string;
-  /** 当前正在解析的属性值缓冲区 */
-  attrValueBuffer: string;
-  /** 属性值的起始引号字符 */
-  attrValueQuote: string;
-  /** 是否正在解析属性值 */
-  inAttrValue: boolean;
-  /** 注释缓冲区 */
-  commentBuffer: string;
-  /** 是否为闭合标签（</tag>） */
-  isClosingTag: boolean;
+  template: string
+  pos = 0
+  line = 1
+  column = 1
+  state: ParseState = ParseState.TEXT
+  root: RootNode
+  currentElement: ElementNode | null = null
+  parentStack: ElementNode[] = []
+  textBuffer = ''
+  textStart = 0
+  tagNameBuffer = ''
+  tagNameStart = 0
+  attrNameBuffer = ''
+  attrValueBuffer = ''
+  attrValueQuote = ''
+  inAttrValue = false
+  commentBuffer = ''
+  isClosingTag = false
 
   constructor(template: string) {
     this.template = template;
-    this.pos = 0;
-    this.line = 1;
-    this.column = 1;
-    this.state = ParseState.TEXT;
     this.root = createRootNode(createPosition(0, template.length, 1, 1));
-    this.currentElement = null;
-    this.parentStack = [];
-    this.textBuffer = '';
-    this.textStart = 0;
-    this.tagNameBuffer = '';
-    this.tagNameStart = 0;
-    this.attrNameBuffer = '';
-    this.attrValueBuffer = '';
-    this.attrValueQuote = '';
-    this.inAttrValue = false;
-    this.commentBuffer = '';
-    this.isClosingTag = false;
   }
 
-  /** 获取当前位置信息 */
   currentPos(): Position {
     return createPosition(this.pos, this.pos, this.line, this.column);
   }
 
-  /** 推进一个字符，更新行号和列号 */
   advance(): string {
     const ch = this.template[this.pos++];
-    if (ch === '\n') {
-      this.line++;
-      this.column = 1;
-    } else {
-      this.column++;
-    }
+    if (ch === '\n') { this.line++; this.column = 1; } else { this.column++; }
     return ch;
   }
 
-  /** 查看当前字符但不推进 */
-  peek(): string {
-    return this.template[this.pos] || '';
-  }
+  peek(): string { return this.template[this.pos] || ''; }
+  peekAt(offset: number): string { return this.template[this.pos + offset] || ''; }
+  isEOF(): boolean { return this.pos >= this.template.length; }
+  startsWith(str: string): boolean { return this.template.substring(this.pos, this.pos + str.length) === str; }
 
-  /** 查看后面第 n 个字符 */
-  peekAt(offset: number): string {
-    return this.template[this.pos + offset] || '';
-  }
-
-  /** 是否已到达模板末尾 */
-  isEOF(): boolean {
-    return this.pos >= this.template.length;
-  }
-
-  /** 当前字符是否匹配指定字符串 */
-  startsWith(str: string): boolean {
-    return this.template.substring(this.pos, this.pos + str.length) === str;
-  }
-
-  /** 跳过空白字符 */
   skipWhitespace(): void {
-    while (!this.isEOF() && /\s/.test(this.peek())) {
-      this.advance();
-    }
+    while (!this.isEOF() && /\s/.test(this.peek())) this.advance();
   }
 }
 
@@ -528,17 +469,6 @@ function finishOpenTag(ctx: ParserContext, isSelfClosing: boolean = false): void
   }
 
   ctx.state = ParseState.TEXT;
-}
-
-/**
- * 将子节点添加到当前父元素或根节点
- */
-function _addChild(ctx: ParserContext, node: ElementNode | TextNode): void {
-  if (ctx.currentElement) {
-    ctx.currentElement.children.push(node);
-  } else {
-    ctx.root.children.push(node);
-  }
 }
 
 /**

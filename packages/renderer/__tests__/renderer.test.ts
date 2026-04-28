@@ -719,3 +719,263 @@ describe('Renderer 渲染器', () => {
     expect(container.childNodes.length).toBe(0)
   })
 })
+
+// ================================================================
+//  补充测试 — createRenderer 基础创建
+// ================================================================
+
+describe('createRenderer 补充测试', () => {
+  it('多次创建渲染器实例互不干扰', () => {
+    const r1 = createRenderer(new MockRenderer())
+    const r2 = createRenderer(new MockRenderer())
+    expect(r1).not.toBe(r2)
+    expect(typeof r1.mount).toBe('function')
+    expect(typeof r2.mount).toBe('function')
+  })
+})
+
+// ================================================================
+//  补充测试 — mount 挂载
+// ================================================================
+
+describe('mount 补充测试', () => {
+  const mockRenderer = new MockRenderer()
+  const renderer = createRenderer(mockRenderer)
+
+  it('mount 空子节点', () => {
+    const container = createContainer()
+    const vnode = h('div', { id: 'empty' }, null)
+    renderer.mount(vnode, container)
+    const el = container.childNodes[0] as MockElement
+    expect(el.tagName).toBe('div')
+    expect(el.attributes['id']).toBe('empty')
+    expect(el.textContent).toBe('')
+  })
+
+  it('mount 深层嵌套元素', () => {
+    const container = createContainer()
+    const vnode = h('div', null, [
+      h('section', null, [
+        h('article', null, [
+          h('p', null, 'deep content'),
+        ]),
+      ]),
+    ])
+    renderer.mount(vnode, container)
+    const div = container.childNodes[0] as MockElement
+    expect(div.tagName).toBe('div')
+    const section = div.childNodes[0] as MockElement
+    expect(section.tagName).toBe('section')
+    const article = section.childNodes[0] as MockElement
+    expect(article.tagName).toBe('article')
+    const p = article.childNodes[0] as MockElement
+    expect(p.tagName).toBe('p')
+    expect(p.textContent).toBe('deep content')
+  })
+
+  it('mount 文本 VNode', () => {
+    const container = createContainer()
+    const vnode = textVNode('plain text')
+    renderer.mount(vnode, container)
+    expect(container.childNodes.length).toBe(1)
+    const textNode = container.childNodes[0] as MockText
+    expect(textNode.nodeValue).toBe('plain text')
+  })
+
+  it('mount 带样式的元素', () => {
+    const container = createContainer()
+    const vnode = h('div', { style: { color: 'red', fontSize: '16px' } }, 'styled')
+    renderer.mount(vnode, container)
+    const el = container.childNodes[0] as MockElement
+    expect(el.style['color']).toBe('red')
+    expect(el.style['fontSize']).toBe('16px')
+  })
+
+  it('mount 带布尔 class 对象的元素', () => {
+    const container = createContainer()
+    const vnode = h('div', { class: { active: true, disabled: false } }, 'class obj')
+    renderer.mount(vnode, container)
+    const el = container.childNodes[0] as MockElement
+    expect(el.className).toBe('active')
+  })
+})
+
+// ================================================================
+//  补充测试 — patch 更新
+// ================================================================
+
+describe('patch 补充测试', () => {
+  const mockRenderer = new MockRenderer()
+  const renderer = createRenderer(mockRenderer)
+
+  it('patch 更新样式', () => {
+    const container = createContainer()
+    const oldVNode = h('div', { style: { color: 'red' } }, null)
+    renderer.mount(oldVNode, container)
+    const newVNode = h('div', { style: { color: 'blue' } }, null)
+    renderer.patch(oldVNode, newVNode)
+    const el = container.childNodes[0] as MockElement
+    expect(el.style['color']).toBe('blue')
+  })
+
+  it('patch 更新子元素（文本到数组）', () => {
+    const container = createContainer()
+    const oldVNode = h('div', null, 'old text')
+    renderer.mount(oldVNode, container)
+    const newVNode = h('div', null, [h('span', null, 'new')])
+    renderer.patch(oldVNode, newVNode)
+    const div = container.childNodes[0] as MockElement
+    const span = div.childNodes[0] as MockElement
+    expect(span.tagName).toBe('span')
+    expect(span.textContent).toBe('new')
+  })
+
+  it('patch 更新子元素（数组到文本）', () => {
+    const container = createContainer()
+    const oldVNode = h('div', null, [h('span', null, 'child')])
+    renderer.mount(oldVNode, container)
+    const newVNode = h('div', null, 'replaced text')
+    renderer.patch(oldVNode, newVNode)
+    const div = container.childNodes[0] as MockElement
+    expect(div.textContent).toBe('replaced text')
+  })
+
+  it('patch 移除属性', () => {
+    const container = createContainer()
+    const oldVNode = h('div', { id: 'app', title: 'tooltip' }, null)
+    renderer.mount(oldVNode, container)
+    const newVNode = h('div', { id: 'app' }, null)
+    renderer.patch(oldVNode, newVNode)
+    const el = container.childNodes[0] as MockElement
+    expect(el.attributes['id']).toBe('app')
+    expect(el.attributes['title']).toBe(undefined)
+  })
+
+  it('patch 文本 VNode', () => {
+    const container = createContainer()
+    const oldVNode = textVNode('old')
+    renderer.mount(oldVNode, container)
+    const newVNode = textVNode('new')
+    renderer.patch(oldVNode, newVNode)
+    const textNode = container.childNodes[0] as MockText
+    expect(textNode.nodeValue).toBe('new')
+  })
+})
+
+// ================================================================
+//  补充测试 — unmount 卸载
+// ================================================================
+
+describe('unmount 补充测试', () => {
+  const mockRenderer = new MockRenderer()
+  const renderer = createRenderer(mockRenderer)
+
+  it('unmount 嵌套元素', () => {
+    const container = createContainer()
+    const vnode = h('div', null, [
+      h('span', null, 'child1'),
+      h('span', null, 'child2'),
+    ])
+    renderer.mount(vnode, container)
+    expect(container.childNodes.length).toBe(1)
+    renderer.unmount(vnode)
+    expect(container.childNodes.length).toBe(0)
+  })
+
+  it('unmount 文本 VNode', () => {
+    const container = createContainer()
+    const vnode = textVNode('to remove')
+    renderer.mount(vnode, container)
+    expect(container.childNodes.length).toBe(1)
+    renderer.unmount(vnode)
+    expect(container.childNodes.length).toBe(0)
+  })
+})
+
+// ================================================================
+//  补充测试 — props 传递
+// ================================================================
+
+describe('props 传递', () => {
+  const mockRenderer = new MockRenderer()
+  const renderer = createRenderer(mockRenderer)
+
+  it('多个 props 正确传递', () => {
+    const container = createContainer()
+    const vnode = h('input', {
+      type: 'text',
+      id: 'username',
+      name: 'user',
+      placeholder: 'Enter name',
+    }, null)
+    renderer.mount(vnode, container)
+    const el = container.childNodes[0] as MockElement
+    expect(el.attributes['type']).toBe('text')
+    expect(el.attributes['id']).toBe('username')
+    expect(el.attributes['name']).toBe('user')
+    expect(el.attributes['placeholder']).toBe('Enter name')
+  })
+
+  it('key 和 ref 不作为 DOM 属性', () => {
+    const container = createContainer()
+    const vnode = h('div', { key: 'unique', ref: 'myRef', id: 'real' }, 'test')
+    renderer.mount(vnode, container)
+    const el = container.childNodes[0] as MockElement
+    expect(el.attributes['key']).toBe(undefined)
+    expect(el.attributes['ref']).toBe(undefined)
+    expect(el.attributes['id']).toBe('real')
+  })
+})
+
+// ================================================================
+//  补充测试 — 事件处理
+// ================================================================
+
+describe('事件处理 补充测试', () => {
+  const mockRenderer = new MockRenderer()
+  const renderer = createRenderer(mockRenderer)
+
+  it('多个事件绑定', () => {
+    const container = createContainer()
+    let clickCount = 0
+    let inputVal = ''
+    const vnode = h('input', {
+      onClick: () => { clickCount++ },
+      onInput: (e: any) => { inputVal = e.detail },
+    }, null)
+    renderer.mount(vnode, container)
+    const el = container.childNodes[0] as MockElement
+    el.triggerEvent('click')
+    expect(clickCount).toBe(1)
+    el.triggerEvent('click')
+    expect(clickCount).toBe(2)
+    el.triggerEvent('input', 'hello')
+    expect(inputVal).toBe('hello')
+  })
+
+  it('patch 更新事件处理器', () => {
+    const container = createContainer()
+    let handler1Called = false
+    let handler2Called = false
+    const oldVNode = h('button', { onClick: () => { handler1Called = true } }, 'Click')
+    renderer.mount(oldVNode, container)
+    const newVNode = h('button', { onClick: () => { handler2Called = true } }, 'Click')
+    renderer.patch(oldVNode, newVNode)
+    const el = container.childNodes[0] as MockElement
+    el.triggerEvent('click')
+    expect(handler1Called).toBe(false)
+    expect(handler2Called).toBe(true)
+  })
+
+  it('patch 移除事件处理器', () => {
+    const container = createContainer()
+    let called = false
+    const oldVNode = h('button', { onClick: () => { called = true } }, 'Click')
+    renderer.mount(oldVNode, container)
+    const newVNode = h('button', null, 'Click')
+    renderer.patch(oldVNode, newVNode)
+    const el = container.childNodes[0] as MockElement
+    el.triggerEvent('click')
+    expect(called).toBe(false)
+  })
+})

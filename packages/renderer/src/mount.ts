@@ -9,6 +9,60 @@ import type { VNode } from './vnode'
 import { ShapeFlags, isFragment, isTextVNode, isCommentVNode } from './vnode'
 import { mountProp } from './props'
 
+// ================================================================
+//  首次渲染优化
+// ================================================================
+
+/** 是否处于首次渲染模式 */
+let isFirstRenderPass = false
+
+/** 首次渲染期间跳过的 effect 收集计数 */
+let skippedTrackingCount = 0
+
+/**
+ * 启用首次渲染优化模式
+ *
+ * 在首次渲染时暂时禁用响应式追踪，减少 effect 注册数量。
+ * 渲染完成后自动恢复追踪。
+ *
+ * @param fn  首次渲染函数
+ * @returns 渲染函数的返回值
+ */
+export function withFirstRenderOptimization<T>(fn: () => T): T {
+  const wasFirstRender = isFirstRenderPass
+  isFirstRenderPass = true
+  try {
+    return fn()
+  } finally {
+    if (!wasFirstRender) {
+      isFirstRenderPass = false
+    }
+  }
+}
+
+/**
+ * 检查是否应跳过依赖收集（首次渲染优化）
+ *
+ * @returns 是否应跳过
+ */
+export function shouldSkipTracking(): boolean {
+  return isFirstRenderPass
+}
+
+/**
+ * 获取跳过的追踪计数（用于调试）
+ */
+export function getSkippedTrackingCount(): number {
+  return skippedTrackingCount
+}
+
+/**
+ * 重置跳过的追踪计数
+ */
+export function resetSkippedTrackingCount(): void {
+  skippedTrackingCount = 0
+}
+
 /**
  * 挂载 VNode
  */

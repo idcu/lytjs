@@ -168,7 +168,7 @@ export interface SPAManifest {
 // ================================================================
 
 /** CLI 命令类型 */
-export type CLICommand = 'dev' | 'build' | 'preview'
+export type CLICommand = 'dev' | 'build' | 'preview' | 'migrate'
 
 /** 解析后的 CLI 参数 */
 export interface ParsedCLIArgs {
@@ -176,4 +176,6 @@ export interface ParsedCLIArgs {
   rootDir: string
   port?: number
   host?: string
+  /** 构建模式：spa（默认）、ssr、ssg */
+  mode?: 'spa' | 'ssr' | 'ssg'
 }

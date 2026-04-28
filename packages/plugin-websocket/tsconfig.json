@@ -1,0 +1,32 @@
+{
+  "compilerOptions": {
+    "target": "ES2018",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "emitDeclarationOnly": true,
+    "outDir": "./dist/types",
+    "rootDir": "./src",
+    "allowImportingTsExtensions": true,
+    "noEmit": false,
+    "noEmitOnError": false,
+    "lib": ["ES2018", "DOM", "DOM.Iterable"],
+    "types": ["node"],
+    "ignoreDeprecations": "6.0"
+  },
+  "include": [
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/__tests__"
+  ]
+}

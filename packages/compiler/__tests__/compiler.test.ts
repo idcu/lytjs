@@ -35,6 +35,7 @@ import {
   generate,
   compile,
   isStatic,
+  parseSFC,
 } from '../src/index'
 import type { RootNode, ElementNode, TextNode, ASTNode } from '../src/index'
 
@@ -286,5 +287,337 @@ describe('compile', () => {
     expect(span.staticFlag).toBe(1)
     expect(isStatic(div)).toBe(true)
     expect(isStatic(span)).toBe(true)
+  })
+})
+
+// ================================================================
+//  补充测试 — compile() 基础模板编译
+// ================================================================
+
+describe('compile 补充测试', () => {
+  it('编译简单文本节点', () => {
+    const result = compile('Hello World')
+    expect(result.code).toBeDefined()
+    expect(result.ast).not.toBe(null)
+  })
+
+  it('编译包含多个子元素的模板', () => {
+    const result = compile('<ul><li>1</li><li>2</li><li>3</li></ul>')
+    expect(result.code).toContain("'ul'")
+    expect(result.code).toContain("'li'")
+  })
+
+  it('编译结果包含 helpers 数组', () => {
+    const result = compile('<div id="app">test</div>')
+    expect(Array.isArray(result.helpers)).toBe(true)
+  })
+
+  it('编译结果包含 ast', () => {
+    const result = compile('<div>test</div>')
+    expect(result.ast).toBeDefined()
+    expect(result.ast.type).toBe('Root')
+  })
+
+  it('编译结果包含 hoistResult', () => {
+    const result = compile('<div>test</div>')
+    expect(result.hoistResult).toBeDefined()
+  })
+})
+
+// ================================================================
+//  补充测试 — v-if / v-else-if / v-else
+// ================================================================
+
+describe('v-if / v-else-if / v-else', () => {
+  it('v-if 指令解析', () => {
+    const ast = parseHTML('<div v-if="show">visible</div>')
+    const div = ast.children[0] as ElementNode
+    const ifDir = div.directives.find(d => d.name === 'if')
+    expect(ifDir).not.toBe(undefined)
+    expect(ifDir!.value).toBe('show')
+  })
+
+  it('v-else-if 指令解析', () => {
+    // v-else-if 不在 DIRECTIVE_NAMES 中，解析器不将其识别为指令
+    // 但仍会作为属性存在
+    const ast = parseHTML('<div v-else-if="type === \'a\'">A</div>')
+    const div = ast.children[0] as ElementNode
+    // v-else-if 被当作普通属性处理
+    const prop = div.props.find(p => p.name === 'v-else-if')
+    expect(prop).not.toBe(undefined)
+    expect(prop!.value).toBe("type === 'a'")
+  })
+
+  it('v-else 指令解析', () => {
+    // v-else 不在 DIRECTIVE_NAMES 中，解析器不将其识别为指令
+    const ast = parseHTML('<div v-else>default</div>')
+    const div = ast.children[0] as ElementNode
+    const prop = div.props.find(p => p.name === 'v-else')
+    expect(prop).not.toBe(undefined)
+  })
+
+  it('编译 v-if 模板', () => {
+    const result = compile('<div v-if="show">content</div>')
+    expect(result.code).toContain('show')
+  })
+})
+
+// ================================================================
+//  补充测试 — v-for 列表渲染
+// ================================================================
+
+describe('v-for 列表渲染', () => {
+  it('v-each 指令解析', () => {
+    const ast = parseHTML('<li v-each="item in items">{{ item.name }}</li>')
+    const li = ast.children[0] as ElementNode
+    const eachDir = li.directives.find(d => d.name === 'each')
+    expect(eachDir).not.toBe(undefined)
+    expect(eachDir!.value).toBe('item in items')
+  })
+
+  it('v-each 带索引', () => {
+    const ast = parseHTML('<li v-each="(item, index) in list">{{ index }}: {{ item }}</li>')
+    const li = ast.children[0] as ElementNode
+    const eachDir = li.directives.find(d => d.name === 'each')
+    expect(eachDir).not.toBe(undefined)
+    expect(eachDir!.value).toContain('item')
+    expect(eachDir!.value).toContain('index')
+    expect(eachDir!.value).toContain('list')
+  })
+
+  it('编译 v-for 模板', () => {
+    const result = compile('<ul><li v-each="item in items">{{ item }}</li></ul>')
+    expect(result.code).toContain('items')
+  })
+})
+
+// ================================================================
+//  补充测试 — v-bind 属性绑定
+// ================================================================
+
+describe('v-bind 属性绑定', () => {
+  it('v-bind 基础绑定', () => {
+    const ast = parseHTML('<div v-bind:title="tip"></div>')
+    const div = ast.children[0] as ElementNode
+    const bindDir = div.directives.find(d => d.name === 'bind')
+    expect(bindDir).not.toBe(undefined)
+    expect(bindDir!.arg).toBe('title')
+    expect(bindDir!.value).toBe('tip')
+  })
+
+  it('缩写 :attr 绑定', () => {
+    const ast = parseHTML('<div :id="dynamicId" :class="cls"></div>')
+    const div = ast.children[0] as ElementNode
+    const bindDirs = div.directives.filter(d => d.name === 'bind')
+    expect(bindDirs.length).toBe(2)
+  })
+
+  it('编译 v-bind 模板', () => {
+    const result = compile('<div v-bind:title="tip"></div>')
+    expect(result.code).toContain('tip')
+  })
+})
+
+// ================================================================
+//  补充测试 — v-on 事件绑定
+// ================================================================
+
+describe('v-on 事件绑定', () => {
+  it('v-on 基础绑定', () => {
+    const ast = parseHTML('<button v-on:click="handleClick">Click</button>')
+    const btn = ast.children[0] as ElementNode
+    const onDir = btn.directives.find(d => d.name === 'on')
+    expect(onDir).not.toBe(undefined)
+    // v-on:click 的 arg 是 ":click"（解析器保留冒号前缀）
+    expect(onDir!.arg).toBe(':click')
+    expect(onDir!.value).toBe('handleClick')
+  })
+
+  it('@ 缩写事件绑定', () => {
+    const ast = parseHTML('<input @input="onInput" @change="onChange" />')
+    const input = ast.children[0] as ElementNode
+    const onDirs = input.directives.filter(d => d.name === 'on')
+    expect(onDirs.length).toBe(2)
+  })
+
+  it('编译 v-on 模板', () => {
+    const result = compile('<button @click="handleClick">Click</button>')
+    expect(result.code).toContain('handleClick')
+  })
+})
+
+// ================================================================
+//  补充测试 — v-model 双向绑定
+// ================================================================
+
+describe('v-model 双向绑定', () => {
+  it('v-model 指令解析', () => {
+    // v-model 被映射为 bind 指令，arg 为 'model'
+    const ast = parseHTML('<input v-model="value" />')
+    const input = ast.children[0] as ElementNode
+    const bindDir = input.directives.find(d => d.name === 'bind' && d.arg === 'model')
+    expect(bindDir).not.toBe(undefined)
+    expect(bindDir!.value).toBe('value')
+  })
+
+  it('编译 v-model 模板', () => {
+    const result = compile('<input v-model="inputValue" />')
+    expect(result.code).toContain('inputValue')
+  })
+})
+
+// ================================================================
+//  补充测试 — v-slot 插槽
+// ================================================================
+
+describe('v-slot 插槽', () => {
+  it('v-slot 具名插槽', () => {
+    const ast = parseHTML('<template v-slot:header><h1>Title</h1></template>')
+    const tmpl = ast.children[0] as ElementNode
+    const slotDir = tmpl.directives.find(d => d.name === 'slot')
+    expect(slotDir).not.toBe(undefined)
+    expect(slotDir!.arg).toBe('header')
+  })
+
+  it('v-slot 作用域插槽', () => {
+    const ast = parseHTML('<template v-slot:default="props"><span>{{ props.text }}</span></template>')
+    const tmpl = ast.children[0] as ElementNode
+    const slotDir = tmpl.directives.find(d => d.name === 'slot')
+    expect(slotDir).not.toBe(undefined)
+    expect(slotDir!.value).toBe('props')
+  })
+})
+
+// ================================================================
+//  补充测试 — 文本插值 {{ }}
+// ================================================================
+
+describe('文本插值', () => {
+  it('简单插值', () => {
+    const ast = parseHTML('<p>{{ message }}</p>')
+    const p = ast.children[0] as ElementNode
+    const text = p.children[0] as TextNode
+    expect(text.isExpression).toBe(true)
+    expect(text.content).toContain('{{ message }}')
+  })
+
+  it('混合文本和插值', () => {
+    const ast = parseHTML('<p>Hello, {{ name }}!</p>')
+    const p = ast.children[0] as ElementNode
+    const text = p.children[0] as TextNode
+    expect(text.isExpression).toBe(true)
+    expect(text.content).toContain('Hello')
+    expect(text.content).toContain('{{ name }}')
+  })
+
+  it('编译插值模板', () => {
+    const result = compile('<div>{{ message }}</div>')
+    expect(result.code).toContain('message')
+  })
+})
+
+// ================================================================
+//  补充测试 — 静态节点优化
+// ================================================================
+
+describe('静态节点优化', () => {
+  it('动态节点不被标记为静态', () => {
+    const ast = parseHTML('<div class="static"><span>{{ dynamic }}</span></div>')
+    optimize(ast)
+    const div = ast.children[0] as ElementNode
+    const span = div.children[0] as ElementNode
+    // 包含动态插值的 span 不应被标记为静态
+    expect(isStatic(span)).toBe(false)
+  })
+
+  it('带 v-bind 的节点不被标记为静态', () => {
+    const ast = parseHTML('<div :class="cls">text</div>')
+    optimize(ast)
+    const div = ast.children[0] as ElementNode
+    expect(isStatic(div)).toBe(false)
+  })
+
+  it('带 v-if 的节点不被标记为静态', () => {
+    const ast = parseHTML('<div v-if="show">conditional</div>')
+    optimize(ast)
+    const div = ast.children[0] as ElementNode
+    expect(isStatic(div)).toBe(false)
+  })
+})
+
+// ================================================================
+//  补充测试 — parseSFC() SFC 解析
+// ================================================================
+
+describe('parseSFC', () => {
+  it('解析完整的 SFC', () => {
+    const source = `
+<template>
+  <div class="app">{{ message }}</div>
+</template>
+
+<script>
+export default {
+  data() { return { message: 'hello' } }
+}
+</script>
+
+<style scoped>
+.app { color: red; }
+</style>
+`
+    const descriptor = parseSFC(source, 'App.lyt')
+    expect(descriptor.filename).toBe('App.lyt')
+    expect(descriptor.template).not.toBe(null)
+    expect(descriptor.template!.content).toContain('{{ message }}')
+    expect(descriptor.script).not.toBe(null)
+    expect(descriptor.script!.content).toContain('export default')
+    expect(descriptor.styles.length).toBe(1)
+    expect(descriptor.styles[0].scoped).toBe(true)
+    expect(descriptor.styles[0].content).toContain('color: red')
+  })
+
+  it('解析只有 template 的 SFC', () => {
+    const source = `
+<template>
+  <div>minimal</div>
+</template>
+`
+    const descriptor = parseSFC(source)
+    expect(descriptor.template).not.toBe(null)
+    expect(descriptor.template!.content).toContain('minimal')
+    expect(descriptor.script).toBe(null)
+    expect(descriptor.styles.length).toBe(0)
+  })
+
+  it('解析多个 style 块', () => {
+    const source = `
+<template><div>test</div></template>
+<style>.a { color: red; }</style>
+<style scoped>.b { color: blue; }</style>
+`
+    const descriptor = parseSFC(source)
+    expect(descriptor.styles.length).toBe(2)
+    expect(descriptor.styles[0].scoped).toBe(false)
+    expect(descriptor.styles[1].scoped).toBe(true)
+  })
+
+  it('解析没有块的 SFC', () => {
+    const descriptor = parseSFC('empty content')
+    expect(descriptor.template).toBe(null)
+    expect(descriptor.script).toBe(null)
+    expect(descriptor.styles.length).toBe(0)
+  })
+
+  it('忽略 HTML 注释', () => {
+    const source = `
+<!-- 这是一个注释 -->
+<template>
+  <div>content</div>
+</template>
+`
+    const descriptor = parseSFC(source)
+    expect(descriptor.template).not.toBe(null)
+    expect(descriptor.template!.content).toContain('content')
   })
 })

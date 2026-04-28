@@ -36,7 +36,6 @@ import {
   compositionOnBeforeMount as lytOnBeforeMount,
   onBeforeUpdate as lytOnBeforeUpdate,
   onBeforeUnmount as lytOnBeforeUnmount,
-  defineEmits as lytDefineEmits,
 } from '@lytjs/component'
 
 // 从 @lytjs/core 导入渲染函数
@@ -255,7 +254,10 @@ export function onErrorCaptured(fn: (err: any, instance: any, info: string) => b
  * @see https://vuejs.org/api/composition-api-lifecycle.html#onrendertracked
  */
 export function onRenderTracked(fn: (event: any) => void): void {
-  console.warn('[Compat: onRenderTracked is a placeholder')
+  if (currentInstance) {
+    if (!currentInstance._renderTracked) currentInstance._renderTracked = []
+    currentInstance._renderTracked.push(fn)
+  }
 }
 
 /**
@@ -263,7 +265,10 @@ export function onRenderTracked(fn: (event: any) => void): void {
  * @see https://vuejs.org/api/composition-api-lifecycle.html#onrendertriggered
  */
 export function onRenderTriggered(fn: (event: any) => void): void {
-  console.warn('[Compat: onRenderTriggered is a placeholder')
+  if (currentInstance) {
+    if (!currentInstance._renderTriggered) currentInstance._renderTriggered = []
+    currentInstance._renderTriggered.push(fn)
+  }
 }
 
 /**
@@ -271,7 +276,10 @@ export function onRenderTriggered(fn: (event: any) => void): void {
  * @see https://vuejs.org/api/composition-api-lifecycle.html#onactivated
  */
 export function onActivated(fn: () => void): void {
-  console.warn('[Compat: onActivated is a placeholder')
+  if (currentInstance) {
+    if (!currentInstance._activatedHooks) currentInstance._activatedHooks = []
+    currentInstance._activatedHooks.push(fn)
+  }
 }
 
 /**
@@ -279,7 +287,10 @@ export function onActivated(fn: () => void): void {
  * @see https://vuejs.org/api/composition-api-lifecycle.html#ondeactivated
  */
 export function onDeactivated(fn: () => void): void {
-  console.warn('[Compat: onDeactivated is a placeholder')
+  if (currentInstance) {
+    if (!currentInstance._deactivatedHooks) currentInstance._deactivatedHooks = []
+    currentInstance._deactivatedHooks.push(fn)
+  }
 }
 
 /**
@@ -367,19 +378,32 @@ export const defineAsyncComponent = lytDefineAsyncComponent
  * @see https://vuejs.org/api/sfc-script-setup.html#defineprops
  */
 export function defineProps<T = any>(): T {
-  console.warn('[Compat: defineProps is a compiler macro. Use defineComponent({ props: {...} }) instead.')
+  if (currentInstance) {
+    return (currentInstance.props || {}) as T
+  }
+  console.warn('[Compat: defineProps should be used within setup(). Returning empty object.')
   return {} as T
 }
 
 /**
- * 定义组件 emits（编译器宏占位）
+ * 定义组件 emits（编译器宏 + 运行时支持）
  *
- * 在 Lyt.js 中，emits 通过 defineComponent 的 emits 选项定义。
- * 此函数包装了 @lytjs/component 的 defineEmits。
+ * 在 <script setup> 中使用时，编译器会提取参数并生成 emits 选项。
+ * 在运行时直接调用时，返回一个 emit 包装函数。
  *
  * @see https://vuejs.org/api/sfc-script-setup.html#defineemits
  */
-export const defineEmits = lytDefineEmits
+export function defineEmits<T extends (...args: any[]) => void>(emits?: string[]): any {
+  if (currentInstance) {
+    currentInstance._emits = emits || []
+    return (...args: any[]) => {
+      if (currentInstance && currentInstance.emit) {
+        currentInstance.emit(currentInstance._emits[0] || '', ...args)
+      }
+    }
+  }
+  return () => {}
+}
 
 /**
  * 为 props 设置默认值（编译器宏占位）
@@ -387,8 +411,13 @@ export const defineEmits = lytDefineEmits
  * @see https://vuejs.org/api/sfc-script-setup.html#withdefaults
  */
 export function withDefaults<T, D>(props: T, defaults: D): T & D {
-  console.warn('[Compat: withDefaults is a compiler macro. Use defineComponent({ props: { ...withDefaults } }) instead.')
-  return { ...props, ...defaults } as T & D
+  const result: any = { ...defaults }
+  for (const key in props) {
+    if (props[key] !== undefined) {
+      result[key] = props[key]
+    }
+  }
+  return result as T & D
 }
 
 /**
@@ -399,7 +428,46 @@ export function withDefaults<T, D>(props: T, defaults: D): T & D {
  * @see https://vuejs.org/api/sfc-script-setup.html#defineexpose
  */
 export function defineExpose<T = any>(exposed?: T): void {
-  console.warn('[Compat: defineExpose is a compiler macro. In Lyt.js, setup return values are automatically exposed.')
+  if (currentInstance && exposed) {
+    currentInstance._exposed = exposed
+  }
+}
+
+/**
+ * 定义双向绑定模型（编译器宏 + 运行时支持）
+ *
+ * 在 <script setup> 中使用时，编译器会将其转换为 prop + emit 代码。
+ * 在运行时直接调用时，返回一个 Proxy 对象作为 ref 使用。
+ *
+ * - defineModel() → 使用默认的 modelValue prop + update:modelValue emit
+ * - defineModel('count') → 使用 count prop + update:count emit
+ *
+ * @see https://vuejs.org/api/sfc-script-setup.html#definemodel
+ */
+export function defineModel<T = any>(name?: string, options?: any): { value: T } {
+  const modelName = name || 'modelValue'
+  const updateEvent = `update:${modelName}`
+  if (currentInstance) {
+    return new Proxy({} as any, {
+      get(_target, key) {
+        if (key === 'value') {
+          return (currentInstance as any).props?.[modelName]
+        }
+        return (currentInstance as any)[key as string]
+      },
+      set(_target, key, value) {
+        if (key === 'value') {
+          if (currentInstance && (currentInstance as any).emit) {
+            ;(currentInstance as any).emit(updateEvent, value)
+          }
+        } else {
+          ;(currentInstance as any)[key as string] = value
+        }
+        return true
+      },
+    })
+  }
+  return { value: undefined as any }
 }
 
 // ==========================================
@@ -411,7 +479,10 @@ export function defineExpose<T = any>(exposed?: T): void {
  * @see https://vuejs.org/api/composition-api-setup.html#useslots
  */
 export function useSlots(): Record<string, any> {
-  console.warn('[Compat: useSlots is a placeholder. Access slots via setup context.')
+  if (currentInstance) {
+    return currentInstance.slots || {}
+  }
+  console.warn('[Compat: useSlots should be used within setup(). Returning empty object.')
   return {}
 }
 
@@ -420,17 +491,28 @@ export function useSlots(): Record<string, any> {
  * @see https://vuejs.org/api/composition-api-setup.html#useattrs
  */
 export function useAttrs(): Record<string, any> {
-  console.warn('[Compat: useAttrs is a placeholder. Access attrs via setup context.')
+  if (currentInstance) {
+    return currentInstance.attrs || {}
+  }
+  console.warn('[Compat: useAttrs should be used within setup(). Returning empty object.')
   return {}
 }
 
 /**
- * 使用模板引用（占位）
+ * 使用模板引用
+ *
+ * 在 <script setup> 中使用时，编译器会将其转换为内部 ref 注册。
+ * 在运行时直接调用时，注册到当前组件实例的 _templateRefs 中。
+ *
  * @see https://vuejs.org/api/composition-api-setup.html#usetemplateRef
  */
 export function useTemplateRef<T = any>(key: string): { value: T | null } {
-  console.warn('[Compat: useTemplateRef is a placeholder. Use ref() and template ref attribute instead.')
-  return { value: null }
+  const ref = { value: null as T | null }
+  if (currentInstance) {
+    if (!currentInstance._templateRefs) currentInstance._templateRefs = {}
+    currentInstance._templateRefs[key] = ref
+  }
+  return ref
 }
 
 // ==========================================
@@ -450,6 +532,19 @@ export function isProxy(value: unknown): boolean {
  * @see https://vuejs.org/api/reactivity-utilities.html#toraw
  */
 export function proxyRefs<T extends object>(objectWithRefs: T): T {
-  console.warn('[Compat: proxyRefs is a placeholder. Use reactive() or toRefs() instead.')
-  return objectWithRefs
+  return new Proxy(objectWithRefs, {
+    get(target, key) {
+      const val = (target as any)[key]
+      return val && typeof val === 'object' && '__v_isRef' in val ? val.value : val
+    },
+    set(target, key, value) {
+      const val = (target as any)[key]
+      if (val && typeof val === 'object' && '__v_isRef' in val) {
+        val.value = value
+      } else {
+        (target as any)[key] = value
+      }
+      return true
+    }
+  })
 }

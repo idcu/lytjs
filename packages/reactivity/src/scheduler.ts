@@ -151,6 +151,47 @@ export function nextTick(): Promise<void> {
 }
 
 /**
+ * 同步刷新所有待执行的 job
+ *
+ * 强制立即执行队列中的所有 job，不等待微任务。
+ * 适用于需要在当前同步代码中获取最新渲染结果的场景。
+ *
+ * @returns 是否执行了任何 job
+ */
+export function flushSync(): boolean {
+  if (queue.size === 0 && pendingPostFlushCbs.length === 0) {
+    return false
+  }
+
+  // 取消已安排的微任务刷新
+  isFlushPending = false
+  currentFlushPromise = null
+
+  // 同步执行刷新
+  flushJobs()
+
+  return true
+}
+
+/**
+ * 检查是否有待执行的 job
+ *
+ * @returns 是否有待执行的 job
+ */
+export function hasPendingJobs(): boolean {
+  return queue.size > 0 || pendingPostFlushCbs.length > 0
+}
+
+/**
+ * 获取待执行 job 的数量
+ *
+ * @returns 待执行 job 数量
+ */
+export function getPendingJobCount(): number {
+  return queue.size + pendingPostFlushCbs.length
+}
+
+/**
  * 查询队列中是否包含指定的 job
  *
  * @param job - 要查询的 job

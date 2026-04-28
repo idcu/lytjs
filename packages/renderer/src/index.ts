@@ -62,7 +62,6 @@ export {
   patchProp,
   patchAllProps,
   patchElementProps,
-  PatchFlags as PatchPropFlags,
 } from './dom/patch-props'
 
 // ---- 事件系统 ----
@@ -71,7 +70,6 @@ export {
   getEventKey,
   parseEventModifier,
   createInvoker,
-  getEventInvokers,
   patchEvent,
   removeAllEventListeners,
 } from './dom/patch-events'

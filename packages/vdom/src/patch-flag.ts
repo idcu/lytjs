@@ -73,29 +73,19 @@ export function hasPatchFlag(flag: number | undefined, target: PatchFlags): bool
  * @returns 描述字符串数组
  */
 export function describePatchFlag(flag: number | undefined): string[] {
-  if (flag === null || flag === undefined) return ['NONE']
+  if (flag == null) return ['NONE']
   if (flag === PatchFlags.HOISTED) return ['HOISTED']
   if (flag === PatchFlags.BAIL) return ['BAIL']
-
   const names: string[] = []
-  const mapping: Record<number, string> = {
-    [PatchFlags.TEXT]: 'TEXT',
-    [PatchFlags.CLASS]: 'CLASS',
-    [PatchFlags.STYLE]: 'STYLE',
-    [PatchFlags.PROPS]: 'PROPS',
-    [PatchFlags.FULL_PROPS]: 'FULL_PROPS',
-    [PatchFlags.STABLE_FRAGMENT]: 'STABLE_FRAGMENT',
-    [PatchFlags.KEYED_FRAGMENT]: 'KEYED_FRAGMENT',
-    [PatchFlags.UNKEYED_FRAGMENT]: 'UNKEYED_FRAGMENT',
-    [PatchFlags.NEED_PATCH]: 'NEED_PATCH',
-    [PatchFlags.DYNAMIC_SLOTS]: 'DYNAMIC_SLOTS',
+  const checks: [number, string][] = [
+    [PatchFlags.TEXT, 'TEXT'], [PatchFlags.CLASS, 'CLASS'],
+    [PatchFlags.STYLE, 'STYLE'], [PatchFlags.PROPS, 'PROPS'],
+    [PatchFlags.FULL_PROPS, 'FULL_PROPS'], [PatchFlags.STABLE_FRAGMENT, 'STABLE_FRAGMENT'],
+    [PatchFlags.KEYED_FRAGMENT, 'KEYED_FRAGMENT'], [PatchFlags.UNKEYED_FRAGMENT, 'UNKEYED_FRAGMENT'],
+    [PatchFlags.NEED_PATCH, 'NEED_PATCH'], [PatchFlags.DYNAMIC_SLOTS, 'DYNAMIC_SLOTS'],
+  ]
+  for (const [value, name] of checks) {
+    if (flag & value) names.push(name)
   }
-
-  for (const [value, name] of Object.entries(mapping)) {
-    if (flag & Number(value)) {
-      names.push(name)
-    }
-  }
-
   return names.length > 0 ? names : ['NONE']
 }

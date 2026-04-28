@@ -5,7 +5,7 @@
  */
 
 export { parseSFC, extractExportDefault } from './parse-sfc';
-export type { SFCDescriptor, SFCBlock, SFCStyleBlock } from './parse-sfc';
+export type { SFCDescriptor, SFCBlock, SFCScriptBlock, SFCStyleBlock } from './parse-sfc';
 
 export { compileSFC, scopeCSS } from './compile-sfc';
 export type { SFCCompileResult } from './compile-sfc';

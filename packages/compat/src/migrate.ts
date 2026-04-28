@@ -407,6 +407,198 @@ function analyzeMigrationIssues(source: string): MigrationIssue[] {
       })
     }
 
+    // 检查 <style scoped>
+    if (/<style[^>]*scoped/.test(line)) {
+      issues.push({
+        type: 'style',
+        severity: 'warning',
+        description: '<style scoped> 需要转换为 Lyt.js scoped 样式',
+        suggestion: '将 <style scoped> 替换为 <style> 并添加 scoped CSS 注释标识',
+        line: lineNum,
+        original: line.trim(),
+      })
+    }
+
+    // ---- 新增 Vue 3 API 检测 ----
+
+    // 检查 defineModel (Vue 3.4+)
+    if (/\bdefineModel\b/.test(line) && !/defineModel/.test(line.replace(/\bdefineModelOptions\b/, ''))) {
+      issues.push({
+        type: 'api',
+        severity: 'warning',
+        description: 'defineModel (Vue 3.4+) 是编译器宏，需要手动转换',
+        suggestion: '在 defineComponent({ props: {...}, emits: [...] }) 中定义 props 和 emits，使用 modelValue prop 和 update:modelValue 事件',
+        line: lineNum,
+        original: line.trim(),
+      })
+    }
+
+    // 检查 useTemplateRef (Vue 3.5+)
+    if (/\buseTemplateRef\b/.test(line)) {
+      issues.push({
+        type: 'api',
+        severity: 'warning',
+        description: 'useTemplateRef (Vue 3.5+) 需要替换为 Lyt.js ref',
+        suggestion: '使用 ref() 配合 template ref 属性替代: const el = ref(null); <div ref="el">',
+        line: lineNum,
+        original: line.trim(),
+      })
+    }
+
+    // 检查 defineSlots (Vue 3.3+)
+    if (/\bdefineSlots\b/.test(line)) {
+      issues.push({
+        type: 'api',
+        severity: 'info',
+        description: 'defineSlots (Vue 3.3+) 是编译器宏，Lyt.js 中不需要',
+        suggestion: 'Lyt.js 的 slots 通过 setup 上下文自动可用',
+        line: lineNum,
+        original: line.trim(),
+      })
+    }
+
+    // 检查 toValue
+    if (/\btoValue\b/.test(line)) {
+      issues.push({
+        type: 'api',
+        severity: 'info',
+        description: 'toValue 需要替换为 Lyt.js 兼容实现',
+        suggestion: '使用 @lytjs/compat 中提供的 toValue 兼容函数，或手动判断: typeof val === "function" ? val() : val',
+        line: lineNum,
+        original: line.trim(),
+      })
+    }
+
+    // 检查 toRefs
+    if (/\btoRefs\b/.test(line)) {
+      issues.push({
+        type: 'api',
+        severity: 'info',
+        description: 'toRefs 需要替换为 @lytjs/compat 中的兼容实现',
+        suggestion: 'import { toRefs } from "@lytjs/compat"',
+        line: lineNum,
+        original: line.trim(),
+      })
+    }
+
+    // 检查 useId (Vue 3.5+)
+    if (/\buseId\b/.test(line)) {
+      issues.push({
+        type: 'api',
+        severity: 'info',
+        description: 'useId (Vue 3.5+) 需要替换为 Lyt.js 兼容实现',
+        suggestion: '使用 @lytjs/compat 中的 useId 或自行实现: let counter = 0; const useId = () => "lyt-" + (++counter)',
+        line: lineNum,
+        original: line.trim(),
+      })
+    }
+
+    // 检查 <script setup> 语法
+    if (/<script[^>]*setup[^>]*>/.test(line)) {
+      issues.push({
+        type: 'api',
+        severity: 'warning',
+        description: '<script setup> 是编译器语法糖，需要转换为标准 setup() 函数',
+        suggestion: '将 <script setup> 中的顶层变量和函数移入 defineComponent({ setup() { ... } }) 中',
+        line: lineNum,
+        original: line.trim(),
+      })
+    }
+
+    // 检查 v-model 命名参数用法 (v-model:title)
+    if (/v-model:[a-zA-Z][\w-]*/.test(line)) {
+      issues.push({
+        type: 'directive',
+        severity: 'warning',
+        description: 'v-model 命名参数 (v-model:title) 需要转换',
+        suggestion: '将 v-model:title="val" 替换为 :title="val" @update:title="val = $event"',
+        line: lineNum,
+        original: line.trim(),
+      })
+    }
+
+    // 检查 Transition 组件
+    if (/<Transition[^>]*>/.test(line) || /<transition[^>]*>/.test(line)) {
+      issues.push({
+        type: 'component',
+        severity: 'info',
+        description: 'Transition 组件已通过 @lytjs/compat 提供',
+        suggestion: '确保从 @lytjs/compat 导入 Transition',
+        line: lineNum,
+      })
+    }
+
+    // 检查 TransitionGroup 组件
+    if (/<TransitionGroup[^>]*>/.test(line) || /<transition-group[^>]*>/.test(line)) {
+      issues.push({
+        type: 'component',
+        severity: 'info',
+        description: 'TransitionGroup 组件已通过 @lytjs/compat 提供',
+        suggestion: '确保从 @lytjs/compat 导入 TransitionGroup',
+        line: lineNum,
+      })
+    }
+
+    // 检查 Pinia defineStore
+    if (/\bdefineStore\b/.test(line)) {
+      issues.push({
+        type: 'ecosystem',
+        severity: 'warning',
+        description: 'Pinia defineStore 需要替换为 @lytjs/store',
+        suggestion: '将 defineStore 替换为 @lytjs/store 中的 createStore，并调整 API 调用',
+        line: lineNum,
+        original: line.trim(),
+      })
+    }
+
+    // 检查 Pinia createPinia
+    if (/\bcreatePinia\b/.test(line)) {
+      issues.push({
+        type: 'ecosystem',
+        severity: 'warning',
+        description: 'Pinia createPinia 需要替换为 @lytjs/store',
+        suggestion: '将 createPinia 替换为 @lytjs/store 中的 createStore',
+        line: lineNum,
+        original: line.trim(),
+      })
+    }
+
+    // 检查 Vue Router useRoute
+    if (/\buseRoute\b/.test(line)) {
+      issues.push({
+        type: 'ecosystem',
+        severity: 'warning',
+        description: 'Vue Router useRoute 需要替换为 @lytjs/router',
+        suggestion: '将 useRoute 替换为 @lytjs/plugin-vue-router 中的 useRoute',
+        line: lineNum,
+        original: line.trim(),
+      })
+    }
+
+    // 检查 Vue Router useRouter
+    if (/\buseRouter\b/.test(line)) {
+      issues.push({
+        type: 'ecosystem',
+        severity: 'warning',
+        description: 'Vue Router useRouter 需要替换为 @lytjs/router',
+        suggestion: '将 useRouter 替换为 @lytjs/plugin-vue-router 中的 useRouter',
+        line: lineNum,
+        original: line.trim(),
+      })
+    }
+
+    // 检查 Vue Router createRouter
+    if (/\bcreateRouter\b/.test(line)) {
+      issues.push({
+        type: 'ecosystem',
+        severity: 'warning',
+        description: 'Vue Router createRouter 需要替换为 @lytjs/router',
+        suggestion: '将 createRouter 替换为 @lytjs/plugin-vue-router 中的 createRouter',
+        line: lineNum,
+        original: line.trim(),
+      })
+    }
+
     // 检查 Teleport 组件
     if (/<Teleport/.test(line)) {
       issues.push({
