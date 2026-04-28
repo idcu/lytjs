@@ -1,0 +1,32 @@
+[
+  {
+    "name": "@lytjs/common-is",
+    "path": "packages/common/packages/is/dist/index.mjs",
+    "limit": "2 KB",
+    "import": "{ isString, isNumber, isBoolean }"
+  },
+  {
+    "name": "@lytjs/common-object",
+    "path": "packages/common/packages/object/dist/index.mjs",
+    "limit": "3 KB",
+    "import": "{ deepClone, deepMerge, pick, omit }"
+  },
+  {
+    "name": "@lytjs/common",
+    "path": "packages/common/packages/common/dist/index.mjs",
+    "limit": "15 KB",
+    "import": "{ isString, deepClone, debounce, EventEmitter }"
+  },
+  {
+    "name": "@lytjs/reactivity",
+    "path": "packages/reactivity/dist/index.mjs",
+    "limit": "12 KB",
+    "import": "{ reactive, ref, computed, watch, watchEffect }"
+  },
+  {
+    "name": "@lytjs/core",
+    "path": "packages/core/dist/index.mjs",
+    "limit": "35 KB",
+    "import": "{ createApp, h, nextTick }"
+  }
+]
