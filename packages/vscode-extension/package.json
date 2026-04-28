@@ -285,7 +285,7 @@
   "devDependencies": {
     "@types/node": "^18.x",
     "@types/vscode": "^1.80.0",
-    "typescript": "^5.0.1"
+    "typescript": "^6.0.3"
   },
   "dependencies": {
     "@lytjs/compiler": "workspace:*",
