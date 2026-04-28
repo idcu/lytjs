@@ -9,7 +9,6 @@
 
 import { defineComponent } from '@lytjs/component';
 import { reactive, watch, ref } from '@lytjs/reactivity';
-import { generateId } from '../a11y/aria-utils';
 import { handleArrowKeys } from '../a11y/keyboard-nav';
 
 export const Tabs = defineComponent({
@@ -100,9 +99,11 @@ export const Tabs = defineComponent({
         case 'Enter':
         case ' ':
           e.preventDefault();
-          const tab = enabledTabs[index];
-          if (tab) {
-            handleTabClick(tab.key, index);
+          {
+            const tab = enabledTabs[index];
+            if (tab) {
+              handleTabClick(tab.key, index);
+            }
           }
           break;
       }

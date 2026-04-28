@@ -258,7 +258,7 @@ export function patchDOMProps(
   // 遍历新 props，更新变化的属性
   for (let i = 0; i < newKeys.length; i++) {
     const key = newKeys[i];
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
     const newValue = newProps![key];
     const oldValue = oldProps ? oldProps[key] : undefined;
 

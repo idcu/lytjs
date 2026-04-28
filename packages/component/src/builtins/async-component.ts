@@ -225,7 +225,7 @@ export function defineAsyncComponent(
         // 清除定时器
         clearTimers();
 
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
         return asyncState.resolvedComponent!;
       })
       .catch((error: Error) => {

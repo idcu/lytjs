@@ -128,7 +128,7 @@ export class OllamaProvider implements AIProviderInterface {
     } catch (error) {
       clearTimeout(timeoutId)
       if ((error as Error).name === 'AbortError') {
-        throw new Error(`Ollama API request timed out after ${options?.timeout ?? this.defaultTimeout}ms`)
+        throw new Error(`Ollama API request timed out after ${options?.timeout ?? this.defaultTimeout}ms`, { cause: error })
       }
       throw error
     }
@@ -225,7 +225,7 @@ export class OllamaProvider implements AIProviderInterface {
     } catch (error) {
       clearTimeout(timeoutId)
       if ((error as Error).name === 'AbortError') {
-        throw new Error(`Ollama API request timed out after ${options?.timeout ?? this.defaultTimeout}ms`)
+        throw new Error(`Ollama API request timed out after ${options?.timeout ?? this.defaultTimeout}ms`, { cause: error })
       }
       throw error
     }
@@ -261,7 +261,7 @@ export class OllamaProvider implements AIProviderInterface {
       if (!response.ok) return []
 
       const data = await response.json()
-      this._availableModels = ((data.models || []) as any[]).map((m: any) => m.name) || []
+      this._availableModels = ((data.models || []) as Array<{ name: string }>).map((m) => m.name) || []
       return this._availableModels
     } catch {
       return []

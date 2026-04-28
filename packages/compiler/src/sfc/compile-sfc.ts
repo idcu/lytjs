@@ -14,7 +14,7 @@
  */
 
 import { compile } from '../index';
-import type { SFCDescriptor, SFCScriptBlock } from './parse-sfc';
+import type { SFCDescriptor } from './parse-sfc';
 import { extractExportDefault } from './parse-sfc';
 
 // ============================================================
@@ -155,7 +155,7 @@ function compileScriptSetup(scriptContent: string): ScriptSetupCompileResult {
   while ((modelMatch = defineModelRe.exec(cleanedContent)) !== null) {
     const varName = modelMatch[1] || 'model';
     const modelName = modelMatch[2] || modelMatch[3] || 'modelValue';
-    const options = modelMatch[4]?.trim() || '';
+    const _options = modelMatch[4]?.trim() || '';
 
     // 生成对应的 prop 名和 update 事件名
     const updateEvent = `update:${modelName}`;
@@ -871,7 +871,7 @@ function generateModuleCode(
       // 更新 return 语句
       setupCode = setupCode.replace(
         /return \{ ([^}]+) \};/,
-        (_, bindings) => `return { ${setupBindings.join(', ')} };`
+        (_, _bindings) => `return { ${setupBindings.join(', ')} };`
       );
     }
 

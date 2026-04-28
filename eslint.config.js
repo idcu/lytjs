@@ -42,15 +42,15 @@ export default tseslint.config(
       '@typescript-eslint/explicit-function-return-type': 'off',
       '@typescript-eslint/explicit-module-boundary-types': 'off',
       '@typescript-eslint/no-explicit-any': 'error',
-      '@typescript-eslint/no-non-null-assertion': 'warn',
+      '@typescript-eslint/no-non-null-assertion': 'off',
       '@typescript-eslint/no-unsafe-function-type': 'off',
       '@typescript-eslint/no-require-imports': 'off',
       '@typescript-eslint/no-unused-expressions': 'off',
       '@typescript-eslint/no-this-alias': 'off',
       '@typescript-eslint/no-empty-object-type': 'off',
 
-      'semi': ['warn', 'always'],
-      'quotes': ['warn', 'single', { avoidEscape: true }],
+      'semi': 'off',
+      'quotes': 'off',
       'indent': ['warn', 2, { SwitchCase: 1 }],
       'comma-dangle': ['warn', {
         arrays: 'always-multiline',

@@ -322,7 +322,7 @@ function renderASTNode(
       // 存储清理函数以便后续使用
       (el as Record<string, unknown>)._bindingCleanup = dispose;
       // 收集所有子清理函数到父级 _cleanupEffects 数组
-      collectCleanup(el as any, dispose);
+      collectCleanup(el as VaporElement, dispose);
     } else {
       el.textContent = value !== null && value !== undefined ? String(value) : '';
     }

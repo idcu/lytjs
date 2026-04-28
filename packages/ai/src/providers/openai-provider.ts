@@ -145,16 +145,16 @@ export class OpenAIProvider implements AIProviderInterface {
         content: data.choices[0]?.message?.content || '',
         usage: data.usage
           ? {
-              promptTokens: data.usage.prompt_tokens,
-              completionTokens: data.usage.completion_tokens,
-              totalTokens: data.usage.total_tokens,
-            }
+            promptTokens: data.usage.prompt_tokens,
+            completionTokens: data.usage.completion_tokens,
+            totalTokens: data.usage.total_tokens,
+          }
           : undefined,
       }
     } catch (error) {
       clearTimeout(timeoutId)
       if ((error as Error).name === 'AbortError') {
-        throw new Error(`OpenAI API request timed out after ${options?.timeout ?? this.defaultTimeout}ms`)
+        throw new Error(`OpenAI API request timed out after ${options?.timeout ?? this.defaultTimeout}ms`, { cause: error })
       }
       throw error
     }
@@ -268,7 +268,7 @@ export class OpenAIProvider implements AIProviderInterface {
     } catch (error) {
       clearTimeout(timeoutId)
       if ((error as Error).name === 'AbortError') {
-        throw new Error(`OpenAI API request timed out after ${options?.timeout ?? this.defaultTimeout}ms`)
+        throw new Error(`OpenAI API request timed out after ${options?.timeout ?? this.defaultTimeout}ms`, { cause: error })
       }
       throw error
     }

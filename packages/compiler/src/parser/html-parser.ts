@@ -16,7 +16,6 @@
 import {
   type RootNode,
   type ElementNode,
-  type TextNode,
   type AttributeNode,
   type DirectiveNode,
   type Position,

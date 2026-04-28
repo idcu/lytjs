@@ -536,7 +536,7 @@ class MiniAppStorageAdapter implements StorageAdapter {
         return null;
       }
       return typeof value === 'string' ? value : JSON.stringify(value);
-    } catch (e) {
+    } catch (_e) {
       return null;
     }
   }
@@ -567,7 +567,7 @@ class MiniAppStorageAdapter implements StorageAdapter {
   removeItem(key: string): void {
     try {
       this._wx.removeStorageSync(key);
-    } catch (e) {
+    } catch (_e) {
       // 静默处理
     }
   }
@@ -578,7 +578,7 @@ class MiniAppStorageAdapter implements StorageAdapter {
   clear(): void {
     try {
       this._wx.clearStorageSync();
-    } catch (e) {
+    } catch (_e) {
       // 静默处理
     }
   }
@@ -590,7 +590,7 @@ class MiniAppStorageAdapter implements StorageAdapter {
     try {
       const info = this._wx.getStorageInfoSync();
       return info.keys || [];
-    } catch (e) {
+    } catch (_e) {
       return [];
     }
   }
@@ -605,7 +605,7 @@ class MiniAppStorageAdapter implements StorageAdapter {
         currentSize: info.currentSize || 0,
         limitSize: info.limitSize || 10240,
       };
-    } catch (e) {
+    } catch (_e) {
       return { currentSize: 0, limitSize: 10240 };
     }
   }
@@ -960,7 +960,7 @@ export class GlobalStateManager {
     if (!this._wx) return;
     try {
       this._wx.setStorageSync(this._persistKey, this._state);
-    } catch (e) {
+    } catch (_e) {
       // 持久化失败不影响运行
     }
   }

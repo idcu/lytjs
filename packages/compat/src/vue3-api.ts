@@ -532,19 +532,16 @@ export function isProxy(value: unknown): boolean {
  * @see https://vuejs.org/api/reactivity-utilities.html#toraw
  */
 export function proxyRefs<T extends object>(objectWithRefs: T): T {
-  return new Proxy(objectWithRefs, {
-    get(target, key) {
-      const val = (target as any)[key]
-      return val && typeof val === 'object' && '__v_isRef' in val ? val.value : val
-    },
-    set(target, key, value) {
-      const val = (target as any)[key]
-      if (val && typeof val === 'object' && '__v_isRef' in val) {
-        val.value = value
-      } else {
-        (target as any)[key] = value
-      }
-      return true
+  for (const key of Object.keys(objectWithRefs)) {
+    const val = (objectWithRefs as Record<string, unknown>)[key]
+    if (val && typeof val === 'object' && '__v_isRef' in (val as Record<string, unknown>)) {
+      Object.defineProperty(objectWithRefs, key, {
+        get() { return (val as { value: unknown }).value },
+        set(newVal: unknown) { (val as { value: unknown }).value = newVal },
+        enumerable: true,
+        configurable: true,
+      })
     }
-  })
+  }
+  return objectWithRefs
 }

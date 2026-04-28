@@ -87,7 +87,7 @@ export class FocusTrap {
     this.isActive = true;
     this.isPaused = false;
 
-    const doc = (globalThis as any).document as Document;
+    const doc = (globalThis as unknown as { document: Document }).document;
 
     // 保存当前焦点元素
     this.previousActiveElement = doc.activeElement as HTMLElement;
@@ -111,7 +111,7 @@ export class FocusTrap {
     this.isActive = false;
     this.isPaused = false;
 
-    const doc = (globalThis as any).document as Document;
+    const doc = (globalThis as unknown as { document: Document }).document;
 
     // 解绑键盘事件
     doc.removeEventListener('keydown', this.handleKeydown);
@@ -187,7 +187,7 @@ export class FocusTrap {
 
     const first = focusable[0];
     const last = focusable[focusable.length - 1];
-    const doc = (globalThis as any).document as Document;
+    const doc = (globalThis as unknown as { document: Document }).document;
     const active = doc.activeElement;
 
     if (e.shiftKey) {

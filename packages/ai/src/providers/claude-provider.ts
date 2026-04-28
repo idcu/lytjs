@@ -167,7 +167,7 @@ export class ClaudeProvider implements AIProviderInterface {
     } catch (error) {
       clearTimeout(timeoutId)
       if ((error as Error).name === 'AbortError') {
-        throw new Error(`Claude API request timed out after ${options?.timeout ?? this.defaultTimeout}ms`)
+        throw new Error(`Claude API request timed out after ${options?.timeout ?? this.defaultTimeout}ms`, { cause: error })
       }
       throw error
     }
@@ -267,7 +267,7 @@ export class ClaudeProvider implements AIProviderInterface {
     } catch (error) {
       clearTimeout(timeoutId)
       if ((error as Error).name === 'AbortError') {
-        throw new Error(`Claude API request timed out after ${options?.timeout ?? this.defaultTimeout}ms`)
+        throw new Error(`Claude API request timed out after ${options?.timeout ?? this.defaultTimeout}ms`, { cause: error })
       }
       throw error
     }

@@ -10,7 +10,7 @@
 import { defineComponent, onMounted, onUnmounted } from '@lytjs/component';
 import { reactive } from '@lytjs/reactivity';
 import { generateId } from '../a11y/aria-utils';
-import { handleArrowKeys, handleEscape, handleActivation } from '../a11y/keyboard-nav';
+import { handleArrowKeys } from '../a11y/keyboard-nav';
 
 export const Select = defineComponent({
   name: 'LytSelect',
@@ -161,7 +161,7 @@ export const Select = defineComponent({
 
     const handleListKeydown = (e: KeyboardEvent) => {
       const opts = filteredOptions();
-      const enabledOpts = opts.filter((o: any) => !o.disabled);
+      const enabledOpts = opts.filter((o: { disabled?: boolean }) => !o.disabled);
 
       switch (e.key) {
         case 'ArrowDown':

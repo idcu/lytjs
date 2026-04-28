@@ -80,7 +80,7 @@ let currentOptions: AxeHelperOptions = { ...defaultOptions };
 // ================================================================
 
 /** 可聚焦的交互元素标签 */
-const INTERACTIVE_TAGS = new Set([
+const _INTERACTIVE_TAGS = new Set([
   'BUTTON', 'A', 'INPUT', 'SELECT', 'TEXTAREA',
   'SUMMARY', 'DETAILS',
 ]);
@@ -142,7 +142,7 @@ function getAttr(el: A11yElement, key: string): string | null {
 /**
  * 检查元素是否有某个属性（兼容 mock DOM 和真实 DOM）
  */
-function hasAttr(el: A11yElement, key: string): boolean {
+function _hasAttr(el: A11yElement, key: string): boolean {
   if (el.hasAttribute) {
     return el.hasAttribute(key);
   }
@@ -190,11 +190,11 @@ function hasAccessibleName(el: A11yElement): boolean {
 /**
  * 收集元素及其所有子元素
  */
-function collectElements(el: A11yElement): A11yElement[] {
+function _collectElements(el: A11yElement): A11yElement[] {
   const result: A11yElement[] = [el];
   if (el.children) {
     for (const child of el.children) {
-      result.push(...collectElements(child));
+      result.push(..._collectElements(child));
     }
   }
   return result;
@@ -461,7 +461,7 @@ function checkColorContrast(elements: A11yElement[]): A11yViolation[] {
 
   for (const el of elements) {
     // 检查内联 style 中的 color 和 background-color
-    const style = (el as any).style;
+    const style = (el as HTMLElement).style;
     if (!style || typeof style !== 'object') continue;
 
     const color = style.color || style.getPropertyValue?.('color');

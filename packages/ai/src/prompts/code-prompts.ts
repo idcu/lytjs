@@ -48,7 +48,7 @@ export function inlineCompletionPrompt(context: {
 }): string {
   const { beforeCursor, afterCursor, filePath, language } = context
 
-  let prompt = `${CODE_CONTEXT}
+  const prompt = `${CODE_CONTEXT}
 
 请补全以下代码中光标位置的内容。
 

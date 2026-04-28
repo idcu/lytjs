@@ -121,12 +121,11 @@ export const DropdownMenu = defineComponent({
 
     /** 获取可聚焦的菜单项 */
     const getFocusableItems = () => {
-      const result: any[] = [];
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      props.items.forEach((item: any) => {
+      const result: Array<{ key?: string | number; label: string; disabled?: boolean }> = [];
+      props.items.forEach((item) => {
         if (isDivider(item)) return;
         if (isGroup(item) && item.children) {
-          item.children.forEach((child: any) => {
+          item.children.forEach((child: { disabled?: boolean }) => {
             if (!child.disabled) result.push(child);
           });
         } else if (!item.disabled) {
@@ -160,8 +159,10 @@ export const DropdownMenu = defineComponent({
           if (!state.isVisible) {
             show();
           }
-          const focusable = getFocusableItems();
-          state.focusedIndex = focusable.length - 1;
+          {
+            const focusable = getFocusableItems();
+            state.focusedIndex = focusable.length - 1;
+          }
           break;
         case 'Escape':
           if (state.isVisible) {
