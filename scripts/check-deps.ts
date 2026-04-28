@@ -71,9 +71,21 @@ const LAYER_MAP: Record<string, number> = {
 // 允许的跨层依赖（例外情况）
 const ALLOWED_CROSS_LAYER: Record<string, Set<string>> = {
   // L4 包允许依赖 L0 + L1（不需要 L2/L3）
-  "@lytjs/router": new Set(["@lytjs/common-*", "@lytjs/reactivity", "@lytjs/vdom"]),
-  "@lytjs/store": new Set(["@lytjs/common-*", "@lytjs/reactivity", "@lytjs/vdom"]),
-  "@lytjs/compat": new Set(["@lytjs/common-*", "@lytjs/reactivity", "@lytjs/vdom"]),
+  "@lytjs/router": new Set([
+    "@lytjs/common-*",
+    "@lytjs/reactivity",
+    "@lytjs/vdom",
+  ]),
+  "@lytjs/store": new Set([
+    "@lytjs/common-*",
+    "@lytjs/reactivity",
+    "@lytjs/vdom",
+  ]),
+  "@lytjs/compat": new Set([
+    "@lytjs/common-*",
+    "@lytjs/reactivity",
+    "@lytjs/vdom",
+  ]),
 };
 
 interface Violation {
@@ -122,7 +134,11 @@ function findPackageJsonFiles(dir: string): string[] {
       }
 
       // 递归搜索子目录（但排除 node_modules 和 dist）
-      if (entry.name !== "node_modules" && entry.name !== "dist" && entry.name !== ".turbo") {
+      if (
+        entry.name !== "node_modules" &&
+        entry.name !== "dist" &&
+        entry.name !== ".turbo"
+      ) {
         results.push(...findPackageJsonFiles(fullPath));
       }
     }
@@ -187,7 +203,10 @@ function checkDependencies(): Violation[] {
       // 检查跨层依赖（跳过相邻层）
       if (targetLayer < sourceLayer - 1) {
         const allowed = ALLOWED_CROSS_LAYER[sourceName];
-        if (!allowed || !allowed.has(depName) && !allowed.has(`@lytjs/common-*`)) {
+        if (
+          !allowed ||
+          (!allowed.has(depName) && !allowed.has(`@lytjs/common-*`))
+        ) {
           violations.push({
             source: sourceName,
             target: depName,

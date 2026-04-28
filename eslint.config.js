@@ -14,6 +14,7 @@ export default tseslint.config(
       "**/coverage/**",
       "docs/.vitepress/cache/**",
       "docs/.vitepress/dist/**",
+      "docs/.vitepress/**",
       "packages/_templates/**",
     ],
   },
@@ -39,6 +40,11 @@ export default tseslint.config(
   // TypeScript 特定规则
   {
     files: ["**/*.ts", "**/*.tsx"],
+    languageOptions: {
+      parserOptions: {
+        project: true,
+      },
+    },
     rules: {
       "@typescript-eslint/no-unused-vars": [
         "error",

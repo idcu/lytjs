@@ -38,7 +38,11 @@ function findPackageJsonFiles(dir: string): string[] {
         results.push(pkgJsonPath);
       }
 
-      if (entry.name !== "node_modules" && entry.name !== "dist" && entry.name !== ".turbo") {
+      if (
+        entry.name !== "node_modules" &&
+        entry.name !== "dist" &&
+        entry.name !== ".turbo"
+      ) {
         results.push(...findPackageJsonFiles(fullPath));
       }
     }
@@ -64,7 +68,11 @@ function syncVersions(targetVersion: string): void {
     }
 
     // 更新 workspace 依赖的版本号（如果有显式版本）
-    const depFields = ["dependencies", "devDependencies", "peerDependencies"] as const;
+    const depFields = [
+      "dependencies",
+      "devDependencies",
+      "peerDependencies",
+    ] as const;
     for (const field of depFields) {
       if (pkg[field]) {
         for (const [dep, version] of Object.entries(pkg[field])) {
@@ -75,7 +83,9 @@ function syncVersions(targetVersion: string): void {
               // 如果是精确版本号，更新为新版本
               if (/^\d+\.\d+\.\d+$/.test(semverPart)) {
                 pkg[field][dep] = `workspace:^${targetVersion}`;
-                console.log(`  📝 ${pkg.name}: ${dep} ${version} → workspace:^${targetVersion}`);
+                console.log(
+                  `  📝 ${pkg.name}: ${dep} ${version} → workspace:^${targetVersion}`,
+                );
               }
             }
           }
@@ -114,7 +124,7 @@ function main(): void {
   // 验证版本号格式
   if (!/^\d+\.\d+\.\d+(-\w+\.\d+)?$/.test(targetVersion)) {
     console.error(`❌ 无效的版本号格式: ${targetVersion}`);
-    console.error('   期望格式: X.Y.Z 或 X.Y.Z-prerelease.N');
+    console.error("   期望格式: X.Y.Z 或 X.Y.Z-prerelease.N");
     process.exit(1);
   }
 
