@@ -1,0 +1,25 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "composite": false,
+    "incremental": false,
+    "paths": {
+      "@lytjs/common-env": ["../../packages/env/dist"],
+      "@lytjs/common-is": ["../../packages/is/dist"],
+      "@lytjs/common-string": ["../../packages/string/dist"],
+      "@lytjs/common-path": ["../../packages/path/dist"],
+      "@lytjs/common-events": ["../../packages/events/dist"],
+      "@lytjs/common-cache": ["../../packages/cache/dist"],
+      "@lytjs/common-timing": ["../../packages/timing/dist"],
+      "@lytjs/common-algorithm": ["../../packages/algorithm/dist"],
+      "@lytjs/common-vnode": ["../../packages/vnode/dist"],
+      "@lytjs/common-error": ["../../packages/error/dist"],
+      "@lytjs/common-object": ["../../packages/object/dist"],
+      "@lytjs/common-scheduler": ["../../packages/scheduler/dist"]
+    }
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "dist", "tests"]
+}
