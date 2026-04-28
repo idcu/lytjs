@@ -1,52 +1,115 @@
 {
-  "lyt-component": {
+  "Lyt Component": {
     "prefix": "lyt-component",
     "body": [
+      "import { defineComponent, ref } from '@lytjs/core'",
+      "",
+      "export default defineComponent({",
+      "  name: '${1:MyComponent}',",
+      "  props: {",
+      "    ${2:title}: { type: String, default: '' }",
+      "  },",
+      "  setup(props) {",
+      "    const ${3:count} = ref(0)",
+      "    return { ${3:count} }",
+      "  },",
+      "  template: `",
+      "    <div class=\"${1:MyComponent}\">",
+      "      <h2>{{ ${2:title} }}</h2>",
+      "      <p>Count: {{ ${3:count} }}</p>",
+      "      <button @click=\"${3:count}++\">Increment</button>",
+      "    </div>",
+      "  `",
+      "})"
+    ],
+    "description": "Create a Lyt.js component with defineComponent"
+  },
+  "Lyt Composable": {
+    "prefix": "lyt-composable",
+    "body": [
+      "import { ref, computed, watch } from '@lytjs/reactivity'",
+      "",
+      "export function use${1:Feature}(${2:options}) {",
+      "  const ${3:state} = ref(${4:initialValue})",
+      "",
+      "  const ${5:computed} = computed(() => {",
+      "    return ${3:state}.value * 2",
+      "  })",
+      "",
+      "  watch(${3:state}, (newVal, oldVal) => {",
+      "    console.log('${1:Feature} changed:', newVal)",
+      "  })",
+      "",
+      "  return {",
+      "    ${3:state},",
+      "    ${5:computed}",
+      "  }",
+      "}"
+    ],
+    "description": "Create a Lyt.js composable function"
+  },
+  "Lyt App Setup": {
+    "prefix": "lyt-app",
+    "body": [
+      "import { createApp } from '@lytjs/core'",
+      "import App from './App.lyt'",
+      "",
+      "const app = createApp(App)",
+      "",
+      "// app.use(plugin)",
+      "// app.component('name', component)",
+      "",
+      "app.mount('#app')"
+    ],
+    "description": "Create a Lyt.js app entry point"
+  },
+  "Lyt Ref": {
+    "prefix": "lyt-ref",
+    "body": ["const ${1:name} = ref(${2:initialValue})"],
+    "description": "Create a ref"
+  },
+  "Lyt Reactive": {
+    "prefix": "lyt-reactive",
+    "body": ["const ${1:state} = reactive({", "  ${2:key}: ${3:value}", "})"],
+    "description": "Create a reactive object"
+  },
+  "Lyt Computed": {
+    "prefix": "lyt-computed",
+    "body": ["const ${1:name} = computed(() => {", "  return ${2:expression}", "})"],
+    "description": "Create a computed property"
+  },
+  "Lyt Watch": {
+    "prefix": "lyt-watch",
+    "body": ["watch(${1:source}, (${2:newVal}, ${3:oldVal}) => {", "  ${4:// handler}", "})"],
+    "description": "Create a watcher"
+  },
+  "Lyt SFC Template": {
+    "prefix": "lyt-sfc",
+    "body": [
       "<template>",
-      "  <div class=\"${1:component-name}\">",
-      "    $0",
+      "  <div class=\"${1:component}\">",
+      "    ${2:content}",
       "  </div>",
       "</template>",
       "",
-      "<script setup lang=\"ts\">",
-      "import { ref, reactive, computed, onMounted } from 'lytjs';",
+      "<script>",
+      "import { defineComponent, ref } from '@lytjs/core'",
       "",
-      "// Props",
-      "const props = defineProps<{",
-      "  ${2:modelValue?: string}",
-      "}>();",
-      "",
-      "// Emits",
-      "const emit = defineEmits<{",
-      "  (e: 'update:modelValue', value: string): void;",
-      "}>();",
-      "",
-      "// Reactive state",
-      "const ${3:state} = ref<${4:string}>('');",
-      "",
-      "// Computed",
-      "const ${5:computedValue} = computed(() => {",
-      "  return ${6:state.value};",
-      "});",
-      "",
-      "// Methods",
-      "function ${7:handleClick}() {",
-      "  console.log('clicked');",
-      "}",
-      "",
-      "// Lifecycle",
-      "onMounted(() => {",
-      "  console.log('${1:component-name} mounted');",
-      "});",
+      "export default defineComponent({",
+      "  name: '${1:component}',",
+      "  setup() {",
+      "    return {}",
+      "  }",
+      "})",
       "</script>",
       "",
       "<style scoped>",
-      ".${1:component-name} {",
-      "  /* styles */",
-      "}",
+      "  .${1:component} {",
+      "    ${3:styles}",
+      "  }",
       "</style>"
     ],
-    "description": "Lyt.js Component - 完整组件模板"
+    "description": "Create a Lyt.js SFC (.lyt) template"
   },
   "lyt-composition": {
     "prefix": "lyt-composition",
@@ -81,8 +144,8 @@
     ],
     "description": "Composition API Setup - Composition API setup 模板"
   },
-  "lyt-reactive": {
-    "prefix": "lyt-reactive",
+  "lyt-reactive-advanced": {
+    "prefix": "lyt-reactive-advanced",
     "body": [
       "import { ref, reactive, toRefs, isRef, unref } from 'lytjs';",
       "",
@@ -107,8 +170,8 @@
     ],
     "description": "Reactive / Ref - reactive/ref 使用模板"
   },
-  "lyt-computed": {
-    "prefix": "lyt-computed",
+  "lyt-computed-advanced": {
+    "prefix": "lyt-computed-advanced",
     "body": [
       "import { computed } from 'lytjs';",
       "",
@@ -131,8 +194,8 @@
     ],
     "description": "Computed - computed 使用模板"
   },
-  "lyt-watch": {
-    "prefix": "lyt-watch",
+  "lyt-watch-advanced": {
+    "prefix": "lyt-watch-advanced",
     "body": [
       "import { watch, watchEffect } from 'lytjs';",
       "",

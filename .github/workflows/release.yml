@@ -13,14 +13,16 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v2
       - uses: actions/setup-node@v4
         with:
           node-version: '18'
           registry-url: 'https://registry.npmjs.org'
-      - run: npm install
-      - run: npm run build
-      - run: npm run test
-      - run: npm run publish:all
+          cache: 'pnpm'
+      - run: pnpm install
+      - run: pnpm run build
+      - run: pnpm run test
+      - run: pnpm run publish:all
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       - name: Generate Release Notes
