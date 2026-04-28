@@ -1,0 +1,45 @@
+# @lytjs/{{PACKAGE_NAME}}
+
+> {{DESCRIPTION}}
+
+## 安装
+
+```bash
+pnpm add @lytjs/{{PACKAGE_NAME}}
+```
+
+## 使用
+
+```typescript
+import { /* ... */ } from "@lytjs/{{PACKAGE_NAME}}";
+```
+
+## API
+
+### `/* 函数名 */`
+
+```typescript
+function /* 函数签名 */
+```
+
+**参数**:
+
+| 参数 | 类型 | 说明 |
+|:---|:---|:---|
+| `param` | `string` | 参数说明 |
+
+**返回值**: `ReturnType`
+
+**示例**:
+
+```typescript
+// 示例代码
+```
+
+## 相关包
+
+- [`@lytjs/common`]({{RELATED_PKG_URL}}) - 相关包说明
+
+## 许可证
+
+[MIT](../../../LICENSE)
