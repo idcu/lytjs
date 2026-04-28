@@ -283,7 +283,7 @@
     "test": "node ./dist/test/runTest.js"
   },
   "devDependencies": {
-    "@types/node": "^18.x",
+    "@types/node": "^25.x",
     "@types/vscode": "^1.80.0",
     "typescript": "^5.0.1"
   },
