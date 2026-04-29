@@ -52,21 +52,44 @@ function flushJobs() {
   isFlushing = true;
   isFlushPending = false;
 
-  // 执行 pre 队列
-  flushIndex = 0;
-  const preLen = pendingPreFlushCbs.length;
-  for (flushIndex = 0; flushIndex < preLen; flushIndex++) {
-    pendingPreFlushCbs[flushIndex]!();
-  }
-  pendingPreFlushCbs.length = 0;
+  let iterations = 0;
+  const MAX_ITERATIONS = 100;
 
-  // 执行 post 队列
-  flushIndex = 0;
-  const postLen = pendingPostFlushCbs.length;
-  for (flushIndex = 0; flushIndex < postLen; flushIndex++) {
-    pendingPostFlushCbs[flushIndex]!();
+  // 循环处理：执行期间新增的回调也会被处理
+  while ((pendingPreFlushCbs.length > 0 || pendingPostFlushCbs.length > 0) && iterations < MAX_ITERATIONS) {
+    iterations++;
+
+    // 执行 pre 队列
+    flushIndex = 0;
+    const preLen = pendingPreFlushCbs.length;
+    for (flushIndex = 0; flushIndex < preLen; flushIndex++) {
+      const cb = pendingPreFlushCbs[flushIndex];
+      if (cb) {
+        pendingPreFlushCbs[flushIndex] = undefined as any;
+        cb();
+      }
+    }
+    pendingPreFlushCbs.length = 0;
+
+    // 执行 post 队列
+    flushIndex = 0;
+    const postLen = pendingPostFlushCbs.length;
+    for (flushIndex = 0; flushIndex < postLen; flushIndex++) {
+      const cb = pendingPostFlushCbs[flushIndex];
+      if (cb) {
+        pendingPostFlushCbs[flushIndex] = undefined as any;
+        cb();
+      }
+    }
+    pendingPostFlushCbs.length = 0;
   }
-  pendingPostFlushCbs.length = 0;
+
+  if (iterations >= MAX_ITERATIONS && __DEV__) {
+    console.warn(
+      `[lytjs/reactivity] flushJobs exceeded ${MAX_ITERATIONS} iterations. ` +
+      `Possible infinite update loop detected.`
+    );
+  }
 
   isFlushing = false;
 }

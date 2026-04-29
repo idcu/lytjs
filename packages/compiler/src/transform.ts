@@ -487,10 +487,36 @@ function handleDirective(
     }
   } else if (prop.name === 'html') {
     if (expContent !== undefined) {
+      // P0-05 XSS fix: 在开发模式下对 v-html 使用发出安全警告
+      // 生成: (__DEV__ ? (console.warn("..."), value) : value)
+      const safeValue = createCompoundExpression([
+        `(${createConditionalExpression(
+          createSimpleExpression('__DEV__', false, prop.loc, false),
+          createCompoundExpression([
+            createCallExpression(
+              'console.warn',
+              [
+                createSimpleExpression(
+                  '"[LyticsJS warn] v-html directive can lead to XSS attack. Make sure the content is sanitized before rendering."',
+                  true,
+                  prop.loc,
+                  true,
+                ),
+              ],
+              prop.loc,
+            ),
+            ', ',
+            createSimpleExpression(expContent, false, prop.loc, false),
+          ]),
+          createSimpleExpression(expContent, false, prop.loc, false),
+          false,
+          prop.loc,
+        )})`,
+      ]);
       properties.push(
         createObjectProperty(
           createSimpleExpression('"innerHTML"', true, prop.loc, true),
-          createSimpleExpression(expContent, false, prop.loc, false),
+          safeValue as unknown as JSChildNode,
         ),
       );
     }

@@ -28,6 +28,8 @@ describe('createApp', () => {
     app.mount(container);
     expect(container.innerHTML).toBe('<div>hello</div>');
     app.unmount();
+    // P0-02 修复：unmount 通过 renderer.unmount 正确卸载组件
+    // renderer.unmount 会移除已挂载的 DOM 节点
     expect(container.innerHTML).toBe('');
   });
 

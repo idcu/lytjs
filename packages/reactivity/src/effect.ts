@@ -95,7 +95,9 @@ export function trigger(
   const effects: ReactiveEffect[] = [];
   for (const dep of deps) {
     if (dep) {
-      effects.push(...dep);
+      for (const effect of dep) {
+        effects.push(effect);
+      }
     }
   }
 

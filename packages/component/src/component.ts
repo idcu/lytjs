@@ -114,6 +114,7 @@ export function setupComponent(instance: ComponentInternalInstance): void {
         instance.vnode.isAsyncPlaceholder = false;
       })
       .catch((err: Error) => {
+        instance.vnode.isAsyncPlaceholder = false;
         handleError(err, instance, 'setup function');
       });
   } else {

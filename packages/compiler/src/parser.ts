@@ -136,6 +136,13 @@ function parseChildren(
             advanceBy(context, match[0].length);
             continue;
           }
+          // DOCTYPE/声明格式异常，跳过到行尾或文件尾防止无限循环
+          if (__DEV__) {
+            console.warn(`[lytjs/compiler] Invalid DOCTYPE/declaration at position ${context.offset}`);
+          }
+          const lineEnd = s.indexOf('\n');
+          advanceBy(context, lineEnd === -1 ? s.length : lineEnd);
+          continue;
         }
         node = parseElement(context);
       }
@@ -362,7 +369,23 @@ function parseTag(
   }
 
   const props: (AttributeNode | DirectiveNode)[] = [];
+  const MAX_ATTRIBUTES = 1000;
+  let attrCount = 0;
   while (context.source.length > 0 && !context.source.startsWith('>') && !context.source.startsWith('/>')) {
+    attrCount++;
+    if (attrCount > MAX_ATTRIBUTES) {
+      if (__DEV__) {
+        console.warn(
+          `[lytjs/compiler] Too many attributes (${attrCount}), ` +
+          `stopping attribute parsing to prevent infinite loop.`
+        );
+      }
+      const tagEnd = context.source.indexOf('>');
+      if (tagEnd !== -1) {
+        advanceBy(context, tagEnd);
+      }
+      break;
+    }
     const prop = parseAttribute(context, tagType);
     if (prop) {
       props.push(prop);

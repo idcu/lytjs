@@ -58,9 +58,14 @@ export function computedSignal<T>(fn: () => T): ComputedSignal<T> {
   let dirty = true;
 
   const runner = new ReactiveEffect(() => {
-    store[SIGNAL_KEY] = fn() as T;
-    dirty = false;
-    trigger(store, TriggerOpTypes.SET, SIGNAL_KEY);
+    try {
+      store[SIGNAL_KEY] = fn() as T;
+      dirty = false;
+      trigger(store, TriggerOpTypes.SET, SIGNAL_KEY);
+    } catch (e) {
+      dirty = true;
+      throw e;
+    }
   });
 
   const computedFn: any = function computedFn(): T {

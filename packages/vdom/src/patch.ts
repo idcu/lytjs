@@ -12,6 +12,7 @@ import {
 } from '@lytjs/common-vnode'
 import type { VNode } from '@lytjs/common-vnode'
 import { isArray, isFunction, hasChanged, EMPTY_OBJ } from '@lytjs/common-is'
+import { isSafeAttribute } from '@lytjs/common-string'
 import type { RendererOptions, HostNode, HostElement } from './types'
 import { getVNodeProps } from './props-map'
 import { getSequence } from '@lytjs/common-algorithm'
@@ -191,7 +192,9 @@ export function createRenderer(options: RendererOptions<HostNode, HostElement>) 
   ): void {
     // Reuse the existing fragment anchors
     n2.el = n1.el
-    const endAnchor = (n2.anchor = n1.anchor)!
+    const endAnchor = n1.anchor
+    if (!endAnchor) return
+    n2.anchor = endAnchor
 
     const c1 = n1.children as VNode[] | null
     const c2 = n2.children as VNode[] | null
@@ -356,7 +359,9 @@ export function createRenderer(options: RendererOptions<HostNode, HostElement>) 
         } else if (moved) {
           if (j < 0 || i !== increasingNewIndexSequence[j]!) {
             // Move existing node to new position
-            insert(nextChild.el!, container, anchor)
+            if (nextChild.el) {
+              insert(nextChild.el, container, anchor)
+            }
           } else {
             j--
           }
@@ -399,6 +404,7 @@ export function createRenderer(options: RendererOptions<HostNode, HostElement>) 
     parentSuspense: any,
     isSVG: boolean,
   ): void {
+    // n1.el is guaranteed to exist since n1 was previously mounted
     const el = (n2.el = n1.el!) as HostElement
 
     // Patch props
@@ -678,7 +684,9 @@ export function createRenderer(options: RendererOptions<HostNode, HostElement>) 
         } else if (moved) {
           if (j < 0 || i !== increasingNewIndexSequence[j]!) {
             // Move existing node to new position
-            insert(nextChild.el!, container, anchor)
+            if (nextChild.el) {
+              insert(nextChild.el, container, anchor)
+            }
           } else {
             j--
           }
@@ -706,7 +714,7 @@ export function createRenderer(options: RendererOptions<HostNode, HostElement>) 
 
     if (type === Comment) {
       if (doRemove) {
-        hostRemove(el!)
+        if (el) hostRemove(el)
       }
       return
     }
@@ -719,7 +727,7 @@ export function createRenderer(options: RendererOptions<HostNode, HostElement>) 
     }
 
     if (doRemove) {
-      hostRemove(el!)
+      if (el) hostRemove(el)
     }
   }
 
@@ -783,10 +791,10 @@ export function createRenderer(options: RendererOptions<HostNode, HostElement>) 
         move(children[i]!, container, anchor, parentComponent, parentSuspense)
       }
       // Move anchors
-      insert(vnode.el!, container, anchor)
-      insert(vnode.anchor!, container, anchor)
+      if (vnode.el) insert(vnode.el, container, anchor)
+      if (vnode.anchor && vnode.anchor !== vnode.el) insert(vnode.anchor, container, anchor)
     } else {
-      insert(vnode.el!, container, anchor)
+      if (vnode.el) insert(vnode.el, container, anchor)
     }
   }
 
@@ -801,7 +809,7 @@ export function createRenderer(options: RendererOptions<HostNode, HostElement>) 
   return {
     patch,
     mount,
-    unmount,
+    unmount: (vnode: VNode) => unmount(vnode, null, null, true),
     move,
     diffChildren,
   }
@@ -873,7 +881,9 @@ export function createDOMRendererOptions(): RendererOptions<Node, Element> {
       } else if (nextValue == null || nextValue === false) {
         el.removeAttribute(key)
       } else {
-        el.setAttribute(key, String(nextValue))
+        if (isSafeAttribute(key, String(nextValue))) {
+          el.setAttribute(key, String(nextValue))
+        }
       }
     },
     createComment(text: string): Node {

@@ -55,7 +55,9 @@ function renderVNodeToString(vnode: VNode): string {
   // Handle Comment
   if (type === Comment) {
     const text = isFunction(children) ? '' : String(children ?? '')
-    return `<!--${text}-->`
+    // 转义 --> 防止提前关闭注释导致 HTML 注入
+    const safe = text.replace(/-->/g, '--&gt;')
+    return `<!--${safe}-->`
   }
 
   // Handle Element
