@@ -1,9 +1,8 @@
 // src/reactive.ts
 // 响应式对象（Proxy 实现）
-// 复用 @lytjs/common-is: isObject, hasChanged, hasOwn, isSymbol
-// 自建: isMap, isSet（common-is 未提供，待讨论是否迁入）
+// 复用 @lytjs/common-is: isObject, hasChanged, hasOwn, isSymbol, isMap, isSet
 
-import { isObject, hasChanged, hasOwn, isSymbol } from '@lytjs/common-is';
+import { isObject, hasChanged, hasOwn, isSymbol, isMap, isSet } from '@lytjs/common-is';
 import { ReactiveFlags, TrackOpTypes, TriggerOpTypes, ITERATE_KEY } from './constants';
 import {
   track,
@@ -14,22 +13,11 @@ import {
 } from './effect';
 import type { UnwrapNestedRefs, DeepReadonly } from './types';
 
-// ==================== 自建工具函数（common-is 未提供） ====================
-// TODO: 讨论是否迁入 @lytjs/common-is
+// ==================== 类型 ====================
 
 type Target = object;
 
-function isMap(val: unknown): val is Map<any, any> {
-  return toTypeString(val) === '[object Map]';
-}
-
-function isSet(val: unknown): val is Set<any> {
-  return toTypeString(val) === '[object Set]';
-}
-
-function toTypeString(val: unknown): string {
-  return Object.prototype.toString.call(val);
-}
+// ==================== 辅助常量 ====================
 
 // ==================== 数组方法拦截 ====================
 

@@ -31,6 +31,13 @@ export {
   isStringOrNumber,
   hasOwn,
   hasChanged,
+  toTypeString,
+  isMap,
+  isSet,
+  isWeakMap,
+  isWeakSet,
+  isDate,
+  isRegExp,
 } from '@lytjs/common-is'
 
 // string
