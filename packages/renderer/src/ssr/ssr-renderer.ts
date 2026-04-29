@@ -6,18 +6,8 @@
 import type { VNode } from '@lytjs/vdom'
 import { Fragment, Text, ShapeFlags, getVNodeProps } from '@lytjs/vdom'
 import { isString, isArray, isObject, isFunction, isNullish } from '@lytjs/common-is'
+import { camelToKebab } from '@lytjs/common-string'
 import { escapeHtml, isBooleanAttr, isVoidElement } from '../utils'
-
-// ============================================================
-// Helpers
-// ============================================================
-
-/**
- * Convert camelCase to kebab-case
- */
-function camelToKebab(str: string): string {
-  return str.replace(/([A-Z])/g, '-$1').toLowerCase()
-}
 
 // ============================================================
 // renderToString - main entry

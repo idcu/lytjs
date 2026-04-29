@@ -2,26 +2,9 @@
  * @lytjs/renderer - Shared utilities
  */
 
-// ============================================================
-// HTML escaping for SSR
-// ============================================================
+import { escapeHTML as escapeHtml } from '@lytjs/common-string'
 
-const escapeRe = /[&<>"']/g
-
-const escapeMap: Record<string, string> = {
-  '&': '&amp;',
-  '<': '&lt;',
-  '>': '&gt;',
-  '"': '&quot;',
-  "'": '&#39;',
-}
-
-/**
- * Escape HTML special characters in a string
- */
-export function escapeHtml(str: string): string {
-  return str.replace(escapeRe, (match) => escapeMap[match]!)
-}
+export { escapeHtml }
 
 // ============================================================
 // Boolean attribute list

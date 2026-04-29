@@ -31,9 +31,12 @@ describe('createComponentInstance', () => {
     expect(instance.isDeactivated).toBe(false);
     expect(instance.parent).toBeNull();
     expect(instance.root).toBe(instance);
-    expect(instance.lifecycle.mount.size).toBe(0);
-    expect(instance.lifecycle.update.size).toBe(0);
-    expect(instance.lifecycle.unmount.size).toBe(0);
+    expect(instance.lifecycle.beforeMount.size).toBe(0);
+    expect(instance.lifecycle.mounted.size).toBe(0);
+    expect(instance.lifecycle.beforeUpdate.size).toBe(0);
+    expect(instance.lifecycle.updated.size).toBe(0);
+    expect(instance.lifecycle.beforeUnmount.size).toBe(0);
+    expect(instance.lifecycle.unmounted.size).toBe(0);
   });
 
   it('should set parent and root correctly', () => {

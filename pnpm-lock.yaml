@@ -281,6 +281,9 @@ importers:
       '@lytjs/common-is':
         specifier: workspace:*
         version: link:../common/packages/is
+      '@lytjs/common-vnode':
+        specifier: workspace:*
+        version: link:../common/packages/vnode
     devDependencies:
       tsup:
         specifier: ^8.0.0
@@ -405,6 +408,9 @@ importers:
       '@lytjs/common-scheduler':
         specifier: workspace:*
         version: link:../common/packages/scheduler
+      '@lytjs/common-string':
+        specifier: workspace:*
+        version: link:../common/packages/string
       '@lytjs/reactivity':
         specifier: workspace:*
         version: link:../reactivity

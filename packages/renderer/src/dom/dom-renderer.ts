@@ -100,7 +100,7 @@ export function createDOMRenderer(): DOMRenderer {
     },
     patch: renderer.patch,
     unmount(vnode: VNode): void {
-      renderer.unmount(vnode, null, null, true)
+      renderer.unmount(vnode)
     },
     mount: renderer.mount,
     move(

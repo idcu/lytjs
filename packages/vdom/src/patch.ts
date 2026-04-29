@@ -216,17 +216,17 @@ export function createRenderer(options: RendererOptions<HostNode, HostElement>) 
   }
 
   // ============================================================
-  // diffChildrenFragment - like diffChildren but uses endAnchor as fallback
+  // diffChildrenInternal - 通用 keyed diff 算法
   // ============================================================
 
-  function diffChildrenFragment(
+  function diffChildrenInternal(
     c1: VNode[],
     c2: VNode[],
     container: HostNode,
-    endAnchor: HostNode,
     parentComponent: any,
     parentSuspense: any,
     isSVG: boolean,
+    fallbackAnchor: HostNode | null,
   ): void {
     let i = 0
     const l2 = c2.length
@@ -258,11 +258,11 @@ export function createRenderer(options: RendererOptions<HostNode, HostElement>) 
       e2--
     }
 
-    // 3. Common sequence + mount (use endAnchor as fallback)
+    // 3. Common sequence + mount
     if (i > e1) {
       if (i <= e2) {
         const nextPos = e2 + 1
-        const anchor = nextPos < l2 ? c2[nextPos]!.el : endAnchor
+        const anchor = nextPos < l2 ? c2[nextPos]!.el : fallbackAnchor
         while (i <= e2) {
           patch(null, c2[i]!, container, anchor, parentComponent, parentSuspense, isSVG)
           i++
@@ -352,13 +352,12 @@ export function createRenderer(options: RendererOptions<HostNode, HostElement>) 
         const nextIndex = s2 + i
         const nextChild = c2[nextIndex]!
         const anchor =
-          nextIndex + 1 < l2 ? c2[nextIndex + 1]!.el : endAnchor
+          nextIndex + 1 < l2 ? c2[nextIndex + 1]!.el : fallbackAnchor
 
         if (newIndexToOldIndexMap[i] === 0) {
           patch(null, nextChild, container, anchor, parentComponent, parentSuspense, isSVG)
         } else if (moved) {
           if (j < 0 || i !== increasingNewIndexSequence[j]!) {
-            // Move existing node to new position
             if (nextChild.el) {
               insert(nextChild.el, container, anchor)
             }
@@ -368,6 +367,22 @@ export function createRenderer(options: RendererOptions<HostNode, HostElement>) 
         }
       }
     }
+  }
+
+  // ============================================================
+  // diffChildrenFragment - like diffChildren but uses endAnchor as fallback
+  // ============================================================
+
+  function diffChildrenFragment(
+    c1: VNode[],
+    c2: VNode[],
+    container: HostNode,
+    endAnchor: HostNode,
+    parentComponent: any,
+    parentSuspense: any,
+    isSVG: boolean,
+  ): void {
+    diffChildrenInternal(c1, c2, container, parentComponent, parentSuspense, isSVG, endAnchor)
   }
 
   // ============================================================
@@ -546,153 +561,7 @@ export function createRenderer(options: RendererOptions<HostNode, HostElement>) 
     parentSuspense: any,
     isSVG: boolean,
   ): void {
-    let i = 0
-    const l2 = c2.length
-    let e1 = c1.length - 1
-    let e2 = l2 - 1
-
-    // 1. Sync from start
-    while (i <= e1 && i <= e2) {
-      const n1 = c1[i]!
-      const n2 = c2[i]!
-      if (isSameVNodeType(n1, n2)) {
-        patch(n1, n2, container, null, parentComponent, parentSuspense, isSVG)
-      } else {
-        break
-      }
-      i++
-    }
-
-    // 2. Sync from end
-    while (i <= e1 && i <= e2) {
-      const n1 = c1[e1]!
-      const n2 = c2[e2]!
-      if (isSameVNodeType(n1, n2)) {
-        patch(n1, n2, container, null, parentComponent, parentSuspense, isSVG)
-      } else {
-        break
-      }
-      e1--
-      e2--
-    }
-
-    // 3. Common sequence + mount
-    if (i > e1) {
-      if (i <= e2) {
-        const nextPos = e2 + 1
-        const anchor = nextPos < l2 ? c2[nextPos]!.el : null
-        while (i <= e2) {
-          patch(null, c2[i]!, container, anchor, parentComponent, parentSuspense, isSVG)
-          i++
-        }
-      }
-    }
-    // 4. Common sequence + unmount
-    else if (i > e2) {
-      while (i <= e1) {
-        unmount(c1[i]!, parentComponent, parentSuspense, true)
-        i++
-      }
-    }
-    // 5. Unknown sequence - use keyed diff with LIS
-    else {
-      const s1 = i
-      const s2 = i
-
-      // Build key:index map for new children
-      const keyToNewIndexMap: Map<string | number | symbol, number> = new Map()
-      for (i = s2; i <= e2; i++) {
-        const nextChild = c2[i]!
-        const key = nextChild.key
-        if (key != null) {
-          keyToNewIndexMap.set(key, i)
-        }
-      }
-
-      let j: number
-      let patched = 0
-      const toBePatched = e2 - s2 + 1
-      let moved = false
-      let maxNewIndexSoFar = 0
-
-      // Build array of new indices for old children
-      const newIndexToOldIndexMap = new Array(toBePatched).fill(0)
-
-      for (i = s1; i <= e1; i++) {
-        const prevChild = c1[i]!
-        if (patched >= toBePatched) {
-          // All new nodes have been patched, unmount the rest
-          unmount(prevChild, parentComponent, parentSuspense, true)
-          continue
-        }
-
-        let newIndex: number | undefined
-        if (prevChild.key != null) {
-          newIndex = keyToNewIndexMap.get(prevChild.key)
-        } else {
-          // Key-less children: find by type match
-          for (j = s2; j <= e2; j++) {
-            if (
-              newIndexToOldIndexMap[j - s2] === 0 &&
-              isSameVNodeType(prevChild, c2[j]!)
-            ) {
-              newIndex = j
-              break
-            }
-          }
-        }
-
-        if (newIndex === undefined) {
-          // Old child has no match in new - unmount
-          unmount(prevChild, parentComponent, parentSuspense, true)
-        } else {
-          newIndexToOldIndexMap[newIndex - s2] = i + 1
-          if (newIndex >= maxNewIndexSoFar) {
-            maxNewIndexSoFar = newIndex
-          } else {
-            moved = true
-          }
-          patch(
-            prevChild,
-            c2[newIndex]!,
-            container,
-            null,
-            parentComponent,
-            parentSuspense,
-            isSVG,
-          )
-          patched++
-        }
-      }
-
-      // Move and mount using LIS
-      const increasingNewIndexSequence = moved
-        ? getSequence(newIndexToOldIndexMap)
-        : []
-
-      j = increasingNewIndexSequence.length - 1
-
-      for (i = toBePatched - 1; i >= 0; i--) {
-        const nextIndex = s2 + i
-        const nextChild = c2[nextIndex]!
-        const anchor =
-          nextIndex + 1 < l2 ? c2[nextIndex + 1]!.el : null
-
-        if (newIndexToOldIndexMap[i] === 0) {
-          // New node - mount
-          patch(null, nextChild, container, anchor, parentComponent, parentSuspense, isSVG)
-        } else if (moved) {
-          if (j < 0 || i !== increasingNewIndexSequence[j]!) {
-            // Move existing node to new position
-            if (nextChild.el) {
-              insert(nextChild.el, container, anchor)
-            }
-          } else {
-            j--
-          }
-        }
-      }
-    }
+    diffChildrenInternal(c1, c2, container, parentComponent, parentSuspense, isSVG, null)
   }
 
   // ============================================================

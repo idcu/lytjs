@@ -108,7 +108,7 @@ export function cacheInstance(
 ): void {
   const cache = keepAlive.setupState.cache as KeepAliveCache;
   const keys = keepAlive.setupState.keys as Set<string>;
-  const max = keepAlive.props.max;
+  const max = keepAlive.props.max as number | undefined;
 
   // If already cached, remove old entry first
   if (cache.has(key)) {

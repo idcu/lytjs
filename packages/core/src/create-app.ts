@@ -1,6 +1,5 @@
 // src/create-app.ts
-import { createRenderer, createVNode } from '@lytjs/vdom';
-import { isSafeAttribute } from '@lytjs/common-string';
+import { createRenderer, createVNode, createDOMRendererOptions } from '@lytjs/vdom';
 import type { App, AppConfig, Plugin, Component, ComponentPublicInstance } from './types';
 
 export function createApp(rootComponent: Component, rootProps: any = null): App {
@@ -58,7 +57,7 @@ export function createApp(rootComponent: Component, rootProps: any = null): App 
         vnode = createVNode(comp, rootProps);
       }
 
-      const renderer = createRenderer(getRendererOptions());
+      const renderer = createRenderer(createDOMRendererOptions());
       context.renderer = renderer;
       context._container = container;
       context._vnode = vnode;
@@ -151,51 +150,4 @@ function createContextConfig(context: any): AppConfig {
   });
 }
 
-function getRendererOptions() {
-  return {
-    patchProp(el: any, key: string, prevValue: any, nextValue: any) {
-      if (key === 'class') {
-        el.className = nextValue || '';
-      } else if (key === 'style') {
-        for (const k in nextValue) el.style[k] = nextValue[k];
-      } else if (key.startsWith('on')) {
-        const event = key.slice(2).toLowerCase();
-        el.removeEventListener(event, prevValue);
-        if (nextValue) el.addEventListener(event, nextValue);
-      } else if (nextValue == null) {
-        el.removeAttribute(key);
-      } else {
-        if (isSafeAttribute(key, String(nextValue))) {
-          el.setAttribute(key, String(nextValue));
-        }
-      }
-    },
-    insert(el: any, parent: any, anchor: any) {
-      parent.insertBefore(el, anchor || null);
-    },
-    remove(el: any) {
-      el.parentNode?.removeChild(el);
-    },
-    createElement(type: string) {
-      return document.createElement(type);
-    },
-    createText(text: string) {
-      return document.createTextNode(text);
-    },
-    createComment(text: string) {
-      return document.createComment(text);
-    },
-    setText(node: any, text: string) {
-      node.nodeValue = text;
-    },
-    setElementText(el: any, text: string) {
-      el.textContent = text;
-    },
-    parentNode(node: any) {
-      return node.parentNode;
-    },
-    nextSibling(node: any) {
-      return node.nextSibling;
-    },
-  };
-}
+
