@@ -112,3 +112,46 @@ export const hasOwn = (obj: object, key: string | symbol): boolean =>
  */
 export const hasChanged = (value: unknown, oldValue: unknown): boolean =>
   !Object.is(value, oldValue)
+
+/**
+ * 获取值的内部 [[Class]] 标签
+ * 等价于 Object.prototype.toString.call(val) 的结果
+ */
+export const toTypeString = (val: unknown): string =>
+  Object.prototype.toString.call(val)
+
+/**
+ * 检查值是否为 Map 类型
+ */
+export const isMap = (val: unknown): val is Map<any, any> =>
+  toTypeString(val) === '[object Map]'
+
+/**
+ * 检查值是否为 Set 类型
+ */
+export const isSet = (val: unknown): val is Set<any> =>
+  toTypeString(val) === '[object Set]'
+
+/**
+ * 检查值是否为 WeakMap 类型
+ */
+export const isWeakMap = (val: unknown): val is WeakMap<any, any> =>
+  toTypeString(val) === '[object WeakMap]'
+
+/**
+ * 检查值是否为 WeakSet 类型
+ */
+export const isWeakSet = (val: unknown): val is WeakSet<any> =>
+  toTypeString(val) === '[object WeakSet]'
+
+/**
+ * 检查值是否为 Date 类型
+ */
+export const isDate = (val: unknown): val is Date =>
+  toTypeString(val) === '[object Date]'
+
+/**
+ * 检查值是否为 RegExp 类型
+ */
+export const isRegExp = (val: unknown): val is RegExp =>
+  toTypeString(val) === '[object RegExp]'
