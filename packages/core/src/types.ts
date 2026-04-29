@@ -6,7 +6,7 @@ import type { ComponentOptions, ComponentPublicInstance, InternalSlots } from '@
 
 // ==================== App ====================
 
-export interface App<HostElement = any> {
+export interface App<HostElement = Element> {
   config: AppConfig;
   use(plugin: Plugin, ...options: any[]): App;
   mount(rootContainer: HostElement | string): ComponentPublicInstance;

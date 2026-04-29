@@ -64,10 +64,15 @@ export function extname(path: string): string {
  */
 export function pathToRegex(pattern: string): RegExp {
   const normalized = normalizePath(pattern)
+  // 先提取参数/通配符部分（含前导 /），转义静态部分，再还原
   const regexStr = normalized
-    .replace(/\/\*/g, '/(.*)')              // 通配符
-    .replace(/\/:(\w+)\?/g, '(?:/([^/]+))?') // 可选参数（含前面的斜杠）
-    .replace(/:(\w+)/g, '([^/]+)')           // 命名参数
+    .replace(/\/\*/g, '§WILDCARD§')
+    .replace(/\/:(\w+)\?/g, '§OPTPARAM§')
+    .replace(/\/:(\w+)/g, '§PARAM§')
+    .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    .replace(/§WILDCARD§/g, '/(.*)')
+    .replace(/§OPTPARAM§/g, '(?:/([^/]+))?')
+    .replace(/§PARAM§/g, '/([^/]+)')
   return new RegExp(`^${regexStr}$`)
 }
 

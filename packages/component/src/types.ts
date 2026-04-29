@@ -1,6 +1,8 @@
 // src/types.ts
 // All type definitions for @lytjs/component
 
+import type { VNode } from '@lytjs/vdom';
+
 export interface ComponentOptions {
   name?: string;
   props?: Record<string, PropOptions>;
@@ -39,9 +41,9 @@ export interface PropOptions {
 export interface ComponentInternalInstance {
   uid: number;
   type: ComponentOptions;
-  vnode: any;
-  subTree: any;
-  props: any;
+  vnode: VNode | null;
+  subTree: VNode | null;
+  props: Record<string, unknown>;
   slots: InternalSlots;
   ctx: ComponentPublicInstance;
   setupState: Record<string, any>;
@@ -53,9 +55,12 @@ export interface ComponentInternalInstance {
   isUnmounted: boolean;
   isDeactivated: boolean;
   lifecycle: {
-    update: Set<Function>;
-    mount: Set<Function>;
-    unmount: Set<Function>;
+    beforeMount: Set<Function>;
+    mounted: Set<Function>;
+    beforeUpdate: Set<Function>;
+    updated: Set<Function>;
+    beforeUnmount: Set<Function>;
+    unmounted: Set<Function>;
   };
   provides: Record<string, any>;
   parent: ComponentInternalInstance | null;

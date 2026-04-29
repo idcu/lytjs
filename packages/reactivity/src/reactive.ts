@@ -42,9 +42,12 @@ const arrayInstrumentations: Record<string | symbol, Function> = {};
   const originMethod = Array.prototype[method] as Function;
   arrayInstrumentations[method] = function (this: unknown[], ...args: unknown[]) {
     pauseTracking();
-    const result = originMethod.apply(this, args);
-    resetTracking();
-    return result;
+    try {
+      const result = originMethod.apply(this, args);
+      return result;
+    } finally {
+      resetTracking();
+    }
   };
 });
 

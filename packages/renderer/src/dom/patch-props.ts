@@ -4,17 +4,11 @@
  */
 
 import { isString } from '@lytjs/common-is'
+import { camelToKebab } from '@lytjs/common-string'
 
 // ============================================================
 // Local helpers (not in common-is)
 // ============================================================
-
-/**
- * Convert camelCase to kebab-case
- */
-function camelToKebab(str: string): string {
-  return str.replace(/([A-Z])/g, '-$1').toLowerCase()
-}
 
 /**
  * Check if a key is an event handler (onXxx)

@@ -52,7 +52,7 @@ export interface WatchEffectOptions {
   allowRecurse?: boolean;
 }
 
-export type WatchSource<T = any> = Ref<T> | (() => T) | any;
+export type WatchSource<T = any> = Ref<T> | (() => T);
 
 export type WatchCallback<T = any, S = T> = (
   newValue: T,

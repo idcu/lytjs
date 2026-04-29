@@ -11,6 +11,7 @@ import {
 } from '@lytjs/common-vnode'
 import type { VNode, VNodeChildren, VNodeTypes } from '@lytjs/common-vnode'
 import { isString, isArray, isFunction, isObject, isNullish, EMPTY_OBJ } from '@lytjs/common-is'
+import { normalizeClass } from '@lytjs/common-string'
 import { setVNodeProps, getVNodeProps } from './props-map'
 
 // ============================================================
@@ -287,37 +288,8 @@ function normalizeProps(props: Record<string, any>): Record<string, any> {
 }
 
 /**
- * Normalize class value to a string
- */
-function normalizeClass(value: unknown): string {
-  if (isString(value)) {
-    return value
-  }
-  if (isArray(value)) {
-    const res: string[] = []
-    for (let i = 0; i < value.length; i++) {
-      const v = value[i]
-      if (v) {
-        const normalized = normalizeClass(v)
-        if (normalized) res.push(normalized)
-      }
-    }
-    return res.join(' ')
-  }
-  if (isObject(value)) {
-    const res: string[] = []
-    for (const key in value as Record<string, unknown>) {
-      if ((value as Record<string, unknown>)[key]) {
-        res.push(key)
-      }
-    }
-    return res.join(' ')
-  }
-  return ''
-}
-
-/**
- * Normalize style value to a CSSStyleDeclaration-compatible object or string
+ * Normalize style value - keeps object form for vdom patch diffing
+ * Note: common-string's normalizeStyle returns string, but vdom needs object form
  */
 function normalizeStyle(
   value: unknown,
@@ -329,7 +301,6 @@ function normalizeStyle(
       if (item) {
         const normalized = normalizeStyle(item)
         if (isString(normalized)) {
-          // Cannot merge string styles easily, just take the last one
           return normalized
         }
         Object.assign(res, normalized)

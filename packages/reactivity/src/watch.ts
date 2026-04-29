@@ -22,6 +22,8 @@ import type {
 let flushIndex = 0;
 const pendingPreFlushCbs: Function[] = [];
 const pendingPostFlushCbs: Function[] = [];
+const queuedPreCbs = new Set<Function>();
+const queuedPostCbs = new Set<Function>();
 
 function queuePreFlushCb(cb: Function) {
   queueCb(cb, pendingPreFlushCbs);
@@ -32,7 +34,9 @@ function queuePostFlushCb(cb: Function) {
 }
 
 function queueCb(cb: Function, queue: Function[]) {
-  if (!queue.includes(cb)) {
+  const queuedSet = queue === pendingPreFlushCbs ? queuedPreCbs : queuedPostCbs;
+  if (!queuedSet.has(cb)) {
+    queuedSet.add(cb);
     queue.push(cb);
     queueFlush();
   }
@@ -70,6 +74,7 @@ function flushJobs() {
       }
     }
     pendingPreFlushCbs.length = 0;
+    queuedPreCbs.clear();
 
     // 执行 post 队列
     flushIndex = 0;
@@ -82,6 +87,7 @@ function flushJobs() {
       }
     }
     pendingPostFlushCbs.length = 0;
+    queuedPostCbs.clear();
   }
 
   if (iterations >= MAX_ITERATIONS && __DEV__) {

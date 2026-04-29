@@ -66,9 +66,12 @@ export function createComponentInstance(
     isUnmounted: false,
     isDeactivated: false,
     lifecycle: {
-      update: new Set(),
-      mount: new Set(),
-      unmount: new Set(),
+      beforeMount: new Set(),
+      mounted: new Set(),
+      beforeUpdate: new Set(),
+      updated: new Set(),
+      beforeUnmount: new Set(),
+      unmounted: new Set(),
     },
     provides: parent ? parent.provides : Object.create(null),
     parent,
@@ -94,7 +97,11 @@ export function createComponentInstance(
  * Set up a component instance: run setup, init props, init slots.
  */
 export function setupComponent(instance: ComponentInternalInstance): void {
-  const { props, children } = instance.vnode;
+  const vnode = instance.vnode;
+  if (!vnode) return;
+
+  const { children } = vnode;
+  const props = (vnode as any).props ?? null;
 
   // Init props
   initProps(instance, props);
@@ -107,14 +114,14 @@ export function setupComponent(instance: ComponentInternalInstance): void {
 
   if (isPromise(setupResult)) {
     // Async setup - mark vnode as async
-    instance.vnode.isAsyncPlaceholder = true;
+    vnode.isAsyncPlaceholder = true;
     setupResult
       .then((resolvedResult: any) => {
         handleSetupResult(instance, resolvedResult);
-        instance.vnode.isAsyncPlaceholder = false;
+        vnode.isAsyncPlaceholder = false;
       })
       .catch((err: Error) => {
-        instance.vnode.isAsyncPlaceholder = false;
+        vnode.isAsyncPlaceholder = false;
         handleError(err, instance, 'setup function');
       });
   } else {
@@ -289,18 +296,26 @@ export function defineComponent(options: ComponentOptions): ComponentOptions {
 /**
  * Merge component options with extends and mixins.
  */
-function mergeOptions(options: ComponentOptions): ComponentOptions {
+function mergeOptions(options: ComponentOptions, seen = new WeakSet<ComponentOptions>()): ComponentOptions {
+  if (seen.has(options)) {
+    if (__DEV__) {
+      console.warn('[lytjs/component] Circular mixin/extends detected, skipping.');
+    }
+    return { ...options };
+  }
+  seen.add(options);
+
   let merged: ComponentOptions = { ...options };
 
   // Apply extends first
   if (options.extends) {
-    merged = mergeOptionsPair(mergeOptions(options.extends), merged);
+    merged = mergeOptionsPair(mergeOptions(options.extends, seen), merged);
   }
 
   // Then apply mixins
   if (options.mixins) {
     for (const mixin of options.mixins) {
-      merged = mergeOptionsPair(merged, mergeOptions(mixin));
+      merged = mergeOptionsPair(merged, mergeOptions(mixin, seen));
     }
   }
 
