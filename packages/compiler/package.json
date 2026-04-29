@@ -1,0 +1,39 @@
+{
+  "name": "@lytjs/compiler",
+  "version": "6.0.0",
+  "description": "LytJS template compiler - parse, transform, optimize and codegen",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": ["dist"],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "type-check": "tsc --noEmit",
+    "lint": "eslint src tests --ext .ts",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@lytjs/common-is": "workspace:*",
+    "@lytjs/common-env": "workspace:*",
+    "@lytjs/common-error": "workspace:*"
+  },
+  "devDependencies": {
+    "tsup": "^8.0.0",
+    "typescript": "^5.4.0",
+    "vitest": "^1.6.0"
+  },
+  "license": "MIT"
+}
