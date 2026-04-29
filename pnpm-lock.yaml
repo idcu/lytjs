@@ -323,6 +323,46 @@ importers:
         specifier: ^1.6.0
         version: 1.6.1(@types/node@22.19.17)(@vitest/ui@3.2.4)(jsdom@24.1.3)
 
+  packages/core:
+    dependencies:
+      '@lytjs/common-env':
+        specifier: workspace:*
+        version: link:../common/packages/env
+      '@lytjs/common-error':
+        specifier: workspace:*
+        version: link:../common/packages/error
+      '@lytjs/common-is':
+        specifier: workspace:*
+        version: link:../common/packages/is
+      '@lytjs/compiler':
+        specifier: workspace:*
+        version: link:../compiler
+      '@lytjs/component':
+        specifier: workspace:*
+        version: link:../component
+      '@lytjs/reactivity':
+        specifier: workspace:*
+        version: link:../reactivity
+      '@lytjs/renderer':
+        specifier: workspace:*
+        version: link:../renderer
+      '@lytjs/vdom':
+        specifier: workspace:*
+        version: link:../vdom
+    devDependencies:
+      jsdom:
+        specifier: ^24.0.0
+        version: 24.1.3
+      tsup:
+        specifier: ^8.0.0
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.12)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.3)
+      typescript:
+        specifier: ^5.4.0
+        version: 5.9.3
+      vitest:
+        specifier: ^1.6.0
+        version: 1.6.1(@types/node@22.19.17)(@vitest/ui@3.2.4)(jsdom@24.1.3)
+
   packages/reactivity:
     dependencies:
       '@lytjs/common-env':
