@@ -159,6 +159,14 @@ function collectDynamicChildren(root: RootNode): void {
   }
 }
 
+/**
+ * 递归收集动态子节点，构建 Block Tree。
+ *
+ * 对于每个非静态的子元素节点，将其 codegenNode 加入父元素的 dynamicChildren，
+ * 并递归地为该子元素自身建立 dynamicChildren（如果它也有动态后代）。
+ * 这确保了嵌套结构（如嵌套 v-for、深层动态子树）中的每一层 Block
+ * 都能正确追踪其直接动态子节点，避免深层更新时退化为完整 diff。
+ */
 function collectDynamicChildrenFromElement(element: ElementNode): void {
   for (const child of element.children) {
     if (child.type === NodeTypes.ELEMENT) {
@@ -168,6 +176,10 @@ function collectDynamicChildrenFromElement(element: ElementNode): void {
         if (childElement.codegenNode) {
           element.dynamicChildren!.push(childElement.codegenNode);
         }
+        // 递归收集：为子元素自身也建立 dynamicChildren，
+        // 确保嵌套动态节点（如嵌套 v-for）的 Block Tree 完整
+        childElement.dynamicChildren = [];
+        collectDynamicChildrenFromElement(childElement);
       }
     }
   }

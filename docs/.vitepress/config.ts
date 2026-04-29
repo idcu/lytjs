@@ -5,7 +5,7 @@ export default defineConfig({
   description: "下一代轻量级前端框架 v6.0.0",
   lang: "zh-CN",
 
-  // 部署到 GitHub Pages 子路径
+  // 文档站基础路径（部署到 Pages 子路径时使用）
   base: "/lytjs/",
 
   head: [
@@ -97,7 +97,7 @@ export default defineConfig({
     },
 
     socialLinks: [
-      { icon: "github", link: "https://github.com/idcu/lytjs" },
+      { icon: "github", link: "https://gitee.com/lytjs/lytjs" },
     ],
 
     footer: {

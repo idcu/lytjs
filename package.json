@@ -4,6 +4,16 @@
   "private": true,
   "type": "module",
   "description": "Lyt.js - 下一代轻量级前端框架",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://gitee.com/lytjs/lytjs.git",
+    "directory": "/"
+  },
+  "homepage": "https://gitee.com/lytjs/lytjs",
+  "bugs": {
+    "url": "https://gitee.com/lytjs/lytjs/issues"
+  },
   "packageManager": "pnpm@9.15.4",
   "engines": {
     "node": ">=18.0.0",
@@ -16,6 +26,8 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:ui": "vitest --ui",
+    "test:e2e": "playwright test --config=e2e/playwright.config.ts",
+    "bench": "vitest bench --config vitest.config.ts",
     "lint": "eslint . --fix",
     "lint:check": "eslint .",
     "type-check": "pnpm -r run type-check",
@@ -37,6 +49,7 @@
     "@commitlint/cli": "^19.6.1",
     "@commitlint/config-conventional": "^19.6.0",
     "@eslint/js": "^9.18.0",
+    "@playwright/test": "^1.59.1",
     "@size-limit/preset-small-lib": "^11.1.6",
     "@types/node": "^22.10.5",
     "@vitest/coverage-v8": "^3.0.0",
@@ -47,6 +60,7 @@
     "globals": "^15.14.0",
     "husky": "^9.1.7",
     "lint-staged": "^15.3.0",
+    "playwright": "^1.59.1",
     "prettier": "^3.4.2",
     "size-limit": "^11.1.6",
     "tsx": "^4.19.2",
