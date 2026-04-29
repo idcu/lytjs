@@ -55,6 +55,15 @@ export {
   onEffectCleanup,
 } from './effect';
 
+export {
+  // effectScope
+  effectScope,
+  getCurrentScope,
+  onScopeDispose,
+} from './effect-scope';
+
+export type { EffectScope, EffectScopeOptions } from './effect-scope';
+
 // 类型 re-export
 export type {
   Ref,
