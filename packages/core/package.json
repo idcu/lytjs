@@ -34,8 +34,6 @@
     "@lytjs/renderer": "workspace:*",
     "@lytjs/component": "workspace:*",
     "@lytjs/common-is": "workspace:*",
-    "@lytjs/common-env": "workspace:*",
-    "@lytjs/common-error": "workspace:*",
     "@lytjs/common-string": "workspace:*"
   },
   "devDependencies": {

@@ -1,0 +1,73 @@
+// src/transforms/v-for.ts
+// v-for 转换逻辑
+
+import { NodeTypes } from '../constants';
+import type {
+  RootNode,
+  TemplateChildNode,
+  ElementNode,
+  TransformContext,
+} from '../types';
+import {
+  createSimpleExpression,
+  createCallExpression,
+} from '../ast';
+import { getExpContent, findDirective } from './helpers';
+import { transformElement } from './transform-element';
+
+export function transformFor(node: RootNode | TemplateChildNode, context: TransformContext): void {
+  if (node.type !== NodeTypes.ELEMENT) return;
+
+  const element = node as ElementNode;
+  const forDir = findDirective(element, 'for');
+  if (!forDir || !forDir.exp) return;
+
+  // Remove v-for directive from props
+  element.props = element.props.filter(
+    (p) => !(p.type === NodeTypes.DIRECTIVE && p.name === 'for'),
+  );
+
+  // Parse v-for expression
+  const expContent = getExpContent(forDir.exp);
+  if (!expContent) return;
+
+  const inMatch = expContent.match(/^\s*(\S+)\s+in\s+(.+)$/);
+  if (!inMatch) return;
+
+  const left = inMatch[1]!.trim();
+  const right = inMatch[2]!.trim();
+
+  let itemVar: string;
+  let indexVar: string | undefined;
+
+  if (left.startsWith('(') && left.endsWith(')')) {
+    const inner = left.slice(1, -1).trim();
+    const parts = inner.split(',').map((p: string) => p.trim());
+    itemVar = parts[0] ?? 'item';
+    indexVar = parts[1];
+  } else if (left.startsWith('[') && left.endsWith(']')) {
+    const inner = left.slice(1, -1).trim();
+    const parts = inner.split(',').map((p: string) => p.trim());
+    itemVar = parts[0] ?? 'item';
+    indexVar = parts[1];
+  } else {
+    itemVar = left;
+  }
+
+  // Transform the element
+  transformElement(element, context);
+
+  context.helper('RENDER_LIST');
+
+  const renderListCall = createCallExpression('RENDER_LIST', [
+    createSimpleExpression(right, false, forDir.exp.loc, false),
+    createSimpleExpression(
+      `(${itemVar}${indexVar ? `, ${indexVar}` : ''}) => `,
+      false,
+      forDir.exp.loc,
+      false,
+    ),
+  ]);
+
+  context.replaceNode(renderListCall as unknown as TemplateChildNode);
+}

@@ -134,23 +134,63 @@ const errorMessages: Record<number, string> = {
   [LytErrorCodes.X_V_IF_SIBLING_IF]: 'v-if/v-else-if must be siblings.',
   [LytErrorCodes.X_V_FOR_NO_EXPRESSION]: 'v-for requires an expression.',
   [LytErrorCodes.X_V_FOR_MISSING_KEY]: 'v-for requires a key.',
+  [LytErrorCodes.X_V_FOR_TEMPLATE_KEY_PLACEMENT]: '<template> key must be placed on <template> tag when using v-for.',
   [LytErrorCodes.X_KEY_EXPECTED]: 'Expected a key on v-for/v-if.',
+  [LytErrorCodes.X_INVALID_V_FOR]: 'Invalid v-for usage.',
   [LytErrorCodes.X_MISSING_END_TAG]: 'Missing end tag.',
   [LytErrorCodes.X_INVALID_END_TAG]: 'Invalid end tag.',
   [LytErrorCodes.X_INTERPOLATION_NO_EXPRESSION]: 'Interpolation requires an expression.',
+  [LytErrorCodes.X_MISSING_DYNAMIC_DIRECTIVE_ARGUMENT]: 'Missing dynamic directive argument.',
+  [LytErrorCodes.X_V_BIND_INVALID_SAME_NAME_ARGUMENT]: 'v-bind cannot use same name as the directive argument.',
+  [LytErrorCodes.X_V_BIND_INVALID_DYNAMIC_ARGUMENT]: 'Invalid dynamic argument for v-bind.',
+  [LytErrorCodes.X_V_ON_INVALID_DYNAMIC_ARGUMENT]: 'Invalid dynamic argument for v-on.',
+  [LytErrorCodes.X_V_MODEL_INVALID_EXPRESSION]: 'Invalid v-model expression.',
+  [LytErrorCodes.X_V_MODEL_ON_SCOPE_VARIABLE]: 'v-model cannot be used on scope variable.',
+  [LytErrorCodes.X_INVALID_V_MODEL_MODIFIER]: 'Invalid v-model modifier.',
+  [LytErrorCodes.X_V_MODEL_MALFORMED_MODIFIER]: 'Malformed v-model modifier.',
+  [LytErrorCodes.X_V_MODEL_INVALID_MODIFIER_ON_INPUT]: 'Invalid v-model modifier on input element.',
+  [LytErrorCodes.X_V_MODEL_PROP_CANNOT_BE_SET]: 'v-model prop cannot be set.',
+  [LytErrorCodes.X_V_MODEL_CANNOT_BE_USED_ON_PROPS]: 'v-model cannot be used on props.',
+  [LytErrorCodes.X_V_SLOT_EXTRANEOUS_DEFAULT_SLOT_CHILDREN]: 'Extraneous children found in default slot.',
+  [LytErrorCodes.X_V_SLOT_DUPLICATE_SLOT_NAMES]: 'Duplicate slot names.',
+  [LytErrorCodes.X_V_SLOT_MISSING_SLOT_NAME]: 'v-slot is missing slot name.',
+  [LytErrorCodes.X_V_SLOT_MIXED_SLOT_USAGE]: 'Mixed slot usage is not allowed.',
+  [LytErrorCodes.X_V_SLOT_DUPLICATE_SLOT_NAMES_IN_SAME_SCOPE]: 'Duplicate slot names in the same scope.',
+  [LytErrorCodes.X_V_SLOT_EXPECTED_SLOT_NAME]: 'Expected slot name for v-slot.',
+  [LytErrorCodes.X_V_SLOT_NAMED_EXPECTED_DEFAULT]: 'Named slot expected default slot content.',
+  [LytErrorCodes.X_V_SLOT_NAMED_NO_DEFAULT]: 'No default slot content for named slot.',
+  [LytErrorCodes.X_V_SLOT_DEFAULT_DUPLICATE]: 'Duplicate default slot.',
+  [LytErrorCodes.X_V_SLOT_EXTRANEOUS_ATTRS_IN_SLOTS]: 'Extraneous attributes in slot outlet.',
   [LytErrorCodes.SETUP_FUNCTION_ERROR]: 'Setup function error.',
   [LytErrorCodes.RENDER_ERROR]: 'Render function error.',
   [LytErrorCodes.WATCH_CALLBACK_ERROR]: 'Watch callback error.',
   [LytErrorCodes.WATCH_GETTER_ERROR]: 'Watch getter error.',
+  [LytErrorCodes.WATCH_CLEANUP_ERROR]: 'Watch cleanup error.',
   [LytErrorCodes.LIFECYCLE_HOOK_ERROR]: 'Lifecycle hook error.',
   [LytErrorCodes.PROVIDE_INJECT_ERROR]: 'Provide/inject error.',
+  [LytErrorCodes.NEXT_TICK_ERROR]: 'nextTick callback error.',
+  [LytErrorCodes.DIRECTIVE_ERROR]: 'Directive error.',
+  [LytErrorCodes.TRANSITION_ERROR]: 'Transition error.',
+  [LytErrorCodes.KEEP_ALIVE_ERROR]: 'KeepAlive error.',
+  [LytErrorCodes.TELEPORT_ERROR]: 'Teleport error.',
+  [LytErrorCodes.SUSPENSE_ERROR]: 'Suspense error.',
   [LytErrorCodes.INVALID_VNODE_TYPE]: 'Invalid vnode type.',
   [LytErrorCodes.INVALID_VNODE_KEY]: 'Invalid vnode key.',
   [LytErrorCodes.INVALID_DOM_NODE]: 'Invalid DOM node.',
   [LytErrorCodes.INVALID_HYDRATION_NODE]: 'Invalid hydration node.',
+  [LytErrorCodes.INVALID_PATCH_FLAG]: 'Invalid patch flag.',
   [LytErrorCodes.INVALID_REF]: 'Invalid ref.',
+  [LytErrorCodes.INVALID_SLOT]: 'Invalid slot.',
   [LytErrorCodes.INVALID_CHILDREN]: 'Invalid children.',
   [LytErrorCodes.INVALID_PROPS]: 'Invalid props.',
+  [LytErrorCodes.INVALID_EVENT]: 'Invalid event handler.',
+  [LytErrorCodes.INVALID_ATTR]: 'Invalid attribute.',
+  [LytErrorCodes.INVALID_CLASS]: 'Invalid class value.',
+  [LytErrorCodes.INVALID_STYLE]: 'Invalid style value.',
+  [LytErrorCodes.INVALID_DIRECTIVE_VALUE]: 'Invalid directive value.',
+  [LytErrorCodes.INVALID_TEMPLATE]: 'Invalid template.',
+  [LytErrorCodes.INVALID_MOUNT_TARGET]: 'Failed to mount app: target element not found.',
+  [LytErrorCodes.INVALID_UNMOUNT_TARGET]: 'Failed to unmount app: target element not found.',
   [LytErrorCodes.INVALID_COMPONENT]: 'Invalid component.',
   [LytErrorCodes.INVALID_PROP_TYPE]: 'Invalid prop type.',
   [LytErrorCodes.MISSING_PROP]: 'Missing required prop.',
@@ -214,40 +254,46 @@ export class LytError extends Error {
 }
 
 /**
- * 创建编译器错误
+ * 通用错误创建函数
  */
-export function createCompilerError(
+function createLytError(
+  kind: 'compiler' | 'renderer' | 'component',
   code: number,
   loc?: SourceLocation,
   additionalMessage?: string
 ): LytError {
   const message = getErrorMessage(code) + (additionalMessage ? ` ${additionalMessage}` : '')
-  return new LytError(code, message, loc)
+  const error = new LytError(code, message, loc)
+  error.name = `${kind.charAt(0).toUpperCase() + kind.slice(1)}Error`
+  return error
 }
+
+/**
+ * 创建编译器错误
+ */
+export const createCompilerError = (
+  code: number,
+  loc?: SourceLocation,
+  additionalMessage?: string
+): LytError => createLytError('compiler', code, loc, additionalMessage)
 
 /**
  * 创建渲染器错误
  */
-export function createRendererError(
+export const createRendererError = (
   code: number,
   loc?: SourceLocation,
   additionalMessage?: string
-): LytError {
-  const message = getErrorMessage(code) + (additionalMessage ? ` ${additionalMessage}` : '')
-  return new LytError(code, message, loc)
-}
+): LytError => createLytError('renderer', code, loc, additionalMessage)
 
 /**
  * 创建组件错误
  */
-export function createComponentError(
+export const createComponentError = (
   code: number,
   loc?: SourceLocation,
   additionalMessage?: string
-): LytError {
-  const message = getErrorMessage(code) + (additionalMessage ? ` ${additionalMessage}` : '')
-  return new LytError(code, message, loc)
-}
+): LytError => createLytError('component', code, loc, additionalMessage)
 
 // ============================================================
 // 开发模式与警告

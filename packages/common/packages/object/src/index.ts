@@ -9,6 +9,9 @@ import {
   isNullish,
 } from '@lytjs/common-is'
 
+const hasOwn = (obj: object, key: string | number | symbol): boolean =>
+  Object.prototype.hasOwnProperty.call(obj, key)
+
 /**
  * 浅合并多个对象
  */
@@ -19,7 +22,7 @@ export function mergeObjects<T extends Record<string, any>>(
   for (const source of sources) {
     if (source) {
       for (const key in source) {
-        if (Object.prototype.hasOwnProperty.call(source, key)) {
+        if (hasOwn(source, key)) {
           ;(result as any)[key] = source[key]
         }
       }
@@ -37,7 +40,7 @@ export function deepMerge<T extends Record<string, any>>(
 ): T {
   const result = { ...target }
   for (const key in source) {
-    if (Object.prototype.hasOwnProperty.call(source, key)) {
+    if (hasOwn(source, key)) {
       const sourceVal = source[key]
       const targetVal = result[key]
       if (isPlainObject(sourceVal) && isPlainObject(targetVal)) {
@@ -82,8 +85,8 @@ export function diffObjects<T extends Record<string, any>>(
 
   // 检查新增和变更
   for (const key in newObj) {
-    if (Object.prototype.hasOwnProperty.call(newObj, key)) {
-      if (!Object.prototype.hasOwnProperty.call(oldObj, key)) {
+    if (hasOwn(newObj, key)) {
+      if (!hasOwn(oldObj, key)) {
         added[key] = newObj[key]
       } else if (oldObj[key] !== newObj[key]) {
         changed[key] = { from: oldObj[key], to: newObj[key] }
@@ -94,8 +97,8 @@ export function diffObjects<T extends Record<string, any>>(
   // 检查删除
   for (const key in oldObj) {
     if (
-      Object.prototype.hasOwnProperty.call(oldObj, key) &&
-      !Object.prototype.hasOwnProperty.call(newObj, key)
+      hasOwn(oldObj, key) &&
+      !hasOwn(newObj, key)
     ) {
       removed[key] = oldObj[key]
     }
@@ -113,7 +116,7 @@ export function pick<T extends Record<string, any>, K extends keyof T>(
 ): Pick<T, K> {
   const result = {} as Pick<T, K>
   for (const key of keys) {
-    if (Object.prototype.hasOwnProperty.call(obj, key)) {
+    if (hasOwn(obj, key)) {
       result[key] = obj[key]
     }
   }
@@ -137,34 +140,50 @@ export function omit<T extends Record<string, any>, K extends keyof T>(
 /**
  * 深度克隆对象
  */
-export function deepClone<T>(value: T): T {
-  if (value === null || typeof value !== 'object') {
-    return value
+export function deepClone<T>(source: T, seen = new WeakMap<object, unknown>()): T {
+  // 基本类型直接返回
+  if (source === null || typeof source !== 'object') return source;
+
+  // 循环引用检测
+  if (seen.has(source as object)) return seen.get(source as object) as T;
+
+  // 特殊对象类型
+  if (source instanceof Date) return new Date(source.getTime()) as T;
+  if (source instanceof RegExp) return new RegExp(source) as T;
+  if (source instanceof Map) {
+    const clone = new Map();
+    seen.set(source, clone);
+    source.forEach((value, key) => {
+      clone.set(deepClone(key, seen), deepClone(value, seen));
+    });
+    return clone as T;
+  }
+  if (source instanceof Set) {
+    const clone = new Set();
+    seen.set(source, clone);
+    source.forEach(value => {
+      clone.add(deepClone(value, seen));
+    });
+    return clone as T;
   }
 
-  if (value instanceof Date) {
-    return new Date(value.getTime()) as any
-  }
-
-  if (value instanceof RegExp) {
-    return new RegExp(value.source, value.flags) as any
-  }
-
-  if (isArray(value)) {
-    return value.map((item) => deepClone(item)) as any
-  }
-
-  if (isPlainObject(value)) {
-    const result = {} as Record<string, any>
-    for (const key in value) {
-      if (Object.prototype.hasOwnProperty.call(value, key)) {
-        result[key] = deepClone(value[key])
-      }
+  // 数组
+  if (isArray(source)) {
+    const clone: unknown[] = [];
+    seen.set(source, clone);
+    for (let i = 0; i < source.length; i++) {
+      clone[i] = deepClone(source[i], seen);
     }
-    return result as T
+    return clone as T;
   }
 
-  return value
+  // 普通对象
+  const clone = {} as Record<string | symbol, unknown>;
+  seen.set(source, clone);
+  for (const key of Object.keys(source)) {
+    clone[key] = deepClone((source as Record<string, unknown>)[key], seen);
+  }
+  return clone as T;
 }
 
 /**
@@ -180,7 +199,7 @@ export function shallowEqual(a: Record<string, any>, b: Record<string, any>): bo
   if (keysA.length !== keysB.length) return false
 
   for (const key of keysA) {
-    if (a[key] !== b[key] || !Object.prototype.hasOwnProperty.call(b, key)) {
+    if (a[key] !== b[key] || !hasOwn(b, key)) {
       return false
     }
   }
@@ -200,6 +219,30 @@ export function deepEqual(a: any, b: any): boolean {
 
   if (typeof a !== 'object') return false
 
+  if (a instanceof Date && b instanceof Date) {
+    return a.getTime() === b.getTime()
+  }
+
+  if (a instanceof RegExp && b instanceof RegExp) {
+    return a.source === b.source && a.flags === b.flags
+  }
+
+  if (a instanceof Map && b instanceof Map) {
+    if (a.size !== b.size) return false
+    for (const [key, val] of a) {
+      if (!b.has(key) || !deepEqual(val, b.get(key))) return false
+    }
+    return true
+  }
+
+  if (a instanceof Set && b instanceof Set) {
+    if (a.size !== b.size) return false
+    for (const val of a) {
+      if (!b.has(val)) return false
+    }
+    return true
+  }
+
   if (isArray(a) && isArray(b)) {
     if (a.length !== b.length) return false
     return a.every((val, i) => deepEqual(val, b[i]))
@@ -210,10 +253,6 @@ export function deepEqual(a: any, b: any): boolean {
     const keysB = Object.keys(b)
     if (keysA.length !== keysB.length) return false
     return keysA.every((key) => deepEqual(a[key], b[key]))
-  }
-
-  if (a instanceof Date && b instanceof Date) {
-    return a.getTime() === b.getTime()
   }
 
   return false
