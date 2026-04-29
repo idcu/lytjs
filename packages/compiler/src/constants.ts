@@ -94,29 +94,3 @@ export const helperNameMap: Record<string, string> = {
   NORMALIZE_PROPS: 'normalizeProps',
   GUARD_REACTIVE_PROPS: 'guardReactiveProps',
 };
-
-// Helper enum (as const)
-export const HelperNameMap = {
-  CREATE_VNODE: 'createElementVNode',
-  CREATE_ELEMENT_VNODE: 'createElementVNode',
-  CREATE_COMMENT: 'createCommentVNode',
-  CREATE_TEXT: 'createTextVNode',
-  CREATE_STATIC: 'createStaticVNode',
-  RESOLVE_COMPONENT: 'resolveComponent',
-  RESOLVE_DYNAMIC_COMPONENT: 'resolveDynamicComponent',
-  RESOLVE_DIRECTIVE: 'resolveDirective',
-  RENDER_LIST: 'renderList',
-  RENDER_SLOT: 'renderSlot',
-  CREATE_SLOTS: 'createSlots',
-  TO_DISPLAY_STRING: 'toDisplayString',
-  MERGE_PROPS: 'mergeProps',
-  TO_HANDLER_KEY: 'toHandlerKey',
-  SET_BLOCK_TRACKING: 'setBlockTracking',
-  CREATE_BLOCK: 'createBlock',
-  OPEN_BLOCK: 'openBlock',
-  WITH_CTX: 'withCtx',
-  NORMALIZE_CLASS: 'normalizeClass',
-  NORMALIZE_STYLE: 'normalizeStyle',
-  NORMALIZE_PROPS: 'normalizeProps',
-  GUARD_REACTIVE_PROPS: 'guardReactiveProps',
-} as const;

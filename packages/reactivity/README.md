@@ -1,98 +1,64 @@
 # @lytjs/reactivity
 
-LytJS 响应式系统 -- 提供 signal、ref、reactive、computed、watch、effect 等核心响应式原语。
-
-## 特性
-
-- **Signal API**: 现代化的细粒度响应式原语
-- **Reactive Proxy**: 基于 Proxy 的深层响应式对象
-- **Ref**: 包装式的响应式引用
-- **Computed**: 自动缓存的可计算值
-- **Watch**: 声明式数据侦听器
-- **Effect**: 副作用管理
+> LytJS 响应式系统，提供 ref、reactive、computed、watch 等核心响应式原语
 
 ## 安装
 
 ```bash
-pnpm add @lytjs/reactivity
+npm install @lytjs/reactivity
 ```
 
-## 使用
+## 核心 API
 
-### Signal
+### reactive / shallowReactive / readonly / shallowReadonly
+
+创建响应式对象，支持深层/浅层响应和只读模式
 
 ```typescript
-import { signal, computedSignal, set, update } from '@lytjs/reactivity/signal';
-
-const count = signal(0);
-const doubled = computedSignal(() => count() * 2);
-
-console.log(doubled()); // 0
-set(count, 1);
-console.log(doubled()); // 2
-update(count, n => n + 1);
-console.log(doubled()); // 4
+import { reactive, shallowReactive, readonly, shallowReadonly } from '@lytjs/reactivity'
 ```
 
-### Reactive
+### ref / shallowRef
+
+创建响应式引用，适用于基本类型值
 
 ```typescript
-import { reactive, computed, watch } from '@lytjs/reactivity';
-
-const state = reactive({ count: 0 });
-const doubled = computed(() => state.count * 2);
-
-watch(doubled, (newVal) => {
-  console.log(`doubled changed to: ${newVal}`);
-});
-
-state.count = 1; // 输出: doubled changed to: 2
+import { ref, shallowRef } from '@lytjs/reactivity'
 ```
 
-### Ref
+### computed
+
+创建计算属性，自动追踪依赖并缓存结果
 
 ```typescript
-import { ref, computed, watchEffect } from '@lytjs/reactivity';
-
-const count = ref(0);
-const doubled = computed(() => count.value * 2);
-
-watchEffect(() => {
-  console.log(doubled.value);
-});
-
-count.value++; // 输出: 2
+import { computed } from '@lytjs/reactivity'
 ```
 
-## API
+### watch / watchEffect
 
-| API | 说明 |
-|-----|------|
-| `reactive()` | 创建深层响应式对象 |
-| `shallowReactive()` | 创建浅层响应式对象 |
-| `readonly()` | 创建只读响应式对象 |
-| `ref()` | 创建 ref |
-| `shallowRef()` | 创建浅层 ref |
-| `computed()` | 创建计算属性 |
-| `watch()` | 侦听数据源变化 |
-| `watchEffect()` | 自动追踪依赖的副作用 |
-| `effect()` | 创建原始副作用 |
-| `signal()` | 创建 signal |
-| `computedSignal()` | 创建计算 signal |
+侦听响应式数据变化并执行副作用
 
-## 子路径入口
+```typescript
+import { watch, watchEffect } from '@lytjs/reactivity'
+```
 
-- `@lytjs/reactivity` -- 主入口（reactive/ref/computed/watch/effect）
-- `@lytjs/reactivity/signal` -- Signal API
-- `@lytjs/reactivity/signal-component` -- Signal 组件集成
+### effect
 
-## 依赖
+创建自定义响应式副作用
 
-- `@lytjs/common-is` -- 类型判断工具
-- `@lytjs/common-scheduler` -- 调度器（nextTick）
-- `@lytjs/common-env` -- 环境检测
-- `@lytjs/common-error` -- 错误处理
+```typescript
+import { effect, stop } from '@lytjs/reactivity'
+```
 
-## License
+### toRef / toRefs / unref
 
-MIT
+响应式引用工具函数
+
+```typescript
+import { toRef, toRefs, unref } from '@lytjs/reactivity'
+```
+
+## 相关包
+
+- [@lytjs/core](../core) - 框架核心入口，整合所有子包
+- [@lytjs/component](../component) - 组件系统，依赖响应式系统

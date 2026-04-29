@@ -37,9 +37,6 @@
     "@lytjs/reactivity": "workspace:*",
     "@lytjs/vdom": "workspace:*",
     "@lytjs/common-is": "workspace:*",
-    "@lytjs/common-env": "workspace:*",
-    "@lytjs/common-scheduler": "workspace:*",
-    "@lytjs/common-error": "workspace:*",
     "@lytjs/common-string": "workspace:*"
   },
   "devDependencies": {
