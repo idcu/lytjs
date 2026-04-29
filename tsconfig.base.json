@@ -43,7 +43,8 @@
       "@lytjs/renderer": ["packages/renderer/src"],
       "@lytjs/component": ["packages/component/src"],
       "@lytjs/core": ["packages/core/src"]
-    }
+    },
+    "types": []
   },
   "exclude": ["node_modules", "dist", "**/dist", "**/node_modules"]
 }
