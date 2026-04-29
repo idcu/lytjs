@@ -251,3 +251,75 @@ export function normalizeStyle(
 
   return ''
 }
+
+// ============================================================
+// 安全工具函数
+// ============================================================
+
+/**
+ * 危险事件处理器属性黑名单
+ */
+const DANGEROUS_EVENT_ATTRS = new Set([
+  'onclick', 'ondblclick', 'onmousedown', 'onmouseup', 'onmouseover',
+  'onmouseout', 'onmousemove', 'onmouseenter', 'onmouseleave',
+  'onkeydown', 'onkeyup', 'onkeypress',
+  'onfocus', 'onblur', 'oninput', 'onchange', 'onsubmit', 'onreset',
+  'onload', 'onerror', 'onresize', 'onscroll',
+  'oncontextmenu', 'ondrag', 'ondragend', 'ondragenter',
+  'ondragleave', 'ondragover', 'ondragstart', 'ondrop',
+  'onanimationend', 'onanimationstart', 'ontransitionend',
+  'onwheel', 'onpointerdown', 'onpointerup', 'onpointermove',
+  'oncopy', 'oncut', 'onpaste',
+])
+
+/**
+ * 危险 URL 属性（需要协议白名单校验）
+ */
+const DANGEROUS_URL_ATTRS = new Set([
+  'src', 'href', 'action', 'formaction', 'xlink:href',
+  'data', 'srcdoc', 'poster', 'background',
+])
+
+/**
+ * 允许的 URL 协议
+ */
+const ALLOWED_URL_PROTOCOLS = new Set([
+  'http:', 'https:', 'mailto:', 'tel:', '#', '',
+])
+
+/**
+ * 检查属性是否安全
+ * @returns true 表示安全，false 表示应跳过
+ */
+export function isSafeAttribute(
+  attrName: string,
+  attrValue: string,
+): boolean {
+  const lowerName = attrName.toLowerCase()
+
+  // 1. 检查事件处理器属性
+  if (DANGEROUS_EVENT_ATTRS.has(lowerName)) {
+    if (typeof process !== 'undefined' && process.env?.NODE_ENV === 'development') {
+      console.warn(`[lytjs/security] Blocked dangerous event attribute: ${attrName}`)
+    }
+    return false
+  }
+
+  // 2. 检查 URL 类属性
+  if (DANGEROUS_URL_ATTRS.has(lowerName)) {
+    const trimmed = (attrValue ?? '').trim().toLowerCase()
+    const protocolMatch = trimmed.match(/^([a-z]+:|#)/)
+    const protocol = protocolMatch?.[1] ?? ''
+    if (!ALLOWED_URL_PROTOCOLS.has(protocol)) {
+      if (typeof process !== 'undefined' && process.env?.NODE_ENV === 'development') {
+        console.warn(
+          `[lytjs/security] Blocked dangerous URL in attribute "${attrName}": ` +
+          `protocol "${protocol}" is not allowed`,
+        )
+      }
+      return false
+    }
+  }
+
+  return true
+}

@@ -1,5 +1,6 @@
 // src/create-app.ts
 import { createRenderer, createVNode } from '@lytjs/vdom';
+import { isSafeAttribute } from '@lytjs/common-string';
 import type { App, AppConfig, Plugin, Component, ComponentPublicInstance } from './types';
 
 export function createApp(rootComponent: Component, rootProps: any = null): App {
@@ -26,6 +27,13 @@ export function createApp(rootComponent: Component, rootProps: any = null): App 
       const container = typeof rootContainer === 'string'
         ? document.querySelector(rootContainer)
         : rootContainer;
+
+      if (!container) {
+        throw new Error(
+          `[LytJS] Failed to mount app: cannot find element matching selector "${rootContainer}". ` +
+          `Make sure the target element exists in the DOM before calling app.mount().`
+        );
+      }
 
       // 解析根组件的 render 函数，生成 VNode
       const comp = rootComponent as any;
@@ -75,12 +83,9 @@ export function createApp(rootComponent: Component, rootProps: any = null): App 
     unmount() {
       if (context.renderer && context._vnode) {
         context.renderer.unmount(context._vnode);
-        // 清除容器内容
-        if (context._container) {
-          context._container.innerHTML = '';
-        }
         context._vnode = null;
       }
+      context._container = null;
     },
 
     provide(key, value) {
@@ -160,7 +165,9 @@ function getRendererOptions() {
       } else if (nextValue == null) {
         el.removeAttribute(key);
       } else {
-        el.setAttribute(key, String(nextValue));
+        if (isSafeAttribute(key, String(nextValue))) {
+          el.setAttribute(key, String(nextValue));
+        }
       }
     },
     insert(el: any, parent: any, anchor: any) {

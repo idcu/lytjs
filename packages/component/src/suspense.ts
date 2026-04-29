@@ -118,7 +118,8 @@ export function registerAsyncChild(
         boundary.isPending = false;
         boundary.error = err;
         boundary.promise = null;
-        for (const cb of boundary.onResolve) {
+        // 调用 onError 回调而非 onResolve
+        for (const cb of boundary.onPending) {
           cb();
         }
       }

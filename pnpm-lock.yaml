@@ -334,6 +334,9 @@ importers:
       '@lytjs/common-is':
         specifier: workspace:*
         version: link:../common/packages/is
+      '@lytjs/common-string':
+        specifier: workspace:*
+        version: link:../common/packages/string
       '@lytjs/compiler':
         specifier: workspace:*
         version: link:../compiler
@@ -433,6 +436,9 @@ importers:
       '@lytjs/common-is':
         specifier: workspace:*
         version: link:../common/packages/is
+      '@lytjs/common-string':
+        specifier: workspace:*
+        version: link:../common/packages/string
       '@lytjs/common-vnode':
         specifier: workspace:*
         version: link:../common/packages/vnode
