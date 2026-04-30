@@ -118,6 +118,30 @@ export function onErrorCaptured(
   }
 }
 
+/**
+ * Register a callback to be called when the component is activated (by KeepAlive).
+ */
+export function onActivated(fn: () => void): void {
+  if (currentInstance) {
+    if (!currentInstance.activatedHooks) {
+      currentInstance.activatedHooks = [];
+    }
+    currentInstance.activatedHooks.push(fn);
+  }
+}
+
+/**
+ * Register a callback to be called when the component is deactivated (by KeepAlive).
+ */
+export function onDeactivated(fn: () => void): void {
+  if (currentInstance) {
+    if (!currentInstance.deactivatedHooks) {
+      currentInstance.deactivatedHooks = [];
+    }
+    currentInstance.deactivatedHooks.push(fn);
+  }
+}
+
 // ==================== Lifecycle calling ====================
 
 /**

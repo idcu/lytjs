@@ -175,6 +175,11 @@ export function activateInstance(instance: ComponentInternalInstance): void {
   if (instance.type.activated) {
     instance.type.activated.call(instance.ctx);
   }
+  if (instance.activatedHooks) {
+    for (const hook of instance.activatedHooks) {
+      try { hook(); } catch (e) { /* ignore */ }
+    }
+  }
 }
 
 /**
@@ -185,5 +190,10 @@ export function deactivateInstance(instance: ComponentInternalInstance): void {
   // Call deactivated hook if defined
   if (instance.type.deactivated) {
     instance.type.deactivated.call(instance.ctx);
+  }
+  if (instance.deactivatedHooks) {
+    for (const hook of instance.deactivatedHooks) {
+      try { hook(); } catch (e) { /* ignore */ }
+    }
   }
 }

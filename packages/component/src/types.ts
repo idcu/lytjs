@@ -117,6 +117,8 @@ export interface ComponentInternalInstance {
   errorCapturedHooks?: Array<
     (err: Error, instance: ComponentPublicInstance | null, info: string) => boolean | void
   >;
+  activatedHooks?: Array<() => void>;
+  deactivatedHooks?: Array<() => void>;
 }
 
 // ==================== ComponentPublicInstance ====================
