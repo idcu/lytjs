@@ -7,9 +7,9 @@
 // VNode 类型 Symbol
 // ============================================================
 
-export const Fragment = Symbol.for('Fragment')
-export const Text = Symbol.for('Text')
-export const Comment = Symbol.for('Comment')
+export const Fragment = Symbol.for("Fragment");
+export const Text = Symbol.for("Text");
+export const Comment = Symbol.for("Comment");
 
 // ============================================================
 // ShapeFlags - VNode 形状标志
@@ -80,7 +80,7 @@ export type VNodeTypes =
   | typeof Fragment
   | typeof Text
   | typeof Comment
-  | object // Component
+  | object; // Component
 
 export type VNodeChildren =
   | string
@@ -89,108 +89,108 @@ export type VNodeChildren =
   | null
   | undefined
   | VNode[]
-  | { [key: string]: VNode[] }
+  | { [key: string]: VNode[] };
 
 export interface VNodeSourceLocation {
-  start: { line: number; column: number; offset: number }
-  end: { line: number; column: number; offset: number }
-  source: string
+  start: { line: number; column: number; offset: number };
+  end: { line: number; column: number; offset: number };
+  source: string;
 }
 
 export interface VNodeData {
-  [key: string]: any
+  [key: string]: any;
 }
 
 export interface VNode {
   /** VNode 类型 */
-  type: VNodeTypes
+  type: VNodeTypes;
   /** VNode 的 key */
-  key: string | number | symbol | null | undefined
+  key: string | number | symbol | null | undefined;
   /** ref 引用 */
-  ref: any
+  ref: any;
   /** 是否为静态提升 */
-  isStatic: boolean
+  isStatic: boolean;
   /** 是否为静态根节点 */
-  isStaticRoot: boolean
+  isStaticRoot: boolean;
   /** 是否为 once 渲染 */
-  isOnce: boolean
+  isOnce: boolean;
   /** 是否为异步占位 */
-  isAsyncPlaceholder: boolean
+  isAsyncPlaceholder: boolean;
   /** 是否为注释节点 */
-  isComment: boolean
+  isComment: boolean;
   /** 是否为克隆节点 */
-  isCloned: boolean
+  isCloned: boolean;
   /** 是否为块级元素 */
-  isBlockTree: boolean
+  isBlockTree: boolean;
   /** 形状标志 */
-  shapeFlag: number
+  shapeFlag: number;
   /** 补丁标志 */
-  patchFlag: number
+  patchFlag: number;
   /** 动态 props */
-  dynamicProps: string[] | null
+  dynamicProps: string[] | null;
   /** 动态子节点 */
-  dynamicChildren: VNode[] | null
+  dynamicChildren: VNode[] | null;
   /** 子节点 */
-  children: VNodeChildren
+  children: VNodeChildren;
   /** 组件实例 */
-  component: ComponentInternalInstance | null
+  component: ComponentInternalInstance | null;
   /** 挂载的 DOM 元素 */
-  el: any
+  el: any;
   /** 锚点元素 */
-  anchor: any
+  anchor: any;
   /** 目标元素（Teleport） */
-  target: any
+  target: any;
   /** 目标锚点（Teleport） */
-  targetAnchor: any
+  targetAnchor: any;
   /** 目标起始位置（Teleport） */
-  targetStart: any
+  targetStart: any;
   /** 源码位置 */
-  loc: VNodeSourceLocation | null
+  loc: VNodeSourceLocation | null;
   /** 内部标记 */
-  __v_isVNode: true
+  __v_isVNode: true;
 }
 
 export interface ComponentPublicInstance {
-  $props: Record<string, any>
-  $attrs: Record<string, any>
-  $refs: Record<string, any>
-  $slots: Record<string, any>
-  $emit: (event: string, ...args: any[]) => void
-  $el: any
-  $forceUpdate: () => void
-  $nextTick: (fn?: () => void) => Promise<void>
+  $props: Record<string, any>;
+  $attrs: Record<string, any>;
+  $refs: Record<string, any>;
+  $slots: Record<string, any>;
+  $emit: (event: string, ...args: any[]) => void;
+  $el: any;
+  $forceUpdate: () => void;
+  $nextTick: (fn?: () => void) => Promise<void>;
 }
 
 export interface ComponentInternalInstance {
-  uid: number
-  type: VNodeTypes
-  parent: ComponentInternalInstance | null
-  root: ComponentInternalInstance
-  vnode: VNode
-  subTree: VNode
-  props: Record<string, any>
-  attrs: Record<string, any>
-  slots: Record<string, any>
-  refs: Record<string, any>
-  setupState: Record<string, any>
-  data: Record<string, any>
-  ctx: Record<string, any>
-  emit: (event: string, ...args: any[]) => void
-  isMounted: boolean
-  isUnmounted: boolean
-  isDeactivated: boolean
-  isKeepingAlive: boolean
+  uid: number;
+  type: VNodeTypes;
+  parent: ComponentInternalInstance | null;
+  root: ComponentInternalInstance;
+  vnode: VNode;
+  subTree: VNode;
+  props: Record<string, any>;
+  attrs: Record<string, any>;
+  slots: Record<string, any>;
+  refs: Record<string, any>;
+  setupState: Record<string, any>;
+  data: Record<string, any>;
+  ctx: Record<string, any>;
+  emit: (event: string, ...args: any[]) => void;
+  isMounted: boolean;
+  isUnmounted: boolean;
+  isDeactivated: boolean;
+  isKeepingAlive: boolean;
 }
 
 export interface BaseComponentOptions {
-  props?: Record<string, any>
-  emits?: string[] | Record<string, any>
-  setup?: (...args: any[]) => any
-  render?: (...args: any[]) => any
-  computed?: Record<string, any>
-  methods?: Record<string, any>
-  watch?: Record<string, any>
-  data?: () => Record<string, any>
+  props?: Record<string, any>;
+  emits?: string[] | Record<string, any>;
+  setup?: (...args: any[]) => any;
+  render?: (...args: any[]) => any;
+  computed?: Record<string, any>;
+  methods?: Record<string, any>;
+  watch?: Record<string, any>;
+  data?: () => Record<string, any>;
 }
 
 // ============================================================
@@ -203,66 +203,66 @@ export interface BaseComponentOptions {
 export function isVNode(value: unknown): value is VNode {
   return (
     value !== null &&
-    typeof value === 'object' &&
+    typeof value === "object" &&
     (value as any).__v_isVNode === true
-  )
+  );
 }
 
 /**
  * 检查 VNode 是否为 Fragment 类型
  */
 export function isFragment(vnode: VNode): boolean {
-  return vnode.type === Fragment
+  return vnode.type === Fragment;
 }
 
 /**
  * 检查 VNode 是否为 Text 类型
  */
 export function isTextVNode(vnode: VNode): boolean {
-  return vnode.type === Text
+  return vnode.type === Text;
 }
 
 /**
  * 检查 VNode 是否为 Comment 类型
  */
 export function isCommentVNode(vnode: VNode): boolean {
-  return vnode.type === Comment
+  return vnode.type === Comment;
 }
 
 /**
  * 检查两个 VNode 是否类型相同
  */
 export function isSameVNodeType(n1: VNode, n2: VNode): boolean {
-  return n1.type === n2.type && n1.key === n2.key
+  return n1.type === n2.type && n1.key === n2.key;
 }
 
 /**
  * 检查 VNode 是否包含指定的 patch flag
  */
 export function hasPatchFlag(vnode: VNode, flag: number): boolean {
-  return (vnode.patchFlag & flag) !== 0
+  return (vnode.patchFlag & flag) !== 0;
 }
 
 /**
  * 描述 patch flag 的含义
  */
 export function describePatchFlag(flag: number): string {
-  const names: string[] = []
+  const names: string[] = [];
 
-  if (flag === PatchFlags.HOISTED) return 'HOISTED'
-  if (flag === PatchFlags.BAIL) return 'BAIL'
+  if (flag === PatchFlags.HOISTED) return "HOISTED";
+  if (flag === PatchFlags.BAIL) return "BAIL";
 
-  if (flag & PatchFlags.TEXT) names.push('TEXT')
-  if (flag & PatchFlags.CLASS) names.push('CLASS')
-  if (flag & PatchFlags.STYLE) names.push('STYLE')
-  if (flag & PatchFlags.PROPS) names.push('PROPS')
-  if (flag & PatchFlags.FULL_PROPS) names.push('FULL_PROPS')
-  if (flag & PatchFlags.HYDRATE_EVENTS) names.push('HYDRATE_EVENTS')
-  if (flag & PatchFlags.STABLE_FRAGMENT) names.push('STABLE_FRAGMENT')
-  if (flag & PatchFlags.KEYED_FRAGMENT) names.push('KEYED_FRAGMENT')
-  if (flag & PatchFlags.UNKEYED_FRAGMENT) names.push('UNKEYED_FRAGMENT')
-  if (flag & PatchFlags.NEED_PATCH) names.push('NEED_PATCH')
-  if (flag & PatchFlags.DYNAMIC_SLOTS) names.push('DYNAMIC_SLOTS')
+  if (flag & PatchFlags.TEXT) names.push("TEXT");
+  if (flag & PatchFlags.CLASS) names.push("CLASS");
+  if (flag & PatchFlags.STYLE) names.push("STYLE");
+  if (flag & PatchFlags.PROPS) names.push("PROPS");
+  if (flag & PatchFlags.FULL_PROPS) names.push("FULL_PROPS");
+  if (flag & PatchFlags.HYDRATE_EVENTS) names.push("HYDRATE_EVENTS");
+  if (flag & PatchFlags.STABLE_FRAGMENT) names.push("STABLE_FRAGMENT");
+  if (flag & PatchFlags.KEYED_FRAGMENT) names.push("KEYED_FRAGMENT");
+  if (flag & PatchFlags.UNKEYED_FRAGMENT) names.push("UNKEYED_FRAGMENT");
+  if (flag & PatchFlags.NEED_PATCH) names.push("NEED_PATCH");
+  if (flag & PatchFlags.DYNAMIC_SLOTS) names.push("DYNAMIC_SLOTS");
 
-  return names.join(' | ') || 'NO_FLAGS'
+  return names.join(" | ") || "NO_FLAGS";
 }

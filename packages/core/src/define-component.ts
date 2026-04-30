@@ -1,7 +1,12 @@
 // src/define-component.ts
 // @lytjs/core - 组件定义
 
-import type { ComponentOptions, Component, AsyncComponentLoader, AsyncComponentOptions } from './types';
+import type {
+  ComponentOptions,
+  Component,
+  AsyncComponentLoader,
+  AsyncComponentOptions,
+} from "./types";
 
 /**
  * 定义组件（类型标记 + 直接返回 options）
@@ -14,9 +19,9 @@ export function defineComponent(options: ComponentOptions): Component {
  * 定义异步组件
  */
 export function defineAsyncComponent(
-  source: AsyncComponentLoader | AsyncComponentOptions
+  source: AsyncComponentLoader | AsyncComponentOptions,
 ): Component {
-  if (typeof source === 'function') {
+  if (typeof source === "function") {
     source = { loader: source };
   }
 
@@ -62,7 +67,7 @@ export function defineAsyncComponent(
   load();
 
   const comp: ComponentOptions = {
-    name: 'AsyncComponent',
+    name: "AsyncComponent",
     setup() {
       const instance = {
         resolved: resolvedComponent,

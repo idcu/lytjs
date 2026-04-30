@@ -1,18 +1,20 @@
 // src/transforms/helpers.ts
 // 共享辅助函数
 
-import { NodeTypes } from '../constants';
+import { NodeTypes } from "../constants";
 import type {
   ElementNode,
   DirectiveNode,
   ExpressionNode,
   TemplateChildNode,
-} from '../types';
+} from "../types";
 
 /**
  * 获取表达式节点的内容字符串
  */
-export function getExpContent(exp: ExpressionNode | undefined): string | undefined {
+export function getExpContent(
+  exp: ExpressionNode | undefined,
+): string | undefined {
   if (!exp) return undefined;
   if (exp.type === NodeTypes.SIMPLE_EXPRESSION) return exp.content;
   return undefined;
@@ -21,9 +23,13 @@ export function getExpContent(exp: ExpressionNode | undefined): string | undefin
 /**
  * 在元素节点中查找指定名称的指令
  */
-export function findDirective(node: ElementNode, name: string): DirectiveNode | undefined {
+export function findDirective(
+  node: ElementNode,
+  name: string,
+): DirectiveNode | undefined {
   return node.props.find(
-    (p): p is DirectiveNode => p.type === NodeTypes.DIRECTIVE && p.name === name,
+    (p): p is DirectiveNode =>
+      p.type === NodeTypes.DIRECTIVE && p.name === name,
   );
 }
 

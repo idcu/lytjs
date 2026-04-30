@@ -1,7 +1,7 @@
 // src/parser.ts
 // HTML template parser
 
-import { NodeTypes, ElementTypes, TextModes, TagType } from './constants';
+import { NodeTypes, ElementTypes, TextModes, TagType } from "./constants";
 import type {
   RootNode,
   ElementNode,
@@ -16,7 +16,7 @@ import type {
   ParserContext,
   ParserOptions,
   SourceLocation,
-} from './types';
+} from "./types";
 import {
   createRoot,
   createElement,
@@ -26,7 +26,7 @@ import {
   createAttribute,
   createDirective,
   createSimpleExpression,
-} from './ast';
+} from "./ast";
 
 // ============================================================
 // Parser utilities
@@ -46,7 +46,7 @@ function advancePositionWithMutation(
   let line = context.line;
   for (let i = 0; i < numberOfCharacters; i++) {
     const char = source[i];
-    if (char === '\n') {
+    if (char === "\n") {
       line++;
     }
   }
@@ -62,7 +62,11 @@ function advanceSpaces(context: ParserContext): void {
   }
 }
 
-function getCursor(context: ParserContext): { offset: number; line: number; column: number } {
+function getCursor(context: ParserContext): {
+  offset: number;
+  line: number;
+  column: number;
+} {
   return { offset: context.offset, line: context.line, column: context.column };
 }
 
@@ -93,7 +97,10 @@ export function parse(source: string, options: ParserOptions = {}): RootNode {
   return root;
 }
 
-function createParserContext(source: string, options: ParserOptions): ParserContext {
+function createParserContext(
+  source: string,
+  options: ParserOptions,
+): ParserContext {
   return {
     options,
     originalSource: source,
@@ -122,15 +129,15 @@ function parseChildren(
     let node: TemplateChildNode | undefined;
 
     if (mode === TextModes.DATA || mode === TextModes.RCDATA) {
-      if (s.startsWith('<!--')) {
+      if (s.startsWith("<!--")) {
         node = parseComment(context);
-      } else if (s.startsWith('{{')) {
+      } else if (s.startsWith("{{")) {
         node = parseInterpolation(context);
-      } else if (s.startsWith('<')) {
-        if (s[1] === '/') {
+      } else if (s.startsWith("<")) {
+        if (s[1] === "/") {
           break;
         }
-        if (s.startsWith('<!DOCTYPE') || s.startsWith('<!')) {
+        if (s.startsWith("<!DOCTYPE") || s.startsWith("<!")) {
           const match = s.match(/^<![\s\S]*?>/);
           if (match) {
             advanceBy(context, match[0].length);
@@ -138,9 +145,11 @@ function parseChildren(
           }
           // DOCTYPE/声明格式异常，跳过到行尾或文件尾防止无限循环
           if (__DEV__) {
-            console.warn(`[lytjs/compiler] Invalid DOCTYPE/declaration at position ${context.offset}`);
+            console.warn(
+              `[lytjs/compiler] Invalid DOCTYPE/declaration at position ${context.offset}`,
+            );
           }
-          const lineEnd = s.indexOf('\n');
+          const lineEnd = s.indexOf("\n");
           advanceBy(context, lineEnd === -1 ? s.length : lineEnd);
           continue;
         }
@@ -158,10 +167,7 @@ function parseChildren(
   }
 
   // Handle whitespace condensing
-  if (
-    mode === TextModes.DATA &&
-    parent.type !== NodeTypes.ELEMENT
-  ) {
+  if (mode === TextModes.DATA && parent.type !== NodeTypes.ELEMENT) {
     nodes = condenseWhitespace(nodes);
   }
 
@@ -208,7 +214,7 @@ function isEnd(context: ParserContext, mode: number): boolean {
   const s = context.source;
   switch (mode) {
     case TextModes.DATA:
-      if (s.startsWith('</')) {
+      if (s.startsWith("</")) {
         const match = s.match(/^<\/([a-zA-Z][a-zA-Z0-9-]*)/);
         return !!match;
       }
@@ -216,7 +222,7 @@ function isEnd(context: ParserContext, mode: number): boolean {
     case TextModes.RCDATA:
     case TextModes.RAWTEXT:
     case TextModes.CDATA: {
-      if (s.startsWith('</')) {
+      if (s.startsWith("</")) {
         return true;
       }
       return !s;
@@ -232,7 +238,7 @@ function isEnd(context: ParserContext, mode: number): boolean {
 
 function parseText(context: ParserContext): TextNode {
   const start = getCursor(context);
-  const endTokens = ['<', '{{'];
+  const endTokens = ["<", "{{"];
 
   let endIndex = context.source.length;
   for (const token of endTokens) {
@@ -252,9 +258,11 @@ function parseText(context: ParserContext): TextNode {
 // Parse interpolation {{ expression }}
 // ============================================================
 
-function parseInterpolation(context: ParserContext): InterpolationNode | undefined {
+function parseInterpolation(
+  context: ParserContext,
+): InterpolationNode | undefined {
   const start = getCursor(context);
-  const closeIndex = context.source.indexOf('}}', 2);
+  const closeIndex = context.source.indexOf("}}", 2);
 
   if (closeIndex === -1) {
     return undefined;
@@ -288,7 +296,7 @@ function parseComment(context: ParserContext): CommentNode {
 
   advanceBy(context, 4);
 
-  const endIndex = context.source.indexOf('-->');
+  const endIndex = context.source.indexOf("-->");
   let content: string;
   if (endIndex === -1) {
     content = context.source;
@@ -321,16 +329,18 @@ function parseElement(context: ParserContext): ElementNode | undefined {
   const tag = element.tag;
 
   let textMode: number = TextModes.DATA;
-  if (tag === 'textarea' || tag === 'title') {
+  if (tag === "textarea" || tag === "title") {
     textMode = TextModes.RCDATA;
-  } else if (tag === 'style' || tag === 'script') {
+  } else if (tag === "style" || tag === "script") {
     textMode = TextModes.RAWTEXT;
   }
 
   parseChildren(context, element, textMode);
 
   if (context.source.startsWith(`</`)) {
-    const endTagMatch = context.source.match(new RegExp(`^<\\/\\s*${tag}\\s*>`));
+    const endTagMatch = context.source.match(
+      new RegExp(`^<\\/\\s*${tag}\\s*>`),
+    );
     if (endTagMatch) {
       advanceBy(context, endTagMatch[0].length);
     }
@@ -362,25 +372,29 @@ function parseTag(
   let tagType: number = ElementTypes.ELEMENT;
   if (isComponentTag(tag)) {
     tagType = ElementTypes.COMPONENT;
-  } else if (tag === 'template') {
+  } else if (tag === "template") {
     tagType = ElementTypes.TEMPLATE;
-  } else if (tag === 'slot') {
+  } else if (tag === "slot") {
     tagType = ElementTypes.SLOT;
   }
 
   const props: (AttributeNode | DirectiveNode)[] = [];
   const MAX_ATTRIBUTES = 1000;
   let attrCount = 0;
-  while (context.source.length > 0 && !context.source.startsWith('>') && !context.source.startsWith('/>')) {
+  while (
+    context.source.length > 0 &&
+    !context.source.startsWith(">") &&
+    !context.source.startsWith("/>")
+  ) {
     attrCount++;
     if (attrCount > MAX_ATTRIBUTES) {
       if (__DEV__) {
         console.warn(
           `[lytjs/compiler] Too many attributes (${attrCount}), ` +
-          `stopping attribute parsing to prevent infinite loop.`
+            `stopping attribute parsing to prevent infinite loop.`,
         );
       }
-      const tagEnd = context.source.indexOf('>');
+      const tagEnd = context.source.indexOf(">");
       if (tagEnd !== -1) {
         advanceBy(context, tagEnd);
       }
@@ -394,10 +408,10 @@ function parseTag(
   }
 
   let isSelfClosing = false;
-  if (context.source.startsWith('/>')) {
+  if (context.source.startsWith("/>")) {
     isSelfClosing = true;
     advanceBy(context, 2);
-  } else if (context.source.startsWith('>')) {
+  } else if (context.source.startsWith(">")) {
     advanceBy(context, 1);
   }
 
@@ -430,17 +444,17 @@ function parseAttribute(
   const rawName = match[0]!;
   advanceBy(context, rawName.length);
 
-  if (rawName.startsWith(':')) {
-    return parseDirective(context, 'bind', rawName.slice(1), start);
+  if (rawName.startsWith(":")) {
+    return parseDirective(context, "bind", rawName.slice(1), start);
   }
-  if (rawName.startsWith('@')) {
-    return parseDirective(context, 'on', rawName.slice(1), start);
+  if (rawName.startsWith("@")) {
+    return parseDirective(context, "on", rawName.slice(1), start);
   }
-  if (rawName.startsWith('#')) {
-    return parseDirective(context, 'slot', rawName.slice(1), start);
+  if (rawName.startsWith("#")) {
+    return parseDirective(context, "slot", rawName.slice(1), start);
   }
 
-  if (rawName.startsWith('v-')) {
+  if (rawName.startsWith("v-")) {
     const dirMatch = rawName.match(/^v-([a-zA-Z][a-zA-Z0-9-]*)(?::(.+))?$/);
     if (dirMatch) {
       return parseDirective(context, dirMatch[1]!, dirMatch[2], start);
@@ -451,7 +465,7 @@ function parseAttribute(
 
   let value: TextNode | undefined;
 
-  if (context.source.startsWith('=')) {
+  if (context.source.startsWith("=")) {
     advanceBy(context, 1);
     advanceSpaces(context);
     value = parseAttributeValue(context);
@@ -467,16 +481,18 @@ function parseAttributeValue(context: ParserContext): TextNode {
   if (context.source.startsWith('"')) {
     advanceBy(context, 1);
     const endIndex = context.source.indexOf('"');
-    content = endIndex >= 0 ? context.source.slice(0, endIndex) : context.source;
+    content =
+      endIndex >= 0 ? context.source.slice(0, endIndex) : context.source;
     advanceBy(context, content.length + 1);
   } else if (context.source.startsWith("'")) {
     advanceBy(context, 1);
     const endIndex = context.source.indexOf("'");
-    content = endIndex >= 0 ? context.source.slice(0, endIndex) : context.source;
+    content =
+      endIndex >= 0 ? context.source.slice(0, endIndex) : context.source;
     advanceBy(context, content.length + 1);
   } else {
     const match = context.source.match(/^[^\t\r\n\f >]+/);
-    content = match ? match[0] : '';
+    content = match ? match[0] : "";
     advanceBy(context, content.length);
   }
 
@@ -496,33 +512,47 @@ function parseDirective(
   let modifiers: string[] = [];
 
   if (rawArg !== undefined) {
-    const parts = rawArg.split('.');
+    const parts = rawArg.split(".");
     const argContent = parts[0];
     modifiers = parts.slice(1);
 
-    if (argContent !== undefined && argContent.startsWith('[') && argContent.endsWith(']')) {
+    if (
+      argContent !== undefined &&
+      argContent.startsWith("[") &&
+      argContent.endsWith("]")
+    ) {
       const content = argContent.slice(1, -1);
-      arg = createSimpleExpression(content, false, getSelection(context, start), false);
+      arg = createSimpleExpression(
+        content,
+        false,
+        getSelection(context, start),
+        false,
+      );
     } else if (argContent !== undefined) {
-      arg = createSimpleExpression(argContent, true, getSelection(context, start), true);
+      arg = createSimpleExpression(
+        argContent,
+        true,
+        getSelection(context, start),
+        true,
+      );
     }
   }
 
   if (
-    name === 'bind' ||
-    name === 'on' ||
-    name === 'model' ||
-    name === 'if' ||
-    name === 'for' ||
-    name === 'show' ||
-    name === 'slot' ||
-    name === 'once' ||
-    name === 'else-if' ||
-    name === 'else'
+    name === "bind" ||
+    name === "on" ||
+    name === "model" ||
+    name === "if" ||
+    name === "for" ||
+    name === "show" ||
+    name === "slot" ||
+    name === "once" ||
+    name === "else-if" ||
+    name === "else"
   ) {
     advanceSpaces(context);
 
-    if (context.source.startsWith('=')) {
+    if (context.source.startsWith("=")) {
       advanceBy(context, 1);
       advanceSpaces(context);
 
@@ -532,24 +562,37 @@ function parseDirective(
       if (context.source.startsWith('"')) {
         advanceBy(context, 1);
         const endIndex = context.source.indexOf('"');
-        valueContent = endIndex >= 0 ? context.source.slice(0, endIndex) : context.source;
+        valueContent =
+          endIndex >= 0 ? context.source.slice(0, endIndex) : context.source;
         advanceBy(context, valueContent.length + 1);
       } else if (context.source.startsWith("'")) {
         advanceBy(context, 1);
         const endIndex = context.source.indexOf("'");
-        valueContent = endIndex >= 0 ? context.source.slice(0, endIndex) : context.source;
+        valueContent =
+          endIndex >= 0 ? context.source.slice(0, endIndex) : context.source;
         advanceBy(context, valueContent.length + 1);
       } else {
         const match = context.source.match(/^[^\t\r\n\f >]+/);
-        valueContent = match ? match[0] : '';
+        valueContent = match ? match[0] : "";
         advanceBy(context, valueContent.length);
       }
 
-      exp = createSimpleExpression(valueContent, false, getSelection(context, valueStart), false);
+      exp = createSimpleExpression(
+        valueContent,
+        false,
+        getSelection(context, valueStart),
+        false,
+      );
     }
   }
 
-  return createDirective(name, arg, exp, modifiers, getSelection(context, start));
+  return createDirective(
+    name,
+    arg,
+    exp,
+    modifiers,
+    getSelection(context, start),
+  );
 }
 
 // ============================================================
@@ -557,5 +600,5 @@ function parseDirective(
 // ============================================================
 
 function isComponentTag(tag: string): boolean {
-  return /^[A-Z]/.test(tag) || tag.includes('-');
+  return /^[A-Z]/.test(tag) || tag.includes("-");
 }

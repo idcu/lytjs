@@ -7,8 +7,8 @@
  * 防抖函数返回类型
  */
 interface DebouncedFn<T extends (...args: any[]) => any> {
-  (...args: Parameters<T>): void
-  cancel: () => void
+  (...args: Parameters<T>): void;
+  cancel: () => void;
 }
 
 /**
@@ -16,26 +16,26 @@ interface DebouncedFn<T extends (...args: any[]) => any> {
  */
 export function debounce<T extends (...args: any[]) => any>(
   fn: T,
-  waitMs: number
+  waitMs: number,
 ): DebouncedFn<T> {
-  let timer: ReturnType<typeof setTimeout> | null = null
+  let timer: ReturnType<typeof setTimeout> | null = null;
 
   const debounced = ((...args: Parameters<T>) => {
-    if (timer) clearTimeout(timer)
+    if (timer) clearTimeout(timer);
     timer = setTimeout(() => {
-      fn(...args)
-      timer = null
-    }, waitMs)
-  }) as DebouncedFn<T>
+      fn(...args);
+      timer = null;
+    }, waitMs);
+  }) as DebouncedFn<T>;
 
   debounced.cancel = () => {
     if (timer) {
-      clearTimeout(timer)
-      timer = null
+      clearTimeout(timer);
+      timer = null;
     }
-  }
+  };
 
-  return debounced
+  return debounced;
 }
 
 /**
@@ -43,39 +43,39 @@ export function debounce<T extends (...args: any[]) => any>(
  */
 export function debounceImmediate<T extends (...args: any[]) => any>(
   fn: T,
-  waitMs: number
+  waitMs: number,
 ): DebouncedFn<T> {
-  let timer: ReturnType<typeof setTimeout> | null = null
-  let isWaiting = false
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  let isWaiting = false;
 
   const debounced = ((...args: Parameters<T>) => {
     if (!isWaiting) {
-      fn(...args)
-      isWaiting = true
+      fn(...args);
+      isWaiting = true;
       timer = setTimeout(() => {
-        isWaiting = false
-        timer = null
-      }, waitMs)
+        isWaiting = false;
+        timer = null;
+      }, waitMs);
     }
-  }) as DebouncedFn<T>
+  }) as DebouncedFn<T>;
 
   debounced.cancel = () => {
     if (timer) {
-      clearTimeout(timer)
-      timer = null
+      clearTimeout(timer);
+      timer = null;
     }
-    isWaiting = false
-  }
+    isWaiting = false;
+  };
 
-  return debounced
+  return debounced;
 }
 
 /**
  * 节流函数返回类型
  */
 interface ThrottledFn<T extends (...args: any[]) => any> {
-  (...args: Parameters<T>): void
-  cancel: () => void
+  (...args: Parameters<T>): void;
+  cancel: () => void;
 }
 
 /**
@@ -83,39 +83,39 @@ interface ThrottledFn<T extends (...args: any[]) => any> {
  */
 export function throttle<T extends (...args: any[]) => any>(
   fn: T,
-  waitMs: number
+  waitMs: number,
 ): ThrottledFn<T> {
-  let timer: ReturnType<typeof setTimeout> | null = null
-  let lastCallTime = 0
-  let cancelled = false
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  let lastCallTime = 0;
+  let cancelled = false;
 
   const throttled = ((...args: Parameters<T>) => {
-    if (cancelled) return
+    if (cancelled) return;
 
-    const now = Date.now()
-    const elapsed = now - lastCallTime
+    const now = Date.now();
+    const elapsed = now - lastCallTime;
 
     if (elapsed >= waitMs) {
-      lastCallTime = now
-      fn(...args)
+      lastCallTime = now;
+      fn(...args);
     } else if (!timer) {
       timer = setTimeout(() => {
-        lastCallTime = Date.now()
-        fn(...args)
-        timer = null
-      }, waitMs - elapsed)
+        lastCallTime = Date.now();
+        fn(...args);
+        timer = null;
+      }, waitMs - elapsed);
     }
-  }) as ThrottledFn<T>
+  }) as ThrottledFn<T>;
 
   throttled.cancel = () => {
-    cancelled = true
+    cancelled = true;
     if (timer) {
-      clearTimeout(timer)
-      timer = null
+      clearTimeout(timer);
+      timer = null;
     }
-  }
+  };
 
-  return throttled
+  return throttled;
 }
 
 /**
@@ -123,38 +123,38 @@ export function throttle<T extends (...args: any[]) => any>(
  */
 export function throttleWithTrailing<T extends (...args: any[]) => any>(
   fn: T,
-  waitMs: number
+  waitMs: number,
 ): ThrottledFn<T> {
-  let timer: ReturnType<typeof setTimeout> | null = null
-  let lastArgs: Parameters<T> | null = null
-  let isThrottled = false
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  let lastArgs: Parameters<T> | null = null;
+  let isThrottled = false;
 
   const throttled = ((...args: Parameters<T>) => {
-    lastArgs = args
+    lastArgs = args;
     if (!isThrottled) {
-      isThrottled = true
-      fn(...args)
+      isThrottled = true;
+      fn(...args);
       timer = setTimeout(() => {
-        isThrottled = false
+        isThrottled = false;
         if (lastArgs) {
-          fn(...lastArgs)
-          lastArgs = null
+          fn(...lastArgs);
+          lastArgs = null;
         }
-        timer = null
-      }, waitMs)
+        timer = null;
+      }, waitMs);
     }
-  }) as ThrottledFn<T>
+  }) as ThrottledFn<T>;
 
   throttled.cancel = () => {
     if (timer) {
-      clearTimeout(timer)
-      timer = null
+      clearTimeout(timer);
+      timer = null;
     }
-    isThrottled = false
-    lastArgs = null
-  }
+    isThrottled = false;
+    lastArgs = null;
+  };
 
-  return throttled
+  return throttled;
 }
 
 /**
@@ -162,8 +162,8 @@ export function throttleWithTrailing<T extends (...args: any[]) => any>(
  */
 export function delay<T = void>(ms: number, value?: T): Promise<T> {
   return new Promise((resolve) => {
-    setTimeout(() => resolve(value as T), ms)
-  })
+    setTimeout(() => resolve(value as T), ms);
+  });
 }
 
 /**
@@ -173,26 +173,26 @@ export async function retry<T>(
   fn: () => Promise<T>,
   maxRetries: number = 3,
   retryDelay: number = 1000,
-  retryCondition?: (error: Error) => boolean
+  retryCondition?: (error: Error) => boolean,
 ): Promise<T> {
-  let lastError: Error | undefined
+  let lastError: Error | undefined;
 
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
-      return await fn()
+      return await fn();
     } catch (err) {
-      lastError = err instanceof Error ? err : new Error(String(err))
+      lastError = err instanceof Error ? err : new Error(String(err));
 
       if (attempt < maxRetries) {
         if (retryCondition && !retryCondition(lastError)) {
-          throw lastError
+          throw lastError;
         }
-        await delay(retryDelay)
+        await delay(retryDelay);
       }
     }
   }
 
-  throw lastError!
+  throw lastError!;
 }
 
 /**
@@ -201,24 +201,24 @@ export async function retry<T>(
 export function timeout<T>(
   promise: Promise<T>,
   ms: number,
-  message: string = 'Timeout'
+  message: string = "Timeout",
 ): Promise<T> {
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => {
-      reject(new Error(message))
-    }, ms)
+      reject(new Error(message));
+    }, ms);
 
     promise.then(
       (value) => {
-        clearTimeout(timer)
-        resolve(value)
+        clearTimeout(timer);
+        resolve(value);
       },
       (err) => {
-        clearTimeout(timer)
-        reject(err)
-      }
-    )
-  })
+        clearTimeout(timer);
+        reject(err);
+      },
+    );
+  });
 }
 
 /**
@@ -228,21 +228,21 @@ export async function poll<T>(
   fn: () => T | Promise<T>,
   condition: (value: T) => boolean,
   interval: number = 1000,
-  timeoutMs: number = 30000
+  timeoutMs: number = 30000,
 ): Promise<T> {
-  const startTime = Date.now()
+  const startTime = Date.now();
 
   while (true) {
-    const value = await fn()
+    const value = await fn();
     if (condition(value)) {
-      return value
+      return value;
     }
 
     if (Date.now() - startTime >= timeoutMs) {
-      throw new Error('Polling timeout exceeded')
+      throw new Error("Polling timeout exceeded");
     }
 
-    await delay(interval)
+    await delay(interval);
   }
 }
 
@@ -250,44 +250,44 @@ export async function poll<T>(
  * 任务队列 - 控制并发执行的任务队列
  */
 export class TaskQueue {
-  private queue: Array<() => Promise<void>> = []
-  private running: number = 0
-  private concurrency: number
-  private resolvers: Array<() => void> = []
+  private queue: Array<() => Promise<void>> = [];
+  private running: number = 0;
+  private concurrency: number;
+  private resolvers: Array<() => void> = [];
 
   constructor(concurrency: number = 1) {
     if (concurrency < 1) {
-      throw new Error('TaskQueue concurrency must be at least 1')
+      throw new Error("TaskQueue concurrency must be at least 1");
     }
-    this.concurrency = concurrency
+    this.concurrency = concurrency;
   }
 
   get size(): number {
-    return this.queue.length
+    return this.queue.length;
   }
 
   add(task: () => Promise<void>): void {
-    this.queue.push(task)
-    this.run()
+    this.queue.push(task);
+    this.run();
   }
 
   private async run(): Promise<void> {
-    if (this.running >= this.concurrency || this.queue.length === 0) return
+    if (this.running >= this.concurrency || this.queue.length === 0) return;
 
-    this.running++
-    const task = this.queue.shift()!
+    this.running++;
+    const task = this.queue.shift()!;
 
     try {
-      await task()
+      await task();
     } catch (err) {
-      console.error('TaskQueue task error:', err)
+      console.error("TaskQueue task error:", err);
     } finally {
-      this.running--
+      this.running--;
       if (this.queue.length > 0) {
-        this.run()
+        this.run();
       } else if (this.running === 0) {
-        this.resolvers.forEach((resolve) => resolve())
-        this.resolvers = []
+        this.resolvers.forEach((resolve) => resolve());
+        this.resolvers = [];
       }
     }
   }
@@ -296,16 +296,16 @@ export class TaskQueue {
    * 等待所有任务完成
    */
   async wait(): Promise<void> {
-    if (this.running === 0 && this.queue.length === 0) return
+    if (this.running === 0 && this.queue.length === 0) return;
     return new Promise<void>((resolve) => {
-      this.resolvers.push(resolve)
-    })
+      this.resolvers.push(resolve);
+    });
   }
 
   /**
    * 清空待执行的任务队列
    */
   clear(): void {
-    this.queue = []
+    this.queue = [];
   }
 }

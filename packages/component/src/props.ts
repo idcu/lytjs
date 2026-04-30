@@ -1,8 +1,17 @@
 // src/props.ts
 // Props handling - validation, normalization, defaults
 
-import { isString, isNumber, isBoolean, isObject, isArray, isFunction, hasOwn, EMPTY_OBJ } from '@lytjs/common-is';
-import type { PropOptions } from './types';
+import {
+  isString,
+  isNumber,
+  isBoolean,
+  isObject,
+  isArray,
+  isFunction,
+  hasOwn,
+  EMPTY_OBJ,
+} from "@lytjs/common-is";
+import type { PropOptions } from "./types";
 
 declare const __DEV__: boolean;
 
@@ -10,7 +19,9 @@ declare const __DEV__: boolean;
  * Normalize props definition into a consistent Record<string, PropOptions> format.
  * Handles array-based props (e.g., ['a', 'b']) and object-based props.
  */
-export function normalizePropsOptions(rawProps?: Record<string, PropOptions> | string[]): Record<string, PropOptions> {
+export function normalizePropsOptions(
+  rawProps?: Record<string, PropOptions> | string[],
+): Record<string, PropOptions> {
   if (!rawProps) return EMPTY_OBJ as Record<string, PropOptions>;
 
   if (isArray(rawProps)) {
@@ -28,9 +39,8 @@ export function normalizePropsOptions(rawProps?: Record<string, PropOptions> | s
   for (const key in rawProps) {
     if (hasOwn(rawProps, key)) {
       const value = rawProps[key]!;
-      result[key] = isFunction(value) || isArray(value)
-        ? { type: value }
-        : value;
+      result[key] =
+        isFunction(value) || isArray(value) ? { type: value } : value;
     }
   }
   return result;
@@ -88,7 +98,7 @@ export function validateType(value: unknown, type: any): boolean {
     for (let i = 0; i < type.length; i++) {
       if (checkType(value, type[i]!)) return true;
     }
-    expectedType = type.map(t => getTypeName(t)).join(' | ');
+    expectedType = type.map((t) => getTypeName(t)).join(" | ");
   } else {
     if (checkType(value, type)) return true;
     expectedType = getTypeName(type);
@@ -114,13 +124,13 @@ function checkType(value: unknown, type: any): boolean {
 }
 
 function getTypeName(value: unknown): string {
-  if (value === null) return 'null';
-  if (value === undefined) return 'undefined';
-  if (isArray(value)) return 'Array';
-  if (isString(value)) return 'String';
-  if (isNumber(value)) return 'Number';
-  if (isBoolean(value)) return 'Boolean';
-  if (isFunction(value)) return 'Function';
-  if (isObject(value)) return 'Object';
+  if (value === null) return "null";
+  if (value === undefined) return "undefined";
+  if (isArray(value)) return "Array";
+  if (isString(value)) return "String";
+  if (isNumber(value)) return "Number";
+  if (isBoolean(value)) return "Boolean";
+  if (isFunction(value)) return "Function";
+  if (isObject(value)) return "Object";
   return String(value);
 }

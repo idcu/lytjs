@@ -2,31 +2,31 @@
 // Vue 3 风格的 effectScope API
 // 用于批量管理响应式副作用的创建和销毁
 
-import { ReactiveEffect, setActiveEffectScope } from './effect'
+import { type ReactiveEffect, setActiveEffectScope } from "./effect";
 
 export interface EffectScope {
   /** 当前 scope 是否活跃 */
-  active: boolean
+  active: boolean;
   /** scope 收集的 effects */
-  effects: (ReactiveEffect | EffectScope)[]
+  effects: (ReactiveEffect | EffectScope)[];
   /** scope 注册的清理回调 */
-  cleanups: (() => void)[]
+  cleanups: (() => void)[];
   /** 父 scope（嵌套时自动关联） */
-  parent: EffectScope | undefined
+  parent: EffectScope | undefined;
   /** 是否脱离父 scope（detached scope 不会被父 scope stop） */
-  detached: boolean
+  detached: boolean;
   /** 在 scope 上下文中执行 fn，期间创建的 effect 会被自动收集 */
-  run<T>(fn: () => T): T | undefined
+  run<T>(fn: () => T): T | undefined;
   /** 停止 scope，清理所有收集的 effects 和 cleanups */
-  stop(): void
+  stop(): void;
 }
 
 export interface EffectScopeOptions {
-  detached?: boolean
+  detached?: boolean;
 }
 
 /** 当前活跃的 effectScope */
-let activeEffectScope: EffectScope | undefined
+let activeEffectScope: EffectScope | undefined;
 
 /**
  * 创建一个 effect scope，用于批量管理响应式副作用。
@@ -54,45 +54,45 @@ export function effectScope(detached?: boolean): EffectScope {
     detached: !!detached,
 
     run(fn) {
-      if (!this.active) return
-      const prevScope = activeEffectScope
-      activeEffectScope = this
+      if (!this.active) return;
+      const prevScope = activeEffectScope;
+      activeEffectScope = this;
       // 同步到 effect.ts 中的 activeEffectScope，使 ReactiveEffect 构造函数能自动注册
-      setActiveEffectScope(this)
+      setActiveEffectScope(this);
       try {
-        return fn()
+        return fn();
       } finally {
-        activeEffectScope = prevScope
-        setActiveEffectScope(prevScope)
+        activeEffectScope = prevScope;
+        setActiveEffectScope(prevScope);
       }
     },
 
     stop() {
-      if (!this.active) return
-      this.active = false
+      if (!this.active) return;
+      this.active = false;
       for (const effect of this.effects) {
-        effect.stop()
+        effect.stop();
       }
       for (const cleanup of this.cleanups) {
-        cleanup()
+        cleanup();
       }
-      this.effects.length = 0
-      this.cleanups.length = 0
+      this.effects.length = 0;
+      this.cleanups.length = 0;
     },
-  } as EffectScope
+  } as EffectScope;
 
   if (!scope.detached && activeEffectScope) {
-    activeEffectScope.effects.push(scope as any)
+    activeEffectScope.effects.push(scope as any);
   }
 
-  return scope
+  return scope;
 }
 
 /**
  * 获取当前活跃的 effectScope。
  */
 export function getCurrentScope(): EffectScope | undefined {
-  return activeEffectScope
+  return activeEffectScope;
 }
 
 /**
@@ -114,6 +114,6 @@ export function getCurrentScope(): EffectScope | undefined {
  */
 export function onScopeDispose(fn: () => void): void {
   if (activeEffectScope) {
-    activeEffectScope.cleanups.push(fn)
+    activeEffectScope.cleanups.push(fn);
   }
 }

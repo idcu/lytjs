@@ -1,8 +1,14 @@
 // src/h.ts
 // @lytjs/core - VNode 创建辅助函数
 
-import { createVNode, Fragment, Text, Comment, EMPTY_OBJ } from '@lytjs/vdom';
-import type { VNode, VNodeChildren, Component } from './types';
+import {
+  createVNode,
+  type Fragment,
+  type Text,
+  type Comment,
+  EMPTY_OBJ,
+} from "@lytjs/vdom";
+import type { VNode, VNodeChildren, Component } from "./types";
 
 /**
  * 创建 VNode
@@ -10,7 +16,7 @@ import type { VNode, VNodeChildren, Component } from './types';
 export function h(
   type: string | Component | typeof Fragment | typeof Text | typeof Comment,
   props?: Record<string, any> | null,
-  children?: VNodeChildren
+  children?: VNodeChildren,
 ): VNode {
   if (props == null) {
     props = EMPTY_OBJ;

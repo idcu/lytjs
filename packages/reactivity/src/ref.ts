@@ -2,9 +2,9 @@
 // Ref 响应式引用
 // 复用 @lytjs/common-is: isObject, hasChanged
 
-import { isObject, hasChanged } from '@lytjs/common-is';
-import { track, trigger, activeEffect, shouldTrack } from './effect';
-import { TrackOpTypes, TriggerOpTypes, ReactiveFlags } from './constants';
+import { isObject, hasChanged } from "@lytjs/common-is";
+import { track, trigger, activeEffect, shouldTrack } from "./effect";
+import { TrackOpTypes, TriggerOpTypes, ReactiveFlags } from "./constants";
 
 // ==================== Ref 类型（内部简化版，避免 unique symbol 在 DTS 中的问题） ====================
 
@@ -81,12 +81,12 @@ class ShallowRefImpl<T> {
 
 export function trackRefValue(ref: any) {
   if (shouldTrack && activeEffect) {
-    track(ref, TrackOpTypes.GET, 'value');
+    track(ref, TrackOpTypes.GET, "value");
   }
 }
 
 export function triggerRefValue(ref: any, newVal?: any, oldVal?: any) {
-  trigger(ref, TriggerOpTypes.SET, 'value', newVal, oldVal);
+  trigger(ref, TriggerOpTypes.SET, "value", newVal, oldVal);
 }
 
 // ==================== 公共 API ====================
@@ -115,13 +115,15 @@ export function unref<T>(r: T | Ref<T>): T {
 
 export function toRef<T extends object, K extends keyof T>(
   object: T,
-  key: K
+  key: K,
 ): Ref<T[K]> {
   if (isRef(object[key])) return object[key] as Ref<T[K]>;
   return new ObjectRefImpl(object, key) as any;
 }
 
-export function toRefs<T extends object>(object: any): { [K in keyof T]: Ref<T[K]> } {
+export function toRefs<T extends object>(
+  object: any,
+): { [K in keyof T]: Ref<T[K]> } {
   const result: any = {};
   for (const key in object) {
     result[key] = toRef(object, key);
@@ -140,7 +142,7 @@ class ObjectRefImpl<T extends object, K extends keyof T> {
 
   constructor(
     private readonly _object: T,
-    private readonly _key: K
+    private readonly _key: K,
   ) {}
 
   get value(): T[K] {
@@ -160,7 +162,7 @@ class CustomRefImpl<T> {
   constructor(factory: CustomRefFactory<T>) {
     const { get, set } = factory(
       () => trackRefValue(this as any),
-      () => triggerRefValue(this as any)
+      () => triggerRefValue(this as any),
     );
     this._getter = get;
     this._setter = set;
@@ -179,7 +181,7 @@ class CustomRefImpl<T> {
 
 type CustomRefFactory<T> = (
   track: () => void,
-  trigger: () => void
+  trigger: () => void,
 ) => { get: () => T; set: (value: T) => void };
 
 function toReactive<T>(value: T): T {
@@ -187,7 +189,7 @@ function toReactive<T>(value: T): T {
 }
 
 function toRaw(value: any): any {
-  return value && (value as any)[ReactiveFlags.RAW] || value;
+  return (value && (value as any)[ReactiveFlags.RAW]) || value;
 }
 
 // reactive 的延迟绑定，由 index.ts 在模块初始化时设置

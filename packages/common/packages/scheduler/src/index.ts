@@ -3,7 +3,7 @@
  * 任务调度器 - 管理异步任务队列
  */
 
-import { isNode } from '@lytjs/common-env'
+import { isNode } from "@lytjs/common-env";
 
 // ============================================================
 // 调度器类型
@@ -12,32 +12,30 @@ import { isNode } from '@lytjs/common-env'
 /**
  * 调度器任务类型
  */
-export type SchedulerJob = () => void
+export type SchedulerJob = () => void;
 
 // ============================================================
 // 调度器状态
 // ============================================================
 
-let isFlushing = false
-let isFlushPending = false
+let isFlushing = false;
+let isFlushPending = false;
 
-const queue: SchedulerJob[] = []
-const queueSet: Set<SchedulerJob> = new Set()
-const postFlushCbs: SchedulerJob[] = []
-const postFlushCbsSet: Set<SchedulerJob> = new Set()
+const queue: SchedulerJob[] = [];
+const queueSet: Set<SchedulerJob> = new Set();
+const postFlushCbs: SchedulerJob[] = [];
+const postFlushCbsSet: Set<SchedulerJob> = new Set();
 
-let resolvedPromise: Promise<void> | null = null
+let resolvedPromise: Promise<void> | null = null;
 
 /**
  * 获取当前环境的 resolvedPromise
  */
 function getResolvedPromise(): Promise<void> {
   if (!resolvedPromise) {
-    resolvedPromise = isNode()
-      ? Promise.resolve()
-      : Promise.resolve()
+    resolvedPromise = isNode() ? Promise.resolve() : Promise.resolve();
   }
-  return resolvedPromise
+  return resolvedPromise;
 }
 
 // ============================================================
@@ -50,9 +48,9 @@ function getResolvedPromise(): Promise<void> {
  */
 export function queueJob(job: SchedulerJob): void {
   if (!queueSet.has(job)) {
-    queueSet.add(job)
-    queue.push(job)
-    queueFlush()
+    queueSet.add(job);
+    queue.push(job);
+    queueFlush();
   }
 }
 
@@ -62,9 +60,9 @@ export function queueJob(job: SchedulerJob): void {
  */
 export function queuePostFlushCb(cb: SchedulerJob): void {
   if (!postFlushCbsSet.has(cb)) {
-    postFlushCbsSet.add(cb)
-    postFlushCbs.push(cb)
-    queueFlush()
+    postFlushCbsSet.add(cb);
+    postFlushCbs.push(cb);
+    queueFlush();
   }
 }
 
@@ -72,41 +70,41 @@ export function queuePostFlushCb(cb: SchedulerJob): void {
  * 在下一个 tick 执行回调
  */
 export function nextTick(cb?: SchedulerJob): Promise<void> {
-  const p = getResolvedPromise()
-  return cb ? p.then(cb) : p
+  const p = getResolvedPromise();
+  return cb ? p.then(cb) : p;
 }
 
 /**
  * 刷新所有待执行的任务
  */
 export function flushJobs(): void {
-  isFlushing = true
-  isFlushPending = false
+  isFlushing = true;
+  isFlushPending = false;
 
   try {
     // 执行所有 job
     for (let i = 0; i < queue.length; i++) {
-      const job = queue[i]!
-      queueSet.delete(job)
-      job()
+      const job = queue[i]!;
+      queueSet.delete(job);
+      job();
     }
 
-    queue.length = 0
+    queue.length = 0;
 
     // 执行所有 post-flush 回调
     for (let i = 0; i < postFlushCbs.length; i++) {
-      const cb = postFlushCbs[i]!
-      postFlushCbsSet.delete(cb)
-      cb()
+      const cb = postFlushCbs[i]!;
+      postFlushCbsSet.delete(cb);
+      cb();
     }
 
-    postFlushCbs.length = 0
+    postFlushCbs.length = 0;
   } finally {
-    isFlushing = false
+    isFlushing = false;
 
     // 如果在执行过程中有新的 job 被加入，继续刷新
     if (queue.length || postFlushCbs.length) {
-      flushJobs()
+      flushJobs();
     }
   }
 }
@@ -115,22 +113,22 @@ export function flushJobs(): void {
  * 同步刷新所有任务
  */
 export function flushSync(): void {
-  if (isFlushing) return
-  flushJobs()
+  if (isFlushing) return;
+  flushJobs();
 }
 
 /**
  * 检查是否有待执行的任务
  */
 export function hasPendingJobs(): boolean {
-  return queue.length > 0 || postFlushCbs.length > 0
+  return queue.length > 0 || postFlushCbs.length > 0;
 }
 
 /**
  * 获取待执行的 job 数量
  */
 export function getPendingJobCount(): number {
-  return queue.length
+  return queue.length;
 }
 
 /**
@@ -138,8 +136,8 @@ export function getPendingJobCount(): number {
  */
 function queueFlush(): void {
   if (!isFlushing && !isFlushPending) {
-    isFlushPending = true
-    nextTick(flushJobs)
+    isFlushPending = true;
+    nextTick(flushJobs);
   }
 }
 
@@ -147,10 +145,10 @@ function queueFlush(): void {
  * 重置调度器状态（用于测试）
  */
 export function resetSchedulerState(): void {
-  queue.length = 0
-  queueSet.clear()
-  postFlushCbs.length = 0
-  postFlushCbsSet.clear()
-  isFlushing = false
-  isFlushPending = false
+  queue.length = 0;
+  queueSet.clear();
+  postFlushCbs.length = 0;
+  postFlushCbsSet.clear();
+  isFlushing = false;
+  isFlushPending = false;
 }

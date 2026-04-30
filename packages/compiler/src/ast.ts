@@ -1,7 +1,7 @@
 // src/ast.ts
 // AST node creation helper functions
 
-import { NodeTypes, ElementTypes } from './constants';
+import { NodeTypes, ElementTypes } from "./constants";
 import type {
   RootNode,
   ElementNode,
@@ -22,15 +22,19 @@ import type {
   ExpressionNode,
   TemplateChildNode,
   SourceLocation,
-} from './types';
+} from "./types";
 
-function createLoc(source: string, offset: number, length: number): SourceLocation {
-  const lines = source.slice(0, offset).split('\n');
+function createLoc(
+  source: string,
+  offset: number,
+  length: number,
+): SourceLocation {
+  const lines = source.slice(0, offset).split("\n");
   const line = lines.length;
-  const column = (lines[line - 1] ?? '').length + 1;
-  const endLines = source.slice(0, offset + length).split('\n');
+  const column = (lines[line - 1] ?? "").length + 1;
+  const endLines = source.slice(0, offset + length).split("\n");
   const endLine = endLines.length;
-  const endColumn = (endLines[endLine - 1] ?? '').length + 1;
+  const endColumn = (endLines[endLine - 1] ?? "").length + 1;
   return {
     start: { line, column, offset },
     end: { line: endLine, column: endColumn, offset: offset + length },
@@ -40,7 +44,7 @@ function createLoc(source: string, offset: number, length: number): SourceLocati
 
 export function createRoot(
   children: TemplateChildNode[],
-  source = '',
+  source = "",
 ): RootNode {
   return {
     type: NodeTypes.ROOT,
@@ -61,7 +65,11 @@ export function createElement(
   tag: string,
   props: (AttributeNode | DirectiveNode)[] = [],
   children: TemplateChildNode[] = [],
-  loc: SourceLocation = { start: { line: 1, column: 1, offset: 0 }, end: { line: 1, column: 1, offset: 0 }, source: '' },
+  loc: SourceLocation = {
+    start: { line: 1, column: 1, offset: 0 },
+    end: { line: 1, column: 1, offset: 0 },
+    source: "",
+  },
 ): ElementNode {
   return {
     type: NodeTypes.ELEMENT,
@@ -86,7 +94,11 @@ export function createElement(
 
 export function createText(
   content: string,
-  loc: SourceLocation = { start: { line: 1, column: 1, offset: 0 }, end: { line: 1, column: 1, offset: 0 }, source: '' },
+  loc: SourceLocation = {
+    start: { line: 1, column: 1, offset: 0 },
+    end: { line: 1, column: 1, offset: 0 },
+    source: "",
+  },
 ): TextNode {
   return {
     type: NodeTypes.TEXT,
@@ -98,7 +110,11 @@ export function createText(
 
 export function createComment(
   content: string,
-  loc: SourceLocation = { start: { line: 1, column: 1, offset: 0 }, end: { line: 1, column: 1, offset: 0 }, source: '' },
+  loc: SourceLocation = {
+    start: { line: 1, column: 1, offset: 0 },
+    end: { line: 1, column: 1, offset: 0 },
+    source: "",
+  },
 ): CommentNode {
   return {
     type: NodeTypes.COMMENT,
@@ -109,7 +125,11 @@ export function createComment(
 
 export function createInterpolation(
   content: ExpressionNode,
-  loc: SourceLocation = { start: { line: 1, column: 1, offset: 0 }, end: { line: 1, column: 1, offset: 0 }, source: '' },
+  loc: SourceLocation = {
+    start: { line: 1, column: 1, offset: 0 },
+    end: { line: 1, column: 1, offset: 0 },
+    source: "",
+  },
 ): InterpolationNode {
   return {
     type: NodeTypes.INTERPOLATION,
@@ -122,7 +142,11 @@ export function createInterpolation(
 export function createAttribute(
   name: string,
   value: TextNode | undefined = undefined,
-  loc: SourceLocation = { start: { line: 1, column: 1, offset: 0 }, end: { line: 1, column: 1, offset: 0 }, source: '' },
+  loc: SourceLocation = {
+    start: { line: 1, column: 1, offset: 0 },
+    end: { line: 1, column: 1, offset: 0 },
+    source: "",
+  },
 ): AttributeNode {
   return {
     type: NodeTypes.ATTRIBUTE,
@@ -137,7 +161,11 @@ export function createDirective(
   arg: ExpressionNode | undefined = undefined,
   exp: ExpressionNode | undefined = undefined,
   modifiers: string[] = [],
-  loc: SourceLocation = { start: { line: 1, column: 1, offset: 0 }, end: { line: 1, column: 1, offset: 0 }, source: '' },
+  loc: SourceLocation = {
+    start: { line: 1, column: 1, offset: 0 },
+    end: { line: 1, column: 1, offset: 0 },
+    source: "",
+  },
 ): DirectiveNode {
   return {
     type: NodeTypes.DIRECTIVE,
@@ -152,7 +180,11 @@ export function createDirective(
 export function createSimpleExpression(
   content: string,
   isStatic = false,
-  loc: SourceLocation = { start: { line: 1, column: 1, offset: 0 }, end: { line: 1, column: 1, offset: 0 }, source: '' },
+  loc: SourceLocation = {
+    start: { line: 1, column: 1, offset: 0 },
+    end: { line: 1, column: 1, offset: 0 },
+    source: "",
+  },
   isConstant = false,
 ): SimpleExpressionNode {
   return {
@@ -166,7 +198,11 @@ export function createSimpleExpression(
 
 export function createCompoundExpression(
   children: (TemplateChildNode | SimpleExpressionNode | string)[],
-  loc: SourceLocation = { start: { line: 1, column: 1, offset: 0 }, end: { line: 1, column: 1, offset: 0 }, source: '' },
+  loc: SourceLocation = {
+    start: { line: 1, column: 1, offset: 0 },
+    end: { line: 1, column: 1, offset: 0 },
+    source: "",
+  },
 ): CompoundExpressionNode {
   return {
     type: NodeTypes.COMPOUND_EXPRESSION,
@@ -186,7 +222,11 @@ export function createVNodeCall(
   isBlock = false,
   disableTracking = false,
   isComponent = false,
-  loc: SourceLocation = { start: { line: 1, column: 1, offset: 0 }, end: { line: 1, column: 1, offset: 0 }, source: '' },
+  loc: SourceLocation = {
+    start: { line: 1, column: 1, offset: 0 },
+    end: { line: 1, column: 1, offset: 0 },
+    source: "",
+  },
 ): VNodeCall {
   return {
     type: NodeTypes.VNODE_CALL,
@@ -205,7 +245,11 @@ export function createVNodeCall(
 
 export function createObjectExpression(
   properties: JSProperty[] = [],
-  loc: SourceLocation = { start: { line: 1, column: 1, offset: 0 }, end: { line: 1, column: 1, offset: 0 }, source: '' },
+  loc: SourceLocation = {
+    start: { line: 1, column: 1, offset: 0 },
+    end: { line: 1, column: 1, offset: 0 },
+    source: "",
+  },
 ): JSObjectExpression {
   return {
     type: NodeTypes.JS_OBJECT_EXPRESSION,
@@ -217,7 +261,11 @@ export function createObjectExpression(
 export function createObjectProperty(
   key: JSChildNode,
   value: JSChildNode,
-  loc: SourceLocation = { start: { line: 1, column: 1, offset: 0 }, end: { line: 1, column: 1, offset: 0 }, source: '' },
+  loc: SourceLocation = {
+    start: { line: 1, column: 1, offset: 0 },
+    end: { line: 1, column: 1, offset: 0 },
+    source: "",
+  },
 ): JSProperty {
   return {
     type: NodeTypes.JS_PROPERTY,
@@ -230,7 +278,11 @@ export function createObjectProperty(
 export function createCallExpression(
   callee: string | symbol,
   args: (JSChildNode | string | TemplateChildNode | TemplateChildNode[])[] = [],
-  loc: SourceLocation = { start: { line: 1, column: 1, offset: 0 }, end: { line: 1, column: 1, offset: 0 }, source: '' },
+  loc: SourceLocation = {
+    start: { line: 1, column: 1, offset: 0 },
+    end: { line: 1, column: 1, offset: 0 },
+    source: "",
+  },
 ): JSCallExpression {
   return {
     type: NodeTypes.JS_CALL_EXPRESSION,
@@ -245,7 +297,11 @@ export function createConditionalExpression(
   consequent: JSChildNode | TemplateChildNode | TemplateChildNode[],
   alternate: JSChildNode | TemplateChildNode | TemplateChildNode[],
   newline = true,
-  loc: SourceLocation = { start: { line: 1, column: 1, offset: 0 }, end: { line: 1, column: 1, offset: 0 }, source: '' },
+  loc: SourceLocation = {
+    start: { line: 1, column: 1, offset: 0 },
+    end: { line: 1, column: 1, offset: 0 },
+    source: "",
+  },
 ): JSConditionalExpression {
   return {
     type: NodeTypes.JS_CONDITIONAL_EXPRESSION,
@@ -259,7 +315,11 @@ export function createConditionalExpression(
 
 export function createArrayExpression(
   elements: JSChildNode[] = [],
-  loc: SourceLocation = { start: { line: 1, column: 1, offset: 0 }, end: { line: 1, column: 1, offset: 0 }, source: '' },
+  loc: SourceLocation = {
+    start: { line: 1, column: 1, offset: 0 },
+    end: { line: 1, column: 1, offset: 0 },
+    source: "",
+  },
 ): JSArrayExpression {
   return {
     type: NodeTypes.JS_ARRAY_EXPRESSION,

@@ -1,7 +1,7 @@
 // src/types.ts
 // All type definitions for @lytjs/component
 
-import type { VNode } from '@lytjs/vdom';
+import type { VNode } from "@lytjs/vdom";
 
 export interface ComponentOptions {
   name?: string;

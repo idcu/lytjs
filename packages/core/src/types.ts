@@ -1,8 +1,12 @@
 // src/types.ts
 // @lytjs/core - 类型定义
 
-import type { VNode } from '@lytjs/vdom';
-import type { ComponentOptions, ComponentPublicInstance, InternalSlots } from '@lytjs/component';
+import type { VNode } from "@lytjs/vdom";
+import type {
+  ComponentOptions,
+  ComponentPublicInstance,
+  InternalSlots,
+} from "@lytjs/component";
 
 // ==================== App ====================
 
@@ -16,8 +20,16 @@ export interface App<HostElement = Element> {
   component(name: string, component: Component): App;
   directive(name: string, directive: Directive): App;
   mixin(mixin: ComponentOptions): App;
-  errorHandler?: (err: any, instance: ComponentPublicInstance | null, info: string) => void;
-  warnHandler?: (msg: string, instance: ComponentPublicInstance | null, trace: string) => void;
+  errorHandler?: (
+    err: any,
+    instance: ComponentPublicInstance | null,
+    info: string,
+  ) => void;
+  warnHandler?: (
+    msg: string,
+    instance: ComponentPublicInstance | null,
+    trace: string,
+  ) => void;
 }
 
 export interface AppConfig {
@@ -39,18 +51,56 @@ export interface Plugin {
 
 export type Component = ComponentOptions | (() => any);
 
-export type { ComponentOptions, ComponentPublicInstance } from '@lytjs/component';
+export type {
+  ComponentOptions,
+  ComponentPublicInstance,
+} from "@lytjs/component";
 
 // ==================== Directive ====================
 
 export interface Directive<T = any> {
-  created?: (el: T, binding: DirectiveBinding, vnode: VNode, prevVNode: VNode) => void;
-  beforeMount?: (el: T, binding: DirectiveBinding, vnode: VNode, prevVNode: VNode) => void;
-  mounted?: (el: T, binding: DirectiveBinding, vnode: VNode, prevVNode: VNode) => void;
-  beforeUpdate?: (el: T, binding: DirectiveBinding, vnode: VNode, prevVNode: VNode) => void;
-  updated?: (el: T, binding: DirectiveBinding, vnode: VNode, prevVNode: VNode) => void;
-  beforeUnmount?: (el: T, binding: DirectiveBinding, vnode: VNode, prevVNode: VNode) => void;
-  unmounted?: (el: T, binding: DirectiveBinding, vnode: VNode, prevVNode: VNode) => void;
+  created?: (
+    el: T,
+    binding: DirectiveBinding,
+    vnode: VNode,
+    prevVNode: VNode,
+  ) => void;
+  beforeMount?: (
+    el: T,
+    binding: DirectiveBinding,
+    vnode: VNode,
+    prevVNode: VNode,
+  ) => void;
+  mounted?: (
+    el: T,
+    binding: DirectiveBinding,
+    vnode: VNode,
+    prevVNode: VNode,
+  ) => void;
+  beforeUpdate?: (
+    el: T,
+    binding: DirectiveBinding,
+    vnode: VNode,
+    prevVNode: VNode,
+  ) => void;
+  updated?: (
+    el: T,
+    binding: DirectiveBinding,
+    vnode: VNode,
+    prevVNode: VNode,
+  ) => void;
+  beforeUnmount?: (
+    el: T,
+    binding: DirectiveBinding,
+    vnode: VNode,
+    prevVNode: VNode,
+  ) => void;
+  unmounted?: (
+    el: T,
+    binding: DirectiveBinding,
+    vnode: VNode,
+    prevVNode: VNode,
+  ) => void;
 }
 
 export interface DirectiveBinding {
@@ -62,7 +112,12 @@ export interface DirectiveBinding {
   dir: Directive;
 }
 
-export type DirectiveArguments = [Directive, any, string?, Record<string, boolean>?][];
+export type DirectiveArguments = [
+  Directive,
+  any,
+  string?,
+  Record<string, boolean>?,
+][];
 
 // ==================== Async Component ====================
 
@@ -75,7 +130,12 @@ export interface AsyncComponentOptions {
   delay?: number;
   timeout?: number;
   suspensible?: boolean;
-  onError?: (error: Error, retry: () => void, fail: () => void, attempts: number) => any;
+  onError?: (
+    error: Error,
+    retry: () => void,
+    fail: () => void,
+    attempts: number,
+  ) => any;
 }
 
 // ==================== Composition API ====================
@@ -85,11 +145,11 @@ export type { InternalSlots };
 export type ErrorCapturedHook = (
   err: Error,
   instance: ComponentPublicInstance | null,
-  info: string
+  info: string,
 ) => boolean | void;
 
 export type DebuggerHook = (event: any) => void;
 
 // ==================== Re-export VNode ====================
 
-export type { VNode, VNodeChildren } from '@lytjs/vdom';
+export type { VNode, VNodeChildren } from "@lytjs/vdom";

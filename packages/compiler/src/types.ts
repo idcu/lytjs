@@ -1,8 +1,13 @@
 // src/types.ts
 // All type definitions for the compiler AST and options
 
-import type { SourceLocation } from '@lytjs/common-error';
-import type { NodeTypes, ElementTypes, TextModes, BindingTypes } from './constants';
+import type { SourceLocation } from "@lytjs/common-error";
+import type {
+  NodeTypes,
+  ElementTypes,
+  TextModes,
+  BindingTypes,
+} from "./constants";
 
 // ============================================================
 // Source Location (re-export for convenience)
@@ -25,7 +30,7 @@ export interface Position {
 // ============================================================
 
 export interface BaseNode {
-  type: typeof NodeTypes[keyof typeof NodeTypes];
+  type: (typeof NodeTypes)[keyof typeof NodeTypes];
   loc: SourceLocation;
 }
 
@@ -51,7 +56,7 @@ export interface ElementNode extends BaseNode {
   type: typeof NodeTypes.ELEMENT;
   ns: number;
   tag: string;
-  tagType: typeof ElementTypes[keyof typeof ElementTypes];
+  tagType: (typeof ElementTypes)[keyof typeof ElementTypes];
   isSelfClosing: boolean;
   props: (AttributeNode | DirectiveNode)[];
   children: TemplateChildNode[];
@@ -248,7 +253,10 @@ export interface DirectiveTransformResult {
 export interface ParserOptions {
   isCustomElement?: (tag: string) => boolean;
   isNativeTag?: (tag: string) => boolean;
-  getTextMode?: (tag: string, ns: number) => typeof TextModes[keyof typeof TextModes];
+  getTextMode?: (
+    tag: string,
+    ns: number,
+  ) => (typeof TextModes)[keyof typeof TextModes];
   decodeEntities?: (text: string, strict: boolean) => string;
   onError?: (error: Error) => void;
   comments?: boolean;
@@ -273,7 +281,7 @@ export interface TransformOptions {
 }
 
 export interface CodegenOptions {
-  mode?: 'module' | 'function';
+  mode?: "module" | "function";
   prefixIdentifiers?: boolean;
   sourceMap?: boolean;
   filename?: string;
@@ -288,8 +296,9 @@ export interface CodegenOptions {
   emitStatic?: boolean;
 }
 
-export interface CompilerOptions extends ParserOptions, TransformOptions, CodegenOptions {
-  whitespace?: 'condense' | 'preserve';
+export interface CompilerOptions
+  extends ParserOptions, TransformOptions, CodegenOptions {
+  whitespace?: "condense" | "preserve";
 }
 
 export interface BindingMetadata {

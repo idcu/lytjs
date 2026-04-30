@@ -3,8 +3,8 @@
  * Enhanced patchProp for DOM elements with class, style, event, and attribute handling
  */
 
-import { isString } from '@lytjs/common-is'
-import { camelToKebab } from '@lytjs/common-string'
+import { isString } from "@lytjs/common-is";
+import { camelToKebab } from "@lytjs/common-string";
 
 // ============================================================
 // Local helpers (not in common-is)
@@ -14,7 +14,7 @@ import { camelToKebab } from '@lytjs/common-string'
  * Check if a key is an event handler (onXxx)
  */
 export function isOn(key: string): boolean {
-  return /^on[A-Z]/.test(key)
+  return /^on[A-Z]/.test(key);
 }
 
 /**
@@ -22,23 +22,23 @@ export function isOn(key: string): boolean {
  */
 export function isBooleanAttr(key: string): boolean {
   return [
-    'disabled',
-    'readonly',
-    'checked',
-    'selected',
-    'multiple',
-    'autofocus',
-    'async',
-    'defer',
-    'controls',
-    'loop',
-    'muted',
-    'default',
-    'open',
-    'required',
-    'reversed',
-    'allowfullscreen',
-  ].includes(key)
+    "disabled",
+    "readonly",
+    "checked",
+    "selected",
+    "multiple",
+    "autofocus",
+    "async",
+    "defer",
+    "controls",
+    "loop",
+    "muted",
+    "default",
+    "open",
+    "required",
+    "reversed",
+    "allowfullscreen",
+  ].includes(key);
 }
 
 // ============================================================
@@ -46,31 +46,28 @@ export function isBooleanAttr(key: string): boolean {
 // ============================================================
 
 interface Invoker extends EventListener {
-  value: EventListener
-  attached: number
+  value: EventListener;
+  attached: number;
 }
 
-const invokerCache = new WeakMap<Element, Map<string, Invoker>>()
+const invokerCache = new WeakMap<Element, Map<string, Invoker>>();
 
-function getOrCreateInvoker(
-  el: Element,
-  rawName: string,
-): Invoker {
-  let elMap = invokerCache.get(el)
+function getOrCreateInvoker(el: Element, rawName: string): Invoker {
+  let elMap = invokerCache.get(el);
   if (!elMap) {
-    elMap = new Map()
-    invokerCache.set(el, elMap)
+    elMap = new Map();
+    invokerCache.set(el, elMap);
   }
 
-  let invoker = elMap.get(rawName)
+  let invoker = elMap.get(rawName);
   if (!invoker) {
     invoker = ((e: Event) => {
-      invoker!.value(e)
-    }) as unknown as Invoker
-    invoker.attached = Date.now()
-    elMap.set(rawName, invoker)
+      invoker!.value(e);
+    }) as unknown as Invoker;
+    invoker.attached = Date.now();
+    elMap.set(rawName, invoker);
   }
-  return invoker
+  return invoker;
 }
 
 // ============================================================
@@ -81,11 +78,11 @@ function getOrCreateInvoker(
  * Patch the class attribute on an element
  */
 export function patchClass(el: Element, prev: unknown, next: unknown): void {
-  const el_ = el as HTMLElement
-  const prevClass = prev == null ? '' : String(prev)
-  const nextClass = next == null ? '' : String(next)
+  const el_ = el as HTMLElement;
+  const prevClass = prev == null ? "" : String(prev);
+  const nextClass = next == null ? "" : String(next);
   if (prevClass !== nextClass) {
-    el_.className = nextClass
+    el_.className = nextClass;
   }
 }
 
@@ -96,31 +93,27 @@ export function patchClass(el: Element, prev: unknown, next: unknown): void {
 /**
  * Patch the style attribute on an element
  */
-export function patchStyle(
-  el: Element,
-  prev: unknown,
-  next: unknown,
-): void {
-  const el_ = el as HTMLElement
-  const style = el_.style
+export function patchStyle(el: Element, prev: unknown, next: unknown): void {
+  const el_ = el as HTMLElement;
+  const style = el_.style;
 
-  if (!next || next === '') {
-    el_.removeAttribute('style')
-    return
+  if (!next || next === "") {
+    el_.removeAttribute("style");
+    return;
   }
 
-  const prevStyle = prev as Record<string, string | number> | null | undefined
-  const nextStyle = next as Record<string, string | number> | string
+  const prevStyle = prev as Record<string, string | number> | null | undefined;
+  const nextStyle = next as Record<string, string | number> | string;
 
   if (isString(nextStyle)) {
     if (prevStyle && !isString(prevStyle)) {
       // Was object, now string - clear all inline styles
       for (const key in prevStyle) {
-        style.removeProperty(camelToKebab(key))
+        style.removeProperty(camelToKebab(key));
       }
     }
-    el_.setAttribute('style', nextStyle)
-    return
+    el_.setAttribute("style", nextStyle);
+    return;
   }
 
   // nextStyle is an object
@@ -128,21 +121,21 @@ export function patchStyle(
     // Remove keys that existed in prev but not in next
     for (const key in prevStyle) {
       if (!(key in nextStyle)) {
-        style.removeProperty(camelToKebab(key))
+        style.removeProperty(camelToKebab(key));
       }
     }
   } else if (isString(prevStyle)) {
     // Was string, now object - clear the string style
-    el_.removeAttribute('style')
+    el_.removeAttribute("style");
   }
 
   // Apply all new styles
   for (const key in nextStyle) {
-    const val = nextStyle[key]
-    if (val != null && val !== '') {
-      style.setProperty(camelToKebab(key), String(val))
+    const val = nextStyle[key];
+    if (val != null && val !== "") {
+      style.setProperty(camelToKebab(key), String(val));
     } else {
-      style.removeProperty(camelToKebab(key))
+      style.removeProperty(camelToKebab(key));
     }
   }
 }
@@ -161,24 +154,24 @@ export function patchEvent(
   next: unknown,
 ): void {
   // Extract event name: onClick -> click
-  const eventName = rawName.slice(2).toLowerCase()
+  const eventName = rawName.slice(2).toLowerCase();
 
   // Remove previous listener
   if (prev) {
-    const elMap = invokerCache.get(el)
+    const elMap = invokerCache.get(el);
     if (elMap) {
-      const invoker = elMap.get(rawName)
+      const invoker = elMap.get(rawName);
       if (invoker) {
-        el.removeEventListener(eventName, invoker)
+        el.removeEventListener(eventName, invoker);
       }
     }
   }
 
   // Add new listener
   if (next) {
-    const invoker = getOrCreateInvoker(el, rawName)
-    invoker.value = next as EventListener
-    el.addEventListener(eventName, invoker)
+    const invoker = getOrCreateInvoker(el, rawName);
+    invoker.value = next as EventListener;
+    el.addEventListener(eventName, invoker);
   }
 }
 
@@ -196,16 +189,16 @@ export function patchAttr(
   _isSVG: boolean,
 ): void {
   if (value == null || value === false) {
-    el.removeAttribute(key)
+    el.removeAttribute(key);
   } else if (isBooleanAttr(key)) {
     // Boolean attributes: presence means true
-    if (value === true || value === '') {
-      el.setAttribute(key, '')
+    if (value === true || value === "") {
+      el.setAttribute(key, "");
     } else {
-      el.setAttribute(key, String(value))
+      el.setAttribute(key, String(value));
     }
   } else {
-    el.setAttribute(key, String(value))
+    el.setAttribute(key, String(value));
   }
 }
 
@@ -224,13 +217,13 @@ export function patchProp(
   nextValue: unknown,
   isSVG: boolean = false,
 ): void {
-  if (key === 'class') {
-    patchClass(el, prevValue, nextValue)
-  } else if (key === 'style') {
-    patchStyle(el, prevValue, nextValue)
+  if (key === "class") {
+    patchClass(el, prevValue, nextValue);
+  } else if (key === "style") {
+    patchStyle(el, prevValue, nextValue);
   } else if (isOn(key)) {
-    patchEvent(el, key, prevValue, nextValue)
+    patchEvent(el, key, prevValue, nextValue);
   } else {
-    patchAttr(el, key, nextValue, isSVG)
+    patchAttr(el, key, nextValue, isSVG);
   }
 }

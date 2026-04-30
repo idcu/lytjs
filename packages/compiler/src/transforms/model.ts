@@ -1,8 +1,8 @@
 // src/transforms/v-model.ts
 // v-model 指令转换逻辑
 
-import type { DirectiveTransform } from '../types';
-import { getExpContent } from './helpers';
+import type { DirectiveTransform } from "../types";
+import { getExpContent } from "./helpers";
 
 export const transformModel: DirectiveTransform = (dir, _node, _context) => {
   const { exp } = dir;
@@ -12,11 +12,11 @@ export const transformModel: DirectiveTransform = (dir, _node, _context) => {
 
   if (expContent) {
     props.push({
-      key: 'modelValue',
+      key: "modelValue",
       value: expContent,
     });
     props.push({
-      key: 'onUpdate:modelValue',
+      key: "onUpdate:modelValue",
       value: `$event => (${expContent} = $event)`,
     });
   }

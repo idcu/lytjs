@@ -1,7 +1,7 @@
 // src/transform.ts
 // AST transform pipeline - main entry
 
-import { NodeTypes } from './constants';
+import { NodeTypes } from "./constants";
 import type {
   RootNode,
   ElementNode,
@@ -15,12 +15,12 @@ import type {
   JSChildNode,
   CodegenContext,
   BaseNode,
-} from './types';
+} from "./types";
 import {
   createSimpleExpression,
   createCallExpression,
   createArrayExpression,
-} from './ast';
+} from "./ast";
 import {
   transformElement,
   transformIf,
@@ -32,13 +32,16 @@ import {
   transformModel,
   transformShow,
   isJS,
-} from './transforms';
+} from "./transforms";
 
 // ============================================================
 // Main transform function
 // ============================================================
 
-export function transform(root: RootNode, options: TransformOptions = {}): void {
+export function transform(
+  root: RootNode,
+  options: TransformOptions = {},
+): void {
   const context = createTransformContext(root, options);
   traverseNode(root, context, options);
 
@@ -54,13 +57,16 @@ export function transform(root: RootNode, options: TransformOptions = {}): void 
   if (root.children.length === 1) {
     const child = root.children[0];
     if (child) {
-      if (child.type === NodeTypes.ELEMENT && (child as ElementNode).codegenNode) {
+      if (
+        child.type === NodeTypes.ELEMENT &&
+        (child as ElementNode).codegenNode
+      ) {
         root.codegenNode = (child as ElementNode).codegenNode as JSChildNode;
       } else if (child.type === NodeTypes.TEXT) {
         root.codegenNode = child as unknown as JSChildNode;
       } else if (child.type === NodeTypes.INTERPOLATION) {
         root.codegenNode = createCallExpression(
-          context.helper('TO_DISPLAY_STRING'),
+          context.helper("TO_DISPLAY_STRING"),
           [(child as InterpolationNode).content],
         );
       } else if (isJS(child)) {
@@ -69,17 +75,17 @@ export function transform(root: RootNode, options: TransformOptions = {}): void 
     }
   } else if (root.children.length > 1) {
     const elements = root.children.filter(
-      (c) => c.type === NodeTypes.ELEMENT || c.type === NodeTypes.TEXT || c.type === NodeTypes.INTERPOLATION,
+      (c) =>
+        c.type === NodeTypes.ELEMENT ||
+        c.type === NodeTypes.TEXT ||
+        c.type === NodeTypes.INTERPOLATION,
     );
     if (elements.length > 0) {
-      root.codegenNode = createCallExpression(
-        context.helper('CREATE_VNODE'),
-        [
-          createSimpleExpression('Fragment', true),
-          createSimpleExpression('null', true),
-          createArrayExpression(elements as unknown as JSChildNode[]),
-        ],
-      );
+      root.codegenNode = createCallExpression(context.helper("CREATE_VNODE"), [
+        createSimpleExpression("Fragment", true),
+        createSimpleExpression("null", true),
+        createArrayExpression(elements as unknown as JSChildNode[]),
+      ]);
     }
   }
 }
@@ -88,7 +94,10 @@ export function transform(root: RootNode, options: TransformOptions = {}): void 
 // Create Transform Context
 // ============================================================
 
-function createTransformContext(root: RootNode, _options: TransformOptions): TransformContext {
+function createTransformContext(
+  root: RootNode,
+  _options: TransformOptions,
+): TransformContext {
   const helpers = new Map<string, number>();
   const components = new Set<string>();
   const directives = new Set<string>();
@@ -113,12 +122,16 @@ function createTransformContext(root: RootNode, _options: TransformOptions): Tra
       helpers.set(name, count + 1);
       return name;
     },
-    helperString(name: string): string { return name; },
+    helperString(name: string): string {
+      return name;
+    },
     replaceNode(node: TemplateChildNode): void {
       if (!context.parent) return;
       const parent = context.parent;
       if (parent.type === NodeTypes.ROOT || parent.type === NodeTypes.ELEMENT) {
-        const idx = parent.children.indexOf(context.currentNode as TemplateChildNode);
+        const idx = parent.children.indexOf(
+          context.currentNode as TemplateChildNode,
+        );
         if (idx !== -1) parent.children[idx] = node;
       }
       currentNode = node;
@@ -134,24 +147,39 @@ function createTransformContext(root: RootNode, _options: TransformOptions): Tra
     },
     onNodeRemoved(): void {},
     addIdentifiers(exp: any): void {
-      if (typeof exp === 'string') context.identifiers.add(exp);
-      else if (exp.type === NodeTypes.SIMPLE_EXPRESSION && !exp.isStatic) context.identifiers.add(exp.content);
+      if (typeof exp === "string") context.identifiers.add(exp);
+      else if (exp.type === NodeTypes.SIMPLE_EXPRESSION && !exp.isStatic)
+        context.identifiers.add(exp.content);
     },
     removeIdentifiers(exp: any): void {
-      if (typeof exp === 'string') context.identifiers.delete(exp);
-      else if (exp.type === NodeTypes.SIMPLE_EXPRESSION && !exp.isStatic) context.identifiers.delete(exp.content);
+      if (typeof exp === "string") context.identifiers.delete(exp);
+      else if (exp.type === NodeTypes.SIMPLE_EXPRESSION && !exp.isStatic)
+        context.identifiers.delete(exp.content);
     },
-    addHoist(node: JSChildNode): void { context.hoists.push(node); },
-    addTemp(): number { return context.temps++; },
-    addCache(_index: number): void { context.cached++; },
+    addHoist(node: JSChildNode): void {
+      context.hoists.push(node);
+    },
+    addTemp(): number {
+      return context.temps++;
+    },
+    addCache(_index: number): void {
+      context.cached++;
+    },
     error(msg: string, _node?: BaseNode): void {
       throw new Error(`[lytjs/compiler] ${msg}`);
     },
     createCodegenContext(): CodegenContext {
       return {
-        source: root.loc.source, code: '', line: 1, column: 1, offset: 0,
-        indentLevel: 0, pure: false,
-        helper(key: string): string { return `_${key}`; },
+        source: root.loc.source,
+        code: "",
+        line: 1,
+        column: 1,
+        offset: 0,
+        indentLevel: 0,
+        pure: false,
+        helper(key: string): string {
+          return `_${key}`;
+        },
         push(_code: string, _node?: BaseNode): void {},
         indent(): void {},
         deindent(_withoutNewline?: boolean): void {},
@@ -229,5 +257,11 @@ export const builtInDirectiveTransforms: Record<string, DirectiveTransform> = {
 };
 
 // Re-export individual transforms for backward compatibility
-export { transformElement, transformIf, transformFor, transformOnce, transformSlot };
+export {
+  transformElement,
+  transformIf,
+  transformFor,
+  transformOnce,
+  transformSlot,
+};
 export { transformBind, transformOn, transformModel, transformShow };

@@ -1,9 +1,9 @@
 // src/keep-alive.ts
 // KeepAlive component (simplified)
 
-import { isString, isArray } from '@lytjs/common-is';
-import type { ComponentInternalInstance, ComponentOptions } from './types';
-import { createComponentInstance, setupComponent } from './component';
+import { isString, isArray } from "@lytjs/common-is";
+import type { ComponentInternalInstance, ComponentOptions } from "./types";
+import { createComponentInstance, setupComponent } from "./component";
 
 // ==================== Types ====================
 
@@ -26,7 +26,7 @@ export interface KeepAliveProps {
 }
 
 export const KeepAlive: ComponentOptions = {
-  name: 'KeepAlive',
+  name: "KeepAlive",
 
   props: {
     include: {},
@@ -92,7 +92,7 @@ export function matchesPattern(
   }
 
   if (isArray(pattern)) {
-    return pattern.some(p => matchesPattern(name, p));
+    return pattern.some((p) => matchesPattern(name, p));
   }
 
   return true;
@@ -156,9 +156,7 @@ export function removeCachedInstance(
 /**
  * Activate a cached component instance.
  */
-export function activateInstance(
-  instance: ComponentInternalInstance,
-): void {
+export function activateInstance(instance: ComponentInternalInstance): void {
   instance.isDeactivated = false;
   // Call activated hook if defined
   if (instance.type.activated) {
@@ -169,9 +167,7 @@ export function activateInstance(
 /**
  * Deactivate a component instance.
  */
-export function deactivateInstance(
-  instance: ComponentInternalInstance,
-): void {
+export function deactivateInstance(instance: ComponentInternalInstance): void {
   instance.isDeactivated = true;
   // Call deactivated hook if defined
   if (instance.type.deactivated) {

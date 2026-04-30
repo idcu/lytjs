@@ -1,8 +1,8 @@
 // src/suspense.ts
 // Suspense component (simplified)
 
-import type { ComponentInternalInstance, ComponentOptions } from './types';
-import { createComponentInstance, setupComponent } from './component';
+import type { ComponentInternalInstance, ComponentOptions } from "./types";
+import { createComponentInstance, setupComponent } from "./component";
 
 // ==================== Types ====================
 
@@ -24,7 +24,7 @@ export interface SuspenseBoundary {
 // ==================== Suspense Component ====================
 
 export const Suspense: ComponentOptions = {
-  name: 'Suspense',
+  name: "Suspense",
 
   props: {
     timeout: { type: Number, default: undefined },

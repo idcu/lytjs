@@ -1,7 +1,7 @@
 // src/optimize.ts
 // AST optimizer - hoist static subtrees, mark constants, patch flags
 
-import { NodeTypes, PatchFlags } from './constants';
+import { NodeTypes, PatchFlags } from "./constants";
 import type {
   RootNode,
   ElementNode,
@@ -10,7 +10,7 @@ import type {
   JSChildNode,
   VNodeCall,
   CompilerOptions,
-} from './types';
+} from "./types";
 
 // ============================================================
 // Main optimize function
@@ -47,7 +47,9 @@ function markConstants(root: RootNode): void {
         (p) => p.type === NodeTypes.DIRECTIVE,
       );
       const hasDynamicBindings = element.props.some(
-        (p) => p.type === NodeTypes.DIRECTIVE && (p.name === 'bind' || p.name === 'on'),
+        (p) =>
+          p.type === NodeTypes.DIRECTIVE &&
+          (p.name === "bind" || p.name === "on"),
       );
       const hasInterpolation = hasDescendantInterpolation(element);
 
@@ -97,7 +99,7 @@ function createHoistedReference(index: number): VNodeCall {
     loc: {
       start: { line: 0, column: 0, offset: 0 },
       end: { line: 0, column: 0, offset: 0 },
-      source: '',
+      source: "",
     },
   };
 }
@@ -117,7 +119,7 @@ function markPatchFlags(root: RootNode): void {
       const hasDynamicProps = element.props.some(
         (p) =>
           p.type === NodeTypes.DIRECTIVE &&
-          (p.name === 'bind' || p.name === 'on' || p.name === 'model'),
+          (p.name === "bind" || p.name === "on" || p.name === "model"),
       );
 
       const hasInterpolation = element.children.some(
@@ -131,7 +133,10 @@ function markPatchFlags(root: RootNode): void {
       }
 
       // Also set patch flag on codegenNode
-      if (element.codegenNode && element.codegenNode.type === NodeTypes.VNODE_CALL) {
+      if (
+        element.codegenNode &&
+        element.codegenNode.type === NodeTypes.VNODE_CALL
+      ) {
         const vnodeCall = element.codegenNode as VNodeCall;
         if (element.patchFlag) {
           vnodeCall.patchFlag = String(element.patchFlag);

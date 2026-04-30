@@ -2,11 +2,17 @@
 // 计算属性
 // 复用 @lytjs/common-is: isFunction, hasChanged
 
-import { isFunction } from '@lytjs/common-is';
-import { ReactiveEffect } from './effect';
-import { trackRefValue, triggerRefValue } from './ref';
-import type { ComputedRef, WritableComputedRef, ComputedGetter, ComputedSetter, WritableComputedOptions } from './types';
-import { ComputedRefSymbol } from './constants';
+import { isFunction } from "@lytjs/common-is";
+import { ReactiveEffect } from "./effect";
+import { trackRefValue, triggerRefValue } from "./ref";
+import type {
+  ComputedRef,
+  WritableComputedRef,
+  ComputedGetter,
+  ComputedSetter,
+  WritableComputedOptions,
+} from "./types";
+import { ComputedRefSymbol } from "./constants";
 
 // ==================== ComputedRefImpl ====================
 
@@ -21,7 +27,7 @@ class ComputedRefImpl<T> {
   constructor(
     getter: ComputedGetter<T>,
     private readonly _setter: ComputedSetter<T> | undefined,
-    isSSR: boolean
+    isSSR: boolean,
   ) {
     this.effect = new ReactiveEffect(getter, () => {
       if (!this._dirty) {
@@ -49,7 +55,7 @@ class ComputedRefImpl<T> {
     if (this._setter) {
       this._setter(newValue);
     } else if (__DEV__) {
-      console.warn('Write operation failed: computed value is readonly');
+      console.warn("Write operation failed: computed value is readonly");
     }
   }
 }
@@ -57,7 +63,7 @@ class ComputedRefImpl<T> {
 // ==================== 公共 API ====================
 
 export function computed<T>(
-  getterOrOptions: ComputedGetter<T> | WritableComputedOptions<T>
+  getterOrOptions: ComputedGetter<T> | WritableComputedOptions<T>,
 ): ComputedRef<T> | WritableComputedRef<T> {
   let getter: ComputedGetter<T>;
   let setter: ComputedSetter<T> | undefined;
@@ -65,7 +71,7 @@ export function computed<T>(
   if (isFunction(getterOrOptions)) {
     getter = getterOrOptions;
     setter = __DEV__
-      ? () => console.warn('Write operation failed: computed value is readonly')
+      ? () => console.warn("Write operation failed: computed value is readonly")
       : undefined;
   } else {
     getter = getterOrOptions.get;

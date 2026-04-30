@@ -48,49 +48,49 @@ export const TextModes = {
 } as const;
 
 export const BindingTypes = {
-  DATA: 'data' as const,
-  PROPS: 'props' as const,
-  SETUP: 'setup' as const,
-  LITERAL_CONST: 'literal-const' as const,
+  DATA: "data" as const,
+  PROPS: "props" as const,
+  SETUP: "setup" as const,
+  LITERAL_CONST: "literal-const" as const,
 } as const;
 
-export { PatchFlags } from '@lytjs/common-vnode';
+export { PatchFlags } from "@lytjs/common-vnode";
 
 // Runtime helper names
 export const VNodeHook = {
-  BEFORE_MOUNT: 'bm',
-  MOUNTED: 'm',
-  BEFORE_UPDATE: 'bu',
-  UPDATED: 'u',
-  BEFORE_UNMOUNT: 'bum',
-  UNMOUNTED: 'um',
+  BEFORE_MOUNT: "bm",
+  MOUNTED: "m",
+  BEFORE_UPDATE: "bu",
+  UPDATED: "u",
+  BEFORE_UNMOUNT: "bum",
+  UNMOUNTED: "um",
 } as const;
 
 // Runtime helper symbols
-export const RENDER_HELPER = 'renderHelper' as const;
+export const RENDER_HELPER = "renderHelper" as const;
 
 // Helper name mapping for codegen
 export const helperNameMap: Record<string, string> = {
-  CREATE_VNODE: 'createElementVNode',
-  CREATE_ELEMENT_VNODE: 'createElementVNode',
-  CREATE_COMMENT: 'createCommentVNode',
-  CREATE_TEXT: 'createTextVNode',
-  CREATE_STATIC: 'createStaticVNode',
-  RESOLVE_COMPONENT: 'resolveComponent',
-  RESOLVE_DYNAMIC_COMPONENT: 'resolveDynamicComponent',
-  RESOLVE_DIRECTIVE: 'resolveDirective',
-  RENDER_LIST: 'renderList',
-  RENDER_SLOT: 'renderSlot',
-  CREATE_SLOTS: 'createSlots',
-  TO_DISPLAY_STRING: 'toDisplayString',
-  MERGE_PROPS: 'mergeProps',
-  TO_HANDLER_KEY: 'toHandlerKey',
-  SET_BLOCK_TRACKING: 'setBlockTracking',
-  CREATE_BLOCK: 'createBlock',
-  OPEN_BLOCK: 'openBlock',
-  WITH_CTX: 'withCtx',
-  NORMALIZE_CLASS: 'normalizeClass',
-  NORMALIZE_STYLE: 'normalizeStyle',
-  NORMALIZE_PROPS: 'normalizeProps',
-  GUARD_REACTIVE_PROPS: 'guardReactiveProps',
+  CREATE_VNODE: "createElementVNode",
+  CREATE_ELEMENT_VNODE: "createElementVNode",
+  CREATE_COMMENT: "createCommentVNode",
+  CREATE_TEXT: "createTextVNode",
+  CREATE_STATIC: "createStaticVNode",
+  RESOLVE_COMPONENT: "resolveComponent",
+  RESOLVE_DYNAMIC_COMPONENT: "resolveDynamicComponent",
+  RESOLVE_DIRECTIVE: "resolveDirective",
+  RENDER_LIST: "renderList",
+  RENDER_SLOT: "renderSlot",
+  CREATE_SLOTS: "createSlots",
+  TO_DISPLAY_STRING: "toDisplayString",
+  MERGE_PROPS: "mergeProps",
+  TO_HANDLER_KEY: "toHandlerKey",
+  SET_BLOCK_TRACKING: "setBlockTracking",
+  CREATE_BLOCK: "createBlock",
+  OPEN_BLOCK: "openBlock",
+  WITH_CTX: "withCtx",
+  NORMALIZE_CLASS: "normalizeClass",
+  NORMALIZE_STYLE: "normalizeStyle",
+  NORMALIZE_PROPS: "normalizeProps",
+  GUARD_REACTIVE_PROPS: "guardReactiveProps",
 };
