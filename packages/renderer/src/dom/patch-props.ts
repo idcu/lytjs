@@ -236,6 +236,9 @@ export function patchProp(
       if (__DEV__ && nextValue != null && typeof nextValue !== 'string') {
         console.warn('v-html expects a string value.');
       }
+      // SECURITY NOTE: innerHTML is a potential XSS vector.
+      // The caller is responsible for ensuring the content is safe.
+      // This is typically used by v-html directive which should sanitize input.
       el.innerHTML = nextValue == null ? '' : String(nextValue);
     }
   } else if (key === 'textContent') {

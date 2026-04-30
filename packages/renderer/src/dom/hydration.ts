@@ -51,7 +51,11 @@ function hydrateNode(vnode: VNode, parent: HTMLElement, index: number): number {
       }
     }
     // Fragment el points to the first child's el
-    vnode.el = parent.childNodes[index] ?? null;
+    if (childArray.length > 0) {
+      vnode.el = parent.childNodes[index] ?? null;
+    } else {
+      vnode.el = null;
+    }
     return currentIndex;
   }
 

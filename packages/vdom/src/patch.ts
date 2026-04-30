@@ -299,7 +299,8 @@ export function createRenderer(
     if (i > e1) {
       if (i <= e2) {
         const nextPos = e2 + 1;
-        const anchor = nextPos < l2 ? c2[nextPos]!.el : fallbackAnchor;
+        const nextEl = nextPos < l2 ? c2[nextPos]?.el : null;
+        const anchor = nextEl ?? fallbackAnchor;
         while (i <= e2) {
           patch(
             null,
@@ -412,8 +413,8 @@ export function createRenderer(
       for (i = toBePatched - 1; i >= 0; i--) {
         const nextIndex = s2 + i;
         const nextChild = c2[nextIndex]!;
-        const anchor =
-          nextIndex + 1 < l2 ? c2[nextIndex + 1]!.el : fallbackAnchor;
+        const nextEl = nextIndex + 1 < l2 ? c2[nextIndex + 1]?.el : null;
+        const anchor = nextEl ?? fallbackAnchor;
 
         if (newIndexToOldIndexMap[i] === 0) {
           patch(
@@ -684,10 +685,18 @@ export function createRenderer(
       const { bum } = component as ComponentInternalInstance;
       if (isArray(bum)) {
         for (let i = 0; i < bum.length; i++) {
-          bum[i]!();
+          try {
+            bum[i]!();
+          } catch (e) {
+            console.error('[LytJS] Error in beforeUnmount hook:', e)
+          }
         }
       } else if (bum) {
-        bum();
+        try {
+          bum();
+        } catch (e) {
+          console.error('[LytJS] Error in beforeUnmount hook:', e)
+        }
       }
       component.isUnmounted = true;
     }
