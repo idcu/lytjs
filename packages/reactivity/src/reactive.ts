@@ -30,6 +30,17 @@ import { toRaw, isRef } from "./shared";
 
 type Target = object;
 
+/**
+ * Internal interface for objects with reactive flags
+ */
+interface ReactiveTarget {
+  [ReactiveFlags.RAW]?: unknown;
+  [ReactiveFlags.IS_REACTIVE]?: boolean;
+  [ReactiveFlags.IS_READONLY]?: boolean;
+  [ReactiveFlags.IS_SHALLOW]?: boolean;
+  [ReactiveFlags.IS_REF]?: boolean;
+}
+
 // ==================== 辅助常量 ====================
 
 const MUTATING_METHODS = new Set<string>(["set", "add", "delete", "clear"]);
@@ -80,7 +91,7 @@ const arrayInstrumentations: Record<string | symbol, Function> = {};
 const builtInSymbols = new Set<symbol>(
   Object.getOwnPropertyNames(Symbol)
     .filter((key) => key !== "arguments" && key !== "caller")
-    .map((key) => (Symbol as any)[key])
+    .map((key) => (Symbol as any)[key as keyof typeof Symbol])
     .filter(isSymbol),
 );
 
@@ -96,7 +107,7 @@ function createReactiveObject(
   _isShallow: boolean,
   baseHandlers: ProxyHandler<Target>,
   collectionHandlers: ProxyHandler<Target>,
-  proxyMap: WeakMap<Target, any>,
+  proxyMap: WeakMap<Target, Proxy<Target>>,
 ) {
   if (!isObject(target)) {
     if (__DEV__) {
@@ -106,13 +117,13 @@ function createReactiveObject(
   }
 
   // markRaw 标记的对象不代理
-  if ((target as any)[ReactiveFlags.SKIP]) {
+  if ((target as ReactiveTarget)[ReactiveFlags.SKIP]) {
     return target;
   }
 
   if (
-    (target as any)[ReactiveFlags.RAW] &&
-    !(isReadonlyFlag && (target as any)[ReactiveFlags.IS_REACTIVE])
+    (target as ReactiveTarget)[ReactiveFlags.RAW] &&
+    !(isReadonlyFlag && (target as ReactiveTarget)[ReactiveFlags.IS_REACTIVE])
   ) {
     return target;
   }
@@ -307,10 +318,10 @@ const shallowCollectionHandlers = createCollectionHandler(false, true);
 
 // ==================== 公共 API ====================
 
-const reactiveMap = new WeakMap<Target, any>();
-const shallowReactiveMap = new WeakMap<Target, any>();
-const readonlyMap = new WeakMap<Target, any>();
-const shallowReadonlyMap = new WeakMap<Target, any>();
+const reactiveMap = new WeakMap<Target, Proxy<Target>>();
+const shallowReactiveMap = new WeakMap<Target, Proxy<Target>>();
+const readonlyMap = new WeakMap<Target, Proxy<Target>>();
+const shallowReadonlyMap = new WeakMap<Target, Proxy<Target>>();
 
 export function reactive<T extends object>(target: T): UnwrapNestedRefs<T> {
   if (isReadonly(target)) return target as UnwrapNestedRefs<T>;
@@ -361,13 +372,13 @@ export function shallowReadonly<T extends object>(target: T): Readonly<T> {
 
 export function isReactive(value: unknown): boolean {
   if (isReadonly(value)) {
-    return isReactive((value as any)[ReactiveFlags.RAW]);
+    return isReactive((value as ReactiveTarget)[ReactiveFlags.RAW]);
   }
-  return !!(value && (value as any)[ReactiveFlags.IS_REACTIVE]);
+  return !!(value && (value as ReactiveTarget)[ReactiveFlags.IS_REACTIVE]);
 }
 
 export function isReadonly(value: unknown): boolean {
-  return !!(value && (value as any)[ReactiveFlags.IS_READONLY]);
+  return !!(value && (value as ReactiveTarget)[ReactiveFlags.IS_READONLY]);
 }
 
 export function isProxy(value: unknown): boolean {
