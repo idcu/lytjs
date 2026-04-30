@@ -145,6 +145,23 @@ export function onDeactivated(fn: () => void): void {
 // ==================== Lifecycle calling ====================
 
 /**
+ * Safely call an Options API lifecycle hook with error handling.
+ */
+function callOptionsHook(
+  instance: ComponentInternalInstance,
+  hook: Function | undefined,
+  name: string,
+): void {
+  if (hook) {
+    try {
+      hook.call(instance.ctx);
+    } catch (err) {
+      handleError(err as Error, instance, `${name} hook`);
+    }
+  }
+}
+
+/**
  * Call all registered hooks for a given lifecycle phase.
  */
 export function callLifecycleHook(
@@ -174,8 +191,8 @@ export function callLifecycleHook(
  */
 export function callCreatedHook(instance: ComponentInternalInstance): void {
   const { beforeCreate, created } = instance.type;
-  if (beforeCreate) beforeCreate.call(instance.ctx);
-  if (created) created.call(instance.ctx);
+  callOptionsHook(instance, beforeCreate, "beforeCreate");
+  callOptionsHook(instance, created, "created");
 }
 
 /**
@@ -184,9 +201,9 @@ export function callCreatedHook(instance: ComponentInternalInstance): void {
 export function callMountedHook(instance: ComponentInternalInstance): void {
   const { beforeMount, mounted } = instance.type;
   callLifecycleHook(instance, "beforeMount");
-  if (beforeMount) beforeMount.call(instance.ctx);
+  callOptionsHook(instance, beforeMount, "beforeMount");
   callLifecycleHook(instance, "mounted");
-  if (mounted) mounted.call(instance.ctx);
+  callOptionsHook(instance, mounted, "mounted");
   instance.isMounted = true;
 }
 
@@ -196,9 +213,9 @@ export function callMountedHook(instance: ComponentInternalInstance): void {
 export function callUpdatedHook(instance: ComponentInternalInstance): void {
   const { beforeUpdate, updated } = instance.type;
   callLifecycleHook(instance, "beforeUpdate");
-  if (beforeUpdate) beforeUpdate.call(instance.ctx);
+  callOptionsHook(instance, beforeUpdate, "beforeUpdate");
   callLifecycleHook(instance, "updated");
-  if (updated) updated.call(instance.ctx);
+  callOptionsHook(instance, updated, "updated");
 }
 
 /**
@@ -207,9 +224,9 @@ export function callUpdatedHook(instance: ComponentInternalInstance): void {
 export function callUnmountedHook(instance: ComponentInternalInstance): void {
   const { beforeUnmount, unmounted } = instance.type;
   callLifecycleHook(instance, "beforeUnmount");
-  if (beforeUnmount) beforeUnmount.call(instance.ctx);
+  callOptionsHook(instance, beforeUnmount, "beforeUnmount");
   callLifecycleHook(instance, "unmounted");
-  if (unmounted) unmounted.call(instance.ctx);
+  callOptionsHook(instance, unmounted, "unmounted");
   instance.isUnmounted = true;
 }
 
