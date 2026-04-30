@@ -2,7 +2,7 @@
 // Slot handling
 
 import { isFunction, isArray, isObject, isNullish } from "@lytjs/common-is";
-import type { VNode } from "@lytjs/vdom";
+import type { VNode } from "@lytjs/common-vnode";
 import type {
   ComponentInternalInstance,
   InternalSlots,
