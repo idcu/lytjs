@@ -46,9 +46,6 @@ export {
 // Patch logic and renderer
 export { createRenderer, createDOMRendererOptions } from "./patch";
 
-// Props storage (internal but exported for advanced usage)
-export { setVNodeProps, getVNodeProps } from "./props-map";
-
 // Types
 export type {
   Props,

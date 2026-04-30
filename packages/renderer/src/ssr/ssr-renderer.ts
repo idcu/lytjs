@@ -4,7 +4,7 @@
  */
 
 import type { VNode } from "@lytjs/vdom";
-import { Fragment, Text, ShapeFlags, getVNodeProps } from "@lytjs/vdom";
+import { Fragment, Text, ShapeFlags } from "@lytjs/vdom";
 import {
   isString,
   isArray,
@@ -88,7 +88,7 @@ function renderFragmentToString(vnode: VNode): string {
 
 function renderElementToString(vnode: VNode): string {
   const tag = vnode.type as string;
-  const props = getVNodeProps(vnode) ?? {};
+  const props = vnode.props ?? {};
   const { shapeFlag, children } = vnode;
 
   // Build opening tag with attributes

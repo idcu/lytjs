@@ -4,7 +4,7 @@
  */
 
 import type { VNode } from "@lytjs/vdom";
-import { Fragment, Text, ShapeFlags, getVNodeProps } from "@lytjs/vdom";
+import { Fragment, Text, ShapeFlags } from "@lytjs/vdom";
 import { isArray, isFunction } from "@lytjs/common-is";
 import { patchProp } from "./patch-props";
 
@@ -65,7 +65,7 @@ function hydrateNode(vnode: VNode, parent: HTMLElement, index: number): number {
   if (shapeFlag & ShapeFlags.ELEMENT) {
     const tag = type as string;
     const existingNode = parent.childNodes[index];
-    const props = getVNodeProps(vnode) ?? {};
+    const props = vnode.props ?? {};
 
     if (
       existingNode &&

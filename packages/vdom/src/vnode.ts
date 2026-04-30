@@ -14,7 +14,6 @@ import {
   EMPTY_OBJ,
 } from "@lytjs/common-is";
 import { normalizeClass } from "@lytjs/common-string";
-import { setVNodeProps, getVNodeProps } from "./props-map";
 
 // ============================================================
 // createVNode
@@ -62,9 +61,11 @@ export function createVNode(
     __v_isVNode: true,
   };
 
-  // Store props in WeakMap for renderer access
+  // Store props directly on the vnode
   if (props) {
-    setVNodeProps(vnode, props);
+    vnode.props = props;
+  } else {
+    vnode.props = null;
   }
 
   // Normalize children and update shapeFlag
@@ -124,25 +125,22 @@ export function cloneVNode(
     normalizeProps(mergedProps);
     cloned.key = mergedProps.key ?? vnode.key;
     cloned.ref = mergedProps.ref ?? vnode.ref;
-    // Store merged props
-    const oldProps = getVNodeProps(vnode);
-    if (oldProps) {
-      const finalProps = { ...oldProps, ...mergedProps };
-      setVNodeProps(cloned, finalProps);
+    // Merge props directly
+    if (vnode.props) {
+      cloned.props = { ...vnode.props, ...mergedProps };
     } else {
-      setVNodeProps(cloned, mergedProps);
+      cloned.props = mergedProps;
     }
     // Merge children if provided
     if (!isNullish(mergedProps.children)) {
       cloned.children = mergedProps.children;
       normalizeChildren(cloned, mergedProps.children);
     }
-  } else {
-    // Clone props reference
-    const oldProps = getVNodeProps(vnode);
-    if (oldProps) {
-      setVNodeProps(cloned, { ...oldProps });
-    }
+  }
+  // When no extraProps, props is already shallow-copied via spread (...vnode)
+  // which copies the reference. For a true shallow copy, we create a new object.
+  else if (vnode.props) {
+    cloned.props = { ...vnode.props };
   }
 
   return cloned;
