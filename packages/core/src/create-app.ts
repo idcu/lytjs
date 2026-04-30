@@ -21,12 +21,20 @@ export function createApp(
 
     use(plugin: Plugin | Function, ...options: any[]) {
       if (installedPlugins.has(plugin)) return app;
-      if (typeof plugin === "function") {
-        (plugin as Function)(app, ...options);
-      } else {
-        plugin.install(app, ...options);
+      try {
+        if (typeof plugin === "function") {
+          (plugin as Function)(app, ...options);
+        } else {
+          plugin.install(app, ...options);
+        }
+        installedPlugins.add(plugin);
+      } catch (err) {
+        console.error(
+          `[LytJS] Plugin failed to install: ${typeof plugin === "function" ? plugin.name || "anonymous function" : (plugin as Plugin).install?.name || "plugin"}`,
+          err,
+        );
+        throw err;
       }
-      installedPlugins.add(plugin);
       return app;
     },
 
