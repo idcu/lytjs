@@ -9,7 +9,7 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
+      "import": "./dist/index.mjs",
       "require": "./dist/index.cjs"
     }
   },
@@ -34,7 +34,8 @@
     "@lytjs/renderer": "workspace:*",
     "@lytjs/component": "workspace:*",
     "@lytjs/common-is": "workspace:*",
-    "@lytjs/common-string": "workspace:*"
+    "@lytjs/common-string": "workspace:*",
+    "@lytjs/common-scheduler": "workspace:*"
   },
   "devDependencies": {
     "tsup": "^8.0.0",
