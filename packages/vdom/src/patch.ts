@@ -661,7 +661,24 @@ export function createRenderer(
     parentSuspense: any,
     doRemove: boolean = false,
   ): void {
-    const { type, children, el } = vnode;
+    const { type, children, el, component } = vnode;
+
+    // Handle component unmount - trigger onUnmounted lifecycle hook
+    if (
+      component &&
+      (vnode.shapeFlag & ShapeFlags.STATEFUL_COMPONENT ||
+        vnode.shapeFlag & ShapeFlags.FUNCTIONAL_COMPONENT)
+    ) {
+      const { bum } = component as any;
+      if (isArray(bum)) {
+        for (let i = 0; i < bum.length; i++) {
+          bum[i]!();
+        }
+      } else if (bum) {
+        bum();
+      }
+      component.isUnmounted = true;
+    }
 
     if (type === Fragment) {
       unmountFragment(vnode, parentComponent, parentSuspense, doRemove);
