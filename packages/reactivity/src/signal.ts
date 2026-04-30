@@ -42,7 +42,8 @@ export function signal<T>(initialValue: T): WritableSignal<T> {
   // 使用普通对象存储值，利用 effect 系统追踪
   const store = { [SIGNAL_KEY]: initialValue };
 
-  const signalFn: any = function signalFn(valueOrNothing?: T): T | void {
+  // signalFn 内部实现：重载调用签名，支持读取和写入
+  const signalFn: WritableSignal<T> & ((valueOrNothing?: T) => T | void) = function signalFn(valueOrNothing?: T): T | void {
     if (arguments.length > 0) {
       if (hasChanged(valueOrNothing, store[SIGNAL_KEY])) {
         store[SIGNAL_KEY] = valueOrNothing as T;
@@ -55,7 +56,7 @@ export function signal<T>(initialValue: T): WritableSignal<T> {
   };
 
   Object.defineProperty(signalFn, SignalSymbol, { value: true });
-  return signalFn as WritableSignal<T>;
+  return signalFn;
 }
 
 export function computedSignal<T>(fn: () => T): ComputedSignal<T> {

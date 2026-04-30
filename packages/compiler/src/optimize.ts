@@ -1,7 +1,7 @@
 // src/optimize.ts
 // AST optimizer - hoist static subtrees, mark constants, patch flags
 
-import { NodeTypes, PatchFlags } from "./constants";
+import { NodeTypes } from "./constants";
 import type {
   RootNode,
   ElementNode,
@@ -23,8 +23,9 @@ export function optimize(root: RootNode, _options: CompilerOptions = {}): void {
   // Then, hoist static subtrees
   hoistStatic(root);
 
-  // Then, mark patch flags on dynamic nodes
-  markPatchFlags(root);
+  // 注意：markPatchFlags 已移除
+  // patchFlag 现在由 transform-element.ts 在 transform 阶段设置更精确的值
+  // 保留此注释以说明原因
 
   // Finally, collect dynamic children for Block Tree
   collectDynamicChildren(root);
@@ -102,48 +103,6 @@ function createHoistedReference(index: number): VNodeCall {
       source: "",
     },
   };
-}
-
-// ============================================================
-// Mark Patch Flags
-// ============================================================
-
-function markPatchFlags(root: RootNode): void {
-  walk(root.children, (node) => {
-    if (node.type === NodeTypes.ELEMENT) {
-      const element = node as ElementNode;
-
-      if (element.isStatic) return;
-
-      // Check for dynamic content
-      const hasDynamicProps = element.props.some(
-        (p) =>
-          p.type === NodeTypes.DIRECTIVE &&
-          (p.name === "bind" || p.name === "on" || p.name === "model"),
-      );
-
-      const hasInterpolation = element.children.some(
-        (c) => c.type === NodeTypes.INTERPOLATION,
-      );
-
-      if (hasDynamicProps) {
-        element.patchFlag = PatchFlags.FULL_PROPS;
-      } else if (hasInterpolation) {
-        element.patchFlag = PatchFlags.TEXT;
-      }
-
-      // Also set patch flag on codegenNode
-      if (
-        element.codegenNode &&
-        element.codegenNode.type === NodeTypes.VNODE_CALL
-      ) {
-        const vnodeCall = element.codegenNode as VNodeCall;
-        if (element.patchFlag) {
-          vnodeCall.patchFlag = String(element.patchFlag);
-        }
-      }
-    }
-  });
 }
 
 // ============================================================

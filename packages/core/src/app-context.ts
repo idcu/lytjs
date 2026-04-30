@@ -1,18 +1,22 @@
 // src/app-context.ts
 // @lytjs/core - AppContext 创建和配置
 
-import type { App, AppConfig, Plugin, Component } from "./types";
+import type { App, AppConfig, Plugin, Component, Directive, Renderer } from "./types";
 
 export interface AppContext {
   config: AppConfig;
-  provides: Record<string, any>;
+  provides: Record<string, unknown>;
   components: Record<string, Component>;
-  directives: Record<string, any>;
-  mixins: any[];
-  renderer: any;
-  _vnode: any;
-  _container: any;
+  directives: Record<string, Directive>;
+  mixins: ComponentOptions[];
+  renderer: Renderer | null;
+  _vnode: VNode | null;
+  _container: Element | null;
 }
+
+// 需要延迟导入避免循环依赖
+type VNode = import("./types").VNode;
+type ComponentOptions = import("./types").ComponentOptions;
 
 /**
  * 创建应用上下文对象
@@ -21,15 +25,15 @@ export function createAppContext(): AppContext {
   return {
     config: {
       performance: false,
-      globalProperties: {} as Record<string, any>,
+      globalProperties: {},
     } as AppConfig,
-    provides: Object.create(null),
-    components: {} as Record<string, Component>,
-    directives: {} as Record<string, any>,
-    mixins: [] as any[],
-    renderer: null as any,
-    _vnode: null as any,
-    _container: null as any,
+    provides: Object.create(null) as Record<string, unknown>,
+    components: {},
+    directives: {},
+    mixins: [],
+    renderer: null,
+    _vnode: null,
+    _container: null,
   };
 }
 
@@ -42,14 +46,14 @@ export function createContextConfig(context: AppContext): AppConfig {
       if (key === "globalProperties") {
         return context.config.globalProperties;
       }
-      return context.config[key];
+      return (context.config as Record<string, unknown>)[key];
     },
-    set(_, key: string, value: any) {
+    set(_, key: string, value: unknown) {
       if (key === "globalProperties") {
-        context.config.globalProperties = value;
+        context.config.globalProperties = value as Record<string, unknown>;
         return true;
       }
-      context.config[key] = value;
+      (context.config as Record<string, unknown>)[key] = value;
       return true;
     },
   });

@@ -1,6 +1,7 @@
 /**
  * @lytjs/common-scheduler
  * 任务调度器 - 管理异步任务队列
+ * 支持 pre-flush 和 post-flush 两种队列
  */
 
 // ============================================================
@@ -21,6 +22,8 @@ let isFlushPending = false;
 
 const queue: SchedulerJob[] = [];
 const queueSet: Set<SchedulerJob> = new Set();
+const preFlushCbs: SchedulerJob[] = [];
+const preFlushCbsSet: Set<SchedulerJob> = new Set();
 const postFlushCbs: SchedulerJob[] = [];
 const postFlushCbsSet: Set<SchedulerJob> = new Set();
 
@@ -50,6 +53,18 @@ export function queueJob(job: SchedulerJob): void {
 }
 
 /**
+ * 将回调加入 pre-flush 队列
+ * 在主 job 队列之前执行（用于 watch 的 "pre" 模式）
+ */
+export function queuePreFlushCb(cb: SchedulerJob): void {
+  if (!preFlushCbsSet.has(cb)) {
+    preFlushCbsSet.add(cb);
+    preFlushCbs.push(cb);
+    queueFlush();
+  }
+}
+
+/**
  * 将回调加入 post-flush 队列
  * 在所有 job 执行完毕后执行
  */
@@ -71,34 +86,64 @@ export function nextTick(cb?: SchedulerJob): Promise<void> {
 
 /**
  * 刷新所有待执行的任务
+ * 执行顺序：pre-flush 回调 -> 主 job 队列 -> post-flush 回调
+ * 支持循环处理：执行期间新增的回调也会被处理
  */
 export function flushJobs(): void {
   isFlushing = true;
   isFlushPending = false;
 
+  let iterations = 0;
+  const MAX_ITERATIONS = 100;
+
   try {
-    // 执行所有 job
-    for (let i = 0; i < queue.length; i++) {
-      const job = queue[i]!;
-      queueSet.delete(job);
-      job();
+    // 循环处理：执行期间新增的回调也会被处理
+    while (
+      (preFlushCbs.length > 0 || queue.length > 0 || postFlushCbs.length > 0) &&
+      iterations < MAX_ITERATIONS
+    ) {
+      iterations++;
+
+      // 1. 执行 pre-flush 队列（watch pre 模式回调）
+      for (let i = 0; i < preFlushCbs.length; i++) {
+        const cb = preFlushCbs[i]!;
+        preFlushCbsSet.delete(cb);
+        cb();
+      }
+      preFlushCbs.length = 0;
+
+      // 2. 执行主 job 队列
+      for (let i = 0; i < queue.length; i++) {
+        const job = queue[i]!;
+        queueSet.delete(job);
+        job();
+      }
+      queue.length = 0;
+
+      // 3. 执行 post-flush 回调
+      for (let i = 0; i < postFlushCbs.length; i++) {
+        const cb = postFlushCbs[i]!;
+        postFlushCbsSet.delete(cb);
+        cb();
+      }
+      postFlushCbs.length = 0;
     }
 
-    queue.length = 0;
-
-    // 执行所有 post-flush 回调
-    for (let i = 0; i < postFlushCbs.length; i++) {
-      const cb = postFlushCbs[i]!;
-      postFlushCbsSet.delete(cb);
-      cb();
+    if (iterations >= MAX_ITERATIONS) {
+      const msg =
+        `[lytjs/common-scheduler] flushJobs exceeded ${MAX_ITERATIONS} iterations. ` +
+        `Possible infinite update loop detected.`;
+      if (__DEV__) {
+        console.warn(msg);
+      } else {
+        console.error(msg);
+      }
     }
-
-    postFlushCbs.length = 0;
   } finally {
     isFlushing = false;
 
-    // 如果在执行过程中有新的 job 被加入，继续刷新
-    if (queue.length || postFlushCbs.length) {
+    // 如果在执行过程中有新的任务被加入，继续刷新
+    if (preFlushCbs.length || queue.length || postFlushCbs.length) {
       flushJobs();
     }
   }
@@ -116,7 +161,7 @@ export function flushSync(): void {
  * 检查是否有待执行的任务
  */
 export function hasPendingJobs(): boolean {
-  return queue.length > 0 || postFlushCbs.length > 0;
+  return preFlushCbs.length > 0 || queue.length > 0 || postFlushCbs.length > 0;
 }
 
 /**
@@ -142,6 +187,8 @@ function queueFlush(): void {
 export function resetSchedulerState(): void {
   queue.length = 0;
   queueSet.clear();
+  preFlushCbs.length = 0;
+  preFlushCbsSet.clear();
   postFlushCbs.length = 0;
   postFlushCbsSet.clear();
   isFlushing = false;
