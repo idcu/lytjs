@@ -9,6 +9,9 @@ export default defineConfig({
   splitting: false,
   treeshake: true,
   minify: false,
+  define: {
+    __DEV__: 'process.env.NODE_ENV !== "production"',
+  },
   outExtension({ format }) {
     return {
       js: format === 'cjs' ? '.cjs' : '.mjs',
