@@ -4,7 +4,7 @@
   "description": "LytJS reactive system - signals, refs, computed, watch, and effects",
   "type": "module",
   "main": "./dist/index.cjs",
-  "module": "./dist/index.js",
+  "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {

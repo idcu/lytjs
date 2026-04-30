@@ -79,6 +79,9 @@
     ]
   },
   "pnpm": {
-    "overrides": {}
+    "overrides": {
+      "vitest": "^3.0.0",
+      "typescript": "^5.8.2"
+    }
   }
 }

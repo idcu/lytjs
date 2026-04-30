@@ -4,7 +4,7 @@
   "description": "LytJS virtual DOM - vnode creation, diffing algorithm, and patch flags",
   "type": "module",
   "main": "./dist/index.cjs",
-  "module": "./dist/index.js",
+  "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
