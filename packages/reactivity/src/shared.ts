@@ -14,8 +14,14 @@ interface RefLike {
  * 获取响应式对象的原始值
  */
 export function toRaw<T>(observed: T): T {
-  const raw = observed && (observed as any)[ReactiveFlags.RAW];
-  return raw ? toRaw(raw) : observed;
+  const seen = new Set<object>();
+  let current: any = observed;
+  while (current && (current as any)[ReactiveFlags.RAW]) {
+    if (seen.has(current)) return current;
+    seen.add(current);
+    current = (current as any)[ReactiveFlags.RAW];
+  }
+  return current;
 }
 
 /**

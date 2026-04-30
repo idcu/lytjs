@@ -137,9 +137,7 @@ export function watch<T, Immediate extends Readonly<boolean> = false>(
           cleanupFns.forEach((f) => f());
           cleanupFns.length = 0;
         }
-        const args = isMultiSource
-          ? ([newValue, oldValue] as [any, any])
-          : ([newValue, oldValue] as [any, any]);
+        const args = [newValue, oldValue] as [any, any];
         cb(...args, onCleanup);
         oldValue = newValue;
         if (once) {

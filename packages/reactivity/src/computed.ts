@@ -3,7 +3,7 @@
 // 复用 @lytjs/common-is: isFunction, hasChanged
 
 import { isFunction } from "@lytjs/common-is";
-import { ReactiveEffect } from "./effect";
+import { ReactiveEffect, createDep } from "./effect";
 import type { Dep } from "./effect";
 import { trackRefValue, triggerRefValue } from "./ref";
 import type {
@@ -19,7 +19,7 @@ import { ComputedRefSymbol } from "./constants";
 
 class ComputedRefImpl<T> {
   // 使用 Dep 类型替代 Set<any>，提供更精确的类型约束
-  public dep: Dep = new Set() as Dep;
+  public dep: Dep = createDep();
   private _value!: T;
   private _dirty = true;
   public readonly [ComputedRefSymbol] = true;

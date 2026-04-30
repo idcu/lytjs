@@ -160,7 +160,7 @@ export class ReactiveEffect<T = any> {
   onTrack?: (event: { target: object; key: string | symbol; type: string }) => void;
   onTrigger?: (event: { target: object; key: string | symbol; type: string; newValue?: unknown; oldValue?: unknown }) => void;
   // 运行前清理（onEffectCleanup 注册的）
-  _cleanup?: () => void;
+  _cleanups: Array<() => void> = [];
 
   constructor(
     public fn: () => T,
@@ -179,9 +179,11 @@ export class ReactiveEffect<T = any> {
     }
 
     // 在重新执行前调用 cleanup
-    if (this._cleanup) {
-      this._cleanup();
-      this._cleanup = undefined;
+    if (this._cleanups.length > 0) {
+      for (let i = 0; i < this._cleanups.length; i++) {
+        this._cleanups[i]();
+      }
+      this._cleanups.length = 0;
     }
 
     try {
@@ -202,9 +204,11 @@ export class ReactiveEffect<T = any> {
   stop(): void {
     if (this.active) {
       cleanupEffect(this);
-      if (this._cleanup) {
-        this._cleanup();
-        this._cleanup = undefined;
+      if (this._cleanups.length > 0) {
+        for (let i = 0; i < this._cleanups.length; i++) {
+          this._cleanups[i]();
+        }
+        this._cleanups.length = 0;
       }
       if (this.onStop) this.onStop();
       this.active = false;
@@ -288,7 +292,7 @@ export function onEffectCleanup(fn: () => void, failSilently = false): void {
     return;
   }
   if (activeEffect) {
-    activeEffect._cleanup = fn;
+    activeEffect._cleanups.push(fn);
   }
 }
 

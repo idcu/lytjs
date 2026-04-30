@@ -3,7 +3,7 @@
 // 复用 @lytjs/common-is: isObject, hasChanged
 
 import { isObject, hasChanged } from "@lytjs/common-is";
-import { track, trigger, activeEffect, shouldTrack } from "./effect";
+import { track, trigger, activeEffect, shouldTrack, createDep } from "./effect";
 import type { Dep } from "./effect";
 import { TrackOpTypes, TriggerOpTypes } from "./constants";
 import { toRaw, isRef } from "./shared";
@@ -37,7 +37,7 @@ class RefImpl<T> {
   private _value: T;
   private _rawValue: T;
   // 使用 Dep 类型替代 Set<any>，提供更精确的类型约束
-  public dep: Dep = new Set() as Dep;
+  public dep: Dep = createDep();
   public readonly __v_isRef = true;
 
   constructor(value: T, isShallow: boolean) {
@@ -66,7 +66,7 @@ class ShallowRefImpl<T> {
   private _value: T;
   private _rawValue: T;
   // 使用 Dep 类型替代 Set<any>，提供更精确的类型约束
-  public dep: Dep = new Set() as Dep;
+  public dep: Dep = createDep();
   public readonly __v_isRef = true;
   public readonly __v_isShallow = true as const;
 
@@ -82,9 +82,10 @@ class ShallowRefImpl<T> {
 
   set value(newVal: T) {
     if (hasChanged(newVal, this._rawValue)) {
+      const oldVal = this._rawValue;
       this._rawValue = newVal;
       this._value = newVal;
-      triggerRefValue(this, newVal);
+      triggerRefValue(this, newVal, oldVal);
     }
   }
 }

@@ -159,7 +159,7 @@ function createMutableHandler(
         return Reflect.get(arrayInstrumentations, key, _receiver);
       }
 
-      const res = Reflect.get(target, key, target);
+      const res = Reflect.get(target, key, _receiver);
 
       if (isSymbol(key) ? builtInSymbols.has(key) : isNonTrackableKey(key)) {
         return res;
@@ -287,7 +287,7 @@ function createCollectionHandler(
         track(target, TrackOpTypes.GET, ITERATE_KEY_COL);
       }
 
-      const res = Reflect.get(target, key, target);
+      const res = Reflect.get(target, key, _receiver);
       if (typeof res === "function") {
         if (!isReadonly) {
           if (MUTATING_METHODS.has(key as string)) {
@@ -351,7 +351,7 @@ function createShallowReadonlyCollectionHandler(): ProxyHandler<Target> {
       if (key === "size" || key === "get" || key === "has" || key === "forEach") {
         track(target, TrackOpTypes.GET, ITERATE_KEY_COL);
       }
-      const res = Reflect.get(target, key, target);
+      const res = Reflect.get(target, key, _receiver);
       if (typeof res === "function") {
         if (MUTATING_METHODS.has(key as string)) {
           return (...args: any[]) => {
