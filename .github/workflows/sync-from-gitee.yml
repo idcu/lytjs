@@ -39,11 +39,10 @@ jobs:
           # 拉取 Gitee 最新代码
           git fetch gitee ${{ github.event.inputs.branch || 'develop' }}
 
-          # 合并 Gitee 的变更
+          # 合并 Gitee 的变更（移除 --allow-unrelated-histories 避免代码覆盖风险）
           git merge gitee/${{ github.event.inputs.branch || 'develop' }} \
-            --no-edit \
-            --allow-unrelated-histories || {
-              echo "::warning::合并冲突，请手动解决"
+            --no-edit || {
+              echo "::error::合并冲突，请手动解决"
               exit 1
             }
 
@@ -57,8 +56,8 @@ jobs:
           # 同步 main 分支
           git fetch gitee main
           git checkout main
-          git merge gitee/main --no-edit --allow-unrelated-histories || {
-            echo "::warning::main 分支合并冲突，请手动解决"
+          git merge gitee/main --no-edit || {
+            echo "::error::main 分支合并冲突，请手动解决"
             exit 1
           }
           git push origin main
