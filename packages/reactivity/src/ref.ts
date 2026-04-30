@@ -134,7 +134,7 @@ export function toRef<T extends object, K extends keyof T>(
 export function toRefs<T extends object>(
   object: T,
 ): { [K in keyof T]: Ref<T[K]> } {
-  const result: any = {};
+  const result: any = {} as { [K in keyof T]: Ref<T[K]> };
   for (const key in object) {
     result[key] = toRef(object, key);
   }
@@ -194,6 +194,6 @@ type CustomRefFactory<T> = (
   trigger: () => void,
 ) => { get: () => T; set: (value: T) => void };
 
-function toReactive(value: any): any {
-  return isObject(value) ? reactive(value) : value;
+function toReactive<T extends object>(value: T): T {
+  return isObject(value) ? reactive(value as object) as T : value;
 }
