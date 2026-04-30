@@ -9,12 +9,12 @@ import type { ComponentInternalInstance } from "./types";
  */
 export function normalizeEmitsOptions(
   emits?: string[] | Record<string, (...args: any[]) => any>,
-): Record<string, any> | null {
+): Record<string, unknown> | null {
   if (!emits) return null;
 
   if (isArray(emits)) {
     // Array-based: ['click', 'change'] => { click: null, change: null }
-    const result: Record<string, any> = {};
+    const result: Record<string, unknown> = {};
     for (let i = 0; i < emits.length; i++) {
       const key = emits[i]!;
       result[key] = null;
@@ -23,7 +23,7 @@ export function normalizeEmitsOptions(
   }
 
   // Already an object (Record<string, Function | null>)
-  return emits as Record<string, any>;
+  return emits as Record<string, unknown>;
 }
 
 /**

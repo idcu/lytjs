@@ -88,7 +88,7 @@ export function resolvePropValue(
 /**
  * Validate value against a type or array of types.
  */
-export function validateType(value: unknown, type: any): boolean {
+export function validateType(value: unknown, type: unknown): boolean {
   if (type === null || type === undefined) return true;
 
   let expectedType: string;
