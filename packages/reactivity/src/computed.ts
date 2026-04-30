@@ -47,8 +47,14 @@ class ComputedRefImpl<T> {
   get value(): T {
     trackRefValue(this as any);
     if (this._dirty) {
-      this._value = this.effect.run()!;
-      this._dirty = false;
+      if (this.effect.active) {
+        this._value = this.effect.run()!;
+        this._dirty = false;
+      } else if (__DEV__) {
+        console.warn(
+          'Computed value was accessed after its effect was stopped. Returning last cached value.',
+        );
+      }
     }
     return this._value;
   }
