@@ -299,7 +299,7 @@ function handleDirective(
           createConditionalExpression(
             createSimpleExpression(expContent, false, prop.loc, false),
             createSimpleExpression("undefined", true, prop.loc, true),
-            createSimpleExpression('"{ display: none }"', true, prop.loc, true),
+            createSimpleExpression("undefined", true, prop.loc, true),
             false,
           ),
         ),

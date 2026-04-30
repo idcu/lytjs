@@ -23,13 +23,18 @@ export function compile(
   const ast = parse(source, options);
 
   // 2. Transform AST (包含原 optimize 阶段的 markConstants、hoistStatic、collectDynamicChildren)
+  const {
+    nodeTransforms: userNodeTransforms,
+    directiveTransforms: userDirectiveTransforms,
+    ...restOptions
+  } = options;
   const transformOptions = {
-    nodeTransforms: [...builtInTransforms, ...(options.nodeTransforms ?? [])],
+    ...restOptions,
+    nodeTransforms: [...builtInTransforms, ...(userNodeTransforms ?? [])],
     directiveTransforms: {
       ...builtInDirectiveTransforms,
-      ...(options.directiveTransforms ?? {}),
+      ...(userDirectiveTransforms ?? {}),
     },
-    ...options,
   };
   transform(ast, transformOptions);
 
@@ -40,14 +45,16 @@ export function compile(
 }
 
 // Constants
-export { NodeTypes } from "./constants";
-export { ElementTypes } from "./constants";
-export { ConstantTypes } from "./constants";
-export { TagType } from "./constants";
-export { TextModes } from "./constants";
-export { BindingTypes } from "./constants";
-export { PatchFlags } from "./constants";
-export { helperNameMap } from "./constants";
+export {
+  NodeTypes,
+  ElementTypes,
+  ConstantTypes,
+  TagType,
+  TextModes,
+  BindingTypes,
+  PatchFlags,
+  helperNameMap,
+} from "./constants";
 
 // Types
 export type { RootNode } from "./types";
