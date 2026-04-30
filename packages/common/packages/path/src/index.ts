@@ -106,17 +106,23 @@ export interface PathMatchResult {
 /**
  * 匹配路径并提取参数
  */
+const regexCache = new Map<string, RegExp>()
+
 export function matchPath(
   pattern: string,
   path: string,
 ): PathMatchResult | null {
   const normalized = normalizePath(path);
-  const regex = pathToRegex(pattern);
+  const normalizedPattern = normalizePath(pattern);
+  let regex = regexCache.get(normalizedPattern)
+  if (!regex) {
+    regex = pathToRegex(pattern);
+    regexCache.set(normalizedPattern, regex);
+  }
   const match = normalized.match(regex);
   if (!match) return null;
 
   const params: Record<string, string> = {};
-  const normalizedPattern = normalizePath(pattern);
 
   // 提取参数名
   const paramNames: string[] = [];
@@ -190,7 +196,9 @@ export function resolvePath(from: string, to: string): string {
   const toSegments = to.split("/").filter(Boolean);
   for (const seg of toSegments) {
     if (seg === "..") {
-      segments.pop();
+      if (segments.length > 1) {
+        segments.pop();
+      }
     } else if (seg !== ".") {
       segments.push(seg);
     }
