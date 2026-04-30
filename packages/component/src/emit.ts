@@ -3,6 +3,7 @@
 
 import { isFunction, hasOwn, isArray } from "@lytjs/common-is";
 import type { ComponentInternalInstance } from "./types";
+import { handleError } from "./lifecycle";
 
 /**
  * Normalize emits definition into a consistent Record<string, any> format.
@@ -61,7 +62,11 @@ export function emit(
   // Look for handler in props first, then attrs
   const handler = instance.props[handlerName] ?? instance.attrs[handlerName];
   if (isFunction(handler)) {
-    handler(...args);
+    try {
+      handler(...args);
+    } catch (err) {
+      handleError(err as Error, instance, `event handler for "${event}"`);
+    }
   }
 }
 
