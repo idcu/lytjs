@@ -69,6 +69,9 @@ export interface ComponentInternalInstance {
   render?: RenderFunction;
   exposed?: Record<string, any> | null;
   attrs: Record<string, any>;
+  errorCapturedHooks?: Array<
+    (err: Error, instance: any, info: string) => boolean | void
+  >;
 }
 
 export interface ComponentPublicInstance {

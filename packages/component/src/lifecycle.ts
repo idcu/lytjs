@@ -99,24 +99,16 @@ export function onBeforeUnmount(fn: () => void): void {
 
 /**
  * Register an error captured callback.
+ * Uses an array to collect multiple callbacks per instance.
  */
 export function onErrorCaptured(
   fn: (err: Error, instance: any, info: string) => boolean | void,
 ): void {
-  // Error captured is handled via options, not lifecycle sets
   if (currentInstance) {
-    const original = currentInstance.type.errorCaptured;
-    currentInstance.type.errorCaptured = (
-      err: Error,
-      instance: any,
-      info: string,
-    ) => {
-      const result = fn(err, instance, info);
-      if (original) {
-        original(err, instance, info);
-      }
-      return result;
-    };
+    if (!currentInstance.errorCapturedHooks) {
+      currentInstance.errorCapturedHooks = [];
+    }
+    currentInstance.errorCapturedHooks.push(fn);
   }
 }
 
@@ -189,13 +181,24 @@ export function callUnmountedHook(instance: ComponentInternalInstance): void {
 
 /**
  * Handle error captured propagation.
- * Returns true if the error was handled (should stop propagation).
+ * Calls all errorCapturedHooks on the current instance (from inner to outer),
+ * then propagates to parent. Returns true if the error was handled.
  */
 export function handleError(
   err: Error,
   instance: ComponentInternalInstance,
   info: string,
 ): boolean {
+  // Call all errorCapturedHooks registered via onErrorCaptured() on this instance
+  const hooks = instance.errorCapturedHooks;
+  if (hooks && hooks.length > 0) {
+    for (const hook of hooks) {
+      const result = hook(err, instance, info);
+      if (result === true) return true; // stop propagation
+    }
+  }
+
+  // Also check options API errorCaptured
   const errorHandler = instance.type.errorCaptured;
   if (errorHandler) {
     const result = errorHandler.call(instance.ctx, err, instance, info);
