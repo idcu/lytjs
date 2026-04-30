@@ -292,6 +292,41 @@ function createCollectionHandler(
         if (!isReadonly) {
           if (MUTATING_METHODS.has(key as string)) {
             return (...args: any[]) => {
+              const rawTarget = toRaw(target);
+              if (key === "set") {
+                // Map.set: 检查值是否实际改变
+                const oldValue = rawTarget.get(args[0]);
+                const hadKey = rawTarget.has(args[0]);
+                const result = res.apply(target, args);
+                if (!hadKey || !Object.is(toRaw(oldValue), toRaw(args[1]))) {
+                  trigger(target, TriggerOpTypes.SET, args[0], args[1], oldValue);
+                }
+                return result;
+              } else if (key === "add") {
+                // Set.add: 利用返回值判断是否新增
+                const had = rawTarget.has(args[0]);
+                const result = res.apply(target, args);
+                if (!had) {
+                  trigger(target, TriggerOpTypes.ADD, args[0], args[0]);
+                }
+                return result;
+              } else if (key === "delete") {
+                // Map/Set.delete: 已有 hadKey 检查
+                const hadKey = rawTarget.has(args[0]);
+                const result = res.apply(target, args);
+                if (hadKey) {
+                  trigger(target, TriggerOpTypes.DELETE, args[0], undefined, undefined);
+                }
+                return result;
+              } else if (key === "clear") {
+                const hadItems = rawTarget.size > 0;
+                const result = res.apply(target, args);
+                if (hadItems) {
+                  trigger(target, TriggerOpTypes.CLEAR, undefined, undefined, undefined);
+                }
+                return result;
+              }
+              // 其他变异方法
               const result = res.apply(target, args);
               trigger(target, TriggerOpTypes.ADD, ITERATE_KEY_COL);
               return result;
@@ -321,9 +356,13 @@ function createShallowReadonlyCollectionHandler(): ProxyHandler<Target> {
         if (MUTATING_METHODS.has(key as string)) {
           return (...args: any[]) => {
             if (__DEV__) {
-              console.warn(`Set operation on key "${String(key)}" failed: target is shallow readonly.`);
+              console.warn(`Operation "${String(key)}" failed: target is shallow readonly.`);
             }
-            return res.apply(target, args);
+            // 返回适当的默认值以匹配方法签名
+            if (key === 'delete') return false;
+            if (key === 'has') return false;
+            // set/add/clear 返回 undefined 即可
+            return undefined;
           };
         }
         return res.bind(target);
