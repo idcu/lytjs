@@ -11,13 +11,8 @@ const targetMap = new WeakMap<object, Map<string | symbol, Dep>>();
 export let shouldTrack = true;
 const trackStack: boolean[] = [];
 
-// effectScope 支持：从 effect-scope 导入 activeEffectScope
-// 使用 late binding 避免循环依赖
-let activeEffectScope: any = undefined;
-
-export function setActiveEffectScope(scope: any) {
-  activeEffectScope = scope;
-}
+// effectScope 支持：从 effect-scope 导入 activeEffectScope getter
+import { getActiveEffectScope } from "./effect-scope";
 
 // ==================== Dep ====================
 
@@ -154,8 +149,9 @@ export class ReactiveEffect<T = any> {
     public scheduler?: (...args: any[]) => any,
   ) {
     // 自动注册到当前活跃的 effectScope
-    if (activeEffectScope && activeEffectScope.active) {
-      activeEffectScope.effects.push(this);
+    const scope = getActiveEffectScope();
+    if (scope && scope.active) {
+      scope.effects.push(this);
     }
   }
 
