@@ -31,7 +31,7 @@ export function transformFor(
   const expContent = getExpContent(forDir.exp);
   if (!expContent) return;
 
-  const inMatch = expContent.match(/^\s*(\S+)\s+in\s+(.+)$/);
+  const inMatch = expContent.match(/^\s*(\S+)\s+(?:in|of)\s+(.+)$/);
   if (!inMatch) return;
 
   const left = inMatch[1]!.trim();
