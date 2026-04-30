@@ -2,11 +2,12 @@
 // 响应式副作用系统核心
 
 import { ITERATE_KEY } from "./constants";
+import type { ReactiveEffectRunner } from "./types";
 
 // ==================== 全局状态 ====================
 
 export let activeEffect: ReactiveEffect | undefined;
-let trackDepth = 0;
+let _trackDepth = 0;
 const targetMap = new WeakMap<object, Map<string | symbol, Dep>>();
 export let shouldTrack = true;
 const trackStack: boolean[] = [];
@@ -157,8 +158,18 @@ export class ReactiveEffect<T = any> {
   computed?: boolean;
   allowRecurse?: boolean;
   onStop?: () => void;
-  onTrack?: (event: { target: object; key: string | symbol; type: string }) => void;
-  onTrigger?: (event: { target: object; key: string | symbol; type: string; newValue?: unknown; oldValue?: unknown }) => void;
+  onTrack?: (event: {
+    target: object;
+    key: string | symbol;
+    type: string;
+  }) => void;
+  onTrigger?: (event: {
+    target: object;
+    key: string | symbol;
+    type: string;
+    newValue?: unknown;
+    oldValue?: unknown;
+  }) => void;
   // 运行前清理（onEffectCleanup 注册的）
   _cleanups: Array<() => void> = [];
 
@@ -188,13 +199,14 @@ export class ReactiveEffect<T = any> {
 
     try {
       this.parent = activeEffect;
+      // eslint-disable-next-line @typescript-eslint/no-this-alias
       activeEffect = this;
       shouldTrack = true;
-      trackDepth++;
+      _trackDepth++;
 
       return this.fn();
     } finally {
-      trackDepth--;
+      _trackDepth--;
       activeEffect = this.parent;
       shouldTrack = activeEffect ? activeEffect.allowRecurse !== false : true;
       this.parent = undefined;
@@ -226,11 +238,6 @@ function cleanupEffect(effect: ReactiveEffect) {
 
 // ==================== 公共 API ====================
 
-export type ReactiveEffectRunner<T = any> = {
-  (): T;
-  effect: ReactiveEffect;
-};
-
 export function effect<T = any>(
   fn: () => T,
   options?: {
@@ -238,8 +245,18 @@ export function effect<T = any>(
     scheduler?: (...args: any[]) => any;
     allowRecurse?: boolean;
     onStop?: () => void;
-    onTrack?: (event: { target: object; key: string | symbol; type: string }) => void;
-    onTrigger?: (event: { target: object; key: string | symbol; type: string; newValue?: unknown; oldValue?: unknown }) => void;
+    onTrack?: (event: {
+      target: object;
+      key: string | symbol;
+      type: string;
+    }) => void;
+    onTrigger?: (event: {
+      target: object;
+      key: string | symbol;
+      type: string;
+      newValue?: unknown;
+      oldValue?: unknown;
+    }) => void;
   },
 ): ReactiveEffectRunner<T> {
   const _effect = new ReactiveEffect(fn);
