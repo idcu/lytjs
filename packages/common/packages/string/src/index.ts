@@ -70,8 +70,18 @@ export function escapeHTML(str: string): string {
     ">": "&gt;",
     '"': "&quot;",
     "'": "&#39;",
+    "`": "&#96;",
+    "/": "&#47;",
   };
-  return str.replace(/[&<>"']/g, (c) => map[c] ?? c);
+  return str.replace(/[&<>"'`/]/g, (c) => map[c] ?? c);
+}
+
+/**
+ * 转义属性值上下文中的危险字符
+ * 比 escapeHTML 更严格，额外覆盖 = 字符
+ */
+export function escapeAttrValue(str: string): string {
+  return escapeHTML(str).replace(/=/g, "&#61;");
 }
 
 /**
