@@ -215,11 +215,96 @@ export function patchAttr(
 // ============================================================
 
 /**
- * Basic runtime HTML sanitization for innerHTML.
- * Removes <script> tags to mitigate XSS when using v-html.
+ * Runtime HTML sanitization for innerHTML.
+ * Defends against common XSS vectors when using v-html:
+ *  - Removes dangerous tags (script, iframe, object, embed, form, input, etc.)
+ *  - Strips event-handler attributes (on*)
+ *  - Neutralises javascript: / vbscript: / data: URIs
+ *  - Handles HTML-entity encoding bypasses by decoding before checking
  */
 function sanitizeHTML(str: string): string {
-  return str.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+  // 1. Decode HTML entities so encoded payloads are not missed.
+  //    We apply decode repeatedly until the string stabilises (handles
+  //    double-encoding like &amp;lt;script&amp;gt;).
+  let decoded = str;
+  const decodeMap: [RegExp, string][] = [
+    [
+      /&#x0*([0-9a-fA-F]+);/g,
+      (_, code) => String.fromCodePoint(parseInt(code, 16)),
+    ],
+    [/&#0*([0-9]+);/g, (_, code) => String.fromCodePoint(parseInt(code, 10))],
+    [/&amp;/gi, "&"],
+    [/&lt;/gi, "<"],
+    [/&gt;/gi, ">"],
+    [/&quot;/gi, '"'],
+    [/&apos;/gi, "'"],
+    [/&#x27;/gi, "'"],
+    [/&#x22;/gi, '"'],
+  ];
+  // Run up to 5 rounds to handle nested encoding
+  for (let i = 0; i < 5; i++) {
+    const prev = decoded;
+    for (const [re, repl] of decodeMap) {
+      decoded = decoded.replace(re, repl as any);
+    }
+    if (decoded === prev) break;
+  }
+
+  // 2. Remove dangerous tags (both self-closing and normal forms).
+  const dangerousTags = [
+    "script",
+    "iframe",
+    "object",
+    "embed",
+    "form",
+    "input",
+    "textarea",
+    "select",
+    "button",
+    "link",
+    "meta",
+    "base",
+    "applet",
+    "frame",
+    "frameset",
+    "details",
+    "marquee",
+    "math",
+    "svg",
+  ];
+  const tagPattern = dangerousTags.join("|");
+  const openCloseTagRe = new RegExp(`<\\/?(${tagPattern})\\b[^>]*>`, "gi");
+  decoded = decoded.replace(openCloseTagRe, "");
+
+  // 3. Remove event-handler attributes (on*).
+  //    Matches on<word>=  inside any tag, consuming the quoted value.
+  decoded = decoded.replace(
+    /(<[^>]*?)\s+on[a-zA-Z]+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi,
+    "$1",
+  );
+
+  // 4. Neutralise dangerous URI schemes in href / src / action / formaction / xlink:href.
+  const uriAttrs =
+    "href|src|action|formaction|xlink:href|data|codebase|cite|background|poster|dynsrc|lowsrc";
+  const uriRe = new RegExp(
+    `(?:(${uriAttrs})\\s*=\\s*)(?:"([^"]*)"|'([^']*)')`,
+    "gi",
+  );
+  decoded = decoded.replace(
+    uriRe,
+    (_match, attr: string, dq: string, sq: string) => {
+      const value = dq ?? sq ?? "";
+      // Strip whitespace / null bytes / control chars that could hide the scheme
+      // eslint-disable-next-line no-control-regex
+      const cleaned = value.replace(/[\u0000-\u0020]+/g, "").toLowerCase();
+      if (/^(javascript|vbscript|data|mhtml|x-javascript)\s*:/i.test(cleaned)) {
+        return `${attr}=""`;
+      }
+      return _match;
+    },
+  );
+
+  return decoded;
 }
 
 // ============================================================
@@ -243,17 +328,18 @@ export function patchProp(
     patchStyle(el, prevValue, nextValue);
   } else if (isOn(key)) {
     patchEvent(el, key, prevValue, nextValue);
-  } else if (key === 'innerHTML') {
+  } else if (key === "innerHTML") {
     if (nextValue !== prevValue) {
-      if (__DEV__ && nextValue != null && typeof nextValue !== 'string') {
-        console.warn('v-html expects a string value.');
+      if (__DEV__ && nextValue != null && typeof nextValue !== "string") {
+        console.warn("v-html expects a string value.");
       }
-      const sanitized = nextValue == null ? '' : sanitizeHTML(String(nextValue));
+      const sanitized =
+        nextValue == null ? "" : sanitizeHTML(String(nextValue));
       el.innerHTML = sanitized;
     }
-  } else if (key === 'textContent') {
+  } else if (key === "textContent") {
     if (nextValue !== prevValue) {
-      el.textContent = nextValue == null ? '' : String(nextValue);
+      el.textContent = nextValue == null ? "" : String(nextValue);
     }
   } else {
     patchAttr(el, key, nextValue, isSVG);
