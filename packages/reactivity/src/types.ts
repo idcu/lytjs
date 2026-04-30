@@ -96,7 +96,7 @@ export type UnwrapNestedRefs<T> =
       : T;
 export type DeepReadonly<T> = { readonly [K in keyof T]: DeepReadonly<T[K]> };
 export type ToRefs<T = any> = { [K in keyof T]: Ref<T[K]> };
-export type ReactiveObject = any;
+export type ReactiveObject<T extends object = object> = { [K in keyof T]: T[K] } & { __v_isReactive: true };
 
 // Re-export
 export type {
