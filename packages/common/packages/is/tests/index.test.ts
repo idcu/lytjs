@@ -17,6 +17,13 @@ import {
   hasChanged,
   NOOP,
   EMPTY_OBJ,
+  toTypeString,
+  isMap,
+  isSet,
+  isWeakMap,
+  isWeakSet,
+  isDate,
+  isRegExp,
 } from '../src/index'
 
 describe('@lytjs/common-is', () => {
@@ -292,4 +299,79 @@ describe('@lytjs/common-is', () => {
       expect(Object.keys(EMPTY_OBJ)).toHaveLength(0)
     })
   })
+
+  // toTypeString
+  describe("toTypeString", () => {
+    it("should return [object Object] for plain objects", () => {
+      expect(toTypeString({})).toBe("[object Object]");
+    });
+    it("should return [object Array] for arrays", () => {
+      expect(toTypeString([])).toBe("[object Array]");
+    });
+  });
+
+  // isMap
+  describe("isMap", () => {
+    it("should return true for Map instances", () => {
+      expect(isMap(new Map())).toBe(true);
+    });
+    it("should return false for non-Map values", () => {
+      expect(isMap({})).toBe(false);
+      expect(isMap(new WeakMap())).toBe(false);
+    });
+  });
+
+  // isSet
+  describe("isSet", () => {
+    it("should return true for Set instances", () => {
+      expect(isSet(new Set())).toBe(true);
+    });
+    it("should return false for non-Set values", () => {
+      expect(isSet({})).toBe(false);
+      expect(isSet(new WeakSet())).toBe(false);
+    });
+  });
+
+  // isWeakMap
+  describe("isWeakMap", () => {
+    it("should return true for WeakMap instances", () => {
+      expect(isWeakMap(new WeakMap())).toBe(true);
+    });
+    it("should return false for non-WeakMap values", () => {
+      expect(isWeakMap(new Map())).toBe(false);
+    });
+  });
+
+  // isWeakSet
+  describe("isWeakSet", () => {
+    it("should return true for WeakSet instances", () => {
+      expect(isWeakSet(new WeakSet())).toBe(true);
+    });
+    it("should return false for non-WeakSet values", () => {
+      expect(isWeakSet(new Set())).toBe(false);
+    });
+  });
+
+  // isDate
+  describe("isDate", () => {
+    it("should return true for Date instances", () => {
+      expect(isDate(new Date())).toBe(true);
+    });
+    it("should return false for non-Date values", () => {
+      expect(isDate({})).toBe(false);
+      expect(isDate("2024-01-01")).toBe(false);
+    });
+  });
+
+  // isRegExp
+  describe("isRegExp", () => {
+    it("should return true for RegExp instances", () => {
+      expect(isRegExp(/test/)).toBe(true);
+      expect(isRegExp(new RegExp("test"))).toBe(true);
+    });
+    it("should return false for non-RegExp values", () => {
+      expect(isRegExp({})).toBe(false);
+      expect(isRegExp("/test/")).toBe(false);
+    });
+  });
 })
