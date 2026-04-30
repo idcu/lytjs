@@ -9,6 +9,7 @@ import type {
 import type { ComponentOptions } from "./types";
 import { defineComponent as _defineComponent, onBeforeUnmount } from "@lytjs/component";
 import { shallowRef, ref } from "@lytjs/reactivity";
+import { h } from "./h";
 
 /**
  * 定义组件（re-export from @lytjs/component）
@@ -44,7 +45,17 @@ export function defineAsyncComponent(
   const loading = ref(false);
   let retries = 0;
 
+  const MAX_RETRIES = 3;
   const retry = () => {
+    if (retries >= MAX_RETRIES) {
+      if (__DEV__) {
+        console.warn(`AsyncComponent: max retries (${MAX_RETRIES}) exceeded.`);
+      }
+      error.value = new Error(
+        `[lytjs/core] AsyncComponent: max retries (${MAX_RETRIES}) exceeded.`,
+      );
+      return;
+    }
     retries++;
     loadedComponent.value = undefined;
     error.value = undefined;
@@ -110,13 +121,13 @@ export function defineAsyncComponent(
     },
     render() {
       if (loadedComponent.value) {
-        return loadedComponent.value;
+        return h(loadedComponent.value);
       }
       if (error.value && errorComponent) {
-        return errorComponent;
+        return h(errorComponent);
       }
       if (loading.value && loadingComponent) {
-        return loadingComponent;
+        return h(loadingComponent);
       }
       return null;
     },
