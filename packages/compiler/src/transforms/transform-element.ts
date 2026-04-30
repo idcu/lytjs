@@ -10,7 +10,7 @@
  * 从而在运行时 diff 时跳过静态子树，只追踪动态节点。
  *
  * 工作流程:
- * 1. 编译阶段: optimize.ts 中的 collectDynamicChildren() 遍历 AST，
+ * 1. 编译阶段: transform.ts 中的 collectDynamicChildren() 在 transform 完成后遍历 AST，
  *    将非静态子节点的 codegenNode 收集到父元素的 dynamicChildren 数组中。
  * 2. 运行时: Block VNode 在 diff 时只遍历 dynamicChildren，而非完整 children，
  *    将 O(n) 的 diff 复杂度降低到 O(动态节点数)。
@@ -193,6 +193,11 @@ export function transformElement(
     patchFlag = PatchFlags.FULL_PROPS;
   } else if (children.some((c) => c.type === NodeTypes.INTERPOLATION)) {
     patchFlag = PatchFlags.TEXT;
+  }
+
+  // 同步 patchFlag 到 ElementNode.patchFlag（供运行时和测试使用）
+  if (patchFlag !== undefined) {
+    node.patchFlag = patchFlag;
   }
 
   const vnodeCall = createVNodeCall(

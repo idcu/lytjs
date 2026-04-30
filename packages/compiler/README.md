@@ -46,7 +46,7 @@ import { generate } from '@lytjs/compiler'
 
 ### optimize
 
-对 AST 进行静态分析和优化标记
+对 AST 进行静态分析和优化标记（已合并到 transform 阶段，保留导出仅为向后兼容）
 
 ```typescript
 import { optimize } from '@lytjs/compiler'
