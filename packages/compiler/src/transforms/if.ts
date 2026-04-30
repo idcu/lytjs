@@ -96,15 +96,15 @@ export function transformIf(
       if (!conditional) {
         conditional = createConditionalExpression(
           test,
-          branchNode as unknown as JSChildNode,
-          undefined as any,
+          branchNode as JSChildNode,
+          undefined,
           true,
         );
       } else {
         conditional.alternate = createConditionalExpression(
           test,
-          branchNode as unknown as JSChildNode,
-          undefined as any,
+          branchNode as JSChildNode,
+          undefined,
           true,
         );
         conditional = conditional.alternate as JSConditionalExpression;
@@ -114,12 +114,12 @@ export function transformIf(
       if (!conditional) {
         conditional = createConditionalExpression(
           createSimpleExpression("true", true, sibElement.loc, true),
-          branchNode as unknown as JSChildNode,
-          undefined as any,
+          branchNode as JSChildNode,
+          undefined,
           true,
         );
       } else {
-        conditional.alternate = branchNode as unknown as JSChildNode;
+        conditional.alternate = branchNode as JSChildNode;
       }
     }
 

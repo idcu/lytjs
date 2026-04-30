@@ -71,6 +71,7 @@ import type {
   JSProperty,
   TransformContext,
   ExpressionNode,
+  TemplateChildNode,
 } from "../types";
 import {
   createVNodeCall,
@@ -149,7 +150,7 @@ export function transformElement(
   }
 
   // Build children
-  let vnodeChildren: JSChildNode | any[] | string | undefined;
+  let vnodeChildren: JSChildNode | TemplateChildNode[] | string | undefined;
   if (children.length === 1) {
     const child = children[0];
     if (child) {
@@ -179,7 +180,7 @@ export function transformElement(
       }
       if (parts.length > 0) {
         context.helper("TO_DISPLAY_STRING");
-        vnodeChildren = createCompoundExpression(parts as any);
+        vnodeChildren = createCompoundExpression(parts);
       }
     } else {
       vnodeChildren = children as unknown as JSChildNode[];
@@ -197,7 +198,7 @@ export function transformElement(
   const vnodeCall = createVNodeCall(
     isComponent ? tag : JSON.stringify(tag),
     propsExpression,
-    vnodeChildren as any,
+    vnodeChildren,
     patchFlag,
     undefined,
     undefined,

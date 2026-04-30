@@ -295,7 +295,7 @@ export function createCallExpression(
 export function createConditionalExpression(
   test: JSChildNode | string,
   consequent: JSChildNode | TemplateChildNode | TemplateChildNode[],
-  alternate: JSChildNode | TemplateChildNode | TemplateChildNode[],
+  alternate: JSChildNode | TemplateChildNode | TemplateChildNode[] | undefined,
   newline = true,
   loc: SourceLocation = {
     start: { line: 1, column: 1, offset: 0 },

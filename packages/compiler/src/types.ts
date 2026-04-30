@@ -176,7 +176,7 @@ export interface JSConditionalExpression extends BaseNode {
   type: typeof NodeTypes.JS_CONDITIONAL_EXPRESSION;
   test: JSChildNode | string;
   consequent: JSChildNode | TemplateChildNode | TemplateChildNode[];
-  alternate: JSChildNode | TemplateChildNode | TemplateChildNode[];
+  alternate: JSChildNode | TemplateChildNode | TemplateChildNode[] | undefined;
   newline: boolean;
 }
 
@@ -210,6 +210,16 @@ export type TemplateChildNode =
   | SimpleExpressionNode
   | CompoundExpressionNode
   | JSChildNode;
+
+/**
+ * VNode children type - represents the possible types for VNodeCall.children
+ * and conditional expression branches.
+ */
+export type VNodeChild =
+  | JSChildNode
+  | TemplateChildNode
+  | TemplateChildNode[]
+  | string;
 
 export type ExpressionNode = SimpleExpressionNode | CompoundExpressionNode;
 
