@@ -4,7 +4,12 @@
     "outDir": "./dist",
     "rootDir": "./src",
     "composite": false,
-    "incremental": false
+    "incremental": false,
+    "declaration": true,
+    "declarationMap": true,
+    "paths": {
+      "@lytjs/common-is": ["./node_modules/@lytjs/common-is/src"]
+    }
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist", "tests"]

@@ -37,6 +37,7 @@ export function createVNode(
 
   const vnode: VNode = {
     type,
+    props: null,
     key: props?.key ?? null,
     ref: props?.ref ?? null,
     isStatic: false,

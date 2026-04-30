@@ -35,12 +35,27 @@ export default tseslint.config(
     },
   },
 
+  // 没有 tsconfig.json 的目录，禁用 parserOptions.project（必须在 TypeScript 规则之前）
+  {
+    files: ["e2e/**/*", "benchmarks/**/*", "scripts/**/*"],
+    languageOptions: {
+      parserOptions: {
+        project: null,
+      },
+    },
+  },
+
   // TypeScript 特定规则
   {
     files: ["**/*.ts", "**/*.tsx"],
     languageOptions: {
       parserOptions: {
-        project: true,
+        project: [
+          "./tsconfig.base.json",
+          "./packages/*/tsconfig.json",
+          "./packages/common/packages/*/tsconfig.json",
+        ],
+        tsconfigRootDir: import.meta.dirname,
       },
     },
     rules: {
@@ -84,16 +99,6 @@ export default tseslint.config(
     rules: {
       "@typescript-eslint/no-explicit-any": "off",
       "no-console": "off",
-    },
-  },
-
-  // 没有 tsconfig.json 的目录，禁用 parserOptions.project
-  {
-    files: ["e2e/**/*", "benchmarks/**/*", "scripts/**/*"],
-    languageOptions: {
-      parserOptions: {
-        project: null,
-      },
     },
   },
 
