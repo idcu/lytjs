@@ -118,10 +118,6 @@ export function watch<T, Immediate extends Readonly<boolean> = false>(
 
   const onCleanup: OnCleanup = (fn: () => void) => {
     cleanupFns.push(fn);
-    effect.onStop = () => {
-      cleanupFns.forEach((f) => f());
-      cleanupFns.length = 0;
-    };
   };
 
   const job: () => void = () => {
@@ -175,6 +171,15 @@ export function watch<T, Immediate extends Readonly<boolean> = false>(
 
   const effect = new ReactiveEffect(getter, scheduler as any);
 
+  effect.onStop = () => {
+    if (cleanupFns.length > 0) {
+      for (let i = cleanupFns.length - 1; i >= 0; i--) {
+        cleanupFns[i]!();
+      }
+      cleanupFns.length = 0;
+    }
+  };
+
   if (__DEV__) {
     effect.onTrack = onTrack;
     effect.onTrigger = onTrigger;
@@ -225,10 +230,6 @@ function doWatchEffect(
 
   const onCleanup: OnCleanup = (fn: () => void) => {
     cleanupFns.push(fn);
-    currentEffect.onStop = () => {
-      cleanupFns.forEach((f) => f());
-      cleanupFns.length = 0;
-    };
   };
 
   const getter = () => {
@@ -253,6 +254,15 @@ function doWatchEffect(
         };
 
   currentEffect = new ReactiveEffect(getter, schedulerFn);
+
+  currentEffect.onStop = () => {
+    if (cleanupFns.length > 0) {
+      for (let i = cleanupFns.length - 1; i >= 0; i--) {
+        cleanupFns[i]!();
+      }
+      cleanupFns.length = 0;
+    }
+  };
 
   if (__DEV__) {
     currentEffect.onTrack = onTrack;
