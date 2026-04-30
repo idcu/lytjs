@@ -20,6 +20,7 @@
     "pnpm": ">=9.0.0"
   },
   "scripts": {
+    "prepare": "husky",
     "dev": "pnpm -r --parallel run dev",
     "build": "pnpm -r run build",
     "test": "vitest run",
