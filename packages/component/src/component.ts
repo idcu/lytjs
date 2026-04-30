@@ -74,7 +74,7 @@ export function createComponentInstance(
       beforeUnmount: new Set(),
       unmounted: new Set(),
     },
-    provides: parent ? parent.provides : Object.create(null),
+    provides: parent ? parent.provides : new Map(),
     parent,
     root: parent ? parent.root : (null as unknown as ComponentInternalInstance),
     appContext,
@@ -420,7 +420,7 @@ export function createAppContext(): AppContext {
     components: {},
     directives: {},
     mixins: [],
-    provides: Object.create(null),
+    provides: new Map(),
   };
 }
 
@@ -432,11 +432,7 @@ export function createAppContext(): AppContext {
 export function provide(key: string | symbol, value: any): void {
   const instance = getCurrentInstance();
   if (instance) {
-    // Use Map to support symbol keys correctly
-    if (!(instance.provides instanceof Map)) {
-      instance.provides = new Map(Object.entries(instance.provides));
-    }
-    (instance.provides as Map<string | symbol, unknown>).set(key, value);
+    instance.provides.set(key, value);
   }
 }
 
@@ -451,12 +447,8 @@ export function inject(key: string | symbol, defaultValue?: any): any {
   let current: ComponentInternalInstance | null = instance.parent;
   while (current) {
     const provides = current.provides;
-    if (provides instanceof Map) {
-      if (provides.has(key)) {
-        return provides.get(key);
-      }
-    } else if (hasOwn(provides, key as string)) {
-      return provides[key as string];
+    if (provides.has(key)) {
+      return provides.get(key);
     }
     current = current.parent;
   }

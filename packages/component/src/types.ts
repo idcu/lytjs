@@ -78,10 +78,8 @@ export interface AppContext {
   components: Record<string, ComponentOptions>;
   directives: Record<string, unknown>;
   mixins: ComponentOptions[];
-  provides: Record<string, unknown>;
+  provides: Map<string | symbol, unknown>;
 }
-
-// ==================== ComponentInternalInstance ====================
 
 export interface ComponentInternalInstance {
   uid: number;
@@ -107,7 +105,7 @@ export interface ComponentInternalInstance {
     beforeUnmount: Set<(...args: unknown[]) => void>;
     unmounted: Set<(...args: unknown[]) => void>;
   };
-  provides: Record<string, unknown> | Map<string | symbol, unknown>;
+  provides: Map<string | symbol, unknown>;
   parent: ComponentInternalInstance | null;
   root: ComponentInternalInstance;
   appContext: AppContext;
