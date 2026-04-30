@@ -4,7 +4,7 @@
  */
 
 import { isString } from "@lytjs/common-is";
-import { camelToKebab } from "@lytjs/common-string";
+import { camelToKebab, isSafeAttribute } from "@lytjs/common-string";
 import {
   getDOMEventName,
   extractDOMEventHandler,
@@ -185,10 +185,28 @@ export function patchAttr(
     if (value === true || value === "") {
       el.setAttribute(key, "");
     } else {
-      el.setAttribute(key, String(value));
+      const strValue = String(value);
+      if (!isSafeAttribute(key, strValue)) {
+        if (__DEV__) {
+          console.warn(
+            `[LyticsJS warn] Unsafe attribute "${key}" with value "${strValue}" has been blocked.`,
+          );
+        }
+        return;
+      }
+      el.setAttribute(key, strValue);
     }
   } else {
-    el.setAttribute(key, String(value));
+    const strValue = String(value);
+    if (!isSafeAttribute(key, strValue)) {
+      if (__DEV__) {
+        console.warn(
+          `[LyticsJS warn] Unsafe attribute "${key}" with value "${strValue}" has been blocked.`,
+        );
+      }
+      return;
+    }
+    el.setAttribute(key, strValue);
   }
 }
 
