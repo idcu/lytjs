@@ -33,7 +33,7 @@ import {
 // ============================================================
 
 function escapeRegExp(str: string): string {
-  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function advanceBy(context: ParserContext, numberOfCharacters: number): void {
@@ -370,6 +370,14 @@ function parseElement(context: ParserContext): ElementNode | undefined {
     } else if (__DEV__) {
       console.warn(
         `[LytJS compiler warn] Element <${tag}> was left open. Expected closing tag </${tag}>.`,
+      );
+    }
+
+    if (context.options.onError) {
+      context.options.onError(
+        new Error(
+          `[LytJS compiler error] Element <${tag}> was left open. Expected closing tag </${tag}>.`,
+        ),
       );
     }
   }
