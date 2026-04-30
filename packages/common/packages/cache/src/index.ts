@@ -178,7 +178,13 @@ export class ExpiringCache<K, V> {
   }
 
   has(key: K): boolean {
-    return this.get(key) !== undefined;
+    const entry = this.map.get(key);
+    if (!entry) return false;
+    if (this.isExpired(entry)) {
+      this.map.delete(key);
+      return false;
+    }
+    return true;
   }
 
   delete(key: K): boolean {
