@@ -73,7 +73,7 @@ function hydrateNode(vnode: VNode, parent: HTMLElement, index: number): number {
       warnHydrationMismatch(
         "node type",
         `Text("${text}")`,
-        existingNode ? `Element(<${(existingNode as Element).tagName.toLowerCase()}>)` : "none",
+        node ? `Element(<${(node as Element).tagName.toLowerCase()}>)` : "none",
       );
       const newNode = document.createTextNode(text);
       if (node) {
