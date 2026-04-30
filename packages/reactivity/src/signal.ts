@@ -68,11 +68,11 @@ export function computedSignal<T>(fn: () => T): ComputedSignal<T> {
       try {
         store[SIGNAL_KEY] = fn();
         dirty = false;
-        trigger(store, TriggerOpTypes.SET, SIGNAL_KEY);
       } catch (e) {
         dirty = true;
         throw e;
       }
+      trigger(store, TriggerOpTypes.SET, SIGNAL_KEY);
     },
     // 调度器：标记为脏值并触发依赖更新，实现缓存失效
     () => {

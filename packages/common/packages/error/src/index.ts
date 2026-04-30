@@ -365,7 +365,6 @@ export function warnOnce(message: string): void {
  * 输出错误信息
  */
 export function error(message: string): void {
-  if (!devMode) return;
   console.error(`[LytJS error]: ${message}`);
 }
 
