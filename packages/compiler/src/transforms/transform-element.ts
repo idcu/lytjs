@@ -162,8 +162,11 @@ export function transformElement(
           (child as InterpolationNode).content,
         ]);
       } else if (child.type === NodeTypes.ELEMENT) {
+        // TemplateChildNode is a superset of JSChildNode, so direct assertion is not allowed.
+        // At runtime, the transform pipeline ensures element nodes have valid codegenNode (JSChildNode).
         vnodeChildren = child as unknown as JSChildNode;
       } else {
+        // TemplateChildNode is a superset of JSChildNode, so direct assertion is not allowed.
         vnodeChildren = child as unknown as JSChildNode;
       }
     }
@@ -183,6 +186,8 @@ export function transformElement(
         vnodeChildren = createCompoundExpression(parts);
       }
     } else {
+      // TemplateChildNode[] cannot be directly asserted to JSChildNode[] because
+      // TemplateChildNode is a superset that includes non-JS types (ElementNode, TextNode, etc.).
       vnodeChildren = children as unknown as JSChildNode[];
     }
   }
@@ -345,7 +350,7 @@ function handleDirective(
       properties.push(
         createObjectProperty(
           createSimpleExpression('"innerHTML"', true, prop.loc, true),
-          safeValue as unknown as JSChildNode,
+          safeValue as JSChildNode,
         ),
       );
     }

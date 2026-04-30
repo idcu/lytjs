@@ -4,7 +4,7 @@
  */
 
 import type { VNode } from "@lytjs/vdom";
-import { Fragment, Text, ShapeFlags } from "@lytjs/vdom";
+import { Fragment, Text, Comment, ShapeFlags } from "@lytjs/vdom";
 import {
   isString,
   isArray,
@@ -135,10 +135,6 @@ function renderElementToString(vnode: VNode): string {
     }
   }
 
-  if (!isValidHTMLElementTag(tag)) {
-    return "";
-  }
-
   html += `</${tag}>`;
   return html;
 }
@@ -178,14 +174,18 @@ function isSafeURL(url: string): boolean {
       .join("|"),
     "g",
   );
-  while (decoded !== prev) {
+  let maxIterations = 10;
+  while (decoded !== prev && maxIterations-- > 0) {
     prev = decoded;
     decoded = decoded.replace(entityRegex, (match) => {
-      return String.fromCharCode(
-        match.startsWith("&#x")
-          ? parseInt(match.slice(3, -1), 16)
-          : parseInt(match.slice(2, -1), 10),
-      );
+      const codePoint = match.startsWith("&#x")
+        ? parseInt(match.slice(3, -1), 16)
+        : parseInt(match.slice(2, -1), 10);
+      // Validate the parsed code point is within the valid Unicode range
+      if (isNaN(codePoint) || codePoint < 0 || codePoint > 0x10ffff) {
+        return match;
+      }
+      return String.fromCodePoint(codePoint);
     });
     // 命名实体解码（在数字实体解码之后）
     decoded = decoded.replace(

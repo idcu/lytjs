@@ -119,6 +119,9 @@ export function triggerEffects(effects: ReactiveEffect[]) {
         "[LyticsJS warn] Maximum trigger depth exceeded. Possible infinite reactivity loop detected.",
       );
     }
+    console.error(
+      `[LyticsJS error] Maximum trigger depth (${MAX_TRIGGER_DEPTH}) exceeded in triggerEffects. Possible infinite reactivity loop detected. triggerDepth=${triggerDepth}`,
+    );
     return;
   }
   triggerDepth++;
@@ -267,7 +270,12 @@ export function effect<T = any>(
 ): ReactiveEffectRunner<T> {
   const _effect = new ReactiveEffect(fn);
   if (options) {
-    Object.assign(_effect, options);
+    // 仅提取已知合法选项，防止覆盖内部属性（如 fn、active）
+    _effect.scheduler = options.scheduler;
+    _effect.allowRecurse = options.allowRecurse;
+    _effect.onStop = options.onStop;
+    _effect.onTrack = options.onTrack;
+    _effect.onTrigger = options.onTrigger;
   }
   if (!options || !options.lazy) {
     _effect.run();

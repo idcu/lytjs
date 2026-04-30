@@ -241,13 +241,17 @@ function sanitizeHTML(str: string): string {
     [/&#x27;/gi, "'"],
     [/&#x22;/gi, '"'],
   ];
-  // Run up to 5 rounds to handle nested encoding
-  for (let i = 0; i < 5; i++) {
-    const prev = decoded;
-    for (const [re, repl] of decodeMap) {
-      decoded = decoded.replace(re, repl as any);
+  // Run up to 5 rounds to handle nested encoding.
+  // Fast path: skip decoding entirely if the string contains no '&' character,
+  // since HTML entities always start with '&'.
+  if (str.includes("&")) {
+    for (let i = 0; i < 5; i++) {
+      const prev = decoded;
+      for (const [re, repl] of decodeMap) {
+        decoded = decoded.replace(re, repl as any);
+      }
+      if (decoded === prev) break;
     }
-    if (decoded === prev) break;
   }
 
   // 2. Remove dangerous tags (both self-closing and normal forms).
@@ -273,7 +277,7 @@ function sanitizeHTML(str: string): string {
     "svg",
   ];
   const tagPattern = dangerousTags.join("|");
-  const openCloseTagRe = new RegExp(`<\\/?(${tagPattern})\\b[^>]*>`, "gi");
+  const openCloseTagRe = new RegExp(`<\\/?(${tagPattern})\\b(?:[^>"']|"[^"]*"|'[^']*')*>`, "gi");
   decoded = decoded.replace(openCloseTagRe, "");
 
   // 3. Remove event-handler attributes (on*).

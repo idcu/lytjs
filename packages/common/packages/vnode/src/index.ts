@@ -11,9 +11,6 @@ export const Fragment = Symbol.for("Fragment");
 export const Text = Symbol.for("Text");
 export const Comment = Symbol.for("Comment");
 
-// 独立导出的常量，便于直接导入使用
-export const FUNCTIONAL_COMPONENT = 1 << 1;
-
 // ============================================================
 // ShapeFlags - VNode 形状标志
 // ============================================================

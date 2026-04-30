@@ -4,15 +4,10 @@
  */
 
 import type { VNode } from "@lytjs/vdom";
-import { Fragment, Text, ShapeFlags } from "@lytjs/vdom";
+import { Fragment, Text, Comment, ShapeFlags } from "@lytjs/vdom";
 import { isArray, isFunction } from "@lytjs/common-is";
 import { patchProp } from "./patch-props";
-
-// ============================================================
-// VNode storage for container elements (shared with dom-renderer)
-// ============================================================
-
-const vnodeMap = new WeakMap<Element, any>();
+import { vnodeMap } from "./dom-renderer";
 
 // ============================================================
 // Dev mode hydration mismatch warnings
@@ -87,6 +82,39 @@ function hydrateNode(vnode: VNode, parent: HTMLElement, index: number): number {
         node ? `Element(<${(node as Element).tagName.toLowerCase()}>)` : "none",
       );
       const newNode = document.createTextNode(text);
+      if (node) {
+        parent.replaceChild(newNode, node);
+      } else {
+        parent.appendChild(newNode);
+      }
+      vnode.el = newNode;
+    }
+    return index + 1;
+  }
+
+  // Handle Comment
+  if (type === Comment) {
+    const node = parent.childNodes[index];
+    const text = isFunction(children) ? "" : String(children ?? "");
+    if (node && node.nodeType === Node.COMMENT_NODE) {
+      // Match: reuse existing comment node
+      if (node.textContent !== text) {
+        warnHydrationMismatch("comment content", text, node.textContent ?? "");
+        node.textContent = text;
+      }
+      vnode.el = node;
+    } else {
+      // Mismatch: create new comment node and replace
+      warnHydrationMismatch(
+        "node type",
+        `Comment("${text}")`,
+        node
+          ? node.nodeType === Node.TEXT_NODE
+            ? `Text("${node.textContent}")`
+            : `Element(<${(node as Element).tagName.toLowerCase()}>)`
+          : "none",
+      );
+      const newNode = document.createComment(text);
       if (node) {
         parent.replaceChild(newNode, node);
       } else {

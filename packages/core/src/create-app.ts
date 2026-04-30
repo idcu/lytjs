@@ -24,6 +24,7 @@ export function createApp(
   const installedPlugins = new Set<
     Plugin | ((app: App, ...options: any[]) => void)
   >();
+  let _isUnmounted = false;
 
   const app: App = {
     config: createContextConfig(context),
@@ -51,6 +52,18 @@ export function createApp(
     },
 
     mount(rootContainer: string | Element) {
+      if (_isUnmounted) {
+        throw new Error(
+          `[LytJS] App has been unmounted and cannot be remounted. Create a new app instance instead.`,
+        );
+      }
+
+      if (context._container) {
+        throw new Error(
+          `[LytJS] App is already mounted. Call app.unmount() first before mounting again.`,
+        );
+      }
+
       const container =
         typeof rootContainer === "string"
           ? document.querySelector(rootContainer)
@@ -133,7 +146,14 @@ export function createApp(
       context.directives = {};
       context.provides.clear();
 
+      // 清理 globalProperties
+      context.config.globalProperties = {};
+
       context._instance = null;
+      context.renderer = null;
+
+      // 标记 app 为已卸载，防止再次挂载
+      _isUnmounted = true;
     },
 
     provide(key, value) {
