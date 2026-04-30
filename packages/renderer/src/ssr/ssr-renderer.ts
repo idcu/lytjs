@@ -129,6 +129,27 @@ function renderElementToString(vnode: VNode): string {
 // renderAttributeToString
 // ============================================================
 
+// Security: block dangerous URL protocols on sensitive attributes
+// Extracted to module-level constant to avoid re-creation on every render
+const DANGEROUS_ATTRS = new Set([
+  "href", "src", "action", "formaction", "xlink:href", "data", "srcdoc",
+  "autofocus", "contenteditable", "draggable",
+]);
+
+const ALLOWED_URL_PROTOCOLS = new Set([
+  "http", "https", "mailto", "tel",
+]);
+
+function isSafeURL(url: string): boolean {
+  const trimmed = url.trim().toLowerCase();
+  const protocolMatch = trimmed.match(/^([a-z][a-z0-9+\-.]*?):/);
+  if (!protocolMatch) {
+    // No protocol - relative URL, check for suspicious content
+    return !trimmed.includes("javascript:") && !trimmed.includes("data:");
+  }
+  return ALLOWED_URL_PROTOCOLS.has(protocolMatch[1]);
+}
+
 function renderAttributeToString(key: string, value: unknown): string {
   // Skip null/undefined
   if (isNullish(value)) return "";
@@ -169,13 +190,9 @@ function renderAttributeToString(key: string, value: unknown): string {
     return ` ${key}`;
   }
 
-  // Security: block javascript:/data: protocol on dangerous attributes
-  const DANGEROUS_ATTRS = new Set([
-    "href", "src", "action", "formaction", "xlink:href", "data", "srcdoc",
-  ]);
+  // Security: block dangerous URL protocols on sensitive attributes
   if (DANGEROUS_ATTRS.has(key)) {
-    const strVal = String(value).trim().toLowerCase();
-    if (strVal.startsWith("javascript:") || strVal.startsWith("data:text/html")) {
+    if (!isSafeURL(String(value))) {
       if (__DEV__) {
         console.warn(
           `[LytJS SSR] Blocked potentially dangerous attribute: ${key}="${String(value)}"`
