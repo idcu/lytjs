@@ -4,7 +4,7 @@
   "description": "LytJS component system - component instances, props, emits, slots, and lifecycle",
   "type": "module",
   "main": "./dist/index.cjs",
-  "module": "./dist/index.js",
+  "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {

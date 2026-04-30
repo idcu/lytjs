@@ -4,7 +4,7 @@
   "description": "LytJS template compiler - parse, transform, optimize and codegen",
   "type": "module",
   "main": "./dist/index.cjs",
-  "module": "./dist/index.js",
+  "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
