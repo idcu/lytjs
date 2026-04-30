@@ -97,12 +97,6 @@ export const isStringOrNumber = (val: unknown): val is string | number =>
   isString(val) || isNumber(val);
 
 /**
- * 检查值是否为 VNode
- */
-export const isVNode = (val: unknown): val is { __v_isVNode: true } =>
-  isObject(val) && (val as any).__v_isVNode === true;
-
-/**
  * 检查对象是否拥有指定的自身属性
  */
 export const hasOwn = (obj: object, key: string | symbol): boolean =>
