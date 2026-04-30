@@ -32,6 +32,10 @@ import {
 // Parser utilities
 // ============================================================
 
+function escapeRegExp(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 function advanceBy(context: ParserContext, numberOfCharacters: number): void {
   const { source } = context;
   advancePositionWithMutation(context, source, numberOfCharacters);
@@ -359,7 +363,7 @@ function parseElement(context: ParserContext): ElementNode | undefined {
 
   if (context.source.startsWith(`</`)) {
     const endTagMatch = context.source.match(
-      new RegExp(`^<\\/\\s*${tag}\\s*>`),
+      new RegExp(`^<\\/\\s*${escapeRegExp(tag)}\\s*>`),
     );
     if (endTagMatch) {
       advanceBy(context, endTagMatch[0].length);
