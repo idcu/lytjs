@@ -15,6 +15,8 @@ import {
 import { camelToKebab } from "@lytjs/common-string";
 import { escapeHtml, isBooleanAttr, isVoidElement } from "../utils";
 
+const __DEV__ = process.env.NODE_ENV !== "production";
+
 // ============================================================
 // renderToString - main entry
 // ============================================================

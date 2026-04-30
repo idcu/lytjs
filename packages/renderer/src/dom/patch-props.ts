@@ -12,6 +12,8 @@ import {
 } from "@lytjs/common-events";
 import { isBooleanAttr } from "../utils";
 
+const __DEV__ = process.env.NODE_ENV !== "production";
+
 // ============================================================
 // Local helpers (not in common-is)
 // ============================================================
