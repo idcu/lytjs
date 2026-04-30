@@ -273,6 +273,9 @@ function parseInterpolation(
   const closeIndex = context.source.indexOf("}}", 2);
 
   if (closeIndex === -1) {
+    if (__DEV__) {
+      console.warn("[LytJS compiler warn] Unclosed interpolation expression.");
+    }
     return undefined;
   }
 
