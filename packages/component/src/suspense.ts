@@ -47,6 +47,10 @@ export const Suspense: ComponentOptions = {
       onError: [],
     };
 
+    if (_props.onResolve) boundary.onResolve.push(_props.onResolve);
+    if (_props.onPending) boundary.onPending.push(_props.onPending);
+    if (_props.onError) boundary.onError.push(_props.onError);
+
     return {
       boundary,
     };
@@ -152,7 +156,7 @@ export function registerAsyncChild(
           try {
             cb();
           } catch (e) {
-            console.error('[LytJS] Error in suspense resolve callback:', e)
+            console.error("[LytJS] Error in suspense resolve callback:", e);
           }
         }
       }
@@ -171,7 +175,7 @@ export function registerAsyncChild(
           try {
             cb(err);
           } catch (e) {
-            console.error('[LytJS] Error in suspense error callback:', e)
+            console.error("[LytJS] Error in suspense error callback:", e);
           }
         }
       }
@@ -203,7 +207,11 @@ export function resolveSuspense(boundary: SuspenseBoundary): void {
   boundary.error = null;
   boundary.pendingPromises.clear();
   for (const cb of boundary.onResolve) {
-    cb();
+    try {
+      cb();
+    } catch (e) {
+      console.error("[LytJS] Error in suspense resolve callback:", e);
+    }
   }
 }
 

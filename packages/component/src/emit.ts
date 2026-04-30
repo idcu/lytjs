@@ -56,6 +56,12 @@ export function emit(
 ): void {
   if (instance.isUnmounted) return;
 
+  if (__DEV__ && instance && !isEmitValid(instance, event)) {
+    console.warn(
+      `[LytJS warn]: Component emitted event "${event}" but it is not declared in emits.`,
+    );
+  }
+
   // Normalize event name: convert kebab-case to camelCase for handler lookup
   const handlerName = toHandlerKey(event);
 

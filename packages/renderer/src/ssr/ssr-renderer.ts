@@ -58,7 +58,7 @@ function renderVNodeToString(vnode: VNode): string {
     // 转义 <!-- 和 --> 防止注释注入导致 HTML 结构破坏
     let safe = text.replace(/<!--/g, "&lt;!--").replace(/-->/g, "--&gt;");
     // Sanitize double-dash in comment content to prevent invalid HTML comments
-    safe = safe.replace(/--/g, '- -');
+    safe = safe.replace(/--/g, "- -");
     return `<!--${safe}-->`;
   }
 
@@ -150,32 +150,57 @@ function renderElementToString(vnode: VNode): string {
 // Security: attributes that carry URLs and need protocol validation
 // Extracted to module-level constant to avoid re-creation on every render
 const URL_ATTRS = new Set([
-  "href", "src", "action", "formaction", "xlink:href", "data", "srcdoc",
+  "href",
+  "src",
+  "action",
+  "formaction",
+  "xlink:href",
+  "data",
+  "srcdoc",
 ]);
 
 function isSafeURL(url: string): boolean {
   // 循环解码 HTML 实体，直到字符串不再变化
   let decoded = url;
-  let prev = '';
+  let prev = "";
   const entityRegex = /&#x?[0-9a-f]+;/gi;
+  // 常见命名实体解码映射
+  const namedEntities: Record<string, string> = {
+    "&colon;": ":",
+    "&tab;": "\t",
+    "&newline;": "\n",
+    "&lpar;": "(",
+    "&rpar;": ")",
+  };
+  const namedEntityRegex = new RegExp(
+    Object.keys(namedEntities)
+      .map((e) => e.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+      .join("|"),
+    "g",
+  );
   while (decoded !== prev) {
     prev = decoded;
-    decoded = decoded.replace(entityRegex, match => {
+    decoded = decoded.replace(entityRegex, (match) => {
       return String.fromCharCode(
-        match.startsWith('&#x')
+        match.startsWith("&#x")
           ? parseInt(match.slice(3, -1), 16)
-          : parseInt(match.slice(2, -1), 10)
+          : parseInt(match.slice(2, -1), 10),
       );
     });
+    // 命名实体解码（在数字实体解码之后）
+    decoded = decoded.replace(
+      namedEntityRegex,
+      (match) => namedEntities[match] || match,
+    );
   }
   // 使用 URL 构造函数进行额外验证
   try {
-    const parsed = new URL(decoded, 'http://example.com');
-    const protocol = parsed.protocol.toLowerCase().replace(':', '')
-    if (protocol === 'javascript' || protocol === 'data') {
-      return false
+    const parsed = new URL(decoded, "http://example.com");
+    const protocol = parsed.protocol.toLowerCase().replace(":", "");
+    if (protocol === "javascript" || protocol === "data") {
+      return false;
     }
-    return true
+    return true;
   } catch {
     return false;
   }
@@ -226,7 +251,7 @@ function renderAttributeToString(key: string, value: unknown): string {
     if (!isSafeURL(String(value))) {
       if (__DEV__) {
         console.warn(
-          `[LytJS SSR] Blocked potentially dangerous attribute: ${key}="${String(value)}"`
+          `[LytJS SSR] Blocked potentially dangerous attribute: ${key}="${String(value)}"`,
         );
       }
       return "";
