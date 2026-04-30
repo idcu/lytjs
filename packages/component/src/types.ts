@@ -6,9 +6,11 @@ import type { VNode } from "@lytjs/vdom";
 // ==================== PropOptions ====================
 
 /** Prop 类型构造器 */
-export type PropType<T> = {
-  new (...args: any[]): T & {};
-} | { (): T };
+export type PropType<T> =
+  | {
+      new (...args: any[]): T & {};
+    }
+  | { (): T };
 type PropConstructor<T> = PropType<T> | true;
 
 export interface PropOptions<T = unknown> {
@@ -47,7 +49,10 @@ export interface ComponentOptions<
   name?: string;
   props?: Record<string, PropOptions<unknown>> & Props;
   emits?: string[] | Record<string, (...args: unknown[]) => void>;
-  setup?: (props: Props, ctx: SetupContext) => RawBindings | RenderFunction | void;
+  setup?: (
+    props: Props,
+    ctx: SetupContext,
+  ) => RawBindings | RenderFunction | void;
   render?: RenderFunction;
   data?: () => D;
   computed?: C;
@@ -67,7 +72,11 @@ export interface ComponentOptions<
   unmounted?(): void;
   activated?(): void;
   deactivated?(): void;
-  errorCaptured?(err: Error, instance: ComponentPublicInstance | null, info: string): boolean | void;
+  errorCaptured?(
+    err: Error,
+    instance: ComponentPublicInstance | null,
+    info: string,
+  ): boolean | void;
   inheritAttrs?: boolean;
 }
 
@@ -113,10 +122,15 @@ export interface ComponentInternalInstance {
   exposed?: Record<string, unknown> | null;
   attrs: Record<string, unknown>;
   errorCapturedHooks?: Array<
-    (err: Error, instance: ComponentPublicInstance | null, info: string) => boolean | void
+    (
+      err: Error,
+      instance: ComponentPublicInstance | null,
+      info: string,
+    ) => boolean | void
   >;
   activatedHooks?: Array<() => void>;
   deactivatedHooks?: Array<() => void>;
+  effects?: any[];
 }
 
 // ==================== ComponentPublicInstance ====================

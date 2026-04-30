@@ -152,13 +152,11 @@ export function cacheInstance(
       if (oldestInstance) {
         deactivateInstance(oldestInstance);
         // Stop all reactive effects to prevent memory leaks
-        if (oldestInstance.effects && oldestInstance.effects.length > 0) {
-          oldestInstance.effects.forEach((effect: any) => {
-            if (typeof effect.stop === "function") {
-              effect.stop();
-            }
-          });
-        }
+        oldestInstance.effects?.forEach((effect: any) => {
+          if (typeof effect.stop === "function") {
+            effect.stop();
+          }
+        });
       }
       cache.delete(oldestKey);
       keys.delete(oldestKey);
@@ -204,7 +202,7 @@ export function activateInstance(instance: ComponentInternalInstance): void {
       try {
         hook();
       } catch (e) {
-        handleError(e as Error, instance, 'activated hook');
+        handleError(e as Error, instance, "activated hook");
       }
     }
   }
@@ -224,7 +222,7 @@ export function deactivateInstance(instance: ComponentInternalInstance): void {
       try {
         hook();
       } catch (e) {
-        handleError(e as Error, instance, 'deactivated hook');
+        handleError(e as Error, instance, "deactivated hook");
       }
     }
   }
