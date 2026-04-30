@@ -2,7 +2,7 @@
 // Vue 3 风格的 effectScope API
 // 用于批量管理响应式副作用的创建和销毁
 
-import { type ReactiveEffect, setActiveEffectScope } from "./effect";
+import { type ReactiveEffect } from "./effect";
 
 export interface EffectScope {
   /** 当前 scope 是否活跃 */
@@ -25,8 +25,18 @@ export interface EffectScopeOptions {
   detached?: boolean;
 }
 
-/** 当前活跃的 effectScope */
+/** 当前活跃的 effectScope（唯一来源） */
 let activeEffectScope: EffectScope | undefined;
+
+/** 获取当前活跃的 effectScope */
+export function getActiveEffectScope(): EffectScope | undefined {
+  return activeEffectScope;
+}
+
+/** 设置当前活跃的 effectScope */
+export function setActiveEffectScope(scope: EffectScope | undefined): void {
+  activeEffectScope = scope;
+}
 
 /**
  * 创建一个 effect scope，用于批量管理响应式副作用。
@@ -57,13 +67,10 @@ export function effectScope(detached?: boolean): EffectScope {
       if (!this.active) return;
       const prevScope = activeEffectScope;
       activeEffectScope = this;
-      // 同步到 effect.ts 中的 activeEffectScope，使 ReactiveEffect 构造函数能自动注册
-      setActiveEffectScope(this);
       try {
         return fn();
       } finally {
         activeEffectScope = prevScope;
-        setActiveEffectScope(prevScope);
       }
     },
 
