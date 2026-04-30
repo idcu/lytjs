@@ -87,11 +87,6 @@ export function createApp(
       // Set up the component (runs setup, init props/slots, data, lifecycle)
       setupComponent(instance);
 
-      // Finish component setup if async setup resolved synchronously
-      if (!rootVNode.isAsyncPlaceholder) {
-        finishComponentSetup(instance);
-      }
-
       // Render using the standard renderer
       const renderer = createRenderer(createDOMRendererOptions());
       context.renderer = renderer;
