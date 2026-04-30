@@ -7,7 +7,10 @@ import type {
   AsyncComponentOptions,
 } from "./types";
 import type { ComponentOptions } from "./types";
-import { defineComponent as _defineComponent, onBeforeUnmount } from "@lytjs/component";
+import {
+  defineComponent as _defineComponent,
+  onBeforeUnmount,
+} from "@lytjs/component";
 import { shallowRef, ref } from "@lytjs/reactivity";
 import { h } from "./h";
 
@@ -102,8 +105,8 @@ export function defineAsyncComponent(
   };
   startTimeout();
 
-  // 预加载
-  load();
+  // 延迟加载：在组件首次渲染时触发，而非立即加载
+  // load();
 
   const comp: ComponentOptions = {
     name: "AsyncComponent",
@@ -126,6 +129,10 @@ export function defineAsyncComponent(
       return instance;
     },
     render() {
+      // 首次渲染时触发加载
+      if (!loadedComponent.value && !error.value && !loading.value) {
+        load();
+      }
       if (loadedComponent.value) {
         return h(loadedComponent.value);
       }

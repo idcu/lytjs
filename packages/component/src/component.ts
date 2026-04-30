@@ -18,8 +18,11 @@ import type {
   SetupContext,
   InternalSlots,
   AppContext,
+  RenderFunction,
 } from "./types";
 import type { VNode } from "@lytjs/common-vnode";
+
+type SetupResult = RenderFunction | Record<string, unknown> | void;
 import { normalizePropsOptions, resolvePropValue } from "./props";
 import { normalizeEmitsOptions, emit } from "./emit";
 import { initSlots } from "./slots";
@@ -135,7 +138,7 @@ export function setupComponent(instance: ComponentInternalInstance): void {
 /**
  * Run the setup function if defined.
  */
-function runSetup(instance: ComponentInternalInstance): any {
+function runSetup(instance: ComponentInternalInstance): SetupResult {
   const { setup } = instance.type;
 
   if (!setup) return undefined;
@@ -159,7 +162,7 @@ function runSetup(instance: ComponentInternalInstance): any {
  */
 function handleSetupResult(
   instance: ComponentInternalInstance,
-  setupResult: any,
+  setupResult: SetupResult,
 ): void {
   if (isFunction(setupResult)) {
     // Setup returned a render function

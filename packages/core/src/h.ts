@@ -16,19 +16,17 @@ import type { VNode, VNodeChildren, Component } from "./types";
  */
 export function h(
   type: string | Component | typeof Fragment | typeof Text | typeof Comment,
-  props?: Record<string, any> | null,
-  children?: VNodeChildren,
+  props?: Record<string, unknown> | null,
+  ...children: VNodeChildren[]
 ): VNode {
   if (props == null) {
     props = EMPTY_OBJ;
   }
 
-  // 处理数组子节点作为剩余参数的情况
-  if (arguments.length > 3) {
-    children = Array.prototype.slice.call(arguments, 2);
-  }
+  // 合并剩余子节点
+  const flatChildren = children.length > 1 ? children : children[0];
 
-  return createVNode(type as VNodeTypes, props, children);
+  return createVNode(type as VNodeTypes, props, flatChildren);
 }
 
 /**
