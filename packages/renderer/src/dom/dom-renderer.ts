@@ -125,7 +125,15 @@ export function createDOMRenderer(): DOMRenderer {
           (container as any)._vnode = null;
         }
         if (container.firstChild) {
-          container.innerHTML = "";
+          // Use replaceChildren instead of innerHTML to avoid memory leaks
+          // from event listeners and other references not being cleaned up
+          if (typeof container.replaceChildren === "function") {
+            container.replaceChildren();
+          } else {
+            while (container.firstChild) {
+              container.removeChild(container.firstChild);
+            }
+          }
         }
       } else {
         // Patch into container
