@@ -54,8 +54,9 @@ export function collectDynamicChildren(vnode: VNode): VNode[] {
 
   if (vnode.dynamicChildren) {
     const queue = [...vnode.dynamicChildren];
-    while (queue.length > 0) {
-      const current = queue.shift()!;
+    let head = 0;
+    while (head < queue.length) {
+      const current = queue[head++]!;
       result.push(current);
       if (current.dynamicChildren) {
         for (let i = 0; i < current.dynamicChildren.length; i++) {
