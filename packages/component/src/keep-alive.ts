@@ -4,6 +4,7 @@
 import { isString, isArray } from "@lytjs/common-is";
 import type { ComponentInternalInstance, ComponentOptions } from "./types";
 import { createComponentInstance, setupComponent } from "./component";
+import { handleError } from "./lifecycle";
 
 // ==================== Types ====================
 
@@ -177,7 +178,11 @@ export function activateInstance(instance: ComponentInternalInstance): void {
   }
   if (instance.activatedHooks) {
     for (const hook of instance.activatedHooks) {
-      try { hook(); } catch (e) { /* ignore */ }
+      try {
+        hook();
+      } catch (e) {
+        handleError(e as Error, instance, 'activated hook');
+      }
     }
   }
 }
@@ -193,7 +198,11 @@ export function deactivateInstance(instance: ComponentInternalInstance): void {
   }
   if (instance.deactivatedHooks) {
     for (const hook of instance.deactivatedHooks) {
-      try { hook(); } catch (e) { /* ignore */ }
+      try {
+        hook();
+      } catch (e) {
+        handleError(e as Error, instance, 'deactivated hook');
+      }
     }
   }
 }
