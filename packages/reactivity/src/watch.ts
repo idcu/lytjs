@@ -37,23 +37,33 @@ function getSource(source: WatchSource<unknown>): () => unknown {
 }
 
 // seen 参数改为可选，允许外部传入已有 Set 以实现复用
-function traverse(value: unknown, seen?: Set<unknown>): unknown {
+const MAX_TRAVERSE_DEPTH = 100;
+
+function traverse(value: unknown, seen?: Set<unknown>, depth = 0): unknown {
   const _seen = seen ?? new Set();
   if (!isObject(value) || _seen.has(value)) return value;
+  if (depth > MAX_TRAVERSE_DEPTH) {
+    if (__DEV__) {
+      console.warn(
+        `[LyticsJS warn] traverse exceeded maximum depth (${MAX_TRAVERSE_DEPTH}).`,
+      );
+    }
+    return value;
+  }
   _seen.add(value);
   if (isArray(value)) {
     for (let i = 0; i < value.length; i++) {
-      traverse(value[i], _seen);
+      traverse(value[i], _seen, depth + 1);
     }
   } else if (value instanceof Map) {
     value.forEach((_, key) => {
-      traverse(value.get(key), _seen);
+      traverse(value.get(key), _seen, depth + 1);
     });
   } else if (value instanceof Set) {
-    value.forEach((v) => traverse(v, _seen));
+    value.forEach((v) => traverse(v, _seen, depth + 1));
   } else {
     for (const key of Object.keys(value as object)) {
-      traverse((value as any)[key], _seen);
+      traverse((value as any)[key], _seen, depth + 1);
     }
   }
   return value;
@@ -103,12 +113,14 @@ export function watch<T, Immediate extends Readonly<boolean> = false>(
     ? new Array((source as WatchSource<T>[]).length).fill(undefined)
     : undefined;
 
-  let cleanup: (() => void) | undefined;
+  let cleanupFns: Array<() => void> = [];
   let isStopped = false;
 
   const onCleanup: OnCleanup = (fn: () => void) => {
-    cleanup = effect.onStop = () => {
-      fn();
+    cleanupFns.push(fn);
+    effect.onStop = () => {
+      cleanupFns.forEach((f) => f());
+      cleanupFns.length = 0;
     };
   };
 
@@ -125,7 +137,10 @@ export function watch<T, Immediate extends Readonly<boolean> = false>(
             )
           : hasChanged(newValue, oldValue))
       ) {
-        if (cleanup) cleanup();
+        if (cleanupFns.length > 0) {
+          cleanupFns.forEach((f) => f());
+          cleanupFns.length = 0;
+        }
         const args = isMultiSource
           ? ([newValue, oldValue] as [any, any])
           : ([newValue, oldValue] as [any, any]);
@@ -206,16 +221,21 @@ function doWatchEffect(
 ): WatchHandle {
   const { flush = "pre", onTrack, onTrigger } = options;
 
-  let cleanup: (() => void) | undefined;
+  let cleanupFns: Array<() => void> = [];
 
   const onCleanup: OnCleanup = (fn: () => void) => {
-    cleanup = currentEffect.onStop = () => {
-      fn();
+    cleanupFns.push(fn);
+    currentEffect.onStop = () => {
+      cleanupFns.forEach((f) => f());
+      cleanupFns.length = 0;
     };
   };
 
   const getter = () => {
-    if (cleanup) cleanup();
+    if (cleanupFns.length > 0) {
+      cleanupFns.forEach((f) => f());
+      cleanupFns.length = 0;
+    }
     source(onCleanup);
   };
 
