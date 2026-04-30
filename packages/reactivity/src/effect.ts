@@ -27,6 +27,9 @@ export const createDep = (): Dep => {
 
 // ==================== Track / Trigger ====================
 
+const MAX_TRIGGER_DEPTH = 100;
+let triggerDepth = 0;
+
 export function track(target: object, _type: string, key: string | symbol) {
   if (!shouldTrack || activeEffect === undefined) return;
 
@@ -55,8 +58,10 @@ export function track(target: object, _type: string, key: string | symbol) {
 
 export function trackEffect(dep: Dep) {
   if (!shouldTrack || activeEffect === undefined) return;
-  dep.add(activeEffect);
-  activeEffect.deps.push(dep);
+  if (!dep.has(activeEffect)) {
+    dep.add(activeEffect);
+    activeEffect.deps.push(dep);
+  }
 }
 
 export function trigger(
@@ -108,15 +113,29 @@ export function trigger(
 }
 
 export function triggerEffects(effects: ReactiveEffect[]) {
-  for (const effect of effects) {
-    if (effect.computed) {
-      triggerEffect(effect);
+  triggerDepth++;
+  if (triggerDepth > MAX_TRIGGER_DEPTH) {
+    triggerDepth = 0;
+    if (__DEV__) {
+      console.warn(
+        "[LyticsJS warn] Maximum trigger depth exceeded. Possible infinite reactivity loop detected.",
+      );
     }
+    return;
   }
-  for (const effect of effects) {
-    if (!effect.computed) {
-      triggerEffect(effect);
+  try {
+    for (const effect of effects) {
+      if (effect.computed) {
+        triggerEffect(effect);
+      }
     }
+    for (const effect of effects) {
+      if (!effect.computed) {
+        triggerEffect(effect);
+      }
+    }
+  } finally {
+    triggerDepth--;
   }
 }
 
