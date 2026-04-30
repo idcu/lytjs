@@ -795,6 +795,75 @@ export function createRenderer(
 /**
  * Create default DOM renderer options for browser environments
  */
+
+/**
+ * Special event name mappings from camelCase prop names to DOM event names.
+ */
+const DOM_EVENT_NAME_MAP: Record<string, string> = {
+  onDoubleClick: "dblclick",
+  onMouseEnter: "mouseenter",
+  onMouseLeave: "mouseleave",
+  onBeforeInput: "beforeinput",
+  onCompositionStart: "compositionstart",
+  onCompositionUpdate: "compositionupdate",
+  onCompositionEnd: "compositionend",
+  onPointerEnter: "pointerenter",
+  onPointerLeave: "pointerleave",
+  onPointerDown: "pointerdown",
+  onPointerMove: "pointermove",
+  onPointerUp: "pointerup",
+  onPointerCancel: "pointercancel",
+  onPointerOver: "pointerover",
+  onPointerOut: "pointerout",
+  onDragStart: "dragstart",
+  onDragEnd: "dragend",
+  onDragOver: "dragover",
+  onDragEnter: "dragenter",
+  onDragLeave: "dragleave",
+  onDragDrop: "drop",
+  onAnimationStart: "animationstart",
+  onAnimationEnd: "animationend",
+  onAnimationIteration: "animationiteration",
+  onTransitionEnd: "transitionend",
+  onTouchStart: "touchstart",
+  onTouchMove: "touchmove",
+  onTouchEnd: "touchend",
+  onTouchCancel: "touchcancel",
+  onContextMenu: "contextmenu",
+  onWheel: "wheel",
+  onScroll: "scroll",
+};
+
+function getDOMEventName(rawName: string): string {
+  return DOM_EVENT_NAME_MAP[rawName] ?? rawName.slice(2).toLowerCase();
+}
+
+function extractDOMEventHandler(value: unknown): EventListener | null {
+  if (typeof value === "function") {
+    return value as EventListener;
+  }
+  if (value != null && typeof value === "object" && "handler" in value) {
+    return (value as { handler: EventListener }).handler;
+  }
+  return null;
+}
+
+function extractDOMEventOptions(
+  value: unknown,
+): boolean | AddEventListenerOptions | undefined {
+  if (value != null && typeof value === "object" && typeof value !== "function") {
+    const opts = value as Record<string, unknown>;
+    if ("capture" in opts || "passive" in opts || "once" in opts) {
+      return {
+        capture: !!opts.capture,
+        passive: !!opts.passive,
+        once: !!opts.once,
+      };
+    }
+  }
+  return undefined;
+}
+
 export function createDOMRendererOptions(): RendererOptions<Node, Element> {
   return {
     createElement(tag: string): Element {
@@ -849,12 +918,16 @@ export function createDOMRendererOptions(): RendererOptions<Node, Element> {
           el.removeAttribute("style");
         }
       } else if (key.startsWith("on")) {
-        const eventName = key.slice(2).toLowerCase();
-        if (prevValue) {
-          el.removeEventListener(eventName, prevValue as EventListener);
+        const eventName = getDOMEventName(key);
+        const prevHandler = extractDOMEventHandler(prevValue);
+        const prevOptions = extractDOMEventOptions(prevValue);
+        const nextHandler = extractDOMEventHandler(nextValue);
+        const nextOptions = extractDOMEventOptions(nextValue);
+        if (prevHandler) {
+          el.removeEventListener(eventName, prevHandler, prevOptions);
         }
-        if (nextValue) {
-          el.addEventListener(eventName, nextValue as EventListener);
+        if (nextHandler) {
+          el.addEventListener(eventName, nextHandler, nextOptions);
         }
       } else if (nextValue == null || nextValue === false) {
         el.removeAttribute(key);
