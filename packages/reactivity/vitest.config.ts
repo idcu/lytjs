@@ -1,6 +1,14 @@
 import { defineConfig } from 'vitest/config';
 
+const commonRoot = '/workspace/lytjs/packages/common/packages';
+
 export default defineConfig({
+  resolve: {
+    alias: {
+      '@lytjs/common-is': `${commonRoot}/is/dist/index.mjs`,
+      '@lytjs/common-scheduler': `${commonRoot}/scheduler/dist/index.mjs`,
+    },
+  },
   test: {
     environment: 'node',
     globals: true,
