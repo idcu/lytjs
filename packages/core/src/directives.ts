@@ -24,7 +24,7 @@ export function withDirectives(
       arg,
       modifiers: modifiers || {},
     }),
-  );
+  ) as any;
   return dirVNode;
 }
 

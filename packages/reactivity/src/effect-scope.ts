@@ -78,10 +78,22 @@ export function effectScope(detached?: boolean): EffectScope {
       if (!this.active) return;
       this.active = false;
       for (const effect of this.effects) {
-        effect.stop();
+        try {
+          effect.stop();
+        } catch (e) {
+          if (__DEV__) {
+            console.warn("[LyticsJS warn] Error stopping effect in scope:", e);
+          }
+        }
       }
       for (const cleanup of this.cleanups) {
-        cleanup();
+        try {
+          cleanup();
+        } catch (e) {
+          if (__DEV__) {
+            console.warn("[LyticsJS warn] Error running cleanup in scope:", e);
+          }
+        }
       }
       this.effects.length = 0;
       this.cleanups.length = 0;

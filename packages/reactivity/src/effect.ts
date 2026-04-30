@@ -49,7 +49,6 @@ export function track(target: object, _type: string, key: string | symbol) {
   // 调试：触发 onTrack
   if (__DEV__ && activeEffect.onTrack) {
     activeEffect.onTrack({
-      effect: activeEffect,
       target,
       type: _type,
       key,
@@ -186,13 +185,20 @@ export class ReactiveEffect<T = any> {
 
   run(): T | undefined {
     if (!this.active) {
-      return this.fn();
+      try {
+        return this.fn();
+      } catch (e) {
+        if (__DEV__) {
+          console.warn("[LyticsJS warn] Error running inactive effect:", e);
+        }
+        throw e;
+      }
     }
 
     // 在重新执行前调用 cleanup
     if (this._cleanups.length > 0) {
       for (let i = 0; i < this._cleanups.length; i++) {
-        this._cleanups[i]();
+        this._cleanups[i]!();
       }
       this._cleanups.length = 0;
     }
@@ -218,7 +224,7 @@ export class ReactiveEffect<T = any> {
       cleanupEffect(this);
       if (this._cleanups.length > 0) {
         for (let i = 0; i < this._cleanups.length; i++) {
-          this._cleanups[i]();
+          this._cleanups[i]!();
         }
         this._cleanups.length = 0;
       }

@@ -14,7 +14,6 @@ import { isRef } from "./ref";
 import { isReactive } from "./reactive";
 import { ReactiveEffect } from "./effect";
 import {
-  nextTick,
   queuePreFlushCb,
   queuePostFlushCb,
 } from "@lytjs/common-scheduler";
@@ -31,8 +30,8 @@ import type {
 
 function getSource(source: WatchSource<unknown>): () => unknown {
   if (isRef(source)) return () => source.value;
-  if (isReactive(source)) return () => traverse(source);
-  if (isFunction(source)) return source;
+  if (isReactive(source as object)) return () => traverse(source);
+  if (typeof source === "function") return source as () => unknown;
   return NOOP;
 }
 
@@ -113,7 +112,7 @@ export function watch<T, Immediate extends Readonly<boolean> = false>(
     ? new Array((source as WatchSource<T>[]).length).fill(undefined)
     : undefined;
 
-  let cleanupFns: Array<() => void> = [];
+  const cleanupFns: Array<() => void> = [];
   let isStopped = false;
 
   const onCleanup: OnCleanup = (fn: () => void) => {
@@ -179,8 +178,8 @@ export function watch<T, Immediate extends Readonly<boolean> = false>(
   };
 
   if (__DEV__) {
-    effect.onTrack = onTrack;
-    effect.onTrigger = onTrigger;
+    effect.onTrack = onTrack as typeof effect.onTrack;
+    effect.onTrigger = onTrigger as typeof effect.onTrigger;
   }
 
   if (immediate) {
@@ -224,7 +223,7 @@ function doWatchEffect(
 ): WatchHandle {
   const { flush = "pre", onTrack, onTrigger } = options;
 
-  let cleanupFns: Array<() => void> = [];
+  const cleanupFns: Array<() => void> = [];
 
   const onCleanup: OnCleanup = (fn: () => void) => {
     cleanupFns.push(fn);
@@ -263,8 +262,8 @@ function doWatchEffect(
   };
 
   if (__DEV__) {
-    currentEffect.onTrack = onTrack;
-    currentEffect.onTrigger = onTrigger;
+    currentEffect.onTrack = onTrack as typeof currentEffect.onTrack;
+    currentEffect.onTrigger = onTrigger as typeof currentEffect.onTrigger;
   }
 
   currentEffect.run();

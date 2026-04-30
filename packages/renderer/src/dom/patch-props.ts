@@ -227,12 +227,12 @@ function sanitizeHTML(str: string): string {
   //    We apply decode repeatedly until the string stabilises (handles
   //    double-encoding like &amp;lt;script&amp;gt;).
   let decoded = str;
-  const decodeMap: [RegExp, string][] = [
+  const decodeMap: [RegExp, string | ((...args: any[]) => string)][] = [
     [
       /&#x0*([0-9a-fA-F]+);/g,
-      (_, code) => String.fromCodePoint(parseInt(code, 16)),
+      (_: any, code: any) => String.fromCodePoint(parseInt(code, 16)),
     ],
-    [/&#0*([0-9]+);/g, (_, code) => String.fromCodePoint(parseInt(code, 10))],
+    [/&#0*([0-9]+);/g, (_: any, code: any) => String.fromCodePoint(parseInt(code, 10))],
     [/&amp;/gi, "&"],
     [/&lt;/gi, "<"],
     [/&gt;/gi, ">"],

@@ -140,7 +140,7 @@ export interface VNode {
   /** 组件实例 */
   component: ComponentInternalInstance | null;
   /** 挂载的 DOM 元素 */
-  el: Element | Text | Comment | null;
+  el: Node | null;
   /** 锚点元素 */
   anchor: Node | null;
   /** 目标元素（Teleport） */
@@ -187,6 +187,7 @@ export interface ComponentInternalInstance {
   isKeepingAlive: boolean;
   bum?: (() => void) | null;
   effects?: Array<{ stop: () => void }>;
+  update?: () => void;
 }
 
 export interface BaseComponentOptions {

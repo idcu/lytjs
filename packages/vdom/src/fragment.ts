@@ -44,6 +44,7 @@ export function createFragment(children: VNode[]): VNode {
     type: Fragment,
     key: null,
     ref: null,
+    props: null,
     isStatic: false,
     isStaticRoot: false,
     isOnce: false,

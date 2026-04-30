@@ -72,7 +72,7 @@ export function createApp(
       // Replace appContext: createComponentInstance creates a new empty context
       // when parent is null, but we need the core-level context with plugins,
       // components, directives, and provides registered on the app.
-      instance.appContext = context as ComponentAppContext;
+      instance.appContext = context as unknown as ComponentAppContext;
 
       // Copy app-level provides into the root instance
       if (context.provides) {
@@ -100,7 +100,7 @@ export function createApp(
 
       // Render using the standard renderer
       const renderer = createRenderer(createDOMRendererOptions());
-      context.renderer = renderer;
+      context.renderer = renderer as any;
       context._container = container;
       context._vnode = rootVNode;
 
@@ -141,12 +141,12 @@ export function createApp(
       return app;
     },
 
-    inject(key) {
-      return context.provides.get(key);
+    inject<T = unknown>(key: string | symbol): T | undefined {
+      return context.provides.get(key) as T | undefined;
     },
 
     component(name, component) {
-      context.components[name] = component;
+      context.components[name] = component as any;
       return app;
     },
 

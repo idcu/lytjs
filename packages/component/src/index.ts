@@ -10,6 +10,7 @@ export {
   createAppContext,
   provide,
   inject,
+  createComponentPublicInstance,
 } from "./component";
 
 // Props

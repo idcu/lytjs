@@ -45,6 +45,7 @@ export const Suspense: ComponentOptions = {
       onResolve: [],
       onPending: [],
       onError: [],
+      aborted: false,
     };
 
     if (_props.onResolve) boundary.onResolve.push(_props.onResolve);

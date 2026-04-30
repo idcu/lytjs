@@ -12,7 +12,7 @@ import type {
 
 // ==================== ReactiveEffect 类型 ====================
 
-export type ReactiveEffectRunner<T = any> = {
+export type ReactiveEffectRunner<T = unknown> = {
   (): T;
   effect: ReactiveEffect;
 };
@@ -57,9 +57,9 @@ export interface WatchEffectOptions {
   allowRecurse?: boolean;
 }
 
-export type WatchSource<T = any> = Ref<T> | (() => T) | object;
+export type WatchSource<T = unknown> = Ref<T> | (() => T) | object;
 
-export type WatchCallback<T = any, S = T> = (
+export type WatchCallback<T = unknown, S = T> = (
   newValue: T,
   oldValue: S,
   onCleanup: OnCleanup,
@@ -81,7 +81,7 @@ export interface WritableComputedOptions<T> {
   set: ComputedSetter<T>;
 }
 
-export type WritableComputedRef<T = any> = ComputedRef<T> & {
+export type WritableComputedRef<T = unknown> = ComputedRef<T> & {
   value: T;
 };
 
@@ -95,7 +95,7 @@ export type UnwrapNestedRefs<T> =
       ? { [K in keyof T]: UnwrapNestedRefs<T[K]> }
       : T;
 export type DeepReadonly<T> = { readonly [K in keyof T]: DeepReadonly<T[K]> };
-export type ToRefs<T = any> = { [K in keyof T]: Ref<T[K]> };
+export type ToRefs<T = unknown> = { [K in keyof T]: Ref<T[K]> };
 export type ReactiveObject<T extends object = object> = { [K in keyof T]: T[K] } & { __v_isReactive: true };
 
 // Re-export
