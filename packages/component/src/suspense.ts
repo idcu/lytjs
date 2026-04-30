@@ -177,4 +177,7 @@ export function abortSuspense(boundary: SuspenseBoundary): void {
   boundary.isPending = false;
   boundary.promise = null;
   boundary.pendingPromises.clear();
+  boundary.onResolve.length = 0;
+  boundary.onPending.length = 0;
+  boundary.onError.length = 0;
 }

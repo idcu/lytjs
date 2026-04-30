@@ -123,6 +123,19 @@ export function cacheInstance(
   if (max !== undefined && keys.size > max) {
     const oldestKey = keys.values().next().value;
     if (oldestKey !== undefined) {
+      const oldestInstance = cache.get(oldestKey);
+      // Call deactivated lifecycle hook before eviction
+      if (oldestInstance) {
+        deactivateInstance(oldestInstance);
+        // Stop all reactive effects to prevent memory leaks
+        if (oldestInstance.effects && oldestInstance.effects.length > 0) {
+          oldestInstance.effects.forEach((effect: any) => {
+            if (typeof effect.stop === "function") {
+              effect.stop();
+            }
+          });
+        }
+      }
       cache.delete(oldestKey);
       keys.delete(oldestKey);
     }
