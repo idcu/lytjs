@@ -113,9 +113,7 @@ export function trigger(
 }
 
 export function triggerEffects(effects: ReactiveEffect[]) {
-  triggerDepth++;
   if (triggerDepth > MAX_TRIGGER_DEPTH) {
-    triggerDepth = 0;
     if (__DEV__) {
       console.warn(
         "[LyticsJS warn] Maximum trigger depth exceeded. Possible infinite reactivity loop detected.",
@@ -123,6 +121,7 @@ export function triggerEffects(effects: ReactiveEffect[]) {
     }
     return;
   }
+  triggerDepth++;
   try {
     for (const effect of effects) {
       if (effect.computed) {
