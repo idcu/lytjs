@@ -2,19 +2,23 @@
 // @lytjs/core - 组件定义
 
 import type {
-  ComponentOptions,
   Component,
   AsyncComponentLoader,
   AsyncComponentOptions,
 } from "./types";
+import type { ComponentOptions } from "./types";
+import { defineComponent as _defineComponent } from "@lytjs/component";
 import { shallowRef, ref } from "@lytjs/reactivity";
 
 /**
- * 定义组件（类型标记 + 直接返回 options）
+ * 定义组件（re-export from @lytjs/component）
+ *
+ * 权威实现在 @lytjs/component 中，此处统一返回类型为 ComponentOptions。
+ * 由于 Component = ComponentOptions | (() => any)，
+ * 返回 ComponentOptions 是 Component 的子集，完全兼容。
  */
-export function defineComponent(options: ComponentOptions): Component {
-  return options as Component;
-}
+export const defineComponent: (options: ComponentOptions) => ComponentOptions =
+  _defineComponent;
 
 /**
  * 定义异步组件
