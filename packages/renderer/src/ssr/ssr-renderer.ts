@@ -158,13 +158,30 @@ const ALLOWED_URL_PROTOCOLS = new Set([
   "http", "https", "mailto", "tel",
 ]);
 
+const DANGEROUS_PROTOCOLS = new Set([
+  "javascript", "vbscript", "data",
+]);
+
 function isSafeURL(url: string): boolean {
-  const trimmed = url.trim().toLowerCase();
+  // Decode HTML entities before checking
+  let decoded = url;
+  try {
+    decoded = decoded.replace(/&#x?[0-9a-f]+;/gi, (match) => {
+      const text = match.replace(/&#x?/i, "").replace(/;$/, "");
+      const code = parseInt(text, match.includes("x") ? 16 : 10);
+      return code > 0 ? String.fromCharCode(code) : match;
+    });
+  } catch { /* ignore decode errors */ }
+
+  const trimmed = decoded.trim().toLowerCase();
   const protocolMatch = trimmed.match(/^([a-z][a-z0-9+\-.]*?):/);
   if (!protocolMatch) {
-    // No protocol - relative URL, check for suspicious content
-    return !trimmed.includes("javascript:") && !trimmed.includes("data:");
+    for (const proto of DANGEROUS_PROTOCOLS) {
+      if (trimmed.includes(proto)) return false;
+    }
+    return true;
   }
+  if (DANGEROUS_PROTOCOLS.has(protocolMatch[1])) return false;
   return ALLOWED_URL_PROTOCOLS.has(protocolMatch[1]);
 }
 
