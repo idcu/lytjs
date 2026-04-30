@@ -12,8 +12,6 @@ import { patchProp } from "./patch-props";
 // Dev mode hydration mismatch warnings
 // ============================================================
 
-const __DEV__ = process.env.NODE_ENV !== "production";
-
 function warnHydrationMismatch(
   type: string,
   expected: string,
