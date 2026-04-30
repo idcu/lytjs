@@ -29,5 +29,14 @@ export default defineConfig({
       name: 'chromium',
       use: { browserName: 'chromium' },
     },
+    {
+      name: 'firefox',
+      use: { browserName: 'firefox' },
+    },
+    // TODO: 评估 WebKit 支持可行性
+    // {
+    //   name: 'webkit',
+    //   use: { browserName: 'webkit' },
+    // },
   ],
 })
