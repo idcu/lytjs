@@ -10,6 +10,7 @@ import {
   ShapeFlags,
   PatchFlags,
   isSameVNodeType,
+  FUNCTIONAL_COMPONENT,
 } from "@lytjs/common-vnode";
 import type { VNode, ComponentInternalInstance } from "@lytjs/common-vnode";
 import { isArray, isFunction, hasChanged, EMPTY_OBJ } from "@lytjs/common-is";
@@ -460,7 +461,13 @@ export function createRenderer(
         } else if (moved) {
           if (j < 0 || i !== increasingNewIndexSequence[j]!) {
             if (nextChild.el) {
-              insert(nextChild.el, container, anchor);
+              move(
+                nextChild,
+                container,
+                anchor,
+                parentComponent,
+                parentSuspense,
+              );
             }
           } else {
             j--;
@@ -709,7 +716,7 @@ export function createRenderer(
     if (
       component &&
       (vnode.shapeFlag & ShapeFlags.STATEFUL_COMPONENT ||
-        vnode.shapeFlag & ShapeFlags.FUNCTIONAL_COMPONENT)
+        vnode.shapeFlag & FUNCTIONAL_COMPONENT)
     ) {
       const { bum } = component as ComponentInternalInstance;
       if (isArray(bum)) {
