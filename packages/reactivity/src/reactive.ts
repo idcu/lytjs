@@ -305,6 +305,34 @@ function createCollectionHandler(
   };
 }
 
+function createShallowReadonlyCollectionHandler(): ProxyHandler<Target> {
+  const ITERATE_KEY_COL = Symbol("collection_iterate");
+  return {
+    get(target, key, _receiver) {
+      if (key === ReactiveFlags.IS_REACTIVE) return false;
+      if (key === ReactiveFlags.IS_READONLY) return true;
+      if (key === ReactiveFlags.IS_SHALLOW) return true;
+      if (key === ReactiveFlags.RAW) return target;
+      if (key === "size" || key === "get" || key === "has" || key === "forEach") {
+        track(target, TrackOpTypes.GET, ITERATE_KEY_COL);
+      }
+      const res = Reflect.get(target, key, target);
+      if (typeof res === "function") {
+        if (MUTATING_METHODS.has(key as string)) {
+          return (...args: any[]) => {
+            if (__DEV__) {
+              console.warn(`Set operation on key "${String(key)}" failed: target is shallow readonly.`);
+            }
+            return res.apply(target, args);
+          };
+        }
+        return res.bind(target);
+      }
+      return res;
+    },
+  };
+}
+
 // ==================== Handler 实例 ====================
 
 const mutableHandlers = createMutableHandler(false, false);
@@ -315,6 +343,7 @@ const shallowReadonlyHandlers = createMutableHandler(true, true);
 const mutableCollectionHandlers = createCollectionHandler(false, false);
 const readonlyCollectionHandlers = createCollectionHandler(true, false);
 const shallowCollectionHandlers = createCollectionHandler(false, true);
+const shallowReadonlyCollectionHandlers = createShallowReadonlyCollectionHandler();
 
 // ==================== 公共 API ====================
 
@@ -365,7 +394,7 @@ export function shallowReadonly<T extends object>(target: T): Readonly<T> {
     true,
     true,
     shallowReadonlyHandlers,
-    shallowCollectionHandlers,
+    shallowReadonlyCollectionHandlers,
     shallowReadonlyMap,
   );
 }
