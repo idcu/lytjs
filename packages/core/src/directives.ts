@@ -1,6 +1,7 @@
 // src/directives.ts
 // @lytjs/core - 指令辅助函数
 
+import { cloneVNode } from "@lytjs/vdom";
 import type { VNode, DirectiveArguments, Directive } from "./types";
 
 /** 扩展 VNode 类型以支持指令存储 */
@@ -15,7 +16,7 @@ export function withDirectives(
   vnode: VNode,
   directives: DirectiveArguments,
 ): VNode {
-  const dirVNode = vnode as DirectiveVNode;
+  const dirVNode = cloneVNode(vnode) as DirectiveVNode;
   dirVNode._directives = directives.map(
     ([dir, value, arg, modifiers]) => ({
       dir: dir as Directive,
@@ -24,7 +25,7 @@ export function withDirectives(
       modifiers: modifiers || {},
     }),
   );
-  return vnode;
+  return dirVNode;
 }
 
 /** Memo 缓存条目 */
