@@ -43,15 +43,23 @@ function advancePositionWithMutation(
   source: string,
   numberOfCharacters: number,
 ): void {
-  let line = context.line;
   for (let i = 0; i < numberOfCharacters; i++) {
-    const char = source[i];
-    if (char === "\n") {
-      line++;
+    const char = source.charCodeAt(i);
+    if (char === 10 /* \n */) {
+      context.line++;
+      context.column = 0;
+    } else if (char === 13 /* \r */) {
+      context.line++;
+      context.column = 0;
+      // Skip \n in \r\n sequence
+      if (source.charCodeAt(i + 1) === 10) {
+        i++;
+        context.offset++;
+      }
+    } else {
+      context.column++;
     }
   }
-  context.line = line;
-  context.column += numberOfCharacters;
   context.offset += numberOfCharacters;
 }
 
