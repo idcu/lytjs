@@ -136,7 +136,11 @@ export function callLifecycleHook(
   const hooks = instance.lifecycle[hookName];
   if (hooks.size > 0) {
     for (const hook of hooks) {
-      hook();
+      try {
+        hook();
+      } catch (err) {
+        handleError(err as Error, instance, hookName);
+      }
     }
   }
 }
