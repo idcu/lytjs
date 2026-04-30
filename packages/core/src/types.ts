@@ -10,18 +10,32 @@ import type {
 
 // ==================== App ====================
 
+/** 渲染器接口（跨包抽象） */
+export interface Renderer {
+  mount(vnode: VNode | null, container: Element): void;
+  unmount(vnode: VNode | null): void;
+  patch(oldVNode: VNode | null, newVNode: VNode | null, container: Element): void;
+  move(vnode: VNode, container: Element, anchor: Element | null): void;
+}
+
+/** 插件安装函数签名 */
+export type PluginInstallFunction<T = any> = (
+  app: App,
+  ...options: T[]
+) => void;
+
 export interface App<HostElement = Element> {
   config: AppConfig;
-  use(plugin: Plugin, ...options: any[]): App;
+  use(plugin: Plugin | PluginInstallFunction, ...options: any[]): App;
   mount(rootContainer: HostElement | string): ComponentPublicInstance;
   unmount(): void;
-  provide<T>(key: string | symbol, value: T): App;
-  inject<T>(key: string | symbol): T | undefined;
+  provide<T = any>(key: string | symbol, value: T): App;
+  inject<T = any>(key: string | symbol): T | undefined;
   component(name: string, component: Component): App;
   directive(name: string, directive: Directive): App;
   mixin(mixin: ComponentOptions): App;
   errorHandler?: (
-    err: any,
+    err: unknown,
     instance: ComponentPublicInstance | null,
     info: string,
   ) => void;
@@ -34,22 +48,22 @@ export interface App<HostElement = Element> {
 
 export interface AppConfig {
   performance: boolean;
-  errorHandler?: (err: any, instance: any, info: string) => void;
-  warnHandler?: (msg: string, instance: any, trace: string) => void;
-  globalProperties: Record<string, any>;
+  errorHandler?: (err: unknown, instance: ComponentPublicInstance | null, info: string) => void;
+  warnHandler?: (msg: string, instance: ComponentPublicInstance | null, trace: string) => void;
+  globalProperties: Record<string, unknown>;
   isCustomElement?: (tag: string) => boolean;
-  compilerOptions?: any;
+  compilerOptions?: Record<string, unknown>;
 }
 
 // ==================== Plugin ====================
 
 export interface Plugin {
-  install: (app: App, ...options: any[]) => void;
+  install: PluginInstallFunction;
 }
 
 // ==================== Component ====================
 
-export type Component = ComponentOptions | (() => any);
+export type Component = ComponentOptions | (() => VNode);
 
 export type {
   ComponentOptions,
@@ -58,55 +72,55 @@ export type {
 
 // ==================== Directive ====================
 
-export interface Directive<T = any> {
+export interface Directive<T = Element> {
   created?: (
     el: T,
     binding: DirectiveBinding,
     vnode: VNode,
-    prevVNode: VNode,
+    prevVNode: VNode | null,
   ) => void;
   beforeMount?: (
     el: T,
     binding: DirectiveBinding,
     vnode: VNode,
-    prevVNode: VNode,
+    prevVNode: VNode | null,
   ) => void;
   mounted?: (
     el: T,
     binding: DirectiveBinding,
     vnode: VNode,
-    prevVNode: VNode,
+    prevVNode: VNode | null,
   ) => void;
   beforeUpdate?: (
     el: T,
     binding: DirectiveBinding,
     vnode: VNode,
-    prevVNode: VNode,
+    prevVNode: VNode | null,
   ) => void;
   updated?: (
     el: T,
     binding: DirectiveBinding,
     vnode: VNode,
-    prevVNode: VNode,
+    prevVNode: VNode | null,
   ) => void;
   beforeUnmount?: (
     el: T,
     binding: DirectiveBinding,
     vnode: VNode,
-    prevVNode: VNode,
+    prevVNode: VNode | null,
   ) => void;
   unmounted?: (
     el: T,
     binding: DirectiveBinding,
     vnode: VNode,
-    prevVNode: VNode,
+    prevVNode: VNode | null,
   ) => void;
 }
 
 export interface DirectiveBinding {
   instance: ComponentPublicInstance | null;
-  value: any;
-  oldValue: any;
+  value: unknown;
+  oldValue: unknown;
   arg?: string;
   modifiers: Record<string, boolean>;
   dir: Directive;
@@ -114,7 +128,7 @@ export interface DirectiveBinding {
 
 export type DirectiveArguments = [
   Directive,
-  any,
+  unknown,
   string?,
   Record<string, boolean>?,
 ][];
@@ -135,7 +149,7 @@ export interface AsyncComponentOptions {
     retry: () => void,
     fail: () => void,
     attempts: number,
-  ) => any;
+  ) => void;
 }
 
 // ==================== Composition API ====================
@@ -148,7 +162,14 @@ export type ErrorCapturedHook = (
   info: string,
 ) => boolean | void;
 
-export type DebuggerHook = (event: any) => void;
+export type DebuggerHook = (event: DebuggerEvent) => void;
+
+export interface DebuggerEvent {
+  effect: { id: number; active: boolean };
+  target: object;
+  type: "track" | "trigger";
+  key: string | symbol | undefined;
+}
 
 // ==================== Re-export VNode ====================
 

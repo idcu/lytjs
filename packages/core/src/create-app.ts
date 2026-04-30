@@ -20,16 +20,16 @@ export function createApp(
   rootProps: Record<string, unknown> | null = null,
 ): App {
   const context = createAppContext();
-  const installedPlugins = new Set<Plugin | Function>();
+  const installedPlugins = new Set<Plugin | ((app: App, ...options: any[]) => void)>();
 
   const app: App = {
     config: createContextConfig(context),
 
-    use(plugin: Plugin | Function, ...options: any[]) {
+    use(plugin: Plugin | ((app: App, ...options: any[]) => void), ...options: any[]) {
       if (installedPlugins.has(plugin)) return app;
       try {
         if (typeof plugin === "function") {
-          (plugin as Function)(app, ...options);
+          (plugin as (app: App, ...options: any[]) => void)(app, ...options);
         } else {
           plugin.install(app, ...options);
         }
@@ -44,7 +44,7 @@ export function createApp(
       return app;
     },
 
-    mount(rootContainer: any) {
+    mount(rootContainer: string | Element) {
       const container =
         typeof rootContainer === "string"
           ? document.querySelector(rootContainer)
