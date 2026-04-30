@@ -108,6 +108,8 @@ export interface VNode {
   key: string | number | symbol | null | undefined;
   /** ref 引用 */
   ref: any;
+  /** VNode 的 props（可选，直接存储在 VNode 上） */
+  props: Record<string, unknown> | null;
   /** 是否为静态提升 */
   isStatic: boolean;
   /** 是否为静态根节点 */

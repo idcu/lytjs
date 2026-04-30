@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest';
 import { h, Fragment } from '../src/index';
-import { getVNodeProps } from '@lytjs/vdom';
 
 describe('h', () => {
   it('should create element VNode', () => {
@@ -10,7 +9,7 @@ describe('h', () => {
 
   it('should create VNode with props', () => {
     const vnode = h('div', { id: 'app' });
-    expect(getVNodeProps(vnode)).toEqual({ id: 'app' });
+    expect(vnode.props).toEqual({ id: 'app' });
   });
 
   it('should create VNode with children', () => {
@@ -36,12 +35,12 @@ describe('h', () => {
 
   it('should handle null props', () => {
     const vnode = h('div', null, 'text');
-    expect(getVNodeProps(vnode)).toEqual({});
+    expect(vnode.props).toEqual(null);
   });
 
   it('should merge class', () => {
     const vnode = h('div', { class: 'a' }, null);
-    expect(getVNodeProps(vnode).class).toBe('a');
+    expect(vnode.props!.class).toBe('a');
   });
 
   it('should handle key in props', () => {

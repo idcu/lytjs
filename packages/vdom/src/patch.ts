@@ -15,7 +15,6 @@ import type { VNode } from "@lytjs/common-vnode";
 import { isArray, isFunction, hasChanged, EMPTY_OBJ } from "@lytjs/common-is";
 import { isSafeAttribute } from "@lytjs/common-string";
 import type { RendererOptions, HostNode, HostElement } from "./types";
-import { getVNodeProps } from "./props-map";
 import { getSequence } from "@lytjs/common-algorithm";
 
 // ============================================================
@@ -109,7 +108,7 @@ export function createRenderer(
     vnode.el = el;
 
     // Apply props
-    const props = getVNodeProps(vnode) ?? EMPTY_OBJ;
+    const props = vnode.props ?? EMPTY_OBJ;
     for (const key in props) {
       if (key === "key" || key === "ref") continue;
       patchProp(el, key, null, props[key]);
@@ -513,8 +512,8 @@ export function createRenderer(
     const el = (n2.el = n1.el!) as HostElement;
 
     // Patch props
-    const oldProps = getVNodeProps(n1) ?? EMPTY_OBJ;
-    const newProps = getVNodeProps(n2) ?? EMPTY_OBJ;
+    const oldProps = n1.props ?? EMPTY_OBJ;
+    const newProps = n2.props ?? EMPTY_OBJ;
 
     if (n2.patchFlag === PatchFlags.FULL_PROPS) {
       // Full props diff
