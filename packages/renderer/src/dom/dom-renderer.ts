@@ -118,7 +118,12 @@ export function createDOMRenderer(): DOMRenderer {
   return {
     render(vnode: VNode | null, container: Element): void {
       if (vnode == null) {
-        // Unmount: clear container
+        // Unmount: trigger lifecycle hooks before clearing DOM
+        const existing = (container as any)._vnode as VNode | null | undefined;
+        if (existing) {
+          renderer.unmount(existing);
+          (container as any)._vnode = null;
+        }
         if (container.firstChild) {
           container.innerHTML = "";
         }
