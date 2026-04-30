@@ -86,8 +86,20 @@ function renderFragmentToString(vnode: VNode): string {
 // renderElementToString
 // ============================================================
 
+function isValidHTMLElementTag(tag: string): boolean {
+  return /^[a-z][a-z0-9-]*$/.test(tag);
+}
+
 function renderElementToString(vnode: VNode): string {
   const tag = vnode.type as string;
+
+  if (!isValidHTMLElementTag(tag)) {
+    if (__DEV__) {
+      console.warn(`[LytJS warn] Invalid SSR element tag: "${tag}"`);
+    }
+    return "";
+  }
+
   const props = vnode.props ?? {};
   const { shapeFlag, children } = vnode;
 
@@ -119,6 +131,10 @@ function renderElementToString(vnode: VNode): string {
         html += renderVNodeToString(child);
       }
     }
+  }
+
+  if (!isValidHTMLElementTag(tag)) {
+    return "";
   }
 
   html += `</${tag}>`;
