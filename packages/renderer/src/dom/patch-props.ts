@@ -5,6 +5,11 @@
 
 import { isString } from "@lytjs/common-is";
 import { camelToKebab } from "@lytjs/common-string";
+import {
+  getDOMEventName,
+  extractDOMEventHandler,
+  extractDOMEventOptions,
+} from "@lytjs/common-events";
 import { isBooleanAttr } from "../utils";
 
 // ============================================================
@@ -16,57 +21,6 @@ import { isBooleanAttr } from "../utils";
  */
 export function isOn(key: string): boolean {
   return /^on[A-Z]/.test(key);
-}
-
-// ============================================================
-// Event name mapping
-// ============================================================
-
-/**
- * Special event name mappings from camelCase prop names to DOM event names.
- * e.g., onDoubleClick -> dblclick, onMouseEnter -> mouseenter
- */
-const EVENT_NAME_MAP: Record<string, string> = {
-  onDoubleClick: "dblclick",
-  onMouseEnter: "mouseenter",
-  onMouseLeave: "mouseleave",
-  onBeforeInput: "beforeinput",
-  onCompositionStart: "compositionstart",
-  onCompositionUpdate: "compositionupdate",
-  onCompositionEnd: "compositionend",
-  onPointerEnter: "pointerenter",
-  onPointerLeave: "pointerleave",
-  onPointerDown: "pointerdown",
-  onPointerMove: "pointermove",
-  onPointerUp: "pointerup",
-  onPointerCancel: "pointercancel",
-  onPointerOver: "pointerover",
-  onPointerOut: "pointerout",
-  onDragStart: "dragstart",
-  onDragEnd: "dragend",
-  onDragOver: "dragover",
-  onDragEnter: "dragenter",
-  onDragLeave: "dragleave",
-  onDragDrop: "drop",
-  onAnimationStart: "animationstart",
-  onAnimationEnd: "animationend",
-  onAnimationIteration: "animationiteration",
-  onTransitionEnd: "transitionend",
-  onTouchStart: "touchstart",
-  onTouchMove: "touchmove",
-  onTouchEnd: "touchend",
-  onTouchCancel: "touchcancel",
-  onContextMenu: "contextmenu",
-  onWheel: "wheel",
-  onScroll: "scroll",
-};
-
-/**
- * Convert a camelCase event prop name (e.g., onClick) to a DOM event name (e.g., click).
- * Uses the mapping table for special cases, falls back to simple lowercase conversion.
- */
-function getEventName(rawName: string): string {
-  return EVENT_NAME_MAP[rawName] ?? rawName.slice(2).toLowerCase();
 }
 
 // ============================================================
@@ -184,13 +138,13 @@ export function patchEvent(
   next: unknown,
 ): void {
   // Extract event name using the mapping table
-  const eventName = getEventName(rawName);
+  const eventName = getDOMEventName(rawName);
 
   // Normalize prev/next to extract handler and options
-  const prevHandler = extractEventHandler(prev);
-  const prevOptions = extractEventOptions(prev);
-  const nextHandler = extractEventHandler(next);
-  const nextOptions = extractEventOptions(next);
+  const prevHandler = extractDOMEventHandler(prev);
+  const prevOptions = extractDOMEventOptions(prev);
+  const nextHandler = extractDOMEventHandler(next);
+  const nextOptions = extractDOMEventOptions(next);
 
   // Remove previous listener
   if (prevHandler) {
@@ -209,47 +163,6 @@ export function patchEvent(
     invoker.value = nextHandler;
     el.addEventListener(eventName, invoker, nextOptions);
   }
-}
-
-/**
- * Extract the event handler function from a prop value.
- * Supports both plain functions and objects with a handler property.
- */
-function extractEventHandler(value: unknown): EventListener | null {
-  if (isFunction(value)) {
-    return value as EventListener;
-  }
-  if (value != null && typeof value === "object" && "handler" in value) {
-    return (value as { handler: EventListener }).handler;
-  }
-  return null;
-}
-
-/**
- * Extract event options (capture, passive, once) from a prop value.
- * Returns undefined when no options are specified (for performance).
- */
-function extractEventOptions(
-  value: unknown,
-): boolean | AddEventListenerOptions | undefined {
-  if (value != null && typeof value === "object" && !isFunction(value)) {
-    const opts = value as Record<string, unknown>;
-    if ("capture" in opts || "passive" in opts || "once" in opts) {
-      return {
-        capture: !!opts.capture,
-        passive: !!opts.passive,
-        once: !!opts.once,
-      };
-    }
-  }
-  return undefined;
-}
-
-/**
- * Check if a value is a function
- */
-function isFunction(value: unknown): value is (...args: any[]) => any {
-  return typeof value === "function";
 }
 
 // ============================================================

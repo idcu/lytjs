@@ -14,6 +14,11 @@ import {
 import type { VNode } from "@lytjs/common-vnode";
 import { isArray, isFunction, hasChanged, EMPTY_OBJ } from "@lytjs/common-is";
 import { isSafeAttribute } from "@lytjs/common-string";
+import {
+  getDOMEventName,
+  extractDOMEventHandler,
+  extractDOMEventOptions,
+} from "@lytjs/common-events";
 import type { RendererOptions, HostNode, HostElement } from "./types";
 import { getSequence } from "@lytjs/common-algorithm";
 
@@ -787,74 +792,6 @@ export function createRenderer(
 /**
  * Create default DOM renderer options for browser environments
  */
-
-/**
- * Special event name mappings from camelCase prop names to DOM event names.
- */
-const DOM_EVENT_NAME_MAP: Record<string, string> = {
-  onDoubleClick: "dblclick",
-  onMouseEnter: "mouseenter",
-  onMouseLeave: "mouseleave",
-  onBeforeInput: "beforeinput",
-  onCompositionStart: "compositionstart",
-  onCompositionUpdate: "compositionupdate",
-  onCompositionEnd: "compositionend",
-  onPointerEnter: "pointerenter",
-  onPointerLeave: "pointerleave",
-  onPointerDown: "pointerdown",
-  onPointerMove: "pointermove",
-  onPointerUp: "pointerup",
-  onPointerCancel: "pointercancel",
-  onPointerOver: "pointerover",
-  onPointerOut: "pointerout",
-  onDragStart: "dragstart",
-  onDragEnd: "dragend",
-  onDragOver: "dragover",
-  onDragEnter: "dragenter",
-  onDragLeave: "dragleave",
-  onDragDrop: "drop",
-  onAnimationStart: "animationstart",
-  onAnimationEnd: "animationend",
-  onAnimationIteration: "animationiteration",
-  onTransitionEnd: "transitionend",
-  onTouchStart: "touchstart",
-  onTouchMove: "touchmove",
-  onTouchEnd: "touchend",
-  onTouchCancel: "touchcancel",
-  onContextMenu: "contextmenu",
-  onWheel: "wheel",
-  onScroll: "scroll",
-};
-
-function getDOMEventName(rawName: string): string {
-  return DOM_EVENT_NAME_MAP[rawName] ?? rawName.slice(2).toLowerCase();
-}
-
-function extractDOMEventHandler(value: unknown): EventListener | null {
-  if (typeof value === "function") {
-    return value as EventListener;
-  }
-  if (value != null && typeof value === "object" && "handler" in value) {
-    return (value as { handler: EventListener }).handler;
-  }
-  return null;
-}
-
-function extractDOMEventOptions(
-  value: unknown,
-): boolean | AddEventListenerOptions | undefined {
-  if (value != null && typeof value === "object" && typeof value !== "function") {
-    const opts = value as Record<string, unknown>;
-    if ("capture" in opts || "passive" in opts || "once" in opts) {
-      return {
-        capture: !!opts.capture,
-        passive: !!opts.passive,
-        once: !!opts.once,
-      };
-    }
-  }
-  return undefined;
-}
 
 export function createDOMRendererOptions(): RendererOptions<Node, Element> {
   return {
