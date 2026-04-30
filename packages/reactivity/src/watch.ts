@@ -26,8 +26,8 @@ import type {
 // ==================== Scheduler 队列 ====================
 
 let flushIndex = 0;
-const pendingPreFlushCbs: Function[] = [];
-const pendingPostFlushCbs: Function[] = [];
+const pendingPreFlushCbs: (Function | undefined)[] = [];
+const pendingPostFlushCbs: (Function | undefined)[] = [];
 const queuedPreCbs = new Set<Function>();
 const queuedPostCbs = new Set<Function>();
 
@@ -39,7 +39,7 @@ function queuePostFlushCb(cb: Function) {
   queueCb(cb, pendingPostFlushCbs);
 }
 
-function queueCb(cb: Function, queue: Function[]) {
+function queueCb(cb: Function, queue: (Function | undefined)[]) {
   const queuedSet = queue === pendingPreFlushCbs ? queuedPreCbs : queuedPostCbs;
   if (!queuedSet.has(cb)) {
     queuedSet.add(cb);
@@ -78,7 +78,7 @@ function flushJobs() {
     for (flushIndex = 0; flushIndex < preLen; flushIndex++) {
       const cb = pendingPreFlushCbs[flushIndex];
       if (cb) {
-        pendingPreFlushCbs[flushIndex] = undefined as any;
+        pendingPreFlushCbs[flushIndex] = undefined;
         cb();
       }
     }
@@ -91,7 +91,7 @@ function flushJobs() {
     for (flushIndex = 0; flushIndex < postLen; flushIndex++) {
       const cb = pendingPostFlushCbs[flushIndex];
       if (cb) {
-        pendingPostFlushCbs[flushIndex] = undefined as any;
+        pendingPostFlushCbs[flushIndex] = undefined;
         cb();
       }
     }
@@ -99,11 +99,15 @@ function flushJobs() {
     queuedPostCbs.clear();
   }
 
-  if (iterations >= MAX_ITERATIONS && __DEV__) {
-    console.warn(
+  if (iterations >= MAX_ITERATIONS) {
+    const msg =
       `[lytjs/reactivity] flushJobs exceeded ${MAX_ITERATIONS} iterations. ` +
-        `Possible infinite update loop detected.`,
-    );
+      `Possible infinite update loop detected.`;
+    if (__DEV__) {
+      console.warn(msg);
+    } else {
+      console.error(msg);
+    }
   }
 
   isFlushing = false;
