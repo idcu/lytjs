@@ -360,7 +360,6 @@ function createShallowReadonlyCollectionHandler(): ProxyHandler<Target> {
             }
             // 返回适当的默认值以匹配方法签名
             if (key === 'delete') return false;
-            if (key === 'has') return false;
             // set/add/clear 返回 undefined 即可
             return undefined;
           };
