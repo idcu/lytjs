@@ -111,7 +111,7 @@ export function createApp(
     },
 
     provide(key, value) {
-      context.provides[key as string] = value;
+      (context.provides as Record<string | symbol, unknown>)[key] = value;
       return app;
     },
 
