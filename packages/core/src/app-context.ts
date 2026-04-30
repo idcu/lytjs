@@ -3,7 +3,7 @@
 
 import type { AppConfig, Renderer } from "./types";
 import { createAppContext as createBaseAppContext } from "@lytjs/component";
-import type { AppContext as BaseAppContext } from "@lytjs/component";
+import type { AppContext as BaseAppContext, ComponentInternalInstance } from "@lytjs/component";
 
 // 需要延迟导入避免循环依赖
 type VNode = import("./types").VNode;
@@ -18,6 +18,7 @@ export interface AppContext extends BaseAppContext {
   renderer: Renderer | null;
   _vnode: VNode | null;
   _container: Element | null;
+  _instance: ComponentInternalInstance | null;
 }
 
 /**
@@ -34,6 +35,7 @@ export function createAppContext(): AppContext {
     renderer: null,
     _vnode: null,
     _container: null,
+    _instance: null,
   };
 }
 
