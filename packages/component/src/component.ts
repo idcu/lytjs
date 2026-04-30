@@ -180,6 +180,9 @@ export function finishComponentSetup(
 ): void {
   const { type } = instance;
 
+  // Create public instance proxy before data() so ctx is available
+  instance.ctx = createComponentPublicInstance(instance);
+
   // Init data
   if (type.data) {
     const data = type.data.call(instance.ctx);
@@ -195,9 +198,6 @@ export function finishComponentSetup(
       instance.render = type.render.bind(instance.ctx);
     }
   }
-
-  // Create public instance proxy
-  instance.ctx = createComponentPublicInstance(instance);
 }
 
 // ==================== initProps ====================
@@ -221,7 +221,7 @@ export function initProps(
   for (const key in propsOptions) {
     if (hasOwn(propsOptions, key)) {
       const value = rawProps[key];
-      props[key] = resolvePropValue(propsOptions[key]!, value, instance);
+      props[key] = resolvePropValue(propsOptions[key]!, value, instance, key);
     }
   }
 

@@ -3,6 +3,8 @@
 
 import type { ComponentInternalInstance, ComponentOptions } from "./types";
 import { createComponentInstance, setupComponent } from "./component";
+import { ShapeFlags } from "@lytjs/common-vnode";
+import type { VNode } from "@lytjs/common-vnode";
 
 // ==================== Types ====================
 
@@ -60,7 +62,7 @@ export function createSuspenseInstance(
   props: SuspenseProps = {},
   parent: ComponentInternalInstance | null = null,
 ): ComponentInternalInstance {
-  const vnode = {
+  const vnode: VNode = {
     type: Suspense,
     props: {
       timeout: props.timeout,
@@ -69,6 +71,27 @@ export function createSuspenseInstance(
       onError: props.onError,
     },
     children: null,
+    key: null,
+    ref: null,
+    isStatic: false,
+    isStaticRoot: false,
+    isOnce: false,
+    isAsyncPlaceholder: false,
+    isComment: false,
+    isCloned: false,
+    isBlockTree: false,
+    shapeFlag: ShapeFlags.SUSPENSE | ShapeFlags.STATEFUL_COMPONENT,
+    patchFlag: 0,
+    dynamicProps: null,
+    dynamicChildren: null,
+    component: null,
+    el: null,
+    anchor: null,
+    target: null,
+    targetAnchor: null,
+    targetStart: null,
+    loc: null,
+    __v_isVNode: true,
   };
 
   const instance = createComponentInstance(vnode, parent);
@@ -126,7 +149,11 @@ export function registerAsyncChild(
         boundary.promise = null;
         // Call onResolve callbacks
         for (const cb of boundary.onResolve) {
-          cb();
+          try {
+            cb();
+          } catch (e) {
+            console.error('[LytJS] Error in suspense resolve callback:', e)
+          }
         }
       }
       return result;
@@ -141,7 +168,11 @@ export function registerAsyncChild(
         boundary.promise = null;
         // Call onError callbacks (P1-16 fix: was incorrectly calling onPending)
         for (const cb of boundary.onError) {
-          cb(err);
+          try {
+            cb(err);
+          } catch (e) {
+            console.error('[LytJS] Error in suspense error callback:', e)
+          }
         }
       }
     });
