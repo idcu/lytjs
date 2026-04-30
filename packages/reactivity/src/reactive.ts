@@ -32,6 +32,8 @@ type Target = object;
 
 // ==================== 辅助常量 ====================
 
+const MUTATING_METHODS = new Set<string>(["set", "add", "delete", "clear"]);
+
 // ==================== 数组方法拦截 ====================
 
 const arrayInstrumentations: Record<string | symbol, Function> = {};
@@ -277,8 +279,7 @@ function createCollectionHandler(
       const res = Reflect.get(target, key, target);
       if (typeof res === "function") {
         if (!isReadonly) {
-          const mutatingMethods = new Set(["set", "add", "delete", "clear"]);
-          if (mutatingMethods.has(key as string)) {
+          if (MUTATING_METHODS.has(key as string)) {
             return (...args: any[]) => {
               const result = res.apply(target, args);
               trigger(target, TriggerOpTypes.ADD, ITERATE_KEY_COL);
