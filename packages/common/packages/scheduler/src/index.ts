@@ -14,6 +14,15 @@
 export type SchedulerJob = () => void;
 
 // ============================================================
+// 全局错误处理
+// ============================================================
+
+let globalErrorHandler: ((error: Error, info: string) => void) | null = null;
+export function setErrorHandler(handler: (error: Error, info: string) => void | null): void {
+  globalErrorHandler = handler;
+}
+
+// ============================================================
 // 调度器状态
 // ============================================================
 
@@ -111,9 +120,8 @@ export function flushJobs(): void {
         try {
           cb();
         } catch (e) {
-          if (__DEV__) {
-            console.error("[lytjs/common-scheduler] pre-flush callback failed:", e);
-          }
+          if (globalErrorHandler) globalErrorHandler(e as Error, "pre-flush callback");
+          console.error("[lytjs/common-scheduler] pre-flush callback failed:", e);
         }
       }
       preFlushCbs.length = 0;
@@ -125,9 +133,8 @@ export function flushJobs(): void {
         try {
           job();
         } catch (e) {
-          if (__DEV__) {
-            console.error("[lytjs/common-scheduler] job execution failed:", e);
-          }
+          if (globalErrorHandler) globalErrorHandler(e as Error, "job execution");
+          console.error("[lytjs/common-scheduler] job execution failed:", e);
         }
       }
       queue.length = 0;
@@ -139,9 +146,8 @@ export function flushJobs(): void {
         try {
           cb();
         } catch (e) {
-          if (__DEV__) {
-            console.error("[lytjs/common-scheduler] post-flush callback failed:", e);
-          }
+          if (globalErrorHandler) globalErrorHandler(e as Error, "post-flush callback");
+          console.error("[lytjs/common-scheduler] post-flush callback failed:", e);
         }
       }
       postFlushCbs.length = 0;
