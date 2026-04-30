@@ -61,18 +61,22 @@ export function escapeRegExp(str: string): string {
 }
 
 /**
+ * 转义 HTML 特殊字符的映射表（模块级常量，避免每次调用重复创建）
+ */
+const HTML_ESCAPE_MAP: Record<string, string> = {
+  "&": "&amp;",
+  "<": "&lt;",
+  ">": "&gt;",
+  '"': "&quot;",
+  "'": "&#39;",
+  "`": "&#96;",
+};
+
+/**
  * 转义 HTML 特殊字符
  */
 export function escapeHTML(str: string): string {
-  const map: Record<string, string> = {
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#39;",
-    "`": "&#96;",
-  };
-  return str.replace(/[&<>"'`]/g, (c) => map[c] ?? c);
+  return str.replace(/[&<>"'`]/g, (c) => HTML_ESCAPE_MAP[c] ?? c);
 }
 
 /**
@@ -84,20 +88,24 @@ export function escapeAttrValue(str: string): string {
 }
 
 /**
+ * 反转义 HTML 特殊字符的映射表（模块级常量，避免每次调用重复创建）
+ */
+const HTML_UNESCAPE_MAP: Record<string, string> = {
+  "&amp;": "&",
+  "&lt;": "<",
+  "&gt;": ">",
+  "&quot;": '"',
+  "&#39;": "'",
+  "&apos;": "'",
+};
+
+/**
  * 反转义 HTML 特殊字符
  */
 export function unescapeHTML(str: string): string {
-  const map: Record<string, string> = {
-    "&amp;": "&",
-    "&lt;": "<",
-    "&gt;": ">",
-    "&quot;": '"',
-    "&#39;": "'",
-    "&apos;": "'",
-  };
   return str.replace(
     /&(?:amp|lt|gt|quot|#39|apos);/g,
-    (entity) => map[entity] ?? entity,
+    (entity) => HTML_UNESCAPE_MAP[entity] ?? entity,
   );
 }
 
@@ -112,10 +120,20 @@ export function trim(str: string): string {
  * 去除首尾指定字符
  */
 export function trimChars(str: string, chars: string): string {
-  const pattern = new RegExp(
-    `^[${escapeRegExp(chars)}]+|[${escapeRegExp(chars)}]+$`,
-    "g",
-  );
+  // 将 ] 和 - 放在字符类开头，避免在字符类中间需要转义
+  // 先从 chars 中提取 ] 和 -，再对其余字符进行标准转义
+  const specialChars: string[] = [];
+  const normalChars: string[] = [];
+  for (const ch of chars) {
+    if (ch === "]" || ch === "-") {
+      specialChars.push(ch);
+    } else {
+      normalChars.push(ch);
+    }
+  }
+  const charClass =
+    specialChars.join("") + escapeRegExp(normalChars.join(""));
+  const pattern = new RegExp(`^[${charClass}]+|[${charClass}]+$`, "g");
   return str.replace(pattern, "");
 }
 

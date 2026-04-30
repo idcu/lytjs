@@ -20,6 +20,7 @@ import type {
   BaseNode,
   CompilerOptions,
   VNodeCall,
+  ExpressionNode,
 } from "./types";
 import {
   createSimpleExpression,
@@ -173,12 +174,12 @@ function createTransformContext(
       }
     },
     onNodeRemoved(): void {},
-    addIdentifiers(exp: any): void {
+    addIdentifiers(exp: ExpressionNode | string): void {
       if (typeof exp === "string") context.identifiers.add(exp);
       else if (exp.type === NodeTypes.SIMPLE_EXPRESSION && !exp.isStatic)
         context.identifiers.add(exp.content);
     },
-    removeIdentifiers(exp: any): void {
+    removeIdentifiers(exp: ExpressionNode | string): void {
       if (typeof exp === "string") context.identifiers.delete(exp);
       else if (exp.type === NodeTypes.SIMPLE_EXPRESSION && !exp.isStatic)
         context.identifiers.delete(exp.content);

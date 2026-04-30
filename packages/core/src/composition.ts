@@ -11,6 +11,9 @@ import type { InternalSlots } from "./types";
 export function useSlots(): InternalSlots {
   const instance = getCurrentInstance();
   if (!instance) {
+    if (__DEV__) {
+      console.warn("[LyticsJS warn] useSlots() was called outside of setup().");
+    }
     return {} as InternalSlots;
   }
   return instance.slots || ({} as InternalSlots);
@@ -22,6 +25,9 @@ export function useSlots(): InternalSlots {
 export function useAttrs(): Record<string, unknown> {
   const instance = getCurrentInstance();
   if (!instance) {
+    if (__DEV__) {
+      console.warn("[LyticsJS warn] useAttrs() was called outside of setup().");
+    }
     return {};
   }
   return instance.attrs || {};

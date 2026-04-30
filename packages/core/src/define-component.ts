@@ -73,6 +73,11 @@ export function defineAsyncComponent(
         loadedComponent.value = comp;
         error.value = undefined;
         loading.value = false;
+        // load 成功后清除 timeout，避免不必要的超时回调
+        if (timeoutId !== null) {
+          clearTimeout(timeoutId);
+          timeoutId = null;
+        }
         return comp;
       })
       .catch((err) => {
@@ -80,7 +85,36 @@ export function defineAsyncComponent(
         loading.value = false;
         if (onError) {
           return new Promise<any>((resolve, reject) => {
-            onError(err, () => resolve(retry()), reject, retries);
+            let settled = false;
+            const ON_ERROR_TIMEOUT = 30000; // 30 秒超时保护
+            const timer = setTimeout(() => {
+              if (!settled) {
+                settled = true;
+                reject(
+                  new Error(
+                    `[lytjs/core] AsyncComponent: onError callback did not call retry() or reject() within ${ON_ERROR_TIMEOUT / 1000}s.`,
+                  ),
+                );
+              }
+            }, ON_ERROR_TIMEOUT);
+            onError(
+              err,
+              () => {
+                if (!settled) {
+                  settled = true;
+                  clearTimeout(timer);
+                  resolve(retry());
+                }
+              },
+              (reason?: any) => {
+                if (!settled) {
+                  settled = true;
+                  clearTimeout(timer);
+                  reject(reason ?? err);
+                }
+              },
+              retries,
+            );
           });
         }
         throw err;

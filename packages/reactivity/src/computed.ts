@@ -49,9 +49,8 @@ class ComputedRefImpl<T> {
     if (this._dirty) {
       if (this.effect.active) {
         const value = this.effect.run();
-        if (value !== undefined) {
-          this._value = value;
-        }
+         
+        this._value = value!;
         this._dirty = false;
       } else if (__DEV__) {
         console.warn(

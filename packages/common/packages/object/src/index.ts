@@ -6,6 +6,11 @@
 import { isPlainObject, isArray, isNullish, hasOwn } from "@lytjs/common-is";
 
 /**
+ * 危险 key 列表，用于防止原型污染
+ */
+const PROTO_POLLUTION_KEYS = new Set(["__proto__", "constructor", "prototype"]);
+
+/**
  * 浅合并多个对象
  */
 export function mergeObjects<T extends Record<string, any>>(
@@ -15,7 +20,7 @@ export function mergeObjects<T extends Record<string, any>>(
   for (const source of sources) {
     if (source) {
       for (const key in source) {
-        if (hasOwn(source, key)) {
+        if (hasOwn(source, key) && !PROTO_POLLUTION_KEYS.has(key)) {
           (result as any)[key] = source[key];
         }
       }
@@ -33,7 +38,7 @@ export function deepMerge<T extends Record<string, any>>(
 ): T {
   const result = { ...target };
   for (const key in source) {
-    if (hasOwn(source, key)) {
+    if (hasOwn(source, key) && !PROTO_POLLUTION_KEYS.has(key)) {
       const sourceVal = source[key];
       const targetVal = result[key];
       if (isPlainObject(sourceVal) && isPlainObject(targetVal)) {

@@ -254,7 +254,18 @@ export function createSetupContext(
     slots: instance.slots,
     emit: instance.emit,
     expose(exposed?: Record<string, any>) {
-      instance.exposed = exposed ?? null;
+      if (!exposed) {
+        instance.exposed = null;
+        return;
+      }
+      // 过滤危险 key，防止原型污染
+      const safeExposed: Record<string, any> = {};
+      for (const key of Object.keys(exposed)) {
+        if (key !== "__proto__" && key !== "constructor") {
+          safeExposed[key] = exposed[key];
+        }
+      }
+      instance.exposed = safeExposed;
     },
   };
 }

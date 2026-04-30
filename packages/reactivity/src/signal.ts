@@ -89,6 +89,12 @@ export function computedSignal<T>(fn: () => T): ComputedSignal<T> {
   } as ComputedSignal<T>;
 
   Object.defineProperty(computedFn, ComputedSignalSymbol, { value: true });
+  Object.defineProperty(computedFn, "stop", {
+    value: () => runner.stop(),
+    writable: false,
+    enumerable: false,
+    configurable: true,
+  });
   return computedFn;
 }
 

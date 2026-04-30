@@ -10,7 +10,6 @@ import {
   ShapeFlags,
   PatchFlags,
   isSameVNodeType,
-  FUNCTIONAL_COMPONENT,
 } from "@lytjs/common-vnode";
 import type { VNode, ComponentInternalInstance } from "@lytjs/common-vnode";
 import { isArray, isFunction, hasChanged, EMPTY_OBJ } from "@lytjs/common-is";
@@ -64,6 +63,13 @@ export function createRenderer(
   ): void {
     // If n1 and n2 are the same type, patch them
     if (n1 !== null && isSameVNodeType(n1, n2)) {
+      // If n1.el is null (e.g. previously unmounted), fall through to mount logic
+      if (n1.el === null) {
+        n1 = null;
+      }
+    }
+
+    if (n1 !== null && isSameVNodeType(n1, n2)) {
       // Fragment needs special handling
       if (n2.type === Fragment) {
         patchFragment(
@@ -76,7 +82,7 @@ export function createRenderer(
         );
       } else if (n2.type === Text) {
         // Patch text node: update textContent if children changed
-        const node = (n2.el = n1.el!);
+        const node = (n2.el = n1.el);
         if (n1.children !== n2.children) {
           (node as any).textContent = isFunction(n2.children)
             ? ""
@@ -84,7 +90,7 @@ export function createRenderer(
         }
       } else if (n2.type === Comment) {
         // Patch comment node: update nodeValue if children changed
-        const node = (n2.el = n1.el!);
+        const node = (n2.el = n1.el);
         if (n1.children !== n2.children) {
           (node as any).nodeValue = isFunction(n2.children)
             ? ""
@@ -92,7 +98,7 @@ export function createRenderer(
         }
       } else if (n2.shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
         // Component patch: delegate to component update process
-        n2.el = n1.el!;
+        n2.el = n1.el;
         n2.component = n1.component;
         if (n2.component) {
           const { update } = n2.component;
@@ -140,7 +146,14 @@ export function createRenderer(
     anchor: HostNode | null,
     isSVG: boolean,
   ): void {
-    const tag = vnode.type as string;
+    if (typeof vnode.type !== 'string') {
+      console.warn(
+        `[LytJS warn]: mountElement received a vnode with non-string type (${String(vnode.type)}). ` +
+        `Only element vnodes can be mounted as elements.`,
+      );
+      return;
+    }
+    const tag = vnode.type;
     const el = createElement(tag);
     vnode.el = el;
 
@@ -716,7 +729,7 @@ export function createRenderer(
     if (
       component &&
       (vnode.shapeFlag & ShapeFlags.STATEFUL_COMPONENT ||
-        vnode.shapeFlag & FUNCTIONAL_COMPONENT)
+        vnode.shapeFlag & ShapeFlags.FUNCTIONAL_COMPONENT)
     ) {
       const { bum } = component as ComponentInternalInstance;
       if (isArray(bum)) {

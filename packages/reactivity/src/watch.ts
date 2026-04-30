@@ -122,7 +122,13 @@ export function watch<T, Immediate extends Readonly<boolean> = false>(
   const job: () => void = () => {
     if (!effect.active || isStopped) return;
     if (cb) {
-      const newValue = effect.run();
+      let newValue: any;
+      try {
+        newValue = effect.run();
+      } catch (e) {
+        console.error("[LyticsJS error] Error in watch getter:", e);
+        throw e;
+      }
       if (
         deep ||
         forceTrigger ||
@@ -145,7 +151,12 @@ export function watch<T, Immediate extends Readonly<boolean> = false>(
         }
       }
     } else {
-      effect.run();
+      try {
+        effect.run();
+      } catch (e) {
+        console.error("[LyticsJS error] Error in watch effect run:", e);
+        throw e;
+      }
     }
   };
 

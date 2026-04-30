@@ -11,7 +11,7 @@ import { patchProp } from "./patch-props";
 // VNode storage for container elements
 // ============================================================
 
-const vnodeMap = new WeakMap<Element, any>();
+export const vnodeMap = new WeakMap<Element, VNode | null>();
 
 // ============================================================
 // SVG namespace detection
@@ -125,10 +125,10 @@ export function createDOMRenderer(): DOMRenderer {
     render(vnode: VNode | null, container: Element): void {
       if (vnode == null) {
         // Unmount: trigger lifecycle hooks before clearing DOM
-        const existing = vnodeMap.get(container) as VNode | null | undefined;
+        const existing = vnodeMap.get(container);
         if (existing) {
           renderer.unmount(existing);
-          vnodeMap.set(container, null);
+          vnodeMap.delete(container);
         }
         if (container.firstChild) {
           // Use replaceChildren instead of innerHTML to avoid memory leaks
@@ -143,8 +143,8 @@ export function createDOMRenderer(): DOMRenderer {
         }
       } else {
         // Patch into container
-        const existing = vnodeMap.get(container) as VNode | null | undefined;
-        renderer.patch(existing ?? null, vnode, container);
+        const existing = vnodeMap.get(container) ?? null;
+        renderer.patch(existing, vnode, container);
         vnodeMap.set(container, vnode);
       }
     },

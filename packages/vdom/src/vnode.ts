@@ -288,6 +288,28 @@ function normalizeProps(props: Record<string, any>): Record<string, any> {
 }
 
 /**
+ * Parse a CSS inline style string (e.g. "color:red; font-size:16px")
+ * into a plain object { color: "red", fontSize: "16px" }.
+ */
+function parseStringStyle(cssText: string): Record<string, string> {
+  const res: Record<string, string> = {};
+  const list = cssText.split(";");
+  for (let i = 0; i < list.length; i++) {
+    const item = list[i]?.trim();
+    if (!item) continue;
+    const colonIdx = item.indexOf(":");
+    if (colonIdx === -1) continue;
+    const prop = item.slice(0, colonIdx).trim();
+    const val = item.slice(colonIdx + 1).trim();
+    if (!prop) continue;
+    // Convert kebab-case to camelCase for JS style objects
+    const camelProp = prop.replace(/-\w/g, (m) => m[1]?.toUpperCase() ?? "");
+    res[camelProp] = val;
+  }
+  return res;
+}
+
+/**
  * Normalize style value - keeps object form for vdom patch diffing
  * Note: common-string's normalizeStyle returns string, but vdom needs object form
  */
@@ -301,7 +323,8 @@ function normalizeStyle(
       if (item) {
         const normalized = normalizeStyle(item);
         if (isString(normalized)) {
-          // Skip string elements to avoid ignoring subsequent object elements
+          // Parse string styles (e.g. "color:red") into object form and merge
+          Object.assign(res, parseStringStyle(normalized));
           continue;
         }
         Object.assign(res, normalized);

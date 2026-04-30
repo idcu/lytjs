@@ -81,18 +81,14 @@ export function effectScope(detached?: boolean): EffectScope {
         try {
           effect.stop();
         } catch (e) {
-          if (__DEV__) {
-            console.warn("[LyticsJS warn] Error stopping effect in scope:", e);
-          }
+          console.error("[LyticsJS warn] Error stopping effect in scope:", e);
         }
       }
       for (const cleanup of this.cleanups) {
         try {
           cleanup();
         } catch (e) {
-          if (__DEV__) {
-            console.warn("[LyticsJS warn] Error running cleanup in scope:", e);
-          }
+          console.error("[LyticsJS warn] Error running cleanup in scope:", e);
         }
       }
       this.effects.length = 0;
@@ -134,5 +130,9 @@ export function getCurrentScope(): EffectScope | undefined {
 export function onScopeDispose(fn: () => void): void {
   if (activeEffectScope) {
     activeEffectScope.cleanups.push(fn);
+  } else if (__DEV__) {
+    console.warn(
+      "[LyticsJS warn] onScopeDispose() was called when there was no active effect scope to be associated with.",
+    );
   }
 }

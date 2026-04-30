@@ -367,18 +367,20 @@ function parseElement(context: ParserContext): ElementNode | undefined {
     );
     if (endTagMatch) {
       advanceBy(context, endTagMatch[0].length);
-    } else if (__DEV__) {
-      console.warn(
-        `[LytJS compiler warn] Element <${tag}> was left open. Expected closing tag </${tag}>.`,
-      );
-    }
+    } else {
+      if (__DEV__) {
+        console.warn(
+          `[LytJS compiler warn] Element <${tag}> was left open. Expected closing tag </${tag}>.`,
+        );
+      }
 
-    if (context.options.onError) {
-      context.options.onError(
-        new Error(
-          `[LytJS compiler error] Element <${tag}> was left open. Expected closing tag </${tag}>.`,
-        ),
-      );
+      if (context.options.onError) {
+        context.options.onError(
+          new Error(
+            `[LytJS compiler error] Element <${tag}> was left open. Expected closing tag </${tag}>.`,
+          ),
+        );
+      }
     }
   }
 
