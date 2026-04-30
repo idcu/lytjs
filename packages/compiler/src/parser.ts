@@ -185,13 +185,17 @@ function parseChildren(
 function condenseWhitespace(nodes: TemplateChildNode[]): TemplateChildNode[] {
   const condensed: TemplateChildNode[] = [];
   let prevText: TextNode | undefined;
+  // Track indices of whitespace-only text nodes to remove in a single pass (O(n))
+  const whitespaceIndicesToRemove = new Set<number>();
 
-  for (const node of nodes) {
+  for (let i = 0; i < nodes.length; i++) {
+    const node = nodes[i]!;
     if (node.type === NodeTypes.TEXT) {
       if (!node.content.trim()) {
         if (prevText) {
           prevText.content += node.content;
         } else if (condensed.length > 0) {
+          whitespaceIndicesToRemove.add(condensed.length);
           prevText = node;
           condensed.push(node);
         }
@@ -200,10 +204,8 @@ function condenseWhitespace(nodes: TemplateChildNode[]): TemplateChildNode[] {
     }
 
     if (node.type === NodeTypes.TEXT && prevText && !prevText.content.trim()) {
-      const idx = condensed.indexOf(prevText);
-      if (idx !== -1) {
-        condensed.splice(idx, 1);
-      }
+      // Mark the previous whitespace-only text node for removal
+      whitespaceIndicesToRemove.add(condensed.length - 1);
     }
 
     if (node.type === NodeTypes.TEXT) {
@@ -213,6 +215,11 @@ function condenseWhitespace(nodes: TemplateChildNode[]): TemplateChildNode[] {
     }
 
     condensed.push(node);
+  }
+
+  // Filter out marked whitespace nodes in a single pass (O(n))
+  if (whitespaceIndicesToRemove.size > 0) {
+    return condensed.filter((_, idx) => !whitespaceIndicesToRemove.has(idx));
   }
 
   return condensed;
