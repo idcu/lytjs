@@ -98,7 +98,7 @@ export interface VNodeSourceLocation {
 }
 
 export interface VNodeData {
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export interface VNode {
@@ -107,7 +107,7 @@ export interface VNode {
   /** VNode 的 key */
   key: string | number | symbol | null | undefined;
   /** ref 引用 */
-  ref: any;
+  ref: ((ref: unknown) => void) | null;
   /** VNode 的 props（可选，直接存储在 VNode 上） */
   props: Record<string, unknown> | null;
   /** 是否为静态提升 */
@@ -137,15 +137,15 @@ export interface VNode {
   /** 组件实例 */
   component: ComponentInternalInstance | null;
   /** 挂载的 DOM 元素 */
-  el: any;
+  el: Element | Text | Comment | null;
   /** 锚点元素 */
-  anchor: any;
+  anchor: Node | null;
   /** 目标元素（Teleport） */
-  target: any;
+  target: Element | null;
   /** 目标锚点（Teleport） */
-  targetAnchor: any;
+  targetAnchor: Node | null;
   /** 目标起始位置（Teleport） */
-  targetStart: any;
+  targetStart: Node | null;
   /** 源码位置 */
   loc: VNodeSourceLocation | null;
   /** 内部标记 */
@@ -153,12 +153,12 @@ export interface VNode {
 }
 
 export interface ComponentPublicInstance {
-  $props: Record<string, any>;
-  $attrs: Record<string, any>;
-  $refs: Record<string, any>;
-  $slots: Record<string, any>;
-  $emit: (event: string, ...args: any[]) => void;
-  $el: any;
+  $props: Record<string, unknown>;
+  $attrs: Record<string, unknown>;
+  $refs: Record<string, unknown>;
+  $slots: Record<string, unknown>;
+  $emit: (event: string, ...args: unknown[]) => void;
+  $el: Element | ComponentPublicInstance | null;
   $forceUpdate: () => void;
   $nextTick: (fn?: () => void) => Promise<void>;
 }
@@ -170,29 +170,31 @@ export interface ComponentInternalInstance {
   root: ComponentInternalInstance;
   vnode: VNode;
   subTree: VNode;
-  props: Record<string, any>;
-  attrs: Record<string, any>;
-  slots: Record<string, any>;
-  refs: Record<string, any>;
-  setupState: Record<string, any>;
-  data: Record<string, any>;
-  ctx: Record<string, any>;
-  emit: (event: string, ...args: any[]) => void;
+  props: Record<string, unknown>;
+  attrs: Record<string, unknown>;
+  slots: Record<string, unknown>;
+  refs: Record<string, unknown>;
+  setupState: Record<string, unknown>;
+  data: Record<string, unknown>;
+  ctx: Record<string, unknown>;
+  emit: (event: string, ...args: unknown[]) => void;
   isMounted: boolean;
   isUnmounted: boolean;
   isDeactivated: boolean;
   isKeepingAlive: boolean;
+  bum?: (() => void) | null;
+  effects?: Array<{ stop: () => void }>;
 }
 
 export interface BaseComponentOptions {
-  props?: Record<string, any>;
-  emits?: string[] | Record<string, any>;
+  props?: Record<string, unknown>;
+  emits?: string[] | Record<string, unknown>;
   setup?: (...args: any[]) => any;
   render?: (...args: any[]) => any;
-  computed?: Record<string, any>;
-  methods?: Record<string, any>;
-  watch?: Record<string, any>;
-  data?: () => Record<string, any>;
+  computed?: Record<string, () => unknown>;
+  methods?: Record<string, (...args: any[]) => any>;
+  watch?: Record<string, unknown>;
+  data?: () => Record<string, unknown>;
 }
 
 // ============================================================
