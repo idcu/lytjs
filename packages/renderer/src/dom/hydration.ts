@@ -9,6 +9,25 @@ import { isArray, isFunction } from "@lytjs/common-is";
 import { patchProp } from "./patch-props";
 
 // ============================================================
+// Dev mode hydration mismatch warnings
+// ============================================================
+
+const __DEV__ = process.env.NODE_ENV !== "production";
+
+function warnHydrationMismatch(
+  type: string,
+  expected: string,
+  actual: string,
+): void {
+  if (__DEV__) {
+    console.warn(
+      `[LyticsJS warn] Hydration mismatch: expected ${type} "${expected}" but got "${actual}". ` +
+      `The DOM has been patched to match the vnode.`,
+    );
+  }
+}
+
+// ============================================================
 // Hydration types
 // ============================================================
 
@@ -45,11 +64,17 @@ function hydrateNode(vnode: VNode, parent: HTMLElement, index: number): number {
     if (node && node.nodeType === Node.TEXT_NODE) {
       // Match: reuse existing text node
       if (node.textContent !== text) {
+        warnHydrationMismatch("text content", text, node.textContent ?? "");
         node.textContent = text;
       }
       vnode.el = node;
     } else {
       // Mismatch: create new text node and replace
+      warnHydrationMismatch(
+        "node type",
+        `Text("${text}")`,
+        existingNode ? `Element(<${(existingNode as Element).tagName.toLowerCase()}>)` : "none",
+      );
       const newNode = document.createTextNode(text);
       if (node) {
         parent.replaceChild(newNode, node);
@@ -117,6 +142,13 @@ function hydrateNode(vnode: VNode, parent: HTMLElement, index: number): number {
       }
     } else {
       // Mismatch: create new element and replace
+      warnHydrationMismatch(
+        "element tag",
+        `<${tag}>`,
+        existingNode
+          ? `<${(existingNode as Element).tagName.toLowerCase()}>`
+          : "none",
+      );
       const isSVG =
         tag === "svg" ||
         (existingNode as Element | undefined)?.namespaceURI ===
