@@ -22,6 +22,7 @@ export interface SuspenseBoundary {
   onResolve: (() => void)[];
   onPending: (() => void)[];
   onError: ((error: Error) => void)[];
+  aborted: boolean;
 }
 
 // ==================== Suspense Component ====================
@@ -87,6 +88,7 @@ export function createSuspenseBoundary(): SuspenseBoundary {
     onResolve: [],
     onPending: [],
     onError: [],
+    aborted: false,
   };
 }
 
@@ -98,6 +100,8 @@ export function registerAsyncChild(
   boundary: SuspenseBoundary,
   promise: Promise<any>,
 ): boolean {
+  if (boundary.aborted) return false;
+
   const wasPending = boundary.isPending;
   boundary.isPending = true;
   boundary.error = null;
@@ -114,6 +118,7 @@ export function registerAsyncChild(
 
   promise
     .then((result: any) => {
+      if (boundary.aborted) return;
       boundary.pendingPromises.delete(promise);
       // When all promises are resolved, transition to resolved
       if (boundary.pendingPromises.size === 0) {
@@ -127,6 +132,7 @@ export function registerAsyncChild(
       return result;
     })
     .catch((err: Error) => {
+      if (boundary.aborted) return;
       boundary.pendingPromises.delete(promise);
       boundary.error = err;
       // When all promises are settled, transition based on error state
@@ -174,6 +180,7 @@ export function resolveSuspense(boundary: SuspenseBoundary): void {
  * Abort a suspense boundary (e.g., on unmount).
  */
 export function abortSuspense(boundary: SuspenseBoundary): void {
+  boundary.aborted = true;
   boundary.isPending = false;
   boundary.promise = null;
   boundary.pendingPromises.clear();
