@@ -3,7 +3,7 @@
  * VDOM-specific types that extend common-vnode types
  */
 
-import type { VNode } from "@lytjs/common-vnode";
+import type { VNode, ComponentInternalInstance } from "@lytjs/common-vnode";
 
 // ============================================================
 // Basic types
@@ -28,8 +28,8 @@ export interface Component {
   name?: string;
   setup?: (...args: any[]) => any;
   render?: (...args: any[]) => any;
-  props?: Record<string, any>;
-  emits?: string[] | Record<string, any>;
+  props?: Record<string, unknown>;
+  emits?: string[] | Record<string, unknown>;
 }
 
 // ============================================================
@@ -64,8 +64,8 @@ export interface RendererOptions<
     prevValue: unknown,
     nextValue: unknown,
     prevChildren?: VNode[],
-    parentComponent?: any,
-    parentSuspense?: any,
+    parentComponent?: ComponentInternalInstance | null,
+    parentSuspense?: SuspenseBoundary | null,
   ): void;
   /** Create a comment node */
   createComment(text: string): HostNode;
@@ -80,8 +80,8 @@ export interface RendererOptions<
 /** Suspense boundary interface */
 export interface SuspenseBoundary {
   vnode: VNode;
-  parent: any;
-  parentComponent: any;
+  parent: ComponentInternalInstance | null;
+  parentComponent: ComponentInternalInstance | null;
   isSVG: boolean;
   container: Node;
   anchor: Node | null;
@@ -89,7 +89,7 @@ export interface SuspenseBoundary {
   pendingBranch: VNode | null;
   isInFallback: boolean;
   isHydrating: boolean;
-  effects: any[];
+  effects: Array<{ stop: () => void }>;
 }
 
 // ============================================================
