@@ -1,6 +1,7 @@
 import { defineConfig } from 'vitest/config';
+import { resolve } from 'node:path';
 
-const commonRoot = '/workspace/lytjs/packages/common/packages';
+const commonRoot = resolve(__dirname, '../../common/packages');
 
 export default defineConfig({
   resolve: {
@@ -12,7 +13,7 @@ export default defineConfig({
   test: {
     environment: 'node',
     globals: true,
-    setupFiles: ['./test/setup.ts'],
+    setupFiles: ['./tests/setup.ts'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],

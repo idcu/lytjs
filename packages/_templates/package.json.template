@@ -34,7 +34,6 @@
   },
   "dependencies": {},
   "devDependencies": {
-    "@lytjs/test-utils": "workspace:*",
     "tsup": "^8.3.6",
     "typescript": "^5.7.3",
     "vitest": "^3.0.0"
