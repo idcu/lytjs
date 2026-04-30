@@ -335,6 +335,17 @@ export function createRenderer(
         }
       }
 
+      // Build type index for unkeyed new children
+      const newTypeMap = new Map<string, number[]>();
+      for (let i = s2; i <= e2; i++) {
+        const child = c2[i];
+        if (child && !child.key) {
+          const typeKey = String(child.type);
+          if (!newTypeMap.has(typeKey)) newTypeMap.set(typeKey, []);
+          newTypeMap.get(typeKey)!.push(i);
+        }
+      }
+
       let j: number;
       let patched = 0;
       const toBePatched = e2 - s2 + 1;
@@ -354,13 +365,18 @@ export function createRenderer(
         if (prevChild.key != null) {
           newIndex = keyToNewIndexMap.get(prevChild.key);
         } else {
-          for (j = s2; j <= e2; j++) {
-            if (
-              newIndexToOldIndexMap[j - s2] === 0 &&
-              isSameVNodeType(prevChild, c2[j]!)
-            ) {
-              newIndex = j;
-              break;
+          // Use type index map for O(1) lookup instead of O(n) brute-force scan
+          const typeKey = String(prevChild.type);
+          const candidates = newTypeMap.get(typeKey);
+          if (candidates) {
+            for (const candidateIdx of candidates) {
+              if (
+                newIndexToOldIndexMap[candidateIdx - s2] === 0 &&
+                isSameVNodeType(prevChild, c2[candidateIdx]!)
+              ) {
+                newIndex = candidateIdx;
+                break;
+              }
             }
           }
         }
