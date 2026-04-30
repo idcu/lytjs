@@ -7,6 +7,7 @@ import type {
   AsyncComponentLoader,
   AsyncComponentOptions,
 } from "./types";
+import { shallowRef, ref } from "@lytjs/reactivity";
 
 /**
  * 定义组件（类型标记 + 直接返回 options）
@@ -34,26 +35,30 @@ export function defineAsyncComponent(
     onError,
   } = source;
 
-  let resolvedComponent: Component | undefined;
-  let error: Error | undefined;
+  const loadedComponent = shallowRef<Component | undefined>(undefined);
+  const error = ref<Error | undefined>(undefined);
+  const loading = ref(false);
   let retries = 0;
 
   const retry = () => {
     retries++;
-    resolvedComponent = undefined;
-    error = undefined;
+    loadedComponent.value = undefined;
+    error.value = undefined;
     return load();
   };
 
   const load = (): Promise<Component> => {
+    loading.value = true;
     return loader()
       .then((comp) => {
-        resolvedComponent = comp;
-        error = undefined;
+        loadedComponent.value = comp;
+        error.value = undefined;
+        loading.value = false;
         return comp;
       })
       .catch((err) => {
-        error = err;
+        error.value = err;
+        loading.value = false;
         if (onError) {
           return new Promise<any>((resolve, reject) => {
             onError(err, () => resolve(retry()), reject, retries);
@@ -63,6 +68,18 @@ export function defineAsyncComponent(
       });
   };
 
+  // 超时处理
+  if (timeout != null) {
+    setTimeout(() => {
+      if (!loadedComponent.value && !error.value) {
+        error.value = new Error(
+          `[lytjs/core] AsyncComponent timed out after ${timeout}ms.`,
+        );
+        loading.value = false;
+      }
+    }, timeout);
+  }
+
   // 预加载
   load();
 
@@ -70,9 +87,9 @@ export function defineAsyncComponent(
     name: "AsyncComponent",
     setup() {
       const instance = {
-        resolved: resolvedComponent,
-        loading: loadingComponent,
-        error: errorComponent,
+        resolved: loadedComponent,
+        loading,
+        error,
         delay,
         timeout,
       };
@@ -80,13 +97,13 @@ export function defineAsyncComponent(
       return instance;
     },
     render() {
-      if (resolvedComponent) {
-        return resolvedComponent;
+      if (loadedComponent.value) {
+        return loadedComponent.value;
       }
-      if (error && errorComponent) {
+      if (error.value && errorComponent) {
         return errorComponent;
       }
-      if (loadingComponent) {
+      if (loading.value && loadingComponent) {
         return loadingComponent;
       }
       return null;
