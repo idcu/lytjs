@@ -10,6 +10,7 @@ import type {
 } from "../types";
 import { findDirective } from "./helpers";
 import { transformElement } from "./transform-element";
+import { createSimpleExpression } from "../ast";
 
 export function transformOnce(
   node: RootNode | TemplateChildNode,
@@ -32,5 +33,11 @@ export function transformOnce(
   // Mark as hoistable
   if (element.codegenNode) {
     context.addHoist(element.codegenNode);
+    element.codegenNode = createSimpleExpression(
+      `_hoisted_${context.hoists.length - 1}`,
+      false,
+      element.loc,
+      true,
+    ) as unknown as typeof element.codegenNode;
   }
 }
