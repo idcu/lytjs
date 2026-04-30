@@ -15,8 +15,6 @@ import {
 import { camelToKebab } from "@lytjs/common-string";
 import { escapeHtml, isBooleanAttr, isVoidElement } from "../utils";
 
-const __DEV__ = process.env.NODE_ENV !== "production";
-
 // ============================================================
 // renderToString - main entry
 // ============================================================
@@ -147,42 +145,34 @@ function renderElementToString(vnode: VNode): string {
 // renderAttributeToString
 // ============================================================
 
-// Security: block dangerous URL protocols on sensitive attributes
+// Security: attributes that carry URLs and need protocol validation
 // Extracted to module-level constant to avoid re-creation on every render
-const DANGEROUS_ATTRS = new Set([
+const URL_ATTRS = new Set([
   "href", "src", "action", "formaction", "xlink:href", "data", "srcdoc",
-  "autofocus", "contenteditable", "draggable",
-]);
-
-const ALLOWED_URL_PROTOCOLS = new Set([
-  "http", "https", "mailto", "tel",
-]);
-
-const DANGEROUS_PROTOCOLS = new Set([
-  "javascript", "vbscript", "data",
 ]);
 
 function isSafeURL(url: string): boolean {
-  // Decode HTML entities before checking
+  // 循环解码 HTML 实体，直到字符串不再变化
   let decoded = url;
-  try {
-    decoded = decoded.replace(/&#x?[0-9a-f]+;/gi, (match) => {
-      const text = match.replace(/&#x?/i, "").replace(/;$/, "");
-      const code = parseInt(text, match.includes("x") ? 16 : 10);
-      return code > 0 ? String.fromCharCode(code) : match;
+  let prev = '';
+  const entityRegex = /&#x?[0-9a-f]+;/gi;
+  while (decoded !== prev) {
+    prev = decoded;
+    decoded = decoded.replace(entityRegex, match => {
+      return String.fromCharCode(
+        match.startsWith('&#x')
+          ? parseInt(match.slice(3, -1), 16)
+          : parseInt(match.slice(2, -1), 10)
+      );
     });
-  } catch { /* ignore decode errors */ }
-
-  const trimmed = decoded.trim().toLowerCase();
-  const protocolMatch = trimmed.match(/^([a-z][a-z0-9+\-.]*?):/);
-  if (!protocolMatch) {
-    for (const proto of DANGEROUS_PROTOCOLS) {
-      if (trimmed.includes(proto)) return false;
-    }
-    return true;
   }
-  if (DANGEROUS_PROTOCOLS.has(protocolMatch[1])) return false;
-  return ALLOWED_URL_PROTOCOLS.has(protocolMatch[1]);
+  // 使用 URL 构造函数进行额外验证
+  try {
+    const parsed = new URL(decoded, 'http://example.com');
+    return parsed.protocol !== 'javascript:';
+  } catch {
+    return false;
+  }
 }
 
 function renderAttributeToString(key: string, value: unknown): string {
@@ -225,8 +215,8 @@ function renderAttributeToString(key: string, value: unknown): string {
     return ` ${key}`;
   }
 
-  // Security: block dangerous URL protocols on sensitive attributes
-  if (DANGEROUS_ATTRS.has(key)) {
+  // Security: block dangerous URL protocols on URL attributes
+  if (URL_ATTRS.has(key)) {
     if (!isSafeURL(String(value))) {
       if (__DEV__) {
         console.warn(
