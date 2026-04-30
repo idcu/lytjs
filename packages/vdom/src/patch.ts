@@ -19,7 +19,12 @@ import {
   extractDOMEventHandler,
   extractDOMEventOptions,
 } from "@lytjs/common-events";
-import type { RendererOptions, HostNode, HostElement, SuspenseBoundary } from "./types";
+import type {
+  RendererOptions,
+  HostNode,
+  HostElement,
+  SuspenseBoundary,
+} from "./types";
 import { getSequence } from "@lytjs/common-algorithm";
 
 // ============================================================
@@ -68,8 +73,34 @@ export function createRenderer(
           parentSuspense,
           isSVG,
         );
+      } else if (n2.type === Text) {
+        // Patch text node: update textContent if children changed
+        const node = (n2.el = n1.el!);
+        if (n1.children !== n2.children) {
+          (node as any).textContent = isFunction(n2.children)
+            ? ""
+            : String(n2.children ?? "");
+        }
+      } else if (n2.type === Comment) {
+        // Patch comment node: update nodeValue if children changed
+        const node = (n2.el = n1.el!);
+        if (n1.children !== n2.children) {
+          (node as any).nodeValue = isFunction(n2.children)
+            ? ""
+            : String(n2.children ?? "");
+        }
+      } else if (n2.shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
+        // Component patch: delegate to component update process
+        n2.el = n1.el!;
+        n2.component = n1.component;
+        if (n2.component) {
+          const { update } = n2.component;
+          if (update) {
+            update();
+          }
+        }
       } else {
-        // Patch existing node
+        // Patch existing element node
         patchElement(n1, n2, parentComponent, parentSuspense, isSVG);
       }
     } else {
@@ -537,7 +568,7 @@ export function createRenderer(
     const oldProps = n1.props ?? EMPTY_OBJ;
     const newProps = n2.props ?? EMPTY_OBJ;
 
-    if (n2.patchFlag === PatchFlags.FULL_PROPS) {
+    if (n2.patchFlag & PatchFlags.FULL_PROPS) {
       // Full props diff
       diffProps(el, oldProps, newProps);
     } else if (n2.patchFlag > 0) {
@@ -601,10 +632,8 @@ export function createRenderer(
         // Old children were array - unmount all
         unmountChildren(c1 as VNode[], parentComponent, parentSuspense);
       }
-      if (c2 !== c1) {
-        // Set new text
-        setElementText(container as HostElement, String(c2 ?? ""));
-      }
+      // Always set new text (DOM was potentially cleared by unmountChildren above)
+      setElementText(container as HostElement, String(c2 ?? ""));
     } else {
       // New children are array (or null)
       if (prevShapeFlag & ShapeFlags.TEXT_CHILDREN) {
@@ -688,17 +717,18 @@ export function createRenderer(
           try {
             bum[i]!();
           } catch (e) {
-            console.error('[LytJS] Error in beforeUnmount hook:', e)
+            console.error("[LytJS] Error in beforeUnmount hook:", e);
           }
         }
       } else if (bum) {
         try {
           bum();
         } catch (e) {
-          console.error('[LytJS] Error in beforeUnmount hook:', e)
+          console.error("[LytJS] Error in beforeUnmount hook:", e);
         }
       }
       component.isUnmounted = true;
+      return;
     }
 
     if (type === Fragment) {
