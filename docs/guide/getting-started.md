@@ -43,6 +43,6 @@ createApp(App).mount("#app");
 
 ## 下一步
 
-- [响应式系统](/lytjs/guide/reactivity) - 了解响应式原理
-- [组件](/lytjs/guide/components) - 学习组件系统
-- [模板语法](/lytjs/guide/template-syntax) - 掌握模板语法
+- TODO: 待完善 - 了解响应式原理
+- TODO: 待完善 - 学习组件系统
+- TODO: 待完善 - 掌握模板语法
