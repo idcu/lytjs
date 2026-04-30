@@ -3,18 +3,58 @@
 
 import type { VNode } from "@lytjs/vdom";
 
-export interface ComponentOptions {
+// ==================== PropOptions ====================
+
+/** Prop 类型构造器 */
+export type PropType<T> = {
+  new (...args: any[]): T & {};
+} | { (): T };
+type PropConstructor<T> = PropType<T> | true;
+
+export interface PropOptions<T = unknown> {
+  type?: PropConstructor<T>;
+  required?: boolean;
+  default?: T;
+  validator?: (value: unknown) => boolean;
+}
+
+// ==================== SetupContext ====================
+
+export interface SetupContext {
+  attrs: Record<string, unknown>;
+  slots: InternalSlots;
+  emit: (event: string, ...args: unknown[]) => void;
+  expose?: (exposed?: Record<string, unknown>) => void;
+}
+
+// ==================== RenderFunction ====================
+
+export type RenderFunction = (ctx: ComponentPublicInstance) => VNode;
+
+// ==================== Slots ====================
+
+export type SlotFunction = (props?: Record<string, unknown>) => VNode[];
+export type InternalSlots = Record<string, SlotFunction | undefined>;
+
+// ==================== ComponentOptions ====================
+
+export interface ComponentOptions<
+  Props = Record<string, unknown>,
+  RawBindings = Record<string, unknown>,
+  D = Record<string, unknown>,
+  C extends Record<string, unknown> = Record<string, unknown>,
+> {
   name?: string;
-  props?: Record<string, PropOptions>;
-  emits?: string[] | Record<string, (...args: any[]) => any>;
-  setup?: (props: any, ctx: SetupContext) => any;
+  props?: Record<string, PropOptions<unknown>> & Props;
+  emits?: string[] | Record<string, (...args: unknown[]) => void>;
+  setup?: (props: Props, ctx: SetupContext) => RawBindings | RenderFunction | void;
   render?: RenderFunction;
-  data?: () => Record<string, any>;
-  computed?: Record<string, any>;
-  watch?: Record<string, any>;
-  methods?: Record<string, Function>;
-  provide?: Record<string, any> | (() => Record<string, any>);
-  inject?: Record<string, any>;
+  data?: () => D;
+  computed?: C;
+  watch?: Record<string, (...args: unknown[]) => void>;
+  methods?: Record<string, (...args: unknown[]) => unknown>;
+  provide?: Record<string, unknown> | (() => Record<string, unknown>);
+  inject?: Record<string, unknown>;
   mixins?: ComponentOptions[];
   extends?: ComponentOptions;
   beforeCreate?(): void;
@@ -27,16 +67,21 @@ export interface ComponentOptions {
   unmounted?(): void;
   activated?(): void;
   deactivated?(): void;
-  errorCaptured?(err: Error, instance: any, info: string): boolean | void;
+  errorCaptured?(err: Error, instance: ComponentPublicInstance | null, info: string): boolean | void;
   inheritAttrs?: boolean;
 }
 
-export interface PropOptions {
-  type?: any;
-  required?: boolean;
-  default?: any;
-  validator?: (value: any) => boolean;
+// ==================== AppContext ====================
+
+export interface AppContext {
+  config: Record<string, unknown>;
+  components: Record<string, ComponentOptions>;
+  directives: Record<string, unknown>;
+  mixins: ComponentOptions[];
+  provides: Record<string, unknown>;
 }
+
+// ==================== ComponentInternalInstance ====================
 
 export interface ComponentInternalInstance {
   uid: number;
@@ -46,61 +91,44 @@ export interface ComponentInternalInstance {
   props: Record<string, unknown>;
   slots: InternalSlots;
   ctx: ComponentPublicInstance;
-  setupState: Record<string, any>;
-  data: Record<string, any>;
+  setupState: Record<string, unknown>;
+  data: Record<string, unknown>;
   propsOptions: Record<string, PropOptions>;
-  emitsOptions: Record<string, any> | null;
-  emit: (event: string, ...args: any[]) => void;
+  emitsOptions: Record<string, unknown> | null;
+  emit: (event: string, ...args: unknown[]) => void;
   isMounted: boolean;
   isUnmounted: boolean;
   isDeactivated: boolean;
   lifecycle: {
-    beforeMount: Set<Function>;
-    mounted: Set<Function>;
-    beforeUpdate: Set<Function>;
-    updated: Set<Function>;
-    beforeUnmount: Set<Function>;
-    unmounted: Set<Function>;
+    beforeMount: Set<(...args: unknown[]) => void>;
+    mounted: Set<(...args: unknown[]) => void>;
+    beforeUpdate: Set<(...args: unknown[]) => void>;
+    updated: Set<(...args: unknown[]) => void>;
+    beforeUnmount: Set<(...args: unknown[]) => void>;
+    unmounted: Set<(...args: unknown[]) => void>;
   };
-  provides: Record<string, any>;
+  provides: Record<string, unknown> | Map<string | symbol, unknown>;
   parent: ComponentInternalInstance | null;
   root: ComponentInternalInstance;
   appContext: AppContext;
   render?: RenderFunction;
-  exposed?: Record<string, any> | null;
-  attrs: Record<string, any>;
+  exposed?: Record<string, unknown> | null;
+  attrs: Record<string, unknown>;
   errorCapturedHooks?: Array<
-    (err: Error, instance: any, info: string) => boolean | void
+    (err: Error, instance: ComponentPublicInstance | null, info: string) => boolean | void
   >;
 }
 
+// ==================== ComponentPublicInstance ====================
+
 export interface ComponentPublicInstance {
-  $data: Record<string, any>;
-  $props: any;
-  $el: any;
+  $data: Record<string, unknown>;
+  $props: Record<string, unknown>;
+  $el: Element | null;
   $options: ComponentOptions;
-  $refs: Record<string, any>;
+  $refs: Record<string, Element | ComponentPublicInstance | null>;
   $slots: InternalSlots;
-  $emit: (event: string, ...args: any[]) => void;
+  $emit: (event: string, ...args: unknown[]) => void;
   $forceUpdate: () => void;
   $nextTick: () => Promise<void>;
 }
-
-export interface SetupContext {
-  attrs: Record<string, any>;
-  slots: InternalSlots;
-  emit: (event: string, ...args: any[]) => void;
-  expose?: (exposed?: Record<string, any>) => void;
-}
-
-export interface AppContext {
-  config: any;
-  components: Record<string, any>;
-  directives: Record<string, any>;
-  mixins: ComponentOptions[];
-  provides: Record<string, any>;
-}
-
-export type RenderFunction = (...args: any[]) => any;
-export type SlotFunction = (props?: any) => any[];
-export type InternalSlots = Record<string, SlotFunction | undefined>;
