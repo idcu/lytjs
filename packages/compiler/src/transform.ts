@@ -1,5 +1,7 @@
 // src/transform.ts
 // AST transform pipeline - main entry
+// 包含 transform、markConstants、hoistStatic、collectDynamicChildren
+// optimize 阶段的逻辑已合并到此模块中
 
 import { NodeTypes } from "./constants";
 import type {
@@ -16,6 +18,8 @@ import type {
   ParentNode,
   JSChildNode,
   BaseNode,
+  CompilerOptions,
+  VNodeCall,
 } from "./types";
 import {
   createSimpleExpression,
@@ -89,6 +93,28 @@ export function transform(
       ]);
     }
   }
+
+  // 以下原为 optimize 阶段的逻辑，现已合并到 transform 阶段
+  // patchFlag 由 transform-element.ts 在 transform 过程中统一设置
+  markConstants(root);
+  hoistStatic(root);
+  collectDynamicChildren(root);
+}
+
+// ============================================================
+// 向后兼容的 optimize 函数
+// ============================================================
+
+/**
+ * 向后兼容的 optimize 函数。
+ * 原 optimize 阶段的逻辑（markConstants、hoistStatic、collectDynamicChildren）
+ * 已合并到 transform() 中，此函数保留仅为向后兼容。
+ * 调用此函数是安全的（幂等操作），但推荐直接使用 transform()。
+ */
+export function optimize(root: RootNode, _options: CompilerOptions = {}): void {
+  markConstants(root);
+  hoistStatic(root);
+  collectDynamicChildren(root);
 }
 
 // ============================================================
@@ -256,3 +282,152 @@ export {
   transformSlot,
 };
 export { transformBind, transformOn, transformModel, transformShow };
+
+// ============================================================
+// Mark Constants (原 optimize.ts)
+// ============================================================
+
+function markConstants(root: RootNode): void {
+  walk(root.children, (node) => {
+    if (node.type === NodeTypes.ELEMENT) {
+      const element = node as ElementNode;
+
+      // An element is constant if:
+      // 1. It has no directives
+      // 2. All its attributes are static
+      // 3. All its children are constant (including descendants)
+      const hasDirectives = element.props.some(
+        (p) => p.type === NodeTypes.DIRECTIVE,
+      );
+      const hasDynamicBindings = element.props.some(
+        (p) =>
+          p.type === NodeTypes.DIRECTIVE &&
+          (p.name === "bind" || p.name === "on"),
+      );
+      const hasInterpolation = hasDescendantInterpolation(element);
+
+      if (!hasDirectives && !hasDynamicBindings && !hasInterpolation) {
+        element.isStatic = true;
+      }
+    } else if (node.type === NodeTypes.TEXT) {
+      (node as TextNode).isStatic = true;
+    }
+  });
+}
+
+// ============================================================
+// Hoist Static (原 optimize.ts)
+// ============================================================
+
+function hoistStatic(root: RootNode): void {
+  const hoists: JSChildNode[] = [];
+
+  walk(root.children, (node) => {
+    if (node.type === NodeTypes.ELEMENT) {
+      const element = node as ElementNode;
+
+      if (element.isStatic && element.codegenNode) {
+        // Hoist static elements
+        hoists.push(element.codegenNode);
+        element.codegenNode = createHoistedReference(hoists.length - 1);
+      }
+    }
+  });
+
+  root.hoists = [...root.hoists, ...hoists];
+}
+
+function createHoistedReference(index: number): VNodeCall {
+  return {
+    type: NodeTypes.VNODE_CALL,
+    tag: `_hoisted_${index + 1}`,
+    props: undefined,
+    children: undefined,
+    patchFlag: undefined,
+    dynamicProps: undefined,
+    directives: undefined,
+    isBlock: false,
+    disableTracking: false,
+    isComponent: false,
+    loc: {
+      start: { line: 0, column: 0, offset: 0 },
+      end: { line: 0, column: 0, offset: 0 },
+      source: "",
+    },
+  };
+}
+
+// ============================================================
+// Collect Dynamic Children - Block Tree (原 optimize.ts)
+// ============================================================
+
+function collectDynamicChildren(root: RootNode): void {
+  // Find the root element and collect its dynamic children
+  for (const child of root.children) {
+    if (child.type === NodeTypes.ELEMENT) {
+      const element = child as ElementNode;
+      if (!element.isStatic) {
+        element.dynamicChildren = [];
+
+        collectDynamicChildrenFromElement(element);
+      }
+    }
+  }
+}
+
+/**
+ * 递归收集动态子节点，构建 Block Tree。
+ *
+ * 对于每个非静态的子元素节点，将其 codegenNode 加入父元素的 dynamicChildren，
+ * 并递归地为该子元素自身建立 dynamicChildren（如果它也有动态后代）。
+ * 这确保了嵌套结构（如嵌套 v-for、深层动态子树）中的每一层 Block
+ * 都能正确追踪其直接动态子节点，避免深层更新时退化为完整 diff。
+ */
+function collectDynamicChildrenFromElement(element: ElementNode): void {
+  for (const child of element.children) {
+    if (child.type === NodeTypes.ELEMENT) {
+      const childElement = child as ElementNode;
+
+      if (!childElement.isStatic) {
+        if (childElement.codegenNode) {
+          element.dynamicChildren!.push(childElement.codegenNode);
+        }
+        // 递归收集：为子元素自身也建立 dynamicChildren，
+        // 确保嵌套动态节点（如嵌套 v-for）的 Block Tree 完整
+        childElement.dynamicChildren = [];
+        collectDynamicChildrenFromElement(childElement);
+      }
+    }
+  }
+}
+
+// ============================================================
+// Walk helper (原 optimize.ts)
+// ============================================================
+
+function walk(
+  nodes: TemplateChildNode[],
+  fn: (node: TemplateChildNode) => void,
+): void {
+  for (const node of nodes) {
+    fn(node);
+
+    if (node.type === NodeTypes.ELEMENT) {
+      walk((node as ElementNode).children, fn);
+    }
+  }
+}
+
+function hasDescendantInterpolation(element: ElementNode): boolean {
+  for (const child of element.children) {
+    if (child.type === NodeTypes.INTERPOLATION) {
+      return true;
+    }
+    if (child.type === NodeTypes.ELEMENT) {
+      if (hasDescendantInterpolation(child as ElementNode)) {
+        return true;
+      }
+    }
+  }
+  return false;
+}

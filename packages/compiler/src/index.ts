@@ -8,8 +8,8 @@ import {
   transform,
   builtInTransforms,
   builtInDirectiveTransforms,
+  optimize,
 } from "./transform";
-import { optimize } from "./optimize";
 import { generate } from "./codegen";
 import type { CompilerOptions, CodegenResult } from "./types";
 
@@ -22,7 +22,7 @@ export function compile(
   // 1. Parse template to AST
   const ast = parse(source, options);
 
-  // 2. Transform AST
+  // 2. Transform AST (包含原 optimize 阶段的 markConstants、hoistStatic、collectDynamicChildren)
   const transformOptions = {
     nodeTransforms: [...builtInTransforms, ...(options.nodeTransforms ?? [])],
     directiveTransforms: {
@@ -33,10 +33,7 @@ export function compile(
   };
   transform(ast, transformOptions);
 
-  // 3. Optimize AST
-  optimize(ast, options);
-
-  // 4. Generate code
+  // 3. Generate code
   const codegenResult = generate(ast, options);
 
   return codegenResult;
