@@ -427,7 +427,11 @@ function createAppContext(): AppContext {
 export function provide(key: string | symbol, value: any): void {
   const instance = getCurrentInstance();
   if (instance) {
-    instance.provides[key as string] = value;
+    // Use Map to support symbol keys correctly
+    if (!(instance.provides instanceof Map)) {
+      instance.provides = new Map(Object.entries(instance.provides));
+    }
+    (instance.provides as Map<string | symbol, unknown>).set(key, value);
   }
 }
 
@@ -441,8 +445,13 @@ export function inject(key: string | symbol, defaultValue?: any): any {
   // Walk up the parent chain
   let current: ComponentInternalInstance | null = instance.parent;
   while (current) {
-    if (hasOwn(current.provides, key as string)) {
-      return current.provides[key as string];
+    const provides = current.provides;
+    if (provides instanceof Map) {
+      if (provides.has(key)) {
+        return provides.get(key);
+      }
+    } else if (hasOwn(provides, key as string)) {
+      return provides[key as string];
     }
     current = current.parent;
   }

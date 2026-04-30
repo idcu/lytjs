@@ -4,6 +4,7 @@
 
 import { isFunction } from "@lytjs/common-is";
 import { ReactiveEffect } from "./effect";
+import type { Dep } from "./effect";
 import { trackRefValue, triggerRefValue } from "./ref";
 import type {
   ComputedRef,
@@ -17,7 +18,8 @@ import { ComputedRefSymbol } from "./constants";
 // ==================== ComputedRefImpl ====================
 
 class ComputedRefImpl<T> {
-  public dep: Set<any> = new Set();
+  // 使用 Dep 类型替代 Set<any>，提供更精确的类型约束
+  public dep: Dep = new Set() as Dep;
   private _value!: T;
   private _dirty = true;
   public readonly [ComputedRefSymbol] = true;

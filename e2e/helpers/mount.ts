@@ -116,6 +116,9 @@ export async function mount(
       const app = createApp(rootComponent, props)
       const vm = app.mount(container)
 
+      // 存储 app 实例引用，供 unmount 使用
+      ;(window as any).__lytjs_app__ = app
+
       return {
         el: vm.$el,
         app: true, // 标记 app 已创建（不可序列化，仅作标记）
@@ -132,9 +135,17 @@ export async function mount(
  */
 export async function unmount(page: Page) {
   return page.evaluate(() => {
-    const container = document.querySelector('#app')
-    if (container) {
-      container.innerHTML = ''
+    // 从 window 上获取存储的 app 实例引用，调用 app.unmount() 正确卸载
+    const app = (window as any).__lytjs_app__
+    if (app) {
+      app.unmount()
+      ;(window as any).__lytjs_app__ = null
+    } else {
+      // 回退：直接清空容器内容
+      const container = document.querySelector('#app')
+      if (container) {
+        container.innerHTML = ''
+      }
     }
   })
 }

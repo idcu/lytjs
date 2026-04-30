@@ -374,10 +374,7 @@ export function isSafeAttribute(attrName: string, attrValue: string): boolean {
 
   // 1. 检查事件处理器属性
   if (DANGEROUS_EVENT_ATTRS.has(lowerName)) {
-    if (
-      typeof process !== "undefined" &&
-      process.env?.NODE_ENV === "development"
-    ) {
+    if (__DEV__) {
       console.warn(
         `[lytjs/security] Blocked dangerous event attribute: ${attrName}`,
       );
@@ -391,10 +388,7 @@ export function isSafeAttribute(attrName: string, attrValue: string): boolean {
     const protocolMatch = trimmed.match(/^([a-z]+:|#)/);
     const protocol = protocolMatch?.[1] ?? "";
     if (!ALLOWED_URL_PROTOCOLS.has(protocol)) {
-      if (
-        typeof process !== "undefined" &&
-        process.env?.NODE_ENV === "development"
-      ) {
+      if (__DEV__) {
         console.warn(
           `[lytjs/security] Blocked dangerous URL in attribute "${attrName}": ` +
             `protocol "${protocol}" is not allowed`,

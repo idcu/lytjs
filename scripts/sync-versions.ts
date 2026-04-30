@@ -41,7 +41,8 @@ function findPackageJsonFiles(dir: string): string[] {
       if (
         entry.name !== "node_modules" &&
         entry.name !== "dist" &&
-        entry.name !== ".turbo"
+        entry.name !== ".turbo" &&
+        entry.name !== "_templates"
       ) {
         results.push(...findPackageJsonFiles(fullPath));
       }

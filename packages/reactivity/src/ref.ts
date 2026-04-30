@@ -4,6 +4,7 @@
 
 import { isObject, hasChanged } from "@lytjs/common-is";
 import { track, trigger, activeEffect, shouldTrack } from "./effect";
+import type { Dep } from "./effect";
 import { TrackOpTypes, TriggerOpTypes } from "./constants";
 import { toRaw, isRef } from "./shared";
 import { reactive } from "./reactive";
@@ -28,7 +29,8 @@ export interface ComputedRef<T = any> extends Ref<T> {
 class RefImpl<T> {
   private _value: T;
   private _rawValue: T;
-  public dep: Set<any> = new Set();
+  // 使用 Dep 类型替代 Set<any>，提供更精确的类型约束
+  public dep: Dep = new Set() as Dep;
   public readonly __v_isRef = true;
 
   constructor(value: T, isShallow: boolean) {
@@ -56,7 +58,8 @@ class RefImpl<T> {
 class ShallowRefImpl<T> {
   private _value: T;
   private _rawValue: T;
-  public dep: Set<any> = new Set();
+  // 使用 Dep 类型替代 Set<any>，提供更精确的类型约束
+  public dep: Dep = new Set() as Dep;
   public readonly __v_isRef = true;
   public readonly __v_isShallow = true as const;
 
@@ -122,7 +125,7 @@ export function toRef<T extends object, K extends keyof T>(
 }
 
 export function toRefs<T extends object>(
-  object: any,
+  object: T,
 ): { [K in keyof T]: Ref<T[K]> } {
   const result: any = {};
   for (const key in object) {

@@ -8,20 +8,8 @@ export default defineConfig({
   clean: true,
   minify: false,
   treeshake: true,
-  external: [
-    '@lytjs/common-env',
-    '@lytjs/common-is',
-    '@lytjs/common-string',
-    '@lytjs/common-path',
-    '@lytjs/common-events',
-    '@lytjs/common-cache',
-    '@lytjs/common-timing',
-    '@lytjs/common-algorithm',
-    '@lytjs/common-vnode',
-    '@lytjs/common-error',
-    '@lytjs/common-object',
-    '@lytjs/common-scheduler',
-  ],
+  // 使用正则通配符匹配所有 @lytjs/common-* 子包
+  external: [/^@lytjs\/common-/,],
   outExtension({ format }) {
     return {
       js: format === 'cjs' ? '.cjs' : '.mjs',

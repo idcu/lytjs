@@ -64,7 +64,8 @@ export function generate(
 function createCodegenContext(ast: RootNode): CodegenContext {
   const helpers = new Map<string, string>();
   let indentLevel = 0;
-  let code = "";
+  // 使用数组收集代码片段，避免频繁字符串拼接带来的性能开销
+  const codeParts: string[] = [];
 
   const context: CodegenContext = {
     source: ast.loc.source,
@@ -82,7 +83,7 @@ function createCodegenContext(ast: RootNode): CodegenContext {
     },
 
     push(c: string, _node?: BaseNode): void {
-      code += c;
+      codeParts.push(c);
     },
 
     indent(): void {
@@ -94,19 +95,19 @@ function createCodegenContext(ast: RootNode): CodegenContext {
         indentLevel--;
       }
       if (!withoutNewline) {
-        code += `\n${"  ".repeat(indentLevel)}`;
+        codeParts.push(`\n${"  ".repeat(indentLevel)}`);
       }
     },
 
     newline(): void {
-      code += `\n${"  ".repeat(indentLevel)}`;
+      codeParts.push(`\n${"  ".repeat(indentLevel)}`);
     },
   };
 
-  // Override code getter
+  // Override code getter - 返回数组拼接后的最终代码
   Object.defineProperty(context, "code", {
     get() {
-      return code;
+      return codeParts.join("");
     },
   });
 

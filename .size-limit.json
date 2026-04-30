@@ -24,6 +24,30 @@
     "import": "{ reactive, ref, computed, watch, watchEffect }"
   },
   {
+    "name": "@lytjs/vdom",
+    "path": "packages/vdom/dist/index.mjs",
+    "limit": "10 KB",
+    "import": "{ createVNode, Fragment, Text, Comment }"
+  },
+  {
+    "name": "@lytjs/compiler",
+    "path": "packages/compiler/dist/index.mjs",
+    "limit": "15 KB",
+    "import": "{ compile, parse }"
+  },
+  {
+    "name": "@lytjs/renderer",
+    "path": "packages/renderer/dist/index.mjs",
+    "limit": "8 KB",
+    "import": "{ createRenderer, render }"
+  },
+  {
+    "name": "@lytjs/component",
+    "path": "packages/component/dist/index.mjs",
+    "limit": "12 KB",
+    "import": "{ defineComponent, createComponentInstance, setupComponent }"
+  },
+  {
     "name": "@lytjs/core",
     "path": "packages/core/dist/index.mjs",
     "limit": "35 KB",

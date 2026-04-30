@@ -13,7 +13,6 @@ import type {
   DirectiveTransform,
   ParentNode,
   JSChildNode,
-  CodegenContext,
   BaseNode,
 } from "./types";
 import {
@@ -96,7 +95,7 @@ export function transform(
 
 function createTransformContext(
   root: RootNode,
-  _options: TransformOptions,
+  options: TransformOptions,
 ): TransformContext {
   const helpers = new Map<string, number>();
   const components = new Set<string>();
@@ -166,25 +165,12 @@ function createTransformContext(
       context.cached++;
     },
     error(msg: string, _node?: BaseNode): void {
-      throw new Error(`[lytjs/compiler] ${msg}`);
-    },
-    createCodegenContext(): CodegenContext {
-      return {
-        source: root.loc.source,
-        code: "",
-        line: 1,
-        column: 1,
-        offset: 0,
-        indentLevel: 0,
-        pure: false,
-        helper(key: string): string {
-          return `_${key}`;
-        },
-        push(_code: string, _node?: BaseNode): void {},
-        indent(): void {},
-        deindent(_withoutNewline?: boolean): void {},
-        newline(): void {},
-      };
+      // 优先调用 options.onError 回调，否则直接抛出错误
+      if (options.onError) {
+        options.onError(new Error(`[lytjs/compiler] ${msg}`));
+      } else {
+        throw new Error(`[lytjs/compiler] ${msg}`);
+      }
     },
   };
   context.self = context;
