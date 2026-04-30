@@ -1,0 +1,182 @@
+// tests/transforms/for.test.ts
+// transformFor 独立单元测试
+
+import { describe, it, expect } from "vitest";
+import { transformFor } from "../../src/transforms/for";
+import { createMockContext } from "./helpers";
+import {
+  createElement,
+  createSimpleExpression,
+  createDirective,
+  createRoot,
+  createText,
+} from "../../src/ast";
+
+/**
+ * 创建一个能捕获 replaceNode 调用的 mock context
+ */
+function createContextWithReplace() {
+  let replacedNode: TemplateChildNode | null = null;
+  const context = createMockContext({
+    replaceNode(node: TemplateChildNode) {
+      replacedNode = node;
+    },
+  });
+  return { context, getReplacedNode: () => replacedNode };
+}
+
+describe("transformFor", () => {
+  describe("基本 v-for 转换", () => {
+    it("应该将 v-for 元素转换为 RENDER_LIST 调用", () => {
+      const forDir = createDirective(
+        "for",
+        undefined,
+        createSimpleExpression("item in list", false),
+      );
+      const element = createElement("div", [forDir], [createText("hello")]);
+      const root = createRoot([element]);
+      const { context, getReplacedNode } = createContextWithReplace();
+      context.parent = root;
+
+      transformFor(element, context);
+
+      const replaced = getReplacedNode();
+      expect(replaced?.type).toBe(NodeTypes.JS_CALL_EXPRESSION);
+      const callNode = replaced as any;
+      expect(callNode.callee).toBe("RENDER_LIST");
+    });
+
+    it("应该从元素 props 中移除 v-for 指令", () => {
+      const forDir = createDirective(
+        "for",
+        undefined,
+        createSimpleExpression("item in items", false),
+      );
+      const element = createElement("li", [forDir]);
+      const root = createRoot([element]);
+      const { context } = createContextWithReplace();
+      context.parent = root;
+
+      transformFor(element, context);
+
+      // v-for 指令已从 props 中移除
+      const hasForDirective = element.props.some(
+        (p) => p.type === NodeTypes.DIRECTIVE && p.name === "for",
+      );
+      expect(hasForDirective).toBe(false);
+    });
+
+    it("应该正确解析简单变量语法", () => {
+      const forDir = createDirective(
+        "for",
+        undefined,
+        createSimpleExpression("item in list", false),
+      );
+      const element = createElement("div", [forDir]);
+      const root = createRoot([element]);
+      const { context, getReplacedNode } = createContextWithReplace();
+      context.parent = root;
+
+      transformFor(element, context);
+
+      const replaced = getReplacedNode();
+      expect(replaced?.type).toBe(NodeTypes.JS_CALL_EXPRESSION);
+      const callNode = replaced as any;
+      expect(callNode.callee).toBe("RENDER_LIST");
+      // 第二个参数应该包含 item
+      const secondArg = callNode.arguments[1];
+      expect(secondArg.content).toContain("item");
+    });
+
+    it("应该正确解析 (item,index) 无空格语法", () => {
+      const forDir = createDirective(
+        "for",
+        undefined,
+        createSimpleExpression("(item,index) in list", false),
+      );
+      const element = createElement("div", [forDir]);
+      const root = createRoot([element]);
+      const { context, getReplacedNode } = createContextWithReplace();
+      context.parent = root;
+
+      transformFor(element, context);
+
+      const replaced = getReplacedNode();
+      expect(replaced?.type).toBe(NodeTypes.JS_CALL_EXPRESSION);
+      const callNode = replaced as any;
+      expect(callNode.callee).toBe("RENDER_LIST");
+      const secondArg = callNode.arguments[1];
+      expect(secondArg.content).toContain("item");
+      expect(secondArg.content).toContain("index");
+    });
+
+    it("应该注册 RENDER_LIST helper", () => {
+      const forDir = createDirective(
+        "for",
+        undefined,
+        createSimpleExpression("item in list", false),
+      );
+      const element = createElement("div", [forDir]);
+      const root = createRoot([element]);
+      const { context } = createContextWithReplace();
+      context.parent = root;
+
+      transformFor(element, context);
+
+      expect(context.helpers.get("RENDER_LIST")).toBe(1);
+    });
+  });
+
+  describe("边界条件", () => {
+    it("非元素节点应该被忽略", () => {
+      const textNode = createText("hello");
+      const root = createRoot([textNode]);
+      const context = createMockContext({ parent: root });
+
+      transformFor(textNode, context);
+
+      expect(root.children).toHaveLength(1);
+      expect(root.children[0]?.type).toBe(NodeTypes.TEXT);
+    });
+
+    it("没有 v-for 指令的元素应该被忽略", () => {
+      const element = createElement("div", [], [createText("hello")]);
+      const root = createRoot([element]);
+      const context = createMockContext({ parent: root });
+
+      transformFor(element, context);
+
+      expect(root.children).toHaveLength(1);
+      expect(root.children[0]?.type).toBe(NodeTypes.ELEMENT);
+    });
+
+    it("v-for 指令没有 exp 时应该被忽略", () => {
+      const forDir = createDirective("for", undefined, undefined);
+      const element = createElement("div", [forDir]);
+      const root = createRoot([element]);
+      const context = createMockContext({ parent: root });
+
+      transformFor(element, context);
+
+      expect(root.children).toHaveLength(1);
+      expect(root.children[0]?.type).toBe(NodeTypes.ELEMENT);
+    });
+
+    it("v-for 表达式格式不正确时应该被忽略", () => {
+      const forDir = createDirective(
+        "for",
+        undefined,
+        createSimpleExpression("invalid expression", false),
+      );
+      const element = createElement("div", [forDir]);
+      const root = createRoot([element]);
+      const context = createMockContext({ parent: root });
+
+      transformFor(element, context);
+
+      // 表达式不匹配 "xxx in yyy" 格式，应被忽略
+      expect(root.children).toHaveLength(1);
+      expect(root.children[0]?.type).toBe(NodeTypes.ELEMENT);
+    });
+  });
+});
