@@ -12,8 +12,6 @@ import {
 } from "@lytjs/common-events";
 import { isBooleanAttr } from "../utils";
 
-const __DEV__ = process.env.NODE_ENV !== "production";
-
 // ============================================================
 // Local helpers (not in common-is)
 // ============================================================
@@ -233,6 +231,17 @@ export function patchProp(
     patchStyle(el, prevValue, nextValue);
   } else if (isOn(key)) {
     patchEvent(el, key, prevValue, nextValue);
+  } else if (key === 'innerHTML') {
+    if (nextValue !== prevValue) {
+      if (__DEV__ && nextValue != null && typeof nextValue !== 'string') {
+        console.warn('v-html expects a string value.');
+      }
+      el.innerHTML = nextValue == null ? '' : String(nextValue);
+    }
+  } else if (key === 'textContent') {
+    if (nextValue !== prevValue) {
+      el.textContent = nextValue == null ? '' : String(nextValue);
+    }
   } else {
     patchAttr(el, key, nextValue, isSVG);
   }
