@@ -14,20 +14,20 @@ import {
 
 // ==================== Signal 类型 ====================
 
-export interface Signal<T = any> {
+export interface Signal<T = unknown> {
   (): T;
   (value: T): void;
   readonly [SignalSymbol]: true;
 }
 
-export interface ComputedSignal<T = any> {
+export interface ComputedSignal<T = unknown> {
   (): T;
   readonly [ComputedSignalSymbol]: true;
 }
 
-export interface WritableSignal<T = any> extends Signal<T> {}
+export interface WritableSignal<T = unknown> extends Signal<T> {}
 
-export interface ReadonlySignal<T = any> {
+export interface ReadonlySignal<T = unknown> {
   (): T;
   readonly [SignalSymbol]: true;
 }
@@ -40,33 +40,33 @@ const SIGNAL_KEY = Symbol("signal_value");
 
 export function signal<T>(initialValue: T): WritableSignal<T> {
   // 使用普通对象存储值，利用 effect 系统追踪
-  const store = { [SIGNAL_KEY]: initialValue };
+  const store: { [key: symbol]: T } = { [SIGNAL_KEY]: initialValue };
 
   // signalFn 内部实现：重载调用签名，支持读取和写入
-  const signalFn: WritableSignal<T> & ((valueOrNothing?: T) => T | void) = function signalFn(valueOrNothing?: T): T | void {
+  const signalFn = function signalFn(valueOrNothing?: T): T | void {
     if (arguments.length > 0) {
       if (hasChanged(valueOrNothing, store[SIGNAL_KEY])) {
-        store[SIGNAL_KEY] = valueOrNothing as T;
+        store[SIGNAL_KEY] = valueOrNothing;
         trigger(store, TriggerOpTypes.SET, SIGNAL_KEY, valueOrNothing);
       }
       return;
     }
     track(store, TrackOpTypes.GET, SIGNAL_KEY);
     return store[SIGNAL_KEY];
-  };
+  } as WritableSignal<T> & ((valueOrNothing?: T) => T | void);
 
   Object.defineProperty(signalFn, SignalSymbol, { value: true });
   return signalFn;
 }
 
 export function computedSignal<T>(fn: () => T): ComputedSignal<T> {
-  const store = { [SIGNAL_KEY]: undefined as any };
+  const store: { [key: symbol]: T } = { [SIGNAL_KEY]: undefined as unknown as T };
   let dirty = true;
 
   const runner = new ReactiveEffect(
     () => {
       try {
-        store[SIGNAL_KEY] = fn() as T;
+        store[SIGNAL_KEY] = fn();
         dirty = false;
         trigger(store, TriggerOpTypes.SET, SIGNAL_KEY);
       } catch (e) {
@@ -81,16 +81,16 @@ export function computedSignal<T>(fn: () => T): ComputedSignal<T> {
     },
   );
 
-  const computedFn: any = function computedFn(): T {
+  const computedFn = function computedFn(): T {
     track(store, TrackOpTypes.GET, SIGNAL_KEY);
     if (dirty) {
       runner.run();
     }
     return store[SIGNAL_KEY];
-  };
+  } as ComputedSignal<T>;
 
   Object.defineProperty(computedFn, ComputedSignalSymbol, { value: true });
-  return computedFn as ComputedSignal<T>;
+  return computedFn;
 }
 
 export function valueOf<T>(sig: Signal<T>): T {
@@ -109,9 +109,9 @@ export function update<T>(
 }
 
 export function readonlySignal<T>(sig: Signal<T>): ReadonlySignal<T> {
-  const readonlyFn: any = function readonlyFn(): T {
+  const readonlyFn = function readonlyFn(): T {
     return sig();
-  };
+  } as ReadonlySignal<T>;
   Object.defineProperty(readonlyFn, SignalSymbol, { value: true });
-  return readonlyFn as ReadonlySignal<T>;
+  return readonlyFn;
 }
