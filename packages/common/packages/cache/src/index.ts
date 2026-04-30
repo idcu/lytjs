@@ -217,20 +217,24 @@ interface MemoizedFn<T extends (...args: any[]) => any> {
  */
 export function memoize<T extends (...args: any[]) => any>(
   fn: T,
-  resolver?: (...args: Parameters<T>) => string,
-  cache?: Map<string, ReturnType<T>>,
+  options?: { resolver?: (...args: any[]) => string; maxSize?: number },
 ): MemoizedFn<T> {
-  const internalCache = cache ?? new Map<string, ReturnType<T>>();
+  const internalCache = new Map<string, ReturnType<T>>();
+  const maxSize = options?.maxSize;
 
   const memoized = ((...args: Parameters<T>): ReturnType<T> => {
-    const key = resolver
-      ? resolver(...args)
+    const key = options?.resolver
+      ? options.resolver(...args)
       : JSON.stringify(args.length === 1 ? args[0] : args);
     if (internalCache.has(key)) {
       return internalCache.get(key)!;
     }
     const result = fn(...args);
     internalCache.set(key, result);
+    if (maxSize && internalCache.size > maxSize) {
+      const firstKey = internalCache.keys().next().value;
+      if (firstKey !== undefined) internalCache.delete(firstKey);
+    }
     return result;
   }) as MemoizedFn<T>;
 
