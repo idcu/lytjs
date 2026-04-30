@@ -21,6 +21,6 @@ export function toRaw<T>(observed: T): T {
 /**
  * 判断一个值是否为 ref
  */
-export function isRef(r: any): r is RefLike {
-  return !!(r && r.__v_isRef === true);
+export function isRef(r: unknown): r is RefLike {
+  return !!(r && typeof r === "object" && (r as RefLike).__v_isRef === true);
 }

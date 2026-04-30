@@ -158,8 +158,8 @@ export class ReactiveEffect<T = any> {
   computed?: boolean;
   allowRecurse?: boolean;
   onStop?: () => void;
-  onTrack?: (event: any) => void;
-  onTrigger?: (event: any) => void;
+  onTrack?: (event: { target: object; key: string | symbol; type: string }) => void;
+  onTrigger?: (event: { target: object; key: string | symbol; type: string; newValue?: unknown; oldValue?: unknown }) => void;
   // 运行前清理（onEffectCleanup 注册的）
   _cleanup?: () => void;
 
@@ -235,8 +235,8 @@ export function effect<T = any>(
     scheduler?: (...args: any[]) => any;
     allowRecurse?: boolean;
     onStop?: () => void;
-    onTrack?: (event: any) => void;
-    onTrigger?: (event: any) => void;
+    onTrack?: (event: { target: object; key: string | symbol; type: string }) => void;
+    onTrigger?: (event: { target: object; key: string | symbol; type: string; newValue?: unknown; oldValue?: unknown }) => void;
   },
 ): ReactiveEffectRunner<T> {
   const _effect = new ReactiveEffect(fn);
