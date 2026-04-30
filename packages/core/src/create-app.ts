@@ -64,6 +64,11 @@ export function createApp(
       // Create component instance using the standardized component system
       const instance = createComponentInstance(rootVNode, null);
 
+      // Replace appContext: createComponentInstance creates a new empty context
+      // when parent is null, but we need the core-level context with plugins,
+      // components, directives, and provides registered on the app.
+      instance.appContext = context as any;
+
       // Copy app-level provides into the root instance
       if (context.provides) {
         const rootProvides = instance.provides;

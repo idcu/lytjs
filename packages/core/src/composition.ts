@@ -2,6 +2,7 @@
 // @lytjs/core - Composition API 辅助函数
 
 import { getCurrentInstance } from "@lytjs/component";
+import { computed } from "@lytjs/reactivity";
 import type { InternalSlots } from "./types";
 
 /**
@@ -38,12 +39,12 @@ export function useModel<T = unknown>(
     return { value: undefined as T };
   }
 
-  return {
-    get value(): T {
+  return computed({
+    get() {
       return props[key] as T;
     },
-    set value(newValue: T) {
+    set(newValue: T) {
       instance.emit(`update:${key}`, newValue);
     },
-  };
+  }) as any;
 }
