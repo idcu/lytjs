@@ -3,10 +3,7 @@
  * 对象操作工具函数集合
  */
 
-import { isPlainObject, isArray, isNullish } from "@lytjs/common-is";
-
-const hasOwn = (obj: object, key: string | number | symbol): boolean =>
-  Object.prototype.hasOwnProperty.call(obj, key);
+import { isPlainObject, isArray, isNullish, hasOwn } from "@lytjs/common-is";
 
 /**
  * 浅合并多个对象

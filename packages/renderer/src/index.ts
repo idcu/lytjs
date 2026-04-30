@@ -20,7 +20,6 @@ export {
   patchEvent,
   patchAttr,
   isOn,
-  isBooleanAttr as isDOMBooleanAttr,
 } from "./dom/patch-props";
 
 // Hydration
