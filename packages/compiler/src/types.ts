@@ -277,7 +277,7 @@ export interface TransformOptions {
   directiveTransforms?: Record<string, DirectiveTransform>;
   isBuiltInComponent?: (tag: string) => symbol | undefined;
   isCustomElement?: (tag: string) => boolean;
-  expressionPlugins?: any[];
+  expressionPlugins?: string[];
   scopeId?: string | null;
   slotted?: boolean;
   ssr?: boolean;
@@ -376,7 +376,7 @@ export interface CodegenContext {
   offset: number;
   indentLevel: number;
   pure: boolean;
-  map?: any;
+  map?: Record<string, number>;
   helper(key: string): string;
   push(code: string, node?: BaseNode): void;
   indent(): void;
@@ -392,7 +392,7 @@ export interface CodegenResult {
   code: string;
   preamble: string;
   ast: RootNode;
-  map?: any;
+  map?: Record<string, number>;
 }
 
 // ============================================================
