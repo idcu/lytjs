@@ -1,7 +1,7 @@
 // src/effect.ts
 // 响应式副作用系统核心
 
-import { ITERATE_KEY } from './constants';
+import { ITERATE_KEY } from "./constants";
 
 // ==================== 全局状态 ====================
 
@@ -69,33 +69,33 @@ export function trigger(
   type: string,
   key?: string | symbol,
   _newValue?: unknown,
-  _oldValue?: unknown
+  _oldValue?: unknown,
 ) {
   const depsMap = targetMap.get(target);
   if (!depsMap) return;
 
   const deps: (Dep | undefined)[] = [];
 
-  if (type === 'clear') {
+  if (type === "clear") {
     deps.push(...depsMap.values());
   } else {
     if (key !== undefined) {
       deps.push(depsMap.get(key));
     }
 
-    if (type === 'add') {
+    if (type === "add") {
       if (Array.isArray(target)) {
-        deps.push(depsMap.get('length'));
+        deps.push(depsMap.get("length"));
       } else {
         deps.push(depsMap.get(ITERATE_KEY));
       }
-    } else if (type === 'delete') {
+    } else if (type === "delete") {
       if (!Array.isArray(target)) {
         deps.push(depsMap.get(ITERATE_KEY));
       }
-    } else if (type === 'set') {
+    } else if (type === "set") {
       if (Array.isArray(target) && isIntegerKey(key)) {
-        deps.push(depsMap.get('length'));
+        deps.push(depsMap.get("length"));
       }
     }
   }
@@ -151,7 +151,7 @@ export class ReactiveEffect<T = any> {
 
   constructor(
     public fn: () => T,
-    public scheduler?: (...args: any[]) => any
+    public scheduler?: (...args: any[]) => any,
   ) {
     // 自动注册到当前活跃的 effectScope
     if (activeEffectScope && activeEffectScope.active) {
@@ -222,7 +222,7 @@ export function effect<T = any>(
     onStop?: () => void;
     onTrack?: (event: any) => void;
     onTrigger?: (event: any) => void;
-  }
+  },
 ): ReactiveEffectRunner<T> {
   const _effect = new ReactiveEffect(fn);
   if (options) {
@@ -267,7 +267,9 @@ export function batch(fn: () => void): void {
 export function onEffectCleanup(fn: () => void, failSilently = false): void {
   if (activeEffect === undefined && !failSilently) {
     if (__DEV__) {
-      console.warn('onEffectCleanup() was called when there was no active effect to associate with.');
+      console.warn(
+        "onEffectCleanup() was called when there was no active effect to associate with.",
+      );
     }
     return;
   }
@@ -279,5 +281,10 @@ export function onEffectCleanup(fn: () => void, failSilently = false): void {
 // ==================== 辅助 ====================
 
 export function isIntegerKey(key: unknown): boolean {
-  return typeof key === 'string' && key !== 'NaN' && key[0] !== '-' && '' + parseInt(key, 10) === key;
+  return (
+    typeof key === "string" &&
+    key !== "NaN" &&
+    key[0] !== "-" &&
+    "" + parseInt(key, 10) === key
+  );
 }

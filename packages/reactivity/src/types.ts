@@ -1,9 +1,14 @@
 // src/types.ts
 // 类型定义（公共 API 类型）
 
-import type { ReactiveEffect } from './effect';
-import type { Ref, ShallowRef, ComputedRef } from './ref';
-import type { Signal, ComputedSignal, WritableSignal, ReadonlySignal } from './signal';
+import type { ReactiveEffect } from "./effect";
+import type { Ref, ShallowRef, ComputedRef } from "./ref";
+import type {
+  Signal,
+  ComputedSignal,
+  WritableSignal,
+  ReadonlySignal,
+} from "./signal";
 
 // ==================== ReactiveEffect 类型 ====================
 
@@ -35,7 +40,7 @@ export interface DebuggerEvent {
 export interface WatchOptions<Immediate = boolean> {
   immediate?: Immediate;
   deep?: boolean;
-  flush?: 'pre' | 'post' | 'sync';
+  flush?: "pre" | "post" | "sync";
   once?: boolean;
   onTrack?: (event: DebuggerEvent) => void;
   onTrigger?: (event: DebuggerEvent) => void;
@@ -44,7 +49,7 @@ export interface WatchOptions<Immediate = boolean> {
 }
 
 export interface WatchEffectOptions {
-  flush?: 'pre' | 'post' | 'sync';
+  flush?: "pre" | "post" | "sync";
   once?: boolean;
   onTrack?: (event: DebuggerEvent) => void;
   onTrigger?: (event: DebuggerEvent) => void;
@@ -57,7 +62,7 @@ export type WatchSource<T = any> = Ref<T> | (() => T);
 export type WatchCallback<T = any, S = T> = (
   newValue: T,
   oldValue: S,
-  onCleanup: OnCleanup
+  onCleanup: OnCleanup,
 ) => void;
 
 export type OnCleanup = (cleanupFn: () => void) => void;
@@ -83,14 +88,23 @@ export type WritableComputedRef<T = any> = ComputedRef<T> & {
 // ==================== 工具类型 ====================
 
 export type UnwrapRef<T> = T extends Ref<infer V> ? UnwrapRef<V> : T;
-export type UnwrapNestedRefs<T> = T extends Ref<infer V>
-  ? UnwrapRef<V>
-  : T extends (object | Function)
-    ? { [K in keyof T]: UnwrapNestedRefs<T[K]> }
-    : T;
+export type UnwrapNestedRefs<T> =
+  T extends Ref<infer V>
+    ? UnwrapRef<V>
+    : T extends object | Function
+      ? { [K in keyof T]: UnwrapNestedRefs<T[K]> }
+      : T;
 export type DeepReadonly<T> = { readonly [K in keyof T]: DeepReadonly<T[K]> };
 export type ToRefs<T = any> = { [K in keyof T]: Ref<T[K]> };
 export type ReactiveObject = any;
 
 // Re-export
-export type { Ref, ShallowRef, ComputedRef, Signal, ComputedSignal, WritableSignal, ReadonlySignal };
+export type {
+  Ref,
+  ShallowRef,
+  ComputedRef,
+  Signal,
+  ComputedSignal,
+  WritableSignal,
+  ReadonlySignal,
+};

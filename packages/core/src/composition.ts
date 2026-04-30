@@ -1,8 +1,8 @@
 // src/composition.ts
 // @lytjs/core - Composition API 辅助函数
 
-import { getCurrentInstance } from '@lytjs/component';
-import type { InternalSlots } from './types';
+import { getCurrentInstance } from "@lytjs/component";
+import type { InternalSlots } from "./types";
 
 /**
  * 获取当前组件的 slots

@@ -1,8 +1,8 @@
 // src/component.ts
 // Core component instance management
 
-import { reactive } from '@lytjs/reactivity';
-import { nextTick } from '@lytjs/common-scheduler';
+import { reactive } from "@lytjs/reactivity";
+import { nextTick } from "@lytjs/common-scheduler";
 import {
   isFunction,
   isObject,
@@ -10,7 +10,7 @@ import {
   NOOP,
   EMPTY_OBJ,
   isPromise,
-} from '@lytjs/common-is';
+} from "@lytjs/common-is";
 import type {
   ComponentOptions,
   ComponentInternalInstance,
@@ -18,16 +18,16 @@ import type {
   SetupContext,
   InternalSlots,
   AppContext,
-} from './types';
-import { normalizePropsOptions, resolvePropValue } from './props';
-import { normalizeEmitsOptions, emit } from './emit';
-import { initSlots } from './slots';
+} from "./types";
+import { normalizePropsOptions, resolvePropValue } from "./props";
+import { normalizeEmitsOptions, emit } from "./emit";
+import { initSlots } from "./slots";
 import {
   setCurrentInstance,
   getCurrentInstance,
   callCreatedHook,
   handleError,
-} from './lifecycle';
+} from "./lifecycle";
 
 // ==================== UID counter ====================
 
@@ -47,7 +47,7 @@ export function createComponentInstance(
   // Merge extends and mixins
   const mergedOptions = mergeOptions(type);
 
-  const appContext = (parent ? parent.appContext : createAppContext());
+  const appContext = parent ? parent.appContext : createAppContext();
 
   const instance: ComponentInternalInstance = {
     uid: uid++,
@@ -75,7 +75,7 @@ export function createComponentInstance(
     },
     provides: parent ? parent.provides : Object.create(null),
     parent,
-    root: parent ? parent.root : null as unknown as ComponentInternalInstance,
+    root: parent ? parent.root : (null as unknown as ComponentInternalInstance),
     appContext,
     attrs: {},
   };
@@ -86,7 +86,8 @@ export function createComponentInstance(
   }
 
   // Create emit function bound to this instance
-  instance.emit = (event: string, ...args: any[]) => emit(instance, event, ...args);
+  instance.emit = (event: string, ...args: any[]) =>
+    emit(instance, event, ...args);
 
   return instance;
 }
@@ -122,7 +123,7 @@ export function setupComponent(instance: ComponentInternalInstance): void {
       })
       .catch((err: Error) => {
         vnode.isAsyncPlaceholder = false;
-        handleError(err, instance, 'setup function');
+        handleError(err, instance, "setup function");
       });
   } else {
     handleSetupResult(instance, setupResult);
@@ -144,7 +145,7 @@ function runSetup(instance: ComponentInternalInstance): any {
     const result = setup(instance.props, setupContext);
     return result;
   } catch (err) {
-    handleError(err as Error, instance, 'setup function');
+    handleError(err as Error, instance, "setup function");
     return undefined;
   } finally {
     setCurrentInstance(null);
@@ -154,7 +155,10 @@ function runSetup(instance: ComponentInternalInstance): any {
 /**
  * Handle the result of the setup function.
  */
-function handleSetupResult(instance: ComponentInternalInstance, setupResult: any): void {
+function handleSetupResult(
+  instance: ComponentInternalInstance,
+  setupResult: any,
+): void {
   if (isFunction(setupResult)) {
     // Setup returned a render function
     instance.render = setupResult;
@@ -170,7 +174,9 @@ function handleSetupResult(instance: ComponentInternalInstance, setupResult: any
 /**
  * Finish component setup: handle data, methods, computed, render.
  */
-export function finishComponentSetup(instance: ComponentInternalInstance): void {
+export function finishComponentSetup(
+  instance: ComponentInternalInstance,
+): void {
   const { type } = instance;
 
   // Init data
@@ -235,7 +241,9 @@ export function initProps(
 /**
  * Create the setup context object passed to the setup function.
  */
-export function createSetupContext(instance: ComponentInternalInstance): SetupContext {
+export function createSetupContext(
+  instance: ComponentInternalInstance,
+): SetupContext {
   return {
     attrs: instance.attrs,
     slots: instance.slots,
@@ -296,10 +304,15 @@ export function defineComponent(options: ComponentOptions): ComponentOptions {
 /**
  * Merge component options with extends and mixins.
  */
-function mergeOptions(options: ComponentOptions, seen = new WeakSet<ComponentOptions>()): ComponentOptions {
+function mergeOptions(
+  options: ComponentOptions,
+  seen = new WeakSet<ComponentOptions>(),
+): ComponentOptions {
   if (seen.has(options)) {
     if (__DEV__) {
-      console.warn('[lytjs/component] Circular mixin/extends detected, skipping.');
+      console.warn(
+        "[lytjs/component] Circular mixin/extends detected, skipping.",
+      );
     }
     return { ...options };
   }
@@ -332,7 +345,7 @@ function mergeOptionsPair(
   const merged: Record<string, any> = { ...parent };
 
   for (const key in child) {
-    if (key === 'props' || key === 'emits' || key === 'inject') {
+    if (key === "props" || key === "emits" || key === "inject") {
       const parentVal = (parent as any)[key];
       const childVal = (child as any)[key];
       if (parentVal && childVal) {
@@ -340,7 +353,7 @@ function mergeOptionsPair(
       } else if (childVal) {
         merged[key] = childVal;
       }
-    } else if (key === 'data' || key === 'provide') {
+    } else if (key === "data" || key === "provide") {
       const parentVal = (parent as any)[key];
       const childVal = (child as any)[key];
       if (parentVal && childVal) {
@@ -356,7 +369,7 @@ function mergeOptionsPair(
       } else if (childVal) {
         merged[key] = childVal;
       }
-    } else if (key === 'computed' || key === 'methods' || key === 'watch') {
+    } else if (key === "computed" || key === "methods" || key === "watch") {
       const parentVal = (parent as any)[key];
       const childVal = (child as any)[key];
       if (parentVal && childVal) {
@@ -364,10 +377,16 @@ function mergeOptionsPair(
       } else if (childVal) {
         merged[key] = childVal;
       }
-    } else if (key === 'beforeCreate' || key === 'created' ||
-               key === 'beforeMount' || key === 'mounted' ||
-               key === 'beforeUpdate' || key === 'updated' ||
-               key === 'beforeUnmount' || key === 'unmounted') {
+    } else if (
+      key === "beforeCreate" ||
+      key === "created" ||
+      key === "beforeMount" ||
+      key === "mounted" ||
+      key === "beforeUpdate" ||
+      key === "updated" ||
+      key === "beforeUnmount" ||
+      key === "unmounted"
+    ) {
       const parentVal = (parent as any)[key];
       const childVal = (child as any)[key];
       if (parentVal && childVal) {
@@ -378,7 +397,7 @@ function mergeOptionsPair(
       } else if (childVal) {
         merged[key] = childVal;
       }
-    } else if (key === 'mixins' || key === 'extends') {
+    } else if (key === "mixins" || key === "extends") {
       // Skip - already handled
     } else if (hasOwn(child, key)) {
       merged[key] = (child as any)[key];

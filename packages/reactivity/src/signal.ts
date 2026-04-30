@@ -3,9 +3,14 @@
 // 复用 @lytjs/common-is: hasChanged
 // 复用 effect 系统实现依赖追踪
 
-import { hasChanged } from '@lytjs/common-is';
-import { ReactiveEffect, track, trigger } from './effect';
-import { SignalSymbol, ComputedSignalSymbol, TrackOpTypes, TriggerOpTypes } from './constants';
+import { hasChanged } from "@lytjs/common-is";
+import { ReactiveEffect, track, trigger } from "./effect";
+import {
+  SignalSymbol,
+  ComputedSignalSymbol,
+  TrackOpTypes,
+  TriggerOpTypes,
+} from "./constants";
 
 // ==================== Signal 类型 ====================
 
@@ -29,7 +34,7 @@ export interface ReadonlySignal<T = any> {
 
 // ==================== Signal 内部标记 ====================
 
-const SIGNAL_KEY = Symbol('signal_value');
+const SIGNAL_KEY = Symbol("signal_value");
 
 // ==================== Signal 实现 ====================
 
@@ -88,7 +93,10 @@ export function set<T>(sig: WritableSignal<T>, newValue: T): void {
   sig(newValue);
 }
 
-export function update<T>(sig: WritableSignal<T>, updater: (prev: T) => T): void {
+export function update<T>(
+  sig: WritableSignal<T>,
+  updater: (prev: T) => T,
+): void {
   sig(updater(sig()));
 }
 

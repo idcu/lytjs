@@ -1,7 +1,7 @@
 // src/app-context.ts
 // @lytjs/core - AppContext 创建和配置
 
-import type { App, AppConfig, Plugin, Component } from './types';
+import type { App, AppConfig, Plugin, Component } from "./types";
 
 export interface AppContext {
   config: AppConfig;
@@ -39,13 +39,13 @@ export function createAppContext(): AppContext {
 export function createContextConfig(context: AppContext): AppConfig {
   return new Proxy({} as AppConfig, {
     get(_, key: string) {
-      if (key === 'globalProperties') {
+      if (key === "globalProperties") {
         return context.config.globalProperties;
       }
       return context.config[key];
     },
     set(_, key: string, value: any) {
-      if (key === 'globalProperties') {
+      if (key === "globalProperties") {
         context.config.globalProperties = value;
         return true;
       }

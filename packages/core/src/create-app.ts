@@ -1,11 +1,18 @@
 // src/create-app.ts
 // @lytjs/core - createApp 工厂函数
 
-import { createRenderer, createVNode, createDOMRendererOptions } from '@lytjs/vdom';
-import type { App, Plugin, Component, ComponentPublicInstance } from './types';
-import { createAppContext, createContextConfig } from './app-context';
+import {
+  createRenderer,
+  createVNode,
+  createDOMRendererOptions,
+} from "@lytjs/vdom";
+import type { App, Plugin, Component, ComponentPublicInstance } from "./types";
+import { createAppContext, createContextConfig } from "./app-context";
 
-export function createApp(rootComponent: Component, rootProps: any = null): App {
+export function createApp(
+  rootComponent: Component,
+  rootProps: any = null,
+): App {
   const context = createAppContext();
   const installedPlugins = new Set<Plugin | Function>();
 
@@ -14,7 +21,7 @@ export function createApp(rootComponent: Component, rootProps: any = null): App 
 
     use(plugin: Plugin | Function, ...options: any[]) {
       if (installedPlugins.has(plugin)) return app;
-      if (typeof plugin === 'function') {
+      if (typeof plugin === "function") {
         (plugin as Function)(app, ...options);
       } else {
         plugin.install(app, ...options);
@@ -24,21 +31,22 @@ export function createApp(rootComponent: Component, rootProps: any = null): App 
     },
 
     mount(rootContainer: any) {
-      const container = typeof rootContainer === 'string'
-        ? document.querySelector(rootContainer)
-        : rootContainer;
+      const container =
+        typeof rootContainer === "string"
+          ? document.querySelector(rootContainer)
+          : rootContainer;
 
       if (!container) {
         throw new Error(
           `[LytJS] Failed to mount app: cannot find element matching selector "${rootContainer}". ` +
-          `Make sure the target element exists in the DOM before calling app.mount().`
+            `Make sure the target element exists in the DOM before calling app.mount().`,
         );
       }
 
       const comp = rootComponent as any;
       let vnode: any;
 
-      if (typeof comp === 'object' && comp.render) {
+      if (typeof comp === "object" && comp.render) {
         const instance = {
           ...rootProps,
           ...comp.data?.(),
@@ -49,7 +57,7 @@ export function createApp(rootComponent: Component, rootProps: any = null): App 
           $emit: () => {},
         };
         vnode = comp.render.call(instance);
-      } else if (typeof comp === 'function') {
+      } else if (typeof comp === "function") {
         vnode = comp(rootProps);
       } else {
         vnode = createVNode(comp, rootProps);

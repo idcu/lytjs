@@ -1,8 +1,8 @@
 // src/emit.ts
 // Event emission system
 
-import { isFunction, hasOwn, isArray } from '@lytjs/common-is';
-import type { ComponentInternalInstance } from './types';
+import { isFunction, hasOwn, isArray } from "@lytjs/common-is";
+import type { ComponentInternalInstance } from "./types";
 
 /**
  * Normalize emits definition into a consistent Record<string, any> format.

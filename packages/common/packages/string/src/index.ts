@@ -7,8 +7,8 @@
  * 首字母大写
  */
 export function capitalize(str: string): string {
-  if (!str) return ''
-  return str.charAt(0).toUpperCase() + str.slice(1)
+  if (!str) return "";
+  return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
 /**
@@ -16,10 +16,10 @@ export function capitalize(str: string): string {
  */
 export function kebabCase(str: string): string {
   return str
-    .replace(/([a-z0-9])([A-Z])/g, '$1-$2')
-    .replace(/([A-Z]+)([A-Z][a-z])/g, '$1-$2')
-    .replace(/[\s_]+/g, '-')
-    .toLowerCase()
+    .replace(/([a-z0-9])([A-Z])/g, "$1-$2")
+    .replace(/([A-Z]+)([A-Z][a-z])/g, "$1-$2")
+    .replace(/[\s_]+/g, "-")
+    .toLowerCase();
 }
 
 /**
@@ -27,37 +27,37 @@ export function kebabCase(str: string): string {
  */
 export function camelCase(str: string): string {
   return str
-    .replace(/[-_\s]+(.)?/g, (_, c) => (c ? c.toUpperCase() : ''))
-    .replace(/^[A-Z]/, (c) => c.toLowerCase())
+    .replace(/[-_\s]+(.)?/g, (_, c) => (c ? c.toUpperCase() : ""))
+    .replace(/^[A-Z]/, (c) => c.toLowerCase());
 }
 
 /**
  * 转换为 PascalCase
  */
 export function pascalCase(str: string): string {
-  const camel = camelCase(str)
-  return camel.charAt(0).toUpperCase() + camel.slice(1)
+  const camel = camelCase(str);
+  return camel.charAt(0).toUpperCase() + camel.slice(1);
 }
 
 /**
  * camelCase 转 kebab-case
  */
 export function camelToKebab(str: string): string {
-  return str.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase()
+  return str.replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase();
 }
 
 /**
  * kebab-case 转 camelCase
  */
 export function kebabToCamel(str: string): string {
-  return str.replace(/-([a-z])/g, (_, c) => c.toUpperCase())
+  return str.replace(/-([a-z])/g, (_, c) => c.toUpperCase());
 }
 
 /**
  * 转义正则表达式特殊字符
  */
 export function escapeRegExp(str: string): string {
-  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 /**
@@ -65,13 +65,13 @@ export function escapeRegExp(str: string): string {
  */
 export function escapeHTML(str: string): string {
   const map: Record<string, string> = {
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#39;',
-  }
-  return str.replace(/[&<>"']/g, (c) => map[c] ?? c)
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;",
+  };
+  return str.replace(/[&<>"']/g, (c) => map[c] ?? c);
 }
 
 /**
@@ -79,90 +79,110 @@ export function escapeHTML(str: string): string {
  */
 export function unescapeHTML(str: string): string {
   const map: Record<string, string> = {
-    '&amp;': '&',
-    '&lt;': '<',
-    '&gt;': '>',
-    '&quot;': '"',
-    '&#39;': "'",
-    '&apos;': "'",
-  }
-  return str.replace(/&(?:amp|lt|gt|quot|#39|apos);/g, (entity) => map[entity] ?? entity)
+    "&amp;": "&",
+    "&lt;": "<",
+    "&gt;": ">",
+    "&quot;": '"',
+    "&#39;": "'",
+    "&apos;": "'",
+  };
+  return str.replace(
+    /&(?:amp|lt|gt|quot|#39|apos);/g,
+    (entity) => map[entity] ?? entity,
+  );
 }
 
 /**
  * 去除首尾空白字符
  */
 export function trim(str: string): string {
-  return str.trim()
+  return str.trim();
 }
 
 /**
  * 去除首尾指定字符
  */
 export function trimChars(str: string, chars: string): string {
-  const pattern = new RegExp(`^[${escapeRegExp(chars)}]+|[${escapeRegExp(chars)}]+$`, 'g')
-  return str.replace(pattern, '')
+  const pattern = new RegExp(
+    `^[${escapeRegExp(chars)}]+|[${escapeRegExp(chars)}]+$`,
+    "g",
+  );
+  return str.replace(pattern, "");
 }
 
 /**
  * 重复字符串 n 次
  */
 export function repeat(str: string, count: number): string {
-  if (count <= 0) return ''
-  return str.repeat(count)
+  if (count <= 0) return "";
+  return str.repeat(count);
 }
 
 /**
  * 在字符串开头填充
  */
-export function padStart(str: string, length: number, fillStr: string = ' '): string {
-  return str.padStart(length, fillStr)
+export function padStart(
+  str: string,
+  length: number,
+  fillStr: string = " ",
+): string {
+  return str.padStart(length, fillStr);
 }
 
 /**
  * 在字符串末尾填充
  */
-export function padEnd(str: string, length: number, fillStr: string = ' '): string {
-  return str.padEnd(length, fillStr)
+export function padEnd(
+  str: string,
+  length: number,
+  fillStr: string = " ",
+): string {
+  return str.padEnd(length, fillStr);
 }
 
 /**
  * 检查字符串是否以指定前缀开头
  */
-export function startsWith(str: string, prefix: string, position: number = 0): boolean {
-  return str.startsWith(prefix, position)
+export function startsWith(
+  str: string,
+  prefix: string,
+  position: number = 0,
+): boolean {
+  return str.startsWith(prefix, position);
 }
 
 /**
  * 检查字符串是否以指定后缀结尾
  */
 export function endsWith(str: string, suffix: string): boolean {
-  return str.endsWith(suffix)
+  return str.endsWith(suffix);
 }
 
 /**
  * 检查字符串是否包含子串
  */
 export function includes(str: string, searchStr: string): boolean {
-  return str.includes(searchStr)
+  return str.includes(searchStr);
 }
 
 /**
  * 分割字符串
  */
 export function split(str: string, separator: string): string[] {
-  return str.split(separator)
+  return str.split(separator);
 }
 
 /**
  * 将字符串拆分为单词数组
  */
 export function words(str: string): string[] {
-  if (!str) return []
-  return str.match(/[a-zA-Z0-9]+/g)?.flatMap((w) => {
-    // Split camelCase boundaries: "helloWorld" -> ["hello", "World"]
-    return w.match(/[a-z0-9]+|[A-Z][a-z0-9]*/g) ?? []
-  }) ?? []
+  if (!str) return [];
+  return (
+    str.match(/[a-zA-Z0-9]+/g)?.flatMap((w) => {
+      // Split camelCase boundaries: "helloWorld" -> ["hello", "World"]
+      return w.match(/[a-z0-9]+|[A-Z][a-z0-9]*/g) ?? [];
+    }) ?? []
+  );
 }
 
 /**
@@ -170,22 +190,26 @@ export function words(str: string): string[] {
  */
 export function substring(str: string, start: number, end?: number): string {
   if (start < 0) {
-    start = Math.max(0, str.length + start)
+    start = Math.max(0, str.length + start);
   }
   if (end === undefined) {
-    return str.slice(start)
+    return str.slice(start);
   }
-  return str.slice(start, end)
+  return str.slice(start, end);
 }
 
 /**
  * 截断字符串
  */
-export function truncate(str: string, length: number, omission: string = '...'): string {
-  if (str.length <= length) return str
-  const truncatedLength = length - omission.length
-  if (truncatedLength <= 0) return omission.slice(0, length)
-  return str.slice(0, truncatedLength) + omission
+export function truncate(
+  str: string,
+  length: number,
+  omission: string = "...",
+): string {
+  if (str.length <= length) return str;
+  const truncatedLength = length - omission.length;
+  if (truncatedLength <= 0) return omission.slice(0, length);
+  return str.slice(0, truncatedLength) + omission;
 }
 
 /**
@@ -193,63 +217,75 @@ export function truncate(str: string, length: number, omission: string = '...'):
  */
 export function template(
   str: string,
-  data: Record<string, string | number | boolean>
+  data: Record<string, string | number | boolean>,
 ): string {
   return str.replace(/\{(\w+)\}/g, (match, key) => {
-    const value = data[key]
-    return value !== undefined ? String(value) : match
-  })
+    const value = data[key];
+    return value !== undefined ? String(value) : match;
+  });
 }
 
 /**
  * 规范化 class 值
  */
 export function normalizeClass(
-  value: string | Record<string, any> | Array<any> | undefined | null | boolean | number
+  value:
+    | string
+    | Record<string, any>
+    | Array<any>
+    | undefined
+    | null
+    | boolean
+    | number,
 ): string {
-  if (!value) return ''
-  if (typeof value === 'string') return value
+  if (!value) return "";
+  if (typeof value === "string") return value;
 
   if (Array.isArray(value)) {
-    return value.map(normalizeClass).filter(Boolean).join(' ')
+    return value.map(normalizeClass).filter(Boolean).join(" ");
   }
 
-  if (typeof value === 'object') {
-    const result: string[] = []
+  if (typeof value === "object") {
+    const result: string[] = [];
     for (const key in value) {
       if (value[key]) {
-        result.push(key)
+        result.push(key);
       }
     }
-    return result.join(' ')
+    return result.join(" ");
   }
 
-  return ''
+  return "";
 }
 
 /**
  * 规范化 style 值
  */
 export function normalizeStyle(
-  value: string | Record<string, string | number> | Array<any> | undefined | null
+  value:
+    | string
+    | Record<string, string | number>
+    | Array<any>
+    | undefined
+    | null,
 ): string {
-  if (!value) return ''
-  if (typeof value === 'string') return value
+  if (!value) return "";
+  if (typeof value === "string") return value;
 
   if (Array.isArray(value)) {
-    return value.map(normalizeStyle).filter(Boolean).join('; ')
+    return value.map(normalizeStyle).filter(Boolean).join("; ");
   }
 
-  if (typeof value === 'object') {
-    const result: string[] = []
+  if (typeof value === "object") {
+    const result: string[] = [];
     for (const key in value) {
-      const cssKey = camelToKebab(key)
-      result.push(`${cssKey}: ${value[key]}`)
+      const cssKey = camelToKebab(key);
+      result.push(`${cssKey}: ${value[key]}`);
     }
-    return result.join('; ')
+    return result.join("; ");
   }
 
-  return ''
+  return "";
 }
 
 // ============================================================
@@ -260,66 +296,113 @@ export function normalizeStyle(
  * 危险事件处理器属性黑名单
  */
 const DANGEROUS_EVENT_ATTRS = new Set([
-  'onclick', 'ondblclick', 'onmousedown', 'onmouseup', 'onmouseover',
-  'onmouseout', 'onmousemove', 'onmouseenter', 'onmouseleave',
-  'onkeydown', 'onkeyup', 'onkeypress',
-  'onfocus', 'onblur', 'oninput', 'onchange', 'onsubmit', 'onreset',
-  'onload', 'onerror', 'onresize', 'onscroll',
-  'oncontextmenu', 'ondrag', 'ondragend', 'ondragenter',
-  'ondragleave', 'ondragover', 'ondragstart', 'ondrop',
-  'onanimationend', 'onanimationstart', 'ontransitionend',
-  'onwheel', 'onpointerdown', 'onpointerup', 'onpointermove',
-  'oncopy', 'oncut', 'onpaste',
-])
+  "onclick",
+  "ondblclick",
+  "onmousedown",
+  "onmouseup",
+  "onmouseover",
+  "onmouseout",
+  "onmousemove",
+  "onmouseenter",
+  "onmouseleave",
+  "onkeydown",
+  "onkeyup",
+  "onkeypress",
+  "onfocus",
+  "onblur",
+  "oninput",
+  "onchange",
+  "onsubmit",
+  "onreset",
+  "onload",
+  "onerror",
+  "onresize",
+  "onscroll",
+  "oncontextmenu",
+  "ondrag",
+  "ondragend",
+  "ondragenter",
+  "ondragleave",
+  "ondragover",
+  "ondragstart",
+  "ondrop",
+  "onanimationend",
+  "onanimationstart",
+  "ontransitionend",
+  "onwheel",
+  "onpointerdown",
+  "onpointerup",
+  "onpointermove",
+  "oncopy",
+  "oncut",
+  "onpaste",
+]);
 
 /**
  * 危险 URL 属性（需要协议白名单校验）
  */
 const DANGEROUS_URL_ATTRS = new Set([
-  'src', 'href', 'action', 'formaction', 'xlink:href',
-  'data', 'srcdoc', 'poster', 'background',
-])
+  "src",
+  "href",
+  "action",
+  "formaction",
+  "xlink:href",
+  "data",
+  "srcdoc",
+  "poster",
+  "background",
+]);
 
 /**
  * 允许的 URL 协议
  */
 const ALLOWED_URL_PROTOCOLS = new Set([
-  'http:', 'https:', 'mailto:', 'tel:', '#', '',
-])
+  "http:",
+  "https:",
+  "mailto:",
+  "tel:",
+  "#",
+  "",
+]);
 
 /**
  * 检查属性是否安全
  * @returns true 表示安全，false 表示应跳过
  */
-export function isSafeAttribute(
-  attrName: string,
-  attrValue: string,
-): boolean {
-  const lowerName = attrName.toLowerCase()
+export function isSafeAttribute(attrName: string, attrValue: string): boolean {
+  const lowerName = attrName.toLowerCase();
 
   // 1. 检查事件处理器属性
   if (DANGEROUS_EVENT_ATTRS.has(lowerName)) {
-    if (typeof process !== 'undefined' && process.env?.NODE_ENV === 'development') {
-      console.warn(`[lytjs/security] Blocked dangerous event attribute: ${attrName}`)
+    if (
+      typeof process !== "undefined" &&
+      process.env?.NODE_ENV === "development"
+    ) {
+      console.warn(
+        `[lytjs/security] Blocked dangerous event attribute: ${attrName}`,
+      );
     }
-    return false
+    return false;
   }
 
   // 2. 检查 URL 类属性
   if (DANGEROUS_URL_ATTRS.has(lowerName)) {
-    const trimmed = (attrValue ?? '').trim().toLowerCase()
-    const protocolMatch = trimmed.match(/^([a-z]+:|#)/)
-    const protocol = protocolMatch?.[1] ?? ''
+    const trimmed = (attrValue ?? "").trim().toLowerCase();
+    const protocolMatch = trimmed.match(/^([a-z]+:|#)/);
+    const protocol = protocolMatch?.[1] ?? "";
     if (!ALLOWED_URL_PROTOCOLS.has(protocol)) {
-      if (typeof process !== 'undefined' && process.env?.NODE_ENV === 'development') {
+      if (
+        typeof process !== "undefined" &&
+        process.env?.NODE_ENV === "development"
+      ) {
         console.warn(
           `[lytjs/security] Blocked dangerous URL in attribute "${attrName}": ` +
-          `protocol "${protocol}" is not allowed`,
-        )
+            `protocol "${protocol}" is not allowed`,
+        );
       }
-      return false
+      return false;
     }
   }
 
-  return true
+  return true;
 }

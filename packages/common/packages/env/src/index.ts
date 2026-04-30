@@ -8,13 +8,13 @@
  */
 export interface EnvInfo {
   /** 是否为浏览器环境 */
-  isBrowser: boolean
+  isBrowser: boolean;
   /** 是否为 Node.js 环境 */
-  isNode: boolean
+  isNode: boolean;
   /** 是否为 SSR 环境 */
-  isSSR: boolean
+  isSSR: boolean;
   /** 用户代理字符串 */
-  userAgent: string
+  userAgent: string;
 }
 
 /**
@@ -22,10 +22,10 @@ export interface EnvInfo {
  */
 export function isBrowser(): boolean {
   return (
-    typeof window !== 'undefined' &&
-    typeof document !== 'undefined' &&
-    typeof navigator !== 'undefined'
-  )
+    typeof window !== "undefined" &&
+    typeof document !== "undefined" &&
+    typeof navigator !== "undefined"
+  );
 }
 
 /**
@@ -33,10 +33,10 @@ export function isBrowser(): boolean {
  */
 export function isNode(): boolean {
   return (
-    typeof process !== 'undefined' &&
+    typeof process !== "undefined" &&
     process.versions != null &&
     process.versions.node != null
-  )
+  );
 }
 
 /**
@@ -44,20 +44,20 @@ export function isNode(): boolean {
  * SSR 环境既不是浏览器也不是 Node.js（或无法确定）
  */
 export function isSSR(): boolean {
-  return !isBrowser() && !isNode()
+  return !isBrowser() && !isNode();
 }
 
 /**
  * 获取完整的环境信息
  */
 export function getEnvInfo(): EnvInfo {
-  const browser = isBrowser()
-  const node = isNode()
+  const browser = isBrowser();
+  const node = isNode();
 
   return {
     isBrowser: browser,
     isNode: node,
     isSSR: !browser && !node,
-    userAgent: browser ? navigator.userAgent : '',
-  }
+    userAgent: browser ? navigator.userAgent : "",
+  };
 }

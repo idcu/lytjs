@@ -9,27 +9,16 @@ export {
   defineComponent,
   provide,
   inject,
-} from './component';
+} from "./component";
 
 // Props
-export {
-  normalizePropsOptions,
-  resolvePropValue,
-  validateType,
-} from './props';
+export { normalizePropsOptions, resolvePropValue, validateType } from "./props";
 
 // Emit
-export {
-  emit,
-  normalizeEmitsOptions,
-  isEmitValid,
-} from './emit';
+export { emit, normalizeEmitsOptions, isEmitValid } from "./emit";
 
 // Slots
-export {
-  initSlots,
-  normalizeSlotValue,
-} from './slots';
+export { initSlots, normalizeSlotValue } from "./slots";
 
 // Lifecycle
 export {
@@ -48,7 +37,7 @@ export {
   callUpdatedHook,
   callUnmountedHook,
   handleError,
-} from './lifecycle';
+} from "./lifecycle";
 
 // KeepAlive
 export {
@@ -60,8 +49,8 @@ export {
   removeCachedInstance,
   activateInstance,
   deactivateInstance,
-} from './keep-alive';
-export type { KeepAliveProps } from './keep-alive';
+} from "./keep-alive";
+export type { KeepAliveProps } from "./keep-alive";
 
 // Suspense
 export {
@@ -73,8 +62,8 @@ export {
   getSuspenseError,
   resolveSuspense,
   abortSuspense,
-} from './suspense';
-export type { SuspenseProps, SuspenseBoundary } from './suspense';
+} from "./suspense";
+export type { SuspenseProps, SuspenseBoundary } from "./suspense";
 
 // Types
 export type {
@@ -87,4 +76,4 @@ export type {
   PropOptions,
   RenderFunction,
   SlotFunction,
-} from './types';
+} from "./types";

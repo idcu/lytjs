@@ -3,14 +3,10 @@
  * 对象操作工具函数集合
  */
 
-import {
-  isPlainObject,
-  isArray,
-  isNullish,
-} from '@lytjs/common-is'
+import { isPlainObject, isArray, isNullish } from "@lytjs/common-is";
 
 const hasOwn = (obj: object, key: string | number | symbol): boolean =>
-  Object.prototype.hasOwnProperty.call(obj, key)
+  Object.prototype.hasOwnProperty.call(obj, key);
 
 /**
  * 浅合并多个对象
@@ -18,17 +14,17 @@ const hasOwn = (obj: object, key: string | number | symbol): boolean =>
 export function mergeObjects<T extends Record<string, any>>(
   ...sources: Partial<T>[]
 ): T {
-  const result = {} as T
+  const result = {} as T;
   for (const source of sources) {
     if (source) {
       for (const key in source) {
         if (hasOwn(source, key)) {
-          ;(result as any)[key] = source[key]
+          (result as any)[key] = source[key];
         }
       }
     }
   }
-  return result
+  return result;
 }
 
 /**
@@ -36,40 +32,40 @@ export function mergeObjects<T extends Record<string, any>>(
  */
 export function deepMerge<T extends Record<string, any>>(
   target: T,
-  source: Partial<T>
+  source: Partial<T>,
 ): T {
-  const result = { ...target }
+  const result = { ...target };
   for (const key in source) {
     if (hasOwn(source, key)) {
-      const sourceVal = source[key]
-      const targetVal = result[key]
+      const sourceVal = source[key];
+      const targetVal = result[key];
       if (isPlainObject(sourceVal) && isPlainObject(targetVal)) {
         result[key] = deepMerge(
           targetVal as Record<string, any>,
-          sourceVal as Record<string, any>
-        ) as any
+          sourceVal as Record<string, any>,
+        ) as any;
       } else {
-        result[key] = sourceVal as any
+        result[key] = sourceVal as any;
       }
     }
   }
-  return result
+  return result;
 }
 
 /**
  * 创建对象的浅快照
  */
 export function createSnapshot<T extends Record<string, any>>(obj: T): T {
-  return { ...obj }
+  return { ...obj };
 }
 
 /**
  * 对象差异结果
  */
 export interface ObjectDiff<T = any> {
-  added: Record<string, T>
-  removed: Record<string, T>
-  changed: Record<string, { from: T; to: T }>
+  added: Record<string, T>;
+  removed: Record<string, T>;
+  changed: Record<string, { from: T; to: T }>;
 }
 
 /**
@@ -77,34 +73,31 @@ export interface ObjectDiff<T = any> {
  */
 export function diffObjects<T extends Record<string, any>>(
   oldObj: T,
-  newObj: T
+  newObj: T,
 ): ObjectDiff {
-  const added: Record<string, any> = {}
-  const removed: Record<string, any> = {}
-  const changed: Record<string, { from: any; to: any }> = {}
+  const added: Record<string, any> = {};
+  const removed: Record<string, any> = {};
+  const changed: Record<string, { from: any; to: any }> = {};
 
   // 检查新增和变更
   for (const key in newObj) {
     if (hasOwn(newObj, key)) {
       if (!hasOwn(oldObj, key)) {
-        added[key] = newObj[key]
+        added[key] = newObj[key];
       } else if (oldObj[key] !== newObj[key]) {
-        changed[key] = { from: oldObj[key], to: newObj[key] }
+        changed[key] = { from: oldObj[key], to: newObj[key] };
       }
     }
   }
 
   // 检查删除
   for (const key in oldObj) {
-    if (
-      hasOwn(oldObj, key) &&
-      !hasOwn(newObj, key)
-    ) {
-      removed[key] = oldObj[key]
+    if (hasOwn(oldObj, key) && !hasOwn(newObj, key)) {
+      removed[key] = oldObj[key];
     }
   }
 
-  return { added, removed, changed }
+  return { added, removed, changed };
 }
 
 /**
@@ -112,15 +105,15 @@ export function diffObjects<T extends Record<string, any>>(
  */
 export function pick<T extends Record<string, any>, K extends keyof T>(
   obj: T,
-  keys: K[]
+  keys: K[],
 ): Pick<T, K> {
-  const result = {} as Pick<T, K>
+  const result = {} as Pick<T, K>;
   for (const key of keys) {
     if (hasOwn(obj, key)) {
-      result[key] = obj[key]
+      result[key] = obj[key];
     }
   }
-  return result
+  return result;
 }
 
 /**
@@ -128,21 +121,24 @@ export function pick<T extends Record<string, any>, K extends keyof T>(
  */
 export function omit<T extends Record<string, any>, K extends keyof T>(
   obj: T,
-  keys: K[]
+  keys: K[],
 ): Omit<T, K> {
-  const result = { ...obj }
+  const result = { ...obj };
   for (const key of keys) {
-    delete result[key]
+    delete result[key];
   }
-  return result
+  return result;
 }
 
 /**
  * 深度克隆对象
  */
-export function deepClone<T>(source: T, seen = new WeakMap<object, unknown>()): T {
+export function deepClone<T>(
+  source: T,
+  seen = new WeakMap<object, unknown>(),
+): T {
   // 基本类型直接返回
-  if (source === null || typeof source !== 'object') return source;
+  if (source === null || typeof source !== "object") return source;
 
   // 循环引用检测
   if (seen.has(source as object)) return seen.get(source as object) as T;
@@ -161,7 +157,7 @@ export function deepClone<T>(source: T, seen = new WeakMap<object, unknown>()): 
   if (source instanceof Set) {
     const clone = new Set();
     seen.set(source, clone);
-    source.forEach(value => {
+    source.forEach((value) => {
       clone.add(deepClone(value, seen));
     });
     return clone as T;
@@ -189,73 +185,76 @@ export function deepClone<T>(source: T, seen = new WeakMap<object, unknown>()): 
 /**
  * 浅比较两个对象是否相等
  */
-export function shallowEqual(a: Record<string, any>, b: Record<string, any>): boolean {
-  if (a === b) return true
-  if (!a || !b) return false
+export function shallowEqual(
+  a: Record<string, any>,
+  b: Record<string, any>,
+): boolean {
+  if (a === b) return true;
+  if (!a || !b) return false;
 
-  const keysA = Object.keys(a)
-  const keysB = Object.keys(b)
+  const keysA = Object.keys(a);
+  const keysB = Object.keys(b);
 
-  if (keysA.length !== keysB.length) return false
+  if (keysA.length !== keysB.length) return false;
 
   for (const key of keysA) {
     if (a[key] !== b[key] || !hasOwn(b, key)) {
-      return false
+      return false;
     }
   }
 
-  return true
+  return true;
 }
 
 /**
  * 深度比较两个值是否相等
  */
 export function deepEqual(a: any, b: any): boolean {
-  if (a === b) return true
-  if (a == null || b == null) return false
-  if (typeof a !== typeof b) return false
+  if (a === b) return true;
+  if (a == null || b == null) return false;
+  if (typeof a !== typeof b) return false;
 
-  if (typeof a === 'number' && Number.isNaN(a) && Number.isNaN(b)) return true
+  if (typeof a === "number" && Number.isNaN(a) && Number.isNaN(b)) return true;
 
-  if (typeof a !== 'object') return false
+  if (typeof a !== "object") return false;
 
   if (a instanceof Date && b instanceof Date) {
-    return a.getTime() === b.getTime()
+    return a.getTime() === b.getTime();
   }
 
   if (a instanceof RegExp && b instanceof RegExp) {
-    return a.source === b.source && a.flags === b.flags
+    return a.source === b.source && a.flags === b.flags;
   }
 
   if (a instanceof Map && b instanceof Map) {
-    if (a.size !== b.size) return false
+    if (a.size !== b.size) return false;
     for (const [key, val] of a) {
-      if (!b.has(key) || !deepEqual(val, b.get(key))) return false
+      if (!b.has(key) || !deepEqual(val, b.get(key))) return false;
     }
-    return true
+    return true;
   }
 
   if (a instanceof Set && b instanceof Set) {
-    if (a.size !== b.size) return false
+    if (a.size !== b.size) return false;
     for (const val of a) {
-      if (!b.has(val)) return false
+      if (!b.has(val)) return false;
     }
-    return true
+    return true;
   }
 
   if (isArray(a) && isArray(b)) {
-    if (a.length !== b.length) return false
-    return a.every((val, i) => deepEqual(val, b[i]))
+    if (a.length !== b.length) return false;
+    return a.every((val, i) => deepEqual(val, b[i]));
   }
 
   if (isPlainObject(a) && isPlainObject(b)) {
-    const keysA = Object.keys(a)
-    const keysB = Object.keys(b)
-    if (keysA.length !== keysB.length) return false
-    return keysA.every((key) => deepEqual(a[key], b[key]))
+    const keysA = Object.keys(a);
+    const keysB = Object.keys(b);
+    if (keysA.length !== keysB.length) return false;
+    return keysA.every((key) => deepEqual(a[key], b[key]));
   }
 
-  return false
+  return false;
 }
 
 /**
@@ -264,16 +263,16 @@ export function deepEqual(a: any, b: any): boolean {
 export function get<T = any>(
   obj: Record<string, any>,
   path: string,
-  defaultValue?: T
+  defaultValue?: T,
 ): T | undefined {
-  if (!path) return obj as T
-  const keys = path.split('.')
-  let current: any = obj
+  if (!path) return obj as T;
+  const keys = path.split(".");
+  let current: any = obj;
   for (const key of keys) {
-    if (current == null) return defaultValue
-    current = current[key]
+    if (current == null) return defaultValue;
+    current = current[key];
   }
-  return isNullish(current) ? defaultValue : current
+  return isNullish(current) ? defaultValue : current;
 }
 
 /**
@@ -282,23 +281,23 @@ export function get<T = any>(
 export function set<T extends Record<string, any>>(
   obj: T,
   path: string,
-  value: any
+  value: any,
 ): T {
-  if (!path) return obj
-  const keys = path.split('.')
-  const result = { ...obj }
-  let current: any = result
+  if (!path) return obj;
+  const keys = path.split(".");
+  const result = { ...obj };
+  let current: any = result;
 
   for (let i = 0; i < keys.length - 1; i++) {
-    const key = keys[i]!
-    if (current[key] == null || typeof current[key] !== 'object') {
-      current[key] = {}
+    const key = keys[i]!;
+    if (current[key] == null || typeof current[key] !== "object") {
+      current[key] = {};
     } else {
-      current[key] = { ...current[key] }
+      current[key] = { ...current[key] };
     }
-    current = current[key]
+    current = current[key];
   }
 
-  current[keys[keys.length - 1]!] = value
-  return result
+  current[keys[keys.length - 1]!] = value;
+  return result;
 }

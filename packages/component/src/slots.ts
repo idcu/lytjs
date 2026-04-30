@@ -1,8 +1,12 @@
 // src/slots.ts
 // Slot handling
 
-import { isFunction, isArray, isObject, isNullish } from '@lytjs/common-is';
-import type { ComponentInternalInstance, InternalSlots, SlotFunction } from './types';
+import { isFunction, isArray, isObject, isNullish } from "@lytjs/common-is";
+import type {
+  ComponentInternalInstance,
+  InternalSlots,
+  SlotFunction,
+} from "./types";
 
 /**
  * Initialize slots from children.

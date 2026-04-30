@@ -14,49 +14,49 @@
  * @returns 构成 LIS 的索引数组
  */
 export function getSequence(arr: number[]): number[] {
-  const len = arr.length
-  if (len === 0) return []
+  const len = arr.length;
+  if (len === 0) return [];
 
   // tails[i] 存储长度为 i+1 的 LIS 的最小末尾值的索引
-  const tails: number[] = []
+  const tails: number[] = [];
   // parent[i] 存储 arr[i] 在 LIS 中的前驱索引
-  const parent: number[] = new Array(len).fill(-1)
+  const parent: number[] = new Array(len).fill(-1);
 
   for (let i = 0; i < len; i++) {
-    const val = arr[i]!
+    const val = arr[i]!;
 
     // 二分查找：找到 tails 中第一个 >= val 的位置
-    let left = 0
-    let right = tails.length
+    let left = 0;
+    let right = tails.length;
 
     while (left < right) {
-      const mid = (left + right) >>> 1
+      const mid = (left + right) >>> 1;
       if (arr[tails[mid]!]! < val) {
-        left = mid + 1
+        left = mid + 1;
       } else {
-        right = mid
+        right = mid;
       }
     }
 
     // left 就是 val 应该放置的位置
     if (left > 0) {
-      parent[i] = tails[left - 1]!
+      parent[i] = tails[left - 1]!;
     }
 
     if (left === tails.length) {
-      tails.push(i)
+      tails.push(i);
     } else {
-      tails[left] = i
+      tails[left] = i;
     }
   }
 
   // 回溯构建 LIS 的索引序列
-  const result: number[] = []
-  let current = tails[tails.length - 1]!
+  const result: number[] = [];
+  let current = tails[tails.length - 1]!;
   while (current !== -1) {
-    result.push(current)
-    current = parent[current]!
+    result.push(current);
+    current = parent[current]!;
   }
 
-  return result.reverse()
+  return result.reverse();
 }

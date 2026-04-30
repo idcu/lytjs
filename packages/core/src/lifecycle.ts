@@ -9,7 +9,7 @@ export {
   onBeforeUnmount,
   onBeforeUpdate,
   onErrorCaptured,
-} from '@lytjs/component';
+} from "@lytjs/component";
 
 // onRenderTracked 和 onRenderTriggered 需要响应式系统的支持
 // 这些钩子在 reactivity 的 effect 系统中触发

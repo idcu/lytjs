@@ -2,8 +2,8 @@
 // @lytjs/reactivity 主入口 - re-export 所有公共 API
 
 // 初始化 ref.ts 的 reactive 函数引用（解决循环依赖）
-import { _setReactiveFn } from './ref';
-import { reactive as reactiveFn } from './reactive';
+import { _setReactiveFn } from "./ref";
+import { reactive as reactiveFn } from "./reactive";
 _setReactiveFn(reactiveFn);
 
 export {
@@ -17,7 +17,7 @@ export {
   isProxy,
   toRaw,
   markRaw,
-} from './reactive';
+} from "./reactive";
 
 export {
   // ref
@@ -29,12 +29,12 @@ export {
   toRefs,
   toRef,
   customRef,
-} from './ref';
+} from "./ref";
 
 export {
   // computed
   computed,
-} from './computed';
+} from "./computed";
 
 export {
   // watch
@@ -42,7 +42,7 @@ export {
   watchEffect,
   watchPostEffect,
   watchSyncEffect,
-} from './watch';
+} from "./watch";
 
 export {
   // effect
@@ -53,16 +53,16 @@ export {
   resetTracking,
   batch,
   onEffectCleanup,
-} from './effect';
+} from "./effect";
 
 export {
   // effectScope
   effectScope,
   getCurrentScope,
   onScopeDispose,
-} from './effect-scope';
+} from "./effect-scope";
 
-export type { EffectScope, EffectScopeOptions } from './effect-scope';
+export type { EffectScope, EffectScopeOptions } from "./effect-scope";
 
 // 类型 re-export
 export type {
@@ -90,7 +90,7 @@ export type {
   DeepReadonly,
   ToRefs,
   ReactiveObject,
-} from './types';
+} from "./types";
 
 export {
   RefSymbol,
@@ -98,4 +98,4 @@ export {
   ComputedRefSymbol,
   ReactiveSymbol,
   ReadonlySymbol,
-} from './constants';
+} from "./constants";

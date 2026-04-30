@@ -3,16 +3,18 @@
  * VNode creation and manipulation functions
  */
 
+import { Fragment, Text, Comment, ShapeFlags } from "@lytjs/common-vnode";
+import type { VNode, VNodeChildren, VNodeTypes } from "@lytjs/common-vnode";
 import {
-  Fragment,
-  Text,
-  Comment,
-  ShapeFlags,
-} from '@lytjs/common-vnode'
-import type { VNode, VNodeChildren, VNodeTypes } from '@lytjs/common-vnode'
-import { isString, isArray, isFunction, isObject, isNullish, EMPTY_OBJ } from '@lytjs/common-is'
-import { normalizeClass } from '@lytjs/common-string'
-import { setVNodeProps, getVNodeProps } from './props-map'
+  isString,
+  isArray,
+  isFunction,
+  isObject,
+  isNullish,
+  EMPTY_OBJ,
+} from "@lytjs/common-is";
+import { normalizeClass } from "@lytjs/common-string";
+import { setVNodeProps, getVNodeProps } from "./props-map";
 
 // ============================================================
 // createVNode
@@ -31,7 +33,7 @@ export function createVNode(
 ): VNode {
   // Handle class/style normalization
   if (props) {
-    props = normalizeProps(props)
+    props = normalizeProps(props);
   }
 
   const vnode: VNode = {
@@ -58,19 +60,19 @@ export function createVNode(
     targetStart: null,
     loc: null,
     __v_isVNode: true,
-  }
+  };
 
   // Store props in WeakMap for renderer access
   if (props) {
-    setVNodeProps(vnode, props)
+    setVNodeProps(vnode, props);
   }
 
   // Normalize children and update shapeFlag
   if (children !== null && children !== undefined) {
-    normalizeChildren(vnode, children)
+    normalizeChildren(vnode, children);
   }
 
-  return vnode
+  return vnode;
 }
 
 // ============================================================
@@ -80,8 +82,8 @@ export function createVNode(
 /**
  * Create a text VNode
  */
-export function createTextVNode(text: string = ''): VNode {
-  return createVNode(Text, null, text)
+export function createTextVNode(text: string = ""): VNode {
+  return createVNode(Text, null, text);
 }
 
 // ============================================================
@@ -91,10 +93,10 @@ export function createTextVNode(text: string = ''): VNode {
 /**
  * Create a comment VNode
  */
-export function createCommentVNode(text: string = ''): VNode {
-  const vnode = createVNode(Comment, null, text)
-  vnode.isComment = true
-  return vnode
+export function createCommentVNode(text: string = ""): VNode {
+  const vnode = createVNode(Comment, null, text);
+  vnode.isComment = true;
+  return vnode;
 }
 
 // ============================================================
@@ -112,40 +114,38 @@ export function cloneVNode(
     ...vnode,
     isCloned: true,
     // Deep clone dynamic children reference (not the array itself)
-    dynamicChildren: vnode.dynamicChildren
-      ? [...vnode.dynamicChildren]
-      : null,
-  }
+    dynamicChildren: vnode.dynamicChildren ? [...vnode.dynamicChildren] : null,
+  };
 
   // Merge extra props
   if (extraProps) {
-    const mergedProps = { ...extraProps }
+    const mergedProps = { ...extraProps };
     // Normalize the merged props
-    normalizeProps(mergedProps)
-    cloned.key = mergedProps.key ?? vnode.key
-    cloned.ref = mergedProps.ref ?? vnode.ref
+    normalizeProps(mergedProps);
+    cloned.key = mergedProps.key ?? vnode.key;
+    cloned.ref = mergedProps.ref ?? vnode.ref;
     // Store merged props
-    const oldProps = getVNodeProps(vnode)
+    const oldProps = getVNodeProps(vnode);
     if (oldProps) {
-      const finalProps = { ...oldProps, ...mergedProps }
-      setVNodeProps(cloned, finalProps)
+      const finalProps = { ...oldProps, ...mergedProps };
+      setVNodeProps(cloned, finalProps);
     } else {
-      setVNodeProps(cloned, mergedProps)
+      setVNodeProps(cloned, mergedProps);
     }
     // Merge children if provided
     if (!isNullish(mergedProps.children)) {
-      cloned.children = mergedProps.children
-      normalizeChildren(cloned, mergedProps.children)
+      cloned.children = mergedProps.children;
+      normalizeChildren(cloned, mergedProps.children);
     }
   } else {
     // Clone props reference
-    const oldProps = getVNodeProps(vnode)
+    const oldProps = getVNodeProps(vnode);
     if (oldProps) {
-      setVNodeProps(cloned, { ...oldProps })
+      setVNodeProps(cloned, { ...oldProps });
     }
   }
 
-  return cloned
+  return cloned;
 }
 
 // ============================================================
@@ -162,48 +162,48 @@ export function cloneVNode(
 export function mergeProps(
   ...args: (Record<string, any> | null | undefined)[]
 ): Record<string, any> {
-  const result: Record<string, any> = {}
+  const result: Record<string, any> = {};
 
   for (let i = 0; i < args.length; i++) {
-    const props = args[i]
-    if (!props) continue
+    const props = args[i];
+    if (!props) continue;
 
     for (const key in props) {
-      if (key === 'key' || key === 'ref') continue
+      if (key === "key" || key === "ref") continue;
 
-      const val = props[key]
-      const existing = result[key]
+      const val = props[key];
+      const existing = result[key];
 
       // Class concatenation
-      if (key === 'class') {
+      if (key === "class") {
         result[key] = existing
           ? normalizeClass([existing, val])
-          : normalizeClass(val)
+          : normalizeClass(val);
       }
       // Style merging
-      else if (key === 'style') {
+      else if (key === "style") {
         result[key] = existing
           ? normalizeStyle([existing, val])
-          : normalizeStyle(val)
+          : normalizeStyle(val);
       }
       // Event handler concatenation
-      else if (key.startsWith('on') && isFunction(val)) {
+      else if (key.startsWith("on") && isFunction(val)) {
         if (isFunction(existing)) {
-          result[key] = [existing, val]
+          result[key] = [existing, val];
         } else if (isArray(existing)) {
-          result[key] = [...existing, val]
+          result[key] = [...existing, val];
         } else {
-          result[key] = val
+          result[key] = val;
         }
       }
       // Normal prop override
       else {
-        result[key] = val
+        result[key] = val;
       }
     }
   }
 
-  return result
+  return result;
 }
 
 // ============================================================
@@ -214,31 +214,31 @@ export function mergeProps(
  * Normalize children and set shapeFlag on the vnode
  */
 export function normalizeChildren(vnode: VNode, children: VNodeChildren): void {
-  let type: number = 0
+  let type: number = 0;
 
   if (isNullish(children)) {
     // No children
   } else if (isArray(children)) {
-    type = ShapeFlags.ARRAY_CHILDREN
+    type = ShapeFlags.ARRAY_CHILDREN;
   } else if (isString(children) || isFunction(children)) {
     // Function children will be resolved later; treat as text for shapeFlag
-    type = ShapeFlags.TEXT_CHILDREN
+    type = ShapeFlags.TEXT_CHILDREN;
     // Convert function children to a slot-like structure
     if (isFunction(children)) {
-      vnode.children = children as unknown as VNodeChildren
+      vnode.children = children as unknown as VNodeChildren;
     }
-  } else if (typeof children === 'number') {
-    type = ShapeFlags.TEXT_CHILDREN
-    vnode.children = String(children)
-  } else if (typeof children === 'boolean') {
+  } else if (typeof children === "number") {
+    type = ShapeFlags.TEXT_CHILDREN;
+    vnode.children = String(children);
+  } else if (typeof children === "boolean") {
     // Boolean children are treated as null
-    vnode.children = undefined
+    vnode.children = undefined;
   } else if (isObject(children)) {
     // Slots children
-    type = ShapeFlags.SLOTS_CHILDREN
+    type = ShapeFlags.SLOTS_CHILDREN;
   }
 
-  vnode.shapeFlag |= type
+  vnode.shapeFlag |= type;
 }
 
 // ============================================================
@@ -250,22 +250,22 @@ export function normalizeChildren(vnode: VNode, children: VNodeChildren): void {
  */
 export function getShapeFlag(type: VNodeTypes): number {
   if (isString(type)) {
-    return ShapeFlags.ELEMENT
+    return ShapeFlags.ELEMENT;
   }
   if (type === Fragment) {
-    return ShapeFlags.ARRAY_CHILDREN
+    return ShapeFlags.ARRAY_CHILDREN;
   }
   if (type === Text) {
-    return ShapeFlags.TEXT_CHILDREN
+    return ShapeFlags.TEXT_CHILDREN;
   }
   if (type === Comment) {
-    return 0
+    return 0;
   }
   // Object type => component
-  if (isObject(type) && typeof type === 'object') {
-    return ShapeFlags.STATEFUL_COMPONENT
+  if (isObject(type) && typeof type === "object") {
+    return ShapeFlags.STATEFUL_COMPONENT;
   }
-  return 0
+  return 0;
 }
 
 // ============================================================
@@ -278,13 +278,13 @@ export function getShapeFlag(type: VNodeTypes): number {
 function normalizeProps(props: Record<string, any>): Record<string, any> {
   // class normalization
   if (props.class !== undefined) {
-    props.class = normalizeClass(props.class)
+    props.class = normalizeClass(props.class);
   }
   // style normalization
   if (props.style !== undefined) {
-    props.style = normalizeStyle(props.style)
+    props.style = normalizeStyle(props.style);
   }
-  return props
+  return props;
 }
 
 /**
@@ -295,27 +295,27 @@ function normalizeStyle(
   value: unknown,
 ): string | Record<string, string | number> {
   if (isArray(value)) {
-    const res: Record<string, string | number> = {}
+    const res: Record<string, string | number> = {};
     for (let i = 0; i < value.length; i++) {
-      const item = value[i]
+      const item = value[i];
       if (item) {
-        const normalized = normalizeStyle(item)
+        const normalized = normalizeStyle(item);
         if (isString(normalized)) {
-          return normalized
+          return normalized;
         }
-        Object.assign(res, normalized)
+        Object.assign(res, normalized);
       }
     }
-    return res
+    return res;
   }
   if (isString(value)) {
-    return value
+    return value;
   }
   if (isObject(value)) {
-    return value as Record<string, string | number>
+    return value as Record<string, string | number>;
   }
-  return EMPTY_OBJ as Record<string, string | number>
+  return EMPTY_OBJ as Record<string, string | number>;
 }
 
 // Re-export EMPTY_OBJ for convenience
-export { EMPTY_OBJ }
+export { EMPTY_OBJ };

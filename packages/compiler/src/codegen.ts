@@ -1,7 +1,7 @@
 // src/codegen.ts
 // Code generator - generates render function code from AST
 
-import { NodeTypes, PatchFlags } from './constants';
+import { NodeTypes, PatchFlags } from "./constants";
 import type {
   RootNode,
   JSChildNode,
@@ -21,14 +21,17 @@ import type {
   CodegenContext,
   CodegenOptions,
   BaseNode,
-} from './types';
-import { helperNameMap } from './constants';
+} from "./types";
+import { helperNameMap } from "./constants";
 
 // ============================================================
 // Main generate function
 // ============================================================
 
-export function generate(ast: RootNode, _options: CodegenOptions = {}): CodegenResult {
+export function generate(
+  ast: RootNode,
+  _options: CodegenOptions = {},
+): CodegenResult {
   const context = createCodegenContext(ast);
 
   // Generate helper imports (preamble)
@@ -61,11 +64,11 @@ export function generate(ast: RootNode, _options: CodegenOptions = {}): CodegenR
 function createCodegenContext(ast: RootNode): CodegenContext {
   const helpers = new Map<string, string>();
   let indentLevel = 0;
-  let code = '';
+  let code = "";
 
   const context: CodegenContext = {
     source: ast.loc.source,
-    code: '',
+    code: "",
     line: 1,
     column: 1,
     offset: 0,
@@ -91,23 +94,23 @@ function createCodegenContext(ast: RootNode): CodegenContext {
         indentLevel--;
       }
       if (!withoutNewline) {
-        code += `\n${'  '.repeat(indentLevel)}`;
+        code += `\n${"  ".repeat(indentLevel)}`;
       }
     },
 
     newline(): void {
-      code += `\n${'  '.repeat(indentLevel)}`;
+      code += `\n${"  ".repeat(indentLevel)}`;
     },
   };
 
   // Override code getter
-  Object.defineProperty(context, 'code', {
+  Object.defineProperty(context, "code", {
     get() {
       return code;
     },
   });
 
-  Object.defineProperty(context, 'indentLevel', {
+  Object.defineProperty(context, "indentLevel", {
     get() {
       return indentLevel;
     },
@@ -124,19 +127,22 @@ function createCodegenContext(ast: RootNode): CodegenContext {
 // ============================================================
 
 function genHelperImports(helpers: string[]): string {
-  if (helpers.length === 0) return '';
+  if (helpers.length === 0) return "";
 
   const imports = helpers.map((h) => helperNameMap[h] ?? h);
   const uniqueImports = [...new Set(imports)];
 
-  return `import { ${uniqueImports.join(', ')} } from 'lytjs';\n`;
+  return `import { ${uniqueImports.join(", ")} } from 'lytjs';\n`;
 }
 
 // ============================================================
 // Generate node
 // ============================================================
 
-function genNode(node: JSChildNode | TemplateChildNode, context: CodegenContext): void {
+function genNode(
+  node: JSChildNode | TemplateChildNode,
+  context: CodegenContext,
+): void {
   switch (node.type) {
     case NodeTypes.VNODE_CALL:
       genVNodeCall(node as VNodeCall, context);
@@ -184,24 +190,26 @@ function genNode(node: JSChildNode | TemplateChildNode, context: CodegenContext)
 function genVNodeCall(node: VNodeCall, context: CodegenContext): void {
   const { tag, props, children, patchFlag, isBlock } = node;
 
-  const callee = isBlock ? context.helper('CREATE_BLOCK') : context.helper('CREATE_VNODE');
+  const callee = isBlock
+    ? context.helper("CREATE_BLOCK")
+    : context.helper("CREATE_VNODE");
   context.push(`${callee}(`, node);
 
   // Tag
   genNodeExpr(tag, context);
-  context.push(', ', node);
+  context.push(", ", node);
 
   // Props
   if (props) {
     genNode(props, context);
   } else {
-    context.push('null', node);
+    context.push("null", node);
   }
 
   // Children
   if (children !== undefined) {
-    context.push(', ', node);
-    if (typeof children === 'string') {
+    context.push(", ", node);
+    if (typeof children === "string") {
       context.push(JSON.stringify(children), node);
     } else if (Array.isArray(children)) {
       genChildrenArray(children, context);
@@ -212,8 +220,9 @@ function genVNodeCall(node: VNodeCall, context: CodegenContext): void {
 
   // Patch flag
   if (patchFlag !== undefined) {
-    context.push(', ', node);
-    const flagStr = typeof patchFlag === 'string' ? patchFlag : String(patchFlag);
+    context.push(", ", node);
+    const flagStr =
+      typeof patchFlag === "string" ? patchFlag : String(patchFlag);
     context.push(flagStr, node);
     const flagNum = parseInt(flagStr, 10);
     if (!isNaN(flagNum)) {
@@ -221,17 +230,21 @@ function genVNodeCall(node: VNodeCall, context: CodegenContext): void {
     }
   }
 
-  context.push(')', node);
+  context.push(")", node);
 }
 
 // ============================================================
 // Generate CallExpression
 // ============================================================
 
-function genCallExpression(node: JSCallExpression, context: CodegenContext): void {
-  const callee = typeof node.callee === 'string'
-    ? context.helper(node.callee)
-    : String(node.callee);
+function genCallExpression(
+  node: JSCallExpression,
+  context: CodegenContext,
+): void {
+  const callee =
+    typeof node.callee === "string"
+      ? context.helper(node.callee)
+      : String(node.callee);
 
   context.push(`${callee}(`, node);
 
@@ -239,9 +252,9 @@ function genCallExpression(node: JSCallExpression, context: CodegenContext): voi
     const arg = node.arguments[i];
     if (arg === undefined) continue;
     if (i > 0) {
-      context.push(', ', node);
+      context.push(", ", node);
     }
-    if (typeof arg === 'string') {
+    if (typeof arg === "string") {
       context.push(arg, node);
     } else if (Array.isArray(arg)) {
       genChildrenArray(arg, context);
@@ -250,33 +263,36 @@ function genCallExpression(node: JSCallExpression, context: CodegenContext): voi
     }
   }
 
-  context.push(')', node);
+  context.push(")", node);
 }
 
 // ============================================================
 // Generate ObjectExpression
 // ============================================================
 
-function genObjectExpression(node: JSObjectExpression, context: CodegenContext): void {
+function genObjectExpression(
+  node: JSObjectExpression,
+  context: CodegenContext,
+): void {
   const { properties } = node;
 
   if (properties.length === 0) {
-    context.push('{}', node);
+    context.push("{}", node);
     return;
   }
 
-  context.push('{ ', node);
+  context.push("{ ", node);
 
   for (let i = 0; i < properties.length; i++) {
     const prop = properties[i];
     if (prop === undefined) continue;
     if (i > 0) {
-      context.push(', ', node);
+      context.push(", ", node);
     }
     genNode(prop, context);
   }
 
-  context.push(' }', node);
+  context.push(" }", node);
 }
 
 // ============================================================
@@ -292,7 +308,7 @@ function genProperty(node: JSProperty, context: CodegenContext): void {
     genNode(key, context);
   }
 
-  context.push(': ', node);
+  context.push(": ", node);
   genNode(value, context);
 }
 
@@ -300,39 +316,45 @@ function genProperty(node: JSProperty, context: CodegenContext): void {
 // Generate ArrayExpression
 // ============================================================
 
-function genArrayExpression(node: JSArrayExpression, context: CodegenContext): void {
-  context.push('[', node);
+function genArrayExpression(
+  node: JSArrayExpression,
+  context: CodegenContext,
+): void {
+  context.push("[", node);
 
   for (let i = 0; i < node.elements.length; i++) {
     const el = node.elements[i];
     if (el === undefined) continue;
     if (i > 0) {
-      context.push(', ', node);
+      context.push(", ", node);
     }
     genNode(el, context);
   }
 
-  context.push(']', node);
+  context.push("]", node);
 }
 
 // ============================================================
 // Generate ConditionalExpression
 // ============================================================
 
-function genConditional(node: JSConditionalExpression, context: CodegenContext): void {
+function genConditional(
+  node: JSConditionalExpression,
+  context: CodegenContext,
+): void {
   const { test, consequent, alternate } = node;
 
-  context.push('(', node);
+  context.push("(", node);
 
-  if (typeof test === 'string') {
+  if (typeof test === "string") {
     context.push(test, node);
   } else {
     genNode(test, context);
   }
 
-  context.push(' ? ', node);
+  context.push(" ? ", node);
 
-  if (typeof consequent === 'string') {
+  if (typeof consequent === "string") {
     context.push(consequent, node);
   } else if (Array.isArray(consequent)) {
     genChildrenArray(consequent, context);
@@ -340,9 +362,9 @@ function genConditional(node: JSConditionalExpression, context: CodegenContext):
     genNode(consequent, context);
   }
 
-  context.push(' : ', node);
+  context.push(" : ", node);
 
-  if (typeof alternate === 'string') {
+  if (typeof alternate === "string") {
     context.push(alternate, node);
   } else if (Array.isArray(alternate)) {
     genChildrenArray(alternate, context);
@@ -350,7 +372,7 @@ function genConditional(node: JSConditionalExpression, context: CodegenContext):
     genNode(alternate, context);
   }
 
-  context.push(')', node);
+  context.push(")", node);
 }
 
 // ============================================================
@@ -365,17 +387,23 @@ function genText(node: TextNode, context: CodegenContext): void {
 // Generate Interpolation
 // ============================================================
 
-function genInterpolation(node: InterpolationNode, context: CodegenContext): void {
-  context.push(`${context.helper('TO_DISPLAY_STRING')}(`, node);
+function genInterpolation(
+  node: InterpolationNode,
+  context: CodegenContext,
+): void {
+  context.push(`${context.helper("TO_DISPLAY_STRING")}(`, node);
   genNode(node.content, context);
-  context.push(')', node);
+  context.push(")", node);
 }
 
 // ============================================================
 // Generate Expression
 // ============================================================
 
-function genExpression(node: SimpleExpressionNode, context: CodegenContext): void {
+function genExpression(
+  node: SimpleExpressionNode,
+  context: CodegenContext,
+): void {
   context.push(node.content, node);
 }
 
@@ -383,16 +411,19 @@ function genExpression(node: SimpleExpressionNode, context: CodegenContext): voi
 // Generate CompoundExpression
 // ============================================================
 
-function genCompoundExpression(node: CompoundExpressionNode, context: CodegenContext): void {
+function genCompoundExpression(
+  node: CompoundExpressionNode,
+  context: CodegenContext,
+): void {
   for (const child of node.children) {
-    if (typeof child === 'string') {
+    if (typeof child === "string") {
       context.push(child, node);
     } else if (child.type === NodeTypes.SIMPLE_EXPRESSION) {
       context.push(child.content, node);
     } else if (child.type === NodeTypes.INTERPOLATION) {
-      context.push(`${context.helper('TO_DISPLAY_STRING')}(`, node);
+      context.push(`${context.helper("TO_DISPLAY_STRING")}(`, node);
       genNode(child.content, context);
-      context.push(')', node);
+      context.push(")", node);
     } else {
       genNode(child, context);
     }
@@ -407,33 +438,33 @@ function genElement(node: ElementNode, context: CodegenContext): void {
   if (node.codegenNode) {
     genNode(node.codegenNode, context);
   } else {
-    const callee = context.helper('CREATE_VNODE');
+    const callee = context.helper("CREATE_VNODE");
     context.push(`${callee}(${JSON.stringify(node.tag)}`, node);
 
     if (node.props.length > 0) {
-      context.push(', { ', node);
+      context.push(", { ", node);
       for (let i = 0; i < node.props.length; i++) {
         const prop = node.props[i];
         if (prop === undefined) continue;
-        if (i > 0) context.push(', ', node);
+        if (i > 0) context.push(", ", node);
         if (prop.type === NodeTypes.ATTRIBUTE) {
           context.push(`${JSON.stringify(prop.name)}: `, node);
           if (prop.value) {
             context.push(JSON.stringify(prop.value.content), node);
           } else {
-            context.push('true', node);
+            context.push("true", node);
           }
         }
       }
-      context.push(' }', node);
+      context.push(" }", node);
     }
 
     if (node.children.length > 0) {
-      context.push(', ', node);
+      context.push(", ", node);
       genChildrenArray(node.children, context);
     }
 
-    context.push(')', node);
+    context.push(")", node);
   }
 }
 
@@ -441,27 +472,33 @@ function genElement(node: ElementNode, context: CodegenContext): void {
 // Generate children array
 // ============================================================
 
-function genChildrenArray(children: TemplateChildNode[], context: CodegenContext): void {
-  context.push('[', undefined);
+function genChildrenArray(
+  children: TemplateChildNode[],
+  context: CodegenContext,
+): void {
+  context.push("[", undefined);
 
   for (let i = 0; i < children.length; i++) {
     const child = children[i];
     if (child === undefined) continue;
     if (i > 0) {
-      context.push(', ', undefined);
+      context.push(", ", undefined);
     }
     genNode(child, context);
   }
 
-  context.push(']', undefined);
+  context.push("]", undefined);
 }
 
 // ============================================================
 // Generate node expression (string or node)
 // ============================================================
 
-function genNodeExpr(expr: string | JSChildNode, context: CodegenContext): void {
-  if (typeof expr === 'string') {
+function genNodeExpr(
+  expr: string | JSChildNode,
+  context: CodegenContext,
+): void {
+  if (typeof expr === "string") {
     context.push(expr, undefined);
   } else {
     genNode(expr, context);
@@ -474,18 +511,18 @@ function genNodeExpr(expr: string | JSChildNode, context: CodegenContext): void 
 
 function getPatchFlagName(flag: number): string {
   const names: string[] = [];
-  if (flag & PatchFlags.TEXT) names.push('TEXT');
-  if (flag & PatchFlags.CLASS) names.push('CLASS');
-  if (flag & PatchFlags.STYLE) names.push('STYLE');
-  if (flag & PatchFlags.PROPS) names.push('PROPS');
-  if (flag & PatchFlags.FULL_PROPS) names.push('FULL_PROPS');
-  if (flag & PatchFlags.HYDRATE_EVENTS) names.push('HYDRATE_EVENTS');
-  if (flag & PatchFlags.STABLE_FRAGMENT) names.push('STABLE_FRAGMENT');
-  if (flag & PatchFlags.KEYED_FRAGMENT) names.push('KEYED_FRAGMENT');
-  if (flag & PatchFlags.UNKEYED_FRAGMENT) names.push('UNKEYED_FRAGMENT');
-  if (flag & PatchFlags.NEED_PATCH) names.push('NEED_PATCH');
-  if (flag & PatchFlags.DYNAMIC_SLOTS) names.push('DYNAMIC_SLOTS');
-  if (flag === PatchFlags.HOISTED) return 'HOISTED';
-  if (flag === PatchFlags.BAIL) return 'BAIL';
-  return names.join(' | ') || String(flag);
+  if (flag & PatchFlags.TEXT) names.push("TEXT");
+  if (flag & PatchFlags.CLASS) names.push("CLASS");
+  if (flag & PatchFlags.STYLE) names.push("STYLE");
+  if (flag & PatchFlags.PROPS) names.push("PROPS");
+  if (flag & PatchFlags.FULL_PROPS) names.push("FULL_PROPS");
+  if (flag & PatchFlags.HYDRATE_EVENTS) names.push("HYDRATE_EVENTS");
+  if (flag & PatchFlags.STABLE_FRAGMENT) names.push("STABLE_FRAGMENT");
+  if (flag & PatchFlags.KEYED_FRAGMENT) names.push("KEYED_FRAGMENT");
+  if (flag & PatchFlags.UNKEYED_FRAGMENT) names.push("UNKEYED_FRAGMENT");
+  if (flag & PatchFlags.NEED_PATCH) names.push("NEED_PATCH");
+  if (flag & PatchFlags.DYNAMIC_SLOTS) names.push("DYNAMIC_SLOTS");
+  if (flag === PatchFlags.HOISTED) return "HOISTED";
+  if (flag === PatchFlags.BAIL) return "BAIL";
+  return names.join(" | ") || String(flag);
 }

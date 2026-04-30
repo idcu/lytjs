@@ -1,19 +1,24 @@
 // src/directives.ts
 // @lytjs/core - 指令辅助函数
 
-import type { VNode, DirectiveArguments } from './types';
+import type { VNode, DirectiveArguments } from "./types";
 
 /**
  * 将指令应用到 VNode 上
  */
-export function withDirectives(vnode: VNode, directives: DirectiveArguments): VNode {
+export function withDirectives(
+  vnode: VNode,
+  directives: DirectiveArguments,
+): VNode {
   // 将指令信息存储在 VNode 的自定义属性中
-  (vnode as any)._directives = directives.map(([dir, value, arg, modifiers]) => ({
-    dir,
-    value,
-    arg,
-    modifiers: modifiers || {},
-  }));
+  (vnode as any)._directives = directives.map(
+    ([dir, value, arg, modifiers]) => ({
+      dir,
+      value,
+      arg,
+      modifiers: modifiers || {},
+    }),
+  );
   return vnode;
 }
 
@@ -24,7 +29,7 @@ export function withMemo(
   memo: any[],
   render: () => VNode,
   cache: any[],
-  index: number
+  index: number,
 ): VNode {
   const cached = cache[index];
   if (cached && isMemoSame(cached.memo, memo)) {

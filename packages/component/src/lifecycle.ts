@@ -1,7 +1,7 @@
 // src/lifecycle.ts
 // Lifecycle hooks management
 
-import type { ComponentInternalInstance } from './types';
+import type { ComponentInternalInstance } from "./types";
 
 // Current instance being set up (for lifecycle hook registration)
 let currentInstance: ComponentInternalInstance | null = null;
@@ -9,7 +9,9 @@ let currentInstance: ComponentInternalInstance | null = null;
 /**
  * Set the current instance (used during setup).
  */
-export function setCurrentInstance(instance: ComponentInternalInstance | null): void {
+export function setCurrentInstance(
+  instance: ComponentInternalInstance | null,
+): void {
   currentInstance = instance;
 }
 
@@ -25,7 +27,13 @@ export function getCurrentInstance(): ComponentInternalInstance | null {
  */
 function registerLifecycleHook(
   instance: ComponentInternalInstance,
-  hookName: 'beforeMount' | 'mounted' | 'beforeUpdate' | 'updated' | 'beforeUnmount' | 'unmounted',
+  hookName:
+    | "beforeMount"
+    | "mounted"
+    | "beforeUpdate"
+    | "updated"
+    | "beforeUnmount"
+    | "unmounted",
   fn: Function,
 ): void {
   if (instance) {
@@ -40,7 +48,7 @@ function registerLifecycleHook(
  */
 export function onMounted(fn: () => void): void {
   if (currentInstance) {
-    registerLifecycleHook(currentInstance, 'mounted', fn);
+    registerLifecycleHook(currentInstance, "mounted", fn);
   }
 }
 
@@ -49,7 +57,7 @@ export function onMounted(fn: () => void): void {
  */
 export function onUpdated(fn: () => void): void {
   if (currentInstance) {
-    registerLifecycleHook(currentInstance, 'updated', fn);
+    registerLifecycleHook(currentInstance, "updated", fn);
   }
 }
 
@@ -58,7 +66,7 @@ export function onUpdated(fn: () => void): void {
  */
 export function onUnmounted(fn: () => void): void {
   if (currentInstance) {
-    registerLifecycleHook(currentInstance, 'unmounted', fn);
+    registerLifecycleHook(currentInstance, "unmounted", fn);
   }
 }
 
@@ -67,7 +75,7 @@ export function onUnmounted(fn: () => void): void {
  */
 export function onBeforeMount(fn: () => void): void {
   if (currentInstance) {
-    registerLifecycleHook(currentInstance, 'beforeMount', fn);
+    registerLifecycleHook(currentInstance, "beforeMount", fn);
   }
 }
 
@@ -76,7 +84,7 @@ export function onBeforeMount(fn: () => void): void {
  */
 export function onBeforeUpdate(fn: () => void): void {
   if (currentInstance) {
-    registerLifecycleHook(currentInstance, 'beforeUpdate', fn);
+    registerLifecycleHook(currentInstance, "beforeUpdate", fn);
   }
 }
 
@@ -85,18 +93,24 @@ export function onBeforeUpdate(fn: () => void): void {
  */
 export function onBeforeUnmount(fn: () => void): void {
   if (currentInstance) {
-    registerLifecycleHook(currentInstance, 'beforeUnmount', fn);
+    registerLifecycleHook(currentInstance, "beforeUnmount", fn);
   }
 }
 
 /**
  * Register an error captured callback.
  */
-export function onErrorCaptured(fn: (err: Error, instance: any, info: string) => boolean | void): void {
+export function onErrorCaptured(
+  fn: (err: Error, instance: any, info: string) => boolean | void,
+): void {
   // Error captured is handled via options, not lifecycle sets
   if (currentInstance) {
     const original = currentInstance.type.errorCaptured;
-    currentInstance.type.errorCaptured = (err: Error, instance: any, info: string) => {
+    currentInstance.type.errorCaptured = (
+      err: Error,
+      instance: any,
+      info: string,
+    ) => {
       const result = fn(err, instance, info);
       if (original) {
         original(err, instance, info);
@@ -113,7 +127,13 @@ export function onErrorCaptured(fn: (err: Error, instance: any, info: string) =>
  */
 export function callLifecycleHook(
   instance: ComponentInternalInstance,
-  hookName: 'beforeMount' | 'mounted' | 'beforeUpdate' | 'updated' | 'beforeUnmount' | 'unmounted',
+  hookName:
+    | "beforeMount"
+    | "mounted"
+    | "beforeUpdate"
+    | "updated"
+    | "beforeUnmount"
+    | "unmounted",
 ): void {
   const hooks = instance.lifecycle[hookName];
   if (hooks.size > 0) {
@@ -137,9 +157,9 @@ export function callCreatedHook(instance: ComponentInternalInstance): void {
  */
 export function callMountedHook(instance: ComponentInternalInstance): void {
   const { beforeMount, mounted } = instance.type;
-  callLifecycleHook(instance, 'beforeMount');
+  callLifecycleHook(instance, "beforeMount");
   if (beforeMount) beforeMount.call(instance.ctx);
-  callLifecycleHook(instance, 'mounted');
+  callLifecycleHook(instance, "mounted");
   if (mounted) mounted.call(instance.ctx);
   instance.isMounted = true;
 }
@@ -149,9 +169,9 @@ export function callMountedHook(instance: ComponentInternalInstance): void {
  */
 export function callUpdatedHook(instance: ComponentInternalInstance): void {
   const { beforeUpdate, updated } = instance.type;
-  callLifecycleHook(instance, 'beforeUpdate');
+  callLifecycleHook(instance, "beforeUpdate");
   if (beforeUpdate) beforeUpdate.call(instance.ctx);
-  callLifecycleHook(instance, 'updated');
+  callLifecycleHook(instance, "updated");
   if (updated) updated.call(instance.ctx);
 }
 
@@ -160,9 +180,9 @@ export function callUpdatedHook(instance: ComponentInternalInstance): void {
  */
 export function callUnmountedHook(instance: ComponentInternalInstance): void {
   const { beforeUnmount, unmounted } = instance.type;
-  callLifecycleHook(instance, 'beforeUnmount');
+  callLifecycleHook(instance, "beforeUnmount");
   if (beforeUnmount) beforeUnmount.call(instance.ctx);
-  callLifecycleHook(instance, 'unmounted');
+  callLifecycleHook(instance, "unmounted");
   if (unmounted) unmounted.call(instance.ctx);
   instance.isUnmounted = true;
 }

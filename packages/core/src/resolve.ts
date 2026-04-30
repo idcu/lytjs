@@ -1,7 +1,7 @@
 // src/resolve.ts
 // @lytjs/core - 组件/指令解析
 
-import type { Component, Directive } from './types';
+import type { Component, Directive } from "./types";
 
 /**
  * 解析全局注册的组件
@@ -11,7 +11,7 @@ export function resolveComponent(name: string): Component | undefined {
   if (__DEV__) {
     console.warn(
       `[lytjs/core] resolveComponent("${name}") is not yet implemented. ` +
-      `Dynamic component resolution is not supported in the current version.`
+        `Dynamic component resolution is not supported in the current version.`,
     );
   }
   return undefined;
@@ -25,7 +25,7 @@ export function resolveDirective(name: string): Directive | undefined {
   if (__DEV__) {
     console.warn(
       `[lytjs/core] resolveDirective("${name}") is not yet implemented. ` +
-      `Dynamic directive resolution is not supported in the current version.`
+        `Dynamic directive resolution is not supported in the current version.`,
     );
   }
   return undefined;

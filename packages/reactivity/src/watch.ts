@@ -3,11 +3,17 @@
 // 复用 @lytjs/common-is: isFunction, isObject, isArray, hasChanged, NOOP
 // 复用 @lytjs/common-scheduler: nextTick
 
-import { isFunction, isObject, isArray, hasChanged, NOOP } from '@lytjs/common-is';
-import { isRef } from './ref';
-import { isReactive } from './reactive';
-import { ReactiveEffect } from './effect';
-import { nextTick } from '@lytjs/common-scheduler';
+import {
+  isFunction,
+  isObject,
+  isArray,
+  hasChanged,
+  NOOP,
+} from "@lytjs/common-is";
+import { isRef } from "./ref";
+import { isReactive } from "./reactive";
+import { ReactiveEffect } from "./effect";
+import { nextTick } from "@lytjs/common-scheduler";
 import type {
   WatchSource,
   WatchCallback,
@@ -15,7 +21,7 @@ import type {
   WatchEffectOptions,
   WatchHandle,
   OnCleanup,
-} from './types';
+} from "./types";
 
 // ==================== Scheduler 队列 ====================
 
@@ -60,7 +66,10 @@ function flushJobs() {
   const MAX_ITERATIONS = 100;
 
   // 循环处理：执行期间新增的回调也会被处理
-  while ((pendingPreFlushCbs.length > 0 || pendingPostFlushCbs.length > 0) && iterations < MAX_ITERATIONS) {
+  while (
+    (pendingPreFlushCbs.length > 0 || pendingPostFlushCbs.length > 0) &&
+    iterations < MAX_ITERATIONS
+  ) {
     iterations++;
 
     // 执行 pre 队列
@@ -93,7 +102,7 @@ function flushJobs() {
   if (iterations >= MAX_ITERATIONS && __DEV__) {
     console.warn(
       `[lytjs/reactivity] flushJobs exceeded ${MAX_ITERATIONS} iterations. ` +
-      `Possible infinite update loop detected.`
+        `Possible infinite update loop detected.`,
     );
   }
 
@@ -121,7 +130,7 @@ function traverse(value: unknown, seen: Set<unknown> = new Set()): unknown {
       traverse(value.get(key), seen);
     });
   } else if (value instanceof Set) {
-    value.forEach(v => traverse(v, seen));
+    value.forEach((v) => traverse(v, seen));
   } else {
     for (const key of Object.keys(value as object)) {
       traverse((value as any)[key], seen);
@@ -135,9 +144,17 @@ function traverse(value: unknown, seen: Set<unknown> = new Set()): unknown {
 export function watch<T, Immediate extends Readonly<boolean> = false>(
   source: WatchSource<T> | WatchSource<T>[],
   cb: WatchCallback<T>,
-  options?: WatchOptions<Immediate>
+  options?: WatchOptions<Immediate>,
 ): WatchHandle {
-  const { immediate, deep, flush = 'pre', once, onTrack, onTrigger, scheduler: userScheduler } = options || {};
+  const {
+    immediate,
+    deep,
+    flush = "pre",
+    once,
+    onTrack,
+    onTrigger,
+    scheduler: userScheduler,
+  } = options || {};
 
   let getter: () => any;
   let forceTrigger = false;
@@ -145,9 +162,9 @@ export function watch<T, Immediate extends Readonly<boolean> = false>(
 
   if (isArray(source)) {
     isMultiSource = true;
-    forceTrigger = source.some(s => isReactive(s));
+    forceTrigger = source.some((s) => isReactive(s));
     getter = () =>
-      source.map(s => {
+      source.map((s) => {
         if (isRef(s)) return s.value;
         if (isReactive(s)) return traverse(s);
         if (isFunction(s)) return s();
@@ -183,13 +200,15 @@ export function watch<T, Immediate extends Readonly<boolean> = false>(
         deep ||
         forceTrigger ||
         (isMultiSource
-          ? (newValue as any[]).some((v, i) => hasChanged(v, (oldValue as any[])[i]))
+          ? (newValue as any[]).some((v, i) =>
+              hasChanged(v, (oldValue as any[])[i]),
+            )
           : hasChanged(newValue, oldValue))
       ) {
         if (cleanup) cleanup();
         const args = isMultiSource
-          ? [newValue, oldValue] as [any, any]
-          : [newValue, oldValue] as [any, any];
+          ? ([newValue, oldValue] as [any, any])
+          : ([newValue, oldValue] as [any, any]);
         cb(...args, onCleanup);
         oldValue = newValue;
         if (once) {
@@ -202,15 +221,17 @@ export function watch<T, Immediate extends Readonly<boolean> = false>(
     }
   };
 
-  const rawScheduler = userScheduler || ((flush === 'sync')
-    ? job
-    : () => {
-        if (flush === 'post') {
-          queuePostFlushCb(job);
-        } else {
-          queuePreFlushCb(job);
-        }
-      });
+  const rawScheduler =
+    userScheduler ||
+    (flush === "sync"
+      ? job
+      : () => {
+          if (flush === "post") {
+            queuePostFlushCb(job);
+          } else {
+            queuePreFlushCb(job);
+          }
+        });
 
   // 包装 scheduler，确保传 job 参数给用户自定义 scheduler
   const scheduler = userScheduler
@@ -240,30 +261,30 @@ export function watch<T, Immediate extends Readonly<boolean> = false>(
 
 export function watchEffect(
   effectFn: (onCleanup: OnCleanup) => void,
-  options?: WatchEffectOptions
+  options?: WatchEffectOptions,
 ): WatchHandle {
   return doWatchEffect(effectFn, options);
 }
 
 export function watchPostEffect(
   effectFn: (onCleanup: OnCleanup) => void,
-  options?: WatchEffectOptions
+  options?: WatchEffectOptions,
 ): WatchHandle {
-  return doWatchEffect(effectFn, { ...options, flush: 'post' });
+  return doWatchEffect(effectFn, { ...options, flush: "post" });
 }
 
 export function watchSyncEffect(
   effectFn: (onCleanup: OnCleanup) => void,
-  options?: WatchEffectOptions
+  options?: WatchEffectOptions,
 ): WatchHandle {
-  return doWatchEffect(effectFn, { ...options, flush: 'sync' });
+  return doWatchEffect(effectFn, { ...options, flush: "sync" });
 }
 
 function doWatchEffect(
   source: (onCleanup: OnCleanup) => void,
-  options: WatchEffectOptions = {}
+  options: WatchEffectOptions = {},
 ): WatchHandle {
-  const { flush = 'pre', onTrack, onTrigger } = options;
+  const { flush = "pre", onTrack, onTrigger } = options;
 
   let cleanup: (() => void) | undefined;
 
@@ -280,15 +301,16 @@ function doWatchEffect(
 
   let currentEffect: ReactiveEffect;
 
-  const schedulerFn: (...args: any[]) => any = (flush === 'sync')
-    ? () => currentEffect.run()
-    : () => {
-        if (flush === 'post') {
-          queuePostFlushCb(() => currentEffect.run());
-        } else {
-          queuePreFlushCb(() => currentEffect.run());
-        }
-      };
+  const schedulerFn: (...args: any[]) => any =
+    flush === "sync"
+      ? () => currentEffect.run()
+      : () => {
+          if (flush === "post") {
+            queuePostFlushCb(() => currentEffect.run());
+          } else {
+            queuePreFlushCb(() => currentEffect.run());
+          }
+        };
 
   currentEffect = new ReactiveEffect(getter, schedulerFn);
 
