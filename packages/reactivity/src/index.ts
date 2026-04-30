@@ -1,11 +1,6 @@
 // src/index.ts
 // @lytjs/reactivity 主入口 - re-export 所有公共 API
 
-// 初始化 ref.ts 的 reactive 函数引用（解决循环依赖）
-import { _setReactiveFn } from "./ref";
-import { reactive as reactiveFn } from "./reactive";
-_setReactiveFn(reactiveFn);
-
 export {
   // reactive
   reactive,

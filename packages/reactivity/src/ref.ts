@@ -4,7 +4,9 @@
 
 import { isObject, hasChanged } from "@lytjs/common-is";
 import { track, trigger, activeEffect, shouldTrack } from "./effect";
-import { TrackOpTypes, TriggerOpTypes, ReactiveFlags } from "./constants";
+import { TrackOpTypes, TriggerOpTypes } from "./constants";
+import { toRaw, isRef } from "./shared";
+import { reactive } from "./reactive";
 
 // ==================== Ref 类型（内部简化版，避免 unique symbol 在 DTS 中的问题） ====================
 
@@ -105,12 +107,10 @@ export function triggerRef<T>(ref: ShallowRef<T>): void {
   triggerRefValue(ref, ref.value);
 }
 
-export function isRef<T>(r: Ref<T> | unknown): r is Ref<T> {
-  return !!(r && (r as any).__v_isRef === true);
-}
+export { isRef } from "./shared";
 
 export function unref<T>(r: T | Ref<T>): T {
-  return isRef(r) ? r.value : (r as T);
+  return isRef(r) ? (r as any).value : (r as T);
 }
 
 export function toRef<T extends object, K extends keyof T>(
@@ -184,22 +184,6 @@ type CustomRefFactory<T> = (
   trigger: () => void,
 ) => { get: () => T; set: (value: T) => void };
 
-function toReactive<T>(value: T): T {
+function toReactive(value: any): any {
   return isObject(value) ? reactive(value) : value;
-}
-
-function toRaw(value: any): any {
-  return (value && (value as any)[ReactiveFlags.RAW]) || value;
-}
-
-// reactive 的延迟绑定，由 index.ts 在模块初始化时设置
-let _reactiveFn: ((v: object) => any) | undefined = undefined;
-
-export function _setReactiveFn(fn: (v: object) => any) {
-  _reactiveFn = fn;
-}
-
-function reactive(value: object): any {
-  if (_reactiveFn) return _reactiveFn(value);
-  return value;
 }

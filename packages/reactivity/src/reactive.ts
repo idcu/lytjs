@@ -24,6 +24,7 @@ import {
   isIntegerKey,
 } from "./effect";
 import type { UnwrapNestedRefs, DeepReadonly } from "./types";
+import { toRaw, isRef } from "./shared";
 
 // ==================== 类型 ====================
 
@@ -372,17 +373,9 @@ export function isProxy(value: unknown): boolean {
   return isReactive(value) || isReadonly(value);
 }
 
-export function toRaw<T>(observed: T): T {
-  const raw = observed && (observed as any)[ReactiveFlags.RAW];
-  return raw ? toRaw(raw) : observed;
-}
+export { toRaw } from "./shared";
 
 export function markRaw<T extends object>(value: T): T {
   Object.defineProperty(value, ReactiveFlags.SKIP, { value: true });
   return value;
-}
-
-// isRef 在 reactive handler getter 中使用，通过 __v_isRef 属性直接判断
-function isRef(r: any): r is any {
-  return !!(r && r.__v_isRef === true);
 }
