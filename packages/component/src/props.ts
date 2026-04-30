@@ -54,6 +54,7 @@ export function resolvePropValue(
   propOptions: PropOptions,
   value: unknown,
   _instance?: any,
+  key?: string,
 ): any {
   const { type, default: defaultValue, validator } = propOptions;
 
@@ -78,7 +79,7 @@ export function resolvePropValue(
   // Custom validator
   if (validator && __DEV__) {
     if (!validator(value)) {
-      console.warn(`[LytJS warn]: Prop validation failed`);
+      console.warn(`[LytJS warn]: Prop validation failed for prop "${key}": received ${JSON.stringify(value)}`);
     }
   }
 
