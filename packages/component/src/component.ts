@@ -19,6 +19,7 @@ import type {
   InternalSlots,
   AppContext,
 } from "./types";
+import type { VNode } from "@lytjs/common-vnode";
 import { normalizePropsOptions, resolvePropValue } from "./props";
 import { normalizeEmitsOptions, emit } from "./emit";
 import { initSlots } from "./slots";
@@ -39,7 +40,7 @@ let uid = 0;
  * Create a component internal instance from a vnode.
  */
 export function createComponentInstance(
-  vnode: any,
+  vnode: VNode,
   parent: ComponentInternalInstance | null,
 ): ComponentInternalInstance {
   const type = vnode.type as ComponentOptions;
@@ -61,7 +62,7 @@ export function createComponentInstance(
     data: {},
     propsOptions: normalizePropsOptions(mergedOptions.props),
     emitsOptions: normalizeEmitsOptions(mergedOptions.emits),
-    emit: NOOP as any,
+    emit: NOOP as (...args: any[]) => void,
     isMounted: false,
     isUnmounted: false,
     isDeactivated: false,
@@ -346,16 +347,16 @@ function mergeOptionsPair(
 
   for (const key in child) {
     if (key === "props" || key === "emits" || key === "inject") {
-      const parentVal = (parent as any)[key];
-      const childVal = (child as any)[key];
+      const parentVal = (parent as Record<string, unknown>)[key];
+      const childVal = (child as Record<string, unknown>)[key];
       if (parentVal && childVal) {
         merged[key] = { ...parentVal, ...childVal };
       } else if (childVal) {
         merged[key] = childVal;
       }
     } else if (key === "data" || key === "provide") {
-      const parentVal = (parent as any)[key];
-      const childVal = (child as any)[key];
+      const parentVal = (parent as Record<string, unknown>)[key];
+      const childVal = (child as Record<string, unknown>)[key];
       if (parentVal && childVal) {
         merged[key] = function (this: any) {
           const parentData = isFunction(parentVal)
@@ -370,8 +371,8 @@ function mergeOptionsPair(
         merged[key] = childVal;
       }
     } else if (key === "computed" || key === "methods" || key === "watch") {
-      const parentVal = (parent as any)[key];
-      const childVal = (child as any)[key];
+      const parentVal = (parent as Record<string, unknown>)[key];
+      const childVal = (child as Record<string, unknown>)[key];
       if (parentVal && childVal) {
         merged[key] = { ...parentVal, ...childVal };
       } else if (childVal) {
@@ -387,8 +388,8 @@ function mergeOptionsPair(
       key === "beforeUnmount" ||
       key === "unmounted"
     ) {
-      const parentVal = (parent as any)[key];
-      const childVal = (child as any)[key];
+      const parentVal = (parent as Record<string, unknown>)[key];
+      const childVal = (child as Record<string, unknown>)[key];
       if (parentVal && childVal) {
         merged[key] = function (this: any) {
           parentVal.call(this);
@@ -400,7 +401,7 @@ function mergeOptionsPair(
     } else if (key === "mixins" || key === "extends") {
       // Skip - already handled
     } else if (hasOwn(child, key)) {
-      merged[key] = (child as any)[key];
+      merged[key] = (child as Record<string, unknown>)[key];
     }
   }
 

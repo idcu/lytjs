@@ -11,7 +11,7 @@ import {
   PatchFlags,
   isSameVNodeType,
 } from "@lytjs/common-vnode";
-import type { VNode } from "@lytjs/common-vnode";
+import type { VNode, ComponentInternalInstance } from "@lytjs/common-vnode";
 import { isArray, isFunction, hasChanged, EMPTY_OBJ } from "@lytjs/common-is";
 import { isSafeAttribute } from "@lytjs/common-string";
 import {
@@ -19,7 +19,7 @@ import {
   extractDOMEventHandler,
   extractDOMEventOptions,
 } from "@lytjs/common-events";
-import type { RendererOptions, HostNode, HostElement } from "./types";
+import type { RendererOptions, HostNode, HostElement, SuspenseBoundary } from "./types";
 import { getSequence } from "@lytjs/common-algorithm";
 
 // ============================================================
@@ -52,8 +52,8 @@ export function createRenderer(
     n2: VNode,
     container: HostNode,
     anchor: HostNode | null = null,
-    parentComponent: any = null,
-    parentSuspense: any = null,
+    parentComponent: ComponentInternalInstance | null = null,
+    parentSuspense: SuspenseBoundary | null = null,
     isSVG: boolean = false,
   ): void {
     // If n1 and n2 are the same type, patch them
@@ -169,8 +169,8 @@ export function createRenderer(
     vnode: VNode,
     container: HostNode,
     anchor: HostNode | null,
-    parentComponent: any,
-    parentSuspense: any,
+    parentComponent: ComponentInternalInstance | null,
+    parentSuspense: SuspenseBoundary | null,
     isSVG: boolean,
   ): void {
     const fragmentStartAnchor = createComment("");
@@ -207,8 +207,8 @@ export function createRenderer(
     n1: VNode,
     n2: VNode,
     container: HostNode,
-    parentComponent: any,
-    parentSuspense: any,
+    parentComponent: ComponentInternalInstance | null,
+    parentSuspense: SuspenseBoundary | null,
     isSVG: boolean,
   ): void {
     // Reuse the existing fragment anchors
@@ -260,8 +260,8 @@ export function createRenderer(
     c1: VNode[],
     c2: VNode[],
     container: HostNode,
-    parentComponent: any,
-    parentSuspense: any,
+    parentComponent: ComponentInternalInstance | null,
+    parentSuspense: SuspenseBoundary | null,
     isSVG: boolean,
     fallbackAnchor: HostNode | null,
   ): void {
@@ -431,8 +431,8 @@ export function createRenderer(
     c2: VNode[],
     container: HostNode,
     endAnchor: HostNode,
-    parentComponent: any,
-    parentSuspense: any,
+    parentComponent: ComponentInternalInstance | null,
+    parentSuspense: SuspenseBoundary | null,
     isSVG: boolean,
   ): void {
     diffChildrenInternal(
@@ -455,8 +455,8 @@ export function createRenderer(
     container: HostNode,
     anchor: HostNode | null,
     isSVG: boolean,
-    parentComponent: any = null,
-    parentSuspense: any = null,
+    parentComponent: ComponentInternalInstance | null = null,
+    parentSuspense: SuspenseBoundary | null = null,
   ): void {
     const children = vnode.children;
     if (!isArray(children)) return;
@@ -509,8 +509,8 @@ export function createRenderer(
   function patchElement(
     n1: VNode,
     n2: VNode,
-    parentComponent: any,
-    parentSuspense: any,
+    parentComponent: ComponentInternalInstance | null,
+    parentSuspense: SuspenseBoundary | null,
     isSVG: boolean,
   ): void {
     // n1.el is guaranteed to exist since n1 was previously mounted
@@ -569,8 +569,8 @@ export function createRenderer(
     n1: VNode,
     n2: VNode,
     container: HostNode,
-    parentComponent: any,
-    parentSuspense: any,
+    parentComponent: ComponentInternalInstance | null,
+    parentSuspense: SuspenseBoundary | null,
     isSVG: boolean,
   ): void {
     const c1 = n1.children as VNode[] | string | null;
@@ -632,8 +632,8 @@ export function createRenderer(
     c1: VNode[],
     c2: VNode[],
     container: HostNode,
-    parentComponent: any,
-    parentSuspense: any,
+    parentComponent: ComponentInternalInstance | null,
+    parentSuspense: SuspenseBoundary | null,
     isSVG: boolean,
   ): void {
     diffChildrenInternal(
@@ -653,8 +653,8 @@ export function createRenderer(
 
   function unmount(
     vnode: VNode,
-    parentComponent: any,
-    parentSuspense: any,
+    parentComponent: ComponentInternalInstance | null,
+    parentSuspense: SuspenseBoundary | null,
     doRemove: boolean = false,
   ): void {
     const { type, children, el, component } = vnode;
@@ -665,7 +665,7 @@ export function createRenderer(
       (vnode.shapeFlag & ShapeFlags.STATEFUL_COMPONENT ||
         vnode.shapeFlag & ShapeFlags.FUNCTIONAL_COMPONENT)
     ) {
-      const { bum } = component as any;
+      const { bum } = component as ComponentInternalInstance;
       if (isArray(bum)) {
         for (let i = 0; i < bum.length; i++) {
           bum[i]!();
@@ -706,8 +706,8 @@ export function createRenderer(
 
   function unmountFragment(
     vnode: VNode,
-    parentComponent: any,
-    parentSuspense: any,
+    parentComponent: ComponentInternalInstance | null,
+    parentSuspense: SuspenseBoundary | null,
     doRemove: boolean,
   ): void {
     const { children } = vnode;
@@ -734,8 +734,8 @@ export function createRenderer(
 
   function unmountChildren(
     children: VNode[],
-    parentComponent: any,
-    parentSuspense: any,
+    parentComponent: ComponentInternalInstance | null,
+    parentSuspense: SuspenseBoundary | null,
   ): void {
     for (let i = 0; i < children.length; i++) {
       unmount(children[i]!, parentComponent, parentSuspense, true);
@@ -750,8 +750,8 @@ export function createRenderer(
     vnode: VNode,
     container: HostNode,
     anchor: HostNode | null,
-    parentComponent: any,
-    parentSuspense: any,
+    parentComponent: ComponentInternalInstance | null,
+    parentSuspense: SuspenseBoundary | null,
   ): void {
     if (vnode.type === Fragment) {
       // Move fragment children
