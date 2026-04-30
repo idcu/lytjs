@@ -56,7 +56,9 @@ function renderVNodeToString(vnode: VNode): string {
   if (type === Comment) {
     const text = isFunction(children) ? "" : String(children ?? "");
     // 转义 <!-- 和 --> 防止注释注入导致 HTML 结构破坏
-    const safe = text.replace(/<!--/g, "&lt;!--").replace(/-->/g, "--&gt;");
+    let safe = text.replace(/<!--/g, "&lt;!--").replace(/-->/g, "--&gt;");
+    // Sanitize double-dash in comment content to prevent invalid HTML comments
+    safe = safe.replace(/--/g, '- -');
     return `<!--${safe}-->`;
   }
 
@@ -169,7 +171,11 @@ function isSafeURL(url: string): boolean {
   // 使用 URL 构造函数进行额外验证
   try {
     const parsed = new URL(decoded, 'http://example.com');
-    return parsed.protocol !== 'javascript:';
+    const protocol = parsed.protocol.toLowerCase().replace(':', '')
+    if (protocol === 'javascript' || protocol === 'data') {
+      return false
+    }
+    return true
   } catch {
     return false;
   }
