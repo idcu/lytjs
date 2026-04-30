@@ -11,22 +11,27 @@ import { createAppContext, createContextConfig } from "./app-context";
 import {
   createComponentInstance,
   setupComponent,
-  finishComponentSetup,
   createComponentPublicInstance,
   callUnmountedHook,
 } from "@lytjs/component";
+import type { AppContext as ComponentAppContext } from "@lytjs/component";
 
 export function createApp(
   rootComponent: Component,
   rootProps: Record<string, unknown> | null = null,
 ): App {
   const context = createAppContext();
-  const installedPlugins = new Set<Plugin | ((app: App, ...options: any[]) => void)>();
+  const installedPlugins = new Set<
+    Plugin | ((app: App, ...options: any[]) => void)
+  >();
 
   const app: App = {
     config: createContextConfig(context),
 
-    use(plugin: Plugin | ((app: App, ...options: any[]) => void), ...options: any[]) {
+    use(
+      plugin: Plugin | ((app: App, ...options: any[]) => void),
+      ...options: any[]
+    ) {
       if (installedPlugins.has(plugin)) return app;
       try {
         if (typeof plugin === "function") {
@@ -67,7 +72,7 @@ export function createApp(
       // Replace appContext: createComponentInstance creates a new empty context
       // when parent is null, but we need the core-level context with plugins,
       // components, directives, and provides registered on the app.
-      instance.appContext = context as any;
+      instance.appContext = context as ComponentAppContext;
 
       // Copy app-level provides into the root instance
       if (context.provides) {
