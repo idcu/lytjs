@@ -119,6 +119,7 @@ export function setupComponent(instance: ComponentInternalInstance): void {
     vnode.isAsyncPlaceholder = true;
     setupResult
       .then((resolvedResult: any) => {
+        if (instance.isUnmounted) return;
         handleSetupResult(instance, resolvedResult);
         vnode.isAsyncPlaceholder = false;
       })
@@ -185,7 +186,7 @@ export function finishComponentSetup(
 
   // Init data
   if (type.data) {
-    const data = type.data.call(instance.ctx);
+    const data = type.data.call(instance.ctx) ?? {};
     instance.data = reactive(data);
   }
 

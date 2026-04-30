@@ -245,7 +245,7 @@ export function handleError(
   if (hooks && hooks.length > 0) {
     for (const hook of hooks) {
       const result = hook(err, instance, info);
-      if (result === true) return true; // stop propagation
+      if (result === false) return true; // stop propagation
     }
   }
 

@@ -56,7 +56,7 @@ export function resolvePropValue(
   _instance?: any,
   key?: string,
 ): any {
-  const { type, default: defaultValue, validator } = propOptions;
+  const { type, default: defaultValue, required, validator } = propOptions;
 
   // If value is absent (undefined) and there's a default, use it
   if (value === undefined) {
@@ -67,6 +67,10 @@ export function resolvePropValue(
     if (defaultValue !== undefined) {
       const def = isFunction(defaultValue) ? defaultValue() : defaultValue;
       return def;
+    }
+    // Check required prop
+    if (required && __DEV__) {
+      console.warn(`[LytJS warn]: Missing required prop: "${key}"`);
     }
     return undefined;
   }
