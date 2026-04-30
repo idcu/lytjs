@@ -177,7 +177,7 @@ jobs:
 
       - name: Run size check
         run: pnpm run size-check
-        continue-on-error: true
+        continue-on-error: false
 
   # E2E 测试
   e2e:
