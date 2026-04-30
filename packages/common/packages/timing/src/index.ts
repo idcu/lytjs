@@ -183,7 +183,7 @@ export async function retry<T>(
     } catch (err) {
       lastError = err instanceof Error ? err : new Error(String(err));
 
-      if (attempt < maxRetries) {
+      if (attempt < maxRetries - 1) {
         if (retryCondition && !retryCondition(lastError)) {
           throw lastError;
         }
