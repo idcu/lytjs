@@ -27,6 +27,7 @@
     "test:coverage": "vitest run --coverage",
     "test:ui": "vitest --ui",
     "test:e2e": "playwright test --config=e2e/playwright.config.ts",
+    "test:e2e:build": "node e2e/build.cjs",
     "bench": "vitest bench --config vitest.config.ts",
     "lint": "eslint . --fix",
     "lint:check": "eslint .",
