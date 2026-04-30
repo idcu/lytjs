@@ -853,6 +853,15 @@ export function createDOMRendererOptions(): RendererOptions<Node, Element> {
           el.setAttribute("style", nextValue);
         } else if (nextValue != null) {
           const style = el as HTMLElement;
+          // 先移除旧样式中不存在于新样式的属性
+          if (prevValue && typeof prevValue === "object") {
+            for (const k in prevValue as Record<string, string>) {
+              if (!(k in (nextValue as Record<string, string>))) {
+                style.style.setProperty(k, "");
+              }
+            }
+          }
+          // 然后设置新样式
           for (const k in nextValue as Record<string, string>) {
             const val = (nextValue as Record<string, string>)[k];
             if (val !== undefined) {
