@@ -274,15 +274,16 @@ export function getShapeFlag(type: VNodeTypes): number {
  * Normalize props: extract key/ref, normalize class/style
  */
 function normalizeProps(props: Record<string, any>): Record<string, any> {
+  const normalized = { ...props };
   // class normalization
-  if (props.class !== undefined) {
-    props.class = normalizeClass(props.class);
+  if (normalized.class !== undefined) {
+    normalized.class = normalizeClass(normalized.class);
   }
   // style normalization
-  if (props.style !== undefined) {
-    props.style = normalizeStyle(props.style);
+  if (normalized.style !== undefined) {
+    normalized.style = normalizeStyle(normalized.style);
   }
-  return props;
+  return normalized;
 }
 
 /**
@@ -299,7 +300,8 @@ function normalizeStyle(
       if (item) {
         const normalized = normalizeStyle(item);
         if (isString(normalized)) {
-          return normalized;
+          // Skip string elements to avoid ignoring subsequent object elements
+          continue;
         }
         Object.assign(res, normalized);
       }
