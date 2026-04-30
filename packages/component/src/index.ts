@@ -7,6 +7,7 @@ export {
   setupComponent,
   finishComponentSetup,
   defineComponent,
+  createAppContext,
   provide,
   inject,
 } from "./component";

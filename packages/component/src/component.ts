@@ -409,7 +409,11 @@ function mergeOptionsPair(
 
 // ==================== createAppContext ====================
 
-function createAppContext(): AppContext {
+/**
+ * Create a base app context object.
+ * Exported for @lytjs/core to extend with runtime fields.
+ */
+export function createAppContext(): AppContext {
   return {
     config: {},
     components: {},

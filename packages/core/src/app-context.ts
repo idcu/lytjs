@@ -1,36 +1,36 @@
 // src/app-context.ts
 // @lytjs/core - AppContext 创建和配置
 
-import type { App, AppConfig, Plugin, Component, Directive, Renderer } from "./types";
-
-export interface AppContext {
-  config: AppConfig;
-  provides: Record<string, unknown>;
-  components: Record<string, Component>;
-  directives: Record<string, Directive>;
-  mixins: ComponentOptions[];
-  renderer: Renderer | null;
-  _vnode: VNode | null;
-  _container: Element | null;
-}
+import type { AppConfig, Renderer } from "./types";
+import { createAppContext as createBaseAppContext } from "@lytjs/component";
+import type { AppContext as BaseAppContext } from "@lytjs/component";
 
 // 需要延迟导入避免循环依赖
 type VNode = import("./types").VNode;
 type ComponentOptions = import("./types").ComponentOptions;
 
 /**
+ * Core AppContext extends the base AppContext from @lytjs/component
+ * with runtime fields needed by the app lifecycle (renderer, _vnode, _container).
+ */
+export interface AppContext extends BaseAppContext {
+  config: AppConfig;
+  renderer: Renderer | null;
+  _vnode: VNode | null;
+  _container: Element | null;
+}
+
+/**
  * 创建应用上下文对象
+ * 基于 @lytjs/component 的 createAppContext 扩展运行时字段
  */
 export function createAppContext(): AppContext {
   return {
+    ...createBaseAppContext(),
     config: {
       performance: false,
       globalProperties: {},
     } as AppConfig,
-    provides: Object.create(null) as Record<string, unknown>,
-    components: {},
-    directives: {},
-    mixins: [],
     renderer: null,
     _vnode: null,
     _container: null,
