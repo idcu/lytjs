@@ -9,7 +9,14 @@ import { TrackOpTypes, TriggerOpTypes } from "./constants";
 import { toRaw, isRef } from "./shared";
 import { reactive } from "./reactive";
 
-// ==================== Ref 类型（内部简化版，避免 unique symbol 在 DTS 中的问题） ====================
+// ==================== Ref 类型 ====================
+
+/** Internal interface for ref-like objects used in track/trigger */
+export interface RefLike<T = unknown> {
+  dep: Dep;
+  __v_isRef?: boolean;
+  value: T;
+}
 
 export interface Ref<T = any> {
   value: T;
@@ -84,13 +91,13 @@ class ShallowRefImpl<T> {
 
 // ==================== 追踪与触发 ====================
 
-export function trackRefValue(ref: any) {
+export function trackRefValue(ref: RefLike): void {
   if (shouldTrack && activeEffect) {
     track(ref, TrackOpTypes.GET, "value");
   }
 }
 
-export function triggerRefValue(ref: any, newVal?: any, oldVal?: any) {
+export function triggerRefValue(ref: RefLike, newVal?: unknown, oldVal?: unknown): void {
   trigger(ref, TriggerOpTypes.SET, "value", newVal, oldVal);
 }
 
@@ -121,7 +128,7 @@ export function toRef<T extends object, K extends keyof T>(
   key: K,
 ): Ref<T[K]> {
   if (isRef(object[key])) return object[key] as Ref<T[K]>;
-  return new ObjectRefImpl(object, key) as any;
+  return new ObjectRefImpl(object, key) as unknown as Ref<T[K]>;
 }
 
 export function toRefs<T extends object>(
@@ -135,7 +142,7 @@ export function toRefs<T extends object>(
 }
 
 export function customRef<T>(factory: CustomRefFactory<T>): Ref<T> {
-  return new CustomRefImpl(factory) as any;
+  return new CustomRefImpl(factory) as unknown as Ref<T>;
 }
 
 // ==================== 内部实现类 ====================
