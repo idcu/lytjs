@@ -13,6 +13,7 @@ import {
   setupComponent,
   finishComponentSetup,
   createComponentPublicInstance,
+  callUnmountedHook,
 } from "@lytjs/component";
 
 export function createApp(
@@ -65,11 +66,8 @@ export function createApp(
 
       // Copy app-level provides into the root instance
       if (context.provides) {
-        if (!(instance.provides instanceof Map)) {
-          instance.provides = new Map(Object.entries(instance.provides));
-        }
-        const rootProvides = instance.provides as Map<string | symbol, unknown>;
-        for (const [key, value] of Object.entries(context.provides)) {
+        const rootProvides = instance.provides;
+        for (const [key, value] of context.provides) {
           if (!rootProvides.has(key)) {
             rootProvides.set(key, value);
           }
@@ -87,6 +85,9 @@ export function createApp(
       // Set up the component (runs setup, init props/slots, data, lifecycle)
       setupComponent(instance);
 
+      // Save root instance reference for unmount lifecycle hooks
+      context._instance = instance;
+
       // Render using the standard renderer
       const renderer = createRenderer(createDOMRendererOptions());
       context.renderer = renderer;
@@ -103,20 +104,35 @@ export function createApp(
     },
 
     unmount() {
-      if (context.renderer && context._vnode) {
-        context.renderer.unmount(context._vnode);
-        context._vnode = null;
+      if (!context.renderer || !context._vnode) return;
+
+      const instance = context._instance;
+      if (instance) {
+        // 调用 beforeUnmount 和 unmounted 生命周期钩子
+        // (包括 Composition API 和 Options API)
+        callUnmountedHook(instance);
       }
+
+      context.renderer.unmount(context._vnode);
+      context._vnode = null;
       context._container = null;
+
+      // 清理 app context
+      context.mixins.length = 0;
+      context.components = {};
+      context.directives = {};
+      context.provides.clear();
+
+      context._instance = null;
     },
 
     provide(key, value) {
-      (context.provides as Record<string | symbol, unknown>)[key] = value;
+      context.provides.set(key, value);
       return app;
     },
 
     inject(key) {
-      return context.provides[key as string];
+      return context.provides.get(key);
     },
 
     component(name, component) {
