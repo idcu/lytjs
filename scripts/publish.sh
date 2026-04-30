@@ -45,14 +45,19 @@ log_warn() {
 DRY_RUN=false
 TAG=""
 
-for arg in "$@"; do
-  case "$arg" in
+while [[ $# -gt 0 ]]; do
+  case "$1" in
     --dry-run)
       DRY_RUN=true
+      shift
       ;;
     --tag)
       shift
       TAG="--tag ${1:-latest}"
+      shift
+      ;;
+    *)
+      shift
       ;;
   esac
 done
