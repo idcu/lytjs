@@ -133,7 +133,7 @@ export interface VNodeCall extends BaseNode {
   tag: string | JSChildNode;
   props: JSChildNode | undefined;
   children: JSChildNode | TemplateChildNode[] | string | undefined;
-  patchFlag: string | JSChildNode | undefined;
+  patchFlag: string | number | undefined;
   dynamicProps: JSChildNode | undefined;
   directives: JSChildNode[] | undefined;
   isBlock: boolean;

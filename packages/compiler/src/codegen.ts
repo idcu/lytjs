@@ -37,6 +37,17 @@ export function generate(
   // Generate helper imports (preamble)
   const preamble = genHelperImports(ast.helpers);
 
+  // Generate hoisted variable declarations
+  if (ast.hoists && ast.hoists.length > 0) {
+    for (let i = 0; i < ast.hoists.length; i++) {
+      const hoistedNode = ast.hoists[i];
+      context.push(`const _hoisted_${i + 1} = `);
+      genNode(hoistedNode as JSChildNode, context);
+      context.push(`\n`);
+    }
+    context.push(`\n`);
+  }
+
   // Generate render function
   context.push(`function render(_ctx, _cache) {\n`);
   context.indent();
@@ -178,9 +189,12 @@ function genNode(
     case NodeTypes.ELEMENT:
       genElement(node as ElementNode, context);
       break;
-    default:
-      context.push(JSON.stringify(node), node);
-      break;
+    default: {
+      const nodeType = (node as { type?: string | number }).type;
+      throw new Error(
+        `[LytJS compiler] Codegen: unknown node type "${nodeType ?? "unknown"}"`,
+      );
+    }
   }
 }
 

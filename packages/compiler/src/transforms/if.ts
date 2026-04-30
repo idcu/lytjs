@@ -79,9 +79,13 @@ export function transformIf(
     // Transform the element (without v-if)
     const savedParent = context.parent;
     context.parent = parent;
-    transformElement(sibElement, context);
-    context.parent = savedParent;
+    try {
+      transformElement(sibElement, context);
+    } finally {
+      context.parent = savedParent;
+    }
 
+    if (!sibElement.codegenNode) continue;
     const branchNode = sibElement.codegenNode as VNodeCall;
 
     if (sibIf || sibElseIf) {

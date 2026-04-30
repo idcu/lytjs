@@ -367,6 +367,10 @@ function parseElement(context: ParserContext): ElementNode | undefined {
     );
     if (endTagMatch) {
       advanceBy(context, endTagMatch[0].length);
+    } else if (__DEV__) {
+      console.warn(
+        `[LytJS compiler warn] Element <${tag}> was left open. Expected closing tag </${tag}>.`,
+      );
     }
   }
 
@@ -505,14 +509,26 @@ function parseAttributeValue(context: ParserContext): TextNode {
   if (context.source.startsWith('"')) {
     advanceBy(context, 1);
     const endIndex = context.source.indexOf('"');
-    content =
-      endIndex >= 0 ? context.source.slice(0, endIndex) : context.source;
+    if (endIndex >= 0) {
+      content = context.source.slice(0, endIndex);
+    } else {
+      if (__DEV__) {
+        console.warn("[LytJS compiler warn] Unclosed attribute value.");
+      }
+      content = context.source;
+    }
     advanceBy(context, content.length + 1);
   } else if (context.source.startsWith("'")) {
     advanceBy(context, 1);
     const endIndex = context.source.indexOf("'");
-    content =
-      endIndex >= 0 ? context.source.slice(0, endIndex) : context.source;
+    if (endIndex >= 0) {
+      content = context.source.slice(0, endIndex);
+    } else {
+      if (__DEV__) {
+        console.warn("[LytJS compiler warn] Unclosed attribute value.");
+      }
+      content = context.source;
+    }
     advanceBy(context, content.length + 1);
   } else {
     const match = context.source.match(/^[^\t\r\n\f >]+/);
