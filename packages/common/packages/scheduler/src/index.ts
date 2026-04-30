@@ -108,7 +108,13 @@ export function flushJobs(): void {
       for (let i = 0; i < preFlushCbs.length; i++) {
         const cb = preFlushCbs[i]!;
         preFlushCbsSet.delete(cb);
-        cb();
+        try {
+          cb();
+        } catch (e) {
+          if (__DEV__) {
+            console.error("[lytjs/common-scheduler] pre-flush callback failed:", e);
+          }
+        }
       }
       preFlushCbs.length = 0;
 
@@ -116,7 +122,13 @@ export function flushJobs(): void {
       for (let i = 0; i < queue.length; i++) {
         const job = queue[i]!;
         queueSet.delete(job);
-        job();
+        try {
+          job();
+        } catch (e) {
+          if (__DEV__) {
+            console.error("[lytjs/common-scheduler] job execution failed:", e);
+          }
+        }
       }
       queue.length = 0;
 
@@ -124,7 +136,13 @@ export function flushJobs(): void {
       for (let i = 0; i < postFlushCbs.length; i++) {
         const cb = postFlushCbs[i]!;
         postFlushCbsSet.delete(cb);
-        cb();
+        try {
+          cb();
+        } catch (e) {
+          if (__DEV__) {
+            console.error("[lytjs/common-scheduler] post-flush callback failed:", e);
+          }
+        }
       }
       postFlushCbs.length = 0;
     }
@@ -138,13 +156,22 @@ export function flushJobs(): void {
       } else {
         console.error(msg);
       }
+      // Clear all queues to prevent re-triggering
+      queue.length = 0;
+      queueSet.clear();
+      preFlushCbs.length = 0;
+      preFlushCbsSet.clear();
+      postFlushCbs.length = 0;
+      postFlushCbsSet.clear();
     }
   } finally {
     isFlushing = false;
 
-    // 如果在执行过程中有新的任务被加入，继续刷新
+    // If new jobs were queued during flush, schedule next flush via nextTick
+    // instead of recursive call to avoid stack overflow
     if (preFlushCbs.length || queue.length || postFlushCbs.length) {
-      flushJobs();
+      isFlushPending = true;
+      nextTick(flushJobs);
     }
   }
 }
