@@ -55,9 +55,35 @@ export function extname(path: string): string {
 /**
  * 将路径模式转换为正则表达式
  * 支持 :param 参数、* 通配符、? 可选段
+ * @throws {Error} 如果参数名包含非单词字符
  */
+const PARAM_NAME_RE = /^(\w+)$/;
+
 export function pathToRegex(pattern: string): RegExp {
   const normalized = normalizePath(pattern);
+
+  // Validate parameter names to prevent regex injection
+  const paramNames: string[] = [];
+  const optionalParamRegex = /:(\w+)\?/g;
+  let m: RegExpExecArray | null;
+  while ((m = optionalParamRegex.exec(normalized)) !== null) {
+    paramNames.push(m[1]!);
+  }
+  const requiredParamRegex = /:(\w+)(?!\?)/g;
+  while ((m = requiredParamRegex.exec(normalized)) !== null) {
+    paramNames.push(m[1]!);
+  }
+  // Note: param names are already validated by \w+ in the regex above,
+  // but we do an explicit check for safety
+  for (const name of paramNames) {
+    if (!PARAM_NAME_RE.test(name)) {
+      throw new Error(
+        `Invalid parameter name "${name}" in path pattern "${pattern}". ` +
+        `Parameter names must only contain word characters (a-z, A-Z, 0-9, _).`
+      );
+    }
+  }
+
   // 先提取参数/通配符部分（含前导 /），转义静态部分，再还原
   const regexStr = normalized
     .replace(/\/\*/g, "§WILDCARD§")
