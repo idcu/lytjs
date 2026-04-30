@@ -43,6 +43,9 @@ function hydrateNode(vnode: VNode, parent: HTMLElement, index: number): number {
   // Handle Fragment
   if (type === Fragment) {
     const childArray = isArray(children) ? children : [];
+    // Save reference to first child before hydration loop,
+    // because child node replacement may invalidate indices.
+    const firstChild = parent.childNodes[index] ?? null;
     let currentIndex = index;
     for (let i = 0; i < childArray.length; i++) {
       const child = childArray[i];
@@ -52,7 +55,7 @@ function hydrateNode(vnode: VNode, parent: HTMLElement, index: number): number {
     }
     // Fragment el points to the first child's el
     if (childArray.length > 0) {
-      vnode.el = parent.childNodes[index] ?? null;
+      vnode.el = firstChild;
     } else {
       vnode.el = null;
     }

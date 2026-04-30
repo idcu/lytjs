@@ -18,7 +18,7 @@ export type SchedulerJob = () => void;
 // ============================================================
 
 let globalErrorHandler: ((error: Error, info: string) => void) | null = null;
-export function setErrorHandler(handler: (error: Error, info: string) => void | null): void {
+export function setErrorHandler(handler: ((error: Error, info: string) => void) | null): void {
   globalErrorHandler = handler;
 }
 

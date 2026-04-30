@@ -211,6 +211,18 @@ export function patchAttr(
 }
 
 // ============================================================
+// HTML sanitization
+// ============================================================
+
+/**
+ * Basic runtime HTML sanitization for innerHTML.
+ * Removes <script> tags to mitigate XSS when using v-html.
+ */
+function sanitizeHTML(str: string): string {
+  return str.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+}
+
+// ============================================================
 // patchProp - main entry
 // ============================================================
 
@@ -236,10 +248,8 @@ export function patchProp(
       if (__DEV__ && nextValue != null && typeof nextValue !== 'string') {
         console.warn('v-html expects a string value.');
       }
-      // SECURITY NOTE: innerHTML is a potential XSS vector.
-      // The caller is responsible for ensuring the content is safe.
-      // This is typically used by v-html directive which should sanitize input.
-      el.innerHTML = nextValue == null ? '' : String(nextValue);
+      const sanitized = nextValue == null ? '' : sanitizeHTML(String(nextValue));
+      el.innerHTML = sanitized;
     }
   } else if (key === 'textContent') {
     if (nextValue !== prevValue) {
