@@ -9,6 +9,12 @@ import { isArray, isFunction } from "@lytjs/common-is";
 import { patchProp } from "./patch-props";
 
 // ============================================================
+// VNode storage for container elements (shared with dom-renderer)
+// ============================================================
+
+const vnodeMap = new WeakMap<Element, any>();
+
+// ============================================================
 // Dev mode hydration mismatch warnings
 // ============================================================
 
@@ -20,7 +26,7 @@ function warnHydrationMismatch(
   if (__DEV__) {
     console.warn(
       `[LyticsJS warn] Hydration mismatch: expected ${type} "${expected}" but got "${actual}". ` +
-      `The DOM has been patched to match the vnode.`,
+        `The DOM has been patched to match the vnode.`,
     );
   }
 }
@@ -207,7 +213,7 @@ export function createHydrationFunctions(
 ): HydrationRenderer {
   function hydrate(vnode: VNode, container: HTMLElement): void {
     hydrateNode(vnode, container, 0);
-    (container as any)._vnode = vnode;
+    vnodeMap.set(container, vnode);
   }
 
   return { hydrate };
