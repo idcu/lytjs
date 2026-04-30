@@ -148,6 +148,20 @@ function findPackageJsonFiles(dir: string): string[] {
   return results;
 }
 
+/**
+ * Check if a dependency name matches any pattern in the allowed set,
+ * supporting wildcard patterns like `@lytjs/common-*`
+ */
+function isWildcardMatch(allowed: Set<string>, depName: string): boolean {
+  if (allowed.has(depName)) return true;
+  for (const pattern of allowed) {
+    if (pattern.endsWith("*") && depName.startsWith(pattern.slice(0, -1))) {
+      return true;
+    }
+  }
+  return false;
+}
+
 function checkDependencies(): Violation[] {
   const violations: Violation[] = [];
   const pkgFiles = findPackageJsonFiles(join(ROOT, "packages"));
@@ -204,10 +218,7 @@ function checkDependencies(): Violation[] {
       // 检查跨层依赖（跳过相邻层）
       if (targetLayer < sourceLayer - 1) {
         const allowed = ALLOWED_CROSS_LAYER[sourceName];
-        if (
-          !allowed ||
-          (!allowed.has(depName) && !allowed.has(`@lytjs/common-*`))
-        ) {
+        if (!allowed || !isWildcardMatch(allowed, depName)) {
           violations.push({
             source: sourceName,
             target: depName,
