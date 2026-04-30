@@ -36,10 +36,10 @@ pnpm add @lytjs/common-is
 pnpm add @lytjs/common-object
 
 # 需要路由
-pnpm add @lytjs/router
+pnpm add @lytjs/router（规划中）
 
 # 需要状态管理
-pnpm add @lytjs/store
+pnpm add @lytjs/store（规划中）
 ```
 
 ## TypeScript
