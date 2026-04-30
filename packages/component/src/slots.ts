@@ -2,6 +2,7 @@
 // Slot handling
 
 import { isFunction, isArray, isObject, isNullish } from "@lytjs/common-is";
+import type { VNode } from "@lytjs/vdom";
 import type {
   ComponentInternalInstance,
   InternalSlots,
@@ -45,8 +46,8 @@ export function initSlots(
  * Normalize slot return value to an array.
  * Ensures slot functions always return arrays for consistent rendering.
  */
-export function normalizeSlotValue(value: any): any[] {
+export function normalizeSlotValue(value: unknown): VNode[] {
   if (isNullish(value)) return [];
-  if (isArray(value)) return value;
-  return [value];
+  if (isArray(value)) return value as VNode[];
+  return [value as VNode];
 }
