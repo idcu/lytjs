@@ -14,7 +14,9 @@
             ref, reactive, computed, watch, watchEffect,
             onMounted, onUnmounted, onUpdated,
             onBeforeMount, onBeforeUnmount, onBeforeUpdate,
-            Fragment, Text, Comment, withDirectives } = LytJS;
+            onErrorCaptured,
+            Fragment, Text, Comment, withDirectives,
+            defineAsyncComponent, compile } = LytJS;
 
     window.LytJS = {
       createApp,
@@ -32,10 +34,13 @@
       onBeforeMount,
       onBeforeUnmount,
       onBeforeUpdate,
+      onErrorCaptured,
       Fragment,
       Text,
       Comment,
       withDirectives,
+      defineAsyncComponent,
+      compile,
     };
   </script>
 </body>
