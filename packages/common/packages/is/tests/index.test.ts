@@ -13,7 +13,6 @@ import {
   isNullish,
   isEmpty,
   isStringOrNumber,
-  isVNode,
   hasOwn,
   hasChanged,
   NOOP,
@@ -232,20 +231,6 @@ describe('@lytjs/common-is', () => {
       expect(isStringOrNumber(undefined)).toBe(false)
       expect(isStringOrNumber(true)).toBe(false)
       expect(isStringOrNumber({})).toBe(false)
-    })
-  })
-
-  // isVNode
-  describe('isVNode', () => {
-    it('should return true for VNode-like objects', () => {
-      const vnode = { __v_isVNode: true, type: 'div' }
-      expect(isVNode(vnode)).toBe(true)
-    })
-
-    it('should return false for non-VNode objects', () => {
-      expect(isVNode({})).toBe(false)
-      expect(isVNode({ type: 'div' })).toBe(false)
-      expect(isVNode(null)).toBe(false)
     })
   })
 
