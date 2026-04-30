@@ -46,13 +46,13 @@ export function signal<T>(initialValue: T): WritableSignal<T> {
   const signalFn = function signalFn(valueOrNothing?: T): T | void {
     if (arguments.length > 0) {
       if (hasChanged(valueOrNothing, store[SIGNAL_KEY])) {
-        store[SIGNAL_KEY] = valueOrNothing;
+        store[SIGNAL_KEY] = valueOrNothing as T;
         trigger(store, TriggerOpTypes.SET, SIGNAL_KEY, valueOrNothing);
       }
       return;
     }
     track(store, TrackOpTypes.GET, SIGNAL_KEY);
-    return store[SIGNAL_KEY];
+    return store[SIGNAL_KEY] as T;
   } as WritableSignal<T> & ((valueOrNothing?: T) => T | void);
 
   Object.defineProperty(signalFn, SignalSymbol, { value: true });
@@ -60,7 +60,7 @@ export function signal<T>(initialValue: T): WritableSignal<T> {
 }
 
 export function computedSignal<T>(fn: () => T): ComputedSignal<T> {
-  const store: { [key: symbol]: T } = { [SIGNAL_KEY]: undefined as unknown as T };
+  const store: { [key: symbol]: T | undefined } = { [SIGNAL_KEY]: undefined };
   let dirty = true;
 
   const runner = new ReactiveEffect(
@@ -72,7 +72,6 @@ export function computedSignal<T>(fn: () => T): ComputedSignal<T> {
         dirty = true;
         throw e;
       }
-      trigger(store, TriggerOpTypes.SET, SIGNAL_KEY);
     },
     // 调度器：标记为脏值并触发依赖更新，实现缓存失效
     () => {
@@ -86,7 +85,7 @@ export function computedSignal<T>(fn: () => T): ComputedSignal<T> {
     if (dirty) {
       runner.run();
     }
-    return store[SIGNAL_KEY];
+    return store[SIGNAL_KEY] as T;
   } as ComputedSignal<T>;
 
   Object.defineProperty(computedFn, ComputedSignalSymbol, { value: true });
