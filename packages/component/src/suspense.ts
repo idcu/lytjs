@@ -16,9 +16,12 @@ export interface SuspenseProps {
 export interface SuspenseBoundary {
   isPending: boolean;
   error: Error | null;
+  /** @deprecated 使用 pendingPromises 代替 */
   promise: Promise<any> | null;
+  pendingPromises: Set<Promise<any>>;
   onResolve: (() => void)[];
   onPending: (() => void)[];
+  onError: ((error: Error) => void)[];
 }
 
 // ==================== Suspense Component ====================
@@ -35,8 +38,10 @@ export const Suspense: ComponentOptions = {
       isPending: false,
       error: null,
       promise: null,
+      pendingPromises: new Set(),
       onResolve: [],
       onPending: [],
+      onError: [],
     };
 
     return {
@@ -78,8 +83,10 @@ export function createSuspenseBoundary(): SuspenseBoundary {
     isPending: false,
     error: null,
     promise: null,
+    pendingPromises: new Set(),
     onResolve: [],
     onPending: [],
+    onError: [],
   };
 }
 
@@ -91,19 +98,25 @@ export function registerAsyncChild(
   boundary: SuspenseBoundary,
   promise: Promise<any>,
 ): boolean {
-  boundary.promise = promise;
   const wasPending = boundary.isPending;
   boundary.isPending = true;
   boundary.error = null;
 
-  // Call onPending callbacks
-  for (const cb of boundary.onPending) {
-    cb();
+  // Track this promise in the set
+  boundary.pendingPromises.add(promise);
+
+  // Call onPending callbacks only on first pending child
+  if (!wasPending) {
+    for (const cb of boundary.onPending) {
+      cb();
+    }
   }
 
   promise
     .then((result: any) => {
-      if (boundary.promise === promise) {
+      boundary.pendingPromises.delete(promise);
+      // When all promises are resolved, transition to resolved
+      if (boundary.pendingPromises.size === 0) {
         boundary.isPending = false;
         boundary.promise = null;
         // Call onResolve callbacks
@@ -114,13 +127,15 @@ export function registerAsyncChild(
       return result;
     })
     .catch((err: Error) => {
-      if (boundary.promise === promise) {
+      boundary.pendingPromises.delete(promise);
+      boundary.error = err;
+      // When all promises are settled, transition based on error state
+      if (boundary.pendingPromises.size === 0) {
         boundary.isPending = false;
-        boundary.error = err;
         boundary.promise = null;
-        // 调用 onError 回调而非 onResolve
-        for (const cb of boundary.onPending) {
-          cb();
+        // Call onError callbacks (P1-16 fix: was incorrectly calling onPending)
+        for (const cb of boundary.onError) {
+          cb(err);
         }
       }
     });
@@ -149,6 +164,7 @@ export function resolveSuspense(boundary: SuspenseBoundary): void {
   boundary.isPending = false;
   boundary.promise = null;
   boundary.error = null;
+  boundary.pendingPromises.clear();
   for (const cb of boundary.onResolve) {
     cb();
   }
@@ -160,4 +176,5 @@ export function resolveSuspense(boundary: SuspenseBoundary): void {
 export function abortSuspense(boundary: SuspenseBoundary): void {
   boundary.isPending = false;
   boundary.promise = null;
+  boundary.pendingPromises.clear();
 }
