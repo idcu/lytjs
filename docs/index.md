@@ -10,8 +10,8 @@ hero:
       text: 快速开始
       link: /lytjs/guide/getting-started
     - theme: alt
-      text: GitHub
-      link: https://github.com/idcu/lytjs
+      text: Gitee
+      link: https://gitee.com/lytjs/lytjs
 
 features:
   - title: 轻量核心

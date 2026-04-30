@@ -351,7 +351,6 @@ export interface TransformContext {
   addTemp(): number;
   addCache(index: number): void;
   currentNode: RootNode | TemplateChildNode | null;
-  createCodegenContext(): CodegenContext;
   error(msg: string, node?: BaseNode): void;
 }
 

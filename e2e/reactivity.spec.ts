@@ -162,8 +162,11 @@ test.describe('响应式系统', () => {
       window.__setCount(3);
     }`)
 
-    // 等待 watch 回调执行
-    await page.waitForTimeout(100)
+    // 等待 watch 回调执行（轮询等待，替代固定延时）
+    await page.waitForFunction(
+      () => (window as any).__getChanges && (window as any).__getChanges().length >= 1,
+      { timeout: 5000 }
+    )
 
     const changes = await evaluateInBrowser(page, `(args) => {
       return window.__getChanges();
@@ -196,7 +199,11 @@ test.describe('响应式系统', () => {
       window.__setName('updated');
     }`)
 
-    await page.waitForTimeout(100)
+    // 等待 watch 回调执行（轮询等待，替代固定延时）
+    await page.waitForFunction(
+      () => (window as any).__getChanges && (window as any).__getChanges().length >= 1,
+      { timeout: 5000 }
+    )
 
     const changes = await evaluateInBrowser(page, `(args) => {
       return window.__getChanges();

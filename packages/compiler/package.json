@@ -13,7 +13,9 @@
       "require": "./dist/index.cjs"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "sideEffects": false,
   "scripts": {
     "build": "tsup",
@@ -22,7 +24,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "type-check": "tsc --noEmit",
-    "lint": "eslint src tests --ext .ts",
+    "lint": "eslint \"src/**/*.ts\" \"tests/**/*.ts\"",
     "clean": "rm -rf dist"
   },
   "dependencies": {

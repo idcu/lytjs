@@ -59,15 +59,22 @@ log_info "========================================="
 log_info "构建 L0: common 子仓库..."
 log_info "========================================="
 
-# 先构建 common 下的所有孙仓库
+# 先构建 common 下的所有孙仓库（并行构建）
+PIDS=""
 for pkg in packages/common/packages/*/; do
   if [ -d "$pkg" ]; then
     pkg_name=$(basename "$pkg")
     log_info "构建 @lytjs/common-${pkg_name}..."
-    pnpm --filter "@lytjs/common-${pkg_name}" run build || {
-      log_error "构建 @lytjs/common-${pkg_name} 失败"
-      exit 1
-    }
+    pnpm --filter "@lytjs/common-${pkg_name}" run build &
+    PIDS="$PIDS $!"
+  fi
+done
+
+# 等待所有并行构建完成，任一失败则终止
+for pid in $PIDS; do
+  if ! wait "$pid"; then
+    log_error "L0 层并行构建失败 (pid: $pid)"
+    exit 1
   fi
 done
 

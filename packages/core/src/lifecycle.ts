@@ -20,6 +20,12 @@ export {
 export function onRenderTracked(_hook: (event: any) => void): void {
   // 当响应式依赖被追踪时调用
   // 需要在 effect 系统中集成
+  if (__DEV__) {
+    console.warn(
+      "[lytjs] onRenderTracked is not yet implemented. " +
+        "This hook requires integration with the reactivity effect system.",
+    );
+  }
 }
 
 /**
@@ -28,4 +34,10 @@ export function onRenderTracked(_hook: (event: any) => void): void {
 export function onRenderTriggered(_hook: (event: any) => void): void {
   // 当响应式依赖被触发时调用
   // 需要在 effect 系统中集成
+  if (__DEV__) {
+    console.warn(
+      "[lytjs] onRenderTriggered is not yet implemented. " +
+        "This hook requires integration with the reactivity effect system.",
+    );
+  }
 }

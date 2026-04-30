@@ -27,11 +27,21 @@ export function normalizeEmitsOptions(
 }
 
 /**
- * Convert camelCase to kebab-case.
- * e.g., 'update:modelValue' => 'update:model-value'
+ * 将 kebab-case 转换为 camelCase
+ * 例如: 'update:model-value' => 'update:modelValue'
+ */
+function camelize(str: string): string {
+  return str.replace(/-(\w)/g, (_, c) => (c ? c.toUpperCase() : ""));
+}
+
+/**
+ * 将事件名转换为处理器 key
+ * 先将 kebab-case 转为 camelCase，再首字母大写加 on 前缀
+ * 例如: 'update:model-value' => 'onUpdate:modelValue'
  */
 function toHandlerKey(event: string): string {
-  return `on${event[0]!.toUpperCase()}${event.slice(1)}`;
+  const camelized = camelize(event);
+  return `on${camelized[0]!.toUpperCase()}${camelized.slice(1)}`;
 }
 
 /**

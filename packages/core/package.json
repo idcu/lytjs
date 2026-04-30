@@ -24,7 +24,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "type-check": "tsc --noEmit",
-    "lint": "eslint src tests --ext .ts",
+    "lint": "eslint \"src/**/*.ts\" \"tests/**/*.ts\"",
     "clean": "rm -rf dist"
   },
   "dependencies": {
@@ -45,7 +45,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/idcu/lytjs.git",
+    "url": "https://gitee.com/lytjs/lytjs.git",
     "directory": "packages/core"
   },
   "keywords": [

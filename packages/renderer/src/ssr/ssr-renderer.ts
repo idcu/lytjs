@@ -25,6 +25,10 @@ export interface SSRInput {
 
 /**
  * Render a VNode to an HTML string (async for future Suspense support)
+ *
+ * 使用 async 声明的原因：为未来的 Suspense 异步组件预留支持。
+ * 当组件包含异步子组件（如 Suspense boundary）时，渲染过程需要等待
+ * 异步数据加载完成后再输出 HTML，因此 renderToString 必须是异步的。
  */
 export async function renderToString(input: SSRInput): Promise<string> {
   return renderVNodeToString(input.vnode);
@@ -163,6 +167,22 @@ function renderAttributeToString(key: string, value: unknown): string {
   if (isBooleanAttr(key)) {
     if (value === false || value === "") return "";
     return ` ${key}`;
+  }
+
+  // Security: block javascript:/data: protocol on dangerous attributes
+  const DANGEROUS_ATTRS = new Set([
+    "href", "src", "action", "formaction", "xlink:href", "data", "srcdoc",
+  ]);
+  if (DANGEROUS_ATTRS.has(key)) {
+    const strVal = String(value).trim().toLowerCase();
+    if (strVal.startsWith("javascript:") || strVal.startsWith("data:text/html")) {
+      if (__DEV__) {
+        console.warn(
+          `[LytJS SSR] Blocked potentially dangerous attribute: ${key}="${String(value)}"`
+        );
+      }
+      return "";
+    }
   }
 
   // Regular attributes

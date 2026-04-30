@@ -133,11 +133,12 @@ function findPackageJsonFiles(dir: string): string[] {
         results.push(pkgJsonPath);
       }
 
-      // 递归搜索子目录（但排除 node_modules 和 dist）
+      // 递归搜索子目录（但排除 node_modules、dist 和 _templates）
       if (
         entry.name !== "node_modules" &&
         entry.name !== "dist" &&
-        entry.name !== ".turbo"
+        entry.name !== ".turbo" &&
+        entry.name !== "_templates"
       ) {
         results.push(...findPackageJsonFiles(fullPath));
       }

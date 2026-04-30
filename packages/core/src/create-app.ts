@@ -8,6 +8,12 @@ import {
 } from "@lytjs/vdom";
 import type { App, Plugin, Component, ComponentPublicInstance } from "./types";
 import { createAppContext, createContextConfig } from "./app-context";
+import {
+  createComponentInstance,
+  setupComponent,
+  finishComponentSetup,
+  createComponentPublicInstance,
+} from "@lytjs/component";
 
 export function createApp(
   rootComponent: Component,
@@ -51,45 +57,54 @@ export function createApp(
         );
       }
 
-      const comp = rootComponent as any;
-      let vnode: any;
+      // Create root vnode through the component system's standard flow
+      const rootVNode = createVNode(rootComponent as any, rootProps);
 
-      if (typeof comp === "object" && comp.render) {
-        const instance = {
-          ...rootProps,
-          ...comp.data?.(),
-          ...comp.methods,
-          $props: rootProps || {},
-          $refs: {},
-          $slots: {},
-          $emit: () => {},
-        };
-        vnode = comp.render.call(instance);
-      } else if (typeof comp === "function") {
-        vnode = comp(rootProps);
-      } else {
-        vnode = createVNode(comp, rootProps);
+      // Create component instance using the standardized component system
+      const instance = createComponentInstance(rootVNode, null);
+
+      // Copy app-level provides into the root instance
+      if (context.provides) {
+        if (!(instance.provides instanceof Map)) {
+          instance.provides = new Map(Object.entries(instance.provides));
+        }
+        const rootProvides = instance.provides as Map<string | symbol, unknown>;
+        for (const [key, value] of Object.entries(context.provides)) {
+          if (!rootProvides.has(key)) {
+            rootProvides.set(key, value);
+          }
+        }
       }
 
+      // Copy app-level components and directives
+      for (const [name, comp] of Object.entries(context.components)) {
+        if (comp) instance.appContext.components[name] = comp;
+      }
+      for (const [name, dir] of Object.entries(context.directives)) {
+        if (dir) instance.appContext.directives[name] = dir;
+      }
+
+      // Set up the component (runs setup, init props/slots, data, lifecycle)
+      setupComponent(instance);
+
+      // Finish component setup if async setup resolved synchronously
+      if (!rootVNode.isAsyncPlaceholder) {
+        finishComponentSetup(instance);
+      }
+
+      // Render using the standard renderer
       const renderer = createRenderer(createDOMRendererOptions());
       context.renderer = renderer;
       context._container = container;
-      context._vnode = vnode;
-      renderer.mount(vnode, container);
+      context._vnode = rootVNode;
 
-      const publicInstance: ComponentPublicInstance = {
-        $data: {},
-        $el: vnode.el,
-        $options: rootComponent as any,
-        $props: rootProps || {},
-        $refs: {},
-        $slots: {},
-        $emit: () => {},
-        $forceUpdate: () => {},
-        $nextTick: () => Promise.resolve(),
-      };
+      // Mount the vnode
+      renderer.mount(rootVNode, container);
 
-      return publicInstance;
+      // Create and return the public instance
+      const publicInstance = createComponentPublicInstance(instance);
+
+      return publicInstance as ComponentPublicInstance;
     },
 
     unmount() {

@@ -122,22 +122,24 @@ function getSource(source: WatchSource<unknown>): () => unknown {
   return NOOP;
 }
 
-function traverse(value: unknown, seen: Set<unknown> = new Set()): unknown {
-  if (!isObject(value) || seen.has(value)) return value;
-  seen.add(value);
+// seen 参数改为可选，允许外部传入已有 Set 以实现复用
+function traverse(value: unknown, seen?: Set<unknown>): unknown {
+  const _seen = seen ?? new Set();
+  if (!isObject(value) || _seen.has(value)) return value;
+  _seen.add(value);
   if (isArray(value)) {
     for (let i = 0; i < value.length; i++) {
-      traverse(value[i], seen);
+      traverse(value[i], _seen);
     }
   } else if (value instanceof Map) {
     value.forEach((_, key) => {
-      traverse(value.get(key), seen);
+      traverse(value.get(key), _seen);
     });
   } else if (value instanceof Set) {
-    value.forEach((v) => traverse(v, seen));
+    value.forEach((v) => traverse(v, _seen));
   } else {
     for (const key of Object.keys(value as object)) {
-      traverse((value as any)[key], seen);
+      traverse((value as any)[key], _seen);
     }
   }
   return value;

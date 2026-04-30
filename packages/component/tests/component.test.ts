@@ -117,6 +117,8 @@ describe('setupComponent', () => {
   });
 
   it('should handle async setup', async () => {
+    vi.useFakeTimers();
+
     const options = defineComponent({
       name: 'AsyncComp',
       async setup() {
@@ -132,11 +134,13 @@ describe('setupComponent', () => {
     // Initially async placeholder
     expect(instance.vnode.isAsyncPlaceholder).toBe(true);
 
-    // Wait for resolution
-    await new Promise(resolve => setTimeout(resolve, 50));
+    // 使用 fake timers 推进时间，等待异步 setup 完成
+    vi.advanceTimersByTime(50);
 
     expect(instance.setupState.asyncData).toBe('resolved');
     expect(instance.vnode.isAsyncPlaceholder).toBe(false);
+
+    vi.useRealTimers();
   });
 });
 

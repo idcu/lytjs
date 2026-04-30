@@ -3,8 +3,6 @@
  * 任务调度器 - 管理异步任务队列
  */
 
-import { isNode } from "@lytjs/common-env";
-
 // ============================================================
 // 调度器类型
 // ============================================================
@@ -32,10 +30,7 @@ let resolvedPromise: Promise<void> | null = null;
  * 获取当前环境的 resolvedPromise
  */
 function getResolvedPromise(): Promise<void> {
-  if (!resolvedPromise) {
-    resolvedPromise = isNode() ? Promise.resolve() : Promise.resolve();
-  }
-  return resolvedPromise;
+  return (resolvedPromise ??= Promise.resolve());
 }
 
 // ============================================================

@@ -6,7 +6,7 @@
  *
  * 前提条件: 已执行 pnpm run build（构建所有子包）
  */
-const esbuild = require('/workspace/lytjs/node_modules/.pnpm/esbuild@0.25.12/node_modules/esbuild/lib/main.js')
+const esbuild = require('esbuild')
 const { resolve, dirname } = require('path')
 
 const rootDir = resolve(__dirname, '..')

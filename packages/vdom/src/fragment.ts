@@ -3,7 +3,7 @@
  * Fragment operations - standalone helpers for fragment vnode handling
  */
 
-import { Fragment } from "@lytjs/common-vnode";
+import { Fragment, ShapeFlags } from "@lytjs/common-vnode";
 import type { VNode } from "@lytjs/common-vnode";
 import { isArray } from "@lytjs/common-is";
 
@@ -51,7 +51,7 @@ export function createFragment(children: VNode[]): VNode {
     isComment: false,
     isCloned: false,
     isBlockTree: false,
-    shapeFlag: 16, // ARRAY_CHILDREN
+    shapeFlag: ShapeFlags.ARRAY_CHILDREN,
     patchFlag: 0,
     dynamicProps: null,
     dynamicChildren: null,

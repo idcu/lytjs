@@ -109,6 +109,12 @@ export function onErrorCaptured(
       currentInstance.errorCapturedHooks = [];
     }
     currentInstance.errorCapturedHooks.push(fn);
+  } else if (__DEV__) {
+    // 开发模式下警告：onErrorCaptured 必须在 setup 期间调用
+    console.warn(
+      "[lytjs] onErrorCaptured was called when there is no active component instance. " +
+        "Make sure to call this function inside setup().",
+    );
   }
 }
 

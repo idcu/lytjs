@@ -62,16 +62,23 @@ export function computedSignal<T>(fn: () => T): ComputedSignal<T> {
   const store = { [SIGNAL_KEY]: undefined as any };
   let dirty = true;
 
-  const runner = new ReactiveEffect(() => {
-    try {
-      store[SIGNAL_KEY] = fn() as T;
-      dirty = false;
-      trigger(store, TriggerOpTypes.SET, SIGNAL_KEY);
-    } catch (e) {
+  const runner = new ReactiveEffect(
+    () => {
+      try {
+        store[SIGNAL_KEY] = fn() as T;
+        dirty = false;
+        trigger(store, TriggerOpTypes.SET, SIGNAL_KEY);
+      } catch (e) {
+        dirty = true;
+        throw e;
+      }
+    },
+    // 调度器：标记为脏值并触发依赖更新，实现缓存失效
+    () => {
       dirty = true;
-      throw e;
-    }
-  });
+      trigger(store, TriggerOpTypes.SET, SIGNAL_KEY);
+    },
+  );
 
   const computedFn: any = function computedFn(): T {
     track(store, TrackOpTypes.GET, SIGNAL_KEY);

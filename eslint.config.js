@@ -1,6 +1,5 @@
 import js from "@eslint/js";
 import tseslint from "typescript-eslint";
-import eslintPluginPrettier from "eslint-plugin-prettier";
 import eslintConfigPrettier from "eslint-config-prettier";
 import globals from "globals";
 
@@ -89,6 +88,16 @@ export default tseslint.config(
     },
   },
 
+  // 没有 tsconfig.json 的目录，禁用 parserOptions.project
+  {
+    files: ["e2e/**/*", "benchmarks/**/*", "scripts/**/*"],
+    languageOptions: {
+      parserOptions: {
+        project: null,
+      },
+    },
+  },
+
   // 脚本文件宽松规则
   {
     files: ["scripts/**/*.ts"],
@@ -99,14 +108,4 @@ export default tseslint.config(
 
   // Prettier 兼容（必须放最后）
   eslintConfigPrettier,
-
-  // Prettier 插件
-  {
-    plugins: {
-      prettier: eslintPluginPrettier,
-    },
-    rules: {
-      "prettier/prettier": "error",
-    },
-  },
 );
