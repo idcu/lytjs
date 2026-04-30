@@ -6,6 +6,7 @@ import {
   type Fragment,
   type Text,
   type Comment,
+  type VNodeTypes,
   EMPTY_OBJ,
 } from "@lytjs/vdom";
 import type { VNode, VNodeChildren, Component } from "./types";
@@ -27,7 +28,7 @@ export function h(
     children = Array.prototype.slice.call(arguments, 2);
   }
 
-  return createVNode(type as any, props, children);
+  return createVNode(type as VNodeTypes, props, children);
 }
 
 /**

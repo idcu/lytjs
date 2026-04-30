@@ -58,7 +58,7 @@ export function createApp(
       }
 
       // Create root vnode through the component system's standard flow
-      const rootVNode = createVNode(rootComponent as any, rootProps);
+      const rootVNode = createVNode(rootComponent as Component, rootProps);
 
       // Create component instance using the standardized component system
       const instance = createComponentInstance(rootVNode, null);
