@@ -42,17 +42,23 @@ WATCH_MODE=false
 COVERAGE_MODE=false
 TARGET_LAYER=""
 
-for arg in "$@"; do
-  case "$arg" in
+while [[ $# -gt 0 ]]; do
+  case "$1" in
     --watch)
       WATCH_MODE=true
+      shift
       ;;
     --coverage)
       COVERAGE_MODE=true
+      shift
       ;;
     --layer)
       shift
       TARGET_LAYER="${1:-}"
+      shift
+      ;;
+    *)
+      shift
       ;;
   esac
 done
@@ -111,7 +117,7 @@ else
   # 运行所有测试
   log_info "运行全部测试...\n"
 
-  pnpm $VITEST_ARGS || {
+  pnpm vitest $VITEST_ARGS || {
     log_error "测试失败"
     exit 1
   }
