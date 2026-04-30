@@ -5,6 +5,7 @@
 
 import { isString } from "@lytjs/common-is";
 import { camelToKebab } from "@lytjs/common-string";
+import { isBooleanAttr } from "../utils";
 
 // ============================================================
 // Local helpers (not in common-is)
@@ -15,30 +16,6 @@ import { camelToKebab } from "@lytjs/common-string";
  */
 export function isOn(key: string): boolean {
   return /^on[A-Z]/.test(key);
-}
-
-/**
- * Check if a key is a boolean HTML attribute
- */
-export function isBooleanAttr(key: string): boolean {
-  return [
-    "disabled",
-    "readonly",
-    "checked",
-    "selected",
-    "multiple",
-    "autofocus",
-    "async",
-    "defer",
-    "controls",
-    "loop",
-    "muted",
-    "default",
-    "open",
-    "required",
-    "reversed",
-    "allowfullscreen",
-  ].includes(key);
 }
 
 // ============================================================

@@ -9,6 +9,7 @@ import {
   Comment,
   ShapeFlags,
   PatchFlags,
+  isSameVNodeType,
 } from "@lytjs/common-vnode";
 import type { VNode } from "@lytjs/common-vnode";
 import { isArray, isFunction, hasChanged, EMPTY_OBJ } from "@lytjs/common-is";
@@ -37,14 +38,6 @@ export function createRenderer(
     patchProp,
     createComment,
   } = options;
-
-  // ============================================================
-  // isSameVNodeType
-  // ============================================================
-
-  function isSameVNodeType(n1: VNode, n2: VNode): boolean {
-    return n1.type === n2.type && n1.key === n2.key;
-  }
 
   // ============================================================
   // patch - core diffing entry point

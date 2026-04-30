@@ -99,7 +99,7 @@ export const isStringOrNumber = (val: unknown): val is string | number =>
 /**
  * 检查对象是否拥有指定的自身属性
  */
-export const hasOwn = (obj: object, key: string | symbol): boolean =>
+export const hasOwn = (obj: object, key: string | number | symbol): boolean =>
   Object.prototype.hasOwnProperty.call(obj, key);
 
 /**

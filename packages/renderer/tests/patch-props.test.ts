@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { patchProp, patchClass, patchStyle, patchEvent, patchAttr, isOn, isBooleanAttr } from '../src/dom/patch-props'
+import { patchProp, patchClass, patchStyle, patchEvent, patchAttr, isOn } from '../src/dom/patch-props'
+import { isBooleanAttr } from '../src/utils'
 
 describe('patch-props', () => {
   let el: HTMLElement
