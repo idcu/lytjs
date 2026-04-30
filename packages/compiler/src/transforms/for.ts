@@ -8,7 +8,7 @@ import type {
   ElementNode,
   TransformContext,
 } from "../types";
-import { createSimpleExpression, createCallExpression } from "../ast";
+import { createSimpleExpression, createCallExpression, createCompoundExpression } from "../ast";
 import { getExpContent, findDirective } from "./helpers";
 import { transformElement } from "./transform-element";
 
@@ -57,15 +57,19 @@ export function transformFor(
   // Transform the element
   transformElement(element, context);
 
+  const codegenNode = element.codegenNode;
+  if (!codegenNode) return;
+
   context.helper("RENDER_LIST");
 
   const renderListCall = createCallExpression("RENDER_LIST", [
     createSimpleExpression(right, false, forDir.exp.loc, false),
-    createSimpleExpression(
-      `(${itemVar}${indexVar ? `, ${indexVar}` : ""}) => `,
-      false,
+    createCompoundExpression(
+      [
+        `(${itemVar}${indexVar ? `, ${indexVar}` : ""}) => `,
+        codegenNode as unknown as TemplateChildNode,
+      ],
       forDir.exp.loc,
-      false,
     ),
   ]);
 

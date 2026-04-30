@@ -2,6 +2,7 @@
 // transformFor 独立单元测试
 
 import { describe, it, expect } from "vitest";
+import { NodeTypes } from "../../src/constants";
 import { transformFor } from "../../src/transforms/for";
 import { createMockContext } from "./helpers";
 import {
@@ -83,9 +84,16 @@ describe("transformFor", () => {
       expect(replaced?.type).toBe(NodeTypes.JS_CALL_EXPRESSION);
       const callNode = replaced as any;
       expect(callNode.callee).toBe("RENDER_LIST");
-      // 第二个参数应该包含 item
+      // 第二个参数应该是 CompoundExpression，包含 item
       const secondArg = callNode.arguments[1];
-      expect(secondArg.content).toContain("item");
+      expect(secondArg.type).toBe(NodeTypes.COMPOUND_EXPRESSION);
+      const arrowText = secondArg.children.find((c: any) => typeof c === "string");
+      expect(arrowText).toContain("item");
+      // 箭头函数应包含 codegenNode（元素渲染逻辑）
+      const hasCodegenChild = secondArg.children.some(
+        (c: any) => typeof c !== "string",
+      );
+      expect(hasCodegenChild).toBe(true);
     });
 
     it("应该正确解析 (item,index) 无空格语法", () => {
@@ -106,8 +114,10 @@ describe("transformFor", () => {
       const callNode = replaced as any;
       expect(callNode.callee).toBe("RENDER_LIST");
       const secondArg = callNode.arguments[1];
-      expect(secondArg.content).toContain("item");
-      expect(secondArg.content).toContain("index");
+      expect(secondArg.type).toBe(NodeTypes.COMPOUND_EXPRESSION);
+      const arrowText = secondArg.children.find((c: any) => typeof c === "string");
+      expect(arrowText).toContain("item");
+      expect(arrowText).toContain("index");
     });
 
     it("应该注册 RENDER_LIST helper", () => {
