@@ -42,6 +42,57 @@ export function isBooleanAttr(key: string): boolean {
 }
 
 // ============================================================
+// Event name mapping
+// ============================================================
+
+/**
+ * Special event name mappings from camelCase prop names to DOM event names.
+ * e.g., onDoubleClick -> dblclick, onMouseEnter -> mouseenter
+ */
+const EVENT_NAME_MAP: Record<string, string> = {
+  onDoubleClick: "dblclick",
+  onMouseEnter: "mouseenter",
+  onMouseLeave: "mouseleave",
+  onBeforeInput: "beforeinput",
+  onCompositionStart: "compositionstart",
+  onCompositionUpdate: "compositionupdate",
+  onCompositionEnd: "compositionend",
+  onPointerEnter: "pointerenter",
+  onPointerLeave: "pointerleave",
+  onPointerDown: "pointerdown",
+  onPointerMove: "pointermove",
+  onPointerUp: "pointerup",
+  onPointerCancel: "pointercancel",
+  onPointerOver: "pointerover",
+  onPointerOut: "pointerout",
+  onDragStart: "dragstart",
+  onDragEnd: "dragend",
+  onDragOver: "dragover",
+  onDragEnter: "dragenter",
+  onDragLeave: "dragleave",
+  onDragDrop: "drop",
+  onAnimationStart: "animationstart",
+  onAnimationEnd: "animationend",
+  onAnimationIteration: "animationiteration",
+  onTransitionEnd: "transitionend",
+  onTouchStart: "touchstart",
+  onTouchMove: "touchmove",
+  onTouchEnd: "touchend",
+  onTouchCancel: "touchcancel",
+  onContextMenu: "contextmenu",
+  onWheel: "wheel",
+  onScroll: "scroll",
+};
+
+/**
+ * Convert a camelCase event prop name (e.g., onClick) to a DOM event name (e.g., click).
+ * Uses the mapping table for special cases, falls back to simple lowercase conversion.
+ */
+function getEventName(rawName: string): string {
+  return EVENT_NAME_MAP[rawName] ?? rawName.slice(2).toLowerCase();
+}
+
+// ============================================================
 // Event invoker pattern
 // ============================================================
 
@@ -145,7 +196,9 @@ export function patchStyle(el: Element, prev: unknown, next: unknown): void {
 // ============================================================
 
 /**
- * Patch an event listener on an element using the invoker pattern
+ * Patch an event listener on an element using the invoker pattern.
+ * Supports event options (capture, passive, once) when nextValue is an
+ * object with a handler property.
  */
 export function patchEvent(
   el: Element,
@@ -153,26 +206,73 @@ export function patchEvent(
   prev: unknown,
   next: unknown,
 ): void {
-  // Extract event name: onClick -> click
-  const eventName = rawName.slice(2).toLowerCase();
+  // Extract event name using the mapping table
+  const eventName = getEventName(rawName);
+
+  // Normalize prev/next to extract handler and options
+  const prevHandler = extractEventHandler(prev);
+  const prevOptions = extractEventOptions(prev);
+  const nextHandler = extractEventHandler(next);
+  const nextOptions = extractEventOptions(next);
 
   // Remove previous listener
-  if (prev) {
+  if (prevHandler) {
     const elMap = invokerCache.get(el);
     if (elMap) {
       const invoker = elMap.get(rawName);
       if (invoker) {
-        el.removeEventListener(eventName, invoker);
+        el.removeEventListener(eventName, invoker, prevOptions);
       }
     }
   }
 
   // Add new listener
-  if (next) {
+  if (nextHandler) {
     const invoker = getOrCreateInvoker(el, rawName);
-    invoker.value = next as EventListener;
-    el.addEventListener(eventName, invoker);
+    invoker.value = nextHandler;
+    el.addEventListener(eventName, invoker, nextOptions);
   }
+}
+
+/**
+ * Extract the event handler function from a prop value.
+ * Supports both plain functions and objects with a handler property.
+ */
+function extractEventHandler(value: unknown): EventListener | null {
+  if (isFunction(value)) {
+    return value as EventListener;
+  }
+  if (value != null && typeof value === "object" && "handler" in value) {
+    return (value as { handler: EventListener }).handler;
+  }
+  return null;
+}
+
+/**
+ * Extract event options (capture, passive, once) from a prop value.
+ * Returns undefined when no options are specified (for performance).
+ */
+function extractEventOptions(
+  value: unknown,
+): boolean | AddEventListenerOptions | undefined {
+  if (value != null && typeof value === "object" && !isFunction(value)) {
+    const opts = value as Record<string, unknown>;
+    if ("capture" in opts || "passive" in opts || "once" in opts) {
+      return {
+        capture: !!opts.capture,
+        passive: !!opts.passive,
+        once: !!opts.once,
+      };
+    }
+  }
+  return undefined;
+}
+
+/**
+ * Check if a value is a function
+ */
+function isFunction(value: unknown): value is (...args: any[]) => any {
+  return typeof value === "function";
 }
 
 // ============================================================
