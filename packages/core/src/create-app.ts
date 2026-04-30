@@ -11,7 +11,7 @@ import { createAppContext, createContextConfig } from "./app-context";
 
 export function createApp(
   rootComponent: Component,
-  rootProps: any = null,
+  rootProps: Record<string, unknown> | null = null,
 ): App {
   const context = createAppContext();
   const installedPlugins = new Set<Plugin | Function>();
