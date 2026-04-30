@@ -32,6 +32,8 @@ export {
   onBeforeUpdate,
   onBeforeUnmount,
   onErrorCaptured,
+  onActivated,
+  onDeactivated,
   callLifecycleHook,
   callCreatedHook,
   callMountedHook,
