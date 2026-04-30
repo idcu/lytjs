@@ -3,7 +3,98 @@
  * 事件发射器与订阅管理工具
  */
 
+import { isFunction } from "@lytjs/common-is";
+
 type EventHandler = (...args: any[]) => void;
+
+// ============================================================
+// DOM event name mapping & helpers
+// ============================================================
+
+/**
+ * Special event name mappings from camelCase prop names to DOM event names.
+ * e.g., onDoubleClick -> dblclick, onMouseEnter -> mouseenter
+ */
+export const DOM_EVENT_NAME_MAP: Record<string, string> = {
+  onDoubleClick: "dblclick",
+  onMouseEnter: "mouseenter",
+  onMouseLeave: "mouseleave",
+  onBeforeInput: "beforeinput",
+  onCompositionStart: "compositionstart",
+  onCompositionUpdate: "compositionupdate",
+  onCompositionEnd: "compositionend",
+  onPointerEnter: "pointerenter",
+  onPointerLeave: "pointerleave",
+  onPointerDown: "pointerdown",
+  onPointerMove: "pointermove",
+  onPointerUp: "pointerup",
+  onPointerCancel: "pointercancel",
+  onPointerOver: "pointerover",
+  onPointerOut: "pointerout",
+  onDragStart: "dragstart",
+  onDragEnd: "dragend",
+  onDragOver: "dragover",
+  onDragEnter: "dragenter",
+  onDragLeave: "dragleave",
+  onDragDrop: "drop",
+  onAnimationStart: "animationstart",
+  onAnimationEnd: "animationend",
+  onAnimationIteration: "animationiteration",
+  onTransitionEnd: "transitionend",
+  onTouchStart: "touchstart",
+  onTouchMove: "touchmove",
+  onTouchEnd: "touchend",
+  onTouchCancel: "touchcancel",
+  onContextMenu: "contextmenu",
+  onWheel: "wheel",
+  onScroll: "scroll",
+};
+
+/**
+ * Convert a camelCase event prop name (e.g., onClick) to a DOM event name (e.g., click).
+ * Uses the mapping table for special cases, falls back to simple lowercase conversion.
+ */
+export function getDOMEventName(rawName: string): string {
+  return DOM_EVENT_NAME_MAP[rawName] ?? rawName.slice(2).toLowerCase();
+}
+
+/**
+ * Extract the event handler function from a prop value.
+ * Supports both plain functions and objects with a handler property.
+ */
+export function extractDOMEventHandler(value: unknown): EventListener | null {
+  if (isFunction(value)) {
+    return value as EventListener;
+  }
+  if (value != null && typeof value === "object" && "handler" in value) {
+    return (value as { handler: EventListener }).handler;
+  }
+  return null;
+}
+
+/**
+ * Extract event options (capture, passive, once) from a prop value.
+ * Returns undefined when no options are specified (for performance).
+ */
+export function extractDOMEventOptions(
+  value: unknown,
+): boolean | AddEventListenerOptions | undefined {
+  if (value != null && typeof value === "object" && !isFunction(value)) {
+    const opts = value as Record<string, unknown>;
+    if ("capture" in opts || "passive" in opts || "once" in opts) {
+      return {
+        capture: !!opts.capture,
+        passive: !!opts.passive,
+        once: !!opts.once,
+      };
+    }
+  }
+  return undefined;
+}
+
+// ============================================================
+// EventEmitter
+// ============================================================
 
 /**
  * 事件发射器

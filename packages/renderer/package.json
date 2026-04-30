@@ -37,7 +37,8 @@
     "@lytjs/reactivity": "workspace:*",
     "@lytjs/vdom": "workspace:*",
     "@lytjs/common-is": "workspace:*",
-    "@lytjs/common-string": "workspace:*"
+    "@lytjs/common-string": "workspace:*",
+    "@lytjs/common-events": "workspace:*"
   },
   "devDependencies": {
     "tsup": "^8.0.0",
