@@ -7,7 +7,7 @@ import type {
   AsyncComponentOptions,
 } from "./types";
 import type { ComponentOptions } from "./types";
-import { defineComponent as _defineComponent } from "@lytjs/component";
+import { defineComponent as _defineComponent, onBeforeUnmount } from "@lytjs/component";
 import { shallowRef, ref } from "@lytjs/reactivity";
 
 /**
@@ -73,8 +73,9 @@ export function defineAsyncComponent(
   };
 
   // 超时处理
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
   if (timeout != null) {
-    setTimeout(() => {
+    timeoutId = setTimeout(() => {
       if (!loadedComponent.value && !error.value) {
         error.value = new Error(
           `[lytjs/core] AsyncComponent timed out after ${timeout}ms.`,
@@ -97,6 +98,13 @@ export function defineAsyncComponent(
         delay,
         timeout,
       };
+
+      onBeforeUnmount(() => {
+        if (timeoutId !== null) {
+          clearTimeout(timeoutId);
+          timeoutId = null;
+        }
+      });
 
       return instance;
     },
