@@ -29,6 +29,7 @@ import { toRaw, isRef } from "./shared";
 // ==================== 类型 ====================
 
 type Target = object;
+type ReactiveProxy<T extends object = object> = { [K in keyof T]: T[K] };
 
 /**
  * Internal interface for objects with reactive flags
@@ -107,7 +108,7 @@ function createReactiveObject(
   _isShallow: boolean,
   baseHandlers: ProxyHandler<Target>,
   collectionHandlers: ProxyHandler<Target>,
-  proxyMap: WeakMap<Target, Proxy<Target>>,
+  proxyMap: WeakMap<Target, ReactiveProxy<Target>>,
 ) {
   if (!isObject(target)) {
     if (__DEV__) {
@@ -117,13 +118,13 @@ function createReactiveObject(
   }
 
   // markRaw 标记的对象不代理
-  if ((target as ReactiveTarget)[ReactiveFlags.SKIP]) {
+  if ((target as Record<string | symbol, unknown>)[ReactiveFlags.SKIP]) {
     return target;
   }
 
   if (
-    (target as ReactiveTarget)[ReactiveFlags.RAW] &&
-    !(isReadonlyFlag && (target as ReactiveTarget)[ReactiveFlags.IS_REACTIVE])
+    (target as Record<string | symbol, unknown>)[ReactiveFlags.RAW] &&
+    !(isReadonlyFlag && (target as Record<string | symbol, unknown>)[ReactiveFlags.IS_REACTIVE])
   ) {
     return target;
   }
@@ -292,7 +293,7 @@ function createCollectionHandler(
         if (!isReadonly) {
           if (MUTATING_METHODS.has(key as string)) {
             return (...args: any[]) => {
-              const rawTarget = toRaw(target);
+              const rawTarget = toRaw(target) as Map<unknown, unknown>;
               if (key === "set") {
                 // Map.set: 检查值是否实际改变
                 const oldValue = rawTarget.get(args[0]);
@@ -354,13 +355,11 @@ function createShallowReadonlyCollectionHandler(): ProxyHandler<Target> {
       const res = Reflect.get(target, key, _receiver);
       if (typeof res === "function") {
         if (MUTATING_METHODS.has(key as string)) {
-          return (...args: any[]) => {
+          return (..._args: any[]) => {
             if (__DEV__) {
               console.warn(`Operation "${String(key)}" failed: target is shallow readonly.`);
             }
-            // 返回适当的默认值以匹配方法签名
-            if (key === 'delete') return false;
-            // set/add/clear 返回 undefined 即可
+            if (key === "delete") return false;
             return undefined;
           };
         }
@@ -385,10 +384,10 @@ const shallowReadonlyCollectionHandlers = createShallowReadonlyCollectionHandler
 
 // ==================== 公共 API ====================
 
-const reactiveMap = new WeakMap<Target, Proxy<Target>>();
-const shallowReactiveMap = new WeakMap<Target, Proxy<Target>>();
-const readonlyMap = new WeakMap<Target, Proxy<Target>>();
-const shallowReadonlyMap = new WeakMap<Target, Proxy<Target>>();
+const reactiveMap = new WeakMap<Target, ReactiveProxy<Target>>();
+const shallowReactiveMap = new WeakMap<Target, ReactiveProxy<Target>>();
+const readonlyMap = new WeakMap<Target, ReactiveProxy<Target>>();
+const shallowReadonlyMap = new WeakMap<Target, ReactiveProxy<Target>>();
 
 export function reactive<T extends object>(target: T): UnwrapNestedRefs<T> {
   if (isReadonly(target)) return target as UnwrapNestedRefs<T>;
@@ -399,7 +398,7 @@ export function reactive<T extends object>(target: T): UnwrapNestedRefs<T> {
     mutableHandlers,
     mutableCollectionHandlers,
     reactiveMap,
-  );
+  ) as UnwrapNestedRefs<T>;
 }
 
 export function shallowReactive<T extends object>(target: T): T {
@@ -410,7 +409,7 @@ export function shallowReactive<T extends object>(target: T): T {
     shallowReactiveHandlers,
     shallowCollectionHandlers,
     shallowReactiveMap,
-  );
+  ) as T;
 }
 
 export function readonly<T extends object>(
@@ -423,7 +422,7 @@ export function readonly<T extends object>(
     readonlyHandlers,
     readonlyCollectionHandlers,
     readonlyMap,
-  );
+  ) as DeepReadonly<UnwrapNestedRefs<T>>;
 }
 
 export function shallowReadonly<T extends object>(target: T): Readonly<T> {
@@ -434,7 +433,7 @@ export function shallowReadonly<T extends object>(target: T): Readonly<T> {
     shallowReadonlyHandlers,
     shallowReadonlyCollectionHandlers,
     shallowReadonlyMap,
-  );
+  ) as Readonly<T>;
 }
 
 export function isReactive(value: unknown): boolean {

@@ -246,7 +246,7 @@ export function handleError(
     const hooks = current.errorCapturedHooks;
     if (hooks && hooks.length > 0) {
       for (const hook of hooks) {
-        const result = hook(err, current, info);
+        const result = hook(err, current as any, info);
         if (result === false) return true; // stop propagation
       }
     }
@@ -254,7 +254,7 @@ export function handleError(
     // Also check options API errorCaptured
     const errorHandler = current.type.errorCaptured;
     if (errorHandler) {
-      const result = errorHandler.call(current.ctx, err, current, info);
+      const result = errorHandler.call(current.ctx, err, current as any, info);
       if (result === false) return true;
     }
 

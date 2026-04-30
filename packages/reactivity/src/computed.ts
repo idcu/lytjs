@@ -48,7 +48,10 @@ class ComputedRefImpl<T> {
     trackRefValue(this as any);
     if (this._dirty) {
       if (this.effect.active) {
-        this._value = this.effect.run()!;
+        const value = this.effect.run();
+        if (value !== undefined) {
+          this._value = value;
+        }
         this._dirty = false;
       } else if (__DEV__) {
         console.warn(

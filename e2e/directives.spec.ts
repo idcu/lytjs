@@ -27,7 +27,7 @@ test.describe('指令', () => {
     }`)
 
     // 条件为 true 时应该显示
-    let html = await getHTML(page)
+    const html = await getHTML(page)
     expect(html).toContain('Always visible')
     expect(html).toContain('Conditionally visible')
 
@@ -52,7 +52,7 @@ test.describe('指令', () => {
     }`)
 
     // 条件为 false 时应该不显示
-    let html = await getHTML(page)
+    const html = await getHTML(page)
     expect(html).toContain('Always visible')
     expect(html).not.toContain('Conditionally visible')
 

@@ -27,6 +27,7 @@ export const ReactiveFlags = {
   IS_REACTIVE: "__v_isReactive",
   IS_READONLY: "__v_isReadonly",
   IS_SHALLOW: "__v_isShallow",
+  IS_REF: "__v_isRef",
   RAW: "__v_raw",
   SKIP: "__v_skip",
 } as const;

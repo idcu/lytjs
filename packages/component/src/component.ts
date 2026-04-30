@@ -275,7 +275,7 @@ export function createComponentPublicInstance(
       return instance.props;
     },
     get $el() {
-      return instance.vnode?.el ?? null;
+      return (instance.vnode?.el as Element) ?? null;
     },
     get $options() {
       return instance.type;
@@ -396,8 +396,8 @@ function mergeOptionsPair(
       const childVal = (child as Record<string, unknown>)[key];
       if (parentVal && childVal) {
         merged[key] = function (this: any) {
-          parentVal.call(this);
-          childVal.call(this);
+          (parentVal as Function).call(this);
+          (childVal as Function).call(this);
         };
       } else if (childVal) {
         merged[key] = childVal;

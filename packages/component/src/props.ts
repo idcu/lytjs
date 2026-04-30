@@ -40,7 +40,7 @@ export function normalizePropsOptions(
     if (hasOwn(rawProps, key)) {
       const value = rawProps[key]!;
       result[key] =
-        isFunction(value) || isArray(value) ? { type: value } : value;
+        (isFunction(value) || isArray(value) ? { type: value } : value) as PropOptions;
     }
   }
   return result;

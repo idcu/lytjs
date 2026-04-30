@@ -138,7 +138,7 @@ test.describe('事件处理', () => {
     await page.click('#multi-btn')
     await nextTick(page)
 
-    let logText = await getText(page, '#event-log')
+    const logText = await getText(page, '#event-log')
     expect(logText).toContain('clicked')
   })
 })

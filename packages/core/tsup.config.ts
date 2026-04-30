@@ -10,7 +10,7 @@ export default defineConfig({
   treeshake: true,
   minify: false,
   define: {
-    __DEV__: 'process.env.NODE_ENV !== "production"',
+    __DEV__: 'false',
   },
   outExtension({ format }) {
     return {

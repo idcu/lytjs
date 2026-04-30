@@ -18,16 +18,16 @@ export interface RefLike<T = unknown> {
   value: T;
 }
 
-export interface Ref<T = any> {
+export interface Ref<T = unknown> {
   value: T;
   __v_isRef: true;
 }
 
-export interface ShallowRef<T = any> extends Ref<T> {
+export interface ShallowRef<T = unknown> extends Ref<T> {
   __v_isShallow: true;
 }
 
-export interface ComputedRef<T = any> extends Ref<T> {
+export interface ComputedRef<T = unknown> extends Ref<T> {
   __v_isComputed: true;
 }
 
@@ -42,7 +42,7 @@ class RefImpl<T> {
 
   constructor(value: T, isShallow: boolean) {
     this._rawValue = isShallow ? value : toRaw(value);
-    this._value = isShallow ? value : toReactive(value);
+    this._value = isShallow ? value : (toReactive(value as object) as T);
   }
 
   get value(): T {
@@ -56,7 +56,7 @@ class RefImpl<T> {
     if (hasChanged(newVal, this._rawValue)) {
       const oldVal = this._rawValue;
       this._rawValue = newVal;
-      this._value = useDirectValue ? newVal : toReactive(newVal);
+      this._value = useDirectValue ? newVal : (toReactive(newVal as object) as T);
       triggerRefValue(this, newVal, oldVal);
     }
   }
@@ -115,7 +115,7 @@ export function shallowRef<T>(value: T): ShallowRef<T> {
 }
 
 export function triggerRef<T>(ref: ShallowRef<T>): void {
-  triggerRefValue(ref, ref.value);
+  triggerRefValue(ref as unknown as RefLike<T>, ref.value);
 }
 
 export { isRef } from "./shared";

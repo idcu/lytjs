@@ -128,7 +128,7 @@ export function defineAsyncComponent(
 
       return instance;
     },
-    render() {
+    render(): any {
       // 首次渲染时触发加载
       if (!loadedComponent.value && !error.value && !loading.value) {
         load();
