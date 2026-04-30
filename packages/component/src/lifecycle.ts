@@ -34,7 +34,7 @@ function registerLifecycleHook(
     | "updated"
     | "beforeUnmount"
     | "unmounted",
-  fn: Function,
+  fn: (...args: unknown[]) => void,
 ): void {
   if (instance) {
     instance.lifecycle[hookName].add(fn);
@@ -149,7 +149,7 @@ export function onDeactivated(fn: () => void): void {
  */
 function callOptionsHook(
   instance: ComponentInternalInstance,
-  hook: Function | undefined,
+  hook: ((...args: unknown[]) => void) | undefined,
   name: string,
 ): void {
   if (hook) {
@@ -237,28 +237,29 @@ export function callUnmountedHook(instance: ComponentInternalInstance): void {
  */
 export function handleError(
   err: Error,
-  instance: ComponentInternalInstance,
+  instance: ComponentInternalInstance | null,
   info: string,
 ): boolean {
-  // Call all errorCapturedHooks registered via onErrorCaptured() on this instance
-  const hooks = instance.errorCapturedHooks;
-  if (hooks && hooks.length > 0) {
-    for (const hook of hooks) {
-      const result = hook(err, instance, info);
-      if (result === false) return true; // stop propagation
+  let current: ComponentInternalInstance | null = instance;
+  while (current) {
+    // Call all errorCapturedHooks registered via onErrorCaptured() on this instance
+    const hooks = current.errorCapturedHooks;
+    if (hooks && hooks.length > 0) {
+      for (const hook of hooks) {
+        const result = hook(err, current, info);
+        if (result === false) return true; // stop propagation
+      }
     }
-  }
 
-  // Also check options API errorCaptured
-  const errorHandler = instance.type.errorCaptured;
-  if (errorHandler) {
-    const result = errorHandler.call(instance.ctx, err, instance, info);
-    if (result === false) return true;
-  }
+    // Also check options API errorCaptured
+    const errorHandler = current.type.errorCaptured;
+    if (errorHandler) {
+      const result = errorHandler.call(current.ctx, err, current, info);
+      if (result === false) return true;
+    }
 
-  // Propagate to parent
-  if (instance.parent) {
-    return handleError(err, instance.parent, info);
+    // Propagate to parent
+    current = current.parent;
   }
 
   return false;
