@@ -282,7 +282,9 @@ function parseInterpolation(
   // Advance past {{
   advanceBy(context, 2);
 
-  const rawContent = context.source.slice(0, closeIndex - 2 + 2 - 2);
+  // closeIndex is relative to original source (which still starts with {{),
+  // and we already advanced past {{ (2 chars), so the content length is closeIndex - 2.
+  const rawContent = context.source.slice(0, closeIndex - 2);
 
   const content = rawContent.trim();
 
