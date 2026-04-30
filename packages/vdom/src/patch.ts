@@ -481,6 +481,31 @@ export function createRenderer(
   }
 
   // ============================================================
+  // diffProps - full props diff between old and new props
+  // ============================================================
+
+  function diffProps(
+    el: HostElement,
+    oldProps: Record<string, any>,
+    newProps: Record<string, any>,
+  ): void {
+    for (const key in newProps) {
+      if (key === "key" || key === "ref") continue;
+      const next = newProps[key];
+      const prev = oldProps[key];
+      if (hasChanged(next, prev)) {
+        patchProp(el, key, prev, next);
+      }
+    }
+    for (const key in oldProps) {
+      if (key === "key" || key === "ref") continue;
+      if (!(key in newProps)) {
+        patchProp(el, key, oldProps[key], null);
+      }
+    }
+  }
+
+  // ============================================================
   // patchElement
   // ============================================================
 
@@ -500,20 +525,7 @@ export function createRenderer(
 
     if (n2.patchFlag === PatchFlags.FULL_PROPS) {
       // Full props diff
-      for (const key in newProps) {
-        if (key === "key" || key === "ref") continue;
-        const next = newProps[key];
-        const prev = oldProps[key];
-        if (hasChanged(next, prev)) {
-          patchProp(el, key, prev, next);
-        }
-      }
-      for (const key in oldProps) {
-        if (key === "key" || key === "ref") continue;
-        if (!(key in newProps)) {
-          patchProp(el, key, oldProps[key], null);
-        }
-      }
+      diffProps(el, oldProps, newProps);
     } else if (n2.patchFlag > 0) {
       // PatchFlag optimization
       if (n2.patchFlag & PatchFlags.CLASS) {
@@ -545,20 +557,7 @@ export function createRenderer(
       }
     } else if (oldProps !== newProps) {
       // No patchFlag, do full props diff
-      for (const key in newProps) {
-        if (key === "key" || key === "ref") continue;
-        const next = newProps[key];
-        const prev = oldProps[key];
-        if (hasChanged(next, prev)) {
-          patchProp(el, key, prev, next);
-        }
-      }
-      for (const key in oldProps) {
-        if (key === "key" || key === "ref") continue;
-        if (!(key in newProps)) {
-          patchProp(el, key, oldProps[key], null);
-        }
-      }
+      diffProps(el, oldProps, newProps);
     }
 
     // Patch children
