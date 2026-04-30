@@ -59,6 +59,7 @@ export function defineAsyncComponent(
     retries++;
     loadedComponent.value = undefined;
     error.value = undefined;
+    startTimeout();
     return load();
   };
 
@@ -83,9 +84,13 @@ export function defineAsyncComponent(
       });
   };
 
-  // 超时处理
+  // 超时处理：封装为函数以便 retry 时重新设置
   let timeoutId: ReturnType<typeof setTimeout> | null = null;
-  if (timeout != null) {
+  const startTimeout = () => {
+    if (timeout == null) return;
+    if (timeoutId !== null) {
+      clearTimeout(timeoutId);
+    }
     timeoutId = setTimeout(() => {
       if (!loadedComponent.value && !error.value) {
         error.value = new Error(
@@ -94,7 +99,8 @@ export function defineAsyncComponent(
         loading.value = false;
       }
     }, timeout);
-  }
+  };
+  startTimeout();
 
   // 预加载
   load();
