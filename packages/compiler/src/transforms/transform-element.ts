@@ -307,7 +307,12 @@ function handleDirective(
     }
   } else if (prop.name === "html") {
     if (expContent !== undefined) {
-      // P0-05 XSS fix: 在开发模式下对 v-html 使用发出安全警告
+      // T-002 XSS fix: 对 v-html 值进行运行时消毒，防止 XSS 攻击
+      context.helper("SANITIZE_HTML");
+      const sanitizedValue = createCallExpression("SANITIZE_HTML", [
+        createSimpleExpression(expContent, false, prop.loc, false),
+      ], prop.loc);
+      // 在开发模式下额外发出安全警告
       const safeValue = createCompoundExpression([
         `(${createConditionalExpression(
           createSimpleExpression("__DEV__", false, prop.loc, false),
@@ -325,9 +330,9 @@ function handleDirective(
               prop.loc,
             ),
             ", ",
-            createSimpleExpression(expContent, false, prop.loc, false),
+            sanitizedValue,
           ]),
-          createSimpleExpression(expContent, false, prop.loc, false),
+          sanitizedValue,
           false,
           prop.loc,
         )})`,
