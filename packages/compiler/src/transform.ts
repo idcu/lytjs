@@ -5,7 +5,9 @@ import { NodeTypes } from "./constants";
 import type {
   RootNode,
   ElementNode,
+  TextNode,
   InterpolationNode,
+  CommentNode,
   TemplateChildNode,
   TransformContext,
   TransformOptions,
@@ -194,7 +196,10 @@ function traverseNode(
     for (let i = 0; i < nodeTransforms.length; i++) {
       const transform = nodeTransforms[i];
       if (!transform) continue;
-      const onExit = transform(node as any, context);
+      const onExit = transform(
+        node as RootNode | ElementNode | TextNode | InterpolationNode | CommentNode,
+        context,
+      );
       if (onExit) {
         if (Array.isArray(onExit)) exitFns.push(...onExit);
         else exitFns.push(onExit);
