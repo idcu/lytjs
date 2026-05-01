@@ -2,7 +2,8 @@
 // 内部符号常量
 
 const DEV =
-  typeof globalThis !== "undefined" && (globalThis as any).__DEV__ === true;
+  typeof globalThis !== "undefined" &&
+  (globalThis as Record<string, unknown>).__DEV__ === true;
 
 export const RefSymbol: unique symbol = Symbol(DEV ? "ref" : undefined);
 export const ShallowRefSymbol: unique symbol = Symbol(

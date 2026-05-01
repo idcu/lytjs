@@ -1,14 +1,12 @@
 // src/app-context.ts
 // @lytjs/core - AppContext 创建和配置
 
-import type { BaseAppConfig } from "@lytjs/shared-types";
-import type { AppConfig, Renderer } from "./types";
+import type { AppConfig, DOMRenderer, VNode } from "./types";
 import { createAppContext as createBaseAppContext } from "@lytjs/component";
-import type { AppContext as BaseAppContext, ComponentInternalInstance } from "@lytjs/component";
-
-// 需要延迟导入避免循环依赖
-type VNode = import("./types").VNode;
-type ComponentOptions = import("./types").ComponentOptions;
+import type {
+  AppContext as BaseAppContext,
+  ComponentInternalInstance,
+} from "@lytjs/component";
 
 /**
  * Core AppContext extends the base AppContext from @lytjs/component
@@ -16,7 +14,7 @@ type ComponentOptions = import("./types").ComponentOptions;
  */
 export interface AppContext extends BaseAppContext {
   config: AppConfig;
-  renderer: Renderer | null;
+  renderer: DOMRenderer | null;
   _vnode: VNode | null;
   _container: Element | null;
   _instance: ComponentInternalInstance | null;

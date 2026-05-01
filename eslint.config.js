@@ -35,16 +35,6 @@ export default tseslint.config(
     },
   },
 
-  // 没有 tsconfig.json 的目录，禁用 parserOptions.project（必须在 TypeScript 规则之前）
-  {
-    files: ["e2e/**/*", "benchmarks/**/*", "scripts/**/*"],
-    languageOptions: {
-      parserOptions: {
-        project: null,
-      },
-    },
-  },
-
   // TypeScript 特定规则
   {
     files: ["**/*.ts", "**/*.tsx"],
@@ -91,6 +81,39 @@ export default tseslint.config(
           allow: ["warn", "error"],
         },
       ],
+    },
+  },
+
+  // 没有 tsconfig.json 的目录，禁用 parserOptions.project（必须在 TypeScript 规则之后，以覆盖 project 设置）
+  {
+    files: [
+      "e2e/**/*",
+      "benchmarks/**/*",
+      "scripts/**/*",
+      "**/tsup.config.ts",
+      "**/vitest.config.ts",
+      "**/tests/**/*.ts",
+      "**/tests/**/*.tsx",
+      "**/tests/setup.ts",
+      "**/tests/helpers.ts",
+      "docs/.vitepress/**/*",
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: null,
+      },
+    },
+    rules: {
+      // 这些规则需要 type information，在 project: null 时必须禁用
+      "@typescript-eslint/consistent-type-exports": "off",
+      "@typescript-eslint/consistent-type-imports": "off",
+      // 测试和配置文件放宽规则
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-unused-vars": "off",
+      "@typescript-eslint/no-unused-expressions": "off",
+      "@typescript-eslint/no-require-imports": "off",
+      "@typescript-eslint/ban-ts-comment": "off",
+      "no-console": "off",
     },
   },
 

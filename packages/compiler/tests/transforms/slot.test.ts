@@ -4,7 +4,7 @@
 import { describe, it, expect } from "vitest";
 import { transformSlot } from "../../src/transforms/slot";
 import { NodeTypes, ElementTypes } from "../../src/constants";
-import type { ElementNode, TextNode } from "../../src/types";
+import type { TextNode } from "../../src/types";
 import {
   createMockContext,
   createSlotElement,
@@ -33,7 +33,10 @@ describe("transformSlot", () => {
 
     it("应该跳过普通元素节点（非 slot）", () => {
       const context = createMockContext();
-      const element = createSlotElement({ tag: "div", tagType: ElementTypes.ELEMENT });
+      const element = createSlotElement({
+        tag: "div",
+        tagType: ElementTypes.ELEMENT,
+      });
       transformSlot(element, context);
       expect(context.helpers.size).toBe(0);
     });
@@ -47,7 +50,10 @@ describe("transformSlot", () => {
 
     it("应该为 tag='slot' 的元素注册 RENDER_SLOT helper", () => {
       const context = createMockContext();
-      const element = createSlotElement({ tag: "slot", tagType: ElementTypes.ELEMENT });
+      const element = createSlotElement({
+        tag: "slot",
+        tagType: ElementTypes.ELEMENT,
+      });
       transformSlot(element, context);
       expect(context.helpers.has("RENDER_SLOT")).toBe(true);
     });
@@ -98,7 +104,10 @@ describe("transformSlot", () => {
       const context = createMockContext();
       const element = createSlotElement({
         tagType: ElementTypes.SLOT,
-        props: [createAttr("name", "default"), createAttr("slot-scope", "props")],
+        props: [
+          createAttr("name", "default"),
+          createAttr("slot-scope", "props"),
+        ],
       });
       transformSlot(element, context);
       expect(element.codegenNode).toBeDefined();
@@ -163,7 +172,7 @@ describe("transformSlot", () => {
       const context = createMockContext();
       const element = createSlotElement({ tagType: ElementTypes.SLOT });
       transformSlot(element, context);
-      const firstCodegenNode = element.codegenNode;
+      const _firstCodegenNode = element.codegenNode;
       transformSlot(element, context);
       // transformElement 会重新创建 codegenNode，所以第二次调用后仍然有 codegenNode
       expect(element.codegenNode).toBeDefined();

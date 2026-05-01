@@ -6,7 +6,7 @@
 /**
  * 防抖函数返回类型
  */
-interface DebouncedFn<T extends (...args: any[]) => any> {
+interface DebouncedFn<T extends (...args: unknown[]) => unknown> {
   (...args: Parameters<T>): void;
   cancel: () => void;
 }
@@ -14,7 +14,7 @@ interface DebouncedFn<T extends (...args: any[]) => any> {
 /**
  * 防抖 - 延迟执行，在最后一次调用后等待指定时间
  */
-export function debounce<T extends (...args: any[]) => any>(
+export function debounce<T extends (...args: unknown[]) => unknown>(
   fn: T,
   waitMs: number,
 ): DebouncedFn<T> {
@@ -41,7 +41,7 @@ export function debounce<T extends (...args: any[]) => any>(
 /**
  * 立即防抖 - 立即执行一次，然后在等待期间不再执行
  */
-export function debounceImmediate<T extends (...args: any[]) => any>(
+export function debounceImmediate<T extends (...args: unknown[]) => unknown>(
   fn: T,
   waitMs: number,
 ): DebouncedFn<T> {
@@ -73,7 +73,7 @@ export function debounceImmediate<T extends (...args: any[]) => any>(
 /**
  * 节流函数返回类型
  */
-interface ThrottledFn<T extends (...args: any[]) => any> {
+interface ThrottledFn<T extends (...args: unknown[]) => unknown> {
   (...args: Parameters<T>): void;
   cancel: () => void;
 }
@@ -81,7 +81,7 @@ interface ThrottledFn<T extends (...args: any[]) => any> {
 /**
  * 节流 - 在指定时间内最多执行一次
  */
-export function throttle<T extends (...args: any[]) => any>(
+export function throttle<T extends (...args: unknown[]) => unknown>(
   fn: T,
   waitMs: number,
 ): ThrottledFn<T> {
@@ -121,7 +121,7 @@ export function throttle<T extends (...args: any[]) => any>(
 /**
  * 带尾调的节流 - 立即执行 + 等待结束后再执行最后一次
  */
-export function throttleWithTrailing<T extends (...args: any[]) => any>(
+export function throttleWithTrailing<T extends (...args: unknown[]) => unknown>(
   fn: T,
   waitMs: number,
 ): ThrottledFn<T> {

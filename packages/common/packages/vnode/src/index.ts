@@ -191,13 +191,34 @@ export interface ComponentInternalInstance {
   isUnmounted: boolean;
   isDeactivated: boolean;
   isKeepingAlive: boolean;
-  bum?: ((...args: unknown[]) => void) | Array<(...args: unknown[]) => void> | null;
-  bm?: ((...args: unknown[]) => void) | Array<(...args: unknown[]) => void> | null;
-  m?: ((...args: unknown[]) => void) | Array<(...args: unknown[]) => void> | null;
-  bu?: ((...args: unknown[]) => void) | Array<(...args: unknown[]) => void> | null;
-  u?: ((...args: unknown[]) => void) | Array<(...args: unknown[]) => void> | null;
-  um?: ((...args: unknown[]) => void) | Array<(...args: unknown[]) => void> | null;
-  uc?: ((...args: unknown[]) => void) | Array<(...args: unknown[]) => void> | null;
+  bum?:
+    | ((...args: unknown[]) => void)
+    | Array<(...args: unknown[]) => void>
+    | null;
+  bm?:
+    | ((...args: unknown[]) => void)
+    | Array<(...args: unknown[]) => void>
+    | null;
+  m?:
+    | ((...args: unknown[]) => void)
+    | Array<(...args: unknown[]) => void>
+    | null;
+  bu?:
+    | ((...args: unknown[]) => void)
+    | Array<(...args: unknown[]) => void>
+    | null;
+  u?:
+    | ((...args: unknown[]) => void)
+    | Array<(...args: unknown[]) => void>
+    | null;
+  um?:
+    | ((...args: unknown[]) => void)
+    | Array<(...args: unknown[]) => void>
+    | null;
+  uc?:
+    | ((...args: unknown[]) => void)
+    | Array<(...args: unknown[]) => void>
+    | null;
   effects?: Array<{ stop: () => void }>;
   update?: () => void;
 }
@@ -205,9 +226,12 @@ export interface ComponentInternalInstance {
 export interface BaseComponentOptions {
   props?: Record<string, unknown>;
   emits?: string[] | Record<string, unknown>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setup?: (...args: any[]) => any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   render?: (...args: any[]) => any;
   computed?: Record<string, () => unknown>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   methods?: Record<string, (...args: any[]) => any>;
   watch?: Record<string, unknown>;
   data?: () => Record<string, unknown>;
@@ -222,7 +246,7 @@ export interface BaseComponentOptions {
  * 包含所有 VNode 字段的默认值，用于 createBaseVNode 工厂函数
  */
 export const VNODE_DEFAULTS: VNode = {
-  type: null as any,
+  type: null as unknown as VNode["type"],
   key: null,
   ref: null,
   props: null,
@@ -253,9 +277,7 @@ export const VNODE_DEFAULTS: VNode = {
  * @param overrides 需要覆盖的 VNode 字段
  * @returns 完整的 VNode 对象
  */
-export function createBaseVNode(
-  overrides: Partial<VNode>,
-): VNode {
+export function createBaseVNode(overrides: Partial<VNode>): VNode {
   return { ...VNODE_DEFAULTS, ...overrides } as VNode;
 }
 
@@ -270,7 +292,7 @@ export function isVNode(value: unknown): value is VNode {
   return (
     value !== null &&
     typeof value === "object" &&
-    (value as any).__v_isVNode === true
+    (value as Record<string, unknown>).__v_isVNode === true
   );
 }
 

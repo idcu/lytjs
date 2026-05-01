@@ -17,7 +17,7 @@ export type ReactiveEffectRunner<T = unknown> = {
   effect: ReactiveEffect;
 };
 
-export type EffectScheduler = (...args: any[]) => any;
+export type EffectScheduler = (...args: unknown[]) => unknown;
 
 export interface ReactiveEffectOptions {
   lazy?: boolean;
@@ -75,7 +75,7 @@ export type OnCleanup = (cleanupFn: () => void) => void;
 
 export type WatchHandle = () => void;
 
-export type WatchScheduler = (...args: any[]) => any;
+export type WatchScheduler = (...args: unknown[]) => unknown;
 
 // ==================== Computed 类型 ====================
 
@@ -97,12 +97,14 @@ export type UnwrapRef<T> = T extends Ref<infer V> ? UnwrapRef<V> : T;
 export type UnwrapNestedRefs<T> =
   T extends Ref<infer V>
     ? UnwrapRef<V>
-    : T extends object | Function
+    : T extends object | ((...args: unknown[]) => unknown)
       ? { [K in keyof T]: UnwrapNestedRefs<T[K]> }
       : T;
 export type DeepReadonly<T> = { readonly [K in keyof T]: DeepReadonly<T[K]> };
 export type ToRefs<T = unknown> = { [K in keyof T]: Ref<T[K]> };
-export type ReactiveObject<T extends object = object> = { [K in keyof T]: T[K] } & { __v_isReactive: true };
+export type ReactiveObject<T extends object = object> = {
+  [K in keyof T]: T[K];
+} & { __v_isReactive: true };
 
 // Re-export
 export type {

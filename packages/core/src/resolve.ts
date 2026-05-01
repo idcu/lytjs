@@ -21,9 +21,9 @@ export function resolveComponent(name: string): Component | undefined {
   }
 
   // 1. 先从当前组件的 components 选项中查找
-  const components = (instance.type as any)?.components;
-  if (components && components[name]) {
-    return components[name] as Component;
+  const components = (instance.type as Record<string, unknown>)?.components;
+  if (components && (components as Record<string, Component>)[name]) {
+    return (components as Record<string, Component>)[name];
   }
 
   // 2. 再从全局注册中查找（appContext.components）
@@ -57,9 +57,9 @@ export function resolveDirective(name: string): Directive | undefined {
   }
 
   // 1. 先从当前组件的 directives 选项中查找
-  const directives = (instance.type as any)?.directives;
-  if (directives && directives[name]) {
-    return directives[name] as Directive;
+  const directives = (instance.type as Record<string, unknown>)?.directives;
+  if (directives && (directives as Record<string, Directive>)[name]) {
+    return (directives as Record<string, Directive>)[name];
   }
 
   // 2. 再从全局注册中查找（appContext.directives）
@@ -69,9 +69,7 @@ export function resolveDirective(name: string): Directive | undefined {
   }
 
   if (__DEV__) {
-    warn(
-      `Failed to resolve directive "${name}".`,
-    );
+    warn(`Failed to resolve directive "${name}".`);
   }
   return undefined;
 }

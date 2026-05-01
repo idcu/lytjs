@@ -41,9 +41,7 @@ function traverse(value: unknown, seen?: Set<unknown>, depth = 0): unknown {
   if (!isObject(value) || _seen.has(value)) return value;
   if (depth > MAX_TRAVERSE_DEPTH) {
     if (__DEV__) {
-      warn(
-        `traverse exceeded maximum depth (${MAX_TRAVERSE_DEPTH}).`,
-      );
+      warn(`traverse exceeded maximum depth (${MAX_TRAVERSE_DEPTH}).`);
     }
     return value;
   }
@@ -60,7 +58,7 @@ function traverse(value: unknown, seen?: Set<unknown>, depth = 0): unknown {
     value.forEach((v) => traverse(v, _seen, depth + 1));
   } else {
     for (const key of Object.keys(value as object)) {
-      traverse((value as any)[key], _seen, depth + 1);
+      traverse((value as Record<string, unknown>)[key], _seen, depth + 1);
     }
   }
   return value;
@@ -124,15 +122,15 @@ export function watch<T, Immediate extends Readonly<boolean> = false>(
       try {
         newValue = effect.run();
       } catch (e) {
-        error("Error in watch getter:", e);
+        error(`Error in watch getter: ${e}`);
         throw e;
       }
       if (
         deep ||
         forceTrigger ||
         (isMultiSource
-          ? (newValue as any[]).some((v, i) =>
-              hasChanged(v, (oldValue as any[])[i]),
+          ? (newValue as unknown[]).some((v, i) =>
+              hasChanged(v, (oldValue as unknown[])[i]),
             )
           : hasChanged(newValue, oldValue))
       ) {
@@ -140,8 +138,7 @@ export function watch<T, Immediate extends Readonly<boolean> = false>(
           cleanupFns.forEach((f) => f());
           cleanupFns.length = 0;
         }
-        const args = [newValue, oldValue] as [any, any];
-        cb(...args, onCleanup);
+        cb(newValue as T, oldValue as T, onCleanup);
         oldValue = newValue;
         if (once) {
           isStopped = true;
@@ -152,7 +149,7 @@ export function watch<T, Immediate extends Readonly<boolean> = false>(
       try {
         effect.run();
       } catch (e) {
-        error("Error in watch effect run:", e);
+        error(`Error in watch effect run: ${e}`);
         throw e;
       }
     }
@@ -172,10 +169,13 @@ export function watch<T, Immediate extends Readonly<boolean> = false>(
 
   // 包装 scheduler，确保传 job 参数给用户自定义 scheduler
   const scheduler = userScheduler
-    ? (...args: any[]) => rawScheduler(job, ...args)
+    ? (...args: unknown[]) => rawScheduler(job, ...args)
     : rawScheduler;
 
-  const effect = new ReactiveEffect(getter, scheduler as any);
+  const effect = new ReactiveEffect(
+    getter,
+    scheduler as (...args: unknown[]) => unknown,
+  );
 
   effect.onStop = () => {
     if (cleanupFns.length > 0) {
@@ -246,7 +246,7 @@ function doWatchEffect(
     source(onCleanup);
   };
 
-  const schedulerFn: (...args: any[]) => any =
+  const schedulerFn: (...args: unknown[]) => unknown =
     flush === "sync"
       ? () => currentEffect.run()
       : () => {

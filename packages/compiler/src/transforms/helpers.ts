@@ -1,7 +1,6 @@
 // src/transforms/helpers.ts
 // 共享辅助函数
 
-import { capitalize } from "@lytjs/common-string";
 import { NodeTypes } from "../constants";
 import type {
   ElementNode,

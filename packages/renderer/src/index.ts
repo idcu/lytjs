@@ -22,8 +22,9 @@ export {
   patchStyle,
   patchEvent,
   patchAttr,
-  isOn,
 } from "./dom/patch-props";
+/** 事件名检测 */
+export { isOn } from "@lytjs/common-events";
 
 // Hydration
 /** 创建水合（hydration）函数 */

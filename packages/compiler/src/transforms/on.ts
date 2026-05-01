@@ -1,8 +1,14 @@
 // src/transforms/v-on.ts
 // v-on 指令转换逻辑
 
-import type { DirectiveTransform, ExpressionNode, JSProperty, JSChildNode } from "../types";
-import { getExpContent, capitalize } from "./helpers";
+import type {
+  DirectiveTransform,
+  ExpressionNode,
+  JSProperty,
+  JSChildNode,
+} from "../types";
+import { getExpContent } from "./helpers";
+import { capitalize } from "@lytjs/common-string";
 import {
   createSimpleExpression,
   createCallExpression,

@@ -213,6 +213,7 @@ export class ExpiringCache<K, V> {
 /**
  * Memoize 函数返回类型
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 interface MemoizedFn<T extends (...args: any[]) => any> {
   (...args: Parameters<T>): ReturnType<T>;
   clear: () => void;
@@ -221,11 +222,14 @@ interface MemoizedFn<T extends (...args: any[]) => any> {
 /**
  * 函数记忆化
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function memoize<T extends (...args: any[]) => any>(
   fn: T,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   options?: { resolver?: (...args: any[]) => string; maxSize?: number },
+  externalCache?: Map<string, ReturnType<T>>,
 ): MemoizedFn<T> {
-  const internalCache = new Map<string, ReturnType<T>>();
+  const internalCache = externalCache ?? new Map<string, ReturnType<T>>();
   const maxSize = options?.maxSize;
 
   const memoized = ((...args: Parameters<T>): ReturnType<T> => {

@@ -4,7 +4,14 @@
 import { createVNode } from "@lytjs/vdom";
 import { createDOMRenderer } from "@lytjs/renderer";
 import { error } from "@lytjs/common-error";
-import type { App, Plugin, Component, ComponentPublicInstance } from "./types";
+import type {
+  App,
+  Plugin,
+  Component,
+  ComponentPublicInstance,
+  DOMRenderer,
+  ComponentOptions,
+} from "./types";
 import { createAppContext, createContextConfig } from "./app-context";
 import {
   createComponentInstance,
@@ -20,7 +27,7 @@ export function createApp(
 ): App {
   const context = createAppContext();
   const installedPlugins = new Set<
-    Plugin | ((app: App, ...options: any[]) => void)
+    Plugin | ((app: App, ...options: unknown[]) => void)
   >();
   let _isUnmounted = false;
 
@@ -28,21 +35,23 @@ export function createApp(
     config: createContextConfig(context),
 
     use(
-      plugin: Plugin | ((app: App, ...options: any[]) => void),
-      ...options: any[]
+      plugin: Plugin | ((app: App, ...options: unknown[]) => void),
+      ...options: unknown[]
     ) {
       if (installedPlugins.has(plugin)) return app;
       try {
         if (typeof plugin === "function") {
-          (plugin as (app: App, ...options: any[]) => void)(app, ...options);
+          (plugin as (app: App, ...options: unknown[]) => void)(
+            app,
+            ...options,
+          );
         } else {
           plugin.install(app, ...options);
         }
         installedPlugins.add(plugin);
       } catch (err) {
         error(
-          `Plugin failed to install: ${typeof plugin === "function" ? plugin.name || "anonymous function" : (plugin as Plugin).install?.name || "plugin"}`,
-          err,
+          `Plugin failed to install: ${typeof plugin === "function" ? plugin.name || "anonymous function" : (plugin as Plugin).install?.name || "plugin"}: ${err}`,
         );
         throw err;
       }
@@ -103,7 +112,7 @@ export function createApp(
 
       // Render using the enhanced renderer
       const renderer = createDOMRenderer();
-      context.renderer = renderer as any;
+      context.renderer = renderer as unknown as DOMRenderer;
       context._container = container;
       context._vnode = rootVNode;
 
@@ -156,7 +165,7 @@ export function createApp(
     },
 
     component(name, component) {
-      context.components[name] = component as any;
+      context.components[name] = component as unknown as ComponentOptions;
       return app;
     },
 

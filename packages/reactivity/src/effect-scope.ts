@@ -67,6 +67,7 @@ export function effectScope(detached?: boolean): EffectScope {
     run(fn) {
       if (!this.active) return;
       const prevScope = activeEffectScope;
+      // eslint-disable-next-line @typescript-eslint/no-this-alias
       activeEffectScope = this;
       try {
         return fn();
@@ -82,14 +83,14 @@ export function effectScope(detached?: boolean): EffectScope {
         try {
           effect.stop();
         } catch (e) {
-          error("Error stopping effect in scope:", e);
+          error(`Error stopping effect in scope: ${String(e)}`);
         }
       }
       for (const cleanup of this.cleanups) {
         try {
           cleanup();
         } catch (e) {
-          error("Error running cleanup in scope:", e);
+          error(`Error running cleanup in scope: ${String(e)}`);
         }
       }
       this.effects.length = 0;
@@ -98,7 +99,7 @@ export function effectScope(detached?: boolean): EffectScope {
   } as EffectScope;
 
   if (!scope.detached && activeEffectScope) {
-    activeEffectScope.effects.push(scope as any);
+    activeEffectScope.effects.push(scope as unknown as EffectScopeEntry);
   }
 
   return scope;

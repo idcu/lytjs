@@ -74,13 +74,18 @@ export function defineAsyncComponent(
     loading.value = true;
     showLoading = false;
     if (delayTimer) clearTimeout(delayTimer);
-    delayTimer = setTimeout(() => { showLoading = true; }, delay);
+    delayTimer = setTimeout(() => {
+      showLoading = true;
+    }, delay);
     return loader()
       .then((comp) => {
         loadedComponent.value = comp;
         error.value = undefined;
         loading.value = false;
-        if (delayTimer) { clearTimeout(delayTimer); delayTimer = null; }
+        if (delayTimer) {
+          clearTimeout(delayTimer);
+          delayTimer = null;
+        }
         showLoading = false;
         // load 成功后清除 timeout，避免不必要的超时回调
         if (timeoutId !== null) {
@@ -93,7 +98,7 @@ export function defineAsyncComponent(
         error.value = err;
         loading.value = false;
         if (onError) {
-          return new Promise<any>((resolve, reject) => {
+          return new Promise<Component>((resolve, reject) => {
             let settled = false;
             const ON_ERROR_TIMEOUT = 30000; // 30 秒超时保护
             const timer = setTimeout(() => {
@@ -112,10 +117,11 @@ export function defineAsyncComponent(
                 if (!settled) {
                   settled = true;
                   clearTimeout(timer);
-                  resolve(retry());
+                  const result = retry();
+                  if (result) resolve(result);
                 }
               },
-              (reason?: any) => {
+              (reason?: unknown) => {
                 if (!settled) {
                   settled = true;
                   clearTimeout(timer);

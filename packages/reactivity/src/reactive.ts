@@ -202,8 +202,7 @@ function createMutableHandler(
       if (isReadonly) {
         if (__DEV__) {
           warn(
-            `Set operation on key "${String(key)}" failed: target is readonly.`,
-            target,
+            `Set operation on key "${String(key)}" failed: target is readonly. Target: ${JSON.stringify(target)}`,
           );
         }
         return true;
@@ -241,8 +240,7 @@ function createMutableHandler(
       if (isReadonly) {
         if (__DEV__) {
           warn(
-            `Delete operation on key "${String(key)}" failed: target is readonly.`,
-            target,
+            `Delete operation on key "${String(key)}" failed: target is readonly. Target: ${JSON.stringify(target)}`,
           );
         }
         return true;

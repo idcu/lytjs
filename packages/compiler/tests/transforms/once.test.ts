@@ -46,8 +46,10 @@ describe("transformOnce", () => {
       const context = createMockContext();
       const element = createOnceElement();
       transformOnce(element, context);
+      // After transformOnce, codegenNode is replaced with a hoisted reference
       expect(element.codegenNode).toBeDefined();
-      expect(element.codegenNode!.type).toBe(NodeTypes.VNODE_CALL);
+      // The original codegenNode (VNODE_CALL) is in hoists
+      expect(context.hoists[0]?.type).toBe(NodeTypes.VNODE_CALL);
     });
 
     it("应该将 codegenNode 添加到 hoists 中", () => {
@@ -55,15 +57,24 @@ describe("transformOnce", () => {
       const element = createOnceElement();
       transformOnce(element, context);
       expect(context.hoists.length).toBe(1);
-      expect(context.hoists[0]).toBe(element.codegenNode);
+      // The hoisted node is the original VNODE_CALL codegenNode
+      expect(context.hoists[0]?.type).toBe(NodeTypes.VNODE_CALL);
     });
 
     it("应该从元素的 props 中移除 v-once 指令", () => {
       const context = createMockContext();
       const element = createOnceElement();
-      expect(element.props.some((p) => p.type === NodeTypes.DIRECTIVE && p.name === "once")).toBe(true);
+      expect(
+        element.props.some(
+          (p) => p.type === NodeTypes.DIRECTIVE && p.name === "once",
+        ),
+      ).toBe(true);
       transformOnce(element, context);
-      expect(element.props.some((p) => p.type === NodeTypes.DIRECTIVE && p.name === "once")).toBe(false);
+      expect(
+        element.props.some(
+          (p) => p.type === NodeTypes.DIRECTIVE && p.name === "once",
+        ),
+      ).toBe(false);
     });
 
     it("应该保留 v-once 之外的其他 props", () => {
@@ -72,7 +83,11 @@ describe("transformOnce", () => {
         extraProps: [createAttr("class", "static")],
       });
       transformOnce(element, context);
-      expect(element.props.some((p) => p.type === NodeTypes.ATTRIBUTE && p.name === "class")).toBe(true);
+      expect(
+        element.props.some(
+          (p) => p.type === NodeTypes.ATTRIBUTE && p.name === "class",
+        ),
+      ).toBe(true);
     });
 
     it("应该为 v-once 元素注册 CREATE_VNODE helper", () => {
@@ -107,7 +122,10 @@ describe("transformOnce", () => {
     it("应该处理带有属性和子节点的 v-once 元素", () => {
       const context = createMockContext();
       const element = createOnceElement({
-        extraProps: [createAttr("id", "once-block"), createAttr("class", "container")],
+        extraProps: [
+          createAttr("id", "once-block"),
+          createAttr("class", "container"),
+        ],
         children: [createTextChild("content")],
       });
       transformOnce(element, context);
@@ -122,7 +140,8 @@ describe("transformOnce", () => {
       const spanElement = createOnceElement({ tag: "span" });
       transformOnce(spanElement, context);
       expect(spanElement.codegenNode).toBeDefined();
-      expect(spanElement.codegenNode!.tag).toBe('"span"');
+      // After hoisting, codegenNode is a reference; check the hoisted node's tag
+      expect(context.hoists[0]?.tag).toBe('"span"');
       expect(context.hoists.length).toBe(1);
     });
 
@@ -160,7 +179,11 @@ describe("transformOnce", () => {
       const element = createOnceElement();
       transformOnce(element, context);
       // 验证 v-once 已被移除，后续 transformElement 不会因 v-once 而提前返回
-      expect(element.props.some((p) => p.type === NodeTypes.DIRECTIVE && p.name === "once")).toBe(false);
+      expect(
+        element.props.some(
+          (p) => p.type === NodeTypes.DIRECTIVE && p.name === "once",
+        ),
+      ).toBe(false);
     });
   });
 });

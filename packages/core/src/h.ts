@@ -26,7 +26,11 @@ export function h(
   // 合并剩余子节点
   const flatChildren = children.length > 1 ? children : children[0];
 
-  return createVNode(type as VNodeTypes, props, flatChildren as any);
+  return createVNode(
+    type as VNodeTypes,
+    props,
+    flatChildren as unknown as VNodeChildren,
+  );
 }
 
 /**

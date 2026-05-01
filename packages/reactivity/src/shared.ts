@@ -38,15 +38,16 @@ const MAX_RAW_DEPTH = 100;
  */
 export function toRaw<T>(observed: T): T {
   const seen = new Set<object>();
-  let current: any = observed;
+  let current: unknown = observed;
   let depth = 0;
-  while (current && (current as any)[ReactiveFlags.RAW]) {
-    if (seen.has(current) || depth >= MAX_RAW_DEPTH) return current;
-    seen.add(current);
-    current = (current as any)[ReactiveFlags.RAW];
+  while (current && (current as Record<string, unknown>)[ReactiveFlags.RAW]) {
+    if (seen.has(current as object) || depth >= MAX_RAW_DEPTH)
+      return current as T;
+    seen.add(current as object);
+    current = (current as Record<string, unknown>)[ReactiveFlags.RAW];
     depth++;
   }
-  return current;
+  return current as T;
 }
 
 /**
