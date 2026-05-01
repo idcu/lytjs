@@ -2,39 +2,9 @@
  * @lytjs/renderer - Shared utilities
  */
 
-import { escapeHTML as escapeHtml, VOID_ELEMENTS } from "@lytjs/common-string";
+import { escapeHtml, isBooleanAttr, VOID_ELEMENTS } from "@lytjs/common-string";
 
-export { escapeHtml };
-
-// ============================================================
-// Boolean attribute list
-// ============================================================
-
-const BOOLEAN_ATTRS = new Set([
-  "disabled",
-  "readonly",
-  "checked",
-  "selected",
-  "multiple",
-  "autofocus",
-  "async",
-  "defer",
-  "controls",
-  "loop",
-  "muted",
-  "default",
-  "open",
-  "required",
-  "reversed",
-  "allowfullscreen",
-]);
-
-/**
- * Check if a key is a boolean HTML attribute
- */
-export function isBooleanAttr(key: string): boolean {
-  return BOOLEAN_ATTRS.has(key);
-}
+export { escapeHtml, isBooleanAttr };
 
 // ============================================================
 // Self-closing elements
