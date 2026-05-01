@@ -224,7 +224,12 @@ function traverseNode(
       const transform = nodeTransforms[i];
       if (!transform) continue;
       const onExit = transform(
-        node as RootNode | ElementNode | TextNode | InterpolationNode | CommentNode,
+        node as
+          | RootNode
+          | ElementNode
+          | TextNode
+          | InterpolationNode
+          | CommentNode,
         context,
       );
       if (onExit) {
@@ -391,7 +396,9 @@ function collectDynamicChildrenFromElement(element: ElementNode): void {
 
       if (!childElement.isStatic) {
         if (childElement.codegenNode) {
-          element.dynamicChildren!.push(childElement.codegenNode);
+          if (element.dynamicChildren) {
+            element.dynamicChildren.push(childElement.codegenNode);
+          }
         }
         // 递归收集：为子元素自身也建立 dynamicChildren，
         // 确保嵌套动态节点（如嵌套 v-for）的 Block Tree 完整
