@@ -52,5 +52,71 @@
     "path": "packages/core/dist/index.mjs",
     "limit": "35 KB",
     "import": "{ createApp, h, nextTick }"
+  },
+  {
+    "name": "@lytjs/shared-types",
+    "path": "packages/shared-types/dist/index.mjs",
+    "limit": "2 KB",
+    "import": "{}"
+  },
+  {
+    "name": "@lytjs/common-string",
+    "path": "packages/common/packages/string/dist/index.mjs",
+    "limit": "2 KB",
+    "import": "{}"
+  },
+  {
+    "name": "@lytjs/common-events",
+    "path": "packages/common/packages/events/dist/index.mjs",
+    "limit": "2 KB",
+    "import": "{}"
+  },
+  {
+    "name": "@lytjs/common-error",
+    "path": "packages/common/packages/error/dist/index.mjs",
+    "limit": "2 KB",
+    "import": "{}"
+  },
+  {
+    "name": "@lytjs/common-vnode",
+    "path": "packages/common/packages/vnode/dist/index.mjs",
+    "limit": "3 KB",
+    "import": "{}"
+  },
+  {
+    "name": "@lytjs/common-algorithm",
+    "path": "packages/common/packages/algorithm/dist/index.mjs",
+    "limit": "2 KB",
+    "import": "{}"
+  },
+  {
+    "name": "@lytjs/common-path",
+    "path": "packages/common/packages/path/dist/index.mjs",
+    "limit": "2 KB",
+    "import": "{}"
+  },
+  {
+    "name": "@lytjs/common-cache",
+    "path": "packages/common/packages/cache/dist/index.mjs",
+    "limit": "2 KB",
+    "import": "{}"
+  },
+  {
+    "name": "@lytjs/common-timing",
+    "path": "packages/common/packages/timing/dist/index.mjs",
+    "limit": "2 KB",
+    "import": "{}"
+  },
+  {
+    "name": "@lytjs/common-scheduler",
+    "path": "packages/common/packages/scheduler/dist/index.mjs",
+    "limit": "3 KB",
+    "import": "{}"
+  },
+  {
+    "name": "@lytjs/common-env",
+    "path": "packages/common/packages/env/dist/index.mjs",
+    "limit": "1 KB",
+    "import": "{}"
   }
 ]

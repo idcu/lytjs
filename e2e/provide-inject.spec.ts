@@ -1,5 +1,5 @@
-import { test, expect } from '@playwright/test'
-import { getText, getHTML, unmount, evaluateInBrowser, nextTick } from './helpers/mount'
+import { test, expect } from '@playwright/test';
+import { getText, getHTML, unmount, evaluateInBrowser, nextTick } from './helpers/mount';
 
 test.describe('依赖注入 - Provide/Inject', () => {
   test.beforeEach(async ({ page }) => {
