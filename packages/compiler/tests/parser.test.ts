@@ -225,4 +225,29 @@ describe('parser', () => {
       expect(element.tagType).toBe(ElementTypes.ELEMENT);
     });
   });
+
+  describe('error recovery', () => {
+    it('should handle unclosed tags gracefully', () => {
+      const ast = parse('<div><span>hello')
+      // Parser should still produce a valid AST structure
+      expect(ast).toBeDefined()
+      expect(ast.children.length).toBeGreaterThan(0)
+    })
+
+    it('should handle invalid attribute syntax', () => {
+      const ast = parse('<div =>')
+      expect(ast).toBeDefined()
+    })
+
+    it('should handle deeply nested unclosed tags', () => {
+      const ast = parse('<div><p><span>text')
+      expect(ast).toBeDefined()
+    })
+
+    it('should handle empty input', () => {
+      const ast = parse('')
+      expect(ast).toBeDefined()
+      expect(ast.children).toHaveLength(0)
+    })
+  });
 });

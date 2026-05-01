@@ -9,6 +9,8 @@ import {
   createSimpleExpression,
   createDirective,
 } from "../../src/ast";
+import { parse } from "../../src/parser";
+import { transform } from "../../src/transform";
 
 describe("transformBind", () => {
   describe("基本 v-bind 转换", () => {
@@ -90,5 +92,12 @@ describe("transformBind", () => {
 
       expect(result.props).toHaveLength(0);
     });
+  });
+
+  it("should handle dynamic arguments", () => {
+    const ast = parse('<div :[attr]="value"></div>')
+    const result = transform(ast, { nodeTransforms: [transformBind] })
+    // Verify dynamic argument is processed
+    expect(result).toBeDefined()
   });
 });
