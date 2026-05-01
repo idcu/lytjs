@@ -8,19 +8,19 @@ describe('codegen', () => {
   describe('basic codegen', () => {
     it('should generate render function', () => {
       const result = compile('<div></div>');
-      expect(result.code).toContain('function render');
-      expect(result.code).toContain('return');
+      expect(result.code).toMatch(/function\s+render\s*\(/);
+      expect(result.code).toMatch(/return\b/);
     });
 
     it('should generate createElementVNode call', () => {
       const result = compile('<div></div>');
-      expect(result.code).toContain('createElementVNode');
+      expect(result.code).toMatch(/createElementVNode\(/);
     });
 
     it('should generate preamble with imports', () => {
       const result = compile('<div></div>');
-      expect(result.preamble).toContain('import');
-      expect(result.preamble).toContain('createElementVNode');
+      expect(result.preamble).toMatch(/\bimport\b/);
+      expect(result.preamble).toMatch(/createElementVNode/);
     });
 
     it('should return code and preamble', () => {
