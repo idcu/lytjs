@@ -152,6 +152,10 @@ export interface VNode {
   __v_isVNode: true;
 }
 
+/**
+ * 组件公共实例接口
+ * @deprecated 请使用 @lytjs/component 或 @lytjs/shared-types 中的 ComponentPublicInstance
+ */
 export interface ComponentPublicInstance {
   $props: Record<string, unknown>;
   $attrs: Record<string, unknown>;
@@ -163,6 +167,11 @@ export interface ComponentPublicInstance {
   $nextTick: (fn?: () => void) => Promise<void>;
 }
 
+/**
+ * 组件内部实例接口
+ * @deprecated 请使用 @lytjs/component 中的 ComponentInternalInstance（权威来源）
+ * 此处保留简化版定义以避免循环依赖
+ */
 export interface ComponentInternalInstance {
   uid: number;
   type: VNodeTypes;

@@ -28,6 +28,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
+    "@lytjs/shared-types": "workspace:*",
     "@lytjs/common-is": "workspace:*",
     "@lytjs/common-vnode": "workspace:*",
     "@lytjs/common-algorithm": "workspace:*",
