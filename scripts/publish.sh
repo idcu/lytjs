@@ -2,8 +2,8 @@
 #
 # 根仓库统一发布脚本
 #
-* 按依赖层级从低到高依次发布所有包。
-* 使用 changeset 管理版本号和 CHANGELOG。
+# 按依赖层级从低到高依次发布所有包。
+# 使用 changeset 管理版本号和 CHANGELOG。
 *
 * 用法:
 *   bash scripts/publish.sh              # 正式发布
@@ -111,13 +111,13 @@ if [ "$DRY_RUN" = true ]; then
   log_info "========================================="
   log_info "预演模式（不会实际发布）"
   log_info "========================================="
-  pnpm changeset publish --dry-run $TAG
+  pnpm changeset publish --dry-run "$TAG"
   log_success "预演完成"
 else
   log_info "========================================="
   log_info "开始发布..."
   log_info "========================================="
-  pnpm changeset publish $TAG
+  pnpm changeset publish "$TAG"
   log_success "========================================="
   log_success "发布完成！"
   log_success "========================================="
