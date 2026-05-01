@@ -24,7 +24,7 @@ import { normalizeClass } from "@lytjs/common-string";
  */
 export function createVNode(
   type: VNodeTypes,
-  props: Record<string, any> | null = null,
+  props: Record<string, unknown> | null = null,
   children: VNodeChildren = null,
   patchFlag: number = 0,
   dynamicProps: string[] | null = null,
@@ -110,7 +110,7 @@ export function createCommentVNode(text: string = ""): VNode {
  */
 export function cloneVNode(
   vnode: VNode,
-  extraProps: Record<string, any> | null = null,
+  extraProps: Record<string, unknown> | null = null,
 ): VNode {
   const cloned: VNode = {
     ...vnode,
@@ -159,9 +159,9 @@ export function cloneVNode(
  * - event handlers (onXxx) are concatenated into arrays
  */
 export function mergeProps(
-  ...args: (Record<string, any> | null | undefined)[]
-): Record<string, any> {
-  const result: Record<string, any> = {};
+  ...args: (Record<string, unknown> | null | undefined)[]
+): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
 
   for (let i = 0; i < args.length; i++) {
     const props = args[i];
@@ -274,7 +274,9 @@ export function getShapeFlag(type: VNodeTypes): number {
 /**
  * Normalize props: extract key/ref, normalize class/style
  */
-function normalizeProps(props: Record<string, any>): Record<string, any> {
+function normalizeProps(
+  props: Record<string, unknown>,
+): Record<string, unknown> {
   const normalized = { ...props };
   // class normalization
   if (normalized.class !== undefined) {
