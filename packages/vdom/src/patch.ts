@@ -148,7 +148,7 @@ export function createRenderer(
   ): void {
     if (typeof vnode.type !== 'string') {
       console.warn(
-        `[lytjs]: mountElement received a vnode with non-string type (${String(vnode.type)}). ` +
+        `[LytJS]: mountElement received a vnode with non-string type (${String(vnode.type)}). ` +
         `Only element vnodes can be mounted as elements.`,
       );
       return;
@@ -737,14 +737,14 @@ export function createRenderer(
           try {
             bum[i]!();
           } catch (e) {
-            console.error("[lytjs] Error in beforeUnmount hook:", e);
+            console.error("[LytJS] Error in beforeUnmount hook:", e);
           }
         }
       } else if (bum) {
         try {
           bum();
         } catch (e) {
-          console.error("[lytjs] Error in beforeUnmount hook:", e);
+          console.error("[LytJS] Error in beforeUnmount hook:", e);
         }
       }
       component.isUnmounted = true;

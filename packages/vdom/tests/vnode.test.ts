@@ -275,3 +275,11 @@ describe('isSameVNodeType', () => {
     expect(isSameVNodeType(n1, n2)).toBe(true)
   })
 })
+
+describe('cloneVNode merge props', () => {
+  it('should merge props in cloneVNode', () => {
+    const vnode = createVNode('div', { id: 'app', class: 'old' })
+    const cloned = cloneVNode(vnode, { class: 'new' })
+    expect(cloned.props).toEqual({ id: 'app', class: 'new' })
+  })
+})

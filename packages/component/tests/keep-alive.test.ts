@@ -178,4 +178,22 @@ describe('KeepAlive', () => {
     expect(matchesPattern('Comp123', includePattern)).toBe(true);
     expect(matchesPattern('Other', includePattern)).toBe(false);
   });
+
+  it('should evict oldest when max is reached', () => {
+    const instance = createKeepAliveInstance({ max: 2 })
+    cacheInstance(instance, 'a', { type: {} } as any)
+    cacheInstance(instance, 'b', { type: {} } as any)
+    cacheInstance(instance, 'c', { type: {} } as any)
+    expect(getCachedInstance(instance, 'a')).toBeUndefined()
+    expect(getCachedInstance(instance, 'b')).toBeDefined()
+    expect(getCachedInstance(instance, 'c')).toBeDefined()
+  })
+
+  it('should handle max=1 correctly', () => {
+    const instance = createKeepAliveInstance({ max: 1 })
+    cacheInstance(instance, 'a', { type: {} } as any)
+    cacheInstance(instance, 'b', { type: {} } as any)
+    expect(getCachedInstance(instance, 'a')).toBeUndefined()
+    expect(getCachedInstance(instance, 'b')).toBeDefined()
+  })
 });

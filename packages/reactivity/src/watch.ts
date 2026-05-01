@@ -41,7 +41,7 @@ function traverse(value: unknown, seen?: Set<unknown>, depth = 0): unknown {
   if (depth > MAX_TRAVERSE_DEPTH) {
     if (__DEV__) {
       console.warn(
-        `[lytjs] traverse exceeded maximum depth (${MAX_TRAVERSE_DEPTH}).`,
+        `[LytJS] traverse exceeded maximum depth (${MAX_TRAVERSE_DEPTH}).`,
       );
     }
     return value;
@@ -123,7 +123,7 @@ export function watch<T, Immediate extends Readonly<boolean> = false>(
       try {
         newValue = effect.run();
       } catch (e) {
-        console.error("[LyticsJS error] Error in watch getter:", e);
+        console.error("[LytJS] Error in watch getter:", e);
         throw e;
       }
       if (
@@ -151,7 +151,7 @@ export function watch<T, Immediate extends Readonly<boolean> = false>(
       try {
         effect.run();
       } catch (e) {
-        console.error("[LyticsJS error] Error in watch effect run:", e);
+        console.error("[LytJS] Error in watch effect run:", e);
         throw e;
       }
     }

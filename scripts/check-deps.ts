@@ -41,6 +41,7 @@ const LAYER_MAP: Record<string, number> = {
   "@lytjs/common-vnode": 0,
   "@lytjs/common-env": 0,
   "@lytjs/common": 0,
+  "@lytjs/shared-types": 0,
   // L1
   "@lytjs/reactivity": 1,
   "@lytjs/vdom": 1,

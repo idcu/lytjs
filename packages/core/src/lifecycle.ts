@@ -24,7 +24,7 @@ export function onRenderTracked(_hook: DebuggerHook): void {
   // 需要在 effect 系统中集成
   if (__DEV__) {
     console.warn(
-      "[lytjs] onRenderTracked is not yet implemented. " +
+      "[LytJS] onRenderTracked is not yet implemented. " +
         "This hook requires integration with the reactivity effect system.",
     );
   }
@@ -38,7 +38,7 @@ export function onRenderTriggered(_hook: DebuggerHook): void {
   // 需要在 effect 系统中集成
   if (__DEV__) {
     console.warn(
-      "[lytjs] onRenderTriggered is not yet implemented. " +
+      "[LytJS] onRenderTriggered is not yet implemented. " +
         "This hook requires integration with the reactivity effect system.",
     );
   }

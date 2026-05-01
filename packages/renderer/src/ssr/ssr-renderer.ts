@@ -97,7 +97,7 @@ function renderElementToString(vnode: VNode): string {
 
   if (!isValidHTMLElementTag(tag)) {
     if (__DEV__) {
-      console.warn(`[lytjs] Invalid SSR element tag: "${tag}"`);
+      console.warn(`[LytJS] Invalid SSR element tag: "${tag}"`);
     }
     return "";
   }

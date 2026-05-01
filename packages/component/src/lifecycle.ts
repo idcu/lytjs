@@ -51,7 +51,7 @@ export function onMounted(fn: () => void): void {
     registerLifecycleHook(currentInstance, "mounted", fn);
   } else if (__DEV__) {
     console.warn(
-      "[lytjs] onMounted was called when there is no active component instance. " +
+      "[LytJS] onMounted was called when there is no active component instance. " +
         "Make sure to call this function inside setup().",
     );
   }
@@ -65,7 +65,7 @@ export function onUpdated(fn: () => void): void {
     registerLifecycleHook(currentInstance, "updated", fn);
   } else if (__DEV__) {
     console.warn(
-      "[lytjs] onUpdated was called when there is no active component instance. " +
+      "[LytJS] onUpdated was called when there is no active component instance. " +
         "Make sure to call this function inside setup().",
     );
   }
@@ -79,7 +79,7 @@ export function onUnmounted(fn: () => void): void {
     registerLifecycleHook(currentInstance, "unmounted", fn);
   } else if (__DEV__) {
     console.warn(
-      "[lytjs] onUnmounted was called when there is no active component instance. " +
+      "[LytJS] onUnmounted was called when there is no active component instance. " +
         "Make sure to call this function inside setup().",
     );
   }
@@ -93,7 +93,7 @@ export function onBeforeMount(fn: () => void): void {
     registerLifecycleHook(currentInstance, "beforeMount", fn);
   } else if (__DEV__) {
     console.warn(
-      "[lytjs] onBeforeMount was called when there is no active component instance. " +
+      "[LytJS] onBeforeMount was called when there is no active component instance. " +
         "Make sure to call this function inside setup().",
     );
   }
@@ -107,7 +107,7 @@ export function onBeforeUpdate(fn: () => void): void {
     registerLifecycleHook(currentInstance, "beforeUpdate", fn);
   } else if (__DEV__) {
     console.warn(
-      "[lytjs] onBeforeUpdate was called when there is no active component instance. " +
+      "[LytJS] onBeforeUpdate was called when there is no active component instance. " +
         "Make sure to call this function inside setup().",
     );
   }
@@ -121,7 +121,7 @@ export function onBeforeUnmount(fn: () => void): void {
     registerLifecycleHook(currentInstance, "beforeUnmount", fn);
   } else if (__DEV__) {
     console.warn(
-      "[lytjs] onBeforeUnmount was called when there is no active component instance. " +
+      "[LytJS] onBeforeUnmount was called when there is no active component instance. " +
         "Make sure to call this function inside setup().",
     );
   }
@@ -142,7 +142,7 @@ export function onErrorCaptured(
   } else if (__DEV__) {
     // 开发模式下警告：onErrorCaptured 必须在 setup 期间调用
     console.warn(
-      "[lytjs] onErrorCaptured was called when there is no active component instance. " +
+      "[LytJS] onErrorCaptured was called when there is no active component instance. " +
         "Make sure to call this function inside setup().",
     );
   }

@@ -32,7 +32,7 @@ export function generate(
   ast: RootNode,
   _options: CodegenOptions = {},
 ): CodegenResult {
-  const context = createCodegenContext(ast);
+  const { context, codeParts } = createCodegenContext(ast);
 
   // Generate helper imports (preamble)
   const preamble = genHelperImports(ast.helpers);
@@ -62,7 +62,7 @@ export function generate(
   context.push(`}`);
 
   return {
-    code: context.code,
+    code: codeParts.join(""),
     preamble,
     ast,
   };
@@ -72,7 +72,10 @@ export function generate(
 // Codegen Context
 // ============================================================
 
-function createCodegenContext(ast: RootNode): CodegenContext {
+function createCodegenContext(ast: RootNode): {
+  context: CodegenContext;
+  codeParts: string[];
+} {
   const helpers = new Map<string, string>();
   let indentLevel = 0;
   // 使用数组收集代码片段，避免频繁字符串拼接带来的性能开销
@@ -99,12 +102,14 @@ function createCodegenContext(ast: RootNode): CodegenContext {
 
     indent(): void {
       indentLevel++;
+      context.indentLevel = indentLevel;
     },
 
     deindent(withoutNewline?: boolean): void {
       if (indentLevel > 0) {
         indentLevel--;
       }
+      context.indentLevel = indentLevel;
       if (!withoutNewline) {
         codeParts.push(`\n${"  ".repeat(indentLevel)}`);
       }
@@ -115,23 +120,7 @@ function createCodegenContext(ast: RootNode): CodegenContext {
     },
   };
 
-  // Override code getter - 返回数组拼接后的最终代码
-  Object.defineProperty(context, "code", {
-    get() {
-      return codeParts.join("");
-    },
-  });
-
-  Object.defineProperty(context, "indentLevel", {
-    get() {
-      return indentLevel;
-    },
-    set(v: number) {
-      indentLevel = v;
-    },
-  });
-
-  return context;
+  return { context, codeParts };
 }
 
 // ============================================================
