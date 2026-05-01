@@ -13,10 +13,7 @@ import {
 import { isRef } from "./ref";
 import { isReactive } from "./reactive";
 import { ReactiveEffect } from "./effect";
-import {
-  queuePreFlushCb,
-  queuePostFlushCb,
-} from "@lytjs/common-scheduler";
+import { queuePreFlushCb, queuePostFlushCb } from "@lytjs/common-scheduler";
 import type {
   WatchSource,
   WatchCallback,
@@ -85,7 +82,7 @@ export function watch<T, Immediate extends Readonly<boolean> = false>(
     scheduler: userScheduler,
   } = options || {};
 
-  let getter: () => any;
+  let getter: () => unknown;
   let forceTrigger = false;
   let isMultiSource = false;
 
@@ -108,7 +105,7 @@ export function watch<T, Immediate extends Readonly<boolean> = false>(
     getter = () => traverse(baseGetter());
   }
 
-  let oldValue: any = isMultiSource
+  let oldValue: unknown = isMultiSource
     ? new Array((source as WatchSource<T>[]).length).fill(undefined)
     : undefined;
 
@@ -122,7 +119,7 @@ export function watch<T, Immediate extends Readonly<boolean> = false>(
   const job: () => void = () => {
     if (!effect.active || isStopped) return;
     if (cb) {
-      let newValue: any;
+      let newValue: unknown;
       try {
         newValue = effect.run();
       } catch (e) {
@@ -248,8 +245,6 @@ function doWatchEffect(
     source(onCleanup);
   };
 
-  let currentEffect: ReactiveEffect;
-
   const schedulerFn: (...args: any[]) => any =
     flush === "sync"
       ? () => currentEffect.run()
@@ -261,7 +256,7 @@ function doWatchEffect(
           }
         };
 
-  currentEffect = new ReactiveEffect(getter, schedulerFn);
+  const currentEffect: ReactiveEffect = new ReactiveEffect(getter, schedulerFn);
 
   currentEffect.onStop = () => {
     if (cleanupFns.length > 0) {
