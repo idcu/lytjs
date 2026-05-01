@@ -189,7 +189,7 @@ export function patchAttr(
       if (!isSafeAttribute(key, strValue)) {
         if (__DEV__) {
           console.warn(
-            `[LyticsJS warn] Unsafe attribute "${key}" with value "${strValue}" has been blocked.`,
+            `[lytjs] Unsafe attribute "${key}" with value "${strValue}" has been blocked.`,
           );
         }
         return;
@@ -201,7 +201,7 @@ export function patchAttr(
     if (!isSafeAttribute(key, strValue)) {
       if (__DEV__) {
         console.warn(
-          `[LyticsJS warn] Unsafe attribute "${key}" with value "${strValue}" has been blocked.`,
+          `[lytjs] Unsafe attribute "${key}" with value "${strValue}" has been blocked.`,
         );
       }
       return;
@@ -320,7 +320,7 @@ function sanitizeHTML(str: string): string {
     (_match, attr: string, dq: string, sq: string) => {
       const value = dq ?? sq ?? "";
       // Strip whitespace / null bytes / control chars that could hide the scheme
-      // eslint-disable-next-line no-control-regex
+       
       const cleaned = value
         .replace(
           /[\u0000-\u0020\u00A0\u1680\u2000-\u200B\u2028\u2029\u202F\u205F\u3000\uFEFF]+/g,

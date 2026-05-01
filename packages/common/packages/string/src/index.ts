@@ -404,7 +404,7 @@ export function isSafeAttribute(attrName: string, attrValue: string): boolean {
   if (DANGEROUS_EVENT_ATTRS.has(lowerName)) {
     if (__DEV__) {
       console.warn(
-        `[lytjs/security] Blocked dangerous event attribute: ${attrName}`,
+        `[lytjs] Blocked dangerous event attribute: ${attrName}`,
       );
     }
     return false;
@@ -418,7 +418,7 @@ export function isSafeAttribute(attrName: string, attrValue: string): boolean {
     if (!ALLOWED_URL_PROTOCOLS.has(protocol)) {
       if (__DEV__) {
         console.warn(
-          `[lytjs/security] Blocked dangerous URL in attribute "${attrName}": ` +
+          `[lytjs] Blocked dangerous URL in attribute "${attrName}": ` +
             `protocol "${protocol}" is not allowed`,
         );
       }

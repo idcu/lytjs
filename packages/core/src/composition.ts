@@ -13,7 +13,7 @@ export function useSlots(): InternalSlots {
   const instance = getCurrentInstance();
   if (!instance) {
     if (__DEV__) {
-      console.warn("[LyticsJS warn] useSlots() was called outside of setup().");
+      console.warn("[lytjs] useSlots() was called outside of setup().");
     }
     return {} as InternalSlots;
   }
@@ -27,7 +27,7 @@ export function useAttrs(): Record<string, unknown> {
   const instance = getCurrentInstance();
   if (!instance) {
     if (__DEV__) {
-      console.warn("[LyticsJS warn] useAttrs() was called outside of setup().");
+      console.warn("[lytjs] useAttrs() was called outside of setup().");
     }
     return {};
   }
