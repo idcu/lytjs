@@ -3,7 +3,6 @@
 
 import type { DirectiveTransform } from "../types";
 import { getExpContent } from "./helpers";
-import { warn } from "@lytjs/common-error";
 
 /**
  * 验证 v-model 表达式是否为合法的简单属性访问表达式
@@ -17,7 +16,7 @@ function isValidModelExpression(exp: string): boolean {
   );
 }
 
-export const transformModel: DirectiveTransform = (dir, _node, _context) => {
+export const transformModel: DirectiveTransform = (dir, _node, context) => {
   const { exp } = dir;
   const props: Array<{ key: string; value: string }> = [];
 
@@ -25,7 +24,7 @@ export const transformModel: DirectiveTransform = (dir, _node, _context) => {
 
   if (expContent != null) {
     if (!isValidModelExpression(expContent)) {
-      warn(
+      context.error(
         `v-model expression "${expContent}" is not a valid simple expression`,
       );
       return { props: [] };
