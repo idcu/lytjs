@@ -30,9 +30,9 @@ import { helperNameMap } from "./constants";
 
 export function generate(
   ast: RootNode,
-  _options: CodegenOptions = {},
+  options: CodegenOptions = {},
 ): CodegenResult {
-  const { context, codeParts } = createCodegenContext(ast);
+  const { context, codeParts } = createCodegenContext(ast, options);
 
   // Generate helper imports (preamble)
   const preamble = genHelperImports(ast.helpers);
@@ -72,7 +72,10 @@ export function generate(
 // Codegen Context
 // ============================================================
 
-function createCodegenContext(ast: RootNode): {
+function createCodegenContext(
+  ast: RootNode,
+  _options: CodegenOptions,
+): {
   context: CodegenContext;
   codeParts: string[];
 } {
@@ -83,7 +86,6 @@ function createCodegenContext(ast: RootNode): {
 
   const context: CodegenContext = {
     source: ast.loc.source,
-    code: "",
     line: 1,
     column: 1,
     offset: 0,

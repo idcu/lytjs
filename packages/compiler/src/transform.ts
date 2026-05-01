@@ -308,14 +308,9 @@ function markConstants(root: RootNode): void {
       const hasDirectives = element.props.some(
         (p) => p.type === NodeTypes.DIRECTIVE,
       );
-      const hasDynamicBindings = element.props.some(
-        (p) =>
-          p.type === NodeTypes.DIRECTIVE &&
-          (p.name === "bind" || p.name === "on"),
-      );
       const hasInterpolation = hasDescendantInterpolation(element);
 
-      if (!hasDirectives && !hasDynamicBindings && !hasInterpolation) {
+      if (!hasDirectives && !hasInterpolation) {
         element.isStatic = true;
       }
     } else if (node.type === NodeTypes.TEXT) {

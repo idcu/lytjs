@@ -231,6 +231,10 @@ function hydrateNode(vnode: VNode, parent: HTMLElement, index: number): number {
     return index + 1;
   }
 
+  if (__DEV__) {
+    warn(`Hydration: unrecognized node type, skipping.`);
+  }
+
   return index + 1;
 }
 

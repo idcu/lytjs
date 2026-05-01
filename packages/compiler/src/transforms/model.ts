@@ -11,7 +11,7 @@ import { getExpContent } from "./helpers";
  */
 function isValidModelExpression(exp: string): boolean {
   if (exp === "") return true;
-  return /^[a-zA-Z_$][a-zA-Z0-9_$]*(\.[a-zA-Z_$][a-zA-Z0-9_$]*(\[\d+\])?)*(\[\d+\])*$/.test(
+  return /^[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*|\[\s*(?:['"][\w$]+['"]|\d+)\s*\])*$/.test(
     exp,
   );
 }

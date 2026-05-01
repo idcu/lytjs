@@ -44,6 +44,17 @@ const RE_V_DIRECTIVE = /^v-([a-zA-Z][a-zA-Z0-9-]*)(?::(.+))?$/;
 const RE_UNQUOTED_ATTR_VALUE = /^[^\t\r\n\f >]+/;
 const RE_COMPONENT_TAG = /^[A-Z]/;
 
+// End tag RegExp cache (avoid re-creation on every parseElement call)
+const endTagCache = new Map<string, RegExp>();
+function getEndTagRegex(tag: string): RegExp {
+  let regex = endTagCache.get(tag);
+  if (!regex) {
+    regex = new RegExp(`^<\\/\\s*${escapeRegExp(tag)}\\s*>`);
+    endTagCache.set(tag, regex);
+  }
+  return regex;
+}
+
 function advanceBy(context: ParserContext, numberOfCharacters: number): void {
   const { source } = context;
   advancePositionWithMutation(context, source, numberOfCharacters);
@@ -164,9 +175,7 @@ function parseChildren(
           }
           // DOCTYPE/声明格式异常，跳过到行尾或文件尾防止无限循环
           if (__DEV__) {
-            warn(
-              `Invalid DOCTYPE/declaration at position ${context.offset}`,
-            );
+            warn(`Invalid DOCTYPE/declaration at position ${context.offset}`);
           }
           const lineEnd = s.indexOf("\n");
           advanceBy(context, lineEnd === -1 ? s.length : lineEnd);
@@ -288,7 +297,25 @@ function parseInterpolation(
   context: ParserContext,
 ): InterpolationNode | undefined {
   const start = getCursor(context);
-  const closeIndex = context.source.indexOf("}}", 2);
+  // 字符串感知扫描：跳过引号内的 }}，避免误判
+  let endIndex = 2;
+  let inString: string | null = null;
+  while (endIndex < context.source.length) {
+    const char = context.source[endIndex];
+    if (inString) {
+      if (char === inString && context.source[endIndex - 1] !== "\\") {
+        inString = null;
+      }
+    } else {
+      if (char === '"' || char === "'") {
+        inString = char;
+      } else if (char === "}" && context.source[endIndex + 1] === "}") {
+        break;
+      }
+    }
+    endIndex++;
+  }
+  const closeIndex = endIndex < context.source.length ? endIndex : -1;
 
   if (closeIndex === -1) {
     if (__DEV__) {
@@ -369,16 +396,12 @@ function parseElement(context: ParserContext): ElementNode | undefined {
   parseChildren(context, element, textMode);
 
   if (context.source.startsWith(`</`)) {
-    const endTagMatch = context.source.match(
-      new RegExp(`^<\\/\\s*${escapeRegExp(tag)}\\s*>`),
-    );
+    const endTagMatch = context.source.match(getEndTagRegex(tag));
     if (endTagMatch) {
       advanceBy(context, endTagMatch[0].length);
     } else {
       if (__DEV__) {
-        warn(
-          `Element <${tag}> was left open. Expected closing tag </${tag}>.`,
-        );
+        warn(`Element <${tag}> was left open. Expected closing tag </${tag}>.`);
       }
 
       if (context.options.onError) {
@@ -539,14 +562,27 @@ function parseAttribute(
   return createAttribute(rawName, value, getSelection(context, start));
 }
 
-function parseAttributeValue(context: ParserContext): TextNode {
-  const start = getCursor(context);
+// ============================================================
+// Parse quoted value (shared by parseAttributeValue and parseDirective)
+// ============================================================
+
+function parseQuotedValue(context: ParserContext): string {
   let content: string;
 
   if (context.source.startsWith('"')) {
     advanceBy(context, 1);
-    const endIndex = context.source.indexOf('"');
-    if (endIndex >= 0) {
+    // 跳过转义引号 \"，找到真正的结束引号
+    let endIndex = 0;
+    while (endIndex < context.source.length) {
+      if (
+        context.source[endIndex] === '"' &&
+        context.source[endIndex - 1] !== "\\"
+      ) {
+        break;
+      }
+      endIndex++;
+    }
+    if (endIndex < context.source.length) {
       content = context.source.slice(0, endIndex);
     } else {
       if (__DEV__) {
@@ -557,8 +593,18 @@ function parseAttributeValue(context: ParserContext): TextNode {
     advanceBy(context, content.length + 1);
   } else if (context.source.startsWith("'")) {
     advanceBy(context, 1);
-    const endIndex = context.source.indexOf("'");
-    if (endIndex >= 0) {
+    // 跳过转义引号 \'，找到真正的结束引号
+    let endIndex = 0;
+    while (endIndex < context.source.length) {
+      if (
+        context.source[endIndex] === "'" &&
+        context.source[endIndex - 1] !== "\\"
+      ) {
+        break;
+      }
+      endIndex++;
+    }
+    if (endIndex < context.source.length) {
       content = context.source.slice(0, endIndex);
     } else {
       if (__DEV__) {
@@ -573,6 +619,12 @@ function parseAttributeValue(context: ParserContext): TextNode {
     advanceBy(context, content.length);
   }
 
+  return content;
+}
+
+function parseAttributeValue(context: ParserContext): TextNode {
+  const start = getCursor(context);
+  const content = parseQuotedValue(context);
   return createText(content, getSelection(context, start));
 }
 
@@ -634,25 +686,7 @@ function parseDirective(
       advanceSpaces(context);
 
       const valueStart = getCursor(context);
-      let valueContent: string;
-
-      if (context.source.startsWith('"')) {
-        advanceBy(context, 1);
-        const endIndex = context.source.indexOf('"');
-        valueContent =
-          endIndex >= 0 ? context.source.slice(0, endIndex) : context.source;
-        advanceBy(context, valueContent.length + 1);
-      } else if (context.source.startsWith("'")) {
-        advanceBy(context, 1);
-        const endIndex = context.source.indexOf("'");
-        valueContent =
-          endIndex >= 0 ? context.source.slice(0, endIndex) : context.source;
-        advanceBy(context, valueContent.length + 1);
-      } else {
-        const match = context.source.match(RE_UNQUOTED_ATTR_VALUE);
-        valueContent = match ? match[0] : "";
-        advanceBy(context, valueContent.length);
-      }
+      const valueContent = parseQuotedValue(context);
 
       exp = createSimpleExpression(
         valueContent,
