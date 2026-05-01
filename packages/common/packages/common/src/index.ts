@@ -181,5 +181,6 @@ export {
   hasPendingJobs,
   getPendingJobCount,
   resetSchedulerState,
+  setErrorHandler,
   type SchedulerJob,
 } from "@lytjs/common-scheduler";

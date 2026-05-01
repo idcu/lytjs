@@ -8,7 +8,7 @@ import type {
   SetupContext,
 } from "./types";
 import { createComponentInstance, setupComponent } from "./component";
-import { handleError } from "./lifecycle";
+import { handleError, callUnmountedHook } from "./lifecycle";
 import { ShapeFlags, createBaseVNode } from "@lytjs/common-vnode";
 import type { VNode } from "@lytjs/common-vnode";
 
@@ -134,6 +134,10 @@ export function cacheInstance(
       // Call deactivated lifecycle hook before eviction
       if (oldestInstance) {
         deactivateInstance(oldestInstance);
+        // Call beforeUnmount and unmounted lifecycle hooks for full cleanup
+        if (oldestInstance.lifecycle) {
+          callUnmountedHook(oldestInstance);
+        }
         // Stop all reactive effects to prevent memory leaks
         oldestInstance.effects?.forEach((effect) => {
           effect.stop();

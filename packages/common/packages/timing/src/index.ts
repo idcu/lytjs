@@ -231,11 +231,23 @@ export async function poll<T>(
   timeoutMs: number = 30000,
 ): Promise<T> {
   const startTime = Date.now();
+  let consecutiveErrors = 0;
+  const MAX_CONSECUTIVE_ERRORS = 10;
 
   while (true) {
-    const value = await fn();
-    if (condition(value)) {
-      return value;
+    try {
+      const value = await fn();
+      consecutiveErrors = 0;
+      if (condition(value)) {
+        return value;
+      }
+    } catch (err) {
+      consecutiveErrors++;
+      if (consecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
+        throw new Error(
+          `Polling aborted after ${MAX_CONSECUTIVE_ERRORS} consecutive errors: ${err instanceof Error ? err.message : String(err)}`,
+        );
+      }
     }
 
     if (Date.now() - startTime >= timeoutMs) {

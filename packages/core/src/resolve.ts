@@ -6,6 +6,65 @@ import { getCurrentInstance } from "@lytjs/component";
 import { warn } from "@lytjs/common-error";
 
 /**
+ * Common native HTML elements that should not trigger resolution warnings.
+ */
+const HTML_ELEMENTS = new Set([
+  "div",
+  "span",
+  "p",
+  "a",
+  "img",
+  "input",
+  "button",
+  "form",
+  "table",
+  "ul",
+  "ol",
+  "li",
+  "h1",
+  "h2",
+  "h3",
+  "h4",
+  "h5",
+  "h6",
+  "header",
+  "footer",
+  "nav",
+  "section",
+  "article",
+  "main",
+  "aside",
+  "template",
+  "slot",
+  "br",
+  "hr",
+  "pre",
+  "code",
+  "blockquote",
+  "strong",
+  "em",
+  "i",
+  "b",
+  "u",
+  "s",
+  "small",
+  "sub",
+  "sup",
+  "label",
+  "select",
+  "option",
+  "textarea",
+  "script",
+  "style",
+  "link",
+  "meta",
+  "title",
+  "head",
+  "body",
+  "html",
+]);
+
+/**
  * 解析组件：从当前组件实例的 components 选项和全局注册中查找
  */
 export function resolveComponent(name: string): Component | undefined {
@@ -33,10 +92,12 @@ export function resolveComponent(name: string): Component | undefined {
   }
 
   if (__DEV__) {
-    warn(
-      `Failed to resolve component "${name}". ` +
-        `If this is a native HTML element, register it as a component.`,
-    );
+    if (!HTML_ELEMENTS.has(name)) {
+      warn(
+        `Failed to resolve component "${name}". ` +
+          `If this is a native HTML element, register it as a component.`,
+      );
+    }
   }
   return undefined;
 }

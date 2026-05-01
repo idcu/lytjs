@@ -51,9 +51,10 @@ export function defineAsyncComponent(
   let retries = 0;
   let showLoading = false;
   let delayTimer: ReturnType<typeof setTimeout> | null = null;
+  let loadingPromise: Promise<Component> | null = null;
 
   const MAX_RETRIES = 3;
-  const retry = () => {
+  const retry = (): Promise<Component> | void => {
     if (retries >= MAX_RETRIES) {
       if (__DEV__) {
         warn(`AsyncComponent: max retries (${MAX_RETRIES}) exceeded.`);
@@ -66,22 +67,27 @@ export function defineAsyncComponent(
     retries++;
     loadedComponent.value = undefined;
     error.value = undefined;
+    loadingPromise = null;
     startTimeout();
     return load();
   };
 
   const load = (): Promise<Component> => {
+    // Prevent duplicate concurrent loads
+    if (loadingPromise) return loadingPromise as Promise<Component>;
+
     loading.value = true;
     showLoading = false;
     if (delayTimer) clearTimeout(delayTimer);
     delayTimer = setTimeout(() => {
       showLoading = true;
     }, delay);
-    return loader()
+    return (loadingPromise = loader()
       .then((comp) => {
         loadedComponent.value = comp;
         error.value = undefined;
         loading.value = false;
+        loadingPromise = null;
         if (delayTimer) {
           clearTimeout(delayTimer);
           delayTimer = null;
@@ -94,7 +100,7 @@ export function defineAsyncComponent(
         }
         return comp;
       })
-      .catch((err) => {
+      .catch((err): Promise<Component> => {
         error.value = err;
         loading.value = false;
         if (onError) {
@@ -132,8 +138,8 @@ export function defineAsyncComponent(
             );
           });
         }
-        throw err;
-      });
+        return Promise.reject(err);
+      }));
   };
 
   // 超时处理：封装为函数以便 retry 时重新设置

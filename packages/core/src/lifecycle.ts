@@ -19,6 +19,7 @@ import type { DebuggerHook } from "./types";
 
 /**
  * 注册 renderTracked 钩子（调试用）
+ * @unimplemented 需要在 reactivity 的 effect 系统中集成后才能正常工作
  */
 export function onRenderTracked(_hook: DebuggerHook): void {
   // 当响应式依赖被追踪时调用
@@ -33,6 +34,7 @@ export function onRenderTracked(_hook: DebuggerHook): void {
 
 /**
  * 注册 renderTriggered 钩子（调试用）
+ * @unimplemented 需要在 reactivity 的 effect 系统中集成后才能正常工作
  */
 export function onRenderTriggered(_hook: DebuggerHook): void {
   // 当响应式依赖被触发时调用

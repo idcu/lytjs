@@ -121,7 +121,17 @@ export function setupComponent(instance: ComponentInternalInstance): void {
   if (isPromise(setupResult)) {
     // Async setup - mark vnode as async
     vnode.isAsyncPlaceholder = true;
-    setupResult
+    // Add timeout protection to prevent infinite pending
+    const timedSetupResult = Promise.race([
+      setupResult,
+      new Promise<SetupResult>((_, reject) =>
+        setTimeout(
+          () => reject(new Error("Async component setup timed out")),
+          30000,
+        ),
+      ),
+    ]);
+    timedSetupResult
       .then((resolvedResult) => {
         if (instance.isUnmounted) return;
         handleSetupResult(instance, resolvedResult as SetupResult);

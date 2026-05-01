@@ -521,8 +521,11 @@ const DANGEROUS_TAGS = [
   "frameset",
   "details",
   "marquee",
-  "math",
-  "svg",
+  // Note: 'svg' and 'math' are intentionally excluded from this list.
+  // While SVG and MathML can be used for XSS in certain contexts, they are
+  // legitimate content elements in many applications. Blocking them here
+  // would be overly restrictive. Users requiring stricter sanitization
+  // should use a dedicated library like DOMPurify.
 ];
 const DANGEROUS_TAG_PATTERN = DANGEROUS_TAGS.join("|");
 const RE_DANGEROUS_OPEN_CLOSE_TAG = new RegExp(
@@ -545,7 +548,7 @@ const RE_DANGEROUS_SCHEME =
 
 const DECODE_MAP: [
   RegExp,
-  string | ((substring: string, ...args: unknown[]) => string),
+  string | ((substring: string, ...args: string[]) => string),
 ][] = [
   [
     /&#x0*([0-9a-fA-F]+);/g,
@@ -586,6 +589,15 @@ const DECODE_MAP: [
  *
  * @param str - The raw HTML string to sanitize (typically from v-html binding).
  * @returns The sanitized HTML string with dangerous content removed.
+ *
+ * @remarks
+ * **Limitations:**
+ * - This is a best-effort sanitizer and should NOT be the sole defense against XSS.
+ * - It does NOT parse HTML into a DOM tree; regex-based approaches have inherent
+ *   blind spots (e.g., malformed HTML, browser-specific parsing quirks).
+ * - CSS injection within `style` attributes is not fully neutralized.
+ * - SVG/MathML sub-elements inside non-removed tags are not recursively sanitized.
+ * - For production-grade sanitization, consider a dedicated library like DOMPurify.
  */
 export function sanitizeHTML(str: string): string {
   // 1. Decode HTML entities so encoded payloads are not missed.

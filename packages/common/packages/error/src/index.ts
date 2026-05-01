@@ -354,6 +354,7 @@ export function warn(message: string): void {
 
 // 已警告消息集合
 const warnedMessages = new Set<string>();
+const MAX_WARNED_MESSAGES = 1000;
 
 /**
  * 输出一次性警告信息（相同消息只输出一次）
@@ -361,15 +362,26 @@ const warnedMessages = new Set<string>();
 export function warnOnce(message: string): void {
   if (!devMode) return;
   if (warnedMessages.has(message)) return;
+  // Prevent unbounded memory growth
+  if (warnedMessages.size >= MAX_WARNED_MESSAGES) {
+    warnedMessages.clear();
+  }
   warnedMessages.add(message);
   console.warn(`[LytJS]: ${message}`);
 }
 
 /**
  * 输出错误信息
+ * 在生产环境中仍然输出错误，开发模式下附加额外调试信息
  */
 export function error(message: string): void {
-  console.error(`[LytJS]: ${message}`);
+  if (!devMode) {
+    console.error(`[LytJS]: ${message}`);
+    return;
+  }
+  console.error(
+    `[LytJS] Error: ${message}\n  (dev mode - see stack trace above for details)`,
+  );
 }
 
 /**
