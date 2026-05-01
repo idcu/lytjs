@@ -57,7 +57,7 @@ export function emit(
 ): void {
   if (instance.isUnmounted) return;
 
-  if (__DEV__ && instance && !isEmitValid(instance, event)) {
+  if (__DEV__ && !isEmitValid(instance, event)) {
     console.warn(
       `[LytJS warn]: Component emitted event "${event}" but it is not declared in emits.`,
     );
