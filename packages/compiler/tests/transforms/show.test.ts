@@ -44,7 +44,9 @@ describe("transformShow", () => {
       const result = transformShow(dir, node, context);
 
       expect(result.props).toHaveLength(1);
-      expect(result.props[0].value).toBe("a && b ? undefined : { display: 'none' }");
+      expect(result.props[0].value).toBe(
+        "a && b ? undefined : { display: 'none' }",
+      );
     });
 
     it("应该处理带比较运算符的表达式", () => {
@@ -54,7 +56,9 @@ describe("transformShow", () => {
       const result = transformShow(dir, node, context);
 
       expect(result.props).toHaveLength(1);
-      expect(result.props[0].value).toBe("count > 0 ? undefined : { display: 'none' }");
+      expect(result.props[0].value).toBe(
+        "count > 0 ? undefined : { display: 'none' }",
+      );
     });
 
     it("应该处理带方法调用的表达式", () => {
@@ -64,7 +68,9 @@ describe("transformShow", () => {
       const result = transformShow(dir, node, context);
 
       expect(result.props).toHaveLength(1);
-      expect(result.props[0].value).toBe("isVisible() ? undefined : { display: 'none' }");
+      expect(result.props[0].value).toBe(
+        "isVisible() ? undefined : { display: 'none' }",
+      );
     });
 
     it("应该处理带属性访问的表达式", () => {
@@ -74,7 +80,9 @@ describe("transformShow", () => {
       const result = transformShow(dir, node, context);
 
       expect(result.props).toHaveLength(1);
-      expect(result.props[0].value).toBe("user.loggedIn ? undefined : { display: 'none' }");
+      expect(result.props[0].value).toBe(
+        "user.loggedIn ? undefined : { display: 'none' }",
+      );
     });
 
     it("应该处理三元表达式", () => {
@@ -144,9 +152,8 @@ describe("transformShow", () => {
       const node = createElement("div");
       const result = transformShow(dir, node, context);
 
-      // 空字符串仍然是有效的 expContent
-      expect(result.props).toHaveLength(1);
-      expect(result.props[0].value).toBe(" ? undefined : { display: 'none' }");
+      // 空字符串应返回空 props，避免生成无效代码
+      expect(result.props).toHaveLength(0);
     });
   });
 
@@ -177,7 +184,9 @@ describe("transformShow", () => {
 
       const styleValue = result.props[0].value;
       // 验证三元表达式结构
-      expect(styleValue).toMatch(/^\S+\s*\?\s*undefined\s*:\s*\{ display: 'none' \}$/);
+      expect(styleValue).toMatch(
+        /^\S+\s*\?\s*undefined\s*:\s*\{ display: 'none' \}$/,
+      );
     });
   });
 });
