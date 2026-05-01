@@ -5,6 +5,7 @@ import type {
   Component,
   AsyncComponentLoader,
   AsyncComponentOptions,
+  VNode,
 } from "./types";
 import type { ComponentOptions } from "./types";
 import {
@@ -169,7 +170,7 @@ export function defineAsyncComponent(
 
       return instance;
     },
-    render(): any {
+    render(): VNode | null {
       // 首次渲染时触发加载
       if (!loadedComponent.value && !error.value && !loading.value) {
         load();
@@ -185,7 +186,7 @@ export function defineAsyncComponent(
       }
       return null;
     },
-  };
+  } as ComponentOptions;
 
   return comp as Component;
 }

@@ -13,7 +13,7 @@ const PROTO_POLLUTION_KEYS = new Set(["__proto__", "constructor", "prototype"]);
 /**
  * 浅合并多个对象
  */
-export function mergeObjects<T extends Record<string, any>>(
+export function mergeObjects<T extends Record<string, unknown>>(
   ...sources: Partial<T>[]
 ): T {
   const result = {} as T;
@@ -21,7 +21,7 @@ export function mergeObjects<T extends Record<string, any>>(
     if (source) {
       for (const key in source) {
         if (hasOwn(source, key) && !PROTO_POLLUTION_KEYS.has(key)) {
-          (result as any)[key] = source[key];
+          (result as Record<string, unknown>)[key] = source[key];
         }
       }
     }
@@ -32,7 +32,7 @@ export function mergeObjects<T extends Record<string, any>>(
 /**
  * 深度合并两个对象
  */
-export function deepMerge<T extends Record<string, any>>(
+export function deepMerge<T extends Record<string, unknown>>(
   target: T,
   source: Partial<T>,
 ): T {
@@ -43,11 +43,11 @@ export function deepMerge<T extends Record<string, any>>(
       const targetVal = result[key];
       if (isPlainObject(sourceVal) && isPlainObject(targetVal)) {
         result[key] = deepMerge(
-          targetVal as Record<string, any>,
-          sourceVal as Record<string, any>,
-        ) as any;
+          targetVal as Record<string, unknown>,
+          sourceVal as Record<string, unknown>,
+        ) as (typeof result)[typeof key];
       } else {
-        result[key] = sourceVal as any;
+        result[key] = sourceVal as (typeof result)[typeof key];
       }
     }
   }
@@ -57,14 +57,14 @@ export function deepMerge<T extends Record<string, any>>(
 /**
  * 创建对象的浅快照
  */
-export function createSnapshot<T extends Record<string, any>>(obj: T): T {
+export function createSnapshot<T extends Record<string, unknown>>(obj: T): T {
   return { ...obj };
 }
 
 /**
  * 对象差异结果
  */
-export interface ObjectDiff<T = any> {
+export interface ObjectDiff<T = unknown> {
   added: Record<string, T>;
   removed: Record<string, T>;
   changed: Record<string, { from: T; to: T }>;
@@ -73,13 +73,13 @@ export interface ObjectDiff<T = any> {
 /**
  * 比较两个对象的差异
  */
-export function diffObjects<T extends Record<string, any>>(
+export function diffObjects<T extends Record<string, unknown>>(
   oldObj: T,
   newObj: T,
 ): ObjectDiff {
-  const added: Record<string, any> = {};
-  const removed: Record<string, any> = {};
-  const changed: Record<string, { from: any; to: any }> = {};
+  const added: Record<string, unknown> = {};
+  const removed: Record<string, unknown> = {};
+  const changed: Record<string, { from: unknown; to: unknown }> = {};
 
   // 检查新增和变更
   for (const key in newObj) {
@@ -105,7 +105,7 @@ export function diffObjects<T extends Record<string, any>>(
 /**
  * 从对象中选取指定的属性
  */
-export function pick<T extends Record<string, any>, K extends keyof T>(
+export function pick<T extends Record<string, unknown>, K extends keyof T>(
   obj: T,
   keys: K[],
 ): Pick<T, K> {
@@ -121,7 +121,7 @@ export function pick<T extends Record<string, any>, K extends keyof T>(
 /**
  * 从对象中排除指定的属性
  */
-export function omit<T extends Record<string, any>, K extends keyof T>(
+export function omit<T extends Record<string, unknown>, K extends keyof T>(
   obj: T,
   keys: K[],
 ): Omit<T, K> {
@@ -191,9 +191,9 @@ export function deepClone<T>(
 /**
  * 浅比较两个对象是否相等
  */
-export function shallowEqual(
-  a: Record<string, any>,
-  b: Record<string, any>,
+export function shallowEqual<T extends Record<string, unknown>>(
+  a: T,
+  b: T,
 ): boolean {
   if (a === b) return true;
   if (!a || !b) return false;
@@ -215,7 +215,7 @@ export function shallowEqual(
 /**
  * 深度比较两个值是否相等
  */
-export function deepEqual(a: any, b: any): boolean {
+export function deepEqual<T>(a: T, b: T): boolean {
   if (a === b) return true;
   if (a == null || b == null) return false;
   if (typeof a !== typeof b) return false;
@@ -257,7 +257,10 @@ export function deepEqual(a: any, b: any): boolean {
     const keysA = Object.keys(a);
     const keysB = Object.keys(b);
     if (keysA.length !== keysB.length) return false;
-    return keysA.every((key) => deepEqual(a[key], b[key]));
+    return keysA.every((key) => deepEqual(
+      (a as Record<string, unknown>)[key],
+      (b as Record<string, unknown>)[key],
+    ));
   }
 
   return false;
@@ -266,33 +269,33 @@ export function deepEqual(a: any, b: any): boolean {
 /**
  * 通过路径获取对象中的值
  */
-export function get<T = any>(
-  obj: Record<string, any>,
+export function get<T = unknown>(
+  obj: Record<string, unknown>,
   path: string,
   defaultValue?: T,
 ): T | undefined {
   if (!path) return obj as T;
   const keys = path.split(".");
-  let current: any = obj;
+  let current: unknown = obj;
   for (const key of keys) {
     if (current == null) return defaultValue;
-    current = current[key];
+    current = (current as Record<string, unknown>)[key];
   }
-  return isNullish(current) ? defaultValue : current;
+  return isNullish(current) ? defaultValue : (current as T);
 }
 
 /**
  * 通过路径设置对象中的值（不修改原对象）
  */
-export function set<T extends Record<string, any>>(
+export function set<T extends Record<string, unknown>>(
   obj: T,
   path: string,
-  value: any,
+  value: unknown,
 ): T {
   if (!path) return obj;
   const keys = path.split(".");
   const result = { ...obj };
-  let current: any = result;
+  let current: Record<string, unknown> = result;
 
   for (let i = 0; i < keys.length - 1; i++) {
     const key = keys[i]!;
@@ -300,9 +303,9 @@ export function set<T extends Record<string, any>>(
     if (current[key] == null || typeof current[key] !== "object") {
       current[key] = {};
     } else {
-      current[key] = { ...current[key] };
+      current[key] = { ...current[key] as Record<string, unknown> };
     }
-    current = current[key];
+    current = current[key] as Record<string, unknown>;
   }
 
   const lastKey = keys[keys.length - 1]!;

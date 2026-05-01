@@ -65,7 +65,7 @@ export function createComponentInstance(
     data: {},
     propsOptions: normalizePropsOptions(mergedOptions.props),
     emitsOptions: normalizeEmitsOptions(mergedOptions.emits),
-    emit: NOOP as (...args: any[]) => void,
+    emit: NOOP as (event: string, ...args: unknown[]) => void,
     isMounted: false,
     isUnmounted: false,
     isDeactivated: false,
@@ -90,7 +90,7 @@ export function createComponentInstance(
   }
 
   // Create emit function bound to this instance
-  instance.emit = (event: string, ...args: any[]) =>
+  instance.emit = (event: string, ...args: unknown[]) =>
     emit(instance, event, ...args);
 
   return instance;
@@ -106,7 +106,7 @@ export function setupComponent(instance: ComponentInternalInstance): void {
   if (!vnode) return;
 
   const { children } = vnode;
-  const props = (vnode as any).props ?? null;
+  const props = (vnode.props as Record<string, unknown> | null) ?? null;
 
   // Init props
   initProps(instance, props);
@@ -121,7 +121,7 @@ export function setupComponent(instance: ComponentInternalInstance): void {
     // Async setup - mark vnode as async
     vnode.isAsyncPlaceholder = true;
     setupResult
-      .then((resolvedResult: any) => {
+      .then((resolvedResult: SetupResult) => {
         if (instance.isUnmounted) return;
         handleSetupResult(instance, resolvedResult);
         vnode.isAsyncPlaceholder = false;
@@ -152,7 +152,7 @@ function runSetup(instance: ComponentInternalInstance): SetupResult {
   } catch (err) {
     handleError(err as Error, instance, "setup function");
     // Set a no-op render to prevent silent empty rendering
-    instance.render = () => null as any;
+    instance.render = () => null as unknown as VNode;
     return undefined;
   } finally {
     setCurrentInstance(null);
@@ -213,10 +213,10 @@ export function finishComponentSetup(
  */
 export function initProps(
   instance: ComponentInternalInstance,
-  rawProps: Record<string, any> | null,
+  rawProps: Record<string, unknown> | null,
 ): void {
   const propsOptions = instance.propsOptions;
-  const props: Record<string, any> = {};
+  const props: Record<string, unknown> = {};
 
   if (!rawProps) {
     instance.props = props;
@@ -232,7 +232,7 @@ export function initProps(
   }
 
   // Collect attrs (non-declared props)
-  const attrs: Record<string, any> = {};
+  const attrs: Record<string, unknown> = {};
   for (const key in rawProps) {
     if (!hasOwn(propsOptions, key)) {
       attrs[key] = rawProps[key];
@@ -255,13 +255,13 @@ export function createSetupContext(
     attrs: instance.attrs,
     slots: instance.slots,
     emit: instance.emit,
-    expose(exposed?: Record<string, any>) {
+    expose(exposed?: Record<string, unknown>) {
       if (!exposed) {
         instance.exposed = null;
         return;
       }
       // 过滤危险 key，防止原型污染
-      const safeExposed: Record<string, any> = {};
+      const safeExposed: Record<string, unknown> = {};
       for (const key of Object.keys(exposed)) {
         if (key !== "__proto__" && key !== "constructor") {
           safeExposed[key] = exposed[key];
@@ -360,7 +360,9 @@ function mergeOptionsPair(
   parent: ComponentOptions,
   child: ComponentOptions,
 ): ComponentOptions {
-  const merged: Record<string, any> = { ...parent };
+  // 使用 Record<string, unknown> 作为中间类型以支持动态键访问，
+  // 最终通过类型断言返回 ComponentOptions
+  const merged: Record<string, unknown> = { ...parent };
 
   for (const key in child) {
     if (key === "props" || key === "emits" || key === "inject") {
@@ -375,7 +377,7 @@ function mergeOptionsPair(
       const parentVal = (parent as Record<string, unknown>)[key];
       const childVal = (child as Record<string, unknown>)[key];
       if (parentVal && childVal) {
-        merged[key] = function (this: any) {
+        merged[key] = function (this: ComponentPublicInstance) {
           const parentData = isFunction(parentVal)
             ? parentVal.call(this)
             : parentVal;
@@ -408,7 +410,7 @@ function mergeOptionsPair(
       const parentVal = (parent as Record<string, unknown>)[key];
       const childVal = (child as Record<string, unknown>)[key];
       if (parentVal && childVal) {
-        merged[key] = function (this: any) {
+        merged[key] = function (this: ComponentPublicInstance) {
           (parentVal as Function).call(this);
           (childVal as Function).call(this);
         };
@@ -446,7 +448,7 @@ export function createAppContext(): AppContext {
 /**
  * Provide a value to descendant components.
  */
-export function provide(key: string | symbol, value: any): void {
+export function provide<T = unknown>(key: string | symbol, value: T): void {
   const instance = getCurrentInstance();
   if (instance) {
     instance.provides.set(key, value);
@@ -456,7 +458,7 @@ export function provide(key: string | symbol, value: any): void {
 /**
  * Inject a value from ancestor components.
  */
-export function inject(key: string | symbol, defaultValue?: any): any {
+export function inject<T = unknown>(key: string | symbol, defaultValue?: T): T | undefined {
   const instance = getCurrentInstance();
   if (!instance) return defaultValue;
 
@@ -465,7 +467,7 @@ export function inject(key: string | symbol, defaultValue?: any): any {
   while (current) {
     const provides = current.provides;
     if (provides.has(key)) {
-      return provides.get(key);
+      return provides.get(key) as T | undefined;
     }
     current = current.parent;
   }

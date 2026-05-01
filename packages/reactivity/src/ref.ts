@@ -18,6 +18,11 @@ export interface RefLike<T = unknown> {
   value: T;
 }
 
+/** Minimal interface required by trackRefValue/triggerRefValue */
+interface TrackableRef {
+  dep: Dep;
+}
+
 export interface Ref<T = unknown> {
   value: T;
   __v_isRef: true;
@@ -39,8 +44,10 @@ class RefImpl<T> {
   // 使用 Dep 类型替代 Set<any>，提供更精确的类型约束
   public dep: Dep = createDep();
   public readonly __v_isRef = true;
+  public readonly __v_isShallow?: boolean;
 
   constructor(value: T, isShallow: boolean) {
+    this.__v_isShallow = isShallow || undefined;
     this._rawValue = isShallow ? value : toRaw(value);
     this._value = isShallow ? value : (toReactive(value as object) as T);
   }
@@ -51,7 +58,7 @@ class RefImpl<T> {
   }
 
   set value(newVal: T) {
-    const useDirectValue = (this as any).__v_isShallow;
+    const useDirectValue = this.__v_isShallow;
     newVal = useDirectValue ? newVal : toRaw(newVal);
     if (hasChanged(newVal, this._rawValue)) {
       const oldVal = this._rawValue;
@@ -92,13 +99,13 @@ class ShallowRefImpl<T> {
 
 // ==================== 追踪与触发 ====================
 
-export function trackRefValue(ref: RefLike): void {
+export function trackRefValue(ref: TrackableRef): void {
   if (getShouldTrack() && getActiveEffect()) {
     track(ref, TrackOpTypes.GET, "value");
   }
 }
 
-export function triggerRefValue(ref: RefLike, newVal?: unknown, oldVal?: unknown): void {
+export function triggerRefValue(ref: TrackableRef, newVal?: unknown, oldVal?: unknown): void {
   trigger(ref, TriggerOpTypes.SET, "value", newVal, oldVal);
 }
 
@@ -115,13 +122,13 @@ export function shallowRef<T>(value: T): ShallowRef<T> {
 }
 
 export function triggerRef<T>(ref: ShallowRef<T>): void {
-  triggerRefValue(ref as unknown as RefLike<T>, ref.value);
+  triggerRefValue(ref as unknown as TrackableRef, ref.value);
 }
 
 export { isRef } from "./shared";
 
 export function unref<T>(r: T | Ref<T>): T {
-  return isRef(r) ? (r as any).value : (r as T);
+  return isRef(r) ? (r as Ref<T>).value : (r as T);
 }
 
 export function toRef<T extends object, K extends keyof T>(
@@ -135,7 +142,7 @@ export function toRef<T extends object, K extends keyof T>(
 export function toRefs<T extends object>(
   object: T,
 ): { [K in keyof T]: Ref<T[K]> } {
-  const result: any = {} as { [K in keyof T]: Ref<T[K]> };
+  const result = {} as { [K in keyof T]: Ref<T[K]> };
   for (const key in object) {
     result[key] = toRef(object, key);
   }
@@ -167,13 +174,14 @@ class ObjectRefImpl<T extends object, K extends keyof T> {
 
 class CustomRefImpl<T> {
   public readonly __v_isRef = true;
+  public dep: Dep = createDep();
   private readonly _getter: () => T;
   private readonly _setter: (value: T) => void;
 
   constructor(factory: CustomRefFactory<T>) {
     const { get, set } = factory(
-      () => trackRefValue(this as any),
-      () => triggerRefValue(this as any),
+      () => trackRefValue(this),
+      () => triggerRefValue(this),
     );
     this._getter = get;
     this._setter = set;

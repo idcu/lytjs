@@ -24,6 +24,7 @@ class ComputedRefImpl<T> {
   private _dirty = true;
   public readonly [ComputedRefSymbol] = true;
   public readonly __v_isRef = true;
+  public readonly __v_isComputed = true as const;
   public readonly effect: ReactiveEffect<T>;
 
   constructor(
@@ -34,7 +35,7 @@ class ComputedRefImpl<T> {
     this.effect = new ReactiveEffect(getter, () => {
       if (!this._dirty) {
         this._dirty = true;
-        triggerRefValue(this as any);
+        triggerRefValue(this);
       }
     });
 
@@ -45,7 +46,7 @@ class ComputedRefImpl<T> {
   }
 
   get value(): T {
-    trackRefValue(this as any);
+    trackRefValue(this);
     if (this._dirty) {
       if (this.effect.active) {
         const value = this.effect.run();
@@ -88,5 +89,5 @@ export function computed<T>(
     setter = getterOrOptions.set;
   }
 
-  return new ComputedRefImpl(getter, setter, false) as any;
+  return new ComputedRefImpl(getter, setter, false) as ComputedRef<T> | WritableComputedRef<T>;
 }
