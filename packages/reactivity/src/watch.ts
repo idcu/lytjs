@@ -30,6 +30,11 @@ function getSource(source: WatchSource<unknown>): () => unknown {
   if (isRef(source)) return () => source.value;
   if (isReactive(source as object)) return () => traverse(source);
   if (typeof source === "function") return source as () => unknown;
+  if (__DEV__) {
+    warn(
+      `Invalid watch source: ${JSON.stringify(source)}. A watch source must be a ref, reactive object, or getter function.`,
+    );
+  }
   return NOOP;
 }
 
