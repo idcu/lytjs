@@ -66,9 +66,13 @@ export type {
   ComputedRef,
   WritableComputedRef,
   ReactiveEffectRunner,
+  /** 响应式信号类型，表示一个可读的响应式值 */
   Signal,
+  /** 计算信号类型，表示一个只读的计算响应式值 */
   ComputedSignal,
+  /** 可写信号类型，表示一个可读写的响应式值 */
   WritableSignal,
+  /** 只读信号类型 */
   ReadonlySignal,
   WatchOptions,
   WatchEffectOptions,
