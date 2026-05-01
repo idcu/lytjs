@@ -182,7 +182,13 @@ export interface ComponentInternalInstance {
   isUnmounted: boolean;
   isDeactivated: boolean;
   isKeepingAlive: boolean;
-  bum?: (() => void) | null;
+  bum?: ((...args: unknown[]) => void) | Array<(...args: unknown[]) => void> | null;
+  bm?: ((...args: unknown[]) => void) | Array<(...args: unknown[]) => void> | null;
+  m?: ((...args: unknown[]) => void) | Array<(...args: unknown[]) => void> | null;
+  bu?: ((...args: unknown[]) => void) | Array<(...args: unknown[]) => void> | null;
+  u?: ((...args: unknown[]) => void) | Array<(...args: unknown[]) => void> | null;
+  um?: ((...args: unknown[]) => void) | Array<(...args: unknown[]) => void> | null;
+  uc?: ((...args: unknown[]) => void) | Array<(...args: unknown[]) => void> | null;
   effects?: Array<{ stop: () => void }>;
   update?: () => void;
 }
@@ -196,6 +202,52 @@ export interface BaseComponentOptions {
   methods?: Record<string, (...args: any[]) => any>;
   watch?: Record<string, unknown>;
   data?: () => Record<string, unknown>;
+}
+
+// ============================================================
+// VNode 默认值与工厂函数
+// ============================================================
+
+/**
+ * VNode 默认值常量
+ * 包含所有 VNode 字段的默认值，用于 createBaseVNode 工厂函数
+ */
+export const VNODE_DEFAULTS: VNode = {
+  type: null as any,
+  key: null,
+  ref: null,
+  props: null,
+  isStatic: false,
+  isStaticRoot: false,
+  isOnce: false,
+  isAsyncPlaceholder: false,
+  isComment: false,
+  isCloned: false,
+  isBlockTree: false,
+  shapeFlag: 0,
+  patchFlag: 0,
+  dynamicProps: null,
+  dynamicChildren: null,
+  children: null,
+  component: null,
+  el: null,
+  anchor: null,
+  target: null,
+  targetAnchor: null,
+  targetStart: null,
+  loc: null,
+  __v_isVNode: true,
+};
+
+/**
+ * 创建基础 VNode，使用默认值填充未指定的字段
+ * @param overrides 需要覆盖的 VNode 字段
+ * @returns 完整的 VNode 对象
+ */
+export function createBaseVNode(
+  overrides: Partial<VNode>,
+): VNode {
+  return { ...VNODE_DEFAULTS, ...overrides } as VNode;
 }
 
 // ============================================================

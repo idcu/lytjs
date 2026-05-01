@@ -28,6 +28,7 @@
   "dependencies": {
     "@lytjs/reactivity": "workspace:*",
     "@lytjs/vdom": "workspace:*",
+    "@lytjs/common-vnode": "workspace:*",
     "@lytjs/common-is": "workspace:*",
     "@lytjs/common-scheduler": "workspace:*"
   },

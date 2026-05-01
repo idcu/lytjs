@@ -5,7 +5,7 @@ import { isString, isArray } from "@lytjs/common-is";
 import type { ComponentInternalInstance, ComponentOptions } from "./types";
 import { createComponentInstance, setupComponent } from "./component";
 import { handleError } from "./lifecycle";
-import { ShapeFlags } from "@lytjs/common-vnode";
+import { ShapeFlags, createBaseVNode } from "@lytjs/common-vnode";
 import type { VNode } from "@lytjs/common-vnode";
 
 // ==================== Types ====================
@@ -61,7 +61,7 @@ export function createKeepAliveInstance(
   props: KeepAliveProps = {},
   parent: ComponentInternalInstance | null = null,
 ): ComponentInternalInstance {
-  const vnode: VNode = {
+  const vnode: VNode = createBaseVNode({
     type: KeepAlive,
     props: {
       ...props,
@@ -69,29 +69,8 @@ export function createKeepAliveInstance(
       exclude: props.exclude,
       max: props.max,
     },
-    children: null,
-    key: null,
-    ref: null,
-    isStatic: false,
-    isStaticRoot: false,
-    isOnce: false,
-    isAsyncPlaceholder: false,
-    isComment: false,
-    isCloned: false,
-    isBlockTree: false,
     shapeFlag: ShapeFlags.STATEFUL_COMPONENT,
-    patchFlag: 0,
-    dynamicProps: null,
-    dynamicChildren: null,
-    component: null,
-    el: null,
-    anchor: null,
-    target: null,
-    targetAnchor: null,
-    targetStart: null,
-    loc: null,
-    __v_isVNode: true,
-  };
+  });
 
   const instance = createComponentInstance(vnode, parent);
   setupComponent(instance);

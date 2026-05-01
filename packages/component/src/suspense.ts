@@ -3,7 +3,7 @@
 
 import type { ComponentInternalInstance, ComponentOptions } from "./types";
 import { createComponentInstance, setupComponent } from "./component";
-import { ShapeFlags } from "@lytjs/common-vnode";
+import { ShapeFlags, createBaseVNode } from "@lytjs/common-vnode";
 import type { VNode } from "@lytjs/common-vnode";
 
 // ==================== Types ====================
@@ -15,7 +15,7 @@ export interface SuspenseProps {
   onError?: (error: Error) => void;
 }
 
-export interface SuspenseBoundary {
+export interface SuspenseAsyncState {
   isPending: boolean;
   error: Error | null;
   /** @deprecated 使用 pendingPromises 代替 */
@@ -37,7 +37,7 @@ export const Suspense: ComponentOptions = {
   },
 
   setup(_props: any, _ctx: any) {
-    const boundary: SuspenseBoundary = {
+    const boundary: SuspenseAsyncState = {
       isPending: false,
       error: null,
       promise: null,
@@ -67,7 +67,7 @@ export function createSuspenseInstance(
   props: SuspenseProps = {},
   parent: ComponentInternalInstance | null = null,
 ): ComponentInternalInstance {
-  const vnode: VNode = {
+  const vnode: VNode = createBaseVNode({
     type: Suspense,
     props: {
       timeout: props.timeout,
@@ -75,29 +75,8 @@ export function createSuspenseInstance(
       onPending: props.onPending,
       onError: props.onError,
     },
-    children: null,
-    key: null,
-    ref: null,
-    isStatic: false,
-    isStaticRoot: false,
-    isOnce: false,
-    isAsyncPlaceholder: false,
-    isComment: false,
-    isCloned: false,
-    isBlockTree: false,
     shapeFlag: ShapeFlags.SUSPENSE | ShapeFlags.STATEFUL_COMPONENT,
-    patchFlag: 0,
-    dynamicProps: null,
-    dynamicChildren: null,
-    component: null,
-    el: null,
-    anchor: null,
-    target: null,
-    targetAnchor: null,
-    targetStart: null,
-    loc: null,
-    __v_isVNode: true,
-  };
+  });
 
   const instance = createComponentInstance(vnode, parent);
   setupComponent(instance);
@@ -107,7 +86,7 @@ export function createSuspenseInstance(
 /**
  * Create a suspense boundary for managing async children.
  */
-export function createSuspenseBoundary(): SuspenseBoundary {
+export function createSuspenseBoundary(): SuspenseAsyncState {
   return {
     isPending: false,
     error: null,
@@ -125,7 +104,7 @@ export function createSuspenseBoundary(): SuspenseBoundary {
  * Returns true if this is the first pending child (transition to pending).
  */
 export function registerAsyncChild(
-  boundary: SuspenseBoundary,
+  boundary: SuspenseAsyncState,
   promise: Promise<any>,
 ): boolean {
   if (boundary.aborted) return false;
@@ -188,21 +167,21 @@ export function registerAsyncChild(
 /**
  * Check if a suspense boundary is currently pending.
  */
-export function isSuspensePending(boundary: SuspenseBoundary): boolean {
+export function isSuspensePending(boundary: SuspenseAsyncState): boolean {
   return boundary.isPending;
 }
 
 /**
  * Get the error from a suspense boundary (if any).
  */
-export function getSuspenseError(boundary: SuspenseBoundary): Error | null {
+export function getSuspenseError(boundary: SuspenseAsyncState): Error | null {
   return boundary.error;
 }
 
 /**
  * Resolve a suspense boundary manually.
  */
-export function resolveSuspense(boundary: SuspenseBoundary): void {
+export function resolveSuspense(boundary: SuspenseAsyncState): void {
   boundary.isPending = false;
   boundary.aborted = true;
   boundary.promise = null;
@@ -220,7 +199,7 @@ export function resolveSuspense(boundary: SuspenseBoundary): void {
 /**
  * Abort a suspense boundary (e.g., on unmount).
  */
-export function abortSuspense(boundary: SuspenseBoundary): void {
+export function abortSuspense(boundary: SuspenseAsyncState): void {
   boundary.aborted = true;
   boundary.isPending = false;
   boundary.promise = null;

@@ -2,13 +2,13 @@
 // Vue 3 风格的 effectScope API
 // 用于批量管理响应式副作用的创建和销毁
 
-import { type ReactiveEffect } from "./effect";
+import type { EffectScopeEntry } from "./effect-scope-registrar";
 
 export interface EffectScope {
   /** 当前 scope 是否活跃 */
   active: boolean;
   /** scope 收集的 effects */
-  effects: (ReactiveEffect | EffectScope)[];
+  effects: EffectScopeEntry[];
   /** scope 注册的清理回调 */
   cleanups: (() => void)[];
   /** 父 scope（嵌套时自动关联） */

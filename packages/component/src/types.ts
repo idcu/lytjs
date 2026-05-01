@@ -90,19 +90,16 @@ export interface AppContext {
   provides: Map<string | symbol, unknown>;
 }
 
-export interface ComponentInternalInstance {
+// ==================== ComponentInternalInstance 子接口 ====================
+
+/** 组件身份标识：type、name、uid 等 */
+export interface ComponentIdentity {
   uid: number;
   type: ComponentOptions;
-  vnode: VNode | null;
-  subTree: VNode | null;
-  props: Record<string, unknown>;
-  slots: InternalSlots;
-  ctx: ComponentPublicInstance;
-  setupState: Record<string, unknown>;
-  data: Record<string, unknown>;
-  propsOptions: Record<string, PropOptions>;
-  emitsOptions: Record<string, unknown> | null;
-  emit: (event: string, ...args: unknown[]) => void;
+}
+
+/** 组件生命周期状态：挂载/卸载标记、生命周期钩子等 */
+export interface ComponentLifecycleState {
   isMounted: boolean;
   isUnmounted: boolean;
   isDeactivated: boolean;
@@ -114,13 +111,6 @@ export interface ComponentInternalInstance {
     beforeUnmount: Set<(...args: unknown[]) => void>;
     unmounted: Set<(...args: unknown[]) => void>;
   };
-  provides: Map<string | symbol, unknown>;
-  parent: ComponentInternalInstance | null;
-  root: ComponentInternalInstance;
-  appContext: AppContext;
-  render?: RenderFunction;
-  exposed?: Record<string, unknown> | null;
-  attrs: Record<string, unknown>;
   errorCapturedHooks?: Array<
     (
       err: Error,
@@ -130,8 +120,60 @@ export interface ComponentInternalInstance {
   >;
   activatedHooks?: Array<() => void>;
   deactivatedHooks?: Array<() => void>;
+  /** beforeUnmount hooks (简写) */
+  bum?: ((...args: unknown[]) => void) | Array<(...args: unknown[]) => void> | null;
+  /** beforeMount hooks (简写) */
+  bm?: ((...args: unknown[]) => void) | Array<(...args: unknown[]) => void> | null;
+  /** mounted hooks (简写) */
+  m?: ((...args: unknown[]) => void) | Array<(...args: unknown[]) => void> | null;
+  /** beforeUpdate hooks (简写) */
+  bu?: ((...args: unknown[]) => void) | Array<(...args: unknown[]) => void> | null;
+  /** updated hooks (简写) */
+  u?: ((...args: unknown[]) => void) | Array<(...args: unknown[]) => void> | null;
+  /** unmounted hooks (简写) */
+  um?: ((...args: unknown[]) => void) | Array<(...args: unknown[]) => void> | null;
+  /** update callback (简写) */
+  uc?: ((...args: unknown[]) => void) | Array<(...args: unknown[]) => void> | null;
+}
+
+/** 组件渲染状态：render、subTree、update 等 */
+export interface ComponentRenderState {
+  vnode: VNode | null;
+  subTree: VNode | null;
+  render?: RenderFunction;
   effects?: any[];
 }
+
+/** 组件上下文状态：props、slots、attrs、emit、provides 等 */
+export interface ComponentContextState {
+  props: Record<string, unknown>;
+  slots: InternalSlots;
+  ctx: ComponentPublicInstance;
+  setupState: Record<string, unknown>;
+  data: Record<string, unknown>;
+  propsOptions: Record<string, PropOptions>;
+  emitsOptions: Record<string, unknown> | null;
+  emit: (event: string, ...args: unknown[]) => void;
+  provides: Map<string | symbol, unknown>;
+  exposed?: Record<string, unknown> | null;
+  attrs: Record<string, unknown>;
+}
+
+/** 组件层级关系：parent、root、appContext 等 */
+export interface ComponentParentState {
+  parent: ComponentInternalInstance | null;
+  root: ComponentInternalInstance;
+  appContext: AppContext;
+}
+
+// ==================== ComponentInternalInstance ====================
+
+export interface ComponentInternalInstance
+  extends ComponentIdentity,
+    ComponentLifecycleState,
+    ComponentRenderState,
+    ComponentContextState,
+    ComponentParentState {}
 
 // ==================== ComponentPublicInstance ====================
 
