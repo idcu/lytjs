@@ -122,7 +122,7 @@ export const ErrorCategory = {
 // 错误消息映射
 // ============================================================
 
-const errorMessages: Record<number, string> = {
+const errorMessages: Record<LytErrorCodes, string> = {
   [LytErrorCodes.INVALID_EXPRESSION]: "Invalid expression.",
   [LytErrorCodes.UNEXPECTED_TOKEN]: "Unexpected token.",
   [LytErrorCodes.UNEXPECTED_EOF]: "Unexpected end of expression.",
@@ -246,7 +246,10 @@ export interface SourceLocation {
  * 获取错误码对应的错误消息
  */
 export function getErrorMessage(code: number): string {
-  return errorMessages[code] ?? `unknown error code: ${code}`;
+  return (
+    (errorMessages as Record<number, string>)[code] ??
+    `unknown error code: ${code}`
+  );
 }
 
 /**
