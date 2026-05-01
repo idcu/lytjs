@@ -2,6 +2,7 @@
 // Event emission system
 
 import { isFunction, hasOwn, isArray } from "@lytjs/common-is";
+import { kebabToCamel } from "@lytjs/common-string";
 import type { ComponentInternalInstance } from "./types";
 import { handleError } from "./lifecycle";
 
@@ -28,21 +29,13 @@ export function normalizeEmitsOptions(
 }
 
 /**
- * 将 kebab-case 转换为 camelCase
- * 例如: 'update:model-value' => 'update:modelValue'
- */
-function camelize(str: string): string {
-  return str.replace(/-(\w)/g, (_, c) => (c ? c.toUpperCase() : ""));
-}
-
-/**
  * 将事件名转换为处理器 key
  * 先将 kebab-case 转为 camelCase，再首字母大写加 on 前缀
  * 例如: 'update:model-value' => 'onUpdate:modelValue'
  */
 function toHandlerKey(event: string): string {
   if (!event) return "";
-  const camelized = camelize(event);
+  const camelized = kebabToCamel(event);
   return `on${camelized[0]!.toUpperCase()}${camelized.slice(1)}`;
 }
 
@@ -59,7 +52,7 @@ export function emit(
 
   if (__DEV__ && !isEmitValid(instance, event)) {
     console.warn(
-      `[lytjs]: Component emitted event "${event}" but it is not declared in emits.`,
+      `[LytJS]: Component emitted event "${event}" but it is not declared in emits.`,
     );
   }
 
