@@ -23,9 +23,10 @@ describe("useSlots", () => {
     expect(typeof slots.default).toBe("function");
   });
 
-  it("在无组件实例中返回空对象", () => {
-    const { getCurrentInstance } = vi.mocked("@lytjs/component");
-    getCurrentInstance.mockReturnValueOnce(null);
+  it("在无组件实例中返回空对象", async () => {
+    const { getCurrentInstance } = await import("@lytjs/component");
+    const mockedGetInstance = vi.mocked(getCurrentInstance);
+    mockedGetInstance.mockReturnValueOnce(null);
     const slots = useSlots();
     expect(slots).toEqual({});
   });
@@ -37,9 +38,10 @@ describe("useAttrs", () => {
     expect(attrs).toEqual({ class: "test", id: "app" });
   });
 
-  it("在无组件实例中返回空对象", () => {
-    const { getCurrentInstance } = vi.mocked("@lytjs/component");
-    getCurrentInstance.mockReturnValueOnce(null);
+  it("在无组件实例中返回空对象", async () => {
+    const { getCurrentInstance } = await import("@lytjs/component");
+    const mockedGetInstance = vi.mocked(getCurrentInstance);
+    mockedGetInstance.mockReturnValueOnce(null);
     const attrs = useAttrs();
     expect(attrs).toEqual({});
   });
@@ -64,9 +66,10 @@ describe("useModel", () => {
     expect(mockInstance.emit).toHaveBeenCalledWith("update:value", "world");
   });
 
-  it("在无组件实例中返回 undefined", () => {
-    const { getCurrentInstance } = vi.mocked("@lytjs/component");
-    getCurrentInstance.mockReturnValueOnce(null);
+  it("在无组件实例中返回 undefined", async () => {
+    const { getCurrentInstance } = await import("@lytjs/component");
+    const mockedGetInstance = vi.mocked(getCurrentInstance);
+    mockedGetInstance.mockReturnValueOnce(null);
     const model = useModel({ count: 0 }, "count");
     expect(model.value).toBeUndefined();
   });
