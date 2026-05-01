@@ -3,7 +3,7 @@
 
 import { createVNode } from "@lytjs/vdom";
 import { createDOMRenderer } from "@lytjs/renderer";
-import { error } from "@lytjs/common-error";
+import { error, warn } from "@lytjs/common-error";
 import type {
   App,
   Plugin,
@@ -63,6 +63,14 @@ export function createApp(
         throw new Error(
           `[LytJS] App has been unmounted and cannot be remounted. Create a new app instance instead.`,
         );
+      }
+
+      if (!rootComponent) {
+        if (__DEV__) {
+          warn("App.mount() expects a root component.");
+        }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return null as any;
       }
 
       if (context._container) {
@@ -138,6 +146,28 @@ export function createApp(
       context.renderer.unmount(context._vnode);
       context._vnode = null;
       context._container = null;
+
+      // 清理插件资源：调用插件的 cleanup 方法（如果存在）
+      for (const plugin of installedPlugins) {
+        if (
+          typeof plugin !== "function" &&
+          plugin != null &&
+          typeof (plugin as unknown as Record<string, unknown>).cleanup ===
+            "function"
+        ) {
+          try {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
+            (
+              (plugin as unknown as Record<string, unknown>).cleanup as Function
+            )();
+          } catch (err) {
+            error(
+              `Plugin cleanup failed: ${typeof plugin === "object" && plugin !== null && "name" in plugin ? (plugin as { name?: string }).name : "unknown"}: ${err}`,
+            );
+          }
+        }
+      }
+      installedPlugins.clear();
 
       // 清理 app context
       context.mixins.length = 0;

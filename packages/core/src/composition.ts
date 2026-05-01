@@ -14,9 +14,10 @@ export function useSlots(): InternalSlots {
   const instance = getCurrentInstance();
   if (!instance) {
     if (__DEV__) {
-      warnOnce("useSlots() was called outside of setup().");
+      warnOnce("useSlots() called without an active component instance.");
     }
-    return {} as InternalSlots;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return { $slots: {} } as any;
   }
   return instance.slots || ({} as InternalSlots);
 }

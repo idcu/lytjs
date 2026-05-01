@@ -93,7 +93,8 @@ export class LRUCache<K, V> {
     this._size++;
 
     if (this._size > this.capacity) {
-      const removed = this.tail!;
+      const removed = this.tail;
+      if (!removed) return;
       this.removeNode(removed);
       this.map.delete(removed.key);
       this._size--;

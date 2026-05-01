@@ -176,8 +176,11 @@ export function deepClone<T>(
     return clone as T;
   }
 
-  // 普通对象
-  const clone = {} as Record<string | symbol, unknown>;
+  // 普通对象 - 保留原型链
+  const clone = Object.create(Object.getPrototypeOf(source)) as Record<
+    string | symbol,
+    unknown
+  >;
   seen.set(source, clone);
   for (const key of Reflect.ownKeys(source)) {
     const clonedValue = deepClone(

@@ -79,7 +79,7 @@ export function pathToRegex(pattern: string): RegExp {
     if (!PARAM_NAME_RE.test(name)) {
       throw new Error(
         `Invalid parameter name "${name}" in path pattern "${pattern}". ` +
-        `Parameter names must only contain word characters (a-z, A-Z, 0-9, _).`
+          `Parameter names must only contain word characters (a-z, A-Z, 0-9, _).`,
       );
     }
   }
@@ -106,7 +106,8 @@ export interface PathMatchResult {
 /**
  * 匹配路径并提取参数
  */
-const regexCache = new Map<string, RegExp>()
+const regexCache = new Map<string, RegExp>();
+const MAX_CACHE_SIZE = 100;
 
 export function matchPath(
   pattern: string,
@@ -114,10 +115,15 @@ export function matchPath(
 ): PathMatchResult | null {
   const normalized = normalizePath(path);
   const normalizedPattern = normalizePath(pattern);
-  let regex = regexCache.get(normalizedPattern)
+  let regex = regexCache.get(normalizedPattern);
   if (!regex) {
     regex = pathToRegex(pattern);
     regexCache.set(normalizedPattern, regex);
+    // LRU eviction: remove oldest entry when cache exceeds max size
+    if (regexCache.size > MAX_CACHE_SIZE) {
+      const firstKey = regexCache.keys().next().value;
+      if (firstKey) regexCache.delete(firstKey);
+    }
   }
   const match = normalized.match(regex);
   if (!match) return null;
