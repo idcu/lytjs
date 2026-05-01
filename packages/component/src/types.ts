@@ -122,19 +122,40 @@ export interface ComponentLifecycleState {
   activatedHooks?: Array<() => void>;
   deactivatedHooks?: Array<() => void>;
   /** beforeUnmount hooks (简写) */
-  bum?: ((...args: unknown[]) => void) | Array<(...args: unknown[]) => void> | null;
+  bum?:
+    | ((...args: unknown[]) => void)
+    | Array<(...args: unknown[]) => void>
+    | null;
   /** beforeMount hooks (简写) */
-  bm?: ((...args: unknown[]) => void) | Array<(...args: unknown[]) => void> | null;
+  bm?:
+    | ((...args: unknown[]) => void)
+    | Array<(...args: unknown[]) => void>
+    | null;
   /** mounted hooks (简写) */
-  m?: ((...args: unknown[]) => void) | Array<(...args: unknown[]) => void> | null;
+  m?:
+    | ((...args: unknown[]) => void)
+    | Array<(...args: unknown[]) => void>
+    | null;
   /** beforeUpdate hooks (简写) */
-  bu?: ((...args: unknown[]) => void) | Array<(...args: unknown[]) => void> | null;
+  bu?:
+    | ((...args: unknown[]) => void)
+    | Array<(...args: unknown[]) => void>
+    | null;
   /** updated hooks (简写) */
-  u?: ((...args: unknown[]) => void) | Array<(...args: unknown[]) => void> | null;
+  u?:
+    | ((...args: unknown[]) => void)
+    | Array<(...args: unknown[]) => void>
+    | null;
   /** unmounted hooks (简写) */
-  um?: ((...args: unknown[]) => void) | Array<(...args: unknown[]) => void> | null;
+  um?:
+    | ((...args: unknown[]) => void)
+    | Array<(...args: unknown[]) => void>
+    | null;
   /** update callback (简写) */
-  uc?: ((...args: unknown[]) => void) | Array<(...args: unknown[]) => void> | null;
+  uc?:
+    | ((...args: unknown[]) => void)
+    | Array<(...args: unknown[]) => void>
+    | null;
 }
 
 /** 组件渲染状态：render、subTree、update 等 */
@@ -142,7 +163,7 @@ export interface ComponentRenderState {
   vnode: VNode | null;
   subTree: VNode | null;
   render?: RenderFunction;
-  effects?: any[];
+  effects?: Array<{ stop(): void }>;
 }
 
 /** 组件上下文状态：props、slots、attrs、emit、provides 等 */
@@ -170,7 +191,8 @@ export interface ComponentParentState {
 // ==================== ComponentInternalInstance ====================
 
 export interface ComponentInternalInstance
-  extends ComponentIdentity,
+  extends
+    ComponentIdentity,
     ComponentLifecycleState,
     ComponentRenderState,
     ComponentContextState,
