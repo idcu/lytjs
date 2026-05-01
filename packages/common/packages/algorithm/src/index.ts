@@ -13,7 +13,7 @@
  * @param arr - 输入数组
  * @returns 构成 LIS 的索引数组
  */
-export function getSequence(arr: number[]): number[] {
+export function getSequence(arr: Array<string | number>): number[] {
   const len = arr.length;
   if (len === 0) return [];
 
