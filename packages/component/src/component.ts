@@ -321,32 +321,51 @@ export function defineComponent(options: ComponentOptions): ComponentOptions {
 
 /**
  * Merge component options with extends and mixins.
+ * Uses path tracking to provide detailed circular dependency warnings
+ * that include the full merge chain with component names.
  */
 function mergeOptions(
   options: ComponentOptions,
   seen = new WeakSet<ComponentOptions>(),
+  path: ComponentOptions[] = [],
 ): ComponentOptions {
   if (seen.has(options)) {
     if (__DEV__) {
+      // Build a human-readable cycle path using component names
+      const cycleStart = path.indexOf(options);
+      const cyclePath = path
+        .slice(cycleStart)
+        .map((opts, i) => {
+          const name =
+            (opts as Record<string, unknown>).name ||
+            (opts as Record<string, unknown>).__name ||
+            `anonymous#${i}`;
+          return String(name);
+        })
+        .join(" -> ");
       console.warn(
-        "[lytjs/component] Circular mixin/extends detected, skipping.",
+        `[lytjs/component] Circular mixin/extends detected: ${cyclePath} -> (cycle). Skipping.`,
       );
     }
     return { ...options };
   }
   seen.add(options);
+  path.push(options);
 
   let merged: ComponentOptions = { ...options };
 
   // Apply extends first
   if (options.extends) {
-    merged = mergeOptionsPair(mergeOptions(options.extends, seen), merged);
+    merged = mergeOptionsPair(
+      mergeOptions(options.extends, seen, [...path]),
+      merged,
+    );
   }
 
   // Then apply mixins
   if (options.mixins) {
     for (const mixin of options.mixins) {
-      merged = mergeOptionsPair(merged, mergeOptions(mixin, seen));
+      merged = mergeOptionsPair(merged, mergeOptions(mixin, seen, [...path]));
     }
   }
 
@@ -411,8 +430,8 @@ function mergeOptionsPair(
       const childVal = (child as Record<string, unknown>)[key];
       if (parentVal && childVal) {
         merged[key] = function (this: ComponentPublicInstance) {
-          (parentVal as Function).call(this);
-          (childVal as Function).call(this);
+          (parentVal as (...args: unknown[]) => unknown).call(this);
+          (childVal as (...args: unknown[]) => unknown).call(this);
         };
       } else if (childVal) {
         merged[key] = childVal;
@@ -458,7 +477,10 @@ export function provide<T = unknown>(key: string | symbol, value: T): void {
 /**
  * Inject a value from ancestor components.
  */
-export function inject<T = unknown>(key: string | symbol, defaultValue?: T): T | undefined {
+export function inject<T = unknown>(
+  key: string | symbol,
+  defaultValue?: T,
+): T | undefined {
   const instance = getCurrentInstance();
   if (!instance) return defaultValue;
 
