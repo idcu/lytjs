@@ -4,7 +4,11 @@
  */
 
 import { isString } from "@lytjs/common-is";
-import { camelToKebab, isSafeAttribute, sanitizeHTML } from "@lytjs/common-string";
+import {
+  camelToKebab,
+  isSafeAttribute,
+  sanitizeHTML,
+} from "@lytjs/common-string";
 import { warn } from "@lytjs/common-error";
 import {
   getDOMEventName,
@@ -77,6 +81,14 @@ export function patchStyle(el: Element, prev: unknown, next: unknown): void {
 
   const prevStyle = prev as Record<string, string | number> | null | undefined;
   const nextStyle = next as Record<string, string | number> | string;
+
+  if (
+    nextStyle &&
+    typeof nextStyle !== "object" &&
+    typeof nextStyle !== "string"
+  ) {
+    return;
+  }
 
   if (isString(nextStyle)) {
     if (prevStyle && !isString(prevStyle)) {
