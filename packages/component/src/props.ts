@@ -48,23 +48,26 @@ export function normalizePropsOptions(
  * Resolve prop value with default and type checking.
  * Handles Boolean casting for absent props.
  */
-export function resolvePropValue(
+export function resolvePropValue<T = unknown>(
   propOptions: PropOptions,
   value: unknown,
   _instance?: any,
   key?: string,
-): any {
+): T | undefined {
   const { type, default: defaultValue, required, validator } = propOptions;
 
   // If value is absent (undefined) and there's a default, use it
   if (value === undefined) {
     // Boolean casting: if type is Boolean and no default, default to false
-    if (type === Boolean) {
-      return false;
+    if (
+      type === Boolean ||
+      (isArray(type) && type.includes(Boolean as unknown))
+    ) {
+      return false as T | undefined;
     }
     if (defaultValue !== undefined) {
       const def = isFunction(defaultValue) ? defaultValue() : defaultValue;
-      return def;
+      return def as T | undefined;
     }
     // Check required prop
     if (required && __DEV__) {
@@ -85,7 +88,7 @@ export function resolvePropValue(
     }
   }
 
-  return value;
+  return value as T | undefined;
 }
 
 /**
