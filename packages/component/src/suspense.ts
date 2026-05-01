@@ -47,7 +47,7 @@ export const Suspense: ComponentOptions = {
     timeout: { type: Number, default: undefined },
   },
 
-  setup(_props: Record<string, unknown>, _ctx: Record<string, unknown>) {
+  setup(_props: SuspenseProps, _ctx: Record<string, unknown>) {
     const boundary: SuspenseAsyncState = {
       isPending: false,
       error: null,
@@ -147,7 +147,7 @@ export function registerAsyncChild(
           try {
             cb();
           } catch (e) {
-            console.error("[lytjs] Error in suspense resolve callback:", e);
+            console.error("[LytJS] Error in suspense resolve callback:", e);
           }
         }
       }
@@ -202,7 +202,7 @@ export function resolveSuspense(boundary: SuspenseAsyncState): void {
     try {
       cb();
     } catch (e) {
-      console.error("[lytjs] Error in suspense resolve callback:", e);
+      console.error("[LytJS] Error in suspense resolve callback:", e);
     }
   }
 }

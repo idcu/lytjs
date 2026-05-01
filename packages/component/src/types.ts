@@ -9,7 +9,7 @@ import type { BaseAppConfig } from "@lytjs/shared-types";
 /** Prop 类型构造器 */
 export type PropType<T> =
   | {
-      new (...args: any[]): T & {};
+      new (...args: unknown[]): T & {};
     }
   | { (): T };
 type PropConstructor<T> = PropType<T> | true;
@@ -121,37 +121,37 @@ export interface ComponentLifecycleState {
   >;
   activatedHooks?: Array<() => void>;
   deactivatedHooks?: Array<() => void>;
-  /** beforeUnmount hooks (简写) */
+  /** beforeUnmount hooks (简写: bum = before unmount) */
   bum?:
     | ((...args: unknown[]) => void)
     | Array<(...args: unknown[]) => void>
     | null;
-  /** beforeMount hooks (简写) */
+  /** beforeMount hooks (简写: bm = before mount) */
   bm?:
     | ((...args: unknown[]) => void)
     | Array<(...args: unknown[]) => void>
     | null;
-  /** mounted hooks (简写) */
+  /** mounted hooks (简写: m = mount) */
   m?:
     | ((...args: unknown[]) => void)
     | Array<(...args: unknown[]) => void>
     | null;
-  /** beforeUpdate hooks (简写) */
+  /** beforeUpdate hooks (简写: bu = before update) */
   bu?:
     | ((...args: unknown[]) => void)
     | Array<(...args: unknown[]) => void>
     | null;
-  /** updated hooks (简写) */
+  /** updated hooks (简写: u = update) */
   u?:
     | ((...args: unknown[]) => void)
     | Array<(...args: unknown[]) => void>
     | null;
-  /** unmounted hooks (简写) */
+  /** unmounted hooks (简写: um = unmount) */
   um?:
     | ((...args: unknown[]) => void)
     | Array<(...args: unknown[]) => void>
     | null;
-  /** update callback (简写) */
+  /** update component hooks (简写: uc = update component) */
   uc?:
     | ((...args: unknown[]) => void)
     | Array<(...args: unknown[]) => void>

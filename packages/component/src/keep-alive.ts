@@ -37,7 +37,7 @@ export const KeepAlive: ComponentOptions = {
     max: { type: Number, default: undefined },
   },
 
-  setup(_props: Record<string, unknown>, _ctx: Record<string, unknown>) {
+  setup(_props: KeepAliveProps, _ctx: Record<string, unknown>) {
     const cache: KeepAliveCache = new Map();
     const keys: Set<string> = new Set();
 
@@ -131,10 +131,8 @@ export function cacheInstance(
       if (oldestInstance) {
         deactivateInstance(oldestInstance);
         // Stop all reactive effects to prevent memory leaks
-        oldestInstance.effects?.forEach((effect: any) => {
-          if (typeof effect.stop === "function") {
-            effect.stop();
-          }
+        oldestInstance.effects?.forEach((effect) => {
+          effect.stop();
         });
       }
       cache.delete(oldestKey);
