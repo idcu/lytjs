@@ -3,9 +3,7 @@
  * 事件发射器与订阅管理工具
  */
 
-function isFunction(val: unknown): val is Function {
-  return typeof val === "function";
-}
+import { isFunction } from "@lytjs/common-is";
 
 type EventHandler<T extends unknown[] = unknown[]> = (...args: T) => void;
 

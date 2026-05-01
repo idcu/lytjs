@@ -2,7 +2,7 @@
 // HTML template parser
 
 import { NodeTypes, ElementTypes, TextModes, TagType } from "./constants";
-import { VOID_ELEMENTS } from "@lytjs/common-string";
+import { VOID_ELEMENTS, escapeRegExp } from "@lytjs/common-string";
 import type {
   RootNode,
   ElementNode,
@@ -33,9 +33,15 @@ import {
 // Parser utilities
 // ============================================================
 
-function escapeRegExp(str: string): string {
-  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
+// Pre-compiled RegExp constants (avoid re-creation on every call)
+const RE_ADVANCE_SPACES = /^[\t\r\n\f ]+/;
+const RE_DOCTYPE = /^<![\s\S]*?>/;
+const RE_END_TAG = /^<\/([a-zA-Z][a-zA-Z0-9-]*)/;
+const RE_TAG_NAME = /^([a-zA-Z][a-zA-Z0-9-]*)/;
+const RE_ATTR_NAME = /^[^\t\r\n\f />][^\t\r\n\f />=]*/;
+const RE_V_DIRECTIVE = /^v-([a-zA-Z][a-zA-Z0-9-]*)(?::(.+))?$/;
+const RE_UNQUOTED_ATTR_VALUE = /^[^\t\r\n\f >]+/;
+const RE_COMPONENT_TAG = /^[A-Z]/;
 
 function advanceBy(context: ParserContext, numberOfCharacters: number): void {
   const { source } = context;
@@ -68,7 +74,7 @@ function advancePositionWithMutation(
 }
 
 function advanceSpaces(context: ParserContext): void {
-  const match = /^[\t\r\n\f ]+/.exec(context.source);
+  const match = RE_ADVANCE_SPACES.exec(context.source);
   if (match) {
     advanceBy(context, match[0].length);
   }
@@ -150,7 +156,7 @@ function parseChildren(
           break;
         }
         if (s.startsWith("<!DOCTYPE") || s.startsWith("<!")) {
-          const match = s.match(/^<![\s\S]*?>/);
+          const match = s.match(RE_DOCTYPE);
           if (match) {
             advanceBy(context, match[0].length);
             continue;
@@ -158,7 +164,7 @@ function parseChildren(
           // DOCTYPE/声明格式异常，跳过到行尾或文件尾防止无限循环
           if (__DEV__) {
             console.warn(
-              `[lytjs] Invalid DOCTYPE/declaration at position ${context.offset}`,
+              `[LytJS] Invalid DOCTYPE/declaration at position ${context.offset}`,
             );
           }
           const lineEnd = s.indexOf("\n");
@@ -234,7 +240,7 @@ function isEnd(context: ParserContext, mode: number): boolean {
   switch (mode) {
     case TextModes.DATA:
       if (s.startsWith("</")) {
-        const match = s.match(/^<\/([a-zA-Z][a-zA-Z0-9-]*)/);
+        const match = s.match(RE_END_TAG);
         return !!match;
       }
       return !s;
@@ -399,7 +405,7 @@ function parseTag(
   const start = getCursor(context);
   advanceBy(context, 1);
 
-  const tagMatch = context.source.match(/^([a-zA-Z][a-zA-Z0-9-]*)/);
+  const tagMatch = context.source.match(RE_TAG_NAME);
   if (!tagMatch) {
     return undefined;
   }
@@ -428,7 +434,7 @@ function parseTag(
     if (attrCount > MAX_ATTRIBUTES) {
       if (__DEV__) {
         console.warn(
-          `[lytjs] Too many attributes (${attrCount}), ` +
+          `[LytJS] Too many attributes (${attrCount}), ` +
             `stopping attribute parsing to prevent infinite loop.`,
         );
       }
@@ -455,7 +461,7 @@ function parseTag(
     if (type === TagType.Start && !VOID_ELEMENTS.has(tag)) {
       if (__DEV__) {
         console.warn(
-          `[lytjs] Non-void element <${tag}> uses self-closing syntax. ` +
+          `[LytJS] Non-void element <${tag}> uses self-closing syntax. ` +
             `This is not valid HTML and may cause hydration issues. ` +
             `Use <${tag}></${tag}> instead.`,
         );
@@ -463,7 +469,7 @@ function parseTag(
       if (context.options.onError) {
         context.options.onError(
           new Error(
-            `[lytjs] Non-void element <${tag}> uses self-closing syntax. ` +
+            `[LytJS] Non-void element <${tag}> uses self-closing syntax. ` +
               `Use <${tag}></${tag}> instead.`,
           ),
         );
@@ -494,7 +500,7 @@ function parseAttribute(
 ): AttributeNode | DirectiveNode | undefined {
   const start = getCursor(context);
 
-  const match = context.source.match(/^[^\t\r\n\f />][^\t\r\n\f />=]*/);
+  const match = context.source.match(RE_ATTR_NAME);
   if (!match) {
     return undefined;
   }
@@ -513,7 +519,7 @@ function parseAttribute(
   }
 
   if (rawName.startsWith("v-")) {
-    const dirMatch = rawName.match(/^v-([a-zA-Z][a-zA-Z0-9-]*)(?::(.+))?$/);
+    const dirMatch = rawName.match(RE_V_DIRECTIVE);
     if (dirMatch) {
       return parseDirective(context, dirMatch[1]!, dirMatch[2], start);
     }
@@ -561,7 +567,7 @@ function parseAttributeValue(context: ParserContext): TextNode {
     }
     advanceBy(context, content.length + 1);
   } else {
-    const match = context.source.match(/^[^\t\r\n\f >]+/);
+    const match = context.source.match(RE_UNQUOTED_ATTR_VALUE);
     content = match ? match[0] : "";
     advanceBy(context, content.length);
   }
@@ -642,7 +648,7 @@ function parseDirective(
           endIndex >= 0 ? context.source.slice(0, endIndex) : context.source;
         advanceBy(context, valueContent.length + 1);
       } else {
-        const match = context.source.match(/^[^\t\r\n\f >]+/);
+        const match = context.source.match(RE_UNQUOTED_ATTR_VALUE);
         valueContent = match ? match[0] : "";
         advanceBy(context, valueContent.length);
       }
@@ -670,5 +676,5 @@ function parseDirective(
 // ============================================================
 
 function isComponentTag(tag: string): boolean {
-  return /^[A-Z]/.test(tag) || tag.includes("-");
+  return RE_COMPONENT_TAG.test(tag) || tag.includes("-");
 }
