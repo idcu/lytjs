@@ -245,7 +245,9 @@ export function isSameVNodeType(n1: VNode, n2: VNode): boolean {
  * 检查 VNode 是否包含指定的 patch flag
  */
 export function hasPatchFlag(vnode: VNode, flag: number): boolean {
-  return (vnode.patchFlag & flag) !== 0;
+  const pf = vnode.patchFlag;
+  if (pf === -1 /* HOISTED */ || pf === -2 /* BAIL */) return true;
+  return (pf & flag) !== 0;
 }
 
 /**

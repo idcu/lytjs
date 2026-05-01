@@ -1,11 +1,8 @@
 // src/create-app.ts
 // @lytjs/core - createApp 工厂函数
 
-import {
-  createRenderer,
-  createVNode,
-  createDOMRendererOptions,
-} from "@lytjs/vdom";
+import { createVNode } from "@lytjs/vdom";
+import { createDOMRenderer } from "@lytjs/renderer";
 import type { App, Plugin, Component, ComponentPublicInstance } from "./types";
 import { createAppContext, createContextConfig } from "./app-context";
 import {
@@ -111,8 +108,8 @@ export function createApp(
       // Save root instance reference for unmount lifecycle hooks
       context._instance = instance;
 
-      // Render using the standard renderer
-      const renderer = createRenderer(createDOMRendererOptions());
+      // Render using the enhanced renderer
+      const renderer = createDOMRenderer();
       context.renderer = renderer as any;
       context._container = container;
       context._vnode = rootVNode;

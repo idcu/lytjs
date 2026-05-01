@@ -41,6 +41,7 @@ function camelize(str: string): string {
  * 例如: 'update:model-value' => 'onUpdate:modelValue'
  */
 function toHandlerKey(event: string): string {
+  if (!event) return "";
   const camelized = camelize(event);
   return `on${camelized[0]!.toUpperCase()}${camelized.slice(1)}`;
 }

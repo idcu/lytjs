@@ -229,14 +229,15 @@ export function memoize<T extends (...args: any[]) => any>(
   const maxSize = options?.maxSize;
 
   const memoized = ((...args: Parameters<T>): ReturnType<T> => {
-    let key: string
+    let key: string | undefined;
     try {
       key = options?.resolver
         ? options.resolver(...args)
         : JSON.stringify(args.length === 1 ? args[0] : args);
     } catch {
-      key = String(args)
+      key = undefined;
     }
+    if (!key) return fn(...args);
     if (internalCache.has(key)) {
       return internalCache.get(key)!;
     }
