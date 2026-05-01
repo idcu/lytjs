@@ -23,6 +23,7 @@ class ComputedRefImpl<T> {
   public dep: Dep = createDep();
   private _value!: T;
   private _dirty = true;
+  private _initialized = false;
   public readonly [ComputedRefSymbol] = true;
   public readonly __v_isRef = true;
   public readonly __v_isComputed = true as const;
@@ -50,12 +51,19 @@ class ComputedRefImpl<T> {
     trackRefValue(this);
     if (this._dirty) {
       if (this.effect.active) {
-        const value = this.effect.run();
+        try {
+          const value = this.effect.run();
 
-        if (value !== undefined) {
-          this._value = value;
+          this._value = value as T;
+          this._dirty = false;
+          this._initialized = true;
+        } catch (e) {
+          if (this._initialized) {
+            // Already had a cached value; mark as clean so next access returns cached value
+            this._dirty = false;
+          }
+          throw e;
         }
-        this._dirty = false;
       } else if (__DEV__) {
         warn(
           "Computed value was accessed after its effect was stopped. Returning last cached value.",
