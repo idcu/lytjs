@@ -50,12 +50,14 @@ class ComputedRefImpl<T> {
     if (this._dirty) {
       if (this.effect.active) {
         const value = this.effect.run();
-         
-        this._value = value!;
+
+        if (value !== undefined) {
+          this._value = value;
+        }
         this._dirty = false;
       } else if (__DEV__) {
         console.warn(
-          'Computed value was accessed after its effect was stopped. Returning last cached value.',
+          "Computed value was accessed after its effect was stopped. Returning last cached value.",
         );
       }
     }
@@ -89,5 +91,7 @@ export function computed<T>(
     setter = getterOrOptions.set;
   }
 
-  return new ComputedRefImpl(getter, setter, false) as ComputedRef<T> | WritableComputedRef<T>;
+  return new ComputedRefImpl(getter, setter, false) as
+    | ComputedRef<T>
+    | WritableComputedRef<T>;
 }
