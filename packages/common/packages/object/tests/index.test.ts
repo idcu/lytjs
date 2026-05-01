@@ -190,6 +190,24 @@ describe('@lytjs/common-object', () => {
       expect(cloned).toEqual(date)
       expect(cloned).not.toBe(date)
     })
+
+    it('should clone objects with Symbol keys', () => {
+      const sym = Symbol('key')
+      const original = { [sym]: 'symbol-value', regular: 'regular-value' }
+      const cloned = deepClone(original)
+      expect(cloned[sym]).toBe('symbol-value')
+      expect(cloned.regular).toBe('regular-value')
+      expect(cloned).not.toBe(original)
+    })
+
+    it('should deep clone Symbol key values that are objects', () => {
+      const sym = Symbol('nested')
+      const nested = { x: 1 }
+      const original = { [sym]: nested }
+      const cloned = deepClone(original)
+      expect(cloned[sym]).toEqual({ x: 1 })
+      expect(cloned[sym]).not.toBe(nested)
+    })
   })
 
   // shallowEqual

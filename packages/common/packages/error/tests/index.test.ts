@@ -74,6 +74,26 @@ describe('@lytjs/common-error', () => {
     it('should return component category for component codes', () => {
       expect(getCategory(LytErrorCodes.INVALID_PROP_TYPE)).toBe(ErrorCategory.COMPONENT)
     })
+
+    it('should return runtime for code 0', () => {
+      expect(getCategory(0)).toBe(ErrorCategory.RUNTIME)
+    })
+
+    it('should return runtime for negative codes', () => {
+      expect(getCategory(-1)).toBe(ErrorCategory.RUNTIME)
+    })
+
+    it('should return runtime for unknown high codes', () => {
+      expect(getCategory(9999)).toBe(ErrorCategory.RUNTIME)
+    })
+
+    it('should correctly categorize RENDER_ERROR as RENDERER not RUNTIME', () => {
+      // RENDER_ERROR (2002) falls in [2000, 3000) RUNTIME range
+      // but should be categorized as RENDERER due to special handling
+      expect(getCategory(LytErrorCodes.RENDER_ERROR)).toBe(ErrorCategory.RENDERER)
+      // A nearby runtime code should still be RUNTIME
+      expect(getCategory(2001)).toBe(ErrorCategory.RUNTIME)
+    })
   })
 
   describe('LytError', () => {
