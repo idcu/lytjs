@@ -3,6 +3,7 @@
 
 import { isFunction, hasOwn, isArray } from "@lytjs/common-is";
 import { kebabToCamel } from "@lytjs/common-string";
+import { warn } from "@lytjs/common-error";
 import type { ComponentInternalInstance } from "./types";
 import { handleError } from "./lifecycle";
 
@@ -51,8 +52,8 @@ export function emit(
   if (instance.isUnmounted) return;
 
   if (__DEV__ && !isEmitValid(instance, event)) {
-    console.warn(
-      `[LytJS]: Component emitted event "${event}" but it is not declared in emits.`,
+    warn(
+      `Component emitted event "${event}" but it is not declared in emits.`,
     );
   }
 

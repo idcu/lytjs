@@ -3,6 +3,7 @@
 // 用于批量管理响应式副作用的创建和销毁
 
 import type { EffectScopeEntry } from "./effect-scope-registrar";
+import { warn, error } from "@lytjs/common-error";
 
 export interface EffectScope {
   /** 当前 scope 是否活跃 */
@@ -81,14 +82,14 @@ export function effectScope(detached?: boolean): EffectScope {
         try {
           effect.stop();
         } catch (e) {
-          console.error("[LytJS] Error stopping effect in scope:", e);
+          error("Error stopping effect in scope:", e);
         }
       }
       for (const cleanup of this.cleanups) {
         try {
           cleanup();
         } catch (e) {
-          console.error("[LytJS] Error running cleanup in scope:", e);
+          error("Error running cleanup in scope:", e);
         }
       }
       this.effects.length = 0;
@@ -131,8 +132,8 @@ export function onScopeDispose(fn: () => void): void {
   if (activeEffectScope) {
     activeEffectScope.cleanups.push(fn);
   } else if (__DEV__) {
-    console.warn(
-      "[LytJS] onScopeDispose() was called when there was no active effect scope to be associated with.",
+    warn(
+      "onScopeDispose() was called when there was no active effect scope to be associated with.",
     );
   }
 }

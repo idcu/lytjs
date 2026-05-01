@@ -10,6 +10,7 @@ import {
   isMap,
   isSet,
 } from "@lytjs/common-is";
+import { warn } from "@lytjs/common-error";
 import {
   ReactiveFlags,
   TrackOpTypes,
@@ -121,7 +122,7 @@ function createReactiveObject(
 ) {
   if (!isObject(target)) {
     if (__DEV__) {
-      console.warn(`value cannot be made reactive: ${String(target)}`);
+      warn(`value cannot be made reactive: ${String(target)}`);
     }
     return target;
   }
@@ -200,7 +201,7 @@ function createMutableHandler(
     set(target, key, value, receiver) {
       if (isReadonly) {
         if (__DEV__) {
-          console.warn(
+          warn(
             `Set operation on key "${String(key)}" failed: target is readonly.`,
             target,
           );
@@ -239,7 +240,7 @@ function createMutableHandler(
     deleteProperty(target, key) {
       if (isReadonly) {
         if (__DEV__) {
-          console.warn(
+          warn(
             `Delete operation on key "${String(key)}" failed: target is readonly.`,
             target,
           );
@@ -378,7 +379,7 @@ function createCollectionHandler(
           if (MUTATING_METHODS.has(key as string)) {
             return (..._args: unknown[]) => {
               if (__DEV__) {
-                console.warn(
+                warn(
                   `Operation "${String(key)}" failed: target is shallow readonly.`,
                 );
               }

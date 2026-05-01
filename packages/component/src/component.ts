@@ -11,6 +11,7 @@ import {
   EMPTY_OBJ,
   isPromise,
 } from "@lytjs/common-is";
+import { warn } from "@lytjs/common-error";
 import type {
   ComponentOptions,
   ComponentInternalInstance,
@@ -343,8 +344,8 @@ function mergeOptions(
           return String(name);
         })
         .join(" -> ");
-      console.warn(
-        `[lytjs/component] Circular mixin/extends detected: ${cyclePath} -> (cycle). Skipping.`,
+      warn(
+        `Circular mixin/extends detected: ${cyclePath} -> (cycle). Skipping.`,
       );
     }
     return { ...options };

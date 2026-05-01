@@ -3,6 +3,7 @@
 
 import { getCurrentInstance } from "@lytjs/component";
 import { computed } from "@lytjs/reactivity";
+import { warnOnce } from "@lytjs/common-error";
 import type { WritableComputedRef } from "@lytjs/reactivity";
 import type { InternalSlots } from "./types";
 
@@ -13,7 +14,7 @@ export function useSlots(): InternalSlots {
   const instance = getCurrentInstance();
   if (!instance) {
     if (__DEV__) {
-      console.warn("[LytJS] useSlots() was called outside of setup().");
+      warnOnce("useSlots() was called outside of setup().");
     }
     return {} as InternalSlots;
   }
@@ -27,7 +28,7 @@ export function useAttrs(): Record<string, unknown> {
   const instance = getCurrentInstance();
   if (!instance) {
     if (__DEV__) {
-      console.warn("[LytJS] useAttrs() was called outside of setup().");
+      warnOnce("useAttrs() was called outside of setup().");
     }
     return {};
   }

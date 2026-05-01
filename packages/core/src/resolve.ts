@@ -3,6 +3,7 @@
 
 import type { Component, Directive } from "./types";
 import { getCurrentInstance } from "@lytjs/component";
+import { warn } from "@lytjs/common-error";
 
 /**
  * 解析组件：从当前组件实例的 components 选项和全局注册中查找
@@ -11,8 +12,8 @@ export function resolveComponent(name: string): Component | undefined {
   const instance = getCurrentInstance();
   if (!instance) {
     if (__DEV__) {
-      console.warn(
-        `[lytjs/core] resolveComponent("${name}") was called outside of a component setup function. ` +
+      warn(
+        `resolveComponent("${name}") was called outside of a component setup function. ` +
           `Global components will not be resolved.`,
       );
     }
@@ -32,8 +33,8 @@ export function resolveComponent(name: string): Component | undefined {
   }
 
   if (__DEV__) {
-    console.warn(
-      `[lytjs/core] Failed to resolve component "${name}". ` +
+    warn(
+      `Failed to resolve component "${name}". ` +
         `If this is a native HTML element, register it as a component.`,
     );
   }
@@ -47,8 +48,8 @@ export function resolveDirective(name: string): Directive | undefined {
   const instance = getCurrentInstance();
   if (!instance) {
     if (__DEV__) {
-      console.warn(
-        `[lytjs/core] resolveDirective("${name}") was called outside of a component setup function. ` +
+      warn(
+        `resolveDirective("${name}") was called outside of a component setup function. ` +
           `Global directives will not be resolved.`,
       );
     }
@@ -68,8 +69,8 @@ export function resolveDirective(name: string): Directive | undefined {
   }
 
   if (__DEV__) {
-    console.warn(
-      `[lytjs/core] Failed to resolve directive "${name}".`,
+    warn(
+      `Failed to resolve directive "${name}".`,
     );
   }
   return undefined;

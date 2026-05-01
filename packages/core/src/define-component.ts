@@ -13,6 +13,7 @@ import {
   onBeforeUnmount,
 } from "@lytjs/component";
 import { shallowRef, ref } from "@lytjs/reactivity";
+import { warn } from "@lytjs/common-error";
 import { h } from "./h";
 
 /**
@@ -55,7 +56,7 @@ export function defineAsyncComponent(
   const retry = () => {
     if (retries >= MAX_RETRIES) {
       if (__DEV__) {
-        console.warn(`AsyncComponent: max retries (${MAX_RETRIES}) exceeded.`);
+        warn(`AsyncComponent: max retries (${MAX_RETRIES}) exceeded.`);
       }
       error.value = new Error(
         `[lytjs/core] AsyncComponent: max retries (${MAX_RETRIES}) exceeded.`,

@@ -13,6 +13,7 @@ import {
   isNullish,
 } from "@lytjs/common-is";
 import { camelToKebab } from "@lytjs/common-string";
+import { warn } from "@lytjs/common-error";
 import { escapeHtml, isBooleanAttr, isVoidElement } from "../utils";
 
 // ============================================================
@@ -97,7 +98,7 @@ function renderElementToString(vnode: VNode): string {
 
   if (!isValidHTMLElementTag(tag)) {
     if (__DEV__) {
-      console.warn(`[LytJS] Invalid SSR element tag: "${tag}"`);
+      warn(`Invalid SSR element tag: "${tag}"`);
     }
     return "";
   }
@@ -250,8 +251,8 @@ function renderAttributeToString(key: string, value: unknown): string {
   if (URL_ATTRS.has(key)) {
     if (!isSafeURL(String(value))) {
       if (__DEV__) {
-        console.warn(
-          `[LytJS SSR] Blocked potentially dangerous attribute: ${key}="${String(value)}"`,
+        warn(
+          `Blocked potentially dangerous attribute: ${key}="${String(value)}"`,
         );
       }
       return "";

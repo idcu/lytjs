@@ -3,6 +3,7 @@
 
 import { createVNode } from "@lytjs/vdom";
 import { createDOMRenderer } from "@lytjs/renderer";
+import { error } from "@lytjs/common-error";
 import type { App, Plugin, Component, ComponentPublicInstance } from "./types";
 import { createAppContext, createContextConfig } from "./app-context";
 import {
@@ -39,8 +40,8 @@ export function createApp(
         }
         installedPlugins.add(plugin);
       } catch (err) {
-        console.error(
-          `[LytJS] Plugin failed to install: ${typeof plugin === "function" ? plugin.name || "anonymous function" : (plugin as Plugin).install?.name || "plugin"}`,
+        error(
+          `Plugin failed to install: ${typeof plugin === "function" ? plugin.name || "anonymous function" : (plugin as Plugin).install?.name || "plugin"}`,
           err,
         );
         throw err;
