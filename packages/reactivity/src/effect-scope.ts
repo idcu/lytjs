@@ -65,7 +65,12 @@ export function effectScope(detached?: boolean): EffectScope {
     detached: !!detached,
 
     run(fn) {
-      if (!this.active) return;
+      if (!this.active) {
+        if (__DEV__) {
+          warn(`EffectScope is not active. Cannot run fn.`);
+        }
+        return;
+      }
       const prevScope = activeEffectScope;
       // eslint-disable-next-line @typescript-eslint/no-this-alias
       activeEffectScope = this;

@@ -51,6 +51,16 @@ export {
 } from "./effect";
 
 export {
+  // signal
+  signal,
+  computedSignal,
+  readonlySignal,
+  set,
+  update,
+  valueOf,
+} from "./signal";
+
+export {
   // effectScope
   effectScope,
   getCurrentScope,

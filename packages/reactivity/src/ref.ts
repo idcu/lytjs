@@ -3,7 +3,13 @@
 // 复用 @lytjs/common-is: isObject, hasChanged
 
 import { isObject, hasChanged } from "@lytjs/common-is";
-import { track, trigger, getActiveEffect, getShouldTrack, createDep } from "./effect";
+import {
+  track,
+  trigger,
+  getActiveEffect,
+  getShouldTrack,
+  createDep,
+} from "./effect";
 import type { Dep } from "./effect";
 import { TrackOpTypes, TriggerOpTypes } from "./constants";
 import { toRaw, isRef } from "./shared";
@@ -49,6 +55,8 @@ class RefImpl<T> {
   constructor(value: T, isShallow: boolean) {
     this.__v_isShallow = isShallow || undefined;
     this._rawValue = isShallow ? value : toRaw(value);
+    // toReactive 仅对对象类型生效，非对象值直接赋值。
+    // 此处的 as object 断言是安全的，因为 toReactive 内部会先做 isObject 检查。
     this._value = isShallow ? value : (toReactive(value as object) as T);
   }
 
@@ -63,7 +71,11 @@ class RefImpl<T> {
     if (hasChanged(newVal, this._rawValue)) {
       const oldVal = this._rawValue;
       this._rawValue = newVal;
-      this._value = useDirectValue ? newVal : (toReactive(newVal as object) as T);
+      // toReactive 仅对对象类型生效，非对象值直接赋值。
+      // 此处的 as object 断言是安全的，因为 toReactive 内部会先做 isObject 检查。
+      this._value = useDirectValue
+        ? newVal
+        : (toReactive(newVal as object) as T);
       triggerRefValue(this, newVal, oldVal);
     }
   }
@@ -105,7 +117,11 @@ export function trackRefValue(ref: TrackableRef): void {
   }
 }
 
-export function triggerRefValue(ref: TrackableRef, newVal?: unknown, oldVal?: unknown): void {
+export function triggerRefValue(
+  ref: TrackableRef,
+  newVal?: unknown,
+  oldVal?: unknown,
+): void {
   trigger(ref, TriggerOpTypes.SET, "value", newVal, oldVal);
 }
 
@@ -203,6 +219,6 @@ type CustomRefFactory<T> = (
   trigger: () => void,
 ) => { get: () => T; set: (value: T) => void };
 
-function toReactive<T extends object>(value: T): T {
-  return isObject(value) ? reactive(value as object) as T : value;
+function toReactive<T>(value: T): T {
+  return isObject(value) ? (reactive(value as object) as T) : value;
 }

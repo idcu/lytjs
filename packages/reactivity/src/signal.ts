@@ -22,6 +22,8 @@ export interface Signal<T = unknown> {
 
 export interface ComputedSignal<T = unknown> {
   (): T;
+  /** 停止计算信号的依赖追踪和更新 */
+  stop?: () => void;
   readonly [ComputedSignalSymbol]: true;
 }
 
@@ -46,6 +48,8 @@ export function signal<T>(initialValue: T): WritableSignal<T> {
   const signalFn = function signalFn(valueOrNothing?: T): T | void {
     if (arguments.length > 0) {
       if (hasChanged(valueOrNothing, store[SIGNAL_KEY])) {
+        // valueOrNothing 的类型由泛型 T 约束，运行时由 hasChanged 保证值比较正确。
+        // 此处的 as T 断言是安全的：调用方通过 WritableSignal<T> 的函数签名保证类型一致性。
         store[SIGNAL_KEY] = valueOrNothing as T;
         trigger(store, TriggerOpTypes.SET, SIGNAL_KEY, valueOrNothing);
       }

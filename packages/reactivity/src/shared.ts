@@ -8,25 +8,8 @@ import type { RefLike } from "@lytjs/shared-types";
 // Re-export RefLike for downstream consumers
 export type { RefLike } from "@lytjs/shared-types";
 
-/**
- * 判断一个值是否发生了变化
- *
- * 使用 `Object.is` 进行严格相等比较，与 `===` 不同的是：
- * - `Object.is(NaN, NaN)` 为 `true`（`===` 为 `false`）
- * - `Object.is(+0, -0)` 为 `false`（`===` 为 `true`）
- *
- * 边界情况：
- * - 如果两个值都为 `undefined`，返回 `false`（未变化）
- * - 如果两个值都为 `null`，返回 `false`（未变化）
- * - 如果 `value` 或 `oldValue` 为 `NaN`，只有两者都为 `NaN` 时才返回 `false`
- * - 对象引用比较：只有同一个引用才认为未变化，内容相同的不同对象视为已变化
- *
- * @param value - 新值
- * @param oldValue - 旧值
- * @returns 如果值发生了变化返回 `true`，否则返回 `false`
- */
-export const hasChanged = (value: unknown, oldValue: unknown): boolean =>
-  !Object.is(value, oldValue);
+import { hasChanged } from "@lytjs/common-is";
+export { hasChanged };
 
 /**
  * toRaw 遍历时的最大深度限制，防止异常的代理链导致无限循环

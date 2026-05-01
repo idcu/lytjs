@@ -197,14 +197,7 @@ export class ReactiveEffect<T = unknown> {
 
   run(): T | undefined {
     if (!this.active) {
-      try {
-        return this.fn();
-      } catch (e) {
-        if (__DEV__) {
-          warn(`Error running inactive effect: ${String(e)}`);
-        }
-        throw e;
-      }
+      return undefined;
     }
 
     // 在重新执行前调用 cleanup
@@ -398,6 +391,7 @@ export function isIntegerKey(key: unknown): boolean {
     typeof key === "string" &&
     key !== "NaN" &&
     key[0] !== "-" &&
-    "" + parseInt(key, 10) === key
+    "" + parseInt(key, 10) === key &&
+    Number.isSafeInteger(Number(key))
   );
 }
