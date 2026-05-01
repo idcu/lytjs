@@ -168,4 +168,16 @@ describe('computed', () => {
     expect(count.value).toBe(2);
     expect(doubled.value).toBe(4);
   });
+
+  it('should handle circular dependency gracefully', () => {
+    const count = ref(0)
+    // A depends on B, B depends on A - should not infinite loop
+    const a = computed(() => count.value + b.value)
+    const b = computed(() => count.value * 2)
+    expect(a.value).toBe(0)
+    expect(b.value).toBe(0)
+    count.value = 1
+    expect(a.value).toBe(3)
+    expect(b.value).toBe(2)
+  });
 });
