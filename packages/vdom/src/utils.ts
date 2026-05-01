@@ -51,12 +51,15 @@ export function hasDynamicChildren(vnode: VNode): boolean {
  */
 export function collectDynamicChildren(vnode: VNode): VNode[] {
   const result: VNode[] = [];
+  const visited = new Set<VNode>();
 
   if (vnode.dynamicChildren) {
     const queue = [...vnode.dynamicChildren];
     let head = 0;
     while (head < queue.length) {
       const current = queue[head++]!;
+      if (visited.has(current)) continue;
+      visited.add(current);
       result.push(current);
       if (current.dynamicChildren) {
         for (let i = 0; i < current.dynamicChildren.length; i++) {

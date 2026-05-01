@@ -93,7 +93,8 @@ export type WritableComputedRef<T = unknown> = ComputedRef<T> & {
 
 // ==================== 工具类型 ====================
 
-export type UnwrapRef<T> = T extends Ref<infer V> ? UnwrapRef<V> : T;
+export type UnwrapRef<T> =
+  T extends ShallowRef<infer V> ? V : T extends Ref<infer V> ? UnwrapRef<V> : T;
 export type UnwrapNestedRefs<T> =
   T extends Ref<infer V>
     ? UnwrapRef<V>

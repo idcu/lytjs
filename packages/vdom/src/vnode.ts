@@ -115,6 +115,10 @@ export function cloneVNode(
   const cloned: VNode = {
     ...vnode,
     isCloned: true,
+    // Shallow clone array children to prevent shared mutation
+    children: Array.isArray(vnode.children)
+      ? [...vnode.children]
+      : vnode.children,
     // Deep clone dynamic children reference (not the array itself)
     dynamicChildren: vnode.dynamicChildren ? [...vnode.dynamicChildren] : null,
   };

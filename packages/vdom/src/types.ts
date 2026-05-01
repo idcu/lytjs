@@ -24,13 +24,22 @@ export type HostNode = Node;
 // ============================================================
 
 /** Component interface with internal marker */
-export interface Component {
+export interface Component<P = Record<string, unknown>, RawBindings = {}> {
   __v_isComponent: true;
   name?: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  setup?: (...args: any[]) => any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  render?: (...args: any[]) => any;
+  setup?: (
+    props: P,
+    ctx: {
+      attrs: Record<string, unknown>;
+      slots: Record<string, unknown>;
+      emit: (...args: unknown[]) => void;
+    },
+  ) => RawBindings | void;
+  render?: (ctx: {
+    props: P;
+    slots: Record<string, unknown>;
+    [key: string]: unknown;
+  }) => unknown;
   props?: Record<string, unknown>;
   emits?: string[] | Record<string, unknown>;
 }
