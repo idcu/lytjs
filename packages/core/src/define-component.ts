@@ -47,6 +47,8 @@ export function defineAsyncComponent(
   const error = ref<Error | undefined>(undefined);
   const loading = ref(false);
   let retries = 0;
+  let showLoading = false;
+  let delayTimer: ReturnType<typeof setTimeout> | null = null;
 
   const MAX_RETRIES = 3;
   const retry = () => {
@@ -68,11 +70,16 @@ export function defineAsyncComponent(
 
   const load = (): Promise<Component> => {
     loading.value = true;
+    showLoading = false;
+    if (delayTimer) clearTimeout(delayTimer);
+    delayTimer = setTimeout(() => { showLoading = true; }, delay);
     return loader()
       .then((comp) => {
         loadedComponent.value = comp;
         error.value = undefined;
         loading.value = false;
+        if (delayTimer) { clearTimeout(delayTimer); delayTimer = null; }
+        showLoading = false;
         // load 成功后清除 timeout，避免不必要的超时回调
         if (timeoutId !== null) {
           clearTimeout(timeoutId);
@@ -173,7 +180,7 @@ export function defineAsyncComponent(
       if (error.value && errorComponent) {
         return h(errorComponent);
       }
-      if (loading.value && loadingComponent) {
+      if (showLoading && loadingComponent) {
         return h(loadingComponent);
       }
       return null;

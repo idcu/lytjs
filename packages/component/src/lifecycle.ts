@@ -262,5 +262,14 @@ export function handleError(
     current = current.parent;
   }
 
+  // If error was not handled by any component, try app-level errorHandler
+  if (instance) {
+    const appErrorHandler = instance.root.appContext?.config?.errorHandler;
+    if (typeof appErrorHandler === "function") {
+      appErrorHandler(err, instance, info);
+      return true;
+    }
+  }
+
   return false;
 }

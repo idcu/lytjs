@@ -58,7 +58,6 @@ function advancePositionWithMutation(
       // Skip \n in \r\n sequence
       if (source.charCodeAt(i + 1) === 10) {
         i++;
-        context.offset++;
       }
     } else {
       context.column++;

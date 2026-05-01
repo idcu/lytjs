@@ -61,3 +61,4 @@ export function getEnvInfo(): EnvInfo {
     userAgent: browser ? navigator.userAgent : "",
   };
 }
+

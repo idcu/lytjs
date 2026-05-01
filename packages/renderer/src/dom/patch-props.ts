@@ -300,7 +300,7 @@ function sanitizeHTML(str: string): string {
       const value = dq ?? sq ?? "";
       // Strip whitespace / null bytes / control chars that could hide the scheme
       // eslint-disable-next-line no-control-regex
-      const cleaned = value.replace(/[\u0000-\u0020]+/g, "").toLowerCase();
+      const cleaned = value.replace(/[\u0000-\u0020\u00A0\u1680\u2000-\u200B\u2028\u2029\u202F\u205F\u3000\uFEFF]+/g, "").toLowerCase();
       if (/^(javascript|vbscript|data|mhtml|x-javascript)\s*:/i.test(cleaned)) {
         return `${attr}=""`;
       }

@@ -204,6 +204,7 @@ export function getSuspenseError(boundary: SuspenseBoundary): Error | null {
  */
 export function resolveSuspense(boundary: SuspenseBoundary): void {
   boundary.isPending = false;
+  boundary.aborted = true;
   boundary.promise = null;
   boundary.error = null;
   boundary.pendingPromises.clear();

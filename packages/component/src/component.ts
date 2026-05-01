@@ -151,6 +151,8 @@ function runSetup(instance: ComponentInternalInstance): SetupResult {
     return result;
   } catch (err) {
     handleError(err as Error, instance, "setup function");
+    // Set a no-op render to prevent silent empty rendering
+    instance.render = () => null as any;
     return undefined;
   } finally {
     setCurrentInstance(null);

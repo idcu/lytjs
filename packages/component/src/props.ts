@@ -13,8 +13,6 @@ import {
 } from "@lytjs/common-is";
 import type { PropOptions } from "./types";
 
-declare const __DEV__: boolean;
-
 /**
  * Normalize props definition into a consistent Record<string, PropOptions> format.
  * Handles array-based props (e.g., ['a', 'b']) and object-based props.

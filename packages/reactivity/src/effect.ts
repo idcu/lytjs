@@ -206,6 +206,7 @@ export class ReactiveEffect<T = any> {
       this._cleanups.length = 0;
     }
 
+    const prevShouldTrack = shouldTrack;
     try {
       this.parent = activeEffect;
       // eslint-disable-next-line @typescript-eslint/no-this-alias
@@ -217,7 +218,7 @@ export class ReactiveEffect<T = any> {
     } finally {
       _trackDepth--;
       activeEffect = this.parent;
-      shouldTrack = activeEffect ? activeEffect.allowRecurse !== false : true;
+      shouldTrack = prevShouldTrack;
       this.parent = undefined;
     }
   }

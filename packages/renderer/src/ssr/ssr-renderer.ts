@@ -56,9 +56,9 @@ function renderVNodeToString(vnode: VNode): string {
   if (type === Comment) {
     const text = isFunction(children) ? "" : String(children ?? "");
     // 转义 <!-- 和 --> 防止注释注入导致 HTML 结构破坏
-    let safe = text.replace(/<!--/g, "&lt;!--").replace(/-->/g, "--&gt;");
-    // Sanitize double-dash in comment content to prevent invalid HTML comments
-    safe = safe.replace(/--/g, "- -");
+    // Sanitize double-dash first, then escape comment delimiters
+    let safe = text.replace(/--/g, "- -");
+    safe = safe.replace(/<!--/g, "&lt;!--").replace(/-->/g, "--&gt;");
     return `<!--${safe}-->`;
   }
 

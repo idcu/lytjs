@@ -120,6 +120,7 @@ export function trim(str: string): string {
  * 去除首尾指定字符
  */
 export function trimChars(str: string, chars: string): string {
+  if (!chars) return str;
   // 将 ] 和 - 放在字符类开头，避免在字符类中间需要转义
   // 先从 chars 中提取 ] 和 -，再对其余字符进行标准转义
   const specialChars: string[] = [];

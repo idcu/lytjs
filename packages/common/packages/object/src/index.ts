@@ -147,7 +147,7 @@ export function deepClone<T>(
 
   // 特殊对象类型
   if (source instanceof Date) return new Date(source.getTime()) as T;
-  if (source instanceof RegExp) return new RegExp(source) as T;
+  if (source instanceof RegExp) return new RegExp(source.source, source.flags) as T;
   if (source instanceof Map) {
     const clone = new Map();
     seen.set(source, clone);
@@ -286,12 +286,14 @@ export function set<T extends Record<string, any>>(
   value: any,
 ): T {
   if (!path) return obj;
+  const DANGEROUS_KEYS = new Set(["__proto__", "constructor", "prototype"]);
   const keys = path.split(".");
   const result = { ...obj };
   let current: any = result;
 
   for (let i = 0; i < keys.length - 1; i++) {
     const key = keys[i]!;
+    if (DANGEROUS_KEYS.has(key)) return obj as T;
     if (current[key] == null || typeof current[key] !== "object") {
       current[key] = {};
     } else {
