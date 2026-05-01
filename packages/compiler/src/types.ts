@@ -370,7 +370,6 @@ export interface TransformContext {
 
 export interface CodegenContext {
   source: string;
-  code: string;
   line: number;
   column: number;
   offset: number;

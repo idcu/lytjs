@@ -8,9 +8,14 @@ import type {
   ElementNode,
   TransformContext,
 } from "../types";
-import { createSimpleExpression, createCallExpression, createCompoundExpression } from "../ast";
+import {
+  createSimpleExpression,
+  createCallExpression,
+  createCompoundExpression,
+} from "../ast";
 import { getExpContent, findDirective } from "./helpers";
 import { transformElement } from "./transform-element";
+import { warn } from "@lytjs/common-error";
 
 export function transformFor(
   node: RootNode | TemplateChildNode,
@@ -43,11 +48,25 @@ export function transformFor(
   if (left.startsWith("(") && left.endsWith(")")) {
     const inner = left.slice(1, -1).trim();
     const parts = inner.split(",").map((p: string) => p.trim());
+    if (parts.length > 2) {
+      if (__DEV__) {
+        warn(
+          `v-for does not support destructuring syntax. Use (item, index) in list instead.`,
+        );
+      }
+    }
     itemVar = parts[0] ?? "item";
     indexVar = parts[1];
   } else if (left.startsWith("[") && left.endsWith("]")) {
     const inner = left.slice(1, -1).trim();
     const parts = inner.split(",").map((p: string) => p.trim());
+    if (parts.length > 2) {
+      if (__DEV__) {
+        warn(
+          `v-for does not support destructuring syntax. Use (item, index) in list instead.`,
+        );
+      }
+    }
     itemVar = parts[0] ?? "item";
     indexVar = parts[1];
   } else {

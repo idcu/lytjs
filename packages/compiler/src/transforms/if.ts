@@ -56,6 +56,8 @@ export function transformIf(
   // Build the conditional chain
   let conditional: JSConditionalExpression | undefined;
 
+  const toRemove: number[] = [];
+
   for (let i = chainStart; i < siblings.length; i++) {
     const sibling = siblings[i];
     if (!sibling || sibling.type !== NodeTypes.ELEMENT) break;
@@ -127,9 +129,13 @@ export function transformIf(
       }
     }
 
-    // Remove the sibling from parent's children
-    siblings.splice(i, 1);
-    i--;
+    // Collect index for removal
+    toRemove.push(i);
+  }
+
+  // Remove collected siblings in reverse order to keep indices valid
+  for (let i = toRemove.length - 1; i >= 0; i--) {
+    siblings.splice(toRemove[i]!, 1);
   }
 
   if (conditional) {

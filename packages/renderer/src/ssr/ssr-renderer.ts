@@ -156,29 +156,35 @@ const URL_ATTRS = new Set([
   "srcdoc",
 ]);
 
+// ============================================================
+// Named entity decoding constants (module-level to avoid re-creation)
+// ============================================================
+
+const NAMED_ENTITIES: Record<string, string> = {
+  "&colon;": ":",
+  "&tab;": "\t",
+  "&newline;": "\n",
+  "&lpar;": "(",
+  "&rpar;": ")",
+};
+const NAMED_ENTITY_REGEX = new RegExp(
+  Object.keys(NAMED_ENTITIES)
+    .map((e) => e.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+    .join("|"),
+  "g",
+);
+
+// Numeric entity regex (module-level to avoid re-creation on every isSafeURL call)
+const NUMERIC_ENTITY_REGEX = /&#x?[0-9a-f]+;/gi;
+
 function isSafeURL(url: string): boolean {
   // 循环解码 HTML 实体，直到字符串不再变化
   let decoded = url;
   let prev = "";
-  const entityRegex = /&#x?[0-9a-f]+;/gi;
-  // 常见命名实体解码映射
-  const namedEntities: Record<string, string> = {
-    "&colon;": ":",
-    "&tab;": "\t",
-    "&newline;": "\n",
-    "&lpar;": "(",
-    "&rpar;": ")",
-  };
-  const namedEntityRegex = new RegExp(
-    Object.keys(namedEntities)
-      .map((e) => e.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
-      .join("|"),
-    "g",
-  );
   let maxIterations = 10;
   while (decoded !== prev && maxIterations-- > 0) {
     prev = decoded;
-    decoded = decoded.replace(entityRegex, (match) => {
+    decoded = decoded.replace(NUMERIC_ENTITY_REGEX, (match) => {
       const codePoint = match.startsWith("&#x")
         ? parseInt(match.slice(3, -1), 16)
         : parseInt(match.slice(2, -1), 10);
@@ -190,8 +196,8 @@ function isSafeURL(url: string): boolean {
     });
     // 命名实体解码（在数字实体解码之后）
     decoded = decoded.replace(
-      namedEntityRegex,
-      (match) => namedEntities[match] || match,
+      NAMED_ENTITY_REGEX,
+      (match) => NAMED_ENTITIES[match] || match,
     );
   }
   // 使用 URL 构造函数进行额外验证
