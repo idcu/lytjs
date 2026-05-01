@@ -48,10 +48,15 @@ const MUTATING_METHODS = new Set<string>(["set", "add", "delete", "clear"]);
 
 // ==================== 数组方法拦截 ====================
 
-const arrayInstrumentations: Record<string | symbol, Function> = {};
+const arrayInstrumentations: Record<
+  string | symbol,
+  (...args: unknown[]) => unknown
+> = {};
 
 (["includes", "indexOf", "lastIndexOf"] as const).forEach((method) => {
-  const originMethod = Array.prototype[method] as Function;
+  const originMethod = Array.prototype[method] as (
+    ...args: unknown[]
+  ) => unknown;
   arrayInstrumentations[method] = function (
     this: unknown[],
     ...args: unknown[]
@@ -72,7 +77,9 @@ const arrayInstrumentations: Record<string | symbol, Function> = {};
 });
 
 (["push", "pop", "shift", "unshift", "splice"] as const).forEach((method) => {
-  const originMethod = Array.prototype[method] as Function;
+  const originMethod = Array.prototype[method] as (
+    ...args: unknown[]
+  ) => unknown;
   arrayInstrumentations[method] = function (
     this: unknown[],
     ...args: unknown[]
@@ -92,8 +99,10 @@ const arrayInstrumentations: Record<string | symbol, Function> = {};
 const builtInSymbols = new Set<symbol>(
   Object.getOwnPropertyNames(Symbol)
     .filter((key) => key !== "arguments" && key !== "caller")
-    .map((key) => (Symbol as any)[key as keyof typeof Symbol])
-    .filter(isSymbol),
+    .map(
+      (key) => (Symbol as unknown as Record<string, symbol | undefined>)[key],
+    )
+    .filter((sym): sym is symbol => isSymbol(sym)),
 );
 
 function isNonTrackableKey(key: string | symbol): boolean {
@@ -124,7 +133,10 @@ function createReactiveObject(
 
   if (
     (target as Record<string | symbol, unknown>)[ReactiveFlags.RAW] &&
-    !(isReadonlyFlag && (target as Record<string | symbol, unknown>)[ReactiveFlags.IS_REACTIVE])
+    !(
+      isReadonlyFlag &&
+      (target as Record<string | symbol, unknown>)[ReactiveFlags.IS_REACTIVE]
+    )
   ) {
     return target;
   }
@@ -196,7 +208,7 @@ function createMutableHandler(
         return true;
       }
 
-      let oldValue = (target as any)[key];
+      let oldValue = Reflect.get(target, key);
       if (!isShallow) {
         value = toRaw(value);
         oldValue = toRaw(oldValue);
@@ -236,7 +248,7 @@ function createMutableHandler(
       }
 
       const hadKey = hasOwn(target, key);
-      const oldValue = (target as any)[key];
+      const oldValue = Reflect.get(target, key);
       const result = Reflect.deleteProperty(target, key);
       if (result && hadKey) {
         trigger(target, TriggerOpTypes.DELETE, key, undefined, oldValue);
@@ -292,7 +304,7 @@ function createCollectionHandler(
       if (typeof res === "function") {
         if (!isReadonly) {
           if (MUTATING_METHODS.has(key as string)) {
-            return (...args: any[]) => {
+            return (...args: unknown[]) => {
               const rawTarget = toRaw(target) as Map<unknown, unknown>;
               if (key === "set") {
                 // Map.set: 检查值是否实际改变
@@ -300,7 +312,13 @@ function createCollectionHandler(
                 const hadKey = rawTarget.has(args[0]);
                 const result = res.apply(target, args);
                 if (!hadKey || !Object.is(toRaw(oldValue), toRaw(args[1]))) {
-                  trigger(target, TriggerOpTypes.SET, args[0], args[1], oldValue);
+                  trigger(
+                    target,
+                    TriggerOpTypes.SET,
+                    args[0] as string | symbol,
+                    args[1],
+                    oldValue,
+                  );
                 }
                 return result;
               } else if (key === "add") {
@@ -308,7 +326,12 @@ function createCollectionHandler(
                 const had = rawTarget.has(args[0]);
                 const result = res.apply(target, args);
                 if (!had) {
-                  trigger(target, TriggerOpTypes.ADD, args[0], args[0]);
+                  trigger(
+                    target,
+                    TriggerOpTypes.ADD,
+                    args[0] as string | symbol,
+                    args[0],
+                  );
                 }
                 return result;
               } else if (key === "delete") {
@@ -316,14 +339,26 @@ function createCollectionHandler(
                 const hadKey = rawTarget.has(args[0]);
                 const result = res.apply(target, args);
                 if (hadKey) {
-                  trigger(target, TriggerOpTypes.DELETE, args[0], undefined, undefined);
+                  trigger(
+                    target,
+                    TriggerOpTypes.DELETE,
+                    args[0] as string | symbol,
+                    undefined,
+                    undefined,
+                  );
                 }
                 return result;
               } else if (key === "clear") {
                 const hadItems = rawTarget.size > 0;
                 const result = res.apply(target, args);
                 if (hadItems) {
-                  trigger(target, TriggerOpTypes.CLEAR, undefined, undefined, undefined);
+                  trigger(
+                    target,
+                    TriggerOpTypes.CLEAR,
+                    undefined,
+                    undefined,
+                    undefined,
+                  );
                 }
                 return result;
               }
@@ -349,15 +384,22 @@ function createShallowReadonlyCollectionHandler(): ProxyHandler<Target> {
       if (key === ReactiveFlags.IS_READONLY) return true;
       if (key === ReactiveFlags.IS_SHALLOW) return true;
       if (key === ReactiveFlags.RAW) return target;
-      if (key === "size" || key === "get" || key === "has" || key === "forEach") {
+      if (
+        key === "size" ||
+        key === "get" ||
+        key === "has" ||
+        key === "forEach"
+      ) {
         track(target, TrackOpTypes.GET, ITERATE_KEY_COL);
       }
       const res = Reflect.get(target, key, _receiver);
       if (typeof res === "function") {
         if (MUTATING_METHODS.has(key as string)) {
-          return (..._args: any[]) => {
+          return (..._args: unknown[]) => {
             if (__DEV__) {
-              console.warn(`Operation "${String(key)}" failed: target is shallow readonly.`);
+              console.warn(
+                `Operation "${String(key)}" failed: target is shallow readonly.`,
+              );
             }
             if (key === "delete") return false;
             return undefined;
@@ -380,7 +422,8 @@ const shallowReadonlyHandlers = createMutableHandler(true, true);
 const mutableCollectionHandlers = createCollectionHandler(false, false);
 const readonlyCollectionHandlers = createCollectionHandler(true, false);
 const shallowCollectionHandlers = createCollectionHandler(false, true);
-const shallowReadonlyCollectionHandlers = createShallowReadonlyCollectionHandler();
+const shallowReadonlyCollectionHandlers =
+  createShallowReadonlyCollectionHandler();
 
 // ==================== 公共 API ====================
 
