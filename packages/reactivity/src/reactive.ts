@@ -296,7 +296,12 @@ function createCollectionHandler(
       if (key === ReactiveFlags.RAW) return target;
 
       // 追踪 size 属性和 get 调用
-      if (key === "size" || key === "get") {
+      // 对于 readonly collection，额外追踪 has 和 forEach
+      if (
+        key === "size" ||
+        key === "get" ||
+        (isReadonly && (key === "has" || key === "forEach"))
+      ) {
         track(target, TrackOpTypes.GET, ITERATE_KEY_COL);
       }
 
@@ -368,42 +373,19 @@ function createCollectionHandler(
               return result;
             };
           }
-        }
-        return res.bind(target);
-      }
-      return res;
-    },
-  };
-}
-
-function createShallowReadonlyCollectionHandler(): ProxyHandler<Target> {
-  const ITERATE_KEY_COL = Symbol("collection_iterate");
-  return {
-    get(target, key, _receiver) {
-      if (key === ReactiveFlags.IS_REACTIVE) return false;
-      if (key === ReactiveFlags.IS_READONLY) return true;
-      if (key === ReactiveFlags.IS_SHALLOW) return true;
-      if (key === ReactiveFlags.RAW) return target;
-      if (
-        key === "size" ||
-        key === "get" ||
-        key === "has" ||
-        key === "forEach"
-      ) {
-        track(target, TrackOpTypes.GET, ITERATE_KEY_COL);
-      }
-      const res = Reflect.get(target, key, _receiver);
-      if (typeof res === "function") {
-        if (MUTATING_METHODS.has(key as string)) {
-          return (..._args: unknown[]) => {
-            if (__DEV__) {
-              console.warn(
-                `Operation "${String(key)}" failed: target is shallow readonly.`,
-              );
-            }
-            if (key === "delete") return false;
-            return undefined;
-          };
+        } else if (isShallow) {
+          // Shallow readonly: block mutating methods with warnings
+          if (MUTATING_METHODS.has(key as string)) {
+            return (..._args: unknown[]) => {
+              if (__DEV__) {
+                console.warn(
+                  `Operation "${String(key)}" failed: target is shallow readonly.`,
+                );
+              }
+              if (key === "delete") return false;
+              return undefined;
+            };
+          }
         }
         return res.bind(target);
       }
@@ -422,8 +404,7 @@ const shallowReadonlyHandlers = createMutableHandler(true, true);
 const mutableCollectionHandlers = createCollectionHandler(false, false);
 const readonlyCollectionHandlers = createCollectionHandler(true, false);
 const shallowCollectionHandlers = createCollectionHandler(false, true);
-const shallowReadonlyCollectionHandlers =
-  createShallowReadonlyCollectionHandler();
+const shallowReadonlyCollectionHandlers = createCollectionHandler(true, true);
 
 // ==================== 公共 API ====================
 
