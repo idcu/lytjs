@@ -18,7 +18,7 @@ import type {
  */
 export function initSlots(
   instance: ComponentInternalInstance,
-  children: any,
+  children: unknown,
 ): void {
   if (isNullish(children)) {
     instance.slots = {} as InternalSlots;
