@@ -2,7 +2,7 @@
  * @lytjs/renderer - Shared utilities
  */
 
-import { escapeHTML as escapeHtml } from "@lytjs/common-string";
+import { escapeHTML as escapeHtml, VOID_ELEMENTS } from "@lytjs/common-string";
 
 export { escapeHtml };
 
@@ -39,23 +39,6 @@ export function isBooleanAttr(key: string): boolean {
 // ============================================================
 // Self-closing elements
 // ============================================================
-
-const VOID_ELEMENTS = new Set([
-  "area",
-  "base",
-  "br",
-  "col",
-  "embed",
-  "hr",
-  "img",
-  "input",
-  "link",
-  "meta",
-  "param",
-  "source",
-  "track",
-  "wbr",
-]);
 
 /**
  * Check if a tag is a void (self-closing) element

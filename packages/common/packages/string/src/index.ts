@@ -316,6 +316,32 @@ export function normalizeStyle(
   return "";
 }
 
+
+// ============================================================
+// HTML void elements
+// ============================================================
+
+/**
+ * HTML void elements that are allowed to use self-closing syntax (<br />, <img />, etc.).
+ * Based on the HTML specification: https://html.spec.whatwg.org/multipage/syntax.html#void-elements
+ */
+export const VOID_ELEMENTS = new Set([
+  "area",
+  "base",
+  "br",
+  "col",
+  "embed",
+  "hr",
+  "img",
+  "input",
+  "link",
+  "meta",
+  "param",
+  "source",
+  "track",
+  "wbr",
+]);
+
 // ============================================================
 // 安全工具函数
 // ============================================================

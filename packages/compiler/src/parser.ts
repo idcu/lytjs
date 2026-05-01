@@ -2,6 +2,7 @@
 // HTML template parser
 
 import { NodeTypes, ElementTypes, TextModes, TagType } from "./constants";
+import { VOID_ELEMENTS } from "@lytjs/common-string";
 import type {
   RootNode,
   ElementNode,
@@ -31,27 +32,6 @@ import {
 // ============================================================
 // Parser utilities
 // ============================================================
-
-/**
- * HTML void elements that are allowed to use self-closing syntax (<br />, <img />, etc.).
- * Based on the HTML specification: https://html.spec.whatwg.org/multipage/syntax.html#void-elements
- */
-const VOID_ELEMENTS = new Set([
-  "area",
-  "base",
-  "br",
-  "col",
-  "embed",
-  "hr",
-  "img",
-  "input",
-  "link",
-  "meta",
-  "param",
-  "source",
-  "track",
-  "wbr",
-]);
 
 function escapeRegExp(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
