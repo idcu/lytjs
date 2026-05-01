@@ -64,6 +64,10 @@ PIDS=""
 for pkg in packages/common/packages/*/; do
   if [ -d "$pkg" ]; then
     pkg_name=$(basename "$pkg")
+    # 跳过 common 聚合包（它不是 @lytjs/common-* 子包）
+    if [ "$pkg_name" = "common" ]; then
+      continue
+    fi
     log_info "构建 @lytjs/common-${pkg_name}..."
     pnpm --filter "@lytjs/common-${pkg_name}" run build &
     PIDS="$PIDS $!"
