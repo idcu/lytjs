@@ -161,7 +161,7 @@ function triggerEffect(effect: ReactiveEffect) {
 
 // ==================== ReactiveEffect ====================
 
-export class ReactiveEffect<T = any> {
+export class ReactiveEffect<T = unknown> {
   active = true;
   deps: Dep[] = [];
   parent: ReactiveEffect | undefined = undefined;
@@ -256,7 +256,55 @@ function cleanupEffect(effect: ReactiveEffect) {
 
 // ==================== 公共 API ====================
 
-export function effect<T = any>(
+// Function overloads for effect()
+// Non-lazy effect: fn returns void, preventing accidental return value usage
+export function effect(
+  fn: () => void,
+  options?: {
+    lazy?: false;
+    scheduler?: (...args: any[]) => any;
+    allowRecurse?: boolean;
+    onStop?: () => void;
+    onTrack?: (event: {
+      target: object;
+      key: string | symbol;
+      type: string;
+    }) => void;
+    onTrigger?: (event: {
+      target: object;
+      key: string | symbol;
+      type: string;
+      newValue?: unknown;
+      oldValue?: unknown;
+    }) => void;
+  },
+): ReactiveEffectRunner<void>;
+
+// Lazy effect: preserves generic return value type (used by computed etc.)
+export function effect<T>(
+  fn: () => T,
+  options: {
+    lazy: true;
+    scheduler?: (...args: any[]) => any;
+    allowRecurse?: boolean;
+    onStop?: () => void;
+    onTrack?: (event: {
+      target: object;
+      key: string | symbol;
+      type: string;
+    }) => void;
+    onTrigger?: (event: {
+      target: object;
+      key: string | symbol;
+      type: string;
+      newValue?: unknown;
+      oldValue?: unknown;
+    }) => void;
+  },
+): ReactiveEffectRunner<T>;
+
+// Unified implementation signature
+export function effect<T = unknown>(
   fn: () => T,
   options?: {
     lazy?: boolean;
@@ -323,9 +371,8 @@ export function batch(fn: () => void): void {
     while (trackStack.length > stackLength) {
       trackStack.pop();
     }
-    shouldTrack = trackStack.length > 0
-      ? trackStack[trackStack.length - 1]!
-      : true;
+    shouldTrack =
+      trackStack.length > 0 ? trackStack[trackStack.length - 1]! : true;
   }
 }
 
