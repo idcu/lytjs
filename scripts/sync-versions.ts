@@ -7,49 +7,18 @@
  * 用法: pnpm run sync-versions [--version <新版本号>]
  */
 
-import { readFileSync, writeFileSync, readdirSync, existsSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, "..");
+
+import { findPackageJsonFiles } from "./shared.js";
 
 function getRootVersion(): string {
   const pkg = JSON.parse(readFileSync(join(ROOT, "package.json"), "utf-8"));
   return pkg.version;
-}
-
-function findPackageJsonFiles(dir: string): string[] {
-  const results: string[] = [];
-
-  if (!existsSync(dir)) {
-    return results;
-  }
-
-  const entries = readdirSync(dir, { withFileTypes: true });
-
-  for (const entry of entries) {
-    if (entry.isDirectory()) {
-      const fullPath = join(dir, entry.name);
-      const pkgJsonPath = join(fullPath, "package.json");
-
-      if (existsSync(pkgJsonPath)) {
-        results.push(pkgJsonPath);
-      }
-
-      if (
-        entry.name !== "node_modules" &&
-        entry.name !== "dist" &&
-        entry.name !== ".turbo" &&
-        entry.name !== "_templates"
-      ) {
-        results.push(...findPackageJsonFiles(fullPath));
-      }
-    }
-  }
-
-  return results;
 }
 
 function syncVersions(targetVersion: string): void {
