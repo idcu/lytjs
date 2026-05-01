@@ -1,5 +1,5 @@
-import { test, expect } from '@playwright/test'
-import { getText, getHTML, unmount, evaluateInBrowser, nextTick } from './helpers/mount'
+import { test, expect } from '@playwright/test';
+import { getText, getHTML, unmount, evaluateInBrowser, nextTick } from './helpers/mount';
 
 test.describe('Keep-Alive', () => {
   test.beforeEach(async ({ page }) => {
@@ -224,5 +224,186 @@ test.describe('Keep-Alive', () => {
     expect(result.hasExclude).toBe(true)
     expect(result.hasMax).toBe(true)
     expect(result.maxDefault).toBeUndefined()
+  })
+
+  test('KeepAlive include 正则模式匹配 - 字符串匹配', async ({ page }) => {
+    const result = await evaluateInBrowser(page, `(args) => {
+      const { defineComponent } = window.LytJS;
+
+      const KeepAlive = defineComponent({
+        name: 'KeepAlive',
+        props: {
+          include: {},
+          exclude: {},
+          max: { type: Number, default: undefined },
+        },
+        setup(props) {
+          // 模拟 include 匹配逻辑
+          const matchesInclude = (name) => {
+            if (!props.include) return true;
+            if (typeof props.include === 'string') return name === props.include;
+            if (props.include instanceof RegExp) return props.include.test(name);
+            if (Array.isArray(props.include)) return props.include.includes(name);
+            return true;
+          };
+          return { cache: new Map(), keys: new Set(), props, matchesInclude };
+        },
+        created() {},
+      });
+
+      // 测试字符串匹配
+      const instance = KeepAlive.setup(
+        { include: 'CompA', exclude: undefined, max: undefined },
+        {}
+      );
+      return {
+        matchCompA: instance.matchesInclude('CompA'),
+        matchCompB: instance.matchesInclude('CompB'),
+        matchCompC: instance.matchesInclude('CompC'),
+      };
+    }`)
+
+    expect(result.matchCompA).toBe(true)
+    expect(result.matchCompB).toBe(false)
+    expect(result.matchCompC).toBe(false)
+  })
+
+  test('KeepAlive include 正则模式匹配 - RegExp 匹配', async ({ page }) => {
+    const result = await evaluateInBrowser(page, `(args) => {
+      const { defineComponent } = window.LytJS;
+
+      const KeepAlive = defineComponent({
+        name: 'KeepAlive',
+        props: {
+          include: {},
+          exclude: {},
+          max: { type: Number, default: undefined },
+        },
+        setup(props) {
+          const matchesInclude = (name) => {
+            if (!props.include) return true;
+            if (typeof props.include === 'string') return name === props.include;
+            if (props.include instanceof RegExp) return props.include.test(name);
+            if (Array.isArray(props.include)) return props.include.includes(name);
+            return true;
+          };
+          const matchesExclude = (name) => {
+            if (!props.exclude) return false;
+            if (typeof props.exclude === 'string') return name === props.exclude;
+            if (props.exclude instanceof RegExp) return props.exclude.test(name);
+            if (Array.isArray(props.exclude)) return props.exclude.includes(name);
+            return false;
+          };
+          return { cache: new Map(), keys: new Set(), props, matchesInclude, matchesExclude };
+        },
+        created() {},
+      });
+
+      // 测试正则匹配 include: /^Comp/
+      const instance = KeepAlive.setup(
+        { include: /^Comp/, exclude: undefined, max: undefined },
+        {}
+      );
+      return {
+        matchCompA: instance.matchesInclude('CompA'),
+        matchCompB: instance.matchesInclude('CompB'),
+        matchCompC: instance.matchesInclude('CompC'),
+        matchOther: instance.matchesInclude('Other'),
+      };
+    }`)
+
+    expect(result.matchCompA).toBe(true)
+    expect(result.matchCompB).toBe(true)
+    expect(result.matchCompC).toBe(true)
+    expect(result.matchOther).toBe(false)
+  })
+
+  test('KeepAlive exclude 正则模式匹配 - RegExp 排除', async ({ page }) => {
+    const result = await evaluateInBrowser(page, `(args) => {
+      const { defineComponent } = window.LytJS;
+
+      const KeepAlive = defineComponent({
+        name: 'KeepAlive',
+        props: {
+          include: {},
+          exclude: {},
+          max: { type: Number, default: undefined },
+        },
+        setup(props) {
+          const matchesExclude = (name) => {
+            if (!props.exclude) return false;
+            if (typeof props.exclude === 'string') return name === props.exclude;
+            if (props.exclude instanceof RegExp) return props.exclude.test(name);
+            if (Array.isArray(props.exclude)) return props.exclude.includes(name);
+            return false;
+          };
+          return { cache: new Map(), keys: new Set(), props, matchesExclude };
+        },
+        created() {},
+      });
+
+      // 测试正则排除 exclude: /Dialog/
+      const instance = KeepAlive.setup(
+        { include: undefined, exclude: /Dialog/, max: undefined },
+        {}
+      );
+      return {
+        excludeDialog: instance.matchesExclude('AlertDialog'),
+        excludeConfirm: instance.matchesExclude('ConfirmDialog'),
+        excludeNormal: instance.matchesExclude('NormalComp'),
+      };
+    }`)
+
+    expect(result.excludeDialog).toBe(true)
+    expect(result.excludeConfirm).toBe(true)
+    expect(result.excludeNormal).toBe(false)
+  })
+
+  test('KeepAlive include/exclude 组合使用 - 数组模式', async ({ page }) => {
+    const result = await evaluateInBrowser(page, `(args) => {
+      const { defineComponent } = window.LytJS;
+
+      const KeepAlive = defineComponent({
+        name: 'KeepAlive',
+        props: {
+          include: {},
+          exclude: {},
+          max: { type: Number, default: undefined },
+        },
+        setup(props) {
+          const matchesInclude = (name) => {
+            if (!props.include) return true;
+            if (typeof props.include === 'string') return name === props.include;
+            if (props.include instanceof RegExp) return props.include.test(name);
+            if (Array.isArray(props.include)) return props.include.includes(name);
+            return true;
+          };
+          const matchesExclude = (name) => {
+            if (!props.exclude) return false;
+            if (typeof props.exclude === 'string') return name === props.exclude;
+            if (props.exclude instanceof RegExp) return props.exclude.test(name);
+            if (Array.isArray(props.exclude)) return props.exclude.includes(name);
+            return false;
+          };
+          return { cache: new Map(), keys: new Set(), props, matchesInclude, matchesExclude };
+        },
+        created() {},
+      });
+
+      // 测试数组 include 和 exclude
+      const instance = KeepAlive.setup(
+        { include: ['CompA', 'CompB'], exclude: ['CompB'], max: undefined },
+        {}
+      );
+      return {
+        compAIncluded: instance.matchesInclude('CompA') && !instance.matchesExclude('CompA'),
+        compBIncluded: instance.matchesInclude('CompB') && !instance.matchesExclude('CompB'),
+        compCIncluded: instance.matchesInclude('CompC') && !instance.matchesExclude('CompC'),
+      };
+    }`)
+
+    expect(result.compAIncluded).toBe(true)
+    expect(result.compBIncluded).toBe(false)
+    expect(result.compCIncluded).toBe(false)
   })
 })

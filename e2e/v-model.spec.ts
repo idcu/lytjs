@@ -1,5 +1,5 @@
-import { test, expect } from '@playwright/test'
-import { getText, getHTML, unmount, evaluateInBrowser, nextTick } from './helpers/mount'
+import { test, expect } from '@playwright/test';
+import { getText, getHTML, unmount, evaluateInBrowser, nextTick } from './helpers/mount';
 
 /**
  * v-model E2E 测试

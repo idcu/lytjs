@@ -1,5 +1,5 @@
-import { test, expect } from '@playwright/test'
-import { getText, getHTML, unmount, evaluateInBrowser, nextTick } from './helpers/mount'
+import { test, expect } from '@playwright/test';
+import { getText, getHTML, unmount, evaluateInBrowser, nextTick } from './helpers/mount';
 
 test.describe('组件通信 - Props', () => {
   test.beforeEach(async ({ page }) => {
