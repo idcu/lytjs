@@ -32,6 +32,27 @@ import {
 // Parser utilities
 // ============================================================
 
+/**
+ * HTML void elements that are allowed to use self-closing syntax (<br />, <img />, etc.).
+ * Based on the HTML specification: https://html.spec.whatwg.org/multipage/syntax.html#void-elements
+ */
+const VOID_ELEMENTS = new Set([
+  "area",
+  "base",
+  "br",
+  "col",
+  "embed",
+  "hr",
+  "img",
+  "input",
+  "link",
+  "meta",
+  "param",
+  "source",
+  "track",
+  "wbr",
+]);
+
 function escapeRegExp(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
@@ -448,6 +469,26 @@ function parseTag(
   if (context.source.startsWith("/>")) {
     isSelfClosing = true;
     advanceBy(context, 2);
+
+    // Warn when non-void elements use self-closing syntax (e.g. <div />)
+    // This is not valid HTML and may cause hydration issues.
+    if (type === TagType.Start && !VOID_ELEMENTS.has(tag)) {
+      if (__DEV__) {
+        console.warn(
+          `[lytjs/compiler] Non-void element <${tag}> uses self-closing syntax. ` +
+            `This is not valid HTML and may cause hydration issues. ` +
+            `Use <${tag}></${tag}> instead.`,
+        );
+      }
+      if (context.options.onError) {
+        context.options.onError(
+          new Error(
+            `[lytjs/compiler] Non-void element <${tag}> uses self-closing syntax. ` +
+              `Use <${tag}></${tag}> instead.`,
+          ),
+        );
+      }
+    }
   } else if (context.source.startsWith(">")) {
     advanceBy(context, 1);
   }
