@@ -343,6 +343,39 @@ export const VOID_ELEMENTS = new Set([
 ]);
 
 // ============================================================
+// Boolean attributes
+// ============================================================
+
+/**
+ * HTML boolean attributes whose presence means true.
+ */
+export const BOOLEAN_ATTRS = new Set([
+  "disabled",
+  "readonly",
+  "checked",
+  "selected",
+  "multiple",
+  "autofocus",
+  "async",
+  "defer",
+  "controls",
+  "loop",
+  "muted",
+  "default",
+  "open",
+  "required",
+  "reversed",
+  "allowfullscreen",
+]);
+
+/**
+ * Check if a key is a boolean HTML attribute
+ */
+export function isBooleanAttr(key: string): boolean {
+  return BOOLEAN_ATTRS.has(key);
+}
+
+// ============================================================
 // 安全工具函数
 // ============================================================
 
@@ -454,3 +487,133 @@ export function isSafeAttribute(attrName: string, attrValue: string): boolean {
 
   return true;
 }
+
+// ============================================================
+// HTML sanitization
+// ============================================================
+
+// Pre-compiled RegExp constants for sanitizeHTML (avoid re-creation on every call)
+const DANGEROUS_TAGS = [
+  "script",
+  "iframe",
+  "object",
+  "embed",
+  "form",
+  "input",
+  "textarea",
+  "select",
+  "button",
+  "link",
+  "meta",
+  "base",
+  "applet",
+  "frame",
+  "frameset",
+  "details",
+  "marquee",
+  "math",
+  "svg",
+];
+const DANGEROUS_TAG_PATTERN = DANGEROUS_TAGS.join("|");
+const RE_DANGEROUS_OPEN_CLOSE_TAG = new RegExp(
+  `<\\/?(${DANGEROUS_TAG_PATTERN})\\b(?:[^>"']|"[^"]*"|'[^']*')*>`,
+  "gi",
+);
+const RE_EVENT_HANDLER_ATTR =
+  /(<[^>]*?)\s+on[a-zA-Z]+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi;
+const URI_ATTRS =
+  "href|src|action|formaction|xlink:href|data|codebase|cite|background|poster|dynsrc|lowsrc";
+const RE_URI_ATTR = new RegExp(
+  `(?:(${URI_ATTRS})\\s*=\\s*)(?:"([^"]*)"|'([^']*)')`,
+  "gi",
+);
+const RE_WHITESPACE_CTRL =
+  /[\u0000-\u0020\u00A0\u1680\u2000-\u200B\u2028\u2029\u202F\u205F\u3000\uFEFF]+/g;
+const RE_DANGEROUS_SCHEME =
+  /^(javascript|vbscript|data|mhtml|x-javascript)\s*:/i;
+const DECODE_MAP: [RegExp, string | ((...args: any[]) => string)][] = [
+  [
+    /&#x0*([0-9a-fA-F]+);/g,
+    (_: any, code: any) => String.fromCodePoint(parseInt(code, 16)),
+  ],
+  [
+    /&#0*([0-9]+);/g,
+    (_: any, code: any) => String.fromCodePoint(parseInt(code, 10)),
+  ],
+  [/&amp;/gi, "&"],
+  [/&lt;/gi, "<"],
+  [/&gt;/gi, ">"],
+  [/&quot;/gi, '"'],
+  [/&apos;/gi, "'"],
+  [/&#x27;/gi, "'"],
+  [/&#x22;/gi, '"'],
+];
+
+/**
+ * Runtime HTML sanitization for innerHTML (v-html directive).
+ *
+ * Security strategy:
+ * 1. Entity decoding: Decodes HTML entities (including nested/double-encoded
+ *    forms like &amp;lt;) before inspection, so encoded payloads cannot bypass
+ *    tag/attribute checks. Decoding runs up to 5 rounds until the string
+ *    stabilises.
+ * 2. Dangerous tag removal: Strips both opening and closing forms of dangerous
+ *    tags (script, iframe, object, embed, form, input, textarea, select,
+ *    button, link, meta, base, applet, frame, frameset, details, marquee,
+ *    math, svg) via case-insensitive regex.
+ * 3. Event-handler stripping: Removes on* attributes (e.g. onclick, onerror)
+ *    from any remaining tags.
+ * 4. Dangerous URI neutralisation: Inspects href, src, action, formaction,
+ *    xlink:href, data, codebase, cite, background, poster, dynsrc, lowsrc
+ *    attributes and neutralises javascript:, vbscript:, data:, mhtml:, and
+ *    x-javascript: schemes. Strips whitespace/control characters before
+ *    scheme detection to prevent obfuscation.
+ *
+ * @param str - The raw HTML string to sanitize (typically from v-html binding).
+ * @returns The sanitized HTML string with dangerous content removed.
+ */
+export function sanitizeHTML(str: string): string {
+  // 1. Decode HTML entities so encoded payloads are not missed.
+  //    We apply decode repeatedly until the string stabilises (handles
+  //    double-encoding like &amp;lt;script&amp;gt;).
+  let decoded = str;
+  // Run up to 5 rounds to handle nested encoding.
+  // Fast path: skip decoding entirely if the string contains no '&' character,
+  // since HTML entities always start with '&'.
+  if (str.includes("&")) {
+    for (let i = 0; i < 5; i++) {
+      const prev = decoded;
+      for (const [re, repl] of DECODE_MAP) {
+        decoded = decoded.replace(re, repl as any);
+      }
+      if (decoded === prev) break;
+    }
+  }
+
+  // 2. Remove dangerous tags (both self-closing and normal forms).
+  decoded = decoded.replace(RE_DANGEROUS_OPEN_CLOSE_TAG, "");
+
+  // 3. Remove event-handler attributes (on*).
+  //    Matches on<word>=  inside any tag, consuming the quoted value.
+  decoded = decoded.replace(RE_EVENT_HANDLER_ATTR, "$1");
+
+  // 4. Neutralise dangerous URI schemes in href / src / action / formaction / xlink:href.
+  decoded = decoded.replace(
+    RE_URI_ATTR,
+    (_match, attr: string, dq: string, sq: string) => {
+      const value = dq ?? sq ?? "";
+      // Strip whitespace / null bytes / control chars that could hide the scheme
+      const cleaned = value
+        .replace(RE_WHITESPACE_CTRL, "")
+        .toLowerCase();
+      if (RE_DANGEROUS_SCHEME.test(cleaned)) {
+        return `${attr}=""`;
+      }
+      return _match;
+    },
+  );
+
+  return decoded;
+}
+
+export { escapeHTML as escapeHtml };
