@@ -37,7 +37,7 @@ export const KeepAlive: ComponentOptions = {
     max: { type: Number, default: undefined },
   },
 
-  setup(_props: any, _ctx: any) {
+  setup(_props: Record<string, unknown>, _ctx: Record<string, unknown>) {
     const cache: KeepAliveCache = new Map();
     const keys: Set<string> = new Set();
 
