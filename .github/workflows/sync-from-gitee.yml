@@ -50,6 +50,7 @@ jobs:
           git push origin ${{ github.event.inputs.branch || 'develop' }}
 
       - name: Sync main branch
+        if: github.event_name == 'workflow_dispatch'
         env:
           GITEE_TOKEN: ${{ secrets.GITEE_SYNC_TOKEN }}
         run: |
