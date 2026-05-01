@@ -3,12 +3,10 @@
 // 提取公共函数以消除 reactive <-> ref 的循环依赖
 
 import { ReactiveFlags } from "./constants";
+import type { RefLike } from "@lytjs/shared-types";
 
-// 最小 Ref 接口，仅用于类型保护（避免从 ref.ts 导入产生循环依赖）
-interface RefLike {
-  __v_isRef: true;
-  value: any;
-}
+// Re-export RefLike for downstream consumers
+export type { RefLike } from "@lytjs/shared-types";
 
 /**
  * 获取响应式对象的原始值
@@ -27,6 +25,6 @@ export function toRaw<T>(observed: T): T {
 /**
  * 判断一个值是否为 ref
  */
-export function isRef(r: unknown): r is RefLike {
+export function isRef<T = unknown>(r: unknown): r is RefLike<T> {
   return !!(r && typeof r === "object" && (r as RefLike).__v_isRef === true);
 }

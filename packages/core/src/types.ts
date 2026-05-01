@@ -2,6 +2,7 @@
 // @lytjs/core - 类型定义
 
 import type { VNode } from "@lytjs/vdom";
+import type { BaseAppConfig } from "@lytjs/shared-types";
 import type {
   ComponentOptions,
   ComponentPublicInstance,
@@ -46,10 +47,8 @@ export interface App<HostElement = Element> {
   ) => void;
 }
 
-export interface AppConfig {
+export interface AppConfig extends BaseAppConfig {
   performance: boolean;
-  errorHandler?: (err: unknown, instance: ComponentPublicInstance | null, info: string) => void;
-  warnHandler?: (msg: string, instance: ComponentPublicInstance | null, trace: string) => void;
   globalProperties: Record<string, unknown>;
   isCustomElement?: (tag: string) => boolean;
   compilerOptions?: Record<string, unknown>;
