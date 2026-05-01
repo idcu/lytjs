@@ -20,18 +20,18 @@ export interface Renderer {
 }
 
 /** 插件安装函数签名 */
-export type PluginInstallFunction<T = any> = (
+export type PluginInstallFunction<T = unknown> = (
   app: App,
   ...options: T[]
 ) => void;
 
 export interface App<HostElement = Element> {
   config: AppConfig;
-  use(plugin: Plugin | PluginInstallFunction, ...options: any[]): App;
+  use(plugin: Plugin | PluginInstallFunction, ...options: unknown[]): App;
   mount(rootContainer: HostElement | string): ComponentPublicInstance;
   unmount(): void;
-  provide<T = any>(key: string | symbol, value: T): App;
-  inject<T = any>(key: string | symbol): T | undefined;
+  provide<T = unknown>(key: string | symbol, value: T): App;
+  inject<T = unknown>(key: string | symbol): T | undefined;
   component(name: string, component: Component): App;
   directive(name: string, directive: Directive): App;
   mixin(mixin: ComponentOptions): App;
