@@ -256,12 +256,12 @@ export function getErrorMessage(code: number): string {
  * 获取错误码对应的分类
  */
 export function getCategory(code: number): ErrorCategoryType {
+  // RENDER_ERROR (2002) is categorized as renderer, check before general range
+  if (code === LytErrorCodes.RENDER_ERROR) return ErrorCategory.RENDERER;
   if (code >= 1000 && code < 2000) return ErrorCategory.COMPILER;
+  if (code >= 2000 && code < 3000) return ErrorCategory.RUNTIME;
   if (code >= 3000 && code < 4000) return ErrorCategory.RENDERER;
   if (code >= 4000 && code < 5000) return ErrorCategory.COMPONENT;
-  // RENDER_ERROR (2002) is categorized as renderer
-  if (code === LytErrorCodes.RENDER_ERROR) return ErrorCategory.RENDERER;
-  if (code >= 2000 && code < 3000) return ErrorCategory.RUNTIME;
   return ErrorCategory.RUNTIME;
 }
 
