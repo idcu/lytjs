@@ -1,22 +1,25 @@
-import { defineConfig } from 'vitest/config';
-import { resolve } from 'node:path';
+import { defineConfig } from "vitest/config";
+import { resolve, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
 
-const commonRoot = resolve(__dirname, '../../common/packages');
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const commonRoot = resolve(__dirname, "../common/packages");
 
 export default defineConfig({
   resolve: {
     alias: {
-      '@lytjs/common-is': `${commonRoot}/is/dist/index.mjs`,
-      '@lytjs/common-scheduler': `${commonRoot}/scheduler/dist/index.mjs`,
+      "@lytjs/common-is": `${commonRoot}/is/dist/index.mjs`,
+      "@lytjs/common-scheduler": `${commonRoot}/scheduler/dist/index.mjs`,
+      "@lytjs/common-error": `${commonRoot}/error/dist/index.mjs`,
     },
   },
   test: {
-    environment: 'node',
+    environment: "node",
     globals: true,
-    setupFiles: ['./tests/setup.ts'],
+    setupFiles: [resolve(__dirname, "./tests/setup.ts")],
     coverage: {
-      provider: 'v8',
-      reporter: ['text', 'json', 'html'],
+      provider: "v8",
+      reporter: ["text", "json", "html"],
       thresholds: {
         global: {
           branches: 80,

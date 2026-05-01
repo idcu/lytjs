@@ -542,10 +542,10 @@ const RE_WHITESPACE_CTRL =
   /[\u0000-\u0020\u00A0\u1680\u2000-\u200B\u2028\u2029\u202F\u205F\u3000\uFEFF]+/g;
 const RE_DANGEROUS_SCHEME =
   /^(javascript|vbscript|data|mhtml|x-javascript)\s*:/i;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 const DECODE_MAP: [
   RegExp,
-  string | ((substring: string, ...args: any[]) => string),
+  string | ((substring: string, ...args: unknown[]) => string),
 ][] = [
   [
     /&#x0*([0-9a-fA-F]+);/g,
