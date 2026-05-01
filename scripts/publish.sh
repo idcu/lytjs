@@ -53,7 +53,11 @@ while [[ $# -gt 0 ]]; do
       ;;
     --tag)
       shift
-      TAG="--tag ${1:-latest}"
+      if [ -z "${1:-}" ]; then
+        echo "Error: --tag requires a value"
+        exit 1
+      fi
+      TAG="--tag $1"
       shift
       ;;
     *)
