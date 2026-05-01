@@ -72,7 +72,7 @@ export function resolvePropValue<T = unknown>(
     }
     // Check required prop
     if (required && __DEV__) {
-      console.warn(`[lytjs]: Missing required prop: "${key}"`);
+      console.warn(`[LytJS]: Missing required prop: "${key}"`);
     }
     return undefined;
   }
@@ -85,7 +85,7 @@ export function resolvePropValue<T = unknown>(
   // Custom validator
   if (validator && __DEV__) {
     if (!validator(value)) {
-      console.warn(`[lytjs]: Prop validation failed for prop "${key}": received ${JSON.stringify(value)}`);
+      console.warn(`[LytJS]: Prop validation failed for prop "${key}": received ${JSON.stringify(value)}`);
     }
   }
 
@@ -113,7 +113,7 @@ export function validateType(value: unknown, type: unknown): boolean {
 
   if (__DEV__) {
     console.warn(
-      `[lytjs]: Invalid prop: expected ${expectedType}, got ${getTypeName(value)}.`,
+      `[LytJS]: Invalid prop: expected ${expectedType}, got ${getTypeName(value)}.`,
     );
   }
 

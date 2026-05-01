@@ -49,10 +49,16 @@ export function isUnknownEnv(): boolean {
 }
 
 /**
- * @deprecated 请使用 isUnknownEnv() 代替。保留此函数仅为向后兼容。
- * 检测当前是否为 SSR 环境（实际语义为"未知环境"）
+ * 检测当前是否为 SSR（服务端渲染）环境
+ *
+ * SSR 环境定义为：运行在 Node.js 中且不在浏览器中。
+ * 注意：Node.js 环境也可以运行非 SSR 代码（如 CLI 工具、构建脚本等），
+ * 因此此函数仅表示"当前处于服务端渲染上下文"的合理推断。
+ * 如果需要精确的 SSR 状态，建议通过框架级别的上下文注入来判断。
  */
-export const isSSR = isUnknownEnv;
+export function isSSR(): boolean {
+  return isNode() && !isBrowser();
+}
 
 /**
  * 获取完整的环境信息
@@ -64,7 +70,7 @@ export function getEnvInfo(): EnvInfo {
   return {
     isBrowser: browser,
     isNode: node,
-    isSSR: !browser && !node,
+    isSSR: isSSR(),
     userAgent: browser ? navigator.userAgent : "",
   };
 }

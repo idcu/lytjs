@@ -189,7 +189,7 @@ export function patchAttr(
       if (!isSafeAttribute(key, strValue)) {
         if (__DEV__) {
           console.warn(
-            `[lytjs] Unsafe attribute "${key}" with value "${strValue}" has been blocked.`,
+            `[LytJS] Unsafe attribute "${key}" with value "${strValue}" has been blocked.`,
           );
         }
         return;
@@ -201,7 +201,7 @@ export function patchAttr(
     if (!isSafeAttribute(key, strValue)) {
       if (__DEV__) {
         console.warn(
-          `[lytjs] Unsafe attribute "${key}" with value "${strValue}" has been blocked.`,
+          `[LytJS] Unsafe attribute "${key}" with value "${strValue}" has been blocked.`,
         );
       }
       return;
@@ -213,6 +213,63 @@ export function patchAttr(
 // ============================================================
 // HTML sanitization
 // ============================================================
+
+// Pre-compiled RegExp constants for sanitizeHTML (avoid re-creation on every call)
+const DANGEROUS_TAGS = [
+  "script",
+  "iframe",
+  "object",
+  "embed",
+  "form",
+  "input",
+  "textarea",
+  "select",
+  "button",
+  "link",
+  "meta",
+  "base",
+  "applet",
+  "frame",
+  "frameset",
+  "details",
+  "marquee",
+  "math",
+  "svg",
+];
+const DANGEROUS_TAG_PATTERN = DANGEROUS_TAGS.join("|");
+const RE_DANGEROUS_OPEN_CLOSE_TAG = new RegExp(
+  `<\\/?(${DANGEROUS_TAG_PATTERN})\\b(?:[^>"']|"[^"]*"|'[^']*')*>`,
+  "gi",
+);
+const RE_EVENT_HANDLER_ATTR =
+  /(<[^>]*?)\s+on[a-zA-Z]+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi;
+const URI_ATTRS =
+  "href|src|action|formaction|xlink:href|data|codebase|cite|background|poster|dynsrc|lowsrc";
+const RE_URI_ATTR = new RegExp(
+  `(?:(${URI_ATTRS})\\s*=\\s*)(?:"([^"]*)"|'([^']*)')`,
+  "gi",
+);
+const RE_WHITESPACE_CTRL =
+  /[\u0000-\u0020\u00A0\u1680\u2000-\u200B\u2028\u2029\u202F\u205F\u3000\uFEFF]+/g;
+const RE_DANGEROUS_SCHEME =
+  /^(javascript|vbscript|data|mhtml|x-javascript)\s*:/i;
+const DECODE_MAP: [RegExp, string | ((...args: any[]) => string)][] = [
+  [
+    /&#x0*([0-9a-fA-F]+);/g,
+    (_: any, code: any) => String.fromCodePoint(parseInt(code, 16)),
+  ],
+  [
+    /&#0*([0-9]+);/g,
+    (_: any, code: any) => String.fromCodePoint(parseInt(code, 10)),
+  ],
+  [/&amp;/gi, "&"],
+  [/&lt;/gi, "<"],
+  [/&gt;/gi, ">"],
+  [/&quot;/gi, '"'],
+  [/&apos;/gi, "'"],
+  [/&#x27;/gi, "'"],
+  [/&#x22;/gi, '"'],
+];
 
 /**
  * Runtime HTML sanitization for innerHTML (v-html directive).
@@ -242,30 +299,13 @@ function sanitizeHTML(str: string): string {
   //    We apply decode repeatedly until the string stabilises (handles
   //    double-encoding like &amp;lt;script&amp;gt;).
   let decoded = str;
-  const decodeMap: [RegExp, string | ((...args: any[]) => string)][] = [
-    [
-      /&#x0*([0-9a-fA-F]+);/g,
-      (_: any, code: any) => String.fromCodePoint(parseInt(code, 16)),
-    ],
-    [
-      /&#0*([0-9]+);/g,
-      (_: any, code: any) => String.fromCodePoint(parseInt(code, 10)),
-    ],
-    [/&amp;/gi, "&"],
-    [/&lt;/gi, "<"],
-    [/&gt;/gi, ">"],
-    [/&quot;/gi, '"'],
-    [/&apos;/gi, "'"],
-    [/&#x27;/gi, "'"],
-    [/&#x22;/gi, '"'],
-  ];
   // Run up to 5 rounds to handle nested encoding.
   // Fast path: skip decoding entirely if the string contains no '&' character,
   // since HTML entities always start with '&'.
   if (str.includes("&")) {
     for (let i = 0; i < 5; i++) {
       const prev = decoded;
-      for (const [re, repl] of decodeMap) {
+      for (const [re, repl] of DECODE_MAP) {
         decoded = decoded.replace(re, repl as any);
       }
       if (decoded === prev) break;
@@ -273,61 +313,22 @@ function sanitizeHTML(str: string): string {
   }
 
   // 2. Remove dangerous tags (both self-closing and normal forms).
-  const dangerousTags = [
-    "script",
-    "iframe",
-    "object",
-    "embed",
-    "form",
-    "input",
-    "textarea",
-    "select",
-    "button",
-    "link",
-    "meta",
-    "base",
-    "applet",
-    "frame",
-    "frameset",
-    "details",
-    "marquee",
-    "math",
-    "svg",
-  ];
-  const tagPattern = dangerousTags.join("|");
-  const openCloseTagRe = new RegExp(
-    `<\\/?(${tagPattern})\\b(?:[^>"']|"[^"]*"|'[^']*')*>`,
-    "gi",
-  );
-  decoded = decoded.replace(openCloseTagRe, "");
+  decoded = decoded.replace(RE_DANGEROUS_OPEN_CLOSE_TAG, "");
 
   // 3. Remove event-handler attributes (on*).
   //    Matches on<word>=  inside any tag, consuming the quoted value.
-  decoded = decoded.replace(
-    /(<[^>]*?)\s+on[a-zA-Z]+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi,
-    "$1",
-  );
+  decoded = decoded.replace(RE_EVENT_HANDLER_ATTR, "$1");
 
   // 4. Neutralise dangerous URI schemes in href / src / action / formaction / xlink:href.
-  const uriAttrs =
-    "href|src|action|formaction|xlink:href|data|codebase|cite|background|poster|dynsrc|lowsrc";
-  const uriRe = new RegExp(
-    `(?:(${uriAttrs})\\s*=\\s*)(?:"([^"]*)"|'([^']*)')`,
-    "gi",
-  );
   decoded = decoded.replace(
-    uriRe,
+    RE_URI_ATTR,
     (_match, attr: string, dq: string, sq: string) => {
       const value = dq ?? sq ?? "";
       // Strip whitespace / null bytes / control chars that could hide the scheme
-       
       const cleaned = value
-        .replace(
-          /[\u0000-\u0020\u00A0\u1680\u2000-\u200B\u2028\u2029\u202F\u205F\u3000\uFEFF]+/g,
-          "",
-        )
+        .replace(RE_WHITESPACE_CTRL, "")
         .toLowerCase();
-      if (/^(javascript|vbscript|data|mhtml|x-javascript)\s*:/i.test(cleaned)) {
+      if (RE_DANGEROUS_SCHEME.test(cleaned)) {
         return `${attr}=""`;
       }
       return _match;

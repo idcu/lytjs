@@ -40,7 +40,7 @@ export function createApp(
         installedPlugins.add(plugin);
       } catch (err) {
         console.error(
-          `[lytjs] Plugin failed to install: ${typeof plugin === "function" ? plugin.name || "anonymous function" : (plugin as Plugin).install?.name || "plugin"}`,
+          `[LytJS] Plugin failed to install: ${typeof plugin === "function" ? plugin.name || "anonymous function" : (plugin as Plugin).install?.name || "plugin"}`,
           err,
         );
         throw err;
@@ -51,13 +51,13 @@ export function createApp(
     mount(rootContainer: string | Element) {
       if (_isUnmounted) {
         throw new Error(
-          `[lytjs] App has been unmounted and cannot be remounted. Create a new app instance instead.`,
+          `[LytJS] App has been unmounted and cannot be remounted. Create a new app instance instead.`,
         );
       }
 
       if (context._container) {
         throw new Error(
-          `[lytjs] App is already mounted. Call app.unmount() first before mounting again.`,
+          `[LytJS] App is already mounted. Call app.unmount() first before mounting again.`,
         );
       }
 
@@ -68,7 +68,7 @@ export function createApp(
 
       if (!container) {
         throw new Error(
-          `[lytjs] Failed to mount app: cannot find element matching selector "${rootContainer}". ` +
+          `[LytJS] Failed to mount app: cannot find element matching selector "${rootContainer}". ` +
             `Make sure the target element exists in the DOM before calling app.mount().`,
         );
       }

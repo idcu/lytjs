@@ -180,4 +180,18 @@ describe('computed', () => {
     expect(a.value).toBe(3)
     expect(b.value).toBe(2)
   });
+
+  it('should return last cached value when getter throws', () => {
+    const errorRef = ref(false)
+    const count = ref(1)
+    const failing = computed(() => {
+      if (errorRef.value) throw new Error('getter error')
+      return count.value
+    })
+    expect(failing.value).toBe(1)
+    errorRef.value = true
+    expect(() => failing.value).toThrow('getter error')
+    // After error, should still return last cached value
+    expect(failing.value).toBe(1)
+  })
 });

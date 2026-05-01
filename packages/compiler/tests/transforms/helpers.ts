@@ -70,7 +70,7 @@ export function createMockContext(overrides?: Partial<TransformContext>): Transf
       context.cached++;
     },
     error(msg: string, _node?: any): void {
-      throw new Error(`[lytjs] ${msg}`);
+      throw new Error(`[LytJS] ${msg}`);
     },
     ...overrides,
   };

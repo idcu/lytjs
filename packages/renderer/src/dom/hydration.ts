@@ -20,7 +20,7 @@ function warnHydrationMismatch(
 ): void {
   if (__DEV__) {
     console.warn(
-      `[lytjs] Hydration mismatch: expected ${type} "${expected}" but got "${actual}". ` +
+      `[LytJS] Hydration mismatch: expected ${type} "${expected}" but got "${actual}". ` +
         `The DOM has been patched to match the vnode.`,
     );
   }

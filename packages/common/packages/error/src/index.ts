@@ -349,7 +349,7 @@ export function getDevMode(): boolean {
  */
 export function warn(message: string): void {
   if (!devMode) return;
-  console.warn(`[lytjs]: ${message}`);
+  console.warn(`[LytJS]: ${message}`);
 }
 
 // 已警告消息集合
@@ -362,14 +362,14 @@ export function warnOnce(message: string): void {
   if (!devMode) return;
   if (warnedMessages.has(message)) return;
   warnedMessages.add(message);
-  console.warn(`[lytjs]: ${message}`);
+  console.warn(`[LytJS]: ${message}`);
 }
 
 /**
  * 输出错误信息
  */
 export function error(message: string): void {
-  console.error(`[LytJS error]: ${message}`);
+  console.error(`[LytJS]: ${message}`);
 }
 
 /**

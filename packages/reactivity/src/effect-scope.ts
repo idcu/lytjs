@@ -81,14 +81,14 @@ export function effectScope(detached?: boolean): EffectScope {
         try {
           effect.stop();
         } catch (e) {
-          console.error("[lytjs] Error stopping effect in scope:", e);
+          console.error("[LytJS] Error stopping effect in scope:", e);
         }
       }
       for (const cleanup of this.cleanups) {
         try {
           cleanup();
         } catch (e) {
-          console.error("[lytjs] Error running cleanup in scope:", e);
+          console.error("[LytJS] Error running cleanup in scope:", e);
         }
       }
       this.effects.length = 0;
@@ -132,7 +132,7 @@ export function onScopeDispose(fn: () => void): void {
     activeEffectScope.cleanups.push(fn);
   } else if (__DEV__) {
     console.warn(
-      "[lytjs] onScopeDispose() was called when there was no active effect scope to be associated with.",
+      "[LytJS] onScopeDispose() was called when there was no active effect scope to be associated with.",
     );
   }
 }

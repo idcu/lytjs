@@ -124,10 +124,10 @@ export function triggerEffects(effects: ReactiveEffect[]) {
   if (triggerDepth > MAX_TRIGGER_DEPTH) {
     if (__DEV__) {
       console.warn(
-        "[lytjs] Maximum trigger depth exceeded. Possible infinite reactivity loop detected.",
+        "[LytJS] Maximum trigger depth exceeded. Possible infinite reactivity loop detected.",
       );
       console.error(
-        `[LyticsJS error] Maximum trigger depth (${MAX_TRIGGER_DEPTH}) exceeded in triggerEffects. Possible infinite reactivity loop detected. triggerDepth=${triggerDepth}`,
+        `[LytJS] Maximum trigger depth (${MAX_TRIGGER_DEPTH}) exceeded in triggerEffects. Possible infinite reactivity loop detected. triggerDepth=${triggerDepth}`,
       );
     }
     return;
@@ -200,7 +200,7 @@ export class ReactiveEffect<T = unknown> {
         return this.fn();
       } catch (e) {
         if (__DEV__) {
-          console.warn("[lytjs] Error running inactive effect:", e);
+          console.warn("[LytJS] Error running inactive effect:", e);
         }
         throw e;
       }
