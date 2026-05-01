@@ -215,12 +215,27 @@ export function patchAttr(
 // ============================================================
 
 /**
- * Runtime HTML sanitization for innerHTML.
- * Defends against common XSS vectors when using v-html:
- *  - Removes dangerous tags (script, iframe, object, embed, form, input, etc.)
- *  - Strips event-handler attributes (on*)
- *  - Neutralises javascript: / vbscript: / data: URIs
- *  - Handles HTML-entity encoding bypasses by decoding before checking
+ * Runtime HTML sanitization for innerHTML (v-html directive).
+ *
+ * Security strategy:
+ * 1. Entity decoding: Decodes HTML entities (including nested/double-encoded
+ *    forms like &amp;lt;) before inspection, so encoded payloads cannot bypass
+ *    tag/attribute checks. Decoding runs up to 5 rounds until the string
+ *    stabilises.
+ * 2. Dangerous tag removal: Strips both opening and closing forms of dangerous
+ *    tags (script, iframe, object, embed, form, input, textarea, select,
+ *    button, link, meta, base, applet, frame, frameset, details, marquee,
+ *    math, svg) via case-insensitive regex.
+ * 3. Event-handler stripping: Removes on* attributes (e.g. onclick, onerror)
+ *    from any remaining tags.
+ * 4. Dangerous URI neutralisation: Inspects href, src, action, formaction,
+ *    xlink:href, data, codebase, cite, background, poster, dynsrc, lowsrc
+ *    attributes and neutralises javascript:, vbscript:, data:, mhtml:, and
+ *    x-javascript: schemes. Strips whitespace/control characters before
+ *    scheme detection to prevent obfuscation.
+ *
+ * @param str - The raw HTML string to sanitize (typically from v-html binding).
+ * @returns The sanitized HTML string with dangerous content removed.
  */
 function sanitizeHTML(str: string): string {
   // 1. Decode HTML entities so encoded payloads are not missed.
@@ -232,7 +247,10 @@ function sanitizeHTML(str: string): string {
       /&#x0*([0-9a-fA-F]+);/g,
       (_: any, code: any) => String.fromCodePoint(parseInt(code, 16)),
     ],
-    [/&#0*([0-9]+);/g, (_: any, code: any) => String.fromCodePoint(parseInt(code, 10))],
+    [
+      /&#0*([0-9]+);/g,
+      (_: any, code: any) => String.fromCodePoint(parseInt(code, 10)),
+    ],
     [/&amp;/gi, "&"],
     [/&lt;/gi, "<"],
     [/&gt;/gi, ">"],
@@ -277,7 +295,10 @@ function sanitizeHTML(str: string): string {
     "svg",
   ];
   const tagPattern = dangerousTags.join("|");
-  const openCloseTagRe = new RegExp(`<\\/?(${tagPattern})\\b(?:[^>"']|"[^"]*"|'[^']*')*>`, "gi");
+  const openCloseTagRe = new RegExp(
+    `<\\/?(${tagPattern})\\b(?:[^>"']|"[^"]*"|'[^']*')*>`,
+    "gi",
+  );
   decoded = decoded.replace(openCloseTagRe, "");
 
   // 3. Remove event-handler attributes (on*).
@@ -300,7 +321,12 @@ function sanitizeHTML(str: string): string {
       const value = dq ?? sq ?? "";
       // Strip whitespace / null bytes / control chars that could hide the scheme
       // eslint-disable-next-line no-control-regex
-      const cleaned = value.replace(/[\u0000-\u0020\u00A0\u1680\u2000-\u200B\u2028\u2029\u202F\u205F\u3000\uFEFF]+/g, "").toLowerCase();
+      const cleaned = value
+        .replace(
+          /[\u0000-\u0020\u00A0\u1680\u2000-\u200B\u2028\u2029\u202F\u205F\u3000\uFEFF]+/g,
+          "",
+        )
+        .toLowerCase();
       if (/^(javascript|vbscript|data|mhtml|x-javascript)\s*:/i.test(cleaned)) {
         return `${attr}=""`;
       }
