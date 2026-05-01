@@ -41,7 +41,7 @@ function traverse(value: unknown, seen?: Set<unknown>, depth = 0): unknown {
   if (depth > MAX_TRAVERSE_DEPTH) {
     if (__DEV__) {
       console.warn(
-        `[LyticsJS warn] traverse exceeded maximum depth (${MAX_TRAVERSE_DEPTH}).`,
+        `[lytjs] traverse exceeded maximum depth (${MAX_TRAVERSE_DEPTH}).`,
       );
     }
     return value;

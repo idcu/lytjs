@@ -59,7 +59,7 @@ export function emit(
 
   if (__DEV__ && !isEmitValid(instance, event)) {
     console.warn(
-      `[LytJS warn]: Component emitted event "${event}" but it is not declared in emits.`,
+      `[lytjs]: Component emitted event "${event}" but it is not declared in emits.`,
     );
   }
 

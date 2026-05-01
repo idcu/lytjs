@@ -348,7 +348,7 @@ export function getDevMode(): boolean {
  */
 export function warn(message: string): void {
   if (!devMode) return;
-  console.warn(`[LytJS warn]: ${message}`);
+  console.warn(`[lytjs]: ${message}`);
 }
 
 // 已警告消息集合
@@ -361,7 +361,7 @@ export function warnOnce(message: string): void {
   if (!devMode) return;
   if (warnedMessages.has(message)) return;
   warnedMessages.add(message);
-  console.warn(`[LytJS warn]: ${message}`);
+  console.warn(`[lytjs]: ${message}`);
 }
 
 /**

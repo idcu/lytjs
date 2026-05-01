@@ -146,7 +146,7 @@ describe('@lytjs/common-error', () => {
       const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
       setDevMode(true)
       warn('test warning')
-      expect(spy).toHaveBeenCalledWith('[LytJS warn]: test warning')
+      expect(spy).toHaveBeenCalledWith('[lytjs]: test warning')
       setDevMode(false)
       spy.mockRestore()
     })

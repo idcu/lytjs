@@ -178,7 +178,7 @@ function parseChildren(
           // DOCTYPE/声明格式异常，跳过到行尾或文件尾防止无限循环
           if (__DEV__) {
             console.warn(
-              `[lytjs/compiler] Invalid DOCTYPE/declaration at position ${context.offset}`,
+              `[lytjs] Invalid DOCTYPE/declaration at position ${context.offset}`,
             );
           }
           const lineEnd = s.indexOf("\n");
@@ -448,7 +448,7 @@ function parseTag(
     if (attrCount > MAX_ATTRIBUTES) {
       if (__DEV__) {
         console.warn(
-          `[lytjs/compiler] Too many attributes (${attrCount}), ` +
+          `[lytjs] Too many attributes (${attrCount}), ` +
             `stopping attribute parsing to prevent infinite loop.`,
         );
       }
@@ -475,7 +475,7 @@ function parseTag(
     if (type === TagType.Start && !VOID_ELEMENTS.has(tag)) {
       if (__DEV__) {
         console.warn(
-          `[lytjs/compiler] Non-void element <${tag}> uses self-closing syntax. ` +
+          `[lytjs] Non-void element <${tag}> uses self-closing syntax. ` +
             `This is not valid HTML and may cause hydration issues. ` +
             `Use <${tag}></${tag}> instead.`,
         );
@@ -483,7 +483,7 @@ function parseTag(
       if (context.options.onError) {
         context.options.onError(
           new Error(
-            `[lytjs/compiler] Non-void element <${tag}> uses self-closing syntax. ` +
+            `[lytjs] Non-void element <${tag}> uses self-closing syntax. ` +
               `Use <${tag}></${tag}> instead.`,
           ),
         );

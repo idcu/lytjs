@@ -196,9 +196,9 @@ function createTransformContext(
     error(msg: string, _node?: BaseNode): void {
       // 优先调用 options.onError 回调，否则直接抛出错误
       if (options.onError) {
-        options.onError(new Error(`[lytjs/compiler] ${msg}`));
+        options.onError(new Error(`[lytjs] ${msg}`));
       } else {
-        throw new Error(`[lytjs/compiler] ${msg}`);
+        throw new Error(`[lytjs] ${msg}`);
       }
     },
   };

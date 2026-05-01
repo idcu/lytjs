@@ -147,7 +147,7 @@ export function registerAsyncChild(
           try {
             cb();
           } catch (e) {
-            console.error("[LytJS] Error in suspense resolve callback:", e);
+            console.error("[lytjs] Error in suspense resolve callback:", e);
           }
         }
       }
@@ -202,7 +202,7 @@ export function resolveSuspense(boundary: SuspenseAsyncState): void {
     try {
       cb();
     } catch (e) {
-      console.error("[LytJS] Error in suspense resolve callback:", e);
+      console.error("[lytjs] Error in suspense resolve callback:", e);
     }
   }
 }
