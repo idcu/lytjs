@@ -9,17 +9,17 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
+      "import": "./dist/index.mjs",
       "require": "./dist/index.cjs"
     },
     "./signal": {
       "types": "./dist/signal.d.ts",
-      "import": "./dist/signal.js",
+      "import": "./dist/signal.mjs",
       "require": "./dist/signal.cjs"
     },
     "./signal-component": {
       "types": "./dist/signal-component.d.ts",
-      "import": "./dist/signal-component.js",
+      "import": "./dist/signal-component.mjs",
       "require": "./dist/signal-component.cjs"
     }
   },

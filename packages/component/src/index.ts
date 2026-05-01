@@ -67,13 +67,18 @@ export {
   resolveSuspense,
   abortSuspense,
 } from "./suspense";
-export type { SuspenseProps, SuspenseBoundary } from "./suspense";
+export type { SuspenseProps, SuspenseAsyncState } from "./suspense";
 
 // Types
 export type {
   ComponentOptions,
   ComponentInternalInstance,
   ComponentPublicInstance,
+  ComponentIdentity,
+  ComponentLifecycleState,
+  ComponentRenderState,
+  ComponentContextState,
+  ComponentParentState,
   SetupContext,
   InternalSlots,
   AppContext,

@@ -15,7 +15,7 @@ import {
   createComponentInstance,
   setupComponent,
 } from '../src/index';
-import type { ComponentInternalInstance, SuspenseBoundary } from '../src/types';
+import type { ComponentInternalInstance, SuspenseAsyncState } from '../src/types';
 
 describe('Suspense', () => {
   it('should show fallback during async setup (pending state)', async () => {

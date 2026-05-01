@@ -3,7 +3,7 @@
  * Fragment operations - standalone helpers for fragment vnode handling
  */
 
-import { Fragment, ShapeFlags } from "@lytjs/common-vnode";
+import { Fragment, ShapeFlags, createBaseVNode } from "@lytjs/common-vnode";
 import type { VNode } from "@lytjs/common-vnode";
 import { isArray } from "@lytjs/common-is";
 
@@ -40,30 +40,9 @@ export function getFragmentChildCount(vnode: VNode): number {
  * Create a fragment vnode with the given children
  */
 export function createFragment(children: VNode[]): VNode {
-  return {
+  return createBaseVNode({
     type: Fragment,
-    key: null,
-    ref: null,
-    props: null,
-    isStatic: false,
-    isStaticRoot: false,
-    isOnce: false,
-    isAsyncPlaceholder: false,
-    isComment: false,
-    isCloned: false,
-    isBlockTree: false,
-    shapeFlag: ShapeFlags.ARRAY_CHILDREN,
-    patchFlag: 0,
-    dynamicProps: null,
-    dynamicChildren: null,
     children,
-    component: null,
-    el: null,
-    anchor: null,
-    target: null,
-    targetAnchor: null,
-    targetStart: null,
-    loc: null,
-    __v_isVNode: true,
-  };
+    shapeFlag: ShapeFlags.ARRAY_CHILDREN,
+  });
 }
