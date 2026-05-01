@@ -23,7 +23,7 @@ export const transformModel: DirectiveTransform = (dir, _node, _context) => {
   if (expContent) {
     if (!isValidModelExpression(expContent)) {
       console.warn(
-        `[lytjs] v-model expression "${expContent}" is not a valid simple expression`,
+        `[LytJS] v-model expression "${expContent}" is not a valid simple expression`,
       );
       return;
     }

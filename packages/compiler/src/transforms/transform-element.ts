@@ -331,7 +331,7 @@ function handleDirective(
               "console.warn",
               [
                 createSimpleExpression(
-                  '"[lytjs] v-html directive can lead to XSS attack. Make sure the content is sanitized before rendering."',
+                  '"[LytJS] v-html directive can lead to XSS attack. Make sure the content is sanitized before rendering."',
                   true,
                   prop.loc,
                   true,
