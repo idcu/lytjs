@@ -25,10 +25,9 @@ test.describe('SSR Hydration', () => {
       };
     }`)
 
-    // 记录 renderToString 的可用性
-    // 如果不可用，后续 SSR 相关测试将使用模拟方式
     if (!result.available) {
       test.skip()
+      return
     }
     expect(result.available).toBe(true)
   })
