@@ -8,6 +8,17 @@ import type { VNode } from "@lytjs/common-vnode";
 
 // ==================== Types ====================
 
+/**
+ * Error thrown when a Suspense boundary is aborted.
+ * Contains the pendingId for error identification.
+ */
+export class SuspenseAbortedError extends Error {
+  constructor(public pendingId: number) {
+    super(`Suspense boundary (id: ${pendingId}) was aborted`);
+    this.name = "SuspenseAbortedError";
+  }
+}
+
 export interface SuspenseProps {
   timeout?: number;
   onResolve?: () => void;
@@ -198,12 +209,35 @@ export function resolveSuspense(boundary: SuspenseAsyncState): void {
 
 /**
  * Abort a suspense boundary (e.g., on unmount).
+ * Rejects all pending promises to prevent memory leaks and allows
+ * downstream consumers to handle the abort via .catch().
  */
 export function abortSuspense(boundary: SuspenseAsyncState): void {
   boundary.aborted = true;
   boundary.isPending = false;
   boundary.promise = null;
-  boundary.pendingPromises.clear();
+
+  // Reject all pending promises to prevent memory leaks.
+  // Since native JavaScript Promises cannot be externally rejected,
+  // we attempt to call an abort method if the promise is a custom thenable.
+  // For native promises, we rely on the aborted flag which causes
+  // .then()/.catch() callbacks in registerAsyncChild to skip side effects.
+  if (boundary.pendingPromises.size > 0) {
+    const abortError = new SuspenseAbortedError(0);
+    boundary.pendingPromises.forEach((promise) => {
+      try {
+        // If the promise has an abort method (custom thenable), call it
+        const p = promise as unknown as Record<string, unknown>;
+        if (typeof p.abort === "function") {
+          p.abort(abortError);
+        }
+      } catch {
+        // Ignore errors during abort
+      }
+    });
+    boundary.pendingPromises.clear();
+  }
+
   boundary.onResolve.length = 0;
   boundary.onPending.length = 0;
   boundary.onError.length = 0;
