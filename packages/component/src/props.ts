@@ -39,8 +39,9 @@ export function normalizePropsOptions(
   for (const key in rawProps) {
     if (hasOwn(rawProps, key)) {
       const value = rawProps[key]!;
-      result[key] =
-        (isFunction(value) || isArray(value) ? { type: value } : value) as PropOptions;
+      result[key] = (
+        isFunction(value) || isArray(value) ? { type: value } : value
+      ) as PropOptions;
     }
   }
   return result;
@@ -86,7 +87,15 @@ export function resolvePropValue<T = unknown>(
   // Custom validator
   if (validator && __DEV__) {
     if (!validator(value)) {
-      warn(`Prop validation failed for prop "${key}": received ${JSON.stringify(value)}`);
+      warn(
+        `Prop validation failed for prop "${key}": received ${(() => {
+          try {
+            return JSON.stringify(value);
+          } catch {
+            return "[object Object]";
+          }
+        })()}`,
+      );
     }
   }
 
@@ -113,9 +122,7 @@ export function validateType(value: unknown, type: unknown): boolean {
   }
 
   if (__DEV__) {
-    warn(
-      `Invalid prop: expected ${expectedType}, got ${getTypeName(value)}.`,
-    );
+    warn(`Invalid prop: expected ${expectedType}, got ${getTypeName(value)}.`);
   }
 
   return false;
@@ -126,7 +133,10 @@ type PropTypeConstructor =
   | (new (...args: unknown[]) => unknown)
   | { (): unknown };
 
-function checkType(value: unknown, type: PropTypeConstructor | PropTypeConstructor[]): boolean {
+function checkType(
+  value: unknown,
+  type: PropTypeConstructor | PropTypeConstructor[],
+): boolean {
   if (type === String) return isString(value);
   if (type === Number) return isNumber(value);
   if (type === Boolean) return isBoolean(value);
