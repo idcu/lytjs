@@ -94,14 +94,6 @@ export function createApp(
         }
       }
 
-      // Copy app-level components and directives
-      for (const [name, comp] of Object.entries(context.components)) {
-        if (comp) instance.appContext.components[name] = comp;
-      }
-      for (const [name, dir] of Object.entries(context.directives)) {
-        if (dir) instance.appContext.directives[name] = dir;
-      }
-
       // Set up the component (runs setup, init props/slots, data, lifecycle)
       setupComponent(instance);
 
