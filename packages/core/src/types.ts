@@ -25,6 +25,9 @@ export type {
   DebuggerEvent,
 };
 
+/** 实例化的渲染器类型（绑定到具体 VNode 实现） */
+export type DOMRenderer = Renderer<VNode>;
+
 // ==================== App ====================
 
 /** 插件安装函数签名 */

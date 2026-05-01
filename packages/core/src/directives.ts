@@ -17,14 +17,12 @@ export function withDirectives(
   directives: DirectiveArguments,
 ): VNode {
   const dirVNode = cloneVNode(vnode) as DirectiveVNode;
-  dirVNode._directives = directives.map(
-    ([dir, value, arg, modifiers]) => ({
-      dir: dir as Directive,
-      value,
-      arg,
-      modifiers: modifiers || {},
-    }),
-  ) as any;
+  dirVNode._directives = directives.map(([dir, value, arg, modifiers]) => ({
+    dir: dir as Directive,
+    value,
+    arg,
+    modifiers: modifiers || {},
+  })) as unknown as DirectiveArguments;
   return dirVNode;
 }
 

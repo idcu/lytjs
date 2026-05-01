@@ -85,7 +85,7 @@ export function createRenderer(
         // Patch text node: update textContent if children changed
         const node = (n2.el = n1.el);
         if (n1.children !== n2.children) {
-          (node as any).textContent = isFunction(n2.children)
+          (node as Text).textContent = isFunction(n2.children)
             ? ""
             : String(n2.children ?? "");
         }
@@ -93,7 +93,7 @@ export function createRenderer(
         // Patch comment node: update nodeValue if children changed
         const node = (n2.el = n1.el);
         if (n1.children !== n2.children) {
-          (node as any).nodeValue = isFunction(n2.children)
+          (node as Comment).nodeValue = isFunction(n2.children)
             ? ""
             : String(n2.children ?? "");
         }
@@ -147,10 +147,10 @@ export function createRenderer(
     anchor: HostNode | null,
     isSVG: boolean,
   ): void {
-    if (typeof vnode.type !== 'string') {
+    if (typeof vnode.type !== "string") {
       warn(
         `mountElement received a vnode with non-string type (${String(vnode.type)}). ` +
-        `Only element vnodes can be mounted as elements.`,
+          `Only element vnodes can be mounted as elements.`,
       );
       return;
     }
@@ -552,8 +552,8 @@ export function createRenderer(
 
   function diffProps(
     el: HostElement,
-    oldProps: Record<string, any>,
-    newProps: Record<string, any>,
+    oldProps: Record<string, unknown>,
+    newProps: Record<string, unknown>,
   ): void {
     for (const key in newProps) {
       if (key === "key" || key === "ref") continue;
@@ -738,14 +738,14 @@ export function createRenderer(
           try {
             bum[i]!();
           } catch (e) {
-            error("Error in beforeUnmount hook:", e);
+            error(`Error in beforeUnmount hook: ${e}`);
           }
         }
       } else if (bum) {
         try {
           bum();
         } catch (e) {
-          error("Error in beforeUnmount hook:", e);
+          error(`Error in beforeUnmount hook: ${e}`);
         }
       }
       component.isUnmounted = true;

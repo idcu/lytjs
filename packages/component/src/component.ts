@@ -122,9 +122,9 @@ export function setupComponent(instance: ComponentInternalInstance): void {
     // Async setup - mark vnode as async
     vnode.isAsyncPlaceholder = true;
     setupResult
-      .then((resolvedResult: SetupResult) => {
+      .then((resolvedResult) => {
         if (instance.isUnmounted) return;
-        handleSetupResult(instance, resolvedResult);
+        handleSetupResult(instance, resolvedResult as SetupResult);
         vnode.isAsyncPlaceholder = false;
       })
       .catch((err: Error) => {
@@ -169,10 +169,10 @@ function handleSetupResult(
 ): void {
   if (isFunction(setupResult)) {
     // Setup returned a render function
-    instance.render = setupResult;
+    instance.render = setupResult as RenderFunction;
   } else if (isObject(setupResult) && setupResult !== null) {
     // Setup returned a state object
-    instance.setupState = setupResult;
+    instance.setupState = setupResult as Record<string, unknown>;
   }
 
   // Finish component setup
@@ -292,7 +292,7 @@ export function createComponentPublicInstance(
       return (instance.vnode?.el as Element) ?? null;
     },
     get $options() {
-      return instance.type;
+      return instance.type as unknown as Record<string, unknown>;
     },
     get $refs() {
       return {};
@@ -404,7 +404,10 @@ function mergeOptionsPair(
           const childData = isFunction(childVal)
             ? childVal.call(this)
             : childVal;
-          return { ...parentData, ...childData };
+          return {
+            ...(parentData as Record<string, unknown>),
+            ...(childData as Record<string, unknown>),
+          };
         };
       } else if (childVal) {
         merged[key] = childVal;

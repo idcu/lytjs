@@ -1,13 +1,12 @@
 // tests/transforms/helpers.ts
 // 共享测试辅助函数 - 用于构建 mock AST 节点和 TransformContext
 
-import { NodeTypes, ElementTypes } from "../../src/constants";
+import { ElementTypes } from "../../src/constants";
 import type {
-  RootNode,
   ElementNode,
   TextNode,
   DirectiveNode,
-  SimpleExpressionNode,
+  AttributeNode,
   TransformContext,
   TemplateChildNode,
   JSChildNode,
@@ -24,7 +23,9 @@ import {
 /**
  * 创建一个最小化的 TransformContext mock
  */
-export function createMockContext(overrides?: Partial<TransformContext>): TransformContext {
+export function createMockContext(
+  overrides?: Partial<TransformContext>,
+): TransformContext {
   const helpers = new Map<string, number>();
   const components = new Set<string>();
   const directives = new Set<string>();
@@ -58,8 +59,8 @@ export function createMockContext(overrides?: Partial<TransformContext>): Transf
     replaceNode(_node: TemplateChildNode): void {},
     removeNode(_node: TemplateChildNode | null): void {},
     onNodeRemoved(): void {},
-    addIdentifiers(_exp: any): void {},
-    removeIdentifiers(_exp: any): void {},
+    addIdentifiers(_exp: unknown): void {},
+    removeIdentifiers(_exp: unknown): void {},
     addHoist(node: JSChildNode): void {
       hoists.push(node);
     },
@@ -69,7 +70,7 @@ export function createMockContext(overrides?: Partial<TransformContext>): Transf
     addCache(_index: number): void {
       context.cached++;
     },
-    error(msg: string, _node?: any): void {
+    error(msg: string, _node?: unknown): void {
       throw new Error(`[LytJS] ${msg}`);
     },
     ...overrides,
@@ -85,8 +86,8 @@ export function createMockContext(overrides?: Partial<TransformContext>): Transf
 export function createSlotElement(
   options: {
     tag?: string;
-    tagType?: typeof ElementTypes[keyof typeof ElementTypes];
-    props?: (any)[];
+    tagType?: (typeof ElementTypes)[keyof typeof ElementTypes];
+    props?: (AttributeNode | DirectiveNode)[];
     children?: TemplateChildNode[];
   } = {},
 ): ElementNode {
@@ -106,7 +107,7 @@ export function createOnceElement(
   options: {
     tag?: string;
     children?: TemplateChildNode[];
-    extraProps?: (any)[];
+    extraProps?: (AttributeNode | DirectiveNode)[];
   } = {},
 ): ElementNode {
   const onceDir = createDirective("once");

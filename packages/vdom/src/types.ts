@@ -27,7 +27,9 @@ export type HostNode = Node;
 export interface Component {
   __v_isComponent: true;
   name?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setup?: (...args: any[]) => any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   render?: (...args: any[]) => any;
   props?: Record<string, unknown>;
   emits?: string[] | Record<string, unknown>;

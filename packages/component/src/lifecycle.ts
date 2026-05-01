@@ -1,7 +1,10 @@
 // src/lifecycle.ts
 // Lifecycle hooks management
 
-import type { ComponentInternalInstance } from "./types";
+import type {
+  ComponentInternalInstance,
+  ComponentPublicInstance,
+} from "./types";
 import { warnOnce } from "@lytjs/common-error";
 
 // Current instance being set up (for lifecycle hook registration)
@@ -133,7 +136,11 @@ export function onBeforeUnmount(fn: () => void): void {
  * Uses an array to collect multiple callbacks per instance.
  */
 export function onErrorCaptured(
-  fn: (err: Error, instance: any, info: string) => boolean | void,
+  fn: (
+    err: Error,
+    instance: ComponentPublicInstance | null,
+    info: string,
+  ) => boolean | void,
 ): void {
   if (currentInstance) {
     if (!currentInstance.errorCapturedHooks) {
@@ -277,7 +284,11 @@ export function handleError(
     const hooks = current.errorCapturedHooks;
     if (hooks && hooks.length > 0) {
       for (const hook of hooks) {
-        const result = hook(err, current as any, info);
+        const result = hook(
+          err,
+          current as unknown as ComponentPublicInstance,
+          info,
+        );
         if (result === false) return true; // stop propagation
       }
     }
@@ -285,7 +296,12 @@ export function handleError(
     // Also check options API errorCaptured
     const errorHandler = current.type.errorCaptured;
     if (errorHandler) {
-      const result = errorHandler.call(current.ctx, err, current as any, info);
+      const result = errorHandler.call(
+        current.ctx,
+        err,
+        current as unknown as ComponentPublicInstance,
+        info,
+      );
       if (result === false) return true;
     }
 

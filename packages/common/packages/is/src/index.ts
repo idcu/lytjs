@@ -52,7 +52,7 @@ export const isObject = (val: unknown): val is object =>
 /**
  * 检查值是否为纯对象（plain object）
  */
-export const isPlainObject = (val: unknown): val is Record<string, any> =>
+export const isPlainObject = (val: unknown): val is Record<string, unknown> =>
   Object.prototype.toString.call(val) === "[object Object]";
 
 /**
@@ -63,16 +63,18 @@ export const isArray = Array.isArray;
 /**
  * 检查值是否为函数
  */
-export const isFunction = (val: unknown): val is Function =>
-  typeof val === "function";
+export const isFunction = (
+  val: unknown,
+): val is (...args: unknown[]) => unknown => typeof val === "function";
 
 /**
  * 检查值是否为 Promise
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const isPromise = (val: unknown): val is Promise<any> =>
   isObject(val) &&
-  isFunction((val as any).then) &&
-  isFunction((val as any).catch);
+  isFunction((val as Record<string, unknown>).then) &&
+  isFunction((val as Record<string, unknown>).catch);
 
 /**
  * 检查值是否为 null 或 undefined
@@ -118,25 +120,25 @@ export const toTypeString = (val: unknown): string =>
 /**
  * 检查值是否为 Map 类型
  */
-export const isMap = (val: unknown): val is Map<any, any> =>
+export const isMap = (val: unknown): val is Map<unknown, unknown> =>
   toTypeString(val) === "[object Map]";
 
 /**
  * 检查值是否为 Set 类型
  */
-export const isSet = (val: unknown): val is Set<any> =>
+export const isSet = (val: unknown): val is Set<unknown> =>
   toTypeString(val) === "[object Set]";
 
 /**
  * 检查值是否为 WeakMap 类型
  */
-export const isWeakMap = (val: unknown): val is WeakMap<any, any> =>
+export const isWeakMap = (val: unknown): val is WeakMap<object, unknown> =>
   toTypeString(val) === "[object WeakMap]";
 
 /**
  * 检查值是否为 WeakSet 类型
  */
-export const isWeakSet = (val: unknown): val is WeakSet<any> =>
+export const isWeakSet = (val: unknown): val is WeakSet<object> =>
   toTypeString(val) === "[object WeakSet]";
 
 /**

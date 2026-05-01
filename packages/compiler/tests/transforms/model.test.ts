@@ -4,9 +4,9 @@
 import { describe, it, expect } from "vitest";
 import { transformModel } from "../../src/transforms/model";
 import { NodeTypes } from "../../src/constants";
-import type { DirectiveNode, ElementNode } from "../../src/types";
+import type { DirectiveNode } from "../../src/types";
 import { createMockContext, createModelDirective } from "./helpers";
-import { createElement, createSimpleExpression } from "../../src/ast";
+import { createElement } from "../../src/ast";
 
 describe("transformModel", () => {
   describe("基本双向绑定转换", () => {
@@ -30,7 +30,10 @@ describe("transformModel", () => {
       const node = createElement("input");
       const result = transformModel(dir, node, context);
 
-      expect(result.props[0]).toEqual({ key: "modelValue", value: "form.name" });
+      expect(result.props[0]).toEqual({
+        key: "modelValue",
+        value: "form.name",
+      });
       expect(result.props[1]).toEqual({
         key: "onUpdate:modelValue",
         value: "$event => (form.name = $event)",

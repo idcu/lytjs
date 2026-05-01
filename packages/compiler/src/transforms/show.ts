@@ -10,7 +10,7 @@ export const transformShow: DirectiveTransform = (dir, _node, _context) => {
 
   const expContent = getExpContent(exp);
 
-  if (expContent) {
+  if (expContent != null) {
     props.push({
       key: "style",
       value: expContent + " ? undefined : { display: 'none' }",

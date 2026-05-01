@@ -1,70 +1,74 @@
 // @lytjs/shared-types - 渲染器相关类型
 
-import type { VNode } from '@lytjs/vdom'
-import type { ComponentPublicInstance } from './component'
+import type { ComponentPublicInstance } from "./component";
 
 /** 渲染器接口（跨包抽象） */
-export interface Renderer {
-  mount(vnode: VNode | null, container: Element): void
-  unmount(vnode: VNode | null): void
-  patch(oldVNode: VNode | null, newVNode: VNode | null, container: Element): void
-  move(vnode: VNode, container: Element, anchor: Element | null): void
+// 使用泛型 VNode 类型，避免对具体 VNode 实现的依赖
+export interface Renderer<VNode = unknown> {
+  mount(vnode: VNode | null, container: Element): void;
+  unmount(vnode: VNode | null): void;
+  patch(
+    oldVNode: VNode | null,
+    newVNode: VNode | null,
+    container: Element,
+  ): void;
+  move(vnode: VNode, container: Element, anchor: Element | null): void;
 }
 
 /** 指令钩子接口 */
-export interface Directive<T = Element> {
+export interface Directive<T = Element, VNode = unknown> {
   created?: (
     el: T,
-    binding: DirectiveBinding,
+    binding: DirectiveBinding<VNode>,
     vnode: VNode,
     prevVNode: VNode | null,
-  ) => void
+  ) => void;
   beforeMount?: (
     el: T,
-    binding: DirectiveBinding,
+    binding: DirectiveBinding<VNode>,
     vnode: VNode,
     prevVNode: VNode | null,
-  ) => void
+  ) => void;
   mounted?: (
     el: T,
-    binding: DirectiveBinding,
+    binding: DirectiveBinding<VNode>,
     vnode: VNode,
     prevVNode: VNode | null,
-  ) => void
+  ) => void;
   beforeUpdate?: (
     el: T,
-    binding: DirectiveBinding,
+    binding: DirectiveBinding<VNode>,
     vnode: VNode,
     prevVNode: VNode | null,
-  ) => void
+  ) => void;
   updated?: (
     el: T,
-    binding: DirectiveBinding,
+    binding: DirectiveBinding<VNode>,
     vnode: VNode,
     prevVNode: VNode | null,
-  ) => void
+  ) => void;
   beforeUnmount?: (
     el: T,
-    binding: DirectiveBinding,
+    binding: DirectiveBinding<VNode>,
     vnode: VNode,
     prevVNode: VNode | null,
-  ) => void
+  ) => void;
   unmounted?: (
     el: T,
-    binding: DirectiveBinding,
+    binding: DirectiveBinding<VNode>,
     vnode: VNode,
     prevVNode: VNode | null,
-  ) => void
+  ) => void;
 }
 
 /** 指令绑定信息 */
-export interface DirectiveBinding {
-  instance: ComponentPublicInstance | null
-  value: unknown
-  oldValue: unknown
-  arg?: string
-  modifiers: Record<string, boolean>
-  dir: Directive
+export interface DirectiveBinding<VNode = unknown> {
+  instance: ComponentPublicInstance | null;
+  value: unknown;
+  oldValue: unknown;
+  arg?: string;
+  modifiers: Record<string, boolean>;
+  dir: Directive<Element, VNode>;
 }
 
 /** 指令参数数组类型 */
@@ -73,4 +77,4 @@ export type DirectiveArguments = [
   unknown,
   string?,
   Record<string, boolean>?,
-][]
+][];

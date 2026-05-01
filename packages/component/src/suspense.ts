@@ -1,7 +1,11 @@
 // src/suspense.ts
 // Suspense component (simplified)
 
-import type { ComponentInternalInstance, ComponentOptions } from "./types";
+import type {
+  ComponentInternalInstance,
+  ComponentOptions,
+  SetupContext,
+} from "./types";
 import { createComponentInstance, setupComponent } from "./component";
 import { ShapeFlags, createBaseVNode } from "@lytjs/common-vnode";
 import type { VNode } from "@lytjs/common-vnode";
@@ -31,8 +35,8 @@ export interface SuspenseAsyncState {
   isPending: boolean;
   error: Error | null;
   /** @deprecated 使用 pendingPromises 代替 */
-  promise: Promise<any> | null;
-  pendingPromises: Set<Promise<any>>;
+  promise: Promise<unknown> | null;
+  pendingPromises: Set<Promise<unknown>>;
   onResolve: (() => void)[];
   onPending: (() => void)[];
   onError: ((error: Error) => void)[];
@@ -48,7 +52,7 @@ export const Suspense: ComponentOptions = {
     timeout: { type: Number, default: undefined },
   },
 
-  setup(_props: SuspenseProps, _ctx: Record<string, unknown>) {
+  setup(_props: Record<string, unknown>, _ctx: SetupContext) {
     const boundary: SuspenseAsyncState = {
       isPending: false,
       error: null,
@@ -60,13 +64,14 @@ export const Suspense: ComponentOptions = {
       aborted: false,
     };
 
-    if (_props.onResolve) boundary.onResolve.push(_props.onResolve);
-    if (_props.onPending) boundary.onPending.push(_props.onPending);
-    if (_props.onError) boundary.onError.push(_props.onError);
+    const props = _props as SuspenseProps;
+    if (props.onResolve) boundary.onResolve.push(props.onResolve);
+    if (props.onPending) boundary.onPending.push(props.onPending);
+    if (props.onError) boundary.onError.push(props.onError);
 
     return {
       boundary,
-    };
+    } as Record<string, unknown>;
   },
 };
 
@@ -117,7 +122,7 @@ export function createSuspenseBoundary(): SuspenseAsyncState {
  */
 export function registerAsyncChild(
   boundary: SuspenseAsyncState,
-  promise: Promise<any>,
+  promise: Promise<unknown>,
 ): boolean {
   if (boundary.aborted) return false;
 
@@ -136,7 +141,7 @@ export function registerAsyncChild(
   }
 
   promise
-    .then((result: any) => {
+    .then((result: unknown) => {
       if (boundary.aborted) return;
       boundary.pendingPromises.delete(promise);
       // When all promises are resolved, transition to resolved
@@ -148,7 +153,7 @@ export function registerAsyncChild(
           try {
             cb();
           } catch (e) {
-            error("Error in suspense resolve callback:", e);
+            error(`Error in suspense resolve callback: ${String(e)}`);
           }
         }
       }
@@ -167,7 +172,7 @@ export function registerAsyncChild(
           try {
             cb(err);
           } catch (e) {
-            error("Error in suspense error callback:", e);
+            error(`Error in suspense error callback: ${String(e)}`);
           }
         }
       }
@@ -203,7 +208,7 @@ export function resolveSuspense(boundary: SuspenseAsyncState): void {
     try {
       cb();
     } catch (e) {
-      error("Error in suspense resolve callback:", e);
+      error(`Error in suspense resolve callback: ${String(e)}`);
     }
   }
 }

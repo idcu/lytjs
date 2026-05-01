@@ -132,8 +132,7 @@ export function trimChars(str: string, chars: string): string {
       normalChars.push(ch);
     }
   }
-  const charClass =
-    specialChars.join("") + escapeRegExp(normalChars.join(""));
+  const charClass = specialChars.join("") + escapeRegExp(normalChars.join(""));
   const pattern = new RegExp(`^[${charClass}]+|[${charClass}]+$`, "g");
   return str.replace(pattern, "");
 }
@@ -259,8 +258,8 @@ export function template(
 export function normalizeClass(
   value:
     | string
-    | Record<string, any>
-    | Array<any>
+    | Record<string, unknown>
+    | Array<unknown>
     | undefined
     | null
     | boolean
@@ -270,7 +269,14 @@ export function normalizeClass(
   if (typeof value === "string") return value;
 
   if (Array.isArray(value)) {
-    return value.map(normalizeClass).filter(Boolean).join(" ");
+    return (
+      value as Array<
+        string | Record<string, unknown> | null | undefined | boolean | number
+      >
+    )
+      .map(normalizeClass)
+      .filter(Boolean)
+      .join(" ");
   }
 
   if (typeof value === "object") {
@@ -293,7 +299,7 @@ export function normalizeStyle(
   value:
     | string
     | Record<string, string | number>
-    | Array<any>
+    | Array<unknown>
     | undefined
     | null,
 ): string {
@@ -301,7 +307,14 @@ export function normalizeStyle(
   if (typeof value === "string") return value;
 
   if (Array.isArray(value)) {
-    return value.map(normalizeStyle).filter(Boolean).join("; ");
+    return (
+      value as Array<
+        string | Record<string, string | number> | null | undefined
+      >
+    )
+      .map(normalizeStyle)
+      .filter(Boolean)
+      .join("; ");
   }
 
   if (typeof value === "object") {
@@ -315,7 +328,6 @@ export function normalizeStyle(
 
   return "";
 }
-
 
 // ============================================================
 // HTML void elements
@@ -462,9 +474,7 @@ export function isSafeAttribute(attrName: string, attrValue: string): boolean {
   // 1. 检查事件处理器属性
   if (DANGEROUS_EVENT_ATTRS.has(lowerName)) {
     if (__DEV__) {
-      console.warn(
-        `[LytJS] Blocked dangerous event attribute: ${attrName}`,
-      );
+      console.warn(`[LytJS] Blocked dangerous event attribute: ${attrName}`);
     }
     return false;
   }
@@ -528,17 +538,22 @@ const RE_URI_ATTR = new RegExp(
   "gi",
 );
 const RE_WHITESPACE_CTRL =
+  // eslint-disable-next-line no-control-regex
   /[\u0000-\u0020\u00A0\u1680\u2000-\u200B\u2028\u2029\u202F\u205F\u3000\uFEFF]+/g;
 const RE_DANGEROUS_SCHEME =
   /^(javascript|vbscript|data|mhtml|x-javascript)\s*:/i;
-const DECODE_MAP: [RegExp, string | ((...args: any[]) => string)][] = [
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const DECODE_MAP: [
+  RegExp,
+  string | ((substring: string, ...args: any[]) => string),
+][] = [
   [
     /&#x0*([0-9a-fA-F]+);/g,
-    (_: any, code: any) => String.fromCodePoint(parseInt(code, 16)),
+    (_: string, code: string) => String.fromCodePoint(parseInt(code, 16)),
   ],
   [
     /&#0*([0-9]+);/g,
-    (_: any, code: any) => String.fromCodePoint(parseInt(code, 10)),
+    (_: string, code: string) => String.fromCodePoint(parseInt(code, 10)),
   ],
   [/&amp;/gi, "&"],
   [/&lt;/gi, "<"],
@@ -584,6 +599,7 @@ export function sanitizeHTML(str: string): string {
     for (let i = 0; i < 5; i++) {
       const prev = decoded;
       for (const [re, repl] of DECODE_MAP) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         decoded = decoded.replace(re, repl as any);
       }
       if (decoded === prev) break;
@@ -603,9 +619,7 @@ export function sanitizeHTML(str: string): string {
     (_match, attr: string, dq: string, sq: string) => {
       const value = dq ?? sq ?? "";
       // Strip whitespace / null bytes / control chars that could hide the scheme
-      const cleaned = value
-        .replace(RE_WHITESPACE_CTRL, "")
-        .toLowerCase();
+      const cleaned = value.replace(RE_WHITESPACE_CTRL, "").toLowerCase();
       if (RE_DANGEROUS_SCHEME.test(cleaned)) {
         return `${attr}=""`;
       }

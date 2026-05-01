@@ -186,7 +186,7 @@ export class ReactiveEffect<T = unknown> {
 
   constructor(
     public fn: () => T,
-    public scheduler?: (...args: any[]) => any,
+    public scheduler?: (...args: unknown[]) => unknown,
   ) {
     // 自动注册到当前活跃的 effectScope
     const scope = getActiveEffectScope();
@@ -201,7 +201,7 @@ export class ReactiveEffect<T = unknown> {
         return this.fn();
       } catch (e) {
         if (__DEV__) {
-          warn("Error running inactive effect:", e);
+          warn(`Error running inactive effect: ${String(e)}`);
         }
         throw e;
       }
@@ -263,7 +263,7 @@ export function effect(
   fn: () => void,
   options?: {
     lazy?: false;
-    scheduler?: (...args: any[]) => any;
+    scheduler?: (...args: unknown[]) => unknown;
     allowRecurse?: boolean;
     onStop?: () => void;
     onTrack?: (event: {
@@ -286,7 +286,7 @@ export function effect<T>(
   fn: () => T,
   options: {
     lazy: true;
-    scheduler?: (...args: any[]) => any;
+    scheduler?: (...args: unknown[]) => unknown;
     allowRecurse?: boolean;
     onStop?: () => void;
     onTrack?: (event: {
@@ -309,7 +309,7 @@ export function effect<T = unknown>(
   fn: () => T,
   options?: {
     lazy?: boolean;
-    scheduler?: (...args: any[]) => any;
+    scheduler?: (...args: unknown[]) => unknown;
     allowRecurse?: boolean;
     onStop?: () => void;
     onTrack?: (event: {

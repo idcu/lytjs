@@ -3,6 +3,7 @@
 
 import { describe, it, expect } from "vitest";
 import { transformIf } from "../../src/transforms/if";
+import { NodeTypes } from "../../src/constants";
 import { createMockContext } from "./helpers";
 import {
   createElement,

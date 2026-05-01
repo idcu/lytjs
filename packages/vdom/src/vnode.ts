@@ -38,8 +38,8 @@ export function createVNode(
   const vnode: VNode = {
     type,
     props: null,
-    key: props?.key ?? null,
-    ref: props?.ref ?? null,
+    key: (props?.key as string | number | symbol | null | undefined) ?? null,
+    ref: (props?.ref as ((ref: unknown) => void) | null | undefined) ?? null,
     isStatic: false,
     isStaticRoot: false,
     isOnce: false,
@@ -124,8 +124,12 @@ export function cloneVNode(
     const mergedProps = { ...extraProps };
     // Normalize the merged props
     normalizeProps(mergedProps);
-    cloned.key = mergedProps.key ?? vnode.key;
-    cloned.ref = mergedProps.ref ?? vnode.ref;
+    cloned.key =
+      (mergedProps.key as string | number | symbol | null | undefined) ??
+      vnode.key;
+    cloned.ref =
+      (mergedProps.ref as ((ref: unknown) => void) | null | undefined) ??
+      vnode.ref;
     // Merge props directly
     if (vnode.props) {
       cloned.props = { ...vnode.props, ...mergedProps };
@@ -134,8 +138,8 @@ export function cloneVNode(
     }
     // Merge children if provided
     if (!isNullish(mergedProps.children)) {
-      cloned.children = mergedProps.children;
-      normalizeChildren(cloned, mergedProps.children);
+      cloned.children = mergedProps.children as VNodeChildren;
+      normalizeChildren(cloned, mergedProps.children as VNodeChildren);
     }
   }
   // When no extraProps, props is already shallow-copied via spread (...vnode)
@@ -177,7 +181,7 @@ export function mergeProps(
       if (key === "class") {
         result[key] = existing
           ? normalizeClass([existing, val])
-          : normalizeClass(val);
+          : normalizeClass(val as string);
       }
       // Style merging
       else if (key === "style") {
@@ -280,11 +284,15 @@ function normalizeProps(
   const normalized = { ...props };
   // class normalization
   if (normalized.class !== undefined) {
-    normalized.class = normalizeClass(normalized.class);
+    normalized.class = normalizeClass(
+      normalized.class as Parameters<typeof normalizeClass>[0],
+    );
   }
   // style normalization
   if (normalized.style !== undefined) {
-    normalized.style = normalizeStyle(normalized.style);
+    normalized.style = normalizeStyle(
+      normalized.style as Parameters<typeof normalizeStyle>[0],
+    );
   }
   return normalized;
 }

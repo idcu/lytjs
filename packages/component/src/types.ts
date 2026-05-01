@@ -6,7 +6,7 @@ import type { BaseAppConfig } from "@lytjs/shared-types";
 import type {
   SlotFunction,
   InternalSlots,
-  ComponentPublicInstance as SharedComponentPublicInstance,
+  ComponentPublicInstance,
 } from "@lytjs/shared-types";
 
 // Re-export shared component types

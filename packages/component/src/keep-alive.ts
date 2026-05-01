@@ -2,7 +2,11 @@
 // KeepAlive component (simplified)
 
 import { isString, isArray } from "@lytjs/common-is";
-import type { ComponentInternalInstance, ComponentOptions } from "./types";
+import type {
+  ComponentInternalInstance,
+  ComponentOptions,
+  SetupContext,
+} from "./types";
 import { createComponentInstance, setupComponent } from "./component";
 import { handleError } from "./lifecycle";
 import { ShapeFlags, createBaseVNode } from "@lytjs/common-vnode";
@@ -37,14 +41,14 @@ export const KeepAlive: ComponentOptions = {
     max: { type: Number, default: undefined },
   },
 
-  setup(_props: KeepAliveProps, _ctx: Record<string, unknown>) {
+  setup(_props: Record<string, unknown>, _ctx: SetupContext) {
     const cache: KeepAliveCache = new Map();
     const keys: Set<string> = new Set();
 
     return {
       cache,
       keys,
-    };
+    } as Record<string, unknown>;
   },
 
   created() {
