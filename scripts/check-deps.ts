@@ -16,13 +16,14 @@
  * 用法: pnpm run check-deps
  */
 
-import { readFileSync, readdirSync, existsSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, "..");
+
+import { findPackageJsonFiles } from "./shared.js";
 
 // 层级定义
 const LAYER_MAP: Record<string, number> = {
@@ -115,43 +116,6 @@ function getLayer(packageName: string): number {
   return -1;
 }
 
-function findPackageJsonFiles(dir: string): string[] {
-  const results: string[] = [];
-
-  if (!existsSync(dir)) {
-    return results;
-  }
-
-  const entries = readdirSync(dir, { withFileTypes: true });
-
-  for (const entry of entries) {
-    if (entry.isDirectory()) {
-      const fullPath = join(dir, entry.name);
-      const pkgJsonPath = join(fullPath, "package.json");
-
-      if (existsSync(pkgJsonPath)) {
-        results.push(pkgJsonPath);
-      }
-
-      // 递归搜索子目录（但排除 node_modules、dist 和 _templates）
-      if (
-        entry.name !== "node_modules" &&
-        entry.name !== "dist" &&
-        entry.name !== ".turbo" &&
-        entry.name !== "_templates"
-      ) {
-        results.push(...findPackageJsonFiles(fullPath));
-      }
-    }
-  }
-
-  return results;
-}
-
-/**
- * Check if a dependency name matches any pattern in the allowed set,
- * supporting wildcard patterns like `@lytjs/common-*`
- */
 function isWildcardMatch(allowed: Set<string>, depName: string): boolean {
   if (allowed.has(depName)) return true;
   for (const pattern of allowed) {
