@@ -41,7 +41,8 @@
       "@lytjs/component": ["packages/component/src"],
       "@lytjs/core": ["packages/core/src"]
     },
-    "types": []
+    "types": [],
   },
+  "include": ["env.d.ts"],
   "exclude": ["node_modules", "dist", "**/dist", "**/node_modules"]
 }
