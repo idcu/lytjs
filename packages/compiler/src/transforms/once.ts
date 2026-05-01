@@ -34,7 +34,7 @@ export function transformOnce(
   if (element.codegenNode) {
     context.addHoist(element.codegenNode);
     element.codegenNode = createSimpleExpression(
-      `_hoisted_${context.hoists.length - 1}`,
+      `_hoisted_${context.hoists.length}`,
       false,
       element.loc,
       true,
