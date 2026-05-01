@@ -147,7 +147,8 @@ export function deepClone<T>(
 
   // 特殊对象类型
   if (source instanceof Date) return new Date(source.getTime()) as T;
-  if (source instanceof RegExp) return new RegExp(source.source, source.flags) as T;
+  if (source instanceof RegExp)
+    return new RegExp(source.source, source.flags) as T;
   if (source instanceof Map) {
     const clone = new Map();
     seen.set(source, clone);
@@ -178,8 +179,11 @@ export function deepClone<T>(
   // 普通对象
   const clone = {} as Record<string | symbol, unknown>;
   seen.set(source, clone);
-  for (const key of Object.keys(source)) {
-    clone[key] = deepClone((source as Record<string, unknown>)[key], seen);
+  for (const key of Reflect.ownKeys(source)) {
+    clone[key as string] = deepClone(
+      (source as Record<string | symbol, unknown>)[key as string | symbol],
+      seen,
+    );
   }
   return clone as T;
 }
@@ -286,14 +290,13 @@ export function set<T extends Record<string, any>>(
   value: any,
 ): T {
   if (!path) return obj;
-  const DANGEROUS_KEYS = new Set(["__proto__", "constructor", "prototype"]);
   const keys = path.split(".");
   const result = { ...obj };
   let current: any = result;
 
   for (let i = 0; i < keys.length - 1; i++) {
     const key = keys[i]!;
-    if (DANGEROUS_KEYS.has(key)) return obj as T;
+    if (PROTO_POLLUTION_KEYS.has(key)) return obj as T;
     if (current[key] == null || typeof current[key] !== "object") {
       current[key] = {};
     } else {
@@ -302,6 +305,8 @@ export function set<T extends Record<string, any>>(
     current = current[key];
   }
 
-  current[keys[keys.length - 1]!] = value;
+  const lastKey = keys[keys.length - 1]!;
+  if (PROTO_POLLUTION_KEYS.has(lastKey)) return obj as T;
+  current[lastKey] = value;
   return result;
 }
