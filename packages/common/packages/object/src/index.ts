@@ -180,10 +180,20 @@ export function deepClone<T>(
   const clone = {} as Record<string | symbol, unknown>;
   seen.set(source, clone);
   for (const key of Reflect.ownKeys(source)) {
-    clone[key as string | symbol] = deepClone(
+    const clonedValue = deepClone(
       (source as Record<string | symbol, unknown>)[key as string | symbol],
       seen,
     );
+    if (typeof key === "symbol") {
+      Object.defineProperty(clone, key, {
+        value: clonedValue,
+        writable: true,
+        enumerable: true,
+        configurable: true,
+      });
+    } else {
+      clone[key] = clonedValue;
+    }
   }
   return clone as T;
 }

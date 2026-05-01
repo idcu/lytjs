@@ -256,7 +256,8 @@ export function getErrorMessage(code: number): string {
  * 获取错误码对应的分类
  */
 export function getCategory(code: number): ErrorCategoryType {
-  // RENDER_ERROR (2002) is categorized as renderer, check before general range
+  // RENDER_ERROR (2002) 属于渲染器错误，需在通用范围检查之前处理
+  // 因为 2002 落在 [2000, 3000) 的 RUNTIME 范围内，需要特殊覆盖为 RENDERER
   if (code === LytErrorCodes.RENDER_ERROR) return ErrorCategory.RENDERER;
   if (code >= 1000 && code < 2000) return ErrorCategory.COMPILER;
   if (code >= 2000 && code < 3000) return ErrorCategory.RUNTIME;
