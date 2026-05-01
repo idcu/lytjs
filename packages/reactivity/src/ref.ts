@@ -3,7 +3,7 @@
 // 复用 @lytjs/common-is: isObject, hasChanged
 
 import { isObject, hasChanged } from "@lytjs/common-is";
-import { track, trigger, activeEffect, shouldTrack, createDep } from "./effect";
+import { track, trigger, getActiveEffect, getShouldTrack, createDep } from "./effect";
 import type { Dep } from "./effect";
 import { TrackOpTypes, TriggerOpTypes } from "./constants";
 import { toRaw, isRef } from "./shared";
@@ -93,7 +93,7 @@ class ShallowRefImpl<T> {
 // ==================== 追踪与触发 ====================
 
 export function trackRefValue(ref: RefLike): void {
-  if (shouldTrack && activeEffect) {
+  if (getShouldTrack() && getActiveEffect()) {
     track(ref, TrackOpTypes.GET, "value");
   }
 }

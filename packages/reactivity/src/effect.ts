@@ -6,11 +6,19 @@ import type { ReactiveEffectRunner } from "./types";
 
 // ==================== 全局状态 ====================
 
-export let activeEffect: ReactiveEffect | undefined;
+let activeEffect: ReactiveEffect | undefined;
 let _trackDepth = 0;
 const targetMap = new WeakMap<object, Map<string | symbol, Dep>>();
-export let shouldTrack = true;
+let shouldTrack = true;
 const trackStack: boolean[] = [];
+
+// 只读访问器，防止外部修改内部状态
+export function getActiveEffect(): ReactiveEffect | undefined {
+  return activeEffect;
+}
+export function getShouldTrack(): boolean {
+  return shouldTrack;
+}
 
 // effectScope 支持：从 effect-scope 导入 activeEffectScope getter
 import { getActiveEffectScope } from "./effect-scope";
@@ -118,10 +126,10 @@ export function triggerEffects(effects: ReactiveEffect[]) {
       console.warn(
         "[LyticsJS warn] Maximum trigger depth exceeded. Possible infinite reactivity loop detected.",
       );
+      console.error(
+        `[LyticsJS error] Maximum trigger depth (${MAX_TRIGGER_DEPTH}) exceeded in triggerEffects. Possible infinite reactivity loop detected. triggerDepth=${triggerDepth}`,
+      );
     }
-    console.error(
-      `[LyticsJS error] Maximum trigger depth (${MAX_TRIGGER_DEPTH}) exceeded in triggerEffects. Possible infinite reactivity loop detected. triggerDepth=${triggerDepth}`,
-    );
     return;
   }
   triggerDepth++;
@@ -306,11 +314,18 @@ export function resetTracking(): void {
 }
 
 export function batch(fn: () => void): void {
+  const stackLength = trackStack.length;
   pauseTracking();
   try {
     fn();
   } finally {
-    resetTracking();
+    // 恢复到 batch 调用前的 stack 长度，确保嵌套安全
+    while (trackStack.length > stackLength) {
+      trackStack.pop();
+    }
+    shouldTrack = trackStack.length > 0
+      ? trackStack[trackStack.length - 1]!
+      : true;
   }
 }
 
