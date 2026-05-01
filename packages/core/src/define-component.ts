@@ -173,6 +173,10 @@ export function defineAsyncComponent(
           clearTimeout(timeoutId);
           timeoutId = null;
         }
+        if (delayTimer !== null) {
+          clearTimeout(delayTimer);
+          delayTimer = null;
+        }
       });
 
       return instance;
