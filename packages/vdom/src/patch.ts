@@ -14,6 +14,7 @@ import {
 import type { VNode, ComponentInternalInstance } from "@lytjs/common-vnode";
 import { isArray, isFunction, hasChanged, EMPTY_OBJ } from "@lytjs/common-is";
 import { isSafeAttribute } from "@lytjs/common-string";
+import { warn, error } from "@lytjs/common-error";
 import {
   getDOMEventName,
   extractDOMEventHandler,
@@ -147,8 +148,8 @@ export function createRenderer(
     isSVG: boolean,
   ): void {
     if (typeof vnode.type !== 'string') {
-      console.warn(
-        `[LytJS]: mountElement received a vnode with non-string type (${String(vnode.type)}). ` +
+      warn(
+        `mountElement received a vnode with non-string type (${String(vnode.type)}). ` +
         `Only element vnodes can be mounted as elements.`,
       );
       return;
@@ -737,14 +738,14 @@ export function createRenderer(
           try {
             bum[i]!();
           } catch (e) {
-            console.error("[LytJS] Error in beforeUnmount hook:", e);
+            error("Error in beforeUnmount hook:", e);
           }
         }
       } else if (bum) {
         try {
           bum();
         } catch (e) {
-          console.error("[LytJS] Error in beforeUnmount hook:", e);
+          error("Error in beforeUnmount hook:", e);
         }
       }
       component.isUnmounted = true;
@@ -861,13 +862,96 @@ export function createRenderer(
 }
 
 // ============================================================
+// Simplified patchProp for vdom's own DOM renderer
+// ============================================================
+
+/**
+ * Simplified patchProp implementation for vdom's built-in DOM renderer.
+ *
+ * This is a lightweight version that covers the most common prop types
+ * (class, style, events, attributes) without the advanced features of
+ * the full implementation in `@lytjs/renderer` (e.g., invoker pattern
+ * for events, camelCase-to-kebab-case style normalization, boolean attr
+ * handling, innerHTML sanitization, etc.).
+ *
+ * Used only by `createDOMRendererOptions()` for vdom's own tests and
+ * standalone usage. Production applications should use
+ * `@lytjs/renderer`'s `createDOMRenderer()` which provides the
+ * complete, security-hardened patchProp.
+ *
+ * TODO(U-06): Unify with @lytjs/renderer's patchProp by extracting
+ * shared logic (patchClass, patchStyle, patchAttr) into common packages
+ * and having both implementations consume them. The main blocker is
+ * patchEvent's invoker pattern which is renderer-specific optimization.
+ *
+ * @see @lytjs/renderer/src/dom/patch-props.ts for the full implementation
+ */
+function patchDOMProp(
+  el: Element,
+  key: string,
+  prevValue: unknown,
+  nextValue: unknown,
+): void {
+  if (key === "class") {
+    if (prevValue !== nextValue) {
+      el.className = (nextValue as string) || "";
+    }
+  } else if (key === "style") {
+    if (typeof nextValue === "string") {
+      el.setAttribute("style", nextValue);
+    } else if (nextValue != null) {
+      const style = el as HTMLElement;
+      // Remove old style properties that don't exist in new style
+      if (prevValue && typeof prevValue === "object") {
+        for (const k in prevValue as Record<string, string>) {
+          if (!(k in (nextValue as Record<string, string>))) {
+            style.style.setProperty(k, "");
+          }
+        }
+      }
+      // Apply new style properties
+      for (const k in nextValue as Record<string, string>) {
+        const val = (nextValue as Record<string, string>)[k];
+        if (val !== undefined) {
+          style.style.setProperty(k, val);
+        }
+      }
+    } else {
+      el.removeAttribute("style");
+    }
+  } else if (key.startsWith("on")) {
+    const eventName = getDOMEventName(key);
+    const prevHandler = extractDOMEventHandler(prevValue);
+    const prevOptions = extractDOMEventOptions(prevValue);
+    const nextHandler = extractDOMEventHandler(nextValue);
+    const nextOptions = extractDOMEventOptions(nextValue);
+    if (prevHandler) {
+      el.removeEventListener(eventName, prevHandler, prevOptions);
+    }
+    if (nextHandler) {
+      el.addEventListener(eventName, nextHandler, nextOptions);
+    }
+  } else if (nextValue == null || nextValue === false) {
+    el.removeAttribute(key);
+  } else {
+    if (isSafeAttribute(key, String(nextValue))) {
+      el.setAttribute(key, String(nextValue));
+    }
+  }
+}
+
+// ============================================================
 // Default DOM renderer options
 // ============================================================
 
 /**
- * Create default DOM renderer options for browser environments
+ * Create default DOM renderer options for browser environments.
+ *
+ * Provides a minimal DOM adapter suitable for vdom's own tests and
+ * standalone usage. For production use, prefer `@lytjs/renderer`'s
+ * `createDOMRenderer()` which includes SVG namespace handling,
+ * event invoker caching, innerHTML sanitization, and more.
  */
-
 export function createDOMRendererOptions(): RendererOptions<Node, Element> {
   return {
     createElement(tag: string): Element {
@@ -897,59 +981,7 @@ export function createDOMRendererOptions(): RendererOptions<Node, Element> {
     parentNode(node: Node): Node | null {
       return node.parentNode;
     },
-    patchProp(
-      el: Element,
-      key: string,
-      prevValue: unknown,
-      nextValue: unknown,
-    ): void {
-      if (key === "class") {
-        if (prevValue !== nextValue) {
-          el.className = (nextValue as string) || "";
-        }
-      } else if (key === "style") {
-        if (typeof nextValue === "string") {
-          el.setAttribute("style", nextValue);
-        } else if (nextValue != null) {
-          const style = el as HTMLElement;
-          // 先移除旧样式中不存在于新样式的属性
-          if (prevValue && typeof prevValue === "object") {
-            for (const k in prevValue as Record<string, string>) {
-              if (!(k in (nextValue as Record<string, string>))) {
-                style.style.setProperty(k, "");
-              }
-            }
-          }
-          // 然后设置新样式
-          for (const k in nextValue as Record<string, string>) {
-            const val = (nextValue as Record<string, string>)[k];
-            if (val !== undefined) {
-              style.style.setProperty(k, val);
-            }
-          }
-        } else {
-          el.removeAttribute("style");
-        }
-      } else if (key.startsWith("on")) {
-        const eventName = getDOMEventName(key);
-        const prevHandler = extractDOMEventHandler(prevValue);
-        const prevOptions = extractDOMEventOptions(prevValue);
-        const nextHandler = extractDOMEventHandler(nextValue);
-        const nextOptions = extractDOMEventOptions(nextValue);
-        if (prevHandler) {
-          el.removeEventListener(eventName, prevHandler, prevOptions);
-        }
-        if (nextHandler) {
-          el.addEventListener(eventName, nextHandler, nextOptions);
-        }
-      } else if (nextValue == null || nextValue === false) {
-        el.removeAttribute(key);
-      } else {
-        if (isSafeAttribute(key, String(nextValue))) {
-          el.setAttribute(key, String(nextValue));
-        }
-      }
-    },
+    patchProp: patchDOMProp,
     createComment(text: string): Node {
       return document.createComment(text);
     },
