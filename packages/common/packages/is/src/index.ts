@@ -46,7 +46,7 @@ export const isBigInt = (val: unknown): val is bigint =>
 /**
  * 检查值是否为对象（非 null）
  */
-export const isObject = (val: unknown): val is Record<string, any> =>
+export const isObject = (val: unknown): val is object =>
   val !== null && (typeof val === "object" || typeof val === "function");
 
 /**

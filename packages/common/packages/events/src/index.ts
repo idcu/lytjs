@@ -146,13 +146,14 @@ export class EventEmitter {
   emit(event: string, ...args: unknown[]): boolean {
     const handlers = this.events.get(event);
     if (!handlers || handlers.size === 0) return false;
-    handlers.forEach((handler) => {
+    const snapshot = [...handlers];
+    for (const handler of snapshot) {
       try {
         handler(...args);
       } catch (e) {
         console.error(`Error in event handler for "${event}":`, e);
       }
-    });
+    }
     return true;
   }
 

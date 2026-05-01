@@ -32,9 +32,10 @@ export function initSlots(
     slots.default = children as SlotFunction;
   } else if (isObject(children) && !isArray(children)) {
     // Object of slot functions
-    for (const key in children) {
-      if (isFunction(children[key])) {
-        slots[key] = children[key] as SlotFunction;
+    const slotObj = children as Record<string, unknown>;
+    for (const key in slotObj) {
+      if (isFunction(slotObj[key])) {
+        slots[key] = slotObj[key] as SlotFunction;
       }
     }
   }
