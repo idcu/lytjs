@@ -18,7 +18,9 @@ export type SchedulerJob = () => void;
 // ============================================================
 
 let globalErrorHandler: ((error: Error, info: string) => void) | null = null;
-export function setErrorHandler(handler: ((error: Error, info: string) => void) | null): void {
+export function setErrorHandler(
+  handler: ((error: Error, info: string) => void) | null,
+): void {
   globalErrorHandler = handler;
 }
 
@@ -28,6 +30,18 @@ export function setErrorHandler(handler: ((error: Error, info: string) => void) 
 
 let isFlushing = false;
 let isFlushPending = false;
+
+let maxIterations = 100;
+
+/**
+ * 设置 flushJobs 的最大迭代次数
+ * 用于自定义调度器在复杂场景下的循环上限
+ */
+export function setMaxIterations(n: number): void {
+  if (typeof n === "number" && n > 0) {
+    maxIterations = n;
+  }
+}
 
 const queue: SchedulerJob[] = [];
 const queueSet: Set<SchedulerJob> = new Set();
@@ -103,13 +117,12 @@ export function flushJobs(): void {
   isFlushPending = false;
 
   let iterations = 0;
-  const MAX_ITERATIONS = 100;
 
   try {
     // 循环处理：执行期间新增的回调也会被处理
     while (
       (preFlushCbs.length > 0 || queue.length > 0 || postFlushCbs.length > 0) &&
-      iterations < MAX_ITERATIONS
+      iterations < maxIterations
     ) {
       iterations++;
 
@@ -120,8 +133,12 @@ export function flushJobs(): void {
         try {
           cb();
         } catch (e) {
-          if (globalErrorHandler) globalErrorHandler(e as Error, "pre-flush callback");
-          console.error("[lytjs/common-scheduler] pre-flush callback failed:", e);
+          if (globalErrorHandler)
+            globalErrorHandler(e as Error, "pre-flush callback");
+          console.error(
+            "[lytjs/common-scheduler] pre-flush callback failed:",
+            e,
+          );
         }
       }
       preFlushCbs.length = 0;
@@ -133,7 +150,8 @@ export function flushJobs(): void {
         try {
           job();
         } catch (e) {
-          if (globalErrorHandler) globalErrorHandler(e as Error, "job execution");
+          if (globalErrorHandler)
+            globalErrorHandler(e as Error, "job execution");
           console.error("[lytjs/common-scheduler] job execution failed:", e);
         }
       }
@@ -146,16 +164,20 @@ export function flushJobs(): void {
         try {
           cb();
         } catch (e) {
-          if (globalErrorHandler) globalErrorHandler(e as Error, "post-flush callback");
-          console.error("[lytjs/common-scheduler] post-flush callback failed:", e);
+          if (globalErrorHandler)
+            globalErrorHandler(e as Error, "post-flush callback");
+          console.error(
+            "[lytjs/common-scheduler] post-flush callback failed:",
+            e,
+          );
         }
       }
       postFlushCbs.length = 0;
     }
 
-    if (iterations >= MAX_ITERATIONS) {
+    if (iterations >= maxIterations) {
       const msg =
-        `[lytjs/common-scheduler] flushJobs exceeded ${MAX_ITERATIONS} iterations. ` +
+        `[lytjs/common-scheduler] flushJobs exceeded ${maxIterations} iterations. ` +
         `Possible infinite update loop detected.`;
       if (__DEV__) {
         console.warn(msg);

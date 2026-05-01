@@ -9,15 +9,22 @@ import type { RefLike } from "@lytjs/shared-types";
 export type { RefLike } from "@lytjs/shared-types";
 
 /**
+ * toRaw 遍历时的最大深度限制，防止异常的代理链导致无限循环
+ */
+const MAX_RAW_DEPTH = 100;
+
+/**
  * 获取响应式对象的原始值
  */
 export function toRaw<T>(observed: T): T {
   const seen = new Set<object>();
   let current: any = observed;
+  let depth = 0;
   while (current && (current as any)[ReactiveFlags.RAW]) {
-    if (seen.has(current)) return current;
+    if (seen.has(current) || depth >= MAX_RAW_DEPTH) return current;
     seen.add(current);
     current = (current as any)[ReactiveFlags.RAW];
+    depth++;
   }
   return current;
 }
