@@ -62,9 +62,21 @@ describe("transformOn", () => {
       const result = transformOn(dir, node, context);
 
       expect(result.props).toHaveLength(1);
-      expect(result.props[0]).toEqual({
-        key: "onClick_stop",
-        value: "handleClick",
+      // key 是 SimpleExpressionNode
+      expect(result.props[0].key).toMatchObject({
+        content: '"onClick"',
+        isStatic: true,
+        isConstant: true,
+      });
+      // value 应为 withModifiers 调用表达式
+      expect(result.props[0].value).toMatchObject({
+        callee: "withModifiers",
+        arguments: [
+          { content: "handleClick" },
+          {
+            elements: [{ content: '"stop"' }],
+          },
+        ],
       });
     });
 
@@ -77,9 +89,21 @@ describe("transformOn", () => {
       const result = transformOn(dir, node, context);
 
       expect(result.props).toHaveLength(1);
-      expect(result.props[0]).toEqual({
-        key: "onClick_stop_prevent",
-        value: "handleClick",
+      // key 是 SimpleExpressionNode
+      expect(result.props[0].key).toMatchObject({
+        content: '"onClick"',
+        isStatic: true,
+        isConstant: true,
+      });
+      // value 应为 withModifiers 调用表达式，包含两个修饰符
+      expect(result.props[0].value).toMatchObject({
+        callee: "withModifiers",
+        arguments: [
+          { content: "handleClick" },
+          {
+            elements: [{ content: '"stop"' }, { content: '"prevent"' }],
+          },
+        ],
       });
     });
   });
