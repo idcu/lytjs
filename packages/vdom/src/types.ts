@@ -4,13 +4,14 @@
  */
 
 import type { VNode, ComponentInternalInstance } from "@lytjs/common-vnode";
+import type { Props as SharedProps } from "@lytjs/shared-types";
 
 // ============================================================
 // Basic types
 // ============================================================
 
 /** Props type for VNode */
-export type Props = Record<string, unknown>;
+export type Props = SharedProps;
 
 /** Host element type (DOM Element) */
 export type HostElement = Element;

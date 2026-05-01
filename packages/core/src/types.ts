@@ -8,16 +8,24 @@ import type {
   ComponentPublicInstance,
   InternalSlots,
 } from "@lytjs/component";
+import type {
+  Renderer,
+  Directive,
+  DirectiveBinding,
+  DirectiveArguments,
+  DebuggerEvent,
+} from "@lytjs/shared-types";
+
+// Re-export shared types
+export type {
+  Renderer,
+  Directive,
+  DirectiveBinding,
+  DirectiveArguments,
+  DebuggerEvent,
+};
 
 // ==================== App ====================
-
-/** 渲染器接口（跨包抽象） */
-export interface Renderer {
-  mount(vnode: VNode | null, container: Element): void;
-  unmount(vnode: VNode | null): void;
-  patch(oldVNode: VNode | null, newVNode: VNode | null, container: Element): void;
-  move(vnode: VNode, container: Element, anchor: Element | null): void;
-}
 
 /** 插件安装函数签名 */
 export type PluginInstallFunction<T = unknown> = (
@@ -69,69 +77,6 @@ export type {
   ComponentPublicInstance,
 } from "@lytjs/component";
 
-// ==================== Directive ====================
-
-export interface Directive<T = Element> {
-  created?: (
-    el: T,
-    binding: DirectiveBinding,
-    vnode: VNode,
-    prevVNode: VNode | null,
-  ) => void;
-  beforeMount?: (
-    el: T,
-    binding: DirectiveBinding,
-    vnode: VNode,
-    prevVNode: VNode | null,
-  ) => void;
-  mounted?: (
-    el: T,
-    binding: DirectiveBinding,
-    vnode: VNode,
-    prevVNode: VNode | null,
-  ) => void;
-  beforeUpdate?: (
-    el: T,
-    binding: DirectiveBinding,
-    vnode: VNode,
-    prevVNode: VNode | null,
-  ) => void;
-  updated?: (
-    el: T,
-    binding: DirectiveBinding,
-    vnode: VNode,
-    prevVNode: VNode | null,
-  ) => void;
-  beforeUnmount?: (
-    el: T,
-    binding: DirectiveBinding,
-    vnode: VNode,
-    prevVNode: VNode | null,
-  ) => void;
-  unmounted?: (
-    el: T,
-    binding: DirectiveBinding,
-    vnode: VNode,
-    prevVNode: VNode | null,
-  ) => void;
-}
-
-export interface DirectiveBinding {
-  instance: ComponentPublicInstance | null;
-  value: unknown;
-  oldValue: unknown;
-  arg?: string;
-  modifiers: Record<string, boolean>;
-  dir: Directive;
-}
-
-export type DirectiveArguments = [
-  Directive,
-  unknown,
-  string?,
-  Record<string, boolean>?,
-][];
-
 // ==================== Async Component ====================
 
 export type AsyncComponentLoader = () => Promise<Component>;
@@ -162,13 +107,6 @@ export type ErrorCapturedHook = (
 ) => boolean | void;
 
 export type DebuggerHook = (event: DebuggerEvent) => void;
-
-export interface DebuggerEvent {
-  effect: { id: number; active: boolean };
-  target: object;
-  type: "track" | "trigger";
-  key: string | symbol | undefined;
-}
 
 // ==================== Re-export VNode ====================
 

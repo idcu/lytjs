@@ -3,6 +3,15 @@
 
 import type { VNode } from "@lytjs/vdom";
 import type { BaseAppConfig } from "@lytjs/shared-types";
+import type {
+  SlotFunction,
+  InternalSlots,
+  ComponentPublicInstance as SharedComponentPublicInstance,
+} from "@lytjs/shared-types";
+
+// Re-export shared component types
+export type { SlotFunction, InternalSlots };
+export type { ComponentPublicInstance } from "@lytjs/shared-types";
 
 // ==================== PropOptions ====================
 
@@ -33,11 +42,6 @@ export interface SetupContext {
 // ==================== RenderFunction ====================
 
 export type RenderFunction = (ctx: ComponentPublicInstance) => VNode;
-
-// ==================== Slots ====================
-
-export type SlotFunction = (props?: Record<string, unknown>) => VNode[];
-export type InternalSlots = Record<string, SlotFunction | undefined>;
 
 // ==================== ComponentOptions ====================
 
@@ -197,17 +201,3 @@ export interface ComponentInternalInstance
     ComponentRenderState,
     ComponentContextState,
     ComponentParentState {}
-
-// ==================== ComponentPublicInstance ====================
-
-export interface ComponentPublicInstance {
-  $data: Record<string, unknown>;
-  $props: Record<string, unknown>;
-  $el: Element | null;
-  $options: ComponentOptions;
-  $refs: Record<string, Element | ComponentPublicInstance | null>;
-  $slots: InternalSlots;
-  $emit: (event: string, ...args: unknown[]) => void;
-  $forceUpdate: () => void;
-  $nextTick: () => Promise<void>;
-}

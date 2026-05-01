@@ -28,6 +28,12 @@ export interface ReactiveEffectOptions {
   onTrigger?: (event: DebuggerEvent) => void;
 }
 
+/**
+ * 调试事件
+ * 注意：此版本使用具体的 ReactiveEffect 类引用（生产者视角），
+ * 与 @lytjs/shared-types 中使用脱敏 ReactiveEffectRef 的版本不同。
+ * 保持此定义以避免类型不兼容（type: string vs 'track' | 'trigger'）。
+ */
 export interface DebuggerEvent {
   effect: ReactiveEffect;
   target: object;
