@@ -246,6 +246,8 @@ function hydrateNode(vnode: VNode, parent: HTMLElement, index: number): number {
  * Create hydration functions for matching existing DOM with vnodes.
  */
 export function createHydrationFunctions(
+  // _rendererOptions is reserved for future renderer configuration.
+  // Currently unused but kept in the API signature for forward compatibility.
   _rendererOptions: Record<string, unknown>,
 ): HydrationRenderer {
   function hydrate(vnode: VNode, container: HTMLElement): void {

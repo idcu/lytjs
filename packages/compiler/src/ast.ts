@@ -29,6 +29,13 @@ function createLoc(
   offset: number,
   length: number,
 ): SourceLocation {
+  if (__DEV__) {
+    if (offset < 0 || length < 0 || offset + length > source.length) {
+      console.warn(
+        `[LytJS] createLoc: invalid range offset=${offset}, length=${length}, source.length=${source.length}`,
+      );
+    }
+  }
   const lines = source.slice(0, offset).split("\n");
   const line = lines.length;
   const column = (lines[line - 1] ?? "").length + 1;

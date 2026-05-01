@@ -37,7 +37,7 @@ export interface ReactiveEffectOptions {
 export interface DebuggerEvent {
   effect: ReactiveEffect;
   target: object;
-  type: string;
+  type: "track" | "trigger";
   key: unknown;
 }
 

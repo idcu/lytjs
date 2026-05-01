@@ -92,7 +92,7 @@ export function createApp(
       }
 
       // Create root vnode through the component system's standard flow
-      const rootVNode = createVNode(rootComponent as Component, rootProps);
+      const rootVNode = createVNode(rootComponent, rootProps);
 
       // Create component instance using the standardized component system
       const instance = createComponentInstance(rootVNode, null);
@@ -156,7 +156,6 @@ export function createApp(
             "function"
         ) {
           try {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
             (
               (plugin as unknown as Record<string, unknown>).cleanup as Function
             )();

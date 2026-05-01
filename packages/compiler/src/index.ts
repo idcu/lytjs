@@ -23,6 +23,10 @@ export function compile(
   const ast = parse(source, options);
 
   // 2. Transform AST (包含原 optimize 阶段的 markConstants、hoistStatic、collectDynamicChildren)
+  // restOptions inherits ParserOptions & CodegenOptions from CompilerOptions via
+  // structural typing (TypeScript's excess property check does not apply when
+  // destructuring into a rest object). This ensures type compatibility without
+  // explicit casting.
   const {
     nodeTransforms: userNodeTransforms,
     directiveTransforms: userDirectiveTransforms,

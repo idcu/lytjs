@@ -269,7 +269,7 @@ export function getShapeFlag(type: VNodeTypes): number {
     return 0;
   }
   // Object type => component
-  if (isObject(type) && typeof type === "object") {
+  if (isObject(type)) {
     return ShapeFlags.STATEFUL_COMPONENT;
   }
   return 0;

@@ -17,16 +17,22 @@ export { hasChanged };
 const MAX_RAW_DEPTH = 100;
 
 /**
+ * toRaw 遍历过程中用于检测循环引用的 Set。
+ * 提取为模块级常量以避免每次调用 toRaw 时重新分配。
+ */
+const _rawSeenSet = new Set<object>();
+
+/**
  * 获取响应式对象的原始值
  */
 export function toRaw<T>(observed: T): T {
-  const seen = new Set<object>();
+  _rawSeenSet.clear();
   let current: unknown = observed;
   let depth = 0;
   while (current && (current as Record<string, unknown>)[ReactiveFlags.RAW]) {
-    if (seen.has(current as object) || depth >= MAX_RAW_DEPTH)
+    if (_rawSeenSet.has(current as object) || depth >= MAX_RAW_DEPTH)
       return current as T;
-    seen.add(current as object);
+    _rawSeenSet.add(current as object);
     current = (current as Record<string, unknown>)[ReactiveFlags.RAW];
     depth++;
   }

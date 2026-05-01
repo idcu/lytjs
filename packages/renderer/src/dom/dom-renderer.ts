@@ -5,12 +5,22 @@
 
 import { createRenderer, createDOMRendererOptions } from "@lytjs/vdom";
 import type { VNode, RendererOptions } from "@lytjs/vdom";
+import type { ComponentInternalInstance, SuspenseBoundary } from "@lytjs/vdom";
 import { patchProp } from "./patch-props";
 
 // ============================================================
 // VNode storage for container elements
 // ============================================================
 
+/**
+ * Module-level shared VNode storage for container elements.
+ *
+ * NOTE: This WeakMap is shared across all renderer instances created in the
+ * same module scope. If multiple independent renderer instances are needed,
+ * be aware that they will share the same vnode-to-element mapping. This is
+ * intentional for the current single-renderer architecture, but should be
+ * revisited if multi-instance isolation is required in the future.
+ */
 export const vnodeMap = new WeakMap<Element, VNode | null>();
 
 // ============================================================
@@ -153,8 +163,20 @@ export function createDOMRenderer(): DOMRenderer {
       renderer.unmount(vnode);
     },
     mount: renderer.mount,
-    move(vnode: VNode, container: Node, anchor: Node | null): void {
-      renderer.move(vnode, container, anchor, null, null);
+    move(
+      vnode: VNode,
+      container: Node,
+      anchor: Node | null,
+      _parentComponent?: ComponentInternalInstance | null,
+      _parentSuspense?: SuspenseBoundary | null,
+    ): void {
+      renderer.move(
+        vnode,
+        container,
+        anchor,
+        _parentComponent ?? null,
+        _parentSuspense ?? null,
+      );
     },
   };
 }

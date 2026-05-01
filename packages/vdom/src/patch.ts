@@ -29,6 +29,41 @@ import type {
 import { getSequence } from "@lytjs/common-algorithm";
 
 // ============================================================
+// SVG constants
+// ============================================================
+
+/** Common SVG elements that require the SVG namespace */
+const SVG_TAGS = new Set([
+  "svg",
+  "path",
+  "circle",
+  "ellipse",
+  "line",
+  "polyline",
+  "polygon",
+  "rect",
+  "g",
+  "defs",
+  "use",
+  "clipPath",
+  "linearGradient",
+  "radialGradient",
+  "stop",
+  "pattern",
+  "mask",
+  "symbol",
+  "image",
+  "foreignObject",
+  "text",
+  "tspan",
+  "textPath",
+  "marker",
+  "animate",
+  "animateTransform",
+  "set",
+]);
+
+// ============================================================
 // Renderer factory
 // ============================================================
 
@@ -62,14 +97,16 @@ export function createRenderer(
     parentSuspense: SuspenseBoundary | null = null,
     isSVG: boolean = false,
   ): void {
-    // If n1 and n2 are the same type, patch them
+    // 第一次检查：判断 n1 是否可以复用（同类型）。
+    // 如果 n1.el 为 null（例如之前被卸载），则将 n1 置为 null 以走挂载逻辑。
     if (n1 !== null && isSameVNodeType(n1, n2)) {
-      // If n1.el is null (e.g. previously unmounted), fall through to mount logic
       if (n1.el === null) {
         n1 = null;
       }
     }
 
+    // 第二次检查：在 n1 可能被置为 null 之后，再次判断是否走 patch 路径。
+    // 两次检查是必要的：第一次可能将 n1 置为 null，第二次需要基于更新后的 n1 做判断。
     if (n1 !== null && isSameVNodeType(n1, n2)) {
       // Fragment needs special handling
       if (n2.type === Fragment) {
@@ -85,6 +122,13 @@ export function createRenderer(
         // Patch text node: update textContent if children changed
         const node = (n2.el = n1.el);
         if (n1.children !== n2.children) {
+          if (isFunction(n2.children)) {
+            warn(
+              `Text vnode received a function children value. ` +
+                `Function children are only supported on component vnodes. ` +
+                `The value will be replaced with an empty string.`,
+            );
+          }
           (node as Text).textContent = isFunction(n2.children)
             ? ""
             : String(n2.children ?? "");
@@ -886,6 +930,20 @@ export function createRenderer(
  *
  * @see @lytjs/renderer/src/dom/patch-props.ts for the full implementation
  */
+/**
+ * ⚠️ WARNING: Simplified patchDOMProp implementation
+ *
+ * This is a MINIMAL version of DOM property patching for development/testing use.
+ * For production environments, use @lytjs/renderer which provides the
+ * complete, security-hardened patchProp implementation.
+ *
+ * Security considerations:
+ * - This version does NOT implement full XSS protection for all edge cases
+ * - Event handler patching is simplified (no invoker pattern)
+ * - Style patching lacks full CSS property sanitization
+ *
+ * @see @lytjs/renderer/src/dom/patch-props.ts for the full implementation
+ */
 function patchDOMProp(
   el: Element,
   key: string,
@@ -955,7 +1013,12 @@ function patchDOMProp(
 export function createDOMRendererOptions(): RendererOptions<Node, Element> {
   return {
     createElement(tag: string): Element {
-      return document.createElement(tag);
+      return document.createElementNS(
+        SVG_TAGS.has(tag)
+          ? "http://www.w3.org/2000/svg"
+          : "http://www.w3.org/1999/xhtml",
+        tag,
+      );
     },
     setElementText(node: Element, text: string): void {
       node.textContent = text;

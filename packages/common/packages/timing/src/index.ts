@@ -80,6 +80,11 @@ interface ThrottledFn<T extends (...args: unknown[]) => unknown> {
 
 /**
  * 节流 - 在指定时间内最多执行一次
+ *
+ * @note 由于浏览器 setTimeout 的最小延迟通常为 4ms（嵌套调用时），
+ * 且在后台标签页中可能被进一步节流至 1000ms，实际节流间隔
+ * 可能略大于指定的 waitMs。对于高精度定时需求，请考虑使用
+ * requestAnimationFrame 或 Web Worker。
  */
 export function throttle<T extends (...args: unknown[]) => unknown>(
   fn: T,

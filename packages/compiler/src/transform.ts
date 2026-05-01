@@ -131,6 +131,9 @@ function createTransformContext(
   const directives = new Set<string>();
   let currentNode: RootNode | TemplateChildNode | null = root;
 
+  // Self-referential initialization: context.self is set after the object literal
+  // is created because the object cannot reference itself during construction.
+  // This pattern allows transforms to access the context via context.self.
   const context: TransformContext = {
     self: null as unknown as TransformContext,
     parent: null,
@@ -354,8 +357,8 @@ function createHoistedReference(index: number): VNodeCall {
     disableTracking: false,
     isComponent: false,
     loc: {
-      start: { line: 0, column: 0, offset: 0 },
-      end: { line: 0, column: 0, offset: 0 },
+      start: { line: 1, column: 1, offset: 0 },
+      end: { line: 1, column: 1, offset: 0 },
       source: "",
     },
   };

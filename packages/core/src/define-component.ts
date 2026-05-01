@@ -16,6 +16,9 @@ import { shallowRef, ref } from "@lytjs/reactivity";
 import { warn } from "@lytjs/common-error";
 import { h } from "./h";
 
+/** onError 回调未响应时的默认超时时间（毫秒） */
+const DEFAULT_ON_ERROR_TIMEOUT = 30000;
+
 /**
  * 定义组件（re-export from @lytjs/component）
  *
@@ -106,7 +109,7 @@ export function defineAsyncComponent(
         if (onError) {
           return new Promise<Component>((resolve, reject) => {
             let settled = false;
-            const ON_ERROR_TIMEOUT = 30000; // 30 秒超时保护
+            const ON_ERROR_TIMEOUT = DEFAULT_ON_ERROR_TIMEOUT;
             const timer = setTimeout(() => {
               if (!settled) {
                 settled = true;

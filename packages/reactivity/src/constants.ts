@@ -1,6 +1,15 @@
 // src/constants.ts
 // 内部符号常量
 
+// DEV 检测方式说明：
+// 此处使用运行时检测 globalThis.__DEV__，适用于需要在运行时根据 DEV 标志
+// 改变行为的场景（如条件性警告、调试符号描述）。
+// 与 env.d.ts 中通过 TypeScript declare const __DEV__ 的方式不同：
+// - env.d.ts 方式：编译时类型声明，配合打包工具的 define/replace 插件在构建时
+//   替换 __DEV__ 为字面量 true/false，实现死代码消除（DCE）。
+// - 此处方式：运行时检测，用于无法通过编译时替换覆盖的场景（如独立模块、
+//   跨包共享的常量文件）。
+// 两种方式在构建产物中最终等价，但此处的运行时检测在未配置构建替换时也能工作。
 const DEV =
   typeof globalThis !== "undefined" &&
   (globalThis as Record<string, unknown>).__DEV__ === true;

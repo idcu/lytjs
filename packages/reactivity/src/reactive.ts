@@ -101,6 +101,11 @@ const builtInSymbols = new Set<symbol>(
   Object.getOwnPropertyNames(Symbol)
     .filter((key) => key !== "arguments" && key !== "caller")
     .map(
+      // 安全性说明：Object.getOwnPropertyNames(Symbol) 返回的 key 一定是
+      // Symbol 构造函数自身的静态属性名（如 "iterator"、"hasInstance" 等），
+      // 用这些 key 索引 Symbol 构造函数必然返回 symbol 值。
+      // 使用 Record<string, symbol | undefined> 是因为 TypeScript 将 Symbol
+      // 视为 interface 而非 namespace，无法直接用字符串索引。
       (key) => (Symbol as unknown as Record<string, symbol | undefined>)[key],
     )
     .filter((sym): sym is symbol => isSymbol(sym)),
@@ -319,6 +324,10 @@ function createCollectionHandler(
       const res = Reflect.get(target, key, _receiver);
       if (typeof res === "function") {
         if (!isReadonly) {
+          // key as string: MUTATING_METHODS 只包含字符串方法名（"set"/"add"/"delete"/"clear"），
+          // 而 Proxy handler 的 key 参数类型为 string | symbol。对于 Map/Set 的变异方法，
+          // key 始终是字符串，symbol 类型的 key（如 Symbol.iterator）不会匹配 MUTATING_METHODS，
+          // 因此 Set.has(key as string) 对 symbol 返回 false 是安全的。
           if (MUTATING_METHODS.has(key as string)) {
             return (...args: unknown[]) => {
               const rawTarget = toRaw(target) as Map<unknown, unknown>;
@@ -393,6 +402,10 @@ function createCollectionHandler(
                   `Operation "${String(key)}" failed: target is shallow readonly.`,
                 );
               }
+              // delete 返回 false 以匹配原生 Set.prototype.delete 和 Map.prototype.delete 的
+              // 失败返回值语义（表示未执行删除）。其他变异方法（set/add/clear）返回 undefined，
+              // 因为原生 API 中这些方法在成功时返回特定值（如 Set.add 返回 Set 本身），
+              // 此处用 undefined 表示操作被阻止，与 readonly handler 的行为一致。
               if (key === "delete") return false;
               return undefined;
             };

@@ -42,7 +42,7 @@ export function setActiveEffectScope(scope: EffectScope | undefined): void {
 /**
  * 创建一个 effect scope，用于批量管理响应式副作用。
  *
- * @param detached - 是否脱离父 scope。默认 false，即嵌套 scope 会被父 scope 管理。
+ * @param options - 配置选项。支持传入 boolean（兼容旧 API）或 EffectScopeOptions 对象。
  * @returns EffectScope 实例
  *
  * @example
@@ -56,7 +56,10 @@ export function setActiveEffectScope(scope: EffectScope | undefined): void {
  * scope.stop()
  * ```
  */
-export function effectScope(detached?: boolean): EffectScope {
+export function effectScope(
+  options?: boolean | EffectScopeOptions,
+): EffectScope {
+  const detached = typeof options === "boolean" ? options : options?.detached;
   const scope: EffectScope = {
     active: true,
     effects: [],
@@ -104,6 +107,9 @@ export function effectScope(detached?: boolean): EffectScope {
   } as EffectScope;
 
   if (!scope.detached && activeEffectScope) {
+    // 双重断言是必要的：EffectScope 对象字面量实现了 EffectScopeEntry 所需的
+    // stop() 方法，但 TypeScript 无法自动推断对象字面量满足联合类型。
+    // EffectScopeEntry = ReactiveEffect | EffectScope，此处 scope 是 EffectScope 实例。
     activeEffectScope.effects.push(scope as unknown as EffectScopeEntry);
   }
 

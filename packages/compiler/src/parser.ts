@@ -508,6 +508,8 @@ function parseTag(
   }
 
   const element = createElement(tag, props, [], getSelection(context, start));
+  // Safe: tagType is assigned from ElementTypes constants (COMPONENT/TEMPLATE/SLOT/ELEMENT)
+  // which are valid values for the ElementNode.tagType union type.
   element.tagType = tagType as typeof element.tagType;
   element.isSelfClosing = isSelfClosing;
 

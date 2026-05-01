@@ -11,4 +11,3 @@ export { transformOnce } from "./once";
 export { transformSlot } from "./slot";
 export { transformElement } from "./transform-element";
 export { getExpContent, findDirective, isJS } from "./helpers";
-export { capitalize } from "@lytjs/common-string";

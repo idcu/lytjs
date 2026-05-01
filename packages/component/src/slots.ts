@@ -2,6 +2,7 @@
 // Slot handling
 
 import { isFunction, isArray, isObject, isNullish } from "@lytjs/common-is";
+import { warn } from "@lytjs/common-error";
 import type { VNode } from "@lytjs/common-vnode";
 import type {
   ComponentInternalInstance,
@@ -50,5 +51,11 @@ export function initSlots(
 export function normalizeSlotValue(value: unknown): VNode[] {
   if (isNullish(value)) return [];
   if (isArray(value)) return value as VNode[];
+  if (__DEV__) {
+    warn(
+      `normalizeSlotValue: expected VNode or VNode[], got ${typeof value}. ` +
+        `This may cause rendering issues.`,
+    );
+  }
   return [value as VNode];
 }

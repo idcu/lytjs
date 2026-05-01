@@ -6,6 +6,9 @@ import { getExpContent } from "./helpers";
 
 export const transformBind: DirectiveTransform = (dir, _node, _context) => {
   const { arg, exp } = dir;
+  // Returns a plain object array instead of JSProperty nodes because this
+  // directive transform produces string-based key-value pairs that are later
+  // consumed by codegen as literal strings, not as AST property nodes.
   const props: Array<{ key: string; value: string }> = [];
 
   const argContent = arg ? getExpContent(arg as ExpressionNode) : undefined;

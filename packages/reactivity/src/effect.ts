@@ -26,13 +26,10 @@ import { getActiveEffectScope } from "./effect-scope";
 
 // ==================== Dep ====================
 
-export type Dep = Set<ReactiveEffect> & { n?: number; w?: number };
+export type Dep = Set<ReactiveEffect>;
 
 export const createDep = (): Dep => {
-  const dep: Dep = new Set() as Dep;
-  dep.w = 0;
-  dep.n = 0;
-  return dep;
+  return new Set() as Dep;
 };
 
 // ==================== Track / Trigger ====================
@@ -371,17 +368,22 @@ export function batch(fn: () => void): void {
 }
 
 export function onEffectCleanup(fn: () => void, failSilently = false): void {
-  if (activeEffect === undefined && !failSilently) {
-    if (__DEV__) {
+  if (activeEffect === undefined) {
+    if (!failSilently) {
+      if (__DEV__) {
+        warn(
+          "onEffectCleanup() was called when there was no active effect to associate with.",
+        );
+      }
+    } else if (__DEV__) {
       warn(
-        "onEffectCleanup() was called when there was no active effect to associate with.",
+        "onEffectCleanup() was called with failSilently=true but there was no active effect. " +
+          "This is likely a bug — the cleanup function will never be invoked.",
       );
     }
     return;
   }
-  if (activeEffect) {
-    activeEffect._cleanups.push(fn);
-  }
+  activeEffect._cleanups.push(fn);
 }
 
 // ==================== 辅助 ====================
