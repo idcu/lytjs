@@ -310,8 +310,13 @@ function parseStringStyle(cssText: string): Record<string, string> {
 }
 
 /**
- * Normalize style value - keeps object form for vdom patch diffing
- * Note: common-string's normalizeStyle returns string, but vdom needs object form
+ * Normalize style value - keeps object form for vdom patch diffing.
+ * Note: common-string's normalizeStyle returns string, but vdom needs object form.
+ *
+ * @param value - The style value to normalize. Can be a string (e.g. "color:red"),
+ *   an array of styles to merge, or a style object.
+ * @returns A normalized style: either a CSS string or a Record of CSS properties
+ *   with string or number values. Never returns undefined (falls back to EMPTY_OBJ).
  */
 function normalizeStyle(
   value: unknown,
