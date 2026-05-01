@@ -353,7 +353,7 @@ function normalizeStyle(
   if (isObject(value)) {
     return value as Record<string, string | number>;
   }
-  return EMPTY_OBJ as Record<string, string | number>;
+  return {} as Record<string, string | number>;
 }
 
 // Re-export EMPTY_OBJ for convenience
