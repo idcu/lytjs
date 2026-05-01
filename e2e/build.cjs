@@ -31,7 +31,7 @@ const aliases = {
   '@lytjs/common-timing': resolve(rootDir, 'packages/common/packages/timing/src/index.ts'),
   '@lytjs/common-events': resolve(rootDir, 'packages/common/packages/events/src/index.ts'),
   '@lytjs/common-object': resolve(rootDir, 'packages/common/packages/object/src/index.ts'),
-  '@lytjs/common-common': resolve(rootDir, 'packages/common/packages/common/src/index.ts'),
+  '@lytjs/common': resolve(rootDir, 'packages/common/packages/common/src/index.ts'),
 }
 
 // 构建 esbuild 的 plugin 来处理 workspace 别名
@@ -60,6 +60,7 @@ async function build() {
     sourcemap: true,
     define: {
       'process.env.NODE_ENV': '"development"',
+      '__DEV__': 'true',
     },
     external: [],
     logLevel: 'info',
