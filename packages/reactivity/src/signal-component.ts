@@ -4,8 +4,8 @@
 import type { Signal, ComputedSignal } from "./signal";
 
 export interface SignalComponentOptions {
-  signals?: Record<string, Signal<any>>;
-  computed?: Record<string, ComputedSignal<any>>;
+  signals?: Record<string, Signal<unknown>>;
+  computed?: Record<string, ComputedSignal<unknown>>;
 }
 
 /**
@@ -13,8 +13,8 @@ export interface SignalComponentOptions {
  */
 export function extractSignals(
   options: SignalComponentOptions,
-): (Signal<any> | ComputedSignal<any>)[] {
-  const signals: (Signal<any> | ComputedSignal<any>)[] = [];
+): (Signal<unknown> | ComputedSignal<unknown>)[] {
+  const signals: (Signal<unknown> | ComputedSignal<unknown>)[] = [];
   if (options.signals) {
     signals.push(...Object.values(options.signals));
   }
@@ -44,9 +44,9 @@ export function createSignalBinding<T>(
  * 将 signal 值转换为响应式 props
  */
 export function signalToProps(
-  signals: Record<string, Signal<any>>,
-): Record<string, any> {
-  const props: Record<string, any> = {};
+  signals: Record<string, Signal<unknown>>,
+): Record<string, unknown> {
+  const props: Record<string, unknown> = {};
   for (const [key, sig] of Object.entries(signals)) {
     Object.defineProperty(props, key, {
       get: () => sig(),
