@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { ref, computed, watch, effectScope, onScopeDispose } from '../src/index'
+import { ref, computed, watch, effect, effectScope, onScopeDispose } from '../src/index'
 
 describe('effectScope', () => {
   it('should collect effects', () => {
@@ -53,5 +53,65 @@ describe('effectScope', () => {
     expect(disposed).toBe(false)
     scope.stop()
     expect(disposed).toBe(true)
+  })
+
+  it('should not throw when stopping a scope that was never run', () => {
+    const scope = effectScope()
+    expect(() => scope.stop()).not.toThrow()
+    expect(scope.active).toBe(false)
+  })
+
+  it('should not throw when stopping an already stopped scope', () => {
+    const count = ref(0)
+    const scope = effectScope()
+    scope.run(() => {
+      watch(count, () => {})
+    })
+    scope.stop()
+    expect(() => scope.stop()).not.toThrow()
+  })
+
+  it('should stop inner scope independently from outer scope', () => {
+    const count = ref(0)
+    let outerWatchCalled = false
+    let innerWatchCalled = false
+
+    const outerScope = effectScope()
+    const innerScope = effectScope()
+
+    outerScope.run(() => {
+      watch(count, () => { outerWatchCalled = true })
+    })
+
+    innerScope.run(() => {
+      watch(count, () => { innerWatchCalled = true })
+    })
+
+    innerScope.stop()
+    count.value = 1
+
+    expect(innerWatchCalled).toBe(false)
+    expect(outerWatchCalled).toBe(true)
+  })
+
+  it('should allow re-running effects after scope disposal', () => {
+    const count = ref(0)
+    let effectValue = 0
+
+    const scope = effectScope()
+    scope.run(() => {
+      effect(() => { effectValue = count.value })
+    })
+
+    expect(effectValue).toBe(0)
+    scope.stop()
+    count.value = 1
+    expect(effectValue).toBe(0)
+
+    // Re-run scope
+    scope.run(() => {
+      effect(() => { effectValue = count.value })
+    })
+    expect(effectValue).toBe(1)
   })
 })

@@ -175,6 +175,15 @@ describe('watch', () => {
     if (jobFn) jobFn();
     expect(fn).toHaveBeenCalledTimes(1);
   });
+
+  it('should not track nested changes in reactive object without deep option', async () => {
+    const obj = reactive({ nested: { value: 1 } })
+    const fn = vi.fn()
+    watch(() => obj.nested.value, fn)
+    obj.nested.value = 2
+    await nextTick()
+    expect(fn).toHaveBeenCalledTimes(1)
+  });
 });
 
 describe('watchEffect', () => {
