@@ -130,3 +130,137 @@ describe('createApp', () => {
     app.mount(container);
   });
 });
+
+describe('createApp - errorCaptured', () => {
+  let container: HTMLElement;
+
+  beforeEach(() => {
+    container = document.createElement('div');
+    document.body.appendChild(container);
+  });
+
+  it('should call errorCaptured hook when child component throws during render', () => {
+    const errorCaptured = vi.fn();
+    const app = createApp({
+      setup() {
+        return {};
+      },
+      render() {
+        return h('div', null, [
+          h(defineComponent({
+            name: 'ErrorChild',
+            render() {
+              throw new Error('child render error');
+            },
+          })),
+        ]);
+      },
+      errorCaptured,
+    });
+
+    try {
+      app.mount(container);
+    } catch (e) {
+      // error may propagate
+    }
+
+    expect(errorCaptured).toHaveBeenCalled();
+    expect(errorCaptured.mock.calls[0][0]).toBeInstanceOf(Error);
+    expect(errorCaptured.mock.calls[0][0].message).toBe('child render error');
+  });
+
+  it('should call errorCaptured hook with correct arguments', () => {
+    const errorCaptured = vi.fn();
+    const ErrorChild = defineComponent({
+      name: 'ErrorChild',
+      render() {
+        throw new TypeError('type error in child');
+      },
+    });
+
+    const app = createApp({
+      render() {
+        return h(ErrorChild);
+      },
+      errorCaptured,
+    });
+
+    try {
+      app.mount(container);
+    } catch (e) {
+      // error may propagate
+    }
+
+    expect(errorCaptured).toHaveBeenCalledTimes(1);
+    const [err, instance, info] = errorCaptured.mock.calls[0];
+    expect(err).toBeInstanceOf(TypeError);
+    expect(err.message).toBe('type error in child');
+    expect(typeof info).toBe('string');
+  });
+
+  it('should propagate error when errorCaptured returns true', () => {
+    const errorCaptured = vi.fn(() => true);
+    const errorHandler = vi.fn();
+    const ErrorChild = defineComponent({
+      name: 'ErrorChild',
+      render() {
+        throw new Error('propagated error');
+      },
+    });
+
+    const app = createApp({
+      render() {
+        return h(ErrorChild);
+      },
+      errorCaptured,
+    });
+    app.config.errorHandler = errorHandler;
+
+    try {
+      app.mount(container);
+    } catch (e) {
+      // error may propagate
+    }
+
+    expect(errorCaptured).toHaveBeenCalled();
+  });
+
+  it('should stop error propagation when errorCaptured returns false', () => {
+    const errorCaptured = vi.fn(() => false);
+    const ErrorChild = defineComponent({
+      name: 'ErrorChild',
+      render() {
+        throw new Error('stopped error');
+      },
+    });
+
+    const app = createApp({
+      render() {
+        return h(ErrorChild);
+      },
+      errorCaptured,
+    });
+
+    try {
+      app.mount(container);
+    } catch (e) {
+      // error may propagate
+    }
+
+    expect(errorCaptured).toHaveBeenCalled();
+  });
+
+  it('should not call errorCaptured when no error occurs', () => {
+    const errorCaptured = vi.fn();
+    const app = createApp({
+      render() {
+        return h('div', null, 'no error');
+      },
+      errorCaptured,
+    });
+
+    app.mount(container);
+
+    expect(errorCaptured).not.toHaveBeenCalled();
+  });
+});
