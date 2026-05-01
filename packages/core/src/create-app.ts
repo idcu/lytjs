@@ -82,7 +82,7 @@ export function createApp(
       // Replace appContext: createComponentInstance creates a new empty context
       // when parent is null, but we need the core-level context with plugins,
       // components, directives, and provides registered on the app.
-      instance.appContext = context as unknown as ComponentAppContext;
+      instance.appContext = context as ComponentAppContext;
 
       // Copy app-level provides into the root instance
       if (context.provides) {

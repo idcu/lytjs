@@ -8,6 +8,7 @@ packages:
   - "packages/tools/packages/*"      # 规划中
 
   # 子仓库（单包级）
+  - "packages/shared-types"
   - "packages/reactivity"
   - "packages/vdom"
   - "packages/compiler"

@@ -34,6 +34,7 @@
       "@lytjs/common-vnode": ["packages/common/packages/vnode/src"],
       "@lytjs/common-env": ["packages/common/packages/env/src"],
       "@lytjs/common": ["packages/common/packages/common/src"],
+      "@lytjs/shared-types": ["packages/shared-types/src"],
       "@lytjs/reactivity": ["packages/reactivity/src"],
       "@lytjs/vdom": ["packages/vdom/src"],
       "@lytjs/compiler": ["packages/compiler/src"],

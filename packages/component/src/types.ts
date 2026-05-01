@@ -2,6 +2,7 @@
 // All type definitions for @lytjs/component
 
 import type { VNode } from "@lytjs/vdom";
+import type { BaseAppConfig } from "@lytjs/shared-types";
 
 // ==================== PropOptions ====================
 
@@ -83,7 +84,7 @@ export interface ComponentOptions<
 // ==================== AppContext ====================
 
 export interface AppContext {
-  config: Record<string, unknown>;
+  config: BaseAppConfig;
   components: Record<string, ComponentOptions>;
   directives: Record<string, unknown>;
   mixins: ComponentOptions[];

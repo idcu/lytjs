@@ -1,6 +1,7 @@
 // src/app-context.ts
 // @lytjs/core - AppContext 创建和配置
 
+import type { BaseAppConfig } from "@lytjs/shared-types";
 import type { AppConfig, Renderer } from "./types";
 import { createAppContext as createBaseAppContext } from "@lytjs/component";
 import type { AppContext as BaseAppContext, ComponentInternalInstance } from "@lytjs/component";
