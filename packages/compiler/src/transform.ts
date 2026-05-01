@@ -193,7 +193,10 @@ function createTransformContext(
     addCache(_index: number): void {
       context.cached++;
     },
-    error(msg: string, _node?: BaseNode): void {
+    error(msg: string, node?: BaseNode): void {
+      if (node?.loc?.start) {
+        msg = `${msg} (at line ${node.loc.start.line}, column ${node.loc.start.column})`;
+      }
       // 优先调用 options.onError 回调，否则直接抛出错误
       if (options.onError) {
         options.onError(new Error(`[LytJS] ${msg}`));
