@@ -10,6 +10,7 @@ import {
   hasChanged,
   NOOP,
 } from "@lytjs/common-is";
+import { warn, error } from "@lytjs/common-error";
 import { isRef } from "./ref";
 import { isReactive } from "./reactive";
 import { ReactiveEffect } from "./effect";
@@ -40,8 +41,8 @@ function traverse(value: unknown, seen?: Set<unknown>, depth = 0): unknown {
   if (!isObject(value) || _seen.has(value)) return value;
   if (depth > MAX_TRAVERSE_DEPTH) {
     if (__DEV__) {
-      console.warn(
-        `[LytJS] traverse exceeded maximum depth (${MAX_TRAVERSE_DEPTH}).`,
+      warn(
+        `traverse exceeded maximum depth (${MAX_TRAVERSE_DEPTH}).`,
       );
     }
     return value;
@@ -123,7 +124,7 @@ export function watch<T, Immediate extends Readonly<boolean> = false>(
       try {
         newValue = effect.run();
       } catch (e) {
-        console.error("[LytJS] Error in watch getter:", e);
+        error("Error in watch getter:", e);
         throw e;
       }
       if (
@@ -151,7 +152,7 @@ export function watch<T, Immediate extends Readonly<boolean> = false>(
       try {
         effect.run();
       } catch (e) {
-        console.error("[LytJS] Error in watch effect run:", e);
+        error("Error in watch effect run:", e);
         throw e;
       }
     }

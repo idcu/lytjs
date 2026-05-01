@@ -5,6 +5,7 @@ import type { ComponentInternalInstance, ComponentOptions } from "./types";
 import { createComponentInstance, setupComponent } from "./component";
 import { ShapeFlags, createBaseVNode } from "@lytjs/common-vnode";
 import type { VNode } from "@lytjs/common-vnode";
+import { error } from "@lytjs/common-error";
 
 // ==================== Types ====================
 
@@ -147,7 +148,7 @@ export function registerAsyncChild(
           try {
             cb();
           } catch (e) {
-            console.error("[LytJS] Error in suspense resolve callback:", e);
+            error("Error in suspense resolve callback:", e);
           }
         }
       }
@@ -166,7 +167,7 @@ export function registerAsyncChild(
           try {
             cb(err);
           } catch (e) {
-            console.error("[LytJS] Error in suspense error callback:", e);
+            error("Error in suspense error callback:", e);
           }
         }
       }
@@ -202,7 +203,7 @@ export function resolveSuspense(boundary: SuspenseAsyncState): void {
     try {
       cb();
     } catch (e) {
-      console.error("[LytJS] Error in suspense resolve callback:", e);
+      error("Error in suspense resolve callback:", e);
     }
   }
 }

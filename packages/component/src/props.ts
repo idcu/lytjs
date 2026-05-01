@@ -11,6 +11,7 @@ import {
   hasOwn,
   EMPTY_OBJ,
 } from "@lytjs/common-is";
+import { warn } from "@lytjs/common-error";
 import type { PropOptions } from "./types";
 import type { ComponentInternalInstance } from "./types";
 
@@ -72,7 +73,7 @@ export function resolvePropValue<T = unknown>(
     }
     // Check required prop
     if (required && __DEV__) {
-      console.warn(`[LytJS]: Missing required prop: "${key}"`);
+      warn(`Missing required prop: "${key}"`);
     }
     return undefined;
   }
@@ -85,7 +86,7 @@ export function resolvePropValue<T = unknown>(
   // Custom validator
   if (validator && __DEV__) {
     if (!validator(value)) {
-      console.warn(`[LytJS]: Prop validation failed for prop "${key}": received ${JSON.stringify(value)}`);
+      warn(`Prop validation failed for prop "${key}": received ${JSON.stringify(value)}`);
     }
   }
 
@@ -112,8 +113,8 @@ export function validateType(value: unknown, type: unknown): boolean {
   }
 
   if (__DEV__) {
-    console.warn(
-      `[LytJS]: Invalid prop: expected ${expectedType}, got ${getTypeName(value)}.`,
+    warn(
+      `Invalid prop: expected ${expectedType}, got ${getTypeName(value)}.`,
     );
   }
 

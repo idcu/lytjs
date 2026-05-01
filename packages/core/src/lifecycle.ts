@@ -11,6 +11,7 @@ export {
   onErrorCaptured,
 } from "@lytjs/component";
 
+import { warn } from "@lytjs/common-error";
 import type { DebuggerHook } from "./types";
 
 // onRenderTracked 和 onRenderTriggered 需要响应式系统的支持
@@ -23,8 +24,8 @@ export function onRenderTracked(_hook: DebuggerHook): void {
   // 当响应式依赖被追踪时调用
   // 需要在 effect 系统中集成
   if (__DEV__) {
-    console.warn(
-      "[LytJS] onRenderTracked is not yet implemented. " +
+    warn(
+      "onRenderTracked is not yet implemented. " +
         "This hook requires integration with the reactivity effect system.",
     );
   }
@@ -37,8 +38,8 @@ export function onRenderTriggered(_hook: DebuggerHook): void {
   // 当响应式依赖被触发时调用
   // 需要在 effect 系统中集成
   if (__DEV__) {
-    console.warn(
-      "[LytJS] onRenderTriggered is not yet implemented. " +
+    warn(
+      "onRenderTriggered is not yet implemented. " +
         "This hook requires integration with the reactivity effect system.",
     );
   }

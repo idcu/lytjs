@@ -3,6 +3,7 @@
 
 import { ITERATE_KEY } from "./constants";
 import type { ReactiveEffectRunner } from "./types";
+import { warn, error } from "@lytjs/common-error";
 
 // ==================== 全局状态 ====================
 
@@ -123,11 +124,11 @@ export function trigger(
 export function triggerEffects(effects: ReactiveEffect[]) {
   if (triggerDepth > MAX_TRIGGER_DEPTH) {
     if (__DEV__) {
-      console.warn(
-        "[LytJS] Maximum trigger depth exceeded. Possible infinite reactivity loop detected.",
+      warn(
+        "Maximum trigger depth exceeded. Possible infinite reactivity loop detected.",
       );
-      console.error(
-        `[LytJS] Maximum trigger depth (${MAX_TRIGGER_DEPTH}) exceeded in triggerEffects. Possible infinite reactivity loop detected. triggerDepth=${triggerDepth}`,
+      error(
+        `Maximum trigger depth (${MAX_TRIGGER_DEPTH}) exceeded in triggerEffects. Possible infinite reactivity loop detected. triggerDepth=${triggerDepth}`,
       );
     }
     return;
@@ -200,7 +201,7 @@ export class ReactiveEffect<T = unknown> {
         return this.fn();
       } catch (e) {
         if (__DEV__) {
-          console.warn("[LytJS] Error running inactive effect:", e);
+          warn("Error running inactive effect:", e);
         }
         throw e;
       }
@@ -379,7 +380,7 @@ export function batch(fn: () => void): void {
 export function onEffectCleanup(fn: () => void, failSilently = false): void {
   if (activeEffect === undefined && !failSilently) {
     if (__DEV__) {
-      console.warn(
+      warn(
         "onEffectCleanup() was called when there was no active effect to associate with.",
       );
     }

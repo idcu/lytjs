@@ -6,6 +6,7 @@
 import type { VNode } from "@lytjs/vdom";
 import { Fragment, Text, Comment, ShapeFlags } from "@lytjs/vdom";
 import { isArray, isFunction } from "@lytjs/common-is";
+import { warn } from "@lytjs/common-error";
 import { patchProp } from "./patch-props";
 import { vnodeMap } from "./dom-renderer";
 
@@ -19,8 +20,8 @@ function warnHydrationMismatch(
   actual: string,
 ): void {
   if (__DEV__) {
-    console.warn(
-      `[LytJS] Hydration mismatch: expected ${type} "${expected}" but got "${actual}". ` +
+    warn(
+      `Hydration mismatch: expected ${type} "${expected}" but got "${actual}". ` +
         `The DOM has been patched to match the vnode.`,
     );
   }

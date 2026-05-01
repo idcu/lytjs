@@ -3,6 +3,7 @@
 
 import { NodeTypes, ElementTypes, TextModes, TagType } from "./constants";
 import { VOID_ELEMENTS, escapeRegExp } from "@lytjs/common-string";
+import { warn } from "@lytjs/common-error";
 import type {
   RootNode,
   ElementNode,
@@ -163,8 +164,8 @@ function parseChildren(
           }
           // DOCTYPE/声明格式异常，跳过到行尾或文件尾防止无限循环
           if (__DEV__) {
-            console.warn(
-              `[LytJS] Invalid DOCTYPE/declaration at position ${context.offset}`,
+            warn(
+              `Invalid DOCTYPE/declaration at position ${context.offset}`,
             );
           }
           const lineEnd = s.indexOf("\n");
@@ -291,7 +292,7 @@ function parseInterpolation(
 
   if (closeIndex === -1) {
     if (__DEV__) {
-      console.warn("[LytJS compiler warn] Unclosed interpolation expression.");
+      warn("Unclosed interpolation expression.");
     }
     return undefined;
   }
@@ -375,8 +376,8 @@ function parseElement(context: ParserContext): ElementNode | undefined {
       advanceBy(context, endTagMatch[0].length);
     } else {
       if (__DEV__) {
-        console.warn(
-          `[LytJS compiler warn] Element <${tag}> was left open. Expected closing tag </${tag}>.`,
+        warn(
+          `Element <${tag}> was left open. Expected closing tag </${tag}>.`,
         );
       }
 
@@ -433,8 +434,8 @@ function parseTag(
     attrCount++;
     if (attrCount > MAX_ATTRIBUTES) {
       if (__DEV__) {
-        console.warn(
-          `[LytJS] Too many attributes (${attrCount}), ` +
+        warn(
+          `Too many attributes (${attrCount}), ` +
             `stopping attribute parsing to prevent infinite loop.`,
         );
       }
@@ -460,8 +461,8 @@ function parseTag(
     // This is not valid HTML and may cause hydration issues.
     if (type === TagType.Start && !VOID_ELEMENTS.has(tag)) {
       if (__DEV__) {
-        console.warn(
-          `[LytJS] Non-void element <${tag}> uses self-closing syntax. ` +
+        warn(
+          `Non-void element <${tag}> uses self-closing syntax. ` +
             `This is not valid HTML and may cause hydration issues. ` +
             `Use <${tag}></${tag}> instead.`,
         );
@@ -549,7 +550,7 @@ function parseAttributeValue(context: ParserContext): TextNode {
       content = context.source.slice(0, endIndex);
     } else {
       if (__DEV__) {
-        console.warn("[LytJS compiler warn] Unclosed attribute value.");
+        warn("Unclosed attribute value.");
       }
       content = context.source;
     }
@@ -561,7 +562,7 @@ function parseAttributeValue(context: ParserContext): TextNode {
       content = context.source.slice(0, endIndex);
     } else {
       if (__DEV__) {
-        console.warn("[LytJS compiler warn] Unclosed attribute value.");
+        warn("Unclosed attribute value.");
       }
       content = context.source;
     }
