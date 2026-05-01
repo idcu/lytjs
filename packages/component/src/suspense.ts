@@ -47,7 +47,7 @@ export const Suspense: ComponentOptions = {
     timeout: { type: Number, default: undefined },
   },
 
-  setup(_props: any, _ctx: any) {
+  setup(_props: Record<string, unknown>, _ctx: Record<string, unknown>) {
     const boundary: SuspenseAsyncState = {
       isPending: false,
       error: null,
