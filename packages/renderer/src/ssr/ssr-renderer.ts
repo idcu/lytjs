@@ -57,9 +57,9 @@ function renderVNodeToString(vnode: VNode): string {
   if (type === Comment) {
     const text = isFunction(children) ? "" : String(children ?? "");
     // 转义 <!-- 和 --> 防止注释注入导致 HTML 结构破坏
-    // Sanitize double-dash first, then escape comment delimiters
-    let safe = text.replace(/--/g, "- -");
-    safe = safe.replace(/<!--/g, "&lt;!--").replace(/-->/g, "--&gt;");
+    // Sanitize comment delimiters first, then double-dash
+    let safe = text.replace(/<!--/g, "&lt;!--").replace(/-->/g, "--&gt;");
+    safe = safe.replace(/--/g, "- -");
     return `<!--${safe}-->`;
   }
 
@@ -198,8 +198,14 @@ function isSafeURL(url: string): boolean {
   try {
     const parsed = new URL(decoded, "http://example.com");
     const protocol = parsed.protocol.toLowerCase().replace(":", "");
-    if (protocol === "javascript" || protocol === "data") {
+    if (protocol === "javascript") {
       return false;
+    }
+    if (protocol === "data") {
+      // 允许安全的 data:image/* MIME 类型
+      return /^data:image\/(png|jpeg|jpg|gif|svg\+xml|webp|bmp|ico|avif);/i.test(
+        url,
+      );
     }
     return true;
   } catch {
