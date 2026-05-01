@@ -181,6 +181,8 @@ function genNode(
       genElement(node as ElementNode, context);
       break;
     default: {
+      // Fallback: exhaustive check for unknown node types.
+      // This branch should never be reached if all NodeTypes are handled above.
       const nodeType = (node as { type?: string | number }).type;
       throw new Error(
         `[LytJS compiler] Codegen: unknown node type "${nodeType ?? "unknown"}"`,
@@ -530,5 +532,5 @@ function getPatchFlagName(flag: number): string {
   if (flag & PatchFlags.DYNAMIC_SLOTS) names.push("DYNAMIC_SLOTS");
   if (flag === PatchFlags.HOISTED) return "HOISTED";
   if (flag === PatchFlags.BAIL) return "BAIL";
-  return names.join(" | ") || String(flag);
+  return names.join(" | ") || "UNKNOWN";
 }

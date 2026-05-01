@@ -135,10 +135,7 @@ export function flushJobs(): void {
         } catch (e) {
           if (globalErrorHandler)
             globalErrorHandler(e as Error, "pre-flush callback");
-          console.error(
-            "[LytJS] pre-flush callback failed:",
-            e,
-          );
+          console.error("[LytJS] pre-flush callback failed:", e);
         }
       }
       preFlushCbs.length = 0;
@@ -166,10 +163,7 @@ export function flushJobs(): void {
         } catch (e) {
           if (globalErrorHandler)
             globalErrorHandler(e as Error, "post-flush callback");
-          console.error(
-            "[LytJS] post-flush callback failed:",
-            e,
-          );
+          console.error("[LytJS] post-flush callback failed:", e);
         }
       }
       postFlushCbs.length = 0;
@@ -248,4 +242,5 @@ export function resetSchedulerState(): void {
   postFlushCbsSet.clear();
   isFlushing = false;
   isFlushPending = false;
+  maxIterations = 100;
 }

@@ -140,6 +140,11 @@ interface CacheEntry<V> {
 
 /**
  * 带过期时间的缓存
+ *
+ * @note 此实现采用惰性删除策略：过期条目仅在 get() / has() 访问时被移除，
+ * 不会主动扫描清理。如果存在大量写入后不再访问的过期条目，
+ * 它们将一直占用内存直到调用 cleanup() 或 clear()。
+ * 对于写入密集但读取稀疏的场景，建议定期调用 cleanup() 释放内存。
  */
 export class ExpiringCache<K, V> {
   private ttl: number;

@@ -154,7 +154,9 @@ export interface VNode {
 
 /**
  * 组件公共实例接口
- * @deprecated 请使用 @lytjs/component 或 @lytjs/shared-types 中的 ComponentPublicInstance
+ * @deprecated 此接口已迁移至 @lytjs/component（权威来源）和 @lytjs/shared-types。
+ * 新代码请直接从 @lytjs/component 导入 ComponentPublicInstance。
+ * 此处保留仅为向后兼容，未来版本中将移除。
  */
 export interface ComponentPublicInstance {
   $props: Record<string, unknown>;

@@ -47,7 +47,7 @@ export function transformFor(
 
   if (left.startsWith("(") && left.endsWith(")")) {
     const inner = left.slice(1, -1).trim();
-    const parts = inner.split(",").map((p: string) => p.trim());
+    const parts = inner.split(",").map((p) => p.trim());
     if (parts.length > 2) {
       if (__DEV__) {
         warn(
@@ -59,7 +59,7 @@ export function transformFor(
     indexVar = parts[1];
   } else if (left.startsWith("[") && left.endsWith("]")) {
     const inner = left.slice(1, -1).trim();
-    const parts = inner.split(",").map((p: string) => p.trim());
+    const parts = inner.split(",").map((p) => p.trim());
     if (parts.length > 2) {
       if (__DEV__) {
         warn(

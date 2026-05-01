@@ -375,7 +375,6 @@ export interface CodegenContext {
   offset: number;
   indentLevel: number;
   pure: boolean;
-  map?: Record<string, number>;
   helper(key: string): string;
   push(code: string, node?: BaseNode): void;
   indent(): void;

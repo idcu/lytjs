@@ -36,7 +36,11 @@ export function findDirective(
 }
 
 /**
- * 判断节点是否为 JS 类型节点
+ * 判断节点是否为 JS 类型节点（codegen 阶段的节点类型）。
+ *
+ * 注意：此函数不包含表达式节点（SIMPLE_EXPRESSION、COMPOUND_EXPRESSION），
+ * 因为表达式节点属于模板层节点，在 transform 阶段仍需要作为 TemplateChildNode 处理，
+ * 而非直接作为 codegen 节点使用。
  */
 export function isJS(node: TemplateChildNode): boolean {
   return (

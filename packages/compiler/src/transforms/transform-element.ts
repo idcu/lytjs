@@ -36,6 +36,7 @@ import {
   createConditionalExpression,
 } from "../ast";
 import { getExpContent, findDirective } from "./helpers";
+import { capitalize } from "@lytjs/common-string";
 
 export function transformElement(
   node: ElementNode,
@@ -274,7 +275,7 @@ function handleVOn(
     properties.push(
       createObjectProperty(
         createSimpleExpression(
-          `"on${argContent.charAt(0).toUpperCase() + argContent.slice(1)}"`,
+          `"on${capitalize(argContent)}"`,
           true,
           prop.loc,
           true,
@@ -335,12 +336,15 @@ function handleVShow(
         createConditionalExpression(
           createSimpleExpression(expContent, false, prop.loc, false),
           createSimpleExpression("undefined", true, prop.loc, true),
-          createObjectExpression([
-            createObjectProperty(
-              createSimpleExpression("display", true, prop.loc, true),
-              createSimpleExpression("'none'", true, prop.loc, true),
-            ),
-          ], prop.loc),
+          createObjectExpression(
+            [
+              createObjectProperty(
+                createSimpleExpression("display", true, prop.loc, true),
+                createSimpleExpression("'none'", true, prop.loc, true),
+              ),
+            ],
+            prop.loc,
+          ),
           false,
         ),
       ),
@@ -362,9 +366,11 @@ function handleVHtml(
   if (expContent !== undefined) {
     // T-002 XSS fix: 对 v-html 值进行运行时消毒，防止 XSS 攻击
     context.helper("SANITIZE_HTML");
-    const sanitizedValue = createCallExpression("SANITIZE_HTML", [
-      createSimpleExpression(expContent, false, prop.loc, false),
-    ], prop.loc);
+    const sanitizedValue = createCallExpression(
+      "SANITIZE_HTML",
+      [createSimpleExpression(expContent, false, prop.loc, false)],
+      prop.loc,
+    );
     // 在开发模式下额外发出安全警告
     const safeValue = createCompoundExpression([
       `(${createConditionalExpression(

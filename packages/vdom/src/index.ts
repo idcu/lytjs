@@ -58,12 +58,7 @@ export type {
 } from "./types";
 
 // Diff utilities
-export {
-  isSameVNodeType as isSameVNodeTypeFromDiff,
-  canUseFastDiff,
-  countNewNodes,
-  countRemovedNodes,
-} from "./diff";
+export { canUseFastDiff, countNewNodes, countRemovedNodes } from "./diff";
 
 // Fragment utilities
 export {

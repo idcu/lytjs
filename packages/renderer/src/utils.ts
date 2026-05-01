@@ -1,5 +1,9 @@
 /**
  * @lytjs/renderer - Shared utilities
+ *
+ * This module provides shared utility functions used across the renderer package,
+ * including HTML escaping, boolean attribute detection, and void element checks.
+ * It re-exports selected utilities from @lytjs/common-string for convenience.
  */
 
 import { escapeHtml, isBooleanAttr, VOID_ELEMENTS } from "@lytjs/common-string";

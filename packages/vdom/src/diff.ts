@@ -18,8 +18,15 @@ export { isSameVNodeType };
 // ============================================================
 
 /**
- * Check if old and new children can use the fast path (no structural changes).
- * Returns true if both arrays have the same keys in the same order.
+ * 检查新旧子节点数组是否可以使用快速路径（无需完整 diff）。
+ *
+ * 仅当满足以下全部条件时返回 true：
+ * 1. 两个数组长度相同
+ * 2. 对应位置的节点类型相同（isSameVNodeType）
+ *
+ * 注意：此函数不检查 key 是否匹配。如果节点有 key 但 key 不同，
+ * 即使类型相同也会返回 true，因此调用方需确保无 key 或 key 一致时
+ * 才能安全使用快速路径。当前实现中快速路径主要用于无 key 的简单列表场景。
  */
 export function canUseFastDiff(c1: VNode[], c2: VNode[]): boolean {
   if (c1.length !== c2.length) return false;

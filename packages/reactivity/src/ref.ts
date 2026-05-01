@@ -129,6 +129,8 @@ export function triggerRefValue(
 
 export function ref<T>(value: T): Ref<T> {
   if (isRef(value)) return value as Ref<T>;
+  // 双重断言是必要的：RefImpl 实现了 Ref 接口所需的 value/__v_isRef 属性，
+  // 但 TypeScript 无法自动推断类实例满足接口（私有成员导致结构不兼容）。
   return new RefImpl(value, false) as unknown as Ref<T>;
 }
 

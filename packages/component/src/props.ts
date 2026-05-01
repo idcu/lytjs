@@ -62,6 +62,9 @@ export function resolvePropValue<T = unknown>(
   // If value is absent (undefined) and there's a default, use it
   if (value === undefined) {
     // Boolean casting: if type is Boolean and no default, default to false
+    // 类型断言 `Boolean as unknown` 是必要的，因为 PropOptions.type 的类型
+    // 为 Constructor | Constructor[]，而 Boolean 构造函数需要通过 unknown 中间
+    // 类型才能与数组元素类型兼容
     if (
       type === Boolean ||
       (isArray(type) && type.includes(Boolean as unknown))
@@ -113,6 +116,7 @@ export function validateType(value: unknown, type: unknown): boolean {
   if (isArray(type)) {
     // Array of types - value must match at least one
     for (let i = 0; i < type.length; i++) {
+      // type[i] 的静态类型为 unknown，需要断言为 PropTypeConstructor 以调用 checkType
       if (checkType(value, type[i]! as PropTypeConstructor)) return true;
     }
     expectedType = type.map((t) => getTypeName(t)).join(" | ");

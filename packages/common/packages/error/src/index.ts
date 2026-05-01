@@ -328,6 +328,9 @@ export const createComponentError = (
 // 开发模式与警告
 // ============================================================
 
+// 注意：devMode 是模块级状态变量，在测试中如果某个测试用例修改了 devMode
+// 而未在 afterEach 中重置（通过 setDevMode(false)），会导致后续测试用例
+// 的 warn/error 行为受到影响。测试文件应确保在适当位置重置 devMode。
 let devMode = false;
 
 /**

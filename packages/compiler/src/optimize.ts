@@ -7,4 +7,8 @@
 //
 // 此文件保留仅为向后兼容，所有实现已迁移到 transform.ts。
 
+/**
+ * @deprecated optimize 阶段已合并到 transform 阶段，请直接使用 transform()。
+ * 此文件保留仅为向后兼容。
+ */
 export { optimize } from "./transform";

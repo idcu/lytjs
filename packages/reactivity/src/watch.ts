@@ -121,11 +121,11 @@ export function watch<T, Immediate extends Readonly<boolean> = false>(
   };
 
   const job: () => void = () => {
-    if (!effect.active || isStopped) return;
+    if (!watcher.active || isStopped) return;
     if (cb) {
       let newValue: unknown;
       try {
-        newValue = effect.run();
+        newValue = watcher.run();
       } catch (e) {
         error(`Error in watch getter: ${e}`);
         throw e;
@@ -147,12 +147,12 @@ export function watch<T, Immediate extends Readonly<boolean> = false>(
         oldValue = newValue;
         if (once) {
           isStopped = true;
-          effect.stop();
+          watcher.stop();
         }
       }
     } else {
       try {
-        effect.run();
+        watcher.run();
       } catch (e) {
         error(`Error in watch effect run: ${e}`);
         throw e;
@@ -177,12 +177,12 @@ export function watch<T, Immediate extends Readonly<boolean> = false>(
     ? (...args: unknown[]) => rawScheduler(job, ...args)
     : rawScheduler;
 
-  const effect = new ReactiveEffect(
+  const watcher = new ReactiveEffect(
     getter,
     scheduler as (...args: unknown[]) => unknown,
   );
 
-  effect.onStop = () => {
+  watcher.onStop = () => {
     if (cleanupFns.length > 0) {
       for (let i = cleanupFns.length - 1; i >= 0; i--) {
         cleanupFns[i]!();
@@ -192,19 +192,19 @@ export function watch<T, Immediate extends Readonly<boolean> = false>(
   };
 
   if (__DEV__) {
-    effect.onTrack = onTrack as typeof effect.onTrack;
-    effect.onTrigger = onTrigger as typeof effect.onTrigger;
+    watcher.onTrack = onTrack as typeof watcher.onTrack;
+    watcher.onTrigger = onTrigger as typeof watcher.onTrigger;
   }
 
   if (immediate) {
     job();
   } else {
-    oldValue = effect.run();
+    oldValue = watcher.run();
   }
 
   return () => {
     isStopped = true;
-    effect.stop();
+    watcher.stop();
   };
 }
 

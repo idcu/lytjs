@@ -38,6 +38,9 @@ function getOrCreateInvoker(el: Element, rawName: string): Invoker {
 
   let invoker = elMap.get(rawName);
   if (!invoker) {
+    // Closure self-reference pattern: the invoker function references itself via
+    // the outer `invoker` variable. This allows the wrapper to always call the
+    // latest handler value stored in invoker.value without re-attaching listeners.
     invoker = ((e: Event) => {
       invoker!.value(e);
     }) as unknown as Invoker;
@@ -235,6 +238,9 @@ export function patchProp(
   } else if (isOn(key)) {
     patchEvent(el, key, prevValue, nextValue);
   } else if (key === "innerHTML") {
+    // Performance optimization: skip DOM update when innerHTML value is unchanged.
+    // Note: this uses reference equality (!==) rather than deep comparison,
+    // which is sufficient for the common case where the value is a static string.
     if (nextValue !== prevValue) {
       if (__DEV__ && nextValue != null && typeof nextValue !== "string") {
         warn("v-html expects a string value.");

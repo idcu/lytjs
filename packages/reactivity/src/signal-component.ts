@@ -42,6 +42,10 @@ export function createSignalBinding<T>(
 
 /**
  * 将 signal 值转换为响应式 props
+ *
+ * 注意：通过 Object.defineProperty 定义的 getter 会在每次属性访问时调用 signal()，
+ * 这会触发 signal 的依赖追踪机制。如果此 props 对象在响应式上下文（如 effect 或
+ * computed）中被读取，访问的 signal 会自动注册为该上下文的依赖。
  */
 export function signalToProps(
   signals: Record<string, Signal<unknown>>,
