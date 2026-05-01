@@ -9,7 +9,7 @@ import { handleError } from "./lifecycle";
  * Normalize emits definition into a consistent Record<string, any> format.
  */
 export function normalizeEmitsOptions(
-  emits?: string[] | Record<string, (...args: any[]) => any>,
+  emits?: string[] | Record<string, (...args: unknown[]) => unknown>,
 ): Record<string, unknown> | null {
   if (!emits) return null;
 
@@ -53,7 +53,7 @@ function toHandlerKey(event: string): string {
 export function emit(
   instance: ComponentInternalInstance,
   event: string,
-  ...args: any[]
+  ...args: unknown[]
 ): void {
   if (instance.isUnmounted) return;
 

@@ -3,6 +3,7 @@
 
 import { getCurrentInstance } from "@lytjs/component";
 import { computed } from "@lytjs/reactivity";
+import type { WritableComputedRef } from "@lytjs/reactivity";
 import type { InternalSlots } from "./types";
 
 /**
@@ -39,10 +40,17 @@ export function useAttrs(): Record<string, unknown> {
 export function useModel<T = unknown>(
   props: Record<string, unknown>,
   key: string,
-): { value: T } {
+): WritableComputedRef<T> {
   const instance = getCurrentInstance();
   if (!instance) {
-    return { value: undefined as T };
+    return computed({
+      get() {
+        return undefined as T;
+      },
+      set() {
+        // no-op when outside setup
+      },
+    }) as WritableComputedRef<T>;
   }
 
   return computed({
@@ -52,5 +60,5 @@ export function useModel<T = unknown>(
     set(newValue: T) {
       instance.emit(`update:${key}`, newValue);
     },
-  }) as any;
+  }) as WritableComputedRef<T>;
 }

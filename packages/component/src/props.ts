@@ -12,6 +12,7 @@ import {
   EMPTY_OBJ,
 } from "@lytjs/common-is";
 import type { PropOptions } from "./types";
+import type { ComponentInternalInstance } from "./types";
 
 /**
  * Normalize props definition into a consistent Record<string, PropOptions> format.
@@ -51,7 +52,7 @@ export function normalizePropsOptions(
 export function resolvePropValue<T = unknown>(
   propOptions: PropOptions,
   value: unknown,
-  _instance?: any,
+  _instance?: ComponentInternalInstance,
   key?: string,
 ): T | undefined {
   const { type, default: defaultValue, required, validator } = propOptions;
@@ -102,11 +103,11 @@ export function validateType(value: unknown, type: unknown): boolean {
   if (isArray(type)) {
     // Array of types - value must match at least one
     for (let i = 0; i < type.length; i++) {
-      if (checkType(value, type[i]!)) return true;
+      if (checkType(value, type[i]! as PropTypeConstructor)) return true;
     }
     expectedType = type.map((t) => getTypeName(t)).join(" | ");
   } else {
-    if (checkType(value, type)) return true;
+    if (checkType(value, type as PropTypeConstructor)) return true;
     expectedType = getTypeName(type);
   }
 
@@ -119,7 +120,12 @@ export function validateType(value: unknown, type: unknown): boolean {
   return false;
 }
 
-function checkType(value: unknown, type: any): boolean {
+/** Prop 类型构造器 */
+type PropTypeConstructor =
+  | (new (...args: unknown[]) => unknown)
+  | { (): unknown };
+
+function checkType(value: unknown, type: PropTypeConstructor | PropTypeConstructor[]): boolean {
   if (type === String) return isString(value);
   if (type === Number) return isNumber(value);
   if (type === Boolean) return isBoolean(value);

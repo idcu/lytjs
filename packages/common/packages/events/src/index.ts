@@ -7,7 +7,7 @@ function isFunction(val: unknown): val is Function {
   return typeof val === "function";
 }
 
-type EventHandler = (...args: any[]) => void;
+type EventHandler<T extends unknown[] = unknown[]> = (...args: T) => void;
 
 // ============================================================
 // DOM event name mapping & helpers
@@ -143,7 +143,7 @@ export class EventEmitter {
   /**
    * 触发事件
    */
-  emit(event: string, ...args: any[]): boolean {
+  emit(event: string, ...args: unknown[]): boolean {
     const handlers = this.events.get(event);
     if (!handlers || handlers.size === 0) return false;
     handlers.forEach((handler) => {
@@ -248,7 +248,7 @@ export class TopicSubscriptionManager {
   /**
    * 发布消息到主题
    */
-  publish(topic: string, ...args: any[]): boolean {
+  publish(topic: string, ...args: unknown[]): boolean {
     const handlers = this.topics.get(topic);
     if (!handlers || handlers.size === 0) return false;
     handlers.forEach((handler) => {
