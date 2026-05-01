@@ -107,6 +107,49 @@ describe('PatchFlags - renderer optimization', () => {
     // data-x should NOT be updated because it's not in dynamicProps
     expect(el.getAttribute('data-x')).toBe('1')
   })
+
+  it('FULL_PROPS patchFlag should diff all props', () => {
+    const n1 = createVNode(
+      'div',
+      { id: 'app', class: 'old', 'data-x': '1', title: 'old title' },
+      'text',
+      PatchFlags.FULL_PROPS,
+    )
+    const n2 = createVNode(
+      'div',
+      { id: 'app', class: 'new', 'data-x': '2', title: 'new title' },
+      'text',
+      PatchFlags.FULL_PROPS,
+    )
+    renderer.mount(n1, container)
+    renderer.patch(n1, n2, container)
+    const el = n2.el as HTMLElement
+    expect(el.className).toBe('new')
+    expect(el.getAttribute('data-x')).toBe('2')
+    expect(el.title).toBe('new title')
+  })
+
+  it('STYLE patchFlag should only update style', () => {
+    const n1 = createVNode(
+      'div',
+      { id: 'app', class: 'container', style: { color: 'red', fontSize: '14px' } },
+      'text',
+      PatchFlags.STYLE,
+    )
+    const n2 = createVNode(
+      'div',
+      { id: 'app', class: 'container', style: { color: 'blue', fontSize: '16px' } },
+      'text',
+      PatchFlags.STYLE,
+    )
+    renderer.mount(n1, container)
+    renderer.patch(n1, n2, container)
+    const el = n2.el as HTMLElement
+    expect(el.style.color).toBe('blue')
+    expect(el.style.fontSize).toBe('16px')
+    // class should remain (not reset)
+    expect(el.className).toBe('container')
+  })
 })
 
 describe('VNode utility checks', () => {
