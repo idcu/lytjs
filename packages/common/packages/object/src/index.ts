@@ -180,7 +180,7 @@ export function deepClone<T>(
   const clone = {} as Record<string | symbol, unknown>;
   seen.set(source, clone);
   for (const key of Reflect.ownKeys(source)) {
-    clone[key as string] = deepClone(
+    clone[key as string | symbol] = deepClone(
       (source as Record<string | symbol, unknown>)[key as string | symbol],
       seen,
     );
@@ -257,10 +257,12 @@ export function deepEqual<T>(a: T, b: T): boolean {
     const keysA = Object.keys(a);
     const keysB = Object.keys(b);
     if (keysA.length !== keysB.length) return false;
-    return keysA.every((key) => deepEqual(
-      (a as Record<string, unknown>)[key],
-      (b as Record<string, unknown>)[key],
-    ));
+    return keysA.every((key) =>
+      deepEqual(
+        (a as Record<string, unknown>)[key],
+        (b as Record<string, unknown>)[key],
+      ),
+    );
   }
 
   return false;
@@ -303,7 +305,7 @@ export function set<T extends Record<string, unknown>>(
     if (current[key] == null || typeof current[key] !== "object") {
       current[key] = {};
     } else {
-      current[key] = { ...current[key] as Record<string, unknown> };
+      current[key] = { ...(current[key] as Record<string, unknown>) };
     }
     current = current[key] as Record<string, unknown>;
   }
