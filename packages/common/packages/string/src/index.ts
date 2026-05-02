@@ -3,6 +3,10 @@
  * 字符串处理工具函数集合
  */
 
+const warn = (...args: unknown[]) => {
+  if (typeof console !== 'undefined') console.warn('[LytJS]', ...args);
+};
+
 /**
  * 首字母大写
  */
@@ -97,6 +101,7 @@ const HTML_UNESCAPE_MAP: Record<string, string> = {
   '&quot;': '"',
   '&#39;': "'",
   '&apos;': "'",
+  '&#96;': '`',
 };
 
 /**
@@ -104,7 +109,7 @@ const HTML_UNESCAPE_MAP: Record<string, string> = {
  */
 export function unescapeHTML(str: string): string {
   return str.replace(
-    /&(?:amp|lt|gt|quot|#39|apos);/g,
+    /&(?:amp|lt|gt|quot|#39|apos|#96);/g,
     (entity) => HTML_UNESCAPE_MAP[entity] ?? entity,
   );
 }
@@ -534,7 +539,7 @@ export function isSafeAttribute(attrName: string, attrValue: string): boolean {
   // 1. 检查事件处理器属性
   if (DANGEROUS_EVENT_ATTRS.has(lowerName)) {
     if (__DEV__) {
-      console.warn(`[LytJS] Blocked dangerous event attribute: ${attrName}`);
+      warn(`Blocked dangerous event attribute: ${attrName}`);
     }
     return false;
   }
@@ -546,8 +551,8 @@ export function isSafeAttribute(attrName: string, attrValue: string): boolean {
     const protocol = protocolMatch?.[1] ?? '';
     if (!ALLOWED_URL_PROTOCOLS.has(protocol)) {
       if (__DEV__) {
-        console.warn(
-          `[LytJS] Blocked dangerous URL in attribute "${attrName}": ` +
+        warn(
+          `Blocked dangerous URL in attribute "${attrName}": ` +
             `protocol "${protocol}" is not allowed`,
         );
       }

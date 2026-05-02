@@ -44,6 +44,7 @@ export {
   kebabToCamel,
   escapeRegExp,
   escapeHTML,
+  escapeHtml,
   unescapeHTML,
   trim,
   trimChars,

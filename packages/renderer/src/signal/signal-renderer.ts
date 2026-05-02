@@ -60,6 +60,33 @@ export function createSignalRenderer(
 ): SignalRenderer {
   let cleanup: (() => void) | null = null;
 
+  // 编译模板为 Signal 模式（缓存编译结果，避免每次 render 重新编译）
+  let code: string;
+  let renderBody: string | null;
+  try {
+    const compileResult = compile(template, { rendererMode: 'signal' });
+    code = compileResult.code;
+
+    // 从编译结果中提取 render 函数体
+    // codegen-signal 生成的代码结构：
+    //   import { effect, reconcileArray } from '@lytjs/reactivity';
+    //   import { createTemplate, ... } from '@lytjs/dom-runtime';
+    //   export function render(_ctx, _container) { ... }
+    //   return () => { runCleanups(); };
+    //
+    // 我们需要提取 render 函数体，并通过 new Function 执行
+    renderBody = extractRenderBody(code);
+    if (!renderBody) {
+      throw new Error(
+        `[LytJS] SignalRenderer: failed to extract render function from compiled code.`,
+      );
+    }
+  } catch (e) {
+    throw e instanceof Error
+      ? new Error(`[LytJS] SignalRenderer: template compilation failed. ${e.message}`)
+      : new Error(`[LytJS] SignalRenderer: template compilation failed. ${String(e)}`);
+  }
+
   return {
     render(container: Element | string) {
       // 卸载旧的渲染
@@ -79,72 +106,59 @@ export function createSignalRenderer(
         );
       }
 
-      // 编译模板为 Signal 模式
-      const { code } = compile(template, { rendererMode: 'signal' });
-
-      // 从编译结果中提取 render 函数体
-      // codegen-signal 生成的代码结构：
-      //   import { effect, reconcileArray } from '@lytjs/reactivity';
-      //   import { createTemplate, ... } from '@lytjs/dom-runtime';
-      //   export function render(_ctx, _container) { ... }
-      //   return () => { runCleanups(); };
-      //
-      // 我们需要提取 render 函数体，并通过 new Function 执行
-
-      const renderBody = extractRenderBody(code);
-      if (!renderBody) {
-        throw new Error(
-          `[LytJS] SignalRenderer: failed to extract render function from compiled code.`,
+      try {
+        // 创建渲染函数，传入所有 dom-runtime 和 reactivity 的函数作为参数
+        // 参数名必须与 codegen-signal.ts 生成的 import 名称一致
+        const renderFn = new Function(
+          'effect',
+          'reconcileArray',
+          'createTemplate',
+          'setText',
+          'setHTML',
+          'setAttribute',
+          'setProperty',
+          'setStyle',
+          'setClass',
+          'insert',
+          'remove',
+          'createEventHandler',
+          'bindEffect',
+          'onCleanup',
+          'runCleanups',
+          '_ctx',
+          '_container',
+          renderBody,
         );
-      }
 
-      // 创建渲染函数，传入所有 dom-runtime 和 reactivity 的函数作为参数
-      // 参数名必须与 codegen-signal.ts 生成的 import 名称一致
-      const renderFn = new Function(
-        'effect',
-        'reconcileArray',
-        'createTemplate',
-        'setText',
-        'setHTML',
-        'setAttribute',
-        'setProperty',
-        'setStyle',
-        'setClass',
-        'insert',
-        'remove',
-        'createEventHandler',
-        'bindEffect',
-        'onCleanup',
-        'runCleanups',
-        '_ctx',
-        '_container',
-        renderBody,
-      );
+        // 执行渲染函数
+        const cleanupFn = renderFn(
+          effect,
+          reconcileArray,
+          createTemplate,
+          setText,
+          setHTML,
+          setAttribute,
+          setProperty,
+          setStyle,
+          setClass,
+          insert,
+          remove,
+          createEventHandler,
+          bindEffect,
+          onCleanup,
+          runCleanups,
+          context,
+          el,
+        );
 
-      // 执行渲染函数
-      const cleanupFn = renderFn(
-        effect,
-        reconcileArray,
-        createTemplate,
-        setText,
-        setHTML,
-        setAttribute,
-        setProperty,
-        setStyle,
-        setClass,
-        insert,
-        remove,
-        createEventHandler,
-        bindEffect,
-        onCleanup,
-        runCleanups,
-        context,
-        el,
-      );
-
-      // 保存清理函数
-      if (typeof cleanupFn === 'function') {
-        cleanup = cleanupFn;
+        // 保存清理函数
+        if (typeof cleanupFn === 'function') {
+          cleanup = cleanupFn;
+        }
+      } catch (e) {
+        throw e instanceof Error
+          ? new Error(`[LytJS] SignalRenderer: render execution failed. ${e.message}`)
+          : new Error(`[LytJS] SignalRenderer: render execution failed. ${String(e)}`);
       }
     },
 

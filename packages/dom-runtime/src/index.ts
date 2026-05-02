@@ -217,7 +217,7 @@ export function setStyle(el: Element, style: string | Record<string, string>): v
   if (!isBrowser) return;
   const htmlEl = el as HTMLElement;
   if (typeof style === 'string') {
-    htmlEl.setAttribute('style', style);
+    htmlEl.style.cssText = style;
   } else {
     for (const [key, value] of Object.entries(style)) {
       (htmlEl.style as unknown as Record<string, string>)[key] = value;
@@ -335,9 +335,14 @@ export function reconcileArray<T>(
   // 收集当前 parent 中已有的 reconcileArray 管理的节点
   // 通过遍历 parent.childNodes 中 ref 之前的节点
   const childNodes = parent.childNodes;
-  const endIdx = ref != null
+  let endIdx = ref != null
     ? Array.from(childNodes as ArrayLike<ChildNode>).indexOf(ref as ChildNode)
     : childNodes.length;
+
+  // 当 ref 不在 parent 中时，回退到 childNodes.length（等同于 ref 为 null 的行为）
+  if (endIdx < 0) {
+    endIdx = childNodes.length;
+  }
 
   for (let i = 0; i < endIdx; i++) {
     const node = childNodes[i]!;
@@ -370,6 +375,8 @@ export function reconcileArray<T>(
       existing.item = item;
       // 将节点移到 fragment 中以重新排序
       fragment.appendChild(existing.node);
+      // 删除已匹配的 key，防止重复 key 时同一节点被匹配两次
+      existingMap.delete(key);
     } else {
       // key 不存在：创建新节点
       const node = options.create(item);

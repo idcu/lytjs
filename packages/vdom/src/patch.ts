@@ -930,8 +930,8 @@ export function createRenderer(options: RendererOptions<HostNode, HostElement>) 
         const children = isArray(n2.children) ? n2.children : [];
         for (let i = 0; i < children.length; i++) {
           const child = children[i];
-          if (child != null && child.el) {
-            insert(child.el as HostNode, newTarget, targetEnd);
+          if (child != null) {
+            move(child, newTarget, targetEnd, parentComponent, parentSuspense);
           }
         }
 
@@ -948,6 +948,13 @@ export function createRenderer(options: RendererOptions<HostNode, HostElement>) 
     else if (oldDisabled !== newDisabled) {
       if (newDisabled) {
         // Was enabled, now disabled: move children from target back to container
+        const children = isArray(n2.children) ? n2.children : [];
+        for (let i = 0; i < children.length; i++) {
+          const child = children[i];
+          if (child != null) {
+            move(child, container, anchor, parentComponent, parentSuspense);
+          }
+        }
         if (n1.targetStart) hostRemove(n1.targetStart);
         if (n1.targetAnchor) hostRemove(n1.targetAnchor);
         n2.target = null;
