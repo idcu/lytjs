@@ -126,10 +126,29 @@ export function omit<T extends Record<string, unknown>, K extends keyof T>(
 
 /**
  * 深度克隆对象
+ * @param source - 要克隆的源对象
+ * @param seen - 用于循环引用检测的 WeakMap
+ * @param maxDepth - 最大递归深度，默认 20，超出时回退到 JSON.parse(JSON.stringify())
  */
-export function deepClone<T>(source: T, seen = new WeakMap<object, unknown>()): T {
+export function deepClone<T>(
+  source: T,
+  seen: WeakMap<object, unknown> = new WeakMap<object, unknown>(),
+  maxDepth: number = 20,
+  _currentDepth: number = 0,
+): T {
   // 基本类型直接返回
   if (source === null || typeof source !== 'object') return source;
+
+  // 深度超限时回退到 JSON 方式
+  if (_currentDepth >= maxDepth) {
+    try {
+      return JSON.parse(JSON.stringify(source)) as T;
+    } catch {
+      throw new Error(
+        `deepClone: maximum depth (${maxDepth}) exceeded and JSON fallback failed for value of type ${typeof source}.`,
+      );
+    }
+  }
 
   // 循环引用检测
   if (seen.has(source as object)) return seen.get(source as object) as T;
@@ -141,7 +160,10 @@ export function deepClone<T>(source: T, seen = new WeakMap<object, unknown>()): 
     const clone = new Map();
     seen.set(source, clone);
     source.forEach((value, key) => {
-      clone.set(deepClone(key, seen), deepClone(value, seen));
+      clone.set(
+        deepClone(key, seen, maxDepth, _currentDepth + 1),
+        deepClone(value, seen, maxDepth, _currentDepth + 1),
+      );
     });
     return clone as T;
   }
@@ -149,7 +171,7 @@ export function deepClone<T>(source: T, seen = new WeakMap<object, unknown>()): 
     const clone = new Set();
     seen.set(source, clone);
     source.forEach((value) => {
-      clone.add(deepClone(value, seen));
+      clone.add(deepClone(value, seen, maxDepth, _currentDepth + 1));
     });
     return clone as T;
   }
@@ -159,7 +181,7 @@ export function deepClone<T>(source: T, seen = new WeakMap<object, unknown>()): 
     const clone: unknown[] = [];
     seen.set(source, clone);
     for (let i = 0; i < source.length; i++) {
-      clone[i] = deepClone(source[i], seen);
+      clone[i] = deepClone(source[i], seen, maxDepth, _currentDepth + 1);
     }
     return clone as T;
   }
@@ -171,6 +193,8 @@ export function deepClone<T>(source: T, seen = new WeakMap<object, unknown>()): 
     const clonedValue = deepClone(
       (source as Record<string | symbol, unknown>)[key as string | symbol],
       seen,
+      maxDepth,
+      _currentDepth + 1,
     );
     if (typeof key === 'symbol') {
       Object.defineProperty(clone, key, {
@@ -273,6 +297,8 @@ export function get<T = unknown>(
   let current: unknown = obj;
   for (const key of keys) {
     if (current == null) return defaultValue;
+    // 防止原型污染：拒绝访问 __proto__、constructor、prototype 等危险路径
+    if (PROTO_POLLUTION_KEYS.has(key)) return defaultValue;
     current = (current as Record<string, unknown>)[key];
   }
   return isNullish(current) ? defaultValue : (current as T);

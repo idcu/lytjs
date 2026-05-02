@@ -4,7 +4,7 @@
 import { isString, isArray } from '@lytjs/common-is';
 import type { ComponentInternalInstance, ComponentOptions, SetupContext } from './types';
 import { createComponentInstance, setupComponent } from './component';
-import { handleError, callUnmountedHook } from './lifecycle';
+import { handleError } from './lifecycle';
 import { ShapeFlags, createBaseVNode } from '@lytjs/common-vnode';
 import type { VNode } from '@lytjs/common-vnode';
 
@@ -32,7 +32,7 @@ export const KeepAlive: ComponentOptions = {
   props: {
     include: {},
     exclude: {},
-    max: { type: Number, default: undefined },
+    max: { type: Number },
   },
 
   setup(_props: Record<string, unknown>, _ctx: SetupContext) {
@@ -125,14 +125,11 @@ export function cacheInstance(
     const oldestKey = keys.values().next().value;
     if (oldestKey !== undefined) {
       const oldestInstance = cache.get(oldestKey);
-      // Call deactivated lifecycle hook before eviction
+      // 淘汰时只调用 deactivated 钩子（组件被缓存停用，而非卸载）
+      // 不应同时触发 unmounted 钩子，unmounted 仅在组件真正被销毁时调用
       if (oldestInstance) {
         deactivateInstance(oldestInstance);
-        // Call beforeUnmount and unmounted lifecycle hooks for full cleanup
-        if (oldestInstance.lifecycle) {
-          callUnmountedHook(oldestInstance);
-        }
-        // Stop all reactive effects to prevent memory leaks
+        // 停止所有响应式 effect 以防止内存泄漏
         oldestInstance.effects?.forEach((effect) => {
           effect.stop();
         });

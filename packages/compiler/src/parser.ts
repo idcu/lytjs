@@ -45,12 +45,20 @@ const RE_UNQUOTED_ATTR_VALUE = /^[^\t\r\n\f >]+/;
 const RE_COMPONENT_TAG = /^[A-Z]/;
 
 // End tag RegExp cache (avoid re-creation on every parseElement call)
+const END_TAG_CACHE_MAX_SIZE = 100;
 const endTagCache = new Map<string, RegExp>();
 function getEndTagRegex(tag: string): RegExp {
   let regex = endTagCache.get(tag);
   if (!regex) {
     regex = new RegExp(`^<\\/\\s*${escapeRegExp(tag)}\\s*>`);
     endTagCache.set(tag, regex);
+    // Evict oldest entry when cache exceeds max size
+    if (endTagCache.size > END_TAG_CACHE_MAX_SIZE) {
+      const oldestKey = endTagCache.keys().next().value;
+      if (oldestKey !== undefined) {
+        endTagCache.delete(oldestKey);
+      }
+    }
   }
   return regex;
 }
@@ -289,15 +297,23 @@ function parseText(context: ParserContext): TextNode {
 function parseInterpolation(context: ParserContext): InterpolationNode | undefined {
   const start = getCursor(context);
   // 字符串感知扫描：跳过引号内的 }}，避免误判
+  // 使用状态机方式处理转义，正确处理连续反斜杠序列
   let endIndex = 2;
   let inString: string | null = null;
+  let backslashCount = 0;
   while (endIndex < context.source.length) {
     const char = context.source[endIndex];
     if (inString) {
-      if (char === inString && context.source[endIndex - 1] !== '\\') {
+      if (char === '\\') {
+        backslashCount++;
+      } else if (char === inString && backslashCount % 2 === 0) {
         inString = null;
+        backslashCount = 0;
+      } else {
+        backslashCount = 0;
       }
     } else {
+      backslashCount = 0;
       if (char === '"' || char === "'") {
         inString = char;
       } else if (char === '}' && context.source[endIndex + 1] === '}') {
@@ -373,9 +389,17 @@ function parseElement(context: ParserContext): ElementNode | undefined {
   const tag = element.tag;
 
   let textMode: number = TextModes.DATA;
-  if (tag === 'textarea' || tag === 'title') {
+  if (tag === 'textarea' || tag === 'title' || tag === 'xmp') {
     textMode = TextModes.RCDATA;
-  } else if (tag === 'style' || tag === 'script') {
+  } else if (
+    tag === 'style' ||
+    tag === 'script' ||
+    tag === 'iframe' ||
+    tag === 'noembed' ||
+    tag === 'noframes' ||
+    tag === 'noscript' ||
+    tag === 'plaintext'
+  ) {
     textMode = TextModes.RAWTEXT;
   }
 
@@ -556,11 +580,18 @@ function parseQuotedValue(context: ParserContext): string {
 
   if (context.source.startsWith('"')) {
     advanceBy(context, 1);
-    // 跳过转义引号 \"，找到真正的结束引号
+    // 状态机方式处理转义：追踪连续反斜杠数量，奇数个反斜杠表示下一个引号被转义
     let endIndex = 0;
+    let backslashCount = 0;
     while (endIndex < context.source.length) {
-      if (context.source[endIndex] === '"' && context.source[endIndex - 1] !== '\\') {
-        break;
+      const char = context.source[endIndex];
+      if (char === '\\') {
+        backslashCount++;
+      } else {
+        if (char === '"' && backslashCount % 2 === 0) {
+          break;
+        }
+        backslashCount = 0;
       }
       endIndex++;
     }
@@ -575,11 +606,18 @@ function parseQuotedValue(context: ParserContext): string {
     advanceBy(context, content.length + 1);
   } else if (context.source.startsWith("'")) {
     advanceBy(context, 1);
-    // 跳过转义引号 \'，找到真正的结束引号
+    // 状态机方式处理转义：追踪连续反斜杠数量，奇数个反斜杠表示下一个引号被转义
     let endIndex = 0;
+    let backslashCount = 0;
     while (endIndex < context.source.length) {
-      if (context.source[endIndex] === "'" && context.source[endIndex - 1] !== '\\') {
-        break;
+      const char = context.source[endIndex];
+      if (char === '\\') {
+        backslashCount++;
+      } else {
+        if (char === "'" && backslashCount % 2 === 0) {
+          break;
+        }
+        backslashCount = 0;
       }
       endIndex++;
     }

@@ -29,7 +29,10 @@ export function setErrorHandler(handler: ((error: Error, info: string) => void) 
 let isFlushing = false;
 let isFlushPending = false;
 
-let maxIterations = 100;
+/** Default maximum iterations for flushJobs loop to prevent infinite update loops. */
+const DEFAULT_MAX_ITERATIONS = 100;
+
+let maxIterations = DEFAULT_MAX_ITERATIONS;
 
 /**
  * 设置 flushJobs 的最大迭代次数
@@ -171,9 +174,11 @@ export function flushJobs(): void {
     }
 
     if (iterations >= maxIterations) {
+      const remainingJobs = queue.length + preFlushCbs.length + postFlushCbs.length;
       const msg =
         `[LytJS] flushJobs exceeded ${maxIterations} iterations. ` +
-        `Possible infinite update loop detected.`;
+        `Possible infinite update loop detected.` +
+        (remainingJobs > 0 ? ` ${remainingJobs} job(s) were discarded.` : '');
       if (__DEV__) {
         console.warn(msg);
       } else {
@@ -243,5 +248,5 @@ export function resetSchedulerState(): void {
   postFlushCbsSet.clear();
   isFlushing = false;
   isFlushPending = false;
-  maxIterations = 100;
+  maxIterations = DEFAULT_MAX_ITERATIONS;
 }

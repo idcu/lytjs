@@ -2,16 +2,11 @@
 // 内部符号常量
 
 // DEV 检测方式说明：
-// 此处使用运行时检测 globalThis.__DEV__，适用于需要在运行时根据 DEV 标志
-// 改变行为的场景（如条件性警告、调试符号描述）。
-// 与 env.d.ts 中通过 TypeScript declare const __DEV__ 的方式不同：
-// - env.d.ts 方式：编译时类型声明，配合打包工具的 define/replace 插件在构建时
-//   替换 __DEV__ 为字面量 true/false，实现死代码消除（DCE）。
-// - 此处方式：运行时检测，用于无法通过编译时替换覆盖的场景（如独立模块、
-//   跨包共享的常量文件）。
-// 两种方式在构建产物中最终等价，但此处的运行时检测在未配置构建替换时也能工作。
-const DEV =
-  typeof globalThis !== 'undefined' && (globalThis as Record<string, unknown>).__DEV__ === true;
+// 统一使用 typeof 检测方式，兼容编译时 define/replace 替换和未配置构建替换的场景。
+// 当打包工具（如 rollup/esbuild）通过 define 插件将 __DEV__ 替换为字面量 true/false 时，
+// typeof 检测会被优化为直接的字面量判断，实现死代码消除（DCE）。
+// 当未配置构建替换时，typeof 检测也能安全降级为 false，避免 ReferenceError。
+const DEV = typeof __DEV__ !== 'undefined' ? __DEV__ : false;
 
 export const RefSymbol: unique symbol = Symbol(DEV ? 'ref' : undefined);
 export const ShallowRefSymbol: unique symbol = Symbol(DEV ? 'shallow_ref' : undefined);

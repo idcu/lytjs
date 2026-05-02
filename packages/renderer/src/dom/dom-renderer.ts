@@ -8,21 +8,6 @@ import type { VNode, RendererOptions } from '@lytjs/vdom';
 import type { ComponentInternalInstance, SuspenseBoundary } from '@lytjs/vdom';
 import { patchProp } from './patch-props';
 
-// ============================================================
-// VNode storage for container elements
-// ============================================================
-
-/**
- * Module-level shared VNode storage for container elements.
- *
- * NOTE: This WeakMap is shared across all renderer instances created in the
- * same module scope. If multiple independent renderer instances are needed,
- * be aware that they will share the same vnode-to-element mapping. This is
- * intentional for the current single-renderer architecture, but should be
- * revisited if multi-instance isolation is required in the future.
- */
-export const vnodeMap = new WeakMap<Element, VNode | null>();
-
 import { SVG_NS, isSVGTag } from '@lytjs/common-dom';
 
 // ============================================================
@@ -34,13 +19,23 @@ export interface DOMRenderer {
   patch(n1: VNode | null, n2: VNode, container: Node, anchor?: Node | null): void;
   unmount(vnode: VNode): void;
   mount(vnode: VNode, container: Node): void;
-  move(vnode: VNode, container: Node, anchor: Node | null): void;
+  move(
+    vnode: VNode,
+    container: Node,
+    anchor: Node | null,
+    _parentComponent?: ComponentInternalInstance | null,
+    _parentSuspense?: SuspenseBoundary | null,
+  ): void;
 }
 
 /**
  * Create a DOM renderer that uses vdom's createRenderer with enhanced patchProp.
+ * vnodeMap is scoped to each renderer instance via closure (not module-level shared).
  */
 export function createDOMRenderer(): DOMRenderer {
+  // VNode storage scoped to this renderer instance
+  const vnodeMap = new WeakMap<Element, VNode | null>();
+
   // Get vdom's DOM host options
   const hostOptions = createDOMRendererOptions();
 

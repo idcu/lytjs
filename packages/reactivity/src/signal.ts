@@ -84,6 +84,12 @@ export function computedSignal<T>(fn: () => T): ComputedSignal<T> {
     if (dirty) {
       runner.run();
     }
+    // 如果 getter 首次执行抛出异常，store[SIGNAL_KEY] 仍为 undefined，
+    // 此时 runner.run() 已将异常重新抛出，不会到达此处。
+    // 额外检查：如果 store 中无有效值且 runner 未成功执行过，重新抛出。
+    if (store[SIGNAL_KEY] === undefined && dirty) {
+      throw new Error('computedSignal getter threw on initial evaluation.');
+    }
     return store[SIGNAL_KEY] as T;
   } as ComputedSignal<T>;
 

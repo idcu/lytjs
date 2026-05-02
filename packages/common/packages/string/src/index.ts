@@ -436,14 +436,72 @@ const DANGEROUS_EVENT_ATTRS = new Set([
   'ondrop',
   'onanimationend',
   'onanimationstart',
+  'onanimationiteration',
   'ontransitionend',
+  'ontoggle',
   'onwheel',
   'onpointerdown',
   'onpointerup',
   'onpointermove',
+  'onpointerover',
+  'onpointerout',
+  'onpointerenter',
+  'onpointerleave',
+  'onpointercancel',
+  'onpointerrawupdate',
   'oncopy',
   'oncut',
   'onpaste',
+  'ontouchstart',
+  'ontouchmove',
+  'ontouchend',
+  'ontouchcancel',
+  'onbeforeinput',
+  'oncompositionstart',
+  'oncompositionupdate',
+  'oncompositionend',
+  'onfocusin',
+  'onfocusout',
+  'onhashchange',
+  'onpopstate',
+  'onstorage',
+  'onmessage',
+  'onoffline',
+  'ononline',
+  'onpagehide',
+  'onpageshow',
+  'onbeforeunload',
+  'onunload',
+  'onabort',
+  'oncanplay',
+  'oncanplaythrough',
+  'ondurationchange',
+  'onemptied',
+  'onended',
+  'onloadeddata',
+  'onloadedmetadata',
+  'onloadstart',
+  'onpause',
+  'onplay',
+  'onplaying',
+  'onprogress',
+  'onratechange',
+  'onseeked',
+  'onseeking',
+  'onstalled',
+  'onsuspend',
+  'ontimeupdate',
+  'onvolumechange',
+  'onwaiting',
+  'onshow',
+  'onafterprint',
+  'onbeforeprint',
+  'onfullscreenchange',
+  'onfullscreenerror',
+  'onlanguagechange',
+  'onrejectionhandled',
+  'onunhandledrejection',
+  'onsecuritypolicyviolation',
 ]);
 
 /**
@@ -521,7 +579,6 @@ const DANGEROUS_TAGS = [
   'applet',
   'frame',
   'frameset',
-  'details',
   'marquee',
   // Note: 'svg' and 'math' are intentionally excluded from this list.
   // While SVG and MathML can be used for XSS in certain contexts, they are
@@ -535,6 +592,9 @@ const RE_DANGEROUS_OPEN_CLOSE_TAG = new RegExp(
   'gi',
 );
 const RE_EVENT_HANDLER_ATTR = /(<[^>]*?)\s+on[a-zA-Z]+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi;
+// Also match on* attributes without values (e.g. <div onerror>) and with unquoted values
+const RE_EVENT_HANDLER_ATTR_NOVALUE = /(<[^>]*?)\s+on[a-zA-Z]+(?=\s|>|\/>)/gi;
+const RE_EVENT_HANDLER_ATTR_UNQUOTED = /(<[^>]*?)\s+on[a-zA-Z]+\s*=\s*(?![\s"'])([^\s>]+)/gi;
 const URI_ATTRS =
   'href|src|action|formaction|xlink:href|data|codebase|cite|background|poster|dynsrc|lowsrc';
 const RE_URI_ATTR = new RegExp(`(?:(${URI_ATTRS})\\s*=\\s*)(?:"([^"]*)"|'([^']*)')`, 'gi');
@@ -542,6 +602,12 @@ const RE_WHITESPACE_CTRL =
   // eslint-disable-next-line no-control-regex
   /[\u0000-\u0020\u00A0\u1680\u2000-\u200B\u2028\u2029\u202F\u205F\u3000\uFEFF]+/g;
 const RE_DANGEROUS_SCHEME = /^(javascript|vbscript|data|mhtml|x-javascript)\s*:/i;
+// Match data: URIs containing SVG content (used for XSS via data:image/svg+xml)
+const RE_DATA_SVG = /^data\s*:\s*image\/svg\+xml/i;
+// Match CSS expression() (IE-specific XSS vector)
+const RE_CSS_EXPRESSION = /expression\s*\(/gi;
+// Match style attributes containing expression() or url(javascript:...)
+const RE_STYLE_ATTR = /(<[^>]*?)\s+(style)\s*=\s*(?:"([^"]*)"|'([^']*)')/gi;
 
 const DECODE_MAP: [RegExp, string | ((substring: string, ...args: string[]) => string)][] = [
   [/&#x0*([0-9a-fA-F]+);/g, (_: string, code: string) => String.fromCodePoint(parseInt(code, 16))],
@@ -565,7 +631,7 @@ const DECODE_MAP: [RegExp, string | ((substring: string, ...args: string[]) => s
  *    stabilises.
  * 2. Dangerous tag removal: Strips both opening and closing forms of dangerous
  *    tags (script, iframe, object, embed, form, input, textarea, select,
- *    button, link, meta, base, applet, frame, frameset, details, marquee,
+ *    button, link, meta, base, applet, frame, frameset, marquee,
  *    math, svg) via case-insensitive regex.
  * 3. Event-handler stripping: Removes on* attributes (e.g. onclick, onerror)
  *    from any remaining tags.
@@ -610,8 +676,12 @@ export function sanitizeHTML(str: string): string {
   decoded = decoded.replace(RE_DANGEROUS_OPEN_CLOSE_TAG, '');
 
   // 3. Remove event-handler attributes (on*).
-  //    Matches on<word>=  inside any tag, consuming the quoted value.
+  //    Matches on<word>= inside any tag, consuming the quoted value.
   decoded = decoded.replace(RE_EVENT_HANDLER_ATTR, '$1');
+  // Also remove on* attributes without values (e.g. <div onerror>)
+  decoded = decoded.replace(RE_EVENT_HANDLER_ATTR_NOVALUE, '$1');
+  // Remove on* attributes with unquoted values
+  decoded = decoded.replace(RE_EVENT_HANDLER_ATTR_UNQUOTED, '$1');
 
   // 4. Neutralise dangerous URI schemes in href / src / action / formaction / xlink:href.
   decoded = decoded.replace(RE_URI_ATTR, (_match, attr: string, dq: string, sq: string) => {
@@ -619,10 +689,32 @@ export function sanitizeHTML(str: string): string {
     // Strip whitespace / null bytes / control chars that could hide the scheme
     const cleaned = value.replace(RE_WHITESPACE_CTRL, '').toLowerCase();
     if (RE_DANGEROUS_SCHEME.test(cleaned)) {
+      // Special handling for data: URIs containing SVG
+      if (RE_DATA_SVG.test(cleaned)) {
+        return `${attr}=""`;
+      }
       return `${attr}=""`;
     }
     return _match;
   });
+
+  // 5. Remove expression() CSS expressions from style attributes (IE XSS vector)
+  decoded = decoded.replace(
+    RE_STYLE_ATTR,
+    (_match, tagPrefix: string, _attrName: string, dq: string, sq: string) => {
+      const value = dq ?? sq ?? '';
+      const cleaned = value.replace(RE_WHITESPACE_CTRL, '');
+      if (RE_CSS_EXPRESSION.test(cleaned)) {
+        // Remove the expression() but keep the style attribute with safe content
+        const sanitized = cleaned.replace(RE_CSS_EXPRESSION, '').trim();
+        return `${tagPrefix} style="${sanitized}"`;
+      }
+      return _match;
+    },
+  );
+
+  // 6. Remove any remaining javascript:/vbscript: in any context (catch-all)
+  decoded = decoded.replace(/(?:javascript|vbscript)\s*:/gi, 'blocked:');
 
   return decoded;
 }

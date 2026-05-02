@@ -69,19 +69,27 @@ const arrayInstrumentations: Record<string | symbol, (...args: unknown[]) => unk
 const builtInSymbols = new Set<symbol>(
   Object.getOwnPropertyNames(Symbol)
     .filter((key) => key !== 'arguments' && key !== 'caller')
-    .map(
-      // 安全性说明：Object.getOwnPropertyNames(Symbol) 返回的 key 一定是
-      // Symbol 构造函数自身的静态属性名（如 "iterator"、"hasInstance" 等），
-      // 用这些 key 索引 Symbol 构造函数必然返回 symbol 值。
-      // 使用 Record<string, symbol | undefined> 是因为 TypeScript 将 Symbol
-      // 视为 interface 而非 namespace，无法直接用字符串索引。
-      (key) => (Symbol as unknown as Record<string, symbol | undefined>)[key],
-    )
-    .filter((sym): sym is symbol => isSymbol(sym)),
+    .map((key) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const value = (Symbol as any)[key];
+      return isSymbol(value) ? value : undefined;
+    })
+    .filter((sym): sym is symbol => sym !== undefined),
 );
 
 function isNonTrackableKey(key: string | symbol): boolean {
   return key === '__proto__' || key === '__v_isRef';
+}
+
+/**
+ * 将 unknown 值安全地转换为 trigger key (string | symbol)。
+ * 如果值不是 string 或 symbol 类型，返回 undefined。
+ */
+function toTriggerKey(value: unknown): string | symbol | undefined {
+  if (typeof value === 'string' || typeof value === 'symbol') {
+    return value;
+  }
+  return undefined;
 }
 
 // ==================== createReactiveObject ====================
@@ -255,10 +263,10 @@ function createMutableHandler(isReadonly: boolean, isShallow: boolean): ProxyHan
 
 // ==================== Collection Handlers ====================
 
-function createCollectionHandler(isReadonly: boolean, isShallow: boolean): ProxyHandler<Target> {
-  // Map/Set 的迭代 key
-  const ITERATE_KEY_COL = Symbol('collection_iterate');
+// Map/Set 的迭代 key（模块级常量，避免每次调用 createCollectionHandler 时创建新 Symbol）
+const ITERATE_KEY_COL = Symbol('collection_iterate');
 
+function createCollectionHandler(isReadonly: boolean, isShallow: boolean): ProxyHandler<Target> {
   return {
     get(target, key, _receiver) {
       if (key === ReactiveFlags.IS_REACTIVE) return !isReadonly;
@@ -288,13 +296,10 @@ function createCollectionHandler(isReadonly: boolean, isShallow: boolean): Proxy
                 const hadKey = rawTarget.has(args[0]);
                 const result = res.apply(target, args);
                 if (!hadKey || !Object.is(toRaw(oldValue), toRaw(args[1]))) {
-                  trigger(
-                    target,
-                    TriggerOpTypes.SET,
-                    args[0] as string | symbol,
-                    args[1],
-                    oldValue,
-                  );
+                  const triggerKey = toTriggerKey(args[0]);
+                  if (triggerKey !== undefined) {
+                    trigger(target, TriggerOpTypes.SET, triggerKey, args[1], oldValue);
+                  }
                 }
                 return result;
               } else if (key === 'add') {
@@ -302,7 +307,10 @@ function createCollectionHandler(isReadonly: boolean, isShallow: boolean): Proxy
                 const had = rawTarget.has(args[0]);
                 const result = res.apply(target, args);
                 if (!had) {
-                  trigger(target, TriggerOpTypes.ADD, args[0] as string | symbol, args[0]);
+                  const triggerKey = toTriggerKey(args[0]);
+                  if (triggerKey !== undefined) {
+                    trigger(target, TriggerOpTypes.ADD, triggerKey, args[0]);
+                  }
                 }
                 return result;
               } else if (key === 'delete') {
@@ -310,13 +318,10 @@ function createCollectionHandler(isReadonly: boolean, isShallow: boolean): Proxy
                 const hadKey = rawTarget.has(args[0]);
                 const result = res.apply(target, args);
                 if (hadKey) {
-                  trigger(
-                    target,
-                    TriggerOpTypes.DELETE,
-                    args[0] as string | symbol,
-                    undefined,
-                    undefined,
-                  );
+                  const triggerKey = toTriggerKey(args[0]);
+                  if (triggerKey !== undefined) {
+                    trigger(target, TriggerOpTypes.DELETE, triggerKey, undefined, undefined);
+                  }
                 }
                 return result;
               } else if (key === 'clear') {

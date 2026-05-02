@@ -305,46 +305,49 @@ export const createComponentError = (
 // 开发模式与警告
 // ============================================================
 
-// 注意：devMode 是模块级状态变量，在测试中如果某个测试用例修改了 devMode
-// 而未在 afterEach 中重置（通过 setDevMode(false)），会导致后续测试用例
-// 的 warn/error 行为受到影响。测试文件应确保在适当位置重置 devMode。
-let devMode = false;
+// 统一使用全局 __DEV__ 作为开发模式检测。
+// devMode 作为设置函数（setDevMode）的兼容接口保留，但内部统一读写 __DEV__。
+// 测试中通过 setDevMode(true/false) 切换即可。
+
+declare const __DEV__: boolean;
 
 /**
- * 设置开发模式
+ * 设置开发模式（兼容接口，内部统一设置 globalThis.__DEV__）
  */
 export function setDevMode(enabled: boolean): void {
-  devMode = enabled;
+  if (typeof globalThis !== 'undefined') {
+    (globalThis as Record<string, unknown>).__DEV__ = enabled;
+  }
 }
 
 /**
  * 获取当前开发模式状态
  */
 export function getDevMode(): boolean {
-  return devMode;
+  return typeof __DEV__ !== 'undefined' ? __DEV__ : false;
 }
 
 /**
  * 输出警告信息（仅在开发模式下）
  */
 export function warn(message: string): void {
-  if (!devMode) return;
+  if (!__DEV__) return;
   console.warn(`[LytJS]: ${message}`);
 }
 
-// 已警告消息集合 - 使用 LRU 策略避免内存无限增长
+// 已警告消息集合 - 使用 FIFO 策略避免内存无限增长
 // 当达到上限时，删除最早添加的条目，而非清空全部
 const warnedMessages = new Set<string>();
 const MAX_WARNED_MESSAGES = 1000;
 
 /**
  * 输出一次性警告信息（相同消息只输出一次）
- * 使用 LRU 策略：达到上限时删除最早的条目，避免已抑制的警告重新出现
+ * 使用 FIFO 策略：达到上限时删除最早的条目，避免已抑制的警告重新出现
  */
 export function warnOnce(message: string): void {
-  if (!devMode) return;
+  if (!__DEV__) return;
   if (warnedMessages.has(message)) return;
-  // LRU eviction: 当达到上限时，删除最早添加的条目
+  // FIFO eviction: 当达到上限时，删除最早添加的条目
   if (warnedMessages.size >= MAX_WARNED_MESSAGES) {
     const first = warnedMessages.values().next().value;
     if (first !== undefined) {
@@ -360,7 +363,7 @@ export function warnOnce(message: string): void {
  * 在生产环境中仍然输出错误，开发模式下附加额外调试信息
  */
 export function error(message: string): void {
-  if (!devMode) {
+  if (!__DEV__) {
     console.error(`[LytJS]: ${message}`);
     return;
   }

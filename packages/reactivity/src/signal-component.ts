@@ -3,9 +3,9 @@
 
 import type { Signal, ComputedSignal } from './signal';
 
-export interface SignalComponentOptions {
-  signals?: Record<string, Signal<unknown>>;
-  computed?: Record<string, ComputedSignal<unknown>>;
+export interface SignalComponentOptions<T = Record<string, unknown>> {
+  signals?: { [K in keyof T]?: Signal<T[K]> };
+  computed?: { [K in keyof T]?: ComputedSignal<T[K]> };
 }
 
 /**
@@ -16,10 +16,10 @@ export function extractSignals(
 ): (Signal<unknown> | ComputedSignal<unknown>)[] {
   const signals: (Signal<unknown> | ComputedSignal<unknown>)[] = [];
   if (options.signals) {
-    signals.push(...Object.values(options.signals));
+    signals.push(...(Object.values(options.signals) as Signal<unknown>[]));
   }
   if (options.computed) {
-    signals.push(...Object.values(options.computed));
+    signals.push(...(Object.values(options.computed) as ComputedSignal<unknown>[]));
   }
   return signals;
 }
