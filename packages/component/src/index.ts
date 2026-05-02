@@ -8,6 +8,7 @@ export {
   setupComponent,
   finishComponentSetup,
   defineComponent,
+  defineFunctionalComponent,
   createAppContext,
   provide,
   inject,
@@ -77,6 +78,31 @@ export {
   abortSuspense,
 } from './suspense';
 export type { SuspenseProps, SuspenseAsyncState } from './suspense';
+
+// Transition
+/** Transition 过渡组件 */
+export { Transition } from './transition';
+export type { TransitionComponentProps } from './transition';
+
+// TransitionGroup
+/** TransitionGroup 列表过渡组件 */
+export { TransitionGroup } from './transition-group';
+export type { TransitionGroupComponentProps } from './transition-group';
+
+// Teleport
+/** Teleport 传送门组件 */
+export { Teleport } from './teleport';
+export type { TeleportProps } from './teleport';
+
+// ErrorBoundary
+/** 错误边界组件，捕获子组件渲染错误 */
+export { ErrorBoundary } from './error-boundary';
+export type { ErrorBoundaryProps } from './error-boundary';
+
+// Signal State
+/** Signal State 适配器，使 Signal 可以与组件协作 */
+export { createSignalState, createComputedState } from './signal-state';
+export type { SignalStateOptions } from './signal-state';
 
 // Types
 /** 组件相关类型定义 */

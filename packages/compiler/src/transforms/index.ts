@@ -10,4 +10,5 @@ export { transformShow } from './show';
 export { transformOnce } from './once';
 export { transformSlot } from './slot';
 export { transformElement } from './transform-element';
+export { transformScoped, hasVDeep, getScopeId } from './scoped';
 export { getExpContent, findDirective, isJS } from './helpers';

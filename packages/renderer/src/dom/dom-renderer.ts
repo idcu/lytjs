@@ -54,6 +54,9 @@ export function createDOMRenderer(): DOMRenderer {
       const isSVG = (el as Element).namespaceURI === SVG_NS;
       patchProp(el, key, prevValue, nextValue, isSVG);
     },
+    querySelector(selector: string): Element | null {
+      return document.querySelector(selector);
+    },
   };
 
   const renderer = createRenderer(options);

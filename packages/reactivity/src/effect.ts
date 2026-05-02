@@ -354,6 +354,53 @@ export function batch(fn: () => void): void {
   }
 }
 
+/**
+ * batchAsync - like batch but supports async functions.
+ * Pauses tracking during fn execution (including after await),
+ * and restores tracking state when fn completes (or throws).
+ * Returns a Promise.
+ */
+export function batchAsync(fn: () => void | Promise<void>): Promise<void> {
+  const stackLength = trackStack.length;
+  pauseTracking();
+  try {
+    const result = fn();
+    if (result && typeof result === 'object' && 'then' in result) {
+      return (result as Promise<void>).finally(() => {
+        while (trackStack.length > stackLength) {
+          trackStack.pop();
+        }
+        shouldTrack = trackStack.length > 0 ? trackStack[trackStack.length - 1]! : true;
+      });
+    }
+    return Promise.resolve();
+  } catch (e) {
+    while (trackStack.length > stackLength) {
+      trackStack.pop();
+    }
+    shouldTrack = trackStack.length > 0 ? trackStack[trackStack.length - 1]! : true;
+    return Promise.reject(e);
+  }
+}
+
+/**
+ * untrack - execute fn without tracking dependencies.
+ * Semantically different from batch: untrack means "run but don't track".
+ * Returns the return value of fn.
+ */
+export function untrack<T>(fn: () => T): T {
+  const stackLength = trackStack.length;
+  pauseTracking();
+  try {
+    return fn();
+  } finally {
+    while (trackStack.length > stackLength) {
+      trackStack.pop();
+    }
+    shouldTrack = trackStack.length > 0 ? trackStack[trackStack.length - 1]! : true;
+  }
+}
+
 export function onEffectCleanup(fn: () => void, failSilently = false): void {
   if (activeEffect === undefined) {
     if (!failSilently && __DEV__) {

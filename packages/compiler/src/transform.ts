@@ -33,6 +33,7 @@ import {
   transformOn,
   transformModel,
   transformShow,
+  transformScoped,
   isJS,
 } from './transforms';
 
@@ -267,6 +268,7 @@ export const builtInTransforms: NodeTransform[] = [
   transformIf as NodeTransform,
   transformFor as NodeTransform,
   transformOnce as NodeTransform,
+  transformScoped as NodeTransform,
   transformElement as unknown as NodeTransform,
 ];
 
@@ -279,6 +281,7 @@ export const builtInDirectiveTransforms: Record<string, DirectiveTransform> = {
 
 // Re-export individual transforms for backward compatibility
 export { transformElement, transformIf, transformFor, transformOnce, transformSlot };
+export { transformScoped };
 export { transformBind, transformOn, transformModel, transformShow };
 
 // ============================================================
