@@ -300,17 +300,25 @@ export function createComponentPublicInstance(
         return res;
       }
 
-      // 2. setupState
+      // 2. globalProperties
+      const globalProperties = instance.appContext?.config?.globalProperties as
+        | Record<string, unknown>
+        | undefined;
+      if (globalProperties && hasOwn(globalProperties, key)) {
+        return globalProperties[key as string];
+      }
+
+      // 3. setupState
       if (hasOwn(instance.setupState, key)) {
         return instance.setupState[key as string];
       }
 
-      // 3. data
+      // 4. data
       if (hasOwn(instance.data, key)) {
         return instance.data[key as string];
       }
 
-      // 4. props
+      // 5. props
       if (hasOwn(instance.props, key)) {
         return instance.props[key as string];
       }
@@ -335,10 +343,14 @@ export function createComponentPublicInstance(
     },
 
     has(_target: ComponentPublicInstance, key: string | symbol): boolean {
+      const globalProperties = instance.appContext?.config?.globalProperties as
+        | Record<string, unknown>
+        | undefined;
       return (
         key in instance.setupState ||
         key in instance.data ||
         key in instance.props ||
+        (globalProperties ? key in globalProperties : false) ||
         key in _target
       );
     },

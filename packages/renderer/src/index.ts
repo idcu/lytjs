@@ -30,6 +30,16 @@ export type { HydrationRenderer } from './dom/hydration';
 export { renderToString } from './ssr/ssr-renderer';
 export type { SSRInput } from './ssr/ssr-renderer';
 
+// SSR streaming
+/** 将 VNode 树流式渲染为 ReadableStream（SSR Streaming） */
+export { renderToStream } from './ssr/ssr-stream';
+export type { SSRStreamOptions } from './ssr/ssr-stream';
+
+// SSR island architecture
+/** Island Architecture 相关函数 */
+export { hydrateIsland, registerIslandComponent, createIslandSSRContent } from './ssr/ssr-island';
+export type { ComponentOptions as IslandComponentOptions } from './ssr/ssr-island';
+
 // Signal renderer
 /** 创建 Signal 模式渲染器（细粒度 DOM 更新） */
 export { createSignalRenderer } from './signal/signal-renderer';

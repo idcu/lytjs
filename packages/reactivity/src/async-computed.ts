@@ -1,0 +1,155 @@
+// src/async-computed.ts
+// @lytjs/reactivity - 异步 computed
+
+declare const __DEV__: boolean;
+
+import { trackRefValue, triggerRefValue } from './ref';
+import type { Ref } from './ref';
+import { createDep } from './effect';
+import type { Dep } from './effect';
+import { effect, stop } from './effect';
+import type { ReactiveEffectRunner } from './types';
+import { warn } from '@lytjs/common-error';
+
+// ==================== AsyncComputedRef 类型 ====================
+
+/**
+ * 异步计算属性引用
+ * 扩展了标准 Ref，增加了 loading 和 error 状态
+ */
+export interface AsyncComputedRef<T = unknown> extends Ref<T | undefined> {
+  /** 异步计算是否正在进行 */
+  readonly loading: boolean;
+  /** 上一次异步计算的错误（如果有） */
+  readonly error: unknown;
+}
+
+// ==================== AsyncComputedRefImpl ====================
+
+class AsyncComputedRefImpl<T> {
+  private _value: T | undefined;
+  private _loading: boolean = false;
+  private _error: unknown = undefined;
+  private _effect: ReactiveEffectRunner<void> | null = null;
+
+  public readonly __v_isRef = true;
+  public dep: Dep = createDep();
+
+  constructor(
+    private readonly _getter: () => Promise<T>,
+    initialValue?: T,
+    lazy: boolean = false,
+  ) {
+    this._value = initialValue;
+
+    if (!lazy) {
+      // 非懒加载模式：使用 effect 追踪依赖，依赖变化时重新执行 getter
+      this._effect = effect(() => {
+        this._runGetter();
+      });
+    }
+  }
+
+  /**
+   * 执行 getter 并处理 Promise 结果
+   */
+  private _runGetter(): void {
+    // 标记为 loading
+    this._loading = true;
+    this._error = undefined;
+
+    // 调用 getter 获取 Promise
+    const promise = this._getter();
+
+    // 使用 Promise.then() 非阻塞处理
+    promise.then(
+      (value) => {
+        this._value = value;
+        this._loading = false;
+        this._error = undefined;
+        // 触发 ref 更新
+        triggerRefValue(this);
+      },
+      (err) => {
+        this._error = err;
+        this._loading = false;
+        // 触发 ref 更新
+        triggerRefValue(this);
+      },
+    );
+  }
+
+  /**
+   * 手动触发执行（用于懒加载模式）
+   */
+  execute(): void {
+    if (this._loading) return;
+    this._runGetter();
+  }
+
+  get value(): T | undefined {
+    trackRefValue(this);
+    return this._value;
+  }
+
+  set value(_newVal: T | undefined) {
+    if (__DEV__) {
+      warn('Write operation failed: asyncComputed value is readonly');
+    }
+  }
+
+  get loading(): boolean {
+    return this._loading;
+  }
+
+  get error(): unknown {
+    return this._error;
+  }
+
+  /**
+   * 停止 effect 追踪
+   */
+  dispose(): void {
+    if (this._effect) {
+      stop(this._effect);
+      this._effect = null;
+    }
+  }
+}
+
+// ==================== 公共 API ====================
+
+/**
+ * 创建异步计算属性
+ * 当 getter 中的响应式依赖变化时，自动重新执行 getter
+ *
+ * @param getter 返回 Promise 的函数
+ * @param initialValue 初始值（Promise pending 时的值）
+ * @returns AsyncComputedRef
+ */
+export function asyncComputed<T>(
+  getter: () => Promise<T>,
+  initialValue?: T,
+): AsyncComputedRef<T> {
+  return new AsyncComputedRefImpl<T>(getter, initialValue, false) as unknown as AsyncComputedRef<T>;
+}
+
+/**
+ * 创建异步状态（懒加载模式）
+ * factory 只执行一次，适合数据请求场景
+ *
+ * @param factory 返回 Promise 的函数
+ * @param initialValue 初始值
+ * @returns AsyncComputedRef
+ */
+export function useAsyncState<T>(
+  factory: () => Promise<T>,
+  initialValue?: T,
+): AsyncComputedRef<T> {
+  const impl = new AsyncComputedRefImpl<T>(factory, initialValue, true);
+
+  // 立即执行一次
+  impl.execute();
+
+  return impl as unknown as AsyncComputedRef<T>;
+}

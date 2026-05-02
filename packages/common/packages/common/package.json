@@ -42,7 +42,11 @@
     "@lytjs/common-scheduler": "workspace:*",
     "@lytjs/common-dom": "workspace:*",
     "@lytjs/common-query": "workspace:*",
-    "@lytjs/common-dom-helpers": "workspace:*"
+    "@lytjs/common-dom-helpers": "workspace:*",
+    "@lytjs/common-a11y": "workspace:*",
+    "@lytjs/common-keyboard": "workspace:*",
+    "@lytjs/common-storage": "workspace:*",
+    "@lytjs/common-validate": "workspace:*"
   },
   "devDependencies": {
     "tsup": "^8.4.0",

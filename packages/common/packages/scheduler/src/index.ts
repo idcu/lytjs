@@ -13,6 +13,25 @@
  */
 export type SchedulerJob = () => void;
 
+/**
+ * 带优先级的调度器任务类型
+ */
+export interface SchedulerJobWithPriority extends SchedulerJob {
+  /** 优先级，数值越小优先级越高 */
+  priority?: number;
+}
+
+/**
+ * 优先级常量
+ */
+export const Priority = {
+  IDLE: 1000,       // 空闲任务
+  LOW: 500,         // 低优先级
+  NORMAL: 0,        // 普通优先级（默认）
+  HIGH: -500,       // 高优先级
+  CRITICAL: -1000,  // 关键任务
+} as const;
+
 // ============================================================
 // 全局错误处理
 // ============================================================
@@ -77,6 +96,30 @@ export function queueJob(job: SchedulerJob): void {
 }
 
 /**
+ * 将带优先级的任务加入队列
+ * 按优先级插入（优先级高的在前），相同优先级保持插入顺序（稳定排序）
+ */
+export function queueJobWithPriority(job: SchedulerJobWithPriority): void {
+  if (!queueSet.has(job)) {
+    queueSet.add(job);
+    const priority = job.priority ?? Priority.NORMAL;
+    // 找到第一个优先级大于等于当前 job 的位置（即当前 job 应该插入的位置）
+    // 这样优先级高的（数值小的）排在前面，相同优先级的保持插入顺序
+    let insertIndex = queue.length;
+    for (let i = 0; i < queue.length; i++) {
+      const existingJob = queue[i] as SchedulerJobWithPriority | undefined;
+      const existingPriority = existingJob?.priority ?? Priority.NORMAL;
+      if (existingPriority > priority) {
+        insertIndex = i;
+        break;
+      }
+    }
+    queue.splice(insertIndex, 0, job);
+    queueFlush();
+  }
+}
+
+/**
  * 将回调加入 pre-flush 队列
  * 在主 job 队列之前执行（用于 watch 的 "pre" 模式）
  */
@@ -110,8 +153,9 @@ export function nextTick(cb?: SchedulerJob): Promise<void> {
 
 /**
  * 刷新所有待执行的任务
- * 执行顺序：pre-flush 回调 -> 主 job 队列 -> post-flush 回调
+ * 执行顺序：pre-flush 回调 -> 主 job 队列（按优先级） -> post-flush 回调
  * 支持循环处理：执行期间新增的回调也会被处理
+ * 优先级策略：每轮先执行 CRITICAL/HIGH，再 NORMAL，最后 LOW/IDLE
  */
 export function flushJobs(): void {
   isFlushing = true;
@@ -142,20 +186,8 @@ export function flushJobs(): void {
       }
       preFlushCbs.length = 0;
 
-      // 2. 执行主 job 队列
-      for (let i = 0; i < queue.length; i++) {
-        const job = queue[i]!;
-        queueSet.delete(job);
-        try {
-          job();
-        } catch (e) {
-          if (globalErrorHandler) globalErrorHandler(e as Error, 'job execution');
-          if (__DEV__) {
-            console.error('[LytJS] job execution failed:', e);
-          }
-        }
-      }
-      queue.length = 0;
+      // 2. 执行主 job 队列（按优先级分组执行）
+      flushQueueByPriority();
 
       // 3. 执行 post-flush 回调
       for (let i = 0; i < postFlushCbs.length; i++) {
@@ -202,6 +234,50 @@ export function flushJobs(): void {
       nextTick(flushJobs);
     }
   }
+}
+
+/**
+ * 按优先级分组执行队列中的任务
+ * 执行顺序：CRITICAL/HIGH -> NORMAL -> LOW/IDLE
+ * 如果某轮执行中新增了高优先级任务，优先执行它们
+ */
+function flushQueueByPriority(): void {
+  // 优先级阈值定义
+  const HIGH_THRESHOLD = Priority.NORMAL; // <= 0 视为高优先级（CRITICAL: -1000, HIGH: -500）
+
+  // 分组执行，每执行一组后检查是否有新的高优先级任务加入
+  const executeBatch = (minPriority: number, maxPriority: number): void => {
+    let i = 0;
+    while (i < queue.length) {
+      const job = queue[i] as SchedulerJobWithPriority | undefined;
+      const priority = job?.priority ?? Priority.NORMAL;
+      if (priority >= minPriority && priority <= maxPriority) {
+        // 移除并执行
+        queue.splice(i, 1);
+        queueSet.delete(job!);
+        try {
+          job!();
+        } catch (e) {
+          if (globalErrorHandler) globalErrorHandler(e as Error, 'job execution');
+          if (__DEV__) {
+            console.error('[LytJS] job execution failed:', e);
+          }
+        }
+        // 不递增 i，因为 splice 后下一个元素移到了当前位置
+      } else {
+        i++;
+      }
+    }
+  };
+
+  // 第一轮：执行 CRITICAL 和 HIGH 任务（priority <= 0）
+  executeBatch(Priority.CRITICAL, HIGH_THRESHOLD);
+
+  // 第二轮：执行 NORMAL 任务（priority >= 0 && priority < 500）
+  executeBatch(Priority.NORMAL, Priority.LOW - 1);
+
+  // 第三轮：执行 LOW 和 IDLE 任务（priority >= 500）
+  executeBatch(Priority.LOW, Priority.IDLE);
 }
 
 /**

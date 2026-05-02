@@ -99,18 +99,57 @@ describe('createApp', () => {
   it('should handle error handler', () => {
     const errorHandler = vi.fn();
     const app = createApp({
-      render() {
+      data() {
         throw new Error('test error');
       },
     });
-    app.config.errorHandler = errorHandler;
-    // mount 过程中 render 抛出错误，errorHandler 应该被调用
+    app.errorHandler = errorHandler;
+    // mount 过程中 data() 抛出错误，errorHandler 应该被调用
     try {
       app.mount(container);
     } catch (e) {
-      // 预期错误
+      // 预期错误仍然会被重新抛出
     }
-    // error handler 在当前实现中由调用方处理
+    expect(errorHandler).toHaveBeenCalled();
+    expect(errorHandler.mock.calls[0][0]).toBeInstanceOf(Error);
+    expect(errorHandler.mock.calls[0][0].message).toBe('test error');
+  });
+
+  it('should call errorHandler with error, instance and info', () => {
+    const errorHandler = vi.fn();
+    const app = createApp({
+      data() {
+        throw new TypeError('type error');
+      },
+    });
+    app.errorHandler = errorHandler;
+
+    try {
+      app.mount(container);
+    } catch (e) {
+      // 预期错误仍然会被重新抛出
+    }
+
+    expect(errorHandler).toHaveBeenCalledTimes(1);
+    const [err, instance, info] = errorHandler.mock.calls[0];
+    expect(err).toBeInstanceOf(TypeError);
+    expect(err.message).toBe('type error');
+    expect(instance).toBeDefined();
+    expect(typeof info).toBe('string');
+  });
+
+  it('should still throw after errorHandler is called', () => {
+    const errorHandler = vi.fn();
+    const app = createApp({
+      data() {
+        throw new Error('handled error');
+      },
+    });
+    app.errorHandler = errorHandler;
+
+    // errorHandler 存在时，错误仍然会被重新抛出以保留原始堆栈
+    expect(() => app.mount(container)).toThrow('handled error');
+    expect(errorHandler).toHaveBeenCalled();
   });
 
   it('should support global properties', () => {
@@ -147,6 +186,17 @@ describe('createApp', () => {
     const app = createApp({ render: () => h('div') });
     app.config.performance = true;
     app.mount(container);
+  });
+
+  it('should call error() when no errorHandler is set', () => {
+    const app = createApp({
+      data() {
+        throw new Error('unhandled error');
+      },
+    });
+    // 不设置 errorHandler，应回退到 error() 函数
+
+    expect(() => app.mount(container)).toThrow('unhandled error');
   });
 });
 

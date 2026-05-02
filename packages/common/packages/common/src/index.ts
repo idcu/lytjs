@@ -238,3 +238,56 @@ export {
   addClass,
   removeClass,
 } from '@lytjs/common-dom-helpers';
+
+// a11y
+export {
+  focusTrap,
+  manageFocus,
+  getAriaProps,
+  setAriaProps,
+  isFocusable,
+  getFocusableElements,
+  assertActiveElement,
+  ARIA_ROLES,
+  type FocusTrapOptions,
+} from '@lytjs/common-a11y';
+
+// keyboard
+export {
+  matchShortcut,
+  createKeySequence,
+  parseShortcut,
+  MODIFIER_KEYS,
+  SPECIAL_KEYS,
+  type ParsedShortcut,
+} from '@lytjs/common-keyboard';
+
+// storage
+export {
+  createStorage,
+  createSessionStorage,
+  isStorageAvailable,
+  parseJSON,
+  type StorageOptions,
+  type StorageAdapter,
+} from '@lytjs/common-storage';
+
+// validate
+export {
+  validate,
+  createValidator,
+  required,
+  minLength,
+  maxLength,
+  pattern,
+  email,
+  url,
+  number,
+  min,
+  max,
+  oneOf,
+  custom,
+  builtInRules,
+  type ValidationResult,
+  type ValidationRule,
+} from '@lytjs/common-validate';

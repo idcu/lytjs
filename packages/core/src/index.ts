@@ -9,6 +9,14 @@ export { resolveComponent, resolveDirective } from './resolve';
 export { withDirectives, withMemo } from './directives';
 export { useSlots, useAttrs, useModel } from './composition';
 export {
+  defineCustomElement,
+  useShadowRoot,
+  useHost,
+  useWebComponentSlots,
+  injectChildStyles,
+} from './web-component';
+export type { DefineCustomElementOptions } from './web-component';
+export {
   onMounted,
   onUnmounted,
   onUpdated,

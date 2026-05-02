@@ -33,6 +33,14 @@ export {
 } from './computed';
 
 export {
+  // async computed
+  asyncComputed,
+  useAsyncState,
+} from './async-computed';
+
+export type { AsyncComputedRef } from './async-computed';
+
+export {
   // watch
   watch,
   watchEffect,
