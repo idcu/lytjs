@@ -24,6 +24,14 @@ import {
   template,
   normalizeClass,
   normalizeStyle,
+  sanitizeHTML,
+  isSafeAttribute,
+  escapeAttrValue,
+  normalizeStyleObject,
+  isBooleanAttr,
+  VOID_ELEMENTS,
+  BOOLEAN_ATTRS,
+  DANGEROUS_EVENT_ATTRS,
 } from '../src/index';
 
 describe('@lytjs/common-string', () => {
@@ -462,6 +470,331 @@ describe('@lytjs/common-string', () => {
     it('should handle array of styles', () => {
       const result = normalizeStyle(['color: red', { fontSize: '16px' }]);
       expect(result).toBe('color: red; font-size: 16px');
+    });
+  });
+
+  // ============================================================
+  // 安全关键函数测试
+  // ============================================================
+
+  // sanitizeHTML
+  describe('sanitizeHTML', () => {
+    it('should remove dangerous <script> tags', () => {
+      const input = '<script>alert("xss")</script>';
+      const result = sanitizeHTML(input);
+      expect(result).not.toContain('<script>');
+      expect(result).not.toContain('</script>');
+    });
+
+    it('should remove <iframe> tags', () => {
+      const input = '<iframe src="https://evil.com"></iframe>';
+      expect(sanitizeHTML(input)).not.toContain('iframe');
+    });
+
+    it('should remove <object> and <embed> tags', () => {
+      const input = '<object data="evil.swf"></object><embed src="evil.swf">';
+      expect(sanitizeHTML(input)).not.toContain('object');
+      expect(sanitizeHTML(input)).not.toContain('embed');
+    });
+
+    it('should remove <form> tags', () => {
+      const input = '<form action="evil.com"><input type="text"></form>';
+      expect(sanitizeHTML(input)).not.toContain('form');
+    });
+
+    it('should remove event handler attributes (onclick, onerror, etc.)', () => {
+      const input = '<div onclick="alert(1)">click</div>';
+      expect(sanitizeHTML(input)).not.toContain('onclick');
+      expect(sanitizeHTML(input)).toContain('click');
+
+      const input2 = '<img src="x" onerror="alert(1)">';
+      expect(sanitizeHTML(input2)).not.toContain('onerror');
+    });
+
+    it('should neutralize javascript: URI protocol', () => {
+      const input = '<a href="javascript:alert(1)">click</a>';
+      const result = sanitizeHTML(input);
+      expect(result).not.toContain('javascript:');
+      expect(result).toContain('href=""');
+    });
+
+    it('should neutralize vbscript: URI protocol', () => {
+      const input = '<a href="vbscript:MsgBox(1)">click</a>';
+      const result = sanitizeHTML(input);
+      expect(result).not.toContain('vbscript:');
+    });
+
+    it('should neutralize data: URI protocol', () => {
+      const input = '<a href="data:text/html,<script>alert(1)</script>">click</a>';
+      const result = sanitizeHTML(input);
+      expect(result).not.toContain('data:text/html');
+    });
+
+    it('should handle HTML entity encoded bypass attempts', () => {
+      const input = '&lt;script&gt;alert("xss")&lt;/script&gt;';
+      const result = sanitizeHTML(input);
+      expect(result).not.toContain('<script>');
+    });
+
+    it('should handle double-encoded bypass attempts', () => {
+      const input = '&amp;lt;script&amp;gt;alert("xss")&amp;lt;/script&amp;gt;';
+      const result = sanitizeHTML(input);
+      expect(result).not.toContain('<script>');
+    });
+
+    it('should remove CSS expression() from style attributes', () => {
+      const input = '<div style="width: expression(alert(1))">test</div>';
+      const result = sanitizeHTML(input);
+      expect(result).not.toContain('expression(');
+    });
+
+    it('should preserve safe HTML content', () => {
+      const input = '<div class="safe"><p>Hello <strong>world</strong></p></div>';
+      expect(sanitizeHTML(input)).toBe(input);
+    });
+
+    it('should preserve safe href links', () => {
+      const input = '<a href="https://example.com">link</a>';
+      expect(sanitizeHTML(input)).toBe(input);
+    });
+
+    it('should intercept data:image/svg+xml URIs', () => {
+      const input = '<img src="data:image/svg+xml,<svg onload=alert(1)>">';
+      const result = sanitizeHTML(input);
+      expect(result).not.toContain('data:image/svg+xml');
+    });
+
+    it('should handle mixed safe and dangerous content', () => {
+      const input = '<p>Hello</p><script>alert(1)</script><div>World</div>';
+      const result = sanitizeHTML(input);
+      expect(result).toContain('<p>Hello</p>');
+      expect(result).toContain('<div>World</div>');
+      expect(result).not.toContain('script');
+    });
+  });
+
+  // isSafeAttribute
+  describe('isSafeAttribute', () => {
+    it('should block event handler attributes (onclick)', () => {
+      expect(isSafeAttribute('onclick', 'alert(1)')).toBe(false);
+    });
+
+    it('should block event handler attributes (onerror)', () => {
+      expect(isSafeAttribute('onerror', 'alert(1)')).toBe(false);
+    });
+
+    it('should block event handler attributes case-insensitively', () => {
+      expect(isSafeAttribute('OnClick', 'alert(1)')).toBe(false);
+      expect(isSafeAttribute('ONLOAD', 'alert(1)')).toBe(false);
+    });
+
+    it('should allow safe URL protocols (http:)', () => {
+      expect(isSafeAttribute('href', 'https://example.com')).toBe(true);
+    });
+
+    it('should allow safe URL protocols (https:)', () => {
+      expect(isSafeAttribute('href', 'https://example.com')).toBe(true);
+    });
+
+    it('should allow safe URL protocols (mailto:)', () => {
+      expect(isSafeAttribute('href', 'mailto:test@example.com')).toBe(true);
+    });
+
+    it('should allow safe URL protocols (tel:)', () => {
+      expect(isSafeAttribute('href', 'tel:+1234567890')).toBe(true);
+    });
+
+    it('should allow anchor links (#)', () => {
+      expect(isSafeAttribute('href', '#section')).toBe(true);
+    });
+
+    it('should block javascript: protocol in URL attributes', () => {
+      expect(isSafeAttribute('href', 'javascript:alert(1)')).toBe(false);
+    });
+
+    it('should block vbscript: protocol in URL attributes', () => {
+      expect(isSafeAttribute('href', 'vbscript:MsgBox(1)')).toBe(false);
+    });
+
+    it('should block data: protocol in URL attributes', () => {
+      expect(isSafeAttribute('src', 'data:text/html,<script>alert(1)</script>')).toBe(false);
+    });
+
+    it('should allow normal non-URL attributes', () => {
+      expect(isSafeAttribute('class', 'container')).toBe(true);
+      expect(isSafeAttribute('id', 'main')).toBe(true);
+      expect(isSafeAttribute('title', 'tooltip')).toBe(true);
+    });
+  });
+
+  // escapeAttrValue
+  describe('escapeAttrValue', () => {
+    it('should escape HTML special characters', () => {
+      expect(escapeAttrValue('<div>')).toBe('&lt;div&gt;');
+      expect(escapeAttrValue('&')).toBe('&amp;');
+      expect(escapeAttrValue('"hello"')).toBe('&quot;hello&quot;');
+      expect(escapeAttrValue("it's")).toBe('it&#39;s');
+    });
+
+    it('should additionally escape = character', () => {
+      expect(escapeAttrValue('a=b')).toBe('a&#61;b');
+      expect(escapeAttrValue('key=value&foo=bar')).toBe('key&#61;value&amp;foo&#61;bar');
+    });
+
+    it('should handle empty string', () => {
+      expect(escapeAttrValue('')).toBe('');
+    });
+
+    it('should not modify normal text without special characters', () => {
+      expect(escapeAttrValue('hello')).toBe('hello');
+    });
+  });
+
+  // normalizeStyleObject
+  describe('normalizeStyleObject', () => {
+    it('should parse string input into object', () => {
+      const result = normalizeStyleObject('color: red; font-size: 16px');
+      expect(result).toEqual({ color: 'red', fontSize: '16px' });
+    });
+
+    it('should pass through object input', () => {
+      const input = { color: 'blue', margin: '10px' };
+      expect(normalizeStyleObject(input)).toBe(input);
+    });
+
+    it('should merge array of objects', () => {
+      const result = normalizeStyleObject([{ color: 'red' }, { fontSize: '16px' }]);
+      expect(result).toEqual({ color: 'red', fontSize: '16px' });
+    });
+
+    it('should let later array items override earlier ones', () => {
+      const result = normalizeStyleObject([{ color: 'red' }, { color: 'blue' }]);
+      expect(result).toEqual({ color: 'blue' });
+    });
+
+    it('should return empty object for null input', () => {
+      expect(normalizeStyleObject(null)).toEqual({});
+    });
+
+    it('should return empty object for undefined input', () => {
+      expect(normalizeStyleObject(undefined)).toEqual({});
+    });
+
+    it('should return empty object for empty string', () => {
+      expect(normalizeStyleObject('')).toEqual({});
+    });
+  });
+
+  // isBooleanAttr
+  describe('isBooleanAttr', () => {
+    it('should return true for known boolean attributes', () => {
+      expect(isBooleanAttr('disabled')).toBe(true);
+      expect(isBooleanAttr('checked')).toBe(true);
+      expect(isBooleanAttr('readonly')).toBe(true);
+      expect(isBooleanAttr('selected')).toBe(true);
+      expect(isBooleanAttr('multiple')).toBe(true);
+      expect(isBooleanAttr('autofocus')).toBe(true);
+      expect(isBooleanAttr('required')).toBe(true);
+      expect(isBooleanAttr('async')).toBe(true);
+      expect(isBooleanAttr('defer')).toBe(true);
+    });
+
+    it('should return false for non-boolean attributes', () => {
+      expect(isBooleanAttr('class')).toBe(false);
+      expect(isBooleanAttr('id')).toBe(false);
+      expect(isBooleanAttr('style')).toBe(false);
+      expect(isBooleanAttr('href')).toBe(false);
+      expect(isBooleanAttr('src')).toBe(false);
+      expect(isBooleanAttr('onclick')).toBe(false);
+    });
+  });
+
+  // VOID_ELEMENTS
+  describe('VOID_ELEMENTS', () => {
+    it('should be a Set', () => {
+      expect(VOID_ELEMENTS).toBeInstanceOf(Set);
+    });
+
+    it('should contain common void elements', () => {
+      expect(VOID_ELEMENTS.has('br')).toBe(true);
+      expect(VOID_ELEMENTS.has('hr')).toBe(true);
+      expect(VOID_ELEMENTS.has('img')).toBe(true);
+      expect(VOID_ELEMENTS.has('input')).toBe(true);
+      expect(VOID_ELEMENTS.has('link')).toBe(true);
+      expect(VOID_ELEMENTS.has('meta')).toBe(true);
+      expect(VOID_ELEMENTS.has('area')).toBe(true);
+      expect(VOID_ELEMENTS.has('base')).toBe(true);
+      expect(VOID_ELEMENTS.has('col')).toBe(true);
+      expect(VOID_ELEMENTS.has('embed')).toBe(true);
+      expect(VOID_ELEMENTS.has('source')).toBe(true);
+      expect(VOID_ELEMENTS.has('track')).toBe(true);
+      expect(VOID_ELEMENTS.has('wbr')).toBe(true);
+    });
+
+    it('should not contain non-void elements', () => {
+      expect(VOID_ELEMENTS.has('div')).toBe(false);
+      expect(VOID_ELEMENTS.has('span')).toBe(false);
+      expect(VOID_ELEMENTS.has('script')).toBe(false);
+    });
+  });
+
+  // BOOLEAN_ATTRS
+  describe('BOOLEAN_ATTRS', () => {
+    it('should be a Set', () => {
+      expect(BOOLEAN_ATTRS).toBeInstanceOf(Set);
+    });
+
+    it('should contain common boolean attributes', () => {
+      expect(BOOLEAN_ATTRS.has('disabled')).toBe(true);
+      expect(BOOLEAN_ATTRS.has('checked')).toBe(true);
+      expect(BOOLEAN_ATTRS.has('readonly')).toBe(true);
+      expect(BOOLEAN_ATTRS.has('selected')).toBe(true);
+      expect(BOOLEAN_ATTRS.has('multiple')).toBe(true);
+      expect(BOOLEAN_ATTRS.has('autofocus')).toBe(true);
+      expect(BOOLEAN_ATTRS.has('required')).toBe(true);
+      expect(BOOLEAN_ATTRS.has('async')).toBe(true);
+      expect(BOOLEAN_ATTRS.has('defer')).toBe(true);
+      expect(BOOLEAN_ATTRS.has('controls')).toBe(true);
+      expect(BOOLEAN_ATTRS.has('loop')).toBe(true);
+      expect(BOOLEAN_ATTRS.has('muted')).toBe(true);
+    });
+
+    it('should not contain non-boolean attributes', () => {
+      expect(BOOLEAN_ATTRS.has('class')).toBe(false);
+      expect(BOOLEAN_ATTRS.has('id')).toBe(false);
+      expect(BOOLEAN_ATTRS.has('style')).toBe(false);
+    });
+  });
+
+  // DANGEROUS_EVENT_ATTRS
+  describe('DANGEROUS_EVENT_ATTRS', () => {
+    it('should be a Set', () => {
+      expect(DANGEROUS_EVENT_ATTRS).toBeInstanceOf(Set);
+    });
+
+    it('should contain common dangerous event attributes', () => {
+      expect(DANGEROUS_EVENT_ATTRS.has('onclick')).toBe(true);
+      expect(DANGEROUS_EVENT_ATTRS.has('onerror')).toBe(true);
+      expect(DANGEROUS_EVENT_ATTRS.has('onload')).toBe(true);
+      expect(DANGEROUS_EVENT_ATTRS.has('onmouseover')).toBe(true);
+      expect(DANGEROUS_EVENT_ATTRS.has('onfocus')).toBe(true);
+      expect(DANGEROUS_EVENT_ATTRS.has('onblur')).toBe(true);
+      expect(DANGEROUS_EVENT_ATTRS.has('onsubmit')).toBe(true);
+      expect(DANGEROUS_EVENT_ATTRS.has('onkeydown')).toBe(true);
+      expect(DANGEROUS_EVENT_ATTRS.has('ontouchstart')).toBe(true);
+      expect(DANGEROUS_EVENT_ATTRS.has('oncopy')).toBe(true);
+      expect(DANGEROUS_EVENT_ATTRS.has('onpaste')).toBe(true);
+    });
+
+    it('should have a reasonable size (at least 50 entries)', () => {
+      expect(DANGEROUS_EVENT_ATTRS.size).toBeGreaterThanOrEqual(50);
+    });
+
+    it('should not contain non-event attributes', () => {
+      expect(DANGEROUS_EVENT_ATTRS.has('class')).toBe(false);
+      expect(DANGEROUS_EVENT_ATTRS.has('id')).toBe(false);
+      expect(DANGEROUS_EVENT_ATTRS.has('style')).toBe(false);
+      expect(DANGEROUS_EVENT_ATTRS.has('href')).toBe(false);
     });
   });
 });

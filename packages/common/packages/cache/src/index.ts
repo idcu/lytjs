@@ -6,7 +6,7 @@
 /**
  * LRU 缓存节点
  */
-interface LRUNode<K, V> {
+export interface LRUNode<K, V> {
   key: K;
   value: V;
   prev: LRUNode<K, V> | null;
@@ -133,7 +133,7 @@ export class LRUCache<K, V> {
 /**
  * 缓存条目
  */
-interface CacheEntry<V> {
+export interface CacheEntry<V> {
   value: V;
   expiry: number;
 }
@@ -220,7 +220,7 @@ export class ExpiringCache<K, V> {
  * Memoize 函数返回类型
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-interface MemoizedFn<T extends (...args: any[]) => any> {
+export interface MemoizedFn<T extends (...args: any[]) => any> {
   (...args: Parameters<T>): ReturnType<T>;
   clear: () => void;
 }

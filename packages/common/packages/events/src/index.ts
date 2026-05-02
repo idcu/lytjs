@@ -5,7 +5,7 @@
 
 import { isFunction } from '@lytjs/common-is';
 
-type EventHandler<T extends unknown[] = unknown[]> = (...args: T) => void;
+export type EventHandler<T extends unknown[] = unknown[]> = (...args: T) => void;
 
 /**
  * Check if a key is an event handler (onXxx)

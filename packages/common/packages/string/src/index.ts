@@ -403,7 +403,7 @@ export function isBooleanAttr(key: string): boolean {
 /**
  * 危险事件处理器属性黑名单
  */
-const DANGEROUS_EVENT_ATTRS = new Set([
+export const DANGEROUS_EVENT_ATTRS = new Set([
   'onclick',
   'ondblclick',
   'onmousedown',

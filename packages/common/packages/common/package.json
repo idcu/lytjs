@@ -39,7 +39,10 @@
     "@lytjs/common-vnode": "workspace:*",
     "@lytjs/common-error": "workspace:*",
     "@lytjs/common-object": "workspace:*",
-    "@lytjs/common-scheduler": "workspace:*"
+    "@lytjs/common-scheduler": "workspace:*",
+    "@lytjs/common-dom": "workspace:*",
+    "@lytjs/common-query": "workspace:*",
+    "@lytjs/common-dom-helpers": "workspace:*"
   },
   "devDependencies": {
     "tsup": "^8.4.0",

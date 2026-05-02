@@ -6,7 +6,7 @@
 /**
  * 防抖函数返回类型
  */
-interface DebouncedFn<T extends (...args: unknown[]) => unknown> {
+export interface DebouncedFn<T extends (...args: unknown[]) => unknown> {
   (...args: Parameters<T>): void;
   cancel: () => void;
 }
@@ -73,7 +73,7 @@ export function debounceImmediate<T extends (...args: unknown[]) => unknown>(
 /**
  * 节流函数返回类型
  */
-interface ThrottledFn<T extends (...args: unknown[]) => unknown> {
+export interface ThrottledFn<T extends (...args: unknown[]) => unknown> {
   (...args: Parameters<T>): void;
   cancel: () => void;
 }
