@@ -3,18 +3,12 @@
 // 复用 @lytjs/common-is: isFunction, isObject, isArray, hasChanged, NOOP
 // 复用 @lytjs/common-scheduler: nextTick, queuePreFlushCb, queuePostFlushCb
 
-import {
-  isFunction,
-  isObject,
-  isArray,
-  hasChanged,
-  NOOP,
-} from "@lytjs/common-is";
-import { warn, error } from "@lytjs/common-error";
-import { isRef } from "./ref";
-import { isReactive } from "./reactive";
-import { ReactiveEffect } from "./effect";
-import { queuePreFlushCb, queuePostFlushCb } from "@lytjs/common-scheduler";
+import { isFunction, isObject, isArray, hasChanged, NOOP } from '@lytjs/common-is';
+import { warn, error } from '@lytjs/common-error';
+import { isRef } from './ref';
+import { isReactive } from './reactive';
+import { ReactiveEffect } from './effect';
+import { queuePreFlushCb, queuePostFlushCb } from '@lytjs/common-scheduler';
 import type {
   WatchSource,
   WatchCallback,
@@ -22,14 +16,14 @@ import type {
   WatchEffectOptions,
   WatchHandle,
   OnCleanup,
-} from "./types";
+} from './types';
 
 // ==================== 数据源规范化 ====================
 
 function getSource(source: WatchSource<unknown>): () => unknown {
   if (isRef(source)) return () => source.value;
   if (isReactive(source as object)) return () => traverse(source);
-  if (typeof source === "function") return source as () => unknown;
+  if (typeof source === 'function') return source as () => unknown;
   if (__DEV__) {
     warn(
       `Invalid watch source: ${JSON.stringify(source)}. A watch source must be a ref, reactive object, or getter function.`,
@@ -41,31 +35,58 @@ function getSource(source: WatchSource<unknown>): () => unknown {
 // seen 参数改为可选，允许外部传入已有 Set 以实现复用
 const MAX_TRAVERSE_DEPTH = 100;
 
+/**
+ * 深度遍历响应式对象的所有属性以触发依赖收集。
+ * 使用迭代实现（栈代替递归），避免深层对象导致的栈溢出。
+ */
 function traverse(value: unknown, seen?: Set<unknown>, depth = 0): unknown {
   const _seen = seen ?? new Set();
   if (!isObject(value) || _seen.has(value)) return value;
-  if (depth > MAX_TRAVERSE_DEPTH) {
-    if (__DEV__) {
-      warn(`traverse exceeded maximum depth (${MAX_TRAVERSE_DEPTH}).`);
+
+  // 使用显式栈进行迭代遍历，避免递归栈溢出
+  const stack: Array<{ value: unknown; depth: number }> = [{ value, depth }];
+
+  while (stack.length > 0) {
+    const current = stack.pop()!;
+    const { value: val, depth: d } = current;
+
+    if (!isObject(val) || _seen.has(val)) continue;
+    if (d > MAX_TRAVERSE_DEPTH) {
+      if (__DEV__) {
+        warn(`traverse exceeded maximum depth (${MAX_TRAVERSE_DEPTH}).`);
+      }
+      continue;
     }
-    return value;
+    _seen.add(val);
+
+    if (isArray(val)) {
+      // 反向压栈以保持原始顺序
+      for (let i = val.length - 1; i >= 0; i--) {
+        stack.push({ value: val[i]!, depth: d + 1 });
+      }
+    } else if (val instanceof Map) {
+      val.forEach((v, key) => {
+        stack.push({ value: v, depth: d + 1 });
+        // Also traverse the key if it's an object
+        if (isObject(key)) {
+          stack.push({ value: key, depth: d + 1 });
+        }
+      });
+    } else if (val instanceof Set) {
+      val.forEach((v) => {
+        stack.push({ value: v, depth: d + 1 });
+      });
+    } else {
+      const keys = Object.keys(val as object);
+      for (let i = keys.length - 1; i >= 0; i--) {
+        stack.push({
+          value: (val as Record<string, unknown>)[keys[i]!]!,
+          depth: d + 1,
+        });
+      }
+    }
   }
-  _seen.add(value);
-  if (isArray(value)) {
-    for (let i = 0; i < value.length; i++) {
-      traverse(value[i], _seen, depth + 1);
-    }
-  } else if (value instanceof Map) {
-    value.forEach((_, key) => {
-      traverse(value.get(key), _seen, depth + 1);
-    });
-  } else if (value instanceof Set) {
-    value.forEach((v) => traverse(v, _seen, depth + 1));
-  } else {
-    for (const key of Object.keys(value as object)) {
-      traverse((value as Record<string, unknown>)[key], _seen, depth + 1);
-    }
-  }
+
   return value;
 }
 
@@ -79,7 +100,7 @@ export function watch<T, Immediate extends Readonly<boolean> = false>(
   const {
     immediate,
     deep,
-    flush = "pre",
+    flush = 'pre',
     once,
     onTrack,
     onTrigger,
@@ -134,9 +155,7 @@ export function watch<T, Immediate extends Readonly<boolean> = false>(
         deep ||
         forceTrigger ||
         (isMultiSource
-          ? (newValue as unknown[]).some((v, i) =>
-              hasChanged(v, (oldValue as unknown[])[i]),
-            )
+          ? (newValue as unknown[]).some((v, i) => hasChanged(v, (oldValue as unknown[])[i]))
           : hasChanged(newValue, oldValue))
       ) {
         if (cleanupFns.length > 0) {
@@ -162,10 +181,10 @@ export function watch<T, Immediate extends Readonly<boolean> = false>(
 
   const rawScheduler =
     userScheduler ||
-    (flush === "sync"
+    (flush === 'sync'
       ? job
       : () => {
-          if (flush === "post") {
+          if (flush === 'post') {
             queuePostFlushCb(job);
           } else {
             queuePreFlushCb(job);
@@ -177,10 +196,7 @@ export function watch<T, Immediate extends Readonly<boolean> = false>(
     ? (...args: unknown[]) => rawScheduler(job, ...args)
     : rawScheduler;
 
-  const watcher = new ReactiveEffect(
-    getter,
-    scheduler as (...args: unknown[]) => unknown,
-  );
+  const watcher = new ReactiveEffect(getter, scheduler as (...args: unknown[]) => unknown);
 
   watcher.onStop = () => {
     if (cleanupFns.length > 0) {
@@ -221,21 +237,21 @@ export function watchPostEffect(
   effectFn: (onCleanup: OnCleanup) => void,
   options?: WatchEffectOptions,
 ): WatchHandle {
-  return doWatchEffect(effectFn, { ...options, flush: "post" });
+  return doWatchEffect(effectFn, { ...options, flush: 'post' });
 }
 
 export function watchSyncEffect(
   effectFn: (onCleanup: OnCleanup) => void,
   options?: WatchEffectOptions,
 ): WatchHandle {
-  return doWatchEffect(effectFn, { ...options, flush: "sync" });
+  return doWatchEffect(effectFn, { ...options, flush: 'sync' });
 }
 
 function doWatchEffect(
   source: (onCleanup: OnCleanup) => void,
   options: WatchEffectOptions = {},
 ): WatchHandle {
-  const { flush = "pre", onTrack, onTrigger } = options;
+  const { flush = 'pre', onTrack, onTrigger } = options;
 
   const cleanupFns: Array<() => void> = [];
 
@@ -252,10 +268,10 @@ function doWatchEffect(
   };
 
   const schedulerFn: (...args: unknown[]) => unknown =
-    flush === "sync"
+    flush === 'sync'
       ? () => currentEffect.run()
       : () => {
-          if (flush === "post") {
+          if (flush === 'post') {
             queuePostFlushCb(() => currentEffect.run());
           } else {
             queuePreFlushCb(() => currentEffect.run());

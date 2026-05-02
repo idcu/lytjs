@@ -1,11 +1,9 @@
 // src/lifecycle.ts
 // Lifecycle hooks management
 
-import type {
-  ComponentInternalInstance,
-  ComponentPublicInstance,
-} from "./types";
-import { warnOnce } from "@lytjs/common-error";
+import type { ComponentInternalInstance, ComponentPublicInstance } from './types';
+import { warnOnce } from '@lytjs/common-error';
+import type { DebuggerEvent } from '@lytjs/shared-types';
 
 // Current instance being set up (for lifecycle hook registration)
 let currentInstance: ComponentInternalInstance | null = null;
@@ -13,9 +11,7 @@ let currentInstance: ComponentInternalInstance | null = null;
 /**
  * Set the current instance (used during setup).
  */
-export function setCurrentInstance(
-  instance: ComponentInternalInstance | null,
-): void {
+export function setCurrentInstance(instance: ComponentInternalInstance | null): void {
   currentInstance = instance;
 }
 
@@ -31,13 +27,7 @@ export function getCurrentInstance(): ComponentInternalInstance | null {
  */
 function registerLifecycleHook(
   instance: ComponentInternalInstance,
-  hookName:
-    | "beforeMount"
-    | "mounted"
-    | "beforeUpdate"
-    | "updated"
-    | "beforeUnmount"
-    | "unmounted",
+  hookName: 'beforeMount' | 'mounted' | 'beforeUpdate' | 'updated' | 'beforeUnmount' | 'unmounted',
   fn: (...args: unknown[]) => void,
 ): void {
   if (instance) {
@@ -52,11 +42,11 @@ function registerLifecycleHook(
  */
 export function onMounted(fn: () => void): void {
   if (currentInstance) {
-    registerLifecycleHook(currentInstance, "mounted", fn);
+    registerLifecycleHook(currentInstance, 'mounted', fn);
   } else if (__DEV__) {
     warnOnce(
-      "onMounted was called when there is no active component instance. " +
-        "Make sure to call this function inside setup().",
+      'onMounted was called when there is no active component instance. ' +
+        'Make sure to call this function inside setup().',
     );
   }
 }
@@ -66,11 +56,11 @@ export function onMounted(fn: () => void): void {
  */
 export function onUpdated(fn: () => void): void {
   if (currentInstance) {
-    registerLifecycleHook(currentInstance, "updated", fn);
+    registerLifecycleHook(currentInstance, 'updated', fn);
   } else if (__DEV__) {
     warnOnce(
-      "onUpdated was called when there is no active component instance. " +
-        "Make sure to call this function inside setup().",
+      'onUpdated was called when there is no active component instance. ' +
+        'Make sure to call this function inside setup().',
     );
   }
 }
@@ -80,11 +70,11 @@ export function onUpdated(fn: () => void): void {
  */
 export function onUnmounted(fn: () => void): void {
   if (currentInstance) {
-    registerLifecycleHook(currentInstance, "unmounted", fn);
+    registerLifecycleHook(currentInstance, 'unmounted', fn);
   } else if (__DEV__) {
     warnOnce(
-      "onUnmounted was called when there is no active component instance. " +
-        "Make sure to call this function inside setup().",
+      'onUnmounted was called when there is no active component instance. ' +
+        'Make sure to call this function inside setup().',
     );
   }
 }
@@ -94,11 +84,11 @@ export function onUnmounted(fn: () => void): void {
  */
 export function onBeforeMount(fn: () => void): void {
   if (currentInstance) {
-    registerLifecycleHook(currentInstance, "beforeMount", fn);
+    registerLifecycleHook(currentInstance, 'beforeMount', fn);
   } else if (__DEV__) {
     warnOnce(
-      "onBeforeMount was called when there is no active component instance. " +
-        "Make sure to call this function inside setup().",
+      'onBeforeMount was called when there is no active component instance. ' +
+        'Make sure to call this function inside setup().',
     );
   }
 }
@@ -108,11 +98,11 @@ export function onBeforeMount(fn: () => void): void {
  */
 export function onBeforeUpdate(fn: () => void): void {
   if (currentInstance) {
-    registerLifecycleHook(currentInstance, "beforeUpdate", fn);
+    registerLifecycleHook(currentInstance, 'beforeUpdate', fn);
   } else if (__DEV__) {
     warnOnce(
-      "onBeforeUpdate was called when there is no active component instance. " +
-        "Make sure to call this function inside setup().",
+      'onBeforeUpdate was called when there is no active component instance. ' +
+        'Make sure to call this function inside setup().',
     );
   }
 }
@@ -122,11 +112,11 @@ export function onBeforeUpdate(fn: () => void): void {
  */
 export function onBeforeUnmount(fn: () => void): void {
   if (currentInstance) {
-    registerLifecycleHook(currentInstance, "beforeUnmount", fn);
+    registerLifecycleHook(currentInstance, 'beforeUnmount', fn);
   } else if (__DEV__) {
     warnOnce(
-      "onBeforeUnmount was called when there is no active component instance. " +
-        "Make sure to call this function inside setup().",
+      'onBeforeUnmount was called when there is no active component instance. ' +
+        'Make sure to call this function inside setup().',
     );
   }
 }
@@ -136,11 +126,7 @@ export function onBeforeUnmount(fn: () => void): void {
  * Uses an array to collect multiple callbacks per instance.
  */
 export function onErrorCaptured(
-  fn: (
-    err: Error,
-    instance: ComponentPublicInstance | null,
-    info: string,
-  ) => boolean | void,
+  fn: (err: Error, instance: ComponentPublicInstance | null, info: string) => boolean | void,
 ): void {
   if (currentInstance) {
     if (!currentInstance.errorCapturedHooks) {
@@ -150,8 +136,8 @@ export function onErrorCaptured(
   } else if (__DEV__) {
     // 开发模式下警告：onErrorCaptured 必须在 setup 期间调用
     warnOnce(
-      "onErrorCaptured was called when there is no active component instance. " +
-        "Make sure to call this function inside setup().",
+      'onErrorCaptured was called when there is no active component instance. ' +
+        'Make sure to call this function inside setup().',
     );
   }
 }
@@ -180,6 +166,46 @@ export function onDeactivated(fn: () => void): void {
   }
 }
 
+/**
+ * Register a callback to be called when a reactive dependency is tracked during render.
+ * Only active in development mode.
+ */
+export function onRenderTracked(fn: (e: DebuggerEvent) => void): void {
+  if (__DEV__) {
+    if (currentInstance) {
+      if (!currentInstance.renderTrackedHooks) {
+        currentInstance.renderTrackedHooks = [];
+      }
+      currentInstance.renderTrackedHooks.push(fn);
+    } else {
+      warnOnce(
+        'onRenderTracked was called when there is no active component instance. ' +
+          'Make sure to call this function inside setup().',
+      );
+    }
+  }
+}
+
+/**
+ * Register a callback to be called when a reactive dependency is triggered during render.
+ * Only active in development mode.
+ */
+export function onRenderTriggered(fn: (e: DebuggerEvent) => void): void {
+  if (__DEV__) {
+    if (currentInstance) {
+      if (!currentInstance.renderTriggeredHooks) {
+        currentInstance.renderTriggeredHooks = [];
+      }
+      currentInstance.renderTriggeredHooks.push(fn);
+    } else {
+      warnOnce(
+        'onRenderTriggered was called when there is no active component instance. ' +
+          'Make sure to call this function inside setup().',
+      );
+    }
+  }
+}
+
 // ==================== Lifecycle calling ====================
 
 /**
@@ -204,13 +230,7 @@ function callOptionsHook(
  */
 export function callLifecycleHook(
   instance: ComponentInternalInstance,
-  hookName:
-    | "beforeMount"
-    | "mounted"
-    | "beforeUpdate"
-    | "updated"
-    | "beforeUnmount"
-    | "unmounted",
+  hookName: 'beforeMount' | 'mounted' | 'beforeUpdate' | 'updated' | 'beforeUnmount' | 'unmounted',
 ): void {
   const hooks = instance.lifecycle[hookName];
   if (hooks.size > 0) {
@@ -229,8 +249,8 @@ export function callLifecycleHook(
  */
 export function callCreatedHook(instance: ComponentInternalInstance): void {
   const { beforeCreate, created } = instance.type;
-  callOptionsHook(instance, beforeCreate, "beforeCreate");
-  callOptionsHook(instance, created, "created");
+  callOptionsHook(instance, beforeCreate, 'beforeCreate');
+  callOptionsHook(instance, created, 'created');
 }
 
 /**
@@ -238,10 +258,10 @@ export function callCreatedHook(instance: ComponentInternalInstance): void {
  */
 export function callMountedHook(instance: ComponentInternalInstance): void {
   const { beforeMount, mounted } = instance.type;
-  callLifecycleHook(instance, "beforeMount");
-  callOptionsHook(instance, beforeMount, "beforeMount");
-  callLifecycleHook(instance, "mounted");
-  callOptionsHook(instance, mounted, "mounted");
+  callLifecycleHook(instance, 'beforeMount');
+  callOptionsHook(instance, beforeMount, 'beforeMount');
+  callLifecycleHook(instance, 'mounted');
+  callOptionsHook(instance, mounted, 'mounted');
   instance.isMounted = true;
 }
 
@@ -250,10 +270,10 @@ export function callMountedHook(instance: ComponentInternalInstance): void {
  */
 export function callUpdatedHook(instance: ComponentInternalInstance): void {
   const { beforeUpdate, updated } = instance.type;
-  callLifecycleHook(instance, "beforeUpdate");
-  callOptionsHook(instance, beforeUpdate, "beforeUpdate");
-  callLifecycleHook(instance, "updated");
-  callOptionsHook(instance, updated, "updated");
+  callLifecycleHook(instance, 'beforeUpdate');
+  callOptionsHook(instance, beforeUpdate, 'beforeUpdate');
+  callLifecycleHook(instance, 'updated');
+  callOptionsHook(instance, updated, 'updated');
 }
 
 /**
@@ -261,10 +281,10 @@ export function callUpdatedHook(instance: ComponentInternalInstance): void {
  */
 export function callUnmountedHook(instance: ComponentInternalInstance): void {
   const { beforeUnmount, unmounted } = instance.type;
-  callLifecycleHook(instance, "beforeUnmount");
-  callOptionsHook(instance, beforeUnmount, "beforeUnmount");
-  callLifecycleHook(instance, "unmounted");
-  callOptionsHook(instance, unmounted, "unmounted");
+  callLifecycleHook(instance, 'beforeUnmount');
+  callOptionsHook(instance, beforeUnmount, 'beforeUnmount');
+  callLifecycleHook(instance, 'unmounted');
+  callOptionsHook(instance, unmounted, 'unmounted');
   instance.isUnmounted = true;
 }
 
@@ -284,11 +304,7 @@ export function handleError(
     const hooks = current.errorCapturedHooks;
     if (hooks && hooks.length > 0) {
       for (const hook of hooks) {
-        const result = hook(
-          err,
-          current as unknown as ComponentPublicInstance,
-          info,
-        );
+        const result = hook(err, current as unknown as ComponentPublicInstance, info);
         if (result === false) return true; // stop propagation
       }
     }
@@ -312,7 +328,7 @@ export function handleError(
   // If error was not handled by any component, try app-level errorHandler
   if (instance) {
     const appErrorHandler = instance.root.appContext?.config?.errorHandler;
-    if (typeof appErrorHandler === "function") {
+    if (typeof appErrorHandler === 'function') {
       appErrorHandler(err, instance, info);
       return true;
     }

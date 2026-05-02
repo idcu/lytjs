@@ -10,23 +10,19 @@ import {
   ShapeFlags,
   PatchFlags,
   isSameVNodeType,
-} from "@lytjs/common-vnode";
-import type { VNode, ComponentInternalInstance } from "@lytjs/common-vnode";
-import { isArray, isFunction, hasChanged, EMPTY_OBJ } from "@lytjs/common-is";
-import { isSafeAttribute } from "@lytjs/common-string";
-import { warn, error } from "@lytjs/common-error";
+} from '@lytjs/common-vnode';
+import type { VNode, ComponentInternalInstance } from '@lytjs/common-vnode';
+import { isArray, isFunction, hasChanged, EMPTY_OBJ } from '@lytjs/common-is';
+import { isSafeAttribute } from '@lytjs/common-string';
+import { sanitizeHTML } from '@lytjs/common-string';
+import { warn, error } from '@lytjs/common-error';
 import {
   getDOMEventName,
   extractDOMEventHandler,
   extractDOMEventOptions,
-} from "@lytjs/common-events";
-import type {
-  RendererOptions,
-  HostNode,
-  HostElement,
-  SuspenseBoundary,
-} from "./types";
-import { getSequence } from "@lytjs/common-algorithm";
+} from '@lytjs/common-events';
+import type { RendererOptions, HostNode, HostElement, SuspenseBoundary } from './types';
+import { getSequence } from '@lytjs/common-algorithm';
 
 // ============================================================
 // SVG constants
@@ -34,33 +30,33 @@ import { getSequence } from "@lytjs/common-algorithm";
 
 /** Common SVG elements that require the SVG namespace */
 const SVG_TAGS = new Set([
-  "svg",
-  "path",
-  "circle",
-  "ellipse",
-  "line",
-  "polyline",
-  "polygon",
-  "rect",
-  "g",
-  "defs",
-  "use",
-  "clipPath",
-  "linearGradient",
-  "radialGradient",
-  "stop",
-  "pattern",
-  "mask",
-  "symbol",
-  "image",
-  "foreignObject",
-  "text",
-  "tspan",
-  "textPath",
-  "marker",
-  "animate",
-  "animateTransform",
-  "set",
+  'svg',
+  'path',
+  'circle',
+  'ellipse',
+  'line',
+  'polyline',
+  'polygon',
+  'rect',
+  'g',
+  'defs',
+  'use',
+  'clipPath',
+  'linearGradient',
+  'radialGradient',
+  'stop',
+  'pattern',
+  'mask',
+  'symbol',
+  'image',
+  'foreignObject',
+  'text',
+  'tspan',
+  'textPath',
+  'marker',
+  'animate',
+  'animateTransform',
+  'set',
 ]);
 
 // ============================================================
@@ -71,9 +67,7 @@ const SVG_TAGS = new Set([
  * Create a renderer with the given host platform options.
  * Returns patch, mount, and unmount functions.
  */
-export function createRenderer(
-  options: RendererOptions<HostNode, HostElement>,
-) {
+export function createRenderer(options: RendererOptions<HostNode, HostElement>) {
   const {
     createElement,
     setElementText,
@@ -110,14 +104,7 @@ export function createRenderer(
     if (n1 !== null && isSameVNodeType(n1, n2)) {
       // Fragment needs special handling
       if (n2.type === Fragment) {
-        patchFragment(
-          n1,
-          n2,
-          container,
-          parentComponent,
-          parentSuspense,
-          isSVG,
-        );
+        patchFragment(n1, n2, container, parentComponent, parentSuspense, isSVG);
       } else if (n2.type === Text) {
         // Patch text node: update textContent if children changed
         const node = (n2.el = n1.el);
@@ -129,17 +116,13 @@ export function createRenderer(
                 `The value will be replaced with an empty string.`,
             );
           }
-          (node as Text).textContent = isFunction(n2.children)
-            ? ""
-            : String(n2.children ?? "");
+          (node as Text).textContent = isFunction(n2.children) ? '' : String(n2.children ?? '');
         }
       } else if (n2.type === Comment) {
         // Patch comment node: update nodeValue if children changed
         const node = (n2.el = n1.el);
         if (n1.children !== n2.children) {
-          (node as Comment).nodeValue = isFunction(n2.children)
-            ? ""
-            : String(n2.children ?? "");
+          (node as Comment).nodeValue = isFunction(n2.children) ? '' : String(n2.children ?? '');
         }
       } else if (n2.shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
         // Component patch: delegate to component update process
@@ -169,14 +152,7 @@ export function createRenderer(
       } else if (n2.type === Comment) {
         mountCommentNode(n2, container, anchor);
       } else if (n2.type === Fragment) {
-        mountFragment(
-          n2,
-          container,
-          anchor,
-          parentComponent,
-          parentSuspense,
-          isSVG,
-        );
+        mountFragment(n2, container, anchor, parentComponent, parentSuspense, isSVG);
       }
     }
   }
@@ -191,7 +167,7 @@ export function createRenderer(
     anchor: HostNode | null,
     isSVG: boolean,
   ): void {
-    if (typeof vnode.type !== "string") {
+    if (typeof vnode.type !== 'string') {
       warn(
         `mountElement received a vnode with non-string type (${String(vnode.type)}). ` +
           `Only element vnodes can be mounted as elements.`,
@@ -205,7 +181,7 @@ export function createRenderer(
     // Apply props
     const props = vnode.props ?? EMPTY_OBJ;
     for (const key in props) {
-      if (key === "key" || key === "ref") continue;
+      if (key === 'key' || key === 'ref') continue;
       patchProp(el, key, null, props[key]);
     }
 
@@ -213,7 +189,7 @@ export function createRenderer(
     if (vnode.shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
       mountChildren(vnode, el, anchor, isSVG);
     } else if (vnode.shapeFlag & ShapeFlags.TEXT_CHILDREN) {
-      setElementText(el, String(vnode.children ?? ""));
+      setElementText(el, String(vnode.children ?? ''));
     }
 
     // Insert into container
@@ -224,12 +200,8 @@ export function createRenderer(
   // mountTextNode
   // ============================================================
 
-  function mountTextNode(
-    vnode: VNode,
-    container: HostNode,
-    anchor: HostNode | null,
-  ): void {
-    const text = isFunction(vnode.children) ? "" : String(vnode.children ?? "");
+  function mountTextNode(vnode: VNode, container: HostNode, anchor: HostNode | null): void {
+    const text = isFunction(vnode.children) ? '' : String(vnode.children ?? '');
     const node = createText(text);
     vnode.el = node;
     insert(node, container, anchor);
@@ -239,12 +211,8 @@ export function createRenderer(
   // mountCommentNode
   // ============================================================
 
-  function mountCommentNode(
-    vnode: VNode,
-    container: HostNode,
-    anchor: HostNode | null,
-  ): void {
-    const text = isFunction(vnode.children) ? "" : String(vnode.children ?? "");
+  function mountCommentNode(vnode: VNode, container: HostNode, anchor: HostNode | null): void {
+    const text = isFunction(vnode.children) ? '' : String(vnode.children ?? '');
     const node = createComment(text);
     vnode.el = node;
     vnode.anchor = node;
@@ -263,8 +231,8 @@ export function createRenderer(
     parentSuspense: SuspenseBoundary | null,
     isSVG: boolean,
   ): void {
-    const fragmentStartAnchor = createComment("");
-    const fragmentEndAnchor = createComment("");
+    const fragmentStartAnchor = createComment('');
+    const fragmentEndAnchor = createComment('');
     vnode.el = fragmentStartAnchor;
     vnode.anchor = fragmentEndAnchor;
 
@@ -276,15 +244,7 @@ export function createRenderer(
     for (let i = 0; i < children.length; i++) {
       const child = children[i];
       if (child != null) {
-        patch(
-          null,
-          child,
-          container,
-          fragmentEndAnchor,
-          parentComponent,
-          parentSuspense,
-          isSVG,
-        );
+        patch(null, child, container, fragmentEndAnchor, parentComponent, parentSuspense, isSVG);
       }
     }
   }
@@ -314,27 +274,11 @@ export function createRenderer(
     if (isArray(c1) && isArray(c2)) {
       // Use diffChildren with the parent container
       // The anchor for insertions should be the fragment's end anchor
-      diffChildrenFragment(
-        c1,
-        c2,
-        container,
-        endAnchor,
-        parentComponent,
-        parentSuspense,
-        isSVG,
-      );
+      diffChildrenFragment(c1, c2, container, endAnchor, parentComponent, parentSuspense, isSVG);
     } else if (isArray(c2)) {
       // Old was null/empty, mount all new before end anchor
       for (let i = 0; i < c2.length; i++) {
-        patch(
-          null,
-          c2[i]!,
-          container,
-          endAnchor,
-          parentComponent,
-          parentSuspense,
-          isSVG,
-        );
+        patch(null, c2[i]!, container, endAnchor, parentComponent, parentSuspense, isSVG);
       }
     } else if (isArray(c1)) {
       // New is null/empty, unmount all old
@@ -392,15 +336,7 @@ export function createRenderer(
         const nextEl = nextPos < l2 ? c2[nextPos]?.el : null;
         const anchor = nextEl ?? fallbackAnchor;
         while (i <= e2) {
-          patch(
-            null,
-            c2[i]!,
-            container,
-            anchor,
-            parentComponent,
-            parentSuspense,
-            isSVG,
-          );
+          patch(null, c2[i]!, container, anchor, parentComponent, parentSuspense, isSVG);
           i++;
         }
       }
@@ -481,22 +417,12 @@ export function createRenderer(
           } else {
             moved = true;
           }
-          patch(
-            prevChild,
-            c2[newIndex]!,
-            container,
-            null,
-            parentComponent,
-            parentSuspense,
-            isSVG,
-          );
+          patch(prevChild, c2[newIndex]!, container, null, parentComponent, parentSuspense, isSVG);
           patched++;
         }
       }
 
-      const increasingNewIndexSequence = moved
-        ? getSequence(newIndexToOldIndexMap)
-        : [];
+      const increasingNewIndexSequence = moved ? getSequence(newIndexToOldIndexMap) : [];
 
       j = increasingNewIndexSequence.length - 1;
 
@@ -507,25 +433,11 @@ export function createRenderer(
         const anchor = nextEl ?? fallbackAnchor;
 
         if (newIndexToOldIndexMap[i] === 0) {
-          patch(
-            null,
-            nextChild,
-            container,
-            anchor,
-            parentComponent,
-            parentSuspense,
-            isSVG,
-          );
+          patch(null, nextChild, container, anchor, parentComponent, parentSuspense, isSVG);
         } else if (moved) {
           if (j < 0 || i !== increasingNewIndexSequence[j]!) {
             if (nextChild.el) {
-              move(
-                nextChild,
-                container,
-                anchor,
-                parentComponent,
-                parentSuspense,
-              );
+              move(nextChild, container, anchor, parentComponent, parentSuspense);
             }
           } else {
             j--;
@@ -548,15 +460,7 @@ export function createRenderer(
     parentSuspense: SuspenseBoundary | null,
     isSVG: boolean,
   ): void {
-    diffChildrenInternal(
-      c1,
-      c2,
-      container,
-      parentComponent,
-      parentSuspense,
-      isSVG,
-      endAnchor,
-    );
+    diffChildrenInternal(c1, c2, container, parentComponent, parentSuspense, isSVG, endAnchor);
   }
 
   // ============================================================
@@ -577,15 +481,7 @@ export function createRenderer(
     for (let i = 0; i < children.length; i++) {
       const child = children[i];
       if (child != null) {
-        patch(
-          null,
-          child,
-          container,
-          anchor,
-          parentComponent,
-          parentSuspense,
-          isSVG,
-        );
+        patch(null, child, container, anchor, parentComponent, parentSuspense, isSVG);
       }
     }
   }
@@ -600,7 +496,7 @@ export function createRenderer(
     newProps: Record<string, unknown>,
   ): void {
     for (const key in newProps) {
-      if (key === "key" || key === "ref") continue;
+      if (key === 'key' || key === 'ref') continue;
       const next = newProps[key];
       const prev = oldProps[key];
       if (hasChanged(next, prev)) {
@@ -608,7 +504,7 @@ export function createRenderer(
       }
     }
     for (const key in oldProps) {
-      if (key === "key" || key === "ref") continue;
+      if (key === 'key' || key === 'ref') continue;
       if (!(key in newProps)) {
         patchProp(el, key, oldProps[key], null);
       }
@@ -640,11 +536,11 @@ export function createRenderer(
       // PatchFlag optimization
       if (n2.patchFlag & PatchFlags.CLASS) {
         if (oldProps.class !== newProps.class) {
-          patchProp(el, "class", oldProps.class, newProps.class);
+          patchProp(el, 'class', oldProps.class, newProps.class);
         }
       }
       if (n2.patchFlag & PatchFlags.STYLE) {
-        patchProp(el, "style", oldProps.style, newProps.style);
+        patchProp(el, 'style', oldProps.style, newProps.style);
       }
       if (n2.patchFlag & PatchFlags.PROPS) {
         // Only diff dynamicProps
@@ -662,7 +558,7 @@ export function createRenderer(
       }
       if (n2.patchFlag & PatchFlags.TEXT) {
         if (n1.children !== n2.children) {
-          setElementText(el, String(n2.children ?? ""));
+          setElementText(el, String(n2.children ?? ''));
         }
       }
     } else if (oldProps !== newProps) {
@@ -698,12 +594,12 @@ export function createRenderer(
         unmountChildren(c1 as VNode[], parentComponent, parentSuspense);
       }
       // Always set new text (DOM was potentially cleared by unmountChildren above)
-      setElementText(container as HostElement, String(c2 ?? ""));
+      setElementText(container as HostElement, String(c2 ?? ''));
     } else {
       // New children are array (or null)
       if (prevShapeFlag & ShapeFlags.TEXT_CHILDREN) {
         // Old children were text - clear it
-        setElementText(container as HostElement, "");
+        setElementText(container as HostElement, '');
       }
 
       if (prevShapeFlag & ShapeFlags.ARRAY_CHILDREN) {
@@ -723,14 +619,7 @@ export function createRenderer(
         }
       } else if (nextShapeFlag & ShapeFlags.ARRAY_CHILDREN) {
         // Old children were null/none - mount new array
-        mountChildren(
-          n2,
-          container,
-          null,
-          isSVG,
-          parentComponent,
-          parentSuspense,
-        );
+        mountChildren(n2, container, null, isSVG, parentComponent, parentSuspense);
       }
     }
   }
@@ -747,15 +636,7 @@ export function createRenderer(
     parentSuspense: SuspenseBoundary | null,
     isSVG: boolean,
   ): void {
-    diffChildrenInternal(
-      c1,
-      c2,
-      container,
-      parentComponent,
-      parentSuspense,
-      isSVG,
-      null,
-    );
+    diffChildrenInternal(c1, c2, container, parentComponent, parentSuspense, isSVG, null);
   }
 
   // ============================================================
@@ -881,8 +762,7 @@ export function createRenderer(
       }
       // Move anchors
       if (vnode.el) insert(vnode.el, container, anchor);
-      if (vnode.anchor && vnode.anchor !== vnode.el)
-        insert(vnode.anchor, container, anchor);
+      if (vnode.anchor && vnode.anchor !== vnode.el) insert(vnode.anchor, container, anchor);
     } else {
       if (vnode.el) insert(vnode.el, container, anchor);
     }
@@ -944,26 +824,21 @@ export function createRenderer(
  *
  * @see @lytjs/renderer/src/dom/patch-props.ts for the full implementation
  */
-function patchDOMProp(
-  el: Element,
-  key: string,
-  prevValue: unknown,
-  nextValue: unknown,
-): void {
-  if (key === "class") {
+function patchDOMProp(el: Element, key: string, prevValue: unknown, nextValue: unknown): void {
+  if (key === 'class') {
     if (prevValue !== nextValue) {
-      el.className = (nextValue as string) || "";
+      el.className = (nextValue as string) || '';
     }
-  } else if (key === "style") {
-    if (typeof nextValue === "string") {
-      el.setAttribute("style", nextValue);
+  } else if (key === 'style') {
+    if (typeof nextValue === 'string') {
+      el.setAttribute('style', nextValue);
     } else if (nextValue != null) {
       const style = el as HTMLElement;
       // Remove old style properties that don't exist in new style
-      if (prevValue && typeof prevValue === "object") {
+      if (prevValue && typeof prevValue === 'object') {
         for (const k in prevValue as Record<string, string>) {
           if (!(k in (nextValue as Record<string, string>))) {
-            style.style.setProperty(k, "");
+            style.style.setProperty(k, '');
           }
         }
       }
@@ -975,9 +850,9 @@ function patchDOMProp(
         }
       }
     } else {
-      el.removeAttribute("style");
+      el.removeAttribute('style');
     }
-  } else if (key.startsWith("on")) {
+  } else if (key.startsWith('on')) {
     const eventName = getDOMEventName(key);
     const prevHandler = extractDOMEventHandler(prevValue);
     const prevOptions = extractDOMEventOptions(prevValue);
@@ -991,6 +866,13 @@ function patchDOMProp(
     }
   } else if (nextValue == null || nextValue === false) {
     el.removeAttribute(key);
+  } else if (key === 'innerHTML' || key === 'textContent') {
+    // Security: sanitize HTML content to prevent XSS
+    if (key === 'innerHTML' && typeof nextValue === 'string') {
+      el.innerHTML = sanitizeHTML(nextValue);
+    } else {
+      el[key] = nextValue as string;
+    }
   } else {
     if (isSafeAttribute(key, String(nextValue))) {
       el.setAttribute(key, String(nextValue));
@@ -1014,9 +896,7 @@ export function createDOMRendererOptions(): RendererOptions<Node, Element> {
   return {
     createElement(tag: string): Element {
       return document.createElementNS(
-        SVG_TAGS.has(tag)
-          ? "http://www.w3.org/2000/svg"
-          : "http://www.w3.org/1999/xhtml",
+        SVG_TAGS.has(tag) ? 'http://www.w3.org/2000/svg' : 'http://www.w3.org/1999/xhtml',
         tag,
       );
     },

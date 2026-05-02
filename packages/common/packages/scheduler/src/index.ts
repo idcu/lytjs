@@ -18,9 +18,7 @@ export type SchedulerJob = () => void;
 // ============================================================
 
 let globalErrorHandler: ((error: Error, info: string) => void) | null = null;
-export function setErrorHandler(
-  handler: ((error: Error, info: string) => void) | null,
-): void {
+export function setErrorHandler(handler: ((error: Error, info: string) => void) | null): void {
   globalErrorHandler = handler;
 }
 
@@ -38,7 +36,7 @@ let maxIterations = 100;
  * 用于自定义调度器在复杂场景下的循环上限
  */
 export function setMaxIterations(n: number): void {
-  if (typeof n === "number" && n > 0) {
+  if (typeof n === 'number' && n > 0) {
     maxIterations = n;
   }
 }
@@ -133,9 +131,10 @@ export function flushJobs(): void {
         try {
           cb();
         } catch (e) {
-          if (globalErrorHandler)
-            globalErrorHandler(e as Error, "pre-flush callback");
-          console.error("[LytJS] pre-flush callback failed:", e);
+          if (globalErrorHandler) globalErrorHandler(e as Error, 'pre-flush callback');
+          if (__DEV__) {
+            console.error('[LytJS] pre-flush callback failed:', e);
+          }
         }
       }
       preFlushCbs.length = 0;
@@ -147,9 +146,10 @@ export function flushJobs(): void {
         try {
           job();
         } catch (e) {
-          if (globalErrorHandler)
-            globalErrorHandler(e as Error, "job execution");
-          console.error("[LytJS] job execution failed:", e);
+          if (globalErrorHandler) globalErrorHandler(e as Error, 'job execution');
+          if (__DEV__) {
+            console.error('[LytJS] job execution failed:', e);
+          }
         }
       }
       queue.length = 0;
@@ -161,9 +161,10 @@ export function flushJobs(): void {
         try {
           cb();
         } catch (e) {
-          if (globalErrorHandler)
-            globalErrorHandler(e as Error, "post-flush callback");
-          console.error("[LytJS] post-flush callback failed:", e);
+          if (globalErrorHandler) globalErrorHandler(e as Error, 'post-flush callback');
+          if (__DEV__) {
+            console.error('[LytJS] post-flush callback failed:', e);
+          }
         }
       }
       postFlushCbs.length = 0;

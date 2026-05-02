@@ -1,17 +1,18 @@
 // src/types.ts
 // All type definitions for @lytjs/component
 
-import type { VNode } from "@lytjs/vdom";
-import type { BaseAppConfig } from "@lytjs/shared-types";
+import type { VNode } from '@lytjs/vdom';
+import type { BaseAppConfig } from '@lytjs/shared-types';
 import type {
   SlotFunction,
   InternalSlots,
   ComponentPublicInstance,
-} from "@lytjs/shared-types";
+  DebuggerEvent,
+} from '@lytjs/shared-types';
 
 // Re-export shared component types
 export type { SlotFunction, InternalSlots };
-export type { ComponentPublicInstance } from "@lytjs/shared-types";
+export type { ComponentPublicInstance } from '@lytjs/shared-types';
 
 // ==================== PropOptions ====================
 
@@ -54,10 +55,7 @@ export interface ComponentOptions<
   name?: string;
   props?: Record<string, PropOptions<unknown>> & Props;
   emits?: string[] | Record<string, (...args: unknown[]) => void>;
-  setup?: (
-    props: Props,
-    ctx: SetupContext,
-  ) => RawBindings | RenderFunction | void;
+  setup?: (props: Props, ctx: SetupContext) => RawBindings | RenderFunction | void;
   render?: RenderFunction;
   data?: () => D;
   computed?: C;
@@ -117,14 +115,12 @@ export interface ComponentLifecycleState {
     unmounted: Set<(...args: unknown[]) => void>;
   };
   errorCapturedHooks?: Array<
-    (
-      err: Error,
-      instance: ComponentPublicInstance | null,
-      info: string,
-    ) => boolean | void
+    (err: Error, instance: ComponentPublicInstance | null, info: string) => boolean | void
   >;
   activatedHooks?: Array<() => void>;
   deactivatedHooks?: Array<() => void>;
+  renderTrackedHooks?: Array<(e: DebuggerEvent) => void>;
+  renderTriggeredHooks?: Array<(e: DebuggerEvent) => void>;
 }
 
 /** 组件渲染状态：render、subTree、update 等 */
