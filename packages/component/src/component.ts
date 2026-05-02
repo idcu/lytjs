@@ -381,6 +381,28 @@ export function defineComponent(options: ComponentOptions): ComponentOptions {
   return options;
 }
 
+// ==================== defineFunctionalComponent ====================
+
+/**
+ * Define a functional component.
+ * A functional component has no instance, no lifecycle hooks, and no reactive state.
+ * It receives props and returns a render function directly.
+ */
+export function defineFunctionalComponent(
+  render: Function,
+  props?: Record<string, any>,
+): ComponentOptions {
+  return {
+    name: 'FunctionalComponent',
+    props: props ?? {},
+    setup() {
+      return render;
+    },
+    // 标记为函数式组件
+    __isFunctional: true,
+  } as any as ComponentOptions;
+}
+
 // ==================== mergeOptions ====================
 
 /**

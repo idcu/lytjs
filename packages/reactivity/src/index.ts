@@ -48,6 +48,8 @@ export {
   enableTracking,
   resetTracking,
   batch,
+  batchAsync,
+  untrack,
   onEffectCleanup,
 } from './effect';
 

@@ -141,6 +141,8 @@ export interface VNode {
   targetAnchor: Node | null;
   /** 目标起始位置（Teleport） */
   targetStart: Node | null;
+  /** Suspense 边界 */
+  suspense?: any;
   /** 源码位置 */
   loc: VNodeSourceLocation | null;
   /** 内部标记 */
@@ -240,6 +242,7 @@ export const VNODE_DEFAULTS: VNode = {
   target: null,
   targetAnchor: null,
   targetStart: null,
+  suspense: null,
   loc: null,
   __v_isVNode: true,
 };

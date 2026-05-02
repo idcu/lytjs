@@ -79,3 +79,37 @@ export {
   hasTextChildren,
   getArrayChildren,
 } from './utils';
+
+// Transition
+export {
+  nextFrame,
+  addTransitionClass,
+  removeTransitionClass,
+  getTransitionInfo,
+  hasCSSTransition,
+  performEnterTransition,
+  performLeaveTransition,
+  cancelTransition,
+  createTransitionState,
+} from './transition';
+
+export type {
+  TransitionProps,
+  TransitionDurationInfo,
+  TransitionState,
+} from './transition';
+
+// TransitionGroup
+export {
+  recordPositions,
+  applyFLIP,
+  performGroupEnterTransition,
+  performGroupLeaveTransition,
+  createFLIPState,
+  beforeUpdate as transitionGroupBeforeUpdate,
+  afterUpdate as transitionGroupAfterUpdate,
+} from './transition-group';
+
+export type {
+  TransitionGroupProps,
+} from './transition-group';

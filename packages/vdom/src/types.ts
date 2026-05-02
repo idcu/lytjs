@@ -79,20 +79,15 @@ export interface RendererOptions<HostNode = Node, HostElement extends Node = Ele
 }
 
 // ============================================================
-// Suspense types (stub)
+// Suspense types
 // ============================================================
 
 /**
  * Suspense boundary interface
  *
- * @stub 此接口为占位定义，用于满足 patch/renderer 的类型约束。
- * 以下字段目前未被实现逻辑使用，保留供未来 Suspense 功能实现时填充：
- * - parent / parentComponent: 父组件关联
- * - isSVG: SVG 命名空间标记
- * - container / anchor: DOM 容器与锚点
- * - activeBranch / pendingBranch: 活跃/等待中的 vnode 分支
- * - isInFallback / isHydrating: fallback 与 hydration 状态
- * - effects: 关联的响应式副作用
+ * Used by the patch algorithm to manage async component rendering.
+ * The boundary tracks the active and pending branches, fallback state,
+ * and associated reactive effects.
  */
 export interface SuspenseBoundary {
   vnode: VNode;
