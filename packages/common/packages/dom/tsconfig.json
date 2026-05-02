@@ -1,0 +1,19 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "composite": false,
+    "incremental": false,
+    "declaration": true,
+    "declarationMap": true,
+    "paths": {
+      "@lytjs/common-is": ["./node_modules/@lytjs/common-is/src"],
+      "@lytjs/common-string": ["./node_modules/@lytjs/common-string/src"],
+      "@lytjs/common-events": ["./node_modules/@lytjs/common-events/src"],
+      "@lytjs/common-error": ["./node_modules/@lytjs/common-error/src"]
+    }
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "dist", "tests"]
+}

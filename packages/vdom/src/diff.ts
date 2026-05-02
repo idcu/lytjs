@@ -4,8 +4,8 @@
  * and provides standalone diff utilities.
  */
 
-import type { VNode } from "@lytjs/common-vnode";
-import { isSameVNodeType } from "@lytjs/common-vnode";
+import type { VNode } from '@lytjs/common-vnode';
+import { isSameVNodeType } from '@lytjs/common-vnode';
 
 // ============================================================
 // isSameVNodeType re-export

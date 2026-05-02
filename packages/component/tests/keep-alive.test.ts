@@ -17,7 +17,10 @@ import {
 } from '../src/index';
 import type { ComponentInternalInstance, ComponentOptions } from '../src/types';
 
-function createSimpleInstance(name: string, parent: ComponentInternalInstance | null = null): ComponentInternalInstance {
+function createSimpleInstance(
+  name: string,
+  parent: ComponentInternalInstance | null = null,
+): ComponentInternalInstance {
   const options = defineComponent({ name });
   const vnode = { type: options, props: {}, children: null };
   const instance = createComponentInstance(vnode, parent);
@@ -180,20 +183,20 @@ describe('KeepAlive', () => {
   });
 
   it('should evict oldest when max is reached', () => {
-    const instance = createKeepAliveInstance({ max: 2 })
-    cacheInstance(instance, 'a', { type: {} } as any)
-    cacheInstance(instance, 'b', { type: {} } as any)
-    cacheInstance(instance, 'c', { type: {} } as any)
-    expect(getCachedInstance(instance, 'a')).toBeUndefined()
-    expect(getCachedInstance(instance, 'b')).toBeDefined()
-    expect(getCachedInstance(instance, 'c')).toBeDefined()
-  })
+    const instance = createKeepAliveInstance({ max: 2 });
+    cacheInstance(instance, 'a', { type: {} } as any);
+    cacheInstance(instance, 'b', { type: {} } as any);
+    cacheInstance(instance, 'c', { type: {} } as any);
+    expect(getCachedInstance(instance, 'a')).toBeUndefined();
+    expect(getCachedInstance(instance, 'b')).toBeDefined();
+    expect(getCachedInstance(instance, 'c')).toBeDefined();
+  });
 
   it('should handle max=1 correctly', () => {
-    const instance = createKeepAliveInstance({ max: 1 })
-    cacheInstance(instance, 'a', { type: {} } as any)
-    cacheInstance(instance, 'b', { type: {} } as any)
-    expect(getCachedInstance(instance, 'a')).toBeUndefined()
-    expect(getCachedInstance(instance, 'b')).toBeDefined()
-  })
+    const instance = createKeepAliveInstance({ max: 1 });
+    cacheInstance(instance, 'a', { type: {} } as any);
+    cacheInstance(instance, 'b', { type: {} } as any);
+    expect(getCachedInstance(instance, 'a')).toBeUndefined();
+    expect(getCachedInstance(instance, 'b')).toBeDefined();
+  });
 });

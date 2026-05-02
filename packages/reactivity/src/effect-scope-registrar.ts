@@ -2,8 +2,8 @@
 // effect 和 effect-scope 的共享类型注册器
 // 用于打破 effect.ts <-> effect-scope.ts 的循环依赖
 
-import type { ReactiveEffect } from "./effect";
-import type { EffectScope } from "./effect-scope";
+import type { ReactiveEffect } from './effect';
+import type { EffectScope } from './effect-scope';
 
 /**
  * effectScope 收集的条目类型

@@ -11,7 +11,11 @@ import {
 } from '../src/index';
 import type { ComponentInternalInstance, ComponentOptions, InternalSlots } from '../src/types';
 
-function createAndSetup(options: ComponentOptions, rawProps: Record<string, any> = {}, children: any = null) {
+function createAndSetup(
+  options: ComponentOptions,
+  rawProps: Record<string, any> = {},
+  children: any = null,
+) {
   const vnode = { type: options, props: rawProps, children };
   const instance = createComponentInstance(vnode, null);
   setupComponent(instance);

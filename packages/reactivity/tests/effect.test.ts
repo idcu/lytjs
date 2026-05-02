@@ -45,10 +45,13 @@ describe('effect', () => {
     const obj = reactive({ count: 0 });
     const fn = vi.fn();
     const scheduler = vi.fn();
-    effect(() => {
-      obj.count;
-      fn();
-    }, { scheduler });
+    effect(
+      () => {
+        obj.count;
+        fn();
+      },
+      { scheduler },
+    );
     expect(fn).toHaveBeenCalledTimes(1);
     expect(scheduler).not.toHaveBeenCalled();
     obj.count = 1;
@@ -113,7 +116,10 @@ describe('effect', () => {
   it('should reset tracking state', () => {
     const obj = reactive({ count: 0 });
     const fn = vi.fn();
-    effect(() => { obj.count; fn(); });
+    effect(() => {
+      obj.count;
+      fn();
+    });
     pauseTracking();
     obj.count = 1; // trigger 仍然发生
     expect(fn).toHaveBeenCalledTimes(2);

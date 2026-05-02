@@ -2,8 +2,8 @@
 // Vue 3 风格的 effectScope API
 // 用于批量管理响应式副作用的创建和销毁
 
-import type { EffectScopeEntry } from "./effect-scope-registrar";
-import { warn, error } from "@lytjs/common-error";
+import type { EffectScopeEntry } from './effect-scope-registrar';
+import { warn, error } from '@lytjs/common-error';
 
 export interface EffectScope {
   /** 当前 scope 是否活跃 */
@@ -56,10 +56,8 @@ export function setActiveEffectScope(scope: EffectScope | undefined): void {
  * scope.stop()
  * ```
  */
-export function effectScope(
-  options?: boolean | EffectScopeOptions,
-): EffectScope {
-  const detached = typeof options === "boolean" ? options : options?.detached;
+export function effectScope(options?: boolean | EffectScopeOptions): EffectScope {
+  const detached = typeof options === 'boolean' ? options : options?.detached;
   const scope: EffectScope = {
     active: true,
     effects: [],
@@ -145,7 +143,7 @@ export function onScopeDispose(fn: () => void): void {
     activeEffectScope.cleanups.push(fn);
   } else if (__DEV__) {
     warn(
-      "onScopeDispose() was called when there was no active effect scope to be associated with.",
+      'onScopeDispose() was called when there was no active effect scope to be associated with.',
     );
   }
 }

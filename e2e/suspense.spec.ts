@@ -3,15 +3,17 @@ import { getText, getHTML, unmount, evaluateInBrowser, nextTick } from './helper
 
 test.describe('Suspense', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/')
-  })
+    await page.goto('/');
+  });
 
   test.afterEach(async ({ page }) => {
-    await unmount(page)
-  })
+    await unmount(page);
+  });
 
   test('Suspense 组件应该正确创建', async ({ page }) => {
-    const result = await evaluateInBrowser(page, `(args) => {
+    const result = await evaluateInBrowser(
+      page,
+      `(args) => {
       const { defineComponent } = window.LytJS;
 
       const Suspense = defineComponent({
@@ -40,16 +42,19 @@ test.describe('Suspense', () => {
         hasTimeout: 'timeout' in Suspense.props,
         hasSetup: typeof Suspense.setup === 'function',
       };
-    }`)
+    }`,
+    );
 
-    expect(result.name).toBe('Suspense')
-    expect(result.hasProps).toBe(true)
-    expect(result.hasTimeout).toBe(true)
-    expect(result.hasSetup).toBe(true)
-  })
+    expect(result.name).toBe('Suspense');
+    expect(result.hasProps).toBe(true);
+    expect(result.hasTimeout).toBe(true);
+    expect(result.hasSetup).toBe(true);
+  });
 
   test('Suspense boundary 初始状态', async ({ page }) => {
-    const result = await evaluateInBrowser(page, `(args) => {
+    const result = await evaluateInBrowser(
+      page,
+      `(args) => {
       const { defineComponent } = window.LytJS;
 
       const Suspense = defineComponent({
@@ -81,18 +86,21 @@ test.describe('Suspense', () => {
         onPendingLength: boundary.boundary.onPending.length,
         onErrorLength: boundary.boundary.onError.length,
       };
-    }`)
+    }`,
+    );
 
-    expect(result.isPending).toBe(false)
-    expect(result.error).toBeNull()
-    expect(result.pendingPromisesSize).toBe(0)
-    expect(result.onResolveLength).toBe(0)
-    expect(result.onPendingLength).toBe(0)
-    expect(result.onErrorLength).toBe(0)
-  })
+    expect(result.isPending).toBe(false);
+    expect(result.error).toBeNull();
+    expect(result.pendingPromisesSize).toBe(0);
+    expect(result.onResolveLength).toBe(0);
+    expect(result.onPendingLength).toBe(0);
+    expect(result.onErrorLength).toBe(0);
+  });
 
   test('Suspense boundary 状态管理 - pending/resolve', async ({ page }) => {
-    const result = await evaluateInBrowser(page, `(args) => {
+    const result = await evaluateInBrowser(
+      page,
+      `(args) => {
       const { defineComponent } = window.LytJS;
 
       const boundary = {
@@ -124,16 +132,19 @@ test.describe('Suspense', () => {
       };
 
       return { pendingState, resolvedState };
-    }`)
+    }`,
+    );
 
-    expect(result.pendingState.isPending).toBe(true)
-    expect(result.pendingState.pendingPromisesSize).toBe(1)
-    expect(result.resolvedState.isPending).toBe(false)
-    expect(result.resolvedState.pendingPromisesSize).toBe(0)
-  })
+    expect(result.pendingState.isPending).toBe(true);
+    expect(result.pendingState.pendingPromisesSize).toBe(1);
+    expect(result.resolvedState.isPending).toBe(false);
+    expect(result.resolvedState.pendingPromisesSize).toBe(0);
+  });
 
   test('Suspense boundary 错误状态管理', async ({ page }) => {
-    const result = await evaluateInBrowser(page, `(args) => {
+    const result = await evaluateInBrowser(
+      page,
+      `(args) => {
       const boundary = {
         isPending: false,
         error: null,
@@ -154,15 +165,18 @@ test.describe('Suspense', () => {
         errorMessage: boundary.error.message,
         isPending: boundary.isPending,
       };
-    }`)
+    }`,
+    );
 
-    expect(result.hasError).toBe(true)
-    expect(result.errorMessage).toBe('Async component failed')
-    expect(result.isPending).toBe(false)
-  })
+    expect(result.hasError).toBe(true);
+    expect(result.errorMessage).toBe('Async component failed');
+    expect(result.isPending).toBe(false);
+  });
 
   test('Suspense onResolve/onPending 回调注册', async ({ page }) => {
-    const result = await evaluateInBrowser(page, `(args) => {
+    const result = await evaluateInBrowser(
+      page,
+      `(args) => {
       const boundary = {
         isPending: false,
         error: null,
@@ -189,11 +203,12 @@ test.describe('Suspense', () => {
         resolveCalls,
         pendingCalls,
       };
-    }`)
+    }`,
+    );
 
-    expect(result.onResolveLength).toBe(1)
-    expect(result.onPendingLength).toBe(1)
-    expect(result.resolveCalls).toEqual(['resolved'])
-    expect(result.pendingCalls).toEqual(['pending'])
-  })
-})
+    expect(result.onResolveLength).toBe(1);
+    expect(result.onPendingLength).toBe(1);
+    expect(result.resolveCalls).toEqual(['resolved']);
+    expect(result.pendingCalls).toEqual(['pending']);
+  });
+});

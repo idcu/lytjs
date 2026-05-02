@@ -4,17 +4,17 @@
  *
  * 这些函数通过 page.evaluate 在浏览器环境中执行 LytJS 代码
  */
-import type { Page } from '@playwright/test'
+import type { Page } from '@playwright/test';
 
 /**
  * 组件定义类型（浏览器端）
  */
 export interface ComponentOptions {
-  render?: () => any
-  setup?: () => Record<string, any>
-  data?: () => Record<string, any>
-  methods?: Record<string, (...args: any[]) => any>
-  [key: string]: any
+  render?: () => any;
+  setup?: () => Record<string, any>;
+  data?: () => Record<string, any>;
+  methods?: Record<string, (...args: any[]) => any>;
+  [key: string]: any;
 }
 
 /**
@@ -22,9 +22,9 @@ export interface ComponentOptions {
  */
 export interface MountOptions {
   /** 根容器选择器，默认 '#app' */
-  container?: string
+  container?: string;
   /** 根属性 */
-  props?: Record<string, unknown>
+  props?: Record<string, unknown>;
 }
 
 /**
@@ -40,19 +40,18 @@ export async function mount(
   component: string | ComponentOptions,
   options: MountOptions = {},
 ) {
-  const container = options.container ?? '#app'
-  const props = options.props ?? {}
+  const container = options.container ?? '#app';
+  const props = options.props ?? {};
 
   // 将组件定义序列化传入浏览器
-  const componentStr =
-    typeof component === 'string' ? component : JSON.stringify(component)
+  const componentStr = typeof component === 'string' ? component : JSON.stringify(component);
 
   return page.evaluate(
     async ({ componentStr, container, props }) => {
-      const { createApp, h, defineComponent } = (window as any).LytJS
+      const { createApp, h, defineComponent } = (window as any).LytJS;
 
       // 解析组件
-      let rootComponent: any
+      let rootComponent: any;
       if (typeof componentStr === 'string' && componentStr.startsWith('(')) {
         // 函数形式的组件 - 通过 Function 构造器还原
         rootComponent = new Function(
@@ -80,10 +79,10 @@ export async function mount(
           (window as any).LytJS.onUpdated,
           (window as any).LytJS.nextTick,
           (window as any).LytJS.Fragment,
-        )
+        );
       } else {
         // 对象形式的组件
-        const compObj = JSON.parse(componentStr)
+        const compObj = JSON.parse(componentStr);
         if (compObj.render) {
           // render 是字符串形式，需要还原为函数
           if (typeof compObj.render === 'string') {
@@ -106,26 +105,26 @@ export async function mount(
               (window as any).LytJS.onMounted,
               (window as any).LytJS.onUnmounted,
               (window as any).LytJS.nextTick,
-            )
+            );
           }
         }
-        rootComponent = compObj
+        rootComponent = compObj;
       }
 
       // 创建并挂载应用
-      const app = createApp(rootComponent, props)
-      const vm = app.mount(container)
+      const app = createApp(rootComponent, props);
+      const vm = app.mount(container);
 
       // 存储 app 实例引用，供 unmount 使用
-      ;(window as any).__lytjs_app__ = app
+      (window as any).__lytjs_app__ = app;
 
       return {
         el: vm.$el,
         app: true, // 标记 app 已创建（不可序列化，仅作标记）
-      }
+      };
     },
     { componentStr, container, props },
-  )
+  );
 }
 
 /**
@@ -136,18 +135,18 @@ export async function mount(
 export async function unmount(page: Page) {
   return page.evaluate(() => {
     // 从 window 上获取存储的 app 实例引用，调用 app.unmount() 正确卸载
-    const app = (window as any).__lytjs_app__
+    const app = (window as any).__lytjs_app__;
     if (app) {
-      app.unmount()
-      ;(window as any).__lytjs_app__ = null
+      app.unmount();
+      (window as any).__lytjs_app__ = null;
     } else {
       // 回退：直接清空容器内容
-      const container = document.querySelector('#app')
+      const container = document.querySelector('#app');
       if (container) {
-        container.innerHTML = ''
+        container.innerHTML = '';
       }
     }
-  })
+  });
 }
 
 /**
@@ -166,16 +165,16 @@ export async function triggerEvent(
 ) {
   return page.evaluate(
     ({ selector, eventType, options }) => {
-      const el = document.querySelector(selector)
+      const el = document.querySelector(selector);
       if (!el) {
-        throw new Error(`Element not found: ${selector}`)
+        throw new Error(`Element not found: ${selector}`);
       }
-      const event = new Event(eventType, { bubbles: true, cancelable: true })
-      Object.assign(event, options)
-      el.dispatchEvent(event)
+      const event = new Event(eventType, { bubbles: true, cancelable: true });
+      Object.assign(event, options);
+      el.dispatchEvent(event);
     },
     { selector, eventType, options },
-  )
+  );
 }
 
 /**
@@ -187,9 +186,9 @@ export async function triggerEvent(
  */
 export async function getText(page: Page, selector = '#app'): Promise<string> {
   return page.evaluate((sel) => {
-    const el = document.querySelector(sel)
-    return el ? el.textContent ?? '' : ''
-  }, selector)
+    const el = document.querySelector(sel);
+    return el ? (el.textContent ?? '') : '';
+  }, selector);
 }
 
 /**
@@ -199,14 +198,11 @@ export async function getText(page: Page, selector = '#app'): Promise<string> {
  * @param selector - 目标元素选择器，默认 '#app'
  * @returns 元素的 innerHTML
  */
-export async function getHTML(
-  page: Page,
-  selector = '#app',
-): Promise<string> {
+export async function getHTML(page: Page, selector = '#app'): Promise<string> {
   return page.evaluate((sel) => {
-    const el = document.querySelector(sel)
-    return el ? el.innerHTML : ''
-  }, selector)
+    const el = document.querySelector(sel);
+    return el ? el.innerHTML : '';
+  }, selector);
 }
 
 /**
@@ -222,31 +218,56 @@ export async function evaluateInBrowser<T = any>(
   fn: string,
   args: Record<string, any> = {},
 ): Promise<T> {
-  return page.evaluate(
-    (params) => {
-      const { h, ref, reactive, computed, watch, watchEffect, onMounted, onUnmounted, onUpdated, nextTick, createApp, defineComponent, Fragment } =
-        (window as any).LytJS
-      const fn = new Function(
-        'h',
-        'ref',
-        'reactive',
-        'computed',
-        'watch',
-        'watchEffect',
-        'onMounted',
-        'onUnmounted',
-        'onUpdated',
-        'nextTick',
-        'createApp',
-        'defineComponent',
-        'Fragment',
-        'args',
-        `return (${fn})(args)`,
-      )
-      return fn(h, ref, reactive, computed, watch, watchEffect, onMounted, onUnmounted, onUpdated, nextTick, createApp, defineComponent, Fragment, params)
-    },
-    args,
-  )
+  return page.evaluate((params) => {
+    const {
+      h,
+      ref,
+      reactive,
+      computed,
+      watch,
+      watchEffect,
+      onMounted,
+      onUnmounted,
+      onUpdated,
+      nextTick,
+      createApp,
+      defineComponent,
+      Fragment,
+    } = (window as any).LytJS;
+    const fn = new Function(
+      'h',
+      'ref',
+      'reactive',
+      'computed',
+      'watch',
+      'watchEffect',
+      'onMounted',
+      'onUnmounted',
+      'onUpdated',
+      'nextTick',
+      'createApp',
+      'defineComponent',
+      'Fragment',
+      'args',
+      `return (${fn})(args)`,
+    );
+    return fn(
+      h,
+      ref,
+      reactive,
+      computed,
+      watch,
+      watchEffect,
+      onMounted,
+      onUnmounted,
+      onUpdated,
+      nextTick,
+      createApp,
+      defineComponent,
+      Fragment,
+      params,
+    );
+  }, args);
 }
 
 /**
@@ -256,7 +277,7 @@ export async function evaluateInBrowser<T = any>(
  */
 export async function nextTick(page: Page): Promise<void> {
   return page.evaluate(async () => {
-    const { nextTick } = (window as any).LytJS
-    await nextTick()
-  })
+    const { nextTick } = (window as any).LytJS;
+    await nextTick();
+  });
 }

@@ -71,9 +71,7 @@ describe('codegen', () => {
     });
 
     it('should generate v-if/v-else chain', () => {
-      const result = compile(
-        '<div v-if="a">A</div><div v-else>B</div>',
-      );
+      const result = compile('<div v-if="a">A</div><div v-else>B</div>');
       expect(result.code).toContain('?');
       expect(result.code).toContain(':');
     });

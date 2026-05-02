@@ -206,7 +206,7 @@ export async function retry<T>(
 export function timeout<T>(
   promise: Promise<T>,
   ms: number,
-  message: string = "Timeout",
+  message: string = 'Timeout',
 ): Promise<T> {
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => {
@@ -256,7 +256,7 @@ export async function poll<T>(
     }
 
     if (Date.now() - startTime >= timeoutMs) {
-      throw new Error("Polling timeout exceeded");
+      throw new Error('Polling timeout exceeded');
     }
 
     await delay(interval);
@@ -274,7 +274,7 @@ export class TaskQueue {
 
   constructor(concurrency: number = 1) {
     if (concurrency < 1) {
-      throw new Error("TaskQueue concurrency must be at least 1");
+      throw new Error('TaskQueue concurrency must be at least 1');
     }
     this.concurrency = concurrency;
   }
@@ -297,7 +297,7 @@ export class TaskQueue {
     try {
       await task();
     } catch (err) {
-      console.error("TaskQueue task error:", err);
+      console.error('TaskQueue task error:', err);
     } finally {
       this.running--;
       if (this.queue.length > 0) {

@@ -25,7 +25,7 @@ export class LRUCache<K, V> {
 
   constructor(maxSize: number) {
     if (maxSize < 1) {
-      throw new Error("LRUCache maxSize must be at least 1");
+      throw new Error('LRUCache maxSize must be at least 1');
     }
     this.capacity = maxSize;
   }
@@ -152,7 +152,7 @@ export class ExpiringCache<K, V> {
 
   constructor(ttlMs: number) {
     if (ttlMs < 1) {
-      throw new Error("ExpiringCache TTL must be at least 1ms");
+      throw new Error('ExpiringCache TTL must be at least 1ms');
     }
     this.ttl = ttlMs;
   }

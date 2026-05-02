@@ -2,13 +2,13 @@
 // @lytjs/reactivity - reactive.ts 和 ref.ts 共享的辅助函数
 // 提取公共函数以消除 reactive <-> ref 的循环依赖
 
-import { ReactiveFlags } from "./constants";
-import type { RefLike } from "@lytjs/shared-types";
+import { ReactiveFlags } from './constants';
+import type { RefLike } from '@lytjs/shared-types';
 
 // Re-export RefLike for downstream consumers
-export type { RefLike } from "@lytjs/shared-types";
+export type { RefLike } from '@lytjs/shared-types';
 
-import { hasChanged } from "@lytjs/common-is";
+import { hasChanged } from '@lytjs/common-is';
 export { hasChanged };
 
 /**
@@ -30,8 +30,7 @@ export function toRaw<T>(observed: T): T {
   let current: unknown = observed;
   let depth = 0;
   while (current && (current as Record<string, unknown>)[ReactiveFlags.RAW]) {
-    if (_rawSeenSet.has(current as object) || depth >= MAX_RAW_DEPTH)
-      return current as T;
+    if (_rawSeenSet.has(current as object) || depth >= MAX_RAW_DEPTH) return current as T;
     _rawSeenSet.add(current as object);
     current = (current as Record<string, unknown>)[ReactiveFlags.RAW];
     depth++;
@@ -43,5 +42,5 @@ export function toRaw<T>(observed: T): T {
  * 判断一个值是否为 ref
  */
 export function isRef<T = unknown>(r: unknown): r is RefLike<T> {
-  return !!(r && typeof r === "object" && (r as RefLike).__v_isRef === true);
+  return !!(r && typeof r === 'object' && (r as RefLike).__v_isRef === true);
 }

@@ -15,7 +15,7 @@ npm install @lytjs/vdom
 创建虚拟 DOM 节点
 
 ```typescript
-import { createVNode } from '@lytjs/vdom'
+import { createVNode } from '@lytjs/vdom';
 ```
 
 ### createRenderer
@@ -23,7 +23,7 @@ import { createVNode } from '@lytjs/vdom'
 创建渲染器实例，支持自定义渲染后端
 
 ```typescript
-import { createRenderer, createDOMRendererOptions } from '@lytjs/vdom'
+import { createRenderer, createDOMRendererOptions } from '@lytjs/vdom';
 ```
 
 ### Fragment / Text / Comment
@@ -31,7 +31,7 @@ import { createRenderer, createDOMRendererOptions } from '@lytjs/vdom'
 虚拟节点类型常量和工具
 
 ```typescript
-import { Fragment, Text, Comment } from '@lytjs/vdom'
+import { Fragment, Text, Comment } from '@lytjs/vdom';
 ```
 
 ### cloneVNode / mergeProps
@@ -39,7 +39,7 @@ import { Fragment, Text, Comment } from '@lytjs/vdom'
 VNode 克隆和属性合并
 
 ```typescript
-import { cloneVNode, mergeProps } from '@lytjs/vdom'
+import { cloneVNode, mergeProps } from '@lytjs/vdom';
 ```
 
 ### normalizeChildren / getShapeFlag
@@ -47,7 +47,7 @@ import { cloneVNode, mergeProps } from '@lytjs/vdom'
 子节点规范化和形状标志
 
 ```typescript
-import { normalizeChildren, getShapeFlag } from '@lytjs/vdom'
+import { normalizeChildren, getShapeFlag } from '@lytjs/vdom';
 ```
 
 ## 相关包

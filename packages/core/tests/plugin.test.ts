@@ -49,7 +49,9 @@ describe('Plugin', () => {
   it('should register component via plugin', () => {
     const MyComp = defineComponent({ render: () => h('span') });
     const plugin = {
-      install(app: any) { app.component('my-comp', MyComp); },
+      install(app: any) {
+        app.component('my-comp', MyComp);
+      },
     };
     const app = createApp({ render: () => h('div') });
     app.use(plugin);
@@ -57,7 +59,9 @@ describe('Plugin', () => {
 
   it('should register directive via plugin', () => {
     const plugin = {
-      install(app: any) { app.directive('focus', {}); },
+      install(app: any) {
+        app.directive('focus', {});
+      },
     };
     const app = createApp({ render: () => h('div') });
     app.use(plugin);
@@ -65,7 +69,9 @@ describe('Plugin', () => {
 
   it('should provide via plugin', () => {
     const plugin = {
-      install(app: any) { app.provide('plugin-data', 'from-plugin'); },
+      install(app: any) {
+        app.provide('plugin-data', 'from-plugin');
+      },
     };
     const app = createApp({ render: () => h('div') });
     app.use(plugin);
@@ -81,7 +87,11 @@ describe('Plugin', () => {
   });
 
   it('should handle plugin install error', () => {
-    const plugin = { install: () => { throw new Error('plugin error'); } };
+    const plugin = {
+      install: () => {
+        throw new Error('plugin error');
+      },
+    };
     const app = createApp({ render: () => h('div') });
     app.config.errorHandler = vi.fn();
     expect(() => app.use(plugin)).toThrow('plugin error');

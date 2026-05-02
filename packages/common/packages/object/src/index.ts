@@ -3,19 +3,17 @@
  * 对象操作工具函数集合
  */
 
-import { isPlainObject, isArray, isNullish, hasOwn } from "@lytjs/common-is";
+import { isPlainObject, isArray, isNullish, hasOwn } from '@lytjs/common-is';
 
 /**
  * 危险 key 列表，用于防止原型污染
  */
-const PROTO_POLLUTION_KEYS = new Set(["__proto__", "constructor", "prototype"]);
+const PROTO_POLLUTION_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
 
 /**
  * 浅合并多个对象
  */
-export function mergeObjects<T extends Record<string, unknown>>(
-  ...sources: Partial<T>[]
-): T {
+export function mergeObjects<T extends Record<string, unknown>>(...sources: Partial<T>[]): T {
   const result = {} as T;
   for (const source of sources) {
     if (source) {
@@ -32,10 +30,7 @@ export function mergeObjects<T extends Record<string, unknown>>(
 /**
  * 深度合并两个对象
  */
-export function deepMerge<T extends Record<string, unknown>>(
-  target: T,
-  source: Partial<T>,
-): T {
+export function deepMerge<T extends Record<string, unknown>>(target: T, source: Partial<T>): T {
   const result = { ...target };
   for (const key in source) {
     if (hasOwn(source, key) && !PROTO_POLLUTION_KEYS.has(key)) {
@@ -73,10 +68,7 @@ export interface ObjectDiff<T = unknown> {
 /**
  * 比较两个对象的差异
  */
-export function diffObjects<T extends Record<string, unknown>>(
-  oldObj: T,
-  newObj: T,
-): ObjectDiff {
+export function diffObjects<T extends Record<string, unknown>>(oldObj: T, newObj: T): ObjectDiff {
   const added: Record<string, unknown> = {};
   const removed: Record<string, unknown> = {};
   const changed: Record<string, { from: unknown; to: unknown }> = {};
@@ -135,20 +127,16 @@ export function omit<T extends Record<string, unknown>, K extends keyof T>(
 /**
  * 深度克隆对象
  */
-export function deepClone<T>(
-  source: T,
-  seen = new WeakMap<object, unknown>(),
-): T {
+export function deepClone<T>(source: T, seen = new WeakMap<object, unknown>()): T {
   // 基本类型直接返回
-  if (source === null || typeof source !== "object") return source;
+  if (source === null || typeof source !== 'object') return source;
 
   // 循环引用检测
   if (seen.has(source as object)) return seen.get(source as object) as T;
 
   // 特殊对象类型
   if (source instanceof Date) return new Date(source.getTime()) as T;
-  if (source instanceof RegExp)
-    return new RegExp(source.source, source.flags) as T;
+  if (source instanceof RegExp) return new RegExp(source.source, source.flags) as T;
   if (source instanceof Map) {
     const clone = new Map();
     seen.set(source, clone);
@@ -177,17 +165,14 @@ export function deepClone<T>(
   }
 
   // 普通对象 - 保留原型链
-  const clone = Object.create(Object.getPrototypeOf(source)) as Record<
-    string | symbol,
-    unknown
-  >;
+  const clone = Object.create(Object.getPrototypeOf(source)) as Record<string | symbol, unknown>;
   seen.set(source, clone);
   for (const key of Reflect.ownKeys(source)) {
     const clonedValue = deepClone(
       (source as Record<string | symbol, unknown>)[key as string | symbol],
       seen,
     );
-    if (typeof key === "symbol") {
+    if (typeof key === 'symbol') {
       Object.defineProperty(clone, key, {
         value: clonedValue,
         writable: true,
@@ -204,10 +189,7 @@ export function deepClone<T>(
 /**
  * 浅比较两个对象是否相等
  */
-export function shallowEqual<T extends Record<string, unknown>>(
-  a: T,
-  b: T,
-): boolean {
+export function shallowEqual<T extends Record<string, unknown>>(a: T, b: T): boolean {
   if (a === b) return true;
   if (!a || !b) return false;
 
@@ -233,9 +215,9 @@ export function deepEqual<T>(a: T, b: T): boolean {
   if (a == null || b == null) return false;
   if (typeof a !== typeof b) return false;
 
-  if (typeof a === "number" && Number.isNaN(a) && Number.isNaN(b)) return true;
+  if (typeof a === 'number' && Number.isNaN(a) && Number.isNaN(b)) return true;
 
-  if (typeof a !== "object") return false;
+  if (typeof a !== 'object') return false;
 
   if (a instanceof Date && b instanceof Date) {
     return a.getTime() === b.getTime();
@@ -271,10 +253,7 @@ export function deepEqual<T>(a: T, b: T): boolean {
     const keysB = Object.keys(b);
     if (keysA.length !== keysB.length) return false;
     return keysA.every((key) =>
-      deepEqual(
-        (a as Record<string, unknown>)[key],
-        (b as Record<string, unknown>)[key],
-      ),
+      deepEqual((a as Record<string, unknown>)[key], (b as Record<string, unknown>)[key]),
     );
   }
 
@@ -290,7 +269,7 @@ export function get<T = unknown>(
   defaultValue?: T,
 ): T | undefined {
   if (!path) return obj as T;
-  const keys = path.split(".");
+  const keys = path.split('.');
   let current: unknown = obj;
   for (const key of keys) {
     if (current == null) return defaultValue;
@@ -302,20 +281,16 @@ export function get<T = unknown>(
 /**
  * 通过路径设置对象中的值（不修改原对象）
  */
-export function set<T extends Record<string, unknown>>(
-  obj: T,
-  path: string,
-  value: unknown,
-): T {
+export function set<T extends Record<string, unknown>>(obj: T, path: string, value: unknown): T {
   if (!path) return obj;
-  const keys = path.split(".");
+  const keys = path.split('.');
   const result = { ...obj };
   let current: Record<string, unknown> = result;
 
   for (let i = 0; i < keys.length - 1; i++) {
     const key = keys[i]!;
     if (PROTO_POLLUTION_KEYS.has(key)) return obj as T;
-    if (current[key] == null || typeof current[key] !== "object") {
+    if (current[key] == null || typeof current[key] !== 'object') {
       current[key] = {};
     } else {
       current[key] = { ...(current[key] as Record<string, unknown>) };

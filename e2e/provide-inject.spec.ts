@@ -3,15 +3,17 @@ import { getText, getHTML, unmount, evaluateInBrowser, nextTick } from './helper
 
 test.describe('依赖注入 - Provide/Inject', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/')
-  })
+    await page.goto('/');
+  });
 
   test.afterEach(async ({ page }) => {
-    await unmount(page)
-  })
+    await unmount(page);
+  });
 
   test('app.provide 跨层级传递数据到子组件', async ({ page }) => {
-    await evaluateInBrowser(page, `(args) => {
+    await evaluateInBrowser(
+      page,
+      `(args) => {
       const { createApp, h, defineComponent } = window.LytJS;
 
       const GrandChild = defineComponent({
@@ -37,14 +39,17 @@ test.describe('依赖注入 - Provide/Inject', () => {
       });
       app.provide('theme', 'dark');
       app.mount('#app');
-    }`)
+    }`,
+    );
 
-    const text = await getText(page, '#grandchild')
-    expect(text).toBe('Theme: dark')
-  })
+    const text = await getText(page, '#grandchild');
+    expect(text).toBe('Theme: dark');
+  });
 
   test('provide/inject 响应式数据更新时子组件自动更新', async ({ page }) => {
-    await evaluateInBrowser(page, `(args) => {
+    await evaluateInBrowser(
+      page,
+      `(args) => {
       const { createApp, h, defineComponent, ref } = window.LytJS;
 
       const locale = ref('zh-CN');
@@ -74,22 +79,28 @@ test.describe('依赖注入 - Provide/Inject', () => {
       app.mount('#app');
 
       window.__updateLocale = (val) => { locale.value = val; };
-    }`)
+    }`,
+    );
 
-    let text = await getText(page, '#locale-display')
-    expect(text).toBe('Locale: zh-CN')
+    let text = await getText(page, '#locale-display');
+    expect(text).toBe('Locale: zh-CN');
 
-    await evaluateInBrowser(page, `(args) => {
+    await evaluateInBrowser(
+      page,
+      `(args) => {
       window.__updateLocale('en-US');
-    }`)
-    await nextTick(page)
+    }`,
+    );
+    await nextTick(page);
 
-    text = await getText(page, '#locale-display')
-    expect(text).toBe('Locale: en-US')
-  })
+    text = await getText(page, '#locale-display');
+    expect(text).toBe('Locale: en-US');
+  });
 
   test('inject 使用默认值当 provide 未提供时', async ({ page }) => {
-    await evaluateInBrowser(page, `(args) => {
+    await evaluateInBrowser(
+      page,
+      `(args) => {
       const { createApp, h, defineComponent } = window.LytJS;
 
       const Child = defineComponent({
@@ -108,14 +119,17 @@ test.describe('依赖注入 - Provide/Inject', () => {
         }
       });
       app.mount('#app');
-    }`)
+    }`,
+    );
 
-    const text = await getText(page, '#inject-default')
-    expect(text).toBe('fallback-value')
-  })
+    const text = await getText(page, '#inject-default');
+    expect(text).toBe('fallback-value');
+  });
 
   test('多层级 provide/inject 正确传递', async ({ page }) => {
-    await evaluateInBrowser(page, `(args) => {
+    await evaluateInBrowser(
+      page,
+      `(args) => {
       const { createApp, h, defineComponent } = window.LytJS;
 
       const Level3 = defineComponent({
@@ -147,9 +161,10 @@ test.describe('依赖注入 - Provide/Inject', () => {
       });
       app.provide('app-level', 'from-app');
       app.mount('#app');
-    }`)
+    }`,
+    );
 
-    const text = await getText(page, '#level3')
-    expect(text).toBe('from-app|from-level2')
-  })
-})
+    const text = await getText(page, '#level3');
+    expect(text).toBe('from-app|from-level2');
+  });
+});

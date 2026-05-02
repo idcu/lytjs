@@ -20,7 +20,7 @@ import type { ComponentInternalInstance, SuspenseAsyncState } from '../src/types
 describe('Suspense', () => {
   it('should show fallback during async setup (pending state)', async () => {
     let resolvePromise: (value: any) => void;
-    const promise = new Promise(resolve => {
+    const promise = new Promise((resolve) => {
       resolvePromise = resolve;
     });
 
@@ -64,7 +64,7 @@ describe('Suspense', () => {
     }
 
     // Give microtask queue time to process
-    await new Promise(resolve => setTimeout(resolve, 10));
+    await new Promise((resolve) => setTimeout(resolve, 10));
 
     expect(isSuspensePending(boundary)).toBe(false);
     expect(getSuspenseError(boundary)).toBe(error);
@@ -110,7 +110,7 @@ describe('Suspense', () => {
     boundary.onPending.push(onPending);
 
     let resolvePromise: (value: any) => void;
-    const promise = new Promise(resolve => {
+    const promise = new Promise((resolve) => {
       resolvePromise = resolve;
     });
 
@@ -123,7 +123,7 @@ describe('Suspense', () => {
     const boundary = createSuspenseBoundary();
 
     let resolvePromise: (value: any) => void;
-    const promise = new Promise(resolve => {
+    const promise = new Promise((resolve) => {
       resolvePromise = resolve;
     });
 
@@ -140,9 +140,9 @@ describe('Suspense', () => {
   it('should handle multiple async children', async () => {
     const boundary = createSuspenseBoundary();
 
-    const promise1 = new Promise(resolve => setTimeout(() => resolve('p1'), 10));
-    const promise2 = new Promise(resolve => setTimeout(() => resolve('p2'), 20));
-    const promise3 = new Promise(resolve => setTimeout(() => resolve('p3'), 5));
+    const promise1 = new Promise((resolve) => setTimeout(() => resolve('p1'), 10));
+    const promise2 = new Promise((resolve) => setTimeout(() => resolve('p2'), 20));
+    const promise3 = new Promise((resolve) => setTimeout(() => resolve('p3'), 5));
 
     registerAsyncChild(boundary, promise1);
     registerAsyncChild(boundary, promise2);
@@ -152,7 +152,7 @@ describe('Suspense', () => {
     expect(isSuspensePending(boundary)).toBe(true);
 
     await Promise.all([promise1, promise2, promise3]);
-    await new Promise(resolve => setTimeout(resolve, 30));
+    await new Promise((resolve) => setTimeout(resolve, 30));
 
     expect(isSuspensePending(boundary)).toBe(false);
   });
@@ -181,7 +181,7 @@ describe('Suspense', () => {
     const boundary = createSuspenseBoundary();
 
     let resolvePromise: (value: any) => void;
-    const promise = new Promise(resolve => {
+    const promise = new Promise((resolve) => {
       resolvePromise = resolve;
     });
 

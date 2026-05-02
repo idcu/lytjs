@@ -3,17 +3,10 @@
  * VNode creation and manipulation functions
  */
 
-import { Fragment, Text, Comment, ShapeFlags } from "@lytjs/common-vnode";
-import type { VNode, VNodeChildren, VNodeTypes } from "@lytjs/common-vnode";
-import {
-  isString,
-  isArray,
-  isFunction,
-  isObject,
-  isNullish,
-  EMPTY_OBJ,
-} from "@lytjs/common-is";
-import { normalizeClass } from "@lytjs/common-string";
+import { Fragment, Text, Comment, ShapeFlags } from '@lytjs/common-vnode';
+import type { VNode, VNodeChildren, VNodeTypes } from '@lytjs/common-vnode';
+import { isString, isArray, isFunction, isObject, isNullish, EMPTY_OBJ } from '@lytjs/common-is';
+import { normalizeClass, normalizeStyleObject as normalizeStyle } from '@lytjs/common-string';
 
 // ============================================================
 // createVNode
@@ -84,7 +77,7 @@ export function createVNode(
 /**
  * Create a text VNode
  */
-export function createTextVNode(text: string = ""): VNode {
+export function createTextVNode(text: string = ''): VNode {
   return createVNode(Text, null, text);
 }
 
@@ -95,7 +88,7 @@ export function createTextVNode(text: string = ""): VNode {
 /**
  * Create a comment VNode
  */
-export function createCommentVNode(text: string = ""): VNode {
+export function createCommentVNode(text: string = ''): VNode {
   const vnode = createVNode(Comment, null, text);
   vnode.isComment = true;
   return vnode;
@@ -108,17 +101,12 @@ export function createCommentVNode(text: string = ""): VNode {
 /**
  * Clone a VNode, optionally merging extra props
  */
-export function cloneVNode(
-  vnode: VNode,
-  extraProps: Record<string, unknown> | null = null,
-): VNode {
+export function cloneVNode(vnode: VNode, extraProps: Record<string, unknown> | null = null): VNode {
   const cloned: VNode = {
     ...vnode,
     isCloned: true,
     // Shallow clone array children to prevent shared mutation
-    children: Array.isArray(vnode.children)
-      ? [...vnode.children]
-      : vnode.children,
+    children: Array.isArray(vnode.children) ? [...vnode.children] : vnode.children,
     // Deep clone dynamic children reference (not the array itself)
     dynamicChildren: vnode.dynamicChildren ? [...vnode.dynamicChildren] : null,
   };
@@ -128,12 +116,8 @@ export function cloneVNode(
     const mergedProps = { ...extraProps };
     // Normalize the merged props
     normalizeProps(mergedProps);
-    cloned.key =
-      (mergedProps.key as string | number | symbol | null | undefined) ??
-      vnode.key;
-    cloned.ref =
-      (mergedProps.ref as ((ref: unknown) => void) | null | undefined) ??
-      vnode.ref;
+    cloned.key = (mergedProps.key as string | number | symbol | null | undefined) ?? vnode.key;
+    cloned.ref = (mergedProps.ref as ((ref: unknown) => void) | null | undefined) ?? vnode.ref;
     // Merge props directly
     if (vnode.props) {
       cloned.props = { ...vnode.props, ...mergedProps };
@@ -176,25 +160,21 @@ export function mergeProps(
     if (!props) continue;
 
     for (const key in props) {
-      if (key === "key" || key === "ref") continue;
+      if (key === 'key' || key === 'ref') continue;
 
       const val = props[key];
       const existing = result[key];
 
       // Class concatenation
-      if (key === "class") {
-        result[key] = existing
-          ? normalizeClass([existing, val])
-          : normalizeClass(val as string);
+      if (key === 'class') {
+        result[key] = existing ? normalizeClass([existing, val]) : normalizeClass(val as string);
       }
       // Style merging
-      else if (key === "style") {
-        result[key] = existing
-          ? normalizeStyle([existing, val])
-          : normalizeStyle(val);
+      else if (key === 'style') {
+        result[key] = existing ? normalizeStyle([existing, val]) : normalizeStyle(val);
       }
       // Event handler concatenation
-      else if (key.startsWith("on") && isFunction(val)) {
+      else if (key.startsWith('on') && isFunction(val)) {
         if (isFunction(existing)) {
           result[key] = [existing, val];
         } else if (isArray(existing)) {
@@ -234,10 +214,10 @@ export function normalizeChildren(vnode: VNode, children: VNodeChildren): void {
     if (isFunction(children)) {
       vnode.children = children as unknown as VNodeChildren;
     }
-  } else if (typeof children === "number") {
+  } else if (typeof children === 'number') {
     type = ShapeFlags.TEXT_CHILDREN;
     vnode.children = String(children);
-  } else if (typeof children === "boolean") {
+  } else if (typeof children === 'boolean') {
     // Boolean children are treated as null
     vnode.children = undefined;
   } else if (isObject(children)) {
@@ -282,82 +262,17 @@ export function getShapeFlag(type: VNodeTypes): number {
 /**
  * Normalize props: extract key/ref, normalize class/style
  */
-function normalizeProps(
-  props: Record<string, unknown>,
-): Record<string, unknown> {
+function normalizeProps(props: Record<string, unknown>): Record<string, unknown> {
   const normalized = { ...props };
   // class normalization
   if (normalized.class !== undefined) {
-    normalized.class = normalizeClass(
-      normalized.class as Parameters<typeof normalizeClass>[0],
-    );
+    normalized.class = normalizeClass(normalized.class as Parameters<typeof normalizeClass>[0]);
   }
   // style normalization
   if (normalized.style !== undefined) {
-    normalized.style = normalizeStyle(
-      normalized.style as Parameters<typeof normalizeStyle>[0],
-    );
+    normalized.style = normalizeStyle(normalized.style as Parameters<typeof normalizeStyle>[0]);
   }
   return normalized;
-}
-
-/**
- * Parse a CSS inline style string (e.g. "color:red; font-size:16px")
- * into a plain object { color: "red", fontSize: "16px" }.
- */
-function parseStringStyle(cssText: string): Record<string, string> {
-  const res: Record<string, string> = {};
-  const list = cssText.split(";");
-  for (let i = 0; i < list.length; i++) {
-    const item = list[i]?.trim();
-    if (!item) continue;
-    const colonIdx = item.indexOf(":");
-    if (colonIdx === -1) continue;
-    const prop = item.slice(0, colonIdx).trim();
-    const val = item.slice(colonIdx + 1).trim();
-    if (!prop) continue;
-    // Convert kebab-case to camelCase for JS style objects
-    const camelProp = prop.replace(/-\w/g, (m) => m[1]?.toUpperCase() ?? "");
-    res[camelProp] = val;
-  }
-  return res;
-}
-
-/**
- * Normalize style value - keeps object form for vdom patch diffing.
- * Note: common-string's normalizeStyle returns string, but vdom needs object form.
- *
- * @param value - The style value to normalize. Can be a string (e.g. "color:red"),
- *   an array of styles to merge, or a style object.
- * @returns A normalized style: either a CSS string or a Record of CSS properties
- *   with string or number values. Never returns undefined (falls back to EMPTY_OBJ).
- */
-function normalizeStyle(
-  value: unknown,
-): string | Record<string, string | number> {
-  if (isArray(value)) {
-    const res: Record<string, string | number> = {};
-    for (let i = 0; i < value.length; i++) {
-      const item = value[i];
-      if (item) {
-        const normalized = normalizeStyle(item);
-        if (isString(normalized)) {
-          // Parse string styles (e.g. "color:red") into object form and merge
-          Object.assign(res, parseStringStyle(normalized));
-          continue;
-        }
-        Object.assign(res, normalized);
-      }
-    }
-    return res;
-  }
-  if (isString(value)) {
-    return value;
-  }
-  if (isObject(value)) {
-    return value as Record<string, string | number>;
-  }
-  return {} as Record<string, string | number>;
 }
 
 // Re-export EMPTY_OBJ for convenience

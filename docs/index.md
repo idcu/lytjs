@@ -2,8 +2,8 @@
 layout: home
 
 hero:
-  name: "Lyt.js"
-  text: "下一代轻量级前端框架"
+  name: 'Lyt.js'
+  text: '下一代轻量级前端框架'
   tagline: 高性能 · 类型安全 · 模块化 · 渐进式
   actions:
     - theme: brand

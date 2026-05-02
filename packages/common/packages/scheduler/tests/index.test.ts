@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
   queueJob,
   queuePostFlushCb,
@@ -9,9 +9,9 @@ import {
   hasPendingJobs,
   getPendingJobCount,
   resetSchedulerState,
-} from "../src/index";
+} from '../src/index';
 
-describe("@lytjs/common-scheduler", () => {
+describe('@lytjs/common-scheduler', () => {
   beforeEach(() => {
     resetSchedulerState();
   });
@@ -20,22 +20,22 @@ describe("@lytjs/common-scheduler", () => {
     resetSchedulerState();
   });
 
-  describe("queueJob", () => {
-    it("should queue a job", () => {
+  describe('queueJob', () => {
+    it('should queue a job', () => {
       const job = vi.fn();
       queueJob(job);
       expect(hasPendingJobs()).toBe(true);
       expect(getPendingJobCount()).toBe(1);
     });
 
-    it("should not queue duplicate jobs", () => {
+    it('should not queue duplicate jobs', () => {
       const job = vi.fn();
       queueJob(job);
       queueJob(job);
       expect(getPendingJobCount()).toBe(1);
     });
 
-    it("should queue different jobs", () => {
+    it('should queue different jobs', () => {
       const job1 = vi.fn();
       const job2 = vi.fn();
       queueJob(job1);
@@ -44,14 +44,14 @@ describe("@lytjs/common-scheduler", () => {
     });
   });
 
-  describe("queuePostFlushCb", () => {
-    it("should queue a post-flush callback", () => {
+  describe('queuePostFlushCb', () => {
+    it('should queue a post-flush callback', () => {
       const cb = vi.fn();
       queuePostFlushCb(cb);
       expect(hasPendingJobs()).toBe(true);
     });
 
-    it("should not queue duplicate callbacks", () => {
+    it('should not queue duplicate callbacks', () => {
       const cb = vi.fn();
       queuePostFlushCb(cb);
       queuePostFlushCb(cb);
@@ -60,8 +60,8 @@ describe("@lytjs/common-scheduler", () => {
     });
   });
 
-  describe("flushJobs", () => {
-    it("should execute all queued jobs", () => {
+  describe('flushJobs', () => {
+    it('should execute all queued jobs', () => {
       const job1 = vi.fn();
       const job2 = vi.fn();
       queueJob(job1);
@@ -72,17 +72,17 @@ describe("@lytjs/common-scheduler", () => {
       expect(hasPendingJobs()).toBe(false);
     });
 
-    it("should execute post-flush callbacks after jobs", () => {
+    it('should execute post-flush callbacks after jobs', () => {
       const order: string[] = [];
-      const job = vi.fn(() => order.push("job"));
-      const cb = vi.fn(() => order.push("callback"));
+      const job = vi.fn(() => order.push('job'));
+      const cb = vi.fn(() => order.push('callback'));
       queueJob(job);
       queuePostFlushCb(cb);
       flushJobs();
-      expect(order).toEqual(["job", "callback"]);
+      expect(order).toEqual(['job', 'callback']);
     });
 
-    it("should handle jobs that queue new jobs", () => {
+    it('should handle jobs that queue new jobs', () => {
       const job2 = vi.fn();
       const job1 = vi.fn(() => queueJob(job2));
       queueJob(job1);
@@ -92,8 +92,8 @@ describe("@lytjs/common-scheduler", () => {
     });
   });
 
-  describe("flushSync", () => {
-    it("should flush jobs synchronously", () => {
+  describe('flushSync', () => {
+    it('should flush jobs synchronously', () => {
       const job = vi.fn();
       queueJob(job);
       flushSync();
@@ -101,15 +101,15 @@ describe("@lytjs/common-scheduler", () => {
     });
   });
 
-  describe("nextTick", () => {
-    it("should execute callback after next tick", async () => {
+  describe('nextTick', () => {
+    it('should execute callback after next tick', async () => {
       const cb = vi.fn();
       nextTick(cb);
       await new Promise((resolve) => setTimeout(resolve, 0));
       expect(cb).toHaveBeenCalled();
     });
 
-    it("should queue job and flush", async () => {
+    it('should queue job and flush', async () => {
       const job = vi.fn();
       queueJob(job);
       await nextTick(() => {});
@@ -117,23 +117,23 @@ describe("@lytjs/common-scheduler", () => {
     });
   });
 
-  describe("hasPendingJobs", () => {
-    it("should return false when no jobs are pending", () => {
+  describe('hasPendingJobs', () => {
+    it('should return false when no jobs are pending', () => {
       expect(hasPendingJobs()).toBe(false);
     });
 
-    it("should return true when jobs are pending", () => {
+    it('should return true when jobs are pending', () => {
       queueJob(vi.fn());
       expect(hasPendingJobs()).toBe(true);
     });
   });
 
-  describe("getPendingJobCount", () => {
-    it("should return 0 when no jobs are pending", () => {
+  describe('getPendingJobCount', () => {
+    it('should return 0 when no jobs are pending', () => {
       expect(getPendingJobCount()).toBe(0);
     });
 
-    it("should return correct count", () => {
+    it('should return correct count', () => {
       queueJob(vi.fn());
       queueJob(vi.fn());
       queueJob(vi.fn());
@@ -141,8 +141,8 @@ describe("@lytjs/common-scheduler", () => {
     });
   });
 
-  describe("queuePreFlushCb", () => {
-    it("should execute pre-flush callbacks before jobs", async () => {
+  describe('queuePreFlushCb', () => {
+    it('should execute pre-flush callbacks before jobs', async () => {
       const order: number[] = [];
       queueJob(() => order.push(1));
       queuePreFlushCb(() => order.push(0));
@@ -150,7 +150,7 @@ describe("@lytjs/common-scheduler", () => {
       expect(order).toEqual([0, 1]);
     });
 
-    it("should deduplicate pre-flush callbacks", async () => {
+    it('should deduplicate pre-flush callbacks', async () => {
       let count = 0;
       const cb = () => count++;
       queuePreFlushCb(cb);

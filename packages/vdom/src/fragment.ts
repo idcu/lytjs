@@ -3,20 +3,16 @@
  * Fragment operations - standalone helpers for fragment vnode handling
  */
 
-import { Fragment, ShapeFlags, createBaseVNode } from "@lytjs/common-vnode";
-import type { VNode } from "@lytjs/common-vnode";
-import { isArray } from "@lytjs/common-is";
+import { Fragment, ShapeFlags, createBaseVNode } from '@lytjs/common-vnode';
+import type { VNode } from '@lytjs/common-vnode';
+import { isArray } from '@lytjs/common-is';
 
 // ============================================================
 // Fragment helpers
 // ============================================================
 
-/**
- * Check if a vnode is a Fragment
- */
-export function isFragmentVNode(vnode: VNode): boolean {
-  return vnode.type === Fragment;
-}
+// Re-export isFragment from common-vnode for backward compatibility
+export { isFragment as isFragmentVNode } from '@lytjs/common-vnode';
 
 /**
  * Get the children array from a fragment vnode

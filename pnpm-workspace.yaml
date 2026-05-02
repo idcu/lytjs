@@ -1,23 +1,23 @@
 packages:
   # 子仓库（孙仓库级）
-  - "packages/common/packages/*"
+  - 'packages/common/packages/*'
   # 以下目录尚未创建，为未来规划中的子仓库
-  - "packages/ecosystem/packages/*"  # 规划中
-  - "packages/lytui/packages/*"      # 规划中
-  - "packages/plugins/packages/*"    # 规划中
-  - "packages/tools/packages/*"      # 规划中
+  - 'packages/ecosystem/packages/*' # 规划中
+  - 'packages/lytui/packages/*' # 规划中
+  - 'packages/plugins/packages/*' # 规划中
+  - 'packages/tools/packages/*' # 规划中
 
   # 子仓库（单包级）
-  - "packages/shared-types"
-  - "packages/reactivity"
-  - "packages/vdom"
-  - "packages/compiler"
-  - "packages/renderer"
-  - "packages/component"
-  - "packages/core"
+  - 'packages/shared-types'
+  - 'packages/reactivity'
+  - 'packages/vdom'
+  - 'packages/compiler'
+  - 'packages/renderer'
+  - 'packages/component'
+  - 'packages/core'
 
   # 根仓库应用
-  - "docs"
-  - "examples/*"
-  - "benchmarks/*"
-  - "e2e/*"
+  - 'docs'
+  - 'examples/*'
+  - 'benchmarks/*'
+  - 'e2e/*'

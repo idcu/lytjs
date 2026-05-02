@@ -1,14 +1,10 @@
 // src/slots.ts
 // Slot handling
 
-import { isFunction, isArray, isObject, isNullish } from "@lytjs/common-is";
-import { warn } from "@lytjs/common-error";
-import type { VNode } from "@lytjs/common-vnode";
-import type {
-  ComponentInternalInstance,
-  InternalSlots,
-  SlotFunction,
-} from "./types";
+import { isFunction, isArray, isObject, isNullish } from '@lytjs/common-is';
+import { warn } from '@lytjs/common-error';
+import type { VNode } from '@lytjs/common-vnode';
+import type { ComponentInternalInstance, InternalSlots, SlotFunction } from './types';
 
 /**
  * Initialize slots from children.
@@ -17,10 +13,7 @@ import type {
  * - A single function (default slot)
  * - null/undefined (no slots)
  */
-export function initSlots(
-  instance: ComponentInternalInstance,
-  children: unknown,
-): void {
+export function initSlots(instance: ComponentInternalInstance, children: unknown): void {
   if (isNullish(children)) {
     instance.slots = {} as InternalSlots;
     return;

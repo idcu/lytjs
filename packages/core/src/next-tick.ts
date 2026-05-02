@@ -1,1 +1,1 @@
-export { nextTick } from "@lytjs/common-scheduler";
+export { nextTick } from '@lytjs/common-scheduler';

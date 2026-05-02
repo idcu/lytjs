@@ -1,7 +1,7 @@
 // src/signal-component.ts
 // Signal 组件集成工具
 
-import type { Signal, ComputedSignal } from "./signal";
+import type { Signal, ComputedSignal } from './signal';
 
 export interface SignalComponentOptions {
   signals?: Record<string, Signal<unknown>>;
@@ -47,9 +47,7 @@ export function createSignalBinding<T>(
  * 这会触发 signal 的依赖追踪机制。如果此 props 对象在响应式上下文（如 effect 或
  * computed）中被读取，访问的 signal 会自动注册为该上下文的依赖。
  */
-export function signalToProps(
-  signals: Record<string, Signal<unknown>>,
-): Record<string, unknown> {
+export function signalToProps(signals: Record<string, Signal<unknown>>): Record<string, unknown> {
   const props: Record<string, unknown> = {};
   for (const [key, sig] of Object.entries(signals)) {
     Object.defineProperty(props, key, {

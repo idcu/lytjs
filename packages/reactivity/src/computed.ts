@@ -2,19 +2,19 @@
 // 计算属性
 // 复用 @lytjs/common-is: isFunction, hasChanged
 
-import { isFunction } from "@lytjs/common-is";
-import { warn } from "@lytjs/common-error";
-import { ReactiveEffect, createDep } from "./effect";
-import type { Dep } from "./effect";
-import { trackRefValue, triggerRefValue } from "./ref";
+import { isFunction } from '@lytjs/common-is';
+import { warn } from '@lytjs/common-error';
+import { ReactiveEffect, createDep } from './effect';
+import type { Dep } from './effect';
+import { trackRefValue, triggerRefValue } from './ref';
 import type {
   ComputedRef,
   WritableComputedRef,
   ComputedGetter,
   ComputedSetter,
   WritableComputedOptions,
-} from "./types";
-import { ComputedRefSymbol } from "./constants";
+} from './types';
+import { ComputedRefSymbol } from './constants';
 
 // ==================== ComputedRefImpl ====================
 
@@ -66,7 +66,7 @@ class ComputedRefImpl<T> {
         }
       } else if (__DEV__) {
         warn(
-          "Computed value was accessed after its effect was stopped. Returning last cached value.",
+          'Computed value was accessed after its effect was stopped. Returning last cached value.',
         );
       }
     }
@@ -77,7 +77,7 @@ class ComputedRefImpl<T> {
     if (this._setter) {
       this._setter(newValue);
     } else if (__DEV__) {
-      warn("Write operation failed: computed value is readonly");
+      warn('Write operation failed: computed value is readonly');
     }
   }
 }
@@ -92,15 +92,11 @@ export function computed<T>(
 
   if (isFunction(getterOrOptions)) {
     getter = getterOrOptions;
-    setter = __DEV__
-      ? () => warn("Write operation failed: computed value is readonly")
-      : undefined;
+    setter = __DEV__ ? () => warn('Write operation failed: computed value is readonly') : undefined;
   } else {
     getter = getterOrOptions.get;
     setter = getterOrOptions.set;
   }
 
-  return new ComputedRefImpl(getter, setter, false) as
-    | ComputedRef<T>
-    | WritableComputedRef<T>;
+  return new ComputedRefImpl(getter, setter, false) as ComputedRef<T> | WritableComputedRef<T>;
 }

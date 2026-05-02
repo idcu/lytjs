@@ -3,15 +3,17 @@ import { getText, getHTML, unmount, evaluateInBrowser, nextTick } from './helper
 
 test.describe('指令', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/')
-  })
+    await page.goto('/');
+  });
 
   test.afterEach(async ({ page }) => {
-    await unmount(page)
-  })
+    await unmount(page);
+  });
 
   test('v-if 条件渲染 - 显示元素', async ({ page }) => {
-    await evaluateInBrowser(page, `(args) => {
+    await evaluateInBrowser(
+      page,
+      `(args) => {
       const { createApp, h, ref } = window.LytJS;
       const show = ref(true);
 
@@ -24,19 +26,22 @@ test.describe('指令', () => {
         ])
       });
       app.mount('#app');
-    }`)
+    }`,
+    );
 
     // 条件为 true 时应该显示
-    const html = await getHTML(page)
-    expect(html).toContain('Always visible')
-    expect(html).toContain('Conditionally visible')
+    const html = await getHTML(page);
+    expect(html).toContain('Always visible');
+    expect(html).toContain('Conditionally visible');
 
-    const conditionalEl = await page.locator('#conditional').count()
-    expect(conditionalEl).toBe(1)
-  })
+    const conditionalEl = await page.locator('#conditional').count();
+    expect(conditionalEl).toBe(1);
+  });
 
   test('v-if 条件渲染 - 隐藏元素', async ({ page }) => {
-    await evaluateInBrowser(page, `(args) => {
+    await evaluateInBrowser(
+      page,
+      `(args) => {
       const { createApp, h, ref } = window.LytJS;
       const show = ref(false);
 
@@ -49,19 +54,22 @@ test.describe('指令', () => {
         ])
       });
       app.mount('#app');
-    }`)
+    }`,
+    );
 
     // 条件为 false 时应该不显示
-    const html = await getHTML(page)
-    expect(html).toContain('Always visible')
-    expect(html).not.toContain('Conditionally visible')
+    const html = await getHTML(page);
+    expect(html).toContain('Always visible');
+    expect(html).not.toContain('Conditionally visible');
 
-    const conditionalEl = await page.locator('#conditional').count()
-    expect(conditionalEl).toBe(0)
-  })
+    const conditionalEl = await page.locator('#conditional').count();
+    expect(conditionalEl).toBe(0);
+  });
 
   test('v-if 条件切换', async ({ page }) => {
-    await evaluateInBrowser(page, `(args) => {
+    await evaluateInBrowser(
+      page,
+      `(args) => {
       const { createApp, h, ref } = window.LytJS;
       const visible = ref(true);
 
@@ -75,39 +83,48 @@ test.describe('指令', () => {
         ])
       });
       app.mount('#app');
-    }`)
+    }`,
+    );
 
     // 初始状态 - Panel A 可见
-    let panelA = await page.locator('#panel-a').count()
-    let panelB = await page.locator('#panel-b').count()
-    expect(panelA).toBe(1)
-    expect(panelB).toBe(0)
+    let panelA = await page.locator('#panel-a').count();
+    let panelB = await page.locator('#panel-b').count();
+    expect(panelA).toBe(1);
+    expect(panelB).toBe(0);
 
     // 切换到 Panel B
-    await evaluateInBrowser(page, `(args) => {
+    await evaluateInBrowser(
+      page,
+      `(args) => {
       window.__setVisible(false);
-    }`)
-    await nextTick(page)
+    }`,
+    );
+    await nextTick(page);
 
-    panelA = await page.locator('#panel-a').count()
-    panelB = await page.locator('#panel-b').count()
-    expect(panelA).toBe(0)
-    expect(panelB).toBe(1)
+    panelA = await page.locator('#panel-a').count();
+    panelB = await page.locator('#panel-b').count();
+    expect(panelA).toBe(0);
+    expect(panelB).toBe(1);
 
     // 切换回 Panel A
-    await evaluateInBrowser(page, `(args) => {
+    await evaluateInBrowser(
+      page,
+      `(args) => {
       window.__setVisible(true);
-    }`)
-    await nextTick(page)
+    }`,
+    );
+    await nextTick(page);
 
-    panelA = await page.locator('#panel-a').count()
-    panelB = await page.locator('#panel-b').count()
-    expect(panelA).toBe(1)
-    expect(panelB).toBe(0)
-  })
+    panelA = await page.locator('#panel-a').count();
+    panelB = await page.locator('#panel-b').count();
+    expect(panelA).toBe(1);
+    expect(panelB).toBe(0);
+  });
 
   test('v-for 列表渲染', async ({ page }) => {
-    await evaluateInBrowser(page, `(args) => {
+    await evaluateInBrowser(
+      page,
+      `(args) => {
       const { createApp, h, ref } = window.LytJS;
       const items = ref(['Apple', 'Banana', 'Cherry']);
 
@@ -122,24 +139,30 @@ test.describe('指令', () => {
         )
       });
       app.mount('#app');
-    }`)
+    }`,
+    );
 
     // 验证初始列表
-    let listItems = await page.locator('li').allTextContents()
-    expect(listItems).toEqual(['Apple', 'Banana', 'Cherry'])
+    let listItems = await page.locator('li').allTextContents();
+    expect(listItems).toEqual(['Apple', 'Banana', 'Cherry']);
 
     // 添加新项
-    await evaluateInBrowser(page, `(args) => {
+    await evaluateInBrowser(
+      page,
+      `(args) => {
       window.__addItem('Durian');
-    }`)
-    await nextTick(page)
+    }`,
+    );
+    await nextTick(page);
 
-    listItems = await page.locator('li').allTextContents()
-    expect(listItems).toEqual(['Apple', 'Banana', 'Cherry', 'Durian'])
-  })
+    listItems = await page.locator('li').allTextContents();
+    expect(listItems).toEqual(['Apple', 'Banana', 'Cherry', 'Durian']);
+  });
 
   test('v-for 列表渲染 - 空列表', async ({ page }) => {
-    await evaluateInBrowser(page, `(args) => {
+    await evaluateInBrowser(
+      page,
+      `(args) => {
       const { createApp, h, ref } = window.LytJS;
       const items = ref([]);
 
@@ -151,14 +174,17 @@ test.describe('指令', () => {
         )
       });
       app.mount('#app');
-    }`)
+    }`,
+    );
 
-    const text = await getText(page)
-    expect(text).toBe('No items')
-  })
+    const text = await getText(page);
+    expect(text).toBe('No items');
+  });
 
   test('v-for 列表渲染 - 更新整个列表', async ({ page }) => {
-    await evaluateInBrowser(page, `(args) => {
+    await evaluateInBrowser(
+      page,
+      `(args) => {
       const { createApp, h, ref } = window.LytJS;
       const items = ref(['one', 'two']);
 
@@ -172,23 +198,29 @@ test.describe('指令', () => {
         )
       });
       app.mount('#app');
-    }`)
+    }`,
+    );
 
-    let listItems = await page.locator('li').allTextContents()
-    expect(listItems).toEqual(['one', 'two'])
+    let listItems = await page.locator('li').allTextContents();
+    expect(listItems).toEqual(['one', 'two']);
 
     // 替换整个列表
-    await evaluateInBrowser(page, `(args) => {
+    await evaluateInBrowser(
+      page,
+      `(args) => {
       window.__setItems(['a', 'b', 'c', 'd']);
-    }`)
-    await nextTick(page)
+    }`,
+    );
+    await nextTick(page);
 
-    listItems = await page.locator('li').allTextContents()
-    expect(listItems).toEqual(['a', 'b', 'c', 'd'])
-  })
+    listItems = await page.locator('li').allTextContents();
+    expect(listItems).toEqual(['a', 'b', 'c', 'd']);
+  });
 
   test('v-for 渲染对象列表', async ({ page }) => {
-    await evaluateInBrowser(page, `(args) => {
+    await evaluateInBrowser(
+      page,
+      `(args) => {
       const { createApp, h, ref } = window.LytJS;
       const users = ref([
         { id: 1, name: 'Alice' },
@@ -203,9 +235,10 @@ test.describe('指令', () => {
         )
       });
       app.mount('#app');
-    }`)
+    }`,
+    );
 
-    const listItems = await page.locator('li').allTextContents()
-    expect(listItems).toEqual(['Alice (ID: 1)', 'Bob (ID: 2)'])
-  })
-})
+    const listItems = await page.locator('li').allTextContents();
+    expect(listItems).toEqual(['Alice (ID: 1)', 'Bob (ID: 2)']);
+  });
+});

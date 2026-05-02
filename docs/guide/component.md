@@ -7,10 +7,10 @@
 使用对象语法定义组件，包含 `props`、`data`、`methods`、`setup` 等选项。
 
 ```typescript
-import { createApp } from "@lytjs/core";
+import { createApp } from '@lytjs/core';
 
 const Counter = {
-  name: "Counter",
+  name: 'Counter',
   props: {
     initialCount: { type: Number, default: 0 },
   },
@@ -23,15 +23,15 @@ const Counter = {
     },
   },
   render(ctx) {
-    return h("div", [
-      h("p", `Count: ${ctx.count}`),
-      h("button", { onClick: () => ctx.increment() }, "Increment"),
+    return h('div', [
+      h('p', `Count: ${ctx.count}`),
+      h('button', { onClick: () => ctx.increment() }, 'Increment'),
     ]);
   },
 };
 
 const app = createApp(Counter, { initialCount: 10 });
-app.mount("#app");
+app.mount('#app');
 ```
 
 ## Setup 函数
@@ -40,7 +40,7 @@ app.mount("#app");
 
 ```typescript
 const MyComponent = {
-  name: "MyComponent",
+  name: 'MyComponent',
   setup(props, ctx) {
     const count = ref(0);
     const increment = () => count.value++;
@@ -61,7 +61,7 @@ const UserCard = {
     age: { type: Number, default: 0 },
   },
   render(ctx) {
-    return h("div", `${ctx.name}, ${ctx.age} 岁`);
+    return h('div', `${ctx.name}, ${ctx.age} 岁`);
   },
 };
 ```
@@ -73,10 +73,10 @@ const UserCard = {
 ```typescript
 const MyComponent = {
   mounted() {
-    console.log("组件已挂载");
+    console.log('组件已挂载');
   },
   unmounted() {
-    console.log("组件已卸载");
+    console.log('组件已卸载');
   },
 };
 ```

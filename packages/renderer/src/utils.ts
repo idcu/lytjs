@@ -6,7 +6,7 @@
  * It re-exports selected utilities from @lytjs/common-string for convenience.
  */
 
-import { escapeHtml, isBooleanAttr, VOID_ELEMENTS } from "@lytjs/common-string";
+import { escapeHtml, isBooleanAttr, VOID_ELEMENTS } from '@lytjs/common-string';
 
 export { escapeHtml, isBooleanAttr };
 

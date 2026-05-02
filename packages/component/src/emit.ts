@@ -1,11 +1,11 @@
 // src/emit.ts
 // Event emission system
 
-import { isFunction, hasOwn, isArray } from "@lytjs/common-is";
-import { kebabToCamel } from "@lytjs/common-string";
-import { warn } from "@lytjs/common-error";
-import type { ComponentInternalInstance } from "./types";
-import { handleError } from "./lifecycle";
+import { isFunction, hasOwn, isArray } from '@lytjs/common-is';
+import { kebabToCamel } from '@lytjs/common-string';
+import { warn } from '@lytjs/common-error';
+import type { ComponentInternalInstance } from './types';
+import { handleError } from './lifecycle';
 
 /**
  * Normalize emits definition into a consistent Record<string, any> format.
@@ -35,7 +35,7 @@ export function normalizeEmitsOptions(
  * 例如: 'update:model-value' => 'onUpdate:modelValue'
  */
 function toHandlerKey(event: string): string {
-  if (!event) return "";
+  if (!event) return '';
   const camelized = kebabToCamel(event);
   return `on${camelized[0]!.toUpperCase()}${camelized.slice(1)}`;
 }
@@ -44,17 +44,11 @@ function toHandlerKey(event: string): string {
  * Emit an event on a component instance.
  * Looks for `onXxx` handler in props and attrs (camelCase conversion).
  */
-export function emit(
-  instance: ComponentInternalInstance,
-  event: string,
-  ...args: unknown[]
-): void {
+export function emit(instance: ComponentInternalInstance, event: string, ...args: unknown[]): void {
   if (instance.isUnmounted) return;
 
   if (__DEV__ && !isEmitValid(instance, event)) {
-    warn(
-      `Component emitted event "${event}" but it is not declared in emits.`,
-    );
+    warn(`Component emitted event "${event}" but it is not declared in emits.`);
   }
 
   // Normalize event name: convert kebab-case to camelCase for handler lookup
@@ -74,10 +68,7 @@ export function emit(
 /**
  * Check if an event is declared in the emits options.
  */
-export function isEmitValid(
-  instance: ComponentInternalInstance,
-  event: string,
-): boolean {
+export function isEmitValid(instance: ComponentInternalInstance, event: string): boolean {
   if (!instance.emitsOptions) return true;
   return hasOwn(instance.emitsOptions, event);
 }

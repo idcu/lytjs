@@ -10,10 +10,10 @@ import {
   isFunction,
   hasOwn,
   EMPTY_OBJ,
-} from "@lytjs/common-is";
-import { warn } from "@lytjs/common-error";
-import type { PropOptions } from "./types";
-import type { ComponentInternalInstance } from "./types";
+} from '@lytjs/common-is';
+import { warn } from '@lytjs/common-error';
+import type { PropOptions } from './types';
+import type { ComponentInternalInstance } from './types';
 
 /**
  * Normalize props definition into a consistent Record<string, PropOptions> format.
@@ -39,9 +39,7 @@ export function normalizePropsOptions(
   for (const key in rawProps) {
     if (hasOwn(rawProps, key)) {
       const value = rawProps[key]!;
-      result[key] = (
-        isFunction(value) || isArray(value) ? { type: value } : value
-      ) as PropOptions;
+      result[key] = (isFunction(value) || isArray(value) ? { type: value } : value) as PropOptions;
     }
   }
   return result;
@@ -65,10 +63,7 @@ export function resolvePropValue<T = unknown>(
     // 类型断言 `Boolean as unknown` 是必要的，因为 PropOptions.type 的类型
     // 为 Constructor | Constructor[]，而 Boolean 构造函数需要通过 unknown 中间
     // 类型才能与数组元素类型兼容
-    if (
-      type === Boolean ||
-      (isArray(type) && type.includes(Boolean as unknown))
-    ) {
+    if (type === Boolean || (isArray(type) && type.includes(Boolean as unknown))) {
       return false as T | undefined;
     }
     if (defaultValue !== undefined) {
@@ -95,7 +90,7 @@ export function resolvePropValue<T = unknown>(
           try {
             return JSON.stringify(value);
           } catch {
-            return "[object Object]";
+            return '[object Object]';
           }
         })()}`,
       );
@@ -119,7 +114,7 @@ export function validateType(value: unknown, type: unknown): boolean {
       // type[i] 的静态类型为 unknown，需要断言为 PropTypeConstructor 以调用 checkType
       if (checkType(value, type[i]! as PropTypeConstructor)) return true;
     }
-    expectedType = type.map((t) => getTypeName(t)).join(" | ");
+    expectedType = type.map((t) => getTypeName(t)).join(' | ');
   } else {
     if (checkType(value, type as PropTypeConstructor)) return true;
     expectedType = getTypeName(type);
@@ -133,14 +128,9 @@ export function validateType(value: unknown, type: unknown): boolean {
 }
 
 /** Prop 类型构造器 */
-type PropTypeConstructor =
-  | (new (...args: unknown[]) => unknown)
-  | { (): unknown };
+type PropTypeConstructor = (new (...args: unknown[]) => unknown) | { (): unknown };
 
-function checkType(
-  value: unknown,
-  type: PropTypeConstructor | PropTypeConstructor[],
-): boolean {
+function checkType(value: unknown, type: PropTypeConstructor | PropTypeConstructor[]): boolean {
   if (type === String) return isString(value);
   if (type === Number) return isNumber(value);
   if (type === Boolean) return isBoolean(value);
@@ -151,13 +141,13 @@ function checkType(
 }
 
 function getTypeName(value: unknown): string {
-  if (value === null) return "null";
-  if (value === undefined) return "undefined";
-  if (isArray(value)) return "Array";
-  if (isString(value)) return "String";
-  if (isNumber(value)) return "Number";
-  if (isBoolean(value)) return "Boolean";
-  if (isFunction(value)) return "Function";
-  if (isObject(value)) return "Object";
+  if (value === null) return 'null';
+  if (value === undefined) return 'undefined';
+  if (isArray(value)) return 'Array';
+  if (isString(value)) return 'String';
+  if (isNumber(value)) return 'Number';
+  if (isBoolean(value)) return 'Boolean';
+  if (isFunction(value)) return 'Function';
+  if (isObject(value)) return 'Object';
   return String(value);
 }

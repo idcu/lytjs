@@ -3,15 +3,17 @@ import { getText, getHTML, unmount, evaluateInBrowser, nextTick } from './helper
 
 test.describe('组件通信 - Props', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/')
-  })
+    await page.goto('/');
+  });
 
   test.afterEach(async ({ page }) => {
-    await unmount(page)
-  })
+    await unmount(page);
+  });
 
   test('父组件向子组件传递 props 并正确渲染', async ({ page }) => {
-    await evaluateInBrowser(page, `(args) => {
+    await evaluateInBrowser(
+      page,
+      `(args) => {
       const { createApp, h, defineComponent } = window.LytJS;
 
       const ChildComp = defineComponent({
@@ -28,14 +30,17 @@ test.describe('组件通信 - Props', () => {
         }
       });
       app.mount('#app');
-    }`)
+    }`,
+    );
 
-    const html = await getHTML(page)
-    expect(html).toContain('Hello Props - 42')
-  })
+    const html = await getHTML(page);
+    expect(html).toContain('Hello Props - 42');
+  });
 
   test('props 响应式更新时子组件自动更新', async ({ page }) => {
-    await evaluateInBrowser(page, `(args) => {
+    await evaluateInBrowser(
+      page,
+      `(args) => {
       const { createApp, h, defineComponent, ref } = window.LytJS;
 
       const message = ref('initial');
@@ -58,22 +63,28 @@ test.describe('组件通信 - Props', () => {
       app.mount('#app');
 
       window.__updateMessage = (val) => { message.value = val; };
-    }`)
+    }`,
+    );
 
-    let text = await getText(page, '#child-text')
-    expect(text).toBe('initial')
+    let text = await getText(page, '#child-text');
+    expect(text).toBe('initial');
 
-    await evaluateInBrowser(page, `(args) => {
+    await evaluateInBrowser(
+      page,
+      `(args) => {
       window.__updateMessage('updated');
-    }`)
-    await nextTick(page)
+    }`,
+    );
+    await nextTick(page);
 
-    text = await getText(page, '#child-text')
-    expect(text).toBe('updated')
-  })
+    text = await getText(page, '#child-text');
+    expect(text).toBe('updated');
+  });
 
   test('props 默认值在未传递时生效', async ({ page }) => {
-    await evaluateInBrowser(page, `(args) => {
+    await evaluateInBrowser(
+      page,
+      `(args) => {
       const { createApp, h, defineComponent } = window.LytJS;
 
       const ChildComp = defineComponent({
@@ -92,14 +103,17 @@ test.describe('组件通信 - Props', () => {
         }
       });
       app.mount('#app');
-    }`)
+    }`,
+    );
 
-    const text = await getText(page, '#defaults')
-    expect(text).toBe('Default Title:0')
-  })
+    const text = await getText(page, '#defaults');
+    expect(text).toBe('Default Title:0');
+  });
 
   test('多个 props 同时传递', async ({ page }) => {
-    await evaluateInBrowser(page, `(args) => {
+    await evaluateInBrowser(
+      page,
+      `(args) => {
       const { createApp, h, defineComponent } = window.LytJS;
 
       const ChildComp = defineComponent({
@@ -117,24 +131,27 @@ test.describe('组件通信 - Props', () => {
         }
       });
       app.mount('#app');
-    }`)
+    }`,
+    );
 
-    const text = await getText(page, '#multi-props')
-    expect(text).toBe('x-99-true')
-  })
-})
+    const text = await getText(page, '#multi-props');
+    expect(text).toBe('x-99-true');
+  });
+});
 
 test.describe('组件通信 - Emit', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/')
-  })
+    await page.goto('/');
+  });
 
   test.afterEach(async ({ page }) => {
-    await unmount(page)
-  })
+    await unmount(page);
+  });
 
   test('子组件触发 emit 事件，父组件正确接收', async ({ page }) => {
-    await evaluateInBrowser(page, `(args) => {
+    await evaluateInBrowser(
+      page,
+      `(args) => {
       const { createApp, h, defineComponent, ref } = window.LytJS;
 
       const receivedEvents = ref([]);
@@ -171,19 +188,25 @@ test.describe('组件通信 - Emit', () => {
       app.mount('#app');
 
       window.__getEvents = () => receivedEvents.value;
-    }`)
+    }`,
+    );
 
-    await page.click('#emit-btn')
-    await nextTick(page)
+    await page.click('#emit-btn');
+    await nextTick(page);
 
-    const events = await evaluateInBrowser(page, `(args) => {
+    const events = await evaluateInBrowser(
+      page,
+      `(args) => {
       return window.__getEvents();
-    }`)
-    expect(events).toContain('payload-data')
-  })
+    }`,
+    );
+    expect(events).toContain('payload-data');
+  });
 
   test('emit 事件传递多个参数', async ({ page }) => {
-    await evaluateInBrowser(page, `(args) => {
+    await evaluateInBrowser(
+      page,
+      `(args) => {
       const { createApp, h, defineComponent, ref } = window.LytJS;
 
       const lastArgs = ref(null);
@@ -220,19 +243,25 @@ test.describe('组件通信 - Emit', () => {
       app.mount('#app');
 
       window.__getLastArgs = () => lastArgs.value;
-    }`)
+    }`,
+    );
 
-    await page.click('#multi-emit-btn')
-    await nextTick(page)
+    await page.click('#multi-emit-btn');
+    await nextTick(page);
 
-    const args = await evaluateInBrowser(page, `(args) => {
+    const args = await evaluateInBrowser(
+      page,
+      `(args) => {
       return window.__getLastArgs();
-    }`)
-    expect(args).toEqual({ a: 1, b: 'two', c: { three: true } })
-  })
+    }`,
+    );
+    expect(args).toEqual({ a: 1, b: 'two', c: { three: true } });
+  });
 
   test('emit 多次触发累积事件', async ({ page }) => {
-    await evaluateInBrowser(page, `(args) => {
+    await evaluateInBrowser(
+      page,
+      `(args) => {
       const { createApp, h, defineComponent, ref } = window.LytJS;
 
       const clickCount = ref(0);
@@ -267,18 +296,22 @@ test.describe('组件通信 - Emit', () => {
       app.mount('#app');
 
       window.__getCount = () => clickCount.value;
-    }`)
+    }`,
+    );
 
-    await page.click('#inc-btn')
-    await nextTick(page)
-    await page.click('#inc-btn')
-    await nextTick(page)
-    await page.click('#inc-btn')
-    await nextTick(page)
+    await page.click('#inc-btn');
+    await nextTick(page);
+    await page.click('#inc-btn');
+    await nextTick(page);
+    await page.click('#inc-btn');
+    await nextTick(page);
 
-    const count = await evaluateInBrowser(page, `(args) => {
+    const count = await evaluateInBrowser(
+      page,
+      `(args) => {
       return window.__getCount();
-    }`)
-    expect(count).toBe(3)
-  })
-})
+    }`,
+    );
+    expect(count).toBe(3);
+  });
+});

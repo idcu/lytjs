@@ -22,9 +22,9 @@ export interface EnvInfo {
  */
 export function isBrowser(): boolean {
   return (
-    typeof window !== "undefined" &&
-    typeof document !== "undefined" &&
-    typeof navigator !== "undefined"
+    typeof window !== 'undefined' &&
+    typeof document !== 'undefined' &&
+    typeof navigator !== 'undefined'
   );
 }
 
@@ -33,9 +33,7 @@ export function isBrowser(): boolean {
  */
 export function isNode(): boolean {
   return (
-    typeof process !== "undefined" &&
-    process.versions != null &&
-    process.versions.node != null
+    typeof process !== 'undefined' && process.versions != null && process.versions.node != null
   );
 }
 
@@ -71,6 +69,6 @@ export function getEnvInfo(): EnvInfo {
     isBrowser: browser,
     isNode: node,
     isSSR: isSSR(),
-    userAgent: browser ? navigator.userAgent : "",
+    userAgent: browser ? navigator.userAgent : '',
   };
 }

@@ -122,7 +122,7 @@ describe('setupComponent', () => {
     const options = defineComponent({
       name: 'AsyncComp',
       async setup() {
-        await new Promise(resolve => setTimeout(resolve, 10));
+        await new Promise((resolve) => setTimeout(resolve, 10));
         return { asyncData: 'resolved' };
       },
     });

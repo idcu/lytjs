@@ -1,16 +1,12 @@
 // src/keep-alive.ts
 // KeepAlive component (simplified)
 
-import { isString, isArray } from "@lytjs/common-is";
-import type {
-  ComponentInternalInstance,
-  ComponentOptions,
-  SetupContext,
-} from "./types";
-import { createComponentInstance, setupComponent } from "./component";
-import { handleError, callUnmountedHook } from "./lifecycle";
-import { ShapeFlags, createBaseVNode } from "@lytjs/common-vnode";
-import type { VNode } from "@lytjs/common-vnode";
+import { isString, isArray } from '@lytjs/common-is';
+import type { ComponentInternalInstance, ComponentOptions, SetupContext } from './types';
+import { createComponentInstance, setupComponent } from './component';
+import { handleError, callUnmountedHook } from './lifecycle';
+import { ShapeFlags, createBaseVNode } from '@lytjs/common-vnode';
+import type { VNode } from '@lytjs/common-vnode';
 
 // ==================== Types ====================
 
@@ -19,9 +15,7 @@ interface KeepAliveCache {
   set(key: string, instance: ComponentInternalInstance): void;
   delete(key: string): boolean;
   has(key: string): boolean;
-  forEach(
-    callback: (value: ComponentInternalInstance, key: string) => void,
-  ): void;
+  forEach(callback: (value: ComponentInternalInstance, key: string) => void): void;
 }
 
 // ==================== KeepAlive Component ====================
@@ -33,7 +27,7 @@ export interface KeepAliveProps {
 }
 
 export const KeepAlive: ComponentOptions = {
-  name: "KeepAlive",
+  name: 'KeepAlive',
 
   props: {
     include: {},
@@ -163,10 +157,7 @@ export function getCachedInstance(
 /**
  * Remove a cached instance from KeepAlive.
  */
-export function removeCachedInstance(
-  keepAlive: ComponentInternalInstance,
-  key: string,
-): boolean {
+export function removeCachedInstance(keepAlive: ComponentInternalInstance, key: string): boolean {
   const cache = keepAlive.setupState.cache as KeepAliveCache;
   const keys = keepAlive.setupState.keys as Set<string>;
   keys.delete(key);
@@ -187,7 +178,7 @@ export function activateInstance(instance: ComponentInternalInstance): void {
       try {
         hook();
       } catch (e) {
-        handleError(e as Error, instance, "activated hook");
+        handleError(e as Error, instance, 'activated hook');
       }
     }
   }
@@ -207,7 +198,7 @@ export function deactivateInstance(instance: ComponentInternalInstance): void {
       try {
         hook();
       } catch (e) {
-        handleError(e as Error, instance, "deactivated hook");
+        handleError(e as Error, instance, 'deactivated hook');
       }
     }
   }

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from '@playwright/test';
 
 /**
  * E2E 全局 setup 测试
@@ -6,18 +6,18 @@ import { test, expect } from '@playwright/test'
  */
 test.describe('E2E Setup', () => {
   test('should load LytJS global bundle', async ({ page }) => {
-    await page.goto('/')
+    await page.goto('/');
     // 验证 LytJS 全局对象已加载
     const hasLytJS = await page.evaluate(() => {
-      return typeof (window as any).LytJS === 'object'
-    })
-    expect(hasLytJS).toBe(true)
-  })
+      return typeof (window as any).LytJS === 'object';
+    });
+    expect(hasLytJS).toBe(true);
+  });
 
   test('should expose core APIs on window.LytJS', async ({ page }) => {
-    await page.goto('/')
+    await page.goto('/');
     const apis = await page.evaluate(() => {
-      const L = (window as any).LytJS
+      const L = (window as any).LytJS;
       return {
         createApp: typeof L.createApp === 'function',
         h: typeof L.h === 'function',
@@ -29,17 +29,17 @@ test.describe('E2E Setup', () => {
         onUnmounted: typeof L.onUnmounted === 'function',
         nextTick: typeof L.nextTick === 'function',
         defineComponent: typeof L.defineComponent === 'function',
-      }
-    })
-    expect(apis.createApp).toBe(true)
-    expect(apis.h).toBe(true)
-    expect(apis.ref).toBe(true)
-    expect(apis.reactive).toBe(true)
-    expect(apis.computed).toBe(true)
-    expect(apis.watch).toBe(true)
-    expect(apis.onMounted).toBe(true)
-    expect(apis.onUnmounted).toBe(true)
-    expect(apis.nextTick).toBe(true)
-    expect(apis.defineComponent).toBe(true)
-  })
-})
+      };
+    });
+    expect(apis.createApp).toBe(true);
+    expect(apis.h).toBe(true);
+    expect(apis.ref).toBe(true);
+    expect(apis.reactive).toBe(true);
+    expect(apis.computed).toBe(true);
+    expect(apis.watch).toBe(true);
+    expect(apis.onMounted).toBe(true);
+    expect(apis.onUnmounted).toBe(true);
+    expect(apis.nextTick).toBe(true);
+    expect(apis.defineComponent).toBe(true);
+  });
+});

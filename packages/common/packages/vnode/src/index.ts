@@ -7,9 +7,9 @@
 // VNode 类型 Symbol
 // ============================================================
 
-export const Fragment = Symbol.for("Fragment");
-export const Text = Symbol.for("Text");
-export const Comment = Symbol.for("Comment");
+export const Fragment = Symbol.for('Fragment');
+export const Text = Symbol.for('Text');
+export const Comment = Symbol.for('Comment');
 
 // ============================================================
 // ShapeFlags - VNode 形状标志
@@ -75,12 +75,7 @@ export const enum PatchFlags {
 // VNode 类型定义
 // ============================================================
 
-export type VNodeTypes =
-  | string
-  | typeof Fragment
-  | typeof Text
-  | typeof Comment
-  | object; // Component
+export type VNodeTypes = string | typeof Fragment | typeof Text | typeof Comment | object; // Component
 
 export type VNodeChildren =
   | string
@@ -154,9 +149,8 @@ export interface VNode {
 
 /**
  * 组件公共实例接口
- * @deprecated 此接口已迁移至 @lytjs/component（权威来源）和 @lytjs/shared-types。
- * 新代码请直接从 @lytjs/component 导入 ComponentPublicInstance。
- * 此处保留仅为向后兼容，未来版本中将移除。
+ * @internal 此接口的权威来源为 @lytjs/shared-types/src/component.ts。
+ * 此处保留仅为避免循环依赖，新代码请从 @lytjs/shared-types 导入。
  */
 export interface ComponentPublicInstance {
   $props: Record<string, unknown>;
@@ -171,8 +165,8 @@ export interface ComponentPublicInstance {
 
 /**
  * 组件内部实例接口
- * @deprecated 请使用 @lytjs/component 中的 ComponentInternalInstance（权威来源）
- * 此处保留简化版定义以避免循环依赖
+ * @internal 此接口的权威来源为 @lytjs/component/src/types.ts。
+ * 此处保留简化版定义以避免循环依赖，新代码请从 @lytjs/component 导入。
  */
 export interface ComponentInternalInstance {
   uid: number;
@@ -193,34 +187,13 @@ export interface ComponentInternalInstance {
   isUnmounted: boolean;
   isDeactivated: boolean;
   isKeepingAlive: boolean;
-  bum?:
-    | ((...args: unknown[]) => void)
-    | Array<(...args: unknown[]) => void>
-    | null;
-  bm?:
-    | ((...args: unknown[]) => void)
-    | Array<(...args: unknown[]) => void>
-    | null;
-  m?:
-    | ((...args: unknown[]) => void)
-    | Array<(...args: unknown[]) => void>
-    | null;
-  bu?:
-    | ((...args: unknown[]) => void)
-    | Array<(...args: unknown[]) => void>
-    | null;
-  u?:
-    | ((...args: unknown[]) => void)
-    | Array<(...args: unknown[]) => void>
-    | null;
-  um?:
-    | ((...args: unknown[]) => void)
-    | Array<(...args: unknown[]) => void>
-    | null;
-  uc?:
-    | ((...args: unknown[]) => void)
-    | Array<(...args: unknown[]) => void>
-    | null;
+  bum?: ((...args: unknown[]) => void) | Array<(...args: unknown[]) => void> | null;
+  bm?: ((...args: unknown[]) => void) | Array<(...args: unknown[]) => void> | null;
+  m?: ((...args: unknown[]) => void) | Array<(...args: unknown[]) => void> | null;
+  bu?: ((...args: unknown[]) => void) | Array<(...args: unknown[]) => void> | null;
+  u?: ((...args: unknown[]) => void) | Array<(...args: unknown[]) => void> | null;
+  um?: ((...args: unknown[]) => void) | Array<(...args: unknown[]) => void> | null;
+  uc?: ((...args: unknown[]) => void) | Array<(...args: unknown[]) => void> | null;
   effects?: Array<{ stop: () => void }>;
   update?: () => void;
 }
@@ -248,7 +221,7 @@ export interface BaseComponentOptions {
  * 包含所有 VNode 字段的默认值，用于 createBaseVNode 工厂函数
  */
 export const VNODE_DEFAULTS: VNode = {
-  type: null as unknown as VNode["type"],
+  type: null as unknown as VNode['type'],
   key: null,
   ref: null,
   props: null,
@@ -293,7 +266,7 @@ export function createBaseVNode(overrides: Partial<VNode>): VNode {
 export function isVNode(value: unknown): value is VNode {
   return (
     value !== null &&
-    typeof value === "object" &&
+    typeof value === 'object' &&
     (value as Record<string, unknown>).__v_isVNode === true
   );
 }
@@ -341,20 +314,20 @@ export function hasPatchFlag(vnode: VNode, flag: number): boolean {
 export function describePatchFlag(flag: number): string {
   const names: string[] = [];
 
-  if (flag === PatchFlags.HOISTED) return "HOISTED";
-  if (flag === PatchFlags.BAIL) return "BAIL";
+  if (flag === PatchFlags.HOISTED) return 'HOISTED';
+  if (flag === PatchFlags.BAIL) return 'BAIL';
 
-  if (flag & PatchFlags.TEXT) names.push("TEXT");
-  if (flag & PatchFlags.CLASS) names.push("CLASS");
-  if (flag & PatchFlags.STYLE) names.push("STYLE");
-  if (flag & PatchFlags.PROPS) names.push("PROPS");
-  if (flag & PatchFlags.FULL_PROPS) names.push("FULL_PROPS");
-  if (flag & PatchFlags.HYDRATE_EVENTS) names.push("HYDRATE_EVENTS");
-  if (flag & PatchFlags.STABLE_FRAGMENT) names.push("STABLE_FRAGMENT");
-  if (flag & PatchFlags.KEYED_FRAGMENT) names.push("KEYED_FRAGMENT");
-  if (flag & PatchFlags.UNKEYED_FRAGMENT) names.push("UNKEYED_FRAGMENT");
-  if (flag & PatchFlags.NEED_PATCH) names.push("NEED_PATCH");
-  if (flag & PatchFlags.DYNAMIC_SLOTS) names.push("DYNAMIC_SLOTS");
+  if (flag & PatchFlags.TEXT) names.push('TEXT');
+  if (flag & PatchFlags.CLASS) names.push('CLASS');
+  if (flag & PatchFlags.STYLE) names.push('STYLE');
+  if (flag & PatchFlags.PROPS) names.push('PROPS');
+  if (flag & PatchFlags.FULL_PROPS) names.push('FULL_PROPS');
+  if (flag & PatchFlags.HYDRATE_EVENTS) names.push('HYDRATE_EVENTS');
+  if (flag & PatchFlags.STABLE_FRAGMENT) names.push('STABLE_FRAGMENT');
+  if (flag & PatchFlags.KEYED_FRAGMENT) names.push('KEYED_FRAGMENT');
+  if (flag & PatchFlags.UNKEYED_FRAGMENT) names.push('UNKEYED_FRAGMENT');
+  if (flag & PatchFlags.NEED_PATCH) names.push('NEED_PATCH');
+  if (flag & PatchFlags.DYNAMIC_SLOTS) names.push('DYNAMIC_SLOTS');
 
-  return names.join(" | ") || "NO_FLAGS";
+  return names.join(' | ') || 'NO_FLAGS';
 }

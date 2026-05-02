@@ -1,13 +1,13 @@
 // src/index.ts
 // @lytjs/core - 核心入口
 
-export { createApp } from "./create-app";
-export { h, h as createElement } from "./h";
-export { defineComponent, defineAsyncComponent } from "./define-component";
-export { nextTick } from "./next-tick";
-export { resolveComponent, resolveDirective } from "./resolve";
-export { withDirectives, withMemo } from "./directives";
-export { useSlots, useAttrs, useModel } from "./composition";
+export { createApp } from './create-app';
+export { h, h as createElement } from './h';
+export { defineComponent, defineAsyncComponent } from './define-component';
+export { nextTick } from './next-tick';
+export { resolveComponent, resolveDirective } from './resolve';
+export { withDirectives, withMemo } from './directives';
+export { useSlots, useAttrs, useModel } from './composition';
 export {
   onMounted,
   onUnmounted,
@@ -18,26 +18,12 @@ export {
   onErrorCaptured,
   onRenderTracked,
   onRenderTriggered,
-} from "./lifecycle";
+} from './lifecycle';
 
 // Re-export from sub-packages
-export {
-  ref,
-  reactive,
-  computed,
-  watch,
-  watchEffect,
-  effect,
-} from "@lytjs/reactivity";
-export {
-  createVNode,
-  Fragment,
-  Text,
-  Comment,
-  cloneVNode,
-  mergeProps,
-} from "@lytjs/vdom";
-export { compile } from "@lytjs/compiler";
+export { ref, reactive, computed, watch, watchEffect, effect } from '@lytjs/reactivity';
+export { createVNode, Fragment, Text, Comment, cloneVNode, mergeProps } from '@lytjs/vdom';
+export { compile } from '@lytjs/compiler';
 
 export type {
   App,
@@ -57,4 +43,4 @@ export type {
   DebuggerHook,
   DebuggerEvent,
   ComponentPublicInstance,
-} from "./types";
+} from './types';

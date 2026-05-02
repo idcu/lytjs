@@ -1,9 +1,9 @@
 // src/effect.ts
 // 响应式副作用系统核心
 
-import { ITERATE_KEY } from "./constants";
-import type { ReactiveEffectRunner } from "./types";
-import { warn, error } from "@lytjs/common-error";
+import { ITERATE_KEY } from './constants';
+import type { ReactiveEffectRunner } from './types';
+import { warn, error } from '@lytjs/common-error';
 
 // ==================== 全局状态 ====================
 
@@ -22,7 +22,7 @@ export function getShouldTrack(): boolean {
 }
 
 // effectScope 支持：从 effect-scope 导入 activeEffectScope getter
-import { getActiveEffectScope } from "./effect-scope";
+import { getActiveEffectScope } from './effect-scope';
 
 // ==================== Dep ====================
 
@@ -82,26 +82,26 @@ export function trigger(
 
   const deps: (Dep | undefined)[] = [];
 
-  if (type === "clear") {
+  if (type === 'clear') {
     deps.push(...depsMap.values());
   } else {
     if (key !== undefined) {
       deps.push(depsMap.get(key));
     }
 
-    if (type === "add") {
+    if (type === 'add') {
       if (Array.isArray(target)) {
-        deps.push(depsMap.get("length"));
+        deps.push(depsMap.get('length'));
       } else {
         deps.push(depsMap.get(ITERATE_KEY));
       }
-    } else if (type === "delete") {
+    } else if (type === 'delete') {
       if (!Array.isArray(target)) {
         deps.push(depsMap.get(ITERATE_KEY));
       }
-    } else if (type === "set") {
+    } else if (type === 'set') {
       if (Array.isArray(target) && isIntegerKey(key)) {
-        deps.push(depsMap.get("length"));
+        deps.push(depsMap.get('length'));
       }
     }
   }
@@ -121,9 +121,7 @@ export function trigger(
 export function triggerEffects(effects: ReactiveEffect[]) {
   if (triggerDepth > MAX_TRIGGER_DEPTH) {
     if (__DEV__) {
-      warn(
-        "Maximum trigger depth exceeded. Possible infinite reactivity loop detected.",
-      );
+      warn('Maximum trigger depth exceeded. Possible infinite reactivity loop detected.');
       error(
         `Maximum trigger depth (${MAX_TRIGGER_DEPTH}) exceeded in triggerEffects. Possible infinite reactivity loop detected. triggerDepth=${triggerDepth}`,
       );
@@ -166,11 +164,7 @@ export class ReactiveEffect<T = unknown> {
   computed?: boolean;
   allowRecurse?: boolean;
   onStop?: () => void;
-  onTrack?: (event: {
-    target: object;
-    key: string | symbol;
-    type: string;
-  }) => void;
+  onTrack?: (event: { target: object; key: string | symbol; type: string }) => void;
   onTrigger?: (event: {
     target: object;
     key: string | symbol;
@@ -256,11 +250,7 @@ export function effect(
     scheduler?: (...args: unknown[]) => unknown;
     allowRecurse?: boolean;
     onStop?: () => void;
-    onTrack?: (event: {
-      target: object;
-      key: string | symbol;
-      type: string;
-    }) => void;
+    onTrack?: (event: { target: object; key: string | symbol; type: string }) => void;
     onTrigger?: (event: {
       target: object;
       key: string | symbol;
@@ -279,11 +269,7 @@ export function effect<T>(
     scheduler?: (...args: unknown[]) => unknown;
     allowRecurse?: boolean;
     onStop?: () => void;
-    onTrack?: (event: {
-      target: object;
-      key: string | symbol;
-      type: string;
-    }) => void;
+    onTrack?: (event: { target: object; key: string | symbol; type: string }) => void;
     onTrigger?: (event: {
       target: object;
       key: string | symbol;
@@ -302,11 +288,7 @@ export function effect<T = unknown>(
     scheduler?: (...args: unknown[]) => unknown;
     allowRecurse?: boolean;
     onStop?: () => void;
-    onTrack?: (event: {
-      target: object;
-      key: string | symbol;
-      type: string;
-    }) => void;
+    onTrack?: (event: { target: object; key: string | symbol; type: string }) => void;
     onTrigger?: (event: {
       target: object;
       key: string | symbol;
@@ -362,8 +344,7 @@ export function batch(fn: () => void): void {
     while (trackStack.length > stackLength) {
       trackStack.pop();
     }
-    shouldTrack =
-      trackStack.length > 0 ? trackStack[trackStack.length - 1]! : true;
+    shouldTrack = trackStack.length > 0 ? trackStack[trackStack.length - 1]! : true;
   }
 }
 
@@ -371,14 +352,12 @@ export function onEffectCleanup(fn: () => void, failSilently = false): void {
   if (activeEffect === undefined) {
     if (!failSilently) {
       if (__DEV__) {
-        warn(
-          "onEffectCleanup() was called when there was no active effect to associate with.",
-        );
+        warn('onEffectCleanup() was called when there was no active effect to associate with.');
       }
     } else if (__DEV__) {
       warn(
-        "onEffectCleanup() was called with failSilently=true but there was no active effect. " +
-          "This is likely a bug — the cleanup function will never be invoked.",
+        'onEffectCleanup() was called with failSilently=true but there was no active effect. ' +
+          'This is likely a bug — the cleanup function will never be invoked.',
       );
     }
     return;
@@ -390,10 +369,10 @@ export function onEffectCleanup(fn: () => void, failSilently = false): void {
 
 export function isIntegerKey(key: unknown): boolean {
   return (
-    typeof key === "string" &&
-    key !== "NaN" &&
-    key[0] !== "-" &&
-    "" + parseInt(key, 10) === key &&
+    typeof key === 'string' &&
+    key !== 'NaN' &&
+    key[0] !== '-' &&
+    '' + parseInt(key, 10) === key &&
     Number.isSafeInteger(Number(key))
   );
 }

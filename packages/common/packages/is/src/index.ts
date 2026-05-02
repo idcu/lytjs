@@ -16,44 +16,40 @@ export const EMPTY_OBJ: Readonly<Record<string, never>> = Object.freeze({});
 /**
  * 检查值是否为字符串
  */
-export const isString = (val: unknown): val is string =>
-  typeof val === "string";
+export const isString = (val: unknown): val is string => typeof val === 'string';
 
 /**
  * 检查值是否为数字（排除 NaN）
  */
 export const isNumber = (val: unknown): val is number =>
-  typeof val === "number" && !Number.isNaN(val);
+  typeof val === 'number' && !Number.isNaN(val);
 
 /**
  * 检查值是否为布尔值
  */
-export const isBoolean = (val: unknown): val is boolean =>
-  typeof val === "boolean";
+export const isBoolean = (val: unknown): val is boolean => typeof val === 'boolean';
 
 /**
  * 检查值是否为 Symbol
  */
-export const isSymbol = (val: unknown): val is symbol =>
-  typeof val === "symbol";
+export const isSymbol = (val: unknown): val is symbol => typeof val === 'symbol';
 
 /**
  * 检查值是否为 BigInt
  */
-export const isBigInt = (val: unknown): val is bigint =>
-  typeof val === "bigint";
+export const isBigInt = (val: unknown): val is bigint => typeof val === 'bigint';
 
 /**
  * 检查值是否为对象（非 null）
  */
 export const isObject = (val: unknown): val is object =>
-  val !== null && (typeof val === "object" || typeof val === "function");
+  val !== null && (typeof val === 'object' || typeof val === 'function');
 
 /**
  * 检查值是否为纯对象（plain object）
  */
 export const isPlainObject = (val: unknown): val is Record<string, unknown> =>
-  Object.prototype.toString.call(val) === "[object Object]";
+  Object.prototype.toString.call(val) === '[object Object]';
 
 /**
  * 检查值是否为数组
@@ -63,9 +59,8 @@ export const isArray = Array.isArray;
 /**
  * 检查值是否为函数
  */
-export const isFunction = (
-  val: unknown,
-): val is (...args: unknown[]) => unknown => typeof val === "function";
+export const isFunction = (val: unknown): val is (...args: unknown[]) => unknown =>
+  typeof val === 'function';
 
 /**
  * 检查值是否为 Promise
@@ -114,41 +109,37 @@ export const hasChanged = (value: unknown, oldValue: unknown): boolean =>
  * 获取值的内部 [[Class]] 标签
  * 等价于 Object.prototype.toString.call(val) 的结果
  */
-export const toTypeString = (val: unknown): string =>
-  Object.prototype.toString.call(val);
+export const toTypeString = (val: unknown): string => Object.prototype.toString.call(val);
 
 /**
  * 检查值是否为 Map 类型
  */
 export const isMap = (val: unknown): val is Map<unknown, unknown> =>
-  toTypeString(val) === "[object Map]";
+  toTypeString(val) === '[object Map]';
 
 /**
  * 检查值是否为 Set 类型
  */
-export const isSet = (val: unknown): val is Set<unknown> =>
-  toTypeString(val) === "[object Set]";
+export const isSet = (val: unknown): val is Set<unknown> => toTypeString(val) === '[object Set]';
 
 /**
  * 检查值是否为 WeakMap 类型
  */
 export const isWeakMap = (val: unknown): val is WeakMap<object, unknown> =>
-  toTypeString(val) === "[object WeakMap]";
+  toTypeString(val) === '[object WeakMap]';
 
 /**
  * 检查值是否为 WeakSet 类型
  */
 export const isWeakSet = (val: unknown): val is WeakSet<object> =>
-  toTypeString(val) === "[object WeakSet]";
+  toTypeString(val) === '[object WeakSet]';
 
 /**
  * 检查值是否为 Date 类型
  */
-export const isDate = (val: unknown): val is Date =>
-  toTypeString(val) === "[object Date]";
+export const isDate = (val: unknown): val is Date => toTypeString(val) === '[object Date]';
 
 /**
  * 检查值是否为 RegExp 类型
  */
-export const isRegExp = (val: unknown): val is RegExp =>
-  toTypeString(val) === "[object RegExp]";
+export const isRegExp = (val: unknown): val is RegExp => toTypeString(val) === '[object RegExp]';

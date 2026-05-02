@@ -1,7 +1,7 @@
 // src/transforms/v-if.ts
 // v-if / v-else-if / v-else 转换逻辑
 
-import { NodeTypes } from "../constants";
+import { NodeTypes } from '../constants';
 import type {
   RootNode,
   TemplateChildNode,
@@ -11,25 +11,17 @@ import type {
   JSConditionalExpression,
   VNodeCall,
   JSChildNode,
-} from "../types";
-import { createSimpleExpression, createConditionalExpression } from "../ast";
-import { getExpContent, findDirective } from "./helpers";
-import { transformElement } from "./transform-element";
+} from '../types';
+import { createSimpleExpression, createConditionalExpression } from '../ast';
+import { getExpContent, findDirective } from './helpers';
+import { transformElement } from './transform-element';
 
-export function transformIf(
-  node: RootNode | TemplateChildNode,
-  context: TransformContext,
-): void {
+export function transformIf(node: RootNode | TemplateChildNode, context: TransformContext): void {
   if (node.type !== NodeTypes.ELEMENT) return;
 
   const element = node as ElementNode;
-  const ifDir = findDirective(element, "if");
-  if (
-    !ifDir &&
-    !findDirective(element, "else-if") &&
-    !findDirective(element, "else")
-  )
-    return;
+  const ifDir = findDirective(element, 'if');
+  if (!ifDir && !findDirective(element, 'else-if') && !findDirective(element, 'else')) return;
 
   const parent = context.parent;
   if (!parent) return;
@@ -44,8 +36,8 @@ export function transformIf(
     if (
       sibling &&
       sibling.type === NodeTypes.ELEMENT &&
-      (findDirective(sibling as ElementNode, "if") ||
-        findDirective(sibling as ElementNode, "else-if"))
+      (findDirective(sibling as ElementNode, 'if') ||
+        findDirective(sibling as ElementNode, 'else-if'))
     ) {
       chainStart = i;
     } else {
@@ -63,9 +55,9 @@ export function transformIf(
     if (!sibling || sibling.type !== NodeTypes.ELEMENT) break;
 
     const sibElement = sibling as ElementNode;
-    const sibIf = findDirective(sibElement, "if");
-    const sibElseIf = findDirective(sibElement, "else-if");
-    const sibElse = findDirective(sibElement, "else");
+    const sibIf = findDirective(sibElement, 'if');
+    const sibElseIf = findDirective(sibElement, 'else-if');
+    const sibElse = findDirective(sibElement, 'else');
 
     if (!sibIf && !sibElseIf && !sibElse) break;
 
@@ -74,7 +66,7 @@ export function transformIf(
       (p) =>
         !(
           p.type === NodeTypes.DIRECTIVE &&
-          (p.name === "if" || p.name === "else-if" || p.name === "else")
+          (p.name === 'if' || p.name === 'else-if' || p.name === 'else')
         ),
     );
 
@@ -92,20 +84,13 @@ export function transformIf(
 
     if (sibIf || sibElseIf) {
       const testExpr = sibIf?.exp ?? sibElseIf?.exp;
-      const testContent = testExpr
-        ? getExpContent(testExpr as ExpressionNode)
-        : undefined;
+      const testContent = testExpr ? getExpContent(testExpr as ExpressionNode) : undefined;
       const test = testContent
         ? createSimpleExpression(testContent, false, sibElement.loc, false)
-        : createSimpleExpression("true", true, sibElement.loc, true);
+        : createSimpleExpression('true', true, sibElement.loc, true);
 
       if (!conditional) {
-        conditional = createConditionalExpression(
-          test,
-          branchNode as JSChildNode,
-          undefined,
-          true,
-        );
+        conditional = createConditionalExpression(test, branchNode as JSChildNode, undefined, true);
       } else {
         conditional.alternate = createConditionalExpression(
           test,
@@ -119,7 +104,7 @@ export function transformIf(
       // v-else
       if (!conditional) {
         conditional = createConditionalExpression(
-          createSimpleExpression("true", true, sibElement.loc, true),
+          createSimpleExpression('true', true, sibElement.loc, true),
           branchNode as JSChildNode,
           undefined,
           true,

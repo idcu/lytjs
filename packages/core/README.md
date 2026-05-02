@@ -15,10 +15,10 @@ npm install @lytjs/core
 创建应用实例，挂载根组件
 
 ```typescript
-import { createApp } from '@lytjs/core'
+import { createApp } from '@lytjs/core';
 
-const app = createApp(RootComponent)
-app.mount('#app')
+const app = createApp(RootComponent);
+app.mount('#app');
 ```
 
 ### h / createElement
@@ -26,7 +26,7 @@ app.mount('#app')
 创建虚拟节点（JSX 工厂函数）
 
 ```typescript
-import { h } from '@lytjs/core'
+import { h } from '@lytjs/core';
 ```
 
 ### defineComponent / defineAsyncComponent
@@ -34,7 +34,7 @@ import { h } from '@lytjs/core'
 定义组件和异步组件
 
 ```typescript
-import { defineComponent, defineAsyncComponent } from '@lytjs/core'
+import { defineComponent, defineAsyncComponent } from '@lytjs/core';
 ```
 
 ### nextTick
@@ -42,7 +42,7 @@ import { defineComponent, defineAsyncComponent } from '@lytjs/core'
 在下一个 DOM 更新周期后执行回调
 
 ```typescript
-import { nextTick } from '@lytjs/core'
+import { nextTick } from '@lytjs/core';
 ```
 
 ### ref / reactive / computed / watch / watchEffect
@@ -50,7 +50,7 @@ import { nextTick } from '@lytjs/core'
 响应式 API（从 @lytjs/reactivity 重导出）
 
 ```typescript
-import { ref, reactive, computed, watch, watchEffect } from '@lytjs/core'
+import { ref, reactive, computed, watch, watchEffect } from '@lytjs/core';
 ```
 
 ### onMounted / onUnmounted / onUpdated
@@ -58,7 +58,7 @@ import { ref, reactive, computed, watch, watchEffect } from '@lytjs/core'
 生命周期钩子
 
 ```typescript
-import { onMounted, onUnmounted, onUpdated } from '@lytjs/core'
+import { onMounted, onUnmounted, onUpdated } from '@lytjs/core';
 ```
 
 ### compile
@@ -66,7 +66,7 @@ import { onMounted, onUnmounted, onUpdated } from '@lytjs/core'
 模板编译（从 @lytjs/compiler 重导出）
 
 ```typescript
-import { compile } from '@lytjs/core'
+import { compile } from '@lytjs/core';
 ```
 
 ## 相关包
