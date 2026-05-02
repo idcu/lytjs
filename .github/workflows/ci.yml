@@ -5,8 +5,8 @@ on:
     branches:
       - main
       - develop
-      - "feat/**"
-      - "fix/**"
+      - 'feat/**'
+      - 'fix/**'
   pull_request:
     branches:
       - main
@@ -17,10 +17,62 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  PNPM_VERSION: "9.15.4"
-  NODE_VERSION: "20"
+  PNPM_VERSION: '9.15.4'
+  NODE_VERSION: '20'
 
 jobs:
+  # 依赖安全审计
+  audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run pnpm audit
+        run: pnpm audit --audit-level=high
+        continue-on-error: true
+
+  # Changeset 检查
+  changeset-check:
+    name: Changeset Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Check for changesets
+        run: pnpm changeset status --since=origin/develop
+        continue-on-error: true
+
   # 代码检查
   lint:
     name: Lint
