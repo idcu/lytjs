@@ -136,13 +136,26 @@ export function parseURL(url: string): ParsedURL {
     }
 
     // Parse host into hostname and port
-    const colonIndex = host.lastIndexOf(':');
-    if (colonIndex !== -1) {
-      hostname = host.slice(0, colonIndex);
-      port = host.slice(colonIndex + 1);
+    // Handle IPv6 addresses like [::1]:8080
+    if (host.startsWith('[')) {
+      const bracketEnd = host.indexOf(']');
+      if (bracketEnd !== -1) {
+        hostname = host.slice(0, bracketEnd + 1);
+        if (host.length > bracketEnd + 1 && host[bracketEnd + 1] === ':') {
+          port = host.slice(bracketEnd + 2);
+        }
+      } else {
+        hostname = host;
+      }
     } else {
-      hostname = host;
-      port = '';
+      const colonIndex = host.lastIndexOf(':');
+      if (colonIndex !== -1) {
+        hostname = host.slice(0, colonIndex);
+        port = host.slice(colonIndex + 1);
+      } else {
+        hostname = host;
+        port = '';
+      }
     }
   } else {
     // Relative URL
@@ -213,7 +226,7 @@ export function buildURL(
     result += '?' + queryString;
   }
   // Use provided hash, or keep existing hash if no new hash is given
-  const finalHash = hash !== undefined ? '#' + hash : existingHash;
+  const finalHash = hash !== undefined ? '#' + encodeURIComponent(hash) : existingHash;
   if (finalHash) {
     result += finalHash;
   }

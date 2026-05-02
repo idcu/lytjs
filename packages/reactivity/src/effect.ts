@@ -363,22 +363,22 @@ export function batch(fn: () => void): void {
 export function batchAsync(fn: () => void | Promise<void>): Promise<void> {
   const stackLength = trackStack.length;
   pauseTracking();
-  try {
-    const result = fn();
-    if (result && typeof result === 'object' && 'then' in result) {
-      return (result as Promise<void>).finally(() => {
-        while (trackStack.length > stackLength) {
-          trackStack.pop();
-        }
-        shouldTrack = trackStack.length > 0 ? trackStack[trackStack.length - 1]! : true;
-      });
-    }
-    return Promise.resolve();
-  } catch (e) {
+  const restoreTracking = () => {
     while (trackStack.length > stackLength) {
       trackStack.pop();
     }
     shouldTrack = trackStack.length > 0 ? trackStack[trackStack.length - 1]! : true;
+  };
+  try {
+    const result = fn();
+    if (result && typeof result === 'object' && 'then' in result) {
+      return (result as Promise<void>).finally(restoreTracking);
+    }
+    // 同步路径：立即恢复 tracking 状态
+    restoreTracking();
+    return Promise.resolve();
+  } catch (e) {
+    restoreTracking();
     return Promise.reject(e);
   }
 }

@@ -60,6 +60,7 @@ export {
   template,
   normalizeClass,
   normalizeStyle,
+  normalizeStyleObject,
   sanitizeHTML,
   isSafeAttribute,
   escapeAttrValue,

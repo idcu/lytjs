@@ -8,6 +8,31 @@ const isBrowser =
   typeof document !== 'undefined' &&
   typeof document.createElement === 'function';
 
+/** 危险的事件属性黑名单，防止通过属性注入事件处理器 */
+const DANGEROUS_EVENT_ATTRS = new Set([
+  'onclick', 'ondblclick', 'onmousedown', 'onmouseup', 'onmouseover',
+  'onmousemove', 'onmouseout', 'onmouseenter', 'onmouseleave',
+  'onkeydown', 'onkeyup', 'onkeypress',
+  'onfocus', 'onblur', 'oninput', 'onchange', 'onsubmit', 'onreset',
+  'onload', 'onunload', 'onbeforeunload', 'onerror', 'onresize',
+  'onscroll', 'onwheel', 'ondrag', 'ondragstart', 'ondragend',
+  'ondragenter', 'ondragleave', 'ondragover', 'ondrop',
+  'oncopy', 'oncut', 'onpaste',
+  'oncontextmenu', 'onselect', 'onselectstart',
+  'ontouchstart', 'ontouchend', 'ontouchmove', 'ontouchcancel',
+  'onpointerdown', 'onpointerup', 'onpointermove',
+  'onanimationstart', 'onanimationend', 'onanimationiteration',
+  'ontransitionend', 'ontransitionstart', 'ontransitionend',
+  'ontransitioncancel',
+]);
+
+/**
+ * 检查属性名是否安全（非事件处理器）
+ */
+function isSafeAttr(key: string): boolean {
+  return !DANGEROUS_EVENT_ATTRS.has(key.toLowerCase());
+}
+
 /**
  * 创建 DOM 元素
  *
@@ -30,7 +55,7 @@ export function createElement(
   if (attrs) {
     for (const key of Object.keys(attrs)) {
       const val = attrs[key];
-      if (val !== undefined) {
+      if (val !== undefined && isSafeAttr(key)) {
         el.setAttribute(key, val);
       }
     }

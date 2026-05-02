@@ -48,7 +48,7 @@ export function recordPositions(children: Element[]): Map<string, DOMRect> {
   for (let i = 0; i < children.length; i++) {
     const child = children[i];
     if (!child) continue;
-    const key = getChildKey(child);
+    const key = getChildKey(child, i);
     if (key !== null) {
       positions.set(key, child.getBoundingClientRect());
     }
@@ -58,12 +58,14 @@ export function recordPositions(children: Element[]): Map<string, DOMRect> {
 
 /**
  * Get a unique key for a child element.
- * Checks for a `data-key` attribute, then falls back to the element's tag + index.
+ * Checks for a `data-key` attribute, then falls back to element index.
+ * Using tagName as fallback causes key collisions for same-type elements.
  */
-function getChildKey(el: Element): string | null {
+function getChildKey(el: Element, index: number): string | null {
   const key = el.getAttribute('data-key');
   if (key !== null) return key;
-  return el.tagName.toLowerCase();
+  // 使用索引作为 fallback，避免同类型元素的 key 冲突
+  return `__idx_${index}`;
 }
 
 /**
@@ -78,7 +80,7 @@ export function applyFLIP(
   for (let i = 0; i < children.length; i++) {
     const child = children[i];
     if (!child) continue;
-    const key = getChildKey(child);
+    const key = getChildKey(child, i);
     if (key === null) continue;
 
     const oldRect = oldPositions.get(key);
