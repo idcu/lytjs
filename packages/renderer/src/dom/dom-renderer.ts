@@ -3,10 +3,10 @@
  * Creates a DOM renderer using vdom's createRenderer with enhanced patchProp
  */
 
-import { createRenderer, createDOMRendererOptions } from "@lytjs/vdom";
-import type { VNode, RendererOptions } from "@lytjs/vdom";
-import type { ComponentInternalInstance, SuspenseBoundary } from "@lytjs/vdom";
-import { patchProp } from "./patch-props";
+import { createRenderer, createDOMRendererOptions } from '@lytjs/vdom';
+import type { VNode, RendererOptions } from '@lytjs/vdom';
+import type { ComponentInternalInstance, SuspenseBoundary } from '@lytjs/vdom';
+import { patchProp } from './patch-props';
 
 // ============================================================
 // VNode storage for container elements
@@ -23,63 +23,7 @@ import { patchProp } from "./patch-props";
  */
 export const vnodeMap = new WeakMap<Element, VNode | null>();
 
-// ============================================================
-// SVG namespace detection
-// ============================================================
-
-const SVG_TAGS = new Set([
-  "svg",
-  "path",
-  "circle",
-  "rect",
-  "line",
-  "polyline",
-  "polygon",
-  "ellipse",
-  "g",
-  "defs",
-  "use",
-  "clipPath",
-  "text",
-  "tspan",
-  "linearGradient",
-  "radialGradient",
-  "stop",
-  "filter",
-  "feBlend",
-  "feColorMatrix",
-  "feComponentTransfer",
-  "feComposite",
-  "feConvolveMatrix",
-  "feDiffuseLighting",
-  "feDisplacementMap",
-  "feDistantLight",
-  "feFlood",
-  "feGaussianBlur",
-  "feImage",
-  "feMerge",
-  "feMergeNode",
-  "feMorphology",
-  "feOffset",
-  "fePointLight",
-  "feSpecularLighting",
-  "feSpotLight",
-  "feTile",
-  "feTurbulence",
-  "mask",
-  "symbol",
-  "marker",
-  "pattern",
-  "foreignObject",
-  "image",
-  "animate",
-  "animateTransform",
-  "animateMotion",
-]);
-
-function isSVGTag(tag: string): boolean {
-  return SVG_TAGS.has(tag);
-}
+import { SVG_NS, isSVGTag } from '@lytjs/common-dom';
 
 // ============================================================
 // createDOMRenderer
@@ -87,18 +31,11 @@ function isSVGTag(tag: string): boolean {
 
 export interface DOMRenderer {
   render(vnode: VNode | null, container: Element): void;
-  patch(
-    n1: VNode | null,
-    n2: VNode,
-    container: Node,
-    anchor?: Node | null,
-  ): void;
+  patch(n1: VNode | null, n2: VNode, container: Node, anchor?: Node | null): void;
   unmount(vnode: VNode): void;
   mount(vnode: VNode, container: Node): void;
   move(vnode: VNode, container: Node, anchor: Node | null): void;
 }
-
-const SVG_NS = "http://www.w3.org/2000/svg";
 
 /**
  * Create a DOM renderer that uses vdom's createRenderer with enhanced patchProp.
@@ -118,12 +55,7 @@ export function createDOMRenderer(): DOMRenderer {
       }
       return document.createElement(tag);
     },
-    patchProp(
-      el: Element,
-      key: string,
-      prevValue: unknown,
-      nextValue: unknown,
-    ): void {
+    patchProp(el: Element, key: string, prevValue: unknown, nextValue: unknown): void {
       const isSVG = (el as Element).namespaceURI === SVG_NS;
       patchProp(el, key, prevValue, nextValue, isSVG);
     },
@@ -143,7 +75,7 @@ export function createDOMRenderer(): DOMRenderer {
         if (container.firstChild) {
           // Use replaceChildren instead of innerHTML to avoid memory leaks
           // from event listeners and other references not being cleaned up
-          if (typeof container.replaceChildren === "function") {
+          if (typeof container.replaceChildren === 'function') {
             container.replaceChildren();
           } else {
             while (container.firstChild) {
@@ -170,13 +102,7 @@ export function createDOMRenderer(): DOMRenderer {
       _parentComponent?: ComponentInternalInstance | null,
       _parentSuspense?: SuspenseBoundary | null,
     ): void {
-      renderer.move(
-        vnode,
-        container,
-        anchor,
-        _parentComponent ?? null,
-        _parentSuspense ?? null,
-      );
+      renderer.move(vnode, container, anchor, _parentComponent ?? null, _parentSuspense ?? null);
     },
   };
 }

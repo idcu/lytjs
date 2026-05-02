@@ -3,26 +3,31 @@ import { getText, getHTML, unmount, evaluateInBrowser, nextTick } from './helper
 
 test.describe('模板编译', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/')
-  })
+    await page.goto('/');
+  });
 
   test.afterEach(async ({ page }) => {
-    await unmount(page)
-  })
+    await unmount(page);
+  });
 
   test('compile 函数应该存在且可调用', async ({ page }) => {
-    const result = await evaluateInBrowser(page, `(args) => {
+    const result = await evaluateInBrowser(
+      page,
+      `(args) => {
       const { compile } = window.LytJS;
       return {
         isFunction: typeof compile === 'function',
       };
-    }`)
+    }`,
+    );
 
-    expect(result.isFunction).toBe(true)
-  })
+    expect(result.isFunction).toBe(true);
+  });
 
   test('compile 编译简单模板生成渲染函数', async ({ page }) => {
-    const result = await evaluateInBrowser(page, `(args) => {
+    const result = await evaluateInBrowser(
+      page,
+      `(args) => {
       const { compile } = window.LytJS;
 
       try {
@@ -38,14 +43,17 @@ test.describe('模板编译', () => {
           error: e.message,
         };
       }
-    }`)
+    }`,
+    );
 
     // compile 函数存在且可调用（具体返回格式取决于实现）
-    expect(result.success).toBe(true)
-  })
+    expect(result.success).toBe(true);
+  });
 
   test('compile 编译带插值的模板', async ({ page }) => {
-    const result = await evaluateInBrowser(page, `(args) => {
+    const result = await evaluateInBrowser(
+      page,
+      `(args) => {
       const { compile } = window.LytJS;
 
       try {
@@ -60,13 +68,16 @@ test.describe('模板编译', () => {
           error: e.message,
         };
       }
-    }`)
+    }`,
+    );
 
-    expect(result.success).toBe(true)
-  })
+    expect(result.success).toBe(true);
+  });
 
   test('compile 编译带条件指令的模板', async ({ page }) => {
-    const result = await evaluateInBrowser(page, `(args) => {
+    const result = await evaluateInBrowser(
+      page,
+      `(args) => {
       const { compile } = window.LytJS;
 
       try {
@@ -81,13 +92,16 @@ test.describe('模板编译', () => {
           error: e.message,
         };
       }
-    }`)
+    }`,
+    );
 
-    expect(result.success).toBe(true)
-  })
+    expect(result.success).toBe(true);
+  });
 
   test('compile 编译带列表指令的模板', async ({ page }) => {
-    const result = await evaluateInBrowser(page, `(args) => {
+    const result = await evaluateInBrowser(
+      page,
+      `(args) => {
       const { compile } = window.LytJS;
 
       try {
@@ -102,13 +116,16 @@ test.describe('模板编译', () => {
           error: e.message,
         };
       }
-    }`)
+    }`,
+    );
 
-    expect(result.success).toBe(true)
-  })
+    expect(result.success).toBe(true);
+  });
 
   test('compile 编译带事件绑定的模板', async ({ page }) => {
-    const result = await evaluateInBrowser(page, `(args) => {
+    const result = await evaluateInBrowser(
+      page,
+      `(args) => {
       const { compile } = window.LytJS;
 
       try {
@@ -123,13 +140,16 @@ test.describe('模板编译', () => {
           error: e.message,
         };
       }
-    }`)
+    }`,
+    );
 
-    expect(result.success).toBe(true)
-  })
+    expect(result.success).toBe(true);
+  });
 
   test('compile 编译带组件引用的模板', async ({ page }) => {
-    const result = await evaluateInBrowser(page, `(args) => {
+    const result = await evaluateInBrowser(
+      page,
+      `(args) => {
       const { compile } = window.LytJS;
 
       try {
@@ -144,13 +164,16 @@ test.describe('模板编译', () => {
           error: e.message,
         };
       }
-    }`)
+    }`,
+    );
 
-    expect(result.success).toBe(true)
-  })
+    expect(result.success).toBe(true);
+  });
 
   test('compile 编译带 v-model 的模板', async ({ page }) => {
-    const result = await evaluateInBrowser(page, `(args) => {
+    const result = await evaluateInBrowser(
+      page,
+      `(args) => {
       const { compile } = window.LytJS;
 
       try {
@@ -165,13 +188,16 @@ test.describe('模板编译', () => {
           error: e.message,
         };
       }
-    }`)
+    }`,
+    );
 
-    expect(result.success).toBe(true)
-  })
+    expect(result.success).toBe(true);
+  });
 
   test('compile 编译带 slot 的模板', async ({ page }) => {
-    const result = await evaluateInBrowser(page, `(args) => {
+    const result = await evaluateInBrowser(
+      page,
+      `(args) => {
       const { compile } = window.LytJS;
 
       try {
@@ -186,17 +212,20 @@ test.describe('模板编译', () => {
           error: e.message,
         };
       }
-    }`)
+    }`,
+    );
 
-    expect(result.success).toBe(true)
-  })
+    expect(result.success).toBe(true);
+  });
 
   // ============================================================
   // 以下是改进的测试：验证 compile 输出的代码可以执行并产生正确的 VNode
   // ============================================================
 
   test('compile 返回的 code 字段应包含 render 函数定义', async ({ page }) => {
-    const result = await evaluateInBrowser(page, `(args) => {
+    const result = await evaluateInBrowser(
+      page,
+      `(args) => {
       const { compile } = window.LytJS;
       const compiled = compile('<div>Hello</div>');
       return {
@@ -205,31 +234,37 @@ test.describe('模板编译', () => {
         containsRenderFunction: compiled.code.includes('function render'),
         containsCreateVNode: compiled.code.includes('createVNode') || compiled.code.includes('CREATE_VNODE'),
       };
-    }`)
+    }`,
+    );
 
-    expect(result.hasCode).toBe(true)
-    expect(result.codeLength).toBeGreaterThan(0)
-    expect(result.containsRenderFunction).toBe(true)
-  })
+    expect(result.hasCode).toBe(true);
+    expect(result.codeLength).toBeGreaterThan(0);
+    expect(result.containsRenderFunction).toBe(true);
+  });
 
   test('compile 返回的 preamble 应包含必要的 import 声明', async ({ page }) => {
-    const result = await evaluateInBrowser(page, `(args) => {
+    const result = await evaluateInBrowser(
+      page,
+      `(args) => {
       const { compile } = window.LytJS;
       const compiled = compile('<div>Hello</div>');
       return {
         hasPreamble: typeof compiled.preamble === 'string',
         preambleContent: compiled.preamble,
       };
-    }`)
+    }`,
+    );
 
-    expect(result.hasPreamble).toBe(true)
+    expect(result.hasPreamble).toBe(true);
     // preamble 应包含 import 声明
-    expect(result.preambleContent).toContain('import')
-    expect(result.preambleContent).toContain('createVNode')
-  })
+    expect(result.preambleContent).toContain('import');
+    expect(result.preambleContent).toContain('createVNode');
+  });
 
   test('compile 返回的 ast 应包含正确的根节点信息', async ({ page }) => {
-    const result = await evaluateInBrowser(page, `(args) => {
+    const result = await evaluateInBrowser(
+      page,
+      `(args) => {
       const { compile } = window.LytJS;
       const compiled = compile('<div>Hello</div>');
       return {
@@ -237,14 +272,17 @@ test.describe('模板编译', () => {
         astType: compiled.ast.type,
         astChildrenCount: compiled.ast.children ? compiled.ast.children.length : 0,
       };
-    }`)
+    }`,
+    );
 
-    expect(result.hasAst).toBe(true)
-    expect(result.astType).toBeDefined()
-  })
+    expect(result.hasAst).toBe(true);
+    expect(result.astType).toBeDefined();
+  });
 
   test('compile 编译简单模板后，生成的 render 函数可以执行', async ({ page }) => {
-    const result = await evaluateInBrowser(page, `(args) => {
+    const result = await evaluateInBrowser(
+      page,
+      `(args) => {
       const { compile, h, createVNode } = window.LytJS;
       const compiled = compile('<div>Hello World</div>');
 
@@ -287,17 +325,20 @@ test.describe('模板编译', () => {
           code: code,
         };
       }
-    }`)
+    }`,
+    );
 
-    expect(result.success).toBe(true)
+    expect(result.success).toBe(true);
     // VNode 的 type 应该是 'div' 标签
-    expect(result.vnodeTag).toBe('div')
-    expect(result.hasChildren).toBe(true)
-    expect(result.childrenContent).toContain('Hello World')
-  })
+    expect(result.vnodeTag).toBe('div');
+    expect(result.hasChildren).toBe(true);
+    expect(result.childrenContent).toContain('Hello World');
+  });
 
   test('compile 编译带插值的模板后，render 函数应正确引用上下文变量', async ({ page }) => {
-    const result = await evaluateInBrowser(page, `(args) => {
+    const result = await evaluateInBrowser(
+      page,
+      `(args) => {
       const { compile, h, createVNode } = window.LytJS;
       const compiled = compile('<span>{{ message }}</span>');
 
@@ -326,16 +367,19 @@ test.describe('模板编译', () => {
           error: e.message,
         };
       }
-    }`)
+    }`,
+    );
 
-    expect(result.success).toBe(true)
-    expect(result.vnodeTag).toBe('span')
+    expect(result.success).toBe(true);
+    expect(result.vnodeTag).toBe('span');
     // 插值应引用上下文中的 message 变量
-    expect(result.childrenContent).toContain('Hello from context')
-  })
+    expect(result.childrenContent).toContain('Hello from context');
+  });
 
   test('compile 编译带属性绑定的模板后，render 函数应正确生成 props', async ({ page }) => {
-    const result = await evaluateInBrowser(page, `(args) => {
+    const result = await evaluateInBrowser(
+      page,
+      `(args) => {
       const { compile, h, createVNode } = window.LytJS;
       const compiled = compile('<a href="/home" class="link">Home</a>');
 
@@ -363,17 +407,20 @@ test.describe('模板编译', () => {
           error: e.message,
         };
       }
-    }`)
+    }`,
+    );
 
-    expect(result.success).toBe(true)
-    expect(result.vnodeTag).toBe('a')
-    expect(result.hasProps).toBe(true)
-    expect(result.props.href).toBe('/home')
-    expect(result.props.class).toBe('link')
-  })
+    expect(result.success).toBe(true);
+    expect(result.vnodeTag).toBe('a');
+    expect(result.hasProps).toBe(true);
+    expect(result.props.href).toBe('/home');
+    expect(result.props.class).toBe('link');
+  });
 
   test('compile 编译带条件渲染的模板后，render 函数应支持条件分支', async ({ page }) => {
-    const result = await evaluateInBrowser(page, `(args) => {
+    const result = await evaluateInBrowser(
+      page,
+      `(args) => {
       const { compile, h, createVNode } = window.LytJS;
       const compiled = compile('<div><p v-if="show">Visible</p><p v-else>Hidden</p></div>');
 
@@ -411,19 +458,22 @@ test.describe('模板编译', () => {
           error: e.message,
         };
       }
-    }`)
+    }`,
+    );
 
-    expect(result.success).toBe(true)
+    expect(result.success).toBe(true);
     // show=true 时应显示 "Visible"
-    expect(result.trueContainsVisible).toBe(true)
-    expect(result.trueContainsHidden).toBe(false)
+    expect(result.trueContainsVisible).toBe(true);
+    expect(result.trueContainsHidden).toBe(false);
     // show=false 时应显示 "Hidden"
-    expect(result.falseContainsVisible).toBe(false)
-    expect(result.falseContainsHidden).toBe(true)
-  })
+    expect(result.falseContainsVisible).toBe(false);
+    expect(result.falseContainsHidden).toBe(true);
+  });
 
   test('compile 编译带动态属性绑定的模板后，render 函数应正确引用上下文', async ({ page }) => {
-    const result = await evaluateInBrowser(page, `(args) => {
+    const result = await evaluateInBrowser(
+      page,
+      `(args) => {
       const { compile, h, createVNode } = window.LytJS;
       const compiled = compile('<div :id="dynamicId" :class="dynamicClass">Content</div>');
 
@@ -455,10 +505,11 @@ test.describe('模板编译', () => {
           error: e.message,
         };
       }
-    }`)
+    }`,
+    );
 
-    expect(result.success).toBe(true)
-    expect(result.idValue).toBe('my-div')
-    expect(result.classValue).toBe('active highlighted')
-  })
-})
+    expect(result.success).toBe(true);
+    expect(result.idValue).toBe('my-div');
+    expect(result.classValue).toBe('active highlighted');
+  });
+});

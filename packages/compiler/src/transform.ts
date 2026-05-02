@@ -3,7 +3,7 @@
 // 包含 transform、markConstants、hoistStatic、collectDynamicChildren
 // optimize 阶段的逻辑已合并到此模块中
 
-import { NodeTypes } from "./constants";
+import { NodeTypes } from './constants';
 import type {
   RootNode,
   ElementNode,
@@ -21,12 +21,8 @@ import type {
   CompilerOptions,
   VNodeCall,
   ExpressionNode,
-} from "./types";
-import {
-  createSimpleExpression,
-  createCallExpression,
-  createArrayExpression,
-} from "./ast";
+} from './types';
+import { createSimpleExpression, createCallExpression, createArrayExpression } from './ast';
 import {
   transformElement,
   transformIf,
@@ -38,16 +34,13 @@ import {
   transformModel,
   transformShow,
   isJS,
-} from "./transforms";
+} from './transforms';
 
 // ============================================================
 // Main transform function
 // ============================================================
 
-export function transform(
-  root: RootNode,
-  options: TransformOptions = {},
-): void {
+export function transform(root: RootNode, options: TransformOptions = {}): void {
   const context = createTransformContext(root, options);
   traverseNode(root, context, options);
 
@@ -63,18 +56,14 @@ export function transform(
   if (root.children.length === 1) {
     const child = root.children[0];
     if (child) {
-      if (
-        child.type === NodeTypes.ELEMENT &&
-        (child as ElementNode).codegenNode
-      ) {
+      if (child.type === NodeTypes.ELEMENT && (child as ElementNode).codegenNode) {
         root.codegenNode = (child as ElementNode).codegenNode as JSChildNode;
       } else if (child.type === NodeTypes.TEXT) {
         root.codegenNode = child as unknown as JSChildNode;
       } else if (child.type === NodeTypes.INTERPOLATION) {
-        root.codegenNode = createCallExpression(
-          context.helper("TO_DISPLAY_STRING"),
-          [(child as InterpolationNode).content],
-        );
+        root.codegenNode = createCallExpression(context.helper('TO_DISPLAY_STRING'), [
+          (child as InterpolationNode).content,
+        ]);
       } else if (isJS(child)) {
         root.codegenNode = child as JSChildNode;
       }
@@ -87,9 +76,9 @@ export function transform(
         c.type === NodeTypes.INTERPOLATION,
     );
     if (elements.length > 0) {
-      root.codegenNode = createCallExpression(context.helper("CREATE_VNODE"), [
-        createSimpleExpression("Fragment", true),
-        createSimpleExpression("null", true),
+      root.codegenNode = createCallExpression(context.helper('CREATE_VNODE'), [
+        createSimpleExpression('Fragment', true),
+        createSimpleExpression('null', true),
         createArrayExpression(elements as unknown as JSChildNode[]),
       ]);
     }
@@ -122,10 +111,7 @@ export function optimize(root: RootNode, _options: CompilerOptions = {}): void {
 // Create Transform Context
 // ============================================================
 
-function createTransformContext(
-  root: RootNode,
-  options: TransformOptions,
-): TransformContext {
+function createTransformContext(root: RootNode, options: TransformOptions): TransformContext {
   const helpers = new Map<string, number>();
   const components = new Set<string>();
   const directives = new Set<string>();
@@ -160,9 +146,7 @@ function createTransformContext(
       if (!context.parent) return;
       const parent = context.parent;
       if (parent.type === NodeTypes.ROOT || parent.type === NodeTypes.ELEMENT) {
-        const idx = parent.children.indexOf(
-          context.currentNode as TemplateChildNode,
-        );
+        const idx = parent.children.indexOf(context.currentNode as TemplateChildNode);
         if (idx !== -1) parent.children[idx] = node;
       }
       currentNode = node;
@@ -178,12 +162,12 @@ function createTransformContext(
     },
     onNodeRemoved(): void {},
     addIdentifiers(exp: ExpressionNode | string): void {
-      if (typeof exp === "string") context.identifiers.add(exp);
+      if (typeof exp === 'string') context.identifiers.add(exp);
       else if (exp.type === NodeTypes.SIMPLE_EXPRESSION && !exp.isStatic)
         context.identifiers.add(exp.content);
     },
     removeIdentifiers(exp: ExpressionNode | string): void {
-      if (typeof exp === "string") context.identifiers.delete(exp);
+      if (typeof exp === 'string') context.identifiers.delete(exp);
       else if (exp.type === NodeTypes.SIMPLE_EXPRESSION && !exp.isStatic)
         context.identifiers.delete(exp.content);
     },
@@ -230,12 +214,7 @@ function traverseNode(
       const transform = nodeTransforms[i];
       if (!transform) continue;
       const onExit = transform(
-        node as
-          | RootNode
-          | ElementNode
-          | TextNode
-          | InterpolationNode
-          | CommentNode,
+        node as RootNode | ElementNode | TextNode | InterpolationNode | CommentNode,
         context,
       );
       if (onExit) {
@@ -286,13 +265,7 @@ export const builtInDirectiveTransforms: Record<string, DirectiveTransform> = {
 };
 
 // Re-export individual transforms for backward compatibility
-export {
-  transformElement,
-  transformIf,
-  transformFor,
-  transformOnce,
-  transformSlot,
-};
+export { transformElement, transformIf, transformFor, transformOnce, transformSlot };
 export { transformBind, transformOn, transformModel, transformShow };
 
 // ============================================================
@@ -308,9 +281,7 @@ function markConstants(root: RootNode): void {
       // 1. It has no directives
       // 2. All its attributes are static
       // 3. All its children are constant (including descendants)
-      const hasDirectives = element.props.some(
-        (p) => p.type === NodeTypes.DIRECTIVE,
-      );
+      const hasDirectives = element.props.some((p) => p.type === NodeTypes.DIRECTIVE);
       const hasInterpolation = hasDescendantInterpolation(element);
 
       if (!hasDirectives && !hasInterpolation) {
@@ -359,7 +330,7 @@ function createHoistedReference(index: number): VNodeCall {
     loc: {
       start: { line: 1, column: 1, offset: 0 },
       end: { line: 1, column: 1, offset: 0 },
-      source: "",
+      source: '',
     },
   };
 }
@@ -414,10 +385,7 @@ function collectDynamicChildrenFromElement(element: ElementNode): void {
 // Walk helper (原 optimize.ts)
 // ============================================================
 
-function walk(
-  nodes: TemplateChildNode[],
-  fn: (node: TemplateChildNode) => void,
-): void {
+function walk(nodes: TemplateChildNode[], fn: (node: TemplateChildNode) => void): void {
   for (const node of nodes) {
     fn(node);
 

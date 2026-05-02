@@ -13,7 +13,7 @@
  * v-if/v-else 分支内部动态子节点不独立收集。
  */
 
-import { NodeTypes, ElementTypes, PatchFlags } from "../constants";
+import { NodeTypes, ElementTypes, PatchFlags } from '../constants';
 import type {
   ElementNode,
   InterpolationNode,
@@ -25,7 +25,7 @@ import type {
   TransformContext,
   ExpressionNode,
   TemplateChildNode,
-} from "../types";
+} from '../types';
 import {
   createVNodeCall,
   createSimpleExpression,
@@ -34,30 +34,27 @@ import {
   createObjectExpression,
   createObjectProperty,
   createConditionalExpression,
-} from "../ast";
-import { getExpContent, findDirective } from "./helpers";
-import { capitalize } from "@lytjs/common-string";
+} from '../ast';
+import { getExpContent, findDirective } from './helpers';
+import { capitalize } from '@lytjs/common-string';
 
-export function transformElement(
-  node: ElementNode,
-  context: TransformContext,
-): void {
+export function transformElement(node: ElementNode, context: TransformContext): void {
   if (node.type !== NodeTypes.ELEMENT) return;
 
   // Handle v-if chain first
-  const ifDirective = findDirective(node, "if");
+  const ifDirective = findDirective(node, 'if');
   if (ifDirective) {
     return;
   }
 
   // Handle v-for
-  const forDirective = findDirective(node, "for");
+  const forDirective = findDirective(node, 'for');
   if (forDirective) {
     return;
   }
 
   // Handle v-once
-  const onceDirective = findDirective(node, "once");
+  const onceDirective = findDirective(node, 'once');
   if (onceDirective) {
     return;
   }
@@ -76,21 +73,11 @@ export function transformElement(
     for (const prop of props) {
       if (prop.type === NodeTypes.ATTRIBUTE) {
         const value = prop.value
-          ? createSimpleExpression(
-              JSON.stringify(prop.value.content),
-              true,
-              prop.loc,
-              true,
-            )
-          : createSimpleExpression("true", true, prop.loc, true);
+          ? createSimpleExpression(JSON.stringify(prop.value.content), true, prop.loc, true)
+          : createSimpleExpression('true', true, prop.loc, true);
         properties.push(
           createObjectProperty(
-            createSimpleExpression(
-              JSON.stringify(prop.name),
-              true,
-              prop.loc,
-              true,
-            ),
+            createSimpleExpression(JSON.stringify(prop.name), true, prop.loc, true),
             value,
           ),
         );
@@ -111,8 +98,8 @@ export function transformElement(
       if (child.type === NodeTypes.TEXT) {
         vnodeChildren = child.content;
       } else if (child.type === NodeTypes.INTERPOLATION) {
-        context.helper("TO_DISPLAY_STRING");
-        vnodeChildren = createCallExpression("TO_DISPLAY_STRING", [
+        context.helper('TO_DISPLAY_STRING');
+        vnodeChildren = createCallExpression('TO_DISPLAY_STRING', [
           (child as InterpolationNode).content,
         ]);
       } else if (child.type === NodeTypes.ELEMENT) {
@@ -136,7 +123,7 @@ export function transformElement(
         }
       }
       if (parts.length > 0) {
-        context.helper("TO_DISPLAY_STRING");
+        context.helper('TO_DISPLAY_STRING');
         vnodeChildren = createCompoundExpression(parts);
       }
     } else {
@@ -173,7 +160,7 @@ export function transformElement(
 
   node.codegenNode = vnodeCall;
 
-  context.helper("CREATE_VNODE");
+  context.helper('CREATE_VNODE');
 
   if (isComponent) {
     context.components.add(tag);
@@ -190,27 +177,27 @@ function handleDirective(
   properties: JSProperty[],
 ): void {
   switch (prop.name) {
-    case "bind":
+    case 'bind':
       handleVBind(prop, node, context, properties);
       break;
-    case "on":
+    case 'on':
       handleVOn(prop, node, context, properties);
       break;
-    case "model":
+    case 'model':
       // v-model 已有独立 transform（model.ts），保持现有调用
       handleVModel(prop, node, context, properties);
       break;
-    case "show":
+    case 'show':
       handleVShow(prop, node, context, properties);
       break;
-    case "html":
+    case 'html':
       handleVHtml(prop, node, context, properties);
       break;
-    case "text":
+    case 'text':
       handleVText(prop, node, context, properties);
       break;
-    case "cloak":
-    case "pre":
+    case 'cloak':
+    case 'pre':
       // skip
       break;
     default:
@@ -230,23 +217,16 @@ function handleVBind(
   properties: JSProperty[],
 ): void {
   const expContent = getExpContent(prop.exp);
-  const argContent = prop.arg
-    ? getExpContent(prop.arg as ExpressionNode)
-    : undefined;
+  const argContent = prop.arg ? getExpContent(prop.arg as ExpressionNode) : undefined;
 
   if (argContent !== undefined) {
     const valueExpr =
       expContent !== undefined
         ? createSimpleExpression(expContent, false, prop.loc, false)
-        : createSimpleExpression("undefined", true, prop.loc, true);
+        : createSimpleExpression('undefined', true, prop.loc, true);
     properties.push(
       createObjectProperty(
-        createSimpleExpression(
-          JSON.stringify(argContent),
-          true,
-          prop.loc,
-          true,
-        ),
+        createSimpleExpression(JSON.stringify(argContent), true, prop.loc, true),
         valueExpr,
       ),
     );
@@ -263,23 +243,16 @@ function handleVOn(
   properties: JSProperty[],
 ): void {
   const expContent = getExpContent(prop.exp);
-  const argContent = prop.arg
-    ? getExpContent(prop.arg as ExpressionNode)
-    : undefined;
+  const argContent = prop.arg ? getExpContent(prop.arg as ExpressionNode) : undefined;
 
   if (argContent !== undefined) {
     const handler =
       expContent !== undefined
         ? createSimpleExpression(expContent, false, prop.loc, false)
-        : createSimpleExpression("undefined", true, prop.loc, true);
+        : createSimpleExpression('undefined', true, prop.loc, true);
     properties.push(
       createObjectProperty(
-        createSimpleExpression(
-          `"on${capitalize(argContent)}"`,
-          true,
-          prop.loc,
-          true,
-        ),
+        createSimpleExpression(`"on${capitalize(argContent)}"`, true, prop.loc, true),
         handler,
       ),
     );
@@ -307,12 +280,7 @@ function handleVModel(
     properties.push(
       createObjectProperty(
         createSimpleExpression('"onUpdate:modelValue"', true, prop.loc, true),
-        createSimpleExpression(
-          `$event => (${expContent} = $event)`,
-          false,
-          prop.loc,
-          false,
-        ),
+        createSimpleExpression(`$event => (${expContent} = $event)`, false, prop.loc, false),
       ),
     );
   }
@@ -335,11 +303,11 @@ function handleVShow(
         createSimpleExpression('"style"', true, prop.loc, true),
         createConditionalExpression(
           createSimpleExpression(expContent, false, prop.loc, false),
-          createSimpleExpression("undefined", true, prop.loc, true),
+          createSimpleExpression('undefined', true, prop.loc, true),
           createObjectExpression(
             [
               createObjectProperty(
-                createSimpleExpression("display", true, prop.loc, true),
+                createSimpleExpression('display', true, prop.loc, true),
                 createSimpleExpression("'none'", true, prop.loc, true),
               ),
             ],
@@ -365,19 +333,19 @@ function handleVHtml(
 
   if (expContent !== undefined) {
     // T-002 XSS fix: 对 v-html 值进行运行时消毒，防止 XSS 攻击
-    context.helper("SANITIZE_HTML");
+    context.helper('SANITIZE_HTML');
     const sanitizedValue = createCallExpression(
-      "SANITIZE_HTML",
+      'SANITIZE_HTML',
       [createSimpleExpression(expContent, false, prop.loc, false)],
       prop.loc,
     );
     // 在开发模式下额外发出安全警告
     const safeValue = createCompoundExpression([
       `(${createConditionalExpression(
-        createSimpleExpression("__DEV__", false, prop.loc, false),
+        createSimpleExpression('__DEV__', false, prop.loc, false),
         createCompoundExpression([
           createCallExpression(
-            "console.warn",
+            'console.warn',
             [
               createSimpleExpression(
                 '"[LytJS] v-html directive can lead to XSS attack. Make sure the content is sanitized before rendering."',
@@ -388,7 +356,7 @@ function handleVHtml(
             ],
             prop.loc,
           ),
-          ", ",
+          ', ',
           sanitizedValue,
         ]),
         sanitizedValue,

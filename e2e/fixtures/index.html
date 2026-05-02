@@ -1,47 +1,64 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>LytJS E2E Test App</title>
-</head>
-<body>
-  <div id="app"></div>
-  <script src="/dist/lytjs.global.js"></script>
-  <script>
-    // 将 LytJS 核心 API 暴露到 window 上，供 E2E 测试通过 page.evaluate 使用
-    const { createApp, h, defineComponent, nextTick,
-            ref, reactive, computed, watch, watchEffect,
-            onMounted, onUnmounted, onUpdated,
-            onBeforeMount, onBeforeUnmount, onBeforeUpdate,
-            onErrorCaptured,
-            Fragment, Text, Comment, withDirectives,
-            defineAsyncComponent, compile } = LytJS;
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LytJS E2E Test App</title>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script src="/dist/lytjs.global.js"></script>
+    <script>
+      // 将 LytJS 核心 API 暴露到 window 上，供 E2E 测试通过 page.evaluate 使用
+      const {
+        createApp,
+        h,
+        defineComponent,
+        nextTick,
+        ref,
+        reactive,
+        computed,
+        watch,
+        watchEffect,
+        onMounted,
+        onUnmounted,
+        onUpdated,
+        onBeforeMount,
+        onBeforeUnmount,
+        onBeforeUpdate,
+        onErrorCaptured,
+        Fragment,
+        Text,
+        Comment,
+        withDirectives,
+        defineAsyncComponent,
+        compile,
+      } = LytJS;
 
-    window.LytJS = {
-      createApp,
-      h,
-      defineComponent,
-      nextTick,
-      ref,
-      reactive,
-      computed,
-      watch,
-      watchEffect,
-      onMounted,
-      onUnmounted,
-      onUpdated,
-      onBeforeMount,
-      onBeforeUnmount,
-      onBeforeUpdate,
-      onErrorCaptured,
-      Fragment,
-      Text,
-      Comment,
-      withDirectives,
-      defineAsyncComponent,
-      compile,
-    };
-  </script>
-</body>
+      window.LytJS = {
+        createApp,
+        h,
+        defineComponent,
+        nextTick,
+        ref,
+        reactive,
+        computed,
+        watch,
+        watchEffect,
+        onMounted,
+        onUnmounted,
+        onUpdated,
+        onBeforeMount,
+        onBeforeUnmount,
+        onBeforeUpdate,
+        onErrorCaptured,
+        Fragment,
+        Text,
+        Comment,
+        withDirectives,
+        defineAsyncComponent,
+        compile,
+      };
+    </script>
+  </body>
 </html>

@@ -2,18 +2,12 @@
 // Ref 响应式引用
 // 复用 @lytjs/common-is: isObject, hasChanged
 
-import { isObject, hasChanged } from "@lytjs/common-is";
-import {
-  track,
-  trigger,
-  getActiveEffect,
-  getShouldTrack,
-  createDep,
-} from "./effect";
-import type { Dep } from "./effect";
-import { TrackOpTypes, TriggerOpTypes } from "./constants";
-import { toRaw, isRef } from "./shared";
-import { reactive } from "./reactive";
+import { isObject, hasChanged } from '@lytjs/common-is';
+import { track, trigger, getActiveEffect, getShouldTrack, createDep } from './effect';
+import type { Dep } from './effect';
+import { TrackOpTypes, TriggerOpTypes } from './constants';
+import { toRaw, isRef } from './shared';
+import { reactive } from './reactive';
 
 // ==================== Ref 类型 ====================
 
@@ -73,9 +67,7 @@ class RefImpl<T> {
       this._rawValue = newVal;
       // toReactive 仅对对象类型生效，非对象值直接赋值。
       // 此处的 as object 断言是安全的，因为 toReactive 内部会先做 isObject 检查。
-      this._value = useDirectValue
-        ? newVal
-        : (toReactive(newVal as object) as T);
+      this._value = useDirectValue ? newVal : (toReactive(newVal as object) as T);
       triggerRefValue(this, newVal, oldVal);
     }
   }
@@ -113,16 +105,12 @@ class ShallowRefImpl<T> {
 
 export function trackRefValue(ref: TrackableRef): void {
   if (getShouldTrack() && getActiveEffect()) {
-    track(ref, TrackOpTypes.GET, "value");
+    track(ref, TrackOpTypes.GET, 'value');
   }
 }
 
-export function triggerRefValue(
-  ref: TrackableRef,
-  newVal?: unknown,
-  oldVal?: unknown,
-): void {
-  trigger(ref, TriggerOpTypes.SET, "value", newVal, oldVal);
+export function triggerRefValue(ref: TrackableRef, newVal?: unknown, oldVal?: unknown): void {
+  trigger(ref, TriggerOpTypes.SET, 'value', newVal, oldVal);
 }
 
 // ==================== 公共 API ====================
@@ -143,23 +131,18 @@ export function triggerRef<T>(ref: ShallowRef<T>): void {
   triggerRefValue(ref as unknown as TrackableRef, ref.value);
 }
 
-export { isRef } from "./shared";
+export { isRef } from './shared';
 
 export function unref<T>(r: T | Ref<T>): T {
   return isRef(r) ? (r as Ref<T>).value : (r as T);
 }
 
-export function toRef<T extends object, K extends keyof T>(
-  object: T,
-  key: K,
-): Ref<T[K]> {
+export function toRef<T extends object, K extends keyof T>(object: T, key: K): Ref<T[K]> {
   if (isRef(object[key])) return object[key] as Ref<T[K]>;
   return new ObjectRefImpl(object, key) as unknown as Ref<T[K]>;
 }
 
-export function toRefs<T extends object>(
-  object: T,
-): { [K in keyof T]: Ref<T[K]> } {
+export function toRefs<T extends object>(object: T): { [K in keyof T]: Ref<T[K]> } {
   const result = {} as { [K in keyof T]: Ref<T[K]> };
   for (const key in object) {
     result[key] = toRef(object, key);

@@ -1,7 +1,7 @@
 // src/ast.ts
 // AST node creation helper functions
 
-import { NodeTypes, ElementTypes } from "./constants";
+import { NodeTypes, ElementTypes } from './constants';
 import type {
   RootNode,
   ElementNode,
@@ -22,13 +22,9 @@ import type {
   ExpressionNode,
   TemplateChildNode,
   SourceLocation,
-} from "./types";
+} from './types';
 
-function createLoc(
-  source: string,
-  offset: number,
-  length: number,
-): SourceLocation {
+function createLoc(source: string, offset: number, length: number): SourceLocation {
   if (__DEV__) {
     if (offset < 0 || length < 0 || offset + length > source.length) {
       console.warn(
@@ -36,12 +32,12 @@ function createLoc(
       );
     }
   }
-  const lines = source.slice(0, offset).split("\n");
+  const lines = source.slice(0, offset).split('\n');
   const line = lines.length;
-  const column = (lines[line - 1] ?? "").length + 1;
-  const endLines = source.slice(0, offset + length).split("\n");
+  const column = (lines[line - 1] ?? '').length + 1;
+  const endLines = source.slice(0, offset + length).split('\n');
   const endLine = endLines.length;
-  const endColumn = (endLines[endLine - 1] ?? "").length + 1;
+  const endColumn = (endLines[endLine - 1] ?? '').length + 1;
   return {
     start: { line, column, offset },
     end: { line: endLine, column: endColumn, offset: offset + length },
@@ -52,13 +48,10 @@ function createLoc(
 const DEFAULT_LOC: SourceLocation = {
   start: { line: 1, column: 1, offset: 0 },
   end: { line: 1, column: 1, offset: 0 },
-  source: "",
+  source: '',
 };
 
-export function createRoot(
-  children: TemplateChildNode[],
-  source = "",
-): RootNode {
+export function createRoot(children: TemplateChildNode[], source = ''): RootNode {
   return {
     type: NodeTypes.ROOT,
     children,
@@ -101,10 +94,7 @@ export function createElement(
   };
 }
 
-export function createText(
-  content: string,
-  loc: SourceLocation = DEFAULT_LOC,
-): TextNode {
+export function createText(content: string, loc: SourceLocation = DEFAULT_LOC): TextNode {
   return {
     type: NodeTypes.TEXT,
     content,
@@ -113,10 +103,7 @@ export function createText(
   };
 }
 
-export function createComment(
-  content: string,
-  loc: SourceLocation = DEFAULT_LOC,
-): CommentNode {
+export function createComment(content: string, loc: SourceLocation = DEFAULT_LOC): CommentNode {
   return {
     type: NodeTypes.COMMENT,
     content,

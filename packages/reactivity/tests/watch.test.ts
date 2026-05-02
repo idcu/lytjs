@@ -177,12 +177,12 @@ describe('watch', () => {
   });
 
   it('should not track nested changes in reactive object without deep option', async () => {
-    const obj = reactive({ nested: { value: 1 } })
-    const fn = vi.fn()
-    watch(() => obj.nested.value, fn)
-    obj.nested.value = 2
-    await nextTick()
-    expect(fn).toHaveBeenCalledTimes(1)
+    const obj = reactive({ nested: { value: 1 } });
+    const fn = vi.fn();
+    watch(() => obj.nested.value, fn);
+    obj.nested.value = 2;
+    await nextTick();
+    expect(fn).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -190,7 +190,9 @@ describe('watchEffect', () => {
   it('should auto-track dependencies', async () => {
     const count = ref(0);
     const fn = vi.fn();
-    watchEffect(() => { fn(count.value); });
+    watchEffect(() => {
+      fn(count.value);
+    });
     expect(fn).toHaveBeenCalledWith(0);
     count.value = 1;
     await nextTick();
@@ -200,7 +202,9 @@ describe('watchEffect', () => {
   it('should stop watchEffect', async () => {
     const count = ref(0);
     const fn = vi.fn();
-    const stop = watchEffect(() => { fn(count.value); });
+    const stop = watchEffect(() => {
+      fn(count.value);
+    });
     count.value = 1;
     await nextTick();
     expect(fn).toHaveBeenCalledTimes(2);

@@ -2,30 +2,12 @@
 // 响应式对象（Proxy 实现）
 // 复用 @lytjs/common-is: isObject, hasChanged, hasOwn, isSymbol, isMap, isSet
 
-import {
-  isObject,
-  hasChanged,
-  hasOwn,
-  isSymbol,
-  isMap,
-  isSet,
-} from "@lytjs/common-is";
-import { warn } from "@lytjs/common-error";
-import {
-  ReactiveFlags,
-  TrackOpTypes,
-  TriggerOpTypes,
-  ITERATE_KEY,
-} from "./constants";
-import {
-  track,
-  trigger,
-  pauseTracking,
-  resetTracking,
-  isIntegerKey,
-} from "./effect";
-import type { UnwrapNestedRefs, DeepReadonly } from "./types";
-import { toRaw, isRef } from "./shared";
+import { isObject, hasChanged, hasOwn, isSymbol, isMap, isSet } from '@lytjs/common-is';
+import { warn } from '@lytjs/common-error';
+import { ReactiveFlags, TrackOpTypes, TriggerOpTypes, ITERATE_KEY } from './constants';
+import { track, trigger, pauseTracking, resetTracking, isIntegerKey } from './effect';
+import type { UnwrapNestedRefs, DeepReadonly } from './types';
+import { toRaw, isRef } from './shared';
 
 // ==================== 类型 ====================
 
@@ -45,26 +27,18 @@ interface ReactiveTarget {
 
 // ==================== 辅助常量 ====================
 
-const MUTATING_METHODS = new Set<string>(["set", "add", "delete", "clear"]);
+const MUTATING_METHODS = new Set<string>(['set', 'add', 'delete', 'clear']);
 
 // ==================== 数组方法拦截 ====================
 
-const arrayInstrumentations: Record<
-  string | symbol,
-  (...args: unknown[]) => unknown
-> = {};
+const arrayInstrumentations: Record<string | symbol, (...args: unknown[]) => unknown> = {};
 
-(["includes", "indexOf", "lastIndexOf"] as const).forEach((method) => {
-  const originMethod = Array.prototype[method] as (
-    ...args: unknown[]
-  ) => unknown;
-  arrayInstrumentations[method] = function (
-    this: unknown[],
-    ...args: unknown[]
-  ) {
+(['includes', 'indexOf', 'lastIndexOf'] as const).forEach((method) => {
+  const originMethod = Array.prototype[method] as (...args: unknown[]) => unknown;
+  arrayInstrumentations[method] = function (this: unknown[], ...args: unknown[]) {
     const arr = toRaw(this);
     for (let i = 0; i < arr.length; i++) {
-      track(arr, TrackOpTypes.GET, i + "");
+      track(arr, TrackOpTypes.GET, i + '');
     }
     const result = originMethod.apply(arr, args);
     if (result === -1 || result === false) {
@@ -77,14 +51,9 @@ const arrayInstrumentations: Record<
   };
 });
 
-(["push", "pop", "shift", "unshift", "splice"] as const).forEach((method) => {
-  const originMethod = Array.prototype[method] as (
-    ...args: unknown[]
-  ) => unknown;
-  arrayInstrumentations[method] = function (
-    this: unknown[],
-    ...args: unknown[]
-  ) {
+(['push', 'pop', 'shift', 'unshift', 'splice'] as const).forEach((method) => {
+  const originMethod = Array.prototype[method] as (...args: unknown[]) => unknown;
+  arrayInstrumentations[method] = function (this: unknown[], ...args: unknown[]) {
     pauseTracking();
     try {
       const result = originMethod.apply(this, args);
@@ -99,7 +68,7 @@ const arrayInstrumentations: Record<
 
 const builtInSymbols = new Set<symbol>(
   Object.getOwnPropertyNames(Symbol)
-    .filter((key) => key !== "arguments" && key !== "caller")
+    .filter((key) => key !== 'arguments' && key !== 'caller')
     .map(
       // 安全性说明：Object.getOwnPropertyNames(Symbol) 返回的 key 一定是
       // Symbol 构造函数自身的静态属性名（如 "iterator"、"hasInstance" 等），
@@ -112,7 +81,7 @@ const builtInSymbols = new Set<symbol>(
 );
 
 function isNonTrackableKey(key: string | symbol): boolean {
-  return key === "__proto__" || key === "__v_isRef";
+  return key === '__proto__' || key === '__v_isRef';
 }
 
 // ==================== createReactiveObject ====================
@@ -139,10 +108,7 @@ function createReactiveObject(
 
   if (
     (target as Record<string | symbol, unknown>)[ReactiveFlags.RAW] &&
-    !(
-      isReadonlyFlag &&
-      (target as Record<string | symbol, unknown>)[ReactiveFlags.IS_REACTIVE]
-    )
+    !(isReadonlyFlag && (target as Record<string | symbol, unknown>)[ReactiveFlags.IS_REACTIVE])
   ) {
     return target;
   }
@@ -152,8 +118,7 @@ function createReactiveObject(
     return existingProxy;
   }
 
-  const handlers =
-    isMap(target) || isSet(target) ? collectionHandlers : baseHandlers;
+  const handlers = isMap(target) || isSet(target) ? collectionHandlers : baseHandlers;
 
   const proxy = new Proxy(target, handlers);
   proxyMap.set(target, proxy);
@@ -162,10 +127,7 @@ function createReactiveObject(
 
 // ==================== Mutable Handlers ====================
 
-function createMutableHandler(
-  isReadonly: boolean,
-  isShallow: boolean,
-): ProxyHandler<Target> {
+function createMutableHandler(isReadonly: boolean, isShallow: boolean): ProxyHandler<Target> {
   return {
     get(target, key, _receiver) {
       if (key === ReactiveFlags.IS_REACTIVE) return !isReadonly;
@@ -211,7 +173,7 @@ function createMutableHandler(
               try {
                 return JSON.stringify(target);
               } catch {
-                return "[object Object]";
+                return '[object Object]';
               }
             })()}`,
           );
@@ -255,7 +217,7 @@ function createMutableHandler(
               try {
                 return JSON.stringify(target);
               } catch {
-                return "[object Object]";
+                return '[object Object]';
               }
             })()}`,
           );
@@ -284,11 +246,7 @@ function createMutableHandler(
 
     ownKeys(target) {
       if (!isReadonly) {
-        track(
-          target,
-          TrackOpTypes.ITERATE,
-          Array.isArray(target) ? "length" : ITERATE_KEY,
-        );
+        track(target, TrackOpTypes.ITERATE, Array.isArray(target) ? 'length' : ITERATE_KEY);
       }
       return Reflect.ownKeys(target);
     },
@@ -297,12 +255,9 @@ function createMutableHandler(
 
 // ==================== Collection Handlers ====================
 
-function createCollectionHandler(
-  isReadonly: boolean,
-  isShallow: boolean,
-): ProxyHandler<Target> {
+function createCollectionHandler(isReadonly: boolean, isShallow: boolean): ProxyHandler<Target> {
   // Map/Set 的迭代 key
-  const ITERATE_KEY_COL = Symbol("collection_iterate");
+  const ITERATE_KEY_COL = Symbol('collection_iterate');
 
   return {
     get(target, key, _receiver) {
@@ -313,16 +268,12 @@ function createCollectionHandler(
 
       // 追踪 size 属性和 get 调用
       // 对于 readonly collection，额外追踪 has 和 forEach
-      if (
-        key === "size" ||
-        key === "get" ||
-        (isReadonly && (key === "has" || key === "forEach"))
-      ) {
+      if (key === 'size' || key === 'get' || (isReadonly && (key === 'has' || key === 'forEach'))) {
         track(target, TrackOpTypes.GET, ITERATE_KEY_COL);
       }
 
       const res = Reflect.get(target, key, _receiver);
-      if (typeof res === "function") {
+      if (typeof res === 'function') {
         if (!isReadonly) {
           // key as string: MUTATING_METHODS 只包含字符串方法名（"set"/"add"/"delete"/"clear"），
           // 而 Proxy handler 的 key 参数类型为 string | symbol。对于 Map/Set 的变异方法，
@@ -331,7 +282,7 @@ function createCollectionHandler(
           if (MUTATING_METHODS.has(key as string)) {
             return (...args: unknown[]) => {
               const rawTarget = toRaw(target) as Map<unknown, unknown>;
-              if (key === "set") {
+              if (key === 'set') {
                 // Map.set: 检查值是否实际改变
                 const oldValue = rawTarget.get(args[0]);
                 const hadKey = rawTarget.has(args[0]);
@@ -346,20 +297,15 @@ function createCollectionHandler(
                   );
                 }
                 return result;
-              } else if (key === "add") {
+              } else if (key === 'add') {
                 // Set.add: 利用返回值判断是否新增
                 const had = rawTarget.has(args[0]);
                 const result = res.apply(target, args);
                 if (!had) {
-                  trigger(
-                    target,
-                    TriggerOpTypes.ADD,
-                    args[0] as string | symbol,
-                    args[0],
-                  );
+                  trigger(target, TriggerOpTypes.ADD, args[0] as string | symbol, args[0]);
                 }
                 return result;
-              } else if (key === "delete") {
+              } else if (key === 'delete') {
                 // Map/Set.delete: 已有 hadKey 检查
                 const hadKey = rawTarget.has(args[0]);
                 const result = res.apply(target, args);
@@ -373,17 +319,11 @@ function createCollectionHandler(
                   );
                 }
                 return result;
-              } else if (key === "clear") {
+              } else if (key === 'clear') {
                 const hadItems = rawTarget.size > 0;
                 const result = res.apply(target, args);
                 if (hadItems) {
-                  trigger(
-                    target,
-                    TriggerOpTypes.CLEAR,
-                    undefined,
-                    undefined,
-                    undefined,
-                  );
+                  trigger(target, TriggerOpTypes.CLEAR, undefined, undefined, undefined);
                 }
                 return result;
               }
@@ -398,15 +338,13 @@ function createCollectionHandler(
           if (MUTATING_METHODS.has(key as string)) {
             return (..._args: unknown[]) => {
               if (__DEV__) {
-                warn(
-                  `Operation "${String(key)}" failed: target is shallow readonly.`,
-                );
+                warn(`Operation "${String(key)}" failed: target is shallow readonly.`);
               }
               // delete 返回 false 以匹配原生 Set.prototype.delete 和 Map.prototype.delete 的
               // 失败返回值语义（表示未执行删除）。其他变异方法（set/add/clear）返回 undefined，
               // 因为原生 API 中这些方法在成功时返回特定值（如 Set.add 返回 Set 本身），
               // 此处用 undefined 表示操作被阻止，与 readonly handler 的行为一致。
-              if (key === "delete") return false;
+              if (key === 'delete') return false;
               return undefined;
             };
           }
@@ -460,9 +398,7 @@ export function shallowReactive<T extends object>(target: T): T {
   ) as T;
 }
 
-export function readonly<T extends object>(
-  target: T,
-): DeepReadonly<UnwrapNestedRefs<T>> {
+export function readonly<T extends object>(target: T): DeepReadonly<UnwrapNestedRefs<T>> {
   return createReactiveObject(
     target,
     true,
@@ -499,7 +435,7 @@ export function isProxy(value: unknown): boolean {
   return isReactive(value) || isReadonly(value);
 }
 
-export { toRaw } from "./shared";
+export { toRaw } from './shared';
 
 export function markRaw<T extends object>(value: T): T {
   Object.defineProperty(value, ReactiveFlags.SKIP, { value: true });

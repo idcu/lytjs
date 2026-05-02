@@ -3,8 +3,8 @@
  * VDOM-specific types that extend common-vnode types
  */
 
-import type { VNode, ComponentInternalInstance } from "@lytjs/common-vnode";
-import type { Props as SharedProps } from "@lytjs/shared-types";
+import type { VNode, ComponentInternalInstance } from '@lytjs/common-vnode';
+import type { Props as SharedProps } from '@lytjs/shared-types';
 
 // ============================================================
 // Basic types
@@ -35,11 +35,7 @@ export interface Component<P = Record<string, unknown>, RawBindings = {}> {
       emit: (...args: unknown[]) => void;
     },
   ) => RawBindings | void;
-  render?: (ctx: {
-    props: P;
-    slots: Record<string, unknown>;
-    [key: string]: unknown;
-  }) => unknown;
+  render?: (ctx: { props: P; slots: Record<string, unknown>; [key: string]: unknown }) => unknown;
   props?: Record<string, unknown>;
   emits?: string[] | Record<string, unknown>;
 }
@@ -49,10 +45,7 @@ export interface Component<P = Record<string, unknown>, RawBindings = {}> {
 // ============================================================
 
 /** Renderer options for host platform operations */
-export interface RendererOptions<
-  HostNode = Node,
-  HostElement extends Node = Element,
-> {
+export interface RendererOptions<HostNode = Node, HostElement extends Node = Element> {
   /** Create a host element from a tag string */
   createElement(type: string): HostElement;
   /** Set text content on a host element */

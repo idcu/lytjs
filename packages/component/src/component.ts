@@ -1,17 +1,10 @@
 // src/component.ts
 // Core component instance management
 
-import { reactive } from "@lytjs/reactivity";
-import { nextTick } from "@lytjs/common-scheduler";
-import {
-  isFunction,
-  isObject,
-  hasOwn,
-  NOOP,
-  EMPTY_OBJ,
-  isPromise,
-} from "@lytjs/common-is";
-import { warn } from "@lytjs/common-error";
+import { reactive } from '@lytjs/reactivity';
+import { nextTick } from '@lytjs/common-scheduler';
+import { isFunction, isObject, hasOwn, NOOP, EMPTY_OBJ, isPromise } from '@lytjs/common-is';
+import { warn } from '@lytjs/common-error';
 import type {
   ComponentOptions,
   ComponentInternalInstance,
@@ -20,19 +13,14 @@ import type {
   InternalSlots,
   AppContext,
   RenderFunction,
-} from "./types";
-import type { VNode } from "@lytjs/common-vnode";
+} from './types';
+import type { VNode } from '@lytjs/common-vnode';
 
 type SetupResult = RenderFunction | Record<string, unknown> | void;
-import { normalizePropsOptions, resolvePropValue } from "./props";
-import { normalizeEmitsOptions, emit } from "./emit";
-import { initSlots } from "./slots";
-import {
-  setCurrentInstance,
-  getCurrentInstance,
-  callCreatedHook,
-  handleError,
-} from "./lifecycle";
+import { normalizePropsOptions, resolvePropValue } from './props';
+import { normalizeEmitsOptions, emit } from './emit';
+import { initSlots } from './slots';
+import { setCurrentInstance, getCurrentInstance, callCreatedHook, handleError } from './lifecycle';
 
 // ==================== UID counter ====================
 
@@ -94,8 +82,7 @@ export function createComponentInstance(
   }
 
   // Create emit function bound to this instance
-  instance.emit = (event: string, ...args: unknown[]) =>
-    emit(instance, event, ...args);
+  instance.emit = (event: string, ...args: unknown[]) => emit(instance, event, ...args);
 
   return instance;
 }
@@ -128,10 +115,7 @@ export function setupComponent(instance: ComponentInternalInstance): void {
     const timedSetupResult = Promise.race([
       setupResult,
       new Promise<SetupResult>((_, reject) =>
-        setTimeout(
-          () => reject(new Error("Async component setup timed out")),
-          30000,
-        ),
+        setTimeout(() => reject(new Error('Async component setup timed out')), 30000),
       ),
     ]);
     timedSetupResult
@@ -142,7 +126,7 @@ export function setupComponent(instance: ComponentInternalInstance): void {
       })
       .catch((err: Error) => {
         vnode.isAsyncPlaceholder = false;
-        handleError(err, instance, "setup function");
+        handleError(err, instance, 'setup function');
       });
   } else {
     handleSetupResult(instance, setupResult);
@@ -164,7 +148,7 @@ function runSetup(instance: ComponentInternalInstance): SetupResult {
     const result = setup(instance.props, setupContext);
     return result;
   } catch (err) {
-    handleError(err as Error, instance, "setup function");
+    handleError(err as Error, instance, 'setup function');
     // Set a no-op render to prevent silent empty rendering
     instance.render = () => null as unknown as VNode;
     return undefined;
@@ -176,10 +160,7 @@ function runSetup(instance: ComponentInternalInstance): SetupResult {
 /**
  * Handle the result of the setup function.
  */
-function handleSetupResult(
-  instance: ComponentInternalInstance,
-  setupResult: SetupResult,
-): void {
+function handleSetupResult(instance: ComponentInternalInstance, setupResult: SetupResult): void {
   if (isFunction(setupResult)) {
     // Setup returned a render function
     instance.render = setupResult as RenderFunction;
@@ -195,9 +176,7 @@ function handleSetupResult(
 /**
  * Finish component setup: handle data, methods, computed, render.
  */
-export function finishComponentSetup(
-  instance: ComponentInternalInstance,
-): void {
+export function finishComponentSetup(instance: ComponentInternalInstance): void {
   const { type } = instance;
 
   // Create public instance proxy before data() so ctx is available
@@ -262,9 +241,7 @@ export function initProps(
 /**
  * Create the setup context object passed to the setup function.
  */
-export function createSetupContext(
-  instance: ComponentInternalInstance,
-): SetupContext {
+export function createSetupContext(instance: ComponentInternalInstance): SetupContext {
   return {
     attrs: instance.attrs,
     slots: instance.slots,
@@ -277,7 +254,7 @@ export function createSetupContext(
       // 过滤危险 key，防止原型污染
       const safeExposed: Record<string, unknown> = {};
       for (const key of Object.keys(exposed)) {
-        if (key !== "__proto__" && key !== "constructor") {
+        if (key !== '__proto__' && key !== 'constructor') {
           safeExposed[key] = exposed[key];
         }
       }
@@ -356,10 +333,8 @@ function mergeOptions(
             `anonymous#${i}`;
           return String(name);
         })
-        .join(" -> ");
-      warn(
-        `Circular mixin/extends detected: ${cyclePath} -> (cycle). Skipping.`,
-      );
+        .join(' -> ');
+      warn(`Circular mixin/extends detected: ${cyclePath} -> (cycle). Skipping.`);
     }
     return { ...options };
   }
@@ -370,10 +345,7 @@ function mergeOptions(
 
   // Apply extends first
   if (options.extends) {
-    merged = mergeOptionsPair(
-      mergeOptions(options.extends, seen, [...path]),
-      merged,
-    );
+    merged = mergeOptionsPair(mergeOptions(options.extends, seen, [...path]), merged);
   }
 
   // Then apply mixins
@@ -389,16 +361,13 @@ function mergeOptions(
 /**
  * Merge two ComponentOptions objects.
  */
-function mergeOptionsPair(
-  parent: ComponentOptions,
-  child: ComponentOptions,
-): ComponentOptions {
+function mergeOptionsPair(parent: ComponentOptions, child: ComponentOptions): ComponentOptions {
   // 使用 Record<string, unknown> 作为中间类型以支持动态键访问，
   // 最终通过类型断言返回 ComponentOptions
   const merged: Record<string, unknown> = { ...parent };
 
   for (const key in child) {
-    if (key === "props" || key === "emits" || key === "inject") {
+    if (key === 'props' || key === 'emits' || key === 'inject') {
       const parentVal = (parent as Record<string, unknown>)[key];
       const childVal = (child as Record<string, unknown>)[key];
       if (parentVal && childVal) {
@@ -406,17 +375,13 @@ function mergeOptionsPair(
       } else if (childVal) {
         merged[key] = childVal;
       }
-    } else if (key === "data" || key === "provide") {
+    } else if (key === 'data' || key === 'provide') {
       const parentVal = (parent as Record<string, unknown>)[key];
       const childVal = (child as Record<string, unknown>)[key];
       if (parentVal && childVal) {
         merged[key] = function (this: ComponentPublicInstance) {
-          const parentData = isFunction(parentVal)
-            ? parentVal.call(this)
-            : parentVal;
-          const childData = isFunction(childVal)
-            ? childVal.call(this)
-            : childVal;
+          const parentData = isFunction(parentVal) ? parentVal.call(this) : parentVal;
+          const childData = isFunction(childVal) ? childVal.call(this) : childVal;
           return {
             ...(parentData as Record<string, unknown>),
             ...(childData as Record<string, unknown>),
@@ -425,7 +390,7 @@ function mergeOptionsPair(
       } else if (childVal) {
         merged[key] = childVal;
       }
-    } else if (key === "computed" || key === "methods" || key === "watch") {
+    } else if (key === 'computed' || key === 'methods' || key === 'watch') {
       const parentVal = (parent as Record<string, unknown>)[key];
       const childVal = (child as Record<string, unknown>)[key];
       if (parentVal && childVal) {
@@ -434,14 +399,14 @@ function mergeOptionsPair(
         merged[key] = childVal;
       }
     } else if (
-      key === "beforeCreate" ||
-      key === "created" ||
-      key === "beforeMount" ||
-      key === "mounted" ||
-      key === "beforeUpdate" ||
-      key === "updated" ||
-      key === "beforeUnmount" ||
-      key === "unmounted"
+      key === 'beforeCreate' ||
+      key === 'created' ||
+      key === 'beforeMount' ||
+      key === 'mounted' ||
+      key === 'beforeUpdate' ||
+      key === 'updated' ||
+      key === 'beforeUnmount' ||
+      key === 'unmounted'
     ) {
       const parentVal = (parent as Record<string, unknown>)[key];
       const childVal = (child as Record<string, unknown>)[key];
@@ -453,7 +418,7 @@ function mergeOptionsPair(
       } else if (childVal) {
         merged[key] = childVal;
       }
-    } else if (key === "mixins" || key === "extends") {
+    } else if (key === 'mixins' || key === 'extends') {
       // Skip - already handled
     } else if (hasOwn(child, key)) {
       merged[key] = (child as Record<string, unknown>)[key];
@@ -494,10 +459,7 @@ export function provide<T = unknown>(key: string | symbol, value: T): void {
 /**
  * Inject a value from ancestor components.
  */
-export function inject<T = unknown>(
-  key: string | symbol,
-  defaultValue?: T,
-): T | undefined {
+export function inject<T = unknown>(key: string | symbol, defaultValue?: T): T | undefined {
   const instance = getCurrentInstance();
   if (!instance) return defaultValue;
 

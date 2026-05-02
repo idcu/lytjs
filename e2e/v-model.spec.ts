@@ -14,15 +14,17 @@ import { getText, getHTML, unmount, evaluateInBrowser, nextTick } from './helper
  */
 test.describe('v-model 双向绑定', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/')
-  })
+    await page.goto('/');
+  });
 
   test.afterEach(async ({ page }) => {
-    await unmount(page)
-  })
+    await unmount(page);
+  });
 
   test('v-model (input) - 初始值应正确显示', async ({ page }) => {
-    await evaluateInBrowser(page, `(args) => {
+    await evaluateInBrowser(
+      page,
+      `(args) => {
       const { createApp, h, ref } = window.LytJS;
       const text = ref('Hello LytJS');
 
@@ -47,18 +49,21 @@ test.describe('v-model 双向绑定', () => {
 
       window.__getModelText = () => text.value;
       window.__setModelText = (val) => { text.value = val; };
-    }`)
+    }`,
+    );
 
     // 验证初始值
-    const inputValue = await page.inputValue('#model-input')
-    expect(inputValue).toBe('Hello LytJS')
+    const inputValue = await page.inputValue('#model-input');
+    expect(inputValue).toBe('Hello LytJS');
 
-    const displayText = await getText(page, '#model-display')
-    expect(displayText).toBe('Hello LytJS')
-  })
+    const displayText = await getText(page, '#model-display');
+    expect(displayText).toBe('Hello LytJS');
+  });
 
   test('v-model (input) - input 事件应更新绑定值', async ({ page }) => {
-    await evaluateInBrowser(page, `(args) => {
+    await evaluateInBrowser(
+      page,
+      `(args) => {
       const { createApp, h, ref } = window.LytJS;
       const text = ref('');
 
@@ -81,25 +86,31 @@ test.describe('v-model 双向绑定', () => {
       app.mount('#app');
 
       window.__getModelText = () => text.value;
-    }`)
+    }`,
+    );
 
     // 通过 Playwright 填入输入值
-    await page.fill('#model-input', 'User typed text')
-    await nextTick(page)
+    await page.fill('#model-input', 'User typed text');
+    await nextTick(page);
 
     // 验证显示文本是否同步更新
-    const displayText = await getText(page, '#model-display')
-    expect(displayText).toBe('User typed text')
+    const displayText = await getText(page, '#model-display');
+    expect(displayText).toBe('User typed text');
 
     // 验证 ref 值是否更新
-    const modelText = await evaluateInBrowser(page, `(args) => {
+    const modelText = await evaluateInBrowser(
+      page,
+      `(args) => {
       return window.__getModelText();
-    }`)
-    expect(modelText).toBe('User typed text')
-  })
+    }`,
+    );
+    expect(modelText).toBe('User typed text');
+  });
 
   test('v-model (input) - 程序化更新 ref 值应反映到 input 元素', async ({ page }) => {
-    await evaluateInBrowser(page, `(args) => {
+    await evaluateInBrowser(
+      page,
+      `(args) => {
       const { createApp, h, ref } = window.LytJS;
       const text = ref('initial');
 
@@ -121,25 +132,31 @@ test.describe('v-model 双向绑定', () => {
       app.mount('#app');
 
       window.__setModelText = (val) => { text.value = val; };
-    }`)
+    }`,
+    );
 
     // 验证初始值
-    let inputValue = await page.inputValue('#model-input')
-    expect(inputValue).toBe('initial')
+    let inputValue = await page.inputValue('#model-input');
+    expect(inputValue).toBe('initial');
 
     // 程序化更新
-    await evaluateInBrowser(page, `(args) => {
+    await evaluateInBrowser(
+      page,
+      `(args) => {
       window.__setModelText('programmatic update');
-    }`)
-    await nextTick(page)
+    }`,
+    );
+    await nextTick(page);
 
     // 验证 input 元素值已更新
-    inputValue = await page.inputValue('#model-input')
-    expect(inputValue).toBe('programmatic update')
-  })
+    inputValue = await page.inputValue('#model-input');
+    expect(inputValue).toBe('programmatic update');
+  });
 
   test('v-model (textarea) - 多行文本双向绑定', async ({ page }) => {
-    await evaluateInBrowser(page, `(args) => {
+    await evaluateInBrowser(
+      page,
+      `(args) => {
       const { createApp, h, ref } = window.LytJS;
       const content = ref('Line 1');
 
@@ -161,23 +178,26 @@ test.describe('v-model 双向绑定', () => {
       app.mount('#app');
 
       window.__getContent = () => content.value;
-    }`)
+    }`,
+    );
 
     // 验证初始值
-    const textareaValue = await page.inputValue('#model-textarea')
-    expect(textareaValue).toBe('Line 1')
+    const textareaValue = await page.inputValue('#model-textarea');
+    expect(textareaValue).toBe('Line 1');
 
     // 填入新值
-    await page.fill('#model-textarea', 'Line 1\nLine 2\nLine 3')
-    await nextTick(page)
+    await page.fill('#model-textarea', 'Line 1\nLine 2\nLine 3');
+    await nextTick(page);
 
     // 验证同步
-    const displayText = await getText(page, '#model-text-display')
-    expect(displayText).toBe('Line 1\nLine 2\nLine 3')
-  })
+    const displayText = await getText(page, '#model-text-display');
+    expect(displayText).toBe('Line 1\nLine 2\nLine 3');
+  });
 
   test('v-model (checkbox) - 布尔值双向绑定', async ({ page }) => {
-    await evaluateInBrowser(page, `(args) => {
+    await evaluateInBrowser(
+      page,
+      `(args) => {
       const { createApp, h, ref } = window.LytJS;
       const checked = ref(false);
 
@@ -201,40 +221,46 @@ test.describe('v-model 双向绑定', () => {
 
       window.__getChecked = () => checked.value;
       window.__setChecked = (val) => { checked.value = val; };
-    }`)
+    }`,
+    );
 
     // 初始状态 - 未选中
-    let isChecked = await page.isChecked('#model-checkbox')
-    expect(isChecked).toBe(false)
+    let isChecked = await page.isChecked('#model-checkbox');
+    expect(isChecked).toBe(false);
 
-    let displayText = await getText(page, '#model-checkbox-display')
-    expect(displayText).toBe('unchecked')
+    let displayText = await getText(page, '#model-checkbox-display');
+    expect(displayText).toBe('unchecked');
 
     // 点击选中
-    await page.check('#model-checkbox')
-    await nextTick(page)
+    await page.check('#model-checkbox');
+    await nextTick(page);
 
-    isChecked = await page.isChecked('#model-checkbox')
-    expect(isChecked).toBe(true)
+    isChecked = await page.isChecked('#model-checkbox');
+    expect(isChecked).toBe(true);
 
-    displayText = await getText(page, '#model-checkbox-display')
-    expect(displayText).toBe('checked')
+    displayText = await getText(page, '#model-checkbox-display');
+    expect(displayText).toBe('checked');
 
     // 程序化取消选中
-    await evaluateInBrowser(page, `(args) => {
+    await evaluateInBrowser(
+      page,
+      `(args) => {
       window.__setChecked(false);
-    }`)
-    await nextTick(page)
+    }`,
+    );
+    await nextTick(page);
 
-    isChecked = await page.isChecked('#model-checkbox')
-    expect(isChecked).toBe(false)
+    isChecked = await page.isChecked('#model-checkbox');
+    expect(isChecked).toBe(false);
 
-    displayText = await getText(page, '#model-checkbox-display')
-    expect(displayText).toBe('unchecked')
-  })
+    displayText = await getText(page, '#model-checkbox-display');
+    expect(displayText).toBe('unchecked');
+  });
 
   test('v-model - 多个输入框独立绑定', async ({ page }) => {
-    await evaluateInBrowser(page, `(args) => {
+    await evaluateInBrowser(
+      page,
+      `(args) => {
       const { createApp, h, ref } = window.LytJS;
       const firstName = ref('');
       const lastName = ref('');
@@ -264,31 +290,34 @@ test.describe('v-model 双向绑定', () => {
         }
       });
       app.mount('#app');
-    }`)
+    }`,
+    );
 
     // 填入 first name
-    await page.fill('#first-name', 'John')
-    await nextTick(page)
+    await page.fill('#first-name', 'John');
+    await nextTick(page);
 
-    let fullName = await getText(page, '#full-name')
-    expect(fullName).toBe('John ')
+    let fullName = await getText(page, '#full-name');
+    expect(fullName).toBe('John ');
 
     // 填入 last name
-    await page.fill('#last-name', 'Doe')
-    await nextTick(page)
+    await page.fill('#last-name', 'Doe');
+    await nextTick(page);
 
-    fullName = await getText(page, '#full-name')
-    expect(fullName).toBe('John Doe')
+    fullName = await getText(page, '#full-name');
+    expect(fullName).toBe('John Doe');
 
     // 验证两个输入框独立
-    const firstNameValue = await page.inputValue('#first-name')
-    const lastNameValue = await page.inputValue('#last-name')
-    expect(firstNameValue).toBe('John')
-    expect(lastNameValue).toBe('Doe')
-  })
+    const firstNameValue = await page.inputValue('#first-name');
+    const lastNameValue = await page.inputValue('#last-name');
+    expect(firstNameValue).toBe('John');
+    expect(lastNameValue).toBe('Doe');
+  });
 
   test('v-model - 与 computed 配合使用', async ({ page }) => {
-    await evaluateInBrowser(page, `(args) => {
+    await evaluateInBrowser(
+      page,
+      `(args) => {
       const { createApp, h, ref, computed } = window.LytJS;
       const text = ref('hello');
 
@@ -311,23 +340,28 @@ test.describe('v-model 双向绑定', () => {
         }
       });
       app.mount('#app');
-    }`)
+    }`,
+    );
 
     // 初始 computed 值
-    let upperText = await getText(page, '#computed-upper')
-    expect(upperText).toBe('HELLO')
+    let upperText = await getText(page, '#computed-upper');
+    expect(upperText).toBe('HELLO');
 
     // 更新 input
-    await page.fill('#computed-input', 'world')
-    await nextTick(page)
+    await page.fill('#computed-input', 'world');
+    await nextTick(page);
 
-    upperText = await getText(page, '#computed-upper')
-    expect(upperText).toBe('WORLD')
-  })
+    upperText = await getText(page, '#computed-upper');
+    expect(upperText).toBe('WORLD');
+  });
 
-  test('v-model - 编译器 transform 应正确生成 modelValue 和 onUpdate:modelValue', async ({ page }) => {
+  test('v-model - 编译器 transform 应正确生成 modelValue 和 onUpdate:modelValue', async ({
+    page,
+  }) => {
     // 验证编译器对 v-model 的 transform 输出
-    const result = await evaluateInBrowser(page, `(args) => {
+    const result = await evaluateInBrowser(
+      page,
+      `(args) => {
       const { compile } = window.LytJS;
 
       const compiled = compile('<input v-model="text" type="text" />');
@@ -339,10 +373,11 @@ test.describe('v-model 双向绑定', () => {
         hasOnUpdateModelValue: code.includes('onUpdate:modelValue'),
         hasTextInput: code.includes('text'),
       };
-    }`)
+    }`,
+    );
 
     // 编译器应将 v-model 转换为 modelValue + onUpdate:modelValue
-    expect(result.hasModelValue).toBe(true)
-    expect(result.hasOnUpdateModelValue).toBe(true)
-  })
-})
+    expect(result.hasModelValue).toBe(true);
+    expect(result.hasOnUpdateModelValue).toBe(true);
+  });
+});

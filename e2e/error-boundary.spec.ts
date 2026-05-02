@@ -3,15 +3,17 @@ import { getText, getHTML, unmount, evaluateInBrowser, nextTick } from './helper
 
 test.describe('错误边界', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/')
-  })
+    await page.goto('/');
+  });
 
   test.afterEach(async ({ page }) => {
-    await unmount(page)
-  })
+    await unmount(page);
+  });
 
   test('onErrorCaptured 应该捕获子组件错误', async ({ page }) => {
-    const result = await evaluateInBrowser(page, `(args) => {
+    const result = await evaluateInBrowser(
+      page,
+      `(args) => {
       const { createApp, h, defineComponent, onErrorCaptured, ref } = window.LytJS;
 
       const capturedErrors = ref([]);
@@ -57,22 +59,28 @@ test.describe('错误边界', () => {
       return {
         errorBoundaryExists: document.querySelector('#error-boundary') !== null,
       };
-    }`)
+    }`,
+    );
 
     // 验证错误边界组件存在
-    expect(result.errorBoundaryExists).toBe(true)
+    expect(result.errorBoundaryExists).toBe(true);
 
     // 验证错误被捕获
-    const errors = await evaluateInBrowser(page, `(args) => {
+    const errors = await evaluateInBrowser(
+      page,
+      `(args) => {
       return window.__getCapturedErrors();
-    }`)
+    }`,
+    );
     // onErrorCaptured 可能捕获到错误（取决于框架实现）
     // 至少验证不会导致整个页面崩溃
-    expect(result.errorBoundaryExists).toBe(true)
-  })
+    expect(result.errorBoundaryExists).toBe(true);
+  });
 
   test('onErrorCaptured 返回 false 阻止错误向上传播', async ({ page }) => {
-    const result = await evaluateInBrowser(page, `(args) => {
+    const result = await evaluateInBrowser(
+      page,
+      `(args) => {
       const { createApp, h, defineComponent, onErrorCaptured, ref } = window.LytJS;
 
       const level1Errors = ref([]);
@@ -121,17 +129,23 @@ test.describe('错误边界', () => {
       window.__getLevel2Errors = () => level2Errors.value;
 
       return {};
-    }`)
+    }`,
+    );
 
-    const level2Errors = await evaluateInBrowser(page, `(args) => {
+    const level2Errors = await evaluateInBrowser(
+      page,
+      `(args) => {
       return window.__getLevel2Errors();
-    }`)
+    }`,
+    );
     // 中间层应该捕获到错误
-    expect(level2Errors.length).toBeGreaterThanOrEqual(0)
-  })
+    expect(level2Errors.length).toBeGreaterThanOrEqual(0);
+  });
 
   test('错误边界显示备用内容', async ({ page }) => {
-    await evaluateInBrowser(page, `(args) => {
+    await evaluateInBrowser(
+      page,
+      `(args) => {
       const { createApp, h, defineComponent, ref, onErrorCaptured } = window.LytJS;
 
       const hasError = ref(false);
@@ -180,21 +194,24 @@ test.describe('错误边界', () => {
       } catch (e) {
         // 忽略
       }
-    }`)
+    }`,
+    );
 
     // 等待错误处理完成
-    await nextTick(page)
+    await nextTick(page);
 
     // 验证备用内容被渲染
-    const fallback = await page.locator('#fallback').count()
-    expect(fallback).toBe(1)
+    const fallback = await page.locator('#fallback').count();
+    expect(fallback).toBe(1);
 
-    const errorMsg = await getText(page, '#error-msg')
-    expect(errorMsg).toBe('Risky operation failed')
-  })
+    const errorMsg = await getText(page, '#error-msg');
+    expect(errorMsg).toBe('Risky operation failed');
+  });
 
   test('onErrorCaptured 接收正确的错误信息', async ({ page }) => {
-    const result = await evaluateInBrowser(page, `(args) => {
+    const result = await evaluateInBrowser(
+      page,
+      `(args) => {
       const { createApp, h, defineComponent, onErrorCaptured, ref } = window.LytJS;
 
       const captured = ref(null);
@@ -232,20 +249,26 @@ test.describe('错误边界', () => {
 
       window.__getCaptured = () => captured.value;
       return {};
-    }`)
+    }`,
+    );
 
-    const captured = await evaluateInBrowser(page, `(args) => {
+    const captured = await evaluateInBrowser(
+      page,
+      `(args) => {
       return window.__getCaptured();
-    }`)
+    }`,
+    );
 
     if (captured) {
-      expect(captured.errorMessage).toBe('Type error in child')
-      expect(captured.errorType).toBe('TypeError')
+      expect(captured.errorMessage).toBe('Type error in child');
+      expect(captured.errorType).toBe('TypeError');
     }
-  })
+  });
 
   test('无错误时 onErrorCaptured 不被触发', async ({ page }) => {
-    const result = await evaluateInBrowser(page, `(args) => {
+    const result = await evaluateInBrowser(
+      page,
+      `(args) => {
       const { createApp, h, defineComponent, onErrorCaptured, ref } = window.LytJS;
 
       const capturedErrors = ref([]);
@@ -276,14 +299,18 @@ test.describe('错误边界', () => {
         childRendered: document.querySelector('#normal-child') !== null,
         childText: document.querySelector('#normal-child')?.textContent,
       };
-    }`)
+    }`,
+    );
 
-    expect(result.childRendered).toBe(true)
-    expect(result.childText).toBe('I am fine')
+    expect(result.childRendered).toBe(true);
+    expect(result.childText).toBe('I am fine');
 
-    const errors = await evaluateInBrowser(page, `(args) => {
+    const errors = await evaluateInBrowser(
+      page,
+      `(args) => {
       return window.__getCapturedErrors();
-    }`)
-    expect(errors.length).toBe(0)
-  })
-})
+    }`,
+    );
+    expect(errors.length).toBe(0);
+  });
+});

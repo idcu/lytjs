@@ -15,7 +15,7 @@ npm install @lytjs/component
 定义组件选项对象
 
 ```typescript
-import { defineComponent } from '@lytjs/component'
+import { defineComponent } from '@lytjs/component';
 ```
 
 ### createComponentInstance / setupComponent
@@ -23,7 +23,7 @@ import { defineComponent } from '@lytjs/component'
 创建和初始化组件实例
 
 ```typescript
-import { createComponentInstance, setupComponent } from '@lytjs/component'
+import { createComponentInstance, setupComponent } from '@lytjs/component';
 ```
 
 ### provide / inject
@@ -31,7 +31,7 @@ import { createComponentInstance, setupComponent } from '@lytjs/component'
 依赖注入
 
 ```typescript
-import { provide, inject } from '@lytjs/component'
+import { provide, inject } from '@lytjs/component';
 ```
 
 ### onMounted / onUnmounted / onUpdated
@@ -39,7 +39,7 @@ import { provide, inject } from '@lytjs/component'
 组件生命周期钩子
 
 ```typescript
-import { onMounted, onUnmounted, onUpdated } from '@lytjs/component'
+import { onMounted, onUnmounted, onUpdated } from '@lytjs/component';
 ```
 
 ### KeepAlive
@@ -47,7 +47,7 @@ import { onMounted, onUnmounted, onUpdated } from '@lytjs/component'
 内置缓存组件
 
 ```typescript
-import { KeepAlive } from '@lytjs/component'
+import { KeepAlive } from '@lytjs/component';
 ```
 
 ### Suspense
@@ -55,7 +55,7 @@ import { KeepAlive } from '@lytjs/component'
 异步组件边界
 
 ```typescript
-import { Suspense } from '@lytjs/component'
+import { Suspense } from '@lytjs/component';
 ```
 
 ## 相关包

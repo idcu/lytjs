@@ -68,7 +68,9 @@ describe('computed', () => {
     const count = ref(1);
     const doubled = computed({
       get: () => count.value * 2,
-      set: (val: number) => { count.value = val / 2; },
+      set: (val: number) => {
+        count.value = val / 2;
+      },
     });
     expect(doubled.value).toBe(2);
     doubled.value = 4;
@@ -145,9 +147,13 @@ describe('computed', () => {
     const count = ref(1);
     const bad = computed({
       get: () => count.value,
-      set: () => { throw new Error('setter error'); },
+      set: () => {
+        throw new Error('setter error');
+      },
     });
-    expect(() => { bad.value = 2; }).toThrow('setter error');
+    expect(() => {
+      bad.value = 2;
+    }).toThrow('setter error');
   });
 
   it('should handle computed returning objects', () => {
@@ -162,7 +168,9 @@ describe('computed', () => {
     const count = ref(0);
     const doubled = computed({
       get: () => count.value * 2,
-      set: (val: number) => { count.value = val / 2; },
+      set: (val: number) => {
+        count.value = val / 2;
+      },
     });
     doubled.value = 4;
     expect(count.value).toBe(2);
@@ -170,28 +178,28 @@ describe('computed', () => {
   });
 
   it('should handle circular dependency gracefully', () => {
-    const count = ref(0)
+    const count = ref(0);
     // A depends on B, B depends on A - should not infinite loop
-    const a = computed(() => count.value + b.value)
-    const b = computed(() => count.value * 2)
-    expect(a.value).toBe(0)
-    expect(b.value).toBe(0)
-    count.value = 1
-    expect(a.value).toBe(3)
-    expect(b.value).toBe(2)
+    const a = computed(() => count.value + b.value);
+    const b = computed(() => count.value * 2);
+    expect(a.value).toBe(0);
+    expect(b.value).toBe(0);
+    count.value = 1;
+    expect(a.value).toBe(3);
+    expect(b.value).toBe(2);
   });
 
   it('should return last cached value when getter throws', () => {
-    const errorRef = ref(false)
-    const count = ref(1)
+    const errorRef = ref(false);
+    const count = ref(1);
     const failing = computed(() => {
-      if (errorRef.value) throw new Error('getter error')
-      return count.value
-    })
-    expect(failing.value).toBe(1)
-    errorRef.value = true
-    expect(() => failing.value).toThrow('getter error')
+      if (errorRef.value) throw new Error('getter error');
+      return count.value;
+    });
+    expect(failing.value).toBe(1);
+    errorRef.value = true;
+    expect(() => failing.value).toThrow('getter error');
     // After error, should still return last cached value
-    expect(failing.value).toBe(1)
-  })
+    expect(failing.value).toBe(1);
+  });
 });

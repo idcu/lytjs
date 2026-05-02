@@ -41,10 +41,15 @@ describe('createApp', () => {
   });
 
   it('should pass root props', () => {
-    const app = createApp(defineComponent({
-      props: ['msg'],
-      render() { return h('p', null, this.msg); },
-    }), { msg: 'hello' });
+    const app = createApp(
+      defineComponent({
+        props: ['msg'],
+        render() {
+          return h('p', null, this.msg);
+        },
+      }),
+      { msg: 'hello' },
+    );
     app.mount(container);
     expect(container.innerHTML).toContain('hello');
   });
@@ -84,13 +89,19 @@ describe('createApp', () => {
 
   it('should register global directive', () => {
     const app = createApp({ render: () => h('div') });
-    app.directive('focus', { mounted(el: any) { el.focus(); } });
+    app.directive('focus', {
+      mounted(el: any) {
+        el.focus();
+      },
+    });
   });
 
   it('should handle error handler', () => {
     const errorHandler = vi.fn();
     const app = createApp({
-      render() { throw new Error('test error'); },
+      render() {
+        throw new Error('test error');
+      },
     });
     app.config.errorHandler = errorHandler;
     // mount 过程中 render 抛出错误，errorHandler 应该被调用
@@ -109,11 +120,19 @@ describe('createApp', () => {
   });
 
   it('should support mixin', () => {
-    const mixin = { created() { this.mixinData = true; } };
-    const app = createApp(defineComponent({
-      mixins: [mixin],
-      render() { return h('div'); },
-    }));
+    const mixin = {
+      created() {
+        this.mixinData = true;
+      },
+    };
+    const app = createApp(
+      defineComponent({
+        mixins: [mixin],
+        render() {
+          return h('div');
+        },
+      }),
+    );
     app.mount(container);
   });
 
@@ -147,12 +166,14 @@ describe('createApp - errorCaptured', () => {
       },
       render() {
         return h('div', null, [
-          h(defineComponent({
-            name: 'ErrorChild',
-            render() {
-              throw new Error('child render error');
-            },
-          })),
+          h(
+            defineComponent({
+              name: 'ErrorChild',
+              render() {
+                throw new Error('child render error');
+              },
+            }),
+          ),
         ]);
       },
       errorCaptured,

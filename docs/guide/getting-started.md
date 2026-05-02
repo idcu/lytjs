@@ -20,7 +20,7 @@ pnpm add @lytjs/core
 ## 第一个应用
 
 ```typescript
-import { createApp, ref } from "@lytjs/core";
+import { createApp, ref } from '@lytjs/core';
 
 const App = {
   setup() {
@@ -38,7 +38,7 @@ const App = {
   `,
 };
 
-createApp(App).mount("#app");
+createApp(App).mount('#app');
 ```
 
 ## 下一步

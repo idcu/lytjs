@@ -3,7 +3,7 @@
  * 事件发射器与订阅管理工具
  */
 
-import { isFunction } from "@lytjs/common-is";
+import { isFunction } from '@lytjs/common-is';
 
 type EventHandler<T extends unknown[] = unknown[]> = (...args: T) => void;
 
@@ -23,38 +23,38 @@ export function isOn(key: string): boolean {
  * e.g., onDoubleClick -> dblclick, onMouseEnter -> mouseenter
  */
 export const DOM_EVENT_NAME_MAP: Record<string, string> = {
-  onDoubleClick: "dblclick",
-  onMouseEnter: "mouseenter",
-  onMouseLeave: "mouseleave",
-  onBeforeInput: "beforeinput",
-  onCompositionStart: "compositionstart",
-  onCompositionUpdate: "compositionupdate",
-  onCompositionEnd: "compositionend",
-  onPointerEnter: "pointerenter",
-  onPointerLeave: "pointerleave",
-  onPointerDown: "pointerdown",
-  onPointerMove: "pointermove",
-  onPointerUp: "pointerup",
-  onPointerCancel: "pointercancel",
-  onPointerOver: "pointerover",
-  onPointerOut: "pointerout",
-  onDragStart: "dragstart",
-  onDragEnd: "dragend",
-  onDragOver: "dragover",
-  onDragEnter: "dragenter",
-  onDragLeave: "dragleave",
-  onDragDrop: "drop",
-  onAnimationStart: "animationstart",
-  onAnimationEnd: "animationend",
-  onAnimationIteration: "animationiteration",
-  onTransitionEnd: "transitionend",
-  onTouchStart: "touchstart",
-  onTouchMove: "touchmove",
-  onTouchEnd: "touchend",
-  onTouchCancel: "touchcancel",
-  onContextMenu: "contextmenu",
-  onWheel: "wheel",
-  onScroll: "scroll",
+  onDoubleClick: 'dblclick',
+  onMouseEnter: 'mouseenter',
+  onMouseLeave: 'mouseleave',
+  onBeforeInput: 'beforeinput',
+  onCompositionStart: 'compositionstart',
+  onCompositionUpdate: 'compositionupdate',
+  onCompositionEnd: 'compositionend',
+  onPointerEnter: 'pointerenter',
+  onPointerLeave: 'pointerleave',
+  onPointerDown: 'pointerdown',
+  onPointerMove: 'pointermove',
+  onPointerUp: 'pointerup',
+  onPointerCancel: 'pointercancel',
+  onPointerOver: 'pointerover',
+  onPointerOut: 'pointerout',
+  onDragStart: 'dragstart',
+  onDragEnd: 'dragend',
+  onDragOver: 'dragover',
+  onDragEnter: 'dragenter',
+  onDragLeave: 'dragleave',
+  onDragDrop: 'drop',
+  onAnimationStart: 'animationstart',
+  onAnimationEnd: 'animationend',
+  onAnimationIteration: 'animationiteration',
+  onTransitionEnd: 'transitionend',
+  onTouchStart: 'touchstart',
+  onTouchMove: 'touchmove',
+  onTouchEnd: 'touchend',
+  onTouchCancel: 'touchcancel',
+  onContextMenu: 'contextmenu',
+  onWheel: 'wheel',
+  onScroll: 'scroll',
 };
 
 /**
@@ -73,7 +73,7 @@ export function extractDOMEventHandler(value: unknown): EventListener | null {
   if (isFunction(value)) {
     return value as EventListener;
   }
-  if (value != null && typeof value === "object" && "handler" in value) {
+  if (value != null && typeof value === 'object' && 'handler' in value) {
     return (value as { handler: EventListener }).handler;
   }
   return null;
@@ -86,9 +86,9 @@ export function extractDOMEventHandler(value: unknown): EventListener | null {
 export function extractDOMEventOptions(
   value: unknown,
 ): boolean | AddEventListenerOptions | undefined {
-  if (value != null && typeof value === "object" && !isFunction(value)) {
+  if (value != null && typeof value === 'object' && !isFunction(value)) {
     const opts = value as Record<string, unknown>;
-    if ("capture" in opts || "passive" in opts || "once" in opts) {
+    if ('capture' in opts || 'passive' in opts || 'once' in opts) {
       return {
         capture: !!opts.capture,
         passive: !!opts.passive,
@@ -207,7 +207,7 @@ export class SubscriptionManager {
       try {
         unsub();
       } catch (e) {
-        console.error("Error during unsubscribe:", e);
+        console.error('Error during unsubscribe:', e);
       }
     });
     this.unsubscribers.clear();

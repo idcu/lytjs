@@ -6,10 +6,10 @@
  *
  * 前提条件: 已执行 pnpm run build（构建所有子包）
  */
-const esbuild = require('esbuild')
-const { resolve, dirname } = require('path')
+const esbuild = require('esbuild');
+const { resolve, dirname } = require('path');
 
-const rootDir = resolve(__dirname, '..')
+const rootDir = resolve(__dirname, '..');
 
 // 项目包的 workspace 别名映射
 const aliases = {
@@ -32,7 +32,7 @@ const aliases = {
   '@lytjs/common-events': resolve(rootDir, 'packages/common/packages/events/src/index.ts'),
   '@lytjs/common-object': resolve(rootDir, 'packages/common/packages/object/src/index.ts'),
   '@lytjs/common': resolve(rootDir, 'packages/common/packages/common/src/index.ts'),
-}
+};
 
 // 构建 esbuild 的 plugin 来处理 workspace 别名
 const workspacePlugin = {
@@ -41,13 +41,13 @@ const workspacePlugin = {
     for (const [alias, path] of Object.entries(aliases)) {
       build.onResolve({ filter: new RegExp(`^${alias}$`) }, () => ({
         path,
-      }))
+      }));
     }
   },
-}
+};
 
 async function build() {
-  const outDir = resolve(__dirname, 'fixtures/dist')
+  const outDir = resolve(__dirname, 'fixtures/dist');
 
   await esbuild.build({
     entryPoints: [resolve(rootDir, 'packages/core/src/index.ts')],
@@ -60,16 +60,16 @@ async function build() {
     sourcemap: true,
     define: {
       'process.env.NODE_ENV': '"development"',
-      '__DEV__': 'true',
+      __DEV__: 'true',
     },
     external: [],
     logLevel: 'info',
-  })
+  });
 
-  console.log(`\nBuild complete: ${resolve(outDir, 'lytjs.global.js')}`)
+  console.log(`\nBuild complete: ${resolve(outDir, 'lytjs.global.js')}`);
 }
 
 build().catch((err) => {
-  console.error('Build failed:', err)
-  process.exit(1)
-})
+  console.error('Build failed:', err);
+  process.exit(1);
+});

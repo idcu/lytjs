@@ -1,20 +1,12 @@
 // src/define-component.ts
 // @lytjs/core - 组件定义
 
-import type {
-  Component,
-  AsyncComponentLoader,
-  AsyncComponentOptions,
-  VNode,
-} from "./types";
-import type { ComponentOptions } from "./types";
-import {
-  defineComponent as _defineComponent,
-  onBeforeUnmount,
-} from "@lytjs/component";
-import { shallowRef, ref } from "@lytjs/reactivity";
-import { warn } from "@lytjs/common-error";
-import { h } from "./h";
+import type { Component, AsyncComponentLoader, AsyncComponentOptions, VNode } from './types';
+import type { ComponentOptions } from './types';
+import { defineComponent as _defineComponent, onBeforeUnmount } from '@lytjs/component';
+import { shallowRef, ref } from '@lytjs/reactivity';
+import { warn } from '@lytjs/common-error';
+import { h } from './h';
 
 /** onError 回调未响应时的默认超时时间（毫秒） */
 const DEFAULT_ON_ERROR_TIMEOUT = 30000;
@@ -26,8 +18,7 @@ const DEFAULT_ON_ERROR_TIMEOUT = 30000;
  * 由于 Component = ComponentOptions | (() => any)，
  * 返回 ComponentOptions 是 Component 的子集，完全兼容。
  */
-export const defineComponent: (options: ComponentOptions) => ComponentOptions =
-  _defineComponent;
+export const defineComponent: (options: ComponentOptions) => ComponentOptions = _defineComponent;
 
 /**
  * 定义异步组件
@@ -35,18 +26,11 @@ export const defineComponent: (options: ComponentOptions) => ComponentOptions =
 export function defineAsyncComponent(
   source: AsyncComponentLoader | AsyncComponentOptions,
 ): Component {
-  if (typeof source === "function") {
+  if (typeof source === 'function') {
     source = { loader: source };
   }
 
-  const {
-    loader,
-    loadingComponent,
-    errorComponent,
-    delay = 200,
-    timeout,
-    onError,
-  } = source;
+  const { loader, loadingComponent, errorComponent, delay = 200, timeout, onError } = source;
 
   const loadedComponent = shallowRef<Component | undefined>(undefined);
   const error = ref<Error | undefined>(undefined);
@@ -154,9 +138,7 @@ export function defineAsyncComponent(
     }
     timeoutId = setTimeout(() => {
       if (!loadedComponent.value && !error.value) {
-        error.value = new Error(
-          `[lytjs/core] AsyncComponent timed out after ${timeout}ms.`,
-        );
+        error.value = new Error(`[lytjs/core] AsyncComponent timed out after ${timeout}ms.`);
         loading.value = false;
       }
     }, timeout);
@@ -167,7 +149,7 @@ export function defineAsyncComponent(
   // load();
 
   const comp: ComponentOptions = {
-    name: "AsyncComponent",
+    name: 'AsyncComponent',
     setup() {
       const instance = {
         resolved: loadedComponent,

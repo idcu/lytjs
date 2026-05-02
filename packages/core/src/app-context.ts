@@ -1,19 +1,15 @@
 // src/app-context.ts
 // @lytjs/core - AppContext 创建和配置
 
-import type { AppConfig, DOMRenderer, VNode } from "./types";
-import { createAppContext as createBaseAppContext } from "@lytjs/component";
-import type {
-  AppContext as BaseAppContext,
-  ComponentInternalInstance,
-} from "@lytjs/component";
+import type { AppConfig, DOMRenderer, VNode } from './types';
+import { createAppContext as createBaseAppContext } from '@lytjs/component';
+import type { AppContext as BaseAppContext, ComponentInternalInstance } from '@lytjs/component';
 
 /**
  * Core AppContext extends the base AppContext from @lytjs/component
  * with runtime fields needed by the app lifecycle (renderer, _vnode, _container).
  */
 export interface AppContext extends BaseAppContext {
-  config: AppConfig;
   renderer: DOMRenderer | null;
   _vnode: VNode | null;
   _container: Element | null;
@@ -48,13 +44,13 @@ export function createAppContext(): AppContext {
 export function createContextConfig(context: AppContext): AppConfig {
   return new Proxy({} as AppConfig, {
     get(_, key: string) {
-      if (key === "globalProperties") {
+      if (key === 'globalProperties') {
         return context.config.globalProperties;
       }
       return (context.config as Record<string, unknown>)[key];
     },
     set(_, key: string, value: unknown) {
-      if (key === "globalProperties") {
+      if (key === 'globalProperties') {
         context.config.globalProperties = value as Record<string, unknown>;
         return true;
       }

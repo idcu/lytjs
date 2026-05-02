@@ -15,7 +15,7 @@ npm install @lytjs/renderer
 创建 DOM 渲染器实例
 
 ```typescript
-import { createDOMRenderer } from '@lytjs/renderer'
+import { createDOMRenderer } from '@lytjs/renderer';
 ```
 
 ### patchProp / patchClass / patchStyle / patchEvent / patchAttr
@@ -23,7 +23,7 @@ import { createDOMRenderer } from '@lytjs/renderer'
 DOM 属性更新工具函数
 
 ```typescript
-import { patchProp, patchClass, patchStyle, patchEvent } from '@lytjs/renderer'
+import { patchProp, patchClass, patchStyle, patchEvent } from '@lytjs/renderer';
 ```
 
 ### createHydrationFunctions
@@ -31,7 +31,7 @@ import { patchProp, patchClass, patchStyle, patchEvent } from '@lytjs/renderer'
 创建服务端渲染 Hydration 函数
 
 ```typescript
-import { createHydrationFunctions } from '@lytjs/renderer'
+import { createHydrationFunctions } from '@lytjs/renderer';
 ```
 
 ### renderToString
@@ -39,7 +39,7 @@ import { createHydrationFunctions } from '@lytjs/renderer'
 服务端渲染为字符串
 
 ```typescript
-import { renderToString } from '@lytjs/renderer'
+import { renderToString } from '@lytjs/renderer';
 ```
 
 ### escapeHtml / isBooleanAttr / isVoidElement
@@ -47,7 +47,7 @@ import { renderToString } from '@lytjs/renderer'
 渲染工具函数
 
 ```typescript
-import { escapeHtml, isBooleanAttr, isVoidElement } from '@lytjs/renderer'
+import { escapeHtml, isBooleanAttr, isVoidElement } from '@lytjs/renderer';
 ```
 
 ## 相关包

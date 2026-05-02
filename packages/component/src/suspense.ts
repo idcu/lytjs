@@ -1,15 +1,11 @@
 // src/suspense.ts
 // Suspense component (simplified)
 
-import type {
-  ComponentInternalInstance,
-  ComponentOptions,
-  SetupContext,
-} from "./types";
-import { createComponentInstance, setupComponent } from "./component";
-import { ShapeFlags, createBaseVNode } from "@lytjs/common-vnode";
-import type { VNode } from "@lytjs/common-vnode";
-import { error } from "@lytjs/common-error";
+import type { ComponentInternalInstance, ComponentOptions, SetupContext } from './types';
+import { createComponentInstance, setupComponent } from './component';
+import { ShapeFlags, createBaseVNode } from '@lytjs/common-vnode';
+import type { VNode } from '@lytjs/common-vnode';
+import { error } from '@lytjs/common-error';
 
 // ==================== Types ====================
 
@@ -20,7 +16,7 @@ import { error } from "@lytjs/common-error";
 export class SuspenseAbortedError extends Error {
   constructor(public pendingId: number) {
     super(`Suspense boundary (id: ${pendingId}) was aborted`);
-    this.name = "SuspenseAbortedError";
+    this.name = 'SuspenseAbortedError';
   }
 }
 
@@ -46,7 +42,7 @@ export interface SuspenseAsyncState {
 // ==================== Suspense Component ====================
 
 export const Suspense: ComponentOptions = {
-  name: "Suspense",
+  name: 'Suspense',
 
   props: {
     timeout: { type: Number, default: undefined },
@@ -234,7 +230,7 @@ export function abortSuspense(boundary: SuspenseAsyncState): void {
       try {
         // If the promise has an abort method (custom thenable), call it
         const p = promise as unknown as Record<string, unknown>;
-        if (typeof p.abort === "function") {
+        if (typeof p.abort === 'function') {
           p.abort(abortError);
         }
       } catch {

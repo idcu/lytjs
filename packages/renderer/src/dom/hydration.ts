@@ -3,22 +3,18 @@
  * Simplified hydration that matches existing DOM nodes with vnodes
  */
 
-import type { VNode } from "@lytjs/vdom";
-import { Fragment, Text, Comment, ShapeFlags } from "@lytjs/vdom";
-import { isArray, isFunction } from "@lytjs/common-is";
-import { warn } from "@lytjs/common-error";
-import { patchProp } from "./patch-props";
-import { vnodeMap } from "./dom-renderer";
+import type { VNode } from '@lytjs/vdom';
+import { Fragment, Text, Comment, ShapeFlags } from '@lytjs/vdom';
+import { isArray, isFunction } from '@lytjs/common-is';
+import { warn } from '@lytjs/common-error';
+import { patchProp } from './patch-props';
+import { vnodeMap } from './dom-renderer';
 
 // ============================================================
 // Dev mode hydration mismatch warnings
 // ============================================================
 
-function warnHydrationMismatch(
-  type: string,
-  expected: string,
-  actual: string,
-): void {
+function warnHydrationMismatch(type: string, expected: string, actual: string): void {
   if (__DEV__) {
     warn(
       `Hydration mismatch: expected ${type} "${expected}" but got "${actual}". ` +
@@ -67,24 +63,24 @@ function hydrateNode(vnode: VNode, parent: HTMLElement, index: number): number {
   // Handle Text
   if (type === Text) {
     const node = parent.childNodes[index];
-    const text = isFunction(children) ? "" : String(children ?? "");
+    const text = isFunction(children) ? '' : String(children ?? '');
     if (node && node.nodeType === Node.TEXT_NODE) {
       // Match: reuse existing text node
       if (node.textContent !== text) {
-        warnHydrationMismatch("text content", text, node.textContent ?? "");
+        warnHydrationMismatch('text content', text, node.textContent ?? '');
         node.textContent = text;
       }
       vnode.el = node;
     } else {
       // Mismatch: create new text node and replace
       warnHydrationMismatch(
-        "node type",
+        'node type',
         `Text("${text}")`,
         node && node.nodeType === Node.ELEMENT_NODE
           ? `Element(<${(node as Element).tagName.toLowerCase()}>)`
           : node
             ? `Node(type=${node.nodeType})`
-            : "none",
+            : 'none',
       );
       const newNode = document.createTextNode(text);
       if (node) {
@@ -100,24 +96,24 @@ function hydrateNode(vnode: VNode, parent: HTMLElement, index: number): number {
   // Handle Comment
   if (type === Comment) {
     const node = parent.childNodes[index];
-    const text = isFunction(children) ? "" : String(children ?? "");
+    const text = isFunction(children) ? '' : String(children ?? '');
     if (node && node.nodeType === Node.COMMENT_NODE) {
       // Match: reuse existing comment node
       if (node.textContent !== text) {
-        warnHydrationMismatch("comment content", text, node.textContent ?? "");
+        warnHydrationMismatch('comment content', text, node.textContent ?? '');
         node.textContent = text;
       }
       vnode.el = node;
     } else {
       // Mismatch: create new comment node and replace
       warnHydrationMismatch(
-        "node type",
+        'node type',
         `Comment("${text}")`,
         node
           ? node.nodeType === Node.TEXT_NODE
             ? `Text("${node.textContent}")`
             : `Element(<${(node as Element).tagName.toLowerCase()}>)`
-          : "none",
+          : 'none',
       );
       const newNode = document.createComment(text);
       if (node) {
@@ -145,10 +141,9 @@ function hydrateNode(vnode: VNode, parent: HTMLElement, index: number): number {
       vnode.el = existingNode as Element;
 
       // Hydrate props (attach event listeners, sync attributes)
-      const isSVG =
-        (existingNode as Element).namespaceURI === "http://www.w3.org/2000/svg";
+      const isSVG = (existingNode as Element).namespaceURI === 'http://www.w3.org/2000/svg';
       for (const key in props) {
-        if (key === "key" || key === "ref") continue;
+        if (key === 'key' || key === 'ref') continue;
         patchProp(existingNode as Element, key, null, props[key], isSVG);
       }
 
@@ -158,15 +153,11 @@ function hydrateNode(vnode: VNode, parent: HTMLElement, index: number): number {
         for (let i = 0; i < children.length; i++) {
           const child = children[i];
           if (child != null) {
-            childIndex = hydrateNode(
-              child,
-              existingNode as HTMLElement,
-              childIndex,
-            );
+            childIndex = hydrateNode(child, existingNode as HTMLElement, childIndex);
           }
         }
       } else if (shapeFlag & ShapeFlags.TEXT_CHILDREN) {
-        const text = String(children ?? "");
+        const text = String(children ?? '');
         const firstChild = (existingNode as HTMLElement).firstChild;
         if (firstChild && firstChild.nodeType === Node.TEXT_NODE) {
           if (firstChild.textContent !== text) {
@@ -187,24 +178,21 @@ function hydrateNode(vnode: VNode, parent: HTMLElement, index: number): number {
     } else {
       // Mismatch: create new element and replace
       warnHydrationMismatch(
-        "element tag",
+        'element tag',
         `<${tag}>`,
-        existingNode
-          ? `<${(existingNode as Element).tagName.toLowerCase()}>`
-          : "none",
+        existingNode ? `<${(existingNode as Element).tagName.toLowerCase()}>` : 'none',
       );
       const isSVG =
-        tag === "svg" ||
-        (existingNode as Element | undefined)?.namespaceURI ===
-          "http://www.w3.org/2000/svg";
+        tag === 'svg' ||
+        (existingNode as Element | undefined)?.namespaceURI === 'http://www.w3.org/2000/svg';
       const newEl = isSVG
-        ? document.createElementNS("http://www.w3.org/2000/svg", tag)
+        ? document.createElementNS('http://www.w3.org/2000/svg', tag)
         : document.createElement(tag);
       vnode.el = newEl;
 
       // Mount props
       for (const key in props) {
-        if (key === "key" || key === "ref") continue;
+        if (key === 'key' || key === 'ref') continue;
         patchProp(newEl, key, null, props[key], isSVG);
       }
 
@@ -217,7 +205,7 @@ function hydrateNode(vnode: VNode, parent: HTMLElement, index: number): number {
           }
         }
       } else if (shapeFlag & ShapeFlags.TEXT_CHILDREN) {
-        newEl.textContent = String(children ?? "");
+        newEl.textContent = String(children ?? '');
       }
 
       // Replace or append

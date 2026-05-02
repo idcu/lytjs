@@ -7,28 +7,26 @@
  * 规范化路径：统一使用正斜杠，去除重复斜杠和末尾斜杠
  */
 export function normalizePath(path: string): string {
-  if (!path) return "";
-  return (
-    path.replace(/\\/g, "/").replace(/\/+/g, "/").replace(/\/$/, "") || "/"
-  );
+  if (!path) return '';
+  return path.replace(/\\/g, '/').replace(/\/+/g, '/').replace(/\/$/, '') || '/';
 }
 
 /**
  * 拼接路径段
  */
 export function joinPath(...segments: string[]): string {
-  return normalizePath(segments.filter(Boolean).join("/"));
+  return normalizePath(segments.filter(Boolean).join('/'));
 }
 
 /**
  * 获取目录名
  */
 export function dirname(path: string): string {
-  if (!path) return ".";
+  if (!path) return '.';
   const normalized = normalizePath(path);
-  const lastSlash = normalized.lastIndexOf("/");
-  if (lastSlash === -1) return ".";
-  if (lastSlash === 0) return "/";
+  const lastSlash = normalized.lastIndexOf('/');
+  if (lastSlash === -1) return '.';
+  if (lastSlash === 0) return '/';
   return normalized.slice(0, lastSlash);
 }
 
@@ -36,9 +34,9 @@ export function dirname(path: string): string {
  * 获取文件名（含扩展名）
  */
 export function basename(path: string): string {
-  if (!path) return "";
+  if (!path) return '';
   const normalized = normalizePath(path);
-  const lastSlash = normalized.lastIndexOf("/");
+  const lastSlash = normalized.lastIndexOf('/');
   return lastSlash === -1 ? normalized : normalized.slice(lastSlash + 1);
 }
 
@@ -47,8 +45,8 @@ export function basename(path: string): string {
  */
 export function extname(path: string): string {
   const base = basename(path);
-  const lastDot = base.lastIndexOf(".");
-  if (lastDot <= 0) return "";
+  const lastDot = base.lastIndexOf('.');
+  if (lastDot <= 0) return '';
   return base.slice(lastDot);
 }
 
@@ -86,13 +84,13 @@ export function pathToRegex(pattern: string): RegExp {
 
   // 先提取参数/通配符部分（含前导 /），转义静态部分，再还原
   const regexStr = normalized
-    .replace(/\/\*/g, "§WILDCARD§")
-    .replace(/\/:(\w+)\?/g, "§OPTPARAM§")
-    .replace(/\/:(\w+)/g, "§PARAM§")
-    .replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
-    .replace(/§WILDCARD§/g, "/(.*)")
-    .replace(/§OPTPARAM§/g, "(?:/([^/]+))?")
-    .replace(/§PARAM§/g, "/([^/]+)");
+    .replace(/\/\*/g, '§WILDCARD§')
+    .replace(/\/:(\w+)\?/g, '§OPTPARAM§')
+    .replace(/\/:(\w+)/g, '§PARAM§')
+    .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    .replace(/§WILDCARD§/g, '/(.*)')
+    .replace(/§OPTPARAM§/g, '(?:/([^/]+))?')
+    .replace(/§PARAM§/g, '/([^/]+)');
   return new RegExp(`^${regexStr}$`);
 }
 
@@ -109,10 +107,7 @@ export interface PathMatchResult {
 const regexCache = new Map<string, RegExp>();
 const MAX_CACHE_SIZE = 100;
 
-export function matchPath(
-  pattern: string,
-  path: string,
-): PathMatchResult | null {
+export function matchPath(pattern: string, path: string): PathMatchResult | null {
   const normalized = normalizePath(path);
   const normalizedPattern = normalizePath(pattern);
   let regex = regexCache.get(normalizedPattern);
@@ -141,8 +136,8 @@ export function matchPath(
   while ((m = requiredParamRegex.exec(normalizedPattern)) !== null) {
     paramNames.push(m[1]!);
   }
-  if (normalizedPattern.includes("*")) {
-    paramNames.push("*");
+  if (normalizedPattern.includes('*')) {
+    paramNames.push('*');
   }
 
   for (let i = 0; i < paramNames.length; i++) {
@@ -159,7 +154,7 @@ export function matchPath(
  * 检查是否为绝对路径
  */
 export function isAbsolute(path: string): boolean {
-  return path.startsWith("/");
+  return path.startsWith('/');
 }
 
 /**
@@ -197,18 +192,18 @@ export function resolvePath(from: string, to: string): string {
   if (isAbsolute(to)) return normalizePath(to);
 
   const normalizedFrom = normalizePath(from);
-  const segments = normalizedFrom.split("/");
+  const segments = normalizedFrom.split('/');
 
-  const toSegments = to.split("/").filter(Boolean);
+  const toSegments = to.split('/').filter(Boolean);
   for (const seg of toSegments) {
-    if (seg === "..") {
+    if (seg === '..') {
       if (segments.length > 1) {
         segments.pop();
       }
-    } else if (seg !== ".") {
+    } else if (seg !== '.') {
       segments.push(seg);
     }
   }
 
-  return normalizePath(segments.join("/"));
+  return normalizePath(segments.join('/'));
 }

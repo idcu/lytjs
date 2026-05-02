@@ -2,14 +2,14 @@
 
 /** ReactiveEffect 的脱敏引用（用于调试事件） */
 export interface ReactiveEffectRef {
-  id: number
-  active: boolean
+  id: number;
+  active: boolean;
 }
 
 /** 调试事件 */
 export interface DebuggerEvent {
-  effect: ReactiveEffectRef
-  target: object
-  type: 'track' | 'trigger'
-  key: string | symbol | undefined
+  effect: ReactiveEffectRef;
+  target: object;
+  type: 'track' | 'trigger';
+  key: string | symbol | undefined;
 }

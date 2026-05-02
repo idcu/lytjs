@@ -7,7 +7,7 @@
  * 首字母大写
  */
 export function capitalize(str: string): string {
-  if (!str) return "";
+  if (!str) return '';
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
@@ -16,9 +16,9 @@ export function capitalize(str: string): string {
  */
 export function kebabCase(str: string): string {
   return str
-    .replace(/([a-z0-9])([A-Z])/g, "$1-$2")
-    .replace(/([A-Z]+)([A-Z][a-z])/g, "$1-$2")
-    .replace(/[\s_]+/g, "-")
+    .replace(/([a-z0-9])([A-Z])/g, '$1-$2')
+    .replace(/([A-Z]+)([A-Z][a-z])/g, '$1-$2')
+    .replace(/[\s_]+/g, '-')
     .toLowerCase();
 }
 
@@ -27,7 +27,7 @@ export function kebabCase(str: string): string {
  */
 export function camelCase(str: string): string {
   return str
-    .replace(/[-_\s]+(.)?/g, (_, c) => (c ? c.toUpperCase() : ""))
+    .replace(/[-_\s]+(.)?/g, (_, c) => (c ? c.toUpperCase() : ''))
     .replace(/^[A-Z]/, (c) => c.toLowerCase());
 }
 
@@ -43,7 +43,7 @@ export function pascalCase(str: string): string {
  * camelCase 转 kebab-case
  */
 export function camelToKebab(str: string): string {
-  return str.replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase();
+  return str.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
 }
 
 /**
@@ -57,19 +57,19 @@ export function kebabToCamel(str: string): string {
  * 转义正则表达式特殊字符
  */
 export function escapeRegExp(str: string): string {
-  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 /**
  * 转义 HTML 特殊字符的映射表（模块级常量，避免每次调用重复创建）
  */
 const HTML_ESCAPE_MAP: Record<string, string> = {
-  "&": "&amp;",
-  "<": "&lt;",
-  ">": "&gt;",
-  '"': "&quot;",
-  "'": "&#39;",
-  "`": "&#96;",
+  '&': '&amp;',
+  '<': '&lt;',
+  '>': '&gt;',
+  '"': '&quot;',
+  "'": '&#39;',
+  '`': '&#96;',
 };
 
 /**
@@ -84,19 +84,19 @@ export function escapeHTML(str: string): string {
  * 比 escapeHTML 更严格，额外覆盖 = 字符
  */
 export function escapeAttrValue(str: string): string {
-  return escapeHTML(str).replace(/=/g, "&#61;");
+  return escapeHTML(str).replace(/=/g, '&#61;');
 }
 
 /**
  * 反转义 HTML 特殊字符的映射表（模块级常量，避免每次调用重复创建）
  */
 const HTML_UNESCAPE_MAP: Record<string, string> = {
-  "&amp;": "&",
-  "&lt;": "<",
-  "&gt;": ">",
-  "&quot;": '"',
-  "&#39;": "'",
-  "&apos;": "'",
+  '&amp;': '&',
+  '&lt;': '<',
+  '&gt;': '>',
+  '&quot;': '"',
+  '&#39;': "'",
+  '&apos;': "'",
 };
 
 /**
@@ -126,55 +126,43 @@ export function trimChars(str: string, chars: string): string {
   const specialChars: string[] = [];
   const normalChars: string[] = [];
   for (const ch of chars) {
-    if (ch === "]" || ch === "-") {
+    if (ch === ']' || ch === '-') {
       specialChars.push(ch);
     } else {
       normalChars.push(ch);
     }
   }
-  const charClass = specialChars.join("") + escapeRegExp(normalChars.join(""));
-  const pattern = new RegExp(`^[${charClass}]+|[${charClass}]+$`, "g");
-  return str.replace(pattern, "");
+  const charClass = specialChars.join('') + escapeRegExp(normalChars.join(''));
+  const pattern = new RegExp(`^[${charClass}]+|[${charClass}]+$`, 'g');
+  return str.replace(pattern, '');
 }
 
 /**
  * 重复字符串 n 次
  */
 export function repeat(str: string, count: number): string {
-  if (count <= 0) return "";
+  if (count <= 0) return '';
   return str.repeat(count);
 }
 
 /**
  * 在字符串开头填充
  */
-export function padStart(
-  str: string,
-  length: number,
-  fillStr: string = " ",
-): string {
+export function padStart(str: string, length: number, fillStr: string = ' '): string {
   return str.padStart(length, fillStr);
 }
 
 /**
  * 在字符串末尾填充
  */
-export function padEnd(
-  str: string,
-  length: number,
-  fillStr: string = " ",
-): string {
+export function padEnd(str: string, length: number, fillStr: string = ' '): string {
   return str.padEnd(length, fillStr);
 }
 
 /**
  * 检查字符串是否以指定前缀开头
  */
-export function startsWith(
-  str: string,
-  prefix: string,
-  position: number = 0,
-): boolean {
+export function startsWith(str: string, prefix: string, position: number = 0): boolean {
   return str.startsWith(prefix, position);
 }
 
@@ -228,11 +216,7 @@ export function substring(str: string, start: number, end?: number): string {
 /**
  * 截断字符串
  */
-export function truncate(
-  str: string,
-  length: number,
-  omission: string = "...",
-): string {
+export function truncate(str: string, length: number, omission: string = '...'): string {
   if (str.length <= length) return str;
   const truncatedLength = length - omission.length;
   if (truncatedLength <= 0) return omission.slice(0, length);
@@ -242,10 +226,7 @@ export function truncate(
 /**
  * 简单模板引擎，使用 {key} 作为占位符
  */
-export function template(
-  str: string,
-  data: Record<string, string | number | boolean>,
-): string {
+export function template(str: string, data: Record<string, string | number | boolean>): string {
   return str.replace(/\{(\w+)\}/g, (match, key) => {
     const value = data[key];
     return value !== undefined ? String(value) : match;
@@ -256,77 +237,105 @@ export function template(
  * 规范化 class 值
  */
 export function normalizeClass(
-  value:
-    | string
-    | Record<string, unknown>
-    | Array<unknown>
-    | undefined
-    | null
-    | boolean
-    | number,
+  value: string | Record<string, unknown> | Array<unknown> | undefined | null | boolean | number,
 ): string {
-  if (!value) return "";
-  if (typeof value === "string") return value;
+  if (!value) return '';
+  if (typeof value === 'string') return value;
 
   if (Array.isArray(value)) {
-    return (
-      value as Array<
-        string | Record<string, unknown> | null | undefined | boolean | number
-      >
-    )
+    return (value as Array<string | Record<string, unknown> | null | undefined | boolean | number>)
       .map(normalizeClass)
       .filter(Boolean)
-      .join(" ");
+      .join(' ');
   }
 
-  if (typeof value === "object") {
+  if (typeof value === 'object') {
     const result: string[] = [];
     for (const key in value) {
       if (value[key]) {
         result.push(key);
       }
     }
-    return result.join(" ");
+    return result.join(' ');
   }
 
-  return "";
+  return '';
 }
 
 /**
- * 规范化 style 值
+ * 规范化 style 值（返回 CSS 字符串）
  */
 export function normalizeStyle(
-  value:
-    | string
-    | Record<string, string | number>
-    | Array<unknown>
-    | undefined
-    | null,
+  value: string | Record<string, string | number> | Array<unknown> | undefined | null,
 ): string {
-  if (!value) return "";
-  if (typeof value === "string") return value;
+  if (!value) return '';
+  if (typeof value === 'string') return value;
 
   if (Array.isArray(value)) {
-    return (
-      value as Array<
-        string | Record<string, string | number> | null | undefined
-      >
-    )
+    return (value as Array<string | Record<string, string | number> | null | undefined>)
       .map(normalizeStyle)
       .filter(Boolean)
-      .join("; ");
+      .join('; ');
   }
 
-  if (typeof value === "object") {
+  if (typeof value === 'object') {
     const result: string[] = [];
     for (const key in value) {
       const cssKey = camelToKebab(key);
       result.push(`${cssKey}: ${value[key]}`);
     }
-    return result.join("; ");
+    return result.join('; ');
   }
 
-  return "";
+  return '';
+}
+
+/**
+ * 规范化 style 值（返回对象形式，用于 vdom diff）
+ * 将 string 解析为对象，array 合并为单一对象，object 直接返回。
+ *
+ * @param value - style 值（string | array | object）
+ * @returns 规范化后的 style 对象，不会返回 undefined
+ */
+export function normalizeStyleObject(value: unknown): Record<string, string | number> {
+  if (Array.isArray(value)) {
+    const res: Record<string, string | number> = {};
+    for (let i = 0; i < value.length; i++) {
+      const item = value[i];
+      if (item) {
+        const normalized = normalizeStyleObject(item);
+        Object.assign(res, normalized);
+      }
+    }
+    return res;
+  }
+  if (typeof value === 'string') {
+    return parseStringStyle(value);
+  }
+  if (typeof value === 'object' && value !== null) {
+    return value as Record<string, string | number>;
+  }
+  return {} as Record<string, string | number>;
+}
+
+/**
+ * 将 CSS 字符串（如 "color:red; font-size:16px"）解析为对象
+ */
+function parseStringStyle(cssText: string): Record<string, string> {
+  const res: Record<string, string> = {};
+  const list = cssText.split(';');
+  for (let i = 0; i < list.length; i++) {
+    const item = list[i]?.trim();
+    if (!item) continue;
+    const colonIdx = item.indexOf(':');
+    if (colonIdx === -1) continue;
+    const prop = item.slice(0, colonIdx).trim();
+    const val = item.slice(colonIdx + 1).trim();
+    if (!prop) continue;
+    const camelProp = prop.replace(/-\w/g, (m) => m[1]?.toUpperCase() ?? '');
+    res[camelProp] = val;
+  }
+  return res;
 }
 
 // ============================================================
@@ -338,20 +347,20 @@ export function normalizeStyle(
  * Based on the HTML specification: https://html.spec.whatwg.org/multipage/syntax.html#void-elements
  */
 export const VOID_ELEMENTS = new Set([
-  "area",
-  "base",
-  "br",
-  "col",
-  "embed",
-  "hr",
-  "img",
-  "input",
-  "link",
-  "meta",
-  "param",
-  "source",
-  "track",
-  "wbr",
+  'area',
+  'base',
+  'br',
+  'col',
+  'embed',
+  'hr',
+  'img',
+  'input',
+  'link',
+  'meta',
+  'param',
+  'source',
+  'track',
+  'wbr',
 ]);
 
 // ============================================================
@@ -362,22 +371,22 @@ export const VOID_ELEMENTS = new Set([
  * HTML boolean attributes whose presence means true.
  */
 export const BOOLEAN_ATTRS = new Set([
-  "disabled",
-  "readonly",
-  "checked",
-  "selected",
-  "multiple",
-  "autofocus",
-  "async",
-  "defer",
-  "controls",
-  "loop",
-  "muted",
-  "default",
-  "open",
-  "required",
-  "reversed",
-  "allowfullscreen",
+  'disabled',
+  'readonly',
+  'checked',
+  'selected',
+  'multiple',
+  'autofocus',
+  'async',
+  'defer',
+  'controls',
+  'loop',
+  'muted',
+  'default',
+  'open',
+  'required',
+  'reversed',
+  'allowfullscreen',
 ]);
 
 /**
@@ -395,74 +404,67 @@ export function isBooleanAttr(key: string): boolean {
  * 危险事件处理器属性黑名单
  */
 const DANGEROUS_EVENT_ATTRS = new Set([
-  "onclick",
-  "ondblclick",
-  "onmousedown",
-  "onmouseup",
-  "onmouseover",
-  "onmouseout",
-  "onmousemove",
-  "onmouseenter",
-  "onmouseleave",
-  "onkeydown",
-  "onkeyup",
-  "onkeypress",
-  "onfocus",
-  "onblur",
-  "oninput",
-  "onchange",
-  "onsubmit",
-  "onreset",
-  "onload",
-  "onerror",
-  "onresize",
-  "onscroll",
-  "oncontextmenu",
-  "ondrag",
-  "ondragend",
-  "ondragenter",
-  "ondragleave",
-  "ondragover",
-  "ondragstart",
-  "ondrop",
-  "onanimationend",
-  "onanimationstart",
-  "ontransitionend",
-  "onwheel",
-  "onpointerdown",
-  "onpointerup",
-  "onpointermove",
-  "oncopy",
-  "oncut",
-  "onpaste",
+  'onclick',
+  'ondblclick',
+  'onmousedown',
+  'onmouseup',
+  'onmouseover',
+  'onmouseout',
+  'onmousemove',
+  'onmouseenter',
+  'onmouseleave',
+  'onkeydown',
+  'onkeyup',
+  'onkeypress',
+  'onfocus',
+  'onblur',
+  'oninput',
+  'onchange',
+  'onsubmit',
+  'onreset',
+  'onload',
+  'onerror',
+  'onresize',
+  'onscroll',
+  'oncontextmenu',
+  'ondrag',
+  'ondragend',
+  'ondragenter',
+  'ondragleave',
+  'ondragover',
+  'ondragstart',
+  'ondrop',
+  'onanimationend',
+  'onanimationstart',
+  'ontransitionend',
+  'onwheel',
+  'onpointerdown',
+  'onpointerup',
+  'onpointermove',
+  'oncopy',
+  'oncut',
+  'onpaste',
 ]);
 
 /**
  * 危险 URL 属性（需要协议白名单校验）
  */
 const DANGEROUS_URL_ATTRS = new Set([
-  "src",
-  "href",
-  "action",
-  "formaction",
-  "xlink:href",
-  "data",
-  "srcdoc",
-  "poster",
-  "background",
+  'src',
+  'href',
+  'action',
+  'formaction',
+  'xlink:href',
+  'data',
+  'srcdoc',
+  'poster',
+  'background',
 ]);
 
 /**
  * 允许的 URL 协议
  */
-const ALLOWED_URL_PROTOCOLS = new Set([
-  "http:",
-  "https:",
-  "mailto:",
-  "tel:",
-  "#",
-  "",
-]);
+const ALLOWED_URL_PROTOCOLS = new Set(['http:', 'https:', 'mailto:', 'tel:', '#', '']);
 
 /**
  * 检查属性是否安全
@@ -481,9 +483,9 @@ export function isSafeAttribute(attrName: string, attrValue: string): boolean {
 
   // 2. 检查 URL 类属性
   if (DANGEROUS_URL_ATTRS.has(lowerName)) {
-    const trimmed = (attrValue ?? "").trim().toLowerCase();
+    const trimmed = (attrValue ?? '').trim().toLowerCase();
     const protocolMatch = trimmed.match(/^([a-z]+:|#)/);
-    const protocol = protocolMatch?.[1] ?? "";
+    const protocol = protocolMatch?.[1] ?? '';
     if (!ALLOWED_URL_PROTOCOLS.has(protocol)) {
       if (__DEV__) {
         console.warn(
@@ -504,63 +506,49 @@ export function isSafeAttribute(attrName: string, attrValue: string): boolean {
 
 // Pre-compiled RegExp constants for sanitizeHTML (avoid re-creation on every call)
 const DANGEROUS_TAGS = [
-  "script",
-  "iframe",
-  "object",
-  "embed",
-  "form",
-  "input",
-  "textarea",
-  "select",
-  "button",
-  "link",
-  "meta",
-  "base",
-  "applet",
-  "frame",
-  "frameset",
-  "details",
-  "marquee",
+  'script',
+  'iframe',
+  'object',
+  'embed',
+  'form',
+  'input',
+  'textarea',
+  'select',
+  'button',
+  'link',
+  'meta',
+  'base',
+  'applet',
+  'frame',
+  'frameset',
+  'details',
+  'marquee',
   // Note: 'svg' and 'math' are intentionally excluded from this list.
   // While SVG and MathML can be used for XSS in certain contexts, they are
   // legitimate content elements in many applications. Blocking them here
   // would be overly restrictive. Users requiring stricter sanitization
   // should use a dedicated library like DOMPurify.
 ];
-const DANGEROUS_TAG_PATTERN = DANGEROUS_TAGS.join("|");
+const DANGEROUS_TAG_PATTERN = DANGEROUS_TAGS.join('|');
 const RE_DANGEROUS_OPEN_CLOSE_TAG = new RegExp(
   `<\\/?(${DANGEROUS_TAG_PATTERN})\\b(?:[^>"']|"[^"]*"|'[^']*')*>`,
-  "gi",
+  'gi',
 );
-const RE_EVENT_HANDLER_ATTR =
-  /(<[^>]*?)\s+on[a-zA-Z]+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi;
+const RE_EVENT_HANDLER_ATTR = /(<[^>]*?)\s+on[a-zA-Z]+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi;
 const URI_ATTRS =
-  "href|src|action|formaction|xlink:href|data|codebase|cite|background|poster|dynsrc|lowsrc";
-const RE_URI_ATTR = new RegExp(
-  `(?:(${URI_ATTRS})\\s*=\\s*)(?:"([^"]*)"|'([^']*)')`,
-  "gi",
-);
+  'href|src|action|formaction|xlink:href|data|codebase|cite|background|poster|dynsrc|lowsrc';
+const RE_URI_ATTR = new RegExp(`(?:(${URI_ATTRS})\\s*=\\s*)(?:"([^"]*)"|'([^']*)')`, 'gi');
 const RE_WHITESPACE_CTRL =
   // eslint-disable-next-line no-control-regex
   /[\u0000-\u0020\u00A0\u1680\u2000-\u200B\u2028\u2029\u202F\u205F\u3000\uFEFF]+/g;
-const RE_DANGEROUS_SCHEME =
-  /^(javascript|vbscript|data|mhtml|x-javascript)\s*:/i;
+const RE_DANGEROUS_SCHEME = /^(javascript|vbscript|data|mhtml|x-javascript)\s*:/i;
 
-const DECODE_MAP: [
-  RegExp,
-  string | ((substring: string, ...args: string[]) => string),
-][] = [
-  [
-    /&#x0*([0-9a-fA-F]+);/g,
-    (_: string, code: string) => String.fromCodePoint(parseInt(code, 16)),
-  ],
-  [
-    /&#0*([0-9]+);/g,
-    (_: string, code: string) => String.fromCodePoint(parseInt(code, 10)),
-  ],
-  [/&amp;/gi, "&"],
-  [/&lt;/gi, "<"],
-  [/&gt;/gi, ">"],
+const DECODE_MAP: [RegExp, string | ((substring: string, ...args: string[]) => string)][] = [
+  [/&#x0*([0-9a-fA-F]+);/g, (_: string, code: string) => String.fromCodePoint(parseInt(code, 16))],
+  [/&#0*([0-9]+);/g, (_: string, code: string) => String.fromCodePoint(parseInt(code, 10))],
+  [/&amp;/gi, '&'],
+  [/&lt;/gi, '<'],
+  [/&gt;/gi, '>'],
   [/&quot;/gi, '"'],
   [/&apos;/gi, "'"],
   [/&#x27;/gi, "'"],
@@ -607,7 +595,7 @@ export function sanitizeHTML(str: string): string {
   // Run up to 5 rounds to handle nested encoding.
   // Fast path: skip decoding entirely if the string contains no '&' character,
   // since HTML entities always start with '&'.
-  if (str.includes("&")) {
+  if (str.includes('&')) {
     for (let i = 0; i < 5; i++) {
       const prev = decoded;
       for (const [re, repl] of DECODE_MAP) {
@@ -619,25 +607,22 @@ export function sanitizeHTML(str: string): string {
   }
 
   // 2. Remove dangerous tags (both self-closing and normal forms).
-  decoded = decoded.replace(RE_DANGEROUS_OPEN_CLOSE_TAG, "");
+  decoded = decoded.replace(RE_DANGEROUS_OPEN_CLOSE_TAG, '');
 
   // 3. Remove event-handler attributes (on*).
   //    Matches on<word>=  inside any tag, consuming the quoted value.
-  decoded = decoded.replace(RE_EVENT_HANDLER_ATTR, "$1");
+  decoded = decoded.replace(RE_EVENT_HANDLER_ATTR, '$1');
 
   // 4. Neutralise dangerous URI schemes in href / src / action / formaction / xlink:href.
-  decoded = decoded.replace(
-    RE_URI_ATTR,
-    (_match, attr: string, dq: string, sq: string) => {
-      const value = dq ?? sq ?? "";
-      // Strip whitespace / null bytes / control chars that could hide the scheme
-      const cleaned = value.replace(RE_WHITESPACE_CTRL, "").toLowerCase();
-      if (RE_DANGEROUS_SCHEME.test(cleaned)) {
-        return `${attr}=""`;
-      }
-      return _match;
-    },
-  );
+  decoded = decoded.replace(RE_URI_ATTR, (_match, attr: string, dq: string, sq: string) => {
+    const value = dq ?? sq ?? '';
+    // Strip whitespace / null bytes / control chars that could hide the scheme
+    const cleaned = value.replace(RE_WHITESPACE_CTRL, '').toLowerCase();
+    if (RE_DANGEROUS_SCHEME.test(cleaned)) {
+      return `${attr}=""`;
+    }
+    return _match;
+  });
 
   return decoded;
 }

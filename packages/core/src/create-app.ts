@@ -1,9 +1,9 @@
 // src/create-app.ts
 // @lytjs/core - createApp 工厂函数
 
-import { createVNode } from "@lytjs/vdom";
-import { createDOMRenderer } from "@lytjs/renderer";
-import { error, warn } from "@lytjs/common-error";
+import { createVNode } from '@lytjs/vdom';
+import { createDOMRenderer } from '@lytjs/renderer';
+import { error, warn } from '@lytjs/common-error';
 import type {
   App,
   Plugin,
@@ -11,47 +11,39 @@ import type {
   ComponentPublicInstance,
   DOMRenderer,
   ComponentOptions,
-} from "./types";
-import { createAppContext, createContextConfig } from "./app-context";
+} from './types';
+import { createAppContext, createContextConfig } from './app-context';
 import {
   createComponentInstance,
   setupComponent,
   createComponentPublicInstance,
   callUnmountedHook,
-} from "@lytjs/component";
-import type { AppContext as ComponentAppContext } from "@lytjs/component";
+} from '@lytjs/component';
+import type { AppContext as ComponentAppContext } from '@lytjs/component';
 
 export function createApp(
   rootComponent: Component,
   rootProps: Record<string, unknown> | null = null,
 ): App {
   const context = createAppContext();
-  const installedPlugins = new Set<
-    Plugin | ((app: App, ...options: unknown[]) => void)
-  >();
+  const installedPlugins = new Set<Plugin | ((app: App, ...options: unknown[]) => void)>();
   let _isUnmounted = false;
 
   const app: App = {
     config: createContextConfig(context),
 
-    use(
-      plugin: Plugin | ((app: App, ...options: unknown[]) => void),
-      ...options: unknown[]
-    ) {
+    use(plugin: Plugin | ((app: App, ...options: unknown[]) => void), ...options: unknown[]) {
       if (installedPlugins.has(plugin)) return app;
       try {
-        if (typeof plugin === "function") {
-          (plugin as (app: App, ...options: unknown[]) => void)(
-            app,
-            ...options,
-          );
+        if (typeof plugin === 'function') {
+          (plugin as (app: App, ...options: unknown[]) => void)(app, ...options);
         } else {
           plugin.install(app, ...options);
         }
         installedPlugins.add(plugin);
       } catch (err) {
         error(
-          `Plugin failed to install: ${typeof plugin === "function" ? plugin.name || "anonymous function" : (plugin as Plugin).install?.name || "plugin"}: ${err}`,
+          `Plugin failed to install: ${typeof plugin === 'function' ? plugin.name || 'anonymous function' : (plugin as Plugin).install?.name || 'plugin'}: ${err}`,
         );
         throw err;
       }
@@ -67,7 +59,7 @@ export function createApp(
 
       if (!rootComponent) {
         if (__DEV__) {
-          warn("App.mount() expects a root component.");
+          warn('App.mount() expects a root component.');
         }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return null as any;
@@ -80,9 +72,7 @@ export function createApp(
       }
 
       const container =
-        typeof rootContainer === "string"
-          ? document.querySelector(rootContainer)
-          : rootContainer;
+        typeof rootContainer === 'string' ? document.querySelector(rootContainer) : rootContainer;
 
       if (!container) {
         throw new Error(
@@ -150,18 +140,15 @@ export function createApp(
       // 清理插件资源：调用插件的 cleanup 方法（如果存在）
       for (const plugin of installedPlugins) {
         if (
-          typeof plugin !== "function" &&
+          typeof plugin !== 'function' &&
           plugin != null &&
-          typeof (plugin as unknown as Record<string, unknown>).cleanup ===
-            "function"
+          typeof (plugin as unknown as Record<string, unknown>).cleanup === 'function'
         ) {
           try {
-            (
-              (plugin as unknown as Record<string, unknown>).cleanup as Function
-            )();
+            ((plugin as unknown as Record<string, unknown>).cleanup as Function)();
           } catch (err) {
             error(
-              `Plugin cleanup failed: ${typeof plugin === "object" && plugin !== null && "name" in plugin ? (plugin as { name?: string }).name : "unknown"}: ${err}`,
+              `Plugin cleanup failed: ${typeof plugin === 'object' && plugin !== null && 'name' in plugin ? (plugin as { name?: string }).name : 'unknown'}: ${err}`,
             );
           }
         }

@@ -5,12 +5,12 @@ on:
   workflow_dispatch:
     inputs:
       branch:
-        description: "要同步的分支（默认 develop）"
+        description: '要同步的分支（默认 develop）'
         required: false
-        default: "develop"
+        default: 'develop'
   # 支持定时同步（每天检查一次，降低同步频率）
   schedule:
-    - cron: "0 0 * * *"
+    - cron: '0 0 * * *'
 
 jobs:
   sync:

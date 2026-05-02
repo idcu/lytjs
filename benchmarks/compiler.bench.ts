@@ -1,20 +1,21 @@
-import { describe, bench } from 'vitest'
-import { parse, compile } from '@lytjs/compiler'
+import { describe, bench } from 'vitest';
+import { parse, compile } from '@lytjs/compiler';
 
 describe('compiler benchmark', () => {
   bench('parse simple template', () => {
-    const template = '<div class="container"><span>Hello World</span></div>'
+    const template = '<div class="container"><span>Hello World</span></div>';
     for (let i = 0; i < 100; i++) {
-      parse(template)
+      parse(template);
     }
-  })
+  });
 
   bench('parse template with interpolation', () => {
-    const template = '<div class="container"><span>{{ message }}</span><p>{{ count + 1 }}</p></div>'
+    const template =
+      '<div class="container"><span>{{ message }}</span><p>{{ count + 1 }}</p></div>';
     for (let i = 0; i < 100; i++) {
-      parse(template)
+      parse(template);
     }
-  })
+  });
 
   bench('parse template with directives', () => {
     const template = `
@@ -27,25 +28,26 @@ describe('compiler benchmark', () => {
         <input v-model="text" />
         <div v-show="visible">Conditional content</div>
       </div>
-    `
+    `;
     for (let i = 0; i < 100; i++) {
-      parse(template)
+      parse(template);
     }
-  })
+  });
 
   bench('compile simple template', () => {
-    const template = '<div class="container"><span>Hello World</span></div>'
+    const template = '<div class="container"><span>Hello World</span></div>';
     for (let i = 0; i < 100; i++) {
-      compile(template)
+      compile(template);
     }
-  })
+  });
 
   bench('compile template with interpolation', () => {
-    const template = '<div class="container"><span>{{ message }}</span><p>{{ count + 1 }}</p></div>'
+    const template =
+      '<div class="container"><span>{{ message }}</span><p>{{ count + 1 }}</p></div>';
     for (let i = 0; i < 100; i++) {
-      compile(template)
+      compile(template);
     }
-  })
+  });
 
   bench('compile template with directives', () => {
     const template = `
@@ -58,9 +60,9 @@ describe('compiler benchmark', () => {
         <input v-model="text" />
         <div v-show="visible">Conditional content</div>
       </div>
-    `
+    `;
     for (let i = 0; i < 100; i++) {
-      compile(template)
+      compile(template);
     }
-  })
-})
+  });
+});

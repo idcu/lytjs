@@ -1,9 +1,9 @@
 // src/parser.ts
 // HTML template parser
 
-import { NodeTypes, ElementTypes, TextModes, TagType } from "./constants";
-import { VOID_ELEMENTS, escapeRegExp } from "@lytjs/common-string";
-import { warn } from "@lytjs/common-error";
+import { NodeTypes, ElementTypes, TextModes, TagType } from './constants';
+import { VOID_ELEMENTS, escapeRegExp } from '@lytjs/common-string';
+import { warn } from '@lytjs/common-error';
 import type {
   RootNode,
   ElementNode,
@@ -18,7 +18,7 @@ import type {
   ParserContext,
   ParserOptions,
   SourceLocation,
-} from "./types";
+} from './types';
 import {
   createRoot,
   createElement,
@@ -28,7 +28,7 @@ import {
   createAttribute,
   createDirective,
   createSimpleExpression,
-} from "./ast";
+} from './ast';
 
 // ============================================================
 // Parser utilities
@@ -127,10 +127,7 @@ export function parse(source: string, options: ParserOptions = {}): RootNode {
   return root;
 }
 
-function createParserContext(
-  source: string,
-  options: ParserOptions,
-): ParserContext {
+function createParserContext(source: string, options: ParserOptions): ParserContext {
   return {
     options,
     originalSource: source,
@@ -147,11 +144,7 @@ function createParserContext(
 // Parse children
 // ============================================================
 
-function parseChildren(
-  context: ParserContext,
-  parent: ParentNode,
-  mode: number,
-): void {
+function parseChildren(context: ParserContext, parent: ParentNode, mode: number): void {
   let nodes: TemplateChildNode[] = [];
 
   while (!isEnd(context, mode)) {
@@ -159,15 +152,15 @@ function parseChildren(
     let node: TemplateChildNode | undefined;
 
     if (mode === TextModes.DATA || mode === TextModes.RCDATA) {
-      if (s.startsWith("<!--")) {
+      if (s.startsWith('<!--')) {
         node = parseComment(context);
-      } else if (s.startsWith("{{")) {
+      } else if (s.startsWith('{{')) {
         node = parseInterpolation(context);
-      } else if (s.startsWith("<")) {
-        if (s[1] === "/") {
+      } else if (s.startsWith('<')) {
+        if (s[1] === '/') {
           break;
         }
-        if (s.startsWith("<!DOCTYPE") || s.startsWith("<!")) {
+        if (s.startsWith('<!DOCTYPE') || s.startsWith('<!')) {
           const match = s.match(RE_DOCTYPE);
           if (match) {
             advanceBy(context, match[0].length);
@@ -177,7 +170,7 @@ function parseChildren(
           if (__DEV__) {
             warn(`Invalid DOCTYPE/declaration at position ${context.offset}`);
           }
-          const lineEnd = s.indexOf("\n");
+          const lineEnd = s.indexOf('\n');
           advanceBy(context, lineEnd === -1 ? s.length : lineEnd);
           continue;
         }
@@ -249,7 +242,7 @@ function isEnd(context: ParserContext, mode: number): boolean {
   const s = context.source;
   switch (mode) {
     case TextModes.DATA:
-      if (s.startsWith("</")) {
+      if (s.startsWith('</')) {
         const match = s.match(RE_END_TAG);
         return !!match;
       }
@@ -257,7 +250,7 @@ function isEnd(context: ParserContext, mode: number): boolean {
     case TextModes.RCDATA:
     case TextModes.RAWTEXT:
     case TextModes.CDATA: {
-      if (s.startsWith("</")) {
+      if (s.startsWith('</')) {
         return true;
       }
       return !s;
@@ -273,7 +266,7 @@ function isEnd(context: ParserContext, mode: number): boolean {
 
 function parseText(context: ParserContext): TextNode {
   const start = getCursor(context);
-  const endTokens = ["<", "{{"];
+  const endTokens = ['<', '{{'];
 
   let endIndex = context.source.length;
   for (const token of endTokens) {
@@ -293,9 +286,7 @@ function parseText(context: ParserContext): TextNode {
 // Parse interpolation {{ expression }}
 // ============================================================
 
-function parseInterpolation(
-  context: ParserContext,
-): InterpolationNode | undefined {
+function parseInterpolation(context: ParserContext): InterpolationNode | undefined {
   const start = getCursor(context);
   // 字符串感知扫描：跳过引号内的 }}，避免误判
   let endIndex = 2;
@@ -303,13 +294,13 @@ function parseInterpolation(
   while (endIndex < context.source.length) {
     const char = context.source[endIndex];
     if (inString) {
-      if (char === inString && context.source[endIndex - 1] !== "\\") {
+      if (char === inString && context.source[endIndex - 1] !== '\\') {
         inString = null;
       }
     } else {
       if (char === '"' || char === "'") {
         inString = char;
-      } else if (char === "}" && context.source[endIndex + 1] === "}") {
+      } else if (char === '}' && context.source[endIndex + 1] === '}') {
         break;
       }
     }
@@ -319,7 +310,7 @@ function parseInterpolation(
 
   if (closeIndex === -1) {
     if (__DEV__) {
-      warn("Unclosed interpolation expression.");
+      warn('Unclosed interpolation expression.');
     }
     return undefined;
   }
@@ -335,12 +326,7 @@ function parseInterpolation(
 
   advanceBy(context, rawContent.length + 2);
 
-  const expression = createSimpleExpression(
-    content,
-    false,
-    getSelection(context, start),
-    false,
-  );
+  const expression = createSimpleExpression(content, false, getSelection(context, start), false);
 
   return createInterpolation(expression, getSelection(context, start));
 }
@@ -354,7 +340,7 @@ function parseComment(context: ParserContext): CommentNode {
 
   advanceBy(context, 4);
 
-  const endIndex = context.source.indexOf("-->");
+  const endIndex = context.source.indexOf('-->');
   let content: string;
   if (endIndex === -1) {
     content = context.source;
@@ -387,9 +373,9 @@ function parseElement(context: ParserContext): ElementNode | undefined {
   const tag = element.tag;
 
   let textMode: number = TextModes.DATA;
-  if (tag === "textarea" || tag === "title") {
+  if (tag === 'textarea' || tag === 'title') {
     textMode = TextModes.RCDATA;
-  } else if (tag === "style" || tag === "script") {
+  } else if (tag === 'style' || tag === 'script') {
     textMode = TextModes.RAWTEXT;
   }
 
@@ -422,10 +408,7 @@ function parseElement(context: ParserContext): ElementNode | undefined {
 // Parse tag
 // ============================================================
 
-function parseTag(
-  context: ParserContext,
-  type: number,
-): ElementNode | undefined {
+function parseTag(context: ParserContext, type: number): ElementNode | undefined {
   const start = getCursor(context);
   advanceBy(context, 1);
 
@@ -440,9 +423,9 @@ function parseTag(
   let tagType: number = ElementTypes.ELEMENT;
   if (isComponentTag(tag)) {
     tagType = ElementTypes.COMPONENT;
-  } else if (tag === "template") {
+  } else if (tag === 'template') {
     tagType = ElementTypes.TEMPLATE;
-  } else if (tag === "slot") {
+  } else if (tag === 'slot') {
     tagType = ElementTypes.SLOT;
   }
 
@@ -451,8 +434,8 @@ function parseTag(
   let attrCount = 0;
   while (
     context.source.length > 0 &&
-    !context.source.startsWith(">") &&
-    !context.source.startsWith("/>")
+    !context.source.startsWith('>') &&
+    !context.source.startsWith('/>')
   ) {
     attrCount++;
     if (attrCount > MAX_ATTRIBUTES) {
@@ -462,7 +445,7 @@ function parseTag(
             `stopping attribute parsing to prevent infinite loop.`,
         );
       }
-      const tagEnd = context.source.indexOf(">");
+      const tagEnd = context.source.indexOf('>');
       if (tagEnd !== -1) {
         advanceBy(context, tagEnd);
       }
@@ -476,7 +459,7 @@ function parseTag(
   }
 
   let isSelfClosing = false;
-  if (context.source.startsWith("/>")) {
+  if (context.source.startsWith('/>')) {
     isSelfClosing = true;
     advanceBy(context, 2);
 
@@ -499,7 +482,7 @@ function parseTag(
         );
       }
     }
-  } else if (context.source.startsWith(">")) {
+  } else if (context.source.startsWith('>')) {
     advanceBy(context, 1);
   }
 
@@ -534,17 +517,17 @@ function parseAttribute(
   const rawName = match[0]!;
   advanceBy(context, rawName.length);
 
-  if (rawName.startsWith(":")) {
-    return parseDirective(context, "bind", rawName.slice(1), start);
+  if (rawName.startsWith(':')) {
+    return parseDirective(context, 'bind', rawName.slice(1), start);
   }
-  if (rawName.startsWith("@")) {
-    return parseDirective(context, "on", rawName.slice(1), start);
+  if (rawName.startsWith('@')) {
+    return parseDirective(context, 'on', rawName.slice(1), start);
   }
-  if (rawName.startsWith("#")) {
-    return parseDirective(context, "slot", rawName.slice(1), start);
+  if (rawName.startsWith('#')) {
+    return parseDirective(context, 'slot', rawName.slice(1), start);
   }
 
-  if (rawName.startsWith("v-")) {
+  if (rawName.startsWith('v-')) {
     const dirMatch = rawName.match(RE_V_DIRECTIVE);
     if (dirMatch) {
       return parseDirective(context, dirMatch[1]!, dirMatch[2], start);
@@ -555,7 +538,7 @@ function parseAttribute(
 
   let value: TextNode | undefined;
 
-  if (context.source.startsWith("=")) {
+  if (context.source.startsWith('=')) {
     advanceBy(context, 1);
     advanceSpaces(context);
     value = parseAttributeValue(context);
@@ -576,10 +559,7 @@ function parseQuotedValue(context: ParserContext): string {
     // 跳过转义引号 \"，找到真正的结束引号
     let endIndex = 0;
     while (endIndex < context.source.length) {
-      if (
-        context.source[endIndex] === '"' &&
-        context.source[endIndex - 1] !== "\\"
-      ) {
+      if (context.source[endIndex] === '"' && context.source[endIndex - 1] !== '\\') {
         break;
       }
       endIndex++;
@@ -588,7 +568,7 @@ function parseQuotedValue(context: ParserContext): string {
       content = context.source.slice(0, endIndex);
     } else {
       if (__DEV__) {
-        warn("Unclosed attribute value.");
+        warn('Unclosed attribute value.');
       }
       content = context.source;
     }
@@ -598,10 +578,7 @@ function parseQuotedValue(context: ParserContext): string {
     // 跳过转义引号 \'，找到真正的结束引号
     let endIndex = 0;
     while (endIndex < context.source.length) {
-      if (
-        context.source[endIndex] === "'" &&
-        context.source[endIndex - 1] !== "\\"
-      ) {
+      if (context.source[endIndex] === "'" && context.source[endIndex - 1] !== '\\') {
         break;
       }
       endIndex++;
@@ -610,14 +587,14 @@ function parseQuotedValue(context: ParserContext): string {
       content = context.source.slice(0, endIndex);
     } else {
       if (__DEV__) {
-        warn("Unclosed attribute value.");
+        warn('Unclosed attribute value.');
       }
       content = context.source;
     }
     advanceBy(context, content.length + 1);
   } else {
     const match = context.source.match(RE_UNQUOTED_ATTR_VALUE);
-    content = match ? match[0] : "";
+    content = match ? match[0] : '';
     advanceBy(context, content.length);
   }
 
@@ -643,69 +620,44 @@ function parseDirective(
   let modifiers: string[] = [];
 
   if (rawArg !== undefined) {
-    const parts = rawArg.split(".");
+    const parts = rawArg.split('.');
     const argContent = parts[0];
     modifiers = parts.slice(1);
 
-    if (
-      argContent !== undefined &&
-      argContent.startsWith("[") &&
-      argContent.endsWith("]")
-    ) {
+    if (argContent !== undefined && argContent.startsWith('[') && argContent.endsWith(']')) {
       const content = argContent.slice(1, -1);
-      arg = createSimpleExpression(
-        content,
-        false,
-        getSelection(context, start),
-        false,
-      );
+      arg = createSimpleExpression(content, false, getSelection(context, start), false);
     } else if (argContent !== undefined) {
-      arg = createSimpleExpression(
-        argContent,
-        true,
-        getSelection(context, start),
-        true,
-      );
+      arg = createSimpleExpression(argContent, true, getSelection(context, start), true);
     }
   }
 
   if (
-    name === "bind" ||
-    name === "on" ||
-    name === "model" ||
-    name === "if" ||
-    name === "for" ||
-    name === "show" ||
-    name === "slot" ||
-    name === "once" ||
-    name === "else-if" ||
-    name === "else"
+    name === 'bind' ||
+    name === 'on' ||
+    name === 'model' ||
+    name === 'if' ||
+    name === 'for' ||
+    name === 'show' ||
+    name === 'slot' ||
+    name === 'once' ||
+    name === 'else-if' ||
+    name === 'else'
   ) {
     advanceSpaces(context);
 
-    if (context.source.startsWith("=")) {
+    if (context.source.startsWith('=')) {
       advanceBy(context, 1);
       advanceSpaces(context);
 
       const valueStart = getCursor(context);
       const valueContent = parseQuotedValue(context);
 
-      exp = createSimpleExpression(
-        valueContent,
-        false,
-        getSelection(context, valueStart),
-        false,
-      );
+      exp = createSimpleExpression(valueContent, false, getSelection(context, valueStart), false);
     }
   }
 
-  return createDirective(
-    name,
-    arg,
-    exp,
-    modifiers,
-    getSelection(context, start),
-  );
+  return createDirective(name, arg, exp, modifiers, getSelection(context, start));
 }
 
 // ============================================================
@@ -713,5 +665,5 @@ function parseDirective(
 // ============================================================
 
 function isComponentTag(tag: string): boolean {
-  return RE_COMPONENT_TAG.test(tag) || tag.includes("-");
+  return RE_COMPONENT_TAG.test(tag) || tag.includes('-');
 }

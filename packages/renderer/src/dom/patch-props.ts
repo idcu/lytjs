@@ -1,22 +1,23 @@
 /**
  * @lytjs/renderer - DOM property patching
- * Enhanced patchProp for DOM elements with class, style, event, and attribute handling
+ * Enhanced patchProp for DOM elements with class, style, event, and attribute handling.
+ * Delegates shared logic to @lytjs/common-dom, adds invoker event caching on top.
  */
 
-import { isString } from "@lytjs/common-is";
 import {
-  camelToKebab,
-  isSafeAttribute,
-  sanitizeHTML,
-} from "@lytjs/common-string";
-import { warn } from "@lytjs/common-error";
+  patchClass as domPatchClass,
+  patchStyle as domPatchStyle,
+  patchProp as domPatchProp,
+} from '@lytjs/common-dom';
 import {
   getDOMEventName,
   extractDOMEventHandler,
   extractDOMEventOptions,
   isOn,
-} from "@lytjs/common-events";
-import { isBooleanAttr } from "../utils";
+} from '@lytjs/common-events';
+
+// Re-export shared functions for backward compatibility
+export { patchClass, patchStyle, patchAttr } from '@lytjs/common-dom';
 
 // ============================================================
 // Event invoker pattern
@@ -38,9 +39,6 @@ function getOrCreateInvoker(el: Element, rawName: string): Invoker {
 
   let invoker = elMap.get(rawName);
   if (!invoker) {
-    // Closure self-reference pattern: the invoker function references itself via
-    // the outer `invoker` variable. This allows the wrapper to always call the
-    // latest handler value stored in invoker.value without re-attaching listeners.
     invoker = ((e: Event) => {
       invoker!.value(e);
     }) as unknown as Invoker;
@@ -51,85 +49,7 @@ function getOrCreateInvoker(el: Element, rawName: string): Invoker {
 }
 
 // ============================================================
-// patchClass
-// ============================================================
-
-/**
- * Patch the class attribute on an element
- */
-export function patchClass(el: Element, prev: unknown, next: unknown): void {
-  const el_ = el as HTMLElement;
-  const prevClass = prev == null ? "" : String(prev);
-  const nextClass = next == null ? "" : String(next);
-  if (prevClass !== nextClass) {
-    el_.className = nextClass;
-  }
-}
-
-// ============================================================
-// patchStyle
-// ============================================================
-
-/**
- * Patch the style attribute on an element
- */
-export function patchStyle(el: Element, prev: unknown, next: unknown): void {
-  const el_ = el as HTMLElement;
-  const style = el_.style;
-
-  if (!next || next === "") {
-    el_.removeAttribute("style");
-    return;
-  }
-
-  const prevStyle = prev as Record<string, string | number> | null | undefined;
-  const nextStyle = next as Record<string, string | number> | string;
-
-  if (
-    nextStyle &&
-    typeof nextStyle !== "object" &&
-    typeof nextStyle !== "string"
-  ) {
-    return;
-  }
-
-  if (isString(nextStyle)) {
-    if (prevStyle && !isString(prevStyle)) {
-      // Was object, now string - clear all inline styles
-      for (const key in prevStyle) {
-        style.removeProperty(camelToKebab(key));
-      }
-    }
-    el_.setAttribute("style", nextStyle);
-    return;
-  }
-
-  // nextStyle is an object
-  if (prevStyle && !isString(prevStyle)) {
-    // Remove keys that existed in prev but not in next
-    for (const key in prevStyle) {
-      if (!(key in nextStyle)) {
-        style.removeProperty(camelToKebab(key));
-      }
-    }
-  } else if (isString(prevStyle)) {
-    // Was string, now object - clear the string style
-    el_.removeAttribute("style");
-  }
-
-  // Apply all new styles
-  for (const key in nextStyle) {
-    const val = nextStyle[key];
-    if (val != null && val !== "") {
-      style.setProperty(camelToKebab(key), String(val));
-    } else {
-      style.removeProperty(camelToKebab(key));
-    }
-  }
-}
-
-// ============================================================
-// patchEvent
+// patchEvent (renderer-specific: uses invoker pattern)
 // ============================================================
 
 /**
@@ -137,22 +57,13 @@ export function patchStyle(el: Element, prev: unknown, next: unknown): void {
  * Supports event options (capture, passive, once) when nextValue is an
  * object with a handler property.
  */
-export function patchEvent(
-  el: Element,
-  rawName: string,
-  prev: unknown,
-  next: unknown,
-): void {
-  // Extract event name using the mapping table
+export function patchEvent(el: Element, rawName: string, prev: unknown, next: unknown): void {
   const eventName = getDOMEventName(rawName);
-
-  // Normalize prev/next to extract handler and options
   const prevHandler = extractDOMEventHandler(prev);
   const prevOptions = extractDOMEventOptions(prev);
   const nextHandler = extractDOMEventHandler(next);
   const nextOptions = extractDOMEventOptions(next);
 
-  // Remove previous listener
   if (prevHandler) {
     const elMap = invokerCache.get(el);
     if (elMap) {
@@ -163,7 +74,6 @@ export function patchEvent(
     }
   }
 
-  // Add new listener
   if (nextHandler) {
     const invoker = getOrCreateInvoker(el, rawName);
     invoker.value = nextHandler;
@@ -172,57 +82,13 @@ export function patchEvent(
 }
 
 // ============================================================
-// patchAttr
-// ============================================================
-
-/**
- * Patch a regular or boolean attribute on an element
- */
-export function patchAttr(
-  el: Element,
-  key: string,
-  value: unknown,
-  _isSVG: boolean,
-): void {
-  if (value == null || value === false) {
-    el.removeAttribute(key);
-  } else if (isBooleanAttr(key)) {
-    // Boolean attributes: presence means true
-    if (value === true || value === "") {
-      el.setAttribute(key, "");
-    } else {
-      const strValue = String(value);
-      if (!isSafeAttribute(key, strValue)) {
-        if (__DEV__) {
-          warn(
-            `Unsafe attribute "${key}" with value "${strValue}" has been blocked.`,
-          );
-        }
-        return;
-      }
-      el.setAttribute(key, strValue);
-    }
-  } else {
-    const strValue = String(value);
-    if (!isSafeAttribute(key, strValue)) {
-      if (__DEV__) {
-        warn(
-          `Unsafe attribute "${key}" with value "${strValue}" has been blocked.`,
-        );
-      }
-      return;
-    }
-    el.setAttribute(key, strValue);
-  }
-}
-
-// ============================================================
-// patchProp - main entry
+// patchProp - main entry (renderer-specific: adds invoker events)
 // ============================================================
 
 /**
  * Patch a prop on a DOM element.
- * Dispatches to specialized handlers for class, style, events, and attributes.
+ * Delegates class/style/attr/innerHTML/textContent to @lytjs/common-dom,
+ * and adds invoker-based event handling on top.
  */
 export function patchProp(
   el: Element,
@@ -231,29 +97,14 @@ export function patchProp(
   nextValue: unknown,
   isSVG: boolean = false,
 ): void {
-  if (key === "class") {
-    patchClass(el, prevValue, nextValue);
-  } else if (key === "style") {
-    patchStyle(el, prevValue, nextValue);
+  if (key === 'class') {
+    domPatchClass(el, prevValue, nextValue);
+  } else if (key === 'style') {
+    domPatchStyle(el, prevValue, nextValue);
   } else if (isOn(key)) {
     patchEvent(el, key, prevValue, nextValue);
-  } else if (key === "innerHTML") {
-    // Performance optimization: skip DOM update when innerHTML value is unchanged.
-    // Note: this uses reference equality (!==) rather than deep comparison,
-    // which is sufficient for the common case where the value is a static string.
-    if (nextValue !== prevValue) {
-      if (__DEV__ && nextValue != null && typeof nextValue !== "string") {
-        warn("v-html expects a string value.");
-      }
-      const sanitized =
-        nextValue == null ? "" : sanitizeHTML(String(nextValue));
-      el.innerHTML = sanitized;
-    }
-  } else if (key === "textContent") {
-    if (nextValue !== prevValue) {
-      el.textContent = nextValue == null ? "" : String(nextValue);
-    }
   } else {
-    patchAttr(el, key, nextValue, isSVG);
+    // Delegate to common-dom for innerHTML, textContent, and attrs
+    domPatchProp(el, key, prevValue, nextValue, isSVG);
   }
 }

@@ -17,30 +17,30 @@ npm install @lytjs/core
 ```
 
 ```typescript
-import { createApp, ref, computed } from '@lytjs/core'
+import { createApp, ref, computed } from '@lytjs/core';
 
 const app = createApp({
   setup() {
-    const count = ref(0)
-    const doubled = computed(() => count.value * 2)
-    return { count, doubled }
+    const count = ref(0);
+    const doubled = computed(() => count.value * 2);
+    return { count, doubled };
   },
-  template: '<div>{{ count }} x 2 = {{ doubled }}</div>'
-})
+  template: '<div>{{ count }} x 2 = {{ doubled }}</div>',
+});
 
-app.mount('#app')
+app.mount('#app');
 ```
 
 ## 包架构
 
-| 包 | 描述 |
-|---|---|
+| 包                                         | 描述                                         |
+| ------------------------------------------ | -------------------------------------------- |
 | [@lytjs/reactivity](./packages/reactivity) | 响应式系统（ref, reactive, computed, watch） |
-| [@lytjs/vdom](./packages/vdom) | 虚拟 DOM 和 diff 算法 |
-| [@lytjs/compiler](./packages/compiler) | 模板编译器 |
-| [@lytjs/renderer](./packages/renderer) | DOM/SSR 渲染器 |
-| [@lytjs/component](./packages/component) | 组件系统 |
-| [@lytjs/core](./packages/core) | 核心应用 API |
+| [@lytjs/vdom](./packages/vdom)             | 虚拟 DOM 和 diff 算法                        |
+| [@lytjs/compiler](./packages/compiler)     | 模板编译器                                   |
+| [@lytjs/renderer](./packages/renderer)     | DOM/SSR 渲染器                               |
+| [@lytjs/component](./packages/component)   | 组件系统                                     |
+| [@lytjs/core](./packages/core)             | 核心应用 API                                 |
 
 ## 开发
 

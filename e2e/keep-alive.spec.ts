@@ -3,15 +3,17 @@ import { getText, getHTML, unmount, evaluateInBrowser, nextTick } from './helper
 
 test.describe('Keep-Alive', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/')
-  })
+    await page.goto('/');
+  });
 
   test.afterEach(async ({ page }) => {
-    await unmount(page)
-  })
+    await unmount(page);
+  });
 
   test('KeepAlive 组件应该正确创建', async ({ page }) => {
-    const result = await evaluateInBrowser(page, `(args) => {
+    const result = await evaluateInBrowser(
+      page,
+      `(args) => {
       const { defineComponent } = window.LytJS;
 
       const KeepAlive = defineComponent({
@@ -32,15 +34,18 @@ test.describe('Keep-Alive', () => {
         hasProps: !!KeepAlive.props,
         hasSetup: typeof KeepAlive.setup === 'function',
       };
-    }`)
+    }`,
+    );
 
-    expect(result.name).toBe('KeepAlive')
-    expect(result.hasProps).toBe(true)
-    expect(result.hasSetup).toBe(true)
-  })
+    expect(result.name).toBe('KeepAlive');
+    expect(result.hasProps).toBe(true);
+    expect(result.hasSetup).toBe(true);
+  });
 
   test('KeepAlive 缓存机制 - 切换组件后保留状态', async ({ page }) => {
-    await evaluateInBrowser(page, `(args) => {
+    await evaluateInBrowser(
+      page,
+      `(args) => {
       const { createApp, h, defineComponent, ref } = window.LytJS;
 
       const inputText = ref('');
@@ -96,50 +101,59 @@ test.describe('Keep-Alive', () => {
 
       window.__getInputText = () => inputText.value;
       window.__toggle = () => { currentView.value = currentView.value === 'A' ? 'B' : 'A'; };
-    }`)
+    }`,
+    );
 
     // 验证初始显示 CompA
-    let compA = await page.locator('#comp-a').count()
-    let compB = await page.locator('#comp-b').count()
-    expect(compA).toBe(1)
-    expect(compB).toBe(0)
+    let compA = await page.locator('#comp-a').count();
+    let compB = await page.locator('#comp-b').count();
+    expect(compA).toBe(1);
+    expect(compB).toBe(0);
 
     // 在 CompA 的 input 中输入内容
-    await page.fill('#comp-a-input', 'preserved text')
-    await nextTick(page)
+    await page.fill('#comp-a-input', 'preserved text');
+    await nextTick(page);
 
-    let inputText = await evaluateInBrowser(page, `(args) => {
+    let inputText = await evaluateInBrowser(
+      page,
+      `(args) => {
       return window.__getInputText();
-    }`)
-    expect(inputText).toBe('preserved text')
+    }`,
+    );
+    expect(inputText).toBe('preserved text');
 
     // 切换到 CompB
-    await page.click('#toggle-btn')
-    await nextTick(page)
+    await page.click('#toggle-btn');
+    await nextTick(page);
 
-    compA = await page.locator('#comp-a').count()
-    compB = await page.locator('#comp-b').count()
-    expect(compA).toBe(0)
-    expect(compB).toBe(1)
+    compA = await page.locator('#comp-a').count();
+    compB = await page.locator('#comp-b').count();
+    expect(compA).toBe(0);
+    expect(compB).toBe(1);
 
     // 切换回 CompA
-    await page.click('#toggle-btn')
-    await nextTick(page)
+    await page.click('#toggle-btn');
+    await nextTick(page);
 
-    compA = await page.locator('#comp-a').count()
-    compB = await page.locator('#comp-b').count()
-    expect(compA).toBe(1)
-    expect(compB).toBe(0)
+    compA = await page.locator('#comp-a').count();
+    compB = await page.locator('#comp-b').count();
+    expect(compA).toBe(1);
+    expect(compB).toBe(0);
 
     // 验证 CompA 的状态被保留
-    inputText = await evaluateInBrowser(page, `(args) => {
+    inputText = await evaluateInBrowser(
+      page,
+      `(args) => {
       return window.__getInputText();
-    }`)
-    expect(inputText).toBe('preserved text')
-  })
+    }`,
+    );
+    expect(inputText).toBe('preserved text');
+  });
 
   test('activated/deactivated 生命周期钩子', async ({ page }) => {
-    await evaluateInBrowser(page, `(args) => {
+    await evaluateInBrowser(
+      page,
+      `(args) => {
       const { createApp, h, defineComponent, ref } = window.LytJS;
 
       const lifecycleLog = [];
@@ -173,29 +187,32 @@ test.describe('Keep-Alive', () => {
       app.mount('#app');
 
       window.__getLog = () => lifecycleLog;
-    }`)
+    }`,
+    );
 
     // 验证初始渲染
-    let inner = await page.locator('#inner').count()
-    expect(inner).toBe(1)
+    let inner = await page.locator('#inner').count();
+    expect(inner).toBe(1);
 
     // 切换离开
-    await page.click('#switch-btn')
-    await nextTick(page)
+    await page.click('#switch-btn');
+    await nextTick(page);
 
-    inner = await page.locator('#inner').count()
-    expect(inner).toBe(0)
+    inner = await page.locator('#inner').count();
+    expect(inner).toBe(0);
 
     // 切换回来
-    await page.click('#switch-btn')
-    await nextTick(page)
+    await page.click('#switch-btn');
+    await nextTick(page);
 
-    inner = await page.locator('#inner').count()
-    expect(inner).toBe(1)
-  })
+    inner = await page.locator('#inner').count();
+    expect(inner).toBe(1);
+  });
 
   test('KeepAlive props - include/exclude 配置', async ({ page }) => {
-    const result = await evaluateInBrowser(page, `(args) => {
+    const result = await evaluateInBrowser(
+      page,
+      `(args) => {
       const { defineComponent } = window.LytJS;
 
       const KeepAlive = defineComponent({
@@ -218,16 +235,19 @@ test.describe('Keep-Alive', () => {
         hasMax: 'max' in KeepAlive.props,
         maxDefault: KeepAlive.props.max.default,
       };
-    }`)
+    }`,
+    );
 
-    expect(result.hasInclude).toBe(true)
-    expect(result.hasExclude).toBe(true)
-    expect(result.hasMax).toBe(true)
-    expect(result.maxDefault).toBeUndefined()
-  })
+    expect(result.hasInclude).toBe(true);
+    expect(result.hasExclude).toBe(true);
+    expect(result.hasMax).toBe(true);
+    expect(result.maxDefault).toBeUndefined();
+  });
 
   test('KeepAlive include 正则模式匹配 - 字符串匹配', async ({ page }) => {
-    const result = await evaluateInBrowser(page, `(args) => {
+    const result = await evaluateInBrowser(
+      page,
+      `(args) => {
       const { defineComponent } = window.LytJS;
 
       const KeepAlive = defineComponent({
@@ -261,15 +281,18 @@ test.describe('Keep-Alive', () => {
         matchCompB: instance.matchesInclude('CompB'),
         matchCompC: instance.matchesInclude('CompC'),
       };
-    }`)
+    }`,
+    );
 
-    expect(result.matchCompA).toBe(true)
-    expect(result.matchCompB).toBe(false)
-    expect(result.matchCompC).toBe(false)
-  })
+    expect(result.matchCompA).toBe(true);
+    expect(result.matchCompB).toBe(false);
+    expect(result.matchCompC).toBe(false);
+  });
 
   test('KeepAlive include 正则模式匹配 - RegExp 匹配', async ({ page }) => {
-    const result = await evaluateInBrowser(page, `(args) => {
+    const result = await evaluateInBrowser(
+      page,
+      `(args) => {
       const { defineComponent } = window.LytJS;
 
       const KeepAlive = defineComponent({
@@ -310,16 +333,19 @@ test.describe('Keep-Alive', () => {
         matchCompC: instance.matchesInclude('CompC'),
         matchOther: instance.matchesInclude('Other'),
       };
-    }`)
+    }`,
+    );
 
-    expect(result.matchCompA).toBe(true)
-    expect(result.matchCompB).toBe(true)
-    expect(result.matchCompC).toBe(true)
-    expect(result.matchOther).toBe(false)
-  })
+    expect(result.matchCompA).toBe(true);
+    expect(result.matchCompB).toBe(true);
+    expect(result.matchCompC).toBe(true);
+    expect(result.matchOther).toBe(false);
+  });
 
   test('KeepAlive exclude 正则模式匹配 - RegExp 排除', async ({ page }) => {
-    const result = await evaluateInBrowser(page, `(args) => {
+    const result = await evaluateInBrowser(
+      page,
+      `(args) => {
       const { defineComponent } = window.LytJS;
 
       const KeepAlive = defineComponent({
@@ -352,15 +378,18 @@ test.describe('Keep-Alive', () => {
         excludeConfirm: instance.matchesExclude('ConfirmDialog'),
         excludeNormal: instance.matchesExclude('NormalComp'),
       };
-    }`)
+    }`,
+    );
 
-    expect(result.excludeDialog).toBe(true)
-    expect(result.excludeConfirm).toBe(true)
-    expect(result.excludeNormal).toBe(false)
-  })
+    expect(result.excludeDialog).toBe(true);
+    expect(result.excludeConfirm).toBe(true);
+    expect(result.excludeNormal).toBe(false);
+  });
 
   test('KeepAlive include/exclude 组合使用 - 数组模式', async ({ page }) => {
-    const result = await evaluateInBrowser(page, `(args) => {
+    const result = await evaluateInBrowser(
+      page,
+      `(args) => {
       const { defineComponent } = window.LytJS;
 
       const KeepAlive = defineComponent({
@@ -400,10 +429,11 @@ test.describe('Keep-Alive', () => {
         compBIncluded: instance.matchesInclude('CompB') && !instance.matchesExclude('CompB'),
         compCIncluded: instance.matchesInclude('CompC') && !instance.matchesExclude('CompC'),
       };
-    }`)
+    }`,
+    );
 
-    expect(result.compAIncluded).toBe(true)
-    expect(result.compBIncluded).toBe(false)
-    expect(result.compCIncluded).toBe(false)
-  })
-})
+    expect(result.compAIncluded).toBe(true);
+    expect(result.compBIncluded).toBe(false);
+    expect(result.compCIncluded).toBe(false);
+  });
+});

@@ -16,78 +16,66 @@
  * 用法: pnpm run check-deps
  */
 
-import { readFileSync } from "node:fs";
-import { join, dirname } from "node:path";
-import { fileURLToPath } from "node:url";
+import { readFileSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const ROOT = join(__dirname, "..");
+const ROOT = join(__dirname, '..');
 
-import { findPackageJsonFiles } from "./shared.js";
+import { findPackageJsonFiles } from './shared.js';
 
 // 层级定义
 const LAYER_MAP: Record<string, number> = {
   // L0
-  "@lytjs/common-is": 0,
-  "@lytjs/common-object": 0,
-  "@lytjs/common-string": 0,
-  "@lytjs/common-path": 0,
-  "@lytjs/common-events": 0,
-  "@lytjs/common-cache": 0,
-  "@lytjs/common-timing": 0,
-  "@lytjs/common-scheduler": 0,
-  "@lytjs/common-error": 0,
-  "@lytjs/common-algorithm": 0,
-  "@lytjs/common-vnode": 0,
-  "@lytjs/common-env": 0,
-  "@lytjs/common": 0,
-  "@lytjs/shared-types": 0,
+  '@lytjs/common-is': 0,
+  '@lytjs/common-object': 0,
+  '@lytjs/common-string': 0,
+  '@lytjs/common-path': 0,
+  '@lytjs/common-events': 0,
+  '@lytjs/common-cache': 0,
+  '@lytjs/common-timing': 0,
+  '@lytjs/common-scheduler': 0,
+  '@lytjs/common-error': 0,
+  '@lytjs/common-algorithm': 0,
+  '@lytjs/common-vnode': 0,
+  '@lytjs/common-env': 0,
+  '@lytjs/common': 0,
+  '@lytjs/shared-types': 0,
   // L1
-  "@lytjs/reactivity": 1,
-  "@lytjs/vdom": 1,
-  "@lytjs/compiler": 1,
+  '@lytjs/reactivity': 1,
+  '@lytjs/vdom': 1,
+  '@lytjs/compiler': 1,
   // L2
-  "@lytjs/renderer": 2,
-  "@lytjs/component": 2,
+  '@lytjs/renderer': 2,
+  '@lytjs/component': 2,
   // L3
-  "@lytjs/core": 3,
+  '@lytjs/core': 3,
   // L4
-  "@lytjs/router": 4,
-  "@lytjs/store": 4,
-  "@lytjs/compat": 4,
+  '@lytjs/router': 4,
+  '@lytjs/store': 4,
+  '@lytjs/compat': 4,
   // L5
-  "@lytjs/cli": 5,
-  "@lytjs/devtools": 5,
-  "@lytjs/lytx": 5,
-  "@lytjs/ai": 5,
-  "@lytjs/test-utils": 5,
+  '@lytjs/cli': 5,
+  '@lytjs/devtools': 5,
+  '@lytjs/lytx': 5,
+  '@lytjs/ai': 5,
+  '@lytjs/test-utils': 5,
   // L6
-  "@lytjs/ui-core": 6,
-  "@lytjs/ui-components": 6,
-  "@lytjs/ui-theme": 6,
-  "@lytjs/ui-icons": 6,
+  '@lytjs/ui-core': 6,
+  '@lytjs/ui-components': 6,
+  '@lytjs/ui-theme': 6,
+  '@lytjs/ui-icons': 6,
   // L7
-  "@lytjs/lytjs": 7,
+  '@lytjs/lytjs': 7,
 };
 
 // 允许的跨层依赖（例外情况）
 const ALLOWED_CROSS_LAYER: Record<string, Set<string>> = {
   // L4 包允许依赖 L0 + L1（不需要 L2/L3）
-  "@lytjs/router": new Set([
-    "@lytjs/common-*",
-    "@lytjs/reactivity",
-    "@lytjs/vdom",
-  ]),
-  "@lytjs/store": new Set([
-    "@lytjs/common-*",
-    "@lytjs/reactivity",
-    "@lytjs/vdom",
-  ]),
-  "@lytjs/compat": new Set([
-    "@lytjs/common-*",
-    "@lytjs/reactivity",
-    "@lytjs/vdom",
-  ]),
+  '@lytjs/router': new Set(['@lytjs/common-*', '@lytjs/reactivity', '@lytjs/vdom']),
+  '@lytjs/store': new Set(['@lytjs/common-*', '@lytjs/reactivity', '@lytjs/vdom']),
+  '@lytjs/compat': new Set(['@lytjs/common-*', '@lytjs/reactivity', '@lytjs/vdom']),
 };
 
 interface Violation {
@@ -95,7 +83,7 @@ interface Violation {
   target: string;
   sourceLayer: number;
   targetLayer: number;
-  type: "reverse" | "cross-layer" | "same-layer";
+  type: 'reverse' | 'cross-layer' | 'same-layer';
 }
 
 function getLayer(packageName: string): number {
@@ -104,13 +92,13 @@ function getLayer(packageName: string): number {
     return LAYER_MAP[packageName]!;
   }
   // 通配符匹配（如 @lytjs/common-* 匹配所有 L0 common 包）
-  if (packageName.startsWith("@lytjs/common-")) {
+  if (packageName.startsWith('@lytjs/common-')) {
     return 0;
   }
-  if (packageName.startsWith("@lytjs/ui-")) {
+  if (packageName.startsWith('@lytjs/ui-')) {
     return 6;
   }
-  if (packageName.startsWith("@lytjs/plugin-")) {
+  if (packageName.startsWith('@lytjs/plugin-')) {
     return 6;
   }
   // 非内部包，返回 -1
@@ -120,7 +108,7 @@ function getLayer(packageName: string): number {
 function isWildcardMatch(allowed: Set<string>, depName: string): boolean {
   if (allowed.has(depName)) return true;
   for (const pattern of allowed) {
-    if (pattern.endsWith("*") && depName.startsWith(pattern.slice(0, -1))) {
+    if (pattern.endsWith('*') && depName.startsWith(pattern.slice(0, -1))) {
       return true;
     }
   }
@@ -129,10 +117,10 @@ function isWildcardMatch(allowed: Set<string>, depName: string): boolean {
 
 function checkDependencies(): Violation[] {
   const violations: Violation[] = [];
-  const pkgFiles = findPackageJsonFiles(join(ROOT, "packages"));
+  const pkgFiles = findPackageJsonFiles(join(ROOT, 'packages'));
 
   for (const pkgFile of pkgFiles) {
-    const pkg = JSON.parse(readFileSync(pkgFile, "utf-8"));
+    const pkg = JSON.parse(readFileSync(pkgFile, 'utf-8'));
     const sourceName = pkg.name;
     const sourceLayer = getLayer(sourceName);
 
@@ -146,7 +134,7 @@ function checkDependencies(): Violation[] {
     };
 
     for (const [depName, _version] of Object.entries(allDeps)) {
-      if (!depName.startsWith("@lytjs/")) {
+      if (!depName.startsWith('@lytjs/')) {
         continue; // 跳过非内部依赖
       }
 
@@ -163,7 +151,7 @@ function checkDependencies(): Violation[] {
           target: depName,
           sourceLayer,
           targetLayer,
-          type: "reverse",
+          type: 'reverse',
         });
         continue;
       }
@@ -175,7 +163,7 @@ function checkDependencies(): Violation[] {
           target: depName,
           sourceLayer,
           targetLayer,
-          type: "same-layer",
+          type: 'same-layer',
         });
         continue;
       }
@@ -189,7 +177,7 @@ function checkDependencies(): Violation[] {
             target: depName,
             sourceLayer,
             targetLayer,
-            type: "cross-layer",
+            type: 'cross-layer',
           });
         }
       }
@@ -200,12 +188,12 @@ function checkDependencies(): Violation[] {
 }
 
 function main(): void {
-  console.log("🔍 检查依赖方向...\n");
+  console.log('🔍 检查依赖方向...\n');
 
   const violations = checkDependencies();
 
   if (violations.length === 0) {
-    console.log("✅ 所有依赖方向正确，未发现违规。\n");
+    console.log('✅ 所有依赖方向正确，未发现违规。\n');
     process.exit(0);
   }
 
@@ -213,9 +201,9 @@ function main(): void {
 
   for (const v of violations) {
     const typeLabel = {
-      reverse: "反向依赖",
-      "cross-layer": "跨层依赖",
-      "same-layer": "同层交叉依赖",
+      reverse: '反向依赖',
+      'cross-layer': '跨层依赖',
+      'same-layer': '同层交叉依赖',
     }[v.type];
 
     console.log(
@@ -223,7 +211,7 @@ function main(): void {
     );
   }
 
-  console.log("\n请修复以上违规后重新运行检查。");
+  console.log('\n请修复以上违规后重新运行检查。');
   process.exit(1);
 }
 

@@ -3,9 +3,9 @@
  * Utility functions for VNode inspection and manipulation
  */
 
-import { PatchFlags, ShapeFlags } from "@lytjs/common-vnode";
-import type { VNode } from "@lytjs/common-vnode";
-import { isArray } from "@lytjs/common-is";
+import { PatchFlags, ShapeFlags } from '@lytjs/common-vnode';
+import type { VNode } from '@lytjs/common-vnode';
+import { isArray } from '@lytjs/common-is';
 
 // ============================================================
 // VNode inspection utilities
@@ -33,10 +33,10 @@ export function isDynamicVNode(vnode: VNode): boolean {
  * Extract text content from a vnode
  */
 export function getVNodeText(vnode: VNode): string {
-  if (vnode.children == null) return "";
-  if (typeof vnode.children === "string") return vnode.children;
-  if (typeof vnode.children === "number") return String(vnode.children);
-  return "";
+  if (vnode.children == null) return '';
+  if (typeof vnode.children === 'string') return vnode.children;
+  if (typeof vnode.children === 'number') return String(vnode.children);
+  return '';
 }
 
 /**

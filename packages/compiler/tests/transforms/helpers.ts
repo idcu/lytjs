@@ -1,7 +1,7 @@
 // tests/transforms/helpers.ts
 // 共享测试辅助函数 - 用于构建 mock AST 节点和 TransformContext
 
-import { ElementTypes } from "../../src/constants";
+import { ElementTypes } from '../../src/constants';
 import type {
   ElementNode,
   TextNode,
@@ -10,7 +10,7 @@ import type {
   TransformContext,
   TemplateChildNode,
   JSChildNode,
-} from "../../src/types";
+} from '../../src/types';
 import {
   createRoot,
   createElement,
@@ -18,14 +18,12 @@ import {
   createDirective,
   createSimpleExpression,
   createAttribute,
-} from "../../src/ast";
+} from '../../src/ast';
 
 /**
  * 创建一个最小化的 TransformContext mock
  */
-export function createMockContext(
-  overrides?: Partial<TransformContext>,
-): TransformContext {
+export function createMockContext(overrides?: Partial<TransformContext>): TransformContext {
   const helpers = new Map<string, number>();
   const components = new Set<string>();
   const directives = new Set<string>();
@@ -91,11 +89,7 @@ export function createSlotElement(
     children?: TemplateChildNode[];
   } = {},
 ): ElementNode {
-  const element = createElement(
-    options.tag ?? "slot",
-    options.props ?? [],
-    options.children ?? [],
-  );
+  const element = createElement(options.tag ?? 'slot', options.props ?? [], options.children ?? []);
   element.tagType = options.tagType ?? ElementTypes.SLOT;
   return element;
 }
@@ -110,20 +104,17 @@ export function createOnceElement(
     extraProps?: (AttributeNode | DirectiveNode)[];
   } = {},
 ): ElementNode {
-  const onceDir = createDirective("once");
+  const onceDir = createDirective('once');
   const props = [onceDir, ...(options.extraProps ?? [])];
-  return createElement(options.tag ?? "div", props, options.children ?? []);
+  return createElement(options.tag ?? 'div', props, options.children ?? []);
 }
 
 /**
  * 创建一个带有 v-model 指令的 DirectiveNode
  */
-export function createModelDirective(
-  expContent: string,
-  modifiers: string[] = [],
-): DirectiveNode {
+export function createModelDirective(expContent: string, modifiers: string[] = []): DirectiveNode {
   const exp = createSimpleExpression(expContent, false);
-  return createDirective("model", undefined, exp, modifiers);
+  return createDirective('model', undefined, exp, modifiers);
 }
 
 /**
@@ -131,7 +122,7 @@ export function createModelDirective(
  */
 export function createShowDirective(expContent: string): DirectiveNode {
   const exp = createSimpleExpression(expContent, false);
-  return createDirective("show", undefined, exp);
+  return createDirective('show', undefined, exp);
 }
 
 /**

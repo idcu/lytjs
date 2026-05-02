@@ -2,7 +2,7 @@
 // All type definitions for @lytjs/component
 
 import type { VNode } from '@lytjs/vdom';
-import type { BaseAppConfig } from '@lytjs/shared-types';
+import type { BaseAppContext } from '@lytjs/shared-types';
 import type {
   SlotFunction,
   InternalSlots,
@@ -85,8 +85,7 @@ export interface ComponentOptions<
 
 // ==================== AppContext ====================
 
-export interface AppContext {
-  config: BaseAppConfig;
+export interface AppContext extends BaseAppContext {
   components: Record<string, ComponentOptions>;
   directives: Record<string, unknown>;
   mixins: ComponentOptions[];

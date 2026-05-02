@@ -36,7 +36,10 @@ describe('ref', () => {
   it('should not trigger when setting the same value (primitive)', () => {
     const r = ref(0);
     const fn = vi.fn();
-    effect(() => { r.value; fn(); });
+    effect(() => {
+      r.value;
+      fn();
+    });
     r.value = 0;
     expect(fn).toHaveBeenCalledTimes(1);
   });
@@ -93,7 +96,10 @@ describe('ref', () => {
   it('should not deeply unwrap with shallowRef', () => {
     const r = shallowRef({ count: 0 });
     const fn = vi.fn();
-    effect(() => { r.value; fn(); });
+    effect(() => {
+      r.value;
+      fn();
+    });
     r.value.count = 1; // 不应触发
     expect(fn).toHaveBeenCalledTimes(1);
     r.value = { count: 1 }; // 应触发
@@ -103,7 +109,10 @@ describe('ref', () => {
   it('should manually trigger with triggerRef', () => {
     const r = shallowRef({ count: 0 });
     const fn = vi.fn();
-    effect(() => { r.value; fn(); });
+    effect(() => {
+      r.value;
+      fn();
+    });
     r.value.count = 1;
     expect(fn).toHaveBeenCalledTimes(1);
     triggerRef(r);
@@ -113,8 +122,14 @@ describe('ref', () => {
   it('should create custom ref with customRef', () => {
     let value = 1;
     const r = customRef((track, trigger) => ({
-      get() { track(); return value; },
-      set(newVal: number) { value = newVal; trigger(); },
+      get() {
+        track();
+        return value;
+      },
+      set(newVal: number) {
+        value = newVal;
+        trigger();
+      },
     }));
     const fn = vi.fn();
     let dummy: number;

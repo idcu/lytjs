@@ -1,29 +1,19 @@
 // src/types.ts
 // @lytjs/core - 类型定义
 
-import type { VNode } from "@lytjs/vdom";
-import type { BaseAppConfig } from "@lytjs/shared-types";
-import type {
-  ComponentOptions,
-  ComponentPublicInstance,
-  InternalSlots,
-} from "@lytjs/component";
+import type { VNode } from '@lytjs/vdom';
+import type { BaseAppConfig } from '@lytjs/shared-types';
+import type { ComponentOptions, ComponentPublicInstance, InternalSlots } from '@lytjs/component';
 import type {
   Renderer,
   Directive,
   DirectiveBinding,
   DirectiveArguments,
   DebuggerEvent,
-} from "@lytjs/shared-types";
+} from '@lytjs/shared-types';
 
 // Re-export shared types
-export type {
-  Renderer,
-  Directive,
-  DirectiveBinding,
-  DirectiveArguments,
-  DebuggerEvent,
-};
+export type { Renderer, Directive, DirectiveBinding, DirectiveArguments, DebuggerEvent };
 
 /** 实例化的渲染器类型（绑定到具体 VNode 实现） */
 export type DOMRenderer = Renderer<VNode>;
@@ -31,10 +21,7 @@ export type DOMRenderer = Renderer<VNode>;
 // ==================== App ====================
 
 /** 插件安装函数签名 */
-export type PluginInstallFunction<T = unknown> = (
-  app: App,
-  ...options: T[]
-) => void;
+export type PluginInstallFunction<T = unknown> = (app: App, ...options: T[]) => void;
 
 export interface App<HostElement = Element> {
   config: AppConfig;
@@ -46,16 +33,8 @@ export interface App<HostElement = Element> {
   component(name: string, component: Component): App;
   directive(name: string, directive: Directive): App;
   mixin(mixin: ComponentOptions): App;
-  errorHandler?: (
-    err: unknown,
-    instance: ComponentPublicInstance | null,
-    info: string,
-  ) => void;
-  warnHandler?: (
-    msg: string,
-    instance: ComponentPublicInstance | null,
-    trace: string,
-  ) => void;
+  errorHandler?: (err: unknown, instance: ComponentPublicInstance | null, info: string) => void;
+  warnHandler?: (msg: string, instance: ComponentPublicInstance | null, trace: string) => void;
 }
 
 export interface AppConfig extends BaseAppConfig {
@@ -75,10 +54,7 @@ export interface Plugin {
 
 export type Component = ComponentOptions | (() => VNode);
 
-export type {
-  ComponentOptions,
-  ComponentPublicInstance,
-} from "@lytjs/component";
+export type { ComponentOptions, ComponentPublicInstance } from '@lytjs/component';
 
 // ==================== Async Component ====================
 
@@ -91,12 +67,7 @@ export interface AsyncComponentOptions {
   delay?: number;
   timeout?: number;
   suspensible?: boolean;
-  onError?: (
-    error: Error,
-    retry: () => void,
-    fail: () => void,
-    attempts: number,
-  ) => void;
+  onError?: (error: Error, retry: () => void, fail: () => void, attempts: number) => void;
 }
 
 // ==================== Composition API ====================
@@ -113,4 +84,4 @@ export type DebuggerHook = (event: DebuggerEvent) => void;
 
 // ==================== Re-export VNode ====================
 
-export type { VNode, VNodeChildren } from "@lytjs/vdom";
+export type { VNode, VNodeChildren } from '@lytjs/vdom';

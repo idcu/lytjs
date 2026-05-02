@@ -1,12 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import {
-  signal,
-  computedSignal,
-  valueOf,
-  set,
-  update,
-  readonlySignal,
-} from '../src/signal';
+import { signal, computedSignal, valueOf, set, update, readonlySignal } from '../src/signal';
 import { effect } from '../src/index';
 
 describe('signal', () => {
@@ -132,7 +125,10 @@ describe('signal', () => {
   it('should not trigger when setting the same value', () => {
     const s = signal(0);
     const fn = vi.fn();
-    effect(() => { s(); fn(); });
+    effect(() => {
+      s();
+      fn();
+    });
     set(s, 0);
     expect(fn).toHaveBeenCalledTimes(1);
   });

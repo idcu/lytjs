@@ -15,9 +15,9 @@ npm install @lytjs/compiler
 将模板字符串编译为可执行的渲染函数代码
 
 ```typescript
-import { compile } from '@lytjs/compiler'
+import { compile } from '@lytjs/compiler';
 
-const { code, ast } = compile('<div>{{ message }}</div>')
+const { code, ast } = compile('<div>{{ message }}</div>');
 ```
 
 ### parse
@@ -25,7 +25,7 @@ const { code, ast } = compile('<div>{{ message }}</div>')
 将模板字符串解析为 AST
 
 ```typescript
-import { parse } from '@lytjs/compiler'
+import { parse } from '@lytjs/compiler';
 ```
 
 ### transform
@@ -33,7 +33,7 @@ import { parse } from '@lytjs/compiler'
 对 AST 应用转换管道（v-if、v-for、v-model 等指令处理）
 
 ```typescript
-import { transform } from '@lytjs/compiler'
+import { transform } from '@lytjs/compiler';
 ```
 
 ### generate
@@ -41,7 +41,7 @@ import { transform } from '@lytjs/compiler'
 从 AST 生成渲染函数代码
 
 ```typescript
-import { generate } from '@lytjs/compiler'
+import { generate } from '@lytjs/compiler';
 ```
 
 ### optimize
@@ -49,7 +49,7 @@ import { generate } from '@lytjs/compiler'
 对 AST 进行静态分析和优化标记（已合并到 transform 阶段，保留导出仅为向后兼容）
 
 ```typescript
-import { optimize } from '@lytjs/compiler'
+import { optimize } from '@lytjs/compiler';
 ```
 
 ## 相关包

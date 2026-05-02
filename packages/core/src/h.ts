@@ -8,8 +8,8 @@ import {
   type Comment,
   type VNodeTypes,
   EMPTY_OBJ,
-} from "@lytjs/vdom";
-import type { VNode, VNodeChildren, Component } from "./types";
+} from '@lytjs/vdom';
+import type { VNode, VNodeChildren, Component } from './types';
 
 /**
  * 创建 VNode
@@ -26,11 +26,7 @@ export function h(
   // 合并剩余子节点
   const flatChildren = children.length > 1 ? children : children[0];
 
-  return createVNode(
-    type as VNodeTypes,
-    props,
-    flatChildren as unknown as VNodeChildren,
-  );
+  return createVNode(type as VNodeTypes, props, flatChildren as unknown as VNodeChildren);
 }
 
 /**

@@ -13,8 +13,7 @@ import {
 } from '@lytjs/common-vnode';
 import type { VNode, ComponentInternalInstance } from '@lytjs/common-vnode';
 import { isArray, isFunction, hasChanged, EMPTY_OBJ } from '@lytjs/common-is';
-import { isSafeAttribute } from '@lytjs/common-string';
-import { sanitizeHTML } from '@lytjs/common-string';
+import { isOn } from '@lytjs/common-events';
 import { warn, error } from '@lytjs/common-error';
 import {
   getDOMEventName,
@@ -23,41 +22,7 @@ import {
 } from '@lytjs/common-events';
 import type { RendererOptions, HostNode, HostElement, SuspenseBoundary } from './types';
 import { getSequence } from '@lytjs/common-algorithm';
-
-// ============================================================
-// SVG constants
-// ============================================================
-
-/** Common SVG elements that require the SVG namespace */
-const SVG_TAGS = new Set([
-  'svg',
-  'path',
-  'circle',
-  'ellipse',
-  'line',
-  'polyline',
-  'polygon',
-  'rect',
-  'g',
-  'defs',
-  'use',
-  'clipPath',
-  'linearGradient',
-  'radialGradient',
-  'stop',
-  'pattern',
-  'mask',
-  'symbol',
-  'image',
-  'foreignObject',
-  'text',
-  'tspan',
-  'textPath',
-  'marker',
-  'animate',
-  'animateTransform',
-  'set',
-]);
+import { SVG_NS, isSVGTag, patchProp as domPatchProp } from '@lytjs/common-dom';
 
 // ============================================================
 // Renderer factory
@@ -825,34 +790,13 @@ export function createRenderer(options: RendererOptions<HostNode, HostElement>) 
  * @see @lytjs/renderer/src/dom/patch-props.ts for the full implementation
  */
 function patchDOMProp(el: Element, key: string, prevValue: unknown, nextValue: unknown): void {
-  if (key === 'class') {
-    if (prevValue !== nextValue) {
-      el.className = (nextValue as string) || '';
-    }
-  } else if (key === 'style') {
-    if (typeof nextValue === 'string') {
-      el.setAttribute('style', nextValue);
-    } else if (nextValue != null) {
-      const style = el as HTMLElement;
-      // Remove old style properties that don't exist in new style
-      if (prevValue && typeof prevValue === 'object') {
-        for (const k in prevValue as Record<string, string>) {
-          if (!(k in (nextValue as Record<string, string>))) {
-            style.style.setProperty(k, '');
-          }
-        }
-      }
-      // Apply new style properties
-      for (const k in nextValue as Record<string, string>) {
-        const val = (nextValue as Record<string, string>)[k];
-        if (val !== undefined) {
-          style.style.setProperty(k, val);
-        }
-      }
-    } else {
-      el.removeAttribute('style');
-    }
-  } else if (key.startsWith('on')) {
+  // Delegate to common-dom for class, style, innerHTML, textContent, and attrs
+  if (key === 'class' || key === 'style' || key === 'innerHTML' || key === 'textContent') {
+    domPatchProp(el, key, prevValue, nextValue);
+    return;
+  }
+  // Event handling (simplified - no invoker pattern)
+  if (isOn(key)) {
     const eventName = getDOMEventName(key);
     const prevHandler = extractDOMEventHandler(prevValue);
     const prevOptions = extractDOMEventOptions(prevValue);
@@ -864,20 +808,10 @@ function patchDOMProp(el: Element, key: string, prevValue: unknown, nextValue: u
     if (nextHandler) {
       el.addEventListener(eventName, nextHandler, nextOptions);
     }
-  } else if (nextValue == null || nextValue === false) {
-    el.removeAttribute(key);
-  } else if (key === 'innerHTML' || key === 'textContent') {
-    // Security: sanitize HTML content to prevent XSS
-    if (key === 'innerHTML' && typeof nextValue === 'string') {
-      el.innerHTML = sanitizeHTML(nextValue);
-    } else {
-      el[key] = nextValue as string;
-    }
-  } else {
-    if (isSafeAttribute(key, String(nextValue))) {
-      el.setAttribute(key, String(nextValue));
-    }
+    return;
   }
+  // Delegate remaining attributes to common-dom
+  domPatchProp(el, key, prevValue, nextValue);
 }
 
 // ============================================================
@@ -895,10 +829,7 @@ function patchDOMProp(el: Element, key: string, prevValue: unknown, nextValue: u
 export function createDOMRendererOptions(): RendererOptions<Node, Element> {
   return {
     createElement(tag: string): Element {
-      return document.createElementNS(
-        SVG_TAGS.has(tag) ? 'http://www.w3.org/2000/svg' : 'http://www.w3.org/1999/xhtml',
-        tag,
-      );
+      return document.createElementNS(isSVGTag(tag) ? SVG_NS : 'http://www.w3.org/1999/xhtml', tag);
     },
     setElementText(node: Element, text: string): void {
       node.textContent = text;

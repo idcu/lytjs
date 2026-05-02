@@ -1,8 +1,8 @@
 // src/transforms/v-bind.ts
 // v-bind 指令转换逻辑
 
-import type { DirectiveTransform, ExpressionNode } from "../types";
-import { getExpContent } from "./helpers";
+import type { DirectiveTransform, ExpressionNode } from '../types';
+import { getExpContent } from './helpers';
 
 export const transformBind: DirectiveTransform = (dir, _node, _context) => {
   const { arg, exp } = dir;

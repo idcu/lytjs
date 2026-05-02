@@ -1,17 +1,13 @@
 // @lytjs/shared-types - 渲染器相关类型
 
-import type { ComponentPublicInstance } from "./component";
+import type { ComponentPublicInstance } from './component';
 
 /** 渲染器接口（跨包抽象） */
 // 使用泛型 VNode 类型，避免对具体 VNode 实现的依赖
 export interface Renderer<VNode = unknown> {
   mount(vnode: VNode | null, container: Element): void;
   unmount(vnode: VNode | null): void;
-  patch(
-    oldVNode: VNode | null,
-    newVNode: VNode | null,
-    container: Element,
-  ): void;
+  patch(oldVNode: VNode | null, newVNode: VNode | null, container: Element): void;
   move(vnode: VNode, container: Element, anchor: Element | null): void;
 }
 
@@ -72,9 +68,4 @@ export interface DirectiveBinding<VNode = unknown> {
 }
 
 /** 指令参数数组类型 */
-export type DirectiveArguments = [
-  Directive,
-  unknown,
-  string?,
-  Record<string, boolean>?,
-][];
+export type DirectiveArguments = [Directive, unknown, string?, Record<string, boolean>?][];

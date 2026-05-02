@@ -15,7 +15,7 @@ npm install @lytjs/reactivity
 创建响应式对象，支持深层/浅层响应和只读模式
 
 ```typescript
-import { reactive, shallowReactive, readonly, shallowReadonly } from '@lytjs/reactivity'
+import { reactive, shallowReactive, readonly, shallowReadonly } from '@lytjs/reactivity';
 ```
 
 ### ref / shallowRef
@@ -23,7 +23,7 @@ import { reactive, shallowReactive, readonly, shallowReadonly } from '@lytjs/rea
 创建响应式引用，适用于基本类型值
 
 ```typescript
-import { ref, shallowRef } from '@lytjs/reactivity'
+import { ref, shallowRef } from '@lytjs/reactivity';
 ```
 
 ### computed
@@ -31,7 +31,7 @@ import { ref, shallowRef } from '@lytjs/reactivity'
 创建计算属性，自动追踪依赖并缓存结果
 
 ```typescript
-import { computed } from '@lytjs/reactivity'
+import { computed } from '@lytjs/reactivity';
 ```
 
 ### watch / watchEffect
@@ -39,7 +39,7 @@ import { computed } from '@lytjs/reactivity'
 侦听响应式数据变化并执行副作用
 
 ```typescript
-import { watch, watchEffect } from '@lytjs/reactivity'
+import { watch, watchEffect } from '@lytjs/reactivity';
 ```
 
 ### effect
@@ -47,7 +47,7 @@ import { watch, watchEffect } from '@lytjs/reactivity'
 创建自定义响应式副作用
 
 ```typescript
-import { effect, stop } from '@lytjs/reactivity'
+import { effect, stop } from '@lytjs/reactivity';
 ```
 
 ### toRef / toRefs / unref
@@ -55,7 +55,7 @@ import { effect, stop } from '@lytjs/reactivity'
 响应式引用工具函数
 
 ```typescript
-import { toRef, toRefs, unref } from '@lytjs/reactivity'
+import { toRef, toRefs, unref } from '@lytjs/reactivity';
 ```
 
 ## 边界行为与已知限制
@@ -65,15 +65,15 @@ import { toRef, toRefs, unref } from '@lytjs/reactivity'
 `batch()` 支持嵌套调用。内层 `batch` 不会影响外层的追踪恢复，因为内部使用栈（`trackStack`）记录追踪状态，嵌套结束时只会恢复到当前 `batch` 调用前的栈长度。
 
 ```typescript
-import { batch, effect } from '@lytjs/reactivity'
+import { batch, effect } from '@lytjs/reactivity';
 
 batch(() => {
   // 追踪已暂停
   batch(() => {
     // 追踪仍处于暂停状态
-  })
+  });
   // 内层 batch 结束后，追踪仍处于暂停状态（由外层 batch 控制）
-})
+});
 // 外层 batch 结束后，追踪恢复正常
 ```
 
@@ -84,11 +84,11 @@ batch(() => {
 如果泛型参数 `T` 本身包含 `undefined`（例如 `signal<number | undefined>(undefined)`），首次调用 `signal()` 时会正确初始化为 `undefined`，但后续调用 `sig(undefined)` 也会触发写入逻辑（通过 `hasChanged` 判断值是否变化）。
 
 ```typescript
-import { signal } from '@lytjs/reactivity'
+import { signal } from '@lytjs/reactivity';
 
-const sig = signal<number | undefined>(42)
-sig(undefined) // 写入操作：将值设为 undefined
-sig()         // 读取操作：返回 undefined
+const sig = signal<number | undefined>(42);
+sig(undefined); // 写入操作：将值设为 undefined
+sig(); // 读取操作：返回 undefined
 ```
 
 ### `computedSignal.stop()` 方法
@@ -100,15 +100,15 @@ sig()         // 读取操作：返回 undefined
 - 依赖该计算信号的其他 effect 不会再因依赖变化而被触发
 
 ```typescript
-import { computedSignal, signal } from '@lytjs/reactivity'
+import { computedSignal, signal } from '@lytjs/reactivity';
 
-const count = signal(1)
-const doubled = computedSignal(() => count() * 2)
+const count = signal(1);
+const doubled = computedSignal(() => count() * 2);
 
-doubled() // 2
-doubled.stop() // 停止响应式追踪
-count.set(10)
-doubled() // 2（仍返回缓存值，不再更新）
+doubled(); // 2
+doubled.stop(); // 停止响应式追踪
+count.set(10);
+doubled(); // 2（仍返回缓存值，不再更新）
 ```
 
 ## 相关包
