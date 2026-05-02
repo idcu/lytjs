@@ -329,7 +329,11 @@ export function handleError(
   if (instance) {
     const appErrorHandler = instance.root.appContext?.config?.errorHandler;
     if (typeof appErrorHandler === 'function') {
-      appErrorHandler(err, instance, info);
+      // 传入公共实例而非内部实例，避免暴露内部实现细节
+      const publicInstance = instance.ctx
+        ? (instance as unknown as { ctx: ComponentPublicInstance }).ctx
+        : null;
+      appErrorHandler(err, publicInstance, info);
       return true;
     }
   }

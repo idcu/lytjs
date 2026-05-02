@@ -28,6 +28,7 @@ export function createApp(
   const context = createAppContext();
   const installedPlugins = new Set<Plugin | ((app: App, ...options: unknown[]) => void)>();
   let _isUnmounted = false;
+  let _isMounted = false;
 
   const app: App = {
     config: createContextConfig(context),
@@ -61,8 +62,7 @@ export function createApp(
         if (__DEV__) {
           warn('App.mount() expects a root component.');
         }
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        return null as any;
+        return null;
       }
 
       if (context._container) {
@@ -120,11 +120,16 @@ export function createApp(
       // Create and return the public instance
       const publicInstance = createComponentPublicInstance(instance);
 
+      _isMounted = true;
+
       return publicInstance as ComponentPublicInstance;
     },
 
     unmount() {
       if (!context.renderer || !context._vnode) return;
+
+      // 标记 app 为已卸载，防止在清理过程中再次挂载或触发其他操作
+      _isUnmounted = true;
 
       const instance = context._instance;
       if (instance) {
@@ -145,7 +150,8 @@ export function createApp(
           typeof (plugin as unknown as Record<string, unknown>).cleanup === 'function'
         ) {
           try {
-            ((plugin as unknown as Record<string, unknown>).cleanup as Function)();
+            const cleanup = (plugin as unknown as Record<string, unknown>).cleanup;
+            if (typeof cleanup === 'function') cleanup();
           } catch (err) {
             error(
               `Plugin cleanup failed: ${typeof plugin === 'object' && plugin !== null && 'name' in plugin ? (plugin as { name?: string }).name : 'unknown'}: ${err}`,
@@ -166,12 +172,15 @@ export function createApp(
 
       context._instance = null;
       context.renderer = null;
-
-      // 标记 app 为已卸载，防止再次挂载
-      _isUnmounted = true;
     },
 
     provide(key, value) {
+      if (__DEV__ && _isMounted) {
+        warn(
+          'app.provide() cannot be called after the app has been mounted. ' +
+            'Register provides before calling app.mount().',
+        );
+      }
       context.provides.set(key, value);
       return app;
     },

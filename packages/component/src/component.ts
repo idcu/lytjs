@@ -24,6 +24,9 @@ import { setCurrentInstance, getCurrentInstance, callCreatedHook, handleError } 
 
 // ==================== UID counter ====================
 
+// 异步 setup 超时时间（毫秒）
+const ASYNC_SETUP_TIMEOUT = 30000;
+
 // 注意：uid 使用自增整数，在 JavaScript 中 Number.MAX_SAFE_INTEGER 为 2^53 - 1。
 // 在实际应用中达到此上限的概率极低（需创建约 9 * 10^15 个组件实例），
 // 因此此处不做溢出检查。如确实需要，可考虑使用 BigInt 或周期性重置。
@@ -115,7 +118,7 @@ export function setupComponent(instance: ComponentInternalInstance): void {
     const timedSetupResult = Promise.race([
       setupResult,
       new Promise<SetupResult>((_, reject) =>
-        setTimeout(() => reject(new Error('Async component setup timed out')), 30000),
+        setTimeout(() => reject(new Error('Async component setup timed out')), ASYNC_SETUP_TIMEOUT),
       ),
     ]);
     timedSetupResult
@@ -227,7 +230,7 @@ export function initProps(
   // Collect attrs (non-declared props)
   const attrs: Record<string, unknown> = {};
   for (const key in rawProps) {
-    if (!hasOwn(propsOptions, key)) {
+    if (hasOwn(rawProps, key) && !hasOwn(propsOptions, key)) {
       attrs[key] = rawProps[key];
     }
   }
@@ -251,10 +254,22 @@ export function createSetupContext(instance: ComponentInternalInstance): SetupCo
         instance.exposed = null;
         return;
       }
+      // 公共属性白名单：这些属性始终可访问，不应被 expose 覆盖
+      const publicApiKeys = new Set([
+        '$data',
+        '$props',
+        '$el',
+        '$emit',
+        '$forceUpdate',
+        '$nextTick',
+        '$slots',
+        '$refs',
+        '$options',
+      ]);
       // 过滤危险 key，防止原型污染
       const safeExposed: Record<string, unknown> = {};
       for (const key of Object.keys(exposed)) {
-        if (key !== '__proto__' && key !== 'constructor') {
+        if (key !== '__proto__' && key !== 'constructor' && !publicApiKeys.has(key)) {
           safeExposed[key] = exposed[key];
         }
       }
@@ -267,10 +282,68 @@ export function createSetupContext(instance: ComponentInternalInstance): SetupCo
 
 /**
  * Create the public instance proxy ($data, $props, $el, etc.).
+ * Uses a Proxy so that Options API `this` correctly resolves properties
+ * from setupState, data, props, and public instance fields ($el, $emit, etc.).
  */
 export function createComponentPublicInstance(
   instance: ComponentInternalInstance,
 ): ComponentPublicInstance {
+  const PublicInstanceProxyHandlers: ProxyHandler<ComponentPublicInstance> = {
+    get(target: ComponentPublicInstance, key: string | symbol): unknown {
+      // 1. Public properties ($data, $props, $el, $emit, etc.)
+      if (key in target) {
+        const res = (target as unknown as Record<string | symbol, unknown>)[key];
+        // Bind functions to the proxy so `this` works correctly
+        if (typeof res === 'function' && key !== '$emit') {
+          return res.bind(target);
+        }
+        return res;
+      }
+
+      // 2. setupState
+      if (hasOwn(instance.setupState, key)) {
+        return instance.setupState[key as string];
+      }
+
+      // 3. data
+      if (hasOwn(instance.data, key)) {
+        return instance.data[key as string];
+      }
+
+      // 4. props
+      if (hasOwn(instance.props, key)) {
+        return instance.props[key as string];
+      }
+
+      return undefined;
+    },
+
+    set(_target: ComponentPublicInstance, key: string | symbol, value: unknown): boolean {
+      // 1. setupState
+      if (hasOwn(instance.setupState, key)) {
+        instance.setupState[key as string] = value;
+        return true;
+      }
+
+      // 2. data
+      if (hasOwn(instance.data, key)) {
+        instance.data[key as string] = value;
+        return true;
+      }
+
+      return true;
+    },
+
+    has(_target: ComponentPublicInstance, key: string | symbol): boolean {
+      return (
+        key in instance.setupState ||
+        key in instance.data ||
+        key in instance.props ||
+        key in _target
+      );
+    },
+  };
+
   const ctx: ComponentPublicInstance = {
     get $data() {
       return instance.data;
@@ -295,7 +368,7 @@ export function createComponentPublicInstance(
     $nextTick: () => nextTick(),
   };
 
-  return ctx;
+  return new Proxy(ctx, PublicInstanceProxyHandlers);
 }
 
 // ==================== defineComponent ====================
@@ -452,6 +525,11 @@ export function createAppContext(): AppContext {
 export function provide<T = unknown>(key: string | symbol, value: T): void {
   const instance = getCurrentInstance();
   if (instance) {
+    // 首次 provide 时，如果当前 provides 与父级共享同一个 Map 引用，
+    // 则创建以父级 provides 为原型的新 Map，确保层级隔离
+    if (instance.provides === (instance.parent?.provides ?? null)) {
+      instance.provides = Object.create(instance.provides) as Map<string | symbol, unknown>;
+    }
     instance.provides.set(key, value);
   }
 }

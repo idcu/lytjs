@@ -8,7 +8,6 @@ import { Fragment, Text, Comment, ShapeFlags } from '@lytjs/vdom';
 import { isArray, isFunction } from '@lytjs/common-is';
 import { warn } from '@lytjs/common-error';
 import { patchProp } from './patch-props';
-import { vnodeMap } from './dom-renderer';
 
 // ============================================================
 // Dev mode hydration mismatch warnings
@@ -41,21 +40,39 @@ function hydrateNode(vnode: VNode, parent: HTMLElement, index: number): number {
   // Handle Fragment
   if (type === Fragment) {
     const childArray = isArray(children) ? children : [];
-    // Save reference to first child before hydration loop,
-    // because child node replacement may invalidate indices.
-    const firstChild = parent.childNodes[index] ?? null;
     let currentIndex = index;
+    let hasMismatch = false;
     for (let i = 0; i < childArray.length; i++) {
       const child = childArray[i];
       if (child != null) {
         currentIndex = hydrateNode(child, parent, currentIndex);
       }
     }
-    // Fragment el points to the first child's el
+    // Fragment el points to the first child's el.
+    // When a hydration mismatch caused a node replacement, the saved
+    // firstChild reference may point to an orphaned node that was
+    // detached from the DOM. Use the first child vnode's el instead,
+    // which is always the currently-attached DOM node after hydration.
     if (childArray.length > 0) {
-      vnode.el = firstChild;
+      const firstChild = parent.childNodes[index] ?? null;
+      if (firstChild && childArray[0] && childArray[0].el === firstChild) {
+        // No mismatch on first child: safe to use the reference
+        vnode.el = firstChild;
+      } else if (childArray[0] && childArray[0].el) {
+        // First child was replaced during hydration: use the new el
+        vnode.el = childArray[0].el as Node;
+        hasMismatch = true;
+      } else {
+        vnode.el = null;
+      }
     } else {
       vnode.el = null;
+    }
+    if (hasMismatch && __DEV__) {
+      warn(
+        `Hydration mismatch in Fragment: some children could not be matched. ` +
+          `The DOM has been patched to match the vnode.`,
+      );
     }
     return currentIndex;
   }
@@ -232,12 +249,18 @@ function hydrateNode(vnode: VNode, parent: HTMLElement, index: number): number {
 
 /**
  * Create hydration functions for matching existing DOM with vnodes.
+ * Accepts an optional shared vnodeMap so hydration and DOM renderer
+ * use the same vnode-to-element mapping.
  */
 export function createHydrationFunctions(
   // _rendererOptions is reserved for future renderer configuration.
   // Currently unused but kept in the API signature for forward compatibility.
   _rendererOptions: Record<string, unknown>,
+  sharedVnodeMap?: WeakMap<Element, VNode | null>,
 ): HydrationRenderer {
+  // Use shared vnodeMap if provided, otherwise create a local one
+  const vnodeMap = sharedVnodeMap ?? new WeakMap<Element, VNode | null>();
+
   function hydrate(vnode: VNode, container: HTMLElement): void {
     hydrateNode(vnode, container, 0);
     vnodeMap.set(container, vnode);

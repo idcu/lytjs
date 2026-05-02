@@ -23,14 +23,9 @@ export function createVNode(
   dynamicProps: string[] | null = null,
   isBlockNode: boolean = false,
 ): VNode {
-  // Handle class/style normalization
-  if (props) {
-    props = normalizeProps(props);
-  }
-
   const vnode: VNode = {
     type,
-    props: null,
+    props: props ? normalizeProps(props) : null,
     key: (props?.key as string | number | symbol | null | undefined) ?? null,
     ref: (props?.ref as ((ref: unknown) => void) | null | undefined) ?? null,
     isStatic: false,
@@ -54,13 +49,6 @@ export function createVNode(
     loc: null,
     __v_isVNode: true,
   };
-
-  // Store props directly on the vnode
-  if (props) {
-    vnode.props = props;
-  } else {
-    vnode.props = null;
-  }
 
   // Normalize children and update shapeFlag
   if (children !== null && children !== undefined) {

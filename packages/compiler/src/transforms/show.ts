@@ -14,12 +14,10 @@ export const transformShow: DirectiveTransform = (dir, _node, _context) => {
     return { props: [] };
   }
 
-  if (expContent != null) {
-    props.push({
-      key: 'style',
-      value: expContent + " ? undefined : { display: 'none' }",
-    });
-  }
+  props.push({
+    key: 'style',
+    value: expContent + " ? undefined : { display: 'none' }",
+  });
 
   return { props };
 };

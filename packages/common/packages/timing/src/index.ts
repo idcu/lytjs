@@ -180,6 +180,11 @@ export async function retry<T>(
   retryDelay: number = 1000,
   retryCondition?: (error: Error) => boolean,
 ): Promise<T> {
+  // maxRetries=0 表示不重试，直接执行一次
+  if (maxRetries <= 0) {
+    return fn();
+  }
+
   let lastError: Error | undefined;
 
   for (let attempt = 0; attempt < maxRetries; attempt++) {

@@ -299,6 +299,7 @@ function markConstants(root: RootNode): void {
 
 function hoistStatic(root: RootNode): void {
   const hoists: JSChildNode[] = [];
+  const existingHoistsLen = root.hoists.length;
 
   walk(root.children, (node) => {
     if (node.type === NodeTypes.ELEMENT) {
@@ -307,7 +308,8 @@ function hoistStatic(root: RootNode): void {
       if (element.isStatic && element.codegenNode) {
         // Hoist static elements
         hoists.push(element.codegenNode);
-        element.codegenNode = createHoistedReference(hoists.length - 1);
+        // Global index = existing hoists + new hoists pushed so far - 1
+        element.codegenNode = createHoistedReference(existingHoistsLen + hoists.length - 1);
       }
     }
   });

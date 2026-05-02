@@ -177,7 +177,7 @@ export function patchAttr(el: Element, key: string, value: unknown, _isSVG: bool
     if (value === true || value === '') {
       el.setAttribute(key, '');
     } else {
-      const strValue = String(value);
+      const strValue = typeof value === 'string' ? value : String(value);
       if (!isSafeAttribute(key, strValue)) {
         if (__DEV__) {
           warn(`Unsafe attribute "${key}" with value "${strValue}" has been blocked.`);
@@ -187,7 +187,7 @@ export function patchAttr(el: Element, key: string, value: unknown, _isSVG: bool
       el.setAttribute(key, strValue);
     }
   } else {
-    const strValue = String(value);
+    const strValue = typeof value === 'string' ? value : String(value);
     if (!isSafeAttribute(key, strValue)) {
       if (__DEV__) {
         warn(`Unsafe attribute "${key}" with value "${strValue}" has been blocked.`);

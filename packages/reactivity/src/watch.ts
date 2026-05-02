@@ -136,6 +136,8 @@ export function watch<T, Immediate extends Readonly<boolean> = false>(
 
   const cleanupFns: Array<() => void> = [];
   let isStopped = false;
+  let consecutiveErrors = 0;
+  const MAX_CONSECUTIVE_ERRORS = 3;
 
   const onCleanup: OnCleanup = (fn: () => void) => {
     cleanupFns.push(fn);
@@ -147,8 +149,12 @@ export function watch<T, Immediate extends Readonly<boolean> = false>(
       let newValue: unknown;
       try {
         newValue = watcher.run();
+        consecutiveErrors = 0;
       } catch (e) {
-        error(`Error in watch getter: ${e}`);
+        consecutiveErrors++;
+        if (consecutiveErrors <= MAX_CONSECUTIVE_ERRORS) {
+          error(`Error in watch getter: ${e}`);
+        }
         throw e;
       }
       if (
@@ -172,8 +178,12 @@ export function watch<T, Immediate extends Readonly<boolean> = false>(
     } else {
       try {
         watcher.run();
+        consecutiveErrors = 0;
       } catch (e) {
-        error(`Error in watch effect run: ${e}`);
+        consecutiveErrors++;
+        if (consecutiveErrors <= MAX_CONSECUTIVE_ERRORS) {
+          error(`Error in watch effect run: ${e}`);
+        }
         throw e;
       }
     }

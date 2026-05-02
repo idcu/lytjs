@@ -9,7 +9,7 @@ export function transformSlot(node: RootNode | TemplateChildNode, context: Trans
   if (node.type !== NodeTypes.ELEMENT) return;
 
   const element = node as ElementNode;
-  if (element.tagType !== ElementTypes.SLOT && element.tag !== 'slot') return;
+  if (element.tagType !== ElementTypes.SLOT) return;
 
   context.helper('RENDER_SLOT');
   transformElement(element, context);

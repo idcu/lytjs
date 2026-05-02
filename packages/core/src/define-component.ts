@@ -170,13 +170,14 @@ export function defineAsyncComponent(
         }
       });
 
-      return instance;
-    },
-    render(): VNode | null {
-      // 首次渲染时触发加载
+      // 在 setup 阶段触发加载，避免 render 中触发副作用
       if (!loadedComponent.value && !error.value && !loading.value) {
         load();
       }
+
+      return instance;
+    },
+    render(): VNode | null {
       if (loadedComponent.value) {
         return h(loadedComponent.value);
       }

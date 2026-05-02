@@ -257,13 +257,15 @@ export class TopicSubscriptionManager {
   publish(topic: string, ...args: unknown[]): boolean {
     const handlers = this.topics.get(topic);
     if (!handlers || handlers.size === 0) return false;
-    handlers.forEach((handler) => {
+    // 创建快照，防止发布期间订阅者列表被修改导致的问题
+    const snapshot = [...handlers];
+    for (const handler of snapshot) {
       try {
         handler(...args);
       } catch (e) {
         console.error(`Error in topic handler for "${topic}":`, e);
       }
-    });
+    }
     return true;
   }
 

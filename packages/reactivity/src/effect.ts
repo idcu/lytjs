@@ -34,6 +34,11 @@ export const createDep = (): Dep => {
 
 // ==================== Track / Trigger ====================
 
+/**
+ * Maximum depth for nested trigger() calls to prevent infinite reactivity loops.
+ * When triggerDepth exceeds this limit, further triggers are silently dropped
+ * and a warning is emitted in DEV mode.
+ */
 const MAX_TRIGGER_DEPTH = 100;
 let triggerDepth = 0;
 
@@ -115,7 +120,8 @@ export function trigger(
     }
   }
 
-  triggerEffects(effects);
+  // 去重：同一个 effect 可能同时存在于多个 dep 中
+  triggerEffects([...new Set(effects)]);
 }
 
 export function triggerEffects(effects: ReactiveEffect[]) {
@@ -350,15 +356,8 @@ export function batch(fn: () => void): void {
 
 export function onEffectCleanup(fn: () => void, failSilently = false): void {
   if (activeEffect === undefined) {
-    if (!failSilently) {
-      if (__DEV__) {
-        warn('onEffectCleanup() was called when there was no active effect to associate with.');
-      }
-    } else if (__DEV__) {
-      warn(
-        'onEffectCleanup() was called with failSilently=true but there was no active effect. ' +
-          'This is likely a bug — the cleanup function will never be invoked.',
-      );
+    if (!failSilently && __DEV__) {
+      warn('onEffectCleanup() was called when there was no active effect to associate with.');
     }
     return;
   }

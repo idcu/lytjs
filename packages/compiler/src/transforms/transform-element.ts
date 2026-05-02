@@ -106,16 +106,21 @@ export function transformElement(node: ElementNode, context: TransformContext): 
         // TemplateChildNode is a superset of JSChildNode, so direct assertion is not allowed.
         // At runtime, the transform pipeline ensures element nodes have valid codegenNode (JSChildNode).
         vnodeChildren = child as unknown as JSChildNode;
+      } else if (child.type === NodeTypes.COMMENT) {
+        // Skip comment nodes - they are not JSChildNode and should not be included in codegen
+        vnodeChildren = undefined;
       } else {
         // TemplateChildNode is a superset of JSChildNode, so direct assertion is not allowed.
         vnodeChildren = child as unknown as JSChildNode;
       }
     }
   } else if (children.length > 1) {
-    const hasNonText = children.some((c) => c.type === NodeTypes.ELEMENT);
+    // Filter out comment nodes - they are not valid JSChildNode types
+    const nonCommentChildren = children.filter((c) => c.type !== NodeTypes.COMMENT);
+    const hasNonText = nonCommentChildren.some((c) => c.type === NodeTypes.ELEMENT);
     if (!hasNonText) {
       const parts: (string | SimpleExpressionNode | InterpolationNode)[] = [];
-      for (const child of children) {
+      for (const child of nonCommentChildren) {
         if (child.type === NodeTypes.TEXT) {
           parts.push(JSON.stringify(child.content));
         } else if (child.type === NodeTypes.INTERPOLATION) {
@@ -129,7 +134,8 @@ export function transformElement(node: ElementNode, context: TransformContext): 
     } else {
       // TemplateChildNode[] cannot be directly asserted to JSChildNode[] because
       // TemplateChildNode is a superset that includes non-JS types (ElementNode, TextNode, etc.).
-      vnodeChildren = children as unknown as JSChildNode[];
+      // Use filtered nonCommentChildren to exclude CommentNode from codegen.
+      vnodeChildren = nonCommentChildren as unknown as JSChildNode[];
     }
   }
 

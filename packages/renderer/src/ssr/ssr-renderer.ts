@@ -19,14 +19,15 @@ export interface SSRInput {
 }
 
 /**
- * Render a VNode to an HTML string (async for future Suspense support)
+ * Render a VNode to an HTML string.
  *
- * 使用 async 声明的原因：为未来的 Suspense 异步组件预留支持。
- * 当组件包含异步子组件（如 Suspense boundary）时，渲染过程需要等待
- * 异步数据加载完成后再输出 HTML，因此 renderToString 必须是异步的。
+ * Returns a Promise for future Suspense/async component support.
+ * When components contain async sub-components (e.g. Suspense boundaries),
+ * the rendering process needs to wait for async data loading before
+ * outputting HTML.
  */
-export async function renderToString(input: SSRInput): Promise<string> {
-  return renderVNodeToString(input.vnode);
+export function renderToString(input: SSRInput): Promise<string> {
+  return Promise.resolve(renderVNodeToString(input.vnode));
 }
 
 // ============================================================
@@ -189,8 +190,12 @@ function isSafeURL(url: string): boolean {
       return false;
     }
     if (protocol === 'data') {
-      // 允许安全的 data:image/* MIME 类型
-      return /^data:image\/(png|jpeg|jpg|gif|svg\+xml|webp|bmp|ico|avif);/i.test(url);
+      // 禁止 data:image/svg+xml（可嵌入脚本，存在 XSS 风险）
+      if (/^data:image\/svg\+xml/i.test(decoded)) {
+        return false;
+      }
+      // 允许安全的 data:image/* MIME 类型（使用解码后的 URL 进行检查）
+      return /^data:image\/(png|jpeg|jpg|gif|webp|bmp|ico|avif);/i.test(decoded);
     }
     return true;
   } catch {

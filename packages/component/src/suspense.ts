@@ -155,10 +155,11 @@ export function registerAsyncChild(
       }
       return result;
     })
-    .catch((err: Error) => {
+    .catch((err: unknown) => {
       if (boundary.aborted) return;
       boundary.pendingPromises.delete(promise);
-      boundary.error = err;
+      const caughtError = err instanceof Error ? err : new Error(String(err));
+      boundary.error = caughtError;
       // When all promises are settled, transition based on error state
       if (boundary.pendingPromises.size === 0) {
         boundary.isPending = false;
@@ -166,7 +167,7 @@ export function registerAsyncChild(
         // Call onError callbacks (P1-16 fix: was incorrectly calling onPending)
         for (const cb of boundary.onError) {
           try {
-            cb(err);
+            cb(caughtError);
           } catch (e) {
             error(`Error in suspense error callback: ${String(e)}`);
           }

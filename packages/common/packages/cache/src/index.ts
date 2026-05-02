@@ -227,6 +227,9 @@ interface MemoizedFn<T extends (...args: any[]) => any> {
 
 /**
  * 函数记忆化
+ *
+ * 当指定 maxSize 时，采用 FIFO（先进先出）淘汰策略：
+ * 达到容量上限时删除最早插入的缓存条目。
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function memoize<T extends (...args: any[]) => any>(

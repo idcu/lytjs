@@ -36,10 +36,6 @@ export function createAppContext(): AppContext {
 
 /**
  * 创建代理配置对象，读写操作映射到 context.config
- *
- * @note 此 Proxy 对象不实现 ownKeys / getOwnPropertyDescriptor trap，
- * 因此 Object.keys()、for...in、JSON.stringify 等依赖枚举的操作
- * 将返回空结果。如需枚举 config 属性，请直接访问 context.config。
  */
 export function createContextConfig(context: AppContext): AppConfig {
   return new Proxy({} as AppConfig, {
@@ -56,6 +52,15 @@ export function createContextConfig(context: AppContext): AppConfig {
       }
       (context.config as Record<string, unknown>)[key] = value;
       return true;
+    },
+    ownKeys() {
+      return Reflect.ownKeys(context.config);
+    },
+    has(_, key: string) {
+      return key in context.config;
+    },
+    getOwnPropertyDescriptor(_, key: string) {
+      return Object.getOwnPropertyDescriptor(context.config, key);
     },
   });
 }

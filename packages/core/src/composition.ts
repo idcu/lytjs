@@ -16,8 +16,7 @@ export function useSlots(): InternalSlots {
     if (__DEV__) {
       warnOnce('useSlots() called without an active component instance.');
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return { $slots: {} } as any;
+    return {} as InternalSlots;
   }
   return instance.slots || ({} as InternalSlots);
 }

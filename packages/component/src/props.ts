@@ -67,7 +67,19 @@ export function resolvePropValue<T = unknown>(
       return false as T | undefined;
     }
     if (defaultValue !== undefined) {
-      const def = isFunction(defaultValue) ? defaultValue() : defaultValue;
+      let def: unknown;
+      if (isFunction(defaultValue)) {
+        try {
+          def = defaultValue();
+        } catch (e) {
+          if (__DEV__) {
+            warn(`Failed to resolve default value for prop "${key}": ${(e as Error).message}`);
+          }
+          def = undefined;
+        }
+      } else {
+        def = defaultValue;
+      }
       return def as T | undefined;
     }
     // Check required prop

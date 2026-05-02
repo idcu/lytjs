@@ -23,19 +23,34 @@ const MAX_RAW_DEPTH = 100;
 const _rawSeenSet = new Set<object>();
 
 /**
+ * toRaw 嵌套调用深度计数器，防止嵌套调用时提前清空 _rawSeenSet。
+ */
+let _rawDepth = 0;
+
+/**
  * 获取响应式对象的原始值
  */
 export function toRaw<T>(observed: T): T {
-  _rawSeenSet.clear();
-  let current: unknown = observed;
-  let depth = 0;
-  while (current && (current as Record<string, unknown>)[ReactiveFlags.RAW]) {
-    if (_rawSeenSet.has(current as object) || depth >= MAX_RAW_DEPTH) return current as T;
-    _rawSeenSet.add(current as object);
-    current = (current as Record<string, unknown>)[ReactiveFlags.RAW];
-    depth++;
+  _rawDepth++;
+  if (_rawDepth === 1) {
+    _rawSeenSet.clear();
   }
-  return current as T;
+  try {
+    let current: unknown = observed;
+    let depth = 0;
+    while (current && (current as Record<string, unknown>)[ReactiveFlags.RAW]) {
+      if (_rawSeenSet.has(current as object) || depth >= MAX_RAW_DEPTH) return current as T;
+      _rawSeenSet.add(current as object);
+      current = (current as Record<string, unknown>)[ReactiveFlags.RAW];
+      depth++;
+    }
+    return current as T;
+  } finally {
+    _rawDepth--;
+    if (_rawDepth === 0) {
+      _rawSeenSet.clear();
+    }
+  }
 }
 
 /**
