@@ -9,7 +9,10 @@ import {
   hasPendingJobs,
   getPendingJobCount,
   resetSchedulerState,
+  queueJobWithPriority,
+  Priority,
 } from '../src/index';
+import type { SchedulerJobWithPriority } from '../src/index';
 
 describe('@lytjs/common-scheduler', () => {
   beforeEach(() => {
@@ -157,6 +160,124 @@ describe('@lytjs/common-scheduler', () => {
       queuePreFlushCb(cb);
       await nextTick();
       expect(count).toBe(1);
+    });
+  });
+
+  describe('Priority', () => {
+    it('should have correct priority values', () => {
+      expect(Priority.CRITICAL).toBe(-1000);
+      expect(Priority.HIGH).toBe(-500);
+      expect(Priority.NORMAL).toBe(0);
+      expect(Priority.LOW).toBe(500);
+      expect(Priority.IDLE).toBe(1000);
+    });
+  });
+
+  describe('queueJobWithPriority', () => {
+    it('should insert job by priority (higher priority first)', () => {
+      const order: string[] = [];
+      const criticalJob: SchedulerJobWithPriority = vi.fn(() => order.push('critical'));
+      criticalJob.priority = Priority.CRITICAL;
+      const normalJob: SchedulerJobWithPriority = vi.fn(() => order.push('normal'));
+      normalJob.priority = Priority.NORMAL;
+      const lowJob: SchedulerJobWithPriority = vi.fn(() => order.push('low'));
+      lowJob.priority = Priority.LOW;
+
+      // Insert in reverse priority order
+      queueJobWithPriority(lowJob);
+      queueJobWithPriority(normalJob);
+      queueJobWithPriority(criticalJob);
+
+      flushJobs();
+      expect(order).toEqual(['critical', 'normal', 'low']);
+    });
+
+    it('should maintain insertion order for same priority (stable sort)', () => {
+      const order: number[] = [];
+      const job1: SchedulerJobWithPriority = vi.fn(() => order.push(1));
+      job1.priority = Priority.NORMAL;
+      const job2: SchedulerJobWithPriority = vi.fn(() => order.push(2));
+      job2.priority = Priority.NORMAL;
+      const job3: SchedulerJobWithPriority = vi.fn(() => order.push(3));
+      job3.priority = Priority.NORMAL;
+
+      queueJobWithPriority(job1);
+      queueJobWithPriority(job2);
+      queueJobWithPriority(job3);
+
+      flushJobs();
+      expect(order).toEqual([1, 2, 3]);
+    });
+
+    it('should default to NORMAL priority when not specified', () => {
+      const order: string[] = [];
+      const noPriorityJob: SchedulerJobWithPriority = vi.fn(() => order.push('no-priority'));
+      // No priority set, should default to NORMAL
+      const highJob: SchedulerJobWithPriority = vi.fn(() => order.push('high'));
+      highJob.priority = Priority.HIGH;
+
+      queueJobWithPriority(noPriorityJob);
+      queueJobWithPriority(highJob);
+
+      flushJobs();
+      expect(order).toEqual(['high', 'no-priority']);
+    });
+
+    it('should not queue duplicate jobs', () => {
+      const job: SchedulerJobWithPriority = vi.fn();
+      job.priority = Priority.HIGH;
+      queueJobWithPriority(job);
+      queueJobWithPriority(job);
+      expect(getPendingJobCount()).toBe(1);
+    });
+
+    it('should execute CRITICAL and HIGH before NORMAL and LOW', () => {
+      const order: string[] = [];
+      const idleJob: SchedulerJobWithPriority = vi.fn(() => order.push('idle'));
+      idleJob.priority = Priority.IDLE;
+      const lowJob: SchedulerJobWithPriority = vi.fn(() => order.push('low'));
+      lowJob.priority = Priority.LOW;
+      const normalJob: SchedulerJobWithPriority = vi.fn(() => order.push('normal'));
+      normalJob.priority = Priority.NORMAL;
+      const highJob: SchedulerJobWithPriority = vi.fn(() => order.push('high'));
+      highJob.priority = Priority.HIGH;
+      const criticalJob: SchedulerJobWithPriority = vi.fn(() => order.push('critical'));
+      criticalJob.priority = Priority.CRITICAL;
+
+      // Insert in random order
+      queueJobWithPriority(normalJob);
+      queueJobWithPriority(idleJob);
+      queueJobWithPriority(criticalJob);
+      queueJobWithPriority(lowJob);
+      queueJobWithPriority(highJob);
+
+      flushJobs();
+      expect(order).toEqual(['critical', 'high', 'normal', 'low', 'idle']);
+    });
+
+    it('should prioritize newly added high-priority jobs within same flush round', () => {
+      const order: string[] = [];
+      const normalJob: SchedulerJobWithPriority = vi.fn(() => {
+        order.push('normal');
+        // During normal job execution, add a high-priority job
+        const urgentJob: SchedulerJobWithPriority = vi.fn(() => order.push('urgent'));
+        urgentJob.priority = Priority.CRITICAL;
+        queueJobWithPriority(urgentJob);
+      });
+      normalJob.priority = Priority.NORMAL;
+      const lowJob: SchedulerJobWithPriority = vi.fn(() => order.push('low'));
+      lowJob.priority = Priority.LOW;
+
+      queueJobWithPriority(normalJob);
+      queueJobWithPriority(lowJob);
+
+      flushJobs();
+      // The urgent job added during normal execution should be processed
+      // in the next iteration before low
+      expect(order.indexOf('urgent')).toBeLessThan(order.indexOf('low'));
+      expect(order).toContain('normal');
+      expect(order).toContain('urgent');
+      expect(order).toContain('low');
     });
   });
 });

@@ -92,13 +92,24 @@ export function createApp(
 
       context._container = container;
 
-      // 根据渲染模式选择不同的渲染路径
-      if (rendererMode === 'signal') {
-        return mountWithSignalMode(container);
-      }
+      try {
+        // 根据渲染模式选择不同的渲染路径
+        if (rendererMode === 'signal') {
+          return mountWithSignalMode(container);
+        }
 
-      // 默认 VNode 模式
-      return mountWithVNodeMode(container);
+        // 默认 VNode 模式
+        return mountWithVNodeMode(container);
+      } catch (err) {
+        if (app.errorHandler) {
+          app.errorHandler(err, null, 'mount');
+        } else {
+          error(
+            `[LytJS] Failed to mount app: ${err instanceof Error ? err.message : String(err)}`,
+          );
+        }
+        throw err;
+      }
     },
 
     unmount() {

@@ -76,6 +76,21 @@ importers:
         specifier: ^3.0.0
         version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@26.1.0)(tsx@4.21.0)(yaml@2.8.3)
 
+  packages/common/packages/a11y:
+    devDependencies:
+      jsdom:
+        specifier: ^26.0.0
+        version: 26.1.0
+      tsup:
+        specifier: ^8.4.0
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.12)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.3)
+      typescript:
+        specifier: ^5.8.2
+        version: 5.9.3
+      vitest:
+        specifier: ^3.0.0
+        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@26.1.0)(tsx@4.21.0)(yaml@2.8.3)
+
   packages/common/packages/algorithm:
     devDependencies:
       tsup:
@@ -102,6 +117,9 @@ importers:
 
   packages/common/packages/common:
     dependencies:
+      '@lytjs/common-a11y':
+        specifier: workspace:*
+        version: link:../a11y
       '@lytjs/common-algorithm':
         specifier: workspace:*
         version: link:../algorithm
@@ -126,6 +144,9 @@ importers:
       '@lytjs/common-is':
         specifier: workspace:*
         version: link:../is
+      '@lytjs/common-keyboard':
+        specifier: workspace:*
+        version: link:../keyboard
       '@lytjs/common-object':
         specifier: workspace:*
         version: link:../object
@@ -138,12 +159,18 @@ importers:
       '@lytjs/common-scheduler':
         specifier: workspace:*
         version: link:../scheduler
+      '@lytjs/common-storage':
+        specifier: workspace:*
+        version: link:../storage
       '@lytjs/common-string':
         specifier: workspace:*
         version: link:../string
       '@lytjs/common-timing':
         specifier: workspace:*
         version: link:../timing
+      '@lytjs/common-validate':
+        specifier: workspace:*
+        version: link:../validate
       '@lytjs/common-vnode':
         specifier: workspace:*
         version: link:../vnode
@@ -253,6 +280,21 @@ importers:
         specifier: ^3.0.0
         version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@26.1.0)(tsx@4.21.0)(yaml@2.8.3)
 
+  packages/common/packages/keyboard:
+    devDependencies:
+      jsdom:
+        specifier: ^26.0.0
+        version: 26.1.0
+      tsup:
+        specifier: ^8.4.0
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.12)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.3)
+      typescript:
+        specifier: ^5.8.2
+        version: 5.9.3
+      vitest:
+        specifier: ^3.0.0
+        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@26.1.0)(tsx@4.21.0)(yaml@2.8.3)
+
   packages/common/packages/object:
     dependencies:
       '@lytjs/common-is':
@@ -309,6 +351,21 @@ importers:
         specifier: ^3.0.0
         version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@26.1.0)(tsx@4.21.0)(yaml@2.8.3)
 
+  packages/common/packages/storage:
+    devDependencies:
+      jsdom:
+        specifier: ^26.0.0
+        version: 26.1.0
+      tsup:
+        specifier: ^8.4.0
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.12)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.3)
+      typescript:
+        specifier: ^5.8.2
+        version: 5.9.3
+      vitest:
+        specifier: ^3.0.0
+        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@26.1.0)(tsx@4.21.0)(yaml@2.8.3)
+
   packages/common/packages/string:
     devDependencies:
       tsup:
@@ -323,6 +380,21 @@ importers:
 
   packages/common/packages/timing:
     devDependencies:
+      tsup:
+        specifier: ^8.4.0
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.12)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.3)
+      typescript:
+        specifier: ^5.8.2
+        version: 5.9.3
+      vitest:
+        specifier: ^3.0.0
+        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@26.1.0)(tsx@4.21.0)(yaml@2.8.3)
+
+  packages/common/packages/validate:
+    devDependencies:
+      jsdom:
+        specifier: ^26.0.0
+        version: 26.1.0
       tsup:
         specifier: ^8.4.0
         version: 8.5.1(jiti@2.6.1)(postcss@8.5.12)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.3)
