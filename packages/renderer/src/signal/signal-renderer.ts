@@ -1,0 +1,212 @@
+// src/signal/signal-renderer.ts
+// @lytjs/renderer - Signal 模式渲染器
+// 使用 @lytjs/compiler 编译模板为 Signal 模式代码，
+// 通过 @lytjs/dom-runtime 提供的细粒度 DOM 操作函数执行渲染
+
+import { compile } from '@lytjs/compiler';
+import { effect } from '@lytjs/reactivity';
+import {
+  insert,
+  remove,
+  runCleanups,
+  onCleanup,
+  createTemplate,
+  setText,
+  setHTML,
+  setAttribute,
+  setProperty,
+  setStyle,
+  setClass,
+  createEventHandler,
+  reconcileArray,
+  bindEffect,
+} from '@lytjs/dom-runtime';
+
+// ============================================================
+// SignalRenderer 接口
+// ============================================================
+
+export interface SignalRenderer {
+  /** 将模板渲染到指定的容器元素或 CSS 选择器 */
+  render(container: Element | string): void;
+  /** 卸载渲染器，清理所有 effect 和 DOM */
+  unmount(): void;
+}
+
+// ============================================================
+// createSignalRenderer 工厂函数
+// ============================================================
+
+/**
+ * 创建一个 Signal 模式的渲染器
+ *
+ * @param template - 模板字符串
+ * @param context - 模板上下文（响应式数据）
+ * @returns SignalRenderer 实例
+ *
+ * @example
+ * ```ts
+ * const { ref } = require('@lytjs/reactivity');
+ * const { createSignalRenderer } = require('@lytjs/renderer');
+ *
+ * const ctx = { message: ref('hello') };
+ * const renderer = createSignalRenderer('<div>{{ message }}</div>', ctx);
+ * renderer.render('#app');
+ * ```
+ */
+export function createSignalRenderer(
+  template: string,
+  context: Record<string, unknown>,
+): SignalRenderer {
+  let cleanup: (() => void) | null = null;
+
+  return {
+    render(container: Element | string) {
+      // 卸载旧的渲染
+      if (cleanup) {
+        cleanup();
+        cleanup = null;
+      }
+
+      const el =
+        typeof container === 'string'
+          ? document.querySelector(container)!
+          : container;
+
+      if (!el) {
+        throw new Error(
+          `[LytJS] SignalRenderer: cannot find element matching "${container}".`,
+        );
+      }
+
+      // 编译模板为 Signal 模式
+      const { code } = compile(template, { rendererMode: 'signal' });
+
+      // 从编译结果中提取 render 函数体
+      // codegen-signal 生成的代码结构：
+      //   import { effect, reconcileArray } from '@lytjs/reactivity';
+      //   import { createTemplate, ... } from '@lytjs/dom-runtime';
+      //   export function render(_ctx, _container) { ... }
+      //   return () => { runCleanups(); };
+      //
+      // 我们需要提取 render 函数体，并通过 new Function 执行
+
+      const renderBody = extractRenderBody(code);
+      if (!renderBody) {
+        throw new Error(
+          `[LytJS] SignalRenderer: failed to extract render function from compiled code.`,
+        );
+      }
+
+      // 创建渲染函数，传入所有 dom-runtime 和 reactivity 的函数作为参数
+      // 参数名必须与 codegen-signal.ts 生成的 import 名称一致
+      const renderFn = new Function(
+        'effect',
+        'reconcileArray',
+        'createTemplate',
+        'setText',
+        'setHTML',
+        'setAttribute',
+        'setProperty',
+        'setStyle',
+        'setClass',
+        'insert',
+        'remove',
+        'createEventHandler',
+        'bindEffect',
+        'onCleanup',
+        'runCleanups',
+        '_ctx',
+        '_container',
+        renderBody,
+      );
+
+      // 执行渲染函数
+      const cleanupFn = renderFn(
+        effect,
+        reconcileArray,
+        createTemplate,
+        setText,
+        setHTML,
+        setAttribute,
+        setProperty,
+        setStyle,
+        setClass,
+        insert,
+        remove,
+        createEventHandler,
+        bindEffect,
+        onCleanup,
+        runCleanups,
+        context,
+        el,
+      );
+
+      // 保存清理函数
+      if (typeof cleanupFn === 'function') {
+        cleanup = cleanupFn;
+      }
+    },
+
+    unmount() {
+      if (cleanup) {
+        cleanup();
+        cleanup = null;
+      }
+    },
+  };
+}
+
+// ============================================================
+// 辅助函数：从编译代码中提取 render 函数体
+// ============================================================
+
+/**
+ * 从 codegen-signal 生成的代码中提取 render 函数体
+ *
+ * 生成的代码结构：
+ * ```
+ * import { effect, reconcileArray } from '@lytjs/reactivity';
+ * import { createTemplate, ... } from '@lytjs/dom-runtime';
+ *
+ * export function render(_ctx, _container) {
+ *   ...
+ *   return () => { runCleanups(); };
+ * }
+ * ```
+ *
+ * 我们需要提取函数体（花括号内的内容），去掉 import 语句和函数声明
+ */
+function extractRenderBody(code: string): string | null {
+  // 匹配 render 函数体
+  // 查找 "export function render(_ctx, _container) {" 和对应的闭合 "}"
+  const funcMatch = code.match(
+    /export\s+function\s+render\s*\(\s*_ctx\s*,\s*_container\s*\)\s*\{/,
+  );
+
+  if (!funcMatch) {
+    return null;
+  }
+
+  const startIndex = funcMatch.index! + funcMatch[0]!.length;
+
+  // 找到匹配的闭合花括号
+  let depth = 1;
+  let i = startIndex;
+  while (i < code.length && depth > 0) {
+    if (code[i] === '{') {
+      depth++;
+    } else if (code[i] === '}') {
+      depth--;
+    }
+    i++;
+  }
+
+  if (depth !== 0) {
+    return null;
+  }
+
+  // 提取函数体内容
+  const body = code.substring(startIndex, i - 1).trim();
+  return body;
+}

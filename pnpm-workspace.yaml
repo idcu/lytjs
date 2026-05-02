@@ -10,6 +10,7 @@ packages:
   # 子仓库（单包级）
   - 'packages/shared-types'
   - 'packages/reactivity'
+  - 'packages/dom-runtime'
   - 'packages/vdom'
   - 'packages/compiler'
   - 'packages/renderer'

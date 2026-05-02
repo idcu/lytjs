@@ -6,9 +6,10 @@
 import { parse } from './parser';
 import { transform, builtInTransforms, builtInDirectiveTransforms, optimize } from './transform';
 import { generate } from './codegen';
+import { generateSignal } from './codegen-signal';
 import type { CompilerOptions, CodegenResult } from './types';
 
-export { parse, transform, optimize, generate };
+export { parse, transform, optimize, generate, generateSignal };
 
 export function compile(source: string, options: CompilerOptions = {}): CodegenResult {
   // 1. Parse template to AST
@@ -35,6 +36,11 @@ export function compile(source: string, options: CompilerOptions = {}): CodegenR
   transform(ast, transformOptions);
 
   // 3. Generate code
+  if (options.rendererMode === 'signal') {
+    return generateSignal(ast, options);
+  }
+
+  // 默认 VNode 模式
   const codegenResult = generate(ast, options);
 
   return codegenResult;

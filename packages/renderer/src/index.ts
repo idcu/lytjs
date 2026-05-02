@@ -30,6 +30,11 @@ export type { HydrationRenderer } from './dom/hydration';
 export { renderToString } from './ssr/ssr-renderer';
 export type { SSRInput } from './ssr/ssr-renderer';
 
+// Signal renderer
+/** 创建 Signal 模式渲染器（细粒度 DOM 更新） */
+export { createSignalRenderer } from './signal/signal-renderer';
+export type { SignalRenderer } from './signal/signal-renderer';
+
 // Utilities
 /** HTML 转义、布尔属性判断等工具函数 */
 export { escapeHtml, isBooleanAttr, isVoidElement } from './utils';
