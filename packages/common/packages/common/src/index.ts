@@ -60,6 +60,13 @@ export {
   template,
   normalizeClass,
   normalizeStyle,
+  sanitizeHTML,
+  isSafeAttribute,
+  escapeAttrValue,
+  isBooleanAttr,
+  VOID_ELEMENTS,
+  BOOLEAN_ATTRS,
+  DANGEROUS_EVENT_ATTRS,
 } from '@lytjs/common-string';
 
 // path
@@ -80,10 +87,27 @@ export {
 } from '@lytjs/common-path';
 
 // events
-export { EventEmitter, SubscriptionManager, TopicSubscriptionManager } from '@lytjs/common-events';
+export {
+  isOn,
+  DOM_EVENT_NAME_MAP,
+  getDOMEventName,
+  extractDOMEventHandler,
+  extractDOMEventOptions,
+  EventEmitter,
+  SubscriptionManager,
+  TopicSubscriptionManager,
+  type EventHandler,
+} from '@lytjs/common-events';
 
 // cache
-export { LRUCache, memoize, ExpiringCache } from '@lytjs/common-cache';
+export {
+  LRUCache,
+  memoize,
+  ExpiringCache,
+  type LRUNode,
+  type CacheEntry,
+  type MemoizedFn,
+} from '@lytjs/common-cache';
 
 // timing
 export {
@@ -96,6 +120,8 @@ export {
   timeout,
   poll,
   TaskQueue,
+  type DebouncedFn,
+  type ThrottledFn,
 } from '@lytjs/common-timing';
 
 // algorithm
@@ -164,6 +190,7 @@ export {
 // scheduler
 export {
   queueJob,
+  queuePreFlushCb,
   queuePostFlushCb,
   nextTick,
   flushJobs,
@@ -171,6 +198,41 @@ export {
   hasPendingJobs,
   getPendingJobCount,
   resetSchedulerState,
+  setMaxIterations,
   setErrorHandler,
   type SchedulerJob,
 } from '@lytjs/common-scheduler';
+
+// dom
+export {
+  SVG_TAGS,
+  SVG_NS,
+  isSVGTag,
+  patchClass,
+  patchStyle,
+  patchAttr,
+  patchProp,
+} from '@lytjs/common-dom';
+
+// query
+export {
+  parseQueryString,
+  stringifyQueryString,
+  parseURL,
+  buildURL,
+  type ParsedURL,
+} from '@lytjs/common-query';
+
+// dom-helpers
+export {
+  createElement,
+  insertBefore,
+  removeChild,
+  nextSibling,
+  createTextNode,
+  createComment,
+  setStyle,
+  hasClass,
+  addClass,
+  removeClass,
+} from '@lytjs/common-dom-helpers';

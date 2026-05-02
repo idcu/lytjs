@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/common-dom",
-  "version": "0.1.0",
+  "version": "6.0.0",
   "description": "Shared DOM utilities for Lyt.js - SVG tags, patchClass, patchStyle, patchAttr, patchProp",
   "keywords": [
     "lytjs",
@@ -14,9 +14,9 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs",
-      "require": "./dist/index.cjs",
-      "types": "./dist/index.d.ts"
+      "require": "./dist/index.cjs"
     }
   },
   "files": [
@@ -41,6 +41,7 @@
   "devDependencies": {
     "typescript": "^5.8.2",
     "tsup": "^8.4.0",
-    "vitest": "^3.0.0"
+    "vitest": "^3.0.0",
+    "jsdom": "^24.0.0"
   }
 }
