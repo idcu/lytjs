@@ -44,6 +44,14 @@ export interface AppConfig extends BaseAppConfig {
   compilerOptions?: Record<string, unknown>;
 }
 
+// ==================== App Options ====================
+
+/** createApp 的配置选项 */
+export interface AppOptions {
+  /** 渲染模式：'vnode' 使用 VNode diff（默认），'signal' 使用 Signal + 直接 DOM 操作 */
+  rendererMode?: 'vnode' | 'signal';
+}
+
 // ==================== Plugin ====================
 
 export interface Plugin {

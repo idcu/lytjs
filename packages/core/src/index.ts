@@ -28,6 +28,7 @@ export { compile } from '@lytjs/compiler';
 export type {
   App,
   AppConfig,
+  AppOptions,
   Plugin,
   Component,
   ComponentOptions,

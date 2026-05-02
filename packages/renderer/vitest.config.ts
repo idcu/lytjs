@@ -14,8 +14,12 @@ export default defineConfig({
       '@lytjs/common-error': `${commonRoot}/error/dist/index.mjs`,
       '@lytjs/common-events': `${commonRoot}/events/dist/index.mjs`,
       '@lytjs/common-vnode': `${commonRoot}/vnode/dist/index.mjs`,
+      '@lytjs/common-dom': `${commonRoot}/dom/dist/index.mjs`,
       '@lytjs/vdom': `${packagesRoot}/vdom/dist/index.mjs`,
       '@lytjs/core': `${packagesRoot}/core/dist/index.mjs`,
+      '@lytjs/reactivity': `${packagesRoot}/reactivity/dist/index.mjs`,
+      '@lytjs/dom-runtime': `${packagesRoot}/dom-runtime/dist/index.mjs`,
+      '@lytjs/compiler': `${packagesRoot}/compiler/dist/index.mjs`,
     },
   },
   test: {
