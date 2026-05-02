@@ -5,7 +5,7 @@ import type { ComponentInternalInstance, ComponentOptions, SetupContext } from '
 import { createComponentInstance, setupComponent } from './component';
 import { ShapeFlags, createBaseVNode } from '@lytjs/common-vnode';
 import type { VNode } from '@lytjs/common-vnode';
-import { error } from '@lytjs/common-error';
+import { error, warn } from '@lytjs/common-error';
 
 // ==================== Types ====================
 
@@ -49,6 +49,27 @@ export const Suspense: ComponentOptions = {
   },
 
   setup(_props: Record<string, unknown>, _ctx: SetupContext) {
+    // __DEV__ mode: validate props types
+    if (typeof __DEV__ !== 'undefined' && __DEV__) {
+      const props = _props as SuspenseProps;
+      if (props.timeout !== undefined && typeof props.timeout !== 'number') {
+        warn(`[Suspense] Invalid prop: timeout should be a number, got ${typeof props.timeout}.`);
+      }
+      if (props.onResolve !== undefined && typeof props.onResolve !== 'function') {
+        warn(
+          `[Suspense] Invalid prop: onResolve should be a function, got ${typeof props.onResolve}.`,
+        );
+      }
+      if (props.onPending !== undefined && typeof props.onPending !== 'function') {
+        warn(
+          `[Suspense] Invalid prop: onPending should be a function, got ${typeof props.onPending}.`,
+        );
+      }
+      if (props.onError !== undefined && typeof props.onError !== 'function') {
+        warn(`[Suspense] Invalid prop: onError should be a function, got ${typeof props.onError}.`);
+      }
+    }
+
     const boundary: SuspenseAsyncState = {
       isPending: false,
       error: null,
@@ -241,6 +262,8 @@ export function abortSuspense(boundary: SuspenseAsyncState): void {
     boundary.pendingPromises.clear();
   }
 
+  // 清空所有回调数组，防止 abort 后仍被调用导致内存泄漏或无效操作。
+  // 使用 length = 0 方式清空数组，保持数组引用不变（避免影响外部持有的引用）。
   boundary.onResolve.length = 0;
   boundary.onPending.length = 0;
   boundary.onError.length = 0;

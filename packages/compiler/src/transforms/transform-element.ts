@@ -19,6 +19,7 @@ import type {
   InterpolationNode,
   DirectiveNode,
   SimpleExpressionNode,
+  CompoundExpressionNode,
   JSChildNode,
   JSObjectExpression,
   JSProperty,
@@ -37,6 +38,16 @@ import {
 } from '../ast';
 import { getExpContent, findDirective } from './helpers';
 import { capitalize } from '@lytjs/common-string';
+
+/**
+ * Type guard: check if a TemplateChildNode has a codegenNode (JSChildNode).
+ * Used to safely narrow types instead of `as unknown as JSChildNode`.
+ */
+function hasCodegenNode(
+  node: TemplateChildNode,
+): node is ElementNode & { codegenNode: JSChildNode } {
+  return node.type === NodeTypes.ELEMENT && (node as ElementNode).codegenNode != null;
+}
 
 export function transformElement(node: ElementNode, context: TransformContext): void {
   if (node.type !== NodeTypes.ELEMENT) return;
@@ -103,15 +114,30 @@ export function transformElement(node: ElementNode, context: TransformContext): 
           (child as InterpolationNode).content,
         ]);
       } else if (child.type === NodeTypes.ELEMENT) {
-        // TemplateChildNode is a superset of JSChildNode, so direct assertion is not allowed.
-        // At runtime, the transform pipeline ensures element nodes have valid codegenNode (JSChildNode).
-        vnodeChildren = child as unknown as JSChildNode;
+        // Use type guard to safely access codegenNode without double assertion
+        if (hasCodegenNode(child)) {
+          vnodeChildren = child.codegenNode;
+        }
       } else if (child.type === NodeTypes.COMMENT) {
         // Skip comment nodes - they are not JSChildNode and should not be included in codegen
         vnodeChildren = undefined;
       } else {
-        // TemplateChildNode is a superset of JSChildNode, so direct assertion is not allowed.
-        vnodeChildren = child as unknown as JSChildNode;
+        // For other node types (SimpleExpressionNode, CompoundExpressionNode, JSChildNode),
+        // they are valid JSChildNode subtypes - safe to narrow directly
+        if (
+          child.type === NodeTypes.SIMPLE_EXPRESSION ||
+          child.type === NodeTypes.COMPOUND_EXPRESSION ||
+          child.type === NodeTypes.VNODE_CALL ||
+          child.type === NodeTypes.JS_CALL_EXPRESSION ||
+          child.type === NodeTypes.JS_OBJECT_EXPRESSION ||
+          child.type === NodeTypes.JS_PROPERTY ||
+          child.type === NodeTypes.JS_ARRAY_EXPRESSION ||
+          child.type === NodeTypes.JS_FUNCTION_EXPRESSION ||
+          child.type === NodeTypes.JS_CONDITIONAL_EXPRESSION ||
+          child.type === NodeTypes.JS_CACHE_EXPRESSION
+        ) {
+          vnodeChildren = child as JSChildNode;
+        }
       }
     }
   } else if (children.length > 1) {
@@ -132,10 +158,25 @@ export function transformElement(node: ElementNode, context: TransformContext): 
         vnodeChildren = createCompoundExpression(parts);
       }
     } else {
-      // TemplateChildNode[] cannot be directly asserted to JSChildNode[] because
-      // TemplateChildNode is a superset that includes non-JS types (ElementNode, TextNode, etc.).
-      // Use filtered nonCommentChildren to exclude CommentNode from codegen.
-      vnodeChildren = nonCommentChildren as unknown as JSChildNode[];
+      // Filter out non-JSChildNode types from codegen
+      const jsChildren = nonCommentChildren.filter(
+        (
+          c,
+        ): c is
+          | SimpleExpressionNode
+          | CompoundExpressionNode
+          | (ElementNode & { codegenNode: JSChildNode }) =>
+          c.type === NodeTypes.SIMPLE_EXPRESSION ||
+          c.type === NodeTypes.COMPOUND_EXPRESSION ||
+          hasCodegenNode(c),
+      );
+      if (jsChildren.length > 0) {
+        vnodeChildren = jsChildren.map((c) =>
+          c.type === NodeTypes.ELEMENT
+            ? (c as ElementNode & { codegenNode: JSChildNode }).codegenNode
+            : (c as JSChildNode),
+        ) as JSChildNode[];
+      }
     }
   }
 
@@ -346,9 +387,10 @@ function handleVHtml(
       prop.loc,
     );
     // 在开发模式下额外发出安全警告
+    // 使用 process.env.NODE_ENV 检查，确保在构建时通过 tsup define 注入为编译时常量
     const safeValue = createCompoundExpression([
       `(${createConditionalExpression(
-        createSimpleExpression('__DEV__', false, prop.loc, false),
+        createSimpleExpression('process.env.NODE_ENV !== "production"', false, prop.loc, false),
         createCompoundExpression([
           createCallExpression(
             'console.warn',

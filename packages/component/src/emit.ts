@@ -30,13 +30,21 @@ export function normalizeEmitsOptions(
 }
 
 /**
+ * 将事件名统一转换为 camelCase 形式，用于 emits 选项的声明式查找。
+ * 例如: 'update:model-value' => 'update:modelValue'
+ */
+function normalizeEventName(event: string): string {
+  return kebabToCamel(event);
+}
+
+/**
  * 将事件名转换为处理器 key
  * 先将 kebab-case 转为 camelCase，再首字母大写加 on 前缀
  * 例如: 'update:model-value' => 'onUpdate:modelValue'
  */
 function toHandlerKey(event: string): string {
   if (!event) return '';
-  const camelized = kebabToCamel(event);
+  const camelized = normalizeEventName(event);
   return `on${camelized[0]!.toUpperCase()}${camelized.slice(1)}`;
 }
 
@@ -67,8 +75,11 @@ export function emit(instance: ComponentInternalInstance, event: string, ...args
 
 /**
  * Check if an event is declared in the emits options.
+ * Uses the same normalization (kebab-case -> camelCase) as emit() to ensure
+ * consistent event name matching.
  */
 export function isEmitValid(instance: ComponentInternalInstance, event: string): boolean {
   if (!instance.emitsOptions) return true;
-  return hasOwn(instance.emitsOptions, event);
+  const normalized = normalizeEventName(event);
+  return hasOwn(instance.emitsOptions, normalized) || hasOwn(instance.emitsOptions, event);
 }

@@ -57,18 +57,20 @@ export function extname(path: string): string {
  */
 const PARAM_NAME_RE = /^(\w+)$/;
 
-export function pathToRegex(pattern: string): RegExp {
-  const normalized = normalizePath(pattern);
-
-  // Validate parameter names to prevent regex injection
+/**
+ * 从路径模式中提取参数名列表
+ * 支持 :param 必选参数和 :param? 可选参数
+ * @throws {Error} 如果参数名包含非单词字符
+ */
+function extractParamNames(path: string): string[] {
   const paramNames: string[] = [];
   const optionalParamRegex = /:(\w+)\?/g;
   let m: RegExpExecArray | null;
-  while ((m = optionalParamRegex.exec(normalized)) !== null) {
+  while ((m = optionalParamRegex.exec(path)) !== null) {
     paramNames.push(m[1]!);
   }
   const requiredParamRegex = /:(\w+)(?!\?)/g;
-  while ((m = requiredParamRegex.exec(normalized)) !== null) {
+  while ((m = requiredParamRegex.exec(path)) !== null) {
     paramNames.push(m[1]!);
   }
   // Note: param names are already validated by \w+ in the regex above,
@@ -76,11 +78,31 @@ export function pathToRegex(pattern: string): RegExp {
   for (const name of paramNames) {
     if (!PARAM_NAME_RE.test(name)) {
       throw new Error(
-        `Invalid parameter name "${name}" in path pattern "${pattern}". ` +
+        `Invalid parameter name "${name}" in path pattern "${path}". ` +
           `Parameter names must only contain word characters (a-z, A-Z, 0-9, _).`,
       );
     }
   }
+
+  // ReDoS risk warning: if too many parameters, the resulting regex may have
+  // high complexity and be vulnerable to ReDoS attacks
+  if (paramNames.length > 10) {
+    if (typeof __DEV__ !== 'undefined' && __DEV__) {
+      console.warn(
+        `[LytJS] pathToRegex: path pattern "${path}" contains ${paramNames.length} parameters, ` +
+          `which may result in a complex regex with potential ReDoS risk. ` +
+          `Consider simplifying the pattern or reducing the number of parameters.`,
+      );
+    }
+  }
+  return paramNames;
+}
+
+export function pathToRegex(pattern: string): RegExp {
+  const normalized = normalizePath(pattern);
+
+  // Validate parameter names to prevent regex injection
+  extractParamNames(normalized);
 
   // 先提取参数/通配符部分（含前导 /），转义静态部分，再还原
   const regexStr = normalized
@@ -125,17 +147,8 @@ export function matchPath(pattern: string, path: string): PathMatchResult | null
 
   const params: Record<string, string> = {};
 
-  // 提取参数名
-  const paramNames: string[] = [];
-  const optionalParamRegex = /:(\w+)\?/g;
-  let m: RegExpExecArray | null;
-  while ((m = optionalParamRegex.exec(normalizedPattern)) !== null) {
-    paramNames.push(m[1]!);
-  }
-  const requiredParamRegex = /:(\w+)(?!\?)/g;
-  while ((m = requiredParamRegex.exec(normalizedPattern)) !== null) {
-    paramNames.push(m[1]!);
-  }
+  // 提取参数名（复用公共函数）
+  const paramNames = extractParamNames(normalizedPattern);
   if (normalizedPattern.includes('*')) {
     paramNames.push('*');
   }

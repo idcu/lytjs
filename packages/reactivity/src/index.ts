@@ -29,6 +29,7 @@ export {
 export {
   // computed
   computed,
+  setSSRMode,
 } from './computed';
 
 export {

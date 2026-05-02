@@ -444,7 +444,7 @@ function parseTag(context: ParserContext, type: number): ElementNode | undefined
   const tag = tagMatch[1]!;
   advanceBy(context, tag.length);
 
-  let tagType: number = ElementTypes.ELEMENT;
+  let tagType: (typeof ElementTypes)[keyof typeof ElementTypes] = ElementTypes.ELEMENT;
   if (isComponentTag(tag)) {
     tagType = ElementTypes.COMPONENT;
   } else if (tag === 'template') {
@@ -529,7 +529,7 @@ function parseTag(context: ParserContext, type: number): ElementNode | undefined
 
 function parseAttribute(
   context: ParserContext,
-  _tagType: number,
+  _tagType: (typeof ElementTypes)[keyof typeof ElementTypes],
 ): AttributeNode | DirectiveNode | undefined {
   const start = getCursor(context);
 

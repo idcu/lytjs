@@ -624,6 +624,9 @@ export function createRenderer(options: RendererOptions<HostNode, HostElement>) 
     ) {
       const { bum } = component as ComponentInternalInstance;
       if (isArray(bum)) {
+        // 逐个执行 beforeUnmount 回调。单个回调抛出异常时，捕获并记录错误后继续执行
+        // 后续回调，确保所有 beforeUnmount 钩子都有机会运行，避免一个组件的卸载错误
+        // 影响其他组件的清理逻辑。
         for (let i = 0; i < bum.length; i++) {
           try {
             bum[i]!();

@@ -80,6 +80,14 @@ function hydrateNode(vnode: VNode, parent: HTMLElement, index: number): number {
   // Handle Text
   if (type === Text) {
     const node = parent.childNodes[index];
+    if (isFunction(children)) {
+      if (__DEV__) {
+        warn(
+          `Hydration: Text VNode children is a function, which is not supported during hydration. ` +
+            `The function will be replaced with an empty string.`,
+        );
+      }
+    }
     const text = isFunction(children) ? '' : String(children ?? '');
     if (node && node.nodeType === Node.TEXT_NODE) {
       // Match: reuse existing text node
@@ -199,9 +207,10 @@ function hydrateNode(vnode: VNode, parent: HTMLElement, index: number): number {
         `<${tag}>`,
         existingNode ? `<${(existingNode as Element).tagName.toLowerCase()}>` : 'none',
       );
-      const isSVG =
-        tag === 'svg' ||
-        (existingNode as Element | undefined)?.namespaceURI === 'http://www.w3.org/2000/svg';
+      // 检查父元素的 namespaceURI 而非仅判断根元素是否为 SVG，
+      // 以正确处理 SVG 命名空间内的非根元素水合
+      const parentNamespace = parent.namespaceURI;
+      const isSVG = tag === 'svg' || parentNamespace === 'http://www.w3.org/2000/svg';
       const newEl = isSVG
         ? document.createElementNS('http://www.w3.org/2000/svg', tag)
         : document.createElement(tag);

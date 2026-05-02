@@ -201,13 +201,10 @@ export interface ComponentInternalInstance {
 export interface BaseComponentOptions {
   props?: Record<string, unknown>;
   emits?: string[] | Record<string, unknown>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  setup?: (...args: any[]) => any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  render?: (...args: any[]) => any;
+  setup?: (...args: unknown[]) => Record<string, unknown>;
+  render?: (...args: unknown[]) => unknown;
   computed?: Record<string, () => unknown>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  methods?: Record<string, (...args: any[]) => any>;
+  methods?: Record<string, (...args: unknown[]) => unknown>;
   watch?: Record<string, unknown>;
   data?: () => Record<string, unknown>;
 }

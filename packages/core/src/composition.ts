@@ -38,28 +38,28 @@ export function useAttrs(): Record<string, unknown> {
 /**
  * 双向绑定辅助（v-model 的 composition API 版本）
  */
-export function useModel<T = unknown>(
-  props: Record<string, unknown>,
+export function useModel<T>(
+  props: Record<string, T | undefined>,
   key: string,
 ): WritableComputedRef<T> {
   const instance = getCurrentInstance();
   if (!instance) {
-    return computed({
+    return computed<T>({
       get() {
         return undefined as T;
       },
       set() {
         // no-op when outside setup
       },
-    }) as WritableComputedRef<T>;
+    });
   }
 
-  return computed({
+  return computed<T>({
     get() {
       return props[key] as T;
     },
     set(newValue: T) {
       instance.emit(`update:${key}`, newValue);
     },
-  }) as WritableComputedRef<T>;
+  });
 }
