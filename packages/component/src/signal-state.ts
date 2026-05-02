@@ -4,10 +4,6 @@
 import { signal, computedSignal } from '@lytjs/reactivity';
 import type { Signal, ComputedSignal } from '@lytjs/reactivity';
 
-export interface SignalStateOptions<T> {
-  default?: T;
-}
-
 /**
  * 创建与组件协作的 Signal State
  */

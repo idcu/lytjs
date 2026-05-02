@@ -104,9 +104,18 @@ export function createApp(
     unmount() {
       if (rendererMode === 'signal') {
         // Signal 模式卸载
+        const componentOptions = rootComponent as Record<string, unknown>;
+        const beforeUnmount = componentOptions.beforeUnmount as (() => void) | undefined;
+        if (typeof beforeUnmount === 'function') {
+          beforeUnmount.call(componentOptions);
+        }
         if (signalRenderer) {
           signalRenderer.unmount();
           signalRenderer = null;
+        }
+        const unmounted = componentOptions.unmounted as (() => void) | undefined;
+        if (typeof unmounted === 'function') {
+          unmounted.call(componentOptions);
         }
       } else {
         // VNode 模式卸载
@@ -123,6 +132,7 @@ export function createApp(
 
       // 标记 app 为已卸载
       _isUnmounted = true;
+      _isMounted = false;
 
       context._container = null;
 
@@ -255,16 +265,36 @@ export function createApp(
 
     // 执行 data 函数
     if (typeof componentOptions.data === 'function') {
-      const dataResult = (componentOptions.data as () => Record<string, unknown>)();
-      Object.assign(ctx, dataResult);
+      try {
+        const dataResult = (componentOptions.data as () => Record<string, unknown>)();
+        Object.assign(ctx, dataResult);
+      } catch (e) {
+        error(
+          `[LytJS] Failed to execute data() in Signal mode: ${e instanceof Error ? e.message : String(e)}`,
+        );
+        throw e;
+      }
     }
 
     // 执行 setup 函数
     if (typeof componentOptions.setup === 'function') {
-      const setupResult = (componentOptions.setup as Function)(rootProps ?? {}, {});
-      if (setupResult && typeof setupResult === 'object') {
-        Object.assign(ctx, setupResult);
+      try {
+        const setupResult = (componentOptions.setup as Function)(rootProps ?? {}, {});
+        if (setupResult && typeof setupResult === 'object') {
+          Object.assign(ctx, setupResult);
+        }
+      } catch (e) {
+        error(
+          `[LytJS] Failed to execute setup() in Signal mode: ${e instanceof Error ? e.message : String(e)}`,
+        );
+        throw e;
       }
+    }
+
+    // 调用 beforeMount 生命周期钩子
+    const beforeMount = componentOptions.beforeMount as (() => void) | undefined;
+    if (typeof beforeMount === 'function') {
+      beforeMount.call(ctx);
     }
 
     // 创建 Signal 渲染器
@@ -272,6 +302,12 @@ export function createApp(
     signalRenderer.render(container);
 
     _isMounted = true;
+
+    // 调用 mounted 生命周期钩子
+    const mounted = componentOptions.mounted as (() => void) | undefined;
+    if (typeof mounted === 'function') {
+      mounted.call(ctx);
+    }
 
     // Signal 模式返回一个简化的公共实例
     // 通过 Proxy 实现对 ctx 的访问

@@ -105,6 +105,9 @@ function processVDeep(
         const deepAttr = createAttribute(`${scopeId}-deep`, createText(''));
         childElement.props.push(deepAttr);
       }
+
+      // Recurse into child elements to handle deeply nested v-deep
+      processVDeep(childElement, scopeId, _context);
     }
   }
 }

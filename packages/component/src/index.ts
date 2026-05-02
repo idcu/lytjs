@@ -102,7 +102,6 @@ export type { ErrorBoundaryProps } from './error-boundary';
 // Signal State
 /** Signal State 适配器，使 Signal 可以与组件协作 */
 export { createSignalState, createComputedState } from './signal-state';
-export type { SignalStateOptions } from './signal-state';
 
 // Types
 /** 组件相关类型定义 */

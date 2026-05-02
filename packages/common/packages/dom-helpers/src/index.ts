@@ -22,8 +22,17 @@ const DANGEROUS_EVENT_ATTRS = new Set([
   'ontouchstart', 'ontouchend', 'ontouchmove', 'ontouchcancel',
   'onpointerdown', 'onpointerup', 'onpointermove',
   'onanimationstart', 'onanimationend', 'onanimationiteration',
-  'ontransitionend', 'ontransitionstart', 'ontransitionend',
-  'ontransitioncancel',
+  'ontransitionstart', 'ontransitionend', 'ontransitioncancel',
+]);
+
+/** 需要 URL 安全检查的属性 */
+const URL_ATTRS = new Set([
+  'href', 'src', 'action', 'formaction', 'xlink:href', 'data', 'poster',
+]);
+
+/** 安全的 URL 协议白名单 */
+const SAFE_URL_PROTOCOLS = new Set([
+  'http:', 'https:', 'mailto:', 'tel:', 'ftp:', '.', '/', '#', '?',
 ]);
 
 /**
@@ -31,6 +40,24 @@ const DANGEROUS_EVENT_ATTRS = new Set([
  */
 function isSafeAttr(key: string): boolean {
   return !DANGEROUS_EVENT_ATTRS.has(key.toLowerCase());
+}
+
+/**
+ * 检查 URL 属性值是否安全（非 javascript: 等危险协议）
+ */
+function isSafeURL(value: string): boolean {
+  const trimmed = value.trim().toLowerCase();
+  // 相对 URL、hash、query 是安全的
+  if (trimmed.startsWith('#') || trimmed.startsWith('?') || trimmed.startsWith('/') || trimmed.startsWith('.')) {
+    return true;
+  }
+  // 检查协议
+  const colonIndex = trimmed.indexOf(':');
+  if (colonIndex > 0) {
+    const protocol = trimmed.slice(0, colonIndex + 1);
+    return SAFE_URL_PROTOCOLS.has(protocol);
+  }
+  return true;
 }
 
 /**
@@ -56,6 +83,10 @@ export function createElement(
     for (const key of Object.keys(attrs)) {
       const val = attrs[key];
       if (val !== undefined && isSafeAttr(key)) {
+        // 对 URL 类属性进行协议安全检查
+        if (URL_ATTRS.has(key.toLowerCase()) && !isSafeURL(val)) {
+          continue; // 跳过危险的 URL 属性值
+        }
         el.setAttribute(key, val);
       }
     }

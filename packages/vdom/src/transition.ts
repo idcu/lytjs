@@ -57,6 +57,12 @@ export interface TransitionState {
 }
 
 // ============================================================
+// Internal: transition cleanup WeakMap (avoids naming conflicts on DOM elements)
+// ============================================================
+
+const transitionCleanupMap = new WeakMap<Element, (() => void) | null>();
+
+// ============================================================
 // Helper: nextFrame
 // ============================================================
 
@@ -238,7 +244,7 @@ export function performEnterTransition(
   addTransitionClass(el, classes.active);
 
   // Force reflow before removing enter-from class
-  void (el as HTMLElement).offsetHeight;
+  void el.getBoundingClientRect();
 
   // Remove enter-from, add enter-to
   removeTransitionClass(el, classes.from);
@@ -311,7 +317,7 @@ export function performLeaveTransition(
   addTransitionClass(el, classes.active);
 
   // Force reflow before removing leave-from class
-  void (el as HTMLElement).offsetHeight;
+  void el.getBoundingClientRect();
 
   // Remove leave-from, add leave-to
   removeTransitionClass(el, classes.from);
@@ -387,29 +393,30 @@ function waitForTransitionEnd(
     // Only handle transitionend/animationend for this element
     if (event.target !== el) return;
 
-    // For animationend, check if it's the right animation
+    // For animationend, use a pending set to track remaining animations
     if (event.type === 'animationend') {
       const animationName = (event as AnimationEvent).animationName;
-      const animations = getStylePropAsArray(getComputedStyle(el), 'animationName');
-      // Only finish if this is the last animation
-      if (animations.length > 1 && animations[animations.length - 1] !== animationName) {
-        return;
-      }
+      pendingAnimations.delete(animationName);
+      if (pendingAnimations.size > 0) return;
     }
 
     clearTimeout(timer);
     finish();
   };
 
+  // 使用 Set 追踪待完成的动画，解决多动画并行时提前结束的问题
+  const animations = getStylePropAsArray(getComputedStyle(el), 'animationName');
+  const pendingAnimations = new Set(animations);
+
   el.addEventListener('transitionend', onEnd);
   el.addEventListener('animationend', onEnd);
 
-  // Store cleanup function on the element for cancellation
-  (el as Element & { _transitionCleanup?: () => void })._transitionCleanup = () => {
+  // Store cleanup function in WeakMap for cancellation
+  transitionCleanupMap.set(el, () => {
     clearTimeout(timer);
     el.removeEventListener('transitionend', onEnd);
     el.removeEventListener('animationend', onEnd);
-  };
+  });
 }
 
 // ============================================================
@@ -420,10 +427,10 @@ function waitForTransitionEnd(
  * Cancel any ongoing transition on the given element.
  */
 export function cancelTransition(el: Element): void {
-  const cleanup = (el as Element & { _transitionCleanup?: () => void })._transitionCleanup;
+  const cleanup = transitionCleanupMap.get(el);
   if (cleanup) {
     cleanup();
-    delete (el as Element & { _transitionCleanup?: () => void })._transitionCleanup;
+    transitionCleanupMap.delete(el);
   }
 }
 
