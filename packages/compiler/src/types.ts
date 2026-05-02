@@ -377,6 +377,7 @@ export interface CodegenResult {
   code: string;
   preamble: string;
   ast: RootNode;
+  // TODO: source map 支持，当前未实现。计划使用 source-map 库生成完整 source map。
   map?: Record<string, number>;
 }
 

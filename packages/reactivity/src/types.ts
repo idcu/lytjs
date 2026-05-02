@@ -66,6 +66,15 @@ export type WatchCallback<T = unknown, S = T> = (
   onCleanup: OnCleanup,
 ) => void;
 
+/**
+ * immediate 模式下 oldValue 为 undefined，否则为 T | undefined。
+ * 用于 watch 函数的回调类型推断。
+ */
+export type WatchCallbackWithImmediate<T, Immediate extends boolean> = WatchCallback<
+  T,
+  Immediate extends true ? undefined : T | undefined
+>;
+
 export type OnCleanup = (cleanupFn: () => void) => void;
 
 export type WatchHandle = () => void;

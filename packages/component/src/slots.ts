@@ -44,6 +44,10 @@ export function initSlots(instance: ComponentInternalInstance, children: unknown
 export function normalizeSlotValue(value: unknown): VNode[] {
   if (isNullish(value)) return [];
   if (isArray(value)) return value as VNode[];
+  if (isObject(value) && value !== null && typeof (value as VNode).__v_isVNode === 'boolean') {
+    // Valid VNode object
+    return [value as VNode];
+  }
   if (__DEV__) {
     warn(
       `normalizeSlotValue: expected VNode or VNode[], got ${typeof value}. ` +

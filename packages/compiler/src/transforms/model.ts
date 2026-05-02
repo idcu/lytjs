@@ -7,10 +7,9 @@ import { getExpContent } from './helpers';
 /**
  * 验证 v-model 表达式是否为合法的简单属性访问表达式
  * 只允许标识符和属性访问（如 foo、foo.bar、foo[0]、items[0]）
- * 空字符串视为有效表达式
  */
 function isValidModelExpression(exp: string): boolean {
-  if (exp === '') return true;
+  if (exp === '') return false;
   return /^[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*|\[\s*(?:['"][\w$]+['"]|\d+)\s*\])*$/.test(exp);
 }
 

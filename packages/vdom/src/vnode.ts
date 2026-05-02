@@ -9,6 +9,16 @@ import { isString, isArray, isFunction, isObject, isNullish, EMPTY_OBJ } from '@
 import { normalizeClass, normalizeStyleObject as normalizeStyle } from '@lytjs/common-string';
 
 // ============================================================
+// Dev warnings
+// ============================================================
+
+function warnDev(msg: string): void {
+  if (typeof __DEV__ !== 'undefined' && __DEV__) {
+    console.warn(`[LytJS] ${msg}`);
+  }
+}
+
+// ============================================================
 // createVNode
 // ============================================================
 
@@ -23,6 +33,24 @@ export function createVNode(
   dynamicProps: string[] | null = null,
   isBlockNode: boolean = false,
 ): VNode {
+  // __DEV__ mode: runtime type checks for key and ref
+  if (props) {
+    if ('key' in props && props.key != null) {
+      const keyType = typeof props.key;
+      if (keyType !== 'string' && keyType !== 'number' && keyType !== 'symbol') {
+        warnDev(`Invalid value used as key. Expected string, number, or symbol, got ${keyType}.`);
+      }
+    }
+    if ('ref' in props && props.ref != null) {
+      const refVal = props.ref;
+      if (typeof refVal !== 'object' && typeof refVal !== 'function') {
+        warnDev(
+          `Invalid value used as ref. Expected object, function, or null, got ${typeof refVal}.`,
+        );
+      }
+    }
+  }
+
   const vnode: VNode = {
     type,
     props: props ? normalizeProps(props) : null,
@@ -248,9 +276,15 @@ export function getShapeFlag(type: VNodeTypes): number {
 // ============================================================
 
 /**
- * Normalize props: extract key/ref, normalize class/style
+ * Normalize props: extract key/ref, normalize class/style.
+ * If props already has no class/style shorthand properties, return the original object
+ * to avoid unnecessary shallow copies that increase GC pressure.
  */
 function normalizeProps(props: Record<string, unknown>): Record<string, unknown> {
+  // Fast path: if no class/style to normalize, return original object
+  if (props.class === undefined && props.style === undefined) {
+    return props;
+  }
   const normalized = { ...props };
   // class normalization
   if (normalized.class !== undefined) {

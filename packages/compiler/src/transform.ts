@@ -115,11 +115,24 @@ function createTransformContext(root: RootNode, options: TransformOptions): Tran
   const helpers = new Map<string, number>();
   const components = new Set<string>();
   const directives = new Set<string>();
-  let currentNode: RootNode | TemplateChildNode | null = root;
+  const currentNode: RootNode | TemplateChildNode | null = root;
 
-  // Self-referential initialization: context.self is set after the object literal
-  // is created because the object cannot reference itself during construction.
-  // This pattern allows transforms to access the context via context.self.
+  // Use a factory function to avoid self-referential null initialization.
+  // The context object is created via a lazy initializer that receives itself
+  // after construction, eliminating the need for `null as unknown as TransformContext`.
+  const context = createContext(root, options, helpers, components, directives, currentNode);
+  context.self = context;
+  return context;
+}
+
+function createContext(
+  root: RootNode,
+  options: TransformOptions,
+  helpers: Map<string, number>,
+  components: Set<string>,
+  directives: Set<string>,
+  currentNode: RootNode | TemplateChildNode | null,
+): TransformContext {
   const context: TransformContext = {
     self: null as unknown as TransformContext,
     parent: null,
@@ -364,7 +377,11 @@ function collectDynamicChildren(root: RootNode): void {
  * 都能正确追踪其直接动态子节点，避免深层更新时退化为完整 diff。
  */
 function collectDynamicChildrenFromElement(element: ElementNode): void {
-  for (const child of element.children) {
+  // 先过滤掉已移除的节点（null/undefined），再进行操作
+  const validChildren = element.children.filter(
+    (child): child is TemplateChildNode => child != null,
+  );
+  for (const child of validChildren) {
     if (child.type === NodeTypes.ELEMENT) {
       const childElement = child as ElementNode;
 
@@ -375,8 +392,10 @@ function collectDynamicChildrenFromElement(element: ElementNode): void {
           }
         }
         // 递归收集：为子元素自身也建立 dynamicChildren，
-        // 确保嵌套动态节点（如嵌套 v-for）的 Block Tree 完整
-        childElement.dynamicChildren = [];
+        // 确保嵌套动态节点（如嵌套 v-for）的 Block Tree 完整。
+        // 使用合并而非覆盖，保留已有的 dynamicChildren
+        const existing = childElement.dynamicChildren;
+        childElement.dynamicChildren = existing ? [...existing] : [];
         collectDynamicChildrenFromElement(childElement);
       }
     }

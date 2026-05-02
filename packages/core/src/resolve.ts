@@ -9,6 +9,7 @@ import { warn } from '@lytjs/common-error';
  * Common native HTML elements that should not trigger resolution warnings.
  */
 const HTML_ELEMENTS = new Set([
+  // 结构元素
   'div',
   'span',
   'p',
@@ -34,8 +35,7 @@ const HTML_ELEMENTS = new Set([
   'article',
   'main',
   'aside',
-  'template',
-  'slot',
+  // 文本元素
   'br',
   'hr',
   'pre',
@@ -51,9 +51,44 @@ const HTML_ELEMENTS = new Set([
   'sub',
   'sup',
   'label',
+  'abbr',
+  'cite',
+  'dfn',
+  'kbd',
+  'mark',
+  'q',
+  'samp',
+  'var',
+  'wbr',
+  // 表单元素
   'select',
   'option',
   'textarea',
+  'optgroup',
+  'fieldset',
+  'legend',
+  'datalist',
+  'output',
+  'progress',
+  'meter',
+  // 媒体元素
+  'picture',
+  'video',
+  'audio',
+  'source',
+  'track',
+  'canvas',
+  'map',
+  'area',
+  'svg',
+  // 交互元素
+  'details',
+  'summary',
+  'dialog',
+  // 模板/插槽
+  'template',
+  'slot',
+  // 脚本/样式/元数据
   'script',
   'style',
   'link',
@@ -62,6 +97,37 @@ const HTML_ELEMENTS = new Set([
   'head',
   'body',
   'html',
+  'noscript',
+  // 表格子元素
+  'thead',
+  'tbody',
+  'tfoot',
+  'tr',
+  'th',
+  'td',
+  'caption',
+  'colgroup',
+  'col',
+  // 列表子元素
+  'dl',
+  'dt',
+  'dd',
+  // 其他
+  'figure',
+  'figcaption',
+  'iframe',
+  'object',
+  'embed',
+  'param',
+  'time',
+  'data',
+  'ruby',
+  'rt',
+  'rp',
+  'bdi',
+  'bdo',
+  'ins',
+  'del',
 ]);
 
 /**

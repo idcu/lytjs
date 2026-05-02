@@ -11,7 +11,7 @@ import { ReactiveEffect } from './effect';
 import { queuePreFlushCb, queuePostFlushCb } from '@lytjs/common-scheduler';
 import type {
   WatchSource,
-  WatchCallback,
+  WatchCallbackWithImmediate,
   WatchOptions,
   WatchEffectOptions,
   WatchHandle,
@@ -92,9 +92,26 @@ function traverse(value: unknown, seen?: Set<unknown>, depth = 0): unknown {
 
 // ==================== Watch 实现 ====================
 
+/**
+ * 侦听一个或多个响应式数据源，并在数据变化时执行回调。
+ *
+ * @param source - 要侦听的数据源，可以是 ref、reactive 对象、getter 函数，或它们的数组
+ * @param cb - 数据变化时的回调函数
+ * @param options - 侦听选项
+ * @returns 停止侦听的句柄函数
+ *
+ * @remarks
+ * 关于 scheduler 参数签名：
+ * watch 的 scheduler 与 ReactiveEffect 的 scheduler 参数签名不同。
+ * - ReactiveEffect.scheduler: () => void（无参数，由 effect 系统内部调用）
+ * - watch scheduler: (job: () => void, ...args: unknown[]) => unknown
+ *   其中 job 是 watch 内部封装的变更检测+回调执行函数。
+ *   当用户提供 scheduler 时，watch 会将 job 作为第一个参数传入，
+ *   用户可以在 scheduler 中决定何时执行 job（如节流、防抖等）。
+ */
 export function watch<T, Immediate extends Readonly<boolean> = false>(
   source: WatchSource<T> | WatchSource<T>[],
-  cb: WatchCallback<T>,
+  cb: WatchCallbackWithImmediate<T, Immediate>,
   options?: WatchOptions<Immediate>,
 ): WatchHandle {
   const {
@@ -168,7 +185,11 @@ export function watch<T, Immediate extends Readonly<boolean> = false>(
           cleanupFns.forEach((f) => f());
           cleanupFns.length = 0;
         }
-        cb(newValue as T, oldValue as T, onCleanup);
+        cb(
+          newValue as T,
+          oldValue as Immediate extends true ? undefined : T | undefined,
+          onCleanup,
+        );
         oldValue = newValue;
         if (once) {
           isStopped = true;

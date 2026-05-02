@@ -2,11 +2,38 @@
 // v-for 转换逻辑
 
 import { NodeTypes } from '../constants';
-import type { RootNode, TemplateChildNode, ElementNode, TransformContext } from '../types';
+import type {
+  RootNode,
+  TemplateChildNode,
+  ElementNode,
+  TransformContext,
+  VNodeCall,
+  JSCallExpression,
+} from '../types';
 import { createSimpleExpression, createCallExpression, createCompoundExpression } from '../ast';
 import { getExpContent, findDirective } from './helpers';
 import { transformElement } from './transform-element';
 import { warn } from '@lytjs/common-error';
+
+/**
+ * Type guard: check if a codegenNode is a VNodeCall.
+ */
+function isVNodeCall(node: unknown): node is VNodeCall {
+  return (
+    typeof node === 'object' && node !== null && (node as VNodeCall).type === NodeTypes.VNODE_CALL
+  );
+}
+
+/**
+ * Type guard: check if a codegenNode is a JSCallExpression.
+ */
+function isJSCallExpression(node: unknown): node is JSCallExpression {
+  return (
+    typeof node === 'object' &&
+    node !== null &&
+    (node as JSCallExpression).type === NodeTypes.JS_CALL_EXPRESSION
+  );
+}
 
 export function transformFor(node: RootNode | TemplateChildNode, context: TransformContext): void {
   if (node.type !== NodeTypes.ELEMENT) return;
@@ -66,6 +93,13 @@ export function transformFor(node: RootNode | TemplateChildNode, context: Transf
   const codegenNode = element.codegenNode;
   if (!codegenNode) return;
 
+  // Use type guards instead of double type assertions
+  const renderItem = isVNodeCall(codegenNode)
+    ? codegenNode
+    : isJSCallExpression(codegenNode)
+      ? codegenNode
+      : (codegenNode as VNodeCall);
+
   context.helper('RENDER_LIST');
 
   const renderListCall = createCallExpression('RENDER_LIST', [
@@ -73,7 +107,7 @@ export function transformFor(node: RootNode | TemplateChildNode, context: Transf
     createCompoundExpression(
       [
         `(${itemVar}${indexVar ? `, ${indexVar}` : ''}) => `,
-        codegenNode as unknown as TemplateChildNode,
+        renderItem as unknown as TemplateChildNode,
       ],
       forDir.exp.loc,
     ),

@@ -82,6 +82,19 @@ class ComputedRefImpl<T> {
   }
 }
 
+// ==================== SSR 模式管理 ====================
+
+let _isSSR = false;
+
+/**
+ * 设置 SSR 模式。
+ * 在 SSR 环境中调用 setSSRMode(true) 可让 computed 在创建时立即求值，
+ * 避免在服务端渲染时因懒求值导致的不一致问题。
+ */
+export function setSSRMode(isSSR: boolean): void {
+  _isSSR = isSSR;
+}
+
 // ==================== 公共 API ====================
 
 export function computed<T>(
@@ -98,5 +111,5 @@ export function computed<T>(
     setter = getterOrOptions.set;
   }
 
-  return new ComputedRefImpl(getter, setter, false) as ComputedRef<T> | WritableComputedRef<T>;
+  return new ComputedRefImpl(getter, setter, _isSSR) as ComputedRef<T> | WritableComputedRef<T>;
 }

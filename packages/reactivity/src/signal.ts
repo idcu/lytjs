@@ -31,7 +31,21 @@ export interface ReadonlySignal<T = unknown> {
 
 // ==================== Signal 内部标记 ====================
 
+/**
+ * SIGNAL_KEY 是 signal 内部存储值的私有键（Symbol 类型）。
+ *
+ * 架构设计说明：
+ * Signal 的值不直接存储在 signalFn 函数对象上，而是通过一个中间 store 对象间接引用。
+ * 这样做的原因是：
+ * 1. 利用 effect 系统的 track/trigger 机制进行依赖追踪，需要传入一个可被 Proxy 拦截的目标对象。
+ *    函数对象本身不适合作为 Proxy 目标（会影响函数调用行为），因此使用普通对象作为存储载体。
+ * 2. Symbol 键确保值存储对外不可见，避免与函数对象自身的属性冲突。
+ * 3. store 对象作为 track/trigger 的第一个参数，使 effect 系统能正确建立和触发依赖关系。
+ */
 const SIGNAL_KEY = Symbol('signal_value');
+
+// 哨兵值：区分 signalFn 调用时"未传参"和"传入 undefined"
+const NO_VALUE = Symbol('NO_VALUE');
 
 // ==================== Signal 实现 ====================
 
@@ -40,19 +54,20 @@ export function signal<T>(initialValue: T): WritableSignal<T> {
   const store: { [key: symbol]: T } = { [SIGNAL_KEY]: initialValue };
 
   // signalFn 内部实现：重载调用签名，支持读取和写入
-  const signalFn = function signalFn(valueOrNothing?: T): T | void {
-    if (arguments.length > 0) {
-      if (hasChanged(valueOrNothing, store[SIGNAL_KEY])) {
-        // valueOrNothing 的类型由泛型 T 约束，运行时由 hasChanged 保证值比较正确。
+  // 使用 NO_VALUE 哨兵值区分"未传参"（读取）和"传入 undefined"（写入）
+  const signalFn = function signalFn(newValue?: T | typeof NO_VALUE): T | void {
+    if (arguments.length > 0 && newValue !== NO_VALUE) {
+      if (hasChanged(newValue as T, store[SIGNAL_KEY])) {
+        // newValue 的类型由泛型 T 约束，运行时由 hasChanged 保证值比较正确。
         // 此处的 as T 断言是安全的：调用方通过 WritableSignal<T> 的函数签名保证类型一致性。
-        store[SIGNAL_KEY] = valueOrNothing as T;
-        trigger(store, TriggerOpTypes.SET, SIGNAL_KEY, valueOrNothing);
+        store[SIGNAL_KEY] = newValue as T;
+        trigger(store, TriggerOpTypes.SET, SIGNAL_KEY, newValue as T);
       }
       return;
     }
     track(store, TrackOpTypes.GET, SIGNAL_KEY);
     return store[SIGNAL_KEY] as T;
-  } as WritableSignal<T> & ((valueOrNothing?: T) => T | void);
+  } as WritableSignal<T> & ((newValue?: T | typeof NO_VALUE) => T | void);
 
   Object.defineProperty(signalFn, SignalSymbol, { value: true });
   return signalFn;

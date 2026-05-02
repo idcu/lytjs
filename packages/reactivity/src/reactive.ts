@@ -37,9 +37,8 @@ const arrayInstrumentations: Record<string | symbol, (...args: unknown[]) => unk
   const originMethod = Array.prototype[method] as (...args: unknown[]) => unknown;
   arrayInstrumentations[method] = function (this: unknown[], ...args: unknown[]) {
     const arr = toRaw(this);
-    for (let i = 0; i < arr.length; i++) {
-      track(arr, TrackOpTypes.GET, i + '');
-    }
+    // 只追踪数组长度变化，避免大数组时逐索引创建大量依赖
+    track(arr, TrackOpTypes.HAS, 'length');
     const result = originMethod.apply(arr, args);
     if (result === -1 || result === false) {
       return originMethod.apply(
@@ -338,12 +337,12 @@ function createCollectionHandler(isReadonly: boolean, isShallow: boolean): Proxy
               return result;
             };
           }
-        } else if (isShallow) {
-          // Shallow readonly: block mutating methods with warnings
+        } else {
+          // Readonly: block mutating methods with warnings
           if (MUTATING_METHODS.has(key as string)) {
             return (..._args: unknown[]) => {
               if (__DEV__) {
-                warn(`Operation "${String(key)}" failed: target is shallow readonly.`);
+                warn(`Operation "${String(key)}" failed: target is readonly.`);
               }
               // delete 返回 false 以匹配原生 Set.prototype.delete 和 Map.prototype.delete 的
               // 失败返回值语义（表示未执行删除）。其他变异方法（set/add/clear）返回 undefined，

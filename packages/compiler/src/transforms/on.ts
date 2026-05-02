@@ -1,7 +1,7 @@
 // src/transforms/v-on.ts
 // v-on 指令转换逻辑
 
-import type { DirectiveTransform, ExpressionNode, JSProperty, JSChildNode } from '../types';
+import type { DirectiveTransform, ExpressionNode, JSChildNode, Property } from '../types';
 import { getExpContent } from './helpers';
 import { capitalize } from '@lytjs/common-string';
 import {
@@ -13,7 +13,7 @@ import {
 
 export const transformOn: DirectiveTransform = (dir, _node, _context) => {
   const { arg, exp, modifiers } = dir;
-  const props: Array<JSProperty | { key: string; value: string }> = [];
+  const props: Property[] = [];
 
   const argContent = arg ? getExpContent(arg as ExpressionNode) : undefined;
   const expContent = getExpContent(exp);
