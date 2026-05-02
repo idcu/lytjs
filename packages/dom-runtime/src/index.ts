@@ -9,6 +9,37 @@ const isBrowser =
   typeof document !== 'undefined' &&
   typeof HTMLElement !== 'undefined';
 
+// ==================== XSS 防护 ====================
+
+/**
+ * 基础 HTML sanitizer，移除危险标签和属性
+ * 注意：这不是一个完整的 sanitizer，仅提供基础防护
+ * 生产环境建议使用 DOMPurify 等成熟库
+ */
+function sanitizeHTML(html: string): string {
+  // 移除危险标签（含内容）
+  let result = html.replace(
+    /<\s*\/?\s*(script|iframe|object|embed|applet|form)[^>]*>[\s\S]*?<\s*\/\s*\1\s*>/gi,
+    '',
+  );
+  // 移除自闭合的危险标签
+  result = result.replace(
+    /<\s*(script|iframe|object|embed|applet|form|input|textarea|select|button|link|meta)[^>]*\/?>/gi,
+    '',
+  );
+  // 移除事件属性
+  result = result.replace(
+    /\s+on\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]*)/gi,
+    '',
+  );
+  // 移除 srcdoc、formaction、xlink:href
+  result = result.replace(
+    /\s+(srcdoc|formaction|xlink:href)\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]*)/gi,
+    '',
+  );
+  return result;
+}
+
 // ==================== DOM 创建 ====================
 
 /**
@@ -17,7 +48,17 @@ const isBrowser =
  */
 export function createTemplate(html: string): DocumentFragment {
   if (!isBrowser) {
-    return document.createDocumentFragment();
+    // 非浏览器环境返回空 fragment（无法使用 document API）
+    return {
+      nodeType: 11,
+      childNodes: [],
+      children: [],
+      firstChild: null,
+      lastChild: null,
+      appendChild() { return null as unknown as Node; },
+      removeChild() { return null as unknown as Node; },
+      cloneNode() { return this as unknown as DocumentFragment; },
+    } as unknown as DocumentFragment;
   }
   const template = document.createElement('template');
   template.innerHTML = html;
@@ -108,11 +149,12 @@ export function setText(el: Node, value: string): void {
 }
 
 /**
- * 设置元素的 HTML 内容（安全）
+ * 设置元素的 HTML 内容（带 XSS 防护）
+ * 自动过滤危险的 script/iframe 标签和事件属性
  */
 export function setHTML(el: Element, value: string): void {
   if (!isBrowser) return;
-  el.innerHTML = value;
+  el.innerHTML = sanitizeHTML(value);
 }
 
 /**
@@ -377,38 +419,35 @@ export function bindEffect(fn: () => void): () => void {
 /**
  * 批量执行 DOM 操作（减少重排）
  *
- * 使用 DocumentFragment 批量操作，减少浏览器重排次数
+ * 使用 requestAnimationFrame 或微任务批量合并 DOM 操作
  */
 export function batchDOM(fn: () => void): void {
   if (!isBrowser) {
     fn();
     return;
   }
-  // 创建一个临时容器来批量收集 DOM 操作
-  const fragment = document.createDocumentFragment();
-  const container = document.createElement('div');
-  fragment.appendChild(container);
-
-  // 执行用户函数，所有对 container 的子节点操作都在 fragment 中
-  fn();
-
-  // 注意：batchDOM 本身不做特殊优化，
-  // 因为 DOM 操作已经通过 DocumentFragment 在 reconcileArray 中优化
-  // 这里主要作为语义化的批量操作入口
+  // 使用微任务延迟执行，合并同一 tick 内的多次 DOM 操作
+  Promise.resolve().then(fn);
 }
 
 // ==================== 卸载 ====================
 
 export type CleanupFn = () => void;
 
-/** 清理函数栈 */
+/** 清理函数栈（模块级，用于简单场景） */
 const cleanupStack: CleanupFn[] = [];
 
+/** 当前活跃的清理栈，支持嵌套作用域 */
+let activeCleanupStack: CleanupFn[] | null = null;
+
 /**
- * 注册清理函数
+ * 注册清理函数到当前活跃的清理栈
+ * 如果有活跃的清理栈（通过 createCleanupScope 创建），则注册到该栈
+ * 否则注册到全局清理栈
  */
 export function onCleanup(fn: CleanupFn): void {
-  cleanupStack.push(fn);
+  const stack = activeCleanupStack ?? cleanupStack;
+  stack.push(fn);
 }
 
 /**
@@ -416,7 +455,8 @@ export function onCleanup(fn: CleanupFn): void {
  * 即使某个函数抛出异常，也会继续执行后续函数
  */
 export function runCleanups(): void {
-  const fns = cleanupStack.splice(0, cleanupStack.length);
+  const stack = activeCleanupStack ?? cleanupStack;
+  const fns = stack.splice(0, stack.length);
   const errors: unknown[] = [];
   for (const fn of fns) {
     try {
@@ -428,4 +468,28 @@ export function runCleanups(): void {
   if (errors.length > 0) {
     throw errors[0];
   }
+}
+
+/**
+ * 创建一个隔离的清理作用域
+ * 在 scope 内注册的 onCleanup 只会被 scope 的 dispose 清理
+ * 避免多个渲染器实例之间的清理函数互相干扰
+ */
+export function createCleanupScope(): { dispose: () => void } {
+  const scopeStack: CleanupFn[] = [];
+  const prevStack = activeCleanupStack;
+  activeCleanupStack = scopeStack;
+  return {
+    dispose() {
+      activeCleanupStack = prevStack;
+      const fns = scopeStack.splice(0, scopeStack.length);
+      for (const fn of fns) {
+        try {
+          fn();
+        } catch {
+          // 静默忽略清理错误
+        }
+      }
+    },
+  };
 }

@@ -190,13 +190,74 @@ function extractRenderBody(code: string): string | null {
 
   const startIndex = funcMatch.index! + funcMatch[0]!.length;
 
-  // 找到匹配的闭合花括号
+  // 找到匹配的闭合花括号，跳过字符串和注释中的花括号
   let depth = 1;
   let i = startIndex;
   while (i < code.length && depth > 0) {
-    if (code[i] === '{') {
+    const ch = code[i]!;
+
+    // 跳过单引号字符串
+    if (ch === "'") {
+      i++;
+      while (i < code.length && code[i] !== "'") {
+        if (code[i] === '\\') i++; // 跳过转义字符
+        i++;
+      }
+      i++;
+      continue;
+    }
+
+    // 跳过双引号字符串
+    if (ch === '"') {
+      i++;
+      while (i < code.length && code[i] !== '"') {
+        if (code[i] === '\\') i++; // 跳过转义字符
+        i++;
+      }
+      i++;
+      continue;
+    }
+
+    // 跳过模板字符串
+    if (ch === '`') {
+      i++;
+      while (i < code.length && code[i] !== '`') {
+        if (code[i] === '\\') i++; // 跳过转义字符
+        if (code[i] === '$' && code[i + 1] === '{') {
+          // 模板字符串中的 ${} 表达式，递增 depth
+          i += 2;
+          depth++;
+          continue;
+        }
+        i++;
+      }
+      i++;
+      continue;
+    }
+
+    // 跳过单行注释
+    if (ch === '/' && code[i + 1] === '/') {
+      i += 2;
+      while (i < code.length && code[i] !== '\n') {
+        i++;
+      }
+      i++;
+      continue;
+    }
+
+    // 跳过多行注释
+    if (ch === '/' && code[i + 1] === '*') {
+      i += 2;
+      while (i < code.length && !(code[i] === '*' && code[i + 1] === '/')) {
+        i++;
+      }
+      i += 2;
+      continue;
+    }
+
+    if (ch === '{') {
       depth++;
-    } else if (code[i] === '}') {
+    } else if (ch === '}') {
       depth--;
     }
     i++;

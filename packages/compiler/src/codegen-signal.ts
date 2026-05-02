@@ -126,10 +126,8 @@ export function generateSignal(
 
   // ---- Phase 1: Generate imports ----
   lines.push(
-    `import { effect, reconcileArray } from '@lytjs/reactivity';`,
-  );
-  lines.push(
-    `import { createTemplate, setText, setHTML, setAttribute, setProperty, setStyle, setClass, insert, remove, createEventHandler, onCleanup } from '@lytjs/dom-runtime';`,
+    `import { effect } from '@lytjs/reactivity';`,
+    `import { createTemplate, setText, setHTML, setAttribute, setProperty, setStyle, setClass, insert, remove, createEventHandler, onCleanup, reconcileArray } from '@lytjs/dom-runtime';`,
   );
   lines.push('');
 
@@ -148,7 +146,7 @@ export function generateSignal(
   if (elementVars.length > 0) {
     // 找到根元素变量名
     const rootVar = elementVars[0]!.varName;
-    lines.push(`  const ${rootVar} = createTemplate('${staticHTML}');`);
+    lines.push(`  const ${rootVar} = createTemplate(${JSON.stringify(staticHTML)});`);
 
     // 解构子元素
     if (elementVars.length > 1) {
@@ -539,17 +537,18 @@ function processDirective(
     case 'on': {
       if (argContent && expContent) {
         usedImports.add('addEventListener');
+        usedImports.add('onCleanup');
         if (dir.modifiers.length > 0) {
           usedImports.add('createEventHandler');
           const mods = dir.modifiers.map((m) => `${m}: true`).join(', ');
           dynamicBindings.push({
             varName,
-            code: `createEventHandler(${varName}, '${argContent}', _ctx.${expContent}, { ${mods} });`,
+            code: `onCleanup(createEventHandler(${varName}, '${argContent}', _ctx.${expContent}, { ${mods} }));`,
           });
         } else {
           dynamicBindings.push({
             varName,
-            code: `${varName}.addEventListener('${argContent}', _ctx.${expContent});`,
+            code: `onCleanup(addEventListener(${varName}, '${argContent}', _ctx.${expContent}));`,
           });
         }
       }
@@ -559,13 +558,15 @@ function processDirective(
     case 'model': {
       if (expContent) {
         usedImports.add('effect');
+        usedImports.add('onCleanup');
+        usedImports.add('addEventListener');
         dynamicBindings.push({
           varName,
           code: `effect(() => { ${varName}.value = _ctx.${expContent}; });`,
         });
         dynamicBindings.push({
           varName,
-          code: `${varName}.addEventListener('input', ($e) => { _ctx.${expContent} = $e.target.value; });`,
+          code: `onCleanup(addEventListener(${varName}, 'input', ($e) => { _ctx.${expContent} = $e.target.value; }));`,
         });
       }
       break;
