@@ -64,12 +64,35 @@ export function createDOMRenderer(): DOMRenderer {
 
   const renderer = createRenderer(options);
 
+  const cleanupVNodeResources = (vnode: VNode): void => {
+    if (vnode.component) {
+      const cleanupRenderer: ResourceCleanupRenderer = {
+        removeEventListener(
+          el: unknown,
+          event: string,
+          handler: (...args: unknown[]) => void,
+          options?: unknown,
+        ): void {
+          if (el instanceof EventTarget) {
+            el.removeEventListener(
+              event,
+              handler as EventListener,
+              options as EventListenerOptions,
+            );
+          }
+        },
+      };
+      cleanupComponentResources(cleanupRenderer, vnode.component);
+    }
+  };
+
   return {
     render(vnode: VNode | null, container: Element): void {
       if (vnode == null) {
         // Unmount: trigger lifecycle hooks before clearing DOM
         const existing = vnodeMap.get(container);
         if (existing) {
+          cleanupVNodeResources(existing);
           renderer.unmount(existing);
           vnodeMap.delete(container);
         }
@@ -101,17 +124,7 @@ export function createDOMRenderer(): DOMRenderer {
     },
     patch: renderer.patch,
     unmount(vnode: VNode): void {
-      // 在卸载前清理组件注册资源
-      if (vnode.component) {
-        const cleanupRenderer: ResourceCleanupRenderer = {
-          removeEventListener(el: unknown, event: string, handler: (...args: unknown[]) => void): void {
-            if (el instanceof EventTarget) {
-              el.removeEventListener(event, handler as EventListener);
-            }
-          },
-        };
-        cleanupComponentResources(cleanupRenderer, vnode.component);
-      }
+      cleanupVNodeResources(vnode);
       renderer.unmount(vnode);
     },
     mount: renderer.mount,

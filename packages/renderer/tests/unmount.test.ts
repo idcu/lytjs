@@ -27,7 +27,12 @@ describe('unmount - 组件资源自动清理', () => {
       registerComponentEventListener(component, el, 'click', handler);
       cleanupComponentResources(mockRenderer, component);
 
-      expect(mockRenderer.removeEventListener).toHaveBeenCalledWith(el, 'click', handler);
+      expect(mockRenderer.removeEventListener).toHaveBeenCalledWith(
+        el,
+        'click',
+        handler,
+        undefined,
+      );
     });
 
     it('应支持传入 options', () => {
@@ -39,7 +44,7 @@ describe('unmount - 组件资源自动清理', () => {
       registerComponentEventListener(component, el, 'click', handler, options);
       cleanupComponentResources(mockRenderer, component);
 
-      expect(mockRenderer.removeEventListener).toHaveBeenCalledWith(el, 'click', handler);
+      expect(mockRenderer.removeEventListener).toHaveBeenCalledWith(el, 'click', handler, options);
     });
 
     it('应支持同一组件注册多个事件监听器', () => {
@@ -115,7 +120,9 @@ describe('unmount - 组件资源自动清理', () => {
 
     it('单个清理失败不应阻断其余清理流程', () => {
       const component = {};
-      const cleanup1 = vi.fn(() => { throw new Error('cleanup error'); });
+      const cleanup1 = vi.fn(() => {
+        throw new Error('cleanup error');
+      });
       const cleanup2 = vi.fn();
       const dispose = vi.fn();
 
@@ -162,7 +169,9 @@ describe('unmount - 组件资源自动清理', () => {
 
     it('effect dispose 失败不应阻断事件监听器清理', () => {
       const component = {};
-      const dispose = vi.fn(() => { throw new Error('effect error'); });
+      const dispose = vi.fn(() => {
+        throw new Error('effect error');
+      });
 
       registerComponentEffectSubscription(component, dispose);
       registerComponentEventListener(component, {}, 'click', vi.fn());

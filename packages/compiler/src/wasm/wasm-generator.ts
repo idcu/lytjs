@@ -8,7 +8,7 @@ import { transform } from '../transform';
 import { generate } from '../codegen';
 import { generateSSR } from '../codegen-ssr';
 import { NodeTypes } from '../constants';
-import type { RootNode, ElementNode, TemplateChildNode } from '../types';
+import type { ElementNode, TemplateChildNode, RootNode, TransformOptions } from '../types';
 import type { WASMGenerateOptions } from './wasm-compiler';
 
 // ============================================================
@@ -18,14 +18,12 @@ import type { WASMGenerateOptions } from './wasm-compiler';
 /**
  * 从模板源码生成渲染函数代码。
  */
-export function generateRenderCode(
-  source: string,
-  options: WASMGenerateOptions = {},
-): string {
-  const { mode = 'module', prefix = '', ssr = false } = options as any;
+export function generateRenderCode(source: string, options: WASMGenerateOptions = {}): string {
+  const { mode = 'module', prefix = '' } = options;
+  const ssr = (options as unknown as { ssr?: boolean }).ssr ?? false;
 
   const root = parse(source);
-  transform(root, { ssr } as any);
+  transform(root, { ssr } as TransformOptions);
 
   let code: string;
   if (ssr) {
@@ -57,29 +55,29 @@ export function generateHoistedCode(source: string): string {
   const lines: string[] = [];
   for (let i = 0; i < root.hoists.length; i++) {
     const hoistedNode = root.hoists[i];
-    const result = generate(createRootWithCodegen([hoistedNode as TemplateChildNode]), {
-      sourceMap: false,
-    });
+    // 为每个 hoisted 节点创建独立的 RootNode
+    const hoistRoot = {
+      type: NodeTypes.ROOT,
+      children: [],
+      helpers: [],
+      components: [],
+      directives: [],
+      hoists: [],
+      codegenNode: hoistedNode,
+      imports: [],
+      cached: 0,
+      temps: 0,
+      loc: {
+        start: { line: 1, column: 1, offset: 0 },
+        end: { line: 1, column: 1, offset: 0 },
+        source: '',
+      },
+    };
+    const result = generate(hoistRoot as RootNode, { sourceMap: false });
     lines.push(`const _hoisted_${i + 1} = ${result.code.trim()}`);
   }
 
   return lines.join('\n');
-}
-
-function createRootWithCodegen(children: TemplateChildNode[]): RootNode {
-  return {
-    type: NodeTypes.ROOT,
-    children: [],
-    helpers: [],
-    components: [],
-    directives: [],
-    hoists: [],
-    codegenNode: children[0] as any,
-    imports: [],
-    cached: 0,
-    temps: 0,
-    loc: { start: { line: 1, column: 1, offset: 0 }, end: { line: 1, column: 1, offset: 0 }, source: '' },
-  };
 }
 
 // ============================================================
@@ -98,8 +96,8 @@ export function generatePatchFlags(source: string): Record<string, number> {
   function walk(node: TemplateChildNode, path: string): void {
     if (node.type === NodeTypes.ELEMENT) {
       const el = node as ElementNode;
-      if ((el as any).patchFlag && (el as any).patchFlag !== 0) {
-        flags[path] = (el as any).patchFlag;
+      if (el.patchFlag && el.patchFlag !== 0) {
+        flags[path] = el.patchFlag;
       }
       el.children.forEach((child, index) => {
         walk(child, `${el.tag}.${index}`);

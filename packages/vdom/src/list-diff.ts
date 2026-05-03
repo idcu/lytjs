@@ -17,37 +17,37 @@ import { getSequence } from '@lytjs/common-algorithm';
  * DOM 操作函数集合。
  * diff 算法通过此接口与平台操作解耦，具体实现由渲染器在初始化时注入。
  */
-export interface DOMOperations {
+export interface DOMOperations<HostNodeType = unknown, SuspenseType = unknown> {
   /** 插入节点到容器中指定锚点前 */
-  insert(child: VNode, container: any, anchor: any): void;
+  insert(child: VNode, container: HostNodeType, anchor: HostNodeType): void;
   /** 创建元素节点 */
-  createElement(type: string): any;
+  createElement(type: string): HostNodeType;
   /** 挂载 VNode 到容器 */
-  mount(vnode: VNode, container: any, anchor: any): void;
+  mount(vnode: VNode, container: HostNodeType, anchor: HostNodeType): void;
   /** 对比更新两个 VNode */
   patch(
     n1: VNode | null,
     n2: VNode,
-    container: any,
-    anchor: any,
+    container: HostNodeType,
+    anchor: HostNodeType,
     parentComponent: ComponentInternalInstance | null,
-    parentSuspense: any,
+    parentSuspense: SuspenseType,
     isSVG: boolean,
   ): void;
   /** 卸载 VNode */
   unmount(
     vnode: VNode,
     parentComponent: ComponentInternalInstance | null,
-    parentSuspense: any,
+    parentSuspense: SuspenseType,
     doRemove: boolean,
   ): void;
   /** 移动 VNode 到新位置 */
   move(
     vnode: VNode,
-    container: any,
-    anchor: any,
+    container: HostNodeType,
+    anchor: HostNodeType,
     parentComponent: ComponentInternalInstance | null,
-    parentSuspense: any,
+    parentSuspense: SuspenseType,
   ): void;
 }
 
@@ -56,16 +56,26 @@ export interface DOMOperations {
 // ============================================================
 
 /** 模块级 DOM 操作实例，由渲染器初始化时注入 */
-let registeredDOMOps: DOMOperations | null = null;
+let registeredDOMOps: DOMOperations<unknown, unknown> | null = null;
+
+const __DEV__ = process.env.NODE_ENV !== 'production';
 
 /**
  * 注册 DOM 操作实现。
  * 应在渲染器初始化时调用一次，将平台相关的 DOM 操作注入到 diff 模块中。
  */
-export function registerDOMOperations(ops: DOMOperations): void {
+export function registerDOMOperations<HostNodeType = unknown, SuspenseType = unknown>(
+  ops: DOMOperations<HostNodeType, SuspenseType>,
+): void {
   if (!ops) {
     throw new Error(
       '[lytjs/list-diff] registerDOMOperations requires a valid DOMOperations object',
+    );
+  }
+  if (__DEV__ && registeredDOMOps !== null && registeredDOMOps !== ops) {
+    console.warn(
+      '[lytjs/list-diff] DOMOperations already registered. Overwriting previous registration. ' +
+        'This may cause issues in multi-renderer scenarios.',
     );
   }
   registeredDOMOps = ops;
@@ -91,10 +101,11 @@ function getDOMOps(): DOMOperations {
 
 /**
  * 内联的 VNode 类型比较函数。
- * 在 diff 热路径中使用，避免外部函数调用开销。
+ * ⚠️ 必须与 @lytjs/common-vnode 中的 isSameVNodeType 保持同步。
+ * 使用 Object.is 替代 === 以正确处理 NaN 等边界情况。
  */
 function sameVNodeType(a: VNode, b: VNode): boolean {
-  return a.type === b.type && a.key === b.key;
+  return Object.is(a.type, b.type) && Object.is(a.key, b.key);
 }
 
 // ============================================================
@@ -114,11 +125,11 @@ function sameVNodeType(a: VNode, b: VNode): boolean {
 export function patchKeyedChildren(
   c1: VNode[],
   c2: VNode[],
-  container: any,
+  container: unknown,
   parentComponent: ComponentInternalInstance | null,
-  parentSuspense: any,
+  parentSuspense: unknown,
   isSVG: boolean,
-  fallbackAnchor: any = null,
+  fallbackAnchor: unknown = null,
 ): void {
   const ops = getDOMOps();
   let i = 0;
@@ -141,7 +152,17 @@ export function patchKeyedChildren(
     }
     if (fastPathMatch) {
       for (let fi = 0; fi < oldLength; fi++) {
-        ops.patch(c1[fi]!, c2[fi]!, container, null, parentComponent, parentSuspense, isSVG);
+        const nextIdx = fi + 1;
+        const anchor = nextIdx < oldLength ? c2[nextIdx]?.el : null;
+        ops.patch(
+          c1[fi]!,
+          c2[fi]!,
+          container,
+          anchor ?? fallbackAnchor,
+          parentComponent,
+          parentSuspense,
+          isSVG,
+        );
       }
       return;
     }
@@ -287,9 +308,7 @@ export function patchKeyedChildren(
 
     // 5.3 仅在发生移动时计算 LIS
     // getSequence 接受普通数组，需要从 Int32Array 转换
-    const increasingNewIndexSequence = moved
-      ? getSequence(Array.from(newIndexToOldIndexMap))
-      : [];
+    const increasingNewIndexSequence = moved ? getSequence(Array.from(newIndexToOldIndexMap)) : [];
 
     j = increasingNewIndexSequence.length - 1;
 
@@ -328,11 +347,11 @@ export function patchKeyedChildren(
 export function patchUnkeyedChildren(
   c1: VNode[],
   c2: VNode[],
-  container: any,
+  container: unknown,
   parentComponent: ComponentInternalInstance | null,
-  parentSuspense: any,
+  parentSuspense: unknown,
   isSVG: boolean,
-  fallbackAnchor: any = null,
+  fallbackAnchor: unknown = null,
 ): void {
   const ops = getDOMOps();
   const l1 = c1.length;

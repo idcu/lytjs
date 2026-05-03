@@ -279,6 +279,26 @@ describe('patch-events', () => {
       el.click();
       expect(handler).toHaveBeenCalledTimes(1);
     });
+
+    it('should pass capture option to removeEventListener', () => {
+      const handler = vi.fn();
+      const addSpy = vi.spyOn(el, 'addEventListener');
+      const removeSpy = vi.spyOn(el, 'removeEventListener');
+
+      patchEvent(el, 'onClick.capture', handler);
+
+      // addEventListener 应被调用且包含 capture: true
+      expect(addSpy).toHaveBeenCalledWith('click', expect.any(Function), { capture: true });
+
+      // 移除
+      patchEvent(el, 'onClick.capture', null);
+
+      // removeEventListener 应传递 capture: true
+      expect(removeSpy).toHaveBeenCalledWith('click', expect.any(Function), { capture: true });
+
+      addSpy.mockRestore();
+      removeSpy.mockRestore();
+    });
   });
 
   // ----------------------------------------------------------

@@ -29,7 +29,9 @@ export interface ParsedEvent {
 /** 事件 invoker 函数，持有 value 属性用于更新 */
 export interface EventInvoker extends EventListener {
   /** 当前绑定的事件处理函数，更新时直接替换此属性 */
-  value: Function | null;
+  value: ((...args: unknown[]) => void) | null;
+  /** @internal 解析后的事件修饰符 */
+  _parsed?: ParsedEvent;
 }
 
 // ============================================================
@@ -38,6 +40,9 @@ export interface EventInvoker extends EventListener {
 
 /** el._vei 缓存 key */
 const VEI_KEY = '_vei';
+
+/** el._vei 缓存类型 */
+type InvokerCache = Record<string, EventInvoker | undefined>;
 
 /** 事件修饰符匹配正则（支持多个修饰符） */
 const EVENT_MODIFIER_RE = /\.(stop|prevent|capture|once|self|passive)(?=\.|$)/g;
@@ -54,7 +59,7 @@ export function normalizeEventName(rawName: string): string {
   // 移除 @ 前缀
   let name = rawName.startsWith('@') ? rawName.slice(1) : rawName;
   // 移除 on 前缀（仅当以大写字母开头的 on 前缀时）
-  if (name.startsWith('on') && name.length > 2 && name[2]! === name[2]!.toUpperCase()) {
+  if (name.startsWith('on') && name.length > 2 && /^[A-Za-z]$/.test(name[2]!)) {
     name = name.slice(2);
   }
   // 移除修饰符后缀（如 .stop.prevent）
@@ -130,10 +135,10 @@ export function parseEventModifier(rawName: string): ParsedEvent {
  * 创建事件 invoker 函数。
  * invoker 是一个持有 value 属性的闭包，调用时执行 invoker.value(event)。
  */
-export function createInvoker(initialValue: Function): EventInvoker {
+export function createInvoker(initialValue: (...args: unknown[]) => void): EventInvoker {
   const invoker = ((e: Event) => {
     // 处理修饰符
-    const parsed = (invoker as any)._parsed as ParsedEvent | undefined;
+    const parsed = invoker._parsed;
     if (parsed) {
       if (parsed.stop) e.stopPropagation();
       if (parsed.prevent) e.preventDefault();
@@ -163,9 +168,9 @@ export function createInvoker(initialValue: Function): EventInvoker {
 export function patchEvent(
   el: Element,
   rawName: string,
-  nextValue: Function | null,
-  _prevValue?: Function | null,
-  _instance?: any,
+  nextValue: ((...args: unknown[]) => void) | null,
+  _prevValue?: ((...args: unknown[]) => void) | null,
+  _instance?: unknown,
 ): void {
   // 兼容现有 common-events 的对象格式 { handler, capture, ... }
   const actualNextValue = extractHandler(nextValue);
@@ -174,9 +179,9 @@ export function patchEvent(
   const parsed = parseEventModifier(rawName);
 
   // 获取或创建 el._vei 缓存
-  let invokers = (el as any)[VEI_KEY];
+  let invokers = (el as unknown as Record<string, InvokerCache>)[VEI_KEY];
   if (!invokers) {
-    invokers = (el as any)[VEI_KEY] = {};
+    invokers = (el as unknown as Record<string, InvokerCache>)[VEI_KEY] = {};
   }
 
   const existingInvoker = invokers[eventKey] as EventInvoker | undefined;
@@ -187,15 +192,20 @@ export function patchEvent(
   } else if (actualNextValue && !existingInvoker) {
     // 情况 2：有新值 + 无旧 invoker → 创建并绑定
     const invoker = createInvoker(actualNextValue);
-    (invoker as any)._parsed = parsed;
+    invoker._parsed = parsed;
     invokers[eventKey] = invoker;
 
     // 构建 AddEventListenerOptions
-    const options: AddEventListenerOptions | boolean | undefined = buildEventListenerOptions(parsed);
+    const options: AddEventListenerOptions | boolean | undefined =
+      buildEventListenerOptions(parsed);
     el.addEventListener(parsed.name, invoker, options);
   } else if (!actualNextValue && existingInvoker) {
     // 情况 3：无新值 + 有旧 invoker → 移除
-    el.removeEventListener(parsed.name, existingInvoker);
+    el.removeEventListener(
+      parsed.name,
+      existingInvoker,
+      parsed.capture ? { capture: true } : undefined,
+    );
     invokers[eventKey] = undefined;
   }
   // 情况 4：无新值 + 无旧 invoker → 无操作
@@ -210,19 +220,19 @@ export function patchEvent(
  * 用于组件卸载时的清理。
  */
 export function removeAllEventListeners(el: Element): void {
-  const invokers = (el as any)[VEI_KEY];
+  const invokers = (el as unknown as Record<string, InvokerCache>)[VEI_KEY];
   if (!invokers) return;
 
   for (const eventKey in invokers) {
     const invoker = invokers[eventKey] as EventInvoker | undefined;
     if (invoker) {
-      const parsed = (invoker as any)._parsed as ParsedEvent | undefined;
+      const parsed = invoker._parsed;
       const eventName = parsed?.name ?? normalizeEventName(eventKey);
-      el.removeEventListener(eventName, invoker);
+      el.removeEventListener(eventName, invoker, parsed?.capture ? { capture: true } : undefined);
     }
   }
 
-  delete (el as any)[VEI_KEY];
+  delete (el as unknown as Record<string, InvokerCache>)[VEI_KEY];
 }
 
 // ============================================================
@@ -233,10 +243,13 @@ export function removeAllEventListeners(el: Element): void {
  * 从值中提取事件处理函数。
  * 兼容直接函数和 { handler, capture, ... } 对象格式。
  */
-function extractHandler(value: Function | null): Function | null {
+function extractHandler(
+  value: ((...args: unknown[]) => void) | null,
+): ((...args: unknown[]) => void) | null {
   if (typeof value === 'function') return value;
   if (value != null && typeof value === 'object' && 'handler' in value) {
-    return (value as any).handler as Function;
+    const handler = (value as unknown as Record<string, unknown>).handler;
+    return typeof handler === 'function' ? (handler as (...args: unknown[]) => void) : null;
   }
   return null;
 }

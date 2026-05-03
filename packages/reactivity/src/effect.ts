@@ -4,6 +4,8 @@
 import { ITERATE_KEY } from './constants';
 import type { ReactiveEffectRunner } from './types';
 import { warn, error } from '@lytjs/common-error';
+import { __DEV__ } from './shared/types';
+import { _isSignalUntracked } from './signal';
 
 // ==================== 全局状态 ====================
 
@@ -90,12 +92,9 @@ const MAX_TRIGGER_DEPTH = 100;
 let triggerDepth = 0;
 
 export function track(target: object, _type: string, key: string | symbol) {
-  // 首次渲染优化：跳过依赖收集
-  if (shouldSkipTracking()) {
-    skippedTrackingCount++;
-    return;
-  }
   if (!shouldTrack || activeEffect === undefined) return;
+  // signal untrack 桥接：signalUntrack 期间跳过 effect 系统的依赖收集
+  if (_isSignalUntracked()) return;
 
   let depsMap = targetMap.get(target);
   if (!depsMap) {

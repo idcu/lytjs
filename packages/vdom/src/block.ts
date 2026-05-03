@@ -131,7 +131,7 @@ export function isBlock(vnode: VNode): vnode is Block {
  * 获取当前 Block 的 dynamicChildren 数组
  */
 export function getCurrentBlock(): VNode[] | null {
-  return currentBlock;
+  return currentBlock ? [...currentBlock] : null;
 }
 
 /**
