@@ -13,6 +13,53 @@ const targetMap = new WeakMap<object, Map<string | symbol, Dep>>();
 let shouldTrack = true;
 const trackStack: boolean[] = [];
 
+// ==================== 首次渲染优化 ====================
+
+/** 标记当前是否处于首次渲染优化期间 */
+let isFirstRenderPass = false;
+
+/** 记录被跳过的追踪次数（用于调试和测试验证） */
+let skippedTrackingCount = 0;
+
+/**
+ * 包裹首次渲染过程，期间禁用响应式依赖收集。
+ * 支持嵌套调用：如果外层已经处于首次渲染优化期间，
+ * 内层调用不会提前重置标志位。
+ */
+export function withFirstRenderOptimization<T>(fn: () => T): T {
+  const wasFirstRender = isFirstRenderPass;
+  isFirstRenderPass = true;
+  try {
+    return fn();
+  } finally {
+    if (!wasFirstRender) {
+      isFirstRenderPass = false;
+    }
+  }
+}
+
+/**
+ * 检查当前是否应跳过响应式依赖收集。
+ * 在 withFirstRenderOptimization 执行期间返回 true。
+ */
+export function shouldSkipTracking(): boolean {
+  return isFirstRenderPass;
+}
+
+/**
+ * 获取被跳过的追踪次数（用于调试和测试）。
+ */
+export function getSkippedTrackingCount(): number {
+  return skippedTrackingCount;
+}
+
+/**
+ * 重置被跳过的追踪计数（用于测试）。
+ */
+export function resetSkippedTrackingCount(): void {
+  skippedTrackingCount = 0;
+}
+
 // 只读访问器，防止外部修改内部状态
 export function getActiveEffect(): ReactiveEffect | undefined {
   return activeEffect;
@@ -43,6 +90,11 @@ const MAX_TRIGGER_DEPTH = 100;
 let triggerDepth = 0;
 
 export function track(target: object, _type: string, key: string | symbol) {
+  // 首次渲染优化：跳过依赖收集
+  if (shouldSkipTracking()) {
+    skippedTrackingCount++;
+    return;
+  }
   if (!shouldTrack || activeEffect === undefined) return;
 
   let depsMap = targetMap.get(target);
@@ -68,6 +120,11 @@ export function track(target: object, _type: string, key: string | symbol) {
 }
 
 export function trackEffect(dep: Dep) {
+  // 首次渲染优化：跳过依赖收集
+  if (shouldSkipTracking()) {
+    skippedTrackingCount++;
+    return;
+  }
   if (!shouldTrack || activeEffect === undefined) return;
   if (!dep.has(activeEffect)) {
     dep.add(activeEffect);
