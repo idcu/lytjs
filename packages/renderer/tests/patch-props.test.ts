@@ -6,8 +6,8 @@ import {
   patchStyle,
   patchEvent,
   patchAttr,
-  isOn,
 } from '../src/dom/patch-props';
+import { isOn } from '@lytjs/common-events';
 import { isBooleanAttr } from '../src/utils';
 
 describe('patch-props', () => {
@@ -91,15 +91,15 @@ describe('patch-props', () => {
   describe('patchEvent', () => {
     it('should add event listener', () => {
       const handler = vi.fn();
-      patchEvent(el, 'onClick', null, handler);
+      patchEvent(el, 'onClick', handler);
       el.click();
       expect(handler).toHaveBeenCalledTimes(1);
     });
 
     it('should remove event listener when next is null', () => {
       const handler = vi.fn();
-      patchEvent(el, 'onClick', null, handler);
-      patchEvent(el, 'onClick', handler, null);
+      patchEvent(el, 'onClick', handler);
+      patchEvent(el, 'onClick', null);
       el.click();
       expect(handler).not.toHaveBeenCalled();
     });
@@ -107,11 +107,49 @@ describe('patch-props', () => {
     it('should replace event listener', () => {
       const handler1 = vi.fn();
       const handler2 = vi.fn();
-      patchEvent(el, 'onClick', null, handler1);
-      patchEvent(el, 'onClick', handler1, handler2);
+      patchEvent(el, 'onClick', handler1);
+      patchEvent(el, 'onClick', handler2);
       el.click();
       expect(handler1).not.toHaveBeenCalled();
       expect(handler2).toHaveBeenCalledTimes(1);
+    });
+
+    it('should cache invoker on el._vei when adding event', () => {
+      const handler = vi.fn();
+      patchEvent(el, 'onClick', handler);
+      expect((el as any)._vei).toBeDefined();
+      expect((el as any)._vei.onClick).toBeDefined();
+      expect((el as any)._vei.onClick.value).toBe(handler);
+    });
+
+    it('should only replace invoker.value when updating event (no DOM re-bind)', () => {
+      const handler1 = vi.fn();
+      const handler2 = vi.fn();
+      const addSpy = vi.spyOn(el, 'addEventListener');
+      const removeSpy = vi.spyOn(el, 'removeEventListener');
+
+      patchEvent(el, 'onClick', handler1);
+      const addCountAfterFirst = addSpy.mock.calls.length;
+
+      patchEvent(el, 'onClick', handler2);
+
+      // 不应再次调用 addEventListener 或 removeEventListener
+      expect(addSpy.mock.calls.length).toBe(addCountAfterFirst);
+      expect(removeSpy).not.toHaveBeenCalled();
+
+      // handler2 应生效
+      el.click();
+      expect(handler2).toHaveBeenCalledTimes(1);
+
+      addSpy.mockRestore();
+      removeSpy.mockRestore();
+    });
+
+    it('should clear el._vei entry when removing event', () => {
+      const handler = vi.fn();
+      patchEvent(el, 'onClick', handler);
+      patchEvent(el, 'onClick', null);
+      expect((el as any)._vei.onClick).toBeUndefined();
     });
   });
 
