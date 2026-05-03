@@ -9,10 +9,20 @@ export default defineConfig({
   splitting: false,
   treeshake: true,
   minify: false,
+  define: {
+    __DEV__: 'false',
+  },
   outExtension({ format }) {
     return {
       js: format === 'cjs' ? '.cjs' : '.mjs',
     };
   },
-  external: ['@lytjs/common-is', '@lytjs/common-env', '@lytjs/common-error'],
+  external: [
+    '@lytjs/common-is',
+    '@lytjs/common-env',
+    '@lytjs/common-error',
+    '@lytjs/common-vnode',
+    '@lytjs/common-string',
+    '@lytjs/shared-types',
+  ],
 });

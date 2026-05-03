@@ -7,7 +7,6 @@
 import { SignalSymbol, ComputedSignalSymbol, TrackOpTypes, TriggerOpTypes } from './constants';
 import { track, trigger } from './effect';
 import type { Subscriber } from './shared/types';
-import { __DEV__ } from './shared/types';
 
 // ============================================================
 // Types

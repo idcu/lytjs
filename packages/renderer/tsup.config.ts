@@ -13,6 +13,9 @@ export default defineConfig({
   splitting: false,
   treeshake: true,
   minify: false,
+  define: {
+    __DEV__: 'false',
+  },
   outExtension({ format }) {
     return {
       js: format === 'cjs' ? '.cjs' : '.mjs',
@@ -25,5 +28,10 @@ export default defineConfig({
     '@lytjs/common-env',
     '@lytjs/common-scheduler',
     '@lytjs/common-error',
+    '@lytjs/common-string',
+    '@lytjs/common-events',
+    '@lytjs/common-dom',
+    '@lytjs/dom-runtime',
+    '@lytjs/compiler',
   ],
 });

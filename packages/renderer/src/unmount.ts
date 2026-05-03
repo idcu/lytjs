@@ -7,7 +7,7 @@
 
 // ==================== 类型定义 ====================
 
-const __DEV__ = process.env.NODE_ENV !== 'production';
+declare const __DEV__: boolean;
 
 /** 事件监听器注册条目 */
 interface EventListenerEntry {

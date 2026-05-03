@@ -58,7 +58,7 @@ export interface DOMOperations<HostNodeType = unknown, SuspenseType = unknown> {
 /** 模块级 DOM 操作实例，由渲染器初始化时注入 */
 let registeredDOMOps: DOMOperations<unknown, unknown> | null = null;
 
-const __DEV__ = process.env.NODE_ENV !== 'production';
+declare const __DEV__: boolean;
 
 /**
  * 注册 DOM 操作实现。
