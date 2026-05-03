@@ -14,9 +14,9 @@ describe('signal', () => {
     expect(s()).toBe(1);
   });
 
-  it('should set value via direct call', () => {
+  it('should set value via .set() method', () => {
     const s = signal(0);
-    s(1);
+    s.set(1);
     expect(s()).toBe(1);
   });
 
@@ -34,7 +34,7 @@ describe('signal', () => {
     expect(doubled()).toBe(4);
   });
 
-  it('should cache computed signal value', () => {
+  it('should cache computed signal value (lazy evaluation)', () => {
     const fn = vi.fn();
     const count = signal(1);
     const doubled = computedSignal(() => {
@@ -45,10 +45,12 @@ describe('signal', () => {
     doubled();
     expect(fn).toHaveBeenCalledTimes(1); // 缓存，只计算一次
     set(count, 2);
-    // 依赖变更时 effect 立即重新计算
+    // 惰性求值：依赖变更时标记 dirty，但不立即重新计算
+    expect(fn).toHaveBeenCalledTimes(1);
+    doubled(); // 读取时才重新计算
     expect(fn).toHaveBeenCalledTimes(2);
-    doubled();
-    expect(fn).toHaveBeenCalledTimes(2); // 仍然是 2，因为已经重新计算过了
+    doubled(); // 缓存，不再计算
+    expect(fn).toHaveBeenCalledTimes(2);
   });
 
   it('should trigger effects when signal changes', () => {

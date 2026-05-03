@@ -69,11 +69,15 @@ export {
 export {
   // signal
   signal,
+  computed as signalComputed,
   computedSignal,
   readonlySignal,
   set,
   update,
   valueOf,
+  // signal batch/untrack
+  signalBatch,
+  signalUntrack,
 } from './signal';
 
 export {
@@ -100,6 +104,8 @@ export type {
   WritableSignal,
   /** 只读信号类型 */
   ReadonlySignal,
+  /** 订阅者回调类型 */
+  Subscriber,
   WatchOptions,
   WatchEffectOptions,
   WatchSource,
