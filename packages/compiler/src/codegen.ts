@@ -24,13 +24,14 @@ import type {
   BaseNode,
 } from './types';
 import { helperNameMap } from './constants';
+import { SourceMapGenerator } from './source-map';
 
 // ============================================================
 // Main generate function
 // ============================================================
 
 export function generate(ast: RootNode, options: CodegenOptions = {}): CodegenResult {
-  const { context, codeParts } = createCodegenContext(ast, options);
+  const { context, codeParts, sourceMapGen } = createCodegenContext(ast, options);
 
   // Generate helper imports (preamble)
   const preamble = genHelperImports(ast.helpers);
@@ -59,10 +60,13 @@ export function generate(ast: RootNode, options: CodegenOptions = {}): CodegenRe
   context.deindent();
   context.push(`}`);
 
+  const code = codeParts.join('');
+
   return {
-    code: codeParts.join(''),
+    code,
     preamble,
     ast,
+    map: sourceMapGen ? sourceMapGen.toJSON() : undefined,
   };
 }
 
@@ -72,15 +76,29 @@ export function generate(ast: RootNode, options: CodegenOptions = {}): CodegenRe
 
 function createCodegenContext(
   ast: RootNode,
-  _options: CodegenOptions,
+  options: CodegenOptions,
 ): {
   context: CodegenContext;
   codeParts: string[];
+  sourceMapGen: SourceMapGenerator | null;
 } {
   const helpers = new Map<string, string>();
   let indentLevel = 0;
   // 使用数组收集代码片段，避免频繁字符串拼接带来的性能开销
   const codeParts: string[] = [];
+
+  // Source map support
+  const sourceMapGen: SourceMapGenerator | null = options.sourceMap
+    ? new SourceMapGenerator(options.filename ?? 'template.html')
+    : null;
+
+  if (sourceMapGen) {
+    sourceMapGen.addSource(options.filename ?? 'template.html', ast.loc.source);
+  }
+
+  // Track current generated position for source mapping
+  let currentLine = 0;
+  let currentColumn = 0;
 
   const context: CodegenContext = {
     source: ast.loc.source,
@@ -96,8 +114,28 @@ function createCodegenContext(
       return mapped;
     },
 
-    push(c: string, _node?: BaseNode): void {
+    push(c: string, node?: BaseNode): void {
       codeParts.push(c);
+
+      // Update generated position tracking
+      for (let i = 0; i < c.length; i++) {
+        if (c[i] === '\n') {
+          currentLine++;
+          currentColumn = 0;
+        } else {
+          currentColumn++;
+        }
+      }
+
+      // Add source mapping if source map is enabled and node has location info
+      if (sourceMapGen && node?.loc?.start) {
+        sourceMapGen.addMapping(
+          node.loc.start.line - 1, // Convert to 0-based
+          node.loc.start.column - 1,
+          currentLine,
+          currentColumn - c.length, // Map to the start of this push
+        );
+      }
     },
 
     indent(): void {
@@ -112,15 +150,19 @@ function createCodegenContext(
       context.indentLevel = indentLevel;
       if (!withoutNewline) {
         codeParts.push(`\n${'  '.repeat(indentLevel)}`);
+        currentLine++;
+        currentColumn = indentLevel * 2;
       }
     },
 
     newline(): void {
       codeParts.push(`\n${'  '.repeat(indentLevel)}`);
+      currentLine++;
+      currentColumn = indentLevel * 2;
     },
   };
 
-  return { context, codeParts };
+  return { context, codeParts, sourceMapGen };
 }
 
 // ============================================================

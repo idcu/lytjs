@@ -70,6 +70,12 @@ export function transformElement(node: ElementNode, context: TransformContext): 
     return;
   }
 
+  // Handle v-memo (handled by transformVMemo)
+  const memoDirective = findDirective(node, 'memo');
+  if (memoDirective) {
+    return;
+  }
+
   // Regular element - convert to VNodeCall
   const { tag, props, children } = node;
 

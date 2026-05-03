@@ -1,0 +1,261 @@
+// src/source-map.ts
+// Lightweight Source Map generator
+//
+// Implements a minimal Source Map v3 generator with VLQ encoding,
+// compatible with the Source Map specification.
+// https://sourcemaps.info/spec.html
+
+import type { RawSourceMap } from './types';
+
+// ============================================================
+// VLQ Encoding
+// ============================================================
+
+/** Base64 VLQ character set (A-Z, a-z, 0-9, +, /) */
+const VLQ_BASE64_CHARS =
+  'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+
+/** Continuation bit mask */
+const VLQ_BASE_SHIFT = 5;
+const VLQ_CONTINUATION_BIT = 1 << VLQ_BASE_SHIFT;
+
+/** Sign bit position */
+const VLQ_VALUE_MASK = (1 << VLQ_BASE_SHIFT) - 1;
+
+/**
+ * Encode a single integer value using VLQ (Variable-Length Quantity) encoding.
+ * Handles signed values: negative values use the least significant bit as sign.
+ */
+function vlqEncode(value: number): string {
+  let vlq = value < 0 ? ((-value) << 1) + 1 : value << 1;
+  let encoded = '';
+
+  do {
+    let digit = vlq & VLQ_VALUE_MASK;
+    vlq >>>= VLQ_BASE_SHIFT;
+    if (vlq > 0) {
+      digit |= VLQ_CONTINUATION_BIT;
+    }
+    encoded += VLQ_BASE64_CHARS[digit]!;
+  } while (vlq > 0);
+
+  return encoded;
+}
+
+// ============================================================
+// Source Mapping
+// ============================================================
+
+export interface SourceMapping {
+  /** Original source line (0-based) */
+  originalLine: number;
+  /** Original source column (0-based) */
+  originalColumn: number;
+  /** Generated code line (0-based) */
+  generatedLine: number;
+  /** Generated code column (0-based) */
+  generatedColumn: number;
+  /** Optional name for the mapped token */
+  name?: string;
+}
+
+// ============================================================
+// SourceMapGenerator
+// ============================================================
+
+export class SourceMapGenerator {
+  private file: string;
+  private _sourceRoot = '';
+  private sources: string[] = [];
+  private sourcesContent: string[] = [];
+  private names: string[] = [];
+  private mappings: SourceMapping[] = [];
+  private _namesMap = new Map<string, number>();
+  private _sourcesMap = new Map<string, number>();
+
+  constructor(file = '', sourceRoot = '') {
+    this.file = file;
+    this._sourceRoot = sourceRoot;
+  }
+
+  /**
+   * Add a mapping from original source position to generated code position.
+   *
+   * @param originalLine - Original source line (0-based)
+   * @param originalColumn - Original source column (0-based)
+   * @param generatedLine - Generated code line (0-based)
+   * @param generatedColumn - Generated code column (0-based)
+   * @param name - Optional name for the mapped token
+   */
+  addMapping(
+    originalLine: number,
+    originalColumn: number,
+    generatedLine: number,
+    generatedColumn: number,
+    name?: string,
+  ): void {
+    // Resolve source index (use first source if not yet added)
+    if (this.sources.length === 0) {
+      this.addSource(this.file || 'source');
+    }
+
+    // Resolve name index
+    let nameIndex: number | undefined;
+    if (name !== undefined) {
+      nameIndex = this._namesMap.get(name);
+      if (nameIndex === undefined) {
+        nameIndex = this.names.length;
+        this.names.push(name);
+        this._namesMap.set(name, nameIndex);
+      }
+    }
+
+    this.mappings.push({
+      originalLine,
+      originalColumn,
+      generatedLine,
+      generatedColumn,
+      name: nameIndex !== undefined ? this.names[nameIndex] : undefined,
+    });
+  }
+
+  /**
+   * Add a source file.
+   */
+  addSource(source: string, content?: string): number {
+    const existingIndex = this._sourcesMap.get(source);
+    if (existingIndex !== undefined) {
+      if (content !== undefined && !this.sourcesContent[existingIndex]) {
+        this.sourcesContent[existingIndex] = content;
+      }
+      return existingIndex;
+    }
+
+    const index = this.sources.length;
+    this.sources.push(source);
+    this.sourcesContent.push(content ?? '');
+    this._sourcesMap.set(source, index);
+    return index;
+  }
+
+  /**
+   * Generate the encoded mappings string using VLQ encoding.
+   *
+   * Format: Each segment is separated by ','; each line group is separated by ';'.
+   * Each segment contains: [generated column, source index, original line, original column, name index]
+   * All values are relative (delta-encoded) except the first segment of each line
+   * which has an absolute generated column.
+   */
+  private encodeMappings(): string {
+    if (this.mappings.length === 0) return '';
+
+    // Sort mappings by generated position
+    const sorted = [...this.mappings].sort((a, b) => {
+      if (a.generatedLine !== b.generatedLine) return a.generatedLine - b.generatedLine;
+      return a.generatedColumn - b.generatedColumn;
+    });
+
+    const lines: string[] = [];
+    let prevGenLine = 0;
+    let prevGenCol = 0;
+    let prevSource = 0;
+    let prevOrigLine = 0;
+    let prevOrigCol = 0;
+    let prevName = 0;
+
+    let currentLineSegments: string[] = [];
+
+    for (const mapping of sorted) {
+      // Fill empty lines with semicolons
+      while (prevGenLine < mapping.generatedLine) {
+        lines.push(currentLineSegments.join(','));
+        currentLineSegments = [];
+        prevGenLine++;
+        prevGenCol = 0; // Reset generated column for new lines
+      }
+
+      // Encode segment fields (all delta-encoded)
+      const genCol = mapping.generatedColumn - prevGenCol;
+      const sourceIdx = this._sourcesMap.get(this.sources[0] ?? '') ?? 0;
+      const source = sourceIdx - prevSource;
+      const origLine = mapping.originalLine - prevOrigLine;
+      const origCol = mapping.originalColumn - prevOrigCol;
+
+      let segment = vlqEncode(genCol) + vlqEncode(source) + vlqEncode(origLine) + vlqEncode(origCol);
+
+      // Name index (optional)
+      if (mapping.name !== undefined) {
+        const nameIdx = this._namesMap.get(mapping.name) ?? 0;
+        segment += vlqEncode(nameIdx - prevName);
+        prevName = nameIdx;
+      }
+
+      currentLineSegments.push(segment);
+
+      // Update previous values
+      prevGenCol = mapping.generatedColumn;
+      prevSource = sourceIdx;
+      prevOrigLine = mapping.originalLine;
+      prevOrigCol = mapping.originalColumn;
+    }
+
+    // Push the last line
+    lines.push(currentLineSegments.join(','));
+
+    return lines.join(';');
+  }
+
+  /**
+   * Convert to RawSourceMap object.
+   */
+  toJSON(): RawSourceMap {
+    return {
+      version: 3,
+      file: this.file,
+      sourceRoot: this._sourceRoot || undefined,
+      sources: [...this.sources],
+      sourcesContent: [...this.sourcesContent],
+      names: [...this.names],
+      mappings: this.encodeMappings(),
+    };
+  }
+
+  /**
+   * Convert to base64-encoded data URI string.
+   * Format: data:application/json;charset=utf-8;base64,<encoded>
+   */
+  toBase64(): string {
+    const json = JSON.stringify(this.toJSON());
+    const base64 = Buffer.from(json, 'utf-8').toString('base64');
+    return `data:application/json;charset=utf-8;base64,${base64}`;
+  }
+
+  /**
+   * Convert to inline source map comment format.
+   * Format: //# sourceMappingURL=data:application/json;charset=utf-8;base64,<encoded>
+   */
+  toComment(): string {
+    return `//# sourceMappingURL=${this.toBase64()}`;
+  }
+}
+
+// ============================================================
+// Source Map Builder (convenience API for compiler integration)
+// ============================================================
+
+export interface SourceMapBuildOptions {
+  filename?: string;
+  sourceContent?: string;
+  sourceRoot?: string;
+}
+
+/**
+ * Create a SourceMapGenerator pre-configured for compiler use.
+ */
+export function createSourceMapGenerator(options: SourceMapBuildOptions = {}): SourceMapGenerator {
+  const gen = new SourceMapGenerator(options.filename ?? 'template.html', options.sourceRoot);
+  if (options.sourceContent !== undefined) {
+    gen.addSource(options.filename ?? 'template.html', options.sourceContent);
+  }
+  return gen;
+}

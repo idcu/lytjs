@@ -34,6 +34,8 @@
       "@lytjs/common-error": ["./packages/error/src"],
       "@lytjs/common-object": ["./packages/object/src"],
       "@lytjs/common-scheduler": ["./packages/scheduler/src"],
+      "@lytjs/common-http": ["./packages/http/src"],
+      "@lytjs/common-raf": ["./packages/raf/src"],
       "@lytjs/common": ["./packages/common/src"]
     }
   },

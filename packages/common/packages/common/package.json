@@ -46,7 +46,9 @@
     "@lytjs/common-a11y": "workspace:*",
     "@lytjs/common-keyboard": "workspace:*",
     "@lytjs/common-storage": "workspace:*",
-    "@lytjs/common-validate": "workspace:*"
+    "@lytjs/common-validate": "workspace:*",
+    "@lytjs/common-http": "workspace:*",
+    "@lytjs/common-raf": "workspace:*"
   },
   "devDependencies": {
     "tsup": "^8.4.0",
