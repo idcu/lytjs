@@ -200,10 +200,8 @@ export function createVaporApp(
       const vaporContext: VaporContext = {
         attrs: { ...rootProps },
         slots: {},
-        emit(event: string, ...args: unknown[]) {
-          if (__DEV__) {
-            console.log(`[LytJS] VaporApp: emitted event "${event}"`, args);
-          }
+        emit(_event: string, ..._args: unknown[]) {
+          // event emission placeholder
         },
       };
 

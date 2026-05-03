@@ -4,7 +4,6 @@
 import { ITERATE_KEY } from './constants';
 import type { ReactiveEffectRunner } from './types';
 import { warn, error } from '@lytjs/common-error';
-import { __DEV__ } from './shared/types';
 import { _isSignalUntracked } from './signal';
 
 // ==================== 全局状态 ====================

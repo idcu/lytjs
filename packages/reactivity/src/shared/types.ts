@@ -6,6 +6,5 @@
 /** 订阅者回调函数 */
 export type Subscriber = () => void;
 
-/** DEV 模式标记 */
-export const __DEV__: boolean =
-  typeof process !== 'undefined' && process.env.NODE_ENV !== 'production';
+/** DEV 模式标记 - 由构建工具注入 */
+declare const __DEV__: boolean;
