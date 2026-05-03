@@ -127,3 +127,11 @@ export {
 export type {
   TransitionGroupProps,
 } from './transition-group';
+
+// List diff
+export {
+  registerDOMOperations,
+  patchKeyedChildren,
+  patchUnkeyedChildren,
+} from './list-diff';
+export type { DOMOperations } from './list-diff';

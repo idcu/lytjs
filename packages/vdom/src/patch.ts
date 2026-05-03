@@ -21,7 +21,11 @@ import {
   extractDOMEventOptions,
 } from '@lytjs/common-events';
 import type { RendererOptions, HostNode, HostElement, SuspenseBoundary } from './types';
-import { getSequence } from '@lytjs/common-algorithm';
+import {
+  registerDOMOperations,
+  patchKeyedChildren as listDiffPatchKeyedChildren,
+} from './list-diff';
+import type { DOMOperations } from './list-diff';
 import { SVG_NS, isSVGTag, patchProp as domPatchProp } from '@lytjs/common-dom';
 
 // ============================================================
@@ -272,7 +276,7 @@ export function createRenderer(options: RendererOptions<HostNode, HostElement>) 
   }
 
   // ============================================================
-  // diffChildrenInternal - 通用 keyed diff 算法
+  // diffChildrenInternal - 委托给 list-diff 模块
   // ============================================================
 
   function diffChildrenInternal(
@@ -284,152 +288,7 @@ export function createRenderer(options: RendererOptions<HostNode, HostElement>) 
     isSVG: boolean,
     fallbackAnchor: HostNode | null,
   ): void {
-    let i = 0;
-    const l2 = c2.length;
-    let e1 = c1.length - 1;
-    let e2 = l2 - 1;
-
-    // 1. Sync from start
-    while (i <= e1 && i <= e2) {
-      const n1 = c1[i]!;
-      const n2 = c2[i]!;
-      if (isSameVNodeType(n1, n2)) {
-        patch(n1, n2, container, null, parentComponent, parentSuspense, isSVG);
-      } else {
-        break;
-      }
-      i++;
-    }
-
-    // 2. Sync from end
-    while (i <= e1 && i <= e2) {
-      const n1 = c1[e1]!;
-      const n2 = c2[e2]!;
-      if (isSameVNodeType(n1, n2)) {
-        patch(n1, n2, container, null, parentComponent, parentSuspense, isSVG);
-      } else {
-        break;
-      }
-      e1--;
-      e2--;
-    }
-
-    // 3. Common sequence + mount
-    if (i > e1) {
-      if (i <= e2) {
-        const nextPos = e2 + 1;
-        const nextEl = nextPos < l2 ? c2[nextPos]?.el : null;
-        const anchor = nextEl ?? fallbackAnchor;
-        while (i <= e2) {
-          patch(null, c2[i]!, container, anchor, parentComponent, parentSuspense, isSVG);
-          i++;
-        }
-      }
-    }
-    // 4. Common sequence + unmount
-    else if (i > e2) {
-      while (i <= e1) {
-        unmount(c1[i]!, parentComponent, parentSuspense, true);
-        i++;
-      }
-    }
-    // 5. Unknown sequence - use keyed diff with LIS
-    else {
-      const s1 = i;
-      const s2 = i;
-
-      const keyToNewIndexMap: Map<string | number | symbol, number> = new Map();
-      for (i = s2; i <= e2; i++) {
-        const nextChild = c2[i]!;
-        const key = nextChild.key;
-        if (key != null) {
-          keyToNewIndexMap.set(key, i);
-        }
-      }
-
-      // Build type index for unkeyed new children
-      const newTypeMap = new Map<string, number[]>();
-      for (let i = s2; i <= e2; i++) {
-        const child = c2[i];
-        if (child && !child.key) {
-          const typeKey = String(child.type);
-          if (!newTypeMap.has(typeKey)) newTypeMap.set(typeKey, []);
-          newTypeMap.get(typeKey)!.push(i);
-        }
-      }
-
-      let j: number;
-      let patched = 0;
-      const toBePatched = e2 - s2 + 1;
-      let moved = false;
-      let maxNewIndexSoFar = 0;
-
-      const newIndexToOldIndexMap = new Array(toBePatched).fill(0);
-
-      for (i = s1; i <= e1; i++) {
-        const prevChild = c1[i]!;
-        if (patched >= toBePatched) {
-          unmount(prevChild, parentComponent, parentSuspense, true);
-          continue;
-        }
-
-        let newIndex: number | undefined;
-        if (prevChild.key != null) {
-          newIndex = keyToNewIndexMap.get(prevChild.key);
-        } else {
-          // Use type index map for O(1) lookup instead of O(n) brute-force scan
-          const typeKey = String(prevChild.type);
-          const candidates = newTypeMap.get(typeKey);
-          if (candidates) {
-            for (const candidateIdx of candidates) {
-              if (
-                newIndexToOldIndexMap[candidateIdx - s2] === 0 &&
-                isSameVNodeType(prevChild, c2[candidateIdx]!)
-              ) {
-                newIndex = candidateIdx;
-                break;
-              }
-            }
-          }
-        }
-
-        if (newIndex === undefined) {
-          unmount(prevChild, parentComponent, parentSuspense, true);
-        } else {
-          newIndexToOldIndexMap[newIndex - s2] = i + 1;
-          if (newIndex >= maxNewIndexSoFar) {
-            maxNewIndexSoFar = newIndex;
-          } else {
-            moved = true;
-          }
-          patch(prevChild, c2[newIndex]!, container, null, parentComponent, parentSuspense, isSVG);
-          patched++;
-        }
-      }
-
-      const increasingNewIndexSequence = moved ? getSequence(newIndexToOldIndexMap) : [];
-
-      j = increasingNewIndexSequence.length - 1;
-
-      for (i = toBePatched - 1; i >= 0; i--) {
-        const nextIndex = s2 + i;
-        const nextChild = c2[nextIndex]!;
-        const nextEl = nextIndex + 1 < l2 ? c2[nextIndex + 1]?.el : null;
-        const anchor = nextEl ?? fallbackAnchor;
-
-        if (newIndexToOldIndexMap[i] === 0) {
-          patch(null, nextChild, container, anchor, parentComponent, parentSuspense, isSVG);
-        } else if (moved) {
-          if (j < 0 || i !== increasingNewIndexSequence[j]!) {
-            if (nextChild.el) {
-              move(nextChild, container, anchor, parentComponent, parentSuspense);
-            }
-          } else {
-            j--;
-          }
-        }
-      }
-    }
+    listDiffPatchKeyedChildren(c1, c2, container, parentComponent, parentSuspense, isSVG, fallbackAnchor);
   }
 
   // ============================================================
@@ -1221,6 +1080,31 @@ export function createRenderer(options: RendererOptions<HostNode, HostElement>) 
   function mount(vnode: VNode, container: HostNode): void {
     patch(null, vnode, container, null);
   }
+
+  // ============================================================
+  // 注册 DOM 操作到 list-diff 模块
+  // ============================================================
+  const domOps: DOMOperations = {
+    insert: (child, container, anchor) => {
+      if (child.el) {
+        insert(child.el, container, anchor);
+      }
+    },
+    createElement: (type) => createElement(type),
+    mount: (vnode, container, anchor) => {
+      patch(null, vnode, container, anchor);
+    },
+    patch: (n1, n2, container, anchor, parentComponent, parentSuspense, isSVG) => {
+      patch(n1, n2, container, anchor, parentComponent, parentSuspense, isSVG);
+    },
+    unmount: (vnode, parentComponent, parentSuspense, doRemove) => {
+      unmount(vnode, parentComponent, parentSuspense, doRemove);
+    },
+    move: (vnode, container, anchor, parentComponent, parentSuspense) => {
+      move(vnode, container, anchor, parentComponent, parentSuspense);
+    },
+  };
+  registerDOMOperations(domOps);
 
   return {
     patch,
