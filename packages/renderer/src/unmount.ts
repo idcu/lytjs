@@ -7,6 +7,8 @@
 
 // ==================== 类型定义 ====================
 
+const __DEV__ = process.env.NODE_ENV !== 'production';
+
 /** 事件监听器注册条目 */
 interface EventListenerEntry {
   el: unknown;
@@ -17,7 +19,12 @@ interface EventListenerEntry {
 
 /** 渲染器接口（仅需 removeEventListener 方法） */
 export interface ResourceCleanupRenderer {
-  removeEventListener(el: unknown, event: string, handler: (...args: unknown[]) => void): void;
+  removeEventListener(
+    el: unknown,
+    event: string,
+    handler: (...args: unknown[]) => void,
+    options?: unknown,
+  ): void;
 }
 
 // ==================== 三层 WeakMap 清理注册表 ====================
@@ -74,10 +81,7 @@ export function registerComponentEventListener(
  * @param component - 组件实例（作为 WeakMap key）
  * @param dispose - effect 的 dispose 回调函数
  */
-export function registerComponentEffectSubscription(
-  component: object,
-  dispose: () => void,
-): void {
+export function registerComponentEffectSubscription(component: object, dispose: () => void): void {
   let subscriptions = effectSubscriptionRegistry.get(component);
   if (!subscriptions) {
     subscriptions = [];
@@ -93,10 +97,7 @@ export function registerComponentEffectSubscription(
  * @param component - 组件实例（作为 WeakMap key）
  * @param cleanup - 清理回调函数
  */
-export function registerComponentCleanup(
-  component: object,
-  cleanup: () => void,
-): void {
+export function registerComponentCleanup(component: object, cleanup: () => void): void {
   let cleanups = cleanupHookRegistry.get(component);
   if (!cleanups) {
     cleanups = [];
@@ -130,8 +131,8 @@ export function cleanupComponentResources(
     for (const cleanup of cleanups) {
       try {
         cleanup();
-      } catch (_err) {
-        // 静默处理，不阻断其余清理流程
+      } catch (err) {
+        if (__DEV__) console.warn('[lytjs/cleanup] Error during cleanup:', err);
       }
     }
     cleanupHookRegistry.delete(component);
@@ -143,8 +144,8 @@ export function cleanupComponentResources(
     for (const dispose of subscriptions) {
       try {
         dispose();
-      } catch (_err) {
-        // 静默处理，不阻断其余清理流程
+      } catch (err) {
+        if (__DEV__) console.warn('[lytjs/cleanup] Error during cleanup:', err);
       }
     }
     effectSubscriptionRegistry.delete(component);
@@ -153,11 +154,11 @@ export function cleanupComponentResources(
   // 3. 清理事件监听器
   const listeners = eventListenerRegistry.get(component);
   if (listeners) {
-    for (const { el, event, handler } of listeners) {
+    for (const { el, event, handler, options } of listeners) {
       try {
-        renderer.removeEventListener(el, event, handler);
-      } catch (_err) {
-        // 静默处理，不阻断其余清理流程
+        renderer.removeEventListener(el, event, handler, options);
+      } catch (err) {
+        if (__DEV__) console.warn('[lytjs/cleanup] Error during cleanup:', err);
       }
     }
     eventListenerRegistry.delete(component);

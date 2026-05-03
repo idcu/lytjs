@@ -288,7 +288,15 @@ export function createRenderer(options: RendererOptions<HostNode, HostElement>) 
     isSVG: boolean,
     fallbackAnchor: HostNode | null,
   ): void {
-    listDiffPatchKeyedChildren(c1, c2, container, parentComponent, parentSuspense, isSVG, fallbackAnchor);
+    listDiffPatchKeyedChildren(
+      c1,
+      c2,
+      container,
+      parentComponent,
+      parentSuspense,
+      isSVG,
+      fallbackAnchor,
+    );
   }
 
   // ============================================================
@@ -488,20 +496,9 @@ export function createRenderer(options: RendererOptions<HostNode, HostElement>) 
     const oldDynamicChildren = n1.dynamicChildren;
     const newDynamicChildren = n2.dynamicChildren;
 
-    if (
-      oldDynamicChildren &&
-      newDynamicChildren &&
-      oldDynamicChildren.length > 0
-    ) {
+    if (oldDynamicChildren && newDynamicChildren && oldDynamicChildren.length > 0) {
       // Block Tree 优化路径：仅 diff dynamicChildren
-      patchBlockChildren(
-        n1,
-        n2,
-        el,
-        parentComponent,
-        parentSuspense,
-        isSVG,
-      );
+      patchBlockChildren(n1, n2, el, parentComponent, parentSuspense, isSVG);
     } else {
       // 回退路径：全量 diff children
       patchChildren(n1, n2, el, parentComponent, parentSuspense, isSVG);
@@ -752,7 +749,7 @@ export function createRenderer(options: RendererOptions<HostNode, HostElement>) 
   ): void {
     const { props } = vnode;
     const to = props?.to as string | Element | undefined;
-    const disabled = !!(props?.disabled);
+    const disabled = !!props?.disabled;
 
     if (disabled) {
       // When disabled, mount children directly into the container
@@ -894,9 +891,17 @@ export function createRenderer(options: RendererOptions<HostNode, HostElement>) 
     const c1 = n1.children as VNode[] | null;
     const c2 = n2.children as VNode[] | null;
     if (isArray(c1) && isArray(c2)) {
-      const patchContainer = newDisabled ? container : (n2.target as HostNode) ?? container;
+      const patchContainer = newDisabled ? container : ((n2.target as HostNode) ?? container);
       const patchAnchor = newDisabled ? anchor : (n2.targetAnchor as HostNode | null);
-      diffChildrenInternal(c1, c2, patchContainer, parentComponent, parentSuspense, isSVG, patchAnchor);
+      diffChildrenInternal(
+        c1,
+        c2,
+        patchContainer,
+        parentComponent,
+        parentSuspense,
+        isSVG,
+        patchAnchor,
+      );
     }
   }
 
@@ -921,11 +926,7 @@ export function createRenderer(options: RendererOptions<HostNode, HostElement>) 
     }
   }
 
-  function moveTeleport(
-    vnode: VNode,
-    container: HostNode,
-    anchor: HostNode | null,
-  ): void {
+  function moveTeleport(vnode: VNode, container: HostNode, anchor: HostNode | null): void {
     // Only move the placeholder comment node in the container.
     // The children in the target container stay in place.
     if (vnode.el) {
@@ -1084,7 +1085,7 @@ export function createRenderer(options: RendererOptions<HostNode, HostElement>) 
   // ============================================================
   // 注册 DOM 操作到 list-diff 模块
   // ============================================================
-  const domOps: DOMOperations = {
+  const domOps: DOMOperations<HostNode, SuspenseBoundary | null> = {
     insert: (child, container, anchor) => {
       if (child.el) {
         insert(child.el, container, anchor);

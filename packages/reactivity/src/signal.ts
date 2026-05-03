@@ -6,13 +6,15 @@
 
 import { SignalSymbol, ComputedSignalSymbol, TrackOpTypes, TriggerOpTypes } from './constants';
 import { track, trigger } from './effect';
+import type { Subscriber } from './shared/types';
+import { __DEV__ } from './shared/types';
 
 // ============================================================
 // Types
 // ============================================================
 
 /** 订阅者回调 */
-export type Subscriber = () => void;
+export type { Subscriber };
 
 /** Signal 只读接口 */
 export interface Signal<T = unknown> {
@@ -60,13 +62,20 @@ let activeSubscriber: Subscriber | null = null;
 let isUntracked = false;
 
 /** 依赖追踪回调：computed 使用此回调记录 signal 依赖关系 */
-let trackDependency: ((signal: WritableSignal<unknown>, unsubscribe: () => void) => void) | null = null;
+let trackDependency: ((signal: WritableSignal<unknown>, unsubscribe: () => void) => void) | null =
+  null;
 
 /** batch 嵌套深度 */
 let batchDepth = 0;
 
 /** batch 期间待通知的订阅者 */
 const pendingNotifications = new Set<Subscriber>();
+
+/** batch 期间待执行的 effect 系统 trigger 操作（自动去重） */
+const pendingTriggerOps = new Map<
+  string,
+  { store: Record<symbol, unknown>; signalKey: symbol; newValue?: unknown }
+>();
 
 /** 是否正在执行通知 */
 let isNotifying = false;
@@ -115,9 +124,7 @@ export function signal<T>(initialValue: T): WritableSignal<T> {
     if (Object.is(newValue, value)) return;
     value = newValue;
     store[SIGNAL_KEY] = newValue;
-    notifySubscribers(subscribers);
-    // effect 系统桥接触发
-    trigger(store, TriggerOpTypes.SET, SIGNAL_KEY, newValue);
+    notifySubscribers(subscribers, store, SIGNAL_KEY, newValue);
   };
 
   signalFn.update = (updater: (prev: T) => T): void => {
@@ -126,8 +133,7 @@ export function signal<T>(initialValue: T): WritableSignal<T> {
     if (Object.is(newValue, value)) return;
     value = newValue;
     store[SIGNAL_KEY] = newValue;
-    notifySubscribers(subscribers);
-    trigger(store, TriggerOpTypes.SET, SIGNAL_KEY, newValue);
+    notifySubscribers(subscribers, store, SIGNAL_KEY, newValue);
   };
 
   signalFn.dispose = (): void => {
@@ -136,6 +142,7 @@ export function signal<T>(initialValue: T): WritableSignal<T> {
   };
 
   signalFn._subscribe = (subscriber: Subscriber): (() => void) => {
+    if (disposed) return () => {};
     subscribers.add(subscriber);
     return () => subscribers.delete(subscriber);
   };
@@ -152,7 +159,7 @@ export function signal<T>(initialValue: T): WritableSignal<T> {
  * 惰性求值、自动依赖追踪与清理、循环依赖检测。
  */
 export function computed<T>(fn: () => T): ComputedSignal<T> {
-  let value: T;
+  let value: T | undefined;
   let dirty = true;
   let isComputing = false;
   const dependencies = new Map<WritableSignal<unknown>, () => void>();
@@ -163,14 +170,14 @@ export function computed<T>(fn: () => T): ComputedSignal<T> {
   const invalidate = (): void => {
     if (disposed) return;
     dirty = true;
-    // 通知 computed 的订阅者
-    for (const sub of subscribers) {
+    const subs = Array.from(subscribers);
+    for (const sub of subs) {
       sub();
     }
   };
 
   const computedFn = function computedFn(): T {
-    if (disposed) return value;
+    if (disposed) return value as T;
 
     // 追踪：如果有活跃订阅者，注册自身
     if (activeSubscriber && !isUntracked) {
@@ -208,7 +215,7 @@ export function computed<T>(fn: () => T): ComputedSignal<T> {
       }
     }
 
-    return value;
+    return value as T;
   } as ComputedSignal<T>;
 
   Object.defineProperty(computedFn, ComputedSignalSymbol, { value: true });
@@ -267,21 +274,38 @@ export function signalUntrack<T>(fn: () => T): T {
   }
 }
 
+/** @internal 检查当前是否处于 untrack 模式（供 effect 系统桥接使用） */
+export function _isSignalUntracked(): boolean {
+  return isUntracked;
+}
+
 // ============================================================
 // 内部通知机制
 // ============================================================
 
-function notifySubscribers(subscribers: Set<Subscriber>): void {
+function notifySubscribers(
+  subscribers: Set<Subscriber>,
+  store?: Record<symbol, unknown>,
+  signalKey?: symbol,
+  newValue?: unknown,
+): void {
   if (batchDepth > 0) {
-    // batch 模式：延迟通知
     for (const sub of subscribers) {
       pendingNotifications.add(sub);
     }
+    // effect 系统桥接：batch 期间也延迟 trigger（去重）
+    if (store && signalKey !== undefined) {
+      const triggerKey = String(signalKey);
+      pendingTriggerOps.set(triggerKey, { store, signalKey, newValue });
+    }
     return;
   }
-  // 立即通知
   for (const sub of subscribers) {
     sub();
+  }
+  // effect 系统桥接触发
+  if (store && signalKey !== undefined) {
+    trigger(store, TriggerOpTypes.SET, signalKey, newValue);
   }
 }
 
@@ -289,10 +313,20 @@ function flushPendingNotifications(): void {
   if (isNotifying) return;
   isNotifying = true;
   try {
-    const notifications = Array.from(pendingNotifications);
-    pendingNotifications.clear();
-    for (const sub of notifications) {
-      sub();
+    let iterations = 0;
+    while ((pendingNotifications.size > 0 || pendingTriggerOps.size > 0) && iterations < 100) {
+      const notifications = Array.from(pendingNotifications);
+      const triggers = Array.from(pendingTriggerOps.values());
+      pendingNotifications.clear();
+      pendingTriggerOps.clear();
+      for (const sub of notifications) {
+        sub();
+      }
+      // 执行延迟的 effect 系统 trigger（已去重）
+      for (const { store, signalKey, newValue } of triggers) {
+        trigger(store, TriggerOpTypes.SET, signalKey, newValue);
+      }
+      iterations++;
     }
   } finally {
     isNotifying = false;
@@ -341,22 +375,22 @@ export function readonlySignal<T>(sig: Signal<T>): ReadonlySignal<T> {
 // 调试/测试 API
 // ============================================================
 
-/** 获取当前活跃订阅者（仅用于测试） */
+/** @internal 获取当前活跃订阅者（仅用于测试） */
 export function _getActiveSubscriber(): Subscriber | null {
   return activeSubscriber;
 }
 
-/** 获取 batch 深度（仅用于测试） */
+/** @internal 获取 batch 深度（仅用于测试） */
 export function _getBatchDepth(): number {
   return batchDepth;
 }
 
-/** 获取待通知订阅者数量（仅用于测试） */
+/** @internal 获取待通知订阅者数量（仅用于测试） */
 export function _getPendingNotificationsCount(): number {
   return pendingNotifications.size;
 }
 
-/** 重置全局状态（仅用于测试） */
+/** @internal 重置全局状态（仅用于测试） */
 export function _resetSignalGlobalState(): void {
   activeSubscriber = null;
   isUntracked = false;

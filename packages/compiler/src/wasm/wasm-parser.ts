@@ -5,7 +5,17 @@
 
 import { parse } from '../parser';
 import { NodeTypes } from '../constants';
-import type { RootNode, TemplateChildNode } from '../types';
+import type {
+  RootNode,
+  TemplateChildNode,
+  ElementNode,
+  TextNode,
+  InterpolationNode,
+  CommentNode,
+  AttributeNode,
+  DirectiveNode,
+  SimpleExpressionNode,
+} from '../types';
 import type { ASTNode, Token } from './wasm-compiler';
 
 // ============================================================
@@ -60,8 +70,12 @@ export function tokenize(source: string): Token[] {
         i += tagMatch[0].length;
 
         // 解析属性
-        while (i < source.length && !source.slice(i).startsWith('>') && !source.slice(i).startsWith('/>')) {
-          const attrMatch = source.slice(i).match(/^\s+([^\t\r\n\f />=][^\t\r\n\f />=]*)/);
+        while (
+          i < source.length &&
+          !source.slice(i).startsWith('>') &&
+          !source.slice(i).startsWith('/>')
+        ) {
+          const attrMatch = source.slice(i).match(/^\s+([^\t\r\n\f />=][^\t\r\n\f />=:]*)/);
           if (attrMatch) {
             tokens.push({ type: 'attr-name', value: attrMatch[1]! });
             i += attrMatch[0].length;
@@ -123,7 +137,7 @@ function findInterpolationEnd(source: string, start: number): number {
       }
     } else {
       backslashCount = 0;
-      if (char === '"' || char === "'") {
+      if (char === '"' || char === "'" || char === '`') {
         inString = char;
       } else if (char === '}' && source[i + 1] === '}') {
         return i;
@@ -153,25 +167,40 @@ function serializeASTSimple(root: RootNode): ASTNode[] {
 function serializeSimpleNode(node: TemplateChildNode): ASTNode {
   switch (node.type) {
     case NodeTypes.ELEMENT: {
-      const el = node as any;
+      const el = node as ElementNode;
       return {
         type: 'Element',
         tag: el.tag,
         children: el.children.map(serializeSimpleNode),
-        props: el.props.map((p: any) => ({
-          name: p.type === NodeTypes.DIRECTIVE ? `v-${p.name}` : p.name,
-          value: p.value?.content ?? p.exp?.content,
-        })),
+        props: el.props.map((p: AttributeNode | DirectiveNode) => {
+          if (p.type === NodeTypes.ATTRIBUTE) {
+            return { name: p.name, value: p.value?.content };
+          }
+          return {
+            name: `v-${p.name}`,
+            value: (p.exp as { content?: string } | undefined)?.content,
+          };
+        }),
         isStatic: el.isStatic,
         patchFlag: el.patchFlag,
       };
     }
-    case NodeTypes.TEXT:
-      return { type: 'Text', content: (node as any).content, isStatic: (node as any).isStatic };
-    case NodeTypes.INTERPOLATION:
-      return { type: 'Interpolation', content: (node as any).content?.content ?? '' };
-    case NodeTypes.COMMENT:
-      return { type: 'Comment', content: (node as any).content };
+    case NodeTypes.TEXT: {
+      const textNode = node as TextNode;
+      return { type: 'Text', content: textNode.content, isStatic: textNode.isStatic };
+    }
+    case NodeTypes.INTERPOLATION: {
+      const interpNode = node as InterpolationNode;
+      const content =
+        interpNode.content.type === NodeTypes.SIMPLE_EXPRESSION
+          ? (interpNode.content as SimpleExpressionNode).content
+          : '';
+      return { type: 'Interpolation', content };
+    }
+    case NodeTypes.COMMENT: {
+      const commentNode = node as CommentNode;
+      return { type: 'Comment', content: commentNode.content };
+    }
     default:
       return { type: `Unknown(${node.type})` };
   }

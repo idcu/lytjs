@@ -89,7 +89,6 @@ export {
 
 export type { EffectScope, EffectScopeOptions } from './effect-scope';
 
-// 类型 re-export
 export type {
   Ref,
   ShallowRef,

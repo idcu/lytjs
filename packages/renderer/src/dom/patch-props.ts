@@ -51,8 +51,8 @@ export function patchProp(
     invokerPatchEvent(
       el,
       key,
-      nextValue as Function | null,
-      prevValue as Function | null,
+      nextValue as ((...args: unknown[]) => void) | null,
+      prevValue as ((...args: unknown[]) => void) | null,
     );
   } else {
     // Delegate to common-dom for innerHTML, textContent, and attrs
