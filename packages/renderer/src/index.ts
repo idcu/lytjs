@@ -9,6 +9,15 @@
 export { createRenderer } from '@lytjs/vdom';
 export type { VNode, RendererOptions } from '@lytjs/vdom';
 
+// Re-export first render optimization from reactivity
+/** 首次渲染优化 */
+export {
+  withFirstRenderOptimization,
+  shouldSkipTracking,
+  getSkippedTrackingCount,
+  resetSkippedTrackingCount,
+} from '@lytjs/reactivity';
+
 // DOM renderer
 /** 创建 DOM 渲染器 */
 export { createDOMRenderer } from './dom/dom-renderer';

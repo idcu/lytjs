@@ -7,6 +7,7 @@ import { createRenderer, createDOMRendererOptions } from '@lytjs/vdom';
 import type { VNode, RendererOptions } from '@lytjs/vdom';
 import type { ComponentInternalInstance, SuspenseBoundary } from '@lytjs/vdom';
 import { patchProp } from './patch-props';
+import { withFirstRenderOptimization } from '@lytjs/reactivity';
 
 import { SVG_NS, isSVGTag } from '@lytjs/common-dom';
 
@@ -84,7 +85,15 @@ export function createDOMRenderer(): DOMRenderer {
       } else {
         // Patch into container
         const existing = vnodeMap.get(container) ?? null;
-        renderer.patch(existing, vnode, container);
+        if (existing === null) {
+          // 首次挂载：包裹 withFirstRenderOptimization 跳过依赖收集
+          withFirstRenderOptimization(() => {
+            renderer.patch(null, vnode, container);
+          });
+        } else {
+          // 后续更新：正常 patch，依赖正常收集
+          renderer.patch(existing, vnode, container);
+        }
         vnodeMap.set(container, vnode);
       }
     },

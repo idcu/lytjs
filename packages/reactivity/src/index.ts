@@ -59,6 +59,11 @@ export {
   batchAsync,
   untrack,
   onEffectCleanup,
+  // 首次渲染优化
+  withFirstRenderOptimization,
+  shouldSkipTracking,
+  getSkippedTrackingCount,
+  resetSkippedTrackingCount,
 } from './effect';
 
 export {
