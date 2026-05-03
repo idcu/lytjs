@@ -83,6 +83,16 @@ export type {
   PropOptions as VaporPropOptions,
 } from './vapor/vapor-app';
 
+// Component resource cleanup
+/** 组件资源自动清理：注册事件监听器、effect 订阅、cleanup 钩子，卸载时自动释放 */
+export {
+  registerComponentEventListener,
+  registerComponentEffectSubscription,
+  registerComponentCleanup,
+  cleanupComponentResources,
+} from './unmount';
+export type { ResourceCleanupRenderer } from './unmount';
+
 // Utilities
 /** HTML 转义、布尔属性判断等工具函数 */
 export { escapeHtml, isBooleanAttr, isVoidElement } from './utils';

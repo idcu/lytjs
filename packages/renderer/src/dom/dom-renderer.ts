@@ -8,6 +8,8 @@ import type { VNode, RendererOptions } from '@lytjs/vdom';
 import type { ComponentInternalInstance, SuspenseBoundary } from '@lytjs/vdom';
 import { patchProp } from './patch-props';
 import { withFirstRenderOptimization } from '@lytjs/reactivity';
+import { cleanupComponentResources } from '../unmount';
+import type { ResourceCleanupRenderer } from '../unmount';
 
 import { SVG_NS, isSVGTag } from '@lytjs/common-dom';
 
@@ -99,6 +101,17 @@ export function createDOMRenderer(): DOMRenderer {
     },
     patch: renderer.patch,
     unmount(vnode: VNode): void {
+      // 在卸载前清理组件注册资源
+      if (vnode.component) {
+        const cleanupRenderer: ResourceCleanupRenderer = {
+          removeEventListener(el: unknown, event: string, handler: (...args: unknown[]) => void): void {
+            if (el instanceof EventTarget) {
+              el.removeEventListener(event, handler as EventListener);
+            }
+          },
+        };
+        cleanupComponentResources(cleanupRenderer, vnode.component);
+      }
       renderer.unmount(vnode);
     },
     mount: renderer.mount,
