@@ -160,6 +160,27 @@ export {
   unregisterCustomBlockProcessor,
   getRegisteredCustomBlockProcessors,
 } from './sfc';
+
+// ============================================================
+// WASM Compiler API
+// ============================================================
+
+// WASM 编译函数
+export { wasmCompile, serializeAST } from './wasm';
+export { tokenize, buildAST, parseInterpolation } from './wasm';
+export { generateRenderCode, generateHoistedCode, generatePatchFlags } from './wasm';
+
+// WASM 类型
+export type {
+  WASMCompileOptions,
+  WASMCompileResult,
+  WASMCompileError,
+  WASMCompileWarning,
+  WASMTransformOptions,
+  WASMGenerateOptions,
+  ASTNode,
+  Token,
+} from './wasm';
 export type {
   SFCDescriptor,
   SFCTemplateBlock,
