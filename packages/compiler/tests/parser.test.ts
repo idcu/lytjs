@@ -257,4 +257,234 @@ describe('parser', () => {
       expect(ast.children).toHaveLength(0);
     });
   });
+
+  describe('bare directives ("所见即所得" mode)', () => {
+    // ===== 基本裸指令名解析（13 个指令）=====
+
+    it('should parse bare if directive', () => {
+      const ast = parse('<div if="show"></div>');
+      const el = ast.children[0] as ElementNode;
+      const dir = el.props[0] as DirectiveNode;
+      expect(dir.type).toBe(NodeTypes.DIRECTIVE);
+      expect(dir.name).toBe('if');
+      expect(dir.exp?.content).toBe('show');
+    });
+
+    it('should parse bare else-if directive', () => {
+      const ast = parse('<div else-if="cond"></div>');
+      const el = ast.children[0] as ElementNode;
+      const dir = el.props[0] as DirectiveNode;
+      expect(dir.type).toBe(NodeTypes.DIRECTIVE);
+      expect(dir.name).toBe('else-if');
+      expect(dir.exp?.content).toBe('cond');
+    });
+
+    it('should parse bare else directive (no value)', () => {
+      const ast = parse('<div else></div>');
+      const el = ast.children[0] as ElementNode;
+      const dir = el.props[0] as DirectiveNode;
+      expect(dir.type).toBe(NodeTypes.DIRECTIVE);
+      expect(dir.name).toBe('else');
+    });
+
+    it('should parse bare for directive with value pattern', () => {
+      const ast = parse('<div for="item in list"></div>');
+      const el = ast.children[0] as ElementNode;
+      const dir = el.props[0] as DirectiveNode;
+      expect(dir.type).toBe(NodeTypes.DIRECTIVE);
+      expect(dir.name).toBe('for');
+      expect(dir.exp?.content).toBe('item in list');
+    });
+
+    it('should parse bare each directive', () => {
+      const ast = parse('<div each="item in list"></div>');
+      const el = ast.children[0] as ElementNode;
+      const dir = el.props[0] as DirectiveNode;
+      expect(dir.type).toBe(NodeTypes.DIRECTIVE);
+      expect(dir.name).toBe('each');
+      expect(dir.exp?.content).toBe('item in list');
+    });
+
+    it('should parse bare model directive', () => {
+      const ast = parse('<input model="value">');
+      const el = ast.children[0] as ElementNode;
+      const dir = el.props[0] as DirectiveNode;
+      expect(dir.type).toBe(NodeTypes.DIRECTIVE);
+      expect(dir.name).toBe('model');
+      expect(dir.exp?.content).toBe('value');
+    });
+
+    it('should parse bare show directive', () => {
+      const ast = parse('<div show="visible"></div>');
+      const el = ast.children[0] as ElementNode;
+      const dir = el.props[0] as DirectiveNode;
+      expect(dir.type).toBe(NodeTypes.DIRECTIVE);
+      expect(dir.name).toBe('show');
+      expect(dir.exp?.content).toBe('visible');
+    });
+
+    it('should parse bare text directive', () => {
+      const ast = parse('<div text="content"></div>');
+      const el = ast.children[0] as ElementNode;
+      const dir = el.props[0] as DirectiveNode;
+      expect(dir.type).toBe(NodeTypes.DIRECTIVE);
+      expect(dir.name).toBe('text');
+      expect(dir.exp?.content).toBe('content');
+    });
+
+    it('should parse bare html directive', () => {
+      const ast = parse('<div html="rawHtml"></div>');
+      const el = ast.children[0] as ElementNode;
+      const dir = el.props[0] as DirectiveNode;
+      expect(dir.type).toBe(NodeTypes.DIRECTIVE);
+      expect(dir.name).toBe('html');
+      expect(dir.exp?.content).toBe('rawHtml');
+    });
+
+    it('should parse bare once directive', () => {
+      const ast = parse('<div once></div>');
+      const el = ast.children[0] as ElementNode;
+      const dir = el.props[0] as DirectiveNode;
+      expect(dir.type).toBe(NodeTypes.DIRECTIVE);
+      expect(dir.name).toBe('once');
+    });
+
+    it('should parse bare memo directive', () => {
+      const ast = parse('<div memo="[value]"></div>');
+      const el = ast.children[0] as ElementNode;
+      const dir = el.props[0] as DirectiveNode;
+      expect(dir.type).toBe(NodeTypes.DIRECTIVE);
+      expect(dir.name).toBe('memo');
+      expect(dir.exp?.content).toBe('[value]');
+    });
+
+    it('should parse bare pre directive', () => {
+      const ast = parse('<div pre></div>');
+      const el = ast.children[0] as ElementNode;
+      const dir = el.props[0] as DirectiveNode;
+      expect(dir.type).toBe(NodeTypes.DIRECTIVE);
+      expect(dir.name).toBe('pre');
+    });
+
+    it('should parse bare cloak directive', () => {
+      const ast = parse('<div cloak></div>');
+      const el = ast.children[0] as ElementNode;
+      const dir = el.props[0] as DirectiveNode;
+      expect(dir.type).toBe(NodeTypes.DIRECTIVE);
+      expect(dir.name).toBe('cloak');
+    });
+
+    // ===== 冲突解决测试 =====
+
+    it('should NOT parse for as directive on <label> tag', () => {
+      const ast = parse('<label for="inputId">Click</label>');
+      const el = ast.children[0] as ElementNode;
+      const prop = el.props[0] as AttributeNode;
+      expect(prop.type).toBe(NodeTypes.ATTRIBUTE);
+      expect(prop.name).toBe('for');
+    });
+
+    it('should NOT parse for as directive on <output> tag', () => {
+      const ast = parse('<output for="result">Value</output>');
+      const el = ast.children[0] as ElementNode;
+      const prop = el.props[0] as AttributeNode;
+      expect(prop.type).toBe(NodeTypes.ATTRIBUTE);
+      expect(prop.name).toBe('for');
+    });
+
+    it('should NOT parse for as directive when value looks like an ID', () => {
+      const ast = parse('<div for="inputId"></div>');
+      const el = ast.children[0] as ElementNode;
+      const prop = el.props[0] as AttributeNode;
+      expect(prop.type).toBe(NodeTypes.ATTRIBUTE);
+      expect(prop.name).toBe('for');
+    });
+
+    it('should NOT parse show as directive on <dialog> tag', () => {
+      const ast = parse('<dialog show></dialog>');
+      const el = ast.children[0] as ElementNode;
+      const prop = el.props[0] as AttributeNode;
+      expect(prop.type).toBe(NodeTypes.ATTRIBUTE);
+      expect(prop.name).toBe('show');
+    });
+
+    // ===== attr- 转义测试 =====
+
+    it('should parse attr-for as escaped attribute for', () => {
+      const ast = parse('<div attr-for="inputId"></div>');
+      const el = ast.children[0] as ElementNode;
+      const prop = el.props[0] as AttributeNode;
+      expect(prop.type).toBe(NodeTypes.ATTRIBUTE);
+      expect(prop.name).toBe('for');
+      expect(prop.value?.content).toBe('inputId');
+    });
+
+    // ===== 配置关闭测试 =====
+
+    it('should NOT parse bare directives when bareDirectives is false', () => {
+      const ast = parse('<div if="show"></div>', { bareDirectives: false });
+      const el = ast.children[0] as ElementNode;
+      const prop = el.props[0] as AttributeNode;
+      expect(prop.type).toBe(NodeTypes.ATTRIBUTE);
+      expect(prop.name).toBe('if');
+    });
+
+    // ===== 等价性测试 =====
+
+    it('should produce identical AST for bare if and v-if', () => {
+      const bareAst = parse('<div if="show"></div>');
+      const vAst = parse('<div v-if="show"></div>');
+      const bareDir = (bareAst.children[0] as ElementNode).props[0] as DirectiveNode;
+      const vDir = (vAst.children[0] as ElementNode).props[0] as DirectiveNode;
+      expect(bareDir.type).toBe(vDir.type);
+      expect(bareDir.name).toBe(vDir.name);
+      expect(bareDir.exp?.content).toBe(vDir.exp?.content);
+    });
+
+    it('should produce identical AST for bare for and v-for', () => {
+      const bareAst = parse('<div for="item in list"></div>');
+      const vAst = parse('<div v-for="item in list"></div>');
+      const bareDir = (bareAst.children[0] as ElementNode).props[0] as DirectiveNode;
+      const vDir = (vAst.children[0] as ElementNode).props[0] as DirectiveNode;
+      expect(bareDir.type).toBe(vDir.type);
+      expect(bareDir.name).toBe(vDir.name);
+      expect(bareDir.exp?.content).toBe(vDir.exp?.content);
+    });
+
+    it('should produce identical AST for bare model and v-model', () => {
+      const bareAst = parse('<input model="msg">');
+      const vAst = parse('<input v-model="msg">');
+      const bareDir = (bareAst.children[0] as ElementNode).props[0] as DirectiveNode;
+      const vDir = (vAst.children[0] as ElementNode).props[0] as DirectiveNode;
+      expect(bareDir.type).toBe(vDir.type);
+      expect(bareDir.name).toBe(vDir.name);
+      expect(bareDir.exp?.content).toBe(vDir.exp?.content);
+    });
+
+    // ===== 混合使用测试 =====
+
+    it('should handle bare if and v-for on same element', () => {
+      const ast = parse('<div for="item in list" if="show">hello</div>');
+      const el = ast.children[0] as ElementNode;
+      expect(el.props.length).toBe(2);
+      const forDir = el.props[0] as DirectiveNode;
+      const ifDir = el.props[1] as DirectiveNode;
+      expect(forDir.type).toBe(NodeTypes.DIRECTIVE);
+      expect(forDir.name).toBe('for');
+      expect(ifDir.type).toBe(NodeTypes.DIRECTIVE);
+      expect(ifDir.name).toBe('if');
+    });
+
+    it('should handle attr-for escape alongside bare if', () => {
+      const ast = parse('<div attr-for="id" if="show"></div>');
+      const el = ast.children[0] as ElementNode;
+      expect(el.props.length).toBe(2);
+      const attrFor = el.props[0] as AttributeNode;
+      const ifDir = el.props[1] as DirectiveNode;
+      expect(attrFor.type).toBe(NodeTypes.ATTRIBUTE);
+      expect(attrFor.name).toBe('for');
+      expect(ifDir.type).toBe(NodeTypes.DIRECTIVE);
+      expect(ifDir.name).toBe('if');
+    });
+  });
 });
