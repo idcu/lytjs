@@ -1,7 +1,15 @@
 // src/parser.ts
 // HTML template parser
 
-import { NodeTypes, ElementTypes, TextModes, TagType } from './constants';
+import {
+  NodeTypes,
+  ElementTypes,
+  TextModes,
+  TagType,
+  BARE_DIRECTIVE_NAMES,
+  BARE_DIRECTIVE_CONFLICTS,
+  BARE_DIRECTIVE_VALUE_PATTERNS,
+} from './constants';
 import { VOID_ELEMENTS, escapeRegExp } from '@lytjs/common-string';
 import { warn } from '@lytjs/common-error';
 import type {
@@ -475,7 +483,7 @@ function parseTag(context: ParserContext, type: number): ElementNode | undefined
       }
       break;
     }
-    const prop = parseAttribute(context, tagType);
+    const prop = parseAttribute(context, tagType, tag);
     if (prop) {
       props.push(prop);
     }
@@ -527,9 +535,83 @@ function parseTag(context: ParserContext, type: number): ElementNode | undefined
 // Parse attribute or directive
 // ============================================================
 
+/**
+ * 尝试将裸属性名解析为指令（"所见即所得"模式）
+ *
+ * @returns DirectiveNode 如果匹配为裸指令；undefined 如果不匹配
+ */
+function tryParseBareDirective(
+  rawName: string,
+  currentTag: string,
+  _tagType: (typeof ElementTypes)[keyof typeof ElementTypes],
+  context: ParserContext,
+  start: { offset: number; line: number; column: number },
+): AttributeNode | DirectiveNode | undefined {
+  // 检查是否显式关闭了裸指令名解析
+  if (context.options.bareDirectives === false) {
+    return undefined;
+  }
+
+  // 处理 attr- 转义前缀：attr-for="..." → 普通属性 for="..."
+  if (rawName.startsWith('attr-')) {
+    const escapedName = rawName.slice(5); // 去掉 "attr-" 前缀
+    advanceSpaces(context);
+
+    let value: TextNode | undefined;
+    if (context.source.startsWith('=')) {
+      advanceBy(context, 1);
+      advanceSpaces(context);
+      value = parseAttributeValue(context);
+    }
+
+    return createAttribute(escapedName, value, getSelection(context, start));
+  }
+
+  // 检查是否为裸指令名
+  if (!BARE_DIRECTIVE_NAMES.has(rawName)) {
+    return undefined;
+  }
+
+  // 上下文感知冲突检测
+  const conflictTags = BARE_DIRECTIVE_CONFLICTS[rawName];
+  if (conflictTags && conflictTags.has(currentTag)) {
+    return undefined; // 在冲突标签上，视为普通属性
+  }
+
+  // 值格式启发式检测（仅对有定义模式的指令生效）
+  const valuePattern = BARE_DIRECTIVE_VALUE_PATTERNS[rawName];
+  if (valuePattern) {
+    // 预读属性值（不消费），检查是否符合指令值格式
+    const savedSource = context.source;
+    advanceSpaces(context);
+
+    if (context.source.startsWith('=')) {
+      // 跳过 '=' 和空白
+      const afterEq = context.source.slice(1).trimStart();
+      // 提取引号内的值
+      const quoteMatch = afterEq.match(/^(['"])(.*)\1/);
+      if (quoteMatch) {
+        const attrValue = quoteMatch[2]!;
+        if (!valuePattern.test(attrValue)) {
+          // 值格式不匹配指令模式，还原上下文并视为普通属性
+          context.source = savedSource;
+          return undefined;
+        }
+      }
+    }
+
+    // 还原上下文（实际值解析由 parseDirective 完成）
+    context.source = savedSource;
+  }
+
+  // 匹配成功，解析为指令
+  return parseDirective(context, rawName, undefined, start);
+}
+
 function parseAttribute(
   context: ParserContext,
   _tagType: (typeof ElementTypes)[keyof typeof ElementTypes],
+  currentTag: string,
 ): AttributeNode | DirectiveNode | undefined {
   const start = getCursor(context);
 
@@ -557,6 +639,13 @@ function parseAttribute(
       return parseDirective(context, dirMatch[1]!, dirMatch[2], start);
     }
   }
+
+  // ===== 裸指令名识别（"所见即所得"模式）=====
+  const bareResult = tryParseBareDirective(rawName, currentTag, _tagType, context, start);
+  if (bareResult) {
+    return bareResult;
+  }
+  // ===== 裸指令名识别结束 =====
 
   advanceSpaces(context);
 
@@ -676,9 +765,15 @@ function parseDirective(
     name === 'model' ||
     name === 'if' ||
     name === 'for' ||
+    name === 'each' ||
     name === 'show' ||
+    name === 'text' ||
+    name === 'html' ||
     name === 'slot' ||
     name === 'once' ||
+    name === 'memo' ||
+    name === 'pre' ||
+    name === 'cloak' ||
     name === 'else-if' ||
     name === 'else'
   ) {

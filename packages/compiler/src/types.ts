@@ -258,6 +258,11 @@ export interface ParserOptions {
   decodeEntities?: (text: string, strict: boolean) => string;
   onError?: (error: Error) => void;
   comments?: boolean;
+  /**
+   * 是否启用裸指令名解析（"所见即所得"模式）。默认为 true。
+   * 设为 false 时，所有裸指令名将被视为普通 HTML 属性。
+   */
+  bareDirectives?: boolean;
 }
 
 export interface TransformOptions {

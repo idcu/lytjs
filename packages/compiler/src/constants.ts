@@ -96,3 +96,41 @@ export const helperNameMap: Record<string, string> = {
   SANITIZE_HTML: 'sanitizeHTML',
   WITH_MEMO: 'withMemo',
 } as const;
+
+/**
+ * 支持的裸指令名集合（"所见即所得"模式）
+ * 这些指令名在模板中无需 v- 前缀即可被识别
+ */
+export const BARE_DIRECTIVE_NAMES = new Set([
+  'if',
+  'else-if',
+  'else',
+  'for',
+  'each',
+  'model',
+  'show',
+  'text',
+  'html',
+  'once',
+  'memo',
+  'pre',
+  'cloak',
+]);
+
+/**
+ * 裸指令名与 HTML 原生属性的冲突规则
+ * key: 指令名, value: 在这些标签上不识别为指令（视为原生属性）
+ */
+export const BARE_DIRECTIVE_CONFLICTS: Record<string, Set<string>> = {
+  for: new Set(['label', 'output']),
+  show: new Set(['dialog']),
+  text: new Set([]), // text 仅与 SVG <text> 元素标签冲突，不影响属性解析
+};
+
+/**
+ * 需要通过值格式启发式判断的指令名
+ * key: 指令名, value: 用于匹配指令值格式的正则表达式
+ */
+export const BARE_DIRECTIVE_VALUE_PATTERNS: Record<string, RegExp> = {
+  for: /^\s*\(?[\w$]+\s*(?:,\s*[\w$]+)?\s+(?:in|of)\s+/, // "item in list" 或 "(item, index) of items"
+};
