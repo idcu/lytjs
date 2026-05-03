@@ -296,8 +296,8 @@ export interface CodegenOptions {
 
 export interface CompilerOptions extends ParserOptions, TransformOptions, CodegenOptions {
   whitespace?: 'condense' | 'preserve';
-  /** 渲染模式：'vnode' 使用 VNode diff，'signal' 使用 Signal + 直接 DOM 操作 */
-  rendererMode?: 'vnode' | 'signal';
+  /** 渲染模式：'vnode' 使用 VNode diff，'signal' 使用 Signal + 直接 DOM 操作，'vapor' 是 'signal' 的别名 */
+  rendererMode?: 'vnode' | 'signal' | 'vapor';
 }
 
 export interface BindingMetadata {

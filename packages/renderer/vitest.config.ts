@@ -3,8 +3,8 @@ import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const commonRoot = resolve(__dirname, '../../common/packages');
-const packagesRoot = resolve(__dirname, '../..');
+const commonRoot = resolve(__dirname, '../common/packages');
+const packagesRoot = resolve(__dirname, '..');
 
 export default defineConfig({
   resolve: {
@@ -15,6 +15,7 @@ export default defineConfig({
       '@lytjs/common-events': `${commonRoot}/events/dist/index.mjs`,
       '@lytjs/common-vnode': `${commonRoot}/vnode/dist/index.mjs`,
       '@lytjs/common-dom': `${commonRoot}/dom/dist/index.mjs`,
+      '@lytjs/common-scheduler': `${commonRoot}/scheduler/dist/index.mjs`,
       '@lytjs/vdom': `${packagesRoot}/vdom/dist/index.mjs`,
       '@lytjs/core': `${packagesRoot}/core/dist/index.mjs`,
       '@lytjs/reactivity': `${packagesRoot}/reactivity/dist/index.mjs`,
@@ -25,6 +26,7 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: true,
+    setupFiles: [resolve(__dirname, '../reactivity/tests/setup.ts')],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
