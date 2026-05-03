@@ -233,8 +233,17 @@ function genNode(node: JSChildNode | TemplateChildNode, context: CodegenContext)
 function genVNodeCall(node: VNodeCall, context: CodegenContext): void {
   const { tag, props, children, patchFlag, isBlock } = node;
 
-  const callee = isBlock ? context.helper('CREATE_BLOCK') : context.helper('CREATE_VNODE');
-  context.push(`${callee}(`, node);
+  if (isBlock) {
+    // Block 节点：生成 openBlock() 前缀
+    context.push(`${context.helper('OPEN_BLOCK')}()`, node);
+    context.push('\n');
+    context.indent();
+
+    context.push(`${context.helper('CREATE_BLOCK')}(`, node);
+  } else {
+    // 普通节点：生成 createVNode 调用
+    context.push(`${context.helper('CREATE_VNODE')}(`, node);
+  }
 
   // Tag
   genNodeExpr(tag, context);
@@ -271,6 +280,11 @@ function genVNodeCall(node: VNodeCall, context: CodegenContext): void {
   }
 
   context.push(')', node);
+
+  if (isBlock) {
+    context.push('\n');
+    context.deindent();
+  }
 }
 
 // ============================================================

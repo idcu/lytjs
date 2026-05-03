@@ -80,6 +80,20 @@ export {
   getArrayChildren,
 } from './utils';
 
+// Block Tree runtime
+export {
+  openBlock,
+  closeBlock,
+  createBlock,
+  trackDynamicChild,
+  isBlock,
+  getCurrentBlock,
+  getBlockStackDepth,
+  resetBlockStack,
+} from './block';
+
+export type { Block } from './block';
+
 // Transition
 export {
   nextFrame,

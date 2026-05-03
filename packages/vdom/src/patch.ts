@@ -625,8 +625,72 @@ export function createRenderer(options: RendererOptions<HostNode, HostElement>) 
       diffProps(el, oldProps, newProps);
     }
 
-    // Patch children
-    patchChildren(n1, n2, el, parentComponent, parentSuspense, isSVG);
+    // Patch children — Block Tree 快速路径
+    const oldDynamicChildren = n1.dynamicChildren;
+    const newDynamicChildren = n2.dynamicChildren;
+
+    if (
+      oldDynamicChildren &&
+      newDynamicChildren &&
+      oldDynamicChildren.length > 0
+    ) {
+      // Block Tree 优化路径：仅 diff dynamicChildren
+      patchBlockChildren(
+        n1,
+        n2,
+        el,
+        parentComponent,
+        parentSuspense,
+        isSVG,
+      );
+    } else {
+      // 回退路径：全量 diff children
+      patchChildren(n1, n2, el, parentComponent, parentSuspense, isSVG);
+    }
+  }
+
+  // ============================================================
+  // patchBlockChildren — Block Tree 快速路径
+  // ============================================================
+
+  /**
+   * 仅遍历 dynamicChildren 进行 patch。
+   * dynamicChildren 中的每个节点按索引一一对应（顺序稳定），
+   * 跳过所有静态子树的 diff。
+   */
+  function patchBlockChildren(
+    n1: VNode,
+    n2: VNode,
+    container: HostNode,
+    parentComponent: ComponentInternalInstance | null,
+    parentSuspense: SuspenseBoundary | null,
+    isSVG: boolean,
+  ): void {
+    const oldDynamicChildren = n1.dynamicChildren!;
+    const newDynamicChildren = n2.dynamicChildren!;
+
+    for (let i = 0; i < newDynamicChildren.length; i++) {
+      const oldVNode = oldDynamicChildren[i];
+      const newVNode = newDynamicChildren[i]!;
+
+      if (oldVNode && isSameVNodeType(oldVNode, newVNode)) {
+        // 同类型节点：走 patch 更新路径
+        patch(oldVNode, newVNode, container, null, parentComponent, parentSuspense, isSVG);
+      } else {
+        // 类型不同或旧节点不存在：卸载旧的，挂载新的
+        if (oldVNode) {
+          unmount(oldVNode, parentComponent, parentSuspense, true);
+        }
+        patch(null, newVNode, container, null, parentComponent, parentSuspense, isSVG);
+      }
+    }
+
+    // 卸载多余的旧 dynamicChildren
+    if (oldDynamicChildren.length > newDynamicChildren.length) {
+      for (let i = newDynamicChildren.length; i < oldDynamicChildren.length; i++) {
+        unmount(oldDynamicChildren[i]!, parentComponent, parentSuspense, true);
+      }
+    }
   }
 
   // ============================================================

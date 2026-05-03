@@ -199,6 +199,10 @@ export function transformElement(node: ElementNode, context: TransformContext): 
     node.patchFlag = patchFlag;
   }
 
+  // 判断是否为 Block 根节点
+  // 根元素或具有动态子节点的元素应作为 Block
+  const shouldBeBlock = !node.isStatic && (patchFlag !== undefined || hasDynamicChildren(node));
+
   const vnodeCall = createVNodeCall(
     isComponent ? tag : JSON.stringify(tag),
     propsExpression,
@@ -206,18 +210,41 @@ export function transformElement(node: ElementNode, context: TransformContext): 
     patchFlag,
     undefined,
     undefined,
-    false,
+    shouldBeBlock,
     false,
     isComponent,
   );
 
   node.codegenNode = vnodeCall;
 
-  context.helper('CREATE_VNODE');
+  if (shouldBeBlock) {
+    context.helper('CREATE_BLOCK');
+    context.helper('OPEN_BLOCK');
+  } else {
+    context.helper('CREATE_VNODE');
+  }
+
+  // 为动态子节点注册 trackDynamicChild helper
+  if (shouldBeBlock && patchFlag !== undefined) {
+    context.helper('SET_BLOCK_TRACKING');
+  }
 
   if (isComponent) {
     context.components.add(tag);
   }
+}
+
+/**
+ * 判断元素是否包含动态子节点（递归检查一层）
+ */
+function hasDynamicChildren(node: ElementNode): boolean {
+  return node.children.some((child) => {
+    if (child.type === NodeTypes.ELEMENT) {
+      const el = child as ElementNode;
+      return el.patchFlag !== undefined && el.patchFlag !== 0;
+    }
+    return child.type === NodeTypes.INTERPOLATION;
+  });
 }
 
 /**
