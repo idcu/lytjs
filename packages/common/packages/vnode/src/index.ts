@@ -65,6 +65,8 @@ export const enum PatchFlags {
   NEED_PATCH = 1 << 9,
   /** 动态插槽 */
   DYNAMIC_SLOTS = 1 << 10,
+  /** Block 节点具有 dynamicChildren，patch 时应优先遍历 dynamicChildren */
+  DYNAMIC_CHILDREN = 1 << 11,
   /** 静态节点，可提升 */
   HOISTED = -1,
   /** 指示 diff 算法应退出优化模式 */
