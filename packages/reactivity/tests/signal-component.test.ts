@@ -116,7 +116,7 @@ describe('signalToProps', () => {
     const count = signal(1);
     const props = signalToProps({ count });
     expect(props.count).toBe(1);
-    count(100);
+    count.set(100);
     expect(props.count).toBe(100);
   });
 

@@ -1,7 +1,7 @@
 // src/signal-component.ts
 // Signal 组件集成工具
 
-import type { Signal, ComputedSignal } from './signal';
+import type { Signal, WritableSignal, ComputedSignal } from './signal';
 
 export interface SignalComponentOptions<T = Record<string, unknown>> {
   signals?: { [K in keyof T]?: Signal<T[K]> };
@@ -28,13 +28,13 @@ export function extractSignals(
  * 创建 signal 绑定辅助
  */
 export function createSignalBinding<T>(
-  signal: Signal<T>,
+  sig: WritableSignal<T>,
   onChange?: (value: T) => void,
 ): { get: () => T; set: (value: T) => void } {
   return {
-    get: () => signal(),
+    get: () => sig(),
     set: (value: T) => {
-      signal(value);
+      sig.set(value);
       onChange?.(value);
     },
   };
