@@ -291,3 +291,26 @@ export {
   type ValidationResult,
   type ValidationRule,
 } from '@lytjs/common-validate';
+
+// http
+export {
+  HttpClient,
+  HttpError,
+  CancellationToken,
+  createHttpClient,
+  http,
+  type HttpClientOptions,
+  type RequestOptions,
+  type HttpResponse,
+  type InternalRequestConfig,
+  type Interceptor,
+} from '@lytjs/common-http';
+
+// raf
+export {
+  raf,
+  caf,
+  nextFrame,
+  rafThrottle,
+  rafDebounce,
+} from '@lytjs/common-raf';

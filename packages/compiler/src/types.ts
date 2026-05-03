@@ -298,6 +298,8 @@ export interface CompilerOptions extends ParserOptions, TransformOptions, Codege
   whitespace?: 'condense' | 'preserve';
   /** 渲染模式：'vnode' 使用 VNode diff，'signal' 使用 Signal + 直接 DOM 操作，'vapor' 是 'signal' 的别名 */
   rendererMode?: 'vnode' | 'signal' | 'vapor';
+  /** SSR 编译模式：启用后跳过客户端专用指令（v-on, v-model, v-show），生成 renderToString 格式代码 */
+  ssrMode?: boolean;
 }
 
 export interface BindingMetadata {
@@ -372,6 +374,20 @@ export interface CodegenContext {
 }
 
 // ============================================================
+// Raw Source Map
+// ============================================================
+
+export interface RawSourceMap {
+  version: number;
+  file: string;
+  sourceRoot?: string;
+  sources: string[];
+  sourcesContent: string[];
+  names: string[];
+  mappings: string;
+}
+
+// ============================================================
 // Codegen Result
 // ============================================================
 
@@ -379,8 +395,8 @@ export interface CodegenResult {
   code: string;
   preamble: string;
   ast: RootNode;
-  // TODO: source map 支持，当前未实现。计划使用 source-map 库生成完整 source map。
-  map?: Record<string, number>;
+  /** Source map (RawSourceMap 格式) */
+  map?: RawSourceMap;
 }
 
 // ============================================================

@@ -3,7 +3,7 @@ import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const commonRoot = resolve(__dirname, '../../common/packages');
+const commonRoot = resolve(__dirname, '../common/packages');
 
 export default defineConfig({
   resolve: {
@@ -12,6 +12,9 @@ export default defineConfig({
       '@lytjs/common-string': `${commonRoot}/string/dist/index.mjs`,
       '@lytjs/common-error': `${commonRoot}/error/dist/index.mjs`,
     },
+  },
+  define: {
+    __DEV__: true,
   },
   test: {
     globals: true,

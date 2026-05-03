@@ -7,9 +7,10 @@ import { parse } from './parser';
 import { transform, builtInTransforms, builtInDirectiveTransforms, optimize } from './transform';
 import { generate } from './codegen';
 import { generateSignal } from './codegen-signal';
-import type { CompilerOptions, CodegenResult } from './types';
+import { generateSSR } from './codegen-ssr';
+import type { CompilerOptions, CodegenResult, DirectiveTransform } from './types';
 
-export { parse, transform, optimize, generate, generateSignal };
+export { parse, transform, optimize, generate, generateSignal, generateSSR };
 
 export function compile(source: string, options: CompilerOptions = {}): CodegenResult {
   // 1. Parse template to AST
@@ -23,19 +24,39 @@ export function compile(source: string, options: CompilerOptions = {}): CodegenR
   const {
     nodeTransforms: userNodeTransforms,
     directiveTransforms: userDirectiveTransforms,
+    ssrMode,
     ...restOptions
   } = options;
-  const transformOptions = {
-    ...restOptions,
-    nodeTransforms: [...builtInTransforms, ...(userNodeTransforms ?? [])],
-    directiveTransforms: {
+
+  // In SSR mode, filter out client-only directive transforms (v-on, v-model, v-show)
+  let directiveTransforms: Record<string, DirectiveTransform>;
+  if (ssrMode) {
+    const { on: _on, model: _model, show: _show, ...ssrDirectiveTransforms } =
+      builtInDirectiveTransforms;
+    directiveTransforms = {
+      ...ssrDirectiveTransforms,
+      ...(userDirectiveTransforms ?? {}),
+    };
+  } else {
+    directiveTransforms = {
       ...builtInDirectiveTransforms,
       ...(userDirectiveTransforms ?? {}),
-    },
+    };
+  }
+
+  const transformOptions = {
+    ...restOptions,
+    ssr: ssrMode ?? false,
+    nodeTransforms: [...builtInTransforms, ...(userNodeTransforms ?? [])],
+    directiveTransforms,
   };
   transform(ast, transformOptions);
 
   // 3. Generate code
+  if (ssrMode) {
+    return generateSSR(ast, options);
+  }
+
   if (options.rendererMode === 'signal' || options.rendererMode === 'vapor') {
     return generateSignal(ast, options);
   }
@@ -93,6 +114,7 @@ export type { SourceLocation } from './types';
 export type { ParentNode } from './types';
 export type { BaseNode } from './types';
 export type { Property } from './types';
+export type { RawSourceMap } from './types';
 
 // AST helpers
 export { createRoot } from './ast';
@@ -121,3 +143,34 @@ export { transformBind } from './transform';
 export { transformOn } from './transform';
 export { transformModel } from './transform';
 export { transformShow } from './transform';
+export { transformVMemo } from './transform';
+
+// Source Map
+export { SourceMapGenerator, createSourceMapGenerator } from './source-map';
+export type { SourceMapping } from './source-map';
+
+// SFC (Single File Component)
+export {
+  parseSFC,
+  compileSFC,
+  generateComponentTypes,
+  KNOWN_CUSTOM_BLOCKS,
+  registerCustomBlockProcessor,
+  getCustomBlockProcessor,
+  unregisterCustomBlockProcessor,
+  getRegisteredCustomBlockProcessors,
+} from './sfc';
+export type {
+  SFCDescriptor,
+  SFCTemplateBlock,
+  SFCScriptBlock,
+  SFCStyleBlock,
+  SFCCustomBlock,
+  SFCParseOptions,
+  SFCCompileOptions,
+  SFCCompileResult,
+  CustomBlockProcessor,
+  ComponentTypeInfo,
+  PropDeclaration,
+  EmitDeclaration,
+} from './sfc';

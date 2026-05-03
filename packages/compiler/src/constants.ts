@@ -94,4 +94,5 @@ export const helperNameMap: Record<string, string> = {
   NORMALIZE_PROPS: 'normalizeProps',
   GUARD_REACTIVE_PROPS: 'guardReactiveProps',
   SANITIZE_HTML: 'sanitizeHTML',
+  WITH_MEMO: 'withMemo',
 } as const;
