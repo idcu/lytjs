@@ -25,7 +25,19 @@ export type { DOMRenderer } from './dom/dom-renderer';
 
 // DOM property patching
 /** DOM 属性补丁操作 */
-export { patchProp, patchClass, patchStyle, patchEvent, patchAttr } from './dom/patch-props';
+export {
+  patchProp,
+  patchClass,
+  patchStyle,
+  patchEvent,
+  patchAttr,
+  normalizeEventName,
+  getEventKey,
+  parseEventModifier,
+  createInvoker,
+  removeAllEventListeners,
+} from './dom/patch-props';
+export type { ParsedEvent, EventInvoker } from './dom/patch-props';
 /** 事件名检测 */
 export { isOn } from '@lytjs/common-events';
 
