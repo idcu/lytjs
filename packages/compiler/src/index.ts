@@ -36,7 +36,7 @@ export function compile(source: string, options: CompilerOptions = {}): CodegenR
   transform(ast, transformOptions);
 
   // 3. Generate code
-  if (options.rendererMode === 'signal') {
+  if (options.rendererMode === 'signal' || options.rendererMode === 'vapor') {
     return generateSignal(ast, options);
   }
 

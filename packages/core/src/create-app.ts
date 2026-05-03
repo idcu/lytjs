@@ -33,8 +33,9 @@ export function createApp(
   let _isUnmounted = false;
   let _isMounted = false;
 
-  // 确定渲染模式
+  // 确定渲染模式（'vapor' 是 'signal' 的别名）
   const rendererMode = options?.rendererMode ?? 'vnode';
+  const effectiveMode = rendererMode === 'vapor' ? 'signal' : rendererMode;
 
   // Signal 模式下的渲染器引用
   let signalRenderer: SignalRenderer | null = null;
@@ -94,7 +95,7 @@ export function createApp(
 
       try {
         // 根据渲染模式选择不同的渲染路径
-        if (rendererMode === 'signal') {
+        if (effectiveMode === 'signal') {
           return mountWithSignalMode(container);
         }
 
@@ -113,7 +114,7 @@ export function createApp(
     },
 
     unmount() {
-      if (rendererMode === 'signal') {
+      if (effectiveMode === 'signal') {
         // Signal 模式卸载
         const componentOptions = rootComponent as Record<string, unknown>;
         const beforeUnmount = componentOptions.beforeUnmount as (() => void) | undefined;

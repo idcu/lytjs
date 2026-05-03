@@ -45,6 +45,23 @@ export type { ComponentOptions as IslandComponentOptions } from './ssr/ssr-islan
 export { createSignalRenderer } from './signal/signal-renderer';
 export type { SignalRenderer } from './signal/signal-renderer';
 
+// Vapor renderer (alias for Signal renderer)
+/** 创建 Vapor 模式渲染器（Signal 渲染器的别名） */
+export { createSignalRenderer as createVaporRenderer } from './signal/signal-renderer';
+export type { SignalRenderer as VaporRenderer } from './signal/signal-renderer';
+
+// Vapor app API
+/** 定义 Vapor 模式组件 */
+export { defineVaporComponent, createVaporApp } from './vapor/vapor-app';
+export type {
+  VaporComponentOptions,
+  VaporComponentDefinition,
+  VaporApp,
+  VaporAppOptions,
+  VaporContext,
+  PropOptions as VaporPropOptions,
+} from './vapor/vapor-app';
+
 // Utilities
 /** HTML 转义、布尔属性判断等工具函数 */
 export { escapeHtml, isBooleanAttr, isVoidElement } from './utils';

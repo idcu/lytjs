@@ -431,7 +431,7 @@ function processVNodeCallProps(
 function processDirective(
   dir: DirectiveNode,
   varName: string,
-  _tag: string,
+  tag: string,
   dynamicBindings: Array<{ varName: string; code: string }>,
 ): void {
   const expContent = dir.exp ? getExpContent(dir.exp as SimpleExpressionNode) : undefined;
@@ -440,11 +440,11 @@ function processDirective(
   switch (dir.name) {
     case 'if': {
       // v-if 在 transform 阶段已被转换为 JSConditionalExpression
-      // 此处作为后备处理
+      // 此处作为后备处理，使用 insert/remove 方式
       if (expContent) {
         dynamicBindings.push({
           varName,
-          code: `effect(() => {\n    if (_ctx.${expContent}) {\n      ${varName}.style.display = '';\n    } else {\n      ${varName}.style.display = 'none';\n    }\n  });`,
+          code: `let _ifFallbackEl = null;\n  effect(() => {\n    if (_ctx.${expContent}) {\n      if (!_ifFallbackEl) {\n        _ifFallbackEl = ${varName};\n        insert(_ifFallbackEl, _container);\n      }\n    } else {\n      if (_ifFallbackEl) {\n        remove(_ifFallbackEl);\n        _ifFallbackEl = null;\n      }\n    }\n  });`,
         });
       }
       break;
@@ -528,13 +528,48 @@ function processDirective(
 
     case 'model': {
       if (expContent) {
+        const tagLower = tag.toLowerCase();
+        const modifiers = dir.modifiers;
+        const isLazy = modifiers.includes('lazy');
+        const isNumber = modifiers.includes('number');
+        const isTrim = modifiers.includes('trim');
+
+        // 确定事件类型和取值方式
+        let eventName: string;
+        let getValueExpr: string;
+        if (tagLower === 'select') {
+          eventName = 'change';
+          getValueExpr = '$e.target.value';
+        } else if (tagLower === 'textarea') {
+          eventName = isLazy ? 'change' : 'input';
+          getValueExpr = '$e.target.value';
+        } else {
+          // input 元素（默认）
+          eventName = isLazy ? 'change' : 'input';
+          getValueExpr = '$e.target.value';
+        }
+
+        // 构建赋值表达式（应用修饰符）
+        let setValueExpr = getValueExpr;
+        if (isNumber) {
+          setValueExpr = `Number(${getValueExpr})`;
+        }
+        if (isTrim) {
+          setValueExpr = `(${getValueExpr}).trim()`;
+        }
+        if (isNumber && isTrim) {
+          // .number.trim 组合：先 trim 再转 number
+          setValueExpr = `Number((${getValueExpr}).trim())`;
+        }
+
+        // 生成双向绑定代码
         dynamicBindings.push({
           varName,
           code: `effect(() => { ${varName}.value = _ctx.${expContent}; });`,
         });
         dynamicBindings.push({
           varName,
-          code: `onCleanup(addEventListener(${varName}, 'input', ($e) => { _ctx.${expContent} = $e.target.value; }));`,
+          code: `onCleanup(addEventListener(${varName}, '${eventName}', ($e) => { _ctx.${expContent} = ${setValueExpr}; }));`,
         });
       }
       break;
@@ -550,6 +585,7 @@ function processDirective(
 
 // ============================================================
 // Process JSConditionalExpression (v-if 转换结果)
+// 使用 createTemplate + insert/remove 实现真正的 DOM 插入/移除
 // ============================================================
 
 function processConditional(
@@ -563,60 +599,202 @@ function processConditional(
   const testExpr = getTestExpr(node.test);
   if (!testExpr) return;
 
-  // 获取条件分支中的元素信息
-  const consequentInfo = extractElementFromBranch(node.consequent);
+  // 收集所有条件分支（v-if / v-else-if / v-else 链）
+  const branches: Array<{
+    condition: string | null; // null 表示 v-else（无条件）
+    branch: JSChildNode | TemplateChildNode | TemplateChildNode[] | string | undefined;
+  }> = [];
 
-  // 确定目标变量名
-  let targetVar = parentVar;
-  if (!targetVar && consequentInfo) {
-    // 查找已有变量名
-    const existing = findExistingVar(elementVars, consequentInfo.tag, consumedCount);
-    if (existing) {
-      targetVar = existing;
+  // 收集 consequent 分支
+  branches.push({
+    condition: testExpr,
+    branch: node.consequent,
+  });
+
+  // 递归收集 alternate 链（v-else-if / v-else）
+  let alternate = node.alternate;
+  while (alternate) {
+    if (
+      typeof alternate !== 'string' &&
+      !Array.isArray(alternate) &&
+      alternate.type === NodeTypes.JS_CONDITIONAL_EXPRESSION
+    ) {
+      const altCond = alternate as JSConditionalExpression;
+      const altTestExpr = getTestExpr(altCond.test);
+      branches.push({
+        condition: altTestExpr || null,
+        branch: altCond.consequent,
+      });
+      alternate = altCond.alternate;
     } else {
-      const varName = genVarName(consequentInfo.tag, varCounter);
-      elementVars.push({ varName, tag: consequentInfo.tag });
-      targetVar = varName;
+      // v-else 分支（无条件）
+      branches.push({
+        condition: null,
+        branch: alternate,
+      });
+      alternate = undefined;
     }
   }
 
-  if (targetVar) {
-    // 检查 consequent 中是否有插值
-    const consequentChildren = extractChildrenText(node.consequent);
-    const alternateChildren = node.alternate ? extractChildrenText(node.alternate) : null;
+  // 为每个分支注册变量名（确保 varCounter 和 elementVars 正确递增）
+  for (let i = 0; i < branches.length; i++) {
+    const branchInfo = branches[i]!;
+    const elInfo = extractElementFromBranch(branchInfo.branch);
+    if (elInfo) {
+      const existing = findExistingVar(elementVars, elInfo.tag, consumedCount);
+      if (!existing) {
+        const varName = genVarName(elInfo.tag, varCounter);
+        elementVars.push({ varName, tag: elInfo.tag });
+      }
+    }
+  }
 
-    if (consequentChildren) {
-      dynamicBindings.push({
-        varName: targetVar,
-        code: `effect(() => {\n    if (_ctx.${testExpr}) {\n      ${targetVar}.style.display = '';\n      setText(${targetVar}, _ctx.${consequentChildren});\n    } else {\n      ${targetVar}.style.display = 'none';${alternateChildren ? `\n      setText(${targetVar}, _ctx.${alternateChildren});` : ''}\n    }\n  });`,
-      });
-    } else {
-      dynamicBindings.push({
-        varName: targetVar,
-        code: `effect(() => {\n    if (_ctx.${testExpr}) {\n      ${targetVar}.style.display = '';\n    } else {\n      ${targetVar}.style.display = 'none';\n    }\n  });`,
-      });
+  // 序列化每个分支的 HTML
+  const branchHTMLs: string[] = [];
+  for (const branchInfo of branches) {
+    const html = serializeBranchHTML(branchInfo.branch);
+    branchHTMLs.push(html);
+  }
+
+  // 确定父容器和参考节点
+  const containerVar = parentVar ?? '_container';
+  const ifVarName = `_if${varCounter.get('_if') ?? 0}`;
+  varCounter.set('_if', (varCounter.get('_if') ?? 0) + 1);
+
+  // 生成条件分支的 DOM 插入/移除代码
+  let code = `let ${ifVarName}El = null;\n`;
+  code += `let ${ifVarName}Active = -1;\n`;
+  code += `effect(() => {\n`;
+
+  for (let i = 0; i < branches.length; i++) {
+    const branchInfo = branches[i]!;
+    const branchHTML = branchHTMLs[i]!;
+
+    if (i > 0) {
+      code += `    } else `;
     }
 
-    // 处理 consequent 分支中的子元素动态绑定
+    if (branchInfo.condition !== null) {
+      code += `if (_ctx.${branchInfo.condition}) `;
+    }
+
+    code += `{\n`;
+    code += `      if (${ifVarName}Active !== ${i}) {\n`;
+
+    // 移除之前的分支元素
+    if (i === 0) {
+      code += `        if (${ifVarName}El) {\n`;
+      code += `          remove(${ifVarName}El);\n`;
+      code += `          ${ifVarName}El = null;\n`;
+      code += `        }\n`;
+    }
+
+    // 创建并插入新分支元素
+    code += `        ${ifVarName}El = createTemplate(${JSON.stringify(branchHTML)}).firstElementChild;\n`;
+    if (branchHTML.trim()) {
+      code += `        insert(${ifVarName}El, ${containerVar});\n`;
+    }
+    code += `        ${ifVarName}Active = ${i};\n`;
+
+    // 处理分支内的动态绑定（如插值文本）
+    const childrenText = extractChildrenText(branchInfo.branch);
+    if (childrenText && branchHTML.trim()) {
+      code += `        setText(${ifVarName}El, _ctx.${childrenText});\n`;
+    }
+
+    code += `      }`;
+
+    // 如果分支已激活，更新动态内容
+    const childrenTextUpdate = extractChildrenText(branchInfo.branch);
+    if (childrenTextUpdate && branchHTML.trim()) {
+      code += ` else {\n`;
+      code += `        setText(${ifVarName}El, _ctx.${childrenTextUpdate});\n`;
+      code += `      }`;
+    }
+
+    code += `\n`;
+  }
+
+  // 如果所有条件都不满足，移除元素
+  code += `    } else {\n`;
+  code += `      if (${ifVarName}El) {\n`;
+  code += `        remove(${ifVarName}El);\n`;
+  code += `        ${ifVarName}El = null;\n`;
+  code += `        ${ifVarName}Active = -1;\n`;
+  code += `      }\n`;
+  code += `    }\n`;
+  code += `  });`;
+
+  dynamicBindings.push({
+    varName: containerVar,
+    code,
+  });
+
+  // 处理每个分支中的子元素动态绑定（如 :class, :style 等）
+  for (let i = 0; i < branches.length; i++) {
     processBranchDynamics(
-      node.consequent,
-      targetVar,
+      branches[i]!.branch,
+      containerVar,
       varCounter,
       elementVars,
       dynamicBindings,
     );
+  }
+}
 
-    // 处理 alternate 分支中的子元素动态绑定
-    if (node.alternate) {
-      processBranchDynamics(
-        node.alternate,
-        targetVar,
-        varCounter,
-        elementVars,
-        dynamicBindings,
-      );
+// ============================================================
+// Helper: 序列化条件分支为 HTML 字符串
+// ============================================================
+
+function serializeBranchHTML(
+  branch: JSChildNode | TemplateChildNode | TemplateChildNode[] | string | undefined,
+): string {
+  if (!branch) return '';
+  if (typeof branch === 'string') return branch;
+  if (Array.isArray(branch)) {
+    return branch.map((item) => serializeBranchHTML(item)).join('');
+  }
+  if (branch.type === NodeTypes.VNODE_CALL) {
+    const vnode = branch as VNodeCall;
+    if (typeof vnode.tag === 'string') {
+      const tag = vnode.tag.replace(/^"|"$/g, '');
+      let attrs = '';
+      // 从 props 中提取静态属性
+      if (vnode.props && vnode.props.type === NodeTypes.JS_OBJECT_EXPRESSION) {
+        const objExpr = vnode.props as JSObjectExpression;
+        for (const prop of objExpr.properties) {
+          if (prop.type === NodeTypes.JS_PROPERTY) {
+            const jsProp = prop as JSProperty;
+            if (
+              jsProp.key.type === NodeTypes.SIMPLE_EXPRESSION &&
+              jsProp.value.type === NodeTypes.SIMPLE_EXPRESSION
+            ) {
+              const key = (jsProp.key as SimpleExpressionNode).content.replace(/^"|"$/g, '');
+              const value = (jsProp.value as SimpleExpressionNode).content;
+              // 只序列化静态属性值（不包含 _ctx 引用的）
+              if (!value.includes('_ctx') && !value.includes('(')) {
+                attrs += ` ${key}="${value.replace(/^"|"$/g, '')}"`;
+              }
+            }
+          }
+        }
+      }
+      // 序列化 children
+      let childrenHTML = '';
+      if (vnode.children) {
+        if (typeof vnode.children === 'string') {
+          childrenHTML = vnode.children;
+        } else if (Array.isArray(vnode.children)) {
+          childrenHTML = vnode.children.map((c) => serializeBranchHTML(c)).join('');
+        }
+      }
+      return `<${tag}${attrs}>${childrenHTML}</${tag}>`;
     }
   }
+  if (branch.type === NodeTypes.ELEMENT) {
+    return serializeStaticHTML(branch as ElementNode, new Map(), []);
+  }
+  return '';
 }
 
 // ============================================================

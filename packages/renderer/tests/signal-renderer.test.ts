@@ -470,5 +470,188 @@ describe('SignalRenderer', () => {
 
       renderer.unmount();
     });
+
+    // ==================== v-html XSS 安全测试 ====================
+
+    describe('v-html XSS safety', () => {
+      it('should sanitize <script> tags in v-html', () => {
+        const ctx = { html: ref('<script>alert("xss")</script><p>safe</p>') };
+        const renderer = createSignalRenderer(
+          '<div v-html="html"></div>',
+          ctx,
+        );
+        renderer.render(container);
+
+        const div = container.querySelector('div')!;
+        // script tag should be removed by sanitizer
+        expect(div.querySelector('script')).toBeNull();
+        // safe content should remain
+        expect(div.querySelector('p')).not.toBeNull();
+        expect(div.querySelector('p')!.textContent).toBe('safe');
+
+        renderer.unmount();
+      });
+
+      it('should sanitize event handler attributes in v-html', () => {
+        const ctx = { html: ref('<div onclick="alert(1)">click me</div>') };
+        const renderer = createSignalRenderer(
+          '<div v-html="html"></div>',
+          ctx,
+        );
+        renderer.render(container);
+
+        const inner = container.querySelector('div > div');
+        expect(inner).not.toBeNull();
+        expect(inner!.getAttribute('onclick')).toBeNull();
+
+        renderer.unmount();
+      });
+
+      it('should sanitize <iframe> tags in v-html', () => {
+        const ctx = { html: ref('<iframe src="evil.com"></iframe><span>ok</span>') };
+        const renderer = createSignalRenderer(
+          '<div v-html="html"></div>',
+          ctx,
+        );
+        renderer.render(container);
+
+        const div = container.querySelector('div')!;
+        expect(div.querySelector('iframe')).toBeNull();
+        expect(div.querySelector('span')).not.toBeNull();
+
+        renderer.unmount();
+      });
+    });
+  });
+
+  // ==================== v-for 列表缩小测试 ====================
+
+  describe('v-for list shrinking', () => {
+    it('should remove DOM nodes when list shrinks from 3 to 1', () => {
+      const ctx = {
+        items: ref([
+          { id: 1, text: 'a' },
+          { id: 2, text: 'b' },
+          { id: 3, text: 'c' },
+        ]),
+      };
+      const renderer = createSignalRenderer(
+        '<ul><li v-for="item in items">{{ item.text }}</li></ul>',
+        ctx,
+      );
+      renderer.render(container);
+
+      const ul = container.querySelector('ul')!;
+      expect(ul.querySelectorAll('li').length).toBe(3);
+
+      // Shrink list from 3 to 1
+      ctx.items.value = [{ id: 1, text: 'a' }];
+
+      const lis = ul.querySelectorAll('li');
+      expect(lis.length).toBe(1);
+      expect(lis[0]!.textContent).toBe('a');
+
+      renderer.unmount();
+    });
+
+    it('should remove all DOM nodes when list becomes empty', () => {
+      const ctx = {
+        items: ref([
+          { id: 1, text: 'a' },
+          { id: 2, text: 'b' },
+        ]),
+      };
+      const renderer = createSignalRenderer(
+        '<ul><li v-for="item in items">{{ item.text }}</li></ul>',
+        ctx,
+      );
+      renderer.render(container);
+
+      const ul = container.querySelector('ul')!;
+      expect(ul.querySelectorAll('li').length).toBe(2);
+
+      ctx.items.value = [];
+      expect(ul.querySelectorAll('li').length).toBe(0);
+
+      renderer.unmount();
+    });
+  });
+
+  // ==================== 多个 v-if 快速切换 ====================
+
+  describe('multiple v-if rapid switching', () => {
+    it('should maintain correct DOM after rapid v-if toggling', () => {
+      const ctx = { show: ref(true) };
+      const renderer = createSignalRenderer(
+        '<div><span v-if="show">visible</span></div>',
+        ctx,
+      );
+      renderer.render(container);
+
+      const span = container.querySelector('span')!;
+
+      // Rapid toggling
+      ctx.show.value = false;
+      ctx.show.value = true;
+      ctx.show.value = false;
+      ctx.show.value = true;
+
+      // Final state: show is true, span should be visible
+      expect(span.style.display).toBe('');
+
+      renderer.unmount();
+    });
+
+    it('should end with correct state after multiple v-if toggles', () => {
+      const ctx = { show: ref(false) };
+      const renderer = createSignalRenderer(
+        '<div><span v-if="show">conditional</span></div>',
+        ctx,
+      );
+      renderer.render(container);
+
+      const span = container.querySelector('span')!;
+
+      // Start hidden
+      expect(span.style.display).toBe('none');
+
+      // Toggle multiple times, ending with false
+      ctx.show.value = true;
+      expect(span.style.display).toBe('');
+      ctx.show.value = false;
+      expect(span.style.display).toBe('none');
+      ctx.show.value = true;
+      expect(span.style.display).toBe('');
+      ctx.show.value = false;
+      expect(span.style.display).toBe('none');
+
+      renderer.unmount();
+    });
+
+    it('should handle rapid switching of multiple independent v-if conditions', () => {
+      const ctx = { a: ref(true), b: ref(false) };
+      const renderer = createSignalRenderer(
+        '<div><span v-if="a">A</span><span v-if="b">B</span></div>',
+        ctx,
+      );
+      renderer.render(container);
+
+      const spans = container.querySelectorAll('span');
+      expect(spans[0]!.style.display).toBe('');
+      expect(spans[1]!.style.display).toBe('none');
+
+      // Rapid toggling both conditions
+      ctx.a.value = false;
+      ctx.b.value = true;
+      expect(spans[0]!.style.display).toBe('none');
+      expect(spans[1]!.style.display).toBe('');
+
+      ctx.a.value = true;
+      ctx.b.value = false;
+      expect(spans[0]!.style.display).toBe('');
+      expect(spans[1]!.style.display).toBe('none');
+
+      renderer.unmount();
+    });
   });
 });
