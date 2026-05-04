@@ -300,10 +300,11 @@ export class HttpClient {
         data = (await response.arrayBuffer()) as unknown as T;
         break;
       case 'json':
-      default:
+      default: {
         const text = await response.text();
         data = text ? JSON.parse(text) : (null as unknown as T);
         break;
+      }
     }
 
     return {

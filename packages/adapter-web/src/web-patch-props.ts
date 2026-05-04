@@ -20,13 +20,13 @@ export { patchClass, patchStyle, patchAttr } from '@lytjs/common-dom';
 // Re-export web-patch-events types and functions
 export {
   patchEvent,
-  normalizeEventName,
-  getEventKey,
-  parseEventModifier,
   createInvoker,
   removeAllEventListeners,
 } from './web-patch-events';
 export type { ParsedEvent, EventInvoker } from './web-patch-events';
+
+// normalizeEventName, getEventKey, parseEventModifier 已迁移到 @lytjs/common-events
+export { normalizeEventName, getEventKey, parseEventModifier } from '@lytjs/common-events';
 
 // ============================================================
 // patchProp - main entry (renderer-specific: adds invoker events)

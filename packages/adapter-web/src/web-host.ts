@@ -15,6 +15,7 @@ import type {
   HostEventOptions,
 } from '@lytjs/host-contract';
 import { SVG_NS, isSVGTag } from '@lytjs/common-dom';
+import { parseDuration } from '@lytjs/common-string';
 import { patchProp } from './web-patch-props';
 import { wrapDOMEvent } from './web-event-wrap';
 
@@ -316,28 +317,4 @@ export class WebRendererHost implements RendererHost<Node, Element> {
   getTagName(el: Element): string {
     return el.tagName.toLowerCase();
   }
-}
-
-// ============================================================
-// Internal Helpers
-// ============================================================
-
-/**
- * 解析 CSS 时长字符串为毫秒数。
- * 支持格式：'0.3s', '300ms', '0s' 等。
- * 多个值（逗号分隔）时取最大值。
- */
-function parseDuration(value: string): number {
-  if (!value || value === '0s' || value === '0ms') return 0;
-  const values = value.split(',');
-  let max = 0;
-  for (const v of values) {
-    const trimmed = v.trim();
-    if (trimmed.endsWith('ms')) {
-      max = Math.max(max, parseFloat(trimmed) || 0);
-    } else if (trimmed.endsWith('s')) {
-      max = Math.max(max, (parseFloat(trimmed) || 0) * 1000);
-    }
-  }
-  return max;
 }

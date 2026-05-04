@@ -15,6 +15,65 @@ export function isOn(key: string): boolean {
 }
 
 // ============================================================
+// 事件缓存 key 与修饰符解析
+// ============================================================
+
+/** 事件缓存 key 前缀 */
+export const VEI_KEY = '_vei';
+
+/** 事件修饰符正则 */
+export const EVENT_MODIFIER_RE = /\.(stop|prevent|capture|once|self|passive)(?=\.|$)/g;
+
+/**
+ * 事件名规范化：移除 @/on 前缀和修饰符后缀，转小写。
+ * 支持格式：@click / onClick / click → click
+ */
+export function normalizeEventName(rawName: string): string {
+  let name = rawName.startsWith('@') ? rawName.slice(1) : rawName;
+  if (name.startsWith('on') && name.length > 2 && /^[A-Za-z]$/.test(name[2]!)) {
+    name = name.slice(2);
+  }
+  return name.replace(EVENT_MODIFIER_RE, '').toLowerCase();
+}
+
+/**
+ * 事件缓存 key 转换：click → onClick
+ */
+export function getEventKey(name: string): string {
+  return 'on' + name[0]!.toUpperCase() + name.slice(1);
+}
+
+/**
+ * 解析事件修饰符。
+ * 例如：onClick.stop.prevent → { name: 'click', stop: true, prevent: true, ... }
+ */
+export function parseEventModifier(rawName: string): {
+  name: string;
+  stop: boolean;
+  prevent: boolean;
+  capture: boolean;
+  once: boolean;
+  self: boolean;
+  passive: boolean;
+} {
+  const modifiers = { stop: false, prevent: false, capture: false, once: false, self: false, passive: false };
+  const match = rawName.match(EVENT_MODIFIER_RE);
+  if (match) {
+    for (const mod of match) {
+      switch (mod) {
+        case '.stop': modifiers.stop = true; break;
+        case '.prevent': modifiers.prevent = true; break;
+        case '.capture': modifiers.capture = true; break;
+        case '.once': modifiers.once = true; break;
+        case '.self': modifiers.self = true; break;
+        case '.passive': modifiers.passive = true; break;
+      }
+    }
+  }
+  return { name: normalizeEventName(rawName), ...modifiers };
+}
+
+// ============================================================
 // DOM event name mapping & helpers
 // ============================================================
 

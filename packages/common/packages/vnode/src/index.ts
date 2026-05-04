@@ -144,6 +144,7 @@ export interface VNode {
   /** 目标起始位置（Teleport） */
   targetStart: Node | null;
   /** Suspense 边界 */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   suspense?: any;
   /** 源码位置 */
   loc: VNodeSourceLocation | null;

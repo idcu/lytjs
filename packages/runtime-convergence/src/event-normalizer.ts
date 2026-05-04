@@ -3,16 +3,11 @@
 
 import type { RendererHost, HostEvent, HostEventHandler, HostEventOptions } from '@lytjs/host-contract';
 import type { ParsedModifiers, ParsedEventInfo, EventInvoker } from './types';
+import { EVENT_MODIFIER_RE, VEI_KEY } from '@lytjs/common-events';
 
 // ============================================================
 // 常量
 // ============================================================
-
-/** 事件修饰符正则（支持多个修饰符） */
-const EVENT_MODIFIER_RE = /\.(stop|prevent|capture|once|self|passive)(?=\.|$)/g;
-
-/** el 上缓存 invoker 的 key */
-const VEI_KEY = '_vei';
 
 /** invoker 缓存类型 */
 type InvokerCache<HE> = Record<string, EventInvoker<HE> | undefined>;

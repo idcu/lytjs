@@ -6,6 +6,13 @@
  * 从 @lytjs/renderer/src/dom/patch-events.ts 迁移，纯翻译，不做额外归一化。
  */
 
+import {
+  VEI_KEY,
+  normalizeEventName,
+  getEventKey,
+  parseEventModifier,
+} from '@lytjs/common-events';
+
 // ============================================================
 // Types
 // ============================================================
@@ -40,94 +47,8 @@ export interface EventInvoker extends EventListener {
 // Constants
 // ============================================================
 
-/** el._vei 缓存 key */
-const VEI_KEY = '_vei';
-
 /** el._vei 缓存类型 */
 type InvokerCache = Record<string, EventInvoker | undefined>;
-
-/** 事件修饰符匹配正则（支持多个修饰符） */
-const EVENT_MODIFIER_RE = /\.(stop|prevent|capture|once|self|passive)(?=\.|$)/g;
-
-// ============================================================
-// Event Name Normalization
-// ============================================================
-
-/**
- * 将各种格式的事件名规范化为标准 DOM 事件名。
- * 支持格式：@click / onClick / click → click
- */
-export function normalizeEventName(rawName: string): string {
-  // 移除 @ 前缀
-  let name = rawName.startsWith('@') ? rawName.slice(1) : rawName;
-  // 移除 on 前缀（仅当以大写字母开头的 on 前缀时）
-  if (name.startsWith('on') && name.length > 2 && /^[A-Za-z]$/.test(name[2]!)) {
-    name = name.slice(2);
-  }
-  // 移除修饰符后缀（如 .stop.prevent）
-  name = name.replace(EVENT_MODIFIER_RE, '');
-  // 转为小写
-  return name.toLowerCase();
-}
-
-/**
- * 将事件名转换为 invoker 缓存的 key。
- * click → onClick，mouseenter → onMouseenter
- */
-export function getEventKey(rawName: string): string {
-  const name = normalizeEventName(rawName);
-  return 'on' + name[0]!.toUpperCase() + name.slice(1);
-}
-
-// ============================================================
-// Event Modifier Parsing
-// ============================================================
-
-/**
- * 解析事件名中的修饰符。
- * 例如：onClick.stop.prevent → { name: 'click', stop: true, prevent: true, ... }
- */
-export function parseEventModifier(rawName: string): ParsedEvent {
-  const name = normalizeEventName(rawName);
-  const parsed: ParsedEvent = {
-    name,
-    stop: false,
-    prevent: false,
-    capture: false,
-    once: false,
-    self: false,
-    passive: false,
-  };
-
-  // 匹配所有修饰符
-  const modifierMatch = rawName.match(/\.(stop|prevent|capture|once|self|passive)/g);
-  if (modifierMatch) {
-    for (const mod of modifierMatch) {
-      switch (mod) {
-        case '.stop':
-          parsed.stop = true;
-          break;
-        case '.prevent':
-          parsed.prevent = true;
-          break;
-        case '.capture':
-          parsed.capture = true;
-          break;
-        case '.once':
-          parsed.once = true;
-          break;
-        case '.self':
-          parsed.self = true;
-          break;
-        case '.passive':
-          parsed.passive = true;
-          break;
-      }
-    }
-  }
-
-  return parsed;
-}
 
 // ============================================================
 // Invoker Creation
@@ -176,7 +97,7 @@ export function patchEvent(
   // 兼容现有 common-events 的对象格式 { handler, capture, ... }
   const actualNextValue = extractHandler(nextValue);
 
-  const eventKey = getEventKey(rawName);
+  const eventKey = getEventKey(normalizeEventName(rawName));
   const parsed = parseEventModifier(rawName);
 
   // 获取或创建 el._vei 缓存

@@ -82,12 +82,12 @@ export type { SuspenseProps, SuspenseAsyncState } from './suspense';
 // Transition
 /** Transition 过渡组件 */
 export { Transition } from './transition';
-export type { TransitionComponentProps } from './transition';
+export type { TransitionComponentProps, TransitionComponentPropsLegacy } from './transition';
 
 // TransitionGroup
 /** TransitionGroup 列表过渡组件 */
 export { TransitionGroup } from './transition-group';
-export type { TransitionGroupComponentProps } from './transition-group';
+export type { TransitionGroupComponentProps, TransitionGroupComponentPropsLegacy } from './transition-group';
 
 // Teleport
 /** Teleport 传送门组件 */
