@@ -79,6 +79,7 @@ export {
   getSuspenseError,
   resolveSuspense,
   abortSuspense,
+  linkSuspenseBoundary,
 } from './suspense';
 export type { SuspenseProps, SuspenseAsyncState } from './suspense';
 

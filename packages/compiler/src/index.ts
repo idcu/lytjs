@@ -42,6 +42,16 @@ function hashString(str: string): string {
 }
 
 /**
+ * 构建编译缓存键，确保读取和写入使用相同的键生成逻辑。
+ * 包含 source、ssrMode、rendererMode 三个维度。
+ */
+function buildCompileCacheKey(source: string, options: CompilerOptions): string {
+  return hashString(
+    source + '|' + String(options.ssrMode ?? false) + '|' + String(options.rendererMode ?? ''),
+  );
+}
+
+/**
  * 清除编译缓存。用于测试或需要释放内存时。
  */
 export function clearCompileCache(): void {
@@ -62,7 +72,7 @@ export function compile(source: string, options: CompilerOptions = {}): CodegenR
     (options.directiveTransforms && Object.keys(options.directiveTransforms).length > 0);
 
   if (!hasCustomTransforms) {
-    const cacheKey = hashString(source + '|' + String(options.ssrMode ?? false) + '|' + String(options.rendererMode ?? ''));
+    const cacheKey = buildCompileCacheKey(source, options);
     const cached = compileCache.get(cacheKey);
     if (cached) {
       // LRU: 将命中条目移到末尾（最近使用）
@@ -124,7 +134,7 @@ export function compile(source: string, options: CompilerOptions = {}): CodegenR
 
   // 4. 存入缓存
   if (!hasCustomTransforms) {
-    const cacheKey = hashString(source);
+    const cacheKey = buildCompileCacheKey(source, options);
     // LRU 淘汰：超出最大缓存大小时删除最旧条目
     if (compileCache.size >= MAX_CACHE_SIZE) {
       const oldestKey = compileCache.keys().next().value;

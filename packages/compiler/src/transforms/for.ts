@@ -15,6 +15,9 @@ import { getExpContent, findDirective } from './helpers';
 import { transformElement } from './transform-element';
 import { warn } from '@lytjs/common-error';
 
+// 递增计数器，用于生成唯一的解构临时变量名，避免嵌套 v-for 冲突
+let destructureCounter = 0;
+
 /**
  * Type guard: check if a codegenNode is a VNodeCall.
  */
@@ -55,9 +58,12 @@ export function transformFor(node: RootNode | TemplateChildNode, context: Transf
   // - item in list
   // - (item, index) in list
   // - { key, value } in entries
+  // - { key: k, value: v } in entries (with renaming)
   // - { key, value }, index in entries
+  // - { key = 'default' } in entries (with default values)
   // - [ a, b ] in array
   // - [ a, b ], index in array
+  // - [ a = 1 ] in array (with default values)
   const inMatch = expContent.match(
     /^\s*(?:\(([^)]+)\)|(\{[^}]+\}(?:\s*,\s*\w+)?)|(\[[^\]]+\](?:\s*,\s*\w+)?)|(\S+))\s+(?:in|of)\s+(.+)$/,
   );
@@ -155,8 +161,12 @@ export function transformFor(node: RootNode | TemplateChildNode, context: Transf
  * Supports:
  * - `{ key, value }` -> object destructuring
  * - `{ key, value }, index` -> object destructuring with index
+ * - `{ key: k, value: v }` -> object destructuring with renaming
+ * - `{ key = 'default' }` -> object destructuring with default values
+ * - `{ key: k = 'default' }` -> object destructuring with renaming and default
  * - `[ index, value ]` -> array destructuring
  * - `[ index, value ], index` -> array destructuring with outer index
+ * - `[ a = 1, b = 2 ]` -> array destructuring with default values
  *
  * Returns null if the pattern is not a destructuring expression.
  */
@@ -168,7 +178,7 @@ function parseDestructure(
   if (objMatch) {
     return {
       pattern: objMatch[1]!.trim(),
-      tempVar: '__destructureItem',
+      tempVar: `__destructureItem_${destructureCounter++}`,
       indexVar: objMatch[2]?.trim(),
     };
   }
@@ -178,7 +188,7 @@ function parseDestructure(
   if (arrMatch) {
     return {
       pattern: arrMatch[1]!.trim(),
-      tempVar: '__destructureItem',
+      tempVar: `__destructureItem_${destructureCounter++}`,
       indexVar: arrMatch[2]?.trim(),
     };
   }

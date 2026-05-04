@@ -37,6 +37,7 @@
       "@lytjs/common": ["packages/common/packages/common/src"],
       "@lytjs/shared-types": ["packages/shared-types/src"],
       "@lytjs/reactivity": ["packages/reactivity/src"],
+      "@lytjs/reactivity/*": ["packages/reactivity/src/*"],
       "@lytjs/vdom": ["packages/vdom/src"],
       "@lytjs/compiler": ["packages/compiler/src"],
       "@lytjs/renderer": ["packages/renderer/src"],

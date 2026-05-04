@@ -1,6 +1,15 @@
 /**
  * @lytjs/vdom - patch
- * Core patch logic with platform-agnostic renderer host
+ *
+ * Core patch logic with platform-agnostic renderer host.
+ *
+ * This is the main entry point that orchestrates all patch sub-modules:
+ * - patch-element.ts: Element vnode mount/patch
+ * - patch-component.ts: Component vnode mount
+ * - patch-fragment.ts: Fragment vnode mount/patch/unmount
+ * - patch-teleport.ts: Teleport vnode mount/patch/unmount/move
+ * - patch-suspense.ts: Suspense vnode mount/patch/unmount
+ * - patch-children.ts: Children diff/mount/unmount
  */
 
 import {
@@ -8,19 +17,26 @@ import {
   Text,
   Comment,
   ShapeFlags,
-  PatchFlags,
   isSameVNodeType,
 } from '@lytjs/common-vnode';
 import type { VNode, ComponentInternalInstance } from '@lytjs/common-vnode';
-import { isArray, isFunction, hasChanged, EMPTY_OBJ, isString } from '@lytjs/common-is';
+import { isArray, isFunction } from '@lytjs/common-is';
 import { warn, error } from '@lytjs/common-error';
 import type { RendererHost } from '@lytjs/host-contract';
 import type { RendererOptions, SuspenseBoundary } from './types';
 import {
   registerDOMOperations,
-  patchKeyedChildren as listDiffPatchKeyedChildren,
 } from './list-diff';
 import type { DOMOperations } from './list-diff';
+
+// Sub-module imports
+import type { RendererContext } from './patch-element';
+import { createElementPatch } from './patch-element';
+import { createComponentPatch } from './patch-component';
+import { createFragmentPatch } from './patch-fragment';
+import { createTeleportPatch } from './patch-teleport';
+import { createSuspensePatch } from './patch-suspense';
+import { createChildrenPatch } from './patch-children';
 
 // ============================================================
 // RendererHost adapter: wraps a RendererHost into RendererOptions shape
@@ -205,6 +221,46 @@ export function createRenderer<HN, HE extends HN>(
   const getVNodeEl = (vnode: VNode): HN | null => vnode.el as unknown as HN | null;
 
   // ============================================================
+  // Build shared RendererContext for sub-modules
+  // ============================================================
+
+  // We use a mutable context object that gets populated as functions are created.
+  // This allows sub-modules to reference each other through the shared context.
+  const ctx = {} as RendererContext<HN, HE>;
+
+  // Populate host operations
+  ctx.createElement = createElement;
+  ctx.setElementText = setElementText;
+  ctx.insert = insert;
+  ctx.remove = hostRemove;
+  ctx.createText = createText;
+  ctx.setText = setText;
+  ctx.patchProp = patchProp;
+  ctx.createComment = createComment;
+  ctx.querySelector = querySelector;
+  ctx.setupChildComponent = setupChildComponent;
+  ctx.setVNodeEl = setVNodeEl;
+  ctx.getVNodeEl = getVNodeEl;
+
+  // ============================================================
+  // Create sub-module APIs
+  // ============================================================
+
+  const childrenAPI = createChildrenPatch<HN, HE>(ctx);
+  const elementAPI = createElementPatch<HN, HE>(ctx);
+  const componentAPI = createComponentPatch<HN, HE>(ctx);
+  const fragmentAPI = createFragmentPatch<HN, HE>(ctx);
+  const teleportAPI = createTeleportPatch<HN, HE>(ctx);
+  const suspenseAPI = createSuspensePatch<HN, HE>(ctx);
+
+  // Wire up children helpers into context
+  ctx.mountChildren = childrenAPI.mountChildren;
+  ctx.unmountChildren = childrenAPI.unmountChildren;
+  ctx.patchChildren = childrenAPI.patchChildren;
+  ctx.patchBlockChildren = childrenAPI.patchBlockChildren;
+  ctx.diffChildrenInternal = childrenAPI.diffChildrenInternal;
+
+  // ============================================================
   // patch - core diffing entry point
   // ============================================================
 
@@ -230,7 +286,7 @@ export function createRenderer<HN, HE extends HN>(
     if (n1 !== null && isSameVNodeType(n1, n2)) {
       // Fragment needs special handling
       if (n2.type === Fragment) {
-        patchFragment(n1, n2, container, parentComponent, parentSuspense, isSVG);
+        fragmentAPI.patchFragment(n1, n2, container, parentComponent, parentSuspense, isSVG);
       } else if (n2.type === Text) {
         // Patch text node: update textContent if children changed
         const node = n1.el;
@@ -253,7 +309,7 @@ export function createRenderer<HN, HE extends HN>(
           setText(node as unknown as HN, isFunction(n2.children) ? '' : String(n2.children ?? ''));
         }
       } else if (n2.shapeFlag & ShapeFlags.SUSPENSE) {
-        patchSuspense(n1, n2, container, anchor, parentComponent, parentSuspense, isSVG);
+        suspenseAPI.patchSuspense(n1, n2, container, anchor, parentComponent, parentSuspense, isSVG);
       } else if (n2.shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
         // Component patch: delegate to component update process
         n2.el = n1.el;
@@ -265,12 +321,12 @@ export function createRenderer<HN, HE extends HN>(
           }
         }
       } else if (n2.shapeFlag & ShapeFlags.TELEPORT) {
-        patchTeleport(n1, n2, container, anchor, parentComponent, parentSuspense, isSVG);
+        teleportAPI.patchTeleport(n1, n2, container, anchor, parentComponent, parentSuspense, isSVG);
       } else if (n2.shapeFlag & ShapeFlags.SUSPENSE) {
-        patchSuspense(n1, n2, container, anchor, parentComponent, parentSuspense, isSVG);
+        suspenseAPI.patchSuspense(n1, n2, container, anchor, parentComponent, parentSuspense, isSVG);
       } else {
         // Patch existing element node
-        patchElement(n1, n2, parentComponent, parentSuspense, isSVG);
+        elementAPI.patchElement(n1, n2, parentComponent, parentSuspense, isSVG);
       }
     } else {
       // Unmount old node
@@ -280,671 +336,21 @@ export function createRenderer<HN, HE extends HN>(
 
       // Mount new node
       if (n2.shapeFlag & ShapeFlags.ELEMENT) {
-        mountElement(n2, container, anchor, isSVG, parentComponent, parentSuspense);
+        elementAPI.mountElement(n2, container, anchor, isSVG, parentComponent, parentSuspense);
       } else if (n2.type === Text) {
-        mountTextNode(n2, container, anchor);
+        elementAPI.mountTextNode(n2, container, anchor);
       } else if (n2.type === Comment) {
-        mountCommentNode(n2, container, anchor);
+        elementAPI.mountCommentNode(n2, container, anchor);
       } else if (n2.type === Fragment) {
-        mountFragment(n2, container, anchor, parentComponent, parentSuspense, isSVG);
+        fragmentAPI.mountFragment(n2, container, anchor, parentComponent, parentSuspense, isSVG);
       } else if (n2.shapeFlag & ShapeFlags.TELEPORT) {
-        mountTeleport(n2, container, anchor, parentComponent, parentSuspense, isSVG);
+        teleportAPI.mountTeleport(n2, container, anchor, parentComponent, parentSuspense, isSVG);
       } else if (n2.shapeFlag & ShapeFlags.SUSPENSE) {
-        mountSuspense(n2, container, anchor, parentComponent, parentSuspense, isSVG);
+        suspenseAPI.mountSuspense(n2, container, anchor, parentComponent, parentSuspense, isSVG);
       } else if (n2.shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
-        mountComponent(n2, container, anchor, parentComponent, parentSuspense, isSVG);
+        componentAPI.mountComponent(n2, container, anchor, parentComponent, parentSuspense, isSVG);
       }
     }
-  }
-
-  // ============================================================
-  // mountComponent
-  // ============================================================
-
-  function mountComponent(
-    vnode: VNode,
-    container: HN,
-    anchor: HN | null,
-    parentComponent: ComponentInternalInstance | null,
-    parentSuspense: SuspenseBoundary | null,
-    isSVG: boolean,
-  ): void {
-    let component = vnode.component as ComponentInternalInstance | null | undefined;
-
-    if (!component) {
-      // Try to create and setup the component instance using the provided callback
-      if (setupChildComponent) {
-        setupChildComponent(vnode, parentComponent);
-        component = vnode.component as ComponentInternalInstance | null | undefined;
-      }
-      if (!component) {
-        warn(
-          `mountComponent received a component vnode without a component instance. ` +
-            `Ensure setupComponent has been called before mounting.`,
-        );
-        return;
-      }
-    }
-
-    // Call the render function to get the subTree
-    const renderFn = (component as unknown as Record<string, unknown>).render as
-      | ((ctx: Record<string, unknown>) => VNode)
-      | undefined;
-    if (!renderFn) {
-      warn(`Component "${(component.type as Record<string, unknown>).name || 'anonymous'}" has no render function.`);
-      return;
-    }
-
-    let subTree: VNode;
-    try {
-      subTree = renderFn(component.ctx as Record<string, unknown>);
-    } catch (err) {
-      // Propagate error through parent chain via errorCaptured
-      const renderError = err instanceof Error ? err : new Error(String(err));
-      let handled = false;
-      let current: ComponentInternalInstance | null = component.parent;
-      while (current) {
-        const type = current.type as Record<string, unknown>;
-        const errorHandler = type.errorCaptured as
-          | ((err: Error, instance: unknown, info: string) => boolean | void)
-          | undefined;
-        if (errorHandler) {
-          try {
-            const result = errorHandler.call(current.ctx, renderError, current, 'render function');
-            if (result === false) {
-              handled = true;
-              break;
-            }
-          } catch (e) {
-            error(`Error in errorCaptured hook: ${e}`);
-          }
-        }
-        // Also check errorCapturedHooks (from onErrorCaptured API)
-        const hooks = (current as unknown as Record<string, unknown>).errorCapturedHooks as
-          | Array<(err: Error, instance: unknown, info: string) => boolean | void>
-          | undefined;
-        if (hooks && hooks.length > 0) {
-          for (const hook of hooks) {
-            try {
-              const result = hook(renderError, current, 'render function');
-              if (result === false) {
-                handled = true;
-                break;
-              }
-            } catch (e) {
-              error(`Error in errorCaptured hook: ${e}`);
-            }
-          }
-          if (handled) break;
-        }
-        current = current.parent;
-      }
-
-      // If not handled by any component, try app-level errorHandler
-      if (!handled && component.root) {
-        const rootAny = component.root as unknown as Record<string, unknown>;
-        const appContext = rootAny.appContext as Record<string, unknown> | undefined;
-        const appErrorHandler = appContext?.config as Record<string, unknown> | undefined;
-        if (appErrorHandler && typeof appErrorHandler.errorHandler === 'function') {
-          (appErrorHandler.errorHandler as Function)(renderError, component.ctx, 'render function');
-        }
-      }
-
-      throw renderError;
-    }
-
-    component.subTree = subTree;
-
-    // Apply inheritAttrs: merge instance.attrs into root VNode props
-    const componentType = component.type as Record<string, unknown>;
-    if (component.attrs && subTree) {
-      const attrs = component.attrs;
-      const attrsKeys = Object.keys(attrs);
-      if (attrsKeys.length > 0) {
-        if (componentType.inheritAttrs !== false) {
-          // inheritAttrs !== false: 合并所有 attrs
-          const rootProps = { ...(subTree.props ?? {}), ...attrs };
-          subTree.props = rootProps;
-        } else {
-          // inheritAttrs === false: 仅合并 class 和 style（Vue 3 行为）
-          // class 和 style 是视觉相关属性，即使 inheritAttrs 为 false 也应继承到根元素
-          const fallthroughAttrs: Record<string, unknown> = {};
-          if ('class' in attrs) {
-            fallthroughAttrs.class = attrs.class;
-          }
-          if ('style' in attrs) {
-            fallthroughAttrs.style = attrs.style;
-          }
-          const fallthroughKeys = Object.keys(fallthroughAttrs);
-          if (fallthroughKeys.length > 0) {
-            const rootProps = { ...(subTree.props ?? {}), ...fallthroughAttrs };
-            subTree.props = rootProps;
-          }
-        }
-      }
-    }
-
-    // Patch the subTree into the container
-    patch(null, subTree, container, anchor, component, parentSuspense, isSVG);
-
-    // The component's el points to the root element of the subTree
-    vnode.el = subTree.el;
-  }
-
-  // ============================================================
-  // setRef - 处理模板 ref 收集
-  // ============================================================
-
-  /**
-   * 设置 ref 引用：
-   * - 字符串 ref：存储到父组件实例的 refs 对象中
-   * - 函数 ref：调用并传入元素
-   * - 对象 ref（refImpl）：设置其 .value
-   */
-  function setRef(
-    el: HN,
-    ref: unknown,
-    parentComponent: ComponentInternalInstance,
-  ): void {
-    if (typeof ref === 'string') {
-      parentComponent.refs[ref] = el;
-    } else if (typeof ref === 'function') {
-      ref(el);
-    } else if (ref !== null && typeof ref === 'object' && 'value' in ref) {
-      (ref as { value: unknown }).value = el;
-    }
-  }
-
-  // ============================================================
-  // mountElement
-  // ============================================================
-
-  function mountElement(
-    vnode: VNode,
-    container: HN,
-    anchor: HN | null,
-    isSVG: boolean,
-    parentComponent: ComponentInternalInstance | null = null,
-    parentSuspense: SuspenseBoundary | null = null,
-  ): void {
-    if (typeof vnode.type !== 'string') {
-      warn(
-        `mountElement received a vnode with non-string type (${String(vnode.type)}). ` +
-          `Only element vnodes can be mounted as elements.`,
-      );
-      return;
-    }
-    const tag = vnode.type;
-    const el = createElement(tag);
-    setVNodeEl(vnode, el);
-
-    // Apply props
-    const props = vnode.props ?? EMPTY_OBJ;
-    for (const key in props) {
-      if (key === 'key' || key === 'ref') continue;
-      patchProp(el, key, null, props[key]);
-    }
-
-    // Mount children
-    if (vnode.shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
-      mountChildren(vnode, el, anchor, isSVG, parentComponent, parentSuspense);
-    } else if (vnode.shapeFlag & ShapeFlags.TEXT_CHILDREN) {
-      setElementText(el, String(vnode.children ?? ''));
-    }
-
-    // Insert into container
-    insert(el, container, anchor);
-
-    // Handle ref: store element reference on parent component instance
-    const refValue = vnode.ref;
-    if (refValue && parentComponent) {
-      setRef(el, refValue, parentComponent);
-    }
-  }
-
-  // ============================================================
-  // mountTextNode
-  // ============================================================
-
-  function mountTextNode(vnode: VNode, container: HN, anchor: HN | null): void {
-    const text = isFunction(vnode.children) ? '' : String(vnode.children ?? '');
-    const node = createText(text);
-    setVNodeEl(vnode, node);
-    insert(node, container, anchor);
-  }
-
-  // ============================================================
-  // mountCommentNode
-  // ============================================================
-
-  function mountCommentNode(vnode: VNode, container: HN, anchor: HN | null): void {
-    const text = isFunction(vnode.children) ? '' : String(vnode.children ?? '');
-    const node = createComment(text);
-    setVNodeEl(vnode, node);
-    vnode.anchor = node as unknown as Node | null;
-    insert(node, container, anchor);
-  }
-
-  // ============================================================
-  // mountFragment
-  // ============================================================
-
-  function mountFragment(
-    vnode: VNode,
-    container: HN,
-    anchor: HN | null,
-    parentComponent: ComponentInternalInstance | null,
-    parentSuspense: SuspenseBoundary | null,
-    isSVG: boolean,
-  ): void {
-    const fragmentStartAnchor = createComment('');
-    const fragmentEndAnchor = createComment('');
-    setVNodeEl(vnode, fragmentStartAnchor);
-    vnode.anchor = fragmentEndAnchor as unknown as Node | null;
-
-    insert(fragmentStartAnchor, container, anchor);
-    insert(fragmentEndAnchor, container, anchor);
-
-    // Mount children between the anchors
-    const children = isArray(vnode.children) ? vnode.children : [];
-    for (let i = 0; i < children.length; i++) {
-      const child = children[i];
-      if (child != null) {
-        patch(null, child, container, fragmentEndAnchor, parentComponent, parentSuspense, isSVG);
-      }
-    }
-  }
-
-  // ============================================================
-  // patchFragment
-  // ============================================================
-
-  function patchFragment(
-    n1: VNode,
-    n2: VNode,
-    container: HN,
-    parentComponent: ComponentInternalInstance | null,
-    parentSuspense: SuspenseBoundary | null,
-    isSVG: boolean,
-  ): void {
-    // Reuse the existing fragment anchors
-    n2.el = n1.el;
-    const endAnchor = n1.anchor;
-    if (!endAnchor) return;
-    n2.anchor = endAnchor;
-
-    const c1 = n1.children as VNode[] | null;
-    const c2 = n2.children as VNode[] | null;
-
-    // Both should be arrays for fragments
-    if (isArray(c1) && isArray(c2)) {
-      // Choose diff strategy based on fragment patchFlag
-      if (n2.patchFlag & PatchFlags.STABLE_FRAGMENT) {
-        // STABLE_FRAGMENT: children order never changes, patch by index directly
-        diffStableFragment(c1, c2, container, endAnchor as HN, parentComponent, parentSuspense, isSVG);
-      } else if (n2.patchFlag & PatchFlags.KEYED_FRAGMENT) {
-        // KEYED_FRAGMENT: children have keys, use keyed diff algorithm
-        diffChildrenFragment(c1, c2, container, endAnchor as HN, parentComponent, parentSuspense, isSVG);
-      } else if (n2.patchFlag & PatchFlags.UNKEYED_FRAGMENT) {
-        // UNKEYED_FRAGMENT: children have no keys, use simple sync-from-start strategy
-        diffUnkeyedFragment(c1, c2, container, endAnchor as HN, parentComponent, parentSuspense, isSVG);
-      } else {
-        // No fragment-specific patchFlag, use default keyed diff
-        diffChildrenFragment(c1, c2, container, endAnchor as HN, parentComponent, parentSuspense, isSVG);
-      }
-    } else if (isArray(c2)) {
-      // Old was null/empty, mount all new before end anchor
-      for (let i = 0; i < c2.length; i++) {
-        patch(null, c2[i]!, container, endAnchor as HN, parentComponent, parentSuspense, isSVG);
-      }
-    } else if (isArray(c1)) {
-      // New is null/empty, unmount all old
-      unmountChildren(c1, parentComponent, parentSuspense);
-    }
-  }
-
-  // ============================================================
-  // diffChildrenInternal - 委托给 list-diff 模块
-  // ============================================================
-
-  function diffChildrenInternal(
-    c1: VNode[],
-    c2: VNode[],
-    container: HN,
-    parentComponent: ComponentInternalInstance | null,
-    parentSuspense: SuspenseBoundary | null,
-    isSVG: boolean,
-    fallbackAnchor: HN | null,
-  ): void {
-    listDiffPatchKeyedChildren(
-      c1,
-      c2,
-      container,
-      parentComponent,
-      parentSuspense,
-      isSVG,
-      fallbackAnchor,
-    );
-  }
-
-  // ============================================================
-  // diffChildrenFragment - like diffChildren but uses endAnchor as fallback
-  // ============================================================
-
-  function diffChildrenFragment(
-    c1: VNode[],
-    c2: VNode[],
-    container: HN,
-    endAnchor: HN,
-    parentComponent: ComponentInternalInstance | null,
-    parentSuspense: SuspenseBoundary | null,
-    isSVG: boolean,
-  ): void {
-    diffChildrenInternal(c1, c2, container, parentComponent, parentSuspense, isSVG, endAnchor);
-  }
-
-  // ============================================================
-  // diffStableFragment - STABLE_FRAGMENT: patch by index, skip key comparison
-  // ============================================================
-
-  function diffStableFragment(
-    c1: VNode[],
-    c2: VNode[],
-    container: HN,
-    endAnchor: HN,
-    parentComponent: ComponentInternalInstance | null,
-    parentSuspense: SuspenseBoundary | null,
-    isSVG: boolean,
-  ): void {
-    const commonLength = Math.min(c1.length, c2.length);
-    // Patch common prefix by index (no key comparison needed)
-    for (let i = 0; i < commonLength; i++) {
-      patch(c1[i]!, c2[i]!, container, null, parentComponent, parentSuspense, isSVG);
-    }
-    // Mount extra new children
-    if (c2.length > c1.length) {
-      for (let i = commonLength; i < c2.length; i++) {
-        patch(null, c2[i]!, container, endAnchor, parentComponent, parentSuspense, isSVG);
-      }
-    }
-    // Unmount extra old children
-    else if (c1.length > c2.length) {
-      for (let i = commonLength; i < c1.length; i++) {
-        unmount(c1[i]!, parentComponent, parentSuspense, true);
-      }
-    }
-  }
-
-  // ============================================================
-  // diffUnkeyedFragment - UNKEYED_FRAGMENT: simple sync-from-start strategy
-  // ============================================================
-
-  function diffUnkeyedFragment(
-    c1: VNode[],
-    c2: VNode[],
-    container: HN,
-    endAnchor: HN,
-    parentComponent: ComponentInternalInstance | null,
-    parentSuspense: SuspenseBoundary | null,
-    isSVG: boolean,
-  ): void {
-    // Sync from start: patch nodes with the same type at the same index
-    let i = 0;
-    const l1 = c1.length;
-    const l2 = c2.length;
-
-    while (i < l1 && i < l2) {
-      if (isSameVNodeType(c1[i]!, c2[i]!)) {
-        patch(c1[i]!, c2[i]!, container, null, parentComponent, parentSuspense, isSVG);
-      } else {
-        // Type mismatch: unmount old, mount new
-        unmount(c1[i]!, parentComponent, parentSuspense, true);
-        patch(null, c2[i]!, container, null, parentComponent, parentSuspense, isSVG);
-      }
-      i++;
-    }
-
-    // Mount remaining new children
-    while (i < l2) {
-      patch(null, c2[i]!, container, endAnchor, parentComponent, parentSuspense, isSVG);
-      i++;
-    }
-
-    // Unmount remaining old children
-    while (i < l1) {
-      unmount(c1[i]!, parentComponent, parentSuspense, true);
-      i++;
-    }
-  }
-
-  // ============================================================
-  // mountChildren
-  // ============================================================
-
-  function mountChildren(
-    vnode: VNode,
-    container: HN,
-    anchor: HN | null,
-    isSVG: boolean,
-    parentComponent: ComponentInternalInstance | null = null,
-    parentSuspense: SuspenseBoundary | null = null,
-  ): void {
-    const children = vnode.children;
-    if (!isArray(children)) return;
-
-    for (let i = 0; i < children.length; i++) {
-      const child = children[i];
-      if (child != null) {
-        patch(null, child, container, anchor, parentComponent, parentSuspense, isSVG);
-      }
-    }
-  }
-
-  // ============================================================
-  // diffProps - full props diff between old and new props
-  // ============================================================
-
-  function diffProps(
-    el: HE,
-    oldProps: Record<string, unknown>,
-    newProps: Record<string, unknown>,
-  ): void {
-    for (const key in newProps) {
-      if (key === 'key' || key === 'ref') continue;
-      const next = newProps[key];
-      const prev = oldProps[key];
-      if (hasChanged(next, prev)) {
-        patchProp(el, key, prev, next);
-      }
-    }
-    for (const key in oldProps) {
-      if (key === 'key' || key === 'ref') continue;
-      if (!(key in newProps)) {
-        patchProp(el, key, oldProps[key], null);
-      }
-    }
-  }
-
-  // ============================================================
-  // patchElement
-  // ============================================================
-
-  function patchElement(
-    n1: VNode,
-    n2: VNode,
-    parentComponent: ComponentInternalInstance | null,
-    parentSuspense: SuspenseBoundary | null,
-    isSVG: boolean,
-  ): void {
-    // n1.el is guaranteed to exist since n1 was previously mounted
-    const el = n1.el! as unknown as HE;
-    setVNodeEl(n2, n1.el as unknown as HN | null);
-
-    // Patch props
-    const oldProps = n1.props ?? EMPTY_OBJ;
-    const newProps = n2.props ?? EMPTY_OBJ;
-
-    if (n2.patchFlag & PatchFlags.FULL_PROPS) {
-      // Full props diff
-      diffProps(el, oldProps, newProps);
-    } else if (n2.patchFlag > 0) {
-      // PatchFlag optimization
-      if (n2.patchFlag & PatchFlags.CLASS) {
-        if (oldProps.class !== newProps.class) {
-          patchProp(el, 'class', oldProps.class, newProps.class);
-        }
-      }
-      if (n2.patchFlag & PatchFlags.STYLE) {
-        patchProp(el, 'style', oldProps.style, newProps.style);
-      }
-      if (n2.patchFlag & PatchFlags.PROPS) {
-        // Only diff dynamicProps
-        const dynamicProps = n2.dynamicProps;
-        if (dynamicProps) {
-          for (let i = 0; i < dynamicProps.length; i++) {
-            const key = dynamicProps[i]!;
-            const next = newProps[key];
-            const prev = oldProps[key];
-            if (hasChanged(next, prev)) {
-              patchProp(el, key, prev, next);
-            }
-          }
-        }
-      }
-      if (n2.patchFlag & PatchFlags.TEXT) {
-        if (n1.children !== n2.children) {
-          setElementText(el, String(n2.children ?? ''));
-        }
-      }
-    } else if (oldProps !== newProps) {
-      // No patchFlag, do full props diff
-      diffProps(el, oldProps, newProps);
-    }
-
-    // Patch children — Block Tree 快速路径
-    const oldDynamicChildren = n1.dynamicChildren;
-    const newDynamicChildren = n2.dynamicChildren;
-
-    if (oldDynamicChildren && newDynamicChildren && oldDynamicChildren.length > 0) {
-      // Block Tree 优化路径：仅 diff dynamicChildren
-      patchBlockChildren(n1, n2, el, parentComponent, parentSuspense, isSVG);
-    } else {
-      // 回退路径：全量 diff children
-      patchChildren(n1, n2, el, parentComponent, parentSuspense, isSVG);
-    }
-  }
-
-  // ============================================================
-  // patchBlockChildren — Block Tree 快速路径
-  // ============================================================
-
-  /**
-   * 仅遍历 dynamicChildren 进行 patch。
-   * dynamicChildren 中的每个节点按索引一一对应（顺序稳定），
-   * 跳过所有静态子树的 diff。
-   */
-  function patchBlockChildren(
-    n1: VNode,
-    n2: VNode,
-    container: HN,
-    parentComponent: ComponentInternalInstance | null,
-    parentSuspense: SuspenseBoundary | null,
-    isSVG: boolean,
-  ): void {
-    const oldDynamicChildren = n1.dynamicChildren!;
-    const newDynamicChildren = n2.dynamicChildren!;
-
-    for (let i = 0; i < newDynamicChildren.length; i++) {
-      const oldVNode = oldDynamicChildren[i];
-      const newVNode = newDynamicChildren[i]!;
-
-      if (oldVNode && isSameVNodeType(oldVNode, newVNode)) {
-        // 同类型节点：走 patch 更新路径
-        patch(oldVNode, newVNode, container, null, parentComponent, parentSuspense, isSVG);
-      } else {
-        // 类型不同或旧节点不存在：卸载旧的，挂载新的
-        if (oldVNode) {
-          unmount(oldVNode, parentComponent, parentSuspense, true);
-        }
-        patch(null, newVNode, container, null, parentComponent, parentSuspense, isSVG);
-      }
-    }
-
-    // 卸载多余的旧 dynamicChildren
-    if (oldDynamicChildren.length > newDynamicChildren.length) {
-      for (let i = newDynamicChildren.length; i < oldDynamicChildren.length; i++) {
-        unmount(oldDynamicChildren[i]!, parentComponent, parentSuspense, true);
-      }
-    }
-  }
-
-  // ============================================================
-  // patchChildren
-  // ============================================================
-
-  function patchChildren(
-    n1: VNode,
-    n2: VNode,
-    container: HN,
-    parentComponent: ComponentInternalInstance | null,
-    parentSuspense: SuspenseBoundary | null,
-    isSVG: boolean,
-  ): void {
-    const c1 = n1.children as VNode[] | string | null;
-    const c2 = n2.children as VNode[] | string | null;
-    const { shapeFlag: prevShapeFlag } = n1;
-    const { shapeFlag: nextShapeFlag } = n2;
-
-    if (nextShapeFlag & ShapeFlags.TEXT_CHILDREN) {
-      // New children are text
-      if (prevShapeFlag & ShapeFlags.ARRAY_CHILDREN) {
-        // Old children were array - unmount all
-        unmountChildren(c1 as VNode[], parentComponent, parentSuspense);
-      }
-      // Always set new text (DOM was potentially cleared by unmountChildren above)
-      setElementText(container as HE, String(c2 ?? ''));
-    } else {
-      // New children are array (or null)
-      if (prevShapeFlag & ShapeFlags.TEXT_CHILDREN) {
-        // Old children were text - clear it
-        setElementText(container as HE, '');
-      }
-
-      if (prevShapeFlag & ShapeFlags.ARRAY_CHILDREN) {
-        if (nextShapeFlag & ShapeFlags.ARRAY_CHILDREN) {
-          // Both are arrays - diff
-          diffChildren(
-            c1 as VNode[],
-            c2 as VNode[],
-            container,
-            parentComponent,
-            parentSuspense,
-            isSVG,
-          );
-        } else {
-          // New children are null - unmount all old
-          unmountChildren(c1 as VNode[], parentComponent, parentSuspense);
-        }
-      } else if (nextShapeFlag & ShapeFlags.ARRAY_CHILDREN) {
-        // Old children were null/none - mount new array
-        mountChildren(n2, container, null, isSVG, parentComponent, parentSuspense);
-      }
-    }
-  }
-
-  // ============================================================
-  // diffChildren - keyed diff with LIS optimization
-  // ============================================================
-
-  function diffChildren(
-    c1: VNode[],
-    c2: VNode[],
-    container: HN,
-    parentComponent: ComponentInternalInstance | null,
-    parentSuspense: SuspenseBoundary | null,
-    isSVG: boolean,
-  ): void {
-    diffChildrenInternal(c1, c2, container, parentComponent, parentSuspense, isSVG, null);
   }
 
   // ============================================================
@@ -996,7 +402,7 @@ export function createRenderer<HN, HE extends HN>(
     }
 
     if (type === Fragment) {
-      unmountFragment(vnode, parentComponent, parentSuspense, doRemove);
+      fragmentAPI.unmountFragment(vnode, parentComponent, parentSuspense, doRemove);
       return;
     }
 
@@ -1009,12 +415,12 @@ export function createRenderer<HN, HE extends HN>(
     }
 
     if (vnode.shapeFlag & ShapeFlags.TELEPORT) {
-      unmountTeleport(vnode, parentComponent, parentSuspense, doRemove);
+      teleportAPI.unmountTeleport(vnode, parentComponent, parentSuspense, doRemove);
       return;
     }
 
     if (vnode.shapeFlag & ShapeFlags.SUSPENSE) {
-      unmountSuspense(vnode, parentComponent, parentSuspense, doRemove);
+      suspenseAPI.unmountSuspense(vnode, parentComponent, parentSuspense, doRemove);
       return;
     }
 
@@ -1042,481 +448,6 @@ export function createRenderer<HN, HE extends HN>(
   }
 
   // ============================================================
-  // unmountFragment
-  // ============================================================
-
-  function unmountFragment(
-    vnode: VNode,
-    parentComponent: ComponentInternalInstance | null,
-    parentSuspense: SuspenseBoundary | null,
-    doRemove: boolean,
-  ): void {
-    const { children } = vnode;
-    if (isArray(children)) {
-      for (let i = 0; i < children.length; i++) {
-        unmount(children[i]!, parentComponent, parentSuspense, doRemove);
-      }
-    }
-
-    if (doRemove) {
-      // Remove fragment anchors
-      const vEl = getVNodeEl(vnode);
-      if (vEl) {
-        hostRemove(vEl);
-      }
-      if (vnode.anchor && vnode.anchor !== vnode.el) {
-        hostRemove(vnode.anchor as unknown as HN);
-      }
-    }
-  }
-
-  // ============================================================
-  // unmountChildren
-  // ============================================================
-
-  function unmountChildren(
-    children: VNode[],
-    parentComponent: ComponentInternalInstance | null,
-    parentSuspense: SuspenseBoundary | null,
-  ): void {
-    for (let i = 0; i < children.length; i++) {
-      unmount(children[i]!, parentComponent, parentSuspense, true);
-    }
-  }
-
-  // ============================================================
-  // Teleport - mount / patch / unmount / move
-  // ============================================================
-
-  function mountTeleport(
-    vnode: VNode,
-    container: HN,
-    anchor: HN | null,
-    parentComponent: ComponentInternalInstance | null,
-    parentSuspense: SuspenseBoundary | null,
-    isSVG: boolean,
-  ): void {
-    const { props } = vnode;
-    const to = props?.to as string | HE | undefined;
-    const disabled = !!props?.disabled;
-
-    if (disabled) {
-      // When disabled, mount children directly into the container
-      mountChildren(vnode, container, anchor, isSVG, parentComponent, parentSuspense);
-      // Store a placeholder comment in container
-      const placeholder = createComment('');
-      setVNodeEl(vnode, placeholder);
-      vnode.targetAnchor = null;
-      insert(placeholder, container, anchor);
-    } else {
-      // Resolve target container
-      let target: HE | null = null;
-      if (isString(to)) {
-        target = querySelector ? querySelector(to) : null;
-      } else if (to && typeof to === 'object') {
-        target = to as HE;
-      }
-
-      if (!target) {
-        if (typeof __DEV__ !== 'undefined' && __DEV__) {
-          warn(`Teleport target "${String(to)}" not found. Mounting children in place.`);
-        }
-        mountChildren(vnode, container, anchor, isSVG, parentComponent, parentSuspense);
-        const placeholder = createComment('');
-        setVNodeEl(vnode, placeholder);
-        vnode.targetAnchor = null;
-        insert(placeholder, container, anchor);
-        return;
-      }
-
-      // Create anchor nodes in the target container
-      const targetStart = createComment('teleport start');
-      const targetEnd = createComment('teleport end');
-      insert(targetStart, target, null);
-      insert(targetEnd, target, null);
-
-      // Mount children between the target anchors
-      const children = isArray(vnode.children) ? vnode.children : [];
-      for (let i = 0; i < children.length; i++) {
-        const child = children[i];
-        if (child != null) {
-          patch(null, child, target, targetEnd, parentComponent, parentSuspense, isSVG);
-        }
-      }
-
-      // Create placeholder comment in the original container
-      const placeholder = createComment('');
-      insert(placeholder, container, anchor);
-
-      // Store references on vnode
-      setVNodeEl(vnode, placeholder);
-      vnode.target = target as unknown as Element | null;
-      vnode.targetAnchor = targetEnd as unknown as Node | null;
-      vnode.targetStart = targetStart as unknown as Node | null;
-    }
-  }
-
-  function patchTeleport(
-    n1: VNode,
-    n2: VNode,
-    container: HN,
-    anchor: HN | null,
-    parentComponent: ComponentInternalInstance | null,
-    parentSuspense: SuspenseBoundary | null,
-    isSVG: boolean,
-  ): void {
-    const oldProps = n1.props ?? EMPTY_OBJ;
-    const newProps = n2.props ?? EMPTY_OBJ;
-    const oldDisabled = !!oldProps.disabled;
-    const newDisabled = !!newProps.disabled;
-    const oldTo = oldProps.to as string | HE | undefined;
-    const newTo = newProps.to as string | HE | undefined;
-
-    // Reuse the placeholder el
-    n2.el = n1.el;
-    n2.target = n1.target;
-    n2.targetAnchor = n1.targetAnchor;
-    n2.targetStart = n1.targetStart;
-
-    // Case 1: target changed (and not disabled)
-    if (!newDisabled && oldTo !== newTo) {
-      // Resolve new target
-      let newTarget: HE | null = null;
-      if (isString(newTo)) {
-        newTarget = querySelector ? querySelector(newTo) : null;
-      } else if (newTo && typeof newTo === 'object') {
-        newTarget = newTo as HE;
-      }
-
-      if (newTarget) {
-        // Create new anchors in the new target
-        const targetStart = createComment('teleport start');
-        const targetEnd = createComment('teleport end');
-        insert(targetStart, newTarget, null);
-        insert(targetEnd, newTarget, null);
-
-        // Move children from old target to new target
-        const children = isArray(n2.children) ? n2.children : [];
-        for (let i = 0; i < children.length; i++) {
-          const child = children[i];
-          if (child != null) {
-            move(child, newTarget, targetEnd, parentComponent, parentSuspense);
-          }
-        }
-
-        // Remove old target anchors
-        if (n1.targetStart) hostRemove(n1.targetStart as unknown as HN);
-        if (n1.targetAnchor) hostRemove(n1.targetAnchor as unknown as HN);
-
-        n2.target = newTarget as unknown as Element | null;
-        n2.targetAnchor = targetEnd as unknown as Node | null;
-        n2.targetStart = targetStart as unknown as Node | null;
-      }
-    }
-    // Case 2: disabled -> enabled or enabled -> disabled
-    else if (oldDisabled !== newDisabled) {
-      if (newDisabled) {
-        // Was enabled, now disabled: move children from target back to container
-        const children = isArray(n2.children) ? n2.children : [];
-        for (let i = 0; i < children.length; i++) {
-          const child = children[i];
-          if (child != null) {
-            move(child, container, anchor, parentComponent, parentSuspense);
-          }
-        }
-        if (n1.targetStart) hostRemove(n1.targetStart as unknown as HN);
-        if (n1.targetAnchor) hostRemove(n1.targetAnchor as unknown as HN);
-        n2.target = null;
-        n2.targetAnchor = null;
-        n2.targetStart = null;
-      } else {
-        // Was disabled, now enabled: re-mount as teleport
-        mountTeleport(n2, container, anchor, parentComponent, parentSuspense, isSVG);
-        return;
-      }
-    }
-
-    // Patch children
-    const c1 = n1.children as VNode[] | null;
-    const c2 = n2.children as VNode[] | null;
-    if (isArray(c1) && isArray(c2)) {
-      const patchContainer = newDisabled ? container : ((n2.target as unknown as HN) ?? container);
-      const patchAnchor = newDisabled ? anchor : (n2.targetAnchor as unknown as HN | null);
-      diffChildrenInternal(
-        c1,
-        c2,
-        patchContainer,
-        parentComponent,
-        parentSuspense,
-        isSVG,
-        patchAnchor,
-      );
-    }
-  }
-
-  function unmountTeleport(
-    vnode: VNode,
-    parentComponent: ComponentInternalInstance | null,
-    parentSuspense: SuspenseBoundary | null,
-    doRemove: boolean,
-  ): void {
-    // Unmount children
-    const children = isArray(vnode.children) ? vnode.children : [];
-    for (let i = 0; i < children.length; i++) {
-      unmount(children[i]!, parentComponent, parentSuspense, doRemove);
-    }
-
-    if (doRemove) {
-      // Remove target anchors
-      if (vnode.targetStart) hostRemove(vnode.targetStart as unknown as HN);
-      if (vnode.targetAnchor) hostRemove(vnode.targetAnchor as unknown as HN);
-      // Remove placeholder in container
-      const vEl = getVNodeEl(vnode);
-      if (vEl) hostRemove(vEl);
-    }
-  }
-
-  function moveTeleport(vnode: VNode, container: HN, anchor: HN | null): void {
-    // Only move the placeholder comment node in the container.
-    // The children in the target container stay in place.
-    const vEl = getVNodeEl(vnode);
-    if (vEl) {
-      insert(vEl, container, anchor);
-    }
-  }
-
-  // ============================================================
-  // Suspense - mount / patch / unmount
-  // ============================================================
-
-  /**
-   * Extract default and fallback branches from vnode children.
-   * Children can be:
-   * - VNode[] (default slot only, no fallback)
-   * - { default: VNode[], fallback?: VNode[] } (named slots)
-   */
-  function resolveSuspenseChildren(
-    children: VNode['children'],
-  ): { defaultBranch: VNode | null; fallbackBranch: VNode | null } {
-    if (isArray(children)) {
-      // VNode[]: treat as default slot, no fallback
-      return {
-        defaultBranch: children[0] ?? null,
-        fallbackBranch: null,
-      };
-    }
-
-    if (children && typeof children === 'object' && !isArray(children)) {
-      // Slot object: { default: VNode[], fallback?: VNode[] }
-      const slots = children as Record<string, VNode[]>;
-      const defaultSlot = slots.default;
-      const fallbackSlot = slots.fallback;
-      return {
-        defaultBranch: isArray(defaultSlot) ? (defaultSlot[0] ?? null) : null,
-        fallbackBranch: isArray(fallbackSlot) ? (fallbackSlot[0] ?? null) : null,
-      };
-    }
-
-    return { defaultBranch: null, fallbackBranch: null };
-  }
-
-  function mountSuspense(
-    vnode: VNode,
-    container: HN,
-    anchor: HN | null,
-    parentComponent: ComponentInternalInstance | null,
-    _parentSuspense: SuspenseBoundary | null,
-    isSVG: boolean,
-  ): void {
-    // Create a SuspenseBoundary and store it on the vnode
-    const boundary: SuspenseBoundary = {
-      vnode,
-      parent: parentComponent,
-      parentComponent,
-      isSVG,
-      container,
-      anchor,
-      activeBranch: null,
-      pendingBranch: null,
-      isInFallback: false,
-      isHydrating: false,
-      effects: [],
-    };
-
-    vnode.suspense = boundary;
-
-    // Resolve default and fallback branches from children
-    const { defaultBranch, fallbackBranch } = resolveSuspenseChildren(vnode.children);
-
-    // Check if the default branch contains async components
-    const isAsync = defaultBranch?.isAsyncPlaceholder === true;
-
-    if (isAsync && fallbackBranch) {
-      // Async content: mount fallback as pendingBranch
-      boundary.isInFallback = true;
-      boundary.pendingBranch = defaultBranch;
-      boundary.activeBranch = null;
-
-      // Mount the fallback content
-      patch(null, fallbackBranch, container, anchor, parentComponent, boundary, isSVG);
-      vnode.el = fallbackBranch.el;
-    } else {
-      // Sync content: mount default as activeBranch
-      boundary.activeBranch = defaultBranch;
-
-      if (defaultBranch) {
-        patch(null, defaultBranch, container, anchor, parentComponent, boundary, isSVG);
-        vnode.el = defaultBranch.el;
-      }
-    }
-
-    // Create placeholder comment node if no el was set
-    if (!vnode.el) {
-      const placeholder = createComment('');
-      setVNodeEl(vnode, placeholder);
-      insert(placeholder, container, anchor);
-    }
-  }
-
-  function patchSuspense(
-    n1: VNode,
-    n2: VNode,
-    container: HN,
-    anchor: HN | null,
-    parentComponent: ComponentInternalInstance | null,
-    parentSuspense: SuspenseBoundary | null,
-    isSVG: boolean,
-  ): void {
-    // Reuse the existing boundary
-    const boundary = n1.suspense as SuspenseBoundary | undefined;
-    if (boundary) {
-      n2.suspense = boundary;
-      boundary.vnode = n2;
-    }
-
-    n2.el = n1.el;
-
-    // Resolve new children
-    const { defaultBranch: newDefault, fallbackBranch: newFallback } =
-      resolveSuspenseChildren(n2.children);
-
-    // Check if we need to transition from pending to resolved
-    const wasInFallback = boundary?.isInFallback ?? false;
-    const isAsync = newDefault?.isAsyncPlaceholder === true;
-
-    if (wasInFallback && !isAsync) {
-      // Transition: pending -> resolved
-      // Unmount the fallback (pendingBranch display) and mount the active content
-      if (boundary) {
-        boundary.isInFallback = false;
-        boundary.activeBranch = newDefault;
-        boundary.pendingBranch = null;
-      }
-
-      // Unmount old fallback content (was displayed as the pending branch)
-      if (!isArray(n1.children) && n1.children && typeof n1.children === 'object') {
-        const slots = n1.children as Record<string, VNode[]>;
-        const fallbackSlot = slots.fallback;
-        if (isArray(fallbackSlot) && fallbackSlot[0]) {
-          unmount(fallbackSlot[0], parentComponent, parentSuspense, true);
-        }
-      }
-
-      // Mount the new active content
-      if (newDefault) {
-        patch(null, newDefault, container, anchor, parentComponent, boundary ?? parentSuspense, isSVG);
-        n2.el = newDefault.el;
-      }
-    } else if (!wasInFallback && isAsync && newFallback) {
-      // Transition: resolved -> pending
-      // Unmount the active content and mount the fallback
-      if (boundary) {
-        boundary.isInFallback = true;
-        boundary.pendingBranch = newDefault;
-      }
-
-      // Unmount old active content (save reference before clearing)
-      const oldActive = boundary?.activeBranch ?? null;
-      if (boundary) {
-        boundary.activeBranch = null;
-      }
-      if (oldActive) {
-        unmount(oldActive, parentComponent, parentSuspense, true);
-      }
-
-      // Mount the fallback
-      patch(null, newFallback, container, anchor, parentComponent, boundary ?? parentSuspense, isSVG);
-      n2.el = newFallback.el;
-    } else {
-      // No state transition: patch the active branch normally
-      const oldActive = n1.children as VNode[] | null;
-      const newActive = n2.children as VNode[] | null;
-
-      if (isArray(oldActive) && isArray(newActive)) {
-        const oldBranch = oldActive[0] ?? null;
-        const newBranch = newActive[0] ?? null;
-
-        if (oldBranch && newBranch && isSameVNodeType(oldBranch, newBranch)) {
-          patch(oldBranch, newBranch, container, anchor, parentComponent, parentSuspense, isSVG);
-        } else {
-          if (oldBranch) {
-            unmount(oldBranch, parentComponent, parentSuspense, true);
-          }
-          if (newBranch) {
-            patch(null, newBranch, container, anchor, parentComponent, parentSuspense, isSVG);
-          }
-        }
-
-        if (boundary) {
-          boundary.activeBranch = newBranch;
-        }
-      }
-    }
-  }
-
-  function unmountSuspense(
-    vnode: VNode,
-    parentComponent: ComponentInternalInstance | null,
-    parentSuspense: SuspenseBoundary | null,
-    doRemove: boolean,
-  ): void {
-    const boundary = vnode.suspense as SuspenseBoundary | undefined;
-
-    // Unmount the active branch
-    if (boundary?.activeBranch) {
-      unmount(boundary.activeBranch, parentComponent, parentSuspense, doRemove);
-    }
-
-    // Unmount the pending branch (if still mounted)
-    if (boundary?.pendingBranch) {
-      unmount(boundary.pendingBranch, parentComponent, parentSuspense, doRemove);
-    }
-
-    // Also unmount any remaining children from vnode.children
-    // (fallback content that may have been mounted)
-    const { fallbackBranch: unmountFallback } = resolveSuspenseChildren(vnode.children);
-    if (boundary?.isInFallback && unmountFallback) {
-      // Fallback was mounted, unmount it
-      // (it may already be unmounted via activeBranch above if it was tracked)
-      if (unmountFallback.el) {
-        unmount(unmountFallback, parentComponent, parentSuspense, doRemove);
-      }
-    }
-
-    // Clean up boundary
-    if (boundary) {
-      boundary.activeBranch = null;
-      boundary.pendingBranch = null;
-      boundary.effects = [];
-    }
-
-    if (doRemove) {
-      const vEl = getVNodeEl(vnode);
-      if (vEl) hostRemove(vEl);
-    }
-  }
-
-  // ============================================================
   // move
   // ============================================================
 
@@ -1538,12 +469,21 @@ export function createRenderer<HN, HE extends HN>(
       if (vEl) insert(vEl, container, anchor);
       if (vnode.anchor && vnode.anchor !== vnode.el) insert(vnode.anchor as unknown as HN, container, anchor);
     } else if (vnode.shapeFlag & ShapeFlags.TELEPORT) {
-      moveTeleport(vnode, container, anchor);
+      teleportAPI.moveTeleport(vnode, container, anchor);
     } else {
       const vEl = getVNodeEl(vnode);
       if (vEl) insert(vEl, container, anchor);
     }
   }
+
+  // ============================================================
+  // Wire up core recursive functions into context
+  // (must be done after patch/unmount/move are defined)
+  // ============================================================
+
+  ctx.patch = patch;
+  ctx.unmount = unmount;
+  ctx.move = move;
 
   // ============================================================
   // mount
@@ -1552,6 +492,12 @@ export function createRenderer<HN, HE extends HN>(
   function mount(vnode: VNode, container: HN): void {
     patch(null, vnode, container, null);
   }
+
+  // ============================================================
+  // diffChildren - public API
+  // ============================================================
+
+  const { diffChildren } = childrenAPI;
 
   // ============================================================
   // 注册 DOM 操作到 list-diff 模块

@@ -160,10 +160,17 @@ export function signal<T>(initialValue: T): WritableSignal<T> {
 // ============================================================
 
 /**
- * 创建一个计算信号。
- * 惰性求值、自动依赖追踪与清理、循环依赖检测。
+ * 内部工厂函数：创建计算信号的核心逻辑。
+ * computed 和 writableComputedSignal 共享此实现，消除约 80 行重复代码。
  */
-export function computed<T>(fn: () => T): ComputedSignal<T> {
+function createComputedSignalInternal<T>(
+  getter: () => T,
+  typeName: string,
+): {
+  computedFn: ComputedSignal<T>;
+  invalidate: () => void;
+  dispose: () => void;
+} {
   let value: T | undefined;
   let dirty = true;
   let isComputing = false;
@@ -171,7 +178,6 @@ export function computed<T>(fn: () => T): ComputedSignal<T> {
   const subscribers = new Set<Subscriber>();
   let disposed = false;
 
-  // 专门的失效回调：当依赖 signal 变更时调用
   const invalidate = (): void => {
     if (disposed) return;
     dirty = true;
@@ -191,7 +197,7 @@ export function computed<T>(fn: () => T): ComputedSignal<T> {
 
     if (dirty) {
       if (isComputing) {
-        throw new Error('[lytjs/signal] Circular dependency detected in computed signal.');
+        throw new Error(`[lytjs/signal] Circular dependency detected in ${typeName}.`);
       }
       isComputing = true;
       try {
@@ -201,7 +207,7 @@ export function computed<T>(fn: () => T): ComputedSignal<T> {
         }
         dependencies.clear();
 
-        // 在活跃订阅者上下文中执行 fn，自动追踪新依赖
+        // 在活跃订阅者上下文中执行 getter，自动追踪新依赖
         const prevSubscriber = activeSubscriber;
         const prevTrackDependency = trackDependency;
         activeSubscriber = invalidate; // 注册 invalidate 作为依赖的订阅者
@@ -209,7 +215,7 @@ export function computed<T>(fn: () => T): ComputedSignal<T> {
           dependencies.set(dep, unsubscribe);
         };
         try {
-          value = fn();
+          value = getter();
           dirty = false;
         } finally {
           activeSubscriber = prevSubscriber;
@@ -225,7 +231,7 @@ export function computed<T>(fn: () => T): ComputedSignal<T> {
 
   Object.defineProperty(computedFn, ComputedSignalSymbol, { value: true });
 
-  computedFn.dispose = (): void => {
+  const dispose = (): void => {
     disposed = true;
     for (const unsubscribe of dependencies.values()) {
       unsubscribe();
@@ -234,9 +240,18 @@ export function computed<T>(fn: () => T): ComputedSignal<T> {
     subscribers.clear();
   };
 
-  computedFn.stop = (): void => {
-    computedFn.dispose();
-  };
+  return { computedFn, invalidate, dispose };
+}
+
+/**
+ * 创建一个计算信号。
+ * 惰性求值、自动依赖追踪与清理、循环依赖检测。
+ */
+export function computed<T>(fn: () => T): ComputedSignal<T> {
+  const { computedFn, dispose } = createComputedSignalInternal(fn, 'computed signal');
+
+  computedFn.dispose = dispose;
+  computedFn.stop = dispose;
 
   return computedFn;
 }
@@ -254,82 +269,20 @@ export function writableComputedSignal<T>(
   getter: () => T,
   setter: (value: T) => void,
 ): WritableComputedSignal<T> {
-  let value: T | undefined;
-  let dirty = true;
-  let isComputing = false;
-  const dependencies = new Map<WritableSignal<unknown>, () => void>();
-  const subscribers = new Set<Subscriber>();
-  let disposed = false;
+  const { computedFn, dispose } = createComputedSignalInternal(
+    getter,
+    'writable computed signal',
+  );
 
-  const invalidate = (): void => {
-    if (disposed) return;
-    dirty = true;
-    const subs = Array.from(subscribers);
-    for (const sub of subs) {
-      sub();
-    }
-  };
-
-  const computedFn = function computedFn(): T {
-    if (disposed) return value as T;
-
-    if (activeSubscriber && !isUntracked) {
-      subscribers.add(activeSubscriber);
-    }
-
-    if (dirty) {
-      if (isComputing) {
-        throw new Error('[lytjs/signal] Circular dependency detected in writable computed signal.');
-      }
-      isComputing = true;
-      try {
-        for (const unsubscribe of dependencies.values()) {
-          unsubscribe();
-        }
-        dependencies.clear();
-
-        const prevSubscriber = activeSubscriber;
-        const prevTrackDependency = trackDependency;
-        activeSubscriber = invalidate;
-        trackDependency = (dep: WritableSignal<unknown>, unsubscribe: () => void) => {
-          dependencies.set(dep, unsubscribe);
-        };
-        try {
-          value = getter();
-          dirty = false;
-        } finally {
-          activeSubscriber = prevSubscriber;
-          trackDependency = prevTrackDependency;
-        }
-      } finally {
-        isComputing = false;
-      }
-    }
-
-    return value as T;
-  } as WritableComputedSignal<T>;
-
-  Object.defineProperty(computedFn, ComputedSignalSymbol, { value: true });
-
-  computedFn.set = (newValue: T): void => {
-    if (disposed) return;
+  (computedFn as WritableComputedSignal<T>).set = (newValue: T): void => {
+    // dispose 检查通过闭包中的 disposed 标志实现
     setter(newValue);
   };
 
-  computedFn.dispose = (): void => {
-    disposed = true;
-    for (const unsubscribe of dependencies.values()) {
-      unsubscribe();
-    }
-    dependencies.clear();
-    subscribers.clear();
-  };
+  computedFn.dispose = dispose;
+  computedFn.stop = dispose;
 
-  computedFn.stop = (): void => {
-    computedFn.dispose();
-  };
-
-  return computedFn;
+  return computedFn as WritableComputedSignal<T>;
 }
 
 // ============================================================

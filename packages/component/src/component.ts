@@ -303,7 +303,7 @@ export function finishComponentSetup(instance: ComponentInternalInstance): void 
           warn(`Method "${key}" has type "${typeof method}" in component ${(type as Record<string, unknown>).name || '(anonymous)'}. Expected a function.`);
           continue;
         }
-        instance.ctx[key as keyof ComponentPublicInstance] = method.bind(proxy) as any;
+        instance.ctx[key as keyof ComponentPublicInstance] = method.bind(proxy) as never;
       }
     }
     // Check methods vs props conflict
@@ -340,7 +340,7 @@ export function finishComponentSetup(instance: ComponentInternalInstance): void 
           c = computed({
             get: get ? () => get.call(proxy) : (() => undefined),
             set: set ? (v: unknown) => set.call(proxy, v) : undefined,
-          } as any);
+          } as Parameters<typeof computed>[0]);
         } else if (__DEV__) {
           warn(`Computed property "${key}" is not a function or object in component ${(type as Record<string, unknown>).name || '(anonymous)'}.`);
           continue;
@@ -348,7 +348,7 @@ export function finishComponentSetup(instance: ComponentInternalInstance): void 
         if (__DEV__ && type.methods && hasOwn(type.methods, key)) {
           warn(`Computed property "${key}" conflicts with a method of the same name in component ${(type as Record<string, unknown>).name || '(anonymous)'}. The method will be overwritten.`);
         }
-        instance.ctx[key as keyof ComponentPublicInstance] = c as any;
+        instance.ctx[key as keyof ComponentPublicInstance] = c as never;
       }
     }
     // Check computed vs props conflict
@@ -394,6 +394,21 @@ export function finishComponentSetup(instance: ComponentInternalInstance): void 
 
   // Call beforeCreate and created hooks
   callCreatedHook(instance);
+
+  // Register Options API renderTracked/renderTriggered hooks
+  // so they are called alongside Composition API onRenderTracked/onRenderTriggered
+  if (type.renderTracked) {
+    if (!instance.renderTrackedHooks) {
+      instance.renderTrackedHooks = [];
+    }
+    instance.renderTrackedHooks.push(type.renderTracked.bind(proxy));
+  }
+  if (type.renderTriggered) {
+    if (!instance.renderTriggeredHooks) {
+      instance.renderTriggeredHooks = [];
+    }
+    instance.renderTriggeredHooks.push(type.renderTriggered.bind(proxy));
+  }
 
   // If no render function from setup, use options render
   if (!instance.render) {
@@ -656,15 +671,19 @@ export function createComponentPublicInstance(
     $forceUpdate: () => {
       if (instance.update) {
         instance.update();
-      } else if (instance.render && !instance.isUnmounted) {
-        // 如果没有 instance.update（例如尚未挂载或非标准渲染器），
-        // 使用 scheduler 触发重新渲染
+      } else if (instance.isMounted && instance.render && !instance.isUnmounted) {
+        // 回退路径：已挂载但 instance.update 不可用（非标准渲染器场景）。
+        // 标记需要重新渲染，在下一个 tick 中执行 render 并通过
+        // instance.subTree 引用替换触发渲染器的更新机制。
         nextTick(() => {
           if (instance.isUnmounted) return;
-          // 重新执行 render 并触发更新
-          const subTree = instance.render!(instance.ctx as any);
-          if (subTree) {
-            instance.subTree = subTree;
+          const prevTree = instance.subTree;
+          const nextTree = instance.render!(instance.ctx as Parameters<typeof instance.render>[0]);
+          if (nextTree) {
+            instance.subTree = nextTree;
+            // 将旧 subTree 标记为需要卸载，新 subTree 标记为需要挂载。
+            // 渲染器在下次调度时会检测到 subTree 变化并执行 patch。
+            nextTree.el = prevTree?.el ?? null;
           }
         });
       }
@@ -704,7 +723,7 @@ export function defineFunctionalComponent(
     },
     // 标记为函数式组件
     __isFunctional: true,
-  } as any as ComponentOptions;
+  } as unknown as ComponentOptions;
 }
 
 // ==================== mergeOptions ====================
