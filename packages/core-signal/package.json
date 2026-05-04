@@ -25,9 +25,6 @@
     "@lytjs/compiler": "workspace:*",
     "@lytjs/renderer": "workspace:*",
     "@lytjs/dom-runtime": "workspace:*",
-    "@lytjs/adapter-web": "workspace:*",
-    "@lytjs/common-is": "workspace:*",
-    "@lytjs/common-string": "workspace:*",
     "@lytjs/common-scheduler": "workspace:*",
     "@lytjs/common-error": "workspace:*",
     "@lytjs/shared-types": "workspace:*"

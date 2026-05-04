@@ -130,5 +130,35 @@
     "path": "packages/core-signal/dist/index.mjs",
     "limit": "18 KB",
     "import": "{ createApp, signal, compile }"
+  },
+  {
+    "name": "@lytjs/common-security",
+    "path": "packages/common/packages/security/dist/index.mjs",
+    "limit": "2 KB",
+    "import": "{}"
+  },
+  {
+    "name": "@lytjs/adapter-web",
+    "path": "packages/adapter-web/dist/index.mjs",
+    "limit": "5 KB",
+    "import": "{}"
+  },
+  {
+    "name": "@lytjs/dom-runtime",
+    "path": "packages/dom-runtime/dist/index.mjs",
+    "limit": "4 KB",
+    "import": "{}"
+  },
+  {
+    "name": "@lytjs/runtime-convergence",
+    "path": "packages/runtime-convergence/dist/index.mjs",
+    "limit": "3 KB",
+    "import": "{}"
+  },
+  {
+    "name": "@lytjs/host-contract",
+    "path": "packages/host-contract/dist/index.mjs",
+    "limit": "1 KB",
+    "import": "{}"
   }
 ]

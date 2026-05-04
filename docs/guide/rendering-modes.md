@@ -87,60 +87,22 @@ createApp(App).mount('#app');
 // 数据变化 → 直接更新对应 DOM 节点
 ```
 
-## Vapor 模式
-
-Vapor 模式是 LytJS 最轻量的渲染模式，编译时优化将模板直接转换为命令式 DOM 操作。
-
-### 工作原理
-
-1. 编译阶段将模板转换为高效的命令式代码
-2. 运行时无需虚拟 DOM，直接操作 DOM
-3. 响应式系统通过编译时注入的更新函数驱动更新
-
-```typescript
-import { createApp, ref } from '@lytjs/core-vapor';
-
-const App = {
-  setup() {
-    const count = ref(0);
-    const increment = () => count.value++;
-
-    return { count, increment };
-  },
-  template: `
-    <div>
-      <p>Count: {{ count }}</p>
-      <button @click="increment">+1</button>
-    </div>
-  `,
-};
-
-createApp(App).mount('#app');
-```
-
-### 特点
-
-- 极致轻量，运行时体积最小
-- 编译时优化，无虚拟 DOM 开销
-- 适合对包体积和运行时性能有极高要求的场景
-
 ## 如何选择渲染模式
 
-| 特性 | VNode | Signal | Vapor |
-|------|-------|--------|-------|
-| 虚拟 DOM | 有 | 无 | 无 |
-| Diff 开销 | 有 | 无 | 无 |
-| 编译时优化 | 部分 | 部分 | 完全 |
-| 运行时体积 | 较大 | 中等 | 最小 |
-| 更新粒度 | 组件级 | 节点级 | 节点级 |
-| 兼容性 | 最佳 | 良好 | 良好 |
-| 适用场景 | 通用 | 高频更新 | 极致性能 |
+| 特性 | VNode | Signal |
+|------|-------|--------|
+| 虚拟 DOM | 有 | 无 |
+| Diff 开销 | 有 | 无 |
+| 编译时优化 | 部分 | 部分 |
+| 运行时体积 | 较大 | 中等 |
+| 更新粒度 | 组件级 | 节点级 |
+| 兼容性 | 最佳 | 良好 |
+| 适用场景 | 通用 | 高频更新 |
 
 ### 选择建议
 
 - **大多数应用**：使用默认的 VNode 模式，兼容性最好，开发体验最佳
 - **数据密集型应用**（如仪表盘、实时数据展示）：使用 Signal 模式，获得更细粒度的更新性能
-- **嵌入式/轻量场景**（如微前端、组件库）：使用 Vapor 模式，最小化运行时开销
 
 ## @lytjs/core-vnode 和 @lytjs/core-signal 独立包
 
@@ -202,12 +164,23 @@ const App = {
 createApp(App).mount('#app');
 ```
 
-### API 兼容性
+### API 差异
 
-三个包导出的 API 完全一致，可以无缝切换：
+三个包共享核心的 `createApp` / `ref` / `reactive` / `computed` / `watch` / `watchEffect` / `defineComponent` / `nextTick` 等 API，但渲染模式专属的 API 有所不同：
+
+- **`@lytjs/core` / `@lytjs/core-vnode`** 提供 VNode 相关 API：`h()` / `createElement()` / `createVNode()` / `Fragment` / `Text` / `Comment` / `cloneVNode` / `mergeProps` / `defineAsyncComponent` / `resolveComponent` / `resolveDirective` / `withDirectives` / `withMemo` / `useSlots` / `useAttrs` / `useModel` / `defineCustomElement` 等。
+- **`@lytjs/core-signal`** 提供 Signal 相关 API：`signal()` / `computedSignal()` / `readonlySignal()` / `set()` / `update()` / `valueOf()` / `signalBatch()` / `signalUntrack()`，以及 DOM 运行时 API（`insert` / `remove` / `createElement` / `setText` / `setAttribute` / `addEventListener` 等）。
+- **`@lytjs/core-signal` 不导出** VNode 相关 API（如 `h`、`createVNode`、`Fragment`、`Text`、`Comment` 等）。
+- **`@lytjs/core` / `@lytjs/core-vnode` 不导出** Signal 相关 API（如 `signal`、`computedSignal`、`readonlySignal` 等）。
 
 ```typescript
-// 以下导入在任何包中都可用
+// VNode 模式（@lytjs/core 或 @lytjs/core-vnode）专属 API
+import { h, createVNode, Fragment, Text, Comment, cloneVNode, mergeProps } from '@lytjs/core';
+
+// Signal 模式（@lytjs/core-signal）专属 API
+import { signal, computedSignal, readonlySignal, set, update, valueOf } from '@lytjs/core-signal';
+
+// 两个模式共享的核心 API
 import {
   createApp,
   ref,
@@ -219,8 +192,7 @@ import {
   onUnmounted,
   defineComponent,
   nextTick,
-  // ...更多 API
-} from '@lytjs/core'; // 或 '@lytjs/core-vnode' 或 '@lytjs/core-signal'
+} from '@lytjs/core'; // 或 '@lytjs/core-signal'
 ```
 
 ### 按需选择包
@@ -245,24 +217,6 @@ import {
 }
 ```
 
-### 混合使用
+### 渲染模式不支持混合使用
 
-在同一应用中可以混合使用不同渲染模式的组件：
-
-```typescript
-import { createApp } from '@lytjs/core';
-import SignalComponent from './SignalComponent.vue';
-import VNodeComponent from './VNodeComponent.vue';
-
-const App = {
-  components: { SignalComponent, VNodeComponent },
-  template: `
-    <div>
-      <SignalComponent />
-      <VNodeComponent />
-    </div>
-  `,
-};
-
-createApp(App).mount('#app');
-```
+`@lytjs/core-vnode` 和 `@lytjs/core-signal` 是独立的渲染模式包，它们使用不同的渲染器（VNode 渲染器 vs Signal 渲染器），**不支持在同一应用中混合使用不同渲染模式的组件**。请根据项目需求选择一种渲染模式，并在整个应用中保持一致。

@@ -89,41 +89,51 @@ pnpm --filter "@lytjs/common" run build || {
   exit 1
 }
 
-# L1: reactivity, vdom, compiler
-log_info "========================================="
-log_info "构建 L1: reactivity / vdom / compiler..."
-log_info "========================================="
-
-for pkg in reactivity vdom compiler; do
-  log_info "构建 @lytjs/${pkg}..."
-  pnpm --filter "@lytjs/${pkg}" run build || {
-    log_error "构建 @lytjs/${pkg} 失败"
-    exit 1
-  }
-done
-
-# L2: renderer, component
-log_info "========================================="
-log_info "构建 L2: renderer / component..."
-log_info "========================================="
-
-for pkg in renderer component; do
-  log_info "构建 @lytjs/${pkg}..."
-  pnpm --filter "@lytjs/${pkg}" run build || {
-    log_error "构建 @lytjs/${pkg} 失败"
-    exit 1
-  }
-done
-
-# L3: core
-log_info "========================================="
-log_info "构建 L3: core..."
-log_info "========================================="
-
-pnpm --filter "@lytjs/core" run build || {
-  log_error "构建 @lytjs/core 失败"
+# 构建 host-contract（L0: 零外部依赖）
+log_info "构建 @lytjs/host-contract..."
+pnpm --filter "@lytjs/host-contract" run build || {
+  log_error "构建 @lytjs/host-contract 失败"
   exit 1
 }
+
+# L1: reactivity, vdom, compiler, dom-runtime
+log_info "========================================="
+log_info "构建 L1: reactivity / vdom / compiler / dom-runtime..."
+log_info "========================================="
+
+for pkg in reactivity vdom compiler dom-runtime; do
+  log_info "构建 @lytjs/${pkg}..."
+  pnpm --filter "@lytjs/${pkg}" run build || {
+    log_error "构建 @lytjs/${pkg} 失败"
+    exit 1
+  }
+done
+
+# L2: renderer, component, adapter-web, runtime-convergence
+log_info "========================================="
+log_info "构建 L2: renderer / component / adapter-web / runtime-convergence..."
+log_info "========================================="
+
+for pkg in renderer component adapter-web runtime-convergence; do
+  log_info "构建 @lytjs/${pkg}..."
+  pnpm --filter "@lytjs/${pkg}" run build || {
+    log_error "构建 @lytjs/${pkg} 失败"
+    exit 1
+  }
+done
+
+# L3: core, core-vnode, core-signal
+log_info "========================================="
+log_info "构建 L3: core / core-vnode / core-signal..."
+log_info "========================================="
+
+for pkg in core core-vnode core-signal; do
+  log_info "构建 @lytjs/${pkg}..."
+  pnpm --filter "@lytjs/${pkg}" run build || {
+    log_error "构建 @lytjs/${pkg} 失败"
+    exit 1
+  }
+done
 
 # L4-L6: ecosystem, lytui, plugins, tools
 log_info "========================================="

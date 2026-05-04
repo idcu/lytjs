@@ -25,6 +25,12 @@ export default defineConfig({
       '@lytjs/renderer': resolve('/workspace/lytjs/packages/renderer/dist/index.mjs'),
       '@lytjs/component': resolve('/workspace/lytjs/packages/component/dist/index.mjs'),
       '@lytjs/compiler': resolve('/workspace/lytjs/packages/compiler/dist/index.mjs'),
+      '@lytjs/core-vnode': resolve('/workspace/lytjs/packages/core-vnode/src'),
+      '@lytjs/core-signal': resolve('/workspace/lytjs/packages/core-signal/src'),
+      '@lytjs/adapter-web': resolve('/workspace/lytjs/packages/adapter-web/src'),
+      '@lytjs/dom-runtime': resolve('/workspace/lytjs/packages/dom-runtime/src'),
+      '@lytjs/runtime-convergence': resolve('/workspace/lytjs/packages/runtime-convergence/src'),
+      '@lytjs/host-contract': resolve('/workspace/lytjs/packages/host-contract/src'),
     },
   },
   test: {
