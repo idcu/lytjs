@@ -2,13 +2,23 @@
  * @lytjs/vdom - transition
  * Vue 3 style Transition component support
  * Provides CSS/JS transition hooks for enter, leave, and appear animations
+ *
+ * 泛型化重构：所有函数均支持通过 RendererHost<HN, HE> 接口进行平台无关调用。
+ * 当 host 参数为 undefined 时，回退到直接 DOM 操作（向后兼容）。
  */
+
+import type { RendererHost, TransitionDurationInfo } from '@lytjs/host-contract';
+import { parseDuration } from '@lytjs/common-string';
 
 // ============================================================
 // TransitionProps
 // ============================================================
 
-export interface TransitionProps {
+/**
+ * 过渡属性（泛型版本）。
+ * @template HE - 宿主元素类型
+ */
+export interface TransitionProps<HE = unknown> {
   name?: string;
   appear?: boolean;
   mode?: 'in-out' | 'out-in' | 'default';
@@ -18,28 +28,21 @@ export interface TransitionProps {
   leaveFromClass?: string;
   leaveActiveClass?: string;
   leaveToClass?: string;
-  onBeforeEnter?: (el: Element) => void;
-  onEnter?: (el: Element, done: () => void) => void;
-  onAfterEnter?: (el: Element) => void;
-  onEnterCancelled?: (el: Element) => void;
-  onBeforeLeave?: (el: Element) => void;
-  onLeave?: (el: Element, done: () => void) => void;
-  onAfterLeave?: (el: Element) => void;
-  onLeaveCancelled?: (el: Element) => void;
+  onBeforeEnter?: (el: HE) => void;
+  onEnter?: (el: HE, done: () => void) => void;
+  onAfterEnter?: (el: HE) => void;
+  onEnterCancelled?: (el: HE) => void;
+  onBeforeLeave?: (el: HE) => void;
+  onLeave?: (el: HE, done: () => void) => void;
+  onAfterLeave?: (el: HE) => void;
+  onLeaveCancelled?: (el: HE) => void;
 }
 
-// ============================================================
-// Transition duration info
-// ============================================================
-
-export interface TransitionDurationInfo {
-  /** Total transition duration in ms */
-  duration: number;
-  /** Whether the element has CSS transition */
-  hasTransition: boolean;
-  /** Whether the element has CSS animation */
-  hasAnimation: boolean;
-}
+/**
+ * @deprecated 使用 TransitionProps<HE> 代替。
+ * 保留此类型别名以确保向后兼容。
+ */
+export type LegacyTransitionProps = TransitionProps<Element>;
 
 // ============================================================
 // Internal transition state
@@ -57,52 +60,28 @@ export interface TransitionState {
 }
 
 // ============================================================
-// Internal: transition cleanup WeakMap (avoids naming conflicts on DOM elements)
+// Internal: transition cleanup WeakMap
 // ============================================================
 
-const transitionCleanupMap = new WeakMap<Element, (() => void) | null>();
+const transitionCleanupMap = new WeakMap<object, (() => void) | null>();
 
 // ============================================================
-// Helper: nextFrame
-// ============================================================
-
-/**
- * Schedule a callback to run on the next animation frame.
- * Uses double rAF to ensure the browser has had a chance to paint.
- */
-export function nextFrame(fn: () => void): void {
-  requestAnimationFrame(() => {
-    requestAnimationFrame(fn);
-  });
-}
-
-// ============================================================
-// Helper: addTransitionClass / removeTransitionClass
+// 内部辅助函数（DOM 回退用）
 // ============================================================
 
 /**
- * Add a CSS class to an element for transition purposes.
+ * Get a CSS property value as an array of strings (handles comma-separated values).
  */
-export function addTransitionClass(el: Element, cls: string): void {
-  el.classList.add(cls);
+function getStylePropAsArray(styles: CSSStyleDeclaration, prop: string): string[] {
+  const value = styles.getPropertyValue(prop);
+  if (!value) return [];
+  return value.split(',').map((v) => v.trim());
 }
 
 /**
- * Remove a CSS class from an element for transition purposes.
+ * DOM 回退：获取过渡信息。
  */
-export function removeTransitionClass(el: Element, cls: string): void {
-  el.classList.remove(cls);
-}
-
-// ============================================================
-// Helper: getTransitionInfo
-// ============================================================
-
-/**
- * Get transition duration information from an element's computed styles.
- * Checks both CSS transitions and animations.
- */
-export function getTransitionInfo(el: Element, _type: 'enter' | 'leave'): TransitionDurationInfo {
+function getTransitionInfoDOM(el: Element, _type: 'enter' | 'leave'): TransitionDurationInfo {
   const styles = getComputedStyle(el);
   const transitionDelays = getStylePropAsArray(styles, 'transitionDelay');
   const transitionDurations = getStylePropAsArray(styles, 'transitionDuration');
@@ -132,74 +111,15 @@ export function getTransitionInfo(el: Element, _type: 'enter' | 'leave'): Transi
     duration = Math.max(duration, maxDuration);
   }
 
-  return {
-    duration,
-    hasTransition,
-    hasAnimation,
-  };
-}
-
-/**
- * Parse a CSS duration string (e.g., "0.3s", "300ms") to milliseconds.
- */
-function parseDuration(value: string): number {
-  if (value.endsWith('ms')) {
-    return parseFloat(value);
-  }
-  if (value.endsWith('s')) {
-    return parseFloat(value) * 1000;
-  }
-  return 0;
-}
-
-/**
- * Get a CSS property value as an array of strings (handles comma-separated values).
- */
-function getStylePropAsArray(styles: CSSStyleDeclaration, prop: string): string[] {
-  const value = styles.getPropertyValue(prop);
-  if (!value) return [];
-  return value.split(',').map((v) => v.trim());
-}
-
-// ============================================================
-// Helper: hasCSSTransition
-// ============================================================
-
-/**
- * Check if an element has a CSS transition or animation defined
- * for the given transition name and type (enter/leave).
- */
-export function hasCSSTransition(el: Element, name: string | undefined, type: 'enter' | 'leave'): boolean {
-  if (!name) {
-    // Check for any transition or animation
-    const info = getTransitionInfo(el, type);
-    return info.hasTransition || info.hasAnimation;
-  }
-
-  // Check for name-specific transition classes
-  const fromClass = type === 'enter' ? `${name}-from` : `${name}-leave-from`;
-  const activeClass = type === 'enter' ? `${name}-enter-active` : `${name}-leave-active`;
-  const toClass = type === 'enter' ? `${name}-enter-to` : `${name}-leave-to`;
-
-  const hasFromClass = el.classList.contains(fromClass);
-  const hasActiveClass = el.classList.contains(activeClass);
-  const hasToClass = el.classList.contains(toClass);
-
-  if (hasActiveClass) {
-    // If the active class is present, check if there's an actual CSS transition/animation
-    const info = getTransitionInfo(el, type);
-    return info.hasTransition || info.hasAnimation;
-  }
-
-  return hasFromClass || hasActiveClass || hasToClass;
+  return { duration, hasTransition, hasAnimation };
 }
 
 // ============================================================
 // Resolve transition class names
 // ============================================================
 
-function resolveTransitionClasses(
-  props: TransitionProps,
+function resolveTransitionClasses<HE>(
+  props: TransitionProps<HE>,
   type: 'enter' | 'leave',
 ): { from: string; active: string; to: string } {
   const name = props.name ?? 'v';
@@ -220,76 +140,334 @@ function resolveTransitionClasses(
 }
 
 // ============================================================
+// Helper: nextFrame
+// ============================================================
+
+/**
+ * Schedule a callback to run on the next animation frame.
+ * Uses double rAF to ensure the browser has had a chance to paint.
+ *
+ * 当传入 host 时，通过 host.nextFrame 执行（平台无关）。
+ * 当不传 host 时，直接使用 requestAnimationFrame（DOM 回退）。
+ *
+ * @param hostOrFn - RendererHost 实例或回调函数（向后兼容）
+ * @param fn - 当第一个参数为 host 时，此为回调函数
+ */
+export function nextFrame<HN, HE extends HN>(
+  host: RendererHost<HN, HE>,
+  fn: () => void,
+): void;
+export function nextFrame(fn: () => void): void;
+export function nextFrame<HN, HE extends HN>(
+  hostOrFn: RendererHost<HN, HE> | (() => void),
+  fn?: () => void,
+): void {
+  if (typeof hostOrFn === 'function') {
+    // 向后兼容：直接使用 requestAnimationFrame
+    requestAnimationFrame(() => {
+      requestAnimationFrame(hostOrFn);
+    });
+  } else {
+    // 泛型版本：通过 host 调用
+    hostOrFn.nextFrame(fn!);
+  }
+}
+
+// ============================================================
+// Helper: addTransitionClass / removeTransitionClass
+// ============================================================
+
+/**
+ * Add a CSS class to an element for transition purposes.
+ *
+ * @param hostOrEl - RendererHost 实例或 DOM Element（向后兼容）
+ * @param elOrCls - 当第一个参数为 host 时，此为元素；否则为 CSS 类名
+ * @param cls - 当第一个参数为 host 时，此为 CSS 类名
+ */
+export function addTransitionClass<HN, HE extends HN>(
+  host: RendererHost<HN, HE>,
+  el: HE,
+  cls: string,
+): void;
+export function addTransitionClass(el: Element, cls: string): void;
+export function addTransitionClass<HN, HE extends HN>(
+  hostOrEl: RendererHost<HN, HE> | Element,
+  elOrCls: HE | string,
+  cls?: string,
+): void {
+  if (typeof elOrCls === 'string') {
+    // 向后兼容：(el: Element, cls: string)
+    (hostOrEl as Element).classList.add(elOrCls);
+  } else {
+    // 泛型版本：(host, el, cls)
+    (hostOrEl as RendererHost<HN, HE>).addClass(elOrCls, cls!);
+  }
+}
+
+/**
+ * Remove a CSS class from an element for transition purposes.
+ *
+ * @param hostOrEl - RendererHost 实例或 DOM Element（向后兼容）
+ * @param elOrCls - 当第一个参数为 host 时，此为元素；否则为 CSS 类名
+ * @param cls - 当第一个参数为 host 时，此为 CSS 类名
+ */
+export function removeTransitionClass<HN, HE extends HN>(
+  host: RendererHost<HN, HE>,
+  el: HE,
+  cls: string,
+): void;
+export function removeTransitionClass(el: Element, cls: string): void;
+export function removeTransitionClass<HN, HE extends HN>(
+  hostOrEl: RendererHost<HN, HE> | Element,
+  elOrCls: HE | string,
+  cls?: string,
+): void {
+  if (typeof elOrCls === 'string') {
+    // 向后兼容：(el: Element, cls: string)
+    (hostOrEl as Element).classList.remove(elOrCls);
+  } else {
+    // 泛型版本：(host, el, cls)
+    (hostOrEl as RendererHost<HN, HE>).removeClass(elOrCls, cls!);
+  }
+}
+
+// ============================================================
+// Helper: getTransitionInfo
+// ============================================================
+
+/**
+ * Get transition duration information from an element's computed styles.
+ * Checks both CSS transitions and animations.
+ *
+ * @param hostOrEl - RendererHost 实例或 DOM Element（向后兼容）
+ * @param elOrType - 当第一个参数为 host 时，此为元素；否则为过渡类型
+ * @param type - 当第一个参数为 host 时，此为过渡类型
+ */
+export function getTransitionInfo<HN, HE extends HN>(
+  host: RendererHost<HN, HE>,
+  el: HE,
+  type: 'enter' | 'leave',
+): TransitionDurationInfo;
+export function getTransitionInfo(el: Element, type: 'enter' | 'leave'): TransitionDurationInfo;
+export function getTransitionInfo<HN, HE extends HN>(
+  hostOrEl: RendererHost<HN, HE> | Element,
+  elOrType: HE | 'enter' | 'leave',
+  type?: 'enter' | 'leave',
+): TransitionDurationInfo {
+  if (typeof elOrType === 'string') {
+    // 向后兼容：(el: Element, type: 'enter' | 'leave')
+    return getTransitionInfoDOM(hostOrEl as Element, elOrType as 'enter' | 'leave');
+  } else {
+    // 泛型版本：(host, el, type)
+    const info = (hostOrEl as RendererHost<HN, HE>).getTransitionInfo(elOrType, type!);
+    return { duration: info.duration, hasTransition: info.hasTransition, hasAnimation: info.hasAnimation };
+  }
+}
+
+// ============================================================
+// Helper: hasCSSTransition
+// ============================================================
+
+/**
+ * Check if an element has a CSS transition or animation defined
+ * for the given transition name and type (enter/leave).
+ *
+ * @param hostOrEl - RendererHost 实例或 DOM Element（向后兼容）
+ * @param elOrName - 当第一个参数为 host 时，此为元素；否则为过渡名称
+ * @param nameOrType - 当第一个参数为 host 时，此为过渡名称；否则为过渡类型
+ * @param type - 当第一个参数为 host 时，此为过渡类型
+ */
+export function hasCSSTransition<HN, HE extends HN>(
+  host: RendererHost<HN, HE>,
+  el: HE,
+  name: string | undefined,
+  type: 'enter' | 'leave',
+): boolean;
+export function hasCSSTransition(el: Element, name: string | undefined, type: 'enter' | 'leave'): boolean;
+export function hasCSSTransition<HN, HE extends HN>(
+  hostOrEl: RendererHost<HN, HE> | Element,
+  elOrName: HE | string | undefined,
+  nameOrType?: string | undefined | 'enter' | 'leave',
+  type?: 'enter' | 'leave',
+): boolean {
+  if (typeof elOrName === 'string' || elOrName === undefined) {
+    // 向后兼容：(el: Element, name: string | undefined, type: 'enter' | 'leave')
+    const el = hostOrEl as Element;
+    const name = elOrName as string | undefined;
+    const t = nameOrType as 'enter' | 'leave';
+
+    if (!name) {
+      const info = getTransitionInfoDOM(el, t);
+      return info.hasTransition || info.hasAnimation;
+    }
+
+    const fromClass = t === 'enter' ? `${name}-from` : `${name}-leave-from`;
+    const activeClass = t === 'enter' ? `${name}-enter-active` : `${name}-leave-active`;
+    const toClass = t === 'enter' ? `${name}-enter-to` : `${name}-leave-to`;
+
+    const hasFromClass = el.classList.contains(fromClass);
+    const hasActiveClass = el.classList.contains(activeClass);
+    const hasToClass = el.classList.contains(toClass);
+
+    if (hasActiveClass) {
+      const info = getTransitionInfoDOM(el, t);
+      return info.hasTransition || info.hasAnimation;
+    }
+
+    return hasFromClass || hasActiveClass || hasToClass;
+  } else {
+    // 泛型版本：(host, el, name, type)
+    const host = hostOrEl as RendererHost<HN, HE>;
+    const el = elOrName as HE;
+    const name = nameOrType as string | undefined;
+    const t = type!;
+
+    if (!name) {
+      const info = host.getTransitionInfo(el, t);
+      return info.hasTransition || info.hasAnimation;
+    }
+
+    const fromClass = t === 'enter' ? `${name}-from` : `${name}-leave-from`;
+    const activeClass = t === 'enter' ? `${name}-enter-active` : `${name}-leave-active`;
+    const toClass = t === 'enter' ? `${name}-enter-to` : `${name}-leave-to`;
+
+    const hasFromClass = host.hasClass(el, fromClass);
+    const hasActiveClass = host.hasClass(el, activeClass);
+    const hasToClass = host.hasClass(el, toClass);
+
+    if (hasActiveClass) {
+      const info = host.getTransitionInfo(el, t);
+      return info.hasTransition || info.hasAnimation;
+    }
+
+    return hasFromClass || hasActiveClass || hasToClass;
+  }
+}
+
+// ============================================================
 // Enter transition
 // ============================================================
 
 /**
  * Perform an enter transition on the given element.
  * Supports both CSS transitions and JS hooks.
+ *
+ * @param hostOrEl - RendererHost 实例或 DOM Element（向后兼容）
+ * @param elOrProps - 当第一个参数为 host 时，此为元素；否则为过渡属性
+ * @param propsOrDone - 当第一个参数为 host 时，此为过渡属性；否则为完成回调
+ * @param done - 当第一个参数为 host 时，此为完成回调
  */
+export function performEnterTransition<HN, HE extends HN>(
+  host: RendererHost<HN, HE>,
+  el: HE,
+  props: TransitionProps<HE>,
+  done: () => void,
+): void;
 export function performEnterTransition(
   el: Element,
-  props: TransitionProps,
+  props: TransitionProps<Element>,
   done: () => void,
+): void;
+export function performEnterTransition<HN, HE extends HN>(
+  hostOrEl: RendererHost<HN, HE> | Element,
+  elOrProps: HE | TransitionProps<Element>,
+  propsOrDone?: TransitionProps<HE> | (() => void),
+  done?: () => void,
 ): void {
-  const classes = resolveTransitionClasses(props, 'enter');
+  if (typeof elOrProps === 'object' && elOrProps !== null && !('name' in elOrProps) && !('onBeforeEnter' in elOrProps)) {
+    // 泛型版本：(host, el, props, done)
+    const host = hostOrEl as RendererHost<HN, HE>;
+    const el = elOrProps as HE;
+    const props = propsOrDone as TransitionProps<HE>;
+    const doneFn = done!;
 
-  // Call onBeforeEnter hook
-  if (props.onBeforeEnter) {
-    props.onBeforeEnter(el);
-  }
+    const classes = resolveTransitionClasses(props, 'enter');
 
-  // Add enter-from and enter-active classes
-  addTransitionClass(el, classes.from);
-  addTransitionClass(el, classes.active);
+    if (props.onBeforeEnter) {
+      props.onBeforeEnter(el);
+    }
 
-  // Force reflow before removing enter-from class
-  void el.getBoundingClientRect();
+    host.addClass(el, classes.from);
+    host.addClass(el, classes.active);
+    host.forceReflow(el);
+    host.removeClass(el, classes.from);
+    host.addClass(el, classes.to);
 
-  // Remove enter-from, add enter-to
-  removeTransitionClass(el, classes.from);
-  addTransitionClass(el, classes.to);
-
-  // Check if there's a JS enter hook
-  if (props.onEnter) {
-    props.onEnter(el, () => {
-      finishEnter(el, classes, props, done);
-    });
-  } else {
-    // CSS transition: wait for transitionend/animationend
-    const info = getTransitionInfo(el, 'enter');
-    if (info.hasTransition || info.hasAnimation) {
-      const nextDone = () => finishEnter(el, classes, props, done);
-      if (info.duration > 0) {
-        setTimeout(nextDone, info.duration + 50); // +50ms buffer
-      } else {
-        // Listen for transitionend/animationend events
-        waitForTransitionEnd(el, info, nextDone);
-      }
+    if (props.onEnter) {
+      props.onEnter(el, () => {
+        host.removeClass(el, classes.active);
+        host.removeClass(el, classes.to);
+        if (props.onAfterEnter) props.onAfterEnter(el);
+        doneFn();
+      });
     } else {
-      // No CSS transition, finish immediately
-      finishEnter(el, classes, props, done);
+      const info = host.getTransitionInfo(el, 'enter');
+      if (info.hasTransition || info.hasAnimation) {
+        const finish = () => {
+          host.removeClass(el, classes.active);
+          host.removeClass(el, classes.to);
+          if (props.onAfterEnter) props.onAfterEnter(el);
+          doneFn();
+        };
+        if (info.duration > 0) {
+          host.setTimeout(finish, info.duration + 50);
+        } else {
+          waitForTransitionEnd(host, el, info, finish);
+        }
+      } else {
+        host.removeClass(el, classes.active);
+        host.removeClass(el, classes.to);
+        if (props.onAfterEnter) props.onAfterEnter(el);
+        doneFn();
+      }
+    }
+  } else {
+    // 向后兼容：(el: Element, props: TransitionProps<Element>, done: () => void)
+    const el = hostOrEl as Element;
+    const props = elOrProps as TransitionProps<Element>;
+    const doneFn = propsOrDone as () => void;
+
+    const classes = resolveTransitionClasses(props, 'enter');
+
+    if (props.onBeforeEnter) {
+      props.onBeforeEnter(el);
+    }
+
+    el.classList.add(classes.from);
+    el.classList.add(classes.active);
+    void el.getBoundingClientRect();
+    el.classList.remove(classes.from);
+    el.classList.add(classes.to);
+
+    if (props.onEnter) {
+      props.onEnter(el, () => {
+        el.classList.remove(classes.active);
+        el.classList.remove(classes.to);
+        if (props.onAfterEnter) props.onAfterEnter(el);
+        doneFn();
+      });
+    } else {
+      const info = getTransitionInfoDOM(el, 'enter');
+      if (info.hasTransition || info.hasAnimation) {
+        const finish = () => {
+          el.classList.remove(classes.active);
+          el.classList.remove(classes.to);
+          if (props.onAfterEnter) props.onAfterEnter(el);
+          doneFn();
+        };
+        if (info.duration > 0) {
+          setTimeout(finish, info.duration + 50);
+        } else {
+          waitForTransitionEndDOM(el, info, finish);
+        }
+      } else {
+        el.classList.remove(classes.active);
+        el.classList.remove(classes.to);
+        if (props.onAfterEnter) props.onAfterEnter(el);
+        doneFn();
+      }
     }
   }
-}
-
-/**
- * Finish the enter transition: remove all transition classes and call hooks.
- */
-function finishEnter(
-  el: Element,
-  classes: { from: string; active: string; to: string },
-  props: TransitionProps,
-  done: () => void,
-): void {
-  removeTransitionClass(el, classes.active);
-  removeTransitionClass(el, classes.to);
-
-  if (props.onAfterEnter) {
-    props.onAfterEnter(el);
-  }
-
-  done();
 }
 
 // ============================================================
@@ -299,80 +477,176 @@ function finishEnter(
 /**
  * Perform a leave transition on the given element.
  * Supports both CSS transitions and JS hooks.
+ *
+ * @param hostOrEl - RendererHost 实例或 DOM Element（向后兼容）
+ * @param elOrProps - 当第一个参数为 host 时，此为元素；否则为过渡属性
+ * @param propsOrDone - 当第一个参数为 host 时，此为过渡属性；否则为完成回调
+ * @param done - 当第一个参数为 host 时，此为完成回调
  */
+export function performLeaveTransition<HN, HE extends HN>(
+  host: RendererHost<HN, HE>,
+  el: HE,
+  props: TransitionProps<HE>,
+  done: () => void,
+): void;
 export function performLeaveTransition(
   el: Element,
-  props: TransitionProps,
+  props: TransitionProps<Element>,
   done: () => void,
+): void;
+export function performLeaveTransition<HN, HE extends HN>(
+  hostOrEl: RendererHost<HN, HE> | Element,
+  elOrProps: HE | TransitionProps<Element>,
+  propsOrDone?: TransitionProps<HE> | (() => void),
+  done?: () => void,
 ): void {
-  const classes = resolveTransitionClasses(props, 'leave');
+  if (typeof elOrProps === 'object' && elOrProps !== null && !('name' in elOrProps) && !('onBeforeEnter' in elOrProps)) {
+    // 泛型版本：(host, el, props, done)
+    const host = hostOrEl as RendererHost<HN, HE>;
+    const el = elOrProps as HE;
+    const props = propsOrDone as TransitionProps<HE>;
+    const doneFn = done!;
 
-  // Call onBeforeLeave hook
-  if (props.onBeforeLeave) {
-    props.onBeforeLeave(el);
-  }
+    const classes = resolveTransitionClasses(props, 'leave');
 
-  // Add leave-from and leave-active classes
-  addTransitionClass(el, classes.from);
-  addTransitionClass(el, classes.active);
+    if (props.onBeforeLeave) {
+      props.onBeforeLeave(el);
+    }
 
-  // Force reflow before removing leave-from class
-  void el.getBoundingClientRect();
+    host.addClass(el, classes.from);
+    host.addClass(el, classes.active);
+    host.forceReflow(el);
+    host.removeClass(el, classes.from);
+    host.addClass(el, classes.to);
 
-  // Remove leave-from, add leave-to
-  removeTransitionClass(el, classes.from);
-  addTransitionClass(el, classes.to);
-
-  // Check if there's a JS leave hook
-  if (props.onLeave) {
-    props.onLeave(el, () => {
-      finishLeave(el, classes, props, done);
-    });
-  } else {
-    // CSS transition: wait for transitionend/animationend
-    const info = getTransitionInfo(el, 'leave');
-    if (info.hasTransition || info.hasAnimation) {
-      const nextDone = () => finishLeave(el, classes, props, done);
-      if (info.duration > 0) {
-        setTimeout(nextDone, info.duration + 50); // +50ms buffer
-      } else {
-        waitForTransitionEnd(el, info, nextDone);
-      }
+    if (props.onLeave) {
+      props.onLeave(el, () => {
+        host.removeClass(el, classes.active);
+        host.removeClass(el, classes.to);
+        if (props.onAfterLeave) props.onAfterLeave(el);
+        doneFn();
+      });
     } else {
-      // No CSS transition, finish immediately
-      finishLeave(el, classes, props, done);
+      const info = host.getTransitionInfo(el, 'leave');
+      if (info.hasTransition || info.hasAnimation) {
+        const finish = () => {
+          host.removeClass(el, classes.active);
+          host.removeClass(el, classes.to);
+          if (props.onAfterLeave) props.onAfterLeave(el);
+          doneFn();
+        };
+        if (info.duration > 0) {
+          host.setTimeout(finish, info.duration + 50);
+        } else {
+          waitForTransitionEnd(host, el, info, finish);
+        }
+      } else {
+        host.removeClass(el, classes.active);
+        host.removeClass(el, classes.to);
+        if (props.onAfterLeave) props.onAfterLeave(el);
+        doneFn();
+      }
+    }
+  } else {
+    // 向后兼容：(el: Element, props: TransitionProps<Element>, done: () => void)
+    const el = hostOrEl as Element;
+    const props = elOrProps as TransitionProps<Element>;
+    const doneFn = propsOrDone as () => void;
+
+    const classes = resolveTransitionClasses(props, 'leave');
+
+    if (props.onBeforeLeave) {
+      props.onBeforeLeave(el);
+    }
+
+    el.classList.add(classes.from);
+    el.classList.add(classes.active);
+    void el.getBoundingClientRect();
+    el.classList.remove(classes.from);
+    el.classList.add(classes.to);
+
+    if (props.onLeave) {
+      props.onLeave(el, () => {
+        el.classList.remove(classes.active);
+        el.classList.remove(classes.to);
+        if (props.onAfterLeave) props.onAfterLeave(el);
+        doneFn();
+      });
+    } else {
+      const info = getTransitionInfoDOM(el, 'leave');
+      if (info.hasTransition || info.hasAnimation) {
+        const finish = () => {
+          el.classList.remove(classes.active);
+          el.classList.remove(classes.to);
+          if (props.onAfterLeave) props.onAfterLeave(el);
+          doneFn();
+        };
+        if (info.duration > 0) {
+          setTimeout(finish, info.duration + 50);
+        } else {
+          waitForTransitionEndDOM(el, info, finish);
+        }
+      } else {
+        el.classList.remove(classes.active);
+        el.classList.remove(classes.to);
+        if (props.onAfterLeave) props.onAfterLeave(el);
+        doneFn();
+      }
     }
   }
 }
 
-/**
- * Finish the leave transition: remove all transition classes and call hooks.
- */
-function finishLeave(
-  el: Element,
-  classes: { from: string; active: string; to: string },
-  props: TransitionProps,
-  done: () => void,
-): void {
-  removeTransitionClass(el, classes.active);
-  removeTransitionClass(el, classes.to);
-
-  if (props.onAfterLeave) {
-    props.onAfterLeave(el);
-  }
-
-  done();
-}
-
 // ============================================================
-// Wait for transition/animation end
+// Wait for transition/animation end (泛型版本)
 // ============================================================
 
 /**
  * Wait for CSS transitionend or animationend events on an element.
  * Falls back to a timeout if no events are detected.
  */
-function waitForTransitionEnd(
+function waitForTransitionEnd<HN, HE extends HN>(
+  host: RendererHost<HN, HE>,
+  el: HE,
+  info: TransitionDurationInfo,
+  done: () => void,
+): void {
+  let called = false;
+  const finish = () => {
+    if (!called) {
+      called = true;
+      done();
+    }
+  };
+
+  // 安全超时
+  const timeout = info.duration > 0 ? info.duration + 50 : 3000;
+  const timer = host.setTimeout(finish, timeout);
+
+  // 创建事件处理函数
+  const onEnd = (event: unknown) => {
+    const hostEvent = event as { target: unknown; type: string };
+    if (hostEvent.target !== el) return;
+
+    host.clearTimeout(timer);
+    finish();
+  };
+
+  // 通过 host 添加事件监听
+  const disposeTransition = host.addEventListener(el, 'transitionend', onEnd as never);
+  const disposeAnimation = host.addEventListener(el, 'animationend', onEnd as never);
+
+  // 存储清理函数
+  transitionCleanupMap.set(el as object, () => {
+    host.clearTimeout(timer);
+    disposeTransition();
+    disposeAnimation();
+  });
+}
+
+/**
+ * DOM 回退：等待过渡/动画结束。
+ */
+function waitForTransitionEndDOM(
   el: Element,
   info: TransitionDurationInfo,
   done: () => void,
@@ -385,15 +659,12 @@ function waitForTransitionEnd(
     }
   };
 
-  // Set a safety timeout based on computed duration
   const timeout = info.duration > 0 ? info.duration + 50 : 3000;
   const timer = setTimeout(finish, timeout);
 
   const onEnd = (event: Event) => {
-    // Only handle transitionend/animationend for this element
     if (event.target !== el) return;
 
-    // For animationend, use a pending set to track remaining animations
     if (event.type === 'animationend') {
       const animationName = (event as AnimationEvent).animationName;
       pendingAnimations.delete(animationName);
@@ -404,14 +675,12 @@ function waitForTransitionEnd(
     finish();
   };
 
-  // 使用 Set 追踪待完成的动画，解决多动画并行时提前结束的问题
   const animations = getStylePropAsArray(getComputedStyle(el), 'animationName');
   const pendingAnimations = new Set(animations);
 
   el.addEventListener('transitionend', onEnd);
   el.addEventListener('animationend', onEnd);
 
-  // Store cleanup function in WeakMap for cancellation
   transitionCleanupMap.set(el, () => {
     clearTimeout(timer);
     el.removeEventListener('transitionend', onEnd);
@@ -425,12 +694,26 @@ function waitForTransitionEnd(
 
 /**
  * Cancel any ongoing transition on the given element.
+ *
+ * @param hostOrEl - RendererHost 实例或 DOM Element（向后兼容）
+ * @param el - 当第一个参数为 host 时，此为宿主元素
  */
-export function cancelTransition(el: Element): void {
-  const cleanup = transitionCleanupMap.get(el);
+export function cancelTransition<HN, HE extends HN>(
+  host: RendererHost<HN, HE>,
+  el: HE,
+): void;
+export function cancelTransition(el: Element): void;
+export function cancelTransition<HN, HE extends HN>(
+  hostOrEl: RendererHost<HN, HE> | Element,
+  el?: HE,
+): void {
+  // 确定实际元素引用
+  const target = el ?? (hostOrEl as unknown as object);
+
+  const cleanup = transitionCleanupMap.get(target);
   if (cleanup) {
     cleanup();
-    transitionCleanupMap.delete(el);
+    transitionCleanupMap.delete(target);
   }
 }
 

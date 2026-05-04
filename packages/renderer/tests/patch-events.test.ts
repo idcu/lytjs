@@ -7,8 +7,8 @@ import {
   createInvoker,
   patchEvent,
   removeAllEventListeners,
-} from '../src/dom/patch-events';
-import type { EventInvoker, ParsedEvent } from '../src/dom/patch-events';
+} from '@lytjs/adapter-web';
+import type { EventInvoker, ParsedEvent } from '@lytjs/adapter-web';
 
 describe('patch-events', () => {
   let el: HTMLElement;

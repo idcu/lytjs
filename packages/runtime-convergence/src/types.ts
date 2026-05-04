@@ -198,43 +198,10 @@ export interface AsyncSchedulerOptions {
 
 /**
  * 过渡属性（平台无关）。
+ * 从 @lytjs/vdom 的 TransitionProps re-export，保持与 vdom 同步。
+ * 如需修改，请同步修改 @lytjs/vdom/src/transition.ts 中的定义。
  */
-export interface TransitionProps<HE> {
-  /** 过渡名称前缀（默认 'v'） */
-  name?: string;
-  /** 是否在首次挂载时执行 appear 过渡 */
-  appear?: boolean;
-  /** 过渡模式 */
-  mode?: 'in-out' | 'out-in' | 'default';
-  /** 进入起始类名 */
-  enterFromClass?: string;
-  /** 进入激活类名 */
-  enterActiveClass?: string;
-  /** 进入结束类名 */
-  enterToClass?: string;
-  /** 离开起始类名 */
-  leaveFromClass?: string;
-  /** 离开激活类名 */
-  leaveActiveClass?: string;
-  /** 离开结束类名 */
-  leaveToClass?: string;
-  /** 进入前回调 */
-  onBeforeEnter?: (el: HE) => void;
-  /** 进入回调（done 用于通知完成） */
-  onEnter?: (el: HE, done: () => void) => void;
-  /** 进入完成回调 */
-  onAfterEnter?: (el: HE) => void;
-  /** 进入取消回调 */
-  onEnterCancelled?: (el: HE) => void;
-  /** 离开前回调 */
-  onBeforeLeave?: (el: HE) => void;
-  /** 离开回调（done 用于通知完成） */
-  onLeave?: (el: HE, done: () => void) => void;
-  /** 离开完成回调 */
-  onAfterLeave?: (el: HE) => void;
-  /** 离开取消回调 */
-  onLeaveCancelled?: (el: HE) => void;
-}
+export type { TransitionProps } from '@lytjs/vdom';
 
 /**
  * 过渡状态。

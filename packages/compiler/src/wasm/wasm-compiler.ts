@@ -71,6 +71,7 @@ export interface WASMTransformOptions {
   /** 是否标记静态节点 */
   markStatic?: boolean
   /** 自定义节点转换器 */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   nodeTransforms?: Array<(node: any, context: any) => void | (() => void) | (() => void)[]>
 }
 
@@ -163,6 +164,7 @@ export function wasmCompile(
       onWarn: (warning: string) => {
         warnings.push({ message: warning });
       },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
   } catch (error) {
     const err = error as Error;
@@ -230,6 +232,7 @@ export function serializeAST(root: RootNode): ASTNode[] {
   return root.children.map((child) => serializeNode(child));
 }
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 function serializeNode(node: TemplateChildNode): ASTNode {
   switch (node.type) {
     case NodeTypes.ELEMENT: {
@@ -282,6 +285,7 @@ function serializeNode(node: TemplateChildNode): ASTNode {
 // 节点统计
 // ============================================================
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 function countNodes(root: RootNode): { staticCount: number; dynamicCount: number } {
   let staticCount = 0;
   let dynamicCount = 0;

@@ -119,9 +119,12 @@ export {
 
 export type {
   TransitionProps,
-  TransitionDurationInfo,
   TransitionState,
+  LegacyTransitionProps,
 } from './transition';
+
+// TransitionDurationInfo 已迁移到 @lytjs/host-contract
+export type { TransitionDurationInfo } from '@lytjs/host-contract';
 
 // TransitionGroup
 export {
@@ -136,6 +139,7 @@ export {
 
 export type {
   TransitionGroupProps,
+  LegacyTransitionGroupProps,
 } from './transition-group';
 
 // List diff

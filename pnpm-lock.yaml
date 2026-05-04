@@ -681,9 +681,15 @@ importers:
 
   packages/runtime-convergence:
     dependencies:
+      '@lytjs/common-events':
+        specifier: workspace:*
+        version: link:../common/packages/events
       '@lytjs/host-contract':
         specifier: workspace:*
         version: link:../host-contract
+      '@lytjs/vdom':
+        specifier: workspace:*
+        version: link:../vdom
     devDependencies:
       tsup:
         specifier: ^8.3.0

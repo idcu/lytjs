@@ -22,7 +22,9 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@lytjs/host-contract": "workspace:*"
+    "@lytjs/host-contract": "workspace:*",
+    "@lytjs/common-events": "workspace:*",
+    "@lytjs/vdom": "workspace:*"
   },
   "devDependencies": {
     "tsup": "^8.3.0",

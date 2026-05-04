@@ -291,7 +291,7 @@ export function createApp(
     // 执行 setup 函数
     if (typeof componentOptions.setup === 'function') {
       try {
-        const setupResult = (componentOptions.setup as Function)(rootProps ?? {}, {});
+        const setupResult = (componentOptions.setup as (props: Record<string, unknown>, ctx: Record<string, unknown>) => unknown)(rootProps ?? {}, {});
         if (setupResult && typeof setupResult === 'object') {
           Object.assign(ctx, setupResult);
         }

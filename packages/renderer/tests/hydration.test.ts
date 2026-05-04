@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { createVNode, Fragment } from '@lytjs/vdom';
-import { createHydrationFunctions } from '../src/dom/hydration';
+import { createHydrationFunctions } from '@lytjs/adapter-web';
 
 describe('Hydration', () => {
   let container: HTMLElement;

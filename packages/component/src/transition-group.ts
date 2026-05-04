@@ -1,11 +1,18 @@
 // src/transition-group.ts
 // TransitionGroup component definition
+//
+// 泛型化重构：TransitionGroupComponentProps 中的回调类型从 Element 改为泛型 HE。
+// 保留 TransitionGroupComponentPropsLegacy 类型别名以确保向后兼容。
 
 import type { ComponentOptions, SetupContext } from './types';
 
 // ==================== TransitionGroup Props ====================
 
-export interface TransitionGroupComponentProps {
+/**
+ * TransitionGroup 组件属性（泛型版本）。
+ * @template HE - 宿主元素类型
+ */
+export interface TransitionGroupComponentProps<HE = unknown> {
   name?: string;
   appear?: boolean;
   tag?: string | false;
@@ -16,15 +23,21 @@ export interface TransitionGroupComponentProps {
   leaveFromClass?: string;
   leaveActiveClass?: string;
   leaveToClass?: string;
-  onBeforeEnter?: (el: Element) => void;
-  onEnter?: (el: Element, done: () => void) => void;
-  onAfterEnter?: (el: Element) => void;
-  onEnterCancelled?: (el: Element) => void;
-  onBeforeLeave?: (el: Element) => void;
-  onLeave?: (el: Element, done: () => void) => void;
-  onAfterLeave?: (el: Element) => void;
-  onLeaveCancelled?: (el: Element) => void;
+  onBeforeEnter?: (el: HE) => void;
+  onEnter?: (el: HE, done: () => void) => void;
+  onAfterEnter?: (el: HE) => void;
+  onEnterCancelled?: (el: HE) => void;
+  onBeforeLeave?: (el: HE) => void;
+  onLeave?: (el: HE, done: () => void) => void;
+  onAfterLeave?: (el: HE) => void;
+  onLeaveCancelled?: (el: HE) => void;
 }
+
+/**
+ * @deprecated 使用 TransitionGroupComponentProps<HE> 代替。
+ * 保留此类型别名以确保向后兼容。
+ */
+export type TransitionGroupComponentPropsLegacy = TransitionGroupComponentProps<Element>;
 
 // ==================== TransitionGroup Component ====================
 

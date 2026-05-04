@@ -6,7 +6,7 @@ import {
   patchStyle,
   patchEvent,
   patchAttr,
-} from '../src/dom/patch-props';
+} from '@lytjs/adapter-web';
 import { isOn } from '@lytjs/common-events';
 import { isBooleanAttr } from '../src/utils';
 

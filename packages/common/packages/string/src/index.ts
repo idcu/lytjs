@@ -725,3 +725,23 @@ export function sanitizeHTML(str: string): string {
 }
 
 export { escapeHTML as escapeHtml };
+
+// ============================================================
+// CSS 工具
+// ============================================================
+
+/**
+ * 解析 CSS 时长字符串为毫秒数。
+ * 支持逗号分隔的多个值（取最大值）。
+ * @param value - CSS 时长字符串，如 '0.3s', '300ms', '0.3s, 0.1s'
+ */
+export function parseDuration(value: string | undefined | null): number {
+  if (value == null || value === '' || value === '0s' || value === '0ms') return 0;
+  const values = value.split(',').map(v => {
+    v = v.trim();
+    if (v.endsWith('ms')) return parseFloat(v);
+    if (v.endsWith('s')) return parseFloat(v) * 1000;
+    return parseFloat(v);
+  });
+  return Math.max(0, ...values);
+}

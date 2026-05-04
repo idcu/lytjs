@@ -76,7 +76,7 @@ interface SFCBlock {
 const RE_BLOCK_OPEN = /^<([a-zA-Z][a-zA-Z0-9-]*)([\s\S]*?)>/;
 
 // Attribute regex: matches name="value", name='value', name=value, or standalone name
-const RE_ATTR = /([^\s"'<>\/=]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+)))?/g;
+const RE_ATTR = /([^\s"'<>=/]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+)))?/g;
 
 // ============================================================
 // Parse Options

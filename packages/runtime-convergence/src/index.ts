@@ -24,13 +24,15 @@ export type {
   SchedulerPriority,
   SchedulerJob,
   AsyncSchedulerOptions,
-  // 过渡引擎
-  TransitionProps,
+  // 过渡引擎（TransitionProps 从 @lytjs/vdom re-export）
   TransitionState,
   FLIPRecord,
   ResolvedTransitionClasses,
   TransitionEngineOptions,
 } from './types';
+
+// TransitionProps 从 @lytjs/vdom re-export，避免重复定义
+export type { TransitionProps } from '@lytjs/vdom';
 
 // ============================================================
 // 类导出
