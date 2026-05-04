@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { ref, reactive } from '@lytjs/reactivity';
 import { createSignalRenderer } from '../src/signal/signal-renderer';

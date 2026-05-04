@@ -105,6 +105,8 @@ export interface ComponentLifecycleState {
   isMounted: boolean;
   isUnmounted: boolean;
   isDeactivated: boolean;
+  isKeepingAlive: boolean;
+  refs: Record<string, unknown>;
   lifecycle: {
     beforeMount: Set<(...args: unknown[]) => void>;
     mounted: Set<(...args: unknown[]) => void>;

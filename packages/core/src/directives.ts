@@ -39,8 +39,10 @@ export function withMemo(
   index: number,
 ): VNode {
   if (index < 0 || index >= cache.length) {
-    // Index out of bounds - render without caching
-    return render();
+    // Index out of bounds - render and write to cache
+    const result = render();
+    cache[index] = { memo, result };
+    return result;
   }
   const cached = cache[index];
   if (cached && isMemoSame(cached.memo, memo)) {

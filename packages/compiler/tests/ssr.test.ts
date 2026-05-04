@@ -110,8 +110,8 @@ describe('SSR Compilation Mode', () => {
 
       // SSR should not contain VNode creation
       expect(ssrResult.code).not.toContain('createElementVNode');
-      // Client should contain VNode creation
-      expect(clientResult.code).toContain('createElementVNode');
+      // Client should contain VNode creation (createBlock for elements with dynamic bindings)
+      expect(clientResult.code).toContain('createBlock');
     });
 
     it('SSR 模式应该包含 renderToString 辅助函数', () => {

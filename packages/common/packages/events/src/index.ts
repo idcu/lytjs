@@ -38,9 +38,11 @@ export function normalizeEventName(rawName: string): string {
 
 /**
  * 事件缓存 key 转换：click → onClick
+ * 先去除修饰符后缀（`.` 之后的部分），再进行首字母大写转换。
  */
 export function getEventKey(name: string): string {
-  return 'on' + name[0]!.toUpperCase() + name.slice(1);
+  const baseName = name.split('.')[0];
+  return 'on' + baseName![0]!.toUpperCase() + baseName!.slice(1);
 }
 
 /**

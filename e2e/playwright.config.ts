@@ -18,10 +18,10 @@ export default defineConfig({
   },
   // 自动启动静态文件服务器，serve e2e/fixtures 目录
   webServer: {
-    command: 'npx vite e2e/fixtures --port 3000',
+    command: 'node e2e/build.cjs && npx vite e2e/fixtures --port 3000',
     port: 3000,
     reuseExistingServer: !process.env.CI,
-    timeout: 30_000,
+    timeout: 60_000,
   },
   // 浏览器配置
   projects: [

@@ -150,11 +150,8 @@ describe('transformModel', () => {
       const context = createMockContext();
       const dir = createModelDirective('');
       const node = createElement('input');
-      const result = transformModel(dir, node, context);
-
-      // 空字符串仍然是有效的 expContent
-      expect(result.props).toHaveLength(2);
-      expect(result.props[0]).toEqual({ key: 'modelValue', value: '' });
+      // 空字符串不是合法的 v-model 表达式，应抛出错误
+      expect(() => transformModel(dir, node, context)).toThrow();
     });
   });
 

@@ -113,6 +113,8 @@ describe('effect', () => {
     enableTracking();
     obj.count = 2;
     expect(fn).toHaveBeenCalledTimes(3);
+    // Clean up trackStack to avoid affecting subsequent tests
+    resetTracking();
   });
 
   it('should reset tracking state', () => {

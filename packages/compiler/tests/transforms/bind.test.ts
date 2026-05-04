@@ -92,8 +92,7 @@ describe('transformBind', () => {
 
   it('should handle dynamic arguments', () => {
     const ast = parse('<div :[attr]="value"></div>');
-    const result = transform(ast, { nodeTransforms: [transformBind] });
-    // Verify dynamic argument is processed
-    expect(result).toBeDefined();
+    // transform returns void, but should not throw for dynamic arguments
+    expect(() => transform(ast, { directiveTransforms: { bind: transformBind } })).not.toThrow();
   });
 });

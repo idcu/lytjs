@@ -47,7 +47,7 @@ describe('transformSlot', () => {
       const context = createMockContext();
       const element = createSlotElement({
         tag: 'slot',
-        tagType: ElementTypes.ELEMENT,
+        tagType: ElementTypes.SLOT,
       });
       transformSlot(element, context);
       expect(context.helpers.has('RENDER_SLOT')).toBe(true);

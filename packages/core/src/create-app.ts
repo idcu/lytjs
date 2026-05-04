@@ -239,13 +239,30 @@ export function createApp(
     setupComponent(instance);
 
     // Store component instance on vnode so patch can access it
-    rootVNode.component = instance;
+    (rootVNode as any).component = instance;
 
     // Save root instance reference for unmount lifecycle hooks
     context._instance = instance;
 
     // Render using the enhanced renderer
-    const renderer = createDOMRenderer();
+    // Provide setupChildComponent callback so the renderer can create and setup
+    // child component instances when it encounters component vnodes during patching
+    const renderer = createDOMRenderer({
+      setupChildComponent(childVNode: any, parentComponent: any) {
+        const childInstance = createComponentInstance(
+          childVNode,
+          parentComponent,
+        );
+        // Inherit appContext from parent or root
+        if (parentComponent) {
+          childInstance.appContext = parentComponent.appContext;
+        } else {
+          childInstance.appContext = context as ComponentAppContext;
+        }
+        setupComponent(childInstance);
+        childVNode.component = childInstance;
+      },
+    });
     context.renderer = renderer as unknown as DOMRenderer;
     context._vnode = rootVNode;
 
