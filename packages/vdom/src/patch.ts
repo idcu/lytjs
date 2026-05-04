@@ -216,7 +216,11 @@ export function createRenderer<HN, HE extends HN>(
   } = internal;
 
   // Helper: assign host node to vnode.el (VNode.el is typed as Node | null in common-vnode,
-  // but we work with generic HN here, so we need a type assertion)
+  // but we work with generic HN here, so we need a type assertion).
+  // The double assertion (HN -> unknown -> Node) is necessary because HN and Node are
+  // unrelated types in the generic context — TypeScript does not allow direct casts between
+  // two generic types that don't share a common base. Going through unknown is the standard
+  // pattern for this kind of cross-boundary type bridge.
   const setVNodeEl = (vnode: VNode, el: HN | null) => { vnode.el = el as unknown as Node | null; };
   const getVNodeEl = (vnode: VNode): HN | null => vnode.el as unknown as HN | null;
 
@@ -275,8 +279,9 @@ export function createRenderer<HN, HE extends HN>(
   ): void {
     // 第一次检查：判断 n1 是否可以复用（同类型）。
     // 如果 n1.el 为 null（例如之前被卸载），则将 n1 置为 null 以走挂载逻辑。
+    // 仅对非组件类型的 vnode 执行此操作，组件 vnode 的 el 为 null 不代表需要重新挂载。
     if (n1 !== null && isSameVNodeType(n1, n2)) {
-      if (n1.el === null) {
+      if (n1.el === null && !(n1.shapeFlag & ShapeFlags.STATEFUL_COMPONENT) && !(n1.shapeFlag & ShapeFlags.FUNCTIONAL_COMPONENT)) {
         n1 = null;
       }
     }
@@ -322,8 +327,6 @@ export function createRenderer<HN, HE extends HN>(
         }
       } else if (n2.shapeFlag & ShapeFlags.TELEPORT) {
         teleportAPI.patchTeleport(n1, n2, container, anchor, parentComponent, parentSuspense, isSVG);
-      } else if (n2.shapeFlag & ShapeFlags.SUSPENSE) {
-        suspenseAPI.patchSuspense(n1, n2, container, anchor, parentComponent, parentSuspense, isSVG);
       } else {
         // Patch existing element node
         elementAPI.patchElement(n1, n2, parentComponent, parentSuspense, isSVG);

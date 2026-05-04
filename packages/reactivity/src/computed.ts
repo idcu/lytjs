@@ -40,10 +40,20 @@ class ComputedRefImpl<T> {
         triggerRefValue(this);
       }
     });
+    this.effect.computed = true;
 
     if (isSSR) {
-      this._value = getter();
-      this._dirty = false;
+      try {
+        this._value = getter();
+        this._dirty = false;
+      } catch (e) {
+        // SSR 模式下 getter 异常不应阻塞渲染流程，
+        // 标记为 dirty 以便后续访问时重试
+        this._dirty = true;
+        if (__DEV__) {
+          warn(`Computed getter threw during SSR initialization: ${e}`);
+        }
+      }
     }
   }
 

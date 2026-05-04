@@ -12,6 +12,28 @@ import type { SuspenseBoundary } from './types';
 import type { RendererContext } from './patch-element';
 
 // ============================================================
+// Cross-package linker registration (avoids circular dependency)
+// ============================================================
+
+type SuspenseLinkerFn = (
+  asyncState: unknown,
+  vnodeBoundary: SuspenseBoundary,
+  domSwitch: (boundary: unknown, toFallback: boolean) => void,
+) => void;
+
+let suspenseLinker: SuspenseLinkerFn | null = null;
+
+/**
+ * Register a linker function that connects the vdom-layer SuspenseBoundary
+ * with the component-layer SuspenseAsyncState.
+ *
+ * Called by @lytjs/component during initialization to avoid circular imports.
+ */
+export function registerSuspenseLinker(linker: SuspenseLinkerFn): void {
+  suspenseLinker = linker;
+}
+
+// ============================================================
 // Suspense patch factory
 // ============================================================
 
@@ -123,6 +145,30 @@ export function createSuspensePatch<HN, HE extends HN>(
     };
 
     vnode.suspense = boundary;
+
+    // Link vdom-layer SuspenseBoundary with component-layer SuspenseAsyncState
+    // if the linker has been registered by @lytjs/component.
+    if (suspenseLinker && vnode.component) {
+      const setupState = (vnode.component as ComponentInternalInstance).setupState;
+      if (setupState && typeof setupState === 'object' && 'boundary' in setupState) {
+        const asyncState = setupState.boundary;
+        if (asyncState && typeof asyncState === 'object') {
+          suspenseLinker(asyncState, boundary, (_boundary: unknown, toFallback: boolean) => {
+            // domSwitch: toggle between default and fallback branches
+            const b = _boundary as { vnodeBoundary?: SuspenseBoundary & { isInFallback: boolean } };
+            const vb = b.vnodeBoundary;
+            if (!vb) return;
+            if (toFallback && !vb.isInFallback) {
+              // Switch to fallback: handled by patchSuspense on next update
+              vb.isInFallback = true;
+            } else if (!toFallback && vb.isInFallback) {
+              // Switch back to default: handled by patchSuspense on next update
+              vb.isInFallback = false;
+            }
+          });
+        }
+      }
+    }
 
     // Resolve default and fallback branches from children
     const { defaultBranch, fallbackBranch } = resolveSuspenseChildren(vnode.children);

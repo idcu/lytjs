@@ -7,6 +7,28 @@ import { ShapeFlags, createBaseVNode } from '@lytjs/common-vnode';
 import type { VNode } from '@lytjs/common-vnode';
 import { error, warn } from '@lytjs/common-error';
 import { nextTick } from '@lytjs/common-scheduler';
+import { registerSuspenseLinker } from '@lytjs/vdom';
+
+// ============================================================
+// Register cross-package suspense boundary linker
+// ============================================================
+
+// This links the vdom-layer SuspenseBoundary with the component-layer
+// SuspenseAsyncState so that async state changes can drive DOM switching.
+let _linkerRegistered = false;
+function ensureLinkerRegistered(): void {
+  if (_linkerRegistered) return;
+  _linkerRegistered = true;
+  registerSuspenseLinker(
+    (asyncState: unknown, vnodeBoundary: unknown, domSwitch: (boundary: unknown, toFallback: boolean) => void) => {
+      linkSuspenseBoundary(
+        asyncState as SuspenseAsyncState,
+        vnodeBoundary as SuspenseAsyncState['vnodeBoundary'],
+        domSwitch as SuspenseAsyncState['domSwitch'],
+      );
+    },
+  );
+}
 
 // ==================== Types ====================
 
@@ -69,6 +91,9 @@ export const Suspense: ComponentOptions = {
   },
 
   setup(_props: Record<string, unknown>, _ctx: SetupContext) {
+    // Ensure the cross-package linker is registered so vdom can call linkSuspenseBoundary
+    ensureLinkerRegistered();
+
     // __DEV__ mode: validate props types
     if (typeof __DEV__ !== 'undefined' && __DEV__) {
       const props = _props as SuspenseProps;

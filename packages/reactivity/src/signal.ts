@@ -178,9 +178,15 @@ function createComputedSignalInternal<T>(
   const subscribers = new Set<Subscriber>();
   let disposed = false;
 
+  // effect 系统桥接：使用 store 对象作为 track/trigger 的 target
+  const store: Record<symbol, unknown> = {};
+  const COMPUTED_SIGNAL_KEY = Symbol('computed_signal_value');
+
   const invalidate = (): void => {
     if (disposed) return;
     dirty = true;
+    // effect 系统桥接触发
+    trigger(store, TriggerOpTypes.SET, COMPUTED_SIGNAL_KEY);
     const subs = Array.from(subscribers);
     for (const sub of subs) {
       sub();
@@ -189,6 +195,9 @@ function createComputedSignalInternal<T>(
 
   const computedFn = function computedFn(): T {
     if (disposed) return value as T;
+
+    // effect 系统桥接追踪
+    track(store, TrackOpTypes.GET, COMPUTED_SIGNAL_KEY);
 
     // 追踪：如果有活跃订阅者，注册自身
     if (activeSubscriber && !isUntracked) {

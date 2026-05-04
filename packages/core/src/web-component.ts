@@ -35,14 +35,47 @@ export interface DefineCustomElementOptions {
 
 // ==================== 内部状态 ====================
 
-/** 当前 Custom Element 的 Shadow Root（供 useShadowRoot 使用） */
-let _currentShadowRoot: ShadowRoot | null = null;
+/**
+ * Per-instance context stored in a WeakMap so that multiple Custom Element
+ * instances can coexist without clobbering each other's state.
+ */
+interface ElementContext {
+  shadowRoot: ShadowRoot | null;
+  host: HTMLElement;
+  slotCallback: (() => void) | null;
+}
 
-/** 当前 Custom Element 的宿主元素（供 useHost 使用） */
-let _currentHost: HTMLElement | null = null;
+const elementContextMap = new WeakMap<HTMLElement, ElementContext>();
 
-/** 当前 Custom Element 的 slot 变化回调（供 useSlots 使用） */
-let _currentSlotCallback: (() => void) | null = null;
+/**
+ * Stack of host elements currently being set up.
+ * Since connectedCallback -> setupComponent is synchronous, the top of the
+ * stack always refers to the element whose setup() is currently executing.
+ * This replaces the old module-level _currentHost / _currentShadowRoot
+ * variables and supports nested/re-entrant scenarios correctly.
+ */
+const setupStack: HTMLElement[] = [];
+
+/**
+ * Get or create the context entry for a given host element.
+ */
+function getElementContext(host: HTMLElement): ElementContext {
+  let ctx = elementContextMap.get(host);
+  if (!ctx) {
+    ctx = { shadowRoot: null, host, slotCallback: null };
+    elementContextMap.set(host, ctx);
+  }
+  return ctx;
+}
+
+/**
+ * Return the context for the host element whose setup is currently running,
+ * or undefined if called outside of a Custom Element setup.
+ */
+function getCurrentContext(): ElementContext | undefined {
+  const host = setupStack[setupStack.length - 1];
+  return host ? elementContextMap.get(host) : undefined;
+}
 
 // ==================== Props 类型映射 ====================
 
@@ -148,9 +181,13 @@ export function defineCustomElement(
     }
 
     connectedCallback(): void {
-      // 设置内部上下文
-      _currentShadowRoot = useShadowDOM ? (this._root as ShadowRoot) : null;
-      _currentHost = this;
+      // Store per-instance context in WeakMap
+      const ctx = getElementContext(this);
+      ctx.shadowRoot = useShadowDOM ? (this._root as ShadowRoot) : null;
+      ctx.host = this;
+
+      // Push onto setup stack so composition API functions can find this context
+      setupStack.push(this);
 
       try {
         // 从 attributes 收集 props
@@ -181,8 +218,8 @@ export function defineCustomElement(
         // 设置 slot 变化监听
         this._setupSlotObserver();
       } finally {
-        _currentShadowRoot = null;
-        _currentHost = null;
+        // Pop from setup stack
+        setupStack.pop();
       }
     }
 
@@ -199,6 +236,9 @@ export function defineCustomElement(
         this._slotObserver.disconnect();
         this._slotObserver = null;
       }
+
+      // Remove per-instance context from WeakMap
+      elementContextMap.delete(this);
 
       this._instance = null;
       this._renderer = null;
@@ -223,9 +263,13 @@ export function defineCustomElement(
       if (this._renderer && this._vnode) {
         // 更新 vnode 的 props
         (this._vnode.props as Record<string, unknown>)[propKey] = deserializedValue;
-        // 使用 render 方法重新渲染
+        // 优先使用 render 方法重新渲染；如果不存在则使用 patch 方法
         if (this._renderer.render && this._vnode) {
           this._renderer.render(this._vnode, this._root as Element);
+        } else if (this._renderer.patch && this._vnode) {
+          // render 方法不存在时，使用 patch 进行更新
+          // patch(null, vnode, container) 等价于重新挂载
+          this._renderer.patch(null, this._vnode, this._root as Element);
         }
       }
     }
@@ -233,8 +277,9 @@ export function defineCustomElement(
     private _setupSlotObserver(): void {
       // 监听 Light DOM slot 内容变化
       this._slotObserver = new MutationObserver(() => {
-        if (_currentSlotCallback) {
-          _currentSlotCallback();
+        const ctx = elementContextMap.get(this);
+        if (ctx?.slotCallback) {
+          ctx.slotCallback();
         }
       });
 
@@ -247,8 +292,18 @@ export function defineCustomElement(
   }
 
   // 注册 Custom Element
-  if (!customElements.get(tagName)) {
-    customElements.define(tagName, LytCustomElement);
+  // 使用 try-catch 处理竞态条件：多个模块可能同时尝试注册同名元素
+  try {
+    if (!customElements.get(tagName)) {
+      customElements.define(tagName, LytCustomElement);
+    }
+  } catch (e) {
+    if (__DEV__) {
+      warn(
+        `defineCustomElement: failed to register "${tagName}". ` +
+        `It may have already been registered by another module. Error: ${e}`,
+      );
+    }
   }
 
   return LytCustomElement;
@@ -260,13 +315,14 @@ export function defineCustomElement(
  * 在 setup 中获取当前 Custom Element 的 Shadow Root
  */
 export function useShadowRoot(): ShadowRoot | null {
-  if (__DEV__ && !_currentShadowRoot) {
+  const ctx = getCurrentContext();
+  if (__DEV__ && !ctx?.shadowRoot) {
     warn(
       'useShadowRoot() was called outside of a Custom Element context. ' +
         'Make sure this is called inside a component wrapped by defineCustomElement.',
     );
   }
-  return _currentShadowRoot;
+  return ctx?.shadowRoot ?? null;
 }
 
 // ==================== Composition API: useHost ====================
@@ -275,13 +331,14 @@ export function useShadowRoot(): ShadowRoot | null {
  * 在 setup 中获取当前 Custom Element 的宿主元素
  */
 export function useHost(): HTMLElement | null {
-  if (__DEV__ && !_currentHost) {
+  const ctx = getCurrentContext();
+  if (__DEV__ && !ctx?.host) {
     warn(
       'useHost() was called outside of a Custom Element context. ' +
         'Make sure this is called inside a component wrapped by defineCustomElement.',
     );
   }
-  return _currentHost;
+  return ctx?.host ?? null;
 }
 
 // ==================== Composition API: useSlots (Web Component 版) ====================
@@ -291,7 +348,10 @@ export function useHost(): HTMLElement | null {
  * 返回一个注册回调的函数
  */
 export function useWebComponentSlots(onChange: () => void): void {
-  _currentSlotCallback = onChange;
+  const ctx = getCurrentContext();
+  if (ctx) {
+    ctx.slotCallback = onChange;
+  }
 }
 
 // ==================== injectChildStyles ====================
@@ -300,7 +360,8 @@ export function useWebComponentSlots(onChange: () => void): void {
  * 向 Shadow DOM 注入样式
  */
 export function injectChildStyles(styles: string): void {
-  const shadowRoot = _currentShadowRoot;
+  const ctx = getCurrentContext();
+  const shadowRoot = ctx?.shadowRoot ?? null;
   if (!shadowRoot) {
     if (__DEV__) {
       warn(

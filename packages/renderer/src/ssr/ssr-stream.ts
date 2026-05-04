@@ -31,6 +31,9 @@ export interface SSRStreamOptions {
  * enabling progressive HTML delivery. Suspense boundaries are supported:
  * when an async component is encountered, the fallback is streamed first,
  * then the real content is pushed once resolved.
+ *
+ * Uses microtask scheduling to allow the browser to process chunks between
+ * renders, enabling true progressive streaming.
  */
 export function renderToStream(
   input: SSRInput,
@@ -41,12 +44,18 @@ export function renderToStream(
 
   return new ReadableStream<Uint8Array>({
     start(controller) {
-      try {
-        streamVNode(input.vnode, controller, encoder, commentMarkers);
+      // Wrap synchronous rendering in a microtask so that controller.close()
+      // does not execute synchronously in start(), allowing the browser to
+      // consume chunks progressively between microtask boundaries.
+      Promise.resolve().then(() => {
+        try {
+          streamVNode(input.vnode, controller, encoder, commentMarkers);
+        } catch (err) {
+          controller.error(err);
+          return;
+        }
         controller.close();
-      } catch (err) {
-        controller.error(err);
-      }
+      });
     },
   });
 }
@@ -157,7 +166,7 @@ function streamElement(
   let openTag = `<${tag}`;
 
   // Render props as attributes
-  for (const key in props) {
+  for (const key of Object.keys(props)) {
     if (key === 'key' || key === 'ref') continue;
     openTag += renderStreamAttributeToString(key, props[key]);
   }
@@ -204,6 +213,147 @@ const NAMED_ENTITIES: Record<string, string> = {
   '&newline;': '\n',
   '&lpar;': '(',
   '&rpar;': ')',
+  '&nbsp;': '\u00A0',
+  '&copy;': '\u00A9',
+  '&reg;': '\u00AE',
+  '&trade;': '\u2122',
+  '&times;': '\u00D7',
+  '&divide;': '\u00F7',
+  '&pound;': '\u00A3',
+  '&yen;': '\u00A5',
+  '&cent;': '\u00A2',
+  '&sect;': '\u00A7',
+  '&para;': '\u00B6',
+  '&middot;': '\u00B7',
+  '&laquo;': '\u00AB',
+  '&raquo;': '\u00BB',
+  '&iexcl;': '\u00A1',
+  '&iquest;': '\u00BF',
+  '&deg;': '\u00B0',
+  '&plusmn;': '\u00B1',
+  '&micro;': '\u00B5',
+  '&frac14;': '\u00BC',
+  '&frac12;': '\u00BD',
+  '&frac34;': '\u00BE',
+  '&sup1;': '\u00B9',
+  '&sup2;': '\u00B2',
+  '&sup3;': '\u00B3',
+  '&acute;': '\u00B4',
+  '&cedil;': '\u00B8',
+  '&ordf;': '\u00AA',
+  '&not;': '\u00AC',
+  '&shy;': '\u00AD',
+  '&macr;': '\u00AF',
+  '&uml;': '\u00A8',
+  '&circ;': '\u02C6',
+  '&tilde;': '\u02DC',
+  '&ensp;': '\u2002',
+  '&emsp;': '\u2003',
+  '&thinsp;': '\u2009',
+  '&zwnj;': '\u200C',
+  '&zwj;': '\u200D',
+  '&lrm;': '\u200E',
+  '&rlm;': '\u200F',
+  '&ndash;': '\u2013',
+  '&mdash;': '\u2014',
+  '&lsquo;': '\u2018',
+  '&rsquo;': '\u2019',
+  '&sbquo;': '\u201A',
+  '&ldquo;': '\u201C',
+  '&rdquo;': '\u201D',
+  '&bdquo;': '\u201E',
+  '&dagger;': '\u2020',
+  '&Dagger;': '\u2021',
+  '&bull;': '\u2022',
+  '&hellip;': '\u2026',
+  '&permil;': '\u2030',
+  '&prime;': '\u2032',
+  '&Prime;': '\u2033',
+  '&lsaquo;': '\u2039',
+  '&rsaquo;': '\u203A',
+  '&oline;': '\u203E',
+  '&frasl;': '\u2044',
+  '&euro;': '\u20AC',
+  '&larr;': '\u2190',
+  '&uarr;': '\u2191',
+  '&rarr;': '\u2192',
+  '&darr;': '\u2193',
+  '&harr;': '\u2194',
+  '&crarr;': '\u21B5',
+  '&lceil;': '\u2308',
+  '&rceil;': '\u2309',
+  '&lfloor;': '\u230A',
+  '&rfloor;': '\u230B',
+  '&lang;': '\u27E8',
+  '&rang;': '\u27E9',
+  '&loz;': '\u25CA',
+  '&spades;': '\u2660',
+  '&clubs;': '\u2663',
+  '&hearts;': '\u2665',
+  '&diams;': '\u2666',
+  '&OElig;': '\u0152',
+  '&oelig;': '\u0153',
+  '&Scaron;': '\u0160',
+  '&scaron;': '\u0161',
+  '&Yuml;': '\u0178',
+  '&fnof;': '\u0192',
+  '&Alpha;': '\u0391',
+  '&Beta;': '\u0392',
+  '&Gamma;': '\u0393',
+  '&Delta;': '\u0394',
+  '&Epsilon;': '\u0395',
+  '&Zeta;': '\u0396',
+  '&Eta;': '\u0397',
+  '&Theta;': '\u0398',
+  '&Iota;': '\u0399',
+  '&Kappa;': '\u039A',
+  '&Lambda;': '\u039B',
+  '&Mu;': '\u039C',
+  '&Nu;': '\u039D',
+  '&Xi;': '\u039E',
+  '&Omicron;': '\u039F',
+  '&Pi;': '\u03A0',
+  '&Rho;': '\u03A1',
+  '&Sigma;': '\u03A3',
+  '&Tau;': '\u03A4',
+  '&Upsilon;': '\u03A5',
+  '&Phi;': '\u03A6',
+  '&Chi;': '\u03A7',
+  '&Psi;': '\u03A8',
+  '&Omega;': '\u03A9',
+  '&alpha;': '\u03B1',
+  '&beta;': '\u03B2',
+  '&gamma;': '\u03B3',
+  '&delta;': '\u03B4',
+  '&epsilon;': '\u03B5',
+  '&zeta;': '\u03B6',
+  '&eta;': '\u03B7',
+  '&theta;': '\u03B8',
+  '&iota;': '\u03B9',
+  '&kappa;': '\u03BA',
+  '&lambda;': '\u03BB',
+  '&mu;': '\u03BC',
+  '&nu;': '\u03BD',
+  '&xi;': '\u03BE',
+  '&omicron;': '\u03BF',
+  '&pi;': '\u03C0',
+  '&rho;': '\u03C1',
+  '&sigmaf;': '\u03C2',
+  '&sigma;': '\u03C3',
+  '&tau;': '\u03C4',
+  '&upsilon;': '\u03C5',
+  '&phi;': '\u03C6',
+  '&chi;': '\u03C7',
+  '&psi;': '\u03C8',
+  '&omega;': '\u03C9',
+  '&thetasym;': '\u03D1',
+  '&upsih;': '\u03D2',
+  '&piv;': '\u03D6',
+  '&apos;': "'",
+  '&quot;': '"',
+  '&amp;': '&',
+  '&lt;': '<',
+  '&gt;': '>',
 };
 const NAMED_ENTITY_REGEX = new RegExp(
   Object.keys(NAMED_ENTITIES)

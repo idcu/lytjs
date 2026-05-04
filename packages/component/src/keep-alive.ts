@@ -86,7 +86,9 @@ export function matchesPattern(
   name: string | undefined,
   pattern: string | RegExp | (string | RegExp)[] | undefined,
 ): boolean {
-  if (!pattern || !name) return true;
+  if (!pattern) return true;
+  // 当组件 name 为 undefined 时，跳过匹配（视为不匹配）
+  if (name === undefined) return false;
 
   if (isString(pattern)) {
     return name === pattern;

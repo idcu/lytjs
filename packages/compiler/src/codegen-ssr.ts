@@ -27,6 +27,30 @@ import type {
 } from './types';
 
 // ============================================================
+// Module-level constants
+// ============================================================
+
+const VOID_ELEMENTS = new Set([
+  'area', 'base', 'br', 'col', 'embed', 'hr', 'img',
+  'input', 'link', 'meta', 'param', 'source', 'track', 'wbr',
+]);
+
+// ============================================================
+// Helper functions
+// ============================================================
+
+// @ts-ignore: escapeHtml is kept as a module-level utility for potential future use
+// and is also inlined into generated code strings at runtime.
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+// ============================================================
 // Main SSR generate function
 // ============================================================
 
@@ -44,7 +68,21 @@ export function generateSSR(ast: RootNode, _options: CodegenOptions = {}): Codeg
   parts.push(`);\n`);
   parts.push(`}\n\n`);
 
+  // escapeHtml helper (used by renderToString and interpolation output)
+  parts.push(`function escapeHtml(str) {\n`);
+  parts.push(`  return String(str)\n`);
+  parts.push(`    .replace(/&/g, '&amp;')\n`);
+  parts.push(`    .replace(/</g, '&lt;')\n`);
+  parts.push(`    .replace(/>/g, '&gt;')\n`);
+  parts.push(`    .replace(/"/g, '&quot;')\n`);
+  parts.push(`    .replace(/'/g, '&#39;');\n`);
+  parts.push(`}\n\n`);
+
   // Helper function
+  // NOTE: renderToString is intentionally inlined into each compilation result
+  // to ensure every compiled output is self-contained and independently executable,
+  // without relying on external runtime imports. This trades a small amount of
+  // code duplication for maximum portability and zero runtime coupling.
   parts.push(`function renderToString(vnode) {\n`);
   parts.push(`  if (typeof vnode === 'string') return vnode;\n`);
   parts.push(`  if (vnode == null) return '';\n`);
@@ -54,7 +92,7 @@ export function generateSSR(ast: RootNode, _options: CodegenOptions = {}): Codeg
   parts.push(`  if (props) {\n`);
   parts.push(`    for (const [key, value] of Object.entries(props)) {\n`);
   parts.push(`      if (value != null && value !== false) {\n`);
-  parts.push(`        html += ' ' + key + '="' + value + '"';\n`);
+  parts.push(`        html += ' ' + key + '="' + escapeHtml(value) + '"';\n`);
   parts.push(`      }\n`);
   parts.push(`    }\n`);
   parts.push(`  }\n`);
@@ -91,7 +129,7 @@ function genSSRChildren(children: TemplateChildNode[]): string {
       case NodeTypes.INTERPOLATION: {
         const node = child as InterpolationNode;
         const content = (node.content as SimpleExpressionNode).content;
-        parts.push(`String(${content})`);
+        parts.push(`escapeHtml(String(${content}))`);
         break;
       }
 
@@ -127,7 +165,7 @@ function genSSRChildren(children: TemplateChildNode[]): string {
             childParts.push((c as SimpleExpressionNode).content);
           } else if (c.type === NodeTypes.INTERPOLATION) {
             const content = ((c as InterpolationNode).content as SimpleExpressionNode).content;
-            childParts.push(`String(${content})`);
+            childParts.push(`escapeHtml(String(${content}))`);
           }
         }
         parts.push(`(${childParts.join(' + ')})`);
@@ -176,22 +214,22 @@ function genSSRElement(element: ElementNode): string {
           propParts.push(`' ${argContent}="' + ${expContent} + '"'`);
         }
       }
-      // v-html: handled specially
+      // v-html: output raw HTML content as children (not as attribute)
       if (prop.name === 'html') {
         const expContent = prop.exp
           ? (prop.exp as SimpleExpressionNode).content
           : undefined;
         if (expContent) {
-          propParts.push(`' innerHTML="' + ${expContent} + '"'`);
+          propParts.push(`' + ${expContent} + '`);
         }
       }
-      // v-text: handled specially - set textContent
+      // v-text: output escaped text content as children (not as attribute)
       if (prop.name === 'text') {
         const expContent = prop.exp
           ? (prop.exp as SimpleExpressionNode).content
           : undefined;
         if (expContent) {
-          propParts.push(`' textContent="' + ${expContent} + '"'`);
+          propParts.push(`' + escapeHtml(String(${expContent})) + '`);
         }
       }
     }
@@ -202,12 +240,7 @@ function genSSRElement(element: ElementNode): string {
   }
 
   // Self-closing check
-  const voidElements = new Set([
-    'area', 'base', 'br', 'col', 'embed', 'hr', 'img',
-    'input', 'link', 'meta', 'param', 'source', 'track', 'wbr',
-  ]);
-
-  if (voidElements.has(tag)) {
+  if (VOID_ELEMENTS.has(tag)) {
     parts.push(" + '>'");
     return `(${parts.join('')})`;
   }
@@ -317,12 +350,7 @@ function genSSRVNodeCall(vnode: VNodeCall): string {
     }
   }
 
-  const voidElements = new Set([
-    'area', 'base', 'br', 'col', 'embed', 'hr', 'img',
-    'input', 'link', 'meta', 'param', 'source', 'track', 'wbr',
-  ]);
-
-  if (voidElements.has(tag)) {
+  if (VOID_ELEMENTS.has(tag)) {
     parts.push(" + '>'");
     return `(${parts.join('')})`;
   }
@@ -364,8 +392,41 @@ function genSSRCallExpression(call: JSCallExpression): string {
           : firstArg && !Array.isArray(firstArg) && firstArg.type === NodeTypes.SIMPLE_EXPRESSION
             ? (firstArg as SimpleExpressionNode).content
             : '[]';
-      // For SSR, renderList should produce a map().join('')
-      return `(${listExpr}).map(...)`;
+      const secondArg = args[1];
+      // The second argument is a CompoundExpressionNode representing an arrow function:
+      // children: ['(item, index) => { ', ...arrowBody, ' }']
+      let arrowParams = 'item';
+      let arrowBodyStr = "''";
+      if (
+        secondArg &&
+        !Array.isArray(secondArg) &&
+        typeof secondArg !== 'string' &&
+        secondArg.type === NodeTypes.COMPOUND_EXPRESSION
+      ) {
+        const compound = secondArg as CompoundExpressionNode;
+        const children = compound.children;
+        // Extract arrow function parameters from the first child string
+        const firstChild = children[0];
+        if (typeof firstChild === 'string') {
+          const paramsMatch = firstChild.match(/\(([^)]*)\)\s*=>\s*\{/);
+          if (paramsMatch) {
+            arrowParams = paramsMatch[1]!.trim();
+          }
+        }
+        // Extract the body (everything between first and last child)
+        const bodyChildren = children.slice(1, -1);
+        if (bodyChildren.length > 0) {
+          arrowBodyStr = genSSRChildren(bodyChildren as TemplateChildNode[]);
+        }
+      } else if (
+        secondArg &&
+        !Array.isArray(secondArg) &&
+        typeof secondArg !== 'string' &&
+        secondArg.type === NodeTypes.SIMPLE_EXPRESSION
+      ) {
+        arrowBodyStr = (secondArg as SimpleExpressionNode).content;
+      }
+      return `(${listExpr}).map((${arrowParams}) => ${arrowBodyStr}).join('')`;
     }
   }
 

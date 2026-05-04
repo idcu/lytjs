@@ -12,6 +12,16 @@ const isBrowser =
 // ==================== XSS 防护 ====================
 
 /**
+ * 危险标签名称列表，用于 sanitizeHTML 的正则匹配
+ */
+const DANGEROUS_TAG_NAMES = 'script|iframe|object|embed|applet|form';
+
+/**
+ * 自闭合危险标签名称列表（包含 input、textarea 等表单元素）
+ */
+const DANGEROUS_SELF_CLOSING_TAG_NAMES = `${DANGEROUS_TAG_NAMES}|input|textarea|select|button|link|meta`;
+
+/**
  * 基础 HTML sanitizer，移除危险标签和属性
  * 注意：这不是一个完整的 sanitizer，仅提供基础防护
  * 生产环境建议使用 DOMPurify 等成熟库
@@ -19,12 +29,18 @@ const isBrowser =
 function sanitizeHTML(html: string): string {
   // 移除危险标签（含内容）
   let result = html.replace(
-    /<\s*\/?\s*(script|iframe|object|embed|applet|form)[^>]*>[\s\S]*?<\s*\/\s*\1\s*>/gi,
+    new RegExp(
+      `<\\s*/?\\s*(${DANGEROUS_TAG_NAMES})[^>]*>[\\s\\S]*?<\\s*/\\s*\\1\\s*>`,
+      'gi',
+    ),
     '',
   );
   // 移除自闭合的危险标签
   result = result.replace(
-    /<\s*(script|iframe|object|embed|applet|form|input|textarea|select|button|link|meta)[^>]*\/?>/gi,
+    new RegExp(
+      `<\\s*(${DANGEROUS_SELF_CLOSING_TAG_NAMES})[^>]*/?>`,
+      'gi',
+    ),
     '',
   );
   // 移除事件属性
@@ -37,6 +53,26 @@ function sanitizeHTML(html: string): string {
     /\s+(srcdoc|formaction|xlink:href)\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]*)/gi,
     '',
   );
+  // 防御嵌套绕过（如 <scr<script>ipt>）：移除危险标签后递归检查，
+  // 直到结果不再变化，确保不会因为移除操作产生新的危险标签
+  let prevResult = '';
+  while (result !== prevResult) {
+    prevResult = result;
+    result = result.replace(
+      new RegExp(
+        `<\\s*/?\\s*(${DANGEROUS_TAG_NAMES})[^>]*>[\\s\\S]*?<\\s*/\\s*\\1\\s*>`,
+        'gi',
+      ),
+      '',
+    );
+    result = result.replace(
+      new RegExp(
+        `<\\s*(${DANGEROUS_SELF_CLOSING_TAG_NAMES})[^>]*/?>`,
+        'gi',
+      ),
+      '',
+    );
+  }
   return result;
 }
 
@@ -174,6 +210,27 @@ export function removeAttribute(el: Element, key: string): void {
 }
 
 /**
+ * 常见的需要设置 DOM property 而非 HTML attribute 的属性名称集合。
+ * 提取为模块级常量以避免每次调用 setProperty 时重复创建。
+ */
+const PROPERTY_KEYS = new Set([
+  'value',
+  'checked',
+  'disabled',
+  'selected',
+  'multiple',
+  'readOnly',
+  'indeterminate',
+  'hidden',
+  'tabIndex',
+  'className',
+  'innerHTML',
+  'textContent',
+  'innerText',
+  'style',
+]);
+
+/**
  * 设置元素的属性（智能判断属性/property）
  *
  * 对于 value、checked、disabled 等布尔/值属性，
@@ -182,24 +239,7 @@ export function removeAttribute(el: Element, key: string): void {
 export function setProperty(el: Element, key: string, value: unknown): void {
   if (!isBrowser) return;
   const htmlEl = el as HTMLElement & Record<string, unknown>;
-  // 常见的需要设置 property 的属性列表
-  const propertyKeys = new Set([
-    'value',
-    'checked',
-    'disabled',
-    'selected',
-    'multiple',
-    'readOnly',
-    'indeterminate',
-    'hidden',
-    'tabIndex',
-    'className',
-    'innerHTML',
-    'textContent',
-    'innerText',
-    'style',
-  ]);
-  if (propertyKeys.has(key) || key in htmlEl) {
+  if (PROPERTY_KEYS.has(key) || key in htmlEl) {
     htmlEl[key] = value;
   } else {
     if (value === null || value === undefined || value === false) {
@@ -334,6 +374,9 @@ export function reconcileArray<T>(
 
   // 收集当前 parent 中已有的 reconcileArray 管理的节点
   // 通过遍历 parent.childNodes 中 ref 之前的节点
+  // NOTE (P2-15): 使用自定义属性 __reconcileKey 存储节点的 reconcile key，
+  // 存在与用户代码或其他库的属性名冲突风险。未来可改用 WeakMap<Node, string | number>
+  // 来避免污染 DOM 元素的属性空间，但需注意 WeakMap 无法序列化且不适用于跨 iframe 场景。
   const childNodes = parent.childNodes;
   let endIdx = ref != null
     ? Array.from(childNodes as ArrayLike<ChildNode>).indexOf(ref as ChildNode)
@@ -426,7 +469,10 @@ export function bindEffect(fn: () => void): () => void {
 /**
  * 批量执行 DOM 操作（减少重排）
  *
- * 使用 requestAnimationFrame 或微任务批量合并 DOM 操作
+ * 当前使用微任务（Promise.resolve().then）延迟执行，合并同一 tick 内的多次 DOM 操作。
+ * TODO (P2-14): 未来可考虑使用 requestAnimationFrame 替代微任务，
+ * 使 DOM 批量更新与浏览器渲染帧对齐，进一步减少不必要的重排重绘。
+ * 但需注意 requestAnimationFrame 的回调时机晚于微任务，可能影响更新时序。
  */
 export function batchDOM(fn: () => void): void {
   if (!isBrowser) {
