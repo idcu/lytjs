@@ -10,12 +10,14 @@ import {
   activateInstance,
   deactivateInstance,
   matchesPattern,
+  getCacheKey,
   KeepAlive,
   defineComponent,
   createComponentInstance,
   setupComponent,
 } from '../src/index';
 import type { ComponentInternalInstance, ComponentOptions } from '../src/types';
+import type { VNode } from '@lytjs/common-vnode';
 
 function createSimpleInstance(
   name: string,
@@ -198,5 +200,85 @@ describe('KeepAlive', () => {
     cacheInstance(instance, 'b', { type: {} } as any);
     expect(getCachedInstance(instance, 'a')).toBeUndefined();
     expect(getCachedInstance(instance, 'b')).toBeDefined();
+  });
+});
+
+describe('KeepAlive onCacheKey', () => {
+  it('should use onCacheKey function to generate cache key', () => {
+    const customKeyFn = vi.fn((vnode: VNode) => `custom:${(vnode.type as any).name}`);
+    const ka = createKeepAliveInstance({ onCacheKey: customKeyFn });
+
+    const comp = createSimpleInstance('CustomKeyComp');
+    const vnode = { type: comp.type, props: {} } as unknown as VNode;
+
+    const key = getCacheKey(ka, vnode);
+
+    expect(customKeyFn).toHaveBeenCalledWith(vnode);
+    expect(key).toBe('custom:CustomKeyComp');
+  });
+
+  it('should use default key (component name) when onCacheKey is not provided', () => {
+    const ka = createKeepAliveInstance();
+
+    const comp = createSimpleInstance('DefaultKeyComp');
+    const vnode = { type: comp.type, props: {} } as unknown as VNode;
+
+    const key = getCacheKey(ka, vnode);
+
+    expect(key).toBe('DefaultKeyComp');
+  });
+
+  it('should use vnode.type as string when type is a string', () => {
+    const ka = createKeepAliveInstance();
+    const vnode = { type: 'div', props: {} } as unknown as VNode;
+
+    const key = getCacheKey(ka, vnode);
+
+    expect(key).toBe('div');
+  });
+
+  it('should handle onCacheKey returning a number', () => {
+    const ka = createKeepAliveInstance({
+      onCacheKey: (_vnode: VNode) => 42,
+    });
+
+    const comp = createSimpleInstance('NumberKeyComp');
+    const vnode = { type: comp.type, props: {} } as unknown as VNode;
+
+    const key = getCacheKey(ka, vnode);
+
+    expect(key).toBe('42');
+  });
+
+  it('should work with cacheInstance using onCacheKey', () => {
+    const ka = createKeepAliveInstance({
+      onCacheKey: (vnode: VNode) => `key:${(vnode.type as any).name}`,
+    });
+
+    const comp = createSimpleInstance('CachedWithCustomKey');
+    const vnode = { type: comp.type, props: {} } as unknown as VNode;
+
+    const key = getCacheKey(ka, vnode);
+    cacheInstance(ka, key, comp);
+
+    expect(getCachedInstance(ka, 'key:CachedWithCustomKey')).toBe(comp);
+  });
+
+  it('should generate different keys for different components with onCacheKey', () => {
+    const ka = createKeepAliveInstance({
+      onCacheKey: (vnode: VNode) => `key:${(vnode.type as any).name}`,
+    });
+
+    const comp1 = createSimpleInstance('CompA');
+    const comp2 = createSimpleInstance('CompB');
+    const vnode1 = { type: comp1.type, props: {} } as unknown as VNode;
+    const vnode2 = { type: comp2.type, props: {} } as unknown as VNode;
+
+    const key1 = getCacheKey(ka, vnode1);
+    const key2 = getCacheKey(ka, vnode2);
+
+    expect(key1).toBe('key:CompA');
+    expect(key2).toBe('key:CompB');
+    expect(key1).not.toBe(key2);
   });
 });

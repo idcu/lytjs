@@ -252,6 +252,8 @@ export function createRenderer<HN, HE extends HN>(
         if (n1.children !== n2.children) {
           setText(node as unknown as HN, isFunction(n2.children) ? '' : String(n2.children ?? ''));
         }
+      } else if (n2.shapeFlag & ShapeFlags.SUSPENSE) {
+        patchSuspense(n1, n2, container, anchor, parentComponent, parentSuspense, isSVG);
       } else if (n2.shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
         // Component patch: delegate to component update process
         n2.el = n1.el;
@@ -395,12 +397,30 @@ export function createRenderer<HN, HE extends HN>(
 
     // Apply inheritAttrs: merge instance.attrs into root VNode props
     const componentType = component.type as Record<string, unknown>;
-    if (componentType.inheritAttrs !== false && component.attrs && subTree) {
+    if (component.attrs && subTree) {
       const attrs = component.attrs;
       const attrsKeys = Object.keys(attrs);
       if (attrsKeys.length > 0) {
-        const rootProps = { ...(subTree.props ?? {}), ...attrs };
-        subTree.props = rootProps;
+        if (componentType.inheritAttrs !== false) {
+          // inheritAttrs !== false: 合并所有 attrs
+          const rootProps = { ...(subTree.props ?? {}), ...attrs };
+          subTree.props = rootProps;
+        } else {
+          // inheritAttrs === false: 仅合并 class 和 style（Vue 3 行为）
+          // class 和 style 是视觉相关属性，即使 inheritAttrs 为 false 也应继承到根元素
+          const fallthroughAttrs: Record<string, unknown> = {};
+          if ('class' in attrs) {
+            fallthroughAttrs.class = attrs.class;
+          }
+          if ('style' in attrs) {
+            fallthroughAttrs.style = attrs.style;
+          }
+          const fallthroughKeys = Object.keys(fallthroughAttrs);
+          if (fallthroughKeys.length > 0) {
+            const rootProps = { ...(subTree.props ?? {}), ...fallthroughAttrs };
+            subTree.props = rootProps;
+          }
+        }
       }
     }
 
@@ -409,6 +429,30 @@ export function createRenderer<HN, HE extends HN>(
 
     // The component's el points to the root element of the subTree
     vnode.el = subTree.el;
+  }
+
+  // ============================================================
+  // setRef - 处理模板 ref 收集
+  // ============================================================
+
+  /**
+   * 设置 ref 引用：
+   * - 字符串 ref：存储到父组件实例的 refs 对象中
+   * - 函数 ref：调用并传入元素
+   * - 对象 ref（refImpl）：设置其 .value
+   */
+  function setRef(
+    el: HN,
+    ref: unknown,
+    parentComponent: ComponentInternalInstance,
+  ): void {
+    if (typeof ref === 'string') {
+      parentComponent.refs[ref] = el;
+    } else if (typeof ref === 'function') {
+      ref(el);
+    } else if (ref !== null && typeof ref === 'object' && 'value' in ref) {
+      (ref as { value: unknown }).value = el;
+    }
   }
 
   // ============================================================
@@ -450,6 +494,12 @@ export function createRenderer<HN, HE extends HN>(
 
     // Insert into container
     insert(el, container, anchor);
+
+    // Handle ref: store element reference on parent component instance
+    const refValue = vnode.ref;
+    if (refValue && parentComponent) {
+      setRef(el, refValue, parentComponent);
+    }
   }
 
   // ============================================================
@@ -975,6 +1025,17 @@ export function createRenderer<HN, HE extends HN>(
       }
     }
 
+    // Clean up string refs on unmount
+    if (vnode.ref && parentComponent) {
+      if (typeof vnode.ref === 'string') {
+        delete parentComponent.refs[vnode.ref];
+      } else if (typeof vnode.ref === 'function') {
+        vnode.ref(null);
+      } else if (vnode.ref !== null && typeof vnode.ref === 'object' && 'value' in vnode.ref) {
+        (vnode.ref as { value: unknown }).value = null;
+      }
+    }
+
     if (doRemove) {
       if (el) hostRemove(el);
     }
@@ -1228,6 +1289,37 @@ export function createRenderer<HN, HE extends HN>(
   // Suspense - mount / patch / unmount
   // ============================================================
 
+  /**
+   * Extract default and fallback branches from vnode children.
+   * Children can be:
+   * - VNode[] (default slot only, no fallback)
+   * - { default: VNode[], fallback?: VNode[] } (named slots)
+   */
+  function resolveSuspenseChildren(
+    children: VNode['children'],
+  ): { defaultBranch: VNode | null; fallbackBranch: VNode | null } {
+    if (isArray(children)) {
+      // VNode[]: treat as default slot, no fallback
+      return {
+        defaultBranch: children[0] ?? null,
+        fallbackBranch: null,
+      };
+    }
+
+    if (children && typeof children === 'object' && !isArray(children)) {
+      // Slot object: { default: VNode[], fallback?: VNode[] }
+      const slots = children as Record<string, VNode[]>;
+      const defaultSlot = slots.default;
+      const fallbackSlot = slots.fallback;
+      return {
+        defaultBranch: isArray(defaultSlot) ? (defaultSlot[0] ?? null) : null,
+        fallbackBranch: isArray(fallbackSlot) ? (fallbackSlot[0] ?? null) : null,
+      };
+    }
+
+    return { defaultBranch: null, fallbackBranch: null };
+  }
+
   function mountSuspense(
     vnode: VNode,
     container: HN,
@@ -1253,19 +1345,37 @@ export function createRenderer<HN, HE extends HN>(
 
     vnode.suspense = boundary;
 
-    // Mount the default content (children) as the active branch
-    const children = isArray(vnode.children) ? vnode.children : [];
-    const activeBranch = children[0] ?? null;
-    boundary.activeBranch = activeBranch;
+    // Resolve default and fallback branches from children
+    const { defaultBranch, fallbackBranch } = resolveSuspenseChildren(vnode.children);
 
-    if (activeBranch) {
-      patch(null, activeBranch, container, anchor, parentComponent, boundary, isSVG);
+    // Check if the default branch contains async components
+    const isAsync = defaultBranch?.isAsyncPlaceholder === true;
+
+    if (isAsync && fallbackBranch) {
+      // Async content: mount fallback as pendingBranch
+      boundary.isInFallback = true;
+      boundary.pendingBranch = defaultBranch;
+      boundary.activeBranch = null;
+
+      // Mount the fallback content
+      patch(null, fallbackBranch, container, anchor, parentComponent, boundary, isSVG);
+      vnode.el = fallbackBranch.el;
+    } else {
+      // Sync content: mount default as activeBranch
+      boundary.activeBranch = defaultBranch;
+
+      if (defaultBranch) {
+        patch(null, defaultBranch, container, anchor, parentComponent, boundary, isSVG);
+        vnode.el = defaultBranch.el;
+      }
     }
 
-    // Create placeholder comment node
-    const placeholder = createComment('');
-    setVNodeEl(vnode, placeholder);
-    insert(placeholder, container, anchor);
+    // Create placeholder comment node if no el was set
+    if (!vnode.el) {
+      const placeholder = createComment('');
+      setVNodeEl(vnode, placeholder);
+      insert(placeholder, container, anchor);
+    }
   }
 
   function patchSuspense(
@@ -1286,27 +1396,80 @@ export function createRenderer<HN, HE extends HN>(
 
     n2.el = n1.el;
 
-    // Patch the active branch
-    const oldActive = n1.children as VNode[] | null;
-    const newActive = n2.children as VNode[] | null;
+    // Resolve new children
+    const { defaultBranch: newDefault, fallbackBranch: newFallback } =
+      resolveSuspenseChildren(n2.children);
 
-    if (isArray(oldActive) && isArray(newActive)) {
-      const oldBranch = oldActive[0] ?? null;
-      const newBranch = newActive[0] ?? null;
+    // Check if we need to transition from pending to resolved
+    const wasInFallback = boundary?.isInFallback ?? false;
+    const isAsync = newDefault?.isAsyncPlaceholder === true;
 
-      if (oldBranch && newBranch && isSameVNodeType(oldBranch, newBranch)) {
-        patch(oldBranch, newBranch, container, anchor, parentComponent, parentSuspense, isSVG);
-      } else {
-        if (oldBranch) {
-          unmount(oldBranch, parentComponent, parentSuspense, true);
-        }
-        if (newBranch) {
-          patch(null, newBranch, container, anchor, parentComponent, parentSuspense, isSVG);
+    if (wasInFallback && !isAsync) {
+      // Transition: pending -> resolved
+      // Unmount the fallback (pendingBranch display) and mount the active content
+      if (boundary) {
+        boundary.isInFallback = false;
+        boundary.activeBranch = newDefault;
+        boundary.pendingBranch = null;
+      }
+
+      // Unmount old fallback content (was displayed as the pending branch)
+      if (!isArray(n1.children) && n1.children && typeof n1.children === 'object') {
+        const slots = n1.children as Record<string, VNode[]>;
+        const fallbackSlot = slots.fallback;
+        if (isArray(fallbackSlot) && fallbackSlot[0]) {
+          unmount(fallbackSlot[0], parentComponent, parentSuspense, true);
         }
       }
 
+      // Mount the new active content
+      if (newDefault) {
+        patch(null, newDefault, container, anchor, parentComponent, boundary ?? parentSuspense, isSVG);
+        n2.el = newDefault.el;
+      }
+    } else if (!wasInFallback && isAsync && newFallback) {
+      // Transition: resolved -> pending
+      // Unmount the active content and mount the fallback
       if (boundary) {
-        boundary.activeBranch = newBranch;
+        boundary.isInFallback = true;
+        boundary.pendingBranch = newDefault;
+      }
+
+      // Unmount old active content (save reference before clearing)
+      const oldActive = boundary?.activeBranch ?? null;
+      if (boundary) {
+        boundary.activeBranch = null;
+      }
+      if (oldActive) {
+        unmount(oldActive, parentComponent, parentSuspense, true);
+      }
+
+      // Mount the fallback
+      patch(null, newFallback, container, anchor, parentComponent, boundary ?? parentSuspense, isSVG);
+      n2.el = newFallback.el;
+    } else {
+      // No state transition: patch the active branch normally
+      const oldActive = n1.children as VNode[] | null;
+      const newActive = n2.children as VNode[] | null;
+
+      if (isArray(oldActive) && isArray(newActive)) {
+        const oldBranch = oldActive[0] ?? null;
+        const newBranch = newActive[0] ?? null;
+
+        if (oldBranch && newBranch && isSameVNodeType(oldBranch, newBranch)) {
+          patch(oldBranch, newBranch, container, anchor, parentComponent, parentSuspense, isSVG);
+        } else {
+          if (oldBranch) {
+            unmount(oldBranch, parentComponent, parentSuspense, true);
+          }
+          if (newBranch) {
+            patch(null, newBranch, container, anchor, parentComponent, parentSuspense, isSVG);
+          }
+        }
+
+        if (boundary) {
+          boundary.activeBranch = newBranch;
+        }
       }
     }
   }
@@ -1320,9 +1483,24 @@ export function createRenderer<HN, HE extends HN>(
     const boundary = vnode.suspense as SuspenseBoundary | undefined;
 
     // Unmount the active branch
-    const children = isArray(vnode.children) ? vnode.children : [];
-    for (let i = 0; i < children.length; i++) {
-      unmount(children[i]!, parentComponent, parentSuspense, doRemove);
+    if (boundary?.activeBranch) {
+      unmount(boundary.activeBranch, parentComponent, parentSuspense, doRemove);
+    }
+
+    // Unmount the pending branch (if still mounted)
+    if (boundary?.pendingBranch) {
+      unmount(boundary.pendingBranch, parentComponent, parentSuspense, doRemove);
+    }
+
+    // Also unmount any remaining children from vnode.children
+    // (fallback content that may have been mounted)
+    const { fallbackBranch: unmountFallback } = resolveSuspenseChildren(vnode.children);
+    if (boundary?.isInFallback && unmountFallback) {
+      // Fallback was mounted, unmount it
+      // (it may already be unmounted via activeBranch above if it was tracked)
+      if (unmountFallback.el) {
+        unmount(unmountFallback, parentComponent, parentSuspense, doRemove);
+      }
     }
 
     // Clean up boundary

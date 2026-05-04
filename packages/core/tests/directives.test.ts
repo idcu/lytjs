@@ -73,6 +73,86 @@ describe('withDirectives', () => {
     expect(stored.arg).toBe('focus');
     expect(stored.modifiers).toEqual({ lazy: true, once: true });
   });
+
+  describe('deep 选项', () => {
+    it('deep: true 时递归将指令应用到子 VNode', () => {
+      const childVNode = createMockVNode();
+      const grandChildVNode = createMockVNode();
+      const parentVNode = {
+        type: 'div',
+        props: null,
+        children: [childVNode],
+      } as unknown as VNode;
+
+      // 为子 VNode 添加孙节点
+      (childVNode as any).children = [grandChildVNode];
+
+      const dir = { mounted: vi.fn(), deep: true } as any;
+      const directives: DirectiveArguments = [[dir, 'value', 'arg']];
+
+      const result = withDirectives(parentVNode, directives);
+
+      // 父节点应有指令
+      expect((result as any)._directives).toHaveLength(1);
+
+      // 子节点应有指令
+      expect((childVNode as any)._directives).toHaveLength(1);
+      expect((childVNode as any)._directives[0][0]).toBe(dir);
+
+      // 孙节点也应有指令
+      expect((grandChildVNode as any)._directives).toHaveLength(1);
+      expect((grandChildVNode as any)._directives[0][0]).toBe(dir);
+    });
+
+    it('deep: false 或无 deep 时不递归', () => {
+      const childVNode = createMockVNode();
+      const parentVNode = {
+        type: 'div',
+        props: null,
+        children: [childVNode],
+      } as unknown as VNode;
+
+      const dir = { mounted: vi.fn() } as any;
+      const directives: DirectiveArguments = [[dir, 'value', 'arg']];
+
+      withDirectives(parentVNode, directives);
+
+      // 子节点不应有指令
+      expect((childVNode as any)._directives).toBeUndefined();
+    });
+
+    it('deep 选项处理多个子节点', () => {
+      const child1 = createMockVNode();
+      const child2 = createMockVNode();
+      const parentVNode = {
+        type: 'div',
+        props: null,
+        children: [child1, child2],
+      } as unknown as VNode;
+
+      const dir = { mounted: vi.fn(), deep: true } as any;
+      const directives: DirectiveArguments = [[dir, 'value']];
+
+      withDirectives(parentVNode, directives);
+
+      expect((child1 as any)._directives).toHaveLength(1);
+      expect((child2 as any)._directives).toHaveLength(1);
+    });
+
+    it('deep 选项跳过非对象子节点', () => {
+      const parentVNode = {
+        type: 'div',
+        props: null,
+        children: ['text', null, 42],
+      } as unknown as VNode;
+
+      const dir = { mounted: vi.fn(), deep: true } as any;
+      const directives: DirectiveArguments = [[dir, 'value']];
+
+      // 不应抛出错误
+      expect(() => withDirectives(parentVNode, directives)).not.toThrow();
+    });
+  });
 });
 
 describe('withMemo', () => {

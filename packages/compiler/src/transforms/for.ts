@@ -51,24 +51,44 @@ export function transformFor(node: RootNode | TemplateChildNode, context: Transf
   const expContent = getExpContent(forDir.exp);
   if (!expContent) return;
 
-  const inMatch = expContent.match(/^\s*(?:\(([^)]+)\)|(\S+))\s+(?:in|of)\s+(.+)$/);
+  // Supports:
+  // - item in list
+  // - (item, index) in list
+  // - { key, value } in entries
+  // - { key, value }, index in entries
+  // - [ a, b ] in array
+  // - [ a, b ], index in array
+  const inMatch = expContent.match(
+    /^\s*(?:\(([^)]+)\)|(\{[^}]+\}(?:\s*,\s*\w+)?)|(\[[^\]]+\](?:\s*,\s*\w+)?)|(\S+))\s+(?:in|of)\s+(.+)$/,
+  );
   if (!inMatch) return;
 
-  // inMatch[1]: 括号语法 (item, index) 中括号内的内容
-  // inMatch[2]: 非括号语法的单个变量名
-  // inMatch[3]: 右侧迭代表达式
-  const left = (inMatch[1] ?? inMatch[2])!.trim();
-  const right = inMatch[3]!.trim();
+  // inMatch[1]: parenthesized syntax (item, index)
+  // inMatch[2]: object destructuring { key, value } [, index]
+  // inMatch[3]: array destructuring [ a, b ] [, index]
+  // inMatch[4]: simple variable name
+  // inMatch[5]: right-hand side iteration expression
+  const left = (inMatch[1] ?? inMatch[2] ?? inMatch[3] ?? inMatch[4])!.trim();
+  const right = inMatch[5]!.trim();
+
+  // Check for destructuring patterns
+  const destructureResult = parseDestructure(left);
 
   let itemVar: string;
   let indexVar: string | undefined;
+  let destructureExpr: string | undefined;
 
-  // 括号语法已在正则中提取内部内容，直接按逗号分割
-  if (inMatch[1]) {
+  if (destructureResult) {
+    // Destructuring pattern: { key, value } or [ index, value ]
+    itemVar = destructureResult.tempVar;
+    indexVar = destructureResult.indexVar;
+    destructureExpr = destructureResult.pattern;
+  } else if (inMatch[1]) {
+    // Parenthesized syntax: (item, index) or (item)
     const parts = left.split(',').map((p) => p.trim());
     if (parts.length > 2) {
       if (__DEV__) {
-        warn(`v-for does not support destructuring syntax. Use (item, index) in list instead.`);
+        warn(`v-for does not support more than 2 variables in (item, index) syntax.`);
       }
     }
     itemVar = parts[0] ?? 'item';
@@ -78,7 +98,7 @@ export function transformFor(node: RootNode | TemplateChildNode, context: Transf
     const parts = inner.split(',').map((p) => p.trim());
     if (parts.length > 2) {
       if (__DEV__) {
-        warn(`v-for does not support destructuring syntax. Use (item, index) in list instead.`);
+        warn(`v-for does not support more than 2 variables in [item, index] syntax.`);
       }
     }
     itemVar = parts[0] ?? 'item';
@@ -102,16 +122,66 @@ export function transformFor(node: RootNode | TemplateChildNode, context: Transf
 
   context.helper('RENDER_LIST');
 
+  // Build the arrow function body
+  let arrowBody: TemplateChildNode[];
+  if (destructureExpr) {
+    // For destructuring, add a destructuring statement before the render item
+    arrowBody = [
+      createSimpleExpression(`const ${destructureExpr} = ${itemVar}`, false, forDir.exp.loc, false),
+      renderItem as unknown as TemplateChildNode,
+    ];
+  } else {
+    arrowBody = [renderItem as unknown as TemplateChildNode];
+  }
+
   const renderListCall = createCallExpression('RENDER_LIST', [
     createSimpleExpression(right, false, forDir.exp.loc, false),
     createCompoundExpression(
       [
-        `(${itemVar}${indexVar ? `, ${indexVar}` : ''}) => `,
-        renderItem as unknown as TemplateChildNode,
+        `(${itemVar}${indexVar ? `, ${indexVar}` : ''}) => { `,
+        ...arrowBody,
+        ` }`,
       ],
       forDir.exp.loc,
     ),
   ]);
 
   context.replaceNode(renderListCall as unknown as TemplateChildNode);
+}
+
+/**
+ * Parse a destructuring pattern from the left-hand side of v-for.
+ *
+ * Supports:
+ * - `{ key, value }` -> object destructuring
+ * - `{ key, value }, index` -> object destructuring with index
+ * - `[ index, value ]` -> array destructuring
+ * - `[ index, value ], index` -> array destructuring with outer index
+ *
+ * Returns null if the pattern is not a destructuring expression.
+ */
+function parseDestructure(
+  left: string,
+): { pattern: string; tempVar: string; indexVar?: string } | null {
+  // Match: { ... } [, index]
+  const objMatch = left.match(/^(\{[^}]+\})(?:\s*,\s*(\w+))?$/);
+  if (objMatch) {
+    return {
+      pattern: objMatch[1]!.trim(),
+      tempVar: '__destructureItem',
+      indexVar: objMatch[2]?.trim(),
+    };
+  }
+
+  // Match: [ ... ] [, index]
+  const arrMatch = left.match(/^(\[[^\]]+\])(?:\s*,\s*(\w+))?$/);
+  if (arrMatch) {
+    return {
+      pattern: arrMatch[1]!.trim(),
+      tempVar: '__destructureItem',
+      indexVar: arrMatch[2]?.trim(),
+    };
+  }
+
+  return null;
 }

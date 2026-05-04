@@ -21,8 +21,9 @@ export {
   triggerRef,
   isRef,
   unref,
-  toRefs,
   toRef,
+  toRefs,
+  toValue,
   customRef,
 } from './ref';
 
@@ -67,6 +68,7 @@ export {
   signal,
   computed as signalComputed,
   computedSignal,
+  writableComputedSignal,
   readonlySignal,
   set,
   update,
@@ -86,6 +88,8 @@ export type {
   Signal,
   /** 计算信号类型，表示一个只读的计算响应式值 */
   ComputedSignal,
+  /** 可写计算信号类型，表示一个可读写的计算响应式值 */
+  WritableComputedSignal,
   /** 可写信号类型，表示一个可读写的响应式值 */
   WritableSignal,
   /** 只读信号类型 */

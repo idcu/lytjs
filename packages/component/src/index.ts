@@ -13,7 +13,9 @@ export {
   provide,
   inject,
   createComponentPublicInstance,
+  PUBLIC_PROPERTIES_MAP,
 } from './component';
+export type { InjectOptions } from './component';
 
 // Props
 /** Props 规范化与校验 */
@@ -57,6 +59,7 @@ export {
   KeepAlive,
   createKeepAliveInstance,
   matchesPattern,
+  getCacheKey,
   cacheInstance,
   getCachedInstance,
   removeCachedInstance,

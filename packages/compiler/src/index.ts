@@ -12,7 +12,66 @@ import type { CompilerOptions, CodegenResult, DirectiveTransform } from './types
 
 export { parse, transform, optimize, generate };
 
+// ============================================================
+// LRU 编译缓存
+// ============================================================
+
+/** LRU 缓存条目 */
+interface CompileCacheEntry {
+  code: string;
+  preamble: string;
+  ast: any;
+}
+
+/** 最大缓存条目数 */
+const MAX_CACHE_SIZE = 100;
+
+/** 编译缓存（Map 天然保持插入顺序，用于 LRU 淘汰） */
+const compileCache = new Map<string, CompileCacheEntry>();
+
+/**
+ * 简单的字符串哈希函数（djb2），用于生成缓存键。
+ * 不需要加密安全性，仅需良好的分布性。
+ */
+function hashString(str: string): string {
+  let hash = 5381;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) + hash + str.charCodeAt(i)) & 0xffffffff;
+  }
+  return String(hash >>> 0);
+}
+
+/**
+ * 清除编译缓存。用于测试或需要释放内存时。
+ */
+export function clearCompileCache(): void {
+  compileCache.clear();
+}
+
+/**
+ * 获取当前编译缓存大小。用于调试和测试。
+ */
+export function getCompileCacheSize(): number {
+  return compileCache.size;
+}
+
 export function compile(source: string, options: CompilerOptions = {}): CodegenResult {
+  // 0. 检查编译缓存（仅在无自定义 nodeTransforms/directiveTransforms 时使用缓存）
+  const hasCustomTransforms =
+    (options.nodeTransforms && options.nodeTransforms.length > 0) ||
+    (options.directiveTransforms && Object.keys(options.directiveTransforms).length > 0);
+
+  if (!hasCustomTransforms) {
+    const cacheKey = hashString(source + '|' + String(options.ssrMode ?? false) + '|' + String(options.rendererMode ?? ''));
+    const cached = compileCache.get(cacheKey);
+    if (cached) {
+      // LRU: 将命中条目移到末尾（最近使用）
+      compileCache.delete(cacheKey);
+      compileCache.set(cacheKey, cached);
+      return { code: cached.code, preamble: cached.preamble, ast: cached.ast };
+    }
+  }
+
   // 1. Parse template to AST
   const ast = parse(source, options);
 
@@ -53,16 +112,28 @@ export function compile(source: string, options: CompilerOptions = {}): CodegenR
   transform(ast, transformOptions);
 
   // 3. Generate code
+  let codegenResult: CodegenResult;
   if (ssrMode) {
-    return generateSSR(ast, options);
+    codegenResult = generateSSR(ast, options);
+  } else if (options.rendererMode === 'signal' || options.rendererMode === 'vapor') {
+    codegenResult = generateSignal(ast, options);
+  } else {
+    // 默认 VNode 模式
+    codegenResult = generate(ast, options);
   }
 
-  if (options.rendererMode === 'signal' || options.rendererMode === 'vapor') {
-    return generateSignal(ast, options);
+  // 4. 存入缓存
+  if (!hasCustomTransforms) {
+    const cacheKey = hashString(source);
+    // LRU 淘汰：超出最大缓存大小时删除最旧条目
+    if (compileCache.size >= MAX_CACHE_SIZE) {
+      const oldestKey = compileCache.keys().next().value;
+      if (oldestKey !== undefined) {
+        compileCache.delete(oldestKey);
+      }
+    }
+    compileCache.set(cacheKey, { code: codegenResult.code, preamble: codegenResult.preamble ?? '', ast });
   }
-
-  // 默认 VNode 模式
-  const codegenResult = generate(ast, options);
 
   return codegenResult;
 }

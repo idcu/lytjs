@@ -3,7 +3,7 @@
 
 import type { ReactiveEffect } from './effect';
 import type { Ref, ShallowRef, ComputedRef } from './ref';
-import type { Signal, ComputedSignal, WritableSignal, ReadonlySignal, Subscriber } from './signal';
+import type { Signal, ComputedSignal, WritableSignal, WritableComputedSignal, ReadonlySignal, Subscriber } from './signal';
 
 // ==================== ReactiveEffect 类型 ====================
 
@@ -118,6 +118,7 @@ export type {
   ComputedRef,
   Signal,
   ComputedSignal,
+  WritableComputedSignal,
   WritableSignal,
   ReadonlySignal,
   Subscriber,

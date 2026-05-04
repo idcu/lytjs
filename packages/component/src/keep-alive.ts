@@ -1,7 +1,7 @@
 // src/keep-alive.ts
 // KeepAlive component (simplified)
 
-import { isString, isArray } from '@lytjs/common-is';
+import { isString, isArray, isFunction } from '@lytjs/common-is';
 import type { ComponentInternalInstance, ComponentOptions, SetupContext } from './types';
 import { createComponentInstance, setupComponent } from './component';
 import { handleError } from './lifecycle';
@@ -24,6 +24,8 @@ export interface KeepAliveProps {
   include?: string | RegExp | (string | RegExp)[];
   exclude?: string | RegExp | (string | RegExp)[];
   max?: number;
+  /** Custom cache key function: receives a vnode and returns a string or number to use as the cache key */
+  onCacheKey?: (vnode: VNode) => string | number;
 }
 
 export const KeepAlive: ComponentOptions = {
@@ -33,6 +35,7 @@ export const KeepAlive: ComponentOptions = {
     include: {},
     exclude: {},
     max: { type: Number },
+    onCacheKey: { type: Function },
   },
 
   setup(_props: Record<string, unknown>, _ctx: SetupContext) {
@@ -66,6 +69,7 @@ export function createKeepAliveInstance(
       include: props.include,
       exclude: props.exclude,
       max: props.max,
+      onCacheKey: props.onCacheKey,
     },
     shapeFlag: ShapeFlags.STATEFUL_COMPONENT,
   });
@@ -97,6 +101,48 @@ export function matchesPattern(
   }
 
   return true;
+}
+
+/**
+ * Get the cache key for a vnode within a KeepAlive context.
+ *
+ * If the KeepAlive instance has an `onCacheKey` prop (a custom function),
+ * it is called with the vnode to produce the cache key.
+ * Otherwise, the default key is derived from `vnode.type` (the component
+ * constructor or tag name).
+ *
+ * @param keepAlive - The KeepAlive component instance
+ * @param vnode - The vnode to compute a cache key for
+ * @returns A string cache key
+ */
+export function getCacheKey(
+  keepAlive: ComponentInternalInstance,
+  vnode: VNode,
+): string {
+  const onCacheKey = keepAlive.props.onCacheKey as
+    | ((vnode: VNode) => string | number)
+    | undefined;
+
+  if (isFunction(onCacheKey)) {
+    try {
+      return String(onCacheKey(vnode));
+    } catch (e) {
+      handleError(e as Error, keepAlive, 'onCacheKey');
+    }
+  }
+
+  // Default: use vnode.type (component constructor or tag string)
+  const type = vnode.type;
+  if (typeof type === 'string') {
+    return type;
+  }
+  if (type && typeof type === 'object' && 'name' in type) {
+    return String((type as { name?: string }).name) || String(type);
+  }
+  if (typeof type === 'function' && 'name' in type) {
+    return (type as { name?: string }).name || String(type);
+  }
+  return String(type);
 }
 
 /**
