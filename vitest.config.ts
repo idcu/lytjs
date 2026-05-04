@@ -20,7 +20,7 @@ export default defineConfig({
       '@lytjs/common-env': resolve(commonRoot, 'env/dist/index.mjs'),
       '@lytjs/shared-types': resolve('/workspace/lytjs/packages/shared-types/src'),
       '@lytjs/vdom': resolve('/workspace/lytjs/packages/vdom/dist/index.mjs'),
-      '@lytjs/vdom/transition': resolve('/workspace/lytjs/packages/vdom/dist/transition-entry.mjs'),
+      '@lytjs/vdom/transition': resolve('/workspace/lytjs/packages/vdom/dist/transition.mjs'),
       '@lytjs/core': resolve('/workspace/lytjs/packages/core/dist/index.mjs'),
       '@lytjs/reactivity': resolve('/workspace/lytjs/packages/reactivity/dist/index.mjs'),
       '@lytjs/reactivity/scope': resolve('/workspace/lytjs/packages/reactivity/dist/scope.mjs'),
