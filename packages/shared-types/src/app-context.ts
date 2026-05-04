@@ -20,5 +20,5 @@ export interface BaseAppContext {
   mixins?: unknown[];
   components?: Record<string, unknown>;
   directives?: Record<string, unknown>;
-  provides?: Map<unknown, unknown>;
+  provides?: Record<string | symbol, unknown>;
 }

@@ -89,7 +89,7 @@ export interface AppContext extends BaseAppContext {
   components: Record<string, ComponentOptions>;
   directives: Record<string, unknown>;
   mixins: ComponentOptions[];
-  provides: Map<string | symbol, unknown>;
+  provides: Record<string | symbol, unknown>;
 }
 
 // ==================== ComponentInternalInstance 子接口 ====================
@@ -140,7 +140,7 @@ export interface ComponentContextState {
   propsOptions: Record<string, PropOptions>;
   emitsOptions: Record<string, unknown> | null;
   emit: (event: string, ...args: unknown[]) => void;
-  provides: Map<string | symbol, unknown>;
+  provides: Record<string | symbol, unknown>;
   exposed?: Record<string, unknown> | null;
   attrs: Record<string, unknown>;
 }

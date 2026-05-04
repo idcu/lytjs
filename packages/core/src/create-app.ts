@@ -171,7 +171,7 @@ export function createApp(
       context.mixins.length = 0;
       context.components = {};
       context.directives = {};
-      context.provides.clear();
+      context.provides = {};
 
       // 清理 globalProperties
       context.config.globalProperties = {};
@@ -187,12 +187,12 @@ export function createApp(
             'Register provides before calling app.mount().',
         );
       }
-      context.provides.set(key, value);
+      context.provides[key as string] = value;
       return app;
     },
 
     inject<T = unknown>(key: string | symbol): T | undefined {
-      return context.provides.get(key) as T | undefined;
+      return context.provides[key as string] as T | undefined;
     },
 
     component(name, component) {
@@ -228,15 +228,18 @@ export function createApp(
     // Copy app-level provides into the root instance
     if (context.provides) {
       const rootProvides = instance.provides;
-      for (const [key, value] of context.provides) {
-        if (!rootProvides.has(key)) {
-          rootProvides.set(key, value);
+      for (const key in context.provides) {
+        if (!(key in rootProvides)) {
+          rootProvides[key] = context.provides[key];
         }
       }
     }
 
     // Set up the component (runs setup, init props/slots, data, lifecycle)
     setupComponent(instance);
+
+    // Store component instance on vnode so patch can access it
+    rootVNode.component = instance;
 
     // Save root instance reference for unmount lifecycle hooks
     context._instance = instance;
