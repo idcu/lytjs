@@ -11,6 +11,7 @@ export default defineConfig({
       '@lytjs/common-error': resolve(commonRoot, 'error/dist/index.mjs'),
       '@lytjs/common-vnode': resolve(commonRoot, 'vnode/dist/index.mjs'),
       '@lytjs/common-string': resolve(commonRoot, 'string/dist/index.mjs'),
+      '@lytjs/common-security': resolve(commonRoot, 'security/dist/index.mjs'),
       '@lytjs/common-events': resolve(commonRoot, 'events/dist/index.mjs'),
       '@lytjs/common-object': resolve(commonRoot, 'object/dist/index.mjs'),
       '@lytjs/common-algorithm': resolve(commonRoot, 'algorithm/dist/index.mjs'),

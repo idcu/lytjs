@@ -25,6 +25,7 @@
       "@lytjs/common-env": ["./packages/env/src"],
       "@lytjs/common-is": ["./packages/is/src"],
       "@lytjs/common-string": ["./packages/string/src"],
+      "@lytjs/common-security": ["./packages/security/src"],
       "@lytjs/common-path": ["./packages/path/src"],
       "@lytjs/common-events": ["./packages/events/src"],
       "@lytjs/common-cache": ["./packages/cache/src"],
