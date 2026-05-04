@@ -150,7 +150,7 @@ export function defineCustomElement(
     connectedCallback(): void {
       // 设置内部上下文
       _currentShadowRoot = useShadowDOM ? (this._root as ShadowRoot) : null;
-      _currentHost = self;
+      _currentHost = this;
 
       try {
         // 从 attributes 收集 props

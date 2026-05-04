@@ -241,7 +241,7 @@ export function finishComponentSetup(instance: ComponentInternalInstance): void 
   if (type.methods) {
     for (const key in type.methods) {
       if (hasOwn(type.methods, key)) {
-        const method = type.methods[key];
+        const method = type.methods[key]!;
         if (__DEV__ && typeof method !== 'function') {
           warn(`Method "${key}" has type "${typeof method}" in component ${(type as Record<string, unknown>).name || '(anonymous)'}. Expected a function.`);
           continue;

@@ -11,6 +11,11 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs",
       "require": "./dist/index.cjs"
+    },
+    "./transition": {
+      "types": "./dist/transition-entry.d.ts",
+      "import": "./dist/transition-entry.mjs",
+      "require": "./dist/transition-entry.cjs"
     }
   },
   "files": [

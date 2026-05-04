@@ -32,7 +32,7 @@ export type {
 } from './types';
 
 // TransitionProps 从 @lytjs/vdom re-export，避免重复定义
-export type { TransitionProps } from '@lytjs/vdom';
+export type { TransitionProps } from '@lytjs/vdom/transition';
 
 // ============================================================
 // 类导出

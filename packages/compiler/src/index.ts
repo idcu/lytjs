@@ -10,7 +10,7 @@ import { generateSignal } from './codegen-signal';
 import { generateSSR } from './codegen-ssr';
 import type { CompilerOptions, CodegenResult, DirectiveTransform } from './types';
 
-export { parse, transform, optimize, generate, generateSignal, generateSSR };
+export { parse, transform, optimize, generate };
 
 export function compile(source: string, options: CompilerOptions = {}): CodegenResult {
   // 1. Parse template to AST
@@ -149,49 +149,9 @@ export { transformVMemo } from './transform';
 export { SourceMapGenerator, createSourceMapGenerator } from './source-map';
 export type { SourceMapping } from './source-map';
 
-// SFC (Single File Component)
-export {
-  parseSFC,
-  compileSFC,
-  generateComponentTypes,
-  KNOWN_CUSTOM_BLOCKS,
-  registerCustomBlockProcessor,
-  getCustomBlockProcessor,
-  unregisterCustomBlockProcessor,
-  getRegisteredCustomBlockProcessors,
-} from './sfc';
-
-// ============================================================
-// WASM Compiler API
-// ============================================================
-
-// WASM 编译函数
-export { wasmCompile, serializeAST } from './wasm';
-export { tokenize, buildAST, parseInterpolation } from './wasm';
-export { generateRenderCode, generateHoistedCode, generatePatchFlags } from './wasm';
-
-// WASM 类型
-export type {
-  WASMCompileOptions,
-  WASMCompileResult,
-  WASMCompileError,
-  WASMCompileWarning,
-  WASMTransformOptions,
-  WASMGenerateOptions,
-  ASTNode,
-  Token,
-} from './wasm';
-export type {
-  SFCDescriptor,
-  SFCTemplateBlock,
-  SFCScriptBlock,
-  SFCStyleBlock,
-  SFCCustomBlock,
-  SFCParseOptions,
-  SFCCompileOptions,
-  SFCCompileResult,
-  CustomBlockProcessor,
-  ComponentTypeInfo,
-  PropDeclaration,
-  EmitDeclaration,
-} from './sfc';
+// Note: generateSignal, generateSSR, SFC, and WASM exports are now available
+// via sub-path entries:
+//   import { generateSignal } from '@lytjs/compiler/signal'
+//   import { generateSSR } from '@lytjs/compiler/ssr'
+//   import { parseSFC, compileSFC } from '@lytjs/compiler/sfc'
+//   import { wasmCompile } from '@lytjs/compiler/wasm'

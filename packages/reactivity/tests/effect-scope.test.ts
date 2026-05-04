@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { ref, computed, watch, effect, effectScope, onScopeDispose } from '../src/index';
+import { ref, computed, watch, effect } from '../src/index';
+import { effectScope, onScopeDispose } from '../src/effect-scope';
 
 describe('effectScope', () => {
   it('should collect effects', () => {

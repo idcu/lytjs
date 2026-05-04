@@ -32,13 +32,9 @@ export {
   setSSRMode,
 } from './computed';
 
-export {
-  // async computed
-  asyncComputed,
-  useAsyncState,
-} from './async-computed';
-
-export type { AsyncComputedRef } from './async-computed';
+// scope and async sub-path entries are available at:
+//   @lytjs/reactivity/scope   - effectScope, getCurrentScope, onScopeDispose
+//   @lytjs/reactivity/async   - asyncComputed, useAsyncState
 
 export {
   // watch
@@ -79,15 +75,6 @@ export {
   signalBatch,
   signalUntrack,
 } from './signal';
-
-export {
-  // effectScope
-  effectScope,
-  getCurrentScope,
-  onScopeDispose,
-} from './effect-scope';
-
-export type { EffectScope, EffectScopeOptions } from './effect-scope';
 
 export type {
   Ref,

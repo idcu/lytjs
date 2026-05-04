@@ -201,7 +201,7 @@ export interface AsyncSchedulerOptions {
  * 从 @lytjs/vdom 的 TransitionProps re-export，保持与 vdom 同步。
  * 如需修改，请同步修改 @lytjs/vdom/src/transition.ts 中的定义。
  */
-export type { TransitionProps } from '@lytjs/vdom';
+export type { TransitionProps } from '@lytjs/vdom/transition';
 
 /**
  * 过渡状态。
