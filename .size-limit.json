@@ -118,5 +118,17 @@
     "path": "packages/common/packages/env/dist/index.mjs",
     "limit": "1 KB",
     "import": "{}"
+  },
+  {
+    "name": "@lytjs/core-vnode",
+    "path": "packages/core-vnode/dist/index.mjs",
+    "limit": "20 KB",
+    "import": "{ createApp, h, nextTick }"
+  },
+  {
+    "name": "@lytjs/core-signal",
+    "path": "packages/core-signal/dist/index.mjs",
+    "limit": "18 KB",
+    "import": "{ createApp, signal, compile }"
   }
 ]

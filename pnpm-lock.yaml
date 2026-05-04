@@ -421,6 +421,22 @@ importers:
         specifier: ^3.0.0
         version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@29.1.1)(tsx@4.21.0)(yaml@2.8.3)
 
+  packages/common/packages/security:
+    dependencies:
+      '@lytjs/common-is':
+        specifier: workspace:*
+        version: link:../is
+    devDependencies:
+      tsup:
+        specifier: ^8.4.0
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.12)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.3)
+      typescript:
+        specifier: ^5.8.2
+        version: 5.9.3
+      vitest:
+        specifier: ^3.0.0
+        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@29.1.1)(tsx@4.21.0)(yaml@2.8.3)
+
   packages/common/packages/storage:
     devDependencies:
       jsdom:
@@ -582,6 +598,92 @@ importers:
       vitest:
         specifier: ^3.0.0
         version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@24.1.3)(tsx@4.21.0)(yaml@2.8.3)
+
+  packages/core-signal:
+    dependencies:
+      '@lytjs/adapter-web':
+        specifier: workspace:*
+        version: link:../adapter-web
+      '@lytjs/common-error':
+        specifier: workspace:*
+        version: link:../common/packages/error
+      '@lytjs/common-is':
+        specifier: workspace:*
+        version: link:../common/packages/is
+      '@lytjs/common-scheduler':
+        specifier: workspace:*
+        version: link:../common/packages/scheduler
+      '@lytjs/common-string':
+        specifier: workspace:*
+        version: link:../common/packages/string
+      '@lytjs/compiler':
+        specifier: workspace:*
+        version: link:../compiler
+      '@lytjs/component':
+        specifier: workspace:*
+        version: link:../component
+      '@lytjs/dom-runtime':
+        specifier: workspace:*
+        version: link:../dom-runtime
+      '@lytjs/reactivity':
+        specifier: workspace:*
+        version: link:../reactivity
+      '@lytjs/renderer':
+        specifier: workspace:*
+        version: link:../renderer
+      '@lytjs/shared-types':
+        specifier: workspace:*
+        version: link:../shared-types
+    devDependencies:
+      tsup:
+        specifier: ^8.0.0
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.12)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.3)
+      typescript:
+        specifier: ^5.8.2
+        version: 5.9.3
+
+  packages/core-vnode:
+    dependencies:
+      '@lytjs/adapter-web':
+        specifier: workspace:*
+        version: link:../adapter-web
+      '@lytjs/common-error':
+        specifier: workspace:*
+        version: link:../common/packages/error
+      '@lytjs/common-is':
+        specifier: workspace:*
+        version: link:../common/packages/is
+      '@lytjs/common-scheduler':
+        specifier: workspace:*
+        version: link:../common/packages/scheduler
+      '@lytjs/common-string':
+        specifier: workspace:*
+        version: link:../common/packages/string
+      '@lytjs/compiler':
+        specifier: workspace:*
+        version: link:../compiler
+      '@lytjs/component':
+        specifier: workspace:*
+        version: link:../component
+      '@lytjs/reactivity':
+        specifier: workspace:*
+        version: link:../reactivity
+      '@lytjs/renderer':
+        specifier: workspace:*
+        version: link:../renderer
+      '@lytjs/shared-types':
+        specifier: workspace:*
+        version: link:../shared-types
+      '@lytjs/vdom':
+        specifier: workspace:*
+        version: link:../vdom
+    devDependencies:
+      tsup:
+        specifier: ^8.0.0
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.12)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.3)
+      typescript:
+        specifier: ^5.8.2
+        version: 5.9.3
 
   packages/dom-runtime:
     dependencies:

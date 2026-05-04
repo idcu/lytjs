@@ -48,6 +48,19 @@ export default defineConfig({
     ],
 
     sidebar: {
+      '/lytjs/api/': [
+        {
+          text: 'API 参考',
+          items: [
+            { text: '@lytjs/core', link: '/lytjs/api/core' },
+            { text: '@lytjs/reactivity', link: '/lytjs/api/reactivity' },
+            { text: '@lytjs/compiler', link: '/lytjs/api/compiler' },
+            { text: '@lytjs/renderer', link: '/lytjs/api/renderer' },
+            { text: '@lytjs/component', link: '/lytjs/api/component' },
+            { text: '独立构建变体', link: '/lytjs/api/core-variants' },
+          ],
+        },
+      ],
       '/lytjs/guide/': [
         {
           text: '开始',
@@ -57,37 +70,41 @@ export default defineConfig({
             { text: '安装', link: '/lytjs/guide/installation' },
           ],
         },
-        // TODO: 核心概念 - 待补充以下文档
-        // {
-        //   text: "核心概念",
-        //   items: [
-        //     { text: "响应式系统", link: "/lytjs/guide/reactivity" },
-        //     { text: "组件", link: "/lytjs/guide/components" },
-        //     { text: "模板语法", link: "/lytjs/guide/template-syntax" },
-        //     { text: "生命周期", link: "/lytjs/guide/lifecycle" },
-        //     { text: "事件处理", link: "/lytjs/guide/events" },
-        //   ],
-        // },
-        // TODO: 进阶 - 待补充以下文档
-        // {
-        //   text: "进阶",
-        //   items: [
-        //     { text: "组合式 API", link: "/lytjs/guide/composition-api" },
-        //     { text: "自定义指令", link: "/lytjs/guide/custom-directives" },
-        //     { text: "插件", link: "/lytjs/guide/plugins" },
-        //     { text: "渲染函数", link: "/lytjs/guide/render-function" },
-        //   ],
-        // },
-        // TODO: 工程化 - 待补充以下文档
-        // {
-        //   text: "工程化",
-        //   items: [
-        //     { text: "项目配置", link: "/lytjs/guide/project-config" },
-        //     { text: "构建优化", link: "/lytjs/guide/build-optimization" },
-        //     { text: "SSR", link: "/lytjs/guide/ssr" },
-        //     { text: "TypeScript", link: "/lytjs/guide/typescript" },
-        //   ],
-        // },
+        {
+          text: '核心概念',
+          items: [
+            { text: '响应式系统', link: '/lytjs/guide/reactivity' },
+            { text: '组件', link: '/lytjs/guide/components' },
+            { text: '模板语法', link: '/lytjs/guide/template-syntax' },
+            { text: '生命周期', link: '/lytjs/guide/lifecycle' },
+            { text: '事件处理', link: '/lytjs/guide/events' },
+          ],
+        },
+        {
+          text: '进阶',
+          items: [
+            { text: '组合式 API', link: '/lytjs/guide/composition-api' },
+            { text: '自定义指令', link: '/lytjs/guide/custom-directives' },
+            { text: '插件', link: '/lytjs/guide/plugins' },
+            { text: '渲染函数', link: '/lytjs/guide/render-function' },
+          ],
+        },
+        {
+          text: '工程化',
+          items: [
+            { text: '项目配置', link: '/lytjs/guide/project-config' },
+            { text: '构建优化', link: '/lytjs/guide/build-optimization' },
+            { text: 'SSR', link: '/lytjs/guide/ssr' },
+            { text: 'TypeScript', link: '/lytjs/guide/typescript' },
+          ],
+        },
+        {
+          text: '内置与渲染',
+          items: [
+            { text: '内置组件', link: '/lytjs/guide/built-in-components' },
+            { text: '渲染模式', link: '/lytjs/guide/rendering-modes' },
+          ],
+        },
         {
           text: '贡献',
           items: [

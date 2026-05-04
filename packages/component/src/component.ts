@@ -1,7 +1,7 @@
 // src/component.ts
 // Core component instance management
 
-import { reactive } from '@lytjs/reactivity';
+import { reactive, computed, watch } from '@lytjs/reactivity';
 import { nextTick } from '@lytjs/common-scheduler';
 import { isFunction, isObject, hasOwn, NOOP, EMPTY_OBJ, isPromise } from '@lytjs/common-is';
 import { warn } from '@lytjs/common-error';
@@ -189,6 +189,67 @@ export function finishComponentSetup(instance: ComponentInternalInstance): void 
   if (type.data) {
     const data = type.data.call(instance.ctx) ?? {};
     instance.data = reactive(data);
+  }
+
+  const proxy = instance.ctx;
+
+  // Init methods: bind each method to the public instance proxy
+  if (type.methods) {
+    for (const key in type.methods) {
+      if (hasOwn(type.methods, key)) {
+        const method = type.methods[key];
+        if (__DEV__ && typeof method !== 'function') {
+          warn(`Method "${key}" has type "${typeof method}" in component ${(type as Record<string, unknown>).name || '(anonymous)'}. Expected a function.`);
+          continue;
+        }
+        instance.ctx[key as keyof ComponentPublicInstance] = method.bind(proxy) as any;
+      }
+    }
+  }
+
+  // Init computed: create computed refs and mount on ctx
+  if (type.computed) {
+    for (const key in type.computed) {
+      if (hasOwn(type.computed, key)) {
+        const getter = type.computed[key];
+        if (__DEV__) {
+          if (typeof getter !== 'function') {
+            warn(`Computed property "${key}" is not a function in component ${(type as Record<string, unknown>).name || '(anonymous)'}.`);
+            continue;
+          }
+          // Warn if computed key conflicts with a methods key
+          if (type.methods && hasOwn(type.methods, key)) {
+            warn(`Computed property "${key}" conflicts with a method of the same name in component ${(type as Record<string, unknown>).name || '(anonymous)'}. The method will be overwritten.`);
+          }
+        }
+        const c = computed(() => getter.call(proxy));
+        instance.ctx[key as keyof ComponentPublicInstance] = c as any;
+      }
+    }
+  }
+
+  // Init watch: set up watchers for each declared watch key
+  if (type.watch) {
+    for (const key in type.watch) {
+      if (hasOwn(type.watch, key)) {
+        let handler = type.watch[key];
+        if (__DEV__ && typeof handler === 'string') {
+          // String handler refers to a method name
+          if (type.methods && hasOwn(type.methods, handler)) {
+            handler = type.methods[handler].bind(proxy);
+          } else {
+            warn(`Invalid watch handler "${handler}" in component ${(type as Record<string, unknown>).name || '(anonymous)'}. No matching method found.`);
+            continue;
+          }
+        } else if (typeof handler === 'function') {
+          handler = handler.bind(proxy);
+        } else if (__DEV__) {
+          warn(`Invalid watch handler for "${key}" in component ${(type as Record<string, unknown>).name || '(anonymous)'}. Expected a function or a method name string.`);
+          continue;
+        }
+        watch(() => proxy[key as keyof ComponentPublicInstance], handler as (...args: unknown[]) => void, { immediate: false });
+      }
+    }
   }
 
   // Call beforeCreate and created hooks

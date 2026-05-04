@@ -24,6 +24,7 @@
       "@lytjs/common-is": ["packages/common/packages/is/src"],
       "@lytjs/common-object": ["packages/common/packages/object/src"],
       "@lytjs/common-string": ["packages/common/packages/string/src"],
+      "@lytjs/common-security": ["packages/common/packages/security/src"],
       "@lytjs/common-path": ["packages/common/packages/path/src"],
       "@lytjs/common-events": ["packages/common/packages/events/src"],
       "@lytjs/common-cache": ["packages/common/packages/cache/src"],
@@ -40,7 +41,11 @@
       "@lytjs/compiler": ["packages/compiler/src"],
       "@lytjs/renderer": ["packages/renderer/src"],
       "@lytjs/component": ["packages/component/src"],
-      "@lytjs/core": ["packages/core/src"]
+      "@lytjs/core": ["packages/core/src"],
+      "@lytjs/core-vnode": ["packages/core-vnode/src"],
+      "@lytjs/core-vnode/*": ["packages/core-vnode/src/*"],
+      "@lytjs/core-signal": ["packages/core-signal/src"],
+      "@lytjs/core-signal/*": ["packages/core-signal/src/*"]
     },
     "types": ["node"]
   },

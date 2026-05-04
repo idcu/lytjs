@@ -9,6 +9,7 @@
       "@lytjs/common-env": ["../../packages/env/dist"],
       "@lytjs/common-is": ["../../packages/is/dist"],
       "@lytjs/common-string": ["../../packages/string/dist"],
+      "@lytjs/common-security": ["../../packages/security/dist"],
       "@lytjs/common-path": ["../../packages/path/dist"],
       "@lytjs/common-events": ["../../packages/events/dist"],
       "@lytjs/common-cache": ["../../packages/cache/dist"],

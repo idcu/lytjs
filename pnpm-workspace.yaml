@@ -19,6 +19,8 @@ packages:
   - 'packages/adapter-web'
   - 'packages/component'
   - 'packages/core'
+  - 'packages/core-vnode'
+  - 'packages/core-signal'
 
   # 根仓库应用
   - 'docs'
