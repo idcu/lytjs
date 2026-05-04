@@ -154,6 +154,17 @@ export function customRef<T>(factory: CustomRefFactory<T>): Ref<T> {
   return new CustomRefImpl(factory) as unknown as Ref<T>;
 }
 
+/**
+ * 将值规范化为非 ref 值。
+ * 如果是 Ref 则返回 .value，如果是函数则调用并返回结果，否则直接返回。
+ * Vue 3.3+ 新增工具函数。
+ */
+export function toValue<T>(source: T | Ref<T> | (() => T)): T {
+  if (isRef(source)) return (source as Ref<T>).value;
+  if (typeof source === 'function') return (source as () => T)();
+  return source as T;
+}
+
 // ==================== 内部实现类 ====================
 
 class ObjectRefImpl<T extends object, K extends keyof T> {

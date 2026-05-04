@@ -200,3 +200,18 @@ export function resolveDirective(name: string): Directive | undefined {
   }
   return undefined;
 }
+
+/**
+ * 解析动态组件：
+ * - 如果 tag 是字符串，尝试从 appContext.components 中解析已注册组件，
+ *   如果找不到则返回原始字符串（可能是原生 HTML 元素）
+ * - 如果 tag 已经是组件对象，直接返回
+ */
+export function resolveDynamicComponent(tag: string | Component): Component | string {
+  if (typeof tag === 'string') {
+    // 尝试从已注册组件中解析
+    const resolved = resolveComponent(tag);
+    return resolved ?? tag;
+  }
+  return tag;
+}

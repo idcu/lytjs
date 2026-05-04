@@ -32,6 +32,60 @@ const ASYNC_SETUP_TIMEOUT = 30000;
 // 因此此处不做溢出检查。如确实需要，可考虑使用 BigInt 或周期性重置。
 let uid = 0;
 
+// ==================== accessCache 常量 ====================
+
+/**
+ * PublicInstanceProxy 属性访问缓存位掩码。
+ * 每个公共属性对应一个唯一的位，用于在 accessCache 数组中标记
+ * 该属性首次被访问时的查找结果，避免后续重复遍历 setupState/data/props。
+ *
+ * 位值设计：
+ *   0       - 未缓存（需要首次查找）
+ *   1       - $ 属性（$data, $props, $el, $emit 等）
+ *   2       - setupState
+ *   4       - data
+ *   8       - props
+ *   16      - globalProperties
+ *   32      - ctx（公共实例自身属性）
+ */
+export const enum PublicInstanceProxyAccessCache {
+  /** 未缓存 */
+  NONE = 0,
+  /** 其他（无法归类到具体来源） */
+  OTHER = 1,
+  /** 来自 setupState */
+  SETUP_STATE = 2,
+  /** 来自 data */
+  DATA = 4,
+  /** 来自 props */
+  PROPS = 8,
+  /** 来自 globalProperties */
+  GLOBAL_PROPERTIES = 16,
+  /** 来自 ctx（公共实例自身属性，如 $data, $el 等） */
+  CONTEXT = 32,
+}
+
+/**
+ * 公共属性名到 accessCache 位掩码的映射。
+ * 用于快速判断一个 key 是否是 Vue 内置公共属性（$data, $props 等）。
+ */
+export const PUBLIC_PROPERTIES_MAP: Record<string, number> = {
+  '$': 1,
+  '$el': 2,
+  '$data': 4,
+  '$props': 8,
+  '$attrs': 16,
+  '$slots': 32,
+  '$refs': 64,
+  '$parent': 128,
+  '$root': 256,
+  '$emit': 512,
+  '$options': 1024,
+  '$forceUpdate': 2048,
+  '$nextTick': 4096,
+  '$watch': 8192,
+};
+
 // ==================== createComponentInstance ====================
 
 /**
@@ -79,6 +133,7 @@ export function createComponentInstance(
     root: parent ? parent.root : (null as unknown as ComponentInternalInstance),
     appContext,
     attrs: {},
+    accessCache: null as Record<string, number> | null,
   };
 
   // Set root to self if no parent
@@ -434,8 +489,53 @@ export function createSetupContext(instance: ComponentInternalInstance): SetupCo
 export function createComponentPublicInstance(
   instance: ComponentInternalInstance,
 ): ComponentPublicInstance {
+  // 初始化 accessCache（惰性创建）
+  if (!instance.accessCache) {
+    instance.accessCache = Object.create(null) as Record<string, number>;
+  }
+
   const PublicInstanceProxyHandlers: ProxyHandler<ComponentPublicInstance> = {
     get(target: ComponentPublicInstance, key: string | symbol): unknown {
+      // Symbol.key 无法缓存，直接走原始逻辑
+      if (typeof key === 'symbol') {
+        if (key in target) {
+          const res = (target as unknown as Record<string | symbol, unknown>)[key];
+          if (typeof res === 'function' && key !== Symbol.toPrimitive && key !== Symbol.iterator) {
+            return res.bind(target);
+          }
+          return res;
+        }
+        return undefined;
+      }
+
+      // 尝试从 accessCache 获取缓存结果
+      const cachedValue = instance.accessCache![key];
+      if (cachedValue !== undefined) {
+        switch (cachedValue) {
+          case PublicInstanceProxyAccessCache.CONTEXT: {
+            const res = (target as unknown as Record<string | symbol, unknown>)[key];
+            if (typeof res === 'function' && key !== '$emit') {
+              return res.bind(target);
+            }
+            return res;
+          }
+          case PublicInstanceProxyAccessCache.OTHER:
+            return undefined;
+          case PublicInstanceProxyAccessCache.SETUP_STATE:
+            return instance.setupState[key];
+          case PublicInstanceProxyAccessCache.DATA:
+            return instance.data[key];
+          case PublicInstanceProxyAccessCache.PROPS:
+            return instance.props[key];
+          case PublicInstanceProxyAccessCache.GLOBAL_PROPERTIES: {
+            const globalProperties = instance.appContext?.config?.globalProperties as
+              | Record<string, unknown>
+              | undefined;
+            return globalProperties ? globalProperties[key] : undefined;
+          }
+        }
+      }
+
       // 1. Public properties ($data, $props, $el, $emit, etc.)
       if (key in target) {
         const res = (target as unknown as Record<string | symbol, unknown>)[key];
@@ -443,6 +543,8 @@ export function createComponentPublicInstance(
         if (typeof res === 'function' && key !== '$emit') {
           return res.bind(target);
         }
+        // 缓存查找结果
+        instance.accessCache![key] = PublicInstanceProxyAccessCache.CONTEXT;
         return res;
       }
 
@@ -451,24 +553,30 @@ export function createComponentPublicInstance(
         | Record<string, unknown>
         | undefined;
       if (globalProperties && hasOwn(globalProperties, key)) {
+        instance.accessCache![key] = PublicInstanceProxyAccessCache.GLOBAL_PROPERTIES;
         return globalProperties[key as string];
       }
 
       // 3. setupState
       if (hasOwn(instance.setupState, key)) {
+        instance.accessCache![key] = PublicInstanceProxyAccessCache.SETUP_STATE;
         return instance.setupState[key as string];
       }
 
       // 4. data
       if (hasOwn(instance.data, key)) {
+        instance.accessCache![key] = PublicInstanceProxyAccessCache.DATA;
         return instance.data[key as string];
       }
 
       // 5. props
       if (hasOwn(instance.props, key)) {
+        instance.accessCache![key] = PublicInstanceProxyAccessCache.PROPS;
         return instance.props[key as string];
       }
 
+      // 未找到，缓存为 OTHER 以避免重复查找
+      instance.accessCache![key] = PublicInstanceProxyAccessCache.OTHER;
       return undefined;
     },
 
@@ -489,16 +597,39 @@ export function createComponentPublicInstance(
     },
 
     has(_target: ComponentPublicInstance, key: string | symbol): boolean {
+      // Symbol key 无法使用 accessCache
+      if (typeof key === 'symbol') {
+        return (
+          key in instance.setupState ||
+          key in instance.data ||
+          key in instance.props ||
+          key in _target
+        );
+      }
+
+      // 尝试从 accessCache 获取缓存结果
+      const cachedValue = instance.accessCache![key];
+      if (cachedValue !== undefined) {
+        // 缓存值为 OTHER 表示未找到
+        return cachedValue !== PublicInstanceProxyAccessCache.OTHER;
+      }
+
       const globalProperties = instance.appContext?.config?.globalProperties as
         | Record<string, unknown>
         | undefined;
-      return (
+      const found =
         key in instance.setupState ||
         key in instance.data ||
         key in instance.props ||
         (globalProperties ? key in globalProperties : false) ||
-        key in _target
-      );
+        key in _target;
+
+      // 缓存 has 结果
+      instance.accessCache![key] = found
+        ? PublicInstanceProxyAccessCache.CONTEXT
+        : PublicInstanceProxyAccessCache.OTHER;
+
+      return found;
     },
   };
 
@@ -516,13 +647,28 @@ export function createComponentPublicInstance(
       return instance.type as unknown as Record<string, unknown>;
     },
     get $refs() {
-      return {};
+      return instance.refs as Record<string, Element | ComponentPublicInstance | null>;
     },
     get $slots() {
       return instance.slots;
     },
     $emit: instance.emit,
-    $forceUpdate: NOOP,
+    $forceUpdate: () => {
+      if (instance.update) {
+        instance.update();
+      } else if (instance.render && !instance.isUnmounted) {
+        // 如果没有 instance.update（例如尚未挂载或非标准渲染器），
+        // 使用 scheduler 触发重新渲染
+        nextTick(() => {
+          if (instance.isUnmounted) return;
+          // 重新执行 render 并触发更新
+          const subTree = instance.render!(instance.ctx as any);
+          if (subTree) {
+            instance.subTree = subTree;
+          }
+        });
+      }
+    },
     $nextTick: () => nextTick(),
   };
 
@@ -717,21 +863,74 @@ export function provide<T = unknown>(key: string | symbol, value: T): void {
 }
 
 /**
- * Inject a value from ancestor components.
+ * Options for the inject function.
  */
-export function inject<T = unknown>(key: string | symbol, defaultValue?: T): T | undefined {
+export interface InjectOptions {
+  /** If true, treat defaultValue as a factory function that will be called to produce the default value */
+  factory?: boolean;
+  /** Look up the value from a specific ancestor key instead of the injected key */
+  from?: string | symbol;
+  /** If true, only look up the value from the current instance's own provides (no ancestor lookup) */
+  local?: boolean;
+}
+
+/**
+ * Inject a value from ancestor components.
+ *
+ * Supported forms:
+ * - `inject('key')` - basic lookup
+ * - `inject('key', defaultValue)` - with default value
+ * - `inject('key', () => createDefault(), { factory: true })` - factory function default
+ * - `inject('key', undefined, { from: 'optionalSourceKey' })` - from modifier
+ * - `inject('key', undefined, { local: true })` - local only (no ancestor lookup)
+ */
+export function inject<T = unknown>(
+  key: string | symbol,
+  defaultValue?: T,
+  options?: InjectOptions,
+): T | undefined {
   const instance = getCurrentInstance();
-  if (!instance) return defaultValue;
+  if (!instance) {
+    // No instance context - return default
+    return resolveDefault(defaultValue, options);
+  }
+
+  const lookupKey = options?.from ?? key;
+
+  if (options?.local) {
+    // local mode: only check current instance's own provides (not inherited from parent prototype)
+    // If instance.provides is the same reference as parent.provides, the instance
+    // has not called provide() yet, so there are no own provides to check.
+    const provides = instance.provides as Record<string | symbol, unknown>;
+    const hasOwnProvides = instance.parent
+      ? provides !== instance.parent.provides
+      : true;
+    if (hasOwnProvides && hasOwn(provides, lookupKey as string)) {
+      return provides[lookupKey as string] as T | undefined;
+    }
+    return resolveDefault(defaultValue, options);
+  }
 
   // Walk up the parent chain
   let current: ComponentInternalInstance | null = instance.parent;
   while (current) {
     const provides = current.provides as Record<string | symbol, unknown>;
-    if (key in provides) {
-      return provides[key as string] as T | undefined;
+    if (lookupKey in provides) {
+      return provides[lookupKey as string] as T | undefined;
     }
     current = current.parent;
   }
 
+  return resolveDefault(defaultValue, options);
+}
+
+/**
+ * Resolve the default value for inject, handling factory functions.
+ */
+function resolveDefault<T>(defaultValue: T | undefined, options?: InjectOptions): T | undefined {
+  if (defaultValue === undefined) return undefined;
+  if (options?.factory && typeof defaultValue === 'function') {
+    return (defaultValue as unknown as () => T)();
+  }
   return defaultValue;
 }

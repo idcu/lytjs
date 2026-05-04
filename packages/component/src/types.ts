@@ -130,6 +130,7 @@ export interface ComponentRenderState {
   subTree: VNode | null;
   render?: RenderFunction;
   effects?: Array<{ stop(): void }>;
+  update?: () => void;
 }
 
 /** 组件上下文状态：props、slots、attrs、emit、provides 等 */
@@ -145,6 +146,7 @@ export interface ComponentContextState {
   provides: Record<string | symbol, unknown>;
   exposed?: Record<string, unknown> | null;
   attrs: Record<string, unknown>;
+  accessCache: Record<string, number> | null;
 }
 
 /** 组件层级关系：parent、root、appContext 等 */

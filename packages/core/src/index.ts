@@ -5,9 +5,9 @@ export { createApp } from './create-app';
 export { h, h as createElement } from './h';
 export { defineComponent, defineAsyncComponent } from './define-component';
 export { nextTick } from './next-tick';
-export { resolveComponent, resolveDirective } from './resolve';
+export { resolveComponent, resolveDirective, resolveDynamicComponent } from './resolve';
 export { withDirectives, withMemo } from './directives';
-export { useSlots, useAttrs, useModel } from './composition';
+export { useSlots, useAttrs, useModel, useTemplateRef } from './composition';
 export {
   defineCustomElement,
   useShadowRoot,

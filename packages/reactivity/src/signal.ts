@@ -43,6 +43,12 @@ export interface ComputedSignal<T = unknown> extends Signal<T> {
   readonly [ComputedSignalSymbol]: true;
 }
 
+/** WritableComputedSignal 可写计算信号接口 */
+export interface WritableComputedSignal<T = unknown> extends ComputedSignal<T> {
+  /** 设置新值（通过 setter 函数） */
+  set(newValue: T): void;
+}
+
 /** ReadonlySignal 只读信号接口 */
 export interface ReadonlySignal<T = unknown> {
   /** 读取当前值 */
@@ -218,6 +224,97 @@ export function computed<T>(fn: () => T): ComputedSignal<T> {
   } as ComputedSignal<T>;
 
   Object.defineProperty(computedFn, ComputedSignalSymbol, { value: true });
+
+  computedFn.dispose = (): void => {
+    disposed = true;
+    for (const unsubscribe of dependencies.values()) {
+      unsubscribe();
+    }
+    dependencies.clear();
+    subscribers.clear();
+  };
+
+  computedFn.stop = (): void => {
+    computedFn.dispose();
+  };
+
+  return computedFn;
+}
+
+// ============================================================
+// writableComputed — 可写计算信号
+// ============================================================
+
+/**
+ * 创建一个可写计算信号。
+ * 通过 getter 读取计算值，通过 setter 写入值。
+ * setter 通常会间接更新 getter 依赖的底层 signal。
+ */
+export function writableComputedSignal<T>(
+  getter: () => T,
+  setter: (value: T) => void,
+): WritableComputedSignal<T> {
+  let value: T | undefined;
+  let dirty = true;
+  let isComputing = false;
+  const dependencies = new Map<WritableSignal<unknown>, () => void>();
+  const subscribers = new Set<Subscriber>();
+  let disposed = false;
+
+  const invalidate = (): void => {
+    if (disposed) return;
+    dirty = true;
+    const subs = Array.from(subscribers);
+    for (const sub of subs) {
+      sub();
+    }
+  };
+
+  const computedFn = function computedFn(): T {
+    if (disposed) return value as T;
+
+    if (activeSubscriber && !isUntracked) {
+      subscribers.add(activeSubscriber);
+    }
+
+    if (dirty) {
+      if (isComputing) {
+        throw new Error('[lytjs/signal] Circular dependency detected in writable computed signal.');
+      }
+      isComputing = true;
+      try {
+        for (const unsubscribe of dependencies.values()) {
+          unsubscribe();
+        }
+        dependencies.clear();
+
+        const prevSubscriber = activeSubscriber;
+        const prevTrackDependency = trackDependency;
+        activeSubscriber = invalidate;
+        trackDependency = (dep: WritableSignal<unknown>, unsubscribe: () => void) => {
+          dependencies.set(dep, unsubscribe);
+        };
+        try {
+          value = getter();
+          dirty = false;
+        } finally {
+          activeSubscriber = prevSubscriber;
+          trackDependency = prevTrackDependency;
+        }
+      } finally {
+        isComputing = false;
+      }
+    }
+
+    return value as T;
+  } as WritableComputedSignal<T>;
+
+  Object.defineProperty(computedFn, ComputedSignalSymbol, { value: true });
+
+  computedFn.set = (newValue: T): void => {
+    if (disposed) return;
+    setter(newValue);
+  };
 
   computedFn.dispose = (): void => {
     disposed = true;

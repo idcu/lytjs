@@ -16,6 +16,7 @@ import {
   getCurrentInstance,
 } from '../src/index';
 import type { ComponentOptions, ComponentInternalInstance } from '../src/types';
+import type { InjectOptions } from '../src/component';
 
 describe('createComponentInstance', () => {
   it('should create a component instance with correct defaults', () => {
@@ -302,6 +303,158 @@ describe('provide/inject', () => {
     setupComponent(instance);
 
     expect(instance.setupState.injected).toBe('default-value');
+  });
+
+  it('should support factory function default value', () => {
+    const options = defineComponent({
+      name: 'FactoryDefault',
+      setup() {
+        const value = inject('missing-factory', () => ({ count: 42 }), { factory: true });
+        return { injected: value };
+      },
+    });
+
+    const vnode = { type: options, props: {}, children: null };
+    const instance = createComponentInstance(vnode, null);
+    setupComponent(instance);
+
+    expect(instance.setupState.injected).toEqual({ count: 42 });
+  });
+
+  it('should not call factory when value is provided by ancestor', () => {
+    const parentOptions = defineComponent({
+      name: 'FactoryProvider',
+      setup() {
+        provide('factory-key', 'provided-value');
+        return {};
+      },
+    });
+
+    const childOptions = defineComponent({
+      name: 'FactoryConsumer',
+      setup() {
+        const factoryFn = vi.fn(() => 'factory-result');
+        const value = inject('factory-key', factoryFn, { factory: true });
+        return { injected: value, factoryFn };
+      },
+    });
+
+    const parentVnode = { type: parentOptions, props: {}, children: null };
+    const parentInstance = createComponentInstance(parentVnode, null);
+    setupComponent(parentInstance);
+
+    const childVnode = { type: childOptions, props: {}, children: null };
+    const childInstance = createComponentInstance(childVnode, parentInstance);
+    setupComponent(childInstance);
+
+    expect(childInstance.setupState.injected).toBe('provided-value');
+    expect(childInstance.setupState.factoryFn).not.toHaveBeenCalled();
+  });
+
+  it('should support from modifier to look up from a different key', () => {
+    const parentOptions = defineComponent({
+      name: 'FromProvider',
+      setup() {
+        provide('actual-source-key', 'from-value');
+        return {};
+      },
+    });
+
+    const childOptions = defineComponent({
+      name: 'FromConsumer',
+      setup() {
+        const value = inject('alias-key', 'default', { from: 'actual-source-key' });
+        return { injected: value };
+      },
+    });
+
+    const parentVnode = { type: parentOptions, props: {}, children: null };
+    const parentInstance = createComponentInstance(parentVnode, null);
+    setupComponent(parentInstance);
+
+    const childVnode = { type: childOptions, props: {}, children: null };
+    const childInstance = createComponentInstance(childVnode, parentInstance);
+    setupComponent(childInstance);
+
+    expect(childInstance.setupState.injected).toBe('from-value');
+  });
+
+  it('should support local modifier to only check own provides', () => {
+    const parentOptions = defineComponent({
+      name: 'LocalProvider',
+      setup() {
+        provide('local-key', 'parent-value');
+        return {};
+      },
+    });
+
+    const childOptions = defineComponent({
+      name: 'LocalConsumer',
+      setup() {
+        provide('local-key', 'own-value');
+        const value = inject('local-key', 'default', { local: true });
+        return { injected: value };
+      },
+    });
+
+    const parentVnode = { type: parentOptions, props: {}, children: null };
+    const parentInstance = createComponentInstance(parentVnode, null);
+    setupComponent(parentInstance);
+
+    const childVnode = { type: childOptions, props: {}, children: null };
+    const childInstance = createComponentInstance(childVnode, parentInstance);
+    setupComponent(childInstance);
+
+    // local mode should find own provides, not parent's
+    expect(childInstance.setupState.injected).toBe('own-value');
+  });
+
+  it('should return default when local modifier finds nothing', () => {
+    const parentOptions = defineComponent({
+      name: 'LocalDefaultProvider',
+      setup() {
+        provide('local-missing', 'parent-value');
+        return {};
+      },
+    });
+
+    const childOptions = defineComponent({
+      name: 'LocalDefaultConsumer',
+      setup() {
+        // Don't provide 'local-missing' in child
+        const value = inject('local-missing', 'local-default', { local: true });
+        return { injected: value };
+      },
+    });
+
+    const parentVnode = { type: parentOptions, props: {}, children: null };
+    const parentInstance = createComponentInstance(parentVnode, null);
+    setupComponent(parentInstance);
+
+    const childVnode = { type: childOptions, props: {}, children: null };
+    const childInstance = createComponentInstance(childVnode, parentInstance);
+    setupComponent(childInstance);
+
+    // local mode should NOT find parent's value, return default
+    expect(childInstance.setupState.injected).toBe('local-default');
+  });
+
+  it('should maintain backward compatibility with two-argument form', () => {
+    const options = defineComponent({
+      name: 'BackwardCompat',
+      setup() {
+        const v1 = inject('key1');
+        const v2 = inject('key2', 'default');
+        return { v1, v2 };
+      },
+    });
+
+    const vnode = { type: options, props: {}, children: null };
+    const instance = createComponentInstance(vnode, null);
+    setupComponent(instance);
+
+    expect(instance.setupState.v1).toBeUndefined();
+    expect(instance.setupState.v2).toBe('default');
   });
 });
 
