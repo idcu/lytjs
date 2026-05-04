@@ -24,7 +24,7 @@ export interface App<HostElement = Element> {
   mount(rootContainer: HostElement | string): ComponentPublicInstance | null;
   unmount(): void;
   provide<T = unknown>(key: string | symbol, value: T): App;
-  inject<T = unknown>(key: string | symbol): T | undefined;
+  inject<T = unknown>(key: string | symbol, defaultValue?: T): T;
   component(name: string, component: Component): App;
   directive(name: string, directive: Directive): App;
   mixin(mixin: ComponentOptions): App;

@@ -26,6 +26,16 @@ export function createApp(
   let signalRenderer: SignalRenderer | null = null;
   let _container: Element | null = null;
 
+  // App context with provides and config
+  const context = {
+    provides: Object.create(null) as Record<string | symbol, unknown>,
+    config: {
+      errorHandler: undefined as ((err: unknown, instance: unknown, info: string) => boolean | void) | undefined,
+      warnHandler: undefined as ((msg: string, instance: unknown, trace: string) => void) | undefined,
+      performance: false,
+    },
+  };
+
   const app: App = {
     config: {
       performance: false,
@@ -219,14 +229,22 @@ export function createApp(
             'Register provides before calling app.mount().',
         );
       }
-      // Signal 模式下 provide 暂存到插件上下文中
-      // 注意：Signal 模式不使用组件系统，provide/inject 功能有限
+      context.provides[key] = value;
       return app;
     },
 
-    inject<T = unknown>(key: string | symbol): T | undefined {
-      // Signal 模式下 inject 功能有限
-      return undefined;
+    inject<T = unknown>(key: string | symbol, defaultValue?: T): T {
+      const provides = context.provides;
+      if (key in provides) {
+        return provides[key] as T;
+      }
+      if (defaultValue !== undefined) {
+        return defaultValue;
+      }
+      if (__DEV__) {
+        warn(`Injection "${String(key)}" not found.`);
+      }
+      return undefined as T;
     },
 
     component(name, component) {

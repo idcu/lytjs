@@ -42,15 +42,21 @@ const LAYER_MAP: Record<string, number> = {
   '@lytjs/common-env': 0,
   '@lytjs/common': 0,
   '@lytjs/shared-types': 0,
+  '@lytjs/host-contract': 0,
   // L1
   '@lytjs/reactivity': 1,
   '@lytjs/vdom': 1,
   '@lytjs/compiler': 1,
+  '@lytjs/dom-runtime': 1,
   // L2
   '@lytjs/renderer': 2,
   '@lytjs/component': 2,
+  '@lytjs/adapter-web': 2,
+  '@lytjs/runtime-convergence': 2,
   // L3
   '@lytjs/core': 3,
+  '@lytjs/core-vnode': 3,
+  '@lytjs/core-signal': 3,
   // L4
   '@lytjs/router': 4,
   '@lytjs/store': 4,

@@ -176,6 +176,38 @@ function handleSetupResult(instance: ComponentInternalInstance, setupResult: Set
   finishComponentSetup(instance);
 }
 
+// ==================== normalizeWatchHandler ====================
+
+/**
+ * Normalize a raw watch handler to a bound function.
+ * Supports function, string (method name), and object { handler } forms.
+ */
+function normalizeWatchHandler(
+  raw: unknown,
+  methods: Record<string, Function> | undefined,
+  proxy: ComponentPublicInstance,
+): Function | null {
+  if (typeof raw === 'function') {
+    return raw.bind(proxy);
+  }
+  if (typeof raw === 'string') {
+    if (methods && hasOwn(methods, raw)) {
+      return methods[raw]!.bind(proxy);
+    }
+    if (__DEV__) {
+      warn(`Invalid watch handler "${raw}". No matching method found.`);
+    }
+    return null;
+  }
+  if (raw !== null && typeof raw === 'object' && typeof (raw as Record<string, unknown>).handler !== 'undefined') {
+    return normalizeWatchHandler((raw as Record<string, unknown>).handler, methods, proxy);
+  }
+  if (__DEV__) {
+    warn(`Invalid watch handler. Expected a function, method name string, or { handler } object.`);
+  }
+  return null;
+}
+
 /**
  * Finish component setup: handle data, methods, computed, render.
  */
@@ -189,6 +221,18 @@ export function finishComponentSetup(instance: ComponentInternalInstance): void 
   if (type.data) {
     const data = type.data.call(instance.ctx) ?? {};
     instance.data = reactive(data);
+  }
+
+  // Props conflict detection: create keys set once for reuse
+  const __DEV__propsKeys = __DEV__ && instance.props ? new Set(Object.keys(instance.props)) : null;
+
+  // Check data vs props conflict
+  if (__DEV__propsKeys && instance.data) {
+    for (const key of Object.keys(instance.data)) {
+      if (__DEV__propsKeys.has(key)) {
+        warn(`Data property "${key}" is already defined as a prop. Use default value in props instead.`);
+      }
+    }
   }
 
   const proxy = instance.ctx;
@@ -205,25 +249,57 @@ export function finishComponentSetup(instance: ComponentInternalInstance): void 
         instance.ctx[key as keyof ComponentPublicInstance] = method.bind(proxy) as any;
       }
     }
+    // Check methods vs props conflict
+    if (__DEV__propsKeys) {
+      for (const key of Object.keys(type.methods)) {
+        if (__DEV__propsKeys.has(key)) {
+          warn(`Method "${key}" is already defined as a prop.`);
+        }
+      }
+    }
   }
 
   // Init computed: create computed refs and mount on ctx
   if (type.computed) {
     for (const key in type.computed) {
       if (hasOwn(type.computed, key)) {
-        const getter = type.computed[key];
-        if (__DEV__) {
-          if (typeof getter !== 'function') {
-            warn(`Computed property "${key}" is not a function in component ${(type as Record<string, unknown>).name || '(anonymous)'}.`);
-            continue;
+        const opt = type.computed[key];
+        let c;
+        if (typeof opt === 'function') {
+          // 函数形式 - 只有 getter
+          c = computed(() => opt.call(proxy));
+        } else if (opt && typeof opt === 'object') {
+          // getter/setter 对象形式
+          const { get, set } = opt as { get?: Function; set?: Function };
+          if (__DEV__) {
+            if (typeof get !== 'function') {
+              warn(`Computed property "${key}" has no getter in component ${(type as Record<string, unknown>).name || '(anonymous)'}.`);
+              continue;
+            }
+            if (set !== undefined && typeof set !== 'function') {
+              warn(`Computed property "${key}" setter is not a function in component ${(type as Record<string, unknown>).name || '(anonymous)'}.`);
+            }
           }
-          // Warn if computed key conflicts with a methods key
-          if (type.methods && hasOwn(type.methods, key)) {
-            warn(`Computed property "${key}" conflicts with a method of the same name in component ${(type as Record<string, unknown>).name || '(anonymous)'}. The method will be overwritten.`);
-          }
+          c = computed({
+            get: get ? () => get.call(proxy) : (() => undefined),
+            set: set ? (v: unknown) => set.call(proxy, v) : undefined,
+          } as any);
+        } else if (__DEV__) {
+          warn(`Computed property "${key}" is not a function or object in component ${(type as Record<string, unknown>).name || '(anonymous)'}.`);
+          continue;
         }
-        const c = computed(() => getter.call(proxy));
+        if (__DEV__ && type.methods && hasOwn(type.methods, key)) {
+          warn(`Computed property "${key}" conflicts with a method of the same name in component ${(type as Record<string, unknown>).name || '(anonymous)'}. The method will be overwritten.`);
+        }
         instance.ctx[key as keyof ComponentPublicInstance] = c as any;
+      }
+    }
+    // Check computed vs props conflict
+    if (__DEV__propsKeys) {
+      for (const key of Object.keys(type.computed)) {
+        if (__DEV__propsKeys.has(key)) {
+          warn(`Computed property "${key}" is already defined as a prop.`);
+        }
       }
     }
   }
@@ -232,22 +308,29 @@ export function finishComponentSetup(instance: ComponentInternalInstance): void 
   if (type.watch) {
     for (const key in type.watch) {
       if (hasOwn(type.watch, key)) {
-        let handler = type.watch[key];
-        if (__DEV__ && typeof handler === 'string') {
-          // String handler refers to a method name
-          if (type.methods && hasOwn(type.methods, handler)) {
-            handler = type.methods[handler].bind(proxy);
-          } else {
-            warn(`Invalid watch handler "${handler}" in component ${(type as Record<string, unknown>).name || '(anonymous)'}. No matching method found.`);
-            continue;
+        const raw = type.watch[key];
+        // 标准化为 handler 数组
+        const handlers: Function[] = [];
+        if (Array.isArray(raw)) {
+          for (const h of raw) {
+            const normalized = normalizeWatchHandler(h, type.methods, proxy);
+            if (normalized) handlers.push(normalized);
           }
-        } else if (typeof handler === 'function') {
-          handler = handler.bind(proxy);
-        } else if (__DEV__) {
-          warn(`Invalid watch handler for "${key}" in component ${(type as Record<string, unknown>).name || '(anonymous)'}. Expected a function or a method name string.`);
-          continue;
+        } else {
+          const h = normalizeWatchHandler(raw, type.methods, proxy);
+          if (h) handlers.push(h);
         }
-        watch(() => proxy[key as keyof ComponentPublicInstance], handler as (...args: unknown[]) => void, { immediate: false });
+        // 提取选项（仅对象形式）
+        let options: { immediate?: boolean; deep?: boolean; flush?: 'pre' | 'post' | 'sync' } = {};
+        if (!Array.isArray(raw) && raw !== null && typeof raw === 'object' && typeof (raw as Record<string, unknown>).handler !== 'undefined') {
+          const watchObj = raw as Record<string, unknown>;
+          if (typeof watchObj.immediate === 'boolean') options.immediate = watchObj.immediate;
+          if (typeof watchObj.deep === 'boolean') options.deep = watchObj.deep;
+          if (typeof watchObj.flush === 'string') options.flush = watchObj.flush as 'pre' | 'post' | 'sync';
+        }
+        for (const handler of handlers) {
+          watch(() => proxy[key as keyof ComponentPublicInstance], handler as (...args: unknown[]) => void, options);
+        }
       }
     }
   }

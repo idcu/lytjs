@@ -52,6 +52,7 @@ export default defineConfig({
         {
           text: 'API 参考',
           items: [
+            { text: '概览', link: '/lytjs/api/' },
             { text: '@lytjs/core', link: '/lytjs/api/core' },
             { text: '@lytjs/reactivity', link: '/lytjs/api/reactivity' },
             { text: '@lytjs/compiler', link: '/lytjs/api/compiler' },
@@ -74,7 +75,7 @@ export default defineConfig({
           text: '核心概念',
           items: [
             { text: '响应式系统', link: '/lytjs/guide/reactivity' },
-            { text: '组件', link: '/lytjs/guide/components' },
+            { text: '组件', link: '/lytjs/guide/component' },
             { text: '模板语法', link: '/lytjs/guide/template-syntax' },
             { text: '生命周期', link: '/lytjs/guide/lifecycle' },
             { text: '事件处理', link: '/lytjs/guide/events' },
