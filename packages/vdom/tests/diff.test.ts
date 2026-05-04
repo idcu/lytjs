@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 /**
  * Tests for diff algorithm and renderer patch
  */

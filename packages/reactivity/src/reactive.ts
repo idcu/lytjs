@@ -279,7 +279,7 @@ function createCollectionHandler(isReadonly: boolean, isShallow: boolean): Proxy
         track(target, TrackOpTypes.GET, ITERATE_KEY_COL);
       }
 
-      const res = Reflect.get(target, key, _receiver);
+      const res = Reflect.get(target, key, target);
       if (typeof res === 'function') {
         if (!isReadonly) {
           // key as string: MUTATING_METHODS 只包含字符串方法名（"set"/"add"/"delete"/"clear"），
@@ -310,6 +310,8 @@ function createCollectionHandler(isReadonly: boolean, isShallow: boolean): Proxy
                   if (triggerKey !== undefined) {
                     trigger(target, TriggerOpTypes.ADD, triggerKey, args[0]);
                   }
+                  // size 变化，触发 ITERATE_KEY_COL 依赖
+                  trigger(target, TriggerOpTypes.ADD, ITERATE_KEY_COL);
                 }
                 return result;
               } else if (key === 'delete') {
@@ -321,6 +323,8 @@ function createCollectionHandler(isReadonly: boolean, isShallow: boolean): Proxy
                   if (triggerKey !== undefined) {
                     trigger(target, TriggerOpTypes.DELETE, triggerKey, undefined, undefined);
                   }
+                  // size 变化，触发 ITERATE_KEY_COL 依赖
+                  trigger(target, TriggerOpTypes.DELETE, ITERATE_KEY_COL);
                 }
                 return result;
               } else if (key === 'clear') {
@@ -335,6 +339,13 @@ function createCollectionHandler(isReadonly: boolean, isShallow: boolean): Proxy
               const result = res.apply(target, args);
               trigger(target, TriggerOpTypes.ADD, ITERATE_KEY_COL);
               return result;
+            };
+          }
+          // Map.get: 额外追踪具体的 key，使 set 变异时能精确触发
+          if (key === 'get') {
+            return (...args: unknown[]) => {
+              track(target, TrackOpTypes.GET, args[0] as string | symbol);
+              return res.apply(target, args);
             };
           }
         } else {

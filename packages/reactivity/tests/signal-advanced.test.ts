@@ -147,8 +147,8 @@ describe('循环依赖检测', () => {
   });
 
   it('computed 互相引用应抛出错误', () => {
-    const a: any;
-    const b: any;
+    let a: any;
+    let b: any;
     a = computed(() => b() + 1);
     b = computed(() => a() + 1);
     expect(() => a()).toThrow('Circular dependency');

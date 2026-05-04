@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { ref } from '@lytjs/reactivity';
 import { defineVaporComponent, createVaporApp } from '../src/vapor/vapor-app';

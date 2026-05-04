@@ -40,8 +40,12 @@ export interface DOMRenderer {
  *
  * 使用 WebRendererHost 作为平台适配层，通过 vdom 的 createRenderer
  * 创建完整的渲染器实例。vnodeMap 通过闭包作用域隔离。
+ *
+ * @param extraOptions 可选的额外渲染器选项，例如 setupChildComponent
  */
-export function createDOMRenderer(): DOMRenderer {
+export function createDOMRenderer(
+  extraOptions?: Partial<Pick<RendererOptions<Node, Element>, 'setupChildComponent'>>,
+): DOMRenderer {
   // VNode storage scoped to this renderer instance
   const vnodeMap = new WeakMap<Element, VNode | null>();
 
@@ -84,6 +88,9 @@ export function createDOMRenderer(): DOMRenderer {
     querySelector(selector: string): Element | null {
       return host.querySelector(selector);
     },
+    ...(extraOptions?.setupChildComponent
+      ? { setupChildComponent: extraOptions.setupChildComponent }
+      : {}),
   };
 
   const renderer = createRenderer(options);

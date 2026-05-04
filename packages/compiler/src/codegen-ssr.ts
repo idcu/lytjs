@@ -185,6 +185,15 @@ function genSSRElement(element: ElementNode): string {
           propParts.push(`' innerHTML="' + ${expContent} + '"'`);
         }
       }
+      // v-text: handled specially - set textContent
+      if (prop.name === 'text') {
+        const expContent = prop.exp
+          ? (prop.exp as SimpleExpressionNode).content
+          : undefined;
+        if (expContent) {
+          propParts.push(`' textContent="' + ${expContent} + '"'`);
+        }
+      }
     }
   }
 

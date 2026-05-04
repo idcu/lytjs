@@ -62,20 +62,22 @@ describe('codegen-signal', () => {
       const result = compile('<p v-if="show">hello</p>', { rendererMode: 'signal' });
       expect(result.code).toContain('effect(() => {');
       expect(result.code).toContain('if (_ctx.show)');
-      expect(result.code).toContain("style.display = ''");
-      expect(result.code).toContain("style.display = 'none'");
+      expect(result.code).toContain('createTemplate');
+      expect(result.code).toContain('insert(');
+      expect(result.code).toContain('remove(');
     });
 
     it('should show element when v-if condition is true (code level)', () => {
       const result = compile('<p v-if="show">hello</p>', { rendererMode: 'signal' });
-      // When condition is true, display should be set to ''
-      expect(result.code).toContain("style.display = ''");
+      // When condition is true, element should be inserted via createTemplate + insert
+      expect(result.code).toContain('createTemplate');
+      expect(result.code).toContain('insert(');
     });
 
     it('should hide element when v-if condition is false (code level)', () => {
       const result = compile('<p v-if="show">hello</p>', { rendererMode: 'signal' });
-      // When condition is false, display should be set to 'none'
-      expect(result.code).toContain("style.display = 'none'");
+      // When condition is false, element should be removed via remove()
+      expect(result.code).toContain('remove(');
     });
 
     it('should generate v-else branch', () => {

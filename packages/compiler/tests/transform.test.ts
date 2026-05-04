@@ -26,7 +26,7 @@ describe('transform', () => {
     });
 
     it('should set tag in VNodeCall', () => {
-      const ast = transformTemplate('<span></span>');
+      const ast = transformTemplate('<span :class="cls"></span>');
       const element = ast.children[0] as ElementNode;
       const vnode = element.codegenNode!;
       expect(vnode.type).toBe(NodeTypes.VNODE_CALL);
@@ -34,7 +34,7 @@ describe('transform', () => {
     });
 
     it('should handle static attributes', () => {
-      const ast = transformTemplate('<div id="app"></div>');
+      const ast = transformTemplate('<div id="app" :class="cls"></div>');
       const element = ast.children[0] as ElementNode;
       const vnode = element.codegenNode!;
       expect(vnode.type).toBe(NodeTypes.VNODE_CALL);

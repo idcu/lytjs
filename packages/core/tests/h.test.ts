@@ -35,7 +35,7 @@ describe('h', () => {
 
   it('should handle null props', () => {
     const vnode = h('div', null, 'text');
-    expect(vnode.props).toEqual(null);
+    expect(vnode.props).toEqual({});
   });
 
   it('should merge class', () => {

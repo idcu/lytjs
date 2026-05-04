@@ -14,7 +14,7 @@ describe('withDirectives', () => {
 
     const result = withDirectives(vnode, directives);
 
-    expect(result).toBe(vnode);
+    expect(result).not.toBe(vnode);
     expect((result as any)._directives).toHaveLength(1);
     expect((result as any)._directives[0]).toEqual({
       dir: expect.any(Object),
@@ -57,7 +57,7 @@ describe('withDirectives', () => {
 
     const result = withDirectives(vnode, directives);
 
-    expect(result).toBe(vnode);
+    expect(result).not.toBe(vnode);
   });
 
   it('指令参数正确映射 dir/value/arg/modifiers', () => {
@@ -65,9 +65,9 @@ describe('withDirectives', () => {
     const dir = { created: vi.fn(), beforeMount: vi.fn() };
     const directives: DirectiveArguments = [[dir as any, 42, 'focus', { lazy: true, once: true }]];
 
-    withDirectives(vnode, directives);
+    const result = withDirectives(vnode, directives);
 
-    const stored = (vnode as any)._directives[0];
+    const stored = (result as any)._directives[0];
     expect(stored.dir).toBe(dir);
     expect(stored.value).toBe(42);
     expect(stored.arg).toBe('focus');

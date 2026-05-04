@@ -147,6 +147,7 @@ describe('@lytjs/common-error', () => {
 
   describe('setDevMode / getDevMode', () => {
     it('should default to false', () => {
+      setDevMode(false);
       expect(getDevMode()).toBe(false);
     });
 

@@ -135,7 +135,7 @@ describe('setupComponent', () => {
     expect(instance.vnode.isAsyncPlaceholder).toBe(true);
 
     // 使用 fake timers 推进时间，等待异步 setup 完成
-    vi.advanceTimersByTime(50);
+    await vi.advanceTimersByTimeAsync(50);
 
     expect(instance.setupState.asyncData).toBe('resolved');
     expect(instance.vnode.isAsyncPlaceholder).toBe(false);

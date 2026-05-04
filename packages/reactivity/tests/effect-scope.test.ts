@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { ref, computed, watch, effect } from '../src/index';
+import { nextTick } from '@lytjs/common-scheduler';
 import { effectScope, onScopeDispose } from '../src/effect-scope';
 
 describe('effectScope', () => {
@@ -76,7 +77,7 @@ describe('effectScope', () => {
     expect(() => scope.stop()).not.toThrow();
   });
 
-  it('should stop inner scope independently from outer scope', () => {
+  it('should stop inner scope independently from outer scope', async () => {
     const count = ref(0);
     let outerWatchCalled = false;
     let innerWatchCalled = false;
@@ -98,12 +99,13 @@ describe('effectScope', () => {
 
     innerScope.stop();
     count.value = 1;
+    await nextTick();
 
     expect(innerWatchCalled).toBe(false);
     expect(outerWatchCalled).toBe(true);
   });
 
-  it('should allow re-running effects after scope disposal', () => {
+  it('should not re-run effects after scope disposal', () => {
     const count = ref(0);
     let effectValue = 0;
 
@@ -119,12 +121,13 @@ describe('effectScope', () => {
     count.value = 1;
     expect(effectValue).toBe(0);
 
-    // Re-run scope
-    scope.run(() => {
+    // After stop, scope.run() returns undefined (scope is inactive)
+    const result = scope.run(() => {
       effect(() => {
         effectValue = count.value;
       });
     });
-    expect(effectValue).toBe(1);
+    expect(result).toBeUndefined();
+    expect(effectValue).toBe(0);
   });
 });

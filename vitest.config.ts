@@ -40,6 +40,12 @@ export default defineConfig({
     environment: 'node',
     globals: true,
     setupFiles: ['./packages/reactivity/tests/setup.ts'],
+    // 为需要 DOM 环境的测试目录指定 jsdom
+    environmentOptions: {
+      jsdom: {
+        url: 'http://localhost',
+      },
+    },
     coverage: {
       provider: 'v8',
       include: ['packages/*/src/**/*.ts', 'packages/common/packages/*/src/**/*.ts'],

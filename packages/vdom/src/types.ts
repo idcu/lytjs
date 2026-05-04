@@ -92,6 +92,14 @@ export interface RendererOptions<HN = unknown, HE extends HN = HN> {
   createComment(text: string): HN;
   /** Query selector (for Teleport target) */
   querySelector?(selector: string): HE | null;
+  /** Optional callback to create and setup a component instance for child components.
+   *  When provided, mountComponent will call this if vnode.component is not set.
+   *  Receives the vnode and the parent component instance.
+   *  Should set vnode.component with the created instance. */
+  setupChildComponent?(
+    vnode: VNode,
+    parentComponent: ComponentInternalInstance | null,
+  ): void;
 }
 
 // ============================================================

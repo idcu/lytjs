@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { defineCustomElement, useShadowRoot, useHost, injectChildStyles } from '../src/web-component';
 import type { DefineCustomElementOptions } from '../src/web-component';

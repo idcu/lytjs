@@ -64,6 +64,8 @@ export function createComponentInstance(
     isMounted: false,
     isUnmounted: false,
     isDeactivated: false,
+    isKeepingAlive: false,
+    refs: {},
     lifecycle: {
       beforeMount: new Set(),
       mounted: new Set(),

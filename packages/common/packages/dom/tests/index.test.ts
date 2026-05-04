@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { SVG_TAGS, SVG_NS, isSVGTag, patchClass, patchStyle, patchAttr, patchProp } from '../src/index';
 

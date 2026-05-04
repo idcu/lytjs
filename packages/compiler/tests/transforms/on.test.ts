@@ -17,7 +17,10 @@ describe('transformOn', () => {
       const result = transformOn(dir, node, context);
 
       expect(result.props).toHaveLength(1);
-      expect(result.props[0]).toEqual({ key: 'onClick', value: 'handleClick' });
+      expect(result.props[0]).toMatchObject({
+        key: { content: '"onClick"', isStatic: true },
+        value: { content: 'handleClick' },
+      });
     });
 
     it('应该正确处理 input 事件', () => {
@@ -29,7 +32,10 @@ describe('transformOn', () => {
       const result = transformOn(dir, node, context);
 
       expect(result.props).toHaveLength(1);
-      expect(result.props[0]).toEqual({ key: 'onInput', value: 'onInput' });
+      expect(result.props[0]).toMatchObject({
+        key: { content: '"onInput"', isStatic: true },
+        value: { content: 'onInput' },
+      });
     });
 
     it('应该正确处理 keydown 事件', () => {
@@ -41,9 +47,9 @@ describe('transformOn', () => {
       const result = transformOn(dir, node, context);
 
       expect(result.props).toHaveLength(1);
-      expect(result.props[0]).toEqual({
-        key: 'onKeydown',
-        value: 'handleKeydown',
+      expect(result.props[0]).toMatchObject({
+        key: { content: '"onKeydown"', isStatic: true },
+        value: { content: 'handleKeydown' },
       });
     });
   });

@@ -45,6 +45,7 @@ function hostToOptions<HN, HE extends HN>(
   querySelector: (selector: string) => HE | null;
   nextSibling: (node: HN) => HN | null;
   parentNode: (node: HN) => HN | null;
+  setupChildComponent: ((vnode: VNode, parent: ComponentInternalInstance | null) => void) | undefined;
 } {
   return {
     createElement: (type: string) => host.createElement(type),
@@ -58,6 +59,7 @@ function hostToOptions<HN, HE extends HN>(
     querySelector: (selector) => host.querySelector(selector),
     nextSibling: (node) => host.nextSibling(node),
     parentNode: (node) => host.parentNode(node),
+    setupChildComponent: undefined,
   };
 }
 
@@ -78,6 +80,7 @@ function optionsToInternal<HN, HE extends HN>(
   querySelector: ((selector: string) => HE | null) | undefined;
   nextSibling: (node: HN) => HN | null;
   parentNode: (node: HN) => HN | null;
+  setupChildComponent: ((vnode: VNode, parent: ComponentInternalInstance | null) => void) | undefined;
 } {
   return {
     createElement: (type) => options.createElement(type),
@@ -94,6 +97,7 @@ function optionsToInternal<HN, HE extends HN>(
       : undefined,
     nextSibling: (node) => options.nextSibling(node),
     parentNode: (node) => options.parentNode(node),
+    setupChildComponent: options.setupChildComponent,
   };
 }
 
@@ -192,6 +196,7 @@ export function createRenderer<HN, HE extends HN>(
     patchProp,
     createComment,
     querySelector,
+    setupChildComponent,
   } = internal;
 
   // Helper: assign host node to vnode.el (VNode.el is typed as Node | null in common-vnode,
@@ -273,7 +278,7 @@ export function createRenderer<HN, HE extends HN>(
 
       // Mount new node
       if (n2.shapeFlag & ShapeFlags.ELEMENT) {
-        mountElement(n2, container, anchor, isSVG);
+        mountElement(n2, container, anchor, isSVG, parentComponent, parentSuspense);
       } else if (n2.type === Text) {
         mountTextNode(n2, container, anchor);
       } else if (n2.type === Comment) {
@@ -298,18 +303,25 @@ export function createRenderer<HN, HE extends HN>(
     vnode: VNode,
     container: HN,
     anchor: HN | null,
-    _parentComponent: ComponentInternalInstance | null,
+    parentComponent: ComponentInternalInstance | null,
     parentSuspense: SuspenseBoundary | null,
     isSVG: boolean,
   ): void {
-    const component = vnode.component as ComponentInternalInstance | null | undefined;
+    let component = vnode.component as ComponentInternalInstance | null | undefined;
 
     if (!component) {
-      warn(
-        `mountComponent received a component vnode without a component instance. ` +
-          `Ensure setupComponent has been called before mounting.`,
-      );
-      return;
+      // Try to create and setup the component instance using the provided callback
+      if (setupChildComponent) {
+        setupChildComponent(vnode, parentComponent);
+        component = vnode.component as ComponentInternalInstance | null | undefined;
+      }
+      if (!component) {
+        warn(
+          `mountComponent received a component vnode without a component instance. ` +
+            `Ensure setupComponent has been called before mounting.`,
+        );
+        return;
+      }
     }
 
     // Call the render function to get the subTree
@@ -321,7 +333,64 @@ export function createRenderer<HN, HE extends HN>(
       return;
     }
 
-    const subTree = renderFn(component.ctx as Record<string, unknown>);
+    let subTree: VNode;
+    try {
+      subTree = renderFn(component.ctx as Record<string, unknown>);
+    } catch (err) {
+      // Propagate error through parent chain via errorCaptured
+      const renderError = err instanceof Error ? err : new Error(String(err));
+      let handled = false;
+      let current: ComponentInternalInstance | null = component.parent;
+      while (current) {
+        const type = current.type as Record<string, unknown>;
+        const errorHandler = type.errorCaptured as
+          | ((err: Error, instance: unknown, info: string) => boolean | void)
+          | undefined;
+        if (errorHandler) {
+          try {
+            const result = errorHandler.call(current.ctx, renderError, current, 'render function');
+            if (result === false) {
+              handled = true;
+              break;
+            }
+          } catch (e) {
+            error(`Error in errorCaptured hook: ${e}`);
+          }
+        }
+        // Also check errorCapturedHooks (from onErrorCaptured API)
+        const hooks = (current as unknown as Record<string, unknown>).errorCapturedHooks as
+          | Array<(err: Error, instance: unknown, info: string) => boolean | void>
+          | undefined;
+        if (hooks && hooks.length > 0) {
+          for (const hook of hooks) {
+            try {
+              const result = hook(renderError, current, 'render function');
+              if (result === false) {
+                handled = true;
+                break;
+              }
+            } catch (e) {
+              error(`Error in errorCaptured hook: ${e}`);
+            }
+          }
+          if (handled) break;
+        }
+        current = current.parent;
+      }
+
+      // If not handled by any component, try app-level errorHandler
+      if (!handled && component.root) {
+        const rootAny = component.root as unknown as Record<string, unknown>;
+        const appContext = rootAny.appContext as Record<string, unknown> | undefined;
+        const appErrorHandler = appContext?.config as Record<string, unknown> | undefined;
+        if (appErrorHandler && typeof appErrorHandler.errorHandler === 'function') {
+          (appErrorHandler.errorHandler as Function)(renderError, component.ctx, 'render function');
+        }
+      }
+
+      throw renderError;
+    }
+
     component.subTree = subTree;
 
     // Apply inheritAttrs: merge instance.attrs into root VNode props
@@ -351,6 +420,8 @@ export function createRenderer<HN, HE extends HN>(
     container: HN,
     anchor: HN | null,
     isSVG: boolean,
+    parentComponent: ComponentInternalInstance | null = null,
+    parentSuspense: SuspenseBoundary | null = null,
   ): void {
     if (typeof vnode.type !== 'string') {
       warn(
@@ -372,7 +443,7 @@ export function createRenderer<HN, HE extends HN>(
 
     // Mount children
     if (vnode.shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
-      mountChildren(vnode, el, anchor, isSVG);
+      mountChildren(vnode, el, anchor, isSVG, parentComponent, parentSuspense);
     } else if (vnode.shapeFlag & ShapeFlags.TEXT_CHILDREN) {
       setElementText(el, String(vnode.children ?? ''));
     }
@@ -865,6 +936,12 @@ export function createRenderer<HN, HE extends HN>(
         }
       }
       component.isUnmounted = true;
+
+      // Also unmount the component's subTree to remove DOM elements
+      const subTree = (component as ComponentInternalInstance).subTree;
+      if (subTree) {
+        unmount(subTree, component as ComponentInternalInstance, parentSuspense, doRemove);
+      }
       return;
     }
 

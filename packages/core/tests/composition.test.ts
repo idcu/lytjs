@@ -10,11 +10,13 @@ const mockInstance = {
   appContext: { components: {}, directives: {}, mixins: [], provides: {} },
 } as any;
 
+const mockGetCurrentInstance = vi.fn(() => mockInstance);
+
 vi.mock('@lytjs/component', () => ({
-  getCurrentInstance: () => mockInstance,
+  getCurrentInstance: (...args: any[]) => mockGetCurrentInstance(...args),
 }));
 
-import { useSlots, useAttrs, useModel } from '../composition';
+import { useSlots, useAttrs, useModel } from '../src/composition';
 
 describe('useSlots', () => {
   it('在组件实例中返回 slots 对象', () => {
@@ -24,9 +26,7 @@ describe('useSlots', () => {
   });
 
   it('在无组件实例中返回空对象', async () => {
-    const { getCurrentInstance } = await import('@lytjs/component');
-    const mockedGetInstance = vi.mocked(getCurrentInstance);
-    mockedGetInstance.mockReturnValueOnce(null);
+    mockGetCurrentInstance.mockReturnValueOnce(null);
     const slots = useSlots();
     expect(slots).toEqual({});
   });
@@ -39,9 +39,7 @@ describe('useAttrs', () => {
   });
 
   it('在无组件实例中返回空对象', async () => {
-    const { getCurrentInstance } = await import('@lytjs/component');
-    const mockedGetInstance = vi.mocked(getCurrentInstance);
-    mockedGetInstance.mockReturnValueOnce(null);
+    mockGetCurrentInstance.mockReturnValueOnce(null);
     const attrs = useAttrs();
     expect(attrs).toEqual({});
   });
@@ -67,9 +65,7 @@ describe('useModel', () => {
   });
 
   it('在无组件实例中返回 undefined', async () => {
-    const { getCurrentInstance } = await import('@lytjs/component');
-    const mockedGetInstance = vi.mocked(getCurrentInstance);
-    mockedGetInstance.mockReturnValueOnce(null);
+    mockGetCurrentInstance.mockReturnValueOnce(null);
     const model = useModel({ count: 0 }, 'count');
     expect(model.value).toBeUndefined();
   });
