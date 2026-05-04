@@ -21,6 +21,16 @@
       "types": "./dist/signal-component.d.ts",
       "import": "./dist/signal-component.mjs",
       "require": "./dist/signal-component.cjs"
+    },
+    "./scope": {
+      "types": "./dist/scope.d.ts",
+      "import": "./dist/scope.mjs",
+      "require": "./dist/scope.cjs"
+    },
+    "./async": {
+      "types": "./dist/async.d.ts",
+      "import": "./dist/async.mjs",
+      "require": "./dist/async.cjs"
     }
   },
   "files": [

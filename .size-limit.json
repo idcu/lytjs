@@ -160,5 +160,35 @@
     "path": "packages/host-contract/dist/index.mjs",
     "limit": "1 KB",
     "import": "{}"
+  },
+  {
+    "name": "@lytjs/vdom/transition",
+    "path": "packages/vdom/dist/transition-entry.mjs",
+    "limit": "5 KB",
+    "import": "{ performEnterTransition, performLeaveTransition, TransitionGroupProps }"
+  },
+  {
+    "name": "@lytjs/reactivity/scope",
+    "path": "packages/reactivity/dist/scope.mjs",
+    "limit": "3 KB",
+    "import": "{ effectScope, getCurrentScope, onScopeDispose }"
+  },
+  {
+    "name": "@lytjs/reactivity/async",
+    "path": "packages/reactivity/dist/async.mjs",
+    "limit": "3 KB",
+    "import": "{ asyncComputed, useAsyncState }"
+  },
+  {
+    "name": "@lytjs/compiler/signal",
+    "path": "packages/compiler/dist/signal.mjs",
+    "limit": "8 KB",
+    "import": "{ generateSignal }"
+  },
+  {
+    "name": "@lytjs/compiler/ssr",
+    "path": "packages/compiler/dist/ssr.mjs",
+    "limit": "5 KB",
+    "import": "{ generateSSR }"
   }
 ]
