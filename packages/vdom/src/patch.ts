@@ -1,6 +1,6 @@
 /**
  * @lytjs/vdom - patch
- * Core patch logic with minimal DOM renderer
+ * Core patch logic with platform-agnostic renderer host
  */
 
 import {
@@ -13,40 +13,191 @@ import {
 } from '@lytjs/common-vnode';
 import type { VNode, ComponentInternalInstance } from '@lytjs/common-vnode';
 import { isArray, isFunction, hasChanged, EMPTY_OBJ, isString } from '@lytjs/common-is';
-import { isOn } from '@lytjs/common-events';
 import { warn, error } from '@lytjs/common-error';
-import {
-  getDOMEventName,
-  extractDOMEventHandler,
-  extractDOMEventOptions,
-} from '@lytjs/common-events';
-import type { RendererOptions, HostNode, HostElement, SuspenseBoundary } from './types';
+import type { RendererHost } from '@lytjs/host-contract';
+import type { RendererOptions, SuspenseBoundary } from './types';
 import {
   registerDOMOperations,
   patchKeyedChildren as listDiffPatchKeyedChildren,
 } from './list-diff';
 import type { DOMOperations } from './list-diff';
-import { SVG_NS, isSVGTag, patchProp as domPatchProp } from '@lytjs/common-dom';
+
+// ============================================================
+// RendererHost adapter: wraps a RendererHost into RendererOptions shape
+// ============================================================
+
+/**
+ * Adapt a RendererHost to the internal RendererOptions-like shape used by createRenderer.
+ * This bridges the gap between RendererHost's patchProp(el, key, prev, next, isSVG?)
+ * and the internal need for a simpler patchProp(el, key, prev, next).
+ */
+function hostToOptions<HN, HE extends HN>(
+  host: RendererHost<HN, HE>,
+): {
+  createElement: (type: string) => HE;
+  setElementText: (node: HE, text: string) => void;
+  insert: (child: HN, parent: HN, anchor?: HN | null) => void;
+  remove: (child: HN) => void;
+  createText: (text: string) => HN;
+  setText: (node: HN, text: string) => void;
+  patchProp: (el: HE, key: string, prevValue: unknown, nextValue: unknown) => void;
+  createComment: (text: string) => HN;
+  querySelector: (selector: string) => HE | null;
+  nextSibling: (node: HN) => HN | null;
+  parentNode: (node: HN) => HN | null;
+} {
+  return {
+    createElement: (type: string) => host.createElement(type),
+    setElementText: (node, text) => host.setElementText(node, text),
+    insert: (child, parent, anchor) => host.insert(child, parent, anchor),
+    remove: (child) => host.remove(child),
+    createText: (text) => host.createText(text),
+    setText: (node, text) => host.setText(node, text),
+    patchProp: (el, key, prevValue, nextValue) => host.patchProp(el, key, prevValue, nextValue),
+    createComment: (text) => host.createComment(text),
+    querySelector: (selector) => host.querySelector(selector),
+    nextSibling: (node) => host.nextSibling(node),
+    parentNode: (node) => host.parentNode(node),
+  };
+}
+
+/**
+ * Adapt legacy RendererOptions to the internal shape used by createRenderer.
+ */
+function optionsToInternal<HN, HE extends HN>(
+  options: RendererOptions<HN, HE>,
+): {
+  createElement: (type: string) => HE;
+  setElementText: (node: HE, text: string) => void;
+  insert: (child: HN, parent: HN, anchor?: HN | null) => void;
+  remove: (child: HN) => void;
+  createText: (text: string) => HN;
+  setText: (node: HN, text: string) => void;
+  patchProp: (el: HE, key: string, prevValue: unknown, nextValue: unknown) => void;
+  createComment: (text: string) => HN;
+  querySelector: ((selector: string) => HE | null) | undefined;
+  nextSibling: (node: HN) => HN | null;
+  parentNode: (node: HN) => HN | null;
+} {
+  return {
+    createElement: (type) => options.createElement(type),
+    setElementText: (node, text) => options.setElementText(node, text),
+    insert: (child, parent, anchor) => options.insert(child, parent, anchor),
+    remove: (child) => options.remove(child),
+    createText: (text) => options.createText(text),
+    setText: (node, text) => options.setText(node, text),
+    patchProp: (el, key, prevValue, nextValue) =>
+      options.patchProp(el, key, prevValue, nextValue),
+    createComment: (text) => options.createComment(text),
+    querySelector: options.querySelector
+      ? (selector) => options.querySelector!(selector)
+      : undefined,
+    nextSibling: (node) => options.nextSibling(node),
+    parentNode: (node) => options.parentNode(node),
+  };
+}
 
 // ============================================================
 // Renderer factory
 // ============================================================
 
 /**
- * Create a renderer with the given host platform options.
+ * Create a renderer with the given RendererHost.
  * Returns patch, mount, and unmount functions.
+ *
+ * This is the primary signature — fully platform-agnostic.
  */
-export function createRenderer(options: RendererOptions<HostNode, HostElement>) {
+export function createRenderer<HN, HE extends HN>(
+  host: RendererHost<HN, HE>,
+): {
+  patch(
+    n1: VNode | null,
+    n2: VNode,
+    container: HN,
+    anchor?: HN | null,
+    parentComponent?: ComponentInternalInstance | null,
+    parentSuspense?: SuspenseBoundary | null,
+    isSVG?: boolean,
+  ): void;
+  mount(vnode: VNode, container: HN): void;
+  unmount(vnode: VNode): void;
+  move(
+    vnode: VNode,
+    container: HN,
+    anchor: HN | null,
+    parentComponent: ComponentInternalInstance | null,
+    parentSuspense: SuspenseBoundary | null,
+  ): void;
+  diffChildren(
+    c1: VNode[],
+    c2: VNode[],
+    container: HN,
+    parentComponent: ComponentInternalInstance | null,
+    parentSuspense: SuspenseBoundary | null,
+    isSVG: boolean,
+  ): void;
+};
+
+/**
+ * @deprecated Use createRenderer(host: RendererHost) instead.
+ * Legacy signature accepting RendererOptions for backward compatibility.
+ */
+export function createRenderer<HN, HE extends HN>(
+  options: RendererOptions<HN, HE>,
+): {
+  patch(
+    n1: VNode | null,
+    n2: VNode,
+    container: HN,
+    anchor?: HN | null,
+    parentComponent?: ComponentInternalInstance | null,
+    parentSuspense?: SuspenseBoundary | null,
+    isSVG?: boolean,
+  ): void;
+  mount(vnode: VNode, container: HN): void;
+  unmount(vnode: VNode): void;
+  move(
+    vnode: VNode,
+    container: HN,
+    anchor: HN | null,
+    parentComponent: ComponentInternalInstance | null,
+    parentSuspense: SuspenseBoundary | null,
+  ): void;
+  diffChildren(
+    c1: VNode[],
+    c2: VNode[],
+    container: HN,
+    parentComponent: ComponentInternalInstance | null,
+    parentSuspense: SuspenseBoundary | null,
+    isSVG: boolean,
+  ): void;
+};
+
+export function createRenderer<HN, HE extends HN>(
+  hostOrOptions: RendererHost<HN, HE> | RendererOptions<HN, HE>,
+) {
+  // Detect whether we received a RendererHost or legacy RendererOptions
+  const isHost = 'addClass' in hostOrOptions && 'getBoundingClientRect' in hostOrOptions;
+  const internal = isHost
+    ? hostToOptions(hostOrOptions as RendererHost<HN, HE>)
+    : optionsToInternal(hostOrOptions as RendererOptions<HN, HE>);
+
   const {
     createElement,
     setElementText,
     insert,
     remove: hostRemove,
     createText,
+    setText,
     patchProp,
     createComment,
     querySelector,
-  } = options;
+  } = internal;
+
+  // Helper: assign host node to vnode.el (VNode.el is typed as Node | null in common-vnode,
+  // but we work with generic HN here, so we need a type assertion)
+  const setVNodeEl = (vnode: VNode, el: HN | null) => { vnode.el = el as unknown as Node | null; };
+  const getVNodeEl = (vnode: VNode): HN | null => vnode.el as unknown as HN | null;
 
   // ============================================================
   // patch - core diffing entry point
@@ -55,8 +206,8 @@ export function createRenderer(options: RendererOptions<HostNode, HostElement>) 
   function patch(
     n1: VNode | null,
     n2: VNode,
-    container: HostNode,
-    anchor: HostNode | null = null,
+    container: HN,
+    anchor: HN | null = null,
     parentComponent: ComponentInternalInstance | null = null,
     parentSuspense: SuspenseBoundary | null = null,
     isSVG: boolean = false,
@@ -77,7 +228,8 @@ export function createRenderer(options: RendererOptions<HostNode, HostElement>) 
         patchFragment(n1, n2, container, parentComponent, parentSuspense, isSVG);
       } else if (n2.type === Text) {
         // Patch text node: update textContent if children changed
-        const node = (n2.el = n1.el);
+        const node = n1.el;
+        setVNodeEl(n2, node as unknown as HN | null);
         if (n1.children !== n2.children) {
           if (isFunction(n2.children)) {
             warn(
@@ -86,13 +238,14 @@ export function createRenderer(options: RendererOptions<HostNode, HostElement>) 
                 `The value will be replaced with an empty string.`,
             );
           }
-          (node as Text).textContent = isFunction(n2.children) ? '' : String(n2.children ?? '');
+          setText(node as unknown as HN, isFunction(n2.children) ? '' : String(n2.children ?? ''));
         }
       } else if (n2.type === Comment) {
         // Patch comment node: update nodeValue if children changed
-        const node = (n2.el = n1.el);
+        const node = n1.el;
+        setVNodeEl(n2, node as unknown as HN | null);
         if (n1.children !== n2.children) {
-          (node as Comment).nodeValue = isFunction(n2.children) ? '' : String(n2.children ?? '');
+          setText(node as unknown as HN, isFunction(n2.children) ? '' : String(n2.children ?? ''));
         }
       } else if (n2.shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
         // Component patch: delegate to component update process
@@ -141,8 +294,8 @@ export function createRenderer(options: RendererOptions<HostNode, HostElement>) 
 
   function mountElement(
     vnode: VNode,
-    container: HostNode,
-    anchor: HostNode | null,
+    container: HN,
+    anchor: HN | null,
     isSVG: boolean,
   ): void {
     if (typeof vnode.type !== 'string') {
@@ -154,7 +307,7 @@ export function createRenderer(options: RendererOptions<HostNode, HostElement>) 
     }
     const tag = vnode.type;
     const el = createElement(tag);
-    vnode.el = el;
+    setVNodeEl(vnode, el);
 
     // Apply props
     const props = vnode.props ?? EMPTY_OBJ;
@@ -178,10 +331,10 @@ export function createRenderer(options: RendererOptions<HostNode, HostElement>) 
   // mountTextNode
   // ============================================================
 
-  function mountTextNode(vnode: VNode, container: HostNode, anchor: HostNode | null): void {
+  function mountTextNode(vnode: VNode, container: HN, anchor: HN | null): void {
     const text = isFunction(vnode.children) ? '' : String(vnode.children ?? '');
     const node = createText(text);
-    vnode.el = node;
+    setVNodeEl(vnode, node);
     insert(node, container, anchor);
   }
 
@@ -189,11 +342,11 @@ export function createRenderer(options: RendererOptions<HostNode, HostElement>) 
   // mountCommentNode
   // ============================================================
 
-  function mountCommentNode(vnode: VNode, container: HostNode, anchor: HostNode | null): void {
+  function mountCommentNode(vnode: VNode, container: HN, anchor: HN | null): void {
     const text = isFunction(vnode.children) ? '' : String(vnode.children ?? '');
     const node = createComment(text);
-    vnode.el = node;
-    vnode.anchor = node;
+    setVNodeEl(vnode, node);
+    vnode.anchor = node as unknown as Node | null;
     insert(node, container, anchor);
   }
 
@@ -203,16 +356,16 @@ export function createRenderer(options: RendererOptions<HostNode, HostElement>) 
 
   function mountFragment(
     vnode: VNode,
-    container: HostNode,
-    anchor: HostNode | null,
+    container: HN,
+    anchor: HN | null,
     parentComponent: ComponentInternalInstance | null,
     parentSuspense: SuspenseBoundary | null,
     isSVG: boolean,
   ): void {
     const fragmentStartAnchor = createComment('');
     const fragmentEndAnchor = createComment('');
-    vnode.el = fragmentStartAnchor;
-    vnode.anchor = fragmentEndAnchor;
+    setVNodeEl(vnode, fragmentStartAnchor);
+    vnode.anchor = fragmentEndAnchor as unknown as Node | null;
 
     insert(fragmentStartAnchor, container, anchor);
     insert(fragmentEndAnchor, container, anchor);
@@ -234,7 +387,7 @@ export function createRenderer(options: RendererOptions<HostNode, HostElement>) 
   function patchFragment(
     n1: VNode,
     n2: VNode,
-    container: HostNode,
+    container: HN,
     parentComponent: ComponentInternalInstance | null,
     parentSuspense: SuspenseBoundary | null,
     isSVG: boolean,
@@ -253,21 +406,21 @@ export function createRenderer(options: RendererOptions<HostNode, HostElement>) 
       // Choose diff strategy based on fragment patchFlag
       if (n2.patchFlag & PatchFlags.STABLE_FRAGMENT) {
         // STABLE_FRAGMENT: children order never changes, patch by index directly
-        diffStableFragment(c1, c2, container, endAnchor, parentComponent, parentSuspense, isSVG);
+        diffStableFragment(c1, c2, container, endAnchor as HN, parentComponent, parentSuspense, isSVG);
       } else if (n2.patchFlag & PatchFlags.KEYED_FRAGMENT) {
         // KEYED_FRAGMENT: children have keys, use keyed diff algorithm
-        diffChildrenFragment(c1, c2, container, endAnchor, parentComponent, parentSuspense, isSVG);
+        diffChildrenFragment(c1, c2, container, endAnchor as HN, parentComponent, parentSuspense, isSVG);
       } else if (n2.patchFlag & PatchFlags.UNKEYED_FRAGMENT) {
         // UNKEYED_FRAGMENT: children have no keys, use simple sync-from-start strategy
-        diffUnkeyedFragment(c1, c2, container, endAnchor, parentComponent, parentSuspense, isSVG);
+        diffUnkeyedFragment(c1, c2, container, endAnchor as HN, parentComponent, parentSuspense, isSVG);
       } else {
         // No fragment-specific patchFlag, use default keyed diff
-        diffChildrenFragment(c1, c2, container, endAnchor, parentComponent, parentSuspense, isSVG);
+        diffChildrenFragment(c1, c2, container, endAnchor as HN, parentComponent, parentSuspense, isSVG);
       }
     } else if (isArray(c2)) {
       // Old was null/empty, mount all new before end anchor
       for (let i = 0; i < c2.length; i++) {
-        patch(null, c2[i]!, container, endAnchor, parentComponent, parentSuspense, isSVG);
+        patch(null, c2[i]!, container, endAnchor as HN, parentComponent, parentSuspense, isSVG);
       }
     } else if (isArray(c1)) {
       // New is null/empty, unmount all old
@@ -282,11 +435,11 @@ export function createRenderer(options: RendererOptions<HostNode, HostElement>) 
   function diffChildrenInternal(
     c1: VNode[],
     c2: VNode[],
-    container: HostNode,
+    container: HN,
     parentComponent: ComponentInternalInstance | null,
     parentSuspense: SuspenseBoundary | null,
     isSVG: boolean,
-    fallbackAnchor: HostNode | null,
+    fallbackAnchor: HN | null,
   ): void {
     listDiffPatchKeyedChildren(
       c1,
@@ -306,8 +459,8 @@ export function createRenderer(options: RendererOptions<HostNode, HostElement>) 
   function diffChildrenFragment(
     c1: VNode[],
     c2: VNode[],
-    container: HostNode,
-    endAnchor: HostNode,
+    container: HN,
+    endAnchor: HN,
     parentComponent: ComponentInternalInstance | null,
     parentSuspense: SuspenseBoundary | null,
     isSVG: boolean,
@@ -322,8 +475,8 @@ export function createRenderer(options: RendererOptions<HostNode, HostElement>) 
   function diffStableFragment(
     c1: VNode[],
     c2: VNode[],
-    container: HostNode,
-    endAnchor: HostNode,
+    container: HN,
+    endAnchor: HN,
     parentComponent: ComponentInternalInstance | null,
     parentSuspense: SuspenseBoundary | null,
     isSVG: boolean,
@@ -354,8 +507,8 @@ export function createRenderer(options: RendererOptions<HostNode, HostElement>) 
   function diffUnkeyedFragment(
     c1: VNode[],
     c2: VNode[],
-    container: HostNode,
-    endAnchor: HostNode,
+    container: HN,
+    endAnchor: HN,
     parentComponent: ComponentInternalInstance | null,
     parentSuspense: SuspenseBoundary | null,
     isSVG: boolean,
@@ -395,8 +548,8 @@ export function createRenderer(options: RendererOptions<HostNode, HostElement>) 
 
   function mountChildren(
     vnode: VNode,
-    container: HostNode,
-    anchor: HostNode | null,
+    container: HN,
+    anchor: HN | null,
     isSVG: boolean,
     parentComponent: ComponentInternalInstance | null = null,
     parentSuspense: SuspenseBoundary | null = null,
@@ -417,7 +570,7 @@ export function createRenderer(options: RendererOptions<HostNode, HostElement>) 
   // ============================================================
 
   function diffProps(
-    el: HostElement,
+    el: HE,
     oldProps: Record<string, unknown>,
     newProps: Record<string, unknown>,
   ): void {
@@ -449,7 +602,8 @@ export function createRenderer(options: RendererOptions<HostNode, HostElement>) 
     isSVG: boolean,
   ): void {
     // n1.el is guaranteed to exist since n1 was previously mounted
-    const el = (n2.el = n1.el!) as HostElement;
+    const el = n1.el! as unknown as HE;
+    setVNodeEl(n2, n1.el as unknown as HN | null);
 
     // Patch props
     const oldProps = n1.props ?? EMPTY_OBJ;
@@ -517,7 +671,7 @@ export function createRenderer(options: RendererOptions<HostNode, HostElement>) 
   function patchBlockChildren(
     n1: VNode,
     n2: VNode,
-    container: HostNode,
+    container: HN,
     parentComponent: ComponentInternalInstance | null,
     parentSuspense: SuspenseBoundary | null,
     isSVG: boolean,
@@ -556,7 +710,7 @@ export function createRenderer(options: RendererOptions<HostNode, HostElement>) 
   function patchChildren(
     n1: VNode,
     n2: VNode,
-    container: HostNode,
+    container: HN,
     parentComponent: ComponentInternalInstance | null,
     parentSuspense: SuspenseBoundary | null,
     isSVG: boolean,
@@ -573,12 +727,12 @@ export function createRenderer(options: RendererOptions<HostNode, HostElement>) 
         unmountChildren(c1 as VNode[], parentComponent, parentSuspense);
       }
       // Always set new text (DOM was potentially cleared by unmountChildren above)
-      setElementText(container as HostElement, String(c2 ?? ''));
+      setElementText(container as HE, String(c2 ?? ''));
     } else {
       // New children are array (or null)
       if (prevShapeFlag & ShapeFlags.TEXT_CHILDREN) {
         // Old children were text - clear it
-        setElementText(container as HostElement, '');
+        setElementText(container as HE, '');
       }
 
       if (prevShapeFlag & ShapeFlags.ARRAY_CHILDREN) {
@@ -610,7 +764,7 @@ export function createRenderer(options: RendererOptions<HostNode, HostElement>) 
   function diffChildren(
     c1: VNode[],
     c2: VNode[],
-    container: HostNode,
+    container: HN,
     parentComponent: ComponentInternalInstance | null,
     parentSuspense: SuspenseBoundary | null,
     isSVG: boolean,
@@ -628,7 +782,8 @@ export function createRenderer(options: RendererOptions<HostNode, HostElement>) 
     parentSuspense: SuspenseBoundary | null,
     doRemove: boolean = false,
   ): void {
-    const { type, children, el, component } = vnode;
+    const { type, children, component } = vnode;
+    const el = getVNodeEl(vnode);
 
     // Handle component unmount - trigger onUnmounted lifecycle hook
     if (
@@ -666,7 +821,8 @@ export function createRenderer(options: RendererOptions<HostNode, HostElement>) 
 
     if (type === Comment) {
       if (doRemove) {
-        if (el) hostRemove(el);
+        const commentEl = getVNodeEl(vnode);
+        if (commentEl) hostRemove(commentEl);
       }
       return;
     }
@@ -712,11 +868,12 @@ export function createRenderer(options: RendererOptions<HostNode, HostElement>) 
 
     if (doRemove) {
       // Remove fragment anchors
-      if (vnode.el) {
-        hostRemove(vnode.el);
+      const vEl = getVNodeEl(vnode);
+      if (vEl) {
+        hostRemove(vEl);
       }
       if (vnode.anchor && vnode.anchor !== vnode.el) {
-        hostRemove(vnode.anchor);
+        hostRemove(vnode.anchor as unknown as HN);
       }
     }
   }
@@ -741,14 +898,14 @@ export function createRenderer(options: RendererOptions<HostNode, HostElement>) 
 
   function mountTeleport(
     vnode: VNode,
-    container: HostNode,
-    anchor: HostNode | null,
+    container: HN,
+    anchor: HN | null,
     parentComponent: ComponentInternalInstance | null,
     parentSuspense: SuspenseBoundary | null,
     isSVG: boolean,
   ): void {
     const { props } = vnode;
-    const to = props?.to as string | Element | undefined;
+    const to = props?.to as string | HE | undefined;
     const disabled = !!props?.disabled;
 
     if (disabled) {
@@ -756,16 +913,16 @@ export function createRenderer(options: RendererOptions<HostNode, HostElement>) 
       mountChildren(vnode, container, anchor, isSVG, parentComponent, parentSuspense);
       // Store a placeholder comment in container
       const placeholder = createComment('');
-      vnode.el = placeholder;
+      setVNodeEl(vnode, placeholder);
       vnode.targetAnchor = null;
       insert(placeholder, container, anchor);
     } else {
       // Resolve target container
-      let target: HostElement | null = null;
+      let target: HE | null = null;
       if (isString(to)) {
         target = querySelector ? querySelector(to) : null;
-      } else if (to && typeof to === 'object' && 'nodeType' in to) {
-        target = to as HostElement;
+      } else if (to && typeof to === 'object') {
+        target = to as HE;
       }
 
       if (!target) {
@@ -774,7 +931,7 @@ export function createRenderer(options: RendererOptions<HostNode, HostElement>) 
         }
         mountChildren(vnode, container, anchor, isSVG, parentComponent, parentSuspense);
         const placeholder = createComment('');
-        vnode.el = placeholder;
+        setVNodeEl(vnode, placeholder);
         vnode.targetAnchor = null;
         insert(placeholder, container, anchor);
         return;
@@ -800,18 +957,18 @@ export function createRenderer(options: RendererOptions<HostNode, HostElement>) 
       insert(placeholder, container, anchor);
 
       // Store references on vnode
-      vnode.el = placeholder;
-      vnode.target = target;
-      vnode.targetAnchor = targetEnd;
-      vnode.targetStart = targetStart;
+      setVNodeEl(vnode, placeholder);
+      vnode.target = target as unknown as Element | null;
+      vnode.targetAnchor = targetEnd as unknown as Node | null;
+      vnode.targetStart = targetStart as unknown as Node | null;
     }
   }
 
   function patchTeleport(
     n1: VNode,
     n2: VNode,
-    container: HostNode,
-    anchor: HostNode | null,
+    container: HN,
+    anchor: HN | null,
     parentComponent: ComponentInternalInstance | null,
     parentSuspense: SuspenseBoundary | null,
     isSVG: boolean,
@@ -820,8 +977,8 @@ export function createRenderer(options: RendererOptions<HostNode, HostElement>) 
     const newProps = n2.props ?? EMPTY_OBJ;
     const oldDisabled = !!oldProps.disabled;
     const newDisabled = !!newProps.disabled;
-    const oldTo = oldProps.to as string | Element | undefined;
-    const newTo = newProps.to as string | Element | undefined;
+    const oldTo = oldProps.to as string | HE | undefined;
+    const newTo = newProps.to as string | HE | undefined;
 
     // Reuse the placeholder el
     n2.el = n1.el;
@@ -832,11 +989,11 @@ export function createRenderer(options: RendererOptions<HostNode, HostElement>) 
     // Case 1: target changed (and not disabled)
     if (!newDisabled && oldTo !== newTo) {
       // Resolve new target
-      let newTarget: HostElement | null = null;
+      let newTarget: HE | null = null;
       if (isString(newTo)) {
         newTarget = querySelector ? querySelector(newTo) : null;
-      } else if (newTo && typeof newTo === 'object' && 'nodeType' in newTo) {
-        newTarget = newTo as HostElement;
+      } else if (newTo && typeof newTo === 'object') {
+        newTarget = newTo as HE;
       }
 
       if (newTarget) {
@@ -856,12 +1013,12 @@ export function createRenderer(options: RendererOptions<HostNode, HostElement>) 
         }
 
         // Remove old target anchors
-        if (n1.targetStart) hostRemove(n1.targetStart);
-        if (n1.targetAnchor) hostRemove(n1.targetAnchor);
+        if (n1.targetStart) hostRemove(n1.targetStart as unknown as HN);
+        if (n1.targetAnchor) hostRemove(n1.targetAnchor as unknown as HN);
 
-        n2.target = newTarget;
-        n2.targetAnchor = targetEnd;
-        n2.targetStart = targetStart;
+        n2.target = newTarget as unknown as Element | null;
+        n2.targetAnchor = targetEnd as unknown as Node | null;
+        n2.targetStart = targetStart as unknown as Node | null;
       }
     }
     // Case 2: disabled -> enabled or enabled -> disabled
@@ -875,8 +1032,8 @@ export function createRenderer(options: RendererOptions<HostNode, HostElement>) 
             move(child, container, anchor, parentComponent, parentSuspense);
           }
         }
-        if (n1.targetStart) hostRemove(n1.targetStart);
-        if (n1.targetAnchor) hostRemove(n1.targetAnchor);
+        if (n1.targetStart) hostRemove(n1.targetStart as unknown as HN);
+        if (n1.targetAnchor) hostRemove(n1.targetAnchor as unknown as HN);
         n2.target = null;
         n2.targetAnchor = null;
         n2.targetStart = null;
@@ -891,8 +1048,8 @@ export function createRenderer(options: RendererOptions<HostNode, HostElement>) 
     const c1 = n1.children as VNode[] | null;
     const c2 = n2.children as VNode[] | null;
     if (isArray(c1) && isArray(c2)) {
-      const patchContainer = newDisabled ? container : ((n2.target as HostNode) ?? container);
-      const patchAnchor = newDisabled ? anchor : (n2.targetAnchor as HostNode | null);
+      const patchContainer = newDisabled ? container : ((n2.target as unknown as HN) ?? container);
+      const patchAnchor = newDisabled ? anchor : (n2.targetAnchor as unknown as HN | null);
       diffChildrenInternal(
         c1,
         c2,
@@ -919,18 +1076,20 @@ export function createRenderer(options: RendererOptions<HostNode, HostElement>) 
 
     if (doRemove) {
       // Remove target anchors
-      if (vnode.targetStart) hostRemove(vnode.targetStart);
-      if (vnode.targetAnchor) hostRemove(vnode.targetAnchor);
+      if (vnode.targetStart) hostRemove(vnode.targetStart as unknown as HN);
+      if (vnode.targetAnchor) hostRemove(vnode.targetAnchor as unknown as HN);
       // Remove placeholder in container
-      if (vnode.el) hostRemove(vnode.el);
+      const vEl = getVNodeEl(vnode);
+      if (vEl) hostRemove(vEl);
     }
   }
 
-  function moveTeleport(vnode: VNode, container: HostNode, anchor: HostNode | null): void {
+  function moveTeleport(vnode: VNode, container: HN, anchor: HN | null): void {
     // Only move the placeholder comment node in the container.
     // The children in the target container stay in place.
-    if (vnode.el) {
-      insert(vnode.el, container, anchor);
+    const vEl = getVNodeEl(vnode);
+    if (vEl) {
+      insert(vEl, container, anchor);
     }
   }
 
@@ -940,8 +1099,8 @@ export function createRenderer(options: RendererOptions<HostNode, HostElement>) 
 
   function mountSuspense(
     vnode: VNode,
-    container: HostNode,
-    anchor: HostNode | null,
+    container: HN,
+    anchor: HN | null,
     parentComponent: ComponentInternalInstance | null,
     _parentSuspense: SuspenseBoundary | null,
     isSVG: boolean,
@@ -974,15 +1133,15 @@ export function createRenderer(options: RendererOptions<HostNode, HostElement>) 
 
     // Create placeholder comment node
     const placeholder = createComment('');
-    vnode.el = placeholder;
+    setVNodeEl(vnode, placeholder);
     insert(placeholder, container, anchor);
   }
 
   function patchSuspense(
     n1: VNode,
     n2: VNode,
-    container: HostNode,
-    anchor: HostNode | null,
+    container: HN,
+    anchor: HN | null,
     parentComponent: ComponentInternalInstance | null,
     parentSuspense: SuspenseBoundary | null,
     isSVG: boolean,
@@ -1043,7 +1202,8 @@ export function createRenderer(options: RendererOptions<HostNode, HostElement>) 
     }
 
     if (doRemove) {
-      if (vnode.el) hostRemove(vnode.el);
+      const vEl = getVNodeEl(vnode);
+      if (vEl) hostRemove(vEl);
     }
   }
 
@@ -1053,8 +1213,8 @@ export function createRenderer(options: RendererOptions<HostNode, HostElement>) 
 
   function move(
     vnode: VNode,
-    container: HostNode,
-    anchor: HostNode | null,
+    container: HN,
+    anchor: HN | null,
     parentComponent: ComponentInternalInstance | null,
     parentSuspense: SuspenseBoundary | null,
   ): void {
@@ -1065,12 +1225,14 @@ export function createRenderer(options: RendererOptions<HostNode, HostElement>) 
         move(children[i]!, container, anchor, parentComponent, parentSuspense);
       }
       // Move anchors
-      if (vnode.el) insert(vnode.el, container, anchor);
-      if (vnode.anchor && vnode.anchor !== vnode.el) insert(vnode.anchor, container, anchor);
+      const vEl = getVNodeEl(vnode);
+      if (vEl) insert(vEl, container, anchor);
+      if (vnode.anchor && vnode.anchor !== vnode.el) insert(vnode.anchor as unknown as HN, container, anchor);
     } else if (vnode.shapeFlag & ShapeFlags.TELEPORT) {
       moveTeleport(vnode, container, anchor);
     } else {
-      if (vnode.el) insert(vnode.el, container, anchor);
+      const vEl = getVNodeEl(vnode);
+      if (vEl) insert(vEl, container, anchor);
     }
   }
 
@@ -1078,17 +1240,18 @@ export function createRenderer(options: RendererOptions<HostNode, HostElement>) 
   // mount
   // ============================================================
 
-  function mount(vnode: VNode, container: HostNode): void {
+  function mount(vnode: VNode, container: HN): void {
     patch(null, vnode, container, null);
   }
 
   // ============================================================
   // 注册 DOM 操作到 list-diff 模块
   // ============================================================
-  const domOps: DOMOperations<HostNode, SuspenseBoundary | null> = {
+  const domOps: DOMOperations<HN, SuspenseBoundary | null> = {
     insert: (child, container, anchor) => {
-      if (child.el) {
-        insert(child.el, container, anchor);
+      const childEl = getVNodeEl(child);
+      if (childEl) {
+        insert(childEl, container, anchor);
       }
     },
     createElement: (type) => createElement(type),
@@ -1113,120 +1276,5 @@ export function createRenderer(options: RendererOptions<HostNode, HostElement>) 
     unmount: (vnode: VNode) => unmount(vnode, null, null, true),
     move,
     diffChildren,
-  };
-}
-
-// ============================================================
-// Simplified patchProp for vdom's own DOM renderer
-// ============================================================
-
-/**
- * Simplified patchProp implementation for vdom's built-in DOM renderer.
- *
- * This is a lightweight version that covers the most common prop types
- * (class, style, events, attributes) without the advanced features of
- * the full implementation in `@lytjs/renderer` (e.g., invoker pattern
- * for events, camelCase-to-kebab-case style normalization, boolean attr
- * handling, innerHTML sanitization, etc.).
- *
- * Used only by `createDOMRendererOptions()` for vdom's own tests and
- * standalone usage. Production applications should use
- * `@lytjs/renderer`'s `createDOMRenderer()` which provides the
- * complete, security-hardened patchProp.
- *
- * TODO(U-06): Unify with @lytjs/renderer's patchProp by extracting
- * shared logic (patchClass, patchStyle, patchAttr) into common packages
- * and having both implementations consume them. The main blocker is
- * patchEvent's invoker pattern which is renderer-specific optimization.
- *
- * @see @lytjs/renderer/src/dom/patch-props.ts for the full implementation
- */
-/**
- * ⚠️ WARNING: Simplified patchDOMProp implementation
- *
- * This is a MINIMAL version of DOM property patching for development/testing use.
- * For production environments, use @lytjs/renderer which provides the
- * complete, security-hardened patchProp implementation.
- *
- * Security considerations:
- * - This version does NOT implement full XSS protection for all edge cases
- * - Event handler patching is simplified (no invoker pattern)
- * - Style patching lacks full CSS property sanitization
- *
- * @see @lytjs/renderer/src/dom/patch-props.ts for the full implementation
- */
-function patchDOMProp(el: Element, key: string, prevValue: unknown, nextValue: unknown): void {
-  // Delegate to common-dom for class, style, innerHTML, textContent, and attrs
-  if (key === 'class' || key === 'style' || key === 'innerHTML' || key === 'textContent') {
-    domPatchProp(el, key, prevValue, nextValue);
-    return;
-  }
-  // Event handling (simplified - no invoker pattern)
-  if (isOn(key)) {
-    const eventName = getDOMEventName(key);
-    const prevHandler = extractDOMEventHandler(prevValue);
-    const prevOptions = extractDOMEventOptions(prevValue);
-    const nextHandler = extractDOMEventHandler(nextValue);
-    const nextOptions = extractDOMEventOptions(nextValue);
-    if (prevHandler) {
-      el.removeEventListener(eventName, prevHandler, prevOptions);
-    }
-    if (nextHandler) {
-      el.addEventListener(eventName, nextHandler, nextOptions);
-    }
-    return;
-  }
-  // Delegate remaining attributes to common-dom
-  domPatchProp(el, key, prevValue, nextValue);
-}
-
-// ============================================================
-// Default DOM renderer options
-// ============================================================
-
-/**
- * Create default DOM renderer options for browser environments.
- *
- * Provides a minimal DOM adapter suitable for vdom's own tests and
- * standalone usage. For production use, prefer `@lytjs/renderer`'s
- * `createDOMRenderer()` which includes SVG namespace handling,
- * event invoker caching, innerHTML sanitization, and more.
- */
-export function createDOMRendererOptions(): RendererOptions<Node, Element> {
-  return {
-    createElement(tag: string): Element {
-      return document.createElementNS(isSVGTag(tag) ? SVG_NS : 'http://www.w3.org/1999/xhtml', tag);
-    },
-    setElementText(node: Element, text: string): void {
-      node.textContent = text;
-    },
-    insert(child: Node, parent: Node, anchor: Node | null = null): void {
-      parent.insertBefore(child, anchor);
-    },
-    remove(child: Node): void {
-      const parent = child.parentNode;
-      if (parent) {
-        parent.removeChild(child);
-      }
-    },
-    createText(text: string): Node {
-      return document.createTextNode(text);
-    },
-    setText(node: Node, text: string): void {
-      node.nodeValue = text;
-    },
-    nextSibling(node: Node): Node | null {
-      return node.nextSibling;
-    },
-    parentNode(node: Node): Node | null {
-      return node.parentNode;
-    },
-    patchProp: patchDOMProp,
-    createComment(text: string): Node {
-      return document.createComment(text);
-    },
-    querySelector(selector: string): Element | null {
-      return document.querySelector(selector);
-    },
   };
 }

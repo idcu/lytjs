@@ -5,9 +5,9 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import {
   createVNode,
   createRenderer,
-  createDOMRendererOptions,
   ShapeFlags,
 } from '../src/index';
+import { WebRendererHost } from '@lytjs/adapter-web';
 
 let targetCounter = 0;
 
@@ -32,7 +32,7 @@ describe('Teleport - mount', () => {
   beforeEach(() => {
     container = createTestContainer();
     target = createUniqueTarget();
-    renderer = createRenderer(createDOMRendererOptions());
+    renderer = createRenderer(new WebRendererHost());
   });
 
   afterEach(() => {
@@ -99,7 +99,7 @@ describe('Teleport - unmount', () => {
   beforeEach(() => {
     container = createTestContainer();
     target = createUniqueTarget();
-    renderer = createRenderer(createDOMRendererOptions());
+    renderer = createRenderer(new WebRendererHost());
   });
 
   afterEach(() => {
@@ -142,7 +142,7 @@ describe('Teleport - patch (target change)', () => {
     container = createTestContainer();
     target1 = createUniqueTarget();
     target2 = createUniqueTarget();
-    renderer = createRenderer(createDOMRendererOptions());
+    renderer = createRenderer(new WebRendererHost());
   });
 
   afterEach(() => {
@@ -186,7 +186,7 @@ describe('Teleport - move', () => {
   beforeEach(() => {
     container = createTestContainer();
     target = createUniqueTarget();
-    renderer = createRenderer(createDOMRendererOptions());
+    renderer = createRenderer(new WebRendererHost());
   });
 
   afterEach(() => {

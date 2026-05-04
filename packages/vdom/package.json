@@ -34,7 +34,8 @@
     "@lytjs/common-algorithm": "workspace:*",
     "@lytjs/common-string": "workspace:*",
     "@lytjs/common-events": "workspace:*",
-    "@lytjs/common-dom": "workspace:*"
+    "@lytjs/common-dom": "workspace:*",
+    "@lytjs/host-contract": "workspace:*"
   },
   "devDependencies": {
     "tsup": "^8.0.0",

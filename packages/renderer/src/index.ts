@@ -18,12 +18,12 @@ export {
   resetSkippedTrackingCount,
 } from '@lytjs/reactivity';
 
-// DOM renderer
+// DOM renderer - re-export from @lytjs/adapter-web
 /** 创建 DOM 渲染器 */
-export { createDOMRenderer } from './dom/dom-renderer';
-export type { DOMRenderer } from './dom/dom-renderer';
+export { createDOMRenderer } from '@lytjs/adapter-web';
+export type { DOMRenderer } from '@lytjs/adapter-web';
 
-// DOM property patching
+// DOM property patching - re-export from @lytjs/adapter-web
 /** DOM 属性补丁操作 */
 export {
   patchProp,
@@ -36,15 +36,31 @@ export {
   parseEventModifier,
   createInvoker,
   removeAllEventListeners,
-} from './dom/patch-props';
-export type { ParsedEvent, EventInvoker } from './dom/patch-props';
+} from '@lytjs/adapter-web';
+export type { ParsedEvent, EventInvoker } from '@lytjs/adapter-web';
 /** 事件名检测 */
 export { isOn } from '@lytjs/common-events';
 
-// Hydration
+// Hydration - re-export from @lytjs/adapter-web
 /** 创建水合（hydration）函数 */
-export { createHydrationFunctions } from './dom/hydration';
-export type { HydrationRenderer } from './dom/hydration';
+export { createHydrationFunctions } from '@lytjs/adapter-web';
+export type { HydrationRenderer } from '@lytjs/adapter-web';
+
+// Re-export from @lytjs/host-contract
+/** 渲染器宿主抽象类型 */
+export type {
+  RendererHost,
+  HostRect,
+  HostStyleDeclaration,
+  TransitionDurationInfo,
+  HostEvent,
+  HostEventHandler,
+  HostEventOptions,
+} from '@lytjs/host-contract';
+
+// Re-export from @lytjs/adapter-web
+/** Web 渲染器宿主实现 */
+export { WebRendererHost, createWebHost, wrapDOMEvent } from '@lytjs/adapter-web';
 
 // SSR renderer
 /** 将组件渲染为字符串（SSR） */

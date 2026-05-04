@@ -33,5 +33,7 @@ export default defineConfig({
     '@lytjs/common-dom',
     '@lytjs/dom-runtime',
     '@lytjs/compiler',
+    '@lytjs/host-contract',
+    '@lytjs/adapter-web',
   ],
 });

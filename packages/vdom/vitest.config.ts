@@ -6,6 +6,9 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const commonRoot = resolve(__dirname, '../common/packages');
 
 export default defineConfig({
+  define: {
+    __DEV__: true,
+  },
   resolve: {
     alias: {
       '@lytjs/common-is': `${commonRoot}/is/dist/index.mjs`,
@@ -15,6 +18,8 @@ export default defineConfig({
       '@lytjs/common-error': `${commonRoot}/error/dist/index.mjs`,
       '@lytjs/common-algorithm': `${commonRoot}/algorithm/dist/index.mjs`,
       '@lytjs/shared-types': resolve(__dirname, '../shared-types/dist/index.mjs'),
+      '@lytjs/host-contract': resolve(__dirname, '../host-contract/dist/index.mjs'),
+      '@lytjs/adapter-web': resolve(__dirname, '../adapter-web/dist/index.mjs'),
     },
   },
   test: {

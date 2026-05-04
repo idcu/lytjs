@@ -21,6 +21,9 @@ export default defineConfig({
       '@lytjs/reactivity': `${packagesRoot}/reactivity/dist/index.mjs`,
       '@lytjs/dom-runtime': `${packagesRoot}/dom-runtime/dist/index.mjs`,
       '@lytjs/compiler': `${packagesRoot}/compiler/dist/index.mjs`,
+      '@lytjs/host-contract': `${packagesRoot}/host-contract/dist/index.mjs`,
+      '@lytjs/adapter-web': `${packagesRoot}/adapter-web/dist/index.mjs`,
+      '@lytjs/shared-types': `${packagesRoot}/shared-types/dist/index.mjs`,
     },
   },
   test: {

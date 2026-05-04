@@ -6,6 +6,17 @@
 import type { VNode, ComponentInternalInstance } from '@lytjs/common-vnode';
 import type { Props as SharedProps } from '@lytjs/shared-types';
 
+// Re-export from @lytjs/host-contract for convenience
+export type {
+  RendererHost,
+  HostRect,
+  HostStyleDeclaration,
+  TransitionDurationInfo,
+  HostEvent,
+  HostEventHandler,
+  HostEventOptions,
+} from '@lytjs/host-contract';
+
 // ============================================================
 // Basic types
 // ============================================================
@@ -44,27 +55,32 @@ export interface Component<P = Record<string, unknown>, RawBindings = {}> {
 // Renderer types
 // ============================================================
 
-/** Renderer options for host platform operations */
-export interface RendererOptions<HostNode = Node, HostElement extends Node = Element> {
+/**
+ * Renderer options for host platform operations.
+ *
+ * @deprecated Use RendererHost from @lytjs/host-contract instead.
+ * This interface is kept for backward compatibility.
+ */
+export interface RendererOptions<HN = unknown, HE extends HN = HN> {
   /** Create a host element from a tag string */
-  createElement(type: string): HostElement;
+  createElement(type: string): HE;
   /** Set text content on a host element */
-  setElementText(node: HostElement, text: string): void;
+  setElementText(node: HE, text: string): void;
   /** Insert a host node before an anchor, or append to parent */
-  insert(child: HostNode, parent: HostNode, anchor?: HostNode | null): void;
+  insert(child: HN, parent: HN, anchor?: HN | null): void;
   /** Remove a host node from its parent */
-  remove(child: HostNode): void;
+  remove(child: HN): void;
   /** Create a text node */
-  createText(text: string): HostNode;
+  createText(text: string): HN;
   /** Set text content on a text node */
-  setText(node: HostNode, text: string): void;
+  setText(node: HN, text: string): void;
   /** Get next sibling of a host node */
-  nextSibling(node: HostNode): HostNode | null;
+  nextSibling(node: HN): HN | null;
   /** Get parent of a host node */
-  parentNode(node: HostNode): HostNode | null;
+  parentNode(node: HN): HN | null;
   /** Patch a prop on a host element */
   patchProp(
-    el: HostElement,
+    el: HE,
     key: string,
     prevValue: unknown,
     nextValue: unknown,
@@ -73,9 +89,9 @@ export interface RendererOptions<HostNode = Node, HostElement extends Node = Ele
     parentSuspense?: SuspenseBoundary | null,
   ): void;
   /** Create a comment node */
-  createComment(text: string): HostNode;
+  createComment(text: string): HN;
   /** Query selector (for Teleport target) */
-  querySelector?(selector: string): HostElement | null;
+  querySelector?(selector: string): HE | null;
 }
 
 // ============================================================
@@ -88,14 +104,17 @@ export interface RendererOptions<HostNode = Node, HostElement extends Node = Ele
  * Used by the patch algorithm to manage async component rendering.
  * The boundary tracks the active and pending branches, fallback state,
  * and associated reactive effects.
+ *
+ * Note: container and anchor use `unknown` to remain platform-agnostic.
+ * The renderer internally knows the concrete host node type.
  */
 export interface SuspenseBoundary {
   vnode: VNode;
   parent: ComponentInternalInstance | null;
   parentComponent: ComponentInternalInstance | null;
   isSVG: boolean;
-  container: Node;
-  anchor: Node | null;
+  container: unknown;
+  anchor: unknown;
   activeBranch: VNode | null;
   pendingBranch: VNode | null;
   isInFallback: boolean;
