@@ -284,8 +284,62 @@ export function createRenderer<HN, HE extends HN>(
         mountTeleport(n2, container, anchor, parentComponent, parentSuspense, isSVG);
       } else if (n2.shapeFlag & ShapeFlags.SUSPENSE) {
         mountSuspense(n2, container, anchor, parentComponent, parentSuspense, isSVG);
+      } else if (n2.shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
+        mountComponent(n2, container, anchor, parentComponent, parentSuspense, isSVG);
       }
     }
+  }
+
+  // ============================================================
+  // mountComponent
+  // ============================================================
+
+  function mountComponent(
+    vnode: VNode,
+    container: HN,
+    anchor: HN | null,
+    _parentComponent: ComponentInternalInstance | null,
+    parentSuspense: SuspenseBoundary | null,
+    isSVG: boolean,
+  ): void {
+    const component = vnode.component as ComponentInternalInstance | null | undefined;
+
+    if (!component) {
+      warn(
+        `mountComponent received a component vnode without a component instance. ` +
+          `Ensure setupComponent has been called before mounting.`,
+      );
+      return;
+    }
+
+    // Call the render function to get the subTree
+    const renderFn = (component as unknown as Record<string, unknown>).render as
+      | ((ctx: Record<string, unknown>) => VNode)
+      | undefined;
+    if (!renderFn) {
+      warn(`Component "${(component.type as Record<string, unknown>).name || 'anonymous'}" has no render function.`);
+      return;
+    }
+
+    const subTree = renderFn(component.ctx as Record<string, unknown>);
+    component.subTree = subTree;
+
+    // Apply inheritAttrs: merge instance.attrs into root VNode props
+    const componentType = component.type as Record<string, unknown>;
+    if (componentType.inheritAttrs !== false && component.attrs && subTree) {
+      const attrs = component.attrs;
+      const attrsKeys = Object.keys(attrs);
+      if (attrsKeys.length > 0) {
+        const rootProps = { ...(subTree.props ?? {}), ...attrs };
+        subTree.props = rootProps;
+      }
+    }
+
+    // Patch the subTree into the container
+    patch(null, subTree, container, anchor, component, parentSuspense, isSVG);
+
+    // The component's el points to the root element of the subTree
+    vnode.el = subTree.el;
   }
 
   // ============================================================

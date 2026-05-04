@@ -26,25 +26,30 @@ export default defineConfig({
       {
         text: '子仓库',
         items: [
-          { text: 'common', link: '/lytjs/packages/common/' },
-          { text: 'reactivity', link: '/lytjs/packages/reactivity/' },
-          { text: 'vdom', link: '/lytjs/packages/vdom/' },
-          { text: 'compiler', link: '/lytjs/packages/compiler/' },
-          { text: 'renderer', link: '/lytjs/packages/renderer/' },
-          { text: 'component', link: '/lytjs/packages/component/' },
-          { text: 'core', link: '/lytjs/packages/core/' },
+          { text: 'common', link: '/lytjs/api/' },
+          { text: 'reactivity', link: '/lytjs/api/reactivity' },
+          { text: 'vdom', link: '/lytjs/api/' },
+          { text: 'compiler', link: '/lytjs/api/compiler' },
+          { text: 'renderer', link: '/lytjs/api/renderer' },
+          { text: 'component', link: '/lytjs/api/component' },
+          { text: 'core', link: '/lytjs/api/core' },
         ],
       },
       {
         text: '生态',
         items: [
-          { text: 'Router', link: '/lytjs/ecosystem/router/' },
-          { text: 'Store', link: '/lytjs/ecosystem/store/' },
-          { text: 'CLI', link: '/lytjs/ecosystem/cli/' },
-          { text: 'UI 组件库', link: '/lytjs/ecosystem/lytui/' },
+          // TODO: Router 包尚未实现，取消注释当包就绪时
+          // { text: 'Router', link: '/lytjs/ecosystem/router/' },
+          // TODO: Store 包尚未实现，取消注释当包就绪时
+          // { text: 'Store', link: '/lytjs/ecosystem/store/' },
+          // TODO: CLI 包尚未实现，取消注释当包就绪时
+          // { text: 'CLI', link: '/lytjs/ecosystem/cli/' },
+          // TODO: UI 组件库尚未实现，取消注释当包就绪时
+          // { text: 'UI 组件库', link: '/lytjs/ecosystem/lytui/' },
         ],
       },
-      { text: '示例', link: '/lytjs/examples/' },
+      // TODO: 示例页面尚未创建，取消注释当示例就绪时
+      // { text: '示例', link: '/lytjs/examples/' },
     ],
 
     sidebar: {

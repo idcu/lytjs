@@ -72,7 +72,7 @@ export function createComponentInstance(
       beforeUnmount: new Set(),
       unmounted: new Set(),
     },
-    provides: parent ? parent.provides : new Map(),
+    provides: parent ? parent.provides : (Object.create(null) as Record<string | symbol, unknown>),
     parent,
     root: parent ? parent.root : (null as unknown as ComponentInternalInstance),
     appContext,
@@ -691,7 +691,7 @@ export function createAppContext(): AppContext {
     components: {},
     directives: {},
     mixins: [],
-    provides: new Map(),
+    provides: Object.create(null) as Record<string | symbol, unknown>,
   };
 }
 
@@ -703,12 +703,14 @@ export function createAppContext(): AppContext {
 export function provide<T = unknown>(key: string | symbol, value: T): void {
   const instance = getCurrentInstance();
   if (instance) {
-    // 首次 provide 时，如果当前 provides 与父级共享同一个 Map 引用，
-    // 则创建以父级 provides 为原型的新 Map，确保层级隔离
+    // 首次 provide 时，如果当前 provides 与父级共享同一个引用，
+    // 则创建以父级 provides 为原型的新对象，确保层级隔离
     if (instance.provides === (instance.parent?.provides ?? null)) {
-      instance.provides = Object.create(instance.provides) as Map<string | symbol, unknown>;
+      instance.provides = Object.create(
+        instance.provides as Record<string | symbol, unknown>,
+      ) as Record<string | symbol, unknown>;
     }
-    instance.provides.set(key, value);
+    instance.provides[key as string] = value;
   }
 }
 
@@ -722,9 +724,9 @@ export function inject<T = unknown>(key: string | symbol, defaultValue?: T): T |
   // Walk up the parent chain
   let current: ComponentInternalInstance | null = instance.parent;
   while (current) {
-    const provides = current.provides;
-    if (provides.has(key)) {
-      return provides.get(key) as T | undefined;
+    const provides = current.provides as Record<string | symbol, unknown>;
+    if (key in provides) {
+      return provides[key as string] as T | undefined;
     }
     current = current.parent;
   }

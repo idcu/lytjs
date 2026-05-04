@@ -33,15 +33,15 @@ export function createApp(
       errorHandler: undefined as ((err: unknown, instance: unknown, info: string) => boolean | void) | undefined,
       warnHandler: undefined as ((msg: string, instance: unknown, trace: string) => void) | undefined,
       performance: false,
+      globalProperties: {} as Record<string, unknown>,
+      isCustomElement: undefined as ((tag: string) => boolean) | undefined,
+      compilerOptions: undefined as Record<string, unknown> | undefined,
     },
   };
 
   const app: App = {
-    config: {
-      performance: false,
-      globalProperties: {},
-      isCustomElement: undefined,
-      compilerOptions: undefined,
+    get config() {
+      return context.config;
     },
 
     use(plugin: Plugin | ((app: App, ...options: unknown[]) => void), ...options: unknown[]) {
@@ -169,8 +169,8 @@ export function createApp(
           },
         }) as ComponentPublicInstance;
       } catch (err) {
-        if (app.errorHandler) {
-          app.errorHandler(err, null, 'mount');
+        if (context.config.errorHandler) {
+          context.config.errorHandler(err, null, 'mount');
         } else {
           error(
             `[LytJS] Failed to mount app: ${err instanceof Error ? err.message : String(err)}`,
