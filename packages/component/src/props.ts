@@ -91,7 +91,7 @@ export function resolvePropValue<T = unknown>(
 
   // Type validation
   if (type !== undefined && __DEV__) {
-    validateType(value, type);
+    validateType(value, type, key);
   }
 
   // Custom validator
@@ -115,10 +115,11 @@ export function resolvePropValue<T = unknown>(
 /**
  * Validate value against a type or array of types.
  */
-export function validateType(value: unknown, type: unknown): boolean {
+export function validateType(value: unknown, type: unknown, key?: string): boolean {
   if (type === null || type === undefined) return true;
 
   let expectedType: string;
+  const actualType = getTypeName(value);
 
   if (isArray(type)) {
     // Array of types - value must match at least one
@@ -133,7 +134,11 @@ export function validateType(value: unknown, type: unknown): boolean {
   }
 
   if (__DEV__) {
-    warn(`Invalid prop: expected ${expectedType}, got ${getTypeName(value)}.`);
+    const keyInfo = key ? ` "${key}"` : '';
+    warn(
+      `Invalid prop${keyInfo}: expected type ${expectedType}, got ${actualType}.` +
+      (value !== null && value !== undefined ? ` (value: ${(() => { try { return JSON.stringify(value); } catch { return String(value); } })()})` : ''),
+    );
   }
 
   return false;

@@ -33,6 +33,9 @@ export function createApp(
   let _isUnmounted = false;
   let _isMounted = false;
 
+  // 跟踪挂载期间注册的全局事件监听器，以便卸载时清理
+  const _globalListeners: Array<{ target: EventTarget; event: string; handler: EventListener; options?: AddEventListenerOptions }> = [];
+
   // 确定渲染模式（'vapor' 是 'signal' 的别名）
   const rendererMode = options?.rendererMode ?? 'vnode';
   const effectiveMode = rendererMode === 'vapor' ? 'signal' : rendererMode;
@@ -147,6 +150,18 @@ export function createApp(
       _isMounted = false;
 
       context._container = null;
+
+      // 清理全局事件监听器（document、window 等上注册的监听器）
+      for (const listener of _globalListeners) {
+        try {
+          listener.target.removeEventListener(listener.event, listener.handler, listener.options);
+        } catch (err) {
+          if (__DEV__) {
+            warn(`Failed to remove global event listener "${listener.event}": ${err}`);
+          }
+        }
+      }
+      _globalListeners.length = 0;
 
       // 清理插件资源：调用插件的 cleanup 方法（如果存在）
       for (const plugin of installedPlugins) {

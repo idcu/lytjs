@@ -69,8 +69,10 @@ const builtInSymbols = new Set<symbol>(
   Object.getOwnPropertyNames(Symbol)
     .filter((key) => key !== 'arguments' && key !== 'caller')
     .map((key) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const value = (Symbol as any)[key];
+      // Object.getOwnPropertyNames 返回 string[]，而 Symbol 的属性值类型为 symbol，
+      // 但 TypeScript 将 Symbol 视为 Function，其索引签名为 unknown。
+      // 使用索引签名访问 Symbol[key] 返回 unknown，需要类型断言。
+      const value = (Symbol as unknown as Record<string, unknown>)[key];
       return isSymbol(value) ? value : undefined;
     })
     .filter((sym): sym is symbol => sym !== undefined),
@@ -274,13 +276,20 @@ function createCollectionHandler(isReadonly: boolean, isShallow: boolean): Proxy
       if (key === ReactiveFlags.RAW) return target;
 
       // 追踪 size 属性和 get 调用
-      // 对于 readonly collection，额外追踪 has 和 forEach
-      if (key === 'size' || key === 'get' || (isReadonly && (key === 'has' || key === 'forEach'))) {
+      // has/forEach/entries/keys/values/Symbol.iterator 在所有模式下都追踪
+      if (key === 'size' || key === 'get' || key === 'has' || key === 'forEach' || key === 'entries' || key === 'keys' || key === 'values' || key === Symbol.iterator) {
         track(target, TrackOpTypes.GET, ITERATE_KEY_COL);
       }
 
       const res = Reflect.get(target, key, target);
       if (typeof res === 'function') {
+        // 对迭代方法进行包装以追踪依赖
+        if (!isReadonly && (key === 'entries' || key === 'keys' || key === 'values' || key === Symbol.iterator)) {
+          return (...args: unknown[]) => {
+            track(target, TrackOpTypes.GET, ITERATE_KEY_COL);
+            return res.apply(target, args);
+          };
+        }
         if (!isReadonly) {
           // key as string: MUTATING_METHODS 只包含字符串方法名（"set"/"add"/"delete"/"clear"），
           // 而 Proxy handler 的 key 参数类型为 string | symbol。对于 Map/Set 的变异方法，

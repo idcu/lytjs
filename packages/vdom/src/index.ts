@@ -111,3 +111,6 @@ export {
   patchUnkeyedChildren,
 } from './list-diff';
 export type { DOMOperations } from './list-diff';
+
+// Suspense linker registration (for cross-package boundary linking)
+export { registerSuspenseLinker } from './patch-suspense';

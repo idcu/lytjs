@@ -31,6 +31,7 @@ class AsyncComputedRefImpl<T> {
   private _loading: boolean = false;
   private _error: unknown = undefined;
   private _effect: ReactiveEffectRunner<void> | null = null;
+  private _version = 0;
 
   public readonly __v_isRef = true;
   public dep: Dep = createDep();
@@ -58,12 +59,16 @@ class AsyncComputedRefImpl<T> {
     this._loading = true;
     this._error = undefined;
 
+    // 递增版本号，用于竞态检测
+    const currentVersion = ++this._version;
+
     // 调用 getter 获取 Promise
     const promise = this._getter();
 
     // 使用 Promise.then() 非阻塞处理
     promise.then(
       (value) => {
+        if (currentVersion !== this._version) return; // 过期结果，忽略
         this._value = value;
         this._loading = false;
         this._error = undefined;
@@ -71,6 +76,7 @@ class AsyncComputedRefImpl<T> {
         triggerRefValue(this);
       },
       (err) => {
+        if (currentVersion !== this._version) return; // 过期结果，忽略
         this._error = err;
         this._loading = false;
         // 触发 ref 更新
@@ -110,6 +116,7 @@ class AsyncComputedRefImpl<T> {
    * 停止 effect 追踪
    */
   dispose(): void {
+    this._version++; // 使所有 pending 的 promise 回调失效
     if (this._effect) {
       stop(this._effect);
       this._effect = null;

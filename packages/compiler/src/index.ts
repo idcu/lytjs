@@ -47,7 +47,7 @@ function hashString(str: string): string {
  */
 function buildCompileCacheKey(source: string, options: CompilerOptions): string {
   return hashString(
-    source + '|' + String(options.ssrMode ?? false) + '|' + String(options.rendererMode ?? ''),
+    source + '|' + String(options.ssrMode ?? false) + '|' + String(options.rendererMode ?? '') + '|' + String(options.scopeId ?? ''),
   );
 }
 

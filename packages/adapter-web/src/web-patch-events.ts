@@ -4,6 +4,15 @@
  * 更新时仅替换 invoker.value，无需重新 addEventListener。
  *
  * 从 @lytjs/renderer/src/dom/patch-events.ts 迁移，纯翻译，不做额外归一化。
+ *
+ * TODO (P2-12): 未来优化方向 - 事件委托（Event Delegation）
+ * 当前每个元素独立绑定事件监听器。对于大量同类元素（如列表项），
+ * 可以在根容器上使用事件委托，通过 event.target 冒泡机制统一处理，
+ * 减少事件监听器数量，降低内存占用并提升初始化性能。
+ * 实现时需注意：
+ * 1. 事件修饰符（.stop, .prevent, .capture, .self, .once）的委托语义
+ * 2. 动态添加/移除元素时委托的自动生效与清理
+ * 3. 与现有 invoker 缓存机制的兼容
  */
 
 import {

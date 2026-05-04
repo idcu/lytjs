@@ -4,7 +4,8 @@
  */
 
 import type { VNode } from '@lytjs/vdom';
-import { isString } from '@lytjs/common-is';
+import { Fragment, Text } from '@lytjs/vdom';
+import { isString, isArray } from '@lytjs/common-is';
 import { warn } from '@lytjs/common-error';
 import { escapeHtml } from '../utils';
 
@@ -135,6 +136,10 @@ export async function hydrateIsland(
 
 /**
  * Hydrate a single island element with the given component and props.
+ *
+ * Instead of replacing innerHTML, this performs true hydration by walking
+ * the vnode tree and reconciling it against the existing DOM nodes, reusing
+ * nodes that match and only updating/creating nodes that differ.
  */
 async function hydrateIslandElement(
   el: HTMLElement,
@@ -162,22 +167,335 @@ async function hydrateIslandElement(
   }
 
   if (vnode) {
-    // Replace the island placeholder content with the hydrated vnode
-    el.innerHTML = '';
-    // For SSR island hydration, we render the vnode to HTML and set it
-    // In a full implementation this would use the DOM renderer's hydrate
+    // Remove the placeholder comment node(s) inside the island element
+    // but keep any existing DOM children for hydration comparison
+    const placeholderComments: ChildNode[] = [];
+    for (let i = el.childNodes.length - 1; i >= 0; i--) {
+      const child = el.childNodes[i];
+      if (child && child.nodeType === Node.COMMENT_NODE) {
+        placeholderComments.push(child);
+      }
+    }
+    for (const comment of placeholderComments) {
+      comment.remove();
+    }
+
+    // Perform true hydration: walk vnode tree and reconcile with existing DOM
+    hydrateVNode(el, vnode);
+  }
+}
+
+/**
+ * Hydrate a VNode against existing DOM children of a parent element.
+ *
+ * Walks the vnode tree and the DOM tree in parallel:
+ * - Text nodes: compare textContent, reuse if matching, update if different
+ * - Element nodes: compare tagName and key attributes, reuse if matching,
+ *   recursively hydrate children, create new nodes if no match
+ * - Fragment nodes: hydrate each child vnode against sibling DOM nodes
+ * - Unmatched DOM nodes are removed; unmatched vnodes create new DOM nodes
+ */
+function hydrateVNode(parent: Element, vnode: VNode): void {
+  const { type, children } = vnode;
+
+  // Handle Fragment: hydrate each child vnode against sibling DOM nodes
+  if (type === Fragment) {
+    if (isArray(children)) {
+      let domIndex = 0;
+      const existingChildren = Array.from(parent.childNodes);
+      for (let i = 0; i < children.length; i++) {
+        const childVNode = children[i];
+        if (childVNode == null) continue;
+        domIndex = hydrateChildVNode(parent, childVNode, existingChildren, domIndex);
+      }
+      // Remove any remaining unmatched DOM nodes
+      removeRemainingChildren(parent, existingChildren, domIndex);
+    }
+    return;
+  }
+
+  // Handle Text vnode
+  if (type === Text) {
+    const text = isString(children) ? children : String(children ?? '');
+    const firstChild = parent.firstChild;
+    if (firstChild && firstChild.nodeType === Node.TEXT_NODE) {
+      // Reuse existing text node if content matches
+      if (firstChild.textContent !== text) {
+        firstChild.textContent = text;
+      }
+    } else {
+      // No matching text node; create a new one
+      const textNode = document.createTextNode(text);
+      parent.appendChild(textNode);
+    }
+    return;
+  }
+
+  // Handle Element vnode
+  if (typeof type === 'string') {
+    const tag = type.toLowerCase();
+
+    // Try to find a matching element among existing DOM children
+    let matchedElement: Element | null = null;
+    const existingChildren = Array.from(parent.childNodes);
+
+    for (let i = 0; i < existingChildren.length; i++) {
+      const child = existingChildren[i];
+      if (child && child.nodeType === Node.ELEMENT_NODE) {
+        const el = child as Element;
+        if (el.tagName.toLowerCase() === tag) {
+          matchedElement = el;
+          break;
+        }
+      }
+    }
+
+    if (matchedElement) {
+      // Reuse existing element: update attributes and hydrate children
+      hydrateAttributes(matchedElement, vnode);
+      hydrateElementChildren(matchedElement, vnode);
+    } else {
+      // No matching element; create a new one from the vnode
+      const html = vnodeToSimpleHTML(vnode);
+      const template = document.createElement('template');
+      template.innerHTML = html;
+      const newElement = template.content.firstChild;
+      if (newElement) {
+        parent.appendChild(newElement);
+      }
+    }
+    return;
+  }
+}
+
+/**
+ * Hydrate a single child vnode against existing DOM children at a given index.
+ * Returns the next DOM index after consuming nodes.
+ */
+function hydrateChildVNode(
+  parent: Element,
+  vnode: VNode,
+  existingChildren: ChildNode[],
+  domIndex: number,
+): number {
+  const { type, children } = vnode;
+
+  // Handle Fragment: hydrate each child
+  if (type === Fragment) {
+    if (isArray(children)) {
+      for (let i = 0; i < children.length; i++) {
+        const child = children[i];
+        if (child != null) {
+          domIndex = hydrateChildVNode(parent, child, existingChildren, domIndex);
+        }
+      }
+    }
+    return domIndex;
+  }
+
+  // Handle Text
+  if (type === Text) {
+    const text = isString(children) ? children : String(children ?? '');
+    if (domIndex < existingChildren.length) {
+      const existingNode = existingChildren[domIndex];
+      if (!existingNode) {
+        parent.appendChild(document.createTextNode(text));
+        return domIndex + 1;
+      }
+      if (existingNode.nodeType === Node.TEXT_NODE) {
+        // Reuse existing text node
+        if (existingNode.textContent !== text) {
+          existingNode.textContent = text;
+        }
+        return domIndex + 1;
+      }
+      // Type mismatch: replace the existing node
+      const textNode = document.createTextNode(text);
+      parent.replaceChild(textNode, existingNode);
+      return domIndex + 1;
+    }
+    // No existing node; append new text node
+    parent.appendChild(document.createTextNode(text));
+    return domIndex + 1;
+  }
+
+  // Handle Element
+  if (typeof type === 'string') {
+    const tag = type.toLowerCase();
+
+    if (domIndex < existingChildren.length) {
+      const existingNode = existingChildren[domIndex];
+      if (!existingNode) {
+        // No existing node; append new element
+        const html = vnodeToSimpleHTML(vnode);
+        const template = document.createElement('template');
+        template.innerHTML = html;
+        const newElement = template.content.firstChild;
+        if (newElement) {
+          parent.appendChild(newElement);
+        }
+        return domIndex + 1;
+      }
+      if (existingNode.nodeType === Node.ELEMENT_NODE) {
+        const el = existingNode as Element;
+        if (el.tagName.toLowerCase() === tag) {
+          // Tag matches: reuse and hydrate
+          hydrateAttributes(el, vnode);
+          hydrateElementChildren(el, vnode);
+          return domIndex + 1;
+        }
+        // Tag mismatch: replace with new element
+        const html = vnodeToSimpleHTML(vnode);
+        const template = document.createElement('template');
+        template.innerHTML = html;
+        const newElement = template.content.firstChild;
+        if (newElement) {
+          parent.replaceChild(newElement, existingNode);
+        }
+        return domIndex + 1;
+      }
+      // Not an element node: replace
+      const html = vnodeToSimpleHTML(vnode);
+      const template = document.createElement('template');
+      template.innerHTML = html;
+      const newElement = template.content.firstChild;
+      if (newElement) {
+        parent.replaceChild(newElement, existingNode);
+      }
+      return domIndex + 1;
+    }
+    // No existing node; append new element
     const html = vnodeToSimpleHTML(vnode);
-    el.innerHTML = html;
+    const template = document.createElement('template');
+    template.innerHTML = html;
+    const newElement = template.content.firstChild;
+    if (newElement) {
+      parent.appendChild(newElement);
+    }
+    return domIndex + 1;
+  }
+
+  return domIndex;
+}
+
+/**
+ * Remove remaining unmatched DOM children starting from domIndex.
+ */
+function removeRemainingChildren(
+  parent: Element,
+  existingChildren: ChildNode[],
+  domIndex: number,
+): void {
+  for (let i = existingChildren.length - 1; i >= domIndex; i--) {
+    const child = existingChildren[i];
+    if (child) {
+      parent.removeChild(child);
+    }
+  }
+}
+
+/**
+ * Update attributes on an existing DOM element to match the vnode props.
+ */
+function hydrateAttributes(el: Element, vnode: VNode): void {
+  const props = vnode.props ?? {};
+  const vnodeKeys = new Set<string>();
+
+  // Set or update attributes from vnode props
+  for (const key in props) {
+    if (key === 'key' || key === 'ref') continue;
+    vnodeKeys.add(key);
+    const value = props[key];
+    if (typeof value === 'boolean') {
+      if (value) {
+        el.setAttribute(key, '');
+      } else {
+        el.removeAttribute(key);
+      }
+    } else if (value != null && value !== '') {
+      el.setAttribute(key, String(value));
+    } else {
+      el.removeAttribute(key);
+    }
+  }
+
+  // Remove attributes that exist on the DOM element but not in vnode props
+  const existingAttrs = Array.from(el.attributes);
+  for (const attr of existingAttrs) {
+    if (!vnodeKeys.has(attr.name) && attr.name !== 'data-island' && attr.name !== 'data-props') {
+      el.removeAttribute(attr.name);
+    }
+  }
+}
+
+/**
+ * Hydrate children of an existing element against vnode children.
+ */
+function hydrateElementChildren(el: Element, vnode: VNode): void {
+  const { children, shapeFlag } = vnode;
+
+  if (shapeFlag != null && (shapeFlag & 0b0001)) {
+    // TEXT_CHILDREN
+    const text = isString(children) ? children : String(children ?? '');
+    if (el.childNodes.length > 0) {
+      // Reuse first text child if it exists
+      const firstChild = el.firstChild!;
+      if (firstChild.nodeType === Node.TEXT_NODE) {
+        if (firstChild.textContent !== text) {
+          firstChild.textContent = text;
+        }
+        // Remove any extra children
+        while (el.childNodes.length > 1) {
+          el.removeChild(el.lastChild!);
+        }
+      } else {
+        // Replace all children with a single text node
+        el.textContent = text;
+      }
+    } else {
+      el.appendChild(document.createTextNode(text));
+    }
+    return;
+  }
+
+  if (isArray(children)) {
+    const existingChildren = Array.from(el.childNodes);
+    let domIndex = 0;
+    for (let i = 0; i < children.length; i++) {
+      const child = children[i];
+      if (child != null) {
+        domIndex = hydrateChildVNode(el, child, existingChildren, domIndex);
+      }
+    }
+    removeRemainingChildren(el, existingChildren, domIndex);
+    return;
   }
 }
 
 /**
  * Simple vnode-to-HTML converter for island hydration.
- * This is a lightweight version that handles basic elements and text.
+ * Handles basic elements, text, fragments, and comments.
  */
 function vnodeToSimpleHTML(vnode: VNode): string {
   const { type, children } = vnode;
 
+  // Handle Fragment: render each child
+  if (type === Fragment) {
+    if (isArray(children)) {
+      return children
+        .map((child) => (child != null ? vnodeToSimpleHTML(child) : ''))
+        .join('');
+    }
+    return '';
+  }
+
+  // Handle Text vnode
+  if (type === Text) {
+    const text = isString(children) ? children : String(children ?? '');
+    return escapeHtml(text);
+  }
+
+  // Handle Element vnode
   if (typeof type === 'string') {
     const props = vnode.props ?? {};
     let attrs = '';
@@ -192,11 +510,21 @@ function vnodeToSimpleHTML(vnode: VNode): string {
     }
 
     const tag = type;
-    const childContent = children != null
-      ? typeof children === 'string'
-        ? escapeHtml(children)
-        : ''
-      : '';
+
+    // Render children
+    let childContent = '';
+    if (children != null) {
+      if (isString(children)) {
+        childContent = escapeHtml(children);
+      } else if (isArray(children)) {
+        childContent = children
+          .map((child) => (child != null ? vnodeToSimpleHTML(child as VNode) : ''))
+          .join('');
+      } else if (typeof children === 'object' && 'type' in (children as object)) {
+        // Single VNode child
+        childContent = vnodeToSimpleHTML(children as unknown as VNode);
+      }
+    }
 
     return `<${tag}${attrs}>${childContent}</${tag}>`;
   }
