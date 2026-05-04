@@ -80,6 +80,8 @@ export interface ComponentOptions<
     instance: ComponentPublicInstance | null,
     info: string,
   ): boolean | void;
+  renderTracked?(e: DebuggerEvent): void;
+  renderTriggered?(e: DebuggerEvent): void;
   inheritAttrs?: boolean;
 }
 

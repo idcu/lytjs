@@ -7,7 +7,7 @@ export { defineComponent, defineAsyncComponent } from './define-component';
 export { nextTick } from './next-tick';
 export { resolveComponent, resolveDirective, resolveDynamicComponent } from './resolve';
 export { withDirectives, withMemo } from './directives';
-export { useSlots, useAttrs, useModel, useTemplateRef } from './composition';
+export { useSlots, useAttrs, useModel, useTemplateRef, defineModel, useId, useCssModule, useCssVars } from './composition';
 export {
   defineCustomElement,
   useShadowRoot,

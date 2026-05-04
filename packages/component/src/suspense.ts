@@ -1,11 +1,12 @@
 // src/suspense.ts
-// Suspense component (simplified)
+// Suspense component
 
 import type { ComponentInternalInstance, ComponentOptions, SetupContext } from './types';
 import { createComponentInstance, setupComponent } from './component';
 import { ShapeFlags, createBaseVNode } from '@lytjs/common-vnode';
 import type { VNode } from '@lytjs/common-vnode';
 import { error, warn } from '@lytjs/common-error';
+import { nextTick } from '@lytjs/common-scheduler';
 
 // ==================== Types ====================
 
@@ -37,6 +38,25 @@ export interface SuspenseAsyncState {
   onPending: (() => void)[];
   onError: ((error: Error) => void)[];
   aborted: boolean;
+  /**
+   * 关联的 vdom 层 SuspenseBoundary 引用。
+   * 当异步状态变化时，通过此引用驱动 DOM 切换。
+   */
+  vnodeBoundary?: {
+    vnode: VNode;
+    container: unknown;
+    anchor: unknown;
+    parentComponent: ComponentInternalInstance | null;
+    isSVG: boolean;
+    isInFallback: boolean;
+    activeBranch: VNode | null;
+    pendingBranch: VNode | null;
+  };
+  /**
+   * DOM 切换函数，由 vdom 层的 patch 函数提供。
+   * 用于在 pending/resolve 状态变化时执行实际的 DOM 操作。
+   */
+  domSwitch?: (boundary: SuspenseAsyncState, toFallback: boolean) => void;
 }
 
 // ==================== Suspense Component ====================
@@ -155,6 +175,15 @@ export function registerAsyncChild(
     for (const cb of boundary.onPending) {
       cb();
     }
+    // 触发 DOM 切换：显示 fallback slot
+    if (boundary.domSwitch) {
+      const switchFn = boundary.domSwitch;
+      nextTick(() => {
+        if (!boundary.aborted) {
+          switchFn(boundary, true);
+        }
+      });
+    }
   }
 
   promise
@@ -172,6 +201,15 @@ export function registerAsyncChild(
           } catch (e) {
             error(`Error in suspense resolve callback: ${String(e)}`);
           }
+        }
+        // 触发 DOM 切换：从 fallback 切回 default slot
+        if (boundary.domSwitch) {
+          const switchFn = boundary.domSwitch;
+          nextTick(() => {
+            if (!boundary.aborted) {
+              switchFn(boundary, false);
+            }
+          });
         }
       }
       return result;
@@ -211,6 +249,19 @@ export function isSuspensePending(boundary: SuspenseAsyncState): boolean {
  */
 export function getSuspenseError(boundary: SuspenseAsyncState): Error | null {
   return boundary.error;
+}
+
+/**
+ * 将 vdom 层的 SuspenseBoundary 与 component 层的 SuspenseAsyncState 关联。
+ * 由 vdom 的 mountSuspense 调用，使异步状态变化能驱动 DOM 切换。
+ */
+export function linkSuspenseBoundary(
+  asyncState: SuspenseAsyncState,
+  vnodeBoundary: SuspenseAsyncState['vnodeBoundary'],
+  domSwitch: SuspenseAsyncState['domSwitch'],
+): void {
+  asyncState.vnodeBoundary = vnodeBoundary;
+  asyncState.domSwitch = domSwitch;
 }
 
 /**
