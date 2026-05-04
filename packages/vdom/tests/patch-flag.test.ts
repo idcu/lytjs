@@ -5,13 +5,13 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import {
   createVNode,
   createRenderer,
-  createDOMRendererOptions,
   PatchFlags,
   ShapeFlags,
   hasPatchFlag,
   isStaticVNode,
   isDynamicVNode,
 } from '../src/index';
+import { WebRendererHost } from '@lytjs/adapter-web';
 
 describe('PatchFlags', () => {
   it('TEXT flag should be 1', () => {
@@ -52,7 +52,7 @@ describe('PatchFlags - renderer optimization', () => {
 
   beforeEach(() => {
     container = document.createElement('div');
-    renderer = createRenderer(createDOMRendererOptions());
+    renderer = createRenderer(new WebRendererHost());
   });
 
   it('TEXT patchFlag should only update text content', () => {

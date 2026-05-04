@@ -43,7 +43,9 @@
     "@lytjs/common-events": "workspace:*",
     "@lytjs/common-dom": "workspace:*",
     "@lytjs/dom-runtime": "workspace:*",
-    "@lytjs/compiler": "workspace:*"
+    "@lytjs/compiler": "workspace:*",
+    "@lytjs/host-contract": "workspace:*",
+    "@lytjs/adapter-web": "workspace:*"
   },
   "devDependencies": {
     "tsup": "^8.0.0",

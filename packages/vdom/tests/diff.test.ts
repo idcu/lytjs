@@ -6,12 +6,12 @@ import {
   createVNode,
   createTextVNode,
   createRenderer,
-  createDOMRendererOptions,
   ShapeFlags,
   PatchFlags,
   Fragment,
   Text,
 } from '../src/index';
+import { WebRendererHost } from '@lytjs/adapter-web';
 
 describe('Renderer - mount', () => {
   let container: HTMLDivElement;
@@ -19,7 +19,7 @@ describe('Renderer - mount', () => {
 
   beforeEach(() => {
     container = document.createElement('div');
-    renderer = createRenderer(createDOMRendererOptions());
+    renderer = createRenderer(new WebRendererHost());
   });
 
   it('should mount an element vnode', () => {
@@ -82,7 +82,7 @@ describe('Renderer - patch', () => {
 
   beforeEach(() => {
     container = document.createElement('div');
-    renderer = createRenderer(createDOMRendererOptions());
+    renderer = createRenderer(new WebRendererHost());
   });
 
   it('should patch element with same type - update props', () => {
@@ -150,7 +150,7 @@ describe('Renderer - diffChildren', () => {
 
   beforeEach(() => {
     container = document.createElement('div');
-    renderer = createRenderer(createDOMRendererOptions());
+    renderer = createRenderer(new WebRendererHost());
   });
 
   it('should add new children at end', () => {
@@ -227,7 +227,7 @@ describe('Renderer - unmount', () => {
 
   beforeEach(() => {
     container = document.createElement('div');
-    renderer = createRenderer(createDOMRendererOptions());
+    renderer = createRenderer(new WebRendererHost());
   });
 
   it('should unmount an element', () => {

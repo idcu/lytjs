@@ -31,6 +31,16 @@ export type {
   BaseComponentOptions,
 } from '@lytjs/common-vnode';
 
+// Re-export from @lytjs/host-contract
+export type {
+  RendererHost,
+  HostRect,
+  HostStyleDeclaration,
+  HostEvent,
+  HostEventHandler,
+  HostEventOptions,
+} from '@lytjs/host-contract';
+
 // VNode creation and manipulation
 export {
   createVNode,
@@ -44,7 +54,7 @@ export {
 } from './vnode';
 
 // Patch logic and renderer
-export { createRenderer, createDOMRendererOptions } from './patch';
+export { createRenderer } from './patch';
 
 // Types
 export type {

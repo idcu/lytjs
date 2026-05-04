@@ -7,6 +7,7 @@
  */
 
 import type { VNode, ComponentInternalInstance } from '@lytjs/common-vnode';
+import type { RendererHost } from '@lytjs/host-contract';
 import { getSequence } from '@lytjs/common-algorithm';
 
 // ============================================================
@@ -16,6 +17,9 @@ import { getSequence } from '@lytjs/common-algorithm';
 /**
  * DOM 操作函数集合。
  * diff 算法通过此接口与平台操作解耦，具体实现由渲染器在初始化时注入。
+ *
+ * @deprecated Use RendererHost from @lytjs/host-contract instead.
+ * This interface is kept for backward compatibility only.
  */
 export interface DOMOperations<HostNodeType = unknown, SuspenseType = unknown> {
   /** 插入节点到容器中指定锚点前 */
@@ -63,6 +67,9 @@ declare const __DEV__: boolean;
 /**
  * 注册 DOM 操作实现。
  * 应在渲染器初始化时调用一次，将平台相关的 DOM 操作注入到 diff 模块中。
+ *
+ * @deprecated Use RendererHost from @lytjs/host-contract instead.
+ * This function is kept for backward compatibility only.
  */
 export function registerDOMOperations<HostNodeType = unknown, SuspenseType = unknown>(
   ops: DOMOperations<HostNodeType, SuspenseType>,
@@ -96,12 +103,96 @@ function getDOMOps(): DOMOperations {
 }
 
 // ============================================================
+// Internal: resolve operations from host or registered ops
+// ============================================================
+
+/**
+ * Internal operations interface that both RendererHost and DOMOperations satisfy.
+ */
+interface ResolvedOps {
+  patch(
+    n1: VNode | null,
+    n2: VNode,
+    container: unknown,
+    anchor: unknown,
+    parentComponent: ComponentInternalInstance | null,
+    parentSuspense: unknown,
+    isSVG: boolean,
+  ): void;
+  unmount(
+    vnode: VNode,
+    parentComponent: ComponentInternalInstance | null,
+    parentSuspense: unknown,
+    doRemove: boolean,
+  ): void;
+  move(
+    vnode: VNode,
+    container: unknown,
+    anchor: unknown,
+    parentComponent: ComponentInternalInstance | null,
+    parentSuspense: unknown,
+  ): void;
+}
+
+/**
+ * Wrap a RendererHost into the ResolvedOps interface for use by diff functions.
+ */
+function hostToOps<HN, HE extends HN>(
+  _host: RendererHost<HN, HE>,
+  patchFn: (
+    n1: VNode | null,
+    n2: VNode,
+    container: HN,
+    anchor: HN | null,
+    parentComponent: ComponentInternalInstance | null,
+    parentSuspense: unknown,
+    isSVG: boolean,
+  ) => void,
+  unmountFn: (
+    vnode: VNode,
+    parentComponent: ComponentInternalInstance | null,
+    parentSuspense: unknown,
+    doRemove: boolean,
+  ) => void,
+  moveFn: (
+    vnode: VNode,
+    container: HN,
+    anchor: HN | null,
+    parentComponent: ComponentInternalInstance | null,
+    parentSuspense: unknown,
+  ) => void,
+): ResolvedOps {
+  return {
+    patch: (n1, n2, container, anchor, parentComponent, parentSuspense, isSVG) =>
+      patchFn(n1, n2, container as HN, anchor as HN | null, parentComponent, parentSuspense, isSVG),
+    unmount: (vnode, parentComponent, parentSuspense, doRemove) =>
+      unmountFn(vnode, parentComponent, parentSuspense, doRemove),
+    move: (vnode, container, anchor, parentComponent, parentSuspense) =>
+      moveFn(vnode, container as HN, anchor as HN | null, parentComponent, parentSuspense),
+  };
+}
+
+/**
+ * Wrap registered DOMOperations into the ResolvedOps interface.
+ */
+function domOpsToResolved(ops: DOMOperations): ResolvedOps {
+  return {
+    patch: (n1, n2, container, anchor, parentComponent, parentSuspense, isSVG) =>
+      ops.patch(n1, n2, container, anchor, parentComponent, parentSuspense, isSVG),
+    unmount: (vnode, parentComponent, parentSuspense, doRemove) =>
+      ops.unmount(vnode, parentComponent, parentSuspense, doRemove),
+    move: (vnode, container, anchor, parentComponent, parentSuspense) =>
+      ops.move(vnode, container, anchor, parentComponent, parentSuspense),
+  };
+}
+
+// ============================================================
 // Inline sameVNodeType
 // ============================================================
 
 /**
  * 内联的 VNode 类型比较函数。
- * ⚠️ 必须与 @lytjs/common-vnode 中的 isSameVNodeType 保持同步。
+ * 必须与 @lytjs/common-vnode 中的 isSameVNodeType 保持同步。
  * 使用 Object.is 替代 === 以正确处理 NaN 等边界情况。
  */
 function sameVNodeType(a: VNode, b: VNode): boolean {
@@ -121,6 +212,24 @@ function sameVNodeType(a: VNode, b: VNode): boolean {
  * 3. 同步后缀：从后往前匹配相同类型节点
  * 4. 新增挂载 / 旧节点卸载
  * 5. 未知子序列：key 映射 + LIS 最小移动
+ *
+ * @param host - Optional RendererHost for platform-agnostic operation.
+ *               If provided, uses host methods; otherwise falls back to registered DOMOperations.
+ */
+export function patchKeyedChildren<HN, HE extends HN>(
+  c1: VNode[],
+  c2: VNode[],
+  container: HN,
+  parentComponent: ComponentInternalInstance | null,
+  parentSuspense: unknown,
+  isSVG: boolean,
+  fallbackAnchor: HN | null,
+  host: RendererHost<HN, HE>,
+): void;
+
+/**
+ * @deprecated Use the overload with RendererHost parameter instead.
+ * Legacy signature using registered DOMOperations.
  */
 export function patchKeyedChildren(
   c1: VNode[],
@@ -129,9 +238,36 @@ export function patchKeyedChildren(
   parentComponent: ComponentInternalInstance | null,
   parentSuspense: unknown,
   isSVG: boolean,
-  fallbackAnchor: unknown = null,
+  fallbackAnchor?: unknown,
+): void;
+
+export function patchKeyedChildren<HN, HE extends HN>(
+  c1: VNode[],
+  c2: VNode[],
+  container: HN,
+  parentComponent: ComponentInternalInstance | null,
+  parentSuspense: unknown,
+  isSVG: boolean,
+  fallbackAnchor: HN | null | undefined,
+  hostOrUndefined?: RendererHost<HN, HE>,
 ): void {
-  const ops = getDOMOps();
+  // Determine whether to use RendererHost or fallback to registered DOMOperations
+  const useHost = hostOrUndefined !== undefined;
+  const ops: ResolvedOps = useHost
+    ? hostToOps(
+        hostOrUndefined,
+        // These patch/unmount/move functions are not available here directly;
+        // we need to use the registered ops for the actual patch/unmount/move calls
+        // since the host only provides low-level node operations.
+        // The DOMOperations registered by createRenderer already wrap the host's
+        // low-level operations into VNode-level patch/unmount/move.
+        // So when a host is provided, we still rely on registeredDOMOps for VNode-level ops.
+        (n1, n2, cont, anchor, pc, ps, svg) => getDOMOps().patch(n1, n2, cont, anchor, pc, ps, svg),
+        (vnode, pc, ps, doRemove) => getDOMOps().unmount(vnode, pc, ps, doRemove),
+        (vnode, cont, anchor, pc, ps) => getDOMOps().move(vnode, cont, anchor, pc, ps),
+      )
+    : domOpsToResolved(getDOMOps());
+
   let i = 0;
   const l2 = c2.length;
   let e1 = c1.length - 1;
@@ -343,6 +479,24 @@ export function patchKeyedChildren(
 /**
  * 不带 key 的子节点 diff 算法。
  * 从前往后逐个比较，类型匹配则 patch，不匹配则卸载旧节点并挂载新节点。
+ *
+ * @param host - Optional RendererHost for platform-agnostic operation.
+ *               If provided, uses host methods; otherwise falls back to registered DOMOperations.
+ */
+export function patchUnkeyedChildren<HN, HE extends HN>(
+  c1: VNode[],
+  c2: VNode[],
+  container: HN,
+  parentComponent: ComponentInternalInstance | null,
+  parentSuspense: unknown,
+  isSVG: boolean,
+  fallbackAnchor: HN | null,
+  host: RendererHost<HN, HE>,
+): void;
+
+/**
+ * @deprecated Use the overload with RendererHost parameter instead.
+ * Legacy signature using registered DOMOperations.
  */
 export function patchUnkeyedChildren(
   c1: VNode[],
@@ -351,9 +505,29 @@ export function patchUnkeyedChildren(
   parentComponent: ComponentInternalInstance | null,
   parentSuspense: unknown,
   isSVG: boolean,
-  fallbackAnchor: unknown = null,
+  fallbackAnchor?: unknown,
+): void;
+
+export function patchUnkeyedChildren<HN, HE extends HN>(
+  c1: VNode[],
+  c2: VNode[],
+  container: HN,
+  parentComponent: ComponentInternalInstance | null,
+  parentSuspense: unknown,
+  isSVG: boolean,
+  fallbackAnchor: HN | null | undefined,
+  hostOrUndefined?: RendererHost<HN, HE>,
 ): void {
-  const ops = getDOMOps();
+  const useHost = hostOrUndefined !== undefined;
+  const ops: ResolvedOps = useHost
+    ? hostToOps(
+        hostOrUndefined,
+        (n1, n2, cont, anchor, pc, ps, svg) => getDOMOps().patch(n1, n2, cont, anchor, pc, ps, svg),
+        (vnode, pc, ps, doRemove) => getDOMOps().unmount(vnode, pc, ps, doRemove),
+        (vnode, cont, anchor, pc, ps) => getDOMOps().move(vnode, cont, anchor, pc, ps),
+      )
+    : domOpsToResolved(getDOMOps());
+
   const l1 = c1.length;
   const l2 = c2.length;
   const commonLength = Math.min(l1, l2);

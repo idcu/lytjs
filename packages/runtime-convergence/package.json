@@ -1,0 +1,38 @@
+{
+  "name": "@lytjs/runtime-convergence",
+  "version": "6.0.0",
+  "description": "LytJS runtime capability convergence - render queue, event normalization, node cache, async scheduling",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": ["dist"],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "type-check": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@lytjs/host-contract": "workspace:*"
+  },
+  "devDependencies": {
+    "tsup": "^8.3.0",
+    "typescript": "^5.8.2"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://gitee.com/lytjs/lytjs.git",
+    "directory": "packages/runtime-convergence"
+  },
+  "keywords": ["lytjs", "runtime-convergence", "render-queue", "event-normalizer"]
+}

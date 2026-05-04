@@ -9,11 +9,14 @@ packages:
 
   # 子仓库（单包级）
   - 'packages/shared-types'
+  - 'packages/host-contract'
+  - 'packages/runtime-convergence'
   - 'packages/reactivity'
   - 'packages/dom-runtime'
   - 'packages/vdom'
   - 'packages/compiler'
   - 'packages/renderer'
+  - 'packages/adapter-web'
   - 'packages/component'
   - 'packages/core'
 

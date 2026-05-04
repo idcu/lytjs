@@ -79,6 +79,43 @@ importers:
         specifier: ^3.0.0
         version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@29.1.1)(tsx@4.21.0)(yaml@2.8.3)
 
+  packages/adapter-web:
+    dependencies:
+      '@lytjs/common-dom':
+        specifier: workspace:*
+        version: link:../common/packages/dom
+      '@lytjs/common-error':
+        specifier: workspace:*
+        version: link:../common/packages/error
+      '@lytjs/common-events':
+        specifier: workspace:*
+        version: link:../common/packages/events
+      '@lytjs/common-is':
+        specifier: workspace:*
+        version: link:../common/packages/is
+      '@lytjs/common-string':
+        specifier: workspace:*
+        version: link:../common/packages/string
+      '@lytjs/host-contract':
+        specifier: workspace:*
+        version: link:../host-contract
+      '@lytjs/reactivity':
+        specifier: workspace:*
+        version: link:../reactivity
+      '@lytjs/shared-types':
+        specifier: workspace:*
+        version: link:../shared-types
+      '@lytjs/vdom':
+        specifier: workspace:*
+        version: link:../vdom
+    devDependencies:
+      tsup:
+        specifier: ^8.3.0
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.12)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.3)
+      typescript:
+        specifier: ^5.8.2
+        version: 5.9.3
+
   packages/common/packages/a11y:
     devDependencies:
       jsdom:
@@ -565,6 +602,15 @@ importers:
         specifier: ^3.0.0
         version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@26.1.0)(tsx@4.21.0)(yaml@2.8.3)
 
+  packages/host-contract:
+    devDependencies:
+      tsup:
+        specifier: ^8.3.0
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.12)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.3)
+      typescript:
+        specifier: ^5.8.2
+        version: 5.9.3
+
   packages/reactivity:
     dependencies:
       '@lytjs/common-is':
@@ -589,6 +635,9 @@ importers:
 
   packages/renderer:
     dependencies:
+      '@lytjs/adapter-web':
+        specifier: workspace:*
+        version: link:../adapter-web
       '@lytjs/common-dom':
         specifier: workspace:*
         version: link:../common/packages/dom
@@ -607,6 +656,9 @@ importers:
       '@lytjs/dom-runtime':
         specifier: workspace:*
         version: link:../dom-runtime
+      '@lytjs/host-contract':
+        specifier: workspace:*
+        version: link:../host-contract
       '@lytjs/reactivity':
         specifier: workspace:*
         version: link:../reactivity
@@ -626,6 +678,19 @@ importers:
       vitest:
         specifier: ^3.0.0
         version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@24.1.3)(tsx@4.21.0)(yaml@2.8.3)
+
+  packages/runtime-convergence:
+    dependencies:
+      '@lytjs/host-contract':
+        specifier: workspace:*
+        version: link:../host-contract
+    devDependencies:
+      tsup:
+        specifier: ^8.3.0
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.12)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.3)
+      typescript:
+        specifier: ^5.8.2
+        version: 5.9.3
 
   packages/shared-types:
     devDependencies:
@@ -656,6 +721,9 @@ importers:
       '@lytjs/common-vnode':
         specifier: workspace:*
         version: link:../common/packages/vnode
+      '@lytjs/host-contract':
+        specifier: workspace:*
+        version: link:../host-contract
       '@lytjs/shared-types':
         specifier: workspace:*
         version: link:../shared-types
@@ -4256,7 +4324,7 @@ snapshots:
       sirv: 3.0.2
       tinyglobby: 0.2.16
       tinyrainbow: 2.0.0
-      vitest: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@29.1.1)(tsx@4.21.0)(yaml@2.8.3)
+      vitest: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@26.1.0)(tsx@4.21.0)(yaml@2.8.3)
 
   '@vitest/utils@3.2.4':
     dependencies:

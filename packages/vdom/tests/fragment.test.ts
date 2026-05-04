@@ -5,7 +5,6 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import {
   createVNode,
   createRenderer,
-  createDOMRendererOptions,
   createFragment,
   isFragment,
   getFragmentChildren,
@@ -13,6 +12,7 @@ import {
   Fragment,
   ShapeFlags,
 } from '../src/index';
+import { WebRendererHost } from '@lytjs/adapter-web';
 
 describe('Fragment - vnode creation', () => {
   it('should create fragment vnode via createVNode', () => {
@@ -73,7 +73,7 @@ describe('Fragment - renderer mount', () => {
 
   beforeEach(() => {
     container = document.createElement('div');
-    renderer = createRenderer(createDOMRendererOptions());
+    renderer = createRenderer(new WebRendererHost());
   });
 
   it('should mount fragment children', () => {
@@ -121,7 +121,7 @@ describe('Fragment - renderer patch', () => {
 
   beforeEach(() => {
     container = document.createElement('div');
-    renderer = createRenderer(createDOMRendererOptions());
+    renderer = createRenderer(new WebRendererHost());
   });
 
   it('should patch fragment children (same type, update)', () => {
@@ -172,7 +172,7 @@ describe('Fragment - renderer unmount', () => {
 
   beforeEach(() => {
     container = document.createElement('div');
-    renderer = createRenderer(createDOMRendererOptions());
+    renderer = createRenderer(new WebRendererHost());
   });
 
   it('should unmount fragment and all children', () => {
