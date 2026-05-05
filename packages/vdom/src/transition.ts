@@ -374,7 +374,13 @@ export function performEnterTransition<HN, HE extends HN>(
   propsOrDone?: TransitionProps<HE> | (() => void),
   done?: () => void,
 ): void {
-  if (typeof elOrProps === 'object' && elOrProps !== null && !('name' in elOrProps) && !('onBeforeEnter' in elOrProps)) {
+  // FIX: P1-11 使用 __isRendererHost 标识符号替代鸭子类型检测，
+  // 与 P0-03 的 patch.ts 检测逻辑保持一致
+  const isHost = hostOrEl !== null && typeof hostOrEl === 'object' &&
+    '__isRendererHost' in (hostOrEl as Record<string, unknown>) &&
+    (hostOrEl as Record<string, unknown>).__isRendererHost === true;
+
+  if (isHost) {
     // 泛型版本：(host, el, props, done)
     const host = hostOrEl as RendererHost<HN, HE>;
     const el = elOrProps as HE;
@@ -499,8 +505,20 @@ export function performLeaveTransition<HN, HE extends HN>(
   elOrProps: HE | TransitionProps<Element>,
   propsOrDone?: TransitionProps<HE> | (() => void),
   done?: () => void,
+// FIX: P2-12 CSS 类名前缀可配置，默认为 'v'
+let globalTransitionPrefix = 'v';
+
+export function setTransitionPrefix(prefix: string): void {
+  globalTransitionPrefix = prefix;
+}
+
 ): void {
-  if (typeof elOrProps === 'object' && elOrProps !== null && !('name' in elOrProps) && !('onBeforeEnter' in elOrProps)) {
+  // FIX: P1-11 使用 __isRendererHost 标识符号替代鸭子类型检测
+  const isHost = hostOrEl !== null && typeof hostOrEl === 'object' &&
+    '__isRendererHost' in (hostOrEl as Record<string, unknown>) &&
+    (hostOrEl as Record<string, unknown>).__isRendererHost === true;
+
+  if (isHost) {
     // 泛型版本：(host, el, props, done)
     const host = hostOrEl as RendererHost<HN, HE>;
     const el = elOrProps as HE;

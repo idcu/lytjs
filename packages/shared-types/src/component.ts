@@ -81,6 +81,38 @@ export interface ComponentInternalInstance {
   provides: Record<string | symbol, unknown>;
   parent: ComponentInternalInstance | null;
   root: ComponentInternalInstance;
+  // FIX: P1-10 添加 bum 字段定义，用于 unmount 时访问 beforeUnmount 回调数组
+  /** beforeUnmount 回调数组 */
+  bum?: Array<() => void> | (() => void) | null;
+  /** 是否已挂载 */
+  isMounted?: boolean;
+  /** 是否已卸载 */
+  isUnmounted?: boolean;
+  /** 组件子树 VNode */
+  subTree?: { el: unknown } | null;
+  /** 组件更新函数 */
+  update?: () => void;
+  /** renderTracked 钩子数组 */
+  renderTrackedHooks?: Array<(...args: unknown[]) => void>;
+  /** renderTriggered 钩子数组 */
+  renderTriggeredHooks?: Array<(...args: unknown[]) => void>;
+  /** 暴露的公共 API */
+  exposed?: Record<string, unknown> | null;
+  /** 是否保持活跃（keep-alive） */
+  isKeepingAlive?: boolean;
+  /** 属性访问缓存 */
+  accessCache?: Record<string, number> | null;
+  /** data 对象 */
+  data?: Record<string, unknown>;
+  /** 生命周期钩子集合 */
+  lifecycle?: {
+    beforeMount: Set<(...args: unknown[]) => void>;
+    mounted: Set<(...args: unknown[]) => void>;
+    beforeUpdate: Set<(...args: unknown[]) => void>;
+    updated: Set<(...args: unknown[]) => void>;
+    beforeUnmount: Set<(...args: unknown[]) => void>;
+    unmounted: Set<(...args: unknown[]) => void>;
+  };
 }
 
 /**

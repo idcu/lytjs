@@ -188,8 +188,9 @@ export function createRenderer<HN, HE extends HN>(
 export function createRenderer<HN, HE extends HN>(
   hostOrOptions: RendererHost<HN, HE> | RendererOptions<HN, HE>,
 ) {
-  // Detect whether we received a RendererHost or legacy RendererOptions
-  const isHost = 'addClass' in hostOrOptions && 'getBoundingClientRect' in hostOrOptions;
+  // FIX: P0-03 使用 __isRendererHost 标识符号替代鸭子类型检测，
+  // 避免普通对象碰巧包含 addClass/getBoundingClientRect 时被误判为 RendererHost
+  const isHost = '__isRendererHost' in hostOrOptions && (hostOrOptions as Record<string, unknown>).__isRendererHost === true;
   const internal = isHost
     ? hostToOptions(hostOrOptions as RendererHost<HN, HE>)
     : optionsToInternal(hostOrOptions as RendererOptions<HN, HE>);
@@ -489,6 +490,7 @@ export function createRenderer<HN, HE extends HN>(
 
   // ============================================================
   // 注册 DOM 操作到 list-diff 模块
+  // FIX: P0-04 使用返回的 symbol ID 支持多渲染器场景
   // ============================================================
   const domOps: DOMOperations<HN, SuspenseBoundary | null> = {
     insert: (child, container, anchor) => {
@@ -511,7 +513,9 @@ export function createRenderer<HN, HE extends HN>(
       move(vnode, container, anchor, parentComponent, parentSuspense);
     },
   };
-  registerDOMOperations(domOps);
+  const opsId = registerDOMOperations(domOps);
+  // 将 opsId 存入 ctx，供 patch-children 等子模块传递给 list-diff
+  ctx.opsId = opsId;
 
   return {
     patch,

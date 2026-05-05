@@ -70,15 +70,20 @@ let isUntracked = false;
 let trackDependency: ((signal: WritableSignal<unknown>, unsubscribe: () => void) => void) | null =
   null;
 
-/** batch 嵌套深度 */
+/** 当前 batch 嵌套深度 */
 let batchDepth = 0;
+
+/** FIX: P2-05 batch 嵌套深度限制，防止无限递归 */
+const MAX_BATCH_DEPTH = 100;
 
 /** batch 期间待通知的订阅者 */
 const pendingNotifications = new Set<Subscriber>();
 
 /** batch 期间待执行的 effect 系统 trigger 操作（自动去重） */
+// FIX: P1-05 使用 Map<symbol,...> 替代 Map<string,...>，
+// 避免不同 signal 的 Symbol().toString() 产生相同的字符串 key 导致去重错误
 const pendingTriggerOps = new Map<
-  string,
+  symbol,
   { store: Record<symbol, unknown>; signalKey: symbol; newValue?: unknown }
 >();
 
@@ -105,12 +110,15 @@ export function signal<T>(initialValue: T): WritableSignal<T> {
 
   const signalFn = function signalFn(): T {
     // Signal 内部追踪
-    if (activeSubscriber && !isUntracked && !disposed) {
-      if (!subscribers.has(activeSubscriber)) {
-        subscribers.add(activeSubscriber);
+    // FIX: P0-01 闭包捕获过期 activeSubscriber — 立即捕获当前订阅者引用，
+    // 避免闭包中的 activeSubscriber 在异步回调中被修改后指向错误的订阅者
+    const currentSubscriber = activeSubscriber;
+    if (currentSubscriber && !isUntracked && !disposed) {
+      if (!subscribers.has(currentSubscriber)) {
+        subscribers.add(currentSubscriber);
         if (trackDependency) {
           trackDependency(signalFn as WritableSignal<unknown>, () => {
-            subscribers.delete(activeSubscriber!);
+            subscribers.delete(currentSubscriber);
           });
         }
       }
@@ -303,6 +311,17 @@ export function writableComputedSignal<T>(
  * batch 内多次 signal.set 只在函数结束后统一触发一次通知。
  */
 export function signalBatch(fn: () => void): void {
+  // FIX: P2-05 batch 嵌套深度限制
+  if (batchDepth >= MAX_BATCH_DEPTH) {
+    if (__DEV__) {
+      console.warn(
+        `[lytjs/signal] signalBatch() nesting depth exceeded ${MAX_BATCH_DEPTH}. ` +
+        `This may indicate an infinite loop. The batch call will be executed synchronously.`,
+      );
+    }
+    fn();
+    return;
+  }
   batchDepth++;
   try {
     fn();
@@ -347,14 +366,16 @@ function notifySubscribers(
   signalKey?: symbol,
   newValue?: unknown,
 ): void {
-  if (batchDepth > 0) {
+  // FIX: P0-02 当 isNotifying 为 true 时也走 batch 路径，
+  // 避免在 flushPendingNotifications 执行期间嵌套触发同步通知导致无限递归
+  if (batchDepth > 0 || isNotifying) {
     for (const sub of subscribers) {
       pendingNotifications.add(sub);
     }
     // effect 系统桥接：batch 期间也延迟 trigger（去重）
     if (store && signalKey !== undefined) {
-      const triggerKey = String(signalKey);
-      pendingTriggerOps.set(triggerKey, { store, signalKey, newValue });
+      // FIX: P1-05 直接使用 symbol 作为 key，避免 String() 转换导致的 key 冲突
+      pendingTriggerOps.set(signalKey, { store, signalKey, newValue });
     }
     return;
   }

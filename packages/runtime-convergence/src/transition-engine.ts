@@ -109,6 +109,8 @@ export class TransitionEngine<HN extends object = object, HE extends HN = HN> {
     state.phase = 'entering';
     state.cancelled = false;
     state.doneCallback = done;
+    // FIX: P0-10 存储 props 引用，用于 cancelTransition 时调用取消钩子
+    state.props = props;
 
     const classes = this.resolveTransitionClasses(props, 'enter');
 
@@ -196,6 +198,8 @@ export class TransitionEngine<HN extends object = object, HE extends HN = HN> {
     state.phase = 'leaving';
     state.cancelled = false;
     state.doneCallback = done;
+    // FIX: P0-10 存储 props 引用，用于 cancelTransition 时调用取消钩子
+    state.props = props;
 
     const classes = this.resolveTransitionClasses(props, 'leave');
 
@@ -277,9 +281,14 @@ export class TransitionEngine<HN extends object = object, HE extends HN = HN> {
 
     state.cancelled = true;
 
-    // 调用取消回调
-    // 注意：此处无法直接调用 onEnterCancelled / onLeaveCancelled，
-    // 因为不持有 props 引用。由上层组件负责处理。
+    // FIX: P0-10 根据 phase 调用对应的取消钩子（onEnterCancelled / onLeaveCancelled）
+    if (state.props) {
+      if (state.phase === 'entering' && state.props.onEnterCancelled) {
+        state.props.onEnterCancelled(el);
+      } else if (state.phase === 'leaving' && state.props.onLeaveCancelled) {
+        state.props.onLeaveCancelled(el);
+      }
+    }
 
     // 执行清理函数
     const cleanup = transitionCleanupMap.get(el);
@@ -290,6 +299,7 @@ export class TransitionEngine<HN extends object = object, HE extends HN = HN> {
 
     state.phase = 'idle';
     state.doneCallback = null;
+    state.props = undefined;
   }
 
   // ==========================================================

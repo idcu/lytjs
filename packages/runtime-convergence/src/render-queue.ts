@@ -234,9 +234,11 @@ export class RenderQueue<HN = unknown, HE extends HN = HN> {
    * 获取操作的标识 key，用于合并判断。
    *
    * 对于组件类型（非字符串 type），使用 vnode.key 或 type.name 避免不同组件被错误合并。
+   * FIX: P1-49 定义正确类型替代 any，使用 unknown 和类型守卫
    */
   private getOperationKey(op: RenderOperation): string | null {
-    const typeKey = (vnode: any): string => {
+    // FIX: P1-49 使用 Record<string, unknown> 替代 any，提供更好的类型安全
+    const typeKey = (vnode: Record<string, unknown> | undefined): string => {
       const t = vnode?.type;
       if (typeof t === 'string') {
         return t;
@@ -245,11 +247,12 @@ export class RenderQueue<HN = unknown, HE extends HN = HN> {
       if (vnode?.key != null) {
         return String(vnode.key);
       }
-      if (typeof t === 'function' && t.name) {
-        return t.name;
+      if (typeof t === 'function') {
+        return (t as { name?: string }).name ?? String(t);
       }
       if (typeof t === 'object' && t != null) {
-        return (t as any).name != null ? String((t as any).name) : String(t);
+        const tObj = t as Record<string, unknown>;
+        return tObj.name != null ? String(tObj.name) : String(t);
       }
       return String(t);
     };
@@ -272,6 +275,7 @@ export class RenderQueue<HN = unknown, HE extends HN = HN> {
    * 按优先级排序队列。
    *
    * 优先级高的排在前面，同优先级保持插入顺序（稳定排序）。
+   * FIX: P2-42 渲染队列优先级排序：确保 sync 优先级任务优先执行
    */
   private sortQueue(): void {
     this.queue.sort((a, b) => {

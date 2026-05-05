@@ -110,6 +110,10 @@ export interface HostEventOptions {
  */
 export interface RendererHost<HN = unknown, HE extends HN = HN> {
 
+  // FIX: P0-03 添加渲染宿主标识符号，用于 createRenderer 中精确区分 RendererHost 和 RendererOptions
+  /** @internal 渲染宿主标识符号，用于类型检测 */
+  readonly __isRendererHost?: true;
+
   // ==========================================================
   // 一、节点操作 (Node Operations)
   // ==========================================================

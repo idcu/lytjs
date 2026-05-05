@@ -281,7 +281,8 @@ function handleDirective(
       // skip
       break;
     default:
-      // Unknown directive - register it
+      // FIX: P2-26 自定义指令编译缓存：
+      // Unknown directive - register it for runtime resolution
       context.directives.add(prop.name);
       break;
   }
@@ -315,6 +316,7 @@ function handleVBind(
 
 /**
  * 处理 v-on 指令
+ * FIX: P1-30 添加事件修饰符处理，支持 .stop/.prevent/.capture/.once/.self/.passive
  */
 function handleVOn(
   prop: DirectiveNode,
@@ -330,12 +332,93 @@ function handleVOn(
       expContent !== undefined
         ? createSimpleExpression(expContent, false, prop.loc, false)
         : createSimpleExpression('undefined', true, prop.loc, true);
-    properties.push(
-      createObjectProperty(
-        createSimpleExpression(`"on${capitalize(argContent)}"`, true, prop.loc, true),
-        handler,
-      ),
-    );
+
+    // FIX: P1-30 处理事件修饰符：将修饰符编译为事件选项对象
+    const modifiers = prop.modifiers;
+    if (modifiers && modifiers.length > 0) {
+      const eventOptions: JSProperty[] = [];
+      if (modifiers.includes('capture')) {
+        eventOptions.push(
+          createObjectProperty(
+            createSimpleExpression('capture', true, prop.loc, true),
+            createSimpleExpression('true', true, prop.loc, true),
+          ),
+        );
+      }
+      if (modifiers.includes('once')) {
+        eventOptions.push(
+          createObjectProperty(
+            createSimpleExpression('once', true, prop.loc, true),
+            createSimpleExpression('true', true, prop.loc, true),
+          ),
+        );
+      }
+      if (modifiers.includes('passive')) {
+        eventOptions.push(
+          createObjectProperty(
+            createSimpleExpression('passive', true, prop.loc, true),
+            createSimpleExpression('true', true, prop.loc, true),
+          ),
+        );
+      }
+
+      // 构建带修饰符的事件处理器
+      let eventHandler = handler;
+      // .stop 修饰符：包装为 event.stopPropagation()
+      if (modifiers.includes('stop')) {
+        eventHandler = createCompoundExpression([
+          `($event) => { $event.stopPropagation(); `,
+          handler,
+          `($event) }`,
+        ]);
+      }
+      // .prevent 修饰符：包装为 event.preventDefault()
+      if (modifiers.includes('prevent')) {
+        eventHandler = createCompoundExpression([
+          `($event) => { $event.preventDefault(); `,
+          handler,
+          `($event) }`,
+        ]);
+      }
+      // .self 修饰符：检查 event.target === event.currentTarget
+      if (modifiers.includes('self')) {
+        eventHandler = createCompoundExpression([
+          `($event) => { if ($event.target !== $event.currentTarget) return; `,
+          handler,
+          `($event) }`,
+        ]);
+      }
+
+      // 如果有事件选项，将事件名和选项一起传递
+      if (eventOptions.length > 0) {
+        properties.push(
+          createObjectProperty(
+            createSimpleExpression(`"on${capitalize(argContent)}"`, true, prop.loc, true),
+            createObjectExpression([
+              createObjectProperty(
+                createSimpleExpression('handler', true, prop.loc, true),
+                eventHandler as JSChildNode,
+              ),
+              ...eventOptions,
+            ]),
+          ),
+        );
+      } else {
+        properties.push(
+          createObjectProperty(
+            createSimpleExpression(`"on${capitalize(argContent)}"`, true, prop.loc, true),
+            eventHandler as JSChildNode,
+          ),
+        );
+      }
+    } else {
+      properties.push(
+        createObjectProperty(
+          createSimpleExpression(`"on${capitalize(argContent)}"`, true, prop.loc, true),
+          handler,
+        ),
+      );
+    }
   }
 }
 
@@ -420,10 +503,11 @@ function handleVHtml(
       prop.loc,
     );
     // 在开发模式下额外发出安全警告
-    // 使用 process.env.NODE_ENV 检查，确保在构建时通过 tsup define 注入为编译时常量
+    // FIX: P1-32 使用 __DEV__ 替代 process.env.NODE_ENV，
+    // 与框架其他部分的开发模式检测保持一致
     const safeValue = createCompoundExpression([
       `(${createConditionalExpression(
-        createSimpleExpression('process.env.NODE_ENV !== "production"', false, prop.loc, false),
+        createSimpleExpression('__DEV__', false, prop.loc, false),
         createCompoundExpression([
           createCallExpression(
             'console.warn',

@@ -23,6 +23,7 @@ interface KeepAliveCache {
 export interface KeepAliveProps {
   include?: string | RegExp | (string | RegExp)[];
   exclude?: string | RegExp | (string | RegExp)[];
+  /** FIX: P2-17 缓存大小限制配置（默认 10） */
   max?: number;
   /** Custom cache key function: receives a vnode and returns a string or number to use as the cache key */
   onCacheKey?: (vnode: VNode) => string | number;
@@ -82,11 +83,16 @@ export const KeepAlive: ComponentOptions = {
         ? (compType as { name?: string }).name
         : undefined;
 
-    // Check include/exclude patterns
-    if (
-      !matchesPattern(compName as string | undefined, props.include) ||
-      !matchesPattern(compName as string | undefined, props.exclude === undefined ? undefined : (v: string | undefined) => !matchesPattern(v, props.exclude))
-    ) {
+    // FIX: P1-18 exclude 逻辑重构提高可读性，将复杂的条件表达式拆分为独立判断
+    // 检查 include 过滤：组件名必须匹配 include 模式（如果提供了 include）
+    const isIncluded = props.include === undefined ||
+      matchesPattern(compName as string | undefined, props.include);
+
+    // 检查 exclude 过滤：组件名不能匹配 exclude 模式（如果提供了 exclude）
+    const isExcluded = props.exclude !== undefined &&
+      matchesPattern(compName as string | undefined, props.exclude);
+
+    if (!isIncluded || isExcluded) {
       return rawVNode;
     }
 
@@ -193,6 +199,14 @@ export function getCacheKey(
       return String(onCacheKey(vnode));
     } catch (e) {
       handleError(e as Error, keepAlive, 'onCacheKey');
+      // FIX: P1-19 onCacheKey 异常时在 DEV 模式下发出警告，
+      // 提醒开发者自定义缓存键函数可能存在问题
+      if (__DEV__) {
+        warn(
+          `[KeepAlive] onCacheKey threw an error for vnode type "${String(vnode.type)}". ` +
+          `Falling back to default cache key.`,
+        );
+      }
     }
   }
 

@@ -14,6 +14,16 @@ import type { RendererContext } from './patch-element';
 // Component patch factory
 // ============================================================
 
+// FIX: P1-09 定义 ComponentInternalRuntimeProps 接口替代 as unknown as Record，
+// 提供更精确的类型安全访问组件内部属性
+interface ComponentInternalRuntimeProps {
+  render?: (ctx: Record<string, unknown>) => VNode;
+  name?: string;
+  inheritAttrs?: boolean;
+  errorCaptured?: (err: Error, instance: unknown, info: string) => boolean | void;
+  [key: string]: unknown;
+}
+
 export interface ComponentPatchAPI<HN, _HE extends HN> {
   mountComponent: (
     vnode: VNode,
@@ -63,11 +73,9 @@ export function createComponentPatch<HN, HE extends HN>(
     }
 
     // Call the render function to get the subTree
-    const renderFn = (component as unknown as Record<string, unknown>).render as
-      | ((ctx: Record<string, unknown>) => VNode)
-      | undefined;
+    const renderFn = (component.type as ComponentInternalRuntimeProps).render;
     if (!renderFn) {
-      warn(`Component "${(component.type as Record<string, unknown>).name || 'anonymous'}" has no render function.`);
+      warn(`Component "${(component.type as ComponentInternalRuntimeProps).name || 'anonymous'}" has no render function.`);
       return;
     }
 
@@ -80,10 +88,8 @@ export function createComponentPatch<HN, HE extends HN>(
       let handled = false;
       let current: ComponentInternalInstance | null = component.parent;
       while (current) {
-        const type = current.type as Record<string, unknown>;
-        const errorHandler = type.errorCaptured as
-          | ((err: Error, instance: unknown, info: string) => boolean | void)
-          | undefined;
+        const type = current.type as ComponentInternalRuntimeProps;
+        const errorHandler = type.errorCaptured;
         if (errorHandler) {
           try {
             const result = errorHandler.call(current.ctx, renderError, current, 'render function');
@@ -100,7 +106,6 @@ export function createComponentPatch<HN, HE extends HN>(
           | Array<(err: Error, instance: unknown, info: string) => boolean | void>
           | undefined;
         if (hooks && hooks.length > 0) {
-          for (const hook of hooks) {
             try {
               const result = hook(renderError, current, 'render function');
               if (result === false) {
@@ -131,8 +136,14 @@ export function createComponentPatch<HN, HE extends HN>(
 
     component.subTree = subTree;
 
+    // FIX: P2-11 组件更新 __DEV__ 日志：在组件更新时输出调试信息
+    if (__DEV__) {
+      const compName = (component.type as ComponentInternalRuntimeProps).name || 'anonymous';
+      console.log(`[lytjs/patch-component] Updating component: ${compName}`);
+    }
+
     // Apply inheritAttrs: merge instance.attrs into root VNode props
-    const componentType = component.type as Record<string, unknown>;
+    const componentType = component.type as ComponentInternalRuntimeProps;
     if (component.attrs && subTree) {
       const attrs = component.attrs;
       const attrsKeys = Object.keys(attrs);

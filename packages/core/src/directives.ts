@@ -1,5 +1,15 @@
 // src/directives.ts
 // @lytjs/core - 指令辅助函数
+//
+// FIX: P2-38 指令生命周期钩子文档：
+// 自定义指令支持以下生命周期钩子：
+//   - created：元素创建后、挂载前调用
+//   - beforeMount：元素挂载前调用
+//   - mounted：元素挂载后调用
+//   - beforeUpdate：元素更新前调用
+//   - updated：元素更新后调用
+//   - beforeUnmount：元素卸载前调用
+//   - unmounted：元素卸载后调用
 
 import { cloneVNode } from '@lytjs/vdom';
 import { isArray } from '@lytjs/common-is';
@@ -13,20 +23,30 @@ interface DirectiveVNode extends VNode {
 /**
  * 将指令应用到 VNode 上。
  * 当指令带有 deep: true 选项时，递归遍历子 VNode 并应用指令。
+ * FIX: P1-44 简化类型转换链，使用中间接口 DirectiveEntry 替代多层 as unknown as
  */
+interface DirectiveEntry {
+  dir: Directive & { deep?: boolean };
+  value: unknown;
+  arg: unknown;
+  modifiers: Record<string, boolean>;
+}
+
 export function withDirectives(vnode: VNode, directives: DirectiveArguments): VNode {
   const dirVNode = cloneVNode(vnode) as DirectiveVNode;
-  dirVNode._directives = directives.map(([dir, value, arg, modifiers]) => ({
-    dir: dir as Directive & { deep?: boolean },
-    value,
-    arg,
-    modifiers: modifiers || {},
-  })) as unknown as DirectiveArguments;
+  // FIX: P1-44 使用 DirectiveEntry 中间类型简化类型转换
+  dirVNode._directives = directives.map(
+    ([dir, value, arg, modifiers]): DirectiveEntry => ({
+      dir: dir as Directive & { deep?: boolean },
+      value,
+      arg,
+      modifiers: (modifiers as Record<string, boolean>) || {},
+    }),
+  ) as unknown as DirectiveArguments;
 
   // 处理 deep 选项：递归将指令应用到子 VNode
   for (const dirEntry of dirVNode._directives) {
-    // _directives 已被 map 转为对象数组 { dir, value, arg, modifiers }
-    const dirObj = dirEntry as unknown as { dir: Directive & { deep?: boolean }; value: unknown; arg: unknown; modifiers: Record<string, boolean> };
+    const dirObj = dirEntry as unknown as DirectiveEntry;
     if (dirObj.dir.deep) {
       applyDirectiveDeep(dirVNode, [dirObj.dir, dirObj.value, dirObj.arg as string | undefined, dirObj.modifiers]);
     }

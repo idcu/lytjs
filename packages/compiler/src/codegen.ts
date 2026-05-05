@@ -48,6 +48,8 @@ export function generate(ast: RootNode, options: CodegenOptions = {}): CodegenRe
   }
 
   // Generate render function
+  // FIX: P2-23 生成代码可读性优化：添加函数注释
+  context.push(`// Render function\n`);
   context.push(`function render(_ctx, _cache) {\n`);
   context.indent();
 
@@ -83,8 +85,9 @@ function createCodegenContext(
   sourceMapGen: SourceMapGenerator | null;
 } {
   const helpers = new Map<string, string>();
-  let indentLevel = 0;
-  // 使用数组收集代码片段，避免频繁字符串拼接带来的性能开销
+  // FIX: P1-26 移除冗余的局部 indentLevel 变量，消除双重跟踪问题。
+  // 之前 context.indentLevel 和局部 indentLevel 同时存在，可能导致不同步。
+  // 现在只使用 context.indentLevel 作为唯一的缩进级别来源。
   const codeParts: string[] = [];
 
   // Source map support
@@ -139,19 +142,17 @@ function createCodegenContext(
     },
 
     indent(): void {
-      indentLevel++;
-      context.indentLevel = indentLevel;
+      context.indentLevel++;
     },
 
     deindent(withoutNewline?: boolean): void {
-      if (indentLevel > 0) {
-        indentLevel--;
+      if (context.indentLevel > 0) {
+        context.indentLevel--;
       }
-      context.indentLevel = indentLevel;
       if (!withoutNewline) {
-        codeParts.push(`\n${'  '.repeat(indentLevel)}`);
+        codeParts.push(`\n${'  '.repeat(context.indentLevel)}`);
         currentLine++;
-        currentColumn = indentLevel * 2;
+        currentColumn = context.indentLevel * 2;
       }
     },
 

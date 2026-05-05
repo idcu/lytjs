@@ -49,7 +49,9 @@ export function defineAsyncComponent(
       error.value = new Error(
         `[lytjs/core] AsyncComponent: max retries (${MAX_RETRIES}) exceeded.`,
       );
-      return;
+      // FIX: P0-09 retry 耗尽后返回 Promise.reject，确保 Promise 链正确 settle，
+      // 避免调用方永远等待一个不会 resolve/reject 的 Promise
+      return Promise.reject(error.value);
     }
     retries++;
     loadedComponent.value = undefined;

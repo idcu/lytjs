@@ -59,40 +59,48 @@ export interface DOMOperations<HostNodeType = unknown, SuspenseType = unknown> {
 // DOM Operations Registration
 // ============================================================
 
-/** 模块级 DOM 操作实例，由渲染器初始化时注入 */
-let registeredDOMOps: DOMOperations<unknown, unknown> | null = null;
+/** 模块级 DOM 操作实例映射，由渲染器初始化时注入。FIX: P0-04 使用 Map<symbol, DOMOperations> 替代单例，支持多渲染器场景 */
+const registeredDOMOpsMap = new Map<symbol, DOMOperations<unknown, unknown>>();
 
 declare const __DEV__: boolean;
+
+/** FIX: P2-10 长列表性能保护阈值 */
+const MAX_LIST_DIFF_SIZE = 1000;
 
 /**
  * 注册 DOM 操作实现。
  * 应在渲染器初始化时调用一次，将平台相关的 DOM 操作注入到 diff 模块中。
+ * FIX: P0-04 返回 symbol ID，支持多渲染器场景下的隔离注册
  *
  * @deprecated Use RendererHost from @lytjs/host-contract instead.
  * This function is kept for backward compatibility only.
  */
 export function registerDOMOperations<HostNodeType = unknown, SuspenseType = unknown>(
   ops: DOMOperations<HostNodeType, SuspenseType>,
-): void {
+): symbol {
   if (!ops) {
     throw new Error(
       '[lytjs/list-diff] registerDOMOperations requires a valid DOMOperations object',
     );
   }
-  if (__DEV__ && registeredDOMOps !== null && registeredDOMOps !== ops) {
-    console.warn(
-      '[lytjs/list-diff] DOMOperations already registered. Overwriting previous registration. ' +
-        'This may cause issues in multi-renderer scenarios.',
-    );
-  }
-  registeredDOMOps = ops;
+  const id = Symbol('DOMOperations');
+  registeredDOMOpsMap.set(id, ops);
+  return id;
 }
 
 /**
  * 获取已注册的 DOM 操作实例。
+ * FIX: P0-04 接受 opsId 参数以支持多渲染器场景
  */
-function getDOMOps(): DOMOperations {
-  const ops = registeredDOMOps;
+function getDOMOps(opsId?: symbol): DOMOperations {
+  let ops: DOMOperations | undefined;
+  if (opsId !== undefined) {
+    ops = registeredDOMOpsMap.get(opsId);
+  } else {
+    // 向后兼容：未传 opsId 时使用最后一个注册的实例
+    const entries = Array.from(registeredDOMOpsMap.values());
+    ops = entries[entries.length - 1];
+  }
   if (!ops) {
     throw new Error(
       '[lytjs/list-diff] DOMOperations not registered. ' +
@@ -225,6 +233,7 @@ export function patchKeyedChildren<HN, HE extends HN>(
   isSVG: boolean,
   fallbackAnchor: HN | null,
   host: RendererHost<HN, HE>,
+  opsId?: symbol,
 ): void;
 
 /**
@@ -250,6 +259,7 @@ export function patchKeyedChildren<HN, HE extends HN>(
   isSVG: boolean,
   fallbackAnchor: HN | null | undefined,
   hostOrUndefined?: RendererHost<HN, HE>,
+  opsId?: symbol,
 ): void {
   // Determine whether to use RendererHost or fallback to registered DOMOperations
   const useHost = hostOrUndefined !== undefined;
@@ -262,11 +272,11 @@ export function patchKeyedChildren<HN, HE extends HN>(
         // The DOMOperations registered by createRenderer already wrap the host's
         // low-level operations into VNode-level patch/unmount/move.
         // So when a host is provided, we still rely on registeredDOMOps for VNode-level ops.
-        (n1, n2, cont, anchor, pc, ps, svg) => getDOMOps().patch(n1, n2, cont, anchor, pc, ps, svg),
-        (vnode, pc, ps, doRemove) => getDOMOps().unmount(vnode, pc, ps, doRemove),
-        (vnode, cont, anchor, pc, ps) => getDOMOps().move(vnode, cont, anchor, pc, ps),
+        (n1, n2, cont, anchor, pc, ps, svg) => getDOMOps(opsId).patch(n1, n2, cont, anchor, pc, ps, svg),
+        (vnode, pc, ps, doRemove) => getDOMOps(opsId).unmount(vnode, pc, ps, doRemove),
+        (vnode, cont, anchor, pc, ps) => getDOMOps(opsId).move(vnode, cont, anchor, pc, ps),
       )
-    : domOpsToResolved(getDOMOps());
+    : domOpsToResolved(getDOMOps(opsId));
 
   let i = 0;
   const l2 = c2.length;
@@ -492,6 +502,7 @@ export function patchUnkeyedChildren<HN, HE extends HN>(
   isSVG: boolean,
   fallbackAnchor: HN | null,
   host: RendererHost<HN, HE>,
+  opsId?: symbol,
 ): void;
 
 /**
@@ -517,16 +528,17 @@ export function patchUnkeyedChildren<HN, HE extends HN>(
   isSVG: boolean,
   fallbackAnchor: HN | null | undefined,
   hostOrUndefined?: RendererHost<HN, HE>,
+  opsId?: symbol,
 ): void {
   const useHost = hostOrUndefined !== undefined;
   const ops: ResolvedOps = useHost
     ? hostToOps(
         hostOrUndefined,
-        (n1, n2, cont, anchor, pc, ps, svg) => getDOMOps().patch(n1, n2, cont, anchor, pc, ps, svg),
-        (vnode, pc, ps, doRemove) => getDOMOps().unmount(vnode, pc, ps, doRemove),
-        (vnode, cont, anchor, pc, ps) => getDOMOps().move(vnode, cont, anchor, pc, ps),
+        (n1, n2, cont, anchor, pc, ps, svg) => getDOMOps(opsId).patch(n1, n2, cont, anchor, pc, ps, svg),
+        (vnode, pc, ps, doRemove) => getDOMOps(opsId).unmount(vnode, pc, ps, doRemove),
+        (vnode, cont, anchor, pc, ps) => getDOMOps(opsId).move(vnode, cont, anchor, pc, ps),
       )
-    : domOpsToResolved(getDOMOps());
+    : domOpsToResolved(getDOMOps(opsId));
 
   const l1 = c1.length;
   const l2 = c2.length;

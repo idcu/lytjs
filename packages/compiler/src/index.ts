@@ -20,11 +20,25 @@ export { parse, transform, optimize, generate };
 interface CompileCacheEntry {
   code: string;
   preamble: string;
-  ast: any;
+  // FIX: P1-24 使用 RootNode 类型替代 any，提供类型安全
+  ast: import('./types').RootNode;
 }
 
 /** 最大缓存条目数 */
 const MAX_CACHE_SIZE = 100;
+
+/** FIX: P2-22 编译警告级别可配置 */
+export type WarningLevel = 'silent' | 'error' | 'warn';
+
+let globalWarningLevel: WarningLevel = 'warn';
+
+export function setWarningLevel(level: WarningLevel): void {
+  globalWarningLevel = level;
+}
+
+export function getWarningLevel(): WarningLevel {
+  return globalWarningLevel;
+}
 
 /** 编译缓存（Map 天然保持插入顺序，用于 LRU 淘汰） */
 const compileCache = new Map<string, CompileCacheEntry>();
@@ -43,11 +57,19 @@ function hashString(str: string): string {
 
 /**
  * 构建编译缓存键，确保读取和写入使用相同的键生成逻辑。
- * 包含 source、ssrMode、rendererMode 三个维度。
+ * FIX: P1-25 缓存键覆盖所有影响编译结果的选项，
+ * 包括 source、ssrMode、rendererMode、scopeId、inline、mode 等
  */
 function buildCompileCacheKey(source: string, options: CompilerOptions): string {
   return hashString(
-    source + '|' + String(options.ssrMode ?? false) + '|' + String(options.rendererMode ?? '') + '|' + String(options.scopeId ?? ''),
+    source + '|' +
+    String(options.ssrMode ?? false) + '|' +
+    String(options.rendererMode ?? '') + '|' +
+    String(options.scopeId ?? '') + '|' +
+    String(options.inline ?? false) + '|' +
+    String(options.mode ?? '') + '|' +
+    String(options.prefixIdentifiers ?? false) + '|' +
+    String(options.whitespace ?? ''),
   );
 }
 

@@ -10,6 +10,8 @@ import type { InternalSlots } from './types';
 
 /**
  * 获取当前组件的 slots
+ * FIX: P2-37 useSlots 类型安全增强：
+ * 返回的 InternalSlots 类型确保 slot 函数的参数和返回值类型正确
  */
 export function useSlots(): InternalSlots {
   const instance = getCurrentInstance();
@@ -45,6 +47,11 @@ export function useModel<T>(
 ): WritableComputedRef<T> {
   const instance = getCurrentInstance();
   if (!instance) {
+    // FIX: P1-43 useModel 无实例时添加 DEV 警告，
+    // 提醒开发者 useModel 必须在 setup() 中调用
+    if (__DEV__) {
+      warnOnce(`useModel("${key}") was called outside of setup(). The model will not be reactive.`);
+    }
     return computed<T>({
       get() {
         return undefined as T;
@@ -76,7 +83,8 @@ export function useModel<T>(
  *
  * 返回一个 WritableComputedRef，读取时返回 prop 值，写入时触发 update 事件。
  */
-export function defineModel<T = any>(
+// FIX: P1-45 默认泛型从 any 改为 unknown，提供更好的类型安全性
+export function defineModel<T = unknown>(
   name?: string,
   options?: {
     default?: T;

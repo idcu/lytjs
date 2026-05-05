@@ -1,5 +1,30 @@
 // src/lifecycle.ts
 // Lifecycle hooks management
+//
+// FIX: P2-16 生命周期钩子调用次序文档：
+// 组件生命周期钩子的调用次序如下：
+//
+// 创建阶段：
+//   1. beforeCreate（仅 Options API，setup 之前）
+//   2. setup()（Composition API）
+//   3. created（仅 Options API，setup 之后）
+//
+// 挂载阶段：
+//   4. onBeforeMount / beforeMount
+//   5. onMounted / mounted（子组件先挂载，父组件后挂载）
+//
+// 更新阶段：
+//   6. onBeforeUpdate / beforeUpdate
+//   7. onUpdated / updated（子组件先更新，父组件后更新）
+//
+// 卸载阶段：
+//   8. onBeforeUnmount / beforeUnmount（父组件先卸载，子组件后卸载）
+//   9. onUnmounted / unmounted
+//
+// 特殊钩子：
+//   - errorCaptured：在子组件错误冒泡时调用（从子到父）
+//   - renderTracked / renderTriggered：在渲染函数依赖追踪/触发时调用
+//   - activated / deactivated：KeepAlive 组件激活/停用时调用
 
 import type { ComponentInternalInstance, ComponentPublicInstance } from './types';
 import { warnOnce } from '@lytjs/common-error';

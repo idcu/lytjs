@@ -13,6 +13,9 @@ import type { ComponentInternalInstance, SuspenseBoundary } from '@lytjs/vdom';
 import { withFirstRenderOptimization } from '@lytjs/reactivity';
 import { WebRendererHost } from './web-host';
 
+// FIX: P2-46 自定义元素注册缓存，避免重复注册
+const registeredCustomElements = new Set<string>();
+
 // ============================================================
 // DOMRenderer 接口
 // ============================================================
@@ -79,7 +82,11 @@ export function createDOMRenderer(
       return host.parentNode(node);
     },
     patchProp(el: Element, key: string, prevValue: unknown, nextValue: unknown): void {
-      const isSVG = host.getNamespaceURI!(el) === 'http://www.w3.org/2000/svg';
+      // FIX: P1-55 getNamespaceURI 非空断言改为条件检查，
+      // 避免在 getNamespaceURI 未定义时抛出运行时错误
+      const isSVG = host.getNamespaceURI
+        ? host.getNamespaceURI(el) === 'http://www.w3.org/2000/svg'
+        : false;
       host.patchProp(el, key, prevValue, nextValue, isSVG);
     },
     createComment(text: string): Node {

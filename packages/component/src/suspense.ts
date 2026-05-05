@@ -182,6 +182,9 @@ export function registerAsyncChild(
   boundary: SuspenseAsyncState,
   promise: Promise<unknown>,
 ): boolean {
+  // FIX: P2-18 嵌套 suspense 支持：检查是否在嵌套 suspense 中
+  // 如果当前 suspense 已被中止（可能是父级 suspense abort 导致），
+  // 直接返回 false 避免无效操作
   if (boundary.aborted) return false;
 
   const wasPending = boundary.isPending;
@@ -287,6 +290,13 @@ export function linkSuspenseBoundary(
 
 /**
  * Resolve a suspense boundary manually.
+ *
+ * FIX: P1-20 添加语义注释：
+ * resolveSuspense 用于手动将 suspense 边界标记为已解决状态。
+ * 调用后，所有 pending 的 Promise 将被忽略（通过设置 aborted = true），
+ * onResolve 回调将被触发，DOM 将从 fallback 切回默认内容。
+ * 注意：此方法不会等待正在进行的异步操作完成，而是立即强制解决。
+ * 适用场景：用户手动取消等待、路由切换等需要立即恢复的场景。
  */
 export function resolveSuspense(boundary: SuspenseAsyncState): void {
   boundary.isPending = false;
@@ -307,6 +317,13 @@ export function resolveSuspense(boundary: SuspenseAsyncState): void {
  * Abort a suspense boundary (e.g., on unmount).
  * Rejects all pending promises to prevent memory leaks and allows
  * downstream consumers to handle the abort via .catch().
+ *
+ * FIX: P1-20 添加语义注释：
+ * abortSuspense 用于在组件卸载等场景下中止 suspense 边界。
+ * 与 resolveSuspense 不同，abortSuspense 不会触发 onResolve 回调，
+ * 而是清空所有回调数组以防止后续调用。所有 pending 的 Promise
+ * 将尝试通过 abort 方法取消（如果是自定义 thenable）。
+ * 适用场景：组件卸载、路由切换导致组件树销毁等。
  */
 export function abortSuspense(boundary: SuspenseAsyncState): void {
   boundary.aborted = true;

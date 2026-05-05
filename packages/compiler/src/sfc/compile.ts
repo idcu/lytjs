@@ -25,6 +25,11 @@ export interface SFCCompileResult {
   css?: string;
   scopedId?: string;
   sourceMap?: object;
+  // FIX: P2-30 模块热替换稳定性：添加 HMR 相关元数据
+  /** 模块热替换 ID */
+  hmrId?: string;
+  /** 是否为 HMR 增量更新 */
+  isHmrUpdate?: boolean;
 }
 
 // ============================================================
@@ -203,16 +208,29 @@ function generateModuleCode(opts: ModuleCodeOptions): string {
  *
  * This is a simplified implementation. A production compiler would use
  * a proper CSS parser (e.g., postcss) for robust handling.
+ *
+ * FIX: P1-34 CSS scoping 正则增强：
+ * - 正确处理伪类选择器（:hover, :focus, ::before 等）
+ * - 正确处理属性选择器（[attr=value]）
+ * - 正确处理多级嵌套选择器
+ * - 跳过 @keyframes 内部的 from/to 百分比选择器
  */
 function scopeCSS(css: string, scopeId: string): string {
   const attrSelector = `[data-v-${scopeId}]`;
 
   // Process each CSS rule block
   return css.replace(
+    // FIX: P1-34 增强正则，正确匹配包含伪类、伪元素、属性选择器的复杂选择器
     /([^{}@/][^{}]*?)\{/g,
     (match, selector: string) => {
       // Skip @ rules (e.g., @media, @keyframes)
       if (selector.trim().startsWith('@')) {
+        return match;
+      }
+
+      // 跳过 @keyframes 内部的 from/to/百分比选择器
+      const trimmedSelector = selector.trim();
+      if (/^(from|to|\d+%)\s*$/.test(trimmedSelector)) {
         return match;
       }
 
@@ -225,6 +243,12 @@ function scopeCSS(css: string, scopeId: string): string {
           // For ::v-deep or ::deep, use a different scoping strategy
           if (trimmed.includes('::v-deep') || trimmed.includes('::deep')) {
             return trimmed;
+          }
+          // FIX: P1-34 将 scopeId 添加到选择器末尾（伪类/伪元素之前），
+          // 正确处理 :hover, ::before, :not() 等伪选择器
+          const pseudoMatch = trimmed.match(/^(.*?)(::?[a-zA-Z-]+(?:\(.*?\))?)$/);
+          if (pseudoMatch && pseudoMatch[2]) {
+            return `${pseudoMatch[1]}${attrSelector}${pseudoMatch[2]}`;
           }
           return `${trimmed}${attrSelector}`;
         })

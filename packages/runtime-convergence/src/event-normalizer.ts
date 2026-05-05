@@ -99,6 +99,7 @@ export class EventNormalizer<HN = unknown, HE extends HN = HN> {
       passive: false,
     };
 
+    // FIX: P2-41 事件捕获选项支持：支持 .capture 修饰符
     const modifierMatch = rawName.match(/\.(stop|prevent|capture|once|self|passive)/g);
     if (modifierMatch) {
       for (const mod of modifierMatch) {
@@ -212,6 +213,8 @@ export class EventNormalizer<HN = unknown, HE extends HN = HN> {
     for (const eventKey in invokers) {
       const invoker = invokers[eventKey];
       if (invoker) {
+        // FIX: P1-48 使用 invoker.handler 而非原始 handler 引用移除事件监听器，
+        // 确保能正确匹配 addEventListener 时注册的包装 handler
         const options = this.buildHostEventOptions(invoker.parsed.modifiers);
         this.host.removeEventListener(el, invoker.parsed.name, invoker.handler, options);
       }

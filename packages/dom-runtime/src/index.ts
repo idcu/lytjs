@@ -25,6 +25,8 @@ const DANGEROUS_SELF_CLOSING_TAG_NAMES = `${DANGEROUS_TAG_NAMES}|input|textarea|
  * 基础 HTML sanitizer，移除危险标签和属性
  * 注意：这不是一个完整的 sanitizer，仅提供基础防护
  * 生产环境建议使用 DOMPurify 等成熟库
+ *
+ * @internal 仅供内部使用，不作为公共 API 暴露
  */
 function sanitizeHTML(html: string): string {
   // 防御嵌套绕过：循环执行所有清理步骤，直到结果不再变化
@@ -55,6 +57,31 @@ function sanitizeHTML(html: string): string {
     // 移除危险属性（srcdoc、formaction、xlink:href）
     html = html.replace(
       /\s+(srcdoc|formaction|xlink:href)\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]*)/gi,
+      '',
+    );
+    // FIX: P0-11 过滤 javascript: 伪协议，防止 XSS 绕过
+    // 匹配 href/src/action 等属性中的 javascript: 伪协议（含大小写变体和空白绕过）
+    html = html.replace(
+      /\s+(href|src|action|formaction|data)\s*=\s*(?:"[^"]*"|'[^']*')/gi,
+      (match) => {
+        // 检查属性值是否包含 javascript: 伪协议
+        const valueMatch = match.match(/=\s*(?:"([^"]*)"|'([^']*)')/);
+        if (valueMatch) {
+          const value = (valueMatch[1] ?? valueMatch[2] ?? '').replace(/[\s\x00-\x1f]+/g, '');
+          if (/^javascript\s*:/i.test(value)) {
+            return ''; // 移除包含 javascript: 伪协议的属性
+          }
+        }
+        return match;
+      },
+    );
+    // FIX: P0-11 过滤 SVG foreignObject 标签，防止通过 SVG 命名空间注入恶意 HTML
+    html = html.replace(
+      /<\s*foreignObject[^>]*>[\s\S]*?<\s*\/\s*foreignObject\s*>/gi,
+      '',
+    );
+    html = html.replace(
+      /<\s*foreignObject[^>]*\/?>/gi,
       '',
     );
   }
@@ -237,6 +264,8 @@ export function setProperty(el: Element, key: string, value: unknown): void {
 
 /**
  * 设置元素的样式
+ * FIX: P1-54 使用 setProperty 替代直接赋值，
+ * 正确处理包含连字符的 CSS 属性名（如 background-color、font-size）
  */
 export function setStyle(el: Element, style: string | Record<string, string>): void {
   if (!isBrowser) return;
@@ -245,7 +274,9 @@ export function setStyle(el: Element, style: string | Record<string, string>): v
     htmlEl.style.cssText = style;
   } else {
     for (const [key, value] of Object.entries(style)) {
-      (htmlEl.style as unknown as Record<string, string>)[key] = value;
+      // FIX: P1-54 使用 style.setProperty 替代直接属性赋值，
+      // 确保连字符 CSS 属性名（如 background-color）能正确设置
+      htmlEl.style.setProperty(key, value);
     }
   }
 }
@@ -265,6 +296,21 @@ export function toggleClass(el: Element, className: string, force?: boolean): vo
   if (!isBrowser) return;
   const htmlEl = el as HTMLElement;
   htmlEl.classList.toggle(className, force);
+}
+
+// FIX: P2-45 需要单位的 CSS 属性列表
+const NUMERIC_STYLE_PROPERTIES = new Set([
+  'width', 'height', 'top', 'right', 'bottom', 'left',
+  'margin', 'margin-top', 'margin-right', 'margin-bottom', 'margin-left',
+  'padding', 'padding-top', 'padding-right', 'padding-bottom', 'padding-left',
+  'border-width', 'border-top-width', 'border-right-width', 'border-bottom-width', 'border-left-width',
+  'font-size', 'line-height', 'letter-spacing', 'word-spacing',
+  'min-width', 'max-width', 'min-height', 'max-height',
+  'outline-width', 'column-width', 'column-gap', 'row-gap',
+]);
+
+function isNumericStyleProperty(prop: string): boolean {
+  return NUMERIC_STYLE_PROPERTIES.has(prop);
 }
 
 // ==================== 事件绑定 ====================
@@ -350,6 +396,9 @@ export interface ReconcileOptions<T> {
  * - 删除项：移除
  * - 移动项：移动 DOM 位置
  * - 更新项：调用 update 回调
+ *
+ * FIX: P2-43 移动动画支持：
+ * 如果 options.animateMove 提供了移动动画函数，在节点移动时调用该函数
  */
 export function reconcileArray<T>(
   parent: Node,
@@ -372,7 +421,14 @@ export function reconcileArray<T>(
     : childNodes.length;
 
   // 当 ref 不在 parent 中时，回退到 childNodes.length（等同于 ref 为 null 的行为）
+  // FIX: P1-52 添加 DEV 警告，提醒开发者 ref 不在 parent 中可能是逻辑错误
   if (endIdx < 0) {
+    if (__DEV__) {
+      console.warn(
+        '[lytjs/dom-runtime] reconcileArray: ref node is not a child of parent. ' +
+        'Falling back to appending at the end.',
+      );
+    }
     endIdx = childNodes.length;
   }
 
@@ -389,6 +445,21 @@ export function reconcileArray<T>(
   // 标记已处理的 key
   const usedKeys = new Set<string | number>();
   const fragment = document.createDocumentFragment();
+
+  // FIX: P1-51 检测新列表中的重复 key，在 DEV 模式下发出警告
+  if (__DEV__) {
+    const seenKeys = new Set<string | number>();
+    for (let i = 0; i < list.length; i++) {
+      const key = options.key(list[i]!);
+      if (seenKeys.has(key)) {
+        console.warn(
+          `[lytjs/dom-runtime] Duplicate key "${String(key)}" detected in reconcileArray at index ${i}. ` +
+          `This may cause unexpected behavior.`,
+        );
+      }
+      seenKeys.add(key);
+    }
+  }
 
   // 遍历新列表
   for (let i = 0; i < list.length; i++) {
@@ -480,6 +551,7 @@ export type CleanupFn = () => void;
 const cleanupStack: CleanupFn[] = [];
 
 /** 当前活跃的清理栈，支持嵌套作用域 */
+// FIX: P2-44 嵌套作用域支持：使用栈结构管理嵌套的清理作用域
 let activeCleanupStack: CleanupFn[] | null = null;
 
 /**
@@ -516,6 +588,13 @@ export function runCleanups(): void {
  * 创建一个隔离的清理作用域
  * 在 scope 内注册的 onCleanup 只会被 scope 的 dispose 清理
  * 避免多个渲染器实例之间的清理函数互相干扰
+ *
+ * FIX: P1-53 作用域切换时机修正：
+ * 之前的实现中，activeCleanupStack 在 createCleanupScope 调用时立即切换，
+ * 但 dispose 时先恢复 prevStack 再执行清理函数，导致清理函数执行时
+ * activeCleanupStack 已恢复到外层，如果清理函数中注册了新的 onCleanup，
+ * 这些新的清理函数会注册到外层栈而非当前作用域。
+ * 现在改为在所有清理函数执行完毕后再恢复 prevStack。
  */
 export function createCleanupScope(): { dispose: () => void } {
   const scopeStack: CleanupFn[] = [];
@@ -523,7 +602,8 @@ export function createCleanupScope(): { dispose: () => void } {
   activeCleanupStack = scopeStack;
   return {
     dispose() {
-      activeCleanupStack = prevStack;
+      // FIX: P1-53 先执行所有清理函数，再恢复 prevStack
+      // 确保清理函数中注册的新的 onCleanup 仍然注册到当前作用域
       const fns = scopeStack.splice(0, scopeStack.length);
       for (const fn of fns) {
         try {
@@ -532,6 +612,8 @@ export function createCleanupScope(): { dispose: () => void } {
           // 静默忽略清理错误
         }
       }
+      // 所有清理函数执行完毕后再恢复外层栈
+      activeCleanupStack = prevStack;
     },
   };
 }

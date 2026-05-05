@@ -363,8 +363,16 @@ async function streamElementAsync(
 // yieldToMicrotask - yield control to allow progressive delivery
 // ============================================================
 
+// FIX: v7-P2-14 yieldToMicrotask 使用 queueMicrotask 替代 setTimeout
 function yieldToMicrotask(): Promise<void> {
-  return new Promise<void>((resolve) => setTimeout(resolve, 0));
+  return new Promise<void>((resolve) => {
+    if (typeof queueMicrotask === 'function') {
+      queueMicrotask(resolve);
+    } else {
+      // 回退：使用 Promise.resolve().then() 作为微任务
+      Promise.resolve().then(resolve);
+    }
+  });
 }
 
 // ============================================================

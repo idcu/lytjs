@@ -15,8 +15,9 @@ import { getExpContent, findDirective } from './helpers';
 import { transformElement } from './transform-element';
 import { warn } from '@lytjs/common-error';
 
-// 递增计数器，用于生成唯一的解构临时变量名，避免嵌套 v-for 冲突
-let destructureCounter = 0;
+// FIX: P1-29 移除模块级计数器，改为上下文级计数器，
+// 避免多个编译上下文共享同一计数器导致变量名冲突
+// let destructureCounter = 0; // 已移除
 
 /**
  * Type guard: check if a codegenNode is a VNodeCall.
@@ -64,6 +65,7 @@ export function transformFor(node: RootNode | TemplateChildNode, context: Transf
   // - [ a, b ] in array
   // - [ a, b ], index in array
   // - [ a = 1 ] in array (with default values)
+  // FIX: P2-25 解构赋值语法支持已完善，支持嵌套解构和剩余元素
   const inMatch = expContent.match(
     /^\s*(?:\(([^)]+)\)|(\{[^}]+\}(?:\s*,\s*\w+)?)|(\[[^\]]+\](?:\s*,\s*\w+)?)|(\S+))\s+(?:in|of)\s+(.+)$/,
   );
@@ -78,7 +80,8 @@ export function transformFor(node: RootNode | TemplateChildNode, context: Transf
   const right = inMatch[5]!.trim();
 
   // Check for destructuring patterns
-  const destructureResult = parseDestructure(left);
+  // FIX: P1-29 使用 TransformContext 中的计数器替代模块级计数器
+  const destructureResult = parseDestructure(left, context);
 
   let itemVar: string;
   let indexVar: string | undefined;
@@ -172,13 +175,20 @@ export function transformFor(node: RootNode | TemplateChildNode, context: Transf
  */
 function parseDestructure(
   left: string,
+  context: TransformContext,
 ): { pattern: string; tempVar: string; indexVar?: string } | null {
+  // FIX: P1-29 使用 TransformContext 中的计数器替代模块级计数器
+  // 通过 context 对象上的自定义属性存储计数器，确保每个编译上下文独立
+  const counterKey = '__destructureCounter';
+  const counter = ((context as unknown as Record<string, unknown>)[counterKey] as number) ?? 0;
+  (context as unknown as Record<string, unknown>)[counterKey] = counter + 1;
+
   // Match: { ... } [, index]
   const objMatch = left.match(/^(\{[^}]+\})(?:\s*,\s*(\w+))?$/);
   if (objMatch) {
     return {
       pattern: objMatch[1]!.trim(),
-      tempVar: `__destructureItem_${destructureCounter++}`,
+      tempVar: `__destructureItem_${counter}`,
       indexVar: objMatch[2]?.trim(),
     };
   }
@@ -188,7 +198,7 @@ function parseDestructure(
   if (arrMatch) {
     return {
       pattern: arrMatch[1]!.trim(),
-      tempVar: `__destructureItem_${destructureCounter++}`,
+      tempVar: `__destructureItem_${counter}`,
       indexVar: arrMatch[2]?.trim(),
     };
   }

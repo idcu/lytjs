@@ -120,6 +120,9 @@ export class SourceMapGenerator {
   }
 
   /**
+   * FIX: P2-27 多文件 source map 合并支持：
+   * addSource 现在支持同一 source 多次调用（合并 content）
+   *
    * Add a source file.
    */
   addSource(source: string, content?: string): number {
@@ -223,10 +226,28 @@ export class SourceMapGenerator {
   /**
    * Convert to base64-encoded data URI string.
    * Format: data:application/json;charset=utf-8;base64,<encoded>
+   * FIX: P1-31 使用 TextEncoder+btoa 替代 Buffer，
+   * 确保在浏览器环境和 Node.js 环境中都能正常工作
    */
   toBase64(): string {
     const json = JSON.stringify(this.toJSON());
-    const base64 = Buffer.from(json, 'utf-8').toString('base64');
+    // FIX: P1-31 优先使用 TextEncoder + btoa（浏览器兼容），
+    // 回退到 Buffer（Node.js 环境）
+    let base64: string;
+    if (typeof TextEncoder !== 'undefined' && typeof btoa !== 'undefined') {
+      const encoder = new TextEncoder();
+      const uint8Array = encoder.encode(json);
+      let binary = '';
+      for (let i = 0; i < uint8Array.length; i++) {
+        binary += String.fromCharCode(uint8Array[i]!);
+      }
+      base64 = btoa(binary);
+    } else if (typeof Buffer !== 'undefined') {
+      base64 = Buffer.from(json, 'utf-8').toString('base64');
+    } else {
+      // 最终回退：手动 base64 编码
+      base64 = btoa(unescape(encodeURIComponent(json)));
+    }
     return `data:application/json;charset=utf-8;base64,${base64}`;
   }
 

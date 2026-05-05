@@ -16,6 +16,7 @@ import type { VNode, VNodeChildren, Component } from './types';
 // ============================================================
 
 // Overload 1: h(type) - no props, no children
+// FIX: v7-P1-12 h() children 合并逻辑：确保嵌套数组被正确展平
 export function h(type: string): VNode;
 export function h(type: Component): VNode;
 export function h(type: typeof Fragment): VNode;
@@ -81,8 +82,12 @@ export function h(
     props = EMPTY_OBJ;
   }
 
-  // 合并剩余子节点
-  const flatChildren = children.length > 1 ? children : children[0];
+  // FIX: v7-P1-12 h() children 合并逻辑：递归展平嵌套数组，避免丢失嵌套子节点
+  const flatChildren = children.length > 1
+    ? children.flat(Infinity)
+    : Array.isArray(children[0])
+      ? children[0].flat(Infinity)
+      : children[0];
 
   return createVNode(type as VNodeTypes, props, flatChildren as unknown as VNodeChildren);
 }

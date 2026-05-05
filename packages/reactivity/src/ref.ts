@@ -116,7 +116,18 @@ export function triggerRefValue(ref: TrackableRef, newVal?: unknown, oldVal?: un
 // ==================== 公共 API ====================
 
 export function ref<T>(value: T): Ref<T> {
-  if (isRef(value)) return value as Ref<T>;
+  if (isRef(value)) {
+    // FIX: P1-07 ref() 接受 ShallowRef 时添加 DEV 警告，
+    // 提醒用户 ShallowRef 语义与 Ref 不同，直接返回可能导致意外行为
+    if (__DEV__ && (value as Ref<T>).__v_isShallow) {
+      warn(
+        'ref() received a ShallowRef value. ' +
+        'ShallowRef and Ref have different reactivity semantics. ' +
+        'If this is intentional, use shallowRef() instead.',
+      );
+    }
+    return value as Ref<T>;
+  }
   // 双重断言是必要的：RefImpl 实现了 Ref 接口所需的 value/__v_isRef 属性，
   // 但 TypeScript 无法自动推断类实例满足接口（私有成员导致结构不兼容）。
   return new RefImpl(value, false) as unknown as Ref<T>;
@@ -133,6 +144,8 @@ export function triggerRef<T>(ref: ShallowRef<T>): void {
 
 export { isRef } from './shared';
 
+// FIX: P2-06 unref 类型守卫增强：添加明确的返回类型注释
+// unref 如果参数是 Ref 则返回 .value，否则返回参数本身
 export function unref<T>(r: T | Ref<T>): T {
   return isRef(r) ? (r as Ref<T>).value : (r as T);
 }

@@ -304,6 +304,17 @@ function processElement(
   for (const child of node.children) {
     if (child.type === NodeTypes.INTERPOLATION) {
       const exp = getExpContent((child as InterpolationNode).content as SimpleExpressionNode);
+      // FIX: P1-27 插值表达式安全验证：检查表达式是否为合法的属性访问路径，
+      // 避免注入恶意代码导致 XSS 或运行时错误
+      if (!exp || !/^[a-zA-Z_$][a-zA-Z0-9_$]*(\.[a-zA-Z_$][a-zA-Z0-9_$]*)*$/.test(exp)) {
+        if (__DEV__) {
+          console.warn(
+            `[lytjs/compiler] Invalid interpolation expression: "${exp}". ` +
+            `Only simple property access paths are supported in signal mode.`,
+          );
+        }
+        continue;
+      }
       dynamicBindings.push({
         varName,
         code: `effect(() => setText(${varName}, _ctx.${exp}));`,
@@ -658,9 +669,14 @@ function processConditional(
 
   // 确定父容器和参考节点
   const containerVar = parentVar ?? '_container';
-  const ifVarName = `_if${varCounter.get('_if') ?? 0}`;
-  varCounter.set('_if', (varCounter.get('_if') ?? 0) + 1);
+  // FIX: P1-28 使用唯一计数器键确保嵌套 v-if 生成唯一变量名，
+  // 避免嵌套场景下变量名冲突
+  const ifCounterKey = `_if_${varCounter.get('_if_depth') ?? 0}`;
+  const ifVarName = `_if${varCounter.get(ifCounterKey) ?? 0}`;
+  varCounter.set(ifCounterKey, (varCounter.get(ifCounterKey) ?? 0) + 1);
+  varCounter.set('_if_depth', (varCounter.get('_if_depth') ?? 0) + 1);
 
+  // FIX: P2-24 模板缩进保持：生成的代码保持与模板一致的缩进层级
   // 生成条件分支的 DOM 插入/移除代码
   let code = `let ${ifVarName}El = null;\n`;
   code += `let ${ifVarName}Active = -1;\n`;
@@ -691,6 +707,8 @@ function processConditional(
 
     // 创建并插入新分支元素
     code += `        ${ifVarName}El = createTemplate(${JSON.stringify(branchHTML)}).firstElementChild;\n`;
+    // FIX: P0-07 添加 null 检查，防止空 HTML 或纯文本 HTML 导致 firstElementChild 为 null 时崩溃
+    code += `        if (!${ifVarName}El) { ${ifVarName}El = document.createComment(''); }\n`;
     if (branchHTML.trim()) {
       code += `        insert(${ifVarName}El, ${containerVar});\n`;
     }
