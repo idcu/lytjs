@@ -195,6 +195,9 @@ function genSSRElement(element: ElementNode): string {
 
   // Process props (attributes and SSR-relevant directives)
   const propParts: string[] = [];
+  // Collect v-html/v-text content to be rendered in the children area (not attributes)
+  let directiveChildren: string | undefined;
+
   for (const prop of element.props) {
     if (prop.type === NodeTypes.ATTRIBUTE) {
       const name = prop.name;
@@ -220,7 +223,7 @@ function genSSRElement(element: ElementNode): string {
           ? (prop.exp as SimpleExpressionNode).content
           : undefined;
         if (expContent) {
-          propParts.push(`' + ${expContent} + '`);
+          directiveChildren = (directiveChildren ? directiveChildren + ' + ' : '') + expContent;
         }
       }
       // v-text: output escaped text content as children (not as attribute)
@@ -229,7 +232,7 @@ function genSSRElement(element: ElementNode): string {
           ? (prop.exp as SimpleExpressionNode).content
           : undefined;
         if (expContent) {
-          propParts.push(`' + escapeHtml(String(${expContent})) + '`);
+          directiveChildren = (directiveChildren ? directiveChildren + ' + ' : '') + `escapeHtml(String(${expContent}))`;
         }
       }
     }
@@ -247,8 +250,10 @@ function genSSRElement(element: ElementNode): string {
 
   parts.push(" + '>'");
 
-  // Children
-  if (element.children.length > 0) {
+  // Children: directive children (v-html/v-text) take precedence, otherwise render element children
+  if (directiveChildren) {
+    parts.push(' + ' + directiveChildren);
+  } else if (element.children.length > 0) {
     const childrenStr = genSSRChildren(element.children);
     parts.push(' + ' + childrenStr);
   }
@@ -408,9 +413,26 @@ function genSSRCallExpression(call: JSCallExpression): string {
         // Extract arrow function parameters from the first child string
         const firstChild = children[0];
         if (typeof firstChild === 'string') {
-          const paramsMatch = firstChild.match(/\(([^)]*)\)\s*=>\s*\{/);
-          if (paramsMatch) {
-            arrowParams = paramsMatch[1]!.trim();
+          // Use a balanced-paren extraction to handle nested braces in destructuring
+          const arrowStart = firstChild.indexOf('=>');
+          if (arrowStart !== -1) {
+            const parenStart = firstChild.indexOf('(');
+            if (parenStart !== -1 && parenStart < arrowStart) {
+              // Find the matching closing paren, accounting for nested parens
+              let depth = 0;
+              let parenEnd = -1;
+              for (let i = parenStart; i < arrowStart; i++) {
+                if (firstChild[i] === '(') depth++;
+                else if (firstChild[i] === ')') depth--;
+                if (depth === 0) {
+                  parenEnd = i;
+                  break;
+                }
+              }
+              if (parenEnd !== -1) {
+                arrowParams = firstChild.slice(parenStart + 1, parenEnd).trim();
+              }
+            }
           }
         }
         // Extract the body (everything between first and last child)

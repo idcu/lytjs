@@ -25,7 +25,7 @@ export type {
   SchedulerJob,
   AsyncSchedulerOptions,
   // 过渡引擎（TransitionProps 从 @lytjs/vdom re-export）
-  TransitionState,
+  RuntimeTransitionState,
   FLIPRecord,
   ResolvedTransitionClasses,
   TransitionEngineOptions,

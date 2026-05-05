@@ -2,7 +2,7 @@
 // @lytjs/core - Composition API 辅助函数
 
 import { getCurrentInstance, onMounted } from '@lytjs/component';
-import { computed, shallowRef, watch, watchEffect } from '@lytjs/reactivity';
+import { computed, shallowRef, watch, watchEffect, readonly } from '@lytjs/reactivity';
 import { onScopeDispose } from '@lytjs/reactivity/scope';
 import { warnOnce } from '@lytjs/common-error';
 import type { WritableComputedRef, Ref } from '@lytjs/reactivity';
@@ -147,6 +147,11 @@ export function useTemplateRef<T = any>(key: string): Ref<T | null> {
 let globalIdCounter = 0;
 
 /**
+ * WeakMap to store per-instance ID counters, avoiding private property pollution.
+ */
+const instanceIdMap = new WeakMap<object, Map<string, number>>();
+
+/**
  * 生成应用范围内唯一的 ID。
  * Vue 3.5 新增的组合式 API，用于生成可预测的唯一标识符，
  * 特别适用于无障碍属性（aria-*)和表单元素关联。
@@ -154,21 +159,19 @@ let globalIdCounter = 0;
  * 每个组件实例会获得一个基于组件 uid 的 ID 前缀，
  * 确保同一组件在不同位置渲染时产生不同的 ID。
  */
-export function useId(): Ref<string> {
+export function useId(): Readonly<Ref<string>> {
   const instance = getCurrentInstance();
   const id = shallowRef('');
 
   if (instance) {
     // 使用组件 uid 作为前缀，确保组件级别的唯一性
     const prefix = `lyt-${instance.uid}`;
-    // 在组件内递增，支持同一组件多次调用 useId
-    const idMap = (instance as unknown as Record<string, unknown>).__idMap as
-      | Map<string, number>
-      | undefined;
-    if (!idMap) {
-      (instance as unknown as Record<string, unknown>).__idMap = new Map<string, number>();
+    // 使用 WeakMap 存储每个实例的 ID 计数器，避免私有属性依赖
+    let map = instanceIdMap.get(instance);
+    if (!map) {
+      map = new Map<string, number>();
+      instanceIdMap.set(instance, map);
     }
-    const map = (instance as unknown as Record<string, unknown>).__idMap as Map<string, number>;
     const counter = (map.get('useId') ?? 0) + 1;
     map.set('useId', counter);
     id.value = `${prefix}-${counter}`;
@@ -177,10 +180,15 @@ export function useId(): Ref<string> {
     id.value = `lyt-${++globalIdCounter}`;
   }
 
-  return id;
+  return readonly(id);
 }
 
 // ==================== useCssModule / useCssVars ====================
+
+/**
+ * WeakMap to store per-instance CSS module mappings, avoiding private property pollution.
+ */
+const instanceCssModulesMap = new WeakMap<object, Record<string, Record<string, string>>>();
 
 /**
  * 获取单文件组件中 CSS Modules 的类名映射。
@@ -198,11 +206,26 @@ export function useCssModule(name = '$style'): Record<string, string> {
     return {};
   }
 
-  // CSS Modules 的类名映射存储在 instance 的 cssModules 中
-  const cssModules = (instance as unknown as Record<string, unknown>).cssModules as
-    | Record<string, Record<string, string>>
-    | undefined;
-  return cssModules?.[name] ?? {};
+  // CSS Modules 的类名映射通过 WeakMap 存储，避免私有属性依赖
+  const modules = instanceCssModulesMap.get(instance);
+  return modules?.[name] ?? {};
+}
+
+/**
+ * 在组件实例上注册 CSS Modules 映射（供 SFC 编译器调用）。
+ * 替代直接设置 instance.cssModules 的方式。
+ */
+export function registerCssModules(
+  instance: object,
+  name: string,
+  mapping: Record<string, string>,
+): void {
+  let modules = instanceCssModulesMap.get(instance);
+  if (!modules) {
+    modules = {};
+    instanceCssModulesMap.set(instance, modules);
+  }
+  modules[name] = mapping;
 }
 
 /**

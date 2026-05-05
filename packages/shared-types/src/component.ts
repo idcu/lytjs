@@ -20,11 +20,15 @@ export type InternalSlots<SlotProps = Record<string, unknown>> = Record<
 /**
  * 组件公共实例接口
  * @template Props - 组件 props 类型
+ * @template RawBindings - setup() 返回的绑定类型
  * @template Data - 组件 data 类型
+ * @template C - 组件公共实例类型（用于 $refs/$parent/$root 的递归引用）
  */
 export interface ComponentPublicInstance<
   Props = Record<string, unknown>,
+  RawBindings = Record<string, unknown>,
   Data = Record<string, unknown>,
+  C = ComponentPublicInstance<Props, RawBindings, Data, C>,
 > {
   /** 组件 data 对象 */
   $data: Data;
@@ -35,7 +39,7 @@ export interface ComponentPublicInstance<
   /** 组件选项对象 */
   $options: Record<string, unknown>;
   /** 模板引用映射 */
-  $refs: Record<string, Element | ComponentPublicInstance | null>;
+  $refs: Record<string, Element | C | null>;
   /** 插槽对象 */
   $slots: InternalSlots;
   /** 事件触发函数 */
@@ -45,9 +49,9 @@ export interface ComponentPublicInstance<
   /** nextTick 函数 */
   $nextTick: () => Promise<void>;
   /** 父组件实例 */
-  $parent?: ComponentPublicInstance | null;
+  $parent?: C | null;
   /** 根组件实例 */
-  $root?: ComponentPublicInstance | null;
+  $root?: C | null;
   /** 属性对象 */
   $attrs?: Record<string, unknown>;
   /** provide 对象 */

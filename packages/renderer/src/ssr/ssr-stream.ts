@@ -21,7 +21,32 @@ export interface SSRStreamOptions {
 }
 
 // ============================================================
-// renderToStream - main entry
+// Suspense detection helpers
+// ============================================================
+
+/** ShapeFlag for functional/stateful component (bits 4-5) */
+const COMPONENT_MASK = ShapeFlags.STATEFUL_COMPONENT | ShapeFlags.FUNCTIONAL_COMPONENT;
+
+/** Check if a vnode is a component type (not Fragment/Text/Comment/Element) */
+function isComponentVNode(vnode: VNode): boolean {
+  return !!(vnode.shapeFlag & COMPONENT_MASK);
+}
+
+/** Check if a vnode is a Suspense component by name */
+function isSuspenseVNode(vnode: VNode): boolean {
+  if (!isComponentVNode(vnode)) return false;
+  const type = vnode.type;
+  if (typeof type === 'object' && type !== null && 'name' in type) {
+    return (type as { name?: string }).name === 'Suspense';
+  }
+  if (typeof type === 'function' && 'name' in type) {
+    return (type as { name?: string }).name === 'Suspense';
+  }
+  return false;
+}
+
+// ============================================================
+// renderToStream - main entry (true async streaming)
 // ============================================================
 
 /**
@@ -32,8 +57,9 @@ export interface SSRStreamOptions {
  * when an async component is encountered, the fallback is streamed first,
  * then the real content is pushed once resolved.
  *
- * Uses microtask scheduling to allow the browser to process chunks between
- * renders, enabling true progressive streaming.
+ * Uses a pull-based approach with microtask scheduling so that each VNode
+ * node is enqueued independently, allowing the browser to consume chunks
+ * progressively between microtask boundaries.
  */
 export function renderToStream(
   input: SSRInput,
@@ -43,25 +69,20 @@ export function renderToStream(
   const commentMarkers = options?.commentMarkers ?? false;
 
   return new ReadableStream<Uint8Array>({
-    start(controller) {
-      // Wrap synchronous rendering in a microtask so that controller.close()
-      // does not execute synchronously in start(), allowing the browser to
-      // consume chunks progressively between microtask boundaries.
-      Promise.resolve().then(() => {
-        try {
-          streamVNode(input.vnode, controller, encoder, commentMarkers);
-        } catch (err) {
-          controller.error(err);
-          return;
-        }
-        controller.close();
-      });
+    async pull(controller) {
+      try {
+        await streamVNodeAsync(input.vnode, controller, encoder, commentMarkers);
+      } catch (err) {
+        controller.error(err);
+        return;
+      }
+      controller.close();
     },
   });
 }
 
 // ============================================================
-// streamVNode - recursive streaming
+// pushChunk - enqueue a single HTML chunk
 // ============================================================
 
 function pushChunk(
@@ -78,17 +99,25 @@ function pushChunk(
   controller.enqueue(encoder.encode(html));
 }
 
-function streamVNode(
+// ============================================================
+// streamVNodeAsync - async streaming with microtask yielding
+// ============================================================
+
+/**
+ * Recursively stream a VNode tree with microtask yields between sibling
+ * nodes, enabling true progressive delivery.
+ */
+async function streamVNodeAsync(
   vnode: VNode,
   controller: ReadableStreamDefaultController<Uint8Array>,
   encoder: TextEncoder,
   commentMarkers: boolean,
-): void {
+): Promise<void> {
   const { type, shapeFlag, children } = vnode;
 
   // Handle Fragment
   if (type === Fragment) {
-    streamFragment(vnode, controller, encoder, commentMarkers);
+    await streamFragmentAsync(vnode, controller, encoder, commentMarkers);
     return;
   }
 
@@ -108,48 +137,178 @@ function streamVNode(
     return;
   }
 
+  // Handle Suspense component
+  if (isSuspenseVNode(vnode)) {
+    await streamSuspenseBoundary(vnode, controller, encoder, commentMarkers);
+    return;
+  }
+
   // Handle Element
   if (shapeFlag & ShapeFlags.ELEMENT) {
-    streamElement(vnode, controller, encoder, commentMarkers);
+    await streamElementAsync(vnode, controller, encoder, commentMarkers);
+    return;
+  }
+
+  // Handle other component types (stateful/functional)
+  if (isComponentVNode(vnode)) {
+    await streamComponentAsync(vnode, controller, encoder, commentMarkers);
     return;
   }
 }
 
 // ============================================================
-// streamFragment
+// streamFragmentAsync
 // ============================================================
 
-function streamFragment(
+async function streamFragmentAsync(
   vnode: VNode,
   controller: ReadableStreamDefaultController<Uint8Array>,
   encoder: TextEncoder,
   commentMarkers: boolean,
-): void {
+): Promise<void> {
   const children = vnode.children;
   if (isArray(children)) {
     for (let i = 0; i < children.length; i++) {
       const child = children[i];
       if (child != null) {
-        streamVNode(child, controller, encoder, commentMarkers);
+        await streamVNodeAsync(child, controller, encoder, commentMarkers);
+        // Yield to the event loop between siblings for true progressive delivery
+        await yieldToMicrotask();
       }
     }
   }
 }
 
 // ============================================================
-// streamElement
+// streamSuspenseBoundary - Suspense streaming support
+// ============================================================
+
+/**
+ * Stream a Suspense boundary:
+ * 1. Stream the fallback content immediately
+ * 2. Resolve the async children
+ * 3. Replace the fallback with the resolved content
+ *
+ * Uses comment markers to delineate the Suspense boundary so the client
+ * can replace the fallback when the real content arrives.
+ */
+async function streamSuspenseBoundary(
+  vnode: VNode,
+  controller: ReadableStreamDefaultController<Uint8Array>,
+  encoder: TextEncoder,
+  commentMarkers: boolean,
+): Promise<void> {
+  const suspenseId = `suspense-${Math.random().toString(36).slice(2, 8)}`;
+
+  // Open Suspense boundary marker
+  pushChunk(controller, encoder, `<!--${suspenseId}-start-->`, commentMarkers, 'suspense:start');
+
+  // Try to resolve the default slot children
+  const defaultSlot = vnode.props?.default as (() => unknown) | undefined;
+  const fallbackSlot = vnode.props?.fallback as (() => unknown) | undefined;
+
+  // Stream fallback first if available
+  if (fallbackSlot) {
+    pushChunk(controller, encoder, `<!--${suspenseId}-fallback-start-->`, commentMarkers, 'suspense:fallback');
+    try {
+      const fallbackResult = fallbackSlot();
+      if (isArray(fallbackResult)) {
+        for (const child of fallbackResult) {
+          if (child != null && typeof child === 'object' && 'type' in child) {
+            await streamVNodeAsync(child as VNode, controller, encoder, commentMarkers);
+          }
+        }
+      } else if (fallbackResult != null && typeof fallbackResult === 'object' && 'type' in fallbackResult) {
+        await streamVNodeAsync(fallbackResult as VNode, controller, encoder, commentMarkers);
+      }
+    } catch (_err) {
+      // Fallback rendering error: silently skip
+    }
+    pushChunk(controller, encoder, `<!--${suspenseId}-fallback-end-->`, commentMarkers, 'suspense:fallback-end');
+  }
+
+  // Now try to resolve the default (async) content
+  if (defaultSlot) {
+    try {
+      const result = defaultSlot();
+      // If the result is a Promise, await it
+      const resolved = result instanceof Promise ? await result : result;
+
+      pushChunk(controller, encoder, `<!--${suspenseId}-content-start-->`, commentMarkers, 'suspense:content');
+
+      if (isArray(resolved)) {
+        for (const child of resolved) {
+          if (child != null && typeof child === 'object' && 'type' in child) {
+            await streamVNodeAsync(child as VNode, controller, encoder, commentMarkers);
+            await yieldToMicrotask();
+          }
+        }
+      } else if (resolved != null && typeof resolved === 'object' && 'type' in resolved) {
+        await streamVNodeAsync(resolved as VNode, controller, encoder, commentMarkers);
+      }
+
+      pushChunk(controller, encoder, `<!--${suspenseId}-content-end-->`, commentMarkers, 'suspense:content-end');
+    } catch (_err) {
+      // Async content failed to resolve; fallback is already streamed
+      pushChunk(controller, encoder, `<!--${suspenseId}-error-->`, commentMarkers, 'suspense:error');
+    }
+  }
+
+  // Close Suspense boundary marker
+  pushChunk(controller, encoder, `<!--${suspenseId}-end-->`, commentMarkers, 'suspense:end');
+}
+
+// ============================================================
+// streamComponentAsync - generic component streaming
+// ============================================================
+
+async function streamComponentAsync(
+  vnode: VNode,
+  controller: ReadableStreamDefaultController<Uint8Array>,
+  encoder: TextEncoder,
+  commentMarkers: boolean,
+): Promise<void> {
+  // For component vnodes, try to render them and stream the result
+  const component = vnode.type as Record<string, unknown>;
+  if (typeof component === 'object' && component !== null) {
+    // If the component has a render function, call it
+    if (typeof component.render === 'function') {
+      const result = component.render(vnode.props ?? {});
+      if (result && typeof result === 'object' && 'type' in result) {
+        await streamVNodeAsync(result as VNode, controller, encoder, commentMarkers);
+        return;
+      }
+    }
+    // If the component has a setup that returns a VNode
+    if (typeof component.setup === 'function') {
+      const setupResult = component.setup(vnode.props ?? {});
+      const resolved = setupResult instanceof Promise ? await setupResult : setupResult;
+      if (resolved && typeof resolved === 'object' && 'type' in resolved) {
+        await streamVNodeAsync(resolved as VNode, controller, encoder, commentMarkers);
+        return;
+      }
+    }
+  }
+  // Fallback: render as empty comment
+  if (__DEV__) {
+    warn(`SSR stream: could not render component vnode`);
+  }
+}
+
+// ============================================================
+// streamElementAsync
 // ============================================================
 
 function isValidHTMLElementTag(tag: string): boolean {
   return /^[a-z][a-z0-9-]*$/.test(tag);
 }
 
-function streamElement(
+async function streamElementAsync(
   vnode: VNode,
   controller: ReadableStreamDefaultController<Uint8Array>,
   encoder: TextEncoder,
   commentMarkers: boolean,
-): void {
+): Promise<void> {
   const tag = vnode.type as string;
 
   if (!isValidHTMLElementTag(tag)) {
@@ -189,7 +348,8 @@ function streamElement(
     for (let i = 0; i < children.length; i++) {
       const child = children[i];
       if (child != null) {
-        streamVNode(child, controller, encoder, commentMarkers);
+        await streamVNodeAsync(child, controller, encoder, commentMarkers);
+        await yieldToMicrotask();
       }
     }
   }
@@ -197,6 +357,14 @@ function streamElement(
   // Closing tag
   const closeTag = `</${tag}>`;
   pushChunk(controller, encoder, closeTag, commentMarkers, `element:${tag}:close`);
+}
+
+// ============================================================
+// yieldToMicrotask - yield control to allow progressive delivery
+// ============================================================
+
+function yieldToMicrotask(): Promise<void> {
+  return new Promise<void>((resolve) => setTimeout(resolve, 0));
 }
 
 // ============================================================

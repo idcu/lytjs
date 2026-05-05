@@ -117,6 +117,37 @@ export function createApp(
     },
 
     unmount() {
+      // 清理全局事件监听器（document、window 等上注册的监听器）
+      for (const listener of _globalListeners) {
+        try {
+          listener.target.removeEventListener(listener.event, listener.handler, listener.options);
+        } catch (err) {
+          if (__DEV__) {
+            warn(`Failed to remove global event listener "${listener.event}": ${err}`);
+          }
+        }
+      }
+      _globalListeners.length = 0;
+
+      // 清理插件资源：调用插件的 cleanup 方法（如果存在）
+      for (const plugin of installedPlugins) {
+        if (
+          typeof plugin !== 'function' &&
+          plugin != null &&
+          typeof (plugin as unknown as Record<string, unknown>).cleanup === 'function'
+        ) {
+          try {
+            const cleanup = (plugin as unknown as Record<string, unknown>).cleanup;
+            if (typeof cleanup === 'function') cleanup();
+          } catch (err) {
+            error(
+              `Plugin cleanup failed: ${typeof plugin === 'object' && plugin !== null && 'name' in plugin ? (plugin as { name?: string }).name : 'unknown'}: ${err}`,
+            );
+          }
+        }
+      }
+      installedPlugins.clear();
+
       if (effectiveMode === 'signal') {
         // Signal 模式卸载
         const componentOptions = rootComponent as Record<string, unknown>;
@@ -150,37 +181,6 @@ export function createApp(
       _isMounted = false;
 
       context._container = null;
-
-      // 清理全局事件监听器（document、window 等上注册的监听器）
-      for (const listener of _globalListeners) {
-        try {
-          listener.target.removeEventListener(listener.event, listener.handler, listener.options);
-        } catch (err) {
-          if (__DEV__) {
-            warn(`Failed to remove global event listener "${listener.event}": ${err}`);
-          }
-        }
-      }
-      _globalListeners.length = 0;
-
-      // 清理插件资源：调用插件的 cleanup 方法（如果存在）
-      for (const plugin of installedPlugins) {
-        if (
-          typeof plugin !== 'function' &&
-          plugin != null &&
-          typeof (plugin as unknown as Record<string, unknown>).cleanup === 'function'
-        ) {
-          try {
-            const cleanup = (plugin as unknown as Record<string, unknown>).cleanup;
-            if (typeof cleanup === 'function') cleanup();
-          } catch (err) {
-            error(
-              `Plugin cleanup failed: ${typeof plugin === 'object' && plugin !== null && 'name' in plugin ? (plugin as { name?: string }).name : 'unknown'}: ${err}`,
-            );
-          }
-        }
-      }
-      installedPlugins.clear();
 
       // 清理 app context
       context.mixins.length = 0;
@@ -222,6 +222,30 @@ export function createApp(
 
     mixin(mixin) {
       context.mixins.push(mixin);
+      return app;
+    },
+
+    /**
+     * Register a global event listener that will be automatically cleaned up on unmount.
+     * This ensures no leaked event listeners when the app is destroyed.
+     */
+    on(target: EventTarget, event: string, handler: EventListener, options?: AddEventListenerOptions) {
+      target.addEventListener(event, handler, options);
+      _globalListeners.push({ target, event, handler, options });
+      return app;
+    },
+
+    /**
+     * Remove a previously registered global event listener.
+     */
+    off(target: EventTarget, event: string, handler: EventListener, options?: AddEventListenerOptions) {
+      target.removeEventListener(event, handler, options);
+      const idx = _globalListeners.findIndex(
+        (l) => l.target === target && l.event === event && l.handler === handler,
+      );
+      if (idx !== -1) {
+        _globalListeners.splice(idx, 1);
+      }
       return app;
     },
   };
