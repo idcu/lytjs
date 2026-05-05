@@ -292,31 +292,53 @@ function normalizeWatchHandler(
 export function finishComponentSetup(instance: ComponentInternalInstance): void {
   const { type } = instance;
 
+  // Step 1: Create public instance proxy
   try {
-    // Create public instance proxy before data() so ctx is available
     instance.ctx = createComponentPublicInstance(instance);
+  } catch (err) {
+    if (__DEV__) {
+      warn(
+        `Failed to create public instance proxy for ${(type as Record<string, unknown>).name || '(anonymous)'}: ${(err as Error).message}`,
+      );
+    }
+    handleError(err as Error, instance, 'finishComponentSetup (createComponentPublicInstance)');
+    instance.render = () => null as unknown as VNode;
+    return;
+  }
 
-    // Init data
+  // Step 2: Init data
+  try {
     if (type.data) {
       const data = type.data.call(instance.ctx) ?? {};
       instance.data = reactive(data);
     }
+  } catch (err) {
+    if (__DEV__) {
+      warn(
+        `Failed to initialize data for ${(type as Record<string, unknown>).name || '(anonymous)'}: ${(err as Error).message}`,
+      );
+    }
+    handleError(err as Error, instance, 'finishComponentSetup (data initialization)');
+    instance.render = () => null as unknown as VNode;
+    return;
+  }
 
-    // Props conflict detection: create keys set once for reuse
-    const __DEV__propsKeys = __DEV__ && instance.props ? new Set(Object.keys(instance.props)) : null;
+  // Props conflict detection: create keys set once for reuse
+  const __DEV__propsKeys = __DEV__ && instance.props ? new Set(Object.keys(instance.props)) : null;
 
-    // Check data vs props conflict
-    if (__DEV__propsKeys && instance.data) {
-      for (const key of Object.keys(instance.data)) {
-        if (__DEV__propsKeys.has(key)) {
-          warn(`Data property "${key}" is already defined as a prop. Use default value in props instead.`);
-        }
+  // Check data vs props conflict
+  if (__DEV__propsKeys && instance.data) {
+    for (const key of Object.keys(instance.data)) {
+      if (__DEV__propsKeys.has(key)) {
+        warn(`Data property "${key}" is already defined as a prop. Use default value in props instead.`);
       }
     }
+  }
 
-    const proxy = instance.ctx;
+  const proxy = instance.ctx;
 
-    // Init methods: bind each method to the public instance proxy
+  // Step 3: Init methods
+  try {
     if (type.methods) {
       for (const key in type.methods) {
         if (hasOwn(type.methods, key)) {
@@ -337,8 +359,19 @@ export function finishComponentSetup(instance: ComponentInternalInstance): void 
         }
       }
     }
+  } catch (err) {
+    if (__DEV__) {
+      warn(
+        `Failed to initialize methods for ${(type as Record<string, unknown>).name || '(anonymous)'}: ${(err as Error).message}`,
+      );
+    }
+    handleError(err as Error, instance, 'finishComponentSetup (methods initialization)');
+    instance.render = () => null as unknown as VNode;
+    return;
+  }
 
-    // Init computed: create computed refs and mount on ctx
+  // Step 4: Init computed
+  try {
     if (type.computed) {
       for (const key in type.computed) {
         if (hasOwn(type.computed, key)) {
@@ -382,8 +415,19 @@ export function finishComponentSetup(instance: ComponentInternalInstance): void 
         }
       }
     }
+  } catch (err) {
+    if (__DEV__) {
+      warn(
+        `Failed to initialize computed for ${(type as Record<string, unknown>).name || '(anonymous)'}: ${(err as Error).message}`,
+      );
+    }
+    handleError(err as Error, instance, 'finishComponentSetup (computed initialization)');
+    instance.render = () => null as unknown as VNode;
+    return;
+  }
 
-    // Init watch: set up watchers for each declared watch key
+  // Step 5: Init watch
+  try {
     if (type.watch) {
       for (const key in type.watch) {
         if (hasOwn(type.watch, key)) {
@@ -413,12 +457,22 @@ export function finishComponentSetup(instance: ComponentInternalInstance): void 
         }
       }
     }
+  } catch (err) {
+    if (__DEV__) {
+      warn(
+        `Failed to initialize watch for ${(type as Record<string, unknown>).name || '(anonymous)'}: ${(err as Error).message}`,
+      );
+    }
+    handleError(err as Error, instance, 'finishComponentSetup (watch initialization)');
+    instance.render = () => null as unknown as VNode;
+    return;
+  }
 
-    // Call beforeCreate and created hooks
+  // Step 6: Call created hooks and register render tracking hooks
+  try {
     callCreatedHook(instance);
 
     // Register Options API renderTracked/renderTriggered hooks
-    // so they are called alongside Composition API onRenderTracked/onRenderTriggered
     if (type.renderTracked) {
       if (!instance.renderTrackedHooks) {
         instance.renderTrackedHooks = [];
@@ -431,23 +485,31 @@ export function finishComponentSetup(instance: ComponentInternalInstance): void 
       }
       instance.renderTriggeredHooks.push(type.renderTriggered.bind(proxy));
     }
+  } catch (err) {
+    if (__DEV__) {
+      warn(
+        `Failed during lifecycle hooks for ${(type as Record<string, unknown>).name || '(anonymous)'}: ${(err as Error).message}`,
+      );
+    }
+    handleError(err as Error, instance, 'finishComponentSetup (lifecycle hooks)');
+    instance.render = () => null as unknown as VNode;
+    return;
+  }
 
-    // If no render function from setup, use options render
+  // Step 7: Set up render function
+  try {
     if (!instance.render) {
       if (type.render) {
         instance.render = type.render.bind(instance.ctx);
       }
     }
   } catch (err) {
-    // Log error for debugging
     if (__DEV__) {
       warn(
-        `Failed to finish component setup for ${(type as Record<string, unknown>).name || '(anonymous)'}: ${(err as Error).message}`,
+        `Failed to set up render for ${(type as Record<string, unknown>).name || '(anonymous)'}: ${(err as Error).message}`,
       );
     }
-    // Propagate error to ErrorBoundary
-    handleError(err as Error, instance, 'finishComponentSetup');
-    // Set a no-op render to prevent silent empty rendering
+    handleError(err as Error, instance, 'finishComponentSetup (render setup)');
     instance.render = () => null as unknown as VNode;
   }
 }

@@ -78,7 +78,12 @@ export function useModel<T>(
  */
 export function defineModel<T = any>(
   name?: string,
-  options?: { default?: T; required?: boolean; type?: unknown },
+  options?: {
+    default?: T;
+    required?: boolean;
+    type?: unknown;
+    transform?: (value: T) => T;
+  },
 ): WritableComputedRef<T> {
   const instance = getCurrentInstance();
   const modelName = name ?? 'modelValue';
@@ -104,12 +109,22 @@ export function defineModel<T = any>(
     get() {
       const value = props[modelName];
       if (value === undefined) {
+        // required 校验：值为 undefined 且无默认值时发出警告
+        if (__DEV__ && options?.required && options?.default === undefined) {
+          warnOnce(
+            `defineModel() "${modelName}" is marked as required but its value is undefined.`,
+          );
+        }
         return options?.default as T;
       }
       return value;
     },
     set(newValue: T) {
-      instance.emit(`update:${modelName}`, newValue);
+      // transform: 在 emit 前对值进行转换
+      const emitValue = options?.transform
+        ? options.transform(newValue)
+        : newValue;
+      instance.emit(`update:${modelName}`, emitValue);
     },
   });
 }
@@ -132,7 +147,7 @@ export function useTemplateRef<T = any>(key: string): Ref<T | null> {
       (newVal) => {
         ref.value = newVal;
       },
-      { immediate: true, flush: 'post' },
+      { immediate: true, flush: 'pre' },
     );
     onScopeDispose(stop);
   } else if (__DEV__) {

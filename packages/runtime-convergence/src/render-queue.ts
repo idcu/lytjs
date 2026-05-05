@@ -43,6 +43,9 @@ export class RenderQueue<HN = unknown, HE extends HN = HN> {
   /** 是否正在执行刷新（防止重入） */
   private flushing = false;
 
+  /** 队列是否需要排序（dirty 标志，延迟到 flush 时排序） */
+  private dirty = false;
+
   /** RendererHost 实例 */
   private host: RendererHost<HN, HE>;
 
@@ -77,8 +80,8 @@ export class RenderQueue<HN = unknown, HE extends HN = HN> {
     } else {
       this.queue.push(op);
     }
-    // 按优先级排序
-    this.sortQueue();
+    // 标记队列需要排序，延迟到 flush 时统一排序
+    this.dirty = true;
     this.scheduleFlush();
   }
 
@@ -154,6 +157,12 @@ export class RenderQueue<HN = unknown, HE extends HN = HN> {
 
     this.flushing = true;
 
+    // 如果队列未排序，在 flush 时统一排序一次
+    if (this.dirty) {
+      this.sortQueue();
+      this.dirty = false;
+    }
+
     // 取出当前所有操作（防止 flush 过程中新增操作导致无限循环）
     const ops = this.queue;
     this.queue = [];
@@ -223,17 +232,37 @@ export class RenderQueue<HN = unknown, HE extends HN = HN> {
 
   /**
    * 获取操作的标识 key，用于合并判断。
+   *
+   * 对于组件类型（非字符串 type），使用 vnode.key 或 type.name 避免不同组件被错误合并。
    */
   private getOperationKey(op: RenderOperation): string | null {
+    const typeKey = (vnode: any): string => {
+      const t = vnode?.type;
+      if (typeof t === 'string') {
+        return t;
+      }
+      // 组件类型：优先使用 vnode.key，其次使用 type.name 或 Symbol
+      if (vnode?.key != null) {
+        return String(vnode.key);
+      }
+      if (typeof t === 'function' && t.name) {
+        return t.name;
+      }
+      if (typeof t === 'object' && t != null) {
+        return (t as any).name != null ? String((t as any).name) : String(t);
+      }
+      return String(t);
+    };
+
     switch (op.type) {
       case 'insert':
-        return `insert:${String(op.vnode.type)}`;
+        return `insert:${typeKey(op.vnode)}`;
       case 'remove':
-        return `remove:${String(op.vnode.type)}`;
+        return `remove:${typeKey(op.vnode)}`;
       case 'move':
-        return `move:${String(op.vnode.type)}`;
+        return `move:${typeKey(op.vnode)}`;
       case 'patch':
-        return `patch:${String(op.newVNode.type)}`;
+        return `patch:${typeKey(op.newVNode)}`;
       case 'custom':
         return null;
     }
