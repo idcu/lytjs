@@ -30,8 +30,44 @@ import type { ComponentInternalInstance, ComponentPublicInstance } from './types
 import { warnOnce } from '@lytjs/common-error';
 import type { DebuggerEvent } from '@lytjs/shared-types';
 
-// Current instance being set up (for lifecycle hook registration)
+// Current instance being set up (used during lifecycle hook registration)
 let currentInstance: ComponentInternalInstance | null = null;
+
+// FIX: P1-8 COMPONENT-NEW-02 - 生命周期钩子调用顺序跟踪
+// 用于在开发模式下验证生命周期钩子调用顺序
+const lifecycleCallOrder = new WeakMap<ComponentInternalInstance, Set<string>>();
+
+/**
+ * 断言生命周期钩子调用顺序正确
+ * 确保 onBeforeMount 在 onMounted 之前调用等
+ */
+function assertLifecycleOrder(
+  instance: ComponentInternalInstance,
+  currentHook: string,
+  requiredPrevHooks?: string[],
+): void {
+  if (!__DEV__) return;
+
+  let calledHooks = lifecycleCallOrder.get(instance);
+  if (!calledHooks) {
+    calledHooks = new Set();
+    lifecycleCallOrder.set(instance, calledHooks);
+  }
+
+  // 检查前置钩子是否已调用
+  if (requiredPrevHooks) {
+    for (const requiredHook of requiredPrevHooks) {
+      if (!calledHooks.has(requiredHook)) {
+        warnOnce(
+          `Lifecycle hook "${currentHook}" was called before "${requiredHook}". ` +
+            `Expected order: ${requiredPrevHooks.join(' -> ')} -> ${currentHook}`,
+        );
+      }
+    }
+  }
+
+  calledHooks.add(currentHook);
+}
 
 /**
  * Set the current instance (used during setup).
@@ -282,9 +318,16 @@ export function callCreatedHook(instance: ComponentInternalInstance): void {
  * Call beforeMount and mounted lifecycle hooks (options API).
  */
 export function callMountedHook(instance: ComponentInternalInstance): void {
+  // FIX: P1-8 COMPONENT-NEW-02 - 添加生命周期调用顺序断言
+  assertLifecycleOrder(instance, 'beforeMount', []);
+
   const { beforeMount, mounted } = instance.type;
   callLifecycleHook(instance, 'beforeMount');
   callOptionsHook(instance, beforeMount, 'beforeMount');
+
+  // FIX: P1-8 - 确保 onBeforeMount 在 onMounted 之前调用
+  assertLifecycleOrder(instance, 'mounted', ['beforeMount']);
+
   callLifecycleHook(instance, 'mounted');
   callOptionsHook(instance, mounted, 'mounted');
   instance.isMounted = true;
@@ -294,9 +337,23 @@ export function callMountedHook(instance: ComponentInternalInstance): void {
  * Call beforeUpdate and updated lifecycle hooks (options API).
  */
 export function callUpdatedHook(instance: ComponentInternalInstance): void {
+  // FIX: P1-8 COMPONENT-NEW-02 - 添加生命周期调用顺序断言
+  // 确保组件已挂载后才能调用更新钩子
+  if (__DEV__ && !instance.isMounted) {
+    warnOnce(
+      `Lifecycle hook "beforeUpdate" was called before the component was mounted. ` +
+        `Expected order: mounted -> beforeUpdate -> updated`,
+    );
+  }
+  assertLifecycleOrder(instance, 'beforeUpdate', ['mounted']);
+
   const { beforeUpdate, updated } = instance.type;
   callLifecycleHook(instance, 'beforeUpdate');
   callOptionsHook(instance, beforeUpdate, 'beforeUpdate');
+
+  // FIX: P1-8 - 确保 onBeforeUpdate 在 onUpdated 之前调用
+  assertLifecycleOrder(instance, 'updated', ['beforeUpdate', 'mounted']);
+
   callLifecycleHook(instance, 'updated');
   callOptionsHook(instance, updated, 'updated');
 }
@@ -305,9 +362,23 @@ export function callUpdatedHook(instance: ComponentInternalInstance): void {
  * Call beforeUnmount and unmounted lifecycle hooks (options API).
  */
 export function callUnmountedHook(instance: ComponentInternalInstance): void {
+  // FIX: P1-8 COMPONENT-NEW-02 - 添加生命周期调用顺序断言
+  // 确保组件已挂载后才能调用卸载钩子
+  if (__DEV__ && !instance.isMounted) {
+    warnOnce(
+      `Lifecycle hook "beforeUnmount" was called before the component was mounted. ` +
+        `Expected order: mounted -> beforeUnmount -> unmounted`,
+    );
+  }
+  assertLifecycleOrder(instance, 'beforeUnmount', ['mounted']);
+
   const { beforeUnmount, unmounted } = instance.type;
   callLifecycleHook(instance, 'beforeUnmount');
   callOptionsHook(instance, beforeUnmount, 'beforeUnmount');
+
+  // FIX: P1-8 - 确保 onBeforeUnmount 在 onUnmounted 之前调用
+  assertLifecycleOrder(instance, 'unmounted', ['beforeUnmount', 'mounted']);
+
   callLifecycleHook(instance, 'unmounted');
   callOptionsHook(instance, unmounted, 'unmounted');
   instance.isUnmounted = true;

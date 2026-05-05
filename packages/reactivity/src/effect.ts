@@ -396,6 +396,10 @@ export function resetTracking(): void {
   shouldTrack = last === undefined ? true : last;
 }
 
+// FIX: P1-4 REACTIVITY-NEW-02 - batch 中使用 Set 替代数组去重，避免重复调度同一个 effect
+const batchEffects = new Set<ReactiveEffect>();
+let isFlushingBatch = false;
+
 export function batch(fn: () => void): void {
   const stackLength = trackStack.length;
   pauseTracking();
@@ -407,6 +411,24 @@ export function batch(fn: () => void): void {
       trackStack.pop();
     }
     shouldTrack = trackStack.length > 0 ? trackStack[trackStack.length - 1]! : true;
+  }
+}
+
+/**
+ * 将 effect 添加到 batch 队列中，自动去重
+ * @internal
+ */
+export function queueBatchEffect(effect: ReactiveEffect): void {
+  batchEffects.add(effect);
+  if (!isFlushingBatch) {
+    isFlushingBatch = true;
+    Promise.resolve().then(() => {
+      isFlushingBatch = false;
+      const effects = Array.from(batchEffects);
+      batchEffects.clear();
+      // 使用 Set 去重后执行
+      triggerEffects(effects);
+    });
   }
 }
 

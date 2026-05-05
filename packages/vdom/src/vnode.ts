@@ -298,7 +298,33 @@ export function mergeProps(
 // ============================================================
 
 /**
+ * FIX: P2-6 VDOM-NEW-13 - Fragment children 扁平化辅助函数
+ * 在 normalize 阶段处理嵌套 Fragment
+ */
+function flattenChildren(children: unknown[]): unknown[] {
+  const flattened: unknown[] = [];
+  
+  for (const child of children) {
+    if (!child) continue;
+    
+    // 检查是否为 Fragment vnode
+    if (isObject(child) && 'type' in child && child.type === Fragment) {
+      const fragmentChildren = (child as VNode).children;
+      if (isArray(fragmentChildren)) {
+        // 递归扁平化嵌套 Fragment
+        flattened.push(...flattenChildren(fragmentChildren));
+      }
+    } else {
+      flattened.push(child);
+    }
+  }
+  
+  return flattened;
+}
+
+/**
  * Normalize children and set shapeFlag on the vnode
+ * FIX: P2-6 VDOM-NEW-13 - 支持 Fragment children 扁平化
  */
 export function normalizeChildren(vnode: VNode, children: VNodeChildren): void {
   let type: number = 0;
@@ -306,7 +332,14 @@ export function normalizeChildren(vnode: VNode, children: VNodeChildren): void {
   if (isNullish(children)) {
     // No children
   } else if (isArray(children)) {
-    type = ShapeFlags.ARRAY_CHILDREN;
+    // FIX: P2-6 如果是 Fragment，扁平化嵌套的 children
+    if (vnode.type === Fragment) {
+      const flattened = flattenChildren(children);
+      vnode.children = flattened as VNodeChildren;
+      type = ShapeFlags.ARRAY_CHILDREN;
+    } else {
+      type = ShapeFlags.ARRAY_CHILDREN;
+    }
   } else if (isString(children) || isFunction(children)) {
     // Function children will be resolved later; treat as text for shapeFlag
     type = ShapeFlags.TEXT_CHILDREN;

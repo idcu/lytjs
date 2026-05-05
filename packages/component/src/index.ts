@@ -107,6 +107,21 @@ export type { ErrorBoundaryProps } from './error-boundary';
 /** Signal State 适配器，使 Signal 可以与组件协作 */
 export { createSignalState, createComputedState } from './signal-state';
 
+// Async Component (FIX: P2-7 COMPONENT-NEW-04)
+/** 异步组件加载与预加载支持 */
+export {
+  defineAsyncComponent,
+  preloadComponents,
+  preloadComponent,
+  isComponentPreloaded,
+  clearPreloadCache,
+} from './async-component';
+export type {
+  AsyncComponentLoader,
+  AsyncComponentOptions,
+  AsyncComponentState,
+} from './async-component';
+
 // Types
 /** 组件相关类型定义 */
 export type {

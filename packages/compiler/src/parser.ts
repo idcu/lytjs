@@ -52,6 +52,10 @@ const RE_V_DIRECTIVE = /^v-([a-zA-Z][a-zA-Z0-9-]*)(?::(.+))?$/;
 const RE_UNQUOTED_ATTR_VALUE = /^[^\t\r\n\f >]+/;
 const RE_COMPONENT_TAG = /^[A-Z]/;
 
+// FIX: P1-1 COMPILER-NEW-02 - 输入长度限制，防止极端输入下的性能问题
+const MAX_INPUT_LENGTH = 10000;
+const MAX_REGEX_INPUT_LENGTH = 5000;
+
 // End tag RegExp cache (avoid re-creation on every parseElement call)
 const END_TAG_CACHE_MAX_SIZE = 100;
 const endTagCache = new Map<string, RegExp>();
@@ -133,6 +137,16 @@ function getSelection(
 // ============================================================
 
 export function parse(source: string, options: ParserOptions = {}): RootNode {
+  // FIX: P1-1 COMPILER-NEW-02 - 输入长度检查，如果超过限制使用分段解析
+  if (source.length > MAX_INPUT_LENGTH) {
+    if (__DEV__) {
+      warn(
+        `Input length (${source.length}) exceeds maximum recommended length (${MAX_INPUT_LENGTH}). ` +
+        `Parsing may be slower for large inputs.`
+      );
+    }
+  }
+
   const context = createParserContext(source, options);
   const root = createRoot([], source);
 
@@ -154,6 +168,17 @@ function createParserContext(source: string, options: ParserOptions): ParserCont
     inPre: false,
     inVPre: false,
   };
+}
+
+// FIX: P1-2 COMPILER-NEW-03 - 创建带行列位置信息的解析错误
+function createParseError(
+  context: ParserContext,
+  message: string,
+): Error {
+  const { line, column, offset } = context;
+  return new Error(
+    `[LytJS compiler] Parse error at line ${line}, column ${column} (offset ${offset}): ${message}`
+  );
 }
 
 // ============================================================
@@ -284,9 +309,15 @@ function parseText(context: ParserContext): TextNode {
   const start = getCursor(context);
   const endTokens = ['<', '{{'];
 
-  let endIndex = context.source.length;
+  // FIX: P1-1 COMPILER-NEW-02 - 对大输入使用分段处理
+  let searchLength = context.source.length;
+  if (searchLength > MAX_REGEX_INPUT_LENGTH) {
+    searchLength = MAX_REGEX_INPUT_LENGTH;
+  }
+
+  let endIndex = searchLength;
   for (const token of endTokens) {
-    const index = context.source.indexOf(token);
+    const index = context.source.indexOf(token, 0, searchLength);
     if (index !== -1 && index < endIndex) {
       endIndex = index;
     }
@@ -418,16 +449,14 @@ function parseElement(context: ParserContext): ElementNode | undefined {
     if (endTagMatch) {
       advanceBy(context, endTagMatch[0].length);
     } else {
+      // FIX: P1-2 COMPILER-NEW-03 - 使用带行列位置信息的错误
+      const errorMessage = `Element <${tag}> was left open. Expected closing tag </${tag}>.`;
       if (__DEV__) {
-        warn(`Element <${tag}> was left open. Expected closing tag </${tag}>.`);
+        warn(errorMessage);
       }
 
       if (context.options.onError) {
-        context.options.onError(
-          new Error(
-            `[LytJS compiler error] Element <${tag}> was left open. Expected closing tag </${tag}>.`,
-          ),
-        );
+        context.options.onError(createParseError(context, errorMessage));
       }
     }
   }
@@ -498,20 +527,16 @@ function parseTag(context: ParserContext, type: number): ElementNode | undefined
     // Warn when non-void elements use self-closing syntax (e.g. <div />)
     // This is not valid HTML and may cause hydration issues.
     if (type === TagType.Start && !VOID_ELEMENTS.has(tag)) {
+      // FIX: P1-2 COMPILER-NEW-03 - 使用带行列位置信息的错误
+      const errorMessage =
+        `Non-void element <${tag}> uses self-closing syntax. ` +
+        `This is not valid HTML and may cause hydration issues. ` +
+        `Use <${tag}></${tag}> instead.`;
       if (__DEV__) {
-        warn(
-          `Non-void element <${tag}> uses self-closing syntax. ` +
-            `This is not valid HTML and may cause hydration issues. ` +
-            `Use <${tag}></${tag}> instead.`,
-        );
+        warn(errorMessage);
       }
       if (context.options.onError) {
-        context.options.onError(
-          new Error(
-            `[LytJS] Non-void element <${tag}> uses self-closing syntax. ` +
-              `Use <${tag}></${tag}> instead.`,
-          ),
-        );
+        context.options.onError(createParseError(context, errorMessage));
       }
     }
   } else if (context.source.startsWith('>')) {

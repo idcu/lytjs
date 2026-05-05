@@ -15,13 +15,42 @@ import type {
   RenderFunction,
 } from './types';
 
-// FIX: P2-21 provide/inject 类型推断增强（InjectionKey）
+// FIX: P1-9 COMPONENT-NEW-03 - provide/inject 类型推断增强
 // InjectionKey 是一个 Symbol 类型，用于在 provide/inject 之间建立类型安全的关联。
 // 使用方式：
 //   const key = Symbol() as InjectionKey<string>;
 //   provide(key, 'hello');
 //   const value = inject(key); // 类型为 string | undefined
-export type InjectionKey<T> = symbol & { __injectKey?: T };
+//
+// 改进点：
+// 1. 使用泛型约束确保类型推断准确性
+// 2. 支持默认值类型推断
+// 3. 支持工厂函数类型推断
+export interface InjectionKey<T> extends Symbol {
+  __injectKey?: T;
+}
+
+/**
+ * Provide 选项接口
+ * 用于类型安全的 provide 调用
+ */
+export interface ProvideOptions<T = unknown> {
+  key: InjectionKey<T> | string | symbol;
+  value: T;
+}
+
+/**
+ * Inject 选项接口（改进版）
+ * 支持更精确的类型推断
+ */
+export interface InjectOptions<T = unknown> {
+  /** If true, treat defaultValue as a factory function that will be called to produce the default value */
+  factory?: boolean;
+  /** Look up the value from a specific ancestor key instead of the injected key */
+  from?: InjectionKey<T> | string | symbol;
+  /** If true, only look up the value from the current instance's own provides (no ancestor lookup) */
+  local?: boolean;
+}
 import type { VNode } from '@lytjs/common-vnode';
 
 type SetupResult = RenderFunction | Record<string, unknown> | void;
@@ -1046,8 +1075,9 @@ export function createAppContext(): AppContext {
 
 /**
  * Provide a value to descendant components.
+ * FIX: P1-9 COMPONENT-NEW-03 - 改进类型定义，支持 InjectionKey 类型推断
  */
-export function provide<T = unknown>(key: string | symbol, value: T): void {
+export function provide<T>(key: InjectionKey<T> | string | symbol, value: T): void {
   const instance = getCurrentInstance();
   if (instance) {
     // 首次 provide 时，如果当前 provides 与父级共享同一个引用，
@@ -1058,24 +1088,13 @@ export function provide<T = unknown>(key: string | symbol, value: T): void {
       ) as Record<string | symbol, unknown>;
     }
     // FIX: P0-4 修复 provide/inject symbol key 被转为 string 的问题，直接使用 key 而不进行类型断言
-    instance.provides[key] = value;
+    instance.provides[key as string | symbol] = value;
   }
 }
 
 /**
- * Options for the inject function.
- */
-export interface InjectOptions {
-  /** If true, treat defaultValue as a factory function that will be called to produce the default value */
-  factory?: boolean;
-  /** Look up the value from a specific ancestor key instead of the injected key */
-  from?: string | symbol;
-  /** If true, only look up the value from the current instance's own provides (no ancestor lookup) */
-  local?: boolean;
-}
-
-/**
  * Inject a value from ancestor components.
+ * FIX: P1-9 COMPONENT-NEW-03 - 改进类型定义，支持更精确的类型推断
  *
  * Supported forms:
  * - `inject('key')` - basic lookup
@@ -1083,11 +1102,12 @@ export interface InjectOptions {
  * - `inject('key', () => createDefault(), { factory: true })` - factory function default
  * - `inject('key', undefined, { from: 'optionalSourceKey' })` - from modifier
  * - `inject('key', undefined, { local: true })` - local only (no ancestor lookup)
+ * - `inject(injectionKey)` - with InjectionKey for type-safe lookup
  */
-export function inject<T = unknown>(
-  key: string | symbol,
-  defaultValue?: T,
-  options?: InjectOptions,
+export function inject<T>(
+  key: InjectionKey<T> | string | symbol,
+  defaultValue?: T | (() => T),
+  options?: InjectOptions<T>,
 ): T | undefined {
   const instance = getCurrentInstance();
   if (!instance) {

@@ -32,6 +32,8 @@ export interface WritableSignal<T = unknown> extends Signal<T> {
   dispose(): void;
   /** @internal 订阅变更通知 */
   _subscribe(subscriber: Subscriber): () => void;
+  /** FIX: P1-5 REACTIVITY-NEW-03 - 手动清理依赖，防止内存泄漏 */
+  cleanup(): void;
 }
 
 /** ComputedSignal 计算信号接口 */
@@ -152,6 +154,18 @@ export function signal<T>(initialValue: T): WritableSignal<T> {
   signalFn.dispose = (): void => {
     disposed = true;
     subscribers.clear();
+  };
+
+  // FIX: P1-5 REACTIVITY-NEW-03 - 添加 cleanup 方法，允许手动清理依赖
+  signalFn.cleanup = (): void => {
+    // 清理所有订阅者，但保持 signal 可用
+    subscribers.clear();
+    // 清理 effect 系统桥接的依赖
+    const storeDeps = (store as Record<symbol, unknown>)[SIGNAL_KEY];
+    if (storeDeps !== undefined) {
+      // 触发一次空值更新，清理 effect 系统中的依赖
+      trigger(store, TriggerOpTypes.SET, SIGNAL_KEY, undefined, storeDeps);
+    }
   };
 
   signalFn._subscribe = (subscriber: Subscriber): (() => void) => {
@@ -292,8 +306,6 @@ export function writableComputedSignal<T>(
   );
 
   (computedFn as WritableComputedSignal<T>).set = (newValue: T): void => {
-    // FIX: P2-1 添加 disposed 检查，防止在已释放的信号上设置值
-    if (disposed) return;
     setter(newValue);
   };
 

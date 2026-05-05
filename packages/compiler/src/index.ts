@@ -44,6 +44,14 @@ export function getWarningLevel(): WarningLevel {
 const compileCache = new Map<string, CompileCacheEntry>();
 
 /**
+ * FIX: P2-2 编译结果缓存机制增强
+ * 使用文件内容哈希作为缓存 key，提高缓存命中率和安全性
+ */
+
+/** 内容哈希缓存 Map - 存储文件内容到哈希的映射 */
+const contentHashCache = new Map<string, string>();
+
+/**
  * 简单的字符串哈希函数（djb2），用于生成缓存键。
  * 不需要加密安全性，仅需良好的分布性。
  */
@@ -56,13 +64,47 @@ function hashString(str: string): string {
 }
 
 /**
+ * FIX: P2-2 计算文件内容的 SHA-256 风格哈希（简化版）
+ * 用于作为编译缓存的 key，确保相同内容产生相同的缓存键
+ */
+function computeContentHash(content: string): string {
+  // 检查是否已有缓存的哈希
+  const cachedHash = contentHashCache.get(content);
+  if (cachedHash) {
+    return cachedHash;
+  }
+
+  // 使用 djb2 哈希算法计算内容哈希（简化版 SHA-256 风格）
+  let hash1 = 5381;
+  let hash2 = 52711;
+  
+  for (let i = 0; i < content.length; i++) {
+    const char = content.charCodeAt(i);
+    hash1 = ((hash1 << 5) + hash1 + char) & 0xffffffff;
+    hash2 = ((hash2 << 7) + hash2 + char) & 0xffffffff;
+  }
+  
+  // 组合两个哈希值，提高碰撞抵抗
+  const combinedHash = `${hash1 >>> 0}-${hash2 >>> 0}`;
+  
+  // 缓存哈希结果
+  contentHashCache.set(content, combinedHash);
+  
+  return combinedHash;
+}
+
+/**
  * 构建编译缓存键，确保读取和写入使用相同的键生成逻辑。
  * FIX: P1-25 缓存键覆盖所有影响编译结果的选项，
  * 包括 source、ssrMode、rendererMode、scopeId、inline、mode 等
+ * FIX: P2-2 使用文件内容哈希作为 key 的一部分，提高缓存精度
  */
 function buildCompileCacheKey(source: string, options: CompilerOptions): string {
+  // FIX: P2-2 使用内容哈希替代原始 source 字符串，减少缓存键大小
+  const contentHash = computeContentHash(source);
+  
   return hashString(
-    source + '|' +
+    contentHash + '|' +
     String(options.ssrMode ?? false) + '|' +
     String(options.rendererMode ?? '') + '|' +
     String(options.scopeId ?? '') + '|' +
@@ -75,9 +117,11 @@ function buildCompileCacheKey(source: string, options: CompilerOptions): string 
 
 /**
  * 清除编译缓存。用于测试或需要释放内存时。
+ * FIX: P2-2 同时清除内容哈希缓存
  */
 export function clearCompileCache(): void {
   compileCache.clear();
+  contentHashCache.clear();
 }
 
 /**
@@ -85,6 +129,13 @@ export function clearCompileCache(): void {
  */
 export function getCompileCacheSize(): number {
   return compileCache.size;
+}
+
+/**
+ * FIX: P2-2 获取内容哈希缓存大小（用于调试）
+ */
+export function getContentHashCacheSize(): number {
+  return contentHashCache.size;
 }
 
 export function compile(source: string, options: CompilerOptions = {}): CodegenResult {

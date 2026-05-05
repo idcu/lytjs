@@ -43,3 +43,34 @@ export { EventNormalizer } from './event-normalizer';
 export { NodeCache } from './node-cache';
 export { AsyncScheduler } from './async-scheduler';
 export { TransitionEngine } from './transition-engine';
+
+// ============================================================
+// 性能监控 (FIX: P2-11 RUNTIME-NEW-02)
+// ============================================================
+
+export {
+  // Main class
+  PerformanceMonitor,
+  // Global instance functions
+  getPerformanceMonitor,
+  setPerformanceMonitor,
+  initPerformanceMonitor,
+  // Convenience functions
+  startRenderTiming,
+  recordRenderEntry,
+  getComponentStats,
+  generatePerformanceReport,
+  isPerformanceMonitoringEnabled,
+  setPerformanceMonitoringEnabled,
+  // Decorator
+  withPerformanceTracking,
+  // DevTools
+  connectToDevTools,
+} from './performance';
+
+export type {
+  RenderPerformanceEntry,
+  ComponentPerformanceStats,
+  PerformanceMonitorOptions,
+  PerformanceReport,
+} from './performance';

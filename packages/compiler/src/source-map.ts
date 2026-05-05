@@ -49,14 +49,18 @@ function vlqEncode(value: number): string {
 export interface SourceMapping {
   /** Original source line (0-based) */
   originalLine: number;
-  /** Original source column (0-based) */
+  /** Original source column (0-based) - 高精度列号映射 */
   originalColumn: number;
   /** Generated code line (0-based) */
   generatedLine: number;
-  /** Generated code column (0-based) */
+  /** Generated code column (0-based) - 高精度列号映射 */
   generatedColumn: number;
   /** Optional name for the mapped token */
   name?: string;
+  /** FIX: P2-1 原始列号精确映射，支持更细粒度的源码定位 */
+  originalColumnExact?: number;
+  /** FIX: P2-1 生成列号精确映射 */
+  generatedColumnExact?: number;
 }
 
 // ============================================================
@@ -80,12 +84,14 @@ export class SourceMapGenerator {
 
   /**
    * Add a mapping from original source position to generated code position.
+   * FIX: P2-1 提高列精度，支持精确的原始列号映射
    *
    * @param originalLine - Original source line (0-based)
    * @param originalColumn - Original source column (0-based)
    * @param generatedLine - Generated code line (0-based)
    * @param generatedColumn - Generated code column (0-based)
    * @param name - Optional name for the mapped token
+   * @param originalColumnExact - Optional exact original column for high-precision mapping
    */
   addMapping(
     originalLine: number,
@@ -93,6 +99,7 @@ export class SourceMapGenerator {
     generatedLine: number,
     generatedColumn: number,
     name?: string,
+    originalColumnExact?: number,
   ): void {
     // Resolve source index (use first source if not yet added)
     if (this.sources.length === 0) {
@@ -110,12 +117,19 @@ export class SourceMapGenerator {
       }
     }
 
+    // FIX: P2-1 使用精确的列号映射，如果提供了精确列号则使用，否则使用标准列号
+    const finalOriginalColumn = originalColumnExact !== undefined ? originalColumnExact : originalColumn;
+    const finalGeneratedColumn = generatedColumn;
+
     this.mappings.push({
       originalLine,
-      originalColumn,
+      originalColumn: finalOriginalColumn,
       generatedLine,
-      generatedColumn,
+      generatedColumn: finalGeneratedColumn,
       name: nameIndex !== undefined ? this.names[nameIndex] : undefined,
+      // FIX: P2-1 存储精确列号信息用于高精度映射
+      originalColumnExact: originalColumnExact,
+      generatedColumnExact: finalGeneratedColumn,
     });
   }
 
