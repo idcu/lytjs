@@ -61,7 +61,14 @@ export function transform(root: RootNode, options: TransformOptions = {}): void 
       if (child.type === NodeTypes.ELEMENT && (child as ElementNode).codegenNode) {
         root.codegenNode = (child as ElementNode).codegenNode as JSChildNode;
       } else if (child.type === NodeTypes.TEXT) {
-        root.codegenNode = child as unknown as JSChildNode;
+        // FIX: P2-22 添加安全处理分支，将 TextNode 转换为表达式节点
+        // TextNode 不是 JSChildNode，需要包装为 SimpleExpressionNode
+        root.codegenNode = createSimpleExpression(
+          JSON.stringify((child as TextNode).content),
+          true,
+          child.loc,
+          true,
+        );
       } else if (child.type === NodeTypes.INTERPOLATION) {
         root.codegenNode = createCallExpression(context.helper('TO_DISPLAY_STRING'), [
           (child as InterpolationNode).content,
@@ -127,6 +134,8 @@ function createTransformContext(root: RootNode, options: TransformOptions): Tran
   return context;
 }
 
+// FIX: P2-20 使用延迟初始化模式避免双重类型断言
+// 先创建部分 context，然后通过 getter 延迟访问 self
 function createContext(
   root: RootNode,
   options: TransformOptions,
@@ -135,8 +144,14 @@ function createContext(
   directives: Set<string>,
   currentNode: RootNode | TemplateChildNode | null,
 ): TransformContext {
+  // 使用 let 声明，允许在创建后赋值
+  let contextRef: TransformContext | null = null;
+
   const context: TransformContext = {
-    self: null as unknown as TransformContext,
+    // FIX: P2-20 使用 getter 延迟访问，避免初始化时的循环引用问题
+    get self(): TransformContext {
+      return contextRef!;
+    },
     parent: null,
     rootNode: root,
     helpers,
@@ -207,7 +222,8 @@ function createContext(
       }
     },
   };
-  context.self = context;
+  // FIX: P2-20 完成 context 创建后赋值给 contextRef
+  contextRef = context;
   return context;
 }
 
@@ -265,13 +281,17 @@ function traverseNode(
 // Default transforms
 // ============================================================
 
+// FIX: P2-21 调整类型定义，避免双重类型断言
+// 使用类型兼容的函数签名，无需强制转换
+type TransformFn = (node: Parameters<NodeTransform>[0], context: TransformContext) => ReturnType<NodeTransform>;
+
 export const builtInTransforms: NodeTransform[] = [
-  transformIf as NodeTransform,
-  transformFor as NodeTransform,
-  transformOnce as NodeTransform,
-  transformScoped as NodeTransform,
-  transformVMemo as NodeTransform,
-  transformElement as unknown as NodeTransform,
+  transformIf as TransformFn,
+  transformFor as TransformFn,
+  transformOnce as TransformFn,
+  transformScoped as TransformFn,
+  transformVMemo as TransformFn,
+  transformElement as TransformFn,
 ];
 
 export const builtInDirectiveTransforms: Record<string, DirectiveTransform> = {

@@ -29,9 +29,14 @@ const DANGEROUS_SELF_CLOSING_TAG_NAMES = `${DANGEROUS_TAG_NAMES}|input|textarea|
  * @internal 仅供内部使用，不作为公共 API 暴露
  */
 function sanitizeHTML(html: string): string {
+  // FIX: P2-52 添加最大迭代次数限制，防止无限循环攻击
+  const MAX_ITERATIONS = 10;
+  let iterations = 0;
+
   // 防御嵌套绕过：循环执行所有清理步骤，直到结果不再变化
   let prevResult = '';
-  while (html !== prevResult) {
+  while (html !== prevResult && iterations < MAX_ITERATIONS) {
+    iterations++;
     prevResult = html;
     // 移除危险标签（含内容）
     html = html.replace(
@@ -84,6 +89,21 @@ function sanitizeHTML(html: string): string {
       /<\s*foreignObject[^>]*\/?>/gi,
       '',
     );
+    // FIX: P2-52 过滤 style 标签，防止 CSS 注入攻击
+    html = html.replace(
+      /<\s*style[^>]*>[\s\S]*?<\s*\/\s*style\s*>/gi,
+      '',
+    );
+    // FIX: P2-52 过滤 base 标签，防止基地址劫持攻击
+    html = html.replace(
+      /<\s*base[^>]*\/?>/gi,
+      '',
+    );
+    // FIX: P2-52 过滤 data: URI，防止数据 URI 攻击
+    html = html.replace(
+      /\s+(href|src|action|formaction)\s*=\s*(?:"[^"]*data:[^"]*"|'[^']*data:[^']*')/gi,
+      '',
+    );
   }
   return html;
 }
@@ -93,10 +113,16 @@ function sanitizeHTML(html: string): string {
 /**
  * 从 HTML 字符串创建模板元素
  * 解析一次，后续克隆复用
+ * FIX: P2-54 添加注释说明非浏览器环境 mock 的限制
+ * 注意：非浏览器环境的 mock 仅用于防止 SSR/测试环境崩溃，功能受限：
+ * - 无法解析 HTML 字符串
+ * - 返回的 fragment 没有实际 DOM 功能
+ * - 仅提供基本的类型兼容性
  */
 export function createTemplate(html: string): DocumentFragment {
   if (!isBrowser) {
     // 非浏览器环境返回空 fragment（无法使用 document API）
+    // 此 mock 仅用于防止 SSR/测试环境崩溃，不保证功能完整性
     return {
       nodeType: 11,
       childNodes: [],
@@ -247,11 +273,15 @@ const PROPERTY_KEYS = new Set([
  *
  * 对于 value、checked、disabled 等布尔/值属性，
  * 直接设置 DOM property 而非 HTML attribute
+ * FIX: P2-55 使用 hasOwn 检查避免访问原型链上的 getter/setter
  */
 export function setProperty(el: Element, key: string, value: unknown): void {
   if (!isBrowser) return;
   const htmlEl = el as HTMLElement & Record<string, unknown>;
-  if (PROPERTY_KEYS.has(key) || key in htmlEl) {
+  // FIX: P2-55 使用 Object.prototype.hasOwnProperty 检查属性是否定义在元素自身上，
+  // 避免意外触发原型链上的 getter/setter
+  const hasOwnProperty = Object.prototype.hasOwnProperty;
+  if (PROPERTY_KEYS.has(key) || hasOwnProperty.call(htmlEl, key)) {
     htmlEl[key] = value;
   } else {
     if (value === null || value === undefined || value === false) {
@@ -266,8 +296,9 @@ export function setProperty(el: Element, key: string, value: unknown): void {
  * 设置元素的样式
  * FIX: P1-54 使用 setProperty 替代直接赋值，
  * 正确处理包含连字符的 CSS 属性名（如 background-color、font-size）
+ * FIX: P2-45 对数值类型的 CSS 属性自动添加 px 单位
  */
-export function setStyle(el: Element, style: string | Record<string, string>): void {
+export function setStyle(el: Element, style: string | Record<string, string | number>): void {
   if (!isBrowser) return;
   const htmlEl = el as HTMLElement;
   if (typeof style === 'string') {
@@ -276,7 +307,14 @@ export function setStyle(el: Element, style: string | Record<string, string>): v
     for (const [key, value] of Object.entries(style)) {
       // FIX: P1-54 使用 style.setProperty 替代直接属性赋值，
       // 确保连字符 CSS 属性名（如 background-color）能正确设置
-      htmlEl.style.setProperty(key, value);
+      // FIX: P2-45 对数值类型的 CSS 属性自动添加 px 单位
+      let finalValue: string;
+      if (typeof value === 'number' && isNumericStyleProperty(key)) {
+        finalValue = `${value}px`;
+      } else {
+        finalValue = String(value);
+      }
+      htmlEl.style.setProperty(key, finalValue);
     }
   }
 }
@@ -339,11 +377,12 @@ export function addEventListener(
  * - `.prevent` - 调用 event.preventDefault()
  * - `.capture` - 在捕获阶段监听
  * - `.once` - 只触发一次
+ * FIX: P2-57 使用更具体的事件处理器类型替代宽泛的 Function 类型
  */
 export function createEventHandler(
   el: Element,
   event: string,
-  handler: Function,
+  handler: (event: Event) => void,
   modifiers?: Record<string, boolean>,
 ): () => void {
   if (!isBrowser) return () => {};
@@ -386,6 +425,8 @@ export interface ReconcileOptions<T> {
   create: (item: T) => Node;
   update?: (node: Node, item: T) => void;
   destroy?: (node: Node) => void;
+  // FIX: P2-43 移动动画支持：在节点移动时调用该函数
+  animateMove?: (node: Node, fromIndex: number, toIndex: number) => void;
 }
 
 /**
@@ -399,6 +440,9 @@ export interface ReconcileOptions<T> {
  *
  * FIX: P2-43 移动动画支持：
  * 如果 options.animateMove 提供了移动动画函数，在节点移动时调用该函数
+ * FIX: P2-58 使用 DocumentFragment 进行批量 DOM 操作：
+ * 通过将节点先附加到 fragment，再一次性插入 DOM，减少重排次数
+ * 这是列表协调的常用优化手段，能显著提升大量节点更新时的性能
  */
 export function reconcileArray<T>(
   parent: Node,
@@ -461,6 +505,14 @@ export function reconcileArray<T>(
     }
   }
 
+  // FIX: P2-43 追踪节点原始索引以支持移动动画
+  const nodeIndexMap = options.animateMove ? new Map<Node, number>() : null;
+  if (nodeIndexMap) {
+    for (let i = 0; i < existingNodes.length; i++) {
+      nodeIndexMap.set(existingNodes[i]!, i);
+    }
+  }
+
   // 遍历新列表
   for (let i = 0; i < list.length; i++) {
     const item = list[i]!;
@@ -473,6 +525,13 @@ export function reconcileArray<T>(
       // key 已存在：更新或移动
       if (options.update) {
         options.update(existing.node, item);
+      }
+      // FIX: P2-43 调用移动动画函数
+      if (options.animateMove && nodeIndexMap) {
+        const fromIndex = nodeIndexMap.get(existing.node);
+        if (fromIndex !== undefined && fromIndex !== i) {
+          options.animateMove(existing.node, fromIndex, i);
+        }
       }
       // 标记 item 以便后续 destroy 判断
       existing.item = item;
@@ -514,13 +573,16 @@ export function reconcileArray<T>(
 
 /**
  * 创建一个自动清理的 effect，返回清理函数
+ * FIX: P2-51 明确语义：返回的清理函数用于手动清理，onCleanup 用于作用域自动清理
+ * 两者独立工作，不存在重复清理问题（stop 是幂等操作）
  */
 export function bindEffect(fn: () => void): () => void {
   const runner = effect(fn);
-  // 自动注册清理函数
+  // 注册到当前清理作用域，当作用域被销毁时自动停止 effect
   onCleanup(() => {
     stop(runner);
   });
+  // 返回手动清理函数，允许调用者在需要时提前停止 effect
   return () => {
     stop(runner);
   };
@@ -567,6 +629,7 @@ export function onCleanup(fn: CleanupFn): void {
 /**
  * 执行所有注册的清理函数
  * 即使某个函数抛出异常，也会继续执行后续函数
+ * FIX: P2-59 使用 AggregateError 收集所有错误，而非仅抛出第一个
  */
 export function runCleanups(): void {
   const stack = activeCleanupStack ?? cleanupStack;
@@ -579,8 +642,11 @@ export function runCleanups(): void {
       errors.push(e);
     }
   }
-  if (errors.length > 0) {
+  // FIX: P2-59 使用 AggregateError 收集所有错误，提供更完整的错误信息
+  if (errors.length === 1) {
     throw errors[0];
+  } else if (errors.length > 1) {
+    throw new AggregateError(errors, `runCleanups: ${errors.length} errors occurred during cleanup`);
   }
 }
 

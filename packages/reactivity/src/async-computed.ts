@@ -131,6 +131,8 @@ class AsyncComputedRefImpl<T> {
     // FIX: P2-07 dispose 时清空错误和值，避免悬挂的异步回调更新已销毁的 computed
     this._error = null;
     this._value = undefined;
+    // FIX: P1-2 REACTIVITY-NEW-03 - dispose 时通知订阅者，避免订阅者持有过期值
+    triggerRefValue(this);
   }
 }
 

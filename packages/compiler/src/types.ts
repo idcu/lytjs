@@ -346,6 +346,8 @@ export interface TransformContext {
   scopes: { vFor: number; vOnce: number }[];
   filters?: Set<string>;
   childIndex: number;
+  // FIX: P2-27 添加 __counters 字段，用于存储转换器内部计数器（如解构计数器）
+  __counters?: Record<string, number>;
   helper<T extends string>(name: T): T;
   helperString(name: string): string;
   replaceNode(node: TemplateChildNode): void;

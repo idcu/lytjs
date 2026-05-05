@@ -24,8 +24,9 @@ function getSource(source: WatchSource<unknown>): () => unknown {
   if (isRef(source)) return () => source.value;
   if (isReactive(source as object)) return () => traverse(source);
   if (typeof source === 'function') return source as () => unknown;
+  // FIX: P2-4 DEV 模式下对无效 source 抛出错误，而非静默返回 NOOP
   if (__DEV__) {
-    warn(
+    throw new Error(
       `Invalid watch source: ${JSON.stringify(source)}. A watch source must be a ref, reactive object, or getter function.`,
     );
   }

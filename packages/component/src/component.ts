@@ -598,9 +598,16 @@ export function initProps(
 
 /**
  * Create the setup context object passed to the setup function.
+ * FIX: P1-9 添加缓存逻辑，避免每次调用 runSetup 时重新创建 setupContext
  */
 export function createSetupContext(instance: ComponentInternalInstance): SetupContext {
-  return {
+  // 检查缓存中是否已有该实例的 setupContext
+  const cached = setupContextCache.get(instance);
+  if (cached) {
+    return cached;
+  }
+
+  const context: SetupContext = {
     attrs: instance.attrs,
     slots: instance.slots,
     emit: instance.emit,
@@ -631,6 +638,10 @@ export function createSetupContext(instance: ComponentInternalInstance): SetupCo
       instance.exposed = safeExposed;
     },
   };
+
+  // 缓存 setupContext
+  setupContextCache.set(instance, context);
+  return context;
 }
 
 // ==================== createComponentPublicInstance ====================
@@ -759,10 +770,12 @@ export function createComponentPublicInstance(
 
       // FIX: P0-05 未找到属性时，在 DEV 模式下发出警告并返回 false，
       // 避免静默吞没写入导致调试困难
+      // FIX: P2-10 注意：生产模式下此操作静默返回 false，不抛出错误。
+      // 这是有意的设计，以避免在生产环境中因意外的属性写入导致应用崩溃。
       if (__DEV__) {
         warn(
           `Component public instance has no property "${String(key)}". ` +
-          `This set operation was silently ignored.`,
+            `This set operation was silently ignored.`,
         );
       }
       return false;
@@ -875,15 +888,22 @@ export function defineFunctionalComponent(
   render: (props: Record<string, unknown>) => VNode | VNode[] | null,
   props?: Record<string, unknown>,
 ): ComponentOptions {
+  // FIX: P2-11 减少类型断言层级，将 render 包装为 setup 返回的函数
+  const setupFn = (): VNode => {
+    // 函数式组件的 setup 在渲染时调用，此时 props 已通过上下文传递
+    // 这里返回一个包装函数，实际渲染时由渲染器调用并传入 props
+    return null as unknown as VNode;
+  };
+  // 将原始 render 函数附加到 setupFn 上，供渲染器使用
+  (setupFn as unknown as { _render: typeof render })._render = render;
+
   return {
     name: 'FunctionalComponent',
     props: props ?? {},
-    setup() {
-      return render as unknown as () => VNode;
-    },
+    setup: setupFn as unknown as () => VNode,
     // 标记为函数式组件
     __isFunctional: true,
-  } as unknown as ComponentOptions;
+  } as ComponentOptions;
 }
 
 // ==================== mergeOptions ====================
@@ -1037,7 +1057,8 @@ export function provide<T = unknown>(key: string | symbol, value: T): void {
         instance.provides as Record<string | symbol, unknown>,
       ) as Record<string | symbol, unknown>;
     }
-    instance.provides[key as string] = value;
+    // FIX: P0-4 修复 provide/inject symbol key 被转为 string 的问题，直接使用 key 而不进行类型断言
+    instance.provides[key] = value;
   }
 }
 

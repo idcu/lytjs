@@ -98,12 +98,18 @@ class ComputedRefImpl<T> {
 
 // ==================== SSR 模式管理 ====================
 
+// FIX: P1-3 REACTIVITY-NEW-04 - _isSSR 是模块级可变状态
+// 限制说明：此状态在模块级别共享，多实例/测试场景下可能产生状态泄漏。
+// 建议：在 SSR 场景中使用独立的模块实例，或通过上下文参数传递 SSR 状态。
 let _isSSR = false;
 
 /**
  * 设置 SSR 模式。
  * 在 SSR 环境中调用 setSSRMode(true) 可让 computed 在创建时立即求值，
  * 避免在服务端渲染时因懒求值导致的不一致问题。
+ *
+ * 注意：此设置为模块级全局状态，多实例/测试场景下可能产生状态泄漏。
+ * 如需隔离，请确保不同环境使用独立的模块加载上下文。
  */
 export function setSSRMode(isSSR: boolean): void {
   _isSSR = isSSR;

@@ -53,14 +53,27 @@ function setMemoMeta(node: ElementNode, meta: VMemoMeta): void {
   (node as unknown as Record<symbol, VMemoMeta>)[MEMO_KEY] = meta;
 }
 
-/** 全局计数器，用于生成唯一的缓存变量名 */
-let memoCounter = 0;
+// FIX: P2-28 移除模块级 memoCounter，改用 TransformContext.__counters
+// 避免多个编译上下文共享同一计数器导致变量名冲突
+// 原模块级计数器已迁移到 context.__counters.memo
+
+/**
+ * 获取 memo 计数器的当前值（用于测试）
+ * FIX: P2-28 现在从 context 中读取计数器值
+ */
+export function getMemoCounter(context: TransformContext): number {
+  return context.__counters?.memo ?? 0;
+}
 
 /**
  * 重置 memo 计数器（用于测试）
+ * FIX: P2-28 现在通过修改 context.__counters 来重置计数器
  */
-export function resetMemoCounter(): void {
-  memoCounter = 0;
+export function resetMemoCounter(context: TransformContext): void {
+  if (!context.__counters) {
+    context.__counters = {};
+  }
+  context.__counters.memo = 0;
 }
 
 /**
@@ -92,8 +105,13 @@ export function transformVMemo(
     return;
   }
 
-  // 生成唯一的缓存变量名
-  const cacheKey = `_memo_${memoCounter++}`;
+  // FIX: P2-28 使用 TransformContext.__counters 生成唯一的缓存变量名
+  const memoCounter = context.__counters?.memo ?? 0;
+  if (!context.__counters) {
+    context.__counters = {};
+  }
+  context.__counters.memo = memoCounter + 1;
+  const cacheKey = `_memo_${memoCounter}`;
 
   // 存储依赖信息到节点元数据
   setMemoMeta(element, {

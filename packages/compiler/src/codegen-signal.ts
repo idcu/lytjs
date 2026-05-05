@@ -82,10 +82,20 @@ function serializeStaticHTML(
   const varName = genVarName(node.tag, varCounter);
   elementVars.push({ varName, tag: node.tag });
 
+  // FIX: P1-11 HTML 属性值转义，防止 XSS 攻击
+  const escapeHtml = (str: string): string => {
+    return str
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  };
+
   let attrs = '';
   for (const prop of node.props) {
     if (prop.type === NodeTypes.ATTRIBUTE && prop.value) {
-      attrs += ` ${prop.name}="${prop.value.content}"`;
+      // FIX: P1-11 对属性值进行 HTML 转义
+      attrs += ` ${prop.name}="${escapeHtml(prop.value.content)}"`;
     } else if (prop.type === NodeTypes.ATTRIBUTE && !prop.value) {
       attrs += ` ${prop.name}`;
     }
@@ -125,9 +135,10 @@ export function generateSignal(
   const dynamicBindings: Array<{ varName: string; code: string }> = [];
 
   // ---- Phase 1: Generate imports ----
+  // FIX: P1-13 添加 runCleanups 到 import 列表
   lines.push(
     `import { effect } from '@lytjs/reactivity';`,
-    `import { createTemplate, setText, setHTML, setAttribute, setProperty, setStyle, setClass, insert, remove, createEventHandler, onCleanup, reconcileArray } from '@lytjs/dom-runtime';`,
+    `import { createTemplate, setText, setHTML, setAttribute, setProperty, setStyle, setClass, insert, remove, createEventHandler, onCleanup, runCleanups, reconcileArray } from '@lytjs/dom-runtime';`,
   );
   lines.push('');
 
@@ -528,9 +539,10 @@ function processDirective(
             code: `onCleanup(createEventHandler(${varName}, '${argContent}', _ctx.${expContent}, { ${mods} }));`,
           });
         } else {
+          // FIX: P1-12 使用 createEventHandler 替代未导入的 addEventListener
           dynamicBindings.push({
             varName,
-            code: `onCleanup(addEventListener(${varName}, '${argContent}', _ctx.${expContent}));`,
+            code: `onCleanup(createEventHandler(${varName}, '${argContent}', _ctx.${expContent}));`,
           });
         }
       }
@@ -671,10 +683,12 @@ function processConditional(
   const containerVar = parentVar ?? '_container';
   // FIX: P1-28 使用唯一计数器键确保嵌套 v-if 生成唯一变量名，
   // 避免嵌套场景下变量名冲突
-  const ifCounterKey = `_if_${varCounter.get('_if_depth') ?? 0}`;
+  // FIX: P2-14 修复 `_if_undefined` 问题，确保深度值始终为数字
+  const ifDepth = varCounter.get('_if_depth') ?? 0;
+  const ifCounterKey = `_if_${ifDepth}`;
   const ifVarName = `_if${varCounter.get(ifCounterKey) ?? 0}`;
   varCounter.set(ifCounterKey, (varCounter.get(ifCounterKey) ?? 0) + 1);
-  varCounter.set('_if_depth', (varCounter.get('_if_depth') ?? 0) + 1);
+  varCounter.set('_if_depth', ifDepth + 1);
 
   // FIX: P2-24 模板缩进保持：生成的代码保持与模板一致的缩进层级
   // 生成条件分支的 DOM 插入/移除代码

@@ -46,6 +46,76 @@ interface FLIPState {
 // ============================================================
 
 /**
+ * FLIP 动画的位移阈值（像素）。
+ * 当位移小于此值时，跳过动画以避免不必要的计算。
+ */
+const flipThreshold = 0.5;
+
+/**
+ * 对单个 DOM 元素应用 FLIP 动画。
+ * FIX: P2-7 提取共享的 DOM FLIP 逻辑为独立函数，避免代码重复。
+ *
+ * @param child - 目标 DOM 元素
+ * @param oldRect - 元素旧位置
+ * @param moveClass - 移动动画类名
+ * @returns 是否成功应用动画
+ */
+function applyFLIPToDOMElement(
+  child: Element,
+  oldRect: DOMRect,
+  moveClass: string,
+): boolean {
+  const newRect = child.getBoundingClientRect();
+  const dx = oldRect.left - newRect.left;
+  const dy = oldRect.top - newRect.top;
+
+  // FIX: P2-13 使用 flipThreshold 替代硬编码的 0 检查
+  if (Math.abs(dx) < flipThreshold && Math.abs(dy) < flipThreshold) return false;
+
+  (child as HTMLElement).style.transform = `translate(${dx}px, ${dy}px)`;
+  (child as HTMLElement).style.transition = 'none';
+  void (child as HTMLElement).offsetHeight;
+  (child as HTMLElement).style.transform = '';
+  (child as HTMLElement).style.transition = '';
+
+  child.classList.add(moveClass);
+
+  const styles = getComputedStyle(child);
+  const transitionDurations = styles.getPropertyValue('transitionDuration').split(',').map(v => v.trim());
+  const hasTransition = transitionDurations.some(d => d !== '0s');
+
+  if (!hasTransition) {
+    child.classList.remove(moveClass);
+    return false;
+  }
+
+  // FIX: P1-12 调整声明顺序，将 cleanup 引用 onMoveEnd 的问题修复
+  const onMoveEnd = (event: Event) => {
+    if (event.target !== child) return;
+    cleanup();
+  };
+
+  const cleanup = () => {
+    child.classList.remove(moveClass);
+    child.removeEventListener('transitionend', onMoveEnd);
+    child.removeEventListener('animationend', onMoveEnd);
+  };
+
+  child.addEventListener('transitionend', onMoveEnd);
+  child.addEventListener('animationend', onMoveEnd);
+
+  const durationStr = transitionDurations.reduce((max, d) => {
+    if (d.endsWith('ms')) return Math.max(max, parseFloat(d));
+    if (d.endsWith('s')) return Math.max(max, parseFloat(d) * 1000);
+    return max;
+  }, 0);
+  const duration = durationStr > 0 ? durationStr + 50 : 3000;
+  setTimeout(cleanup, duration);
+
+  return true;
+}
+
+/**
  * 获取子元素的唯一 key。
  * 优先使用 data-key 属性，回退到元素索引。
  */
@@ -144,6 +214,7 @@ export function applyFLIP<HN, HE extends HN>(
 ): void {
   if (Array.isArray(hostOrChildren)) {
     // 向后兼容：(children: Element[], oldPositions: Map<string, DOMRect>, moveClass: string)
+    // FIX: P2-7 使用提取的 applyFLIPToDOMElement 函数避免代码重复
     const children = hostOrChildren as Element[];
     const oldPositions = childrenOrOld as Map<string, DOMRect>;
     const mc = oldPositionsOrMove as string;
@@ -157,49 +228,7 @@ export function applyFLIP<HN, HE extends HN>(
       const oldRect = oldPositions.get(key);
       if (!oldRect) continue;
 
-      const newRect = child.getBoundingClientRect();
-      const dx = oldRect.left - newRect.left;
-      const dy = oldRect.top - newRect.top;
-
-      if (dx === 0 && dy === 0) continue;
-
-      (child as HTMLElement).style.transform = `translate(${dx}px, ${dy}px)`;
-      (child as HTMLElement).style.transition = 'none';
-      void (child as HTMLElement).offsetHeight;
-      (child as HTMLElement).style.transform = '';
-      (child as HTMLElement).style.transition = '';
-
-      child.classList.add(mc);
-
-      const styles = getComputedStyle(child);
-      const transitionDurations = styles.getPropertyValue('transitionDuration').split(',').map(v => v.trim());
-      const hasTransition = transitionDurations.some(d => d !== '0s');
-
-      if (!hasTransition) {
-        child.classList.remove(mc);
-      } else {
-        const cleanup = () => {
-          child.classList.remove(mc);
-          child.removeEventListener('transitionend', onMoveEnd);
-          child.removeEventListener('animationend', onMoveEnd);
-        };
-
-        const onMoveEnd = (event: Event) => {
-          if (event.target !== child) return;
-          cleanup();
-        };
-
-        child.addEventListener('transitionend', onMoveEnd);
-        child.addEventListener('animationend', onMoveEnd);
-
-        const durationStr = transitionDurations.reduce((max, d) => {
-          if (d.endsWith('ms')) return Math.max(max, parseFloat(d));
-          if (d.endsWith('s')) return Math.max(max, parseFloat(d) * 1000);
-          return max;
-        }, 0);
-        const duration = durationStr > 0 ? durationStr + 50 : 3000;
-        setTimeout(cleanup, duration);
-      }
+      applyFLIPToDOMElement(child, oldRect, mc);
     }
   } else {
     // 泛型版本：(host, children, oldPositions, moveClass)
@@ -221,7 +250,8 @@ export function applyFLIP<HN, HE extends HN>(
       const dx = oldRect.left - newRect.left;
       const dy = oldRect.top - newRect.top;
 
-      if (dx === 0 && dy === 0) continue;
+      // FIX: P2-13 使用 flipThreshold 替代硬编码的 0 检查
+      if (Math.abs(dx) < flipThreshold && Math.abs(dy) < flipThreshold) continue;
 
       host.setStyle(child, 'transform', `translate(${dx}px, ${dy}px)`);
       host.setStyle(child, 'transition', 'none');
@@ -613,6 +643,7 @@ export function afterUpdate<HN, HE extends HN>(
     state.newPositions = newPositions;
 
     // 使用 DOM 回退的 FLIP 逻辑
+    // FIX: P2-7 使用提取的 applyFLIPToDOMElement 函数避免代码重复
     for (let i = 0; i < kids.length; i++) {
       const child = kids[i];
       if (!child) continue;
@@ -622,49 +653,7 @@ export function afterUpdate<HN, HE extends HN>(
       const oldRect = state.oldPositions.get(key);
       if (!oldRect) continue;
 
-      const newRect = child.getBoundingClientRect();
-      const dx = oldRect.left - newRect.left;
-      const dy = oldRect.top - newRect.top;
-
-      if (dx === 0 && dy === 0) continue;
-
-      (child as HTMLElement).style.transform = `translate(${dx}px, ${dy}px)`;
-      (child as HTMLElement).style.transition = 'none';
-      void (child as HTMLElement).offsetHeight;
-      (child as HTMLElement).style.transform = '';
-      (child as HTMLElement).style.transition = '';
-
-      child.classList.add(mc);
-
-      const styles = getComputedStyle(child);
-      const transitionDurations = styles.getPropertyValue('transitionDuration').split(',').map(v => v.trim());
-      const hasTransition = transitionDurations.some(d => d !== '0s');
-
-      if (!hasTransition) {
-        child.classList.remove(mc);
-      } else {
-        const cleanup = () => {
-          child.classList.remove(mc);
-          child.removeEventListener('transitionend', onMoveEnd);
-          child.removeEventListener('animationend', onMoveEnd);
-        };
-
-        const onMoveEnd = (event: Event) => {
-          if (event.target !== child) return;
-          cleanup();
-        };
-
-        child.addEventListener('transitionend', onMoveEnd);
-        child.addEventListener('animationend', onMoveEnd);
-
-        const durationStr = transitionDurations.reduce((max, d) => {
-          if (d.endsWith('ms')) return Math.max(max, parseFloat(d));
-          if (d.endsWith('s')) return Math.max(max, parseFloat(d) * 1000);
-          return max;
-        }, 0);
-        const duration = durationStr > 0 ? durationStr + 50 : 3000;
-        setTimeout(cleanup, duration);
-      }
+      applyFLIPToDOMElement(child, oldRect, mc);
     }
   } else {
     // 泛型版本：(host, state, children, moveClass)

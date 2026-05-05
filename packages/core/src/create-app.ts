@@ -10,6 +10,8 @@ import type {
   App,
   AppOptions,
   Plugin,
+  PluginWithCleanup,
+  PluginFunctionWithCleanup,
   Component,
   ComponentPublicInstance,
   DOMRenderer,
@@ -133,16 +135,17 @@ export function createApp(
       _globalListeners.length = 0;
 
       // 清理插件资源：调用插件的 cleanup 方法（如果存在）
+      // FIX: P2-40 使用 PluginWithCleanup 类型替代类型断言链
       for (const plugin of installedPlugins) {
-        // FIX: P1-42 简化插件 cleanup 类型检查，
-        // 使用类型守卫替代多层 as unknown as Record 类型断言
-        const pluginRecord = plugin as unknown as { cleanup?: () => void; name?: string };
-        if (typeof pluginRecord?.cleanup === 'function') {
+        const pluginWithCleanup = plugin as PluginWithCleanup | PluginFunctionWithCleanup;
+        if (typeof pluginWithCleanup?.cleanup === 'function') {
           try {
-            pluginRecord.cleanup();
+            pluginWithCleanup.cleanup();
           } catch (err) {
+            const pluginName = pluginWithCleanup.name ??
+              (typeof plugin === 'function' ? plugin.name : 'unknown');
             error(
-              `Plugin cleanup failed: ${pluginRecord.name ?? 'unknown'}: ${err}`,
+              `Plugin cleanup failed: ${pluginName}: ${err}`,
             );
           }
         }
@@ -276,9 +279,10 @@ export function createApp(
     instance.appContext = context as ComponentAppContext;
 
     // Copy app-level provides into the root instance
+    // FIX: P2-39 使用 Object.keys 替代 for...in，避免遍历到原型链上的属性
     if (context.provides) {
       const rootProvides = instance.provides;
-      for (const key in context.provides) {
+      for (const key of Object.keys(context.provides)) {
         if (!(key in rootProvides)) {
           rootProvides[key] = context.provides[key];
         }

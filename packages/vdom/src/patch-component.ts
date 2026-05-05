@@ -105,7 +105,9 @@ export function createComponentPatch<HN, HE extends HN>(
         const hooks = (current as unknown as Record<string, unknown>).errorCapturedHooks as
           | Array<(err: Error, instance: unknown, info: string) => boolean | void>
           | undefined;
+        // FIX: P0-2 修复 errorCapturedHooks 使用未定义变量 hook，添加遍历 hooks 数组的循环
         if (hooks && hooks.length > 0) {
+          for (const hook of hooks) {
             try {
               const result = hook(renderError, current, 'render function');
               if (result === false) {

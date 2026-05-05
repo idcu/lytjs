@@ -95,9 +95,10 @@ export function createSignalRenderer(
         cleanup = null;
       }
 
+      // FIX: P2-32 移除非空断言，添加 null 检查
       const el =
         typeof container === 'string'
-          ? document.querySelector(container)!
+          ? document.querySelector(container)
           : container;
 
       if (!el) {
@@ -107,6 +108,10 @@ export function createSignalRenderer(
       }
 
       try {
+        // FIX: P1-15 添加安全警告注释
+        // 注意：此处使用 new Function() 执行编译后的模板代码。
+        // 虽然模板代码由编译器生成（而非用户直接输入），但仍存在潜在的安全风险。
+        // 建议在生产环境中使用预编译（AOT compilation）替代运行时编译。
         // 创建渲染函数，传入所有 dom-runtime 和 reactivity 的函数作为参数
         // 参数名必须与 codegen-signal.ts 生成的 import 名称一致
         const renderFn = new Function(
@@ -190,6 +195,12 @@ export function createSignalRenderer(
  * ```
  *
  * 我们需要提取函数体（花括号内的内容），去掉 import 语句和函数声明
+ *
+ * FIX: P2-33 边界情况说明：
+ * - 本函数假设输入代码是由 codegen-signal 生成的标准格式
+ * - 不支持嵌套函数声明或复杂的花括号嵌套（如对象字面量中的方法）
+ * - 字符串和注释中的花括号会被正确跳过
+ * - 如果代码结构不符合预期，可能返回 null 或不完整的结果
  */
 function extractRenderBody(code: string): string | null {
   // 匹配 render 函数体

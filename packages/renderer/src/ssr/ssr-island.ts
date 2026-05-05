@@ -4,7 +4,7 @@
  */
 
 import type { VNode } from '@lytjs/vdom';
-import { Fragment, Text } from '@lytjs/vdom';
+import { Fragment, Text, ShapeFlags } from '@lytjs/vdom';
 import { isString, isArray } from '@lytjs/common-is';
 import { warn } from '@lytjs/common-error';
 import { escapeHtml } from '../utils';
@@ -359,13 +359,15 @@ function hydrateChildVNode(
   if (typeof type === 'string') {
     const tag = type.toLowerCase();
 
+    // FIX: P2-34 缓存 vnodeToSimpleHTML 结果到局部变量，避免重复调用
+    const vnodeHtml = vnodeToSimpleHTML(vnode);
+
     if (domIndex < existingChildren.length) {
       const existingNode = existingChildren[domIndex];
       if (!existingNode) {
         // No existing node; append new element
-        const html = vnodeToSimpleHTML(vnode);
         const template = document.createElement('template');
-        template.innerHTML = html;
+        template.innerHTML = vnodeHtml;
         const newElement = template.content.firstChild;
         if (newElement) {
           parent.appendChild(newElement);
@@ -381,9 +383,8 @@ function hydrateChildVNode(
           return domIndex + 1;
         }
         // Tag mismatch: replace with new element
-        const html = vnodeToSimpleHTML(vnode);
         const template = document.createElement('template');
-        template.innerHTML = html;
+        template.innerHTML = vnodeHtml;
         const newElement = template.content.firstChild;
         if (newElement) {
           parent.replaceChild(newElement, existingNode);
@@ -391,9 +392,8 @@ function hydrateChildVNode(
         return domIndex + 1;
       }
       // Not an element node: replace
-      const html = vnodeToSimpleHTML(vnode);
       const template = document.createElement('template');
-      template.innerHTML = html;
+      template.innerHTML = vnodeHtml;
       const newElement = template.content.firstChild;
       if (newElement) {
         parent.replaceChild(newElement, existingNode);
@@ -401,9 +401,8 @@ function hydrateChildVNode(
       return domIndex + 1;
     }
     // No existing node; append new element
-    const html = vnodeToSimpleHTML(vnode);
     const template = document.createElement('template');
-    template.innerHTML = html;
+    template.innerHTML = vnodeHtml;
     const newElement = template.content.firstChild;
     if (newElement) {
       parent.appendChild(newElement);
@@ -496,7 +495,8 @@ function hydrateAttributes(el: Element, vnode: VNode): void {
 function hydrateElementChildren(el: Element, vnode: VNode): void {
   const { children, shapeFlag } = vnode;
 
-  if (shapeFlag != null && (shapeFlag & 0b0001)) {
+  // FIX: P2-35 使用 ShapeFlags 常量替代魔法数字
+  if (shapeFlag != null && (shapeFlag & ShapeFlags.TEXT_CHILDREN)) {
     // TEXT_CHILDREN
     const text = isString(children) ? children : String(children ?? '');
     if (el.childNodes.length > 0) {

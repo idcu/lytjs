@@ -49,13 +49,10 @@ export function initSlots(instance: ComponentInternalInstance, children: unknown
 export function normalizeSlotValue(value: unknown): VNode[] {
   if (isNullish(value)) return [];
   if (isArray(value)) return value as VNode[];
-  if (isObject(value) && value !== null && typeof (value as VNode).__v_isVNode === 'boolean') {
-    // FIX: P1-23 将 typeof === 'boolean' 检查改为 === true，
-    // 避免在 __v_isVNode 为其他 falsy 值（如 0、''、null）时误判为有效 VNode
-    if ((value as VNode).__v_isVNode === true) {
-      // Valid VNode object
-      return [value as VNode];
-    }
+  // FIX: P2-13 简化检查逻辑，直接检查 __v_isVNode === true
+  // 避免多余的类型检查和嵌套条件
+  if ((value as VNode).__v_isVNode === true) {
+    return [value as VNode];
   }
   if (__DEV__) {
     warn(

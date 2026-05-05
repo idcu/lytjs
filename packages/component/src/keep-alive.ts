@@ -51,8 +51,9 @@ export const KeepAlive: ComponentOptions = {
     } as Record<string, unknown>;
   },
 
-  render(_ctx: Record<string, unknown>): VNode | null {
-    const instance = this as unknown as ComponentInternalInstance;
+  render(ctx: Record<string, unknown>): VNode | null {
+    // FIX: P2-12 使用 ctx 参数替代 this，避免依赖 this 上下文
+    const instance = ctx as unknown as ComponentInternalInstance;
     const props = instance.props as KeepAliveProps;
     const defaultSlot = instance.slots?.default;
 

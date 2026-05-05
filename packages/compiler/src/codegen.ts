@@ -157,9 +157,10 @@ function createCodegenContext(
     },
 
     newline(): void {
-      codeParts.push(`\n${'  '.repeat(indentLevel)}`);
+      // FIX: P0-1 修复 newline() 引用未定义变量 indentLevel，改为使用 context.indentLevel
+      codeParts.push(`\n${'  '.repeat(context.indentLevel)}`);
       currentLine++;
-      currentColumn = indentLevel * 2;
+      currentColumn = context.indentLevel * 2;
     },
   };
 

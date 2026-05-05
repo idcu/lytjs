@@ -214,6 +214,10 @@ function generateModuleCode(opts: ModuleCodeOptions): string {
  * - 正确处理属性选择器（[attr=value]）
  * - 正确处理多级嵌套选择器
  * - 跳过 @keyframes 内部的 from/to 百分比选择器
+ *
+ * FIX: P2-25 已知限制：当前正则实现不支持 CSS 嵌套规则（CSS Nesting），
+ * 如 `.parent { .child { } }` 这种嵌套语法需要使用完整的 CSS 解析器处理。
+ * 建议使用 PostCSS 等工具进行生产环境的 CSS 作用域处理。
  */
 function scopeCSS(css: string, scopeId: string): string {
   const attrSelector = `[data-v-${scopeId}]`;
@@ -221,6 +225,7 @@ function scopeCSS(css: string, scopeId: string): string {
   // Process each CSS rule block
   return css.replace(
     // FIX: P1-34 增强正则，正确匹配包含伪类、伪元素、属性选择器的复杂选择器
+    // FIX: P2-25 注意：此正则不支持 CSS 嵌套规则（CSS Nesting）
     /([^{}@/][^{}]*?)\{/g,
     (match, selector: string) => {
       // Skip @ rules (e.g., @media, @keyframes)
@@ -232,6 +237,16 @@ function scopeCSS(css: string, scopeId: string): string {
       const trimmedSelector = selector.trim();
       if (/^(from|to|\d+%)\s*$/.test(trimmedSelector)) {
         return match;
+      }
+
+      // FIX: P2-25 检测并警告嵌套规则（简单的启发式检测）
+      if (trimmedSelector.includes('{') || trimmedSelector.includes('}')) {
+        if (__DEV__) {
+          console.warn(
+            `[scopeCSS] 检测到可能的 CSS 嵌套规则，当前实现可能无法正确处理。` +
+            `建议使用 PostCSS 进行生产环境的 CSS 作用域处理。`
+          );
+        }
       }
 
       // Split selector by comma to handle multiple selectors

@@ -23,8 +23,7 @@ const PRIORITY_WEIGHT: Record<SchedulerPriority, number> = {
   low: 3,
 };
 
-/** 自增的任务 ID */
-let nextJobId = 0;
+
 
 // ============================================================
 // AsyncScheduler
@@ -61,6 +60,9 @@ export class AsyncScheduler<HN = unknown, HE extends HN = HN> {
   /** 已执行过的任务 ID 集合（用于 allowMerge 去重） */
   private executedJobIds = new Set<number>();
 
+  /** FIX: P2-43 自增的任务 ID，改为实例属性避免全局变量 */
+  private nextJobId = 0;
+
   /**
    * 创建异步调度器实例。
    * @param host - RendererHost 实例
@@ -88,7 +90,8 @@ export class AsyncScheduler<HN = unknown, HE extends HN = HN> {
     priority?: SchedulerPriority,
     allowMerge?: boolean,
   ): number {
-    const id = ++nextJobId;
+    // FIX: P2-43 使用实例属性 nextJobId 替代全局变量
+    const id = ++this.nextJobId;
     const job: SchedulerJob = {
       id,
       fn,
@@ -128,7 +131,8 @@ export class AsyncScheduler<HN = unknown, HE extends HN = HN> {
       this.schedule(fn, 'sync', false);
       return;
     }
-    const id = ++nextJobId;
+    // FIX: P2-43 使用实例属性 nextJobId 替代全局变量
+    const id = ++this.nextJobId;
     const job: SchedulerJob = {
       id,
       fn,
@@ -267,6 +271,9 @@ export class AsyncScheduler<HN = unknown, HE extends HN = HN> {
 
     this.flushing = false;
 
+    // FIX: P2-44 flush 完成后清空 executedJobIds，防止无限增长
+    this.executedJobIds.clear();
+
     // 如果 flush 过程中又有新任务入队，继续调度
     if (this.queue.length > 0) {
       this.scheduleFlush();
@@ -277,14 +284,21 @@ export class AsyncScheduler<HN = unknown, HE extends HN = HN> {
    * 按优先级排序队列。
    *
    * 优先级高的排在前面，同优先级保持插入顺序（稳定排序）。
+   * FIX: P2-42 添加第二排序键（任务 ID）确保排序稳定性
    */
   private sortQueue(): void {
     this.queue.sort((a, b) => {
       const weightA = PRIORITY_WEIGHT[a.priority]!;
       const weightB = PRIORITY_WEIGHT[b.priority]!;
-      return weightA - weightB;
+      // 首先按优先级排序
+      if (weightA !== weightB) {
+        return weightA - weightB;
+      }
+      // FIX: P2-42 同优先级时按任务 ID 排序，确保稳定性
+      return a.id - b.id;
     });
   }
 }
 
+// FIX: P2-41 删除重复的 __DEV__ 声明，使用全局声明
 declare const __DEV__: boolean;

@@ -177,11 +177,14 @@ function parseDestructure(
   left: string,
   context: TransformContext,
 ): { pattern: string; tempVar: string; indexVar?: string } | null {
-  // FIX: P1-29 使用 TransformContext 中的计数器替代模块级计数器
-  // 通过 context 对象上的自定义属性存储计数器，确保每个编译上下文独立
-  const counterKey = '__destructureCounter';
-  const counter = ((context as unknown as Record<string, unknown>)[counterKey] as number) ?? 0;
-  (context as unknown as Record<string, unknown>)[counterKey] = counter + 1;
+  // FIX: P2-27 使用 TransformContext 接口中定义的 __counters 字段替代不安全的类型断言
+  // FIX: P1-29 使用 TransformContext 中的计数器替代模块级计数器，确保每个编译上下文独立
+  const counterKey = 'destructure';
+  const counter = context.__counters?.[counterKey] ?? 0;
+  if (!context.__counters) {
+    context.__counters = {};
+  }
+  context.__counters[counterKey] = counter + 1;
 
   // Match: { ... } [, index]
   const objMatch = left.match(/^(\{[^}]+\})(?:\s*,\s*(\w+))?$/);

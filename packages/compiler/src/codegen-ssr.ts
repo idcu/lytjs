@@ -39,9 +39,9 @@ const VOID_ELEMENTS = new Set([
 // Helper functions
 // ============================================================
 
-// @ts-ignore: escapeHtml is kept as a module-level utility for potential future use
-// and is also inlined into generated code strings at runtime.
-function escapeHtml(str: string): string {
+// FIX: P2-16 escapeHtml 函数已导出供外部使用
+// 该函数同时被内联到生成的代码字符串中，确保运行时独立可用
+export function escapeHtml(str: string): string {
   return str
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -83,6 +83,8 @@ export function generateSSR(ast: RootNode, _options: CodegenOptions = {}): Codeg
   // to ensure every compiled output is self-contained and independently executable,
   // without relying on external runtime imports. This trades a small amount of
   // code duplication for maximum portability and zero runtime coupling.
+  // FIX: P2-15 提取 voidElements 为模块级常量，避免每次调用都创建新 Set
+  parts.push(`const VOID_ELEMENTS = new Set(['area','base','br','col','embed','hr','img','input','link','meta','param','source','track','wbr']);\n\n`);
   parts.push(`function renderToString(vnode) {\n`);
   parts.push(`  if (typeof vnode === 'string') return vnode;\n`);
   parts.push(`  if (vnode == null) return '';\n`);
@@ -97,8 +99,7 @@ export function generateSSR(ast: RootNode, _options: CodegenOptions = {}): Codeg
   parts.push(`    }\n`);
   parts.push(`  }\n`);
   parts.push(`  html += '>';\n`);
-  parts.push(`  const voidElements = new Set(['area','base','br','col','embed','hr','img','input','link','meta','param','source','track','wbr']);\n`);
-  parts.push(`  if (!voidElements.has(tag)) {\n`);
+  parts.push(`  if (!VOID_ELEMENTS.has(tag)) {\n`);
   parts.push(`    if (children != null) {\n`);
   parts.push(`      html += renderToString(children);\n`);
   parts.push(`    }\n`);
@@ -132,7 +133,19 @@ function genSSRChildren(children: TemplateChildNode[]): string {
       case NodeTypes.INTERPOLATION: {
         const node = child as InterpolationNode;
         const content = (node.content as SimpleExpressionNode).content;
-        parts.push(`escapeHtml(String(${content}))`);
+        // FIX: P1-14 SSR 插值表达式白名单验证，防止代码注入
+        const isValidExpr = /^[a-zA-Z_$][a-zA-Z0-9_$]*(\.[a-zA-Z_$][a-zA-Z0-9_$]*)*$/.test(content);
+        if (!isValidExpr) {
+          if (__DEV__) {
+            console.warn(
+              `[lytjs/compiler] Invalid interpolation expression in SSR: "${content}". ` +
+              `Only simple property access paths are allowed.`,
+            );
+          }
+          parts.push(`'[invalid expression]'`);
+        } else {
+          parts.push(`escapeHtml(String(${content}))`);
+        }
         break;
       }
 
@@ -216,8 +229,9 @@ function genSSRElement(element: ElementNode): string {
         const expContent = prop.exp
           ? (prop.exp as SimpleExpressionNode).content
           : undefined;
+        // FIX: P2-17 对 v-bind 属性值进行 HTML 转义，防止 XSS 攻击
         if (argContent && expContent) {
-          propParts.push(`' ${argContent}="' + ${expContent} + '"'`);
+          propParts.push(`' ${argContent}="' + escapeHtml(String(${expContent})) + '"'`);
         }
       }
       // v-html: output raw HTML content as children (not as attribute)

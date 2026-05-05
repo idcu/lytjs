@@ -181,6 +181,8 @@ export class RenderQueue<HN = unknown, HE extends HN = HN> {
 
   /**
    * 执行单个渲染操作。
+   * FIX: P2-50 添加注释说明：insert / remove / move / patch 操作由上层 renderer 处理，
+   * 此处仅作为调度容器，实际执行通过 custom 类型传入
    */
   private executeOperation(op: RenderOperation): void {
     switch (op.type) {
@@ -189,7 +191,17 @@ export class RenderQueue<HN = unknown, HE extends HN = HN> {
         break;
       // insert / remove / move / patch 操作由上层 renderer 处理，
       // 此处仅作为调度容器，实际执行通过 custom 类型传入
+      // 这些操作在 RenderQueue 中主要用于合并和排序，实际 DOM 操作在 renderer 层执行
+      case 'insert':
+      case 'remove':
+      case 'move':
+      case 'patch':
+        // 这些操作类型在 RenderQueue 中仅用于队列管理（合并、排序），
+        // 实际的 DOM 操作由上层 renderer 通过 custom 类型包装后传入
+        // 设计意图：RenderQueue 专注于调度，不直接操作 DOM
+        break;
       default:
+        // 未知操作类型，静默忽略（防御性编程）
         break;
     }
   }
@@ -235,40 +247,44 @@ export class RenderQueue<HN = unknown, HE extends HN = HN> {
    *
    * 对于组件类型（非字符串 type），使用 vnode.key 或 type.name 避免不同组件被错误合并。
    * FIX: P1-49 定义正确类型替代 any，使用 unknown 和类型守卫
+   * FIX: P2-49 提取 typeKey 为独立方法，避免每次调用时重复创建闭包
    */
   private getOperationKey(op: RenderOperation): string | null {
-    // FIX: P1-49 使用 Record<string, unknown> 替代 any，提供更好的类型安全
-    const typeKey = (vnode: Record<string, unknown> | undefined): string => {
-      const t = vnode?.type;
-      if (typeof t === 'string') {
-        return t;
-      }
-      // 组件类型：优先使用 vnode.key，其次使用 type.name 或 Symbol
-      if (vnode?.key != null) {
-        return String(vnode.key);
-      }
-      if (typeof t === 'function') {
-        return (t as { name?: string }).name ?? String(t);
-      }
-      if (typeof t === 'object' && t != null) {
-        const tObj = t as Record<string, unknown>;
-        return tObj.name != null ? String(tObj.name) : String(t);
-      }
-      return String(t);
-    };
-
     switch (op.type) {
       case 'insert':
-        return `insert:${typeKey(op.vnode)}`;
+        return `insert:${this.getVNodeTypeKey(op.vnode)}`;
       case 'remove':
-        return `remove:${typeKey(op.vnode)}`;
+        return `remove:${this.getVNodeTypeKey(op.vnode)}`;
       case 'move':
-        return `move:${typeKey(op.vnode)}`;
+        return `move:${this.getVNodeTypeKey(op.vnode)}`;
       case 'patch':
-        return `patch:${typeKey(op.newVNode)}`;
+        return `patch:${this.getVNodeTypeKey(op.newVNode)}`;
       case 'custom':
         return null;
     }
+  }
+
+  /**
+   * 获取 VNode 的类型 key，用于操作合并判断。
+   * FIX: P2-49 提取为独立方法，避免在 getOperationKey 中重复创建闭包
+   */
+  private getVNodeTypeKey(vnode: Record<string, unknown> | undefined): string {
+    const t = vnode?.type;
+    if (typeof t === 'string') {
+      return t;
+    }
+    // 组件类型：优先使用 vnode.key，其次使用 type.name 或 Symbol
+    if (vnode?.key != null) {
+      return String(vnode.key);
+    }
+    if (typeof t === 'function') {
+      return (t as { name?: string }).name ?? String(t);
+    }
+    if (typeof t === 'object' && t != null) {
+      const tObj = t as Record<string, unknown>;
+      return tObj.name != null ? String(tObj.name) : String(t);
+    }
+    return String(t);
   }
 
   /**
@@ -276,15 +292,23 @@ export class RenderQueue<HN = unknown, HE extends HN = HN> {
    *
    * 优先级高的排在前面，同优先级保持插入顺序（稳定排序）。
    * FIX: P2-42 渲染队列优先级排序：确保 sync 优先级任务优先执行
+   * FIX: P2-48 添加第二排序键（插入索引）确保排序稳定性
    */
   private sortQueue(): void {
-    this.queue.sort((a, b) => {
-      const priorityA = this.getPriority(a);
-      const priorityB = this.getPriority(b);
+    // 为每个操作添加原始索引作为第二排序键
+    const indexedQueue = this.queue.map((op, index) => ({ op, index }));
+    indexedQueue.sort((a, b) => {
+      const priorityA = this.getPriority(a.op);
+      const priorityB = this.getPriority(b.op);
       const weightA = RENDER_PRIORITY_WEIGHT[priorityA];
       const weightB = RENDER_PRIORITY_WEIGHT[priorityB];
-      return weightA - weightB;
+      // 优先级不同时按优先级排序，相同时按原始索引排序（保持插入顺序）
+      if (weightA !== weightB) {
+        return weightA - weightB;
+      }
+      return a.index - b.index;
     });
+    this.queue = indexedQueue.map((item) => item.op);
   }
 
   /**

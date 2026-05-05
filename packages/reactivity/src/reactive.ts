@@ -29,6 +29,9 @@ interface ReactiveTarget {
 
 const MUTATING_METHODS = new Set<string>(['set', 'add', 'delete', 'clear']);
 
+// FIX: P2-3 使用 WeakMap 缓存 Collection 迭代方法的绑定函数，避免每次访问都创建新函数
+const collectionMethodCache = new WeakMap<object, Map<string | symbol, (...args: unknown[]) => unknown>>();
+
 // ==================== 数组方法拦截 ====================
 
 const arrayInstrumentations: Record<string | symbol, (...args: unknown[]) => unknown> = {};
@@ -292,10 +295,21 @@ function createCollectionHandler(isReadonly: boolean, isShallow: boolean): Proxy
       if (typeof res === 'function') {
         // 对迭代方法进行包装以追踪依赖
         if (!isReadonly && (key === 'entries' || key === 'keys' || key === 'values' || key === Symbol.iterator)) {
-          return (...args: unknown[]) => {
-            track(target, TrackOpTypes.GET, ITERATE_KEY);
-            return res.apply(target, args);
-          };
+          // FIX: P2-3 使用缓存避免每次访问都创建新函数
+          let methodCache = collectionMethodCache.get(target);
+          if (!methodCache) {
+            methodCache = new Map();
+            collectionMethodCache.set(target, methodCache);
+          }
+          let cachedFn = methodCache.get(key);
+          if (!cachedFn) {
+            cachedFn = (...args: unknown[]) => {
+              track(target, TrackOpTypes.GET, ITERATE_KEY);
+              return res.apply(target, args);
+            };
+            methodCache.set(key, cachedFn);
+          }
+          return cachedFn;
         }
         if (!isReadonly) {
           // key as string: MUTATING_METHODS 只包含字符串方法名（"set"/"add"/"delete"/"clear"），
@@ -469,6 +483,13 @@ export function isProxy(value: unknown): boolean {
 export { toRaw } from './shared';
 
 export function markRaw<T extends object>(value: T): T {
+  // FIX: P2-2 检查对象是否被冻结或密封，避免在冻结对象上调用 defineProperty 抛出 TypeError
+  if (Object.isFrozen(value) || Object.isSealed(value)) {
+    if (__DEV__) {
+      warn('markRaw() cannot be used on frozen or sealed objects.');
+    }
+    return value;
+  }
   Object.defineProperty(value, ReactiveFlags.SKIP, { value: true });
   return value;
 }

@@ -66,6 +66,17 @@ export interface TransitionState {
 const transitionCleanupMap = new WeakMap<object, (() => void) | null>();
 
 // ============================================================
+// Global transition prefix configuration
+// ============================================================
+
+// FIX: P0-3 将 globalTransitionPrefix 和 setTransitionPrefix 移到文件顶部（模块顶层）
+let globalTransitionPrefix = 'v';
+
+export function setTransitionPrefix(prefix: string): void {
+  globalTransitionPrefix = prefix;
+}
+
+// ============================================================
 // 内部辅助函数（DOM 回退用）
 // ============================================================
 
@@ -122,7 +133,8 @@ function resolveTransitionClasses<HE>(
   props: TransitionProps<HE>,
   type: 'enter' | 'leave',
 ): { from: string; active: string; to: string } {
-  const name = props.name ?? 'v';
+  // FIX: P0-3 使用 globalTransitionPrefix 替代硬编码的 'v'
+  const name = props.name ?? globalTransitionPrefix;
 
   if (type === 'enter') {
     return {
@@ -500,18 +512,13 @@ export function performLeaveTransition(
   props: TransitionProps<Element>,
   done: () => void,
 ): void;
+// FIX: P0-3 修复 performLeaveTransition 函数签名被模块级代码打断的问题
+// 已移除插入在重载签名和实现签名之间的模块级代码（globalTransitionPrefix 和 setTransitionPrefix）
 export function performLeaveTransition<HN, HE extends HN>(
   hostOrEl: RendererHost<HN, HE> | Element,
   elOrProps: HE | TransitionProps<Element>,
   propsOrDone?: TransitionProps<HE> | (() => void),
   done?: () => void,
-// FIX: P2-12 CSS 类名前缀可配置，默认为 'v'
-let globalTransitionPrefix = 'v';
-
-export function setTransitionPrefix(prefix: string): void {
-  globalTransitionPrefix = prefix;
-}
-
 ): void {
   // FIX: P1-11 使用 __isRendererHost 标识符号替代鸭子类型检测
   const isHost = hostOrEl !== null && typeof hostOrEl === 'object' &&
@@ -680,6 +687,11 @@ function waitForTransitionEndDOM(
   const timeout = info.duration > 0 ? info.duration + 50 : 3000;
   const timer = setTimeout(finish, timeout);
 
+  // FIX: P0-6 修复 DOM 回退版变量声明顺序问题
+  // 将 pendingAnimations 声明移到 onEnd 之前，避免 onEnd 引用尚未声明的变量
+  const animations = getStylePropAsArray(getComputedStyle(el), 'animationName');
+  const pendingAnimations = new Set(animations);
+
   const onEnd = (event: Event) => {
     if (event.target !== el) return;
 
@@ -692,9 +704,6 @@ function waitForTransitionEndDOM(
     clearTimeout(timer);
     finish();
   };
-
-  const animations = getStylePropAsArray(getComputedStyle(el), 'animationName');
-  const pendingAnimations = new Set(animations);
 
   el.addEventListener('transitionend', onEnd);
   el.addEventListener('animationend', onEnd);
