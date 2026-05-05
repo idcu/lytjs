@@ -19,10 +19,90 @@ function warnDev(msg: string): void {
 }
 
 // ============================================================
-// createVNode
+// Type aliases for better readability
+// ============================================================
+
+/** Props type for elements (HTML attributes) */
+type ElementProps = Record<string, unknown>;
+
+/** Props type for components */
+type ComponentProps = Record<string, unknown>;
+
+// ============================================================
+// createVNode overloads
 // ============================================================
 
 /**
+ * Create a text VNode (overload for Text type)
+ */
+export function createVNode(
+  type: typeof Text,
+  props: null,
+  children?: string,
+): VNode;
+
+/**
+ * Create a comment VNode (overload for Comment type)
+ */
+export function createVNode(
+  type: typeof Comment,
+  props: null,
+  children?: string,
+): VNode;
+
+/**
+ * Create a Fragment VNode (overload for Fragment type)
+ */
+export function createVNode(
+  type: typeof Fragment,
+  props: null,
+  children?: VNodeChildren,
+): VNode;
+
+/**
+ * Create an element VNode with string tag (overload for HTML elements)
+ * Provides better type inference for element props.
+ */
+export function createVNode(
+  type: string,
+  props: ElementProps | null,
+  children?: VNodeChildren,
+  patchFlag?: number,
+  dynamicProps?: string[] | null,
+  isBlockNode?: boolean,
+): VNode;
+
+/**
+ * Create a component VNode with object type (overload for components)
+ * Provides better type inference for component props.
+ */
+export function createVNode(
+  type: object,
+  props: ComponentProps | null,
+  children?: VNodeChildren,
+  patchFlag?: number,
+  dynamicProps?: string[] | null,
+  isBlockNode?: boolean,
+): VNode;
+
+/**
+ * Create a VNode (generic fallback for VNodeTypes)
+ *
+ * This overload handles all VNodeTypes including string, object, symbol, and built-in types.
+ * It is the most flexible and should be used when the exact type is not known at compile time.
+ */
+export function createVNode(
+  type: VNodeTypes,
+  props?: Record<string, unknown> | null,
+  children?: VNodeChildren,
+  patchFlag?: number,
+  dynamicProps?: string[] | null,
+  isBlockNode?: boolean,
+): VNode;
+
+/**
+ * Create a VNode (implementation)
+ *
  * Create a VNode
  */
 export function createVNode(
