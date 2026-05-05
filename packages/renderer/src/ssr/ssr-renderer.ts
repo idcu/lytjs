@@ -9,6 +9,7 @@ import { isString, isArray, isObject, isFunction, isNullish } from '@lytjs/commo
 import { camelToKebab } from '@lytjs/common-string';
 import { warn } from '@lytjs/common-error';
 import { escapeHtml, isBooleanAttr, isVoidElement } from '../utils';
+import { NAMED_ENTITIES } from './ssr-stream';
 
 // ============================================================
 // renderToString - main entry
@@ -142,16 +143,10 @@ function renderElementToString(vnode: VNode): string {
 const URL_ATTRS = new Set(['href', 'src', 'action', 'formaction', 'xlink:href', 'data', 'srcdoc']);
 
 // ============================================================
-// Named entity decoding constants (module-level to avoid re-creation)
+// Named entity regex (module-level to avoid re-creation)
+// Uses NAMED_ENTITIES imported from ssr-stream.ts
 // ============================================================
 
-const NAMED_ENTITIES: Record<string, string> = {
-  '&colon;': ':',
-  '&tab;': '\t',
-  '&newline;': '\n',
-  '&lpar;': '(',
-  '&rpar;': ')',
-};
 const NAMED_ENTITY_REGEX = new RegExp(
   Object.keys(NAMED_ENTITIES)
     .map((e) => e.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))

@@ -43,13 +43,9 @@ import { createChildrenPatch } from './patch-children';
 // ============================================================
 
 /**
- * Adapt a RendererHost to the internal RendererOptions-like shape used by createRenderer.
- * This bridges the gap between RendererHost's patchProp(el, key, prev, next, isSVG?)
- * and the internal need for a simpler patchProp(el, key, prev, next).
+ * Internal renderer options shape shared by both host and legacy adapters.
  */
-function hostToOptions<HN, HE extends HN>(
-  host: RendererHost<HN, HE>,
-): {
+interface InternalRendererOptions<HN, HE extends HN> {
   createElement: (type: string) => HE;
   setElementText: (node: HE, text: string) => void;
   insert: (child: HN, parent: HN, anchor?: HN | null) => void;
@@ -58,11 +54,20 @@ function hostToOptions<HN, HE extends HN>(
   setText: (node: HN, text: string) => void;
   patchProp: (el: HE, key: string, prevValue: unknown, nextValue: unknown) => void;
   createComment: (text: string) => HN;
-  querySelector: (selector: string) => HE | null;
+  querySelector: ((selector: string) => HE | null) | undefined;
   nextSibling: (node: HN) => HN | null;
   parentNode: (node: HN) => HN | null;
   setupChildComponent: ((vnode: VNode, parent: ComponentInternalInstance | null) => void) | undefined;
-} {
+}
+
+/**
+ * Adapt a RendererHost to the internal RendererOptions-like shape used by createRenderer.
+ * This bridges the gap between RendererHost's patchProp(el, key, prev, next, isSVG?)
+ * and the internal need for a simpler patchProp(el, key, prev, next).
+ */
+function hostToOptions<HN, HE extends HN>(
+  host: RendererHost<HN, HE>,
+): InternalRendererOptions<HN, HE> {
   return {
     createElement: (type: string) => host.createElement(type),
     setElementText: (node, text) => host.setElementText(node, text),
@@ -84,20 +89,7 @@ function hostToOptions<HN, HE extends HN>(
  */
 function optionsToInternal<HN, HE extends HN>(
   options: RendererOptions<HN, HE>,
-): {
-  createElement: (type: string) => HE;
-  setElementText: (node: HE, text: string) => void;
-  insert: (child: HN, parent: HN, anchor?: HN | null) => void;
-  remove: (child: HN) => void;
-  createText: (text: string) => HN;
-  setText: (node: HN, text: string) => void;
-  patchProp: (el: HE, key: string, prevValue: unknown, nextValue: unknown) => void;
-  createComment: (text: string) => HN;
-  querySelector: ((selector: string) => HE | null) | undefined;
-  nextSibling: (node: HN) => HN | null;
-  parentNode: (node: HN) => HN | null;
-  setupChildComponent: ((vnode: VNode, parent: ComponentInternalInstance | null) => void) | undefined;
-} {
+): InternalRendererOptions<HN, HE> {
   return {
     createElement: (type) => options.createElement(type),
     setElementText: (node, text) => options.setElementText(node, text),
@@ -292,25 +284,18 @@ export function createRenderer<HN, HE extends HN>(
       // Fragment needs special handling
       if (n2.type === Fragment) {
         fragmentAPI.patchFragment(n1, n2, container, parentComponent, parentSuspense, isSVG);
-      } else if (n2.type === Text) {
-        // Patch text node: update textContent if children changed
+      } else if (n2.type === Text || n2.type === Comment) {
+        // Patch text/comment node: update content if children changed
         const node = n1.el;
         setVNodeEl(n2, node as unknown as HN | null);
         if (n1.children !== n2.children) {
           if (isFunction(n2.children)) {
             warn(
-              `Text vnode received a function children value. ` +
+              `${n2.type === Text ? 'Text' : 'Comment'} vnode received a function children value. ` +
                 `Function children are only supported on component vnodes. ` +
                 `The value will be replaced with an empty string.`,
             );
           }
-          setText(node as unknown as HN, isFunction(n2.children) ? '' : String(n2.children ?? ''));
-        }
-      } else if (n2.type === Comment) {
-        // Patch comment node: update nodeValue if children changed
-        const node = n1.el;
-        setVNodeEl(n2, node as unknown as HN | null);
-        if (n1.children !== n2.children) {
           setText(node as unknown as HN, isFunction(n2.children) ? '' : String(n2.children ?? ''));
         }
       } else if (n2.shapeFlag & ShapeFlags.SUSPENSE) {

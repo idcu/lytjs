@@ -97,10 +97,13 @@ export function generateSSR(ast: RootNode, _options: CodegenOptions = {}): Codeg
   parts.push(`    }\n`);
   parts.push(`  }\n`);
   parts.push(`  html += '>';\n`);
-  parts.push(`  if (children != null) {\n`);
-  parts.push(`    html += renderToString(children);\n`);
+  parts.push(`  const voidElements = new Set(['area','base','br','col','embed','hr','img','input','link','meta','param','source','track','wbr']);\n`);
+  parts.push(`  if (!voidElements.has(tag)) {\n`);
+  parts.push(`    if (children != null) {\n`);
+  parts.push(`      html += renderToString(children);\n`);
+  parts.push(`    }\n`);
+  parts.push(`    html += '</' + tag + '>';\n`);
   parts.push(`  }\n`);
-  parts.push(`  html += '</' + tag + '>';\n`);
   parts.push(`  return html;\n`);
   parts.push(`}\n`);
 
@@ -448,7 +451,7 @@ function genSSRCallExpression(call: JSCallExpression): string {
       ) {
         arrowBodyStr = (secondArg as SimpleExpressionNode).content;
       }
-      return `(${listExpr}).map((${arrowParams}) => ${arrowBodyStr}).join('')`;
+      return `(${listExpr}).flatMap((${arrowParams}) => ${arrowBodyStr}).join('')`;
     }
   }
 

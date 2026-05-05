@@ -375,7 +375,7 @@ function yieldToMicrotask(): Promise<void> {
 const URL_ATTRS = new Set(['href', 'src', 'action', 'formaction', 'xlink:href', 'data', 'srcdoc']);
 
 // Named entity decoding constants
-const NAMED_ENTITIES: Record<string, string> = {
+export const NAMED_ENTITIES: Record<string, string> = {
   '&colon;': ':',
   '&tab;': '\t',
   '&newline;': '\n',

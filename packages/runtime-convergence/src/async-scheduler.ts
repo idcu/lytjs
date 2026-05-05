@@ -95,9 +95,17 @@ export class AsyncScheduler<HN = unknown, HE extends HN = HN> {
       allowMerge: allowMerge ?? true,
     };
 
-    // 如果允许合并且该任务已执行过，跳过
-    if (job.allowMerge && this.executedJobIds.has(id)) {
-      return id;
+    // 如果允许合并，在 queue 中查找同 id 任务进行去重
+    // 不依赖 executedJobIds（它在 flush 开始时被 clear，导致 flush 间隙竞态）
+    if (job.allowMerge) {
+      const existingIdx = this.queue.findIndex((q) => q.allowMerge && q.id === id);
+      if (existingIdx !== -1) {
+        // 队列中已有同 id 任务，替换为最新的
+        this.queue[existingIdx] = job;
+        this.sortQueue();
+        this.scheduleFlush();
+        return id;
+      }
     }
 
     this.queue.push(job);

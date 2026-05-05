@@ -329,6 +329,12 @@ export function createEventHandler(
 
 // ==================== 列表协调（核心） ====================
 
+/**
+ * WeakMap 用于存储节点的 reconcile key，避免直接在 DOM 元素上设置
+ * __reconcileKey 属性而污染 DOM 属性空间。
+ */
+const reconcileKeyMap = new WeakMap<Node, string | number>();
+
 export interface ReconcileOptions<T> {
   key: (item: T) => string | number;
   create: (item: T) => Node;
@@ -359,9 +365,7 @@ export function reconcileArray<T>(
 
   // 收集当前 parent 中已有的 reconcileArray 管理的节点
   // 通过遍历 parent.childNodes 中 ref 之前的节点
-  // NOTE (P2-15): 使用自定义属性 __reconcileKey 存储节点的 reconcile key，
-  // 存在与用户代码或其他库的属性名冲突风险。未来可改用 WeakMap<Node, string | number>
-  // 来避免污染 DOM 元素的属性空间，但需注意 WeakMap 无法序列化且不适用于跨 iframe 场景。
+  // 使用 WeakMap 存储节点的 reconcile key，避免污染 DOM 元素属性空间
   const childNodes = parent.childNodes;
   let endIdx = ref != null
     ? Array.from(childNodes as ArrayLike<ChildNode>).indexOf(ref as ChildNode)
@@ -374,8 +378,8 @@ export function reconcileArray<T>(
 
   for (let i = 0; i < endIdx; i++) {
     const node = childNodes[i]!;
-    // 尝试从 node 的 __reconcileKey 属性获取 key
-    const key = (node as Node & { __reconcileKey?: string | number }).__reconcileKey;
+    // 从 WeakMap 中获取节点的 reconcile key
+    const key = reconcileKeyMap.get(node);
     if (key !== undefined) {
       existingMap.set(key, { node, item: undefined as unknown as T });
       existingNodes.push(node);
@@ -408,7 +412,7 @@ export function reconcileArray<T>(
     } else {
       // key 不存在：创建新节点
       const node = options.create(item);
-      (node as Node & { __reconcileKey?: string | number }).__reconcileKey = key;
+      reconcileKeyMap.set(node, key);
       fragment.appendChild(node);
     }
   }

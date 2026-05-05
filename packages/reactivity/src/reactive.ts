@@ -264,8 +264,8 @@ function createMutableHandler(isReadonly: boolean, isShallow: boolean): ProxyHan
 
 // ==================== Collection Handlers ====================
 
-// Map/Set 的迭代 key（模块级常量，避免每次调用 createCollectionHandler 时创建新 Symbol）
-const ITERATE_KEY_COL = Symbol('collection_iterate');
+// Map/Set 的迭代 key（复用 ITERATE_KEY 以保持一致性）
+// 使用与 mutable handler 相同的 ITERATE_KEY，确保 collection 和 object 的迭代追踪行为一致。
 
 function createCollectionHandler(isReadonly: boolean, isShallow: boolean): ProxyHandler<Target> {
   return {
@@ -278,7 +278,7 @@ function createCollectionHandler(isReadonly: boolean, isShallow: boolean): Proxy
       // 追踪 size 属性和 get 调用
       // has/forEach/entries/keys/values/Symbol.iterator 在所有模式下都追踪
       if (key === 'size' || key === 'get' || key === 'has' || key === 'forEach' || key === 'entries' || key === 'keys' || key === 'values' || key === Symbol.iterator) {
-        track(target, TrackOpTypes.GET, ITERATE_KEY_COL);
+        track(target, TrackOpTypes.GET, ITERATE_KEY);
       }
 
       const res = Reflect.get(target, key, target);
@@ -286,7 +286,7 @@ function createCollectionHandler(isReadonly: boolean, isShallow: boolean): Proxy
         // 对迭代方法进行包装以追踪依赖
         if (!isReadonly && (key === 'entries' || key === 'keys' || key === 'values' || key === Symbol.iterator)) {
           return (...args: unknown[]) => {
-            track(target, TrackOpTypes.GET, ITERATE_KEY_COL);
+            track(target, TrackOpTypes.GET, ITERATE_KEY);
             return res.apply(target, args);
           };
         }
@@ -319,8 +319,8 @@ function createCollectionHandler(isReadonly: boolean, isShallow: boolean): Proxy
                   if (triggerKey !== undefined) {
                     trigger(target, TriggerOpTypes.ADD, triggerKey, args[0]);
                   }
-                  // size 变化，触发 ITERATE_KEY_COL 依赖
-                  trigger(target, TriggerOpTypes.ADD, ITERATE_KEY_COL);
+                  // size 变化，触发 ITERATE_KEY 依赖
+                  trigger(target, TriggerOpTypes.ADD, ITERATE_KEY);
                 }
                 return result;
               } else if (key === 'delete') {
@@ -332,8 +332,8 @@ function createCollectionHandler(isReadonly: boolean, isShallow: boolean): Proxy
                   if (triggerKey !== undefined) {
                     trigger(target, TriggerOpTypes.DELETE, triggerKey, undefined, undefined);
                   }
-                  // size 变化，触发 ITERATE_KEY_COL 依赖
-                  trigger(target, TriggerOpTypes.DELETE, ITERATE_KEY_COL);
+                  // size 变化，触发 ITERATE_KEY 依赖
+                  trigger(target, TriggerOpTypes.DELETE, ITERATE_KEY);
                 }
                 return result;
               } else if (key === 'clear') {
@@ -346,7 +346,7 @@ function createCollectionHandler(isReadonly: boolean, isShallow: boolean): Proxy
               }
               // 其他变异方法
               const result = res.apply(target, args);
-              trigger(target, TriggerOpTypes.ADD, ITERATE_KEY_COL);
+              trigger(target, TriggerOpTypes.ADD, ITERATE_KEY);
               return result;
             };
           }

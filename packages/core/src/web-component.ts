@@ -296,9 +296,7 @@ export function defineCustomElement(
   // 注册 Custom Element
   // 使用 try-catch 处理竞态条件：多个模块可能同时尝试注册同名元素
   try {
-    if (!customElements.get(tagName)) {
-      customElements.define(tagName, LytCustomElement);
-    }
+    customElements.define(tagName, LytCustomElement);
   } catch (e) {
     if (__DEV__) {
       warn(

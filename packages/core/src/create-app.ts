@@ -2,6 +2,7 @@
 // @lytjs/core - createApp 工厂函数
 
 import { createVNode } from '@lytjs/vdom';
+import type { VNode } from '@lytjs/vdom';
 import { createDOMRenderer, createSignalRenderer } from '@lytjs/renderer';
 import type { SignalRenderer } from '@lytjs/renderer';
 import { error, warn } from '@lytjs/common-error';
@@ -21,7 +22,7 @@ import {
   createComponentPublicInstance,
   callUnmountedHook,
 } from '@lytjs/component';
-import type { AppContext as ComponentAppContext } from '@lytjs/component';
+import type { AppContext as ComponentAppContext, ComponentInternalInstance } from '@lytjs/component';
 
 export function createApp(
   rootComponent: Component,
@@ -278,7 +279,7 @@ export function createApp(
     setupComponent(instance);
 
     // Store component instance on vnode so patch can access it
-    (rootVNode as any).component = instance;
+    rootVNode.component = instance;
 
     // Save root instance reference for unmount lifecycle hooks
     context._instance = instance;
@@ -287,7 +288,7 @@ export function createApp(
     // Provide setupChildComponent callback so the renderer can create and setup
     // child component instances when it encounters component vnodes during patching
     const renderer = createDOMRenderer({
-      setupChildComponent(childVNode: any, parentComponent: any) {
+      setupChildComponent(childVNode: VNode, parentComponent: ComponentInternalInstance | null) {
         const childInstance = createComponentInstance(
           childVNode,
           parentComponent,

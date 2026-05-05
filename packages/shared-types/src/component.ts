@@ -59,10 +59,29 @@ export interface ComponentPublicInstance<
 }
 
 /**
- * 组件内部实例类型别名（最小接口）
+ * 组件内部实例接口（最小接口）
  * 用于跨包类型引用，避免循环依赖
  */
-export type ComponentInternalInstance = unknown;
+export interface ComponentInternalInstance {
+  uid: number;
+  props: Record<string, unknown>;
+  attrs: Record<string, unknown>;
+  slots: InternalSlots;
+  refs: Record<string, unknown>;
+  vnode: { el: unknown };
+  type: Record<string, unknown>;
+  ctx: Record<string, unknown>;
+  setupState: Record<string, unknown>;
+  emit: (event: string, ...args: unknown[]) => void;
+  isDeactivated?: boolean;
+  effects?: { stop: () => void }[];
+  activatedHooks?: (() => void)[];
+  deactivatedHooks?: (() => void)[];
+  appContext?: unknown;
+  provides: Record<string | symbol, unknown>;
+  parent: ComponentInternalInstance | null;
+  root: ComponentInternalInstance;
+}
 
 /**
  * 组件选项基础接口

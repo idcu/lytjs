@@ -20,12 +20,8 @@ function ensureLinkerRegistered(): void {
   if (_linkerRegistered) return;
   _linkerRegistered = true;
   registerSuspenseLinker(
-    (asyncState: unknown, vnodeBoundary: unknown, domSwitch: (boundary: unknown, toFallback: boolean) => void) => {
-      linkSuspenseBoundary(
-        asyncState as SuspenseAsyncState,
-        vnodeBoundary as SuspenseAsyncState['vnodeBoundary'],
-        domSwitch as SuspenseAsyncState['domSwitch'],
-      );
+    (asyncState: SuspenseAsyncState, vnodeBoundary: SuspenseAsyncState['vnodeBoundary'], domSwitch: SuspenseAsyncState['domSwitch']) => {
+      linkSuspenseBoundary(asyncState, vnodeBoundary, domSwitch);
     },
   );
 }

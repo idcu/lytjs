@@ -271,6 +271,37 @@ function hydrateVNode(parent: Element, vnode: VNode): void {
     }
     return;
   }
+
+  // Handle component VNode (stateful or functional component)
+  if (typeof type === 'object' && type !== null) {
+    const component = type as ComponentOptions;
+    let childVNode: VNode | undefined;
+
+    // Try render function first
+    if (typeof component.render === 'function') {
+      const ctx = vnode.props ?? {};
+      const result = component.render(ctx);
+      if (result && typeof result === 'object' && 'type' in result) {
+        childVNode = result as VNode;
+      }
+    }
+
+    // Try setup function if render didn't produce a VNode
+    if (!childVNode && typeof component.setup === 'function') {
+      const setupResult = component.setup(vnode.props ?? {});
+      if (setupResult && typeof setupResult === 'object' && 'type' in setupResult) {
+        childVNode = setupResult as VNode;
+      }
+    }
+
+    // Recursively hydrate the resolved child VNode
+    if (childVNode) {
+      hydrateVNode(parent, childVNode);
+    } else if (__DEV__) {
+      warn(`hydrateVNode: could not resolve component VNode for hydration`);
+    }
+    return;
+  }
 }
 
 /**
@@ -378,6 +409,32 @@ function hydrateChildVNode(
       parent.appendChild(newElement);
     }
     return domIndex + 1;
+  }
+
+  // Handle component VNode (stateful or functional component)
+  if (typeof type === 'object' && type !== null) {
+    const component = type as ComponentOptions;
+    let childVNode: VNode | undefined;
+
+    if (typeof component.render === 'function') {
+      const ctx = vnode.props ?? {};
+      const result = component.render(ctx);
+      if (result && typeof result === 'object' && 'type' in result) {
+        childVNode = result as VNode;
+      }
+    }
+
+    if (!childVNode && typeof component.setup === 'function') {
+      const setupResult = component.setup(vnode.props ?? {});
+      if (setupResult && typeof setupResult === 'object' && 'type' in setupResult) {
+        childVNode = setupResult as VNode;
+      }
+    }
+
+    if (childVNode) {
+      domIndex = hydrateChildVNode(parent, childVNode, existingChildren, domIndex);
+    }
+    return domIndex;
   }
 
   return domIndex;
@@ -538,16 +595,36 @@ function vnodeToSimpleHTML(vnode: VNode): string {
 }
 
 /**
+ * Encode a string to base64 using TextEncoder (safe replacement for btoa(unescape(...))).
+ */
+function uint8ToBase64(bytes: Uint8Array): string {
+  let binary = '';
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
+}
+
+/**
+ * Decode base64 to a Uint8Array using atob (safe replacement for escape(atob(...))).
+ */
+function base64ToUint8(base64: string): Uint8Array {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return bytes;
+}
+
+/**
  * Encode props to a base64 string for embedding in HTML attributes.
  */
 function encodeProps(props: Record<string, unknown>): string {
   const json = JSON.stringify(props);
-  // Use btoa for base64 encoding (available in browser and Node.js)
-  if (typeof btoa !== 'undefined') {
-    return btoa(unescape(encodeURIComponent(json)));
-  }
-  // Fallback for non-browser environments
-  return Buffer.from(json, 'utf-8').toString('base64');
+  // Use TextEncoder for safe UTF-8 to base64 conversion
+  const bytes = new TextEncoder().encode(json);
+  return uint8ToBase64(bytes);
 }
 
 /**
@@ -558,11 +635,9 @@ function decodeProps(encoded: string): Record<string, unknown> {
 
   try {
     let json: string;
-    if (typeof atob !== 'undefined') {
-      json = decodeURIComponent(escape(atob(encoded)));
-    } else {
-      json = Buffer.from(encoded, 'base64').toString('utf-8');
-    }
+    // Use TextDecoder for safe base64 to UTF-8 conversion
+    const bytes = base64ToUint8(encoded);
+    json = new TextDecoder().decode(bytes);
     return JSON.parse(json) as Record<string, unknown>;
   } catch {
     if (__DEV__) {
