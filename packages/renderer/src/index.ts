@@ -2,12 +2,192 @@
  * @lytjs/renderer
  * Rendering backend for the LytJS framework
  * Provides DOM, SSR, and Vapor rendering
+ * FIX: P2-10 RENDERER-NEW-03 - 渲染器插件系统
  */
 
 // Re-export from vdom
 /** 创建渲染器 */
 export { createRenderer } from '@lytjs/vdom';
 export type { VNode, RendererOptions } from '@lytjs/vdom';
+
+// ==================== Renderer Plugin System ====================
+
+import type { VNode as VNodeType } from '@lytjs/vdom';
+
+/**
+ * Renderer plugin interface
+ * Plugins can hook into various stages of the rendering lifecycle
+ */
+export interface RendererPlugin {
+  /** Plugin name */
+  name: string;
+
+  /** Called when plugin is installed */
+  install: (context: PluginContext) => void;
+
+  /** Optional: Called before mounting a vnode */
+  beforeMount?: (vnode: VNodeType) => void;
+
+  /** Optional: Called after mounting a vnode */
+  afterMount?: (vnode: VNodeType, container: unknown) => void;
+
+  /** Optional: Called before patching a vnode */
+  beforePatch?: (oldVNode: VNodeType, newVNode: VNodeType) => void;
+
+  /** Optional: Called after patching a vnode */
+  afterPatch?: (vnode: VNodeType) => void;
+
+  /** Optional: Called before unmounting a vnode */
+  beforeUnmount?: (vnode: VNodeType) => void;
+
+  /** Optional: Called after unmounting a vnode */
+  afterUnmount?: (vnode: VNodeType) => void;
+}
+
+/**
+ * Context passed to plugins during installation
+ */
+export interface PluginContext {
+  /** Register a hook for a specific lifecycle event */
+  on: (event: LifecycleEvent, handler: HookHandler) => void;
+
+  /** Remove a registered hook */
+  off: (event: LifecycleEvent, handler: HookHandler) => void;
+}
+
+/** Lifecycle events that plugins can hook into */
+export type LifecycleEvent =
+  | 'beforeMount'
+  | 'afterMount'
+  | 'beforePatch'
+  | 'afterPatch'
+  | 'beforeUnmount'
+  | 'afterUnmount';
+
+/** Hook handler type */
+export type HookHandler = (...args: unknown[]) => void;
+
+/** Plugin registry */
+const installedPlugins: RendererPlugin[] = [];
+
+/** Hook registry */
+const hooks: Record<LifecycleEvent, Set<HookHandler>> = {
+  beforeMount: new Set(),
+  afterMount: new Set(),
+  beforePatch: new Set(),
+  afterPatch: new Set(),
+  beforeUnmount: new Set(),
+  afterUnmount: new Set(),
+};
+
+/**
+ * Install a renderer plugin.
+ * Plugins can extend the renderer's functionality by hooking into lifecycle events.
+ *
+ * @example
+ * ```ts
+ * // Create a plugin
+ * const myPlugin: RendererPlugin = {
+ *   name: 'MyPlugin',
+ *   install(context) {
+ *     context.on('beforeMount', (vnode) => {
+ *       console.log('Before mount:', vnode);
+ *     });
+ *   },
+ * };
+ *
+ * // Use the plugin
+ * use(myPlugin);
+ * ```
+ */
+export function use(plugin: RendererPlugin): void {
+  if (installedPlugins.includes(plugin)) {
+    if (__DEV__) {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { warn } = require('@lytjs/common-error');
+      warn(`Plugin "${plugin.name}" has already been installed.`);
+    }
+    return;
+  }
+
+  // Create plugin context
+  const context: PluginContext = {
+    on: (event, handler) => {
+      hooks[event].add(handler);
+    },
+    off: (event, handler) => {
+      hooks[event].delete(handler);
+    },
+  };
+
+  // Install the plugin
+  plugin.install(context);
+  installedPlugins.push(plugin);
+
+  // Register plugin's lifecycle hooks if provided
+  if (plugin.beforeMount) hooks.beforeMount.add(plugin.beforeMount);
+  if (plugin.afterMount) hooks.afterMount.add(plugin.afterMount);
+  if (plugin.beforePatch) hooks.beforePatch.add(plugin.beforePatch);
+  if (plugin.afterPatch) hooks.afterPatch.add(plugin.afterPatch);
+  if (plugin.beforeUnmount) hooks.beforeUnmount.add(plugin.beforeUnmount);
+  if (plugin.afterUnmount) hooks.afterUnmount.add(plugin.afterUnmount);
+}
+
+/**
+ * Get all installed plugins
+ */
+export function getInstalledPlugins(): readonly RendererPlugin[] {
+  return [...installedPlugins];
+}
+
+/**
+ * Check if a plugin is installed
+ */
+export function isPluginInstalled(pluginName: string): boolean {
+  return installedPlugins.some((p) => p.name === pluginName);
+}
+
+/**
+ * Remove a plugin by name
+ */
+export function removePlugin(pluginName: string): boolean {
+  const index = installedPlugins.findIndex((p) => p.name === pluginName);
+  if (index === -1) return false;
+
+  const plugin = installedPlugins[index];
+
+  // Remove hooks
+  if (plugin.beforeMount) hooks.beforeMount.delete(plugin.beforeMount);
+  if (plugin.afterMount) hooks.afterMount.delete(plugin.afterMount);
+  if (plugin.beforePatch) hooks.beforePatch.delete(plugin.beforePatch);
+  if (plugin.afterPatch) hooks.afterPatch.delete(plugin.afterPatch);
+  if (plugin.beforeUnmount) hooks.beforeUnmount.delete(plugin.beforeUnmount);
+  if (plugin.afterUnmount) hooks.afterUnmount.delete(plugin.afterUnmount);
+
+  installedPlugins.splice(index, 1);
+  return true;
+}
+
+/**
+ * Internal: Execute hooks for a lifecycle event
+ * This is called by the renderer at appropriate lifecycle points
+ */
+export function executeHooks(event: LifecycleEvent, ...args: unknown[]): void {
+  hooks[event].forEach((handler) => {
+    try {
+      handler(...args);
+    } catch (e) {
+      if (__DEV__) {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const { error } = require('@lytjs/common-error');
+        error(`Error in ${event} hook:`, e);
+      }
+    }
+  });
+}
+
+// Export types
+export type { RendererPlugin as Plugin, PluginContext, LifecycleEvent };
 
 // Re-export first render optimization from reactivity
 /** 首次渲染优化 */

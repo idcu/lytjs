@@ -63,6 +63,23 @@ export {
   resetSkippedTrackingCount,
 } from './effect';
 
+// FIX: P2-4 批量操作 API
+export {
+  batchScope,
+  batchScopeAsync,
+  batchScopeUntrack,
+  getBatchScopeDepth,
+  getCurrentBatchScopeStack,
+  isInBatchScope,
+  flushBatchScopes,
+} from './batch';
+
+export type {
+  BatchScopeOptions,
+  BatchScopeContext,
+  BatchScopeCallback,
+} from './batch';
+
 export {
   // signal
   signal,
@@ -120,3 +137,125 @@ export {
   ReactiveSymbol,
   ReadonlySymbol,
 } from './constants';
+
+// ============================================================
+// FIX: P2-3 调试工具支持 - DevTools 集成
+// ============================================================
+
+/** DevTools 信号依赖信息 */
+export interface DevToolsSignalInfo {
+  id: string;
+  name: string;
+  value: unknown;
+  dependencies: string[];
+  dependents: string[];
+}
+
+/** DevTools effect 信息 */
+export interface DevToolsEffectInfo {
+  id: string;
+  name: string;
+  active: boolean;
+  dependencies: string[];
+}
+
+/** LytJS DevTools 全局对象接口 */
+export interface LytJSDevTools {
+  /** 版本号 */
+  version: string;
+  /** 获取所有信号信息 */
+  getSignals: () => DevToolsSignalInfo[];
+  /** 获取所有 effect 信息 */
+  getEffects: () => DevToolsEffectInfo[];
+  /** 监听信号变化 */
+  onSignalChange: (callback: (signalId: string, value: unknown) => void) => () => void;
+  /** 监听 effect 执行 */
+  onEffectRun: (callback: (effectId: string) => void) => () => void;
+  /** 启用/禁用调试 */
+  setEnabled: (enabled: boolean) => void;
+  /** 当前是否启用 */
+  isEnabled: () => boolean;
+}
+
+/** 调试工具全局对象 */
+declare global {
+  interface Window {
+    __LYTJS_DEVTOOLS__?: LytJSDevTools;
+  }
+}
+
+/** 信号变化监听器集合 */
+const signalChangeListeners = new Set<(signalId: string, value: unknown) => void>();
+/** effect 执行监听器集合 */
+const effectRunListeners = new Set<(effectId: string) => void>();
+/** 调试工具启用状态 */
+let devToolsEnabled = false;
+
+/**
+ * 初始化 LytJS DevTools 全局对象
+ * 在开发环境下自动挂载到 window.__LYTJS_DEVTOOLS__
+ */
+function initDevTools(): void {
+  if (typeof window === 'undefined') return;
+  
+  const devTools: LytJSDevTools = {
+    version: '0.9.9',
+    getSignals: () => {
+      // 返回信号信息（由具体实现填充）
+      return [];
+    },
+    getEffects: () => {
+      // 返回 effect 信息（由具体实现填充）
+      return [];
+    },
+    onSignalChange: (callback) => {
+      signalChangeListeners.add(callback);
+      return () => signalChangeListeners.delete(callback);
+    },
+    onEffectRun: (callback) => {
+      effectRunListeners.add(callback);
+      return () => effectRunListeners.delete(callback);
+    },
+    setEnabled: (enabled) => {
+      devToolsEnabled = enabled;
+    },
+    isEnabled: () => devToolsEnabled,
+  };
+
+  window.__LYTJS_DEVTOOLS__ = devTools;
+}
+
+/**
+ * 通知 DevTools 信号变化
+ * @internal
+ */
+export function _notifyDevToolsSignalChange(signalId: string, value: unknown): void {
+  if (!devToolsEnabled) return;
+  signalChangeListeners.forEach(cb => {
+    try {
+      cb(signalId, value);
+    } catch (e) {
+      // 忽略监听器错误
+    }
+  });
+}
+
+/**
+ * 通知 DevTools effect 执行
+ * @internal
+ */
+export function _notifyDevToolsEffectRun(effectId: string): void {
+  if (!devToolsEnabled) return;
+  effectRunListeners.forEach(cb => {
+    try {
+      cb(effectId);
+    } catch (e) {
+      // 忽略监听器错误
+    }
+  });
+}
+
+// 在开发环境下自动初始化
+if (typeof __DEV__ !== 'undefined' && __DEV__) {
+  initDevTools();
+}

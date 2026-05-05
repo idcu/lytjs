@@ -30,6 +30,24 @@ import { SourceMapGenerator } from './source-map';
 // Main generate function
 // ============================================================
 
+// FIX: P1-3 COMPILER-NEW-04 - 死代码检测：检查是否为空语句序列
+function isDeadCode(node: JSChildNode | TemplateChildNode | undefined): boolean {
+  if (!node) return true;
+  // 空数组表示空语句序列
+  if (Array.isArray(node) && node.length === 0) return true;
+  // 空文本节点
+  if (typeof node === 'object' && 'type' in node && node.type === NodeTypes.TEXT) {
+    const textNode = node as TextNode;
+    if (!textNode.content || textNode.content.trim() === '') return true;
+  }
+  // 空复合表达式
+  if (typeof node === 'object' && 'type' in node && node.type === NodeTypes.COMPOUND_EXPRESSION) {
+    const compoundNode = node as CompoundExpressionNode;
+    if (!compoundNode.children || compoundNode.children.length === 0) return true;
+  }
+  return false;
+}
+
 export function generate(ast: RootNode, options: CodegenOptions = {}): CodegenResult {
   const { context, codeParts, sourceMapGen } = createCodegenContext(ast, options);
 
@@ -40,6 +58,10 @@ export function generate(ast: RootNode, options: CodegenOptions = {}): CodegenRe
   if (ast.hoists && ast.hoists.length > 0) {
     for (let i = 0; i < ast.hoists.length; i++) {
       const hoistedNode = ast.hoists[i];
+      // FIX: P1-3 COMPILER-NEW-04 - 跳过死代码（空语句序列）
+      if (isDeadCode(hoistedNode as JSChildNode)) {
+        continue;
+      }
       context.push(`const _hoisted_${i + 1} = `);
       genNode(hoistedNode as JSChildNode, context);
       context.push(`\n`);
@@ -53,7 +75,8 @@ export function generate(ast: RootNode, options: CodegenOptions = {}): CodegenRe
   context.push(`function render(_ctx, _cache) {\n`);
   context.indent();
 
-  if (ast.codegenNode) {
+  // FIX: P1-3 COMPILER-NEW-04 - 检查 codegenNode 是否为空/死代码
+  if (ast.codegenNode && !isDeadCode(ast.codegenNode)) {
     context.push(`return `);
     genNode(ast.codegenNode, context);
     context.push(`\n`);

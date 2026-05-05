@@ -1,18 +1,10 @@
 /**
- * @lytjs/adapter-web - Event Invoker Caching
+ * @lytjs/adapter-web - Event Invoker Caching with Pooling
  * 事件缓存 Invoker 模式：通过 el._vei 缓存事件处理函数，
  * 更新时仅替换 invoker.value，无需重新 addEventListener。
  *
- * 从 @lytjs/renderer/src/dom/patch-events.ts 迁移，纯翻译，不做额外归一化。
- *
- * TODO (P2-12): 未来优化方向 - 事件委托（Event Delegation）
- * 当前每个元素独立绑定事件监听器。对于大量同类元素（如列表项），
- * 可以在根容器上使用事件委托，通过 event.target 冒泡机制统一处理，
- * 减少事件监听器数量，降低内存占用并提升初始化性能。
- * 实现时需注意：
- * 1. 事件修饰符（.stop, .prevent, .capture, .self, .once）的委托语义
- * 2. 动态添加/移除元素时委托的自动生效与清理
- * 3. 与现有 invoker 缓存机制的兼容
+ * FIX: P1-12 DOM-NEW-01 - 实现事件监听器池化，复用事件监听器对象
+ * 通过对象池复用 invoker 对象，减少内存分配和垃圾回收压力
  */
 
 import {
@@ -59,6 +51,66 @@ export interface EventInvoker extends EventListener {
 /** el._vei 缓存类型 */
 type InvokerCache = Record<string, EventInvoker | undefined>;
 
+// FIX: P1-12 DOM-NEW-01 - 事件监听器池化配置
+/** 对象池最大容量 */
+const INVOKER_POOL_MAX_SIZE = 100;
+/** 对象池 */
+const invokerPool: EventInvoker[] = [];
+/** 池化对象使用计数（用于调试） */
+let poolHitCount = 0;
+let poolMissCount = 0;
+
+// ============================================================
+// Invoker Pool Management
+// ============================================================
+
+/**
+ * 从对象池获取一个 invoker 对象
+ * FIX: P1-12 DOM-NEW-01 - 事件监听器池化
+ */
+function acquireInvoker(): EventInvoker | null {
+  if (invokerPool.length > 0) {
+    poolHitCount++;
+    return invokerPool.pop()!;
+  }
+  poolMissCount++;
+  return null;
+}
+
+/**
+ * 将 invoker 对象归还到对象池
+ * FIX: P1-12 DOM-NEW-01 - 事件监听器池化
+ */
+function releaseInvoker(invoker: EventInvoker): void {
+  if (invokerPool.length < INVOKER_POOL_MAX_SIZE) {
+    // 重置 invoker 状态
+    invoker.value = null;
+    invoker._parsed = undefined;
+    invokerPool.push(invoker);
+  }
+}
+
+/**
+ * 获取池化统计信息（用于调试）
+ * FIX: P1-12 DOM-NEW-01
+ */
+export function getInvokerPoolStats(): { hit: number; miss: number; size: number } {
+  return {
+    hit: poolHitCount,
+    miss: poolMissCount,
+    size: invokerPool.length,
+  };
+}
+
+/**
+ * 重置池化统计信息
+ * FIX: P1-12 DOM-NEW-01
+ */
+export function resetInvokerPoolStats(): void {
+  poolHitCount = 0;
+  poolMissCount = 0;
+}
+
 // ============================================================
 // Invoker Creation
 // ============================================================
@@ -66,8 +118,17 @@ type InvokerCache = Record<string, EventInvoker | undefined>;
 /**
  * 创建事件 invoker 函数。
  * invoker 是一个持有 value 属性的闭包，调用时执行 invoker.value(event)。
+ * FIX: P1-12 DOM-NEW-01 - 优先从对象池获取 invoker 对象
  */
 export function createInvoker(initialValue: (...args: unknown[]) => void): EventInvoker {
+  // 尝试从对象池获取
+  const pooled = acquireInvoker();
+  if (pooled) {
+    pooled.value = initialValue;
+    return pooled;
+  }
+
+  // 创建新的 invoker
   const invoker = ((e: Event) => {
     // 处理修饰符
     const parsed = invoker._parsed;
@@ -137,6 +198,8 @@ export function patchEvent(
       existingInvoker,
       parsed.capture ? { capture: true } : undefined,
     );
+    // FIX: P1-12 DOM-NEW-01 - 将 invoker 归还到对象池
+    releaseInvoker(existingInvoker);
     invokers[eventKey] = undefined;
   }
   // 情况 4：无新值 + 无旧 invoker → 无操作
@@ -149,6 +212,7 @@ export function patchEvent(
 /**
  * 移除元素上所有通过 invoker 缓存的事件监听。
  * 用于组件卸载时的清理。
+ * FIX: P1-12 DOM-NEW-01 - 将 invoker 对象归还到对象池以复用
  */
 export function removeAllEventListeners(el: Element): void {
   const invokers = (el as unknown as Record<string, InvokerCache>)[VEI_KEY];
@@ -160,6 +224,8 @@ export function removeAllEventListeners(el: Element): void {
       const parsed = invoker._parsed;
       const eventName = parsed?.name ?? normalizeEventName(eventKey);
       el.removeEventListener(eventName, invoker, parsed?.capture ? { capture: true } : undefined);
+      // FIX: P1-12 - 将 invoker 归还到对象池
+      releaseInvoker(invoker);
     }
   }
 

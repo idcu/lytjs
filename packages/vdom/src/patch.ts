@@ -22,6 +22,7 @@ import {
 import type { VNode, ComponentInternalInstance } from '@lytjs/common-vnode';
 import { isArray, isFunction } from '@lytjs/common-is';
 import { warn, error } from '@lytjs/common-error';
+import { shallowEqual } from '@lytjs/common-object';
 import type { RendererHost } from '@lytjs/host-contract';
 import type { RendererOptions, SuspenseBoundary } from './types';
 import {
@@ -113,6 +114,29 @@ function optionsToInternal<HN, HE extends HN>(
 // Renderer factory
 // ============================================================
 
+// FIX: P1-10 RENDERER-NEW-01 - 渲染器实例唯一性检查
+// 使用 WeakSet 跟踪已创建的渲染器配置，防止重复创建
+const createdRenderers = new WeakSet<object>();
+
+/**
+ * Check if a renderer has already been created with the same host/options.
+ * Prevents duplicate renderer creation which can cause isolation issues.
+ */
+function checkRendererUniqueness<HN, HE extends HN>(
+  hostOrOptions: RendererHost<HN, HE> | RendererOptions<HN, HE>,
+): void {
+  if (__DEV__) {
+    if (createdRenderers.has(hostOrOptions)) {
+      warn(
+        'A renderer has already been created with this host/options object. ' +
+          'Creating multiple renderers with the same configuration can lead to ' +
+          'unexpected behavior. Consider reusing the existing renderer.',
+      );
+    }
+    createdRenderers.add(hostOrOptions);
+  }
+}
+
 /**
  * Create a renderer with the given RendererHost.
  * Returns patch, mount, and unmount functions.
@@ -188,6 +212,9 @@ export function createRenderer<HN, HE extends HN>(
 export function createRenderer<HN, HE extends HN>(
   hostOrOptions: RendererHost<HN, HE> | RendererOptions<HN, HE>,
 ) {
+  // FIX: P1-10 RENDERER-NEW-01 - 检查渲染器实例唯一性
+  checkRendererUniqueness(hostOrOptions);
+
   // FIX: P0-03 使用 __isRendererHost 标识符号替代鸭子类型检测，
   // 避免普通对象碰巧包含 addClass/getBoundingClientRect 时被误判为 RendererHost
   const isHost = '__isRendererHost' in hostOrOptions && (hostOrOptions as Record<string, unknown>).__isRendererHost === true;
@@ -270,6 +297,14 @@ export function createRenderer<HN, HE extends HN>(
     parentSuspense: SuspenseBoundary | null = null,
     isSVG: boolean = false,
   ): void {
+    // FIX: P1-6 VDOM-NEW-10 - 添加对 null/undefined vnode 的防御性检查
+    if (n2 === null || n2 === undefined) {
+      if (__DEV__) {
+        warn('patch() received null or undefined vnode, skipping.');
+      }
+      return;
+    }
+
     // 第一次检查：判断 n1 是否可以复用（同类型）。
     // 如果 n1.el 为 null（例如之前被卸载），则将 n1 置为 null 以走挂载逻辑。
     // 仅对非组件类型的 vnode 执行此操作，组件 vnode 的 el 为 null 不代表需要重新挂载。
@@ -303,12 +338,27 @@ export function createRenderer<HN, HE extends HN>(
         suspenseAPI.patchSuspense(n1, n2, container, anchor, parentComponent, parentSuspense, isSVG);
       } else if (n2.shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
         // Component patch: delegate to component update process
+        // FIX: P1-7 VDOM-NEW-11 - 组件更新效率优化
+        // 在更新组件前添加 shallowEqual 比较 props，如果相同则跳过更新
+        const prevProps = n1.props as Record<string, unknown> | null | undefined;
+        const nextProps = n2.props as Record<string, unknown> | null | undefined;
+        const propsChanged = !shallowEqual(
+          prevProps ?? {},
+          nextProps ?? {}
+        );
+
         n2.el = n1.el;
         n2.component = n1.component;
         if (n2.component) {
+          // 更新组件的 props 引用，即使跳过更新也需要保持 props 最新
+          n2.component.props = nextProps ?? {};
+
           const { update } = n2.component;
-          if (update) {
+          if (update && propsChanged) {
             update();
+          } else if (__DEV__ && !propsChanged) {
+            const compName = (n2.component.type as { name?: string }).name || 'anonymous';
+            console.log(`[lytjs/patch] Skipping component update for "${compName}": props unchanged`);
           }
         }
       } else if (n2.shapeFlag & ShapeFlags.TELEPORT) {

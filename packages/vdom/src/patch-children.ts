@@ -85,6 +85,38 @@ export function createChildrenPatch<HN, HE extends HN>(
   // ============================================================
 
   /**
+   * FIX: P2-5 VDOM-NEW-12 - 静态提升优化
+   * 检查 vnode 是否为静态节点（无需 diff 的节点）
+   */
+  function isStaticVNode(vnode: VNode | null | undefined): boolean {
+    if (!vnode) return false;
+    // 检查静态标记
+    return !!(vnode.isStatic || vnode.isStaticRoot);
+  }
+
+  /**
+   * FIX: P2-5 VDOM-NEW-12 - 静态提升优化
+   * 直接复用静态 vnode，跳过 diff 过程
+   */
+  function patchStaticVNode(
+    n1: VNode,
+    n2: VNode,
+    container: HN,
+    parentComponent: ComponentInternalInstance | null,
+    parentSuspense: SuspenseBoundary | null,
+    isSVG: boolean,
+  ): boolean {
+    // 如果两个节点都是静态节点且类型相同，直接复用
+    if (isStaticVNode(n1) && isStaticVNode(n2) && isSameVNodeType(n1, n2)) {
+      // 静态节点：复用 DOM 元素，只更新 vnode 引用
+      n2.el = n1.el;
+      n2.anchor = n1.anchor;
+      return true; // 表示已处理，跳过 diff
+    }
+    return false; // 需要正常 diff
+  }
+
+  /**
    * 仅遍历 dynamicChildren 进行 patch。
    * dynamicChildren 中的每个节点按索引一一对应（顺序稳定），
    * 跳过所有静态子树的 diff。
@@ -107,6 +139,11 @@ export function createChildrenPatch<HN, HE extends HN>(
     for (let i = 0; i < newDynamicChildren.length; i++) {
       const oldVNode = oldDynamicChildren[i];
       const newVNode = newDynamicChildren[i]!;
+
+      // FIX: P2-5 VDOM-NEW-12 - 静态提升优化：检查是否可以直接复用静态节点
+      if (oldVNode && patchStaticVNode(oldVNode, newVNode, container, parentComponent, parentSuspense, isSVG)) {
+        continue; // 静态节点已复用，跳过 diff
+      }
 
       if (oldVNode && isSameVNodeType(oldVNode, newVNode)) {
         // 同类型节点：走 patch 更新路径

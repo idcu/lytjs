@@ -28,6 +28,25 @@ export {
   onRenderTriggered,
 } from './lifecycle';
 
+// 全局配置系统
+export {
+  ConfigManager,
+  getGlobalConfig,
+  setGlobalConfig,
+  getConfig,
+  setConfig,
+  watchConfig,
+  configPresets,
+  applyConfigPreset,
+} from './config';
+export type {
+  ConfigChangeCallback,
+  ConfigOptions,
+  ConfigValue,
+  ConfigObject,
+  ConfigArray,
+} from './config';
+
 // Re-export from sub-packages
 export { ref, reactive, computed, watch, watchEffect, effect } from '@lytjs/reactivity';
 export { createVNode, Fragment, Text, Comment, cloneVNode, mergeProps } from '@lytjs/vdom';

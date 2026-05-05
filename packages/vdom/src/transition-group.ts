@@ -539,10 +539,10 @@ export function performGroupLeaveTransition<HN, HE extends HN>(
 
 // FIX: P2-13 FLIP 动画阈值可配置
 /** FLIP 动画跳过阈值（像素），移动距离小于此值时不执行动画 */
-let flipThreshold = 2;
+let positionFlipThreshold = 2;
 
 export function setFlipThreshold(threshold: number): void {
-  flipThreshold = threshold;
+  positionFlipThreshold = threshold;
 }
 
 // ============================================================

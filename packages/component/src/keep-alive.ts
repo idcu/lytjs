@@ -16,6 +16,98 @@ interface KeepAliveCache {
   delete(key: string): boolean;
   has(key: string): boolean;
   forEach(callback: (value: ComponentInternalInstance, key: string) => void): void;
+  readonly size: number;
+  keys(): IterableIterator<string>;
+}
+
+/**
+ * LRU (Least Recently Used) Cache implementation for KeepAlive
+ * FIX: P2-8 COMPONENT-NEW-05 - 实现 LRU 缓存策略，限制缓存组件数量
+ */
+class LRUCache implements KeepAliveCache {
+  private cache: Map<string, ComponentInternalInstance>;
+  private maxSize: number;
+
+  constructor(maxSize: number = 10) {
+    this.cache = new Map();
+    this.maxSize = maxSize;
+  }
+
+  get(key: string): ComponentInternalInstance | undefined {
+    const instance = this.cache.get(key);
+    if (instance !== undefined) {
+      // Move to end (most recently used)
+      this.cache.delete(key);
+      this.cache.set(key, instance);
+    }
+    return instance;
+  }
+
+  set(key: string, instance: ComponentInternalInstance): void {
+    // If key exists, delete it first to update order
+    if (this.cache.has(key)) {
+      this.cache.delete(key);
+    }
+
+    // If at capacity, remove the oldest entry (first in Map)
+    if (this.cache.size >= this.maxSize) {
+      const oldestKey = this.cache.keys().next().value;
+      if (oldestKey !== undefined) {
+        const oldestInstance = this.cache.get(oldestKey);
+        if (oldestInstance) {
+          // Deactivate and cleanup the oldest instance
+          deactivateInstance(oldestInstance);
+          oldestInstance.effects?.forEach((effect) => {
+            effect.stop();
+          });
+        }
+        this.cache.delete(oldestKey);
+      }
+    }
+
+    this.cache.set(key, instance);
+  }
+
+  delete(key: string): boolean {
+    return this.cache.delete(key);
+  }
+
+  has(key: string): boolean {
+    return this.cache.has(key);
+  }
+
+  forEach(callback: (value: ComponentInternalInstance, key: string) => void): void {
+    this.cache.forEach(callback);
+  }
+
+  get size(): number {
+    return this.cache.size;
+  }
+
+  keys(): IterableIterator<string> {
+    return this.cache.keys();
+  }
+
+  /**
+   * Update the max size of the cache
+   */
+  setMaxSize(newMaxSize: number): void {
+    this.maxSize = newMaxSize;
+    // Prune if necessary
+    while (this.cache.size > this.maxSize) {
+      const oldestKey = this.cache.keys().next().value;
+      if (oldestKey !== undefined) {
+        const oldestInstance = this.cache.get(oldestKey);
+        if (oldestInstance) {
+          deactivateInstance(oldestInstance);
+          oldestInstance.effects?.forEach((effect) => {
+            effect.stop();
+          });
+        }
+        this.cache.delete(oldestKey);
+      }
+    }
+  }
 }
 
 // ==================== KeepAlive Component ====================
@@ -40,7 +132,10 @@ export const KeepAlive: ComponentOptions = {
   },
 
   setup(_props: Record<string, unknown>, _ctx: SetupContext) {
-    const cache: KeepAliveCache = new Map();
+    const props = _props as KeepAliveProps;
+    // FIX: P2-8 COMPONENT-NEW-05 - 使用 LRU 缓存替代普通 Map
+    const maxCacheSize = props.max ?? 10;
+    const cache: KeepAliveCache = new LRUCache(maxCacheSize);
     const keys: Set<string> = new Set();
     let _currentVNode: VNode | null = null;
 
@@ -227,6 +322,7 @@ export function getCacheKey(
 
 /**
  * Cache a component instance in KeepAlive.
+ * FIX: P2-8 COMPONENT-NEW-05 - LRU 缓存自动处理容量限制
  */
 export function cacheInstance(
   keepAlive: ComponentInternalInstance,
@@ -235,35 +331,16 @@ export function cacheInstance(
 ): void {
   const cache = keepAlive.setupState.cache as KeepAliveCache;
   const keys = keepAlive.setupState.keys as Set<string>;
-  const max = keepAlive.props.max as number | undefined;
 
-  // If already cached, remove old entry first
+  // If already cached, remove old entry first (will be re-added with updated order)
   if (cache.has(key)) {
     cache.delete(key);
     keys.delete(key);
   }
 
+  // LRU cache automatically handles max size pruning in set()
   cache.set(key, instance);
   keys.add(key);
-
-  // Prune oldest if max exceeded
-  if (max !== undefined && keys.size > max) {
-    const oldestKey = keys.values().next().value;
-    if (oldestKey !== undefined) {
-      const oldestInstance = cache.get(oldestKey);
-      // 淘汰时只调用 deactivated 钩子（组件被缓存停用，而非卸载）
-      // 不应同时触发 unmounted 钩子，unmounted 仅在组件真正被销毁时调用
-      if (oldestInstance) {
-        deactivateInstance(oldestInstance);
-        // 停止所有响应式 effect 以防止内存泄漏
-        oldestInstance.effects?.forEach((effect) => {
-          effect.stop();
-        });
-      }
-      cache.delete(oldestKey);
-      keys.delete(oldestKey);
-    }
-  }
 }
 
 /**
