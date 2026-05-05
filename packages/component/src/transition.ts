@@ -63,9 +63,9 @@ export const Transition: ComponentOptions = {
     onLeaveCancelled: { type: Function },
   },
 
+  // FIX: P0-06 移除多余的 IIFE 包装和 as unknown as void 类型欺骗，
+  // 直接返回渲染函数，让组件系统正确识别 setup 返回的渲染函数
   setup(_props: Record<string, unknown>, { slots }: SetupContext) {
-    return (() => {
-      return slots.default?.();
-    }) as unknown as void;
+    return () => slots.default?.();
   },
 };

@@ -8,6 +8,11 @@
 import type { VNode, ComponentInternalInstance } from '@lytjs/common-vnode';
 import { isSameVNodeType } from '@lytjs/common-vnode';
 import { isArray } from '@lytjs/common-is';
+
+declare const __DEV__: boolean;
+
+/** FIX: P2-14 fallback 层级限制，防止无限嵌套 suspense */
+const MAX_SUSPENSE_DEPTH = 10;
 import type { SuspenseBoundary } from './types';
 import type { RendererContext } from './patch-element';
 
@@ -313,16 +318,26 @@ export function createSuspensePatch<HN, HE extends HN>(
     parentSuspense: SuspenseBoundary | null,
     doRemove: boolean,
   ): void {
+    // FIX: P1-14 添加 unmountedSet 防止重复卸载，
+    // 避免在 activeBranch 和 fallbackBranch 指向同一 VNode 时重复卸载
+    const unmountedSet = new Set<VNode>();
+
+    const safeUnmount = (v: VNode) => {
+      if (unmountedSet.has(v)) return;
+      unmountedSet.add(v);
+      unmount(v, parentComponent, parentSuspense, doRemove);
+    };
+
     const boundary = vnode.suspense as SuspenseBoundary | undefined;
 
     // Unmount the active branch
     if (boundary?.activeBranch) {
-      unmount(boundary.activeBranch, parentComponent, parentSuspense, doRemove);
+      safeUnmount(boundary.activeBranch);
     }
 
     // Unmount the pending branch (if still mounted)
     if (boundary?.pendingBranch) {
-      unmount(boundary.pendingBranch, parentComponent, parentSuspense, doRemove);
+      safeUnmount(boundary.pendingBranch);
     }
 
     // Also unmount any remaining children from vnode.children
@@ -332,7 +347,7 @@ export function createSuspensePatch<HN, HE extends HN>(
       // Fallback was mounted, unmount it
       // (it may already be unmounted via activeBranch above if it was tracked)
       if (unmountFallback.el) {
-        unmount(unmountFallback, parentComponent, parentSuspense, doRemove);
+        safeUnmount(unmountFallback);
       }
     }
 

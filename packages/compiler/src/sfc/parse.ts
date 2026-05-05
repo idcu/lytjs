@@ -243,9 +243,39 @@ function extractBlocks(source: string): SFCBlock[] {
     // Parse attributes
     const attrs = parseAttributes(attrString);
 
-    // Find the matching closing tag
+    // FIX: P0-08 使用标签深度计数器算法替代简单的 indexOf，
+    // 支持嵌套同名标签的正确匹配（如 <template> 内嵌套 <template>）
     const closeTag = `</${tagName}>`;
-    const closeIndex = source.indexOf(closeTag, tagEnd);
+    const openTagPattern = new RegExp(`<\\s*${tagName}[\\s>]`, 'gi');
+    let depth = 1;
+    let searchPos = tagEnd;
+    let closeIndex = -1;
+
+    while (depth > 0 && searchPos < source.length) {
+      // 查找下一个闭合标签
+      const nextClose = source.indexOf(closeTag, searchPos);
+      if (nextClose === -1) break;
+
+      // 在当前位置到下一个闭合标签之间查找嵌套的同名开放标签
+      openTagPattern.lastIndex = searchPos;
+      let nestedOpen: RegExpExecArray | null;
+      let hasNested = false;
+      while ((nestedOpen = openTagPattern.exec(source)) !== null) {
+        if (nestedOpen.index >= nextClose) break;
+        hasNested = true;
+        depth++;
+      }
+
+      if (hasNested) {
+        // 跳过已匹配的嵌套开放标签，继续搜索
+        searchPos = nextClose + closeTag.length;
+        depth--;
+      } else {
+        // 没有嵌套，这就是我们要找的闭合标签
+        closeIndex = nextClose;
+        depth--;
+      }
+    }
 
     if (closeIndex === -1) {
       // No closing tag found; treat remaining content as this block's content

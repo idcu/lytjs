@@ -63,7 +63,10 @@ class AsyncComputedRefImpl<T> {
     const currentVersion = ++this._version;
 
     // 调用 getter 获取 Promise
-    const promise = this._getter();
+    const result = this._getter();
+    // FIX: P1-06 getter 返回非 Promise 时包装为 Promise.resolve()，
+    // 避免非 Promise 返回值导致 .then() 调用失败
+    const promise = result instanceof Promise ? result : Promise.resolve(result);
 
     // 使用 Promise.then() 非阻塞处理
     promise.then(
@@ -77,6 +80,10 @@ class AsyncComputedRefImpl<T> {
       },
       (err) => {
         if (currentVersion !== this._version) return; // 过期结果，忽略
+        // FIX: P2-02 异步 computed 错误处理完善：在 DEV 模式下发出警告
+        if (__DEV__) {
+          console.warn('[lytjs/async-computed] Async computed error:', err);
+        }
         this._error = err;
         this._loading = false;
         // 触发 ref 更新
@@ -121,6 +128,9 @@ class AsyncComputedRefImpl<T> {
       stop(this._effect);
       this._effect = null;
     }
+    // FIX: P2-07 dispose 时清空错误和值，避免悬挂的异步回调更新已销毁的 computed
+    this._error = null;
+    this._value = undefined;
   }
 }
 

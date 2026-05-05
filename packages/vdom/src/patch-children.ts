@@ -97,8 +97,12 @@ export function createChildrenPatch<HN, HE extends HN>(
     parentSuspense: SuspenseBoundary | null,
     isSVG: boolean,
   ): void {
-    const oldDynamicChildren = n1.dynamicChildren!;
-    const newDynamicChildren = n2.dynamicChildren!;
+    // FIX: P1-08 dynamicChildren 非空断言改为条件检查，
+    // 避免在 dynamicChildren 为 null/undefined 时抛出运行时错误
+    const oldDynamicChildren = n1.dynamicChildren;
+    const newDynamicChildren = n2.dynamicChildren;
+
+    if (!oldDynamicChildren || !newDynamicChildren) return;
 
     for (let i = 0; i < newDynamicChildren.length; i++) {
       const oldVNode = oldDynamicChildren[i];
@@ -228,6 +232,7 @@ export function createChildrenPatch<HN, HE extends HN>(
     isSVG: boolean,
     fallbackAnchor: HN | null,
   ): void {
+    // FIX: P0-04 传递 opsId 以支持多渲染器场景下的 DOM 操作隔离
     listDiffPatchKeyedChildren(
       c1,
       c2,
@@ -236,6 +241,8 @@ export function createChildrenPatch<HN, HE extends HN>(
       parentSuspense,
       isSVG,
       fallbackAnchor,
+      undefined,
+      ctx.opsId,
     );
   }
 

@@ -130,6 +130,9 @@ export function watch<T, Immediate extends Readonly<boolean> = false>(
 
   if (isArray(source)) {
     isMultiSource = true;
+    // FIX: P1-04 完善 forceTrigger 逻辑：当多源中存在 reactive 对象时，
+    // 即使 deep 为 false 也需要强制触发回调，因为 reactive 对象的属性变化
+    // 不会改变对象引用本身，hasChanged 检测不到变化
     forceTrigger = source.some((s) => isReactive(s));
     getter = () =>
       source.map((s) => {
@@ -140,6 +143,10 @@ export function watch<T, Immediate extends Readonly<boolean> = false>(
       });
   } else {
     getter = getSource(source as WatchSource<T>);
+    // FIX: P1-04 单源 reactive 对象也需要设置 forceTrigger
+    if (isReactive(source as object)) {
+      forceTrigger = true;
+    }
   }
 
   if (deep) {
@@ -243,6 +250,10 @@ export function watch<T, Immediate extends Readonly<boolean> = false>(
     watcher.onTrigger = onTrigger as typeof watcher.onTrigger;
   }
 
+  // FIX: P2-04 immediate watch 旧值语义注释：
+  // 如果 immediate 为 true，首次执行时 oldValue 为 undefined。
+  // 这是预期行为：immediate 首次触发时没有"旧值"概念，
+  // 与 Vue 3 的 watch API 行为一致。
   if (immediate) {
     job();
   } else {

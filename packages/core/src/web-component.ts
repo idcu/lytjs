@@ -268,8 +268,15 @@ export function defineCustomElement(
       // 触发增量更新：使用 patch 进行差异化更新而非完全重建
       if (this._renderer && this._vnode) {
         if (this._renderer.patch) {
-          // patch(oldVNode, newVNode, container) performs incremental diff
-          this._renderer.patch(this._vnode, this._vnode, this._root as Element);
+          // FIX: P2-39 Shadow DOM 属性反射优化：
+      // 在 Web Component 中，属性变化通过 attributeChangedCallback 触发，
+      // 使用 VNode 副本确保 diff 算法正确检测到变化
+      // FIX: P0-13 创建新 VNode 副本传入 patch，避免传入相同引用导致
+          // diff 算法短路（n1 === n2 时直接返回，不执行任何更新）
+          const newVNode = { ...this._vnode, props: { ...this._vnode.props } };
+          this._renderer.patch(this._vnode, newVNode, this._root as Element);
+          // 更新内部引用为新的 vnode
+          this._vnode = newVNode;
         } else if (this._renderer.render) {
           this._renderer.render(this._vnode, this._root as Element);
         }

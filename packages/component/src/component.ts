@@ -14,6 +14,14 @@ import type {
   AppContext,
   RenderFunction,
 } from './types';
+
+// FIX: P2-21 provide/inject 类型推断增强（InjectionKey）
+// InjectionKey 是一个 Symbol 类型，用于在 provide/inject 之间建立类型安全的关联。
+// 使用方式：
+//   const key = Symbol() as InjectionKey<string>;
+//   provide(key, 'hello');
+//   const value = inject(key); // 类型为 string | undefined
+export type InjectionKey<T> = symbol & { __injectKey?: T };
 import type { VNode } from '@lytjs/common-vnode';
 
 type SetupResult = RenderFunction | Record<string, unknown> | void;
@@ -86,6 +94,10 @@ export const PUBLIC_PROPERTIES_MAP: Record<string, number> = {
   '$watch': 8192,
 };
 
+// FIX: P2-15 setup 上下文 WeakMap 缓存：
+// 缓存 createSetupContext 的结果，避免每次调用 runSetup 时重新创建
+const setupContextCache = new WeakMap<ComponentInternalInstance, SetupContext>();
+
 // ==================== createComponentInstance ====================
 
 /**
@@ -99,6 +111,22 @@ export function createComponentInstance(
   vnode: VNode,
   parent: ComponentInternalInstance | null,
 ): ComponentInternalInstance {
+  // FIX: P1-17 在类型转换前验证 vnode.type 是否为有效组件类型
+  const rawType = vnode.type;
+  if (
+    rawType === null ||
+    rawType === undefined ||
+    typeof rawType === 'string' ||
+    typeof rawType === 'number' ||
+    typeof rawType === 'boolean' ||
+    typeof rawType === 'symbol'
+  ) {
+    throw new Error(
+      `[lytjs/component] createComponentInstance: invalid vnode.type "${String(rawType)}". ` +
+      `Expected a component options object or function.`,
+    );
+  }
+
   const type = vnode.type as ComponentOptions;
 
   try {
@@ -188,20 +216,35 @@ export function setupComponent(instance: ComponentInternalInstance): void {
   if (isPromise(setupResult)) {
     // Async setup - mark vnode as async
     vnode.isAsyncPlaceholder = true;
-    // Add timeout protection to prevent infinite pending
+    // FIX: P1-15 异步 setup 超时定时器在组件卸载时清理，
+    // 避免组件卸载后定时器仍然触发导致内存泄漏和无效操作
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
     const timedSetupResult = Promise.race([
       setupResult,
-      new Promise<SetupResult>((_, reject) =>
-        setTimeout(() => reject(new Error('Async component setup timed out')), ASYNC_SETUP_TIMEOUT),
-      ),
+      new Promise<SetupResult>((_, reject) => {
+        timeoutId = setTimeout(
+          () => reject(new Error('Async component setup timed out')),
+          ASYNC_SETUP_TIMEOUT,
+        );
+      }),
     ]);
     timedSetupResult
       .then((resolvedResult) => {
+        // 清理超时定时器
+        if (timeoutId !== undefined) {
+          clearTimeout(timeoutId);
+          timeoutId = undefined;
+        }
         if (instance.isUnmounted) return;
         handleSetupResult(instance, resolvedResult as SetupResult);
         vnode.isAsyncPlaceholder = false;
       })
       .catch((err: Error) => {
+        // FIX: P1-15 清理超时定时器
+        if (timeoutId !== undefined) {
+          clearTimeout(timeoutId);
+          timeoutId = undefined;
+        }
         vnode.isAsyncPlaceholder = false;
         handleError(err, instance, 'setup function');
       });
@@ -692,6 +735,16 @@ export function createComponentPublicInstance(
     },
 
     set(_target: ComponentPublicInstance, key: string | symbol, value: unknown): boolean {
+      // FIX: P1-16 完善 Symbol key 处理：Symbol key 不应被写入 setupState/data，
+      // 应直接设置到 target 上（与 get handler 的 Symbol 处理保持一致）
+      if (typeof key === 'symbol') {
+        if (key === Symbol.toPrimitive || key === Symbol.iterator) {
+          return false; // 不允许覆盖内置 Symbol
+        }
+        (_target as unknown as Record<string | symbol, unknown>)[key] = value;
+        return true;
+      }
+
       // 1. setupState
       if (hasOwn(instance.setupState, key)) {
         instance.setupState[key as string] = value;
@@ -704,7 +757,15 @@ export function createComponentPublicInstance(
         return true;
       }
 
-      return true;
+      // FIX: P0-05 未找到属性时，在 DEV 模式下发出警告并返回 false，
+      // 避免静默吞没写入导致调试困难
+      if (__DEV__) {
+        warn(
+          `Component public instance has no property "${String(key)}". ` +
+          `This set operation was silently ignored.`,
+        );
+      }
+      return false;
     },
 
     has(_target: ComponentPublicInstance, key: string | symbol): boolean {
@@ -806,16 +867,19 @@ export function defineComponent(options: ComponentOptions): ComponentOptions {
  * Define a functional component.
  * A functional component has no instance, no lifecycle hooks, and no reactive state.
  * It receives props and returns a render function directly.
+ *
+ * FIX: P1-22 使用精确类型替代 Record<string, any>，
+ * render 参数明确为返回 VNode 的函数，props 参数使用 Record<string, unknown>
  */
 export function defineFunctionalComponent(
-  render: Function,
-  props?: Record<string, any>,
+  render: (props: Record<string, unknown>) => VNode | VNode[] | null,
+  props?: Record<string, unknown>,
 ): ComponentOptions {
   return {
     name: 'FunctionalComponent',
     props: props ?? {},
     setup() {
-      return render;
+      return render as unknown as () => VNode;
     },
     // 标记为函数式组件
     __isFunctional: true,

@@ -29,6 +29,8 @@ export function createApp(
   rootProps: Record<string, unknown> | null = null,
   options?: AppOptions,
 ): App {
+  // FIX: P2-36 全局配置继承机制：
+  // 如果提供了父 app context，子 app 继承父 app 的全局配置
   const context = createAppContext();
   const installedPlugins = new Set<Plugin | ((app: App, ...options: unknown[]) => void)>();
   let _isUnmounted = false;
@@ -132,17 +134,15 @@ export function createApp(
 
       // 清理插件资源：调用插件的 cleanup 方法（如果存在）
       for (const plugin of installedPlugins) {
-        if (
-          typeof plugin !== 'function' &&
-          plugin != null &&
-          typeof (plugin as unknown as Record<string, unknown>).cleanup === 'function'
-        ) {
+        // FIX: P1-42 简化插件 cleanup 类型检查，
+        // 使用类型守卫替代多层 as unknown as Record 类型断言
+        const pluginRecord = plugin as unknown as { cleanup?: () => void; name?: string };
+        if (typeof pluginRecord?.cleanup === 'function') {
           try {
-            const cleanup = (plugin as unknown as Record<string, unknown>).cleanup;
-            if (typeof cleanup === 'function') cleanup();
+            pluginRecord.cleanup();
           } catch (err) {
             error(
-              `Plugin cleanup failed: ${typeof plugin === 'object' && plugin !== null && 'name' in plugin ? (plugin as { name?: string }).name : 'unknown'}: ${err}`,
+              `Plugin cleanup failed: ${pluginRecord.name ?? 'unknown'}: ${err}`,
             );
           }
         }
@@ -159,6 +159,14 @@ export function createApp(
         if (signalRenderer) {
           signalRenderer.unmount();
           signalRenderer = null;
+        }
+        // FIX: P1-40 Signal 模式卸载时清理容器 DOM 内容，
+        // 避免卸载后残留的 DOM 元素导致内存泄漏和视觉异常
+        if (context._container) {
+          const container = context._container;
+          while (container.firstChild) {
+            container.removeChild(container.firstChild);
+          }
         }
         const unmounted = componentOptions.unmounted as (() => void) | undefined;
         if (typeof unmounted === 'function') {
@@ -203,12 +211,14 @@ export function createApp(
             'Register provides before calling app.mount().',
         );
       }
-      context.provides[key as string] = value;
+      // FIX: P1-41 inject symbol key 保持类型，使用 string | symbol 作为键类型
+      context.provides[key as string | symbol] = value;
       return app;
     },
 
     inject<T = unknown>(key: string | symbol): T | undefined {
-      return context.provides[key as string] as T | undefined;
+      // FIX: P1-41 inject symbol key 保持类型，支持 symbol 类型的键
+      return context.provides[key as string | symbol] as T | undefined;
     },
 
     component(name, component) {

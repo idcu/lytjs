@@ -30,6 +30,48 @@ import { wrapDOMEvent } from './web-event-wrap';
  */
 export class WebRendererHost implements RendererHost<Node, Element> {
 
+  // FIX: P0-03 渲染宿主标识符号，用于 createRenderer 精确类型检测
+  readonly __isRendererHost = true as const;
+
+  // FIX: P0-12 使用 WeakMap 存储包装后的 handler 映射，
+  // 确保 removeEventListener 能正确找到并移除 addEventListener 时包装的 handler
+  // FIX: P2-47 事件委托性能优化：WeakMap 自动 GC，无需手动清理
+  private static readonly wrappedHandlerMap = new WeakMap<
+    Element,
+    Map<string, Map<HostEventHandler, EventListener>>
+  >();
+
+  private static getWrappedHandler(
+    el: Element,
+    event: string,
+    handler: HostEventHandler,
+  ): EventListener | undefined {
+    const elMap = WebRendererHost.wrappedHandlerMap.get(el);
+    if (!elMap) return undefined;
+    const eventMap = elMap.get(event);
+    if (!eventMap) return undefined;
+    return eventMap.get(handler);
+  }
+
+  private static setWrappedHandler(
+    el: Element,
+    event: string,
+    handler: HostEventHandler,
+    wrapped: EventListener,
+  ): void {
+    let elMap = WebRendererHost.wrappedHandlerMap.get(el);
+    if (!elMap) {
+      elMap = new Map();
+      WebRendererHost.wrappedHandlerMap.set(el, elMap);
+    }
+    let eventMap = elMap.get(event);
+    if (!eventMap) {
+      eventMap = new Map();
+      elMap.set(event, eventMap);
+    }
+    eventMap.set(handler, wrapped);
+  }
+
   // ==========================================================
   // 一、节点操作 (Node Operations)
   // ==========================================================
@@ -191,9 +233,21 @@ export class WebRendererHost implements RendererHost<Node, Element> {
     const wrappedHandler = (e: Event) => {
       handler(wrapDOMEvent(e));
     };
+    // FIX: P0-12 存储包装后的 handler 映射，供 removeEventListener 查找
+    WebRendererHost.setWrappedHandler(el, event, handler, wrappedHandler);
     el.addEventListener(event, wrappedHandler, options as AddEventListenerOptions | undefined);
     return () => {
       el.removeEventListener(event, wrappedHandler, options as AddEventListenerOptions | undefined);
+      // 清理映射
+      const elMap = WebRendererHost.wrappedHandlerMap.get(el);
+      if (elMap) {
+        const eventMap = elMap.get(event);
+        if (eventMap) {
+          eventMap.delete(handler);
+          if (eventMap.size === 0) elMap.delete(event);
+          if (elMap.size === 0) WebRendererHost.wrappedHandlerMap.delete(el);
+        }
+      }
     };
   }
 
@@ -206,13 +260,32 @@ export class WebRendererHost implements RendererHost<Node, Element> {
     handler: HostEventHandler,
     options?: HostEventOptions,
   ): void {
-    // 注意：由于 addEventListener 包装了 handler，直接移除无法匹配。
-    // 此方法用于外部直接调用场景，实际事件管理通过 invoker 模式处理。
-    el.removeEventListener(
-      event,
-      handler as unknown as EventListener,
-      options as AddEventListenerOptions | undefined,
-    );
+    // FIX: P0-12 从映射中查找包装后的 handler，确保能正确移除
+    const wrappedHandler = WebRendererHost.getWrappedHandler(el, event, handler);
+    if (wrappedHandler) {
+      el.removeEventListener(
+        event,
+        wrappedHandler,
+        options as AddEventListenerOptions | undefined,
+      );
+      // 清理映射
+      const elMap = WebRendererHost.wrappedHandlerMap.get(el);
+      if (elMap) {
+        const eventMap = elMap.get(event);
+        if (eventMap) {
+          eventMap.delete(handler);
+          if (eventMap.size === 0) elMap.delete(event);
+          if (elMap.size === 0) WebRendererHost.wrappedHandlerMap.delete(el);
+        }
+      }
+    } else {
+      // 回退：直接尝试移除原始 handler
+      el.removeEventListener(
+        event,
+        handler as unknown as EventListener,
+        options as AddEventListenerOptions | undefined,
+      );
+    }
   }
 
   // ==========================================================

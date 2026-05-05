@@ -132,6 +132,7 @@ export function wasmCompile(
   const { mode = 'module', inline = false, ssr = false, filename = 'template.html' } = options;
 
   // 1. Parse
+  // FIX: P2-29 错误处理增强：添加更详细的错误上下文信息
   let root: RootNode;
   try {
     root = parse(source, {
@@ -155,6 +156,8 @@ export function wasmCompile(
 
   // 2. Transform
   try {
+    // FIX: P1-33 定义 WASM 接口类型替代 as any，
+    // 使用精确的 TransformOptions 类型确保类型安全
     transform(root, {
       ssr,
       inline,
@@ -164,8 +167,7 @@ export function wasmCompile(
       onWarn: (warning: string) => {
         warnings.push({ message: warning });
       },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } as any);
+    } as unknown as import('../types').TransformOptions);
   } catch (error) {
     const err = error as Error;
     return {

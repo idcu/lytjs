@@ -12,6 +12,11 @@ import type { ComponentInternalInstance, InternalSlots, SlotFunction } from './t
  * - An object of slot functions (named slots)
  * - A single function (default slot)
  * - null/undefined (no slots)
+ *
+ * FIX: P2-20 动态 slot 缓存策略：
+ * slots 在初始化时被规范化并存储在 instance.slots 中。
+ * 如果需要动态更新 slots（如通过 scoped slots），应通过
+ * 组件更新机制触发重新初始化，而非直接修改 instance.slots。
  */
 export function initSlots(instance: ComponentInternalInstance, children: unknown): void {
   if (isNullish(children)) {
@@ -45,8 +50,12 @@ export function normalizeSlotValue(value: unknown): VNode[] {
   if (isNullish(value)) return [];
   if (isArray(value)) return value as VNode[];
   if (isObject(value) && value !== null && typeof (value as VNode).__v_isVNode === 'boolean') {
-    // Valid VNode object
-    return [value as VNode];
+    // FIX: P1-23 将 typeof === 'boolean' 检查改为 === true，
+    // 避免在 __v_isVNode 为其他 falsy 值（如 0、''、null）时误判为有效 VNode
+    if ((value as VNode).__v_isVNode === true) {
+      // Valid VNode object
+      return [value as VNode];
+    }
   }
   if (__DEV__) {
     warn(

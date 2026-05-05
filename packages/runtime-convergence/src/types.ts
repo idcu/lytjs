@@ -232,6 +232,8 @@ export interface RuntimeTransitionState {
   cancelled: boolean;
   /** 过渡完成回调 */
   doneCallback: (() => void) | null;
+  /** FIX: P0-10 存储过渡属性引用，用于 cancelTransition 时调用取消钩子 */
+  props?: TransitionProps<unknown>;
 }
 
 /**

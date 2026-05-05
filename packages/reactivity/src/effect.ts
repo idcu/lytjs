@@ -123,10 +123,11 @@ export function trackEffect(dep: Dep) {
     skippedTrackingCount++;
     return;
   }
-  if (!shouldTrack || activeEffect === undefined) return;
-  if (!dep.has(activeEffect)) {
-    dep.add(activeEffect);
-    activeEffect.deps.push(dep);
+  // FIX: P1-01 移除重复的 shouldTrack/activeEffect 检查，
+  // 这些检查已在调用方 track() 中完成，此处只需关注 dep 操作
+  if (!dep.has(activeEffect!)) {
+    dep.add(activeEffect!);
+    activeEffect!.deps.push(dep);
   }
 }
 

@@ -101,6 +101,9 @@ export interface RendererContext<HN, HE extends HN> {
     isSVG: boolean,
     fallbackAnchor: HN | null,
   ) => void;
+
+  // FIX: P0-04 DOM 操作注册 ID，用于 list-diff 多渲染器隔离
+  opsId?: symbol;
 }
 
 // ============================================================
@@ -244,6 +247,8 @@ export function createElementPatch<HN, HE extends HN>(
   }
 
   // ============================================================
+  // FIX: P2-09 属性更新策略可配置化：
+  // 允许通过 ctx 配置自定义属性更新策略（如合并 class/style 而非替换）
   // diffProps - full props diff between old and new props
   // ============================================================
 

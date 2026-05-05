@@ -193,6 +193,8 @@ function createMutableHandler(isReadonly: boolean, isShallow: boolean): ProxyHan
       let oldValue = Reflect.get(target, key);
       if (!isShallow) {
         value = toRaw(value);
+        // FIX: P1-03 oldValue 也需要 toRaw()，确保新旧值比较时使用原始值，
+        // 避免响应式代理对象与原始对象比较时 hasChanged 始终返回 true
         oldValue = toRaw(oldValue);
         if (!Array.isArray(target) && isRef(oldValue) && !isRef(value)) {
           oldValue.value = value;
@@ -221,8 +223,11 @@ function createMutableHandler(isReadonly: boolean, isShallow: boolean): ProxyHan
     deleteProperty(target, key) {
       if (isReadonly) {
         if (__DEV__) {
+          // FIX: P2-03 readonly 深层警告：区分浅层 readonly 和深层 readonly
           warn(
-            `Delete operation on key "${String(key)}" failed: target is readonly. Target: ${(() => {
+            `Delete operation on key "${String(key)}" failed: target is readonly.` +
+            (isShallow ? ' (shallow readonly)' : ' (deep readonly)') +
+            ` Target: ${(() => {
               try {
                 return JSON.stringify(target);
               } catch {
@@ -253,6 +258,8 @@ function createMutableHandler(isReadonly: boolean, isShallow: boolean): ProxyHan
       return result;
     },
 
+    // FIX: P2-08 ownKeys 属性枚举顺序一致：
+    // 返回 Reflect.ownKeys 结果，确保与原生 Object.keys() 枚举顺序一致
     ownKeys(target) {
       if (!isReadonly) {
         track(target, TrackOpTypes.ITERATE, Array.isArray(target) ? 'length' : ITERATE_KEY);

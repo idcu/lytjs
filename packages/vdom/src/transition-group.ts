@@ -235,12 +235,8 @@ export function applyFLIP<HN, HE extends HN>(
       if (!info.hasTransition && !info.hasAnimation) {
         host.removeClass(child, mc);
       } else {
-        const cleanup = () => {
-          host.removeClass(child, mc);
-          disposeTransition();
-          disposeAnimation();
-        };
-
+        // FIX: P1-12 调整声明顺序，将 cleanup 和 onMoveEnd 的声明移到使用之前，
+        // 避免在 TDZ（暂时性死区）中引用后声明的变量
         const onMoveEnd = (event: unknown) => {
           const hostEvent = event as { target: unknown };
           if (hostEvent.target !== child) return;
@@ -249,6 +245,12 @@ export function applyFLIP<HN, HE extends HN>(
 
         const disposeTransition = host.addEventListener(child, 'transitionend', onMoveEnd as never);
         const disposeAnimation = host.addEventListener(child, 'animationend', onMoveEnd as never);
+
+        const cleanup = () => {
+          host.removeClass(child, mc);
+          disposeTransition();
+          disposeAnimation();
+        };
 
         const duration = info.duration > 0 ? info.duration + 50 : 3000;
         host.setTimeout(cleanup, duration);
@@ -413,10 +415,36 @@ export function performGroupLeaveTransition<HN, HE extends HN>(
     el.classList.remove(`${name}-leave-from`);
     el.classList.add(`${name}-leave-to`);
 
-    el.classList.remove(`${name}-leave-active`);
-    el.classList.remove(`${name}-leave-to`);
-    if (props.onAfterLeave) props.onAfterLeave(el);
-    removeFn();
+    // FIX: P1-13 DOM 回退版 leave 动画修复：添加 CSS 过渡检测和等待逻辑，
+    // 避免在 leave 动画未完成时就移除元素
+    if (props.onLeave) {
+      props.onLeave(el, () => {
+        el.classList.remove(`${name}-leave-active`);
+        el.classList.remove(`${name}-leave-to`);
+        if (props.onAfterLeave) props.onAfterLeave(el);
+        removeFn();
+      });
+    } else {
+      const info = getTransitionInfoDOM(el, 'leave');
+      if (info.hasTransition || info.hasAnimation) {
+        const finish = () => {
+          el.classList.remove(`${name}-leave-active`);
+          el.classList.remove(`${name}-leave-to`);
+          if (props.onAfterLeave) props.onAfterLeave(el);
+          removeFn();
+        };
+        if (info.duration > 0) {
+          setTimeout(finish, info.duration + 50);
+        } else {
+          waitForTransitionEndDOM(el, info, finish);
+        }
+      } else {
+        el.classList.remove(`${name}-leave-active`);
+        el.classList.remove(`${name}-leave-to`);
+        if (props.onAfterLeave) props.onAfterLeave(el);
+        removeFn();
+      }
+    }
   } else {
     // 泛型版本：(host, el, props, removeElement)
     const host = hostOrEl as RendererHost<HN, HE>;
@@ -477,6 +505,14 @@ export function performGroupLeaveTransition<HN, HE extends HN>(
       }
     }
   }
+}
+
+// FIX: P2-13 FLIP 动画阈值可配置
+/** FLIP 动画跳过阈值（像素），移动距离小于此值时不执行动画 */
+let flipThreshold = 2;
+
+export function setFlipThreshold(threshold: number): void {
+  flipThreshold = threshold;
 }
 
 // ============================================================

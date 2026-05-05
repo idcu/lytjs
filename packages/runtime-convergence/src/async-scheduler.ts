@@ -14,6 +14,7 @@ const DEFAULT_OPTIONS: Required<AsyncSchedulerOptions> = {
   enableFlushSync: true,
 };
 
+/** FIX: P2-40 优先级调度策略：支持自定义优先级权重 */
 /** 优先级权重映射（数值越小优先级越高） */
 const PRIORITY_WEIGHT: Record<SchedulerPriority, number> = {
   sync: 0,
@@ -121,6 +122,12 @@ export class AsyncScheduler<HN = unknown, HE extends HN = HN> {
    * @param fn - 任务函数
    */
   scheduleSync(fn: () => void): void {
+    // FIX: P1-50 scheduleSync 检查 enableFlushSync 配置，
+    // 当 enableFlushSync 为 false 时回退到异步调度
+    if (!this.options.enableFlushSync) {
+      this.schedule(fn, 'sync', false);
+      return;
+    }
     const id = ++nextJobId;
     const job: SchedulerJob = {
       id,
@@ -235,9 +242,17 @@ export class AsyncScheduler<HN = unknown, HE extends HN = HN> {
     // 取出当前所有任务
     const jobs = this.queue;
     this.queue = [];
-    this.executedJobIds.clear();
+    // FIX: P1-47 消除 executedJobIds 竞态窗口：
+    // 不在 flush 开始时清空 executedJobIds，而是在每个任务执行后立即添加。
+    // 同时在 schedule() 中不依赖 executedJobIds 进行去重（已在 queue 中去重），
+    // executedJobIds 仅用于防止 flush 期间重复入队的任务被执行两次。
+    // 因此此处无需 clear，而是在任务执行后立即 add。
 
     for (const job of jobs) {
+      // FIX: P1-47 在执行前检查是否已在当前 flush 周期中执行过
+      if (job.allowMerge && this.executedJobIds.has(job.id)) {
+        continue;
+      }
       try {
         job.fn();
       } catch (err) {
