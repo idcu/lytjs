@@ -9,6 +9,7 @@
 import type { VNode, ComponentInternalInstance } from '@lytjs/common-vnode';
 import { ShapeFlags, isSameVNodeType } from '@lytjs/common-vnode';
 import { isArray } from '@lytjs/common-is';
+import { warn } from '@lytjs/common-error';
 import type { SuspenseBoundary } from './types';
 import type { RendererContext } from './patch-element';
 import {
@@ -189,6 +190,12 @@ export function createChildrenPatch<HN, HE extends HN>(
         unmountChildren(c1 as VNode[], parentComponent, parentSuspense);
       }
       // Always set new text (DOM was potentially cleared by unmountChildren above)
+      // FIX: P2-12 添加 container 类型守卫检查，避免不安全的类型断言。
+      // container 的实际类型为 HN，而 setElementText 期望 HE（HN 的子类型）。
+      // 在 DEV 模式下检查 container 是否为有效节点，避免静默失败。
+      if (__DEV__ && (!container || typeof container !== 'object')) {
+        warn(`[lytjs/patch-children] setElementText called with invalid container: ${String(container)}`);
+      }
       setElementText(container as HE, String(c2 ?? ''));
     } else {
       // New children are array (or null)

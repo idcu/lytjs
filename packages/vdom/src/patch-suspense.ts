@@ -135,11 +135,16 @@ export function createSuspensePatch<HN, HE extends HN>(
     isSVG: boolean,
   ): void {
     // FIX: P2-14 计算 suspense 嵌套深度，超过阈值时发出警告
+    // FIX: P1-5 正确遍历组件祖先链查找 suspense boundary，
+    // 而非使用 parent.parent.suspense（始终为 undefined）
     let depth = 0;
-    let parent = _parentSuspense;
-    while (parent) {
-      depth++;
-      parent = parent.parent ? (parent.parent.suspense as SuspenseBoundary | null) : null;
+    let currentParent = parentComponent;
+    while (currentParent) {
+      // 检查当前组件的 vnode 是否关联了 suspense boundary
+      if (currentParent.vnode?.suspense) {
+        depth++;
+      }
+      currentParent = currentParent.parent;
     }
     if (__DEV__ && depth > MAX_SUSPENSE_DEPTH) {
       console.warn(

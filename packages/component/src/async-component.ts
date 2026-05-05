@@ -2,12 +2,16 @@
 // Async component loader with preload support
 // FIX: P2-7 COMPONENT-NEW-04 - 异步组件加载与预加载支持
 
+declare const __DEV__: boolean;
+
 import type { ComponentOptions, ComponentInternalInstance } from './types';
 import { createComponentInstance, setupComponent } from './component';
-import { ShapeFlags, createBaseVNode } from '@lytjs/common-vnode';
+import { ShapeFlags, createBaseVNode, Comment } from '@lytjs/common-vnode';
 import type { VNode } from '@lytjs/common-vnode';
 import { isFunction } from '@lytjs/common-is';
 import { warn } from '@lytjs/common-error';
+import { getCurrentInstance } from './lifecycle';
+import { onScopeDispose } from '@lytjs/reactivity';
 
 // ==================== Types ====================
 
@@ -254,8 +258,10 @@ export function defineAsyncComponent(
           });
 
         // Handle timeout
+        // FIX: P2-38 超时定时器在组件卸载时通过 onScopeDispose 清理，
+        // 避免组件卸载后定时器仍然触发导致无效操作和内存泄漏
         if (timeout !== undefined && timeout > 0) {
-          setTimeout(() => {
+          const timeoutId = setTimeout(() => {
             if (!state.isLoaded && !state.isError) {
               state.error = new Error(
                 `Async component loading timed out after ${timeout}ms`,
@@ -268,6 +274,11 @@ export function defineAsyncComponent(
               }
             }
           }, timeout);
+
+          // 在组件作用域销毁时清理超时定时器
+          onScopeDispose(() => {
+            clearTimeout(timeoutId);
+          });
         }
       }
 
@@ -295,20 +306,13 @@ export function defineAsyncComponent(
 // ==================== Helper Functions ====================
 
 /**
- * Get the current component instance (placeholder - should use actual implementation)
+ * Trigger a component update by calling instance.update().
+ * Falls back to nextTick-based re-render if instance.update is not available.
  */
-function getCurrentInstance(): ComponentInternalInstance | null {
-  // This should be imported from the actual implementation
-  // For now, return null as a placeholder
-  return null;
-}
-
-/**
- * Trigger a component update (placeholder - should use actual implementation)
- */
-function triggerComponentUpdate(_instance: ComponentInternalInstance): void {
-  // This should trigger a re-render of the component
-  // Implementation depends on the actual reactivity system
+function triggerComponentUpdate(instance: ComponentInternalInstance): void {
+  if (instance.update) {
+    instance.update();
+  }
 }
 
 /**
@@ -329,8 +333,6 @@ function createComponentVNode(
  * Create a comment VNode
  */
 function createCommentVNode(text: string): VNode {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { Comment } = require('@lytjs/common-vnode');
   return createBaseVNode({
     type: Comment,
     children: text,

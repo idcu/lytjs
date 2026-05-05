@@ -12,6 +12,8 @@
  */
 
 import { isString, isObject, isFunction, hasOwn } from '@lytjs/common-is';
+// FIX: P2-v11-24 从 @lytjs/shared 导入 camelToKebab，避免重复定义
+import { camelToKebab as sharedCamelToKebab, kebabToCamel as sharedKebabToCamel } from '@lytjs/shared';
 
 // ============================================================
 // 类型定义
@@ -148,19 +150,10 @@ export function getConverterByType(
 // 属性反射工具函数
 // ============================================================
 
-/**
- * 将 camelCase 转换为 kebab-case
- */
-function camelToKebab(str: string): string {
-  return str.replace(/[A-Z]/g, (match) => `-${match.toLowerCase()}`);
-}
-
-/**
- * 将 kebab-case 转换为 camelCase
- */
-function kebabToCamel(str: string): string {
-  return str.replace(/-([a-z])/g, (_, letter) => letter.toUpperCase());
-}
+// FIX: P2-v11-24 使用从 @lytjs/shared 导入的 camelToKebab，删除重复定义
+// 局部别名保持向后兼容
+const camelToKebab = sharedCamelToKebab;
+const kebabToCamel = sharedKebabToCamel;
 
 /**
  * 属性反射管理器
@@ -255,10 +248,23 @@ export class AttributeReflector {
 /**
  * 创建增强的 Web Component 基类
  * 提供属性反射、变更观察等能力
+ * FIX: P2-v11-25 定义精确的返回类型 EnhancedElementClass，
+ * 包含 getProperty/setProperty/onConnected 等增强方法的类型信息
  */
+// FIX: P2-v11-25 定义精确的增强元素类型接口
+export interface EnhancedElementClass extends HTMLElement {
+  getProperty<T = unknown>(name: string): T | undefined;
+  setProperty<T = unknown>(name: string, value: T): void;
+  isConnectedToDOM: boolean;
+  onConnected?(): void;
+  onDisconnected?(): void;
+  onPropertyChanged?(name: string, newValue: unknown, oldValue: unknown): void;
+  onAttributeChanged?(name: string, oldValue: string | null, newValue: string | null): void;
+}
+
 export function createEnhancedElementClass(
   options: WebComponentOptions = {},
-): typeof HTMLElement {
+): typeof EnhancedElementClass {
   const reflector = new AttributeReflector();
 
   // 注册属性反射
@@ -359,7 +365,13 @@ export function createEnhancedElementClass(
      */
     setProperty<T = unknown>(name: string, value: T): void {
       const oldValue = this._propertyValues.get(name);
-      if (oldValue === value) return;
+      // FIX: P1-17 使用 Object.is() 替代 ===，正确处理 NaN 和 +/-0 等边界情况；
+      // 对对象类型使用 JSON 序列化进行深度比较，避免引用不同但内容相同导致误判
+      if (typeof value === 'object' && value !== null && typeof oldValue === 'object' && oldValue !== null) {
+        if (JSON.stringify(value) === JSON.stringify(oldValue)) return;
+      } else if (Object.is(oldValue, value)) {
+        return;
+      }
 
       this._propertyValues.set(name, value);
 
@@ -413,7 +425,7 @@ export function createEnhancedElementClass(
     ): void;
   }
 
-  return EnhancedElement as typeof HTMLElement;
+  return EnhancedElement as typeof EnhancedElementClass;
 }
 
 // ============================================================
@@ -437,11 +449,13 @@ export interface LytJSBridgeOptions {
 /**
  * 创建 LytJS 组件的 Web Component 包装器
  */
+// FIX: P1-16 参数前加下划线表示有意未使用，添加 TODO 注释说明桥接功能待实现
 export function defineLytJSWebComponent(
   name: string,
-  bridgeOptions: LytJSBridgeOptions,
+  _bridgeOptions: LytJSBridgeOptions,
   options?: WebComponentOptions,
 ): void {
+  // TODO: 待实现 bridgeOptions 桥接功能，将 LytJS 组件的属性、事件、插槽映射到 Web Component
   const ElementClass = createEnhancedElementClass(options);
 
   customElements.define(name, ElementClass);

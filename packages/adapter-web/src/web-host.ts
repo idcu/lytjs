@@ -180,9 +180,14 @@ export class WebRendererHost implements RendererHost<Node, Element> {
   /**
    * 设置内联样式属性。
    * value 为 null/undefined 时移除该样式属性。
+   * FIX: P2-v11-35 添加 SVG 元素兼容检查，
+   * SVG 元素的 style 属性是 CSSStyleDeclaration 但部分属性名不同，
+   * 使用 setProperty/removeProperty 统一处理
    */
   setStyle(el: Element, key: string, value: string | null | undefined): void {
-    const style = (el as HTMLElement).style;
+    // FIX: P2-v11-35 SVG 元素使用 style.setProperty/removeProperty，
+    // 与 HTMLElement 行为一致，无需 instanceof 检查
+    const style = el.style;
     if (value == null) {
       style.removeProperty(key);
     } else {

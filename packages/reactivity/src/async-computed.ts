@@ -59,6 +59,12 @@ class AsyncComputedRefImpl<T> {
     this._loading = true;
     this._error = undefined;
 
+    // FIX: P2-3 loading 状态变化同步触发通知。
+    // 在设置 _loading = true 后立即调用 triggerRefValue，
+    // 确保订阅者能感知到 loading 状态的变化（如显示 loading 指示器），
+    // 而不是等到异步操作完成后才统一通知。
+    triggerRefValue(this);
+
     // 递增版本号，用于竞态检测
     const currentVersion = ++this._version;
 

@@ -345,6 +345,12 @@ export function normalizeChildren(vnode: VNode, children: VNodeChildren): void {
     type = ShapeFlags.TEXT_CHILDREN;
     // Convert function children to a slot-like structure
     if (isFunction(children)) {
+      // FIX: P2-13 函数类型 children 的 shapeFlag 处理：
+      // 函数 children 在组件 vnode 上作为默认 slot 使用（render 函数中通过
+      // this.$slots.default 访问）。对于非组件 vnode，函数 children 会被
+      // patch 阶段转换为空字符串（参见 patch.ts 中的 Text/Comment 处理）。
+      // 此处保留 TEXT_CHILDREN flag，因为函数 children 在非组件场景下
+      // 语义上等同于文本占位符。
       vnode.children = children as unknown as VNodeChildren;
     }
   } else if (typeof children === 'number') {

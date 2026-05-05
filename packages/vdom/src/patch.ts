@@ -59,6 +59,8 @@ interface InternalRendererOptions<HN, HE extends HN> {
   nextSibling: (node: HN) => HN | null;
   parentNode: (node: HN) => HN | null;
   setupChildComponent: ((vnode: VNode, parent: ComponentInternalInstance | null) => void) | undefined;
+  /** FIX: P1-4 组件更新时规范化 props 的回调 */
+  normalizeProps: ((instance: ComponentInternalInstance, rawProps: Record<string, unknown> | null) => void) | undefined;
 }
 
 /**
@@ -82,6 +84,7 @@ function hostToOptions<HN, HE extends HN>(
     nextSibling: (node) => host.nextSibling(node),
     parentNode: (node) => host.parentNode(node),
     setupChildComponent: undefined,
+    normalizeProps: undefined,
   };
 }
 
@@ -107,6 +110,7 @@ function optionsToInternal<HN, HE extends HN>(
     nextSibling: (node) => options.nextSibling(node),
     parentNode: (node) => options.parentNode(node),
     setupChildComponent: options.setupChildComponent,
+    normalizeProps: options.normalizeProps,
   };
 }
 
@@ -233,6 +237,7 @@ export function createRenderer<HN, HE extends HN>(
     createComment,
     querySelector,
     setupChildComponent,
+    normalizeProps,
   } = internal;
 
   // Helper: assign host node to vnode.el (VNode.el is typed as Node | null in common-vnode,
@@ -263,6 +268,7 @@ export function createRenderer<HN, HE extends HN>(
   ctx.createComment = createComment;
   ctx.querySelector = querySelector;
   ctx.setupChildComponent = setupChildComponent;
+  ctx.normalizeProps = normalizeProps;
   ctx.setVNodeEl = setVNodeEl;
   ctx.getVNodeEl = getVNodeEl;
 
@@ -347,18 +353,29 @@ export function createRenderer<HN, HE extends HN>(
           nextProps ?? {}
         );
 
+        // FIX: P2-9 添加 slots 变化检查，避免仅通过 props 判断更新而忽略 slots 变化。
+        // 当 slots（children）发生变化时（如父组件传入不同的 slot 内容），
+        // 即使 props 未变化，组件也需要重新渲染以反映新的 slot 内容。
+        const slotsChanged = n1.children !== n2.children;
+
         n2.el = n1.el;
         n2.component = n1.component;
         if (n2.component) {
-          // 更新组件的 props 引用，即使跳过更新也需要保持 props 最新
-          n2.component.props = nextProps ?? {};
+          // FIX: P1-4 组件更新时调用 normalizeProps 规范化 nextProps，
+          // 避免绕过 initProps 的声明 props 验证和 attrs 分离
+          if (ctx.normalizeProps) {
+            ctx.normalizeProps(n2.component, nextProps ?? null);
+          } else {
+            // 回退：直接赋值（无规范化时保持旧行为）
+            n2.component.props = nextProps ?? {};
+          }
 
           const { update } = n2.component;
-          if (update && propsChanged) {
+          if (update && (propsChanged || slotsChanged)) {
             update();
-          } else if (__DEV__ && !propsChanged) {
+          } else if (__DEV__ && !propsChanged && !slotsChanged) {
             const compName = (n2.component.type as { name?: string }).name || 'anonymous';
-            console.log(`[lytjs/patch] Skipping component update for "${compName}": props unchanged`);
+            console.log(`[lytjs/patch] Skipping component update for "${compName}": props and slots unchanged`);
           }
         }
       } else if (n2.shapeFlag & ShapeFlags.TELEPORT) {
@@ -502,7 +519,11 @@ export function createRenderer<HN, HE extends HN>(
       // Move anchors
       const vEl = getVNodeEl(vnode);
       if (vEl) insert(vEl, container, anchor);
-      if (vnode.anchor && vnode.anchor !== vnode.el) insert(vnode.anchor as unknown as HN, container, anchor);
+      // FIX: P2-16 添加 null 检查，避免 vnode.anchor 为 null 时的不安全类型断言
+      if (vnode.anchor && vnode.anchor !== vnode.el) {
+        const anchorEl = vnode.anchor as unknown as HN;
+        if (anchorEl) insert(anchorEl, container, anchor);
+      }
     } else if (vnode.shapeFlag & ShapeFlags.TELEPORT) {
       teleportAPI.moveTeleport(vnode, container, anchor);
     } else {

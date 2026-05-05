@@ -249,9 +249,43 @@ function extractRenderBody(code: string): string | null {
       while (i < code.length && code[i] !== '`') {
         if (code[i] === '\\') i++; // 跳过转义字符
         if (code[i] === '$' && code[i + 1] === '{') {
-          // 模板字符串中的 ${} 表达式，递增 depth
+          // FIX: P0-8 模板字符串中的 ${} 表达式，使用子循环跳过，
+          // 不修改外层 depth，避免 depth 泄漏导致提前闭合
           i += 2;
-          depth++;
+          let exprDepth = 1;
+          while (i < code.length && exprDepth > 0) {
+            // 跳过表达式内的字符串
+            if (code[i] === "'") {
+              i++;
+              while (i < code.length && code[i] !== "'") {
+                if (code[i] === '\\') i++;
+                i++;
+              }
+              i++;
+              continue;
+            }
+            if (code[i] === '"') {
+              i++;
+              while (i < code.length && code[i] !== '"') {
+                if (code[i] === '\\') i++;
+                i++;
+              }
+              i++;
+              continue;
+            }
+            if (code[i] === '`') {
+              i++;
+              while (i < code.length && code[i] !== '`') {
+                if (code[i] === '\\') i++;
+                i++;
+              }
+              i++;
+              continue;
+            }
+            if (code[i] === '{') exprDepth++;
+            if (code[i] === '}') exprDepth--;
+            i++;
+          }
           continue;
         }
         i++;

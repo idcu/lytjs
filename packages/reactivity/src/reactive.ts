@@ -286,8 +286,12 @@ function createCollectionHandler(isReadonly: boolean, isShallow: boolean): Proxy
       if (key === ReactiveFlags.RAW) return target;
 
       // 追踪 size 属性和 get 调用
+      // FIX: P2-4 移除 get handler 中对 ITERATE_KEY 的重复追踪。
+      // 之前对 'get' key 同时在 get handler 入口处和包装函数中追踪 ITERATE_KEY，
+      // 导致 Map.get() 调用时产生双重依赖追踪。现在仅在包装函数中追踪具体 key，
+      // ITERATE_KEY 的追踪由变异方法（set/add/delete/clear）的 trigger 覆盖。
       // has/forEach/entries/keys/values/Symbol.iterator 在所有模式下都追踪
-      if (key === 'size' || key === 'get' || key === 'has' || key === 'forEach' || key === 'entries' || key === 'keys' || key === 'values' || key === Symbol.iterator) {
+      if (key === 'size' || key === 'has' || key === 'forEach' || key === 'entries' || key === 'keys' || key === 'values' || key === Symbol.iterator) {
         track(target, TrackOpTypes.GET, ITERATE_KEY);
       }
 

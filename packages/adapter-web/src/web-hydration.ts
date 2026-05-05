@@ -205,7 +205,9 @@ function hydrateMatchedElement(
   // FIX: P1-16 使用可选链替代非空断言
   const isSVG = host.getNamespaceURI?.(existingNode as Element) === 'http://www.w3.org/2000/svg';
   const vnodeProps = props ?? {};
-  for (const key in vnodeProps) {
+  // FIX: P2-v11-36 使用 Object.keys 替代 for...in，
+  // 避免遍历到原型链上的属性
+  for (const key of Object.keys(vnodeProps)) {
     if (key === 'key' || key === 'ref') continue;
     patchProp(existingNode as Element, key, null, vnodeProps[key], isSVG);
   }
@@ -270,7 +272,8 @@ function hydrateMismatchedElement(
 
   // Mount props
   const vnodeProps = props ?? {};
-  for (const key in vnodeProps) {
+  // FIX: P2-v11-36 使用 Object.keys 替代 for...in
+  for (const key of Object.keys(vnodeProps)) {
     if (key === 'key' || key === 'ref') continue;
     patchProp(newEl, key, null, vnodeProps[key], isSVG);
   }

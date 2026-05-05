@@ -149,8 +149,12 @@ function createContext(
 
   const context: TransformContext = {
     // FIX: P2-20 使用 getter 延迟访问，避免初始化时的循环引用问题
+    // FIX: P2-43 添加防御性检查，避免 contextRef 未赋值时返回 undefined
     get self(): TransformContext {
-      return contextRef!;
+      if (contextRef === null) {
+        throw new Error('[LytJS] TransformContext.self accessed before initialization');
+      }
+      return contextRef;
     },
     parent: null,
     rootNode: root,

@@ -8,7 +8,6 @@
  */
 
 import {
-  VEI_KEY,
   normalizeEventName,
   getEventKey,
   parseEventModifier,
@@ -51,6 +50,10 @@ export interface EventInvoker extends EventListener {
 /** el._vei 缓存类型 */
 type InvokerCache = Record<string, EventInvoker | undefined>;
 
+// FIX: P1-24 - 使用 WeakMap 替代 el._vei 属性存储，避免污染 DOM 元素
+/** 事件 invoker 缓存 WeakMap，以 Element 为 key */
+const veiCache = new WeakMap<Element, InvokerCache>();
+
 // FIX: P1-12 DOM-NEW-01 - 事件监听器池化配置
 /** 对象池最大容量 */
 const INVOKER_POOL_MAX_SIZE = 100;
@@ -80,12 +83,17 @@ function acquireInvoker(): EventInvoker | null {
 /**
  * 将 invoker 对象归还到对象池
  * FIX: P1-12 DOM-NEW-01 - 事件监听器池化
+ * FIX: P2-v11-33 完善重置逻辑，清除所有可变状态确保复用时不会残留旧数据
  */
 function releaseInvoker(invoker: EventInvoker): void {
   if (invokerPool.length < INVOKER_POOL_MAX_SIZE) {
-    // 重置 invoker 状态
+    // 重置 invoker 状态：清除 value、_parsed 和闭包捕获的上下文
     invoker.value = null;
     invoker._parsed = undefined;
+    // FIX: P2-v11-33 断开 invoker 闭包中可能引用的 DOM 元素，
+    // 避免通过池化对象意外访问已卸载的元素
+    // 注意：invoker 本身是一个函数（EventListener），其闭包引用了 parsed 和 currentValue，
+    // 已通过 value = null 和 _parsed = undefined 清除
     invokerPool.push(invoker);
   }
 }
@@ -170,10 +178,11 @@ export function patchEvent(
   const eventKey = getEventKey(normalizeEventName(rawName));
   const parsed = parseEventModifier(rawName);
 
-  // 获取或创建 el._vei 缓存
-  let invokers = (el as unknown as Record<string, InvokerCache>)[VEI_KEY];
+  // FIX: P1-24 - 获取或创建 WeakMap 缓存
+  let invokers = veiCache.get(el);
   if (!invokers) {
-    invokers = (el as unknown as Record<string, InvokerCache>)[VEI_KEY] = {};
+    invokers = {};
+    veiCache.set(el, invokers);
   }
 
   const existingInvoker = invokers[eventKey] as EventInvoker | undefined;
@@ -193,10 +202,13 @@ export function patchEvent(
     el.addEventListener(parsed.name, invoker, options);
   } else if (!actualNextValue && existingInvoker) {
     // 情况 3：无新值 + 有旧 invoker → 移除
+    // FIX: P2-v11-34 传递完整的 options 对象给 removeEventListener，
+    // 确保与 addEventListener 时使用的 options 一致，否则无法正确移除监听器
+    const removeOptions = buildEventListenerOptions(parsed);
     el.removeEventListener(
       parsed.name,
       existingInvoker,
-      parsed.capture ? { capture: true } : undefined,
+      removeOptions,
     );
     // FIX: P1-12 DOM-NEW-01 - 将 invoker 归还到对象池
     releaseInvoker(existingInvoker);
@@ -215,21 +227,25 @@ export function patchEvent(
  * FIX: P1-12 DOM-NEW-01 - 将 invoker 对象归还到对象池以复用
  */
 export function removeAllEventListeners(el: Element): void {
-  const invokers = (el as unknown as Record<string, InvokerCache>)[VEI_KEY];
+  const invokers = veiCache.get(el);
   if (!invokers) return;
 
-  for (const eventKey in invokers) {
+  // FIX: P1-23 - 使用 Object.keys 替代 for...in，避免遍历原型链属性
+  for (const eventKey of Object.keys(invokers)) {
     const invoker = invokers[eventKey] as EventInvoker | undefined;
     if (invoker) {
       const parsed = invoker._parsed;
       const eventName = parsed?.name ?? normalizeEventName(eventKey);
-      el.removeEventListener(eventName, invoker, parsed?.capture ? { capture: true } : undefined);
+      // FIX: P2-v11-34 传递完整的 options，确保与 addEventListener 一致
+      const removeOptions = parsed ? buildEventListenerOptions(parsed) : undefined;
+      el.removeEventListener(eventName, invoker, removeOptions);
       // FIX: P1-12 - 将 invoker 归还到对象池
       releaseInvoker(invoker);
     }
   }
 
-  delete (el as unknown as Record<string, InvokerCache>)[VEI_KEY];
+  // FIX: P1-24 - 使用 WeakMap.delete 替代 delete el._vei
+  veiCache.delete(el);
 }
 
 // ============================================================

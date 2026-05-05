@@ -191,11 +191,9 @@ export class SourceMapGenerator {
         prevGenCol = 0; // Reset generated column for new lines
       }
 
-      // FIX: P2-18 使用正确的 source index 替代硬编码的 sources[0]
-      // 从 mapping 中解析 source index（如果存储在 name 字段中）
-      const sourceIdx = mapping.name !== undefined
-        ? (this._sourcesMap.get(mapping.name) ?? 0)
-        : (this._sourcesMap.get(this.sources[0] ?? '') ?? 0);
+      // FIX: P0-7 始终使用 sources[0]（源文件名）查找 source index，
+      // 而非 mapping.name（token 名称），避免 source index 解析错误
+      const sourceIdx = this._sourcesMap.get(this.sources[0] ?? '') ?? 0;
       // Encode segment fields (all delta-encoded)
       const genCol = mapping.generatedColumn - prevGenCol;
       const source = sourceIdx - prevSource;
@@ -292,8 +290,9 @@ export class SourceMapGenerator {
 
       result += base64Chars[(bitmap >> 18) & 63];
       result += base64Chars[(bitmap >> 12) & 63];
-      result += i - 2 <= bytes.length ? base64Chars[(bitmap >> 6) & 63] : '=';
-      result += i - 1 <= bytes.length ? base64Chars[bitmap & 63] : '=';
+      // FIX: P1-9 填充计算：i 已被 i++ 自增，应使用 < 而非 <=
+      result += i - 2 < bytes.length ? base64Chars[(bitmap >> 6) & 63] : '=';
+      result += i - 1 < bytes.length ? base64Chars[bitmap & 63] : '=';
     }
 
     return result;

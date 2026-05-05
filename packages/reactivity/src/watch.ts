@@ -231,6 +231,12 @@ export function watch<T, Immediate extends Readonly<boolean> = false>(
         });
 
   // 包装 scheduler，确保传 job 参数给用户自定义 scheduler
+  // FIX: P2-5 添加 flush=sync 时的语义一致性说明：
+  // 当 flush='sync' 且用户提供了自定义 scheduler 时，rawScheduler 已经是 job 本身
+  // （因为三元表达式 `flush === 'sync' ? job : ...` 在 userScheduler 为 falsy 时生效）。
+  // 但当 userScheduler 存在时，rawScheduler 始终是 userScheduler（三元表达式不生效），
+  // 此时包装层将 job 作为第一个参数传给 userScheduler，这是正确的行为。
+  // 因此无论 flush 模式如何，只要 userScheduler 存在，包装逻辑都是一致的。
   const scheduler = userScheduler
     ? (...args: unknown[]) => rawScheduler(job, ...args)
     : rawScheduler;

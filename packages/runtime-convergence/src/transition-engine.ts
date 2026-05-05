@@ -1,7 +1,7 @@
 // @lytjs/runtime-convergence - transition-engine
 // 过渡引擎：平台无关的过渡动画状态机，所有 DOM 操作通过 RendererHost 执行
 
-import type { RendererHost, TransitionDurationInfo } from '@lytjs/host-contract';
+import type { RendererHost, TransitionDurationInfo, HostEvent, HostEventHandler } from '@lytjs/host-contract';
 import type {
   TransitionProps,
   RuntimeTransitionState as TransitionState,
@@ -451,18 +451,22 @@ export class TransitionEngine<HN extends object = object, HE extends HN = HN> {
     const timer = this.host.setTimeout(finish, timeout);
 
     // 创建事件处理函数
+    // FIX: P1-15 创建类型适配的包装函数，将 onEnd 签名转换为 HostEventHandler
+    // FIX: P2-v11-23 添加运行时验证，确保 onEnd 接收到的事件对象具有有效的 target 属性
     const onEnd = (event: unknown) => {
-      // 通过 HostEvent 接口检查事件目标
+      // 运行时验证事件对象
+      if (event == null || typeof event !== 'object') return;
       const hostEvent = event as { target: unknown; type: string };
       if (hostEvent.target !== el) return;
 
       this.host.clearTimeout(timer);
       finish();
     };
+    const hostEventHandler: HostEventHandler = (event: HostEvent) => onEnd(event);
 
     // 通过 host 添加事件监听
-    const disposeTransition = this.host.addEventListener(el, 'transitionend', onEnd as never);
-    const disposeAnimation = this.host.addEventListener(el, 'animationend', onEnd as never);
+    const disposeTransition = this.host.addEventListener(el, 'transitionend', hostEventHandler);
+    const disposeAnimation = this.host.addEventListener(el, 'animationend', hostEventHandler);
 
     // 存储清理函数
     transitionCleanupMap.set(el, () => {

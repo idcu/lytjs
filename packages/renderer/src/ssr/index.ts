@@ -69,11 +69,13 @@ export function renderToSSR(
   input: SSRInput & { stream?: boolean; commentMarkers?: boolean },
 ): Promise<string> | ReadableStream<Uint8Array> {
   if (input.stream) {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { renderToStream } = require('./ssr-stream');
-    return renderToStream(input, { commentMarkers: input.commentMarkers });
+    // FIX: P1-12 使用动态 import() 替代 require()，兼容 ESM
+    return import('./ssr-stream').then(({ renderToStream }) =>
+      renderToStream(input, { commentMarkers: input.commentMarkers }),
+    );
   }
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { renderToString } = require('./ssr-renderer');
-  return renderToString(input);
+  // FIX: P1-12 使用动态 import() 替代 require()，兼容 ESM
+  return import('./ssr-renderer').then(({ renderToString }) =>
+    renderToString(input),
+  );
 }

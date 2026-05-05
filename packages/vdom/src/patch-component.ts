@@ -82,7 +82,11 @@ export function createComponentPatch<HN, HE extends HN>(
 
     let subTree: VNode;
     try {
-      subTree = renderFn(component.ctx as Record<string, unknown>);
+      // FIX: P2-10 render 函数调用时使用更精确的类型。
+      // component.ctx 的实际类型由组件实例的 setup 过程决定，
+      // 使用 ComponentInternalInstance['ctx'] 类型（Record<string, unknown>）
+      // 与 render 函数签名保持一致，避免类型断言不安全。
+      subTree = renderFn(component.ctx);
     } catch (err) {
       // Propagate error through parent chain via errorCaptured
       const renderError = err instanceof Error ? err : new Error(String(err));
@@ -139,10 +143,10 @@ export function createComponentPatch<HN, HE extends HN>(
 
     component.subTree = subTree;
 
-    // FIX: P2-11 组件更新 __DEV__ 日志：在组件更新时输出调试信息
+    // FIX: P2-11 组件挂载 __DEV__ 日志：在组件首次挂载时输出调试信息
     if (__DEV__) {
       const compName = (component.type as ComponentInternalRuntimeProps).name || 'anonymous';
-      console.log(`[lytjs/patch-component] Updating component: ${compName}`);
+      console.log(`[lytjs/patch-component] Mounting component: ${compName}`);
     }
 
     // Apply inheritAttrs: merge instance.attrs into root VNode props

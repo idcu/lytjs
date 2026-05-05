@@ -83,6 +83,9 @@ export function h(
   }
 
   // FIX: v7-P1-12 h() children 合并逻辑：递归展平嵌套数组，避免丢失嵌套子节点
+  // 注意：children.flat(Infinity) 会递归展平所有嵌套数组。
+  // 这意味着如果 children 中包含非 VNode 的数组（如 props 数组），
+  // 这些数组也会被展平。调用方应确保 children 中只包含 VNode 或原始值。
   const flatChildren = children.length > 1
     ? children.flat(Infinity)
     : Array.isArray(children[0])

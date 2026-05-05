@@ -1,6 +1,9 @@
 // @lytjs/runtime-convergence - render-queue
 // 渲染队列：收集同一 tick 内的渲染操作，合并重复操作，支持同步插队刷新
 
+// FIX: P2-v11-22 添加 __DEV__ 声明，用于 DEV 模式下的警告
+declare const __DEV__: boolean;
+
 import type { RendererHost } from '@lytjs/host-contract';
 import type { RenderOperation, RenderQueueOptions, RenderPriority } from './types';
 import { RENDER_PRIORITY_WEIGHT } from './types';
@@ -199,6 +202,13 @@ export class RenderQueue<HN = unknown, HE extends HN = HN> {
         // 这些操作类型在 RenderQueue 中仅用于队列管理（合并、排序），
         // 实际的 DOM 操作由上层 renderer 通过 custom 类型包装后传入
         // 设计意图：RenderQueue 专注于调度，不直接操作 DOM
+        // FIX: P2-v11-22 在 DEV 模式下添加警告，提醒开发者这些操作类型不应直接执行
+        if (__DEV__) {
+          console.warn(
+            `[lytjs/render-queue] Operation type "${op.type}" should be wrapped in a "custom" operation. ` +
+            `Direct ${op.type} operations in RenderQueue are no-ops.`,
+          );
+        }
         break;
       default:
         // 未知操作类型，静默忽略（防御性编程）

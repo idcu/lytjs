@@ -100,6 +100,13 @@ export interface RendererOptions<HN = unknown, HE extends HN = HN> {
     vnode: VNode,
     parentComponent: ComponentInternalInstance | null,
   ): void;
+  /** FIX: P1-4 Optional callback to normalize props during component updates.
+   *  When provided, patch will call this to normalize nextProps before assigning
+   *  to component.props, ensuring declared props validation and attrs separation. */
+  normalizeProps?(
+    instance: ComponentInternalInstance,
+    rawProps: Record<string, unknown> | null,
+  ): void;
 }
 
 // ============================================================

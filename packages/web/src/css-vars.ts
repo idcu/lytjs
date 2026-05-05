@@ -72,59 +72,85 @@ export function stripVarPrefix(name: string): string {
 }
 
 /**
+ * setCSSVar 参数对象 - 指定元素上的 CSS 变量
+ */
+export interface SetCSSVarWithElementOptions {
+  /** 目标元素 */
+  element: HTMLElement;
+  /** 变量名 */
+  name: string;
+  /** 变量值（null/undefined 表示移除） */
+  value?: CSSVarValue;
+  /** 配置选项 */
+  options?: CSSVarOptions;
+}
+
+/**
+ * setCSSVar 参数对象 - 全局 CSS 变量
+ */
+export interface SetCSSVarGlobalOptions {
+  /** 变量名 */
+  name: string;
+  /** 变量值（null/undefined 表示移除） */
+  value?: CSSVarValue;
+  /** 配置选项 */
+  options?: CSSVarOptions;
+}
+
+/**
  * 设置 CSS 变量
  *
- * @param element - 目标元素（默认为 document.documentElement）
- * @param name - 变量名
- * @param value - 变量值（null/undefined 表示移除）
- * @param options - 配置选项
+ * @param params - 参数对象
  * @example
  * ```ts
  * // 设置全局变量
- * setCSSVar('--primary-color', '#007bff')
+ * setCSSVar({ name: '--primary-color', value: '#007bff' })
  *
  * // 设置元素变量
- * setCSSVar(myElement, 'font-size', 16, { unit: 'px' })
+ * setCSSVar({ element: myElement, name: 'font-size', value: 16, options: { unit: 'px' } })
  *
  * // 移除变量
- * setCSSVar(myElement, '--old-var', null)
+ * setCSSVar({ element: myElement, name: '--old-var', value: null })
  * ```
  */
+export function setCSSVar(params: SetCSSVarWithElementOptions): void;
+export function setCSSVar(params: SetCSSVarGlobalOptions): void;
+/** @deprecated 使用对象参数形式 setCSSVar({ element, name, value }) 替代 */
 export function setCSSVar(
-  element: HTMLElement | string,
-  name?: string,
-  value?: CSSVarValue,
-  options?: CSSVarOptions,
-): void;
-export function setCSSVar(
+  element: HTMLElement,
   name: string,
   value?: CSSVarValue,
   options?: CSSVarOptions,
 ): void;
 export function setCSSVar(
-  elementOrName: HTMLElement | string,
-  nameOrValue?: string | CSSVarValue,
-  valueOrOptions?: CSSVarValue | CSSVarOptions,
+  paramsOrElement: SetCSSVarWithElementOptions | SetCSSVarGlobalOptions | HTMLElement,
+  name?: string,
+  value?: CSSVarValue,
   options?: CSSVarOptions,
 ): void {
-  // 处理重载签名
   let element: HTMLElement;
   let varName: string;
   let varValue: CSSVarValue;
   let opts: CSSVarOptions | undefined;
 
-  if (typeof elementOrName === 'string') {
-    // 第一个参数是变量名（全局设置）
-    element = document.documentElement;
-    varName = normalizeVarName(elementOrName);
-    varValue = nameOrValue as CSSVarValue;
-    opts = valueOrOptions as CSSVarOptions | undefined;
-  } else {
-    // 第一个参数是元素
-    element = elementOrName;
-    varName = normalizeVarName(nameOrValue as string);
-    varValue = valueOrOptions as CSSVarValue;
+  if (paramsOrElement instanceof HTMLElement) {
+    // 向后兼容的位置参数调用方式
+    element = paramsOrElement;
+    varName = normalizeVarName(name!);
+    varValue = value;
     opts = options;
+  } else if ('element' in paramsOrElement) {
+    // 对象参数：指定元素
+    element = paramsOrElement.element;
+    varName = normalizeVarName(paramsOrElement.name);
+    varValue = paramsOrElement.value;
+    opts = paramsOrElement.options;
+  } else {
+    // 对象参数：全局设置
+    element = document.documentElement;
+    varName = normalizeVarName(paramsOrElement.name);
+    varValue = paramsOrElement.value;
+    opts = paramsOrElement.options;
   }
 
   if (!element) return;
@@ -393,6 +419,11 @@ export function hasCSSVar(
 /**
  * 获取元素上定义的所有 CSS 变量
  *
+ * 注意：此方法通过遍历 computedStyle 的所有属性来查找 CSS 变量，
+ * 在属性数量较多的元素上可能存在性能开销。
+ * computedStyle.length 通常在数百到数千之间，遍历是 O(n) 操作。
+ * 建议仅在调试或初始化时调用，避免在热路径中频繁使用。
+ *
  * @param element - 目标元素（默认为 document.documentElement）
  * @returns CSS 变量键值对
  * @example
@@ -548,11 +579,25 @@ export class CSSVarObserver {
 
   /**
    * 检查变量变化
+   * FIX: P2-v11-37 添加最大条目限制，防止 lastValues Map 无限增长
    */
   private lastValues = new Map<string, string | null>();
+  /** lastValues 最大条目数 */
+  private static readonly MAX_LAST_VALUES_SIZE = 500;
 
   private checkChanges(targetNames?: string[]): void {
     const namesToCheck = targetNames ?? Array.from(this.callbacks.keys());
+
+    // FIX: P2-v11-37 当 lastValues 超过最大条目数时，
+    // 清理不在当前观察列表中的条目，防止内存泄漏
+    if (this.lastValues.size > CSSVarObserver.MAX_LAST_VALUES_SIZE) {
+      const activeNames = new Set(this.callbacks.keys());
+      for (const key of this.lastValues.keys()) {
+        if (!activeNames.has(key)) {
+          this.lastValues.delete(key);
+        }
+      }
+    }
 
     namesToCheck.forEach((name) => {
       const currentValue = getCSSVar(this.element, name);
@@ -679,4 +724,8 @@ export {
   // 类
   CSSVarObserver,
   ThemeManager,
+
+  // 类型
+  SetCSSVarWithElementOptions,
+  SetCSSVarGlobalOptions,
 };

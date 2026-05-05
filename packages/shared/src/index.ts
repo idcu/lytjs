@@ -151,7 +151,9 @@ export function isNullish(value: unknown): value is null | undefined {
 export function isPromise<T = unknown>(value: unknown): value is Promise<T> {
   return (
     value instanceof Promise ||
-    (isObject(value) && isFunction((value as PromiseLike<T>).then))
+    (isObject(value) &&
+      isFunction((value as PromiseLike<T>).then) &&
+      isFunction((value as PromiseLike<T>).catch))
   );
 }
 
@@ -208,6 +210,9 @@ export function kebabToCamel(str: string): string {
 /**
  * 生成唯一 ID
  *
+ * FIX: P2-v11-26 优先使用 crypto.randomUUID 回退，减少对全局可变计数器的依赖，
+ * 降低多实例/多窗口场景下的 ID 冲突风险
+ *
  * @param prefix - ID 前缀（可选）
  * @returns 唯一 ID 字符串
  * @example
@@ -218,6 +223,11 @@ export function kebabToCamel(str: string): string {
  */
 let idCounter = 0;
 export function generateId(prefix = 'lyt'): string {
+  // 优先使用 crypto.randomUUID（如果可用），截取前 8 位作为后缀
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return `${prefix}-${crypto.randomUUID().slice(0, 8)}`;
+  }
+  // 回退：使用全局计数器 + 时间戳
   return `${prefix}-${++idCounter}-${Date.now().toString(36)}`;
 }
 
@@ -280,7 +290,10 @@ export function shallowClone<T extends Record<string, unknown>>(obj: T): T {
 }
 
 /**
- * 创建对象的深拷贝（支持基本类型、对象、数组、Date、RegExp）
+ * 创建对象的深拷贝（支持基本类型、对象、数组、Date、RegExp、Map、Set）
+ *
+ * FIX: P2-v11-30 添加对 Map 和 Set 类型的支持，
+ * 确保包含 Map/Set 的对象能被正确深拷贝
  *
  * @param obj - 源对象
  * @returns 深拷贝后的新对象
@@ -296,6 +309,24 @@ export function deepClone<T>(obj: T): T {
 
   if (obj instanceof Date) return new Date(obj.getTime()) as unknown as T;
   if (obj instanceof RegExp) return new RegExp(obj) as unknown as T;
+
+  // FIX: P2-v11-30 支持 Map 类型深拷贝
+  if (obj instanceof Map) {
+    const clonedMap = new Map();
+    for (const [key, value] of obj) {
+      clonedMap.set(deepClone(key), deepClone(value));
+    }
+    return clonedMap as unknown as T;
+  }
+
+  // FIX: P2-v11-30 支持 Set 类型深拷贝
+  if (obj instanceof Set) {
+    const clonedSet = new Set();
+    for (const value of obj) {
+      clonedSet.add(deepClone(value));
+    }
+    return clonedSet as unknown as T;
+  }
 
   if (Array.isArray(obj)) {
     return obj.map((item) => deepClone(item)) as unknown as T;
@@ -514,56 +545,88 @@ export function delay(ms: number): Promise<void> {
 /**
  * 函数防抖
  *
+ * FIX: P2-v11-29 debounce 返回取消函数，允许调用方在需要时取消防抖定时器，
+ * 避免组件卸载后定时器仍在运行导致内存泄漏
+ *
  * @param fn - 要防抖的函数
  * @param wait - 等待毫秒数
- * @returns 防抖后的函数
+ * @returns 防抖后的函数（附带 cancel 方法）
  * @example
  * ```ts
  * const debounced = debounce(() => console.log('called'), 300)
  * debounced() // 300ms 后输出 'called'
  * debounced() // 重新计时
+ * debounced.cancel() // 取消防抖
  * ```
  */
 export function debounce<T extends (...args: unknown[]) => unknown>(
   fn: T,
   wait: number,
-): (...args: Parameters<T>) => void {
+): ((...args: Parameters<T>) => void) & { cancel: () => void } {
   let timeoutId: ReturnType<typeof setTimeout> | null = null;
-  return (...args: Parameters<T>): void => {
+  const debounced = (...args: Parameters<T>): void => {
     if (timeoutId) clearTimeout(timeoutId);
     timeoutId = setTimeout(() => fn(...args), wait);
   };
+  // FIX: P2-v11-29 添加 cancel 方法，允许取消防抖定时器
+  debounced.cancel = (): void => {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+      timeoutId = null;
+    }
+  };
+  return debounced;
 }
 
 /**
  * 函数节流
  *
+ * FIX: P2-v11-28 throttle 返回取消函数，允许调用方在需要时取消节流定时器，
+ * 避免组件卸载后定时器仍在运行导致内存泄漏
+ *
  * @param fn - 要节流的函数
  * @param limit - 限制毫秒数
- * @returns 节流后的函数
+ * @returns 节流后的函数（附带 cancel 方法）
  * @example
  * ```ts
  * const throttled = throttle(() => console.log('called'), 300)
  * throttled() // 立即执行
  * throttled() // 300ms 内被忽略
+ * throttled.cancel() // 取消节流
  * ```
  */
 export function throttle<T extends (...args: unknown[]) => unknown>(
   fn: T,
   limit: number,
-): (...args: Parameters<T>) => void {
+): ((...args: Parameters<T>) => void) & { cancel: () => void } {
   let inThrottle = false;
-  return (...args: Parameters<T>): void => {
+  let timerId: ReturnType<typeof setTimeout> | null = null;
+  const throttled = (...args: Parameters<T>): void => {
     if (!inThrottle) {
       fn(...args);
       inThrottle = true;
-      setTimeout(() => (inThrottle = false), limit);
+      timerId = setTimeout(() => {
+        inThrottle = false;
+        timerId = null;
+      }, limit);
     }
   };
+  // FIX: P2-v11-28 添加 cancel 方法，允许取消节流定时器
+  throttled.cancel = (): void => {
+    if (timerId !== null) {
+      clearTimeout(timerId);
+      timerId = null;
+    }
+    inThrottle = false;
+  };
+  return throttled;
 }
 
 /**
  * 只执行一次的函数
+ *
+ * FIX: P2-v11-27 改进 once 函数：支持异步函数场景，
+ * 在异步执行期间阻止重复调用，执行完成后正确返回结果
  *
  * @param fn - 要执行的函数
  * @returns 只执行一次的包装函数
@@ -576,15 +639,33 @@ export function throttle<T extends (...args: unknown[]) => unknown>(
  */
 export function once<T extends (...args: unknown[]) => unknown>(
   fn: T,
-): (...args: Parameters<T>) => ReturnType<T> | undefined {
+): (...args: Parameters<T>) => ReturnType<T> | undefined | Promise<ReturnType<T> | undefined> {
   let called = false;
   let result: ReturnType<T>;
-  return (...args: Parameters<T>): ReturnType<T> | undefined => {
+  let pendingPromise: Promise<ReturnType<T>> | null = null;
+
+  return (...args: Parameters<T>): ReturnType<T> | undefined | Promise<ReturnType<T> | undefined> => {
     if (!called) {
       called = true;
-      result = fn(...args) as ReturnType<T>;
-      return result;
+      try {
+        result = fn(...args) as ReturnType<T>;
+        // 如果结果是 Promise，跟踪其状态以防止并发调用
+        if (result instanceof Promise) {
+          pendingPromise = result;
+          return result.then(
+            (val) => { pendingPromise = null; return val; },
+            (err) => { pendingPromise = null; throw err; },
+          ) as Promise<ReturnType<T> | undefined>;
+        }
+        return result;
+      } catch (e) {
+        // 同步异常：重置 called 标志，允许重试
+        called = false;
+        throw e;
+      }
     }
+    // 如果有正在执行的异步操作，返回其 Promise
+    if (pendingPromise) return pendingPromise;
     return undefined;
   };
 }
@@ -597,6 +678,7 @@ export function once<T extends (...args: unknown[]) => unknown>(
  * 简单的记忆化函数（memoize）
  *
  * @param fn - 要缓存的函数
+ * @param maxSize - 缓存最大条目数，默认 128。超过时清除最早条目
  * @returns 带缓存的函数
  * @example
  * ```ts
@@ -609,13 +691,49 @@ export function once<T extends (...args: unknown[]) => unknown>(
  */
 export function memoize<T extends (...args: unknown[]) => unknown>(
   fn: T,
+  maxSize: number = 128,
 ): (...args: Parameters<T>) => ReturnType<T> {
   const cache = new Map<string, ReturnType<T>>();
+  const keyOrder: string[] = [];
+
+  /** 对参数进行稳定排序，确保对象键序不同时产生相同的 key */
+  function stableStringify(args: unknown[]): string {
+    return JSON.stringify(args, (_key, value) => {
+      if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
+        // 对对象键进行排序，确保稳定序列化
+        const sorted: Record<string, unknown> = {};
+        Object.keys(value)
+          .sort()
+          .forEach((k) => {
+            sorted[k] = (value as Record<string, unknown>)[k];
+          });
+        return sorted;
+      }
+      return value;
+    });
+  }
+
   return (...args: Parameters<T>): ReturnType<T> => {
-    const key = JSON.stringify(args);
+    let key: string;
+    try {
+      key = stableStringify(args);
+    } catch {
+      // 循环引用或其他序列化错误时，直接调用原函数不缓存
+      return fn(...args) as ReturnType<T>;
+    }
+
     if (cache.has(key)) return cache.get(key)!;
+
     const result = fn(...args) as ReturnType<T>;
     cache.set(key, result);
+    keyOrder.push(key);
+
+    // 超过 maxSize 时，清除最早条目
+    if (keyOrder.length > maxSize) {
+      const oldestKey = keyOrder.shift()!;
+      cache.delete(oldestKey);
+    }
+
     return result;
   };
 }

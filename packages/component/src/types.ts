@@ -87,7 +87,22 @@ export interface ComponentOptions<
 
 // ==================== AppContext ====================
 
-export interface AppContext extends BaseAppContext {
+// FIX: P2-36 定义 AppContextConfig 接口，明确 config 的可选属性，
+// 避免类型过于宽泛（原来 config 类型为 {}），提高类型安全性
+export interface AppContextConfig {
+  /** 全局属性，可通过组件实例的 $ 访问 */
+  globalProperties?: Record<string, unknown>;
+  /** 全局错误处理器 */
+  errorHandler?: (err: Error, instance: unknown, info: string) => void;
+  /** 全局警告处理器 */
+  warnHandler?: (msg: string, instance: unknown, trace: string) => void;
+  /** 是否为原生标签 */
+  isNativeTag?: (tag: string) => boolean;
+  /** 自定义配置字段 */
+  [key: string]: unknown;
+}
+
+export interface AppContext extends BaseAppContext<AppContextConfig> {
   components: Record<string, ComponentOptions>;
   directives: Record<string, unknown>;
   mixins: ComponentOptions[];

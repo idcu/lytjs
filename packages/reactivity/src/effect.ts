@@ -183,12 +183,17 @@ export function trigger(
 
 export function triggerEffects(effects: ReactiveEffect[]) {
   if (triggerDepth > MAX_TRIGGER_DEPTH) {
-    // FIX: P1-1 REACTIVITY-NEW-02 - 超限时不静默丢弃，改为抛出错误
-    // 避免后续所有 trigger 永久静默丢弃，导致响应式系统失效
-    throw new Error(
-      `[lytjs/reactivity] Maximum trigger depth (${MAX_TRIGGER_DEPTH}) exceeded. ` +
-        `Possible infinite reactivity loop detected. triggerDepth=${triggerDepth}`,
-    );
+    // FIX: P2-1 triggerDepth 超限时改为 warn + 静默丢弃，与 Vue 3 行为一致。
+    // 之前直接 throw Error 过于激进，会导致整个响应式链断裂。
+    // 改为仅发出警告并丢弃后续 trigger，避免因单个无限循环导致整个应用崩溃。
+    if (__DEV__) {
+      warn(
+        `[lytjs/reactivity] Maximum trigger depth (${MAX_TRIGGER_DEPTH}) exceeded. ` +
+        `Possible infinite reactivity loop detected. Further triggers are silently dropped. ` +
+        `triggerDepth=${triggerDepth}`,
+      );
+    }
+    return;
   }
   triggerDepth++;
   try {
@@ -412,6 +417,14 @@ export function batch(fn: () => void): void {
     }
     shouldTrack = trackStack.length > 0 ? trackStack[trackStack.length - 1]! : true;
   }
+}
+
+/**
+ * @internal 重置 batch 全局状态（仅用于测试）
+ */
+export function _resetBatchGlobalState(): void {
+  batchEffects.clear();
+  isFlushingBatch = false;
 }
 
 /**

@@ -63,7 +63,11 @@ export interface TransitionState {
 // Internal: transition cleanup WeakMap
 // ============================================================
 
-const transitionCleanupMap = new WeakMap<object, (() => void) | null>();
+// FIX: P2-18 使用复合 key 机制避免同一元素上不同过渡的 cleanup 冲突。
+// transitionCleanupMap: 存储每个 cleanup symbol 对应的清理函数
+const transitionCleanupMap = new Map<symbol, () => void>();
+// elementCleanupKeys: 追踪每个元素关联的所有 cleanup symbol，用于 cancelTransition
+const elementCleanupKeys = new WeakMap<object, Set<symbol>>();
 
 // ============================================================
 // Global transition prefix configuration
@@ -661,11 +665,25 @@ function waitForTransitionEnd<HN, HE extends HN>(
   const disposeAnimation = host.addEventListener(el, 'animationend', onEnd as never);
 
   // 存储清理函数
-  transitionCleanupMap.set(el as object, () => {
+  // FIX: P2-18 使用复合 key 避免同一元素上不同过渡的 cleanup 冲突。
+  // 当同一元素快速触发多次过渡（如 enter -> leave）时，使用 el 作为唯一 key
+  // 会导致后注册的 cleanup 覆盖前一个。改为使用 Symbol 作为唯一标识，
+  // 确保每次过渡都有独立的 cleanup 函数。
+  const cleanupKey = Symbol('transition-cleanup');
+  const cleanupFn = () => {
     host.clearTimeout(timer);
     disposeTransition();
     disposeAnimation();
-  });
+  };
+  transitionCleanupMap.set(cleanupKey, cleanupFn);
+
+  // 追踪元素与 cleanup key 的关联，供 cancelTransition 使用
+  let keys = elementCleanupKeys.get(el as object);
+  if (!keys) {
+    keys = new Set();
+    elementCleanupKeys.set(el as object, keys);
+  }
+  keys.add(cleanupKey);
 }
 
 /**
@@ -708,11 +726,21 @@ function waitForTransitionEndDOM(
   el.addEventListener('transitionend', onEnd);
   el.addEventListener('animationend', onEnd);
 
-  transitionCleanupMap.set(el, () => {
+  // FIX: P2-18 DOM 回退版也使用复合 key 机制
+  const cleanupKey = Symbol('transition-cleanup-dom');
+  const cleanupFn = () => {
     clearTimeout(timer);
     el.removeEventListener('transitionend', onEnd);
     el.removeEventListener('animationend', onEnd);
-  });
+  };
+  transitionCleanupMap.set(cleanupKey, cleanupFn);
+
+  let keys = elementCleanupKeys.get(el as object);
+  if (!keys) {
+    keys = new Set();
+    elementCleanupKeys.set(el as object, keys);
+  }
+  keys.add(cleanupKey);
 }
 
 // ============================================================
@@ -737,10 +765,20 @@ export function cancelTransition<HN, HE extends HN>(
   // 确定实际元素引用
   const target = el ?? (hostOrEl as unknown as object);
 
-  const cleanup = transitionCleanupMap.get(target);
-  if (cleanup) {
-    cleanup();
-    transitionCleanupMap.delete(target);
+  // FIX: P2-18 使用复合 key 机制取消过渡。
+  // 通过 elementCleanupKeys 查找元素关联的所有 cleanup key，
+  // 逐个执行清理并删除，确保同一元素上的多个过渡都能被正确取消。
+  const keys = elementCleanupKeys.get(target);
+  if (keys) {
+    for (const key of keys) {
+      const cleanup = transitionCleanupMap.get(key);
+      if (cleanup) {
+        cleanup();
+        transitionCleanupMap.delete(key);
+      }
+    }
+    keys.clear();
+    elementCleanupKeys.delete(target);
   }
 }
 

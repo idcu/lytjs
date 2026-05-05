@@ -177,6 +177,13 @@ export class NodeCache<HN extends object = object, HE extends HN = HN> {
     // 3. 清理事件监听器
     for (const listener of entry.eventListeners) {
       try {
+        // FIX: P2-v11-21 添加类型检查，确保 listener.el 是有效的宿主元素
+        if (listener.el == null || typeof listener.el !== 'object') {
+          if (__DEV__) {
+            console.warn('[lytjs/node-cache] Invalid event listener element, skipping:', listener.el);
+          }
+          continue;
+        }
         this.host.removeEventListener(
           listener.el as HE,
           listener.event,

@@ -317,6 +317,16 @@ function handleVBind(
 /**
  * 处理 v-on 指令
  * FIX: P1-30 添加事件修饰符处理，支持 .stop/.prevent/.capture/.once/.self/.passive
+ *
+ * NOTE: handleVOn 与 transforms/on.ts 中的 transformOn 的分工说明：
+ * - transformOn（on.ts）：作为 DirectiveTransform 注册到 builtInDirectiveTransforms 中，
+ *   在 transform 阶段由 transform.ts 的 traverseNode 调用，处理 v-on 指令并返回
+ *   DirectiveTransformResult（包含 props 数组），用于标准编译管线。
+ * - handleVOn（此处）：在 transformElement 中直接调用，用于将 v-on 指令转换为
+ *   VNodeCall 的 props 属性。这是 transformElement 内联处理指令的方式，
+ *   与 transformOn 的独立 DirectiveTransform 模式互补。
+ * 实际编译时，v-on 会优先走 on.ts 的 transformOn 路径（通过 builtInDirectiveTransforms），
+ * 此处的 handleVOn 作为 transformElement 内部指令处理的备用路径。
  */
 function handleVOn(
   prop: DirectiveNode,
@@ -365,27 +375,27 @@ function handleVOn(
       // 构建带修饰符的事件处理器
       // FIX: P2-31 使用 ExpressionNode 类型以支持 SimpleExpressionNode 和 CompoundExpressionNode
       let eventHandler: ExpressionNode = handler;
-      // FIX: P2-31 添加调用括号，确保生成的代码正确调用处理器
-      // .stop 修饰符：包装为 event.stopPropagation()
-      if (modifiers.includes('stop')) {
-        eventHandler = createCompoundExpression([
-          `($event) => { $event.stopPropagation(); (`,
-          handler,
-          `)($event); }`,
-        ]);
-      }
-      // .prevent 修饰符：包装为 event.preventDefault()
-      if (modifiers.includes('prevent')) {
-        eventHandler = createCompoundExpression([
-          `($event) => { $event.preventDefault(); (`,
-          handler,
-          `)($event); }`,
-        ]);
-      }
-      // .self 修饰符：检查 event.target === event.currentTarget
+      // FIX: P1-11 使用累加方式组合多个修饰符，避免后面的修饰符覆盖前面的
+      // 收集所有需要应用的修饰符前缀和后缀
+      const modifierPrefixes: string[] = [];
+      const modifierSuffixes: string[] = [];
+
       if (modifiers.includes('self')) {
+        modifierPrefixes.push('if ($event.target !== $event.currentTarget) return;');
+      }
+      if (modifiers.includes('stop')) {
+        modifierPrefixes.push('$event.stopPropagation();');
+      }
+      if (modifiers.includes('prevent')) {
+        modifierPrefixes.push('$event.preventDefault();');
+      }
+
+      // 如果有任何修饰符前缀，将所有修饰符组合到同一个包装函数内
+      if (modifierPrefixes.length > 0) {
         eventHandler = createCompoundExpression([
-          `($event) => { if ($event.target !== $event.currentTarget) return; (`,
+          `($event) => { `,
+          ...modifierPrefixes.map((p) => [p, ' ']).flat(),
+          '(',
           handler,
           `)($event); }`,
         ]);

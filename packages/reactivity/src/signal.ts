@@ -84,6 +84,9 @@ const pendingNotifications = new Set<Subscriber>();
 /** batch 期间待执行的 effect 系统 trigger 操作（自动去重） */
 // FIX: P1-05 使用 Map<symbol,...> 替代 Map<string,...>，
 // 避免不同 signal 的 Symbol().toString() 产生相同的字符串 key 导致去重错误
+// FIX: P2-7 去重时保留最新 newValue：当同一个 signalKey 多次 set 时，
+// Map.set 会覆盖旧值，确保最终 trigger 使用最新的 newValue，
+// 避免因去重导致订阅者收到过期的旧值。
 const pendingTriggerOps = new Map<
   symbol,
   { store: Record<symbol, unknown>; signalKey: symbol; newValue?: unknown }
@@ -160,12 +163,9 @@ export function signal<T>(initialValue: T): WritableSignal<T> {
   signalFn.cleanup = (): void => {
     // 清理所有订阅者，但保持 signal 可用
     subscribers.clear();
-    // 清理 effect 系统桥接的依赖
-    const storeDeps = (store as Record<symbol, unknown>)[SIGNAL_KEY];
-    if (storeDeps !== undefined) {
-      // 触发一次空值更新，清理 effect 系统中的依赖
-      trigger(store, TriggerOpTypes.SET, SIGNAL_KEY, undefined, storeDeps);
-    }
+    // 清理 effect 系统桥接的依赖：直接触发 SET 通知使依赖失效，
+    // 不传旧值以避免读取 signal 值
+    trigger(store, TriggerOpTypes.SET, SIGNAL_KEY);
   };
 
   signalFn._subscribe = (subscriber: Subscriber): (() => void) => {

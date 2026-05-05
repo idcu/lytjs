@@ -2,6 +2,7 @@
 // KeepAlive component (simplified)
 
 import { isString, isArray, isFunction } from '@lytjs/common-is';
+import { watch } from '@lytjs/reactivity';
 import type { ComponentInternalInstance, ComponentOptions, SetupContext } from './types';
 import { createComponentInstance, setupComponent } from './component';
 import { handleError } from './lifecycle';
@@ -136,12 +137,21 @@ export const KeepAlive: ComponentOptions = {
     // FIX: P2-8 COMPONENT-NEW-05 - 使用 LRU 缓存替代普通 Map
     const maxCacheSize = props.max ?? 10;
     const cache: KeepAliveCache = new LRUCache(maxCacheSize);
-    const keys: Set<string> = new Set();
+    // FIX: P2-29 移除冗余的 keys Set，直接使用 cache.keys() 避免数据重复
     let _currentVNode: VNode | null = null;
+
+    // FIX: P2-29 监听 max prop 变化，动态调整 LRU 缓存大小
+    watch(
+      () => (_props as KeepAliveProps).max,
+      (newMax) => {
+        if (newMax !== undefined && typeof newMax === 'number' && newMax > 0) {
+          (cache as LRUCache).setMaxSize(newMax);
+        }
+      },
+    );
 
     return {
       cache,
-      keys,
       _currentVNode,
     } as Record<string, unknown>;
   },
@@ -330,17 +340,14 @@ export function cacheInstance(
   instance: ComponentInternalInstance,
 ): void {
   const cache = keepAlive.setupState.cache as KeepAliveCache;
-  const keys = keepAlive.setupState.keys as Set<string>;
 
   // If already cached, remove old entry first (will be re-added with updated order)
   if (cache.has(key)) {
     cache.delete(key);
-    keys.delete(key);
   }
 
   // LRU cache automatically handles max size pruning in set()
   cache.set(key, instance);
-  keys.add(key);
 }
 
 /**
@@ -359,8 +366,6 @@ export function getCachedInstance(
  */
 export function removeCachedInstance(keepAlive: ComponentInternalInstance, key: string): boolean {
   const cache = keepAlive.setupState.cache as KeepAliveCache;
-  const keys = keepAlive.setupState.keys as Set<string>;
-  keys.delete(key);
   return cache.delete(key);
 }
 

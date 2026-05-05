@@ -120,12 +120,22 @@ export function batchScope<T>(
   try {
     if (async) {
       // 异步模式：使用 batchAsync
+      // FIX: P1-2 异步 batchScope 作用域栈提前弹出
+      // 将 scopeStack.pop() 和 globalBatchDepth-- 移到 .then() 回调中，
+      // 确保 batchAsync 的异步操作完成后再弹出作用域栈
       let result: T;
-      batchAsync(() => {
+      const promise = batchAsync(() => {
         result = callback(ctx);
-      }).then(() => {
+      });
+      promise.then(() => {
         ctx.committed = true;
+        // 异步操作完成后再弹出作用域栈
+        scopeStack.pop();
+        globalBatchDepth--;
       }).catch((error) => {
+        // 异步操作失败时也要弹出作用域栈
+        scopeStack.pop();
+        globalBatchDepth--;
         if (onError) {
           onError(error);
         } else {
@@ -143,15 +153,18 @@ export function batchScope<T>(
       return result!;
     }
   } catch (error) {
+    // 同步模式下的错误处理
     if (onError) {
       onError(error);
       return undefined as T;
     }
     throw error;
   } finally {
-    // 弹出作用域栈
-    scopeStack.pop();
-    globalBatchDepth--;
+    // 仅在同步模式下弹出作用域栈（异步模式在 .then() 中处理）
+    if (!async) {
+      scopeStack.pop();
+      globalBatchDepth--;
+    }
   }
 }
 
@@ -262,26 +275,16 @@ export function isInBatchScope(): boolean {
 /**
  * 等待所有待处理的批量操作完成（异步模式）。
  * 返回一个 Promise，在所有异步批量操作完成后 resolve。
+ *
+ * FIX: P2-2 flushBatchScopes 中 pendingCallbacks 始终为空（死代码）。
+ * 原因：batchScope 的异步模式使用 batchAsync 而非 pendingCallbacks 注册回调，
+ * 导致 pendingCallbacks 永远不会被填充。移除死代码，避免误导维护者。
+ * 如需等待异步 batchScope 完成，应直接 await batchScopeAsync()。
  */
 export function flushBatchScopes(): Promise<void> {
-  if (!isFlushing && pendingCallbacks.size > 0) {
-    isFlushing = true;
-    return new Promise((resolve) => {
-      Promise.resolve().then(() => {
-        const callbacks = Array.from(pendingCallbacks);
-        pendingCallbacks.clear();
-        callbacks.forEach(cb => {
-          try {
-            cb();
-          } catch (e) {
-            // 忽略单个回调的错误
-          }
-        });
-        isFlushing = false;
-        resolve();
-      });
-    });
-  }
+  // FIX: P2-2 pendingCallbacks 在当前实现中始终为空（死代码已移除）。
+  // 异步批量操作的完成通过 batchScopeAsync() 的 Promise 链保证。
+  // 此函数保留为空操作以维持 API 兼容性，未来可用于等待所有异步 batchScope 完成。
   return Promise.resolve();
 }
 

@@ -420,32 +420,36 @@ export interface CreateExtendedHostOptions {
  */
 export function createExtendedWebHost(
   options: CreateExtendedHostOptions,
-): ExtendedRendererHost {
+): ExtendedRendererHost<Node, Element> {
   const { baseHost } = options;
 
-  const extendedHost: ExtendedRendererHost = {
+  const extendedHost: ExtendedRendererHost<Node, Element> = {
     ...baseHost,
 
     // 扩展的节点操作
+    // FIX: P2-v11-31 添加 Document 类型检查，
+    // Document 节点也支持 insertBefore/replaceChild 操作
     insertBefore(parent, newChild, referenceNode) {
-      if (parent instanceof Element || parent instanceof DocumentFragment) {
+      if (parent instanceof Element || parent instanceof DocumentFragment || parent instanceof Document) {
         parent.insertBefore(newChild as Node, referenceNode as Node | null);
       }
     },
 
     replaceChild(parent, newChild, oldChild) {
-      if (parent instanceof Element || parent instanceof DocumentFragment) {
+      if (parent instanceof Element || parent instanceof DocumentFragment || parent instanceof Document) {
         parent.replaceChild(newChild as Node, oldChild as Node);
       }
       return oldChild;
     },
 
     firstChild(node) {
-      return (node as Node).firstChild as unknown as typeof node;
+      const child = (node as Node).firstChild;
+      return child != null ? (child as unknown as Node) : null;
     },
 
     lastChild(node) {
-      return (node as Node).lastChild as unknown as typeof node;
+      const child = (node as Node).lastChild;
+      return child != null ? (child as unknown as Node) : null;
     },
 
     contains(parent, child) {
@@ -649,14 +653,21 @@ export function createExtendedWebHost(
 /**
  * 检查宿主是否支持指定能力
  *
+ * FIX: P2-v11-32 缓存检测结果，避免每次调用都重新检测。
+ * 宿主能力在页面生命周期内不会变化，无需重复检测。
+ *
  * @param capability - 能力名称
  * @returns 如果支持则返回 true
  */
+let cachedCapabilities: HostCapabilities | null = null;
+
 export function supportsHostCapability(
   capability: keyof HostCapabilities,
 ): boolean {
-  const caps = detectHostCapabilities();
-  return caps[capability];
+  if (!cachedCapabilities) {
+    cachedCapabilities = detectHostCapabilities();
+  }
+  return cachedCapabilities[capability];
 }
 
 /**

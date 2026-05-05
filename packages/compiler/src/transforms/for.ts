@@ -66,9 +66,9 @@ export function transformFor(node: RootNode | TemplateChildNode, context: Transf
   // - [ a, b ], index in array
   // - [ a = 1 ] in array (with default values)
   // FIX: P2-25 解构赋值语法支持已完善，支持嵌套解构和剩余元素
-  const inMatch = expContent.match(
-    /^\s*(?:\(([^)]+)\)|(\{[^}]+\}(?:\s*,\s*\w+)?)|(\[[^\]]+\](?:\s*,\s*\w+)?)|(\S+))\s+(?:in|of)\s+(.+)$/,
-  );
+  // FIX: P2-47 改进正则：使用平衡括号匹配替代 [^)]+，
+  // 支持嵌套括号语法如 (item, (sub) => sub.key) in items
+  const inMatch = matchVForExpression(expContent);
   if (!inMatch) return;
 
   // inMatch[1]: parenthesized syntax (item, index)
@@ -207,4 +207,104 @@ function parseDestructure(
   }
 
   return null;
+}
+
+/**
+ * FIX: P2-47 使用平衡括号匹配解析 v-for 表达式，
+ * 支持嵌套括号语法如 (item, (sub) => sub.key) in items
+ *
+ * 返回与原正则匹配相同的分组结构：
+ * [1] parenthesized syntax, [2] object destructuring,
+ * [3] array destructuring, [4] simple variable, [5] right-hand side
+ */
+function matchVForExpression(
+  exp: string,
+): RegExpMatchArray | null {
+  const trimmed = exp.trim();
+
+  // 尝试匹配括号语法：(item) in list 或 (item, index) in list
+  if (trimmed.startsWith('(')) {
+    const parenEnd = findBalancedParen(trimmed, 0);
+    if (parenEnd !== -1) {
+      const left = trimmed.slice(1, parenEnd).trim();
+      const rest = trimmed.slice(parenEnd + 1).trim();
+      const inOfMatch = rest.match(/^(?:in|of)\s+(.+)$/);
+      if (inOfMatch) {
+        return [trimmed, left, undefined, undefined, undefined, inOfMatch[1]] as unknown as RegExpMatchArray;
+      }
+    }
+  }
+
+  // 尝试匹配花括号语法：{ key, value } in list
+  if (trimmed.startsWith('{')) {
+    const braceEnd = findBalancedBrace(trimmed, 0);
+    if (braceEnd !== -1) {
+      const left = trimmed.slice(0, braceEnd + 1).trim();
+      const rest = trimmed.slice(braceEnd + 1).trim();
+      const inOfMatch = rest.match(/^(?:,\s*(\w+))?\s+(?:in|of)\s+(.+)$/);
+      if (inOfMatch) {
+        return [trimmed, undefined, left, undefined, inOfMatch[1] ?? undefined, inOfMatch[2]] as unknown as RegExpMatchArray;
+      }
+    }
+  }
+
+  // 尝试匹配方括号语法：[ a, b ] in list
+  if (trimmed.startsWith('[')) {
+    const bracketEnd = findBalancedBracket(trimmed, 0);
+    if (bracketEnd !== -1) {
+      const left = trimmed.slice(0, bracketEnd + 1).trim();
+      const rest = trimmed.slice(bracketEnd + 1).trim();
+      const inOfMatch = rest.match(/^(?:,\s*(\w+))?\s+(?:in|of)\s+(.+)$/);
+      if (inOfMatch) {
+        return [trimmed, undefined, undefined, left, inOfMatch[1] ?? undefined, inOfMatch[2]] as unknown as RegExpMatchArray;
+      }
+    }
+  }
+
+  // 回退到简单变量名匹配：item in list
+  const simpleMatch = trimmed.match(/^(\S+)\s+(?:in|of)\s+(.+)$/);
+  if (simpleMatch) {
+    return [trimmed, undefined, undefined, undefined, simpleMatch[1], simpleMatch[2]] as unknown as RegExpMatchArray;
+  }
+
+  return null;
+}
+
+/** 找到从 startIndex 开始的平衡右括号位置 */
+function findBalancedParen(str: string, startIndex: number): number {
+  let depth = 0;
+  for (let i = startIndex; i < str.length; i++) {
+    if (str[i] === '(') depth++;
+    else if (str[i] === ')') {
+      depth--;
+      if (depth === 0) return i;
+    }
+  }
+  return -1;
+}
+
+/** 找到从 startIndex 开始的平衡右花括号位置 */
+function findBalancedBrace(str: string, startIndex: number): number {
+  let depth = 0;
+  for (let i = startIndex; i < str.length; i++) {
+    if (str[i] === '{') depth++;
+    else if (str[i] === '}') {
+      depth--;
+      if (depth === 0) return i;
+    }
+  }
+  return -1;
+}
+
+/** 找到从 startIndex 开始的平衡右方括号位置 */
+function findBalancedBracket(str: string, startIndex: number): number {
+  let depth = 0;
+  for (let i = startIndex; i < str.length; i++) {
+    if (str[i] === '[') depth++;
+    else if (str[i] === ']') {
+      depth--;
+      if (depth === 0) return i;
+    }
+  }
+  return -1;
 }
