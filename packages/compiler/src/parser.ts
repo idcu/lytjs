@@ -664,61 +664,51 @@ function parseAttribute(
 // Parse quoted value (shared by parseAttributeValue and parseDirective)
 // ============================================================
 
+// FIX: P2-23 提取公共逻辑，避免代码重复
+/**
+ * 解析带引号的字符串值，支持转义字符
+ * @param context 解析上下文
+ * @param quote 引号字符（" 或 '）
+ * @returns 解析出的内容（不包含引号）
+ */
+function parseQuotedString(context: ParserContext, quote: '"' | "'"): string {
+  advanceBy(context, 1);
+  // 状态机方式处理转义：追踪连续反斜杠数量，奇数个反斜杠表示下一个引号被转义
+  let endIndex = 0;
+  let backslashCount = 0;
+  while (endIndex < context.source.length) {
+    const char = context.source[endIndex];
+    if (char === '\\') {
+      backslashCount++;
+    } else {
+      if (char === quote && backslashCount % 2 === 0) {
+        break;
+      }
+      backslashCount = 0;
+    }
+    endIndex++;
+  }
+
+  let content: string;
+  if (endIndex < context.source.length) {
+    content = context.source.slice(0, endIndex);
+  } else {
+    if (__DEV__) {
+      warn('Unclosed attribute value.');
+    }
+    content = context.source;
+  }
+  advanceBy(context, content.length + 1);
+  return content;
+}
+
 function parseQuotedValue(context: ParserContext): string {
   let content: string;
 
   if (context.source.startsWith('"')) {
-    advanceBy(context, 1);
-    // 状态机方式处理转义：追踪连续反斜杠数量，奇数个反斜杠表示下一个引号被转义
-    let endIndex = 0;
-    let backslashCount = 0;
-    while (endIndex < context.source.length) {
-      const char = context.source[endIndex];
-      if (char === '\\') {
-        backslashCount++;
-      } else {
-        if (char === '"' && backslashCount % 2 === 0) {
-          break;
-        }
-        backslashCount = 0;
-      }
-      endIndex++;
-    }
-    if (endIndex < context.source.length) {
-      content = context.source.slice(0, endIndex);
-    } else {
-      if (__DEV__) {
-        warn('Unclosed attribute value.');
-      }
-      content = context.source;
-    }
-    advanceBy(context, content.length + 1);
+    content = parseQuotedString(context, '"');
   } else if (context.source.startsWith("'")) {
-    advanceBy(context, 1);
-    // 状态机方式处理转义：追踪连续反斜杠数量，奇数个反斜杠表示下一个引号被转义
-    let endIndex = 0;
-    let backslashCount = 0;
-    while (endIndex < context.source.length) {
-      const char = context.source[endIndex];
-      if (char === '\\') {
-        backslashCount++;
-      } else {
-        if (char === "'" && backslashCount % 2 === 0) {
-          break;
-        }
-        backslashCount = 0;
-      }
-      endIndex++;
-    }
-    if (endIndex < context.source.length) {
-      content = context.source.slice(0, endIndex);
-    } else {
-      if (__DEV__) {
-        warn('Unclosed attribute value.');
-      }
-      content = context.source;
-    }
-    advanceBy(context, content.length + 1);
+    content = parseQuotedString(context, "'");
   } else {
     const match = context.source.match(RE_UNQUOTED_ATTR_VALUE);
     content = match ? match[0] : '';

@@ -134,6 +134,20 @@ export function createSuspensePatch<HN, HE extends HN>(
     _parentSuspense: SuspenseBoundary | null,
     isSVG: boolean,
   ): void {
+    // FIX: P2-14 计算 suspense 嵌套深度，超过阈值时发出警告
+    let depth = 0;
+    let parent = _parentSuspense;
+    while (parent) {
+      depth++;
+      parent = parent.parent ? (parent.parent.suspense as SuspenseBoundary | null) : null;
+    }
+    if (__DEV__ && depth > MAX_SUSPENSE_DEPTH) {
+      console.warn(
+        `[lytjs/patch-suspense] Suspense 嵌套深度(${depth})超过阈值(${MAX_SUSPENSE_DEPTH})，` +
+        `可能导致性能问题。建议减少嵌套层级或使用其他方式组织异步逻辑。`
+      );
+    }
+
     // Create a SuspenseBoundary and store it on the vnode
     const boundary: SuspenseBoundary = {
       vnode,

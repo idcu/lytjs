@@ -19,6 +19,9 @@ const MAX_RAW_DEPTH = 100;
 /**
  * toRaw 遍历过程中用于检测循环引用的 Set。
  * 提取为模块级常量以避免每次调用 toRaw 时重新分配。
+ *
+ * FIX: P2-5 注意：此 Set 假设单线程执行。JavaScript 是单线程的，
+ * 因此不需要额外的线程同步机制。嵌套调用通过 _rawDepth 计数器管理。
  */
 const _rawSeenSet = new Set<object>();
 

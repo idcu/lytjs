@@ -10,7 +10,7 @@ import { transform } from '../transform';
 import { generate } from '../codegen';
 import { generateSSR } from '../codegen-ssr';
 import { NodeTypes } from '../constants';
-import type { RootNode, TemplateChildNode, ElementNode, SourceLocation } from '../types';
+import type { RootNode, TemplateChildNode, ElementNode, SourceLocation, TextNode, CommentNode, InterpolationNode, SimpleExpressionNode } from '../types';
 
 // ============================================================
 // Types
@@ -156,9 +156,9 @@ export function wasmCompile(
 
   // 2. Transform
   try {
-    // FIX: P1-33 定义 WASM 接口类型替代 as any，
-    // 使用精确的 TransformOptions 类型确保类型安全
-    transform(root, {
+    // FIX: P2-30 直接导入 TransformOptions 类型，避免动态 import 类型断言
+    // FIX: P1-33 定义 WASM 接口类型替代 as any，使用精确的 TransformOptions 类型确保类型安全
+    const transformOptions: import('../types').TransformOptions = {
       ssr,
       inline,
       onError: (error: Error) => {
@@ -167,7 +167,8 @@ export function wasmCompile(
       onWarn: (warning: string) => {
         warnings.push({ message: warning });
       },
-    } as unknown as import('../types').TransformOptions);
+    };
+    transform(root, transformOptions);
   } catch (error) {
     const err = error as Error;
     return {
@@ -234,7 +235,7 @@ export function serializeAST(root: RootNode): ASTNode[] {
   return root.children.map((child) => serializeNode(child));
 }
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
+// FIX: P2-29 使用正确的类型断言替代 any
 function serializeNode(node: TemplateChildNode): ASTNode {
   switch (node.type) {
     case NodeTypes.ELEMENT: {
@@ -247,37 +248,46 @@ function serializeNode(node: TemplateChildNode): ASTNode {
           if (p.type === NodeTypes.ATTRIBUTE) {
             return { name: p.name, value: p.value?.content };
           }
+          // FIX: P2-29 使用类型守卫替代 any
+          const exp = p.exp as SimpleExpressionNode | undefined;
           return {
             name: `v-${p.name}`,
-            value: (p.exp as any)?.content,
+            value: exp?.content,
             dynamic: true,
           };
         }),
-        isStatic: (el as any).isStatic,
-        patchFlag: (el as any).patchFlag,
+        isStatic: el.isStatic,
+        patchFlag: el.patchFlag,
         loc: node.loc,
       };
     }
-    case NodeTypes.TEXT:
+    case NodeTypes.TEXT: {
+      const textNode = node as TextNode;
       return {
         type: 'Text',
-        content: (node as any).content,
-        isStatic: (node as any).isStatic,
+        content: textNode.content,
+        isStatic: textNode.isStatic,
         loc: node.loc,
       };
-    case NodeTypes.INTERPOLATION:
+    }
+    case NodeTypes.INTERPOLATION: {
+      const interpNode = node as InterpolationNode;
+      const expContent = interpNode.content as SimpleExpressionNode;
       return {
         type: 'Interpolation',
-        content: (node as any).content?.content ?? '',
+        content: expContent?.content ?? '',
         isStatic: false,
         loc: node.loc,
       };
-    case NodeTypes.COMMENT:
+    }
+    case NodeTypes.COMMENT: {
+      const commentNode = node as CommentNode;
       return {
         type: 'Comment',
-        content: (node as any).content,
+        content: commentNode.content,
         loc: node.loc,
       };
+    }
     default:
       return { type: `Unknown(${node.type})`, loc: node.loc };
   }

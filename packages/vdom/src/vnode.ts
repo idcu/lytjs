@@ -196,6 +196,10 @@ export function createCommentVNode(text: string = ''): VNode {
 
 /**
  * Clone a VNode, optionally merging extra props
+ *
+ * FIX: P2-9 注意：此函数执行浅拷贝，嵌套对象（如 props 中的对象属性）
+ * 将在原始 VNode 和克隆的 VNode 之间共享。这是有意的设计选择，
+ * 以平衡性能与正确性。如果需要完全隔离，调用方应手动深拷贝相关属性。
  */
 export function cloneVNode(vnode: VNode, extraProps: Record<string, unknown> | null = null): VNode {
   const cloned: VNode = {

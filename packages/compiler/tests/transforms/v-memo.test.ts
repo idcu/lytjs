@@ -9,8 +9,12 @@ import { createMockContext, createTextChild, createAttr } from './helpers';
 import { createElement, createDirective, createSimpleExpression } from '../../src/ast';
 
 describe('transformVMemo', () => {
+  // FIX: P2-28 resetMemoCounter 现在需要 context 参数
+  let testContext: ReturnType<typeof createMockContext>;
+
   beforeEach(() => {
-    resetMemoCounter();
+    testContext = createMockContext();
+    resetMemoCounter(testContext);
   });
 
   describe('基本功能', () => {
@@ -140,6 +144,7 @@ describe('transformVMemo', () => {
       expect(getMemoMeta(element2)!.cacheKey).toBe('_memo_1');
     });
 
+    // FIX: P2-28 resetMemoCounter 现在需要 context 参数
     it('resetMemoCounter 应该重置计数器', () => {
       const context = createMockContext();
 
@@ -152,7 +157,7 @@ describe('transformVMemo', () => {
       transformVMemo(element, context);
       expect(getMemoMeta(element)!.cacheKey).toBe('_memo_0');
 
-      resetMemoCounter();
+      resetMemoCounter(context);
 
       const memoDir2 = createDirective(
         'memo',

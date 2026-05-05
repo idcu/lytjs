@@ -257,7 +257,9 @@ export function createElementPatch<HN, HE extends HN>(
     oldProps: Record<string, unknown>,
     newProps: Record<string, unknown>,
   ): void {
-    for (const key in newProps) {
+    // FIX: P1-6 VDOM-NEW-05 - 使用 Object.keys() 替代 for...in 避免遍历原型链属性
+    // for...in 会遍历对象原型链上的可枚举属性，可能导致意外的属性更新
+    for (const key of Object.keys(newProps)) {
       if (key === 'key' || key === 'ref') continue;
       const next = newProps[key];
       const prev = oldProps[key];
@@ -265,7 +267,7 @@ export function createElementPatch<HN, HE extends HN>(
         patchProp(el, key, prev, next);
       }
     }
-    for (const key in oldProps) {
+    for (const key of Object.keys(oldProps)) {
       if (key === 'key' || key === 'ref') continue;
       if (!(key in newProps)) {
         patchProp(el, key, oldProps[key], null);
@@ -284,8 +286,16 @@ export function createElementPatch<HN, HE extends HN>(
     parentSuspense: SuspenseBoundary | null,
     isSVG: boolean,
   ): void {
-    // n1.el is guaranteed to exist since n1 was previously mounted
-    const el = n1.el! as unknown as HE;
+    // FIX: P1-5 VDOM-NEW-04 - 添加防御性检查，避免 n1.el 非空断言在异常场景下崩溃
+    // n1.el 理论上应该存在（因为 n1 之前已被挂载），但在某些异常场景（如内存损坏、
+    // 并发更新）下可能为 null，添加检查以提高健壮性
+    if (!n1.el) {
+      if (__DEV__) {
+        warn(`[lytjs/vdom] patchElement: n1.el is null or undefined. ` + `VNode type: ${String(n1.type)}, key: ${String(n1.key)}`);
+      }
+      return;
+    }
+    const el = n1.el as unknown as HE;
     setVNodeEl(n2, n1.el as unknown as HN | null);
 
     // Patch props

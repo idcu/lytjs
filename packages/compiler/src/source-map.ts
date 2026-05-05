@@ -177,9 +177,13 @@ export class SourceMapGenerator {
         prevGenCol = 0; // Reset generated column for new lines
       }
 
+      // FIX: P2-18 使用正确的 source index 替代硬编码的 sources[0]
+      // 从 mapping 中解析 source index（如果存储在 name 字段中）
+      const sourceIdx = mapping.name !== undefined
+        ? (this._sourcesMap.get(mapping.name) ?? 0)
+        : (this._sourcesMap.get(this.sources[0] ?? '') ?? 0);
       // Encode segment fields (all delta-encoded)
       const genCol = mapping.generatedColumn - prevGenCol;
-      const sourceIdx = this._sourcesMap.get(this.sources[0] ?? '') ?? 0;
       const source = sourceIdx - prevSource;
       const origLine = mapping.originalLine - prevOrigLine;
       const origCol = mapping.originalColumn - prevOrigCol;
@@ -228,6 +232,7 @@ export class SourceMapGenerator {
    * Format: data:application/json;charset=utf-8;base64,<encoded>
    * FIX: P1-31 使用 TextEncoder+btoa 替代 Buffer，
    * 确保在浏览器环境和 Node.js 环境中都能正常工作
+   * FIX: P2-19 使用 TextEncoder + 手动 base64 替代废弃的 unescape
    */
   toBase64(): string {
     const json = JSON.stringify(this.toJSON());
@@ -245,10 +250,39 @@ export class SourceMapGenerator {
     } else if (typeof Buffer !== 'undefined') {
       base64 = Buffer.from(json, 'utf-8').toString('base64');
     } else {
-      // 最终回退：手动 base64 编码
-      base64 = btoa(unescape(encodeURIComponent(json)));
+      // FIX: P2-19 使用 TextEncoder + 手动 base64 编码替代废弃的 unescape
+      base64 = this._manualBase64Encode(json);
     }
     return `data:application/json;charset=utf-8;base64,${base64}`;
+  }
+
+  /**
+   * FIX: P2-19 手动实现 base64 编码，避免使用废弃的 unescape
+   * 使用 TextEncoder 将字符串转换为 UTF-8 字节，然后进行 base64 编码
+   */
+  private _manualBase64Encode(str: string): string {
+    const encoder = new TextEncoder();
+    const bytes = encoder.encode(str);
+    const base64Chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+    let result = '';
+    let i = 0;
+
+    while (i < bytes.length) {
+      // 每次处理 3 个字节（24 位）
+      const byte1 = bytes[i++] ?? 0;
+      const byte2 = bytes[i++] ?? 0;
+      const byte3 = bytes[i++] ?? 0;
+
+      // 将 24 位分成 4 个 6 位组
+      const bitmap = (byte1 << 16) | (byte2 << 8) | byte3;
+
+      result += base64Chars[(bitmap >> 18) & 63];
+      result += base64Chars[(bitmap >> 12) & 63];
+      result += i - 2 <= bytes.length ? base64Chars[(bitmap >> 6) & 63] : '=';
+      result += i - 1 <= bytes.length ? base64Chars[bitmap & 63] : '=';
+    }
+
+    return result;
   }
 
   /**

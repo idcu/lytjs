@@ -363,29 +363,31 @@ function handleVOn(
       }
 
       // 构建带修饰符的事件处理器
-      let eventHandler = handler;
+      // FIX: P2-31 使用 ExpressionNode 类型以支持 SimpleExpressionNode 和 CompoundExpressionNode
+      let eventHandler: ExpressionNode = handler;
+      // FIX: P2-31 添加调用括号，确保生成的代码正确调用处理器
       // .stop 修饰符：包装为 event.stopPropagation()
       if (modifiers.includes('stop')) {
         eventHandler = createCompoundExpression([
-          `($event) => { $event.stopPropagation(); `,
+          `($event) => { $event.stopPropagation(); (`,
           handler,
-          `($event) }`,
+          `)($event); }`,
         ]);
       }
       // .prevent 修饰符：包装为 event.preventDefault()
       if (modifiers.includes('prevent')) {
         eventHandler = createCompoundExpression([
-          `($event) => { $event.preventDefault(); `,
+          `($event) => { $event.preventDefault(); (`,
           handler,
-          `($event) }`,
+          `)($event); }`,
         ]);
       }
       // .self 修饰符：检查 event.target === event.currentTarget
       if (modifiers.includes('self')) {
         eventHandler = createCompoundExpression([
-          `($event) => { if ($event.target !== $event.currentTarget) return; `,
+          `($event) => { if ($event.target !== $event.currentTarget) return; (`,
           handler,
-          `($event) }`,
+          `)($event); }`,
         ]);
       }
 

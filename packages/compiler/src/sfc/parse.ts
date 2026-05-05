@@ -256,6 +256,8 @@ function extractBlocks(source: string): SFCBlock[] {
       const nextClose = source.indexOf(closeTag, searchPos);
       if (nextClose === -1) break;
 
+      // FIX: P2-24 重置正则表达式的 lastIndex，避免多文件解析时状态污染
+      openTagPattern.lastIndex = 0;
       // 在当前位置到下一个闭合标签之间查找嵌套的同名开放标签
       openTagPattern.lastIndex = searchPos;
       let nestedOpen: RegExpExecArray | null;

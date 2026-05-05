@@ -361,23 +361,19 @@ export function createRenderer<HN, HE extends HN>(
       (vnode.shapeFlag & ShapeFlags.STATEFUL_COMPONENT ||
         vnode.shapeFlag & ShapeFlags.FUNCTIONAL_COMPONENT)
     ) {
-      const { bum } = component as ComponentInternalInstance;
-      if (isArray(bum)) {
+      // FIX: P1-8 VDOM-NEW-09 - 使用 component.lifecycle.beforeUnmount 替代 component.bum
+      // component.bum 不是标准接口属性，在 TypeScript 严格模式下可能导致类型错误
+      const beforeUnmountHooks = (component as ComponentInternalInstance).lifecycle?.beforeUnmount;
+      if (beforeUnmountHooks && beforeUnmountHooks.size > 0) {
         // 逐个执行 beforeUnmount 回调。单个回调抛出异常时，捕获并记录错误后继续执行
         // 后续回调，确保所有 beforeUnmount 钩子都有机会运行，避免一个组件的卸载错误
         // 影响其他组件的清理逻辑。
-        for (let i = 0; i < bum.length; i++) {
+        for (const hook of beforeUnmountHooks) {
           try {
-            bum[i]!();
+            hook();
           } catch (e) {
             error(`Error in beforeUnmount hook: ${e}`);
           }
-        }
-      } else if (bum) {
-        try {
-          bum();
-        } catch (e) {
-          error(`Error in beforeUnmount hook: ${e}`);
         }
       }
       component.isUnmounted = true;

@@ -3,7 +3,7 @@
 
 import type { RendererHost, HostEvent, HostEventHandler, HostEventOptions } from '@lytjs/host-contract';
 import type { ParsedModifiers, ParsedEventInfo, EventInvoker } from './types';
-import { EVENT_MODIFIER_RE, VEI_KEY } from '@lytjs/common-events';
+import { EVENT_MODIFIER_RE } from '@lytjs/common-events';
 
 // ============================================================
 // 常量
@@ -28,6 +28,12 @@ type InvokerCache<HE> = Record<string, EventInvoker<HE> | undefined>;
 export class EventNormalizer<HN = unknown, HE extends HN = HN> {
   /** RendererHost 实例 */
   private host: RendererHost<HN, HE>;
+
+  /**
+   * FIX: P2-46 使用 WeakMap 替代 el._vei 属性存储，避免类型断言和属性污染
+   * 键：宿主元素，值：该元素的事件 invoker 缓存
+   */
+  private invokerCache = new WeakMap<HE, InvokerCache<HE>>();
 
   /**
    * 创建事件归一化器实例。
@@ -72,7 +78,8 @@ export class EventNormalizer<HN = unknown, HE extends HN = HN> {
     let name = rawName.startsWith('@') ? rawName.slice(1) : rawName;
 
     // 移除 on 前缀（仅当以大写字母开头的 on 前缀时）
-    if (name.startsWith('on') && name.length > 2 && /^[A-Za-z]$/.test(name[2]!)) {
+    // FIX: P2-45 使用 charAt 替代非空断言，更安全地访问字符串字符
+    if (name.startsWith('on') && name.length > 2 && /^[A-Za-z]$/.test(name.charAt(2))) {
       name = name.slice(2);
     }
 
@@ -171,12 +178,11 @@ export class EventNormalizer<HN = unknown, HE extends HN = HN> {
     const eventKey = this.getEventKey(rawName);
     const parsed = this.parseEventName(rawName);
 
-    // 获取或创建 el._vei 缓存
-    const cacheMap = el as unknown as Record<string, InvokerCache<HE>>;
-    let invokers = cacheMap[VEI_KEY];
+    // FIX: P2-46 使用 WeakMap 替代 el._vei 属性存储
+    let invokers = this.invokerCache.get(el);
     if (!invokers) {
       invokers = {};
-      cacheMap[VEI_KEY] = invokers;
+      this.invokerCache.set(el, invokers);
     }
 
     const existingInvoker = invokers[eventKey];
@@ -206,11 +212,12 @@ export class EventNormalizer<HN = unknown, HE extends HN = HN> {
    * @param el - 宿主元素
    */
   removeAllEventListeners(el: HE): void {
-    const cacheMap = el as unknown as Record<string, InvokerCache<HE>>;
-    const invokers = cacheMap[VEI_KEY];
+    // FIX: P2-46 使用 WeakMap 替代 el._vei 属性存储
+    const invokers = this.invokerCache.get(el);
     if (!invokers) return;
 
-    for (const eventKey in invokers) {
+    // FIX: P2-47 使用 Object.keys 替代 for...in，避免遍历原型链上的属性
+    for (const eventKey of Object.keys(invokers)) {
       const invoker = invokers[eventKey];
       if (invoker) {
         // FIX: P1-48 使用 invoker.handler 而非原始 handler 引用移除事件监听器，
@@ -220,7 +227,8 @@ export class EventNormalizer<HN = unknown, HE extends HN = HN> {
       }
     }
 
-    delete cacheMap[VEI_KEY];
+    // 从 WeakMap 中删除该元素的缓存
+    this.invokerCache.delete(el);
   }
 
   // ==========================================================

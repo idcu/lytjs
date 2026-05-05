@@ -98,6 +98,14 @@ function getDOMOps(opsId?: symbol): DOMOperations {
     ops = registeredDOMOpsMap.get(opsId);
   } else {
     // 向后兼容：未传 opsId 时使用最后一个注册的实例
+    // FIX: P2-8 DEV 模式下发出警告，提醒开发者显式传递 opsId
+    if (__DEV__) {
+      warn(
+        '[lytjs/list-diff] getDOMOps() called without opsId. ' +
+          'This is deprecated and may cause issues in multi-renderer scenarios. ' +
+          'Please pass an explicit opsId.',
+      );
+    }
     const entries = Array.from(registeredDOMOpsMap.values());
     ops = entries[entries.length - 1];
   }
@@ -261,6 +269,37 @@ export function patchKeyedChildren<HN, HE extends HN>(
   hostOrUndefined?: RendererHost<HN, HE>,
   opsId?: symbol,
 ): void {
+  // FIX: P1-7 VDOM-NEW-06 - MAX_LIST_DIFF_SIZE 强制执行
+  // 超过阈值时使用简单 diff 策略（全量卸载+挂载），避免复杂 LIS 算法导致性能问题
+  const totalLength = c1.length + c2.length;
+  if (totalLength > MAX_LIST_DIFF_SIZE) {
+    if (__DEV__) {
+      console.warn(
+        `[lytjs/list-diff] 列表长度(${totalLength})超过阈值(${MAX_LIST_DIFF_SIZE})，` +
+          `使用简单 diff 策略以避免性能问题。建议对大数据列表使用虚拟滚动。`,
+      );
+    }
+    // 强制执行简单策略：卸载所有旧节点，挂载所有新节点
+    const useHost = hostOrUndefined !== undefined;
+    const ops: ResolvedOps = useHost
+      ? hostToOps(
+          hostOrUndefined,
+          (n1, n2, cont, anchor, pc, ps, svg) => getDOMOps(opsId).patch(n1, n2, cont, anchor, pc, ps, svg),
+          (vnode, pc, ps, doRemove) => getDOMOps(opsId).unmount(vnode, pc, ps, doRemove),
+          (vnode, cont, anchor, pc, ps) => getDOMOps(opsId).move(vnode, cont, anchor, pc, ps),
+        )
+      : domOpsToResolved(getDOMOps(opsId));
+    // 卸载所有旧节点
+    for (let i = 0; i < c1.length; i++) {
+      ops.unmount(c1[i]!, parentComponent, parentSuspense, true);
+    }
+    // 挂载所有新节点
+    for (let i = 0; i < c2.length; i++) {
+      ops.patch(null, c2[i]!, container, fallbackAnchor ?? null, parentComponent, parentSuspense, isSVG);
+    }
+    return;
+  }
+
   // Determine whether to use RendererHost or fallback to registered DOMOperations
   const useHost = hostOrUndefined !== undefined;
   const ops: ResolvedOps = useHost

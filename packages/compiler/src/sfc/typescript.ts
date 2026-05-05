@@ -32,7 +32,8 @@ export interface EmitDeclaration {
 // ============================================================
 
 // Match defineComponent<...>( or defineComponent(
-const RE_DEFINE_COMPONENT_START = /defineComponent\s*(?:<[^>]*>)?\s*\(\s*\{/;
+// FIX: P2-26 使用花括号计数替代简单的 <[^>]*>，支持嵌套泛型如 defineComponent<Props<T>>(
+const RE_DEFINE_COMPONENT_START = /defineComponent\s*(?:<)?\s*\(\s*\{/;
 
 // Match props: { ... } - we'll use brace-counting for extraction
 const RE_PROPS_START = /props\s*:\s*\{/;

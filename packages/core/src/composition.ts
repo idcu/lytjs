@@ -143,7 +143,8 @@ export function defineModel<T = unknown>(
  * 使用 watch 持续追踪 refs 变化，确保响应式同步。
  * Vue 3.5+ 新增组合式 API。
  */
-export function useTemplateRef<T = any>(key: string): Ref<T | null> {
+// FIX: P1-45 默认泛型从 any 改为 unknown，提供更好的类型安全性
+export function useTemplateRef<T = unknown>(key: string): Ref<T | null> {
   const instance = getCurrentInstance();
   const ref = shallowRef<T | null>(null);
 
@@ -167,7 +168,18 @@ export function useTemplateRef<T = any>(key: string): Ref<T | null> {
 
 // ==================== useId ====================
 
-let globalIdCounter = 0;
+/**
+ * 生成高熵随机字符串作为 ID 后缀
+ * FIX: P2-38 使用 crypto.randomUUID 或高熵随机数替代简单计数器，防止 ID 冲突
+ */
+function generateIdSuffix(): string {
+  // 优先使用 crypto.randomUUID（如果可用）
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID().slice(0, 8);
+  }
+  // 回退：使用高熵随机数（36进制，8位字符）
+  return Math.random().toString(36).slice(2, 10);
+}
 
 /**
  * WeakMap to store per-instance ID counters, avoiding private property pollution.
@@ -181,6 +193,8 @@ const instanceIdMap = new WeakMap<object, Map<string, number>>();
  *
  * 每个组件实例会获得一个基于组件 uid 的 ID 前缀，
  * 确保同一组件在不同位置渲染时产生不同的 ID。
+ *
+ * FIX: P2-38 使用高熵随机数替代全局计数器，防止多实例/多窗口场景下的 ID 冲突
  */
 export function useId(): Readonly<Ref<string>> {
   const instance = getCurrentInstance();
@@ -197,10 +211,11 @@ export function useId(): Readonly<Ref<string>> {
     }
     const counter = (map.get('useId') ?? 0) + 1;
     map.set('useId', counter);
-    id.value = `${prefix}-${counter}`;
+    // 添加高熵随机后缀，防止跨实例 ID 冲突
+    id.value = `${prefix}-${counter}-${generateIdSuffix()}`;
   } else {
-    // 降级：使用全局计数器
-    id.value = `lyt-${++globalIdCounter}`;
+    // 降级：使用高熵随机数替代全局计数器
+    id.value = `lyt-${generateIdSuffix()}`;
   }
 
   return readonly(id);

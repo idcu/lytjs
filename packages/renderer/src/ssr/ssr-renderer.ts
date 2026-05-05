@@ -1,15 +1,14 @@
 /**
  * @lytjs/renderer - SSR Renderer
  * Server-side rendering to string
+ * FIX: P2-36 使用共享工具函数
  */
 
 import type { VNode } from '@lytjs/vdom';
 import { Fragment, Text, Comment, ShapeFlags } from '@lytjs/vdom';
-import { isString, isArray, isObject, isFunction, isNullish } from '@lytjs/common-is';
-import { camelToKebab } from '@lytjs/common-string';
-import { warn } from '@lytjs/common-error';
-import { escapeHtml, isBooleanAttr, isVoidElement } from '../utils';
-import { NAMED_ENTITIES } from './ssr-stream';
+import { isString, isArray, isFunction } from '@lytjs/common-is';
+import { escapeHtml, isVoidElement } from '../utils';
+import { isValidHTMLElementTag, renderAttributeToString } from './ssr-utils';
 
 // ============================================================
 // renderToString - main entry
@@ -83,15 +82,13 @@ function renderFragmentToString(vnode: VNode): string {
 // renderElementToString
 // ============================================================
 
-function isValidHTMLElementTag(tag: string): boolean {
-  return /^[a-z][a-z0-9-]*$/.test(tag);
-}
-
 function renderElementToString(vnode: VNode): string {
   const tag = vnode.type as string;
 
   if (!isValidHTMLElementTag(tag)) {
     if (__DEV__) {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { warn } = require('@lytjs/common-error');
       warn(`Invalid SSR element tag: "${tag}"`);
     }
     return '';
@@ -132,122 +129,4 @@ function renderElementToString(vnode: VNode): string {
 
   html += `</${tag}>`;
   return html;
-}
-
-// ============================================================
-// renderAttributeToString
-// ============================================================
-
-// Security: attributes that carry URLs and need protocol validation
-// Extracted to module-level constant to avoid re-creation on every render
-const URL_ATTRS = new Set(['href', 'src', 'action', 'formaction', 'xlink:href', 'data', 'srcdoc']);
-
-// ============================================================
-// Named entity regex (module-level to avoid re-creation)
-// Uses NAMED_ENTITIES imported from ssr-stream.ts
-// ============================================================
-
-const NAMED_ENTITY_REGEX = new RegExp(
-  Object.keys(NAMED_ENTITIES)
-    .map((e) => e.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
-    .join('|'),
-  'g',
-);
-
-// Numeric entity regex (module-level to avoid re-creation on every isSafeURL call)
-const NUMERIC_ENTITY_REGEX = /&#x?[0-9a-f]+;/gi;
-
-function isSafeURL(url: string): boolean {
-  // 循环解码 HTML 实体，直到字符串不再变化
-  let decoded = url;
-  let prev = '';
-  let maxIterations = 10;
-  while (decoded !== prev && maxIterations-- > 0) {
-    prev = decoded;
-    decoded = decoded.replace(NUMERIC_ENTITY_REGEX, (match) => {
-      const codePoint = match.startsWith('&#x')
-        ? parseInt(match.slice(3, -1), 16)
-        : parseInt(match.slice(2, -1), 10);
-      // Validate the parsed code point is within the valid Unicode range
-      if (isNaN(codePoint) || codePoint < 0 || codePoint > 0x10ffff) {
-        return match;
-      }
-      return String.fromCodePoint(codePoint);
-    });
-    // 命名实体解码（在数字实体解码之后）
-    decoded = decoded.replace(NAMED_ENTITY_REGEX, (match) => NAMED_ENTITIES[match] || match);
-  }
-  // 使用 URL 构造函数进行额外验证
-  try {
-    const parsed = new URL(decoded, 'http://example.com');
-    const protocol = parsed.protocol.toLowerCase().replace(':', '');
-    if (protocol === 'javascript') {
-      return false;
-    }
-    if (protocol === 'data') {
-      // 禁止 data:image/svg+xml（可嵌入脚本，存在 XSS 风险）
-      if (/^data:image\/svg\+xml/i.test(decoded)) {
-        return false;
-      }
-      // 允许安全的 data:image/* MIME 类型（使用解码后的 URL 进行检查）
-      return /^data:image\/(png|jpeg|jpg|gif|webp|bmp|ico|avif);/i.test(decoded);
-    }
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-function renderAttributeToString(key: string, value: unknown): string {
-  // Skip null/undefined
-  if (isNullish(value)) return '';
-
-  // Skip event handlers
-  if (/^on[A-Z]/.test(key)) return '';
-
-  // Class handling
-  if (key === 'class') {
-    const classValue = value == null ? '' : String(value);
-    if (!classValue) return '';
-    return ` class="${escapeHtml(classValue)}"`;
-  }
-
-  // Style handling
-  if (key === 'style') {
-    if (isString(value)) {
-      if (!value) return '';
-      return ` style="${escapeHtml(value)}"`;
-    }
-    if (isObject(value)) {
-      const styles: string[] = [];
-      for (const k in value as Record<string, unknown>) {
-        const val = (value as Record<string, unknown>)[k];
-        if (val != null && val !== '') {
-          styles.push(`${camelToKebab(k)}:${String(val)}`);
-        }
-      }
-      if (styles.length === 0) return '';
-      return ` style="${escapeHtml(styles.join(';'))}"`;
-    }
-    return '';
-  }
-
-  // Boolean attributes
-  if (isBooleanAttr(key)) {
-    if (value === false || value === '') return '';
-    return ` ${key}`;
-  }
-
-  // Security: block dangerous URL protocols on URL attributes
-  if (URL_ATTRS.has(key)) {
-    if (!isSafeURL(String(value))) {
-      if (__DEV__) {
-        warn(`Blocked potentially dangerous attribute: ${key}="${String(value)}"`);
-      }
-      return '';
-    }
-  }
-
-  // Regular attributes
-  return ` ${key}="${escapeHtml(String(value))}"`;
 }

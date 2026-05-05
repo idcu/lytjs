@@ -58,6 +58,23 @@ export interface Plugin {
   install: PluginInstallFunction;
 }
 
+/**
+ * 支持 cleanup 的插件接口
+ * FIX: P2-40 定义 PluginWithCleanup 接口，替代类型断言链
+ */
+export interface PluginWithCleanup extends Plugin {
+  /** 插件清理函数，在 app 卸载时调用 */
+  cleanup?: () => void;
+  /** 插件名称，用于错误报告 */
+  name?: string;
+}
+
+/** 插件函数类型（支持 cleanup） */
+export type PluginFunctionWithCleanup = PluginInstallFunction & {
+  cleanup?: () => void;
+  name?: string;
+};
+
 // ==================== Component ====================
 
 export type Component = ComponentOptions | (() => VNode);

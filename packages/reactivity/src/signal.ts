@@ -292,7 +292,8 @@ export function writableComputedSignal<T>(
   );
 
   (computedFn as WritableComputedSignal<T>).set = (newValue: T): void => {
-    // dispose 检查通过闭包中的 disposed 标志实现
+    // FIX: P2-1 添加 disposed 检查，防止在已释放的信号上设置值
+    if (disposed) return;
     setter(newValue);
   };
 
@@ -476,4 +477,7 @@ export function _resetSignalGlobalState(): void {
   batchDepth = 0;
   pendingNotifications.clear();
   isNotifying = false;
+  // FIX: P1-4 REACTIVITY-NEW-05 - 遗漏 pendingTriggerOps 清理
+  // 确保测试间状态完全隔离，避免 pendingTriggerOps 泄漏导致测试不稳定
+  pendingTriggerOps.clear();
 }

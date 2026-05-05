@@ -59,13 +59,8 @@ export function resolvePropValue<T = unknown>(
 
   // If value is absent (undefined) and there's a default, use it
   if (value === undefined) {
-    // Boolean casting: if type is Boolean and no default, default to false
-    // 类型断言 `Boolean as unknown` 是必要的，因为 PropOptions.type 的类型
-    // 为 Constructor | Constructor[]，而 Boolean 构造函数需要通过 unknown 中间
-    // 类型才能与数组元素类型兼容
-    if (type === Boolean || (isArray(type) && type.includes(Boolean as unknown))) {
-      return false as T | undefined;
-    }
+    // FIX: P1-10 先检查 defaultValue，再处理 Boolean 类型
+    // 如果存在默认值，优先使用默认值（包括 Boolean 类型的 default: true）
     if (defaultValue !== undefined) {
       let def: unknown;
       if (isFunction(defaultValue)) {
@@ -81,6 +76,13 @@ export function resolvePropValue<T = unknown>(
         def = defaultValue;
       }
       return def as T | undefined;
+    }
+    // Boolean casting: if type is Boolean and no default, default to false
+    // 类型断言 `Boolean as unknown` 是必要的，因为 PropOptions.type 的类型
+    // 为 Constructor | Constructor[]，而 Boolean 构造函数需要通过 unknown 中间
+    // 类型才能与数组元素类型兼容
+    if (type === Boolean || (isArray(type) && type.includes(Boolean as unknown))) {
+      return false as T | undefined;
     }
     // Check required prop
     if (required && __DEV__) {

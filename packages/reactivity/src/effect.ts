@@ -125,9 +125,10 @@ export function trackEffect(dep: Dep) {
   }
   // FIX: P1-01 移除重复的 shouldTrack/activeEffect 检查，
   // 这些检查已在调用方 track() 中完成，此处只需关注 dep 操作
-  if (!dep.has(activeEffect!)) {
-    dep.add(activeEffect!);
-    activeEffect!.deps.push(dep);
+  // FIX: P0-5 添加防御性检查，避免非空断言在公共 API 调用时不安全
+  if (activeEffect && !dep.has(activeEffect)) {
+    dep.add(activeEffect);
+    activeEffect.deps.push(dep);
   }
 }
 
@@ -182,13 +183,12 @@ export function trigger(
 
 export function triggerEffects(effects: ReactiveEffect[]) {
   if (triggerDepth > MAX_TRIGGER_DEPTH) {
-    if (__DEV__) {
-      warn('Maximum trigger depth exceeded. Possible infinite reactivity loop detected.');
-      error(
-        `Maximum trigger depth (${MAX_TRIGGER_DEPTH}) exceeded in triggerEffects. Possible infinite reactivity loop detected. triggerDepth=${triggerDepth}`,
-      );
-    }
-    return;
+    // FIX: P1-1 REACTIVITY-NEW-02 - 超限时不静默丢弃，改为抛出错误
+    // 避免后续所有 trigger 永久静默丢弃，导致响应式系统失效
+    throw new Error(
+      `[lytjs/reactivity] Maximum trigger depth (${MAX_TRIGGER_DEPTH}) exceeded. ` +
+        `Possible infinite reactivity loop detected. triggerDepth=${triggerDepth}`,
+    );
   }
   triggerDepth++;
   try {

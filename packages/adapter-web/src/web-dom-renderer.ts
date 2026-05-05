@@ -17,6 +17,76 @@ import { WebRendererHost } from './web-host';
 const registeredCustomElements = new Set<string>();
 
 // ============================================================
+// defineCustomElement - 自定义元素注册
+// ============================================================
+
+/**
+ * 注册自定义元素（Web Component）。
+ * 使用 registeredCustomElements Set 进行缓存，避免重复注册。
+ *
+ * @param name - 自定义元素名称（必须包含连字符）
+ * @param constructor - 自定义元素构造函数
+ * @param options - 可选的注册选项（如 extends）
+ * @returns 是否成功注册（false 表示已存在或注册失败）
+ */
+export function defineCustomElement(
+  name: string,
+  constructor: CustomElementConstructor,
+  options?: ElementDefinitionOptions,
+): boolean {
+  // FIX: P2-46 使用 Set 进行缓存，避免重复注册
+  if (registeredCustomElements.has(name)) {
+    return false;
+  }
+
+  // 检查浏览器是否支持 customElements
+  if (typeof customElements === 'undefined') {
+    console.warn(`[lytjs/adapter-web] customElements API not supported in this environment.`);
+    return false;
+  }
+
+  // 检查名称是否有效（必须包含连字符）
+  if (!name.includes('-')) {
+    console.warn(`[lytjs/adapter-web] Invalid custom element name "${name}". Name must contain a hyphen.`);
+    return false;
+  }
+
+  // 检查是否已被其他代码注册
+  if (customElements.get(name)) {
+    registeredCustomElements.add(name);
+    return false;
+  }
+
+  try {
+    customElements.define(name, constructor, options);
+    registeredCustomElements.add(name);
+    return true;
+  } catch (err) {
+    console.warn(`[lytjs/adapter-web] Failed to define custom element "${name}":`, err);
+    return false;
+  }
+}
+
+/**
+ * 检查自定义元素是否已注册。
+ *
+ * @param name - 自定义元素名称
+ * @returns 是否已注册
+ */
+export function isCustomElementRegistered(name: string): boolean {
+  return registeredCustomElements.has(name);
+}
+
+/**
+ * 获取已注册的自定义元素名称列表。
+ *
+ * @returns 已注册的自定义元素名称数组
+ */
+export function getRegisteredCustomElements(): string[] {
+  return Array.from(registeredCustomElements);
+}
+
+// ============================================================
 // DOMRenderer 接口
 // ============================================================
 
