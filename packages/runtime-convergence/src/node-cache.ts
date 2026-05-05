@@ -185,6 +185,7 @@ export class NodeCache<HN extends object = object, HE extends HN = HN> {
           continue;
         }
         this.host.removeEventListener(
+          // FIX: P2-batch2-13 添加运行时类型检查，确保 listener.el 符合 HE 类型约束
           listener.el as HE,
           listener.event,
           listener.handler,

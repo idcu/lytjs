@@ -74,7 +74,8 @@ export function defineAsyncComponent(
     return (loadingPromise = Promise.resolve(loader())
       .then((comp) => {
         // FIX: P2-v11-15 验证 loader() 返回值，确保是有效的组件定义
-        if (comp == null || typeof comp !== 'object' && typeof comp !== 'function') {
+        // FIX: P2-batch2-9 添加括号明确运算符优先级，避免 && 和 || 混合使用时的歧义
+        if (comp == null || (typeof comp !== 'object' && typeof comp !== 'function')) {
           throw new Error(
             `[lytjs/core] AsyncComponent: loader() returned an invalid component value: ${String(comp)}. ` +
             `Expected a component options object or function.`,

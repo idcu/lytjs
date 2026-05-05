@@ -317,10 +317,7 @@ export class PerformanceMonitor {
 
   /**
    * Get history for a specific component
-   * FIX: P2-v11-18 使用索引 Map 替代 filter，将 O(n) 降为 O(k)
    */
-  private componentHistoryIndex = new Map<string, RenderPerformanceEntry[]>();
-
   getComponentHistory(componentName: string): RenderPerformanceEntry[] {
     return this.getHistory().filter((entry) => entry.componentName === componentName);
   }
@@ -373,12 +370,18 @@ export class PerformanceMonitor {
    * Clear history and stats for a specific component
    */
   clearComponent(componentName: string): boolean {
-    // Rebuild buffer without entries for this component
+    // FIX: P2-batch2-12 修复 clearComponent 破坏环形缓冲区的问题。
+    // 原实现直接将过滤后的数组赋值给 historyBuffer 并重置 head/tail，
+    // 但丢失了环形缓冲区的固定大小约束。正确做法是重建固定大小的缓冲区。
     const filtered = this.getHistory().filter((entry) => entry.componentName !== componentName);
-    this.historyBuffer = filtered;
+    // 重建固定大小的环形缓冲区
+    this.historyBuffer = new Array(this.options.maxHistorySize).fill(null);
     this.historyHead = 0;
     this.historyTail = filtered.length;
     this.historyCount = filtered.length;
+    for (let i = 0; i < filtered.length; i++) {
+      this.historyBuffer[i] = filtered[i];
+    }
     return this.stats.delete(componentName);
   }
 

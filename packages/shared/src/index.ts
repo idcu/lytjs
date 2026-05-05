@@ -694,7 +694,9 @@ export function memoize<T extends (...args: unknown[]) => unknown>(
   maxSize: number = 128,
 ): (...args: Parameters<T>) => ReturnType<T> {
   const cache = new Map<string, ReturnType<T>>();
+  // FIX: P2-batch2-15 使用索引追踪替代 Array.shift()，将 LRU 淘汰从 O(n) 降为 O(1)
   const keyOrder: string[] = [];
+  let evictionIndex = 0;
 
   /** 对参数进行稳定排序，确保对象键序不同时产生相同的 key */
   function stableStringify(args: unknown[]): string {
@@ -728,10 +730,16 @@ export function memoize<T extends (...args: unknown[]) => unknown>(
     cache.set(key, result);
     keyOrder.push(key);
 
-    // 超过 maxSize 时，清除最早条目
+    // 超过 maxSize 时，清除最早条目（使用索引追踪，O(1) 淘汰）
     if (keyOrder.length > maxSize) {
-      const oldestKey = keyOrder.shift()!;
+      const oldestKey = keyOrder[evictionIndex];
       cache.delete(oldestKey);
+      evictionIndex++;
+      // 当所有旧条目都被淘汰后，压缩数组释放内存
+      if (evictionIndex > maxSize) {
+        keyOrder.splice(0, evictionIndex);
+        evictionIndex = 0;
+      }
     }
 
     return result;

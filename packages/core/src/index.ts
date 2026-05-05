@@ -26,6 +26,9 @@ export {
   onErrorCaptured,
   onRenderTracked,
   onRenderTriggered,
+  // FIX: P2-batch2-6 补充导出 onActivated/onDeactivated 生命周期钩子
+  onActivated,
+  onDeactivated,
 } from './lifecycle';
 
 // 全局配置系统

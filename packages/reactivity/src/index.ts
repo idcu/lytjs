@@ -191,6 +191,57 @@ const effectRunListeners = new Set<(effectId: string) => void>();
 /** 调试工具启用状态 */
 let devToolsEnabled = false;
 
+// FIX: P2-4 DevTools 通知批处理：使用 microtask 合并高频通知，
+// 避免在短时间内大量信号变化时逐个触发监听器导致性能问题
+let pendingSignalNotifications: Array<{ signalId: string; value: unknown }> | null = null;
+let pendingEffectNotifications: Array<string> | null = null;
+let devToolsFlushScheduled = false;
+
+function scheduleDevToolsFlush(): void {
+  if (devToolsFlushScheduled) return;
+  devToolsFlushScheduled = true;
+  queueMicrotask(flushDevToolsNotifications);
+}
+
+function flushDevToolsNotifications(): void {
+  devToolsFlushScheduled = false;
+  const signals = pendingSignalNotifications;
+  const effects = pendingEffectNotifications;
+  pendingSignalNotifications = null;
+  pendingEffectNotifications = null;
+
+  if (signals) {
+    // 使用 Map 去重，同一 signalId 只保留最后一次值
+    const deduplicated = new Map<string, unknown>();
+    for (const { signalId, value } of signals) {
+      deduplicated.set(signalId, value);
+    }
+    signalChangeListeners.forEach(cb => {
+      try {
+        for (const [signalId, value] of deduplicated) {
+          cb(signalId, value);
+        }
+      } catch (e) {
+        // 忽略监听器错误
+      }
+    });
+  }
+
+  if (effects) {
+    // 使用 Set 去重
+    const deduplicated = new Set(effects);
+    effectRunListeners.forEach(cb => {
+      try {
+        for (const effectId of deduplicated) {
+          cb(effectId);
+        }
+      } catch (e) {
+        // 忽略监听器错误
+      }
+    });
+  }
+}
+
 /**
  * 初始化 LytJS DevTools 全局对象
  * 在开发环境下自动挂载到 window.__LYTJS_DEVTOOLS__
@@ -228,31 +279,29 @@ function initDevTools(): void {
 /**
  * 通知 DevTools 信号变化
  * @internal
+ * FIX: P2-4 使用批处理合并高频通知，减少监听器调用次数
  */
 export function _notifyDevToolsSignalChange(signalId: string, value: unknown): void {
   if (!devToolsEnabled) return;
-  signalChangeListeners.forEach(cb => {
-    try {
-      cb(signalId, value);
-    } catch (e) {
-      // 忽略监听器错误
-    }
-  });
+  if (!pendingSignalNotifications) {
+    pendingSignalNotifications = [];
+  }
+  pendingSignalNotifications.push({ signalId, value });
+  scheduleDevToolsFlush();
 }
 
 /**
  * 通知 DevTools effect 执行
  * @internal
+ * FIX: P2-4 使用批处理合并高频通知，减少监听器调用次数
  */
 export function _notifyDevToolsEffectRun(effectId: string): void {
   if (!devToolsEnabled) return;
-  effectRunListeners.forEach(cb => {
-    try {
-      cb(effectId);
-    } catch (e) {
-      // 忽略监听器错误
-    }
-  });
+  if (!pendingEffectNotifications) {
+    pendingEffectNotifications = [];
+  }
+  pendingEffectNotifications.push(effectId);
+  scheduleDevToolsFlush();
 }
 
 // 在开发环境下自动初始化

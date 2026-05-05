@@ -1,6 +1,9 @@
 // src/codegen-signal.ts
 // Signal 模式代码生成器 - 生成 effect() + DOM 操作代码
 
+// FIX: P2-5 添加 __DEV__ 声明，避免依赖 env.d.ts 的隐式全局类型
+declare const __DEV__: boolean;
+
 import { NodeTypes } from './constants';
 import type {
   RootNode,
@@ -463,6 +466,7 @@ function processDirective(
     case 'if': {
       // v-if 在 transform 阶段已被转换为 JSConditionalExpression
       // 此处作为后备处理，使用 insert/remove 方式
+      // FIX: P2-13 _container 是 render 函数的第二个参数，在生成的代码中可用
       if (expContent) {
         dynamicBindings.push({
           varName,
@@ -573,16 +577,18 @@ function processDirective(
         }
 
         // 构建赋值表达式（应用修饰符）
-        let setValueExpr = getValueExpr;
-        if (isNumber) {
-          setValueExpr = `Number(${getValueExpr})`;
-        }
-        if (isTrim) {
-          setValueExpr = `(${getValueExpr}).trim()`;
-        }
+        // FIX: P2-14 重构为 if-else 结构，避免 .number.trim 组合时
+        // 前面的单独 if 分支被后续组合分支覆盖，导致逻辑冗余
+        let setValueExpr: string;
         if (isNumber && isTrim) {
           // .number.trim 组合：先 trim 再转 number
           setValueExpr = `Number((${getValueExpr}).trim())`;
+        } else if (isNumber) {
+          setValueExpr = `Number(${getValueExpr})`;
+        } else if (isTrim) {
+          setValueExpr = `(${getValueExpr}).trim()`;
+        } else {
+          setValueExpr = getValueExpr;
         }
 
         // 生成双向绑定代码

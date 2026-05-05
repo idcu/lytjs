@@ -348,27 +348,6 @@ export class ConfigManager {
   }
 
   /**
-   * 深度合并对象（保留用于向后兼容）
-   */
-    Object.entries(source).forEach(([key, value]) => {
-      if (
-        isObject(target[key]) &&
-        isObject(value)
-      ) {
-        this.deepMerge(target[key] as ConfigObject, value as ConfigObject);
-      } else {
-        const oldValue = target[key];
-        target[key] = isObject(value)
-          ? (deepClone(value) as ConfigValue)
-          : value;
-        if (hasChanged(target[key], oldValue)) {
-          this.notify(key, target[key], oldValue);
-        }
-      }
-    });
-  }
-
-  /**
    * 获取所有配置
    *
    * @returns 配置对象的深拷贝
@@ -680,22 +659,5 @@ export function applyConfigPreset(
   setGlobalConfig(config, true);
 }
 
-// ============================================================
-// 导出
-// ============================================================
-
-export {
-  // 类
-  ConfigManager,
-
-  // 全局配置函数
-  getGlobalConfig,
-  setGlobalConfig,
-  getConfig,
-  setConfig,
-  watchConfig,
-
-  // 预设
-  configPresets,
-  applyConfigPreset,
-};
+// FIX: P2-batch2-5 删除底部重复的 export 块，
+// 所有符号已在定义处通过 export class/function/const 直接导出

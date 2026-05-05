@@ -155,10 +155,13 @@ export function createApp(
 
       if (effectiveMode === 'signal') {
         // Signal 模式卸载
+        // FIX: P2-batch2-8 添加类型守卫，确保 rootComponent 是有效对象后再访问属性
         const componentOptions = rootComponent as Record<string, unknown>;
-        const beforeUnmount = componentOptions.beforeUnmount as (() => void) | undefined;
-        if (typeof beforeUnmount === 'function') {
-          beforeUnmount.call(componentOptions);
+        if (componentOptions != null && typeof componentOptions === 'object') {
+          const beforeUnmount = componentOptions.beforeUnmount as (() => void) | undefined;
+          if (typeof beforeUnmount === 'function') {
+            beforeUnmount.call(componentOptions);
+          }
         }
         if (signalRenderer) {
           signalRenderer.unmount();
@@ -325,6 +328,10 @@ export function createApp(
         initProps(instance, rawProps);
       },
     });
+    // FIX: P2-batch2-7 跨包类型断言说明：
+    // context.renderer 的类型为 Renderer | null（来自 core 包），
+    // 而 DOMRenderer 类型定义在 dom 包中。此处通过 unknown 桥接是安全的，
+    // 因为 renderer 实例在 createRenderer() 中已正确初始化为 DOMRenderer。
     context.renderer = renderer as unknown as DOMRenderer;
     context._vnode = rootVNode;
 

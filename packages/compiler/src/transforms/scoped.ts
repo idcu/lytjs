@@ -22,14 +22,10 @@ interface ScopedTransformContext extends TransformContext {
  * Get the scopeId from the transform context.
  * The scopeId may be stored directly on the context or in context.identifiers
  * as a special marker.
+ * FIX: P2-12 使用可选链替代 ScopedTransformContext 类型断言
  */
 function resolveScopeId(context: TransformContext): string | undefined {
-  // Check for scopeId stored directly on the context
-  const scopedCtx = context as ScopedTransformContext;
-  if (scopedCtx.scopeId) {
-    return scopedCtx.scopeId;
-  }
-  return undefined;
+  return (context as ScopedTransformContext).scopeId;
 }
 
 /**

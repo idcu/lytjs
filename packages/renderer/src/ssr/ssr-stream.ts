@@ -14,9 +14,13 @@ import {
   renderAttributeToString,
   NAMED_ENTITIES,
 } from './ssr-utils';
+import { warn } from '@lytjs/common-error';
 
 // Re-export NAMED_ENTITIES for backward compatibility
 export { NAMED_ENTITIES };
+
+// FIX: P2-batch2-1 单调递增计数器，用于生成唯一的 Suspense ID
+let suspenseIdCounter = 0;
 
 // ============================================================
 // SSRStreamOptions
@@ -205,7 +209,9 @@ async function streamSuspenseBoundary(
   encoder: TextEncoder,
   commentMarkers: boolean,
 ): Promise<void> {
-  const suspenseId = `suspense-${Math.random().toString(36).slice(2, 8)}`;
+  // FIX: P2-batch2-1 使用单调递增计数器替代 Math.random()，
+  // 避免 SSR 流式渲染中 Suspense ID 碰撞和不可预测行为
+  const suspenseId = `suspense-${++suspenseIdCounter}`;
 
   // Open Suspense boundary marker
   pushChunk(controller, encoder, `<!--${suspenseId}-start-->`, commentMarkers, 'suspense:start');
@@ -298,8 +304,6 @@ async function streamComponentAsync(
   }
   // Fallback: render as empty comment
   if (__DEV__) {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { warn } = require('@lytjs/common-error');
     warn(`SSR stream: could not render component vnode`);
   }
 }
@@ -318,8 +322,6 @@ async function streamElementAsync(
 
   if (!isValidHTMLElementTag(tag)) {
     if (__DEV__) {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const { warn } = require('@lytjs/common-error');
       warn(`Invalid SSR stream element tag: "${tag}"`);
     }
     return;

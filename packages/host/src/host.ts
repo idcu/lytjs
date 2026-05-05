@@ -531,8 +531,18 @@ export function createExtendedWebHost(
 
     onceEventListener(el, event, handler, options) {
       if (el instanceof Element) {
+        // FIX: P2-batch2-16 将原生 Event 包装为 HostEvent 格式后再传递给 handler，
+        // 避免直接类型断言导致 handler 接收到不符合 HostEvent 接口的对象
         const wrappedHandler = (e: Event) => {
-          handler(e as unknown as HostEvent);
+          const hostEvent: HostEvent = {
+            type: e.type,
+            nativeEvent: e,
+            target: e.target,
+            currentTarget: e.currentTarget,
+            preventDefault: () => e.preventDefault(),
+            stopPropagation: () => e.stopPropagation(),
+          };
+          handler(hostEvent);
           el.removeEventListener(event, wrappedHandler, options);
         };
         el.addEventListener(event, wrappedHandler, options);

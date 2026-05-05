@@ -52,6 +52,11 @@ export function withDirectives(vnode: VNode, directives: DirectiveArguments): VN
       modifiers,
     }),
   ) as unknown as DirectiveArguments;
+  // FIX: P2-batch2-10 类型断言说明：
+  // normalizedDirectives 的元素类型为 DirectiveEntry（四元组），
+  // 而 _directives 的声明类型为 DirectiveArguments。两者结构一致，
+  // 但 TypeScript 无法自动推导数组 map 返回类型与目标类型的兼容性，
+  // 因此需要通过 unknown 桥接。
 
   // 处理 deep 选项：递归将指令应用到子 VNode
   for (const dirEntry of dirVNode._directives) {

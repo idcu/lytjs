@@ -50,12 +50,6 @@ let globalBatchDepth = 0;
 /** 最大嵌套深度限制 */
 const MAX_NESTING_DEPTH = 100;
 
-/** 待提交的回调队列（用于异步模式） */
-const pendingCallbacks = new Set<() => void>();
-
-/** 是否正在刷新队列 */
-let isFlushing = false;
-
 // ============================================================
 // Core API
 // ============================================================
@@ -100,7 +94,9 @@ export function batchScope<T>(
     );
     if (onError) {
       onError(error);
-      return undefined as T;
+      // FIX: P2-1 避免不安全的 undefined as T，在 onError 回调处理后
+      // 抛出错误以确保调用方知道操作失败（T 永远不会被返回）
+      throw error;
     }
     throw error;
   }
@@ -123,7 +119,8 @@ export function batchScope<T>(
       // FIX: P1-2 异步 batchScope 作用域栈提前弹出
       // 将 scopeStack.pop() 和 globalBatchDepth-- 移到 .then() 回调中，
       // 确保 batchAsync 的异步操作完成后再弹出作用域栈
-      let result: T;
+      // FIX: P2-1 初始化 result 为 undefined 并添加运行时检查，避免非空断言
+      let result: T | undefined;
       const promise = batchAsync(() => {
         result = callback(ctx);
       });
@@ -142,21 +139,34 @@ export function batchScope<T>(
           throw error;
         }
       });
-      return result!;
+      if (result === undefined) {
+        throw new Error(
+          '[lytjs/reactivity] batchScope async mode: callback did not synchronously assign a result. ' +
+          'Use batchScopeAsync() for async callbacks.',
+        );
+      }
+      return result;
     } else {
       // 同步模式：使用 batch
-      let result: T;
+      // FIX: P2-1 初始化 result 为 undefined 并添加运行时检查，避免非空断言
+      let result: T | undefined;
       batch(() => {
         result = callback(ctx);
       });
       ctx.committed = true;
-      return result!;
+      if (result === undefined) {
+        throw new Error(
+          '[lytjs/reactivity] batchScope sync mode: callback returned undefined.',
+        );
+      }
+      return result;
     }
   } catch (error) {
     // 同步模式下的错误处理
     if (onError) {
       onError(error);
-      return undefined as T;
+      // FIX: P2-1 避免不安全的 undefined as T
+      throw error;
     }
     throw error;
   } finally {
@@ -198,7 +208,8 @@ export async function batchScopeAsync<T>(
     );
     if (onError) {
       onError(error);
-      return Promise.resolve(undefined as T);
+      // FIX: P2-1 避免不安全的 undefined as T
+      return Promise.reject(error);
     }
     return Promise.reject(error);
   }
@@ -224,7 +235,8 @@ export async function batchScopeAsync<T>(
   } catch (error) {
     if (onError) {
       onError(error);
-      return undefined as T;
+      // FIX: P2-1 避免不安全的 undefined as T
+      throw error;
     }
     throw error;
   } finally {
@@ -296,11 +308,10 @@ export function flushBatchScopes(): Promise<void> {
 export function _resetBatchScopeState(): void {
   scopeStack.length = 0;
   globalBatchDepth = 0;
-  pendingCallbacks.clear();
-  isFlushing = false;
 }
 
 /** @internal 获取待处理回调数量（仅用于测试） */
+// FIX: P2-3 pendingCallbacks 已移除，此函数始终返回 0
 export function _getPendingCallbacksCount(): number {
-  return pendingCallbacks.size;
+  return 0;
 }
