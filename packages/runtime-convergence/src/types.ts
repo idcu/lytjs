@@ -52,14 +52,29 @@ export interface ComponentInstance {
 // ============================================================
 
 /**
+ * 调度任务优先级（与 AsyncScheduler 保持一致）。
+ */
+export type RenderPriority = 'sync' | 'high' | 'normal' | 'low';
+
+/**
+ * 优先级权重映射（数值越小优先级越高）。
+ */
+export const RENDER_PRIORITY_WEIGHT: Record<RenderPriority, number> = {
+  sync: 0,
+  high: 1,
+  normal: 2,
+  low: 3,
+};
+
+/**
  * 渲染操作类型。
  */
 export type RenderOperation =
-  | { type: 'insert'; vnode: VNode; container: unknown; anchor?: unknown }
-  | { type: 'remove'; vnode: VNode }
-  | { type: 'move'; vnode: VNode; container: unknown; anchor?: unknown }
-  | { type: 'patch'; oldVNode: VNode; newVNode: VNode; container: unknown; anchor?: unknown }
-  | { type: 'custom'; fn: () => void };
+  | { type: 'insert'; vnode: VNode; container: unknown; anchor?: unknown; priority?: RenderPriority }
+  | { type: 'remove'; vnode: VNode; priority?: RenderPriority }
+  | { type: 'move'; vnode: VNode; container: unknown; anchor?: unknown; priority?: RenderPriority }
+  | { type: 'patch'; oldVNode: VNode; newVNode: VNode; container: unknown; anchor?: unknown; priority?: RenderPriority }
+  | { type: 'custom'; fn: () => void; priority?: RenderPriority };
 
 /**
  * 渲染队列配置项。
@@ -67,6 +82,8 @@ export type RenderOperation =
 export interface RenderQueueOptions {
   /** 是否启用操作合并（默认 true） */
   enableMerge?: boolean;
+  /** 默认优先级（默认 'normal'） */
+  defaultPriority?: RenderPriority;
 }
 
 // ============================================================

@@ -90,6 +90,10 @@ export const PUBLIC_PROPERTIES_MAP: Record<string, number> = {
 
 /**
  * Create a component internal instance from a vnode.
+ *
+ * Error handling: wraps instance creation in try-catch to prevent
+ * uncaught exceptions during component initialization from crashing
+ * the application. Errors are propagated to the nearest ErrorBoundary.
  */
 export function createComponentInstance(
   vnode: VNode,
@@ -97,54 +101,67 @@ export function createComponentInstance(
 ): ComponentInternalInstance {
   const type = vnode.type as ComponentOptions;
 
-  // Merge extends and mixins
-  const mergedOptions = mergeOptions(type);
+  try {
+    // Merge extends and mixins
+    const mergedOptions = mergeOptions(type);
 
-  const appContext = parent ? parent.appContext : createAppContext();
+    const appContext = parent ? parent.appContext : createAppContext();
 
-  const instance: ComponentInternalInstance = {
-    uid: uid++,
-    type: mergedOptions,
-    vnode,
-    subTree: null,
-    props: EMPTY_OBJ,
-    slots: {} as InternalSlots,
-    ctx: {} as ComponentPublicInstance,
-    setupState: {},
-    data: {},
-    propsOptions: normalizePropsOptions(mergedOptions.props),
-    emitsOptions: normalizeEmitsOptions(mergedOptions.emits),
-    emit: NOOP as (event: string, ...args: unknown[]) => void,
-    isMounted: false,
-    isUnmounted: false,
-    isDeactivated: false,
-    isKeepingAlive: false,
-    refs: {},
-    lifecycle: {
-      beforeMount: new Set(),
-      mounted: new Set(),
-      beforeUpdate: new Set(),
-      updated: new Set(),
-      beforeUnmount: new Set(),
-      unmounted: new Set(),
-    },
-    provides: parent ? parent.provides : (Object.create(null) as Record<string | symbol, unknown>),
-    parent,
-    root: parent ? parent.root : (null as unknown as ComponentInternalInstance),
-    appContext,
-    attrs: {},
-    accessCache: null as Record<string, number> | null,
-  };
+    const instance: ComponentInternalInstance = {
+      uid: uid++,
+      type: mergedOptions,
+      vnode,
+      subTree: null,
+      props: EMPTY_OBJ,
+      slots: {} as InternalSlots,
+      ctx: {} as ComponentPublicInstance,
+      setupState: {},
+      data: {},
+      propsOptions: normalizePropsOptions(mergedOptions.props),
+      emitsOptions: normalizeEmitsOptions(mergedOptions.emits),
+      emit: NOOP as (event: string, ...args: unknown[]) => void,
+      isMounted: false,
+      isUnmounted: false,
+      isDeactivated: false,
+      isKeepingAlive: false,
+      refs: {},
+      lifecycle: {
+        beforeMount: new Set(),
+        mounted: new Set(),
+        beforeUpdate: new Set(),
+        updated: new Set(),
+        beforeUnmount: new Set(),
+        unmounted: new Set(),
+      },
+      provides: parent ? parent.provides : (Object.create(null) as Record<string | symbol, unknown>),
+      parent,
+      root: parent ? parent.root : (null as unknown as ComponentInternalInstance),
+      appContext,
+      attrs: {},
+      accessCache: null as Record<string, number> | null,
+    };
 
-  // Set root to self if no parent
-  if (!parent) {
-    instance.root = instance;
+    // Set root to self if no parent
+    if (!parent) {
+      instance.root = instance;
+    }
+
+    // Create emit function bound to this instance
+    instance.emit = (event: string, ...args: unknown[]) => emit(instance, event, ...args);
+
+    return instance;
+  } catch (err) {
+    // Log error for debugging
+    if (__DEV__) {
+      warn(
+        `Failed to create component instance: ${(err as Error).message}`,
+      );
+    }
+    // Propagate error to ErrorBoundary via handleError
+    handleError(err as Error, parent, 'createComponentInstance');
+    // Re-throw to let the caller handle the failure
+    throw err;
   }
-
-  // Create emit function bound to this instance
-  instance.emit = (event: string, ...args: unknown[]) => emit(instance, event, ...args);
-
-  return instance;
 }
 
 // ==================== setupComponent ====================
@@ -267,154 +284,171 @@ function normalizeWatchHandler(
 
 /**
  * Finish component setup: handle data, methods, computed, render.
+ *
+ * Error handling: wraps the entire setup process in try-catch to
+ * gracefully handle errors during data/methods/computed/watch initialization.
+ * Errors are propagated to the nearest ErrorBoundary.
  */
 export function finishComponentSetup(instance: ComponentInternalInstance): void {
   const { type } = instance;
 
-  // Create public instance proxy before data() so ctx is available
-  instance.ctx = createComponentPublicInstance(instance);
+  try {
+    // Create public instance proxy before data() so ctx is available
+    instance.ctx = createComponentPublicInstance(instance);
 
-  // Init data
-  if (type.data) {
-    const data = type.data.call(instance.ctx) ?? {};
-    instance.data = reactive(data);
-  }
-
-  // Props conflict detection: create keys set once for reuse
-  const __DEV__propsKeys = __DEV__ && instance.props ? new Set(Object.keys(instance.props)) : null;
-
-  // Check data vs props conflict
-  if (__DEV__propsKeys && instance.data) {
-    for (const key of Object.keys(instance.data)) {
-      if (__DEV__propsKeys.has(key)) {
-        warn(`Data property "${key}" is already defined as a prop. Use default value in props instead.`);
-      }
+    // Init data
+    if (type.data) {
+      const data = type.data.call(instance.ctx) ?? {};
+      instance.data = reactive(data);
     }
-  }
 
-  const proxy = instance.ctx;
+    // Props conflict detection: create keys set once for reuse
+    const __DEV__propsKeys = __DEV__ && instance.props ? new Set(Object.keys(instance.props)) : null;
 
-  // Init methods: bind each method to the public instance proxy
-  if (type.methods) {
-    for (const key in type.methods) {
-      if (hasOwn(type.methods, key)) {
-        const method = type.methods[key]!;
-        if (__DEV__ && typeof method !== 'function') {
-          warn(`Method "${key}" has type "${typeof method}" in component ${(type as Record<string, unknown>).name || '(anonymous)'}. Expected a function.`);
-          continue;
-        }
-        instance.ctx[key as keyof ComponentPublicInstance] = method.bind(proxy) as never;
-      }
-    }
-    // Check methods vs props conflict
-    if (__DEV__propsKeys) {
-      for (const key of Object.keys(type.methods)) {
+    // Check data vs props conflict
+    if (__DEV__propsKeys && instance.data) {
+      for (const key of Object.keys(instance.data)) {
         if (__DEV__propsKeys.has(key)) {
-          warn(`Method "${key}" is already defined as a prop.`);
+          warn(`Data property "${key}" is already defined as a prop. Use default value in props instead.`);
         }
       }
     }
-  }
 
-  // Init computed: create computed refs and mount on ctx
-  if (type.computed) {
-    for (const key in type.computed) {
-      if (hasOwn(type.computed, key)) {
-        const opt = type.computed[key];
-        let c;
-        if (typeof opt === 'function') {
-          // 函数形式 - 只有 getter
-          c = computed(() => opt.call(proxy));
-        } else if (opt && typeof opt === 'object') {
-          // getter/setter 对象形式
-          const { get, set } = opt as { get?: Function; set?: Function };
-          if (__DEV__) {
-            if (typeof get !== 'function') {
-              warn(`Computed property "${key}" has no getter in component ${(type as Record<string, unknown>).name || '(anonymous)'}.`);
-              continue;
-            }
-            if (set !== undefined && typeof set !== 'function') {
-              warn(`Computed property "${key}" setter is not a function in component ${(type as Record<string, unknown>).name || '(anonymous)'}.`);
-            }
+    const proxy = instance.ctx;
+
+    // Init methods: bind each method to the public instance proxy
+    if (type.methods) {
+      for (const key in type.methods) {
+        if (hasOwn(type.methods, key)) {
+          const method = type.methods[key]!;
+          if (__DEV__ && typeof method !== 'function') {
+            warn(`Method "${key}" has type "${typeof method}" in component ${(type as Record<string, unknown>).name || '(anonymous)'}. Expected a function.`);
+            continue;
           }
-          c = computed({
-            get: get ? () => get.call(proxy) : (() => undefined),
-            set: set ? (v: unknown) => set.call(proxy, v) : undefined,
-          } as Parameters<typeof computed>[0]);
-        } else if (__DEV__) {
-          warn(`Computed property "${key}" is not a function or object in component ${(type as Record<string, unknown>).name || '(anonymous)'}.`);
-          continue;
-        }
-        if (__DEV__ && type.methods && hasOwn(type.methods, key)) {
-          warn(`Computed property "${key}" conflicts with a method of the same name in component ${(type as Record<string, unknown>).name || '(anonymous)'}. The method will be overwritten.`);
-        }
-        instance.ctx[key as keyof ComponentPublicInstance] = c as never;
-      }
-    }
-    // Check computed vs props conflict
-    if (__DEV__propsKeys) {
-      for (const key of Object.keys(type.computed)) {
-        if (__DEV__propsKeys.has(key)) {
-          warn(`Computed property "${key}" is already defined as a prop.`);
+          instance.ctx[key as keyof ComponentPublicInstance] = method.bind(proxy) as never;
         }
       }
-    }
-  }
-
-  // Init watch: set up watchers for each declared watch key
-  if (type.watch) {
-    for (const key in type.watch) {
-      if (hasOwn(type.watch, key)) {
-        const raw = type.watch[key];
-        // 标准化为 handler 数组
-        const handlers: Function[] = [];
-        if (Array.isArray(raw)) {
-          for (const h of raw) {
-            const normalized = normalizeWatchHandler(h, type.methods, proxy);
-            if (normalized) handlers.push(normalized);
+      // Check methods vs props conflict
+      if (__DEV__propsKeys) {
+        for (const key of Object.keys(type.methods)) {
+          if (__DEV__propsKeys.has(key)) {
+            warn(`Method "${key}" is already defined as a prop.`);
           }
-        } else {
-          const h = normalizeWatchHandler(raw, type.methods, proxy);
-          if (h) handlers.push(h);
-        }
-        // 提取选项（仅对象形式）
-        let options: { immediate?: boolean; deep?: boolean; flush?: 'pre' | 'post' | 'sync' } = {};
-        if (!Array.isArray(raw) && raw !== null && typeof raw === 'object' && typeof (raw as Record<string, unknown>).handler !== 'undefined') {
-          const watchObj = raw as Record<string, unknown>;
-          if (typeof watchObj.immediate === 'boolean') options.immediate = watchObj.immediate;
-          if (typeof watchObj.deep === 'boolean') options.deep = watchObj.deep;
-          if (typeof watchObj.flush === 'string') options.flush = watchObj.flush as 'pre' | 'post' | 'sync';
-        }
-        for (const handler of handlers) {
-          watch(() => proxy[key as keyof ComponentPublicInstance], handler as (...args: unknown[]) => void, options);
         }
       }
     }
-  }
 
-  // Call beforeCreate and created hooks
-  callCreatedHook(instance);
+    // Init computed: create computed refs and mount on ctx
+    if (type.computed) {
+      for (const key in type.computed) {
+        if (hasOwn(type.computed, key)) {
+          const opt = type.computed[key];
+          let c;
+          if (typeof opt === 'function') {
+            // 函数形式 - 只有 getter
+            c = computed(() => opt.call(proxy));
+          } else if (opt && typeof opt === 'object') {
+            // getter/setter 对象形式
+            const { get, set } = opt as { get?: Function; set?: Function };
+            if (__DEV__) {
+              if (typeof get !== 'function') {
+                warn(`Computed property "${key}" has no getter in component ${(type as Record<string, unknown>).name || '(anonymous)'}.`);
+                continue;
+              }
+              if (set !== undefined && typeof set !== 'function') {
+                warn(`Computed property "${key}" setter is not a function in component ${(type as Record<string, unknown>).name || '(anonymous)'}.`);
+              }
+            }
+            c = computed({
+              get: get ? () => get.call(proxy) : (() => undefined),
+              set: set ? (v: unknown) => set.call(proxy, v) : undefined,
+            } as Parameters<typeof computed>[0]);
+          } else if (__DEV__) {
+            warn(`Computed property "${key}" is not a function or object in component ${(type as Record<string, unknown>).name || '(anonymous)'}.`);
+            continue;
+          }
+          if (__DEV__ && type.methods && hasOwn(type.methods, key)) {
+            warn(`Computed property "${key}" conflicts with a method of the same name in component ${(type as Record<string, unknown>).name || '(anonymous)'}. The method will be overwritten.`);
+          }
+          instance.ctx[key as keyof ComponentPublicInstance] = c as never;
+        }
+      }
+      // Check computed vs props conflict
+      if (__DEV__propsKeys) {
+        for (const key of Object.keys(type.computed)) {
+          if (__DEV__propsKeys.has(key)) {
+            warn(`Computed property "${key}" is already defined as a prop.`);
+          }
+        }
+      }
+    }
 
-  // Register Options API renderTracked/renderTriggered hooks
-  // so they are called alongside Composition API onRenderTracked/onRenderTriggered
-  if (type.renderTracked) {
-    if (!instance.renderTrackedHooks) {
-      instance.renderTrackedHooks = [];
+    // Init watch: set up watchers for each declared watch key
+    if (type.watch) {
+      for (const key in type.watch) {
+        if (hasOwn(type.watch, key)) {
+          const raw = type.watch[key];
+          // 标准化为 handler 数组
+          const handlers: Function[] = [];
+          if (Array.isArray(raw)) {
+            for (const h of raw) {
+              const normalized = normalizeWatchHandler(h, type.methods, proxy);
+              if (normalized) handlers.push(normalized);
+            }
+          } else {
+            const h = normalizeWatchHandler(raw, type.methods, proxy);
+            if (h) handlers.push(h);
+          }
+          // 提取选项（仅对象形式）
+          let options: { immediate?: boolean; deep?: boolean; flush?: 'pre' | 'post' | 'sync' } = {};
+          if (!Array.isArray(raw) && raw !== null && typeof raw === 'object' && typeof (raw as Record<string, unknown>).handler !== 'undefined') {
+            const watchObj = raw as Record<string, unknown>;
+            if (typeof watchObj.immediate === 'boolean') options.immediate = watchObj.immediate;
+            if (typeof watchObj.deep === 'boolean') options.deep = watchObj.deep;
+            if (typeof watchObj.flush === 'string') options.flush = watchObj.flush as 'pre' | 'post' | 'sync';
+          }
+          for (const handler of handlers) {
+            watch(() => proxy[key as keyof ComponentPublicInstance], handler as (...args: unknown[]) => void, options);
+          }
+        }
+      }
     }
-    instance.renderTrackedHooks.push(type.renderTracked.bind(proxy));
-  }
-  if (type.renderTriggered) {
-    if (!instance.renderTriggeredHooks) {
-      instance.renderTriggeredHooks = [];
-    }
-    instance.renderTriggeredHooks.push(type.renderTriggered.bind(proxy));
-  }
 
-  // If no render function from setup, use options render
-  if (!instance.render) {
-    if (type.render) {
-      instance.render = type.render.bind(instance.ctx);
+    // Call beforeCreate and created hooks
+    callCreatedHook(instance);
+
+    // Register Options API renderTracked/renderTriggered hooks
+    // so they are called alongside Composition API onRenderTracked/onRenderTriggered
+    if (type.renderTracked) {
+      if (!instance.renderTrackedHooks) {
+        instance.renderTrackedHooks = [];
+      }
+      instance.renderTrackedHooks.push(type.renderTracked.bind(proxy));
     }
+    if (type.renderTriggered) {
+      if (!instance.renderTriggeredHooks) {
+        instance.renderTriggeredHooks = [];
+      }
+      instance.renderTriggeredHooks.push(type.renderTriggered.bind(proxy));
+    }
+
+    // If no render function from setup, use options render
+    if (!instance.render) {
+      if (type.render) {
+        instance.render = type.render.bind(instance.ctx);
+      }
+    }
+  } catch (err) {
+    // Log error for debugging
+    if (__DEV__) {
+      warn(
+        `Failed to finish component setup for ${(type as Record<string, unknown>).name || '(anonymous)'}: ${(err as Error).message}`,
+      );
+    }
+    // Propagate error to ErrorBoundary
+    handleError(err as Error, instance, 'finishComponentSetup');
+    // Set a no-op render to prevent silent empty rendering
+    instance.render = () => null as unknown as VNode;
   }
 }
 

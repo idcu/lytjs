@@ -53,3 +53,21 @@ export type {
   DebuggerEvent,
   ComponentPublicInstance,
 } from './types';
+
+// Common 子包集成点
+export {
+  registerIntegrations,
+  getHttpClient,
+  getQueryUtils,
+  getSecurityUtils,
+  getCacheUtils,
+  safeEscapeHtml,
+  safeParseQueryString,
+} from './common-integration';
+export type {
+  HttpClientLike,
+  QueryUtilsLike,
+  SecurityUtilsLike,
+  CacheUtilsLike,
+  CoreIntegrations,
+} from './common-integration';

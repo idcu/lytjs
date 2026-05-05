@@ -2,7 +2,8 @@
 // 渲染队列：收集同一 tick 内的渲染操作，合并重复操作，支持同步插队刷新
 
 import type { RendererHost } from '@lytjs/host-contract';
-import type { RenderOperation, RenderQueueOptions } from './types';
+import type { RenderOperation, RenderQueueOptions, RenderPriority } from './types';
+import { RENDER_PRIORITY_WEIGHT } from './types';
 
 // ============================================================
 // 常量
@@ -11,6 +12,7 @@ import type { RenderOperation, RenderQueueOptions } from './types';
 /** 默认队列配置 */
 const DEFAULT_OPTIONS: Required<RenderQueueOptions> = {
   enableMerge: true,
+  defaultPriority: 'normal',
 };
 
 // ============================================================
@@ -22,6 +24,8 @@ const DEFAULT_OPTIONS: Required<RenderQueueOptions> = {
  *
  * 收集同一 tick 内的渲染操作，合并对同一元素的重复操作，
  * 通过 host.setTimeout 调度批量执行，支持同步插队刷新（flushSync）。
+ *
+ * 支持优先级排序：sync > high > normal > low
  *
  * @template HN - 宿主节点类型
  * @template HE - 宿主元素类型
@@ -73,6 +77,8 @@ export class RenderQueue<HN = unknown, HE extends HN = HN> {
     } else {
       this.queue.push(op);
     }
+    // 按优先级排序
+    this.sortQueue();
     this.scheduleFlush();
   }
 
@@ -231,5 +237,27 @@ export class RenderQueue<HN = unknown, HE extends HN = HN> {
       case 'custom':
         return null;
     }
+  }
+
+  /**
+   * 按优先级排序队列。
+   *
+   * 优先级高的排在前面，同优先级保持插入顺序（稳定排序）。
+   */
+  private sortQueue(): void {
+    this.queue.sort((a, b) => {
+      const priorityA = this.getPriority(a);
+      const priorityB = this.getPriority(b);
+      const weightA = RENDER_PRIORITY_WEIGHT[priorityA];
+      const weightB = RENDER_PRIORITY_WEIGHT[priorityB];
+      return weightA - weightB;
+    });
+  }
+
+  /**
+   * 获取操作的优先级。
+   */
+  private getPriority(op: RenderOperation): RenderPriority {
+    return op.priority ?? this.options.defaultPriority;
   }
 }
