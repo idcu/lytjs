@@ -41,11 +41,74 @@ export const KeepAlive: ComponentOptions = {
   setup(_props: Record<string, unknown>, _ctx: SetupContext) {
     const cache: KeepAliveCache = new Map();
     const keys: Set<string> = new Set();
+    let _currentVNode: VNode | null = null;
 
     return {
       cache,
       keys,
+      _currentVNode,
     } as Record<string, unknown>;
+  },
+
+  render(_ctx: Record<string, unknown>): VNode | null {
+    const instance = this as unknown as ComponentInternalInstance;
+    const props = instance.props as KeepAliveProps;
+    const defaultSlot = instance.slots?.default;
+
+    if (!defaultSlot) return null;
+
+    const children = defaultSlot();
+    if (!children || children.length === 0) return null;
+
+    // KeepAlive only handles a single child component
+    const rawVNode = children[0] as VNode;
+    if (rawVNode == null) return null;
+
+    // Skip non-component vnodes (text, comment, etc.)
+    if (
+      typeof rawVNode.type === 'string' ||
+      rawVNode.type === (globalThis as Record<string, unknown>).__LYTJS_FRAGMENT__ ||
+      rawVNode.type === (globalThis as Record<string, unknown>).__LYTJS_TEXT__ ||
+      rawVNode.type === (globalThis as Record<string, unknown>).__LYTJS_COMMENT__
+    ) {
+      return rawVNode;
+    }
+
+    // Get component name for matching
+    const compType = rawVNode.type as Record<string, unknown>;
+    const compName = typeof compType === 'object' && compType !== null && 'name' in compType
+      ? (compType as { name?: string }).name
+      : typeof compType === 'function'
+        ? (compType as { name?: string }).name
+        : undefined;
+
+    // Check include/exclude patterns
+    if (
+      !matchesPattern(compName as string | undefined, props.include) ||
+      !matchesPattern(compName as string | undefined, props.exclude === undefined ? undefined : (v: string | undefined) => !matchesPattern(v, props.exclude))
+    ) {
+      return rawVNode;
+    }
+
+    // Compute cache key
+    const cacheKey = getCacheKey(instance, rawVNode);
+
+    // Check if already cached
+    const cachedInstance = getCachedInstance(instance, cacheKey);
+    if (cachedInstance) {
+      // Move to most recent position
+      cacheInstance(instance, cacheKey, cachedInstance);
+      // Copy the cached vnode's children onto the raw vnode for patching
+      rawVNode.component = cachedInstance;
+      rawVNode.shapeFlag |= ShapeFlags.COMPONENT_KEPT_ALIVE;
+      activateInstance(cachedInstance);
+      return rawVNode;
+    }
+
+    // Store reference for deactivation on unmount
+    (instance.setupState as Record<string, unknown>)._currentVNode = rawVNode;
+
+    return rawVNode;
   },
 
   created() {

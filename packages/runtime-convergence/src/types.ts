@@ -221,9 +221,11 @@ export interface AsyncSchedulerOptions {
 export type { TransitionProps } from '@lytjs/vdom/transition';
 
 /**
- * 过渡状态。
+ * 过渡状态（运行时收敛层）。
+ * 与 @lytjs/vdom/transition 中的 TransitionState 不同，
+ * 此版本用于运行时收敛层的过渡控制。
  */
-export interface TransitionState {
+export interface RuntimeTransitionState {
   /** 当前过渡阶段 */
   phase: 'idle' | 'entering' | 'leaving';
   /** 是否已取消 */

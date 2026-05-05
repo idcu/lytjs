@@ -5,7 +5,7 @@ import type { ComponentOptions, RenderFunction } from './types';
 import { onErrorCaptured } from './lifecycle';
 import { ref } from '@lytjs/reactivity';
 import { createVNode } from '@lytjs/vdom';
-import { Text } from '@lytjs/common-vnode';
+import { Text, Fragment } from '@lytjs/common-vnode';
 import type { VNode } from '@lytjs/common-vnode';
 
 export interface ErrorBoundaryProps {
@@ -38,7 +38,11 @@ export const ErrorBoundary: ComponentOptions = {
         if (fallbackSlot) {
           const result = fallbackSlot({ error: error.value });
           if (Array.isArray(result) && result.length > 0) {
-            return result[0] as VNode;
+            // Use Fragment to wrap multiple root nodes from slot
+            if (result.length === 1) {
+              return result[0] as VNode;
+            }
+            return createVNode(Fragment, null, result);
           }
         }
         // Default error UI
@@ -50,7 +54,11 @@ export const ErrorBoundary: ComponentOptions = {
       if (defaultSlot) {
         const result = defaultSlot();
         if (Array.isArray(result) && result.length > 0) {
-          return result[0] as VNode;
+          // Use Fragment to wrap multiple root nodes from slot
+          if (result.length === 1) {
+            return result[0] as VNode;
+          }
+          return createVNode(Fragment, null, result);
         }
       }
 

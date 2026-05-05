@@ -101,14 +101,64 @@ export interface CoreIntegrations {
   cache?: CacheUtilsLike;
 }
 
-// 全局集成点存储
+/**
+ * 集成点作用域，与 App 实例关联。
+ * 每个集成点作用域维护独立的集成配置，
+ * 支持多 App 实例场景下各实例拥有不同的集成配置。
+ */
+export class IntegrationScope {
+  private _integrations: CoreIntegrations = {};
+
+  register(integrations: CoreIntegrations): void {
+    this._integrations = { ...this._integrations, ...integrations };
+  }
+
+  unregister(...keys: (keyof CoreIntegrations)[]): void {
+    for (const key of keys) {
+      delete this._integrations[key];
+    }
+  }
+
+  reset(): void {
+    this._integrations = {};
+  }
+
+  get integrations(): CoreIntegrations {
+    return this._integrations;
+  }
+
+  getHttpClient(): HttpClientLike | undefined {
+    return this._integrations.http;
+  }
+
+  getQueryUtils(): QueryUtilsLike | undefined {
+    return this._integrations.query;
+  }
+
+  getSecurityUtils(): SecurityUtilsLike | undefined {
+    return this._integrations.security;
+  }
+
+  getCacheUtils(): CacheUtilsLike | undefined {
+    return this._integrations.cache;
+  }
+}
+
+// 全局集成点存储（向后兼容）
 let _integrations: CoreIntegrations = {};
 
 /**
- * 注册集成点
+ * 注册集成点（全局，向后兼容）
  */
 export function registerIntegrations(integrations: CoreIntegrations): void {
   _integrations = { ..._integrations, ...integrations };
+}
+
+/**
+ * 重置全局集成点
+ */
+export function resetIntegrations(): void {
+  _integrations = {};
 }
 
 /**

@@ -118,9 +118,16 @@ export async function hydrateIsland(
     if (!islandName) continue;
 
     // Determine which component to use: explicit parameter or registry lookup
-    const resolvedComponent = islandName === component.name
-      ? component
-      : (islandRegistry.get(islandName) ?? component);
+    // Only match if the island name exactly matches a registered component;
+    // do NOT fall back to the passed component on mismatch to prevent wrong hydration.
+    let resolvedComponent = islandRegistry.get(islandName);
+    if (!resolvedComponent && islandName === component.name) {
+      resolvedComponent = component;
+    }
+    if (!resolvedComponent) {
+      // No matching component found for this island; skip it
+      continue;
+    }
 
     // Determine props: explicit parameter or decode from data-props attribute
     const resolvedProps = props ?? decodeProps(el.getAttribute('data-props') ?? '');
@@ -152,18 +159,16 @@ async function hydrateIslandElement(
     setupResult = component.setup(props);
   }
 
-  // Call render if defined
+  // If setup returned a VNode directly, use it (skip render call)
   let vnode: VNode | undefined;
-  if (typeof component.render === 'function') {
-    const ctx = (setupResult && typeof setupResult === 'object' && !('type' in setupResult))
+  if (setupResult && typeof setupResult === 'object' && 'type' in setupResult) {
+    vnode = setupResult as VNode;
+  } else if (typeof component.render === 'function') {
+    // Only call render when setup did not return a VNode
+    const ctx = (setupResult && typeof setupResult === 'object')
       ? setupResult as Record<string, unknown>
       : {};
     vnode = component.render(ctx);
-  }
-
-  // If setup returned a VNode directly, use it
-  if (setupResult && typeof setupResult === 'object' && 'type' in setupResult) {
-    vnode = setupResult as VNode;
   }
 
   if (vnode) {

@@ -4,7 +4,7 @@
 import type { RendererHost, TransitionDurationInfo } from '@lytjs/host-contract';
 import type {
   TransitionProps,
-  TransitionState,
+  RuntimeTransitionState as TransitionState,
   FLIPRecord,
   ResolvedTransitionClasses,
   TransitionEngineOptions,

@@ -256,20 +256,22 @@ export function defineCustomElement(
       const propKey = attrToProp(name);
       const deserializedValue = deserializeValue(newValue, propsOptions[propKey]);
 
+      // Skip if value hasn't actually changed
+      if (this._instance.props[propKey] === deserializedValue) return;
+
       // 更新组件 props
       this._instance.props[propKey] = deserializedValue;
 
-      // 触发更新：重新渲染
+      // 更新 vnode 的 props
+      (this._vnode.props as Record<string, unknown>)[propKey] = deserializedValue;
+
+      // 触发增量更新：使用 patch 进行差异化更新而非完全重建
       if (this._renderer && this._vnode) {
-        // 更新 vnode 的 props
-        (this._vnode.props as Record<string, unknown>)[propKey] = deserializedValue;
-        // 优先使用 render 方法重新渲染；如果不存在则使用 patch 方法
-        if (this._renderer.render && this._vnode) {
+        if (this._renderer.patch) {
+          // patch(oldVNode, newVNode, container) performs incremental diff
+          this._renderer.patch(this._vnode, this._vnode, this._root as Element);
+        } else if (this._renderer.render) {
           this._renderer.render(this._vnode, this._root as Element);
-        } else if (this._renderer.patch && this._vnode) {
-          // render 方法不存在时，使用 patch 进行更新
-          // patch(null, vnode, container) 等价于重新挂载
-          this._renderer.patch(null, this._vnode, this._root as Element);
         }
       }
     }

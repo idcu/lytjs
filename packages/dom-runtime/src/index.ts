@@ -27,53 +27,38 @@ const DANGEROUS_SELF_CLOSING_TAG_NAMES = `${DANGEROUS_TAG_NAMES}|input|textarea|
  * 生产环境建议使用 DOMPurify 等成熟库
  */
 function sanitizeHTML(html: string): string {
-  // 移除危险标签（含内容）
-  let result = html.replace(
-    new RegExp(
-      `<\\s*/?\\s*(${DANGEROUS_TAG_NAMES})[^>]*>[\\s\\S]*?<\\s*/\\s*\\1\\s*>`,
-      'gi',
-    ),
-    '',
-  );
-  // 移除自闭合的危险标签
-  result = result.replace(
-    new RegExp(
-      `<\\s*(${DANGEROUS_SELF_CLOSING_TAG_NAMES})[^>]*/?>`,
-      'gi',
-    ),
-    '',
-  );
-  // 移除事件属性
-  result = result.replace(
-    /\s+on\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]*)/gi,
-    '',
-  );
-  // 移除 srcdoc、formaction、xlink:href
-  result = result.replace(
-    /\s+(srcdoc|formaction|xlink:href)\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]*)/gi,
-    '',
-  );
-  // 防御嵌套绕过（如 <scr<script>ipt>）：移除危险标签后递归检查，
-  // 直到结果不再变化，确保不会因为移除操作产生新的危险标签
+  // 防御嵌套绕过：循环执行所有清理步骤，直到结果不再变化
   let prevResult = '';
-  while (result !== prevResult) {
-    prevResult = result;
-    result = result.replace(
+  while (html !== prevResult) {
+    prevResult = html;
+    // 移除危险标签（含内容）
+    html = html.replace(
       new RegExp(
         `<\\s*/?\\s*(${DANGEROUS_TAG_NAMES})[^>]*>[\\s\\S]*?<\\s*/\\s*\\1\\s*>`,
         'gi',
       ),
       '',
     );
-    result = result.replace(
+    // 移除自闭合的危险标签
+    html = html.replace(
       new RegExp(
         `<\\s*(${DANGEROUS_SELF_CLOSING_TAG_NAMES})[^>]*/?>`,
         'gi',
       ),
       '',
     );
+    // 移除事件属性（on*）
+    html = html.replace(
+      /\s+on\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]*)/gi,
+      '',
+    );
+    // 移除危险属性（srcdoc、formaction、xlink:href）
+    html = html.replace(
+      /\s+(srcdoc|formaction|xlink:href)\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]*)/gi,
+      '',
+    );
   }
-  return result;
+  return html;
 }
 
 // ==================== DOM 创建 ====================
