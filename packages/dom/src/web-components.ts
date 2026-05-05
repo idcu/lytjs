@@ -367,8 +367,13 @@ export function createEnhancedElementClass(
       const oldValue = this._propertyValues.get(name);
       // FIX: P1-17 使用 Object.is() 替代 ===，正确处理 NaN 和 +/-0 等边界情况；
       // 对对象类型使用 JSON 序列化进行深度比较，避免引用不同但内容相同导致误判
+      // FIX: P2-batch2-14 添加 try-catch 防止循环引用导致 JSON.stringify 抛出异常
       if (typeof value === 'object' && value !== null && typeof oldValue === 'object' && oldValue !== null) {
-        if (JSON.stringify(value) === JSON.stringify(oldValue)) return;
+        try {
+          if (JSON.stringify(value) === JSON.stringify(oldValue)) return;
+        } catch {
+          // 循环引用或其他序列化错误时，跳过深度比较，继续执行属性更新
+        }
       } else if (Object.is(oldValue, value)) {
         return;
       }

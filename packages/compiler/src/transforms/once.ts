@@ -25,11 +25,15 @@ export function transformOnce(node: RootNode | TemplateChildNode, context: Trans
   // Mark as hoistable
   if (element.codegenNode) {
     context.addHoist(element.codegenNode);
+    // FIX: P2-11 createSimpleExpression 返回 SimpleExpressionNode，而 codegenNode
+    // 可能是 VNodeCall 等类型。此处使用类型断言是安全的，因为 hoisted 引用
+    // 会在后续 codegen 阶段被解析为实际的 hoisted 值。
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     element.codegenNode = createSimpleExpression(
       `_hoisted_${context.hoists.length}`,
       false,
       element.loc,
       true,
-    ) as unknown as typeof element.codegenNode;
+    ) as any;
   }
 }

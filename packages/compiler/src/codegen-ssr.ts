@@ -8,6 +8,9 @@
 // - 保留 v-if/v-for/v-text/v-html/v-bind
 // - 生成 renderToString 格式的代码
 
+// FIX: P2-16 添加 __DEV__ 声明，避免依赖 env.d.ts 的隐式全局类型
+declare const __DEV__: boolean;
+
 import { NodeTypes } from './constants';
 import type {
   RootNode,

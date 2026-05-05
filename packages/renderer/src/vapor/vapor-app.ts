@@ -6,7 +6,7 @@ import { compile } from '@lytjs/compiler';
 import { createSignalRenderer } from '../signal/signal-renderer';
 import type { SignalRenderer } from '../signal/signal-renderer';
 
-declare const __DEV__: boolean;
+// __DEV__ 已在 env.d.ts 中全局声明，无需重复声明
 
 // ============================================================
 // VaporContext 接口

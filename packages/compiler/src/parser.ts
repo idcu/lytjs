@@ -1,6 +1,9 @@
 // src/parser.ts
 // HTML template parser
 
+// FIX: P2-15 添加 __DEV__ 声明，避免依赖 env.d.ts 的隐式全局类型
+declare const __DEV__: boolean;
+
 import {
   NodeTypes,
   ElementTypes,

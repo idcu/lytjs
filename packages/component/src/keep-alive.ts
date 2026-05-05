@@ -2,6 +2,7 @@
 // KeepAlive component (simplified)
 
 import { isString, isArray, isFunction } from '@lytjs/common-is';
+import { warn } from '@lytjs/common-error';
 import { watch } from '@lytjs/reactivity';
 import type { ComponentInternalInstance, ComponentOptions, SetupContext } from './types';
 import { createComponentInstance, setupComponent } from './component';

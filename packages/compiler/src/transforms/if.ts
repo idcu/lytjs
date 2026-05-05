@@ -16,6 +16,18 @@ import { createSimpleExpression, createConditionalExpression } from '../ast';
 import { getExpContent, findDirective } from './helpers';
 import { transformElement } from './transform-element';
 
+/**
+ * Type guard: check if a node is a JSConditionalExpression.
+ * FIX: P2-8 添加类型守卫函数，替代不安全的 as unknown as 类型断言链
+ */
+function isJSConditionalExpression(node: unknown): node is JSConditionalExpression {
+  return (
+    typeof node === 'object' &&
+    node !== null &&
+    (node as JSConditionalExpression).type === NodeTypes.JS_CONDITIONAL_EXPRESSION
+  );
+}
+
 export function transformIf(node: RootNode | TemplateChildNode, context: TransformContext): void {
   if (node.type !== NodeTypes.ELEMENT) return;
 
@@ -124,6 +136,9 @@ export function transformIf(node: RootNode | TemplateChildNode, context: Transfo
   }
 
   if (conditional) {
-    siblings.splice(chainStart, 0, conditional as unknown as TemplateChildNode);
+    // FIX: P2-8 使用类型守卫验证后再插入，替代不安全的 as unknown as 断言
+    if (isJSConditionalExpression(conditional)) {
+      siblings.splice(chainStart, 0, conditional as unknown as TemplateChildNode);
+    }
   }
 }

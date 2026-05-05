@@ -192,8 +192,7 @@ export function createComponentInstance(
       },
       provides: parent ? parent.provides : (Object.create(null) as Record<string | symbol, unknown>),
       parent,
-      // FIX: P2-31 简化 root 初始化：无父级时直接指向自身，避免先赋 null 再覆盖
-      root: parent ? parent.root : instance,
+      root: null as unknown as ComponentInternalInstance,
       appContext,
       attrs: {},
       accessCache: null as Record<string, number> | null,
@@ -201,6 +200,9 @@ export function createComponentInstance(
 
     // Create emit function bound to this instance
     instance.emit = (event: string, ...args: unknown[]) => emit(instance, event, ...args);
+
+    // FIX: P1-4 在 instance 声明完成后赋值 root，避免在 const 初始化前引用自身
+    instance.root = parent ? parent.root : instance;
 
     return instance;
   } catch (err) {

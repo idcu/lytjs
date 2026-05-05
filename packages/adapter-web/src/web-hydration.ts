@@ -235,10 +235,11 @@ function hydrateMatchedElement(
     childIndex = 1;
   }
 
-  // Remove extra DOM nodes
+  // Remove extra DOM nodes (iterate from end to avoid stale references)
   const elChildren = host.getChildNodes(existingNode as Element);
   while (elChildren.length > childIndex) {
-    host.remove(elChildren[childIndex]!);
+    host.remove(elChildren[elChildren.length - 1]!);
+    elChildren.pop();
   }
 
   return childIndex;

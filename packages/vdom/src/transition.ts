@@ -689,7 +689,7 @@ function waitForTransitionEnd<HN, HE extends HN>(
 /**
  * DOM 回退：等待过渡/动画结束。
  */
-function waitForTransitionEndDOM(
+export function waitForTransitionEndDOM(
   el: Element,
   info: TransitionDurationInfo,
   done: () => void,

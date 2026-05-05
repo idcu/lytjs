@@ -9,6 +9,7 @@ import { Fragment, Text, Comment, ShapeFlags } from '@lytjs/vdom';
 import { isString, isArray, isFunction } from '@lytjs/common-is';
 import { escapeHtml, isVoidElement } from '../utils';
 import { isValidHTMLElementTag, renderAttributeToString } from './ssr-utils';
+import { warn } from '@lytjs/common-error';
 
 // ============================================================
 // renderToString - main entry
@@ -87,8 +88,6 @@ function renderElementToString(vnode: VNode): string {
 
   if (!isValidHTMLElementTag(tag)) {
     if (__DEV__) {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const { warn } = require('@lytjs/common-error');
       warn(`Invalid SSR element tag: "${tag}"`);
     }
     return '';

@@ -13,6 +13,7 @@ export type { VNode, RendererOptions } from '@lytjs/vdom';
 // ==================== Renderer Plugin System ====================
 
 import type { VNode as VNodeType } from '@lytjs/vdom';
+import { warn, error } from '@lytjs/common-error';
 
 /**
  * Renderer plugin interface
@@ -178,8 +179,6 @@ export function executeHooks(event: LifecycleEvent, ...args: unknown[]): void {
       handler(...args);
     } catch (e) {
       if (__DEV__) {
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const { error } = require('@lytjs/common-error');
         error(`Error in ${event} hook:`, e);
       }
     }

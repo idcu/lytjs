@@ -112,6 +112,8 @@ export function createSignalRenderer(
         // 注意：此处使用 new Function() 执行编译后的模板代码。
         // 虽然模板代码由编译器生成（而非用户直接输入），但仍存在潜在的安全风险。
         // 建议在生产环境中使用预编译（AOT compilation）替代运行时编译。
+        // [P2-batch2-3] 已确认安全风险并记录。当前实现依赖编译器可信输入，
+        // 后续版本应考虑使用 AOT 编译或沙箱执行环境来消除此风险。
         // 创建渲染函数，传入所有 dom-runtime 和 reactivity 的函数作为参数
         // 参数名必须与 codegen-signal.ts 生成的 import 名称一致
         const renderFn = new Function(

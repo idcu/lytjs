@@ -596,7 +596,10 @@ function vnodeToSimpleHTML(vnode: VNode): string {
           .join('');
       } else if (typeof children === 'object' && 'type' in (children as object)) {
         // Single VNode child
-        childContent = vnodeToSimpleHTML(children as unknown as VNode);
+        // FIX: P2-batch2-2 添加运行时类型检查，避免不安全的类型断言
+        if (children != null && typeof children === 'object' && 'type' in children) {
+          childContent = vnodeToSimpleHTML(children as VNode);
+        }
       }
     }
 

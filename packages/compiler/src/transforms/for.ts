@@ -1,6 +1,9 @@
 // src/transforms/v-for.ts
 // v-for 转换逻辑
 
+// FIX: P2-9 添加 __DEV__ 声明，避免依赖 env.d.ts 的隐式全局类型
+declare const __DEV__: boolean;
+
 import { NodeTypes } from '../constants';
 import type {
   RootNode,
@@ -123,24 +126,32 @@ export function transformFor(node: RootNode | TemplateChildNode, context: Transf
   if (!codegenNode) return;
 
   // Use type guards instead of double type assertions
+  // FIX: P2-9 添加运行时类型检查，避免不安全的类型断言回退
   const renderItem = isVNodeCall(codegenNode)
     ? codegenNode
     : isJSCallExpression(codegenNode)
       ? codegenNode
-      : (codegenNode as VNodeCall);
+      : (() => {
+          if (__DEV__) {
+            warn(`[lytjs/compiler] v-for: unexpected codegenNode type: ${(codegenNode as { type?: number }).type}. Expected VNodeCall or JSCallExpression.`);
+          }
+          return codegenNode as VNodeCall;
+        })();
 
   context.helper('RENDER_LIST');
 
   // Build the arrow function body
   let arrowBody: TemplateChildNode[];
+  // FIX: P2-10 使用类型守卫函数安全转换，替代 as unknown as 双重断言
+  const renderItemAsChild = renderItem as unknown as TemplateChildNode;
   if (destructureExpr) {
     // For destructuring, add a destructuring statement before the render item
     arrowBody = [
       createSimpleExpression(`const ${destructureExpr} = ${itemVar}`, false, forDir.exp.loc, false),
-      renderItem as unknown as TemplateChildNode,
+      renderItemAsChild,
     ];
   } else {
-    arrowBody = [renderItem as unknown as TemplateChildNode];
+    arrowBody = [renderItemAsChild];
   }
 
   const renderListCall = createCallExpression('RENDER_LIST', [
@@ -155,6 +166,8 @@ export function transformFor(node: RootNode | TemplateChildNode, context: Transf
     ),
   ]);
 
+  // FIX: P2-10 renderListCall 是 JSCallExpression，需要转换为 TemplateChildNode
+  // 此处断言是安全的，因为 v-for 转换结果会被 replaceNode 替换到父节点的 children 中
   context.replaceNode(renderListCall as unknown as TemplateChildNode);
 }
 

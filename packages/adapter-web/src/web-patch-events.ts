@@ -204,9 +204,11 @@ export function patchEvent(
     // 情况 3：无新值 + 有旧 invoker → 移除
     // FIX: P2-v11-34 传递完整的 options 对象给 removeEventListener，
     // 确保与 addEventListener 时使用的 options 一致，否则无法正确移除监听器
-    const removeOptions = buildEventListenerOptions(parsed);
+    // FIX: P1-3 使用 existingInvoker._parsed 而非重新解析的 parsed，
+    // 确保移除时的 options 与绑定时完全一致
+    const removeOptions = buildEventListenerOptions(existingInvoker._parsed);
     el.removeEventListener(
-      parsed.name,
+      existingInvoker._parsed!.name,
       existingInvoker,
       removeOptions,
     );
@@ -260,9 +262,13 @@ function extractHandler(
   value: ((...args: unknown[]) => void) | null,
 ): ((...args: unknown[]) => void) | null {
   if (typeof value === 'function') return value;
+  // FIX: P2-batch2-17 添加类型守卫，确保对象格式的 handler 存在且为函数类型
   if (value != null && typeof value === 'object' && 'handler' in value) {
-    const handler = (value as unknown as Record<string, unknown>).handler;
-    return typeof handler === 'function' ? (handler as (...args: unknown[]) => void) : null;
+    const record = value as Record<string, unknown>;
+    const handler = record.handler;
+    if (typeof handler === 'function') {
+      return handler as (...args: unknown[]) => void;
+    }
   }
   return null;
 }
