@@ -303,5 +303,18 @@ export function useCssVars(vars: () => Record<string, string>): void {
 
   // 使用 watchEffect 自动追踪 vars() 中的响应式依赖
   const stop = watchEffect(updateStyle);
-  onScopeDispose(stop);
+
+  // FIX: P2-v11-10 useCssVars 卸载时清理组件根元素上设置的 CSS 变量，
+  // 避免卸载后残留的 CSS 变量影响其他组件或导致内存泄漏
+  onScopeDispose(() => {
+    stop();
+    const el = instance.vnode?.el as HTMLElement | null;
+    if (el) {
+      const varsObj = vars();
+      for (const key of Object.keys(varsObj)) {
+        const cssVar = key.startsWith('--') ? key : `--${key}`;
+        el.style.removeProperty(cssVar);
+      }
+    }
+  });
 }

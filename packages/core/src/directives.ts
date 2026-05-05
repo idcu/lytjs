@@ -35,12 +35,21 @@ interface DirectiveEntry {
 export function withDirectives(vnode: VNode, directives: DirectiveArguments): VNode {
   const dirVNode = cloneVNode(vnode) as DirectiveVNode;
   // FIX: P1-44 使用 DirectiveEntry 中间类型简化类型转换
-  dirVNode._directives = directives.map(
+  // FIX: P2-v11-12 定义正确的类型转换函数，替代 as unknown as DirectiveArguments
+  const normalizedDirectives: DirectiveArguments = directives.map(
+    ([dir, value, arg, modifiers]): DirectiveArguments[0] => [
+      dir,
+      value,
+      arg as string | undefined,
+      (modifiers as Record<string, boolean>) || {},
+    ],
+  );
+  dirVNode._directives = normalizedDirectives.map(
     ([dir, value, arg, modifiers]): DirectiveEntry => ({
       dir: dir as Directive & { deep?: boolean },
       value,
       arg,
-      modifiers: (modifiers as Record<string, boolean>) || {},
+      modifiers,
     }),
   ) as unknown as DirectiveArguments;
 
@@ -59,10 +68,16 @@ export function withDirectives(vnode: VNode, directives: DirectiveArguments): VN
  * 递归地将指令应用到子 VNode。
  * 遍历 VNode 的 children（数组或单个子节点），为每个子 VNode
  * 附加相同的指令引用。
+ * FIX: P2-v11-13 添加 visited Set 防止循环引用导致无限递归
  */
 function applyDirectiveDeep(vnode: DirectiveVNode, directive: DirectiveArguments[0]): void {
   const children = vnode.children;
   if (!children) return;
+
+  // FIX: P2-v11-13 使用 visited Set 跟踪已处理的 VNode，
+  // 防止循环引用（如 VNode.children 包含自身）导致栈溢出
+  const visited = new Set<DirectiveVNode>();
+  visited.add(vnode);
 
   const childArray = isArray(children) ? children : [children];
 
@@ -70,6 +85,10 @@ function applyDirectiveDeep(vnode: DirectiveVNode, directive: DirectiveArguments
     if (!child || typeof child !== 'object') continue;
 
     const childVNode = child as DirectiveVNode;
+
+    // 跳过已处理的 VNode，防止循环引用
+    if (visited.has(childVNode)) continue;
+    visited.add(childVNode);
 
     // 为子 VNode 附加指令
     if (!childVNode._directives) {

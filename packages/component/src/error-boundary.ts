@@ -9,16 +9,14 @@ import { Text, Fragment } from '@lytjs/common-vnode';
 import type { VNode } from '@lytjs/common-vnode';
 
 // FIX: P1-11 RUNTIME-NEW-01 - 异步错误捕获改进
-// 全局 Promise 错误处理状态
-interface PromiseErrorState {
+// FIX: P1-8 使用 Set 跟踪所有活跃的 ErrorBoundary 实例，
+// 避免后挂载实例覆盖前一个的单例问题
+interface ActiveErrorBoundary {
   handler: (event: PromiseRejectionEvent) => void;
-  isActive: boolean;
 }
 
-const promiseErrorState: PromiseErrorState = {
-  handler: () => {},
-  isActive: false,
-};
+const activeErrorBoundaries = new Set<ActiveErrorBoundary>();
+let globalHandlerInstalled = false;
 
 export interface ErrorBoundaryProps {
   onError?: (error: Error, info: string) => void;
@@ -46,29 +44,41 @@ export const ErrorBoundary: ComponentOptions = {
     });
 
     // FIX: P1-11 RUNTIME-NEW-01 - 改进异步错误捕获
-    // 添加 Promise.reject 监听
+    // FIX: P1-8 使用 Set 跟踪所有活跃实例，unhandledrejection 事件通知所有实例
+    let currentBoundary: ActiveErrorBoundary | null = null;
+
     onMounted(() => {
       if ((props as unknown as { capturePromiseRejections?: boolean }).capturePromiseRejections && typeof window !== 'undefined') {
-        promiseErrorState.handler = (event: PromiseRejectionEvent) => {
-          const err = event.reason instanceof Error
-            ? event.reason
-            : new Error(String(event.reason));
-          error.value = err;
-          hasError.value = true;
-          (props as unknown as ErrorBoundaryProps).onError?.(err, 'unhandledrejection');
-          // 阻止默认处理（控制台报错）
-          event.preventDefault();
+        currentBoundary = {
+          handler: (event: PromiseRejectionEvent) => {
+            const err = event.reason instanceof Error
+              ? event.reason
+              : new Error(String(event.reason));
+            error.value = err;
+            hasError.value = true;
+            (props as unknown as ErrorBoundaryProps).onError?.(err, 'unhandledrejection');
+          },
         };
 
-        window.addEventListener('unhandledrejection', promiseErrorState.handler);
-        promiseErrorState.isActive = true;
+        activeErrorBoundaries.add(currentBoundary);
+
+        // 只安装一次全局 unhandledrejection 事件监听器
+        if (!globalHandlerInstalled) {
+          globalHandlerInstalled = true;
+          window.addEventListener('unhandledrejection', (event: PromiseRejectionEvent) => {
+            // 通知所有活跃的 ErrorBoundary 实例
+            for (const eb of activeErrorBoundaries) {
+              eb.handler(event);
+            }
+          });
+        }
       }
     });
 
     onUnmounted(() => {
-      if (promiseErrorState.isActive && typeof window !== 'undefined') {
-        window.removeEventListener('unhandledrejection', promiseErrorState.handler);
-        promiseErrorState.isActive = false;
+      if (currentBoundary) {
+        activeErrorBoundaries.delete(currentBoundary);
+        currentBoundary = null;
       }
     });
 
@@ -78,7 +88,11 @@ export const ErrorBoundary: ComponentOptions = {
         const fallbackSlot = ctx.$slots.fallback;
         if (fallbackSlot) {
           const result = fallbackSlot({ error: error.value });
-          if (Array.isArray(result) && result.length > 0) {
+          // FIX: P2-28 处理 fallback slot 返回单个 VNode（非数组）的情况
+          if (!Array.isArray(result)) {
+            return result as VNode;
+          }
+          if (result.length > 0) {
             // Use Fragment to wrap multiple root nodes from slot
             if (result.length === 1) {
               return result[0] as VNode;

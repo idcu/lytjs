@@ -117,7 +117,7 @@ export interface DOMRenderer {
  * @param extraOptions 可选的额外渲染器选项，例如 setupChildComponent
  */
 export function createDOMRenderer(
-  extraOptions?: Partial<Pick<RendererOptions<Node, Element>, 'setupChildComponent'>>,
+  extraOptions?: Partial<Pick<RendererOptions<Node, Element>, 'setupChildComponent' | 'normalizeProps'>>,
 ): DOMRenderer {
   // VNode storage scoped to this renderer instance
   const vnodeMap = new WeakMap<Element, VNode | null>();
@@ -167,6 +167,9 @@ export function createDOMRenderer(
     },
     ...(extraOptions?.setupChildComponent
       ? { setupChildComponent: extraOptions.setupChildComponent }
+      : {}),
+    ...(extraOptions?.normalizeProps
+      ? { normalizeProps: extraOptions.normalizeProps }
       : {}),
   };
 

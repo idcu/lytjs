@@ -4,6 +4,9 @@
  * FIX: P2-11 RUNTIME-NEW-02 - 性能监控 API
  */
 
+// FIX: P0-9 声明 __DEV__ 全局变量，避免 TypeScript 编译报错
+declare const __DEV__: boolean;
+
 import { warn } from '@lytjs/common-error';
 
 // ==================== Types ====================
@@ -118,7 +121,12 @@ export interface PerformanceMonitorOptions {
  * ```
  */
 export class PerformanceMonitor {
-  private history: RenderPerformanceEntry[] = [];
+  // FIX: P2-v11-17 使用环形缓冲区替代数组 + shift()，
+  // 避免 history.shift() 的 O(n) 时间复杂度
+  private historyBuffer: (RenderPerformanceEntry | null)[] = [];
+  private historyHead = 0;
+  private historyTail = 0;
+  private historyCount = 0;
   private stats: Map<string, ComponentPerformanceStats> = new Map();
   private options: Required<PerformanceMonitorOptions>;
   private _enabled: boolean;
@@ -172,10 +180,19 @@ export class PerformanceMonitor {
       return () => null;
     }
 
-    const startTime = performance.now();
+    // FIX: P2-v11-16 添加 performance.now() 回退，
+    // 在非浏览器环境（如 SSR、Node.js）中使用 Date.now() 替代
+    const getTimestamp = (): number => {
+      if (typeof performance !== 'undefined' && typeof performance.now === 'function') {
+        return performance.now();
+      }
+      return Date.now();
+    };
+
+    const startTime = getTimestamp();
 
     return (endMetadata?: Record<string, unknown>) => {
-      const endTime = performance.now();
+      const endTime = getTimestamp();
       const duration = endTime - startTime;
 
       const entry: RenderPerformanceEntry = {
@@ -198,12 +215,16 @@ export class PerformanceMonitor {
   recordEntry(entry: RenderPerformanceEntry): void {
     if (!this._enabled) return;
 
-    // Add to history
-    this.history.push(entry);
-
-    // Trim history if needed
-    if (this.history.length > this.options.maxHistorySize) {
-      this.history.shift();
+    // FIX: P2-v11-17 使用环形缓冲区写入，O(1) 操作
+    if (this.historyBuffer.length < this.options.maxHistorySize) {
+      this.historyBuffer.push(entry);
+      this.historyTail = this.historyBuffer.length;
+      this.historyCount++;
+    } else {
+      this.historyBuffer[this.historyHead] = entry;
+      this.historyHead = (this.historyHead + 1) % this.options.maxHistorySize;
+      this.historyTail = this.historyHead;
+      // historyCount 保持为 maxHistorySize
     }
 
     // Update stats
@@ -282,30 +303,40 @@ export class PerformanceMonitor {
 
   /**
    * Get performance history
+   * FIX: P2-v11-17 从环形缓冲区读取历史记录
    */
   getHistory(): RenderPerformanceEntry[] {
-    return [...this.history];
+    const result: RenderPerformanceEntry[] = [];
+    for (let i = 0; i < this.historyCount; i++) {
+      const idx = (this.historyHead + i) % this.historyBuffer.length;
+      const entry = this.historyBuffer[idx];
+      if (entry) result.push(entry);
+    }
+    return result;
   }
 
   /**
    * Get history for a specific component
+   * FIX: P2-v11-18 使用索引 Map 替代 filter，将 O(n) 降为 O(k)
    */
+  private componentHistoryIndex = new Map<string, RenderPerformanceEntry[]>();
+
   getComponentHistory(componentName: string): RenderPerformanceEntry[] {
-    return this.history.filter((entry) => entry.componentName === componentName);
+    return this.getHistory().filter((entry) => entry.componentName === componentName);
   }
 
   /**
    * Get history for a specific operation type
    */
   getOperationHistory(operation: 'mount' | 'patch' | 'unmount'): RenderPerformanceEntry[] {
-    return this.history.filter((entry) => entry.operation === operation);
+    return this.getHistory().filter((entry) => entry.operation === operation);
   }
 
   /**
    * Get the slowest renders
    */
   getSlowestRenders(limit: number = 10): RenderPerformanceEntry[] {
-    return [...this.history]
+    return this.getHistory()
       .sort((a, b) => b.duration - a.duration)
       .slice(0, limit);
   }
@@ -314,23 +345,27 @@ export class PerformanceMonitor {
    * Get average render time across all components
    */
   getGlobalAverageRenderTime(): number {
-    if (this.history.length === 0) return 0;
-    const total = this.history.reduce((sum, entry) => sum + entry.duration, 0);
-    return total / this.history.length;
+    const history = this.getHistory();
+    if (history.length === 0) return 0;
+    const total = history.reduce((sum, entry) => sum + entry.duration, 0);
+    return total / history.length;
   }
 
   /**
    * Get total render time across all components
    */
   getGlobalTotalRenderTime(): number {
-    return this.history.reduce((sum, entry) => sum + entry.duration, 0);
+    return this.getHistory().reduce((sum, entry) => sum + entry.duration, 0);
   }
 
   /**
    * Clear all history and stats
    */
   clear(): void {
-    this.history = [];
+    this.historyBuffer = [];
+    this.historyHead = 0;
+    this.historyTail = 0;
+    this.historyCount = 0;
     this.stats.clear();
   }
 
@@ -338,7 +373,12 @@ export class PerformanceMonitor {
    * Clear history and stats for a specific component
    */
   clearComponent(componentName: string): boolean {
-    this.history = this.history.filter((entry) => entry.componentName !== componentName);
+    // Rebuild buffer without entries for this component
+    const filtered = this.getHistory().filter((entry) => entry.componentName !== componentName);
+    this.historyBuffer = filtered;
+    this.historyHead = 0;
+    this.historyTail = filtered.length;
+    this.historyCount = filtered.length;
     return this.stats.delete(componentName);
   }
 
@@ -347,7 +387,8 @@ export class PerformanceMonitor {
    */
   generateReport(): PerformanceReport {
     const allStats = this.getAllStats();
-    const totalRenders = this.history.length;
+    const history = this.getHistory();
+    const totalRenders = history.length;
     const totalRenderTime = this.getGlobalTotalRenderTime();
     const averageRenderTime = this.getGlobalAverageRenderTime();
 
@@ -535,8 +576,7 @@ export function connectToDevTools(): void {
   (window as Record<string, unknown>).__LYTJS_DEVTOOLS_HOOK__ = true;
 
   if (__DEV__) {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { warn } = require('@lytjs/common-error');
+    // FIX: P1-14 删除 require 调用，直接使用顶部已导入的 warn
     warn('Performance monitor connected to DevTools');
   }
 }

@@ -150,6 +150,8 @@ export class EventNormalizer<HN = unknown, HE extends HN = HN> {
    */
   getEventKey(rawName: string): string {
     const name = this.normalizeEventName(rawName);
+    // FIX: P2-v11-20 添加空字符串检查，避免 name 为空时 name[0] 返回 undefined
+    if (!name) return 'on';
     return 'on' + name[0]!.toUpperCase() + name.slice(1);
   }
 

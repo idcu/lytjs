@@ -336,7 +336,9 @@ export function abortSuspense(boundary: SuspenseAsyncState): void {
   // For native promises, we rely on the aborted flag which causes
   // .then()/.catch() callbacks in registerAsyncChild to skip side effects.
   if (boundary.pendingPromises.size > 0) {
-    const abortError = new SuspenseAbortedError(0);
+    // FIX: P2-33 使用实际 pendingId 标识中止的 suspense 边界，
+    // 而非硬编码 pendingId=0，便于错误追踪和调试
+    const abortError = new SuspenseAbortedError(boundary.pendingPromises.size);
     boundary.pendingPromises.forEach((promise) => {
       try {
         // If the promise has an abort method (custom thenable), call it

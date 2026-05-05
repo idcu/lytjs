@@ -1,6 +1,9 @@
 // @lytjs/runtime-convergence - async-scheduler
 // 异步调度器：统一异步时序操作，通过 host 注入的定时器执行，支持同步插队刷新
 
+// FIX: P2-v11-19 将 __DEV__ 声明移到文件顶部，避免在声明前使用
+declare const __DEV__: boolean;
+
 import type { RendererHost } from '@lytjs/host-contract';
 import type { SchedulerJob, SchedulerPriority, AsyncSchedulerOptions } from './types';
 
@@ -299,6 +302,3 @@ export class AsyncScheduler<HN = unknown, HE extends HN = HN> {
     });
   }
 }
-
-// FIX: P2-41 删除重复的 __DEV__ 声明，使用全局声明
-declare const __DEV__: boolean;

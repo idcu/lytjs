@@ -33,6 +33,10 @@ export interface RendererContext<HN, HE extends HN> {
   setupChildComponent:
     | ((vnode: VNode, parent: ComponentInternalInstance | null) => void)
     | undefined;
+  /** FIX: P1-4 组件更新时规范化 props 的回调（由 @lytjs/component 注册） */
+  normalizeProps:
+    | ((instance: ComponentInternalInstance, rawProps: Record<string, unknown> | null) => void)
+    | undefined;
 
   // VNode el helpers
   setVNodeEl: (vnode: VNode, el: HN | null) => void;
@@ -242,7 +246,8 @@ export function createElementPatch<HN, HE extends HN>(
     const text = isFunction(vnode.children) ? '' : String(vnode.children ?? '');
     const node = createComment(text);
     setVNodeEl(vnode, node);
-    vnode.anchor = node as unknown as Node | null;
+    // FIX: P2-17 添加 null 检查，避免 node 为 null 时的不安全类型断言
+    vnode.anchor = node != null ? (node as unknown as Node | null) : null;
     insert(node, container, anchor);
   }
 

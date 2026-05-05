@@ -69,6 +69,15 @@ function getExpContent(node: SimpleExpressionNode | CompoundExpressionNode | und
 // Helper: 生成静态 HTML 模板
 // ============================================================
 
+// FIX: P2-45 提取 escapeHtml 为模块级函数，避免每次调用 serializeStaticHTML 时重新创建
+function escapeHtmlStatic(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
 /**
  * 将静态元素子树序列化为 HTML 字符串，用于 createTemplate
  * 同时收集所有元素节点的变量名和标签名映射
@@ -82,20 +91,11 @@ function serializeStaticHTML(
   const varName = genVarName(node.tag, varCounter);
   elementVars.push({ varName, tag: node.tag });
 
-  // FIX: P1-11 HTML 属性值转义，防止 XSS 攻击
-  const escapeHtml = (str: string): string => {
-    return str
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
-  };
-
   let attrs = '';
   for (const prop of node.props) {
     if (prop.type === NodeTypes.ATTRIBUTE && prop.value) {
       // FIX: P1-11 对属性值进行 HTML 转义
-      attrs += ` ${prop.name}="${escapeHtml(prop.value.content)}"`;
+      attrs += ` ${prop.name}="${escapeHtmlStatic(prop.value.content)}"`;
     } else if (prop.type === NodeTypes.ATTRIBUTE && !prop.value) {
       attrs += ` ${prop.name}`;
     }
@@ -592,7 +592,7 @@ function processDirective(
         });
         dynamicBindings.push({
           varName,
-          code: `onCleanup(addEventListener(${varName}, '${eventName}', ($e) => { _ctx.${expContent} = ${setValueExpr}; }));`,
+          code: `onCleanup(createEventHandler(${varName}, '${eventName}', ($e) => { _ctx.${expContent} = ${setValueExpr}; }));`,
         });
       }
       break;
@@ -729,6 +729,7 @@ function processConditional(
     code += `        ${ifVarName}Active = ${i};\n`;
 
     // 处理分支内的动态绑定（如插值文本）
+    // FIX: P2-44 缓存 extractChildrenText 结果，避免对同一分支重复调用
     const childrenText = extractChildrenText(branchInfo.branch);
     if (childrenText && branchHTML.trim()) {
       code += `        setText(${ifVarName}El, _ctx.${childrenText});\n`;
@@ -736,11 +737,10 @@ function processConditional(
 
     code += `      }`;
 
-    // 如果分支已激活，更新动态内容
-    const childrenTextUpdate = extractChildrenText(branchInfo.branch);
-    if (childrenTextUpdate && branchHTML.trim()) {
+    // 如果分支已激活，更新动态内容（复用已缓存的 childrenText）
+    if (childrenText && branchHTML.trim()) {
       code += ` else {\n`;
-      code += `        setText(${ifVarName}El, _ctx.${childrenTextUpdate});\n`;
+      code += `        setText(${ifVarName}El, _ctx.${childrenText});\n`;
       code += `      }`;
     }
 

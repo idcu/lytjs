@@ -9,6 +9,7 @@
 import type { VNode, ComponentInternalInstance } from '@lytjs/common-vnode';
 import type { RendererHost } from '@lytjs/host-contract';
 import { getSequence } from '@lytjs/common-algorithm';
+import { warn } from '@lytjs/common-error';
 
 // ============================================================
 // Types
@@ -279,16 +280,11 @@ export function patchKeyedChildren<HN, HE extends HN>(
           `使用简单 diff 策略以避免性能问题。建议对大数据列表使用虚拟滚动。`,
       );
     }
-    // 强制执行简单策略：卸载所有旧节点，挂载所有新节点
-    const useHost = hostOrUndefined !== undefined;
-    const ops: ResolvedOps = useHost
-      ? hostToOps(
-          hostOrUndefined,
-          (n1, n2, cont, anchor, pc, ps, svg) => getDOMOps(opsId).patch(n1, n2, cont, anchor, pc, ps, svg),
-          (vnode, pc, ps, doRemove) => getDOMOps(opsId).unmount(vnode, pc, ps, doRemove),
-          (vnode, cont, anchor, pc, ps) => getDOMOps(opsId).move(vnode, cont, anchor, pc, ps),
-        )
-      : domOpsToResolved(getDOMOps(opsId));
+    // FIX: P2-14 简化超过阈值时的 ops 解析逻辑。
+    // 之前无论 hostOrUndefined 是否存在都通过 hostToOps 包装（冗余的间接层），
+    // 现在直接使用 domOpsToResolved(getDOMOps(opsId))，因为简单策略
+    // 只需要 patch/unmount 操作，不需要 host 的低级操作。
+    const ops = domOpsToResolved(getDOMOps(opsId));
     // 卸载所有旧节点
     for (let i = 0; i < c1.length; i++) {
       ops.unmount(c1[i]!, parentComponent, parentSuspense, true);
@@ -330,7 +326,10 @@ export function patchKeyedChildren<HN, HE extends HN>(
   if (oldLength === newLength && oldLength > 0) {
     let fastPathMatch = true;
     for (let fi = 0; fi < oldLength; fi++) {
-      if (!sameVNodeType(c1[fi]!, c2[fi]!)) {
+      // FIX: P2-21 添加防御性检查，避免数组索引越界时的非空断言崩溃
+      const oldVNode = c1[fi];
+      const newVNode = c2[fi];
+      if (!oldVNode || !newVNode || !sameVNodeType(oldVNode, newVNode)) {
         fastPathMatch = false;
         break;
       }
@@ -339,9 +338,13 @@ export function patchKeyedChildren<HN, HE extends HN>(
       for (let fi = 0; fi < oldLength; fi++) {
         const nextIdx = fi + 1;
         const anchor = nextIdx < oldLength ? c2[nextIdx]?.el : null;
+        // FIX: P2-21 防御性检查
+        const oldV = c1[fi];
+        const newV = c2[fi];
+        if (!oldV || !newV) continue;
         ops.patch(
-          c1[fi]!,
-          c2[fi]!,
+          oldV,
+          newV,
           container,
           anchor ?? fallbackAnchor,
           parentComponent,
@@ -357,13 +360,13 @@ export function patchKeyedChildren<HN, HE extends HN>(
   // 1. 同步前缀（Sync from start）
   // ----------------------------------------------------------
   while (i <= e1 && i <= e2) {
-    const n1 = c1[i]!;
-    const n2 = c2[i]!;
-    if (sameVNodeType(n1, n2)) {
-      ops.patch(n1, n2, container, null, parentComponent, parentSuspense, isSVG);
-    } else {
+    const n1 = c1[i];
+    const n2 = c2[i];
+    // FIX: P2-21 防御性检查
+    if (!n1 || !n2 || !sameVNodeType(n1, n2)) {
       break;
     }
+    ops.patch(n1, n2, container, null, parentComponent, parentSuspense, isSVG);
     i++;
   }
 
@@ -371,13 +374,13 @@ export function patchKeyedChildren<HN, HE extends HN>(
   // 2. 同步后缀（Sync from end）
   // ----------------------------------------------------------
   while (i <= e1 && i <= e2) {
-    const n1 = c1[e1]!;
-    const n2 = c2[e2]!;
-    if (sameVNodeType(n1, n2)) {
-      ops.patch(n1, n2, container, null, parentComponent, parentSuspense, isSVG);
-    } else {
+    const n1 = c1[e1];
+    const n2 = c2[e2];
+    // FIX: P2-21 防御性检查
+    if (!n1 || !n2 || !sameVNodeType(n1, n2)) {
       break;
     }
+    ops.patch(n1, n2, container, null, parentComponent, parentSuspense, isSVG);
     e1--;
     e2--;
   }
@@ -443,7 +446,11 @@ export function patchKeyedChildren<HN, HE extends HN>(
 
     // 5.2 遍历旧节点，复用或卸载
     for (i = s1; i <= e1; i++) {
-      const prevChild = c1[i]!;
+      const prevChild = c1[i];
+      // FIX: P2-21 防御性检查
+      if (!prevChild) {
+        continue;
+      }
       if (patched >= toBePatched) {
         ops.unmount(prevChild, parentComponent, parentSuspense, true);
         continue;
@@ -500,7 +507,9 @@ export function patchKeyedChildren<HN, HE extends HN>(
     // 5.4 从后往前遍历，移动或挂载
     for (i = toBePatched - 1; i >= 0; i--) {
       const nextIndex = s2 + i;
-      const nextChild = c2[nextIndex]!;
+      const nextChild = c2[nextIndex];
+      // FIX: P2-21 防御性检查
+      if (!nextChild) continue;
       const nextEl = nextIndex + 1 < l2 ? c2[nextIndex + 1]?.el : null;
       const anchor = nextEl ?? fallbackAnchor;
 
@@ -585,11 +594,19 @@ export function patchUnkeyedChildren<HN, HE extends HN>(
 
   // 同步公共前缀
   for (let i = 0; i < commonLength; i++) {
-    if (sameVNodeType(c1[i]!, c2[i]!)) {
-      ops.patch(c1[i]!, c2[i]!, container, null, parentComponent, parentSuspense, isSVG);
+    // FIX: P2-21 防御性检查
+    const oldV = c1[i];
+    const newV = c2[i];
+    if (!oldV || !newV) {
+      if (oldV) ops.unmount(oldV, parentComponent, parentSuspense, true);
+      if (newV) ops.patch(null, newV, container, null, parentComponent, parentSuspense, isSVG);
+      continue;
+    }
+    if (sameVNodeType(oldV, newV)) {
+      ops.patch(oldV, newV, container, null, parentComponent, parentSuspense, isSVG);
     } else {
-      ops.unmount(c1[i]!, parentComponent, parentSuspense, true);
-      ops.patch(null, c2[i]!, container, null, parentComponent, parentSuspense, isSVG);
+      ops.unmount(oldV, parentComponent, parentSuspense, true);
+      ops.patch(null, newV, container, null, parentComponent, parentSuspense, isSVG);
     }
   }
 

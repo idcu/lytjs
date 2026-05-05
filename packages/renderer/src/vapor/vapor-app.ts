@@ -111,8 +111,15 @@ export function defineVaporComponent(
     const compileResult = compile(template, { rendererMode: 'signal' });
     compiledCode = compileResult.code;
   } catch (e) {
+    // FIX: P2-v11-01 生产环境编译错误不再静默吞没，
+    // 在非 DEV 环境下将错误记录到 console.error，确保问题可追踪
     if (__DEV__) {
       console.warn(
+        `[LytJS] defineVaporComponent: template compilation failed for "${name || 'anonymous'}". ` +
+        `Error: ${e instanceof Error ? e.message : String(e)}`,
+      );
+    } else {
+      console.error(
         `[LytJS] defineVaporComponent: template compilation failed for "${name || 'anonymous'}". ` +
         `Error: ${e instanceof Error ? e.message : String(e)}`,
       );
@@ -211,6 +218,15 @@ export function createVaporApp(
         if (setupResult && typeof setupResult === 'object') {
           Object.assign(ctx, setupResult);
         }
+      }
+
+      // FIX: P2-v11-02 createVaporApp 验证 template 存在性，
+      // 避免缺少 template 时在运行时产生难以调试的错误
+      if (!rootComponent.template) {
+        throw new Error(
+          `[LytJS] createVaporApp: rootComponent must have a 'template' property. ` +
+          `Received: ${typeof rootComponent.template}`,
+        );
       }
 
       // 创建 Signal 渲染器

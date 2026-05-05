@@ -71,8 +71,15 @@ export function defineAsyncComponent(
     delayTimer = setTimeout(() => {
       showLoading = true;
     }, delay);
-    return (loadingPromise = loader()
+    return (loadingPromise = Promise.resolve(loader())
       .then((comp) => {
+        // FIX: P2-v11-15 验证 loader() 返回值，确保是有效的组件定义
+        if (comp == null || typeof comp !== 'object' && typeof comp !== 'function') {
+          throw new Error(
+            `[lytjs/core] AsyncComponent: loader() returned an invalid component value: ${String(comp)}. ` +
+            `Expected a component options object or function.`,
+          );
+        }
         loadedComponent.value = comp;
         error.value = undefined;
         loading.value = false;

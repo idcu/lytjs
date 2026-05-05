@@ -254,6 +254,11 @@ export function defineCustomElement(
       if (!this._instance || !this._vnode) return;
 
       const propKey = attrToProp(name);
+
+      // FIX: P2-v11-14 添加防御性检查，确保 propKey 在 propsOptions 中存在，
+      // 避免非 observedAttributes 的属性变更触发不必要的更新
+      if (!(propKey in propsOptions)) return;
+
       const deserializedValue = deserializeValue(newValue, propsOptions[propKey]);
 
       // Skip if value hasn't actually changed

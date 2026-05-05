@@ -93,7 +93,11 @@ export function generateSSR(ast: RootNode, _options: CodegenOptions = {}): Codeg
   parts.push(`  let html = '<' + tag;\n`);
   parts.push(`  if (props) {\n`);
   parts.push(`    for (const [key, value] of Object.entries(props)) {\n`);
-  parts.push(`      if (value != null && value !== false) {\n`);
+  // FIX: P2-46 布尔属性特殊处理：值为 true 时只输出属性名（如 disabled），
+  // 值为 false 或 null 时跳过，其他值正常输出带引号的属性值
+  parts.push(`      if (value === true) {\n`);
+  parts.push(`        html += ' ' + key;\n`);
+  parts.push(`      } else if (value != null && value !== false) {\n`);
   parts.push(`        html += ' ' + key + '="' + escapeHtml(value) + '"';\n`);
   parts.push(`      }\n`);
   parts.push(`    }\n`);

@@ -51,6 +51,9 @@ const compileCache = new Map<string, CompileCacheEntry>();
 /** 内容哈希缓存 Map - 存储文件内容到哈希的映射 */
 const contentHashCache = new Map<string, string>();
 
+// FIX: P2-39 contentHashCache 添加 LRU 淘汰策略，避免无限增长导致内存泄漏
+const MAX_CONTENT_HASH_CACHE_SIZE = 200;
+
 /**
  * 简单的字符串哈希函数（djb2），用于生成缓存键。
  * 不需要加密安全性，仅需良好的分布性。
@@ -66,10 +69,16 @@ function hashString(str: string): string {
 /**
  * FIX: P2-2 计算文件内容的 SHA-256 风格哈希（简化版）
  * 用于作为编译缓存的 key，确保相同内容产生相同的缓存键
+ *
+ * FIX: P2-40 使用 djb2 快速哈希作为 contentHashCache 的 key，
+ * 而非完整模板字符串，大幅减少内存占用
  */
 function computeContentHash(content: string): string {
+  // FIX: P2-40 使用快速哈希作为缓存 key，避免存储完整模板字符串
+  const quickHash = hashString(content);
+
   // 检查是否已有缓存的哈希
-  const cachedHash = contentHashCache.get(content);
+  const cachedHash = contentHashCache.get(quickHash);
   if (cachedHash) {
     return cachedHash;
   }
@@ -87,8 +96,16 @@ function computeContentHash(content: string): string {
   // 组合两个哈希值，提高碰撞抵抗
   const combinedHash = `${hash1 >>> 0}-${hash2 >>> 0}`;
   
-  // 缓存哈希结果
-  contentHashCache.set(content, combinedHash);
+  // FIX: P2-39 LRU 淘汰：超出最大缓存大小时删除最旧条目
+  if (contentHashCache.size >= MAX_CONTENT_HASH_CACHE_SIZE) {
+    const oldestKey = contentHashCache.keys().next().value;
+    if (oldestKey !== undefined) {
+      contentHashCache.delete(oldestKey);
+    }
+  }
+  
+  // 缓存哈希结果（使用快速哈希作为 key）
+  contentHashCache.set(quickHash, combinedHash);
   
   return combinedHash;
 }
@@ -148,9 +165,11 @@ export function compile(source: string, options: CompilerOptions = {}): CodegenR
     const cacheKey = buildCompileCacheKey(source, options);
     const cached = compileCache.get(cacheKey);
     if (cached) {
-      // LRU: 将命中条目移到末尾（最近使用）
-      compileCache.delete(cacheKey);
-      compileCache.set(cacheKey, cached);
+      // FIX: P2-41 接受非严格 LRU：缓存命中时不移动条目位置。
+      // 原实现通过 delete + set 将命中条目移到末尾以模拟 LRU，
+      // 但这会导致 Map 内部存储重组（V8 中 Map 的 delete 操作
+      // 在大量条目时可能触发哈希表重建），影响性能。
+      // 对于编译缓存场景，非严格 LRU（仅淘汰最旧条目）已足够。
       return { code: cached.code, preamble: cached.preamble, ast: cached.ast };
     }
   }

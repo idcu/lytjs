@@ -501,14 +501,26 @@ function hydrateElementChildren(el: Element, vnode: VNode): void {
     const text = isString(children) ? children : String(children ?? '');
     if (el.childNodes.length > 0) {
       // Reuse first text child if it exists
-      const firstChild = el.firstChild!;
+      // FIX: P2-v11-03 添加 null 检查替代非空断言，
+      // 防止无子节点时 firstChild 为 null 导致运行时崩溃
+      const firstChild = el.firstChild;
+      if (!firstChild) {
+        el.appendChild(document.createTextNode(text));
+        return;
+      }
       if (firstChild.nodeType === Node.TEXT_NODE) {
         if (firstChild.textContent !== text) {
           firstChild.textContent = text;
         }
         // Remove any extra children
         while (el.childNodes.length > 1) {
-          el.removeChild(el.lastChild!);
+          const lastChild = el.lastChild;
+          // FIX: P2-51 添加 null 检查替代非空断言，防御性编程
+          if (lastChild) {
+            el.removeChild(lastChild);
+          } else {
+            break;
+          }
         }
       } else {
         // Replace all children with a single text node
@@ -596,13 +608,17 @@ function vnodeToSimpleHTML(vnode: VNode): string {
 
 /**
  * Encode a string to base64 using TextEncoder (safe replacement for btoa(unescape(...))).
+ * FIX: P2-50 使用分块处理（每次 8192 字节）替代逐字符拼接，
+ * 避免大字符串时 String.fromCharCode 的性能问题和调用栈开销。
  */
 function uint8ToBase64(bytes: Uint8Array): string {
-  let binary = '';
-  for (let i = 0; i < bytes.length; i++) {
-    binary += String.fromCharCode(bytes[i]);
+  const CHUNK_SIZE = 8192;
+  const chunks: string[] = [];
+  for (let i = 0; i < bytes.length; i += CHUNK_SIZE) {
+    const chunk = bytes.subarray(i, Math.min(i + CHUNK_SIZE, bytes.length));
+    chunks.push(String.fromCharCode(...chunk));
   }
-  return btoa(binary);
+  return btoa(chunks.join(''));
 }
 
 /**

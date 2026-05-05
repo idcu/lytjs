@@ -66,7 +66,9 @@ class ComputedRefImpl<T> {
 
           // FIX: P1-02 effect.run() 返回 undefined 时不覆盖缓存，
           // 避免 getter 返回 undefined 被误认为是有效值而覆盖之前的有效缓存
-          if (value !== undefined || this._dirty) {
+          // FIX: P1-3 移除 || this._dirty 条件（在 _dirty 块内恒为 true），
+          // 仅在 value !== undefined 时覆盖缓存
+          if (value !== undefined) {
             this._value = value as T;
             this._dirty = false;
             this._initialized = true;

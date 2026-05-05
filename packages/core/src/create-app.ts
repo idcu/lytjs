@@ -23,6 +23,7 @@ import {
   setupComponent,
   createComponentPublicInstance,
   callUnmountedHook,
+  initProps,
 } from '@lytjs/component';
 import type { AppContext as ComponentAppContext, ComponentInternalInstance } from '@lytjs/component';
 
@@ -251,6 +252,9 @@ export function createApp(
 
     /**
      * Remove a previously registered global event listener.
+     * FIX: P2-v11-06 off() 使用引用相等性匹配 handler，
+     * 这意味着传入的 handler 必须与 on() 注册时使用同一个函数引用。
+     * 如果使用匿名函数或箭头函数，将无法匹配。请保存函数引用后再传入。
      */
     off(target: EventTarget, event: string, handler: EventListener, options?: AddEventListenerOptions) {
       target.removeEventListener(event, handler, options);
@@ -316,6 +320,10 @@ export function createApp(
         setupComponent(childInstance);
         childVNode.component = childInstance;
       },
+      // FIX: P1-4 组件更新时规范化 props，避免绕过 initProps 的声明 props 验证和 attrs 分离
+      normalizeProps(instance: ComponentInternalInstance, rawProps: Record<string, unknown> | null) {
+        initProps(instance, rawProps);
+      },
     });
     context.renderer = renderer as unknown as DOMRenderer;
     context._vnode = rootVNode;
@@ -334,6 +342,14 @@ export function createApp(
   // ==================== Signal 模式挂载 ====================
 
   function mountWithSignalMode(container: Element): ComponentPublicInstance {
+    // FIX: P2-v11-07 Signal 模式下添加类型守卫，验证 rootComponent
+    // 是否包含 template 属性，避免对非组件对象进行不安全的属性访问
+    if (!rootComponent || typeof rootComponent !== 'object') {
+      throw new Error(
+        `[LytJS] Signal mode requires rootComponent to be a valid component options object.`,
+      );
+    }
+
     // Signal 模式下，rootComponent 应该包含 template 属性
     // 或者是一个包含 template 和 setup/data 的组件选项对象
     const componentOptions = rootComponent as Record<string, unknown>;

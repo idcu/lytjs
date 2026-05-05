@@ -66,8 +66,6 @@ export const TransitionGroup: ComponentOptions = {
   },
 
   setup(_props: Record<string, unknown>, { slots }: SetupContext) {
-    return (() => {
-      return slots.default?.();
-    }) as unknown as void;
+    return () => slots.default?.();
   },
 };

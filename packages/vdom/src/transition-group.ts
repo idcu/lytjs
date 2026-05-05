@@ -265,8 +265,9 @@ export function applyFLIP<HN, HE extends HN>(
       if (!info.hasTransition && !info.hasAnimation) {
         host.removeClass(child, mc);
       } else {
-        // FIX: P1-12 调整声明顺序，将 cleanup 和 onMoveEnd 的声明移到使用之前，
-        // 避免在 TDZ（暂时性死区）中引用后声明的变量
+        // FIX: P1-12 / P2-15 调整声明顺序：onMoveEnd -> dispose -> cleanup -> setTimeout。
+        // 虽然 JavaScript 闭包允许后声明的变量在回调中被引用（因为回调执行时
+        // 变量已经初始化），但按逻辑依赖顺序声明使代码更易读和维护。
         const onMoveEnd = (event: unknown) => {
           const hostEvent = event as { target: unknown };
           if (hostEvent.target !== child) return;
@@ -385,16 +386,34 @@ export function performGroupEnterTransition<HN, HE extends HN>(
         if (info.duration > 0) {
           host.setTimeout(finish, info.duration + 50);
         } else {
-          const onEnd = (event: unknown) => {
+          // FIX: P2-19 保存 timeoutId 并在 onEnd 回调中清除，
+          // 避免过渡正常完成后 setTimeout 仍然执行导致重复调用 finish()。
+          // FIX: P2-20 调整声明顺序：使用 let 声明 onEnd 以避免 TDZ 问题，
+          // 同时添加 finished 标志防止 finish() 被多次调用。
+          let fallbackTimerId: ReturnType<typeof host.setTimeout> | undefined;
+          let finished = false;
+          // 使用 let 声明，允许在 disposeT/disposeA 中引用（通过闭包延迟执行）
+          let onEnd: (event: unknown) => void;
+          onEnd = (event: unknown) => {
             const e = event as { target: unknown };
             if (e.target !== el) return;
+            if (finished) return;
+            finished = true;
             disposeT();
             disposeA();
+            if (fallbackTimerId !== undefined) {
+              host.clearTimeout(fallbackTimerId);
+              fallbackTimerId = undefined;
+            }
             finish();
           };
           const disposeT = host.addEventListener(el, 'transitionend', onEnd as never);
           const disposeA = host.addEventListener(el, 'animationend', onEnd as never);
-          host.setTimeout(() => { disposeT(); disposeA(); finish(); }, 3000);
+          fallbackTimerId = host.setTimeout(() => {
+            if (finished) return;
+            finished = true;
+            disposeT(); disposeA(); finish();
+          }, 3000);
         }
       } else {
         host.removeClass(el, active);

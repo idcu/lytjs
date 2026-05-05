@@ -171,11 +171,26 @@ export class ConfigManager {
       return false;
     }
 
+    // FIX: P1-10 在修改值之前，收集所有父路径的旧值快照
+    const parentOldValues = new Map<string, unknown>();
+    const parentParts = path.split('.');
+    while (parentParts.length > 1) {
+      parentParts.pop();
+      const parentPath = parentParts.join('.');
+      const parentVal = this.get(parentPath);
+      parentOldValues.set(
+        parentPath,
+        parentVal !== null && typeof parentVal === 'object'
+          ? deepClone(parentVal)
+          : parentVal,
+      );
+    }
+
     // 设置新值
     target[lastKey] = value as ConfigValue;
 
     // 触发监听器
-    this.notify(path, value, oldValue);
+    this.notify(path, value, oldValue, parentOldValues);
 
     return true;
   }
@@ -284,10 +299,21 @@ export class ConfigManager {
       return;
     }
 
+    // FIX: P2-v11-08 merge() 合并后遍历合并的键通知路径特定监听器，
+    // 确保通过 merge() 修改的配置项也能触发对应的 watch 回调
+    const mergedKeys: string[] = [];
+
     if (deep) {
-      this.deepMerge(this.config, config);
+      this.deepMergeNotify(this.config, config, '', mergedKeys);
     } else {
-      Object.assign(this.config, config);
+      for (const key of Object.keys(config)) {
+        const oldValue = this.config[key];
+        this.config[key] = config[key];
+        if (hasChanged(this.config[key], oldValue)) {
+          this.notify(key, this.config[key], oldValue);
+          mergedKeys.push(key);
+        }
+      }
     }
 
     // 触发全局监听器
@@ -297,9 +323,33 @@ export class ConfigManager {
   }
 
   /**
-   * 深度合并对象
+   * 深度合并对象，并在值变更时通知监听器
+   * FIX: P2-v11-08 替代原 deepMerge，在合并过程中收集变更的键并通知监听器
    */
-  private deepMerge(target: ConfigObject, source: ConfigObject): void {
+  private deepMergeNotify(target: ConfigObject, source: ConfigObject, prefix: string, mergedKeys: string[]): void {
+    Object.entries(source).forEach(([key, value]) => {
+      const fullPath = prefix ? `${prefix}.${key}` : key;
+      if (
+        isObject(target[key]) &&
+        isObject(value)
+      ) {
+        this.deepMergeNotify(target[key] as ConfigObject, value as ConfigObject, fullPath, mergedKeys);
+      } else {
+        const oldValue = target[key];
+        target[key] = isObject(value)
+          ? (deepClone(value) as ConfigValue)
+          : value;
+        if (hasChanged(target[key], oldValue)) {
+          this.notify(fullPath, target[key], oldValue);
+          mergedKeys.push(fullPath);
+        }
+      }
+    });
+  }
+
+  /**
+   * 深度合并对象（保留用于向后兼容）
+   */
     Object.entries(source).forEach(([key, value]) => {
       if (
         isObject(target[key]) &&
@@ -401,7 +451,13 @@ export class ConfigManager {
   /**
    * 通知监听器
    */
-  private notify<T>(path: string, newValue: T, oldValue: T): void {
+  // FIX: P1-10 增加 parentOldValues 参数，由调用方在修改值之前收集父路径旧值快照
+  private notify<T>(
+    path: string,
+    newValue: T,
+    oldValue: T,
+    parentOldValues?: Map<string, unknown>,
+  ): void {
     // 触发特定路径监听器
     const specificListeners = this.listeners.get(path);
     if (specificListeners) {
@@ -409,6 +465,7 @@ export class ConfigManager {
     }
 
     // 触发父路径监听器
+    // FIX: P1-10 使用调用方传入的 parentOldValues 快照，确保获取的是变更前的旧值
     const parts = path.split('.');
     while (parts.length > 1) {
       parts.pop();
@@ -416,7 +473,7 @@ export class ConfigManager {
       const parentListeners = this.listeners.get(parentPath);
       if (parentListeners) {
         const parentValue = this.get(parentPath);
-        const parentOldValue = this.get(parentPath); // 简化处理
+        const parentOldValue = parentOldValues?.get(parentPath);
         parentListeners.forEach((cb) =>
           cb(parentValue, parentOldValue, path),
         );
@@ -443,9 +500,11 @@ export class ConfigManager {
 
   /**
    * 检查是否可变
+   * FIX: P2-v11-09 简化 isMutable()：mutable 在构造函数中已设置默认值为 true，
+   * 不可能为 undefined，因此 ?? true 是冗余的
    */
   isMutable(): boolean {
-    return this.options.mutable ?? true;
+    return this.options.mutable;
   }
 }
 

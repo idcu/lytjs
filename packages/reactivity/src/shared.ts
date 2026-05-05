@@ -50,6 +50,10 @@ export function toRaw<T>(observed: T): T {
     return current as T;
   } finally {
     _rawDepth--;
+    // FIX: P2-6 在 finally 块中确保清理 _rawSeenSet。
+    // 即使 toRaw 内部抛出异常（如 ReactiveFlags.RAW getter 抛出），
+    // 也能保证 _rawSeenSet 被清空，避免模块级共享 Set 残留脏数据
+    // 影响后续调用。
     if (_rawDepth === 0) {
       _rawSeenSet.clear();
     }

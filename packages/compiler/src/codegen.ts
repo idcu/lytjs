@@ -52,7 +52,7 @@ export function generate(ast: RootNode, options: CodegenOptions = {}): CodegenRe
   const { context, codeParts, sourceMapGen } = createCodegenContext(ast, options);
 
   // Generate helper imports (preamble)
-  const preamble = genHelperImports(ast.helpers);
+  const preamble = genHelperImports(ast.helpers, options.runtimeModuleName);
 
   // Generate hoisted variable declarations
   if (ast.hoists && ast.hoists.length > 0) {
@@ -194,13 +194,15 @@ function createCodegenContext(
 // Generate helper imports
 // ============================================================
 
-function genHelperImports(helpers: string[]): string {
+function genHelperImports(helpers: string[], runtimeModuleName?: string): string {
   if (helpers.length === 0) return '';
 
   const imports = helpers.map((h) => helperNameMap[h] ?? h);
   const uniqueImports = [...new Set(imports)];
 
-  return `import { ${uniqueImports.join(', ')} } from 'lytjs';\n`;
+  // FIX: P1-13 使模块名可配置，通过编译选项 runtimeModuleName 传入，默认值改为 '@lytjs/core'
+  const moduleName = runtimeModuleName ?? '@lytjs/core';
+  return `import { ${uniqueImports.join(', ')} } from '${moduleName}';\n`;
 }
 
 // ============================================================

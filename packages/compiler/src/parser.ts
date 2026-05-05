@@ -309,18 +309,31 @@ function parseText(context: ParserContext): TextNode {
   const start = getCursor(context);
   const endTokens = ['<', '{{'];
 
-  // FIX: P1-1 COMPILER-NEW-02 - 对大输入使用分段处理
-  let searchLength = context.source.length;
-  if (searchLength > MAX_REGEX_INPUT_LENGTH) {
-    searchLength = MAX_REGEX_INPUT_LENGTH;
-  }
-
-  let endIndex = searchLength;
-  for (const token of endTokens) {
-    const index = context.source.indexOf(token, 0, searchLength);
-    if (index !== -1 && index < endIndex) {
-      endIndex = index;
+  // FIX: P2-42 对大输入使用分段处理，避免 searchLength 截断导致遗漏结束标记。
+  // 当输入超过 MAX_REGEX_INPUT_LENGTH 时，先在截断范围内搜索，
+  // 如果未找到结束标记，则继续在剩余部分搜索。
+  let endIndex = context.source.length;
+  let searchStart = 0;
+  while (searchStart < context.source.length) {
+    const searchLength = Math.min(
+      context.source.length - searchStart,
+      MAX_REGEX_INPUT_LENGTH,
+    );
+    const segment = context.source.slice(searchStart, searchStart + searchLength);
+    let segmentEndIndex = searchLength;
+    for (const token of endTokens) {
+      const index = segment.indexOf(token, 0, searchLength);
+      if (index !== -1 && index < segmentEndIndex) {
+        segmentEndIndex = index;
+      }
     }
+    if (segmentEndIndex < searchLength) {
+      // 在当前分段中找到了结束标记
+      endIndex = searchStart + segmentEndIndex;
+      break;
+    }
+    // 当前分段未找到结束标记，继续搜索下一段
+    searchStart += searchLength;
   }
 
   const content = context.source.slice(0, endIndex);
@@ -355,7 +368,7 @@ function parseInterpolation(context: ParserContext): InterpolationNode | undefin
       backslashCount = 0;
       if (char === '"' || char === "'") {
         inString = char;
-      } else if (char === '}' && context.source[endIndex + 1] === '}') {
+      } else if (char === '}' && endIndex + 1 < context.source.length && context.source[endIndex + 1] === '}') {
         break;
       }
     }

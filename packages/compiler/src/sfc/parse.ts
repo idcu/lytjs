@@ -73,6 +73,12 @@ interface SFCBlock {
 
 // Opening tag regex: matches <tagname with optional attributes>
 // Captures: [1] tag name, [2] full attribute string
+// FIX: P2-49 添加已知限制说明：
+// 已知限制：此正则不支持嵌套模板字面量（template literals）作为属性值。
+// 例如：<script setup lang="ts"> 中如果属性值包含反引号嵌套，可能导致解析错误。
+// 这是因为 RE_ATTR 使用简单的引号匹配，无法正确处理模板字面量中的 ${} 插值。
+// 在实际使用中，SFC 的属性值通常是简单的字符串（如 lang="ts"），因此此限制影响较小。
+// 如需支持模板字面量属性值，需要将 RE_ATTR 替换为完整的解析器。
 const RE_BLOCK_OPEN = /^<([a-zA-Z][a-zA-Z0-9-]*)([\s\S]*?)>/;
 
 // Attribute regex: matches name="value", name='value', name=value, or standalone name

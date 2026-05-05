@@ -192,16 +192,12 @@ export function createComponentInstance(
       },
       provides: parent ? parent.provides : (Object.create(null) as Record<string | symbol, unknown>),
       parent,
-      root: parent ? parent.root : (null as unknown as ComponentInternalInstance),
+      // FIX: P2-31 简化 root 初始化：无父级时直接指向自身，避免先赋 null 再覆盖
+      root: parent ? parent.root : instance,
       appContext,
       attrs: {},
       accessCache: null as Record<string, number> | null,
     };
-
-    // Set root to self if no parent
-    if (!parent) {
-      instance.root = instance;
-    }
 
     // Create emit function bound to this instance
     instance.emit = (event: string, ...args: unknown[]) => emit(instance, event, ...args);
@@ -396,12 +392,13 @@ export function finishComponentSetup(instance: ComponentInternalInstance): void 
   }
 
   // Props conflict detection: create keys set once for reuse
-  const __DEV__propsKeys = __DEV__ && instance.props ? new Set(Object.keys(instance.props)) : null;
+  // FIX: P2-30 重命名为 devPropsKeys，避免与全局 __DEV__ 混淆
+  const devPropsKeys = __DEV__ && instance.props ? new Set(Object.keys(instance.props)) : null;
 
   // Check data vs props conflict
-  if (__DEV__propsKeys && instance.data) {
+  if (devPropsKeys && instance.data) {
     for (const key of Object.keys(instance.data)) {
-      if (__DEV__propsKeys.has(key)) {
+      if (devPropsKeys.has(key)) {
         warn(`Data property "${key}" is already defined as a prop. Use default value in props instead.`);
       }
     }
@@ -423,9 +420,9 @@ export function finishComponentSetup(instance: ComponentInternalInstance): void 
         }
       }
       // Check methods vs props conflict
-      if (__DEV__propsKeys) {
+      if (devPropsKeys) {
         for (const key of Object.keys(type.methods)) {
-          if (__DEV__propsKeys.has(key)) {
+          if (devPropsKeys.has(key)) {
             warn(`Method "${key}" is already defined as a prop.`);
           }
         }
@@ -479,9 +476,9 @@ export function finishComponentSetup(instance: ComponentInternalInstance): void 
         }
       }
       // Check computed vs props conflict
-      if (__DEV__propsKeys) {
+      if (devPropsKeys) {
         for (const key of Object.keys(type.computed)) {
-          if (__DEV__propsKeys.has(key)) {
+          if (devPropsKeys.has(key)) {
             warn(`Computed property "${key}" is already defined as a prop.`);
           }
         }
@@ -874,6 +871,9 @@ export function createComponentPublicInstance(
         // 回退路径：已挂载但 instance.update 不可用（非标准渲染器场景）。
         // 标记需要重新渲染，在下一个 tick 中执行 render 并通过
         // instance.subTree 引用替换触发渲染器的更新机制。
+        // FIX: P2-35 添加 anchor 和 ref 处理：
+        // - 保留旧 subTree 的 anchor 信息（用于 Fragment 定位）
+        // - 将旧 subTree 的 ref 转移到新 subTree（保持 ref 绑定）
         nextTick(() => {
           if (instance.isUnmounted) return;
           const prevTree = instance.subTree;
@@ -883,6 +883,14 @@ export function createComponentPublicInstance(
             // 将旧 subTree 标记为需要卸载，新 subTree 标记为需要挂载。
             // 渲染器在下次调度时会检测到 subTree 变化并执行 patch。
             nextTree.el = prevTree?.el ?? null;
+            // FIX: P2-35 保留 anchor 信息，确保 Fragment 子节点定位正确
+            if (prevTree && 'anchor' in prevTree) {
+              (nextTree as Record<string, unknown>).anchor = (prevTree as Record<string, unknown>).anchor;
+            }
+            // FIX: P2-35 转移 ref 绑定，避免 ref 丢失
+            if (prevTree && 'ref' in prevTree) {
+              (nextTree as Record<string, unknown>).ref = (prevTree as Record<string, unknown>).ref;
+            }
           }
         });
       }
@@ -917,19 +925,14 @@ export function defineFunctionalComponent(
   render: (props: Record<string, unknown>) => VNode | VNode[] | null,
   props?: Record<string, unknown>,
 ): ComponentOptions {
-  // FIX: P2-11 减少类型断言层级，将 render 包装为 setup 返回的函数
-  const setupFn = (): VNode => {
-    // 函数式组件的 setup 在渲染时调用，此时 props 已通过上下文传递
-    // 这里返回一个包装函数，实际渲染时由渲染器调用并传入 props
-    return null as unknown as VNode;
-  };
-  // 将原始 render 函数附加到 setupFn 上，供渲染器使用
-  (setupFn as unknown as { _render: typeof render })._render = render;
-
   return {
     name: 'FunctionalComponent',
     props: props ?? {},
-    setup: setupFn as unknown as () => VNode,
+    setup(_props: Record<string, unknown>) {
+      // Return the original render function directly so that handleSetupResult
+      // assigns it as instance.render, making the functional component work correctly.
+      return render as unknown as () => VNode;
+    },
     // 标记为函数式组件
     __isFunctional: true,
   } as ComponentOptions;
@@ -941,17 +944,26 @@ export function defineFunctionalComponent(
  * Merge component options with extends and mixins.
  * Uses path tracking to provide detailed circular dependency warnings
  * that include the full merge chain with component names.
+ *
+ * FIX: P2-37 使用 pathLength 替代 [...path] 数组复制：
+ * 原实现在每次递归调用时通过 [...path] 复制整个 path 数组，
+ * 在深层嵌套的 extends/mixins 链中会产生 O(n^2) 的内存开销。
+ * 改为传递原始 path 引用 + 当前路径长度 pathLength，
+ * 在需要构建警告信息时通过 path.slice(0, pathLength) 获取当前路径，
+ * 避免不必要的数组复制。
  */
 function mergeOptions(
   options: ComponentOptions,
   seen = new WeakSet<ComponentOptions>(),
   path: ComponentOptions[] = [],
+  pathLength: number = 0,
 ): ComponentOptions {
   if (seen.has(options)) {
     if (__DEV__) {
       // Build a human-readable cycle path using component names
-      const cycleStart = path.indexOf(options);
-      const cyclePath = path
+      const currentPath = path.slice(0, pathLength);
+      const cycleStart = currentPath.indexOf(options);
+      const cyclePath = currentPath
         .slice(cycleStart)
         .map((opts, i) => {
           const name =
@@ -966,19 +978,19 @@ function mergeOptions(
     return { ...options };
   }
   seen.add(options);
-  path.push(options);
+  path[pathLength] = options;
 
   let merged: ComponentOptions = { ...options };
 
   // Apply extends first
   if (options.extends) {
-    merged = mergeOptionsPair(mergeOptions(options.extends, seen, [...path]), merged);
+    merged = mergeOptionsPair(mergeOptions(options.extends, seen, path, pathLength + 1), merged);
   }
 
   // Then apply mixins
   if (options.mixins) {
     for (const mixin of options.mixins) {
-      merged = mergeOptionsPair(merged, mergeOptions(mixin, seen, [...path]));
+      merged = mergeOptionsPair(merged, mergeOptions(mixin, seen, path, pathLength + 1));
     }
   }
 
@@ -1080,8 +1092,15 @@ export function createAppContext(): AppContext {
 export function provide<T>(key: InjectionKey<T> | string | symbol, value: T): void {
   const instance = getCurrentInstance();
   if (instance) {
+    // FIX: P2-34 添加原型链边界说明注释：
     // 首次 provide 时，如果当前 provides 与父级共享同一个引用，
-    // 则创建以父级 provides 为原型的新对象，确保层级隔离
+    // 则创建以父级 provides 为原型的新对象，确保层级隔离。
+    // 这是利用 JavaScript 原型链实现 provide/inject 的核心机制：
+    // 子组件通过原型链向上查找 provides，而当前组件的 provide 会
+    // 创建一个新对象遮蔽父级同名 key，不会污染父级的 provides。
+    // 注意：Object.create(null) 创建的对象没有原型，因此不会继承
+    // Object.prototype 上的属性（如 toString、hasOwnProperty 等），
+    // 这是正确的做法，避免 key 冲突。
     if (instance.provides === (instance.parent?.provides ?? null)) {
       instance.provides = Object.create(
         instance.provides as Record<string | symbol, unknown>,
