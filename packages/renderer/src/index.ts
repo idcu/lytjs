@@ -104,8 +104,6 @@ const hooks: Record<LifecycleEvent, Set<HookHandler>> = {
 export function use(plugin: RendererPlugin): void {
   if (installedPlugins.includes(plugin)) {
     if (__DEV__) {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const { warn } = require('@lytjs/common-error');
       warn(`Plugin "${plugin.name}" has already been installed.`);
     }
     return;

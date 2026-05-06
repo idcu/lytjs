@@ -46,8 +46,8 @@ export interface SignalRenderer {
  *
  * @example
  * ```ts
- * const { ref } = require('@lytjs/reactivity');
- * const { createSignalRenderer } = require('@lytjs/renderer');
+ * import { ref } from '@lytjs/reactivity';
+ * import { createSignalRenderer } from '@lytjs/renderer';
  *
  * const ctx = { message: ref('hello') };
  * const renderer = createSignalRenderer('<div>{{ message }}</div>', ctx);

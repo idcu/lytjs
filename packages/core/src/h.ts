@@ -92,6 +92,9 @@ export function h(
       ? children[0].flat(Infinity)
       : children[0];
 
+  // 类型断言说明：flat(Infinity) 返回 unknown[]，但 VNodeChildren 类型为
+  // VNodeChild | VNodeChildren[]，两者在运行时结构一致。
+  // 通过 unknown 桥接是因为 TypeScript 无法自动推导递归展平后的类型与 VNodeChildren 的兼容性。
   return createVNode(type as VNodeTypes, props, flatChildren as unknown as VNodeChildren);
 }
 

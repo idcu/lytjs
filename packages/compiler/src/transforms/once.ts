@@ -28,12 +28,14 @@ export function transformOnce(node: RootNode | TemplateChildNode, context: Trans
     // FIX: P2-11 createSimpleExpression 返回 SimpleExpressionNode，而 codegenNode
     // 可能是 VNodeCall 等类型。此处使用类型断言是安全的，因为 hoisted 引用
     // 会在后续 codegen 阶段被解析为实际的 hoisted 值。
+    // 使用 as any 是有意为之：codegenNode 的联合类型中不包含 SimpleExpressionNode，
+    // 但 hoisted 节点在 codegen 阶段会被特殊处理，此处需要覆盖原始类型。
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     element.codegenNode = createSimpleExpression(
       `_hoisted_${context.hoists.length}`,
       false,
       element.loc,
       true,
-    ) as any;
+    ) as any; // as any: hoisted 节点在 codegen 阶段被替换为 _hoisted_N 引用
   }
 }

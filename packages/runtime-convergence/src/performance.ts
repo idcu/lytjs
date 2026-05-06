@@ -4,8 +4,6 @@
  * FIX: P2-11 RUNTIME-NEW-02 - 性能监控 API
  */
 
-// FIX: P0-9 声明 __DEV__ 全局变量，避免 TypeScript 编译报错
-declare const __DEV__: boolean;
 
 import { warn } from '@lytjs/common-error';
 
@@ -357,9 +355,11 @@ export class PerformanceMonitor {
 
   /**
    * Clear all history and stats
+   * FIX: P2 统一 clear/clearComponent 策略：使用 fill(null) 预分配固定大小缓冲区，
+   * 与 clearComponent 保持一致的环形缓冲区重建方式，避免 clear 后缓冲区大小丢失
    */
   clear(): void {
-    this.historyBuffer = [];
+    this.historyBuffer = new Array(this.options.maxHistorySize).fill(null);
     this.historyHead = 0;
     this.historyTail = 0;
     this.historyCount = 0;

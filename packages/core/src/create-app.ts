@@ -229,6 +229,13 @@ export function createApp(
     },
 
     component(name, component) {
+      // FIX: P2 运行时类型检查：确保 component 参数是有效的组件选项对象
+      if (component != null && typeof component !== 'object' && typeof component !== 'function') {
+        if (__DEV__) {
+          warn(`app.component() expects an object or function, but received ${typeof component}.`);
+        }
+        return app;
+      }
       context.components[name] = component as unknown as ComponentOptions;
       return app;
     },

@@ -1,7 +1,6 @@
 // src/web-component.ts
 // @lytjs/core - Web Component 支持
 
-declare const __DEV__: boolean;
 
 import { createVNode } from '@lytjs/vdom';
 import type { VNode } from '@lytjs/vdom';

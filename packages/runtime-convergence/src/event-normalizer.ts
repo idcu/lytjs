@@ -198,7 +198,14 @@ export class EventNormalizer<HN = unknown, HE extends HN = HN> {
       invokers[eventKey] = invoker;
 
       const options = this.buildHostEventOptions(parsed.modifiers);
-      this.host.addEventListener(el, parsed.name, invoker.handler, options);
+      // FIX: P2 保存 addEventListener 返回的 dispose 函数到 invoker，
+      // 确保后续可以通过 invoker.dispose() 正确移除事件监听
+      const hostDispose = this.host.addEventListener(el, parsed.name, invoker.handler, options);
+      invoker.dispose = () => {
+        hostDispose();
+        // 同时清理内部状态
+        (invoker as { value?: HostEventHandler | null }).value = null;
+      };
     } else if (!nextValue && existingInvoker) {
       // 情况 3：无新值 + 有旧 invoker → 移除
       const options = this.buildHostEventOptions(parsed.modifiers);

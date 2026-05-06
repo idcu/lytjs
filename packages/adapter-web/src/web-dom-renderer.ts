@@ -175,12 +175,12 @@ export function createDOMRenderer(
 
   const renderer = createRenderer(options);
 
-  const cleanupVNodeResources = (vnode: VNode): void => {
-    if (vnode.component) {
-      // 组件资源清理：通过 host 的 removeEventListener 处理
-      // 具体清理逻辑由上层（renderer）的 cleanupComponentResources 处理
-      // 此处保留接口兼容性
-    }
+  // TODO: cleanupVNodeResources 当前为空实现，组件资源清理由上层 renderer 的
+  // cleanupComponentResources 处理。如果后续需要在此处添加 Web 平台特有的
+  // 资源清理逻辑（如取消动画帧、清理 IntersectionObserver 等），请在此实现。
+  // 参见 https://github.com/lytjs/lytjs/issues/xxx
+  const cleanupVNodeResources = (_vnode: VNode): void => {
+    // 当前为空实现，保留接口兼容性
   };
 
   return {

@@ -8,8 +8,6 @@
 // - 保留 v-if/v-for/v-text/v-html/v-bind
 // - 生成 renderToString 格式的代码
 
-// FIX: P2-16 添加 __DEV__ 声明，避免依赖 env.d.ts 的隐式全局类型
-declare const __DEV__: boolean;
 
 import { NodeTypes } from './constants';
 import type {
@@ -224,7 +222,7 @@ function genSSRElement(element: ElementNode): string {
   for (const prop of element.props) {
     if (prop.type === NodeTypes.ATTRIBUTE) {
       const name = prop.name;
-      const value = prop.value ? prop.value.content : '';
+      const value = prop.value ? escapeHtml(prop.value.content) : '';
       propParts.push(`' ${name}="${value}"'`);
     } else if (prop.type === NodeTypes.DIRECTIVE) {
       // In SSR mode, only process bind directives (v-bind)
