@@ -658,9 +658,6 @@ export class ThemeManager {
     const theme = this.themes.get(name);
     if (!theme) return false;
 
-    // 保存当前主题变量值用于切换动画
-    const oldTheme = this.currentTheme;
-
     setCSSVars(this.element, theme);
     this.currentTheme = name;
 

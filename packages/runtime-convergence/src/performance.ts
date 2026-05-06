@@ -123,7 +123,6 @@ export class PerformanceMonitor {
   // 避免 history.shift() 的 O(n) 时间复杂度
   private historyBuffer: (RenderPerformanceEntry | null)[] = [];
   private historyHead = 0;
-  private historyTail = 0;
   private historyCount = 0;
   private stats: Map<string, ComponentPerformanceStats> = new Map();
   private options: Required<PerformanceMonitorOptions>;
@@ -216,12 +215,10 @@ export class PerformanceMonitor {
     // FIX: P2-v11-17 使用环形缓冲区写入，O(1) 操作
     if (this.historyBuffer.length < this.options.maxHistorySize) {
       this.historyBuffer.push(entry);
-      this.historyTail = this.historyBuffer.length;
       this.historyCount++;
     } else {
       this.historyBuffer[this.historyHead] = entry;
       this.historyHead = (this.historyHead + 1) % this.options.maxHistorySize;
-      this.historyTail = this.historyHead;
       // historyCount 保持为 maxHistorySize
     }
 
@@ -361,7 +358,6 @@ export class PerformanceMonitor {
   clear(): void {
     this.historyBuffer = new Array(this.options.maxHistorySize).fill(null);
     this.historyHead = 0;
-    this.historyTail = 0;
     this.historyCount = 0;
     this.stats.clear();
   }
@@ -377,7 +373,6 @@ export class PerformanceMonitor {
     // 重建固定大小的环形缓冲区
     this.historyBuffer = new Array(this.options.maxHistorySize).fill(null);
     this.historyHead = 0;
-    this.historyTail = filtered.length;
     this.historyCount = filtered.length;
     for (let i = 0; i < filtered.length; i++) {
       this.historyBuffer[i] = filtered[i];

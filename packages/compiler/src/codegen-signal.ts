@@ -451,6 +451,24 @@ function processVNodeCallProps(
 // Process Directive Node
 // ============================================================
 
+// FIX: P1-1~3 Signal 模式代码注入防护 - 表达式白名单验证
+const VALID_EXPRESSION = /^[a-zA-Z_$][a-zA-Z0-9_$]*(\.[a-zA-Z_$][a-zA-Z0-9_$]*)*$/;
+
+function validateExpression(exp: string | undefined, context: string): void {
+  if (!exp) return;
+  if (!VALID_EXPRESSION.test(exp)) {
+    throw new Error(`[lytjs/compiler] Invalid expression in ${context}: "${exp}". Only simple property access paths are allowed.`);
+  }
+}
+
+function validateArgContent(arg: string | undefined): void {
+  if (!arg) return;
+  // 额外检查单引号，防止破坏生成的字符串字面量
+  if (arg.includes("'")) {
+    throw new Error(`[lytjs/compiler] Invalid argument: "${arg}". Single quotes are not allowed in directive arguments.`);
+  }
+}
+
 function processDirective(
   dir: DirectiveNode,
   varName: string,
@@ -459,6 +477,11 @@ function processDirective(
 ): void {
   const expContent = dir.exp ? getExpContent(dir.exp as SimpleExpressionNode) : undefined;
   const argContent = dir.arg ? getExpContent(dir.arg as SimpleExpressionNode) : undefined;
+
+  // FIX: P1-1~3 对 expContent 和 argContent 进行白名单验证
+  validateExpression(expContent, `v-${dir.name}`);
+  validateExpression(argContent, `v-${dir.name} argument`);
+  validateArgContent(argContent);
 
   switch (dir.name) {
     case 'if': {
@@ -811,7 +834,8 @@ function serializeBranchHTML(
               const value = (jsProp.value as SimpleExpressionNode).content;
               // 只序列化静态属性值（不包含 _ctx 引用的）
               if (!value.includes('_ctx') && !value.includes('(')) {
-                attrs += ` ${key}="${value.replace(/^"|"$/g, '')}"`;
+                // FIX: P2-batch1-8 对属性值进行 HTML 转义，防止 XSS
+                attrs += ` ${key}="${escapeHtmlStatic(value.replace(/^"|"$/g, ''))}"`;
               }
             }
           }
@@ -889,7 +913,9 @@ function processCallExpression(
               // 提取 children 中的插值
               if (vnode.children) {
                 if (typeof vnode.children === 'string') {
-                  createBody += `\n      setText(${tagInfo.varName}, '${vnode.children}');`;
+                  // FIX: P2-batch1-9 对文本内容进行转义，防止单引号破坏生成代码
+                  const escapedChildren = vnode.children.replace(/'/g, "\\'").replace(/\\/g, '\\\\');
+                  createBody += `\n      setText(${tagInfo.varName}, '${escapedChildren}');`;
                 } else if (
                   vnode.children &&
                   typeof vnode.children === 'object' &&

@@ -9,7 +9,7 @@
 
 import type { RendererHost, HostRect } from '@lytjs/host-contract';
 import type { TransitionProps } from './transition';
-import { getTransitionInfoDOM, waitForTransitionEndDOM } from './transition';
+import { getTransitionInfoDOM, waitForTransitionEndDOM, globalTransitionPrefix } from './transition';
 
 // ============================================================
 // TransitionGroupProps
@@ -326,7 +326,8 @@ export function performGroupEnterTransition<HN, HE extends HN>(
     const props = elOrProps as TransitionGroupProps<Element>;
     const doneFn = propsOrDone as () => void;
 
-    const name = props.name ?? 'v';
+    // FIX: P1-7 使用 globalTransitionPrefix 替代硬编码的 'v'
+    const name = props.name ?? globalTransitionPrefix;
     el.classList.add(`${name}-enter-from`);
     el.classList.add(`${name}-enter-active`);
     void el.getBoundingClientRect();
@@ -353,7 +354,8 @@ export function performGroupEnterTransition<HN, HE extends HN>(
     const props = propsOrDone as TransitionGroupProps<HE>;
     const doneFn = done!;
 
-    const name = props.name ?? 'v';
+    // FIX: P1-7 使用 globalTransitionPrefix 替代硬编码的 'v'
+    const name = props.name ?? globalTransitionPrefix;
     const from = props.enterFromClass ?? `${name}-enter-from`;
     const active = props.enterActiveClass ?? `${name}-enter-active`;
     const to = props.enterToClass ?? `${name}-enter-to`;
@@ -458,7 +460,8 @@ export function performGroupLeaveTransition<HN, HE extends HN>(
     const props = elOrProps as TransitionGroupProps<Element>;
     const removeFn = propsOrRemove as () => void;
 
-    const name = props.name ?? 'v';
+    // FIX: P1-7 使用 globalTransitionPrefix 替代硬编码的 'v'
+    const name = props.name ?? globalTransitionPrefix;
     el.classList.add(`${name}-leave-from`);
     el.classList.add(`${name}-leave-active`);
     void el.getBoundingClientRect();
@@ -502,7 +505,8 @@ export function performGroupLeaveTransition<HN, HE extends HN>(
     const props = propsOrRemove as TransitionGroupProps<HE>;
     const removeFn = removeElement!;
 
-    const name = props.name ?? 'v';
+    // FIX: P1-7 使用 globalTransitionPrefix 替代硬编码的 'v'
+    const name = props.name ?? globalTransitionPrefix;
     const from = props.leaveFromClass ?? `${name}-leave-from`;
     const active = props.leaveActiveClass ?? `${name}-leave-active`;
     const to = props.leaveToClass ?? `${name}-leave-to`;

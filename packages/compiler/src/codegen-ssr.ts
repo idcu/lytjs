@@ -186,7 +186,19 @@ function genSSRChildren(children: TemplateChildNode[]): string {
             childParts.push((c as SimpleExpressionNode).content);
           } else if (c.type === NodeTypes.INTERPOLATION) {
             const content = ((c as InterpolationNode).content as SimpleExpressionNode).content;
-            childParts.push(`escapeHtml(String(${content}))`);
+            // FIX: P1-4 SSR CompoundExpression 插值白名单验证，防止代码注入
+            const isValidExpr = /^[a-zA-Z_$][a-zA-Z0-9_$]*(\.[a-zA-Z_$][a-zA-Z0-9_$]*)*$/.test(content);
+            if (!isValidExpr) {
+              if (__DEV__) {
+                console.warn(
+                  `[lytjs/compiler] Invalid interpolation expression in SSR CompoundExpression: "${content}". ` +
+                  `Only simple property access paths are allowed.`,
+                );
+              }
+              childParts.push(`'[invalid expression]'`);
+            } else {
+              childParts.push(`escapeHtml(String(${content}))`);
+            }
           }
         }
         parts.push(`(${childParts.join(' + ')})`);

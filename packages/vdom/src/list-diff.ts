@@ -63,7 +63,7 @@ export interface DOMOperations<HostNodeType = unknown, SuspenseType = unknown> {
 /** 模块级 DOM 操作实例映射，由渲染器初始化时注入。FIX: P0-04 使用 Map<symbol, DOMOperations> 替代单例，支持多渲染器场景 */
 const registeredDOMOpsMap = new Map<symbol, DOMOperations<unknown, unknown>>();
 
-declare const __DEV__: boolean;
+// FIX: P2-19 删除冗余 __DEV__ 局部声明（env.d.ts 已全局声明）
 
 /** FIX: P2-10 长列表性能保护阈值 */
 const MAX_LIST_DIFF_SIZE = 1000;

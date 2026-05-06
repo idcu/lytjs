@@ -12,8 +12,8 @@
  */
 
 import { isString, isObject, isFunction, hasOwn } from '@lytjs/common-is';
-// FIX: P2-v11-24 从 @lytjs/shared 导入 camelToKebab，避免重复定义
-import { camelToKebab as sharedCamelToKebab, kebabToCamel as sharedKebabToCamel } from '@lytjs/shared';
+// FIX: P2-18 直接使用 shared 导入的函数，删除局部别名
+import { camelToKebab, kebabToCamel } from '@lytjs/shared';
 
 // ============================================================
 // 类型定义
@@ -150,10 +150,8 @@ export function getConverterByType(
 // 属性反射工具函数
 // ============================================================
 
-// FIX: P2-v11-24 使用从 @lytjs/shared 导入的 camelToKebab，删除重复定义
-// 局部别名保持向后兼容
-const camelToKebab = sharedCamelToKebab;
-const kebabToCamel = sharedKebabToCamel;
+// FIX: P2-18 直接使用从 @lytjs/shared 导入的 camelToKebab/kebabToCamel
+// 局部别名已删除，函数已在顶部直接导入
 
 /**
  * 属性反射管理器

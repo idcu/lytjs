@@ -139,13 +139,8 @@ export function batchScope<T>(
           throw error;
         }
       });
-      if (result === undefined) {
-        throw new Error(
-          '[lytjs/reactivity] batchScope async mode: callback did not synchronously assign a result. ' +
-          'Use batchScopeAsync() for async callbacks.',
-        );
-      }
-      return result;
+      // FIX: P1-6 移除对 undefined 返回值的检查，void 函数合法返回 undefined
+      return result as T;
     } else {
       // 同步模式：使用 batch
       // FIX: P2-1 初始化 result 为 undefined 并添加运行时检查，避免非空断言
@@ -292,6 +287,14 @@ export function isInBatchScope(): boolean {
  * 原因：batchScope 的异步模式使用 batchAsync 而非 pendingCallbacks 注册回调，
  * 导致 pendingCallbacks 永远不会被填充。移除死代码，避免误导维护者。
  * 如需等待异步 batchScope 完成，应直接 await batchScopeAsync()。
+ *
+ * FIX: P2-batch1-7 保留原因：
+ * 1. API 兼容性：此函数是公共 API 的一部分，直接删除会导致破坏性变更
+ * 2. 未来扩展：可用于实现等待所有异步 batchScope 完成的功能
+ * 3. 测试用途：提供一种同步刷新所有批量操作的方式（即使当前为空操作）
+ * 4. 类型安全：返回 Promise<void> 与异步 API 签名保持一致
+ *
+ * @deprecated 当前实现为空操作，如需等待异步 batchScope 完成，请直接使用 await batchScopeAsync()
  */
 export function flushBatchScopes(): Promise<void> {
   // FIX: P2-2 pendingCallbacks 在当前实现中始终为空（死代码已移除）。

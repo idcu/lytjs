@@ -624,13 +624,16 @@ export function createExtendedWebHost(
     getElementSize(el) {
       if (el instanceof Element) {
         const rect = el.getBoundingClientRect();
+        // FIX: P2-12 添加 HTMLElement 检查，SVG 元素返回 0
+        // SVG 元素没有 clientWidth/clientHeight/scrollWidth/scrollHeight 属性
+        const isHTMLElement = el instanceof HTMLElement;
         return {
           width: rect.width,
           height: rect.height,
-          clientWidth: (el as HTMLElement).clientWidth,
-          clientHeight: (el as HTMLElement).clientHeight,
-          scrollWidth: (el as HTMLElement).scrollWidth,
-          scrollHeight: (el as HTMLElement).scrollHeight,
+          clientWidth: isHTMLElement ? el.clientWidth : 0,
+          clientHeight: isHTMLElement ? el.clientHeight : 0,
+          scrollWidth: isHTMLElement ? el.scrollWidth : 0,
+          scrollHeight: isHTMLElement ? el.scrollHeight : 0,
         };
       }
       return {

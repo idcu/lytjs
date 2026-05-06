@@ -74,7 +74,8 @@ const elementCleanupKeys = new WeakMap<object, Set<symbol>>();
 // ============================================================
 
 // FIX: P0-3 将 globalTransitionPrefix 和 setTransitionPrefix 移到文件顶部（模块顶层）
-let globalTransitionPrefix = 'v';
+// FIX: P1-7 导出 globalTransitionPrefix，供 transition-group.ts 使用
+export let globalTransitionPrefix = 'v';
 
 export function setTransitionPrefix(prefix: string): void {
   globalTransitionPrefix = prefix;
@@ -684,6 +685,17 @@ function waitForTransitionEnd<HN, HE extends HN>(
     elementCleanupKeys.set(el as object, keys);
   }
   keys.add(cleanupKey);
+
+  // FIX: P2-18 正常完成后清理 transitionCleanupMap 条目，避免内存泄漏
+  const originalFinish = finish;
+  const wrappedFinish = () => {
+    cleanupFn();
+    transitionCleanupMap.delete(cleanupKey);
+    keys?.delete(cleanupKey);
+    originalFinish();
+  };
+  // 替换 done 回调以确保清理
+  done = wrappedFinish;
 }
 
 /**
@@ -741,6 +753,17 @@ export function waitForTransitionEndDOM(
     elementCleanupKeys.set(el as object, keys);
   }
   keys.add(cleanupKey);
+
+  // FIX: P2-18 正常完成后清理 transitionCleanupMap 条目，避免内存泄漏
+  const originalDone = done;
+  const wrappedDone = () => {
+    cleanupFn();
+    transitionCleanupMap.delete(cleanupKey);
+    keys?.delete(cleanupKey);
+    originalDone();
+  };
+  // 替换 done 回调以确保清理
+  done = wrappedDone;
 }
 
 // ============================================================

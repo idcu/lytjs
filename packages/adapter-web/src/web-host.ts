@@ -195,12 +195,16 @@ export class WebRendererHost implements RendererHost<Node, Element> {
     }
   }
 
-  /** 移除内联样式属性 */
+  /**
+   * 移除内联样式属性
+   * FIX: P2-16 统一实现风格，与 setStyle 保持一致
+   */
   removeStyle(el: Element, key: string): void {
-    // FIX: P2 直接使用 el.style.removeProperty，无需 HTMLElement 断言。
+    // FIX: P2-16 统一为直接使用 el.style.removeProperty，与 setStyle 风格一致
     // Element 接口已包含 style 属性（CSSStyleDeclaration），
     // removeProperty 是 CSSStyleDeclaration 的标准方法。
-    el.style.removeProperty(key);
+    const style = el.style;
+    style.removeProperty(key);
   }
 
   /**
