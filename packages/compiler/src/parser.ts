@@ -323,7 +323,9 @@ function parseText(context: ParserContext): TextNode {
     const segment = context.source.slice(searchStart, searchStart + searchLength);
     let segmentEndIndex = searchLength;
     for (const token of endTokens) {
-      const index = segment.indexOf(token, 0, searchLength);
+      // FIX: P2-14 删除 indexOf 第三个参数（死参数）
+      // String.prototype.indexOf 只接受两个参数：searchString 和 position
+      const index = segment.indexOf(token, 0);
       if (index !== -1 && index < segmentEndIndex) {
         segmentEndIndex = index;
       }

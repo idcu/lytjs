@@ -114,6 +114,7 @@ export function createSignalRenderer(
         // 建议在生产环境中使用预编译（AOT compilation）替代运行时编译。
         // [P2-batch2-3] 已确认安全风险并记录。当前实现依赖编译器可信输入，
         // 后续版本应考虑使用 AOT 编译或沙箱执行环境来消除此风险。
+        // 生产环境建议使用 AOT 预编译替代运行时编译
         // 创建渲染函数，传入所有 dom-runtime 和 reactivity 的函数作为参数
         // 参数名必须与 codegen-signal.ts 生成的 import 名称一致
         const renderFn = new Function(

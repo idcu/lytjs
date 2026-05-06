@@ -55,7 +55,7 @@ export { normalizeEventName, getEventKey, parseEventModifier } from '@lytjs/comm
 // createWebHost - 便捷工厂函数
 // ============================================================
 
-import { WebRendererHost } from './web-host';
+// FIX: P2-17 删除重复导入，WebRendererHost 已在文件顶部导出
 import type { RendererHost } from '@lytjs/host-contract';
 
 /**
@@ -63,5 +63,6 @@ import type { RendererHost } from '@lytjs/host-contract';
  * 便捷工厂函数，等价于 `new WebRendererHost()`。
  */
 export function createWebHost(): RendererHost<Node, Element> {
+  // FIX: P2-17 使用已导入的 WebRendererHost 类
   return new WebRendererHost();
 }

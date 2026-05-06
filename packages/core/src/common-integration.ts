@@ -202,7 +202,9 @@ export function safeEscapeHtml(str: string): string {
     return security.escapeHtml(str);
   }
   // 基础实现
+  // FIX: P2-batch1-10 添加反斜杠转义，防止 XSS 攻击
   return str
+    .replace(/\\/g, '&#92;')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')

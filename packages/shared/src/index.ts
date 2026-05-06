@@ -296,6 +296,7 @@ export function shallowClone<T extends Record<string, unknown>>(obj: T): T {
  * 确保包含 Map/Set 的对象能被正确深拷贝
  *
  * @param obj - 源对象
+ * @param seen - 内部使用的 WeakMap，用于检测循环引用
  * @returns 深拷贝后的新对象
  * @example
  * ```ts
@@ -304,8 +305,14 @@ export function shallowClone<T extends Record<string, unknown>>(obj: T): T {
  * copy.b.c.push(4) // original.b.c 不变
  * ```
  */
-export function deepClone<T>(obj: T): T {
+export function deepClone<T>(obj: T, seen?: WeakMap<object, unknown>): T {
   if (obj === null || typeof obj !== 'object') return obj;
+
+  // FIX: P2-13 添加循环引用检测
+  const seenMap = seen ?? new WeakMap<object, unknown>();
+  if (seenMap.has(obj as object)) {
+    return seenMap.get(obj as object) as T;
+  }
 
   // FIX: P2 泛型 T 的限制：TypeScript 无法推导 instanceof 分支返回值与泛型 T 的兼容性。
   // 例如 Date | RegExp | Map | Set 等内置类型的构造函数返回具体类型，
@@ -317,8 +324,9 @@ export function deepClone<T>(obj: T): T {
   // FIX: P2-v11-30 支持 Map 类型深拷贝
   if (obj instanceof Map) {
     const clonedMap = new Map();
+    seenMap.set(obj as object, clonedMap);
     for (const [key, value] of obj) {
-      clonedMap.set(deepClone(key), deepClone(value));
+      clonedMap.set(deepClone(key, seenMap), deepClone(value, seenMap));
     }
     return clonedMap as unknown as T;
   }
@@ -326,20 +334,27 @@ export function deepClone<T>(obj: T): T {
   // FIX: P2-v11-30 支持 Set 类型深拷贝
   if (obj instanceof Set) {
     const clonedSet = new Set();
+    seenMap.set(obj as object, clonedSet);
     for (const value of obj) {
-      clonedSet.add(deepClone(value));
+      clonedSet.add(deepClone(value, seenMap));
     }
     return clonedSet as unknown as T;
   }
 
   if (Array.isArray(obj)) {
-    return obj.map((item) => deepClone(item)) as unknown as T;
+    const clonedArray: unknown[] = [];
+    seenMap.set(obj as object, clonedArray);
+    for (let i = 0; i < obj.length; i++) {
+      clonedArray[i] = deepClone(obj[i], seenMap);
+    }
+    return clonedArray as unknown as T;
   }
 
   const cloned = {} as Record<string, unknown>;
+  seenMap.set(obj as object, cloned);
   for (const key in obj) {
     if (hasOwn(obj as Record<string, unknown>, key)) {
-      cloned[key] = deepClone((obj as Record<string, unknown>)[key]);
+      cloned[key] = deepClone((obj as Record<string, unknown>)[key], seenMap);
     }
   }
   return cloned as T;
@@ -698,9 +713,10 @@ export function memoize<T extends (...args: unknown[]) => unknown>(
   maxSize: number = 128,
 ): (...args: Parameters<T>) => ReturnType<T> {
   const cache = new Map<string, ReturnType<T>>();
-  // FIX: P2-batch2-15 使用索引追踪替代 Array.shift()，将 LRU 淘汰从 O(n) 降为 O(1)
+  // FIX: P2-15 使用循环队列（环形缓冲区）替代 splice，完全避免 O(n) 操作
   const keyOrder: string[] = [];
-  let evictionIndex = 0;
+  let writeIndex = 0; // 下一个写入位置
+  let isFull = false; // 标记队列是否已满
 
   /** 对参数进行稳定排序，确保对象键序不同时产生相同的 key */
   function stableStringify(args: unknown[]): string {
@@ -732,18 +748,17 @@ export function memoize<T extends (...args: unknown[]) => unknown>(
 
     const result = fn(...args) as ReturnType<T>;
     cache.set(key, result);
-    keyOrder.push(key);
 
-    // 超过 maxSize 时，清除最早条目（使用索引追踪，O(1) 淘汰）
-    if (keyOrder.length > maxSize) {
-      const oldestKey = keyOrder[evictionIndex];
+    // FIX: P2-15 使用循环队列，完全避免 O(n) 的 splice 操作
+    if (isFull) {
+      // 队列已满，覆盖最旧的条目
+      const oldestKey = keyOrder[writeIndex];
       cache.delete(oldestKey);
-      evictionIndex++;
-      // 当所有旧条目都被淘汰后，压缩数组释放内存
-      if (evictionIndex > maxSize) {
-        keyOrder.splice(0, evictionIndex);
-        evictionIndex = 0;
-      }
+    }
+    keyOrder[writeIndex] = key;
+    writeIndex = (writeIndex + 1) % maxSize;
+    if (writeIndex === 0) {
+      isFull = true;
     }
 
     return result;

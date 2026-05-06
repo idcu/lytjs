@@ -190,18 +190,22 @@ export function createChildrenPatch<HN, HE extends HN>(
         unmountChildren(c1 as VNode[], parentComponent, parentSuspense);
       }
       // Always set new text (DOM was potentially cleared by unmountChildren above)
-      // FIX: P2-12 添加 container 类型守卫检查，避免不安全的类型断言。
+      // FIX: P2-11 添加运行时类型检查，避免不安全的类型断言。
       // container 的实际类型为 HN，而 setElementText 期望 HE（HN 的子类型）。
-      // 在 DEV 模式下检查 container 是否为有效节点，避免静默失败。
-      if (__DEV__ && (!container || typeof container !== 'object')) {
+      // 使用运行时检查确保 container 是元素类型，如果不是则跳过操作。
+      if (container && typeof container === 'object' && 'nodeType' in container) {
+        setElementText(container as HE, String(c2 ?? ''));
+      } else if (__DEV__) {
         warn(`[lytjs/patch-children] setElementText called with invalid container: ${String(container)}`);
       }
-      setElementText(container as HE, String(c2 ?? ''));
     } else {
       // New children are array (or null)
       if (prevShapeFlag & ShapeFlags.TEXT_CHILDREN) {
         // Old children were text - clear it
-        setElementText(container as HE, '');
+        // FIX: P2-11 添加运行时类型检查
+        if (container && typeof container === 'object' && 'nodeType' in container) {
+          setElementText(container as HE, '');
+        }
       }
 
       if (prevShapeFlag & ShapeFlags.ARRAY_CHILDREN) {

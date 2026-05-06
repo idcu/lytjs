@@ -18,6 +18,14 @@ interface ActiveErrorBoundary {
 const activeErrorBoundaries = new Set<ActiveErrorBoundary>();
 let globalHandlerInstalled = false;
 
+// FIX: P2-18 提取全局处理器函数，以便正确移除监听器
+function globalUnhandledRejectionHandler(event: PromiseRejectionEvent): void {
+  // 通知所有活跃的 ErrorBoundary 实例
+  for (const eb of activeErrorBoundaries) {
+    eb.handler(event);
+  }
+}
+
 export interface ErrorBoundaryProps {
   onError?: (error: Error, info: string) => void;
   fallback?: ComponentOptions;
@@ -65,12 +73,7 @@ export const ErrorBoundary: ComponentOptions = {
         // 只安装一次全局 unhandledrejection 事件监听器
         if (!globalHandlerInstalled) {
           globalHandlerInstalled = true;
-          window.addEventListener('unhandledrejection', (event: PromiseRejectionEvent) => {
-            // 通知所有活跃的 ErrorBoundary 实例
-            for (const eb of activeErrorBoundaries) {
-              eb.handler(event);
-            }
-          });
+          window.addEventListener('unhandledrejection', globalUnhandledRejectionHandler);
         }
       }
     });
@@ -79,6 +82,11 @@ export const ErrorBoundary: ComponentOptions = {
       if (currentBoundary) {
         activeErrorBoundaries.delete(currentBoundary);
         currentBoundary = null;
+        // FIX: P2-18 当所有 ErrorBoundary 实例都被卸载时，移除全局监听器
+        if (activeErrorBoundaries.size === 0 && globalHandlerInstalled) {
+          globalHandlerInstalled = false;
+          window.removeEventListener('unhandledrejection', globalUnhandledRejectionHandler);
+        }
       }
     });
 

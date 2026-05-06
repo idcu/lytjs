@@ -9,7 +9,7 @@ import type { VNode, ComponentInternalInstance } from '@lytjs/common-vnode';
 import { isSameVNodeType } from '@lytjs/common-vnode';
 import { isArray } from '@lytjs/common-is';
 
-declare const __DEV__: boolean;
+// FIX: P2-20 删除冗余 __DEV__ 局部声明（env.d.ts 已全局声明）
 
 /** FIX: P2-14 fallback 层级限制，防止无限嵌套 suspense */
 const MAX_SUSPENSE_DEPTH = 10;
