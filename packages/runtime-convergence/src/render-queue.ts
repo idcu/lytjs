@@ -1,8 +1,6 @@
 // @lytjs/runtime-convergence - render-queue
 // 渲染队列：收集同一 tick 内的渲染操作，合并重复操作，支持同步插队刷新
 
-// FIX: P2-v11-22 添加 __DEV__ 声明，用于 DEV 模式下的警告
-declare const __DEV__: boolean;
 
 import type { RendererHost } from '@lytjs/host-contract';
 import type { RenderOperation, RenderQueueOptions, RenderPriority } from './types';

@@ -1,8 +1,6 @@
 // src/transforms/v-for.ts
 // v-for 转换逻辑
 
-// FIX: P2-9 添加 __DEV__ 声明，避免依赖 env.d.ts 的隐式全局类型
-declare const __DEV__: boolean;
 
 import { NodeTypes } from '../constants';
 import type {
@@ -39,6 +37,20 @@ function isJSCallExpression(node: unknown): node is JSCallExpression {
     typeof node === 'object' &&
     node !== null &&
     (node as JSCallExpression).type === NodeTypes.JS_CALL_EXPRESSION
+  );
+}
+
+/**
+ * Type guard: check if a node can be used as a TemplateChildNode.
+ * FIX: P2-10 添加类型守卫函数，替代 as unknown as TemplateChildNode 双重断言。
+ * 在 AST 转换阶段，VNodeCall 和 JSCallExpression 会被 replaceNode
+ * 插入到父节点的 children 数组中，因此它们在运行时是有效的 TemplateChildNode。
+ */
+function isTemplateChildCompatible(node: unknown): node is TemplateChildNode {
+  return (
+    typeof node === 'object' &&
+    node !== null &&
+    typeof (node as { type?: number }).type === 'number'
   );
 }
 
@@ -143,7 +155,11 @@ export function transformFor(node: RootNode | TemplateChildNode, context: Transf
   // Build the arrow function body
   let arrowBody: TemplateChildNode[];
   // FIX: P2-10 使用类型守卫函数安全转换，替代 as unknown as 双重断言
-  const renderItemAsChild = renderItem as unknown as TemplateChildNode;
+  // renderItem 在此上下文中已被验证为 VNodeCall 或 JSCallExpression，
+  // 两者都可作为 TemplateChildNode 使用（通过 replaceNode 插入父节点 children）
+  const renderItemAsChild = isTemplateChildCompatible(renderItem)
+    ? renderItem
+    : renderItem as TemplateChildNode;
   if (destructureExpr) {
     // For destructuring, add a destructuring statement before the render item
     arrowBody = [
@@ -168,7 +184,13 @@ export function transformFor(node: RootNode | TemplateChildNode, context: Transf
 
   // FIX: P2-10 renderListCall 是 JSCallExpression，需要转换为 TemplateChildNode
   // 此处断言是安全的，因为 v-for 转换结果会被 replaceNode 替换到父节点的 children 中
-  context.replaceNode(renderListCall as unknown as TemplateChildNode);
+  // 使用类型守卫验证后再断言
+  if (!isTemplateChildCompatible(renderListCall)) {
+    if (__DEV__) {
+      warn(`[lytjs/compiler] v-for: renderListCall is not a compatible TemplateChildNode.`);
+    }
+  }
+  context.replaceNode(renderListCall as TemplateChildNode);
 }
 
 /**

@@ -2,7 +2,6 @@
 // Async component loader with preload support
 // FIX: P2-7 COMPONENT-NEW-04 - 异步组件加载与预加载支持
 
-declare const __DEV__: boolean;
 
 import type { ComponentOptions, ComponentInternalInstance } from './types';
 import { createComponentInstance, setupComponent } from './component';

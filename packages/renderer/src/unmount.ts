@@ -7,7 +7,6 @@
 
 // ==================== 类型定义 ====================
 
-declare const __DEV__: boolean;
 
 /** 事件监听器注册条目 */
 interface EventListenerEntry {

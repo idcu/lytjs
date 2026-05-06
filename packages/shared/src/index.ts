@@ -307,6 +307,10 @@ export function shallowClone<T extends Record<string, unknown>>(obj: T): T {
 export function deepClone<T>(obj: T): T {
   if (obj === null || typeof obj !== 'object') return obj;
 
+  // FIX: P2 泛型 T 的限制：TypeScript 无法推导 instanceof 分支返回值与泛型 T 的兼容性。
+  // 例如 Date | RegExp | Map | Set 等内置类型的构造函数返回具体类型，
+  // 但泛型 T 可能是联合类型。此处 as unknown as T 是安全的，因为进入对应
+  // instanceof 分支时，obj 的运行时类型与构造函数返回类型一致。
   if (obj instanceof Date) return new Date(obj.getTime()) as unknown as T;
   if (obj instanceof RegExp) return new RegExp(obj) as unknown as T;
 

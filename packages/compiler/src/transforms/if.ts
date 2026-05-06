@@ -137,8 +137,10 @@ export function transformIf(node: RootNode | TemplateChildNode, context: Transfo
 
   if (conditional) {
     // FIX: P2-8 使用类型守卫验证后再插入，替代不安全的 as unknown as 断言
+    // JSConditionalExpression 具有 type 属性，在 AST 转换阶段可作为 TemplateChildNode
+    // 插入到父节点的 children 数组中
     if (isJSConditionalExpression(conditional)) {
-      siblings.splice(chainStart, 0, conditional as unknown as TemplateChildNode);
+      siblings.splice(chainStart, 0, conditional as TemplateChildNode);
     }
   }
 }

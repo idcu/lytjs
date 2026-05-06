@@ -1,8 +1,6 @@
 // src/codegen-signal.ts
 // Signal 模式代码生成器 - 生成 effect() + DOM 操作代码
 
-// FIX: P2-5 添加 __DEV__ 声明，避免依赖 env.d.ts 的隐式全局类型
-declare const __DEV__: boolean;
 
 import { NodeTypes } from './constants';
 import type {
@@ -108,7 +106,7 @@ function serializeStaticHTML(
   let childrenHTML = '';
   for (const child of node.children) {
     if (child.type === NodeTypes.TEXT) {
-      childrenHTML += (child as TextNode).content;
+      childrenHTML += escapeHtmlStatic((child as TextNode).content);
     } else if (child.type === NodeTypes.ELEMENT) {
       childrenHTML += serializeStaticHTML(child as ElementNode, varCounter, elementVars);
     }
@@ -778,6 +776,8 @@ function processConditional(
       dynamicBindings,
     );
   }
+  // FIX: P2-12 在 processConditional 结束时递减 _if_depth，避免同级 v-if 时计数器持续增长
+  varCounter.set('_if_depth', ifDepth);
 }
 
 // ============================================================

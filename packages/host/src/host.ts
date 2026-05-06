@@ -444,12 +444,14 @@ export function createExtendedWebHost(
 
     firstChild(node) {
       const child = (node as Node).firstChild;
-      return child != null ? (child as unknown as Node) : null;
+      // FIX: P2 移除冗余的 as unknown as Node，firstChild 返回值本身就是 Node | null
+      return child;
     },
 
     lastChild(node) {
       const child = (node as Node).lastChild;
-      return child != null ? (child as unknown as Node) : null;
+      // FIX: P2 移除冗余的 as unknown as Node，lastChild 返回值本身就是 Node | null
+      return child;
     },
 
     contains(parent, child) {
