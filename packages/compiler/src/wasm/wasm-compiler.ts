@@ -10,7 +10,7 @@ import { transform } from '../transform';
 import { generate } from '../codegen';
 import { generateSSR } from '../codegen-ssr';
 import { NodeTypes } from '../constants';
-import type { RootNode, TemplateChildNode, ElementNode, SourceLocation, TextNode, CommentNode, InterpolationNode, SimpleExpressionNode } from '../types';
+import type { RootNode, TemplateChildNode, ElementNode, SourceLocation, TextNode, CommentNode, InterpolationNode, SimpleExpressionNode, NodeTransform } from '../types';
 
 // ============================================================
 // Types
@@ -71,8 +71,7 @@ export interface WASMTransformOptions {
   /** 是否标记静态节点 */
   markStatic?: boolean
   /** 自定义节点转换器 */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  nodeTransforms?: Array<(node: any, context: any) => void | (() => void) | (() => void)[]>
+  nodeTransforms?: NodeTransform[]
 }
 
 /** WASM 代码生成选项 */
@@ -297,7 +296,6 @@ function serializeNode(node: TemplateChildNode): ASTNode {
 // 节点统计
 // ============================================================
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
 function countNodes(root: RootNode): { staticCount: number; dynamicCount: number } {
   let staticCount = 0;
   let dynamicCount = 0;
@@ -305,7 +303,7 @@ function countNodes(root: RootNode): { staticCount: number; dynamicCount: number
   function walk(node: TemplateChildNode): void {
     switch (node.type) {
       case NodeTypes.ELEMENT: {
-        const el = node as any;
+        const el = node as ElementNode;
         if (el.isStatic) {
           staticCount++;
         } else {
