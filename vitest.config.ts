@@ -55,11 +55,11 @@ export default defineConfig({
         'packages/_templates/**',
       ],
       thresholds: {
-        // 全局阈值 - 确保整体质量基线
-        lines: 75,
-        functions: 75,
-        branches: 70,
-        statements: 75,
+        // 全局阈值 - 确保整体质量基线（提升至 85%）
+        lines: 85,
+        functions: 85,
+        branches: 80,
+        statements: 85,
       },
     },
   },

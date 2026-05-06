@@ -88,13 +88,6 @@ export const createDep = (): Dep => {
  */
 let triggerDepth = 0;
 
-/**
- * Maximum depth for nested trigger() calls to prevent infinite reactivity loops.
- * When triggerDepth exceeds this limit, further triggers are silently dropped
- * and a warning is emitted in DEV mode.
- */
-let triggerDepth = 0;
-
 export function track(target: object, _type: string, key: string | symbol) {
   if (!shouldTrack || activeEffect === undefined) return;
   // signal untrack 桥接：signalUntrack 期间跳过 effect 系统的依赖收集
