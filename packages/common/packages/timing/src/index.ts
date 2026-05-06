@@ -331,3 +331,85 @@ export class TaskQueue {
     this.queue = [];
   }
 }
+
+// ============================================================
+// 函数工具（从 @lytjs/shared 迁移）
+// ============================================================
+
+/**
+ * 返回自身的恒等函数
+ *
+ * @param value - 输入值
+ * @returns 输入值本身
+ * @example
+ * ```ts
+ * identity(42) // 42
+ * identity({ a: 1 }) // { a: 1 }
+ * ```
+ */
+export function identity<T>(value: T): T {
+  return value;
+}
+
+/**
+ * 创建一个始终返回指定值的函数
+ *
+ * @param value - 要返回的值
+ * @returns 返回该值的函数
+ * @example
+ * ```ts
+ * const alwaysTrue = constant(true)
+ * alwaysTrue() // true
+ * ```
+ */
+export function constant<T>(value: T): () => T {
+  return () => value;
+}
+
+/**
+ * 只执行一次的函数
+ *
+ * FIX: P2-v11-27 改进 once 函数：支持异步函数场景，
+ * 在异步执行期间阻止重复调用，执行完成后正确返回结果
+ *
+ * @param fn - 要执行的函数
+ * @returns 只执行一次的包装函数
+ * @example
+ * ```ts
+ * const init = once(() => console.log('initialized'))
+ * init() // 输出 'initialized'
+ * init() // 无输出
+ * ```
+ */
+export function once<T extends (...args: unknown[]) => unknown>(
+  fn: T,
+): (...args: Parameters<T>) => ReturnType<T> | undefined | Promise<ReturnType<T> | undefined> {
+  let called = false;
+  let result: ReturnType<T>;
+  let pendingPromise: Promise<ReturnType<T>> | null = null;
+
+  return (...args: Parameters<T>): ReturnType<T> | undefined | Promise<ReturnType<T> | undefined> => {
+    if (!called) {
+      called = true;
+      try {
+        result = fn(...args) as ReturnType<T>;
+        // 如果结果是 Promise，跟踪其状态以防止并发调用
+        if (result instanceof Promise) {
+          pendingPromise = result;
+          return result.then(
+            (val) => { pendingPromise = null; return val; },
+            (err) => { pendingPromise = null; throw err; },
+          ) as Promise<ReturnType<T> | undefined>;
+        }
+        return result;
+      } catch (e) {
+        // 同步异常：重置 called 标志，允许重试
+        called = false;
+        throw e;
+      }
+    }
+    // 如果有正在执行的异步操作，返回其 Promise
+    if (pendingPromise) return pendingPromise;
+    return undefined;
+  };
+}

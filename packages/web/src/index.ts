@@ -36,3 +36,19 @@ export {
   CSSVarObserver,
   ThemeManager,
 } from './css-vars';
+
+// ResizeObserver 管理模块
+// FIX: P2-5 ResizeObserver 未清理问题
+export {
+  // 类型
+  type ResizeObserverCallback,
+  type ResizeObserverOptions,
+  type ResizeObserverStats,
+
+  // 类
+  ResizeObserverManager,
+
+  // 便捷函数
+  useResizeObserver,
+  supportsResizeObserver,
+} from './resize-observer';

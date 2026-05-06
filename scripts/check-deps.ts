@@ -52,7 +52,6 @@ const LAYER_MAP: Record<string, number> = {
   '@lytjs/renderer': 2,
   '@lytjs/component': 2,
   '@lytjs/adapter-web': 2,
-  '@lytjs/runtime-convergence': 2,
   // L3
   '@lytjs/core': 3,
   '@lytjs/core-vnode': 3,

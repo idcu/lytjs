@@ -49,7 +49,6 @@
       "@lytjs/core-signal/*": ["packages/core-signal/src/*"],
       "@lytjs/adapter-web": ["packages/adapter-web/src"],
       "@lytjs/dom-runtime": ["packages/dom-runtime/src"],
-      "@lytjs/runtime-convergence": ["packages/runtime-convergence/src"],
       "@lytjs/host-contract": ["packages/host-contract/src"]
     },
     "types": ["node"]

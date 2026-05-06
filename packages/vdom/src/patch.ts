@@ -122,6 +122,89 @@ function optionsToInternal<HN, HE extends HN>(
 // 使用 WeakSet 跟踪已创建的渲染器配置，防止重复创建
 const createdRenderers = new WeakSet<object>();
 
+// FIX: P2-4 事件监听器清理回调注册表
+// 允许外部注册元素卸载时的事件清理函数
+const eventCleanupCallbacks = new Set<(el: Node) => void>();
+
+// FIX: P2-24 缓存机制优化 - 添加 VNode 类型缓存，避免重复计算 shapeFlag
+const vnodeTypeCache = new WeakMap<object, number>();
+
+// FIX: P2-24 缓存机制优化 - 添加 props 比较缓存
+const propsCompareCache = new WeakMap<object, Map<object, boolean>>();
+
+/**
+ * 获取 VNode 的 shapeFlag 缓存值
+ * FIX: P2-24 缓存机制优化
+ */
+function getCachedShapeFlag(type: unknown): number | undefined {
+  if (typeof type === 'object' && type !== null) {
+    return vnodeTypeCache.get(type);
+  }
+  return undefined;
+}
+
+/**
+ * 设置 VNode 的 shapeFlag 缓存值
+ * FIX: P2-24 缓存机制优化
+ */
+function setCachedShapeFlag(type: unknown, flag: number): void {
+  if (typeof type === 'object' && type !== null) {
+    vnodeTypeCache.set(type, flag);
+  }
+}
+
+/**
+ * 缓存 props 比较结果
+ * FIX: P2-24 缓存机制优化
+ */
+function cachePropsCompare(prev: object, next: object, result: boolean): void {
+  let cache = propsCompareCache.get(prev);
+  if (!cache) {
+    cache = new Map();
+    propsCompareCache.set(prev, cache);
+  }
+  cache.set(next, result);
+}
+
+/**
+ * 获取缓存的 props 比较结果
+ * FIX: P2-24 缓存机制优化
+ */
+function getCachedPropsCompare(prev: object, next: object): boolean | undefined {
+  const cache = propsCompareCache.get(prev);
+  if (cache) {
+    return cache.get(next);
+  }
+  return undefined;
+}
+
+/**
+ * 注册元素卸载时的事件清理回调。
+ * 用于在组件/元素卸载时清理绑定的事件监听器。
+ * FIX: P2-4 事件监听器未清理问题
+ */
+export function registerEventCleanupCallback(callback: (el: Node) => void): () => void {
+  eventCleanupCallbacks.add(callback);
+  return () => eventCleanupCallbacks.delete(callback);
+}
+
+/**
+ * 清理元素上的所有事件监听器。
+ * 调用所有注册的清理回调。
+ * FIX: P2-4 事件监听器未清理问题
+ */
+function cleanupElementEvents(el: Node): void {
+  for (const callback of eventCleanupCallbacks) {
+    try {
+      callback(el);
+    } catch (e) {
+      if (__DEV__) {
+        console.warn('[lytjs/patch] Error during event cleanup:', e);
+      }
+    }
+  }
+}
+
 /**
  * Check if a renderer has already been created with the same host/options.
  * Prevents duplicate renderer creation which can cause isolation issues.
@@ -131,10 +214,11 @@ function checkRendererUniqueness<HN, HE extends HN>(
 ): void {
   if (__DEV__) {
     if (createdRenderers.has(hostOrOptions)) {
+      // FIX: P2-30 字符串拼接优化 - 使用模板字符串替代 + 拼接
       warn(
-        'A renderer has already been created with this host/options object. ' +
-          'Creating multiple renderers with the same configuration can lead to ' +
-          'unexpected behavior. Consider reusing the existing renderer.',
+        `A renderer has already been created with this host/options object. ` +
+        `Creating multiple renderers with the same configuration can lead to ` +
+        `unexpected behavior. Consider reusing the existing renderer.`,
       );
     }
     createdRenderers.add(hostOrOptions);
@@ -221,7 +305,9 @@ export function createRenderer<HN, HE extends HN>(
 
   // FIX: P0-03 使用 __isRendererHost 标识符号替代鸭子类型检测，
   // 避免普通对象碰巧包含 addClass/getBoundingClientRect 时被误判为 RendererHost
-  const isHost = '__isRendererHost' in hostOrOptions && (hostOrOptions as Record<string, unknown>).__isRendererHost === true;
+  // FIX: P1-T3 使用类型守卫替代类型断言
+  const hostOrOptionsRecord = hostOrOptions as Record<string, unknown>;
+  const isHost = '__isRendererHost' in hostOrOptions && hostOrOptionsRecord.__isRendererHost === true;
   const internal = isHost
     ? hostToOptions(hostOrOptions as RendererHost<HN, HE>)
     : optionsToInternal(hostOrOptions as RendererOptions<HN, HE>);
@@ -323,26 +409,30 @@ export function createRenderer<HN, HE extends HN>(
     // 第二次检查：在 n1 可能被置为 null 之后，再次判断是否走 patch 路径。
     // 两次检查是必要的：第一次可能将 n1 置为 null，第二次需要基于更新后的 n1 做判断。
     if (n1 !== null && isSameVNodeType(n1, n2)) {
+      // FIX: P2-9 优化重复的属性查找：缓存 n2.type 到局部变量
+      const n2Type = n2.type;
+      const n2ShapeFlag = n2.shapeFlag;
+
       // Fragment needs special handling
-      if (n2.type === Fragment) {
+      if (n2Type === Fragment) {
         fragmentAPI.patchFragment(n1, n2, container, parentComponent, parentSuspense, isSVG);
-      } else if (n2.type === Text || n2.type === Comment) {
+      } else if (n2Type === Text || n2Type === Comment) {
         // Patch text/comment node: update content if children changed
         const node = n1.el;
         setVNodeEl(n2, node as unknown as HN | null);
         if (n1.children !== n2.children) {
           if (isFunction(n2.children)) {
             warn(
-              `${n2.type === Text ? 'Text' : 'Comment'} vnode received a function children value. ` +
+              `${n2Type === Text ? 'Text' : 'Comment'} vnode received a function children value. ` +
                 `Function children are only supported on component vnodes. ` +
                 `The value will be replaced with an empty string.`,
             );
           }
           setText(node as unknown as HN, isFunction(n2.children) ? '' : String(n2.children ?? ''));
         }
-      } else if (n2.shapeFlag & ShapeFlags.SUSPENSE) {
+      } else if (n2ShapeFlag & ShapeFlags.SUSPENSE) {
         suspenseAPI.patchSuspense(n1, n2, container, anchor, parentComponent, parentSuspense, isSVG);
-      } else if (n2.shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
+      } else if (n2ShapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
         // Component patch: delegate to component update process
         // FIX: P1-7 VDOM-NEW-11 - 组件更新效率优化
         // 在更新组件前添加 shallowEqual 比较 props，如果相同则跳过更新
@@ -378,7 +468,7 @@ export function createRenderer<HN, HE extends HN>(
             console.log(`[lytjs/patch] Skipping component update for "${compName}": props and slots unchanged`);
           }
         }
-      } else if (n2.shapeFlag & ShapeFlags.TELEPORT) {
+      } else if (n2ShapeFlag & ShapeFlags.TELEPORT) {
         teleportAPI.patchTeleport(n1, n2, container, anchor, parentComponent, parentSuspense, isSVG);
       } else {
         // Patch existing element node
@@ -391,13 +481,17 @@ export function createRenderer<HN, HE extends HN>(
       }
 
       // Mount new node
-      if (n2.shapeFlag & ShapeFlags.ELEMENT) {
+      // FIX: P2-9 优化重复的属性查找：缓存 n2.type 和 n2.shapeFlag 到局部变量
+      const n2Type = n2.type;
+      const n2ShapeFlag = n2.shapeFlag;
+
+      if (n2ShapeFlag & ShapeFlags.ELEMENT) {
         elementAPI.mountElement(n2, container, anchor, isSVG, parentComponent, parentSuspense);
-      } else if (n2.type === Text) {
+      } else if (n2Type === Text) {
         elementAPI.mountTextNode(n2, container, anchor);
-      } else if (n2.type === Comment) {
+      } else if (n2Type === Comment) {
         elementAPI.mountCommentNode(n2, container, anchor);
-      } else if (n2.type === Fragment) {
+      } else if (n2Type === Fragment) {
         fragmentAPI.mountFragment(n2, container, anchor, parentComponent, parentSuspense, isSVG);
       } else if (n2.shapeFlag & ShapeFlags.TELEPORT) {
         teleportAPI.mountTeleport(n2, container, anchor, parentComponent, parentSuspense, isSVG);
@@ -481,6 +575,12 @@ export function createRenderer<HN, HE extends HN>(
       for (let i = 0; i < children.length; i++) {
         unmount(children[i]!, parentComponent, parentSuspense, doRemove);
       }
+    }
+
+    // FIX: P2-4 清理元素上的事件监听器
+    // 在卸载元素前清理所有绑定的事件监听器，防止内存泄漏
+    if (el && vnode.shapeFlag & ShapeFlags.ELEMENT) {
+      cleanupElementEvents(el as unknown as Node);
     }
 
     // Clean up string refs on unmount

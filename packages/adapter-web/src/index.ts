@@ -66,3 +66,20 @@ export function createWebHost(): RendererHost<Node, Element> {
   // FIX: P2-17 使用已导入的 WebRendererHost 类
   return new WebRendererHost();
 }
+
+// ============================================================
+// Extended Web Host (merged from @lytjs/host)
+// ============================================================
+
+export type {
+  ExtendedRendererHost,
+  HostCapabilities,
+  CreateExtendedHostOptions,
+} from './web-host-extended';
+
+export {
+  detectHostCapabilities,
+  supportsHostCapability,
+  waitForHostReady,
+  createExtendedWebHost,
+} from './web-host-extended';

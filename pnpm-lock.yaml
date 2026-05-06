@@ -146,6 +146,22 @@ importers:
         specifier: ^3.0.0
         version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@29.1.1)(tsx@4.21.0)(yaml@2.8.3)
 
+  packages/common/packages/async-scheduler:
+    dependencies:
+      '@lytjs/host-contract':
+        specifier: workspace:*
+        version: link:../../../host-contract
+    devDependencies:
+      tsup:
+        specifier: ^8.4.0
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.12)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.3)
+      typescript:
+        specifier: ^5.8.2
+        version: 5.9.3
+      vitest:
+        specifier: ^3.0.0
+        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@29.1.1)(tsx@4.21.0)(yaml@2.8.3)
+
   packages/common/packages/cache:
     devDependencies:
       tsup:
@@ -301,6 +317,25 @@ importers:
         specifier: ^3.0.0
         version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@29.1.1)(tsx@4.21.0)(yaml@2.8.3)
 
+  packages/common/packages/event-normalizer:
+    dependencies:
+      '@lytjs/common-events':
+        specifier: workspace:*
+        version: link:../events
+      '@lytjs/host-contract':
+        specifier: workspace:*
+        version: link:../../../host-contract
+    devDependencies:
+      tsup:
+        specifier: ^8.4.0
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.12)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.3)
+      typescript:
+        specifier: ^5.8.2
+        version: 5.9.3
+      vitest:
+        specifier: ^3.0.0
+        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@29.1.1)(tsx@4.21.0)(yaml@2.8.3)
+
   packages/common/packages/events:
     dependencies:
       '@lytjs/common-is':
@@ -356,6 +391,22 @@ importers:
         specifier: ^3.0.0
         version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@26.1.0)(tsx@4.21.0)(yaml@2.8.3)
 
+  packages/common/packages/node-cache:
+    dependencies:
+      '@lytjs/host-contract':
+        specifier: workspace:*
+        version: link:../../../host-contract
+    devDependencies:
+      tsup:
+        specifier: ^8.4.0
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.12)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.3)
+      typescript:
+        specifier: ^5.8.2
+        version: 5.9.3
+      vitest:
+        specifier: ^3.0.0
+        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@29.1.1)(tsx@4.21.0)(yaml@2.8.3)
+
   packages/common/packages/object:
     dependencies:
       '@lytjs/common-is':
@@ -384,6 +435,19 @@ importers:
         specifier: ^3.0.0
         version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@29.1.1)(tsx@4.21.0)(yaml@2.8.3)
 
+  packages/common/packages/performance:
+    dependencies:
+      '@lytjs/common-error':
+        specifier: workspace:*
+        version: link:../error
+    devDependencies:
+      tsup:
+        specifier: ^8.4.0
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.12)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.3)
+      typescript:
+        specifier: ^5.8.2
+        version: 5.9.3
+
   packages/common/packages/query:
     devDependencies:
       tsup:
@@ -397,6 +461,22 @@ importers:
         version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@29.1.1)(tsx@4.21.0)(yaml@2.8.3)
 
   packages/common/packages/raf:
+    devDependencies:
+      tsup:
+        specifier: ^8.4.0
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.12)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.3)
+      typescript:
+        specifier: ^5.8.2
+        version: 5.9.3
+      vitest:
+        specifier: ^3.0.0
+        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@29.1.1)(tsx@4.21.0)(yaml@2.8.3)
+
+  packages/common/packages/render-queue:
+    dependencies:
+      '@lytjs/host-contract':
+        specifier: workspace:*
+        version: link:../../../host-contract
     devDependencies:
       tsup:
         specifier: ^8.4.0
@@ -468,6 +548,25 @@ importers:
         version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@29.1.1)(tsx@4.21.0)(yaml@2.8.3)
 
   packages/common/packages/timing:
+    devDependencies:
+      tsup:
+        specifier: ^8.4.0
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.12)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.3)
+      typescript:
+        specifier: ^5.8.2
+        version: 5.9.3
+      vitest:
+        specifier: ^3.0.0
+        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@29.1.1)(tsx@4.21.0)(yaml@2.8.3)
+
+  packages/common/packages/transition-engine:
+    dependencies:
+      '@lytjs/host-contract':
+        specifier: workspace:*
+        version: link:../../../host-contract
+      '@lytjs/vdom':
+        specifier: workspace:*
+        version: link:../../../vdom
     devDependencies:
       tsup:
         specifier: ^8.4.0
@@ -765,25 +864,6 @@ importers:
       vitest:
         specifier: ^3.0.0
         version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@24.1.3)(tsx@4.21.0)(yaml@2.8.3)
-
-  packages/runtime-convergence:
-    dependencies:
-      '@lytjs/common-events':
-        specifier: workspace:*
-        version: link:../common/packages/events
-      '@lytjs/host-contract':
-        specifier: workspace:*
-        version: link:../host-contract
-      '@lytjs/vdom':
-        specifier: workspace:*
-        version: link:../vdom
-    devDependencies:
-      tsup:
-        specifier: ^8.3.0
-        version: 8.5.1(jiti@2.6.1)(postcss@8.5.12)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.3)
-      typescript:
-        specifier: ^5.8.2
-        version: 5.9.3
 
   packages/shared-types:
     devDependencies:

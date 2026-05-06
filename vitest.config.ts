@@ -32,7 +32,6 @@ export default defineConfig({
       '@lytjs/core-signal': resolve('/workspace/lytjs/packages/core-signal/src'),
       '@lytjs/adapter-web': resolve('/workspace/lytjs/packages/adapter-web/src'),
       '@lytjs/dom-runtime': resolve('/workspace/lytjs/packages/dom-runtime/src'),
-      '@lytjs/runtime-convergence': resolve('/workspace/lytjs/packages/runtime-convergence/src'),
       '@lytjs/host-contract': resolve('/workspace/lytjs/packages/host-contract/src'),
     },
   },

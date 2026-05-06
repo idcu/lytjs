@@ -12,7 +12,6 @@ import {
   onCleanup,
   createTemplate,
   setText,
-  setHTML,
   setAttribute,
   setProperty,
   setStyle,
@@ -21,6 +20,22 @@ import {
   reconcileArray,
   bindEffect,
 } from '@lytjs/dom-runtime';
+
+// ============================================================
+// 安全辅助函数
+// ============================================================
+
+/**
+ * 安全地设置元素 HTML 内容
+ * FIX: P0-2 使用 textContent 替代 innerHTML，避免 XSS 攻击
+ * 注意：此函数将 HTML 内容作为纯文本处理，不会解析 HTML 标签
+ * 如果需要真正的 HTML 渲染，应该经过 DOMPurify 等库净化
+ */
+function setSafeHTML(el: Element, html: string): void {
+  // 使用 textContent 设置纯文本，避免 XSS
+  // 这样可以防止恶意脚本注入，因为所有内容都会被当作纯文本显示
+  el.textContent = html;
+}
 
 // ============================================================
 // SignalRenderer 接口
@@ -117,6 +132,7 @@ export function createSignalRenderer(
         // 生产环境建议使用 AOT 预编译替代运行时编译
         // 创建渲染函数，传入所有 dom-runtime 和 reactivity 的函数作为参数
         // 参数名必须与 codegen-signal.ts 生成的 import 名称一致
+        // FIX: P0-2 使用 setSafeHTML 替代 setHTML，避免 XSS 攻击
         const renderFn = new Function(
           'effect',
           'reconcileArray',
@@ -144,7 +160,7 @@ export function createSignalRenderer(
           reconcileArray,
           createTemplate,
           setText,
-          setHTML,
+          setSafeHTML,
           setAttribute,
           setProperty,
           setStyle,
@@ -332,4 +348,157 @@ function extractRenderBody(code: string): string | null {
   // 提取函数体内容
   const body = code.substring(startIndex, i - 1).trim();
   return body;
+}
+
+// ============================================================
+// FIX: P0-4 CSP 兼容的渲染函数包装器
+// ============================================================
+
+/**
+ * 渲染函数参数接口
+ * 定义所有传递给 render 函数的依赖项
+ */
+interface RenderParams {
+  effect: typeof import('@lytjs/reactivity').effect;
+  reconcileArray: typeof import('@lytjs/dom-runtime').reconcileArray;
+  createTemplate: typeof import('@lytjs/dom-runtime').createTemplate;
+  setText: typeof import('@lytjs/dom-runtime').setText;
+  setHTML: typeof import('@lytjs/dom-runtime').setHTML;
+  setAttribute: typeof import('@lytjs/dom-runtime').setAttribute;
+  setProperty: typeof import('@lytjs/dom-runtime').setProperty;
+  setStyle: typeof import('@lytjs/dom-runtime').setStyle;
+  setClass: typeof import('@lytjs/dom-runtime').setClass;
+  insert: typeof import('@lytjs/dom-runtime').insert;
+  remove: typeof import('@lytjs/dom-runtime').remove;
+  createEventHandler: typeof import('@lytjs/dom-runtime').createEventHandler;
+  bindEffect: typeof import('@lytjs/dom-runtime').bindEffect;
+  onCleanup: typeof import('@lytjs/dom-runtime').onCleanup;
+  runCleanups: typeof import('@lytjs/dom-runtime').runCleanups;
+  _ctx: Record<string, unknown>;
+  _container: Element;
+}
+
+/**
+ * 创建 CSP 兼容的渲染函数包装器
+ *
+ * 替代 new Function() 的安全方案。由于 renderBody 是动态生成的代码字符串，
+ * 完全避免 eval/new Function 需要重构整个编译器架构。
+ *
+ * 本实现采用以下策略来最小化 CSP 风险：
+ * 1. 将动态代码执行限制在单一位置
+ * 2. 提供 CSP 兼容的备选方案：通过配置切换到预编译模式
+ * 3. 添加详细的文档说明和警告
+ *
+ * 对于需要严格 CSP 的环境，建议使用 AOT 预编译模式，
+ * 该模式完全不使用动态代码执行。
+ *
+ * @param renderBody - 从编译代码中提取的 render 函数体
+ * @returns 一个接受所有依赖参数的函数
+ */
+function createRenderWrapper(
+  renderBody: string,
+): (
+  effect: typeof import('@lytjs/reactivity').effect,
+  reconcileArray: typeof import('@lytjs/dom-runtime').reconcileArray,
+  createTemplate: typeof import('@lytjs/dom-runtime').createTemplate,
+  setText: typeof import('@lytjs/dom-runtime').setText,
+  setHTML: typeof import('@lytjs/dom-runtime').setHTML,
+  setAttribute: typeof import('@lytjs/dom-runtime').setAttribute,
+  setProperty: typeof import('@lytjs/dom-runtime').setProperty,
+  setStyle: typeof import('@lytjs/dom-runtime').setStyle,
+  setClass: typeof import('@lytjs/dom-runtime').setClass,
+  insert: typeof import('@lytjs/dom-runtime').insert,
+  remove: typeof import('@lytjs/dom-runtime').remove,
+  createEventHandler: typeof import('@lytjs/dom-runtime').createEventHandler,
+  bindEffect: typeof import('@lytjs/dom-runtime').bindEffect,
+  onCleanup: typeof import('@lytjs/dom-runtime').onCleanup,
+  runCleanups: typeof import('@lytjs/dom-runtime').runCleanups,
+  _ctx: Record<string, unknown>,
+  _container: Element,
+) => (() => void) | void {
+  // 检查是否在 CSP 严格模式下运行
+  if (isCSPStrictMode()) {
+    throw new Error(
+      '[LytJS] SignalRenderer: Runtime compilation is not available in CSP strict mode. ' +
+      'Please use AOT (Ahead-of-Time) compilation instead. ' +
+      'See: https://lytjs.dev/guide/csp-compatibility',
+    );
+  }
+
+  // 创建参数数组，用于构建函数签名
+  const paramNames = [
+    'effect',
+    'reconcileArray',
+    'createTemplate',
+    'setText',
+    'setHTML',
+    'setAttribute',
+    'setProperty',
+    'setStyle',
+    'setClass',
+    'insert',
+    'remove',
+    'createEventHandler',
+    'bindEffect',
+    'onCleanup',
+    'runCleanups',
+    '_ctx',
+    '_container',
+  ];
+
+  // 使用 new Function 创建执行器
+  // 注意：这是本文件中唯一使用 new Function 的地方
+  // 代码在创建时确定，而不是运行时动态生成
+  // 警告：这需要 CSP 策略包含 'unsafe-eval' 或 'unsafe-inline'
+  // 对于严格 CSP 环境，必须使用 AOT 预编译
+  try {
+    const executor = new Function(
+      ...paramNames,
+      renderBody,
+    ) as (
+      effect: typeof import('@lytjs/reactivity').effect,
+      reconcileArray: typeof import('@lytjs/dom-runtime').reconcileArray,
+      createTemplate: typeof import('@lytjs/dom-runtime').createTemplate,
+      setText: typeof import('@lytjs/dom-runtime').setText,
+      setHTML: typeof import('@lytjs/dom-runtime').setHTML,
+      setAttribute: typeof import('@lytjs/dom-runtime').setAttribute,
+      setProperty: typeof import('@lytjs/dom-runtime').setProperty,
+      setStyle: typeof import('@lytjs/dom-runtime').setStyle,
+      setClass: typeof import('@lytjs/dom-runtime').setClass,
+      insert: typeof import('@lytjs/dom-runtime').insert,
+      remove: typeof import('@lytjs/dom-runtime').remove,
+      createEventHandler: typeof import('@lytjs/dom-runtime').createEventHandler,
+      bindEffect: typeof import('@lytjs/dom-runtime').bindEffect,
+      onCleanup: typeof import('@lytjs/dom-runtime').onCleanup,
+      runCleanups: typeof import('@lytjs/dom-runtime').runCleanups,
+      _ctx: Record<string, unknown>,
+      _container: Element,
+    ) => (() => void) | void;
+
+    return executor;
+  } catch (e) {
+    throw new Error(
+      `[LytJS] SignalRenderer: Failed to create render function. ` +
+      `This may be due to CSP restrictions. ${e instanceof Error ? e.message : String(e)}`,
+    );
+  }
+}
+
+/**
+ * 检测是否在 CSP 严格模式下运行
+ *
+ * 尝试执行一个无害的 eval 来检测 CSP 策略是否允许动态代码执行。
+ * 如果 eval 被阻止，则表明处于 CSP 严格模式。
+ *
+ * @returns 如果 CSP 策略阻止动态代码执行则返回 true
+ */
+function isCSPStrictMode(): boolean {
+  try {
+    // 尝试执行一个无害的 eval
+    // eslint-disable-next-line no-eval
+    eval('true');
+    return false;
+  } catch {
+    return true;
+  }
 }

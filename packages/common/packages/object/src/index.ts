@@ -4,11 +4,13 @@
  */
 
 import { isPlainObject, isArray, isNullish, hasOwn } from '@lytjs/common-is';
+import { PROTO_POLLUTION_KEYS, CLONE_DEFAULT_MAX_DEPTH } from '@lytjs/common-constants';
 
 /**
  * 危险 key 列表，用于防止原型污染
+ * @deprecated 使用 @lytjs/common-constants 中的 PROTO_POLLUTION_KEYS
  */
-const PROTO_POLLUTION_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+const LOCAL_PROTO_POLLUTION_KEYS = new Set(PROTO_POLLUTION_KEYS);
 
 /**
  * 浅合并多个对象
@@ -18,7 +20,7 @@ export function mergeObjects<T extends Record<string, unknown>>(...sources: Part
   for (const source of sources) {
     if (source) {
       for (const key in source) {
-        if (hasOwn(source, key) && !PROTO_POLLUTION_KEYS.has(key)) {
+        if (hasOwn(source, key) && !LOCAL_PROTO_POLLUTION_KEYS.has(key)) {
           (result as Record<string, unknown>)[key] = source[key];
         }
       }
@@ -33,7 +35,7 @@ export function mergeObjects<T extends Record<string, unknown>>(...sources: Part
 export function deepMerge<T extends Record<string, unknown>>(target: T, source: Partial<T>): T {
   const result = { ...target };
   for (const key in source) {
-    if (hasOwn(source, key) && !PROTO_POLLUTION_KEYS.has(key)) {
+    if (hasOwn(source, key) && !LOCAL_PROTO_POLLUTION_KEYS.has(key)) {
       const sourceVal = source[key];
       const targetVal = result[key];
       if (isPlainObject(sourceVal) && isPlainObject(targetVal)) {
@@ -128,12 +130,12 @@ export function omit<T extends Record<string, unknown>, K extends keyof T>(
  * 深度克隆对象
  * @param source - 要克隆的源对象
  * @param seen - 用于循环引用检测的 WeakMap
- * @param maxDepth - 最大递归深度，默认 20，超出时回退到 JSON.parse(JSON.stringify())
+ * @param maxDepth - 最大递归深度，默认 CLONE_DEFAULT_MAX_DEPTH，超出时回退到 JSON.parse(JSON.stringify())
  */
 export function deepClone<T>(
   source: T,
   seen: WeakMap<object, unknown> = new WeakMap<object, unknown>(),
-  maxDepth: number = 20,
+  maxDepth: number = CLONE_DEFAULT_MAX_DEPTH,
   _currentDepth: number = 0,
 ): T {
   // 基本类型直接返回
@@ -298,7 +300,7 @@ export function get<T = unknown>(
   for (const key of keys) {
     if (current == null) return defaultValue;
     // 防止原型污染：拒绝访问 __proto__、constructor、prototype 等危险路径
-    if (PROTO_POLLUTION_KEYS.has(key)) return defaultValue;
+    if (LOCAL_PROTO_POLLUTION_KEYS.has(key)) return defaultValue;
     current = (current as Record<string, unknown>)[key];
   }
   return isNullish(current) ? defaultValue : (current as T);
@@ -315,7 +317,7 @@ export function set<T extends Record<string, unknown>>(obj: T, path: string, val
 
   for (let i = 0; i < keys.length - 1; i++) {
     const key = keys[i]!;
-    if (PROTO_POLLUTION_KEYS.has(key)) return obj as T;
+    if (LOCAL_PROTO_POLLUTION_KEYS.has(key)) return obj as T;
     if (current[key] == null || typeof current[key] !== 'object') {
       current[key] = {};
     } else {
@@ -325,7 +327,128 @@ export function set<T extends Record<string, unknown>>(obj: T, path: string, val
   }
 
   const lastKey = keys[keys.length - 1]!;
-  if (PROTO_POLLUTION_KEYS.has(lastKey)) return obj as T;
+  if (LOCAL_PROTO_POLLUTION_KEYS.has(lastKey)) return obj as T;
   current[lastKey] = value;
   return result;
+}
+
+// ============================================================
+// 对象浅拷贝与合并（从 @lytjs/shared 迁移）
+// ============================================================
+
+/**
+ * 创建对象的浅拷贝
+ *
+ * @param obj - 源对象
+ * @returns 浅拷贝后的新对象
+ * @example
+ * ```ts
+ * const original = { a: 1, b: { c: 2 } }
+ * const copy = shallowClone(original)
+ * copy.a = 3 // original.a 仍为 1
+ * copy.b.c = 4 // original.b.c 也变为 4
+ * ```
+ */
+export function shallowClone<T extends Record<string, unknown>>(obj: T): T {
+  return { ...obj };
+}
+
+/**
+ * 合并两个对象，后面的对象属性覆盖前面的
+ *
+ * @param target - 目标对象
+ * @param source - 源对象
+ * @returns 合并后的新对象
+ * @example
+ * ```ts
+ * merge({ a: 1, b: 2 }, { b: 3, c: 4 }) // { a: 1, b: 3, c: 4 }
+ * ```
+ */
+export function merge<T extends Record<string, unknown>,
+  U extends Record<string, unknown>>(
+  target: T,
+  source: U,
+): T & U {
+  return { ...target, ...source };
+}
+
+// ============================================================
+// 数组处理工具（从 @lytjs/shared 迁移）
+// ============================================================
+
+/**
+ * 移除数组中的重复项（使用 Set）
+ *
+ * @param arr - 输入数组
+ * @returns 去重后的新数组
+ * @example
+ * ```ts
+ * unique([1, 2, 2, 3, 3, 3]) // [1, 2, 3]
+ * ```
+ */
+export function unique<T>(arr: T[]): T[] {
+  return [...new Set(arr)];
+}
+
+/**
+ * 将数组按指定大小分块
+ *
+ * @param arr - 输入数组
+ * @param size - 每块大小
+ * @returns 分块后的二维数组
+ * @example
+ * ```ts
+ * chunk([1, 2, 3, 4, 5], 2) // [[1, 2], [3, 4], [5]]
+ * ```
+ */
+export function chunk<T>(arr: T[], size: number): T[][] {
+  if (size <= 0) return [arr];
+  const result: T[][] = [];
+  for (let i = 0; i < arr.length; i += size) {
+    result.push(arr.slice(i, i + size));
+  }
+  return result;
+}
+
+/**
+ * 扁平化数组（一层）
+ *
+ * @param arr - 嵌套数组
+ * @returns 扁平化后的数组
+ * @example
+ * ```ts
+ * flatten([[1, 2], [3, 4], [5]]) // [1, 2, 3, 4, 5]
+ * ```
+ */
+export function flatten<T>(arr: T[][]): T[] {
+  return arr.reduce((acc, val) => acc.concat(val), []);
+}
+
+/**
+ * 按指定键对数组进行分组
+ *
+ * @param arr - 对象数组
+ * @param key - 分组键
+ * @returns 分组后的对象
+ * @example
+ * ```ts
+ * const users = [
+ *   { role: 'admin', name: 'Alice' },
+ *   { role: 'user', name: 'Bob' },
+ *   { role: 'admin', name: 'Charlie' }
+ * ]
+ * groupBy(users, 'role')
+ * // { admin: [{...}, {...}], user: [{...}] }
+ * ```
+ */
+export function groupBy<T extends Record<string, unknown>>(
+  arr: T[],
+  key: keyof T,
+): Record<string, T[]> {
+  return arr.reduce((acc, item) => {
+    const groupKey = String(item[key]);
+    if (!acc[groupKey]) acc[groupKey] = [];
+    acc[groupKey].push(item);
+    return acc;
+  }, {} as Record<string, T[]>);
 }

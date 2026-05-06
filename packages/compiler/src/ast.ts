@@ -73,12 +73,13 @@ export function createElement(
   props: (AttributeNode | DirectiveNode)[] = [],
   children: TemplateChildNode[] = [],
   loc: SourceLocation = DEFAULT_LOC,
+  tagType: (typeof ElementTypes)[keyof typeof ElementTypes] = ElementTypes.ELEMENT,
 ): ElementNode {
   return {
     type: NodeTypes.ELEMENT,
     ns: 0,
     tag,
-    tagType: ElementTypes.ELEMENT,
+    tagType,
     isSelfClosing: false,
     props,
     children,

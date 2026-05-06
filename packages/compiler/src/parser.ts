@@ -43,9 +43,16 @@ import {
 // Parser utilities
 // ============================================================
 
+import {
+  COMPILER_MAX_INPUT_LENGTH,
+  COMPILER_MAX_REGEX_INPUT_LENGTH,
+  COMPILER_END_TAG_CACHE_MAX_SIZE,
+  COMPILER_MAX_ATTRIBUTES,
+} from '@lytjs/common-constants';
+
 // Pre-compiled RegExp constants (avoid re-creation on every call)
 const RE_ADVANCE_SPACES = /^[\t\r\n\f ]+/;
-const RE_DOCTYPE = /^<![\s\S]*?>/;
+const RE_DOCTYPE = /^<!\[\s\S\]*?>/;
 const RE_END_TAG = /^<\/([a-zA-Z][a-zA-Z0-9-]*)/;
 const RE_TAG_NAME = /^([a-zA-Z][a-zA-Z0-9-]*)/;
 const RE_ATTR_NAME = /^[^\t\r\n\f />][^\t\r\n\f />=]*/;
@@ -53,12 +60,12 @@ const RE_V_DIRECTIVE = /^v-([a-zA-Z][a-zA-Z0-9-]*)(?::(.+))?$/;
 const RE_UNQUOTED_ATTR_VALUE = /^[^\t\r\n\f >]+/;
 const RE_COMPONENT_TAG = /^[A-Z]/;
 
-// FIX: P1-1 COMPILER-NEW-02 - 输入长度限制，防止极端输入下的性能问题
-const MAX_INPUT_LENGTH = 10000;
-const MAX_REGEX_INPUT_LENGTH = 5000;
+// FIX: P2-23 正则表达式缓存 - 模块级预编译正则，避免每次调用都编译
+const RE_QUOTED_ATTR_VALUE = /^(['"])(.*)\1/;
+const RE_IN_OF_EXPRESSION = /^(?:in|of)\s+(.+)$/;
+const RE_COMMA_INDEX_IN_OF = /^(?:,\s*(\w+))?\s+(?:in|of)\s+(.+)$/;
 
 // End tag RegExp cache (avoid re-creation on every parseElement call)
-const END_TAG_CACHE_MAX_SIZE = 100;
 const endTagCache = new Map<string, RegExp>();
 function getEndTagRegex(tag: string): RegExp {
   let regex = endTagCache.get(tag);
@@ -280,26 +287,56 @@ function condenseWhitespace(nodes: TemplateChildNode[]): TemplateChildNode[] {
   return condensed;
 }
 
+// FIX: P2-7 完善类型守卫：添加 TextMode 类型守卫
+/**
+ * 检查是否为 RCDATA 模式（支持实体解析的原始文本）
+ * 类型守卫：缩小 number 类型到具体的 TextMode 常量
+ */
+function isRCDATAMode(mode: number): mode is typeof TextModes.RCDATA {
+  return mode === TextModes.RCDATA;
+}
+
+/**
+ * 检查是否为 RAWTEXT 模式（不解析实体和标签的原始文本）
+ * 类型守卫：缩小 number 类型到具体的 TextMode 常量
+ */
+function isRAWTEXTMode(mode: number): mode is typeof TextModes.RAWTEXT {
+  return mode === TextModes.RAWTEXT;
+}
+
+/**
+ * 检查是否为 CDATA 模式（不解析任何内容的原始文本）
+ * 类型守卫：缩小 number 类型到具体的 TextMode 常量
+ */
+function isCDATAMode(mode: number): mode is typeof TextModes.CDATA {
+  return mode === TextModes.CDATA;
+}
+
+/**
+ * 检查是否为 DATA 模式（标准 HTML 解析模式）
+ * 类型守卫：缩小 number 类型到具体的 TextMode 常量
+ */
+function isDATAMode(mode: number): mode is typeof TextModes.DATA {
+  return mode === TextModes.DATA;
+}
+
 function isEnd(context: ParserContext, mode: number): boolean {
   const s = context.source;
-  switch (mode) {
-    case TextModes.DATA:
-      if (s.startsWith('</')) {
-        const match = s.match(RE_END_TAG);
-        return !!match;
-      }
-      return !s;
-    case TextModes.RCDATA:
-    case TextModes.RAWTEXT:
-    case TextModes.CDATA: {
-      if (s.startsWith('</')) {
-        return true;
-      }
-      return !s;
+  // FIX: P2-7 使用类型守卫进行模式检查
+  if (isDATAMode(mode)) {
+    if (s.startsWith('</')) {
+      const match = s.match(RE_END_TAG);
+      return !!match;
     }
-    default:
-      return !s;
+    return !s;
   }
+  if (isRCDATAMode(mode) || isRAWTEXTMode(mode) || isCDATAMode(mode)) {
+    if (s.startsWith('</')) {
+      return true;
+    }
+    return !s;
+  }
+  return !s;
 }
 
 // ============================================================
@@ -563,10 +600,8 @@ function parseTag(context: ParserContext, type: number): ElementNode | undefined
     return undefined;
   }
 
-  const element = createElement(tag, props, [], getSelection(context, start));
-  // Safe: tagType is assigned from ElementTypes constants (COMPONENT/TEMPLATE/SLOT/ELEMENT)
-  // which are valid values for the ElementNode.tagType union type.
-  element.tagType = tagType as typeof element.tagType;
+  // FIX: P1-T2 通过 createElement 的 tagType 参数直接传入，避免类型断言
+  const element = createElement(tag, props, [], getSelection(context, start), tagType);
   element.isSelfClosing = isSelfClosing;
 
   return element;
@@ -629,8 +664,8 @@ function tryParseBareDirective(
     if (context.source.startsWith('=')) {
       // 跳过 '=' 和空白
       const afterEq = context.source.slice(1).trimStart();
-      // 提取引号内的值
-      const quoteMatch = afterEq.match(/^(['"])(.*)\1/);
+      // FIX: P2-23 使用预编译正则，避免每次调用都编译
+      const quoteMatch = RE_QUOTED_ATTR_VALUE.exec(afterEq);
       if (quoteMatch) {
         const attrValue = quoteMatch[2]!;
         if (!valuePattern.test(attrValue)) {

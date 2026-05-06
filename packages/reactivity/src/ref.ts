@@ -115,11 +115,14 @@ export function triggerRefValue(ref: TrackableRef, newVal?: unknown, oldVal?: un
 
 // ==================== 公共 API ====================
 
-export function ref<T>(value: T): Ref<T> {
+export function ref<T extends object | string | number | boolean | null | undefined>(
+  value: T,
+): Ref<T> {
   if (isRef(value)) {
     // FIX: P1-07 ref() 接受 ShallowRef 时添加 DEV 警告，
     // 提醒用户 ShallowRef 语义与 Ref 不同，直接返回可能导致意外行为
-    if (__DEV__ && (value as Ref<T>).__v_isShallow) {
+    // FIX: P2-34 使用类型守卫替代类型断言
+    if (__DEV__ && isShallowRef(value)) {
       warn(
         'ref() received a ShallowRef value. ' +
         'ShallowRef and Ref have different reactivity semantics. ' +
@@ -144,10 +147,28 @@ export function triggerRef<T>(ref: ShallowRef<T>): void {
 
 export { isRef } from './shared';
 
+// FIX: P2-8 添加类型谓词：isShallowRef 和 isComputedRef
+/**
+ * 检查值是否为 ShallowRef
+ * 类型谓词：缩小类型到 ShallowRef<T>
+ */
+export function isShallowRef<T = unknown>(r: unknown): r is ShallowRef<T> {
+  return isRef(r) && !!(r as ShallowRef<T>).__v_isShallow;
+}
+
+/**
+ * 检查值是否为 ComputedRef
+ * 类型谓词：缩小类型到 ComputedRef<T>
+ */
+export function isComputedRef<T = unknown>(r: unknown): r is ComputedRef<T> {
+  return isRef(r) && !!(r as ComputedRef<T>).__v_isComputed;
+}
+
 // FIX: P2-06 unref 类型守卫增强：添加明确的返回类型注释
 // unref 如果参数是 Ref 则返回 .value，否则返回参数本身
 export function unref<T>(r: T | Ref<T>): T {
-  return isRef(r) ? (r as Ref<T>).value : (r as T);
+  // FIX: P2-34 使用类型守卫替代类型断言，P2-38 移除不必要的 as
+  return isRef(r) ? r.value : r;
 }
 
 export function toRef<T extends object, K extends keyof T>(object: T, key: K): Ref<T[K]> {
@@ -173,8 +194,12 @@ export function customRef<T>(factory: CustomRefFactory<T>): Ref<T> {
  * Vue 3.3+ 新增工具函数。
  */
 export function toValue<T>(source: T | Ref<T> | (() => T)): T {
-  if (isRef(source)) return (source as Ref<T>).value;
-  if (typeof source === 'function') return (source as () => T)();
+  // FIX: P2-34 使用类型守卫替代类型断言
+  if (isRef(source)) return source.value;
+  if (typeof source === 'function') {
+    // FIX: P2-35 添加类型守卫确保 source 是函数后再调用
+    return (source as () => T)();
+  }
   return source as T;
 }
 

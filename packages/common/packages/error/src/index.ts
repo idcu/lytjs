@@ -3,6 +3,8 @@
  * 错误处理工具
  */
 
+import { ERROR_MAX_WARNED_MESSAGES } from '@lytjs/common-constants';
+
 // ============================================================
 // 错误码枚举
 // ============================================================
@@ -338,7 +340,6 @@ export function warn(message: string): void {
 // 已警告消息集合 - 使用 FIFO 策略避免内存无限增长
 // 当达到上限时，删除最早添加的条目，而非清空全部
 const warnedMessages = new Set<string>();
-const MAX_WARNED_MESSAGES = 1000;
 
 /**
  * 输出一次性警告信息（相同消息只输出一次）
@@ -348,7 +349,7 @@ export function warnOnce(message: string): void {
   if (!__DEV__) return;
   if (warnedMessages.has(message)) return;
   // FIFO eviction: 当达到上限时，删除最早添加的条目
-  if (warnedMessages.size >= MAX_WARNED_MESSAGES) {
+  if (warnedMessages.size >= ERROR_MAX_WARNED_MESSAGES) {
     const first = warnedMessages.values().next().value;
     if (first !== undefined) {
       warnedMessages.delete(first);
@@ -375,4 +376,254 @@ export function error(message: string): void {
  */
 export function resetWarnedMessages(): void {
   warnedMessages.clear();
+}
+
+// ============================================================
+// 安全执行工具（从 @lytjs/shared 迁移）
+// ============================================================
+
+/**
+ * 安全地执行函数，捕获错误并返回结果或默认值
+ *
+ * @param fn - 要执行的函数
+ * @param defaultValue - 出错时的默认值
+ * @param context - 可选的上下文信息，用于错误日志
+ * @returns 函数结果或默认值
+ * @example
+ * ```ts
+ * safeExec(() => JSON.parse('invalid'), null) // null
+ * safeExec(() => JSON.parse('{}'), null) // {}
+ * ```
+ */
+export function safeExec<T>(fn: () => T, defaultValue: T, context?: string): T {
+  try {
+    return fn();
+  } catch (err) {
+    // FIX: P2-41 错误日志不完整：添加上下文信息
+    if (__DEV__ && context) {
+      warn(`safeExec failed in "${context}": ${err instanceof Error ? err.message : String(err)}`);
+    }
+    return defaultValue;
+  }
+}
+
+/**
+ * 安全地解析 JSON
+ *
+ * @param str - JSON 字符串
+ * @param defaultValue - 解析失败时的默认值
+ * @param context - 可选的上下文信息，用于错误日志
+ * @returns 解析结果或默认值
+ * @example
+ * ```ts
+ * safeJsonParse('{"a":1}', {}) // { a: 1 }
+ * safeJsonParse('invalid', {}) // {}
+ * ```
+ */
+export function safeJsonParse<T>(str: string, defaultValue: T, context?: string): T {
+  return safeExec(() => JSON.parse(str) as T, defaultValue, context ?? 'safeJsonParse');
+}
+
+// ============================================================
+// 错误恢复机制（FIX: P2-43 错误恢复机制缺失）
+// ============================================================
+
+/**
+ * 增强的错误对象，包含上下文信息和恢复建议
+ */
+export interface EnhancedError extends Error {
+  code?: number;
+  context?: Record<string, unknown>;
+  recoverable?: boolean;
+  recoverySuggestion?: string;
+}
+
+/**
+ * 创建增强的错误对象
+ *
+ * @param message - 错误消息
+ * @param options - 错误选项
+ * @returns 增强的错误对象
+ */
+export function createEnhancedError(
+  message: string,
+  options?: {
+    code?: number;
+    cause?: unknown;
+    context?: Record<string, unknown>;
+    recoverable?: boolean;
+    recoverySuggestion?: string;
+  },
+): EnhancedError {
+  const error = new Error(message, { cause: options?.cause }) as EnhancedError;
+  error.name = 'LytEnhancedError';
+  if (options?.code !== undefined) error.code = options.code;
+  if (options?.context !== undefined) error.context = options.context;
+  if (options?.recoverable !== undefined) error.recoverable = options.recoverable;
+  if (options?.recoverySuggestion !== undefined) error.recoverySuggestion = options.recoverySuggestion;
+  return error;
+}
+
+/**
+ * 错误恢复回调类型
+ */
+export type ErrorRecoveryHandler<T> = (error: EnhancedError) => T | undefined;
+
+/**
+ * 带恢复机制的安全执行函数
+ * FIX: P2-43 错误恢复机制缺失
+ *
+ * @param fn - 要执行的函数
+ * @param options - 执行选项
+ * @returns 函数结果或恢复值
+ * @example
+ * ```ts
+ * const result = safeExecWithRecovery(
+ *   () => riskyOperation(),
+ *   {
+ *     defaultValue: 'fallback',
+ *     onError: (err) => console.error(err),
+ *     onRecover: (err) => 'recovered value',
+ *     maxRetries: 3,
+ *   }
+ * );
+ * ```
+ */
+export function safeExecWithRecovery<T>(
+  fn: () => T,
+  options: {
+    defaultValue: T;
+    context?: string;
+    onError?: (error: EnhancedError) => void;
+    onRecover?: ErrorRecoveryHandler<T>;
+    maxRetries?: number;
+    retryDelay?: number;
+  },
+): T {
+  const { defaultValue, context, onError, onRecover, maxRetries = 0, retryDelay = 0 } = options;
+  let lastError: EnhancedError | undefined;
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return fn();
+    } catch (err) {
+      const enhancedError = createEnhancedError(
+        err instanceof Error ? err.message : String(err),
+        {
+          cause: err,
+          context: {
+            attempt: attempt + 1,
+            maxRetries: maxRetries + 1,
+            operation: context ?? 'safeExecWithRecovery',
+          },
+          recoverable: attempt < maxRetries,
+          recoverySuggestion: attempt < maxRetries
+            ? `Will retry in ${retryDelay}ms (attempt ${attempt + 1}/${maxRetries + 1})`
+            : 'No more retries available, using default value',
+        },
+      );
+
+      lastError = enhancedError;
+
+      if (__DEV__) {
+        warn(
+          `safeExecWithRecovery failed (attempt ${attempt + 1}/${maxRetries + 1})` +
+          `${context ? ` in "${context}"` : ''}: ${enhancedError.message}`,
+        );
+      }
+
+      // 调用错误回调
+      if (onError) {
+        onError(enhancedError);
+      }
+
+      // 尝试恢复
+      if (onRecover && enhancedError.recoverable) {
+        const recoveredValue = onRecover(enhancedError);
+        if (recoveredValue !== undefined) {
+          return recoveredValue;
+        }
+      }
+
+      // 如果不是最后一次尝试，等待后重试
+      if (attempt < maxRetries && retryDelay > 0) {
+        // 注意：同步延迟，仅在必要时使用
+        const start = Date.now();
+        while (Date.now() - start < retryDelay) {
+          // 忙等待
+        }
+      }
+    }
+  }
+
+  // 所有尝试都失败了，返回默认值
+  return defaultValue;
+}
+
+/**
+ * 异步版本的带恢复机制的安全执行函数
+ * FIX: P2-43 错误恢复机制缺失（异步版本）
+ */
+export async function safeExecWithRecoveryAsync<T>(
+  fn: () => T | Promise<T>,
+  options: {
+    defaultValue: T;
+    context?: string;
+    onError?: (error: EnhancedError) => void | Promise<void>;
+    onRecover?: (error: EnhancedError) => T | undefined | Promise<T | undefined>;
+    maxRetries?: number;
+    retryDelay?: number;
+  },
+): Promise<T> {
+  const { defaultValue, context, onError, onRecover, maxRetries = 0, retryDelay = 0 } = options;
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      const enhancedError = createEnhancedError(
+        err instanceof Error ? err.message : String(err),
+        {
+          cause: err,
+          context: {
+            attempt: attempt + 1,
+            maxRetries: maxRetries + 1,
+            operation: context ?? 'safeExecWithRecoveryAsync',
+          },
+          recoverable: attempt < maxRetries,
+          recoverySuggestion: attempt < maxRetries
+            ? `Will retry in ${retryDelay}ms (attempt ${attempt + 1}/${maxRetries + 1})`
+            : 'No more retries available, using default value',
+        },
+      );
+
+      if (__DEV__) {
+        warn(
+          `safeExecWithRecoveryAsync failed (attempt ${attempt + 1}/${maxRetries + 1})` +
+          `${context ? ` in "${context}"` : ''}: ${enhancedError.message}`,
+        );
+      }
+
+      // 调用错误回调
+      if (onError) {
+        await onError(enhancedError);
+      }
+
+      // 尝试恢复
+      if (onRecover && enhancedError.recoverable) {
+        const recoveredValue = await onRecover(enhancedError);
+        if (recoveredValue !== undefined) {
+          return recoveredValue;
+        }
+      }
+
+      // 如果不是最后一次尝试，等待后重试
+      if (attempt < maxRetries && retryDelay > 0) {
+        await new Promise((resolve) => setTimeout(resolve, retryDelay));
+      }
+    }
+  }
+
+  // 所有尝试都失败了，返回默认值
+  return defaultValue;
 }

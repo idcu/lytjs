@@ -217,6 +217,14 @@ function hydrateIsland(
 ): void
 ```
 
+### 参数
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| `name` | `string` | 已注册的 island 组件名称 |
+| `container` | `Element \| string` | 挂载容器元素或 CSS 选择器 |
+| `props` | `Record<string, unknown>` | 传递给组件的 props |
+
 ### 示例
 
 ```ts
@@ -227,6 +235,139 @@ registerIslandComponent('Counter', CounterComponent)
 
 // 在客户端选择性水合
 hydrateIsland('Counter', document.querySelector('[data-island="counter"]')!)
+```
+
+---
+
+## hydrateIslandOnVisible()
+
+在元素可见时才进行 Island 水合（延迟水合）。
+
+### 签名
+
+```ts
+function hydrateIslandOnVisible(
+  name: string,
+  container: Element | string,
+  props?: Record<string, unknown>,
+  options?: IntersectionObserverInit,
+): () => void
+```
+
+### 参数
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| `name` | `string` | 已注册的 island 组件名称 |
+| `container` | `Element \| string` | 挂载容器元素或 CSS 选择器 |
+| `props` | `Record<string, unknown>` | 传递给组件的 props |
+| `options` | `IntersectionObserverInit` | IntersectionObserver 选项 |
+
+### 返回值
+
+返回一个清理函数，调用它可以取消观察和水合。
+
+### 示例
+
+```ts
+import { hydrateIslandOnVisible, registerIslandComponent } from '@lytjs/renderer'
+
+registerIslandComponent('HeavyWidget', HeavyWidgetComponent)
+
+// 当元素进入视口时才水合
+const cleanup = hydrateIslandOnVisible(
+  'HeavyWidget',
+  '[data-island="heavy-widget"]',
+  { initialData: [] },
+  { rootMargin: '100px' } // 提前 100px 开始加载
+)
+
+// 如果需要取消
+// cleanup()
+```
+
+---
+
+## hydrateIslandOnIdle()
+
+在浏览器空闲时进行 Island 水合。
+
+### 签名
+
+```ts
+function hydrateIslandOnIdle(
+  name: string,
+  container: Element | string,
+  props?: Record<string, unknown>,
+  options?: { timeout?: number },
+): () => void
+```
+
+### 参数
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| `name` | `string` | 已注册的 island 组件名称 |
+| `container` | `Element \| string` | 挂载容器元素或 CSS 选择器 |
+| `props` | `Record<string, unknown>` | 传递给组件的 props |
+| `options.timeout` | `number` | 超时时间（毫秒），超时后强制水合 |
+
+### 示例
+
+```ts
+import { hydrateIslandOnIdle, registerIslandComponent } from '@lytjs/renderer'
+
+registerIslandComponent('Analytics', AnalyticsComponent)
+
+// 浏览器空闲时水合，最多等待 3 秒
+hydrateIslandOnIdle(
+  'Analytics',
+  '[data-island="analytics"]',
+  {},
+  { timeout: 3000 }
+)
+```
+
+---
+
+## hydrateIslandOnInteraction()
+
+在用户交互时进行 Island 水合。
+
+### 签名
+
+```ts
+function hydrateIslandOnInteraction(
+  name: string,
+  container: Element | string,
+  props?: Record<string, unknown>,
+  events?: string[],
+): () => void
+```
+
+### 参数
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| `name` | `string` | 已注册的 island 组件名称 |
+| `container` | `Element \| string` | 挂载容器元素或 CSS 选择器 |
+| `props` | `Record<string, unknown>` | 传递给组件的 props |
+| `events` | `string[]` | 触发水合的事件列表，默认 `['click', 'focus', 'mouseover', 'touchstart']` |
+
+### 示例
+
+```ts
+import { hydrateIslandOnInteraction, registerIslandComponent } from '@lytjs/renderer'
+
+registerIslandComponent('DatePicker', DatePickerComponent)
+
+// 用户点击或聚焦时水合
+hydrateIslandOnInteraction(
+  'DatePicker',
+  '[data-island="datepicker"]',
+  { format: 'YYYY-MM-DD' },
+  ['click', 'focus']
+)
 ```
 
 ---
@@ -388,3 +529,130 @@ interface VaporAppOptions {
 | `shouldSkipTracking` | 检查当前是否应跳过依赖收集 |
 | `getSkippedTrackingCount` | 获取被跳过的追踪次数（调试用） |
 | `resetSkippedTrackingCount` | 重置被跳过的追踪计数（测试用） |
+
+---
+
+## 懒加载 API
+
+### defineLazyComponent()
+
+定义一个懒加载组件，支持自动代码分割和按需加载。
+
+#### 签名
+
+```ts
+function defineLazyComponent<T extends Component>(
+  loader: () => Promise<T>,
+  options?: LazyComponentOptions,
+): LazyComponent
+```
+
+#### LazyComponentOptions
+
+```ts
+interface LazyComponentOptions {
+  /** 加载中显示的组件 */
+  loadingComponent?: Component
+  /** 加载失败时显示的组件 */
+  errorComponent?: Component
+  /** 显示 loading 组件前的延迟（毫秒），默认 200 */
+  delay?: number
+  /** 超时时间（毫秒），超时后显示错误组件 */
+  timeout?: number
+  /** 加载失败时的回调 */
+  onError?: (error: Error, retry: () => void, fail: () => void, attempts: number) => void
+}
+```
+
+#### 示例
+
+```ts
+import { defineLazyComponent } from '@lytjs/renderer'
+
+// 基本用法
+const LazyDashboard = defineLazyComponent(
+  () => import('./Dashboard.vue')
+)
+
+// 带选项
+const LazySettings = defineLazyComponent(
+  () => import('./Settings.vue'),
+  {
+    loadingComponent: LoadingSpinner,
+    errorComponent: ErrorDisplay,
+    delay: 200,
+    timeout: 10000,
+    onError(error, retry, fail, attempts) {
+      if (attempts <= 3) retry()
+      else fail()
+    }
+  }
+)
+```
+
+---
+
+### preloadComponent()
+
+预加载懒加载组件，提前获取组件代码。
+
+#### 签名
+
+```ts
+function preloadComponent(component: LazyComponent): Promise<Component>
+```
+
+#### 示例
+
+```ts
+import { defineLazyComponent, preloadComponent } from '@lytjs/renderer'
+
+const LazyDashboard = defineLazyComponent(
+  () => import('./Dashboard.vue')
+)
+
+// 在用户可能访问前预加载
+button.addEventListener('mouseenter', () => {
+  preloadComponent(LazyDashboard)
+})
+```
+
+---
+
+### prefetchComponent()
+
+在浏览器空闲时预取懒加载组件，用于优化后续导航。
+
+#### 签名
+
+```ts
+function prefetchComponent(component: LazyComponent): Promise<void>
+```
+
+#### 示例
+
+```ts
+import { defineLazyComponent, prefetchComponent } from '@lytjs/renderer'
+
+const LazyDashboard = defineLazyComponent(
+  () => import('./Dashboard.vue')
+)
+
+// 页面加载完成后预取
+window.addEventListener('load', () => {
+  prefetchComponent(LazyDashboard)
+})
+```
+
+---
+
+## Island Hydration API 汇总
+
+| 函数 | 说明 |
+|------|------|
+| `hydrateIsland` | 立即水合指定的 Island 组件 |
+| `hydrateIslandOnVisible` | 元素可见时水合 Island 组件 |
+| `hydrateIslandOnIdle` | 浏览器空闲时水合 Island 组件 |
+| `hydrateIslandOnInteraction` | 用户交互时水合 Island 组件 |
+| `registerIslandComponent` | 注册 Island 组件 |
+| `createIslandSSRContent` | 创建 Island SSR 内容 |

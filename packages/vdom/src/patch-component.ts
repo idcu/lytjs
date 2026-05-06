@@ -12,6 +12,14 @@ import type { SuspenseBoundary } from './types';
 import type { RendererContext } from './patch-element';
 
 // ============================================================
+// Component Recursion Depth Limit
+// ============================================================
+
+// FIX: P1-L4 组件递归深度无限制 - 添加递归深度限制（100层）
+const MAX_RECURSION_DEPTH = 100;
+const componentRecursionDepthMap = new WeakMap<ComponentInternalInstance, number>();
+
+// ============================================================
 // Component patch factory
 // ============================================================
 
@@ -72,6 +80,17 @@ export function createComponentPatch<HN, HE extends HN>(
         return;
       }
     }
+
+    // FIX: P1-L4 组件递归深度无限制 - 检查递归深度
+    const currentDepth = componentRecursionDepthMap.get(component) ?? 0;
+    if (currentDepth > MAX_RECURSION_DEPTH) {
+      throw new Error(
+        `Component recursion depth exceeded (${MAX_RECURSION_DEPTH}). ` +
+        `Possible infinite recursion detected in component "${(component.type as ComponentInternalRuntimeProps).name || 'anonymous'}". ` +
+        `Check for circular component references or missing termination conditions.`
+      );
+    }
+    componentRecursionDepthMap.set(component, currentDepth + 1);
 
     // Call the render function to get the subTree
     const renderFn = (component.type as ComponentInternalRuntimeProps).render;
@@ -150,29 +169,43 @@ export function createComponentPatch<HN, HE extends HN>(
     }
 
     // Apply inheritAttrs: merge instance.attrs into root VNode props
+    // FIX: P2-10 减少不必要的对象创建：避免创建中间对象，直接修改 subTree.props
     const componentType = component.type as ComponentInternalRuntimeProps;
     if (component.attrs && subTree) {
       const attrs = component.attrs;
       const attrsKeys = Object.keys(attrs);
       if (attrsKeys.length > 0) {
+        // 获取现有的 props，如果没有则使用空对象
+        const existingProps = subTree.props ?? {};
+
         if (componentType.inheritAttrs !== false) {
           // inheritAttrs !== false: 合并所有 attrs
-          const rootProps = { ...(subTree.props ?? {}), ...attrs };
-          subTree.props = rootProps;
+          // 只有当 existingProps 不为空或需要合并时才创建新对象
+          if (Object.keys(existingProps).length > 0 || attrsKeys.length > 0) {
+            subTree.props = Object.assign({}, existingProps, attrs);
+          } else {
+            subTree.props = attrs;
+          }
         } else {
           // inheritAttrs === false: 仅合并 class 和 style（Vue 3 行为）
           // class 和 style 是视觉相关属性，即使 inheritAttrs 为 false 也应继承到根元素
-          const fallthroughAttrs: Record<string, unknown> = {};
-          if ('class' in attrs) {
-            fallthroughAttrs.class = attrs.class;
-          }
-          if ('style' in attrs) {
-            fallthroughAttrs.style = attrs.style;
-          }
-          const fallthroughKeys = Object.keys(fallthroughAttrs);
-          if (fallthroughKeys.length > 0) {
-            const rootProps = { ...(subTree.props ?? {}), ...fallthroughAttrs };
-            subTree.props = rootProps;
+          const hasClass = 'class' in attrs;
+          const hasStyle = 'style' in attrs;
+
+          if (hasClass || hasStyle) {
+            // 只有当需要合并时才创建新对象
+            if (Object.keys(existingProps).length > 0) {
+              const rootProps = Object.assign({}, existingProps);
+              if (hasClass) rootProps.class = attrs.class;
+              if (hasStyle) rootProps.style = attrs.style;
+              subTree.props = rootProps;
+            } else {
+              // existingProps 为空，直接创建包含 class/style 的对象
+              subTree.props = {
+                ...(hasClass && { class: attrs.class }),
+                ...(hasStyle && { style: attrs.style }),
+              };
+            }
           }
         }
       }

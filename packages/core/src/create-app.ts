@@ -128,8 +128,12 @@ export function createApp(
         try {
           listener.target.removeEventListener(listener.event, listener.handler, listener.options);
         } catch (err) {
+          // FIX: P2-41 错误日志不完整：添加更多上下文信息
           if (__DEV__) {
-            warn(`Failed to remove global event listener "${listener.event}": ${err}`);
+            warn(
+              `Failed to remove global event listener "${listener.event}" ` +
+              `from target ${listener.target.constructor.name}: ${err instanceof Error ? err.message : String(err)}`,
+            );
           }
         }
       }
@@ -143,10 +147,12 @@ export function createApp(
           try {
             pluginWithCleanup.cleanup();
           } catch (err) {
+            // FIX: P2-41 错误日志不完整：添加更多上下文信息
             const pluginName = pluginWithCleanup.name ??
               (typeof plugin === 'function' ? plugin.name : 'unknown');
             error(
-              `Plugin cleanup failed: ${pluginName}: ${err}`,
+              `Plugin cleanup failed for "${pluginName}": ${err instanceof Error ? err.message : String(err)}. ` +
+              `This may cause memory leaks.`,
             );
           }
         }
@@ -385,10 +391,15 @@ export function createApp(
         const dataResult = (componentOptions.data as () => Record<string, unknown>)();
         Object.assign(ctx, dataResult);
       } catch (e) {
-        error(
-          `[LytJS] Failed to execute data() in Signal mode: ${e instanceof Error ? e.message : String(e)}`,
+        // FIX: P2-42 静默失败：确保错误被正确抛出而不是静默吞掉
+        // FIX: P2-41 错误日志不完整：添加更多上下文信息
+        const enhancedError = new Error(
+          `[LytJS] Failed to execute data() in Signal mode: ${e instanceof Error ? e.message : String(e)}. ` +
+          `Component: ${(rootComponent as Record<string, unknown>).name ?? 'anonymous'}`,
+          { cause: e },
         );
-        throw e;
+        error(enhancedError.message);
+        throw enhancedError;
       }
     }
 
@@ -400,10 +411,15 @@ export function createApp(
           Object.assign(ctx, setupResult);
         }
       } catch (e) {
-        error(
-          `[LytJS] Failed to execute setup() in Signal mode: ${e instanceof Error ? e.message : String(e)}`,
+        // FIX: P2-42 静默失败：确保错误被正确抛出而不是静默吞掉
+        // FIX: P2-41 错误日志不完整：添加更多上下文信息
+        const enhancedError = new Error(
+          `[LytJS] Failed to execute setup() in Signal mode: ${e instanceof Error ? e.message : String(e)}. ` +
+          `Component: ${(rootComponent as Record<string, unknown>).name ?? 'anonymous'}`,
+          { cause: e },
         );
-        throw e;
+        error(enhancedError.message);
+        throw enhancedError;
       }
     }
 

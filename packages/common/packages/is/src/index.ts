@@ -143,3 +143,17 @@ export const isDate = (val: unknown): val is Date => toTypeString(val) === '[obj
  * 检查值是否为 RegExp 类型
  */
 export const isRegExp = (val: unknown): val is RegExp => toTypeString(val) === '[object RegExp]';
+
+// ============================================================
+// 常量（从 @lytjs/shared 迁移）
+// ============================================================
+
+/**
+ * 空数组常量（冻结）
+ */
+export const EMPTY_ARR: unknown[] = Object.freeze([]) as unknown[];
+
+/**
+ * 空函数常量
+ */
+export const EMPTY_FN = (): void => {};
