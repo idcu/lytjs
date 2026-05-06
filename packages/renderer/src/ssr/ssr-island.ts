@@ -261,10 +261,8 @@ function hydrateVNode(parent: Element, vnode: VNode): void {
       hydrateElementChildren(matchedElement, vnode);
     } else {
       // No matching element; create a new one from the vnode
-      const html = vnodeToSimpleHTML(vnode);
-      const template = document.createElement('template');
-      template.innerHTML = html;
-      const newElement = template.content.firstChild;
+      // FIX: P0-3 使用安全的 DOM API 替代 innerHTML
+      const newElement = createElementFromVNode(vnode);
       if (newElement) {
         parent.appendChild(newElement);
       }
@@ -366,9 +364,8 @@ function hydrateChildVNode(
       const existingNode = existingChildren[domIndex];
       if (!existingNode) {
         // No existing node; append new element
-        const template = document.createElement('template');
-        template.innerHTML = vnodeHtml;
-        const newElement = template.content.firstChild;
+        // FIX: P0-3 使用安全的 DOM API 替代 innerHTML
+        const newElement = createElementFromVNode(vnode);
         if (newElement) {
           parent.appendChild(newElement);
         }
@@ -383,27 +380,24 @@ function hydrateChildVNode(
           return domIndex + 1;
         }
         // Tag mismatch: replace with new element
-        const template = document.createElement('template');
-        template.innerHTML = vnodeHtml;
-        const newElement = template.content.firstChild;
+        // FIX: P0-3 使用安全的 DOM API 替代 innerHTML
+        const newElement = createElementFromVNode(vnode);
         if (newElement) {
           parent.replaceChild(newElement, existingNode);
         }
         return domIndex + 1;
       }
       // Not an element node: replace
-      const template = document.createElement('template');
-      template.innerHTML = vnodeHtml;
-      const newElement = template.content.firstChild;
+      // FIX: P0-3 使用安全的 DOM API 替代 innerHTML
+      const newElement = createElementFromVNode(vnode);
       if (newElement) {
         parent.replaceChild(newElement, existingNode);
       }
       return domIndex + 1;
     }
     // No existing node; append new element
-    const template = document.createElement('template');
-    template.innerHTML = vnodeHtml;
-    const newElement = template.content.firstChild;
+    // FIX: P0-3 使用安全的 DOM API 替代 innerHTML
+    const newElement = createElementFromVNode(vnode);
     if (newElement) {
       parent.appendChild(newElement);
     }
@@ -544,6 +538,47 @@ function hydrateElementChildren(el: Element, vnode: VNode): void {
     removeRemainingChildren(el, existingChildren, domIndex);
     return;
   }
+}
+
+/**
+ * 安全创建 DOM 元素
+ * FIX: P0-3 避免使用 innerHTML，使用安全的 DOM API
+ */
+function createElementFromVNode(vnode: VNode): Element | null {
+  const type = vnode.type;
+  if (typeof type !== 'string') return null;
+
+  const el = document.createElement(type);
+
+  // 设置属性
+  if (vnode.props) {
+    for (const [key, value] of Object.entries(vnode.props)) {
+      if (key === 'children' || key === 'key') continue;
+      if (value != null) {
+        el.setAttribute(key, String(value));
+      }
+    }
+  }
+
+  // 设置子节点
+  if (vnode.children) {
+    if (typeof vnode.children === 'string') {
+      el.textContent = vnode.children;
+    } else if (Array.isArray(vnode.children)) {
+      for (const child of vnode.children) {
+        if (typeof child === 'string') {
+          el.appendChild(document.createTextNode(child));
+        } else if (child && typeof child === 'object' && 'type' in child) {
+          const childEl = createElementFromVNode(child as VNode);
+          if (childEl) {
+            el.appendChild(childEl);
+          }
+        }
+      }
+    }
+  }
+
+  return el;
 }
 
 /**

@@ -3,6 +3,8 @@
  * 字符串处理工具函数集合
  */
 
+import { STRING_DEFAULT_ID_PREFIX } from '@lytjs/common-constants';
+
 /**
  * 首字母大写
  */
@@ -423,4 +425,32 @@ export function parseDuration(value: string | undefined | null): number {
     return parseFloat(v);
   });
   return Math.max(0, ...values);
+}
+
+// ============================================================
+// ID 生成工具（从 @lytjs/shared 迁移）
+// ============================================================
+
+/**
+ * 生成唯一 ID
+ *
+ * FIX: P2-v11-26 优先使用 crypto.randomUUID 回退，减少对全局可变计数器的依赖，
+ * 降低多实例/多窗口场景下的 ID 冲突风险
+ *
+ * @param prefix - ID 前缀（可选，默认 STRING_DEFAULT_ID_PREFIX）
+ * @returns 唯一 ID 字符串
+ * @example
+ * ```ts
+ * generateId() // 'lyt-abc123'
+ * generateId('btn') // 'btn-abc123'
+ * ```
+ */
+let idCounter = 0;
+export function generateId(prefix = STRING_DEFAULT_ID_PREFIX): string {
+  // 优先使用 crypto.randomUUID（如果可用），截取前 8 位作为后缀
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return `${prefix}-${crypto.randomUUID().slice(0, 8)}`;
+  }
+  // 回退：使用全局计数器 + 时间戳
+  return `${prefix}-${++idCounter}-${Date.now().toString(36)}`;
 }

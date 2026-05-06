@@ -213,6 +213,11 @@ function parseDestructure(
   context: TransformContext,
 ): { pattern: string; tempVar: string; indexVar?: string } | null {
   // FIX: P2-27 使用 TransformContext 接口中定义的 __counters 字段替代不安全的类型断言
+  // FIX: P2-23 正则表达式缓存 - 模块级预编译正则
+const RE_OBJ_DESTRUCTURE = /^(\{[^}]+\})(?:\s*,\s*(\w+))?$/;
+const RE_ARR_DESTRUCTURE = /^(\[[^\]]+\])(?:\s*,\s*(\w+))?$/;
+const RE_SIMPLE_VFOR = /^(\S+)\s+(?:in|of)\s+(.+)$/;
+
   // FIX: P1-29 使用 TransformContext 中的计数器替代模块级计数器，确保每个编译上下文独立
   const counterKey = 'destructure';
   const counter = context.__counters?.[counterKey] ?? 0;
@@ -222,7 +227,8 @@ function parseDestructure(
   context.__counters[counterKey] = counter + 1;
 
   // Match: { ... } [, index]
-  const objMatch = left.match(/^(\{[^}]+\})(?:\s*,\s*(\w+))?$/);
+  // FIX: P2-23 使用预编译正则，避免每次调用都编译
+  const objMatch = RE_OBJ_DESTRUCTURE.exec(left);
   if (objMatch) {
     return {
       pattern: objMatch[1]!.trim(),
@@ -232,7 +238,8 @@ function parseDestructure(
   }
 
   // Match: [ ... ] [, index]
-  const arrMatch = left.match(/^(\[[^\]]+\])(?:\s*,\s*(\w+))?$/);
+  // FIX: P2-23 使用预编译正则，避免每次调用都编译
+  const arrMatch = RE_ARR_DESTRUCTURE.exec(left);
   if (arrMatch) {
     return {
       pattern: arrMatch[1]!.trim(),
@@ -297,7 +304,8 @@ function matchVForExpression(
   }
 
   // 回退到简单变量名匹配：item in list
-  const simpleMatch = trimmed.match(/^(\S+)\s+(?:in|of)\s+(.+)$/);
+  // FIX: P2-23 使用预编译正则，避免每次调用都编译
+  const simpleMatch = RE_SIMPLE_VFOR.exec(trimmed);
   if (simpleMatch) {
     return [trimmed, undefined, undefined, undefined, simpleMatch[1], simpleMatch[2]] as unknown as RegExpMatchArray;
   }

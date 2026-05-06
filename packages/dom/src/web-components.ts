@@ -13,7 +13,7 @@
 
 import { isString, isObject, isFunction, hasOwn } from '@lytjs/common-is';
 // FIX: P2-18 直接使用 shared 导入的函数，删除局部别名
-import { camelToKebab, kebabToCamel } from '@lytjs/shared';
+import { camelToKebab, kebabToCamel } from '@lytjs/common-string';
 
 // ============================================================
 // 类型定义

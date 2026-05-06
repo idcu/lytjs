@@ -443,10 +443,16 @@ export function valueOf<T>(sig: Signal<T>): T {
 
 /** 设置 signal 值（适配器） */
 export function set<T>(sig: WritableSignal<T> | ReadonlySignal<T>, newValue: T): void {
-  if ('set' in sig) {
-    (sig as WritableSignal<T>).set(newValue);
+  // FIX: P2-35 使用类型守卫检查是否为 WritableSignal
+  if (isWritableSignal(sig)) {
+    sig.set(newValue);
   }
   // ReadonlySignal: 静默忽略（保持旧行为）
+}
+
+/** 类型守卫：检查信号是否为可写信号 */
+function isWritableSignal<T>(sig: WritableSignal<T> | ReadonlySignal<T>): sig is WritableSignal<T> {
+  return typeof sig === 'function' && 'set' in sig;
 }
 
 /** 通过 updater 更新 signal 值（适配器） */

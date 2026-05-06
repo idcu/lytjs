@@ -5,6 +5,8 @@ import { ITERATE_KEY } from './constants';
 import type { ReactiveEffectRunner } from './types';
 import { warn, error } from '@lytjs/common-error';
 import { _isSignalUntracked } from './signal';
+import { getActiveEffectScope } from './effect-scope';
+import { REACTIVITY_MAX_TRIGGER_DEPTH } from '@lytjs/common-constants';
 
 // ==================== 全局状态 ====================
 
@@ -69,9 +71,6 @@ export function getShouldTrack(): boolean {
   return shouldTrack;
 }
 
-// effectScope 支持：从 effect-scope 导入 activeEffectScope getter
-import { getActiveEffectScope } from './effect-scope';
-
 // ==================== Dep ====================
 
 export type Dep = Set<ReactiveEffect>;
@@ -87,7 +86,13 @@ export const createDep = (): Dep => {
  * When triggerDepth exceeds this limit, further triggers are silently dropped
  * and a warning is emitted in DEV mode.
  */
-const MAX_TRIGGER_DEPTH = 100;
+let triggerDepth = 0;
+
+/**
+ * Maximum depth for nested trigger() calls to prevent infinite reactivity loops.
+ * When triggerDepth exceeds this limit, further triggers are silently dropped
+ * and a warning is emitted in DEV mode.
+ */
 let triggerDepth = 0;
 
 export function track(target: object, _type: string, key: string | symbol) {
@@ -182,13 +187,13 @@ export function trigger(
 }
 
 export function triggerEffects(effects: ReactiveEffect[]) {
-  if (triggerDepth > MAX_TRIGGER_DEPTH) {
+  if (triggerDepth > REACTIVITY_MAX_TRIGGER_DEPTH) {
     // FIX: P2-1 triggerDepth 超限时改为 warn + 静默丢弃，与 Vue 3 行为一致。
     // 之前直接 throw Error 过于激进，会导致整个响应式链断裂。
     // 改为仅发出警告并丢弃后续 trigger，避免因单个无限循环导致整个应用崩溃。
     if (__DEV__) {
       warn(
-        `[lytjs/reactivity] Maximum trigger depth (${MAX_TRIGGER_DEPTH}) exceeded. ` +
+        `[lytjs/reactivity] Maximum trigger depth (${REACTIVITY_MAX_TRIGGER_DEPTH}) exceeded. ` +
         `Possible infinite reactivity loop detected. Further triggers are silently dropped. ` +
         `triggerDepth=${triggerDepth}`,
       );

@@ -10,6 +10,7 @@ import type { VNode, ComponentInternalInstance } from '@lytjs/common-vnode';
 import type { RendererHost } from '@lytjs/host-contract';
 import { getSequence } from '@lytjs/common-algorithm';
 import { warn } from '@lytjs/common-error';
+import { VDOM_MAX_LIST_DIFF_SIZE } from '@lytjs/common-constants';
 
 // ============================================================
 // Types
@@ -65,9 +66,6 @@ const registeredDOMOpsMap = new Map<symbol, DOMOperations<unknown, unknown>>();
 
 // FIX: P2-19 删除冗余 __DEV__ 局部声明（env.d.ts 已全局声明）
 
-/** FIX: P2-10 长列表性能保护阈值 */
-const MAX_LIST_DIFF_SIZE = 1000;
-
 /**
  * 注册 DOM 操作实现。
  * 应在渲染器初始化时调用一次，将平台相关的 DOM 操作注入到 diff 模块中。
@@ -100,20 +98,22 @@ function getDOMOps(opsId?: symbol): DOMOperations {
   } else {
     // 向后兼容：未传 opsId 时使用最后一个注册的实例
     // FIX: P2-8 DEV 模式下发出警告，提醒开发者显式传递 opsId
+    // FIX: P2-30 字符串拼接优化 - 使用模板字符串替代 + 拼接
     if (__DEV__) {
       warn(
-        '[lytjs/list-diff] getDOMOps() called without opsId. ' +
-          'This is deprecated and may cause issues in multi-renderer scenarios. ' +
-          'Please pass an explicit opsId.',
+        `[lytjs/list-diff] getDOMOps() called without opsId. ` +
+        `This is deprecated and may cause issues in multi-renderer scenarios. ` +
+        `Please pass an explicit opsId.`,
       );
     }
     const entries = Array.from(registeredDOMOpsMap.values());
     ops = entries[entries.length - 1];
   }
   if (!ops) {
+    // FIX: P2-30 字符串拼接优化 - 使用模板字符串替代 + 拼接
     throw new Error(
-      '[lytjs/list-diff] DOMOperations not registered. ' +
-        'Call registerDOMOperations() before using diff functions.',
+      `[lytjs/list-diff] DOMOperations not registered. ` +
+      `Call registerDOMOperations() before using diff functions.`,
     );
   }
   return ops;
@@ -270,13 +270,13 @@ export function patchKeyedChildren<HN, HE extends HN>(
   hostOrUndefined?: RendererHost<HN, HE>,
   opsId?: symbol,
 ): void {
-  // FIX: P1-7 VDOM-NEW-06 - MAX_LIST_DIFF_SIZE 强制执行
+  // FIX: P1-7 VDOM-NEW-06 - VDOM_MAX_LIST_DIFF_SIZE 强制执行
   // 超过阈值时使用简单 diff 策略（全量卸载+挂载），避免复杂 LIS 算法导致性能问题
   const totalLength = c1.length + c2.length;
-  if (totalLength > MAX_LIST_DIFF_SIZE) {
+  if (totalLength > VDOM_MAX_LIST_DIFF_SIZE) {
     if (__DEV__) {
       console.warn(
-        `[lytjs/list-diff] 列表长度(${totalLength})超过阈值(${MAX_LIST_DIFF_SIZE})，` +
+        `[lytjs/list-diff] 列表长度(${totalLength})超过阈值(${VDOM_MAX_LIST_DIFF_SIZE})，` +
           `使用简单 diff 策略以避免性能问题。建议对大数据列表使用虚拟滚动。`,
       );
     }

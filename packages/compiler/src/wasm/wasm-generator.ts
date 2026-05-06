@@ -93,21 +93,24 @@ export function generatePatchFlags(source: string): Record<string, number> {
 
   const flags: Record<string, number> = {};
 
+  // FIX: P2-29 数组遍历优化 - 使用 for 循环替代 forEach
   function walk(node: TemplateChildNode, path: string): void {
     if (node.type === NodeTypes.ELEMENT) {
       const el = node as ElementNode;
       if (el.patchFlag && el.patchFlag !== 0) {
         flags[path] = el.patchFlag;
       }
-      el.children.forEach((child, index) => {
-        walk(child, `${el.tag}.${index}`);
-      });
+      // FIX: P2-29 使用 for 循环替代 forEach
+      for (let i = 0; i < el.children.length; i++) {
+        walk(el.children[i]!, `${el.tag}.${i}`);
+      }
     }
   }
 
-  root.children.forEach((child, index) => {
-    walk(child, `root.${index}`);
-  });
+  // FIX: P2-29 使用 for 循环替代 forEach
+  for (let i = 0; i < root.children.length; i++) {
+    walk(root.children[i]!, `root.${i}`);
+  }
 
   return flags;
 }

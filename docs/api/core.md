@@ -2,6 +2,10 @@
 
 `@lytjs/core` 是 LytJS 框架的核心包，提供了应用创建、组件定义、生命周期钩子、组合式 API 以及 Web Component 支持等核心功能。同时 re-export 了 `@lytjs/reactivity`、`@lytjs/vdom` 和 `@lytjs/compiler` 的常用 API。
 
+::: tip 渲染模式
+`@lytjs/core` 使用 VNode 渲染模式。如需使用 Signal 渲染模式，请使用 `@lytjs/core-signal` 包。详见 [渲染模式](../guide/rendering-modes)。
+:::
+
 ## createApp()
 
 创建一个应用实例，返回 `App` 对象。
@@ -589,7 +593,32 @@ setup() {
 
 `@lytjs/core` 重新导出了以下 `@lytjs/reactivity` 的常用 API：
 
-- `ref` / `reactive` / `computed` / `watch` / `watchEffect` / `effect`
+### 响应式原语
+
+- `ref` / `reactive` / `computed` / `readonly`
+- `shallowRef` / `shallowReactive` / `shallowReadonly`
+
+### 侦听器
+
+- `watch` / `watchEffect` / `watchPostEffect` / `watchSyncEffect`
+
+### 副作用
+
+- `effect` / `stop`
+
+### 工具函数
+
+- `unref` / `toRef` / `toRefs` / `isRef` / `isProxy` / `isReactive` / `isReadonly`
+- `isShallowRef` / `isComputedRef` / `isSignal`
+- `toRaw` / `markRaw`
+
+### 批处理
+
+- `batch` / `batchAsync` / `untrack`
+
+### Effect Scope
+
+- `effectScope` / `getCurrentScope` / `onScopeDispose`
 
 详细文档请参阅 [reactivity.md](./reactivity.md)。
 
@@ -599,7 +628,13 @@ setup() {
 
 `@lytjs/core` 重新导出了以下 `@lytjs/vdom` 的常用 API：
 
-- `createVNode` / `Fragment` / `Text` / `Comment` / `cloneVNode` / `mergeProps`
+### VNode 创建
+
+- `createVNode` / `cloneVNode` / `mergeProps`
+
+### 内置组件
+
+- `Fragment` / `Text` / `Comment`
 
 详细文档请参阅 [vdom.md](./vdom.md)（如需完整 VDOM API 文档）。
 
@@ -610,3 +645,21 @@ setup() {
 - `compile` - 编译模板字符串为渲染函数代码
 
 详细文档请参阅 [compiler.md](./compiler.md)。
+
+---
+
+## 与 Signal 模式的差异
+
+`@lytjs/core`（VNode 模式）与 `@lytjs/core-signal`（Signal 模式）的主要差异：
+
+| 特性 | @lytjs/core | @lytjs/core-signal |
+|------|-------------|-------------------|
+| 渲染机制 | 虚拟 DOM diff | 细粒度响应式绑定 |
+| `h()` 函数 | 支持 | 不支持 |
+| `signal()` | 不支持 | 支持 |
+| `computedSignal()` | 不支持 | 支持 |
+| `ref()` / `reactive()` | 支持 | 支持 |
+| `watch()` / `watchEffect()` | 支持 | 支持 |
+| 生命周期钩子 | 支持 | 支持 |
+
+详见 [渲染模式](../guide/rendering-modes) 和 [独立构建变体](./core-variants)。

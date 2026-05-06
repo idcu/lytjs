@@ -142,6 +142,64 @@ triggerRef(foo) // 控制台输出: 1
 function isRef<T>(value: unknown): value is Ref<T>
 ```
 
+#### 示例
+
+```ts
+import { ref, isRef } from '@lytjs/reactivity'
+
+const count = ref(0)
+console.log(isRef(count)) // true
+console.log(isRef(0)) // false
+```
+
+---
+
+### isShallowRef()
+
+判断一个值是否为浅层 ref（由 `shallowRef()` 创建）。
+
+#### 签名
+
+```ts
+function isShallowRef(value: unknown): value is ShallowRef
+```
+
+#### 示例
+
+```ts
+import { ref, shallowRef, isShallowRef } from '@lytjs/reactivity'
+
+const count = ref(0)
+const shallow = shallowRef({ count: 0 })
+
+console.log(isShallowRef(count)) // false
+console.log(isShallowRef(shallow)) // true
+```
+
+---
+
+### isComputedRef()
+
+判断一个值是否为计算属性 ref（由 `computed()` 创建）。
+
+#### 签名
+
+```ts
+function isComputedRef(value: unknown): value is ComputedRef
+```
+
+#### 示例
+
+```ts
+import { ref, computed, isComputedRef } from '@lytjs/reactivity'
+
+const count = ref(0)
+const doubled = computed(() => count.value * 2)
+
+console.log(isComputedRef(count)) // false
+console.log(isComputedRef(doubled)) // true
+```
+
 ---
 
 ### unref()
@@ -514,17 +572,130 @@ function effect<T = unknown>(
 interface ReactiveEffectOptions {
   /** 是否懒执行（创建时不立即执行），默认 false */
   lazy?: boolean
-  /** 自定义调度器 */
+  /** 自定义调度器，用于控制副作用执行时机 */
   scheduler?: EffectScheduler
   /** 是否允许递归触发，默认 false */
   allowRecurse?: boolean
   /** 停止时的回调 */
   onStop?: () => void
-  /** 依赖被追踪时的调试回调 */
+  /** 依赖被追踪时的调试回调（仅开发模式） */
   onTrack?: (event: DebuggerEvent) => void
-  /** 依赖被触发时的调试回调 */
+  /** 依赖被触发时的调试回调（仅开发模式） */
   onTrigger?: (event: DebuggerEvent) => void
 }
+```
+
+#### 选项详解
+
+##### lazy
+
+当设置为 `true` 时，effect 不会立即执行，需要手动调用返回的 runner 函数：
+
+```ts
+import { effect, ref } from '@lytjs/reactivity'
+
+const count = ref(0)
+
+// 不立即执行
+const runner = effect(() => {
+  console.log('effect:', count.value)
+}, { lazy: true })
+
+// 手动触发执行
+runner() // 输出: effect: 0
+
+count.value++
+// 由于 lazy 模式，需要手动调用 runner 才会执行
+```
+
+##### scheduler
+
+自定义调度器，用于控制副作用的执行时机。常用于实现防抖、节流等功能：
+
+```ts
+import { effect, ref } from '@lytjs/reactivity'
+
+const count = ref(0)
+
+// 使用 scheduler 实现防抖
+let timeout: number
+const runner = effect(() => {
+  console.log('effect:', count.value)
+}, {
+  scheduler(fn) {
+    clearTimeout(timeout)
+    timeout = setTimeout(fn, 100)
+  }
+})
+
+count.value = 1
+count.value = 2
+count.value = 3
+// 100ms 后只输出一次: effect: 3
+```
+
+##### allowRecurse
+
+当设置为 `true` 时，允许在 effect 内部修改依赖的响应式数据，从而递归触发 effect：
+
+```ts
+import { effect, ref } from '@lytjs/reactivity'
+
+const count = ref(0)
+
+// 默认不允许递归
+effect(() => {
+  console.log('count:', count.value)
+  // count.value++ // 这会导致无限循环
+})
+
+// 允许递归（需要谨慎使用，可能导致无限循环）
+effect(() => {
+  if (count.value < 10) {
+    count.value++
+  }
+}, { allowRecurse: true })
+```
+
+##### onStop
+
+当 effect 被停止时调用的回调：
+
+```ts
+import { effect, ref, stop } from '@lytjs/reactivity'
+
+const count = ref(0)
+
+const runner = effect(() => {
+  console.log('effect:', count.value)
+}, {
+  onStop() {
+    console.log('effect stopped')
+  }
+})
+
+stop(runner) // 输出: effect stopped
+```
+
+##### onTrack / onTrigger
+
+调试回调，用于追踪依赖收集和触发：
+
+```ts
+import { effect, ref } from '@lytjs/reactivity'
+
+const count = ref(0)
+
+effect(() => {
+  console.log('effect:', count.value)
+}, {
+  onTrack(e) {
+    console.log('tracked:', e.target, e.key)
+  },
+  onTrigger(e) {
+    console.log('triggered:', e.target, e.key, e.newValue)
+  }
+})
 ```
 
 #### 示例
@@ -767,6 +938,33 @@ function signalUntrack<T>(fn: () => T): T
 
 ---
 
+### isSignal()
+
+判断一个值是否为 Signal（由 `signal()`、`computedSignal()` 或 `readonlySignal()` 创建）。
+
+#### 签名
+
+```ts
+function isSignal(value: unknown): value is Signal
+```
+
+#### 示例
+
+```ts
+import { signal, computedSignal, ref, isSignal } from '@lytjs/reactivity'
+
+const count = signal(0)
+const doubled = computedSignal(() => count() * 2)
+const refValue = ref(0)
+
+console.log(isSignal(count)) // true
+console.log(isSignal(doubled)) // true
+console.log(isSignal(refValue)) // false
+console.log(isSignal(0)) // false
+```
+
+---
+
 ## EffectScope 系列
 
 ### effectScope()
@@ -905,6 +1103,7 @@ function useAsyncState<T>(
 | `ComputedSignal<T>` | 计算信号 |
 | `ReadonlySignal<T>` | 只读信号 |
 | `ReactiveEffectRunner<T>` | effect runner 函数 |
+| `ReactiveEffectOptions` | effect 选项 |
 | `EffectScope` | effect scope 实例 |
 | `WatchOptions` | watch 选项 |
 | `WatchEffectOptions` | watchEffect 选项 |
@@ -913,3 +1112,16 @@ function useAsyncState<T>(
 | `UnwrapNestedRefs<T>` | 深层解包嵌套 Ref 类型 |
 | `DeepReadonly<T>` | 深层只读类型 |
 | `ToRefs<T>` | toRefs 返回类型 |
+| `DebuggerEvent` | 调试事件类型 |
+
+## 类型守卫函数
+
+| 函数 | 说明 |
+|------|------|
+| `isRef()` | 判断是否为 Ref |
+| `isShallowRef()` | 判断是否为浅层 Ref |
+| `isComputedRef()` | 判断是否为计算属性 Ref |
+| `isReactive()` | 判断是否为响应式代理 |
+| `isReadonly()` | 判断是否为只读代理 |
+| `isProxy()` | 判断是否为任何类型的代理 |
+| `isSignal()` | 判断是否为 Signal |

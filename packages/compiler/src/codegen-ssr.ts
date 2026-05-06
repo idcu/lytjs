@@ -10,6 +10,7 @@
 
 
 import { NodeTypes } from './constants';
+import { escapeHTML } from '@lytjs/common-string';
 import type {
   RootNode,
   ElementNode,
@@ -40,16 +41,10 @@ const VOID_ELEMENTS = new Set([
 // Helper functions
 // ============================================================
 
-// FIX: P2-16 escapeHtml 函数已导出供外部使用
-// 该函数同时被内联到生成的代码字符串中，确保运行时独立可用
-export function escapeHtml(str: string): string {
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
+// FIX: P2-1 消除 escapeHtml 函数重复定义
+// 复用 @lytjs/common-string 中的 escapeHTML 函数
+// 注意：生成的代码字符串中仍内联 escapeHtml 函数，确保运行时独立可用
+export const escapeHtml = escapeHTML;
 
 // ============================================================
 // Main SSR generate function
@@ -183,7 +178,8 @@ function genSSRChildren(children: TemplateChildNode[]): string {
           if (typeof c === 'string') {
             childParts.push(c);
           } else if (c.type === NodeTypes.SIMPLE_EXPRESSION) {
-            childParts.push((c as SimpleExpressionNode).content);
+            // FIX: P0-1 CompoundExpression 中的表达式需要转义输出，防止 XSS
+            childParts.push(`escapeHtml(String(${(c as SimpleExpressionNode).content}))`);
           } else if (c.type === NodeTypes.INTERPOLATION) {
             const content = ((c as InterpolationNode).content as SimpleExpressionNode).content;
             // FIX: P1-4 SSR CompoundExpression 插值白名单验证，防止代码注入
@@ -257,7 +253,8 @@ function genSSRElement(element: ElementNode): string {
           ? (prop.exp as SimpleExpressionNode).content
           : undefined;
         if (expContent) {
-          directiveChildren = (directiveChildren ? directiveChildren + ' + ' : '') + expContent;
+          // FIX: P0-1 v-html SSR 模式下需要转义输出，防止 XSS
+          directiveChildren = (directiveChildren ? directiveChildren + ' + ' : '') + `escapeHtml(String(${expContent}))`;
         }
       }
       // v-text: output escaped text content as children (not as attribute)
@@ -333,7 +330,8 @@ function genSSRBranch(
   }
 
   if (branch.type === NodeTypes.SIMPLE_EXPRESSION) {
-    return `String(${(branch as SimpleExpressionNode).content})`;
+    // FIX: P0-1 SSR 表达式需要转义输出，防止 XSS
+    return `escapeHtml(String(${(branch as SimpleExpressionNode).content}))`;
   }
 
   if (branch.type === NodeTypes.TEXT) {
@@ -384,7 +382,8 @@ function genSSRVNodeCall(vnode: VNodeCall): string {
           prop.value.type === NodeTypes.SIMPLE_EXPRESSION
             ? (prop.value as SimpleExpressionNode).content
             : "'[value]'";
-        parts.push(` + ' ${key}="' + ${value} + '"'`);
+        // FIX: P0-1 属性值 SSR 模式下需要转义输出，防止 XSS
+        parts.push(` + ' ${key}="' + escapeHtml(String(${value})) + '"'`);
       }
     }
   }

@@ -4,6 +4,7 @@
  *
  * 所有 DOM API 调用集中在此文件内，不泄漏到 L1/L2。
  * 极度轻薄：只做纯翻译，不做队列/兼容/归一化。
+ * FIX: P2-33 强制同步布局优化 - 添加缓存和批量处理
  */
 
 import type {
@@ -18,6 +19,54 @@ import { SVG_NS, isSVGTag } from '@lytjs/common-dom';
 import { parseDuration } from '@lytjs/common-string';
 import { patchProp } from './web-patch-props';
 import { wrapDOMEvent } from './web-event-wrap';
+
+// ============================================================
+// FIX: P2-33 强制同步布局优化 - 缓存和批量处理
+// ============================================================
+
+/** 重排缓存项 */
+interface ReflowCacheEntry {
+  width: number;
+  height: number;
+  timestamp: number;
+}
+
+/** 重排缓存 */
+const reflowCache = new WeakMap<Element, ReflowCacheEntry>();
+/** 缓存有效期（毫秒） */
+const REFLOW_CACHE_DURATION = 16; // 约一帧的时间
+
+/** 待处理的强制重排元素队列 */
+let pendingReflowElements: Set<Element> = new Set();
+/** 是否已调度重排处理 */
+let isReflowScheduled = false;
+
+/**
+ * 调度强制重排
+ * FIX: P2-33 强制同步布局优化 - 批量处理避免重复读取
+ */
+function scheduleForcedReflow(el: Element): void {
+  pendingReflowElements.add(el);
+  
+  if (!isReflowScheduled) {
+    isReflowScheduled = true;
+    requestAnimationFrame(() => {
+      // 批量执行所有挂起的重排
+      for (const element of pendingReflowElements) {
+        // 触发重排并缓存结果
+        const height = (element as HTMLElement).offsetHeight;
+        const width = (element as HTMLElement).offsetWidth;
+        reflowCache.set(element, {
+          width,
+          height,
+          timestamp: Date.now(),
+        });
+      }
+      pendingReflowElements.clear();
+      isReflowScheduled = false;
+    });
+  }
+}
 
 // ============================================================
 // WebRendererHost
@@ -222,9 +271,29 @@ export class WebRendererHost implements RendererHost<Node, Element> {
   /**
    * 强制回流/重排。
    * 读取 offsetHeight 触发浏览器同步布局。
+   * FIX: P2-33 强制同步布局优化 - 添加缓存避免重复读取
    */
   forceReflow(el: Element): void {
-    void (el as HTMLElement).offsetHeight;
+    // FIX: P2-33 使用 requestAnimationFrame 批量处理强制重排
+    scheduleForcedReflow(el);
+  }
+
+  /**
+   * 获取元素尺寸（带缓存）
+   * FIX: P2-33 强制同步布局优化
+   */
+  getElementSize(el: Element): { width: number; height: number } {
+    // 检查缓存
+    const cached = reflowCache.get(el);
+    if (cached && Date.now() - cached.timestamp < REFLOW_CACHE_DURATION) {
+      return { width: cached.width, height: cached.height };
+    }
+    
+    // 读取并缓存
+    const rect = el.getBoundingClientRect();
+    const size = { width: rect.width, height: rect.height };
+    reflowCache.set(el, { ...size, timestamp: Date.now() });
+    return size;
   }
 
   // ==========================================================

@@ -47,6 +47,8 @@ function vlqEncode(value: number): string {
 // ============================================================
 
 export interface SourceMapping {
+  /** Original source file path */
+  source?: string;
   /** Original source line (0-based) */
   originalLine: number;
   /** Original source column (0-based) - 高精度列号映射 */
@@ -191,9 +193,16 @@ export class SourceMapGenerator {
         prevGenCol = 0; // Reset generated column for new lines
       }
 
-      // FIX: P0-7 始终使用 sources[0]（源文件名）查找 source index，
-      // 而非 mapping.name（token 名称），避免 source index 解析错误
-      const sourceIdx = this._sourcesMap.get(this.sources[0] ?? '') ?? 0;
+      // FIX: P0-5 根据 mapping.source 查找正确的 sourceIndex
+      let sourceIdx = 0;
+      if (mapping.source !== undefined) {
+        const idx = this._sourcesMap.get(mapping.source);
+        if (idx === undefined) {
+          throw new Error(`Unknown source: ${mapping.source}`);
+        }
+        sourceIdx = idx;
+      }
+
       // Encode segment fields (all delta-encoded)
       const genCol = mapping.generatedColumn - prevGenCol;
       const source = sourceIdx - prevSource;
@@ -204,7 +213,10 @@ export class SourceMapGenerator {
 
       // Name index (optional)
       if (mapping.name !== undefined) {
-        const nameIdx = this._namesMap.get(mapping.name) ?? 0;
+        const nameIdx = this._namesMap.get(mapping.name);
+        if (nameIdx === undefined) {
+          throw new Error(`Unknown name: ${mapping.name}`);
+        }
         segment += vlqEncode(nameIdx - prevName);
         prevName = nameIdx;
       }

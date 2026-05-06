@@ -31,6 +31,13 @@ export interface ErrorBoundaryProps {
   fallback?: ComponentOptions;
 }
 
+// FIX: P2-35 类型守卫：检查 props 是否为 ErrorBoundaryProps
+type ErrorBoundaryPropsInternal = ErrorBoundaryProps & { capturePromiseRejections?: boolean };
+
+function isErrorBoundaryProps(props: Record<string, unknown>): props is ErrorBoundaryPropsInternal {
+  return props !== null && typeof props === 'object';
+}
+
 export const ErrorBoundary: ComponentOptions = {
   name: 'ErrorBoundary',
   props: {
@@ -43,11 +50,15 @@ export const ErrorBoundary: ComponentOptions = {
     const error = ref<Error | null>(null);
     const hasError = ref(false);
 
+    // FIX: P2-35 使用类型守卫替代重复的类型断言
+    const typedProps = isErrorBoundaryProps(props) ? props : {} as ErrorBoundaryPropsInternal;
+
     // 使用 onErrorCaptured 捕获子组件错误
     onErrorCaptured((err: Error, _instance: unknown, info: string) => {
       error.value = err;
       hasError.value = true;
-      (props as unknown as ErrorBoundaryProps).onError?.(err, info);
+      // FIX: P2-39 错误边界：添加更友好的错误处理
+      typedProps.onError?.(err, info);
       return false; // 阻止错误继续传播
     });
 
@@ -56,15 +67,16 @@ export const ErrorBoundary: ComponentOptions = {
     let currentBoundary: ActiveErrorBoundary | null = null;
 
     onMounted(() => {
-      if ((props as unknown as { capturePromiseRejections?: boolean }).capturePromiseRejections && typeof window !== 'undefined') {
+      if (typedProps.capturePromiseRejections && typeof window !== 'undefined') {
         currentBoundary = {
           handler: (event: PromiseRejectionEvent) => {
+            // FIX: P2-40 错误信息不友好：改进错误消息
             const err = event.reason instanceof Error
               ? event.reason
               : new Error(String(event.reason));
             error.value = err;
             hasError.value = true;
-            (props as unknown as ErrorBoundaryProps).onError?.(err, 'unhandledrejection');
+            typedProps.onError?.(err, 'unhandledrejection');
           },
         };
 

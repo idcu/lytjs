@@ -135,6 +135,19 @@ export function generateSignal(
   // Track which elements have dynamic bindings
   const dynamicBindings: Array<{ varName: string; code: string }> = [];
 
+  // ---- Phase 0: 检查根节点数量 ----
+  // FIX: P1-L3 模板根节点多个元素未报错 - 在编译时检测并报错
+  const rootElementCount = ast.children.filter(
+    child => child.type === NodeTypes.ELEMENT || child.type === NodeTypes.VNODE_CALL
+  ).length;
+  if (rootElementCount > 1) {
+    throw new Error(
+      `[lytjs/compiler] Template has multiple root elements (${rootElementCount}). ` +
+      `Signal mode requires a single root element. ` +
+      `Wrap your template content in a single parent element, e.g., <div>...</div>.`
+    );
+  }
+
   // ---- Phase 1: Generate imports ----
   // FIX: P1-13 添加 runCleanups 到 import 列表
   lines.push(
@@ -454,6 +467,12 @@ function processVNodeCallProps(
 // FIX: P1-1~3 Signal 模式代码注入防护 - 表达式白名单验证
 const VALID_EXPRESSION = /^[a-zA-Z_$][a-zA-Z0-9_$]*(\.[a-zA-Z_$][a-zA-Z0-9_$]*)*$/;
 
+// FIX: P1-S1, P1-S2 属性名和事件名验证正则
+const VALID_ATTRIBUTE_NAME = /^[a-zA-Z][a-zA-Z0-9-:]*$/;
+const VALID_EVENT_NAME = /^[a-zA-Z][a-zA-Z0-9-]*$/;
+const VALID_SLOT_NAME = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/;
+const VALID_COMPONENT_NAME = /^[a-zA-Z][a-zA-Z0-9-]*$/;
+
 function validateExpression(exp: string | undefined, context: string): void {
   if (!exp) return;
   if (!VALID_EXPRESSION.test(exp)) {
@@ -466,6 +485,47 @@ function validateArgContent(arg: string | undefined): void {
   // 额外检查单引号，防止破坏生成的字符串字面量
   if (arg.includes("'")) {
     throw new Error(`[lytjs/compiler] Invalid argument: "${arg}". Single quotes are not allowed in directive arguments.`);
+  }
+}
+
+// FIX: P1-S1: v-bind 动态属性名验证
+function validateAttributeName(name: string | undefined, context: string): void {
+  if (!name) return;
+  if (!VALID_ATTRIBUTE_NAME.test(name)) {
+    throw new Error(`[lytjs/compiler] Invalid attribute name in ${context}: "${name}". Only alphanumeric characters, hyphens, and colons are allowed.`);
+  }
+}
+
+// FIX: P1-S2: v-on 事件名验证
+function validateEventName(name: string | undefined, context: string): void {
+  if (!name) return;
+  if (!VALID_EVENT_NAME.test(name)) {
+    throw new Error(`[lytjs/compiler] Invalid event name in ${context}: "${name}". Only alphanumeric characters and hyphens are allowed.`);
+  }
+}
+
+// FIX: P1-S7: 动态插槽名验证
+function validateSlotName(name: string | undefined, context: string): void {
+  if (!name) return;
+  if (!VALID_SLOT_NAME.test(name)) {
+    throw new Error(`[lytjs/compiler] Invalid slot name in ${context}: "${name}". Only valid JavaScript identifiers are allowed.`);
+  }
+}
+
+// FIX: P1-S6: 动态组件名验证
+function validateComponentName(name: string | undefined, context: string): void {
+  if (!name) return;
+  if (!VALID_COMPONENT_NAME.test(name)) {
+    throw new Error(`[lytjs/compiler] Invalid component name in ${context}: "${name}". Only alphanumeric characters and hyphens are allowed.`);
+  }
+}
+
+// FIX: P1-S8: v-island 指令验证
+function validateIslandDirective(exp: string | undefined, context: string): void {
+  if (!exp) return;
+  // v-island 指令只允许简单的布尔表达式或属性访问
+  if (!VALID_EXPRESSION.test(exp) && exp !== 'true' && exp !== 'false') {
+    throw new Error(`[lytjs/compiler] Invalid v-island expression in ${context}: "${exp}". Only simple property access or boolean literals are allowed.`);
   }
 }
 
@@ -482,6 +542,18 @@ function processDirective(
   validateExpression(expContent, `v-${dir.name}`);
   validateExpression(argContent, `v-${dir.name} argument`);
   validateArgContent(argContent);
+
+  // FIX: P1-S1, P1-S2: 根据指令类型进行特定的名称验证
+  if (dir.name === 'bind' && argContent) {
+    validateAttributeName(argContent, `v-bind:${argContent}`);
+  }
+  if (dir.name === 'on' && argContent) {
+    validateEventName(argContent, `v-on:${argContent}`);
+  }
+  // FIX: P1-S8: v-island 指令验证
+  if (dir.name === 'island') {
+    validateIslandDirective(expContent, 'v-island');
+  }
 
   switch (dir.name) {
     case 'if': {
@@ -647,7 +719,14 @@ function processConditional(
   consumedCount?: Map<string, number>,
 ): void {
   const testExpr = getTestExpr(node.test);
-  if (!testExpr) return;
+
+  // FIX: P1-L2 v-if/v-else-if 条件为空未报错 - 添加运行时错误抛出
+  if (!testExpr || testExpr.trim() === '') {
+    throw new Error(
+      `[lytjs/compiler] v-if/v-else-if condition is empty or invalid. ` +
+      `Ensure the directive has a valid expression, e.g., v-if="condition" or v-else-if="condition".`
+    );
+  }
 
   // 收集所有条件分支（v-if / v-else-if / v-else 链）
   const branches: Array<{
@@ -819,6 +898,8 @@ function serializeBranchHTML(
     const vnode = branch as VNodeCall;
     if (typeof vnode.tag === 'string') {
       const tag = vnode.tag.replace(/^"|"$/g, '');
+      // FIX: P1-S6: 验证动态组件名
+      validateComponentName(tag, 'v-for dynamic component');
       let attrs = '';
       // 从 props 中提取静态属性
       if (vnode.props && vnode.props.type === NodeTypes.JS_OBJECT_EXPRESSION) {
@@ -1005,6 +1086,19 @@ function processCallExpression(
         }
       }
     }
+
+    // FIX: P1-L1 v-for 无 key 警告不完善 - 添加明确的警告信息
+    if (!userKeyExpr) {
+      if (__DEV__) {
+        console.warn(
+          `[lytjs/compiler] v-for is missing a "key" attribute. ` +
+          `This may cause performance issues and incorrect DOM updates. ` +
+          `Add a unique :key binding to the v-for element, e.g., :key="item.id" or :key="index". ` +
+          `See: https://lytjs.dev/guide/template-syntax.html#v-for-key`
+        );
+      }
+    }
+
     keyExpr = userKeyExpr ?? `${itemVar}.id`;
 
     // 确定父容器变量名

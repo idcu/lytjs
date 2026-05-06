@@ -3,6 +3,7 @@
  * Rendering backend for the LytJS framework
  * Provides DOM, SSR, and Vapor rendering
  * FIX: P2-10 RENDERER-NEW-03 - 渲染器插件系统
+ * FIX: P2-26 懒加载优化 - 大型模块使用动态导入
  */
 
 // Re-export from vdom
@@ -170,9 +171,12 @@ export function removePlugin(pluginName: string): boolean {
 /**
  * Internal: Execute hooks for a lifecycle event
  * This is called by the renderer at appropriate lifecycle points
+ * FIX: P2-29 数组遍历优化 - 使用 for 循环替代 forEach
  */
 export function executeHooks(event: LifecycleEvent, ...args: unknown[]): void {
-  hooks[event].forEach((handler) => {
+  const handlers = hooks[event];
+  // FIX: P2-29 使用 for 循环替代 forEach，避免函数调用开销
+  for (const handler of handlers) {
     try {
       handler(...args);
     } catch (e) {
@@ -180,7 +184,7 @@ export function executeHooks(event: LifecycleEvent, ...args: unknown[]): void {
         error(`Error in ${event} hook:`, e);
       }
     }
-  });
+  }
 }
 
 // Export types
@@ -239,34 +243,65 @@ export type {
 /** Web 渲染器宿主实现 */
 export { WebRendererHost, createWebHost, wrapDOMEvent } from '@lytjs/adapter-web';
 
+// FIX: P2-26 懒加载优化 - SSR 相关函数使用动态导入
 // SSR renderer
 /** 将组件渲染为字符串（SSR） */
-export { renderToString } from './ssr/ssr-renderer';
+export async function renderToString(input: unknown): Promise<string> {
+  const { renderToString: _renderToString } = await import('./ssr/ssr-renderer');
+  return _renderToString(input);
+}
 export type { SSRInput } from './ssr/ssr-renderer';
 
 // SSR streaming
 /** 将 VNode 树流式渲染为 ReadableStream（SSR Streaming） */
-export { renderToStream } from './ssr/ssr-stream';
+export async function renderToStream(vnode: unknown, options?: unknown): Promise<ReadableStream> {
+  const { renderToStream: _renderToStream } = await import('./ssr/ssr-stream');
+  return _renderToStream(vnode, options);
+}
 export type { SSRStreamOptions } from './ssr/ssr-stream';
 
 // SSR island architecture
 /** Island Architecture 相关函数 */
-export { hydrateIsland, registerIslandComponent, createIslandSSRContent } from './ssr/ssr-island';
+export async function hydrateIsland(el: Element, component: unknown, props?: Record<string, unknown>): Promise<void> {
+  const { hydrateIsland: _hydrateIsland } = await import('./ssr/ssr-island');
+  return _hydrateIsland(el, component, props);
+}
+export async function registerIslandComponent(name: string, component: unknown): Promise<void> {
+  const { registerIslandComponent: _registerIslandComponent } = await import('./ssr/ssr-island');
+  return _registerIslandComponent(name, component);
+}
+export async function createIslandSSRContent(vnode: unknown, options?: unknown): Promise<string> {
+  const { createIslandSSRContent: _createIslandSSRContent } = await import('./ssr/ssr-island');
+  return _createIslandSSRContent(vnode, options);
+}
 export type { ComponentOptions as IslandComponentOptions } from './ssr/ssr-island';
 
 // Signal renderer
 /** 创建 Signal 模式渲染器（细粒度 DOM 更新） */
-export { createSignalRenderer } from './signal/signal-renderer';
+export async function createSignalRenderer(options?: unknown) {
+  const { createSignalRenderer: _createSignalRenderer } = await import('./signal/signal-renderer');
+  return _createSignalRenderer(options);
+}
 export type { SignalRenderer } from './signal/signal-renderer';
 
 // Vapor renderer (alias for Signal renderer)
 /** 创建 Vapor 模式渲染器（Signal 渲染器的别名） */
-export { createSignalRenderer as createVaporRenderer } from './signal/signal-renderer';
+export async function createVaporRenderer(options?: unknown) {
+  const { createSignalRenderer: _createSignalRenderer } = await import('./signal/signal-renderer');
+  return _createSignalRenderer(options);
+}
 export type { SignalRenderer as VaporRenderer } from './signal/signal-renderer';
 
 // Vapor app API
 /** 定义 Vapor 模式组件 */
-export { defineVaporComponent, createVaporApp } from './vapor/vapor-app';
+export async function defineVaporComponent(options: unknown) {
+  const { defineVaporComponent: _defineVaporComponent } = await import('./vapor/vapor-app');
+  return _defineVaporComponent(options);
+}
+export async function createVaporApp(rootComponent: unknown, props?: Record<string, unknown>) {
+  const { createVaporApp: _createVaporApp } = await import('./vapor/vapor-app');
+  return _createVaporApp(rootComponent, props);
+}
 export type {
   VaporComponentOptions,
   VaporComponentDefinition,

@@ -66,6 +66,23 @@ const arrayInstrumentations: Record<string | symbol, (...args: unknown[]) => unk
   };
 });
 
+// FIX: P1-L5 响应式数组方法未处理 - 添加 sort, reverse, fill, copyWithin 的处理
+(['sort', 'reverse', 'fill', 'copyWithin'] as const).forEach((method) => {
+  const originMethod = Array.prototype[method] as (...args: unknown[]) => unknown;
+  arrayInstrumentations[method] = function (this: unknown[], ...args: unknown[]) {
+    const arr = toRaw(this);
+    pauseTracking();
+    try {
+      const result = originMethod.apply(arr, args);
+      // 这些方法会修改数组，需要触发更新
+      trigger(arr, TriggerOpTypes.SET, 'length');
+      return result;
+    } finally {
+      resetTracking();
+    }
+  };
+});
+
 // ==================== 辅助常量 ====================
 
 const builtInSymbols = new Set<symbol>(

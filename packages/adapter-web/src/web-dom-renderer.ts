@@ -5,16 +5,163 @@
  * 从 @lytjs/renderer/src/dom/dom-renderer.ts 迁移，
  * 使用 WebRendererHost 替代 createDOMRendererOptions。
  * 保留 vnodeMap (WeakMap) 和 cleanupVNodeResources 逻辑。
+ * FIX: P2-31 DOM 操作合并优化 - 批量处理 DOM 操作
  */
 
-import { createRenderer } from '@lytjs/vdom';
+import { createRenderer, registerEventCleanupCallback } from '@lytjs/vdom';
 import type { VNode, RendererOptions } from '@lytjs/vdom';
 import type { ComponentInternalInstance, SuspenseBoundary } from '@lytjs/vdom';
 import { withFirstRenderOptimization } from '@lytjs/reactivity';
 import { WebRendererHost } from './web-host';
+import { removeAllEventListeners } from './web-patch-events';
 
 // FIX: P2-46 自定义元素注册缓存，避免重复注册
 const registeredCustomElements = new Set<string>();
+
+// ============================================================
+// FIX: P2-31 DOM 操作合并优化 - 批量 DOM 操作队列
+// ============================================================
+
+/** DOM 操作类型 */
+type DOMOperation = 
+  | { type: 'insert'; child: Node; parent: Node; anchor: Node | null }
+  | { type: 'remove'; child: Node }
+  | { type: 'setText'; node: Node; text: string }
+  | { type: 'setElementText'; node: Element; text: string };
+
+/** DOM 操作队列 */
+let domOperationQueue: DOMOperation[] = [];
+/** 是否已调度批量处理 */
+let isBatchScheduled = false;
+/** 最大批量处理间隔（毫秒） */
+const BATCH_INTERVAL = 1;
+
+/**
+ * 将 insert 操作加入队列
+ * FIX: P2-31 DOM 操作合并优化
+ */
+function queueInsert(child: Node, parent: Node, anchor?: Node | null): void {
+  domOperationQueue.push({ type: 'insert', child, parent, anchor: anchor ?? null });
+  scheduleBatch();
+}
+
+/**
+ * 将 remove 操作加入队列
+ * FIX: P2-31 DOM 操作合并优化
+ */
+function queueRemove(child: Node): void {
+  domOperationQueue.push({ type: 'remove', child });
+  scheduleBatch();
+}
+
+/**
+ * 将 setText 操作加入队列
+ * FIX: P2-31 DOM 操作合并优化
+ */
+function queueSetText(node: Node, text: string): void {
+  domOperationQueue.push({ type: 'setText', node, text });
+  scheduleBatch();
+}
+
+/**
+ * 将 setElementText 操作加入队列
+ * FIX: P2-31 DOM 操作合并优化
+ */
+function queueSetElementText(node: Element, text: string): void {
+  domOperationQueue.push({ type: 'setElementText', node, text });
+  scheduleBatch();
+}
+
+/**
+ * 调度批量 DOM 操作处理
+ * FIX: P2-31 DOM 操作合并优化
+ */
+function scheduleBatch(): void {
+  if (isBatchScheduled) return;
+  isBatchScheduled = true;
+  
+  if (typeof requestAnimationFrame !== 'undefined') {
+    requestAnimationFrame(flushDOMOperations);
+  } else {
+    setTimeout(flushDOMOperations, BATCH_INTERVAL);
+  }
+}
+
+/**
+ * 批量处理 DOM 操作
+ * FIX: P2-31 DOM 操作合并优化
+ */
+function flushDOMOperations(): void {
+  isBatchScheduled = false;
+  
+  if (domOperationQueue.length === 0) return;
+  
+  // 复制队列并清空原队列
+  const operations = domOperationQueue;
+  domOperationQueue = [];
+  
+  // 合并相同父元素的 insert 操作，使用 DocumentFragment
+  const fragmentMap = new Map<Node, DocumentFragment>();
+  const otherOperations: DOMOperation[] = [];
+  
+  for (const op of operations) {
+    if (op.type === 'insert') {
+      // 检查是否可以使用 DocumentFragment 批量插入
+      const { child, parent, anchor } = op;
+      if (!anchor && child instanceof Element) {
+        let fragment = fragmentMap.get(parent);
+        if (!fragment) {
+          fragment = document.createDocumentFragment();
+          fragmentMap.set(parent, fragment);
+        }
+        fragment.appendChild(child);
+      } else {
+        otherOperations.push(op);
+      }
+    } else {
+      otherOperations.push(op);
+    }
+  }
+  
+  // 执行 DocumentFragment 批量插入
+  for (const [parent, fragment] of fragmentMap) {
+    if (fragment.childNodes.length > 0) {
+      parent.appendChild(fragment);
+    }
+  }
+  
+  // 执行其他操作
+  for (const op of otherOperations) {
+    switch (op.type) {
+      case 'insert':
+        op.parent.insertBefore(op.child, op.anchor);
+        break;
+      case 'remove': {
+        const parent = op.child.parentNode;
+        if (parent) {
+          parent.removeChild(op.child);
+        }
+        break;
+      }
+      case 'setText':
+        op.node.nodeValue = op.text;
+        break;
+      case 'setElementText':
+        op.node.textContent = op.text;
+        break;
+    }
+  }
+}
+
+/**
+ * 同步刷新所有挂起的 DOM 操作
+ * FIX: P2-31 DOM 操作合并优化
+ */
+export function flushPendingDOMOperations(): void {
+  if (domOperationQueue.length > 0) {
+    flushDOMOperations();
+  }
+}
 
 // ============================================================
 // defineCustomElement - 自定义元素注册
@@ -124,6 +271,14 @@ export function createDOMRenderer(
 
   // 使用 WebRendererHost 作为平台宿主
   const host = new WebRendererHost();
+
+  // FIX: P2-4 注册事件监听器清理回调
+  // 在元素卸载时自动清理所有绑定的事件监听器，防止内存泄漏
+  const unregisterEventCleanup = registerEventCleanupCallback((el: Node) => {
+    if (el instanceof Element) {
+      removeAllEventListeners(el);
+    }
+  });
 
   // 将 WebRendererHost 转换为 vdom 的 RendererOptions 格式
   const options: RendererOptions<Node, Element> = {

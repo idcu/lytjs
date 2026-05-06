@@ -1,12 +1,93 @@
 /**
  * @lytjs/vdom - vnode
  * VNode creation and manipulation functions
+ * FIX: P2-28 对象创建优化 - 使用对象池减少 GC 压力
  */
 
 import { Fragment, Text, Comment, ShapeFlags } from '@lytjs/common-vnode';
 import type { VNode, VNodeChildren, VNodeTypes } from '@lytjs/common-vnode';
 import { isString, isArray, isFunction, isObject, isNullish, EMPTY_OBJ } from '@lytjs/common-is';
 import { normalizeClass, normalizeStyleObject as normalizeStyle } from '@lytjs/common-string';
+
+// ============================================================
+// FIX: P2-28 对象创建优化 - VNode 对象池
+// ============================================================
+
+/** VNode 对象池最大容量 */
+const VNODE_POOL_MAX_SIZE = 200;
+/** VNode 对象池 */
+const vnodePool: VNode[] = [];
+/** 池化对象使用计数（用于调试） */
+let vnodePoolHitCount = 0;
+let vnodePoolMissCount = 0;
+
+/**
+ * 从对象池获取一个 VNode 对象
+ * FIX: P2-28 对象创建优化
+ */
+function acquireVNode(): VNode | null {
+  if (vnodePool.length > 0) {
+    vnodePoolHitCount++;
+    return vnodePool.pop()!;
+  }
+  vnodePoolMissCount++;
+  return null;
+}
+
+/**
+ * 将 VNode 对象归还到对象池
+ * FIX: P2-28 对象创建优化
+ */
+export function releaseVNode(vnode: VNode): void {
+  if (vnodePool.length < VNODE_POOL_MAX_SIZE) {
+    // 重置 vnode 状态，清除引用以便垃圾回收
+    vnode.type = null as unknown as VNodeTypes;
+    vnode.props = null;
+    vnode.key = null;
+    vnode.ref = null;
+    vnode.isStatic = false;
+    vnode.isStaticRoot = false;
+    vnode.isOnce = false;
+    vnode.isAsyncPlaceholder = false;
+    vnode.isComment = false;
+    vnode.isCloned = false;
+    vnode.isBlockTree = false;
+    vnode.shapeFlag = 0;
+    vnode.patchFlag = 0;
+    vnode.dynamicProps = null;
+    vnode.dynamicChildren = null;
+    vnode.children = null;
+    vnode.component = null;
+    vnode.el = null;
+    vnode.anchor = null;
+    vnode.target = null;
+    vnode.targetAnchor = null;
+    vnode.targetStart = null;
+    vnode.loc = null;
+    vnodePool.push(vnode);
+  }
+}
+
+/**
+ * 获取 VNode 池化统计信息（用于调试）
+ * FIX: P2-28 对象创建优化
+ */
+export function getVNodePoolStats(): { hit: number; miss: number; size: number } {
+  return {
+    hit: vnodePoolHitCount,
+    miss: vnodePoolMissCount,
+    size: vnodePool.length,
+  };
+}
+
+/**
+ * 重置 VNode 池化统计信息
+ * FIX: P2-28 对象创建优化
+ */
+export function resetVNodePoolStats(): void {
+  vnodePoolHitCount = 0;
+  vnodePoolMissCount = 0;
+}
 
 // ============================================================
 // Dev warnings
@@ -164,6 +245,60 @@ export function createVNode(
   }
 
   return vnode;
+}
+
+/**
+ * 创建 VNode（使用对象池优化版本）
+ * FIX: P2-28 对象创建优化 - 优先从对象池获取 VNode 对象
+ */
+export function createVNodePooled(
+  type: VNodeTypes,
+  props: Record<string, unknown> | null = null,
+  children: VNodeChildren = null,
+  patchFlag: number = 0,
+  dynamicProps: string[] | null = null,
+  isBlockNode: boolean = false,
+): VNode {
+  // 尝试从对象池获取
+  const vnode = acquireVNode();
+  
+  if (vnode) {
+    // 复用池化对象，重置所有属性
+    vnode.type = type;
+    vnode.props = props ? normalizeProps(props) : null;
+    vnode.key = (props?.key as string | number | symbol | null | undefined) ?? null;
+    vnode.ref = (props?.ref as ((ref: unknown) => void) | null | undefined) ?? null;
+    vnode.isStatic = false;
+    vnode.isStaticRoot = false;
+    vnode.isOnce = false;
+    vnode.isAsyncPlaceholder = false;
+    vnode.isComment = false;
+    vnode.isCloned = false;
+    vnode.isBlockTree = isBlockNode;
+    vnode.shapeFlag = getShapeFlag(type);
+    vnode.patchFlag = patchFlag;
+    vnode.dynamicProps = dynamicProps;
+    vnode.dynamicChildren = null;
+    vnode.children = children;
+    vnode.component = null;
+    vnode.el = null;
+    vnode.anchor = null;
+    vnode.target = null;
+    vnode.targetAnchor = null;
+    vnode.targetStart = null;
+    vnode.loc = null;
+    (vnode as { __v_isVNode?: boolean }).__v_isVNode = true;
+
+    // Normalize children and update shapeFlag
+    if (children !== null && children !== undefined) {
+      normalizeChildren(vnode, children);
+    }
+
+    return vnode;
+  }
+
+  // 池为空，创建新对象
+  return createVNode(type, props, children, patchFlag, dynamicProps, isBlockNode);
 }
 
 // ============================================================

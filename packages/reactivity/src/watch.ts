@@ -21,8 +21,10 @@ import type {
 // ==================== 数据源规范化 ====================
 
 function getSource(source: WatchSource<unknown>): () => unknown {
+  // FIX: P2-34 使用类型守卫替代类型断言
   if (isRef(source)) return () => source.value;
-  if (isReactive(source as object)) return () => traverse(source);
+  // FIX: P2-35 添加类型守卫确保 source 是对象后再检查 isReactive
+  if (isObject(source) && isReactive(source)) return () => traverse(source);
   if (typeof source === 'function') return source as () => unknown;
   // FIX: P2-4 DEV 模式下对无效 source 抛出错误，而非静默返回 NOOP
   if (__DEV__) {
@@ -134,18 +136,21 @@ export function watch<T, Immediate extends Readonly<boolean> = false>(
     // FIX: P1-04 完善 forceTrigger 逻辑：当多源中存在 reactive 对象时，
     // 即使 deep 为 false 也需要强制触发回调，因为 reactive 对象的属性变化
     // 不会改变对象引用本身，hasChanged 检测不到变化
-    forceTrigger = source.some((s) => isReactive(s));
+    // FIX: P2-35 添加类型守卫确保 s 是对象后再检查 isReactive
+    forceTrigger = source.some((s) => isObject(s) && isReactive(s));
     getter = () =>
       source.map((s) => {
         if (isRef(s)) return s.value;
-        if (isReactive(s)) return traverse(s);
+        // FIX: P2-35 添加类型守卫
+        if (isObject(s) && isReactive(s)) return traverse(s);
         if (isFunction(s)) return s();
         return undefined;
       });
   } else {
     getter = getSource(source as WatchSource<T>);
     // FIX: P1-04 单源 reactive 对象也需要设置 forceTrigger
-    if (isReactive(source as object)) {
+    // FIX: P2-35 添加类型守卫
+    if (isObject(source) && isReactive(source)) {
       forceTrigger = true;
     }
   }
@@ -193,11 +198,21 @@ export function watch<T, Immediate extends Readonly<boolean> = false>(
           cleanupFns.forEach((f) => f());
           cleanupFns.length = 0;
         }
-        cb(
-          newValue as T,
-          oldValue as Immediate extends true ? undefined : T | undefined,
-          onCleanup,
-        );
+        // FIX: P1-L7 watch 回调错误未捕获 - 添加 try-catch 捕获回调错误
+        try {
+          cb(
+            newValue as T,
+            oldValue as Immediate extends true ? undefined : T | undefined,
+            onCleanup,
+          );
+          consecutiveErrors = 0;
+        } catch (e) {
+          consecutiveErrors++;
+          if (consecutiveErrors <= MAX_CONSECUTIVE_ERRORS) {
+            error(`Error in watch callback: ${e}`);
+          }
+          // 继续执行，不中断 watch 流程
+        }
         oldValue = newValue;
         if (once) {
           isStopped = true;
