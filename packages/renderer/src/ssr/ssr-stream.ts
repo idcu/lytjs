@@ -6,7 +6,7 @@
 
 import type { VNode } from '@lytjs/vdom';
 import { Fragment, Text, Comment, ShapeFlags } from '@lytjs/vdom';
-import { isString, isArray, isFunction } from '@lytjs/common-is';
+import { isArray, isFunction } from '@lytjs/common-is';
 import { escapeHtml, isVoidElement } from '../utils';
 import type { SSRInput } from './ssr-renderer';
 import {

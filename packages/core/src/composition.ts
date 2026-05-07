@@ -218,7 +218,7 @@ export function useId(): Readonly<Ref<string>> {
     id.value = `lyt-${generateIdSuffix()}`;
   }
 
-  return readonly(id);
+  return readonly(id) as unknown as Readonly<Ref<string>>;
 }
 
 // ==================== useCssModule / useCssVars ====================

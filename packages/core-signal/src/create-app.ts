@@ -63,7 +63,7 @@ export function createApp(
       return app;
     },
 
-    mount(rootContainer: string | Element) {
+    async mount(rootContainer: string | Element) {
       if (_isUnmounted) {
         throw new Error(
           `[LytJS] App has been unmounted and cannot be remounted. Create a new app instance instead.`,
@@ -145,8 +145,9 @@ export function createApp(
         }
 
         // 创建 Signal 渲染器
-        signalRenderer = createSignalRenderer(template, ctx);
-        signalRenderer.render(container);
+        // FIX: DTS build error - createSignalRenderer 现在是 async
+        signalRenderer = await createSignalRenderer(template, ctx);
+        signalRenderer!.render(container);
 
         _isMounted = true;
 

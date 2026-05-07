@@ -34,7 +34,7 @@ export function defineAsyncComponent(
 
   const loadedComponent = shallowRef<Component | undefined>(undefined);
   const error = ref<Error | undefined>(undefined);
-  const loading = ref(false);
+  const loading = ref<boolean>(false);
   let retries = 0;
   let showLoading = false;
   let delayTimer: ReturnType<typeof setTimeout> | null = null;
