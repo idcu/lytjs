@@ -11,7 +11,8 @@
  * @version 6.0.0
  */
 
-import { isString, isObject, isFunction, hasOwn } from '@lytjs/common-is';
+// FIX: DTS build error - 删除未使用的导入
+import { hasOwn } from '@lytjs/common-is';
 // FIX: P2-18 直接使用 shared 导入的函数，删除局部别名
 import { camelToKebab, kebabToCamel } from '@lytjs/common-string';
 
@@ -192,7 +193,8 @@ export class AttributeReflector {
     if (attrValue === null) {
       element.removeAttribute(config.attr!);
     } else {
-      element.setAttribute(config.attr!, attrValue);
+      // FIX: DTS build error - attrValue 需要是 string
+      element.setAttribute(config.attr!, attrValue as string);
     }
   }
 
@@ -262,7 +264,7 @@ export interface EnhancedElementClass extends HTMLElement {
 
 export function createEnhancedElementClass(
   options: WebComponentOptions = {},
-): typeof EnhancedElementClass {
+): new () => EnhancedElementClass {
   const reflector = new AttributeReflector();
 
   // 注册属性反射
@@ -428,7 +430,7 @@ export function createEnhancedElementClass(
     ): void;
   }
 
-  return EnhancedElement as typeof EnhancedElementClass;
+  return EnhancedElement as unknown as new () => EnhancedElementClass;
 }
 
 // ============================================================
@@ -482,7 +484,8 @@ export function supportsWebComponents(): boolean {
 /**
  * 等待自定义元素定义完成
  */
-export function whenDefined(name: string): Promise<void> {
+// FIX: DTS build error - whenDefined 返回 Promise<CustomElementConstructor>
+export function whenDefined(name: string): Promise<CustomElementConstructor> {
   if (!supportsWebComponents()) {
     return Promise.reject(new Error('Web Components not supported'));
   }
