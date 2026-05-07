@@ -151,7 +151,7 @@ export const isRegExp = (val: unknown): val is RegExp => toTypeString(val) === '
 /**
  * 空数组常量（冻结）
  */
-export const EMPTY_ARR: unknown[] = Object.freeze([]) as unknown[];
+export const EMPTY_ARR: readonly unknown[] = Object.freeze([]);
 
 /**
  * 空函数常量
