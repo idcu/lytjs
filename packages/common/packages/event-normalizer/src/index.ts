@@ -88,7 +88,8 @@ type InvokerCache<HE> = Record<string, EventInvoker<HE> | undefined>;
  * @template HN - 宿主节点类型
  * @template HE - 宿主元素类型
  */
-export class EventNormalizer<HN = unknown, HE extends HN = HN> {
+// FIX: DTS build error - HN 必须约束为 object
+export class EventNormalizer<HN extends object = object, HE extends HN = HN> {
   /** RendererHost 实例 */
   private host: RendererHost<HN, HE>;
 
