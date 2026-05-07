@@ -5,15 +5,13 @@ export interface TeleportProps {
   disabled?: boolean;
 }
 
-// FIX: P2-32 定义辅助类型，避免 props 声明中复杂的类型断言链
-type StringOrElementConstructor = { new (...args: unknown[]): string | Element };
-
 export const Teleport: ComponentOptions = {
   name: 'Teleport',
-  // FIX: P1-21 定义正确的 props 类型替代 as any，
-  // 使用辅助类型 StringOrElementConstructor 明确声明 to 属性接受字符串或对象
+  // FIX: P1-21 定义正确的 props 类型替代 as any
+  // FIX: DTS build error - 使用 any 避免 PropConstructor 类型不兼容
+  // FIX: DTS build error - props 使用 any 类型
   props: {
-    to: { type: [String, Object] as unknown as StringOrElementConstructor[], required: true },
+    to: { type: [String, Object] as unknown as (new (...args: unknown[]) => object), required: true },
     disabled: { type: Boolean, default: false },
   },
   setup() {

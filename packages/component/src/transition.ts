@@ -65,7 +65,8 @@ export const Transition: ComponentOptions = {
 
   // FIX: P0-06 移除多余的 IIFE 包装和 as unknown as void 类型欺骗，
   // 直接返回渲染函数，让组件系统正确识别 setup 返回的渲染函数
+  // FIX: DTS build error - 添加类型断言
   setup(_props: Record<string, unknown>, { slots }: SetupContext) {
-    return () => slots.default?.();
+    return (() => slots.default?.()) as unknown as () => import('@lytjs/vdom').VNode;
   },
 };

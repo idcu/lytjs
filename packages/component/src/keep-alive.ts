@@ -7,8 +7,9 @@ import { watch } from '@lytjs/reactivity';
 import type { ComponentInternalInstance, ComponentOptions, SetupContext } from './types';
 import { createComponentInstance, setupComponent } from './component';
 import { handleError } from './lifecycle';
-import { ShapeFlags, createBaseVNode } from '@lytjs/common-vnode';
-import type { VNode } from '@lytjs/common-vnode';
+// FIX: DTS build error - 统一从 vdom 导入，避免类型不兼容
+import { ShapeFlags, createVNode, createCommentVNode } from '@lytjs/vdom';
+import type { VNode } from '@lytjs/vdom';
 
 // ==================== Types ====================
 
@@ -157,20 +158,20 @@ export const KeepAlive: ComponentOptions = {
     } as Record<string, unknown>;
   },
 
-  render(ctx: Record<string, unknown>): VNode | null {
+  render(ctx: unknown): VNode {
     // FIX: P2-12 使用 ctx 参数替代 this，避免依赖 this 上下文
     const instance = ctx as unknown as ComponentInternalInstance;
     const props = instance.props as KeepAliveProps;
     const defaultSlot = instance.slots?.default;
 
-    if (!defaultSlot) return null;
+    if (!defaultSlot) return createCommentVNode('keep-alive');
 
     const children = defaultSlot();
-    if (!children || children.length === 0) return null;
+    if (!children || children.length === 0) return createCommentVNode('keep-alive');
 
     // KeepAlive only handles a single child component
     const rawVNode = children[0] as VNode;
-    if (rawVNode == null) return null;
+    if (rawVNode == null) return createCommentVNode('keep-alive');
 
     // Skip non-component vnodes (text, comment, etc.)
     if (
@@ -212,7 +213,8 @@ export const KeepAlive: ComponentOptions = {
       // Move to most recent position
       cacheInstance(instance, cacheKey, cachedInstance);
       // Copy the cached vnode's children onto the raw vnode for patching
-      rawVNode.component = cachedInstance;
+      // FIX: DTS build error - 类型断言避免 ComponentInternalInstance 冲突
+      rawVNode.component = cachedInstance as unknown as NonNullable<typeof rawVNode.component>;
       rawVNode.shapeFlag |= ShapeFlags.COMPONENT_KEPT_ALIVE;
       activateInstance(cachedInstance);
       return rawVNode;
@@ -238,17 +240,18 @@ export function createKeepAliveInstance(
   props: KeepAliveProps = {},
   parent: ComponentInternalInstance | null = null,
 ): ComponentInternalInstance {
-  const vnode: VNode = createBaseVNode({
-    type: KeepAlive,
-    props: {
+  const vnode: VNode = createVNode(
+    KeepAlive,
+    {
       ...props,
       include: props.include,
       exclude: props.exclude,
       max: props.max,
       onCacheKey: props.onCacheKey,
     },
-    shapeFlag: ShapeFlags.STATEFUL_COMPONENT,
-  });
+    null,
+    ShapeFlags.STATEFUL_COMPONENT,
+  );
 
   const instance = createComponentInstance(vnode, parent);
   setupComponent(instance);
