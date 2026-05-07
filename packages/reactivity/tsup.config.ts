@@ -28,6 +28,7 @@ export default defineConfig({
     '@lytjs/common-scheduler',
     '@lytjs/common-env',
     '@lytjs/common-error',
+    '@lytjs/common-constants',
     '@lytjs/shared-types',
   ],
 });

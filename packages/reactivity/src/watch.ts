@@ -17,12 +17,14 @@ import type {
   WatchHandle,
   OnCleanup,
 } from './types';
+import type { Ref } from './ref';
 
 // ==================== 数据源规范化 ====================
 
 function getSource(source: WatchSource<unknown>): () => unknown {
   // FIX: P2-34 使用类型守卫替代类型断言
-  if (isRef(source)) return () => source.value;
+  // FIX: DTS build error - isRef 返回 RefLike，需要类型断言为 Ref
+  if (isRef(source)) return () => (source as Ref<unknown>).value;
   // FIX: P2-35 添加类型守卫确保 source 是对象后再检查 isReactive
   if (isObject(source) && isReactive(source)) return () => traverse(source);
   if (typeof source === 'function') return source as () => unknown;
