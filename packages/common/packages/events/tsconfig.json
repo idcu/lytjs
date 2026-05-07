@@ -5,10 +5,9 @@
     "rootDir": "./src",
     "composite": false,
     "incremental": false,
-    "declaration": true,
-    "declarationMap": true,
+    "baseUrl": ".",
     "paths": {
-      "@lytjs/common-is": ["./node_modules/@lytjs/common-is/src"]
+      "@lytjs/common-is": ["../is/dist/index.d.ts"]
     }
   },
   "include": ["src/**/*.ts"],

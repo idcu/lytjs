@@ -3,6 +3,8 @@
   "compilerOptions": {
     "outDir": "./dist",
     "rootDir": "./src",
+    "composite": false,
+    "incremental": false,
     "baseUrl": ".",
     "paths": {
       "@lytjs/common-is": ["../is/dist/index.d.ts"]
