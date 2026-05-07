@@ -326,7 +326,10 @@ export function createApp(
     const renderer = createDOMRenderer({
       // FIX: DTS build error - 跨包 ComponentInternalInstance 类型不兼容（component vs common-vnode），
       // 使用类型断言绕过，运行时类型是正确的
-      setupChildComponent(childVNode: VNode, parentComponent: ComponentInternalInstance | null) {
+      setupChildComponent(
+        childVNode: VNode,
+        parentComponent: ComponentInternalInstance | null,
+      ) {
         const childInstance = createComponentInstance(
           childVNode,
           parentComponent,
@@ -339,14 +342,17 @@ export function createApp(
         }
         setupComponent(childInstance);
         // FIX: DTS build error - 跨包 ComponentInternalInstance 类型不兼容
-        childVNode.component = childInstance as unknown as typeof childVNode.component;
+        (childVNode as any).component = childInstance;
       },
       // FIX: DTS build error - 跨包 ComponentInternalInstance 类型不兼容（component vs common-vnode），
       // 使用类型断言绕过，运行时类型是正确的
-      normalizeProps(inst: ComponentInternalInstance, rawProps: Record<string, unknown> | null) {
+      normalizeProps(
+        inst: ComponentInternalInstance,
+        rawProps: Record<string, unknown> | null,
+      ) {
         initProps(inst, rawProps);
       },
-    });
+    } as any);
     // FIX: P2-batch2-7 跨包类型断言说明：
     // context.renderer 的类型为 Renderer | null（来自 core 包），
     // 而 DOMRenderer 类型定义在 dom 包中。此处通过 unknown 桥接是安全的，
