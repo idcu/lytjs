@@ -61,9 +61,10 @@ const flipThreshold = 0.5;
  * @param moveClass - 移动动画类名
  * @returns 是否成功应用动画
  */
+// FIX: DTS build error - 使用 HostRect 替代 DOMRect
 function applyFLIPToDOMElement(
   child: Element,
-  oldRect: DOMRect,
+  oldRect: { left: number; top: number },
   moveClass: string,
 ): boolean {
   const newRect = child.getBoundingClientRect();

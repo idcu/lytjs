@@ -126,58 +126,6 @@ const createdRenderers = new WeakSet<object>();
 // 允许外部注册元素卸载时的事件清理函数
 const eventCleanupCallbacks = new Set<(el: Node) => void>();
 
-// FIX: P2-24 缓存机制优化 - 添加 VNode 类型缓存，避免重复计算 shapeFlag
-const vnodeTypeCache = new WeakMap<object, number>();
-
-// FIX: P2-24 缓存机制优化 - 添加 props 比较缓存
-const propsCompareCache = new WeakMap<object, Map<object, boolean>>();
-
-/**
- * 获取 VNode 的 shapeFlag 缓存值
- * FIX: P2-24 缓存机制优化
- */
-function getCachedShapeFlag(type: unknown): number | undefined {
-  if (typeof type === 'object' && type !== null) {
-    return vnodeTypeCache.get(type);
-  }
-  return undefined;
-}
-
-/**
- * 设置 VNode 的 shapeFlag 缓存值
- * FIX: P2-24 缓存机制优化
- */
-function setCachedShapeFlag(type: unknown, flag: number): void {
-  if (typeof type === 'object' && type !== null) {
-    vnodeTypeCache.set(type, flag);
-  }
-}
-
-/**
- * 缓存 props 比较结果
- * FIX: P2-24 缓存机制优化
- */
-function cachePropsCompare(prev: object, next: object, result: boolean): void {
-  let cache = propsCompareCache.get(prev);
-  if (!cache) {
-    cache = new Map();
-    propsCompareCache.set(prev, cache);
-  }
-  cache.set(next, result);
-}
-
-/**
- * 获取缓存的 props 比较结果
- * FIX: P2-24 缓存机制优化
- */
-function getCachedPropsCompare(prev: object, next: object): boolean | undefined {
-  const cache = propsCompareCache.get(prev);
-  if (cache) {
-    return cache.get(next);
-  }
-  return undefined;
-}
-
 /**
  * 注册元素卸载时的事件清理回调。
  * 用于在组件/元素卸载时清理绑定的事件监听器。
@@ -306,7 +254,8 @@ export function createRenderer<HN, HE extends HN>(
   // FIX: P0-03 使用 __isRendererHost 标识符号替代鸭子类型检测，
   // 避免普通对象碰巧包含 addClass/getBoundingClientRect 时被误判为 RendererHost
   // FIX: P1-T3 使用类型守卫替代类型断言
-  const hostOrOptionsRecord = hostOrOptions as Record<string, unknown>;
+  // FIX: DTS build error - 先转换为 unknown 再转换为 Record
+  const hostOrOptionsRecord = hostOrOptions as unknown as Record<string, unknown>;
   const isHost = '__isRendererHost' in hostOrOptions && hostOrOptionsRecord.__isRendererHost === true;
   const internal = isHost
     ? hostToOptions(hostOrOptions as RendererHost<HN, HE>)
@@ -522,14 +471,15 @@ export function createRenderer<HN, HE extends HN>(
       (vnode.shapeFlag & ShapeFlags.STATEFUL_COMPONENT ||
         vnode.shapeFlag & ShapeFlags.FUNCTIONAL_COMPONENT)
     ) {
-      // FIX: P1-8 VDOM-NEW-09 - 使用 component.lifecycle.beforeUnmount 替代 component.bum
-      // component.bum 不是标准接口属性，在 TypeScript 严格模式下可能导致类型错误
-      const beforeUnmountHooks = (component as ComponentInternalInstance).lifecycle?.beforeUnmount;
-      if (beforeUnmountHooks && beforeUnmountHooks.size > 0) {
-        // 逐个执行 beforeUnmount 回调。单个回调抛出异常时，捕获并记录错误后继续执行
-        // 后续回调，确保所有 beforeUnmount 钩子都有机会运行，避免一个组件的卸载错误
-        // 影响其他组件的清理逻辑。
-        for (const hook of beforeUnmountHooks) {
+      // FIX: P1-8 VDOM-NEW-09 - 使用 component.bum (beforeUnmount)
+      // FIX: DTS build error - 使用 bum 字段，ComponentInternalInstance 已定义
+      const bum = (component as ComponentInternalInstance).bum;
+      const beforeUnmountHooks = Array.isArray(bum) ? bum : bum ? [bum] : [];
+      if (beforeUnmountHooks && beforeUnmountHooks.length > 0) {
+         // 逐个执行 beforeUnmount 回调。单个回调抛出异常时，捕获并记录错误后继续执行
+         // 后续回调，确保所有 beforeUnmount 钩子都有机会运行，避免一个组件的卸载错误
+         // 影响其他组件的清理逻辑。
+         for (const hook of beforeUnmountHooks) {
           try {
             hook();
           } catch (e) {

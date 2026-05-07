@@ -13,9 +13,9 @@
       "require": "./dist/index.cjs"
     },
     "./transition": {
-      "types": "./dist/transition-entry.d.ts",
-      "import": "./dist/transition-entry.mjs",
-      "require": "./dist/transition-entry.cjs"
+      "types": "./dist/transition.d.ts",
+      "import": "./dist/transition.mjs",
+      "require": "./dist/transition.cjs"
     }
   },
   "files": [
