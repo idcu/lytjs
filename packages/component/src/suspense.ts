@@ -19,10 +19,11 @@ let _linkerRegistered = false;
 function ensureLinkerRegistered(): void {
   if (_linkerRegistered) return;
   _linkerRegistered = true;
+  // FIX: DTS build error - SuspenseLinkerFn 参数类型是 unknown
   registerSuspenseLinker(
-    (asyncState: SuspenseAsyncState, vnodeBoundary: SuspenseAsyncState['vnodeBoundary'], domSwitch: SuspenseAsyncState['domSwitch']) => {
+    ((asyncState: SuspenseAsyncState, vnodeBoundary: SuspenseAsyncState['vnodeBoundary'], domSwitch: SuspenseAsyncState['domSwitch']) => {
       linkSuspenseBoundary(asyncState, vnodeBoundary, domSwitch);
-    },
+    }) as (asyncState: unknown, vnodeBoundary: unknown, domSwitch: (boundary: unknown, toFallback: boolean) => void) => void,
   );
 }
 
