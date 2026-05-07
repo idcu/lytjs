@@ -3,6 +3,7 @@
 // 复用 @lytjs/common-is: isObject, hasChanged
 
 import { isObject, hasChanged } from '@lytjs/common-is';
+import { warn } from '@lytjs/common-error';
 import { track, trigger, getActiveEffect, getShouldTrack, createDep } from './effect';
 import type { Dep } from './effect';
 import { TrackOpTypes, TriggerOpTypes } from './constants';

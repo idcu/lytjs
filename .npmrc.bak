@@ -1,0 +1,14 @@
+# pnpm 配置
+shamefully-hoist=false
+strict-peer-dependencies=false
+auto-install-peers=true
+
+# 发布配置
+# 如果使用 npm 发布，取消下面的注释
+# registry=https://registry.npmjs.org/
+
+# 如果使用 Gitee npm 镜像，取消下面的注释
+# registry=https://npm.gitee.com/lytjs/
+
+# workspace 协议
+link-workspace-packages=true

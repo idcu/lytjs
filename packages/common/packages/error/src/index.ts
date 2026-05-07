@@ -556,7 +556,11 @@ export function safeExecWithRecovery<T>(
     }
   }
 
-  // 所有尝试都失败了，返回默认值
+  // 所有尝试都失败了，如果有错误回调则调用
+  if (lastError && onError) {
+    onError(lastError);
+  }
+  // 返回默认值
   return defaultValue;
 }
 
