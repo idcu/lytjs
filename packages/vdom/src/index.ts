@@ -9,8 +9,6 @@ export {
   Fragment,
   Text,
   Comment,
-  ShapeFlags,
-  PatchFlags,
   isVNode,
   isSameVNodeType,
   hasPatchFlag,
@@ -29,6 +27,9 @@ export type {
   ComponentPublicInstance,
   ComponentInternalInstance,
   BaseComponentOptions,
+  // FIX: DTS build error - const enums must be exported as types
+  ShapeFlags,
+  PatchFlags,
 } from '@lytjs/common-vnode';
 
 // Re-export from @lytjs/host-contract
