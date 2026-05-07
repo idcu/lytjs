@@ -269,7 +269,6 @@ export {
   resetSchedulerState,
   setMaxIterations,
   setErrorHandler,
-  type SchedulerJob,
 } from '@lytjs/common-scheduler';
 
 // dom
