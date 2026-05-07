@@ -634,19 +634,22 @@ export function onCleanup(fn: CleanupFn): void {
 export function runCleanups(): void {
   const stack = activeCleanupStack ?? cleanupStack;
   const fns = stack.splice(0, stack.length);
-  const errors: unknown[] = [];
+  const errors: Error[] = [];
   for (const fn of fns) {
     try {
       fn();
     } catch (e) {
-      errors.push(e);
+      errors.push(e as Error);
     }
   }
-  // FIX: P2-59 使用 AggregateError 收集所有错误，提供更完整的错误信息
+  // FIX: P2-59 收集所有错误，提供更完整的错误信息
+  // FIX: DTS build error - AggregateError 在 ES2021，使用自定义错误
   if (errors.length === 1) {
     throw errors[0];
   } else if (errors.length > 1) {
-    throw new AggregateError(errors, `runCleanups: ${errors.length} errors occurred during cleanup`);
+    const error = new Error(`runCleanups: ${errors.length} errors occurred during cleanup`);
+    (error as Error & { errors: Error[] }).errors = errors;
+    throw error;
   }
 }
 
