@@ -13,6 +13,7 @@
       "@lytjs/common-string": ["../common/packages/string/dist/index.d.ts"],
       "@lytjs/common-events": ["../common/packages/events/dist/index.d.ts"],
       "@lytjs/common-dom": ["../common/packages/dom/dist/index.d.ts"],
+      "@lytjs/common-error": ["../common/packages/error/dist/index.d.ts"],
       "@lytjs/dom-runtime": ["../dom-runtime/dist/index.d.ts"],
       "@lytjs/compiler": ["../compiler/dist/index.d.ts"],
       "@lytjs/host-contract": ["../host-contract/dist/index.d.ts"],

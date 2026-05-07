@@ -10,7 +10,6 @@
 
 import type {
   RendererHost,
-  HostRect,
   HostEvent,
   HostEventHandler,
   HostEventOptions,
@@ -425,32 +424,30 @@ export function createExtendedWebHost(
     ...baseHost,
     // FIX: P2-v11-31 添加 Document 类型检查，
     // Document 节点也支持 insertBefore/replaceChild 操作
-    insertBefore(parent, newChild, referenceNode) {
+    insertBefore(parent: Element | DocumentFragment | Document, newChild: Node, referenceNode: Node | null) {
       if (parent instanceof Element || parent instanceof DocumentFragment || parent instanceof Document) {
         parent.insertBefore(newChild as Node, referenceNode as Node | null);
       }
     },
 
-    replaceChild(parent, newChild, oldChild) {
+    replaceChild(parent: Element | DocumentFragment | Document, newChild: Node, oldChild: Node) {
       if (parent instanceof Element || parent instanceof DocumentFragment || parent instanceof Document) {
         parent.replaceChild(newChild as Node, oldChild as Node);
       }
       return oldChild;
     },
 
-    firstChild(node) {
-      const child = (node as Node).firstChild;
-      // FIX: P2 移除冗余的 as unknown as Node，firstChild 返回值本身就是 Node | null
+    firstChild(node: Node) {
+      const child = node.firstChild;
       return child;
     },
 
-    lastChild(node) {
-      const child = (node as Node).lastChild;
-      // FIX: P2 移除冗余的 as unknown as Node，lastChild 返回值本身就是 Node | null
+    lastChild(node: Node) {
+      const child = node.lastChild;
       return child;
     },
 
-    contains(parent, child) {
+    contains(parent: Element, child: Node) {
       if (parent instanceof Element) {
         return parent.contains(child as Node);
       }
@@ -458,14 +455,14 @@ export function createExtendedWebHost(
     },
 
     // 扩展的属性操作
-    getAttributeNames(el) {
+    getAttributeNames(el: Element) {
       if (el instanceof Element) {
         return Array.from(el.getAttributeNames());
       }
       return [];
     },
 
-    setAttributes(el, attrs) {
+    setAttributes(el: Element, attrs: Record<string, string | number | boolean | null | undefined>) {
       if (el instanceof Element) {
         Object.entries(attrs).forEach(([key, value]) => {
           if (value == null) {
@@ -477,20 +474,20 @@ export function createExtendedWebHost(
       }
     },
 
-    removeAttributes(el, keys) {
+    removeAttributes(el: Element, keys: string[]) {
       if (el instanceof Element) {
         keys.forEach((key) => el.removeAttribute(key));
       }
     },
 
     // 扩展的样式操作
-    setStyles(el, styles) {
+    setStyles(el: HTMLElement, styles: Record<string, string | number | null | undefined>) {
       if (el instanceof HTMLElement) {
         Object.entries(styles).forEach(([key, value]) => {
           if (value == null) {
             el.style.removeProperty(key);
           } else {
-            el.style.setProperty(key, value);
+            el.style.setProperty(key, String(value));
           }
         });
       }

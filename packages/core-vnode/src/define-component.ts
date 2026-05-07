@@ -1,5 +1,7 @@
 // src/define-component.ts
 // @lytjs/core-vnode - 组件定义
+// FIX: DTS build error - 声明 __DEV__ 全局变量
+declare const __DEV__: boolean;
 
 import type { Component, AsyncComponentLoader, AsyncComponentOptions, VNode } from './types';
 import type { ComponentOptions } from './types';

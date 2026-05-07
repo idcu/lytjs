@@ -1,5 +1,7 @@
 // src/resolve.ts
 // @lytjs/core-vnode - 组件/指令解析
+// FIX: DTS build error - 声明 __DEV__ 全局变量
+declare const __DEV__: boolean;
 
 import type { Component, Directive } from './types';
 import { getCurrentInstance } from '@lytjs/component';

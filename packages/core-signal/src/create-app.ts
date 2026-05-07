@@ -1,5 +1,7 @@
 // src/create-app.ts
 // @lytjs/core-signal - createApp 工厂函数（仅 Signal 模式）
+// FIX: DTS build error - 声明 __DEV__ 全局变量
+declare const __DEV__: boolean;
 
 import { createSignalRenderer } from '@lytjs/renderer';
 import type { SignalRenderer } from '@lytjs/renderer';
@@ -10,7 +12,6 @@ import type {
   Plugin,
   Component,
   ComponentPublicInstance,
-  ComponentOptions,
 } from './types';
 
 export function createApp(
@@ -247,7 +248,7 @@ export function createApp(
       return undefined as T;
     },
 
-    component(name, component) {
+    component(_name: string, _component: unknown) {
       // Signal 模式下组件注册暂不支持
       if (__DEV__) {
         warn(
@@ -258,7 +259,7 @@ export function createApp(
       return app;
     },
 
-    directive(name, directive) {
+    directive(_name: string, _directive: unknown) {
       // Signal 模式下指令注册暂不支持
       if (__DEV__) {
         warn(
@@ -269,7 +270,7 @@ export function createApp(
       return app;
     },
 
-    mixin(mixin) {
+    mixin(_mixin: unknown) {
       // Signal 模式下 mixin 暂不支持
       if (__DEV__) {
         warn(

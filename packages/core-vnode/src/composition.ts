@@ -1,5 +1,7 @@
 // src/composition.ts
 // @lytjs/core-vnode - Composition API 辅助函数
+// FIX: DTS build error - 声明 __DEV__ 全局变量
+declare const __DEV__: boolean;
 
 import { getCurrentInstance } from '@lytjs/component';
 import { computed } from '@lytjs/reactivity';
