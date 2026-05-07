@@ -1,5 +1,5 @@
 // src/transform.ts
-// AST transform pipeline - main entry
+// AST 转换流水线 - 主入口
 // 包含 transform、markConstants、hoistStatic、collectDynamicChildren
 // optimize 阶段的逻辑已合并到此模块中
 
@@ -39,14 +39,14 @@ import {
 } from './transforms';
 
 // ============================================================
-// Main transform function
+// 主转换函数
 // ============================================================
 
 export function transform(root: RootNode, options: TransformOptions = {}): void {
   const context = createTransformContext(root, options);
   traverseNode(root, context, options);
 
-  // Copy context data to root
+  // 将上下文数据复制到根节点
   root.helpers = Array.from(context.helpers.keys());
   root.components = Array.from(context.components);
   root.directives = Array.from(context.directives);
@@ -54,7 +54,7 @@ export function transform(root: RootNode, options: TransformOptions = {}): void 
   root.temps = context.temps;
   root.cached = context.cached;
 
-  // Create root codegen node
+  // 创建根代码生成节点
   if (root.children.length === 1) {
     const child = root.children[0];
     if (child) {
@@ -117,7 +117,7 @@ export function optimize(root: RootNode, _options: CompilerOptions = {}): void {
 }
 
 // ============================================================
-// Create Transform Context
+// 创建转换上下文
 // ============================================================
 
 function createTransformContext(root: RootNode, options: TransformOptions): TransformContext {
@@ -126,9 +126,9 @@ function createTransformContext(root: RootNode, options: TransformOptions): Tran
   const directives = new Set<string>();
   const currentNode: RootNode | TemplateChildNode | null = root;
 
-  // Use a factory function to avoid self-referential null initialization.
-  // The context object is created via a lazy initializer that receives itself
-  // after construction, eliminating the need for `null as unknown as TransformContext`.
+  // 使用工厂函数避免自引用的 null 初始化。
+  // 上下文对象通过延迟初始化器创建，接收自身
+  // 消除对 `null as unknown as TransformContext` 的需求。
   const context = createContext(root, options, helpers, components, directives, currentNode);
   context.self = context;
   return context;
@@ -232,7 +232,7 @@ function createContext(
 }
 
 // ============================================================
-// Traverse Node
+// 遍历节点
 // ============================================================
 
 function traverseNode(
@@ -282,7 +282,7 @@ function traverseNode(
 }
 
 // ============================================================
-// Default transforms
+// 默认转换
 // ============================================================
 
 // FIX: P2-21 调整类型定义，避免双重类型断言
@@ -305,7 +305,7 @@ export const builtInDirectiveTransforms: Record<string, DirectiveTransform> = {
   show: transformShow,
 };
 
-// Re-export individual transforms for backward compatibility
+// 为向后兼容重新导出各个转换
 export { transformElement, transformIf, transformFor, transformOnce, transformSlot };
 export { transformScoped };
 export { transformVMemo };
@@ -320,7 +320,7 @@ function markConstants(root: RootNode): void {
     if (node.type === NodeTypes.ELEMENT) {
       const element = node as ElementNode;
 
-      // An element is constant if:
+      // 元素是常量的条件：
       // 1. It has no directives
       // 2. All its attributes are static
       // 3. All its children are constant (including descendants)
@@ -349,9 +349,9 @@ function hoistStatic(root: RootNode): void {
       const element = node as ElementNode;
 
       if (element.isStatic && element.codegenNode) {
-        // Hoist static elements
+        // 提升静态元素
         hoists.push(element.codegenNode);
-        // Global index = existing hoists + new hoists pushed so far - 1
+        // 全局索引 = 已有提升 + 当前新提升数量 - 1
         element.codegenNode = createHoistedReference(existingHoistsLen + hoists.length - 1);
       }
     }
@@ -385,7 +385,7 @@ function createHoistedReference(index: number): VNodeCall {
 // ============================================================
 
 function collectDynamicChildren(root: RootNode): void {
-  // Find the root element and collect its dynamic children
+  // 查找根元素并收集其动态 children
   for (const child of root.children) {
     if (child.type === NodeTypes.ELEMENT) {
       const element = child as ElementNode;

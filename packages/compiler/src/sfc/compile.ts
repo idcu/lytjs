@@ -9,7 +9,7 @@ import {
 } from './custom-blocks';
 
 // ============================================================
-// Compile Options & Result Types
+// 编译选项和结果类型
 // ============================================================
 
 export interface SFCCompileOptions {
@@ -37,7 +37,7 @@ export interface SFCCompileResult {
 // ============================================================
 
 /**
- * Compile an SFCDescriptor into a JavaScript module string (and optional CSS).
+ * 将 SFCDescriptor 编译为 JavaScript 模块字符串（和可选的 CSS）。
  *
  * @param descriptor - The parsed SFC descriptor
  * @param options - Compilation options
@@ -57,7 +57,7 @@ export function compileSFC(
 
   const parts: string[] = [];
 
-  // 1. Compile template block into a render function
+  // 1. 编译 template block into a render function
   let renderFnCode = '';
   if (descriptor.template) {
     const compilerOptions: CompilerOptions = {
@@ -76,8 +76,8 @@ export function compileSFC(
 
   // 3. Process style blocks - extract CSS and apply scoping
   let cssCode: string | undefined;
-  // When scoped option is explicitly provided, it controls all style blocks.
-  // When scoped option is not provided (undefined), individual style block's
+  // 当显式提供 scoped 选项时，它控制所有 style 块。
+  // 当未提供 scoped 选项（undefined）时，各个 style 块的
   // scoped attribute determines scoping.
   const scopedId = scoped ? id : undefined;
 
@@ -87,7 +87,7 @@ export function compileSFC(
     for (const style of descriptor.styles) {
       let css = style.content;
 
-      // Scope CSS if: scoped option is true, OR scoped option is not set and
+      // 作用域 CSS 条件：scoped 选项为 true，或 scoped 选项未设置且
       // the individual style block has the scoped attribute
       const shouldScope = scoped === true || (scoped === undefined && style.scoped);
       if (shouldScope) {
@@ -181,7 +181,7 @@ function generateModuleCode(opts: ModuleCodeOptions): string {
     lines.push('');
   }
 
-  // Render function from template compilation
+  // 渲染函数 from template compilation
   if (opts.renderFnCode) {
     lines.push('// Template render function');
     lines.push(opts.renderFnCode);

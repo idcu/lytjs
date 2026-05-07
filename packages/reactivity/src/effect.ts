@@ -438,7 +438,7 @@ export function effect<T>(
   },
 ): ReactiveEffectRunner<T>;
 
-// Unified implementation signature
+// 统一实现签名
 export function effect<T = unknown>(
   fn: () => T,
   options?: {

@@ -1,5 +1,5 @@
 // src/signal-state.ts
-// Signal State adapter for component integration
+// Signal 状态适配器，用于组件集成
 
 import { signal, computedSignal } from '@lytjs/reactivity';
 import type { Signal, ComputedSignal } from '@lytjs/reactivity';

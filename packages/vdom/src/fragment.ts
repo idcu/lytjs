@@ -1,6 +1,6 @@
 /**
  * @lytjs/vdom - fragment
- * Fragment operations - standalone helpers for fragment vnode handling
+ * Fragment 操作 - Fragment vnode 处理的独立辅助函数
  * FIX: P2-6 VDOM-NEW-13 - 片段（Fragment）优化
  */
 
@@ -9,10 +9,10 @@ import type { VNode } from '@lytjs/common-vnode';
 import { isArray } from '@lytjs/common-is';
 
 // ============================================================
-// Fragment helpers
+// Fragment 辅助函数
 // ============================================================
 
-// Re-export isFragment from common-vnode for backward compatibility
+// 为向后兼容从 common-vnode 重新导出 isFragment
 export { isFragment as isFragmentVNode } from '@lytjs/common-vnode';
 
 /**

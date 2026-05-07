@@ -17,7 +17,7 @@ import { getExpContent, findDirective } from './helpers';
 import { transformElement } from './transform-element';
 
 /**
- * Type guard: check if a node is a JSConditionalExpression.
+ * 类型守卫：检查节点是否为 JSConditionalExpression。
  * FIX: P2-8 添加类型守卫函数，替代不安全的 as unknown as 类型断言链
  */
 function isJSConditionalExpression(node: unknown): node is JSConditionalExpression {
@@ -41,7 +41,7 @@ export function transformIf(node: RootNode | TemplateChildNode, context: Transfo
   const siblings = parent.children;
   const currentIndex = siblings.indexOf(node as TemplateChildNode);
 
-  // Find the first v-if in the chain
+  // 查找链中的第一个 v-if
   let chainStart = currentIndex;
   for (let i = currentIndex - 1; i >= 0; i--) {
     const sibling = siblings[i];
@@ -57,7 +57,7 @@ export function transformIf(node: RootNode | TemplateChildNode, context: Transfo
     }
   }
 
-  // Build the conditional chain
+  // 构建条件链
   let conditional: JSConditionalExpression | undefined;
 
   const toRemove: number[] = [];
@@ -73,7 +73,7 @@ export function transformIf(node: RootNode | TemplateChildNode, context: Transfo
 
     if (!sibIf && !sibElseIf && !sibElse) break;
 
-    // Remove v-if/v-else-if/v-else directive from props
+    // 从 props 中移除 v-if/v-else-if/v-else 指令
     sibElement.props = sibElement.props.filter(
       (p) =>
         !(
@@ -82,7 +82,7 @@ export function transformIf(node: RootNode | TemplateChildNode, context: Transfo
         ),
     );
 
-    // Transform the element (without v-if)
+    // 转换元素（不含 v-if）
     const savedParent = context.parent;
     context.parent = parent;
     try {
@@ -126,11 +126,11 @@ export function transformIf(node: RootNode | TemplateChildNode, context: Transfo
       }
     }
 
-    // Collect index for removal
+    // 收集要移除的索引
     toRemove.push(i);
   }
 
-  // Remove collected siblings in reverse order to keep indices valid
+  // 按逆序移除收集的兄弟节点以保持索引有效
   for (let i = toRemove.length - 1; i >= 0; i--) {
     siblings.splice(toRemove[i]!, 1);
   }

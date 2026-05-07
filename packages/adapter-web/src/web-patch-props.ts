@@ -70,7 +70,7 @@ export function patchProp(
       el.setAttributeNS('http://www.w3.org/1999/xlink', key, String(nextValue));
     }
   } else if (isSVG && key === 'xml:lang') {
-    // SVG xml: namespace attributes
+    // SVG xml: 命名空间属性
     if (nextValue == null || nextValue === false) {
       el.removeAttributeNS('http://www.w3.org/XML/1998/namespace', 'lang');
     } else {

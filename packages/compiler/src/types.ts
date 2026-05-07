@@ -1,17 +1,17 @@
 // src/types.ts
-// All type definitions for the compiler AST and options
+// 编译器 AST 和选项的所有类型定义
 
 import type { SourceLocation } from '@lytjs/common-error';
 import type { NodeTypes, ElementTypes, TextModes, BindingTypes } from './constants';
 
 // ============================================================
-// Source Location (re-export for convenience)
+// 源码位置（为方便起见重新导出）
 // ============================================================
 
 export type { SourceLocation };
 
 // ============================================================
-// Position
+// 位置
 // ============================================================
 
 export interface Position {
@@ -21,7 +21,7 @@ export interface Position {
 }
 
 // ============================================================
-// Base Node
+// 基础节点
 // ============================================================
 
 export interface BaseNode {
@@ -30,7 +30,7 @@ export interface BaseNode {
 }
 
 // ============================================================
-// Template AST Nodes
+// 模板 AST 节点
 // ============================================================
 
 export interface RootNode extends BaseNode {
@@ -101,7 +101,7 @@ export interface DirectiveNode extends BaseNode {
 }
 
 // ============================================================
-// Expression Nodes
+// 表达式节点
 // ============================================================
 
 export interface SimpleExpressionNode extends BaseNode {
@@ -182,7 +182,7 @@ export interface JSCacheExpression extends BaseNode {
 }
 
 // ============================================================
-// Union Types
+// 联合类型
 // ============================================================
 
 export type JSChildNode =
@@ -217,7 +217,7 @@ export type ExpressionNode = SimpleExpressionNode | CompoundExpressionNode;
 export type ParentNode = RootNode | ElementNode;
 
 // ============================================================
-// Property for codegen
+// 代码生成属性
 // ============================================================
 
 export type Property =
@@ -228,7 +228,7 @@ export type Property =
     };
 
 // ============================================================
-// Transform Types
+// 转换类型
 // ============================================================
 
 export type NodeTransform = (
@@ -248,7 +248,7 @@ export interface DirectiveTransformResult {
 }
 
 // ============================================================
-// Compiler Options
+// 编译器选项
 // ============================================================
 
 export interface ParserOptions {
@@ -329,7 +329,7 @@ export type BindingMetadataValue =
     };
 
 // ============================================================
-// Transform Context
+// 转换上下文
 // ============================================================
 
 export interface TransformContext {
@@ -363,7 +363,7 @@ export interface TransformContext {
 }
 
 // ============================================================
-// Codegen Context
+// 代码生成上下文
 // ============================================================
 
 export interface CodegenContext {
@@ -381,7 +381,7 @@ export interface CodegenContext {
 }
 
 // ============================================================
-// Raw Source Map
+// 原始 Source Map
 // ============================================================
 
 export interface RawSourceMap {
@@ -395,19 +395,19 @@ export interface RawSourceMap {
 }
 
 // ============================================================
-// Codegen Result
+// 代码生成结果
 // ============================================================
 
 export interface CodegenResult {
   code: string;
   preamble: string;
   ast: RootNode;
-  /** Source map (RawSourceMap 格式) */
+  /** Source map（RawSourceMap 格式） */
   map?: RawSourceMap;
 }
 
 // ============================================================
-// Parser Context
+// 解析器上下文
 // ============================================================
 
 export interface ParserContext {

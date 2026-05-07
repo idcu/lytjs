@@ -1,5 +1,5 @@
 // src/parser-element.ts
-// Element parsing: parseElement, parseTag
+// 元素解析: parseElement, parseTag
 
 import {
   ElementTypes,

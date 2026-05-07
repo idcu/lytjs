@@ -1,5 +1,5 @@
 // src/keep-alive.ts
-// KeepAlive component (simplified)
+// KeepAlive 组件（简化版）
 
 import { isString, isArray, isFunction } from '@lytjs/common-is';
 import { warn } from '@lytjs/common-error';
@@ -11,7 +11,7 @@ import { handleError } from './lifecycle';
 import { ShapeFlags, createVNode, createCommentVNode } from '@lytjs/vdom';
 import type { VNode } from '@lytjs/vdom';
 
-// ==================== Types ====================
+// ==================== 类型定义 ====================
 
 interface KeepAliveCache {
   get(key: string): ComponentInternalInstance | undefined;
@@ -24,7 +24,7 @@ interface KeepAliveCache {
 }
 
 /**
- * LRU (Least Recently Used) Cache implementation for KeepAlive
+ * LRU（最近最少使用）缓存实现，用于 KeepAlive
  * FIX: P2-8 COMPONENT-NEW-05 - 实现 LRU 缓存策略，限制缓存组件数量
  */
 class LRUCache implements KeepAliveCache {
@@ -39,7 +39,7 @@ class LRUCache implements KeepAliveCache {
   get(key: string): ComponentInternalInstance | undefined {
     const instance = this.cache.get(key);
     if (instance !== undefined) {
-      // Move to end (most recently used)
+      // 移动到末尾（最近使用）
       this.cache.delete(key);
       this.cache.set(key, instance);
     }
@@ -47,18 +47,18 @@ class LRUCache implements KeepAliveCache {
   }
 
   set(key: string, instance: ComponentInternalInstance): void {
-    // If key exists, delete it first to update order
+    // 如果 key 已存在，先删除以更新顺序
     if (this.cache.has(key)) {
       this.cache.delete(key);
     }
 
-    // If at capacity, remove the oldest entry (first in Map)
+    // 如果达到容量上限，移除最旧的条目（Map 中的第一个）
     if (this.cache.size >= this.maxSize) {
       const oldestKey = this.cache.keys().next().value;
       if (oldestKey !== undefined) {
         const oldestInstance = this.cache.get(oldestKey);
         if (oldestInstance) {
-          // Deactivate and cleanup the oldest instance
+          // 停用并清理最旧的实例
           deactivateInstance(oldestInstance);
           oldestInstance.effects?.forEach((effect) => {
             effect.stop();
@@ -92,11 +92,11 @@ class LRUCache implements KeepAliveCache {
   }
 
   /**
-   * Update the max size of the cache
+   * 更新缓存的最大容量
    */
   setMaxSize(newMaxSize: number): void {
     this.maxSize = newMaxSize;
-    // Prune if necessary
+    // 如有必要则修剪
     while (this.cache.size > this.maxSize) {
       const oldestKey = this.cache.keys().next().value;
       if (oldestKey !== undefined) {
@@ -120,7 +120,7 @@ export interface KeepAliveProps {
   exclude?: string | RegExp | (string | RegExp)[];
   /** FIX: P2-17 缓存大小限制配置（默认 10） */
   max?: number;
-  /** Custom cache key function: receives a vnode and returns a string or number to use as the cache key */
+  /** 自定义缓存 key 函数：接收一个 vnode，返回字符串或数字作为缓存 key */
   onCacheKey?: (vnode: VNode) => string | number;
 }
 
@@ -169,11 +169,11 @@ export const KeepAlive: ComponentOptions = {
     const children = defaultSlot();
     if (!children || children.length === 0) return createCommentVNode('keep-alive');
 
-    // KeepAlive only handles a single child component
+    // KeepAlive 只处理单个子组件
     const rawVNode = children[0] as VNode;
     if (rawVNode == null) return createCommentVNode('keep-alive');
 
-    // Skip non-component vnodes (text, comment, etc.)
+    // 跳过非组件 vnode（文本、注释等）
     if (
       typeof rawVNode.type === 'string' ||
       rawVNode.type === (globalThis as Record<string, unknown>).__LYTJS_FRAGMENT__ ||
@@ -183,7 +183,7 @@ export const KeepAlive: ComponentOptions = {
       return rawVNode;
     }
 
-    // Get component name for matching
+    // 获取组件名用于匹配
     const compType = rawVNode.type as Record<string, unknown>;
     const compName = typeof compType === 'object' && compType !== null && 'name' in compType
       ? (compType as { name?: string }).name
@@ -204,15 +204,15 @@ export const KeepAlive: ComponentOptions = {
       return rawVNode;
     }
 
-    // Compute cache key
+    // 计算缓存 key
     const cacheKey = getCacheKey(instance, rawVNode);
 
-    // Check if already cached
+    // 检查是否已缓存
     const cachedInstance = getCachedInstance(instance, cacheKey);
     if (cachedInstance) {
-      // Move to most recent position
+      // 移动到最近使用位置
       cacheInstance(instance, cacheKey, cachedInstance);
-      // Copy the cached vnode's children onto the raw vnode for patching
+      // 将缓存 vnode 的子节点复制到原始 vnode 上用于 patch
       // FIX: DTS build error - 类型断言避免 ComponentInternalInstance 冲突
       rawVNode.component = cachedInstance as unknown as NonNullable<typeof rawVNode.component>;
       rawVNode.shapeFlag |= ShapeFlags.COMPONENT_KEPT_ALIVE;
@@ -220,21 +220,21 @@ export const KeepAlive: ComponentOptions = {
       return rawVNode;
     }
 
-    // Store reference for deactivation on unmount
+    // 存储引用以便在卸载时停用
     (instance.setupState as Record<string, unknown>)._currentVNode = rawVNode;
 
     return rawVNode;
   },
 
   created() {
-    // KeepAlive instance init
+    // KeepAlive 实例初始化
   },
 };
 
-// ==================== KeepAlive helpers ====================
+// ==================== KeepAlive 辅助函数 ====================
 
 /**
- * Create a KeepAlive component instance.
+ * 创建 KeepAlive 组件实例。
  */
 export function createKeepAliveInstance(
   props: KeepAliveProps = {},
@@ -259,7 +259,7 @@ export function createKeepAliveInstance(
 }
 
 /**
- * Check if a component name matches the include/exclude patterns.
+ * 检查组件名是否匹配 include/exclude 模式。
  */
 export function matchesPattern(
   name: string | undefined,
@@ -285,16 +285,15 @@ export function matchesPattern(
 }
 
 /**
- * Get the cache key for a vnode within a KeepAlive context.
+ * 获取 KeepAlive 上下文中 vnode 的缓存 key。
  *
- * If the KeepAlive instance has an `onCacheKey` prop (a custom function),
- * it is called with the vnode to produce the cache key.
- * Otherwise, the default key is derived from `vnode.type` (the component
- * constructor or tag name).
+ * 如果 KeepAlive 实例有 `onCacheKey` prop（自定义函数），
+ * 则使用该函数计算缓存 key。
+ * 否则，默认 key 从 `vnode.type`（组件构造函数或标签名）派生。
  *
- * @param keepAlive - The KeepAlive component instance
- * @param vnode - The vnode to compute a cache key for
- * @returns A string cache key
+ * @param keepAlive - KeepAlive 组件实例
+ * @param vnode - 需要计算缓存 key 的 vnode
+ * @returns 字符串形式的缓存 key
  */
 export function getCacheKey(
   keepAlive: ComponentInternalInstance,
@@ -320,7 +319,7 @@ export function getCacheKey(
     }
   }
 
-  // Default: use vnode.type (component constructor or tag string)
+  // 默认：使用 vnode.type（组件构造函数或标签字符串）
   const type = vnode.type;
   if (typeof type === 'string') {
     return type;
@@ -335,7 +334,7 @@ export function getCacheKey(
 }
 
 /**
- * Cache a component instance in KeepAlive.
+ * 在 KeepAlive 中缓存组件实例。
  * FIX: P2-8 COMPONENT-NEW-05 - LRU 缓存自动处理容量限制
  */
 export function cacheInstance(
@@ -345,12 +344,12 @@ export function cacheInstance(
 ): void {
   const cache = keepAlive.setupState.cache as KeepAliveCache;
 
-  // If already cached, remove old entry first (will be re-added with updated order)
+  // 如果已缓存，先删除旧条目（将以更新后的顺序重新添加）
   if (cache.has(key)) {
     cache.delete(key);
   }
 
-  // LRU cache automatically handles max size pruning in set()
+  // LRU 缓存在 set() 中自动处理最大容量修剪
   cache.set(key, instance);
 }
 
@@ -366,7 +365,7 @@ export function getCachedInstance(
 }
 
 /**
- * Remove a cached instance from KeepAlive.
+ * 从 KeepAlive 移除缓存的实例。
  */
 export function removeCachedInstance(keepAlive: ComponentInternalInstance, key: string): boolean {
   const cache = keepAlive.setupState.cache as KeepAliveCache;
@@ -374,11 +373,11 @@ export function removeCachedInstance(keepAlive: ComponentInternalInstance, key: 
 }
 
 /**
- * Activate a cached component instance.
+ * 激活缓存的组件实例。
  */
 export function activateInstance(instance: ComponentInternalInstance): void {
   instance.isDeactivated = false;
-  // Call activated hook if defined
+  // 如果定义了 activated 钩子则调用
   if (instance.type.activated) {
     instance.type.activated.call(instance.ctx);
   }
@@ -394,11 +393,11 @@ export function activateInstance(instance: ComponentInternalInstance): void {
 }
 
 /**
- * Deactivate a component instance.
+ * 停用组件实例。
  */
 export function deactivateInstance(instance: ComponentInternalInstance): void {
   instance.isDeactivated = true;
-  // Call deactivated hook if defined
+  // 如果定义了 deactivated 钩子则调用
   if (instance.type.deactivated) {
     instance.type.deactivated.call(instance.ctx);
   }

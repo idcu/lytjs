@@ -185,7 +185,7 @@ export function defineCustomElement(
       ctx.shadowRoot = useShadowDOM ? (this._root as ShadowRoot) : null;
       ctx.host = this;
 
-      // Push onto setup stack so composition API functions can find this context
+      // 压入 setup 栈，使组合式 API 函数能找到此上下文
       setupStack.push(this);
 
       try {
@@ -260,7 +260,7 @@ export function defineCustomElement(
 
       const deserializedValue = deserializeValue(newValue, propsOptions[propKey]);
 
-      // Skip if value hasn't actually changed
+      // 如果值未实际改变则跳过
       if (this._instance.props[propKey] === deserializedValue) return;
 
       // 更新组件 props

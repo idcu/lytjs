@@ -1,7 +1,7 @@
 /**
  * @lytjs/vdom - diff
- * Diff algorithm module - re-exports diffChildren from patch
- * and provides standalone diff utilities.
+ * Diff 算法模块 - 从 patch 重新导出 diffChildren
+ * 并提供独立的 diff 工具函数。
  *
  * @module @lytjs/vdom/diff
  *
@@ -30,13 +30,13 @@ import type { VNode } from '@lytjs/common-vnode';
 import { isSameVNodeType } from '@lytjs/common-vnode';
 
 // ============================================================
-// isSameVNodeType re-export
+// isSameVNodeType 重新导出
 // ============================================================
 
 export { isSameVNodeType };
 
 // ============================================================
-// Fast path: check if two children arrays can be patched without full diff
+// 快速路径：检查两个 children 数组是否可以无需完整 diff 直接 patch
 // ============================================================
 
 /**
@@ -82,7 +82,7 @@ export function canUseFastDiff(c1: VNode[], c2: VNode[]): boolean {
 }
 
 // ============================================================
-// Node counting utilities
+// 节点计数工具函数
 // ============================================================
 
 /**
@@ -176,7 +176,7 @@ export function countRemovedNodes(c1: VNode[], c2: VNode[]): number {
 }
 
 // ============================================================
-// Diff strategy selection helpers
+// Diff 策略选择辅助函数
 // ============================================================
 
 /**
@@ -226,7 +226,7 @@ export function noChildrenHaveKeys(children: VNode[]): boolean {
 }
 
 // ============================================================
-// Performance analysis utilities
+// 性能分析工具函数
 // ============================================================
 
 /**

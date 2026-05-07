@@ -17,7 +17,7 @@ import { patchProp } from './web-patch-props';
 declare const __DEV__: boolean;
 
 // ============================================================
-// Dev mode hydration mismatch warnings
+// 开发模式水合不匹配警告
 // ============================================================
 
 function warnHydrationMismatch(type: string, expected: string, actual: string): void {
@@ -30,7 +30,7 @@ function warnHydrationMismatch(type: string, expected: string, actual: string): 
 }
 
 // ============================================================
-// Hydration types
+// 水合类型
 // ============================================================
 
 export interface HydrationRenderer {
@@ -38,7 +38,7 @@ export interface HydrationRenderer {
 }
 
 // ============================================================
-// Hydrate Fragment
+// 水合 Fragment
 // FIX: P2-61 将 Fragment 水合逻辑提取为独立函数
 // ============================================================
 
@@ -87,7 +87,7 @@ function hydrateFragment(
 }
 
 // ============================================================
-// Hydrate Text
+// 水合 Text
 // FIX: P2-61 将 Text 水合逻辑提取为独立函数
 // ============================================================
 
@@ -113,7 +113,7 @@ function hydrateText(
   const text = isFunction(children) ? '' : String(children ?? '');
 
   if (node && host.getNodeType(node) === Node.TEXT_NODE) {
-    // Match: reuse existing text node
+    // 匹配：复用现有文本节点
     if ((node as Text).textContent !== text) {
       warnHydrationMismatch('text content', text, (node as Text).textContent ?? '');
       (node as Text).textContent = text;
@@ -143,7 +143,7 @@ function hydrateText(
 }
 
 // ============================================================
-// Hydrate Comment
+// 水合 Comment
 // FIX: P2-61 将 Comment 水合逻辑提取为独立函数
 // ============================================================
 
@@ -166,7 +166,7 @@ function hydrateComment(
     }
     vnode.el = node;
   } else {
-    // Mismatch: create new comment node and replace
+    // 不匹配：创建新注释节点并替换
     warnHydrationMismatch(
       'node type',
       `Comment("${text}")`,
@@ -212,7 +212,7 @@ function hydrateMatchedElement(
     patchProp(existingNode as Element, key, null, vnodeProps[key], isSVG);
   }
 
-  // Hydrate children
+  // 水合子节点
   let childIndex = 0;
   if (shapeFlag & ShapeFlags.ARRAY_CHILDREN && isArray(children)) {
     for (let i = 0; i < children.length; i++) {
@@ -271,7 +271,7 @@ function hydrateMismatchedElement(
   const newEl = host.createElement(tag, isSVG);
   vnode.el = newEl;
 
-  // Mount props
+  // 挂载 props
   const vnodeProps = props ?? {};
   // FIX: P2-v11-36 使用 Object.keys 替代 for...in
   for (const key of Object.keys(vnodeProps)) {
@@ -291,7 +291,7 @@ function hydrateMismatchedElement(
     host.setElementText(newEl, String(children ?? ''));
   }
 
-  // Replace or append
+  // 替换或追加
   if (existingNode) {
     host.replaceChild(parent, newEl, existingNode);
   } else {
@@ -322,7 +322,7 @@ function hydrateElement(
     host.getNodeType(existingNode) === Node.ELEMENT_NODE &&
     host.getTagName(existingNode as Element) === tag.toLowerCase()
   ) {
-    // Match: reuse existing element
+    // 匹配：复用现有元素
     hydrateMatchedElement(vnode, existingNode, host);
   } else {
     // Mismatch: create new element and replace
@@ -345,7 +345,7 @@ function hydrateNode(
 ): number {
   const { type, shapeFlag } = vnode;
 
-  // Handle Fragment
+  // 处理 Fragment
   if (type === Fragment) {
     return hydrateFragment(vnode, parent, index, host);
   }
@@ -355,12 +355,12 @@ function hydrateNode(
     return hydrateText(vnode, parent, index, host);
   }
 
-  // Handle Comment
+  // 处理 Comment
   if (type === Comment) {
     return hydrateComment(vnode, parent, index, host);
   }
 
-  // Handle Element
+  // 处理 Element
   if (shapeFlag & ShapeFlags.ELEMENT) {
     return hydrateElement(vnode, parent, index, host);
   }

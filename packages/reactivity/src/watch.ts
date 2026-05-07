@@ -72,7 +72,7 @@ function traverse(value: unknown, seen?: Set<unknown>, depth = 0): unknown {
     } else if (val instanceof Map) {
       val.forEach((v, key) => {
         stack.push({ value: v, depth: d + 1 });
-        // Also traverse the key if it's an object
+        // 如果 key 是对象，也遍历它
         if (isObject(key)) {
           stack.push({ value: key, depth: d + 1 });
         }

@@ -26,8 +26,8 @@ export function isValidHTMLElementTag(tag: string): boolean {
 // URL 安全验证
 // ============================================================
 
-// Security: attributes that carry URLs and need protocol validation
-// Extracted to module-level constant to avoid re-creation on every render
+// 安全：携带 URL 且需要协议验证的属性
+// 提取为模块级常量以避免每次渲染时重新创建
 export const URL_ATTRS = new Set([
   'href',
   'src',
@@ -38,7 +38,7 @@ export const URL_ATTRS = new Set([
   'srcdoc',
 ]);
 
-// Named entity decoding constants
+// 命名实体解码常量
 export const NAMED_ENTITIES: Record<string, string> = {
   '&colon;': ':',
   '&tab;': '\t',
@@ -188,7 +188,7 @@ export const NAMED_ENTITIES: Record<string, string> = {
   '&gt;': '>',
 };
 
-// Named entity regex (module-level to avoid re-creation)
+// 命名实体正则（模块级以避免重新创建）
 const NAMED_ENTITY_REGEX = new RegExp(
   Object.keys(NAMED_ENTITIES)
     .map((e) => e.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
@@ -196,7 +196,7 @@ const NAMED_ENTITY_REGEX = new RegExp(
   'g',
 );
 
-// Numeric entity regex (module-level to avoid re-creation on every isSafeURL call)
+// 数字实体正则（模块级以避免每次调用 isSafeURL 时重新创建）
 const NUMERIC_ENTITY_REGEX = /&#x?[0-9a-f]+;/gi;
 
 /**
@@ -215,7 +215,7 @@ export function isSafeURL(url: string): boolean {
       const codePoint = match.startsWith('&#x')
         ? parseInt(match.slice(3, -1), 16)
         : parseInt(match.slice(2, -1), 10);
-      // Validate the parsed code point is within the valid Unicode range
+      // 验证解析后的码点是否在有效的 Unicode 范围内
       if (isNaN(codePoint) || codePoint < 0 || codePoint > 0x10ffff) {
         return match;
       }
@@ -256,20 +256,20 @@ export function isSafeURL(url: string): boolean {
  * @returns HTML 属性字符串
  */
 export function renderAttributeToString(key: string, value: unknown): string {
-  // Skip null/undefined
+  // 跳过 null/undefined
   if (isNullish(value)) return '';
 
-  // Skip event handlers
+  // 跳过事件处理器
   if (/^on[A-Z]/.test(key)) return '';
 
-  // Class handling
+  // Class 处理
   if (key === 'class') {
     const classValue = value == null ? '' : String(value);
     if (!classValue) return '';
     return ` class="${escapeHtml(classValue)}"`;
   }
 
-  // Style handling
+  // Style 处理
   if (key === 'style') {
     if (isString(value)) {
       if (!value) return '';
@@ -289,13 +289,13 @@ export function renderAttributeToString(key: string, value: unknown): string {
     return '';
   }
 
-  // Boolean attributes
+  // 布尔属性
   if (isBooleanAttr(key)) {
     if (value === false || value === '') return '';
     return ` ${key}`;
   }
 
-  // Security: block dangerous URL protocols on URL attributes
+  // 安全：阻止 URL 属性上的危险协议
   if (URL_ATTRS.has(key)) {
     if (!isSafeURL(String(value))) {
       if (__DEV__) {
@@ -305,6 +305,6 @@ export function renderAttributeToString(key: string, value: unknown): string {
     }
   }
 
-  // Regular attributes
+  // 常规属性
   return ` ${key}="${escapeHtml(String(value))}"`;
 }

@@ -1,5 +1,5 @@
 // src/suspense.ts
-// Suspense component
+// Suspense 组件
 
 import type { ComponentInternalInstance, ComponentOptions, SetupContext } from './types';
 import { createComponentInstance, setupComponent } from './component';
@@ -10,11 +10,11 @@ import { nextTick } from '@lytjs/common-scheduler';
 import { registerSuspenseLinker } from '@lytjs/vdom';
 
 // ============================================================
-// Register cross-package suspense boundary linker
+// 注册跨包的 suspense boundary 链接器
 // ============================================================
 
-// This links the vdom-layer SuspenseBoundary with the component-layer
-// SuspenseAsyncState so that async state changes can drive DOM switching.
+// 此链接器将 vdom 层的 SuspenseBoundary 与 component 层的
+// SuspenseAsyncState 关联，使异步状态变化可以驱动 DOM 切换。
 let _linkerRegistered = false;
 function ensureLinkerRegistered(): void {
   if (_linkerRegistered) return;
@@ -27,11 +27,11 @@ function ensureLinkerRegistered(): void {
   );
 }
 
-// ==================== Types ====================
+// ==================== 类型定义 ====================
 
 /**
- * Error thrown when a Suspense boundary is aborted.
- * Contains the pendingId for error identification.
+ * Suspense 边界被中止时抛出的错误。
+ * 包含 pendingId 用于错误标识。
  */
 export class SuspenseAbortedError extends Error {
   constructor(public pendingId: number) {
@@ -78,7 +78,7 @@ export interface SuspenseAsyncState {
   domSwitch?: (boundary: SuspenseAsyncState, toFallback: boolean) => void;
 }
 
-// ==================== Suspense Component ====================
+// ==================== Suspense 组件 ====================
 
 export const Suspense: ComponentOptions = {
   name: 'Suspense',
@@ -88,7 +88,7 @@ export const Suspense: ComponentOptions = {
   },
 
   setup(_props: Record<string, unknown>, _ctx: SetupContext) {
-    // Ensure the cross-package linker is registered so vdom can call linkSuspenseBoundary
+    // 确保跨包链接器已注册，以便 vdom 可以调用 linkSuspenseBoundary
     ensureLinkerRegistered();
 
     // __DEV__ mode: validate props types
@@ -134,10 +134,10 @@ export const Suspense: ComponentOptions = {
   },
 };
 
-// ==================== Suspense helpers ====================
+// ==================== Suspense 辅助函数 ====================
 
 /**
- * Create a Suspense component instance.
+ * 创建 Suspense 组件实例。
  */
 export function createSuspenseInstance(
   props: SuspenseProps = {},
@@ -160,7 +160,7 @@ export function createSuspenseInstance(
 }
 
 /**
- * Create a suspense boundary for managing async children.
+ * 创建 suspense boundary 用于管理异步子组件。
  */
 export function createSuspenseBoundary(): SuspenseAsyncState {
   return {
@@ -192,10 +192,10 @@ export function registerAsyncChild(
   boundary.isPending = true;
   boundary.error = null;
 
-  // Track this promise in the set
+  // 在集合中追踪此 Promise
   boundary.pendingPromises.add(promise);
 
-  // Call onPending callbacks only on first pending child
+  // 仅在第一个 pending 子组件时调用 onPending 回调
   if (!wasPending) {
     for (const cb of boundary.onPending) {
       cb();
@@ -215,11 +215,11 @@ export function registerAsyncChild(
     .then((result: unknown) => {
       if (boundary.aborted) return;
       boundary.pendingPromises.delete(promise);
-      // When all promises are resolved, transition to resolved
+      // 当所有 Promise 都解析完成时，转换到 resolved 状态
       if (boundary.pendingPromises.size === 0) {
         boundary.isPending = false;
         boundary.promise = null;
-        // Call onResolve callbacks
+        // 调用 onResolve 回调
         for (const cb of boundary.onResolve) {
           try {
             cb();
@@ -244,11 +244,11 @@ export function registerAsyncChild(
       boundary.pendingPromises.delete(promise);
       const caughtError = err instanceof Error ? err : new Error(String(err));
       boundary.error = caughtError;
-      // When all promises are settled, transition based on error state
+      // 当所有 Promise 都完成时，根据错误状态转换
       if (boundary.pendingPromises.size === 0) {
         boundary.isPending = false;
         boundary.promise = null;
-        // Call onError callbacks (P1-16 fix: was incorrectly calling onPending)
+        // 调用 onError 回调（P1-16 修复：之前错误地调用了 onPending）
         for (const cb of boundary.onError) {
           try {
             cb(caughtError);
@@ -263,7 +263,7 @@ export function registerAsyncChild(
 }
 
 /**
- * Check if a suspense boundary is currently pending.
+ * 检查 suspense boundary 当前是否处于 pending 状态。
  */
 export function isSuspensePending(boundary: SuspenseAsyncState): boolean {
   return boundary.isPending;
@@ -290,7 +290,7 @@ export function linkSuspenseBoundary(
 }
 
 /**
- * Resolve a suspense boundary manually.
+ * 手动解决 suspense boundary。
  *
  * FIX: P1-20 添加语义注释：
  * resolveSuspense 用于手动将 suspense 边界标记为已解决状态。
@@ -315,9 +315,9 @@ export function resolveSuspense(boundary: SuspenseAsyncState): void {
 }
 
 /**
- * Abort a suspense boundary (e.g., on unmount).
- * Rejects all pending promises to prevent memory leaks and allows
- * downstream consumers to handle the abort via .catch().
+ * 中止 suspense boundary（例如在卸载时）。
+ * 拒绝所有 pending 的 Promise 以防止内存泄漏，并允许
+ * 下游消费者通过 .catch() 处理中止。
  *
  * FIX: P1-20 添加语义注释：
  * abortSuspense 用于在组件卸载等场景下中止 suspense 边界。
@@ -331,24 +331,24 @@ export function abortSuspense(boundary: SuspenseAsyncState): void {
   boundary.isPending = false;
   boundary.promise = null;
 
-  // Reject all pending promises to prevent memory leaks.
-  // Since native JavaScript Promises cannot be externally rejected,
-  // we attempt to call an abort method if the promise is a custom thenable.
-  // For native promises, we rely on the aborted flag which causes
-  // .then()/.catch() callbacks in registerAsyncChild to skip side effects.
+  // 拒绝所有 pending 的 Promise 以防止内存泄漏。
+  // 由于原生 JavaScript Promise 无法从外部拒绝，
+  // 如果 Promise 是自定义 thenable，会尝试调用 abort 方法。
+  // 对于原生 Promise，依赖 aborted 标志使
+  // registerAsyncChild 中的 .then()/.catch() 回调跳过副作用。
   if (boundary.pendingPromises.size > 0) {
     // FIX: P2-33 使用实际 pendingId 标识中止的 suspense 边界，
     // 而非硬编码 pendingId=0，便于错误追踪和调试
     const abortError = new SuspenseAbortedError(boundary.pendingPromises.size);
     boundary.pendingPromises.forEach((promise) => {
       try {
-        // If the promise has an abort method (custom thenable), call it
+        // 如果 Promise 有 abort 方法（自定义 thenable），调用它
         const p = promise as unknown as Record<string, unknown>;
         if (typeof p.abort === 'function') {
           p.abort(abortError);
         }
       } catch {
-        // Ignore errors during abort
+        // 忽略中止期间的错误
       }
     });
     boundary.pendingPromises.clear();

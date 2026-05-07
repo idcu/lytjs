@@ -1,7 +1,7 @@
 // src/index.ts
-// @lytjs/component - Main entry point
+// @lytjs/component - 主入口文件
 
-// Core component APIs
+// 核心组件 API
 /** 创建组件实例、设置组件、定义组件等核心 API */
 export {
   createComponentInstance,
@@ -30,7 +30,7 @@ export { emit, normalizeEmitsOptions, isEmitValid } from './emit';
 /** 插槽初始化与规范化 */
 export { initSlots, normalizeSlotValue } from './slots';
 
-// Lifecycle
+// 生命周期
 /** 生命周期钩子注册与调用 */
 export {
   setCurrentInstance,
@@ -104,7 +104,7 @@ export type { TeleportProps } from './teleport';
 export { ErrorBoundary } from './error-boundary';
 export type { ErrorBoundaryProps } from './error-boundary';
 
-// Signal State
+// Signal 状态
 /** Signal State 适配器，使 Signal 可以与组件协作 */
 export { createSignalState, createComputedState } from './signal-state';
 
@@ -123,7 +123,7 @@ export type {
   AsyncComponentState,
 } from './async-component';
 
-// Types
+// 类型定义
 /** 组件相关类型定义 */
 export type {
   ComponentOptions,

@@ -1,63 +1,63 @@
 /**
  * @lytjs/renderer
- * Rendering backend for the LytJS framework
- * Provides DOM, SSR, and Vapor rendering
+ * LytJS 框架的渲染后端
+ * 提供 DOM、SSR 和 Vapor 渲染
  * FIX: P2-10 RENDERER-NEW-03 - 渲染器插件系统
  * FIX: P2-26 懒加载优化 - 大型模块使用动态导入
  */
 
-// Re-export from vdom
+// 从 vdom 重新导出
 /** 创建渲染器 */
 export { createRenderer } from '@lytjs/vdom';
 export type { VNode, RendererOptions } from '@lytjs/vdom';
 
-// ==================== Renderer Plugin System ====================
+// ==================== 渲染器插件系统 ====================
 
 import type { VNode as VNodeType } from '@lytjs/vdom';
 import { warn, error } from '@lytjs/common-error';
 
 /**
- * Renderer plugin interface
- * Plugins can hook into various stages of the rendering lifecycle
+ * 渲染器插件接口
+ * 插件可以挂载到渲染生命周期的各个阶段
  */
 export interface RendererPlugin {
-  /** Plugin name */
+  /** 插件名称 */
   name: string;
 
-  /** Called when plugin is installed */
+  /** 插件安装时调用 */
   install: (context: PluginContext) => void;
 
-  /** Optional: Called before mounting a vnode */
+  /** 可选：在 mount vnode 之前调用 */
   beforeMount?: (vnode: VNodeType) => void;
 
-  /** Optional: Called after mounting a vnode */
+  /** 可选：在 mount vnode 之后调用 */
   afterMount?: (vnode: VNodeType, container: unknown) => void;
 
-  /** Optional: Called before patching a vnode */
+  /** 可选：在 patch vnode 之前调用 */
   beforePatch?: (oldVNode: VNodeType, newVNode: VNodeType) => void;
 
-  /** Optional: Called after patching a vnode */
+  /** 可选：在 patch vnode 之后调用 */
   afterPatch?: (vnode: VNodeType) => void;
 
-  /** Optional: Called before unmounting a vnode */
+  /** 可选：在 unmount vnode 之前调用 */
   beforeUnmount?: (vnode: VNodeType) => void;
 
-  /** Optional: Called after unmounting a vnode */
+  /** 可选：在 unmount vnode 之后调用 */
   afterUnmount?: (vnode: VNodeType) => void;
 }
 
 /**
- * Context passed to plugins during installation
+ * 插件安装时传递的上下文
  */
 export interface PluginContext {
-  /** Register a hook for a specific lifecycle event */
+  /** 为特定的生命周期事件注册钩子 */
   on: (event: LifecycleEvent, handler: HookHandler) => void;
 
-  /** Remove a registered hook */
+  /** 移除已注册的钩子 */
   off: (event: LifecycleEvent, handler: HookHandler) => void;
 }
 
-/** Lifecycle events that plugins can hook into */
+/** 插件可以挂载的生命周期事件 */
 export type LifecycleEvent =
   | 'beforeMount'
   | 'afterMount'
@@ -66,13 +66,13 @@ export type LifecycleEvent =
   | 'beforeUnmount'
   | 'afterUnmount';
 
-/** Hook handler type */
+/** 钩子处理函数类型 */
 export type HookHandler = (...args: unknown[]) => void;
 
-/** Plugin registry */
+/** 插件注册表 */
 const installedPlugins: RendererPlugin[] = [];
 
-/** Hook registry */
+/** 钩子注册表 */
 const hooks: Record<LifecycleEvent, Set<HookHandler>> = {
   beforeMount: new Set(),
   afterMount: new Set(),
@@ -83,12 +83,12 @@ const hooks: Record<LifecycleEvent, Set<HookHandler>> = {
 };
 
 /**
- * Install a renderer plugin.
- * Plugins can extend the renderer's functionality by hooking into lifecycle events.
+ * 安装渲染器插件。
+ * 插件可以通过挂载生命周期事件来扩展渲染器的功能。
  *
  * @example
  * ```ts
- * // Create a plugin
+ * // 创建插件
  * const myPlugin: RendererPlugin = {
  *   name: 'MyPlugin',
  *   install(context) {
@@ -98,7 +98,7 @@ const hooks: Record<LifecycleEvent, Set<HookHandler>> = {
  *   },
  * };
  *
- * // Use the plugin
+ * // 使用插件
  * use(myPlugin);
  * ```
  */
@@ -110,7 +110,7 @@ export function use(plugin: RendererPlugin): void {
     return;
   }
 
-  // Create plugin context
+  // 创建插件上下文
   const context: PluginContext = {
     on: (event, handler) => {
       hooks[event].add(handler);
@@ -120,11 +120,11 @@ export function use(plugin: RendererPlugin): void {
     },
   };
 
-  // Install the plugin
+  // 安装插件
   plugin.install(context);
   installedPlugins.push(plugin);
 
-  // Register plugin's lifecycle hooks if provided
+  // 注册插件的生命周期钩子（如果提供）
   // FIX: DTS build error - 类型断言
   if (plugin.beforeMount) hooks.beforeMount.add(plugin.beforeMount as HookHandler);
   if (plugin.afterMount) hooks.afterMount.add(plugin.afterMount as HookHandler);
@@ -135,21 +135,21 @@ export function use(plugin: RendererPlugin): void {
 }
 
 /**
- * Get all installed plugins
+ * 获取所有已安装的插件
  */
 export function getInstalledPlugins(): readonly RendererPlugin[] {
   return [...installedPlugins];
 }
 
 /**
- * Check if a plugin is installed
+ * 检查插件是否已安装
  */
 export function isPluginInstalled(pluginName: string): boolean {
   return installedPlugins.some((p) => p.name === pluginName);
 }
 
 /**
- * Remove a plugin by name
+ * 按名称移除插件
  */
 export function removePlugin(pluginName: string): boolean {
   const index = installedPlugins.findIndex((p) => p.name === pluginName);
@@ -157,7 +157,7 @@ export function removePlugin(pluginName: string): boolean {
 
   const plugin = installedPlugins[index]!;
 
-  // Remove hooks
+  // 移除钩子
   // FIX: DTS build error - 类型断言
   if (plugin.beforeMount) hooks.beforeMount.delete(plugin.beforeMount as HookHandler);
   if (plugin.afterMount) hooks.afterMount.delete(plugin.afterMount as HookHandler);
@@ -171,8 +171,8 @@ export function removePlugin(pluginName: string): boolean {
 }
 
 /**
- * Internal: Execute hooks for a lifecycle event
- * This is called by the renderer at appropriate lifecycle points
+ * 内部：执行生命周期事件的钩子
+ * 由渲染器在适当的生命周期节点调用
  * FIX: P2-29 数组遍历优化 - 使用 for 循环替代 forEach
  */
 export function executeHooks(event: LifecycleEvent, ...args: unknown[]): void {
@@ -190,11 +190,11 @@ export function executeHooks(event: LifecycleEvent, ...args: unknown[]): void {
   }
 }
 
-// Export types
+// 导出类型
 // FIX: DTS build error - 删除重复的类型导出
 export type { RendererPlugin as Plugin };
 
-// Re-export first render optimization from reactivity
+// 从 reactivity 重新导出首次渲染优化
 /** 首次渲染优化 */
 export {
   withFirstRenderOptimization,
@@ -203,12 +203,12 @@ export {
   resetSkippedTrackingCount,
 } from '@lytjs/reactivity';
 
-// DOM renderer - re-export from @lytjs/adapter-web
+// DOM 渲染器 - 从 @lytjs/adapter-web 重新导出
 /** 创建 DOM 渲染器 */
 export { createDOMRenderer } from '@lytjs/adapter-web';
 export type { DOMRenderer } from '@lytjs/adapter-web';
 
-// DOM property patching - re-export from @lytjs/adapter-web
+// DOM 属性补丁操作 - 从 @lytjs/adapter-web 重新导出
 /** DOM 属性补丁操作 */
 export {
   patchProp,
@@ -226,12 +226,12 @@ export type { ParsedEvent, EventInvoker } from '@lytjs/adapter-web';
 /** 事件名检测 */
 export { isOn } from '@lytjs/common-events';
 
-// Hydration - re-export from @lytjs/adapter-web
+// Hydration - 从 @lytjs/adapter-web 重新导出
 /** 创建水合（hydration）函数 */
 export { createHydrationFunctions } from '@lytjs/adapter-web';
 export type { HydrationRenderer } from '@lytjs/adapter-web';
 
-// Re-export from @lytjs/host-contract
+// 从 @lytjs/host-contract 重新导出
 /** 渲染器宿主抽象类型 */
 export type {
   RendererHost,
@@ -243,12 +243,12 @@ export type {
   HostEventOptions,
 } from '@lytjs/host-contract';
 
-// Re-export from @lytjs/adapter-web
+// 从 @lytjs/adapter-web 重新导出
 /** Web 渲染器宿主实现 */
 export { WebRendererHost, createWebHost, wrapDOMEvent } from '@lytjs/adapter-web';
 
 // FIX: P2-26 懒加载优化 - SSR 相关函数使用动态导入
-// SSR renderer
+// SSR 渲染器
 /** 将组件渲染为字符串（SSR） */
 export async function renderToString(input: { vnode: VNodeType }): Promise<string> {
   const { renderToString: _renderToString } = await import('./ssr/ssr-renderer');
@@ -256,7 +256,7 @@ export async function renderToString(input: { vnode: VNodeType }): Promise<strin
 }
 export type { SSRInput } from './ssr/ssr-renderer';
 
-// SSR streaming
+// SSR 流式渲染
 /** 将 VNode 树流式渲染为 ReadableStream（SSR Streaming） */
 export async function renderToStream(input: { vnode: unknown }, options?: { commentMarkers?: boolean }): Promise<ReadableStream> {
   const { renderToStream: _renderToStream } = await import('./ssr/ssr-stream');
@@ -264,7 +264,7 @@ export async function renderToStream(input: { vnode: unknown }, options?: { comm
 }
 export type { SSRStreamOptions } from './ssr/ssr-stream';
 
-// SSR island architecture
+// SSR Island 架构
 /** Island Architecture 相关函数 */
 import type { ComponentOptions } from './ssr/ssr-island';
 export async function hydrateIsland(el: Element, component: ComponentOptions, props?: Record<string, unknown>): Promise<void> {
@@ -281,7 +281,7 @@ export async function createIslandSSRContent(name: string, props: Record<string,
 }
 export type { ComponentOptions as IslandComponentOptions } from './ssr/ssr-island';
 
-// Signal renderer
+// Signal 渲染器
 /** 创建 Signal 模式渲染器（细粒度 DOM 更新） */
 // FIX: DTS build error - 修复参数数量
 export async function createSignalRenderer(template: string = '', context: Record<string, unknown> = {}) {
@@ -290,7 +290,7 @@ export async function createSignalRenderer(template: string = '', context: Recor
 }
 export type { SignalRenderer } from './signal/signal-renderer';
 
-// Vapor renderer (alias for Signal renderer)
+// Vapor 渲染器（Signal 渲染器的别名）
 /** 创建 Vapor 模式渲染器（Signal 渲染器的别名） */
 // FIX: DTS build error - 修复参数数量
 export async function createVaporRenderer(template: string = '', context: Record<string, unknown> = {}) {
@@ -299,7 +299,7 @@ export async function createVaporRenderer(template: string = '', context: Record
 }
 export type { SignalRenderer as VaporRenderer } from './signal/signal-renderer';
 
-// Vapor app API
+// Vapor 应用 API
 /** 定义 Vapor 模式组件 */
 // FIX: DTS build error - 添加类型断言
 export async function defineVaporComponent(options: unknown) {
@@ -319,7 +319,7 @@ export type {
   PropOptions as VaporPropOptions,
 } from './vapor/vapor-app';
 
-// Component resource cleanup
+// 组件资源清理
 /** 组件资源自动清理：注册事件监听器、effect 订阅、cleanup 钩子，卸载时自动释放 */
 export {
   registerComponentEventListener,
@@ -329,6 +329,6 @@ export {
 } from './unmount';
 export type { ResourceCleanupRenderer } from './unmount';
 
-// Utilities
+// 工具函数
 /** HTML 转义、布尔属性判断等工具函数 */
 export { escapeHtml, isBooleanAttr, isVoidElement } from './utils';

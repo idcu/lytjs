@@ -26,13 +26,15 @@ export default defineConfig({
       {
         text: '子仓库',
         items: [
-          { text: 'common', link: '/lytjs/api/' },
+          { text: 'core', link: '/lytjs/api/core' },
           { text: 'reactivity', link: '/lytjs/api/reactivity' },
-          { text: 'vdom', link: '/lytjs/api/' },
           { text: 'compiler', link: '/lytjs/api/compiler' },
           { text: 'renderer', link: '/lytjs/api/renderer' },
           { text: 'component', link: '/lytjs/api/component' },
-          { text: 'core', link: '/lytjs/api/core' },
+          { text: 'vdom', link: '/lytjs/api/' },
+          { text: 'adapter-web', link: '/lytjs/api/' },
+          { text: 'web', link: '/lytjs/api/' },
+          { text: 'common', link: '/lytjs/api/' },
         ],
       },
       {
@@ -115,7 +117,7 @@ export default defineConfig({
           text: '贡献',
           items: [
             { text: '贡献指南', link: '/lytjs/guide/contributing' },
-            // TODO: 架构设计 (architecture.md)
+            { text: '架构设计', link: '/lytjs/guide/architecture' },
             // TODO: 编码规范 (coding-standards.md)
           ],
         },

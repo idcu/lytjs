@@ -18,6 +18,24 @@ LytJS 框架的 API 参考文档，按包分类组织。
 |------|------|
 | [独立构建变体](./core-variants) | `@lytjs/core-vnode` 和 `@lytjs/core-signal` 的 API 参考和迁移指南 |
 
+## 基础设施包
+
+| 包名 | 说明 |
+|------|------|
+| `@lytjs/shared-types` | 共享类型定义（VNode、组件、渲染器、App 上下文等） |
+| `@lytjs/host-contract` | 跨平台渲染接口定义（Host Contract） |
+| `@lytjs/common-*` | 30 个工具子包（constants、is、string、error、dom、events 等） |
+
+## 平台与适配包
+
+| 包名 | 说明 |
+|------|------|
+| `@lytjs/adapter-web` | Web 平台适配器（DOM 渲染器、事件包装、属性补丁、水合支持） |
+| `@lytjs/dom-runtime` | DOM 运行时工具（Signal 模式下的 DOM 操作 API） |
+| `@lytjs/dom` | DOM 平台封装（Web Components 支持） |
+| `@lytjs/vdom` | 虚拟 DOM 和 diff 算法（VNode、PatchFlags、Block Tree） |
+| `@lytjs/web` | Web 平台工具（CSS 变量、ResizeObserver、Web Components） |
+
 ## 快速导航
 
 ### 响应式 API

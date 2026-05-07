@@ -1,5 +1,5 @@
 // src/transition.ts
-// Transition component definition
+// Transition 组件定义
 //
 // 泛型化重构：TransitionComponentProps 中的回调类型从 Element 改为泛型 HE。
 // 保留 TransitionComponentPropsLegacy 类型别名以确保向后兼容。

@@ -1,5 +1,5 @@
 // src/component-inject.ts
-// Provide/inject dependency injection system
+// Provide/inject 依赖注入系统
 
 import { hasOwn } from '@lytjs/common-is';
 import { getCurrentInstance } from './lifecycle';
@@ -33,18 +33,18 @@ export interface ProvideOptions<T = unknown> {
  * 支持更精确的类型推断
  */
 export interface InjectOptions<T = unknown> {
-  /** If true, treat defaultValue as a factory function that will be called to produce the default value */
+  /** 如果为 true，将 defaultValue 视为工厂函数，调用它来生成默认值 */
   factory?: boolean;
-  /** Look up the value from a specific ancestor key instead of the injected key */
+  /** 从特定的祖先 key 查找值，而非注入的 key */
   from?: InjectionKey<T> | string | symbol;
-  /** If true, only look up the value from the current instance's own provides (no ancestor lookup) */
+  /** 如果为 true，仅从当前实例自身的 provides 中查找值（不向上查找祖先） */
   local?: boolean;
 }
 
 // ==================== provide / inject ====================
 
 /**
- * Provide a value to descendant components.
+ * 向后代组件提供值。
  * FIX: P1-9 COMPONENT-NEW-03 - 改进类型定义，支持 InjectionKey 类型推断
  */
 export function provide<T>(key: InjectionKey<T> | string | symbol, value: T): void {
@@ -70,7 +70,7 @@ export function provide<T>(key: InjectionKey<T> | string | symbol, value: T): vo
 }
 
 /**
- * Inject a value from ancestor components.
+ * 从祖先组件注入值。
  * FIX: P1-9 COMPONENT-NEW-03 - 改进类型定义，支持更精确的类型推断
  *
  * Supported forms:
@@ -88,16 +88,16 @@ export function inject<T>(
 ): T | undefined {
   const instance = getCurrentInstance();
   if (!instance) {
-    // No instance context - return default
+    // 无实例上下文 - 返回默认值
     return resolveDefault(defaultValue, options);
   }
 
   const lookupKey = options?.from ?? key;
 
   if (options?.local) {
-    // local mode: only check current instance's own provides (not inherited from parent prototype)
-    // If instance.provides is the same reference as parent.provides, the instance
-    // has not called provide() yet, so there are no own provides to check.
+    // local 模式：仅检查当前实例自身的 provides（不从父级原型继承）
+    // 如果 instance.provides 与 parent.provides 是同一引用，说明实例
+    // 尚未调用 provide()，因此没有自身的 provides 可检查。
     const provides = instance.provides as Record<string | symbol, unknown>;
     const hasOwnProvides = instance.parent
       ? provides !== instance.parent.provides
@@ -108,7 +108,7 @@ export function inject<T>(
     return resolveDefault(defaultValue, options);
   }
 
-  // Walk up the parent chain
+  // 沿父组件链向上查找
   let current = instance.parent;
   while (current) {
     const provides = current.provides as Record<string | symbol, unknown>;
@@ -122,7 +122,7 @@ export function inject<T>(
 }
 
 /**
- * Resolve the default value for inject, handling factory functions.
+ * 解析 inject 的默认值，处理工厂函数。
  */
 function resolveDefault<T>(defaultValue: T | (() => T) | undefined, options?: InjectOptions): T | undefined {
   if (defaultValue === undefined) return undefined;

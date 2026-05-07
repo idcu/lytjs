@@ -1,5 +1,5 @@
 // src/codegen.ts
-// Code generator - generates render function code from AST
+// 代码生成器 - 从 AST 生成 render 函数代码
 
 import { NodeTypes } from './constants';
 import { describePatchFlag } from '@lytjs/common-vnode';
@@ -27,7 +27,7 @@ import { helperNameMap } from './constants';
 import { SourceMapGenerator } from './source-map';
 
 // ============================================================
-// Main generate function
+// 主生成函数
 // ============================================================
 
 // FIX: P1-3 COMPILER-NEW-04 - 死代码检测：检查是否为空语句序列
@@ -51,10 +51,10 @@ function isDeadCode(node: JSChildNode | TemplateChildNode | undefined): boolean 
 export function generate(ast: RootNode, options: CodegenOptions = {}): CodegenResult {
   const { context, codeParts, sourceMapGen } = createCodegenContext(ast, options);
 
-  // Generate helper imports (preamble)
+  // 生成辅助函数导入（前导代码）
   const preamble = genHelperImports(ast.helpers, options.runtimeModuleName);
 
-  // Generate hoisted variable declarations
+  // 生成提升的变量声明
   if (ast.hoists && ast.hoists.length > 0) {
     for (let i = 0; i < ast.hoists.length; i++) {
       const hoistedNode = ast.hoists[i];
@@ -69,7 +69,7 @@ export function generate(ast: RootNode, options: CodegenOptions = {}): CodegenRe
     context.push(`\n`);
   }
 
-  // Generate render function
+  // 生成 render 函数
   // FIX: P2-23 生成代码可读性优化：添加函数注释
   context.push(`// Render function\n`);
   context.push(`function render(_ctx, _cache) {\n`);
@@ -96,7 +96,7 @@ export function generate(ast: RootNode, options: CodegenOptions = {}): CodegenRe
 }
 
 // ============================================================
-// Codegen Context
+// 代码生成上下文
 // ============================================================
 
 function createCodegenContext(
@@ -113,7 +113,7 @@ function createCodegenContext(
   // 现在只使用 context.indentLevel 作为唯一的缩进级别来源。
   const codeParts: string[] = [];
 
-  // Source map support
+  // Source map 支持
   const sourceMapGen: SourceMapGenerator | null = options.sourceMap
     ? new SourceMapGenerator(options.filename ?? 'template.html')
     : null;
@@ -122,7 +122,7 @@ function createCodegenContext(
     sourceMapGen.addSource(options.filename ?? 'template.html', ast.loc.source);
   }
 
-  // Track current generated position for source mapping
+  // 跟踪当前生成位置用于 source mapping
   let currentLine = 0;
   let currentColumn = 0;
 
@@ -143,7 +143,7 @@ function createCodegenContext(
     push(c: string, node?: BaseNode): void {
       codeParts.push(c);
 
-      // Update generated position tracking
+      // 更新生成位置跟踪
       for (let i = 0; i < c.length; i++) {
         if (c[i] === '\n') {
           currentLine++;
@@ -153,7 +153,7 @@ function createCodegenContext(
         }
       }
 
-      // Add source mapping if source map is enabled and node has location info
+      // 如果启用了 source map 且节点有位置信息，则添加 source mapping
       if (sourceMapGen && node?.loc?.start) {
         sourceMapGen.addMapping(
           node.loc.start.line - 1, // Convert to 0-based
@@ -191,7 +191,7 @@ function createCodegenContext(
 }
 
 // ============================================================
-// Generate helper imports
+// 生成辅助函数导入
 // ============================================================
 
 function genHelperImports(helpers: string[], runtimeModuleName?: string): string {
@@ -206,7 +206,7 @@ function genHelperImports(helpers: string[], runtimeModuleName?: string): string
 }
 
 // ============================================================
-// Generate node
+// 生成节点
 // ============================================================
 
 function genNode(node: JSChildNode | TemplateChildNode, context: CodegenContext): void {
@@ -245,8 +245,8 @@ function genNode(node: JSChildNode | TemplateChildNode, context: CodegenContext)
       genElement(node as ElementNode, context);
       break;
     default: {
-      // Fallback: exhaustive check for unknown node types.
-      // This branch should never be reached if all NodeTypes are handled above.
+      // 回退：对未知节点类型进行穷举检查。
+      // 如果上面处理了所有 NodeTypes，此分支不应被执行。
       const nodeType = (node as { type?: string | number }).type;
       throw new Error(`[LytJS compiler] Codegen: unknown node type "${nodeType ?? 'unknown'}"`);
     }
@@ -254,7 +254,7 @@ function genNode(node: JSChildNode | TemplateChildNode, context: CodegenContext)
 }
 
 // ============================================================
-// Generate VNodeCall
+// 生成 VNodeCall
 // ============================================================
 
 function genVNodeCall(node: VNodeCall, context: CodegenContext): void {
@@ -272,7 +272,7 @@ function genVNodeCall(node: VNodeCall, context: CodegenContext): void {
     context.push(`${context.helper('CREATE_VNODE')}(`, node);
   }
 
-  // Tag
+  // 标签
   genNodeExpr(tag, context);
   context.push(', ', node);
 
@@ -315,7 +315,7 @@ function genVNodeCall(node: VNodeCall, context: CodegenContext): void {
 }
 
 // ============================================================
-// Generate CallExpression
+// 生成 CallExpression
 // ============================================================
 
 function genCallExpression(node: JSCallExpression, context: CodegenContext): void {
@@ -343,7 +343,7 @@ function genCallExpression(node: JSCallExpression, context: CodegenContext): voi
 }
 
 // ============================================================
-// Generate ObjectExpression
+// 生成 ObjectExpression
 // ============================================================
 
 function genObjectExpression(node: JSObjectExpression, context: CodegenContext): void {
@@ -369,7 +369,7 @@ function genObjectExpression(node: JSObjectExpression, context: CodegenContext):
 }
 
 // ============================================================
-// Generate Property
+// 生成 Property
 // ============================================================
 
 function genProperty(node: JSProperty, context: CodegenContext): void {
@@ -386,7 +386,7 @@ function genProperty(node: JSProperty, context: CodegenContext): void {
 }
 
 // ============================================================
-// Generate ArrayExpression
+// 生成 ArrayExpression
 // ============================================================
 
 function genArrayExpression(node: JSArrayExpression, context: CodegenContext): void {
@@ -405,7 +405,7 @@ function genArrayExpression(node: JSArrayExpression, context: CodegenContext): v
 }
 
 // ============================================================
-// Generate ConditionalExpression
+// 生成 ConditionalExpression
 // ============================================================
 
 function genConditional(node: JSConditionalExpression, context: CodegenContext): void {
@@ -443,7 +443,7 @@ function genConditional(node: JSConditionalExpression, context: CodegenContext):
 }
 
 // ============================================================
-// Generate Text
+// 生成 Text
 // ============================================================
 
 function genText(node: TextNode, context: CodegenContext): void {
@@ -451,7 +451,7 @@ function genText(node: TextNode, context: CodegenContext): void {
 }
 
 // ============================================================
-// Generate Interpolation
+// 生成 Interpolation
 // ============================================================
 
 function genInterpolation(node: InterpolationNode, context: CodegenContext): void {
@@ -461,7 +461,7 @@ function genInterpolation(node: InterpolationNode, context: CodegenContext): voi
 }
 
 // ============================================================
-// Generate Expression
+// 生成 Expression
 // ============================================================
 
 function genExpression(node: SimpleExpressionNode, context: CodegenContext): void {
@@ -469,7 +469,7 @@ function genExpression(node: SimpleExpressionNode, context: CodegenContext): voi
 }
 
 // ============================================================
-// Generate CompoundExpression
+// 生成 CompoundExpression
 // ============================================================
 
 function genCompoundExpression(node: CompoundExpressionNode, context: CodegenContext): void {
@@ -489,7 +489,7 @@ function genCompoundExpression(node: CompoundExpressionNode, context: CodegenCon
 }
 
 // ============================================================
-// Generate Element
+// 生成 Element
 // ============================================================
 
 function genElement(node: ElementNode, context: CodegenContext): void {

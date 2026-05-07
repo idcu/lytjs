@@ -29,7 +29,7 @@ import type {
 } from './types';
 
 // ============================================================
-// Module-level constants
+// 模块级常量
 // ============================================================
 
 const VOID_ELEMENTS = new Set([
@@ -38,7 +38,7 @@ const VOID_ELEMENTS = new Set([
 ]);
 
 // ============================================================
-// Helper functions
+// 辅助函数
 // ============================================================
 
 // FIX: P2-1 消除 escapeHtml 函数重复定义
@@ -47,17 +47,17 @@ const VOID_ELEMENTS = new Set([
 export const escapeHtml = escapeHTML;
 
 // ============================================================
-// Main SSR generate function
+// 主 SSR 生成函数
 // ============================================================
 
 export function generateSSR(ast: RootNode, _options: CodegenOptions = {}): CodegenResult {
   const parts: string[] = [];
 
-  // Generate the render function
+  // 生成 render 函数
   parts.push(`function render(_ctx) {\n`);
   parts.push(`  return renderToString(`);
 
-  // Generate children as string concatenation
+  // 将 children 生成为字符串拼接
   const body = genSSRChildren(ast.children);
   parts.push(body);
 
@@ -74,7 +74,7 @@ export function generateSSR(ast: RootNode, _options: CodegenOptions = {}): Codeg
   parts.push(`    .replace(/'/g, '&#39;');\n`);
   parts.push(`}\n\n`);
 
-  // Helper function
+  // 辅助函数
   // NOTE: renderToString is intentionally inlined into each compilation result
   // to ensure every compiled output is self-contained and independently executable,
   // without relying on external runtime imports. This trades a small amount of
@@ -116,7 +116,7 @@ export function generateSSR(ast: RootNode, _options: CodegenOptions = {}): Codeg
 }
 
 // ============================================================
-// Generate SSR children
+// 生成 SSR children
 // ============================================================
 
 function genSSRChildren(children: TemplateChildNode[]): string {
@@ -156,7 +156,7 @@ function genSSRChildren(children: TemplateChildNode[]): string {
       }
 
       case NodeTypes.COMMENT:
-        // Comments are omitted in SSR
+        // 注释在 SSR 中被省略
         break;
 
       case NodeTypes.JS_CONDITIONAL_EXPRESSION: {
@@ -212,19 +212,19 @@ function genSSRChildren(children: TemplateChildNode[]): string {
 }
 
 // ============================================================
-// Generate SSR element
+// 生成 SSR 元素
 // ============================================================
 
 function genSSRElement(element: ElementNode): string {
   const tag = element.tag;
   const parts: string[] = [];
 
-  // Start tag
+  // 开始标签
   parts.push(`'<${tag}'`);
 
-  // Process props (attributes and SSR-relevant directives)
+  // 处理 props（属性和 SSR 相关指令）
   const propParts: string[] = [];
-  // Collect v-html/v-text content to be rendered in the children area (not attributes)
+  // 收集 v-html/v-text 内容以便在 children 区域渲染（而非属性）
   let directiveChildren: string | undefined;
 
   for (const prop of element.props) {
@@ -233,8 +233,8 @@ function genSSRElement(element: ElementNode): string {
       const value = prop.value ? escapeHtml(prop.value.content) : '';
       propParts.push(`' ${name}="${value}"'`);
     } else if (prop.type === NodeTypes.DIRECTIVE) {
-      // In SSR mode, only process bind directives (v-bind)
-      // Skip v-on, v-model, v-show
+      // 在 SSR 模式下，只处理 bind 指令（v-bind）
+      // 跳过 v-on、v-model、v-show
       if (prop.name === 'bind') {
         const argContent = prop.arg
           ? (prop.arg as SimpleExpressionNode).content
@@ -273,7 +273,7 @@ function genSSRElement(element: ElementNode): string {
     parts.push(' + ' + propParts.join(' + '));
   }
 
-  // Self-closing check
+  // 自闭合检查
   if (VOID_ELEMENTS.has(tag)) {
     parts.push(" + '>'");
     return `(${parts.join('')})`;
@@ -281,7 +281,7 @@ function genSSRElement(element: ElementNode): string {
 
   parts.push(" + '>'");
 
-  // Children: directive children (v-html/v-text) take precedence, otherwise render element children
+  // Children：指令 children（v-html/v-text）优先，否则渲染元素 children
   if (directiveChildren) {
     parts.push(' + ' + directiveChildren);
   } else if (element.children.length > 0) {
@@ -289,14 +289,14 @@ function genSSRElement(element: ElementNode): string {
     parts.push(' + ' + childrenStr);
   }
 
-  // End tag
+  // 结束标签
   parts.push(` + '</${tag}>'`);
 
   return `(${parts.join('')})`;
 }
 
 // ============================================================
-// Generate SSR conditional expression
+// 生成 SSR 条件表达式
 // ============================================================
 
 function genSSRConditional(cond: JSConditionalExpression): string {
@@ -342,7 +342,7 @@ function genSSRBranch(
 }
 
 // ============================================================
-// Generate SSR expression
+// 生成 SSR 表达式
 // ============================================================
 
 function genSSRExpr(expr: JSChildNode | string): string {
@@ -354,7 +354,7 @@ function genSSRExpr(expr: JSChildNode | string): string {
 }
 
 // ============================================================
-// Generate SSR VNodeCall
+// 生成 SSR VNodeCall
 // ============================================================
 
 function genSSRVNodeCall(vnode: VNodeCall): string {
@@ -370,11 +370,11 @@ function genSSRVNodeCall(vnode: VNodeCall): string {
           prop.key.type === NodeTypes.SIMPLE_EXPRESSION
             ? (prop.key as SimpleExpressionNode).content.replace(/"/g, '')
             : String(prop.key);
-        // Skip event handlers (on*)
+        // 跳过事件处理器（on*）
         if (key.startsWith('on') && key.length > 2 && key[2] === key[2]!.toUpperCase()) {
           continue;
         }
-        // Skip style (v-show generated)
+        // 跳过 style（v-show 生成的）
         if (key === 'style') {
           continue;
         }
@@ -413,13 +413,13 @@ function genSSRVNodeCall(vnode: VNodeCall): string {
 }
 
 // ============================================================
-// Generate SSR call expression
+// 生成 SSR 调用表达式
 // ============================================================
 
 function genSSRCallExpression(call: JSCallExpression): string {
   const callee = typeof call.callee === 'string' ? call.callee : String(call.callee);
 
-  // Handle renderList
+  // 处理 renderList
   if (callee === 'renderList' || callee === 'RENDER_LIST') {
     const args = call.arguments;
     if (args.length >= 2) {
@@ -431,7 +431,7 @@ function genSSRCallExpression(call: JSCallExpression): string {
             ? (firstArg as SimpleExpressionNode).content
             : '[]';
       const secondArg = args[1];
-      // The second argument is a CompoundExpressionNode representing an arrow function:
+      // 第二个参数是表示箭头函数的 CompoundExpressionNode：
       // children: ['(item, index) => { ', ...arrowBody, ' }']
       let arrowParams = 'item';
       let arrowBodyStr = "''";
@@ -443,15 +443,15 @@ function genSSRCallExpression(call: JSCallExpression): string {
       ) {
         const compound = secondArg as CompoundExpressionNode;
         const children = compound.children;
-        // Extract arrow function parameters from the first child string
+        // 从第一个子节点字符串中提取箭头函数参数
         const firstChild = children[0];
         if (typeof firstChild === 'string') {
-          // Use a balanced-paren extraction to handle nested braces in destructuring
+          // 使用平衡括号提取来处理解构中的嵌套花括号
           const arrowStart = firstChild.indexOf('=>');
           if (arrowStart !== -1) {
             const parenStart = firstChild.indexOf('(');
             if (parenStart !== -1 && parenStart < arrowStart) {
-              // Find the matching closing paren, accounting for nested parens
+              // 查找匹配的右括号，考虑嵌套括号
               let depth = 0;
               let parenEnd = -1;
               for (let i = parenStart; i < arrowStart; i++) {

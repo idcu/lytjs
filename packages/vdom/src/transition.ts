@@ -1,7 +1,7 @@
 /**
  * @lytjs/vdom - transition
- * Vue 3 style Transition component support
- * Provides CSS/JS transition hooks for enter, leave, and appear animations
+ * Vue 3 风格 Transition 组件支持
+ * 提供 CSS/JS transition 钩子用于 enter、leave 和 appear 动画
  *
  * 泛型化重构：所有函数均支持通过 RendererHost<HN, HE> 接口进行平台无关调用。
  * 当 host 参数为 undefined 时，回退到直接 DOM 操作（向后兼容）。
@@ -45,22 +45,22 @@ export interface TransitionProps<HE = unknown> {
 export type LegacyTransitionProps = TransitionProps<Element>;
 
 // ============================================================
-// Internal transition state
+// 内部 transition 状态
 // ============================================================
 
 export interface TransitionState {
-  /** Whether a transition is currently in progress */
+  /** transition 是否正在进行 */
   isLeaving: boolean;
-  /** Whether the element has been inserted into the DOM */
+  /** 元素是否已插入 DOM */
   isInserted: boolean;
-  /** Pending leave callback (for mode: out-in) */
+  /** 待执行的 leave 回调（用于 mode: out-in） */
   pendingLeaveCallback: (() => void) | null;
-  /** Pending enter callback (for mode: in-out) */
+  /** 待执行的 enter 回调（用于 mode: in-out） */
   pendingEnterCallback: (() => void) | null;
 }
 
 // ============================================================
-// Internal: transition cleanup WeakMap
+// 内部：transition 清理 WeakMap
 // ============================================================
 
 // FIX: P2-18 使用复合 key 机制避免同一元素上不同过渡的 cleanup 冲突。
@@ -70,7 +70,7 @@ const transitionCleanupMap = new Map<symbol, () => void>();
 const elementCleanupKeys = new WeakMap<object, Set<symbol>>();
 
 // ============================================================
-// Global transition prefix configuration
+// 全局 transition 前缀配置
 // ============================================================
 
 // FIX: P0-3 将 globalTransitionPrefix 和 setTransitionPrefix 移到文件顶部（模块顶层）
@@ -86,7 +86,7 @@ export function setTransitionPrefix(prefix: string): void {
 // ============================================================
 
 /**
- * Get a CSS property value as an array of strings (handles comma-separated values).
+ * 获取 CSS 属性值为字符串数组（处理逗号分隔的值）。
  */
 function getStylePropAsArray(styles: CSSStyleDeclaration, prop: string): string[] {
   const value = styles.getPropertyValue(prop);
@@ -131,7 +131,7 @@ export function getTransitionInfoDOM(el: Element, _type: 'enter' | 'leave'): Tra
 }
 
 // ============================================================
-// Resolve transition class names
+// 解析 transition 类名
 // ============================================================
 
 function resolveTransitionClasses<HE>(
@@ -157,12 +157,12 @@ function resolveTransitionClasses<HE>(
 }
 
 // ============================================================
-// Helper: nextFrame
+// 辅助函数：nextFrame
 // ============================================================
 
 /**
- * Schedule a callback to run on the next animation frame.
- * Uses double rAF to ensure the browser has had a chance to paint.
+ * 调度回调在下一个动画帧运行。
+ * 使用双重 rAF 确保浏览器有机会绘制。
  *
  * 当传入 host 时，通过 host.nextFrame 执行（平台无关）。
  * 当不传 host 时，直接使用 requestAnimationFrame（DOM 回退）。
@@ -191,11 +191,11 @@ export function nextFrame<HN, HE extends HN>(
 }
 
 // ============================================================
-// Helper: addTransitionClass / removeTransitionClass
+// 辅助函数：addTransitionClass / removeTransitionClass
 // ============================================================
 
 /**
- * Add a CSS class to an element for transition purposes.
+ * 为元素添加 CSS 类用于 transition。
  *
  * @param hostOrEl - RendererHost 实例或 DOM Element（向后兼容）
  * @param elOrCls - 当第一个参数为 host 时，此为元素；否则为 CSS 类名
@@ -222,7 +222,7 @@ export function addTransitionClass<HN, HE extends HN>(
 }
 
 /**
- * Remove a CSS class from an element for transition purposes.
+ * 从元素移除 CSS 类用于 transition。
  *
  * @param hostOrEl - RendererHost 实例或 DOM Element（向后兼容）
  * @param elOrCls - 当第一个参数为 host 时，此为元素；否则为 CSS 类名
@@ -249,12 +249,12 @@ export function removeTransitionClass<HN, HE extends HN>(
 }
 
 // ============================================================
-// Helper: getTransitionInfo
+// 辅助函数：getTransitionInfo
 // ============================================================
 
 /**
- * Get transition duration information from an element's computed styles.
- * Checks both CSS transitions and animations.
+ * 从元素的计算样式获取 transition 持续时间信息。
+ * 同时检查 CSS transition 和 animation。
  *
  * @param hostOrEl - RendererHost 实例或 DOM Element（向后兼容）
  * @param elOrType - 当第一个参数为 host 时，此为元素；否则为过渡类型
@@ -282,11 +282,11 @@ export function getTransitionInfo<HN, HE extends HN>(
 }
 
 // ============================================================
-// Helper: hasCSSTransition
+// 辅助函数：hasCSSTransition
 // ============================================================
 
 /**
- * Check if an element has a CSS transition or animation defined
+ * 检查元素是否定义了 CSS transition 或 animation
  * for the given transition name and type (enter/leave).
  *
  * @param hostOrEl - RendererHost 实例或 DOM Element（向后兼容）
@@ -366,8 +366,8 @@ export function hasCSSTransition<HN, HE extends HN>(
 // ============================================================
 
 /**
- * Perform an enter transition on the given element.
- * Supports both CSS transitions and JS hooks.
+ * 在给定元素上执行 enter transition。
+ * 同时支持 CSS transition 和 JS 钩子。
  *
  * @param hostOrEl - RendererHost 实例或 DOM Element（向后兼容）
  * @param elOrProps - 当第一个参数为 host 时，此为元素；否则为过渡属性
@@ -499,8 +499,8 @@ export function performEnterTransition<HN, HE extends HN>(
 // ============================================================
 
 /**
- * Perform a leave transition on the given element.
- * Supports both CSS transitions and JS hooks.
+ * 在给定元素上执行 leave transition。
+ * 同时支持 CSS transition 和 JS 钩子。
  *
  * @param hostOrEl - RendererHost 实例或 DOM Element（向后兼容）
  * @param elOrProps - 当第一个参数为 host 时，此为元素；否则为过渡属性
@@ -629,12 +629,12 @@ export function performLeaveTransition<HN, HE extends HN>(
 }
 
 // ============================================================
-// Wait for transition/animation end (泛型版本)
+// 等待 transition/animation 结束（泛型版本）
 // ============================================================
 
 /**
- * Wait for CSS transitionend or animationend events on an element.
- * Falls back to a timeout if no events are detected.
+ * 等待元素上的 CSS transitionend 或 animationend 事件。
+ * 如果未检测到事件则回退到超时。
  */
 function waitForTransitionEnd<HN, HE extends HN>(
   host: RendererHost<HN, HE>,
@@ -769,11 +769,11 @@ export function waitForTransitionEndDOM(
 }
 
 // ============================================================
-// Cancel transition
+// 取消 transition
 // ============================================================
 
 /**
- * Cancel any ongoing transition on the given element.
+ * 取消给定元素上正在进行的 transition。
  *
  * @param hostOrEl - RendererHost 实例或 DOM Element（向后兼容）
  * @param el - 当第一个参数为 host 时，此为宿主元素
@@ -808,11 +808,11 @@ export function cancelTransition<HN, HE extends HN>(
 }
 
 // ============================================================
-// Create transition state
+// 创建 transition 状态
 // ============================================================
 
 /**
- * Create a new transition state object for tracking transition lifecycle.
+ * 创建新的 transition 状态对象用于跟踪 transition 生命周期。
  */
 export function createTransitionState(): TransitionState {
   return {

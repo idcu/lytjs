@@ -1,5 +1,5 @@
 // src/error-boundary.ts
-// ErrorBoundary component for catching and handling errors in child components
+// ErrorBoundary 组件，用于捕获和处理子组件中的错误
 
 import type { ComponentOptions, RenderFunction } from './types';
 import type { VNode as VNodeType } from '@lytjs/vdom';
@@ -113,7 +113,7 @@ export const ErrorBoundary: ComponentOptions = {
 
     const render: RenderFunction = (ctx): VNode => {
       if (hasError.value) {
-        // Error state: render fallback slot if provided, otherwise render default error message
+        // 错误状态：如果提供了 fallback 插槽则渲染，否则渲染默认错误信息
         const fallbackSlot = ctx.$slots.fallback;
         if (fallbackSlot) {
           const result = fallbackSlot({ error: error.value });
@@ -122,23 +122,23 @@ export const ErrorBoundary: ComponentOptions = {
             return result as VNode;
           }
           if (result.length > 0) {
-            // Use Fragment to wrap multiple root nodes from slot
+            // 使用 Fragment 包装插槽中的多个根节点
             if (result.length === 1) {
               return result[0] as VNode;
             }
             return createVNode(Fragment, null, result as VNode[]);
           }
         }
-        // Default error UI
+        // 默认错误 UI
         return createVNode(Text, null, error.value ? `Error: ${error.value.message}` : 'An error occurred');
       }
 
-      // Normal state: render default slot (children)
+      // 正常状态：渲染默认插槽（子组件）
       const defaultSlot = ctx.$slots.default;
       if (defaultSlot) {
         const result = defaultSlot();
         if (Array.isArray(result) && result.length > 0) {
-          // Use Fragment to wrap multiple root nodes from slot
+          // 使用 Fragment 包装插槽中的多个根节点
           if (result.length === 1) {
             return result[0] as VNode;
           }

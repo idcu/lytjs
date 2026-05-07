@@ -1,6 +1,6 @@
 /**
- * @lytjs/renderer - SSR Renderer
- * Server-side rendering to string
+ * @lytjs/renderer - SSR 渲染器
+ * 服务端渲染为字符串
  * FIX: P2-36 使用共享工具函数
  */
 
@@ -12,7 +12,7 @@ import { isValidHTMLElementTag, renderAttributeToString } from './ssr-utils';
 import { warn } from '@lytjs/common-error';
 
 // ============================================================
-// renderToString - main entry
+// renderToString - 主入口
 // ============================================================
 
 export interface SSRInput {
@@ -20,12 +20,11 @@ export interface SSRInput {
 }
 
 /**
- * Render a VNode to an HTML string.
+ * 将 VNode 渲染为 HTML 字符串。
  *
- * Returns a Promise for future Suspense/async component support.
- * When components contain async sub-components (e.g. Suspense boundaries),
- * the rendering process needs to wait for async data loading before
- * outputting HTML.
+ * 返回 Promise 以支持未来的 Suspense/异步组件。
+ * 当组件包含异步子组件（如 Suspense 边界）时，
+ * 渲染过程需要等待异步数据加载完成后才能输出 HTML。
  */
 export function renderToString(input: SSRInput): Promise<string> {
   return Promise.resolve(renderVNodeToString(input.vnode));
@@ -38,28 +37,28 @@ export function renderToString(input: SSRInput): Promise<string> {
 function renderVNodeToString(vnode: VNode): string {
   const { type, shapeFlag, children } = vnode;
 
-  // Handle Fragment
+  // 处理 Fragment
   if (type === Fragment) {
     return renderFragmentToString(vnode);
   }
 
-  // Handle Text
+  // 处理 Text
   if (type === Text) {
     const text = isFunction(children) ? '' : String(children ?? '');
     return escapeHtml(text);
   }
 
-  // Handle Comment
+  // 处理 Comment
   if (type === Comment) {
     const text = isFunction(children) ? '' : String(children ?? '');
     // 转义 <!-- 和 --> 防止注释注入导致 HTML 结构破坏
-    // Sanitize comment delimiters first, then double-dash
+    // 先清理注释分隔符，再处理双连字符
     let safe = text.replace(/<!--/g, '&lt;!--').replace(/-->/g, '--&gt;');
     safe = safe.replace(/--/g, '- -');
     return `<!--${safe}-->`;
   }
 
-  // Handle Element
+  // 处理 Element
   if (shapeFlag & ShapeFlags.ELEMENT) {
     return renderElementToString(vnode);
   }
@@ -96,16 +95,16 @@ function renderElementToString(vnode: VNode): string {
   const props = vnode.props ?? {};
   const { shapeFlag, children } = vnode;
 
-  // Build opening tag with attributes
+  // 构建带属性的开始标签
   let html = `<${tag}`;
 
-  // Render props as attributes
+  // 将 props 渲染为属性
   for (const key in props) {
     if (key === 'key' || key === 'ref') continue;
     html += renderAttributeToString(key, props[key]);
   }
 
-  // Self-closing elements
+  // 自闭合元素
   if (isVoidElement(tag)) {
     html += ' />';
     return html;
@@ -113,7 +112,7 @@ function renderElementToString(vnode: VNode): string {
 
   html += '>';
 
-  // Render children
+  // 渲染子节点
   if (shapeFlag & ShapeFlags.TEXT_CHILDREN) {
     const text = isFunction(children) ? '' : String(children ?? '');
     html += escapeHtml(text);

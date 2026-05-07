@@ -1,5 +1,5 @@
 // src/slots.ts
-// Slot handling
+// 插槽处理
 
 import { isFunction, isArray, isObject, isNullish } from '@lytjs/common-is';
 import { warn } from '@lytjs/common-error';
@@ -7,11 +7,11 @@ import type { VNode } from '@lytjs/common-vnode';
 import type { ComponentInternalInstance, InternalSlots, SlotFunction } from './types';
 
 /**
- * Initialize slots from children.
- * Children can be:
- * - An object of slot functions (named slots)
- * - A single function (default slot)
- * - null/undefined (no slots)
+ * 从 children 初始化 slots。
+ * Children 可以是：
+ * - 插槽函数对象（命名插槽）
+ * - 单个函数（默认插槽）
+ * - null/undefined（无插槽）
  *
  * FIX: P2-20 动态 slot 缓存策略：
  * slots 在初始化时被规范化并存储在 instance.slots 中。
@@ -27,10 +27,10 @@ export function initSlots(instance: ComponentInternalInstance, children: unknown
   const slots: InternalSlots = {};
 
   if (isFunction(children)) {
-    // Single function => default slot
+    // 单个函数 => 默认插槽
     slots.default = children as SlotFunction;
   } else if (isObject(children) && !isArray(children)) {
-    // Object of slot functions
+    // 插槽函数对象
     const slotObj = children as Record<string, unknown>;
     for (const key in slotObj) {
       if (isFunction(slotObj[key])) {
@@ -43,8 +43,8 @@ export function initSlots(instance: ComponentInternalInstance, children: unknown
 }
 
 /**
- * Normalize slot return value to an array.
- * Ensures slot functions always return arrays for consistent rendering.
+ * 将插槽返回值规范化为数组。
+ * 确保插槽函数始终返回数组，以保持渲染一致性。
  */
 export function normalizeSlotValue(value: unknown): VNode[] {
   if (isNullish(value)) return [];

@@ -62,7 +62,7 @@ export function defineAsyncComponent(
   };
 
   const load = (): Promise<Component> => {
-    // Prevent duplicate concurrent loads
+    // 防止重复并发加载
     if (loadingPromise) return loadingPromise as Promise<Component>;
 
     loading.value = true;

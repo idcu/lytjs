@@ -11,7 +11,7 @@ import type { SuspenseBoundary } from './types';
 import type { RendererContext } from './patch-element';
 
 // ============================================================
-// Component Recursion Depth Limit
+// 组件递归深度限制
 // ============================================================
 
 // FIX: P1-L4 组件递归深度无限制 - 添加递归深度限制（100层）
@@ -19,7 +19,7 @@ const MAX_RECURSION_DEPTH = 100;
 const componentRecursionDepthMap = new WeakMap<ComponentInternalInstance, number>();
 
 // ============================================================
-// Component patch factory
+// 组件 patch 工厂
 // ============================================================
 
 // FIX: P1-09 定义 ComponentInternalRuntimeProps 接口替代 as unknown as Record，
@@ -66,7 +66,7 @@ export function createComponentPatch<HN, HE extends HN>(
     let component = vnode.component as ComponentInternalInstance | null | undefined;
 
     if (!component) {
-      // Try to create and setup the component instance using the provided callback
+      // 尝试使用提供的回调创建和 setup 组件实例
       if (setupChildComponent) {
         setupChildComponent(vnode, parentComponent);
         component = vnode.component as ComponentInternalInstance | null | undefined;
@@ -91,7 +91,7 @@ export function createComponentPatch<HN, HE extends HN>(
     }
     componentRecursionDepthMap.set(component, currentDepth + 1);
 
-    // Call the render function to get the subTree
+    // 调用 render 函数获取 subTree
     const renderFn = (component.type as ComponentInternalRuntimeProps).render;
     if (!renderFn) {
       warn(`Component "${(component.type as ComponentInternalRuntimeProps).name || 'anonymous'}" has no render function.`);
@@ -106,7 +106,7 @@ export function createComponentPatch<HN, HE extends HN>(
       // 与 render 函数签名保持一致，避免类型断言不安全。
       subTree = renderFn(component.ctx);
     } catch (err) {
-      // Propagate error through parent chain via errorCaptured
+      // 通过父链的 errorCaptured 传播错误
       const renderError = err instanceof Error ? err : new Error(String(err));
       let handled = false;
       let current: ComponentInternalInstance | null = component.parent;
@@ -124,7 +124,7 @@ export function createComponentPatch<HN, HE extends HN>(
             error(`Error in errorCaptured hook: ${e}`);
           }
         }
-        // Also check errorCapturedHooks (from onErrorCaptured API)
+        // 同时检查 errorCapturedHooks（来自 onErrorCaptured API）
         const hooks = (current as unknown as Record<string, unknown>).errorCapturedHooks as
           | Array<(err: Error, instance: unknown, info: string) => boolean | void>
           | undefined;
@@ -146,7 +146,7 @@ export function createComponentPatch<HN, HE extends HN>(
         current = current.parent;
       }
 
-      // If not handled by any component, try app-level errorHandler
+      // 如果没有被任何组件处理，尝试应用级 errorHandler
       if (!handled && component.root) {
         const rootAny = component.root as unknown as Record<string, unknown>;
         const appContext = rootAny.appContext as Record<string, unknown> | undefined;
@@ -167,7 +167,7 @@ export function createComponentPatch<HN, HE extends HN>(
       console.log(`[lytjs/patch-component] Mounting component: ${compName}`);
     }
 
-    // Apply inheritAttrs: merge instance.attrs into root VNode props
+    // 应用 inheritAttrs：将实例的 attrs 合并到根 VNode props
     // FIX: P2-10 减少不必要的对象创建：避免创建中间对象，直接修改 subTree.props
     const componentType = component.type as ComponentInternalRuntimeProps;
     if (component.attrs && subTree) {
@@ -210,10 +210,10 @@ export function createComponentPatch<HN, HE extends HN>(
       }
     }
 
-    // Patch the subTree into the container
+    // Patch subTree 到容器中
     patch(null, subTree, container, anchor, component, parentSuspense, isSVG);
 
-    // The component's el points to the root element of the subTree
+    // 组件的 el 指向 subTree 的根元素
     vnode.el = subTree.el;
   }
 

@@ -354,16 +354,16 @@ export function detectHostCapabilities(): HostCapabilities {
   // Shadow DOM
   caps.shadowDOM = 'attachShadow' in HTMLElement.prototype;
 
-  // Custom Elements
+  // 自定义元素
   caps.customElements = 'customElements' in window;
 
-  // Slots
+  // 插槽
   caps.slots = 'HTMLSlotElement' in window;
 
   // Template
   caps.template = 'HTMLTemplateElement' in window;
 
-  // CSS Variables
+  // CSS 变量
   try {
     caps.cssVariables =
       window.CSS && CSS.supports && CSS.supports('color', 'var(--test)');
@@ -374,10 +374,10 @@ export function detectHostCapabilities(): HostCapabilities {
   // ResizeObserver
   caps.resizeObserver = 'ResizeObserver' in window;
 
-  // IntersectionObserver
+  // 交叉观察器
   caps.intersectionObserver = 'IntersectionObserver' in window;
 
-  // MutationObserver
+  // 变更观察器
   caps.mutationObserver = 'MutationObserver' in window;
 
   // Web Animations API

@@ -1,7 +1,7 @@
 /**
  * @lytjs/vdom/transition
- * Transition and TransitionGroup sub-path entry
- * Re-exports all transition-related public APIs
+ * Transition 和 TransitionGroup 子路径入口
+ * 重新导出所有 transition 相关的公共 API
  */
 
 // Transition

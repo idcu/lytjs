@@ -33,9 +33,9 @@ export interface App<HostElement = Element> {
   component(name: string, component: Component): App;
   directive(name: string, directive: Directive): App;
   mixin(mixin: ComponentOptions): App;
-  /** Register a global event listener that will be automatically cleaned up on unmount. */
+  /** 注册全局事件监听器，将在卸载时自动清理。 */
   on(target: EventTarget, event: string, handler: EventListener, options?: AddEventListenerOptions): App;
-  /** Remove a previously registered global event listener. */
+  /** 移除之前注册的全局事件监听器。 */
   off(target: EventTarget, event: string, handler: EventListener, options?: AddEventListenerOptions): App;
   errorHandler?: (err: unknown, instance: ComponentPublicInstance | null, info: string) => void;
   warnHandler?: (msg: string, instance: ComponentPublicInstance | null, trace: string) => void;

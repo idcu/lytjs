@@ -268,7 +268,7 @@ export interface DOMRenderer {
 export function createDOMRenderer(
   extraOptions?: Partial<Pick<RendererOptions<Node, Element>, 'setupChildComponent' | 'normalizeProps'>>,
 ): DOMRenderer {
-  // VNode storage scoped to this renderer instance
+  // VNode 存储，作用域隔离到此渲染器实例
   const vnodeMap = new WeakMap<Element, VNode | null>();
 
   // 使用 WebRendererHost 作为平台宿主
@@ -361,7 +361,7 @@ export function createDOMRenderer(
           }
         }
       } else {
-        // Patch into container
+        // Patch 到容器
         const existing = vnodeMap.get(container) ?? null;
         if (existing === null) {
           // 首次挂载：包裹 withFirstRenderOptimization 跳过依赖收集

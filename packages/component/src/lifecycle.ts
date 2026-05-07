@@ -1,5 +1,5 @@
 // src/lifecycle.ts
-// Lifecycle hooks management
+// 生命周期钩子管理
 //
 // FIX: P2-16 生命周期钩子调用次序文档：
 // 组件生命周期钩子的调用次序如下：
@@ -30,7 +30,7 @@ import type { ComponentInternalInstance, ComponentPublicInstance } from './types
 import { warnOnce } from '@lytjs/common-error';
 import type { DebuggerEvent } from '@lytjs/shared-types';
 
-// Current instance being set up (used during lifecycle hook registration)
+// 当前正在 setup 的实例（用于生命周期钩子注册）
 let currentInstance: ComponentInternalInstance | null = null;
 
 // FIX: P1-8 COMPONENT-NEW-02 - 生命周期钩子调用顺序跟踪
@@ -70,21 +70,21 @@ function assertLifecycleOrder(
 }
 
 /**
- * Set the current instance (used during setup).
+ * 设置当前实例（在 setup 期间使用）。
  */
 export function setCurrentInstance(instance: ComponentInternalInstance | null): void {
   currentInstance = instance;
 }
 
 /**
- * Get the current instance.
+ * 获取当前实例。
  */
 export function getCurrentInstance(): ComponentInternalInstance | null {
   return currentInstance;
 }
 
 /**
- * Register a lifecycle hook on the current instance.
+ * 在当前实例上注册生命周期钩子。
  */
 function registerLifecycleHook(
   instance: ComponentInternalInstance,
@@ -96,10 +96,10 @@ function registerLifecycleHook(
   }
 }
 
-// ==================== Public lifecycle APIs ====================
+// ==================== 公共生命周期 API ====================
 
 /**
- * Register a callback to be called when the component is mounted.
+ * 注册组件挂载完成后调用的回调。
  */
 export function onMounted(fn: () => void): void {
   if (currentInstance) {
@@ -113,7 +113,7 @@ export function onMounted(fn: () => void): void {
 }
 
 /**
- * Register a callback to be called when the component is updated.
+ * 注册组件更新完成后调用的回调。
  */
 export function onUpdated(fn: () => void): void {
   if (currentInstance) {
@@ -127,7 +127,7 @@ export function onUpdated(fn: () => void): void {
 }
 
 /**
- * Register a callback to be called when the component is unmounted.
+ * 注册组件卸载后调用的回调。
  */
 export function onUnmounted(fn: () => void): void {
   if (currentInstance) {
@@ -155,7 +155,7 @@ export function onBeforeMount(fn: () => void): void {
 }
 
 /**
- * Register a callback to be called before the component is updated.
+ * 注册组件更新前调用的回调。
  */
 export function onBeforeUpdate(fn: () => void): void {
   if (currentInstance) {
@@ -169,7 +169,7 @@ export function onBeforeUpdate(fn: () => void): void {
 }
 
 /**
- * Register a callback to be called before the component is unmounted.
+ * 注册组件卸载前调用的回调。
  */
 export function onBeforeUnmount(fn: () => void): void {
   if (currentInstance) {
@@ -183,8 +183,8 @@ export function onBeforeUnmount(fn: () => void): void {
 }
 
 /**
- * Register an error captured callback.
- * Uses an array to collect multiple callbacks per instance.
+ * 注册错误捕获回调。
+ * 使用数组收集每个实例的多个回调。
  */
 export function onErrorCaptured(
   fn: (err: Error, instance: ComponentPublicInstance | null, info: string) => boolean | void,
@@ -204,7 +204,7 @@ export function onErrorCaptured(
 }
 
 /**
- * Register a callback to be called when the component is activated (by KeepAlive).
+ * 注册组件被 KeepAlive 激活时调用的回调。
  */
 export function onActivated(fn: () => void): void {
   if (currentInstance) {
@@ -216,7 +216,7 @@ export function onActivated(fn: () => void): void {
 }
 
 /**
- * Register a callback to be called when the component is deactivated (by KeepAlive).
+ * 注册组件被 KeepAlive 停用时调用的回调。
  */
 export function onDeactivated(fn: () => void): void {
   if (currentInstance) {
@@ -228,8 +228,8 @@ export function onDeactivated(fn: () => void): void {
 }
 
 /**
- * Register a callback to be called when a reactive dependency is tracked during render.
- * Only active in development mode.
+ * 注册渲染期间追踪响应式依赖时调用的回调。
+ * 仅在开发模式下生效。
  */
 export function onRenderTracked(fn: (e: DebuggerEvent) => void): void {
   if (__DEV__) {
@@ -248,8 +248,8 @@ export function onRenderTracked(fn: (e: DebuggerEvent) => void): void {
 }
 
 /**
- * Register a callback to be called when a reactive dependency is triggered during render.
- * Only active in development mode.
+ * 注册渲染期间触发响应式依赖时调用的回调。
+ * 仅在开发模式下生效。
  */
 export function onRenderTriggered(fn: (e: DebuggerEvent) => void): void {
   if (__DEV__) {
@@ -267,10 +267,10 @@ export function onRenderTriggered(fn: (e: DebuggerEvent) => void): void {
   }
 }
 
-// ==================== Lifecycle calling ====================
+// ==================== 生命周期调用 ====================
 
 /**
- * Safely call an Options API lifecycle hook with error handling.
+ * 安全地调用选项式 API 生命周期钩子（带错误处理）。
  */
 function callOptionsHook(
   instance: ComponentInternalInstance,
@@ -306,7 +306,7 @@ export function callLifecycleHook(
 }
 
 /**
- * Call beforeCreate and created lifecycle hooks (options API).
+ * 调用 beforeCreate 和 created 生命周期钩子（选项式 API）。
  */
 export function callCreatedHook(instance: ComponentInternalInstance): void {
   const { beforeCreate, created } = instance.type;
@@ -315,7 +315,7 @@ export function callCreatedHook(instance: ComponentInternalInstance): void {
 }
 
 /**
- * Call beforeMount and mounted lifecycle hooks (options API).
+ * 调用 beforeMount 和 mounted 生命周期钩子（选项式 API）。
  */
 export function callMountedHook(instance: ComponentInternalInstance): void {
   // FIX: P1-8 COMPONENT-NEW-02 - 添加生命周期调用顺序断言
@@ -334,7 +334,7 @@ export function callMountedHook(instance: ComponentInternalInstance): void {
 }
 
 /**
- * Call beforeUpdate and updated lifecycle hooks (options API).
+ * 调用 beforeUpdate 和 updated 生命周期钩子（选项式 API）。
  */
 export function callUpdatedHook(instance: ComponentInternalInstance): void {
   // FIX: P1-8 COMPONENT-NEW-02 - 添加生命周期调用顺序断言
@@ -359,7 +359,7 @@ export function callUpdatedHook(instance: ComponentInternalInstance): void {
 }
 
 /**
- * Call beforeUnmount and unmounted lifecycle hooks (options API).
+ * 调用 beforeUnmount 和 unmounted 生命周期钩子（选项式 API）。
  */
 export function callUnmountedHook(instance: ComponentInternalInstance): void {
   // FIX: P1-8 COMPONENT-NEW-02 - 添加生命周期调用顺序断言
@@ -385,9 +385,9 @@ export function callUnmountedHook(instance: ComponentInternalInstance): void {
 }
 
 /**
- * Handle error captured propagation.
- * Calls all errorCapturedHooks on the current instance (from inner to outer),
- * then propagates to parent. Returns true if the error was handled.
+ * 处理错误捕获传播。
+ * 调用当前实例上所有通过 onErrorCaptured() 注册的 errorCapturedHooks（从内到外），
+ * 然后传播到父组件。如果错误被处理则返回 true。
  */
 export function handleError(
   err: Error,
@@ -396,16 +396,16 @@ export function handleError(
 ): boolean {
   let current: ComponentInternalInstance | null = instance;
   while (current) {
-    // Call all errorCapturedHooks registered via onErrorCaptured() on this instance
+    // 调用当前实例上通过 onErrorCaptured() 注册的所有 errorCapturedHooks
     const hooks = current.errorCapturedHooks;
     if (hooks && hooks.length > 0) {
       for (const hook of hooks) {
         const result = hook(err, current as unknown as ComponentPublicInstance, info);
-        if (result === false) return true; // stop propagation
+        if (result === false) return true; // 停止传播
       }
     }
 
-    // Also check options API errorCaptured
+    // 同时检查选项式 API 的 errorCaptured
     const errorHandler = current.type.errorCaptured;
     if (errorHandler) {
       const result = errorHandler.call(
@@ -417,11 +417,11 @@ export function handleError(
       if (result === false) return true;
     }
 
-    // Propagate to parent
+    // 传播到父组件
     current = current.parent;
   }
 
-  // If error was not handled by any component, try app-level errorHandler
+  // 如果错误未被任何组件处理，尝试应用级 errorHandler
   if (instance) {
     const appErrorHandler = instance.root.appContext?.config?.errorHandler;
     if (typeof appErrorHandler === 'function') {

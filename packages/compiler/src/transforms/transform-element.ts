@@ -40,8 +40,8 @@ import { getExpContent, findDirective } from './helpers';
 import { capitalize } from '@lytjs/common-string';
 
 /**
- * Type guard: check if a TemplateChildNode has a codegenNode (JSChildNode).
- * Used to safely narrow types instead of `as unknown as JSChildNode`.
+ * 类型守卫：检查 TemplateChildNode 是否有 codegenNode（JSChildNode）。
+ * 用于安全地缩小类型范围，而非使用 `as unknown as JSChildNode`。
  */
 function hasCodegenNode(
   node: TemplateChildNode,
@@ -52,36 +52,36 @@ function hasCodegenNode(
 export function transformElement(node: ElementNode, context: TransformContext): void {
   if (node.type !== NodeTypes.ELEMENT) return;
 
-  // Handle v-if chain first
+  // 首先处理 v-if 链
   const ifDirective = findDirective(node, 'if');
   if (ifDirective) {
     return;
   }
 
-  // Handle v-for
+  // 处理 v-for
   const forDirective = findDirective(node, 'for');
   if (forDirective) {
     return;
   }
 
-  // Handle v-once
+  // 处理 v-once
   const onceDirective = findDirective(node, 'once');
   if (onceDirective) {
     return;
   }
 
-  // Handle v-memo (handled by transformVMemo)
+  // 处理 v-memo（由 transformVMemo 处理）
   const memoDirective = findDirective(node, 'memo');
   if (memoDirective) {
     return;
   }
 
-  // Regular element - convert to VNodeCall
+  // 常规元素 - 转换为 VNodeCall
   const { tag, props, children } = node;
 
   const isComponent = node.tagType === ElementTypes.COMPONENT;
 
-  // Build props object
+  // 构建 props 对象
   let propsExpression: JSObjectExpression | undefined;
   const hasDynamicProps = props.some((p) => p.type === NodeTypes.DIRECTIVE);
 
@@ -107,7 +107,7 @@ export function transformElement(node: ElementNode, context: TransformContext): 
     }
   }
 
-  // Build children
+  // 构建 children
   let vnodeChildren: JSChildNode | TemplateChildNode[] | string | undefined;
   if (children.length === 1) {
     const child = children[0];
@@ -120,15 +120,15 @@ export function transformElement(node: ElementNode, context: TransformContext): 
           (child as InterpolationNode).content,
         ]);
       } else if (child.type === NodeTypes.ELEMENT) {
-        // Use type guard to safely access codegenNode without double assertion
+        // 使用类型守卫安全访问 codegenNode，无需双重断言
         if (hasCodegenNode(child)) {
           vnodeChildren = child.codegenNode;
         }
       } else if (child.type === NodeTypes.COMMENT) {
-        // Skip comment nodes - they are not JSChildNode and should not be included in codegen
+        // 跳过注释节点 - 它们不是 JSChildNode，不应包含在代码生成中
         vnodeChildren = undefined;
       } else {
-        // For other node types (SimpleExpressionNode, CompoundExpressionNode, JSChildNode),
+        // 对于其他节点类型（SimpleExpressionNode、CompoundExpressionNode、JSChildNode），
         // they are valid JSChildNode subtypes - safe to narrow directly
         if (
           child.type === NodeTypes.SIMPLE_EXPRESSION ||
@@ -147,7 +147,7 @@ export function transformElement(node: ElementNode, context: TransformContext): 
       }
     }
   } else if (children.length > 1) {
-    // Filter out comment nodes - they are not valid JSChildNode types
+    // 过滤注释节点 - 它们不是有效的 JSChildNode 类型
     const nonCommentChildren = children.filter((c) => c.type !== NodeTypes.COMMENT);
     const hasNonText = nonCommentChildren.some((c) => c.type === NodeTypes.ELEMENT);
     if (!hasNonText) {
@@ -164,7 +164,7 @@ export function transformElement(node: ElementNode, context: TransformContext): 
         vnodeChildren = createCompoundExpression(parts);
       }
     } else {
-      // Filter out non-JSChildNode types from codegen
+      // 从代码生成中过滤非 JSChildNode 类型
       const jsChildren = nonCommentChildren.filter(
         (
           c,
@@ -186,7 +186,7 @@ export function transformElement(node: ElementNode, context: TransformContext): 
     }
   }
 
-  // Determine patch flag
+  // 确定 patch flag
   let patchFlag: number | undefined;
   if (hasDynamicProps) {
     patchFlag = PatchFlags.FULL_PROPS;
@@ -282,7 +282,7 @@ function handleDirective(
       break;
     default:
       // FIX: P2-26 自定义指令编译缓存：
-      // Unknown directive - register it for runtime resolution
+      // 未知指令 - 注册它以供运行时解析
       context.directives.add(prop.name);
       break;
   }

@@ -20,7 +20,7 @@ import type { SuspenseBoundary } from './types';
  * 包含 host 操作、vnode el 辅助函数、以及核心 patch/unmount/move 递归函数。
  */
 export interface RendererContext<HN, HE extends HN> {
-  // Host operations
+  // 宿主操作
   createElement: (type: string) => HE;
   setElementText: (node: HE, text: string) => void;
   insert: (child: HN, parent: HN, anchor?: HN | null) => void;
@@ -42,7 +42,7 @@ export interface RendererContext<HN, HE extends HN> {
   setVNodeEl: (vnode: VNode, el: HN | null) => void;
   getVNodeEl: (vnode: VNode) => HN | null;
 
-  // Core recursive functions
+  // 核心递归函数
   patch: (
     n1: VNode | null,
     n2: VNode,
@@ -66,7 +66,7 @@ export interface RendererContext<HN, HE extends HN> {
     parentSuspense: SuspenseBoundary | null,
   ) => void;
 
-  // Children helpers
+  // Children 辅助函数
   mountChildren: (
     vnode: VNode,
     container: HN,
@@ -111,7 +111,7 @@ export interface RendererContext<HN, HE extends HN> {
 }
 
 // ============================================================
-// Element patch factory
+// Element patch 工厂
 // ============================================================
 
 export interface ElementPatchAPI<HN, _HE extends HN> {
@@ -203,24 +203,24 @@ export function createElementPatch<HN, HE extends HN>(
     const el = createElement(tag);
     setVNodeEl(vnode, el);
 
-    // Apply props
+    // 应用 props
     const props = vnode.props ?? EMPTY_OBJ;
     for (const key in props) {
       if (key === 'key' || key === 'ref') continue;
       patchProp(el, key, null, props[key]);
     }
 
-    // Mount children
+    // 挂载 children
     if (vnode.shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
       mountChildren(vnode, el, anchor, isSVG, parentComponent, parentSuspense);
     } else if (vnode.shapeFlag & ShapeFlags.TEXT_CHILDREN) {
       setElementText(el, String(vnode.children ?? ''));
     }
 
-    // Insert into container
+    // 插入到容器中
     insert(el, container, anchor);
 
-    // Handle ref: store element reference on parent component instance
+    // 处理 ref：在父组件实例上存储元素引用
     const refValue = vnode.ref;
     if (refValue && parentComponent) {
       setRef(el, refValue, parentComponent);
@@ -308,10 +308,10 @@ export function createElementPatch<HN, HE extends HN>(
     const newProps = n2.props ?? EMPTY_OBJ;
 
     if (n2.patchFlag & PatchFlags.FULL_PROPS) {
-      // Full props diff
+      // 完整 props diff
       diffProps(el, oldProps, newProps);
     } else if (n2.patchFlag > 0) {
-      // PatchFlag optimization
+      // PatchFlag 优化
       if (n2.patchFlag & PatchFlags.CLASS) {
         if (oldProps.class !== newProps.class) {
           patchProp(el, 'class', oldProps.class, newProps.class);
@@ -321,7 +321,7 @@ export function createElementPatch<HN, HE extends HN>(
         patchProp(el, 'style', oldProps.style, newProps.style);
       }
       if (n2.patchFlag & PatchFlags.PROPS) {
-        // Only diff dynamicProps
+        // 仅 diff dynamicProps
         const dynamicProps = n2.dynamicProps;
         if (dynamicProps) {
           for (let i = 0; i < dynamicProps.length; i++) {
@@ -340,7 +340,7 @@ export function createElementPatch<HN, HE extends HN>(
         }
       }
     } else if (oldProps !== newProps) {
-      // No patchFlag, do full props diff
+      // 无 patchFlag，执行完整 props diff
       diffProps(el, oldProps, newProps);
     }
 
