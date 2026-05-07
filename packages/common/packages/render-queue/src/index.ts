@@ -327,14 +327,16 @@ export class RenderQueue<HN = unknown, HE extends HN = HN> {
    * 获取 VNode 的类型 key，用于操作合并判断。
    * FIX: P2-49 提取为独立方法，避免在 getOperationKey 中重复创建闭包
    */
-  private getVNodeTypeKey(vnode: Record<string, unknown> | undefined): string {
-    const t = vnode?.type;
+  // FIX: DTS build error - 使用 unknown 中间类型
+  private getVNodeTypeKey(vnode: unknown): string {
+    const v = vnode as Record<string, unknown> | undefined;
+    const t = v?.type;
     if (typeof t === 'string') {
       return t;
     }
     // 组件类型：优先使用 vnode.key，其次使用 type.name 或 Symbol
-    if (vnode?.key != null) {
-      return String(vnode.key);
+    if (v?.key != null) {
+      return String(v.key);
     }
     if (typeof t === 'function') {
       return (t as { name?: string }).name ?? String(t);
