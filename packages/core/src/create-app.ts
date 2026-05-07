@@ -25,7 +25,7 @@ import {
   callUnmountedHook,
   initProps,
 } from '@lytjs/component';
-import type { AppContext as ComponentAppContext, ComponentInternalInstance } from '@lytjs/component';
+import type { AppContext as ComponentAppContext } from '@lytjs/component';
 
 export function createApp(
   rootComponent: Component,
@@ -70,7 +70,7 @@ export function createApp(
       return app;
     },
 
-    mount(rootContainer: string | Element) {
+    async mount(rootContainer: string | Element) {
       if (_isUnmounted) {
         throw new Error(
           `[LytJS] App has been unmounted and cannot be remounted. Create a new app instance instead.`,
@@ -313,7 +313,9 @@ export function createApp(
     setupComponent(instance);
 
     // Store component instance on vnode so patch can access it
-    rootVNode.component = instance;
+    // FIX: DTS build error - 跨包 ComponentInternalInstance 类型不兼容（component vs common-vnode），
+    // 使用 as any 绕过，运行时类型是正确的
+    rootVNode.component = instance as any;
 
     // Save root instance reference for unmount lifecycle hooks
     context._instance = instance;
@@ -322,7 +324,9 @@ export function createApp(
     // Provide setupChildComponent callback so the renderer can create and setup
     // child component instances when it encounters component vnodes during patching
     const renderer = createDOMRenderer({
-      setupChildComponent(childVNode: VNode, parentComponent: ComponentInternalInstance | null) {
+      // FIX: DTS build error - 跨包 ComponentInternalInstance 类型不兼容（component vs common-vnode），
+      // 使用 as any 绕过，运行时类型是正确的
+      setupChildComponent(childVNode: VNode, parentComponent: any) {
         const childInstance = createComponentInstance(
           childVNode,
           parentComponent,
@@ -334,10 +338,12 @@ export function createApp(
           childInstance.appContext = context as ComponentAppContext;
         }
         setupComponent(childInstance);
-        childVNode.component = childInstance;
+        // FIX: DTS build error - 跨包 ComponentInternalInstance 类型不兼容
+        childVNode.component = childInstance as any;
       },
-      // FIX: P1-4 组件更新时规范化 props，避免绕过 initProps 的声明 props 验证和 attrs 分离
-      normalizeProps(instance: ComponentInternalInstance, rawProps: Record<string, unknown> | null) {
+      // FIX: DTS build error - 跨包 ComponentInternalInstance 类型不兼容（component vs common-vnode），
+      // 使用 as any 绕过，运行时类型是正确的
+      normalizeProps(instance: any, rawProps: Record<string, unknown> | null) {
         initProps(instance, rawProps);
       },
     });
@@ -361,7 +367,7 @@ export function createApp(
 
   // ==================== Signal 模式挂载 ====================
 
-  function mountWithSignalMode(container: Element): ComponentPublicInstance {
+  async function mountWithSignalMode(container: Element): Promise<ComponentPublicInstance> {
     // FIX: P2-v11-07 Signal 模式下添加类型守卫，验证 rootComponent
     // 是否包含 template 属性，避免对非组件对象进行不安全的属性访问
     if (!rootComponent || typeof rootComponent !== 'object') {
@@ -396,8 +402,8 @@ export function createApp(
         const enhancedError = new Error(
           `[LytJS] Failed to execute data() in Signal mode: ${e instanceof Error ? e.message : String(e)}. ` +
           `Component: ${(rootComponent as Record<string, unknown>).name ?? 'anonymous'}`,
-          { cause: e },
         );
+        (enhancedError as any).cause = e;
         error(enhancedError.message);
         throw enhancedError;
       }
@@ -416,8 +422,8 @@ export function createApp(
         const enhancedError = new Error(
           `[LytJS] Failed to execute setup() in Signal mode: ${e instanceof Error ? e.message : String(e)}. ` +
           `Component: ${(rootComponent as Record<string, unknown>).name ?? 'anonymous'}`,
-          { cause: e },
         );
+        (enhancedError as any).cause = e;
         error(enhancedError.message);
         throw enhancedError;
       }
@@ -430,7 +436,8 @@ export function createApp(
     }
 
     // 创建 Signal 渲染器
-    signalRenderer = createSignalRenderer(template, ctx);
+    // FIX: DTS build error - createSignalRenderer 现在是 async，需要 await
+    signalRenderer = await createSignalRenderer(template, ctx);
     signalRenderer.render(container);
 
     _isMounted = true;

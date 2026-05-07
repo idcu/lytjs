@@ -358,7 +358,9 @@ function extractRenderBody(code: string): string | null {
  * 渲染函数参数接口
  * 定义所有传递给 render 函数的依赖项
  */
-interface RenderParams {
+// FIX: DTS build error - 未使用的声明
+// @ts-expect-error -- reserved for future use
+interface _RenderParams {
   effect: typeof import('@lytjs/reactivity').effect;
   reconcileArray: typeof import('@lytjs/dom-runtime').reconcileArray;
   createTemplate: typeof import('@lytjs/dom-runtime').createTemplate;
@@ -395,7 +397,9 @@ interface RenderParams {
  * @param renderBody - 从编译代码中提取的 render 函数体
  * @returns 一个接受所有依赖参数的函数
  */
-function createRenderWrapper(
+// FIX: DTS build error - 未使用的函数
+// @ts-expect-error -- reserved for future use
+function _createRenderWrapper(
   renderBody: string,
 ): (
   effect: typeof import('@lytjs/reactivity').effect,

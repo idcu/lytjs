@@ -26,13 +26,17 @@ export type PluginInstallFunction<T = unknown> = (app: App, ...options: T[]) => 
 export interface App<HostElement = Element> {
   config: AppConfig;
   use(plugin: Plugin | PluginInstallFunction, ...options: unknown[]): App;
-  mount(rootContainer: HostElement | string): ComponentPublicInstance | null;
+  mount(rootContainer: HostElement | string): Promise<ComponentPublicInstance | null>;
   unmount(): void;
   provide<T = unknown>(key: string | symbol, value: T): App;
   inject<T = unknown>(key: string | symbol): T | undefined;
   component(name: string, component: Component): App;
   directive(name: string, directive: Directive): App;
   mixin(mixin: ComponentOptions): App;
+  /** Register a global event listener that will be automatically cleaned up on unmount. */
+  on(target: EventTarget, event: string, handler: EventListener, options?: AddEventListenerOptions): App;
+  /** Remove a previously registered global event listener. */
+  off(target: EventTarget, event: string, handler: EventListener, options?: AddEventListenerOptions): App;
   errorHandler?: (err: unknown, instance: ComponentPublicInstance | null, info: string) => void;
   warnHandler?: (msg: string, instance: ComponentPublicInstance | null, trace: string) => void;
 }

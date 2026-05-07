@@ -49,7 +49,7 @@ export function withDirectives(vnode: VNode, directives: DirectiveArguments): VN
       dir: dir as Directive & { deep?: boolean },
       value,
       arg,
-      modifiers,
+      modifiers: modifiers ?? {},
     }),
   ) as unknown as DirectiveArguments;
   // FIX: P2-batch2-10 类型断言说明：

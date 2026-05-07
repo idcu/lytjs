@@ -155,7 +155,7 @@ export function removePlugin(pluginName: string): boolean {
   const index = installedPlugins.findIndex((p) => p.name === pluginName);
   if (index === -1) return false;
 
-  const plugin = installedPlugins[index];
+  const plugin = installedPlugins[index]!;
 
   // Remove hooks
   // FIX: DTS build error - 类型断言
@@ -184,7 +184,7 @@ export function executeHooks(event: LifecycleEvent, ...args: unknown[]): void {
       (handler as (...args: unknown[]) => void)(...args);
     } catch (e) {
       if (__DEV__) {
-        error(`Error in ${event} hook:`, e);
+        error(`Error in ${event} hook: ${String(e)}`);
       }
     }
   }

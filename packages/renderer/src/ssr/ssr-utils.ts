@@ -7,7 +7,7 @@
 import { isString, isObject, isNullish } from '@lytjs/common-is';
 import { camelToKebab } from '@lytjs/common-string';
 import { warn } from '@lytjs/common-error';
-import { escapeHtml, isBooleanAttr, isVoidElement } from '../utils';
+import { escapeHtml, isBooleanAttr } from '../utils';
 
 // ============================================================
 // HTML 标签验证

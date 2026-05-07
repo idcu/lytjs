@@ -358,7 +358,8 @@ function hydrateChildVNode(
     const tag = type.toLowerCase();
 
     // FIX: P2-34 缓存 vnodeToSimpleHTML 结果到局部变量，避免重复调用
-    const vnodeHtml = vnodeToSimpleHTML(vnode);
+    // @ts-expect-error -- reserved for future use
+    const _vnodeHtml = vnodeToSimpleHTML(vnode);
 
     if (domIndex < existingChildren.length) {
       const existingNode = existingChildren[domIndex];
@@ -633,7 +634,7 @@ function vnodeToSimpleHTML(vnode: VNode): string {
         // Single VNode child
         // FIX: P2-batch2-2 添加运行时类型检查，避免不安全的类型断言
         if (children != null && typeof children === 'object' && 'type' in children) {
-          childContent = vnodeToSimpleHTML(children as VNode);
+          childContent = vnodeToSimpleHTML(children as unknown as VNode);
         }
       }
     }

@@ -7,7 +7,8 @@
  * @version 6.0.0
  */
 
-import { deepClone, hasChanged, isObject, isFunction } from '@lytjs/common-object';
+import { deepClone } from '@lytjs/common-object';
+import { hasChanged, isObject } from '@lytjs/common-is';
 
 // ============================================================
 // 类型定义
@@ -120,7 +121,7 @@ export class ConfigManager {
    */
   get<T = ConfigValue>(path: string, defaultValue?: T): T | undefined {
     const keys = path.split('.');
-    let value: ConfigValue = this.config;
+    let value: ConfigValue | undefined = this.config;
 
     for (const key of keys) {
       if (isObject(value) && key in value) {
@@ -232,7 +233,7 @@ export class ConfigManager {
    */
   has(path: string): boolean {
     const keys = path.split('.');
-    let value: ConfigValue = this.config;
+    let value: ConfigValue | undefined = this.config;
 
     for (const key of keys) {
       if (isObject(value) && key in value) {
@@ -259,7 +260,7 @@ export class ConfigManager {
 
     const keys = path.split('.');
     const lastKey = keys.pop()!;
-    let target: ConfigValue = this.config;
+    let target: ConfigValue | undefined = this.config;
 
     for (const key of keys) {
       if (isObject(target) && key in target) {
@@ -483,7 +484,7 @@ export class ConfigManager {
    * 不可能为 undefined，因此 ?? true 是冗余的
    */
   isMutable(): boolean {
-    return this.options.mutable;
+    return this.options.mutable ?? true;
   }
 }
 
