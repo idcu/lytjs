@@ -470,7 +470,6 @@ const VALID_EXPRESSION = /^[a-zA-Z_$][a-zA-Z0-9_$]*(\.[a-zA-Z_$][a-zA-Z0-9_$]*)*
 // FIX: P1-S1, P1-S2 属性名和事件名验证正则
 const VALID_ATTRIBUTE_NAME = /^[a-zA-Z][a-zA-Z0-9-:]*$/;
 const VALID_EVENT_NAME = /^[a-zA-Z][a-zA-Z0-9-]*$/;
-const VALID_SLOT_NAME = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/;
 const VALID_COMPONENT_NAME = /^[a-zA-Z][a-zA-Z0-9-]*$/;
 
 function validateExpression(exp: string | undefined, context: string): void {
@@ -501,14 +500,6 @@ function validateEventName(name: string | undefined, context: string): void {
   if (!name) return;
   if (!VALID_EVENT_NAME.test(name)) {
     throw new Error(`[lytjs/compiler] Invalid event name in ${context}: "${name}". Only alphanumeric characters and hyphens are allowed.`);
-  }
-}
-
-// FIX: P1-S7: 动态插槽名验证
-function validateSlotName(name: string | undefined, context: string): void {
-  if (!name) return;
-  if (!VALID_SLOT_NAME.test(name)) {
-    throw new Error(`[lytjs/compiler] Invalid slot name in ${context}: "${name}". Only valid JavaScript identifiers are allowed.`);
   }
 }
 

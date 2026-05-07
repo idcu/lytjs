@@ -6,7 +6,7 @@ import { createText, createInterpolation, createSimpleExpression } from './ast';
 import { warn } from '@lytjs/common-error';
 import { advanceBy, getCursor, getSelection } from './parser-base';
 
-import { COMPILER_MAX_REGEX_INPUT_LENGTH } from '@lytjs/common-constants';
+import { COMPILER_MAX_REGEX_INPUT_LENGTH as MAX_REGEX_INPUT_LENGTH } from '@lytjs/common-constants';
 
 // ============================================================
 // Parse text

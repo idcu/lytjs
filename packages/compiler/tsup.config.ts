@@ -29,6 +29,7 @@ export default defineConfig({
     '@lytjs/common-error',
     '@lytjs/common-vnode',
     '@lytjs/common-string',
+    '@lytjs/common-constants',
     '@lytjs/shared-types',
   ],
 });

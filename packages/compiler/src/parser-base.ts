@@ -15,8 +15,8 @@ import type {
 import { createRoot } from './ast';
 
 import {
-  COMPILER_MAX_INPUT_LENGTH,
-  COMPILER_END_TAG_CACHE_MAX_SIZE,
+  COMPILER_MAX_INPUT_LENGTH as MAX_INPUT_LENGTH,
+  COMPILER_END_TAG_CACHE_MAX_SIZE as END_TAG_CACHE_MAX_SIZE,
 } from '@lytjs/common-constants';
 
 import { parseChildren } from './parser-children';
@@ -24,7 +24,6 @@ import { parseChildren } from './parser-children';
 // Pre-compiled RegExp constants (avoid re-creation on every call)
 const RE_ADVANCE_SPACES = /^[\t\r\n\f ]+/;
 const RE_DOCTYPE = /^<!\[\s\S\]*?>/;
-const RE_END_TAG = /^<\/([a-zA-Z][a-zA-Z0-9-]*)/;
 const RE_TAG_NAME = /^([a-zA-Z][a-zA-Z0-9-]*)/;
 const RE_ATTR_NAME = /^[^\t\r\n\f />][^\t\r\n\f />=]*/;
 const RE_V_DIRECTIVE = /^v-([a-zA-Z][a-zA-Z0-9-]*)(?::(.+))?$/;
