@@ -5,6 +5,7 @@
 // 保留 TransitionGroupComponentPropsLegacy 类型别名以确保向后兼容。
 
 import type { ComponentOptions, SetupContext } from './types';
+import type { VNode } from '@lytjs/vdom';
 
 // ==================== TransitionGroup Props ====================
 
@@ -47,7 +48,7 @@ export const TransitionGroup: ComponentOptions = {
   props: {
     name: { type: String },
     appear: { type: Boolean, default: false },
-    tag: { type: [String, Boolean] as any },
+    tag: { type: [String, Boolean] as unknown as (new () => string | boolean) },
     moveClass: { type: String },
     enterFromClass: { type: String },
     enterActiveClass: { type: String },
@@ -67,6 +68,6 @@ export const TransitionGroup: ComponentOptions = {
 
   // FIX: DTS build error - 添加类型断言
   setup(_props: Record<string, unknown>, { slots }: SetupContext) {
-    return (() => slots.default?.()) as unknown as () => import('@lytjs/vdom').VNode;
+    return (() => slots.default?.()) as unknown as () => VNode;
   },
 };

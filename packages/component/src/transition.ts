@@ -5,6 +5,7 @@
 // 保留 TransitionComponentPropsLegacy 类型别名以确保向后兼容。
 
 import type { ComponentOptions, SetupContext } from './types';
+import type { VNode } from '@lytjs/vdom';
 
 // ==================== Transition Props ====================
 
@@ -67,6 +68,6 @@ export const Transition: ComponentOptions = {
   // 直接返回渲染函数，让组件系统正确识别 setup 返回的渲染函数
   // FIX: DTS build error - 添加类型断言
   setup(_props: Record<string, unknown>, { slots }: SetupContext) {
-    return (() => slots.default?.()) as unknown as () => import('@lytjs/vdom').VNode;
+    return (() => slots.default?.()) as unknown as () => VNode;
   },
 };

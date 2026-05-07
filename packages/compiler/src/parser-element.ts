@@ -11,6 +11,8 @@ import { warn } from '@lytjs/common-error';
 import type {
   ElementNode,
   ParserContext,
+  AttributeNode,
+  DirectiveNode,
 } from './types';
 import { createElement } from './ast';
 
@@ -109,7 +111,7 @@ function parseTag(context: ParserContext, type: number): ElementNode | undefined
     tagType = ElementTypes.SLOT;
   }
 
-  const props: (import('./types').AttributeNode | import('./types').DirectiveNode)[] = [];
+  const props: (AttributeNode | DirectiveNode)[] = [];
   const MAX_ATTRIBUTES = 1000;
   let attrCount = 0;
   while (

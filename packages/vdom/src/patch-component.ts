@@ -7,7 +7,6 @@
 
 import type { VNode, ComponentInternalInstance } from '@lytjs/common-vnode';
 import { warn, error } from '@lytjs/common-error';
-import { shallowEqual } from '@lytjs/common-object';
 import type { SuspenseBoundary } from './types';
 import type { RendererContext } from './patch-element';
 

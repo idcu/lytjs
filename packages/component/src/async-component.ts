@@ -1,14 +1,14 @@
 // src/async-component.ts
 // Async component loader with preload support
-// FIX: P2-7 COMPONENT-NEW-04 - å¼‚æ­¥ç»„ä»¶åŠ è½½ä¸Žé¢„åŠ è½½æ”¯æŒ
+// FIX: P2-7 COMPONENT-NEW-04 - 异步组件加载与预加载支持
 
 
 import type { ComponentOptions, ComponentInternalInstance } from './types';
+import type { VNode, VNodeChildren } from '@lytjs/vdom';
 // FIX: DTS build error - 删除未使用的导入
 // import { createComponentInstance, setupComponent } from './component';
-// FIX: DTS build error - ç»Ÿä¸€ä»?vdom å¯¼å…¥
+// FIX: DTS build error - 统一从vdom 导入
 import { ShapeFlags, createVNode, createCommentVNode } from '@lytjs/vdom';
-import type { VNode } from '@lytjs/vdom';
 import { isFunction } from '@lytjs/common-is';
 import { warn } from '@lytjs/common-error';
 import { getCurrentInstance, onBeforeUnmount } from './lifecycle';
@@ -260,8 +260,8 @@ export function defineAsyncComponent(
           });
 
         // Handle timeout
-        // FIX: P2-38 è¶…æ—¶å®šæ—¶å™¨åœ¨ç»„ä»¶å¸è½½æ—¶é€šè¿‡ onScopeDispose æ¸…ç†ï¼?
-        // é¿å…ç»„ä»¶å¸è½½åŽå®šæ—¶å™¨ä»ç„¶è§¦å‘å¯¼è‡´æ— æ•ˆæ“ä½œå’Œå†…å­˜æ³„æ¼?
+        // FIX: P2-38 超时定时器在组件卸载时通过 onScopeDispose 清理，
+        // 避免组件卸载后定时器仍然触发导致无效操作和内存泄漏
         if (timeout !== undefined && timeout > 0) {
           const timeoutId = setTimeout(() => {
             if (!state.isLoaded && !state.isError) {
@@ -348,11 +348,11 @@ function renderLoadedComponent(
   component: ComponentOptions,
   slots?: Record<string, unknown>,
 ): VNode {
-  // FIX: DTS build error - slots ç±»åž‹æ–­è¨€
+  // FIX: DTS build error - slots 类型断言
   return createVNode(
     component,
     {},
-    slots as import('@lytjs/vdom').VNodeChildren,
+    slots as VNodeChildren,
     ShapeFlags.STATEFUL_COMPONENT,
   );
 }

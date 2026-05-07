@@ -396,9 +396,8 @@ export function performGroupEnterTransition<HN, HE extends HN>(
           // 同时添加 finished 标志防止 finish() 被多次调用。
           let fallbackTimerId: ReturnType<typeof host.setTimeout> | undefined;
           let finished = false;
-          // 使用 let 声明，允许在 disposeT/disposeA 中引用（通过闭包延迟执行）
-          let onEnd: (event: unknown) => void;
-          onEnd = (event: unknown) => {
+          // 使用 const 声明，函数内部通过闭包引用 disposeT/disposeA
+          const onEnd = (event: unknown) => {
             const e = event as { target: unknown };
             if (e.target !== el) return;
             if (finished) return;
@@ -542,9 +541,8 @@ export function performGroupLeaveTransition<HN, HE extends HN>(
           host.setTimeout(finish, info.duration + 50);
         } else {
           // FIX: P2-6 调整声明顺序：onEnd 引用 disposeT/disposeA，
-          // 使用 let 声明 onEnd 避免引用未初始化变量的问题
-          let onEnd: (event: unknown) => void;
-          onEnd = (event: unknown) => {
+          // 使用 const 声明，函数内部通过闭包引用 disposeT/disposeA
+          const onEnd = (event: unknown) => {
             const e = event as { target: unknown };
             if (e.target !== el) return;
             disposeT();

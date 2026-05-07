@@ -8,7 +8,7 @@ import { transform, builtInTransforms, builtInDirectiveTransforms, optimize } fr
 import { generate } from './codegen';
 import { generateSignal } from './codegen-signal';
 import { generateSSR } from './codegen-ssr';
-import type { CompilerOptions, CodegenResult, DirectiveTransform } from './types';
+import type { CompilerOptions, CodegenResult, DirectiveTransform, RootNode } from './types';
 
 export { parse, transform, optimize, generate };
 
@@ -21,7 +21,7 @@ interface CompileCacheEntry {
   code: string;
   preamble: string;
   // FIX: P1-24 使用 RootNode 类型替代 any，提供类型安全
-  ast: import('./types').RootNode;
+  ast: RootNode;
 }
 
 /** 最大缓存条目数 */

@@ -250,8 +250,7 @@ export { WebRendererHost, createWebHost, wrapDOMEvent } from '@lytjs/adapter-web
 // FIX: P2-26 懒加载优化 - SSR 相关函数使用动态导入
 // SSR renderer
 /** 将组件渲染为字符串（SSR） */
-// FIX: DTS build error - 使用 any 绕过类型检查
-export async function renderToString(input: any): Promise<string> {
+export async function renderToString(input: { vnode: VNodeType }): Promise<string> {
   const { renderToString: _renderToString } = await import('./ssr/ssr-renderer');
   return _renderToString(input);
 }
@@ -259,21 +258,20 @@ export type { SSRInput } from './ssr/ssr-renderer';
 
 // SSR streaming
 /** 将 VNode 树流式渲染为 ReadableStream（SSR Streaming） */
-// FIX: DTS build error - 类型断言
 export async function renderToStream(input: { vnode: unknown }, options?: { commentMarkers?: boolean }): Promise<ReadableStream> {
   const { renderToStream: _renderToStream } = await import('./ssr/ssr-stream');
-  return _renderToStream(input as any, options);
+  return _renderToStream(input as { vnode: VNodeType }, options);
 }
 export type { SSRStreamOptions } from './ssr/ssr-stream';
 
 // SSR island architecture
 /** Island Architecture 相关函数 */
-// FIX: DTS build error - 使用 any 避免类型不兼容
-export async function hydrateIsland(el: Element, component: any, props?: Record<string, unknown>): Promise<void> {
+import type { ComponentOptions } from './ssr/ssr-island';
+export async function hydrateIsland(el: Element, component: ComponentOptions, props?: Record<string, unknown>): Promise<void> {
   const { hydrateIsland: _hydrateIsland } = await import('./ssr/ssr-island');
   return _hydrateIsland(el, component, props);
 }
-export async function registerIslandComponent(name: string, component: any): Promise<void> {
+export async function registerIslandComponent(name: string, component: ComponentOptions): Promise<void> {
   const { registerIslandComponent: _registerIslandComponent } = await import('./ssr/ssr-island');
   return _registerIslandComponent(name, component);
 }
