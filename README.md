@@ -47,17 +47,23 @@ Lyt.js 提供两种渲染模式，可根据场景选择：
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  L3: 应用层                                                  │
-│  core, core-vnode, core-signal                              │
+│  L5: Web 工具层                                              │
+│  web (CSS 变量、ResizeObserver、Web Components)             │
+├─────────────────────────────────────────────────────────────┤
+│  L4: 核心应用层                                              │
+│  core, core-vnode, core-signal, renderer                    │
+├─────────────────────────────────────────────────────────────┤
+│  L3: 平台适配层                                              │
+│  adapter-web                                                 │
 ├─────────────────────────────────────────────────────────────┤
 │  L2: 平台/组件层                                             │
-│  renderer, component, adapter-web                           │
+│  component, dom, dom-runtime                                 │
 ├─────────────────────────────────────────────────────────────┤
 │  L1: 核心原语层                                              │
-│  reactivity, vdom, compiler, dom-runtime                    │
+│  reactivity, vdom, compiler                                 │
 ├─────────────────────────────────────────────────────────────┤
 │  L0: 基础层                                                  │
-│  common-*, shared-types, host-contract                      │
+│  common-* (30个子包), shared-types, host-contract           │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -69,13 +75,7 @@ Lyt.js 提供两种渲染模式，可根据场景选择：
 | --- | --- |
 | `@lytjs/shared-types` | 共享类型定义 |
 | `@lytjs/host-contract` | 跨平台渲染接口定义 |
-| `@lytjs/common-constants` | 全局常量 |
-| `@lytjs/common-render-queue` | 渲染队列，批量合并渲染操作 |
-| `@lytjs/common-event-normalizer` | 事件归一化工具 |
-| `@lytjs/common-node-cache` | 节点缓存，管理容器-VNode 映射 |
-| `@lytjs/common-async-scheduler` | 异步调度器，支持优先级 |
-| `@lytjs/common-transition-engine` | 过渡引擎，支持 FLIP 动画 |
-| `@lytjs/common-performance` | 性能监控 API |
+| `@lytjs/common-*` | 30 个工具子包（constants, is, string, error 等） |
 
 ### L1: 核心原语层
 
@@ -84,23 +84,35 @@ Lyt.js 提供两种渲染模式，可根据场景选择：
 | `@lytjs/reactivity` | 响应式系统（ref, reactive, computed, watch） |
 | `@lytjs/vdom` | 虚拟 DOM 和 diff 算法 |
 | `@lytjs/compiler` | 模板编译器 |
-| `@lytjs/dom-runtime` | DOM 运行时工具 |
 
 ### L2: 平台/组件层
 
 | 包 | 描述 |
 | --- | --- |
-| `@lytjs/renderer` | DOM/SSR 渲染器 |
+| `@lytjs/dom-runtime` | DOM 运行时工具 |
+| `@lytjs/dom` | DOM 平台封装 |
 | `@lytjs/component` | 组件系统 |
-| `@lytjs/adapter-web` | Web 平台适配器 |
 
-### L3: 应用层
+### L3: 平台适配层
 
 | 包 | 描述 |
 | --- | --- |
+| `@lytjs/adapter-web` | Web 平台适配器 |
+
+### L4: 核心应用层
+
+| 包 | 描述 |
+| --- | --- |
+| `@lytjs/renderer` | DOM/SSR 渲染器 |
 | `@lytjs/core` | 核心应用 API（完整版） |
 | `@lytjs/core-vnode` | 核心应用 API（仅 VNode 模式） |
 | `@lytjs/core-signal` | 核心应用 API（仅 Signal 模式） |
+
+### L5: Web 工具层
+
+| 包 | 描述 |
+| --- | --- |
+| `@lytjs/web` | Web 平台工具（CSS 变量、ResizeObserver、Web Components） |
 
 ## 安全特性
 
