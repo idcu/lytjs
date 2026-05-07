@@ -441,7 +441,7 @@ export function getAllCSSVars(element?: HTMLElement): Record<string, string> {
 
   // 遍历所有计算样式属性
   for (let i = 0; i < computedStyle.length; i++) {
-    const prop = computedStyle[i];
+    const prop = computedStyle[i] as string;
     if (prop.startsWith('--')) {
       const value = computedStyle.getPropertyValue(prop).trim();
       if (value) {
@@ -697,32 +697,5 @@ export class ThemeManager {
 }
 
 // ============================================================
-// 导出
+// 导出 - FIX: DTS build error - 删除重复导出（已在 index.ts 中导出）
 // ============================================================
-
-export {
-  // 核心函数
-  normalizeVarName,
-  stripVarPrefix,
-
-  // 变量操作
-  setCSSVar,
-  getCSSVar,
-  setCSSVars,
-  getCSSVars,
-  removeCSSVar,
-  removeCSSVars,
-
-  // 高级功能
-  hasCSSVar,
-  getAllCSSVars,
-  toggleCSSVar,
-
-  // 类
-  CSSVarObserver,
-  ThemeManager,
-
-  // 类型
-  SetCSSVarWithElementOptions,
-  SetCSSVarGlobalOptions,
-};
