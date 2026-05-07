@@ -13,9 +13,10 @@ export const Comment = Symbol.for('Comment');
 
 // ============================================================
 // ShapeFlags - VNode 形状标志
+// FIX: 将 const enum 改为普通 enum，解决 verbatimModuleSyntax 问题
 // ============================================================
 
-export const enum ShapeFlags {
+export enum ShapeFlags {
   /** HTML 元素或 SVG 元素 */
   ELEMENT = 1,
   /** 函数式组件 */
@@ -40,9 +41,10 @@ export const enum ShapeFlags {
 
 // ============================================================
 // PatchFlags - 补丁标志
+// FIX: 将 const enum 改为普通 enum，解决 verbatimModuleSyntax 问题
 // ============================================================
 
-export const enum PatchFlags {
+export enum PatchFlags {
   /** 动态文本内容 */
   TEXT = 1,
   /** 动态 class */
