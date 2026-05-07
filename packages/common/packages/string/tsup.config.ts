@@ -8,6 +8,7 @@ export default defineConfig({
   clean: true,
   minify: false,
   treeshake: true,
+  external: ['@lytjs/common-constants'],
   outExtension({ format }) {
     return {
       js: format === 'cjs' ? '.cjs' : '.mjs',
