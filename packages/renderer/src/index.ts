@@ -254,53 +254,58 @@ export type { SSRInput } from './ssr/ssr-renderer';
 
 // SSR streaming
 /** 将 VNode 树流式渲染为 ReadableStream（SSR Streaming） */
-export async function renderToStream(vnode: unknown, options?: unknown): Promise<ReadableStream> {
+// FIX: DTS build error - 类型断言
+export async function renderToStream(input: { vnode: unknown }, options?: { commentMarkers?: boolean }): Promise<ReadableStream> {
   const { renderToStream: _renderToStream } = await import('./ssr/ssr-stream');
-  return _renderToStream(vnode, options);
+  return _renderToStream(input, options);
 }
 export type { SSRStreamOptions } from './ssr/ssr-stream';
 
 // SSR island architecture
 /** Island Architecture 相关函数 */
-export async function hydrateIsland(el: Element, component: unknown, props?: Record<string, unknown>): Promise<void> {
+// FIX: DTS build error - 类型断言
+export async function hydrateIsland(el: Element, component: { name?: string; props?: Record<string, unknown>; render?: () => unknown }, props?: Record<string, unknown>): Promise<void> {
   const { hydrateIsland: _hydrateIsland } = await import('./ssr/ssr-island');
   return _hydrateIsland(el, component, props);
 }
-export async function registerIslandComponent(name: string, component: unknown): Promise<void> {
+export async function registerIslandComponent(name: string, component: { name?: string; props?: Record<string, unknown>; render?: () => unknown }): Promise<void> {
   const { registerIslandComponent: _registerIslandComponent } = await import('./ssr/ssr-island');
   return _registerIslandComponent(name, component);
 }
-export async function createIslandSSRContent(vnode: unknown, options?: unknown): Promise<string> {
+export async function createIslandSSRContent(name: string, props: Record<string, unknown> = {}): Promise<string> {
   const { createIslandSSRContent: _createIslandSSRContent } = await import('./ssr/ssr-island');
-  return _createIslandSSRContent(vnode, options);
+  return _createIslandSSRContent(name, props);
 }
 export type { ComponentOptions as IslandComponentOptions } from './ssr/ssr-island';
 
 // Signal renderer
 /** 创建 Signal 模式渲染器（细粒度 DOM 更新） */
-export async function createSignalRenderer(options?: unknown) {
+// FIX: DTS build error - 修复参数数量
+export async function createSignalRenderer(template: string = '', context: Record<string, unknown> = {}) {
   const { createSignalRenderer: _createSignalRenderer } = await import('./signal/signal-renderer');
-  return _createSignalRenderer(options);
+  return _createSignalRenderer(template, context);
 }
 export type { SignalRenderer } from './signal/signal-renderer';
 
 // Vapor renderer (alias for Signal renderer)
 /** 创建 Vapor 模式渲染器（Signal 渲染器的别名） */
-export async function createVaporRenderer(options?: unknown) {
+// FIX: DTS build error - 修复参数数量
+export async function createVaporRenderer(template: string = '', context: Record<string, unknown> = {}) {
   const { createSignalRenderer: _createSignalRenderer } = await import('./signal/signal-renderer');
-  return _createSignalRenderer(options);
+  return _createSignalRenderer(template, context);
 }
 export type { SignalRenderer as VaporRenderer } from './signal/signal-renderer';
 
 // Vapor app API
 /** 定义 Vapor 模式组件 */
+// FIX: DTS build error - 添加类型断言
 export async function defineVaporComponent(options: unknown) {
   const { defineVaporComponent: _defineVaporComponent } = await import('./vapor/vapor-app');
-  return _defineVaporComponent(options);
+  return _defineVaporComponent(options as Parameters<typeof _defineVaporComponent>[0]);
 }
 export async function createVaporApp(rootComponent: unknown, props?: Record<string, unknown>) {
   const { createVaporApp: _createVaporApp } = await import('./vapor/vapor-app');
-  return _createVaporApp(rootComponent, props);
+  return _createVaporApp(rootComponent as Parameters<typeof _createVaporApp>[0], props);
 }
 export type {
   VaporComponentOptions,

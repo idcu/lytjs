@@ -1,5 +1,7 @@
 // src/create-app.ts
 // @lytjs/core-vnode - createApp 工厂函数（仅 VNode 模式）
+// FIX: DTS build error - 声明 __DEV__ 全局变量
+declare const __DEV__: boolean;
 
 import { createVNode } from '@lytjs/vdom';
 import { createDOMRenderer } from '@lytjs/renderer';
