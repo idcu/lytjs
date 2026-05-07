@@ -140,7 +140,7 @@ export const KeepAlive: ComponentOptions = {
     const maxCacheSize = props.max ?? 10;
     const cache: KeepAliveCache = new LRUCache(maxCacheSize);
     // FIX: P2-29 移除冗余的 keys Set，直接使用 cache.keys() 避免数据重复
-    let _currentVNode: VNode | null = null;
+    const _currentVNode: VNode | null = null;
 
     // FIX: P2-29 监听 max prop 变化，动态调整 LRU 缓存大小
     watch(

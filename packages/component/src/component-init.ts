@@ -207,7 +207,7 @@ export function finishComponentSetup(instance: ComponentInternalInstance): void 
             if (h) handlers.push(h);
           }
           // 提取选项（仅对象形式）
-          let options: { immediate?: boolean; deep?: boolean; flush?: 'pre' | 'post' | 'sync' } = {};
+          const options: { immediate?: boolean; deep?: boolean; flush?: 'pre' | 'post' | 'sync' } = {};
           if (!Array.isArray(raw) && raw !== null && typeof raw === 'object' && typeof (raw as Record<string, unknown>).handler !== 'undefined') {
             const watchObj = raw as Record<string, unknown>;
             if (typeof watchObj.immediate === 'boolean') options.immediate = watchObj.immediate;
