@@ -5,8 +5,9 @@
 
 import type { ComponentOptions, ComponentInternalInstance } from './types';
 import { createComponentInstance, setupComponent } from './component';
-import { ShapeFlags, createBaseVNode, Comment } from '@lytjs/common-vnode';
-import type { VNode } from '@lytjs/common-vnode';
+// FIX: DTS build error - 统一�?vdom 导入
+import { ShapeFlags, createVNode, createCommentVNode } from '@lytjs/vdom';
+import type { VNode } from '@lytjs/vdom';
 import { isFunction } from '@lytjs/common-is';
 import { warn } from '@lytjs/common-error';
 import { getCurrentInstance } from './lifecycle';
@@ -126,7 +127,8 @@ export function defineAsyncComponent(
     errorComponent,
     delay = 200,
     timeout,
-    suspensible = false,
+    // FIX: DTS build error - suspensible 未使�?
+    // suspensible = false,
     onError,
   } = normalizedOptions;
 
@@ -225,14 +227,15 @@ export function defineAsyncComponent(
         return () =>
           errorComponent
             ? createComponentVNode(errorComponent, { error: state.error })
-            : createCommentVNode(' Async component error ');
+            : createAsyncCommentVNode(' Async component error ');
       }
 
       // Start loading if not already loading
       if (!state.isLoading) {
         state.isLoading = true;
 
-        const loadStartTime = Date.now();
+        // FIX: DTS build error - loadStartTime 未使�?
+        // const loadStartTime = Date.now();
 
         state.loadingPromise = load()
           .then((comp) => {
@@ -257,8 +260,8 @@ export function defineAsyncComponent(
           });
 
         // Handle timeout
-        // FIX: P2-38 超时定时器在组件卸载时通过 onScopeDispose 清理，
-        // 避免组件卸载后定时器仍然触发导致无效操作和内存泄漏
+        // FIX: P2-38 超时定时器在组件卸载时通过 onScopeDispose 清理�?
+        // 避免组件卸载后定时器仍然触发导致无效操作和内存泄�?
         if (timeout !== undefined && timeout > 0) {
           const timeoutId = setTimeout(() => {
             if (!state.isLoaded && !state.isError) {
@@ -274,7 +277,7 @@ export function defineAsyncComponent(
             }
           }, timeout);
 
-          // 在组件作用域销毁时清理超时定时器
+          // 在组件作用域销毁时清理超时定时�?
           onScopeDispose(() => {
             clearTimeout(timeoutId);
           });
@@ -285,7 +288,7 @@ export function defineAsyncComponent(
       return () => {
         // If delay is 0 or component is preloaded, don't show loading
         if (delay === 0 && state.isLoading && !state.loadedComponent) {
-          return createCommentVNode(' Async component loading ');
+          return createAsyncCommentVNode(' Async component loading ');
         }
 
         // Show loading component if configured
@@ -293,7 +296,7 @@ export function defineAsyncComponent(
           return createComponentVNode(loadingComponent, {});
         }
 
-        return createCommentVNode(' Async component loading ');
+        return createAsyncCommentVNode(' Async component loading ');
       };
     },
   };
@@ -321,22 +324,20 @@ function createComponentVNode(
   component: ComponentOptions,
   props: Record<string, unknown>,
 ): VNode {
-  return createBaseVNode({
-    type: component,
+  return createVNode(
+    component,
     props,
-    shapeFlag: ShapeFlags.STATEFUL_COMPONENT,
-  });
+    null,
+    ShapeFlags.STATEFUL_COMPONENT,
+  );
 }
 
 /**
- * Create a comment VNode
+ * Create a comment VNode (local helper)
+ * FIX: DTS build error - 重命名避免与导入�?createCommentVNode 冲突
  */
-function createCommentVNode(text: string): VNode {
-  return createBaseVNode({
-    type: Comment,
-    children: text,
-    shapeFlag: 0,
-  });
+function createAsyncCommentVNode(text: string): VNode {
+  return createAsyncCommentVNode(text);
 }
 
 /**
@@ -346,12 +347,13 @@ function renderLoadedComponent(
   component: ComponentOptions,
   slots?: Record<string, unknown>,
 ): VNode {
-  return createBaseVNode({
-    type: component,
-    props: {},
-    children: slots,
-    shapeFlag: ShapeFlags.STATEFUL_COMPONENT,
-  });
+  // FIX: DTS build error - slots 类型断言
+  return createVNode(
+    component,
+    {},
+    slots as import('@lytjs/vdom').VNodeChildren,
+    ShapeFlags.STATEFUL_COMPONENT,
+  );
 }
 
 // ==================== Preload Utilities ====================
@@ -388,7 +390,7 @@ export function preloadComponent(
     return Promise.resolve();
   }
 
-  return loader()
+  return (loader() as Promise<ComponentOptions>)
     .then((comp) => {
       const resolvedComponent =
         (comp as { default?: ComponentOptions }).default || comp;

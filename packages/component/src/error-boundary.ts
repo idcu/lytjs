@@ -76,7 +76,8 @@ export const ErrorBoundary: ComponentOptions = {
               : new Error(String(event.reason));
             error.value = err;
             hasError.value = true;
-            typedProps.onError?.(err, 'unhandledrejection');
+            // FIX: DTS build error - 类型断言
+            (typedProps.onError as ((error: Error, info: string) => void) | undefined)?.(err, 'unhandledrejection');
           },
         };
 
@@ -117,7 +118,7 @@ export const ErrorBoundary: ComponentOptions = {
             if (result.length === 1) {
               return result[0] as VNode;
             }
-            return createVNode(Fragment, null, result);
+            return createVNode(Fragment, null, result as VNode[]);
           }
         }
         // Default error UI
@@ -133,7 +134,7 @@ export const ErrorBoundary: ComponentOptions = {
           if (result.length === 1) {
             return result[0] as VNode;
           }
-          return createVNode(Fragment, null, result);
+          return createVNode(Fragment, null, result as import('@lytjs/vdom').VNode[]);
         }
       }
 
