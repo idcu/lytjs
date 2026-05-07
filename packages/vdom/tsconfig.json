@@ -14,7 +14,6 @@
       "@lytjs/common-algorithm": ["../common/packages/algorithm/dist/index.d.ts"],
       "@lytjs/common-env": ["../common/packages/env/dist/index.d.ts"],
       "@lytjs/common-string": ["../common/packages/string/dist/index.d.ts"],
-      "@lytjs/common-object": ["../common/packages/object/dist/index.d.ts"],
       "@lytjs/common-events": ["../common/packages/events/dist/index.d.ts"],
       "@lytjs/common-error": ["../common/packages/error/dist/index.d.ts"],
       "@lytjs/host-contract": ["../host-contract/dist/index.d.ts"]
