@@ -342,6 +342,7 @@ export function createApp(
         }
         setupComponent(childInstance);
         // FIX: DTS build error - 跨包 ComponentInternalInstance 类型不兼容
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (childVNode as any).component = childInstance;
       },
       // FIX: DTS build error - 跨包 ComponentInternalInstance 类型不兼容（component vs common-vnode），
@@ -352,6 +353,7 @@ export function createApp(
       ) {
         initProps(inst, rawProps);
       },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
     // FIX: P2-batch2-7 跨包类型断言说明：
     // context.renderer 的类型为 Renderer | null（来自 core 包），
