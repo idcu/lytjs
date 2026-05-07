@@ -14,8 +14,10 @@ import type { HostRect } from '@lytjs/host-contract';
  * 过渡属性（平台无关）。
  * 从 @lytjs/vdom 的 TransitionProps re-export，保持与 vdom 同步。
  * 如需修改，请同步修改 @lytjs/vdom/src/transition.ts 中的定义。
+ * FIX: DTS build error - 使用 import type 再 export type
  */
-export type { TransitionProps } from '@lytjs/vdom/transition';
+import type { TransitionProps as VdomTransitionProps } from '@lytjs/vdom/transition';
+export type TransitionProps<T = unknown> = VdomTransitionProps<T>;
 
 /**
  * 过渡状态（运行时收敛层）。
@@ -30,7 +32,8 @@ export interface RuntimeTransitionState {
   /** 过渡完成回调 */
   doneCallback: (() => void) | null;
   /** FIX: P0-10 存储过渡属性引用，用于 cancelTransition 时调用取消钩子 */
-  props?: TransitionProps<unknown>;
+  // FIX: DTS build error - 使用 unknown 避免类型不兼容
+  props?: unknown;
 }
 
 /**
@@ -343,11 +346,13 @@ export class TransitionEngine<HN extends object = object, HE extends HN = HN> {
     state.cancelled = true;
 
     // FIX: P0-10 根据 phase 调用对应的取消钩子（onEnterCancelled / onLeaveCancelled）
-    if (state.props) {
-      if (state.phase === 'entering' && state.props.onEnterCancelled) {
-        state.props.onEnterCancelled(el);
-      } else if (state.phase === 'leaving' && state.props.onLeaveCancelled) {
-        state.props.onLeaveCancelled(el);
+    // FIX: DTS build error - 使用类型断言访问 props
+    const props = state.props as { onEnterCancelled?: (el: HE) => void; onLeaveCancelled?: (el: HE) => void } | undefined;
+    if (props) {
+      if (state.phase === 'entering' && props.onEnterCancelled) {
+        props.onEnterCancelled(el);
+      } else if (state.phase === 'leaving' && props.onLeaveCancelled) {
+        props.onLeaveCancelled(el);
       }
     }
 
