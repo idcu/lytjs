@@ -97,7 +97,7 @@ function getStylePropAsArray(styles: CSSStyleDeclaration, prop: string): string[
 /**
  * DOM 回退：获取过渡信息。
  */
-function getTransitionInfoDOM(el: Element, _type: 'enter' | 'leave'): TransitionDurationInfo {
+export function getTransitionInfoDOM(el: Element, _type: 'enter' | 'leave'): TransitionDurationInfo {
   const styles = getComputedStyle(el);
   const transitionDelays = getStylePropAsArray(styles, 'transitionDelay');
   const transitionDurations = getStylePropAsArray(styles, 'transitionDuration');
