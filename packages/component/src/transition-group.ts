@@ -65,7 +65,8 @@ export const TransitionGroup: ComponentOptions = {
     onLeaveCancelled: { type: Function },
   },
 
+  // FIX: DTS build error - 添加类型断言
   setup(_props: Record<string, unknown>, { slots }: SetupContext) {
-    return () => slots.default?.();
+    return (() => slots.default?.()) as unknown as () => import('@lytjs/vdom').VNode;
   },
 };
