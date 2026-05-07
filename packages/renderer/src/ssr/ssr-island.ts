@@ -1,6 +1,6 @@
 /**
- * @lytjs/renderer - SSR Island Architecture
- * Provides island-based selective hydration for SSR applications
+ * @lytjs/renderer - SSR Island 架构
+ * 为 SSR 应用提供基于 Island 的选择性 hydration
  */
 
 import type { VNode } from '@lytjs/vdom';
@@ -10,12 +10,12 @@ import { warn } from '@lytjs/common-error';
 import { escapeHtml } from '../utils';
 
 // ============================================================
-// Types
+// 类型定义
 // ============================================================
 
 /**
- * Minimal component options interface for island components.
- * Uses a simplified shape to avoid tight coupling with the full ComponentOptions.
+ * Island 组件的精简接口。
+ * 使用简化的结构以避免与完整的 ComponentOptions 紧耦合。
  */
 export interface ComponentOptions {
   name?: string;
@@ -27,16 +27,15 @@ export interface ComponentOptions {
 }
 
 // ============================================================
-// Island Registry
+// Island 注册表
 // ============================================================
 
 const islandRegistry = new Map<string, ComponentOptions>();
 
 /**
- * Register a named island component.
+ * 注册一个命名 Island 组件。
  *
- * Registered components can later be referenced by name in `hydrateIsland`
- * and `createIslandSSRContent`.
+ * 注册的组件后续可以在 `hydrateIsland` 和 `createIslandSSRContent` 中通过名称引用。
  */
 export function registerIslandComponent(name: string, component: ComponentOptions): void {
   if (!name || typeof name !== 'string') {
@@ -49,8 +48,8 @@ export function registerIslandComponent(name: string, component: ComponentOption
 }
 
 /**
- * Get a registered island component by name.
- * Returns undefined if not found.
+ * 根据名称获取已注册的 Island 组件。
+ * 如果未找到则返回 undefined。
  */
 export function getIslandComponent(name: string): ComponentOptions | undefined {
   return islandRegistry.get(name);
@@ -61,10 +60,10 @@ export function getIslandComponent(name: string): ComponentOptions | undefined {
 // ============================================================
 
 /**
- * Create server-side rendered island placeholder HTML.
+ * 创建服务端渲染的 Island 占位符 HTML。
  *
- * Generates a `<div>` element with `data-island` and `data-props` attributes.
- * The props are serialized as JSON and base64-encoded for safe embedding in HTML.
+ * 生成一个带有 `data-island` 和 `data-props` 属性的 `<div>` 元素。
+ * props 被序列化为 JSON 并进行 base64 编码，以便安全嵌入 HTML。
  */
 export function createIslandSSRContent(
   name: string,
@@ -79,21 +78,21 @@ export function createIslandSSRContent(
 // ============================================================
 
 /**
- * Hydrate an island element within a container.
+ * 对容器内的 Island 元素执行 hydration。
  *
- * Finds elements with `data-island` attribute, decodes the serialized props,
- * and hydrates them using the registered island component.
+ * 查找带有 `data-island` 属性的元素，解码序列化的 props，
+ * 并使用注册的 Island 组件对它们进行 hydration。
  *
- * @param container - An Element or CSS selector string to find the container
- * @param component - The component options to hydrate with (overrides registry)
- * @param props - Optional props override (overrides serialized props)
+ * @param container - 一个 Element 或 CSS 选择器字符串，用于查找容器
+ * @param component - 用于 hydration 的组件选项（覆盖注册表）
+ * @param props - 可选的 props 覆盖（覆盖序列化的 props）
  */
 export async function hydrateIsland(
   container: Element | string,
   component: ComponentOptions,
   props?: Record<string, unknown>,
 ): Promise<void> {
-  // Resolve container
+  // 解析容器
   let root: Element | null;
   if (isString(container)) {
     root = document.querySelector(container);
@@ -108,7 +107,7 @@ export async function hydrateIsland(
     return;
   }
 
-  // Find all island elements within the container
+  // 查找容器内所有 Island 元素
   const islandElements = root.querySelectorAll('[data-island]');
 
   for (let i = 0; i < islandElements.length; i++) {
@@ -117,54 +116,53 @@ export async function hydrateIsland(
 
     if (!islandName) continue;
 
-    // Determine which component to use: explicit parameter or registry lookup
-    // Only match if the island name exactly matches a registered component;
-    // do NOT fall back to the passed component on mismatch to prevent wrong hydration.
+    // 确定使用哪个组件：显式参数或注册表查找
+    // 仅当 Island 名称与注册组件完全匹配时才匹配；
+    // 不要在名称不匹配时回退到传入的组件，以防止错误的 hydration。
     let resolvedComponent = islandRegistry.get(islandName);
     if (!resolvedComponent && islandName === component.name) {
       resolvedComponent = component;
     }
     if (!resolvedComponent) {
-      // No matching component found for this island; skip it
+      // 没有找到匹配的组件；跳过此 Island
       continue;
     }
 
-    // Determine props: explicit parameter or decode from data-props attribute
+    // 确定 props：显式参数或从 data-props 属性解码
     const resolvedProps = props ?? decodeProps(el.getAttribute('data-props') ?? '');
 
-    // Hydrate the island element
+    // 对 Island 元素执行 hydration
     await hydrateIslandElement(el, resolvedComponent, resolvedProps);
   }
 }
 
 // ============================================================
-// Internal helpers
+// 内部工具函数
 // ============================================================
 
 /**
- * Hydrate a single island element with the given component and props.
+ * 使用给定的组件和 props 对单个 Island 元素执行 hydration。
  *
- * Instead of replacing innerHTML, this performs true hydration by walking
- * the vnode tree and reconciling it against the existing DOM nodes, reusing
- * nodes that match and only updating/creating nodes that differ.
+ * 与替换 innerHTML 不同，此函数通过遍历 vnode 树并与现有 DOM 节点进行
+ * 协调来执行真正的 hydration，复用匹配的节点，仅更新/创建不同的节点。
  */
 async function hydrateIslandElement(
   el: HTMLElement,
   component: ComponentOptions,
   props: Record<string, unknown>,
 ): Promise<void> {
-  // Call setup if defined
+  // 如果定义了 setup 则调用
   let setupResult: Record<string, unknown> | VNode | void = undefined;
   if (typeof component.setup === 'function') {
     setupResult = component.setup(props);
   }
 
-  // If setup returned a VNode directly, use it (skip render call)
+  // 如果 setup 直接返回了 VNode，则使用它（跳过 render 调用）
   let vnode: VNode | undefined;
   if (setupResult && typeof setupResult === 'object' && 'type' in setupResult) {
     vnode = setupResult as VNode;
   } else if (typeof component.render === 'function') {
-    // Only call render when setup did not return a VNode
+    // 仅当 setup 未返回 VNode 时才调用 render
     const ctx = (setupResult && typeof setupResult === 'object')
       ? setupResult as Record<string, unknown>
       : {};
@@ -172,8 +170,8 @@ async function hydrateIslandElement(
   }
 
   if (vnode) {
-    // Remove the placeholder comment node(s) inside the island element
-    // but keep any existing DOM children for hydration comparison
+    // 移除 Island 元素内的占位符注释节点
+    // 但保留现有 DOM 子节点用于 hydration 比较
     const placeholderComments: ChildNode[] = [];
     for (let i = el.childNodes.length - 1; i >= 0; i--) {
       const child = el.childNodes[i];
@@ -185,25 +183,25 @@ async function hydrateIslandElement(
       comment.remove();
     }
 
-    // Perform true hydration: walk vnode tree and reconcile with existing DOM
+    // 执行真正的 hydration：遍历 vnode 树并与现有 DOM 协调
     hydrateVNode(el, vnode);
   }
 }
 
 /**
- * Hydrate a VNode against existing DOM children of a parent element.
+ * 对父元素的现有 DOM 子节点执行 VNode hydration。
  *
- * Walks the vnode tree and the DOM tree in parallel:
- * - Text nodes: compare textContent, reuse if matching, update if different
- * - Element nodes: compare tagName and key attributes, reuse if matching,
- *   recursively hydrate children, create new nodes if no match
- * - Fragment nodes: hydrate each child vnode against sibling DOM nodes
- * - Unmatched DOM nodes are removed; unmatched vnodes create new DOM nodes
+ * 并行遍历 vnode 树和 DOM 树：
+ * - 文本节点：比较 textContent，匹配则复用，不同则更新
+ * - 元素节点：比较 tagName 和 key 属性，匹配则复用，
+ *   递归 hydrate 子节点，无匹配则创建新节点
+ * - Fragment 节点：对每个子 vnode 与兄弟 DOM 节点进行 hydration
+ * - 未匹配的 DOM 节点被移除；未匹配的 vnode 创建新的 DOM 节点
  */
 function hydrateVNode(parent: Element, vnode: VNode): void {
   const { type, children } = vnode;
 
-  // Handle Fragment: hydrate each child vnode against sibling DOM nodes
+  // 处理 Fragment：对每个子 vnode 与兄弟 DOM 节点进行 hydration
   if (type === Fragment) {
     if (isArray(children)) {
       let domIndex = 0;
@@ -213,34 +211,34 @@ function hydrateVNode(parent: Element, vnode: VNode): void {
         if (childVNode == null) continue;
         domIndex = hydrateChildVNode(parent, childVNode, existingChildren, domIndex);
       }
-      // Remove any remaining unmatched DOM nodes
+      // 移除剩余未匹配的 DOM 节点
       removeRemainingChildren(parent, existingChildren, domIndex);
     }
     return;
   }
 
-  // Handle Text vnode
+  // 处理 Text vnode
   if (type === Text) {
     const text = isString(children) ? children : String(children ?? '');
     const firstChild = parent.firstChild;
     if (firstChild && firstChild.nodeType === Node.TEXT_NODE) {
-      // Reuse existing text node if content matches
+      // 如果内容匹配则复用现有文本节点
       if (firstChild.textContent !== text) {
         firstChild.textContent = text;
       }
     } else {
-      // No matching text node; create a new one
+      // 没有匹配的文本节点；创建新节点
       const textNode = document.createTextNode(text);
       parent.appendChild(textNode);
     }
     return;
   }
 
-  // Handle Element vnode
+  // 处理 Element vnode
   if (typeof type === 'string') {
     const tag = type.toLowerCase();
 
-    // Try to find a matching element among existing DOM children
+    // 尝试在现有 DOM 子节点中查找匹配的元素
     let matchedElement: Element | null = null;
     const existingChildren = Array.from(parent.childNodes);
 
@@ -256,11 +254,11 @@ function hydrateVNode(parent: Element, vnode: VNode): void {
     }
 
     if (matchedElement) {
-      // Reuse existing element: update attributes and hydrate children
+      // 复用现有元素：更新属性并 hydrate 子节点
       hydrateAttributes(matchedElement, vnode);
       hydrateElementChildren(matchedElement, vnode);
     } else {
-      // No matching element; create a new one from the vnode
+      // 没有匹配的元素；从 vnode 创建新元素
       // FIX: P0-3 使用安全的 DOM API 替代 innerHTML
       const newElement = createElementFromVNode(vnode);
       if (newElement) {
@@ -270,12 +268,12 @@ function hydrateVNode(parent: Element, vnode: VNode): void {
     return;
   }
 
-  // Handle component VNode (stateful or functional component)
+  // 处理组件 VNode（有状态或函数式组件）
   if (typeof type === 'object' && type !== null) {
     const component = type as ComponentOptions;
     let childVNode: VNode | undefined;
 
-    // Try render function first
+    // 优先尝试 render 函数
     if (typeof component.render === 'function') {
       const ctx = vnode.props ?? {};
       const result = component.render(ctx);
@@ -284,7 +282,7 @@ function hydrateVNode(parent: Element, vnode: VNode): void {
       }
     }
 
-    // Try setup function if render didn't produce a VNode
+    // 如果 render 未产生 VNode，尝试 setup 函数
     if (!childVNode && typeof component.setup === 'function') {
       const setupResult = component.setup(vnode.props ?? {});
       if (setupResult && typeof setupResult === 'object' && 'type' in setupResult) {
@@ -292,7 +290,7 @@ function hydrateVNode(parent: Element, vnode: VNode): void {
       }
     }
 
-    // Recursively hydrate the resolved child VNode
+    // 递归 hydrate 解析后的子 VNode
     if (childVNode) {
       hydrateVNode(parent, childVNode);
     } else if (__DEV__) {
@@ -303,8 +301,8 @@ function hydrateVNode(parent: Element, vnode: VNode): void {
 }
 
 /**
- * Hydrate a single child vnode against existing DOM children at a given index.
- * Returns the next DOM index after consuming nodes.
+ * 在给定索引处对单个子 vnode 与现有 DOM 子节点执行 hydration。
+ * 返回消费节点后的下一个 DOM 索引。
  */
 function hydrateChildVNode(
   parent: Element,
@@ -314,7 +312,7 @@ function hydrateChildVNode(
 ): number {
   const { type, children } = vnode;
 
-  // Handle Fragment: hydrate each child
+  // 处理 Fragment：hydrate 每个子节点
   if (type === Fragment) {
     if (isArray(children)) {
       for (let i = 0; i < children.length; i++) {
@@ -327,7 +325,7 @@ function hydrateChildVNode(
     return domIndex;
   }
 
-  // Handle Text
+  // 处理 Text
   if (type === Text) {
     const text = isString(children) ? children : String(children ?? '');
     if (domIndex < existingChildren.length) {
@@ -337,23 +335,23 @@ function hydrateChildVNode(
         return domIndex + 1;
       }
       if (existingNode.nodeType === Node.TEXT_NODE) {
-        // Reuse existing text node
+        // 复用现有文本节点
         if (existingNode.textContent !== text) {
           existingNode.textContent = text;
         }
         return domIndex + 1;
       }
-      // Type mismatch: replace the existing node
+      // 类型不匹配：替换现有节点
       const textNode = document.createTextNode(text);
       parent.replaceChild(textNode, existingNode);
       return domIndex + 1;
     }
-    // No existing node; append new text node
+    // 没有现有节点；追加新文本节点
     parent.appendChild(document.createTextNode(text));
     return domIndex + 1;
   }
 
-  // Handle Element
+  // 处理 Element
   if (typeof type === 'string') {
     const tag = type.toLowerCase();
 
@@ -364,7 +362,7 @@ function hydrateChildVNode(
     if (domIndex < existingChildren.length) {
       const existingNode = existingChildren[domIndex];
       if (!existingNode) {
-        // No existing node; append new element
+        // 没有现有节点；追加新元素
         // FIX: P0-3 使用安全的 DOM API 替代 innerHTML
         const newElement = createElementFromVNode(vnode);
         if (newElement) {
@@ -375,12 +373,12 @@ function hydrateChildVNode(
       if (existingNode.nodeType === Node.ELEMENT_NODE) {
         const el = existingNode as Element;
         if (el.tagName.toLowerCase() === tag) {
-          // Tag matches: reuse and hydrate
+          // 标签匹配：复用并 hydrate
           hydrateAttributes(el, vnode);
           hydrateElementChildren(el, vnode);
           return domIndex + 1;
         }
-        // Tag mismatch: replace with new element
+        // 标签不匹配：替换为新元素
         // FIX: P0-3 使用安全的 DOM API 替代 innerHTML
         const newElement = createElementFromVNode(vnode);
         if (newElement) {
@@ -388,7 +386,7 @@ function hydrateChildVNode(
         }
         return domIndex + 1;
       }
-      // Not an element node: replace
+      // 不是元素节点：替换
       // FIX: P0-3 使用安全的 DOM API 替代 innerHTML
       const newElement = createElementFromVNode(vnode);
       if (newElement) {
@@ -396,7 +394,7 @@ function hydrateChildVNode(
       }
       return domIndex + 1;
     }
-    // No existing node; append new element
+    // 没有现有节点；追加新元素
     // FIX: P0-3 使用安全的 DOM API 替代 innerHTML
     const newElement = createElementFromVNode(vnode);
     if (newElement) {
@@ -405,7 +403,7 @@ function hydrateChildVNode(
     return domIndex + 1;
   }
 
-  // Handle component VNode (stateful or functional component)
+  // 处理组件 VNode（有状态或函数式组件）
   if (typeof type === 'object' && type !== null) {
     const component = type as ComponentOptions;
     let childVNode: VNode | undefined;
@@ -435,7 +433,7 @@ function hydrateChildVNode(
 }
 
 /**
- * Remove remaining unmatched DOM children starting from domIndex.
+ * 从 domIndex 开始移除剩余未匹配的 DOM 子节点。
  */
 function removeRemainingChildren(
   parent: Element,
@@ -451,13 +449,13 @@ function removeRemainingChildren(
 }
 
 /**
- * Update attributes on an existing DOM element to match the vnode props.
+ * 更新现有 DOM 元素的属性以匹配 vnode props。
  */
 function hydrateAttributes(el: Element, vnode: VNode): void {
   const props = vnode.props ?? {};
   const vnodeKeys = new Set<string>();
 
-  // Set or update attributes from vnode props
+  // 从 vnode props 设置或更新属性
   for (const key in props) {
     if (key === 'key' || key === 'ref') continue;
     vnodeKeys.add(key);
@@ -475,7 +473,7 @@ function hydrateAttributes(el: Element, vnode: VNode): void {
     }
   }
 
-  // Remove attributes that exist on the DOM element but not in vnode props
+  // 移除 DOM 元素上存在但 vnode props 中不存在的属性
   const existingAttrs = Array.from(el.attributes);
   for (const attr of existingAttrs) {
     if (!vnodeKeys.has(attr.name) && attr.name !== 'data-island' && attr.name !== 'data-props') {
@@ -485,7 +483,7 @@ function hydrateAttributes(el: Element, vnode: VNode): void {
 }
 
 /**
- * Hydrate children of an existing element against vnode children.
+ * 对现有元素的子节点与 vnode 子节点执行 hydration。
  */
 function hydrateElementChildren(el: Element, vnode: VNode): void {
   const { children, shapeFlag } = vnode;
@@ -495,7 +493,7 @@ function hydrateElementChildren(el: Element, vnode: VNode): void {
     // TEXT_CHILDREN
     const text = isString(children) ? children : String(children ?? '');
     if (el.childNodes.length > 0) {
-      // Reuse first text child if it exists
+      // 如果存在则复用第一个文本子节点
       // FIX: P2-v11-03 添加 null 检查替代非空断言，
       // 防止无子节点时 firstChild 为 null 导致运行时崩溃
       const firstChild = el.firstChild;
@@ -507,7 +505,7 @@ function hydrateElementChildren(el: Element, vnode: VNode): void {
         if (firstChild.textContent !== text) {
           firstChild.textContent = text;
         }
-        // Remove any extra children
+        // 移除多余的子节点
         while (el.childNodes.length > 1) {
           const lastChild = el.lastChild;
           // FIX: P2-51 添加 null 检查替代非空断言，防御性编程
@@ -518,7 +516,7 @@ function hydrateElementChildren(el: Element, vnode: VNode): void {
           }
         }
       } else {
-        // Replace all children with a single text node
+        // 用单个文本节点替换所有子节点
         el.textContent = text;
       }
     } else {
@@ -583,13 +581,13 @@ function createElementFromVNode(vnode: VNode): Element | null {
 }
 
 /**
- * Simple vnode-to-HTML converter for island hydration.
- * Handles basic elements, text, fragments, and comments.
+ * 简单的 vnode 转 HTML 转换器，用于 Island hydration。
+ * 处理基本元素、文本、Fragment 和注释。
  */
 function vnodeToSimpleHTML(vnode: VNode): string {
   const { type, children } = vnode;
 
-  // Handle Fragment: render each child
+  // 处理 Fragment：渲染每个子节点
   if (type === Fragment) {
     if (isArray(children)) {
       return children
@@ -599,13 +597,13 @@ function vnodeToSimpleHTML(vnode: VNode): string {
     return '';
   }
 
-  // Handle Text vnode
+  // 处理 Text vnode
   if (type === Text) {
     const text = isString(children) ? children : String(children ?? '');
     return escapeHtml(text);
   }
 
-  // Handle Element vnode
+  // 处理 Element vnode
   if (typeof type === 'string') {
     const props = vnode.props ?? {};
     let attrs = '';
@@ -621,7 +619,7 @@ function vnodeToSimpleHTML(vnode: VNode): string {
 
     const tag = type;
 
-    // Render children
+    // 渲染子节点
     let childContent = '';
     if (children != null) {
       if (isString(children)) {
@@ -631,7 +629,7 @@ function vnodeToSimpleHTML(vnode: VNode): string {
           .map((child) => (child != null ? vnodeToSimpleHTML(child as VNode) : ''))
           .join('');
       } else if (typeof children === 'object' && 'type' in (children as object)) {
-        // Single VNode child
+        // 单个 VNode 子节点
         // FIX: P2-batch2-2 添加运行时类型检查，避免不安全的类型断言
         if (children != null && typeof children === 'object' && 'type' in children) {
           childContent = vnodeToSimpleHTML(children as unknown as VNode);
@@ -646,7 +644,7 @@ function vnodeToSimpleHTML(vnode: VNode): string {
 }
 
 /**
- * Encode a string to base64 using TextEncoder (safe replacement for btoa(unescape(...))).
+ * 使用 TextEncoder 将字符串编码为 base64（安全替代 btoa(unescape(...))）。
  * FIX: P2-50 使用分块处理（每次 8192 字节）替代逐字符拼接，
  * 避免大字符串时 String.fromCharCode 的性能问题和调用栈开销。
  */
@@ -661,7 +659,7 @@ function uint8ToBase64(bytes: Uint8Array): string {
 }
 
 /**
- * Decode base64 to a Uint8Array using atob (safe replacement for escape(atob(...))).
+ * 使用 atob 将 base64 解码为 Uint8Array（安全替代 escape(atob(...))）。
  */
 function base64ToUint8(base64: string): Uint8Array {
   const binary = atob(base64);
@@ -673,23 +671,23 @@ function base64ToUint8(base64: string): Uint8Array {
 }
 
 /**
- * Encode props to a base64 string for embedding in HTML attributes.
+ * 将 props 编码为 base64 字符串，用于嵌入 HTML 属性。
  */
 function encodeProps(props: Record<string, unknown>): string {
   const json = JSON.stringify(props);
-  // Use TextEncoder for safe UTF-8 to base64 conversion
+  // 使用 TextEncoder 进行安全的 UTF-8 到 base64 转换
   const bytes = new TextEncoder().encode(json);
   return uint8ToBase64(bytes);
 }
 
 /**
- * Decode props from a base64 string.
+ * 从 base64 字符串解码 props。
  */
 function decodeProps(encoded: string): Record<string, unknown> {
   if (!encoded) return {};
 
   try {
-    // Use TextDecoder for safe base64 to UTF-8 conversion
+    // 使用 TextDecoder 进行安全的 base64 到 UTF-8 转换
     const bytes = base64ToUint8(encoded);
     const json = new TextDecoder().decode(bytes);
     return JSON.parse(json) as Record<string, unknown>;

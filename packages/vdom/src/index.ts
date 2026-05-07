@@ -1,10 +1,10 @@
 /**
  * @lytjs/vdom
  * Virtual DOM package for LytJS
- * Provides vnode creation, diffing algorithm, patch flags, and rendering
+ * 提供 VNode 创建、diff 算法、patch flags 和渲染功能
  */
 
-// Re-export from common-vnode (types and constants)
+// 从 common-vnode 重新导出（类型和常量）
 export {
   Fragment,
   Text,
@@ -32,7 +32,7 @@ export type {
   PatchFlags,
 } from '@lytjs/common-vnode';
 
-// Re-export from @lytjs/host-contract
+// 从 @lytjs/host-contract 重新导出
 export type {
   RendererHost,
   HostRect,
@@ -42,7 +42,7 @@ export type {
   HostEventOptions,
 } from '@lytjs/host-contract';
 
-// VNode creation and manipulation
+// VNode 创建和操作
 export {
   createVNode,
   createTextVNode,
@@ -54,10 +54,10 @@ export {
   EMPTY_OBJ,
 } from './vnode';
 
-// Patch logic and renderer
+// Patch 逻辑和渲染器
 export { createRenderer } from './patch';
 
-// Types
+// 类型定义
 export type {
   Props,
   HostElement,
@@ -68,10 +68,10 @@ export type {
   InternalComponentInstance,
 } from './types';
 
-// Diff utilities
+// Diff 工具函数
 export { canUseFastDiff, countNewNodes, countRemovedNodes } from './diff';
 
-// Fragment utilities
+// Fragment 工具函数
 export {
   isFragmentVNode,
   getFragmentChildren,
@@ -79,7 +79,7 @@ export {
   createFragment,
 } from './fragment';
 
-// Utility functions
+// 工具函数
 export {
   isStaticVNode,
   isDynamicVNode,
@@ -91,7 +91,7 @@ export {
   getArrayChildren,
 } from './utils';
 
-// Block Tree runtime
+// Block Tree 运行时
 export {
   openBlock,
   closeBlock,
@@ -105,7 +105,7 @@ export {
 
 export type { Block } from './block';
 
-// List diff
+// 列表 diff
 export {
   registerDOMOperations,
   patchKeyedChildren,
@@ -113,5 +113,5 @@ export {
 } from './list-diff';
 export type { DOMOperations } from './list-diff';
 
-// Suspense linker registration (for cross-package boundary linking)
+// Suspense linker 注册（用于跨包边界链接）
 export { registerSuspenseLinker } from './patch-suspense';

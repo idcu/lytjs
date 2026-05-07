@@ -208,7 +208,7 @@ export function createVaporApp(
         attrs: { ...rootProps },
         slots: {},
         emit(_event: string, ..._args: unknown[]) {
-          // event emission placeholder
+          // 事件发射占位符
         },
       };
 

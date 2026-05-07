@@ -24,7 +24,7 @@ import { warn } from '@lytjs/common-error';
 const RE_SIMPLE_VFOR = /^(\S+)\s+(?:in|of)\s+(.+)$/;
 
 /**
- * Type guard: check if a codegenNode is a VNodeCall.
+ * 类型守卫：检查 codegenNode 是否为 VNodeCall。
  */
 function isVNodeCall(node: unknown): node is VNodeCall {
   return (
@@ -33,7 +33,7 @@ function isVNodeCall(node: unknown): node is VNodeCall {
 }
 
 /**
- * Type guard: check if a codegenNode is a JSCallExpression.
+ * 类型守卫：检查 codegenNode 是否为 JSCallExpression。
  */
 function isJSCallExpression(node: unknown): node is JSCallExpression {
   return (
@@ -44,7 +44,7 @@ function isJSCallExpression(node: unknown): node is JSCallExpression {
 }
 
 /**
- * Type guard: check if a node can be used as a TemplateChildNode.
+ * 类型守卫：检查节点是否可以用作 TemplateChildNode。
  * FIX: P2-10 添加类型守卫函数，替代 as unknown as TemplateChildNode 双重断言。
  * 在 AST 转换阶段，VNodeCall 和 JSCallExpression 会被 replaceNode
  * 插入到父节点的 children 数组中，因此它们在运行时是有效的 TemplateChildNode。
@@ -64,16 +64,16 @@ export function transformFor(node: RootNode | TemplateChildNode, context: Transf
   const forDir = findDirective(element, 'for');
   if (!forDir || !forDir.exp) return;
 
-  // Remove v-for directive from props
+  // 从 props 中移除 v-for 指令
   element.props = element.props.filter(
     (p) => !(p.type === NodeTypes.DIRECTIVE && p.name === 'for'),
   );
 
-  // Parse v-for expression
+  // 解析 v-for 表达式
   const expContent = getExpContent(forDir.exp);
   if (!expContent) return;
 
-  // Supports:
+  // 支持：
   // - item in list
   // - (item, index) in list
   // - { key, value } in entries
@@ -97,7 +97,7 @@ export function transformFor(node: RootNode | TemplateChildNode, context: Transf
   const left = (inMatch[1] ?? inMatch[2] ?? inMatch[3] ?? inMatch[4])!.trim();
   const right = inMatch[5]!.trim();
 
-  // Check for destructuring patterns
+  // 检查解构模式
   // FIX: P1-29 使用 TransformContext 中的计数器替代模块级计数器
   const destructureResult = parseDestructure(left, context);
 
@@ -106,12 +106,12 @@ export function transformFor(node: RootNode | TemplateChildNode, context: Transf
   let destructureExpr: string | undefined;
 
   if (destructureResult) {
-    // Destructuring pattern: { key, value } or [ index, value ]
+    // 解构模式：{ key, value } 或 [ index, value ]
     itemVar = destructureResult.tempVar;
     indexVar = destructureResult.indexVar;
     destructureExpr = destructureResult.pattern;
   } else if (inMatch[1]) {
-    // Parenthesized syntax: (item, index) or (item)
+    // 括号语法：(item, index) 或 (item)
     const parts = left.split(',').map((p) => p.trim());
     if (parts.length > 2) {
       if (__DEV__) {
@@ -134,13 +134,13 @@ export function transformFor(node: RootNode | TemplateChildNode, context: Transf
     itemVar = left;
   }
 
-  // Transform the element
+  // 转换元素
   transformElement(element, context);
 
   const codegenNode = element.codegenNode;
   if (!codegenNode) return;
 
-  // Use type guards instead of double type assertions
+  // 使用类型守卫而非双重类型断言
   // FIX: P2-9 添加运行时类型检查，避免不安全的类型断言回退
   const renderItem = isVNodeCall(codegenNode)
     ? codegenNode
@@ -155,7 +155,7 @@ export function transformFor(node: RootNode | TemplateChildNode, context: Transf
 
   context.helper('RENDER_LIST');
 
-  // Build the arrow function body
+  // 构建箭头函数体
   let arrowBody: TemplateChildNode[];
   // FIX: P2-10 使用类型守卫函数安全转换，替代 as unknown as 双重断言
   // renderItem 在此上下文中已被验证为 VNodeCall 或 JSCallExpression，
@@ -164,7 +164,7 @@ export function transformFor(node: RootNode | TemplateChildNode, context: Transf
     ? renderItem
     : renderItem as TemplateChildNode;
   if (destructureExpr) {
-    // For destructuring, add a destructuring statement before the render item
+    // 对于解构，在渲染项之前添加解构语句
     arrowBody = [
       createSimpleExpression(`const ${destructureExpr} = ${itemVar}`, false, forDir.exp.loc, false),
       renderItemAsChild,
@@ -197,9 +197,9 @@ export function transformFor(node: RootNode | TemplateChildNode, context: Transf
 }
 
 /**
- * Parse a destructuring pattern from the left-hand side of v-for.
+ * 从 v-for 左侧解析解构模式。
  *
- * Supports:
+ * 支持：
  * - `{ key, value }` -> object destructuring
  * - `{ key, value }, index` -> object destructuring with index
  * - `{ key: k, value: v }` -> object destructuring with renaming
@@ -209,7 +209,7 @@ export function transformFor(node: RootNode | TemplateChildNode, context: Transf
  * - `[ index, value ], index` -> array destructuring with outer index
  * - `[ a = 1, b = 2 ]` -> array destructuring with default values
  *
- * Returns null if the pattern is not a destructuring expression.
+ * 如果模式不是解构表达式则返回 null。
  */
 function parseDestructure(
   left: string,
@@ -228,7 +228,7 @@ const RE_ARR_DESTRUCTURE = /^(\[[^\]]+\])(?:\s*,\s*(\w+))?$/;
   }
   context.__counters[counterKey] = counter + 1;
 
-  // Match: { ... } [, index]
+  // 匹配：{ ... } [, index]
   // FIX: P2-23 使用预编译正则，避免每次调用都编译
   const objMatch = RE_OBJ_DESTRUCTURE.exec(left);
   if (objMatch) {
@@ -239,7 +239,7 @@ const RE_ARR_DESTRUCTURE = /^(\[[^\]]+\])(?:\s*,\s*(\w+))?$/;
     };
   }
 
-  // Match: [ ... ] [, index]
+  // 匹配：[ ... ] [, index]
   // FIX: P2-23 使用预编译正则，避免每次调用都编译
   const arrMatch = RE_ARR_DESTRUCTURE.exec(left);
   if (arrMatch) {

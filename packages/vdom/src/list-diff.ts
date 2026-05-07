@@ -13,7 +13,7 @@ import { warn } from '@lytjs/common-error';
 import { VDOM_MAX_LIST_DIFF_SIZE } from '@lytjs/common-constants';
 
 // ============================================================
-// Types
+// 类型定义
 // ============================================================
 
 /**
@@ -21,7 +21,7 @@ import { VDOM_MAX_LIST_DIFF_SIZE } from '@lytjs/common-constants';
  * diff 算法通过此接口与平台操作解耦，具体实现由渲染器在初始化时注入。
  *
  * @deprecated Use RendererHost from @lytjs/host-contract instead.
- * This interface is kept for backward compatibility only.
+ * 此接口仅保留用于向后兼容。
  */
 export interface DOMOperations<HostNodeType = unknown, SuspenseType = unknown> {
   /** 插入节点到容器中指定锚点前 */
@@ -72,7 +72,7 @@ const registeredDOMOpsMap = new Map<symbol, DOMOperations<unknown, unknown>>();
  * FIX: P0-04 返回 symbol ID，支持多渲染器场景下的隔离注册
  *
  * @deprecated Use RendererHost from @lytjs/host-contract instead.
- * This function is kept for backward compatibility only.
+ * 此函数仅保留用于向后兼容。
  */
 export function registerDOMOperations<HostNodeType = unknown, SuspenseType = unknown>(
   ops: DOMOperations<HostNodeType, SuspenseType>,
@@ -120,11 +120,11 @@ function getDOMOps(opsId?: symbol): DOMOperations {
 }
 
 // ============================================================
-// Internal: resolve operations from host or registered ops
+// 内部：从 host 或注册的 ops 解析操作
 // ============================================================
 
 /**
- * Internal operations interface that both RendererHost and DOMOperations satisfy.
+ * RendererHost 和 DOMOperations 都满足的内部操作接口。
  */
 interface ResolvedOps {
   patch(
@@ -152,7 +152,7 @@ interface ResolvedOps {
 }
 
 /**
- * Wrap a RendererHost into the ResolvedOps interface for use by diff functions.
+ * 将 RendererHost 包装为 ResolvedOps 接口供 diff 函数使用。
  */
 function hostToOps<HN, HE extends HN>(
   _host: RendererHost<HN, HE>,
@@ -190,7 +190,7 @@ function hostToOps<HN, HE extends HN>(
 }
 
 /**
- * Wrap registered DOMOperations into the ResolvedOps interface.
+ * 将注册的 DOMOperations 包装为 ResolvedOps 接口。
  */
 function domOpsToResolved(ops: DOMOperations): ResolvedOps {
   return {
@@ -204,7 +204,7 @@ function domOpsToResolved(ops: DOMOperations): ResolvedOps {
 }
 
 // ============================================================
-// Inline sameVNodeType
+// 内联 sameVNodeType
 // ============================================================
 
 /**
@@ -231,7 +231,7 @@ function sameVNodeType(a: VNode, b: VNode): boolean {
  * 5. 未知子序列：key 映射 + LIS 最小移动
  *
  * @param host - Optional RendererHost for platform-agnostic operation.
- *               If provided, uses host methods; otherwise falls back to registered DOMOperations.
+ *               如果提供，使用 host 方法；否则回退到注册的 DOMOperations。
  */
 export function patchKeyedChildren<HN, HE extends HN>(
   c1: VNode[],
@@ -247,7 +247,7 @@ export function patchKeyedChildren<HN, HE extends HN>(
 
 /**
  * @deprecated Use the overload with RendererHost parameter instead.
- * Legacy signature using registered DOMOperations.
+ * 使用注册的 DOMOperations 的 legacy 签名。
  */
 export function patchKeyedChildren(
   c1: VNode[],
@@ -296,17 +296,17 @@ export function patchKeyedChildren<HN, HE extends HN>(
     return;
   }
 
-  // Determine whether to use RendererHost or fallback to registered DOMOperations
+  // 判断使用 RendererHost 还是回退到注册的 DOMOperations
   const useHost = hostOrUndefined !== undefined;
   const ops: ResolvedOps = useHost
     ? hostToOps(
         hostOrUndefined,
-        // These patch/unmount/move functions are not available here directly;
+        // 这些 patch/unmount/move 函数在此不直接可用；
         // we need to use the registered ops for the actual patch/unmount/move calls
         // since the host only provides low-level node operations.
-        // The DOMOperations registered by createRenderer already wrap the host's
+        // createRenderer 注册的 DOMOperations 已经包装了 host 的
         // low-level operations into VNode-level patch/unmount/move.
-        // So when a host is provided, we still rely on registeredDOMOps for VNode-level ops.
+        // 因此当提供 host 时，我们仍然依赖 registeredDOMOps 进行 VNode 级操作。
         (n1, n2, cont, anchor, pc, ps, svg) => getDOMOps(opsId).patch(n1, n2, cont, anchor, pc, ps, svg),
         (vnode, pc, ps, doRemove) => getDOMOps(opsId).unmount(vnode, pc, ps, doRemove),
         (vnode, cont, anchor, pc, ps) => getDOMOps(opsId).move(vnode, cont, anchor, pc, ps),
@@ -539,7 +539,7 @@ export function patchKeyedChildren<HN, HE extends HN>(
  * 从前往后逐个比较，类型匹配则 patch，不匹配则卸载旧节点并挂载新节点。
  *
  * @param host - Optional RendererHost for platform-agnostic operation.
- *               If provided, uses host methods; otherwise falls back to registered DOMOperations.
+ *               如果提供，使用 host 方法；否则回退到注册的 DOMOperations。
  */
 export function patchUnkeyedChildren<HN, HE extends HN>(
   c1: VNode[],
@@ -555,7 +555,7 @@ export function patchUnkeyedChildren<HN, HE extends HN>(
 
 /**
  * @deprecated Use the overload with RendererHost parameter instead.
- * Legacy signature using registered DOMOperations.
+ * 使用注册的 DOMOperations 的 legacy 签名。
  */
 export function patchUnkeyedChildren(
   c1: VNode[],

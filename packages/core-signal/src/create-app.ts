@@ -27,7 +27,7 @@ export function createApp(
   let signalRenderer: SignalRenderer | null = null;
   let _container: Element | null = null;
 
-  // App context with provides and config
+  // 应用上下文（包含 provides 和 config）
   const context = {
     provides: Object.create(null) as Record<string | symbol, unknown>,
     config: {

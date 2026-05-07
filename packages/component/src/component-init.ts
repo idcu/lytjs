@@ -1,5 +1,5 @@
 // src/component-init.ts
-// Component finish setup: data, methods, computed, watch, render initialization
+// 组件完成 setup：data、methods、computed、watch、render 初始化
 
 import { reactive, computed, watch } from '@lytjs/reactivity';
 import { hasOwn } from '@lytjs/common-is';
@@ -15,8 +15,8 @@ import { createComponentPublicInstance } from './component-proxy';
 // ==================== normalizeWatchHandler ====================
 
 /**
- * Normalize a raw watch handler to a bound function.
- * Supports function, string (method name), and object { handler } forms.
+ * 标准化原始 watch 处理器为绑定函数。
+ * 支持函数、字符串（方法名）和对象 { handler } 形式。
  */
 function normalizeWatchHandler(
   raw: unknown,
@@ -45,16 +45,16 @@ function normalizeWatchHandler(
 }
 
 /**
- * Finish component setup: handle data, methods, computed, render.
+ * 完成组件 setup：处理 data、methods、computed、render。
  *
- * Error handling: wraps the entire setup process in try-catch to
- * gracefully handle errors during data/methods/computed/watch initialization.
- * Errors are propagated to the nearest ErrorBoundary.
+ * 错误处理：整个 setup 过程包裹在 try-catch 中，
+ * 优雅地处理 data/methods/computed/watch 初始化期间的错误。
+ * 错误会传播到最近的 ErrorBoundary。
  */
 export function finishComponentSetup(instance: ComponentInternalInstance): void {
   const { type } = instance;
 
-  // Step 1: Create public instance proxy
+  // 步骤 1：创建公共实例代理
   try {
     instance.ctx = createComponentPublicInstance(instance);
   } catch (err) {
@@ -68,7 +68,7 @@ export function finishComponentSetup(instance: ComponentInternalInstance): void 
     return;
   }
 
-  // Step 2: Init data
+  // 步骤 2：初始化 data
   try {
     if (type.data) {
       const data = type.data.call(instance.ctx) ?? {};
@@ -85,11 +85,11 @@ export function finishComponentSetup(instance: ComponentInternalInstance): void 
     return;
   }
 
-  // Props conflict detection: create keys set once for reuse
+  // Props 冲突检测：创建 keys 集合以复用
   // FIX: P2-30 重命名为 devPropsKeys，避免与全局 __DEV__ 混淆
   const devPropsKeys = __DEV__ && instance.props ? new Set(Object.keys(instance.props)) : null;
 
-  // Check data vs props conflict
+  // 检查 data 与 props 冲突
   if (devPropsKeys && instance.data) {
     for (const key of Object.keys(instance.data)) {
       if (devPropsKeys.has(key)) {
@@ -100,7 +100,7 @@ export function finishComponentSetup(instance: ComponentInternalInstance): void 
 
   const proxy = instance.ctx;
 
-  // Step 3: Init methods
+  // 步骤 3：初始化 methods
   try {
     if (type.methods) {
       for (const key in type.methods) {
@@ -113,7 +113,7 @@ export function finishComponentSetup(instance: ComponentInternalInstance): void 
           instance.ctx[key as keyof ComponentPublicInstance] = method.bind(proxy) as never;
         }
       }
-      // Check methods vs props conflict
+      // 检查 methods 与 props 冲突
       if (devPropsKeys) {
         for (const key of Object.keys(type.methods)) {
           if (devPropsKeys.has(key)) {
@@ -133,7 +133,7 @@ export function finishComponentSetup(instance: ComponentInternalInstance): void 
     return;
   }
 
-  // Step 4: Init computed
+  // 步骤 4：初始化 computed
   try {
     if (type.computed) {
       for (const key in type.computed) {
@@ -169,7 +169,7 @@ export function finishComponentSetup(instance: ComponentInternalInstance): void 
           instance.ctx[key as keyof ComponentPublicInstance] = c as never;
         }
       }
-      // Check computed vs props conflict
+      // 检查 computed 与 props 冲突
       if (devPropsKeys) {
         for (const key of Object.keys(type.computed)) {
           if (devPropsKeys.has(key)) {
@@ -189,7 +189,7 @@ export function finishComponentSetup(instance: ComponentInternalInstance): void 
     return;
   }
 
-  // Step 5: Init watch
+  // 步骤 5：初始化 watch
   try {
     if (type.watch) {
       for (const key in type.watch) {
@@ -231,11 +231,11 @@ export function finishComponentSetup(instance: ComponentInternalInstance): void 
     return;
   }
 
-  // Step 6: Call created hooks and register render tracking hooks
+  // 步骤 6：调用 created 钩子并注册渲染追踪钩子
   try {
     callCreatedHook(instance);
 
-    // Register Options API renderTracked/renderTriggered hooks
+    // 注册选项式 API 的 renderTracked/renderTriggered 钩子
     if (type.renderTracked) {
       if (!instance.renderTrackedHooks) {
         instance.renderTrackedHooks = [];
@@ -259,7 +259,7 @@ export function finishComponentSetup(instance: ComponentInternalInstance): void 
     return;
   }
 
-  // Step 7: Set up render function
+  // 步骤 7：设置渲染函数
   try {
     if (!instance.render) {
       if (type.render) {

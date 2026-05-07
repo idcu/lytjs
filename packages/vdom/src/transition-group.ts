@@ -1,7 +1,7 @@
 /**
  * @lytjs/vdom - transition-group
- * TransitionGroup component support using FLIP animation technique
- * Provides smooth list item transitions: enter, leave, and move
+ * 使用 FLIP 动画技术的 TransitionGroup 组件支持
+ * 提供平滑的列表项 transition：enter、leave 和 move
  *
  * 泛型化重构：所有函数均支持通过 RendererHost<HN, HE> 接口进行平台无关调用。
  * 当 host 参数为 undefined 时，回退到直接 DOM 操作（向后兼容）。
@@ -20,9 +20,9 @@ import { getTransitionInfoDOM, waitForTransitionEndDOM, globalTransitionPrefix }
  * @template HE - 宿主元素类型
  */
 export interface TransitionGroupProps<HE = unknown> extends TransitionProps<HE> {
-  /** Container tag name. If false/undefined, no container element is rendered. */
+  /** 容器标签名。如果为 false/undefined，不渲染容器元素。 */
   tag?: string | false;
-  /** Whether to also apply move transitions using FLIP technique */
+  /** 是否同时使用 FLIP 技术应用 move transition */
   moveClass?: string;
 }
 
@@ -36,9 +36,9 @@ export type LegacyTransitionGroupProps = TransitionGroupProps<Element>;
 // ============================================================
 
 interface FLIPState {
-  /** Map of element keys to their old positions (before DOM update) */
+  /** 元素 key 到旧位置（DOM 更新前）的映射 */
   oldPositions: Map<string, HostRect>;
-  /** Map of element keys to their new positions (after DOM update) */
+  /** 元素 key 到新位置（DOM 更新后）的映射 */
   newPositions: Map<string, HostRect>;
 }
 
@@ -144,8 +144,8 @@ function getChildKeyDOM(el: Element, index: number): string | null {
 // ============================================================
 
 /**
- * Record the current positions of all child elements.
- * Should be called before the DOM update (in beforeUpdate).
+ * 记录所有子元素的当前位置。
+ * 应在 DOM 更新前调用（在 beforeUpdate 中）。
  *
  * @param hostOrChildren - RendererHost 实例或子元素数组（向后兼容）
  * @param children - 当第一个参数为 host 时，此为子元素数组
@@ -189,8 +189,8 @@ export function recordPositions<HN, HE extends HN>(
 }
 
 /**
- * Apply FLIP animation to moved elements.
- * Compares old and new positions, applies inverse transform, then animates to final position.
+ * 对已移动的元素应用 FLIP 动画。
+ * 比较新旧位置，应用反向 transform，然后动画到最终位置。
  *
  * @param hostOrChildren - RendererHost 实例或子元素数组（向后兼容）
  * @param childrenOrOld - 当第一个参数为 host 时，此为子元素数组；否则为旧位置映射
@@ -297,7 +297,7 @@ export function applyFLIP<HN, HE extends HN>(
 // ============================================================
 
 /**
- * Perform enter transition for a new child element in a TransitionGroup.
+ * 为 TransitionGroup 中的新子元素执行 enter transition。
  *
  * @param hostOrEl - RendererHost 实例或 DOM Element（向后兼容）
  * @param elOrProps - 当第一个参数为 host 时，此为元素；否则为过渡属性
@@ -429,8 +429,8 @@ export function performGroupEnterTransition<HN, HE extends HN>(
 }
 
 /**
- * Perform leave transition for a removed child element in a TransitionGroup.
- * After the leave transition completes, the element is removed from the DOM.
+ * 为 TransitionGroup 中被移除的子元素执行 leave transition。
+ * leave transition 完成后，元素从 DOM 中移除。
  *
  * @param hostOrEl - RendererHost 实例或 DOM Element（向后兼容）
  * @param elOrProps - 当第一个参数为 host 时，此为元素；否则为过渡属性
@@ -564,11 +564,11 @@ export function performGroupLeaveTransition<HN, HE extends HN>(
 }
 
 // ============================================================
-// TransitionGroup state management
+// TransitionGroup 状态管理
 // ============================================================
 
 /**
- * Create FLIP state for tracking position changes.
+ * 创建 FLIP 状态用于跟踪位置变化。
  */
 export function createFLIPState(): FLIPState {
   return {
@@ -578,7 +578,7 @@ export function createFLIPState(): FLIPState {
 }
 
 /**
- * Prepare for a DOM update by recording current child positions.
+ * 通过记录当前子元素位置为 DOM 更新做准备。
  *
  * @param hostOrState - RendererHost 实例或 FLIPState（向后兼容）
  * @param stateOrChildren - 当第一个参数为 host 时，此为 FLIPState；否则为子元素数组
@@ -619,7 +619,7 @@ export function beforeUpdate<HN, HE extends HN>(
 }
 
 /**
- * After DOM update, apply FLIP animations for moved elements.
+ * DOM 更新后，对已移动的元素应用 FLIP 动画。
  *
  * @param hostOrState - RendererHost 实例或 FLIPState（向后兼容）
  * @param stateOrChildren - 当第一个参数为 host 时，此为 FLIPState；否则为子元素数组

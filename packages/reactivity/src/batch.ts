@@ -38,7 +38,7 @@ export interface BatchScopeContext {
 export type BatchScopeCallback<T> = (ctx: BatchScopeContext) => T;
 
 // ============================================================
-// Internal State
+// 内部状态
 // ============================================================
 
 /** 当前活跃的批量作用域栈 */
@@ -255,7 +255,7 @@ export function batchScopeUntrack<T>(fn: () => T): T {
 }
 
 // ============================================================
-// Utility Functions
+// 工具函数
 // ============================================================
 
 /**

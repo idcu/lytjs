@@ -1,5 +1,5 @@
 // src/emit.ts
-// Event emission system
+// 事件发射系统
 
 import { isFunction, hasOwn, isArray } from '@lytjs/common-is';
 import { kebabToCamel } from '@lytjs/common-string';
@@ -16,7 +16,7 @@ export function normalizeEmitsOptions(
   if (!emits) return null;
 
   if (isArray(emits)) {
-    // Array-based: ['click', 'change'] => { click: null, change: null }
+    // 数组形式：['click', 'change'] => { click: null, change: null }
     const result: Record<string, unknown> = {};
     for (let i = 0; i < emits.length; i++) {
       const key = emits[i]!;
@@ -25,7 +25,7 @@ export function normalizeEmitsOptions(
     return result;
   }
 
-  // Already an object (Record<string, Function | null>)
+  // 已经是对象形式（Record<string, Function | null>）
   return emits as Record<string, unknown>;
 }
 
@@ -59,10 +59,10 @@ export function emit(instance: ComponentInternalInstance, event: string, ...args
     warn(`Component emitted event "${event}" but it is not declared in emits.`);
   }
 
-  // Normalize event name: convert kebab-case to camelCase for handler lookup
+  // 规范化事件名：将 kebab-case 转为 camelCase 用于处理器查找
   const handlerName = toHandlerKey(event);
 
-  // Look for handler in props first, then attrs
+  // 先在 props 中查找处理器，再在 attrs 中查找
   const handler = instance.props[handlerName] ?? instance.attrs[handlerName];
   if (isFunction(handler)) {
     try {
@@ -74,9 +74,9 @@ export function emit(instance: ComponentInternalInstance, event: string, ...args
 }
 
 /**
- * Check if an event is declared in the emits options.
- * Uses the same normalization (kebab-case -> camelCase) as emit() to ensure
- * consistent event name matching.
+ * 检查事件是否在 emits 选项中声明。
+ * 使用与 emit() 相同的规范化（kebab-case -> camelCase）以确保
+ * 一致的事件名匹配。
  */
 export function isEmitValid(instance: ComponentInternalInstance, event: string): boolean {
   if (!instance.emitsOptions) return true;

@@ -9,13 +9,13 @@ LytJS 提供了完善的服务端渲染（SSR）支持，包括字符串渲染�
 ### 基本用法
 
 ```typescript
-import { createSSRApp } from '@lytjs/core';
-import { renderToString } from '@lytjs/core/ssr';
+import { renderToString } from '@lytjs/renderer';
+import { createApp } from '@lytjs/core';
 import App from './App';
 
-const app = createSSRApp(App);
+const app = createApp(App);
 
-const html = await renderToString(app);
+const html = await renderToString({ vnode: App });
 console.log(html);
 // <div id="app" data-server-rendered="true"><h1>Hello LytJS</h1></div>
 ```
@@ -25,18 +25,11 @@ console.log(html);
 可以通过上下文对象在服务端和组件之间共享数据：
 
 ```typescript
-import { createSSRApp } from '@lytjs/core';
-import { renderToString } from '@lytjs/core/ssr';
+import { renderToString } from '@lytjs/renderer';
+import { createApp } from '@lytjs/core';
 import App from './App';
 
-const app = createSSRApp(App);
-
-const context = {
-  url: '/home',
-  user: { name: '张三' },
-};
-
-const html = await renderToString(app, context);
+const html = await renderToString({ vnode: App });
 ```
 
 在组件中通过 `useSSRContext` 访问上下文：
@@ -57,21 +50,15 @@ const UserProfile = {
 
 ```typescript
 import express from 'express';
-import { createSSRApp } from '@lytjs/core';
-import { renderToString } from '@lytjs/core/ssr';
+import { renderToString } from '@lytjs/renderer';
+import { createApp } from '@lytjs/core';
 import App from './App';
 
 const server = express();
 
 server.get('*', async (req, res) => {
-  const app = createSSRApp(App);
-
-  const context = {
-    url: req.url,
-  };
-
   try {
-    const html = await renderToString(app, context);
+    const html = await renderToString({ vnode: App });
 
     res.send(`
       <!DOCTYPE html>
@@ -100,12 +87,10 @@ server.listen(3000);
 ### 基本用法
 
 ```typescript
-import { createSSRApp } from '@lytjs/core';
-import { renderToStream } from '@lytjs/core/ssr';
+import { renderToStream } from '@lytjs/renderer';
 import App from './App';
 
-const app = createSSRApp(App);
-const stream = renderToStream(app);
+const stream = renderToStream({ vnode: App });
 
 // 将流输出到响应
 stream.pipe(res);
@@ -115,15 +100,12 @@ stream.pipe(res);
 
 ```typescript
 import express from 'express';
-import { createSSRApp } from '@lytjs/core';
-import { renderToStream } from '@lytjs/core/ssr';
+import { renderToStream } from '@lytjs/renderer';
 import App from './App';
 
 const server = express();
 
 server.get('*', async (req, res) => {
-  const app = createSSRApp(App);
-
   res.write(`<!DOCTYPE html>
 <html>
   <head>
@@ -132,7 +114,7 @@ server.get('*', async (req, res) => {
   <body>
     <div id="app">`);
 
-  const stream = renderToStream(app, { context: { url: req.url } });
+  const stream = renderToStream({ vnode: App });
 
   stream.pipe(res);
 
@@ -178,7 +160,7 @@ Hydration 是将服务端渲染的静态 HTML "激活"为可交互应用的过�
 import { createApp } from '@lytjs/core';
 import App from './App';
 
-// 客户端使用 createApp（而非 createSSRApp）
+// 客户端使用 createApp 进行水合
 const app = createApp(App);
 app.mount('#app');
 ```
@@ -509,8 +491,8 @@ server.use(helmet.contentSecurityPolicy({
 ```typescript
 // server.ts
 import express from 'express';
-import { createSSRApp } from '@lytjs/core';
-import { renderToString } from '@lytjs/core/ssr';
+import { renderToString } from '@lytjs/renderer';
+import { createApp } from '@lytjs/core';
 import App from './App';
 
 const server = express();
@@ -518,24 +500,11 @@ const server = express();
 server.use(express.static('dist/client'));
 
 server.get('*', async (req, res) => {
-  const app = createSSRApp(App);
-
-  // 安全：只注入必要的数据
-  const context = { 
-    url: req.url,
-    user: req.user ? { id: req.user.id, name: req.user.name } : null
-  };
-
   try {
-    const html = await renderToString(app, context);
-
-    if (context.url) {
-      // 处理重定向
-      return res.redirect(301, context.url);
-    }
+    const html = await renderToString({ vnode: App });
 
     // 安全序列化初始状态
-    const safeState = JSON.stringify(context)
+    const safeState = JSON.stringify({ url: req.url })
       .replace(/</g, '\\u003c')
       .replace(/>/g, '\\u003e');
 

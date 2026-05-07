@@ -15,7 +15,7 @@ type Target = object;
 type ReactiveProxy<T extends object = object> = { [K in keyof T]: T[K] };
 
 /**
- * Internal interface for objects with reactive flags
+ * 带有响应式标志的对象的内部接口
  */
 interface ReactiveTarget {
   [ReactiveFlags.RAW]?: unknown;
@@ -400,7 +400,7 @@ function createCollectionHandler(isReadonly: boolean, isShallow: boolean): Proxy
             };
           }
         } else {
-          // Readonly: block mutating methods with warnings
+          // Readonly：阻止变异方法并发出警告
           if (MUTATING_METHODS.has(key as string)) {
             return (..._args: unknown[]) => {
               if (__DEV__) {

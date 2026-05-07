@@ -11,16 +11,16 @@ import type {
 import { createAttribute, createText } from '../ast';
 
 /**
- * Extended TransformContext that includes scopeId.
- * The scopeId is set by the compiler when processing scoped components.
+ * 包含 scopeId 的扩展 TransformContext。
+ * scopeId 由编译器在处理 scoped 组件时设置。
  */
 interface ScopedTransformContext extends TransformContext {
   scopeId?: string;
 }
 
 /**
- * Get the scopeId from the transform context.
- * The scopeId may be stored directly on the context or in context.identifiers
+ * 从转换上下文获取 scopeId。
+ * scopeId 可能直接存储在上下文上或在 context.identifiers 中
  * as a special marker.
  * FIX: P2-12 使用可选链替代 ScopedTransformContext 类型断言
  */
@@ -29,7 +29,7 @@ function resolveScopeId(context: TransformContext): string | undefined {
 }
 
 /**
- * Transform that adds scopeId attributes to all element nodes.
+ * 为所有元素节点添加 scopeId 属性的转换。
  *
  * This is the core of CSS Scoped styles:
  * - Each element in a scoped component gets a `data-v-xxxx` attribute
@@ -119,7 +119,7 @@ export function hasVDeep(element: ElementNode): boolean {
 }
 
 /**
- * Get the scopeId from the transform context.
+ * 从转换上下文获取 scopeId。
  */
 export function getScopeId(context: TransformContext): string | undefined {
   return resolveScopeId(context);

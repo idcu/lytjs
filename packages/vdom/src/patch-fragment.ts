@@ -13,7 +13,7 @@ import type { SuspenseBoundary } from './types';
 import type { RendererContext } from './patch-element';
 
 // ============================================================
-// Fragment patch factory
+// Fragment patch 工厂
 // ============================================================
 
 export interface FragmentPatchAPI<HN, _HE extends HN> {
@@ -78,7 +78,7 @@ export function createFragmentPatch<HN, HE extends HN>(
     insert(fragmentStartAnchor, container, anchor);
     insert(fragmentEndAnchor, container, anchor);
 
-    // Mount children between the anchors
+    // 在锚点之间挂载 children
     const children = isArray(vnode.children) ? vnode.children : [];
     for (let i = 0; i < children.length; i++) {
       const child = children[i];
@@ -100,7 +100,7 @@ export function createFragmentPatch<HN, HE extends HN>(
     parentSuspense: SuspenseBoundary | null,
     isSVG: boolean,
   ): void {
-    // Reuse the existing fragment anchors
+    // 复用已有的 fragment 锚点
     n2.el = n1.el;
     const endAnchor = n1.anchor;
     if (!endAnchor) return;
@@ -109,9 +109,9 @@ export function createFragmentPatch<HN, HE extends HN>(
     const c1 = n1.children as VNode[] | null;
     const c2 = n2.children as VNode[] | null;
 
-    // Both should be arrays for fragments
+    // Fragment 的两者都应该是数组
     if (isArray(c1) && isArray(c2)) {
-      // Choose diff strategy based on fragment patchFlag
+      // 根据 fragment patchFlag 选择 diff 策略
       if (n2.patchFlag & PatchFlags.STABLE_FRAGMENT) {
         // STABLE_FRAGMENT: children order never changes, patch by index directly
         diffStableFragment(c1, c2, container, endAnchor as HN, parentComponent, parentSuspense, isSVG);
@@ -122,16 +122,16 @@ export function createFragmentPatch<HN, HE extends HN>(
         // UNKEYED_FRAGMENT: children have no keys, use simple sync-from-start strategy
         diffUnkeyedFragment(c1, c2, container, endAnchor as HN, parentComponent, parentSuspense, isSVG);
       } else {
-        // No fragment-specific patchFlag, use default keyed diff
+        // 无 fragment 特定的 patchFlag，使用默认 keyed diff
         diffChildrenFragment(c1, c2, container, endAnchor as HN, parentComponent, parentSuspense, isSVG);
       }
     } else if (isArray(c2)) {
-      // Old was null/empty, mount all new before end anchor
+      // 旧为 null/空，在结束锚点前挂载所有新节点
       for (let i = 0; i < c2.length; i++) {
         patch(null, c2[i]!, container, endAnchor as HN, parentComponent, parentSuspense, isSVG);
       }
     } else if (isArray(c1)) {
-      // New is null/empty, unmount all old
+      // 新为 null/空，卸载所有旧节点
       unmountChildren(c1, parentComponent, parentSuspense);
     }
   }
@@ -150,17 +150,17 @@ export function createFragmentPatch<HN, HE extends HN>(
     isSVG: boolean,
   ): void {
     const commonLength = Math.min(c1.length, c2.length);
-    // Patch common prefix by index (no key comparison needed)
+    // 按索引 patch 公共前缀（无需 key 比较）
     for (let i = 0; i < commonLength; i++) {
       patch(c1[i]!, c2[i]!, container, null, parentComponent, parentSuspense, isSVG);
     }
-    // Mount extra new children
+    // 挂载额外的新 children
     if (c2.length > c1.length) {
       for (let i = commonLength; i < c2.length; i++) {
         patch(null, c2[i]!, container, endAnchor, parentComponent, parentSuspense, isSVG);
       }
     }
-    // Unmount extra old children
+    // 卸载额外的旧 children
     else if (c1.length > c2.length) {
       for (let i = commonLength; i < c1.length; i++) {
         unmount(c1[i]!, parentComponent, parentSuspense, true);
@@ -181,7 +181,7 @@ export function createFragmentPatch<HN, HE extends HN>(
     parentSuspense: SuspenseBoundary | null,
     isSVG: boolean,
   ): void {
-    // Sync from start: patch nodes with the same type at the same index
+    // 从头同步：按索引 patch 相同类型的节点
     let i = 0;
     const l1 = c1.length;
     const l2 = c2.length;
@@ -190,20 +190,20 @@ export function createFragmentPatch<HN, HE extends HN>(
       if (isSameVNodeType(c1[i]!, c2[i]!)) {
         patch(c1[i]!, c2[i]!, container, null, parentComponent, parentSuspense, isSVG);
       } else {
-        // Type mismatch: unmount old, mount new
+        // 类型不匹配：卸载旧的，挂载新的
         unmount(c1[i]!, parentComponent, parentSuspense, true);
         patch(null, c2[i]!, container, null, parentComponent, parentSuspense, isSVG);
       }
       i++;
     }
 
-    // Mount remaining new children
+    // 挂载剩余的新 children
     while (i < l2) {
       patch(null, c2[i]!, container, endAnchor, parentComponent, parentSuspense, isSVG);
       i++;
     }
 
-    // Unmount remaining old children
+    // 卸载剩余的旧 children
     while (i < l1) {
       unmount(c1[i]!, parentComponent, parentSuspense, true);
       i++;
@@ -244,7 +244,7 @@ export function createFragmentPatch<HN, HE extends HN>(
     }
 
     if (doRemove) {
-      // Remove fragment anchors
+      // 移除 fragment 锚点
       const vEl = getVNodeEl(vnode);
       if (vEl) {
         hostRemove(vEl);

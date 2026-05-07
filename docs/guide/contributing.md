@@ -64,6 +64,8 @@ pnpm build
 ### Scope
 
 - `common`, `reactivity`, `vdom`, `compiler`, `renderer`, `component`, `core`
+- `adapter-web`, `web`, `dom`, `dom-runtime`
+- `shared-types`, `host-contract`
 - `ecosystem`, `lytui`, `plugins`, `tools`
 - `docs`, `ci`, `release`
 

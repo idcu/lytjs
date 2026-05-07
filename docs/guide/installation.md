@@ -139,6 +139,11 @@ if (isSignal(sig)) {
 
 ### Vite 插件
 
+::: warning 尚未实现
+`@lytjs/vite-plugin` 目前尚未发布，请关注后续版本更新。
+:::
+
+<!-- TODO: Vite 插件包尚未实现，取消注释当包就绪时
 LytJS 提供官方 Vite 插件，支持模板编译和热更新：
 
 ```bash
@@ -154,12 +159,19 @@ export default defineConfig({
   plugins: [lytjs()],
 });
 ```
+-->
 
 ### ESLint 插件
 
+::: warning 尚未实现
+`eslint-plugin-lytjs` 目前尚未发布，请关注后续版本更新。
+:::
+
+<!-- TODO: ESLint 插件包尚未实现，取消注释当包就绪时
 ```bash
 pnpm add eslint-plugin-lytjs -D
 ```
+-->
 
 ## 下一步
 

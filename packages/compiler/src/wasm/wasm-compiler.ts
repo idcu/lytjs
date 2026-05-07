@@ -13,7 +13,7 @@ import { NodeTypes } from '../constants';
 import type { RootNode, TemplateChildNode, ElementNode, SourceLocation, TextNode, CommentNode, InterpolationNode, SimpleExpressionNode, NodeTransform, TransformOptions } from '../types';
 
 // ============================================================
-// Types
+// 类型定义
 // ============================================================
 
 /** WASM 编译选项 */

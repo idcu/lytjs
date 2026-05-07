@@ -1,5 +1,5 @@
 // src/constants.ts
-// All enums as `as const` objects (isolatedModules forbids const enum)
+// 所有枚举作为 `as const` 对象（isolatedModules 禁止 const enum）
 
 export const NodeTypes = {
   ROOT: 0,
@@ -56,7 +56,7 @@ export const BindingTypes = {
 
 export { PatchFlags } from '@lytjs/common-vnode';
 
-// Runtime helper names
+// 运行时辅助函数名称
 export const VNodeHook = {
   BEFORE_MOUNT: 'bm',
   MOUNTED: 'm',
@@ -66,10 +66,10 @@ export const VNodeHook = {
   UNMOUNTED: 'um',
 } as const;
 
-// Runtime helper symbols
+// 运行时辅助函数符号
 export const RENDER_HELPER = 'renderHelper' as const;
 
-// Helper name mapping for codegen
+// 代码生成的辅助函数名称映射
 export const helperNameMap: Record<string, string> = {
   CREATE_VNODE: 'createElementVNode',
   CREATE_ELEMENT_VNODE: 'createElementVNode',

@@ -1,5 +1,5 @@
 // src/transition-group.ts
-// TransitionGroup component definition
+// TransitionGroup 组件定义
 //
 // 泛型化重构：TransitionGroupComponentProps 中的回调类型从 Element 改为泛型 HE。
 // 保留 TransitionGroupComponentPropsLegacy 类型别名以确保向后兼容。

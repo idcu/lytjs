@@ -17,7 +17,7 @@ import {
 } from './list-diff';
 
 // ============================================================
-// Children patch factory
+// Children patch 工厂
 // ============================================================
 
 export interface ChildrenPatchAPI<HN, _HE extends HN> {
@@ -184,12 +184,12 @@ export function createChildrenPatch<HN, HE extends HN>(
     const { shapeFlag: nextShapeFlag } = n2;
 
     if (nextShapeFlag & ShapeFlags.TEXT_CHILDREN) {
-      // New children are text
+      // 新 children 为文本
       if (prevShapeFlag & ShapeFlags.ARRAY_CHILDREN) {
-        // Old children were array - unmount all
+        // 旧 children 为数组 - 全部卸载
         unmountChildren(c1 as VNode[], parentComponent, parentSuspense);
       }
-      // Always set new text (DOM was potentially cleared by unmountChildren above)
+      // 始终设置新文本（上面的 unmountChildren 可能已清空 DOM）
       // FIX: P2-11 添加运行时类型检查，避免不安全的类型断言。
       // container 的实际类型为 HN，而 setElementText 期望 HE（HN 的子类型）。
       // 使用运行时检查确保 container 是元素类型，如果不是则跳过操作。
@@ -199,9 +199,9 @@ export function createChildrenPatch<HN, HE extends HN>(
         warn(`[lytjs/patch-children] setElementText called with invalid container: ${String(container)}`);
       }
     } else {
-      // New children are array (or null)
+      // 新 children 为数组（或 null）
       if (prevShapeFlag & ShapeFlags.TEXT_CHILDREN) {
-        // Old children were text - clear it
+        // 旧 children 为文本 - 清空它
         // FIX: P2-11 添加运行时类型检查
         if (container && typeof container === 'object' && 'nodeType' in container) {
           setElementText(container as HE, '');
@@ -210,7 +210,7 @@ export function createChildrenPatch<HN, HE extends HN>(
 
       if (prevShapeFlag & ShapeFlags.ARRAY_CHILDREN) {
         if (nextShapeFlag & ShapeFlags.ARRAY_CHILDREN) {
-          // Both are arrays - diff
+          // 两者都是数组 - diff
           diffChildren(
             c1 as VNode[],
             c2 as VNode[],
@@ -220,11 +220,11 @@ export function createChildrenPatch<HN, HE extends HN>(
             isSVG,
           );
         } else {
-          // New children are null - unmount all old
+          // 新 children 为 null - 卸载所有旧 children
           unmountChildren(c1 as VNode[], parentComponent, parentSuspense);
         }
       } else if (nextShapeFlag & ShapeFlags.ARRAY_CHILDREN) {
-        // Old children were null/none - mount new array
+        // 旧 children 为 null/无 - 挂载新数组
         mountChildren(n2, container, null, isSVG, parentComponent, parentSuspense);
       }
     }
@@ -295,7 +295,7 @@ export function createChildrenPatch<HN, HE extends HN>(
   }
 
   // ============================================================
-  // diffChildren - keyed diff with LIS optimization
+  // diffChildren - 带 LIS 优化的 keyed diff
   // ============================================================
 
   function diffChildren(

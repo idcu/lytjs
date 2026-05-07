@@ -149,7 +149,7 @@ class ComputedRefImpl<T> {
           // FIX: P2-25 缓存未命中处理优化：异常时如果已有缓存值，保持 clean 状态
           // 避免在异常场景下重复触发 effect.run()
           if (this._initialized) {
-            // Already had a cached value; mark as clean so next access returns cached value
+            // 已有缓存值；标记为 clean，以便下次访问时返回缓存值
             this._dirty = false;
           }
           throw e;

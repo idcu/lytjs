@@ -287,13 +287,13 @@ export function createApp(
   // ==================== VNode 模式挂载 ====================
 
   function mountWithVNodeMode(container: Element): ComponentPublicInstance {
-    // Create root vnode through the component system's standard flow
+    // 通过组件系统的标准流程创建根 vnode
     const rootVNode = createVNode(rootComponent, rootProps);
 
-    // Create component instance using the standardized component system
+    // 使用标准化的组件系统创建组件实例
     const instance = createComponentInstance(rootVNode, null);
 
-    // Replace appContext: createComponentInstance creates a new empty context
+    // 替换 appContext：createComponentInstance 会创建新的空上下文
     // when parent is null, but we need the core-level context with plugins,
     // components, directives, and provides registered on the app.
     instance.appContext = context as ComponentAppContext;
@@ -312,17 +312,16 @@ export function createApp(
     // Set up the component (runs setup, init props/slots, data, lifecycle)
     setupComponent(instance);
 
-    // Store component instance on vnode so patch can access it
+    // 将组件实例存储到 vnode 上，以便 patch 时访问
     // FIX: DTS build error - 跨包 ComponentInternalInstance 类型不兼容（component vs common-vnode），
     // 使用类型断言绕过，运行时类型是正确的
     rootVNode.component = instance as unknown as typeof rootVNode.component;
 
-    // Save root instance reference for unmount lifecycle hooks
+    // 保存根实例引用，用于卸载生命周期钩子
     context._instance = instance;
 
-    // Render using the enhanced renderer
-    // Provide setupChildComponent callback so the renderer can create and setup
-    // child component instances when it encounters component vnodes during patching
+    // 使用增强的渲染器进行渲染
+    // 提供 setupChildComponent 回调，使渲染器在 patch 过程中遇到组件 vnode 时能够创建和初始化子组件实例
     const renderer = createDOMRenderer({
       // FIX: DTS build error - 跨包 ComponentInternalInstance 类型不兼容（component vs common-vnode），
       // 使用类型断言绕过，运行时类型是正确的
@@ -334,7 +333,7 @@ export function createApp(
           childVNode,
           parentComponent,
         );
-        // Inherit appContext from parent or root
+        // 从父组件或根组件继承 appContext
         if (parentComponent) {
           childInstance.appContext = parentComponent.appContext;
         } else {
@@ -362,10 +361,10 @@ export function createApp(
     context.renderer = renderer as unknown as DOMRenderer;
     context._vnode = rootVNode;
 
-    // Mount the vnode
+    // 挂载 vnode
     renderer.mount(rootVNode, container);
 
-    // Create and return the public instance
+    // 创建并返回公共实例
     const publicInstance = createComponentPublicInstance(instance);
 
     _isMounted = true;

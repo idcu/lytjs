@@ -12,7 +12,7 @@ import type { SuspenseBoundary } from './types';
 import type { RendererContext } from './patch-element';
 
 // ============================================================
-// Teleport patch factory
+// Teleport patch 工厂
 // ============================================================
 
 export interface TeleportPatchAPI<HN, _HE extends HN> {
@@ -78,15 +78,15 @@ export function createTeleportPatch<HN, HE extends HN>(
     const disabled = !!props?.disabled;
 
     if (disabled) {
-      // When disabled, mount children directly into the container
+      // 当禁用时，直接将 children 挂载到容器中
       mountChildren(vnode, container, anchor, isSVG, parentComponent, parentSuspense);
-      // Store a placeholder comment in container
+      // 在容器中存储占位注释节点
       const placeholder = createComment('');
       setVNodeEl(vnode, placeholder);
       vnode.targetAnchor = null;
       insert(placeholder, container, anchor);
     } else {
-      // Resolve target container
+      // 解析目标容器
       let target: HE | null = null;
       if (isString(to)) {
         target = querySelector ? querySelector(to) : null;
@@ -106,13 +106,13 @@ export function createTeleportPatch<HN, HE extends HN>(
         return;
       }
 
-      // Create anchor nodes in the target container
+      // 在目标容器中创建锚点节点
       const targetStart = createComment('teleport start');
       const targetEnd = createComment('teleport end');
       insert(targetStart, target, null);
       insert(targetEnd, target, null);
 
-      // Mount children between the target anchors
+      // 在目标锚点之间挂载 children
       const children = isArray(vnode.children) ? vnode.children : [];
       for (let i = 0; i < children.length; i++) {
         const child = children[i];
@@ -121,11 +121,11 @@ export function createTeleportPatch<HN, HE extends HN>(
         }
       }
 
-      // Create placeholder comment in the original container
+      // 在原始容器中创建占位注释节点
       const placeholder = createComment('');
       insert(placeholder, container, anchor);
 
-      // Store references on vnode
+      // 在 vnode 上存储引用
       setVNodeEl(vnode, placeholder);
       vnode.target = target as unknown as Element | null;
       vnode.targetAnchor = targetEnd as unknown as Node | null;
@@ -149,15 +149,15 @@ export function createTeleportPatch<HN, HE extends HN>(
     const oldTo = oldProps.to as string | HE | undefined;
     const newTo = newProps.to as string | HE | undefined;
 
-    // Reuse the placeholder el
+    // 复用占位 el
     n2.el = n1.el;
     n2.target = n1.target;
     n2.targetAnchor = n1.targetAnchor;
     n2.targetStart = n1.targetStart;
 
-    // Case 1: target changed (and not disabled)
+    // 情况 1：目标改变（且未禁用）
     if (!newDisabled && oldTo !== newTo) {
-      // Resolve new target
+      // 解析新目标
       let newTarget: HE | null = null;
       if (isString(newTo)) {
         newTarget = querySelector ? querySelector(newTo) : null;
@@ -166,13 +166,13 @@ export function createTeleportPatch<HN, HE extends HN>(
       }
 
       if (newTarget) {
-        // Create new anchors in the new target
+        // 在新目标中创建新锚点
         const targetStart = createComment('teleport start');
         const targetEnd = createComment('teleport end');
         insert(targetStart, newTarget, null);
         insert(targetEnd, newTarget, null);
 
-        // Move children from old target to new target
+        // 将 children 从旧目标移动到新目标
         const children = isArray(n2.children) ? n2.children : [];
         for (let i = 0; i < children.length; i++) {
           const child = children[i];
@@ -181,7 +181,7 @@ export function createTeleportPatch<HN, HE extends HN>(
           }
         }
 
-        // Remove old target anchors
+        // 移除旧目标锚点
         if (n1.targetStart) hostRemove(n1.targetStart as unknown as HN);
         if (n1.targetAnchor) hostRemove(n1.targetAnchor as unknown as HN);
 
@@ -190,10 +190,10 @@ export function createTeleportPatch<HN, HE extends HN>(
         n2.targetStart = targetStart as unknown as Node | null;
       }
     }
-    // Case 2: disabled -> enabled or enabled -> disabled
+    // 情况 2：禁用 -> 启用 或 启用 -> 禁用
     else if (oldDisabled !== newDisabled) {
       if (newDisabled) {
-        // Was enabled, now disabled: move children from target back to container
+        // 之前启用，现在禁用：将 children 从目标移回容器
         const children = isArray(n2.children) ? n2.children : [];
         for (let i = 0; i < children.length; i++) {
           const child = children[i];
@@ -207,7 +207,7 @@ export function createTeleportPatch<HN, HE extends HN>(
         n2.targetAnchor = null;
         n2.targetStart = null;
       } else {
-        // Was disabled, now enabled: re-mount as teleport
+        // 之前禁用，现在启用：重新作为 teleport 挂载
         mountTeleport(n2, container, anchor, parentComponent, parentSuspense, isSVG);
         return;
       }
@@ -237,25 +237,25 @@ export function createTeleportPatch<HN, HE extends HN>(
     parentSuspense: SuspenseBoundary | null,
     doRemove: boolean,
   ): void {
-    // Unmount children
+    // 卸载 children
     const children = isArray(vnode.children) ? vnode.children : [];
     for (let i = 0; i < children.length; i++) {
       unmount(children[i]!, parentComponent, parentSuspense, doRemove);
     }
 
     if (doRemove) {
-      // Remove target anchors
+      // 移除目标锚点
       if (vnode.targetStart) hostRemove(vnode.targetStart as unknown as HN);
       if (vnode.targetAnchor) hostRemove(vnode.targetAnchor as unknown as HN);
-      // Remove placeholder in container
+      // 移除容器中的占位符
       const vEl = getVNodeEl(vnode);
       if (vEl) hostRemove(vEl);
     }
   }
 
   function moveTeleport(vnode: VNode, container: HN, anchor: HN | null): void {
-    // Only move the placeholder comment node in the container.
-    // The children in the target container stay in place.
+    // 只移动容器中的占位注释节点。
+    // 目标容器中的 children 保持不变。
     const vEl = getVNodeEl(vnode);
     if (vEl) {
       insert(vEl, container, anchor);

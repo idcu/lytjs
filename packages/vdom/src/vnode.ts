@@ -1,6 +1,6 @@
 /**
  * @lytjs/vdom - vnode
- * VNode creation and manipulation functions
+ * VNode 创建和操作函数
  * FIX: P2-28 对象创建优化 - 使用对象池减少 GC 压力
  */
 
@@ -90,7 +90,7 @@ export function resetVNodePoolStats(): void {
 }
 
 // ============================================================
-// Dev warnings
+// 开发警告
 // ============================================================
 
 function warnDev(msg: string): void {
@@ -100,21 +100,21 @@ function warnDev(msg: string): void {
 }
 
 // ============================================================
-// Type aliases for better readability
+// 类型别名（提高可读性）
 // ============================================================
 
-/** Props type for elements (HTML attributes) */
+/** 元素的 Props 类型（HTML 属性） */
 type ElementProps = Record<string, unknown>;
 
-/** Props type for components */
+/** 组件的 Props 类型 */
 type ComponentProps = Record<string, unknown>;
 
 // ============================================================
-// createVNode overloads
+// createVNode 重载
 // ============================================================
 
 /**
- * Create a text VNode (overload for Text type)
+ * 创建文本 VNode（Text 类型重载）
  */
 export function createVNode(
   type: typeof Text,
@@ -123,7 +123,7 @@ export function createVNode(
 ): VNode;
 
 /**
- * Create a comment VNode (overload for Comment type)
+ * 创建注释 VNode（Comment 类型重载）
  */
 export function createVNode(
   type: typeof Comment,
@@ -132,7 +132,7 @@ export function createVNode(
 ): VNode;
 
 /**
- * Create a Fragment VNode (overload for Fragment type)
+ * 创建 Fragment VNode（Fragment 类型重载）
  */
 export function createVNode(
   type: typeof Fragment,
@@ -141,8 +141,8 @@ export function createVNode(
 ): VNode;
 
 /**
- * Create an element VNode with string tag (overload for HTML elements)
- * Provides better type inference for element props.
+ * 创建带字符串标签的元素 VNode（HTML 元素重载）
+ * 提供更好的元素 props 类型推导。
  */
 export function createVNode(
   type: string,
@@ -154,8 +154,8 @@ export function createVNode(
 ): VNode;
 
 /**
- * Create a component VNode with object type (overload for components)
- * Provides better type inference for component props.
+ * 创建带对象类型的组件 VNode（组件重载）
+ * 提供更好的组件 props 类型推导。
  */
 export function createVNode(
   type: object,
@@ -167,10 +167,10 @@ export function createVNode(
 ): VNode;
 
 /**
- * Create a VNode (generic fallback for VNodeTypes)
+ * 创建 VNode（VNodeTypes 通用回退重载）
  *
- * This overload handles all VNodeTypes including string, object, symbol, and built-in types.
- * It is the most flexible and should be used when the exact type is not known at compile time.
+ * 此重载处理所有 VNodeTypes，包括 string、object、symbol 和内置类型。
+ * 它是最灵活的，应在编译时不知道具体类型时使用。
  */
 export function createVNode(
   type: VNodeTypes,
@@ -182,9 +182,9 @@ export function createVNode(
 ): VNode;
 
 /**
- * Create a VNode (implementation)
+ * 创建 VNode（实现）
  *
- * Create a VNode
+ * 创建一个 VNode
  */
 export function createVNode(
   type: VNodeTypes,
@@ -194,7 +194,7 @@ export function createVNode(
   dynamicProps: string[] | null = null,
   isBlockNode: boolean = false,
 ): VNode {
-  // __DEV__ mode: runtime type checks for key and ref
+  // __DEV__ 模式：key 和 ref 的运行时类型检查
   if (props) {
     if ('key' in props && props.key != null) {
       const keyType = typeof props.key;
@@ -239,7 +239,7 @@ export function createVNode(
     __v_isVNode: true,
   };
 
-  // Normalize children and update shapeFlag
+  // 规范化 children 并更新 shapeFlag
   if (children !== null && children !== undefined) {
     normalizeChildren(vnode, children);
   }
@@ -289,7 +289,7 @@ export function createVNodePooled(
     vnode.loc = null;
     (vnode as { __v_isVNode?: boolean }).__v_isVNode = true;
 
-    // Normalize children and update shapeFlag
+    // 规范化 children 并更新 shapeFlag
     if (children !== null && children !== undefined) {
       normalizeChildren(vnode, children);
     }
@@ -306,7 +306,7 @@ export function createVNodePooled(
 // ============================================================
 
 /**
- * Create a text VNode
+ * 创建文本 VNode
  */
 export function createTextVNode(text: string = ''): VNode {
   return createVNode(Text, null, text);
@@ -317,7 +317,7 @@ export function createTextVNode(text: string = ''): VNode {
 // ============================================================
 
 /**
- * Create a comment VNode
+ * 创建注释 VNode
  */
 export function createCommentVNode(text: string = ''): VNode {
   const vnode = createVNode(Comment, null, text);
@@ -330,7 +330,7 @@ export function createCommentVNode(text: string = ''): VNode {
 // ============================================================
 
 /**
- * Clone a VNode, optionally merging extra props
+ * 克隆 VNode，可选合并额外的 props
  *
  * FIX: P2-9 注意：此函数执行浅拷贝，嵌套对象（如 props 中的对象属性）
  * 将在原始 VNode 和克隆的 VNode 之间共享。这是有意的设计选择，
@@ -340,33 +340,33 @@ export function cloneVNode(vnode: VNode, extraProps: Record<string, unknown> | n
   const cloned: VNode = {
     ...vnode,
     isCloned: true,
-    // Shallow clone array children to prevent shared mutation
+    // 浅拷贝数组 children 以防止共享修改
     children: Array.isArray(vnode.children) ? [...vnode.children] : vnode.children,
-    // Deep clone dynamic children reference (not the array itself)
+    // 深拷贝 dynamic children 引用（不是数组本身）
     dynamicChildren: vnode.dynamicChildren ? [...vnode.dynamicChildren] : null,
   };
 
-  // Merge extra props
+  // 合并额外的 props
   if (extraProps) {
     const mergedProps = { ...extraProps };
-    // Normalize the merged props
+    // 规范化合并后的 props
     normalizeProps(mergedProps);
     cloned.key = (mergedProps.key as string | number | symbol | null | undefined) ?? vnode.key;
     cloned.ref = (mergedProps.ref as ((ref: unknown) => void) | null | undefined) ?? vnode.ref;
-    // Merge props directly
+    // 直接合并 props
     if (vnode.props) {
       cloned.props = { ...vnode.props, ...mergedProps };
     } else {
       cloned.props = mergedProps;
     }
-    // Merge children if provided
+    // 如果提供了 children，则合并
     if (!isNullish(mergedProps.children)) {
       cloned.children = mergedProps.children as VNodeChildren;
       normalizeChildren(cloned, mergedProps.children as VNodeChildren);
     }
   }
-  // When no extraProps, props is already shallow-copied via spread (...vnode)
-  // which copies the reference. For a true shallow copy, we create a new object.
+  // 当没有 extraProps 时，props 已通过展开运算符浅拷贝
+  // 这只是复制了引用。为了真正的浅拷贝，我们创建一个新对象。
   else if (vnode.props) {
     cloned.props = { ...vnode.props };
   }
@@ -379,11 +379,11 @@ export function cloneVNode(vnode: VNode, extraProps: Record<string, unknown> | n
 // ============================================================
 
 /**
- * Merge multiple props objects.
- * - class values are concatenated
- * - style values are merged
- * - other props: later values override earlier ones
- * - event handlers (onXxx) are concatenated into arrays
+ * 合并多个 props 对象。
+ * - class 值会被拼接
+ * - style 值会被合并
+ * - 其他 props：后面的值覆盖前面的值
+ * - 事件处理器（onXxx）会被拼接成数组
  */
 export function mergeProps(
   ...args: (Record<string, unknown> | null | undefined)[]
@@ -400,15 +400,15 @@ export function mergeProps(
       const val = props[key];
       const existing = result[key];
 
-      // Class concatenation
+      // Class 拼接
       if (key === 'class') {
         result[key] = existing ? normalizeClass([existing, val]) : normalizeClass(val as string);
       }
-      // Style merging
+      // Style 合并
       else if (key === 'style') {
         result[key] = existing ? normalizeStyle([existing, val]) : normalizeStyle(val);
       }
-      // Event handler concatenation
+      // 事件处理器拼接
       else if (key.startsWith('on') && isFunction(val)) {
         if (isFunction(existing)) {
           result[key] = [existing, val];
@@ -418,7 +418,7 @@ export function mergeProps(
           result[key] = val;
         }
       }
-      // Normal prop override
+      // 普通 prop 覆盖
       else {
         result[key] = val;
       }
@@ -458,14 +458,14 @@ function flattenChildren(children: unknown[]): unknown[] {
 }
 
 /**
- * Normalize children and set shapeFlag on the vnode
+ * 规范化 children 并设置 vnode 的 shapeFlag
  * FIX: P2-6 VDOM-NEW-13 - 支持 Fragment children 扁平化
  */
 export function normalizeChildren(vnode: VNode, children: VNodeChildren): void {
   let type: number = 0;
 
   if (isNullish(children)) {
-    // No children
+    // 无 children
   } else if (isArray(children)) {
     // FIX: P2-6 如果是 Fragment，扁平化嵌套的 children
     if (vnode.type === Fragment) {
@@ -476,9 +476,9 @@ export function normalizeChildren(vnode: VNode, children: VNodeChildren): void {
       type = ShapeFlags.ARRAY_CHILDREN;
     }
   } else if (isString(children) || isFunction(children)) {
-    // Function children will be resolved later; treat as text for shapeFlag
+    // 函数 children 将在后续解析；对于 shapeFlag 视为文本
     type = ShapeFlags.TEXT_CHILDREN;
-    // Convert function children to a slot-like structure
+    // 将函数 children 转换为类似 slot 的结构
     if (isFunction(children)) {
       // FIX: P2-13 函数类型 children 的 shapeFlag 处理：
       // 函数 children 在组件 vnode 上作为默认 slot 使用（render 函数中通过
@@ -492,7 +492,7 @@ export function normalizeChildren(vnode: VNode, children: VNodeChildren): void {
     type = ShapeFlags.TEXT_CHILDREN;
     vnode.children = String(children);
   } else if (typeof children === 'boolean') {
-    // Boolean children are treated as null
+    // 布尔 children 视为 null
     vnode.children = undefined;
   } else if (isObject(children)) {
     // Slots children
@@ -507,7 +507,7 @@ export function normalizeChildren(vnode: VNode, children: VNodeChildren): void {
 // ============================================================
 
 /**
- * Determine the base shapeFlag from the vnode type
+ * 根据 vnode 类型确定基础 shapeFlag
  */
 export function getShapeFlag(type: VNodeTypes): number {
   if (isString(type)) {
@@ -522,7 +522,7 @@ export function getShapeFlag(type: VNodeTypes): number {
   if (type === Comment) {
     return 0;
   }
-  // Object type => component
+  // 对象类型 => 组件
   if (isObject(type)) {
     return ShapeFlags.STATEFUL_COMPONENT;
   }
@@ -530,30 +530,30 @@ export function getShapeFlag(type: VNodeTypes): number {
 }
 
 // ============================================================
-// Internal helpers
+// 内部工具函数
 // ============================================================
 
 /**
- * Normalize props: extract key/ref, normalize class/style.
- * If props already has no class/style shorthand properties, return the original object
- * to avoid unnecessary shallow copies that increase GC pressure.
+ * 规范化 props：提取 key/ref，规范化 class/style。
+ * 如果 props 没有 class/style 简写属性，返回原始对象
+ * 以避免不必要的浅拷贝增加 GC 压力。
  */
 function normalizeProps(props: Record<string, unknown>): Record<string, unknown> {
-  // Fast path: if no class/style to normalize, return original object
+  // 快速路径：如果没有需要规范化的 class/style，返回原始对象
   if (props.class === undefined && props.style === undefined) {
     return props;
   }
   const normalized = { ...props };
-  // class normalization
+  // class 规范化
   if (normalized.class !== undefined) {
     normalized.class = normalizeClass(normalized.class as Parameters<typeof normalizeClass>[0]);
   }
-  // style normalization
+  // style 规范化
   if (normalized.style !== undefined) {
     normalized.style = normalizeStyle(normalized.style as Parameters<typeof normalizeStyle>[0]);
   }
   return normalized;
 }
 
-// Re-export EMPTY_OBJ for convenience
+// 为方便起见重新导出 EMPTY_OBJ
 export { EMPTY_OBJ };

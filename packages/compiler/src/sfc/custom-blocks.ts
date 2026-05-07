@@ -1,8 +1,8 @@
 // src/sfc/custom-blocks.ts
-// Custom block processor registry for SFC
+// SFC 自定义块处理器注册表
 
 // ============================================================
-// Types
+// 类型定义
 // ============================================================
 
 export interface CustomBlockProcessor {
@@ -14,12 +14,12 @@ export interface CustomBlockProcessor {
 }
 
 // ============================================================
-// Known Custom Block Types
+// 已知自定义块类型
 // ============================================================
 
 /**
- * Pre-defined custom block types that are commonly used in LytJS SFCs.
- * These are recognized by tooling (IDE, linter, etc.) but do not have
+ * LytJS SFC 中常用的预定义自定义块类型。
+ * 这些被工具（IDE、linter 等）识别但没有
  * built-in processors unless registered.
  */
 export const KNOWN_CUSTOM_BLOCKS: readonly string[] = [
@@ -30,13 +30,13 @@ export const KNOWN_CUSTOM_BLOCKS: readonly string[] = [
 ] as const;
 
 // ============================================================
-// Processor Registry
+// 处理器注册表
 // ============================================================
 
 const processorMap = new Map<string, CustomBlockProcessor>();
 
 /**
- * Register a custom block processor.
+ * 注册自定义块处理器。
  *
  * @param processor - The processor to register
  * @throws Error if a processor with the same name is already registered
@@ -55,7 +55,7 @@ export function registerCustomBlockProcessor(
 }
 
 /**
- * Get a registered custom block processor by name.
+ * 按名称获取已注册的自定义块处理器。
  *
  * @param name - The block type name
  * @returns The processor if registered, undefined otherwise
@@ -67,7 +67,7 @@ export function getCustomBlockProcessor(
 }
 
 /**
- * Remove a registered custom block processor.
+ * 移除已注册的自定义块处理器。
  *
  * @param name - The block type name to unregister
  * @returns true if the processor was found and removed
@@ -77,7 +77,7 @@ export function unregisterCustomBlockProcessor(name: string): boolean {
 }
 
 /**
- * Get the names of all registered custom block processors.
+ * 获取所有已注册自定义块处理器的名称。
  *
  * @returns Array of registered processor names
  */

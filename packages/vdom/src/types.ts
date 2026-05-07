@@ -1,12 +1,12 @@
 /**
  * @lytjs/vdom - types
- * VDOM-specific types that extend common-vnode types
+ * VDOM 特定类型，扩展 common-vnode 类型
  */
 
 import type { VNode, ComponentInternalInstance } from '@lytjs/common-vnode';
 import type { Props as SharedProps } from '@lytjs/shared-types';
 
-// Re-export from @lytjs/host-contract for convenience
+// 为方便起见从 @lytjs/host-contract 重新导出
 export type {
   RendererHost,
   HostRect,
@@ -18,23 +18,23 @@ export type {
 } from '@lytjs/host-contract';
 
 // ============================================================
-// Basic types
+// 基础类型
 // ============================================================
 
-/** Props type for VNode */
+/** VNode 的 Props 类型 */
 export type Props = SharedProps;
 
-/** Host element type (DOM Element) */
+/** 宿主元素类型（DOM Element） */
 export type HostElement = Element;
 
-/** Host node type (DOM Node) */
+/** 宿主节点类型（DOM Node） */
 export type HostNode = Node;
 
 // ============================================================
-// Component types
+// 组件类型
 // ============================================================
 
-/** Component interface with internal marker */
+/** 带有内部标记的组件接口 */
 export interface Component<P = Record<string, unknown>, RawBindings = {}> {
   __v_isComponent: true;
   name?: string;
@@ -52,33 +52,33 @@ export interface Component<P = Record<string, unknown>, RawBindings = {}> {
 }
 
 // ============================================================
-// Renderer types
+// 渲染器类型
 // ============================================================
 
 /**
- * Renderer options for host platform operations.
+ * 宿主平台操作的渲染器选项。
  *
- * @deprecated Use RendererHost from @lytjs/host-contract instead.
- * This interface is kept for backward compatibility.
+ * @deprecated 请使用 @lytjs/host-contract 中的 RendererHost。
+ * 此接口保留仅为向后兼容。
  */
 export interface RendererOptions<HN = unknown, HE extends HN = HN> {
-  /** Create a host element from a tag string */
+  /** 从标签字符串创建宿主元素 */
   createElement(type: string): HE;
-  /** Set text content on a host element */
+  /** 设置宿主元素的文本内容 */
   setElementText(node: HE, text: string): void;
-  /** Insert a host node before an anchor, or append to parent */
+  /** 在锚点前插入宿主节点，或追加到父节点 */
   insert(child: HN, parent: HN, anchor?: HN | null): void;
-  /** Remove a host node from its parent */
+  /** 从父节点移除宿主节点 */
   remove(child: HN): void;
-  /** Create a text node */
+  /** 创建文本节点 */
   createText(text: string): HN;
-  /** Set text content on a text node */
+  /** 设置文本节点的文本内容 */
   setText(node: HN, text: string): void;
-  /** Get next sibling of a host node */
+  /** 获取宿主节点的下一个兄弟节点 */
   nextSibling(node: HN): HN | null;
-  /** Get parent of a host node */
+  /** 获取宿主节点的父节点 */
   parentNode(node: HN): HN | null;
-  /** Patch a prop on a host element */
+  /** 在宿主元素上 patch 一个 prop */
   patchProp(
     el: HE,
     key: string,
@@ -88,21 +88,21 @@ export interface RendererOptions<HN = unknown, HE extends HN = HN> {
     parentComponent?: ComponentInternalInstance | null,
     parentSuspense?: SuspenseBoundary | null,
   ): void;
-  /** Create a comment node */
+  /** 创建注释节点 */
   createComment(text: string): HN;
-  /** Query selector (for Teleport target) */
+  /** 查询选择器（用于 Teleport 目标） */
   querySelector?(selector: string): HE | null;
-  /** Optional callback to create and setup a component instance for child components.
-   *  When provided, mountComponent will call this if vnode.component is not set.
-   *  Receives the vnode and the parent component instance.
-   *  Should set vnode.component with the created instance. */
+  /** 可选回调：为子组件创建和 setup 组件实例。
+   *  当提供时，mountComponent 会在 vnode.component 未设置时调用此回调。
+   *  接收 vnode 和父组件实例。
+   *  应使用创建的实例设置 vnode.component。 */
   setupChildComponent?(
     vnode: VNode,
     parentComponent: ComponentInternalInstance | null,
   ): void;
-  /** FIX: P1-4 Optional callback to normalize props during component updates.
-   *  When provided, patch will call this to normalize nextProps before assigning
-   *  to component.props, ensuring declared props validation and attrs separation. */
+  /** FIX: P1-4 可选回调：在组件更新时规范化 props。
+   *  当提供时，patch 会在将 nextProps 赋值给 component.props 之前调用此回调，
+   *  以确保声明的 props 验证和 attrs 分离。 */
   normalizeProps?(
     instance: ComponentInternalInstance,
     rawProps: Record<string, unknown> | null,
@@ -110,18 +110,18 @@ export interface RendererOptions<HN = unknown, HE extends HN = HN> {
 }
 
 // ============================================================
-// Suspense types
+// Suspense 类型
 // ============================================================
 
 /**
- * Suspense boundary interface
+ * Suspense boundary 接口
  *
- * Used by the patch algorithm to manage async component rendering.
- * The boundary tracks the active and pending branches, fallback state,
- * and associated reactive effects.
+ * 用于 patch 算法管理异步组件渲染。
+ * boundary 跟踪 active 和 pending 分支、fallback 状态
+ * 以及关联的响应式 effect。
  *
- * Note: container and anchor use `unknown` to remain platform-agnostic.
- * The renderer internally knows the concrete host node type.
+ * 注意：container 和 anchor 使用 `unknown` 以保持平台无关。
+ * 渲染器内部知道具体的宿主节点类型。
  */
 export interface SuspenseBoundary {
   vnode: VNode;
@@ -138,16 +138,26 @@ export interface SuspenseBoundary {
 }
 
 // ============================================================
-// Internal types
+// 组件内部实例类型
 // ============================================================
 
-/** Internal component instance (minimal) */
+/**
+ * 组件内部实例 - 存储组件的运行时状态。
+ * 由 setupChildComponent 回调创建。
+ */
 export interface InternalComponentInstance {
+  /** VNode */
   vnode: VNode;
+  /** 父组件实例 */
   parent: InternalComponentInstance | null;
+  /** 子树 */
   subTree: VNode;
+  /** 是否已挂载 */
   isMounted: boolean;
+  /** 是否已卸载 */
   isUnmounted: boolean;
+  /** 更新函数 */
   update: (() => void) | null;
+  /** 渲染函数 */
   render: (() => VNode) | null;
 }

@@ -88,13 +88,13 @@ export function createApp(
       context._container = container;
 
       try {
-        // Create root vnode through the component system's standard flow
+        // 通过组件系统的标准流程创建根 vnode
         const rootVNode = createVNode(rootComponent, rootProps);
 
-        // Create component instance using the standardized component system
+        // 使用标准化的组件系统创建组件实例
         const instance = createComponentInstance(rootVNode, null);
 
-        // Replace appContext: createComponentInstance creates a new empty context
+        // 替换 appContext：createComponentInstance 会创建新的空上下文
         // when parent is null, but we need the core-level context with plugins,
         // components, directives, and provides registered on the app.
         instance.appContext = context as ComponentAppContext;
@@ -112,22 +112,22 @@ export function createApp(
         // Set up the component (runs setup, init props/slots, data, lifecycle)
         setupComponent(instance);
 
-        // Store component instance on vnode so patch can access it
+        // 将组件实例存储到 vnode 上，以便 patch 时访问
         // FIX: DTS build error - 跨包类型不兼容
         (rootVNode as { component: unknown }).component = instance;
 
-        // Save root instance reference for unmount lifecycle hooks
+        // 保存根实例引用，用于卸载生命周期钩子
         context._instance = instance;
 
-        // Render using the DOM renderer
+        // 使用 DOM 渲染器进行渲染
         const renderer = createDOMRenderer();
         context.renderer = renderer as unknown as DOMRenderer;
         context._vnode = rootVNode;
 
-        // Mount the vnode
+        // 挂载 vnode
         renderer.mount(rootVNode, container);
 
-        // Create and return the public instance
+        // 创建并返回公共实例
         const publicInstance = createComponentPublicInstance(instance);
 
         _isMounted = true;

@@ -1,5 +1,5 @@
 // src/component-options.ts
-// Component options merging, definition helpers, and app context
+// 组件选项合并、定义辅助函数和应用上下文
 
 import { isFunction, hasOwn } from '@lytjs/common-is';
 import { warn } from '@lytjs/common-error';
@@ -13,8 +13,8 @@ import type { VNode } from '@lytjs/common-vnode';
 // ==================== defineComponent ====================
 
 /**
- * defineComponent is an identity function that returns the options.
- * It provides TypeScript type inference for component options.
+ * defineComponent 是一个恒等函数，直接返回选项对象。
+ * 它为组件选项提供 TypeScript 类型推断。
  */
 export function defineComponent(options: ComponentOptions): ComponentOptions {
   return options;
@@ -23,9 +23,9 @@ export function defineComponent(options: ComponentOptions): ComponentOptions {
 // ==================== defineFunctionalComponent ====================
 
 /**
- * Define a functional component.
- * A functional component has no instance, no lifecycle hooks, and no reactive state.
- * It receives props and returns a render function directly.
+ * 定义函数式组件。
+ * 函数式组件没有实例、没有生命周期钩子、没有响应式状态。
+ * 它接收 props 并直接返回渲染函数。
  *
  * FIX: P1-22 使用精确类型替代 Record<string, any>，
  * render 参数明确为返回 VNode 的函数，props 参数使用 Record<string, unknown>
@@ -38,8 +38,8 @@ export function defineFunctionalComponent(
     name: 'FunctionalComponent',
     props: props ?? {},
     setup(_props: Record<string, unknown>) {
-      // Return the original render function directly so that handleSetupResult
-      // assigns it as instance.render, making the functional component work correctly.
+      // 直接返回原始渲染函数，使 handleSetupResult
+      // 将其赋值给 instance.render，让函数式组件正常工作。
       return render as unknown as () => VNode;
     },
     // 标记为函数式组件
@@ -50,9 +50,9 @@ export function defineFunctionalComponent(
 // ==================== mergeOptions ====================
 
 /**
- * Merge component options with extends and mixins.
- * Uses path tracking to provide detailed circular dependency warnings
- * that include the full merge chain with component names.
+ * 合并组件选项的 extends 和 mixins。
+ * 使用路径跟踪提供详细的循环依赖警告，
+ * 包含完整的合并链和组件名称。
  *
  * FIX: P2-37 使用 pathLength 替代 [...path] 数组复制：
  * 原实现在每次递归调用时通过 [...path] 复制整个 path 数组，
@@ -69,7 +69,7 @@ export function mergeOptions(
 ): ComponentOptions {
   if (seen.has(options)) {
     if (__DEV__) {
-      // Build a human-readable cycle path using component names
+      // 构建可读的循环路径（使用组件名称）
       const currentPath = path.slice(0, pathLength);
       const cycleStart = currentPath.indexOf(options);
       const cyclePath = currentPath
@@ -91,12 +91,12 @@ export function mergeOptions(
 
   let merged: ComponentOptions = { ...options };
 
-  // Apply extends first
+  // 先应用 extends
   if (options.extends) {
     merged = mergeOptionsPair(mergeOptions(options.extends, seen, path, pathLength + 1), merged);
   }
 
-  // Then apply mixins
+  // 再应用 mixins
   if (options.mixins) {
     for (const mixin of options.mixins) {
       merged = mergeOptionsPair(merged, mergeOptions(mixin, seen, path, pathLength + 1));
@@ -107,7 +107,7 @@ export function mergeOptions(
 }
 
 /**
- * Merge two ComponentOptions objects.
+ * 合并两个 ComponentOptions 对象。
  */
 function mergeOptionsPair(parent: ComponentOptions, child: ComponentOptions): ComponentOptions {
   // 使用 Record<string, unknown> 作为中间类型以支持动态键访问，
@@ -167,7 +167,7 @@ function mergeOptionsPair(parent: ComponentOptions, child: ComponentOptions): Co
         merged[key] = childVal;
       }
     } else if (key === 'mixins' || key === 'extends') {
-      // Skip - already handled
+      // 跳过 - 已处理
     } else if (hasOwn(child, key)) {
       merged[key] = (child as Record<string, unknown>)[key];
     }
@@ -179,8 +179,8 @@ function mergeOptionsPair(parent: ComponentOptions, child: ComponentOptions): Co
 // ==================== createAppContext ====================
 
 /**
- * Create a base app context object.
- * Exported for @lytjs/core to extend with runtime fields.
+ * 创建基础应用上下文对象。
+ * 导出供 @lytjs/core 扩展运行时字段。
  */
 export function createAppContext(): AppContext {
   return {

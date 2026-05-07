@@ -12,14 +12,14 @@ import { reactive } from './reactive';
 
 // ==================== Ref 类型 ====================
 
-/** Internal interface for ref-like objects used in track/trigger */
+/** track/trigger 中使用的类 ref 对象的内部接口 */
 export interface RefLike<T = unknown> {
   dep: Dep;
   __v_isRef?: boolean;
   value: T;
 }
 
-/** Minimal interface required by trackRefValue/triggerRefValue */
+/** trackRefValue/triggerRefValue 所需的最小接口 */
 interface TrackableRef {
   dep: Dep;
 }

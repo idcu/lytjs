@@ -23,7 +23,7 @@ import type {
 } from './types';
 
 // ============================================================
-// Signal Codegen Options
+// Signal 代码生成选项
 // ============================================================
 
 export interface SignalCodegenOptions {
@@ -120,7 +120,7 @@ function serializeStaticHTML(
 }
 
 // ============================================================
-// Main generate function
+// 主生成函数
 // ============================================================
 
 export function generateSignal(
@@ -132,7 +132,7 @@ export function generateSignal(
   const elementVars: Array<{ varName: string; tag: string }> = [];
   const consumedCount = new Map<string, number>();
 
-  // Track which elements have dynamic bindings
+  // 跟踪哪些元素有动态绑定
   const dynamicBindings: Array<{ varName: string; code: string }> = [];
 
   // ---- Phase 0: 检查根节点数量 ----
@@ -206,7 +206,7 @@ export function generateSignal(
 }
 
 // ============================================================
-// Build static HTML from children
+// 从 children 构建静态 HTML
 // ============================================================
 
 function buildStaticHTML(
@@ -221,13 +221,13 @@ function buildStaticHTML(
     } else if (child.type === NodeTypes.ELEMENT) {
       html += serializeStaticHTML(child as ElementNode, varCounter, elementVars);
     }
-    // Skip dynamic nodes (JSConditionalExpression, JSCallExpression, etc.)
+    // 跳过动态节点（JSConditionalExpression、JSCallExpression 等）
   }
   return html;
 }
 
 // ============================================================
-// Process children nodes
+// 处理 children 节点
 // ============================================================
 
 function processChildren(
@@ -263,13 +263,13 @@ function processChildren(
         dynamicBindings,
       );
     }
-    // TextNode, CommentNode, InterpolationNode at root level are handled
+    // 根级别的 TextNode、CommentNode、InterpolationNode 已处理
     // by the static HTML generation
   }
 }
 
 // ============================================================
-// Process Element Node
+// 处理元素节点
 // ============================================================
 
 function processElement(
@@ -411,7 +411,7 @@ function findExistingVar(
 }
 
 // ============================================================
-// Process VNodeCall props (for transformed directives like v-text, v-html)
+// 处理 VNodeCall props（用于 v-text、v-html 等转换后的指令）
 // ============================================================
 
 function processVNodeCallProps(
@@ -461,7 +461,7 @@ function processVNodeCallProps(
 }
 
 // ============================================================
-// Process Directive Node
+// 处理指令节点
 // ============================================================
 
 // FIX: P1-1~3 Signal 模式代码注入防护 - 表达式白名单验证
@@ -697,7 +697,7 @@ function processDirective(
 }
 
 // ============================================================
-// Process JSConditionalExpression (v-if 转换结果)
+// 处理 JSConditionalExpression（v-if 转换结果）
 // 使用 createTemplate + insert/remove 实现真正的 DOM 插入/移除
 // ============================================================
 
@@ -932,7 +932,7 @@ function serializeBranchHTML(
 }
 
 // ============================================================
-// Process JSCallExpression (v-for 转换结果)
+// 处理 JSCallExpression（v-for 转换结果）
 // ============================================================
 
 function processCallExpression(
@@ -1058,7 +1058,7 @@ function processCallExpression(
                     jsProp.key.type === NodeTypes.SIMPLE_EXPRESSION &&
                     jsProp.key.content === 'key'
                   ) {
-                    // Found the key property, extract its value
+                    // 找到 key 属性，提取其值
                     if (
                       jsProp.value &&
                       typeof jsProp.value !== 'string' &&

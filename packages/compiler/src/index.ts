@@ -1,6 +1,6 @@
 // src/index.ts
 // @lytjs/compiler - Main entry point
-// Re-exports all public APIs
+// 重新导出 all public APIs
 
 // Compile function
 import { parse } from './parser';
@@ -240,7 +240,7 @@ export function compile(source: string, options: CompilerOptions = {}): CodegenR
   return codegenResult;
 }
 
-// Constants
+// 常量
 export {
   NodeTypes,
   ElementTypes,
@@ -252,7 +252,7 @@ export {
   helperNameMap,
 } from './constants';
 
-// Types
+// 类型定义
 export type { RootNode } from './types';
 export type { ElementNode } from './types';
 export type { TextNode } from './types';
@@ -306,7 +306,7 @@ export { createCallExpression } from './ast';
 export { createConditionalExpression } from './ast';
 export { createArrayExpression } from './ast';
 
-// Transforms
+// 转换s
 export { transformElement } from './transform';
 export { transformIf } from './transform';
 export { transformFor } from './transform';

@@ -1,6 +1,6 @@
 /**
  * @lytjs/vdom - utils
- * Utility functions for VNode inspection and manipulation
+ * VNode 检查和操作的工具函数
  */
 
 import { PatchFlags, ShapeFlags } from '@lytjs/common-vnode';
@@ -8,18 +8,18 @@ import type { VNode } from '@lytjs/common-vnode';
 import { isArray } from '@lytjs/common-is';
 
 // ============================================================
-// VNode inspection utilities
+// VNode 检查工具函数
 // ============================================================
 
 /**
- * Check if a vnode is a static (hoisted) vnode
+ * 检查 vnode 是否为静态（hoist）vnode
  */
 export function isStaticVNode(vnode: VNode): boolean {
   return vnode.patchFlag === PatchFlags.HOISTED;
 }
 
 /**
- * Check if a vnode is a dynamic vnode (has patchFlag but not HOISTED)
+ * 检查 vnode 是否为动态 vnode（有 patchFlag 但不是 HOISTED）
  */
 export function isDynamicVNode(vnode: VNode): boolean {
   return (
@@ -30,7 +30,7 @@ export function isDynamicVNode(vnode: VNode): boolean {
 }
 
 /**
- * Extract text content from a vnode
+ * 从 vnode 提取文本内容
  */
 export function getVNodeText(vnode: VNode): string {
   if (vnode.children == null) return '';
@@ -40,14 +40,14 @@ export function getVNodeText(vnode: VNode): string {
 }
 
 /**
- * Check if a vnode has dynamic children
+ * 检查 vnode 是否有动态 children
  */
 export function hasDynamicChildren(vnode: VNode): boolean {
   return vnode.dynamicChildren !== null && vnode.dynamicChildren.length > 0;
 }
 
 /**
- * Collect all dynamic children in a vnode tree (BFS)
+ * 收集 vnode 树中所有动态 children（BFS）
  */
 export function collectDynamicChildren(vnode: VNode): VNode[] {
   const result: VNode[] = [];
@@ -73,21 +73,21 @@ export function collectDynamicChildren(vnode: VNode): VNode[] {
 }
 
 /**
- * Check if a vnode has array children
+ * 检查 vnode 是否有数组 children
  */
 export function hasArrayChildren(vnode: VNode): boolean {
   return (vnode.shapeFlag & ShapeFlags.ARRAY_CHILDREN) !== 0;
 }
 
 /**
- * Check if a vnode has text children
+ * 检查 vnode 是否有文本 children
  */
 export function hasTextChildren(vnode: VNode): boolean {
   return (vnode.shapeFlag & ShapeFlags.TEXT_CHILDREN) !== 0;
 }
 
 /**
- * Get the array children of a vnode
+ * 获取 vnode 的数组 children
  */
 export function getArrayChildren(vnode: VNode): VNode[] {
   if (isArray(vnode.children)) return vnode.children;

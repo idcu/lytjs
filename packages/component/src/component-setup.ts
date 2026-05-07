@@ -1,5 +1,5 @@
 // src/component-setup.ts
-// Component instance creation, setup, and props initialization
+// 组件实例创建、setup 和 props 初始化
 
 import { isFunction, isObject, hasOwn, NOOP, EMPTY_OBJ, isPromise } from '@lytjs/common-is';
 import { warn } from '@lytjs/common-error';
@@ -38,11 +38,11 @@ const setupContextCache = new WeakMap<ComponentInternalInstance, SetupContext>()
 // ==================== createComponentInstance ====================
 
 /**
- * Create a component internal instance from a vnode.
+ * 从 vnode 创建组件内部实例。
  *
- * Error handling: wraps instance creation in try-catch to prevent
- * uncaught exceptions during component initialization from crashing
- * the application. Errors are propagated to the nearest ErrorBoundary.
+ * 错误处理：实例创建包裹在 try-catch 中，防止
+ * 组件初始化期间的未捕获异常导致应用崩溃。
+ * 错误会传播到最近的 ErrorBoundary。
  */
 export function createComponentInstance(
   vnode: VNode,
@@ -67,7 +67,7 @@ export function createComponentInstance(
   const type = vnode.type as ComponentOptions;
 
   try {
-    // Merge extends and mixins
+    // 合并 extends 和 mixins
     const mergedOptions = mergeOptions(type);
 
     const appContext = parent ? parent.appContext : createAppContext();
@@ -106,7 +106,7 @@ export function createComponentInstance(
       accessCache: null as Record<string, number> | null,
     };
 
-    // Create emit function bound to this instance
+    // 创建绑定到此实例的 emit 函数
     instance.emit = (event: string, ...args: unknown[]) => emit(instance, event, ...args);
 
     // FIX: P1-4 在 instance 声明完成后赋值 root，避免在 const 初始化前引用自身
@@ -114,15 +114,15 @@ export function createComponentInstance(
 
     return instance;
   } catch (err) {
-    // Log error for debugging
+    // 记录错误用于调试
     if (__DEV__) {
       warn(
         `Failed to create component instance: ${(err as Error).message}`,
       );
     }
-    // Propagate error to ErrorBoundary via handleError
+    // 通过 handleError 将错误传播到 ErrorBoundary
     handleError(err as Error, parent, 'createComponentInstance');
-    // Re-throw to let the caller handle the failure
+    // 重新抛出，让调用者处理失败
     throw err;
   }
 }
@@ -130,7 +130,7 @@ export function createComponentInstance(
 // ==================== setupComponent ====================
 
 /**
- * Set up a component instance: run setup, init props, init slots.
+ * 设置组件实例：运行 setup、初始化 props、初始化 slots。
  */
 export function setupComponent(instance: ComponentInternalInstance): void {
   const vnode = instance.vnode;
@@ -139,17 +139,17 @@ export function setupComponent(instance: ComponentInternalInstance): void {
   const { children } = vnode;
   const props = (vnode.props as Record<string, unknown> | null) ?? null;
 
-  // Init props
+  // 初始化 props
   initProps(instance, props);
 
-  // Init slots
+  // 初始化 slots
   initSlots(instance, children);
 
-  // Set up the component
+  // 设置组件
   const setupResult = runSetup(instance);
 
   if (isPromise(setupResult)) {
-    // Async setup - mark vnode as async
+    // 异步 setup - 标记 vnode 为异步
     vnode.isAsyncPlaceholder = true;
     // FIX: P1-15 异步 setup 超时定时器在组件卸载时清理，
     // 避免组件卸载后定时器仍然触发导致内存泄漏和无效操作
@@ -189,7 +189,7 @@ export function setupComponent(instance: ComponentInternalInstance): void {
 }
 
 /**
- * Run the setup function if defined.
+ * 运行 setup 函数（如果已定义）。
  */
 function runSetup(instance: ComponentInternalInstance): SetupResult {
   const { setup } = instance.type;
@@ -204,7 +204,7 @@ function runSetup(instance: ComponentInternalInstance): SetupResult {
     return result;
   } catch (err) {
     handleError(err as Error, instance, 'setup function');
-    // Set a no-op render to prevent silent empty rendering
+    // 设置空操作渲染函数，防止静默空渲染
     instance.render = () => null as unknown as VNode;
     return undefined;
   } finally {
@@ -213,25 +213,25 @@ function runSetup(instance: ComponentInternalInstance): SetupResult {
 }
 
 /**
- * Handle the result of the setup function.
+ * 处理 setup 函数的返回结果。
  */
 function handleSetupResult(instance: ComponentInternalInstance, setupResult: SetupResult): void {
   if (isFunction(setupResult)) {
-    // Setup returned a render function
+    // Setup 返回了渲染函数
     instance.render = setupResult as RenderFunction;
   } else if (isObject(setupResult) && setupResult !== null) {
-    // Setup returned a state object
+    // Setup 返回了状态对象
     instance.setupState = setupResult as Record<string, unknown>;
   }
 
-  // Finish component setup
+  // 完成组件 setup
   finishComponentSetup(instance);
 }
 
 // ==================== initProps ====================
 
 /**
- * Initialize and validate props on a component instance.
+ * 初始化并验证组件实例的 props。
  */
 export function initProps(
   instance: ComponentInternalInstance,
@@ -244,7 +244,7 @@ export function initProps(
     return;
   }
 
-  // Process declared props
+  // 处理声明的 props
   for (const key in propsOptions) {
     if (hasOwn(propsOptions, key)) {
       const value = rawProps[key];
@@ -252,7 +252,7 @@ export function initProps(
     }
   }
 
-  // Collect attrs (non-declared props)
+  // 收集 attrs（未声明的 props）
   const attrs: Record<string, unknown> = {};
   for (const key in rawProps) {
     if (hasOwn(rawProps, key) && !hasOwn(propsOptions, key)) {
@@ -267,7 +267,7 @@ export function initProps(
 // ==================== createSetupContext ====================
 
 /**
- * Create the setup context object passed to the setup function.
+ * 创建传递给 setup 函数的 setup 上下文对象。
  * FIX: P1-9 添加缓存逻辑，避免每次调用 runSetup 时重新创建 setupContext
  */
 export function createSetupContext(instance: ComponentInternalInstance): SetupContext {

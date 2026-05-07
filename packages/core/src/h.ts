@@ -72,7 +72,7 @@ export function h(
   ...children: VNodeChildren[]
 ): VNode;
 
-// Implementation
+// 实现
 export function h(
   type: string | Component | typeof Fragment | typeof Text | typeof Comment,
   props?: Record<string, unknown> | null,

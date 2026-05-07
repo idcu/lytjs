@@ -1,11 +1,11 @@
 /**
  * @lytjs/vdom - patch
  *
- * Core patch logic with platform-agnostic renderer host.
+ * 核心 patch 逻辑，平台无关的渲染器宿主。
  *
- * This is the main entry point that orchestrates all patch sub-modules:
- * - patch-element.ts: Element vnode mount/patch
- * - patch-component.ts: Component vnode mount
+ * 这是协调所有 patch 子模块的主入口：
+ * - patch-element.ts: 元素 vnode mount/patch
+ * - patch-component.ts: 组件 vnode mount
  * - patch-fragment.ts: Fragment vnode mount/patch/unmount
  * - patch-teleport.ts: Teleport vnode mount/patch/unmount/move
  * - patch-suspense.ts: Suspense vnode mount/patch/unmount
@@ -30,7 +30,7 @@ import {
 } from './list-diff';
 import type { DOMOperations } from './list-diff';
 
-// Sub-module imports
+// 子模块导入
 import type { RendererContext } from './patch-element';
 import { createElementPatch } from './patch-element';
 import { createComponentPatch } from './patch-component';
@@ -40,11 +40,11 @@ import { createSuspensePatch } from './patch-suspense';
 import { createChildrenPatch } from './patch-children';
 
 // ============================================================
-// RendererHost adapter: wraps a RendererHost into RendererOptions shape
+// RendererHost 适配器：将 RendererHost 包装为 RendererOptions 形状
 // ============================================================
 
 /**
- * Internal renderer options shape shared by both host and legacy adapters.
+ * 内部渲染器选项形状，host 和 legacy 适配器共用。
  */
 interface InternalRendererOptions<HN, HE extends HN> {
   createElement: (type: string) => HE;
@@ -64,9 +64,9 @@ interface InternalRendererOptions<HN, HE extends HN> {
 }
 
 /**
- * Adapt a RendererHost to the internal RendererOptions-like shape used by createRenderer.
- * This bridges the gap between RendererHost's patchProp(el, key, prev, next, isSVG?)
- * and the internal need for a simpler patchProp(el, key, prev, next).
+ * 将 RendererHost 适配为 createRenderer 使用的内部 RendererOptions 形状。
+ * 这弥合了 RendererHost 的 patchProp(el, key, prev, next, isSVG?)
+ * 和内部对简化 patchProp(el, key, prev, next) 需求之间的差距。
  */
 function hostToOptions<HN, HE extends HN>(
   host: RendererHost<HN, HE>,
@@ -89,7 +89,7 @@ function hostToOptions<HN, HE extends HN>(
 }
 
 /**
- * Adapt legacy RendererOptions to the internal shape used by createRenderer.
+ * 将 legacy RendererOptions 适配为 createRenderer 使用的内部形状。
  */
 function optionsToInternal<HN, HE extends HN>(
   options: RendererOptions<HN, HE>,
@@ -115,7 +115,7 @@ function optionsToInternal<HN, HE extends HN>(
 }
 
 // ============================================================
-// Renderer factory
+// 渲染器工厂
 // ============================================================
 
 // FIX: P1-10 RENDERER-NEW-01 - 渲染器实例唯一性检查
@@ -154,8 +154,8 @@ function cleanupElementEvents(el: Node): void {
 }
 
 /**
- * Check if a renderer has already been created with the same host/options.
- * Prevents duplicate renderer creation which can cause isolation issues.
+ * 检查是否已使用相同的 host/options 创建了渲染器。
+ * 防止重复创建渲染器，这可能导致隔离问题。
  */
 function checkRendererUniqueness<HN, HE extends HN>(
   hostOrOptions: RendererHost<HN, HE> | RendererOptions<HN, HE>,
@@ -174,10 +174,10 @@ function checkRendererUniqueness<HN, HE extends HN>(
 }
 
 /**
- * Create a renderer with the given RendererHost.
- * Returns patch, mount, and unmount functions.
+ * 使用给定的 RendererHost 创建渲染器。
+ * 返回 patch、mount 和 unmount 函数。
  *
- * This is the primary signature — fully platform-agnostic.
+ * 这是主要签名 — 完全平台无关。
  */
 export function createRenderer<HN, HE extends HN>(
   host: RendererHost<HN, HE>,
@@ -211,8 +211,8 @@ export function createRenderer<HN, HE extends HN>(
 };
 
 /**
- * @deprecated Use createRenderer(host: RendererHost) instead.
- * Legacy signature accepting RendererOptions for backward compatibility.
+ * @deprecated 请使用 createRenderer(host: RendererHost)。
+ * 接受 RendererOptions 的 legacy 签名，用于向后兼容。
  */
 export function createRenderer<HN, HE extends HN>(
   options: RendererOptions<HN, HE>,
@@ -275,24 +275,24 @@ export function createRenderer<HN, HE extends HN>(
     normalizeProps,
   } = internal;
 
-  // Helper: assign host node to vnode.el (VNode.el is typed as Node | null in common-vnode,
-  // but we work with generic HN here, so we need a type assertion).
-  // The double assertion (HN -> unknown -> Node) is necessary because HN and Node are
-  // unrelated types in the generic context — TypeScript does not allow direct casts between
-  // two generic types that don't share a common base. Going through unknown is the standard
-  // pattern for this kind of cross-boundary type bridge.
+  // 辅助函数：将宿主节点赋值给 vnode.el（VNode.el 在 common-vnode 中类型为 Node | null，
+  // 但我们这里使用泛型 HN，因此需要类型断言）。
+  // 双重断言（HN -> unknown -> Node）是必要的，因为 HN 和 Node
+  // 在泛型上下文中是不相关类型 — TypeScript 不允许在
+  // 没有共同基类的两个泛型类型之间直接转换。通过 unknown 是
+  // 这种跨边界类型桥接的标准模式。
   const setVNodeEl = (vnode: VNode, el: HN | null) => { vnode.el = el as unknown as Node | null; };
   const getVNodeEl = (vnode: VNode): HN | null => vnode.el as unknown as HN | null;
 
   // ============================================================
-  // Build shared RendererContext for sub-modules
+  // 构建共享的 RendererContext 供子模块使用
   // ============================================================
 
-  // We use a mutable context object that gets populated as functions are created.
-  // This allows sub-modules to reference each other through the shared context.
+  // 使用可变上下文对象，在函数创建时填充。
+  // 这允许子模块通过共享上下文相互引用。
   const ctx = {} as RendererContext<HN, HE>;
 
-  // Populate host operations
+  // 填充宿主操作
   ctx.createElement = createElement;
   ctx.setElementText = setElementText;
   ctx.insert = insert;
@@ -308,7 +308,7 @@ export function createRenderer<HN, HE extends HN>(
   ctx.getVNodeEl = getVNodeEl;
 
   // ============================================================
-  // Create sub-module APIs
+  // 创建子模块 API
   // ============================================================
 
   const childrenAPI = createChildrenPatch<HN, HE>(ctx);
@@ -318,7 +318,7 @@ export function createRenderer<HN, HE extends HN>(
   const teleportAPI = createTeleportPatch<HN, HE>(ctx);
   const suspenseAPI = createSuspensePatch<HN, HE>(ctx);
 
-  // Wire up children helpers into context
+  // 将 children 辅助函数注入上下文
   ctx.mountChildren = childrenAPI.mountChildren;
   ctx.unmountChildren = childrenAPI.unmountChildren;
   ctx.patchChildren = childrenAPI.patchChildren;
@@ -326,7 +326,7 @@ export function createRenderer<HN, HE extends HN>(
   ctx.diffChildrenInternal = childrenAPI.diffChildrenInternal;
 
   // ============================================================
-  // patch - core diffing entry point
+  // patch - 核心 diff 入口
   // ============================================================
 
   function patch(
@@ -362,11 +362,11 @@ export function createRenderer<HN, HE extends HN>(
       const n2Type = n2.type;
       const n2ShapeFlag = n2.shapeFlag;
 
-      // Fragment needs special handling
+      // Fragment 需要特殊处理
       if (n2Type === Fragment) {
         fragmentAPI.patchFragment(n1, n2, container, parentComponent, parentSuspense, isSVG);
       } else if (n2Type === Text || n2Type === Comment) {
-        // Patch text/comment node: update content if children changed
+        // Patch text/comment 节点：如果 children 变化则更新内容
         const node = n1.el;
         setVNodeEl(n2, node as unknown as HN | null);
         if (n1.children !== n2.children) {
@@ -382,7 +382,7 @@ export function createRenderer<HN, HE extends HN>(
       } else if (n2ShapeFlag & ShapeFlags.SUSPENSE) {
         suspenseAPI.patchSuspense(n1, n2, container, anchor, parentComponent, parentSuspense, isSVG);
       } else if (n2ShapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
-        // Component patch: delegate to component update process
+        // 组件 patch：委托给组件更新流程
         // FIX: P1-7 VDOM-NEW-11 - 组件更新效率优化
         // 在更新组件前添加 shallowEqual 比较 props，如果相同则跳过更新
         const prevProps = n1.props as Record<string, unknown> | null | undefined;
@@ -414,22 +414,22 @@ export function createRenderer<HN, HE extends HN>(
             update();
           } else if (__DEV__ && !propsChanged && !slotsChanged) {
             const compName = (n2.component.type as { name?: string }).name || 'anonymous';
-            console.log(`[lytjs/patch] Skipping component update for "${compName}": props and slots unchanged`);
+            console.log(`[lytjs/patch] 跳过组件更新 "${compName}"：props 和 slots 未变化`);
           }
         }
       } else if (n2ShapeFlag & ShapeFlags.TELEPORT) {
         teleportAPI.patchTeleport(n1, n2, container, anchor, parentComponent, parentSuspense, isSVG);
       } else {
-        // Patch existing element node
+        // Patch 现有元素节点
         elementAPI.patchElement(n1, n2, parentComponent, parentSuspense, isSVG);
       }
     } else {
-      // Unmount old node
+      // 卸载旧节点
       if (n1 !== null) {
         unmount(n1, parentComponent, parentSuspense, true);
       }
 
-      // Mount new node
+      // 挂载新节点
       // FIX: P2-9 优化重复的属性查找：缓存 n2.type 和 n2.shapeFlag 到局部变量
       const n2Type = n2.type;
       const n2ShapeFlag = n2.shapeFlag;
@@ -465,7 +465,7 @@ export function createRenderer<HN, HE extends HN>(
     const { type, children, component } = vnode;
     const el = getVNodeEl(vnode);
 
-    // Handle component unmount - trigger onUnmounted lifecycle hook
+    // 处理组件卸载 - 触发 onUnmounted lifecycle hook
     if (
       component &&
       (vnode.shapeFlag & ShapeFlags.STATEFUL_COMPONENT ||
@@ -489,7 +489,7 @@ export function createRenderer<HN, HE extends HN>(
       }
       component.isUnmounted = true;
 
-      // Also unmount the component's subTree to remove DOM elements
+      // 同时卸载组件的 subTree 以移除 DOM 元素
       const subTree = (component as ComponentInternalInstance).subTree;
       if (subTree) {
         unmount(subTree, component as ComponentInternalInstance, parentSuspense, doRemove);
@@ -520,7 +520,7 @@ export function createRenderer<HN, HE extends HN>(
       return;
     }
 
-    // Unmount children
+    // 卸载 children
     if (vnode.shapeFlag & ShapeFlags.ARRAY_CHILDREN && isArray(children)) {
       for (let i = 0; i < children.length; i++) {
         unmount(children[i]!, parentComponent, parentSuspense, doRemove);
@@ -533,7 +533,7 @@ export function createRenderer<HN, HE extends HN>(
       cleanupElementEvents(el as unknown as Node);
     }
 
-    // Clean up string refs on unmount
+    // 卸载时清理 string refs
     if (vnode.ref && parentComponent) {
       if (typeof vnode.ref === 'string') {
         delete parentComponent.refs[vnode.ref];
@@ -561,12 +561,12 @@ export function createRenderer<HN, HE extends HN>(
     parentSuspense: SuspenseBoundary | null,
   ): void {
     if (vnode.type === Fragment) {
-      // Move fragment children
+      // 移动 Fragment children
       const children = isArray(vnode.children) ? vnode.children : [];
       for (let i = 0; i < children.length; i++) {
         move(children[i]!, container, anchor, parentComponent, parentSuspense);
       }
-      // Move anchors
+      // 移动锚点
       const vEl = getVNodeEl(vnode);
       if (vEl) insert(vEl, container, anchor);
       // FIX: P2-16 添加 null 检查，避免 vnode.anchor 为 null 时的不安全类型断言
@@ -583,8 +583,8 @@ export function createRenderer<HN, HE extends HN>(
   }
 
   // ============================================================
-  // Wire up core recursive functions into context
-  // (must be done after patch/unmount/move are defined)
+  // 将核心递归函数注入上下文
+  // （必须在 patch/unmount/move 定义之后执行）
   // ============================================================
 
   ctx.patch = patch;
@@ -600,7 +600,7 @@ export function createRenderer<HN, HE extends HN>(
   }
 
   // ============================================================
-  // diffChildren - public API
+  // diffChildren - 公共 API
   // ============================================================
 
   const { diffChildren } = childrenAPI;

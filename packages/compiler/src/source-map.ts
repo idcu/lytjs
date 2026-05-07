@@ -1,7 +1,7 @@
 // src/source-map.ts
-// Lightweight Source Map generator
+// 轻量级 Source Map 生成器
 //
-// Implements a minimal Source Map v3 generator with VLQ encoding,
+// 实现最小化的 Source Map v3 生成器，支持 VLQ 编码，
 // compatible with the Source Map specification.
 // https://sourcemaps.info/spec.html
 
@@ -11,20 +11,20 @@ import type { RawSourceMap } from './types';
 // VLQ Encoding
 // ============================================================
 
-/** Base64 VLQ character set (A-Z, a-z, 0-9, +, /) */
+/** Base64 VLQ 字符集（A-Z, a-z, 0-9, +, /） */
 const VLQ_BASE64_CHARS =
   'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 
-/** Continuation bit mask */
+/** 继续位掩码 */
 const VLQ_BASE_SHIFT = 5;
 const VLQ_CONTINUATION_BIT = 1 << VLQ_BASE_SHIFT;
 
-/** Sign bit position */
+/** 符号位位置 */
 const VLQ_VALUE_MASK = (1 << VLQ_BASE_SHIFT) - 1;
 
 /**
- * Encode a single integer value using VLQ (Variable-Length Quantity) encoding.
- * Handles signed values: negative values use the least significant bit as sign.
+ * 使用 VLQ（可变长度数量）编码对单个整数值进行编码。
+ * 处理有符号值：负值使用最低有效位作为符号位。
  */
 function vlqEncode(value: number): string {
   let vlq = value < 0 ? ((-value) << 1) + 1 : value << 1;
@@ -43,21 +43,21 @@ function vlqEncode(value: number): string {
 }
 
 // ============================================================
-// Source Mapping
+// 源码映射
 // ============================================================
 
 export interface SourceMapping {
-  /** Original source file path */
+  /** 原始源文件路径 */
   source?: string;
-  /** Original source line (0-based) */
+  /** 原始源文件行号（从 0 开始） */
   originalLine: number;
   /** Original source column (0-based) - 高精度列号映射 */
   originalColumn: number;
-  /** Generated code line (0-based) */
+  /** 生成代码行号（从 0 开始） */
   generatedLine: number;
-  /** Generated code column (0-based) - 高精度列号映射 */
+  /** 生成代码列号（从 0 开始） - 高精度列号映射 */
   generatedColumn: number;
-  /** Optional name for the mapped token */
+  /** 映射 token 的可选名称 */
   name?: string;
   /** FIX: P2-1 原始列号精确映射，支持更细粒度的源码定位 */
   originalColumnExact?: number;
@@ -85,7 +85,7 @@ export class SourceMapGenerator {
   }
 
   /**
-   * Add a mapping from original source position to generated code position.
+   * 添加从原始源码位置到生成代码位置的映射。
    * FIX: P2-1 提高列精度，支持精确的原始列号映射
    *
    * @param originalLine - Original source line (0-based)
@@ -103,12 +103,12 @@ export class SourceMapGenerator {
     name?: string,
     originalColumnExact?: number,
   ): void {
-    // Resolve source index (use first source if not yet added)
+    // 解析源索引（如果尚未添加则使用第一个源）
     if (this.sources.length === 0) {
       this.addSource(this.file || 'source');
     }
 
-    // Resolve name index
+    // 解析名称索引
     let nameIndex: number | undefined;
     if (name !== undefined) {
       nameIndex = this._namesMap.get(name);
@@ -139,7 +139,7 @@ export class SourceMapGenerator {
    * FIX: P2-27 多文件 source map 合并支持：
    * addSource 现在支持同一 source 多次调用（合并 content）
    *
-   * Add a source file.
+   * 添加源文件。
    */
   addSource(source: string, content?: string): number {
     const existingIndex = this._sourcesMap.get(source);
@@ -158,17 +158,17 @@ export class SourceMapGenerator {
   }
 
   /**
-   * Generate the encoded mappings string using VLQ encoding.
+   * 使用 VLQ 编码生成编码后的映射字符串。
    *
-   * Format: Each segment is separated by ','; each line group is separated by ';'.
-   * Each segment contains: [generated column, source index, original line, original column, name index]
-   * All values are relative (delta-encoded) except the first segment of each line
+   * 格式：每个段用 ',' 分隔；每个行组用 ';' 分隔。
+   * 每个段包含：[生成列, 源索引, 原始行, 原始列, 名称索引]
+   * 所有值都是相对的（增量编码），除了每行的第一个段
    * which has an absolute generated column.
    */
   private encodeMappings(): string {
     if (this.mappings.length === 0) return '';
 
-    // Sort mappings by generated position
+    // 按生成位置排序映射
     const sorted = [...this.mappings].sort((a, b) => {
       if (a.generatedLine !== b.generatedLine) return a.generatedLine - b.generatedLine;
       return a.generatedColumn - b.generatedColumn;
@@ -185,7 +185,7 @@ export class SourceMapGenerator {
     let currentLineSegments: string[] = [];
 
     for (const mapping of sorted) {
-      // Fill empty lines with semicolons
+      // 用分号填充空行
       while (prevGenLine < mapping.generatedLine) {
         lines.push(currentLineSegments.join(','));
         currentLineSegments = [];
@@ -203,7 +203,7 @@ export class SourceMapGenerator {
         sourceIdx = idx;
       }
 
-      // Encode segment fields (all delta-encoded)
+      // 编码段字段（全部增量编码）
       const genCol = mapping.generatedColumn - prevGenCol;
       const source = sourceIdx - prevSource;
       const origLine = mapping.originalLine - prevOrigLine;
@@ -211,7 +211,7 @@ export class SourceMapGenerator {
 
       let segment = vlqEncode(genCol) + vlqEncode(source) + vlqEncode(origLine) + vlqEncode(origCol);
 
-      // Name index (optional)
+      // 名称索引（可选）
       if (mapping.name !== undefined) {
         const nameIdx = this._namesMap.get(mapping.name);
         if (nameIdx === undefined) {
@@ -223,21 +223,21 @@ export class SourceMapGenerator {
 
       currentLineSegments.push(segment);
 
-      // Update previous values
+      // 更新前一个值
       prevGenCol = mapping.generatedColumn;
       prevSource = sourceIdx;
       prevOrigLine = mapping.originalLine;
       prevOrigCol = mapping.originalColumn;
     }
 
-    // Push the last line
+    // 推入最后一行
     lines.push(currentLineSegments.join(','));
 
     return lines.join(';');
   }
 
   /**
-   * Convert to RawSourceMap object.
+   * 转换为 RawSourceMap 对象。
    */
   toJSON(): RawSourceMap {
     return {
