@@ -393,9 +393,10 @@ export function performEnterTransition<HN, HE extends HN>(
 ): void {
   // FIX: P1-11 使用 __isRendererHost 标识符号替代鸭子类型检测，
   // 与 P0-03 的 patch.ts 检测逻辑保持一致
+  // FIX: DTS build error - 先转换为 unknown 再转换为 Record
   const isHost = hostOrEl !== null && typeof hostOrEl === 'object' &&
-    '__isRendererHost' in (hostOrEl as Record<string, unknown>) &&
-    (hostOrEl as Record<string, unknown>).__isRendererHost === true;
+    '__isRendererHost' in (hostOrEl as unknown as Record<string, unknown>) &&
+    (hostOrEl as unknown as Record<string, unknown>).__isRendererHost === true;
 
   if (isHost) {
     // 泛型版本：(host, el, props, done)
@@ -526,9 +527,10 @@ export function performLeaveTransition<HN, HE extends HN>(
   done?: () => void,
 ): void {
   // FIX: P1-11 使用 __isRendererHost 标识符号替代鸭子类型检测
+  // FIX: DTS build error - 先转换为 unknown 再转换为 Record
   const isHost = hostOrEl !== null && typeof hostOrEl === 'object' &&
-    '__isRendererHost' in (hostOrEl as Record<string, unknown>) &&
-    (hostOrEl as Record<string, unknown>).__isRendererHost === true;
+    '__isRendererHost' in (hostOrEl as unknown as Record<string, unknown>) &&
+    (hostOrEl as unknown as Record<string, unknown>).__isRendererHost === true;
 
   if (isHost) {
     // 泛型版本：(host, el, props, done)
