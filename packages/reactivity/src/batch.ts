@@ -222,11 +222,13 @@ export async function batchScopeAsync<T>(
   globalBatchDepth++;
 
   try {
-    const result = await batchAsync(async () => {
-      return await callback(ctx);
+    // FIX: DTS build error - batchAsync 返回 Promise<void>，需要类型断言
+    let result: T | undefined;
+    await batchAsync(async () => {
+      result = await callback(ctx);
     });
     ctx.committed = true;
-    return result;
+    return result as T;
   } catch (error) {
     if (onError) {
       onError(error);

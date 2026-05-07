@@ -3,7 +3,7 @@
 
 import { ITERATE_KEY } from './constants';
 import type { ReactiveEffectRunner } from './types';
-import { warn, error } from '@lytjs/common-error';
+import { warn } from '@lytjs/common-error';
 import { _isSignalUntracked } from './signal';
 import { getActiveEffectScope } from './effect-scope';
 import { REACTIVITY_MAX_TRIGGER_DEPTH } from '@lytjs/common-constants';

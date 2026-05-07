@@ -169,7 +169,8 @@ export function isComputedRef<T = unknown>(r: unknown): r is ComputedRef<T> {
 // unref 如果参数是 Ref 则返回 .value，否则返回参数本身
 export function unref<T>(r: T | Ref<T>): T {
   // FIX: P2-34 使用类型守卫替代类型断言，P2-38 移除不必要的 as
-  return isRef(r) ? r.value : r;
+  // FIX: DTS build error - 使用类型断言确保类型正确
+  return isRef(r) ? (r as Ref<T>).value : r;
 }
 
 export function toRef<T extends object, K extends keyof T>(object: T, key: K): Ref<T[K]> {
@@ -196,7 +197,8 @@ export function customRef<T>(factory: CustomRefFactory<T>): Ref<T> {
  */
 export function toValue<T>(source: T | Ref<T> | (() => T)): T {
   // FIX: P2-34 使用类型守卫替代类型断言
-  if (isRef(source)) return source.value;
+  // FIX: DTS build error - 使用类型断言确保类型正确
+  if (isRef(source)) return (source as Ref<T>).value;
   if (typeof source === 'function') {
     // FIX: P2-35 添加类型守卫确保 source 是函数后再调用
     return (source as () => T)();
