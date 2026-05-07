@@ -499,7 +499,7 @@ function _createRenderWrapper(
 function isCSPStrictMode(): boolean {
   try {
     // 尝试执行一个无害的 eval
-    // eslint-disable-next-line no-eval
+     
     eval('true');
     return false;
   } catch {

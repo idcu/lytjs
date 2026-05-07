@@ -37,7 +37,7 @@ const reflowCache = new WeakMap<Element, ReflowCacheEntry>();
 const REFLOW_CACHE_DURATION = 16; // 约一帧的时间
 
 /** 待处理的强制重排元素队列 */
-let pendingReflowElements: Set<Element> = new Set();
+const pendingReflowElements: Set<Element> = new Set();
 /** 是否已调度重排处理 */
 let isReflowScheduled = false;
 

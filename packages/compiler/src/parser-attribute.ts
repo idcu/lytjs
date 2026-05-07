@@ -2,7 +2,7 @@
 // Attribute and directive parsing: parseAttribute, parseDirective, parseQuotedValue, etc.
 
 import {
-  ElementTypes,
+  type ElementTypes,
   BARE_DIRECTIVE_NAMES,
   BARE_DIRECTIVE_CONFLICTS,
   BARE_DIRECTIVE_VALUE_PATTERNS,
