@@ -3,12 +3,13 @@
  *
  * 提供 ResizeObserver 的安全封装，确保在组件卸载时自动清理观察者，
  * 防止内存泄漏。
- *
  * FIX: P2-5 ResizeObserver 未清理问题
  *
  * @module @lytjs/web/resize-observer
  * @version 6.0.0
  */
+// FIX: DTS build error - 声明 __DEV__ 全局变量
+declare const __DEV__: boolean;
 
 // ============================================================
 // 类型定义
@@ -25,16 +26,6 @@ export type ResizeObserverCallback = (entries: ResizeObserverEntry[]) => void;
 export interface ResizeObserverOptions {
   /** 指定要观察的盒模型 */
   box?: 'content-box' | 'border-box' | 'device-pixel-content-box';
-}
-
-/**
- * 受管理的 ResizeObserver 条目
- */
-interface ManagedObserverEntry {
-  /** 目标元素 */
-  target: Element;
-  /** 观察选项 */
-  options?: ResizeObserverOptions;
 }
 
 // ============================================================
