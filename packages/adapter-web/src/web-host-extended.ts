@@ -11,22 +11,18 @@
 import type {
   RendererHost,
   HostRect,
-  HostStyleDeclaration,
   HostEvent,
   HostEventHandler,
   HostEventOptions,
-  TransitionDurationInfo,
 } from '@lytjs/host-contract';
 
 // 重新导出 host-contract 的类型
 export type {
   RendererHost,
   HostRect,
-  HostStyleDeclaration,
   HostEvent,
   HostEventHandler,
   HostEventOptions,
-  TransitionDurationInfo,
 } from '@lytjs/host-contract';
 
 // ============================================================
@@ -424,10 +420,9 @@ export function createExtendedWebHost(
 ): ExtendedRendererHost<Node, Element> {
   const { baseHost } = options;
 
-  const extendedHost: ExtendedRendererHost<Node, Element> = {
+  // FIX: DTS build error - 泛型类型不兼容，使用 unknown 作为中间类型
+  const extendedHost = {
     ...baseHost,
-
-    // 扩展的节点操作
     // FIX: P2-v11-31 添加 Document 类型检查，
     // Document 节点也支持 insertBefore/replaceChild 操作
     insertBefore(parent, newChild, referenceNode) {
@@ -501,14 +496,14 @@ export function createExtendedWebHost(
       }
     },
 
-    getClassList(el) {
+    getClassList(el: Element) {
       if (el instanceof Element) {
         return Array.from(el.classList);
       }
       return [];
     },
 
-    toggleClass(el, cls, force) {
+    toggleClass(el: Element, cls: string, force?: boolean) {
       if (el instanceof Element) {
         return el.classList.toggle(cls, force);
       }
@@ -516,7 +511,7 @@ export function createExtendedWebHost(
     },
 
     // 扩展的事件操作
-    dispatchEvent(el, event, detail) {
+    dispatchEvent(el: Element, event: string, detail?: unknown) {
       if (el instanceof Element) {
         let evt: Event;
         if (typeof event === 'string') {
@@ -525,14 +520,15 @@ export function createExtendedWebHost(
               ? new CustomEvent(event, { detail })
               : new Event(event);
         } else {
-          evt = event as Event;
+          // FIX: DTS build error - HostEvent 无法直接转换为 Event，需要 unknown 中间类型
+          evt = event as unknown as Event;
         }
         return el.dispatchEvent(evt);
       }
       return false;
     },
 
-    onceEventListener(el, event, handler, options) {
+    onceEventListener(el: Element, event: string, handler: (e: HostEvent) => void, options?: AddEventListenerOptions) {
       if (el instanceof Element) {
         // FIX: P2-batch2-16 将原生 Event 包装为 HostEvent 格式后再传递给 handler，
         // 避免直接类型断言导致 handler 接收到不符合 HostEvent 接口的对象
@@ -555,7 +551,7 @@ export function createExtendedWebHost(
     },
 
     // 扩展的 DOM 查询
-    querySelectorAll(selector, context) {
+    querySelectorAll(selector: string, context?: Element | Document) {
       const root =
         (context as Element | undefined) ??
         (typeof document !== 'undefined' ? document : null);
@@ -565,14 +561,14 @@ export function createExtendedWebHost(
       return [];
     },
 
-    getElementById(id) {
+    getElementById(id: string) {
       if (typeof document !== 'undefined') {
         return document.getElementById(id);
       }
       return null;
     },
 
-    getElementsByClassName(className, context) {
+    getElementsByClassName(className: string, context?: Element) {
       const root =
         (context as Element | undefined) ??
         (typeof document !== 'undefined' ? document.body : null);
@@ -582,7 +578,7 @@ export function createExtendedWebHost(
       return [];
     },
 
-    getElementsByTagName(tag, context) {
+    getElementsByTagName(tag: string, context?: Element) {
       const root =
         (context as Element | undefined) ??
         (typeof document !== 'undefined' ? document.body : null);
@@ -593,13 +589,13 @@ export function createExtendedWebHost(
     },
 
     // 扩展的滚动操作
-    scrollIntoView(el, options) {
+    scrollIntoView(el: Element, options?: ScrollIntoViewOptions) {
       if (el instanceof Element) {
         el.scrollIntoView(options);
       }
     },
 
-    getScrollPosition(el) {
+    getScrollPosition(el: Element | null) {
       if (el instanceof Element) {
         return { scrollLeft: el.scrollLeft, scrollTop: el.scrollTop };
       }
@@ -612,7 +608,7 @@ export function createExtendedWebHost(
       return { scrollLeft: 0, scrollTop: 0 };
     },
 
-    setScrollPosition(el, left, top) {
+    setScrollPosition(el: Element | null, left: number, top: number) {
       if (el instanceof Element) {
         el.scrollLeft = left;
         el.scrollTop = top;
@@ -622,7 +618,7 @@ export function createExtendedWebHost(
     },
 
     // 扩展的尺寸操作
-    getElementSize(el) {
+    getElementSize(el: Element) {
       if (el instanceof Element) {
         const rect = el.getBoundingClientRect();
         // FIX: P2-12 添加 HTMLElement 检查，SVG 元素返回 0
@@ -647,7 +643,7 @@ export function createExtendedWebHost(
       };
     },
 
-    getElementOffset(el) {
+    getElementOffset(el: Element) {
       if (el instanceof Element) {
         const rect = el.getBoundingClientRect();
         return {
@@ -659,7 +655,8 @@ export function createExtendedWebHost(
     },
   };
 
-  return extendedHost;
+  // FIX: DTS build error - 类型断言
+  return extendedHost as ExtendedRendererHost<Node, Element>;
 }
 
 // ============================================================
