@@ -2,6 +2,7 @@
 // ErrorBoundary component for catching and handling errors in child components
 
 import type { ComponentOptions, RenderFunction } from './types';
+import type { VNode as VNodeType } from '@lytjs/vdom';
 import { onErrorCaptured, onMounted, onUnmounted } from './lifecycle';
 import { ref } from '@lytjs/reactivity';
 import { createVNode } from '@lytjs/vdom';
@@ -141,7 +142,7 @@ export const ErrorBoundary: ComponentOptions = {
           if (result.length === 1) {
             return result[0] as VNode;
           }
-          return createVNode(Fragment, null, result as import('@lytjs/vdom').VNode[]);
+          return createVNode(Fragment, null, result as VNodeType[]);
         }
       }
 

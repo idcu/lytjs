@@ -1060,13 +1060,12 @@ describe('signal edge cases', () => {
 
   it('computedSignal should detect circular dependencies', () => {
     // A -> B -> A 循环依赖
-    let a: any;
-    let b: any;
-    a = computedSignal(() => {
+    // 使用类型断言避免 TypeScript 报错，变量需要先声明后赋值因为它们互相引用
+    const a = computedSignal(() => {
       if (b) b();
       return 1;
     });
-    b = computedSignal(() => {
+    const b = computedSignal(() => {
       if (a) a();
       return 2;
     });

@@ -72,6 +72,7 @@ function sanitizeHTML(html: string): string {
         // 检查属性值是否包含 javascript: 伪协议
         const valueMatch = match.match(/=\s*(?:"([^"]*)"|'([^']*)')/);
         if (valueMatch) {
+          // eslint-disable-next-line no-control-regex
           const value = (valueMatch[1] ?? valueMatch[2] ?? '').replace(/[\s\x00-\x1f]+/g, '');
           if (/^javascript\s*:/i.test(value)) {
             return ''; // 移除包含 javascript: 伪协议的属性

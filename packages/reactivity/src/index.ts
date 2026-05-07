@@ -221,7 +221,7 @@ function flushDevToolsNotifications(): void {
         for (const [signalId, value] of deduplicated) {
           cb(signalId, value);
         }
-      } catch (e) {
+      } catch (_e) {
         // 忽略监听器错误
       }
     });
@@ -235,7 +235,7 @@ function flushDevToolsNotifications(): void {
         for (const effectId of deduplicated) {
           cb(effectId);
         }
-      } catch (e) {
+      } catch (_e) {
         // 忽略监听器错误
       }
     });

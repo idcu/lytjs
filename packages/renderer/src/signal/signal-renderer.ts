@@ -5,6 +5,7 @@
 
 import { compile } from '@lytjs/compiler';
 import { effect } from '@lytjs/reactivity';
+import type { effect as EffectType } from '@lytjs/reactivity';
 import {
   insert,
   remove,
@@ -19,6 +20,21 @@ import {
   createEventHandler,
   reconcileArray,
   bindEffect,
+} from '@lytjs/dom-runtime';
+import type {
+  reconcileArray as ReconcileArrayType,
+  createTemplate as CreateTemplateType,
+  setText as SetTextType,
+  setAttribute as SetAttributeType,
+  setProperty as SetPropertyType,
+  setStyle as SetStyleType,
+  setClass as SetClassType,
+  insert as InsertType,
+  remove as RemoveType,
+  createEventHandler as CreateEventHandlerType,
+  bindEffect as BindEffectType,
+  onCleanup as OnCleanupType,
+  runCleanups as RunCleanupsType,
 } from '@lytjs/dom-runtime';
 
 // ============================================================
@@ -361,21 +377,21 @@ function extractRenderBody(code: string): string | null {
 // FIX: DTS build error - 未使用的声明
 // @ts-expect-error -- reserved for future use
 interface _RenderParams {
-  effect: typeof import('@lytjs/reactivity').effect;
-  reconcileArray: typeof import('@lytjs/dom-runtime').reconcileArray;
-  createTemplate: typeof import('@lytjs/dom-runtime').createTemplate;
-  setText: typeof import('@lytjs/dom-runtime').setText;
-  setHTML: typeof import('@lytjs/dom-runtime').setHTML;
-  setAttribute: typeof import('@lytjs/dom-runtime').setAttribute;
-  setProperty: typeof import('@lytjs/dom-runtime').setProperty;
-  setStyle: typeof import('@lytjs/dom-runtime').setStyle;
-  setClass: typeof import('@lytjs/dom-runtime').setClass;
-  insert: typeof import('@lytjs/dom-runtime').insert;
-  remove: typeof import('@lytjs/dom-runtime').remove;
-  createEventHandler: typeof import('@lytjs/dom-runtime').createEventHandler;
-  bindEffect: typeof import('@lytjs/dom-runtime').bindEffect;
-  onCleanup: typeof import('@lytjs/dom-runtime').onCleanup;
-  runCleanups: typeof import('@lytjs/dom-runtime').runCleanups;
+  effect: typeof EffectType;
+  reconcileArray: typeof ReconcileArrayType;
+  createTemplate: typeof CreateTemplateType;
+  setText: typeof SetTextType;
+  setHTML: (el: Element, value: string) => void;
+  setAttribute: typeof SetAttributeType;
+  setProperty: typeof SetPropertyType;
+  setStyle: typeof SetStyleType;
+  setClass: typeof SetClassType;
+  insert: typeof InsertType;
+  remove: typeof RemoveType;
+  createEventHandler: typeof CreateEventHandlerType;
+  bindEffect: typeof BindEffectType;
+  onCleanup: typeof OnCleanupType;
+  runCleanups: typeof RunCleanupsType;
   _ctx: Record<string, unknown>;
   _container: Element;
 }
@@ -402,21 +418,21 @@ interface _RenderParams {
 function _createRenderWrapper(
   renderBody: string,
 ): (
-  effect: typeof import('@lytjs/reactivity').effect,
-  reconcileArray: typeof import('@lytjs/dom-runtime').reconcileArray,
-  createTemplate: typeof import('@lytjs/dom-runtime').createTemplate,
-  setText: typeof import('@lytjs/dom-runtime').setText,
-  setHTML: typeof import('@lytjs/dom-runtime').setHTML,
-  setAttribute: typeof import('@lytjs/dom-runtime').setAttribute,
-  setProperty: typeof import('@lytjs/dom-runtime').setProperty,
-  setStyle: typeof import('@lytjs/dom-runtime').setStyle,
-  setClass: typeof import('@lytjs/dom-runtime').setClass,
-  insert: typeof import('@lytjs/dom-runtime').insert,
-  remove: typeof import('@lytjs/dom-runtime').remove,
-  createEventHandler: typeof import('@lytjs/dom-runtime').createEventHandler,
-  bindEffect: typeof import('@lytjs/dom-runtime').bindEffect,
-  onCleanup: typeof import('@lytjs/dom-runtime').onCleanup,
-  runCleanups: typeof import('@lytjs/dom-runtime').runCleanups,
+  effect: typeof EffectType,
+  reconcileArray: typeof ReconcileArrayType,
+  createTemplate: typeof CreateTemplateType,
+  setText: typeof SetTextType,
+  setHTML: (el: Element, value: string) => void,
+  setAttribute: typeof SetAttributeType,
+  setProperty: typeof SetPropertyType,
+  setStyle: typeof SetStyleType,
+  setClass: typeof SetClassType,
+  insert: typeof InsertType,
+  remove: typeof RemoveType,
+  createEventHandler: typeof CreateEventHandlerType,
+  bindEffect: typeof BindEffectType,
+  onCleanup: typeof OnCleanupType,
+  runCleanups: typeof RunCleanupsType,
   _ctx: Record<string, unknown>,
   _container: Element,
 ) => (() => void) | void {
@@ -460,21 +476,21 @@ function _createRenderWrapper(
       ...paramNames,
       renderBody,
     ) as (
-      effect: typeof import('@lytjs/reactivity').effect,
-      reconcileArray: typeof import('@lytjs/dom-runtime').reconcileArray,
-      createTemplate: typeof import('@lytjs/dom-runtime').createTemplate,
-      setText: typeof import('@lytjs/dom-runtime').setText,
-      setHTML: typeof import('@lytjs/dom-runtime').setHTML,
-      setAttribute: typeof import('@lytjs/dom-runtime').setAttribute,
-      setProperty: typeof import('@lytjs/dom-runtime').setProperty,
-      setStyle: typeof import('@lytjs/dom-runtime').setStyle,
-      setClass: typeof import('@lytjs/dom-runtime').setClass,
-      insert: typeof import('@lytjs/dom-runtime').insert,
-      remove: typeof import('@lytjs/dom-runtime').remove,
-      createEventHandler: typeof import('@lytjs/dom-runtime').createEventHandler,
-      bindEffect: typeof import('@lytjs/dom-runtime').bindEffect,
-      onCleanup: typeof import('@lytjs/dom-runtime').onCleanup,
-      runCleanups: typeof import('@lytjs/dom-runtime').runCleanups,
+      effect: typeof EffectType,
+      reconcileArray: typeof ReconcileArrayType,
+      createTemplate: typeof CreateTemplateType,
+      setText: typeof SetTextType,
+      setHTML: (el: Element, value: string) => void,
+      setAttribute: typeof SetAttributeType,
+      setProperty: typeof SetPropertyType,
+      setStyle: typeof SetStyleType,
+      setClass: typeof SetClassType,
+      insert: typeof InsertType,
+      remove: typeof RemoveType,
+      createEventHandler: typeof CreateEventHandlerType,
+      bindEffect: typeof BindEffectType,
+      onCleanup: typeof OnCleanupType,
+      runCleanups: typeof RunCleanupsType,
       _ctx: Record<string, unknown>,
       _container: Element,
     ) => (() => void) | void;

@@ -283,7 +283,7 @@ if (__DEV__) {
 
   // 重写构造函数以跟踪实例
   const OriginalManager = ResizeObserverManager;
-  (ResizeObserverManager as any) = class extends OriginalManager {
+  (ResizeObserverManager as unknown as typeof ResizeObserverManager & { new(callback: ResizeObserverCallback): ResizeObserverManager }) = class extends OriginalManager {
     constructor(callback: ResizeObserverCallback) {
       super(callback);
       managerRegistry.add(this);
@@ -293,7 +293,7 @@ if (__DEV__) {
   /**
    * 获取 ResizeObserver 统计信息（仅开发模式）
    */
-  (globalThis as any).__getResizeObserverStats = (): ResizeObserverStats => {
+  (globalThis as Record<string, unknown>).__getResizeObserverStats = (): ResizeObserverStats => {
     // 注意：WeakSet 无法遍历，这里仅作为示例
     return {
       activeManagers: 0,

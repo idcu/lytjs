@@ -102,10 +102,10 @@ export function createChildrenPatch<HN, HE extends HN>(
   function patchStaticVNode(
     n1: VNode,
     n2: VNode,
-    container: HN,
-    parentComponent: ComponentInternalInstance | null,
-    parentSuspense: SuspenseBoundary | null,
-    isSVG: boolean,
+    _container: HN,
+    _parentComponent: ComponentInternalInstance | null,
+    _parentSuspense: SuspenseBoundary | null,
+    _isSVG: boolean,
   ): boolean {
     // 如果两个节点都是静态节点且类型相同，直接复用
     if (isStaticVNode(n1) && isStaticVNode(n2) && isSameVNodeType(n1, n2)) {

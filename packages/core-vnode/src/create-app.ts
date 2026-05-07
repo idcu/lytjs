@@ -114,7 +114,7 @@ export function createApp(
 
         // Store component instance on vnode so patch can access it
         // FIX: DTS build error - 跨包类型不兼容
-        (rootVNode as any).component = instance;
+        (rootVNode as { component: unknown }).component = instance;
 
         // Save root instance reference for unmount lifecycle hooks
         context._instance = instance;

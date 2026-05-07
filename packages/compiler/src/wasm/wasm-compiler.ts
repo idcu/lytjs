@@ -10,7 +10,7 @@ import { transform } from '../transform';
 import { generate } from '../codegen';
 import { generateSSR } from '../codegen-ssr';
 import { NodeTypes } from '../constants';
-import type { RootNode, TemplateChildNode, ElementNode, SourceLocation, TextNode, CommentNode, InterpolationNode, SimpleExpressionNode, NodeTransform } from '../types';
+import type { RootNode, TemplateChildNode, ElementNode, SourceLocation, TextNode, CommentNode, InterpolationNode, SimpleExpressionNode, NodeTransform, TransformOptions } from '../types';
 
 // ============================================================
 // Types
@@ -157,7 +157,7 @@ export function wasmCompile(
   try {
     // FIX: P2-30 直接导入 TransformOptions 类型，避免动态 import 类型断言
     // FIX: P1-33 定义 WASM 接口类型替代 as any，使用精确的 TransformOptions 类型确保类型安全
-    const transformOptions: import('../types').TransformOptions = {
+    const transformOptions: TransformOptions = {
       ssr,
       inline,
       onError: (error: Error) => {

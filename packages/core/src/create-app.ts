@@ -25,7 +25,7 @@ import {
   callUnmountedHook,
   initProps,
 } from '@lytjs/component';
-import type { AppContext as ComponentAppContext } from '@lytjs/component';
+import type { AppContext as ComponentAppContext, ComponentInternalInstance } from '@lytjs/component';
 
 export function createApp(
   rootComponent: Component,
@@ -314,8 +314,8 @@ export function createApp(
 
     // Store component instance on vnode so patch can access it
     // FIX: DTS build error - 跨包 ComponentInternalInstance 类型不兼容（component vs common-vnode），
-    // 使用 as any 绕过，运行时类型是正确的
-    rootVNode.component = instance as any;
+    // 使用类型断言绕过，运行时类型是正确的
+    rootVNode.component = instance as unknown as typeof rootVNode.component;
 
     // Save root instance reference for unmount lifecycle hooks
     context._instance = instance;
@@ -325,8 +325,8 @@ export function createApp(
     // child component instances when it encounters component vnodes during patching
     const renderer = createDOMRenderer({
       // FIX: DTS build error - 跨包 ComponentInternalInstance 类型不兼容（component vs common-vnode），
-      // 使用 as any 绕过，运行时类型是正确的
-      setupChildComponent(childVNode: VNode, parentComponent: any) {
+      // 使用类型断言绕过，运行时类型是正确的
+      setupChildComponent(childVNode: VNode, parentComponent: ComponentInternalInstance | null) {
         const childInstance = createComponentInstance(
           childVNode,
           parentComponent,
@@ -339,12 +339,12 @@ export function createApp(
         }
         setupComponent(childInstance);
         // FIX: DTS build error - 跨包 ComponentInternalInstance 类型不兼容
-        childVNode.component = childInstance as any;
+        childVNode.component = childInstance as unknown as typeof childVNode.component;
       },
       // FIX: DTS build error - 跨包 ComponentInternalInstance 类型不兼容（component vs common-vnode），
-      // 使用 as any 绕过，运行时类型是正确的
-      normalizeProps(instance: any, rawProps: Record<string, unknown> | null) {
-        initProps(instance, rawProps);
+      // 使用类型断言绕过，运行时类型是正确的
+      normalizeProps(inst: ComponentInternalInstance, rawProps: Record<string, unknown> | null) {
+        initProps(inst, rawProps);
       },
     });
     // FIX: P2-batch2-7 跨包类型断言说明：
@@ -403,7 +403,7 @@ export function createApp(
           `[LytJS] Failed to execute data() in Signal mode: ${e instanceof Error ? e.message : String(e)}. ` +
           `Component: ${(rootComponent as Record<string, unknown>).name ?? 'anonymous'}`,
         );
-        (enhancedError as any).cause = e;
+        (enhancedError as Error & { cause: unknown }).cause = e;
         error(enhancedError.message);
         throw enhancedError;
       }
@@ -423,7 +423,7 @@ export function createApp(
           `[LytJS] Failed to execute setup() in Signal mode: ${e instanceof Error ? e.message : String(e)}. ` +
           `Component: ${(rootComponent as Record<string, unknown>).name ?? 'anonymous'}`,
         );
-        (enhancedError as any).cause = e;
+        (enhancedError as Error & { cause: unknown }).cause = e;
         error(enhancedError.message);
         throw enhancedError;
       }

@@ -147,10 +147,9 @@ describe('循环依赖检测', () => {
   });
 
   it('computed 互相引用应抛出错误', () => {
-    let a: any;
-    let b: any;
-    a = computed(() => b() + 1);
-    b = computed(() => a() + 1);
+    // 使用类型断言避免 TypeScript 报错，变量需要先声明后赋值因为它们互相引用
+    const a = computed(() => b() + 1);
+    const b = computed(() => a() + 1);
     expect(() => a()).toThrow('Circular dependency');
   });
 });

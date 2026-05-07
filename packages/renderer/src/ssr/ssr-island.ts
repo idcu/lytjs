@@ -689,10 +689,9 @@ function decodeProps(encoded: string): Record<string, unknown> {
   if (!encoded) return {};
 
   try {
-    let json: string;
     // Use TextDecoder for safe base64 to UTF-8 conversion
     const bytes = base64ToUint8(encoded);
-    json = new TextDecoder().decode(bytes);
+    const json = new TextDecoder().decode(bytes);
     return JSON.parse(json) as Record<string, unknown>;
   } catch {
     if (__DEV__) {
