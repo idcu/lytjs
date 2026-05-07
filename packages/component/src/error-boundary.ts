@@ -32,7 +32,11 @@ export interface ErrorBoundaryProps {
 }
 
 // FIX: P2-35 类型守卫：检查 props 是否为 ErrorBoundaryProps
-type ErrorBoundaryPropsInternal = ErrorBoundaryProps & { capturePromiseRejections?: boolean };
+// FIX: DTS build error - 添加索引签名
+interface ErrorBoundaryPropsInternal extends ErrorBoundaryProps {
+  capturePromiseRejections?: boolean;
+  [key: string]: unknown;
+}
 
 function isErrorBoundaryProps(props: Record<string, unknown>): props is ErrorBoundaryPropsInternal {
   return props !== null && typeof props === 'object';
@@ -56,9 +60,11 @@ export const ErrorBoundary: ComponentOptions = {
     // 使用 onErrorCaptured 捕获子组件错误
     onErrorCaptured((err: Error, _instance: unknown, info: string) => {
       error.value = err;
-      hasError.value = true;
+      // FIX: DTS build error - 显式转换为 boolean
+      (hasError as { value: boolean }).value = true;
       // FIX: P2-39 错误边界：添加更友好的错误处理
-      typedProps.onError?.(err, info);
+      // FIX: DTS build error - 类型断言
+      (typedProps.onError as ((error: Error, info: string) => void) | undefined)?.(err, info);
       return false; // 阻止错误继续传播
     });
 
@@ -75,7 +81,8 @@ export const ErrorBoundary: ComponentOptions = {
               ? event.reason
               : new Error(String(event.reason));
             error.value = err;
-            hasError.value = true;
+            // FIX: DTS build error - 显式转换为 boolean
+            (hasError as { value: boolean }).value = true;
             // FIX: DTS build error - 类型断言
             (typedProps.onError as ((error: Error, info: string) => void) | undefined)?.(err, 'unhandledrejection');
           },
