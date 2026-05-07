@@ -112,7 +112,7 @@ export function inject<T>(
   let current = instance.parent;
   while (current) {
     const provides = current.provides as Record<string | symbol, unknown>;
-    if (lookupKey in provides) {
+    if ((lookupKey as string | symbol) in provides) {
       return provides[lookupKey as string] as T | undefined;
     }
     current = current.parent;
@@ -124,10 +124,10 @@ export function inject<T>(
 /**
  * Resolve the default value for inject, handling factory functions.
  */
-function resolveDefault<T>(defaultValue: T | undefined, options?: InjectOptions): T | undefined {
+function resolveDefault<T>(defaultValue: T | (() => T) | undefined, options?: InjectOptions): T | undefined {
   if (defaultValue === undefined) return undefined;
   if (options?.factory && typeof defaultValue === 'function') {
-    return (defaultValue as unknown as () => T)();
+    return (defaultValue as () => T)();
   }
-  return defaultValue;
+  return defaultValue as T;
 }

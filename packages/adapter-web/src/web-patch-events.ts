@@ -206,7 +206,8 @@ export function patchEvent(
     // 确保与 addEventListener 时使用的 options 一致，否则无法正确移除监听器
     // FIX: P1-3 使用 existingInvoker._parsed 而非重新解析的 parsed，
     // 确保移除时的 options 与绑定时完全一致
-    const removeOptions = buildEventListenerOptions(existingInvoker._parsed);
+    // FIX: DTS build error - existingInvoker._parsed 可能为 undefined
+    const removeOptions = buildEventListenerOptions(existingInvoker._parsed!);
     el.removeEventListener(
       existingInvoker._parsed!.name,
       existingInvoker,

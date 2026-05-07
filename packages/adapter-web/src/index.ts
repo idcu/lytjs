@@ -10,6 +10,9 @@
 // ============================================================
 
 export { WebRendererHost } from './web-host';
+// FIX: DTS build error - 局部导入 WebRendererHost 供 createWebHost 使用
+import { WebRendererHost as _WebRendererHost } from './web-host';
+const WebRendererHost = _WebRendererHost;
 
 // ============================================================
 // DOM Renderer

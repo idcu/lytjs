@@ -8,7 +8,8 @@ import type {
   ComponentInternalInstance,
   ComponentPublicInstance,
 } from './types';
-import type { VNode } from '@lytjs/common-vnode';
+// FIX: DTS build error - VNode 未使用
+// import type { VNode } from '@lytjs/common-vnode';
 
 // ==================== accessCache 常量 ====================
 
@@ -279,11 +280,11 @@ export function createComponentPublicInstance(
             nextTree.el = prevTree?.el ?? null;
             // FIX: P2-35 保留 anchor 信息，确保 Fragment 子节点定位正确
             if (prevTree && 'anchor' in prevTree) {
-              (nextTree as Record<string, unknown>).anchor = (prevTree as Record<string, unknown>).anchor;
+              (nextTree as unknown as Record<string, unknown>).anchor = (prevTree as unknown as Record<string, unknown>).anchor;
             }
             // FIX: P2-35 转移 ref 绑定，避免 ref 丢失
             if (prevTree && 'ref' in prevTree) {
-              (nextTree as Record<string, unknown>).ref = (prevTree as Record<string, unknown>).ref;
+              (nextTree as unknown as Record<string, unknown>).ref = (prevTree as unknown as Record<string, unknown>).ref;
             }
           }
         });

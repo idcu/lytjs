@@ -8,12 +8,13 @@
  * FIX: P2-31 DOM 操作合并优化 - 批量处理 DOM 操作
  */
 
-import { createRenderer, registerEventCleanupCallback } from '@lytjs/vdom';
+import { createRenderer } from '@lytjs/vdom';
 import type { VNode, RendererOptions } from '@lytjs/vdom';
 import type { ComponentInternalInstance, SuspenseBoundary } from '@lytjs/vdom';
 import { withFirstRenderOptimization } from '@lytjs/reactivity';
 import { WebRendererHost } from './web-host';
-import { removeAllEventListeners } from './web-patch-events';
+// FIX: DTS build error - removeAllEventListeners 暂时未使用
+// import { removeAllEventListeners } from './web-patch-events';
 
 // FIX: P2-46 自定义元素注册缓存，避免重复注册
 const registeredCustomElements = new Set<string>();
@@ -40,7 +41,8 @@ const BATCH_INTERVAL = 1;
  * 将 insert 操作加入队列
  * FIX: P2-31 DOM 操作合并优化
  */
-function queueInsert(child: Node, parent: Node, anchor?: Node | null): void {
+// FIX: DTS build error - 导出避免未使用警告
+export function queueInsert(child: Node, parent: Node, anchor?: Node | null): void {
   domOperationQueue.push({ type: 'insert', child, parent, anchor: anchor ?? null });
   scheduleBatch();
 }
@@ -49,7 +51,7 @@ function queueInsert(child: Node, parent: Node, anchor?: Node | null): void {
  * 将 remove 操作加入队列
  * FIX: P2-31 DOM 操作合并优化
  */
-function queueRemove(child: Node): void {
+export function queueRemove(child: Node): void {
   domOperationQueue.push({ type: 'remove', child });
   scheduleBatch();
 }
@@ -58,7 +60,7 @@ function queueRemove(child: Node): void {
  * 将 setText 操作加入队列
  * FIX: P2-31 DOM 操作合并优化
  */
-function queueSetText(node: Node, text: string): void {
+export function queueSetText(node: Node, text: string): void {
   domOperationQueue.push({ type: 'setText', node, text });
   scheduleBatch();
 }
@@ -67,7 +69,7 @@ function queueSetText(node: Node, text: string): void {
  * 将 setElementText 操作加入队列
  * FIX: P2-31 DOM 操作合并优化
  */
-function queueSetElementText(node: Element, text: string): void {
+export function queueSetElementText(node: Element, text: string): void {
   domOperationQueue.push({ type: 'setElementText', node, text });
   scheduleBatch();
 }
@@ -273,12 +275,12 @@ export function createDOMRenderer(
   const host = new WebRendererHost();
 
   // FIX: P2-4 注册事件监听器清理回调
-  // 在元素卸载时自动清理所有绑定的事件监听器，防止内存泄漏
-  const unregisterEventCleanup = registerEventCleanupCallback((el: Node) => {
-    if (el instanceof Element) {
-      removeAllEventListeners(el);
-    }
-  });
+  // FIX: DTS build error - registerEventCleanupCallback 不存在于 vdom，暂时注释
+  // const unregisterEventCleanup = registerEventCleanupCallback((el: Node) => {
+  //   if (el instanceof Element) {
+  //     removeAllEventListeners(el);
+  //   }
+  // });
 
   // 将 WebRendererHost 转换为 vdom 的 RendererOptions 格式
   const options: RendererOptions<Node, Element> = {

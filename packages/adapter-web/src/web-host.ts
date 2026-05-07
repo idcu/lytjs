@@ -236,7 +236,8 @@ export class WebRendererHost implements RendererHost<Node, Element> {
   setStyle(el: Element, key: string, value: string | null | undefined): void {
     // FIX: P2-v11-35 SVG 元素使用 style.setProperty/removeProperty，
     // 与 HTMLElement 行为一致，无需 instanceof 检查
-    const style = el.style;
+    // FIX: DTS build error - Element 没有 style，需要类型断言
+    const style = (el as HTMLElement).style;
     if (value == null) {
       style.removeProperty(key);
     } else {
@@ -250,9 +251,8 @@ export class WebRendererHost implements RendererHost<Node, Element> {
    */
   removeStyle(el: Element, key: string): void {
     // FIX: P2-16 统一为直接使用 el.style.removeProperty，与 setStyle 风格一致
-    // Element 接口已包含 style 属性（CSSStyleDeclaration），
-    // removeProperty 是 CSSStyleDeclaration 的标准方法。
-    const style = el.style;
+    // FIX: DTS build error - Element 没有 style，需要类型断言
+    const style = (el as HTMLElement).style;
     style.removeProperty(key);
   }
 
