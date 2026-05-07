@@ -310,7 +310,9 @@ function hydrateElement(
   index: number,
   host: WebRendererHost,
 ): number {
-  const { type, shapeFlag } = vnode;
+  const { type } = vnode;
+  // FIX: DTS build error - shapeFlag 未使用
+  // const { shapeFlag } = vnode;
   const tag = type as string;
   const childNodes = host.getChildNodes(parent);
   const existingNode = childNodes[index];
