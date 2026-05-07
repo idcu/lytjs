@@ -5,13 +5,12 @@
     "rootDir": "./src",
     "composite": false,
     "incremental": false,
-    "declaration": true,
-    "declarationMap": true,
+    "baseUrl": ".",
     "paths": {
-      "@lytjs/common-is": ["./node_modules/@lytjs/common-is/src"],
-      "@lytjs/common-string": ["./node_modules/@lytjs/common-string/src"],
-      "@lytjs/common-events": ["./node_modules/@lytjs/common-events/src"],
-      "@lytjs/common-error": ["./node_modules/@lytjs/common-error/src"]
+      "@lytjs/common-is": ["../is/dist/index.d.ts"],
+      "@lytjs/common-string": ["../string/dist/index.d.ts"],
+      "@lytjs/common-events": ["../events/dist/index.d.ts"],
+      "@lytjs/common-error": ["../error/dist/index.d.ts"]
     }
   },
   "include": ["src/**/*.ts"],

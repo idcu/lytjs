@@ -376,7 +376,8 @@ export class PerformanceMonitor {
     this.historyHead = 0;
     this.historyCount = filtered.length;
     for (let i = 0; i < filtered.length; i++) {
-      this.historyBuffer[i] = filtered[i];
+      // FIX: DTS build error - 类型匹配
+      this.historyBuffer[i] = filtered[i] as RenderPerformanceEntry | null;
     }
     return this.stats.delete(componentName);
   }
@@ -569,10 +570,11 @@ export function connectToDevTools(): void {
   if (typeof window === 'undefined') return;
 
   // Expose monitor to window for DevTools access
-  (window as Record<string, unknown>).__LYTJS_PERFORMANCE_MONITOR__ = getPerformanceMonitor();
+  // FIX: DTS build error - 先转换为 unknown 再转换为 Record
+  (window as unknown as Record<string, unknown>).__LYTJS_PERFORMANCE_MONITOR__ = getPerformanceMonitor();
 
   // Mark initialization for DevTools detection
-  (window as Record<string, unknown>).__LYTJS_DEVTOOLS_HOOK__ = true;
+  (window as unknown as Record<string, unknown>).__LYTJS_DEVTOOLS_HOOK__ = true;
 
   if (__DEV__) {
     // FIX: P1-14 删除 require 调用，直接使用顶部已导入的 warn
