@@ -378,7 +378,6 @@ function handleVOn(
       // FIX: P1-11 使用累加方式组合多个修饰符，避免后面的修饰符覆盖前面的
       // 收集所有需要应用的修饰符前缀和后缀
       const modifierPrefixes: string[] = [];
-      const modifierSuffixes: string[] = [];
 
       if (modifiers.includes('self')) {
         modifierPrefixes.push('if ($event.target !== $event.currentTarget) return;');

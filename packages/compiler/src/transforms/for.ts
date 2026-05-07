@@ -20,6 +20,9 @@ import { warn } from '@lytjs/common-error';
 // 避免多个编译上下文共享同一计数器导致变量名冲突
 // let destructureCounter = 0; // 已移除
 
+// FIX: DTS build error - RE_SIMPLE_VFOR 移到模块级
+const RE_SIMPLE_VFOR = /^(\S+)\s+(?:in|of)\s+(.+)$/;
+
 /**
  * Type guard: check if a codegenNode is a VNodeCall.
  */
@@ -216,7 +219,6 @@ function parseDestructure(
   // FIX: P2-23 正则表达式缓存 - 模块级预编译正则
 const RE_OBJ_DESTRUCTURE = /^(\{[^}]+\})(?:\s*,\s*(\w+))?$/;
 const RE_ARR_DESTRUCTURE = /^(\[[^\]]+\])(?:\s*,\s*(\w+))?$/;
-const RE_SIMPLE_VFOR = /^(\S+)\s+(?:in|of)\s+(.+)$/;
 
   // FIX: P1-29 使用 TransformContext 中的计数器替代模块级计数器，确保每个编译上下文独立
   const counterKey = 'destructure';
