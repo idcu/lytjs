@@ -1,4 +1,2 @@
 #!/usr/bin/env sh
-# 修复 Windows Node 路径
-export PATH="/d/os/run/node/node-v24.14.0-win-x64:$PATH"
-/d/os/run/node/node-v24.14.0-win-x64/pnpm.cmd exec lint-staged
+pnpm exec lint-staged
