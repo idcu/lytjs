@@ -148,14 +148,17 @@
   // Recording
   function toggleRecording() {
     state.isRecording = !state.isRecording;
-    const recordBtn = document.getElementById('record-btn');
-    recordBtn.textContent = state.isRecording ? 'Stop Recording' : 'Start Recording';
-    recordBtn.classList.toggle('recording', state.isRecording);
+    const btn = document.getElementById('record-btn');
 
-    sendMessage({
-      type: 'TOGGLE_RECORDING',
-      enabled: state.isRecording,
-    });
+    if (state.isRecording) {
+      btn.textContent = 'Stop Recording';
+      btn.classList.add('recording');
+      sendMessage({ type: 'START_RECORDING' });
+    } else {
+      btn.textContent = 'Start Recording';
+      btn.classList.remove('recording');
+      sendMessage({ type: 'STOP_RECORDING' });
+    }
   }
 
   function clearEvents() {
@@ -180,169 +183,213 @@
   // Render Component Tree
   function renderComponentTree() {
     const container = document.getElementById('component-tree');
+    const tree = state.componentTree;
 
-    if (!state.componentTree || state.componentTree.length === 0) {
+    if (!tree || tree.length === 0) {
       container.innerHTML = '<p class="placeholder">No component data. Is LytJS installed?</p>';
       return;
     }
 
     container.innerHTML = '';
-    renderTreeNodes(state.componentTree, container, 0);
-  }
-
-  function renderTreeNodes(nodes, container, depth) {
-    nodes.forEach((node) => {
-      const nodeEl = document.createElement('div');
-      nodeEl.className = 'tree-node';
-      nodeEl.style.paddingLeft = depth * 16 + 8 + 'px';
-
-      const hasChildren = node.children && node.children.length > 0;
-
-      nodeEl.innerHTML = `
-        <span class="expand">${hasChildren ? '▶' : ''}</span>
-        <span class="name">${node.name || 'Component'}</span>
-        ${node.tagName ? `<span class="tag">&lt;${node.tagName}&gt;</span>` : ''}
-      `;
-
-      nodeEl.addEventListener('click', (e) => {
-        e.stopPropagation();
-        selectComponent(node, nodeEl);
-      });
-
-      container.appendChild(nodeEl);
-
-      if (hasChildren) {
-        renderTreeNodes(node.children, container, depth + 1);
-      }
+    tree.forEach((node) => {
+      const element = createTreeNode(node);
+      container.appendChild(element);
     });
   }
 
-  function selectComponent(component, element) {
-    // Update selection
-    document.querySelectorAll('.tree-node.selected').forEach((el) => {
+  function createTreeNode(node, depth = 0) {
+    const div = document.createElement('div');
+    div.className = 'tree-node';
+    div.style.paddingLeft = depth * 16 + 'px';
+
+    const header = document.createElement('div');
+    header.className = 'tree-node-header';
+    header.innerHTML = `
+      <span class="expand-icon">${node.children?.length ? '▶' : ' '}</span>
+      <span class="node-name">${node.name || node.id}</span>
+      <span class="node-tag">${node.tag || node.tagName || ''}</span>
+    `;
+
+    header.addEventListener('click', () => {
+      if (node.children?.length) {
+        const childContainer = div.querySelector('.tree-node-children');
+        if (childContainer) {
+          childContainer.classList.toggle('collapsed');
+          header.querySelector('.expand-icon').textContent = childContainer.classList.contains(
+            'collapsed',
+          )
+            ? '▶'
+            : '▼';
+        }
+      }
+      selectComponent(node, header);
+    });
+
+    div.appendChild(header);
+
+    if (node.children?.length) {
+      const childContainer = document.createElement('div');
+      childContainer.className = 'tree-node-children';
+      node.children.forEach((child) => {
+        childContainer.appendChild(createTreeNode(child, depth + 1));
+      });
+      div.appendChild(childContainer);
+    }
+
+    return div;
+  }
+
+  function selectComponent(node, headerElement) {
+    state.selectedComponent = node;
+    renderComponentInspector(node);
+
+    // Highlight in UI
+    document.querySelectorAll('.tree-node-header').forEach((el) => {
       el.classList.remove('selected');
     });
-    element.classList.add('selected');
-
-    state.selectedComponent = component;
-    renderComponentInspector(component);
+    headerElement.classList.add('selected');
   }
 
-  function renderComponentInspector(component) {
-    const inspector = document.getElementById('component-inspector');
-
-    if (!component) {
-      inspector.innerHTML = '<p class="placeholder">Select a component to inspect</p>';
+  function renderComponentInspector(node) {
+    const container = document.getElementById('component-inspector');
+    if (!node) {
+      container.innerHTML = '<p class="placeholder">Select a component to inspect</p>';
       return;
     }
 
-    let html = '';
-
-    // Props section
-    if (component.props && Object.keys(component.props).length > 0) {
-      html += `
-        <div class="inspector-section">
-          <h3>Props</h3>
-          ${renderProperties(component.props)}
-        </div>
-      `;
-    }
-
-    // State section
-    if (component.state && Object.keys(component.state).length > 0) {
-      html += `
-        <div class="inspector-section">
-          <h3>State</h3>
-          ${renderProperties(component.state)}
-        </div>
-      `;
-    }
-
-    // Info section
-    html += `
+    container.innerHTML = `
       <div class="inspector-section">
-        <h3>Info</h3>
-        ${renderProperties({
-          ID: component.id || 'N/A',
-          Name: component.name || 'Unknown',
-          Tag: component.tagName || 'N/A',
-        })}
+        <h3>Component</h3>
+        <div class="inspector-row">
+          <span class="label">Name:</span>
+          <span class="value">${node.name || 'Anonymous'}</span>
+        </div>
+        <div class="inspector-row">
+          <span class="label">ID:</span>
+          <span class="value">${node.id}</span>
+        </div>
+        <div class="inspector-row">
+          <span class="label">Tag:</span>
+          <span class="value">${node.tag || node.tagName || 'N/A'}</span>
+        </div>
+      </div>
+
+      <div class="inspector-section">
+        <h3>Props</h3>
+        <div class="inspector-data">
+          ${renderObjectData(node.props)}
+        </div>
+      </div>
+
+      <div class="inspector-section">
+        <h3>State</h3>
+        <div class="inspector-data">
+          ${renderObjectData(node.state)}
+        </div>
       </div>
     `;
-
-    inspector.innerHTML = html;
   }
 
-  function renderProperties(obj) {
-    return Object.entries(obj)
-      .map(([key, value]) => {
-        const type = typeof value;
-        const valueClass =
-          type === 'number'
-            ? 'number'
-            : type === 'boolean'
-              ? 'boolean'
-              : value === null
-                ? 'null'
-                : '';
-        const displayValue =
-          value === null
-            ? 'null'
-            : typeof value === 'object'
-              ? JSON.stringify(value)
-              : String(value);
+  function renderObjectData(obj) {
+    if (!obj || Object.keys(obj).length === 0) {
+      return '<p class="empty">No data</p>';
+    }
 
-        return `
-        <div class="property-row">
-          <span class="property-key">${key}</span>
-          <span class="property-value ${valueClass}">${displayValue}</span>
-        </div>
-      `;
-      })
+    return Object.entries(obj)
+      .map(
+        ([key, value]) => `
+      <div class="data-row">
+        <span class="data-key">${key}:</span>
+        <span class="data-value">${formatValue(value)}</span>
+      </div>
+    `,
+      )
       .join('');
   }
 
   // Render Signals
   function renderSignals() {
     const container = document.getElementById('signals-list');
+    const signals = state.signals;
 
-    if (!state.signals || state.signals.length === 0) {
+    if (!signals || signals.length === 0) {
       container.innerHTML = '<p class="placeholder">No signals found</p>';
       return;
     }
 
-    container.innerHTML = state.signals
-      .map(
-        (signal) => `
-      <div class="list-item">
-        <div class="name">${signal.name}</div>
-        <div class="value">${formatValue(signal.value)}</div>
-      </div>
-    `,
-      )
-      .join('');
+    container.innerHTML = '';
+    signals.forEach((signal) => {
+      const row = document.createElement('div');
+      row.className = 'signal-row';
+      row.innerHTML = `
+        <span class="signal-name">${signal.name || signal.id}</span>
+        <span class="signal-type">${signal.type || 'signal'}</span>
+        <span class="signal-value">${formatValue(signal.value)}</span>
+      `;
+      row.addEventListener('click', () => {
+        copyToClipboard(JSON.stringify(signal.value, null, 2));
+      });
+      container.appendChild(row);
+    });
   }
 
   // Render Events
   function renderEvents() {
     const container = document.getElementById('events-list');
+    const events = state.events;
 
-    if (state.events.length === 0) {
+    if (!events || events.length === 0) {
       container.innerHTML = '<p class="placeholder">No events recorded</p>';
       return;
     }
 
-    container.innerHTML = state.events
-      .map(
-        (event) => `
-      <div class="list-item">
-        <div class="name">${event.type || 'Event'}</div>
-        <div class="value">${event.detail ? JSON.stringify(event.detail) : ''}</div>
-        <div class="timestamp">${new Date(event.timestamp).toLocaleTimeString()}</div>
-      </div>
-    `,
-      )
-      .join('');
+    container.innerHTML = '';
+    events.forEach((event, index) => {
+      const row = document.createElement('div');
+      row.className = 'event-row';
+      row.innerHTML = `
+        <span class="event-index">${index + 1}</span>
+        <span class="event-type">${event.type}</span>
+        <span class="event-time">${formatTime(event.timestamp)}</span>
+      `;
+      row.addEventListener('click', () => {
+        showEventDetail(event);
+      });
+      container.appendChild(row);
+    });
+  }
+
+  function formatTime(timestamp) {
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString() + '.' + String(date.getMilliseconds()).padStart(3, '0');
+  }
+
+  function showEventDetail(event) {
+    // Show event detail in a modal or inspector
+    console.log('Event detail:', event);
+    // Could also display in inspector panel
+    const inspector = document.getElementById('component-inspector');
+    if (inspector) {
+      inspector.innerHTML = `
+        <div class="inspector-section">
+          <h3>Event Detail</h3>
+          <div class="inspector-row">
+            <span class="label">Type:</span>
+            <span class="value">${event.type}</span>
+          </div>
+          <div class="inspector-row">
+            <span class="label">Time:</span>
+            <span class="value">${formatTime(event.timestamp)}</span>
+          </div>
+        </div>
+        <div class="inspector-section">
+          <h3>Data</h3>
+          <div class="inspector-data">
+            ${renderObjectData(event.detail || event.data)}
+          </div>
+        </div>
+      `;
+    }
   }
 
   // Render Snapshots
@@ -382,8 +429,22 @@
   function formatValue(value) {
     if (value === null) return 'null';
     if (value === undefined) return 'undefined';
-    if (typeof value === 'object') return JSON.stringify(value, null, 2);
+    if (typeof value === 'string') return `"${value}"`;
+    if (typeof value === 'function') return 'ƒ()';
+    if (Array.isArray(value)) return `Array(${value.length})`;
+    if (typeof value === 'object') return '{...}';
     return String(value);
+  }
+
+  function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(
+      () => {
+        console.log('[LytJS DevTools] Copied to clipboard');
+      },
+      (err) => {
+        console.error('[LytJS DevTools] Failed to copy:', err);
+      },
+    );
   }
 
   // Initialize when DOM is ready

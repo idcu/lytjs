@@ -1,5 +1,5 @@
 /* eslint-env browser */
-/* global window */
+/* global window, document */
 
 // Script injected into the page to access LytJS internals
 
@@ -35,21 +35,48 @@
      * Get the component tree from LytJS runtime
      */
     getComponentTree() {
-      const runtime = window.__LYTJS_DEVTOOLS__;
-      if (runtime && typeof runtime.getComponentTree === 'function') {
-        return runtime.getComponentTree();
+      const devtools = window.__LYTJS_DEVTOOLS__;
+      if (devtools && typeof devtools.getComponentTree === 'function') {
+        return devtools.getComponentTree();
       }
-      return [];
+      // Fallback: try to find components in the DOM
+      return this._findComponentsInDOM();
+    },
+
+    /**
+     * Find components in DOM by walking the element tree
+     */
+    _findComponentsInDOM() {
+      const components = [];
+      // Look for elements with __lytjs_component__ property
+      const walk = (element) => {
+        if (element.__lytjs_component__) {
+          components.push({
+            id: element.__lytjs_component__.__id || Math.random().toString(36).slice(2),
+            name: element.__lytjs_component__.__name || element.tagName.toLowerCase(),
+            tag: element.tagName.toLowerCase(),
+            props: element.__lytjs_component__.__props || {},
+            state: element.__lytjs_component__.__state || {},
+            children: [],
+          });
+        }
+        for (const child of element.children) {
+          walk(child);
+        }
+      };
+      walk(document.body);
+      return components;
     },
 
     /**
      * Get signals from LytJS runtime
      */
     getSignals() {
-      const runtime = window.__LYTJS_DEVTOOLS__;
-      if (runtime && typeof runtime.getSignals === 'function') {
-        return runtime.getSignals();
+      const devtools = window.__LYTJS_DEVTOOLS__;
+      if (devtools && typeof devtools.getSignals === 'function') {
+        return devtools.getSignals();
       }
+      // Fallback: return empty array
       return [];
     },
 

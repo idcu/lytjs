@@ -317,3 +317,178 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #4f4f4f;
 }
+
+/* Tree Node Styles */
+.tree-node {
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 12px;
+}
+
+.tree-node-header {
+  display: flex;
+  align-items: center;
+  padding: 4px 8px;
+  cursor: pointer;
+  border-radius: 3px;
+}
+
+.tree-node-header:hover {
+  background: #2a2a2a;
+}
+
+.tree-node-header.selected {
+  background: #1e3a5f;
+}
+
+.expand-icon {
+  width: 12px;
+  margin-right: 4px;
+  color: #888;
+}
+
+.node-name {
+  color: #4fc3f7;
+  font-weight: bold;
+}
+
+.node-tag {
+  color: #888;
+  margin-left: 8px;
+  font-size: 11px;
+}
+
+.tree-node-children {
+  margin-left: 12px;
+}
+
+.tree-node-children.collapsed {
+  display: none;
+}
+
+/* Inspector Styles */
+.inspector-section {
+  margin-bottom: 16px;
+}
+
+.inspector-section h3 {
+  color: #888;
+  font-size: 11px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  border-bottom: 1px solid #333;
+  padding-bottom: 4px;
+}
+
+.inspector-row {
+  display: flex;
+  padding: 4px 0;
+}
+
+.inspector-row .label {
+  color: #888;
+  width: 80px;
+  flex-shrink: 0;
+}
+
+.inspector-row .value {
+  color: #fff;
+}
+
+.inspector-data {
+  background: #1a1a1a;
+  border-radius: 4px;
+  padding: 8px;
+}
+
+.data-row {
+  display: flex;
+  padding: 2px 0;
+}
+
+.data-key {
+  color: #ce93d8;
+  margin-right: 8px;
+}
+
+.data-value {
+  color: #a5d6a7;
+}
+
+.empty {
+  color: #666;
+  font-style: italic;
+}
+
+/* Signal Row Styles */
+.signal-row {
+  display: flex;
+  padding: 8px;
+  border-bottom: 1px solid #333;
+  cursor: pointer;
+}
+
+.signal-row:hover {
+  background: #2a2a2a;
+}
+
+.signal-name {
+  flex: 1;
+  color: #4fc3f7;
+}
+
+.signal-type {
+  width: 80px;
+  color: #888;
+  font-size: 11px;
+}
+
+.signal-value {
+  width: 120px;
+  color: #a5d6a7;
+  text-align: right;
+}
+
+/* Event Row Styles */
+.event-row {
+  display: flex;
+  padding: 8px;
+  border-bottom: 1px solid #333;
+  cursor: pointer;
+}
+
+.event-row:hover {
+  background: #2a2a2a;
+}
+
+.event-index {
+  width: 40px;
+  color: #888;
+}
+
+.event-type {
+  flex: 1;
+  color: #ffcc80;
+}
+
+.event-time {
+  color: #888;
+  font-size: 11px;
+}
+
+/* Recording Button */
+.btn.recording {
+  background: #c62828;
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+  100% {
+    opacity: 1;
+  }
+}
