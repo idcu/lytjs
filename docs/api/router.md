@@ -1,14 +1,12 @@
-# @lytjs/router
+# @lytjs/router API Reference
 
-> LytJS 声明式路由系统，支持嵌套路由、导航守卫和多种 History 模式。
-
-## 安装
+## Installation
 
 ```bash
 pnpm add @lytjs/router
 ```
 
-## 快速开始
+## Basic Usage
 
 ```typescript
 import { createRouter, createWebHistory } from '@lytjs/router';
@@ -16,95 +14,118 @@ import { createRouter, createWebHistory } from '@lytjs/router';
 const router = createRouter({
   history: createWebHistory(),
   routes: [
-    { path: '/', name: 'home', component: Home },
-    { path: '/users/:id', name: 'user', component: User },
+    { path: '/', component: Home },
+    { path: '/about', component: About },
   ],
 });
-
-// 在应用中使用
-app.use(router);
 ```
 
 ## API
 
-### `createRouter(options)`
+### createRouter(options)
 
-创建路由实例。
+Creates a router instance.
 
-**参数：**
+**Options:**
 
-| 参数 | 类型 | 说明 |
-|------|------|------|
-| `options.history` | `RouterHistory` | History 实例 |
-| `options.routes` | `RouteRecordRaw[]` | 路由配置 |
-| `options.scrollBehavior` | `RouterScrollBehavior` | 滚动行为 |
-| `options.strict` | `boolean` | 是否严格匹配尾部斜杠 |
+- `history` - History mode (required)
+- `routes` - Array of route records (required)
+- `scrollBehavior` - Scroll behavior function
 
-**返回值：** `Router`
+**Returns:** `Router` instance
 
-### `createWebHistory(base?)`
+### createWebHistory(base?)
 
-创建 HTML5 History API 路由。
+Creates HTML5 history mode.
 
-### `createWebHashHistory(base?)`
+### createWebHashHistory(base?)
 
-创建 Hash 路由。
+Creates hash-based history mode.
 
-### `createMemoryHistory(initial?)`
+### createMemoryHistory(initial?)
 
-创建内存路由（用于 SSR/测试）。
+Creates memory-based history mode (for SSR/testing).
 
-### `useRouter()`
+### useRouter()
 
-获取当前路由实例（须在 `setup` 中使用）。
+Returns the current router instance.
 
-### `useRoute()`
+### useRoute()
 
-获取当前路由信息（须在 `setup` 中使用）。
+Returns the current route location.
 
-### `<RouterView>`
+### useLink(options)
 
-路由出口组件，渲染匹配的组件。
+Returns reactive link properties.
 
-### `<RouterLink>`
+**Options:**
 
-路由链接组件，渲染为 `<a>` 标签。
+- `to` - Target route
+- `replace` - Use replace mode
+- `activeClass` - CSS class for active link
+- `exactActiveClass` - CSS class for exact active link
 
-## 导航守卫
+**Returns:**
 
-```typescript
-const router = createRouter({ ... });
+- `route` - Resolved route location
+- `href` - Resolved href
+- `isActive` - Whether the link is active
+- `isExactActive` - Whether the link is exactly active
+- `navigate` - Navigation function
 
-// 全局前置守卫
-router.beforeEach((to, from, next) => {
-  // 返回 false 取消导航
-  // 返回路由对象进行重定向
-});
+## Components
 
-// 全局后置钩子
-router.afterEach((to, from) => { });
+### RouterView
 
-// 路由独享守卫
-const routes = [
-  {
-    path: '/admin',
-    beforeEnter: (to, from, next) => { },
-  },
-];
-```
+Renders the matched component for the current route.
 
-## 路由配置
+**Props:**
+
+- `name` - Named view name (default: 'default')
+
+### RouterLink
+
+Creates a navigation link.
+
+**Props:**
+
+- `to` - Target route (required)
+- `replace` - Use replace mode
+- `activeClass` - CSS class for active link
+- `exactActiveClass` - CSS class for exact active link
+- `ariaCurrentValue` - aria-current value
+
+## Navigation Guards
+
+### router.beforeEach(guard)
+
+Add a global before navigation guard.
+
+### router.afterEach(guard)
+
+Add a global after navigation hook.
+
+### router.beforeResolve(guard)
+
+Add a global before resolve guard.
+
+### In-Component Guards
+
+- `beforeRouteLeave(to, from, next)` - Called when leaving the route
+
+## Route Record
 
 ```typescript
 interface RouteRecordRaw {
   path: string;
   name?: string | symbol;
   component?: Component;
+  components?: Record<string, Component>;
   children?: RouteRecordRaw[];
   redirect?: string | RouteLocationRaw;
   alias?: string | string[];
-  meta?: Record<string, unknown>;
-  beforeEnter?: NavigationGuard;
-  props?: boolean | Record<string, any>;
+  meta?: RouteMeta;
+  beforeEnter?: NavigationGuard | NavigationGuard[];
+  props?: boolean | Record<string, any> | (to: RouteLocationNormalized) => Record<string, any>;
 }
 ```

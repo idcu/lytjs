@@ -1,42 +1,25 @@
-import { defineConfig } from '@playwright/test';
+import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
-  testDir: '.',
-  // 匹配所有 .spec.ts 文件，排除 setup.ts 和 helpers
-  testMatch: '*.spec.ts',
-  timeout: 30_000,
-  expect: {
-    timeout: 5_000,
-  },
+  testDir: './tests',
+  fullyParallel: true,
+  forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
+  workers: process.env.CI ? 1 : undefined,
+  reporter: 'html',
   use: {
-    baseURL: 'http://localhost:3000',
-    // 每个测试失败时自动截图
-    screenshot: 'only-on-failure',
-    // 每个测试失败时自动录制 trace
-    trace: 'retain-on-failure',
+    baseURL: 'http://localhost:5173',
+    trace: 'on-first-retry',
   },
-  // 自动启动静态文件服务器，serve e2e/fixtures 目录
-  webServer: {
-    command: 'node e2e/build.cjs && npx vite e2e/fixtures --port 3000',
-    port: 3000,
-    reuseExistingServer: !process.env.CI,
-    timeout: 60_000,
-  },
-  // 浏览器配置
   projects: [
     {
       name: 'chromium',
-      use: { browserName: 'chromium' },
+      use: { ...devices['Desktop Chrome'] },
     },
-    {
-      name: 'firefox',
-      use: { browserName: 'firefox' },
-    },
-    // TODO: 评估 WebKit 支持可行性
-    // {
-    //   name: 'webkit',
-    //   use: { browserName: 'webkit' },
-    // },
   ],
+  webServer: {
+    command: 'pnpm --filter playground dev',
+    url: 'http://localhost:5173',
+    reuseExistingServer: !process.env.CI,
+  },
 });

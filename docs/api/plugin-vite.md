@@ -1,14 +1,12 @@
-# @lytjs/plugin-vite
+# @lytjs/plugin-vite API Reference
 
-> LytJS 官方 Vite 插件，提供 SFC 编译、HMR 和构建优化。
-
-## 安装
+## Installation
 
 ```bash
 pnpm add -D @lytjs/plugin-vite
 ```
 
-## 快速开始
+## Usage
 
 ```typescript
 // vite.config.ts
@@ -20,37 +18,75 @@ export default defineConfig({
 });
 ```
 
-## 配置选项
+## Options
 
-| 选项 | 类型 | 默认值 | 说明 |
-|------|------|--------|------|
-| `include` | `RegExp \| RegExp[]` | `/\.lyt$/` | 匹配的文件模式 |
-| `exclude` | `RegExp \| RegExp[]` | `/node_modules/, /\.git/` | 排除的文件模式 |
-| `ssr` | `boolean` | `false` | SSR 模式 |
-| `signalMode` | `boolean` | `false` | Signal 编译模式 |
+```typescript
+interface LytjsPluginOptions {
+  include?: string | RegExp | (string | RegExp)[];
+  exclude?: string | RegExp | (string | RegExp)[];
+  ssr?: boolean;
+  signalMode?: boolean;
+}
+```
 
-## SFC 格式
+### include
 
-`.lyt` 文件支持三个顶层块：
+Files to include for transformation. Default: `/\.lyt$/`
+
+### exclude
+
+Files to exclude. Default: `/node_modules/`
+
+### ssr
+
+Enable SSR mode. Default: `false`
+
+### signalMode
+
+Enable signal mode compilation. Default: `false`
+
+## Features
+
+### SFC Compilation
+
+Compiles `.lyt` single-file components:
+
+- `<template>` - Component template
+- `<script setup>` - Composition API script
+- `<style scoped>` - Scoped styles
+
+### Hot Module Replacement (HMR)
+
+Automatic HMR for `.lyt` files:
+
+- Template changes: Component-level HMR
+- Script changes: Full page reload
+- Style changes: CSS HMR
+
+### Scoped Styles
+
+Scoped CSS with unique `__scopeId`:
 
 ```html
-<template>
-  <div>{{ message }}</div>
-</template>
-
-<script setup>
-import { ref } from '@lytjs/core';
-const message = ref('Hello');
-</script>
-
 <style scoped>
-div { color: #42b883; }
+  .button {
+    color: red;
+  }
 </style>
 ```
 
-## HMR
+### Custom Blocks
 
-插件自动支持热模块替换：
-- **script 变更** → 全页刷新
-- **template 变更** → 组件热更新
-- **style 变更** → CSS 热更新
+#### `<route>` Block
+
+Define route configuration in component:
+
+```html
+<route> { "path": "/users/:id", "name": "user-detail" } </route>
+```
+
+Import route config:
+
+```typescript
+import routeConfig from './UserDetail.lyt.route';
+```

@@ -1,56 +1,70 @@
-# @lytjs/cli
+# @lytjs/cli API Reference
 
-> LytJS 项目脚手架和开发 CLI 工具。
-
-## 安装
+## Installation
 
 ```bash
 pnpm add -D @lytjs/cli
 ```
 
-## 命令
+## Commands
 
-### `lytjs create <name>`
+### lytjs create [project-name]
 
-创建新的 LytJS 项目。
+Create a new LytJS project.
 
-```bash
-lytjs create my-app
-lytjs create my-app --template minimal
-lytjs create my-app --force
-```
+**Options:**
 
-**选项：**
+- `--template` - Project template (default, minimal, ssr)
+- `--force` - Overwrite existing directory
 
-| 选项 | 说明 |
-|------|------|
-| `--template <name>` | 使用指定模板 |
-| `--force` | 覆盖已存在的目录 |
+### lytjs add <type> <name>
 
-### `lytjs dev`
+Generate a component, page, or store.
 
-启动开发服务器。
+**Types:**
 
-```bash
-lytjs dev --port 3000 --host 0.0.0.0 --open
-```
+- `component` - Generate a .lyt component
+- `page` - Generate a page component
+- `store` - Generate a store module
 
-### `lytjs build`
-
-生产构建。
+**Examples:**
 
 ```bash
-lytjs build --outDir dist --ssr
+lytjs add component Button
+lytjs add page About
+lytjs add store user
 ```
 
-### `lytjs test`
+### lytjs dev
 
-运行测试。
+Start the development server.
 
-```bash
-lytjs test --watch false --coverage
-```
+**Options:**
 
-## 自动检测包管理器
+- `--port` - Server port
+- `--host` - Server host
+- `--open` - Open in browser
 
-CLI 会根据项目中的 lockfile 自动检测包管理器（pnpm > yarn > npm）。
+### lytjs build
+
+Build for production.
+
+**Options:**
+
+- `--outDir` - Output directory
+- `--ssr` - Build for SSR
+- `--minify` - Minify output
+
+### lytjs test
+
+Run tests with Vitest.
+
+**Options:**
+
+- `--watch` - Watch mode
+- `--coverage` - Generate coverage
+- `--grep` - Filter tests by pattern
+
+### lytjs templates
+
+List available project templates.

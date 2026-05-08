@@ -1,84 +1,137 @@
-# @lytjs/store
+# @lytjs/store API Reference
 
-> 基于 Signal 的状态管理，支持 Options Store 和 Setup Store 两种模式。
-
-## 安装
+## Installation
 
 ```bash
 pnpm add @lytjs/store
 ```
 
-## 快速开始
+## Basic Usage
+
+### Options Store
 
 ```typescript
-import { createPinia, defineStore } from '@lytjs/store';
+import { defineStore } from '@lytjs/store';
 
-// 创建 Pinia 实例
-const pinia = createPinia();
-app.use(pinia);
-
-// 定义 Store (Options API)
-const useCounter = defineStore('counter', {
+const useCounterStore = defineStore('counter', {
   state: () => ({ count: 0 }),
   getters: {
     doubleCount: (state) => state.count * 2,
   },
   actions: {
-    increment() { this.count++; },
+    increment() {
+      this.count++;
+    },
   },
 });
+```
 
-// 使用 Store
-const counter = useCounter();
-counter.increment();
-console.log(counter.doubleCount); // 2
+### Setup Store
+
+```typescript
+import { defineStore } from '@lytjs/store';
+import { signal, computed } from '@lytjs/reactivity';
+
+const useCounterStore = defineStore('counter', () => {
+  const count = signal(0);
+  const doubleCount = computed(() => count.value * 2);
+
+  function increment() {
+    count.value++;
+  }
+
+  return { count, doubleCount, increment };
+});
 ```
 
 ## API
 
-### `createPinia()`
+### defineStore(id, options)
 
-创建 Pinia 实例。
+Creates a store definition.
 
-### `defineStore(id, options)`
+**Options Store:**
 
-定义 Options Store。
+- `state` - Function returning initial state
+- `getters` - Computed properties
+- `actions` - Methods
 
-**参数：**
+**Setup Store:**
 
-| 参数 | 类型 | 说明 |
-|------|------|------|
-| `id` | `string` | Store 唯一标识 |
-| `options.state` | `() => StateTree` | 初始状态工厂函数 |
-| `options.getters` | `object` | 计算属性 |
-| `options.actions` | `object` | 方法 |
+- Accepts a setup function that returns store properties
 
-### `defineStore(id, setup)`
+### createPinia()
 
-定义 Setup Store（组合式函数风格）。
+Creates a Pinia instance.
 
-### `storeToRefs(store)`
+### storeToRefs(store)
 
-从 Store 中提取响应式 refs。
+Extracts refs from a store, preserving reactivity.
 
-## Store 实例方法
+### useStore()
 
-| 方法 | 说明 |
-|------|------|
-| `$patch(partial)` | 对象补丁更新 |
-| `$patch(fn)` | 函数补丁更新 |
-| `$reset()` | 重置到初始状态 |
-| `$subscribe(callback)` | 订阅状态变化 |
-| `$onAction(callback)` | 订阅 action 执行 |
-| `$dispose()` | 清理 Store |
+Returns the store instance.
 
-## Setup Store 示例
+## Store Instance
+
+### $id
+
+Store unique identifier.
+
+### $state
+
+Reactive state object.
+
+### $patch(partialOrMutator)
+
+Update state partially.
 
 ```typescript
-const useCounter = defineStore('counter', () => {
-  const count = ref(0);
-  const doubleCount = computed(() => count.value * 2);
-  function increment() { count.value++; }
-  return { count, doubleCount, increment };
+// Object syntax
+store.$patch({ count: 10 });
+
+// Function syntax
+store.$patch((state) => {
+  state.count++;
 });
 ```
+
+### $reset()
+
+Reset state to initial values.
+
+### $subscribe(callback)
+
+Subscribe to state changes.
+
+```typescript
+const unsubscribe = store.$subscribe((mutation, state) => {
+  console.log('Type:', mutation.type);
+  console.log('Store ID:', mutation.storeId);
+});
+
+// Later: unsubscribe()
+```
+
+### $onAction(callback)
+
+Subscribe to action calls.
+
+```typescript
+const unsubscribe = store.$onAction((context) => {
+  console.log('Action:', context.name);
+  console.log('Args:', context.args);
+
+  context.after = (result) => {
+    console.log('After:', result);
+  };
+
+  context.onError = (error) => {
+    console.error('Error:', error);
+  };
+});
+```
+
+### $dispose()
+
+Dispose the store and clear subscriptions.
