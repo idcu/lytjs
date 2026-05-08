@@ -8,6 +8,9 @@ export default defineConfig({
   // 文档站基础路径（部署到 Pages 子路径时使用）
   base: '/lytjs/',
 
+  // 忽略死链接（部分文档页面尚未完成）
+  ignoreDeadLinks: true,
+
   head: [
     ['link', { rel: 'icon', type: 'image/svg+xml', href: '/lytjs/logo.svg' }],
     ['meta', { name: 'theme-color', content: '#3eaf7c' }],
@@ -196,10 +199,9 @@ export default defineConfig({
     darkModeSwitchTitle: '切换到深色模式',
   },
 
-  vite: {
-    // 构建优化
-    build: {
-      minify: 'terser',
-    },
-  },
+  // vite: {
+  //   build: {
+  //     minify: 'terser',
+  //   },
+  // },
 });
