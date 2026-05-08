@@ -6,6 +6,7 @@ export default defineConfig({
   lang: 'zh-CN',
 
   // 文档站基础路径（部署到 Pages 子路径时使用）
+  // VitePress 会自动给所有链接添加此前缀，链接中不需要重复写
   base: '/lytjs/',
 
   // 忽略死链接（部分文档页面尚未完成）
@@ -24,118 +25,118 @@ export default defineConfig({
     siteTitle: 'Lyt.js',
 
     nav: [
-      { text: '指南', link: '/lytjs/guide/' },
-      { text: 'API 参考', link: '/lytjs/api/' },
+      { text: '指南', link: '/guide/' },
+      { text: 'API 参考', link: '/api/' },
       {
         text: '子仓库',
         items: [
-          { text: '@lytjs/core', link: '/lytjs/api/core' },
-          { text: '@lytjs/reactivity', link: '/lytjs/api/reactivity' },
-          { text: '@lytjs/compiler', link: '/lytjs/api/compiler' },
-          { text: '@lytjs/renderer', link: '/lytjs/api/renderer' },
-          { text: '@lytjs/component', link: '/lytjs/api/component' },
-          { text: '@lytjs/vdom', link: '/lytjs/api/vdom' },
-          { text: '@lytjs/common-*', link: '/lytjs/api/common' },
-          { text: '@lytjs/host-contract', link: '/lytjs/api/host-contract' },
-          { text: '@lytjs/shared-types', link: '/lytjs/api/shared-types' },
+          { text: '@lytjs/core', link: '/api/core' },
+          { text: '@lytjs/reactivity', link: '/api/reactivity' },
+          { text: '@lytjs/compiler', link: '/api/compiler' },
+          { text: '@lytjs/renderer', link: '/api/renderer' },
+          { text: '@lytjs/component', link: '/api/component' },
+          { text: '@lytjs/vdom', link: '/api/vdom' },
+          { text: '@lytjs/common-*', link: '/api/common' },
+          { text: '@lytjs/host-contract', link: '/api/host-contract' },
+          { text: '@lytjs/shared-types', link: '/api/shared-types' },
         ],
       },
       {
         text: '生态',
         items: [
           // TODO: Router 包尚未实现，取消注释当包就绪时
-          // { text: 'Router', link: '/lytjs/ecosystem/router/' },
+          // { text: 'Router', link: '/ecosystem/router/' },
           // TODO: Store 包尚未实现，取消注释当包就绪时
-          // { text: 'Store', link: '/lytjs/ecosystem/store/' },
+          // { text: 'Store', link: '/ecosystem/store/' },
           // TODO: CLI 包尚未实现，取消注释当包就绪时
-          // { text: 'CLI', link: '/lytjs/ecosystem/cli/' },
+          // { text: 'CLI', link: '/ecosystem/cli/' },
           // TODO: UI 组件库尚未实现，取消注释当包就绪时
-          // { text: 'UI 组件库', link: '/lytjs/ecosystem/lytui/' },
+          // { text: 'UI 组件库', link: '/ecosystem/lytui/' },
         ],
       },
       // TODO: 示例页面尚未创建，取消注释当示例就绪时
-      // { text: '示例', link: '/lytjs/examples/' },
+      // { text: '示例', link: '/examples/' },
     ],
 
     sidebar: {
-      '/lytjs/api/': [
+      '/api/': [
         {
           text: 'API 参考',
           items: [
-            { text: '概览', link: '/lytjs/api/' },
-            { text: '@lytjs/core', link: '/lytjs/api/core' },
-            { text: '@lytjs/reactivity', link: '/lytjs/api/reactivity' },
-            { text: '@lytjs/compiler', link: '/lytjs/api/compiler' },
-            { text: '@lytjs/renderer', link: '/lytjs/api/renderer' },
-            { text: '@lytjs/component', link: '/lytjs/api/component' },
-            { text: '@lytjs/vdom', link: '/lytjs/api/vdom' },
-            { text: '@lytjs/common-*', link: '/lytjs/api/common' },
-            { text: '@lytjs/host-contract', link: '/lytjs/api/host-contract' },
-            { text: '@lytjs/shared-types', link: '/lytjs/api/shared-types' },
-            { text: '独立构建变体', link: '/lytjs/api/core-variants' },
+            { text: '概览', link: '/api/' },
+            { text: '@lytjs/core', link: '/api/core' },
+            { text: '@lytjs/reactivity', link: '/api/reactivity' },
+            { text: '@lytjs/compiler', link: '/api/compiler' },
+            { text: '@lytjs/renderer', link: '/api/renderer' },
+            { text: '@lytjs/component', link: '/api/component' },
+            { text: '@lytjs/vdom', link: '/api/vdom' },
+            { text: '@lytjs/common-*', link: '/api/common' },
+            { text: '@lytjs/host-contract', link: '/api/host-contract' },
+            { text: '@lytjs/shared-types', link: '/api/shared-types' },
+            { text: '独立构建变体', link: '/api/core-variants' },
           ],
         },
       ],
-      '/lytjs/guide/': [
+      '/guide/': [
         {
           text: '开始',
           items: [
-            { text: '介绍', link: '/lytjs/guide/' },
-            { text: '快速开始', link: '/lytjs/guide/getting-started' },
-            { text: '安装', link: '/lytjs/guide/installation' },
+            { text: '介绍', link: '/guide/' },
+            { text: '快速开始', link: '/guide/getting-started' },
+            { text: '安装', link: '/guide/installation' },
           ],
         },
         {
           text: '核心概念',
           items: [
-            { text: '响应式系统', link: '/lytjs/guide/reactivity' },
-            { text: '组件', link: '/lytjs/guide/component' },
-            { text: '模板语法', link: '/lytjs/guide/template-syntax' },
-            { text: '生命周期', link: '/lytjs/guide/lifecycle' },
-            { text: '事件处理', link: '/lytjs/guide/events' },
+            { text: '响应式系统', link: '/guide/reactivity' },
+            { text: '组件', link: '/guide/component' },
+            { text: '模板语法', link: '/guide/template-syntax' },
+            { text: '生命周期', link: '/guide/lifecycle' },
+            { text: '事件处理', link: '/guide/events' },
           ],
         },
         {
           text: '进阶',
           items: [
-            { text: '组合式 API', link: '/lytjs/guide/composition-api' },
-            { text: '自定义指令', link: '/lytjs/guide/custom-directives' },
-            { text: '插件', link: '/lytjs/guide/plugins' },
-            { text: '渲染函数', link: '/lytjs/guide/render-function' },
+            { text: '组合式 API', link: '/guide/composition-api' },
+            { text: '自定义指令', link: '/guide/custom-directives' },
+            { text: '插件', link: '/guide/plugins' },
+            { text: '渲染函数', link: '/guide/render-function' },
           ],
         },
         {
           text: '工程化',
           items: [
-            { text: '项目配置', link: '/lytjs/guide/project-config' },
-            { text: '构建优化', link: '/lytjs/guide/build-optimization' },
-            { text: 'SSR', link: '/lytjs/guide/ssr' },
-            { text: 'TypeScript', link: '/lytjs/guide/typescript' },
+            { text: '项目配置', link: '/guide/project-config' },
+            { text: '构建优化', link: '/guide/build-optimization' },
+            { text: 'SSR', link: '/guide/ssr' },
+            { text: 'TypeScript', link: '/guide/typescript' },
           ],
         },
         {
           text: '内置与渲染',
           items: [
-            { text: '内置组件', link: '/lytjs/guide/built-in-components' },
-            { text: '渲染模式', link: '/lytjs/guide/rendering-modes' },
+            { text: '内置组件', link: '/guide/built-in-components' },
+            { text: '渲染模式', link: '/guide/rendering-modes' },
           ],
         },
         {
           text: '贡献',
           items: [
-            { text: '贡献指南', link: '/lytjs/guide/contributing' },
-            { text: '架构设计', link: '/lytjs/guide/architecture' },
+            { text: '贡献指南', link: '/guide/contributing' },
+            { text: '架构设计', link: '/guide/architecture' },
           ],
         },
         {
           text: '开发者文档',
           items: [
-            { text: '包总览', link: '/lytjs/guide/packages/' },
-            { text: 'L0 基础层', link: '/lytjs/guide/packages/common' },
-            { text: '响应式系统原理', link: '/lytjs/guide/packages/reactivity-deep' },
-            { text: 'VDOM 实现原理', link: '/lytjs/guide/packages/vdom-deep' },
-            { text: '编译器架构', link: '/lytjs/guide/packages/compiler-deep' },
-            { text: '自定义渲染器开发', link: '/lytjs/guide/packages/custom-renderer' },
+            { text: '包总览', link: '/guide/packages/' },
+            { text: 'L0 基础层', link: '/guide/packages/common' },
+            { text: '响应式系统原理', link: '/guide/packages/reactivity-deep' },
+            { text: 'VDOM 实现原理', link: '/guide/packages/vdom-deep' },
+            { text: '编译器架构', link: '/guide/packages/compiler-deep' },
+            { text: '自定义渲染器开发', link: '/guide/packages/custom-renderer' },
           ],
         },
       ],
@@ -198,10 +199,4 @@ export default defineConfig({
     lightModeSwitchTitle: '切换到浅色模式',
     darkModeSwitchTitle: '切换到深色模式',
   },
-
-  // vite: {
-  //   build: {
-  //     minify: 'terser',
-  //   },
-  // },
 });
