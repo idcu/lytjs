@@ -9,7 +9,7 @@
 import type { Plugin, HmrContext, ResolvedConfig } from 'vite';
 import type { LytjsPluginOptions } from './options';
 import { resolveOptions, defaultOptions } from './options';
-import { createFilter } from './utils';
+import { createFilter, generateScopeId } from './utils';
 import { compileSFC, parseSFC } from '@lytjs/compiler';
 
 export interface LytjsPluginOptions {
@@ -21,6 +21,9 @@ export interface LytjsPluginOptions {
 
 // HMR cache for tracking component updates
 const hmrCache = new Map<string, { script: string; template: string; styles: string[] }>();
+
+// Route block collection
+const routeBlockMap = new Map<string, string>();
 
 /**
  * Create the LytJS Vite plugin
@@ -58,14 +61,26 @@ export default function lytjs(rawOptions: LytjsPluginOptions = {}): Plugin {
       if (filter(id)) {
         return id;
       }
+      // Handle .route virtual modules
+      if (id.endsWith('.route')) {
+        return `\0virtual-route:${id}`;
+      }
       return null;
     },
 
     load(id) {
-      if (!filter(id)) return null;
+      if (!filter(id)) {
+        // Handle virtual route modules
+        if (id.startsWith('\0virtual-route:')) {
+          const sourceId = id.replace('\0virtual-route:', '');
+          const routeContent = routeBlockMap.get(sourceId);
+          if (routeContent) {
+            return `export default ${routeContent}`;
+          }
+        }
+        return null;
+      }
 
-      // In development, we compile on-the-fly
-      // In production, this would be handled by transform
       return null;
     },
 
@@ -76,12 +91,36 @@ export default function lytjs(rawOptions: LytjsPluginOptions = {}): Plugin {
         // Parse the SFC
         const { descriptor } = parseSFC(code, { filename: id });
 
+        // Handle <route> custom block
+        const routeBlock = descriptor.customBlocks?.find(
+          (block: any) => block.type === 'route'
+        );
+        if (routeBlock) {
+          // Emit a virtual module for the route config
+          const routePath = id.replace(/\.\w+$/, '.route');
+          // Store route info for later collection
+          routeBlockMap.set(id, routeBlock.content);
+        }
+
         // Generate the component code
         const result = compileSFC(descriptor, {
           filename: id,
           ssr: options.ssr,
           signalMode: options.signalMode,
         });
+
+        let compiledCode = result.code;
+
+        // Handle scoped styles - inject scope attribute
+        const scopedStyles = descriptor.styles.filter(s => s.scoped);
+        if (scopedStyles.length > 0) {
+          const scopeId = generateScopeId(id);
+          // Inject __scopeId into the component setup
+          compiledCode = compiledCode.replace(
+            /(export default\s*\{)/,
+            `$1\n  __scopeId: '${scopeId}',`
+          );
+        }
 
         // Cache for HMR
         if (!isProduction) {
@@ -93,7 +132,7 @@ export default function lytjs(rawOptions: LytjsPluginOptions = {}): Plugin {
         }
 
         return {
-          code: result.code,
+          code: compiledCode,
           map: result.map,
         };
       } catch (error) {

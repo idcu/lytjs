@@ -43,7 +43,7 @@ export function getInstallCommand(pm: PackageManager): string {
  */
 export function getRunCommand(pm: PackageManager, script: string): string {
   switch (pm) {
-    case 'pnpm': return `pnpm ${script}`;
+    case 'pnpm': return `pnpm run ${script}`;
     case 'yarn': return `yarn ${script}`;
     case 'npm': return `npm run ${script}`;
   }

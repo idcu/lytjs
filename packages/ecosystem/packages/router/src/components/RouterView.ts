@@ -6,6 +6,9 @@
  */
 
 import type { RouteLocationNormalized } from '../types';
+import { useRouter } from '../composables/useRouter';
+import { useRoute } from '../composables/useRoute';
+import { computed } from '@lytjs/reactivity';
 
 export interface RouterViewProps {
   name?: string;
@@ -14,8 +17,8 @@ export interface RouterViewProps {
 
 /**
  * RouterView component
- * In a full implementation, this would integrate with the component system.
- * For now, it provides the basic structure.
+ * Renders the matched component for the current route.
+ * Supports named views via the `name` prop and props passing from route records.
  */
 export const RouterView = {
   name: 'RouterView',
@@ -27,11 +30,51 @@ export const RouterView = {
     },
   },
 
-  setup(_props: RouterViewProps, { slots }: any) {
+  setup(props: RouterViewProps) {
+    const router = useRouter();
+    const route = useRoute();
+
+    const matchedComponent = computed(() => {
+      const matched = route.matched;
+      // Find the matched record for this view depth
+      for (const record of matched) {
+        if (record.components && record.components[props.name!]) {
+          return { component: record.components[props.name!], record };
+        }
+        if (record.component && props.name === 'default') {
+          return { component: record.component, record };
+        }
+      }
+      return null;
+    });
+
     return () => {
-      // TODO: Integrate with component system to render matched component
-      // This will be implemented when integrating with @lytjs/component
-      return slots.default ? slots.default({}) : null;
+      const matched = matchedComponent.value;
+      if (!matched) return null;
+
+      const { component, record } = matched;
+      // Resolve lazy component
+      const resolvedComponent = typeof component === 'function' ? component() : component;
+
+      // Compute props from route record
+      let routeProps: Record<string, any> = {};
+      if (record.props) {
+        if (typeof record.props === 'function') {
+          routeProps = record.props(route);
+        } else if (typeof record.props === 'object') {
+          routeProps = record.props;
+        } else if (record.props === true) {
+          routeProps = route.params;
+        }
+      }
+
+      // Return the component vnode
+      if (resolvedComponent && typeof resolvedComponent === 'object' && 'setup' in resolvedComponent) {
+        // Component object - return it for the renderer
+        return { ...resolvedComponent, props: { ...routeProps, ...resolvedComponent.props } };
+      }
+
+      return resolvedComponent;
     };
   },
 };

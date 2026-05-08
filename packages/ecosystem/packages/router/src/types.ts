@@ -35,6 +35,8 @@ export interface RouteRecordNormalized {
   aliasOf?: RouteRecordNormalized;
   beforeEnter?: NavigationGuard | undefined;
   props: boolean | Record<string, any> | ((to: RouteLocationNormalized) => Record<string, any>);
+  component?: Component | (() => Promise<Component>);
+  components?: Record<string, Component | (() => Promise<Component>)>;
 }
 
 // ===== Route Location =====

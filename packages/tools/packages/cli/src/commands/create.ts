@@ -61,8 +61,12 @@ export async function create(projectName: string, options: CreateOptions = {}): 
  * Generate project files
  */
 function generateProjectFiles(targetDir: string, projectName: string, template: string): void {
+  // Determine template-specific settings
+  const isMinimal = template === 'minimal';
+  const isSsr = template === 'ssr';
+
   // package.json
-  const packageJson = {
+  const packageJson: Record<string, any> = {
     name: projectName,
     version: '0.0.0',
     type: 'module',
@@ -70,7 +74,6 @@ function generateProjectFiles(targetDir: string, projectName: string, template: 
       dev: 'vite',
       build: 'vite build',
       preview: 'vite preview',
-      test: 'vitest',
     },
     dependencies: {
       '@lytjs/core': '^6.0.0',
@@ -78,22 +81,50 @@ function generateProjectFiles(targetDir: string, projectName: string, template: 
     devDependencies: {
       '@lytjs/plugin-vite': '^6.0.0',
       'vite': '^5.0.0',
-      'vitest': '^1.0.0',
     },
   };
-  
+
+  // Minimal template: no vitest, no test script
+  if (!isMinimal) {
+    packageJson.scripts.test = 'vitest';
+    packageJson.devDependencies.vitest = '^1.0.0';
+  }
+
+  // SSR template: add @lytjs/server dependency
+  if (isSsr) {
+    packageJson.dependencies['@lytjs/server'] = '^6.0.0';
+    packageJson.scripts['build:client'] = 'vite build --ssrManifest';
+    packageJson.scripts['build:server'] = 'vite build --ssr src/entry-server.ts';
+    packageJson.scripts['build'] = 'npm run build:client && npm run build:server';
+    packageJson.scripts['preview'] = 'node server';
+  }
+
   writeFile(join(targetDir, 'package.json'), JSON.stringify(packageJson, null, 2));
-  
+
   // vite.config.ts
-  const viteConfig = `import { defineConfig } from 'vite';
+  let viteConfig: string;
+  if (isSsr) {
+    viteConfig = `import { defineConfig } from 'vite';
+import lytjs from '@lytjs/plugin-vite';
+
+export default defineConfig({
+  plugins: [lytjs()],
+  build: {
+    ssrManifest: true,
+  },
+});
+`;
+  } else {
+    viteConfig = `import { defineConfig } from 'vite';
 import lytjs from '@lytjs/plugin-vite';
 
 export default defineConfig({
   plugins: [lytjs()],
 });
 `;
+  }
   writeFile(join(targetDir, 'vite.config.ts'), viteConfig);
-  
+
   // index.html
   const indexHtml = `<!DOCTYPE html>
 <html lang="en">
@@ -110,17 +141,47 @@ export default defineConfig({
 </html>
 `;
   writeFile(join(targetDir, 'index.html'), indexHtml);
-  
+
   // src/main.ts
-  const mainTs = `import { createApp } from '@lytjs/core';
+  let mainTs: string;
+  if (isSsr) {
+    mainTs = `import { createApp } from '@lytjs/core';
+import App from './App.lyt';
+import { createSSRApp } from '@lytjs/server';
+
+const app = createSSRApp(App);
+app.mount('#app');
+`;
+  } else {
+    mainTs = `import { createApp } from '@lytjs/core';
 import App from './App.lyt';
 
 createApp(App).mount('#app');
 `;
+  }
   writeFile(join(targetDir, 'src/main.ts'), mainTs);
-  
+
   // src/App.lyt
-  const appLyt = `<template>
+  let appLyt: string;
+  if (isMinimal) {
+    appLyt = `<template>
+  <div class="app">
+    <h1>{{ title }}</h1>
+  </div>
+</template>
+
+<script setup>
+const title = 'Hello LytJS!';
+</script>
+
+<style scoped>
+.app {
+  text-align: center;
+}
+</style>
+`;
+  } else {
+    appLyt = `<template>
   <div class="app">
     <h1>{{ title }}</h1>
     <p>Welcome to your LytJS app!</p>
@@ -142,8 +203,69 @@ h1 {
 }
 </style>
 `;
+  }
   writeFile(join(targetDir, 'src/App.lyt'), appLyt);
-  
+
+  // SSR-specific files
+  if (isSsr) {
+    // src/entry-server.ts
+    const entryServer = `import { createSSRApp } from '@lytjs/core';
+import App from './App.lyt';
+
+export async function render(url: string) {
+  const app = createSSRApp(App);
+  return app;
+}
+`;
+    writeFile(join(targetDir, 'src/entry-server.ts'), entryServer);
+
+    // src/entry-client.ts
+    const entryClient = `import { createApp } from '@lytjs/core';
+import App from './App.lyt';
+
+const app = createApp(App);
+app.mount('#app');
+`;
+    writeFile(join(targetDir, 'src/entry-client.ts'), entryClient);
+
+    // server.ts
+    const serverTs = `/**
+ * LytJS SSR Server
+ *
+ * A minimal SSR server for development and production.
+ */
+
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const isProduction = process.env.NODE_ENV === 'production';
+
+async function createServer() {
+  let resolve: any;
+  let vite: any;
+
+  if (!isProduction) {
+    const { createServer: createViteServer } = await import('vite');
+    vite = await createViteServer({
+      server: { middlewareMode: true },
+      appType: 'custom',
+    });
+    resolve = (id: string) => vite.resolveUrl(id);
+  } else {
+    resolve = (id: string) => id;
+  }
+
+  // TODO: Set up express/polka server and SSR rendering
+  console.log('LytJS SSR server starting...');
+}
+
+createServer();
+`;
+    writeFile(join(targetDir, 'server.ts'), serverTs);
+  }
+
   // tsconfig.json
   const tsConfig = {
     compilerOptions: {
@@ -166,7 +288,7 @@ h1 {
     references: [{ path: './tsconfig.node.json' }],
   };
   writeFile(join(targetDir, 'tsconfig.json'), JSON.stringify(tsConfig, null, 2));
-  
+
   // tsconfig.node.json
   const tsConfigNode = {
     compilerOptions: {
@@ -179,7 +301,7 @@ h1 {
     include: ['vite.config.ts'],
   };
   writeFile(join(targetDir, 'tsconfig.node.json'), JSON.stringify(tsConfigNode, null, 2));
-  
+
   // .gitignore
   const gitignore = `# Logs
 logs

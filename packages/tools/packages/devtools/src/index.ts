@@ -36,6 +36,7 @@ export {
   getSignals,
   getSignalValue,
   getSignalById,
+  setSignalValue,
   clearSignalRegistry,
 } from './signals';
 

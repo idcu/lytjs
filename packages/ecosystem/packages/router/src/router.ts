@@ -147,8 +147,15 @@ export function createRouter(options: RouterOptions): Router {
 
     const from = currentRoute.value;
 
-    // Run navigation guards
-    const failure = await runGuardSequence(targetLocation, from, matched);
+    // Run navigation guards (pass fromMatched for beforeRouteLeave)
+    const fromMatched = currentRoute.value.matched
+      .map((record) => {
+        // Find the corresponding matcher for the from route records
+        return flatMatchers.find((m) => m.record === record);
+      })
+      .filter((m): m is RouteRecordMatcher => m !== undefined);
+
+    const failure = await runGuardSequence(targetLocation, from, matched, fromMatched);
     if (failure) {
       return failure;
     }
@@ -177,8 +184,21 @@ export function createRouter(options: RouterOptions): Router {
     to: RouteLocationNormalized,
     from: RouteLocationNormalized,
     matched: RouteRecordMatcher[],
+    fromMatched: RouteRecordMatcher[],
   ): Promise<NavigationFailure | void> {
-    // 1. in-component beforeRouteLeave (not implemented yet)
+    // 1. in-component beforeRouteLeave guards (from current matched components)
+    for (const matcher of fromMatched) {
+      const component = matcher.record.component;
+      if (component && typeof component === 'object' && (component as any).beforeRouteLeave) {
+        const result = await (component as any).beforeRouteLeave(to, from, noop as NavigationGuardNext);
+        if (result === false || result instanceof Error) {
+          return { type: NavigationFailureType.aborted, from, to };
+        }
+        if (typeof result === 'string' || (typeof result === 'object' && result !== null)) {
+          return navigate(result, true);
+        }
+      }
+    }
 
     // 2. global beforeEach guards
     for (const guard of beforeEachGuards) {

@@ -101,6 +101,27 @@ export function getSignalById(id: string): SignalInfo | undefined {
 }
 
 /**
+ * Set a signal's value (used by time travel restore)
+ */
+export function setSignalValue(id: string, value: unknown): boolean {
+  const entry = signalRegistry.get(id);
+  if (!entry) return false;
+
+  const { signal } = entry;
+  if ('value' in signal) {
+    signal.value = value;
+    return true;
+  }
+
+  if ('_value' in signal) {
+    signal._value = value;
+    return true;
+  }
+
+  return false;
+}
+
+/**
  * Clear signal registry
  */
 export function clearSignalRegistry(): void {

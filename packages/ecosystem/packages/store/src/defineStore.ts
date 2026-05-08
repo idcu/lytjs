@@ -98,15 +98,21 @@ export function defineStore<Id extends string, S extends StateTree, G, A>(
       for (const [key, fn] of Object.entries(options.actions)) {
         const actionFn = fn as _Method;
         actionFns[key] = async function (...args: any[]) {
+          const context: any = { store, name: key, args };
+
           // Notify action callbacks before
           for (const cb of actions) {
-            cb({ store: store, name: key, args });
+            cb(context);
           }
 
           try {
             const result = await actionFn.call({ ...state, ...getters, ...actionFns }, ...args);
+            // Trigger after callback
+            if (context.after) context.after(result);
             return result;
           } catch (error) {
+            // Trigger onError callback
+            if (context.onError) context.onError(error as Error);
             throw error;
           }
         };
@@ -193,16 +199,114 @@ export function defineStore<Id extends string, S extends StateTree, G, A>(
 export function defineStore<Id extends string, SS>(
   id: Id,
   setup: () => SS,
-): () => SS {
+): () => SS & Store<Id, any, any, any> {
   const cacheKey = `${id}:setup`;
 
-  return function useStore(): SS {
+  return function useStore(pinia: any = getActivePinia()): SS & Store<Id, any, any, any> {
     // Return cached store if exists
     if (storeCache.has(cacheKey)) {
-      return storeCache.get(cacheKey) as unknown as SS;
+      return storeCache.get(cacheKey) as unknown as SS & Store<Id, any, any, any>;
     }
 
-    const store = setup();
+    // Initialize registries
+    if (!subscriptions.has(cacheKey)) {
+      subscriptions.set(cacheKey, new Set());
+    }
+    if (!actionCallbacks.has(cacheKey)) {
+      actionCallbacks.set(cacheKey, new Set());
+    }
+
+    const subs = subscriptions.get(cacheKey)!;
+    const actionCbs = actionCallbacks.get(cacheKey)!;
+
+    // Execute setup to get the store object
+    const storeObj = setup();
+
+    // Wrap functions in storeObj as tracked actions
+    const wrappedStore: Record<string, any> = { ...storeObj };
+    for (const [key, value] of Object.entries(storeObj)) {
+      if (typeof value === 'function' && !key.startsWith('$')) {
+        wrappedStore[key] = async function (...args: any[]) {
+          const context: any = { store: wrappedStore, name: key, args };
+
+          // Notify before
+          for (const cb of actionCbs) {
+            cb(context);
+          }
+
+          try {
+            const result = await (value as Function).apply(wrappedStore, args);
+            // Trigger after callback
+            if (context.after) context.after(result);
+            return result;
+          } catch (error) {
+            // Trigger onError callback
+            if (context.onError) context.onError(error as Error);
+            throw error;
+          }
+        };
+      }
+    }
+
+    // Add Store interface methods
+    const store = wrappedStore as SS & Store<Id, any, any, any>;
+
+    (store as any).$id = id;
+
+    // $state - collect all non-function, non-$ properties
+    (store as any).$state = {};
+    for (const [key, value] of Object.entries(storeObj)) {
+      if (typeof value !== 'function' && !key.startsWith('$')) {
+        (store as any).$state[key] = value;
+      }
+    }
+
+    (store as any).$patch = (partialOrMutator: any) => {
+      if (typeof partialOrMutator === 'function') {
+        partialOrMutator((store as any).$state);
+        for (const sub of subs) {
+          sub({ storeId: id, type: 'patch function', payload: partialOrMutator }, (store as any).$state);
+        }
+      } else {
+        for (const [key, value] of Object.entries(partialOrMutator)) {
+          if (key in (store as any)) {
+            (store as any)[key] = value;
+          }
+        }
+        for (const sub of subs) {
+          sub({ storeId: id, type: 'patch object', payload: partialOrMutator }, (store as any).$state);
+        }
+      }
+    };
+
+    (store as any).$reset = () => {
+      // For setup stores, $reset re-runs the setup function
+      // This is a simplified implementation
+      console.warn(`[@lytjs/store] $reset() is not fully supported for setup stores. Store "${id}" needs to be disposed and recreated.`);
+    };
+
+    (store as any).$subscribe = (callback: any) => {
+      subs.add(callback);
+      return () => { subs.delete(callback); };
+    };
+
+    (store as any).$onAction = (callback: any) => {
+      actionCbs.add(callback);
+      return () => { actionCbs.delete(callback); };
+    };
+
+    (store as any).$dispose = () => {
+      storeCache.delete(cacheKey);
+      subscriptions.delete(cacheKey);
+      actionCallbacks.delete(cacheKey);
+    };
+
+    // Register in pinia
+    if (pinia) {
+      pinia.state.value[id] = (store as any).$state;
+    }
+
+    // Cache and return
     storeCache.set(cacheKey, store as any);
     return store;
   };

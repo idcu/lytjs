@@ -4,7 +4,7 @@
 
 import type { StateSnapshot } from './types';
 import { getComponentTree } from './component-tree';
-import { getSignals } from './signals';
+import { getSignals, setSignalValue } from './signals';
 import { getEvents } from './events';
 
 // Snapshot store
@@ -43,15 +43,22 @@ export function getSnapshotById(id: string): StateSnapshot | undefined {
 
 /**
  * Restore a snapshot
- * Note: Full implementation would restore actual component and signal state
+ * Restores signal values from the snapshot
  */
-export function restoreSnapshot(snapshot: StateSnapshot): void {
-  // In a full implementation, this would:
-  // 1. Restore component tree state
-  // 2. Restore signal values
-  // 3. Replay events if needed
-  
-  console.log(`[@lytjs/devtools] Restoring snapshot ${snapshot.id}`);
+export function restoreSnapshot(snapshot: StateSnapshot): boolean {
+  try {
+    for (const signalInfo of snapshot.signals) {
+      if (setSignalValue(signalInfo.id, signalInfo.value)) {
+        console.log(`[@lytjs/devtools] Restored signal ${signalInfo.name} (${signalInfo.id})`);
+      }
+    }
+
+    console.log(`[@lytjs/devtools] Restored snapshot ${snapshot.id} with ${snapshot.signals.length} signals`);
+    return true;
+  } catch (error) {
+    console.error(`[@lytjs/devtools] Failed to restore snapshot ${snapshot.id}:`, error);
+    return false;
+  }
 }
 
 /**

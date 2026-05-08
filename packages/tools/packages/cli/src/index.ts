@@ -14,6 +14,7 @@ export { create, listTemplates } from './commands/create';
 export { dev } from './commands/dev';
 export { build } from './commands/build';
 export { test } from './commands/test';
+export { add } from './commands/add';
 
 // Utils
 export { logger } from './utils/logger';

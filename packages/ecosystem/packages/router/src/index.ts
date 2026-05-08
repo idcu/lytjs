@@ -16,6 +16,8 @@ export { createMemoryHistory } from './history';
 // Composables
 export { useRouter, setCurrentRouter } from './composables/useRouter';
 export { useRoute } from './composables/useRoute';
+export { useLink } from './composables/useLink';
+export type { UseLinkOptions } from './composables/useLink';
 
 // Components
 export { RouterView } from './components/RouterView';

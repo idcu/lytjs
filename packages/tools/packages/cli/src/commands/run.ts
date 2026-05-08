@@ -10,6 +10,7 @@ import { create, listTemplates } from './create';
 import { dev } from './dev';
 import { build } from './build';
 import { test } from './test';
+import { add } from './add';
 
 const VERSION = '6.0.0';
 
@@ -64,6 +65,17 @@ export async function runCli(rawArgs: string[] = process.argv.slice(2)): Promise
         watch: options.watch !== 'false',
         coverage: options.coverage,
         grep: options.grep,
+      });
+      break;
+
+    case 'add':
+      if (!args[0] || !['component', 'page', 'store'].includes(args[0])) {
+        logger.error('Usage: lytjs add <component|page|store> <name>');
+        logger.info('Example: lytjs add component Button');
+        process.exit(1);
+      }
+      await add(args[0] as 'component' | 'page' | 'store', args[1] || 'Unnamed', {
+        force: options.force,
       });
       break;
       
@@ -125,6 +137,7 @@ ${logger.bold('Commands:')}
   dev               Start development server
   build             Build for production
   test              Run tests
+  add <type> <name> Generate a component, page, or store
   help              Show this help message
 
 ${logger.bold('Options:')}
@@ -155,5 +168,8 @@ ${logger.bold('Examples:')}
   lytjs create my-app --template minimal
   lytjs dev --port 3000
   lytjs build --ssr
+  lytjs add component Button
+  lytjs add page About
+  lytjs add store user
 `);
 }
