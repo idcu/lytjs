@@ -7,12 +7,11 @@
  */
 
 // Core
-export { defineStore } from './defineStore';
-export { createPinia } from './pinia';
+export { defineStore, clearStoreCache } from './defineStore';
+export { createPinia, getActivePinia, setActivePinia } from './pinia';
 
 // Utilities
 export { storeToRefs } from './storeToRefs';
-export { getActivePinia } from './pinia';
 
 // Types
 export type {
@@ -27,4 +26,5 @@ export type {
   StoreGetters,
   StoreActions,
   StoreToRefs,
+  _Method,
 } from './types';
