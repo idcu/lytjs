@@ -17,16 +17,16 @@ function createApp(
   rootComponent: Component,
   rootProps?: Record<string, unknown> | null,
   options?: AppOptions,
-): App
+): App;
 ```
 
 ### 参数
 
-| 参数 | 类型 | 说明 |
-|------|------|------|
-| `rootComponent` | `Component` | 根组件，可以是组件选项对象或函数组件 |
-| `rootProps` | `Record<string, unknown> \| null` | 传递给根组件的 props，默认 `null` |
-| `options` | `AppOptions` | 应用配置选项 |
+| 参数            | 类型                              | 说明                                 |
+| --------------- | --------------------------------- | ------------------------------------ |
+| `rootComponent` | `Component`                       | 根组件，可以是组件选项对象或函数组件 |
+| `rootProps`     | `Record<string, unknown> \| null` | 传递给根组件的 props，默认 `null`    |
+| `options`       | `AppOptions`                      | 应用配置选项                         |
 
 ### AppOptions
 
@@ -39,42 +39,46 @@ interface AppOptions {
 
 ### App 实例方法
 
-| 方法 | 签名 | 说明 |
-|------|------|------|
-| `mount` | `(rootContainer: string \| Element) => ComponentPublicInstance` | 挂载应用到 DOM |
-| `unmount` | `() => void` | 卸载应用，清理所有资源 |
-| `use` | `(plugin: Plugin, ...options: unknown[]) => App` | 安装插件 |
-| `provide` | `<T>(key: string \| symbol, value: T) => App` | 全局 provide |
-| `inject` | `<T>(key: string \| symbol) => T \| undefined` | 全局 inject |
-| `component` | `(name: string, component: Component) => App` | 全局注册组件 |
-| `directive` | `(name: string, directive: Directive) => App` | 全局注册指令 |
-| `mixin` | `(mixin: ComponentOptions) => App` | 全局混入 |
+| 方法        | 签名                                                            | 说明                   |
+| ----------- | --------------------------------------------------------------- | ---------------------- |
+| `mount`     | `(rootContainer: string \| Element) => ComponentPublicInstance` | 挂载应用到 DOM         |
+| `unmount`   | `() => void`                                                    | 卸载应用，清理所有资源 |
+| `use`       | `(plugin: Plugin, ...options: unknown[]) => App`                | 安装插件               |
+| `provide`   | `<T>(key: string \| symbol, value: T) => App`                   | 全局 provide           |
+| `inject`    | `<T>(key: string \| symbol) => T \| undefined`                  | 全局 inject            |
+| `component` | `(name: string, component: Component) => App`                   | 全局注册组件           |
+| `directive` | `(name: string, directive: Directive) => App`                   | 全局注册指令           |
+| `mixin`     | `(mixin: ComponentOptions) => App`                              | 全局混入               |
 
 ### 示例
 
 ```ts
-import { createApp } from '@lytjs/core'
+import { createApp } from '@lytjs/core';
 
 const app = createApp({
   render() {
-    return h('div', {}, 'Hello LytJS')
-  }
-})
+    return h('div', {}, 'Hello LytJS');
+  },
+});
 
-app.mount('#app')
+app.mount('#app');
 ```
 
 使用 Signal 模式：
 
 ```ts
-const app = createApp({
-  template: '<div>{{ message }}</div>',
-  data() {
-    return { message: 'Hello Signal Mode' }
-  }
-}, null, { rendererMode: 'signal' })
+const app = createApp(
+  {
+    template: '<div>{{ message }}</div>',
+    data() {
+      return { message: 'Hello Signal Mode' };
+    },
+  },
+  null,
+  { rendererMode: 'signal' },
+);
 
-app.mount('#app')
+app.mount('#app');
 ```
 
 ---
@@ -90,30 +94,27 @@ function h(
   type: string | Component | typeof Fragment | typeof Text | typeof Comment,
   props?: Record<string, unknown> | null,
   ...children: VNodeChildren[]
-): VNode
+): VNode;
 ```
 
 ### 参数
 
-| 参数 | 类型 | 说明 |
-|------|------|------|
-| `type` | `string \| Component \| typeof Fragment \| typeof Text \| typeof Comment` | HTML 标签名、组件或特殊类型 |
-| `props` | `Record<string, unknown> \| null` | 属性和事件 |
-| `children` | `VNodeChildren[]` | 子节点（可变参数） |
+| 参数       | 类型                                                                      | 说明                        |
+| ---------- | ------------------------------------------------------------------------- | --------------------------- |
+| `type`     | `string \| Component \| typeof Fragment \| typeof Text \| typeof Comment` | HTML 标签名、组件或特殊类型 |
+| `props`    | `Record<string, unknown> \| null`                                         | 属性和事件                  |
+| `children` | `VNodeChildren[]`                                                         | 子节点（可变参数）          |
 
 ### 示例
 
 ```ts
-import { h, Fragment } from '@lytjs/core'
+import { h, Fragment } from '@lytjs/core';
 
 // 创建元素
-h('div', { class: 'container' }, [
-  h('h1', {}, '标题'),
-  h('p', {}, '内容')
-])
+h('div', { class: 'container' }, [h('h1', {}, '标题'), h('p', {}, '内容')]);
 
 // 使用 Fragment
-h(Fragment, null, [h('li', {}, 'A'), h('li', {}, 'B')])
+h(Fragment, null, [h('li', {}, 'A'), h('li', {}, 'B')]);
 ```
 
 ---
@@ -125,27 +126,27 @@ h(Fragment, null, [h('li', {}, 'A'), h('li', {}, 'B')])
 ### 签名
 
 ```ts
-function defineComponent(options: ComponentOptions): ComponentOptions
+function defineComponent(options: ComponentOptions): ComponentOptions;
 ```
 
 ### 示例
 
 ```ts
-import { defineComponent, ref } from '@lytjs/core'
+import { defineComponent, ref } from '@lytjs/core';
 
 const MyComponent = defineComponent({
   name: 'MyComponent',
   props: {
-    title: { type: String, required: true }
+    title: { type: String, required: true },
   },
   setup(props) {
-    const count = ref(0)
-    return { count }
+    const count = ref(0);
+    return { count };
   },
   render() {
-    return h('div', {}, `${this.title}: ${this.count}`)
-  }
-})
+    return h('div', {}, `${this.title}: ${this.count}`);
+  },
+});
 ```
 
 ---
@@ -157,15 +158,13 @@ const MyComponent = defineComponent({
 ### 签名
 
 ```ts
-function defineAsyncComponent(
-  source: AsyncComponentLoader | AsyncComponentOptions,
-): Component
+function defineAsyncComponent(source: AsyncComponentLoader | AsyncComponentOptions): Component;
 ```
 
 ### 参数
 
-| 参数 | 类型 | 说明 |
-|------|------|------|
+| 参数     | 类型                                            | 说明                     |
+| -------- | ----------------------------------------------- | ------------------------ |
 | `source` | `AsyncComponentLoader \| AsyncComponentOptions` | 异步加载器函数或配置对象 |
 
 ### AsyncComponentOptions
@@ -173,17 +172,17 @@ function defineAsyncComponent(
 ```ts
 interface AsyncComponentOptions {
   /** 异步加载函数，返回 Promise<Component> */
-  loader: AsyncComponentLoader
+  loader: AsyncComponentLoader;
   /** 加载中显示的组件 */
-  loadingComponent?: Component
+  loadingComponent?: Component;
   /** 加载失败时显示的组件 */
-  errorComponent?: Component
+  errorComponent?: Component;
   /** 显示 loading 组件前的延迟（毫秒），默认 200 */
-  delay?: number
+  delay?: number;
   /** 超时时间（毫秒），超时后显示错误组件 */
-  timeout?: number
+  timeout?: number;
   /** 加载失败时的回调 */
-  onError?: (error: Error, retry: () => void, fail: () => void, attempts: number) => void
+  onError?: (error: Error, retry: () => void, fail: () => void, attempts: number) => void;
 }
 ```
 
@@ -197,10 +196,10 @@ const AsyncComp = defineAsyncComponent({
   delay: 200,
   timeout: 3000,
   onError(error, retry, fail, attempts) {
-    if (attempts <= 3) retry()
-    else fail()
-  }
-})
+    if (attempts <= 3) retry();
+    else fail();
+  },
+});
 ```
 
 ---
@@ -212,17 +211,17 @@ const AsyncComp = defineAsyncComponent({
 ### 签名
 
 ```ts
-function nextTick(fn?: () => void): Promise<void>
+function nextTick(fn?: () => void): Promise<void>;
 ```
 
 ### 示例
 
 ```ts
-import { nextTick, ref } from '@lytjs/core'
+import { nextTick, ref } from '@lytjs/core';
 
-const count = ref(0)
-count.value++
-await nextTick()
+const count = ref(0);
+count.value++;
+await nextTick();
 // DOM 已更新
 ```
 
@@ -235,18 +234,18 @@ await nextTick()
 ### 签名
 
 ```ts
-function resolveComponent(name: string): Component | undefined
+function resolveComponent(name: string): Component | undefined;
 ```
 
 ### 示例
 
 ```ts
-import { resolveComponent, h } from '@lytjs/core'
+import { resolveComponent, h } from '@lytjs/core';
 
 // 在渲染函数中使用
-const MyButton = resolveComponent('MyButton')
+const MyButton = resolveComponent('MyButton');
 if (MyButton) {
-  return h(MyButton, { label: 'Click' })
+  return h(MyButton, { label: 'Click' });
 }
 ```
 
@@ -259,7 +258,7 @@ if (MyButton) {
 ### 签名
 
 ```ts
-function resolveDirective(name: string): Directive | undefined
+function resolveDirective(name: string): Directive | undefined;
 ```
 
 ---
@@ -271,7 +270,7 @@ function resolveDirective(name: string): Directive | undefined
 ### 签名
 
 ```ts
-function withDirectives(vnode: VNode, directives: DirectiveArguments): VNode
+function withDirectives(vnode: VNode, directives: DirectiveArguments): VNode;
 ```
 
 ### DirectiveArguments 格式
@@ -279,20 +278,18 @@ function withDirectives(vnode: VNode, directives: DirectiveArguments): VNode
 ```ts
 type DirectiveArguments = Array<
   [Directive, unknown, string | undefined, Record<string, boolean> | undefined]
->
+>;
 ```
 
 ### 示例
 
 ```ts
-import { withDirectives, resolveDirective, h, ref } from '@lytjs/core'
+import { withDirectives, resolveDirective, h, ref } from '@lytjs/core';
 
-const focus = resolveDirective('focus')
-const visible = ref(true)
+const focus = resolveDirective('focus');
+const visible = ref(true);
 
-withDirectives(h('input', { type: 'text' }), [
-  [focus, visible],
-])
+withDirectives(h('input', { type: 'text' }), [[focus, visible]]);
 ```
 
 ---
@@ -304,19 +301,14 @@ withDirectives(h('input', { type: 'text' }), [
 ### 签名
 
 ```ts
-function withMemo(
-  memo: unknown[],
-  render: () => VNode,
-  cache: MemoEntry[],
-  index: number,
-): VNode
+function withMemo(memo: unknown[], render: () => VNode, cache: MemoEntry[], index: number): VNode;
 ```
 
 ### 示例
 
 ```ts
-const _cache: MemoEntry[] = []
-const vnode = withMemo([dep1, dep2], () => h('div', {}, expensiveContent), _cache, 0)
+const _cache: MemoEntry[] = [];
+const vnode = withMemo([dep1, dep2], () => h('div', {}, expensiveContent), _cache, 0);
 ```
 
 ---
@@ -328,7 +320,7 @@ const vnode = withMemo([dep1, dep2], () => h('div', {}, expensiveContent), _cach
 ### 签名
 
 ```ts
-function useSlots(): InternalSlots
+function useSlots(): InternalSlots;
 ```
 
 ### 示例
@@ -351,7 +343,7 @@ setup() {
 ### 签名
 
 ```ts
-function useAttrs(): Record<string, unknown>
+function useAttrs(): Record<string, unknown>;
 ```
 
 ### 示例
@@ -372,25 +364,22 @@ setup() {
 ### 签名
 
 ```ts
-function useModel<T>(
-  props: Record<string, T | undefined>,
-  key: string,
-): WritableComputedRef<T>
+function useModel<T>(props: Record<string, T | undefined>, key: string): WritableComputedRef<T>;
 ```
 
 ### 示例
 
 ```ts
-import { useModel } from '@lytjs/core'
+import { useModel } from '@lytjs/core';
 
 const MyInput = defineComponent({
   props: { modelValue: String },
   setup(props) {
-    const model = useModel(props, 'modelValue')
-    return { model }
+    const model = useModel(props, 'modelValue');
+    return { model };
   },
-  template: '<input v-model="model" />'
-})
+  template: '<input v-model="model" />',
+});
 ```
 
 ---
@@ -405,7 +394,7 @@ const MyInput = defineComponent({
 function defineCustomElement(
   componentOptions: ComponentOptions,
   options?: DefineCustomElementOptions,
-): CustomElementConstructor
+): CustomElementConstructor;
 ```
 
 ### DefineCustomElementOptions
@@ -413,30 +402,33 @@ function defineCustomElement(
 ```ts
 interface DefineCustomElementOptions {
   /** 是否使用 Shadow DOM，默认 true */
-  shadowRoot?: boolean
+  shadowRoot?: boolean;
   /** Custom Element 标签名，默认使用组件 name 转换为 kebab-case */
-  name?: string
+  name?: string;
   /** 注入到 Shadow DOM 的 CSS 样式 */
-  css?: string
+  css?: string;
 }
 ```
 
 ### 示例
 
 ```ts
-import { defineCustomElement } from '@lytjs/core'
+import { defineCustomElement } from '@lytjs/core';
 
-const MyElement = defineCustomElement({
-  name: 'MyElement',
-  props: { count: { type: Number, default: 0 } },
-  setup(props) {
-    return { count: props.count }
+const MyElement = defineCustomElement(
+  {
+    name: 'MyElement',
+    props: { count: { type: Number, default: 0 } },
+    setup(props) {
+      return { count: props.count };
+    },
+    template: '<span>Count: {{ count }}</span>',
   },
-  template: '<span>Count: {{ count }}</span>'
-}, {
-  shadowRoot: true,
-  css: ':host { display: block; padding: 8px; }'
-})
+  {
+    shadowRoot: true,
+    css: ':host { display: block; padding: 8px; }',
+  },
+);
 ```
 
 ---
@@ -448,7 +440,7 @@ const MyElement = defineCustomElement({
 ### 签名
 
 ```ts
-function useShadowRoot(): ShadowRoot | null
+function useShadowRoot(): ShadowRoot | null;
 ```
 
 ---
@@ -460,7 +452,7 @@ function useShadowRoot(): ShadowRoot | null
 ### 签名
 
 ```ts
-function useHost(): HTMLElement | null
+function useHost(): HTMLElement | null;
 ```
 
 ---
@@ -472,7 +464,7 @@ function useHost(): HTMLElement | null
 ### 签名
 
 ```ts
-function useWebComponentSlots(onChange: () => void): void
+function useWebComponentSlots(onChange: () => void): void;
 ```
 
 ---
@@ -484,7 +476,7 @@ function useWebComponentSlots(onChange: () => void): void
 ### 签名
 
 ```ts
-function injectChildStyles(styles: string): void
+function injectChildStyles(styles: string): void;
 ```
 
 ---
@@ -498,7 +490,7 @@ function injectChildStyles(styles: string): void
 组件挂载完成后调用。
 
 ```ts
-function onMounted(hook: () => void): void
+function onMounted(hook: () => void): void;
 ```
 
 ### onUpdated()
@@ -506,7 +498,7 @@ function onMounted(hook: () => void): void
 组件更新完成后调用。
 
 ```ts
-function onUpdated(hook: () => void): void
+function onUpdated(hook: () => void): void;
 ```
 
 ### onUnmounted()
@@ -514,7 +506,7 @@ function onUpdated(hook: () => void): void
 组件卸载完成后调用。
 
 ```ts
-function onUnmounted(hook: () => void): void
+function onUnmounted(hook: () => void): void;
 ```
 
 ### onBeforeMount()
@@ -522,7 +514,7 @@ function onUnmounted(hook: () => void): void
 组件挂载前调用。
 
 ```ts
-function onBeforeMount(hook: () => void): void
+function onBeforeMount(hook: () => void): void;
 ```
 
 ### onBeforeUpdate()
@@ -530,7 +522,7 @@ function onBeforeMount(hook: () => void): void
 组件更新前调用。
 
 ```ts
-function onBeforeUpdate(hook: () => void): void
+function onBeforeUpdate(hook: () => void): void;
 ```
 
 ### onBeforeUnmount()
@@ -538,7 +530,7 @@ function onBeforeUpdate(hook: () => void): void
 组件卸载前调用。
 
 ```ts
-function onBeforeUnmount(hook: () => void): void
+function onBeforeUnmount(hook: () => void): void;
 ```
 
 ### onErrorCaptured()
@@ -547,8 +539,8 @@ function onBeforeUnmount(hook: () => void): void
 
 ```ts
 function onErrorCaptured(
-  hook: (err: Error, instance: ComponentPublicInstance | null, info: string) => boolean | void
-): void
+  hook: (err: Error, instance: ComponentPublicInstance | null, info: string) => boolean | void,
+): void;
 ```
 
 ### onRenderTracked()
@@ -556,7 +548,7 @@ function onErrorCaptured(
 响应式依赖被追踪时调用（仅开发模式）。
 
 ```ts
-function onRenderTracked(hook: (e: DebuggerEvent) => void): void
+function onRenderTracked(hook: (e: DebuggerEvent) => void): void;
 ```
 
 ### onRenderTriggered()
@@ -564,7 +556,7 @@ function onRenderTracked(hook: (e: DebuggerEvent) => void): void
 响应式依赖触发重新渲染时调用（仅开发模式）。
 
 ```ts
-function onRenderTriggered(hook: (e: DebuggerEvent) => void): void
+function onRenderTriggered(hook: (e: DebuggerEvent) => void): void;
 ```
 
 ### 生命周期示例
@@ -652,14 +644,337 @@ setup() {
 
 `@lytjs/core`（VNode 模式）与 `@lytjs/core-signal`（Signal 模式）的主要差异：
 
-| 特性 | @lytjs/core | @lytjs/core-signal |
-|------|-------------|-------------------|
-| 渲染机制 | 虚拟 DOM diff | 细粒度响应式绑定 |
-| `h()` 函数 | 支持 | 不支持 |
-| `signal()` | 不支持 | 支持 |
-| `computedSignal()` | 不支持 | 支持 |
-| `ref()` / `reactive()` | 支持 | 支持 |
-| `watch()` / `watchEffect()` | 支持 | 支持 |
-| 生命周期钩子 | 支持 | 支持 |
+| 特性                        | @lytjs/core   | @lytjs/core-signal |
+| --------------------------- | ------------- | ------------------ |
+| 渲染机制                    | 虚拟 DOM diff | 细粒度响应式绑定   |
+| `h()` 函数                  | 支持          | 不支持             |
+| `signal()`                  | 不支持        | 支持               |
+| `computedSignal()`          | 不支持        | 支持               |
+| `ref()` / `reactive()`      | 支持          | 支持               |
+| `watch()` / `watchEffect()` | 支持          | 支持               |
+| 生命周期钩子                | 支持          | 支持               |
 
 详见 [渲染模式](../guide/rendering-modes) 和 [独立构建变体](./core-variants)。
+
+---
+
+## 配置系统
+
+### ConfigManager
+
+全局配置管理器，提供配置的读取、写入、监听和预设功能。
+
+```ts
+class ConfigManager {
+  /** 获取配置值 */
+  get<T = unknown>(path: string, defaultValue?: T): T | undefined;
+
+  /** 设置配置值 */
+  set<T = unknown>(path: string, value: T): boolean;
+
+  /** 批量设置配置 */
+  setMultiple(config: Record<string, unknown>, merge?: boolean): void;
+
+  /** 检查配置是否存在 */
+  has(path: string): boolean;
+
+  /** 删除配置 */
+  delete(path: string): boolean;
+
+  /** 深度合并配置 */
+  merge(config: Record<string, unknown>, deep?: boolean): void;
+
+  /** 获取全部配置 */
+  getAll(): Record<string, unknown>;
+
+  /** 重置配置 */
+  reset(newConfig?: Record<string, unknown>): void;
+
+  /** 清空配置 */
+  clear(): void;
+
+  /** 监听配置变化 */
+  watch<T = unknown>(path: string, callback: ConfigChangeCallback<T>): () => void;
+
+  /** 设置是否可变 */
+  setMutable(mutable: boolean): void;
+
+  /** 检查是否可变 */
+  isMutable(): boolean;
+}
+```
+
+### getGlobalConfig()
+
+获取全局配置管理器实例。
+
+```ts
+function getGlobalConfig(): ConfigManager;
+```
+
+### setGlobalConfig()
+
+设置全局配置管理器实例。
+
+```ts
+function setGlobalConfig(config: ConfigManager): void;
+```
+
+### getConfig() / setConfig() / watchConfig()
+
+便捷的配置访问方法。
+
+```ts
+function getConfig<T = unknown>(path: string, defaultValue?: T): T | undefined;
+function setConfig<T = unknown>(path: string, value: T): boolean;
+function watchConfig<T = unknown>(path: string, callback: ConfigChangeCallback<T>): () => void;
+```
+
+### configPresets
+
+内置配置预设。
+
+```ts
+const configPresets: {
+  /** 开发环境预设 */
+  development: Record<string, unknown>;
+  /** 生产环境预设 */
+  production: Record<string, unknown>;
+};
+```
+
+### applyConfigPreset()
+
+应用配置预设。
+
+```ts
+function applyConfigPreset(preset: Record<string, unknown>): void;
+```
+
+---
+
+## 集成工具
+
+### registerIntegrations()
+
+注册全局集成（HTTP 客户端、缓存、安全工具等）。
+
+```ts
+function registerIntegrations(integrations: Record<string, unknown>): void;
+```
+
+### getHttpClient()
+
+获取全局 HTTP 客户端实例。
+
+```ts
+function getHttpClient(): HttpClient;
+```
+
+### getQueryUtils()
+
+获取全局查询工具。
+
+```ts
+function getQueryUtils(): QueryUtils;
+```
+
+### getSecurityUtils()
+
+获取全局安全工具。
+
+```ts
+function getSecurityUtils(): SecurityUtils;
+```
+
+### getCacheUtils()
+
+获取全局缓存工具。
+
+```ts
+function getCacheUtils(): CacheUtils;
+```
+
+### safeEscapeHtml()
+
+安全 HTML 转义。
+
+```ts
+function safeEscapeHtml(str: string): string;
+```
+
+### safeParseQueryString()
+
+安全解析查询字符串。
+
+```ts
+function safeParseQueryString(query: string): Record<string, string>;
+```
+
+---
+
+## 其他 Composition API
+
+### useTemplateRef()
+
+获取模板中定义了 `ref` 属性的元素。
+
+```ts
+function useTemplateRef<T = Element>(key: string): Ref<T | null>;
+```
+
+**示例：**
+
+```ts
+import { useTemplateRef } from '@lytjs/core'
+
+setup() {
+  const inputRef = useTemplateRef<HTMLInputElement>('my-input')
+
+  onMounted(() => {
+    inputRef.value?.focus()
+  })
+
+  return { inputRef }
+}
+```
+
+```html
+<template>
+  <input ref="my-input" />
+</template>
+```
+
+---
+
+### defineModel()
+
+定义双向绑定的模型（Composition API 风格的 v-model）。
+
+```ts
+function defineModel<T>(options?: ModelOptions<T>): ModelReturn<T>;
+```
+
+**示例：**
+
+```ts
+import { defineModel } from '@lytjs/core'
+
+props: {
+  modelValue: Number
+},
+setup(props) {
+  const model = defineModel({ type: Number })
+
+  // 修改 model.value 会触发 update:modelValue
+  model.value = 123
+}
+```
+
+---
+
+### useId()
+
+生成唯一的组件 ID。
+
+```ts
+function useId(): string;
+```
+
+---
+
+### useCssModule()
+
+获取当前组件的 CSS Module。
+
+```ts
+function useCssModule(): Record<string, string>;
+```
+
+---
+
+### useCssVars()
+
+设置 CSS 变量（自动响应式更新）。
+
+```ts
+function useCssVars(callback: (vars: Record<string, Ref<string>>) => Record<string, string>): void;
+```
+
+---
+
+### onActivated() / onDeactivated()
+
+KeepAlive 激活/停用钩子。
+
+```ts
+function onActivated(callback: () => void): void;
+function onDeactivated(callback: () => void): void;
+```
+
+---
+
+### resolveDynamicComponent()
+
+解析动态组件。
+
+```ts
+function resolveDynamicComponent(component: string | Component): Component;
+```
+
+---
+
+## App 实例属性
+
+### App.config
+
+应用配置对象。
+
+```ts
+interface AppConfig extends BaseAppConfig {
+  performance: boolean;
+  globalProperties: Record<string, unknown>;
+  isCustomElement?: (tag: string) => boolean;
+  compilerOptions?: Record<string, unknown>;
+}
+```
+
+### App.globalProperties
+
+全局属性，会被混入每个组件实例。
+
+```ts
+app.config.globalProperties.$myPlugin = myPlugin;
+// 在组件中: this.$myPlugin
+```
+
+### App.errorHandler
+
+全局错误处理器。
+
+```ts
+app.config.errorHandler = (err, instance, info) => {
+  console.error('Global error:', err);
+  console.error('Component:', instance);
+  console.error('Info:', info);
+};
+```
+
+### App.warnHandler
+
+全局警告处理器。
+
+```ts
+app.config.warnHandler = (msg, instance, trace) => {
+  console.warn('Warning:', msg);
+};
+```
+
+---
+
+## 扩展阅读
+
+- [响应式系统](../guide/reactivity) - 深入理解响应式原理
+- [组合式 API](../guide/composition-api) - setup 和 Composition API 最佳实践
+- [组件](../guide/component) - 组件定义和使用
+- [渲染模式](../guide/rendering-modes) - VNode 与 Signal 模式对比

@@ -13,28 +13,28 @@
 #### 签名
 
 ```ts
-function ref<T>(value: T): Ref<T>
-function ref<T = unknown>(): Ref<T | undefined>
+function ref<T>(value: T): Ref<T>;
+function ref<T = unknown>(): Ref<T | undefined>;
 ```
 
 #### 返回值
 
 ```ts
 interface Ref<T = unknown> {
-  value: T
-  readonly __v_isRef: true
+  value: T;
+  readonly __v_isRef: true;
 }
 ```
 
 #### 示例
 
 ```ts
-import { ref } from '@lytjs/reactivity'
+import { ref } from '@lytjs/reactivity';
 
-const count = ref(0)
-console.log(count.value) // 0
-count.value++
-console.log(count.value) // 1
+const count = ref(0);
+console.log(count.value); // 0
+count.value++;
+console.log(count.value); // 1
 ```
 
 ---
@@ -46,27 +46,27 @@ console.log(count.value) // 1
 #### 签名
 
 ```ts
-function shallowRef<T>(value: T): ShallowRef<T>
+function shallowRef<T>(value: T): ShallowRef<T>;
 ```
 
 #### 返回值
 
 ```ts
 interface ShallowRef<T = unknown> extends Ref<T> {
-  readonly __v_isShallow: true
+  readonly __v_isShallow: true;
 }
 ```
 
 #### 示例
 
 ```ts
-import { shallowRef } from '@lytjs/reactivity'
+import { shallowRef } from '@lytjs/reactivity';
 
-const state = shallowRef({ count: 0 })
+const state = shallowRef({ count: 0 });
 // 修改内部属性不会触发更新
-state.value.count++
+state.value.count++;
 // 替换整个值才会触发更新
-state.value = { count: 1 }
+state.value = { count: 1 };
 ```
 
 ---
@@ -78,32 +78,37 @@ state.value = { count: 1 }
 #### 签名
 
 ```ts
-function customRef<T>(factory: (track: () => void, trigger: () => void) => {
-  get(): T
-  set(value: T): void
-}): Ref<T>
+function customRef<T>(
+  factory: (
+    track: () => void,
+    trigger: () => void,
+  ) => {
+    get(): T;
+    set(value: T): void;
+  },
+): Ref<T>;
 ```
 
 #### 示例
 
 ```ts
-import { customRef } from '@lytjs/reactivity'
+import { customRef } from '@lytjs/reactivity';
 
 function useDebouncedRef<T>(value: T, delay = 200) {
-  let timeout: number
+  let timeout: number;
   return customRef((track, trigger) => ({
     get() {
-      track()
-      return value
+      track();
+      return value;
     },
     set(newValue: T) {
-      clearTimeout(timeout)
+      clearTimeout(timeout);
       timeout = setTimeout(() => {
-        value = newValue
-        trigger()
-      }, delay)
-    }
-  }))
+        value = newValue;
+        trigger();
+      }, delay);
+    },
+  }));
 }
 ```
 
@@ -116,18 +121,18 @@ function useDebouncedRef<T>(value: T, delay = 200) {
 #### 签名
 
 ```ts
-function triggerRef(ref: ShallowRef): void
+function triggerRef(ref: ShallowRef): void;
 ```
 
 #### 示例
 
 ```ts
-import { shallowRef, triggerRef, watchEffect } from '@lytjs/reactivity'
+import { shallowRef, triggerRef, watchEffect } from '@lytjs/reactivity';
 
-const foo = shallowRef({ count: 0 })
-watchEffect(() => console.log(foo.value.count)) // 0
-foo.value.count++
-triggerRef(foo) // 控制台输出: 1
+const foo = shallowRef({ count: 0 });
+watchEffect(() => console.log(foo.value.count)); // 0
+foo.value.count++;
+triggerRef(foo); // 控制台输出: 1
 ```
 
 ---
@@ -139,17 +144,17 @@ triggerRef(foo) // 控制台输出: 1
 #### 签名
 
 ```ts
-function isRef<T>(value: unknown): value is Ref<T>
+function isRef<T>(value: unknown): value is Ref<T>;
 ```
 
 #### 示例
 
 ```ts
-import { ref, isRef } from '@lytjs/reactivity'
+import { ref, isRef } from '@lytjs/reactivity';
 
-const count = ref(0)
-console.log(isRef(count)) // true
-console.log(isRef(0)) // false
+const count = ref(0);
+console.log(isRef(count)); // true
+console.log(isRef(0)); // false
 ```
 
 ---
@@ -161,19 +166,19 @@ console.log(isRef(0)) // false
 #### 签名
 
 ```ts
-function isShallowRef(value: unknown): value is ShallowRef
+function isShallowRef(value: unknown): value is ShallowRef;
 ```
 
 #### 示例
 
 ```ts
-import { ref, shallowRef, isShallowRef } from '@lytjs/reactivity'
+import { ref, shallowRef, isShallowRef } from '@lytjs/reactivity';
 
-const count = ref(0)
-const shallow = shallowRef({ count: 0 })
+const count = ref(0);
+const shallow = shallowRef({ count: 0 });
 
-console.log(isShallowRef(count)) // false
-console.log(isShallowRef(shallow)) // true
+console.log(isShallowRef(count)); // false
+console.log(isShallowRef(shallow)); // true
 ```
 
 ---
@@ -185,19 +190,19 @@ console.log(isShallowRef(shallow)) // true
 #### 签名
 
 ```ts
-function isComputedRef(value: unknown): value is ComputedRef
+function isComputedRef(value: unknown): value is ComputedRef;
 ```
 
 #### 示例
 
 ```ts
-import { ref, computed, isComputedRef } from '@lytjs/reactivity'
+import { ref, computed, isComputedRef } from '@lytjs/reactivity';
 
-const count = ref(0)
-const doubled = computed(() => count.value * 2)
+const count = ref(0);
+const doubled = computed(() => count.value * 2);
 
-console.log(isComputedRef(count)) // false
-console.log(isComputedRef(doubled)) // true
+console.log(isComputedRef(count)); // false
+console.log(isComputedRef(doubled)); // true
 ```
 
 ---
@@ -209,7 +214,7 @@ console.log(isComputedRef(doubled)) // true
 #### 签名
 
 ```ts
-function unref<T>(ref: T | Ref<T>): T
+function unref<T>(ref: T | Ref<T>): T;
 ```
 
 ---
@@ -221,20 +226,17 @@ function unref<T>(ref: T | Ref<T>): T
 #### 签名
 
 ```ts
-function toRef<T extends object, K extends keyof T>(
-  object: T,
-  key: K,
-): Ref<T[K]>
+function toRef<T extends object, K extends keyof T>(object: T, key: K): Ref<T[K]>;
 ```
 
 #### 示例
 
 ```ts
-import { reactive, toRef } from '@lytjs/reactivity'
+import { reactive, toRef } from '@lytjs/reactivity';
 
-const state = reactive({ count: 0 })
-const countRef = toRef(state, 'count')
-countRef.value++ // state.count 也变为 1
+const state = reactive({ count: 0 });
+const countRef = toRef(state, 'count');
+countRef.value++; // state.count 也变为 1
 ```
 
 ---
@@ -246,16 +248,16 @@ countRef.value++ // state.count 也变为 1
 #### 签名
 
 ```ts
-function toRefs<T extends object>(object: T): ToRefs<T>
+function toRefs<T extends object>(object: T): ToRefs<T>;
 ```
 
 #### 示例
 
 ```ts
-import { reactive, toRefs } from '@lytjs/reactivity'
+import { reactive, toRefs } from '@lytjs/reactivity';
 
-const state = reactive({ count: 0, name: 'LytJS' })
-const { count, name } = toRefs(state)
+const state = reactive({ count: 0, name: 'LytJS' });
+const { count, name } = toRefs(state);
 ```
 
 ---
@@ -269,17 +271,17 @@ const { count, name } = toRefs(state)
 #### 签名
 
 ```ts
-function reactive<T extends object>(target: T): UnwrapNestedRefs<T>
+function reactive<T extends object>(target: T): UnwrapNestedRefs<T>;
 ```
 
 #### 示例
 
 ```ts
-import { reactive, watchEffect } from '@lytjs/reactivity'
+import { reactive, watchEffect } from '@lytjs/reactivity';
 
-const state = reactive({ count: 0, nested: { value: 'hello' } })
-watchEffect(() => console.log(state.count))
-state.count++ // 触发 watchEffect
+const state = reactive({ count: 0, nested: { value: 'hello' } });
+watchEffect(() => console.log(state.count));
+state.count++; // 触发 watchEffect
 ```
 
 ---
@@ -291,7 +293,7 @@ state.count++ // 触发 watchEffect
 #### 签名
 
 ```ts
-function shallowReactive<T extends object>(target: T): T
+function shallowReactive<T extends object>(target: T): T;
 ```
 
 ---
@@ -303,7 +305,7 @@ function shallowReactive<T extends object>(target: T): T
 #### 签名
 
 ```ts
-function readonly<T extends object>(target: T): DeepReadonly<UnwrapNestedRefs<T>>
+function readonly<T extends object>(target: T): DeepReadonly<UnwrapNestedRefs<T>>;
 ```
 
 ---
@@ -315,7 +317,7 @@ function readonly<T extends object>(target: T): DeepReadonly<UnwrapNestedRefs<T>
 #### 签名
 
 ```ts
-function shallowReadonly<T extends object>(target: T): Readonly<T>
+function shallowReadonly<T extends object>(target: T): Readonly<T>;
 ```
 
 ---
@@ -327,7 +329,7 @@ function shallowReadonly<T extends object>(target: T): Readonly<T>
 #### 签名
 
 ```ts
-function isReactive(value: unknown): boolean
+function isReactive(value: unknown): boolean;
 ```
 
 ---
@@ -339,7 +341,7 @@ function isReactive(value: unknown): boolean
 #### 签名
 
 ```ts
-function isReadonly(value: unknown): boolean
+function isReadonly(value: unknown): boolean;
 ```
 
 ---
@@ -351,7 +353,7 @@ function isReadonly(value: unknown): boolean
 #### 签名
 
 ```ts
-function isProxy(value: unknown): boolean
+function isProxy(value: unknown): boolean;
 ```
 
 ---
@@ -363,7 +365,7 @@ function isProxy(value: unknown): boolean
 #### 签名
 
 ```ts
-function toRaw<T>(observed: T): T
+function toRaw<T>(observed: T): T;
 ```
 
 ---
@@ -375,7 +377,7 @@ function toRaw<T>(observed: T): T
 #### 签名
 
 ```ts
-function markRaw<T extends object>(value: T): T
+function markRaw<T extends object>(value: T): T;
 ```
 
 ---
@@ -390,39 +392,41 @@ function markRaw<T extends object>(value: T): T
 
 ```ts
 // 只读计算属性
-function computed<T>(getter: ComputedGetter<T>): ComputedRef<T>
+function computed<T>(getter: ComputedGetter<T>): ComputedRef<T>;
 
 // 可写计算属性
-function computed<T>(options: WritableComputedOptions<T>): WritableComputedRef<T>
+function computed<T>(options: WritableComputedOptions<T>): WritableComputedRef<T>;
 ```
 
 #### 类型
 
 ```ts
-type ComputedGetter<T> = () => T
-type ComputedSetter<T> = (newValue: T) => void
+type ComputedGetter<T> = () => T;
+type ComputedSetter<T> = (newValue: T) => void;
 
 interface WritableComputedOptions<T> {
-  get: ComputedGetter<T>
-  set: ComputedSetter<T>
+  get: ComputedGetter<T>;
+  set: ComputedSetter<T>;
 }
 ```
 
 #### 示例
 
 ```ts
-import { ref, computed } from '@lytjs/reactivity'
+import { ref, computed } from '@lytjs/reactivity';
 
-const count = ref(1)
-const doubled = computed(() => count.value * 2)
-console.log(doubled.value) // 2
+const count = ref(1);
+const doubled = computed(() => count.value * 2);
+console.log(doubled.value); // 2
 
 // 可写计算属性
 const plusOne = computed({
   get: () => count.value + 1,
-  set: (val) => { count.value = val - 1 }
-})
-plusOne.value = 5 // count.value 变为 4
+  set: (val) => {
+    count.value = val - 1;
+  },
+});
+plusOne.value = 5; // count.value 变为 4
 ```
 
 ---
@@ -440,14 +444,14 @@ function watch<T>(
   source: WatchSource<T> | WatchSource<T>[],
   callback: WatchCallback<T>,
   options?: WatchOptions<false>,
-): WatchHandle
+): WatchHandle;
 
 // immediate 模式
 function watch<T>(
   source: WatchSource<T> | WatchSource<T>[],
   callback: WatchCallbackWithImmediate<T, true>,
   options: WatchOptions<true>,
-): WatchHandle
+): WatchHandle;
 ```
 
 #### WatchOptions
@@ -455,34 +459,34 @@ function watch<T>(
 ```ts
 interface WatchOptions<Immediate = boolean> {
   /** 是否在创建时立即执行回调，默认 false */
-  immediate?: Immediate
+  immediate?: Immediate;
   /** 是否深度侦听，默认 false */
-  deep?: boolean
+  deep?: boolean;
   /** 回调执行时机：'pre'（更新前）、'post'（更新后）、'sync'（同步），默认 'pre' */
-  flush?: 'pre' | 'post' | 'sync'
+  flush?: 'pre' | 'post' | 'sync';
   /** 是否只触发一次，默认 false */
-  once?: boolean
+  once?: boolean;
 }
 ```
 
 #### 示例
 
 ```ts
-import { ref, watch } from '@lytjs/reactivity'
+import { ref, watch } from '@lytjs/reactivity';
 
-const count = ref(0)
+const count = ref(0);
 
 watch(count, (newVal, oldVal) => {
-  console.log(`count 从 ${oldVal} 变为 ${newVal}`)
-})
+  console.log(`count 从 ${oldVal} 变为 ${newVal}`);
+});
 
 // 侦听多个源
 watch([count, anotherRef], ([newCount, newAnother], [oldCount, oldAnother]) => {
   // ...
-})
+});
 
 // 带选项
-watch(count, callback, { immediate: true, deep: true, flush: 'post' })
+watch(count, callback, { immediate: true, deep: true, flush: 'post' });
 ```
 
 ---
@@ -503,20 +507,20 @@ function watchEffect(
 #### 示例
 
 ```ts
-import { ref, watchEffect } from '@lytjs/reactivity'
+import { ref, watchEffect } from '@lytjs/reactivity';
 
-const count = ref(0)
+const count = ref(0);
 
 const stop = watchEffect((onCleanup) => {
-  console.log(count.value)
+  console.log(count.value);
   onCleanup(() => {
-    console.log('清理副作用')
-  })
-})
+    console.log('清理副作用');
+  });
+});
 
-count.value++ // 触发重新执行
+count.value++; // 触发重新执行
 
-stop() // 停止侦听
+stop(); // 停止侦听
 ```
 
 ---
@@ -560,10 +564,7 @@ function watchSyncEffect(
 #### 签名
 
 ```ts
-function effect<T = unknown>(
-  fn: () => T,
-  options?: ReactiveEffectOptions,
-): ReactiveEffectRunner<T>
+function effect<T = unknown>(fn: () => T, options?: ReactiveEffectOptions): ReactiveEffectRunner<T>;
 ```
 
 #### ReactiveEffectOptions
@@ -571,17 +572,17 @@ function effect<T = unknown>(
 ```ts
 interface ReactiveEffectOptions {
   /** 是否懒执行（创建时不立即执行），默认 false */
-  lazy?: boolean
+  lazy?: boolean;
   /** 自定义调度器，用于控制副作用执行时机 */
-  scheduler?: EffectScheduler
+  scheduler?: EffectScheduler;
   /** 是否允许递归触发，默认 false */
-  allowRecurse?: boolean
+  allowRecurse?: boolean;
   /** 停止时的回调 */
-  onStop?: () => void
+  onStop?: () => void;
   /** 依赖被追踪时的调试回调（仅开发模式） */
-  onTrack?: (event: DebuggerEvent) => void
+  onTrack?: (event: DebuggerEvent) => void;
   /** 依赖被触发时的调试回调（仅开发模式） */
-  onTrigger?: (event: DebuggerEvent) => void
+  onTrigger?: (event: DebuggerEvent) => void;
 }
 ```
 
@@ -592,19 +593,22 @@ interface ReactiveEffectOptions {
 当设置为 `true` 时，effect 不会立即执行，需要手动调用返回的 runner 函数：
 
 ```ts
-import { effect, ref } from '@lytjs/reactivity'
+import { effect, ref } from '@lytjs/reactivity';
 
-const count = ref(0)
+const count = ref(0);
 
 // 不立即执行
-const runner = effect(() => {
-  console.log('effect:', count.value)
-}, { lazy: true })
+const runner = effect(
+  () => {
+    console.log('effect:', count.value);
+  },
+  { lazy: true },
+);
 
 // 手动触发执行
-runner() // 输出: effect: 0
+runner(); // 输出: effect: 0
 
-count.value++
+count.value++;
 // 由于 lazy 模式，需要手动调用 runner 才会执行
 ```
 
@@ -613,24 +617,27 @@ count.value++
 自定义调度器，用于控制副作用的执行时机。常用于实现防抖、节流等功能：
 
 ```ts
-import { effect, ref } from '@lytjs/reactivity'
+import { effect, ref } from '@lytjs/reactivity';
 
-const count = ref(0)
+const count = ref(0);
 
 // 使用 scheduler 实现防抖
-let timeout: number
-const runner = effect(() => {
-  console.log('effect:', count.value)
-}, {
-  scheduler(fn) {
-    clearTimeout(timeout)
-    timeout = setTimeout(fn, 100)
-  }
-})
+let timeout: number;
+const runner = effect(
+  () => {
+    console.log('effect:', count.value);
+  },
+  {
+    scheduler(fn) {
+      clearTimeout(timeout);
+      timeout = setTimeout(fn, 100);
+    },
+  },
+);
 
-count.value = 1
-count.value = 2
-count.value = 3
+count.value = 1;
+count.value = 2;
+count.value = 3;
 // 100ms 后只输出一次: effect: 3
 ```
 
@@ -639,22 +646,25 @@ count.value = 3
 当设置为 `true` 时，允许在 effect 内部修改依赖的响应式数据，从而递归触发 effect：
 
 ```ts
-import { effect, ref } from '@lytjs/reactivity'
+import { effect, ref } from '@lytjs/reactivity';
 
-const count = ref(0)
+const count = ref(0);
 
 // 默认不允许递归
 effect(() => {
-  console.log('count:', count.value)
+  console.log('count:', count.value);
   // count.value++ // 这会导致无限循环
-})
+});
 
 // 允许递归（需要谨慎使用，可能导致无限循环）
-effect(() => {
-  if (count.value < 10) {
-    count.value++
-  }
-}, { allowRecurse: true })
+effect(
+  () => {
+    if (count.value < 10) {
+      count.value++;
+    }
+  },
+  { allowRecurse: true },
+);
 ```
 
 ##### onStop
@@ -662,19 +672,22 @@ effect(() => {
 当 effect 被停止时调用的回调：
 
 ```ts
-import { effect, ref, stop } from '@lytjs/reactivity'
+import { effect, ref, stop } from '@lytjs/reactivity';
 
-const count = ref(0)
+const count = ref(0);
 
-const runner = effect(() => {
-  console.log('effect:', count.value)
-}, {
-  onStop() {
-    console.log('effect stopped')
-  }
-})
+const runner = effect(
+  () => {
+    console.log('effect:', count.value);
+  },
+  {
+    onStop() {
+      console.log('effect stopped');
+    },
+  },
+);
 
-stop(runner) // 输出: effect stopped
+stop(runner); // 输出: effect stopped
 ```
 
 ##### onTrack / onTrigger
@@ -682,36 +695,39 @@ stop(runner) // 输出: effect stopped
 调试回调，用于追踪依赖收集和触发：
 
 ```ts
-import { effect, ref } from '@lytjs/reactivity'
+import { effect, ref } from '@lytjs/reactivity';
 
-const count = ref(0)
+const count = ref(0);
 
-effect(() => {
-  console.log('effect:', count.value)
-}, {
-  onTrack(e) {
-    console.log('tracked:', e.target, e.key)
+effect(
+  () => {
+    console.log('effect:', count.value);
   },
-  onTrigger(e) {
-    console.log('triggered:', e.target, e.key, e.newValue)
-  }
-})
+  {
+    onTrack(e) {
+      console.log('tracked:', e.target, e.key);
+    },
+    onTrigger(e) {
+      console.log('triggered:', e.target, e.key, e.newValue);
+    },
+  },
+);
 ```
 
 #### 示例
 
 ```ts
-import { effect, ref } from '@lytjs/reactivity'
+import { effect, ref } from '@lytjs/reactivity';
 
-const count = ref(0)
+const count = ref(0);
 const runner = effect(() => {
-  console.log(count.value)
-})
+  console.log(count.value);
+});
 // 输出: 0
-count.value++
+count.value++;
 // 输出: 1
 
-runner.effect.stop() // 停止副作用
+runner.effect.stop(); // 停止副作用
 ```
 
 ---
@@ -723,7 +739,7 @@ runner.effect.stop() // 停止副作用
 #### 签名
 
 ```ts
-function stop(runner: ReactiveEffectRunner): void
+function stop(runner: ReactiveEffectRunner): void;
 ```
 
 ---
@@ -735,9 +751,9 @@ function stop(runner: ReactiveEffectRunner): void
 #### 签名
 
 ```ts
-function pauseTracking(): void
-function enableTracking(): void
-function resetTracking(): void
+function pauseTracking(): void;
+function enableTracking(): void;
+function resetTracking(): void;
 ```
 
 ---
@@ -749,28 +765,28 @@ function resetTracking(): void
 #### 签名
 
 ```ts
-function batch<T>(fn: () => T): T
-function batchAsync<T>(fn: () => T | Promise<T>): Promise<T>
+function batch<T>(fn: () => T): T;
+function batchAsync<T>(fn: () => T | Promise<T>): Promise<T>;
 ```
 
 #### 示例
 
 ```ts
-import { ref, effect, batch } from '@lytjs/reactivity'
+import { ref, effect, batch } from '@lytjs/reactivity';
 
-const a = ref(0)
-const b = ref(0)
-let runCount = 0
+const a = ref(0);
+const b = ref(0);
+let runCount = 0;
 
 effect(() => {
-  runCount++
-  console.log(a.value, b.value)
-})
+  runCount++;
+  console.log(a.value, b.value);
+});
 
 batch(() => {
-  a.value = 1
-  b.value = 2
-})
+  a.value = 1;
+  b.value = 2;
+});
 // effect 只执行一次，输出: 1 2
 ```
 
@@ -783,7 +799,7 @@ batch(() => {
 #### 签名
 
 ```ts
-function untrack<T>(fn: () => T): T
+function untrack<T>(fn: () => T): T;
 ```
 
 ---
@@ -795,7 +811,7 @@ function untrack<T>(fn: () => T): T
 #### 签名
 
 ```ts
-function onEffectCleanup(cleanupFn: () => void): void
+function onEffectCleanup(cleanupFn: () => void): void;
 ```
 
 ---
@@ -807,20 +823,20 @@ function onEffectCleanup(cleanupFn: () => void): void
 #### withFirstRenderOptimization()
 
 ```ts
-function withFirstRenderOptimization<T>(fn: () => T): T
+function withFirstRenderOptimization<T>(fn: () => T): T;
 ```
 
 #### shouldSkipTracking()
 
 ```ts
-function shouldSkipTracking(): boolean
+function shouldSkipTracking(): boolean;
 ```
 
 #### getSkippedTrackingCount() / resetSkippedTrackingCount()
 
 ```ts
-function getSkippedTrackingCount(): number
-function resetSkippedTrackingCount(): void
+function getSkippedTrackingCount(): number;
+function resetSkippedTrackingCount(): void;
 ```
 
 ---
@@ -836,7 +852,7 @@ Signal 是一种独立的响应式原语，拥有独立的订阅/通知机制，
 #### 签名
 
 ```ts
-function signal<T>(initialValue: T): WritableSignal<T>
+function signal<T>(initialValue: T): WritableSignal<T>;
 ```
 
 #### WritableSignal
@@ -844,26 +860,26 @@ function signal<T>(initialValue: T): WritableSignal<T>
 ```ts
 interface WritableSignal<T = unknown> extends Signal<T> {
   /** 设置新值 */
-  set(newValue: T): void
+  set(newValue: T): void;
   /** 通过 updater 函数更新值 */
-  update(updater: (prev: T) => T): void
+  update(updater: (prev: T) => T): void;
   /** 停止所有订阅通知，释放资源 */
-  dispose(): void
+  dispose(): void;
 }
 ```
 
 #### 示例
 
 ```ts
-import { signal, effect } from '@lytjs/reactivity'
+import { signal, effect } from '@lytjs/reactivity';
 
-const count = signal(0)
-count.set(1)
-count.update(prev => prev + 1) // 2
+const count = signal(0);
+count.set(1);
+count.update((prev) => prev + 1); // 2
 
 effect(() => {
-  console.log(count()) // 2
-})
+  console.log(count()); // 2
+});
 ```
 
 ---
@@ -875,7 +891,7 @@ effect(() => {
 #### 签名
 
 ```ts
-function computedSignal<T>(getter: () => T): ComputedSignal<T>
+function computedSignal<T>(getter: () => T): ComputedSignal<T>;
 ```
 
 #### ComputedSignal
@@ -883,7 +899,7 @@ function computedSignal<T>(getter: () => T): ComputedSignal<T>
 ```ts
 interface ComputedSignal<T = unknown> extends Signal<T> {
   /** 停止计算信号的依赖追踪和更新 */
-  dispose(): void
+  dispose(): void;
 }
 ```
 
@@ -896,7 +912,7 @@ interface ComputedSignal<T = unknown> extends Signal<T> {
 #### 签名
 
 ```ts
-function readonlySignal<T>(signal: WritableSignal<T>): ReadonlySignal<T>
+function readonlySignal<T>(signal: WritableSignal<T>): ReadonlySignal<T>;
 ```
 
 #### ReadonlySignal
@@ -904,8 +920,8 @@ function readonlySignal<T>(signal: WritableSignal<T>): ReadonlySignal<T>
 ```ts
 interface ReadonlySignal<T = unknown> {
   /** 读取当前值 */
-  (): T
-  readonly [SignalSymbol]: true
+  (): T;
+  readonly [SignalSymbol]: true;
 }
 ```
 
@@ -918,9 +934,9 @@ Signal 的辅助操作函数。
 #### 签名
 
 ```ts
-function set<T>(signal: WritableSignal<T>, newValue: T): void
-function update<T>(signal: WritableSignal<T>, updater: (prev: T) => T): void
-function valueOf<T>(signal: Signal<T>): T
+function set<T>(signal: WritableSignal<T>, newValue: T): void;
+function update<T>(signal: WritableSignal<T>, updater: (prev: T) => T): void;
+function valueOf<T>(signal: Signal<T>): T;
 ```
 
 ---
@@ -932,8 +948,8 @@ Signal 的批量更新和取消追踪。
 #### 签名
 
 ```ts
-function signalBatch<T>(fn: () => T): T
-function signalUntrack<T>(fn: () => T): T
+function signalBatch<T>(fn: () => T): T;
+function signalUntrack<T>(fn: () => T): T;
 ```
 
 ---
@@ -945,22 +961,22 @@ function signalUntrack<T>(fn: () => T): T
 #### 签名
 
 ```ts
-function isSignal(value: unknown): value is Signal
+function isSignal(value: unknown): value is Signal;
 ```
 
 #### 示例
 
 ```ts
-import { signal, computedSignal, ref, isSignal } from '@lytjs/reactivity'
+import { signal, computedSignal, ref, isSignal } from '@lytjs/reactivity';
 
-const count = signal(0)
-const doubled = computedSignal(() => count() * 2)
-const refValue = ref(0)
+const count = signal(0);
+const doubled = computedSignal(() => count() * 2);
+const refValue = ref(0);
 
-console.log(isSignal(count)) // true
-console.log(isSignal(doubled)) // true
-console.log(isSignal(refValue)) // false
-console.log(isSignal(0)) // false
+console.log(isSignal(count)); // true
+console.log(isSignal(doubled)); // true
+console.log(isSignal(refValue)); // false
+console.log(isSignal(0)); // false
 ```
 
 ---
@@ -974,7 +990,7 @@ console.log(isSignal(0)) // false
 #### 签名
 
 ```ts
-function effectScope(options?: boolean | EffectScopeOptions): EffectScope
+function effectScope(options?: boolean | EffectScopeOptions): EffectScope;
 ```
 
 #### EffectScope
@@ -982,28 +998,28 @@ function effectScope(options?: boolean | EffectScopeOptions): EffectScope
 ```ts
 interface EffectScope {
   /** 当前 scope 是否活跃 */
-  active: boolean
+  active: boolean;
   /** 在 scope 上下文中执行 fn，期间创建的 effect 会被自动收集 */
-  run<T>(fn: () => T): T | undefined
+  run<T>(fn: () => T): T | undefined;
   /** 停止 scope，清理所有收集的 effects 和 cleanups */
-  stop(): void
+  stop(): void;
 }
 ```
 
 #### 示例
 
 ```ts
-import { effectScope, ref, watch, computed } from '@lytjs/reactivity'
+import { effectScope, ref, watch, computed } from '@lytjs/reactivity';
 
-const scope = effectScope()
+const scope = effectScope();
 scope.run(() => {
-  const count = ref(0)
-  const doubled = computed(() => count.value * 2)
-  watch(count, (val) => console.log(val))
-})
+  const count = ref(0);
+  const doubled = computed(() => count.value * 2);
+  watch(count, (val) => console.log(val));
+});
 
 // 不再需要时一次性停止所有副作用
-scope.stop()
+scope.stop();
 ```
 
 ---
@@ -1015,7 +1031,7 @@ scope.stop()
 #### 签名
 
 ```ts
-function getCurrentScope(): EffectScope | undefined
+function getCurrentScope(): EffectScope | undefined;
 ```
 
 ---
@@ -1027,7 +1043,7 @@ function getCurrentScope(): EffectScope | undefined
 #### 签名
 
 ```ts
-function onScopeDispose(fn: () => void): boolean
+function onScopeDispose(fn: () => void): boolean;
 ```
 
 ---
@@ -1045,7 +1061,7 @@ function asyncComputed<T>(
   getter: () => Promise<T>,
   initialValue?: T,
   lazy?: boolean,
-): AsyncComputedRef<T>
+): AsyncComputedRef<T>;
 ```
 
 #### AsyncComputedRef
@@ -1053,21 +1069,21 @@ function asyncComputed<T>(
 ```ts
 interface AsyncComputedRef<T = unknown> extends Ref<T | undefined> {
   /** 异步计算是否正在进行 */
-  readonly loading: boolean
+  readonly loading: boolean;
   /** 上一次异步计算的错误 */
-  readonly error: unknown
+  readonly error: unknown;
 }
 ```
 
 #### 示例
 
 ```ts
-import { asyncComputed } from '@lytjs/reactivity'
+import { asyncComputed } from '@lytjs/reactivity';
 
 const user = asyncComputed(async () => {
-  const res = await fetch('/api/user')
-  return res.json()
-}, null)
+  const res = await fetch('/api/user');
+  return res.json();
+}, null);
 
 // 在模板中使用
 // {{ user.loading ? '加载中...' : user.value?.name }}
@@ -1082,46 +1098,204 @@ const user = asyncComputed(async () => {
 #### 签名
 
 ```ts
-function useAsyncState<T>(
-  promise: () => Promise<T>,
-  initialValue?: T,
-): AsyncComputedRef<T>
+function useAsyncState<T>(promise: () => Promise<T>, initialValue?: T): AsyncComputedRef<T>;
 ```
 
 ---
 
 ## 类型导出
 
-| 类型 | 说明 |
-|------|------|
-| `Ref<T>` | 响应式引用 |
-| `ShallowRef<T>` | 浅层响应式引用 |
-| `ComputedRef<T>` | 计算属性引用 |
-| `WritableComputedRef<T>` | 可写计算属性引用 |
-| `Signal<T>` | 只读信号 |
-| `WritableSignal<T>` | 可写信号 |
-| `ComputedSignal<T>` | 计算信号 |
-| `ReadonlySignal<T>` | 只读信号 |
-| `ReactiveEffectRunner<T>` | effect runner 函数 |
-| `ReactiveEffectOptions` | effect 选项 |
-| `EffectScope` | effect scope 实例 |
-| `WatchOptions` | watch 选项 |
-| `WatchEffectOptions` | watchEffect 选项 |
-| `WatchSource<T>` | watch 数据源类型 |
-| `UnwrapRef<T>` | 解包 Ref 类型 |
-| `UnwrapNestedRefs<T>` | 深层解包嵌套 Ref 类型 |
-| `DeepReadonly<T>` | 深层只读类型 |
-| `ToRefs<T>` | toRefs 返回类型 |
-| `DebuggerEvent` | 调试事件类型 |
+| 类型                      | 说明                  |
+| ------------------------- | --------------------- |
+| `Ref<T>`                  | 响应式引用            |
+| `ShallowRef<T>`           | 浅层响应式引用        |
+| `ComputedRef<T>`          | 计算属性引用          |
+| `WritableComputedRef<T>`  | 可写计算属性引用      |
+| `Signal<T>`               | 只读信号              |
+| `WritableSignal<T>`       | 可写信号              |
+| `ComputedSignal<T>`       | 计算信号              |
+| `ReadonlySignal<T>`       | 只读信号              |
+| `ReactiveEffectRunner<T>` | effect runner 函数    |
+| `ReactiveEffectOptions`   | effect 选项           |
+| `EffectScope`             | effect scope 实例     |
+| `WatchOptions`            | watch 选项            |
+| `WatchEffectOptions`      | watchEffect 选项      |
+| `WatchSource<T>`          | watch 数据源类型      |
+| `UnwrapRef<T>`            | 解包 Ref 类型         |
+| `UnwrapNestedRefs<T>`     | 深层解包嵌套 Ref 类型 |
+| `DeepReadonly<T>`         | 深层只读类型          |
+| `ToRefs<T>`               | toRefs 返回类型       |
+| `DebuggerEvent`           | 调试事件类型          |
 
 ## 类型守卫函数
 
-| 函数 | 说明 |
-|------|------|
-| `isRef()` | 判断是否为 Ref |
-| `isShallowRef()` | 判断是否为浅层 Ref |
-| `isComputedRef()` | 判断是否为计算属性 Ref |
-| `isReactive()` | 判断是否为响应式代理 |
-| `isReadonly()` | 判断是否为只读代理 |
-| `isProxy()` | 判断是否为任何类型的代理 |
-| `isSignal()` | 判断是否为 Signal |
+| 函数              | 说明                     |
+| ----------------- | ------------------------ |
+| `isRef()`         | 判断是否为 Ref           |
+| `isShallowRef()`  | 判断是否为浅层 Ref       |
+| `isComputedRef()` | 判断是否为计算属性 Ref   |
+| `isReactive()`    | 判断是否为响应式代理     |
+| `isReadonly()`    | 判断是否为只读代理       |
+| `isProxy()`       | 判断是否为任何类型的代理 |
+| `isSignal()`      | 判断是否为 Signal        |
+
+---
+
+## 批量操作 API
+
+批量操作 API 用于在一次同步执行中收集多个响应式变更，避免重复触发更新。
+
+### batch()
+
+同步批量执行函数，结束后统一触发更新。
+
+```ts
+function batch(fn: () => void): void;
+```
+
+**示例：**
+
+```ts
+import { ref, batch } from '@lytjs/reactivity';
+
+const a = ref(1);
+const b = ref(2);
+
+// 传统方式：两次更新
+a.value = 10;
+b.value = 20;
+
+// 批量方式：一次更新
+batch(() => {
+  a.value = 10;
+  b.value = 20;
+});
+// 视图只更新一次
+```
+
+---
+
+### batchAsync()
+
+异步批量执行函数，结束后统一触发更新。
+
+```ts
+function batchAsync(fn: () => void | Promise<void>): Promise<void>;
+```
+
+---
+
+### batchScope()
+
+创建批量作用域，所有响应式变更在作用域内统一触发。
+
+```ts
+function batchScope<T>(fn: () => T): T;
+```
+
+---
+
+### batchScopeAsync()
+
+异步版本的批量作用域。
+
+```ts
+function batchScopeAsync<T>(fn: () => T | Promise<T>): Promise<T>;
+```
+
+---
+
+### batchScopeUntrack()
+
+在批量作用域中禁用依赖追踪。
+
+```ts
+function batchScopeUntrack<T>(fn: () => T): T;
+```
+
+---
+
+### getBatchScopeDepth()
+
+获取当前批量作用域深度。
+
+```ts
+function getBatchScopeDepth(): number;
+```
+
+---
+
+### getCurrentBatchScopeStack()
+
+获取批量作用域栈。
+
+```ts
+function getCurrentBatchScopeStack(): BatchScopeContext[];
+```
+
+---
+
+### isInBatchScope()
+
+判断当前是否在批量作用域中。
+
+```ts
+function isInBatchScope(): boolean;
+```
+
+---
+
+### flushBatchScopes()
+
+刷新所有待处理的批量作用域。
+
+```ts
+function flushBatchScopes(): void;
+```
+
+---
+
+## 其他工具 API
+
+### toValue()
+
+将 ref 或普通值转为实际值。
+
+```ts
+function toValue<T>(source: T | (() => T)): T;
+```
+
+**示例：**
+
+```ts
+import { ref, toValue } from '@lytjs/reactivity';
+
+const r = ref(42);
+const fn = () => 10;
+
+toValue(r); // 42
+toValue(fn); // 10
+toValue(123); // 123
+```
+
+---
+
+### setSSRMode()
+
+设置 SSR 模式（内部使用）。
+
+```ts
+function setSSRMode(ssr: boolean): void;
+```
+
+---
+
+## SSR 模式说明
+
+在 SSR 环境中，LytJS 会自动检测 `typeof window === 'undefined'` 并进入 SSR 模式。在 SSR 模式下：
+
+- `ref` 和 `reactive` 不会创建 Proxy，直接返回原值
+- `computed` 会在渲染时同步求值
+- `watch` 的 `flush` 选项默认行为会改变
+
+通常不需要手动调用 `setSSRMode()`，框架会自动处理。
