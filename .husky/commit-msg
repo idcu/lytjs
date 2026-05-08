@@ -1,2 +1,4 @@
 #!/usr/bin/env sh
-pnpm exec commitlint --edit "$1"
+# 修复 Windows Node 路径
+export PATH="/d/os/run/node/node-v24.14.0-win-x64:$PATH"
+/d/os/run/node/node-v24.14.0-win-x64/pnpm.cmd exec commitlint --edit "$1"
