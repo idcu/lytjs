@@ -5,19 +5,26 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { runCli } from '../src/commands/run';
 import { create, listTemplates } from '../src/commands/create';
+import { add } from '../src/commands/add';
 import { logger } from '../src/utils/logger';
 import { exists, isEmptyDir, ensureDir, writeFile, readFile } from '../src/utils/fs';
 import { detectPackageManager, getInstallCommand, getRunCommand, getAddCommand } from '../src/utils/package';
-import { createFilter, normalizePath, generateScopeId } from '../src/utils/colors';
 
 // Mock fs module
+const mockExistsSync = vi.fn();
+const mockMkdirSync = vi.fn();
+const mockWriteFileSync = vi.fn();
+const mockReadFileSync = vi.fn();
+const mockReaddirSync = vi.fn();
+const mockStatSync = vi.fn();
+
 vi.mock('fs', () => ({
-  existsSync: vi.fn(),
-  mkdirSync: vi.fn(),
-  writeFileSync: vi.fn(),
-  readFileSync: vi.fn(),
-  readdirSync: vi.fn(),
-  statSync: vi.fn(),
+  existsSync: mockExistsSync,
+  mkdirSync: mockMkdirSync,
+  writeFileSync: mockWriteFileSync,
+  readFileSync: mockReadFileSync,
+  readdirSync: mockReaddirSync,
+  statSync: mockStatSync,
 }));
 
 // Mock child_process
@@ -47,77 +54,67 @@ describe('@lytjs/cli', () => {
   describe('fs utils', () => {
     describe('exists', () => {
       it('should return true if path exists', () => {
-        const { existsSync } = await import('fs');
-        existsSync.mockReturnValue(true);
+        mockExistsSync.mockReturnValue(true);
         expect(exists('/some/path')).toBe(true);
       });
 
       it('should return false if path does not exist', () => {
-        const { existsSync } = await import('fs');
-        existsSync.mockReturnValue(false);
+        mockExistsSync.mockReturnValue(false);
         expect(exists('/some/path')).toBe(false);
       });
     });
 
     describe('isEmptyDir', () => {
       it('should return true for non-existent directory', () => {
-        const { existsSync } = await import('fs');
-        existsSync.mockReturnValue(false);
+        mockExistsSync.mockReturnValue(false);
         expect(isEmptyDir('/nonexistent')).toBe(true);
       });
 
       it('should return true for empty directory', () => {
-        const { existsSync, readdirSync } = await import('fs');
-        existsSync.mockReturnValue(true);
-        readdirSync.mockReturnValue([]);
+        mockExistsSync.mockReturnValue(true);
+        mockReaddirSync.mockReturnValue([]);
         expect(isEmptyDir('/empty')).toBe(true);
       });
 
       it('should return false for non-empty directory', () => {
-        const { existsSync, readdirSync } = await import('fs');
-        existsSync.mockReturnValue(true);
-        readdirSync.mockReturnValue(['file.txt']);
+        mockExistsSync.mockReturnValue(true);
+        mockReaddirSync.mockReturnValue(['file.txt']);
         expect(isEmptyDir('/notempty')).toBe(false);
       });
     });
 
     describe('ensureDir', () => {
       it('should create directory if it does not exist', () => {
-        const { existsSync, mkdirSync } = await import('fs');
-        existsSync.mockReturnValue(false);
+        mockExistsSync.mockReturnValue(false);
         ensureDir('/new/dir');
-        expect(mkdirSync).toHaveBeenCalledWith('/new/dir', { recursive: true });
+        expect(mockMkdirSync).toHaveBeenCalledWith('/new/dir', { recursive: true });
       });
 
       it('should not create directory if it exists', () => {
-        const { existsSync, mkdirSync } = await import('fs');
-        existsSync.mockReturnValue(true);
+        mockExistsSync.mockReturnValue(true);
         ensureDir('/existing/dir');
-        expect(mkdirSync).not.toHaveBeenCalled();
+        expect(mockMkdirSync).not.toHaveBeenCalled();
       });
     });
 
     describe('writeFile', () => {
       it('should write file with content', () => {
-        const { writeFileSync } = await import('fs');
         writeFile('/path/to/file.txt', 'content');
-        expect(writeFileSync).toHaveBeenCalledWith('/path/to/file.txt', 'content', 'utf-8');
+        expect(mockWriteFileSync).toHaveBeenCalledWith('/path/to/file.txt', 'content', 'utf-8');
       });
 
       it('should create parent directories', () => {
-        const { mkdirSync } = await import('fs');
         writeFile('/path/to/nested/file.txt', 'content');
-        expect(mkdirSync).toHaveBeenCalledWith('/path/to/nested', { recursive: true });
+        expect(mockMkdirSync).toHaveBeenCalledWith('/path/to/nested', { recursive: true });
       });
     });
 
     describe('readFile', () => {
       it('should read file as string', () => {
-        const { readFileSync } = await import('fs');
-        readFileSync.mockReturnValue('file content');
+        mockReadFileSync.mockReturnValue('file content');
         const result = readFile('/path/to/file.txt');
         expect(result).toBe('file content');
-        expect(readFileSync).toHaveBeenCalledWith('/path/to/file.txt', 'utf-8');
+        expect(mockReadFileSync).toHaveBeenCalledWith('/path/to/file.txt', 'utf-8');
       });
     });
   });
@@ -125,20 +122,17 @@ describe('@lytjs/cli', () => {
   describe('package manager utils', () => {
     describe('detectPackageManager', () => {
       it('should detect pnpm from lockfile', () => {
-        const { existsSync } = await import('fs');
-        existsSync.mockImplementation((path: string) => path.includes('pnpm-lock.yaml'));
+        mockExistsSync.mockImplementation((path: string) => path.includes('pnpm-lock.yaml'));
         expect(detectPackageManager()).toBe('pnpm');
       });
 
       it('should detect yarn from lockfile', () => {
-        const { existsSync } = await import('fs');
-        existsSync.mockImplementation((path: string) => path.includes('yarn.lock'));
+        mockExistsSync.mockImplementation((path: string) => path.includes('yarn.lock'));
         expect(detectPackageManager()).toBe('yarn');
       });
 
       it('should detect npm from lockfile', () => {
-        const { existsSync } = await import('fs');
-        existsSync.mockImplementation((path: string) => path.includes('package-lock.json'));
+        mockExistsSync.mockImplementation((path: string) => path.includes('package-lock.json'));
         expect(detectPackageManager()).toBe('npm');
       });
     });
@@ -159,7 +153,7 @@ describe('@lytjs/cli', () => {
 
     describe('getRunCommand', () => {
       it('should return correct run command for pnpm', () => {
-        expect(getRunCommand('pnpm', 'dev')).toBe('pnpm dev');
+        expect(getRunCommand('pnpm', 'dev')).toBe('pnpm run dev');
       });
 
       it('should return correct run command for yarn', () => {
@@ -207,14 +201,29 @@ describe('@lytjs/cli', () => {
     it('should error on unknown command', async () => {
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       const processExit = vi.spyOn(process, 'exit').mockImplementation(() => { throw new Error('exit'); });
-      
+
       try {
         await runCli(['unknown-command']);
       } catch {
         // Expected
       }
-      
+
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Unknown command'));
+      consoleSpy.mockRestore();
+      processExit.mockRestore();
+    });
+
+    it('should show help for add command with missing type', async () => {
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const processExit = vi.spyOn(process, 'exit').mockImplementation(() => { throw new Error('exit'); });
+
+      try {
+        await runCli(['add']);
+      } catch {
+        // Expected
+      }
+
+      expect(consoleSpy).toHaveBeenCalled();
       consoleSpy.mockRestore();
       processExit.mockRestore();
     });
@@ -222,40 +231,94 @@ describe('@lytjs/cli', () => {
 
   describe('create command', () => {
     it('should error if directory exists and not empty', async () => {
-      const { existsSync } = await import('fs');
-      existsSync.mockReturnValue(true);
-      
+      mockExistsSync.mockReturnValue(true);
+      mockReaddirSync.mockReturnValue(['existing-file']);
+
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       const processExit = vi.spyOn(process, 'exit').mockImplementation(() => { throw new Error('exit'); });
-      
+
       try {
         await create('existing-project');
       } catch {
         // Expected
       }
-      
+
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('already exists'));
       consoleSpy.mockRestore();
       processExit.mockRestore();
     });
 
     it('should create project files', async () => {
-      const { existsSync, writeFileSync } = await import('fs');
-      existsSync.mockReturnValue(false);
-      
+      mockExistsSync.mockReturnValue(false);
+
       await create('new-project', { force: true });
-      
-      // Check that package.json was written
-      const packageJsonCall = writeFileSync.mock.calls.find(
+
+      const packageJsonCall = mockWriteFileSync.mock.calls.find(
         (call: any[]) => call[0].includes('package.json')
       );
       expect(packageJsonCall).toBeDefined();
-      
-      // Check that vite.config.ts was written
-      const viteConfigCall = writeFileSync.mock.calls.find(
+
+      const viteConfigCall = mockWriteFileSync.mock.calls.find(
         (call: any[]) => call[0].includes('vite.config.ts')
       );
       expect(viteConfigCall).toBeDefined();
+    });
+  });
+
+  describe('add command', () => {
+    it('should error if not in a project directory', async () => {
+      mockExistsSync.mockReturnValue(false);
+
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const processExit = vi.spyOn(process, 'exit').mockImplementation(() => { throw new Error('exit'); });
+
+      try {
+        await add('component', 'Button');
+      } catch {
+        // Expected
+      }
+
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('No package.json'));
+      consoleSpy.mockRestore();
+      processExit.mockRestore();
+    });
+
+    it('should generate a component file', async () => {
+      mockExistsSync.mockReturnValue(true);
+
+      await add('component', 'Button');
+
+      const componentCall = mockWriteFileSync.mock.calls.find(
+        (call: any[]) => call[0].includes('Button.lyt')
+      );
+      expect(componentCall).toBeDefined();
+      expect(componentCall[1]).toContain('template');
+      expect(componentCall[1]).toContain('script setup');
+    });
+
+    it('should generate a page file', async () => {
+      mockExistsSync.mockReturnValue(true);
+
+      await add('page', 'About');
+
+      const pageCall = mockWriteFileSync.mock.calls.find(
+        (call: any[]) => call[0].includes('About.lyt')
+      );
+      expect(pageCall).toBeDefined();
+      expect(pageCall[1]).toContain('page-about');
+    });
+
+    it('should generate a store file', async () => {
+      mockExistsSync.mockReturnValue(true);
+
+      await add('store', 'user');
+
+      const storeCall = mockWriteFileSync.mock.calls.find(
+        (call: any[]) => call[0].includes('user.ts')
+      );
+      expect(storeCall).toBeDefined();
+      expect(storeCall[1]).toContain('defineStore');
+      expect(storeCall[1]).toContain('useUserStore');
     });
   });
 

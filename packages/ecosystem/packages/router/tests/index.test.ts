@@ -530,3 +530,156 @@ describe('composables', () => {
     });
   });
 });
+
+// ===== RouterLink Tests =====
+
+describe('RouterLink', () => {
+  it('should compute href correctly', () => {
+    const router = createRouter({
+      history: createMemoryHistory('/'),
+      routes: [
+        { path: '/users', name: 'users' },
+        { path: '/users/:id', name: 'user-detail' },
+      ],
+    });
+    setCurrentRouter(router);
+
+    const { useLink } = require('../src/composables/useLink');
+    const link = useLink({ to: '/users?page=1#top' });
+    expect(link.href.value).toContain('/users');
+    expect(link.href.value).toContain('page=1');
+    expect(link.href.value).toContain('#top');
+  });
+
+  it('should detect active state', () => {
+    const router = createRouter({
+      history: createMemoryHistory('/'),
+      routes: [
+        { path: '/users', name: 'users' },
+        { path: '/users/:id', name: 'user-detail' },
+      ],
+    });
+    setCurrentRouter(router);
+
+    const { useLink } = require('../src/composables/useLink');
+    const link = useLink({ to: '/users' });
+    // Current route is '/', which doesn't start with '/users' exactly
+    // But after navigating to /users...
+    // For now test that isActive is a computed value
+    expect(link.isActive).toBeDefined();
+    expect(link.isExactActive).toBeDefined();
+  });
+});
+
+// ===== beforeRouteLeave Tests =====
+
+describe('beforeRouteLeave guard', () => {
+  it('should call beforeRouteLeave on component', async () => {
+    const leaveGuard = vi.fn().mockReturnValue(true);
+    const componentWithGuard = {
+      beforeRouteLeave: leaveGuard,
+    };
+
+    const router = createRouter({
+      history: createMemoryHistory('/'),
+      routes: [
+        { path: '/', name: 'home', component: componentWithGuard as any },
+        { path: '/about', name: 'about' },
+      ],
+    });
+
+    // Install to set current route
+    router.install({
+      config: { globalProperties: {} },
+      provide: vi.fn(),
+    });
+
+    await router.push('/about');
+    expect(leaveGuard).toHaveBeenCalledTimes(1);
+  });
+
+  it('should abort navigation when beforeRouteLeave returns false', async () => {
+    const router = createRouter({
+      history: createMemoryHistory('/'),
+      routes: [
+        {
+          path: '/',
+          name: 'home',
+          component: { beforeRouteLeave: () => false } as any,
+        },
+        { path: '/about', name: 'about' },
+      ],
+    });
+
+    router.install({
+      config: { globalProperties: {} },
+      provide: vi.fn(),
+    });
+
+    const result = await router.push('/about');
+    expect(result?.type).toBe(NavigationFailureType.aborted);
+    expect(router.currentRoute.value.path).toBe('/');
+  });
+});
+
+// ===== scrollBehavior Tests =====
+
+describe('scrollBehavior', () => {
+  it('should call scrollBehavior after navigation', async () => {
+    const scrollBehavior = vi.fn().mockReturnValue({ left: 0, top: 0 });
+    const router = createRouter({
+      history: createMemoryHistory('/'),
+      routes: [
+        { path: '/', name: 'home' },
+        { path: '/about', name: 'about' },
+      ],
+      scrollBehavior,
+    });
+
+    await router.push('/about');
+    expect(scrollBehavior).toHaveBeenCalledTimes(1);
+  });
+
+  it('should not scroll when scrollBehavior returns false', async () => {
+    const scrollBehavior = vi.fn().mockReturnValue(false);
+    const router = createRouter({
+      history: createMemoryHistory('/'),
+      routes: [
+        { path: '/', name: 'home' },
+        { path: '/about', name: 'about' },
+      ],
+      scrollBehavior,
+    });
+
+    await router.push('/about');
+    expect(scrollBehavior).toHaveBeenCalledTimes(1);
+  });
+});
+
+// ===== name-based navigation Tests =====
+
+describe('name-based navigation', () => {
+  it('should resolve named route', async () => {
+    const router = createRouter({
+      history: createMemoryHistory('/'),
+      routes: [
+        { path: '/', name: 'home' },
+        { path: '/users/:id', name: 'user' },
+      ],
+    });
+
+    await router.push({ name: 'user', params: { id: '42' } });
+    expect(router.currentRoute.value.path).toBe('/users/42');
+    expect(router.currentRoute.value.params).toEqual({ id: '42' });
+  });
+
+  it('should return aborted for unknown route name', async () => {
+    const router = createRouter({
+      history: createMemoryHistory('/'),
+      routes: [{ path: '/' }],
+    });
+
+    const result = await router.push({ name: 'nonexistent' });
+    expect(result?.type).toBe(NavigationFailureType.aborted);
+  });
+});

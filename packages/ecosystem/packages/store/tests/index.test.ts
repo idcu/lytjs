@@ -188,6 +188,54 @@ describe('@lytjs/store', () => {
       expect(callback).toHaveBeenCalledTimes(1);
     });
 
+    it('should call after callback in $onAction', async () => {
+      const useCounter = defineStore('counter', {
+        state: () => ({ count: 0 }),
+        actions: {
+          increment() {
+            this.count++;
+            return this.count;
+          },
+        },
+      });
+      const store = useCounter();
+      let afterValue: number | undefined;
+      store.$onAction((context) => {
+        context.after = (result: any) => {
+          afterValue = result;
+        };
+      });
+
+      store.increment();
+      expect(afterValue).toBe(1);
+    });
+
+    it('should call onError callback when action throws', async () => {
+      const useStore = defineStore('test', {
+        state: () => ({ value: 0 }),
+        actions: {
+          failingAction() {
+            throw new Error('test error');
+          },
+        },
+      });
+      const store = useStore();
+      let errorCaught: Error | undefined;
+      store.$onAction((context) => {
+        context.onError = (err: Error) => {
+          errorCaught = err;
+        };
+      });
+
+      try {
+        await store.failingAction();
+      } catch {
+        // Expected
+      }
+      expect(errorCaught).toBeDefined();
+      expect(errorCaught!.message).toBe('test error');
+    });
+
     it('should support $dispose', () => {
       const useCounter = defineStore('counter', {
         state: () => ({ count: 0 }),
@@ -242,6 +290,67 @@ describe('@lytjs/store', () => {
       expect(store.count.value).toBe(0);
       store.increment();
       expect(store.count.value).toBe(1);
+    });
+
+    it('should support $subscribe in setup store', () => {
+      const useCounter = defineStore('counter', () => {
+        const count = { value: 0 };
+        const increment = () => { count.value++; };
+        return { count, increment };
+      });
+      const store = useCounter();
+      const callback = vi.fn();
+      const unsubscribe = store.$subscribe(callback);
+
+      store.increment();
+      expect(callback).toHaveBeenCalled();
+
+      unsubscribe();
+    });
+
+    it('should support $patch in setup store', () => {
+      const useStore = defineStore('test', () => {
+        const a = { value: 1 };
+        const b = { value: 2 };
+        return { a, b };
+      });
+      const store = useStore();
+      store.$patch({ a: 10 });
+      expect(store.a).toBe(10);
+    });
+
+    it('should support $onAction with after callback in setup store', async () => {
+      const useStore = defineStore('test', () => {
+        const result = { value: 0 };
+        const compute = async () => {
+          result.value = 42;
+          return result.value;
+        };
+        return { result, compute };
+      });
+      const store = useStore();
+      let afterCalled = false;
+      const unsubscribe = store.$onAction((context) => {
+        context.after = (returnValue: any) => {
+          afterCalled = true;
+          expect(returnValue).toBe(42);
+        };
+      });
+
+      await store.compute();
+      expect(afterCalled).toBe(true);
+      unsubscribe();
+    });
+
+    it('should support $dispose in setup store', () => {
+      const useCounter = defineStore('counter', () => {
+        const count = { value: 0 };
+        return { count };
+      });
+      const store = useCounter();
+      store.$dispose();
+      const newStore = useCounter();
+      expect(newStore).not.toBe(store);
     });
   });
 

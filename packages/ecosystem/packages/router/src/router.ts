@@ -13,6 +13,7 @@ import type {
   NavigationFailure,
   NavigationGuardNext,
   NavigationGuardReturn,
+  RouteParams,
 } from './types';
 import { NavigationFailureType } from './types';
 import { signal } from '@lytjs/reactivity';
@@ -103,6 +104,26 @@ export function createRouter(options: RouterOptions): Router {
   }
 
   /**
+   * Resolve a route name to a path
+   */
+  function resolveName(name: string | symbol, params?: RouteParams): { path: string } | null {
+    for (const matcher of flatMatchers) {
+      if (matcher.record.name === name) {
+        let path = matcher.record.path;
+        // Replace params in path
+        if (params) {
+          for (const [key, value] of Object.entries(params)) {
+            const paramValue = Array.isArray(value) ? value.join('/') : value;
+            path = path.replace(`:${key}`, paramValue);
+          }
+        }
+        return { path };
+      }
+    }
+    return null;
+  }
+
+  /**
    * Navigate to a new route
    */
   async function navigate(
@@ -110,7 +131,7 @@ export function createRouter(options: RouterOptions): Router {
     replace: boolean = false,
   ): Promise<NavigationFailure | void> {
     // Check for duplicate navigation
-    const resolved = resolveLocation(to, currentRoute.value);
+    const resolved = resolveLocation(to, currentRoute.value, { resolveName });
     const targetPath = resolved.path;
 
     // Resolve the route
@@ -168,6 +189,18 @@ export function createRouter(options: RouterOptions): Router {
     }
 
     currentRoute.value = targetLocation;
+
+    // Handle scroll behavior
+    if (options.scrollBehavior) {
+      const savedPosition = replace ? null : null; // Would come from history.state
+      const scrollPosition = options.scrollBehavior(targetLocation, from, savedPosition);
+      if (scrollPosition) {
+        // Use requestAnimationFrame for smooth scrolling
+        if (typeof window !== 'undefined') {
+          window.scrollTo(scrollPosition);
+        }
+      }
+    }
 
     // Run afterEach hooks
     for (const hook of afterEachHooks) {
@@ -272,6 +305,7 @@ export function createRouter(options: RouterOptions): Router {
   const router: Router = {
     currentRoute,
     options,
+    resolveName,
 
     async push(to) {
       if (pendingNavigation) return pendingNavigation;

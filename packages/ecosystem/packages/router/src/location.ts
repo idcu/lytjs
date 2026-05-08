@@ -11,13 +11,27 @@ import { parseFullPath, resolveFullPath } from './matcher';
 export function resolveLocation(
   raw: RouteLocationRaw,
   currentLocation?: RouteLocationNormalized,
+  router?: { resolveName: (name: string | symbol, params?: RouteParams) => { path: string } | null },
 ): { path: string; query: LocationQuery; hash: string; params?: RouteParams } {
   if (typeof raw === 'string') {
     const { path, query, hash } = parseFullPath(raw);
     return { path, query, hash };
   }
 
-  const { path, query = {}, hash = '', params } = raw;
+  const { name, path, query = {}, hash = '', params } = raw;
+
+  // name-based resolution
+  if (name !== undefined && router) {
+    const resolved = router.resolveName(name, params);
+    if (resolved) {
+      return {
+        path: resolved.path,
+        query,
+        hash,
+        params,
+      };
+    }
+  }
 
   if (path !== undefined) {
     const { path: parsedPath, query: parsedQuery, hash: parsedHash } = parseFullPath(path);
@@ -29,7 +43,6 @@ export function resolveLocation(
     };
   }
 
-  // name-based resolution would go here (requires router instance)
   return {
     path: currentLocation?.path || '/',
     query,

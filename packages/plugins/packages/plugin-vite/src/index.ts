@@ -131,6 +131,11 @@ export default function lytjs(rawOptions: LytjsPluginOptions = {}): Plugin {
           });
         }
 
+        // Add HMR accept for development
+        if (!isProduction) {
+          compiledCode += '\nif (import.meta.hot) { import.meta.hot.accept(); }\n';
+        }
+
         return {
           code: compiledCode,
           map: result.map,

@@ -120,6 +120,7 @@ export interface Router {
   beforeResolve(guard: NavigationGuard): () => void;
   install(app: any): void;
   isReady(): Promise<void>;
+  resolveName(name: string | symbol, params?: RouteParams): { path: string } | null;
 }
 
 export interface RouterHistory {

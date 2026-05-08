@@ -71,6 +71,21 @@ export {
   onPanelMessage,
 } from './bridge';
 
+// API
+export { createDevToolsAPI } from './api';
+
+// Store Integration
+export {
+  trackStoreMutation,
+  registerStoreSignals,
+  unregisterStoreSignals,
+} from './store-integration';
+
+// Router Integration
+export {
+  trackRouterNavigation,
+} from './router-integration';
+
 // Types
 export type {
   DevToolsState,

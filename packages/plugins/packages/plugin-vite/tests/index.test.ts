@@ -6,6 +6,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import lytjs, { resolveOptions, defaultOptions } from '../src/index';
 import { createFilter, normalizePath, generateScopeId } from '../src/utils';
 import { validateOptions } from '../src/options';
+import { parseSFC, compileSFC } from '@lytjs/compiler';
+
+vi.mock('@lytjs/compiler', () => ({
+  parseSFC: vi.fn(),
+  compileSFC: vi.fn(),
+}));
 
 describe('@lytjs/plugin-vite', () => {
   describe('plugin creation', () => {
@@ -232,5 +238,89 @@ describe('utils', () => {
       const id = generateScopeId('Component.lyt');
       expect(id).toMatch(/^data-v-[a-z0-9]+$/);
     });
+  });
+});
+
+describe('scoped styles', () => {
+  it('should inject __scopeId for scoped styles', () => {
+    const plugin = lytjs();
+
+    // Mock parseSFC to return a descriptor with scoped styles
+    vi.mocked(parseSFC).mockReturnValue({
+      descriptor: {
+        template: { content: '<div>test</div>' },
+        script: { content: 'export default {}' },
+        styles: [{ content: '.test { color: red; }', scoped: true }],
+        customBlocks: [],
+      },
+    } as any);
+
+    vi.mocked(compileSFC).mockReturnValue({
+      code: 'export default {}',
+      map: null,
+    });
+
+    const result = plugin.transform('<template><div>test</div></template><style scoped>.test { color: red; }</style>', '/src/App.lyt');
+
+    expect(result).not.toBeNull();
+    expect(result!.code).toContain('__scopeId');
+  });
+
+  it('should not inject __scopeId for non-scoped styles', () => {
+    const plugin = lytjs();
+
+    vi.mocked(parseSFC).mockReturnValue({
+      descriptor: {
+        template: { content: '<div>test</div>' },
+        script: { content: 'export default {}' },
+        styles: [{ content: '.test { color: red; }', scoped: false }],
+        customBlocks: [],
+      },
+    } as any);
+
+    vi.mocked(compileSFC).mockReturnValue({
+      code: 'export default {}',
+      map: null,
+    });
+
+    const result = plugin.transform('<template><div>test</div></template><style>.test { color: red; }</style>', '/src/App.lyt');
+
+    expect(result).not.toBeNull();
+    expect(result!.code).not.toContain('__scopeId');
+  });
+});
+
+describe('route custom block', () => {
+  it('should resolve virtual route module', () => {
+    const plugin = lytjs();
+
+    const result = plugin.resolveId('/src/pages/Home.route');
+    expect(result).toContain('virtual-route');
+  });
+
+  it('should load route block content', () => {
+    const plugin = lytjs();
+
+    // First, simulate a transform that sets up the routeBlockMap
+    vi.mocked(parseSFC).mockReturnValue({
+      descriptor: {
+        template: { content: '<div>home</div>' },
+        script: { content: '' },
+        styles: [],
+        customBlocks: [{ type: 'route', content: '{ path: "/", name: "home" }' }],
+      },
+    } as any);
+
+    vi.mocked(compileSFC).mockReturnValue({
+      code: 'export default {}',
+      map: null,
+    });
+
+    plugin.transform('<template><div>home</div></template><route>{ path: "/", name: "home" }</route>', '/src/pages/Home.lyt');
+
+    // Now try to load the virtual route module
+    const loadResult = plugin.load('\0virtual-route:/src/pages/Home.route');
+    expect(loadResult).toContain('export default');
+    expect(loadResult).toContain('home');
   });
 });
