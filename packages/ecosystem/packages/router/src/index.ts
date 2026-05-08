@@ -1,0 +1,42 @@
+/**
+ * @lytjs/router
+ *
+ * LytJS declarative routing system with support for nested routes,
+ * navigation guards, and multiple history modes.
+ *
+ * @packageDocumentation
+ */
+
+// Router core
+export { createRouter } from './router';
+export { createWebHistory } from './history';
+export { createWebHashHistory } from './history';
+export { createMemoryHistory } from './history';
+
+// Composables
+export { useRouter } from './composables/useRouter';
+export { useRoute } from './composables/useRoute';
+
+// Components
+export { RouterView } from './components/RouterView';
+export { RouterLink } from './components/RouterLink';
+
+// Types
+export type {
+  Router,
+  RouterOptions,
+  RouterHistory,
+  RouteRecordRaw,
+  RouteRecordNormalized,
+  RouteLocationNormalized,
+  RouteLocationRaw,
+  RouteParams,
+  LocationQuery,
+  RouteMeta,
+  RouteRecordName,
+  NavigationGuard,
+  NavigationGuardNext,
+  NavigationGuardReturn,
+  NavigationFailure,
+  RouterScrollBehavior,
+} from './types';
