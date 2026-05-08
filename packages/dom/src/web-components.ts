@@ -453,17 +453,64 @@ export interface LytJSBridgeOptions {
 
 /**
  * 创建 LytJS 组件的 Web Component 包装器
+ *
+ * 将 LytJS 组件的属性、事件、插槽映射到 Web Component，
+ * 实现两个组件系统之间的互操作。
  */
-// FIX: P1-16 参数前加下划线表示有意未使用，添加 TODO 注释说明桥接功能待实现
 export function defineLytJSWebComponent(
   name: string,
-  _bridgeOptions: LytJSBridgeOptions,
+  bridgeOptions: LytJSBridgeOptions,
   options?: WebComponentOptions,
 ): void {
-  // TODO: 待实现 bridgeOptions 桥接功能，将 LytJS 组件的属性、事件、插槽映射到 Web Component
-  const ElementClass = createEnhancedElementClass(options);
+  const { component, propMapping, eventMapping, slotMapping } = bridgeOptions;
+
+  // 合并属性定义：将 propMapping 中的属性名转换为 WCPropertyDefinition
+  const mergedProperties: WCPropertyDefinition[] = [
+    ...(options?.properties ?? []),
+  ];
+
+  if (propMapping) {
+    for (const [wcAttr, componentProp] of Object.entries(propMapping)) {
+      // 避免重复定义
+      if (!mergedProperties.some((p) => p.name === componentProp)) {
+        mergedProperties.push({
+          name: componentProp,
+          type: 'string',
+          reflect: true,
+        });
+      }
+    }
+  }
+
+  // 创建增强元素类（使用合并后的属性定义）
+  const ElementClass = createEnhancedElementClass({
+    ...options,
+    properties: mergedProperties,
+  });
+
+  // 存储桥接元数据到元素类上（供运行时使用）
+  const bridgeMeta = {
+    component,
+    propMapping: propMapping ?? {},
+    eventMapping: eventMapping ?? {},
+    slotMapping: slotMapping ?? {},
+  };
+  (ElementClass as unknown as Record<symbol, unknown>)[Symbol.for('lytjs.bridge')] = bridgeMeta;
 
   customElements.define(name, ElementClass);
+}
+
+/**
+ * 获取 Web Component 上的 LytJS 桥接元数据
+ *
+ * @param element - Web Component 元素实例
+ * @returns 桥接元数据，如果不存在则返回 null
+ */
+export function getBridgeMeta(
+  element: Element,
+): { component: unknown; propMapping: Record<string, string>; eventMapping: Record<string, string>; slotMapping: Record<string, string> } | null {
+  const constructor = element.constructor as unknown as Record<symbol, unknown>;
+  return (constructor[Symbol.for('lytjs.bridge')] ?? null) as ReturnType<typeof getBridgeMeta>;
 }
 
 // ============================================================
