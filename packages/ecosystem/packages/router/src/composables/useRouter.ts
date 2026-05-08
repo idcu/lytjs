@@ -18,7 +18,10 @@ export function setCurrentRouter(router: Router): void {
  */
 export function useRouter(): Router {
   if (!currentRouter) {
-    throw new Error('[@lytjs/router] No active router instance. Make sure to install the router plugin.');
+    throw new Error(
+      '[@lytjs/router] No active router instance. ' +
+      'Make sure to call app.use(router) before using useRouter().',
+    );
   }
   return currentRouter;
 }

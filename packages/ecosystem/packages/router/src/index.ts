@@ -14,12 +14,14 @@ export { createWebHashHistory } from './history';
 export { createMemoryHistory } from './history';
 
 // Composables
-export { useRouter } from './composables/useRouter';
+export { useRouter, setCurrentRouter } from './composables/useRouter';
 export { useRoute } from './composables/useRoute';
 
 // Components
 export { RouterView } from './components/RouterView';
+export type { RouterViewProps } from './components/RouterView';
 export { RouterLink } from './components/RouterLink';
+export type { RouterLinkProps } from './components/RouterLink';
 
 // Types
 export type {
@@ -38,5 +40,10 @@ export type {
   NavigationGuardNext,
   NavigationGuardReturn,
   NavigationFailure,
+  NavigationFailureType,
   RouterScrollBehavior,
+  NavigationInfo,
 } from './types';
+
+// Re-export NavigationFailureType as value (enum)
+export { NavigationFailureType } from './types';
