@@ -8,12 +8,22 @@ hero:
   actions:
     - theme: brand
       text: 快速开始
-      link: /lytjs/guide/getting-started
+      link: /guide/getting-started
     - theme: alt
       text: Gitee
       link: https://gitee.com/lytjs/lytjs
 
 features:
+  - icon: 💡
+    title: 为什么选择 Lyt.js
+    details: 轻量级设计、卓越性能、完整类型支持、渐进式架构。无论是小型项目还是大型应用，Lyt.js 都能提供恰到好处的解决方案。
+    link: /guide/getting-started
+    linkText: 了解更多
+  - icon: 📦
+    title: 快速安装
+    details: 'npm create lytjs@latest my-app'
+    link: /guide/installation
+    linkText: 查看安装指南
   - title: 轻量核心
     details: 核心包体积 < 35KB (gzip)，零外部依赖的基础工具库。
   - title: 高性能响应式

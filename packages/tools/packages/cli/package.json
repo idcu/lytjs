@@ -18,13 +18,16 @@
     },
     "./package.json": "./package.json"
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "sideEffects": false,
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "type-check": "tsc --noEmit",
     "lint": "eslint \"src/**/*.ts\"",
     "clean": "rm -rf dist"
@@ -44,5 +47,10 @@
     "url": "https://gitee.com/lytjs/lytjs.git",
     "directory": "packages/tools/packages/cli"
   },
-  "keywords": ["lytjs", "cli", "scaffold", "create-lytjs"]
+  "keywords": [
+    "lytjs",
+    "cli",
+    "scaffold",
+    "create-lytjs"
+  ]
 }
