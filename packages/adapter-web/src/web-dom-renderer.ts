@@ -332,12 +332,42 @@ export function createDOMRenderer(
 
   const renderer = createRenderer(options);
 
-  // TODO: cleanupVNodeResources 当前为空实现，组件资源清理由上层 renderer 的
-  // cleanupComponentResources 处理。如果后续需要在此处添加 Web 平台特有的
-  // 资源清理逻辑（如取消动画帧、清理 IntersectionObserver 等），请在此实现。
-  // 参见 https://github.com/lytjs/lytjs/issues/xxx
-  const cleanupVNodeResources = (_vnode: VNode): void => {
-    // 当前为空实现，保留接口兼容性
+  // Web 平台资源追踪：记录每个 VNode 关联的动画帧、Observer 等需要清理的资源
+  const vnodeResourceMap = new WeakMap<VNode, Set<() => void>>();
+
+  /**
+   * 注册 VNode 关联的资源清理回调。
+   * 供上层 renderer 或组件系统在创建动画帧、Observer 等资源时调用，
+   * 确保 unmount 时自动清理，防止内存泄漏。
+   */
+  function registerVNodeResourceCleanup(vnode: VNode, cleanupFn: () => void): void {
+    let resources = vnodeResourceMap.get(vnode);
+    if (!resources) {
+      resources = new Set();
+      vnodeResourceMap.set(vnode, resources);
+    }
+    resources.add(cleanupFn);
+  }
+
+  /**
+   * 清理 VNode 关联的 Web 平台特有资源。
+   * 包括：取消动画帧、断开 IntersectionObserver / ResizeObserver / MutationObserver 等。
+   */
+  const cleanupVNodeResources = (vnode: VNode): void => {
+    const resources = vnodeResourceMap.get(vnode);
+    if (resources) {
+      for (const cleanupFn of resources) {
+        try {
+          cleanupFn();
+        } catch (e) {
+          if (typeof console !== 'undefined') {
+            console.warn('[lytjs/adapter-web] Error during VNode resource cleanup:', e);
+          }
+        }
+      }
+      resources.clear();
+      vnodeResourceMap.delete(vnode);
+    }
   };
 
   return {
