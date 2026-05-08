@@ -44,14 +44,12 @@ export default defineConfig({
       {
         text: '生态',
         items: [
-          // TODO: Router 包尚未实现，取消注释当包就绪时
-          // { text: 'Router', link: '/ecosystem/router/' },
-          // TODO: Store 包尚未实现，取消注释当包就绪时
-          // { text: 'Store', link: '/ecosystem/store/' },
-          // TODO: CLI 包尚未实现，取消注释当包就绪时
-          // { text: 'CLI', link: '/ecosystem/cli/' },
-          // TODO: UI 组件库尚未实现，取消注释当包就绪时
-          // { text: 'UI 组件库', link: '/ecosystem/lytui/' },
+          { text: 'Router', link: '/api/router' },
+          { text: 'Store', link: '/api/store' },
+          { text: 'CLI', link: '/api/cli' },
+          { text: 'DevTools', link: '/api/devtools' },
+          { text: 'Vite 插件', link: '/api/plugin-vite' },
+          { text: '测试工具', link: '/api/test-utils' },
         ],
       },
       // TODO: 示例页面尚未创建，取消注释当示例就绪时
@@ -61,7 +59,7 @@ export default defineConfig({
     sidebar: {
       '/api/': [
         {
-          text: 'API 参考',
+          text: '核心包',
           items: [
             { text: '概览', link: '/api/' },
             { text: '@lytjs/core', link: '/api/core' },
@@ -74,6 +72,22 @@ export default defineConfig({
             { text: '@lytjs/host-contract', link: '/api/host-contract' },
             { text: '@lytjs/shared-types', link: '/api/shared-types' },
             { text: '独立构建变体', link: '/api/core-variants' },
+          ],
+        },
+        {
+          text: '生态包',
+          items: [
+            { text: '@lytjs/router', link: '/api/router' },
+            { text: '@lytjs/store', link: '/api/store' },
+          ],
+        },
+        {
+          text: '工具包',
+          items: [
+            { text: '@lytjs/cli', link: '/api/cli' },
+            { text: '@lytjs/devtools', link: '/api/devtools' },
+            { text: '@lytjs/plugin-vite', link: '/api/plugin-vite' },
+            { text: '@lytjs/test-utils', link: '/api/test-utils' },
           ],
         },
       ],
