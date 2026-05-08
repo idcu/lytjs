@@ -1,0 +1,55 @@
+{
+  "name": "@lytjs/router",
+  "version": "6.0.0",
+  "description": "LytJS declarative routing system with support for nested routes, navigation guards, and history modes",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "type-check": "tsc --noEmit",
+    "lint": "eslint \"src/**/*.ts\" \"tests/**/*.ts\"",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@lytjs/common-is": "workspace:*",
+    "@lytjs/common-env": "workspace:*",
+    "@lytjs/reactivity": "workspace:*",
+    "@lytjs/component": "workspace:*",
+    "@lytjs/vdom": "workspace:*"
+  },
+  "devDependencies": {
+    "tsup": "^8.0.0",
+    "typescript": "^5.4.0",
+    "vitest": "^3.0.0"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://gitee.com/lytjs/lytjs.git",
+    "directory": "packages/ecosystem/packages/router"
+  },
+  "keywords": [
+    "lytjs",
+    "router",
+    "routing",
+    "spa"
+  ]
+}

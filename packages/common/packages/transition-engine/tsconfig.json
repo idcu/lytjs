@@ -1,0 +1,17 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "composite": false,
+    "incremental": false,
+    "baseUrl": ".",
+    "paths": {
+      "@lytjs/host-contract": ["../../../host-contract/dist/index.d.ts"],
+      "@lytjs/vdom": ["../../../vdom/dist/index.d.ts"],
+      "@lytjs/vdom/transition": ["../../../vdom/dist/transition.d.ts"]
+    }
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "dist", "tests"]
+}

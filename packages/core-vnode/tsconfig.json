@@ -1,0 +1,22 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "composite": false,
+    "incremental": false,
+    "baseUrl": ".",
+    "paths": {
+      "@lytjs/component": ["../component/dist/index.d.ts"],
+      "@lytjs/reactivity": ["../reactivity/dist/index.d.ts"],
+      "@lytjs/vdom": ["../vdom/dist/index.d.ts"],
+      "@lytjs/compiler": ["../compiler/dist/index.d.ts"],
+      "@lytjs/renderer": ["../renderer/dist/index.d.ts"],
+      "@lytjs/common-scheduler": ["../common/packages/scheduler/dist/index.d.ts"],
+      "@lytjs/common-error": ["../common/packages/error/dist/index.d.ts"],
+      "@lytjs/shared-types": ["../shared-types/dist/index.d.ts"]
+    }
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "dist", "tests"]
+}

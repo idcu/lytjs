@@ -1,0 +1,14 @@
+{
+  "extends": "../../../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "baseUrl": ".",
+    "paths": {
+      "@lytjs/compiler": ["../../../compiler/dist/index.d.ts"],
+      "@lytjs/common-is": ["../../../common/packages/is/dist/index.d.ts"],
+      "@lytjs/shared-types": ["../../../shared-types/dist/index.d.ts"]
+    }
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "dist", "tests"]
+}

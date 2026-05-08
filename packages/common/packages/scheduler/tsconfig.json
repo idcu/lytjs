@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "composite": false,
+    "incremental": false,
+    "paths": {
+      "@lytjs/common-env": ["../../packages/env/dist"]
+    }
+  },
+  "include": ["src/**/*.ts", "tests/**/*.ts"],
+  "exclude": ["node_modules", "dist"]
+}

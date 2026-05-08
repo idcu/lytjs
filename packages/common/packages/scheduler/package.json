@@ -1,0 +1,38 @@
+{
+  "name": "@lytjs/common-scheduler",
+  "version": "6.0.0",
+  "description": "Task scheduler for LytJS",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint \"src/**/*.ts\"",
+    "build": "tsup",
+    "type-check": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "sideEffects": false,
+  "license": "MIT",
+  "dependencies": {
+    "@lytjs/common-env": "workspace:*"
+  },
+  "devDependencies": {
+    "tsup": "^8.4.0",
+    "typescript": "^5.8.2",
+    "vitest": "^3.0.7"
+  }
+}

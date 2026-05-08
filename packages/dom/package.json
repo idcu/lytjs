@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json.schemastore.org/package.json",
+  "name": "@lytjs/dom",
+  "version": "6.0.0",
+  "description": "LytJS DOM utilities - Web Components integration and DOM enhancements",
+  "author": "lytjs",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "dev": "tsup --watch",
+    "build": "tsup",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "type-check": "tsc --noEmit",
+    "clean": "rm -rf dist node_modules .turbo"
+  },
+  "dependencies": {
+    "@lytjs/common-is": "workspace:*",
+    "@lytjs/common-string": "workspace:*"
+  },
+  "devDependencies": {
+    "tsup": "^8.3.6",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.0"
+  },
+  "peerDependencies": {},
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://gitee.com/lytjs/lytjs.git",
+    "directory": "packages/dom"
+  },
+  "keywords": [
+    "lytjs",
+    "dom",
+    "web-components"
+  ],
+  "homepage": "https://gitee.com/lytjs/lytjs/tree/develop/packages/dom#readme",
+  "bugs": {
+    "url": "https://gitee.com/lytjs/lytjs/issues"
+  }
+}

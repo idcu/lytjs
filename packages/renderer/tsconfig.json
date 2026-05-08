@@ -1,0 +1,25 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "composite": false,
+    "incremental": false,
+    "baseUrl": ".",
+    "paths": {
+      "@lytjs/reactivity": ["../reactivity/dist/index.d.ts"],
+      "@lytjs/vdom": ["../vdom/dist/index.d.ts"],
+      "@lytjs/common-is": ["../common/packages/is/dist/index.d.ts"],
+      "@lytjs/common-string": ["../common/packages/string/dist/index.d.ts"],
+      "@lytjs/common-events": ["../common/packages/events/dist/index.d.ts"],
+      "@lytjs/common-dom": ["../common/packages/dom/dist/index.d.ts"],
+      "@lytjs/common-error": ["../common/packages/error/dist/index.d.ts"],
+      "@lytjs/dom-runtime": ["../dom-runtime/dist/index.d.ts"],
+      "@lytjs/compiler": ["../compiler/dist/index.d.ts"],
+      "@lytjs/host-contract": ["../host-contract/dist/index.d.ts"],
+      "@lytjs/adapter-web": ["../adapter-web/dist/index.d.ts"]
+    }
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "dist", "tests"]
+}

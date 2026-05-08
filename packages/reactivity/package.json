@@ -1,0 +1,76 @@
+{
+  "name": "@lytjs/reactivity",
+  "version": "6.0.0",
+  "description": "LytJS reactive system - signals, refs, computed, watch, and effects",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    },
+    "./signal": {
+      "types": "./dist/signal.d.ts",
+      "import": "./dist/signal.mjs",
+      "require": "./dist/signal.cjs"
+    },
+    "./signal-component": {
+      "types": "./dist/signal-component.d.ts",
+      "import": "./dist/signal-component.mjs",
+      "require": "./dist/signal-component.cjs"
+    },
+    "./scope": {
+      "types": "./dist/scope.d.ts",
+      "import": "./dist/scope.mjs",
+      "require": "./dist/scope.cjs"
+    },
+    "./async": {
+      "types": "./dist/async.d.ts",
+      "import": "./dist/async.mjs",
+      "require": "./dist/async.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "type-check": "tsc --noEmit",
+    "lint": "eslint \"src/**/*.ts\" \"tests/**/*.ts\"",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@lytjs/shared-types": "workspace:*",
+    "@lytjs/common-is": "workspace:*",
+    "@lytjs/common-scheduler": "workspace:*"
+  },
+  "devDependencies": {
+    "tsup": "^8.0.0",
+    "typescript": "^5.4.0",
+    "vitest": "^1.6.0"
+  },
+  "peerDependencies": {},
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://gitee.com/lytjs/lytjs.git",
+    "directory": "packages/reactivity"
+  },
+  "keywords": [
+    "lytjs",
+    "reactivity",
+    "signal",
+    "vue",
+    "reactive",
+    "computed",
+    "watch"
+  ]
+}

@@ -1,0 +1,57 @@
+{
+  "name": "@lytjs/renderer",
+  "version": "6.0.0",
+  "description": "LytJS renderer - DOM, SSR, and Vapor rendering backends",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    },
+    "./dom": {
+      "types": "./dist/dom.d.ts",
+      "import": "./dist/dom.mjs",
+      "require": "./dist/dom.cjs"
+    },
+    "./ssr": {
+      "types": "./dist/ssr.d.ts",
+      "import": "./dist/ssr.mjs",
+      "require": "./dist/ssr.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "type-check": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@lytjs/reactivity": "workspace:*",
+    "@lytjs/vdom": "workspace:*",
+    "@lytjs/common-is": "workspace:*",
+    "@lytjs/common-string": "workspace:*",
+    "@lytjs/common-events": "workspace:*",
+    "@lytjs/common-dom": "workspace:*",
+    "@lytjs/dom-runtime": "workspace:*",
+    "@lytjs/compiler": "workspace:*",
+    "@lytjs/host-contract": "workspace:*",
+    "@lytjs/adapter-web": "workspace:*"
+  },
+  "devDependencies": {
+    "tsup": "^8.0.0",
+    "typescript": "^5.4.0",
+    "vitest": "^1.6.0",
+    "jsdom": "^24.0.0"
+  },
+  "license": "MIT"
+}

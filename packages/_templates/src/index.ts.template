@@ -1,0 +1,10 @@
+/**
+ * @lytjs/{{PACKAGE_NAME}}
+ *
+ * {{DESCRIPTION}}
+ *
+ * @packageDocumentation
+ */
+
+// 在此导出所有公共 API
+export {};

@@ -1,0 +1,39 @@
+{
+  "name": "@lytjs/dom-runtime",
+  "version": "6.0.0",
+  "description": "LytJS Signal-pattern DOM runtime - fine-grained DOM operations",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint \"src/**/*.ts\"",
+    "build": "tsup",
+    "type-check": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "sideEffects": false,
+  "license": "MIT",
+  "dependencies": {
+    "@lytjs/reactivity": "workspace:*"
+  },
+  "devDependencies": {
+    "tsup": "^8.4.0",
+    "typescript": "^5.8.2",
+    "vitest": "^3.0.7",
+    "jsdom": "^26.0.0"
+  }
+}

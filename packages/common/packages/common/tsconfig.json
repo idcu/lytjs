@@ -1,0 +1,34 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "composite": false,
+    "incremental": false,
+    "baseUrl": "..",
+    "paths": {
+      "@lytjs/common-env": ["./env/dist"],
+      "@lytjs/common-is": ["./is/dist"],
+      "@lytjs/common-string": ["./string/dist"],
+      "@lytjs/common-security": ["./security/dist"],
+      "@lytjs/common-path": ["./path/dist"],
+      "@lytjs/common-events": ["./events/dist"],
+      "@lytjs/common-cache": ["./cache/dist"],
+      "@lytjs/common-timing": ["./timing/dist"],
+      "@lytjs/common-algorithm": ["./algorithm/dist"],
+      "@lytjs/common-vnode": ["./vnode/dist"],
+      "@lytjs/common-error": ["./error/dist"],
+      "@lytjs/common-object": ["./object/dist"],
+      "@lytjs/common-scheduler": ["./scheduler/dist"],
+      "@lytjs/common-constants": ["./constants/dist"],
+      "@lytjs/common-render-queue": ["./render-queue/dist"],
+      "@lytjs/common-event-normalizer": ["./event-normalizer/dist"],
+      "@lytjs/common-node-cache": ["./node-cache/dist"],
+      "@lytjs/common-async-scheduler": ["./async-scheduler/dist"],
+      "@lytjs/common-transition-engine": ["./transition-engine/dist"],
+      "@lytjs/common-performance": ["./performance/dist"]
+    }
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "dist", "tests"]
+}

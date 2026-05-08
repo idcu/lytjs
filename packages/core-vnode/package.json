@@ -1,0 +1,52 @@
+{
+  "name": "@lytjs/core-vnode",
+  "version": "6.0.0",
+  "description": "Lyt.js Core - VNode rendering mode only",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch"
+  },
+  "dependencies": {
+    "@lytjs/component": "workspace:*",
+    "@lytjs/reactivity": "workspace:*",
+    "@lytjs/vdom": "workspace:*",
+    "@lytjs/compiler": "workspace:*",
+    "@lytjs/renderer": "workspace:*",
+    "@lytjs/common-scheduler": "workspace:*",
+    "@lytjs/common-error": "workspace:*",
+    "@lytjs/shared-types": "workspace:*"
+  },
+  "devDependencies": {
+    "tsup": "^8.0.0",
+    "typescript": "^5.4.0"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://gitee.com/lytjs/lytjs.git",
+    "directory": "packages/core-vnode"
+  },
+  "keywords": [
+    "lytjs",
+    "core",
+    "vnode",
+    "createApp",
+    "h",
+    "defineComponent"
+  ]
+}

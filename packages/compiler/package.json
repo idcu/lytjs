@@ -1,0 +1,61 @@
+{
+  "name": "@lytjs/compiler",
+  "version": "6.0.0",
+  "description": "LytJS template compiler - parse, transform, optimize and codegen",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    },
+    "./signal": {
+      "types": "./dist/signal.d.ts",
+      "import": "./dist/signal.mjs",
+      "require": "./dist/signal.cjs"
+    },
+    "./ssr": {
+      "types": "./dist/ssr.d.ts",
+      "import": "./dist/ssr.mjs",
+      "require": "./dist/ssr.cjs"
+    },
+    "./sfc": {
+      "types": "./dist/sfc.d.ts",
+      "import": "./dist/sfc.mjs",
+      "require": "./dist/sfc.cjs"
+    },
+    "./wasm": {
+      "types": "./dist/wasm.d.ts",
+      "import": "./dist/wasm.mjs",
+      "require": "./dist/wasm.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "type-check": "tsc --noEmit",
+    "lint": "eslint \"src/**/*.ts\" \"tests/**/*.ts\"",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@lytjs/common-is": "workspace:*",
+    "@lytjs/common-error": "workspace:*",
+    "@lytjs/common-vnode": "workspace:*"
+  },
+  "devDependencies": {
+    "tsup": "^8.0.0",
+    "typescript": "^5.4.0",
+    "vitest": "^1.6.0"
+  },
+  "license": "MIT"
+}
