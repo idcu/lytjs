@@ -144,3 +144,26 @@ export type {
   RenderFunction,
   SlotFunction,
 } from './types';
+
+// DI 增强模块 (Phase 1.8-1.11)
+/** 依赖注入增强：多级 Provider、可选注入、InjectionToken、生命周期管理 */
+export {
+  InjectionToken,
+  isInjectionToken,
+  provideSingleton,
+  provideScoped,
+  provideTransient,
+  provideAll,
+  withProviderScope,
+  enterProviderScope,
+  exitProviderScope,
+  getProviderRoot,
+  getCurrentProviderNode,
+  InjectionError,
+} from './di';
+export type {
+  ProviderLifecycle,
+  ProviderConfig,
+  ProviderNode,
+  EnhancedInjectOptions,
+} from './di';
