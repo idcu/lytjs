@@ -48,7 +48,8 @@
     "@lytjs/common-storage": "workspace:*",
     "@lytjs/common-validate": "workspace:*",
     "@lytjs/common-http": "workspace:*",
-    "@lytjs/common-raf": "workspace:*"
+    "@lytjs/common-raf": "workspace:*",
+    "@lytjs/common-warn": "workspace:*"
   },
   "devDependencies": {
     "tsup": "^8.4.0",
