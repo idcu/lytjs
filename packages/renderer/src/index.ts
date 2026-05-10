@@ -482,3 +482,24 @@ export async function getServerComponentClientFunctions() {
     configureServerAction: client.configureServerAction,
   };
 }
+
+// 数据获取 API (Phase 1.7)
+/** 数据获取集成 */
+export async function getDataFetchingFunctions() {
+  const data = await import('./data/data-fetching');
+  return {
+    serializeData: data.serializeData,
+    deserializeData: data.deserializeData,
+    createPrefetchManager: data.createPrefetchManager,
+    useFetch: data.useFetch,
+    useAsyncData: data.useAsyncData,
+    injectPrefetchData: data.injectPrefetchData,
+    getPrefetchData: data.getPrefetchData,
+  };
+}
+export type {
+  DataFetchState,
+  DataFetchOptions,
+  PrefetchDataEntry,
+  PrefetchManager,
+} from './data/data-fetching';
