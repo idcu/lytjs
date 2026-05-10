@@ -420,3 +420,42 @@ export type { ResourceCleanupRenderer } from './unmount';
 // 工具函数
 /** HTML 转义、布尔属性判断等工具函数 */
 export { escapeHtml, isBooleanAttr, isVoidElement } from './utils';
+
+// Server Components API (Phase 1.4)
+/** Server Components 服务端运行时 */
+export async function getServerComponentFunctions() {
+  const serverComponents = await import('./server/server-components');
+  return {
+    registerServerComponent: serverComponents.registerServerComponent,
+    registerServerFunction: serverComponents.registerServerFunction,
+    getServerComponent: serverComponents.getServerComponent,
+    getServerFunction: serverComponents.getServerFunction,
+    handleServerAction: serverComponents.handleServerAction,
+    createServerActionHandler: serverComponents.createServerActionHandler,
+    serializeServerData: serverComponents.serializeServerData,
+    deserializeServerData: serverComponents.deserializeServerData,
+    renderServerComponent: serverComponents.renderServerComponent,
+    defineServerComponent: serverComponents.defineServerComponent,
+  };
+}
+export type {
+  ServerComponentDefinition,
+  ServerActionRequest,
+  ServerActionResponse,
+} from './server/server-components';
+
+/** Server Components 客户端运行时 */
+export async function getServerComponentClientFunctions() {
+  const client = await import('./client/server-components-client');
+  return {
+    callServer: client.callServer,
+    createServerFunction: client.createServerFunction,
+    getServerData: client.getServerData,
+    hasServerData: client.hasServerData,
+    isHydrated: client.isHydrated,
+    markHydrated: client.markHydrated,
+    getHydrationState: client.getHydrationState,
+    autoHydrate: client.autoHydrate,
+    configureServerAction: client.configureServerAction,
+  };
+}

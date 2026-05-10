@@ -11,6 +11,21 @@ import { generateSignalOptimized } from './codegen-signal-optimized';
 import { generateSSR } from './codegen-ssr';
 import type { CompilerOptions, CodegenResult, DirectiveTransform, RootNode } from './types';
 
+// Server Components (Phase 1.4)
+export {
+  detectServerDirective,
+  analyzeServerComponent,
+  compileServerComponent,
+  createServerReference,
+  createServerProxy,
+} from './server-components';
+export type {
+  ServerDirective,
+  ServerComponentAnalysis,
+  ServerComponentOptions,
+  ServerComponentResult,
+} from './server-components';
+
 export { parse, transform, optimize, generate };
 export { generateSignalOptimized };
 
