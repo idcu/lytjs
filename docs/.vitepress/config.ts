@@ -20,27 +20,16 @@ export default defineConfig({
     ['meta', { name: 'og:description', content: '下一代轻量级前端框架' }],
   ],
 
+  // 主题配置
   themeConfig: {
     logo: '/lytjs/logo.svg',
     siteTitle: 'Lyt.js',
 
+    // 导航栏
     nav: [
-      { text: '指南', link: '/guide/' },
-      { text: 'API 参考', link: '/api/' },
-      {
-        text: '子仓库',
-        items: [
-          { text: '@lytjs/core', link: '/api/core' },
-          { text: '@lytjs/reactivity', link: '/api/reactivity' },
-          { text: '@lytjs/compiler', link: '/api/compiler' },
-          { text: '@lytjs/renderer', link: '/api/renderer' },
-          { text: '@lytjs/component', link: '/api/component' },
-          { text: '@lytjs/vdom', link: '/api/vdom' },
-          { text: '@lytjs/common-*', link: '/api/common' },
-          { text: '@lytjs/host-contract', link: '/api/host-contract' },
-          { text: '@lytjs/shared-types', link: '/api/shared-types' },
-        ],
-      },
+      { text: '指南', link: '/guide/', activeMatch: '^/guide/' },
+      { text: 'API 参考', link: '/api/', activeMatch: '^/api/' },
+      { text: '示例', link: '/examples/', activeMatch: '^/examples/' },
       {
         text: '生态',
         items: [
@@ -52,14 +41,93 @@ export default defineConfig({
           { text: '测试工具', link: '/api/test-utils' },
         ],
       },
-      // TODO: 示例页面尚未创建，取消注释当示例就绪时
-      // { text: '示例', link: '/examples/' },
+      {
+        text: 'v6.0.0',
+        items: [
+          { text: '更新日志', link: '/changelog' },
+          { text: '贡献指南', link: '/guide/contributing' },
+          { text: 'GitHub', link: 'https://gitee.com/lytjs/lytjs' },
+        ],
+      },
     ],
 
+    // 侧边栏
     sidebar: {
+      '/guide/': [
+        {
+          text: '开始',
+          collapsed: false,
+          items: [
+            { text: '介绍', link: '/guide/' },
+            { text: '快速开始', link: '/guide/getting-started' },
+            { text: '安装', link: '/guide/installation' },
+            { text: '本地开发使用指南', link: '/guide/local-usage' },
+          ],
+        },
+        {
+          text: '核心概念',
+          collapsed: false,
+          items: [
+            { text: '响应式系统', link: '/guide/reactivity' },
+            { text: '组件', link: '/guide/component' },
+            { text: '模板语法', link: '/guide/template-syntax' },
+            { text: '生命周期', link: '/guide/lifecycle' },
+            { text: '事件处理', link: '/guide/events' },
+          ],
+        },
+        {
+          text: '进阶',
+          collapsed: false,
+          items: [
+            { text: '组合式 API', link: '/guide/composition-api' },
+            { text: '自定义指令', link: '/guide/custom-directives' },
+            { text: '插件', link: '/guide/plugins' },
+            { text: '渲染函数', link: '/guide/render-function' },
+          ],
+        },
+        {
+          text: '工程化',
+          collapsed: false,
+          items: [
+            { text: '项目配置', link: '/guide/project-config' },
+            { text: '构建优化', link: '/guide/build-optimization' },
+            { text: 'SSR', link: '/guide/ssr' },
+            { text: 'TypeScript', link: '/guide/typescript' },
+          ],
+        },
+        {
+          text: '内置与渲染',
+          collapsed: false,
+          items: [
+            { text: '内置组件', link: '/guide/built-in-components' },
+            { text: '渲染模式', link: '/guide/rendering-modes' },
+          ],
+        },
+        {
+          text: '贡献',
+          collapsed: false,
+          items: [
+            { text: '贡献指南', link: '/guide/contributing' },
+            { text: '架构设计', link: '/guide/architecture' },
+          ],
+        },
+        {
+          text: '开发者文档',
+          collapsed: true,
+          items: [
+            { text: '包总览', link: '/guide/packages/' },
+            { text: 'L0 基础层', link: '/guide/packages/common' },
+            { text: '响应式系统原理', link: '/guide/packages/reactivity-deep' },
+            { text: 'VDOM 实现原理', link: '/guide/packages/vdom-deep' },
+            { text: '编译器架构', link: '/guide/packages/compiler-deep' },
+            { text: '自定义渲染器开发', link: '/guide/packages/custom-renderer' },
+          ],
+        },
+      ],
       '/api/': [
         {
           text: '核心包',
+          collapsed: false,
           items: [
             { text: '概览', link: '/api/' },
             { text: '@lytjs/core', link: '/api/core' },
@@ -76,6 +144,7 @@ export default defineConfig({
         },
         {
           text: '生态包',
+          collapsed: false,
           items: [
             { text: '@lytjs/router', link: '/api/router' },
             { text: '@lytjs/store', link: '/api/store' },
@@ -83,6 +152,7 @@ export default defineConfig({
         },
         {
           text: '工具包',
+          collapsed: false,
           items: [
             { text: '@lytjs/cli', link: '/api/cli' },
             { text: '@lytjs/devtools', link: '/api/devtools' },
@@ -91,79 +161,32 @@ export default defineConfig({
           ],
         },
       ],
-      '/guide/': [
+      '/examples/': [
         {
-          text: '开始',
+          text: '示例项目',
+          collapsed: false,
           items: [
-            { text: '介绍', link: '/guide/' },
-            { text: '快速开始', link: '/guide/getting-started' },
-            { text: '安装', link: '/guide/installation' },
-            { text: '本地开发使用指南', link: '/guide/local-usage' },
-          ],
-        },
-        {
-          text: '核心概念',
-          items: [
-            { text: '响应式系统', link: '/guide/reactivity' },
-            { text: '组件', link: '/guide/component' },
-            { text: '模板语法', link: '/guide/template-syntax' },
-            { text: '生命周期', link: '/guide/lifecycle' },
-            { text: '事件处理', link: '/guide/events' },
-          ],
-        },
-        {
-          text: '进阶',
-          items: [
-            { text: '组合式 API', link: '/guide/composition-api' },
-            { text: '自定义指令', link: '/guide/custom-directives' },
-            { text: '插件', link: '/guide/plugins' },
-            { text: '渲染函数', link: '/guide/render-function' },
-          ],
-        },
-        {
-          text: '工程化',
-          items: [
-            { text: '项目配置', link: '/guide/project-config' },
-            { text: '构建优化', link: '/guide/build-optimization' },
-            { text: 'SSR', link: '/guide/ssr' },
-            { text: 'TypeScript', link: '/guide/typescript' },
-          ],
-        },
-        {
-          text: '内置与渲染',
-          items: [
-            { text: '内置组件', link: '/guide/built-in-components' },
-            { text: '渲染模式', link: '/guide/rendering-modes' },
-          ],
-        },
-        {
-          text: '贡献',
-          items: [
-            { text: '贡献指南', link: '/guide/contributing' },
-            { text: '架构设计', link: '/guide/architecture' },
-          ],
-        },
-        {
-          text: '开发者文档',
-          items: [
-            { text: '包总览', link: '/guide/packages/' },
-            { text: 'L0 基础层', link: '/guide/packages/common' },
-            { text: '响应式系统原理', link: '/guide/packages/reactivity-deep' },
-            { text: 'VDOM 实现原理', link: '/guide/packages/vdom-deep' },
-            { text: '编译器架构', link: '/guide/packages/compiler-deep' },
-            { text: '自定义渲染器开发', link: '/guide/packages/custom-renderer' },
+            { text: '概览', link: '/examples/' },
+            { text: '计数器', link: '/examples/counter' },
+            { text: '待办事项', link: '/examples/todomvc' },
+            { text: '用户列表', link: '/examples/user-list' },
           ],
         },
       ],
     },
 
-    socialLinks: [{ icon: 'github', link: 'https://gitee.com/lytjs/lytjs' }],
+    // 社交链接
+    socialLinks: [
+      { icon: 'github', link: 'https://gitee.com/lytjs/lytjs' },
+    ],
 
+    // 页脚
     footer: {
       message: '基于 MIT 许可发布',
       copyright: '2026-present lytjs',
     },
 
+    // 本地搜索配置
     search: {
       provider: 'local',
       options: {
@@ -186,32 +209,70 @@ export default defineConfig({
             },
           },
         },
+        miniSearch: {
+          searchOptions: {
+            boost: {
+              title: 5,
+              text: 2,
+              titles: 1,
+            },
+            fuzzy: 0.2,
+            prefix: true,
+          },
+        },
       },
     },
 
+    // 编辑链接
     editLink: {
       pattern: 'https://gitee.com/lytjs/lytjs/edit/develop/docs/:path',
       text: '在 Gitee 上编辑此页',
     },
 
+    // 最后更新时间
     lastUpdated: {
       text: '最后更新于',
     },
 
+    // 文档页脚
     docFooter: {
       prev: '上一页',
       next: '下一页',
     },
 
+    // 大纲
     outline: {
       level: [2, 3],
       label: '页面导航',
     },
 
+    // 返回顶部
     returnToTopLabel: '回到顶部',
+
+    // 侧边栏菜单
     sidebarMenuLabel: '菜单',
+
+    // 暗黑模式
     darkModeSwitchLabel: '主题',
     lightModeSwitchTitle: '切换到浅色模式',
     darkModeSwitchTitle: '切换到深色模式',
+  },
+
+  // Markdown 配置
+  markdown: {
+    lineNumbers: true,
+    config: (md) => {
+      // 可以在这里添加自定义 markdown-it 插件
+    },
+  },
+
+  // Vite 配置
+  vite: {
+    // 自定义 Vite 配置
+    css: {
+      preprocessorOptions: {
+        // 如果需要使用 CSS 预处理器
+      },
+    },
   },
 });
