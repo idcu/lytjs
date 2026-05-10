@@ -1,0 +1,17 @@
+{
+  "name": "@lytjs/benchmarks",
+  "version": "6.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "bench": "vitest bench",
+    "bench:render": "vitest bench --testNamePattern=render",
+    "bench:update": "vitest bench --testNamePattern=update",
+    "compare": "node scripts/compare.js"
+  },
+  "devDependencies": {
+    "@lytjs/core": "workspace:*",
+    "@lytjs/reactivity": "workspace:*",
+    "vitest": "^3.0.0"
+  }
+}
