@@ -1,164 +1,111 @@
 /**
  * 循环依赖检测脚本
  *
- * 用途：使用 madge 检测 packages/ 下所有包的循环依赖。
+ * 使用 madge 检测所有包的循环依赖。
  *
- * 扫描路径：
- *   - packages/*/dist/index.js（顶层包）
- *   - packages/common/packages/*/dist/index.js（common 子包）
- *
- * 用法：
- *   pnpm run check-circular        # 扫描 dist 目录
- *   pnpm run check-circular:src    # 扫描 src 目录
+ * 用法: pnpm run check-circular
+ *       pnpm run check-circular:src  (扫描源码)
  */
 
-import { existsSync, readdirSync } from 'node:fs';
+import madge from 'madge';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-
-import madge from 'madge';
+import { existsSync, readdirSync } from 'node:fs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
 
-// 解析 --src 参数
-const useSrc = process.argv.includes('--src');
+const isSrc = process.argv.includes('--src');
 
-/**
- * 收集所有需要检测的入口文件路径
- */
-function collectEntryPoints(): string[] {
-  const entries: string[] = [];
-  const suffix = useSrc ? 'src/index.ts' : 'dist/index.js';
+interface PackageEntry {
+  name: string;
+  path: string;
+}
 
-  // 扫描 packages/*/dist/index.js（或 src/index.ts）
-  const topPackagesDir = join(ROOT, 'packages');
-  if (existsSync(topPackagesDir)) {
-    const topEntries = readdirSync(topPackagesDir, { withFileTypes: true });
-    for (const entry of topEntries) {
-      if (!entry.isDirectory()) continue;
-      // 跳过 _templates 和 common（common 的子包在下面单独扫描）
-      if (entry.name === '_templates' || entry.name === 'common') continue;
-      // 跳过 ecosystem、plugins、tools（它们是聚合目录，子包在子目录中）
-      if (entry.name === 'ecosystem' || entry.name === 'plugins' || entry.name === 'tools') continue;
+function collectPackages(): PackageEntry[] {
+  const packages: PackageEntry[] = [];
+  const packagesDir = join(ROOT, 'packages');
 
-      const entryPath = join(topPackagesDir, entry.name, suffix);
-      if (existsSync(entryPath)) {
-        entries.push(entryPath);
+  // 顶层包
+  const topDirs = readdirSync(packagesDir, { withFileTypes: true });
+  for (const dir of topDirs) {
+    if (!dir.isDirectory()) continue;
+    if (dir.name.startsWith('_') || dir.name === 'common' || dir.name === 'lytui') continue;
+
+    const entryFile = isSrc
+      ? join(packagesDir, dir.name, 'src', 'index.ts')
+      : join(packagesDir, dir.name, 'dist', 'index.mjs');
+
+    if (existsSync(entryFile)) {
+      packages.push({ name: `@lytjs/${dir.name}`, path: entryFile });
+    }
+  }
+
+  // 孙包目录
+  const subDirs = ['common/packages', 'ecosystem/packages', 'plugins/packages', 'tools/packages'];
+  for (const sub of subDirs) {
+    const subPath = join(packagesDir, sub);
+    if (!existsSync(subPath)) continue;
+
+    const dirs = readdirSync(subPath, { withFileTypes: true });
+    for (const dir of dirs) {
+      if (!dir.isDirectory()) continue;
+
+      const entryFile = isSrc
+        ? join(subPath, dir.name, 'src', 'index.ts')
+        : join(subPath, dir.name, 'dist', 'index.mjs');
+
+      if (existsSync(entryFile)) {
+        packages.push({ name: `@lytjs/${dir.name}`, path: entryFile });
       }
     }
   }
 
-  // 扫描 packages/ecosystem/packages/*/dist/index.js
-  const ecosystemDir = join(ROOT, 'packages', 'ecosystem', 'packages');
-  if (existsSync(ecosystemDir)) {
-    const ecoEntries = readdirSync(ecosystemDir, { withFileTypes: true });
-    for (const entry of ecoEntries) {
-      if (!entry.isDirectory()) continue;
-      const entryPath = join(ecosystemDir, entry.name, suffix);
-      if (existsSync(entryPath)) {
-        entries.push(entryPath);
-      }
-    }
-  }
-
-  // 扫描 packages/plugins/packages/*/dist/index.js
-  const pluginsDir = join(ROOT, 'packages', 'plugins', 'packages');
-  if (existsSync(pluginsDir)) {
-    const pluginEntries = readdirSync(pluginsDir, { withFileTypes: true });
-    for (const entry of pluginEntries) {
-      if (!entry.isDirectory()) continue;
-      const entryPath = join(pluginsDir, entry.name, suffix);
-      if (existsSync(entryPath)) {
-        entries.push(entryPath);
-      }
-    }
-  }
-
-  // 扫描 packages/tools/packages/*/dist/index.js
-  const toolsDir = join(ROOT, 'packages', 'tools', 'packages');
-  if (existsSync(toolsDir)) {
-    const toolEntries = readdirSync(toolsDir, { withFileTypes: true });
-    for (const entry of toolEntries) {
-      if (!entry.isDirectory()) continue;
-      const entryPath = join(toolsDir, entry.name, suffix);
-      if (existsSync(entryPath)) {
-        entries.push(entryPath);
-      }
-    }
-  }
-
-  // 扫描 packages/common/packages/*/dist/index.js
-  const commonPackagesDir = join(ROOT, 'packages', 'common', 'packages');
-  if (existsSync(commonPackagesDir)) {
-    const commonEntries = readdirSync(commonPackagesDir, { withFileTypes: true });
-    for (const entry of commonEntries) {
-      if (!entry.isDirectory()) continue;
-      const entryPath = join(commonPackagesDir, entry.name, suffix);
-      if (existsSync(entryPath)) {
-        entries.push(entryPath);
-      }
-    }
-  }
-
-  return entries;
+  return packages;
 }
 
 async function main(): Promise<void> {
-  const mode = useSrc ? 'src' : 'dist';
-  console.log(`🔍 检测循环依赖（${mode} 模式）...\n`);
+  console.log(`🔍 检查循环依赖 (${isSrc ? '源码模式' : '构建模式'})...\n`);
 
-  const entryPoints = collectEntryPoints();
+  const packages = collectPackages();
+  const entryPoints: Record<string, string> = {};
 
-  if (entryPoints.length === 0) {
-    console.log('⚠️  未找到任何入口文件，请先构建项目。\n');
+  for (const pkg of packages) {
+    entryPoints[pkg.name] = pkg.path;
+  }
+
+  if (Object.keys(entryPoints).length === 0) {
+    console.log('⚠️  未找到任何包入口文件。');
+    console.log(isSrc ? '请确保 src/index.ts 文件存在。' : '请先运行 pnpm build。');
     process.exit(1);
   }
-
-  console.log(`📦 扫描 ${entryPoints.length} 个包：\n`);
-  for (const entry of entryPoints) {
-    // 显示相对于项目根目录的路径
-    const relative = entry.replace(ROOT, '.').replace(/\\/g, '/');
-    console.log(`  - ${relative}`);
-  }
-  console.log('');
 
   try {
     const result = await madge(entryPoints, {
-      // 使用 TypeScript 解析器（src 模式下需要）
+      fileExtensions: ['ts', 'js', 'mjs', 'cjs'],
       tsConfig: join(ROOT, 'tsconfig.base.json'),
-      // 不检测 CommonJS 内置模块
-      detectiveOptions: {
-        es6: { mixedImports: true },
+      alias: {
+        '@lytjs/*': join(ROOT, 'packages/*'),
       },
-      // 基础目录
-      baseDir: ROOT,
     });
 
-    const circularDependencies = result.circular();
+    const circular = result.circular();
 
-    if (circularDependencies.length === 0) {
-      console.log('✅ 未发现循环依赖，所有包依赖关系正常。\n');
+    if (circular.length === 0) {
+      console.log('✅ 未发现循环依赖。\n');
       process.exit(0);
     }
 
-    console.log(`❌ 发现 ${circularDependencies.length} 个循环依赖：\n`);
+    console.log(`❌ 发现 ${circular.length} 个循环依赖：\n`);
 
-    for (let i = 0; i < circularDependencies.length; i++) {
-      const cycle = circularDependencies[i]!;
-      // 将路径转换为相对路径以便阅读
-      const readable = cycle.map((p) => {
-        const relative = p.replace(ROOT, '.').replace(/\\/g, '/');
-        return relative;
-      });
-      console.log(`  ${i + 1}. ${readable.join(' → ')} → ${readable[0]}`);
+    for (const cycle of circular) {
+      console.log(`  🔄 ${cycle.join(' → ')}`);
     }
 
-    console.log('\n请修复以上循环依赖后重新运行检查。');
+    console.log('\n请重构以上模块以消除循环依赖。');
     process.exit(1);
   } catch (err) {
-    console.error('❌ 检测过程中出错：');
-    console.error(err instanceof Error ? err.message : String(err));
+    console.error('检测过程中出错:', err);
     process.exit(1);
   }
 }
