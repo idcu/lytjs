@@ -112,9 +112,14 @@ export function extractComponentState(componentId: string): ComponentState | nul
  * Check if a signal belongs to a component
  * This uses heuristics: signal name prefix or metadata
  */
+interface SignalWithComponentId extends SignalInfo {
+  componentId?: string;
+}
+
 function isSignalBelongsToComponent(signal: SignalInfo, componentId: string): boolean {
   // Check for component metadata in signal
-  if ((signal as any).componentId === componentId) {
+  const signalWithMeta = signal as SignalWithComponentId;
+  if (signalWithMeta.componentId === componentId) {
     return true;
   }
 
@@ -236,7 +241,7 @@ function findSignalIdForPath(componentId: string, path: string): string | null {
     // Match by component association and path
     if (isSignalBelongsToComponent(signal, componentId)) {
       const stateName = component
-        ? signal.name.replace(`${component.name}_`, '')
+        ? signal.name.substring(component.name.length + 1)  // 使用 substring 而不是 replace
         : signal.name;
       if (stateName === path || signal.name === path) {
         return signal.id;

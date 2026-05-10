@@ -5,12 +5,13 @@
  */
 
 import { recordEvent, isEventRecording } from './events';
-import { registerSignal, unregisterSignal, generateSignalId } from './signals';
+import { registerSignal, unregisterSignal } from './signals';
+import { generateId } from '@lytjs/common-string';
 
 /**
  * Track a store mutation in DevTools
  */
-export function trackStoreMutation(storeId: string, type: string, payload: any): void {
+export function trackStoreMutation(storeId: string, type: string, payload: unknown): void {
   if (!isEventRecording()) return;
 
   recordEvent(
@@ -24,14 +25,14 @@ export function trackStoreMutation(storeId: string, type: string, payload: any):
  */
 export function registerStoreSignals(
   storeId: string,
-  state: Record<string, any>,
+  state: Record<string, unknown>,
 ): Map<string, string> {
   const signalIds = new Map<string, string>();
 
   for (const [key, value] of Object.entries(state)) {
-    const id = generateSignalId();
+    const id = generateId('signal');
     const name = `${storeId}.${key}`;
-    registerSignal(value, id, name);
+    registerSignal({ id, name, type: 'signal', value });
     signalIds.set(key, id);
   }
 

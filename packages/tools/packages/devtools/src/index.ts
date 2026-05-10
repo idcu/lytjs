@@ -7,14 +7,15 @@
  */
 
 // State
-export { 
-  getState, 
-  enable, 
-  disable, 
+export {
+  getState,
+  enable,
+  disable,
   setConnected,
   startRecording as startStateRecording,
   stopRecording as stopStateRecording,
   subscribeState,
+  clearStateSubscribers,
 } from './state';
 
 // Component Tree
@@ -26,6 +27,10 @@ export {
   getComponentById,
   getComponentCount,
   clearComponentRegistry,
+  buildComponentTree,
+  getAllComponents,
+  getRootComponents,
+  clearComponents,
 } from './component-tree';
 
 // Signals
@@ -38,6 +43,8 @@ export {
   getSignalById,
   setSignalValue,
   clearSignalRegistry,
+  getSignalsByComponent,
+  clearSignals,
 } from './signals';
 
 // Events
@@ -50,6 +57,10 @@ export {
   clearEvents,
   subscribeEvents,
   getEventCount,
+  getEventsByComponent,
+  getEventsByType,
+  getEventStats,
+  setMaxEvents,
 } from './events';
 
 // Snapshots
@@ -60,6 +71,11 @@ export {
   restoreSnapshot,
   deleteSnapshot,
   clearSnapshots,
+  createSnapshot,
+  getSnapshot,
+  getAllSnapshots,
+  exportSnapshots,
+  importSnapshots,
 } from './snapshots';
 
 // Bridge
@@ -69,6 +85,8 @@ export {
   deactivateBridge,
   sendToPanel,
   onPanelMessage,
+  broadcastToPanel,
+  clearHandlers,
 } from './bridge';
 
 // API
@@ -85,6 +103,69 @@ export {
 export {
   trackRouterNavigation,
 } from './router-integration';
+
+// Panel
+export {
+  initDevToolsPanel,
+  cleanupDevToolsPanel,
+  getPanelState,
+  isPanelInitialized,
+  setActiveTab,
+  getActiveTab,
+} from './panel';
+
+// State Editor (from panel)
+export {
+  initStateEditor,
+  applyStateEdit,
+  extractComponentState,
+  getEditHistory,
+  clearEditHistory,
+  undoLastEdit,
+  parseValue,
+  formatValue,
+  setNestedValue,
+  getNestedValue,
+} from './panel/state-editor';
+
+// Time Travel (from panel)
+export {
+  initTimeTravel,
+  startHistoryRecording,
+  stopHistoryRecording,
+  jumpToHistory,
+  goBack,
+  goForward,
+  goToStart,
+  goToEnd,
+  getHistory,
+  getCurrentIndex,
+  clearHistory,
+  exportHistory,
+  importHistory,
+  downloadHistory,
+  compareSnapshots,
+  getStateDiffForEntry,
+} from './panel/time-travel';
+
+// Performance (from panel)
+export {
+  initPerformancePanel,
+  recordComponentRender,
+  startPerformanceMonitoring,
+  stopPerformanceMonitoring,
+  isPerformanceMonitoring,
+  getComponentPerformance,
+  getAllComponentPerformance,
+  getRenderHeatmap,
+  getPerformanceTimeline,
+  getMemoryTrend,
+  clearComponentPerformance,
+  clearPerformanceTimeline,
+  updatePerformanceConfig,
+  getPerformanceConfig,
+  suggestGarbageCollection,
+} from './panel/performance';
 
 // Types
 export type {

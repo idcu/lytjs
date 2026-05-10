@@ -152,27 +152,48 @@ function addHistoryEntry(entry: Omit<HistoryEntry, 'id' | 'timestamp' | 'index'>
   });
 }
 
+// 定义 payload 类型接口
+interface ComponentPayload {
+  name?: string;
+}
+
+interface SignalPayload {
+  path?: string;
+}
+
+interface StorePayload {
+  type?: string;
+}
+
+interface RouterPayload {
+  to?: string;
+}
+
+interface ErrorPayload {
+  message?: string;
+}
+
 /**
  * Format event description
  */
 function formatEventDescription(event: DevToolsEvent): string {
   switch (event.type) {
     case 'component:created':
-      return `Component created: ${(event.payload as any)?.name || 'Unknown'}`;
+      return `Component created: ${(event.payload as ComponentPayload)?.name || 'Unknown'}`;
     case 'component:mounted':
-      return `Component mounted: ${(event.payload as any)?.name || 'Unknown'}`;
+      return `Component mounted: ${(event.payload as ComponentPayload)?.name || 'Unknown'}`;
     case 'component:updated':
-      return `Component updated: ${(event.payload as any)?.name || 'Unknown'}`;
+      return `Component updated: ${(event.payload as ComponentPayload)?.name || 'Unknown'}`;
     case 'component:unmounted':
-      return `Component unmounted: ${(event.payload as any)?.name || 'Unknown'}`;
+      return `Component unmounted: ${(event.payload as ComponentPayload)?.name || 'Unknown'}`;
     case 'signal:changed':
-      return `State changed: ${(event.payload as any)?.path || 'Unknown'}`;
+      return `State changed: ${(event.payload as SignalPayload)?.path || 'Unknown'}`;
     case 'store:mutation':
-      return `Store mutation: ${(event.payload as any)?.type || 'Unknown'}`;
+      return `Store mutation: ${(event.payload as StorePayload)?.type || 'Unknown'}`;
     case 'router:navigation':
-      return `Navigation: ${(event.payload as any)?.to || 'Unknown'}`;
+      return `Navigation: ${(event.payload as RouterPayload)?.to || 'Unknown'}`;
     case 'error:captured':
-      return `Error: ${(event.payload as any)?.message || 'Unknown'}`;
+      return `Error: ${(event.payload as ErrorPayload)?.message || 'Unknown'}`;
     default:
       return `Event: ${event.type}`;
   }
@@ -197,7 +218,11 @@ export function jumpToHistory(index: number): boolean {
   } else if (entry.data.event?.type === 'signal:changed') {
     // For signal changes, we need to reconstruct the state
     // This is a simplified implementation
-    const payload = entry.data.event.payload as any;
+    interface SignalChangePayload {
+      signalId?: string;
+      newValue?: unknown;
+    }
+    const payload = entry.data.event.payload as SignalChangePayload;
     if (payload?.signalId && payload?.newValue !== undefined) {
       setSignalValue(payload.signalId, payload.newValue);
     }

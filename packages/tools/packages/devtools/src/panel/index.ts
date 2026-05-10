@@ -202,8 +202,9 @@ function extractComponentStateForPanel(componentId: string): {
   const allSignals = getSignals();
   const componentSignals = allSignals.filter(signal => {
     // Match by component name prefix or metadata
+    const signalWithMeta = signal as SignalInfo & { componentId?: string };
     return signal.name.startsWith(`${component.name}_`) ||
-           (signal as any).componentId === componentId;
+           signalWithMeta.componentId === componentId;
   });
 
   return {

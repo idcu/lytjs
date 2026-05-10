@@ -8,9 +8,9 @@
  *   node --expose-gc --loader tsx scripts/memlab-check.ts
  */
 
-import { ref, computed, watch, effectScope, reactive } from '../packages/reactivity/src/index.js';
-import { delay } from '../packages/common/common-timing/src/index.js';
-import { formatBytes } from '../packages/common/packages/string/src/index.js';
+import { ref, computed, watch, effectScope, reactive } from '../packages/reactivity/src/index';
+import { delay } from '../packages/common/packages/timing/src/index';
+import { formatBytes } from '../packages/common/packages/string/src/index';
 import v8 from 'node:v8';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -99,7 +99,7 @@ function analyzeTrend(measurements: number[]): {
 }
 
 // åœºæ™¯1: åˆ›å»º/é”€æ¯å¤§é‡?refs
-async function testRefLifecycle(): Promise<{ passed: boolean; details: string[]; growth: number }> {
+async function testRefLifecycle(): Promise<{ passed: boolean; details: string[]; growth: number; initialMem: number; finalMem: number }> {
   console.log('\nðŸ§ª åœºæ™¯1: Ref ç”Ÿå‘½å‘¨æœŸå†…å­˜æ£€æµ?);
   
   const measurements: number[] = [];
@@ -107,7 +107,7 @@ async function testRefLifecycle(): Promise<{ passed: boolean; details: string[];
   
   for (let i = 0; i < 10; i++) {
     // åˆ›å»º 10000 ä¸?refs
-    const refs: any[] = [];
+    const refs: unknown[] = [];
     for (let j = 0; j < 10000; j++) {
       refs.push(ref(j));
     }
@@ -132,18 +132,18 @@ async function testRefLifecycle(): Promise<{ passed: boolean; details: string[];
   console.log(`  è¶‹åŠ¿: ${analysis.trend}`);
   console.log(passed ? '  âœ?é€šè¿‡' : '  â?æ£€æµ‹åˆ°å†…å­˜æ³„æ¼');
   
-  return { passed, details, growth: analysis.growth };
+  return { passed, details, growth: analysis.growth, initialMem: measurements[0], finalMem: measurements[measurements.length - 1] };
 }
 
 // åœºæ™¯2: åˆ›å»º/é”€æ¯å¤§é‡?reactive å¯¹è±¡
-async function testReactiveLifecycle(): Promise<{ passed: boolean; details: string[]; growth: number }> {
+async function testReactiveLifecycle(): Promise<{ passed: boolean; details: string[]; growth: number; initialMem: number; finalMem: number }> {
   console.log('\nðŸ§ª åœºæ™¯2: Reactive å¯¹è±¡ç”Ÿå‘½å‘¨æœŸå†…å­˜æ£€æµ?);
   
   const measurements: number[] = [];
   const details: string[] = [];
   
   for (let i = 0; i < 10; i++) {
-    const objects: any[] = [];
+    const objects: unknown[] = [];
     for (let j = 0; j < 5000; j++) {
       objects.push(reactive({
         id: j,
@@ -173,19 +173,19 @@ async function testReactiveLifecycle(): Promise<{ passed: boolean; details: stri
   console.log(`  è¶‹åŠ¿: ${analysis.trend}`);
   console.log(passed ? '  âœ?é€šè¿‡' : '  â?æ£€æµ‹åˆ°å†…å­˜æ³„æ¼');
   
-  return { passed, details, growth: analysis.growth };
+  return { passed, details, growth: analysis.growth, initialMem: measurements[0], finalMem: measurements[measurements.length - 1] };
 }
 
 // åœºæ™¯3: å“åº”å¼è®¢é˜?(watchers)
-async function testWatcherLifecycle(): Promise<{ passed: boolean; details: string[]; growth: number }> {
+async function testWatcherLifecycle(): Promise<{ passed: boolean; details: string[]; growth: number; initialMem: number; finalMem: number }> {
   console.log('\nðŸ§ª åœºæ™¯3: Watcher ç”Ÿå‘½å‘¨æœŸå†…å­˜æ£€æµ?);
   
   const measurements: number[] = [];
   const details: string[] = [];
   
   for (let i = 0; i < 10; i++) {
-    const refs: any[] = [];
-    const stoppers: any[] = [];
+    const refs: unknown[] = [];
+    const stoppers: (() => void)[] = [];
     
     // åˆ›å»ºå¤§é‡å“åº”å¼æ•°æ®å’Œè®¢é˜…
     for (let j = 0; j < 5000; j++) {
@@ -217,18 +217,18 @@ async function testWatcherLifecycle(): Promise<{ passed: boolean; details: strin
   console.log(`  è¶‹åŠ¿: ${analysis.trend}`);
   console.log(passed ? '  âœ?é€šè¿‡' : '  â?æ£€æµ‹åˆ°å†…å­˜æ³„æ¼');
   
-  return { passed, details, growth: analysis.growth };
+  return { passed, details, growth: analysis.growth, initialMem: measurements[0], finalMem: measurements[measurements.length - 1] };
 }
 
 // åœºæ™¯4: Effect Scope ç”Ÿå‘½å‘¨æœŸ
-async function testEffectScopeLifecycle(): Promise<{ passed: boolean; details: string[]; growth: number }> {
+async function testEffectScopeLifecycle(): Promise<{ passed: boolean; details: string[]; growth: number; initialMem: number; finalMem: number }> {
   console.log('\nðŸ§ª åœºæ™¯4: Effect Scope ç”Ÿå‘½å‘¨æœŸå†…å­˜æ£€æµ?);
   
   const measurements: number[] = [];
   const details: string[] = [];
   
   for (let i = 0; i < 10; i++) {
-    const scopes: any[] = [];
+    const scopes: { stop: () => void }[] = [];
     
     for (let j = 0; j < 1000; j++) {
       const scope = effectScope();
@@ -262,10 +262,10 @@ async function testEffectScopeLifecycle(): Promise<{ passed: boolean; details: s
   console.log(`  è¶‹åŠ¿: ${analysis.trend}`);
   console.log(passed ? '  âœ?é€šè¿‡' : '  â?æ£€æµ‹åˆ°å†…å­˜æ³„æ¼');
   
-  return { passed, details, growth: analysis.growth };
+  return { passed, details, growth: analysis.growth, initialMem: measurements[0], finalMem: measurements[measurements.length - 1] };
 }
 
-// åœºæ™¯5: Computed å€¼ç”Ÿå‘½å‘¨æœ?async function testComputedLifecycle(): Promise<{ passed: boolean; details: string[]; growth: number }> {
+// åœºæ™¯5: Computed å€¼ç”Ÿå‘½å‘¨æœ?async function testComputedLifecycle(): Promise<{ passed: boolean; details: string[]; growth: number; initialMem: number; finalMem: number }> {
   console.log('\nðŸ§ª åœºæ™¯5: Computed ç”Ÿå‘½å‘¨æœŸå†…å­˜æ£€æµ?);
   
   const measurements: number[] = [];
@@ -273,7 +273,7 @@ async function testEffectScopeLifecycle(): Promise<{ passed: boolean; details: s
   
   for (let i = 0; i < 10; i++) {
     const base = ref(0);
-    const computeds: any[] = [];
+    const computeds: unknown[] = [];
     
     for (let j = 0; j < 5000; j++) {
       computeds.push(computed(() => base.value + j));
@@ -303,10 +303,10 @@ async function testEffectScopeLifecycle(): Promise<{ passed: boolean; details: s
   console.log(`  è¶‹åŠ¿: ${analysis.trend}`);
   console.log(passed ? '  âœ?é€šè¿‡' : '  â?æ£€æµ‹åˆ°å†…å­˜æ³„æ¼');
   
-  return { passed, details, growth: analysis.growth };
+  return { passed, details, growth: analysis.growth, initialMem: measurements[0], finalMem: measurements[measurements.length - 1] };
 }
 
-// åœºæ™¯6: å¤§é‡å“åº”å¼æ•°ç»„æ“ä½?async function testLargeArrayOperations(): Promise<{ passed: boolean; details: string[]; growth: number }> {
+// åœºæ™¯6: å¤§é‡å“åº”å¼æ•°ç»„æ“ä½?async function testLargeArrayOperations(): Promise<{ passed: boolean; details: string[]; growth: number; initialMem: number; finalMem: number }> {
   console.log('\nðŸ§ª åœºæ™¯6: å¤§åž‹æ•°ç»„æ“ä½œå†…å­˜æ£€æµ?);
   
   const measurements: number[] = [];
@@ -341,7 +341,7 @@ async function testEffectScopeLifecycle(): Promise<{ passed: boolean; details: s
   console.log(`  è¶‹åŠ¿: ${analysis.trend}`);
   console.log(passed ? '  âœ?é€šè¿‡' : '  â?æ£€æµ‹åˆ°å†…å­˜æ³„æ¼');
   
-  return { passed, details, growth: analysis.growth };
+  return { passed, details, growth: analysis.growth, initialMem: measurements[0], finalMem: measurements[measurements.length - 1] };
 }
 
 function generateReport(results: { name: string; passed: boolean; details: string[]; growth: number; initialMem: number; finalMem: number }[]): LeakReport {
@@ -398,8 +398,8 @@ async function main(): Promise<void> {
       passed: result.passed,
       details: result.details,
       growth: result.growth,
-      initialMem: parseInt(result.details[0]?.split(': ')[1]?.replace(/[^0-9]/g, '') || '0'),
-      finalMem: parseInt(result.details[result.details.length - 1]?.split(': ')[1]?.replace(/[^0-9]/g, '') || '0'),
+      initialMem: result.initialMem,
+      finalMem: result.finalMem,
     });
   }
   

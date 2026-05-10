@@ -85,7 +85,7 @@ async function main(): Promise<void> {
       fileExtensions: ['ts', 'js', 'mjs', 'cjs'],
       tsConfig: join(ROOT, 'tsconfig.base.json'),
       alias: {
-        '@lytjs/*': join(ROOT, 'packages/*'),
+        '@lytjs/*': join(ROOT, 'packages/*').replace(/\\/g, '/'),
       },
     });
 

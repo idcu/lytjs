@@ -308,11 +308,23 @@ function collectPerformanceMetrics(): PerformanceMetrics {
 }
 
 /**
+ * Chrome 性能内存信息接口
+ */
+interface ChromePerformance extends Performance {
+  memory?: {
+    usedJSHeapSize: number;
+    totalJSHeapSize: number;
+    jsHeapSizeLimit: number;
+  };
+}
+
+/**
  * Get memory info if available
  */
 function getMemoryInfo(): MemoryInfo | undefined {
-  if (typeof performance !== 'undefined' && (performance as any).memory) {
-    const mem = (performance as any).memory;
+  const perf = performance as ChromePerformance;
+  if (typeof performance !== 'undefined' && perf.memory) {
+    const mem = perf.memory;
     return {
       usedJSHeapSize: mem.usedJSHeapSize,
       totalJSHeapSize: mem.totalJSHeapSize,
@@ -427,12 +439,20 @@ export function getMemoryTrend(): {
 }
 
 /**
+ * 带有 gc 方法的全局对象接口
+ */
+interface GlobalWithGC extends typeof globalThis {
+  gc?: () => void;
+}
+
+/**
  * Force garbage collection hint (if available)
  */
 export function suggestGarbageCollection(): void {
-  if (typeof globalThis !== 'undefined' && (globalThis as any).gc) {
+  const globalWithGC = globalThis as GlobalWithGC;
+  if (typeof globalThis !== 'undefined' && typeof globalWithGC.gc === 'function') {
     try {
-      (globalThis as any).gc();
+      globalWithGC.gc();
       sendToPanel({
         type: 'GC_SUGGESTED',
         data: { success: true },
