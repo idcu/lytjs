@@ -231,6 +231,28 @@ export { isOn } from '@lytjs/common-events';
 export { createHydrationFunctions } from '@lytjs/adapter-web';
 export type { HydrationRenderer } from '@lytjs/adapter-web';
 
+// 增强 Hydration API (Phase 1.15-1.17)
+/** Hydration 完善：全应用、选择性、错误恢复 */
+export async function getEnhancedHydrationFunctions() {
+  const hydration = await import('./hydration/enhanced-hydration');
+  return {
+    hydrateApp: hydration.hydrateApp,
+    hydrateVisible: hydration.hydrateVisible,
+    queueHydration: hydration.queueHydration,
+    safeHydrate: hydration.safeHydrate,
+    createHydrationErrorHandler: hydration.createHydrationErrorHandler,
+  };
+}
+export type {
+  HydrationMode,
+  HydrationOptions,
+  HydrationError,
+  HydrationMismatch,
+  HydrationStats,
+  RecoveryStrategy,
+} from './hydration/enhanced-hydration';
+export { HydrationErrorHandler } from './hydration/enhanced-hydration';
+
 // 从 @lytjs/host-contract 重新导出
 /** 渲染器宿主抽象类型 */
 export type {
