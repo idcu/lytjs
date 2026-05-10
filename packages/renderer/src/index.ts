@@ -361,6 +361,52 @@ export type {
 } from './vapor/vapor-hmr';
 export { DEFAULT_STATE_PRESERVATION } from './vapor/vapor-hmr';
 
+// Vapor SSR API (Phase 1.3)
+/** Vapor 模式 SSR 支持 */
+export async function renderVaporToString(
+  component: unknown,
+  props?: Record<string, unknown>,
+  options?: unknown,
+) {
+  const { renderVaporToString: _renderVaporToString } = await import('./vapor/vapor-ssr');
+  return _renderVaporToString(
+    component as Parameters<typeof _renderVaporToString>[0],
+    props as Parameters<typeof _renderVaporToString>[1],
+    options as Parameters<typeof _renderVaporToString>[2],
+  );
+}
+export async function renderVaporToStream(
+  component: unknown,
+  props?: Record<string, unknown>,
+  options?: unknown,
+) {
+  const { renderVaporToStream: _renderVaporToStream } = await import('./vapor/vapor-ssr');
+  return _renderVaporToStream(
+    component as Parameters<typeof _renderVaporToStream>[0],
+    props as Parameters<typeof _renderVaporToStream>[1],
+    options as Parameters<typeof _renderVaporToStream>[2],
+  );
+}
+export async function hydrateVaporComponent(
+  container: Element | string,
+  component: unknown,
+  options?: unknown,
+) {
+  const { hydrateVaporComponent: _hydrateVaporComponent } = await import('./vapor/vapor-ssr');
+  return _hydrateVaporComponent(
+    container,
+    component as Parameters<typeof _hydrateVaporComponent>[1],
+    options as Parameters<typeof _hydrateVaporComponent>[2],
+  );
+}
+export type {
+  VaporSSROptions,
+  VaporSSRResult,
+  VaporSSRStreamResult,
+  VaporHydrationOptions,
+} from './vapor/vapor-ssr';
+export { definePrefetch, usePrefetchData } from './vapor/vapor-ssr';
+
 // 组件资源清理
 /** 组件资源自动清理：注册事件监听器、effect 订阅、cleanup 钩子，卸载时自动释放 */
 export {
