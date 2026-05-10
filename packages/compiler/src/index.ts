@@ -26,6 +26,23 @@ export type {
   ServerComponentResult,
 } from './server-components';
 
+// Client/Server Boundary (Phase 1.6)
+export {
+  analyzeBoundary,
+  splitClientServer,
+  runtime,
+  serverOnly,
+  clientOnly,
+  createEnvironmentValue,
+} from './client-server-boundary';
+export type {
+  BoundaryType,
+  BoundaryAnalysis,
+  ComponentBoundary,
+  SplitResult,
+  SplitOptions,
+} from './client-server-boundary';
+
 export { parse, transform, optimize, generate };
 export { generateSignalOptimized };
 
