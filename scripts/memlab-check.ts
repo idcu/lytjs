@@ -10,6 +10,7 @@
 
 import { ref, computed, watch, effectScope, reactive } from '../packages/reactivity/src/index.js';
 import { delay } from '../packages/common/common-timing/src/index.js';
+import { formatBytes } from '../packages/common/packages/string/src/index.js';
 import v8 from 'node:v8';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -52,14 +53,6 @@ function getMemory(): MemorySnapshot {
     arrayBuffers: usage.arrayBuffers || 0,
     timestamp: Date.now(),
   };
-}
-
-function formatBytes(bytes: number): string {
-  if (bytes === 0) return '0 B';
-  const k = 1024;
-  const sizes = ['B', 'KB', 'MB', 'GB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
 }
 
 function forceGC(): void {

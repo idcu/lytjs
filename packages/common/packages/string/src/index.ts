@@ -454,3 +454,26 @@ export function generateId(prefix = STRING_DEFAULT_ID_PREFIX): string {
   // 回退：使用全局计数器 + 时间戳
   return `${prefix}-${++idCounter}-${Date.now().toString(36)}`;
 }
+
+// ============================================================
+// 字节格式化工具
+// ============================================================
+
+/**
+ * 将字节数格式化为人类可读的字符串
+ * @param bytes - 字节数
+ * @returns 格式化后的字符串，如 "1.5 MB"
+ * @example
+ * ```ts
+ * formatBytes(1024) // '1 KB'
+ * formatBytes(1536) // '1.5 KB'
+ * formatBytes(1024 * 1024) // '1 MB'
+ * ```
+ */
+export function formatBytes(bytes: number): string {
+  if (bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
+}
