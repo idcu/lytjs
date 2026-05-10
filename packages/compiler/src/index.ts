@@ -7,10 +7,12 @@ import { parse } from './parser';
 import { transform, builtInTransforms, builtInDirectiveTransforms, optimize } from './transform';
 import { generate } from './codegen';
 import { generateSignal } from './codegen-signal';
+import { generateSignalOptimized } from './codegen-signal-optimized';
 import { generateSSR } from './codegen-ssr';
 import type { CompilerOptions, CodegenResult, DirectiveTransform, RootNode } from './types';
 
 export { parse, transform, optimize, generate };
+export { generateSignalOptimized };
 
 // ============================================================
 // LRU 编译缓存
@@ -218,7 +220,13 @@ export function compile(source: string, options: CompilerOptions = {}): CodegenR
   if (ssrMode) {
     codegenResult = generateSSR(ast, options);
   } else if (options.rendererMode === 'signal' || options.rendererMode === 'vapor') {
-    codegenResult = generateSignal(ast, options);
+    // Phase 1.1: 使用优化版本的 Signal 代码生成器
+    // 当 optimizeSignal 选项为 true 时使用优化版本（默认为 true）
+    if (options.optimizeSignal !== false) {
+      codegenResult = generateSignalOptimized(ast, options);
+    } else {
+      codegenResult = generateSignal(ast, options);
+    }
   } else {
     // 默认 VNode 模式
     codegenResult = generate(ast, options);
