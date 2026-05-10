@@ -1,81 +1,58 @@
 /**
- * @lytjs/devtools - Time travel debugging
+ * DevTools 状态快照管理模块
  */
 
-import type { StateSnapshot } from './types';
-import { getComponentTree } from './component-tree';
-import { getSignals, setSignalValue } from './signals';
-import { getEvents } from './events';
+export interface Snapshot {
+  id: string;
+  timestamp: number;
+  description?: string;
+  data: Record<string, unknown>;
+}
 
-// Snapshot store
-const snapshots: StateSnapshot[] = [];
-let snapshotIdCounter = 0;
+const snapshots = new Map<string, Snapshot>();
 
-/**
- * Take a snapshot of current state
- */
-export function takeSnapshot(): StateSnapshot {
-  const snapshot: StateSnapshot = {
-    id: `snapshot-${++snapshotIdCounter}`,
+export function createSnapshot(
+  id: string, 
+  data: Record<string, unknown>, 
+  description?: string
+): Snapshot {
+  const snapshot: Snapshot = {
+    id,
     timestamp: Date.now(),
-    components: getComponentTree(),
-    signals: getSignals(),
-    events: getEvents(),
+    description,
+    data: JSON.parse(JSON.stringify(data)), // 深拷贝
   };
-  
-  snapshots.push(snapshot);
+  snapshots.set(id, snapshot);
   return snapshot;
 }
 
-/**
- * Get all snapshots
- */
-export function getSnapshots(): StateSnapshot[] {
-  return [...snapshots];
+export function getSnapshot(id: string): Snapshot | undefined {
+  return snapshots.get(id);
 }
 
-/**
- * Get snapshot by ID
- */
-export function getSnapshotById(id: string): StateSnapshot | undefined {
-  return snapshots.find(s => s.id === id);
+export function getAllSnapshots(): Snapshot[] {
+  return Array.from(snapshots.values()).sort((a, b) => a.timestamp - b.timestamp);
 }
 
-/**
- * Restore a snapshot
- * Restores signal values from the snapshot
- */
-export function restoreSnapshot(snapshot: StateSnapshot): boolean {
-  try {
-    for (const signalInfo of snapshot.signals) {
-      if (setSignalValue(signalInfo.id, signalInfo.value)) {
-        console.log(`[@lytjs/devtools] Restored signal ${signalInfo.name} (${signalInfo.id})`);
-      }
-    }
-
-    console.log(`[@lytjs/devtools] Restored snapshot ${snapshot.id} with ${snapshot.signals.length} signals`);
-    return true;
-  } catch (error) {
-    console.error(`[@lytjs/devtools] Failed to restore snapshot ${snapshot.id}:`, error);
-    return false;
-  }
-}
-
-/**
- * Delete a snapshot
- */
 export function deleteSnapshot(id: string): boolean {
-  const index = snapshots.findIndex(s => s.id === id);
-  if (index === -1) return false;
-  
-  snapshots.splice(index, 1);
-  return true;
+  return snapshots.delete(id);
 }
 
-/**
- * Clear all snapshots
- */
 export function clearSnapshots(): void {
-  snapshots.length = 0;
-  snapshotIdCounter = 0;
+  snapshots.clear();
+}
+
+export function exportSnapshots(): string {
+  return JSON.stringify(getAllSnapshots(), null, 2);
+}
+
+export function importSnapshots(json: string): Snapshot[] {
+  try {
+    const parsed = JSON.parse(json) as Snapshot[];
+    parsed.forEach(s => snapshots.set(s.id, s));
+    return parsed;
+  } catch (e) {
+    console.error('[DevTools Snapshots] Import failed:', e);
+    return [];
+  }
 }

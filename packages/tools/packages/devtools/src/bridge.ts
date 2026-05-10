@@ -1,121 +1,65 @@
 /**
- * @lytjs/devtools - Communication bridge
- *
- * Handles communication between the DevTools backend and the browser extension panel.
+ * DevTools 与面板通信桥接模块
  */
 
-import type { DevToolsHook } from './types';
+export type MessageType = 
+  | 'init'
+  | 'update-component-tree'
+  | 'update-signals'
+  | 'edit-state'
+  | 'time-travel'
+  | 'performance-data';
 
-// Bridge state
-let bridgeActive = false;
-const messageHandlers = new Set<(message: unknown) => void>();
-
-/**
- * Check if bridge is active
- */
-export function isBridgeActive(): boolean {
-  return bridgeActive;
+export interface BridgeMessage {
+  type: MessageType;
+  payload?: unknown;
+  timestamp?: number;
 }
 
-/**
- * Activate the bridge
- */
-export function activateBridge(): void {
-  bridgeActive = true;
-  
-  // Setup window hook for DevTools panel communication
-  if (typeof window !== 'undefined') {
-    (window as any).__LYTJS_DEVTOOLS_HOOK__ = createDevToolsHook();
-  }
-}
+type MessageHandler = (message: BridgeMessage) => void;
 
-/**
- * Deactivate the bridge
- */
-export function deactivateBridge(): void {
-  bridgeActive = false;
-  messageHandlers.clear();
-  
-  if (typeof window !== 'undefined') {
-    delete (window as any).__LYTJS_DEVTOOLS_HOOK__;
-  }
-}
+const handlers = new Map<MessageType, Set<MessageHandler>>();
 
-/**
- * Send message to DevTools panel
- */
-export function sendToPanel(message: unknown): void {
-  if (!bridgeActive) return;
-  
-  // In a real implementation, this would use Chrome DevTools Protocol
-  // or postMessage to communicate with the extension panel
-  if (typeof window !== 'undefined') {
-    window.postMessage({
-      source: 'lytjs-devtools-backend',
-      payload: message,
-    }, '*');
+export function onPanelMessage(type: MessageType, handler: MessageHandler): () => void {
+  if (!handlers.has(type)) {
+    handlers.set(type, new Set());
   }
-}
-
-/**
- * Subscribe to messages from panel
- */
-export function onPanelMessage(handler: (message: unknown) => void): () => void {
-  messageHandlers.add(handler);
-  
-  // Setup message listener if not already done
-  if (typeof window !== 'undefined' && messageHandlers.size === 1) {
-    window.addEventListener('message', handleWindowMessage);
-  }
+  handlers.get(type)!.add(handler);
   
   return () => {
-    messageHandlers.delete(handler);
-    
-    if (typeof window !== 'undefined' && messageHandlers.size === 0) {
-      window.removeEventListener('message', handleWindowMessage);
-    }
+    handlers.get(type)?.delete(handler);
   };
 }
 
-/**
- * Handle window messages
- */
-function handleWindowMessage(event: MessageEvent): void {
-  if (event.data?.source === 'lytjs-devtools-panel') {
-    for (const handler of messageHandlers) {
-      handler(event.data.payload);
-    }
+export function sendToPanel(message: BridgeMessage): void {
+  // 实际实现中，这里会通过 chrome.runtime 或 window.postMessage 发送
+  // 简化版本：直接触发对应类型的处理器
+  const typeHandlers = handlers.get(message.type);
+  if (typeHandlers) {
+    typeHandlers.forEach(handler => {
+      try {
+        handler(message);
+      } catch (e) {
+        console.error('[DevTools Bridge] Handler error:', e);
+      }
+    });
   }
 }
 
-/**
- * Create DevTools hook
- */
-function createDevToolsHook(): DevToolsHook {
-  const listeners = new Map<string, Set<(payload?: unknown) => void>>();
-  
-  return {
-    emit(event: string, payload?: unknown) {
-      const handlers = listeners.get(event);
-      if (handlers) {
-        for (const handler of handlers) {
-          handler(payload);
-        }
+export function broadcastToPanel(message: BridgeMessage): void {
+  // 广播到所有类型的处理器
+  handlers.forEach((typeHandlers, type) => {
+    if (type !== message.type) return;
+    typeHandlers.forEach(handler => {
+      try {
+        handler(message);
+      } catch (e) {
+        console.error('[DevTools Bridge] Broadcast error:', e);
       }
-    },
-    
-    on(event: string, handler: (payload?: unknown) => void) {
-      if (!listeners.has(event)) {
-        listeners.set(event, new Set());
-      }
-      listeners.get(event)!.add(handler);
-    },
-    
-    off(event: string, handler: (payload?: unknown) => void) {
-      const handlers = listeners.get(event);
-      if (handlers) {
-        handlers.delete(handler);
-      }
-    },
-  };
+    });
+  });
+}
+
+export function clearHandlers(): void {
+  handlers.clear();
 }

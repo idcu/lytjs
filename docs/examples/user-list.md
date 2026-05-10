@@ -13,46 +13,52 @@
 ```
 src/
 ├── components/
-│   ├── UserCard.vue
-│   ├── UserList.vue
-│   └── LoadingSpinner.vue
+│   ├── UserCard.js
+│   ├── UserList.js
+│   └── LoadingSpinner.js
 ├── composables/
 │   └── useUsers.js
 ├── views/
-│   ├── UserListView.vue
-│   └── UserDetailView.vue
+│   ├── UserListView.js
+│   └── UserDetailView.js
 ├── router/
 │   └── index.js
 ├── api/
 │   └── users.js
-└── App.vue
+└── App.js
 ```
 
-### App.vue
+### App.js
 
-```vue
-<template>
-  <div id="app">
-    <nav class="navbar">
-      <div class="nav-brand">
-        <router-link to="/">User Manager</router-link>
-      </div>
-      <div class="nav-links">
-        <router-link to="/">用户列表</router-link>
-        <router-link to="/about">关于</router-link>
-      </div>
-    </nav>
-    <main class="main-content">
-      <router-view />
-    </main>
-  </div>
-</template>
+```javascript
+import { createApp, h } from '@lytjs/core'
+import { RouterView, RouterLink } from '@lytjs/router'
 
-<script setup>
-// 应用入口组件
-</script>
+function setup() {
+  return {}
+}
 
-<style>
+function render() {
+  return h('div', { id: 'app' }, [
+    h('nav', { class: 'navbar' }, [
+      h('div', { class: 'nav-brand' }, [
+        h(RouterLink, { to: '/' }, 'User Manager'),
+      ]),
+      h('div', { class: 'nav-links' }, [
+        h(RouterLink, { to: '/' }, '用户列表'),
+        h(RouterLink, { to: '/about' }, '关于'),
+      ]),
+    ]),
+    h('main', { class: 'main-content' }, [
+      h(RouterView),
+    ]),
+  ])
+}
+
+const app = createApp({ setup, render })
+```
+
+```css
 * {
   margin: 0;
   padding: 0;
@@ -105,15 +111,14 @@ body {
   margin: 0 auto;
   padding: 2rem;
 }
-</style>
 ```
 
 ### router/index.js
 
 ```javascript
 import { createRouter, createWebHistory } from '@lytjs/router'
-import UserListView from '../views/UserListView.vue'
-import UserDetailView from '../views/UserDetailView.vue'
+import UserListView from '../views/UserListView.js'
+import UserDetailView from '../views/UserDetailView.js'
 
 const routes = [
   {
@@ -130,7 +135,7 @@ const routes = [
   {
     path: '/about',
     name: 'About',
-    component: () => import('../views/AboutView.vue'),
+    component: () => import('../views/AboutView.js'),
   },
 ]
 
@@ -297,26 +302,22 @@ export function useUsers() {
 }
 ```
 
-### components/LoadingSpinner.vue
+### components/LoadingSpinner.js
 
-```vue
-<template>
-  <div class="loading-spinner">
-    <div class="spinner"></div>
-    <p v-if="message">{{ message }}</p>
-  </div>
-</template>
+```javascript
+import { h } from '@lytjs/core'
 
-<script setup>
-defineProps({
-  message: {
-    type: String,
-    default: '加载中...',
-  },
-})
-</script>
+export function LoadingSpinner(props = {}) {
+  const message = props.message || '加载中...'
 
-<style scoped>
+  return h('div', { class: 'loading-spinner' }, [
+    h('div', { class: 'spinner' }),
+    message && h('p', {}, message),
+  ])
+}
+```
+
+```css
 .loading-spinner {
   display: flex;
   flex-direction: column;
@@ -347,56 +348,46 @@ p {
   margin-top: 1rem;
   color: #666;
 }
-</style>
 ```
 
-### components/UserCard.vue
+### components/UserCard.js
 
-```vue
-<template>
-  <div class="user-card" @click="goToDetail">
-    <div class="avatar">
-      {{ initials }}
-    </div>
-    <div class="info">
-      <h3>{{ user.name }}</h3>
-      <p class="email">{{ user.email }}</p>
-      <p class="company">{{ user.company?.name }}</p>
-    </div>
-    <div class="arrow">→</div>
-  </div>
-</template>
-
-<script setup>
-import { computed } from '@lytjs/core'
+```javascript
+import { computed, h } from '@lytjs/core'
 import { useRouter } from '@lytjs/router'
 
-const props = defineProps({
-  user: {
-    type: Object,
-    required: true,
-  },
-})
+export function UserCard(props) {
+  const { user } = props
+  const router = useRouter()
 
-const router = useRouter()
-
-const initials = computed(() => {
-  return props.user.name
-    .split(' ')
-    .map((n) => n[0])
-    .join('')
-    .toUpperCase()
-})
-
-const goToDetail = () => {
-  router.push({
-    name: 'UserDetail',
-    params: { id: props.user.id },
+  const initials = computed(() => {
+    return user.name
+      .split(' ')
+      .map((n) => n[0])
+      .join('')
+      .toUpperCase()
   })
-}
-</script>
 
-<style scoped>
+  const goToDetail = () => {
+    router.push({
+      name: 'UserDetail',
+      params: { id: user.id },
+    })
+  }
+
+  return () => h('div', { class: 'user-card', onClick: goToDetail }, [
+    h('div', { class: 'avatar' }, initials.value),
+    h('div', { class: 'info' }, [
+      h('h3', {}, user.name),
+      h('p', { class: 'email' }, user.email),
+      h('p', { class: 'company' }, user.company?.name),
+    ]),
+    h('div', { class: 'arrow' }, '→'),
+  ])
+}
+```
+
+```css
 .user-card {
   display: flex;
   align-items: center;
@@ -452,98 +443,94 @@ const goToDetail = () => {
   color: #ccc;
   font-size: 1.5rem;
 }
-</style>
 ```
 
-### views/UserListView.vue
+### views/UserListView.js
 
-```vue
-<template>
-  <div class="user-list-view">
-    <h1>用户列表</h1>
-
-    <!-- 搜索栏 -->
-    <div class="search-bar">
-      <input
-        v-model="searchInput"
-        @input="debouncedSearch"
-        placeholder="搜索用户..."
-        class="search-input"
-      />
-      <button v-if="isSearching" @click="clearSearch" class="clear-btn">
-        清除
-      </button>
-    </div>
-
-    <!-- 错误提示 -->
-    <div v-if="error" class="error-message">
-      <p>{{ error }}</p>
-      <button @click="clearError">重试</button>
-    </div>
-
-    <!-- 加载状态 -->
-    <LoadingSpinner v-if="loading && users.length === 0" />
-
-    <!-- 用户列表 -->
-    <div v-else-if="users.length > 0" class="user-list">
-      <UserCard v-for="user in users" :key="user.id" :user="user" />
-
-      <!-- 加载更多 -->
-      <div v-if="hasMore && !isSearching" class="load-more">
-        <button @click="loadMore" :disabled="loading">
-          {{ loading ? '加载中...' : '加载更多' }}
-        </button>
-      </div>
-    </div>
-
-    <!-- 空状态 -->
-    <div v-else class="empty-state">
-      <p>{{ isSearching ? '没有找到匹配的用户' : '暂无用户数据' }}</p>
-      <button v-if="isSearching" @click="clearSearch">清除搜索</button>
-    </div>
-  </div>
-</template>
-
-<script setup>
-import { ref, onMounted } from '@lytjs/core'
+```javascript
+import { ref, onMounted, h } from '@lytjs/core'
 import { useUsers } from '../composables/useUsers.js'
-import UserCard from '../components/UserCard.vue'
-import LoadingSpinner from '../components/LoadingSpinner.vue'
+import { UserCard } from '../components/UserCard.js'
+import { LoadingSpinner } from '../components/LoadingSpinner.js'
 
-const {
-  users,
-  loading,
-  error,
-  hasMore,
-  isSearching,
-  loadUsers,
-  loadMore,
-  performSearch,
-  clearError,
-} = useUsers()
+export function UserListView() {
+  const {
+    users,
+    loading,
+    error,
+    hasMore,
+    isSearching,
+    loadUsers,
+    loadMore,
+    performSearch,
+    clearError,
+  } = useUsers()
 
-const searchInput = ref('')
-let searchTimeout = null
+  const searchInput = ref('')
+  let searchTimeout = null
 
-// 防抖搜索
-const debouncedSearch = () => {
-  clearTimeout(searchTimeout)
-  searchTimeout = setTimeout(() => {
-    performSearch(searchInput.value)
-  }, 300)
+  // 防抖搜索
+  const debouncedSearch = () => {
+    clearTimeout(searchTimeout)
+    searchTimeout = setTimeout(() => {
+      performSearch(searchInput.value)
+    }, 300)
+  }
+
+  const clearSearch = () => {
+    searchInput.value = ''
+    performSearch('')
+  }
+
+  onMounted(() => {
+    loadUsers()
+  })
+
+  return () => h('div', { class: 'user-list-view' }, [
+    h('h1', {}, '用户列表'),
+
+    // 搜索栏
+    h('div', { class: 'search-bar' }, [
+      h('input', {
+        class: 'search-input',
+        value: searchInput.value,
+        onInput: (e) => { searchInput.value = e.target.value; debouncedSearch() },
+        placeholder: '搜索用户...',
+      }),
+      isSearching.value && h('button', { class: 'clear-btn', onClick: clearSearch }, '清除'),
+    ]),
+
+    // 错误提示
+    error.value && h('div', { class: 'error-message' }, [
+      h('p', {}, error.value),
+      h('button', { onClick: clearError }, '重试'),
+    ]),
+
+    // 加载状态
+    loading.value && users.value.length === 0 && h(LoadingSpinner),
+
+    // 用户列表
+    users.value.length > 0 && h('div', { class: 'user-list' }, [
+      ...users.value.map(user => h(UserCard, { user, key: user.id })),
+
+      // 加载更多
+      hasMore.value && !isSearching.value && h('div', { class: 'load-more' }, [
+        h('button', { onClick: loadMore, disabled: loading.value },
+          loading.value ? '加载中...' : '加载更多'
+        ),
+      ]),
+    ]),
+
+    // 空状态
+    users.value.length === 0 && !loading.value && h('div', { class: 'empty-state' }, [
+      h('p', {}, isSearching.value ? '没有找到匹配的用户' : '暂无用户数据'),
+      isSearching.value && h('button', { onClick: clearSearch }, '清除搜索'),
+    ]),
+  ])
 }
+```
 
-const clearSearch = () => {
-  searchInput.value = ''
-  performSearch('')
-}
-
-onMounted(() => {
-  loadUsers()
-})
-</script>
-
-<style scoped>
+```css
 .user-list-view {
   max-width: 800px;
   margin: 0 auto;
@@ -653,138 +640,133 @@ h1 {
   border-radius: 4px;
   cursor: pointer;
 }
-</style>
 ```
 
-### views/UserDetailView.vue
+### views/UserDetailView.js
 
-```vue
-<template>
-  <div class="user-detail-view">
-    <button class="back-btn" @click="goBack">← 返回列表</button>
-
-    <LoadingSpinner v-if="loading" message="加载用户信息..." />
-
-    <div v-else-if="error" class="error-message">
-      <p>{{ error }}</p>
-      <button @click="retry">重试</button>
-    </div>
-
-    <div v-else-if="currentUser" class="user-detail">
-      <div class="header">
-        <div class="avatar">{{ initials }}</div>
-        <div class="basic-info">
-          <h1>{{ currentUser.name }}</h1>
-          <p class="username">@{{ currentUser.username }}</p>
-        </div>
-      </div>
-
-      <div class="info-sections">
-        <section class="info-section">
-          <h2>联系信息</h2>
-          <div class="info-grid">
-            <div class="info-item">
-              <label>邮箱</label>
-              <a :href="`mailto:${currentUser.email}`">{{ currentUser.email }}</a>
-            </div>
-            <div class="info-item">
-              <label>电话</label>
-              <span>{{ currentUser.phone }}</span>
-            </div>
-            <div class="info-item">
-              <label>网站</label>
-              <a :href="`https://${currentUser.website}`" target="_blank">
-                {{ currentUser.website }}
-              </a>
-            </div>
-          </div>
-        </section>
-
-        <section class="info-section">
-          <h2>公司</h2>
-          <div class="info-grid">
-            <div class="info-item">
-              <label>名称</label>
-              <span>{{ currentUser.company?.name }}</span>
-            </div>
-            <div class="info-item">
-              <label>标语</label>
-              <span class="catch-phrase">"{{ currentUser.company?.catchPhrase }}"</span>
-            </div>
-            <div class="info-item">
-              <label>业务</label>
-              <span>{{ currentUser.company?.bs }}</span>
-            </div>
-          </div>
-        </section>
-
-        <section class="info-section">
-          <h2>地址</h2>
-          <div class="info-grid">
-            <div class="info-item">
-              <label>街道</label>
-              <span>{{ currentUser.address?.street }}</span>
-            </div>
-            <div class="info-item">
-              <label>城市</label>
-              <span>{{ currentUser.address?.city }}</span>
-            </div>
-            <div class="info-item">
-              <label>邮编</label>
-              <span>{{ currentUser.address?.zipcode }}</span>
-            </div>
-          </div>
-        </section>
-      </div>
-    </div>
-
-    <div v-else class="not-found">
-      <h2>用户未找到</h2>
-      <p>该用户可能不存在或已被删除</p>
-      <button @click="goBack">返回列表</button>
-    </div>
-  </div>
-</template>
-
-<script setup>
-import { computed, onMounted } from '@lytjs/core'
+```javascript
+import { computed, onMounted, h } from '@lytjs/core'
 import { useRouter } from '@lytjs/router'
 import { useUsers } from '../composables/useUsers.js'
-import LoadingSpinner from '../components/LoadingSpinner.vue'
+import { LoadingSpinner } from '../components/LoadingSpinner.js'
 
-const props = defineProps({
-  id: {
-    type: String,
-    required: true,
-  },
-})
+export function UserDetailView(props) {
+  const { id } = props
+  const router = useRouter()
+  const { currentUser, loading, error, loadUser, clearError } = useUsers()
 
-const router = useRouter()
-const { currentUser, loading, error, loadUser, clearError } = useUsers()
+  const initials = computed(() => {
+    if (!currentUser.value) return ''
+    return currentUser.value.name
+      .split(' ')
+      .map((n) => n[0])
+      .join('')
+      .toUpperCase()
+  })
 
-const initials = computed(() => {
-  if (!currentUser.value) return ''
-  return currentUser.value.name
-    .split(' ')
-    .map((n) => n[0])
-    .join('')
-    .toUpperCase()
-})
+  const goBack = () => {
+    router.back()
+  }
 
-const goBack = () => {
-  router.back()
+  const retry = () => {
+    loadUser(id)
+  }
+
+  onMounted(() => {
+    loadUser(id)
+  })
+
+  return () => h('div', { class: 'user-detail-view' }, [
+    h('button', { class: 'back-btn', onClick: goBack }, '← 返回列表'),
+
+    loading.value && h(LoadingSpinner, { message: '加载用户信息...' }),
+
+    error.value && h('div', { class: 'error-message' }, [
+      h('p', {}, error.value),
+      h('button', { onClick: retry }, '重试'),
+    ]),
+
+    currentUser.value && h('div', { class: 'user-detail' }, [
+      h('div', { class: 'header' }, [
+        h('div', { class: 'avatar' }, initials.value),
+        h('div', { class: 'basic-info' }, [
+          h('h1', {}, currentUser.value.name),
+          h('p', { class: 'username' }, `@${currentUser.value.username}`),
+        ]),
+      ]),
+
+      h('div', { class: 'info-sections' }, [
+        // 联系信息
+        h('section', { class: 'info-section' }, [
+          h('h2', {}, '联系信息'),
+          h('div', { class: 'info-grid' }, [
+            h('div', { class: 'info-item' }, [
+              h('label', {}, '邮箱'),
+              h('a', { href: `mailto:${currentUser.value.email}` }, currentUser.value.email),
+            ]),
+            h('div', { class: 'info-item' }, [
+              h('label', {}, '电话'),
+              h('span', {}, currentUser.value.phone),
+            ]),
+            h('div', { class: 'info-item' }, [
+              h('label', {}, '网站'),
+              h('a', { href: `https://${currentUser.value.website}`, target: '_blank' },
+                currentUser.value.website
+              ),
+            ]),
+          ]),
+        ]),
+
+        // 公司
+        h('section', { class: 'info-section' }, [
+          h('h2', {}, '公司'),
+          h('div', { class: 'info-grid' }, [
+            h('div', { class: 'info-item' }, [
+              h('label', {}, '名称'),
+              h('span', {}, currentUser.value.company?.name),
+            ]),
+            h('div', { class: 'info-item' }, [
+              h('label', {}, '标语'),
+              h('span', { class: 'catch-phrase' }, `"${currentUser.value.company?.catchPhrase}"`),
+            ]),
+            h('div', { class: 'info-item' }, [
+              h('label', {}, '业务'),
+              h('span', {}, currentUser.value.company?.bs),
+            ]),
+          ]),
+        ]),
+
+        // 地址
+        h('section', { class: 'info-section' }, [
+          h('h2', {}, '地址'),
+          h('div', { class: 'info-grid' }, [
+            h('div', { class: 'info-item' }, [
+              h('label', {}, '街道'),
+              h('span', {}, currentUser.value.address?.street),
+            ]),
+            h('div', { class: 'info-item' }, [
+              h('label', {}, '城市'),
+              h('span', {}, currentUser.value.address?.city),
+            ]),
+            h('div', { class: 'info-item' }, [
+              h('label', {}, '邮编'),
+              h('span', {}, currentUser.value.address?.zipcode),
+            ]),
+          ]),
+        ]),
+      ]),
+    ]),
+
+    !currentUser.value && !loading.value && !error.value && h('div', { class: 'not-found' }, [
+      h('h2', {}, '用户未找到'),
+      h('p', {}, '该用户可能不存在或已被删除'),
+      h('button', { onClick: goBack }, '返回列表'),
+    ]),
+  ])
 }
+```
 
-const retry = () => {
-  loadUser(props.id)
-}
-
-onMounted(() => {
-  loadUser(props.id)
-})
-</script>
-
-<style scoped>
+```css
 .user-detail-view {
   max-width: 800px;
   margin: 0 auto;
@@ -936,7 +918,6 @@ onMounted(() => {
   border-radius: 4px;
   cursor: pointer;
 }
-</style>
 ```
 
 ## 关键代码解释
@@ -1003,11 +984,11 @@ const goToDetail = () => {
 
 ### 5. 错误处理
 
-```vue
-<div v-if="error" class="error-message">
-  <p>{{ error }}</p>
-  <button @click="clearError">重试</button>
-</div>
+```javascript
+error.value && h('div', { class: 'error-message' }, [
+  h('p', {}, error.value),
+  h('button', { onClick: clearError }, '重试'),
+])
 ```
 
 优雅的错误处理 UI，显示错误信息并提供重试操作。

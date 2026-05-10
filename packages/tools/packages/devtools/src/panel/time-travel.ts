@@ -359,6 +359,12 @@ export function importHistory(json: string): boolean {
  * Download history as file
  */
 export function downloadHistory(filename?: string): void {
+  // 浏览器环境检测
+  if (typeof document === 'undefined' || typeof Blob === 'undefined' || typeof URL === 'undefined') {
+    console.warn('[DevTools TimeTravel] downloadHistory is only available in browser environment');
+    return;
+  }
+
   const data = exportHistory();
   const blob = new Blob([data], { type: 'application/json' });
   const url = URL.createObjectURL(blob);

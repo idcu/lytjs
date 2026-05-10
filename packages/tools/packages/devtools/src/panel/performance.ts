@@ -191,8 +191,10 @@ export function startPerformanceMonitoring(): void {
   lastFpsUpdate = performance.now();
   frameCount = 0;
 
-  // Start FPS counter
-  requestAnimationFrame(updateFps);
+  // Start FPS counter (浏览器环境检测)
+  if (typeof requestAnimationFrame !== 'undefined') {
+    requestAnimationFrame(updateFps);
+  }
 
   // Start periodic metrics update
   updateIntervalId = setInterval(() => {
@@ -246,7 +248,10 @@ function updateFps(): void {
     lastFpsUpdate = now;
   }
 
-  requestAnimationFrame(updateFps);
+  // 浏览器环境检测
+  if (typeof requestAnimationFrame !== 'undefined') {
+    requestAnimationFrame(updateFps);
+  }
 }
 
 /**

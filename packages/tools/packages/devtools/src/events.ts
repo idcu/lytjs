@@ -1,98 +1,60 @@
 /**
- * @lytjs/devtools - Event recording
+ * DevTools 事件记录模块
  */
 
-import type { DevToolsEvent, EventType } from './types';
-
-// Event store
-const events: DevToolsEvent[] = [];
-let eventIdCounter = 0;
-let isRecording = false;
-
-// Event listeners
-const eventListeners = new Set<(event: DevToolsEvent) => void>();
-
-/**
- * Start recording events
- */
-export function startRecording(): void {
-  isRecording = true;
+export interface EventRecord {
+  id: string;
+  type: string;
+  componentId?: string;
+  target?: string;
+  timestamp: number;
+  data?: unknown;
 }
 
-/**
- * Stop recording events
- */
-export function stopRecording(): void {
-  isRecording = false;
+const events: EventRecord[] = [];
+let maxEvents = 1000;
+
+export function setMaxEvents(max: number): void {
+  maxEvents = max;
 }
 
-/**
- * Check if recording is active
- */
-export function isEventRecording(): boolean {
-  return isRecording;
-}
-
-/**
- * Record an event
- */
-export function recordEvent(
-  type: EventType,
-  payload: unknown,
-  componentId?: string,
-): DevToolsEvent | undefined {
-  if (!isRecording) return undefined;
-  
-  const event: DevToolsEvent = {
-    id: `event-${++eventIdCounter}`,
-    type,
+export function recordEvent(event: Omit<EventRecord, 'id' | 'timestamp'>): EventRecord {
+  const record: EventRecord = {
+    ...event,
+    id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
     timestamp: Date.now(),
-    payload,
-    componentId,
   };
   
-  events.push(event);
+  events.push(record);
   
-  // Notify listeners
-  for (const listener of eventListeners) {
-    listener(event);
+  // 限制事件数量
+  if (events.length > maxEvents) {
+    events.splice(0, events.length - maxEvents);
   }
   
-  return event;
+  return record;
 }
 
-/**
- * Get all recorded events
- */
-export function getEvents(filter?: EventType[]): DevToolsEvent[] {
-  if (!filter || filter.length === 0) {
-    return [...events];
-  }
-  
-  return events.filter(e => filter.includes(e.type));
+export function getEvents(): EventRecord[] {
+  return [...events];
 }
 
-/**
- * Clear all events
- */
+export function getEventsByComponent(componentId: string): EventRecord[] {
+  return events.filter(e => e.componentId === componentId);
+}
+
+export function getEventsByType(type: string): EventRecord[] {
+  return events.filter(e => e.type === type);
+}
+
 export function clearEvents(): void {
   events.length = 0;
-  eventIdCounter = 0;
 }
 
-/**
- * Subscribe to events
- */
-export function subscribeEvents(callback: (event: DevToolsEvent) => void): () => void {
-  eventListeners.add(callback);
-  return () => {
-    eventListeners.delete(callback);
-  };
-}
-
-/**
- * Get event count
- */
-export function getEventCount(): number {
-  return events.length;
+export function getEventStats(): Record<string, number> {
+  const stats: Record<string, number> = {};
+  events.forEach(e => {
+    stats[e.type] = (stats[e.type] || 0) + 1;
+  });
+  return stats;
 }

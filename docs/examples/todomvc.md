@@ -8,220 +8,264 @@
 
 ## 完整代码
 
-```vue
-<template>
-  <div class="todoapp">
-    <header class="header">
-      <h1>todos</h1>
-      <input
-        class="new-todo"
-        placeholder="What needs to be done?"
-        v-model="newTodo"
-        @keyup.enter="addTodo"
-        autofocus
-      />
-    </header>
-
-    <section class="main" v-show="todos.length">
-      <input
-        id="toggle-all"
-        class="toggle-all"
-        type="checkbox"
-        :checked="allDone"
-        @change="toggleAll"
-      />
-      <label for="toggle-all">Mark all as complete</label>
-
-      <ul class="todo-list">
-        <li
-          v-for="todo in filteredTodos"
-          :key="todo.id"
-          class="todo"
-          :class="{ completed: todo.completed, editing: todo === editingTodo }"
-        >
-          <div class="view">
-            <input
-              class="toggle"
-              type="checkbox"
-              :checked="todo.completed"
-              @change="toggleTodo(todo)"
-            />
-            <label @dblclick="editTodo(todo)">{{ todo.title }}</label>
-            <button class="destroy" @click="removeTodo(todo)"></button>
-          </div>
-          <input
-            v-if="editingTodo === todo"
-            class="edit"
-            v-model="todo.title"
-            @blur="doneEdit(todo)"
-            @keyup.enter="doneEdit(todo)"
-            @keyup.escape="cancelEdit(todo)"
-            v-focus
-          />
-        </li>
-      </ul>
-    </section>
-
-    <footer class="footer" v-show="todos.length">
-      <span class="todo-count">
-        <strong>{{ remaining }}</strong> {{ remaining | pluralize }} left
-      </span>
-
-      <ul class="filters">
-        <li>
-          <a href="#/all" :class="{ selected: visibility === 'all' }">All</a>
-        </li>
-        <li>
-          <a href="#/active" :class="{ selected: visibility === 'active' }">Active</a>
-        </li>
-        <li>
-          <a href="#/completed" :class="{ selected: visibility === 'completed' }">Completed</a>
-        </li>
-      </ul>
-
-      <button
-        class="clear-completed"
-        @click="removeCompleted"
-        v-show="todos.length > remaining"
-      >
-        Clear completed
-      </button>
-    </footer>
-  </div>
-</template>
-
-<script setup>
-import { ref, computed, watch, onMounted } from '@lytjs/core'
+```javascript
+import { createApp, ref, computed, watch, onMounted, h } from '@lytjs/core'
 
 // 存储键名
 const STORAGE_KEY = 'lytjs-todomvc'
 
-// 状态
-const todos = ref([])
-const newTodo = ref('')
-const editingTodo = ref(null)
-const beforeEditCache = ref('')
-const visibility = ref('all')
+function setup() {
+  // 状态
+  const todos = ref([])
+  const newTodo = ref('')
+  const editingTodo = ref(null)
+  const beforeEditCache = ref('')
+  const visibility = ref('all')
 
-// 从本地存储加载
-onMounted(() => {
-  const stored = localStorage.getItem(STORAGE_KEY)
-  if (stored) {
-    todos.value = JSON.parse(stored)
-  }
-})
-
-// 保存到本地存储
-watch(
-  todos,
-  (newVal) => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(newVal))
-  },
-  { deep: true }
-)
-
-// 计算属性：过滤后的待办事项
-const filteredTodos = computed(() => {
-  switch (visibility.value) {
-    case 'active':
-      return todos.value.filter((todo) => !todo.completed)
-    case 'completed':
-      return todos.value.filter((todo) => todo.completed)
-    default:
-      return todos.value
-  }
-})
-
-// 计算属性：未完成的数量
-const remaining = computed(() => {
-  return todos.value.filter((todo) => !todo.completed).length
-})
-
-// 计算属性：是否全部完成
-const allDone = computed({
-  get() {
-    return remaining.value === 0 && todos.value.length > 0
-  },
-  set(value) {
-    todos.value.forEach((todo) => {
-      todo.completed = value
-    })
-  },
-})
-
-// 方法：添加待办事项
-const addTodo = () => {
-  const value = newTodo.value.trim()
-  if (!value) return
-
-  todos.value.push({
-    id: Date.now(),
-    title: value,
-    completed: false,
+  // 从本地存储加载
+  onMounted(() => {
+    const stored = localStorage.getItem(STORAGE_KEY)
+    if (stored) {
+      todos.value = JSON.parse(stored)
+    }
   })
-  newTodo.value = ''
-}
 
-// 方法：删除待办事项
-const removeTodo = (todo) => {
-  const index = todos.value.indexOf(todo)
-  if (index > -1) {
-    todos.value.splice(index, 1)
+  // 保存到本地存储
+  watch(
+    todos,
+    (newVal) => {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(newVal))
+    },
+    { deep: true }
+  )
+
+  // 计算属性：过滤后的待办事项
+  const filteredTodos = computed(() => {
+    switch (visibility.value) {
+      case 'active':
+        return todos.value.filter((todo) => !todo.completed)
+      case 'completed':
+        return todos.value.filter((todo) => todo.completed)
+      default:
+        return todos.value
+    }
+  })
+
+  // 计算属性：未完成的数量
+  const remaining = computed(() => {
+    return todos.value.filter((todo) => !todo.completed).length
+  })
+
+  // 计算属性：是否全部完成
+  const allDone = computed({
+    get() {
+      return remaining.value === 0 && todos.value.length > 0
+    },
+    set(value) {
+      todos.value.forEach((todo) => {
+        todo.completed = value
+      })
+    },
+  })
+
+  // 方法：添加待办事项
+  const addTodo = () => {
+    const value = newTodo.value.trim()
+    if (!value) return
+
+    todos.value.push({
+      id: Date.now(),
+      title: value,
+      completed: false,
+    })
+    newTodo.value = ''
+  }
+
+  // 方法：删除待办事项
+  const removeTodo = (todo) => {
+    const index = todos.value.indexOf(todo)
+    if (index > -1) {
+      todos.value.splice(index, 1)
+    }
+  }
+
+  // 方法：切换待办事项状态
+  const toggleTodo = (todo) => {
+    todo.completed = !todo.completed
+  }
+
+  // 方法：切换全部状态
+  const toggleAll = (e) => {
+    allDone.value = e.target.checked
+  }
+
+  // 方法：开始编辑
+  const editTodo = (todo) => {
+    beforeEditCache.value = todo.title
+    editingTodo.value = todo
+  }
+
+  // 方法：完成编辑
+  const doneEdit = (todo) => {
+    if (!editingTodo.value) return
+
+    todo.title = todo.title.trim()
+    if (!todo.title) {
+      removeTodo(todo)
+    }
+    editingTodo.value = null
+  }
+
+  // 方法：取消编辑
+  const cancelEdit = (todo) => {
+    editingTodo.value = null
+    todo.title = beforeEditCache.value
+  }
+
+  // 方法：删除已完成的
+  const removeCompleted = () => {
+    todos.value = todos.value.filter((todo) => !todo.completed)
+  }
+
+  // 过滤器：复数化
+  const pluralize = (n) => {
+    return n === 1 ? 'item' : 'items'
+  }
+
+  return {
+    todos,
+    newTodo,
+    editingTodo,
+    visibility,
+    filteredTodos,
+    remaining,
+    allDone,
+    addTodo,
+    removeTodo,
+    toggleTodo,
+    toggleAll,
+    editTodo,
+    doneEdit,
+    cancelEdit,
+    removeCompleted,
+    pluralize,
   }
 }
 
-// 方法：切换待办事项状态
-const toggleTodo = (todo) => {
-  todo.completed = !todo.completed
+function render(ctx) {
+  const {
+    todos,
+    newTodo,
+    editingTodo,
+    visibility,
+    filteredTodos,
+    remaining,
+    allDone,
+    addTodo,
+    removeTodo,
+    toggleTodo,
+    toggleAll,
+    editTodo,
+    doneEdit,
+    cancelEdit,
+    removeCompleted,
+    pluralize,
+  } = ctx
+
+  return h('div', { class: 'todoapp' }, [
+    // Header
+    h('header', { class: 'header' }, [
+      h('h1', {}, 'todos'),
+      h('input', {
+        class: 'new-todo',
+        placeholder: 'What needs to be done?',
+        value: newTodo.value,
+        onInput: (e) => { newTodo.value = e.target.value },
+        onKeyup: (e) => { if (e.key === 'Enter') addTodo() },
+        autofocus: true,
+      }),
+    ]),
+
+    // Main
+    todos.value.length > 0 && h('section', { class: 'main' }, [
+      h('input', {
+        id: 'toggle-all',
+        class: 'toggle-all',
+        type: 'checkbox',
+        checked: allDone.value,
+        onChange: toggleAll,
+      }),
+      h('label', { for: 'toggle-all' }, 'Mark all as complete'),
+
+      h('ul', { class: 'todo-list' },
+        filteredTodos.value.map(todo =>
+          h('li', {
+            key: todo.id,
+            class: {
+              completed: todo.completed,
+              editing: todo === editingTodo.value,
+            },
+          }, [
+            h('div', { class: 'view' }, [
+              h('input', {
+                class: 'toggle',
+                type: 'checkbox',
+                checked: todo.completed,
+                onChange: () => toggleTodo(todo),
+              }),
+              h('label', { onDblclick: () => editTodo(todo) }, todo.title),
+              h('button', { class: 'destroy', onClick: () => removeTodo(todo) }),
+            ]),
+            editingTodo.value === todo && h('input', {
+              class: 'edit',
+              value: todo.title,
+              onInput: (e) => { todo.title = e.target.value },
+              onBlur: () => doneEdit(todo),
+              onKeyup: (e) => {
+                if (e.key === 'Enter') doneEdit(todo)
+                if (e.key === 'Escape') cancelEdit(todo)
+              },
+            }),
+          ])
+        )
+      ),
+    ]),
+
+    // Footer
+    todos.value.length > 0 && h('footer', { class: 'footer' }, [
+      h('span', { class: 'todo-count' }, [
+        h('strong', {}, remaining.value),
+        ` ${pluralize(remaining.value)} left`,
+      ]),
+
+      h('ul', { class: 'filters' }, [
+        h('li', {}, h('a', {
+          href: '#/all',
+          class: { selected: visibility.value === 'all' },
+        }, 'All')),
+        h('li', {}, h('a', {
+          href: '#/active',
+          class: { selected: visibility.value === 'active' },
+        }, 'Active')),
+        h('li', {}, h('a', {
+          href: '#/completed',
+          class: { selected: visibility.value === 'completed' },
+        }, 'Completed')),
+      ]),
+
+      todos.value.length > remaining.value && h('button', {
+        class: 'clear-completed',
+        onClick: removeCompleted,
+      }, 'Clear completed'),
+    ]),
+  ])
 }
 
-// 方法：切换全部状态
-const toggleAll = (e) => {
-  allDone.value = e.target.checked
-}
+const app = createApp({ setup, render })
+app.mount('#app')
+```
 
-// 方法：开始编辑
-const editTodo = (todo) => {
-  beforeEditCache.value = todo.title
-  editingTodo.value = todo
-}
-
-// 方法：完成编辑
-const doneEdit = (todo) => {
-  if (!editingTodo.value) return
-
-  todo.title = todo.title.trim()
-  if (!todo.title) {
-    removeTodo(todo)
-  }
-  editingTodo.value = null
-}
-
-// 方法：取消编辑
-const cancelEdit = (todo) => {
-  editingTodo.value = null
-  todo.title = beforeEditCache.value
-}
-
-// 方法：删除已完成的
-const removeCompleted = () => {
-  todos.value = todos.value.filter((todo) => !todo.completed)
-}
-
-// 自定义指令：自动聚焦
-const vFocus = {
-  mounted(el) {
-    el.focus()
-  },
-}
-
-// 过滤器：复数化
-const pluralize = (n) => {
-  return n === 1 ? 'item' : 'items'
-}
-</script>
-
-<style>
+```css
 /* TodoMVC 样式 */
 .todoapp {
   background: #fff;
@@ -481,18 +525,21 @@ html .clear-completed:active {
 .clear-completed:hover {
   text-decoration: underline;
 }
-</style>
 ```
 
 ## 关键代码解释
 
-### 1. 列表渲染 (`v-for`)
+### 1. 列表渲染
 
-```vue
-<li v-for="todo in filteredTodos" :key="todo.id">
+```javascript
+h('ul', { class: 'todo-list' },
+  filteredTodos.value.map(todo =>
+    h('li', { key: todo.id }, [...])
+  )
+)
 ```
 
-使用 `v-for` 指令渲染列表。`:key` 是必需的，用于帮助框架高效地更新列表。
+使用数组 `map` 方法渲染列表。`key` 是必需的，用于帮助框架高效地更新列表。
 
 ### 2. 计算属性 (`computed`)
 
@@ -511,13 +558,16 @@ const filteredTodos = computed(() => {
 
 计算属性会根据依赖的响应式数据自动重新计算。这里根据当前筛选条件返回不同的待办事项列表。
 
-### 3. 双向绑定 (`v-model`)
+### 3. 双向绑定
 
-```vue
-<input v-model="newTodo" @keyup.enter="addTodo" />
+```javascript
+h('input', {
+  value: newTodo.value,
+  onInput: (e) => { newTodo.value = e.target.value },
+})
 ```
 
-`v-model` 提供了表单输入和状态之间的双向绑定。输入框的值会自动同步到 `newTodo`，反之亦然。
+通过 `value` 和 `onInput` 实现表单输入和状态之间的双向绑定。
 
 ### 4. 本地存储持久化
 
@@ -533,22 +583,15 @@ watch(
 
 使用 `watch` 监听 `todos` 的变化，并保存到 `localStorage`。`deep: true` 确保嵌套属性的变化也能被监听到。
 
-### 5. 自定义指令
+### 5. 动态类绑定
 
-```typescript
-const vFocus = {
-  mounted(el) {
-    el.focus()
+```javascript
+h('li', {
+  class: {
+    completed: todo.completed,
+    editing: todo === editingTodo.value,
   },
-}
-```
-
-自定义指令 `v-focus` 在元素挂载时自动聚焦。这在编辑待办事项时非常有用。
-
-### 6. 动态类绑定
-
-```vue
-<li :class="{ completed: todo.completed, editing: todo === editingTodo }">
+})
 ```
 
 使用对象语法动态绑定类。当条件为真时，对应的类会被添加到元素上。

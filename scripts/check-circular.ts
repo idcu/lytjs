@@ -42,7 +42,7 @@ function collectPackages(): PackageEntry[] {
   }
 
   // 孙包目录
-  const subDirs = ['common/packages', 'ecosystem/packages', 'plugins/packages', 'tools/packages'];
+  const subDirs = ['common/packages', 'common/common-warn', 'ecosystem/packages', 'plugins/packages', 'tools/packages'];
   for (const sub of subDirs) {
     const subPath = join(packagesDir, sub);
     if (!existsSync(subPath)) continue;

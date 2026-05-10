@@ -63,7 +63,12 @@ function log(level: LogLevel, msg: string, options?: WarnOptions): void {
   }
 
   if (level === 'fatal') {
-    process.exit(1);
+    // 浏览器环境检测：避免在非 Node.js 环境调用 process.exit
+    if (typeof process !== 'undefined' && process.exit) {
+      process.exit(1);
+    } else {
+      throw new Error(`[Lyt.js fatal] ${msg}`);
+    }
   }
 }
 

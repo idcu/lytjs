@@ -1,101 +1,51 @@
 /**
- * @lytjs/devtools - Component tree inspection
+ * DevTools 组件树管理模块
  */
 
-import type { ComponentTreeNode } from './types';
-
-// Component registry for tracking instances
-const componentRegistry = new Map<string, any>();
-let componentIdCounter = 0;
-
-/**
- * Generate a unique component ID
- */
-export function generateComponentId(): string {
-  return `component-${++componentIdCounter}`;
+export interface ComponentInfo {
+  id: string;
+  name: string;
+  parentId?: string;
+  children: string[];
+  props?: Record<string, unknown>;
+  slots?: Record<string, unknown>;
 }
 
-/**
- * Register a component instance
- */
-export function registerComponent(instance: any, id: string): void {
-  componentRegistry.set(id, instance);
+const components = new Map<string, ComponentInfo>();
+
+export function registerComponent(info: ComponentInfo): void {
+  components.set(info.id, info);
+  if (info.parentId) {
+    const parent = components.get(info.parentId);
+    if (parent && !parent.children.includes(info.id)) {
+      parent.children.push(info.id);
+    }
+  }
 }
 
-/**
- * Unregister a component instance
- */
 export function unregisterComponent(id: string): void {
-  componentRegistry.delete(id);
-}
-
-/**
- * Get component tree starting from root
- * This is a simplified implementation - in production would traverse actual component tree
- */
-export function getComponentTree(): ComponentTreeNode[] {
-  const roots: ComponentTreeNode[] = [];
-  
-  for (const [id, instance] of componentRegistry) {
-    // Check if it's a root component (no parent in registry)
-    const isRoot = !instance.parent || !componentRegistry.has(instance.parent);
-    if (isRoot) {
-      roots.push(buildComponentNode(id, instance));
+  const component = components.get(id);
+  if (component?.parentId) {
+    const parent = components.get(component.parentId);
+    if (parent) {
+      parent.children = parent.children.filter(cid => cid !== id);
     }
   }
-  
-  return roots;
+  components.delete(id);
 }
 
-/**
- * Build a component tree node
- */
-function buildComponentNode(id: string, instance: any): ComponentTreeNode {
-  const node: ComponentTreeNode = {
-    id,
-    name: instance.name || instance.type?.name || 'Anonymous',
-    type: 'component',
-    children: [],
-    props: instance.props || {},
-    emits: instance.emits || [],
-    slots: Object.keys(instance.slots || {}),
-  };
-  
-  // Add children
-  if (instance.children) {
-    for (const child of instance.children) {
-      if (child && child._devtoolsId) {
-        const childInstance = componentRegistry.get(child._devtoolsId);
-        if (childInstance) {
-          node.children.push(buildComponentNode(child._devtoolsId, childInstance));
-        }
-      }
-    }
-  }
-  
-  return node;
+export function getComponentById(id: string): ComponentInfo | undefined {
+  return components.get(id);
 }
 
-/**
- * Get a component by ID
- */
-export function getComponentById(id: string): ComponentTreeNode | undefined {
-  const instance = componentRegistry.get(id);
-  if (!instance) return undefined;
-  return buildComponentNode(id, instance);
+export function getAllComponents(): ComponentInfo[] {
+  return Array.from(components.values());
 }
 
-/**
- * Get component count
- */
-export function getComponentCount(): number {
-  return componentRegistry.size;
+export function getRootComponents(): ComponentInfo[] {
+  return Array.from(components.values()).filter(c => !c.parentId);
 }
 
-/**
- * Clear component registry
- */
-export function clearComponentRegistry(): void {
-  componentRegistry.clear();
-  componentIdCounter = 0;
+export function clearComponents(): void {
+  components.clear();
 }
