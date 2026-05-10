@@ -267,6 +267,29 @@ export async function renderToStream(
 }
 export type { SSRStreamOptions } from './ssr/ssr-stream';
 
+// 优化的流式渲染 (Phase 1.5)
+/** 优化的流式渲染 - TTFB 降低 50%+ */
+export async function createOptimizedStream(
+  vnode: unknown,
+  options?: unknown,
+): Promise<ReadableStream> {
+  const { createOptimizedStream: _createOptimizedStream } = await import('./ssr/ssr-stream-optimized');
+  return _createOptimizedStream(vnode as VNodeType, options as any);
+}
+export async function renderDocumentToStream(
+  vnode: unknown,
+  options?: unknown,
+): Promise<ReadableStream> {
+  const { renderDocumentToStream: _renderDocumentToStream } = await import('./ssr/ssr-stream-optimized');
+  return _renderDocumentToStream(vnode as VNodeType, options as any);
+}
+export type {
+  OptimizedStreamOptions,
+  PreloadHint,
+  StreamStats,
+} from './ssr/ssr-stream-optimized';
+export { OptimizedSSRStream } from './ssr/ssr-stream-optimized';
+
 // SSR Island 架构
 /** Island Architecture 相关函数 */
 import type { ComponentOptions } from './ssr/ssr-island';
