@@ -338,6 +338,29 @@ export type {
   PropOptions as VaporPropOptions,
 } from './vapor/vapor-app';
 
+// Vapor HMR API (Phase 1.2)
+/** Vapor 模式 HMR 支持 */
+export async function getVaporHMRFunctions() {
+  const vaporHMR = await import('./vapor/vapor-hmr');
+  return {
+    generateComponentId: vaporHMR.generateComponentId,
+    registerComponent: vaporHMR.registerComponent,
+    unregisterComponent: vaporHMR.unregisterComponent,
+    handleComponentUpdate: vaporHMR.handleComponentUpdate,
+    createVaporHMRHandler: vaporHMR.createVaporHMRHandler,
+    isHMRAvailable: vaporHMR.isHMRAvailable,
+    forceRerender: vaporHMR.forceRerender,
+    clearHMRState: vaporHMR.clearHMRState,
+    onHMRUpdate: vaporHMR.onHMRUpdate,
+  };
+}
+export type {
+  HMRUpdateType,
+  HMRUpdate,
+  HMRStatePreservation,
+} from './vapor/vapor-hmr';
+export { DEFAULT_STATE_PRESERVATION } from './vapor/vapor-hmr';
+
 // 组件资源清理
 /** 组件资源自动清理：注册事件监听器、effect 订阅、cleanup 钩子，卸载时自动释放 */
 export {

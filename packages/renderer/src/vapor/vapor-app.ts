@@ -5,6 +5,13 @@
 import { compile } from '@lytjs/compiler';
 import { createSignalRenderer } from '../signal/signal-renderer';
 import type { SignalRenderer } from '../signal/signal-renderer';
+import {
+  generateComponentId,
+  registerComponent,
+  unregisterComponent,
+  generateHMRCode,
+  isHMRAvailable,
+} from './vapor-hmr';
 
 // __DEV__ 已在 env.d.ts 中全局声明，无需重复声明
 
@@ -171,6 +178,10 @@ export function createVaporApp(
   let signalRenderer: SignalRenderer | null = null;
   let isMounted = false;
   let isUnmounted = false;
+  
+  // Phase 1.2: HMR 组件 ID
+  const componentId = generateComponentId();
+  let containerEl: Element | null = null;
 
   const vaporApp: VaporApp = {
     mount(container: Element | string) {
@@ -198,6 +209,8 @@ export function createVaporApp(
           `[LytJS] VaporApp: cannot find element matching "${container}".`,
         );
       }
+      
+      containerEl = el;
 
       // 构建上下文对象
       const rootProps = options?.rootProps ?? {};
@@ -232,6 +245,11 @@ export function createVaporApp(
       // 创建 Signal 渲染器
       signalRenderer = createSignalRenderer(rootComponent.template, ctx);
       signalRenderer.render(el);
+      
+      // Phase 1.2: 注册组件实例用于 HMR
+      if (__DEV__ || isHMRAvailable()) {
+        registerComponent(componentId, rootComponent, el);
+      }
 
       isMounted = true;
     },
@@ -241,9 +259,15 @@ export function createVaporApp(
         signalRenderer.unmount();
         signalRenderer = null;
       }
+      
+      // Phase 1.2: 注销组件实例
+      if (__DEV__ || isHMRAvailable()) {
+        unregisterComponent(componentId);
+      }
 
       isMounted = false;
       isUnmounted = true;
+      containerEl = null;
 
       // 清理注册的资源
       provides.clear();

@@ -17,13 +17,18 @@ export interface LytjsPluginOptions {
   exclude?: RegExp | RegExp[];
   ssr?: boolean;
   signalMode?: boolean;
+  /** Phase 1.2: 启用 Vapor HMR 支持 */
+  enableVaporHMR?: boolean;
 }
 
 // HMR cache for tracking component updates
-const hmrCache = new Map<string, { script: string; template: string; styles: string[] }>();
+const hmrCache = new Map<string, { script: string; template: string; styles: string[]; isVapor: boolean }>();
 
 // Route block collection
 const routeBlockMap = new Map<string, string>();
+
+// Vapor component ID map (Phase 1.2)
+const vaporComponentIdMap = new Map<string, string>();
 
 /**
  * Create the LytJS Vite plugin
@@ -128,12 +133,37 @@ export default function lytjs(rawOptions: LytjsPluginOptions = {}): Plugin {
             script: descriptor.script?.content || '',
             template: descriptor.template?.content || '',
             styles: descriptor.styles.map((s) => s.content),
+            isVapor: options.signalMode || false,
           });
         }
 
         // Add HMR accept for development
         if (!isProduction) {
-          compiledCode += '\nif (import.meta.hot) { import.meta.hot.accept(); }\n';
+          // Phase 1.2: Vapor HMR 支持
+          if (options.signalMode && options.enableVaporHMR !== false) {
+            const componentId = `vapor-${id.replace(/[^a-zA-Z0-9]/g, '_')}`;
+            vaporComponentIdMap.set(id, componentId);
+            compiledCode += `
+if (import.meta.hot) {
+  import.meta.hot.accept((newModule) => {
+    if (newModule && newModule.default) {
+      // Vapor HMR: 更新组件定义，保留状态
+      const registry = window.__LYTJS_HMR_REGISTRY__;
+      if (registry) {
+        const instance = registry.get('${componentId}');
+        if (instance) {
+          instance.component = newModule.default;
+          // Signal 模式会自动通过 effect 重新渲染
+          console.log('[LytJS HMR] Vapor component updated: ${id}');
+        }
+      }
+    }
+  });
+}
+`;
+          } else {
+            compiledCode += '\nif (import.meta.hot) { import.meta.hot.accept(); }\n';
+          }
         }
 
         return {
