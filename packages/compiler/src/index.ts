@@ -43,6 +43,25 @@ export type {
   SplitOptions,
 } from './client-server-boundary';
 
+// Optimizations (Phase 1.12-1.14)
+export {
+  analyzeMemoNeeds,
+  analyzeDeadCode,
+  eliminateDeadCode,
+  precompileTemplate,
+} from './optimizations';
+export type {
+  MemoAnalysis,
+  StaticSubtree,
+  DynamicBinding,
+  MemoBoundary,
+  DeadCodeAnalysis,
+  UnreachableCode,
+  ConstantFoldingOpportunity,
+  AOTOptions,
+  AOTResult,
+} from './optimizations';
+
 export { parse, transform, optimize, generate };
 export { generateSignalOptimized };
 
