@@ -99,8 +99,15 @@ export function effectScope(options?: boolean | EffectScopeOptions): EffectScope
           error(`Error running cleanup in scope: ${String(e)}`);
         }
       }
+      if (this.parent) {
+        const idx = this.parent.effects.indexOf(this as unknown as EffectScopeEntry);
+        if (idx !== -1) {
+          this.parent.effects.splice(idx, 1);
+        }
+      }
       this.effects.length = 0;
       this.cleanups.length = 0;
+      this.parent = undefined;
     },
   } as EffectScope;
 

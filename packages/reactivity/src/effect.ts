@@ -246,8 +246,8 @@ export function triggerEffects(effects: ReactiveEffect[]) {
     if (__DEV__) {
       warn(
         `[lytjs/reactivity] Maximum trigger depth (${REACTIVITY_MAX_TRIGGER_DEPTH}) exceeded. ` +
-        `Possible infinite reactivity loop detected. Further triggers are silently dropped. ` +
-        `triggerDepth=${triggerDepth}`,
+          `Possible infinite reactivity loop detected. Further triggers are silently dropped. ` +
+          `triggerDepth=${triggerDepth}`,
       );
     }
     return;
@@ -366,7 +366,9 @@ export class ReactiveEffect<T = unknown> {
         }
         this._cleanups.length = 0;
       }
-      if (this.onStop) this.onStop();
+      if (this.onStop) {
+        this.onStop();
+      }
       this.active = false;
     }
   }

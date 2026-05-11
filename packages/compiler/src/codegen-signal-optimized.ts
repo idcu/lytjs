@@ -707,10 +707,10 @@ function processVNodeCallPropsOptimized(
 function processConditionalOptimized(
   node: JSConditionalExpression,
   varCounter: Map<string, number>,
-  elementVars: Array<{ varName: string; tag: string }>,
+  _elementVars: Array<{ varName: string; tag: string }>,
   dynamicBindings: Array<{ varName: string; code: string }>,
   parentVar: string | undefined,
-  consumedCount: Map<string, number>,
+  _consumedCount: Map<string, number>,
   usedRuntime: Set<string>,
   _options: SignalCodegenOptions,
 ): void {
@@ -792,11 +792,11 @@ function processConditionalOptimized(
 
 function processCallExpressionOptimized(
   node: JSCallExpression,
-  varCounter: Map<string, number>,
-  elementVars: Array<{ varName: string; tag: string }>,
+  _varCounter: Map<string, number>,
+  _elementVars: Array<{ varName: string; tag: string }>,
   dynamicBindings: Array<{ varName: string; code: string }>,
   usedRuntime: Set<string>,
-  options: SignalCodegenOptions,
+  _options: SignalCodegenOptions,
   parentVar?: string,
 ): void {
   const callee = typeof node.callee === 'string' ? node.callee : String(node.callee);

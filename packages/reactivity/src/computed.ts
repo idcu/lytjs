@@ -52,6 +52,10 @@ class ComputedRefImpl<T> {
       this._resetCacheCleanupTimer();
     });
     this.effect.computed = true;
+    const effect = this.effect;
+    effect.onStop = () => {
+      this._cleanupCache();
+    };
 
     if (isSSR) {
       try {
@@ -86,13 +90,13 @@ class ComputedRefImpl<T> {
   // FIX: P2-6 清理缓存值
   private _cleanupCache(): void {
     if (!this.effect.active) {
-      // 清除缓存值，释放内存
+      if (this._cacheCleanupTimer) {
+        clearTimeout(this._cacheCleanupTimer);
+        this._cacheCleanupTimer = null;
+      }
       this._value = undefined as unknown as T;
       this._initialized = false;
       this._dirty = true;
-      if (__DEV__) {
-        console.log('[lytjs/reactivity] Computed cache cleaned up after inactivity');
-      }
     }
   }
 
@@ -117,7 +121,7 @@ class ComputedRefImpl<T> {
         if (computedStack.has(this as ComputedRefImpl<unknown>)) {
           throw new Error(
             `Circular dependency detected in computed property. ` +
-            `A computed property is indirectly referencing itself, causing an infinite loop.`
+              `A computed property is indirectly referencing itself, causing an infinite loop.`,
           );
         }
         computedDepth++;
@@ -125,7 +129,7 @@ class ComputedRefImpl<T> {
           computedDepth--;
           throw new Error(
             `Maximum computed depth exceeded (${MAX_COMPUTED_DEPTH}). ` +
-            `Possible infinite loop in computed properties.`
+              `Possible infinite loop in computed properties.`,
           );
         }
         computedStack.add(this as ComputedRefImpl<unknown>);

@@ -121,7 +121,7 @@ function isStaticSubtree(node: TemplateChildNode): boolean {
       if (prop.type === NodeTypes.DIRECTIVE) {
         return false;
       }
-      if (prop.type === NodeTypes.ATTRIBUTE && prop.value?.includes('{{')) {
+      if (prop.type === NodeTypes.ATTRIBUTE && prop.value?.content.includes('{{')) {
         return false;
       }
     }
@@ -155,11 +155,11 @@ function extractDynamicBindings(node: TemplateChildNode): DynamicBinding[] {
           expression: dir.exp?.toString() || '',
           isStable: isStableExpression(dir.exp?.toString() || ''),
         });
-      } else if (prop.type === NodeTypes.ATTRIBUTE && prop.value?.includes('{{')) {
+      } else if (prop.type === NodeTypes.ATTRIBUTE && prop.value?.content.includes('{{')) {
         bindings.push({
           name: prop.name,
           type: 'prop',
-          expression: prop.value,
+          expression: prop.value?.content ?? '',
           isStable: false,
         });
       }
@@ -329,8 +329,8 @@ export function analyzeDeadCode(source: string): DeadCodeAnalysis {
   const constantExpressions = source.matchAll(/(['"])([^'"]+)\1\s*\+\s*(['"])([^'"]+)\3/g);
   for (const match of constantExpressions) {
     constantFoldingOpportunities.push({
-      expression: match[0],
-      result: match[2] + match[4],
+      expression: match[0] ?? '',
+      result: (match[2] ?? '') + (match[4] ?? ''),
     });
   }
 
@@ -564,7 +564,31 @@ function traverseAST(
 }
 
 function getNodeTypeName(node: TemplateChildNode): string {
-  return NodeTypes[node.type] || 'Unknown';
+  const names: readonly string[] = [
+    'ROOT',
+    'ELEMENT',
+    'TEXT',
+    'COMMENT',
+    'INTERPOLATION',
+    'ATTRIBUTE',
+    'DIRECTIVE',
+    'SIMPLE_EXPRESSION',
+    'COMPOUND_EXPRESSION',
+    'FOR',
+    'IF',
+    ' slotted',
+    'SETUP_ONLY',
+    'VNODE_CALL',
+    'CACHE',
+    'JS_CALL_EXPRESSION',
+    'JS_OBJECT_EXPRESSION',
+    'JS_PROPERTY',
+    'JS_ARRAY_EXPRESSION',
+    'JS_FUNCTION_EXPRESSION',
+    'JS_CONDITIONAL_EXPRESSION',
+    'JS_CACHE_EXPRESSION',
+  ];
+  return names[node.type] || 'Unknown';
 }
 
 function hasVFor(node: TemplateChildNode): boolean {

@@ -285,8 +285,12 @@ export function watch<T, Immediate extends Readonly<boolean> = false>(
   }
 
   return () => {
+    if (isStopped) return;
     isStopped = true;
     watcher.stop();
+    getter = () => {};
+    cleanupFns.length = 0;
+    oldValue = undefined;
   };
 }
 

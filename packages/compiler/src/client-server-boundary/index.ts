@@ -1,3 +1,5 @@
+/// <reference lib="webworker" />
+declare const EdgeRuntime: unique symbol;
 // packages/compiler/src/client-server-boundary/index.ts
 // Client/Server 边界自动分割
 // Phase 1.6: 自动检测和分割客户端/服务端代码
@@ -399,24 +401,20 @@ function generateServerCode(
 ): string {
   const lines: string[] = [];
 
-  // 添加服务端指令
   lines.push("'use server';");
   lines.push('');
 
-  // 导入服务端专用模块
-  for (const imp of analysis.serverImports) {
+  for (const imp of _analysis.serverImports) {
     lines.push(`import '${imp}';`);
   }
 
-  // 导出服务端函数
-  for (const fn of analysis.serverFunctions) {
+  for (const fn of _analysis.serverFunctions) {
     lines.push(`export { ${fn} };`);
   }
 
-  // 添加原始代码中服务端相关的部分
   lines.push('');
   lines.push('// Server-side code');
-  lines.push(source);
+  lines.push(_source);
 
   return lines.join('\n');
 }
@@ -431,24 +429,20 @@ function generateClientCode(
 ): string {
   const lines: string[] = [];
 
-  // 添加客户端指令
   lines.push("'use client';");
   lines.push('');
 
-  // 导入客户端专用模块
-  for (const imp of analysis.clientImports) {
+  for (const imp of _analysis.clientImports) {
     lines.push(`import '${imp}';`);
   }
 
-  // 导出客户端函数
-  for (const fn of analysis.clientFunctions) {
+  for (const fn of _analysis.clientFunctions) {
     lines.push(`export { ${fn} };`);
   }
 
-  // 添加原始代码中客户端相关的部分
   lines.push('');
   lines.push('// Client-side code');
-  lines.push(source);
+  lines.push(_source);
 
   return lines.join('\n');
 }
@@ -477,7 +471,7 @@ function generateSharedCode(
 /**
  * 生成类型定义
  */
-function generateTypeDefinition(source: string, analysis: BoundaryAnalysis): string {
+function generateTypeDefinition(_source: string, analysis: BoundaryAnalysis): string {
   const lines: string[] = [];
 
   lines.push('// Auto-generated type definitions');
