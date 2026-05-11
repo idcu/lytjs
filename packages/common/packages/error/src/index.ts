@@ -121,95 +121,90 @@ export const ErrorCategory = {
 // ============================================================
 
 const errorMessages: Record<LytErrorCodes, string> = {
-  [LytErrorCodes.INVALID_EXPRESSION]: 'Invalid expression.',
-  [LytErrorCodes.UNEXPECTED_TOKEN]: 'Unexpected token.',
-  [LytErrorCodes.UNEXPECTED_EOF]: 'Unexpected end of expression.',
-  [LytErrorCodes.INVALID_IDENTIFIER]: 'Invalid identifier.',
-  [LytErrorCodes.INVALID_DIRECTIVE]: 'Invalid directive.',
-  [LytErrorCodes.INVALID_TEMPLATE_REF]: 'Invalid template ref.',
-  [LytErrorCodes.INVALID_VNODE_SLOT]: 'Invalid vnode slot.',
-  [LytErrorCodes.X_INVALID_SLOT_CONTENT]: 'Invalid slot content.',
-  [LytErrorCodes.X_V_FOR_MALFORMED_EXPRESSION]: 'Malformed v-for expression.',
-  [LytErrorCodes.X_V_FOR_NESTED_ITERATION]: 'Nested v-for iteration is not supported.',
-  [LytErrorCodes.X_V_IF_SAME_KEY]: 'v-if/v-else-if/v-else must use unique keys.',
-  [LytErrorCodes.X_V_IF_NO_EXPRESSION]: 'v-if/v-else-if requires an expression.',
-  [LytErrorCodes.X_V_IF_SIBLING_IF]: 'v-if/v-else-if must be siblings.',
-  [LytErrorCodes.X_V_FOR_NO_EXPRESSION]: 'v-for requires an expression.',
-  [LytErrorCodes.X_V_FOR_MISSING_KEY]: 'v-for requires a key.',
-  [LytErrorCodes.X_V_FOR_TEMPLATE_KEY_PLACEMENT]:
-    '<template> key must be placed on <template> tag when using v-for.',
-  [LytErrorCodes.X_KEY_EXPECTED]: 'Expected a key on v-for/v-if.',
-  [LytErrorCodes.X_INVALID_V_FOR]: 'Invalid v-for usage.',
-  [LytErrorCodes.X_MISSING_END_TAG]: 'Missing end tag.',
-  [LytErrorCodes.X_INVALID_END_TAG]: 'Invalid end tag.',
-  [LytErrorCodes.X_INTERPOLATION_NO_EXPRESSION]: 'Interpolation requires an expression.',
-  [LytErrorCodes.X_MISSING_DYNAMIC_DIRECTIVE_ARGUMENT]: 'Missing dynamic directive argument.',
-  [LytErrorCodes.X_V_BIND_INVALID_SAME_NAME_ARGUMENT]:
-    'v-bind cannot use same name as the directive argument.',
-  [LytErrorCodes.X_V_BIND_INVALID_DYNAMIC_ARGUMENT]: 'Invalid dynamic argument for v-bind.',
-  [LytErrorCodes.X_V_ON_INVALID_DYNAMIC_ARGUMENT]: 'Invalid dynamic argument for v-on.',
-  [LytErrorCodes.X_V_MODEL_INVALID_EXPRESSION]: 'Invalid v-model expression.',
-  [LytErrorCodes.X_V_MODEL_ON_SCOPE_VARIABLE]: 'v-model cannot be used on scope variable.',
-  [LytErrorCodes.X_INVALID_V_MODEL_MODIFIER]: 'Invalid v-model modifier.',
-  [LytErrorCodes.X_V_MODEL_MALFORMED_MODIFIER]: 'Malformed v-model modifier.',
-  [LytErrorCodes.X_V_MODEL_INVALID_MODIFIER_ON_INPUT]: 'Invalid v-model modifier on input element.',
-  [LytErrorCodes.X_V_MODEL_PROP_CANNOT_BE_SET]: 'v-model prop cannot be set.',
-  [LytErrorCodes.X_V_MODEL_CANNOT_BE_USED_ON_PROPS]: 'v-model cannot be used on props.',
-  [LytErrorCodes.X_V_SLOT_EXTRANEOUS_DEFAULT_SLOT_CHILDREN]:
-    'Extraneous children found in default slot.',
-  [LytErrorCodes.X_V_SLOT_DUPLICATE_SLOT_NAMES]: 'Duplicate slot names.',
-  [LytErrorCodes.X_V_SLOT_MISSING_SLOT_NAME]: 'v-slot is missing slot name.',
-  [LytErrorCodes.X_V_SLOT_MIXED_SLOT_USAGE]: 'Mixed slot usage is not allowed.',
-  [LytErrorCodes.X_V_SLOT_DUPLICATE_SLOT_NAMES_IN_SAME_SCOPE]:
-    'Duplicate slot names in the same scope.',
-  [LytErrorCodes.X_V_SLOT_EXPECTED_SLOT_NAME]: 'Expected slot name for v-slot.',
-  [LytErrorCodes.X_V_SLOT_NAMED_EXPECTED_DEFAULT]: 'Named slot expected default slot content.',
-  [LytErrorCodes.X_V_SLOT_NAMED_NO_DEFAULT]: 'No default slot content for named slot.',
-  [LytErrorCodes.X_V_SLOT_DEFAULT_DUPLICATE]: 'Duplicate default slot.',
-  [LytErrorCodes.X_V_SLOT_EXTRANEOUS_ATTRS_IN_SLOTS]: 'Extraneous attributes in slot outlet.',
-  [LytErrorCodes.SETUP_FUNCTION_ERROR]: 'Setup function error.',
-  [LytErrorCodes.RENDER_ERROR]: 'Render function error.',
-  [LytErrorCodes.WATCH_CALLBACK_ERROR]: 'Watch callback error.',
-  [LytErrorCodes.WATCH_GETTER_ERROR]: 'Watch getter error.',
-  [LytErrorCodes.WATCH_CLEANUP_ERROR]: 'Watch cleanup error.',
-  [LytErrorCodes.LIFECYCLE_HOOK_ERROR]: 'Lifecycle hook error.',
-  [LytErrorCodes.PROVIDE_INJECT_ERROR]: 'Provide/inject error.',
-  [LytErrorCodes.NEXT_TICK_ERROR]: 'nextTick callback error.',
-  [LytErrorCodes.DIRECTIVE_ERROR]: 'Directive error.',
-  [LytErrorCodes.TRANSITION_ERROR]: 'Transition error.',
-  [LytErrorCodes.KEEP_ALIVE_ERROR]: 'KeepAlive error.',
-  [LytErrorCodes.TELEPORT_ERROR]: 'Teleport error.',
-  [LytErrorCodes.SUSPENSE_ERROR]: 'Suspense error.',
-  [LytErrorCodes.INVALID_VNODE_TYPE]: 'Invalid vnode type.',
-  [LytErrorCodes.INVALID_VNODE_KEY]: 'Invalid vnode key.',
-  [LytErrorCodes.INVALID_DOM_NODE]: 'Invalid DOM node.',
-  [LytErrorCodes.INVALID_HYDRATION_NODE]: 'Invalid hydration node.',
-  [LytErrorCodes.INVALID_PATCH_FLAG]: 'Invalid patch flag.',
-  [LytErrorCodes.INVALID_REF]: 'Invalid ref.',
-  [LytErrorCodes.INVALID_SLOT]: 'Invalid slot.',
-  [LytErrorCodes.INVALID_CHILDREN]: 'Invalid children.',
-  [LytErrorCodes.INVALID_PROPS]: 'Invalid props.',
-  [LytErrorCodes.INVALID_EVENT]: 'Invalid event handler.',
-  [LytErrorCodes.INVALID_ATTR]: 'Invalid attribute.',
-  [LytErrorCodes.INVALID_CLASS]: 'Invalid class value.',
-  [LytErrorCodes.INVALID_STYLE]: 'Invalid style value.',
-  [LytErrorCodes.INVALID_DIRECTIVE_VALUE]: 'Invalid directive value.',
-  [LytErrorCodes.INVALID_TEMPLATE]: 'Invalid template.',
-  [LytErrorCodes.INVALID_MOUNT_TARGET]: 'Failed to mount app: target element not found.',
-  [LytErrorCodes.INVALID_UNMOUNT_TARGET]: 'Failed to unmount app: target element not found.',
-  [LytErrorCodes.INVALID_COMPONENT]: 'Invalid component.',
-  [LytErrorCodes.INVALID_PROP_TYPE]: 'Invalid prop type.',
-  [LytErrorCodes.MISSING_PROP]: 'Missing required prop.',
-  [LytErrorCodes.INVALID_EMIT_EVENT]: 'Invalid emit event.',
-  [LytErrorCodes.INVALID_SETUP_RETURN]: 'Invalid setup return value.',
-  [LytErrorCodes.INVALID_INJECT_KEY]: 'Invalid inject key.',
-  [LytErrorCodes.DUPLICATE_KEYS]: 'Duplicate keys detected.',
-  [LytErrorCodes.CIRCULAR_REFERENCE]: 'Circular reference detected.',
-  [LytErrorCodes.INVALID_COMPUTED]: 'Invalid computed property.',
-  [LytErrorCodes.INVALID_WATCH_SOURCE]: 'Invalid watch source.',
-  [LytErrorCodes.COMPONENT_IS_MISSING_TEMPLATE]:
-    'Component is missing template or render function.',
-  [LytErrorCodes.COMPONENT_ASYNC_ERROR]: 'Async component error.',
+  [LytErrorCodes.INVALID_EXPRESSION]: '无效的表达式。',
+  [LytErrorCodes.UNEXPECTED_TOKEN]: '意外的标记。',
+  [LytErrorCodes.UNEXPECTED_EOF]: '表达式意外结束。',
+  [LytErrorCodes.INVALID_IDENTIFIER]: '无效的标识符。',
+  [LytErrorCodes.INVALID_DIRECTIVE]: '无效的指令。',
+  [LytErrorCodes.INVALID_TEMPLATE_REF]: '无效的模板引用。',
+  [LytErrorCodes.INVALID_VNODE_SLOT]: '无效的虚拟节点插槽。',
+  [LytErrorCodes.X_INVALID_SLOT_CONTENT]: '无效的插槽内容。',
+  [LytErrorCodes.X_V_FOR_MALFORMED_EXPRESSION]: 'v-for 表达式格式错误。',
+  [LytErrorCodes.X_V_FOR_NESTED_ITERATION]: '不支持嵌套的 v-for 迭代。',
+  [LytErrorCodes.X_V_IF_SAME_KEY]: 'v-if/v-else-if/v-else 必须使用唯一的 key。',
+  [LytErrorCodes.X_V_IF_NO_EXPRESSION]: 'v-if/v-else-if 需要表达式。',
+  [LytErrorCodes.X_V_IF_SIBLING_IF]: 'v-if 和 v-else-if/v-else 必须是兄弟节点。',
+  [LytErrorCodes.X_V_FOR_NO_EXPRESSION]: 'v-for 需要表达式。',
+  [LytErrorCodes.X_V_FOR_MISSING_KEY]: 'v-for 需要 key 属性。',
+  [LytErrorCodes.X_V_FOR_TEMPLATE_KEY_PLACEMENT]: '使用 v-for 时，key 必须放在 <template> 标签上。',
+  [LytErrorCodes.X_KEY_EXPECTED]: '在 v-for/v-if 上期望一个 key。',
+  [LytErrorCodes.X_INVALID_V_FOR]: 'v-for 使用无效。',
+  [LytErrorCodes.X_MISSING_END_TAG]: '缺少结束标签。',
+  [LytErrorCodes.X_INVALID_END_TAG]: '无效的结束标签。',
+  [LytErrorCodes.X_INTERPOLATION_NO_EXPRESSION]: '插值需要表达式。',
+  [LytErrorCodes.X_MISSING_DYNAMIC_DIRECTIVE_ARGUMENT]: '缺少动态指令参数。',
+  [LytErrorCodes.X_V_BIND_INVALID_SAME_NAME_ARGUMENT]: 'v-bind 不能使用与指令参数相同的名称。',
+  [LytErrorCodes.X_V_BIND_INVALID_DYNAMIC_ARGUMENT]: 'v-bind 的动态参数无效。',
+  [LytErrorCodes.X_V_ON_INVALID_DYNAMIC_ARGUMENT]: 'v-on 的动态参数无效。',
+  [LytErrorCodes.X_V_MODEL_INVALID_EXPRESSION]: 'v-model 表达式无效。',
+  [LytErrorCodes.X_V_MODEL_ON_SCOPE_VARIABLE]: 'v-model 不能用于作用域变量。',
+  [LytErrorCodes.X_INVALID_V_MODEL_MODIFIER]: 'v-model 修饰符无效。',
+  [LytErrorCodes.X_V_MODEL_MALFORMED_MODIFIER]: 'v-model 修饰符格式错误。',
+  [LytErrorCodes.X_V_MODEL_INVALID_MODIFIER_ON_INPUT]: 'input 元素上的 v-model 修饰符无效。',
+  [LytErrorCodes.X_V_MODEL_PROP_CANNOT_BE_SET]: 'v-model 属性无法设置。',
+  [LytErrorCodes.X_V_MODEL_CANNOT_BE_USED_ON_PROPS]: 'v-model 不能用于 props。',
+  [LytErrorCodes.X_V_SLOT_EXTRANEOUS_DEFAULT_SLOT_CHILDREN]: '默认插槽中发现多余的子元素。',
+  [LytErrorCodes.X_V_SLOT_DUPLICATE_SLOT_NAMES]: '插槽名称重复。',
+  [LytErrorCodes.X_V_SLOT_MISSING_SLOT_NAME]: 'v-slot 缺少插槽名称。',
+  [LytErrorCodes.X_V_SLOT_MIXED_SLOT_USAGE]: '不允许混合使用插槽。',
+  [LytErrorCodes.X_V_SLOT_DUPLICATE_SLOT_NAMES_IN_SAME_SCOPE]: '同一作用域中插槽名称重复。',
+  [LytErrorCodes.X_V_SLOT_EXPECTED_SLOT_NAME]: 'v-slot 期望插槽名称。',
+  [LytErrorCodes.X_V_SLOT_NAMED_EXPECTED_DEFAULT]: '命名插槽期望默认插槽内容。',
+  [LytErrorCodes.X_V_SLOT_NAMED_NO_DEFAULT]: '命名插槽没有默认插槽内容。',
+  [LytErrorCodes.X_V_SLOT_DEFAULT_DUPLICATE]: '默认插槽重复。',
+  [LytErrorCodes.X_V_SLOT_EXTRANEOUS_ATTRS_IN_SLOTS]: '插槽出口中有多余的属性。',
+  [LytErrorCodes.SETUP_FUNCTION_ERROR]: 'setup 函数错误。',
+  [LytErrorCodes.RENDER_ERROR]: '渲染函数错误。',
+  [LytErrorCodes.WATCH_CALLBACK_ERROR]: 'watch 回调错误。',
+  [LytErrorCodes.WATCH_GETTER_ERROR]: 'watch getter 错误。',
+  [LytErrorCodes.WATCH_CLEANUP_ERROR]: 'watch 清理函数错误。',
+  [LytErrorCodes.LIFECYCLE_HOOK_ERROR]: '生命周期钩子错误。',
+  [LytErrorCodes.PROVIDE_INJECT_ERROR]: 'provide/inject 错误。',
+  [LytErrorCodes.NEXT_TICK_ERROR]: 'nextTick 回调错误。',
+  [LytErrorCodes.DIRECTIVE_ERROR]: '指令错误。',
+  [LytErrorCodes.TRANSITION_ERROR]: '过渡动画错误。',
+  [LytErrorCodes.KEEP_ALIVE_ERROR]: 'KeepAlive 错误。',
+  [LytErrorCodes.TELEPORT_ERROR]: 'Teleport 错误。',
+  [LytErrorCodes.SUSPENSE_ERROR]: 'Suspense 错误。',
+  [LytErrorCodes.INVALID_VNODE_TYPE]: '无效的虚拟节点类型。',
+  [LytErrorCodes.INVALID_VNODE_KEY]: '无效的虚拟节点 key。',
+  [LytErrorCodes.INVALID_DOM_NODE]: '无效的 DOM 节点。',
+  [LytErrorCodes.INVALID_HYDRATION_NODE]: '无效的水合节点。',
+  [LytErrorCodes.INVALID_PATCH_FLAG]: '无效的更新标志。',
+  [LytErrorCodes.INVALID_REF]: '无效的 ref。',
+  [LytErrorCodes.INVALID_SLOT]: '无效的插槽。',
+  [LytErrorCodes.INVALID_CHILDREN]: '无效的子元素。',
+  [LytErrorCodes.INVALID_PROPS]: '无效的 props。',
+  [LytErrorCodes.INVALID_EVENT]: '无效的事件处理器。',
+  [LytErrorCodes.INVALID_ATTR]: '无效的属性。',
+  [LytErrorCodes.INVALID_CLASS]: '无效的 class 值。',
+  [LytErrorCodes.INVALID_STYLE]: '无效的 style 值。',
+  [LytErrorCodes.INVALID_DIRECTIVE_VALUE]: '无效的指令值。',
+  [LytErrorCodes.INVALID_TEMPLATE]: '无效的模板。',
+  [LytErrorCodes.INVALID_MOUNT_TARGET]: '挂载失败：未找到目标元素。',
+  [LytErrorCodes.INVALID_UNMOUNT_TARGET]: '卸载失败：未找到目标元素。',
+  [LytErrorCodes.INVALID_COMPONENT]: '无效的组件。',
+  [LytErrorCodes.INVALID_PROP_TYPE]: '无效的 prop 类型。',
+  [LytErrorCodes.MISSING_PROP]: '缺少必填的 prop。',
+  [LytErrorCodes.INVALID_EMIT_EVENT]: '无效的 emit 事件。',
+  [LytErrorCodes.INVALID_SETUP_RETURN]: 'setup 返回值无效。',
+  [LytErrorCodes.INVALID_INJECT_KEY]: '无效的 inject key。',
+  [LytErrorCodes.DUPLICATE_KEYS]: '检测到重复的 key。',
+  [LytErrorCodes.CIRCULAR_REFERENCE]: '检测到循环引用。',
+  [LytErrorCodes.INVALID_COMPUTED]: '无效的计算属性。',
+  [LytErrorCodes.INVALID_WATCH_SOURCE]: '无效的 watch 源。',
+  [LytErrorCodes.COMPONENT_IS_MISSING_TEMPLATE]: '组件缺少 template 或 render 函数。',
+  [LytErrorCodes.COMPONENT_ASYNC_ERROR]: '异步组件错误。',
 };
 
 // ============================================================
@@ -217,36 +212,96 @@ const errorMessages: Record<LytErrorCodes, string> = {
 // ============================================================
 
 const errorSuggestions: Partial<Record<LytErrorCodes, string>> = {
-  [LytErrorCodes.INVALID_EXPRESSION]: 'Check for syntax errors or missing parentheses.',
-  [LytErrorCodes.UNEXPECTED_TOKEN]: 'Ensure the token matches the expected syntax.',
-  [LytErrorCodes.UNEXPECTED_EOF]: 'Check for unclosed brackets or parentheses.',
-  [LytErrorCodes.INVALID_IDENTIFIER]: 'Variable names must start with a letter or underscore.',
-  [LytErrorCodes.INVALID_DIRECTIVE]: 'Valid directives: v-if, v-else-if, v-else, v-for, v-on, v-bind, v-model, v-show, v-slot, v-scope, v-once, v-memo, ref.',
-  [LytErrorCodes.X_V_FOR_MALFORMED_EXPRESSION]: 'Use format: v-for="item in items" or v-for="(item, index) in items".',
-  [LytErrorCodes.X_V_FOR_NESTED_ITERATION]: 'Use a component wrapper or computed property instead.',
-  [LytErrorCodes.X_V_IF_SAME_KEY]: 'Give each v-if/v-else-if a unique condition key.',
-  [LytErrorCodes.X_V_IF_NO_EXPRESSION]: 'Add an expression: v-if="condition" or remove the directive.',
-  [LytErrorCodes.X_V_IF_SIBLING_IF]: 'Place v-if and v-else-if/v-else elements as direct siblings.',
-  [LytErrorCodes.X_V_FOR_NO_EXPRESSION]: 'Add an expression: v-for="item in items".',
-  [LytErrorCodes.X_V_FOR_MISSING_KEY]: 'Add a :key="item.id" attribute for stable list rendering.',
-  [LytErrorCodes.X_MISSING_END_TAG]: 'Add the closing </tag> tag.',
-  [LytErrorCodes.X_INVALID_END_TAG]: 'Ensure closing tag matches the opening tag.',
-  [LytErrorCodes.X_INTERPOLATION_NO_EXPRESSION]: 'Use {{ expression }} format inside interpolation.',
-  [LytErrorCodes.X_V_MODEL_INVALID_EXPRESSION]: 'Use a valid property path: v-model="object.property" or v-model="variable".',
-  [LytErrorCodes.X_V_MODEL_ON_SCOPE_VARIABLE]: 'v-model cannot bind to v-for loop variables. Use a data property instead.',
-  [LytErrorCodes.X_V_MODEL_INVALID_MODIFIER_ON_INPUT]: 'Use .trim or .number modifiers only on input elements.',
-  [LytErrorCodes.X_V_MODEL_PROP_CANNOT_BE_SET]: 'Use a data property or computed property setter.',
-  [LytErrorCodes.X_V_MODEL_CANNOT_BE_USED_ON_PROPS]: 'Props are read-only. Use emit to update parent.',
-  [LytErrorCodes.X_V_SLOT_DUPLICATE_SLOT_NAMES]: 'Use unique names for each slot.',
-  [LytErrorCodes.X_V_SLOT_MISSING_SLOT_NAME]: 'Add slot name: v-slot:header or use #header syntax.',
-  [LytErrorCodes.X_MISSING_DYNAMIC_DIRECTIVE_ARGUMENT]: 'Add the argument: v-bind:[attrName]="value".',
-  [LytErrorCodes.X_V_BIND_INVALID_SAME_NAME_ARGUMENT]: 'Remove the argument or use a different directive.',
-  [LytErrorCodes.X_INVALID_V_MODEL_MODIFIER]: 'Use .trim, .number, or .lazy modifiers.',
-  [LytErrorCodes.COMPONENT_IS_MISSING_TEMPLATE]: 'Add a template property or render function to your component.',
-  [LytErrorCodes.INVALID_COMPONENT]: 'Ensure the component is properly imported or registered.',
-  [LytErrorCodes.INVALID_PROP_TYPE]: 'Define props with correct types: { type: String } or { type: [String, Number] }.',
-  [LytErrorCodes.MISSING_PROP]: 'Provide the required prop or make it optional.',
-  [LytErrorCodes.INVALID_SETUP_RETURN]: 'Return an object from setup() to expose reactive state.',
+  [LytErrorCodes.INVALID_EXPRESSION]: '检查语法错误或缺少的括号。',
+  [LytErrorCodes.UNEXPECTED_TOKEN]: '确保标记符合预期的语法。',
+  [LytErrorCodes.UNEXPECTED_EOF]: '检查未闭合的括号或标签。',
+  [LytErrorCodes.INVALID_IDENTIFIER]: '变量名必须以字母或下划线开头。',
+  [LytErrorCodes.INVALID_DIRECTIVE]:
+    '有效的指令：v-if、v-else-if、v-else、v-for、v-on、v-bind、v-model、v-show、v-slot、v-scope、v-once、v-memo、ref。',
+  [LytErrorCodes.X_V_FOR_MALFORMED_EXPRESSION]:
+    '使用格式：v-for="item in items" 或 v-for="(item, index) in items"。',
+  [LytErrorCodes.X_V_FOR_NESTED_ITERATION]: '使用组件包装器或计算属性代替。',
+  [LytErrorCodes.X_V_IF_SAME_KEY]: '给每个 v-if/v-else-if 一个唯一的条件 key。',
+  [LytErrorCodes.X_V_IF_NO_EXPRESSION]: '添加表达式：v-if="condition" 或删除该指令。',
+  [LytErrorCodes.X_V_IF_SIBLING_IF]: '将 v-if 和 v-else-if/v-else 元素放在同一层级作为直接兄弟。',
+  [LytErrorCodes.X_V_FOR_NO_EXPRESSION]: '添加表达式：v-for="item in items"。',
+  [LytErrorCodes.X_V_FOR_MISSING_KEY]: '添加 :key="item.id" 属性以实现稳定的列表渲染。',
+  [LytErrorCodes.X_V_FOR_TEMPLATE_KEY_PLACEMENT]:
+    '确保 key 属性直接放在使用 v-for 的 <template> 标签上。',
+  [LytErrorCodes.X_KEY_EXPECTED]: '在 v-for 或 v-if 上添加唯一的 key 属性。',
+  [LytErrorCodes.X_INVALID_V_FOR]: '检查 v-for 的语法是否正确。',
+  [LytErrorCodes.X_MISSING_END_TAG]: '添加结束标签 </tag>。',
+  [LytErrorCodes.X_INVALID_END_TAG]: '确保结束标签与开始标签匹配。',
+  [LytErrorCodes.X_INTERPOLATION_NO_EXPRESSION]: '在插值中使用 {{ expression }} 格式。',
+  [LytErrorCodes.X_MISSING_DYNAMIC_DIRECTIVE_ARGUMENT]: '添加参数：v-bind:[attrName]="value"。',
+  [LytErrorCodes.X_V_BIND_INVALID_SAME_NAME_ARGUMENT]: '删除参数或使用不同的指令。',
+  [LytErrorCodes.X_V_BIND_INVALID_DYNAMIC_ARGUMENT]: '确保动态参数是有效的属性名。',
+  [LytErrorCodes.X_V_ON_INVALID_DYNAMIC_ARGUMENT]: '确保动态参数是有效的事件名。',
+  [LytErrorCodes.X_V_MODEL_INVALID_EXPRESSION]:
+    '使用有效的属性路径：v-model="object.property" 或 v-model="variable"。',
+  [LytErrorCodes.X_V_MODEL_ON_SCOPE_VARIABLE]:
+    'v-model 不能绑定到 v-for 循环变量。请改用数据属性。',
+  [LytErrorCodes.X_INVALID_V_MODEL_MODIFIER]: '使用 .trim、.number 或 .lazy 修饰符。',
+  [LytErrorCodes.X_V_MODEL_MALFORMED_MODIFIER]: '检查 v-model 修饰符的格式是否正确。',
+  [LytErrorCodes.X_V_MODEL_INVALID_MODIFIER_ON_INPUT]:
+    '仅在 input 元素上使用 .trim 或 .number 修饰符。',
+  [LytErrorCodes.X_V_MODEL_PROP_CANNOT_BE_SET]: '使用数据属性或计算属性 setter。',
+  [LytErrorCodes.X_V_MODEL_CANNOT_BE_USED_ON_PROPS]: 'Props 是只读的。使用 emit 来更新父组件。',
+  [LytErrorCodes.X_V_SLOT_EXTRANEOUS_DEFAULT_SLOT_CHILDREN]:
+    '删除默认插槽中多余的子元素或使用命名插槽。',
+  [LytErrorCodes.X_V_SLOT_DUPLICATE_SLOT_NAMES]: '为每个插槽使用唯一的名称。',
+  [LytErrorCodes.X_V_SLOT_MISSING_SLOT_NAME]: '添加插槽名称：v-slot:header 或使用 #header 语法。',
+  [LytErrorCodes.X_V_SLOT_MIXED_SLOT_USAGE]: '统一使用 v-slot 语法或旧的 slot 语法，不要混用。',
+  [LytErrorCodes.X_V_SLOT_DUPLICATE_SLOT_NAMES_IN_SAME_SCOPE]:
+    '确保同一作用域中的所有插槽名称都是唯一的。',
+  [LytErrorCodes.X_V_SLOT_EXPECTED_SLOT_NAME]: '在 v-slot 指令中指定插槽名称。',
+  [LytErrorCodes.X_V_SLOT_NAMED_EXPECTED_DEFAULT]: '为命名插槽提供默认内容或确保正确传递。',
+  [LytErrorCodes.X_V_SLOT_NAMED_NO_DEFAULT]: '为命名插槽提供默认内容或使其成为可选。',
+  [LytErrorCodes.X_V_SLOT_DEFAULT_DUPLICATE]: '删除重复的默认插槽。',
+  [LytErrorCodes.X_V_SLOT_EXTRANEOUS_ATTRS_IN_SLOTS]: '删除插槽出口上的多余属性。',
+  [LytErrorCodes.SETUP_FUNCTION_ERROR]: '检查 setup() 函数中的代码，确保没有语法错误或运行时错误。',
+  [LytErrorCodes.RENDER_ERROR]: '检查 render 函数或 template 中的代码，确保其正确返回虚拟节点。',
+  [LytErrorCodes.WATCH_CALLBACK_ERROR]: '检查 watch 的回调函数，确保其正确处理变化。',
+  [LytErrorCodes.WATCH_GETTER_ERROR]: '检查 watch 的 getter 函数，确保其正确返回要观察的值。',
+  [LytErrorCodes.WATCH_CLEANUP_ERROR]: '检查 watch 的清理函数，确保其正确执行。',
+  [LytErrorCodes.LIFECYCLE_HOOK_ERROR]: '检查生命周期钩子函数，确保其正确实现。',
+  [LytErrorCodes.PROVIDE_INJECT_ERROR]: '检查 provide 和 inject 的使用，确保 key 正确且值可访问。',
+  [LytErrorCodes.NEXT_TICK_ERROR]: '检查 nextTick 的回调函数，确保其正确实现。',
+  [LytErrorCodes.DIRECTIVE_ERROR]: '检查自定义指令的实现，确保其正确处理绑定。',
+  [LytErrorCodes.TRANSITION_ERROR]: '检查 Transition 组件的配置，确保过渡动画正确设置。',
+  [LytErrorCodes.KEEP_ALIVE_ERROR]: '检查 KeepAlive 组件的使用，确保其正确缓存组件。',
+  [LytErrorCodes.TELEPORT_ERROR]: '检查 Teleport 的 to 目标是否存在。',
+  [LytErrorCodes.SUSPENSE_ERROR]: '检查 Suspense 组件的使用，确保正确处理异步加载。',
+  [LytErrorCodes.INVALID_VNODE_TYPE]: '确保传递给 h() 的第一个参数是有效的组件、标签名或函数。',
+  [LytErrorCodes.INVALID_VNODE_KEY]: '确保 key 是字符串或数字类型。',
+  [LytErrorCodes.INVALID_DOM_NODE]: '确保目标是有效的 DOM 节点。',
+  [LytErrorCodes.INVALID_HYDRATION_NODE]: '确保服务端渲染的标记与客户端匹配。',
+  [LytErrorCodes.INVALID_PATCH_FLAG]: '确保使用有效的 patch 标志。',
+  [LytErrorCodes.INVALID_REF]: '确保 ref 正确创建和使用。',
+  [LytErrorCodes.INVALID_SLOT]: '确保插槽正确定义和传递。',
+  [LytErrorCodes.INVALID_CHILDREN]: '确保子元素是有效的虚拟节点或字符串/数字。',
+  [LytErrorCodes.INVALID_PROPS]: '确保 props 的类型和值正确。',
+  [LytErrorCodes.INVALID_EVENT]: '确保事件处理器是有效的函数。',
+  [LytErrorCodes.INVALID_ATTR]: '确保属性名称和值有效。',
+  [LytErrorCodes.INVALID_CLASS]: '确保 class 值是字符串、数组或对象。',
+  [LytErrorCodes.INVALID_STYLE]: '确保 style 值是字符串或对象。',
+  [LytErrorCodes.INVALID_DIRECTIVE_VALUE]: '确保指令值是有效的。',
+  [LytErrorCodes.INVALID_TEMPLATE]: '检查模板语法是否正确。',
+  [LytErrorCodes.INVALID_MOUNT_TARGET]: '确保挂载目标在 DOM 中存在：检查选择器或元素引用。',
+  [LytErrorCodes.INVALID_UNMOUNT_TARGET]: '确保卸载的目标是有效的组件实例。',
+  [LytErrorCodes.INVALID_COMPONENT]: '确保组件已正确导入和注册。',
+  [LytErrorCodes.INVALID_PROP_TYPE]:
+    '用正确的类型定义 props：{ type: String } 或 { type: [String, Number] }。',
+  [LytErrorCodes.MISSING_PROP]: '提供必填的 prop 或将其设为可选。',
+  [LytErrorCodes.INVALID_EMIT_EVENT]: '确保事件名在 emits 选项中定义。',
+  [LytErrorCodes.INVALID_SETUP_RETURN]: '从 setup() 返回对象以暴露响应式状态。',
+  [LytErrorCodes.INVALID_INJECT_KEY]: '确保 inject 的 key 已在祖先组件中 provide。',
+  [LytErrorCodes.DUPLICATE_KEYS]: '为列表中的每个项使用唯一的 key，通常使用 item.id。',
+  [LytErrorCodes.CIRCULAR_REFERENCE]: '检查组件或数据依赖关系，避免循环引用。',
+  [LytErrorCodes.INVALID_COMPUTED]: '确保计算属性返回值或具有正确的 getter/setter。',
+  [LytErrorCodes.INVALID_WATCH_SOURCE]: '确保 watch 的源是 ref、reactive 或 getter 函数。',
+  [LytErrorCodes.COMPONENT_IS_MISSING_TEMPLATE]: '在组件中添加 template 属性或 render 函数。',
+  [LytErrorCodes.COMPONENT_ASYNC_ERROR]: '检查异步组件的加载器函数，确保它正确返回 Promise。',
 };
 
 /**
@@ -326,15 +381,13 @@ export function formatError(error: Error | LytError | string): FormattedError {
   const code = (error as LytError).code ?? 0;
   const category = getCategoryName(getCategory(code));
   const suggestion = getErrorSuggestion(code);
-  
+
   const location = (error as LytError).loc?.start
     ? `line ${(error as LytError).loc!.start.line}, column ${(error as LytError).loc!.start.column}`
     : undefined;
-  
-  const title = code > 0
-    ? `[${category}] Error ${code}`
-    : 'Error';
-  
+
+  const title = code > 0 ? `[${category}] Error ${code}` : 'Error';
+
   return {
     title,
     message: error instanceof Error ? error.message : String(error),
@@ -365,19 +418,19 @@ function getCategoryName(category: ErrorCategoryType): string {
 export function printFormattedError(error: Error | LytError | string): void {
   const formatted = formatError(error);
   const parts: string[] = [];
-  
+
   parts.push(`\x1b[1m\x1b[31m${formatted.title}\x1b[0m`);
-  
+
   if (formatted.location) {
     parts.push(`  Location: ${formatted.location}`);
   }
-  
+
   parts.push(`  ${formatted.message}`);
-  
+
   if (formatted.suggestion) {
     parts.push(`\x1b[32m  💡 Suggestion: ${formatted.suggestion}\x1b[0m`);
   }
-  
+
   console.error(parts.join('\n'));
 }
 
@@ -580,7 +633,8 @@ export function createEnhancedError(
   if (options?.code !== undefined) error.code = options.code;
   if (options?.context !== undefined) error.context = options.context;
   if (options?.recoverable !== undefined) error.recoverable = options.recoverable;
-  if (options?.recoverySuggestion !== undefined) error.recoverySuggestion = options.recoverySuggestion;
+  if (options?.recoverySuggestion !== undefined)
+    error.recoverySuggestion = options.recoverySuggestion;
   return error;
 }
 
@@ -627,28 +681,26 @@ export function safeExecWithRecovery<T>(
     try {
       return fn();
     } catch (err) {
-      const enhancedError = createEnhancedError(
-        err instanceof Error ? err.message : String(err),
-        {
-          cause: err,
-          context: {
-            attempt: attempt + 1,
-            maxRetries: maxRetries + 1,
-            operation: context ?? 'safeExecWithRecovery',
-          },
-          recoverable: attempt < maxRetries,
-          recoverySuggestion: attempt < maxRetries
+      const enhancedError = createEnhancedError(err instanceof Error ? err.message : String(err), {
+        cause: err,
+        context: {
+          attempt: attempt + 1,
+          maxRetries: maxRetries + 1,
+          operation: context ?? 'safeExecWithRecovery',
+        },
+        recoverable: attempt < maxRetries,
+        recoverySuggestion:
+          attempt < maxRetries
             ? `Will retry in ${retryDelay}ms (attempt ${attempt + 1}/${maxRetries + 1})`
             : 'No more retries available, using default value',
-        },
-      );
+      });
 
       lastError = enhancedError;
 
       if (__DEV__) {
         warn(
           `safeExecWithRecovery failed (attempt ${attempt + 1}/${maxRetries + 1})` +
-          `${context ? ` in "${context}"` : ''}: ${enhancedError.message}`,
+            `${context ? ` in "${context}"` : ''}: ${enhancedError.message}`,
         );
       }
 
@@ -705,26 +757,24 @@ export async function safeExecWithRecoveryAsync<T>(
     try {
       return await fn();
     } catch (err) {
-      const enhancedError = createEnhancedError(
-        err instanceof Error ? err.message : String(err),
-        {
-          cause: err,
-          context: {
-            attempt: attempt + 1,
-            maxRetries: maxRetries + 1,
-            operation: context ?? 'safeExecWithRecoveryAsync',
-          },
-          recoverable: attempt < maxRetries,
-          recoverySuggestion: attempt < maxRetries
+      const enhancedError = createEnhancedError(err instanceof Error ? err.message : String(err), {
+        cause: err,
+        context: {
+          attempt: attempt + 1,
+          maxRetries: maxRetries + 1,
+          operation: context ?? 'safeExecWithRecoveryAsync',
+        },
+        recoverable: attempt < maxRetries,
+        recoverySuggestion:
+          attempt < maxRetries
             ? `Will retry in ${retryDelay}ms (attempt ${attempt + 1}/${maxRetries + 1})`
             : 'No more retries available, using default value',
-        },
-      );
+      });
 
       if (__DEV__) {
         warn(
           `safeExecWithRecoveryAsync failed (attempt ${attempt + 1}/${maxRetries + 1})` +
-          `${context ? ` in "${context}"` : ''}: ${enhancedError.message}`,
+            `${context ? ` in "${context}"` : ''}: ${enhancedError.message}`,
         );
       }
 
