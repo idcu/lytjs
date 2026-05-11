@@ -3,8 +3,6 @@
  * 提供响应式信号的注册、查询和修改功能
  */
 
-import { generateId } from '@lytjs/common-string';
-
 export type SignalType = 'ref' | 'reactive' | 'computed' | 'signal';
 
 export interface SignalInfo {

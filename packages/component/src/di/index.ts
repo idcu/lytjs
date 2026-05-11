@@ -4,7 +4,7 @@
 
 import { hasOwn } from '@lytjs/common-is';
 import { getCurrentInstance } from '../lifecycle';
-import { effectScope, onScopeDispose, type EffectScope } from '@lytjs/reactivity';
+import { effectScope, onScopeDispose, type EffectScope } from '@lytjs/reactivity/scope';
 
 // ============================================================
 // Phase 1.10: InjectionToken - 类型安全的注入令牌
@@ -528,31 +528,3 @@ export function withProviderScope<T>(fn: () => T): T {
     exitProviderScope();
   }
 }
-
-// ============================================================
-// 导出
-// ============================================================
-
-export {
-  InjectionToken,
-  isInjectionToken,
-  provide,
-  inject,
-  provideSingleton,
-  provideScoped,
-  provideTransient,
-  provideAll,
-  withProviderScope,
-  enterProviderScope,
-  exitProviderScope,
-  getProviderRoot,
-  getCurrentProviderNode,
-  InjectionError,
-};
-
-export type {
-  ProviderLifecycle,
-  ProviderConfig,
-  ProviderNode,
-  EnhancedInjectOptions,
-};

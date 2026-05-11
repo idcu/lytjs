@@ -76,10 +76,11 @@ export function startHistoryRecording(): void {
 
   // Subscribe to events
   unsubscribeEvents = subscribeEvents((event) => {
+    const eventWithPayload = event as DevToolsEvent;
     addHistoryEntry({
       type: 'event',
-      description: formatEventDescription(event),
-      data: { event },
+      description: formatEventDescription(eventWithPayload),
+      data: { event: eventWithPayload },
     });
   });
 
@@ -93,7 +94,7 @@ export function startHistoryRecording(): void {
 
   sendToPanel({
     type: 'TIME_TRAVEL_STATUS',
-    data: { isRecording: true, currentIndex: timeTravelState.currentIndex },
+    payload: { isRecording: true, currentIndex: timeTravelState.currentIndex },
   });
 }
 
@@ -112,7 +113,7 @@ export function stopHistoryRecording(): void {
 
   sendToPanel({
     type: 'TIME_TRAVEL_STATUS',
-    data: { isRecording: false, currentIndex: timeTravelState.currentIndex },
+    payload: { isRecording: false, currentIndex: timeTravelState.currentIndex },
   });
 }
 
@@ -144,7 +145,7 @@ function addHistoryEntry(entry: Omit<HistoryEntry, 'id' | 'timestamp' | 'index'>
   // Notify panel
   sendToPanel({
     type: 'HISTORY_UPDATED',
-    data: {
+    payload: {
       entry: historyEntry,
       totalEntries: timeTravelState.history.length,
       currentIndex: timeTravelState.currentIndex,
@@ -209,15 +210,12 @@ export function jumpToHistory(index: number): boolean {
     return false;
   }
 
-  const entry = timeTravelState.history[index];
+  const entry = timeTravelState.history[index]!;
   timeTravelState.currentIndex = index;
 
-  // Restore state based on entry type
   if (entry.data.snapshot) {
     restoreSnapshot(entry.data.snapshot);
   } else if (entry.data.event?.type === 'signal:changed') {
-    // For signal changes, we need to reconstruct the state
-    // This is a simplified implementation
     interface SignalChangePayload {
       signalId?: string;
       newValue?: unknown;
@@ -228,10 +226,9 @@ export function jumpToHistory(index: number): boolean {
     }
   }
 
-  // Notify panel
   sendToPanel({
     type: 'TIME_TRAVEL_JUMP',
-    data: {
+    payload: {
       index,
       entry,
       canGoBack: index > 0,
@@ -308,7 +305,7 @@ export function clearHistory(): void {
 
   sendToPanel({
     type: 'HISTORY_CLEARED',
-    data: {},
+    payload: {},
   });
 }
 
@@ -364,7 +361,7 @@ export function importHistory(json: string): boolean {
     // Notify panel
     sendToPanel({
       type: 'HISTORY_IMPORTED',
-      data: {
+      payload: {
         totalEntries: timeTravelState.history.length,
         currentIndex: timeTravelState.currentIndex,
       },
@@ -374,7 +371,7 @@ export function importHistory(json: string): boolean {
   } catch (error) {
     sendToPanel({
       type: 'HISTORY_IMPORT_ERROR',
-      data: { error: error instanceof Error ? error.message : String(error) },
+      payload: { error: error instanceof Error ? error.message : String(error) },
     });
     return false;
   }
@@ -456,8 +453,8 @@ export function getStateDiffForEntry(index: number): StateDiff[] {
     return [];
   }
 
-  const currentEntry = timeTravelState.history[index];
-  const previousEntry = timeTravelState.history[index - 1];
+  const currentEntry = timeTravelState.history[index]!;
+  const previousEntry = timeTravelState.history[index - 1]!;
 
   if (currentEntry.data.snapshot && previousEntry.data.snapshot) {
     return compareSnapshots(previousEntry.data.snapshot, currentEntry.data.snapshot);
@@ -507,7 +504,7 @@ export function initTimeTravel(): () => void {
       case 'GET_HISTORY':
         sendToPanel({
           type: 'HISTORY_LIST',
-          data: {
+          payload: {
             history: getHistory(),
             currentIndex: getCurrentIndex(),
             isRecording: timeTravelState.isRecording,
@@ -541,7 +538,7 @@ function handleJumpToHistory(data: { index: number } | undefined): void {
     const success = jumpToHistory(data.index);
     sendToPanel({
       type: 'JUMP_RESULT',
-      data: { success, index: data.index },
+      payload: { success, index: data.index },
     });
   }
 }
@@ -550,7 +547,7 @@ function handleGoBack(): void {
   const success = goBack();
   sendToPanel({
     type: 'NAVIGATION_RESULT',
-    data: { direction: 'back', success, currentIndex: getCurrentIndex() },
+    payload: { direction: 'back', success, currentIndex: getCurrentIndex() },
   });
 }
 
@@ -558,7 +555,7 @@ function handleGoForward(): void {
   const success = goForward();
   sendToPanel({
     type: 'NAVIGATION_RESULT',
-    data: { direction: 'forward', success, currentIndex: getCurrentIndex() },
+    payload: { direction: 'forward', success, currentIndex: getCurrentIndex() },
   });
 }
 
@@ -566,7 +563,7 @@ function handleGoToStart(): void {
   const success = goToStart();
   sendToPanel({
     type: 'NAVIGATION_RESULT',
-    data: { direction: 'start', success, currentIndex: getCurrentIndex() },
+    payload: { direction: 'start', success, currentIndex: getCurrentIndex() },
   });
 }
 
@@ -574,7 +571,7 @@ function handleGoToEnd(): void {
   const success = goToEnd();
   sendToPanel({
     type: 'NAVIGATION_RESULT',
-    data: { direction: 'end', success, currentIndex: getCurrentIndex() },
+    payload: { direction: 'end', success, currentIndex: getCurrentIndex() },
   });
 }
 
@@ -582,7 +579,7 @@ function handleExportHistory(): void {
   const data = exportHistory();
   sendToPanel({
     type: 'HISTORY_EXPORTED',
-    data: { json: data },
+    payload: { json: data },
   });
 }
 
@@ -591,7 +588,7 @@ function handleImportHistory(data: { json: string } | undefined): void {
     const success = importHistory(data.json);
     sendToPanel({
       type: 'HISTORY_IMPORT_RESULT',
-      data: { success },
+      payload: { success },
     });
   }
 }
@@ -601,7 +598,7 @@ function handleGetStateDiff(data: { index: number } | undefined): void {
     const diffs = getStateDiffForEntry(data.index);
     sendToPanel({
       type: 'STATE_DIFF',
-      data: { index: data.index, diffs },
+      payload: { index: data.index, diffs },
     });
   }
 }

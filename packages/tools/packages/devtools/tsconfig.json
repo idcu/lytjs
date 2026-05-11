@@ -7,7 +7,9 @@
       "@lytjs/reactivity": ["../../../reactivity/dist/index.d.ts"],
       "@lytjs/component": ["../../../component/dist/index.d.ts"],
       "@lytjs/shared-types": ["../../../shared-types/dist/index.d.ts"]
-    }
+    },
+    "noUnusedLocals": false,
+    "noUnusedParameters": false
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist", "tests"]

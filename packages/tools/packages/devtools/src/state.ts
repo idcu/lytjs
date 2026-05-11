@@ -5,74 +5,48 @@
 import type { DevToolsState } from './types';
 import { signal, effect } from '@lytjs/reactivity';
 
-// Global DevTools state
 const devtoolsState = signal<DevToolsState>({
   enabled: false,
   connected: false,
   recording: false,
 });
 
-// 存储 effect cleanup 函数的集合
-const stateSubscribers = new Set<() => void>();
+const stateSubscribers = new Set<(state: DevToolsState) => void>();
 
-/**
- * Get current DevTools state
- */
 export function getState(): DevToolsState {
-  return devtoolsState.value;
+  return devtoolsState();
 }
 
-/**
- * Enable DevTools
- */
 export function enable(): void {
-  devtoolsState.value = { ...devtoolsState.value, enabled: true };
+  devtoolsState.set({ ...devtoolsState(), enabled: true });
 }
 
-/**
- * Disable DevTools
- */
 export function disable(): void {
-  devtoolsState.value = { ...devtoolsState.value, enabled: false };
+  devtoolsState.set({ ...devtoolsState(), enabled: false });
 }
 
-/**
- * Set connection status
- */
 export function setConnected(connected: boolean): void {
-  devtoolsState.value = { ...devtoolsState.value, connected };
+  devtoolsState.set({ ...devtoolsState(), connected });
 }
 
-/**
- * Start recording events
- */
 export function startRecording(): void {
-  devtoolsState.value = { ...devtoolsState.value, recording: true };
+  devtoolsState.set({ ...devtoolsState(), recording: true });
 }
 
-/**
- * Stop recording events
- */
 export function stopRecording(): void {
-  devtoolsState.value = { ...devtoolsState.value, recording: false };
+  devtoolsState.set({ ...devtoolsState(), recording: false });
 }
 
-/**
- * Subscribe to state changes
- * @param callback - 状态变化回调函数
- * @returns 取消订阅函数
- */
 export function subscribeState(callback: (state: DevToolsState) => void): () => void {
   let isActive = true;
 
   const stopEffect = effect(() => {
-    const currentState = devtoolsState.value;
+    const currentState = devtoolsState();
     if (isActive) {
       callback(currentState);
     }
   });
 
-  // 创建 cleanup 函数
   const cleanup = (): void => {
     if (isActive) {
       isActive = false;
@@ -85,11 +59,28 @@ export function subscribeState(callback: (state: DevToolsState) => void): () => 
   return cleanup;
 }
 
-/**
- * 清除所有状态订阅
- * 主要用于测试和清理场景
- */
+export function notifyStateChange(): void {
+  const state = devtoolsState();
+  stateSubscribers.forEach(callback => callback(state));
+}
+
+export function resetState(): void {
+  devtoolsState.set({
+    enabled: false,
+    connected: false,
+    recording: false,
+  });
+}
+
+export function getStateSnapshot(): DevToolsState {
+  return { ...devtoolsState() };
+}
+
+export function restoreState(state: Partial<DevToolsState>): void {
+  devtoolsState.set({ ...devtoolsState(), ...state });
+}
+
 export function clearStateSubscribers(): void {
-  stateSubscribers.forEach(cleanup => cleanup());
+  stateSubscribers.forEach((callback) => callback(devtoolsState()));
   stateSubscribers.clear();
 }

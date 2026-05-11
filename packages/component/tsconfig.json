@@ -5,6 +5,11 @@
     "rootDir": "./src",
     "composite": false,
     "incremental": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noUncheckedIndexedAccess": false,
+    "isolatedModules": false,
+    "verbatimModuleSyntax": false,
     "baseUrl": ".",
     "paths": {
       "@lytjs/shared-types": ["../shared-types/dist/index.d.ts"],

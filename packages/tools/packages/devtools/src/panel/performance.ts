@@ -203,7 +203,7 @@ export function startPerformanceMonitoring(): void {
 
   sendToPanel({
     type: 'PERFORMANCE_MONITORING_STATUS',
-    data: { isMonitoring: true },
+    payload: { isMonitoring: true },
   });
 }
 
@@ -222,7 +222,7 @@ export function stopPerformanceMonitoring(): void {
 
   sendToPanel({
     type: 'PERFORMANCE_MONITORING_STATUS',
-    data: { isMonitoring: false },
+    payload: { isMonitoring: false },
   });
 }
 
@@ -279,7 +279,7 @@ function updatePerformanceMetrics(): void {
   // Send update to panel
   sendToPanel({
     type: 'PERFORMANCE_METRICS',
-    data: {
+    payload: {
       metrics,
       slowRenders,
       timeline: getPerformanceTimelineSummary(),
@@ -441,7 +441,7 @@ export function getMemoryTrend(): {
 /**
  * 带有 gc 方法的全局对象接口
  */
-interface GlobalWithGC extends typeof globalThis {
+interface GlobalWithGC {
   gc?: () => void;
 }
 
@@ -450,23 +450,23 @@ interface GlobalWithGC extends typeof globalThis {
  */
 export function suggestGarbageCollection(): void {
   const globalWithGC = globalThis as GlobalWithGC;
-  if (typeof globalThis !== 'undefined' && typeof globalWithGC.gc === 'function') {
+  if (typeof globalWithGC.gc === 'function') {
     try {
       globalWithGC.gc();
       sendToPanel({
         type: 'GC_SUGGESTED',
-        data: { success: true },
+        payload: { success: true },
       });
     } catch (e) {
       sendToPanel({
         type: 'GC_SUGGESTED',
-        data: { success: false, error: String(e) },
+        payload: { success: false, error: String(e) },
       });
     }
   } else {
     sendToPanel({
       type: 'GC_SUGGESTED',
-      data: { success: false, error: 'GC not available' },
+      payload: { success: false, error: 'GC not available' },
     });
   }
 }
@@ -481,7 +481,7 @@ export function updatePerformanceConfig(config: Partial<PerformanceConfig>): voi
 
   sendToPanel({
     type: 'PERFORMANCE_CONFIG_UPDATED',
-    data: performanceConfig,
+    payload: performanceConfig,
   });
 }
 
@@ -533,7 +533,7 @@ export function initPerformancePanel(): () => void {
       case 'CLEAR_PERFORMANCE_DATA':
         clearComponentPerformance();
         clearPerformanceTimeline();
-        sendToPanel({ type: 'PERFORMANCE_DATA_CLEARED', data: {} });
+        sendToPanel({ type: 'PERFORMANCE_DATA_CLEARED', payload: {} });
         break;
 
       case 'SUGGEST_GC':
@@ -549,7 +549,7 @@ export function initPerformancePanel(): () => void {
       case 'GET_PERFORMANCE_CONFIG':
         sendToPanel({
           type: 'PERFORMANCE_CONFIG',
-          data: getPerformanceConfig(),
+          payload: getPerformanceConfig(),
         });
         break;
     }
@@ -564,7 +564,7 @@ function handleGetPerformanceMetrics(): void {
 
   sendToPanel({
     type: 'PERFORMANCE_METRICS',
-    data: {
+    payload: {
       metrics,
       slowRenders,
       isMonitoring,
@@ -577,7 +577,7 @@ function handleGetRenderHeatmap(): void {
 
   sendToPanel({
     type: 'RENDER_HEATMAP',
-    data: heatmap,
+    payload: heatmap,
   });
 }
 
@@ -588,21 +588,21 @@ function handleGetComponentPerformance(data: { componentId: string } | undefined
 
   sendToPanel({
     type: 'COMPONENT_PERFORMANCE',
-    data: performance,
+    payload: performance,
   });
 }
 
 function handleGetPerformanceTimeline(): void {
   sendToPanel({
     type: 'PERFORMANCE_TIMELINE',
-    data: getPerformanceTimelineSummary(),
+    payload: getPerformanceTimelineSummary(),
   });
 }
 
 function handleGetMemoryTrend(): void {
   sendToPanel({
     type: 'MEMORY_TREND',
-    data: getMemoryTrend(),
+    payload: getMemoryTrend(),
   });
 }
 

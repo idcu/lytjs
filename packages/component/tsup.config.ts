@@ -19,6 +19,7 @@ export default defineConfig({
   },
   external: [
     '@lytjs/reactivity',
+    '@lytjs/reactivity/scope',
     '@lytjs/vdom',
     '@lytjs/common-is',
     '@lytjs/common-env',

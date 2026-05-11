@@ -90,7 +90,7 @@ export function extractComponentState(componentId: string): ComponentState | nul
   const signals = getSignals();
   for (const signal of signals) {
     // Check if signal belongs to this component (by naming convention or metadata)
-    if (isSignalBelongsToComponent(signal, componentId)) {
+    if (isSignalBelongsToComponent(signal as Parameters<typeof isSignalBelongsToComponent>[0], componentId)) {
       state[signal.name] = {
         type: signal.type,
         value: signal.value,
@@ -187,7 +187,7 @@ export function applyStateEdit(
     // Notify panel of the change
     sendToPanel({
       type: 'STATE_EDITED',
-      data: {
+      payload: {
         componentId,
         path,
         oldValue,
@@ -239,7 +239,7 @@ function findSignalIdForPath(componentId: string, path: string): string | null {
 
   for (const signal of signals) {
     // Match by component association and path
-    if (isSignalBelongsToComponent(signal, componentId)) {
+    if (isSignalBelongsToComponent(signal as Parameters<typeof isSignalBelongsToComponent>[0], componentId)) {
       const stateName = component
         ? signal.name.substring(component.name.length + 1)  // 使用 substring 而不是 replace
         : signal.name;
@@ -262,14 +262,14 @@ export function setNestedValue(obj: Record<string, unknown>, path: string, value
   let current: any = obj;
 
   for (let i = 0; i < parts.length - 1; i++) {
-    const part = parts[i];
+    const part = parts[i]!;
     if (!(part in current) || typeof current[part] !== 'object') {
       current[part] = {};
     }
     current = current[part];
   }
 
-  const lastPart = parts[parts.length - 1];
+  const lastPart = parts[parts.length - 1]!;
   current[lastPart] = value;
   return true;
 }
@@ -395,7 +395,7 @@ export function initStateEditor(): () => void {
       case 'GET_EDIT_HISTORY':
         sendToPanel({
           type: 'EDIT_HISTORY',
-          data: getEditHistory(),
+          payload: getEditHistory(),
         });
         break;
 
@@ -414,7 +414,7 @@ function handleGetComponentState(data: { componentId: string } | undefined): voi
   const state = extractComponentState(data.componentId);
   sendToPanel({
     type: 'COMPONENT_STATE',
-    data: state,
+    payload: state,
   });
 }
 
@@ -424,7 +424,7 @@ function handleEditState(data: StateEditMessage | undefined): void {
   const result = applyStateEdit(data.componentId, data.path, data.value);
   sendToPanel({
     type: 'STATE_EDIT_RESULT',
-    data: {
+    payload: {
       ...result,
       componentId: data.componentId,
       path: data.path,
@@ -436,7 +436,7 @@ function handleUndoLastEdit(): void {
   const result = undoLastEdit();
   sendToPanel({
     type: 'UNDO_RESULT',
-    data: result,
+    payload: result,
   });
 }
 
