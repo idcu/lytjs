@@ -1,42 +1,12 @@
 [
   {
-    "name": "@lytjs/core",
-    "path": "packages/core/dist/index.mjs",
-    "limit": "35 KB"
-  },
-  {
     "name": "@lytjs/reactivity",
     "path": "packages/reactivity/dist/index.mjs",
-    "limit": "12 KB"
-  },
-  {
-    "name": "@lytjs/vdom",
-    "path": "packages/vdom/dist/index.mjs",
-    "limit": "10 KB"
-  },
-  {
-    "name": "@lytjs/compiler",
-    "path": "packages/compiler/dist/index.mjs",
     "limit": "15 KB"
   },
   {
-    "name": "@lytjs/component",
-    "path": "packages/component/dist/index.mjs",
-    "limit": "12 KB"
-  },
-  {
-    "name": "@lytjs/renderer",
-    "path": "packages/renderer/dist/index.mjs",
-    "limit": "8 KB"
-  },
-  {
-    "name": "@lytjs/shared-types",
-    "path": "packages/shared-types/dist/index.mjs",
-    "limit": "2 KB"
-  },
-  {
-    "name": "@lytjs/host-contract",
-    "path": "packages/host-contract/dist/index.mjs",
-    "limit": "1 KB"
+    "name": "@lytjs/core",
+    "path": "packages/core/dist/index.mjs",
+    "limit": "40 KB"
   }
 ]

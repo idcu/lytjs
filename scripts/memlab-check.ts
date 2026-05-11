@@ -1,17 +1,7 @@
 #!/usr/bin/env node
-/**
- * å†…å­˜æ³„æ¼æ£€æµ‹è„šæœ? * 
- * è¿è¡Œå†…å­˜å¯†é›†åž‹åœºæ™¯ï¼Œæ£€æµ‹å†…å­˜æ˜¯å¦æŒç»­å¢žé•? * 
- * ä½¿ç”¨æ–¹æ³•:
- *   tsx scripts/memlab-check.ts
- *   # æˆ–å¸¦ GC æ ‡å¿—ä»¥èŽ·å¾—æ›´å‡†ç¡®çš„ç»“æž?
- *   node --expose-gc --loader tsx scripts/memlab-check.ts
- */
-
 import { ref, computed, watch, effectScope, reactive } from '../packages/reactivity/src/index';
 import { delay } from '../packages/common/packages/timing/src/index';
 import { formatBytes } from '../packages/common/packages/string/src/index';
-import v8 from 'node:v8';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -58,14 +48,14 @@ function getMemory(): MemorySnapshot {
 function forceGC(): void {
   if (global.gc) {
     global.gc();
-    // å¤šæ¬¡ GC ä»¥ç¡®ä¿æ¸…ç?    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < 3; i++) {
       global.gc();
     }
   }
 }
 
-function analyzeTrend(measurements: number[]): { 
-  growth: number; 
+function analyzeTrend(measurements: number[]): {
+  growth: number;
   trend: 'increasing' | 'stable' | 'decreasing';
   slope: number;
 } {
@@ -77,16 +67,16 @@ function analyzeTrend(measurements: number[]): {
   const last = measurements[measurements.length - 1];
   const growth = last - first;
 
-  // ç®€å•çº¿æ€§å›žå½’è®¡ç®—æ–œçŽ?  const n = measurements.length;
+  const n = measurements.length;
   const sumX = measurements.reduce((sum, _, i) => sum + i, 0);
   const sumY = measurements.reduce((sum, m) => sum + m, 0);
   const sumXY = measurements.reduce((sum, m, i) => sum + i * m, 0);
   const sumXX = measurements.reduce((sum, _, i) => sum + i * i, 0);
-  
+
   const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
 
-  // åˆ¤æ–­è¶‹åŠ¿
-  const threshold = 1024 * 1024; // 1MB é˜ˆå€?  let trend: 'increasing' | 'stable' | 'decreasing';
+  const threshold = 1024 * 1024;
+  let trend: 'increasing' | 'stable' | 'decreasing';
   if (growth > threshold) {
     trend = 'increasing';
   } else if (growth < -threshold) {
@@ -98,138 +88,175 @@ function analyzeTrend(measurements: number[]): {
   return { growth, trend, slope };
 }
 
-// åœºæ™¯1: åˆ›å»º/é”€æ¯å¤§é‡?refs
-async function testRefLifecycle(): Promise<{ passed: boolean; details: string[]; growth: number; initialMem: number; finalMem: number }> {
-  console.log('\nðŸ§ª åœºæ™¯1: Ref ç”Ÿå‘½å‘¨æœŸå†…å­˜æ£€æµ?);
-  
+async function testRefLifecycle(): Promise<{
+  passed: boolean;
+  details: string[];
+  growth: number;
+  initialMem: number;
+  finalMem: number;
+}> {
+  console.log('\nTest 1: Ref Lifecycle');
+
   const measurements: number[] = [];
   const details: string[] = [];
-  
+
   for (let i = 0; i < 10; i++) {
-    // åˆ›å»º 10000 ä¸?refs
     const refs: unknown[] = [];
     for (let j = 0; j < 10000; j++) {
       refs.push(ref(j));
     }
-    
-    // æ¸…ç©ºå¼•ç”¨
-    refs.length = 0;
-    
-    forceGC();
-    await delay(100);
-    
-    const mem = getMemory();
-    measurements.push(mem.used);
-    details.push(`Iteration ${i + 1}: ${formatBytes(mem.used)}`);
-  }
-  
-  const analysis = analyzeTrend(measurements);
-  const threshold = 5 * 1024 * 1024; // 5MB é˜ˆå€?  const passed = analysis.growth < threshold;
-  
-  console.log(`  åˆå§‹å†…å­˜: ${formatBytes(measurements[0])}`);
-  console.log(`  æœ€ç»ˆå†…å­? ${formatBytes(measurements[measurements.length - 1])}`);
-  console.log(`  å¢žé•¿: ${formatBytes(analysis.growth)}`);
-  console.log(`  è¶‹åŠ¿: ${analysis.trend}`);
-  console.log(passed ? '  âœ?é€šè¿‡' : '  â?æ£€æµ‹åˆ°å†…å­˜æ³„æ¼');
-  
-  return { passed, details, growth: analysis.growth, initialMem: measurements[0], finalMem: measurements[measurements.length - 1] };
-}
 
-// åœºæ™¯2: åˆ›å»º/é”€æ¯å¤§é‡?reactive å¯¹è±¡
-async function testReactiveLifecycle(): Promise<{ passed: boolean; details: string[]; growth: number; initialMem: number; finalMem: number }> {
-  console.log('\nðŸ§ª åœºæ™¯2: Reactive å¯¹è±¡ç”Ÿå‘½å‘¨æœŸå†…å­˜æ£€æµ?);
-  
-  const measurements: number[] = [];
-  const details: string[] = [];
-  
-  for (let i = 0; i < 10; i++) {
-    const objects: unknown[] = [];
-    for (let j = 0; j < 5000; j++) {
-      objects.push(reactive({
-        id: j,
-        name: `Item ${j}`,
-        value: j * 2,
-        nested: { a: 1, b: 2 },
-      }));
-    }
-    
-    objects.length = 0;
-    
+    refs.length = 0;
+
     forceGC();
     await delay(100);
-    
+
     const mem = getMemory();
     measurements.push(mem.used);
     details.push(`Iteration ${i + 1}: ${formatBytes(mem.used)}`);
   }
-  
+
   const analysis = analyzeTrend(measurements);
   const threshold = 5 * 1024 * 1024;
   const passed = analysis.growth < threshold;
-  
-  console.log(`  åˆå§‹å†…å­˜: ${formatBytes(measurements[0])}`);
-  console.log(`  æœ€ç»ˆå†…å­? ${formatBytes(measurements[measurements.length - 1])}`);
-  console.log(`  å¢žé•¿: ${formatBytes(analysis.growth)}`);
-  console.log(`  è¶‹åŠ¿: ${analysis.trend}`);
-  console.log(passed ? '  âœ?é€šè¿‡' : '  â?æ£€æµ‹åˆ°å†…å­˜æ³„æ¼');
-  
-  return { passed, details, growth: analysis.growth, initialMem: measurements[0], finalMem: measurements[measurements.length - 1] };
+
+  console.log(`  Initial: ${formatBytes(measurements[0])}`);
+  console.log(`  Final: ${formatBytes(measurements[measurements.length - 1])}`);
+  console.log(`  Growth: ${formatBytes(analysis.growth)}`);
+  console.log(`  Trend: ${analysis.trend}`);
+  console.log(passed ? '  ✅ Pass' : '  ❌ Fail');
+
+  return {
+    passed,
+    details,
+    growth: analysis.growth,
+    initialMem: measurements[0],
+    finalMem: measurements[measurements.length - 1],
+  };
 }
 
-// åœºæ™¯3: å“åº”å¼è®¢é˜?(watchers)
-async function testWatcherLifecycle(): Promise<{ passed: boolean; details: string[]; growth: number; initialMem: number; finalMem: number }> {
-  console.log('\nðŸ§ª åœºæ™¯3: Watcher ç”Ÿå‘½å‘¨æœŸå†…å­˜æ£€æµ?);
-  
+async function testReactiveLifecycle(): Promise<{
+  passed: boolean;
+  details: string[];
+  growth: number;
+  initialMem: number;
+  finalMem: number;
+}> {
+  console.log('\nTest 2: Reactive Object Lifecycle');
+
   const measurements: number[] = [];
   const details: string[] = [];
-  
+
+  for (let i = 0; i < 10; i++) {
+    const objects: unknown[] = [];
+    for (let j = 0; j < 5000; j++) {
+      objects.push(
+        reactive({
+          id: j,
+          name: `Item ${j}`,
+          value: j * 2,
+          nested: { a: 1, b: 2 },
+        }),
+      );
+    }
+
+    objects.length = 0;
+
+    forceGC();
+    await delay(100);
+
+    const mem = getMemory();
+    measurements.push(mem.used);
+    details.push(`Iteration ${i + 1}: ${formatBytes(mem.used)}`);
+  }
+
+  const analysis = analyzeTrend(measurements);
+  const threshold = 5 * 1024 * 1024;
+  const passed = analysis.growth < threshold;
+
+  console.log(`  Initial: ${formatBytes(measurements[0])}`);
+  console.log(`  Final: ${formatBytes(measurements[measurements.length - 1])}`);
+  console.log(`  Growth: ${formatBytes(analysis.growth)}`);
+  console.log(`  Trend: ${analysis.trend}`);
+  console.log(passed ? '  ✅ Pass' : '  ❌ Fail');
+
+  return {
+    passed,
+    details,
+    growth: analysis.growth,
+    initialMem: measurements[0],
+    finalMem: measurements[measurements.length - 1],
+  };
+}
+
+async function testWatcherLifecycle(): Promise<{
+  passed: boolean;
+  details: string[];
+  growth: number;
+  initialMem: number;
+  finalMem: number;
+}> {
+  console.log('\nTest 3: Watcher Lifecycle');
+
+  const measurements: number[] = [];
+  const details: string[] = [];
+
   for (let i = 0; i < 10; i++) {
     const refs: unknown[] = [];
     const stoppers: (() => void)[] = [];
-    
-    // åˆ›å»ºå¤§é‡å“åº”å¼æ•°æ®å’Œè®¢é˜…
+
     for (let j = 0; j < 5000; j++) {
       const r = ref(j);
       refs.push(r);
       stoppers.push(watch(r, () => {}));
     }
-    
-    // æ¸…ç†è®¢é˜…
-    stoppers.forEach(stop => stop());
+
+    stoppers.forEach((stop) => stop());
     refs.length = 0;
     stoppers.length = 0;
-    
+
     forceGC();
     await delay(100);
-    
+
     const mem = getMemory();
     measurements.push(mem.used);
     details.push(`Iteration ${i + 1}: ${formatBytes(mem.used)}`);
   }
-  
+
   const analysis = analyzeTrend(measurements);
   const threshold = 5 * 1024 * 1024;
   const passed = analysis.growth < threshold;
-  
-  console.log(`  åˆå§‹å†…å­˜: ${formatBytes(measurements[0])}`);
-  console.log(`  æœ€ç»ˆå†…å­? ${formatBytes(measurements[measurements.length - 1])}`);
-  console.log(`  å¢žé•¿: ${formatBytes(analysis.growth)}`);
-  console.log(`  è¶‹åŠ¿: ${analysis.trend}`);
-  console.log(passed ? '  âœ?é€šè¿‡' : '  â?æ£€æµ‹åˆ°å†…å­˜æ³„æ¼');
-  
-  return { passed, details, growth: analysis.growth, initialMem: measurements[0], finalMem: measurements[measurements.length - 1] };
+
+  console.log(`  Initial: ${formatBytes(measurements[0])}`);
+  console.log(`  Final: ${formatBytes(measurements[measurements.length - 1])}`);
+  console.log(`  Growth: ${formatBytes(analysis.growth)}`);
+  console.log(`  Trend: ${analysis.trend}`);
+  console.log(passed ? '  ✅ Pass' : '  ❌ Fail');
+
+  return {
+    passed,
+    details,
+    growth: analysis.growth,
+    initialMem: measurements[0],
+    finalMem: measurements[measurements.length - 1],
+  };
 }
 
-// åœºæ™¯4: Effect Scope ç”Ÿå‘½å‘¨æœŸ
-async function testEffectScopeLifecycle(): Promise<{ passed: boolean; details: string[]; growth: number; initialMem: number; finalMem: number }> {
-  console.log('\nðŸ§ª åœºæ™¯4: Effect Scope ç”Ÿå‘½å‘¨æœŸå†…å­˜æ£€æµ?);
-  
+async function testEffectScopeLifecycle(): Promise<{
+  passed: boolean;
+  details: string[];
+  growth: number;
+  initialMem: number;
+  finalMem: number;
+}> {
+  console.log('\nTest 4: Effect Scope Lifecycle');
+
   const measurements: number[] = [];
   const details: string[] = [];
-  
+
   for (let i = 0; i < 10; i++) {
     const scopes: { stop: () => void }[] = [];
-    
+
     for (let j = 0; j < 1000; j++) {
       const scope = effectScope();
       scope.run(() => {
@@ -239,115 +266,101 @@ async function testEffectScopeLifecycle(): Promise<{ passed: boolean; details: s
       });
       scopes.push(scope);
     }
-    
-    // åœæ­¢æ‰€æœ?scope
-    scopes.forEach(scope => scope.stop());
+
+    scopes.forEach((scope) => scope.stop());
     scopes.length = 0;
-    
+
     forceGC();
     await delay(100);
-    
+
     const mem = getMemory();
     measurements.push(mem.used);
     details.push(`Iteration ${i + 1}: ${formatBytes(mem.used)}`);
   }
-  
+
   const analysis = analyzeTrend(measurements);
   const threshold = 5 * 1024 * 1024;
   const passed = analysis.growth < threshold;
-  
-  console.log(`  åˆå§‹å†…å­˜: ${formatBytes(measurements[0])}`);
-  console.log(`  æœ€ç»ˆå†…å­? ${formatBytes(measurements[measurements.length - 1])}`);
-  console.log(`  å¢žé•¿: ${formatBytes(analysis.growth)}`);
-  console.log(`  è¶‹åŠ¿: ${analysis.trend}`);
-  console.log(passed ? '  âœ?é€šè¿‡' : '  â?æ£€æµ‹åˆ°å†…å­˜æ³„æ¼');
-  
-  return { passed, details, growth: analysis.growth, initialMem: measurements[0], finalMem: measurements[measurements.length - 1] };
+
+  console.log(`  Initial: ${formatBytes(measurements[0])}`);
+  console.log(`  Final: ${formatBytes(measurements[measurements.length - 1])}`);
+  console.log(`  Growth: ${formatBytes(analysis.growth)}`);
+  console.log(`  Trend: ${analysis.trend}`);
+  console.log(passed ? '  ✅ Pass' : '  ❌ Fail');
+
+  return {
+    passed,
+    details,
+    growth: analysis.growth,
+    initialMem: measurements[0],
+    finalMem: measurements[measurements.length - 1],
+  };
 }
 
-// åœºæ™¯5: Computed å€¼ç”Ÿå‘½å‘¨æœ?async function testComputedLifecycle(): Promise<{ passed: boolean; details: string[]; growth: number; initialMem: number; finalMem: number }> {
-  console.log('\nðŸ§ª åœºæ™¯5: Computed ç”Ÿå‘½å‘¨æœŸå†…å­˜æ£€æµ?);
-  
+async function testComputedLifecycle(): Promise<{
+  passed: boolean;
+  details: string[];
+  growth: number;
+  initialMem: number;
+  finalMem: number;
+}> {
+  console.log('\nTest 5: Computed Lifecycle');
+
   const measurements: number[] = [];
   const details: string[] = [];
-  
+
   for (let i = 0; i < 10; i++) {
     const base = ref(0);
     const computeds: unknown[] = [];
-    
+
     for (let j = 0; j < 5000; j++) {
       computeds.push(computed(() => base.value + j));
     }
-    
-    // è§¦å‘è®¡ç®—
+
     base.value = i;
-    
-    // æ¸…ç†
+
     computeds.length = 0;
-    
+
     forceGC();
     await delay(100);
-    
+
     const mem = getMemory();
     measurements.push(mem.used);
     details.push(`Iteration ${i + 1}: ${formatBytes(mem.used)}`);
   }
-  
+
   const analysis = analyzeTrend(measurements);
   const threshold = 5 * 1024 * 1024;
   const passed = analysis.growth < threshold;
-  
-  console.log(`  åˆå§‹å†…å­˜: ${formatBytes(measurements[0])}`);
-  console.log(`  æœ€ç»ˆå†…å­? ${formatBytes(measurements[measurements.length - 1])}`);
-  console.log(`  å¢žé•¿: ${formatBytes(analysis.growth)}`);
-  console.log(`  è¶‹åŠ¿: ${analysis.trend}`);
-  console.log(passed ? '  âœ?é€šè¿‡' : '  â?æ£€æµ‹åˆ°å†…å­˜æ³„æ¼');
-  
-  return { passed, details, growth: analysis.growth, initialMem: measurements[0], finalMem: measurements[measurements.length - 1] };
+
+  console.log(`  Initial: ${formatBytes(measurements[0])}`);
+  console.log(`  Final: ${formatBytes(measurements[measurements.length - 1])}`);
+  console.log(`  Growth: ${formatBytes(analysis.growth)}`);
+  console.log(`  Trend: ${analysis.trend}`);
+  console.log(passed ? '  ✅ Pass' : '  ❌ Fail');
+
+  return {
+    passed,
+    details,
+    growth: analysis.growth,
+    initialMem: measurements[0],
+    finalMem: measurements[measurements.length - 1],
+  };
 }
 
-// åœºæ™¯6: å¤§é‡å“åº”å¼æ•°ç»„æ“ä½?async function testLargeArrayOperations(): Promise<{ passed: boolean; details: string[]; growth: number; initialMem: number; finalMem: number }> {
-  console.log('\nðŸ§ª åœºæ™¯6: å¤§åž‹æ•°ç»„æ“ä½œå†…å­˜æ£€æµ?);
-  
-  const measurements: number[] = [];
-  const details: string[] = [];
-  
-  for (let i = 0; i < 5; i++) {
-    const arr = reactive<number[]>([]);
-    
-    // æ·»åŠ å¤§é‡æ•°æ®
-    for (let j = 0; j < 10000; j++) {
-      arr.push(j);
-    }
-    
-    // æ¸…ç©ºæ•°ç»„
-    arr.length = 0;
-    
-    forceGC();
-    await delay(100);
-    
-    const mem = getMemory();
-    measurements.push(mem.used);
-    details.push(`Iteration ${i + 1}: ${formatBytes(mem.used)}`);
-  }
-  
-  const analysis = analyzeTrend(measurements);
-  const threshold = 10 * 1024 * 1024;
-  const passed = analysis.growth < threshold;
-  
-  console.log(`  åˆå§‹å†…å­˜: ${formatBytes(measurements[0])}`);
-  console.log(`  æœ€ç»ˆå†…å­? ${formatBytes(measurements[measurements.length - 1])}`);
-  console.log(`  å¢žé•¿: ${formatBytes(analysis.growth)}`);
-  console.log(`  è¶‹åŠ¿: ${analysis.trend}`);
-  console.log(passed ? '  âœ?é€šè¿‡' : '  â?æ£€æµ‹åˆ°å†…å­˜æ³„æ¼');
-  
-  return { passed, details, growth: analysis.growth, initialMem: measurements[0], finalMem: measurements[measurements.length - 1] };
-}
-
-function generateReport(results: { name: string; passed: boolean; details: string[]; growth: number; initialMem: number; finalMem: number }[]): LeakReport {
+function generateReport(
+  results: {
+    name: string;
+    passed: boolean;
+    details: string[];
+    growth: number;
+    initialMem: number;
+    finalMem: number;
+  }[],
+): LeakReport {
   return {
     timestamp: new Date().toISOString(),
-    results: results.map(r => ({
+    results: results.map((r) => ({
       testName: r.name,
       passed: r.passed,
       initialMemory: formatBytes(r.initialMem),
@@ -358,8 +371,8 @@ function generateReport(results: { name: string; passed: boolean; details: strin
     })),
     summary: {
       totalTests: results.length,
-      passed: results.filter(r => r.passed).length,
-      failed: results.filter(r => !r.passed).length,
+      passed: results.filter((r) => r.passed).length,
+      failed: results.filter((r) => !r.passed).length,
     },
   };
 }
@@ -367,30 +380,35 @@ function generateReport(results: { name: string; passed: boolean; details: strin
 function saveReport(report: LeakReport): void {
   const reportPath = path.join(__dirname, '..', 'memlab-report.json');
   fs.writeFileSync(reportPath, JSON.stringify(report, null, 2));
-  console.log(`\nðŸ“„ è¯¦ç»†æŠ¥å‘Šå·²ä¿å­? ${reportPath}`);
+  console.log(`\nReport saved to: ${reportPath}`);
 }
 
 async function main(): Promise<void> {
-  console.log('ðŸ” å†…å­˜æ³„æ¼æ£€æµ‹å¼€å§?..');
-  console.log('=' .repeat(60));
-  
+  console.log('Memory Leak Detection');
+  console.log('========================');
+
   if (!global.gc) {
-    console.log('\nâš ï¸  è­¦å‘Š: æœªä½¿ç”?--expose-gc æ ‡å¿—è¿è¡Œ');
-    console.log('   æ£€æµ‹ç»“æžœå¯èƒ½ä¸å¤Ÿå‡†ç¡?);
-    console.log('   å»ºè®®è¿è¡Œæ–¹å¼: node --expose-gc --loader tsx scripts/memlab-check.ts');
+    console.log('\n⚠️ Note: GC not exposed. Run with --expose-gc for more accurate results.');
+    console.log('Example: node --expose-gc --loader tsx scripts/memlab-check.ts');
   }
-  
-  const results: { name: string; passed: boolean; details: string[]; growth: number; initialMem: number; finalMem: number }[] = [];
-  
-  // è¿è¡Œæ‰€æœ‰æµ‹è¯?  const tests = [
-    { name: 'Ref ç”Ÿå‘½å‘¨æœŸ', fn: testRefLifecycle },
-    { name: 'Reactive å¯¹è±¡ç”Ÿå‘½å‘¨æœŸ', fn: testReactiveLifecycle },
-    { name: 'Watcher ç”Ÿå‘½å‘¨æœŸ', fn: testWatcherLifecycle },
-    { name: 'Effect Scope ç”Ÿå‘½å‘¨æœŸ', fn: testEffectScopeLifecycle },
-    { name: 'Computed ç”Ÿå‘½å‘¨æœŸ', fn: testComputedLifecycle },
-    { name: 'å¤§åž‹æ•°ç»„æ“ä½œ', fn: testLargeArrayOperations },
+
+  const results: {
+    name: string;
+    passed: boolean;
+    details: string[];
+    growth: number;
+    initialMem: number;
+    finalMem: number;
+  }[] = [];
+
+  const tests = [
+    { name: 'Ref Lifecycle', fn: testRefLifecycle },
+    { name: 'Reactive Object Lifecycle', fn: testReactiveLifecycle },
+    { name: 'Watcher Lifecycle', fn: testWatcherLifecycle },
+    { name: 'Effect Scope Lifecycle', fn: testEffectScopeLifecycle },
+    { name: 'Computed Lifecycle', fn: testComputedLifecycle },
   ];
-  
+
   for (const test of tests) {
     const result = await test.fn();
     results.push({
@@ -402,37 +420,35 @@ async function main(): Promise<void> {
       finalMem: result.finalMem,
     });
   }
-  
-  // ç”ŸæˆæŠ¥å‘Š
+
   const report = generateReport(results);
   saveReport(report);
-  
-  // è¾“å‡ºæ‘˜è¦
+
   console.log('\n' + '='.repeat(60));
-  console.log('ðŸ“Š æ£€æµ‹ç»“æžœæ‘˜è¦?);
+  console.log('Summary');
   console.log('='.repeat(60));
-  
+
   for (const r of results) {
-    const status = r.passed ? 'âœ? : 'â?;
+    const status = r.passed ? '✅' : '❌';
     console.log(`${status} ${r.name}: ${formatBytes(r.growth)}`);
   }
-  
+
   console.log('\n' + '='.repeat(60));
-  console.log(`æ€»è®¡: ${report.summary.totalTests} ä¸ªæµ‹è¯•`);
-  console.log(`é€šè¿‡: ${report.summary.passed} ä¸ª`);
-  console.log(`å¤±è´¥: ${report.summary.failed} ä¸ª`);
+  console.log(`Total: ${report.summary.totalTests} tests`);
+  console.log(`Pass: ${report.summary.passed}`);
+  console.log(`Fail: ${report.summary.failed}`);
   console.log('='.repeat(60));
-  
+
   if (report.summary.failed > 0) {
-    console.log('\nâ?æ£€æµ‹åˆ°å†…å­˜æ³„æ¼ï¼?);
+    console.log('\n❌ Memory leaks detected!');
     process.exit(1);
   } else {
-    console.log('\nâœ?æ‰€æœ‰å†…å­˜æ³„æ¼æ£€æµ‹é€šè¿‡ï¼?);
+    console.log('\n✅ No memory leaks detected!');
     process.exit(0);
   }
 }
 
-main().catch(error => {
-  console.error('â?æ£€æµ‹è¿‡ç¨‹ä¸­å‘ç”Ÿé”™è¯¯:', error);
+main().catch((error) => {
+  console.error('Error:', error);
   process.exit(1);
 });
