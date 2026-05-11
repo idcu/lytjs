@@ -152,7 +152,10 @@ function createContext(
     // FIX: P2-43 添加防御性检查，避免 contextRef 未赋值时返回 undefined
     get self(): TransformContext {
       if (contextRef === null) {
-        throw new Error('[LytJS] TransformContext.self accessed before initialization');
+        throw new Error(
+          '[LytJS] TransformContext.self accessed before initialization' +
+            '\n  Suggestion: This is an internal framework error. Please report this issue.',
+        );
       }
       return contextRef;
     },

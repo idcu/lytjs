@@ -96,9 +96,13 @@ export function generateSignalOptimized(ast: RootNode, _options?: CompilerOption
     (child) => child.type === NodeTypes.ELEMENT || child.type === NodeTypes.VNODE_CALL,
   ).length;
   if (rootElementCount > 1) {
+    const location = ast.loc?.source
+      ? `\n  Location: line ${ast.loc.start.line}, column ${ast.loc.start.column}`
+      : '';
     throw new Error(
       `[lytjs/compiler] Template has multiple root elements (${rootElementCount}). ` +
-        `Signal mode requires a single root element.`,
+        `Signal mode requires a single root element.${location}` +
+        `\n  Suggestion: Wrap multiple root elements in a container element like <div> or <Fragment>.`,
     );
   }
 
@@ -491,7 +495,10 @@ const VALID_EVENT_NAME = /^[a-zA-Z][a-zA-Z0-9-]*$/;
 function validateExpression(exp: string | undefined, context: string): void {
   if (!exp) return;
   if (!VALID_EXPRESSION.test(exp)) {
-    throw new Error(`[lytjs/compiler] Invalid expression in ${context}: "${exp}"`);
+    throw new Error(
+      `[lytjs/compiler] Invalid expression in ${context}: "${exp}"` +
+        `\n  Suggestion: Ensure the expression contains valid JavaScript syntax.`,
+    );
   }
 }
 
@@ -510,10 +517,16 @@ function processDirectiveOptimized(
   validateExpression(argContent, `v-${dir.name} argument`);
 
   if (dir.name === 'bind' && argContent && !VALID_ATTRIBUTE_NAME.test(argContent)) {
-    throw new Error(`[lytjs/compiler] Invalid attribute name: "${argContent}"`);
+    throw new Error(
+      `[lytjs/compiler] Invalid attribute name: "${argContent}"` +
+        `\n  Suggestion: Attribute names must start with a letter and contain only letters, numbers, or hyphens.`,
+    );
   }
   if (dir.name === 'on' && argContent && !VALID_EVENT_NAME.test(argContent)) {
-    throw new Error(`[lytjs/compiler] Invalid event name: "${argContent}"`);
+    throw new Error(
+      `[lytjs/compiler] Invalid event name: "${argContent}"` +
+        `\n  Suggestion: Event names must start with a letter and contain only letters, numbers, or hyphens.`,
+    );
   }
 
   switch (dir.name) {
@@ -717,7 +730,10 @@ function processConditionalOptimized(
   const testExpr = getTestExpr(node.test);
 
   if (!testExpr || testExpr.trim() === '') {
-    throw new Error(`[lytjs/compiler] v-if/v-else-if condition is empty or invalid.`);
+    throw new Error(
+      `[lytjs/compiler] v-if/v-else-if condition is empty or invalid.` +
+        `\n  Suggestion: Provide a valid expression for v-if, e.g., v-if="isVisible" or v-if="count > 0".`,
+    );
   }
 
   const branches: Array<{

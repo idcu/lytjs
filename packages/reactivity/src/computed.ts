@@ -120,16 +120,21 @@ class ComputedRefImpl<T> {
         // FIX: P1-L6 计算属性循环依赖未检测 - 检测循环依赖
         if (computedStack.has(this as ComputedRefImpl<unknown>)) {
           throw new Error(
-            `Circular dependency detected in computed property. ` +
-              `A computed property is indirectly referencing itself, causing an infinite loop.`,
+            `[LytJS/reactivity] Circular dependency detected in computed property. ` +
+              `A computed property is indirectly referencing itself, causing an infinite loop.` +
+              `\n  Error Code: CIRCULAR_REFERENCE (4008) ` +
+              `\n  Suggestion: Check your computed property dependencies and avoid referencing ` +
+              `the computed itself or other computeds that depend on it.`,
           );
         }
         computedDepth++;
         if (computedDepth > MAX_COMPUTED_DEPTH) {
           computedDepth--;
           throw new Error(
-            `Maximum computed depth exceeded (${MAX_COMPUTED_DEPTH}). ` +
-              `Possible infinite loop in computed properties.`,
+            `[LytJS/reactivity] Maximum computed depth exceeded (${MAX_COMPUTED_DEPTH}). ` +
+              `Possible infinite loop in computed properties.` +
+              `\n  Error Code: CIRCULAR_REFERENCE (4008) ` +
+              `\n  Suggestion: Check for circular dependencies in your computed properties.`,
           );
         }
         computedStack.add(this as ComputedRefImpl<unknown>);

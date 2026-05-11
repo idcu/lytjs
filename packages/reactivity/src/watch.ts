@@ -31,7 +31,10 @@ function getSource(source: WatchSource<unknown>): () => unknown {
   // FIX: P2-4 DEV 模式下对无效 source 抛出错误，而非静默返回 NOOP
   if (__DEV__) {
     throw new Error(
-      `Invalid watch source: ${JSON.stringify(source)}. A watch source must be a ref, reactive object, or getter function.`,
+      `[LytJS/reactivity] Invalid watch source: ${JSON.stringify(source)}. ` +
+        `A watch source must be a ref, reactive object, or getter function. ` +
+        `\n  Error Code: INVALID_WATCH_SOURCE (4010) ` +
+        `\n  Suggestion: Use watch(ref) or watch(reactiveObj) or watch(() => expr).`,
     );
   }
   return NOOP;
