@@ -2,9 +2,6 @@
 // Client/Server 边界自动分割
 // Phase 1.6: 自动检测和分割客户端/服务端代码
 
-import type { CompilerOptions, CodegenResult, RootNode } from '../types';
-import { NodeTypes } from '../constants';
-
 // ============================================================
 // 类型定义
 // ============================================================
@@ -144,11 +141,7 @@ const CLIENT_ONLY_PATTERNS = [
 ];
 
 /** 服务端生命周期钩子 */
-const SERVER_LIFECYCLE_HOOKS = [
-  'serverPrefetch',
-  'ssrRender',
-  'ssrSetup',
-];
+const SERVER_LIFECYCLE_HOOKS = ['serverPrefetch', 'ssrRender', 'ssrSetup'];
 
 /** 客户端生命周期钩子 */
 const CLIENT_LIFECYCLE_HOOKS = [
@@ -212,8 +205,12 @@ export function analyzeBoundary(source: string): BoundaryAnalysis {
     const fnBody = extractFunctionBody(source, fnName);
 
     if (fnBody) {
-      const usesClientAPI = CLIENT_ONLY_PATTERNS.some(p => new RegExp(`\\b${p.source}\\b`).test(fnBody));
-      const usesServerAPI = SERVER_ONLY_PATTERNS.some(p => new RegExp(`\\b${p.source}\\b`).test(fnBody));
+      const usesClientAPI = CLIENT_ONLY_PATTERNS.some((p) =>
+        new RegExp(`\\b${p.source}\\b`).test(fnBody),
+      );
+      const usesServerAPI = SERVER_ONLY_PATTERNS.some((p) =>
+        new RegExp(`\\b${p.source}\\b`).test(fnBody),
+      );
 
       if (usesClientAPI && !usesServerAPI) {
         clientFunctions.push(fnName);
@@ -227,7 +224,8 @@ export function analyzeBoundary(source: string): BoundaryAnalysis {
   const componentMatches = source.matchAll(/defineComponent\s*\(\s*\{([^}]+)\}/g);
   for (const match of componentMatches) {
     const componentBody = match[1]!;
-    const componentName = componentBody.match(/name\s*:\s*['"](\w+)['"]/)?.[1] || 'AnonymousComponent';
+    const componentName =
+      componentBody.match(/name\s*:\s*['"](\w+)['"]/)?.[1] || 'AnonymousComponent';
 
     const componentBoundary = analyzeComponentBoundary(componentName, componentBody);
     if (componentBoundary.serverMethods.length > 0 || componentBoundary.clientMethods.length > 0) {
@@ -296,8 +294,12 @@ function analyzeComponentBoundary(name: string, componentBody: string): Componen
 
   return {
     name,
-    type: serverMethods.length > 0 && clientMethods.length === 0 ? 'server' :
-          clientMethods.length > 0 && serverMethods.length === 0 ? 'client' : 'shared',
+    type:
+      serverMethods.length > 0 && clientMethods.length === 0
+        ? 'server'
+        : clientMethods.length > 0 && serverMethods.length === 0
+          ? 'client'
+          : 'shared',
     serverProps,
     clientProps,
     serverMethods,
@@ -316,7 +318,7 @@ function analyzeComponentBoundary(name: string, componentBody: string): Componen
 function isServerOnlyImport(importPath: string): boolean {
   // Node.js 内置模块
   if (importPath.startsWith('node:')) return true;
-  if (SERVER_ONLY_PATTERNS.some(p => p.test(importPath))) return true;
+  if (SERVER_ONLY_PATTERNS.some((p) => p.test(importPath))) return true;
   return false;
 }
 
@@ -325,7 +327,7 @@ function isServerOnlyImport(importPath: string): boolean {
  */
 function isClientOnlyImport(importPath: string): boolean {
   // 浏览器专用模块
-  if (CLIENT_ONLY_PATTERNS.some(p => p.test(importPath))) return true;
+  if (CLIENT_ONLY_PATTERNS.some((p) => p.test(importPath))) return true;
   return false;
 }
 
@@ -338,7 +340,7 @@ function extractFunctionBody(source: string, fnName: string): string | null {
   if (!match) return null;
 
   let depth = 1;
-  let start = match.index + match[0].length;
+  const start = match.index + match[0].length;
   let end = start;
 
   while (depth > 0 && end < source.length) {
@@ -357,10 +359,7 @@ function extractFunctionBody(source: string, fnName: string): string | null {
 /**
  * 分割客户端/服务端代码
  */
-export function splitClientServer(
-  source: string,
-  options: SplitOptions = {},
-): SplitResult {
+export function splitClientServer(source: string, options: SplitOptions = {}): SplitResult {
   const analysis = analyzeBoundary(source);
 
   // 如果是纯客户端或纯服务端模块，不需要分割
@@ -378,9 +377,8 @@ export function splitClientServer(
   const serverCode = generateServerCode(source, analysis, options);
   const clientCode = generateClientCode(source, analysis, options);
   const sharedCode = generateSharedCode(source, analysis, options);
-  const typeDefinition = options.generateTypes !== false
-    ? generateTypeDefinition(source, analysis)
-    : '';
+  const typeDefinition =
+    options.generateTypes !== false ? generateTypeDefinition(source, analysis) : '';
 
   return {
     serverCode,
@@ -395,9 +393,9 @@ export function splitClientServer(
  * 生成服务端代码
  */
 function generateServerCode(
-  source: string,
-  analysis: BoundaryAnalysis,
-  options: SplitOptions,
+  _source: string,
+  _analysis: BoundaryAnalysis,
+  _options: SplitOptions,
 ): string {
   const lines: string[] = [];
 
@@ -427,9 +425,9 @@ function generateServerCode(
  * 生成客户端代码
  */
 function generateClientCode(
-  source: string,
-  analysis: BoundaryAnalysis,
-  options: SplitOptions,
+  _source: string,
+  _analysis: BoundaryAnalysis,
+  _options: SplitOptions,
 ): string {
   const lines: string[] = [];
 
@@ -459,9 +457,9 @@ function generateClientCode(
  * 生成共享代码
  */
 function generateSharedCode(
-  source: string,
-  analysis: BoundaryAnalysis,
-  options: SplitOptions,
+  _source: string,
+  _analysis: BoundaryAnalysis,
+  _options: SplitOptions,
 ): string {
   const lines: string[] = [];
 
@@ -479,10 +477,7 @@ function generateSharedCode(
 /**
  * 生成类型定义
  */
-function generateTypeDefinition(
-  source: string,
-  analysis: BoundaryAnalysis,
-): string {
+function generateTypeDefinition(source: string, analysis: BoundaryAnalysis): string {
   const lines: string[] = [];
 
   lines.push('// Auto-generated type definitions');
@@ -556,16 +551,3 @@ export function createEnvironmentValue<T>(options: {
   }
   return undefined;
 }
-
-// ============================================================
-// 导出
-// ============================================================
-
-export {
-  analyzeBoundary,
-  splitClientServer,
-  runtime,
-  serverOnly,
-  clientOnly,
-  createEnvironmentValue,
-};

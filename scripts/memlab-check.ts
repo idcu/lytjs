@@ -1,7 +1,8 @@
 #!/usr/bin/env node
-import { ref, computed, watch, effectScope, reactive } from '../packages/reactivity/src/index';
-import { delay } from '../packages/common/packages/timing/src/index';
-import { formatBytes } from '../packages/common/packages/string/src/index';
+import { ref, computed, watch, reactive } from '../packages/reactivity/dist/index.mjs';
+import { effectScope } from '../packages/reactivity/dist/scope.mjs';
+import { delay } from '../packages/common/packages/timing/dist/index.mjs';
+import { formatBytes } from '../packages/common/packages/string/dist/index.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';

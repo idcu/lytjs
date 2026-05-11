@@ -2,7 +2,7 @@
 // 编译器优化模块
 // Phase 1.12-1.14: 自动 memo 检测、死代码消除、AOT 预编译
 
-import type { CompilerOptions, RootNode, TemplateChildNode } from '../types';
+import type { RootNode, TemplateChildNode } from '../types';
 import { NodeTypes } from '../constants';
 
 // ============================================================
@@ -99,7 +99,7 @@ export function analyzeMemoNeeds(ast: RootNode): MemoAnalysis {
   });
 
   return {
-    needsMemo: dynamicBindings.some(b => !b.isStable),
+    needsMemo: dynamicBindings.some((b) => !b.isStable),
     staticSubtrees,
     stableProps,
     dynamicBindings,
@@ -291,7 +291,9 @@ export function analyzeDeadCode(source: string): DeadCodeAnalysis {
 
   for (const variable of declared) {
     // 检查是否只声明未使用
-    const declarationCount = (source.match(new RegExp(`(?:const|let|var)\\s+${variable}\\b`, 'g')) || []).length;
+    const declarationCount = (
+      source.match(new RegExp(`(?:const|let|var)\\s+${variable}\\b`, 'g')) || []
+    ).length;
     const usageCount = (source.match(new RegExp(`\\b${variable}\\b`, 'g')) || []).length;
 
     if (usageCount <= declarationCount) {
@@ -302,7 +304,7 @@ export function analyzeDeadCode(source: string): DeadCodeAnalysis {
   // 检测未使用的导入
   const importMatches = source.matchAll(/import\s+(?:\{([^}]+)\}|(\w+))\s+from/g);
   for (const match of importMatches) {
-    const imports = match[1] ? match[1].split(',').map(s => s.trim()) : [match[2]!];
+    const imports = match[1] ? match[1].split(',').map((s) => s.trim()) : [match[2]!];
     for (const imp of imports) {
       const name = imp.replace(/\s+as\s+\w+/, '').trim();
       if (!used.has(name) && !declared.has(name)) {
@@ -363,20 +365,14 @@ export function eliminateDeadCode(source: string, analysis: DeadCodeAnalysis): s
   // 移除未使用的导入
   for (const imp of analysis.unusedImports) {
     // 移除命名导入
-    result = result.replace(
-      new RegExp(`\\b${imp}\\s*,?\\s*`, 'g'),
-      '',
-    );
+    result = result.replace(new RegExp(`\\b${imp}\\s*,?\\s*`, 'g'), '');
     // 清理空导入
     result = result.replace(/import\s*\{\s*\}\s*from/g, 'import');
   }
 
   // 执行常量折叠
   for (const opportunity of analysis.constantFoldingOpportunities) {
-    result = result.replace(
-      opportunity.expression,
-      JSON.stringify(opportunity.result),
-    );
+    result = result.replace(opportunity.expression, JSON.stringify(opportunity.result));
   }
 
   return result;
@@ -421,10 +417,7 @@ export interface AOTResult {
 /**
  * AOT 预编译模板
  */
-export function precompileTemplate(
-  template: string,
-  options: AOTOptions = {},
-): AOTResult {
+export function precompileTemplate(template: string, options: AOTOptions = {}): AOTResult {
   const {
     inlineStatic = true,
     precomputeConstants = true,
@@ -473,10 +466,7 @@ export function precompileTemplate(
 /**
  * 提取并内联静态内容
  */
-function extractAndInlineStatic(
-  code: string,
-  staticAssets: Map<string, string>,
-): string {
+function extractAndInlineStatic(code: string, staticAssets: Map<string, string>): string {
   // 提取静态 HTML 块
   const staticHTMLRegex = /<template\s+static>([\s\S]*?)<\/template>/g;
   let match;
@@ -579,24 +569,10 @@ function getNodeTypeName(node: TemplateChildNode): string {
 
 function hasVFor(node: TemplateChildNode): boolean {
   if (node.type !== NodeTypes.ELEMENT) return false;
-  return node.props.some(p => p.type === NodeTypes.DIRECTIVE && p.name === 'for');
+  return node.props.some((p) => p.type === NodeTypes.DIRECTIVE && p.name === 'for');
 }
 
 function hasMultipleVIf(node: TemplateChildNode): boolean {
   if (node.type !== NodeTypes.ELEMENT) return false;
-  return node.props.filter(p => p.type === NodeTypes.DIRECTIVE && p.name === 'if').length > 1;
+  return node.props.filter((p) => p.type === NodeTypes.DIRECTIVE && p.name === 'if').length > 1;
 }
-
-// ============================================================
-// 导出
-// ============================================================
-
-export {
-  // Phase 1.12
-  analyzeMemoNeeds,
-  // Phase 1.13
-  analyzeDeadCode,
-  eliminateDeadCode,
-  // Phase 1.14
-  precompileTemplate,
-};

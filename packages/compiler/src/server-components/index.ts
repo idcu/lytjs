@@ -2,9 +2,6 @@
 // Server Components 编译支持
 // Phase 1.4: 实现 'use server' 标记与编译
 
-import type { CompilerOptions, CodegenResult, RootNode } from '../types';
-import { NodeTypes } from '../constants';
-
 // ============================================================
 // 类型定义
 // ============================================================
@@ -74,7 +71,7 @@ export function detectServerDirective(source: string): ServerDirective | null {
  */
 export function analyzeServerComponent(
   source: string,
-  options: ServerComponentOptions = {},
+  _options: ServerComponentOptions = {},
 ): ServerComponentAnalysis {
   const directive = detectServerDirective(source);
   const isServerComponent = directive === 'use server';
@@ -117,7 +114,8 @@ function extractServerFunctions(source: string): string[] {
   }
 
   // 匹配箭头函数形式的导出
-  const arrowFunctionRegex = /export\s+(?:async\s+)?const\s+(\w+)\s*=\s*(?:async\s+)?(?:\([^)]*\)|[^=])\s*=>/g;
+  const arrowFunctionRegex =
+    /export\s+(?:async\s+)?const\s+(\w+)\s*=\s*(?:async\s+)?(?:\([^)]*\)|[^=])\s*=>/g;
   while ((match = arrowFunctionRegex.exec(source)) !== null) {
     functions.push(match[1]!);
   }
@@ -167,7 +165,7 @@ function extractDataFetchers(source: string): string[] {
 export function generateServerComponentCode(
   source: string,
   analysis: ServerComponentAnalysis,
-  options: ServerComponentOptions = {},
+  _options: ServerComponentOptions = {},
 ): string {
   const lines: string[] = [];
 
@@ -195,7 +193,7 @@ export function generateServerComponentCode(
 export function generateClientStubCode(
   componentName: string,
   analysis: ServerComponentAnalysis,
-  options: ServerComponentOptions = {},
+  _options: ServerComponentOptions = {},
 ): string {
   const lines: string[] = [];
 
@@ -215,7 +213,9 @@ export function generateClientStubCode(
   // 导出数据获取函数的占位符
   for (const fetcher of analysis.dataFetchers) {
     lines.push(`export async function ${fetcher}(...args: unknown[]) {`);
-    lines.push(`  throw new Error('[LytJS] ${fetcher} is a server-only function and cannot be called on the client.');`);
+    lines.push(
+      `  throw new Error('[LytJS] ${fetcher} is a server-only function and cannot be called on the client.');`,
+    );
     lines.push(`}`);
   }
 
@@ -266,13 +266,18 @@ export function compileServerComponent(
     };
   }
 
-  const componentName = filename.replace(/\.[^.]+$/, '').split('/').pop() || 'Component';
+  const componentName =
+    filename
+      .replace(/\.[^.]+$/, '')
+      .split('/')
+      .pop() || 'Component';
 
   return {
     serverCode: generateServerComponentCode(source, analysis, options),
-    clientCode: options.generateClientStubs !== false
-      ? generateClientStubCode(componentName, analysis, options)
-      : null,
+    clientCode:
+      options.generateClientStubs !== false
+        ? generateClientStubCode(componentName, analysis, options)
+        : null,
     typeDefinition: generateTypeDefinition(componentName, analysis),
     analysis,
   };
@@ -290,10 +295,9 @@ export function createServerReference<T extends (...args: unknown[]) => Promise<
   id: string,
   fn: T,
 ): T {
-  // 在服务端，直接返回原函数
-  // 但添加元数据标记
-  (fn as any).__serverReferenceId = id;
-  (fn as any).__isServerReference = true;
+  const serverFn = fn as T & { __serverReferenceId?: string; __isServerReference?: boolean };
+  serverFn.__serverReferenceId = id;
+  serverFn.__isServerReference = true;
   return fn;
 }
 
@@ -324,13 +328,3 @@ export function createServerProxy<T extends (...args: unknown[]) => Promise<unkn
     return response.json();
   }) as T;
 }
-
-// ============================================================
-// 导出
-// ============================================================
-
-export {
-  detectServerDirective,
-  analyzeServerComponent,
-  compileServerComponent,
-};

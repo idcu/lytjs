@@ -75,10 +75,7 @@ export interface SignalCodegenOptions {
 // 主生成函数 - 优化版
 // ============================================================
 
-export function generateSignalOptimized(
-  ast: RootNode,
-  _options?: CompilerOptions,
-): CodegenResult {
+export function generateSignalOptimized(ast: RootNode, _options?: CompilerOptions): CodegenResult {
   const options: SignalCodegenOptions = {
     mode: 'signal',
     useShortNames: true,
@@ -96,12 +93,12 @@ export function generateSignalOptimized(
 
   // ---- Phase 0: 检查根节点数量 ----
   const rootElementCount = ast.children.filter(
-    child => child.type === NodeTypes.ELEMENT || child.type === NodeTypes.VNODE_CALL
+    (child) => child.type === NodeTypes.ELEMENT || child.type === NodeTypes.VNODE_CALL,
   ).length;
   if (rootElementCount > 1) {
     throw new Error(
       `[lytjs/compiler] Template has multiple root elements (${rootElementCount}). ` +
-      `Signal mode requires a single root element.`
+        `Signal mode requires a single root element.`,
     );
   }
 
@@ -120,7 +117,7 @@ export function generateSignalOptimized(
   );
 
   // ---- Phase 3: Generate optimized imports ----
-  lines.push(generateOptimizedImports(usedRuntime, options.useShortNames));
+  lines.push(generateOptimizedImports(usedRuntime, options.useShortNames ?? false));
   lines.push('');
 
   // ---- Phase 4: Generate render function ----
@@ -165,10 +162,7 @@ export function generateSignalOptimized(
 // 生成优化的导入语句
 // ============================================================
 
-function generateOptimizedImports(
-  usedRuntime: Set<string>,
-  useShortNames: boolean,
-): string {
+function generateOptimizedImports(usedRuntime: Set<string>, useShortNames: boolean): string {
   if (useShortNames) {
     // 短名称模式
     const imports: string[] = ['e as effect'];
@@ -186,8 +180,10 @@ function generateOptimizedImports(
     if (usedRuntime.has('runCleanups')) imports.push('g as runCleanups');
     if (usedRuntime.has('reconcileArray')) imports.push('n as reconcileArray');
 
-    return `import{${imports.join(',')}}from'@lytjs/reactivity';` +
-           `\nimport{${imports.filter(i => !i.startsWith('e')).join(',')}}from'@lytjs/dom-runtime';`;
+    return (
+      `import{${imports.join(',')}}from'@lytjs/reactivity';` +
+      `\nimport{${imports.filter((i) => !i.startsWith('e')).join(',')}}from'@lytjs/dom-runtime';`
+    );
   } else {
     // 标准名称模式
     const reactivityImports: string[] = ['effect'];
@@ -222,7 +218,7 @@ function generateOptimizedImports(
 function generateOptimizedBindings(
   dynamicBindings: Array<{ varName: string; code: string }>,
   lines: string[],
-  options: SignalCodegenOptions,
+  _options: SignalCodegenOptions,
 ): void {
   // 按元素分组绑定
   const bindingsByElement = new Map<string, string[]>();
@@ -234,15 +230,15 @@ function generateOptimizedBindings(
   }
 
   // 为每个元素生成合并的绑定代码
-  for (const [varName, bindings] of bindingsByElement) {
+  for (const [_varName, bindings] of bindingsByElement) {
     // 检查是否可以合并 effect
-    const effectBindings = bindings.filter(b => b.startsWith('e('));
-    const otherBindings = bindings.filter(b => !b.startsWith('e('));
+    const effectBindings = bindings.filter((b) => b.startsWith('e('));
+    const otherBindings = bindings.filter((b) => !b.startsWith('e('));
 
     // 合并多个 effect 为单个 effect
     if (effectBindings.length > 1) {
       const effectContents = effectBindings
-        .map(b => b.match(/e\(\(\)=>\{(.+)\}\);/)?.[1] || b)
+        .map((b) => b.match(/e\(\(\)=>\{(.+)\}\);/)?.[1] || b)
         .join('');
       lines.push(`e(()=>{${effectContents}});`);
     } else if (effectBindings.length === 1) {
@@ -505,7 +501,7 @@ function processDirectiveOptimized(
   tag: string,
   dynamicBindings: Array<{ varName: string; code: string }>,
   usedRuntime: Set<string>,
-  options: SignalCodegenOptions,
+  _options: SignalCodegenOptions,
 ): void {
   const expContent = dir.exp ? getExpContent(dir.exp as SimpleExpressionNode) : undefined;
   const argContent = dir.arg ? getExpContent(dir.arg as SimpleExpressionNode) : undefined;
@@ -624,7 +620,7 @@ function processDirectiveOptimized(
         const isTrim = modifiers.includes('trim');
 
         let eventName = 'input';
-        let getValueExpr = '$e.target.value';
+        const getValueExpr = '$e.target.value';
 
         if (tagLower === 'select') {
           eventName = 'change';
@@ -668,7 +664,7 @@ function processVNodeCallPropsOptimized(
   varName: string,
   dynamicBindings: Array<{ varName: string; code: string }>,
   usedRuntime: Set<string>,
-  options: SignalCodegenOptions,
+  _options: SignalCodegenOptions,
 ): void {
   if (!vnode.props || vnode.props.type !== NodeTypes.JS_OBJECT_EXPRESSION) return;
 
@@ -716,7 +712,7 @@ function processConditionalOptimized(
   parentVar: string | undefined,
   consumedCount: Map<string, number>,
   usedRuntime: Set<string>,
-  options: SignalCodegenOptions,
+  _options: SignalCodegenOptions,
 ): void {
   const testExpr = getTestExpr(node.test);
 
@@ -872,7 +868,11 @@ function processCallExpressionOptimized(
 
 function createSimpleExpressionFor(
   content: string,
-  _loc?: { start: { line: number; column: number; offset: number }; end: { line: number; column: number; offset: number }; source: string },
+  _loc?: {
+    start: { line: number; column: number; offset: number };
+    end: { line: number; column: number; offset: number };
+    source: string;
+  },
 ): SimpleExpressionNode {
   return {
     type: NodeTypes.SIMPLE_EXPRESSION,

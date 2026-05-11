@@ -1,0 +1,110 @@
+{
+  "timestamp": "2026-05-11T11:00:58.925Z",
+  "results": [
+    {
+      "testName": "Ref Lifecycle",
+      "passed": true,
+      "initialMemory": "10.89 MB",
+      "finalMemory": "14.23 MB",
+      "growth": "3.34 MB",
+      "growthBytes": 3506024,
+      "details": [
+        "Iteration 1: 10.89 MB",
+        "Iteration 2: 8.45 MB",
+        "Iteration 3: 7.35 MB",
+        "Iteration 4: 11.93 MB",
+        "Iteration 5: 16.54 MB",
+        "Iteration 6: 14.22 MB",
+        "Iteration 7: 7.35 MB",
+        "Iteration 8: 11.93 MB",
+        "Iteration 9: 16.55 MB",
+        "Iteration 10: 14.23 MB"
+      ]
+    },
+    {
+      "testName": "Reactive Object Lifecycle",
+      "passed": true,
+      "initialMemory": "15.74 MB",
+      "finalMemory": "10.73 MB",
+      "growth": "NaN undefined",
+      "growthBytes": -5248160,
+      "details": [
+        "Iteration 1: 15.74 MB",
+        "Iteration 2: 17.08 MB",
+        "Iteration 3: 18.67 MB",
+        "Iteration 4: 19.6 MB",
+        "Iteration 5: 21.52 MB",
+        "Iteration 6: 22.43 MB",
+        "Iteration 7: 20.78 MB",
+        "Iteration 8: 21.71 MB",
+        "Iteration 9: 9.57 MB",
+        "Iteration 10: 10.73 MB"
+      ]
+    },
+    {
+      "testName": "Watcher Lifecycle",
+      "passed": false,
+      "initialMemory": "20.46 MB",
+      "finalMemory": "53.01 MB",
+      "growth": "32.55 MB",
+      "growthBytes": 34134408,
+      "details": [
+        "Iteration 1: 20.46 MB",
+        "Iteration 2: 9.81 MB",
+        "Iteration 3: 19.19 MB",
+        "Iteration 4: 28.58 MB",
+        "Iteration 5: 38.41 MB",
+        "Iteration 6: 31.17 MB",
+        "Iteration 7: 40.49 MB",
+        "Iteration 8: 34.37 MB",
+        "Iteration 9: 43.68 MB",
+        "Iteration 10: 53.01 MB"
+      ]
+    },
+    {
+      "testName": "Effect Scope Lifecycle",
+      "passed": true,
+      "initialMemory": "55.88 MB",
+      "finalMemory": "30.27 MB",
+      "growth": "NaN undefined",
+      "growthBytes": -26852216,
+      "details": [
+        "Iteration 1: 55.88 MB",
+        "Iteration 2: 59.69 MB",
+        "Iteration 3: 10.6 MB",
+        "Iteration 4: 13.4 MB",
+        "Iteration 5: 16.23 MB",
+        "Iteration 6: 19.04 MB",
+        "Iteration 7: 21.85 MB",
+        "Iteration 8: 24.66 MB",
+        "Iteration 9: 27.46 MB",
+        "Iteration 10: 30.27 MB"
+      ]
+    },
+    {
+      "testName": "Computed Lifecycle",
+      "passed": false,
+      "initialMemory": "33.25 MB",
+      "finalMemory": "59.77 MB",
+      "growth": "26.52 MB",
+      "growthBytes": 27812456,
+      "details": [
+        "Iteration 1: 33.25 MB",
+        "Iteration 2: 36.18 MB",
+        "Iteration 3: 39.13 MB",
+        "Iteration 4: 42.09 MB",
+        "Iteration 5: 45.03 MB",
+        "Iteration 6: 48.01 MB",
+        "Iteration 7: 50.95 MB",
+        "Iteration 8: 53.89 MB",
+        "Iteration 9: 56.83 MB",
+        "Iteration 10: 59.77 MB"
+      ]
+    }
+  ],
+  "summary": {
+    "totalTests": 5,
+    "passed": 3,
+    "failed": 2
+  }
+}

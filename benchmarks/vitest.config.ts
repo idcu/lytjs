@@ -6,9 +6,7 @@ export default defineConfig({
     include: ['src/**/*.bench.ts'],
     benchmark: {
       include: ['src/**/*.bench.ts'],
-      outputFile: './bench-report.json',
-      reporters: ['default', 'json'],
-      compare: './bench-report.json',
+      reporters: ['default'],
     },
     globals: true,
     environment: 'node',
