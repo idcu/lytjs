@@ -342,7 +342,7 @@ export type BindingMetadataValue =
 // ============================================================
 
 export interface TransformContext {
-  self: TransformContext;
+  readonly self: TransformContext;
   parent: ParentNode | null;
   rootNode: RootNode;
   helpers: Map<string, number>;

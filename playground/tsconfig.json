@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "jsx": "preserve",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    "lib": ["ESNext", "DOM"],
+    "skipLibCheck": true,
+    "noEmit": true,
+    "paths": {
+      "@lytjs/compiler": ["../packages/compiler/src"],
+      "@lytjs/reactivity": ["../packages/reactivity/src"],
+      "@lytjs/dom-runtime": ["../packages/dom-runtime/src"],
+      "@lytjs/renderer": ["../packages/renderer/src"],
+      "@lytjs/vdom": ["../packages/vdom/src"],
+      "@lytjs/shared": ["../packages/shared/src"]
+    }
+  },
+  "include": ["src/**/*", "e2e/**/*", "*.ts"],
+  "exclude": ["node_modules"]
+}

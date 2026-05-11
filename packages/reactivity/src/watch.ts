@@ -293,7 +293,9 @@ export function watch<T, Immediate extends Readonly<boolean> = false>(
     watcher.stop();
     getter = () => {};
     cleanupFns.length = 0;
+    cb = NOOP;
     oldValue = undefined;
+    consecutiveErrors = 0;
   };
 }
 
@@ -327,6 +329,7 @@ function doWatchEffect(
   const { flush = 'pre', onTrack, onTrigger } = options;
 
   const cleanupFns: Array<() => void> = [];
+  let isStopped = false;
 
   const onCleanup: OnCleanup = (fn: () => void) => {
     cleanupFns.push(fn);
@@ -340,18 +343,21 @@ function doWatchEffect(
     source(onCleanup);
   };
 
+  let effectRef: ReactiveEffect | undefined;
+
   const schedulerFn: (...args: unknown[]) => unknown =
     flush === 'sync'
-      ? () => currentEffect.run()
+      ? () => effectRef?.run()
       : () => {
           if (flush === 'post') {
-            queuePostFlushCb(() => currentEffect.run());
+            queuePostFlushCb(() => effectRef?.run());
           } else {
-            queuePreFlushCb(() => currentEffect.run());
+            queuePreFlushCb(() => effectRef?.run());
           }
         };
 
   const currentEffect: ReactiveEffect = new ReactiveEffect(getter, schedulerFn);
+  effectRef = currentEffect;
 
   currentEffect.onStop = () => {
     if (cleanupFns.length > 0) {
@@ -369,5 +375,12 @@ function doWatchEffect(
 
   currentEffect.run();
 
-  return () => currentEffect.stop();
+  return () => {
+    if (isStopped) return;
+    isStopped = true;
+    currentEffect.stop();
+    cleanupFns.length = 0;
+    source = NOOP;
+    effectRef = undefined;
+  };
 }

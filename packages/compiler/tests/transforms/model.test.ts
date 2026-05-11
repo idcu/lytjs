@@ -117,7 +117,7 @@ describe('transformModel', () => {
       expect(result.props).toHaveLength(0);
     });
 
-    it('当 exp 为非 SIMPLE_EXPRESSION 类型时应返回空 props', () => {
+    it('当 exp 为非 SIMPLE_EXPRESSION 类型时应抛出错误', () => {
       const context = createMockContext();
       const dir: DirectiveNode = {
         type: NodeTypes.DIRECTIVE,
@@ -141,9 +141,7 @@ describe('transformModel', () => {
         },
       };
       const node = createElement('input');
-      const result = transformModel(dir, node, context);
-
-      expect(result.props).toHaveLength(0);
+      expect(() => transformModel(dir, node, context)).toThrow(/not a valid simple expression/);
     });
 
     it('应该正确处理空字符串表达式', () => {

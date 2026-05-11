@@ -336,20 +336,6 @@ export function createDOMRenderer(
   const vnodeResourceMap = new WeakMap<VNode, Set<() => void>>();
 
   /**
-   * 注册 VNode 关联的资源清理回调。
-   * 供上层 renderer 或组件系统在创建动画帧、Observer 等资源时调用，
-   * 确保 unmount 时自动清理，防止内存泄漏。
-   */
-  function registerVNodeResourceCleanup(vnode: VNode, cleanupFn: () => void): void {
-    let resources = vnodeResourceMap.get(vnode);
-    if (!resources) {
-      resources = new Set();
-      vnodeResourceMap.set(vnode, resources);
-    }
-    resources.add(cleanupFn);
-  }
-
-  /**
    * 清理 VNode 关联的 Web 平台特有资源。
    * 包括：取消动画帧、断开 IntersectionObserver / ResizeObserver / MutationObserver 等。
    */

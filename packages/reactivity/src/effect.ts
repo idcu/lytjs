@@ -370,6 +370,7 @@ export class ReactiveEffect<T = unknown> {
         this.onStop();
       }
       this.active = false;
+      this.scheduler = undefined;
     }
   }
 }

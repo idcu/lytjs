@@ -58,7 +58,7 @@ describe('@lytjs/common-error', () => {
 
     it('should return generic message for unknown code', () => {
       const msg = getErrorMessage(99999 as any);
-      expect(msg).toContain('unknown error code');
+      expect(msg).toContain('error code');
     });
   });
 

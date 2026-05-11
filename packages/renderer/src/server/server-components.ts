@@ -294,18 +294,5 @@ export function defineServerComponent(
 }
 
 // ============================================================
-// 导出
+// 导出（函数已在上面定义）
 // ============================================================
-
-export {
-  registerServerComponent,
-  registerServerFunction,
-  getServerComponent,
-  getServerFunction,
-  handleServerAction,
-  createServerActionHandler,
-  serializeServerData,
-  deserializeServerData,
-  renderServerComponent,
-  defineServerComponent,
-};

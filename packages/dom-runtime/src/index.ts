@@ -120,11 +120,14 @@ function sanitizeHTML(html: string): string {
  * - 返回的 fragment 没有实际 DOM 功能
  * - 仅提供基本的类型兼容性
  */
-export function createTemplate(html: string): DocumentFragment {
+export interface TemplateWrapper {
+  content: DocumentFragment;
+  remove(): void;
+}
+
+export function createTemplate(html: string): TemplateWrapper {
   if (!isBrowser) {
-    // 非浏览器环境返回空 fragment（无法使用 document API）
-    // 此 mock 仅用于防止 SSR/测试环境崩溃，不保证功能完整性
-    return {
+    const mockContent = {
       nodeType: 11,
       childNodes: [],
       children: [],
@@ -132,12 +135,49 @@ export function createTemplate(html: string): DocumentFragment {
       lastChild: null,
       appendChild() { return null as unknown as Node; },
       removeChild() { return null as unknown as Node; },
-      cloneNode() { return this as unknown as DocumentFragment; },
+      cloneNode() { return mockContent; },
+      querySelector() { return null; },
+      querySelectorAll() { return [] as unknown as NodeList; },
     } as unknown as DocumentFragment;
+
+    return {
+      content: mockContent,
+      remove() {},
+    };
   }
+
   const template = document.createElement('template');
   template.innerHTML = html;
-  return template.content.cloneNode(true) as DocumentFragment;
+  const content = template.content;
+
+  return {
+    content,
+    remove() {
+      const parent = content.parentNode;
+      if (parent) {
+        parent.removeChild(content);
+      }
+    },
+  };
+}
+
+export function getContent(wrapper: TemplateWrapper): Node[] {
+  const result: Node[] = [];
+  let child = wrapper.content.firstChild;
+  while (child) {
+    result.push(child);
+    child = child.nextSibling;
+  }
+  return result;
+}
+
+export function appendChild(parent: Node, wrapper: TemplateWrapper): Node {
+  const children = getContent(wrapper);
+  let lastAppended: Node | null = null;
+  for (const child of children) {
+    lastAppended = parent.appendChild(child);
+  }
+  return lastAppended || ({} as Node);
 }
 
 /**

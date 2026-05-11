@@ -109,7 +109,7 @@ describe('transformShow', () => {
       expect(result.props).toHaveLength(0);
     });
 
-    it('当 exp 为非 SIMPLE_EXPRESSION 类型时应返回空 props', () => {
+    it('应该正确处理复合表达式', () => {
       const context = createMockContext();
       const dir: DirectiveNode = {
         type: NodeTypes.DIRECTIVE,
@@ -135,7 +135,8 @@ describe('transformShow', () => {
       const node = createElement('div');
       const result = transformShow(dir, node, context);
 
-      expect(result.props).toHaveLength(0);
+      expect(result.props).toHaveLength(1);
+      expect(result.props[0].key).toBe('style');
     });
 
     it('应该正确处理空字符串表达式', () => {

@@ -213,6 +213,50 @@ const errorMessages: Record<LytErrorCodes, string> = {
 };
 
 // ============================================================
+// 错误修复建议映射
+// ============================================================
+
+const errorSuggestions: Partial<Record<LytErrorCodes, string>> = {
+  [LytErrorCodes.INVALID_EXPRESSION]: 'Check for syntax errors or missing parentheses.',
+  [LytErrorCodes.UNEXPECTED_TOKEN]: 'Ensure the token matches the expected syntax.',
+  [LytErrorCodes.UNEXPECTED_EOF]: 'Check for unclosed brackets or parentheses.',
+  [LytErrorCodes.INVALID_IDENTIFIER]: 'Variable names must start with a letter or underscore.',
+  [LytErrorCodes.INVALID_DIRECTIVE]: 'Valid directives: v-if, v-else-if, v-else, v-for, v-on, v-bind, v-model, v-show, v-slot, v-scope, v-once, v-memo, ref.',
+  [LytErrorCodes.X_V_FOR_MALFORMED_EXPRESSION]: 'Use format: v-for="item in items" or v-for="(item, index) in items".',
+  [LytErrorCodes.X_V_FOR_NESTED_ITERATION]: 'Use a component wrapper or computed property instead.',
+  [LytErrorCodes.X_V_IF_SAME_KEY]: 'Give each v-if/v-else-if a unique condition key.',
+  [LytErrorCodes.X_V_IF_NO_EXPRESSION]: 'Add an expression: v-if="condition" or remove the directive.',
+  [LytErrorCodes.X_V_IF_SIBLING_IF]: 'Place v-if and v-else-if/v-else elements as direct siblings.',
+  [LytErrorCodes.X_V_FOR_NO_EXPRESSION]: 'Add an expression: v-for="item in items".',
+  [LytErrorCodes.X_V_FOR_MISSING_KEY]: 'Add a :key="item.id" attribute for stable list rendering.',
+  [LytErrorCodes.X_MISSING_END_TAG]: 'Add the closing </tag> tag.',
+  [LytErrorCodes.X_INVALID_END_TAG]: 'Ensure closing tag matches the opening tag.',
+  [LytErrorCodes.X_INTERPOLATION_NO_EXPRESSION]: 'Use {{ expression }} format inside interpolation.',
+  [LytErrorCodes.X_V_MODEL_INVALID_EXPRESSION]: 'Use a valid property path: v-model="object.property" or v-model="variable".',
+  [LytErrorCodes.X_V_MODEL_ON_SCOPE_VARIABLE]: 'v-model cannot bind to v-for loop variables. Use a data property instead.',
+  [LytErrorCodes.X_V_MODEL_INVALID_MODIFIER_ON_INPUT]: 'Use .trim or .number modifiers only on input elements.',
+  [LytErrorCodes.X_V_MODEL_PROP_CANNOT_BE_SET]: 'Use a data property or computed property setter.',
+  [LytErrorCodes.X_V_MODEL_CANNOT_BE_USED_ON_PROPS]: 'Props are read-only. Use emit to update parent.',
+  [LytErrorCodes.X_V_SLOT_DUPLICATE_SLOT_NAMES]: 'Use unique names for each slot.',
+  [LytErrorCodes.X_V_SLOT_MISSING_SLOT_NAME]: 'Add slot name: v-slot:header or use #header syntax.',
+  [LytErrorCodes.X_MISSING_DYNAMIC_DIRECTIVE_ARGUMENT]: 'Add the argument: v-bind:[attrName]="value".',
+  [LytErrorCodes.X_V_BIND_INVALID_SAME_NAME_ARGUMENT]: 'Remove the argument or use a different directive.',
+  [LytErrorCodes.X_INVALID_V_MODEL_MODIFIER]: 'Use .trim, .number, or .lazy modifiers.',
+  [LytErrorCodes.COMPONENT_IS_MISSING_TEMPLATE]: 'Add a template property or render function to your component.',
+  [LytErrorCodes.INVALID_COMPONENT]: 'Ensure the component is properly imported or registered.',
+  [LytErrorCodes.INVALID_PROP_TYPE]: 'Define props with correct types: { type: String } or { type: [String, Number] }.',
+  [LytErrorCodes.MISSING_PROP]: 'Provide the required prop or make it optional.',
+  [LytErrorCodes.INVALID_SETUP_RETURN]: 'Return an object from setup() to expose reactive state.',
+};
+
+/**
+ * 获取错误码对应的修复建议
+ */
+export function getErrorSuggestion(code: number): string | undefined {
+  return errorSuggestions[code as LytErrorCodes];
+}
+
+// ============================================================
 // 错误工具函数
 // ============================================================
 
@@ -229,7 +273,7 @@ export interface SourceLocation {
  * 获取错误码对应的错误消息
  */
 export function getErrorMessage(code: number): string {
-  return (errorMessages as Record<number, string>)[code] ?? `unknown error code: ${code}`;
+  return (errorMessages as Record<number, string>)[code] ?? `Unknown error code: ${code}`;
 }
 
 /**
@@ -259,6 +303,82 @@ export class LytError extends Error {
     this.code = code;
     this.loc = loc;
   }
+}
+
+// ============================================================
+// 统一错误格式化
+// ============================================================
+
+export interface FormattedError {
+  title: string;
+  message: string;
+  suggestion?: string;
+  category: string;
+  code: number;
+  location?: string;
+  stack?: string;
+}
+
+/**
+ * 格式化错误信息，包含友好的提示和修复建议
+ */
+export function formatError(error: Error | LytError | string): FormattedError {
+  const code = (error as LytError).code ?? 0;
+  const category = getCategoryName(getCategory(code));
+  const suggestion = getErrorSuggestion(code);
+  
+  const location = (error as LytError).loc?.start
+    ? `line ${(error as LytError).loc!.start.line}, column ${(error as LytError).loc!.start.column}`
+    : undefined;
+  
+  const title = code > 0
+    ? `[${category}] Error ${code}`
+    : 'Error';
+  
+  return {
+    title,
+    message: error instanceof Error ? error.message : String(error),
+    suggestion,
+    category,
+    code,
+    location,
+    stack: error instanceof Error ? error.stack : undefined,
+  };
+}
+
+/**
+ * 获取分类名称
+ */
+function getCategoryName(category: ErrorCategoryType): string {
+  const names: Record<ErrorCategoryType, string> = {
+    [ErrorCategory.COMPILER]: 'Compiler',
+    [ErrorCategory.RUNTIME]: 'Runtime',
+    [ErrorCategory.RENDERER]: 'Renderer',
+    [ErrorCategory.COMPONENT]: 'Component',
+  };
+  return names[category] ?? 'Unknown';
+}
+
+/**
+ * 打印格式化错误到控制台
+ */
+export function printFormattedError(error: Error | LytError | string): void {
+  const formatted = formatError(error);
+  const parts: string[] = [];
+  
+  parts.push(`\x1b[1m\x1b[31m${formatted.title}\x1b[0m`);
+  
+  if (formatted.location) {
+    parts.push(`  Location: ${formatted.location}`);
+  }
+  
+  parts.push(`  ${formatted.message}`);
+  
+  if (formatted.suggestion) {
+    parts.push(`\x1b[32m  💡 Suggestion: ${formatted.suggestion}\x1b[0m`);
+  }
+  
+  console.error(parts.join('\n'));
 }
 
 /**

@@ -3,8 +3,6 @@
 
 import { createVNode } from '@lytjs/vdom';
 import type { VNode } from '@lytjs/vdom';
-import { createDOMRenderer, createSignalRenderer } from '@lytjs/renderer';
-import type { SignalRenderer } from '@lytjs/renderer';
 import { error, warn } from '@lytjs/common-error';
 import type {
   App,
@@ -14,7 +12,6 @@ import type {
   PluginFunctionWithCleanup,
   Component,
   ComponentPublicInstance,
-  DOMRenderer,
   ComponentOptions,
 } from './types';
 import { createAppContext, createContextConfig } from './app-context';
@@ -29,6 +26,35 @@ import type {
   AppContext as ComponentAppContext,
   ComponentInternalInstance,
 } from '@lytjs/component';
+
+interface SignalRenderer {
+  render(container: Element | Text): void;
+  unmount(): void;
+}
+
+interface DOMRenderer {
+  createApp: unknown;
+  createSignalRenderer: unknown;
+}
+
+let createSignalRenderer: ((template: string, ctx: unknown) => Promise<unknown>) | null = null;
+let createDOMRenderer: ((options: unknown) => unknown) | null = null;
+
+async function getSignalRenderer() {
+  if (!createSignalRenderer) {
+    const renderer = await import('@lytjs/renderer');
+    createSignalRenderer = renderer.createSignalRenderer as (template: string, ctx: unknown) => Promise<unknown>;
+  }
+  return createSignalRenderer;
+}
+
+async function getDOMRenderer() {
+  if (!createDOMRenderer) {
+    const renderer = await import('@lytjs/renderer');
+    createDOMRenderer = renderer.createDOMRenderer as (options: unknown) => unknown;
+  }
+  return createDOMRenderer;
+}
 
 export function createApp(
   rootComponent: Component,
@@ -117,7 +143,7 @@ export function createApp(
         }
 
         // 默认 VNode 模式
-        return mountWithVNodeMode(container);
+        return await mountWithVNodeMode(container);
       } catch (err) {
         if (app.errorHandler) {
           app.errorHandler(err, null, 'mount');
@@ -302,7 +328,7 @@ export function createApp(
 
   // ==================== VNode 模式挂载 ====================
 
-  function mountWithVNodeMode(container: Element): ComponentPublicInstance {
+  async function mountWithVNodeMode(container: Element): Promise<ComponentPublicInstance> {
     // 通过组件系统的标准流程创建根 vnode
     const rootVNode = createVNode(rootComponent, rootProps);
 
@@ -337,8 +363,11 @@ export function createApp(
     context._instance = instance;
 
     // 使用增强的渲染器进行渲染
-    // 提供 setupChildComponent 回调，使渲染器在 patch 过程中遇到组件 vnode 时能够创建和初始化子组件实例
-    const renderer = createDOMRenderer({
+    if (effectiveMode !== 'vnode') {
+      throw new Error('[LytJS] Invalid renderer mode');
+    }
+    const domRendererFn = await getDOMRenderer();
+    const renderer = domRendererFn!({
       // FIX: DTS build error - 跨包 ComponentInternalInstance 类型不兼容（component vs common-vnode），
       // 使用类型断言绕过，运行时类型是正确的
       setupChildComponent(childVNode: VNode, parentComponent: ComponentInternalInstance | null) {
@@ -455,8 +484,8 @@ export function createApp(
     }
 
     // 创建 Signal 渲染器
-    // FIX: DTS build error - createSignalRenderer 现在是 async，需要 await
-    signalRenderer = await createSignalRenderer(template, ctx);
+    const signalRendererFn = await getSignalRenderer();
+    signalRenderer = await signalRendererFn(template, ctx);
     signalRenderer.render(container);
 
     _isMounted = true;

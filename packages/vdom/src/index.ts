@@ -18,6 +18,9 @@ export {
   isCommentVNode,
 } from '@lytjs/common-vnode';
 
+// 重新导出 ShapeFlags 和 PatchFlags（enum 既是类型也是值）
+export { ShapeFlags, PatchFlags } from '@lytjs/common-vnode';
+
 export type {
   VNode,
   VNodeTypes,
@@ -27,9 +30,6 @@ export type {
   ComponentPublicInstance,
   ComponentInternalInstance,
   BaseComponentOptions,
-  // FIX: DTS build error - const enums must be exported as types
-  ShapeFlags,
-  PatchFlags,
 } from '@lytjs/common-vnode';
 
 // 从 @lytjs/host-contract 重新导出
@@ -52,6 +52,9 @@ export {
   normalizeChildren,
   getShapeFlag,
   EMPTY_OBJ,
+  getVNodePoolStats,
+  resetVNodePoolStats,
+  releaseVNode,
 } from './vnode';
 
 // Patch 逻辑和渲染器

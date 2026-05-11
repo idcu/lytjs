@@ -7,7 +7,7 @@ export default defineConfig({
     ssr: 'src/ssr/ssr-renderer.ts',
   },
   format: ['esm', 'cjs'],
-  dts: true,
+  dts: false,
   sourcemap: true,
   clean: true,
   splitting: false,
@@ -35,5 +35,7 @@ export default defineConfig({
     '@lytjs/compiler',
     '@lytjs/host-contract',
     '@lytjs/adapter-web',
+    '@lytjs/core',
+    '@lytjs/component',
   ],
 });

@@ -226,17 +226,5 @@ if (typeof document !== 'undefined' && document.readyState === 'complete') {
 }
 
 // ============================================================
-// 导出
+// 导出（函数已在上面定义）
 // ============================================================
-
-export {
-  callServer,
-  createServerFunction,
-  getServerData,
-  hasServerData,
-  isHydrated,
-  markHydrated,
-  getHydrationState,
-  autoHydrate,
-  configureServerAction,
-};

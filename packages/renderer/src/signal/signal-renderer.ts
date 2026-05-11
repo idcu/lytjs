@@ -20,6 +20,8 @@ import {
   createEventHandler,
   reconcileArray,
   bindEffect,
+  getContent,
+  appendChild as appendChildFn,
 } from '@lytjs/dom-runtime';
 import type {
   reconcileArray as ReconcileArrayType,
@@ -35,22 +37,30 @@ import type {
   bindEffect as BindEffectType,
   onCleanup as OnCleanupType,
   runCleanups as RunCleanupsType,
+  getContent as GetContentType,
+  appendChild as AppendChildType,
 } from '@lytjs/dom-runtime';
 
 // ============================================================
 // 安全辅助函数
 // ============================================================
 
-/**
- * 安全地设置元素 HTML 内容
- * FIX: P0-2 使用 textContent 替代 innerHTML，避免 XSS 攻击
- * 注意：此函数将 HTML 内容作为纯文本处理，不会解析 HTML 标签
- * 如果需要真正的 HTML 渲染，应该经过 DOMPurify 等库净化
- */
 function setSafeHTML(el: Element, html: string): void {
-  // 使用 textContent 设置纯文本，避免 XSS
-  // 这样可以防止恶意脚本注入，因为所有内容都会被当作纯文本显示
   el.textContent = html;
+}
+
+function createTemplateWrapper(html: string) {
+  const wrapper = createTemplate(html);
+  const children = getContent(wrapper);
+
+  return Object.assign(wrapper, {
+    firstChild: children[0] || null,
+    lastChild: children[children.length - 1] || null,
+    childNodes: Object.assign(children, { length: children.length }),
+    appendChild(child: Node): Node {
+      return appendChildFn(wrapper as any, { content: { firstChild: child } } as any) as any;
+    },
+  });
 }
 
 // ============================================================
@@ -144,24 +154,28 @@ export function createSignalRenderer(
         // 创建渲染函数，传入所有 dom-runtime 和 reactivity 的函数作为参数
         // 参数名必须与 codegen-signal.ts 生成的 import 名称一致
         // FIX: P0-2 使用 setSafeHTML 替代 setHTML，避免 XSS 攻击
+        // 注意：生成的代码使用短别名和 _c/_n 参数名
+        // 参数顺序：effect, reconcileArray, createTemplate, setText, setHTML, setAttribute,
+        //          setProperty, setStyle, setClass, insert, remove, createEventHandler,
+        //          bindEffect, onCleanup, runCleanups, ctx, container
         const renderFn = new Function(
-          'effect',
-          'reconcileArray',
-          'createTemplate',
-          'setText',
-          'setHTML',
-          'setAttribute',
-          'setProperty',
-          'setStyle',
-          'setClass',
-          'insert',
-          'remove',
-          'createEventHandler',
-          'bindEffect',
-          'onCleanup',
-          'runCleanups',
-          '_ctx',
-          '_container',
+          'e',
+          'n',
+          't',
+          'x',
+          'h',
+          'a',
+          'p',
+          's',
+          'c',
+          'i',
+          'r',
+          'v',
+          'b',
+          'o',
+          'g',
+          '_c',
+          '_n',
           renderBody,
         );
 
@@ -169,7 +183,7 @@ export function createSignalRenderer(
         const cleanupFn = renderFn(
           effect,
           reconcileArray,
-          createTemplate,
+          createTemplateWrapper,
           setText,
           setSafeHTML,
           setAttribute,
@@ -234,8 +248,9 @@ export function createSignalRenderer(
  */
 function extractRenderBody(code: string): string | null {
   // 匹配 render 函数体
-  // 查找 "export function render(_ctx, _container) {" 和对应的闭合 "}"
-  const funcMatch = code.match(/export\s+function\s+render\s*\(\s*_ctx\s*,\s*_container\s*\)\s*\{/);
+  // 查找 "export function render(...) {" 和对应的闭合 "}"
+  // 支持不同的参数名：_ctx/_container, _c/_n 等
+  const funcMatch = code.match(/export\s+function\s+render\s*\([^)]*\)\s*\{/);
 
   if (!funcMatch) {
     return null;

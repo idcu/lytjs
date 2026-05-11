@@ -20,6 +20,7 @@
     "exactOptionalPropertyTypes": false,
     "composite": true,
     "incremental": true,
+    "tsBuildInfoFile": "./dist/.tsbuildinfo",
     "baseUrl": ".",
     "paths": {
       "@lytjs/common-env": ["./packages/env/src"],

@@ -124,27 +124,12 @@ function createTransformContext(root: RootNode, options: TransformOptions): Tran
   const helpers = new Map<string, number>();
   const components = new Set<string>();
   const directives = new Set<string>();
-  const currentNode: RootNode | TemplateChildNode | null = root;
+  let currentNode: RootNode | TemplateChildNode | null = root;
 
   // 使用工厂函数避免自引用的 null 初始化。
   // 上下文对象通过延迟初始化器创建，接收自身
   // 消除对 `null as unknown as TransformContext` 的需求。
-  const context = createContext(root, options, helpers, components, directives, currentNode);
-  context.self = context;
-  return context;
-}
-
-// FIX: P2-20 使用延迟初始化模式避免双重类型断言
-// 先创建部分 context，然后通过 getter 延迟访问 self
-function createContext(
-  root: RootNode,
-  options: TransformOptions,
-  helpers: Map<string, number>,
-  components: Set<string>,
-  directives: Set<string>,
-  currentNode: RootNode | TemplateChildNode | null,
-): TransformContext {
-  // 使用 let 声明，允许在创建后赋值
+  // FIX: Phase 1 Vapor bug - 使用 contextRef 代替 context.self = context
   let contextRef: TransformContext | null = null;
 
   const context: TransformContext = {
@@ -218,14 +203,16 @@ function createContext(
       context.cached++;
     },
     error(msg: string, node?: BaseNode): void {
-      if (node?.loc?.start) {
-        msg = `${msg} (at line ${node.loc.start.line}, column ${node.loc.start.column})`;
-      }
+      const location = node?.loc?.start
+        ? ` (at line ${node.loc.start.line}, column ${node.loc.start.column})`
+        : '';
+      const fullMsg = `[LytJS] ${msg}${location}`;
+      
       // 优先调用 options.onError 回调，否则直接抛出错误
       if (options.onError) {
-        options.onError(new Error(`[LytJS] ${msg}`));
+        options.onError(new Error(fullMsg));
       } else {
-        throw new Error(`[LytJS] ${msg}`);
+        throw new Error(fullMsg);
       }
     },
   };

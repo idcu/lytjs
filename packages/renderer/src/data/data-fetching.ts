@@ -2,7 +2,7 @@
 // 数据获取集成
 // Phase 1.7: 服务端数据预取 + 序列化
 
-import { ref, computed, watch, type Ref, type ComputedRef } from '@lytjs/reactivity';
+import { ref, watch, type Ref } from '@lytjs/reactivity';
 
 // ============================================================
 // 类型定义
@@ -89,7 +89,7 @@ const pendingPrefetches = new Map<string, Promise<unknown>>();
  * 序列化数据（支持特殊类型）
  */
 export function serializeData(data: unknown): string {
-  return JSON.stringify(data, (key, value) => {
+  return JSON.stringify(data, (_key, value) => {
     // 处理特殊类型
     if (value instanceof Date) {
       return { __type: 'Date', __value: value.toISOString() };
@@ -127,7 +127,7 @@ export function serializeData(data: unknown): string {
  * 反序列化数据
  */
 export function deserializeData(json: string): unknown {
-  return JSON.parse(json, (key, value) => {
+  return JSON.parse(json, (_key, value) => {
     if (value && typeof value === 'object' && '__type' in value) {
       switch (value.__type) {
         case 'Date':
@@ -246,7 +246,7 @@ export function createPrefetchManager(): PrefetchManager {
  * });
  * ```
  */
-export function useFetch<T = unknown>(
+export function useFetch<T extends unknown = unknown>(
   url: string | (() => string),
   options: DataFetchOptions<T> = {},
 ): {
@@ -260,7 +260,6 @@ export function useFetch<T = unknown>(
     initialData,
     cacheKey,
     cacheTime = 5 * 60 * 1000,
-    serverPrefetch = true,
     watch: watchDeps,
     transform,
     onError,
@@ -269,10 +268,10 @@ export function useFetch<T = unknown>(
     retryDelay = 1000,
   } = options;
 
-  const data = ref<T | undefined>(initialData) as Ref<T | undefined>;
-  const loading = ref(false);
+  const data = ref(initialData) as Ref<T | undefined>;
+  const loading = ref<boolean>(false);
   const error = ref<Error | null>(null);
-  const fromCache = ref(false);
+  const fromCache = ref<boolean>(false);
   const timestamp = ref<number | null>(null);
 
   let retryCount = 0;
@@ -286,7 +285,7 @@ export function useFetch<T = unknown>(
       const cached = prefetchStore.get(resolvedCacheKey);
       if (cached && cached.expiresAt > Date.now()) {
         data.value = cached.data as T;
-        fromCache.value = true;
+        fromCache.value = true as boolean;
         timestamp.value = cached.timestamp;
         return;
       }
@@ -296,14 +295,14 @@ export function useFetch<T = unknown>(
         const serverData = (window as any).__LYTJS_PREFETCH_DATA__;
         if (serverData && serverData[resolvedCacheKey]) {
           data.value = serverData[resolvedCacheKey] as T;
-          fromCache.value = true;
+          fromCache.value = true as boolean;
           delete serverData[resolvedCacheKey];
           return;
         }
       }
     }
 
-    loading.value = true;
+    loading.value = true as boolean;
     error.value = null;
 
     try {
@@ -360,12 +359,7 @@ export function useFetch<T = unknown>(
 
   // 立即执行
   if (immediate) {
-    // 服务端预取
-    if (typeof window === 'undefined' && serverPrefetch) {
-      fetchData();
-    } else {
-      fetchData();
-    }
+    fetchData();
   }
 
   return {
@@ -403,14 +397,13 @@ export function useAsyncData<T>(
   const {
     immediate = true,
     initialData,
-    serverPrefetch = true,
     transform,
     onError,
     onSuccess,
   } = options;
 
-  const data = ref<T | undefined>(initialData) as Ref<T | undefined>;
-  const pending = ref(false);
+  const data = ref(initialData) as Ref<T | undefined>;
+  const pending = ref<boolean>(false);
   const error = ref<Error | null>(null);
 
   const execute = async () => {
@@ -431,7 +424,7 @@ export function useAsyncData<T>(
       }
     }
 
-    pending.value = true;
+    pending.value = true as boolean;
     error.value = null;
 
     try {
@@ -441,7 +434,7 @@ export function useAsyncData<T>(
         result = transform(result);
       }
 
-      data.value = result;
+      data.value = result as T;
 
       // 缓存数据
       const now = Date.now();
@@ -452,13 +445,13 @@ export function useAsyncData<T>(
         expiresAt: now + (options.cacheTime || 5 * 60 * 1000),
       });
 
-      onSuccess?.(result);
+      onSuccess?.(result as T);
     } catch (err) {
       const fetchError = err instanceof Error ? err : new Error(String(err));
       error.value = fetchError;
       onError?.(fetchError);
     } finally {
-      pending.value = false;
+      pending.value = false as boolean;
     }
   };
 
@@ -519,15 +512,5 @@ export function getPrefetchData<T = unknown>(key: string): T | undefined {
 }
 
 // ============================================================
-// 导出
+// 导出（函数已在上面定义）
 // ============================================================
-
-export {
-  serializeData,
-  deserializeData,
-  createPrefetchManager,
-  useFetch,
-  useAsyncData,
-  injectPrefetchData,
-  getPrefetchData,
-};

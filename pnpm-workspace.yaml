@@ -8,7 +8,6 @@ packages:
   - 'packages/tools/packages/*' # 规划中
 
   # 子仓库（单包级）
-  - 'packages/common/common-warn'
   - 'packages/shared-types'
   - 'packages/host-contract'
   - 'packages/runtime-convergence'

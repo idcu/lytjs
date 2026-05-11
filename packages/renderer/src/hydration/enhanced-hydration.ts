@@ -2,7 +2,7 @@
 // Hydration 完善模块
 // Phase 1.15-1.17: 全应用 Hydration、选择性 Hydration、水合错误恢复
 
-import { createApp, type App, type Component } from '@lytjs/component';
+import type { App, Component } from '@lytjs/component';
 import { warn } from '@lytjs/common-error';
 
 // ============================================================
@@ -115,6 +115,7 @@ export async function hydrateApp(
   // 检查是否已经 Hydration
   if (containerEl.hasAttribute('data-hydrated')) {
     warn('[LytJS] Container already hydrated');
+    const { createApp } = await import('@lytjs/core');
     return {
       app: createApp(component),
       stats,
@@ -122,6 +123,7 @@ export async function hydrateApp(
   }
 
   // 创建应用实例
+  const { createApp } = await import('@lytjs/core');
   const app = createApp(component);
 
   // 执行 Hydration
@@ -326,6 +328,7 @@ export async function hydrateVisible(
   };
 
   const startTime = performance.now();
+  const { createApp } = await import('@lytjs/core');
   const app = createApp(component);
 
   // 使用 IntersectionObserver 检测可见性
@@ -609,6 +612,7 @@ export async function safeHydrate(
     if (containerEl) {
       // 清空容器并重新渲染
       containerEl.innerHTML = '';
+      const { createApp } = await import('@lytjs/core');
       const app = createApp(component);
       app.mount(containerEl);
 
@@ -631,14 +635,5 @@ export async function safeHydrate(
 }
 
 // ============================================================
-// 导出
+// 导出（函数已在上面定义）
 // ============================================================
-
-export {
-  hydrateApp,
-  hydrateVisible,
-  queueHydration,
-  safeHydrate,
-  createHydrationErrorHandler,
-  HydrationErrorHandler,
-};

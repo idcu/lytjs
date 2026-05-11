@@ -32,8 +32,15 @@ export function createMockContext(overrides?: Partial<TransformContext>): Transf
 
   const rootNode = createRoot([]);
 
+  let contextRef: TransformContext | null = null;
+
   const context: TransformContext = {
-    self: null as unknown as TransformContext,
+    get self(): TransformContext {
+      if (contextRef === null) {
+        throw new Error('[LytJS] TransformContext.self accessed before initialization');
+      }
+      return contextRef;
+    },
     parent: null,
     rootNode,
     helpers,
@@ -74,7 +81,7 @@ export function createMockContext(overrides?: Partial<TransformContext>): Transf
     ...overrides,
   };
 
-  context.self = context;
+  contextRef = context;
   return context;
 }
 

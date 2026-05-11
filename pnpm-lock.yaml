@@ -128,18 +128,6 @@ importers:
         specifier: ^5.8.2
         version: 5.9.3
 
-  packages/common/common-warn:
-    devDependencies:
-      tsup:
-        specifier: ^8.3.5
-        version: 8.5.1(jiti@2.6.1)(postcss@8.5.14)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.3)
-      typescript:
-        specifier: ^5.8.2
-        version: 5.9.3
-      vitest:
-        specifier: ^3.0.0
-        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jsdom@29.1.1)
-
   packages/common/packages/a11y:
     devDependencies:
       jsdom:
@@ -262,7 +250,7 @@ importers:
         version: link:../vnode
       '@lytjs/common-warn':
         specifier: workspace:*
-        version: link:../../common-warn
+        version: link:../warn
     devDependencies:
       tsup:
         specifier: ^8.4.0
@@ -634,6 +622,18 @@ importers:
     devDependencies:
       tsup:
         specifier: ^8.4.0
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.14)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.3)
+      typescript:
+        specifier: ^5.8.2
+        version: 5.9.3
+      vitest:
+        specifier: ^3.0.0
+        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jsdom@29.1.1)
+
+  packages/common/packages/warn:
+    devDependencies:
+      tsup:
+        specifier: ^8.3.5
         version: 8.5.1(jiti@2.6.1)(postcss@8.5.14)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.3)
       typescript:
         specifier: ^5.8.2
@@ -6132,7 +6132,7 @@ snapshots:
       sirv: 3.0.2
       tinyglobby: 0.2.16
       tinyrainbow: 2.0.0
-      vitest: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jsdom@29.1.1)
+      vitest: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jsdom@26.1.0)
 
   '@vitest/utils@3.2.4':
     dependencies:

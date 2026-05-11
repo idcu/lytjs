@@ -502,11 +502,5 @@ export async function renderDocumentToStream(
 }
 
 // ============================================================
-// 导出
+// 导出（已在上面定义）
 // ============================================================
-
-export {
-  OptimizedSSRStream,
-  createOptimizedStream,
-  renderDocumentToStream,
-};
