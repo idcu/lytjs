@@ -16,6 +16,15 @@ import {
   warnOnce,
   error,
   resetWarnedMessages,
+  getErrorSuggestion,
+  formatError,
+  printFormattedError,
+  safeExec,
+  safeJsonParse,
+  createEnhancedError,
+  safeExecWithRecovery,
+  safeExecWithRecoveryAsync,
+  type LogHandler,
 } from '../src/index';
 
 describe('@lytjs/common-error', () => {
@@ -224,6 +233,181 @@ describe('@lytjs/common-error', () => {
       expect(spy).toHaveBeenCalledTimes(2);
       setDevMode(false);
       spy.mockRestore();
+    });
+  });
+
+  describe('getErrorSuggestion', () => {
+    it('should return suggestion for known error code', () => {
+      const suggestion = getErrorSuggestion(LytErrorCodes.INVALID_EXPRESSION);
+      expect(suggestion).toBeTruthy();
+      expect(typeof suggestion).toBe('string');
+    });
+
+    it('should return undefined for unknown error code', () => {
+      const suggestion = getErrorSuggestion(99999 as any);
+      expect(suggestion).toBeUndefined();
+    });
+  });
+
+  describe('formatError', () => {
+    it('should format LytError with code', () => {
+      const err = new LytError(LytErrorCodes.INVALID_EXPRESSION, 'test error');
+      const formatted = formatError(err);
+      expect(formatted.code).toBe(LytErrorCodes.INVALID_EXPRESSION);
+      expect(formatted.message).toBe('test error');
+      expect(formatted.title).toContain('Compiler');
+    });
+
+    it('should format string error', () => {
+      const formatted = formatError('string error');
+      expect(formatted.message).toBe('string error');
+    });
+
+    it('should include location when available', () => {
+      const loc: SourceLocation = {
+        start: { line: 1, column: 2, offset: 3 },
+        end: { line: 4, column: 5, offset: 6 },
+        source: 'test',
+      };
+      const err = new LytError(LytErrorCodes.INVALID_EXPRESSION, 'test', loc);
+      const formatted = formatError(err);
+      expect(formatted.location).toContain('line 1');
+      expect(formatted.location).toContain('column 2');
+    });
+
+    it('should include suggestion when available', () => {
+      const err = new LytError(LytErrorCodes.INVALID_EXPRESSION);
+      const formatted = formatError(err);
+      expect(formatted.suggestion).toBeTruthy();
+    });
+  });
+
+  describe('printFormattedError', () => {
+    it('should call console.error', () => {
+      const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      printFormattedError('test error');
+      expect(spy).toHaveBeenCalled();
+      spy.mockRestore();
+    });
+  });
+
+  describe('safeExec', () => {
+    it('should return result of successful function', () => {
+      const result = safeExec(() => 42, 0);
+      expect(result).toBe(42);
+    });
+
+    it('should return default value on error', () => {
+      const result = safeExec(() => {
+        throw new Error('test error');
+      }, 'default');
+      expect(result).toBe('default');
+    });
+
+    it('should log warning in dev mode on error', () => {
+      const spy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      setDevMode(true);
+      safeExec(
+        () => {
+          throw new Error('test');
+        },
+        0,
+        'test context',
+      );
+      expect(spy).toHaveBeenCalled();
+      setDevMode(false);
+      spy.mockRestore();
+    });
+  });
+
+  describe('safeJsonParse', () => {
+    it('should parse valid JSON', () => {
+      const result = safeJsonParse('{"a": 1}', {});
+      expect(result).toEqual({ a: 1 });
+    });
+
+    it('should return default value on invalid JSON', () => {
+      const result = safeJsonParse('invalid json', { default: true });
+      expect(result).toEqual({ default: true });
+    });
+  });
+
+  describe('createEnhancedError', () => {
+    it('should create an enhanced error', () => {
+      const err = createEnhancedError('test error', {
+        code: 123,
+        recoverable: true,
+        recoverySuggestion: 'try again',
+        context: { test: 'data' },
+      });
+      expect(err.message).toBe('test error');
+      expect(err.code).toBe(123);
+      expect(err.recoverable).toBe(true);
+      expect(err.recoverySuggestion).toBe('try again');
+      expect(err.context).toEqual({ test: 'data' });
+    });
+
+    it('should include cause', () => {
+      const cause = new Error('root cause');
+      const err = createEnhancedError('wrapper', { cause });
+      expect(err.cause).toBe(cause);
+    });
+  });
+
+  describe('safeExecWithRecovery', () => {
+    it('should return result of successful function', () => {
+      const result = safeExecWithRecovery(() => 42, { defaultValue: 0 });
+      expect(result).toBe(42);
+    });
+
+    it('should return default value on error', () => {
+      const result = safeExecWithRecovery(
+        () => {
+          throw new Error('test');
+        },
+        { defaultValue: 'fallback' },
+      );
+      expect(result).toBe('fallback');
+    });
+
+    it('should call onError on error', () => {
+      const onError = vi.fn();
+      safeExecWithRecovery(
+        () => {
+          throw new Error('test');
+        },
+        { defaultValue: 0, onError },
+      );
+      expect(onError).toHaveBeenCalled();
+    });
+
+    it('should call onRecover and use recovered value', () => {
+      const onRecover = vi.fn(() => 'recovered');
+      const result = safeExecWithRecovery(
+        () => {
+          throw new Error('test');
+        },
+        { defaultValue: 'fallback', onRecover, maxRetries: 1 },
+      );
+      expect(onRecover).toHaveBeenCalled();
+      expect(result).toBe('recovered');
+    });
+  });
+
+  describe('safeExecWithRecoveryAsync', async () => {
+    it('should return result of successful async function', async () => {
+      const result = await safeExecWithRecoveryAsync(async () => 42, { defaultValue: 0 });
+      expect(result).toBe(42);
+    });
+
+    it('should return default value on async error', async () => {
+      const result = await safeExecWithRecoveryAsync(
+        async () => {
+          throw new Error('test');
+        },
+        { defaultValue: 'fallback' },
+      );
+      expect(result).toBe('fallback');
     });
   });
 });
