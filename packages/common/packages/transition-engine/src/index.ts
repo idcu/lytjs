@@ -3,21 +3,36 @@
 
 declare const __DEV__: boolean;
 
-import type { RendererHost, TransitionDurationInfo, HostEvent, HostEventHandler } from '@lytjs/host-contract';
+import type {
+  RendererHost,
+  TransitionDurationInfo,
+  HostEvent,
+  HostEventHandler,
+} from '@lytjs/host-contract';
 import type { HostRect } from '@lytjs/host-contract';
 
 // ============================================================
 // 类型定义
 // ============================================================
 
-/**
- * 过渡属性（平台无关）。
- * 从 @lytjs/vdom 的 TransitionProps re-export，保持与 vdom 同步。
- * 如需修改，请同步修改 @lytjs/vdom/src/transition.ts 中的定义。
- * FIX: DTS build error - 使用 import type 再 export type
- */
-import type { TransitionProps as VdomTransitionProps } from '@lytjs/vdom/transition';
-export type TransitionProps<T = unknown> = VdomTransitionProps<T>;
+export interface TransitionProps<T = unknown> {
+  name?: string;
+  appear?: boolean;
+  enterFromClass?: string;
+  enterActiveClass?: string;
+  enterToClass?: string;
+  leaveFromClass?: string;
+  leaveActiveClass?: string;
+  leaveToClass?: string;
+  onBeforeEnter?: (el: T) => void;
+  onEnter?: (el: T, done: () => void) => void;
+  onAfterEnter?: (el: T) => void;
+  onEnterCancelled?: (el: T) => void;
+  onBeforeLeave?: (el: T) => void;
+  onLeave?: (el: T, done: () => void) => void;
+  onAfterLeave?: (el: T) => void;
+  onLeaveCancelled?: (el: T) => void;
+}
 
 /**
  * 过渡状态（运行时收敛层）。
@@ -204,10 +219,7 @@ export class TransitionEngine<HN extends object = object, HE extends HN = HN> {
       const info = this.host.getTransitionInfo(el, 'enter');
       if (info.hasTransition || info.hasAnimation) {
         if (info.duration > 0) {
-          this.host.setTimeout(
-            () => this.finishEnter(el, classes, props),
-            info.duration + 50,
-          );
+          this.host.setTimeout(() => this.finishEnter(el, classes, props), info.duration + 50);
         } else {
           this.waitForTransitionEnd(el, info, () => this.finishEnter(el, classes, props));
         }
@@ -293,10 +305,7 @@ export class TransitionEngine<HN extends object = object, HE extends HN = HN> {
       const info = this.host.getTransitionInfo(el, 'leave');
       if (info.hasTransition || info.hasAnimation) {
         if (info.duration > 0) {
-          this.host.setTimeout(
-            () => this.finishLeave(el, classes, props),
-            info.duration + 50,
-          );
+          this.host.setTimeout(() => this.finishLeave(el, classes, props), info.duration + 50);
         } else {
           this.waitForTransitionEnd(el, info, () => this.finishLeave(el, classes, props));
         }
@@ -347,7 +356,9 @@ export class TransitionEngine<HN extends object = object, HE extends HN = HN> {
 
     // FIX: P0-10 根据 phase 调用对应的取消钩子（onEnterCancelled / onLeaveCancelled）
     // FIX: DTS build error - 使用类型断言访问 props
-    const props = state.props as { onEnterCancelled?: (el: HE) => void; onLeaveCancelled?: (el: HE) => void } | undefined;
+    const props = state.props as
+      | { onEnterCancelled?: (el: HE) => void; onLeaveCancelled?: (el: HE) => void }
+      | undefined;
     if (props) {
       if (state.phase === 'entering' && props.onEnterCancelled) {
         props.onEnterCancelled(el);
@@ -421,7 +432,11 @@ export class TransitionEngine<HN extends object = object, HE extends HN = HN> {
     const ease = easing ?? 'ease';
 
     // Invert: 应用反向偏移
-    this.host.setStyle(record.el, 'transform', `translate(${record.invert.x}px, ${record.invert.y}px)`);
+    this.host.setStyle(
+      record.el,
+      'transform',
+      `translate(${record.invert.x}px, ${record.invert.y}px)`,
+    );
     this.host.setStyle(record.el, 'transition', 'none');
 
     // 强制回流
@@ -499,11 +514,7 @@ export class TransitionEngine<HN extends object = object, HE extends HN = HN> {
    * 通过监听 transitionend/animationend 事件实现，
    * 超时后自动完成（防止事件未触发）。
    */
-  private waitForTransitionEnd(
-    el: HE,
-    info: TransitionDurationInfo,
-    done: () => void,
-  ): void {
+  private waitForTransitionEnd(el: HE, info: TransitionDurationInfo, done: () => void): void {
     let called = false;
     const finish = () => {
       if (!called) {

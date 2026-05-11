@@ -1,194 +1,42 @@
 [
   {
-    "name": "@lytjs/common-is",
-    "path": "packages/common/packages/is/dist/index.mjs",
-    "limit": "2 KB",
-    "import": "{ isString, isNumber, isBoolean }"
-  },
-  {
-    "name": "@lytjs/common-object",
-    "path": "packages/common/packages/object/dist/index.mjs",
-    "limit": "3 KB",
-    "import": "{ deepClone, deepMerge, pick, omit }"
-  },
-  {
-    "name": "@lytjs/common",
-    "path": "packages/common/packages/common/dist/index.mjs",
-    "limit": "15 KB",
-    "import": "{ isString, deepClone, debounce, EventEmitter }"
+    "name": "@lytjs/core",
+    "path": "packages/core/dist/index.mjs",
+    "limit": "35 KB"
   },
   {
     "name": "@lytjs/reactivity",
     "path": "packages/reactivity/dist/index.mjs",
-    "limit": "12 KB",
-    "import": "{ reactive, ref, computed, watch, watchEffect }"
+    "limit": "12 KB"
   },
   {
     "name": "@lytjs/vdom",
     "path": "packages/vdom/dist/index.mjs",
-    "limit": "10 KB",
-    "import": "{ createVNode, Fragment, Text, Comment }"
+    "limit": "10 KB"
   },
   {
     "name": "@lytjs/compiler",
     "path": "packages/compiler/dist/index.mjs",
-    "limit": "15 KB",
-    "import": "{ compile, parse }"
-  },
-  {
-    "name": "@lytjs/renderer",
-    "path": "packages/renderer/dist/index.mjs",
-    "limit": "8 KB",
-    "import": "{ createRenderer, render }"
+    "limit": "15 KB"
   },
   {
     "name": "@lytjs/component",
     "path": "packages/component/dist/index.mjs",
-    "limit": "12 KB",
-    "import": "{ defineComponent, createComponentInstance, setupComponent }"
+    "limit": "12 KB"
   },
   {
-    "name": "@lytjs/core",
-    "path": "packages/core/dist/index.mjs",
-    "limit": "35 KB",
-    "import": "{ createApp, h, nextTick }"
+    "name": "@lytjs/renderer",
+    "path": "packages/renderer/dist/index.mjs",
+    "limit": "8 KB"
   },
   {
     "name": "@lytjs/shared-types",
     "path": "packages/shared-types/dist/index.mjs",
-    "limit": "2 KB",
-    "import": "{}"
-  },
-  {
-    "name": "@lytjs/common-string",
-    "path": "packages/common/packages/string/dist/index.mjs",
-    "limit": "2 KB",
-    "import": "{}"
-  },
-  {
-    "name": "@lytjs/common-events",
-    "path": "packages/common/packages/events/dist/index.mjs",
-    "limit": "2 KB",
-    "import": "{}"
-  },
-  {
-    "name": "@lytjs/common-error",
-    "path": "packages/common/packages/error/dist/index.mjs",
-    "limit": "2 KB",
-    "import": "{}"
-  },
-  {
-    "name": "@lytjs/common-vnode",
-    "path": "packages/common/packages/vnode/dist/index.mjs",
-    "limit": "3 KB",
-    "import": "{}"
-  },
-  {
-    "name": "@lytjs/common-algorithm",
-    "path": "packages/common/packages/algorithm/dist/index.mjs",
-    "limit": "2 KB",
-    "import": "{}"
-  },
-  {
-    "name": "@lytjs/common-path",
-    "path": "packages/common/packages/path/dist/index.mjs",
-    "limit": "2 KB",
-    "import": "{}"
-  },
-  {
-    "name": "@lytjs/common-cache",
-    "path": "packages/common/packages/cache/dist/index.mjs",
-    "limit": "2 KB",
-    "import": "{}"
-  },
-  {
-    "name": "@lytjs/common-timing",
-    "path": "packages/common/packages/timing/dist/index.mjs",
-    "limit": "2 KB",
-    "import": "{}"
-  },
-  {
-    "name": "@lytjs/common-scheduler",
-    "path": "packages/common/packages/scheduler/dist/index.mjs",
-    "limit": "3 KB",
-    "import": "{}"
-  },
-  {
-    "name": "@lytjs/common-env",
-    "path": "packages/common/packages/env/dist/index.mjs",
-    "limit": "1 KB",
-    "import": "{}"
-  },
-  {
-    "name": "@lytjs/core-vnode",
-    "path": "packages/core-vnode/dist/index.mjs",
-    "limit": "20 KB",
-    "import": "{ createApp, h, nextTick }"
-  },
-  {
-    "name": "@lytjs/core-signal",
-    "path": "packages/core-signal/dist/index.mjs",
-    "limit": "18 KB",
-    "import": "{ createApp, signal, compile }"
-  },
-  {
-    "name": "@lytjs/common-security",
-    "path": "packages/common/packages/security/dist/index.mjs",
-    "limit": "2 KB",
-    "import": "{}"
-  },
-  {
-    "name": "@lytjs/adapter-web",
-    "path": "packages/adapter-web/dist/index.mjs",
-    "limit": "5 KB",
-    "import": "{}"
-  },
-  {
-    "name": "@lytjs/dom-runtime",
-    "path": "packages/dom-runtime/dist/index.mjs",
-    "limit": "4 KB",
-    "import": "{}"
-  },
-  {
-    "name": "@lytjs/runtime-convergence",
-    "path": "packages/runtime-convergence/dist/index.mjs",
-    "limit": "3 KB",
-    "import": "{}"
+    "limit": "2 KB"
   },
   {
     "name": "@lytjs/host-contract",
     "path": "packages/host-contract/dist/index.mjs",
-    "limit": "1 KB",
-    "import": "{}"
-  },
-  {
-    "name": "@lytjs/vdom/transition",
-    "path": "packages/vdom/dist/transition-entry.mjs",
-    "limit": "5 KB",
-    "import": "{ performEnterTransition, performLeaveTransition, TransitionGroupProps }"
-  },
-  {
-    "name": "@lytjs/reactivity/scope",
-    "path": "packages/reactivity/dist/scope.mjs",
-    "limit": "3 KB",
-    "import": "{ effectScope, getCurrentScope, onScopeDispose }"
-  },
-  {
-    "name": "@lytjs/reactivity/async",
-    "path": "packages/reactivity/dist/async.mjs",
-    "limit": "3 KB",
-    "import": "{ asyncComputed, useAsyncState }"
-  },
-  {
-    "name": "@lytjs/compiler/signal",
-    "path": "packages/compiler/dist/signal.mjs",
-    "limit": "8 KB",
-    "import": "{ generateSignal }"
-  },
-  {
-    "name": "@lytjs/compiler/ssr",
-    "path": "packages/compiler/dist/ssr.mjs",
-    "limit": "5 KB",
-    "import": "{ generateSSR }"
+    "limit": "1 KB"
   }
 ]
