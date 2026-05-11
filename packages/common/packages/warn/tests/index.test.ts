@@ -9,6 +9,8 @@ import {
   resetWarned,
   getLevel,
   type LogEntry,
+  createWarnContext,
+  type WarnContext,
 } from '../src/index';
 
 describe('@lytjs/common-warn', () => {
@@ -56,9 +58,7 @@ describe('@lytjs/common-warn', () => {
 
     it('should include source in formatted message', () => {
       error('something broke', { source: 'Runtime' });
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        '[Lyt.js error] something broke (at Runtime)',
-      );
+      expect(consoleErrorSpy).toHaveBeenCalledWith('[Lyt.js error] something broke (at Runtime)');
     });
   });
 
@@ -227,6 +227,96 @@ describe('@lytjs/common-warn', () => {
       warn('test');
       const msg = consoleWarnSpy.mock.calls[0][0];
       expect(msg).not.toContain('(at');
+    });
+  });
+
+  // ─── createWarnContext ───────────────────────────────────
+  describe('createWarnContext', () => {
+    it('should create an independent warning context', () => {
+      const ctx1 = createWarnContext();
+      const ctx2 = createWarnContext();
+
+      const handler1 = vi.fn();
+      const handler2 = vi.fn();
+
+      ctx1.setHandler(handler1);
+      ctx2.setHandler(handler2);
+
+      ctx1.warn('ctx1 message');
+      ctx2.warn('ctx2 message');
+
+      expect(handler1).toHaveBeenCalledTimes(1);
+      expect(handler2).toHaveBeenCalledTimes(1);
+      expect(handler1.mock.calls[0][0].msg).toBe('ctx1 message');
+      expect(handler2.mock.calls[0][0].msg).toBe('ctx2 message');
+    });
+
+    it('should have independent level setting', () => {
+      const ctx1 = createWarnContext();
+      const ctx2 = createWarnContext();
+
+      ctx1.setLevel('debug');
+      ctx2.setLevel('error');
+
+      expect(ctx1.getLevel()).toBe('debug');
+      expect(ctx2.getLevel()).toBe('error');
+    });
+
+    it('should have independent once tracking', () => {
+      const ctx1 = createWarnContext();
+      const ctx2 = createWarnContext();
+
+      const handler1 = vi.fn();
+      const handler2 = vi.fn();
+
+      ctx1.setHandler(handler1);
+      ctx2.setHandler(handler2);
+
+      ctx1.warn('duplicate', { once: true });
+      ctx1.warn('duplicate', { once: true });
+      ctx2.warn('duplicate', { once: true });
+      ctx2.warn('duplicate', { once: true });
+
+      expect(handler1).toHaveBeenCalledTimes(1);
+      expect(handler2).toHaveBeenCalledTimes(1);
+    });
+
+    it('should reset warned messages independently', () => {
+      const ctx = createWarnContext();
+      const handler = vi.fn();
+      ctx.setHandler(handler);
+
+      ctx.warn('test', { once: true });
+      ctx.warn('test', { once: true });
+      expect(handler).toHaveBeenCalledTimes(1);
+
+      ctx.resetWarned();
+      ctx.warn('test', { once: true });
+      expect(handler).toHaveBeenCalledTimes(2);
+    });
+
+    it('should support all log levels in context', () => {
+      const ctx = createWarnContext();
+      const handler = vi.fn();
+      ctx.setHandler(handler);
+      ctx.setLevel('debug');
+
+      ctx.debug('debug msg');
+      ctx.warn('warn msg');
+      ctx.error('error msg');
+      ctx.fatal('fatal msg');
+
+      expect(handler).toHaveBeenCalledTimes(4);
+      expect(handler.mock.calls[0][0].level).toBe('debug');
+      expect(handler.mock.calls[1][0].level).toBe('warn');
+      expect(handler.mock.calls[2][0].level).toBe('error');
+      expect(handler.mock.calls[3][0].level).toBe('fatal');
+    });
+
+    it('should call process.exit on fatal in context (Node.js)', () => {
+      const ctx = createWarnContext();
+      ctx.fatal('fatal error');
+      expect(processExitSpy).toHaveBeenCalledWith(1);
     });
   });
 });
