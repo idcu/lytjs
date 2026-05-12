@@ -40,6 +40,7 @@
     "@lytjs/common-string": "workspace:*",
     "@lytjs/common-events": "workspace:*",
     "@lytjs/common-dom": "workspace:*",
+    "@lytjs/common-transition-engine": "workspace:*",
     "@lytjs/host-contract": "workspace:*"
   },
   "devDependencies": {

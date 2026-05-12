@@ -5,10 +5,13 @@
  *
  * 泛型化重构：所有函数均支持通过 RendererHost<HN, HE> 接口进行平台无关调用。
  * 当 host 参数为 undefined 时，回退到直接 DOM 操作（向后兼容）。
+ *
+ * 集成 @lytjs/common-transition-engine 作为底层过渡引擎。
  */
 
 import type { RendererHost, TransitionDurationInfo } from '@lytjs/host-contract';
 import { parseDuration } from '@lytjs/common-string';
+import { TransitionEngine } from '@lytjs/common-transition-engine';
 
 // ============================================================
 // TransitionProps
@@ -79,6 +82,33 @@ export let globalTransitionPrefix = 'v';
 
 export function setTransitionPrefix(prefix: string): void {
   globalTransitionPrefix = prefix;
+}
+
+// ============================================================
+// TransitionEngine 实例管理
+// ============================================================
+
+/**
+ * TransitionEngine 实例缓存（按 host 实例缓存）。
+ * key: RendererHost 实例的 WeakMap key
+ * value: TransitionEngine 实例
+ */
+const engineCache = new WeakMap<RendererHost<any, any>, TransitionEngine<any, any>>();
+
+/**
+ * 获取或创建指定 host 的 TransitionEngine 实例。
+ * @param host - RendererHost 实例
+ * @returns TransitionEngine 实例
+ */
+function getOrCreateEngine<HN extends object, HE extends HN>(
+  host: RendererHost<HN, HE>,
+): TransitionEngine<HN, HE> {
+  let engine = engineCache.get(host);
+  if (!engine) {
+    engine = new TransitionEngine<HN, HE>(host);
+    engineCache.set(host, engine);
+  }
+  return engine as TransitionEngine<HN, HE>;
 }
 
 // ============================================================
@@ -412,74 +442,14 @@ export function performEnterTransition<HN, HE extends HN>(
 
   if (isHost) {
     // 泛型版本：(host, el, props, done)
+    // 使用 TransitionEngine 执行过渡
     const host = hostOrEl as RendererHost<HN, HE>;
     const el = elOrProps as HE;
     const props = propsOrDone as TransitionProps<HE>;
     const doneFn = done!;
 
-    const classes = resolveTransitionClasses(props, 'enter');
-
-    if (props.onBeforeEnter) {
-      props.onBeforeEnter(el);
-    }
-
-    host.addClass(el, classes.from);
-    host.addClass(el, classes.active);
-    host.forceReflow(el);
-    host.removeClass(el, classes.from);
-    host.addClass(el, classes.to);
-
-    if (props.onEnter) {
-      props.onEnter(el, () => {
-        host.removeClass(el, classes.active);
-        host.removeClass(el, classes.to);
-        if (props.onAfterEnter) props.onAfterEnter(el);
-        doneFn();
-      });
-    } else {
-      const info = host.getTransitionInfo(el, 'enter');
-      if (info.hasTransition || info.hasAnimation) {
-        let timer: ReturnType<typeof host.setTimeout> | undefined;
-        let cleanupKey: symbol | undefined;
-        const cleanupFn = () => {
-          if (timer !== undefined) {
-            host.clearTimeout(timer);
-          }
-        };
-        const finish = () => {
-          // 执行清理
-          if (cleanupKey) {
-            cleanupFn();
-            transitionCleanupMap.delete(cleanupKey);
-            const keys = elementCleanupKeys.get(el as object);
-            keys?.delete(cleanupKey);
-          }
-          host.removeClass(el, classes.active);
-          host.removeClass(el, classes.to);
-          if (props.onAfterEnter) props.onAfterEnter(el);
-          doneFn();
-        };
-        if (info.duration > 0) {
-          // FIX: 存储定时器以便后续清理
-          cleanupKey = Symbol('transition-cleanup-enter-timeout');
-          transitionCleanupMap.set(cleanupKey, cleanupFn);
-          let keys = elementCleanupKeys.get(el as object);
-          if (!keys) {
-            keys = new Set();
-            elementCleanupKeys.set(el as object, keys);
-          }
-          keys.add(cleanupKey);
-          timer = host.setTimeout(finish, info.duration + 50);
-        } else {
-          waitForTransitionEnd(host, el, info, finish);
-        }
-      } else {
-        host.removeClass(el, classes.active);
-        host.removeClass(el, classes.to);
-        if (props.onAfterEnter) props.onAfterEnter(el);
-        doneFn();
-      }
-    }
+    const engine = getOrCreateEngine(host);
+    engine.performEnter(el, props, doneFn);
   } else {
     // 向后兼容：(el: Element, props: TransitionProps<Element>, done: () => void)
     const el = hostOrEl as Element;
@@ -594,74 +564,14 @@ export function performLeaveTransition<HN, HE extends HN>(
 
   if (isHost) {
     // 泛型版本：(host, el, props, done)
+    // 使用 TransitionEngine 执行过渡
     const host = hostOrEl as RendererHost<HN, HE>;
     const el = elOrProps as HE;
     const props = propsOrDone as TransitionProps<HE>;
     const doneFn = done!;
 
-    const classes = resolveTransitionClasses(props, 'leave');
-
-    if (props.onBeforeLeave) {
-      props.onBeforeLeave(el);
-    }
-
-    host.addClass(el, classes.from);
-    host.addClass(el, classes.active);
-    host.forceReflow(el);
-    host.removeClass(el, classes.from);
-    host.addClass(el, classes.to);
-
-    if (props.onLeave) {
-      props.onLeave(el, () => {
-        host.removeClass(el, classes.active);
-        host.removeClass(el, classes.to);
-        if (props.onAfterLeave) props.onAfterLeave(el);
-        doneFn();
-      });
-    } else {
-      const info = host.getTransitionInfo(el, 'leave');
-      if (info.hasTransition || info.hasAnimation) {
-        let timer: ReturnType<typeof host.setTimeout> | undefined;
-        let cleanupKey: symbol | undefined;
-        const cleanupFn = () => {
-          if (timer !== undefined) {
-            host.clearTimeout(timer);
-          }
-        };
-        const finish = () => {
-          // 执行清理
-          if (cleanupKey) {
-            cleanupFn();
-            transitionCleanupMap.delete(cleanupKey);
-            const keys = elementCleanupKeys.get(el as object);
-            keys?.delete(cleanupKey);
-          }
-          host.removeClass(el, classes.active);
-          host.removeClass(el, classes.to);
-          if (props.onAfterLeave) props.onAfterLeave(el);
-          doneFn();
-        };
-        if (info.duration > 0) {
-          // FIX: 存储定时器以便后续清理
-          cleanupKey = Symbol('transition-cleanup-leave-timeout');
-          transitionCleanupMap.set(cleanupKey, cleanupFn);
-          let keys = elementCleanupKeys.get(el as object);
-          if (!keys) {
-            keys = new Set();
-            elementCleanupKeys.set(el as object, keys);
-          }
-          keys.add(cleanupKey);
-          timer = host.setTimeout(finish, info.duration + 50);
-        } else {
-          waitForTransitionEnd(host, el, info, finish);
-        }
-      } else {
-        host.removeClass(el, classes.active);
-        host.removeClass(el, classes.to);
-        if (props.onAfterLeave) props.onAfterLeave(el);
-        doneFn();
-      }
-    }
+    const engine = getOrCreateEngine(host);
+    engine.performLeave(el, props, doneFn);
   } else {
     // 向后兼容：(el: Element, props: TransitionProps<Element>, done: () => void)
     const el = hostOrEl as Element;
