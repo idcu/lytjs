@@ -47,3 +47,9 @@ lerna-debug.log*
 
 # Size limit
 .size-limit.json.tmp
+
+# Root markdown (only keep README, CHANGELOG, CONTRIBUTING)
+/*.md
+!README.md
+!CHANGELOG.md
+!CONTRIBUTING.md
