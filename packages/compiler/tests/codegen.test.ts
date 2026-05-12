@@ -113,4 +113,101 @@ describe('codegen', () => {
       expect(result.code).toContain('createElementVNode');
     });
   });
+
+  describe('edge cases', () => {
+    it('should handle template with only whitespace', () => {
+      const result = compile('   \n\t  ');
+      expect(result.code).toBeDefined();
+    });
+
+    it('should handle deeply nested elements', () => {
+      const result = compile('<div><div><div><span>deep</span></div></div></div>');
+      expect(result.code).toContain('createElementVNode');
+    });
+
+    it('should handle element with special characters in attribute', () => {
+      const result = compile('<div data-value="a &lt; b"></div>');
+      expect(result.code).toContain('data-value');
+    });
+
+    it('should handle multiple v-if/v-else-if/v-else branches', () => {
+      const result = compile(
+        '<div v-if="a">A</div><div v-else-if="b">B</div><div v-else>C</div>',
+      );
+      expect(result.code).toContain('?');
+      expect(result.code).toContain(':');
+    });
+
+    it('should handle v-for with index', () => {
+      const result = compile('<li v-for="(item, index) in items">{{ index }}: {{ item }}</li>');
+      expect(result.preamble).toContain('renderList');
+      expect(result.code).toContain('index');
+    });
+
+    it('should handle v-bind shorthand', () => {
+      const result = compile('<div :id="myId"></div>');
+      expect(result.code).toContain('id');
+    });
+
+    it('should handle v-on shorthand', () => {
+      const result = compile('<button @click="handleClick">Click</button>');
+      expect(result.code).toContain('onClick');
+    });
+
+    it('should handle dynamic arguments', () => {
+      const result = compile('<div:[attrName]="value"></div>');
+      expect(result.code).toContain('attrName');
+    });
+
+    it('should handle v-slot shorthand', () => {
+      const result = compile('<MyComponent #default="slotProps">{{ slotProps.text }}</MyComponent>');
+      expect(result.code).toContain('default');
+    });
+
+    it('should handle comments in template', () => {
+      const result = compile('<div><!-- comment --></div>');
+      expect(result.code).toBeDefined();
+    });
+
+    it('should handle mixed v-bind and v-on', () => {
+      const result = compile('<input :value="val" @input="onInput">');
+      expect(result.code).toContain('value');
+      expect(result.code).toContain('onInput');
+    });
+
+    it('should handle v-pre directive', () => {
+      const result = compile('<div v-pre>{{ raw }}</div>');
+      expect(result.code).toContain('{{ raw }}');
+    });
+
+    it('should handle v-once directive', () => {
+      const result = compile('<div v-once>{{ message }}</div>');
+      expect(result.code).toBeDefined();
+    });
+
+    it('should handle v-cloak directive', () => {
+      const result = compile('<div v-cloak>{{ message }}</div>');
+      expect(result.code).toBeDefined();
+    });
+
+    it('should handle svg element', () => {
+      const result = compile('<svg><circle cx="50" cy="50" r="40"></circle></svg>');
+      expect(result.code).toContain('svg');
+    });
+
+    it('should handle template refs', () => {
+      const result = compile('<div ref="myRef"></div>');
+      expect(result.code).toContain('ref');
+    });
+
+    it('should handle key attribute', () => {
+      const result = compile('<div :key="itemId"></div>');
+      expect(result.code).toContain('key');
+    });
+
+    it('should handle is attribute for dynamic component', () => {
+      const result = compile('<component :is="componentName"></component>');
+      expect(result.code).toContain('is');
+    });
+  });
 });
