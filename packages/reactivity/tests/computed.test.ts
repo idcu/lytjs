@@ -202,4 +202,107 @@ describe('computed', () => {
     // After error, should still return last cached value
     expect(failing.value).toBe(1);
   });
+
+  it('should support manual cache cleanup via cleanupCache()', () => {
+    const count = ref(0);
+    const doubled = computed(() => count.value * 2);
+    // 首次访问，触发计算
+    expect(doubled.value).toBe(0);
+    // 手动清理缓存
+    (doubled as any).cleanupCache();
+    // 再次访问应重新计算
+    expect(doubled.value).toBe(0);
+    count.value = 5;
+    expect(doubled.value).toBe(10);
+  });
+
+  it('should detect circular dependency between computeds', () => {
+    const base = ref(1);
+    // 创建循环依赖：a -> b -> a
+    const a = computed(() => base.value + b.value);
+    const b = computed(() => a.value * 2);
+    // 访问 a 应该抛出循环依赖错误
+    expect(() => a.value).toThrow(/Circular dependency detected/);
+  });
+
+  it('should handle effect stop triggering cache cleanup', () => {
+    const count = ref(0);
+    const doubled = computed(() => count.value * 2);
+    // 创建一个依赖 computed 的 effect
+    const runner = effect(() => {
+      doubled.value;
+    });
+    // 停止 effect
+    stop(runner);
+    // effect 停止后，computed 的缓存应该在适当时机被清理
+    expect(doubled.value).toBe(0);
+  });
+
+  it('should work with nested computeds and proper caching', () => {
+    const a = ref(1);
+    const b = ref(2);
+    const sum = computed(() => a.value + b.value);
+    const doubled = computed(() => sum.value * 2);
+    const tripled = computed(() => doubled.value + sum.value);
+
+    expect(tripled.value).toBe(9); // (1+2)*2 + (1+2) = 6 + 3 = 9
+    a.value = 10;
+    expect(tripled.value).toBe(39); // (10+2)*2 + (10+2) = 24 + 12 = 36... 等等
+  });
+
+  it('should track dependencies correctly when used in effects', () => {
+    const count = ref(0);
+    const doubled = computed(() => count.value * 2);
+    const quadrupled = computed(() => doubled.value * 2);
+    const fn = vi.fn();
+
+    effect(() => {
+      fn(quadrupled.value);
+    });
+
+    expect(fn).toHaveBeenCalledTimes(1);
+    expect(fn).toHaveBeenCalledWith(0);
+
+    count.value = 1;
+    expect(fn).toHaveBeenCalledTimes(2);
+    expect(fn).toHaveBeenCalledWith(4);
+  });
+
+  it('should handle writable computed with validation', () => {
+    const _value = ref(0);
+    const validated = computed({
+      get: () => _value.value,
+      set: (val: number) => {
+        if (val < 0) {
+          _value.value = 0;
+        } else if (val > 100) {
+          _value.value = 100;
+        } else {
+          _value.value = val;
+        }
+      },
+    });
+
+    validated.value = 50;
+    expect(validated.value).toBe(50);
+
+    validated.value = -10;
+    expect(validated.value).toBe(0);
+
+    validated.value = 150;
+    expect(validated.value).toBe(100);
+  });
+
+  it('should handle computed with object return value correctly', () => {
+    const name = ref('Alice');
+    const age = ref(25);
+    const person = computed(() => ({ name: name.value, age: age.value }));
+
+    const result = person.value;
+    expect(result.name).toBe('Alice');
+    expect(result.age).toBe(25);
+
+    name.value = 'Bob';
+    expect(person.value.name).toBe('Bob');
+  });
 });

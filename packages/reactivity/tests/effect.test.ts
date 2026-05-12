@@ -275,4 +275,112 @@ describe('untrack', () => {
     obj.count = 1;
     expect(fn).toHaveBeenCalledTimes(2); // re-runs because of tracked access
   });
+
+  it('should handle multiple effects on same reactive object', () => {
+    const obj = reactive({ count: 0 });
+    const fn1 = vi.fn();
+    const fn2 = vi.fn();
+
+    effect(() => {
+      fn1(obj.count);
+    });
+    effect(() => {
+      fn2(obj.count * 2);
+    });
+
+    expect(fn1).toHaveBeenCalledTimes(1);
+    expect(fn2).toHaveBeenCalledTimes(1);
+
+    obj.count = 5;
+    expect(fn1).toHaveBeenCalledTimes(2);
+    expect(fn2).toHaveBeenCalledTimes(2);
+    expect(fn2).toHaveBeenCalledWith(10);
+  });
+
+  it('should handle nested effects correctly', () => {
+    const outerFn = vi.fn();
+    const innerFn = vi.fn();
+    const count = ref(0);
+
+    effect(() => {
+      outerFn(count.value);
+      if (count.value > 0) {
+        effect(() => {
+          innerFn(count.value * 2);
+        });
+      }
+    });
+
+    expect(outerFn).toHaveBeenCalledTimes(1);
+    expect(innerFn).not.toHaveBeenCalled();
+
+    count.value = 1;
+    expect(outerFn).toHaveBeenCalledTimes(2);
+    expect(innerFn).toHaveBeenCalled();
+  });
+
+  it('should allow stopping effect inside effect callback', () => {
+    const count = ref(0);
+    const fn = vi.fn();
+    let runner: any;
+
+    runner = effect(() => {
+      fn(count.value);
+      if (count.value >= 2) {
+        stop(runner);
+      }
+    });
+
+    expect(fn).toHaveBeenCalledTimes(1);
+    count.value = 1;
+    expect(fn).toHaveBeenCalledTimes(2);
+    count.value = 2;
+    expect(fn).toHaveBeenCalledTimes(3);
+    count.value = 3;
+    expect(fn).toHaveBeenCalledTimes(3); // should not run again after stop
+  });
+
+  it('should handle effect with onError option', () => {
+    const errorFn = vi.fn();
+    const shouldThrow = ref(false);
+
+    effect(
+      () => {
+        if (shouldThrow.value) {
+          throw new Error('test error');
+        }
+      },
+      { onError: errorFn },
+    );
+
+    expect(errorFn).not.toHaveBeenCalled();
+    shouldThrow.value = true;
+    expect(errorFn).toHaveBeenCalledTimes(1);
+    expect(errorFn).toHaveBeenCalledWith(new Error('test error'));
+  });
+
+  it('should track dependencies in nested untrack calls', () => {
+    const a = ref(1);
+    const b = ref(2);
+    const c = ref(3);
+    const fn = vi.fn();
+
+    effect(() => {
+      fn(untrack(() => a.value + b.value) + c.value);
+    });
+
+    expect(fn).toHaveBeenCalledTimes(1);
+    expect(fn).toHaveBeenCalledWith(6); // (1+2) + 3
+
+    // a and b are untracked, so changes should not trigger effect
+    a.value = 10;
+    b.value = 20;
+    expect(fn).toHaveBeenCalledTimes(1);
+
+    // c is tracked, so change should trigger effect
+    c.value = 30;
+    expect(fn).toHaveBeenCalledTimes(2);
+    // Note: untrack still reads the current values, so result uses latest a, b
+    expect(fn).toHaveBeenCalledWith(60); // (10+20) + 30
+  });
 });
