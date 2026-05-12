@@ -414,7 +414,7 @@ export function hasCSSTransition<HN, HE extends HN>(
  * @param propsOrDone - 当第一个参数为 host 时，此为过渡属性；否则为完成回调
  * @param done - 当第一个参数为 host 时，此为完成回调
  */
-export function performEnterTransition<HN, HE extends HN>(
+export function performEnterTransition<HN extends object, HE extends HN>(
   host: RendererHost<HN, HE>,
   el: HE,
   props: TransitionProps<HE>,
@@ -425,7 +425,7 @@ export function performEnterTransition(
   props: TransitionProps<Element>,
   done: () => void,
 ): void;
-export function performEnterTransition<HN, HE extends HN>(
+export function performEnterTransition<HN extends object, HE extends HN>(
   hostOrEl: RendererHost<HN, HE> | Element,
   elOrProps: HE | TransitionProps<Element>,
   propsOrDone?: TransitionProps<HE> | (() => void),
@@ -535,7 +535,7 @@ export function performEnterTransition<HN, HE extends HN>(
  * @param propsOrDone - 当第一个参数为 host 时，此为过渡属性；否则为完成回调
  * @param done - 当第一个参数为 host 时，此为完成回调
  */
-export function performLeaveTransition<HN, HE extends HN>(
+export function performLeaveTransition<HN extends object, HE extends HN>(
   host: RendererHost<HN, HE>,
   el: HE,
   props: TransitionProps<HE>,
@@ -548,7 +548,7 @@ export function performLeaveTransition(
 ): void;
 // FIX: P0-3 修复 performLeaveTransition 函数签名被模块级代码打断的问题
 // 已移除插入在重载签名和实现签名之间的模块级代码（globalTransitionPrefix 和 setTransitionPrefix）
-export function performLeaveTransition<HN, HE extends HN>(
+export function performLeaveTransition<HN extends object, HE extends HN>(
   hostOrEl: RendererHost<HN, HE> | Element,
   elOrProps: HE | TransitionProps<Element>,
   propsOrDone?: TransitionProps<HE> | (() => void),
@@ -647,74 +647,6 @@ export function performLeaveTransition<HN, HE extends HN>(
 // ============================================================
 // 等待 transition/animation 结束（泛型版本）
 // ============================================================
-
-/**
- * 等待元素上的 CSS transitionend 或 animationend 事件。
- * 如果未检测到事件则回退到超时。
- */
-function waitForTransitionEnd<HN, HE extends HN>(
-  host: RendererHost<HN, HE>,
-  el: HE,
-  info: TransitionDurationInfo,
-  done: () => void,
-): void {
-  let called = false;
-  const finish = () => {
-    if (!called) {
-      called = true;
-      done();
-    }
-  };
-
-  // 安全超时
-  const timeout = info.duration > 0 ? info.duration + 50 : 3000;
-  const timer = host.setTimeout(finish, timeout);
-
-  // 创建事件处理函数
-  const onEnd = (event: unknown) => {
-    const hostEvent = event as { target: unknown; type: string };
-    if (hostEvent.target !== el) return;
-
-    host.clearTimeout(timer);
-    finish();
-  };
-
-  // 通过 host 添加事件监听
-  const disposeTransition = host.addEventListener(el, 'transitionend', onEnd as never);
-  const disposeAnimation = host.addEventListener(el, 'animationend', onEnd as never);
-
-  // 存储清理函数
-  // FIX: P2-18 使用复合 key 避免同一元素上不同过渡的 cleanup 冲突。
-  // 当同一元素快速触发多次过渡（如 enter -> leave）时，使用 el 作为唯一 key
-  // 会导致后注册的 cleanup 覆盖前一个。改为使用 Symbol 作为唯一标识，
-  // 确保每次过渡都有独立的 cleanup 函数。
-  const cleanupKey = Symbol('transition-cleanup');
-  const cleanupFn = () => {
-    host.clearTimeout(timer);
-    disposeTransition();
-    disposeAnimation();
-  };
-  transitionCleanupMap.set(cleanupKey, cleanupFn);
-
-  // 追踪元素与 cleanup key 的关联，供 cancelTransition 使用
-  let keys = elementCleanupKeys.get(el as object);
-  if (!keys) {
-    keys = new Set();
-    elementCleanupKeys.set(el as object, keys);
-  }
-  keys.add(cleanupKey);
-
-  // FIX: P2-18 正常完成后清理 transitionCleanupMap 条目，避免内存泄漏
-  const originalFinish = finish;
-  const wrappedFinish = () => {
-    cleanupFn();
-    transitionCleanupMap.delete(cleanupKey);
-    keys?.delete(cleanupKey);
-    originalFinish();
-  };
-  // 替换 done 回调以确保清理
-  done = wrappedFinish;
-}
 
 /**
  * DOM 回退：等待过渡/动画结束。
