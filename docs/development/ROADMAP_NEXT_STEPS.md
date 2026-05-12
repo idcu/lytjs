@@ -132,8 +132,9 @@ import {
 - ✅ config.test.ts 新增 35+ 个测试用例（边界情况、watch/merge/setMultiple 高级用例）
 - ✅ plugin.test.ts 新增 30+ 个测试用例（链式调用、重复检测、async plugin 等）
 - ✅ web-component.test.ts 新增 25+ 个测试用例（生命周期、shadow DOM、样式注入等）
+- ✅ renderer 模块已有 200+ 个测试用例（dom-renderer、patch-props、signal-renderer、vapor-app、ssr、hydration、unmount 等全覆盖）
 - ✅ 增强 @lytjs/common-assertions 包的类型安全工具
-- ✅ 总计新增 248+ 个测试用例
+- ✅ 总计新增 248+ 个测试用例，核心模块累计约 450+ 个测试用例
 
 **目标**:
 - reactivity: 90%+ (🚧 进行中，已有显著提升)
@@ -555,7 +556,7 @@ LytJS v6.0 有优秀的架构基础，下一步重点是:
 
 1. ✅ **稳定核心** - 解决技术债务，提高质量（P0 问题已修复，as unknown as 已解决，transition-engine 已集成）
 2. 🚧 **建立生态** - Router, Store, UI 组件
-3. 🚧 **完善测试** - 测试覆盖率提升（reactivity/vdom/compiler/core 核心模块显著增强，新增 248+ 个用例）
+3. ✅ **完善测试** - 测试覆盖率显著提升（reactivity/vdom/compiler/core/renderer 核心模块累计约 450+ 个用例）
 4. 📝 **完善文档** - 中文文档，使用指南
 5. 🔧 **性能优化** - 建立基准，持续优化
 6. 🌱 **社区建设** - 吸引贡献者，扩大影响力
