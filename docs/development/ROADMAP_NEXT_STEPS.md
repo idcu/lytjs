@@ -127,14 +127,16 @@ import {
 - ✅ diff.test.ts 新增 25+ 个测试用例（PatchFlags、Fragment、Text 节点等）
 - ✅ codegen.test.ts 新增 20+ 个测试用例（指令、动态参数、特殊元素等）
 - ✅ optimize.test.ts 新增 10+ 个测试用例（静态标记、hoist、patch flags 等）
+- ✅ composition.test.ts 新增 15+ 个测试用例（useSlots/useAttrs/useModel 增强）
+- ✅ h.test.ts 新增 30+ 个测试用例（props 边界、复杂 props、嵌套 VNode、特殊元素等）
 - ✅ 增强 @lytjs/common-assertions 包的类型安全工具
-- ✅ 总计新增 112+ 个测试用例
+- ✅ 总计新增 157+ 个测试用例
 
 **目标**:
 - reactivity: 90%+ (🚧 进行中，已有显著提升)
 - vdom: 85%+ (🚧 进行中，vnode/diff 测试已增强)
 - compiler: 80%+ (🚧 进行中，codegen/optimize 测试已增强)
-- core: 80%+
+- core: 80%+ (🚧 进行中，composition/h 测试已增强)
 
 **策略**:
 ```typescript
@@ -307,7 +309,7 @@ import { Button, Input, Dialog } from '@lytjs/ui';
 - [x] 修复所有 P0 问题
 - [x] 解决关键的 `as unknown as`（reactivity/vdom 核心模块）
 - [x] 集成 common-transition-engine（vdom transition 已重构）
-- [ ] 测试覆盖率达标（🚧 reactivity/vdom/compiler 核心模块测试显著增强，新增 112+ 个用例）
+- [ ] 测试覆盖率达标（🚧 reactivity/vdom/compiler/core 核心模块测试显著增强，新增 157+ 个用例）
 - [ ] 完善核心包文档
 - [ ] 性能基准测试建立
 - [ ] 修复 CLI 工具类型问题
@@ -465,7 +467,7 @@ import { Button, Input, Dialog } from '@lytjs/ui';
 - [x] 所有 P0 问题解决
 - [x] P1-2.2.1 解决 "as unknown as" 问题（核心模块）
 - [x] P1-2.2.3 集成 common-transition-engine
-- [ ] 测试覆盖率达标（🚧 reactivity/vdom/compiler 核心模块测试显著增强，新增 112+ 个用例）
+- [ ] 测试覆盖率达标（🚧 reactivity/vdom/compiler/core 核心模块测试显著增强，新增 157+ 个用例）
 - [ ] 核心性能基准建立
 - [ ] 文档完整
 
@@ -550,7 +552,7 @@ LytJS v6.0 有优秀的架构基础，下一步重点是:
 
 1. ✅ **稳定核心** - 解决技术债务，提高质量（P0 问题已修复，as unknown as 已解决，transition-engine 已集成）
 2. 🚧 **建立生态** - Router, Store, UI 组件
-3. 🚧 **完善测试** - 测试覆盖率提升（reactivity/vdom/compiler 核心模块显著增强，新增 112+ 个用例）
+3. 🚧 **完善测试** - 测试覆盖率提升（reactivity/vdom/compiler/core 核心模块显著增强，新增 157+ 个用例）
 4. 📝 **完善文档** - 中文文档，使用指南
 5. 🔧 **性能优化** - 建立基准，持续优化
 6. 🌱 **社区建设** - 吸引贡献者，扩大影响力
