@@ -116,14 +116,18 @@ import {
 ```
 
 #### 2.2.2 完善测试覆盖率
-**状态**: 🚧 进行中
+**状态**: 🚧 进行中（显著进展）
 
 **已完成**:
 - ✅ ref.test.ts 新增 13 个测试用例（覆盖 isShallowRef/isComputedRef/toValue 等新增功能）
+- ✅ computed.test.ts 新增 8 个测试用例（cleanupCache、循环依赖检测、嵌套 computed 等）
+- ✅ effect.test.ts 新增 6 个测试用例（多 effects、嵌套 effects、onError 处理等）
+- ✅ reactive.test.ts 新增 10 个测试用例（深层嵌套、markRaw、null prototype 等）
 - ✅ 增强 @lytjs/common-assertions 包的类型安全工具
+- ✅ 总计新增 37 个测试用例
 
 **目标**:
-- reactivity: 90%+ (🚧 进行中)
+- reactivity: 90%+ (🚧 进行中，已有显著提升)
 - vdom: 85%+
 - compiler: 80%+
 - core: 80%+
@@ -299,7 +303,7 @@ import { Button, Input, Dialog } from '@lytjs/ui';
 - [x] 修复所有 P0 问题
 - [x] 解决关键的 `as unknown as`（reactivity/vdom 核心模块）
 - [x] 集成 common-transition-engine（vdom transition 已重构）
-- [ ] 测试覆盖率达标（🚧 ref 测试已增强）
+- [ ] 测试覆盖率达标（🚧 reactivity 核心模块测试显著增强，新增 37 个用例）
 - [ ] 完善核心包文档
 - [ ] 性能基准测试建立
 - [ ] 修复 CLI 工具类型问题
@@ -457,7 +461,7 @@ import { Button, Input, Dialog } from '@lytjs/ui';
 - [x] 所有 P0 问题解决
 - [x] P1-2.2.1 解决 "as unknown as" 问题（核心模块）
 - [x] P1-2.2.3 集成 common-transition-engine
-- [ ] 测试覆盖率达标（🚧 ref 测试已增强）
+- [ ] 测试覆盖率达标（🚧 reactivity 核心模块测试显著增强，新增 37 个用例）
 - [ ] 核心性能基准建立
 - [ ] 文档完整
 
@@ -542,7 +546,7 @@ LytJS v6.0 有优秀的架构基础，下一步重点是:
 
 1. ✅ **稳定核心** - 解决技术债务，提高质量（P0 问题已修复，as unknown as 已解决，transition-engine 已集成）
 2. 🚧 **建立生态** - Router, Store, UI 组件
-3. 🚧 **完善测试** - 测试覆盖率提升（ref 测试已增强）
+3. 🚧 **完善测试** - 测试覆盖率提升（reactivity 核心模块显著增强，新增 37 个用例）
 4. 📝 **完善文档** - 中文文档，使用指南
 5. 🔧 **性能优化** - 建立基准，持续优化
 6. 🌱 **社区建设** - 吸引贡献者，扩大影响力
