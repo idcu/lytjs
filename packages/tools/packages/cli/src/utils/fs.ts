@@ -2,8 +2,8 @@
  * @lytjs/cli - File system utilities
  */
 
-import { existsSync, mkdirSync, writeFileSync, readFileSync, readdirSync, statSync } from 'fs';
-import { join, dirname } from 'path';
+import { existsSync, mkdirSync, writeFileSync, readFileSync, readdirSync } from 'fs';
+import { join, resolve, dirname } from 'path';
 
 /**
  * Ensure directory exists (create if not)

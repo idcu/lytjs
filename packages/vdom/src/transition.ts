@@ -439,14 +439,37 @@ export function performEnterTransition<HN, HE extends HN>(
     } else {
       const info = host.getTransitionInfo(el, 'enter');
       if (info.hasTransition || info.hasAnimation) {
+        let timer: ReturnType<typeof host.setTimeout> | undefined;
+        let cleanupKey: symbol | undefined;
+        const cleanupFn = () => {
+          if (timer !== undefined) {
+            host.clearTimeout(timer);
+          }
+        };
         const finish = () => {
+          // 执行清理
+          if (cleanupKey) {
+            cleanupFn();
+            transitionCleanupMap.delete(cleanupKey);
+            const keys = elementCleanupKeys.get(el as object);
+            keys?.delete(cleanupKey);
+          }
           host.removeClass(el, classes.active);
           host.removeClass(el, classes.to);
           if (props.onAfterEnter) props.onAfterEnter(el);
           doneFn();
         };
         if (info.duration > 0) {
-          host.setTimeout(finish, info.duration + 50);
+          // FIX: 存储定时器以便后续清理
+          cleanupKey = Symbol('transition-cleanup-enter-timeout');
+          transitionCleanupMap.set(cleanupKey, cleanupFn);
+          let keys = elementCleanupKeys.get(el as object);
+          if (!keys) {
+            keys = new Set();
+            elementCleanupKeys.set(el as object, keys);
+          }
+          keys.add(cleanupKey);
+          timer = host.setTimeout(finish, info.duration + 50);
         } else {
           waitForTransitionEnd(host, el, info, finish);
         }
@@ -485,14 +508,37 @@ export function performEnterTransition<HN, HE extends HN>(
     } else {
       const info = getTransitionInfoDOM(el, 'enter');
       if (info.hasTransition || info.hasAnimation) {
+        let timer: ReturnType<typeof setTimeout> | undefined;
+        let cleanupKey: symbol | undefined;
+        const cleanupFn = () => {
+          if (timer !== undefined) {
+            clearTimeout(timer);
+          }
+        };
         const finish = () => {
+          // 执行清理
+          if (cleanupKey) {
+            cleanupFn();
+            transitionCleanupMap.delete(cleanupKey);
+            const keys = elementCleanupKeys.get(el as object);
+            keys?.delete(cleanupKey);
+          }
           el.classList.remove(classes.active);
           el.classList.remove(classes.to);
           if (props.onAfterEnter) props.onAfterEnter(el);
           doneFn();
         };
         if (info.duration > 0) {
-          setTimeout(finish, info.duration + 50);
+          // FIX: 存储定时器以便后续清理
+          cleanupKey = Symbol('transition-cleanup-enter-timeout-dom');
+          transitionCleanupMap.set(cleanupKey, cleanupFn);
+          let keys = elementCleanupKeys.get(el as object);
+          if (!keys) {
+            keys = new Set();
+            elementCleanupKeys.set(el as object, keys);
+          }
+          keys.add(cleanupKey);
+          timer = setTimeout(finish, info.duration + 50);
         } else {
           waitForTransitionEndDOM(el, info, finish);
         }
@@ -575,14 +621,37 @@ export function performLeaveTransition<HN, HE extends HN>(
     } else {
       const info = host.getTransitionInfo(el, 'leave');
       if (info.hasTransition || info.hasAnimation) {
+        let timer: ReturnType<typeof host.setTimeout> | undefined;
+        let cleanupKey: symbol | undefined;
+        const cleanupFn = () => {
+          if (timer !== undefined) {
+            host.clearTimeout(timer);
+          }
+        };
         const finish = () => {
+          // 执行清理
+          if (cleanupKey) {
+            cleanupFn();
+            transitionCleanupMap.delete(cleanupKey);
+            const keys = elementCleanupKeys.get(el as object);
+            keys?.delete(cleanupKey);
+          }
           host.removeClass(el, classes.active);
           host.removeClass(el, classes.to);
           if (props.onAfterLeave) props.onAfterLeave(el);
           doneFn();
         };
         if (info.duration > 0) {
-          host.setTimeout(finish, info.duration + 50);
+          // FIX: 存储定时器以便后续清理
+          cleanupKey = Symbol('transition-cleanup-leave-timeout');
+          transitionCleanupMap.set(cleanupKey, cleanupFn);
+          let keys = elementCleanupKeys.get(el as object);
+          if (!keys) {
+            keys = new Set();
+            elementCleanupKeys.set(el as object, keys);
+          }
+          keys.add(cleanupKey);
+          timer = host.setTimeout(finish, info.duration + 50);
         } else {
           waitForTransitionEnd(host, el, info, finish);
         }
@@ -621,14 +690,37 @@ export function performLeaveTransition<HN, HE extends HN>(
     } else {
       const info = getTransitionInfoDOM(el, 'leave');
       if (info.hasTransition || info.hasAnimation) {
+        let timer: ReturnType<typeof setTimeout> | undefined;
+        let cleanupKey: symbol | undefined;
+        const cleanupFn = () => {
+          if (timer !== undefined) {
+            clearTimeout(timer);
+          }
+        };
         const finish = () => {
+          // 执行清理
+          if (cleanupKey) {
+            cleanupFn();
+            transitionCleanupMap.delete(cleanupKey);
+            const keys = elementCleanupKeys.get(el as object);
+            keys?.delete(cleanupKey);
+          }
           el.classList.remove(classes.active);
           el.classList.remove(classes.to);
           if (props.onAfterLeave) props.onAfterLeave(el);
           doneFn();
         };
         if (info.duration > 0) {
-          setTimeout(finish, info.duration + 50);
+          // FIX: 存储定时器以便后续清理
+          cleanupKey = Symbol('transition-cleanup-leave-timeout-dom');
+          transitionCleanupMap.set(cleanupKey, cleanupFn);
+          let keys = elementCleanupKeys.get(el as object);
+          if (!keys) {
+            keys = new Set();
+            elementCleanupKeys.set(el as object, keys);
+          }
+          keys.add(cleanupKey);
+          timer = setTimeout(finish, info.duration + 50);
         } else {
           waitForTransitionEndDOM(el, info, finish);
         }

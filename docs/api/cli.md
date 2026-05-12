@@ -12,7 +12,7 @@ pnpm add -D @lytjs/cli
 
 Create a new LytJS project.
 
-**Options:**
+**Options**
 
 - `--template` - Project template (default, minimal, ssr)
 - `--force` - Overwrite existing directory
@@ -21,13 +21,13 @@ Create a new LytJS project.
 
 Generate a component, page, or store.
 
-**Types:**
+**Types**
 
 - `component` - Generate a .lyt component
 - `page` - Generate a page component
 - `store` - Generate a store module
 
-**Examples:**
+**Examples**
 
 ```bash
 lytjs add component Button
@@ -39,7 +39,7 @@ lytjs add store user
 
 Start the development server.
 
-**Options:**
+**Options**
 
 - `--port` - Server port
 - `--host` - Server host
@@ -49,7 +49,7 @@ Start the development server.
 
 Build for production.
 
-**Options:**
+**Options**
 
 - `--outDir` - Output directory
 - `--ssr` - Build for SSR
@@ -59,7 +59,7 @@ Build for production.
 
 Run tests with Vitest.
 
-**Options:**
+**Options**
 
 - `--watch` - Watch mode
 - `--coverage` - Generate coverage

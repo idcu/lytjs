@@ -8,8 +8,6 @@
  * @module @lytjs/web/resize-observer
  * @version 6.0.0
  */
-// FIX: DTS build error - 声明 __DEV__ 全局变量
-declare const __DEV__: boolean;
 
 // ============================================================
 // 类型定义

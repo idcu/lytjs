@@ -13,7 +13,6 @@ type AddType = 'component' | 'page' | 'store';
 
 const TEMPLATES: Record<AddType, (name: string, path: string) => { filePath: string; content: string }[]> = {
   component(name, basePath) {
-    const fileName = toPascalCase(name);
     const filePath = join(basePath, `${name}.lyt`);
     return [{
       filePath,

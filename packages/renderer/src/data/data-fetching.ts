@@ -3,6 +3,7 @@
 // Phase 1.7: 服务端数据预取 + 序列化
 
 import { ref, watch, type Ref } from '@lytjs/reactivity';
+import { isArray } from '@lytjs/common-is';
 
 // ============================================================
 // 类型定义
@@ -217,7 +218,7 @@ export function createPrefetchManager(): PrefetchManager {
 
     deserialize(data: string): void {
       const entries = deserializeData(data) as PrefetchDataEntry[];
-      if (Array.isArray(entries)) {
+      if (isArray(entries)) {
         for (const entry of entries) {
           prefetchStore.set(entry.key, entry);
         }

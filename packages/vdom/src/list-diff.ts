@@ -3,10 +3,11 @@
  * 高性能列表 Diff 算法模块
  *
  * 通过 DOM 操作注册模式实现 diff 计算与平台操作的解耦。
- * 包含快速路径优化、Int32Array 索引映射、内联 sameVNodeType 等性能优化。
+ * 包含快速路径优化、Int32Array 索引映射、内联 isSameVNodeType 等性能优化。
  */
 
 import type { VNode, ComponentInternalInstance } from '@lytjs/common-vnode';
+import { isSameVNodeType } from '@lytjs/common-vnode';
 import type { RendererHost } from '@lytjs/host-contract';
 import { getSequence } from '@lytjs/common-algorithm';
 import { warn } from '@lytjs/common-error';
@@ -203,18 +204,7 @@ function domOpsToResolved(ops: DOMOperations): ResolvedOps {
   };
 }
 
-// ============================================================
-// 内联 sameVNodeType
-// ============================================================
 
-/**
- * 内联的 VNode 类型比较函数。
- * 必须与 @lytjs/common-vnode 中的 isSameVNodeType 保持同步。
- * 使用 Object.is 替代 === 以正确处理 NaN 等边界情况。
- */
-function sameVNodeType(a: VNode, b: VNode): boolean {
-  return Object.is(a.type, b.type) && Object.is(a.key, b.key);
-}
 
 // ============================================================
 // patchKeyedChildren — 带 key 的子节点 diff（核心）
@@ -338,7 +328,7 @@ export function patchKeyedChildren<HN, HE extends HN>(
       // FIX: P2-21 添加防御性检查，避免数组索引越界时的非空断言崩溃
       const oldVNode = c1[fi];
       const newVNode = c2[fi];
-      if (!oldVNode || !newVNode || !sameVNodeType(oldVNode, newVNode)) {
+      if (!oldVNode || !newVNode || !isSameVNodeType(oldVNode, newVNode)) {
         fastPathMatch = false;
         break;
       }
@@ -372,7 +362,7 @@ export function patchKeyedChildren<HN, HE extends HN>(
     const n1 = c1[i];
     const n2 = c2[i];
     // FIX: P2-21 防御性检查
-    if (!n1 || !n2 || !sameVNodeType(n1, n2)) {
+    if (!n1 || !n2 || !isSameVNodeType(n1, n2)) {
       break;
     }
     ops.patch(n1, n2, container, null, parentComponent, parentSuspense, isSVG);
@@ -386,7 +376,7 @@ export function patchKeyedChildren<HN, HE extends HN>(
     const n1 = c1[e1];
     const n2 = c2[e2];
     // FIX: P2-21 防御性检查
-    if (!n1 || !n2 || !sameVNodeType(n1, n2)) {
+    if (!n1 || !n2 || !isSameVNodeType(n1, n2)) {
       break;
     }
     ops.patch(n1, n2, container, null, parentComponent, parentSuspense, isSVG);
@@ -476,7 +466,7 @@ export function patchKeyedChildren<HN, HE extends HN>(
           for (const candidateIdx of candidates) {
             if (
               newIndexToOldIndexMap[candidateIdx - s2] === 0 &&
-              sameVNodeType(prevChild, c2[candidateIdx]!)
+              isSameVNodeType(prevChild, c2[candidateIdx]!)
             ) {
               newIndex = candidateIdx;
               break;
@@ -612,7 +602,7 @@ export function patchUnkeyedChildren<HN, HE extends HN>(
       if (newV) ops.patch(null, newV, container, null, parentComponent, parentSuspense, isSVG);
       continue;
     }
-    if (sameVNodeType(oldV, newV)) {
+    if (isSameVNodeType(oldV, newV)) {
       ops.patch(oldV, newV, container, null, parentComponent, parentSuspense, isSVG);
     } else {
       ops.unmount(oldV, parentComponent, parentSuspense, true);

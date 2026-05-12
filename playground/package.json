@@ -16,8 +16,7 @@
     "@lytjs/reactivity": "file:../packages/reactivity/dist",
     "@lytjs/dom-runtime": "file:../packages/dom-runtime/dist",
     "@lytjs/renderer": "file:../packages/renderer/dist",
-    "@lytjs/vdom": "file:../packages/vdom/dist",
-    "@lytjs/shared": "file:../packages/shared/dist"
+    "@lytjs/vdom": "file:../packages/vdom/dist"
   },
   "devDependencies": {
     "@playwright/test": "^1.59.1",

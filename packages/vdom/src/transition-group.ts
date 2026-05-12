@@ -9,6 +9,7 @@
 
 import type { RendererHost, HostRect } from '@lytjs/host-contract';
 import type { TransitionProps } from './transition';
+import { isArray } from '@lytjs/common-is';
 import {
   getTransitionInfoDOM,
   waitForTransitionEndDOM,
@@ -164,7 +165,7 @@ export function recordPositions<HN, HE extends HN>(
   hostOrChildren: RendererHost<HN, HE> | Element[],
   children?: HE[],
 ): Map<string, HostRect> | Map<string, DOMRect> {
-  if (Array.isArray(hostOrChildren)) {
+  if (isArray(hostOrChildren)) {
     // 向后兼容：(children: Element[])
     const positions = new Map<string, DOMRect>();
     for (let i = 0; i < hostOrChildren.length; i++) {
@@ -219,7 +220,7 @@ export function applyFLIP<HN, HE extends HN>(
   oldPositionsOrMove?: Map<string, HostRect> | string,
   moveClass?: string,
 ): void {
-  if (Array.isArray(hostOrChildren)) {
+  if (isArray(hostOrChildren)) {
     // 向后兼容：(children: Element[], oldPositions: Map<string, DOMRect>, moveClass: string)
     // FIX: P2-7 使用提取的 applyFLIPToDOMElement 函数避免代码重复
     const children = hostOrChildren as Element[];

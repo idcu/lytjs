@@ -45,7 +45,6 @@ jobs:
 
       - name: Run pnpm audit
         run: pnpm audit --audit-level=high
-        continue-on-error: true
 
   # Changeset 检查
   changeset-check:
@@ -71,7 +70,6 @@ jobs:
 
       - name: Check for changesets
         run: pnpm changeset status --since=origin/develop
-        continue-on-error: true
 
   # 代码检查
   lint:

@@ -8,6 +8,7 @@
  */
 
 import type { VNode, VNodeTypes, VNodeChildren } from '@lytjs/common-vnode';
+import { isArray } from '@lytjs/common-is';
 import { createVNode } from './vnode';
 
 // ============================================================
@@ -120,7 +121,7 @@ export function trackDynamicChild(vnode: VNode): void {
  * 类型守卫：判断 VNode 是否为 Block（dynamicChildren 非空）
  */
 export function isBlock(vnode: VNode): vnode is Block {
-  return vnode.dynamicChildren !== null && Array.isArray(vnode.dynamicChildren);
+  return vnode.dynamicChildren !== null && isArray(vnode.dynamicChildren);
 }
 
 // ============================================================

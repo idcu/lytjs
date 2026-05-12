@@ -7,7 +7,7 @@ export default defineConfig({
     ssr: 'src/ssr/ssr-renderer.ts',
   },
   format: ['esm', 'cjs'],
-  dts: false,
+  dts: true,
   sourcemap: true,
   clean: true,
   splitting: false,

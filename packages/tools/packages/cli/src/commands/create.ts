@@ -20,7 +20,7 @@ const TEMPLATES = {
 /**
  * Create a new LytJS project
  */
-export async function create(projectName: string, options: CreateOptions = {}): Promise<void> {
+export async function create(projectName: string, options: Partial<CreateOptions> = {}): Promise<void> {
   const targetDir = resolve(process.cwd(), projectName);
   
   // Check if directory exists and is not empty

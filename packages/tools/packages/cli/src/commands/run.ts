@@ -94,18 +94,18 @@ export async function runCli(rawArgs: string[] = process.argv.slice(2)): Promise
  * Parse command line arguments
  */
 function parseArgs(args: string[]): CliOptions {
-  const command = args[0] || '';
+  const command = args[0] ?? '';
   const positional: string[] = [];
-  const options: Record<string, any> = {};
+  const options: Record<string, unknown> = {};
   
   for (let i = command ? 1 : 0; i < args.length; i++) {
-    const arg = args[i];
+    const arg = args[i] ?? '';
     
     if (arg.startsWith('--')) {
       const [key, value] = arg.slice(2).split('=');
       if (value !== undefined) {
         options[key] = value;
-      } else if (i + 1 < args.length && !args[i + 1].startsWith('-')) {
+      } else if (i + 1 < args.length && !(args[i + 1] ?? '').startsWith('-')) {
         options[key] = args[++i];
       } else {
         options[key] = true;

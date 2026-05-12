@@ -33,7 +33,7 @@ export async function dev(options: DevOptions = {}): Promise<void> {
 
   // Parse the run command (e.g., "pnpm run dev" -> ["pnpm", "run", "dev"])
   const cmdParts = runCmd.split(' ');
-  const cmd = cmdParts[0];
+  const cmd = cmdParts[0] ?? 'pnpm';
   const cmdArgs = [...cmdParts.slice(1), ...devArgs];
 
   // Spawn the dev server
@@ -42,12 +42,12 @@ export async function dev(options: DevOptions = {}): Promise<void> {
     shell: true,
   });
 
-  child.on('error', (error) => {
+  child.on('error', (error: Error) => {
     logger.error(`Failed to start dev server: ${error.message}`);
     process.exit(1);
   });
 
-  child.on('exit', (code) => {
+  child.on('exit', (code: number | null) => {
     process.exit(code || 0);
   });
 }

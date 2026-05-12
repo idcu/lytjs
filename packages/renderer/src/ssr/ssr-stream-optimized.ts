@@ -61,7 +61,7 @@ export interface StreamStats {
 // 全局状态
 // ============================================================
 
-let suspenseIdCounter = 0;
+const suspenseIdCounter = 0;
 const COMPONENT_MASK = ShapeFlags.STATEFUL_COMPONENT | ShapeFlags.FUNCTIONAL_COMPONENT;
 
 // ============================================================

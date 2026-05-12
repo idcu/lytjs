@@ -17,7 +17,7 @@
       "@lytjs/dom-runtime": ["../packages/dom-runtime/src"],
       "@lytjs/renderer": ["../packages/renderer/src"],
       "@lytjs/vdom": ["../packages/vdom/src"],
-      "@lytjs/shared": ["../packages/shared/src"]
+      "@lytjs/core": ["../packages/core/src"]
     }
   },
   "include": ["src/**/*", "e2e/**/*", "*.ts"],

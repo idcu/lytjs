@@ -6,6 +6,7 @@
 
 import { SignalSymbol, ComputedSignalSymbol, TrackOpTypes, TriggerOpTypes } from './constants';
 import { track, trigger } from './effect';
+import { REACTIVITY_MAX_TRIGGER_DEPTH } from '@lytjs/common-constants';
 import type { Subscriber } from './shared/types';
 
 // ============================================================
@@ -403,7 +404,7 @@ function flushPendingNotifications(): void {
   isNotifying = true;
   try {
     let iterations = 0;
-    while ((pendingNotifications.size > 0 || pendingTriggerOps.size > 0) && iterations < 100) {
+    while ((pendingNotifications.size > 0 || pendingTriggerOps.size > 0) && iterations < REACTIVITY_MAX_TRIGGER_DEPTH) {
       const notifications = Array.from(pendingNotifications);
       const triggers = Array.from(pendingTriggerOps.values());
       pendingNotifications.clear();
