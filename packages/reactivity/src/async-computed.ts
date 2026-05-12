@@ -8,6 +8,7 @@ import type { Ref } from './ref';
 import { createDep } from './effect';
 import type { Dep } from './effect';
 import { effect, stop } from './effect';
+import { unsafeCast } from '@lytjs/common-assertions';
 import type { ReactiveEffectRunner } from './types';
 import { warn } from '@lytjs/common-error';
 
@@ -156,7 +157,7 @@ export function asyncComputed<T>(
   getter: () => Promise<T>,
   initialValue?: T,
 ): AsyncComputedRef<T> {
-  return new AsyncComputedRefImpl<T>(getter, initialValue, false) as unknown as AsyncComputedRef<T>;
+  return unsafeCast<AsyncComputedRef<T>>(new AsyncComputedRefImpl<T>(getter, initialValue, false));
 }
 
 /**
@@ -176,5 +177,5 @@ export function useAsyncState<T>(
   // 立即执行一次
   impl.execute();
 
-  return impl as unknown as AsyncComputedRef<T>;
+  return unsafeCast<AsyncComputedRef<T>>(impl);
 }

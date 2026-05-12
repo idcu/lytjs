@@ -8,6 +8,7 @@ import { Fragment, Text, Comment, ShapeFlags } from '@lytjs/common-vnode';
 import type { VNode, VNodeChildren, VNodeTypes } from '@lytjs/common-vnode';
 import { isString, isArray, isFunction, isObject, isNullish, EMPTY_OBJ } from '@lytjs/common-is';
 import { normalizeClass, normalizeStyleObject as normalizeStyle } from '@lytjs/common-string';
+import { unsafeCast } from '@lytjs/common-assertions';
 
 // ============================================================
 // FIX: P2-28 对象创建优化 - VNode 对象池
@@ -41,7 +42,7 @@ function acquireVNode(): VNode | null {
 export function releaseVNode(vnode: VNode): void {
   if (vnodePool.length < VNODE_POOL_MAX_SIZE) {
     // 重置 vnode 状态，清除引用以便垃圾回收
-    vnode.type = null as unknown as VNodeTypes;
+    vnode.type = unsafeCast<VNodeTypes>(null);
     vnode.props = null;
     vnode.key = null;
     vnode.ref = null;
@@ -474,7 +475,7 @@ export function normalizeChildren(vnode: VNode, children: VNodeChildren): void {
       // patch 阶段转换为空字符串（参见 patch.ts 中的 Text/Comment 处理）。
       // 此处保留 TEXT_CHILDREN flag，因为函数 children 在非组件场景下
       // 语义上等同于文本占位符。
-      vnode.children = children as unknown as VNodeChildren;
+      vnode.children = unsafeCast<VNodeChildren>(children);
     }
   } else if (typeof children === 'number') {
     type = ShapeFlags.TEXT_CHILDREN;

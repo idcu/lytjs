@@ -246,4 +246,202 @@ describe('Renderer - unmount', () => {
     renderer.unmount(vnode, null, null, true);
     expect(container.childNodes.length).toBe(0);
   });
+
+  it('should unmount text vnode', () => {
+    const vnode = createTextVNode('hello');
+    renderer.mount(vnode, container);
+    expect(container.childNodes.length).toBe(1);
+    renderer.unmount(vnode, null, null, true);
+    expect(container.childNodes.length).toBe(0);
+  });
+
+  it('should unmount fragment with children', () => {
+    const vnode = createVNode(Fragment, null, [
+      createVNode('div'),
+      createVNode('span'),
+      createTextVNode('text'),
+    ]);
+    renderer.mount(vnode, container);
+    expect(container.childNodes.length).toBe(3);
+    renderer.unmount(vnode, null, null, true);
+    expect(container.childNodes.length).toBe(0);
+  });
+});
+
+describe('Renderer - patch with PatchFlags', () => {
+  let container: HTMLDivElement;
+  let renderer: ReturnType<typeof createRenderer>;
+
+  beforeEach(() => {
+    container = document.createElement('div');
+    renderer = createRenderer(new WebRendererHost());
+  });
+
+  it('should optimize patch with TEXT flag', () => {
+    const n1 = createVNode('div', null, 'old', PatchFlags.TEXT);
+    const n2 = createVNode('div', null, 'new', PatchFlags.TEXT);
+    renderer.mount(n1, container);
+    renderer.patch(n1, n2, container);
+    expect((n2.el as HTMLElement).textContent).toBe('new');
+  });
+
+  it('should optimize patch with CLASS flag', () => {
+    const n1 = createVNode('div', { class: 'old' }, null, PatchFlags.CLASS);
+    const n2 = createVNode('div', { class: 'new' }, null, PatchFlags.CLASS);
+    renderer.mount(n1, container);
+    renderer.patch(n1, n2, container);
+    expect((n2.el as HTMLElement).className).toBe('new');
+  });
+
+  it('should optimize patch with STYLE flag', () => {
+    const n1 = createVNode('div', { style: { color: 'red' } }, null, PatchFlags.STYLE);
+    const n2 = createVNode('div', { style: { color: 'blue' } }, null, PatchFlags.STYLE);
+    renderer.mount(n1, container);
+    renderer.patch(n1, n2, container);
+    expect((n2.el as HTMLElement).style.color).toBe('blue');
+  });
+
+  it('should optimize patch with PROPS flag', () => {
+    const n1 = createVNode('div', { id: 'old' }, null, PatchFlags.PROPS, ['id']);
+    const n2 = createVNode('div', { id: 'new' }, null, PatchFlags.PROPS, ['id']);
+    renderer.mount(n1, container);
+    renderer.patch(n1, n2, container);
+    expect((n2.el as HTMLElement).id).toBe('new');
+  });
+
+  it('should handle FULL_PROPS flag', () => {
+    const n1 = createVNode('div', { id: 'old', class: 'old' }, null, PatchFlags.FULL_PROPS);
+    const n2 = createVNode('div', { id: 'new', class: 'new' }, null, PatchFlags.FULL_PROPS);
+    renderer.mount(n1, container);
+    renderer.patch(n1, n2, container);
+    const el = n2.el as HTMLElement;
+    expect(el.id).toBe('new');
+    expect(el.className).toBe('new');
+  });
+});
+
+describe('Renderer - Fragment handling', () => {
+  let container: HTMLDivElement;
+  let renderer: ReturnType<typeof createRenderer>;
+
+  beforeEach(() => {
+    container = document.createElement('div');
+    renderer = createRenderer(new WebRendererHost());
+  });
+
+  it('should mount fragment with multiple children', () => {
+    const vnode = createVNode(Fragment, null, [
+      createVNode('div', null, 'a'),
+      createVNode('span', null, 'b'),
+      createTextVNode('c'),
+    ]);
+    renderer.mount(vnode, container);
+    expect(container.childNodes.length).toBe(3);
+    expect(container.childNodes[0]?.textContent).toBe('a');
+    expect(container.childNodes[1]?.textContent).toBe('b');
+    expect(container.childNodes[2]?.textContent).toBe('c');
+  });
+
+  it('should patch fragment children', () => {
+    const n1 = createVNode(Fragment, null, [
+      createVNode('div', { key: 'a' }, 'a'),
+      createVNode('div', { key: 'b' }, 'b'),
+    ]);
+    const n2 = createVNode(Fragment, null, [
+      createVNode('div', { key: 'a' }, 'a-updated'),
+      createVNode('div', { key: 'b' }, 'b-updated'),
+    ]);
+    renderer.mount(n1, container);
+    renderer.patch(n1, n2, container);
+    expect(container.childNodes.length).toBe(2);
+    expect(container.childNodes[0]?.textContent).toBe('a-updated');
+    expect(container.childNodes[1]?.textContent).toBe('b-updated');
+  });
+
+  it('should handle empty fragment', () => {
+    const vnode = createVNode(Fragment, null, []);
+    renderer.mount(vnode, container);
+    expect(container.childNodes.length).toBe(0);
+  });
+});
+
+describe('Renderer - Text node handling', () => {
+  let container: HTMLDivElement;
+  let renderer: ReturnType<typeof createRenderer>;
+
+  beforeEach(() => {
+    container = document.createElement('div');
+    renderer = createRenderer(new WebRendererHost());
+  });
+
+  it('should patch text nodes', () => {
+    const n1 = createTextVNode('old');
+    const n2 = createTextVNode('new');
+    renderer.mount(n1, container);
+    renderer.patch(n1, n2, container);
+    expect(container.firstChild?.textContent).toBe('new');
+  });
+
+  it('should handle empty text node', () => {
+    const vnode = createTextVNode('');
+    renderer.mount(vnode, container);
+    expect(container.firstChild?.nodeType).toBe(Node.TEXT_NODE);
+    expect(container.firstChild?.textContent).toBe('');
+  });
+
+  it('should patch element to text node', () => {
+    const n1 = createVNode('div', null, 'element');
+    const n2 = createTextVNode('text');
+    renderer.mount(n1, container);
+    renderer.patch(n1, n2, container);
+    expect(container.firstChild?.nodeType).toBe(Node.TEXT_NODE);
+  });
+
+  it('should patch text node to element', () => {
+    const n1 = createTextVNode('text');
+    const n2 = createVNode('div', null, 'element');
+    renderer.mount(n1, container);
+    renderer.patch(n1, n2, container);
+    expect(container.firstChild?.nodeType).toBe(Node.ELEMENT_NODE);
+  });
+});
+
+describe('Renderer - dynamic children optimization', () => {
+  let container: HTMLDivElement;
+  let renderer: ReturnType<typeof createRenderer>;
+
+  beforeEach(() => {
+    container = document.createElement('div');
+    renderer = createRenderer(new WebRendererHost());
+  });
+
+  it('should handle dynamic props update efficiently', () => {
+    const n1 = createVNode('div', { id: 'test' }, 'static', PatchFlags.TEXT, ['id']);
+    const n2 = createVNode('div', { id: 'updated' }, 'updated', PatchFlags.TEXT, ['id']);
+    renderer.mount(n1, container);
+    renderer.patch(n1, n2, container);
+    const el = n2.el as HTMLElement;
+    expect(el.id).toBe('updated');
+    expect(el.textContent).toBe('updated');
+  });
+
+  it('should handle keyed children reordering', () => {
+    const n1 = createVNode('div', null, [
+      createVNode('span', { key: 1 }, '1'),
+      createVNode('span', { key: 2 }, '2'),
+      createVNode('span', { key: 3 }, '3'),
+    ]);
+    const n2 = createVNode('div', null, [
+      createVNode('span', { key: 3 }, '3'),
+      createVNode('span', { key: 1 }, '1'),
+      createVNode('span', { key: 2 }, '2'),
+    ]);
+    renderer.mount(n1, container);
+    renderer.patch(n1, n2, container);
+    const el = n2.el as HTMLElement;
+    expect(el.children.length).toBe(3);
+    expect(el.children[0]?.textContent).toBe('3');
+    expect(el.children[1]?.textContent).toBe('1');
+    expect(el.children[2]?.textContent).toBe('2');
+  });
 });

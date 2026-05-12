@@ -4,6 +4,7 @@
 
 import type { EffectScopeEntry } from './effect-scope-registrar';
 import { warn, error } from '@lytjs/common-error';
+import { unsafeCast } from '@lytjs/common-assertions';
 
 export interface EffectScope {
   /** 当前 scope 是否活跃 */
@@ -100,7 +101,7 @@ export function effectScope(options?: boolean | EffectScopeOptions): EffectScope
         }
       }
       if (this.parent) {
-        const idx = this.parent.effects.indexOf(this as unknown as EffectScopeEntry);
+        const idx = this.parent.effects.indexOf(unsafeCast<EffectScopeEntry>(this));
         if (idx !== -1) {
           this.parent.effects.splice(idx, 1);
         }
@@ -115,7 +116,7 @@ export function effectScope(options?: boolean | EffectScopeOptions): EffectScope
     // 双重断言是必要的：EffectScope 对象字面量实现了 EffectScopeEntry 所需的
     // stop() 方法，但 TypeScript 无法自动推断对象字面量满足联合类型。
     // EffectScopeEntry = ReactiveEffect | EffectScope，此处 scope 是 EffectScope 实例。
-    activeEffectScope.effects.push(scope as unknown as EffectScopeEntry);
+    activeEffectScope.effects.push(unsafeCast<EffectScopeEntry>(scope));
   }
 
   return scope;

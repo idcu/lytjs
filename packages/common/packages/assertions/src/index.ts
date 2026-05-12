@@ -1,26 +1,52 @@
 /**
  * @lytjs/common-assertions
- * Type assertion utilities for LytJS
+ * 类型断言工具包
+ *
+ * 提供安全的类型转换和断言工具，替代不安全的 as unknown as 双重断言。
  *
  * @author LytJS Team
  * @since 6.0.0
  */
 
-import { isObject, isString, isFunction } from '@lytjs/common-is';
+import { isObject, isString, isFunction, isArray, isNumber, isBoolean } from '@lytjs/common-is';
 
-// ==================== 类型断言函数 ====================
+// ==================== 核心类型断言函数 ====================
 
 /**
  * 安全地将一个值断言为指定类型（不做运行时检查）
- * 用于替代 as unknown as T 的双重断言
+ *
+ * 这是 as unknown as T 的安全替代品，语义更清晰。
+ * 仅在确定类型安全时使用，优先使用其他更安全的断言函数。
  *
  * @param value - 要断言的值
  * @returns 断言后的值
  *
  * @template T - 目标类型
+ *
+ * @example
+ * ```typescript
+ * // 不推荐
+ * const el = vnode.el as unknown as HTMLElement;
+ *
+ * // 推荐
+ * const el = unsafeCast<HTMLElement>(vnode.el);
+ * ```
  */
 export function unsafeCast<T>(value: unknown): T {
   return value as T;
+}
+
+/**
+ * 将 nullish 值转换为指定类型的默认值
+ *
+ * @param value - 可能为 null 或 undefined 的值
+ * @param defaultValue - 默认值
+ * @returns 原值或默认值
+ *
+ * @template T - 值的类型
+ */
+export function nullishCoalesce<T>(value: T | null | undefined, defaultValue: T): T {
+  return value ?? defaultValue;
 }
 
 /**
@@ -183,4 +209,141 @@ export function safeGetFunction(
     return obj[key];
   }
   return undefined;
+}
+
+// ==================== VNode / 跨平台专用工具 ====================
+
+/**
+ * 检查值是否是具有 __isRendererHost 标记的渲染器宿主对象
+ *
+ * 用于判断一个对象是否是渲染器的宿主元素，替代 as unknown as Record 的检查。
+ *
+ * @param value - 要检查的值
+ * @returns 是否是渲染器宿主对象
+ */
+export function isRendererHost(value: unknown): boolean {
+  return (
+    isObject(value) &&
+    '__isRendererHost' in value &&
+    (value as Record<string, unknown>).__isRendererHost === true
+  );
+}
+
+/**
+ * 安全地获取对象的任意属性值
+ *
+ * @param obj - 对象
+ * @param key - 属性名
+ * @returns 属性值或 undefined
+ */
+export function safeGetProperty(obj: unknown, key: PropertyKey): unknown {
+  if (isObject(obj) && key in obj) {
+    return (obj as Record<PropertyKey, unknown>)[key];
+  }
+  return undefined;
+}
+
+/**
+ * 安全地将对象转换为 Record 类型
+ *
+ * @param value - 要转换的值
+ * @returns Record 或 undefined（如果不是对象）
+ */
+export function asRecord(value: unknown): Record<string, unknown> | undefined {
+  if (isObject(value)) {
+    return value as Record<string, unknown>;
+  }
+  return undefined;
+}
+
+/**
+ * 安全地访问嵌套对象属性
+ *
+ * @param obj - 根对象
+ * @param path - 属性路径（如 'a.b.c'）
+ * @returns 属性值或 undefined
+ */
+export function safeGetNested(obj: unknown, path: string): unknown {
+  if (!isObject(obj)) return undefined;
+
+  const keys = path.split('.');
+  let current: unknown = obj;
+
+  for (const key of keys) {
+    if (!isObject(current) || !(key in current)) {
+      return undefined;
+    }
+    current = (current as Record<string, unknown>)[key];
+  }
+
+  return current;
+}
+
+// ==================== 基本类型守卫（补充 common-is）====================
+
+/**
+ * 检查值是否是数字类型且为有限值
+ *
+ * @param value - 要检查的值
+ * @returns 是否是有限数字
+ */
+export function isFiniteNumber(value: unknown): value is number {
+  return isNumber(value) && Number.isFinite(value);
+}
+
+/**
+ * 检查值是否是非空字符串
+ *
+ * @param value - 要检查的值
+ * @returns 是否是非空字符串
+ */
+export function isNonEmptyString(value: unknown): value is string {
+  return isString(value) && value.length > 0;
+}
+
+/**
+ * 检查值是否是非空数组
+ *
+ * @param value - 要检查的值
+ * @returns 是否是非空数组
+ */
+export function isNonEmptyArray<T = unknown>(value: unknown): value is T[] {
+  return isArray(value) && value.length > 0;
+}
+
+/**
+ * 检查值是否是非空对象（排除 null 和数组）
+ *
+ * @param value - 要检查的值
+ * @returns 是否是非空对象
+ */
+export function isNonEmptyObject(value: unknown): value is Record<string, unknown> {
+  return isObject(value) && Object.keys(value).length > 0;
+}
+
+// ==================== 条件断言 ====================
+
+/**
+ * 在开发模式下执行断言检查
+ *
+ * @param condition - 断言条件
+ * @param message - 失败时的错误消息
+ * @throws 如果条件为 false 且在开发模式下，抛出错误
+ */
+export function invariant(condition: boolean, message?: string): void {
+  if (__DEV__ && !condition) {
+    throw new Error(message || 'Invariant failed');
+  }
+}
+
+/**
+ * 在开发模式下发出警告
+ *
+ * @param condition - 警告条件（为 true 时发出警告）
+ * @param message - 警告消息
+ */
+export function warning(condition: boolean, message?: string): void {
+  if (__DEV__ && condition) {
+    console.warn(`[LytJS Warning] ${message || 'Warning'}`);
+  }
 }

@@ -4,6 +4,7 @@
 
 import { isObject, hasChanged } from '@lytjs/common-is';
 import { warn } from '@lytjs/common-error';
+import { unsafeCast } from '@lytjs/common-assertions';
 import { track, trigger, getActiveEffect, getShouldTrack, createDep } from './effect';
 import type { Dep } from './effect';
 import { TrackOpTypes, TriggerOpTypes } from './constants';
@@ -134,16 +135,16 @@ export function ref<T extends object | string | number | boolean | null | undefi
   }
   // 双重断言是必要的：RefImpl 实现了 Ref 接口所需的 value/__v_isRef 属性，
   // 但 TypeScript 无法自动推断类实例满足接口（私有成员导致结构不兼容）。
-  return new RefImpl(value, false) as unknown as Ref<T>;
+  return unsafeCast<Ref<T>>(new RefImpl(value, false));
 }
 
 export function shallowRef<T>(value: T): ShallowRef<T> {
-  if (isRef(value)) return value as unknown as ShallowRef<T>;
-  return new ShallowRefImpl(value) as unknown as ShallowRef<T>;
+  if (isRef(value)) return unsafeCast<ShallowRef<T>>(value);
+  return unsafeCast<ShallowRef<T>>(new ShallowRefImpl(value));
 }
 
 export function triggerRef<T>(ref: ShallowRef<T>): void {
-  triggerRefValue(ref as unknown as TrackableRef, ref.value);
+  triggerRefValue(unsafeCast<TrackableRef>(ref), ref.value);
 }
 
 export { isRef } from './shared';
@@ -174,8 +175,8 @@ export function unref<T>(r: T | Ref<T>): T {
 }
 
 export function toRef<T extends object, K extends keyof T>(object: T, key: K): Ref<T[K]> {
-  if (isRef(object[key])) return object[key] as Ref<T[K]>;
-  return new ObjectRefImpl(object, key) as unknown as Ref<T[K]>;
+  if (isRef(object[key])) return unsafeCast<Ref<T[K]>>(object[key]);
+  return unsafeCast<Ref<T[K]>>(new ObjectRefImpl(object, key));
 }
 
 export function toRefs<T extends object>(object: T): { [K in keyof T]: Ref<T[K]> } {
@@ -187,7 +188,7 @@ export function toRefs<T extends object>(object: T): { [K in keyof T]: Ref<T[K]>
 }
 
 export function customRef<T>(factory: CustomRefFactory<T>): Ref<T> {
-  return new CustomRefImpl(factory) as unknown as Ref<T>;
+  return unsafeCast<Ref<T>>(new CustomRefImpl(factory));
 }
 
 /**

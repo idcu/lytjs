@@ -4,6 +4,7 @@
 
 import { isFunction } from '@lytjs/common-is';
 import { warn } from '@lytjs/common-error';
+import { unsafeCast } from '@lytjs/common-assertions';
 import { ReactiveEffect, createDep } from './effect';
 import type { Dep } from './effect';
 import { trackRefValue, triggerRefValue } from './ref';
@@ -94,7 +95,7 @@ class ComputedRefImpl<T> {
         clearTimeout(this._cacheCleanupTimer);
         this._cacheCleanupTimer = null;
       }
-      this._value = undefined as unknown as T;
+      this._value = unsafeCast<T>(undefined);
       this._initialized = false;
       this._dirty = true;
     }

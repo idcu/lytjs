@@ -54,8 +54,8 @@ lerna-debug.log*
 !CHANGELOG.md
 !CONTRIBUTING.md
 
-# Trae Solo development files (local only)
+# AI IDE development files (local only)
 .traesolo.json
-docs/development/TRAE_SOLO_RULES.md
+docs/development/AI_IDE_RULES.md
 docs/development/CHINESE_DOCS_GUIDE.md
 docs/development/ROADMAP_NEXT_STEPS.md

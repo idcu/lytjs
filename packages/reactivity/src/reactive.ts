@@ -4,6 +4,7 @@
 
 import { isObject, hasChanged, hasOwn, isSymbol, isMap, isSet } from '@lytjs/common-is';
 import { warn } from '@lytjs/common-error';
+import { unsafeCast } from '@lytjs/common-assertions';
 import { ReactiveFlags, TrackOpTypes, TriggerOpTypes, ITERATE_KEY } from './constants';
 import { track, trigger, pauseTracking, resetTracking, isIntegerKey } from './effect';
 import type { UnwrapNestedRefs, DeepReadonly } from './types';
@@ -95,7 +96,7 @@ const builtInSymbols = new Set<symbol>(
       // Object.getOwnPropertyNames 返回 string[]，而 Symbol 的属性值类型为 symbol，
       // 但 TypeScript 将 Symbol 视为 Function，其索引签名为 unknown。
       // 使用索引签名访问 Symbol[key] 返回 unknown，需要类型断言。
-      const value = (Symbol as unknown as Record<string, unknown>)[key];
+      const value = unsafeCast<symbol>((Symbol as Record<string, unknown>)[key]);
       return isSymbol(value) ? value : undefined;
     })
     .filter((sym): sym is symbol => sym !== undefined),

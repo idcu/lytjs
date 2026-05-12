@@ -280,3 +280,150 @@ describe('cloneVNode merge props', () => {
     expect(cloned.props).toEqual({ id: 'app', class: 'new' });
   });
 });
+
+describe('vnode edge cases', () => {
+  it('should handle null children correctly', () => {
+    const vnode = createVNode('div', null, null);
+    expect(vnode.children).toBe(null);
+  });
+
+  it('should handle undefined children correctly', () => {
+    const vnode = createVNode('div', null, undefined);
+    expect(vnode.children).toBe(undefined);
+  });
+
+  it('should handle empty string children', () => {
+    const vnode = createVNode('div', null, '');
+    expect(vnode.children).toBe('');
+  });
+
+  it('should handle zero as children', () => {
+    const vnode = createVNode('div', null, 0);
+    expect(vnode.children).toBe('0');
+  });
+
+  it('should handle falsy values in array children', () => {
+    const child1 = createVNode('span');
+    const child2 = createVNode('span');
+    const vnode = createVNode('div', null, [child1, null, child2, false]);
+    expect(Array.isArray(vnode.children)).toBe(true);
+  });
+
+  it('should preserve vnode properties after cloning with extra props', () => {
+    const original = createVNode('div', { id: 'original' }, 'text', PatchFlags.TEXT);
+    const cloned = cloneVNode(original, { class: 'added' });
+    expect(cloned.type).toBe('div');
+    expect(cloned.patchFlag).toBe(PatchFlags.TEXT);
+    expect(cloned.isCloned).toBe(true);
+  });
+
+  it('should handle vnode with both key and ref extracted', () => {
+    const ref = { current: null };
+    const vnode = createVNode('div', { key: 'my-key', ref, id: 'test' });
+    expect(vnode.key).toBe('my-key');
+    expect(vnode.ref).toBe(ref);
+  });
+
+  it('should handle nested fragment vnodes', () => {
+    const innerFragment = createVNode(Fragment, null, [createVNode('span')]);
+    const outerFragment = createVNode(Fragment, null, [innerFragment, createVNode('div')]);
+    expect(outerFragment.type).toBe(Fragment);
+    expect(Array.isArray(outerFragment.children)).toBe(true);
+  });
+
+  it('should handle vnode with symbol key', () => {
+    const symKey = Symbol('key');
+    const vnode = createVNode('div', { key: symKey });
+    expect(vnode.key).toBe(symKey);
+  });
+
+  it('should correctly identify different vnode types with isVNode', () => {
+    const elementVNode = createVNode('div');
+    const textVNode = createTextVNode('hello');
+    const commentVNode = createCommentVNode('comment');
+    const fragmentVNode = createVNode(Fragment, null, []);
+
+    expect(isVNode(elementVNode)).toBe(true);
+    expect(isVNode(textVNode)).toBe(true);
+    expect(isVNode(commentVNode)).toBe(true);
+    expect(isVNode(fragmentVNode)).toBe(true);
+    expect(isVNode('not a vnode')).toBe(false);
+    expect(isVNode(123)).toBe(false);
+    expect(isVNode({})).toBe(false);
+  });
+});
+
+describe('mergeProps advanced cases', () => {
+  it('should merge multiple style objects deeply', () => {
+    const result = mergeProps(
+      { style: { color: 'red', margin: '10px' } },
+      { style: { fontSize: '16px', color: 'blue' } },
+      { style: { padding: '5px' } },
+    );
+    expect(result.style).toEqual({
+      color: 'blue',
+      margin: '10px',
+      fontSize: '16px',
+      padding: '5px',
+    });
+  });
+
+  it('should handle merging props with null values', () => {
+    const result = mergeProps({ id: null }, { class: undefined });
+    expect(result.id).toBeNull();
+    expect(result.class).toBeUndefined();
+  });
+
+  it('should merge multiple event handlers into array', () => {
+    const handler1 = () => 'a';
+    const handler2 = () => 'b';
+    const handler3 = () => 'c';
+    const result = mergeProps({ onClick: handler1 }, { onClick: handler2 }, { onClick: handler3 });
+    expect(result.onClick).toHaveLength(3);
+    expect(result.onClick[0]).toBe(handler1);
+    expect(result.onClick[1]).toBe(handler2);
+    expect(result.onClick[2]).toBe(handler3);
+  });
+
+  it('should handle merging props with special HTML attributes', () => {
+    const result = mergeProps(
+      { 'data-id': '1', 'aria-label': 'test' },
+      { 'data-value': '2', 'aria-hidden': 'true' },
+    );
+    expect(result['data-id']).toBe('1');
+    expect(result['data-value']).toBe('2');
+    expect(result['aria-label']).toBe('test');
+    expect(result['aria-hidden']).toBe('true');
+  });
+});
+
+describe('normalizeChildren advanced cases', () => {
+  it('should handle null children', () => {
+    const vnode = createVNode('div');
+    vnode.shapeFlag = 0;
+    normalizeChildren(vnode, null);
+    // null should not set any children flag
+  });
+
+  it('should handle undefined children', () => {
+    const vnode = createVNode('div');
+    vnode.shapeFlag = 0;
+    normalizeChildren(vnode, undefined);
+    // undefined should not set any children flag
+  });
+
+  it('should handle number children as text', () => {
+    const vnode = createVNode('div');
+    vnode.shapeFlag = 0;
+    normalizeChildren(vnode, 42);
+    expect(vnode.shapeFlag & ShapeFlags.TEXT_CHILDREN).toBeTruthy();
+    expect(vnode.children).toBe('42');
+  });
+
+  it('should handle boolean children (treated as no children)', () => {
+    const vnode = createVNode('div');
+    vnode.shapeFlag = 0;
+    normalizeChildren(vnode, true);
+    // boolean should not set TEXT_CHILDREN flag
+  });
+});

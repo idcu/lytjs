@@ -79,6 +79,17 @@ export default tseslint.config(
       '@typescript-eslint/no-empty-interface': 'off',
       '@typescript-eslint/no-namespace': 'off',
       '@typescript-eslint/no-unsafe-function-type': 'warn',
+      // 禁止使用 as unknown as 双重类型断言（P1-2.2.1）
+      // 推荐使用 @lytjs/common-assertions 中的 unsafeCast 或其他安全替代方案
+      '@typescript-eslint/no-unsafe-type-assertion': 'off',
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: 'TSAsExpression[type.annotation.typeName.name="unknown"] > TSAsExpression',
+          message:
+            '禁止使用 "as unknown as" 双重类型断言。请使用 @lytjs/common-assertions 中的 unsafeCast<T>() 或其他更安全的类型断言方式。',
+        },
+      ],
       'no-console': [
         'warn',
         {
