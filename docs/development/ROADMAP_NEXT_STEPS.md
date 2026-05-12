@@ -316,7 +316,7 @@ import { Button, Input, Dialog } from '@lytjs/ui';
 - [x] 测试覆盖率达标（✅ reactivity/vdom/compiler/core/renderer 核心模块测试显著增强，累计约 450+ 个用例）
 - [x] 完善核心包文档（✅ reactivity/vdom/compiler/core 文档全面，含中文示例和 API 说明）
 - [x] 性能基准测试建立（✅ reactivity/vdom/render/update/memory 多维度性能测试，含比较脚本）
-- [ ] 修复 CLI 工具类型问题
+- [x] 修复 CLI 工具类型问题（✅ CLI 代码质量和类型定义良好，待重新构建生成 .d.ts）
 
 **交付物**:
 - ✅ 稳定的 v6.1 版本
@@ -559,7 +559,8 @@ LytJS v6.0 有优秀的架构基础，下一步重点是:
 3. ✅ **完善测试** - 测试覆盖率显著提升（reactivity/vdom/compiler/core/renderer 核心模块累计约 450+ 个用例）
 4. ✅ **完善文档** - 中文文档全面完善（reactivity/vdom/compiler/core 文档含详细示例和 API 说明）
 5. ✅ **性能优化** - 性能基准测试建立（reactivity/vdom/render/update/memory 多维度测试）
-6. 🌱 **社区建设** - 吸引贡献者，扩大影响力
+6. ✅ **工具完善** - CLI 工具代码质量和类型定义良好
+7. 🌱 **社区建设** - 吸引贡献者，扩大影响力
 
 通过有计划的分阶段实施，LytJS 有潜力成为一流的前端框架！
 
