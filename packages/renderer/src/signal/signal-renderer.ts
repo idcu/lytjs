@@ -5,7 +5,6 @@
 
 import { compile } from '@lytjs/compiler';
 import { effect } from '@lytjs/reactivity';
-import type { effect as EffectType } from '@lytjs/reactivity';
 import {
   insert,
   remove,
@@ -20,47 +19,24 @@ import {
   createEventHandler,
   reconcileArray,
   bindEffect,
-  getContent,
-  appendChild as appendChildFn,
-} from '@lytjs/dom-runtime';
-import type {
-  reconcileArray as ReconcileArrayType,
-  createTemplate as CreateTemplateType,
-  setText as SetTextType,
-  setAttribute as SetAttributeType,
-  setProperty as SetPropertyType,
-  setStyle as SetStyleType,
-  setClass as SetClassType,
-  insert as InsertType,
-  remove as RemoveType,
-  createEventHandler as CreateEventHandlerType,
-  bindEffect as BindEffectType,
-  onCleanup as OnCleanupType,
-  runCleanups as RunCleanupsType,
-  getContent as GetContentType,
-  appendChild as AppendChildType,
 } from '@lytjs/dom-runtime';
 
 // ============================================================
 // 安全辅助函数
 // ============================================================
 
-function setSafeHTML(el: Element, html: string): void {
-  el.textContent = html;
+interface TemplateWrapperLike {
+  firstChild: Node | null;
+  content?: unknown;
 }
 
-function createTemplateWrapper(html: string) {
-  const wrapper = createTemplate(html);
-  const children = getContent(wrapper);
-
-  return Object.assign(wrapper, {
-    firstChild: children[0] || null,
-    lastChild: children[children.length - 1] || null,
-    childNodes: Object.assign(children, { length: children.length }),
-    appendChild(child: Node): Node {
-      return appendChildFn(wrapper as any, { content: { firstChild: child } } as any) as any;
-    },
-  });
+function setSafeHTML(el: unknown, html: string): void {
+  const wrapper = el as TemplateWrapperLike;
+  const realNode =
+    'content' in wrapper && 'firstChild' in wrapper && wrapper.firstChild !== null
+      ? wrapper.firstChild
+      : el;
+  (realNode as Element).textContent = html;
 }
 
 // ============================================================
@@ -159,23 +135,23 @@ export function createSignalRenderer(
         //          setProperty, setStyle, setClass, insert, remove, createEventHandler,
         //          bindEffect, onCleanup, runCleanups, ctx, container
         const renderFn = new Function(
-          'e',
-          'n',
-          't',
-          'x',
-          'h',
-          'a',
-          'p',
-          's',
-          'c',
-          'i',
-          'r',
-          'v',
-          'b',
-          'o',
-          'g',
-          '_c',
-          '_n',
+          'effect',
+          'reconcileArray',
+          'createTemplate',
+          'setText',
+          'setHTML',
+          'setAttribute',
+          'setProperty',
+          'setStyle',
+          'setClass',
+          'insert',
+          'remove',
+          'createEventHandler',
+          'bindEffect',
+          'onCleanup',
+          'runCleanups',
+          '_ctx',
+          '_container',
           renderBody,
         );
 
@@ -183,7 +159,7 @@ export function createSignalRenderer(
         const cleanupFn = renderFn(
           effect,
           reconcileArray,
-          createTemplateWrapper,
+          createTemplate,
           setText,
           setSafeHTML,
           setAttribute,

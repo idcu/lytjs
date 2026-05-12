@@ -2,15 +2,14 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { ref } from '@lytjs/reactivity';
 import { defineVaporComponent, createVaporApp } from '../src/vapor/vapor-app';
-import type {
-  VaporComponentDefinition,
-  VaporContext,
-} from '../src/vapor/vapor-app';
+import { clearCompileCache } from '@lytjs/compiler';
+import type { VaporComponentDefinition, VaporContext } from '../src/vapor/vapor-app';
 
 describe('Vapor App API', () => {
   let container: HTMLElement;
 
   beforeEach(() => {
+    clearCompileCache();
     container = document.createElement('div');
     document.body.appendChild(container);
   });
@@ -123,6 +122,8 @@ describe('Vapor App API', () => {
         template: '<div><span>hello vapor</span></div>',
       });
 
+      console.log('compiledCode:', rootComponent.compiledCode);
+
       const app = createVaporApp(rootComponent);
       app.mount(container);
 
@@ -156,9 +157,7 @@ describe('Vapor App API', () => {
       });
 
       const app = createVaporApp(rootComponent);
-      expect(() => app.mount('#nonexistent-container')).toThrow(
-        /cannot find element matching/,
-      );
+      expect(() => app.mount('#nonexistent-container')).toThrow(/cannot find element matching/);
     });
 
     it('should throw if mounting after unmount', () => {
@@ -171,9 +170,7 @@ describe('Vapor App API', () => {
       app.mount(container);
       app.unmount();
 
-      expect(() => app.mount(container)).toThrow(
-        /has been unmounted and cannot be remounted/,
-      );
+      expect(() => app.mount(container)).toThrow(/has been unmounted and cannot be remounted/);
     });
 
     it('should throw if mounting twice without unmounting', () => {
@@ -185,9 +182,7 @@ describe('Vapor App API', () => {
       const app = createVaporApp(rootComponent);
       app.mount(container);
 
-      expect(() => app.mount(container)).toThrow(
-        /is already mounted/,
-      );
+      expect(() => app.mount(container)).toThrow(/is already mounted/);
 
       app.unmount();
     });
@@ -311,6 +306,8 @@ describe('Vapor App API', () => {
           return { message: 'from setup' };
         },
       });
+
+      console.log('compiledCode for message:', rootComponent.compiledCode);
 
       const app = createVaporApp(rootComponent);
       app.mount(container);

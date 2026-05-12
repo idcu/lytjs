@@ -9,7 +9,6 @@ import {
   generateComponentId,
   registerComponent,
   unregisterComponent,
-  generateHMRCode,
   isHMRAvailable,
 } from './vapor-hmr';
 
@@ -107,9 +106,7 @@ export interface VaporApp {
  * });
  * ```
  */
-export function defineVaporComponent(
-  options: VaporComponentOptions,
-): VaporComponentDefinition {
+export function defineVaporComponent(options: VaporComponentOptions): VaporComponentDefinition {
   const { name, props, setup, template } = options;
 
   // 预编译模板，将编译结果缓存到闭包中
@@ -123,12 +120,12 @@ export function defineVaporComponent(
     if (__DEV__) {
       console.warn(
         `[LytJS] defineVaporComponent: template compilation failed for "${name || 'anonymous'}". ` +
-        `Error: ${e instanceof Error ? e.message : String(e)}`,
+          `Error: ${e instanceof Error ? e.message : String(e)}`,
       );
     } else {
       console.error(
         `[LytJS] defineVaporComponent: template compilation failed for "${name || 'anonymous'}". ` +
-        `Error: ${e instanceof Error ? e.message : String(e)}`,
+          `Error: ${e instanceof Error ? e.message : String(e)}`,
       );
     }
   }
@@ -178,17 +175,16 @@ export function createVaporApp(
   let signalRenderer: SignalRenderer | null = null;
   let isMounted = false;
   let isUnmounted = false;
-  
+
   // Phase 1.2: HMR 组件 ID
   const componentId = generateComponentId();
-  let containerEl: Element | null = null;
 
   const vaporApp: VaporApp = {
     mount(container: Element | string) {
       if (isUnmounted) {
         throw new Error(
           `[LytJS] VaporApp has been unmounted and cannot be remounted. ` +
-          `Create a new app instance instead.`,
+            `Create a new app instance instead.`,
         );
       }
 
@@ -199,18 +195,11 @@ export function createVaporApp(
       }
 
       // 解析容器
-      const el =
-        typeof container === 'string'
-          ? document.querySelector(container)
-          : container;
+      const el = typeof container === 'string' ? document.querySelector(container) : container;
 
       if (!el) {
-        throw new Error(
-          `[LytJS] VaporApp: cannot find element matching "${container}".`,
-        );
+        throw new Error(`[LytJS] VaporApp: cannot find element matching "${container}".`);
       }
-      
-      containerEl = el;
 
       // 构建上下文对象
       const rootProps = options?.rootProps ?? {};
@@ -220,8 +209,11 @@ export function createVaporApp(
       const vaporContext: VaporContext = {
         attrs: { ...rootProps },
         slots: {},
-        emit(_event: string, ..._args: unknown[]) {
-          // 事件发射占位符
+        emit(event: string, ...args: unknown[]) {
+          if (__DEV__) {
+            // eslint-disable-next-line no-console
+            console.log(`[LytJS] VaporComponent emitted event "${event}"`, args);
+          }
         },
       };
 
@@ -238,14 +230,14 @@ export function createVaporApp(
       if (!rootComponent.template) {
         throw new Error(
           `[LytJS] createVaporApp: rootComponent must have a 'template' property. ` +
-          `Received: ${typeof rootComponent.template}`,
+            `Received: ${typeof rootComponent.template}`,
         );
       }
 
       // 创建 Signal 渲染器
       signalRenderer = createSignalRenderer(rootComponent.template, ctx);
       signalRenderer.render(el);
-      
+
       // Phase 1.2: 注册组件实例用于 HMR
       if (__DEV__ || isHMRAvailable()) {
         registerComponent(componentId, rootComponent, el);
@@ -259,7 +251,7 @@ export function createVaporApp(
         signalRenderer.unmount();
         signalRenderer = null;
       }
-      
+
       // Phase 1.2: 注销组件实例
       if (__DEV__ || isHMRAvailable()) {
         unregisterComponent(componentId);
@@ -267,7 +259,6 @@ export function createVaporApp(
 
       isMounted = false;
       isUnmounted = true;
-      containerEl = null;
 
       // 清理注册的资源
       provides.clear();
@@ -278,7 +269,7 @@ export function createVaporApp(
       if (__DEV__ && isMounted) {
         console.warn(
           '[LytJS] VaporApp.provide() cannot be called after the app has been mounted. ' +
-          'Register provides before calling app.mount().',
+            'Register provides before calling app.mount().',
         );
       }
       provides.set(key, value);

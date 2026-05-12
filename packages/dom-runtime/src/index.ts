@@ -5,9 +5,7 @@ import { effect, stop } from '@lytjs/reactivity';
 
 // ==================== 环境检测 ====================
 
-const isBrowser =
-  typeof document !== 'undefined' &&
-  typeof HTMLElement !== 'undefined';
+const isBrowser = typeof document !== 'undefined' && typeof HTMLElement !== 'undefined';
 
 // ==================== XSS 防护 ====================
 
@@ -40,25 +38,13 @@ function sanitizeHTML(html: string): string {
     prevResult = html;
     // 移除危险标签（含内容）
     html = html.replace(
-      new RegExp(
-        `<\\s*/?\\s*(${DANGEROUS_TAG_NAMES})[^>]*>[\\s\\S]*?<\\s*/\\s*\\1\\s*>`,
-        'gi',
-      ),
+      new RegExp(`<\\s*/?\\s*(${DANGEROUS_TAG_NAMES})[^>]*>[\\s\\S]*?<\\s*/\\s*\\1\\s*>`, 'gi'),
       '',
     );
     // 移除自闭合的危险标签
-    html = html.replace(
-      new RegExp(
-        `<\\s*(${DANGEROUS_SELF_CLOSING_TAG_NAMES})[^>]*/?>`,
-        'gi',
-      ),
-      '',
-    );
+    html = html.replace(new RegExp(`<\\s*(${DANGEROUS_SELF_CLOSING_TAG_NAMES})[^>]*/?>`, 'gi'), '');
     // 移除事件属性（on*）
-    html = html.replace(
-      /\s+on\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]*)/gi,
-      '',
-    );
+    html = html.replace(/\s+on\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]*)/gi, '');
     // 移除危险属性（srcdoc、formaction、xlink:href）
     html = html.replace(
       /\s+(srcdoc|formaction|xlink:href)\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]*)/gi,
@@ -82,24 +68,12 @@ function sanitizeHTML(html: string): string {
       },
     );
     // FIX: P0-11 过滤 SVG foreignObject 标签，防止通过 SVG 命名空间注入恶意 HTML
-    html = html.replace(
-      /<\s*foreignObject[^>]*>[\s\S]*?<\s*\/\s*foreignObject\s*>/gi,
-      '',
-    );
-    html = html.replace(
-      /<\s*foreignObject[^>]*\/?>/gi,
-      '',
-    );
+    html = html.replace(/<\s*foreignObject[^>]*>[\s\S]*?<\s*\/\s*foreignObject\s*>/gi, '');
+    html = html.replace(/<\s*foreignObject[^>]*\/?>/gi, '');
     // FIX: P2-52 过滤 style 标签，防止 CSS 注入攻击
-    html = html.replace(
-      /<\s*style[^>]*>[\s\S]*?<\s*\/\s*style\s*>/gi,
-      '',
-    );
+    html = html.replace(/<\s*style[^>]*>[\s\S]*?<\s*\/\s*style\s*>/gi, '');
     // FIX: P2-52 过滤 base 标签，防止基地址劫持攻击
-    html = html.replace(
-      /<\s*base[^>]*\/?>/gi,
-      '',
-    );
+    html = html.replace(/<\s*base[^>]*\/?>/gi, '');
     // FIX: P2-52 过滤 data: URI，防止数据 URI 攻击
     html = html.replace(
       /\s+(href|src|action|formaction)\s*=\s*(?:"[^"]*data:[^"]*"|'[^']*data:[^']*')/gi,
@@ -110,6 +84,22 @@ function sanitizeHTML(html: string): string {
 }
 
 // ==================== DOM 创建 ====================
+
+// 内部辅助接口：用于类型检查
+interface TemplateWrapperLike {
+  content?: unknown;
+  firstChild: Node | null;
+}
+
+// 内部辅助函数：获取真实的 DOM 元素
+function getRealNode(el: unknown): Node | Element {
+  const wrapper = el as TemplateWrapperLike;
+  if ('content' in wrapper && 'firstChild' in wrapper) {
+    // This is our TemplateWrapper!
+    return wrapper.firstChild;
+  }
+  return el as Node | Element;
+}
 
 /**
  * 从 HTML 字符串创建模板元素
@@ -123,6 +113,11 @@ function sanitizeHTML(html: string): string {
 export interface TemplateWrapper {
   content: DocumentFragment;
   remove(): void;
+  firstChild: Node | null;
+  lastChild: Node | null;
+  children: Element[];
+  childNodes: Node[];
+  [Symbol.iterator](): IterableIterator<Element>;
 }
 
 export function createTemplate(html: string): TemplateWrapper {
@@ -133,32 +128,63 @@ export function createTemplate(html: string): TemplateWrapper {
       children: [],
       firstChild: null,
       lastChild: null,
-      appendChild() { return null as unknown as Node; },
-      removeChild() { return null as unknown as Node; },
-      cloneNode() { return mockContent; },
-      querySelector() { return null; },
-      querySelectorAll() { return [] as unknown as NodeList; },
+      appendChild() {
+        return null as unknown as Node;
+      },
+      removeChild() {
+        return null as unknown as Node;
+      },
+      cloneNode() {
+        return mockContent;
+      },
+      querySelector() {
+        return null;
+      },
+      querySelectorAll() {
+        return [] as unknown as NodeList;
+      },
     } as unknown as DocumentFragment;
 
-    return {
+    const wrapper = {
       content: mockContent,
+      firstChild: null,
+      lastChild: null,
+      children: [],
+      childNodes: [],
       remove() {},
+      [Symbol.iterator]() {
+        return this.children[Symbol.iterator]();
+      },
     };
+    return wrapper;
   }
 
   const template = document.createElement('template');
   template.innerHTML = html;
   const content = template.content;
+  const childNodes = Array.from(content.childNodes);
+  const children = Array.from(content.children);
 
-  return {
+  const wrapper = {
     content,
+    firstChild: childNodes[0] || null,
+    lastChild: childNodes[childNodes.length - 1] || null,
+    children,
+    childNodes,
     remove() {
-      const parent = content.parentNode;
-      if (parent) {
-        parent.removeChild(content);
+      for (const node of childNodes) {
+        const parent = node.parentNode;
+        if (parent) {
+          parent.removeChild(node);
+        }
       }
     },
+    [Symbol.iterator]() {
+      return this.children[Symbol.iterator]();
+    },
   };
+
+  return wrapper;
 }
 
 export function getContent(wrapper: TemplateWrapper): Node[] {
@@ -221,27 +247,45 @@ export function createTextNode(text: string): Text {
 
 // ==================== DOM 插入/删除 ====================
 
+// 内部辅助接口：用于 insert 和 remove 函数
+interface RemovableWrapper {
+  content?: unknown;
+  remove?: () => void;
+}
+
 /**
  * 将节点插入到父元素中
  * ref 为 null 时追加到末尾
  */
-export function insert(child: Node, parent: Node, ref?: Node | null): void {
+export function insert(child: unknown, parent: Node, ref?: Node | null): void {
   if (!isBrowser) return;
-  if (ref != null) {
-    parent.insertBefore(child, ref);
+  const wrapper = child as RemovableWrapper;
+  if ('content' in wrapper) {
+    // 如果是 TemplateWrapper，调用 appendChild 处理
+    appendChild(parent, child as TemplateWrapper);
   } else {
-    parent.appendChild(child);
+    // 否则作为普通 Node 处理
+    if (ref != null) {
+      parent.insertBefore(child as Node, ref);
+    } else {
+      parent.appendChild(child as Node);
+    }
   }
 }
 
 /**
  * 移除节点
  */
-export function remove(child: Node): void {
+export function remove(child: unknown): void {
   if (!isBrowser) return;
-  const parent = child.parentNode;
-  if (parent) {
-    parent.removeChild(child);
+  const wrapper = child as RemovableWrapper;
+  if ('remove' in wrapper && typeof wrapper.remove === 'function') {
+    wrapper.remove();
+  } else {
+    const parent = (child as Node).parentNode;
+    if (parent) {
+      parent.removeChild(child as Node);
+    }
   }
 }
 
@@ -255,37 +299,58 @@ export function clearChildren(parent: Node): void {
 
 // ==================== DOM 属性操作 ====================
 
+// 内部辅助接口：用于解包 ref
+interface RefLike {
+  value?: unknown;
+}
+
+// 内部辅助函数：解包 ref
+function unwrapValue(value: unknown): unknown {
+  const ref = value as RefLike;
+  if (value !== null && typeof value === 'object' && 'value' in ref) {
+    return ref.value;
+  }
+  return value;
+}
+
 /**
  * 设置元素的文本内容
  */
-export function setText(el: Node, value: string): void {
+export function setText(el: unknown, value: unknown): void {
   if (!isBrowser) return;
-  el.textContent = value;
+  const realNode = getRealNode(el);
+  const realValue = unwrapValue(value);
+  realNode.textContent = String(realValue);
 }
 
 /**
  * 设置元素的 HTML 内容（带 XSS 防护）
  * 自动过滤危险的 script/iframe 标签和事件属性
  */
-export function setHTML(el: Element, value: string): void {
+export function setHTML(el: unknown, value: unknown): void {
   if (!isBrowser) return;
-  el.innerHTML = sanitizeHTML(value);
+  const realNode = getRealNode(el) as Element;
+  const realValue = unwrapValue(value);
+  realNode.innerHTML = sanitizeHTML(String(realValue));
 }
 
 /**
  * 设置元素的属性
  */
-export function setAttribute(el: Element, key: string, value: string): void {
+export function setAttribute(el: unknown, key: string, value: unknown): void {
   if (!isBrowser) return;
-  el.setAttribute(key, value);
+  const realNode = getRealNode(el) as Element;
+  const realValue = unwrapValue(value);
+  realNode.setAttribute(key, String(realValue));
 }
 
 /**
  * 移除元素的属性
  */
-export function removeAttribute(el: Element, key: string): void {
+export function removeAttribute(el: unknown, key: string): void {
   if (!isBrowser) return;
-  el.removeAttribute(key);
+  const realNode = getRealNode(el) as Element;
+  realNode.removeAttribute(key);
 }
 
 /**
@@ -316,19 +381,20 @@ const PROPERTY_KEYS = new Set([
  * 直接设置 DOM property 而非 HTML attribute
  * FIX: P2-55 使用 hasOwn 检查避免访问原型链上的 getter/setter
  */
-export function setProperty(el: Element, key: string, value: unknown): void {
+export function setProperty(el: unknown, key: string, value: unknown): void {
   if (!isBrowser) return;
-  const htmlEl = el as HTMLElement & Record<string, unknown>;
+  const realNode = getRealNode(el) as HTMLElement;
+  const realValue = unwrapValue(value);
   // FIX: P2-55 使用 Object.prototype.hasOwnProperty 检查属性是否定义在元素自身上，
   // 避免意外触发原型链上的 getter/setter
   const hasOwnProperty = Object.prototype.hasOwnProperty;
-  if (PROPERTY_KEYS.has(key) || hasOwnProperty.call(htmlEl, key)) {
-    htmlEl[key] = value;
+  if (PROPERTY_KEYS.has(key) || hasOwnProperty.call(realNode, key)) {
+    realNode[key] = realValue;
   } else {
-    if (value === null || value === undefined || value === false) {
-      el.removeAttribute(key);
+    if (realValue === null || realValue === undefined || realValue === false) {
+      realNode.removeAttribute(key);
     } else {
-      el.setAttribute(key, String(value));
+      realNode.setAttribute(key, String(realValue));
     }
   }
 }
@@ -339,23 +405,25 @@ export function setProperty(el: Element, key: string, value: unknown): void {
  * 正确处理包含连字符的 CSS 属性名（如 background-color、font-size）
  * FIX: P2-45 对数值类型的 CSS 属性自动添加 px 单位
  */
-export function setStyle(el: Element, style: string | Record<string, string | number>): void {
+export function setStyle(el: unknown, style: unknown): void {
   if (!isBrowser) return;
-  const htmlEl = el as HTMLElement;
+  const realNode = getRealNode(el) as HTMLElement;
   if (typeof style === 'string') {
-    htmlEl.style.cssText = style;
-  } else {
-    for (const [key, value] of Object.entries(style)) {
+    realNode.style.cssText = style;
+  } else if (style !== null && typeof style === 'object') {
+    const styleObj = style as Record<string, string | number>;
+    for (const [key, val] of Object.entries(styleObj)) {
       // FIX: P1-54 使用 style.setProperty 替代直接属性赋值，
       // 确保连字符 CSS 属性名（如 background-color）能正确设置
       // FIX: P2-45 对数值类型的 CSS 属性自动添加 px 单位
       let finalValue: string;
-      if (typeof value === 'number' && isNumericStyleProperty(key)) {
-        finalValue = `${value}px`;
+      const unwrappedVal = unwrapValue(val);
+      if (typeof unwrappedVal === 'number' && isNumericStyleProperty(key)) {
+        finalValue = `${unwrappedVal}px`;
       } else {
-        finalValue = String(value);
+        finalValue = String(unwrappedVal);
       }
-      htmlEl.style.setProperty(key, finalValue);
+      realNode.style.setProperty(key, finalValue);
     }
   }
 }
@@ -363,29 +431,57 @@ export function setStyle(el: Element, style: string | Record<string, string | nu
 /**
  * 设置元素的 class
  */
-export function setClass(el: Element, value: string): void {
+export function setClass(el: unknown, value: unknown): void {
   if (!isBrowser) return;
-  el.setAttribute('class', value);
+  const realNode = getRealNode(el) as Element;
+  const realValue = unwrapValue(value);
+  realNode.setAttribute('class', String(realValue));
 }
 
 /**
  * 切换元素的 class
  */
-export function toggleClass(el: Element, className: string, force?: boolean): void {
+export function toggleClass(el: unknown, className: string, force?: boolean): void {
   if (!isBrowser) return;
-  const htmlEl = el as HTMLElement;
-  htmlEl.classList.toggle(className, force);
+  const realNode = getRealNode(el) as HTMLElement;
+  realNode.classList.toggle(className, force);
 }
 
 // FIX: P2-45 需要单位的 CSS 属性列表
 const NUMERIC_STYLE_PROPERTIES = new Set([
-  'width', 'height', 'top', 'right', 'bottom', 'left',
-  'margin', 'margin-top', 'margin-right', 'margin-bottom', 'margin-left',
-  'padding', 'padding-top', 'padding-right', 'padding-bottom', 'padding-left',
-  'border-width', 'border-top-width', 'border-right-width', 'border-bottom-width', 'border-left-width',
-  'font-size', 'line-height', 'letter-spacing', 'word-spacing',
-  'min-width', 'max-width', 'min-height', 'max-height',
-  'outline-width', 'column-width', 'column-gap', 'row-gap',
+  'width',
+  'height',
+  'top',
+  'right',
+  'bottom',
+  'left',
+  'margin',
+  'margin-top',
+  'margin-right',
+  'margin-bottom',
+  'margin-left',
+  'padding',
+  'padding-top',
+  'padding-right',
+  'padding-bottom',
+  'padding-left',
+  'border-width',
+  'border-top-width',
+  'border-right-width',
+  'border-bottom-width',
+  'border-left-width',
+  'font-size',
+  'line-height',
+  'letter-spacing',
+  'word-spacing',
+  'min-width',
+  'max-width',
+  'min-height',
+  'max-height',
+  'outline-width',
+  'column-width',
+  'column-gap',
+  'row-gap',
 ]);
 
 function isNumericStyleProperty(prop: string): boolean {
@@ -501,9 +597,10 @@ export function reconcileArray<T>(
   // 通过遍历 parent.childNodes 中 ref 之前的节点
   // 使用 WeakMap 存储节点的 reconcile key，避免污染 DOM 元素属性空间
   const childNodes = parent.childNodes;
-  let endIdx = ref != null
-    ? Array.from(childNodes as ArrayLike<ChildNode>).indexOf(ref as ChildNode)
-    : childNodes.length;
+  let endIdx =
+    ref != null
+      ? Array.from(childNodes as ArrayLike<ChildNode>).indexOf(ref as ChildNode)
+      : childNodes.length;
 
   // 当 ref 不在 parent 中时，回退到 childNodes.length（等同于 ref 为 null 的行为）
   // FIX: P1-52 添加 DEV 警告，提醒开发者 ref 不在 parent 中可能是逻辑错误
@@ -511,7 +608,7 @@ export function reconcileArray<T>(
     if (__DEV__) {
       console.warn(
         '[lytjs/dom-runtime] reconcileArray: ref node is not a child of parent. ' +
-        'Falling back to appending at the end.',
+          'Falling back to appending at the end.',
       );
     }
     endIdx = childNodes.length;
@@ -539,7 +636,7 @@ export function reconcileArray<T>(
       if (seenKeys.has(key)) {
         console.warn(
           `[lytjs/dom-runtime] Duplicate key "${String(key)}" detected in reconcileArray at index ${i}. ` +
-          `This may cause unexpected behavior.`,
+            `This may cause unexpected behavior.`,
         );
       }
       seenKeys.add(key);

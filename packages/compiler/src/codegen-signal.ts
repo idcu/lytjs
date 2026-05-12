@@ -1,7 +1,6 @@
 // src/codegen-signal.ts
 // Signal 模式代码生成器 - 生成 effect() + DOM 操作代码
 
-
 import { NodeTypes } from './constants';
 import type {
   RootNode,
@@ -123,10 +122,7 @@ function serializeStaticHTML(
 // 主生成函数
 // ============================================================
 
-export function generateSignal(
-  ast: RootNode,
-  _options?: CompilerOptions,
-): CodegenResult {
+export function generateSignal(ast: RootNode, _options?: CompilerOptions): CodegenResult {
   const lines: string[] = [];
   const varCounter = new Map<string, number>();
   const elementVars: Array<{ varName: string; tag: string }> = [];
@@ -138,20 +134,20 @@ export function generateSignal(
   // ---- Phase 0: 检查根节点数量 ----
   // FIX: P1-L3 模板根节点多个元素未报错 - 在编译时检测并报错
   const rootElementCount = ast.children.filter(
-    child => child.type === NodeTypes.ELEMENT || child.type === NodeTypes.VNODE_CALL
+    (child) => child.type === NodeTypes.ELEMENT || child.type === NodeTypes.VNODE_CALL,
   ).length;
   if (rootElementCount > 1) {
     throw new Error(
       `[lytjs/compiler] Template has multiple root elements (${rootElementCount}). ` +
-      `Signal mode requires a single root element. ` +
-      `Wrap your template content in a single parent element, e.g., <div>...</div>.`
+        `Signal mode requires a single root element. ` +
+        `Wrap your template content in a single parent element, e.g., <div>...</div>.`,
     );
   }
 
   // ---- Phase 1: Generate imports ----
   // FIX: P1-13 添加 runCleanups 到 import 列表
   lines.push(
-    `import { effect } from '@lytjs/reactivity';`,
+    `import { effect, reconcileArray } from '@lytjs/reactivity';`,
     `import { createTemplate, setText, setHTML, setAttribute, setProperty, setStyle, setClass, insert, remove, createEventHandler, onCleanup, runCleanups, reconcileArray } from '@lytjs/dom-runtime';`,
   );
   lines.push('');
@@ -239,13 +235,7 @@ function processChildren(
 ): void {
   for (const child of children) {
     if (child.type === NodeTypes.ELEMENT) {
-      processElement(
-        child as ElementNode,
-        varCounter,
-        elementVars,
-        dynamicBindings,
-        consumedCount,
-      );
+      processElement(child as ElementNode, varCounter, elementVars, dynamicBindings, consumedCount);
     } else if (child.type === NodeTypes.JS_CONDITIONAL_EXPRESSION) {
       processConditional(
         child as JSConditionalExpression,
@@ -256,12 +246,7 @@ function processChildren(
         consumedCount,
       );
     } else if (child.type === NodeTypes.JS_CALL_EXPRESSION) {
-      processCallExpression(
-        child as JSCallExpression,
-        varCounter,
-        elementVars,
-        dynamicBindings,
-      );
+      processCallExpression(child as JSCallExpression, varCounter, elementVars, dynamicBindings);
     }
     // 根级别的 TextNode、CommentNode、InterpolationNode 已处理
     // by the static HTML generation
@@ -310,12 +295,7 @@ function processElement(
           }
         }
       }
-      processDirective(
-        dir,
-        varName,
-        node.tag,
-        dynamicBindings,
-      );
+      processDirective(dir, varName, node.tag, dynamicBindings);
     }
   }
 
@@ -335,7 +315,7 @@ function processElement(
         if (__DEV__) {
           console.warn(
             `[lytjs/compiler] Invalid interpolation expression: "${exp}". ` +
-            `Only simple property access paths are supported in signal mode.`,
+              `Only simple property access paths are supported in signal mode.`,
           );
         }
         continue;
@@ -345,13 +325,7 @@ function processElement(
         code: `effect(() => setText(${varName}, _ctx.${exp}));`,
       });
     } else if (child.type === NodeTypes.ELEMENT) {
-      processElement(
-        child as ElementNode,
-        varCounter,
-        elementVars,
-        dynamicBindings,
-        consumedCount,
-      );
+      processElement(child as ElementNode, varCounter, elementVars, dynamicBindings, consumedCount);
     } else if (child.type === NodeTypes.JS_CONDITIONAL_EXPRESSION) {
       processConditional(
         child as JSConditionalExpression,
@@ -379,7 +353,11 @@ function processElement(
 
 function createSimpleExpressionFor(
   content: string,
-  _loc?: { start: { line: number; column: number; offset: number }; end: { line: number; column: number; offset: number }; source: string },
+  _loc?: {
+    start: { line: number; column: number; offset: number };
+    end: { line: number; column: number; offset: number };
+    source: string;
+  },
 ): SimpleExpressionNode {
   return {
     type: NodeTypes.SIMPLE_EXPRESSION,
@@ -475,7 +453,9 @@ const VALID_COMPONENT_NAME = /^[a-zA-Z][a-zA-Z0-9-]*$/;
 function validateExpression(exp: string | undefined, context: string): void {
   if (!exp) return;
   if (!VALID_EXPRESSION.test(exp)) {
-    throw new Error(`[lytjs/compiler] Invalid expression in ${context}: "${exp}". Only simple property access paths are allowed.`);
+    throw new Error(
+      `[lytjs/compiler] Invalid expression in ${context}: "${exp}". Only simple property access paths are allowed.`,
+    );
   }
 }
 
@@ -483,7 +463,9 @@ function validateArgContent(arg: string | undefined): void {
   if (!arg) return;
   // 额外检查单引号，防止破坏生成的字符串字面量
   if (arg.includes("'")) {
-    throw new Error(`[lytjs/compiler] Invalid argument: "${arg}". Single quotes are not allowed in directive arguments.`);
+    throw new Error(
+      `[lytjs/compiler] Invalid argument: "${arg}". Single quotes are not allowed in directive arguments.`,
+    );
   }
 }
 
@@ -491,7 +473,9 @@ function validateArgContent(arg: string | undefined): void {
 function validateAttributeName(name: string | undefined, context: string): void {
   if (!name) return;
   if (!VALID_ATTRIBUTE_NAME.test(name)) {
-    throw new Error(`[lytjs/compiler] Invalid attribute name in ${context}: "${name}". Only alphanumeric characters, hyphens, and colons are allowed.`);
+    throw new Error(
+      `[lytjs/compiler] Invalid attribute name in ${context}: "${name}". Only alphanumeric characters, hyphens, and colons are allowed.`,
+    );
   }
 }
 
@@ -499,7 +483,9 @@ function validateAttributeName(name: string | undefined, context: string): void 
 function validateEventName(name: string | undefined, context: string): void {
   if (!name) return;
   if (!VALID_EVENT_NAME.test(name)) {
-    throw new Error(`[lytjs/compiler] Invalid event name in ${context}: "${name}". Only alphanumeric characters and hyphens are allowed.`);
+    throw new Error(
+      `[lytjs/compiler] Invalid event name in ${context}: "${name}". Only alphanumeric characters and hyphens are allowed.`,
+    );
   }
 }
 
@@ -507,7 +493,9 @@ function validateEventName(name: string | undefined, context: string): void {
 function validateComponentName(name: string | undefined, context: string): void {
   if (!name) return;
   if (!VALID_COMPONENT_NAME.test(name)) {
-    throw new Error(`[lytjs/compiler] Invalid component name in ${context}: "${name}". Only alphanumeric characters and hyphens are allowed.`);
+    throw new Error(
+      `[lytjs/compiler] Invalid component name in ${context}: "${name}". Only alphanumeric characters and hyphens are allowed.`,
+    );
   }
 }
 
@@ -516,7 +504,9 @@ function validateIslandDirective(exp: string | undefined, context: string): void
   if (!exp) return;
   // v-island 指令只允许简单的布尔表达式或属性访问
   if (!VALID_EXPRESSION.test(exp) && exp !== 'true' && exp !== 'false') {
-    throw new Error(`[lytjs/compiler] Invalid v-island expression in ${context}: "${exp}". Only simple property access or boolean literals are allowed.`);
+    throw new Error(
+      `[lytjs/compiler] Invalid v-island expression in ${context}: "${exp}". Only simple property access or boolean literals are allowed.`,
+    );
   }
 }
 
@@ -715,7 +705,7 @@ function processConditional(
   if (!testExpr || testExpr.trim() === '') {
     throw new Error(
       `[lytjs/compiler] v-if/v-else-if condition is empty or invalid. ` +
-      `Ensure the directive has a valid expression, e.g., v-if="condition" or v-else-if="condition".`
+        `Ensure the directive has a valid expression, e.g., v-if="condition" or v-else-if="condition".`,
     );
   }
 
@@ -946,7 +936,6 @@ function processCallExpression(
 
   // RENDER_LIST 是 v-for 转换后的 callee
   if (callee === 'RENDER_LIST' || callee === 'renderList') {
-
     // 提取迭代源和渲染函数
     const sourceExpr = node.arguments[0];
     const renderFn = node.arguments[1];
@@ -973,10 +962,7 @@ function processCallExpression(
         }
         // 后续子节点是 VNodeCall，提取 tag 和 children
         for (const child of compound.children) {
-          if (
-            typeof child !== 'string' &&
-            child.type === NodeTypes.VNODE_CALL
-          ) {
+          if (typeof child !== 'string' && child.type === NodeTypes.VNODE_CALL) {
             const vnode = child as VNodeCall;
             const tagInfo = extractTagFromVNode(vnode);
             if (tagInfo) {
@@ -986,7 +972,9 @@ function processCallExpression(
               if (vnode.children) {
                 if (typeof vnode.children === 'string') {
                   // FIX: P2-batch1-9 对文本内容进行转义，防止单引号破坏生成代码
-                  const escapedChildren = vnode.children.replace(/'/g, "\\'").replace(/\\/g, '\\\\');
+                  const escapedChildren = vnode.children
+                    .replace(/'/g, "\\'")
+                    .replace(/\\/g, '\\\\');
                   createBody += `\n      setText(${tagInfo.varName}, '${escapedChildren}');`;
                 } else if (
                   vnode.children &&
@@ -1003,13 +991,8 @@ function processCallExpression(
                 ) {
                   const callExpr = vnode.children as JSCallExpression;
                   const callCallee =
-                    typeof callExpr.callee === 'string'
-                      ? callExpr.callee
-                      : String(callExpr.callee);
-                  if (
-                    callCallee === 'TO_DISPLAY_STRING' ||
-                    callCallee === 'toDisplayString'
-                  ) {
+                    typeof callExpr.callee === 'string' ? callExpr.callee : String(callExpr.callee);
+                  if (callCallee === 'TO_DISPLAY_STRING' || callCallee === 'toDisplayString') {
                     const arg = callExpr.arguments[0];
                     if (
                       arg &&
@@ -1038,15 +1021,9 @@ function processCallExpression(
       if (renderFn.type === NodeTypes.COMPOUND_EXPRESSION) {
         const compound = renderFn as CompoundExpressionNode;
         for (const child of compound.children) {
-          if (
-            typeof child !== 'string' &&
-            child.type === NodeTypes.VNODE_CALL
-          ) {
+          if (typeof child !== 'string' && child.type === NodeTypes.VNODE_CALL) {
             const vnode = child as VNodeCall;
-            if (
-              vnode.props &&
-              vnode.props.type === NodeTypes.JS_OBJECT_EXPRESSION
-            ) {
+            if (vnode.props && vnode.props.type === NodeTypes.JS_OBJECT_EXPRESSION) {
               const objExpr = vnode.props as JSObjectExpression;
               for (const prop of objExpr.properties) {
                 if (prop.type === NodeTypes.JS_PROPERTY) {
@@ -1083,9 +1060,9 @@ function processCallExpression(
       if (__DEV__) {
         console.warn(
           `[lytjs/compiler] v-for is missing a "key" attribute. ` +
-          `This may cause performance issues and incorrect DOM updates. ` +
-          `Add a unique :key binding to the v-for element, e.g., :key="item.id" or :key="index". ` +
-          `See: https://lytjs.dev/guide/template-syntax.html#v-for-key`
+            `This may cause performance issues and incorrect DOM updates. ` +
+            `Add a unique :key binding to the v-for element, e.g., :key="item.id" or :key="index". ` +
+            `See: https://lytjs.dev/guide/template-syntax.html#v-for-key`,
         );
       }
     }
@@ -1106,9 +1083,7 @@ function processCallExpression(
 // Helper: 从 VNodeCall 提取标签信息
 // ============================================================
 
-function extractTagFromVNode(
-  vnode: VNodeCall,
-): { tag: string; varName: string } | null {
+function extractTagFromVNode(vnode: VNodeCall): { tag: string; varName: string } | null {
   if (typeof vnode.tag === 'string') {
     // 去掉引号
     const tag = vnode.tag.replace(/^"|"$/g, '');
@@ -1188,12 +1163,8 @@ function extractChildrenText(
       vnode.children.type === NodeTypes.JS_CALL_EXPRESSION
     ) {
       const call = vnode.children as JSCallExpression;
-      const callee =
-        typeof call.callee === 'string' ? call.callee : String(call.callee);
-      if (
-        callee === 'TO_DISPLAY_STRING' ||
-        callee === 'toDisplayString'
-      ) {
+      const callee = typeof call.callee === 'string' ? call.callee : String(call.callee);
+      if (callee === 'TO_DISPLAY_STRING' || callee === 'toDisplayString') {
         const arg = call.arguments[0];
         if (
           arg &&
@@ -1223,13 +1194,7 @@ function processBranchDynamics(
   if (!branch || typeof branch === 'string') return;
   if (Array.isArray(branch)) {
     for (const item of branch) {
-      processBranchDynamics(
-        item,
-        _parentVar,
-        varCounter,
-        elementVars,
-        dynamicBindings,
-      );
+      processBranchDynamics(item, _parentVar, varCounter, elementVars, dynamicBindings);
     }
     return;
   }
@@ -1244,10 +1209,7 @@ function processBranchDynamics(
             jsProp.key.type === NodeTypes.SIMPLE_EXPRESSION &&
             jsProp.value.type === NodeTypes.SIMPLE_EXPRESSION
           ) {
-            const key = (jsProp.key as SimpleExpressionNode).content.replace(
-              /^"|"$/g,
-              '',
-            );
+            const key = (jsProp.key as SimpleExpressionNode).content.replace(/^"|"$/g, '');
             const value = (jsProp.value as SimpleExpressionNode).content;
             // 处理 :class, :style, 其他属性绑定
             if (key === 'class') {

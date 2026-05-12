@@ -78,7 +78,7 @@ export interface SignalCodegenOptions {
 export function generateSignalOptimized(ast: RootNode, _options?: CompilerOptions): CodegenResult {
   const options: SignalCodegenOptions = {
     mode: 'signal',
-    useShortNames: true,
+    useShortNames: false, // 禁用短别名，与 signal-renderer 完全兼容
     inlineSimpleExpressions: true,
   };
 
@@ -121,16 +121,22 @@ export function generateSignalOptimized(ast: RootNode, _options?: CompilerOption
   );
 
   // ---- Phase 3: Generate optimized imports ----
+  // 手动添加必须的 runtime 函数
+  usedRuntime.add('createTemplate');
+  usedRuntime.add('insert');
+  usedRuntime.add('onCleanup');
+  usedRuntime.add('runCleanups');
+
   lines.push(generateOptimizedImports(usedRuntime, options.useShortNames ?? false));
   lines.push('');
 
   // ---- Phase 4: Generate render function ----
-  lines.push('export function render(_c,_n){');
+  lines.push('export function render(_ctx, _container){');
 
   // 生成 createTemplate 调用
   if (elementVars.length > 0) {
     const rootVar = elementVars[0]!.varName;
-    lines.push(`const ${rootVar}=t(${JSON.stringify(staticHTML)});`);
+    lines.push(`const ${rootVar}=createTemplate(${JSON.stringify(staticHTML)});`);
 
     // 解构子元素 - 优化：只有需要时才解构
     if (elementVars.length > 1) {
@@ -138,7 +144,7 @@ export function generateSignalOptimized(ast: RootNode, _options?: CompilerOption
       lines.push(`const[${childVars.join(',')}]=${rootVar}.children;`);
     }
 
-    lines.push(`i(${rootVar},_n);`);
+    lines.push(`insert(${rootVar}, _container);`);
     lines.push('');
   }
 
@@ -149,10 +155,10 @@ export function generateSignalOptimized(ast: RootNode, _options?: CompilerOption
   if (elementVars.length > 0) {
     const rootVar = elementVars[0]!.varName;
     lines.push('');
-    lines.push(`o(()=>${rootVar}.remove());`);
+    lines.push(`onCleanup(()=>${rootVar}.remove());`);
   }
 
-  lines.push('return()=>{g()};');
+  lines.push('return()=>{runCleanups()};');
   lines.push('}');
 
   return {
@@ -236,15 +242,15 @@ function generateOptimizedBindings(
   // 为每个元素生成合并的绑定代码
   for (const [_varName, bindings] of bindingsByElement) {
     // 检查是否可以合并 effect
-    const effectBindings = bindings.filter((b) => b.startsWith('e('));
-    const otherBindings = bindings.filter((b) => !b.startsWith('e('));
+    const effectBindings = bindings.filter((b) => b.startsWith('effect('));
+    const otherBindings = bindings.filter((b) => !b.startsWith('effect('));
 
     // 合并多个 effect 为单个 effect
     if (effectBindings.length > 1) {
       const effectContents = effectBindings
-        .map((b) => b.match(/e\(\(\)=>\{(.+)\}\);/)?.[1] || b)
+        .map((b) => b.match(/effect\(\(\)=>\{(.+)\}\);/)?.[1] || b)
         .join('');
-      lines.push(`e(()=>{${effectContents}});`);
+      lines.push(`effect(()=>{${effectContents}});`);
     } else if (effectBindings.length === 1) {
       lines.push(effectBindings[0]!);
     }
@@ -430,14 +436,14 @@ function processElementOptimized(
         usedRuntime.add('setText');
         dynamicBindings.push({
           varName,
-          code: `e(()=>x(${varName},_c.${exp}));`,
+          code: `effect(()=>setText(${varName},_ctx.${exp}));`,
         });
       } else {
         usedRuntime.add('effect');
         usedRuntime.add('setText');
         dynamicBindings.push({
           varName,
-          code: `e(()=>x(${varName},_c.${exp}));`,
+          code: `effect(()=>setText(${varName},_ctx.${exp}));`,
         });
       }
     } else if (child.type === NodeTypes.ELEMENT) {
@@ -537,7 +543,7 @@ function processDirectiveOptimized(
         usedRuntime.add('remove');
         dynamicBindings.push({
           varName,
-          code: `let _f=null;e(()=>{if(_c.${expContent}){if(!_f){_f=${varName};i(_f,_n);}}else{if(_f){r(_f);_f=null;}}});`,
+          code: `let _f=null;effect(()=>{if(_ctx.${expContent}){if(!_f){_f=${varName};insert(_f, _container);}}else{if(_f){remove(_f);_f=null;}}});`,
         });
       }
       break;
@@ -548,7 +554,7 @@ function processDirectiveOptimized(
         usedRuntime.add('effect');
         dynamicBindings.push({
           varName,
-          code: `e(()=>{${varName}.style.display=_c.${expContent}?'':'none';});`,
+          code: `effect(()=>{${varName}.style.display=_ctx.${expContent}?'':'none';});`,
         });
       }
       break;
@@ -560,7 +566,7 @@ function processDirectiveOptimized(
         usedRuntime.add('setText');
         dynamicBindings.push({
           varName,
-          code: `e(()=>x(${varName},_c.${expContent}));`,
+          code: `effect(()=>setText(${varName},_ctx.${expContent}));`,
         });
       }
       break;
@@ -572,7 +578,7 @@ function processDirectiveOptimized(
         usedRuntime.add('setHTML');
         dynamicBindings.push({
           varName,
-          code: `e(()=>h(${varName},_c.${expContent}));`,
+          code: `effect(()=>setHTML(${varName},_ctx.${expContent}));`,
         });
       }
       break;
@@ -585,19 +591,19 @@ function processDirectiveOptimized(
           usedRuntime.add('setClass');
           dynamicBindings.push({
             varName,
-            code: `e(()=>c(${varName},_c.${expContent}));`,
+            code: `effect(()=>setClass(${varName},_ctx.${expContent}));`,
           });
         } else if (argContent === 'style') {
           usedRuntime.add('setStyle');
           dynamicBindings.push({
             varName,
-            code: `e(()=>s(${varName},_c.${expContent}));`,
+            code: `effect(()=>setStyle(${varName},_ctx.${expContent}));`,
           });
         } else {
           usedRuntime.add('setAttribute');
           dynamicBindings.push({
             varName,
-            code: `e(()=>a(${varName},'${argContent}',_c.${expContent}));`,
+            code: `effect(()=>setAttribute(${varName},'${argContent}',_ctx.${expContent}));`,
           });
         }
       }
@@ -612,12 +618,12 @@ function processDirectiveOptimized(
           const mods = dir.modifiers.map((m) => `${m}:1`).join(',');
           dynamicBindings.push({
             varName,
-            code: `o(v(${varName},'${argContent}',_c.${expContent},{${mods}}));`,
+            code: `onCleanup(createEventHandler(${varName},'${argContent}',_ctx.${expContent},{${mods}}));`,
           });
         } else {
           dynamicBindings.push({
             varName,
-            code: `o(v(${varName},'${argContent}',_c.${expContent}));`,
+            code: `onCleanup(createEventHandler(${varName},'${argContent}',_ctx.${expContent}));`,
           });
         }
       }
@@ -656,11 +662,11 @@ function processDirectiveOptimized(
 
         dynamicBindings.push({
           varName,
-          code: `e(()=>{${varName}.value=_c.${expContent};});`,
+          code: `effect(()=>{${varName}.value=_ctx.${expContent};});`,
         });
         dynamicBindings.push({
           varName,
-          code: `o(v(${varName},'${eventName}',($e)=>{_c.${expContent}=${setValueExpr};}));`,
+          code: `onCleanup(createEventHandler(${varName},'${eventName}',($e)=>{_ctx.${expContent}=${setValueExpr};}));`,
         });
       }
       break;
@@ -700,14 +706,14 @@ function processVNodeCallPropsOptimized(
       usedRuntime.add('setText');
       dynamicBindings.push({
         varName,
-        code: `e(()=>x(${varName},${value}));`,
+        code: `effect(()=>setText(${varName},${value}));`,
       });
     } else if (key === 'innerHTML') {
       usedRuntime.add('effect');
       usedRuntime.add('setHTML');
       dynamicBindings.push({
         varName,
-        code: `e(()=>h(${varName},${value}));`,
+        code: `effect(()=>setHTML(${varName},${value}));`,
       });
     }
   }
@@ -765,13 +771,13 @@ function processConditionalOptimized(
   usedRuntime.add('insert');
   usedRuntime.add('remove');
 
-  const containerVar = parentVar ?? '_n';
+  const containerVar = parentVar ?? '_container';
   const ifDepth = varCounter.get('_if_depth') ?? 0;
   const ifVarName = `_i${varCounter.get(`_if_${ifDepth}`) ?? 0}`;
   varCounter.set(`_if_${ifDepth}`, (varCounter.get(`_if_${ifDepth}`) ?? 0) + 1);
   varCounter.set('_if_depth', ifDepth + 1);
 
-  let code = `let ${ifVarName}El=null,${ifVarName}Idx=-1;e(()=>{`;
+  let code = `let ${ifVarName}El=null,${ifVarName}Idx=-1;effect(()=>{`;
   const branchHTMLs: string[] = [];
 
   for (let i = 0; i < branches.length; i++) {
@@ -781,20 +787,20 @@ function processConditionalOptimized(
 
     if (i > 0) code += 'else ';
     if (branchInfo.condition !== null) {
-      code += `if(_c.${branchInfo.condition})`;
+      code += `if(_ctx.${branchInfo.condition})`;
     }
     code += `{if(${ifVarName}Idx!==${i}){`;
     if (i === 0) {
-      code += `if(${ifVarName}El){r(${ifVarName}El);${ifVarName}El=null;}`;
+      code += `if(${ifVarName}El){remove(${ifVarName}El);${ifVarName}El=null;}`;
     }
-    code += `${ifVarName}El=t(${JSON.stringify(branchHTML)}).firstElementChild;`;
+    code += `${ifVarName}El=createTemplate(${JSON.stringify(branchHTML)}).firstElementChild;`;
     code += `if(!${ifVarName}El)${ifVarName}El=document.createComment('');`;
-    code += `i(${ifVarName}El,${containerVar});`;
+    code += `insert(${ifVarName}El,${containerVar});`;
     code += `${ifVarName}Idx=${i};`;
     code += `}}`;
   }
 
-  code += `else{if(${ifVarName}El){r(${ifVarName}El);${ifVarName}El=null;${ifVarName}Idx=-1;}}`;
+  code += `else{if(${ifVarName}El){remove(${ifVarName}El);${ifVarName}El=null;${ifVarName}Idx=-1;}}`;
   code += '});';
 
   dynamicBindings.push({ varName: containerVar, code });
@@ -866,14 +872,14 @@ function processCallExpressionOptimized(
     }
 
     keyExpr = `${itemVar}.id`;
-    const containerVar = parentVar ?? '_n';
+    const containerVar = parentVar ?? '_container';
 
     usedRuntime.add('effect');
     usedRuntime.add('reconcileArray');
 
     dynamicBindings.push({
       varName: containerVar,
-      code: `e(()=>n(${containerVar},_c.${source},{key:(${itemVar})=>${keyExpr},create:(${itemVar})=>{${createBody}}}));`,
+      code: `effect(()=>reconcileArray(${containerVar},_ctx.${source},{key:(${itemVar})=>${keyExpr},create:(${itemVar})=>{${createBody}}}));`,
     });
   }
 }
