@@ -559,13 +559,60 @@ LytJS v6.0 有优秀的架构基础，下一步重点是:
 3. ✅ **完善测试** - 测试覆盖率显著提升（reactivity/vdom/compiler/core/renderer 核心模块累计约 450+ 个用例）
 4. ✅ **完善文档** - 中文文档全面完善（reactivity/vdom/compiler/core 文档含详细示例和 API 说明）
 5. ✅ **性能优化** - 性能基准测试建立（reactivity/vdom/render/update/memory 多维度测试）
-6. ✅ **工具完善** - CLI 工具代码质量和类型定义良好
+6. ✅ **工具完善** - CLI 工具代码质量和类型定义良好，pnpm 构建问题已解决
 7. 🌱 **社区建设** - 吸引贡献者，扩大影响力
 
 通过有计划的分阶段实施，LytJS 有潜力成为一流的前端框架！
 
 ---
 
-**文档版本**: v1.0
-**最后更新**: 2026-05-12
+## 附录：常见问题解决方案
+
+### pnpm 构建脚本错误
+
+**问题描述**:
+```
+[ERR_PNPM_IGNORED_BUILDS] Ignored build scripts: esbuild@0.21.5, esbuild@0.25.12, ...
+Run "pnpm approve-builds" to pick which dependencies should be allowed to run scripts.
+```
+
+**原因分析**:
+pnpm 11.x 引入了更严格的构建脚本安全检查机制。在 monorepo 子目录中运行 `pnpm` 命令时，会触发 workspace 依赖状态检查，导致构建失败。
+
+**解决方案**:
+
+1. **方案一（推荐）**: 使用 `CI=true` 环境变量跳过交互式检查
+   ```bash
+   cd packages/tools/packages/cli
+   CI=true npx tsup
+   ```
+
+2. **方案二**: 在项目根目录执行构建命令
+   ```bash
+   # 在根目录执行，避免子目录的依赖检查
+   pnpm --filter @lytjs/cli build
+   ```
+
+3. **方案三**: 在 package.json 中预设 CI 环境变量
+   ```json
+   {
+     "scripts": {
+       "build": "CI=true npx tsup"
+     }
+   }
+   ```
+
+**适用范围**:
+- 所有使用 pnpm 11.x 的 monorepo 项目
+- 需要在子目录独立构建的场景
+- CI/CD 流水线中的构建步骤
+
+**相关文档**:
+- [pnpm 构建脚本安全策略](https://pnpm.io/cli/install#ignore-scripts)
+- [tsup 构建配置](https://tsup.egoist.dev/)
+
+---
+
+**文档版本**: v1.1
+**最后更新**: 2026-05-13
 **维护者**: LytJS Team

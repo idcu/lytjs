@@ -29,7 +29,9 @@ describe('Fragment - vnode creation', () => {
     const vnode = createFragment(children);
     expect(vnode.type).toBe(Fragment);
     expect(vnode.__v_isVNode).toBe(true);
-    expect(vnode.children).toBe(children);
+    // createFragment 会扁平化 children，返回新数组
+    expect(vnode.children).toEqual(children);
+    expect((vnode.children as any[]).length).toBe(2);
   });
 });
 
@@ -44,7 +46,8 @@ describe('Fragment - helpers', () => {
   it('getFragmentChildren should return children array', () => {
     const children = [createVNode('div'), createVNode('span')];
     const frag = createVNode(Fragment, null, children);
-    expect(getFragmentChildren(frag)).toBe(children);
+    // getFragmentChildren 会扁平化，返回新数组
+    expect(getFragmentChildren(frag)).toEqual(children);
     expect(getFragmentChildren(frag).length).toBe(2);
   });
 

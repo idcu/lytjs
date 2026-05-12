@@ -93,7 +93,10 @@ export function setTransitionPrefix(prefix: string): void {
  * key: RendererHost 实例的 WeakMap key
  * value: TransitionEngine 实例
  */
-const engineCache = new WeakMap<RendererHost<any, any>, TransitionEngine<any, any>>();
+const engineCache = new WeakMap<
+  RendererHost<object, object>,
+  TransitionEngine<object, object>
+>();
 
 /**
  * 获取或创建指定 host 的 TransitionEngine 实例。

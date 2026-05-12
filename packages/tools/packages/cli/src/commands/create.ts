@@ -44,7 +44,7 @@ export async function create(projectName: string, options: Partial<CreateOptions
   try {
     execSync(getInstallCommand(pm), { cwd: targetDir, stdio: 'inherit' });
     logger.success('Dependencies installed successfully!');
-  } catch (error) {
+  } catch (_error) {
     logger.warning('Failed to install dependencies automatically.');
     logger.info(`Please run "${getInstallCommand(pm)}" manually.`);
   }
@@ -65,8 +65,17 @@ function generateProjectFiles(targetDir: string, projectName: string, template: 
   const isMinimal = template === 'minimal';
   const isSsr = template === 'ssr';
 
-  // package.json
-  const packageJson: Record<string, any> = {
+  // package.json - use explicit type to allow property access
+  interface PackageJsonTemplate {
+    name: string;
+    version: string;
+    type: string;
+    scripts: Record<string, string>;
+    dependencies: Record<string, string>;
+    devDependencies: Record<string, string>;
+  }
+
+  const packageJson: PackageJsonTemplate = {
     name: projectName,
     version: '0.0.0',
     type: 'module',

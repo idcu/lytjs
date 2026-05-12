@@ -306,22 +306,47 @@ export function createRenderer<HN, HE extends HN>(
   ctx.getVNodeEl = getVNodeEl;
 
   // ============================================================
+  // 预定义转发函数供子模块使用（解决循环依赖）
+  // 使用可变引用来延迟绑定实际的实现
+  // ============================================================
+
+  let _patchImpl: typeof ctx.patch | null = null;
+  let _unmountImpl: typeof ctx.unmount | null = null;
+  let _moveImpl: typeof ctx.move | null = null;
+
+  ctx.patch = (...args) => {
+    if (!_patchImpl) throw new Error('patch not initialized');
+    return _patchImpl(...args);
+  };
+  ctx.unmount = (...args) => {
+    if (!_unmountImpl) throw new Error('unmount not initialized');
+    return _unmountImpl(...args);
+  };
+  ctx.move = (...args) => {
+    if (!_moveImpl) throw new Error('move not initialized');
+    return _moveImpl(...args);
+  };
+
+  // ============================================================
   // 创建子模块 API
   // ============================================================
 
+  // 首先创建 children patch API（因为它被其他模块依赖）
   const childrenAPI = createChildrenPatch<HN, HE>(ctx);
-  const elementAPI = createElementPatch<HN, HE>(ctx);
-  const componentAPI = createComponentPatch<HN, HE>(ctx);
-  const fragmentAPI = createFragmentPatch<HN, HE>(ctx);
-  const teleportAPI = createTeleportPatch<HN, HE>(ctx);
-  const suspenseAPI = createSuspensePatch<HN, HE>(ctx);
 
-  // 将 children 辅助函数注入上下文
+  // 立即将 children 辅助函数注入上下文，供后续模块使用
   ctx.mountChildren = childrenAPI.mountChildren;
   ctx.unmountChildren = childrenAPI.unmountChildren;
   ctx.patchChildren = childrenAPI.patchChildren;
   ctx.patchBlockChildren = childrenAPI.patchBlockChildren;
   ctx.diffChildrenInternal = childrenAPI.diffChildrenInternal;
+
+  // 现在可以安全地创建其他子模块 API 了
+  const elementAPI = createElementPatch<HN, HE>(ctx);
+  const componentAPI = createComponentPatch<HN, HE>(ctx);
+  const fragmentAPI = createFragmentPatch<HN, HE>(ctx);
+  const teleportAPI = createTeleportPatch<HN, HE>(ctx);
+  const suspenseAPI = createSuspensePatch<HN, HE>(ctx);
 
   // ============================================================
   // patch - 核心 diff 入口
@@ -602,9 +627,10 @@ export function createRenderer<HN, HE extends HN>(
   // （必须在 patch/unmount/move 定义之后执行）
   // ============================================================
 
-  ctx.patch = patch;
-  ctx.unmount = unmount;
-  ctx.move = move;
+  // 设置转发函数的实际实现
+  _patchImpl = patch;
+  _unmountImpl = unmount;
+  _moveImpl = move;
 
   // ============================================================
   // mount

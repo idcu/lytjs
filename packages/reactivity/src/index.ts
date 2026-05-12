@@ -20,6 +20,8 @@ export {
   shallowRef,
   triggerRef,
   isRef,
+  isShallowRef,
+  isComputedRef,
   unref,
   toRef,
   toRefs,

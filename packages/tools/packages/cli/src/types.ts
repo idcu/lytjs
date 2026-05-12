@@ -5,7 +5,7 @@
 export interface CliOptions {
   command: string;
   args: string[];
-  options: Record<string, any>;
+  options: Record<string, unknown>;
 }
 
 export interface CreateOptions {

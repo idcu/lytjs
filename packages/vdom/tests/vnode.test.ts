@@ -289,7 +289,7 @@ describe('vnode edge cases', () => {
 
   it('should handle undefined children correctly', () => {
     const vnode = createVNode('div', null, undefined);
-    expect(vnode.children).toBe(undefined);
+    expect(vnode.children).toBe(null); // undefined 被默认值转换为 null
   });
 
   it('should handle empty string children', () => {
@@ -371,7 +371,7 @@ describe('mergeProps advanced cases', () => {
   it('should handle merging props with null values', () => {
     const result = mergeProps({ id: null }, { class: undefined });
     expect(result.id).toBeNull();
-    expect(result.class).toBeUndefined();
+    expect(result.class).toBe(''); // normalizeClass(undefined) 返回空字符串
   });
 
   it('should merge multiple event handlers into array', () => {

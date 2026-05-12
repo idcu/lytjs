@@ -28,6 +28,7 @@ export default defineConfig({
     '@lytjs/common-error',
     '@lytjs/common-object',
     '@lytjs/common-constants',
+    '@lytjs/common-assertions',
     '@lytjs/shared-types',
     '@lytjs/host-contract',
   ],

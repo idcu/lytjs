@@ -11,6 +11,8 @@ export default defineConfig({
       '@lytjs/common-is': `${commonRoot}/is/dist/index.mjs`,
       '@lytjs/common-scheduler': `${commonRoot}/scheduler/dist/index.mjs`,
       '@lytjs/common-error': `${commonRoot}/error/dist/index.mjs`,
+      '@lytjs/common-constants': `${commonRoot}/constants/dist/index.mjs`,
+      '@lytjs/common-assertions': `${commonRoot}/assertions/dist/index.mjs`,
     },
   },
   test: {

@@ -8,7 +8,7 @@
  * @since 6.0.0
  */
 
-import { isObject, isString, isFunction, isArray, isNumber, isBoolean } from '@lytjs/common-is';
+import { isObject, isString, isFunction, isArray, isNumber } from '@lytjs/common-is';
 
 // ==================== 核心类型断言函数 ====================
 

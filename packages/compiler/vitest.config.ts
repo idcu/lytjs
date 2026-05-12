@@ -11,6 +11,7 @@ export default defineConfig({
       '@lytjs/common-vnode': `${commonRoot}/vnode/dist/index.mjs`,
       '@lytjs/common-string': `${commonRoot}/string/dist/index.mjs`,
       '@lytjs/common-error': `${commonRoot}/error/dist/index.mjs`,
+      '@lytjs/common-constants': `${commonRoot}/constants/dist/index.mjs`,
     },
   },
   define: {

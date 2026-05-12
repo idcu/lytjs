@@ -27,6 +27,7 @@ export async function runCli(rawArgs: string[] = process.argv.slice(2)): Promise
   }
   
   if (options.version || command === 'version' || command === '-v' || command === '--version') {
+    // eslint-disable-next-line no-console
     console.log(`LytJS CLI v${VERSION}`);
     return;
   }
@@ -35,8 +36,8 @@ export async function runCli(rawArgs: string[] = process.argv.slice(2)): Promise
   switch (command) {
     case 'create':
       await create(args[0] || 'my-lytjs-app', {
-        template: options.template,
-        force: options.force,
+        template: options.template as string | undefined,
+        force: options.force as boolean | undefined,
       });
       break;
       
@@ -46,25 +47,25 @@ export async function runCli(rawArgs: string[] = process.argv.slice(2)): Promise
       
     case 'dev':
       await dev({
-        port: options.port ? parseInt(options.port, 10) : undefined,
-        host: options.host,
-        open: options.open,
+        port: options.port ? parseInt(options.port as string, 10) : undefined,
+        host: options.host as string | undefined,
+        open: options.open as boolean | undefined,
       });
       break;
       
     case 'build':
       await build({
-        outDir: options.outDir,
-        ssr: options.ssr,
-        minify: options.minify !== 'false',
+        outDir: options.outDir as string | undefined,
+        ssr: options.ssr as boolean | undefined,
+        minify: (options.minify as string) !== 'false',
       });
       break;
       
     case 'test':
       await test({
-        watch: options.watch !== 'false',
-        coverage: options.coverage,
-        grep: options.grep,
+        watch: (options.watch as string) !== 'false',
+        coverage: options.coverage as boolean | undefined,
+        grep: options.grep as string | undefined,
       });
       break;
 
@@ -75,7 +76,7 @@ export async function runCli(rawArgs: string[] = process.argv.slice(2)): Promise
         process.exit(1);
       }
       await add(args[0] as 'component' | 'page' | 'store', args[1] || 'Unnamed', {
-        force: options.force,
+        force: options.force as boolean | undefined,
       });
       break;
       
@@ -132,6 +133,7 @@ function parseArgs(args: string[]): CliOptions {
  * Show help message
  */
 function showHelp(): void {
+  // eslint-disable-next-line no-console
   console.log(`
 ${logger.bold('LytJS CLI')} v${VERSION}
 

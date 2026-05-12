@@ -247,7 +247,7 @@ describe('computed', () => {
 
     expect(tripled.value).toBe(9); // (1+2)*2 + (1+2) = 6 + 3 = 9
     a.value = 10;
-    expect(tripled.value).toBe(39); // (10+2)*2 + (10+2) = 24 + 12 = 36... 等等
+    expect(tripled.value).toBe(36); // (10+2)*2 + (10+2) = 24 + 12 = 36
   });
 
   it('should track dependencies correctly when used in effects', () => {

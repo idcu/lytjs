@@ -9,6 +9,7 @@
       "@lytjs/common-scheduler": ["../common/packages/scheduler/dist/index.d.ts"],
       "@lytjs/common-env": ["../common/packages/env/dist/index.d.ts"],
       "@lytjs/common-constants": ["../common/packages/constants/dist/index.d.ts"],
+      "@lytjs/common-assertions": ["../common/packages/assertions/dist/index.d.ts"],
       "@lytjs/shared-types": ["../shared-types/dist/index.d.ts"]
     }
   },

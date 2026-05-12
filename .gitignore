@@ -56,3 +56,6 @@ lerna-debug.log*
 
 # AI IDE development files (local only)
 .traesolo.json
+
+# Auto-generated verification reports (local only)
+docs/development/*_VERIFICATION_REPORT.md

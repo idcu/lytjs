@@ -313,6 +313,7 @@ export class ReactiveEffect<T = unknown> {
     newValue?: unknown;
     oldValue?: unknown;
   }) => void;
+  onError?: (error: Error) => void;
   // 运行前清理（onEffectCleanup 注册的）
   _cleanups: Array<() => void> = [];
 
@@ -349,6 +350,12 @@ export class ReactiveEffect<T = unknown> {
       _trackDepth++;
 
       return this.fn();
+    } catch (error) {
+      if (this.onError) {
+        this.onError(error as Error);
+        return undefined;
+      }
+      throw error;
     } finally {
       _trackDepth--;
       activeEffect = this.parent;
@@ -457,6 +464,7 @@ export function effect<T = unknown>(
       newValue?: unknown;
       oldValue?: unknown;
     }) => void;
+    onError?: (error: Error) => void;
   },
 ): ReactiveEffectRunner<T> {
   const _effect = new ReactiveEffect(fn);
@@ -467,6 +475,7 @@ export function effect<T = unknown>(
     _effect.onStop = options.onStop;
     _effect.onTrack = options.onTrack;
     _effect.onTrigger = options.onTrigger;
+    _effect.onError = options.onError;
   }
   if (!options || !options.lazy) {
     _effect.run();

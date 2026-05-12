@@ -16,6 +16,7 @@
       "@lytjs/common-string": ["../common/packages/string/dist/index.d.ts"],
       "@lytjs/common-events": ["../common/packages/events/dist/index.d.ts"],
       "@lytjs/common-error": ["../common/packages/error/dist/index.d.ts"],
+      "@lytjs/common-assertions": ["../common/packages/assertions/dist/index.d.ts"],
       "@lytjs/host-contract": ["../host-contract/dist/index.d.ts"]
     }
   },

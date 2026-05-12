@@ -20,14 +20,17 @@ function colorize(text: string, color: keyof typeof colors): string {
 
 export const logger = {
   info(message: string): void {
+    // eslint-disable-next-line no-console
     console.log(colorize('ℹ ', 'blue') + message);
   },
   
   success(message: string): void {
+    // eslint-disable-next-line no-console
     console.log(colorize('✔ ', 'green') + message);
   },
   
   warning(message: string): void {
+    // eslint-disable-next-line no-console
     console.log(colorize('⚠ ', 'yellow') + message);
   },
   
@@ -36,10 +39,12 @@ export const logger = {
   },
   
   dim(message: string): void {
+    // eslint-disable-next-line no-console
     console.log(colorize(message, 'dim'));
   },
   
   bold(message: string): void {
+    // eslint-disable-next-line no-console
     console.log(colorize(message, 'bright'));
   },
 };

@@ -3,6 +3,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import fs from 'fs';
 import { runCli } from '../src/commands/run';
 import { create, listTemplates } from '../src/commands/create';
 import { add } from '../src/commands/add';
@@ -10,22 +11,31 @@ import { logger } from '../src/utils/logger';
 import { exists, isEmptyDir, ensureDir, writeFile, readFile } from '../src/utils/fs';
 import { detectPackageManager, getInstallCommand, getRunCommand, getAddCommand } from '../src/utils/package';
 
-// Mock fs module
-const mockExistsSync = vi.fn();
-const mockMkdirSync = vi.fn();
-const mockWriteFileSync = vi.fn();
-const mockReadFileSync = vi.fn();
-const mockReaddirSync = vi.fn();
-const mockStatSync = vi.fn();
-
+// Mock fs module - use inline factory to avoid hoisting issues
 vi.mock('fs', () => ({
-  existsSync: mockExistsSync,
-  mkdirSync: mockMkdirSync,
-  writeFileSync: mockWriteFileSync,
-  readFileSync: mockReadFileSync,
-  readdirSync: mockReaddirSync,
-  statSync: mockStatSync,
+  default: {
+    existsSync: vi.fn(),
+    mkdirSync: vi.fn(),
+    writeFileSync: vi.fn(),
+    readFileSync: vi.fn(),
+    readdirSync: vi.fn(),
+    statSync: vi.fn(),
+  },
+  existsSync: vi.fn(),
+  mkdirSync: vi.fn(),
+  writeFileSync: vi.fn(),
+  readFileSync: vi.fn(),
+  readdirSync: vi.fn(),
+  statSync: vi.fn(),
 }));
+
+// Get mocked functions
+const mockExistsSync = vi.mocked(fs.existsSync);
+const mockMkdirSync = vi.mocked(fs.mkdirSync);
+const mockWriteFileSync = vi.mocked(fs.writeFileSync);
+const mockReadFileSync = vi.mocked(fs.readFileSync);
+const mockReaddirSync = vi.mocked(fs.readdirSync);
+const mockStatSync = vi.mocked(fs.statSync);
 
 // Mock child_process
 vi.mock('child_process', () => ({
