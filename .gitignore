@@ -56,6 +56,3 @@ lerna-debug.log*
 
 # AI IDE development files (local only)
 .traesolo.json
-docs/development/AI_IDE_RULES.md
-docs/development/CHINESE_DOCS_GUIDE.md
-docs/development/ROADMAP_NEXT_STEPS.md
