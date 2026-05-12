@@ -2,7 +2,14 @@
  * @lytjs/plugin-vite - Options and configuration
  */
 
-import type { LytjsPluginOptions } from './index';
+export interface LytjsPluginOptions {
+  include?: RegExp | RegExp[];
+  exclude?: RegExp | RegExp[];
+  ssr?: boolean;
+  signalMode?: boolean;
+  /** Phase 1.2: 启用 Vapor HMR 支持 */
+  enableVaporHMR?: boolean;
+}
 
 /**
  * Default plugin options
@@ -12,6 +19,7 @@ export const defaultOptions: Required<LytjsPluginOptions> = {
   exclude: [/node_modules/, /\.git/],
   ssr: false,
   signalMode: false,
+  enableVaporHMR: false,
 };
 
 /**
@@ -23,6 +31,7 @@ export function resolveOptions(options: LytjsPluginOptions): Required<LytjsPlugi
     exclude: options.exclude ?? defaultOptions.exclude,
     ssr: options.ssr ?? defaultOptions.ssr,
     signalMode: options.signalMode ?? defaultOptions.signalMode,
+    enableVaporHMR: options.enableVaporHMR ?? defaultOptions.enableVaporHMR,
   };
 }
 

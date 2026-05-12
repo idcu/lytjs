@@ -1,6 +1,6 @@
 // packages/renderer/src/data/data-fetching.ts
-// 数据获取集成
-// Phase 1.7: 服务端数据预取 + 序列化
+// 数据获取功能
+// Phase 1.7: 数据获取集成服务端数据预取 + 序列化
 
 import { ref, watch, type Ref } from '@lytjs/reactivity';
 import { isArray } from '@lytjs/common-is';
@@ -10,7 +10,7 @@ import { isArray } from '@lytjs/common-is';
 // ============================================================
 
 /** 数据获取状态 */
-export interface DataFetchState<T> {
+export interface DataFetchState<T extends unknown = unknown> {
   /** 数据 */
   data: T | undefined;
   /** 是否正在加载 */
@@ -24,7 +24,7 @@ export interface DataFetchState<T> {
 }
 
 /** 数据获取选项 */
-export interface DataFetchOptions<T> {
+export interface DataFetchOptions<T extends unknown = unknown> {
   /** 是否立即执行 */
   immediate?: boolean;
   /** 初始数据 */
@@ -120,7 +120,7 @@ export function serializeData(data: unknown): string {
     if (value instanceof RegExp) {
       return { __type: 'RegExp', __value: value.toString() };
     }
-    return value;
+    return value as unknown;
   });
 }
 
@@ -247,7 +247,7 @@ export function createPrefetchManager(): PrefetchManager {
  * });
  * ```
  */
-export function useFetch<T extends unknown = unknown>(
+export function useFetch<T extends string | number | boolean | object | null = object>(
   url: string | (() => string),
   options: DataFetchOptions<T> = {},
 ): {
@@ -269,7 +269,7 @@ export function useFetch<T extends unknown = unknown>(
     retryDelay = 1000,
   } = options;
 
-  const data = ref(initialData) as Ref<T | undefined>;
+  const data = ref(initialData) as Ref<unknown> as Ref<T | undefined>;
   const loading = ref<boolean>(false);
   const error = ref<Error | null>(null);
   const fromCache = ref<boolean>(false);
@@ -316,7 +316,7 @@ export function useFetch<T extends unknown = unknown>(
 
       // 应用转换
       if (transform) {
-        result = transform(result);
+        result = transform(result as unknown) as T;
       }
 
       data.value = result as T;
@@ -385,7 +385,7 @@ export function useFetch<T extends unknown = unknown>(
  * );
  * ```
  */
-export function useAsyncData<T>(
+export function useAsyncData<T extends string | number | boolean | object | null = object>(
   key: string,
   fetcher: () => Promise<T>,
   options: DataFetchOptions<T> = {},
@@ -403,7 +403,7 @@ export function useAsyncData<T>(
     onSuccess,
   } = options;
 
-  const data = ref(initialData) as Ref<T | undefined>;
+  const data = ref<T | undefined>(initialData);
   const pending = ref<boolean>(false);
   const error = ref<Error | null>(null);
 
@@ -429,10 +429,10 @@ export function useAsyncData<T>(
     error.value = null;
 
     try {
-      let result = await fetcher();
+      let result: T = await fetcher() as T;
 
       if (transform) {
-        result = transform(result);
+        result = transform(result as unknown) as T;
       }
 
       data.value = result as T;

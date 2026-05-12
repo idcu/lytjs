@@ -12,27 +12,27 @@ export type StateTree = Record<string | number | symbol, unknown>;
 
 export type _Method = (...args: unknown[]) => unknown;
 
-export interface StoreGetters<G> {
+export type StoreGetters<G> = {
   readonly [K in keyof G]: G[K] extends (...args: unknown[]) => infer R ? R : never;
-}
+};
 
-export interface StoreActions<A> {
+export type StoreActions<A> = {
   [K in keyof A]: A[K] extends _Method ? A[K] : never;
-}
+};
 
-export interface DefineStoreOptions<Id extends string, S extends StateTree, G, A> {
+export interface DefineStoreOptions<_Id extends string, S extends StateTree, G, A> {
   state?: () => S;
   getters?: G & ThisType<S & StoreGetters<G> & StoreActions<A>>;
   actions?: A & ThisType<S & StoreGetters<G> & StoreActions<A>>;
 }
 
 export interface Store<
-  Id extends string = string,
+  _Id extends string = string,
   S extends StateTree = {},
-  G = {},
-  A = {},
+  _G = {},
+  _A = {},
 > {
-  readonly $id: Id;
+  readonly $id: string;
   $state: S;
   $patch(partialState: Partial<S>): void;
   $patch(stateMutator: (state: S) => void): void;
@@ -43,11 +43,11 @@ export interface Store<
 }
 
 export type StoreDefinition<
-  Id extends string = string,
+  _Id extends string = string,
   S extends StateTree = {},
-  G = {},
-  A = {},
-> = (pinia?: any) => Store<Id, S, G, A>;
+  _G = {},
+  _A = {},
+> = (pinia?: any) => Store<_Id, S, _G, _A>;
 
 export type StoreToRefs<SS> = {
   [K in keyof SS]: SS[K] extends Signal<infer T> ? Signal<T> : SS[K];
@@ -57,7 +57,7 @@ export type StoreToRefs<SS> = {
 
 export interface Pinia {
   install(app: any): void;
-  state: Signal<Record<string, StateTree>>;
+  state: import('@lytjs/reactivity').WritableSignal<Record<string, StateTree>>;
   use(plugin: PiniaPlugin): void;
 }
 

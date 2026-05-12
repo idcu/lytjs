@@ -61,7 +61,6 @@ export interface StreamStats {
 // 全局状态
 // ============================================================
 
-const suspenseIdCounter = 0;
 const COMPONENT_MASK = ShapeFlags.STATEFUL_COMPONENT | ShapeFlags.FUNCTIONAL_COMPONENT;
 
 // ============================================================
@@ -87,7 +86,6 @@ export class OptimizedSSRStream {
   private startTime: number;
   private flushedFirstChunk: boolean = false;
   private preloadHints: Set<string>;
-  private pendingPromises: Promise<void>[];
 
   constructor(
     controller: ReadableStreamDefaultController<Uint8Array>,
@@ -115,7 +113,6 @@ export class OptimizedSSRStream {
       suspenseBoundaries: 0,
     };
     this.preloadHints = new Set();
-    this.pendingPromises = [];
   }
 
   // ============================================================

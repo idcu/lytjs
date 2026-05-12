@@ -3,7 +3,7 @@
  */
 
 import { existsSync, mkdirSync, writeFileSync, readFileSync, readdirSync } from 'fs';
-import { join, resolve, dirname } from 'path';
+import { join, dirname } from 'path';
 
 /**
  * Ensure directory exists (create if not)

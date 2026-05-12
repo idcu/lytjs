@@ -6,20 +6,12 @@
  * @packageDocumentation
  */
 
-import type { Plugin, HmrContext, ResolvedConfig } from 'vite';
+import type { Plugin, HmrContext } from 'vite';
 import type { LytjsPluginOptions } from './options';
+import type { SFCStyleBlock, SFCCustomBlock } from '@lytjs/compiler/sfc';
 import { resolveOptions, defaultOptions } from './options';
 import { createFilter, generateScopeId } from './utils';
-import { compileSFC, parseSFC } from '@lytjs/compiler';
-
-export interface LytjsPluginOptions {
-  include?: RegExp | RegExp[];
-  exclude?: RegExp | RegExp[];
-  ssr?: boolean;
-  signalMode?: boolean;
-  /** Phase 1.2: 启用 Vapor HMR 支持 */
-  enableVaporHMR?: boolean;
-}
+import { parseSFC, compileSFC } from '@lytjs/compiler/sfc';
 
 // HMR cache for tracking component updates
 const hmrCache = new Map<string, { script: string; template: string; styles: string[]; isVapor: boolean }>();
@@ -36,14 +28,13 @@ const vaporComponentIdMap = new Map<string, string>();
 export default function lytjs(rawOptions: LytjsPluginOptions = {}): Plugin {
   const options = resolveOptions(rawOptions);
   const filter = createFilter(options.include, options.exclude);
-  let config: ResolvedConfig;
   let isProduction = false;
 
   return {
     name: '@lytjs/plugin-vite',
     enforce: 'pre',
 
-    config(userConfig, env) {
+    config(_userConfig, env) {
       isProduction = env.mode === 'production';
 
       return {
@@ -55,10 +46,6 @@ export default function lytjs(rawOptions: LytjsPluginOptions = {}): Plugin {
           exclude: ['@lytjs/core', '@lytjs/compiler'],
         },
       };
-    },
-
-    configResolved(resolvedConfig) {
-      config = resolvedConfig;
     },
 
     resolveId(id) {
@@ -94,15 +81,13 @@ export default function lytjs(rawOptions: LytjsPluginOptions = {}): Plugin {
 
       try {
         // Parse the SFC
-        const { descriptor } = parseSFC(code, { filename: id });
+        const descriptor = parseSFC(code, { filename: id });
 
         // Handle <route> custom block
-        const routeBlock = descriptor.customBlocks?.find(
-          (block: any) => block.type === 'route'
+        const routeBlock = descriptor.customBlocks.find(
+          (block: SFCCustomBlock) => block.type === 'route'
         );
         if (routeBlock) {
-          // Emit a virtual module for the route config
-          const routePath = id.replace(/\.\w+$/, '.route');
           // Store route info for later collection
           routeBlockMap.set(id, routeBlock.content);
         }
@@ -111,13 +96,13 @@ export default function lytjs(rawOptions: LytjsPluginOptions = {}): Plugin {
         const result = compileSFC(descriptor, {
           filename: id,
           ssr: options.ssr,
-          signalMode: options.signalMode,
+          rendererMode: options.signalMode ? 'signal' : 'vnode',
         });
 
         let compiledCode = result.code;
 
         // Handle scoped styles - inject scope attribute
-        const scopedStyles = descriptor.styles.filter(s => s.scoped);
+        const scopedStyles = descriptor.styles.filter((s: SFCStyleBlock) => s.scoped);
         if (scopedStyles.length > 0) {
           const scopeId = generateScopeId(id);
           // Inject __scopeId into the component setup
@@ -132,7 +117,7 @@ export default function lytjs(rawOptions: LytjsPluginOptions = {}): Plugin {
           hmrCache.set(id, {
             script: descriptor.script?.content || '',
             template: descriptor.template?.content || '',
-            styles: descriptor.styles.map((s) => s.content),
+            styles: descriptor.styles.map((s: SFCStyleBlock) => s.content),
             isVapor: options.signalMode || false,
           });
         }
@@ -168,7 +153,7 @@ if (import.meta.hot) {
 
         return {
           code: compiledCode,
-          map: result.map,
+          map: result.sourceMap as any,
         };
       } catch (error) {
         // Log compilation errors
@@ -192,7 +177,7 @@ if (import.meta.hot) {
       }
     },
 
-    handleHotUpdate(ctx: HmrContext) {
+    async handleHotUpdate(ctx: HmrContext) {
       const { file, server, modules } = ctx;
 
       if (!filter(file)) return;
@@ -202,13 +187,14 @@ if (import.meta.hot) {
 
       try {
         // Read the updated file content
-        const content = ctx.read();
-        const { descriptor } = parseSFC(content, { filename: file });
+        const content = await ctx.read();
+        const descriptor = parseSFC(content, { filename: file });
 
         const newCache = {
           script: descriptor.script?.content || '',
           template: descriptor.template?.content || '',
-          styles: descriptor.styles.map((s) => s.content),
+          styles: descriptor.styles.map((s: SFCStyleBlock) => s.content),
+          isVapor: prevCache.isVapor,
         };
 
         // Determine what changed
@@ -216,7 +202,7 @@ if (import.meta.hot) {
         const templateChanged = prevCache.template !== newCache.template;
         const stylesChanged =
           prevCache.styles.length !== newCache.styles.length ||
-          prevCache.styles.some((s, i) => s !== newCache.styles[i]);
+          prevCache.styles.some((s: string, i: number) => s !== newCache.styles[i]);
 
         // Update cache
         hmrCache.set(file, newCache);

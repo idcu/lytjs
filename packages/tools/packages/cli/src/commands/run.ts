@@ -102,17 +102,24 @@ function parseArgs(args: string[]): CliOptions {
     const arg = args[i] ?? '';
     
     if (arg.startsWith('--')) {
-      const [key, value] = arg.slice(2).split('=');
-      if (value !== undefined) {
+      const parts = arg.slice(2).split('=');
+      const key = parts[0];
+      const value = parts[1];
+      if (value !== undefined && key) {
         options[key] = value;
-      } else if (i + 1 < args.length && !(args[i + 1] ?? '').startsWith('-')) {
-        options[key] = args[++i];
-      } else {
+      } else if (key && i + 1 < args.length && !(args[i + 1] ?? '').startsWith('-')) {
+        const nextArg = args[++i];
+        if (nextArg) {
+          options[key] = nextArg;
+        }
+      } else if (key) {
         options[key] = true;
       }
     } else if (arg.startsWith('-')) {
       const key = arg.slice(1);
-      options[key] = true;
+      if (key) {
+        options[key] = true;
+      }
     } else {
       positional.push(arg);
     }

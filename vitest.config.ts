@@ -38,6 +38,7 @@ export default defineConfig({
       '@lytjs/common-async-scheduler': resolve(root, 'packages/common/packages/async-scheduler/dist/index.mjs'),
       '@lytjs/common-transition-engine': resolve(root, 'packages/common/packages/transition-engine/dist/index.mjs'),
       '@lytjs/common-performance': resolve(root, 'packages/common/packages/performance/dist/index.mjs'),
+      '@lytjs/common-assertions': resolve(root, 'packages/common/packages/assertions/dist/index.mjs'),
       // 主包
       '@lytjs/shared-types': resolve(root, 'packages/shared-types/src'),
       '@lytjs/host-contract': resolve(root, 'packages/host-contract/src'),

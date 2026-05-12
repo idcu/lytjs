@@ -4,7 +4,7 @@
  * Generate components, pages, and stores.
  */
 
-import type { CreateOptions } from '../types';
+import type { AddOptions } from '../types';
 import { logger } from '../utils/logger';
 import { ensureDir, writeFile, exists } from '../utils/fs';
 import { join, resolve } from 'path';
@@ -132,7 +132,7 @@ function resolveTargetDir(type: AddType): string {
 /**
  * Add a component, page, or store
  */
-export async function add(type: AddType, name: string, options: CreateOptions = {}): Promise<void> {
+export async function add(type: AddType, name: string, options: AddOptions = {}): Promise<void> {
   const targetDir = resolveTargetDir(type);
   const fullPath = resolve(targetDir);
 

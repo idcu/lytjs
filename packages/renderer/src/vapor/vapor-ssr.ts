@@ -119,10 +119,8 @@ export async function renderVaporToString(
 export async function renderVaporToStream(
   component: VaporComponentDefinition,
   props: Record<string, unknown> = {},
-  options: VaporSSROptions = {},
+  _options: VaporSSROptions = {},
 ): Promise<VaporSSRStreamResult> {
-  const { serialize = defaultSerialize } = options;
-
   let prefetchResolve: (data: Record<string, unknown>) => void;
   const prefetchPromise = new Promise<Record<string, unknown>>((resolve) => {
     prefetchResolve = resolve;
@@ -137,10 +135,10 @@ export async function renderVaporToStream(
         const setupResult = await executeSetup(component, props);
 
         // 2. 编译模板
-        const compiledTemplate = compileTemplateForSSR(component.template);
+        const _compiledTemplate = compileTemplateForSSR(component.template);
 
         // 3. 流式渲染
-        const htmlChunks = renderTemplateToChunks(compiledTemplate, setupResult);
+        const htmlChunks = renderTemplateToChunks(_compiledTemplate, setupResult);
 
         for (const chunk of htmlChunks) {
           controller.enqueue(encoder.encode(chunk));
@@ -220,7 +218,7 @@ function compileTemplateForSSR(template: string): string {
  * 将模板渲染为 HTML
  */
 function renderTemplateToHTML(
-  compiledCode: string,
+  _compiledCode: string,
   ctx: Record<string, unknown>,
 ): string {
   // 简化实现：直接从上下文渲染模板
@@ -246,7 +244,7 @@ function renderContextToHTML(ctx: Record<string, unknown>): string {
  * 将模板渲染为 HTML 块（流式渲染）
  */
 function renderTemplateToChunks(
-  compiledCode: string,
+  _compiledCode: string,
   ctx: Record<string, unknown>,
 ): string[] {
   const html = renderContextToHTML(ctx);
@@ -266,7 +264,7 @@ function renderTemplateToChunks(
  * 默认序列化函数
  */
 function defaultSerialize(data: unknown): string {
-  return JSON.stringify(data, (key, value) => {
+  return JSON.stringify(data, (_key, value) => {
     // 处理特殊类型
     if (typeof value === 'function') {
       return undefined; // 跳过函数
@@ -335,7 +333,7 @@ export function definePrefetch<T>(
  */
 export function usePrefetchData<T>(
   key: string,
-  fetcher?: () => Promise<T>,
+  _fetcher?: () => Promise<T>,
 ): { data: T | undefined; pending: boolean; error: Error | null } {
   // 检查是否有预取数据
   if (typeof window !== 'undefined') {
@@ -381,7 +379,7 @@ export interface VaporHydrationOptions {
 export async function hydrateVaporComponent(
   container: Element | string,
   component: VaporComponentDefinition,
-  options: VaporHydrationOptions = {},
+  _options: VaporHydrationOptions = {},
 ): Promise<void> {
   const el = typeof container === 'string'
     ? document.querySelector(container)
@@ -396,9 +394,6 @@ export async function hydrateVaporComponent(
   if (!ssrMarker) {
     console.warn('[LytJS] hydrateVaporComponent: no SSR marker found');
   }
-
-  // 读取预取数据
-  const prefetchData = (window as any).__LYTJS_PREFETCH_DATA__ || {};
 
   // 执行 setup
   const props: Record<string, unknown> = {};

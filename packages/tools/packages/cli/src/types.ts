@@ -9,7 +9,6 @@ export interface CliOptions {
 }
 
 export interface CreateOptions {
-  projectName: string;
   template?: string;
   force?: boolean;
 }
@@ -30,6 +29,10 @@ export interface TestOptions {
   watch?: boolean;
   coverage?: boolean;
   grep?: string;
+}
+
+export interface AddOptions {
+  force?: boolean;
 }
 
 export interface PackageJson {

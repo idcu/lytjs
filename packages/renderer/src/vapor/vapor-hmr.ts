@@ -180,7 +180,7 @@ export function handleComponentUpdate(
   componentId: string,
   newComponent: VaporComponentDefinition,
   updateType: HMRUpdateType,
-  preservation: HMRStatePreservation = DEFAULT_STATE_PRESERVATION,
+  _preservation: HMRStatePreservation = DEFAULT_STATE_PRESERVATION,
 ): boolean {
   const instance = componentRegistry.get(componentId);
   if (!instance) {

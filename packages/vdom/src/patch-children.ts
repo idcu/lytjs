@@ -280,17 +280,16 @@ export function createChildrenPatch<HN, HE extends HN>(
     fallbackAnchor: HN | null,
   ): void {
     // FIX: P0-04 传递 opsId 以支持多渲染器场景下的 DOM 操作隔离
-    listDiffPatchKeyedChildren(
-      c1,
-      c2,
-      container,
-      parentComponent,
-      parentSuspense,
-      isSVG,
-      fallbackAnchor,
-      undefined,
-      ctx.opsId,
-    );
+    (listDiffPatchKeyedChildren as unknown as (
+      c1: VNode[],
+      c2: VNode[],
+      container: HN,
+      parentComponent: ComponentInternalInstance | null,
+      parentSuspense: unknown,
+      isSVG: boolean,
+      fallbackAnchor: HN | null,
+      opsId?: symbol,
+    ) => void)(c1, c2, container, parentComponent, parentSuspense, isSVG, fallbackAnchor, ctx.opsId);
   }
 
   // ============================================================

@@ -96,7 +96,7 @@ function getRealNode(el: unknown): Node | Element {
   const wrapper = el as TemplateWrapperLike;
   if ('content' in wrapper && 'firstChild' in wrapper) {
     // This is our TemplateWrapper!
-    return wrapper.firstChild;
+    return wrapper.firstChild || (el as Node | Element);
   }
   return el as Node | Element;
 }
@@ -389,7 +389,7 @@ export function setProperty(el: unknown, key: string, value: unknown): void {
   // 避免意外触发原型链上的 getter/setter
   const hasOwnProperty = Object.prototype.hasOwnProperty;
   if (PROPERTY_KEYS.has(key) || hasOwnProperty.call(realNode, key)) {
-    realNode[key] = realValue;
+    (realNode as unknown as Record<string, unknown>)[key] = realValue;
   } else {
     if (realValue === null || realValue === undefined || realValue === false) {
       realNode.removeAttribute(key);

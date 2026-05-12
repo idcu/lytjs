@@ -361,21 +361,21 @@ function extractRenderBody(code: string): string | null {
 // FIX: DTS build error - 未使用的声明
 // @ts-expect-error -- reserved for future use
 interface _RenderParams {
-  effect: typeof EffectType;
-  reconcileArray: typeof ReconcileArrayType;
-  createTemplate: typeof CreateTemplateType;
-  setText: typeof SetTextType;
+  effect: unknown;
+  reconcileArray: unknown;
+  createTemplate: unknown;
+  setText: unknown;
   setHTML: (el: Element, value: string) => void;
-  setAttribute: typeof SetAttributeType;
-  setProperty: typeof SetPropertyType;
-  setStyle: typeof SetStyleType;
-  setClass: typeof SetClassType;
-  insert: typeof InsertType;
-  remove: typeof RemoveType;
-  createEventHandler: typeof CreateEventHandlerType;
-  bindEffect: typeof BindEffectType;
-  onCleanup: typeof OnCleanupType;
-  runCleanups: typeof RunCleanupsType;
+  setAttribute: unknown;
+  setProperty: unknown;
+  setStyle: unknown;
+  setClass: unknown;
+  insert: unknown;
+  remove: unknown;
+  createEventHandler: unknown;
+  bindEffect: unknown;
+  onCleanup: unknown;
+  runCleanups: unknown;
   _ctx: Record<string, unknown>;
   _container: Element;
 }
@@ -402,21 +402,21 @@ interface _RenderParams {
 function _createRenderWrapper(
   renderBody: string,
 ): (
-  effect: typeof EffectType,
-  reconcileArray: typeof ReconcileArrayType,
-  createTemplate: typeof CreateTemplateType,
-  setText: typeof SetTextType,
+  effect: unknown,
+  reconcileArray: unknown,
+  createTemplate: unknown,
+  setText: unknown,
   setHTML: (el: Element, value: string) => void,
-  setAttribute: typeof SetAttributeType,
-  setProperty: typeof SetPropertyType,
-  setStyle: typeof SetStyleType,
-  setClass: typeof SetClassType,
-  insert: typeof InsertType,
-  remove: typeof RemoveType,
-  createEventHandler: typeof CreateEventHandlerType,
-  bindEffect: typeof BindEffectType,
-  onCleanup: typeof OnCleanupType,
-  runCleanups: typeof RunCleanupsType,
+  setAttribute: unknown,
+  setProperty: unknown,
+  setStyle: unknown,
+  setClass: unknown,
+  insert: unknown,
+  remove: unknown,
+  createEventHandler: unknown,
+  bindEffect: unknown,
+  onCleanup: unknown,
+  runCleanups: unknown,
   _ctx: Record<string, unknown>,
   _container: Element,
 ) => (() => void) | void {
@@ -457,21 +457,21 @@ function _createRenderWrapper(
   // 对于严格 CSP 环境，必须使用 AOT 预编译
   try {
     const executor = new Function(...paramNames, renderBody) as (
-      effect: typeof EffectType,
-      reconcileArray: typeof ReconcileArrayType,
-      createTemplate: typeof CreateTemplateType,
-      setText: typeof SetTextType,
+      effect: unknown,
+      reconcileArray: unknown,
+      createTemplate: unknown,
+      setText: unknown,
       setHTML: (el: Element, value: string) => void,
-      setAttribute: typeof SetAttributeType,
-      setProperty: typeof SetPropertyType,
-      setStyle: typeof SetStyleType,
-      setClass: typeof SetClassType,
-      insert: typeof InsertType,
-      remove: typeof RemoveType,
-      createEventHandler: typeof CreateEventHandlerType,
-      bindEffect: typeof BindEffectType,
-      onCleanup: typeof OnCleanupType,
-      runCleanups: typeof RunCleanupsType,
+      setAttribute: unknown,
+      setProperty: unknown,
+      setStyle: unknown,
+      setClass: unknown,
+      insert: unknown,
+      remove: unknown,
+      createEventHandler: unknown,
+      bindEffect: unknown,
+      onCleanup: unknown,
+      runCleanups: unknown,
       _ctx: Record<string, unknown>,
       _container: Element,
     ) => (() => void) | void;

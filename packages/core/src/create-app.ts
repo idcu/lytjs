@@ -13,6 +13,7 @@ import type {
   Component,
   ComponentPublicInstance,
   ComponentOptions,
+  DOMRenderer as CoreDOMRenderer,
 } from './types';
 import { createAppContext, createContextConfig } from './app-context';
 import {
@@ -26,24 +27,17 @@ import type {
   AppContext as ComponentAppContext,
   ComponentInternalInstance,
 } from '@lytjs/component';
+import type {
+  SignalRenderer,
+} from '@lytjs/renderer';
 
-interface SignalRenderer {
-  render(container: Element | Text): void;
-  unmount(): void;
-}
-
-interface DOMRenderer {
-  createApp: unknown;
-  createSignalRenderer: unknown;
-}
-
-let createSignalRenderer: ((template: string, ctx: unknown) => Promise<unknown>) | null = null;
-let createDOMRenderer: ((options: unknown) => unknown) | null = null;
+let createSignalRenderer: ((template: string, ctx: Record<string, unknown>) => Promise<SignalRenderer>) | null = null;
+let createDOMRenderer: ((options?: unknown) => unknown) | null = null;
 
 async function getSignalRenderer() {
   if (!createSignalRenderer) {
     const renderer = await import('@lytjs/renderer');
-    createSignalRenderer = renderer.createSignalRenderer as (template: string, ctx: unknown) => Promise<unknown>;
+    createSignalRenderer = renderer.createSignalRenderer as (template: string, ctx: Record<string, unknown>) => Promise<SignalRenderer>;
   }
   return createSignalRenderer;
 }
@@ -51,7 +45,7 @@ async function getSignalRenderer() {
 async function getDOMRenderer() {
   if (!createDOMRenderer) {
     const renderer = await import('@lytjs/renderer');
-    createDOMRenderer = renderer.createDOMRenderer as (options: unknown) => unknown;
+    createDOMRenderer = renderer.createDOMRenderer as (options?: unknown) => unknown;
   }
   return createDOMRenderer;
 }
@@ -368,8 +362,6 @@ export function createApp(
     }
     const domRendererFn = await getDOMRenderer();
     const renderer = domRendererFn!({
-      // FIX: DTS build error - 跨包 ComponentInternalInstance 类型不兼容（component vs common-vnode），
-      // 使用类型断言绕过，运行时类型是正确的
       setupChildComponent(childVNode: VNode, parentComponent: ComponentInternalInstance | null) {
         const childInstance = createComponentInstance(childVNode, parentComponent);
         // 从父组件或根组件继承 appContext
@@ -379,22 +371,17 @@ export function createApp(
           childInstance.appContext = context as ComponentAppContext;
         }
         setupComponent(childInstance);
-        // FIX: DTS build error - 跨包 ComponentInternalInstance 类型不兼容
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (childVNode as any).component = childInstance;
+        (childVNode as unknown as { component: ComponentInternalInstance }).component = childInstance;
       },
-      // FIX: DTS build error - 跨包 ComponentInternalInstance 类型不兼容（component vs common-vnode），
-      // 使用类型断言绕过，运行时类型是正确的
       normalizeProps(inst: ComponentInternalInstance, rawProps: Record<string, unknown> | null) {
         initProps(inst, rawProps);
       },
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } as any);
+    }) as { mount: (vnode: VNode, container: Node) => void };
     // FIX: P2-batch2-7 跨包类型断言说明：
     // context.renderer 的类型为 Renderer | null（来自 core 包），
     // 而 DOMRenderer 类型定义在 dom 包中。此处通过 unknown 桥接是安全的，
     // 因为 renderer 实例在 createRenderer() 中已正确初始化为 DOMRenderer。
-    context.renderer = renderer as unknown as DOMRenderer;
+    context.renderer = renderer as unknown as CoreDOMRenderer;
     context._vnode = rootVNode;
 
     // 挂载 vnode

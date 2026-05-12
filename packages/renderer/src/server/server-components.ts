@@ -2,7 +2,7 @@
 // Server Components 运行时支持
 // Phase 1.4: 服务端组件运行时
 
-import type { VaporComponentDefinition } from '../vapor/vapor-app';
+// import type { VaporComponentDefinition } from '../vapor/vapor-app';
 
 // ============================================================
 // 类型定义
@@ -178,7 +178,7 @@ export function createServerActionHandler() {
  * 序列化 Server Component 数据
  */
 export function serializeServerData(data: unknown): string {
-  return JSON.stringify(data, (key, value) => {
+  return JSON.stringify(data, (_key, value) => {
     // 处理特殊类型
     if (value instanceof Date) {
       return { __type: 'Date', value: value.toISOString() };
@@ -203,7 +203,7 @@ export function serializeServerData(data: unknown): string {
  * 反序列化 Server Component 数据
  */
 export function deserializeServerData(json: string): unknown {
-  return JSON.parse(json, (key, value) => {
+  return JSON.parse(json, (_key, value) => {
     if (value && typeof value === 'object' && '__type' in value) {
       switch (value.__type) {
         case 'Date':
@@ -231,7 +231,7 @@ export function deserializeServerData(json: string): unknown {
  */
 export async function renderServerComponent(
   componentId: string,
-  context: Record<string, unknown> = {},
+  _context: Record<string, unknown> = {},
 ): Promise<string> {
   const component = getServerComponent(componentId);
   if (!component) {
@@ -239,9 +239,8 @@ export async function renderServerComponent(
   }
 
   // 获取数据
-  let data: Record<string, unknown> = {};
   if (component.fetchData) {
-    data = await component.fetchData();
+    await component.fetchData();
   }
 
   // 渲染

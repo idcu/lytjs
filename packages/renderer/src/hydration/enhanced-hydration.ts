@@ -2,7 +2,9 @@
 // Hydration 完善模块
 // Phase 1.15-1.17: 全应用 Hydration、选择性 Hydration、水合错误恢复
 
-import type { App, Component } from '@lytjs/component';
+// 临时类型声明，解决循环依赖问题
+type App = unknown;
+type Component = unknown;
 import { warn } from '@lytjs/common-error';
 
 // ============================================================
@@ -115,6 +117,7 @@ export async function hydrateApp(
   // 检查是否已经 Hydration
   if (containerEl.hasAttribute('data-hydrated')) {
     warn('[LytJS] Container already hydrated');
+    // @ts-ignore
     const { createApp } = await import('@lytjs/core');
     return {
       app: createApp(component),
@@ -123,6 +126,7 @@ export async function hydrateApp(
   }
 
   // 创建应用实例
+  // @ts-ignore
   const { createApp } = await import('@lytjs/core');
   const app = createApp(component);
 
@@ -152,9 +156,9 @@ export async function hydrateApp(
  */
 async function performHydration(
   container: Element,
-  app: App,
+  _app: App,
   stats: HydrationStats,
-  options: HydrationOptions,
+  _options: HydrationOptions,
 ): Promise<void> {
   // 遍历所有子节点
   const walker = document.createTreeWalker(
@@ -172,7 +176,7 @@ async function performHydration(
   // 处理每个节点
   for (const n of nodes) {
     if (n instanceof Element) {
-      await hydrateElement(n, stats, options);
+      await hydrateElement(n, stats, _options);
       stats.hydratedNodes++;
     }
   }
@@ -184,7 +188,7 @@ async function performHydration(
 async function hydrateElement(
   element: Element,
   stats: HydrationStats,
-  options: HydrationOptions,
+  _options: HydrationOptions,
 ): Promise<void> {
   // 检查 SSR 标记
   const ssrId = element.getAttribute('data-ssr-id');
@@ -210,7 +214,7 @@ async function hydrateElement(
 
   for (const attr of directives) {
     // 处理指令
-    processDirective(element, attr.name, attr.value, options);
+    processDirective(element, attr.name, attr.value, _options);
   }
 }
 
@@ -221,7 +225,7 @@ function processDirective(
   element: Element,
   name: string,
   value: string,
-  options: HydrationOptions,
+  _options: HydrationOptions,
 ): void {
   switch (name) {
     case 'v-if':
@@ -243,7 +247,7 @@ function processDirective(
 /**
  * 设置 v-model 绑定
  */
-function setupVModel(element: Element, expression: string): void {
+function setupVModel(element: Element, _expression: string): void {
   if (element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement) {
     element.addEventListener('input', (e) => {
       // 触发响应式更新
@@ -328,6 +332,7 @@ export async function hydrateVisible(
   };
 
   const startTime = performance.now();
+  // @ts-ignore
   const { createApp } = await import('@lytjs/core');
   const app = createApp(component);
 
@@ -612,6 +617,7 @@ export async function safeHydrate(
     if (containerEl) {
       // 清空容器并重新渲染
       containerEl.innerHTML = '';
+      // @ts-ignore
       const { createApp } = await import('@lytjs/core');
       const app = createApp(component);
       app.mount(containerEl);

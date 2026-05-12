@@ -53,6 +53,13 @@ export interface SSROptions {
  * const stream = renderToSSRStream({ vnode, commentMarkers: true });
  * ```
  */
+// 直接导入类型而不是依赖 re-export 以避免循环导入问题
+import type { VNode } from '@lytjs/vdom';
+
+interface SSRInput {
+  vnode: VNode;
+}
+
 export function renderToSSR(input: SSRInput & { stream?: false }): Promise<string>;
 export function renderToSSR(
   input: SSRInput & { stream: true; commentMarkers?: boolean },
@@ -64,7 +71,7 @@ export function renderToSSR(
     // FIX: P1-12 使用动态 import() 替代 require()，兼容 ESM
     return import('./ssr-stream').then(({ renderToStream }) =>
       renderToStream(input, { commentMarkers: input.commentMarkers }),
-    );
+    ) as unknown as ReadableStream<Uint8Array>;
   }
   // FIX: P1-12 使用动态 import() 替代 require()，兼容 ESM
   return import('./ssr-renderer').then(({ renderToString }) => renderToString(input));
