@@ -7,10 +7,12 @@
 - **高性能响应式系统** - 基于 Proxy 的细粒度依赖追踪
 - **精确的 VDOM diff 算法** - PatchFlags 和 Block Tree 编译时优化
 - **双核心模式** - VNode 模式与 Signal 模式可选
-- **模块化包架构** - 分层设计，按需引入
+- **8层模块化架构** - 分层设计，按需引入
 - **TypeScript 全类型支持** - 完整的类型推导
 - **安全优先** - 内置 XSS 防护、CSP 支持、输入验证
 - **跨平台渲染** - 统一的 Host Contract 接口
+- **运行时零第三方依赖** - 完全自研实现，极致轻量
+- **可插拔官方插件** - 主题、日志、国际化等官方插件
 
 ## 快速开始
 
@@ -43,33 +45,71 @@ Lyt.js 提供两种渲染模式，可根据场景选择：
 | `@lytjs/core-vnode` | 仅 VNode 渲染模式，适合传统模板场景 |
 | `@lytjs/core-signal` | 仅 Signal 渲染模式，适合细粒度响应场景 |
 
-## 架构分层
+## 官方插件
+
+基于 8 层架构的可插拔插件体系，所有插件均为运行时零依赖：
+
+| 插件名 | 描述 |
+| --- | --- |
+| `@lytjs/plugin-theme` | 主题切换、主题定制、CSS变量管理 |
+| `@lytjs/plugin-logger` | 日志分级、性能追踪、持久化存储 |
+| `@lytjs/plugin-auth` | 权限路由、权限验证、角色管理 |
+| `@lytjs/plugin-storage` | 本地存储、状态持久化、过期时间 |
+| `@lytjs/plugin-i18n` | 国际化支持、语言切换、翻译管理 |
+| `@lytjs/plugin-vite` | Vite 集成、热更新、构建优化 |
+
+## UI 组件库
+
+Lyt.js 提供完整的零依赖 UI 组件库，包括：
+
+| 组件类别 | 组件名称 |
+| --- | --- |
+| 高优先级 | Table, Tree, Cascader, TreeSelect, Transfer, Menu, Tabs, Descriptions |
+| 中优先级 | Modal, Drawer, Upload, DatePicker, Notification |
+| 低优先级 | Calendar, Image, Rate, ColorPicker |
+
+## 8层架构
+
+Lyt.js 采用精心设计的 8 层架构，从底层到上层：
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  L5: Web 工具层                                              │
-│  web (CSS 变量、ResizeObserver、Web Components)             │
+│  L7: 工程化工具层                                            │
+│  构建、打包、测试、lint、零依赖规范校验                       │
 ├─────────────────────────────────────────────────────────────┤
-│  L4: 核心应用层                                              │
-│  core, core-vnode, core-signal, renderer                    │
+│  L6: 业务组件层                                              │
+│  UI 组件库（基础组件、高级组件）                              │
 ├─────────────────────────────────────────────────────────────┤
-│  L3: 平台适配层                                              │
-│  adapter-web                                                 │
+│  L5: 组件基础层                                              │
+│  组件通用逻辑、通信机制、样式规范统一                        │
 ├─────────────────────────────────────────────────────────────┤
-│  L2: 平台/组件层                                             │
-│  component, dom, dom-runtime                                 │
+│  L4: 官方插件层                                              │
+│  主题、国际化、日志、权限、存储等内置插件                    │
 ├─────────────────────────────────────────────────────────────┤
-│  L1: 核心原语层                                              │
-│  reactivity, vdom, compiler                                 │
+│  L3: 插件核心层                                              │
+│  插件规范定义、插件生命周期管理、插件依赖解析                │
 ├─────────────────────────────────────────────────────────────┤
-│  L0: 基础层                                                  │
-│  common-* (30个子包), shared-types, host-contract           │
+│  L2: 核心运行时层                                            │
+│  应用实例创建、生命周期、插件注册/卸载、依赖注入            │
+├─────────────────────────────────────────────────────────────┤
+│  L1: 渲染引擎层                                              │
+│  Vapor无虚拟DOM渲染、指令解析与执行、虚拟DOM diff            │
+├─────────────────────────────────────────────────────────────┤
+│  L0: 基础工具层                                              │
+│  原生JS工具封装、常量定义、类型判断                          │
 └─────────────────────────────────────────────────────────────┘
 ```
 
+### 架构约束
+
+- **严格分层依赖**：上层只能依赖紧邻的下层，禁止跨层依赖
+- **单向依赖**：只允许从上层依赖下层，禁止反向依赖
+- **零第三方依赖**：L0-L6 层运行时无第三方依赖
+- **可插拔设计**：插件层采用可插拔架构，按需引入
+
 ## 包架构
 
-### L0: 基础层
+### L0: 基础工具层
 
 | 包 | 描述 |
 | --- | --- |
@@ -126,7 +166,89 @@ Lyt.js 内置多层安全防护：
 
 ## 开发
 
-请参阅 [CONTRIBUTING.md](./CONTRIBUTING.md) 了解开发指南。
+### 安装依赖
+
+```bash
+pnpm install
+```
+
+### 开发命令
+
+```bash
+# 构建所有包
+pnpm build
+
+# 运行所有测试
+pnpm test
+
+# 类型检查
+pnpm type-check
+
+# 代码质量检查
+pnpm lint:check
+
+# 零依赖规范校验
+pnpm run check-zero-deps
+
+# 循环依赖检查
+pnpm run check-circular
+
+# 包体积检查
+pnpm run size-check
+```
+
+### 项目结构
+
+```
+lytjs/
+├── packages/
+│   ├── common/              # L0 基础工具层
+│   ├── reactivity/          # L1 核心原语层
+│   ├── vdom/                # L1 核心原语层
+│   ├── compiler/            # L1 核心原语层
+│   ├── renderer/            # L1 渲染引擎层
+│   ├── component/           # L2 平台/组件层
+│   ├── core/                # L2 核心运行时层
+│   ├── plugins/             # L3/L4 插件层
+│   │   ├── plugin-theme/
+│   │   ├── plugin-logger/
+│   │   ├── plugin-auth/
+│   │   ├── plugin-storage/
+│   │   ├── plugin-i18n/
+│   │   └── plugin-vite/
+│   ├── ecosystem/           # L6 业务组件层
+│   │   ├── ui/              # UI 组件库
+│   │   ├── router/
+│   │   ├── store/
+│   │   └── ...
+│   └── tools/               # L7 工程化工具层
+├── examples/                # 示例项目
+├── playground/              # 开发调试
+├── docs/                    # 文档
+└── scripts/                 # 工程化脚本
+```
+
+### 开发文档
+
+- [AGENTS.md](./AGENTS.md) - AI 开发助手规则与最佳实践
+- [AI_IDE_RULES.md](./docs/development/AI_IDE_RULES.md) - AI IDE 开发规则
+- [CHINESE_DOCS_GUIDE.md](./docs/development/CHINESE_DOCS_GUIDE.md) - 中文文档指南
+- [ROADMAP_NEXT_STEPS.md](./docs/development/ROADMAP_NEXT_STEPS.md) - 开发路线图
+- [PROJECT_STRUCTURE.md](./docs/development/PROJECT_STRUCTURE.md) - 项目结构说明
+- [PLUGIN_DEVELOPMENT.md](./docs/development/PLUGIN_DEVELOPMENT.md) - 插件开发指南
+
+## 版本迭代里程碑
+
+### ✅ 已完成
+
+- **M1 里程碑** - 完成 8 层架构各层核心能力完善与联调
+- **M2 里程碑** - 完成高优先级 8 个组件开发与测试
+- **M3 里程碑** - 完成中优先级 5 个组件开发与测试
+- **M4 里程碑** - 完成低优先级 4 个组件开发，完善工程化工具链
+
+### 🚀 进行中
+
+- **M5 里程碑** - 长期维护与生态建设
 
 ## 许可证
 
