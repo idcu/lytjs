@@ -67,6 +67,10 @@ Lyt.js 提供完整的零依赖 UI 组件库，包括：
 | 高优先级 | Table, Tree, Cascader, TreeSelect, Transfer, Menu, Tabs, Descriptions |
 | 中优先级 | Modal, Drawer, Upload, DatePicker, Notification |
 | 低优先级 | Calendar, Image, Rate, ColorPicker |
+| 基础组件 | Button, Input, Icon, Badge, Tag, Spin, Empty, Link, Container, Divider |
+| 反馈组件 | Dialog, Toast, Alert, Tooltip |
+| 表单组件 | Form, Select, Checkbox, Radio, Switch, InputNumber |
+| 其他组件 | Transition, TransitionGroup |
 
 ## 8层架构
 
@@ -229,26 +233,43 @@ pnpm run size-check
 ```
 lytjs/
 ├── packages/
+│   ├── _templates/          # 新包模板
 │   ├── common/              # L0 基础工具层
-│   ├── reactivity/          # L1 核心原语层
-│   ├── vdom/                # L1 核心原语层
-│   ├── compiler/            # L1 核心原语层
-│   ├── renderer/            # L1 渲染引擎层
-│   ├── component/           # L2 平台/组件层
-│   ├── core/                # L2 核心运行时层
+│   │   └── packages/        # 30+ 个工具子包
+│   ├── shared-types/        # L0 基础工具层 - 共享类型定义
+│   ├── host-contract/       # L0 基础工具层 - 跨平台渲染接口
+│   ├── reactivity/          # L1 渲染引擎层 - 响应式系统
+│   ├── vdom/                # L1 渲染引擎层 - 虚拟 DOM
+│   ├── compiler/            # L1 渲染引擎层 - 模板编译器
+│   ├── renderer/            # L1 渲染引擎层 - 渲染器
+│   ├── core/                # L2 核心运行时层 - 完整版
+│   ├── core-signal/         # L2 核心运行时层 - 仅 Signal 模式
+│   ├── core-vnode/          # L2 核心运行时层 - 仅 VNode 模式
+│   ├── component/           # L5 组件基础层 - 组件系统
+│   ├── dom/                 # L5 组件基础层 - DOM 平台封装
+│   ├── dom-runtime/         # L5 组件基础层 - DOM 运行时工具
+│   ├── adapter-web/         # L5 组件基础层 - Web 适配器
 │   ├── plugins/             # L3/L4 插件层
-│   │   ├── plugin-theme/
-│   │   ├── plugin-logger/
-│   │   ├── plugin-auth/
-│   │   ├── plugin-storage/
-│   │   ├── plugin-i18n/
-│   │   └── plugin-vite/
+│   │   └── packages/
+│   │       ├── plugin-theme/
+│   │       ├── plugin-logger/
+│   │       ├── plugin-auth/
+│   │       ├── plugin-storage/
+│   │       ├── plugin-i18n/
+│   │       └── plugin-vite/
 │   ├── ecosystem/           # L6 业务组件层
-│   │   ├── ui/              # UI 组件库
-│   │   ├── router/
-│   │   ├── store/
-│   │   └── ...
+│   │   └── packages/
+│   │       ├── ui/          # UI 组件库
+│   │       ├── router/      # 路由
+│   │       ├── store/       # 状态管理
+│   │       ├── devtools/    # 开发者工具
+│   │       ├── ssr/         # SSR
+│   │       ├── platform-adapter/  # 平台适配器
+│   │       └── compat/      # 兼容性层
 │   └── tools/               # L7 工程化工具层
+│       └── packages/
+│           ├── cli/         # CLI 工具
+│           └── devtools/    # 开发者工具扩展
 ├── examples/                # 示例项目
 ├── playground/              # 开发调试
 ├── docs/                    # 文档
