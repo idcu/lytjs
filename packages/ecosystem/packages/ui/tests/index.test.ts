@@ -9,6 +9,7 @@ import { Dialog } from '../src/components/Dialog';
 import { Tabs, TabPane } from '../src/components/Tabs';
 import { Menu } from '../src/components/Menu';
 import { Table } from '../src/components/Table';
+import { Tree } from '../src/components/Tree';
 
 // ===== Button 组件测试 =====
 describe('Button', () => {
@@ -216,6 +217,42 @@ describe('Table', () => {
   });
 });
 
+// ===== Tree 组件测试 =====
+describe('Tree', () => {
+  it('should render Tree with default props', () => {
+    expect(Tree).toBeDefined();
+    expect(Tree.name).toBe('LytTree');
+  });
+
+  it('should have correct props definition', () => {
+    const props = Tree.props;
+    expect(props.data).toBeDefined();
+    expect(props.defaultExpandAll).toBeDefined();
+    expect(props.defaultExpandedKeys).toBeDefined();
+    expect(props.defaultCheckedKeys).toBeDefined();
+    expect(props.defaultSelectedKeys).toBeDefined();
+    expect(props.checkable).toBeDefined();
+    expect(props.showCheckbox).toBeDefined();
+    expect(props.draggable).toBeDefined();
+    expect(props.nodeKey).toBeDefined();
+    expect(props.emptyText).toBeDefined();
+    expect(props.highlightCurrent).toBeDefined();
+    expect(props.showLine).toBeDefined();
+  });
+
+  it('should have default values for props', () => {
+    const props = Tree.props;
+    expect(props.defaultExpandAll.default).toBe(false);
+    expect(props.checkable.default).toBe(false);
+    expect(props.showCheckbox.default).toBe(false);
+    expect(props.draggable.default).toBe(false);
+    expect(props.nodeKey.default).toBe('id');
+    expect(props.emptyText.default).toBe('暂无数据');
+    expect(props.highlightCurrent.default).toBe(false);
+    expect(props.showLine.default).toBe(false);
+  });
+});
+
 // ===== 导出测试 =====
 describe('exports', () => {
   it('should export all components', () => {
@@ -226,5 +263,6 @@ describe('exports', () => {
     expect(TabPane).toBeDefined();
     expect(Menu).toBeDefined();
     expect(Table).toBeDefined();
+    expect(Tree).toBeDefined();
   });
 });
