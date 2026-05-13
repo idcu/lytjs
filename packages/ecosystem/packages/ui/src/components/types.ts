@@ -90,4 +90,80 @@ export interface DialogSlots {
   footer?: () => VNode[];
 }
 
+// ===== Select 组件 =====
+
+export interface SelectOption {
+  label: string;
+  value: string | number;
+  disabled?: boolean;
+}
+
+export interface SelectProps {
+  modelValue?: string | number | (string | number)[];
+  options?: SelectOption[];
+  placeholder?: string;
+  disabled?: boolean;
+  clearable?: boolean;
+  multiple?: boolean;
+  size?: ComponentSize;
+  class?: string;
+  style?: string | Record<string, string>;
+  onChange?: (value: string | number | (string | number)[]) => void;
+  onClear?: () => void;
+}
+
+export interface SelectSlots {
+  default?: () => VNode[];
+  empty?: () => VNode[];
+}
+
+// ===== Tabs 组件 =====
+
+export interface TabPaneProps {
+  label: string;
+  name: string;
+  disabled?: boolean;
+}
+
+export interface TabsProps {
+  modelValue?: string;
+  type?: 'card' | 'border-card';
+  class?: string;
+  style?: string | Record<string, string>;
+  onChange?: (name: string) => void;
+}
+
+export interface TabsSlots {
+  default?: () => VNode[];
+}
+
+// ===== Table 组件 =====
+
+export interface TableColumn {
+  prop?: string;
+  label: string;
+  width?: string | number;
+  align?: 'left' | 'center' | 'right';
+  sortable?: boolean;
+  formatter?: (row: any, column: TableColumn, cellValue: any) => string;
+}
+
+export interface TableProps {
+  data?: any[];
+  columns?: TableColumn[];
+  stripe?: boolean;
+  border?: boolean;
+  height?: string | number;
+  maxHeight?: string | number;
+  class?: string;
+  style?: string | Record<string, string>;
+  onRowClick?: (row: any, index: number) => void;
+  onSortChange?: (column: TableColumn, prop: string, order: 'ascending' | 'descending') => void;
+}
+
+export interface TableSlots {
+  default?: () => VNode[];
+  empty?: () => VNode[];
+}
+
 export type { VNode, Component };

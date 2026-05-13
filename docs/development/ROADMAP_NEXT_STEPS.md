@@ -209,13 +209,16 @@ test('full app', async ({ page }) => {
 - ✅ 添加 31 个单元测试，全部通过
 
 #### 2.2.6 UI 组件库开发
-**状态**: ✅ 已完成（v0.1.0，测试 10/10 通过）
+**状态**: ✅ 已完成（v0.2.0，测试 10/10 通过）
 
 **已完成**:
 - ✅ 创建 UI 包基础结构（package.json、tsconfig.json、tsup.config.ts）
 - ✅ 实现 Button 组件（支持多种类型、尺寸、状态）
 - ✅ 实现 Input 组件（支持双向绑定、清除、密码显示）
 - ✅ 实现 Dialog 组件（支持模态、自定义内容、关闭确认）
+- ✅ 实现 Select 组件（单选、多选、清除）
+- ✅ 实现 Tabs 组件（卡片式、边框卡片式）
+- ✅ 实现 Table 组件（排序、斑马纹、边框）
 - ✅ 添加基础样式文件（CSS 变量、组件样式）
 - ✅ 添加 10 个单元测试，全部通过
 
@@ -223,6 +226,50 @@ test('full app', async ({ page }) => {
 - Button: type/size/disabled/loading/plain/round/circle
 - Input: modelValue/clearable/showPassword/prefix/suffix
 - Dialog: modelValue/title/width/closeOnClickModal/closeOnPressEscape
+- Select: options/placeholder/disabled/clearable/multiple
+- Tabs: modelValue/type/card/border-card
+- Table: data/columns/stripe/border/sortable
+
+#### 2.2.7 SSR 服务端渲染
+**状态**: ✅ 已完成（v6.0.0，测试 9/9 通过）
+
+**已完成**:
+- ✅ 创建 SSR 包基础结构
+- ✅ 实现 renderToString（VNode 转 HTML 字符串）
+- ✅ 实现 renderToHtml（完整 HTML 页面渲染）
+- ✅ HTML 特殊字符转义（XSS 防护）
+- ✅ 支持 class/style 对象处理
+- ✅ 自闭合标签处理
+
+**API**:
+```typescript
+import { renderToString, renderToHtml } from '@lytjs/ssr';
+
+// 渲染 VNode 为字符串
+const html = renderToString(vnode);
+
+// 渲染完整 HTML 页面
+const page = renderToHtml(vnode, {
+  title: 'Page Title',
+  lang: 'zh-CN'
+});
+```
+
+#### 2.2.8 虚拟列表组件
+**状态**: ✅ 已完成（v6.0.0）
+
+**已完成**:
+- ✅ VirtualList 组件实现
+- ✅ 大数据高性能渲染（只渲染可视区域）
+- ✅ 缓冲区支持（减少滚动白屏）
+- ✅ 动态高度计算
+- ✅ 滚动位置追踪
+
+**特性**:
+- data: 数据源
+- itemHeight: 每项高度
+- height: 列表容器高度
+- buffer: 缓冲区大小
 
 **技术实现**:
 ```typescript
@@ -661,13 +708,26 @@ pnpm 11.x 引入了更严格的构建脚本安全检查机制。在 monorepo 子
 
 ---
 
-**文档版本**: v1.6
+**文档版本**: v1.7
 **最后更新**: 2026-05-13
 **维护者**: LytJS Team
 
 ---
 
 ## 更新日志
+
+### v1.7 (2026-05-13)
+- ✅ UI 组件库扩展完成
+  - Select 组件（单选、多选、清除）
+  - Tabs 组件（卡片式、边框卡片式）
+  - Table 组件（排序、斑马纹、边框）
+- ✅ SSR 服务端渲染支持（@lytjs/ssr）
+  - renderToString / renderToHtml
+  - HTML 转义安全处理
+  - 9/9 测试通过
+- ✅ 虚拟列表组件（VirtualList）
+  - 大数据高性能渲染
+  - 缓冲区和动态计算
 
 ### v1.6 (2026-05-13)
 - ✅ 开发者工具预览版完成（@lytjs/devtools）
