@@ -1,0 +1,53 @@
+{
+  "name": "@lytjs/plugin-theme",
+  "version": "6.0.0",
+  "description": "LytJS official theme plugin for CSS variable management, dark/light mode, and custom theme support",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "type-check": "tsc --noEmit",
+    "lint": "eslint \"src/**/*.ts\"",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@lytjs/core": "workspace:*",
+    "@lytjs/reactivity": "workspace:*",
+    "@lytjs/common-is": "workspace:*"
+  },
+  "devDependencies": {
+    "tsup": "^8.0.0",
+    "typescript": "^5.4.0",
+    "vitest": "^3.0.0"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://gitee.com/lytjs/lytjs.git",
+    "directory": "packages/plugins/packages/plugin-theme"
+  },
+  "keywords": [
+    "lytjs",
+    "theme",
+    "dark-mode",
+    "css-variables"
+  ]
+}

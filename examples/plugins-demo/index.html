@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LytJS 插件使用示例</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: var(--lyt-bg-primary, #ffffff);
+      color: var(--lyt-text-primary, #333333);
+      transition: background-color 0.3s, color 0.3s;
+    }
+    
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    
+    h1 {
+      color: var(--lyt-primary, #1890ff);
+    }
+    
+    .section {
+      background: var(--lyt-bg-secondary, #f5f5f5);
+      padding: 20px;
+      margin: 20px 0;
+      border-radius: 8px;
+      border: 1px solid var(--lyt-border, #d9d9d9);
+    }
+    
+    button {
+      background-color: var(--lyt-primary, #1890ff);
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin: 4px;
+    }
+    
+    button:hover {
+      opacity: 0.8;
+    }
+    
+    .dark-btn {
+      background-color: #333;
+    }
+    
+    .light-btn {
+      background-color: #fff;
+      color: #333;
+      border: 1px solid #ccc;
+    }
+    
+    pre {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 15px;
+      border-radius: 4px;
+      overflow-x: auto;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🧩 LytJS 官方插件使用示例</h1>
+    
+    <div class="section">
+      <h2>🎨 主题插件</h2>
+      <button id="theme-light" class="light-btn">浅色主题</button>
+      <button id="theme-dark" class="dark-btn">深色主题</button>
+      <button id="theme-toggle">切换主题</button>
+      <p>当前主题: <span id="current-theme">light</span></p>
+    </div>
+    
+    <div class="section">
+      <h2>📝 日志插件</h2>
+      <button id="log-info">记录 Info</button>
+      <button id="log-warn">记录 Warn</button>
+      <button id="log-error">记录 Error</button>
+      <button id="log-clear">清空日志</button>
+      <h3>日志列表:</h3>
+      <pre id="log-list">(查看浏览器控制台)</pre>
+    </div>
+    
+    <div class="section">
+      <h2>🔐 认证插件</h2>
+      <button id="auth-login">登录</button>
+      <button id="auth-logout">退出</button>
+      <button id="auth-check">检查权限</button>
+      <p>认证状态: <span id="auth-status">未登录</span></p>
+    </div>
+    
+    <div class="section">
+      <h2>💾 存储插件</h2>
+      <input type="text" id="storage-key" placeholder="输入键名" style="padding: 8px; border-radius: 4px; border: 1px solid var(--lyt-border, #d9d9d9);">
+      <input type="text" id="storage-value" placeholder="输入值" style="padding: 8px; border-radius: 4px; border: 1px solid var(--lyt-border, #d9d9d9);">
+      <button id="storage-set">保存</button>
+      <button id="storage-get">读取</button>
+      <button id="storage-clear">清空</button>
+      <p>存储内容: <span id="storage-display">空</span></p>
+    </div>
+
+    <div class="section">
+      <h2>🌍 国际化插件</h2>
+      <button id="lang-zh">中文</button>
+      <button id="lang-en">English</button>
+      <h3>翻译演示:</h3>
+      <p id="i18n-greeting">欢迎</p>
+      <input type="text" id="i18n-name" placeholder="输入名字" style="padding: 8px; border-radius: 4px; border: 1px solid var(--lyt-border, #d9d9d9);">
+      <button id="i18n-greet">打招呼</button>
+      <p id="i18n-result"></p>
+    </div>
+    
+    <div class="section">
+      <h2>📖 使用示例代码</h2>
+      <pre>
+// 安装插件
+app.use(pluginTheme);
+app.use(pluginLogger);
+app.use(pluginAuth);
+app.use(pluginStorage);
+app.use(pluginI18n);
+
+// 使用主题插件
+app.config.globalProperties.$theme.setTheme('dark');
+
+// 使用日志插件
+app.config.globalProperties.$logger.info('Hello World');
+
+// 使用认证插件
+app.config.globalProperties.$auth.login(user);
+
+// 使用存储插件
+app.config.globalProperties.$storage.set('key', 'value');
+
+// 使用国际化插件
+app.config.globalProperties.$t('greeting', { name: 'John' });
+      </pre>
+    </div>
+  </div>
+
+  <script type="module" src="./main.ts"></script>
+</body>
+</html>

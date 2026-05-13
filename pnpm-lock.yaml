@@ -1080,6 +1080,116 @@ importers:
         specifier: ^5.8.2
         version: 5.9.3
 
+  packages/plugins/packages/plugin-auth:
+    dependencies:
+      '@lytjs/common-is':
+        specifier: workspace:*
+        version: link:../../../common/packages/is
+      '@lytjs/core':
+        specifier: workspace:*
+        version: link:../../../core
+      '@lytjs/reactivity':
+        specifier: workspace:*
+        version: link:../../../reactivity
+    devDependencies:
+      tsup:
+        specifier: ^8.0.0
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.14)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.3)
+      typescript:
+        specifier: ^5.4.0
+        version: 5.9.3
+      vitest:
+        specifier: ^3.0.0
+        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jsdom@29.1.1)
+
+  packages/plugins/packages/plugin-i18n:
+    dependencies:
+      '@lytjs/common-is':
+        specifier: workspace:*
+        version: link:../../../common/packages/is
+      '@lytjs/core':
+        specifier: workspace:*
+        version: link:../../../core
+      '@lytjs/reactivity':
+        specifier: workspace:*
+        version: link:../../../reactivity
+    devDependencies:
+      tsup:
+        specifier: ^8.0.0
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.14)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.3)
+      typescript:
+        specifier: ^5.4.0
+        version: 5.9.3
+      vitest:
+        specifier: ^3.0.0
+        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jsdom@29.1.1)
+
+  packages/plugins/packages/plugin-logger:
+    dependencies:
+      '@lytjs/common-is':
+        specifier: workspace:*
+        version: link:../../../common/packages/is
+      '@lytjs/core':
+        specifier: workspace:*
+        version: link:../../../core
+      '@lytjs/reactivity':
+        specifier: workspace:*
+        version: link:../../../reactivity
+    devDependencies:
+      tsup:
+        specifier: ^8.0.0
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.14)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.3)
+      typescript:
+        specifier: ^5.4.0
+        version: 5.9.3
+      vitest:
+        specifier: ^3.0.0
+        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jsdom@29.1.1)
+
+  packages/plugins/packages/plugin-storage:
+    dependencies:
+      '@lytjs/common-is':
+        specifier: workspace:*
+        version: link:../../../common/packages/is
+      '@lytjs/core':
+        specifier: workspace:*
+        version: link:../../../core
+      '@lytjs/reactivity':
+        specifier: workspace:*
+        version: link:../../../reactivity
+    devDependencies:
+      tsup:
+        specifier: ^8.0.0
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.14)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.3)
+      typescript:
+        specifier: ^5.4.0
+        version: 5.9.3
+      vitest:
+        specifier: ^3.0.0
+        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jsdom@29.1.1)
+
+  packages/plugins/packages/plugin-theme:
+    dependencies:
+      '@lytjs/common-is':
+        specifier: workspace:*
+        version: link:../../../common/packages/is
+      '@lytjs/core':
+        specifier: workspace:*
+        version: link:../../../core
+      '@lytjs/reactivity':
+        specifier: workspace:*
+        version: link:../../../reactivity
+    devDependencies:
+      tsup:
+        specifier: ^8.0.0
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.14)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.3)
+      typescript:
+        specifier: ^5.4.0
+        version: 5.9.3
+      vitest:
+        specifier: ^3.0.0
+        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jsdom@29.1.1)
+
   packages/plugins/packages/plugin-vite:
     dependencies:
       '@lytjs/common-is':

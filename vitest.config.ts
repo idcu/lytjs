@@ -80,6 +80,13 @@ export default defineConfig({
       '@lytjs/adapter-web': resolve(root, 'packages/adapter-web/src'),
       '@lytjs/dom-runtime': resolve(root, 'packages/dom-runtime/src'),
       '@lytjs/dom': resolve(root, 'packages/dom/dist/index.mjs'),
+      // 插件包
+      '@lytjs/plugin-theme': resolve(root, 'packages/plugins/packages/plugin-theme/dist/index.mjs'),
+      '@lytjs/plugin-logger': resolve(root, 'packages/plugins/packages/plugin-logger/dist/index.mjs'),
+      '@lytjs/plugin-auth': resolve(root, 'packages/plugins/packages/plugin-auth/dist/index.mjs'),
+      '@lytjs/plugin-storage': resolve(root, 'packages/plugins/packages/plugin-storage/dist/index.mjs'),
+      '@lytjs/plugin-i18n': resolve(root, 'packages/plugins/packages/plugin-i18n/dist/index.mjs'),
+      '@lytjs/plugin-vite': resolve(root, 'packages/plugins/packages/plugin-vite/dist/index.mjs'),
     },
     conditions: ['import', 'node', 'default'],
   },
