@@ -531,8 +531,9 @@ import { Button, Input, Dialog } from '@lytjs/ui';
 **验收标准**:
 - [x] Router v1.0 正式发布（测试 67/67 通过）
 - [x] Store v1.0 正式发布（测试 31/31 通过）
-- [ ] UI 组件库预览
-- [ ] 示例项目完善
+- [x] UI 组件库预览（v0.1.0，测试 10/10 通过）
+- [x] 示例项目完善（Counter + Todo App）
+- [x] DevTools 预览版（测试 21/21 通过）
 
 ### 6.3 里程碑三：v6.3 完善版（20周）
 
@@ -660,13 +661,21 @@ pnpm 11.x 引入了更严格的构建脚本安全检查机制。在 monorepo 子
 
 ---
 
-**文档版本**: v1.5
+**文档版本**: v1.6
 **最后更新**: 2026-05-13
 **维护者**: LytJS Team
 
 ---
 
 ## 更新日志
+
+### v1.6 (2026-05-13)
+- ✅ 开发者工具预览版完成（@lytjs/devtools）
+- 组件树查看器（registerRootComponent）
+- Store 状态检查器（registerStore、getStoreStates）
+- 路由查看器（registerRouter、getCurrentRoute）
+- DevTools 面板（Ctrl+Shift+D 快捷键）
+- 21/21 测试通过
 
 ### v1.5 (2026-05-13)
 - ✅ 示例项目完成

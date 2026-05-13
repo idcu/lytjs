@@ -1,0 +1,60 @@
+{
+  "name": "@lytjs/devtools",
+  "version": "6.0.0",
+  "description": "LytJS Developer Tools for debugging and inspecting applications",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    },
+    "./style.css": "./dist/style.css",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "type-check": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@lytjs/common-is": "workspace:*",
+    "@lytjs/common-env": "workspace:*",
+    "@lytjs/common-dom": "workspace:*",
+    "@lytjs/common-object": "workspace:*",
+    "@lytjs/reactivity": "workspace:*",
+    "@lytjs/component": "workspace:*",
+    "@lytjs/vdom": "workspace:*",
+    "@lytjs/router": "workspace:*",
+    "@lytjs/store": "workspace:*"
+  },
+  "devDependencies": {
+    "tsup": "^8.0.0",
+    "typescript": "^5.4.0",
+    "vitest": "^3.0.0"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://gitee.com/lytjs/lytjs.git",
+    "directory": "packages/ecosystem/packages/devtools"
+  },
+  "keywords": [
+    "lytjs",
+    "devtools",
+    "debugging",
+    "inspector"
+  ]
+}

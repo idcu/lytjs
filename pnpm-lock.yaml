@@ -855,6 +855,46 @@ importers:
         specifier: ^3.0.0
         version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jsdom@29.1.1)
 
+  packages/ecosystem/packages/devtools:
+    dependencies:
+      '@lytjs/common-dom':
+        specifier: workspace:*
+        version: link:../../../common/packages/dom
+      '@lytjs/common-env':
+        specifier: workspace:*
+        version: link:../../../common/packages/env
+      '@lytjs/common-is':
+        specifier: workspace:*
+        version: link:../../../common/packages/is
+      '@lytjs/common-object':
+        specifier: workspace:*
+        version: link:../../../common/packages/object
+      '@lytjs/component':
+        specifier: workspace:*
+        version: link:../../../component
+      '@lytjs/reactivity':
+        specifier: workspace:*
+        version: link:../../../reactivity
+      '@lytjs/router':
+        specifier: workspace:*
+        version: link:../router
+      '@lytjs/store':
+        specifier: workspace:*
+        version: link:../store
+      '@lytjs/vdom':
+        specifier: workspace:*
+        version: link:../../../vdom
+    devDependencies:
+      tsup:
+        specifier: ^8.0.0
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.14)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.3)
+      typescript:
+        specifier: ^5.4.0
+        version: 5.9.3
+      vitest:
+        specifier: ^3.0.0
+        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jsdom@29.1.1)
+
   packages/ecosystem/packages/router:
     dependencies:
       '@lytjs/common-env':
