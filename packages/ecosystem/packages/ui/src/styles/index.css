@@ -68,21 +68,9 @@
   color: var(--lyt-color-primary);
 }
 
-.lyt-button:active {
-  border-color: var(--lyt-color-primary);
-  color: var(--lyt-color-primary);
-}
-
-/* 按钮类型 */
 .lyt-button--primary {
   background-color: var(--lyt-color-primary);
   border-color: var(--lyt-color-primary);
-  color: #ffffff;
-}
-
-.lyt-button--primary:hover {
-  background-color: #66b1ff;
-  border-color: #66b1ff;
   color: #ffffff;
 }
 
@@ -110,27 +98,19 @@
   color: #ffffff;
 }
 
-/* 朴素按钮 */
 .lyt-button--plain {
   background-color: transparent;
 }
 
-.lyt-button--primary.lyt-button--plain {
-  color: var(--lyt-color-primary);
-}
-
-/* 圆角按钮 */
 .lyt-button--round {
   border-radius: var(--lyt-border-radius-round);
 }
 
-/* 圆形按钮 */
 .lyt-button--circle {
   border-radius: var(--lyt-border-radius-circle);
   padding: 8px;
 }
 
-/* 尺寸 */
 .lyt-button--small {
   padding: 6px 12px;
   font-size: 12px;
@@ -141,26 +121,14 @@
   font-size: 16px;
 }
 
-/* 禁用状态 */
 .lyt-button--disabled {
   cursor: not-allowed;
   opacity: 0.5;
 }
 
-/* 加载状态 */
 .lyt-button--loading {
   cursor: wait;
   pointer-events: none;
-}
-
-.lyt-button__loading {
-  display: inline-flex;
-  animation: lyt-button-loading-spin 1s linear infinite;
-}
-
-@keyframes lyt-button-loading-spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
 }
 
 /* ===== Input 组件 ===== */
@@ -181,20 +149,6 @@
   transition: all var(--lyt-transition-duration);
 }
 
-.lyt-input__wrapper:hover {
-  border-color: var(--lyt-border-color-light);
-}
-
-.lyt-input--focused .lyt-input__wrapper {
-  border-color: var(--lyt-color-primary);
-  box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2);
-}
-
-.lyt-input--disabled .lyt-input__wrapper {
-  background-color: var(--lyt-bg-color-page);
-  cursor: not-allowed;
-}
-
 .lyt-input__inner {
   flex: 1;
   width: 100%;
@@ -205,82 +159,6 @@
   background: transparent;
   border: none;
   outline: none;
-}
-
-.lyt-input__inner::placeholder {
-  color: var(--lyt-text-color-placeholder);
-}
-
-.lyt-input__inner:disabled {
-  cursor: not-allowed;
-  color: var(--lyt-text-color-placeholder);
-}
-
-.lyt-input__prefix,
-.lyt-input__suffix {
-  display: flex;
-  align-items: center;
-  color: var(--lyt-text-color-secondary);
-}
-
-.lyt-input__clear,
-.lyt-input__password-toggle {
-  cursor: pointer;
-  color: var(--lyt-text-color-secondary);
-  transition: color var(--lyt-transition-duration);
-}
-
-.lyt-input__clear:hover,
-.lyt-input__password-toggle:hover {
-  color: var(--lyt-text-color-primary);
-}
-
-/* 前后置内容 */
-.lyt-input--prepend .lyt-input__wrapper {
-  border-top-left-radius: 0;
-  border-bottom-left-radius: 0;
-}
-
-.lyt-input--append .lyt-input__wrapper {
-  border-top-right-radius: 0;
-  border-bottom-right-radius: 0;
-}
-
-.lyt-input__prepend,
-.lyt-input__append {
-  display: flex;
-  align-items: center;
-  padding: 0 11px;
-  background-color: var(--lyt-bg-color-page);
-  border: 1px solid var(--lyt-border-color);
-  color: var(--lyt-text-color-regular);
-}
-
-.lyt-input__prepend {
-  border-right: none;
-  border-radius: var(--lyt-border-radius-base) 0 0 var(--lyt-border-radius-base);
-}
-
-.lyt-input__append {
-  border-left: none;
-  border-radius: 0 var(--lyt-border-radius-base) var(--lyt-border-radius-base) 0;
-}
-
-/* 尺寸 */
-.lyt-input--small .lyt-input__wrapper {
-  padding: 2px 7px;
-}
-
-.lyt-input--small .lyt-input__inner {
-  font-size: 12px;
-}
-
-.lyt-input--large .lyt-input__wrapper {
-  padding: 6px 11px;
-}
-
-.lyt-input--large .lyt-input__inner {
-  font-size: 16px;
 }
 
 /* ===== Dialog 组件 ===== */
@@ -294,19 +172,6 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity var(--lyt-transition-duration), visibility var(--lyt-transition-duration);
-}
-
-.lyt-dialog--visible {
-  opacity: 1;
-  visibility: visible;
-}
-
-.lyt-dialog--closing {
-  opacity: 0;
-  visibility: hidden;
 }
 
 .lyt-dialog__overlay {
@@ -318,79 +183,12 @@
   background-color: var(--lyt-bg-color-overlay);
 }
 
-.lyt-dialog__wrapper {
-  position: relative;
-  z-index: 1;
-  max-height: calc(100vh - 40px);
-  overflow: auto;
-}
-
 .lyt-dialog__content {
   display: flex;
   flex-direction: column;
-  max-width: calc(100vw - 40px);
-  max-height: calc(100vh - 40px);
   background-color: var(--lyt-bg-color);
   border-radius: var(--lyt-border-radius-base);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  transform: scale(0.9);
-  transition: transform var(--lyt-transition-duration);
-}
-
-.lyt-dialog--visible .lyt-dialog__content {
-  transform: scale(1);
-}
-
-.lyt-dialog--closing .lyt-dialog__content {
-  transform: scale(0.9);
-}
-
-.lyt-dialog__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--lyt-border-color-lighter);
-}
-
-.lyt-dialog__title {
-  font-size: 16px;
-  font-weight: 500;
-  color: var(--lyt-text-color-primary);
-}
-
-.lyt-dialog__close {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  padding: 0;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  color: var(--lyt-text-color-secondary);
-  transition: color var(--lyt-transition-duration);
-}
-
-.lyt-dialog__close:hover {
-  color: var(--lyt-color-primary);
-}
-
-.lyt-dialog__body {
-  flex: 1;
-  padding: 20px;
-  overflow: auto;
-  color: var(--lyt-text-color-regular);
-}
-
-.lyt-dialog__footer {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 12px;
-  padding: 12px 20px;
-  border-top: 1px solid var(--lyt-border-color-lighter);
 }
 
 /* ===== Select 组件 ===== */
@@ -409,52 +207,6 @@
   border: 1px solid var(--lyt-border-color);
   border-radius: var(--lyt-border-radius-base);
   cursor: pointer;
-  transition: all var(--lyt-transition-duration);
-}
-
-.lyt-select__trigger:hover {
-  border-color: var(--lyt-border-color-light);
-}
-
-.lyt-select--open .lyt-select__trigger {
-  border-color: var(--lyt-color-primary);
-}
-
-.lyt-select--disabled .lyt-select__trigger {
-  background-color: var(--lyt-bg-color-page);
-  cursor: not-allowed;
-}
-
-.lyt-select__selected {
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: var(--lyt-text-color-primary);
-}
-
-.lyt-select__selected:empty::before {
-  content: attr(data-placeholder);
-  color: var(--lyt-text-color-placeholder);
-}
-
-.lyt-select__clear {
-  margin-right: 8px;
-  color: var(--lyt-text-color-secondary);
-  cursor: pointer;
-}
-
-.lyt-select__clear:hover {
-  color: var(--lyt-text-color-primary);
-}
-
-.lyt-select__arrow {
-  color: var(--lyt-text-color-secondary);
-  transition: transform var(--lyt-transition-duration);
-}
-
-.lyt-select__arrow--up {
-  transform: rotate(180deg);
 }
 
 .lyt-select__dropdown {
@@ -468,18 +220,11 @@
   border-radius: var(--lyt-border-radius-base);
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
   z-index: 1000;
-  max-height: 200px;
-  overflow-y: auto;
-}
-
-.lyt-select__options {
-  padding: 4px 0;
 }
 
 .lyt-select__option {
   padding: 8px 12px;
   cursor: pointer;
-  transition: background-color var(--lyt-transition-duration);
 }
 
 .lyt-select__option:hover {
@@ -488,26 +233,9 @@
 
 .lyt-select__option--selected {
   color: var(--lyt-color-primary);
-  font-weight: 500;
-}
-
-.lyt-select__option--disabled {
-  color: var(--lyt-text-color-placeholder);
-  cursor: not-allowed;
-}
-
-.lyt-select__empty {
-  padding: 12px;
-  text-align: center;
-  color: var(--lyt-text-color-secondary);
 }
 
 /* ===== Tabs 组件 ===== */
-.lyt-tabs {
-  display: flex;
-  flex-direction: column;
-}
-
 .lyt-tabs__header {
   display: flex;
   border-bottom: 1px solid var(--lyt-border-color-light);
@@ -518,11 +246,6 @@
   cursor: pointer;
   color: var(--lyt-text-color-regular);
   border-bottom: 2px solid transparent;
-  transition: all var(--lyt-transition-duration);
-}
-
-.lyt-tabs__item:hover {
-  color: var(--lyt-color-primary);
 }
 
 .lyt-tabs__item--active {
@@ -530,35 +253,8 @@
   border-bottom-color: var(--lyt-color-primary);
 }
 
-.lyt-tabs__item--disabled {
-  color: var(--lyt-text-color-placeholder);
-  cursor: not-allowed;
-}
-
 .lyt-tabs__content {
   padding: 16px 0;
-}
-
-.lyt-tab-pane {
-  display: block;
-}
-
-/* Card 类型 */
-.lyt-tabs--card .lyt-tabs__header {
-  border-bottom: 1px solid var(--lyt-border-color);
-}
-
-.lyt-tabs--card .lyt-tabs__item {
-  border: 1px solid transparent;
-  border-bottom-color: var(--lyt-border-color);
-  border-radius: var(--lyt-border-radius-base) var(--lyt-border-radius-base) 0 0;
-  margin-right: 4px;
-}
-
-.lyt-tabs--card .lyt-tabs__item--active {
-  border-color: var(--lyt-border-color);
-  border-bottom-color: var(--lyt-bg-color);
-  background-color: var(--lyt-bg-color);
 }
 
 /* ===== Table 组件 ===== */
@@ -585,35 +281,58 @@
   background-color: var(--lyt-bg-color-page);
 }
 
-.lyt-table__cell--sortable {
-  cursor: pointer;
-  user-select: none;
-}
-
-.lyt-table__cell--sortable:hover {
-  background-color: var(--lyt-border-color-lighter);
-}
-
-.lyt-table__sort-icon {
-  margin-left: 4px;
-  font-size: 12px;
-  color: var(--lyt-color-primary);
-}
-
-.lyt-table__row:hover {
-  background-color: var(--lyt-bg-color-page);
-}
-
-.lyt-table__row--stripe {
-  background-color: var(--lyt-bg-color-page);
-}
-
-.lyt-table--border .lyt-table__cell {
-  border: 1px solid var(--lyt-border-color-lighter);
-}
-
 .lyt-table__empty {
   padding: 40px;
   text-align: center;
   color: var(--lyt-text-color-secondary);
+}
+
+/* ===== Form 组件 ===== */
+.lyt-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.lyt-form-item {
+  display: flex;
+  margin-bottom: 0;
+}
+
+.lyt-form-item__label {
+  display: inline-flex;
+  align-items: center;
+  padding-right: 12px;
+  font-size: 14px;
+  color: var(--lyt-text-color-regular);
+  flex-shrink: 0;
+}
+
+.lyt-form-item__label--required::before {
+  content: '*';
+  color: var(--lyt-color-danger);
+  margin-right: 4px;
+}
+
+.lyt-form-item__content {
+  flex: 1;
+  position: relative;
+}
+
+/* ===== Transition 组件 ===== */
+.fade-transition {
+  transition: opacity 0.3s ease;
+}
+
+.slide-transition {
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.zoom-transition {
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.lyt-transition-group {
+  display: flex;
+  flex-direction: column;
 }

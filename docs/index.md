@@ -2,38 +2,46 @@
 layout: home
 
 hero:
-  name: 'Lyt.js'
-  text: '下一代轻量级前端框架'
-  tagline: 高性能 · 类型安全 · 模块化 · 渐进式
+  name: LytJS
+  text: 轻量级渐进式框架
+  tagline: 高性能、易扩展、现代化 JavaScript 应用框架
+  image:
+    src: /logo.svg
+    alt: LytJS
   actions:
     - theme: brand
       text: 快速开始
       link: /guide/getting-started
     - theme: alt
-      text: Gitee
+      text: 在 Gitee 查看
       link: https://gitee.com/lytjs/lytjs
 
 features:
-  - icon: 💡
-    title: 为什么选择 Lyt.js
-    details: 轻量级设计、卓越性能、完整类型支持、渐进式架构。无论是小型项目还是大型应用，Lyt.js 都能提供恰到好处的解决方案。
-    link: /guide/getting-started
-    linkText: 了解更多
+  - icon: ⚡
+    title: 极致性能
+    details: 基于 Signal 的细粒度响应式系统，只更新真正需要更新的部分
+  - icon: 🧩
+    title: 渐进式架构
+    details: 按需引入，从简单组件到复杂应用，逐步增强
+  - icon: 🔧
+    title: 完整生态
+    details: Router、Store、UI 组件库、DevTools、SSR 一应俱全
   - icon: 📦
-    title: 快速安装
-    details: 'npm create lytjs@latest my-app'
-    link: /guide/installation
-    linkText: 查看安装指南
-  - title: 轻量核心
-    details: 核心包体积 < 35KB (gzip)，零外部依赖的基础工具库。
-  - title: 高性能响应式
-    details: 基于精确的依赖追踪，最小化重渲染，提供极致的运行时性能。
-  - title: TypeScript 优先
-    details: 完整的 TypeScript 类型支持，从核心到生态，类型安全贯穿始终。
-  - title: 模块化架构
-    details: 多层子仓库架构，每个包独立可发布，按需引入，tree-shaking 友好。
-  - title: 渐进式采用
-    details: 从简单的脚本增强到复杂的 SPA 应用，灵活适配各种场景。
-  - title: 完善生态
-    details: 路由、状态管理、CLI、UI 组件库、开发工具一应俱全。
+    title: TypeScript 优先
+    details: 完整的类型定义，提供卓越的开发体验
+  - icon: 🎨
+    title: 组件化开发
+    details: 声明式组件系统，支持组合式 API
+  - icon: 🚀
+    title: 服务端渲染
+    details: 内置 SSR 支持，轻松构建 SEO 友好的应用
 ---
+
+<style>
+:root {
+  --vp-home-hero-name-color: transparent;
+  --vp-home-hero-name-background: -webkit-linear-gradient(120deg, #4fc08d 30%, #42b883);
+  --vp-home-hero-image-background-image: linear-gradient(-45deg, #4fc08d50 50%, #42b88350 50%);
+  --vp-home-hero-image-filter: blur(44px);
+}
+</style>

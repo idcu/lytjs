@@ -1,13 +1,14 @@
 {
-  "name": "lytjs-docs",
-  "version": "1.0.0",
+  "name": "@lytjs/docs",
+  "version": "6.0.0",
+  "description": "LytJS 官方文档",
   "type": "module",
   "scripts": {
     "dev": "vitepress dev",
-    "build": "echo 'Skipping docs build for now'",
+    "build": "vitepress build",
     "preview": "vitepress preview"
   },
   "devDependencies": {
-    "vitepress": "^1.6.3"
+    "vitepress": "^1.0.0"
   }
 }

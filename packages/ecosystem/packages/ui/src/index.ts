@@ -11,6 +11,8 @@ export { Dialog } from './components/Dialog';
 export { Select } from './components/Select';
 export { Tabs, TabPane } from './components/Tabs';
 export { Table } from './components/Table';
+export { Form, FormItem } from './components/Form';
+export { Transition, TransitionGroup } from './components/Transition';
 
 // 类型导出
 export type {
@@ -41,6 +43,8 @@ import { Dialog } from './components/Dialog';
 import { Select } from './components/Select';
 import { Tabs, TabPane } from './components/Tabs';
 import { Table } from './components/Table';
+import { Form, FormItem } from './components/Form';
+import { Transition, TransitionGroup } from './components/Transition';
 
 /**
  * 安装所有组件
@@ -53,6 +57,10 @@ export function install(app: AppContext): void {
   app.components['LytTabs'] = Tabs;
   app.components['LytTabPane'] = TabPane;
   app.components['LytTable'] = Table;
+  app.components['LytForm'] = Form;
+  app.components['LytFormItem'] = FormItem;
+  app.components['LytTransition'] = Transition;
+  app.components['LytTransitionGroup'] = TransitionGroup;
 }
 
 export default {
