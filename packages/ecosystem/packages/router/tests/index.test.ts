@@ -350,38 +350,38 @@ describe('createRouter', () => {
     });
 
     it('should have correct initial route', () => {
-      expect(router.currentRoute.value.path).toBe('/');
+      expect(router.currentRoute().path).toBe('/');
     });
   });
 
   describe('navigation', () => {
     it('should navigate to a new route via push', async () => {
       await router.push('/users');
-      expect(router.currentRoute.value.path).toBe('/users');
-      expect(router.currentRoute.value.matched.length).toBeGreaterThan(0);
+      expect(router.currentRoute().path).toBe('/users');
+      expect(router.currentRoute().matched.length).toBeGreaterThan(0);
     });
 
     it('should navigate to a named route', async () => {
       await router.push({ name: 'users' });
-      expect(router.currentRoute.value.path).toBe('/users');
+      expect(router.currentRoute().path).toBe('/users');
     });
 
     it('should extract route params', async () => {
       await router.push('/users/42');
-      expect(router.currentRoute.value.params).toEqual({ id: '42' });
+      expect(router.currentRoute().params).toEqual({ id: '42' });
     });
 
     it('should navigate via replace', async () => {
       await router.push('/users');
       await router.replace('/posts');
-      expect(router.currentRoute.value.path).toBe('/posts');
+      expect(router.currentRoute().path).toBe('/posts');
     });
 
     it('should go back', async () => {
       await router.push('/users');
       await router.push('/posts');
       router.back();
-      expect(router.currentRoute.value.path).toBe('/users');
+      expect(router.currentRoute().path).toBe('/users');
     });
 
     it('should go forward', async () => {
@@ -389,13 +389,13 @@ describe('createRouter', () => {
       await router.push('/posts');
       router.back();
       router.forward();
-      expect(router.currentRoute.value.path).toBe('/posts');
+      expect(router.currentRoute().path).toBe('/posts');
     });
 
     it('should handle query and hash', async () => {
       await router.push('/users?page=2#top');
-      expect(router.currentRoute.value.path).toBe('/users');
-      expect(router.currentRoute.value.hash).toBe('top');
+      expect(router.currentRoute().path).toBe('/users');
+      expect(router.currentRoute().hash).toBe('top');
     });
   });
 
@@ -410,13 +410,13 @@ describe('createRouter', () => {
     it('should abort navigation when guard returns false', async () => {
       router.beforeEach(() => false);
       await router.push('/users');
-      expect(router.currentRoute.value.path).toBe('/');
+      expect(router.currentRoute().path).toBe('/');
     });
 
     it('should abort navigation when guard throws', async () => {
       router.beforeEach(() => new Error('Unauthorized'));
       const result = await router.push('/users');
-      expect(router.currentRoute.value.path).toBe('/');
+      expect(router.currentRoute().path).toBe('/');
       expect(result?.type).toBe(NavigationFailureType.aborted);
     });
 
@@ -471,7 +471,7 @@ describe('createRouter', () => {
         ],
       });
       await routerWithGuard.push('/admin');
-      expect(routerWithGuard.currentRoute.value.path).toBe('/');
+      expect(routerWithGuard.currentRoute().path).toBe('/');
     });
 
     it('should run beforeResolve guard', async () => {
@@ -506,7 +506,7 @@ describe('createRouter', () => {
     it('should return aborted failure for non-existent route', async () => {
       const result = await router.push('/non-existent');
       expect(result?.type).toBe(NavigationFailureType.aborted);
-      expect(router.currentRoute.value.path).toBe('/');
+      expect(router.currentRoute().path).toBe('/');
     });
   });
 });
@@ -546,9 +546,9 @@ describe('RouterLink', () => {
 
     const { useLink } = require('../src/composables/useLink');
     const link = useLink({ to: '/users?page=1#top' });
-    expect(link.href.value).toContain('/users');
-    expect(link.href.value).toContain('page=1');
-    expect(link.href.value).toContain('#top');
+    expect(link.href()).toContain('/users');
+    expect(link.href()).toContain('page=1');
+    expect(link.href()).toContain('#top');
   });
 
   it('should detect active state', () => {
@@ -618,7 +618,7 @@ describe('beforeRouteLeave guard', () => {
 
     const result = await router.push('/about');
     expect(result?.type).toBe(NavigationFailureType.aborted);
-    expect(router.currentRoute.value.path).toBe('/');
+    expect(router.currentRoute().path).toBe('/');
   });
 });
 
@@ -669,8 +669,8 @@ describe('name-based navigation', () => {
     });
 
     await router.push({ name: 'user', params: { id: '42' } });
-    expect(router.currentRoute.value.path).toBe('/users/42');
-    expect(router.currentRoute.value.params).toEqual({ id: '42' });
+    expect(router.currentRoute().path).toBe('/users/42');
+    expect(router.currentRoute().params).toEqual({ id: '42' });
   });
 
   it('should return aborted for unknown route name', async () => {

@@ -177,6 +177,41 @@ test('full app', async ({ page }) => {
 - ✅ 保持 API 完全兼容（host 分支委托给引擎，DOM 回退分支保持不变）
 - ✅ 实现 TransitionEngine 实例缓存（按 host 实例 WeakMap 缓存）
 
+#### 2.2.4 Router 包开发
+**状态**: 🚧 进行中（核心功能已完成，测试 59/67 通过）
+
+**已完成**:
+- ✅ 实现 `createRouter` 函数，支持声明式路由配置
+- ✅ 实现 `createWebHistory`、`createWebHashHistory`、`createMemoryHistory` 三种历史模式
+- ✅ 实现路由匹配器（matcher），支持动态参数、可选参数、通配符
+- ✅ 实现导航守卫系统（beforeEach、beforeEnter、beforeResolve、afterEach）
+- ✅ 实现 `useRouter`、`useRoute`、`useLink` composables
+- ✅ 实现 `RouterView` 和 `RouterLink` 组件
+- ✅ 修复 signal API 兼容性问题（使用 `()` 而不是 `.value`）
+- ✅ 添加 67 个单元测试，59 个通过
+
+**待修复**:
+- 🐛 MemoryHistory 前进/后退历史管理问题
+- 🐛 beforeRouteLeave 组件内守卫
+- 🐛 404 处理返回类型问题
+- 🐛 未知路由名称导航处理
+
+#### 2.2.5 Store 包开发
+**状态**: 🚧 进行中（核心功能已完成，测试 20/31 通过）
+
+**已完成**:
+- ✅ 实现 `defineStore` 函数，支持 Options API 和 Setup API
+- ✅ 实现 `createPinia` 和插件系统
+- ✅ 实现 `storeToRefs` 工具函数
+- ✅ 实现 `$patch`、`$reset`、`$subscribe`、`$onAction` 等 Store API
+- ✅ 添加 31 个单元测试，20 个通过
+
+**待修复**:
+- 🐛 getters 循环依赖检测问题
+- 🐛 state 响应式更新通知问题
+- 🐛 $subscribe 回调触发问题
+- 🐛 Pinia 状态注册问题
+
 **技术实现**:
 ```typescript
 // vdom/transition.ts 现在使用 TransitionEngine
@@ -330,17 +365,17 @@ import { Button, Input, Dialog } from '@lytjs/ui';
 **目标**: 基础生态就位
 
 **任务清单**:
-- [ ] Router 包 v1.0
-- [ ] Store 包 v1.0
+- [x] Router 包 v0.9（核心功能完成，测试 59/67 通过）
+- [x] Store 包 v0.9（核心功能完成，测试 20/31 通过）
 - [ ] UI 基础组件
 - [ ] 集成示例项目
 - [ ] 开发者工具预览版
 
 **交付物**:
-- ✅ @lytjs/router v1.0
-- ✅ @lytjs/store v1.0
-- ✅ @lytjs/ui v0.1
-- ✅ 示例项目集合
+- 🚧 @lytjs/router v0.9（待修复剩余测试）
+- 🚧 @lytjs/store v0.9（待修复剩余测试）
+- ⏳ @lytjs/ui v0.1
+- ⏳ 示例项目集合
 
 ### 3.3 阶段三：生态完善（v6.3）
 
@@ -482,8 +517,10 @@ import { Button, Input, Dialog } from '@lytjs/ui';
 **目标**: 基础生态就位
 
 **验收标准**:
-- [ ] Router v1.0 发布
-- [ ] Store v1.0 发布
+- [x] Router v0.9 核心功能完成（测试 59/67 通过）
+- [x] Store v0.9 核心功能完成（测试 20/31 通过）
+- [ ] Router v1.0 正式发布（测试全部通过）
+- [ ] Store v1.0 正式发布（测试全部通过）
 - [ ] UI 组件库预览
 - [ ] 示例项目完善
 
@@ -613,6 +650,23 @@ pnpm 11.x 引入了更严格的构建脚本安全检查机制。在 monorepo 子
 
 ---
 
-**文档版本**: v1.1
+**文档版本**: v1.2
 **最后更新**: 2026-05-13
 **维护者**: LytJS Team
+
+---
+
+## 更新日志
+
+### v1.2 (2026-05-13)
+- 更新 Router 包开发进度（59/67 测试通过）
+- 更新 Store 包开发进度（20/31 测试通过）
+- 修复 reactivity 包 tsup 配置（添加 common-assertions 到 external）
+- 修复 router 包 signal API 兼容性问题
+
+### v1.1 (2026-05-13)
+- 添加 pnpm 构建脚本错误解决方案附录
+- 更新测试覆盖率数据
+
+### v1.0 (2026-05-12)
+- 初始版本发布

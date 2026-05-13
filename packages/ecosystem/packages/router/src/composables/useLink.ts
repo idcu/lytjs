@@ -26,16 +26,16 @@ export function useLink(options: UseLinkOptions) {
   });
 
   const isActive = computed(() => {
-    const target = targetLocation.value;
+    const target = targetLocation();
     return route.path.startsWith(target.path);
   });
 
   const isExactActive = computed(() => {
-    return isSameRouteLocation(route, targetLocation.value);
+    return isSameRouteLocation(route, targetLocation());
   });
 
   const href = computed(() => {
-    const loc = targetLocation.value;
+    const loc = targetLocation();
     const path = loc.path;
     const query = Object.keys(loc.query).length
       ? '?' + new URLSearchParams(loc.query as any).toString()

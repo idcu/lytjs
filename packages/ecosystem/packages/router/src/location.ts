@@ -55,9 +55,10 @@ export function resolveLocation(
  * Check if two locations are the same
  */
 export function isSameRouteLocation(
-  a: RouteLocationNormalized,
-  b: RouteLocationNormalized,
+  a: RouteLocationNormalized | undefined,
+  b: RouteLocationNormalized | undefined,
 ): boolean {
+  if (!a || !b) return false;
   return (
     a.path === b.path &&
     a.hash === b.hash &&

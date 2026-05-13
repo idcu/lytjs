@@ -30,5 +30,6 @@ export default defineConfig({
     '@lytjs/common-error',
     '@lytjs/common-constants',
     '@lytjs/shared-types',
+    '@lytjs/common-assertions',
   ],
 });

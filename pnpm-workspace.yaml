@@ -29,3 +29,5 @@ packages:
   - 'e2e/*'
 allowBuilds:
   esbuild: set this to true or false
+onlyBuiltDependencies:
+  - esbuild

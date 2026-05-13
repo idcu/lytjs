@@ -10,5 +10,5 @@ import { useRouter } from './useRouter';
  */
 export function useRoute(): RouteLocationNormalized {
   const router = useRouter();
-  return router.currentRoute.value;
+  return router.currentRoute();
 }

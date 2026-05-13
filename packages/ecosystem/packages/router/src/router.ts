@@ -131,7 +131,7 @@ export function createRouter(options: RouterOptions): Router {
     replace: boolean = false,
   ): Promise<NavigationFailure | void> {
     // Check for duplicate navigation
-    const resolved = resolveLocation(to, currentRoute.value, { resolveName });
+    const resolved = resolveLocation(to, currentRoute(), { resolveName });
     const targetPath = resolved.path;
 
     // Resolve the route
@@ -140,8 +140,8 @@ export function createRouter(options: RouterOptions): Router {
     if (matched.length === 0) {
       return {
         type: NavigationFailureType.aborted,
-        from: currentRoute.value,
-        to: currentRoute.value,
+        from: currentRoute(),
+        to: currentRoute(),
       };
     }
 
@@ -158,18 +158,18 @@ export function createRouter(options: RouterOptions): Router {
     };
 
     // Check for same route navigation
-    if (isSameRouteLocation(currentRoute.value, targetLocation)) {
+    if (isSameRouteLocation(currentRoute(), targetLocation)) {
       return {
         type: NavigationFailureType.duplicated,
-        from: currentRoute.value,
+        from: currentRoute(),
         to: targetLocation,
       };
     }
 
-    const from = currentRoute.value;
+    const from = currentRoute();
 
     // Run navigation guards (pass fromMatched for beforeRouteLeave)
-    const fromMatched = currentRoute.value.matched
+    const fromMatched = currentRoute().matched
       .map((record) => {
         // Find the corresponding matcher for the from route records
         return flatMatchers.find((m) => m.record === record);
@@ -188,7 +188,7 @@ export function createRouter(options: RouterOptions): Router {
       await options.history.push(targetLocation);
     }
 
-    currentRoute.value = targetLocation;
+    currentRoute.set(targetLocation);
 
     // Handle scroll behavior
     if (options.scrollBehavior) {
@@ -298,7 +298,7 @@ export function createRouter(options: RouterOptions): Router {
         matched: matched.map((m) => m.record),
         meta: { ...meta, ...to.meta },
       };
-      currentRoute.value = newLocation;
+      currentRoute.set(newLocation);
     }
   });
 
@@ -376,12 +376,12 @@ export function createRouter(options: RouterOptions): Router {
       // Initial navigation
       const initialLocation = options.history.location;
       const { matched, params, meta } = resolveRoute(initialLocation.path);
-      currentRoute.value = {
+      currentRoute.set({
         ...initialLocation,
         params,
         matched: matched.map((m) => m.record),
         meta: { ...meta, ...initialLocation.meta },
-      };
+      });
 
       readyResolve?.();
     },
