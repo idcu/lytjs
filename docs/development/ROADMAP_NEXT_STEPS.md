@@ -1,1135 +1,302 @@
-# LytJS v6.0 下一步发展规划
+# Lyt.js v6.0.0 下一步发展规划
 
-> 基于现状分析的大厂标准开发建议和路线图
+> 本文档为 Lyt.js v6.0.0 后续开发路线图，聚焦架构落地、组件迭代、规范落地，明确下一步开发优先级与核心任务，严格遵循项目8层架构设计初衷与运行时零第三方依赖原则。
 
 ---
 
 ## 📋 目录
 
-- [1. 现状分析](#1-现状分析)
-- [2. 核心优先事项](#2-核心优先事项)
-- [3. 详细实施计划](#3-详细实施计划)
-- [4. 质量保障体系](#4-质量保障体系)
-- [5. 生态建设](#5-生态建设)
-- [6. 里程碑](#6-里程碑)
+- [一、核心架构落地（优先推进）](#一核心架构落地优先推进)
+- [二、组件开发路线（按优先级推进）](#二组件开发路线按优先级推进)
+- [三、插件开发与完善（同步推进）](#三插件开发与完善同步推进)
+- [四、工程化与规范落地（贯穿全程）](#四工程化与规范落地贯穿全程)
+- [五、版本迭代里程碑（下一步规划）](#五版本迭代里程碑下一步规划)
+- [六、核心约束（必须严格遵守）](#六核心约束必须严格遵守)
 
 ---
 
-## 1. 现状分析
+## 一、核心架构落地（优先推进）
 
-### 1.1 项目概况
+### 1.1 8层架构完善（贴合项目设计初衷）
 
-**当前版本**: v6.0.0
-**架构**: 模块化 Monorepo
-**核心特性**:
+确保8层架构各层职责清晰、依赖关系合理，全部遵循运行时零第三方依赖原则，完成各层核心能力落地与联调，具体分层及下一步完善任务：
 
-- ✅ 响应式系统（Proxy 基础）
-- ✅ VDOM diff 算法
-- ✅ 双核心模式（Signal + VDOM）
-- ✅ 30+ common 工具包
-- ✅ 完整的类型声明
-- ✅ 测试覆盖（待完善）
+#### 8层架构（从底层到上层，下一步完善重点标注）
 
-### 1.2 优势分析
+| 层级 | 层名                     | 核心能力                                                   | 下一步完善                                                       | 约束要求                                              |
+| ---- | ------------------------ | ---------------------------------------------------------- | ---------------------------------------------------------------- | ----------------------------------------------------- |
+| L0   | 基础工具层               | 原生JS工具封装（类型判断、数据处理、事件绑定等）、常量定义 | 完善工具方法覆盖，确保无冗余、无遗漏，适配所有上层依赖           | 零第三方依赖，自研实现                                |
+| L1   | 渲染引擎层               | Vapor无虚拟DOM渲染、原生DOM操作、指令解析与执行            | 优化Vapor渲染性能，完善指令解析兼容性，修复已知渲染bug           | 零第三方依赖，不引入任何外部渲染库                    |
+| L2   | 核心运行时层             | 应用实例创建、生命周期管理、插件注册/卸载机制、依赖注入    | 固化运行时生命周期，完善插件依赖解析逻辑，确保稳定性             | 最小化内核，零依赖，自主可控                          |
+| L3   | 插件核心层               | 插件规范定义、插件生命周期管理、插件依赖解析               | 完善插件注册/卸载机制，统一插件开发规范，适配8层架构             | 自研实现，无第三方依赖，为官方插件提供统一基座        |
+| L4   | 官方插件层               | 框架内置自研插件（主题、国际化、日志、权限、存储等）       | 完成所有必装插件开发与测试，确保可插拔、按需引入，适配核心运行时 | 零第三方依赖，基于插件核心层开发，统一API规范         |
+| L5   | 组件基础层               | 组件通用逻辑、组件生命周期、组件通信机制、样式规范统一     | 固化组件基础逻辑，统一组件通信规范，适配主题插件与渲染引擎       | 原生实现，零第三方依赖，支撑上层业务组件开发          |
+| L6   | 业务组件层               | 基础组件（Button/Input）、高级组件（Table/Tree等）集合     | 按优先级推进组件开发与优化，完成API统一与主题适配                | 基于组件基础层+插件层开发，零第三方依赖，贴合业务场景 |
+| L7   | 工程化工具层（开发辅助） | 构建、打包、测试、lint、版本发布等开发工具                 | 完善工程化脚本，新增零依赖规范校验脚本，优化构建产物体积         | 仅开发/构建阶段使用，不影响线上运行时                 |
 
-1. **架构设计优秀**
-   - 清晰的分层设计
-   - 模块化程度高
-   - 职责分离明确
+### 1.2 架构核心约束落地（下一步重点）
 
-2. **技术选型合理**
-   - TypeScript 全栈
-   - pnpm monorepo
-   - 现代构建工具链
+- **严格坚守运行时零第三方依赖原则**
+  - 所有层（L0-L6）禁止引入任何第三方 runtime 依赖
+  - 通用工具全部自研实现
 
-3. **代码质量良好**
-   - 已有 ESLint 配置
-   - Prettier 格式化
-   - 类型安全
+- **完善各层依赖关系**
+  - 确保底层为上层提供支撑
+  - 无跨层依赖、循环依赖
+  - 使用 `pnpm run check-circular` 定期检查
 
-### 1.3 待改进领域
-
-| 领域          | 现状                                  | 优先级 |
-| ------------- | ------------------------------------- | ------ |
-| 生态系统      | 薄弱（router/store 缺失）             | 🔴 高  |
-| 性能基准      | 缺少竞品对比                          | 🟡 中  |
-| 文档完整度    | 需完善                                | 🟡 中  |
-| 测试覆盖      | 核心包需提高                          | 🟡 中  |
-| CLI 工具      | 类型问题需修复                        | 🟢 低  |
-| as unknown as | ✅ 已解决（reactivity/vdom 核心模块） | 🟢 低  |
+- **固化8层架构文档**
+  - 同步更新至项目 README.md
+  - 确保架构描述统一
+  - 新增架构图说明
 
 ---
 
-## 2. 核心优先事项
-
-### 2.1 P0 - 立即修复（2周内）
-
-#### 2.1.1 修复构建依赖问题
-
-**状态**: ✅ 已完成（pnpm install 成功）
-
-#### 2.1.2 修复类型声明生成
-
-**状态**: ✅ 已完成（core/renderer dts: true）
-
-#### 2.1.3 修复 Playground 配置
-
-**状态**: ✅ 已完成（移除 @lytjs/shared）
-
-#### 2.1.4 修复安全审计
-
-**状态**: ✅ 已完成（移除 continue-on-error）
-
-### 2.2 P1 - 短期目标（1-2个月）
-
-#### 2.2.1 解决 "as unknown as" 问题
-
-**状态**: ✅ 已完成
-
-**完成内容**:
-
-- ✅ 创建并增强 `@lytjs/common-assertions` 包（新增 11 个工具函数）
-- ✅ 添加 ESLint 规则禁止新的 `as unknown as` 使用
-- ✅ 替换 reactivity 模块全部 12 处类型断言
-- ✅ 替换 vdom 模块关键路径 2 处类型断言
-- ✅ 剩余 ~35 处为跨平台宿主元素转换（架构层面设计决策）
-
-**提供的工具函数**:
-
-```typescript
-import {
-  unsafeCast, // 安全的类型转换
-  nullishCoalesce, // 空值合并
-  safeGetProperty, // 安全属性访问
-  safeGetNested, // 安全嵌套访问
-  isFiniteNumber, // 有限数字检查
-  isNonEmptyString, // 非空字符串检查
-  isNonEmptyArray, // 非空数组检查
-  isNonEmptyObject, // 非空对象检查
-  invariant, // 不变量断言
-  warning, // 警告提示
-  asRecord, // 记录类型转换
-} from '@lytjs/common-assertions';
-```
-
-**ESLint 规则**:
-
-```javascript
-'no-restricted-syntax': [
-  'error',
-  {
-    selector: 'TSAsExpression[type.annotation.typeName.name="unknown"] > TSAsExpression',
-    message: '禁止使用 "as unknown as" 双重类型断言。请使用 @lytjs/common-assertions 中的 unsafeCast<T>() 或其他更安全的类型断言方式。',
-  },
-]
-```
-
-#### 2.2.2 完善测试覆盖率
-
-**状态**: ✅ 已完成（核心模块覆盖率达标）
-
-**已完成**:
-
-- ✅ ref.test.ts 新增 13 个测试用例（覆盖 isShallowRef/isComputedRef/toValue 等新增功能）
-- ✅ computed.test.ts 新增 8 个测试用例（cleanupCache、循环依赖检测、嵌套 computed 等）
-- ✅ effect.test.ts 新增 6 个测试用例（多 effects、嵌套 effects、onError 处理等）
-- ✅ reactive.test.ts 新增 10 个测试用例（深层嵌套、markRaw、null prototype 等）
-- ✅ vnode.test.ts 新增 20+ 个测试用例（边界情况、mergeProps 高级用例等）
-- ✅ diff.test.ts 新增 25+ 个测试用例（PatchFlags、Fragment、Text 节点等）
-- ✅ codegen.test.ts 新增 20+ 个测试用例（指令、动态参数、特殊元素等）
-- ✅ optimize.test.ts 新增 10+ 个测试用例（静态标记、hoist、patch flags 等）
-- ✅ composition.test.ts 新增 15+ 个测试用例（useSlots/useAttrs/useModel 增强）
-- ✅ h.test.ts 新增 30+ 个测试用例（props 边界、复杂 props、嵌套 VNode、特殊元素等）
-- ✅ config.test.ts 新增 35+ 个测试用例（边界情况、watch/merge/setMultiple 高级用例）
-- ✅ plugin.test.ts 新增 30+ 个测试用例（链式调用、重复检测、async plugin 等）
-- ✅ web-component.test.ts 新增 25+ 个测试用例（生命周期、shadow DOM、样式注入等）
-- ✅ renderer 模块已有 200+ 个测试用例（dom-renderer、patch-props、signal-renderer、vapor-app、ssr、hydration、unmount 等全覆盖）
-- ✅ 增强 @lytjs/common-assertions 包的类型安全工具
-- ✅ 新增 app-context.test.ts（26 个测试：createAppContext、createContextConfig Proxy）
-- ✅ 新增 common-integration.test.ts（45 个测试：IntegrationScope、safeEscapeHtml、safeParseQueryString）
-- ✅ 新增 lifecycle.test.ts（16 个测试：11 个生命周期钩子导出验证）
-- ✅ 新增 next-tick.test.ts（8 个测试：nextTick 微任务执行）
-- ✅ 新增 resolve.test.ts（20 个测试：resolveComponent/resolveDirective/resolveDynamicComponent）
-- ✅ 新增 patch-element.test.ts（34 个测试：mountElement/patchElement/diffProps/setRef）
-- ✅ 新增 patch-component.test.ts（16 个测试：mountComponent/inheritAttrs/errorCaptured/递归深度限制）
-- ✅ 新增 transition-group.test.ts（35 个测试：FLIP 动画/enter/leave/beforeUpdate/afterUpdate）
-- ✅ 总计新增 448+ 个测试用例，核心模块累计约 650+ 个测试用例
-
-**目标**:
-
-- reactivity: 90%+ (✅ 已达标)
-- vdom: 85%+ (✅ 已达标)
-- compiler: 80%+ (✅ 已达标)
-- core: 80%+ (✅ 已达标)
-
-**策略**:
-
-```typescript
-// 1. 添加单元测试
-describe('feature', () => {
-  it('should work', () => {
-    // 测试代码
-  });
-
-  it('should handle edge cases', () => {
-    // 边界条件测试
-  });
-});
-
-// 2. 添加性能基准测试
-import { bench, group, run } from 'mitata';
-
-group('reactivity', () => {
-  bench('ref.set', () => {
-    /* ... */
-  });
-});
-
-// 3. 添加集成测试
-test('full app', async ({ page }) => {
-  // E2E 测试
-});
-```
-
-#### 2.2.3 集成 common-transition-engine
-
-**状态**: ✅ 已完成
-
-**完成内容**:
-
-- ✅ 在 `@lytjs/vdom/package.json` 中添加 `@lytjs/common-transition-engine` 依赖
-- ✅ 重构 `@lytjs/vdom/transition` 使用 `TransitionEngine` 作为底层引擎
-- ✅ 保持 API 完全兼容（host 分支委托给引擎，DOM 回退分支保持不变）
-- ✅ 实现 TransitionEngine 实例缓存（按 host 实例 WeakMap 缓存）
-
-#### 2.2.4 Router 包开发
-
-**状态**: ✅ 已完成（v1.0.0，测试 67/67 通过）
-
-**已完成**:
-
-- ✅ 实现 `createRouter` 函数，支持声明式路由配置
-- ✅ 实现 `createWebHistory`、`createWebHashHistory`、`createMemoryHistory` 三种历史模式
-- ✅ 实现路由匹配器（matcher），支持动态参数、可选参数、通配符
-- ✅ 实现导航守卫系统（beforeEach、beforeEnter、beforeResolve、afterEach）
-- ✅ 实现 `useRouter`、`useRoute`、`useLink` composables
-- ✅ 实现 `RouterView` 和 `RouterLink` 组件
-- ✅ 修复 signal API 兼容性问题（使用 `computedSignal` 替代 `computed`）
-- ✅ 修复嵌套路由匹配问题（flattenMatchers 合并父/子 tokens）
-- ✅ 修复 404 处理（正确返回 aborted failure）
-- ✅ 修复 beforeRouteLeave 组件内守卫（添加 component 字段到 normalized record）
-- ✅ 添加 67 个单元测试，全部通过
-
-#### 2.2.5 Store 包开发
-
-**状态**: ✅ 已完成（v1.0.0，测试 31/31 通过）
-
-**已完成**:
-
-- ✅ 实现 `defineStore` 函数，支持 Options API 和 Setup API
-- ✅ 实现 `createPinia` 和插件系统
-- ✅ 实现 `storeToRefs` 工具函数
-- ✅ 实现 `$patch`、`$reset`、`$subscribe`、`$onAction` 等 Store API
-- ✅ 修复 signal API 兼容性问题（pinia.state 包装为 `.value` 对象）
-- ✅ 修复 state 响应式问题（使用 Object.defineProperties 复制 getter/setter）
-- ✅ 修复 getters 循环依赖问题（使用 Proxy 替代展开运算符）
-- ✅ 修复 action this 绑定问题（使用 Proxy 作为 thisContext）
-- ✅ 修复 $subscribe 通知问题（在 action wrapper 中触发通知）
-- ✅ 添加 31 个单元测试，全部通过
-
-#### 2.2.6 UI 组件库开发
-
-**状态**: ✅ 已完成（v0.2.0，测试 10/10 通过）
-
-**已完成**:
-
-- ✅ 创建 UI 包基础结构（package.json、tsconfig.json、tsup.config.ts）
-- ✅ 实现 Button 组件（支持多种类型、尺寸、状态）
-- ✅ 实现 Input 组件（支持双向绑定、清除、密码显示）
-- ✅ 实现 Dialog 组件（支持模态、自定义内容、关闭确认）
-- ✅ 实现 Select 组件（单选、多选、清除）
-- ✅ 实现 Tabs 组件（卡片式、边框卡片式）
-- ✅ 实现 Table 组件（排序、斑马纹、边框）
-- ✅ 添加基础样式文件（CSS 变量、组件样式）
-- ✅ 添加 10 个单元测试，全部通过
-
-**组件特性**:
-
-- Button: type/size/disabled/loading/plain/round/circle
-- Input: modelValue/clearable/showPassword/prefix/suffix
-- Dialog: modelValue/title/width/closeOnClickModal/closeOnPressEscape
-- Select: options/placeholder/disabled/clearable/multiple
-- Tabs: modelValue/type/card/border-card
-- Table: data/columns/stripe/border/sortable
-
-#### 2.2.7 SSR 服务端渲染
-
-**状态**: ✅ 已完成（v6.0.0，测试 9/9 通过）
-
-**已完成**:
-
-- ✅ 创建 SSR 包基础结构
-- ✅ 实现 renderToString（VNode 转 HTML 字符串）
-- ✅ 实现 renderToHtml（完整 HTML 页面渲染）
-- ✅ HTML 特殊字符转义（XSS 防护）
-- ✅ 支持 class/style 对象处理
-- ✅ 自闭合标签处理
-
-**API**:
-
-```typescript
-import { renderToString, renderToHtml } from '@lytjs/ssr';
-
-// 渲染 VNode 为字符串
-const html = renderToString(vnode);
-
-// 渲染完整 HTML 页面
-const page = renderToHtml(vnode, {
-  title: 'Page Title',
-  lang: 'zh-CN',
-});
-```
-
-#### 2.2.8 虚拟列表组件
-
-**状态**: ✅ 已完成（v6.0.0）
-
-**已完成**:
-
-- ✅ VirtualList 组件实现
-- ✅ 大数据高性能渲染（只渲染可视区域）
-- ✅ 缓冲区支持（减少滚动白屏）
-- ✅ 动态高度计算
-- ✅ 滚动位置追踪
-
-**特性**:
-
-- data: 数据源
-- itemHeight: 每项高度
-- height: 列表容器高度
-- buffer: 缓冲区大小
-
-**技术实现**:
-
-```typescript
-// vdom/transition.ts 现在使用 TransitionEngine
-import { TransitionEngine } from '@lytjs/common-transition-engine';
-
-const engineCache = new WeakMap<RendererHost<any, any>, TransitionEngine<any, any>>();
-
-function getOrCreateEngine<HN extends object, HE extends HN>(
-  host: RendererHost<HN, HE>,
-): TransitionEngine<HN, HE> {
-  let engine = engineCache.get(host);
-  if (!engine) {
-    engine = new TransitionEngine<HN, HE>(host);
-    engineCache.set(host, engine);
-  }
-  return engine as TransitionEngine<HN, HE>;
-}
-
-// performEnterTransition / performLeaveTransition 的 host 分支
-// 现在委托给 TransitionEngine 执行
-const engine = getOrCreateEngine(host);
-engine.performEnter(el, props, doneFn);
-```
-
-**优势**:
-
-1. 统一过渡动画系统 - 所有平台共享同一套过渡逻辑
-2. FLIP 动画支持 - TransitionEngine 提供完整的 FLIP 动画能力
-3. 代码复用 - 减少 vdom 中的重复代码
-4. 易于维护 - 过渡逻辑集中在 common-transition-engine
-
-#### 2.2.9 插件系统改进（v6.0 Plugin System Enhancement）
-
-**状态**: ✅ 已完成（P0 + P1 + P2 + P3，测试 127/127 通过）
-
-**已完成内容**:
-
-- ✅ 类型系统重构：`EnhancedPlugin` 接口（泛型、元数据、依赖声明、生命周期钩子）
-- ✅ `PluginRegistry` 注册表：注册/注销/查询/依赖管理/冲突检测/事件系统/拓扑排序
-- ✅ `PluginValidator` 验证器：结构/名称/版本/依赖/冲突/peerRequirements/生命周期钩子验证
-- ✅ 集成到 `createApp.use()`：EnhancedPlugin 自动验证、注册、依赖检查、生命周期钩子调用
-- ✅ 向后兼容：基础 Plugin 和函数式插件继续正常工作
-- ✅ `app._pluginRegistry` 和 `app._pluginValidator` 内部 API 访问
-- ✅ 完整的 semver 版本比较（支持 ^, ~, >=, >, <, <=, = 前缀）
-- ✅ 自定义验证规则支持（`addRule` / `removeRule`）
-- ✅ **ConfigSchema 系统**：JSON Schema 风格的配置验证（字符串/数字/布尔/对象/数组/枚举/联合类型）
-- ✅ **ConfigValidator**：完整的类型验证、格式校验（email/url/semver/date/uuid）、自定义验证
-- ✅ **ConfigTransformer**：默认值应用、类型转换、深度合并、警告收集
-- ✅ **definePlugin**：类型安全的插件定义辅助函数
-- ✅ **PluginTester**：隔离环境测试工具
-- ✅ **Plugin CLI**：`create` / `build` / `validate` 子命令，支持 3 种模板（default/minimal/withConfig）
-- ✅ 新增 127 个测试用例（registry 31 + validator 34 + 集成 12 + schema 30 + transformer 10 + sdk 10）
-
-**API**:
-
-```typescript
-import {
-  PluginRegistry,
-  PluginValidator,
-  ConfigValidator,
-  ConfigTransformer,
-  definePlugin,
-} from '@lytjs/core';
-import type {
-  EnhancedPlugin,
-  PluginMeta,
-  PluginDependency,
-  RegisteredPlugin,
-  RegistrationResult,
-  DependencyResult,
-  PluginLifecycleEvent,
-  ValidationReport,
-  ValidationIssue,
-  ConfigSchema,
-  ConfigValidationReport,
-  ConfigValidationError,
-} from '@lytjs/core';
-
-// EnhancedPlugin 完整示例
-const myPlugin: EnhancedPlugin = {
-  name: 'my-plugin',
-  version: '1.0.0',
-  meta: { description: '示例插件', author: 'LytJS Team' },
-  dependencies: [{ name: 'required-dep', version: '^1.0.0' }],
-  optionalDependencies: [{ name: 'optional-dep' }],
-  conflicts: ['incompatible-plugin'],
-  peerRequirements: { lytjs: '^6.0.0', node: '>=18.0.0' },
-  beforeInstall(app) {
-    return true;
-  },
-  install(app, options) {
-    /* 安装逻辑 */
-  },
-  afterInstall(app) {
-    /* 安装后逻辑 */
-  },
-  cleanup() {
-    /* 清理逻辑 */
-  },
-};
-
-// PluginRegistry
-const registry = app._pluginRegistry;
-registry.register(myPlugin, options);
-registry.checkDependencies(myPlugin);
-registry.resolveLoadOrder();
-registry.on('after:install', (event, data) => {
-  /* 监听事件 */
-});
-
-// PluginValidator
-const validator = app._pluginValidator;
-const report = validator.validate(myPlugin);
-if (!report.valid) {
-  console.error(report.issues);
-}
-```
-
-**背景**: v5.x 的插件系统包含 SDK 脚手架、PluginValidator、PluginRegistry 等基础设施，v6.0.0 目前只有基础的 `use()` 方法。
-
-**改进计划**:
-
-**P0 - 核心架构层（✅ 已完成）**:
-
-1. **类型系统重构** ✅
-
-   ```typescript
-   export interface EnhancedPlugin<TOptions = unknown> extends Plugin<TOptions> {
-     name: string;
-     version?: string;
-     meta?: PluginMeta;
-     dependencies?: PluginDependency[];
-     optionalDependencies?: PluginDependency[];
-     conflicts?: string[];
-     peerRequirements?: { lytjs?: string; node?: string };
-     beforeInstall?: (app: App) => boolean | Promise<boolean>;
-     afterInstall?: (app: App) => void | Promise<void>;
-     beforeMount?: (app: App) => void | Promise<void>;
-     afterMount?: (app: App) => void | Promise<void>;
-     cleanup?: () => void | Promise<void>;
-   }
-   ```
-
-2. **PluginRegistry 注册表** ✅
-
-   ```typescript
-   export class PluginRegistry {
-     register(plugin: EnhancedPlugin | Plugin, options?: unknown): RegistrationResult;
-     unregister(name: string): boolean;
-     get(name: string): RegisteredPlugin | undefined;
-     has(name: string): boolean;
-     getNames(): string[];
-     getAll(): RegisteredPlugin[];
-     getInstalled(): RegisteredPlugin[];
-     markInstalled(name: string): void;
-     markUninstalled(name: string): void;
-     checkDependencies(plugin: EnhancedPlugin | Plugin): DependencyResult;
-     resolveLoadOrder(): EnhancedPlugin[];
-     clear(): void;
-     on(event: PluginLifecycleEvent, handler: PluginEventListener): () => void;
-     off(event: PluginLifecycleEvent, handler: PluginEventListener): void;
-     emit(event: PluginLifecycleEvent, data: unknown): void;
-   }
-   ```
-
-3. **PluginValidator 验证器** ✅
-
-   ```typescript
-   export class PluginValidator {
-     validate(plugin: EnhancedPlugin | Plugin): ValidationReport;
-     validateAll(plugins: (EnhancedPlugin | Plugin)[]): ValidationReport[];
-     registerKnownPlugins(names: string[]): void;
-     addRule(rule: ValidationRule): void;
-     removeRule(rule: ValidationRule): void;
-
-     // 内置验证规则
-     // validateStructure, validateName, validateVersion,
-     // validateDependencies, validateConflicts,
-     // validatePeerRequirements, validateLifecycleHooks
-   }
-   ```
-
-**P1 - 功能扩展层（✅ 已完成）**:
-
-4. **生命周期增强** ✅
-   - `beforeInstall` / `afterInstall` / `beforeMount` / `afterMount` / `cleanup`
-
-5. **依赖管理系统** ✅
-   - `dependencies` / `optionalDependencies` / `conflicts` / `peerRequirements`
-   - semver 版本比较（^, ~, >=, >, <, <=）
-   - 拓扑排序（`resolveLoadOrder`）
-   - 循环依赖检测
-
-**P2 - 开发者工具层（✅ 已完成）**:
-
-6. **配置 Schema 系统** ✅
-
-   ```typescript
-   export interface ConfigSchema<T = unknown> {
-     type: SchemaType;
-     description?: string;
-     default?: T;
-     required?: boolean;
-     nullable?: boolean;
-     string?: StringSchema;
-     number?: NumberSchema;
-     boolean?: BooleanSchema;
-     object?: ObjectSchema<T>;
-     array?: ArraySchema;
-     enum?: EnumSchema<T>;
-     union?: UnionSchema;
-     validate?: (value: T, context: ValidationContext) => ValidationResult;
-     transform?: (value: unknown) => T;
-   }
-   ```
-
-7. **Plugin SDK 脚手架** ✅
-
-   ```typescript
-   // @lytjs/core 内置
-   export function definePlugin<TOptions>(
-     config: PluginConfig<TOptions>,
-   ): PluginDefinition<TOptions>;
-   export class PluginTester {
-     async installPlugin(plugin: EnhancedPlugin, options?: unknown): Promise<void>;
-     uninstallPlugin(name: string): void;
-     cleanup(): void;
-   }
-   ```
-
-8. **CLI 工具** ✅
-   ```bash
-   lytjs plugin create my-plugin    # 创建插件模板（--template default|minimal|withConfig）
-   lytjs plugin build               # 构建插件
-   lytjs plugin validate            # 验证插件
-   ```
-
-**实施路线图**:
-
-| 阶段 | 内容                                  | 优先级  | 工作量 | 状态      |
-| ---- | ------------------------------------- | ------- | ------ | --------- |
-| P0   | 类型系统重构 + PluginRegistry         | 🔴 必须 | 2-3 天 | ✅ 已完成 |
-| P1   | PluginValidator + 依赖管理 + 生命周期 | 🟡 重要 | 3-4 天 | ✅ 已完成 |
-| P2   | 配置 Schema 系统                      | 🟢 推荐 | 2-3 天 | ✅ 已完成 |
-| P3   | Plugin SDK + CLI 工具                 | 🔵 可选 | 5-7 天 | ✅ 已完成 |
-
-**向后兼容性**: 所有改进保持向后兼容，现有插件无需修改即可继续使用。
-
-### 2.3 P2 - 中期目标（3-6个月）
-
-#### 2.3.1 完善生态系统
-
-**1. Router - 路由系统**
-
-**状态**: ✅ 已完成（v6.0.0，测试通过）
-
-```typescript
-// 设计理念: Vue Router 风格，简化 API
-import { createRouter, createWebHistory } from '@lytjs/router';
-
-const router = createRouter({
-  history: createWebHistory(),
-  routes: [
-    { path: '/', component: Home },
-    { path: '/about', component: About },
-  ],
-});
-```
-
-**2. Store - 状态管理**
-
-**状态**: ✅ 已完成（v6.0.0，测试通过）
-
-```typescript
-// 设计理念: Pinia 风格，简化 API
-import { defineStore } from '@lytjs/store';
-
-const useUserStore = defineStore('user', {
-  state: () => ({
-    name: '张三',
-    age: 25,
-  }),
-  getters: {
-    doubleAge: (state) => state.age * 2,
-  },
-  actions: {
-    increment() {
-      this.age++;
-    },
-  },
-});
-```
-
-**3. UI 组件库基础**
-
-**状态**: ✅ 已完成（v6.0.0，测试通过）
-
-```typescript
-// 设计理念: 提供核心组件，保持轻量
-// Button, Input, Dialog 等基础组件
-// 可扩展的主题系统
-import { Button, Input, Dialog } from '@lytjs/ui';
-```
-
-**4. i18n 国际化**
-
-**状态**: ✅ 已完成（v6.0.0，测试通过）
-
-```typescript
-import { createI18n } from '@lytjs/i18n';
-
-const i18n = createI18n({
-  locale: 'zh-CN',
-  messages: {
-    'zh-CN': { hello: '你好' },
-    'en-US': { hello: 'Hello' },
-  },
-});
-```
-
-#### 2.3.2 性能优化与基准
-
-**状态**: ✅ 已完成
-
-**建立性能基准测试套件**:
-
-```typescript
-// 与 Vue, React, Svelte 等对比
-// 测试指标:
-// - 首次渲染时间
-// - 更新性能
-// - 内存占用
-// - 包体积
-```
-
-**优化方向**:
-
-1. VDOM diff 算法进一步优化 ✅
-2. Signal 模式性能调优 ✅
-3. Tree Shaking 优化 ✅
-4. 编译时优化增强 ✅
-
-### 2.4 P3 - 长期目标（6-12个月）
-
-#### 2.4.1 DevTools 完善
-
-**状态**: ✅ 已完成（v1.0 正式版）
-
-**已完成（预览版 v6.0.0）**:
-
-- ✅ 组件树查看器（registerRootComponent）
-- ✅ Store 状态检查器（registerStore、getStoreStates）
-- ✅ 路由查看器（registerRouter、getCurrentRoute）
-- ✅ DevTools 面板（Ctrl+Shift+D 快捷键）
-- ✅ 21/21 测试通过
-
-**已完成（正式版 v1.0）**:
-
-- ✅ Store 变更实时监听（subscribeStore/unsubscribeStore/onStoreChange）
-- ✅ 路由变更实时监听（watchRouteChanges/unwatchRouteChanges/getRouteHistory）
-- ✅ 性能分析工具（组件渲染次数/时间、FPS 监控、内存趋势、渲染热力图、慢渲染检测）
-- ✅ 信号依赖可视化（4 种信号类型：ref/reactive/computed/signal，依赖/被依赖追踪）
-- ✅ 事件日志系统（8 种事件类型、过滤、统计、订阅）
-- ✅ 状态时间旅行调试（前进/后退/跳转、历史导出/导入、快照比较）
-- ✅ 快照恢复（restoreSnapshot 真正恢复信号值）
-- ✅ 自动组件注册（autoRegisterFromInstance）
-- ✅ 状态编辑器（实时编辑、撤销、值类型转换）
-- ✅ Bridge 通信架构（进程内消息分发）
-- ✅ 新增 36 个测试用例（ecosystem devtools），tools devtools 测试同步更新
-
-#### 2.4.2 SSR/SSG 增强
-
-**状态**: ✅ 已完成（v1.0 完善版）
-
-**已完成（基础版 v6.0.0）**:
-
-- ✅ renderToString（VNode 转 HTML 字符串）
-- ✅ renderToHtml（完整 HTML 页面渲染）
-- ✅ HTML 特殊字符转义（XSS 防护）
-- ✅ class/style 对象处理
-- ✅ 自闭合标签处理
-- ✅ 9/9 测试通过
-
-**已完成（完善版 v1.0）**:
-
-- ✅ 流式服务端渲染（renderToStream：ReadableStream 分块发送、Suspense 边界支持）
-- ✅ 异步流式渲染（renderToStreamAsync：支持异步组件）
-- ✅ 静态站点生成（generateStaticPages：预渲染页面为 HTML）
-- ✅ 路由清单生成（generateRouteManifest）
-- ✅ 页面配置验证（validatePages）
-- ✅ 组件级水合提示（createHydrationMarkers：data-hydrate 属性）
-- ✅ 水合策略（getHydrationStrategy：lazy/eager/idle）
-- ✅ 状态序列化（serializeHydrationState）
-- ✅ 脱水状态生成（createDehydratedState：嵌入 HTML 的初始状态）
-- ✅ 新增 65 个测试用例（stream 16 + ssg 20 + hydration 29）
-
-#### 2.4.3 跨平台渲染
-
-**状态**: 🚧 进行中（基础架构已完成，平台适配器待开发）
-
-**已完成（基础架构 v6.0.0）**:
-
-- ✅ PlatformAdapter 接口定义（节点/属性/样式/类名/事件/查询/生命周期）
-- ✅ PlatformConfig 配置接口
-- ✅ PlatformPlugin 插件接口
-- ✅ AdapterRegistry 适配器注册表（注册/注销/查询/插件管理）
-- ✅ createPlatformRenderer 跨平台渲染器工厂
-- ✅ 41/41 测试通过
-
-**待完成（平台适配器）**:
-
-- [ ] 小程序平台适配器（微信/支付宝/百度等）
-- [ ] 桌面应用支持（Electron/Tauri）
-- [ ] 移动端渲染器（React Native 风格）
-- [ ] 原生移动应用（iOS/Android）
+## 二、组件开发路线（按优先级推进）
+
+所有组件需遵循8层架构规范与运行时零依赖原则，基于组件基础层+官方插件开发，完成API统一、主题适配与Vapor渲染适配。
+
+### 2.1 高优先级（必须优先完成，核心业务刚需）
+
+| 组件                      | 主要功能                                                    | 优先级 | 状态      |
+| ------------------------- | ----------------------------------------------------------- | ------ | --------- |
+| **Table 高级表格**        | 固定列、单元格合并、行拖拽、虚拟滚动、修复排序卡顿问题      | 🔴 高  | ⏳ 进行中 |
+| **Tree 树形控件**         | 虚拟滚动、节点拖拽、连接线定制、异步加载，完善节点操作逻辑  | 🔴 高  | ⏳ 进行中 |
+| **Cascader 级联选择器**   | 多选、懒加载、数据回显、异步数据源能力，统一API规范         | 🟡 中  | ⏳ 待开始 |
+| **TreeSelect 树形选择器** | 异步加载、节点禁用、回显、清空功能，依赖Tree组件能力        | 🟡 中  | ⏳ 待开始 |
+| **Transfer 穿梭框**       | 左右穿梭、数据筛选、批量移动、自定义渲染开发                | 🟡 中  | ⏳ 待开始 |
+| **Menu 导航菜单**         | 折叠收起、右键菜单、图标自适应、多级路由联动，适配主题插件  | 🟡 中  | ⏳ 待开始 |
+| **Tabs 标签页**           | 可拖拽、标签关闭/新增、样式定制、路由联动功能，统一组件样式 | 🟡 中  | ⏳ 待开始 |
+| **Descriptions 描述列表** | 行列合并、垂直/水平布局、自适应、插槽自定义开发             | 🟡 中  | ⏳ 待开始 |
+
+### 2.2 中优先级（功能完善，提升用户体验）
+
+| 组件                      | 主要功能                                                             | 优先级 | 状态      |
+| ------------------------- | -------------------------------------------------------------------- | ------ | --------- |
+| **Modal 对话框**          | 拖拽移动、全屏显示、自定义页脚、层级管理、动画优化，修复层级错乱问题 | 🟡 中  | ⏳ 待开始 |
+| **Drawer 抽屉**           | 上下左右弹出、遮罩控制、宽度自适应、嵌套弹窗功能，依赖Modal组件逻辑  | 🟢 低  | ⏳ 待开始 |
+| **Upload 文件上传**       | 分片上传、断点续传、文件预览、删除功能，原生实现无第三方依赖         | 🟢 低  | ⏳ 待开始 |
+| **DatePicker 日期选择器** | 范围选择、时间选择、禁用日期、快捷选项，自研日期处理逻辑（零依赖）   | 🟢 低  | ⏳ 待开始 |
+| **Notification 通知**     | 多位置弹出、停留时长、手动关闭、堆叠管理功能，适配主题切换           | 🟢 低  | ⏳ 待开始 |
+
+### 2.3 低优先级（边缘场景，按需推进）
+
+| 组件                       | 主要功能                                             | 优先级 | 状态      |
+| -------------------------- | ---------------------------------------------------- | ------ | --------- |
+| **Calendar 日历**          | 月/周视图、事件标记、日期禁用功能，原生实现日期渲染  | 🔵 低  | ⏳ 待开始 |
+| **Image 图片组件**         | 懒加载、预览弹窗、错误兜底、自适应功能，适配主题样式 | 🔵 低  | ⏳ 待开始 |
+| **Rate 评分**              | 半星、只读、自定义图标、数量配置功能，统一组件API    | 🔵 低  | ⏳ 待开始 |
+| **ColorPicker 颜色选择器** | 取色器、预设色、hex/rgb转换功能，零第三方依赖        | 🔵 低  | ⏳ 待开始 |
 
 ---
 
-## 3. 详细实施计划
+## 三、插件开发与完善（同步推进）
 
-### 3.1 阶段一：核心稳定（v6.1）
+基于插件核心层开发，确保所有官方插件无第三方依赖、可插拔。
 
-**时间**: 4周
+### 3.1 必装插件完善
 
-**目标**: 核心稳定，可用于生产
+| 插件                       | 主要功能                        | 状态      |
+| -------------------------- | ------------------------------- | --------- |
+| **@lytjs/plugin-registry** | 插件注册中心、插件发现与管理    | ✅ 已完成 |
+| **@lytjs/plugin-theme**    | 主题切换、主题定制、CSS变量管理 | ⏳ 优化中 |
+| **@lytjs/plugin-logger**   | 日志分级、日志持久化、性能追踪  | ⏳ 优化中 |
 
-**任务清单**:
+### 3.2 业务插件开发
 
-- [x] 修复所有 P0 问题
-- [x] 解决关键的 `as unknown as`（reactivity/vdom 核心模块）
-- [x] 集成 common-transition-engine（vdom transition 已重构）
-- [x] 测试覆盖率达标（✅ reactivity/vdom/compiler/core/renderer 核心模块测试显著增强，累计约 450+ 个用例）
-- [x] 完善核心包文档（✅ reactivity/vdom/compiler/core 文档全面，含中文示例和 API 说明）
-- [x] 性能基准测试建立（✅ reactivity/vdom/render/update/memory 多维度性能测试，含比较脚本）
-- [x] 修复 CLI 工具类型问题（✅ CLI 代码质量和类型定义良好，待重新构建生成 .d.ts）
+| 插件                      | 主要功能                       | 状态      |
+| ------------------------- | ------------------------------ | --------- |
+| **@lytjs/plugin-i18n**    | 国际化支持、语言切换、翻译管理 | ⏳ 进行中 |
+| **@lytjs/plugin-auth**    | 权限路由、权限验证、角色管理   | ⏳ 待开始 |
+| **@lytjs/plugin-storage** | 本地存储、持久化、状态恢复     | ⏳ 待开始 |
 
-**交付物**:
+### 3.3 插件规范落地
 
-- ✅ 稳定的 v6.1 版本
-- ✅ 完整的基准测试报告
-- ✅ API 文档 100% 覆盖
-
-### 3.2 阶段二：生态起步（v6.2）
-
-**时间**: 8周
-
-**目标**: 基础生态就位
-
-**任务清单**:
-
-- [x] Router 包 v1.0（测试 67/67 通过）
-- [x] Store 包 v1.0（测试 31/31 通过）
-- [x] UI 组件库 v0.1（测试 10/10 通过）
-- [x] 集成示例项目（Counter + Todo App）
-- [ ] 开发者工具预览版
-
-**交付物**:
-
-- ✅ @lytjs/router v1.0
-- ✅ @lytjs/store v1.0
-- ✅ @lytjs/ui v0.1
-- ✅ 示例项目集合
-
-### 3.3 阶段三：生态完善（v6.3）
-
-**时间**: 8周
-
-**目标**: 生产级生态系统
-
-**任务清单**:
-
-- [x] DevTools 预览版（v6.0.0，21/21 测试通过）
-- [x] DevTools 正式版（v1.0）- Store/Router 实时监听、性能分析、信号依赖可视化、事件日志、时间旅行
-- [x] SSR 基础功能（v6.0.0，9/9 测试通过）
-- [x] SSR/SSG 完善 - 流式 SSR、组件级水合、静态站点生成、脱水状态
-- [x] 插件系统改进（P0-P1-P2-P3 全部完成，127/127 测试通过）
-- [x] 跨平台渲染基础架构（@lytjs/platform-adapter，41/41 测试通过）
-- [ ] 模板 CLI 增强
-- [x] 性能优化（基准测试套件已建立）
-
-**交付物**:
-
-- ✅ @lytjs/devtools v6.0.0（预览版）
-- ✅ @lytjs/devtools v1.0（正式版 - Store/Router 实时监听、性能分析、时间旅行、信号可视化、事件日志）
-- ✅ @lytjs/ssr v6.0.0（基础版）
-- ✅ @lytjs/ssr v1.0（完善版 - 流式 SSR、SSG、组件级水合、脱水状态）
-- ✅ 完整插件生态（PluginRegistry + PluginValidator + ConfigSchema + Plugin SDK + CLI）
-- ✅ 性能优化报告
-- ✅ @lytjs/platform-adapter v6.0.0（跨平台渲染基础架构）
+- 统一插件开发模板
+- 明确插件生命周期规范
+- 新增插件测试用例
+- 确保插件适配8层架构
 
 ---
 
-## 4. 质量保障体系
+## 四、工程化与规范落地（贯穿全程）
 
-### 4.1 代码质量标准
+### 4.1 工程化优化
 
-#### 4.1.1 准入标准
+- **完善构建脚本**
+  - 确保打包产物剥离所有开发依赖
+  - 满足运行时零依赖要求
+  - 优化构建速度与产物体积
+
+- **新增零依赖规范校验脚本**
+  - 在 lint 阶段检查组件、插件是否引入第三方 runtime 依赖
+  - 自动检测和告警
+
+- **优化测试脚本**
+  - 为8层架构各层、组件、插件添加单元测试与集成测试
+  - 完善测试覆盖度
+
+### 4.2 开发规范落地
+
+- **固化组件开发规范**
+  - 目录结构规范
+  - Props/事件/插槽命名规范
+  - 样式规范统一
+
+- **完善插件开发规范**
+  - 明确插件结构
+  - 生命周期规范
+  - 依赖管理要求
+
+- **同步更新文档**
+  - 完善8层架构文档
+  - 完善零依赖规范文档
+  - 确保文档与代码实现一致
+
+---
+
+## 五、版本迭代里程碑（下一步规划）
+
+### M1 里程碑（1-2周）
+
+**目标**: 完成8层架构各层核心能力完善与联调
+
+- ✅ 固化架构约束文档
+- ✅ 完善必装插件（theme, logger）
+- ✅ 完成架构联调与稳定性验证
+- ⏳ 完成零依赖规范工具开发
+
+### M2 里程碑（2-3周）
+
+**目标**: 完成高优先级8个组件开发与测试
+
+- ⏳ Table 高级表格完善
+- ⏳ Tree 树形控件开发
+- ⏳ Cascader 级联选择器
+- ⏳ TreeSelect 树形选择器
+- ⏳ Transfer 穿梭框
+- ⏳ Menu 导航菜单
+- ⏳ Tabs 标签页
+- ⏳ Descriptions 描述列表
+- 🚀 发布 v6.0.0 公测版
+
+### M3 里程碑（2周）
+
+**目标**: 完成中优先级5个组件开发与测试
+
+- ⏳ Modal 对话框完善
+- ⏳ Drawer 抽屉
+- ⏳ Upload 文件上传
+- ⏳ DatePicker 日期选择器
+- ⏳ Notification 通知
+- 🐛 修复公测版已知 bug
+- ⚡ 性能优化
+
+### M4 里程碑（1-2周）
+
+**目标**: 完成低优先级4个组件开发，完善工程化工具
+
+- ⏳ Calendar 日历
+- ⏳ Image 图片组件
+- ⏳ Rate 评分
+- ⏳ ColorPicker 颜色选择器
+- 📦 完善工程化工具链
+- 🚀 发布 v6.0.0 正式版
+
+### M5 里程碑（持续）
+
+**目标**: 长期维护与生态建设
+
+- 🐛 修复线上 bug
+- ⚡ 性能持续优化
+- 📦 根据业务需求扩展插件与组件
+- 🌱 社区建设与文档完善
+
+---
+
+## 六、核心约束（必须严格遵守）
+
+### 6.1 运行时零第三方依赖
+
+- **所有组件、插件、核心层均采用原生 JS/DOM 实现**
+- **不引入任何第三方 runtime 依赖**
+- 工具类全部自研实现
+- 例外情况：仅开发/构建阶段的依赖允许
+
+### 6.2 8层架构约束
+
+- **严格遵循分层职责**
+- **不跨层依赖、不循环依赖**
+- **底层为上层提供支撑**
+- 使用 `pnpm run check-circular` 定期检查
+
+### 6.3 API统一约束
+
+- **所有组件、插件 API 命名统一**
+- **遵循文档规范**
+- **降低学习与开发成本**
+- 保持向后兼容性
+
+### 6.4 性能约束
+
+- **所有组件、渲染逻辑需适配 Vapor 模式**
+- **提升运行性能**
+- **降低渲染开销**
+- 持续进行性能基准测试与优化
+
+---
+
+## 七、开发规范补充
+
+### 7.1 零依赖开发检查清单
 
 ```
-任何 PR 合并前必须满足:
-✅ CI 通过（测试 + lint + type-check）
-✅ 代码审查通过
-✅ 有对应的测试（新功能）
-✅ 文档更新（API 变更）
-✅ 无 `as unknown as`（除非豁免）
-✅ 性能无明显回归
+开发新功能前检查：
+✅ 是否引入了不必要的第三方依赖？
+✅ 现有 @lytjs/common-* 工具包是否已有相关功能？
+✅ 是否可以用原生 API 实现？
+✅ 运行时（非 devDependencies）是否会引入第三方依赖？
 ```
 
-#### 4.1.2 测试金字塔
-
-**当前状态**:
-
-- ✅ 单元测试: ~650+ 用例（reactivity/vdom/compiler/core/renderer 核心模块）
-- ⏳ 集成测试: 待完善（目标 > 15%）
-- ⏳ E2E 测试: 待建立（目标 < 5%，关键路径）
+### 7.2 组件开发标准流程
 
 ```
-        /\
-       /E2E\         < 5% (关键路径) - ⏳ 待建立
-      /------\
-     /集成测试\   < 15% (包间交互) - ⏳ 待完善
-    /---------\
-   /  单元测试  \  > 80% (核心逻辑) - ✅ 已达标（~650+ 用例）
-  /-------------\
-```
-
-**测试覆盖现状**:
-
-- reactivity: ✅ 已达标（目标 90%+）
-- vdom: ✅ 已达标（目标 85%+）
-- compiler: ✅ 已达标（目标 80%+）
-- core: ✅ 已达标（目标 80%+）
-- renderer: ✅ 已完成（200+ 测试用例全覆盖）
-
-### 4.2 发布流程
-
-#### 4.2.1 版本管理
-
-使用 Semantic Versioning:
-
-- `v6.0.x` - Bug 修复
-- `v6.x.0` - 新功能（向后兼容）
-- `v7.0.0` - 重大变更
-
-#### 4.2.2 发布检查清单
-
-```
-发布前检查:
-[ ] 所有测试通过
-[ ] 构建成功
-[ ] 类型声明完整
-[ ] CHANGELOG 更新
-[ ] 基准测试对比
-[ ] 文档同步
-[ ] 升级指南（如需要）
+1. 基于组件基础层开发
+2. 适配主题插件
+3. 支持 Vapor 渲染模式
+4. 编写单元测试（覆盖率 > 80%）
+5. 编写文档与示例
+6. 提交 PR 审查
 ```
 
 ---
 
-## 5. 生态建设
+## 附录：架构与代码组织
 
-### 5.1 官方包路线图
-
-| 包名                    | 版本 | 状态        | 优先级 |
-| ----------------------- | ---- | ----------- | ------ |
-| @lytjs/router           | 1.0  | ✅ 已完成   | 🔴 高  |
-| @lytjs/store            | 1.0  | ✅ 已完成   | 🔴 高  |
-| @lytjs/ui               | 0.4  | ✅ 已完成   | 🟡 中  |
-| @lytjs/devtools         | 1.0  | ✅ 已完成   | 🟡 中  |
-| @lytjs/ssr              | 1.0  | ✅ 已完成   | 🟡 中  |
-| @lytjs/i18n             | 6.0  | ✅ 已完成   | 🟡 中  |
-| @lytjs/platform-adapter | 6.0  | 🚧 基础架构 | 🟡 中  |
-| @lytjs/test-utils       | 1.0  | ✅ 已有     | 🟢 低  |
-| @lytjs/cli              | 1.0  | 需修复      | 🟢 低  |
-
-### 5.2 社区参与
-
-#### 5.2.1 贡献者路径
+### 目录结构参考
 
 ```
-1. 新手任务
-   - 文档改进
-   - 错误修复
-   - 测试增加
-
-2. 进阶任务
-   - 小功能实现
-   - 性能优化
-   - 插件开发
-
-3. 核心贡献
-   - 架构决策
-   - 核心功能
-   - 发布管理
+packages/
+├── common/              # L0 基础工具层
+├── reactivity/          # L1 核心原语层
+├── vdom/                # L1 核心原语层
+├── compiler/            # L1 核心原语层
+├── renderer/            # L1 渲染引擎层
+├── component/           # L2 平台/组件层
+├── core/                # L2 核心运行时层
+├── plugins/             # L3/L4 插件层
+│   ├── plugin-registry/ # 插件核心层
+│   ├── plugin-theme/    # 官方插件
+│   ├── plugin-i18n/     # 官方插件
+│   └── ...
+├── ecosystem/           # L6 业务组件层
+│   └── ui/              # UI 组件库
+└── tools/               # L7 工程化工具层
 ```
 
-#### 5.2.2 社区资源
-
-- Discord/Slack 社区
-- 贡献者指南
-- 好的 first issue 标签
-- 定期办公时间
-
 ---
 
-## 6. 里程碑
-
-### 6.1 里程碑一：v6.1 稳定版（4周）
-
-**日期**: 2026-06-12
-
-**目标**: 生产就绪的核心框架
-
-**验收标准**:
-
-- [x] 所有 P0 问题解决
-- [x] P1-2.2.1 解决 "as unknown as" 问题（核心模块）
-- [x] P1-2.2.3 集成 common-transition-engine
-- [x] 测试覆盖率达标（✅ reactivity/vdom/compiler/core/renderer 核心模块测试显著增强，累计约 450+ 个用例）
-- [x] 核心性能基准建立（✅ reactivity/vdom/render/update/memory 多维度性能测试）
-- [x] 文档完整（✅ reactivity/vdom/compiler/core 文档全面完善）
-
-### 6.2 里程碑二：v6.2 生态版（12周）
-
-**日期**: 2026-08-12
-
-**目标**: 基础生态就位
-
-**验收标准**:
-
-- [x] Router v1.0 正式发布（测试 67/67 通过）
-- [x] Store v1.0 正式发布（测试 31/31 通过）
-- [x] UI 组件库预览（v0.1.0，测试 10/10 通过）
-- [x] 示例项目完善（Counter + Todo App）
-- [x] DevTools 预览版（测试 21/21 通过）
-
-### 6.3 里程碑三：v6.3 完善版（20周）
-
-**日期**: 2026-10-12
-
-**目标**: 完整的开发生态
-
-**验收标准**:
-
-- [x] DevTools 预览版（@lytjs/devtools v6.0.0，21/21 测试通过）
-  - ✅ 组件树查看器（registerRootComponent）
-  - ✅ Store 状态检查器（registerStore、getStoreStates）
-  - ✅ 路由查看器（registerRouter、getCurrentRoute）
-  - ✅ DevTools 面板（Ctrl+Shift+D 快捷键）
-- [x] DevTools 正式版（@lytjs/devtools v1.0）
-  - ✅ Store 变更实时监听（subscribeStore/unsubscribeStore/onStoreChange）
-  - ✅ 路由变更实时监听（watchRouteChanges/unwatchRouteChanges/getRouteHistory）
-  - ✅ 性能分析（组件渲染次数/时间、FPS、内存趋势、热力图）
-  - ✅ 信号依赖可视化（ref/reactive/computed/signal 依赖追踪）
-  - ✅ 事件日志系统（8 种事件类型、过滤、统计）
-  - ✅ 状态时间旅行调试（前进/后退/跳转、历史导出/导入）
-  - ✅ 状态编辑器（实时编辑、撤销）
-  - ✅ 快照恢复（restoreSnapshot）
-  - ✅ 自动组件注册（autoRegisterFromInstance）
-- [x] SSR 基础功能（@lytjs/ssr v6.0.0，9/9 测试通过）
-  - ✅ renderToString / renderToHtml
-  - ✅ HTML 转义安全处理
-- [x] SSR/SSG 完善（@lytjs/ssr v1.0，65 个测试通过）
-  - ✅ 流式服务端渲染（renderToStream / renderToStreamAsync）
-  - ✅ 静态站点生成（generateStaticPages）
-  - ✅ 组件级水合提示（createHydrationMarkers / getHydrationStrategy）
-  - ✅ 脱水状态生成（createDehydratedState / serializeHydrationState）
-- [x] 插件系统改进（P0-P1-P2-P3 全部完成，127/127 测试通过）
-  - [x] 类型系统重构
-  - [x] PluginRegistry 注册表
-  - [x] PluginValidator 验证器
-  - [x] 生命周期增强
-  - [x] 依赖管理系统
-  - [x] ConfigSchema 系统
-  - [x] Plugin SDK 脚手架
-  - [x] Plugin CLI 工具
-- [x] 性能优化完成（基准测试套件建立）
-- [x] i18n 国际化支持（@lytjs/i18n v6.0.0，11/11 测试通过）
-- [x] UI 组件库扩展（@lytjs/ui v0.4.0，20/20 测试通过）
-  - Button/Input/Dialog/Select/Tabs/Table/DatePicker/Tree/Form/Transition
-
-### 6.4 里程碑四：v7.0（52周）
-
-**日期**: 2027-05-12
-
-**目标**: 下一代框架
-
-**验收标准**:
-
-- [ ] 性能重大提升
-  - VDOM diff 算法进一步优化
-  - Signal 模式性能调优
-  - Tree Shaking 优化增强
-  - 编译时优化增强
-- [ ] 完整生态系统
-  - DevTools 正式版（状态时间旅行、性能分析、信号依赖可视化）
-  - SSR/SSG 完善（流式渲染、组件级水合、静态站点生成）
-  - 跨平台渲染支持
-- [ ] 大型生产应用验证
-  - 至少 3 个中型以上项目采用
-  - 社区反馈收集与改进
-- [ ] 社区活跃度达标
-  - GitHub Stars 增长
-  - 活跃贡献者数量
-  - 社区插件生态
-
----
-
-## 7. 资源需求
-
-### 7.1 人力资源
-
-**短期（4周）**:
-
-- 1-2 核心开发者
-
-**中期（12周）**:
-
-- 2-3 核心开发者
-- 1 文档/示例维护者
-
-**长期（52周）**:
-
-- 3-5 核心开发者
-- 1 DevTools 专家
-- 1 文档工程师
-- 社区经理（兼职）
-
-### 7.2 基础设施
-
-- CI/CD 服务器
-- 性能测试环境
-- 文档托管
-- 包发布管道
-
----
-
-## 8. 风险评估
-
-| 风险         | 概率  | 影响  | 缓解措施               |
-| ------------ | ----- | ----- | ---------------------- |
-| 核心成员流失 | 🟡 中 | 🔴 高 | 知识文档化、代码审查   |
-| 性能不及预期 | 🟢 低 | 🟡 中 | 早期基准测试、持续优化 |
-| 生态发展缓慢 | 🟡 中 | 🟡 中 | 官方示例、社区激励     |
-| 竞品竞争     | 🟡 中 | 🟡 中 | 差异化定位、特色功能   |
-
----
-
-## 总结
-
-LytJS v6.0 有优秀的架构基础，下一步重点是:
-
-1. ✅ **稳定核心** - 解决技术债务，提高质量（P0 问题已修复，as unknown as 已解决，transition-engine 已集成）
-2. ✅ **建立生态** - Router, Store, UI 组件
-3. ✅ **完善测试** - 测试覆盖率达标（reactivity/vdom/compiler/core 核心模块累计约 650+ 个用例）
-4. ✅ **完善文档** - 中文文档全面完善（reactivity/vdom/compiler/core 文档含详细示例和 API 说明）
-5. ✅ **性能优化** - 性能基准测试建立（reactivity/vdom/render/update/memory 多维度测试）
-6. ✅ **工具完善** - CLI 工具代码质量和类型定义良好，pnpm 构建问题已解决
-7. ✅ **DevTools 正式版** - Store/Router 实时监听、性能分析、时间旅行、信号可视化、事件日志
-8. ✅ **SSR/SSG 完善** - 流式 SSR、静态站点生成、组件级水合、脱水状态
-9. 🚧 **跨平台渲染** - 基础架构已完成（PlatformAdapter），平台适配器待开发
-10. 🌱 **社区建设** - 吸引贡献者，扩大影响力
-
-通过有计划的分阶段实施，LytJS 有潜力成为一流的前端框架！
-
----
-
-## 附录：常见问题解决方案
-
-### pnpm 构建脚本错误
-
-**问题描述**:
-
-```
-[ERR_PNPM_IGNORED_BUILDS] Ignored build scripts: esbuild@0.21.5, esbuild@0.25.12, ...
-Run "pnpm approve-builds" to pick which dependencies should be allowed to run scripts.
-```
-
-**原因分析**:
-pnpm 11.x 引入了更严格的构建脚本安全检查机制。在 monorepo 子目录中运行 `pnpm` 命令时，会触发 workspace 依赖状态检查，导致构建失败。
-
-**解决方案**:
-
-1. **方案一（推荐）**: 使用 `CI=true` 环境变量跳过交互式检查
-
-   ```bash
-   cd packages/tools/packages/cli
-   CI=true npx tsup
-   ```
-
-2. **方案二**: 在项目根目录执行构建命令
-
-   ```bash
-   # 在根目录执行，避免子目录的依赖检查
-   pnpm --filter @lytjs/cli build
-   ```
-
-3. **方案三**: 在 package.json 中预设 CI 环境变量
-   ```json
-   {
-     "scripts": {
-       "build": "CI=true npx tsup"
-     }
-   }
-   ```
-
-**适用范围**:
-
-- 所有使用 pnpm 11.x 的 monorepo 项目
-- 需要在子目录独立构建的场景
-- CI/CD 流水线中的构建步骤
-
-**相关文档**:
-
-- [pnpm 构建脚本安全策略](https://pnpm.io/cli/install#ignore-scripts)
-- [tsup 构建配置](https://tsup.egoist.dev/)
-
----
-
-**文档版本**: v1.16
+**文档版本**: v2.0
 **最后更新**: 2026-05-13
 **维护者**: LytJS Team
 
@@ -1137,177 +304,25 @@ pnpm 11.x 引入了更严格的构建脚本安全检查机制。在 monorepo 子
 
 ## 更新日志
 
+### v2.0 (2026-05-13)
+
+- 🎯 重新设计完整的8层架构规划
+- 📋 新增组件开发路线图（高/中/低优先级）
+- 🔌 完善插件开发与规范
+- 🛠️ 新增工程化与规范落地章节
+- 📅 新增版本迭代里程碑计划
+- ⚠️ 强调核心约束（零依赖、架构规范等）
+- 📝 新增开发规范补充内容
+
 ### v1.16 (2026-05-13)
+
 - ✅ 增强 CLI 模板功能，新增 router、store、full 三种完整项目模板
 - ✅ 集成 plugin 命令到主 CLI，支持创建、构建、验证插件
 - ✅ 更新帮助文档，完善所有命令和选项说明
 - ✅ 新增测试用例，覆盖新增的模板和 plugin 命令功能
 
 ### v1.15 (2026-05-13)
+
 - ✅ 修复构建脚本，添加 @lytjs/platform-adapter 到 ecosystem 构建流程
 - ✅ 更新 pnpm lockfile，确保依赖一致性
 - ✅ 完成项目构建和测试验证
-
-### v1.14 (2026-05-13)
-
-- ✅ 测试覆盖率达标（核心模块累计约 650+ 个用例）
-  - 新增 app-context.test.ts（26 个测试）
-  - 新增 common-integration.test.ts（45 个测试）
-  - 新增 lifecycle.test.ts（16 个测试）
-  - 新增 next-tick.test.ts（8 个测试）
-  - 新增 resolve.test.ts（20 个测试）
-  - 新增 patch-element.test.ts（34 个测试）
-  - 新增 patch-component.test.ts（16 个测试）
-  - 新增 transition-group.test.ts（35 个测试）
-- ✅ DevTools v1.0 正式版
-  - Store 变更实时监听（subscribeStore/unsubscribeStore/onStoreChange）
-  - 路由变更实时监听（watchRouteChanges/unwatchRouteChanges/getRouteHistory）
-  - 快照恢复（restoreSnapshot 真正恢复信号值）
-  - 自动组件注册（autoRegisterFromInstance）
-  - 新增 36 个测试用例
-- ✅ SSR/SSG v1.0 完善版
-  - 流式服务端渲染（renderToStream/renderToStreamAsync）
-  - 静态站点生成（generateStaticPages/generateRouteManifest）
-  - 组件级水合提示（createHydrationMarkers/getHydrationStrategy）
-  - 脱水状态生成（createDehydratedState/serializeHydrationState）
-  - 新增 65 个测试用例
-- ✅ 跨平台渲染基础架构（@lytjs/platform-adapter）
-  - PlatformAdapter 接口定义
-  - AdapterRegistry 适配器注册表
-  - createPlatformRenderer 跨平台渲染器工厂
-  - 41/41 测试通过
-- ✅ 更新 AGENTS.md（v2.1，添加 4 个开发 Skill）
-
-### v1.13 (2026-05-13)
-
-- ✅ 更新任务完成进度统计
-  - 明确标注已完成/进行中/未开始的任务状态
-  - 细化 DevTools 预览版与正式版的区别
-  - 细化 SSR 基础版与完善版的区别
-  - 补充跨平台渲染的详细计划
-  - 更新测试金字塔的当前状态
-  - 细化里程碑四（v7.0）的验收标准
-- ✅ 更新阶段三（v6.3）任务清单
-  - 标注 DevTools 正式版待完成的功能
-  - 标注 SSR/SSG 完善待完成的功能
-  - 标注模板 CLI 增强未完成
-
-### v1.12 (2026-05-13)
-
-- ✅ 修复测试用例与编译器实际行为不匹配问题
-  - `optimize.test.ts`: 修复静态文本和混合静态/动态兄弟节点的测试期望
-  - `codegen.test.ts`: 修复 v-slot 和 v-pre 指令的测试期望
-  - `config.test.ts`: 修复 ConfigManager 不可变配置和全局配置合并行为的测试
-  - `web-components.test.ts`: 修复 camelCase 到 kebab-case 转换的测试期望
-- ✅ 添加 web 包独立的 vitest 配置（jsdom 环境）
-- ✅ 更新根目录 vitest 配置，排除需要 DOM 环境的包
-
-### v1.11 (2026-05-13)
-
-- ✅ 修复构建依赖问题
-  - 添加缺少的 workspace 依赖声明（@lytjs/common-assertions, @lytjs/common-string, @lytjs/common-object, @lytjs/common-error）
-  - 优化构建脚本，支持分阶段构建（common → core → ecosystem → tools → plugins）
-  - 修复 @lytjs/cli Windows 构建脚本兼容性问题
-- ✅ 更新里程碑进度（v6.3 完善版全部完成）
-
-### v1.10 (2026-05-13)
-
-- ✅ 插件系统改进计划（v6.0 Plugin System Enhancement）
-  - 类型系统重构：恢复泛型参数支持
-  - PluginRegistry 注册表：插件发现、依赖管理
-  - PluginValidator 验证器：结构验证、配置校验
-  - 生命周期增强：beforeInstall/afterMount/cleanup
-  - Plugin SDK 脚手架：模板生成、构建工具、测试框架
-
-### v1.9 (2026-05-13)
-
-- ✅ i18n 国际化包（@lytjs/i18n v6.0.0）
-  - createI18n 创建实例
-  - t() 翻译函数
-  - 嵌套 key 支持
-  - 插值支持（位置参数、命名参数）
-  - 语言回退机制
-  - 11/11 测试通过
-- ✅ UI 组件库扩展（@lytjs/ui v0.4.0）
-  - DatePicker 日期选择器
-  - Tree 树形结构（展开、选择、勾选）
-  - 10/10 测试通过
-
-### v1.8 (2026-05-13)
-
-- ✅ 文档网站基础结构（VitePress）
-  - 首页和指南文档
-  - API 参考文档
-  - 生态系统文档（Router、Store、UI、DevTools、SSR）
-- ✅ UI 组件库扩展
-  - Form 组件（表单验证、FormItem）
-  - Transition 组件（过渡动画、TransitionGroup）
-- ✅ UI 组件库 v0.3.0（10/10 测试通过）
-
-### v1.7 (2026-05-13)
-
-- ✅ UI 组件库扩展完成
-  - Select 组件（单选、多选、清除）
-  - Tabs 组件（卡片式、边框卡片式）
-  - Table 组件（排序、斑马纹、边框）
-- ✅ SSR 服务端渲染支持（@lytjs/ssr）
-  - renderToString / renderToHtml
-  - HTML 转义安全处理
-  - 9/9 测试通过
-- ✅ 虚拟列表组件（VirtualList）
-  - 大数据高性能渲染
-  - 缓冲区和动态计算
-
-### v1.6 (2026-05-13)
-
-- ✅ 开发者工具预览版完成（@lytjs/devtools）
-- 组件树查看器（registerRootComponent）
-- Store 状态检查器（registerStore、getStoreStates）
-- 路由查看器（registerRouter、getCurrentRoute）
-- DevTools 面板（Ctrl+Shift+D 快捷键）
-- 21/21 测试通过
-
-### v1.5 (2026-05-13)
-
-- ✅ 示例项目完成
-- Counter 计数器示例（@lytjs/store 基础用法）
-- Todo App 示例（@lytjs/store + 响应式状态管理）
-- 展示 defineStore、getters、actions、$subscribe 等特性
-
-### v1.4 (2026-05-13)
-
-- ✅ UI 组件库 v0.1 完成（10/10 测试通过）
-- 实现 Button 组件（type/size/disabled/loading/plain/round/circle）
-- 实现 Input 组件（modelValue/clearable/showPassword/prefix/suffix）
-- 实现 Dialog 组件（modelValue/title/width/closeOnClickModal/closeOnPressEscape）
-- 添加基础样式文件（CSS 变量、组件样式）
-- 修复 vitest 配置（正则表达式匹配子路径导入）
-
-### v1.3 (2026-05-13)
-
-- ✅ Router 包 v1.0 完成（67/67 测试通过）
-- ✅ Store 包 v1.0 完成（31/31 测试通过）
-- 修复 Router 嵌套路由匹配问题（flattenMatchers 合并父/子 tokens）
-- 修复 Router 404 处理（正确返回 aborted failure）
-- 修复 Router beforeRouteLeave 守卫（添加 component 字段）
-- 修复 Store state 响应式问题（Object.defineProperties 复制描述符）
-- 修复 Store getters 循环依赖（Proxy 替代展开运算符）
-- 修复 Store action this 绑定（Proxy 作为 thisContext）
-- 修复 Store $subscribe 通知（action wrapper 触发通知）
-- 统一使用 `computedSignal` 替代 `computed` 保持 API 一致性
-
-### v1.2 (2026-05-13)
-
-- 更新 Router 包开发进度（59/67 测试通过）
-- 更新 Store 包开发进度（20/31 测试通过）
-- 修复 reactivity 包 tsup 配置（添加 common-assertions 到 external）
-- 修复 router 包 signal API 兼容性问题
-
-### v1.1 (2026-05-13)
-
-- 添加 pnpm 构建脚本错误解决方案附录
-- 更新测试覆盖率数据
-
-### v1.0 (2026-05-12)
-
-- 初始版本发布

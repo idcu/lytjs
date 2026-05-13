@@ -12,6 +12,8 @@
 - [4. 工具命令规范](#4-工具命令规范)
 - [5. 性能优化规范](#5-性能优化规范)
 - [6. 协作开发规范](#6-协作开发规范)
+- [7. 8 层架构开发规范](#7-8-层架构开发规范)
+- [8. 零第三方依赖开发规范](#8-零第三方依赖开发规范)
 
 ---
 
@@ -61,14 +63,14 @@
 
 ### 1.2 分支管理规范
 
-| 分支名 | 用途 | 说明 |
-| --- | --- | --- |
-| `main` | 生产分支 | 只接受合并，不直接提交 |
-| `develop` | 开发分支 | 日常开发基于此分支 |
-| `feature/xxx` | 功能分支 | 新功能开发 |
-| `fix/xxx` | 修复分支 | Bug 修复 |
-| `refactor/xxx` | 重构分支 | 代码重构 |
-| `docs/xxx` | 文档分支 | 文档更新 |
+| 分支名         | 用途     | 说明                   |
+| -------------- | -------- | ---------------------- |
+| `main`         | 生产分支 | 只接受合并，不直接提交 |
+| `develop`      | 开发分支 | 日常开发基于此分支     |
+| `feature/xxx`  | 功能分支 | 新功能开发             |
+| `fix/xxx`      | 修复分支 | Bug 修复               |
+| `refactor/xxx` | 重构分支 | 代码重构               |
+| `docs/xxx`     | 文档分支 | 文档更新               |
 
 ### 1.3 Commit 提交规范
 
@@ -113,7 +115,7 @@
 
 **原则：所有文档和注释都使用中文**
 
-```typescript
+````typescript
 /**
  * 函数功能描述（中文）
  *
@@ -125,21 +127,21 @@
  * const result = functionName(参数);
  * ```
  */
-```
+````
 
 #### 代码注释要求
 
-| 场景 | 注释要求 |
-| --- | --- |
-| 公共 API | 必须有 JSDoc 注释（中文） |
-| 复杂算法 | 必须有算法说明和示例 |
-| 关键业务逻辑 | 必须有逻辑说明 |
-| 临时代码 | 必须标注 TODO 或 FIXME |
+| 场景         | 注释要求                   |
+| ------------ | -------------------------- |
+| 公共 API     | 必须有 JSDoc 注释（中文）  |
+| 复杂算法     | 必须有算法说明和示例       |
+| 关键业务逻辑 | 必须有逻辑说明             |
+| 临时代码     | 必须标注 TODO 或 FIXME     |
 | 性能敏感代码 | 必须标注性能指标和优化说明 |
 
 #### 示例
 
-```typescript
+````typescript
 /**
  * 创建响应式引用（Ref）
  *
@@ -157,7 +159,7 @@
 export function ref<T>(value: T): Ref<T> {
   // ... 实现
 }
-```
+````
 
 ### 2.2 编码规范
 
@@ -166,6 +168,7 @@ export function ref<T>(value: T): Ref<T> {
 **所有文件必须使用 UTF-8 编码，无 BOM**
 
 检查命令：
+
 ```bash
 # 检查文件编码
 file -i **/*.ts **/*.md
@@ -185,7 +188,8 @@ iconv -f GBK -t UTF-8 input.ts > output.ts
 
 #### 依赖使用原则
 
-1. **优先使用 @lytjs/common-* 工具包**
+1. **优先使用 @lytjs/common-\* 工具包**
+
    ```typescript
    // ✅ 推荐
    import { isArray, isString, hasChanged } from '@lytjs/common-is';
@@ -240,12 +244,7 @@ function getFirst<T>(arr: T[]): T | undefined {
 ```typescript
 // ✅ 推荐：使用类型守卫
 function isUser(value: unknown): value is User {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    'id' in value &&
-    'name' in value
-  );
+  return typeof value === 'object' && value !== null && 'id' in value && 'name' in value;
 }
 
 // ✅ 推荐：使用可空类型
@@ -278,7 +277,7 @@ const name = ref('LytJS');
 // ✅ 推荐：reactive 用于对象响应式
 const state = reactive({
   count: 0,
-  name: 'LytJS'
+  name: 'LytJS',
 });
 
 // ❌ 避免：在 signal.set 的回调中做太多事情
@@ -319,25 +318,27 @@ import { h, Text, Comment, Fragment } from '@lytjs/vdom';
 const vnode = h('div', { class: 'container' }, [
   h('h1', { key: 'title' }, 'Hello LytJS'),
   h(Text, 'World'),
-  h(Comment, '这是注释')
+  h(Comment, '这是注释'),
 ]);
 
 // ✅ 推荐：使用 PatchFlags 优化动态内容
 import { PatchFlags } from '@lytjs/common-constants';
 
-h('span', { 
-  key: 'text', 
-  [PatchFlags.TEXT]: true 
-}, dynamicText);
+h(
+  'span',
+  {
+    key: 'text',
+    [PatchFlags.TEXT]: true,
+  },
+  dynamicText,
+);
 ```
 
 #### 3.3.2 列表渲染规则
 
 ```typescript
 // ✅ 推荐：始终使用唯一的 key
-const list = items.map(item => 
-  h('li', { key: item.id }, item.name)
-);
+const list = items.map((item) => h('li', { key: item.id }, item.name));
 
 // ✅ 推荐：使用 @lytjs/common-algorithm 中的 LIS
 import { lis } from '@lytjs/common-algorithm';
@@ -359,20 +360,20 @@ const Counter = defineComponent({
 
   setup() {
     const count = ref(0);
-    
+
     function increment() {
       count.value++;
     }
-    
+
     return { count, increment };
   },
 
   render(ctx) {
     return h('div', [
       h('span', `Count: ${ctx.count}`),
-      h('button', { onClick: ctx.increment }, 'Increment')
+      h('button', { onClick: ctx.increment }, 'Increment'),
     ]);
-  }
+  },
 });
 ```
 
@@ -380,13 +381,7 @@ const Counter = defineComponent({
 
 ```typescript
 // ✅ 推荐：明确的生命周期使用
-import { 
-  onMounted, 
-  onUnmounted, 
-  onUpdated,
-  onActivated,
-  onDeactivated
-} from '@lytjs/core';
+import { onMounted, onUnmounted, onUpdated, onActivated, onDeactivated } from '@lytjs/core';
 
 onMounted(() => {
   // 组件挂载后执行
@@ -401,26 +396,14 @@ onUnmounted(() => {
 
 ### 3.5 Common 工具包使用规则
 
-#### 3.5.1 优先使用 @lytjs/common-*
+#### 3.5.1 优先使用 @lytjs/common-\*
 
 ```typescript
 // ✅ 推荐：使用 common-is
-import { 
-  isArray, 
-  isString, 
-  isObject, 
-  isFunction,
-  isPromise,
-  hasChanged
-} from '@lytjs/common-is';
+import { isArray, isString, isObject, isFunction, isPromise, hasChanged } from '@lytjs/common-is';
 
 // ✅ 推荐：使用 common-constants
-import { 
-  EMPTY_OBJ, 
-  EMPTY_ARR, 
-  NOOP,
-  REACTIVITY_MAX_TRIGGER_DEPTH
-} from '@lytjs/common-constants';
+import { EMPTY_OBJ, EMPTY_ARR, NOOP, REACTIVITY_MAX_TRIGGER_DEPTH } from '@lytjs/common-constants';
 
 // ✅ 推荐：使用 common-vnode
 import { isSameVNodeType } from '@lytjs/common-vnode';
@@ -436,11 +419,7 @@ import { TransitionEngine } from '@lytjs/common-transition-engine';
 import { toPascalCase, camelize } from '@lytjs/common-string';
 
 // ✅ 推荐：使用 common-dom-helpers
-import { 
-  querySelector, 
-  addEventListener, 
-  removeEventListener 
-} from '@lytjs/common-dom-helpers';
+import { querySelector, addEventListener, removeEventListener } from '@lytjs/common-dom-helpers';
 ```
 
 ### 3.6 Renderer 模块编码规则
@@ -537,7 +516,7 @@ class LytJSError extends Error {
   constructor(
     message: string,
     public code: string,
-    public context?: unknown
+    public context?: unknown,
   ) {
     super(message);
     this.name = 'LytJSError';
@@ -568,7 +547,7 @@ if (criticalCondition) {
 // ✅ 推荐：避免在渲染中创建新对象
 // const App = defineComponent({
 //   render() {
-//     return h('div', { 
+//     return h('div', {
 //       style: { color: 'red' } // 避免：每次渲染都创建新对象
 //     });
 //   }
@@ -579,7 +558,7 @@ const style = { color: 'red' };
 const App = defineComponent({
   render() {
     return h('div', { style });
-  }
+  },
 });
 ```
 
@@ -590,7 +569,7 @@ const App = defineComponent({
 import { defineAsyncComponent } from '@lytjs/core';
 
 const HeavyComponent = defineAsyncComponent({
-  loader: () => import('./HeavyComponent.vue')
+  loader: () => import('./HeavyComponent.vue'),
 });
 ```
 
@@ -626,26 +605,26 @@ const HeavyComponent = defineAsyncComponent({
 
 ### 4.1 日常开发命令
 
-| 命令 | 说明 | 使用场景 |
-| --- | --- | --- |
-| `pnpm install` | 安装依赖 | 首次克隆或更新依赖 |
-| `pnpm dev` | 启动开发模式 | 开发时实时编译 |
-| `pnpm build` | 构建所有包 | 发布前或验证修复 |
-| `pnpm test` | 运行所有测试 | 提交代码前验证 |
-| `pnpm lint` | 自动修复 lint 问题 | 代码整理 |
-| `pnpm lint:check` | 检查 lint 问题 | 提交前验证 |
-| `pnpm type-check` | 类型检查 | 确保类型安全 |
-| `pnpm format` | 格式化代码 | 统一代码风格 |
+| 命令              | 说明               | 使用场景           |
+| ----------------- | ------------------ | ------------------ |
+| `pnpm install`    | 安装依赖           | 首次克隆或更新依赖 |
+| `pnpm dev`        | 启动开发模式       | 开发时实时编译     |
+| `pnpm build`      | 构建所有包         | 发布前或验证修复   |
+| `pnpm test`       | 运行所有测试       | 提交代码前验证     |
+| `pnpm lint`       | 自动修复 lint 问题 | 代码整理           |
+| `pnpm lint:check` | 检查 lint 问题     | 提交前验证         |
+| `pnpm type-check` | 类型检查           | 确保类型安全       |
+| `pnpm format`     | 格式化代码         | 统一代码风格       |
 
 ### 4.2 高级检查命令
 
-| 命令 | 说明 | 使用场景 |
-| --- | --- | --- |
-| `pnpm run check-deps` | 检查依赖版本 | 更新依赖前 |
-| `pnpm run check-circular` | 检查循环依赖 | 重构前 |
-| `pnpm run memlab` | 内存泄漏检查 | 性能问题排查 |
-| `pnpm run size-check` | 包体积检查 | 优化包大小 |
-| `pnpm run bench` | 性能基准测试 | 性能优化对比 |
+| 命令                      | 说明         | 使用场景     |
+| ------------------------- | ------------ | ------------ |
+| `pnpm run check-deps`     | 检查依赖版本 | 更新依赖前   |
+| `pnpm run check-circular` | 检查循环依赖 | 重构前       |
+| `pnpm run memlab`         | 内存泄漏检查 | 性能问题排查 |
+| `pnpm run size-check`     | 包体积检查   | 优化包大小   |
+| `pnpm run bench`          | 性能基准测试 | 性能优化对比 |
 
 ### 4.3 Git 操作规范
 
@@ -706,9 +685,7 @@ double.set(2);
 // ✅ 推荐：使用 PatchFlags 优化
 import { h, PatchFlags } from '@lytjs/vdom';
 
-h('div', { class: 'container' }, [
-  h('span', { key: 'text', [PatchFlags.TEXT]: true }, 'Hello'),
-]);
+h('div', { class: 'container' }, [h('span', { key: 'text', [PatchFlags.TEXT]: true }, 'Hello')]);
 
 // ✅ 推荐：使用 Block Tree
 import { block } from '@lytjs/vdom';
@@ -717,10 +694,11 @@ import { block } from '@lytjs/vdom';
 ### 5.2 包体积优化规范
 
 1. **每个包使用 tsup 配置并生成类型声明**
+
    ```typescript
    // tsup.config.ts
    export default defineConfig({
-     dts: true,  // ✅ 必须启用
+     dts: true, // ✅ 必须启用
      splitting: true,
      clean: true,
      // ...
@@ -744,12 +722,12 @@ import { block } from '@lytjs/vdom';
 
 #### 测试覆盖率要求
 
-| 模块 | 覆盖率要求 |
-| --- | --- |
-| reactivity | ≥ 90% |
-| vdom | ≥ 85% |
-| compiler | ≥ 80% |
-| core | ≥ 80% |
+| 模块       | 覆盖率要求 |
+| ---------- | ---------- |
+| reactivity | ≥ 90%      |
+| vdom       | ≥ 85%      |
+| compiler   | ≥ 80%      |
+| core       | ≥ 80%      |
 
 #### 测试文件组织
 
@@ -796,7 +774,7 @@ describe('ref', () => {
 
 每个包的 README.md 结构：
 
-```markdown
+````markdown
 # @lytjs/<package-name>
 
 > 包功能描述（一句话）
@@ -806,6 +784,7 @@ describe('ref', () => {
 ```bash
 npm install @lytjs/<package-name>
 ```
+````
 
 ## 使用示例
 
@@ -820,21 +799,205 @@ import { ... } from '@lytjs/<package-name>';
 ### 函数名
 
 #### 参数
+
 - `param1`: 参数描述
 - `param2`: 参数描述
 
 #### 返回值
+
 返回值描述
 
 ## 相关链接
 
 - [架构文档](../../docs/...)
 - [其他包](../...)
+
+````
+
+---
+
+## 7. 8 层架构开发规范
+
+### 7.1 架构概述
+
+LytJS 采用 8 层架构设计，从底层到上层分别为：
+
+| 层级 | 层名 | 核心能力 |
+| --- | --- | --- |
+| L0 | 基础工具层 | 原生 JS 工具封装、常量定义 |
+| L1 | 渲染引擎层 | Vapor 无虚拟 DOM 渲染、指令解析 |
+| L2 | 核心运行时层 | 应用实例创建、生命周期、插件机制 |
+| L3 | 插件核心层 | 插件规范定义、生命周期管理 |
+| L4 | 官方插件层 | 主题、国际化、日志等内置插件 |
+| L5 | 组件基础层 | 组件通用逻辑、通信机制 |
+| L6 | 业务组件层 | 基础组件、高级组件集合 |
+| L7 | 工程化工具层 | 构建、打包、测试、lint 等 |
+
+### 7.2 分层依赖规则
+
+- **严格分层依赖**：上层只能依赖紧邻的下层，禁止跨层依赖
+- **单向依赖**：只能从上层依赖下层，禁止反向依赖
+- **循环依赖检查**：使用 `pnpm run check-circular` 定期检查
+
+```typescript
+// ✅ 正确：核心层依赖渲染引擎层
+import { render } from '@lytjs/renderer';
+
+// ❌ 错误：核心层直接依赖基础工具层（跨层）
+import { isArray } from '@lytjs/common-is';
+
+// ✅ 正确：通过 renderer 内部封装的工具使用
+import { render, internalUtils } from '@lytjs/renderer';
+````
+
+### 7.3 各层开发规范
+
+#### L0 基础工具层
+
+- 只提供纯函数，无副作用
+- 禁止依赖任何其他层
+- 必须有完整的单元测试覆盖
+- 文档必须详细说明每个函数的用途、参数和返回值
+
+#### L1 渲染引擎层
+
+- 基于 Host Contract 接口开发
+- 支持 Vapor 和 VDOM 双模式
+- 提供可插拔的渲染器实现
+- 性能优先，避免不必要的计算
+
+#### L2 核心运行时层
+
+- 提供最小化的 API
+- 插件注册与卸载机制
+- 应用实例生命周期管理
+- 依赖注入容器实现
+
+#### L3 插件核心层
+
+- 统一插件接口定义
+- 插件依赖解析
+- 插件生命周期管理
+- 插件配置验证
+
+#### L4 官方插件层
+
+- 遵循插件核心层接口
+- 零第三方依赖
+- 可插拔设计
+- 提供完整的 TypeScript 类型
+
+#### L5 组件基础层
+
+- 统一组件 API
+- 组件通信机制
+- 样式规范定义
+- 主题适配接口
+
+#### L6 业务组件层
+
+- 基于组件基础层开发
+- 支持主题定制
+- 适配 Vapor 渲染模式
+- 提供完整的测试用例
+
+#### L7 工程化工具层
+
+- 只在开发/构建时使用
+- 不影响运行时
+- 提供零依赖规范校验
+- 优化构建产物
+
+---
+
+## 8. 零第三方依赖开发规范
+
+### 8.1 零依赖原则
+
+- **运行时零依赖**：所有 L0-L6 层的运行时代码不引入任何第三方库
+- **开发时例外**：构建工具、测试工具等仅在开发时使用的依赖可以接受
+- **优先自研**：需要的功能优先考虑自研实现，而非引入第三方库
+
+### 8.2 零依赖开发检查清单
+
+开发新功能前必须检查：
+
+```
+✅ 是否引入了不必要的第三方依赖？
+✅ 现有 @lytjs/common-* 工具包是否已有相关功能？
+✅ 是否可以用原生 API 实现？
+✅ 运行时（非 devDependencies）是否会引入第三方依赖？
+```
+
+### 8.3 原生 API 使用指南
+
+#### 常用原生 API 替代方案
+
+| 功能需求 | 原生 API 方案                      |
+| -------- | ---------------------------------- |
+| 日期处理 | `Date` 对象、`Intl.DateTimeFormat` |
+| 深拷贝   | `structuredClone()`                |
+| 数组操作 | 原生 `Array` 方法                  |
+| 对象操作 | `Object.assign()`、展开运算符      |
+| URL 处理 | `URL`、`URLSearchParams`           |
+| DOM 操作 | 原生 DOM API                       |
+
+```typescript
+// ✅ 推荐：使用原生日期处理
+const formatDate = (date: Date) => {
+  return new Intl.DateTimeFormat('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(date);
+};
+
+// ❌ 避免：引入第三方日期库
+// import dayjs from 'dayjs';
+```
+
+### 8.4 依赖检查流程
+
+1. **添加新依赖前**：先检查是否真的需要
+2. **区分依赖类型**：
+   - `devDependencies`：构建、测试工具 ✅ 允许
+   - `dependencies`：运行时依赖 ⚠️ 严格禁止
+3. **定期审查**：使用 `pnpm run check-deps` 检查依赖使用情况
+
+### 8.5 自研工具优先
+
+优先使用项目已有的 common 工具包：
+
+```typescript
+// ✅ 推荐：使用 common-is
+import { isArray, isString } from '@lytjs/common-is';
+
+// ✅ 推荐：使用 common-constants
+import { EMPTY_OBJ, NOOP } from '@lytjs/common-constants';
+
+// ✅ 推荐：使用 common-string
+import { camelize, toPascalCase } from '@lytjs/common-string';
+
+// ❌ 避免：重复造轮子
+// const isArray = Array.isArray;
+// const isString = (val) => typeof val === 'string';
+```
+
+### 8.6 零依赖组件开发标准流程
+
+```
+1. 基于组件基础层开发
+2. 适配主题插件
+3. 支持 Vapor 渲染模式
+4. 编写单元测试（覆盖率 > 80%）
+5. 验证无第三方运行时依赖
+6. 编写文档与示例
+7. 提交 PR 审查
 ```
 
 ---
 
-## 7. 快速参考卡
+## 9. 快速参考卡
 
 ### 🚀 5 分钟开始工作
 
@@ -877,27 +1040,34 @@ pnpm test
 
 # 运行单个测试
 pnpm test -- filter="反应式"
+
+# 检查循环依赖
+pnpm run check-circular
+
+# 检查依赖
+pnpm run check-deps
 ```
 
 ### 📦 常用包速查
 
-| 功能 | 包名 |
-| --- | --- |
-| 类型检查 | @lytjs/common-is |
-| 常量定义 | @lytjs/common-constants |
-| 信号工具 | @lytjs/common-vnode |
+| 功能     | 包名                            |
+| -------- | ------------------------------- |
+| 类型检查 | @lytjs/common-is                |
+| 常量定义 | @lytjs/common-constants         |
+| 信号工具 | @lytjs/common-vnode             |
 | 过渡动画 | @lytjs/common-transition-engine |
-| DOM 操作 | @lytjs/common-dom-helpers |
+| DOM 操作 | @lytjs/common-dom-helpers       |
 
 ---
 
-## 8. 问题排查指南
+## 10. 问题排查指南
 
 ### 常见问题
 
 #### Q: Husky 钩子导致内存不足？
 
 A: 禁用钩子提交：
+
 ```bash
 git commit --no-verify -m "..."
 ```
@@ -905,6 +1075,7 @@ git commit --no-verify -m "..."
 #### Q: 类型检查失败？
 
 A: 按以下步骤排查：
+
 ```bash
 1. 确保已运行 pnpm install
 2. 检查 tsconfig.json 配置
@@ -914,18 +1085,30 @@ A: 按以下步骤排查：
 #### Q: 构建失败？
 
 A: 常见原因：
+
 - 缺少依赖：重新运行 pnpm install
 - 类型错误：运行 pnpm type-check
 - tsup 配置：检查 tsup.config.ts（必须启用 dts: true）
 
+#### Q: 引入了第三方运行时依赖？
+
+A: 检查并修复：
+
+```bash
+1. 查看 package.json 的 dependencies
+2. 确保只有 devDependencies 中有第三方库
+3. 使用 pnpm run check-deps 检查
+4. 考虑用自研实现替代第三方库
+```
+
 ---
 
-## 9. 持续改进
+## 11. 持续改进
 
 此规范会根据项目发展持续更新。如有建议，请提交 Issue 或 PR！
 
 ---
 
-**文档版本**: v1.0
-**最后更新**: 2026-05-12
+**文档版本**: v2.0
+**最后更新**: 2026-05-13
 **维护者**: LytJS Team
