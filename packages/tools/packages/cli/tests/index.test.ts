@@ -273,6 +273,71 @@ describe('@lytjs/cli', () => {
       );
       expect(viteConfigCall).toBeDefined();
     });
+
+    it('should create router template project', async () => {
+      mockExistsSync.mockReturnValue(false);
+
+      await create('router-project', { force: true, template: 'router' });
+
+      const packageJsonCall = mockWriteFileSync.mock.calls.find(
+        (call: any[]) => call[0].includes('package.json')
+      );
+      expect(packageJsonCall).toBeDefined();
+      expect(packageJsonCall[1]).toContain('@lytjs/router');
+
+      const homePageCall = mockWriteFileSync.mock.calls.find(
+        (call: any[]) => call[0].includes('Home.lyt')
+      );
+      expect(homePageCall).toBeDefined();
+    });
+
+    it('should create store template project', async () => {
+      mockExistsSync.mockReturnValue(false);
+
+      await create('store-project', { force: true, template: 'store' });
+
+      const packageJsonCall = mockWriteFileSync.mock.calls.find(
+        (call: any[]) => call[0].includes('package.json')
+      );
+      expect(packageJsonCall).toBeDefined();
+      expect(packageJsonCall[1]).toContain('@lytjs/store');
+
+      const counterStoreCall = mockWriteFileSync.mock.calls.find(
+        (call: any[]) => call[0].includes('counter.ts')
+      );
+      expect(counterStoreCall).toBeDefined();
+    });
+
+    it('should create full template project', async () => {
+      mockExistsSync.mockReturnValue(false);
+
+      await create('full-project', { force: true, template: 'full' });
+
+      const packageJsonCall = mockWriteFileSync.mock.calls.find(
+        (call: any[]) => call[0].includes('package.json')
+      );
+      expect(packageJsonCall).toBeDefined();
+      expect(packageJsonCall[1]).toContain('@lytjs/router');
+      expect(packageJsonCall[1]).toContain('@lytjs/store');
+      expect(packageJsonCall[1]).toContain('@lytjs/ui');
+    });
+  });
+
+  describe('plugin command', () => {
+    it('should show help for plugin command with no sub-command', async () => {
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const processExit = vi.spyOn(process, 'exit').mockImplementation(() => { throw new Error('exit'); });
+
+      try {
+        await runCli(['plugin']);
+      } catch {
+        // Expected
+      }
+
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Usage'));
+      consoleSpy.mockRestore();
+      processExit.mockRestore();
+    });
   });
 
   describe('add command', () => {

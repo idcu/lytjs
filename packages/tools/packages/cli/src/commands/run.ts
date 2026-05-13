@@ -11,6 +11,12 @@ import { dev } from './dev';
 import { build } from './build';
 import { test } from './test';
 import { add } from './add';
+import {
+  createPlugin,
+  buildPlugin,
+  validatePlugin,
+  listPluginTemplates,
+} from './plugin';
 
 const VERSION = '6.0.0';
 
@@ -80,6 +86,45 @@ export async function runCli(rawArgs: string[] = process.argv.slice(2)): Promise
       });
       break;
       
+    case 'plugin':
+      if (!args[0]) {
+        logger.error('Usage: lytjs plugin <create|build|validate|templates>');
+        logger.info('Example: lytjs plugin create my-plugin');
+        process.exit(1);
+      }
+      
+      const subCommand = args[0];
+      switch (subCommand) {
+        case 'create':
+          await createPlugin(args[1] || 'my-plugin', {
+            template: options.template as string | undefined,
+            force: options.force as boolean | undefined,
+            skipInstall: options.skipInstall as boolean | undefined,
+          });
+          break;
+        case 'build':
+          await buildPlugin({
+            outDir: options.outDir as string | undefined,
+            minify: options.minify as boolean | undefined,
+            sourcemap: options.sourcemap as boolean | undefined,
+          });
+          break;
+        case 'validate':
+          await validatePlugin({
+            strict: options.strict as boolean | undefined,
+            warningsAsErrors: options.warningsAsErrors as boolean | undefined,
+          });
+          break;
+        case 'templates':
+          listPluginTemplates();
+          break;
+        default:
+          logger.error(`Unknown plugin sub-command: ${subCommand}`);
+          logger.info('Supported sub-commands: create, build, validate, templates');
+          process.exit(1);
+      }
+      break;
+      
     default:
       if (command) {
         logger.error(`Unknown command: ${command}`);
@@ -141,13 +186,14 @@ ${logger.bold('Usage:')}
   lytjs <command> [options]
 
 ${logger.bold('Commands:')}
-  create <name>     Create a new LytJS project
-  templates         List available templates
-  dev               Start development server
-  build             Build for production
-  test              Run tests
-  add <type> <name> Generate a component, page, or store
-  help              Show this help message
+  create <name>            Create a new LytJS project
+  templates                List available templates
+  dev                      Start development server
+  build                    Build for production
+  test                     Run tests
+  add <type> <name>        Generate a component, page, or store
+  plugin <subcmd>          Plugin development commands
+  help                     Show this help message
 
 ${logger.bold('Options:')}
   --version, -v     Show version number
@@ -172,13 +218,29 @@ ${logger.bold('Test Options:')}
   --coverage        Generate coverage report
   --grep <pattern>  Filter tests by pattern
 
+${logger.bold('Plugin Options:')}
+  --template <name>    Use a specific plugin template (default, minimal, withConfig)
+  --force              Overwrite existing directory
+  --skipInstall        Skip installing dependencies
+  --outDir <dir>       Output directory (default: dist)
+  --minify             Minify output
+  --sourcemap          Generate sourcemaps
+  --strict             Strict validation mode
+  --warningsAsErrors   Treat warnings as errors
+
 ${logger.bold('Examples:')}
   lytjs create my-app
   lytjs create my-app --template minimal
+  lytjs create my-app --template router
+  lytjs create my-app --template full
   lytjs dev --port 3000
   lytjs build --ssr
   lytjs add component Button
   lytjs add page About
   lytjs add store user
+  lytjs plugin create my-plugin
+  lytjs plugin create my-plugin --template withConfig
+  lytjs plugin build
+  lytjs plugin validate
 `);
 }

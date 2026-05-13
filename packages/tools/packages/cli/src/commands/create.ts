@@ -15,6 +15,9 @@ const TEMPLATES = {
   default: 'Default template with TypeScript and Vite',
   minimal: 'Minimal template without extra dependencies',
   ssr: 'SSR-enabled template',
+  router: 'Template with Router integration',
+  store: 'Template with Store integration',
+  full: 'Full-featured template with Router, Store, and UI components',
 };
 
 /**
@@ -64,6 +67,9 @@ function generateProjectFiles(targetDir: string, projectName: string, template: 
   // Determine template-specific settings
   const isMinimal = template === 'minimal';
   const isSsr = template === 'ssr';
+  const isRouter = template === 'router' || template === 'full';
+  const isStore = template === 'store' || template === 'full';
+  const isFull = template === 'full';
 
   // package.json - use explicit type to allow property access
   interface PackageJsonTemplate {
@@ -106,6 +112,21 @@ function generateProjectFiles(targetDir: string, projectName: string, template: 
     packageJson.scripts['build:server'] = 'vite build --ssr src/entry-server.ts';
     packageJson.scripts['build'] = 'npm run build:client && npm run build:server';
     packageJson.scripts['preview'] = 'node server';
+  }
+
+  // Router template: add @lytjs/router
+  if (isRouter) {
+    packageJson.dependencies['@lytjs/router'] = '^1.0.0';
+  }
+
+  // Store template: add @lytjs/store
+  if (isStore) {
+    packageJson.dependencies['@lytjs/store'] = '^1.0.0';
+  }
+
+  // Full template: add @lytjs/ui
+  if (isFull) {
+    packageJson.dependencies['@lytjs/ui'] = '^0.4.0';
   }
 
   writeFile(join(targetDir, 'package.json'), JSON.stringify(packageJson, null, 2));
@@ -157,8 +178,41 @@ export default defineConfig({
     mainTs = `import { createApp } from '@lytjs/core';
 import App from './App.lyt';
 import { createSSRApp } from '@lytjs/server';
+${isRouter ? "import { createRouter, createWebHistory } from '@lytjs/router';" : ''}
+${isStore ? "import { createPinia } from '@lytjs/store';" : ''}
 
 const app = createSSRApp(App);
+${isStore ? 'app.use(createPinia());' : ''}
+${isRouter ? `
+const router = createRouter({
+  history: createWebHistory(),
+  routes: [
+    { path: '/', component: () => import('./pages/Home.lyt') },
+    { path: '/about', component: () => import('./pages/About.lyt') },
+  ],
+});
+app.use(router);
+` : ''}
+app.mount('#app');
+`;
+  } else if (isRouter || isStore) {
+    mainTs = `import { createApp } from '@lytjs/core';
+import App from './App.lyt';
+${isRouter ? "import { createRouter, createWebHistory } from '@lytjs/router';" : ''}
+${isStore ? "import { createPinia } from '@lytjs/store';" : ''}
+
+const app = createApp(App);
+${isStore ? 'app.use(createPinia());' : ''}
+${isRouter ? `
+const router = createRouter({
+  history: createWebHistory(),
+  routes: [
+    { path: '/', component: () => import('./pages/Home.lyt') },
+    { path: '/about', component: () => import('./pages/About.lyt') },
+  ],
+});
+app.use(router);
+` : ''}
 app.mount('#app');
 `;
   } else {
@@ -189,6 +243,42 @@ const title = 'Hello LytJS!';
 }
 </style>
 `;
+  } else if (isRouter) {
+    appLyt = `<template>
+  <div class="app">
+    <nav class="nav">
+      <router-link to="/">Home</router-link>
+      <router-link to="/about">About</router-link>
+    </nav>
+    <router-view />
+  </div>
+</template>
+
+<script setup lang="ts">
+import { RouterLink, RouterView } from '@lytjs/router';
+</script>
+
+<style scoped>
+.app {
+  text-align: center;
+  padding: 2rem;
+}
+
+.nav {
+  margin-bottom: 2rem;
+}
+
+.nav a {
+  margin: 0 1rem;
+  color: #42b883;
+  text-decoration: none;
+}
+
+.nav a:hover {
+  text-decoration: underline;
+}
+</style>
+`;
   } else {
     appLyt = `<template>
   <div class="app">
@@ -214,6 +304,95 @@ h1 {
 `;
   }
   writeFile(join(targetDir, 'src/App.lyt'), appLyt);
+
+  // Router template: add pages and store
+  if (isRouter) {
+    // Home page
+    const homePage = `<template>
+  <div class="home">
+    <h1>Home</h1>
+    ${isStore ? `
+    <p>Count: {{ count }}</p>
+    <button @click="increment">Increment</button>
+    <button @click="decrement">Decrement</button>
+    ` : ''}
+    <p>Welcome to the Home page!</p>
+  </div>
+</template>
+
+<script setup lang="ts">
+${isStore ? `import { useCounterStore } from '../stores/counter';
+const counterStore = useCounterStore();
+const { count, increment, decrement } = counterStore;
+` : ''}
+</script>
+
+<style scoped>
+.home {
+  padding: 1rem;
+}
+</style>
+`;
+    ensureDir(join(targetDir, 'src', 'pages'));
+    writeFile(join(targetDir, 'src', 'pages', 'Home.lyt'), homePage);
+
+    // About page
+    const aboutPage = `<template>
+  <div class="about">
+    <h1>About</h1>
+    <p>This is the About page!</p>
+  </div>
+</template>
+
+<script setup lang="ts">
+</script>
+
+<style scoped>
+.about {
+  padding: 1rem;
+}
+</style>
+`;
+    writeFile(join(targetDir, 'src', 'pages', 'About.lyt'), aboutPage);
+  }
+
+  // Store template: add example store
+  if (isStore) {
+    const counterStore = `import { defineStore } from '@lytjs/store';
+import { signal, computed } from '@lytjs/reactivity';
+
+export const useCounterStore = defineStore('counter', () => {
+  // State
+  const count = signal(0);
+
+  // Getters
+  const doubleCount = computed(() => count.value * 2);
+
+  // Actions
+  function increment() {
+    count.value++;
+  }
+
+  function decrement() {
+    count.value--;
+  }
+
+  function reset() {
+    count.value = 0;
+  }
+
+  return {
+    count,
+    doubleCount,
+    increment,
+    decrement,
+    reset,
+  };
+});
+`;
+    ensureDir(join(targetDir, 'src', 'stores'));
+    writeFile(join(targetDir, 'src', 'stores', 'counter.ts'), counterStore);
+  }
 
   // SSR-specific files
   if (isSsr) {
