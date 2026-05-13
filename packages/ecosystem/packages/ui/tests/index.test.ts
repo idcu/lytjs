@@ -8,6 +8,7 @@ import { Input } from '../src/components/Input';
 import { Dialog } from '../src/components/Dialog';
 import { Tabs, TabPane } from '../src/components/Tabs';
 import { Menu } from '../src/components/Menu';
+import { Table } from '../src/components/Table';
 
 // ===== Button 组件测试 =====
 describe('Button', () => {
@@ -184,6 +185,37 @@ describe('Menu', () => {
   });
 });
 
+// ===== Table 组件测试 =====
+describe('Table', () => {
+  it('should render Table with default props', () => {
+    expect(Table).toBeDefined();
+    expect(Table.name).toBe('LytTable');
+  });
+
+  it('should have correct props definition', () => {
+    const props = Table.props;
+    expect(props.data).toBeDefined();
+    expect(props.columns).toBeDefined();
+    expect(props.stripe).toBeDefined();
+    expect(props.border).toBeDefined();
+    expect(props.rowKey).toBeDefined();
+    expect(props.showSelection).toBeDefined();
+    expect(props.highlightCurrentRow).toBeDefined();
+    expect(props.onRowClick).toBeDefined();
+    expect(props.onSortChange).toBeDefined();
+    expect(props.onSelectionChange).toBeDefined();
+  });
+
+  it('should have default values for props', () => {
+    const props = Table.props;
+    expect(props.rowKey.default).toBe('id');
+    expect(props.showSelection.default).toBe(false);
+    expect(props.highlightCurrentRow.default).toBe(false);
+    expect(props.stripe.default).toBe(false);
+    expect(props.border.default).toBe(false);
+  });
+});
+
 // ===== 导出测试 =====
 describe('exports', () => {
   it('should export all components', () => {
@@ -193,5 +225,6 @@ describe('exports', () => {
     expect(Tabs).toBeDefined();
     expect(TabPane).toBeDefined();
     expect(Menu).toBeDefined();
+    expect(Table).toBeDefined();
   });
 });

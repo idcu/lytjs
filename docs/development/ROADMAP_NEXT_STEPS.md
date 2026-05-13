@@ -296,13 +296,23 @@ packages/
 
 ---
 
-**文档版本**: v2.3
+**文档版本**: v2.4
 **最后更新**: 2026-05-13
 **维护者**: LytJS Team
 
 ---
 
 ## 更新日志
+
+### v2.4 (2026-05-13)
+
+- ✅ 完善 Table 高级表格组件，新增选择功能、高亮当前行、固定列支持
+- ✅ Table 组件新增 `rowKey`、`showSelection`、`highlightCurrentRow` 等属性
+- ✅ Table 组件新增 `onSelectionChange`、`selection-change` 等事件
+- ✅ Table 组件支持自定义插槽、单元格对齐、列宽设置
+- ✅ 完善排序功能，优化排序图标展示
+- ✅ 更新测试文件，新增 Table 组件测试用例
+- ✅ 确保 Table 组件严格遵循零第三方依赖原则
 
 ### v2.3 (2026-05-13)
 
