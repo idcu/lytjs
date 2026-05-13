@@ -7,6 +7,7 @@ import { Button } from '../src/components/Button';
 import { Input } from '../src/components/Input';
 import { Dialog } from '../src/components/Dialog';
 import { Tabs, TabPane } from '../src/components/Tabs';
+import { Menu } from '../src/components/Menu';
 
 // ===== Button 组件测试 =====
 describe('Button', () => {
@@ -154,6 +155,35 @@ describe('TabPane', () => {
   });
 });
 
+// ===== Menu 组件测试 =====
+describe('Menu', () => {
+  it('should render Menu with default props', () => {
+    expect(Menu).toBeDefined();
+    expect(Menu.name).toBe('LytMenu');
+  });
+
+  it('should have correct props definition', () => {
+    const props = Menu.props;
+    expect(props.data).toBeDefined();
+    expect(props.defaultOpenKeys).toBeDefined();
+    expect(props.defaultSelectedKeys).toBeDefined();
+    expect(props.mode).toBeDefined();
+    expect(props.theme).toBeDefined();
+    expect(props.collapsible).toBeDefined();
+    expect(props.collapsed).toBeDefined();
+    expect(props.onClick).toBeDefined();
+    expect(props.onOpenChange).toBeDefined();
+  });
+
+  it('should have default values for props', () => {
+    const props = Menu.props;
+    expect(props.mode.default).toBe('vertical');
+    expect(props.theme.default).toBe('light');
+    expect(props.collapsible.default).toBe(false);
+    expect(props.collapsed.default).toBe(false);
+  });
+});
+
 // ===== 导出测试 =====
 describe('exports', () => {
   it('should export all components', () => {
@@ -162,5 +192,6 @@ describe('exports', () => {
     expect(Dialog).toBeDefined();
     expect(Tabs).toBeDefined();
     expect(TabPane).toBeDefined();
+    expect(Menu).toBeDefined();
   });
 });

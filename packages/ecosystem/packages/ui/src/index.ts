@@ -15,6 +15,7 @@ export { Form, FormItem } from './components/Form';
 export { Transition, TransitionGroup } from './components/Transition';
 export { DatePicker } from './components/DatePicker';
 export { Tree } from './components/Tree';
+export { Menu } from './components/Menu';
 
 // 类型导出
 export type {
@@ -49,6 +50,7 @@ import { Form, FormItem } from './components/Form';
 import { Transition, TransitionGroup } from './components/Transition';
 import { DatePicker } from './components/DatePicker';
 import { Tree } from './components/Tree';
+import { Menu } from './components/Menu';
 
 /**
  * 安装所有组件
@@ -67,6 +69,7 @@ export function install(app: AppContext): void {
   app.components['LytTransitionGroup'] = TransitionGroup;
   app.components['LytDatePicker'] = DatePicker;
   app.components['LytTree'] = Tree;
+  app.components['LytMenu'] = Menu;
 }
 
 export default {
