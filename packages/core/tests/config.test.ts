@@ -359,9 +359,13 @@ describe('Config System', () => {
       const config = new ConfigManager({});
       config.setMutable(false);
 
+      // 不可变配置应该拒绝所有修改操作
       expect(config.set('key', 'value')).toBe(false);
       expect(config.delete('key')).toBe(false);
-      expect(config.merge({ key: 'value' })).toBe(false);
+      // merge 返回 void，操作无效时会返回（不抛出错误）
+      // 验证配置未被修改
+      config.merge({ key: 'value' });
+      expect(config.get('key')).toBeUndefined();
     });
   });
 
@@ -389,11 +393,13 @@ describe('Config System', () => {
     });
 
     it('should persist config across setGlobalConfig calls', () => {
+      // 默认行为是合并（merge=true），所以配置会累积
       setGlobalConfig({ initial: 'value' });
       expect(getConfig('initial')).toBe('value');
 
+      // 再次调用 setGlobalConfig 时，如果默认合并，initial 仍然存在
       setGlobalConfig({ updated: 'value' });
-      expect(getConfig('initial')).toBeUndefined();
+      expect(getConfig('initial')).toBe('value'); // 默认合并，保留原有配置
       expect(getConfig('updated')).toBe('value');
     });
   });

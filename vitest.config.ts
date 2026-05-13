@@ -92,6 +92,11 @@ export default defineConfig({
         url: 'http://localhost',
       },
     },
+    // 排除需要 DOM 环境的包，这些包使用自己的 vitest 配置
+    exclude: [
+      '**/node_modules/**',
+      '**/packages/web/tests/**',
+    ],
     coverage: {
       provider: 'v8',
       include: ['packages/*/src/**/*.ts', 'packages/common/packages/*/src/**/*.ts'],

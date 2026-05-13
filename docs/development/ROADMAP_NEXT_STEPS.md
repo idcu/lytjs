@@ -994,13 +994,23 @@ pnpm 11.x 引入了更严格的构建脚本安全检查机制。在 monorepo 子
 
 ---
 
-**文档版本**: v1.11
+**文档版本**: v1.12
 **最后更新**: 2026-05-13
 **维护者**: LytJS Team
 
 ---
 
 ## 更新日志
+
+### v1.12 (2026-05-13)
+
+- ✅ 修复测试用例与编译器实际行为不匹配问题
+  - `optimize.test.ts`: 修复静态文本和混合静态/动态兄弟节点的测试期望
+  - `codegen.test.ts`: 修复 v-slot 和 v-pre 指令的测试期望
+  - `config.test.ts`: 修复 ConfigManager 不可变配置和全局配置合并行为的测试
+  - `web-components.test.ts`: 修复 camelCase 到 kebab-case 转换的测试期望
+- ✅ 添加 web 包独立的 vitest 配置（jsdom 环境）
+- ✅ 更新根目录 vitest 配置，排除需要 DOM 环境的包
 
 ### v1.11 (2026-05-13)
 
