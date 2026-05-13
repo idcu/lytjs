@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Counter - LytJS 示例</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .container {
+      background: white;
+      padding: 40px;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      text-align: center;
+    }
+    h1 { color: #333; margin-bottom: 30px; }
+    .counter {
+      font-size: 4em;
+      font-weight: bold;
+      color: #667eea;
+      margin: 30px 0;
+      min-width: 150px;
+    }
+    .buttons {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-top: 20px;
+    }
+    button {
+      padding: 12px 24px;
+      font-size: 1.1em;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .btn-primary {
+      background: #667eea;
+      color: white;
+    }
+    .btn-primary:hover { background: #5a6fd6; }
+    .btn-secondary {
+      background: #e0e0e0;
+      color: #333;
+    }
+    .btn-secondary:hover { background: #d0d0d0; }
+    .btn-danger {
+      background: #f56c6c;
+      color: white;
+    }
+    .btn-danger:hover { background: #e64c4c; }
+    .back {
+      margin-top: 20px;
+      color: #667eea;
+      text-decoration: none;
+    }
+    .info {
+      margin-top: 20px;
+      padding: 15px;
+      background: #f0f0f0;
+      border-radius: 8px;
+      font-size: 0.9em;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔢 Counter 计数器</h1>
+    <div class="counter" id="count">0</div>
+    <div class="buttons">
+      <button class="btn-secondary" id="decrement">-</button>
+      <button class="btn-primary" id="increment">+</button>
+      <button class="btn-danger" id="reset">重置</button>
+    </div>
+    <div class="info">
+      使用 @lytjs/store 管理状态<br>
+      支持响应式更新和 actions
+    </div>
+    <br>
+    <a href="../index.html" class="back">← 返回示例列表</a>
+  </div>
+
+  <script type="module">
+    import { createPinia, defineStore } from '@lytjs/store';
+    import { signal } from '@lytjs/reactivity';
+
+    // 创建 Pinia 实例
+    const pinia = createPinia();
+
+    // 定义 Counter Store
+    const useCounterStore = defineStore('counter', {
+      state: () => ({
+        count: 0,
+      }),
+      getters: {
+        doubleCount: (state) => state.count * 2,
+      },
+      actions: {
+        increment() {
+          this.count++;
+        },
+        decrement() {
+          this.count--;
+        },
+        reset() {
+          this.count = 0;
+        },
+      },
+    });
+
+    // 使用 Store
+    const counter = useCounterStore(pinia);
+
+    // 获取 DOM 元素
+    const countEl = document.getElementById('count');
+    const incrementBtn = document.getElementById('increment');
+    const decrementBtn = document.getElementById('decrement');
+    const resetBtn = document.getElementById('reset');
+
+    // 更新视图
+    function updateView() {
+      countEl.textContent = counter.count;
+      countEl.style.transform = 'scale(1.2)';
+      setTimeout(() => {
+        countEl.style.transform = 'scale(1)';
+      }, 150);
+    }
+
+    // 订阅状态变化
+    counter.$subscribe((mutation, state) => {
+      console.log('State changed:', mutation, state);
+      updateView();
+    });
+
+    // 绑定事件
+    incrementBtn.addEventListener('click', () => {
+      counter.increment();
+    });
+
+    decrementBtn.addEventListener('click', () => {
+      counter.decrement();
+    });
+
+    resetBtn.addEventListener('click', () => {
+      counter.reset();
+    });
+
+    // 初始化视图
+    updateView();
+
+    console.log('Counter Store:', counter);
+    console.log('Double Count:', counter.doubleCount);
+  </script>
+</body>
+</html>
