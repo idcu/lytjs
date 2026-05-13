@@ -47,6 +47,10 @@ export interface I18nInstance {
   te(key: string, locale?: string): boolean;
   /** 获取语言列表 */
   availableLocales: string[];
+  /** 注册语言包 */
+  registerLocale(locale: string, messages: LocaleMessages): void;
+  /** 获取所有语言包 */
+  getMessages(): Locale;
 }
 
 export type { I18nOptions as I18nConfig };

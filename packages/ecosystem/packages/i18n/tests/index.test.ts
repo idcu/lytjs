@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { createI18n } from '../src/index';
+import { createI18n, registerLocale as standaloneRegisterLocale } from '../src/index';
 
 describe('I18n', () => {
   describe('createI18n', () => {
@@ -12,6 +12,8 @@ describe('I18n', () => {
       expect(i18n).toBeDefined();
       expect(i18n.locale.value).toBe('zh-CN');
       expect(i18n.t).toBeTypeOf('function');
+      expect(i18n.registerLocale).toBeTypeOf('function');
+      expect(i18n.getMessages).toBeTypeOf('function');
     });
 
     it('should create i18n with custom locale', () => {
@@ -101,6 +103,99 @@ describe('I18n', () => {
       
       expect(i18n.availableLocales).toContain('zh-CN');
       expect(i18n.availableLocales).toContain('en-US');
+    });
+  });
+
+  describe('registerLocale', () => {
+    it('should register new locale via instance method', () => {
+      const i18n = createI18n({
+        messages: {
+          'zh-CN': { hello: '你好' },
+        },
+      });
+      
+      // 注册新语言包
+      i18n.registerLocale('ja-JP', { hello: 'こんにちは' });
+      
+      expect(i18n.availableLocales).toContain('ja-JP');
+      
+      i18n.setLocale('ja-JP');
+      expect(i18n.t('hello')).toBe('こんにちは');
+    });
+
+    it('should register new locale via standalone function', () => {
+      const i18n = createI18n({
+        messages: {
+          'zh-CN': { hello: '你好' },
+        },
+      });
+      
+      // 使用独立函数注册
+      standaloneRegisterLocale(i18n, 'fr-FR', { hello: 'Bonjour' });
+      
+      expect(i18n.availableLocales).toContain('fr-FR');
+      
+      i18n.setLocale('fr-FR');
+      expect(i18n.t('hello')).toBe('Bonjour');
+    });
+
+    it('should merge existing locale messages', () => {
+      const i18n = createI18n({
+        messages: {
+          'zh-CN': { hello: '你好' },
+        },
+      });
+      
+      // 合并消息
+      i18n.registerLocale('zh-CN', { goodbye: '再见' });
+      
+      expect(i18n.t('hello')).toBe('你好');
+      expect(i18n.t('goodbye')).toBe('再见');
+    });
+
+    it('should update availableLocales when new locale is registered', () => {
+      const i18n = createI18n({
+        messages: {
+          'zh-CN': {},
+        },
+      });
+      
+      expect(i18n.availableLocales).toHaveLength(1);
+      
+      i18n.registerLocale('en-US', {});
+      expect(i18n.availableLocales).toHaveLength(2);
+    });
+  });
+
+  describe('getMessages', () => {
+    it('should return all messages', () => {
+      const messages = {
+        'zh-CN': { hello: '你好' },
+        'en-US': { hello: 'Hello' },
+      };
+      
+      const i18n = createI18n({ messages });
+      const returnedMessages = i18n.getMessages();
+      
+      expect(returnedMessages).toEqual(messages);
+      expect(returnedMessages['zh-CN']).toEqual(messages['zh-CN']);
+      expect(returnedMessages['en-US']).toEqual(messages['en-US']);
+    });
+
+    it('should return copy of messages to prevent direct modification', () => {
+      const messages = {
+        'zh-CN': { hello: '你好' },
+      };
+      
+      const i18n = createI18n({ messages });
+      const returnedMessages = i18n.getMessages();
+      
+      // 修改返回的对象不应影响内部存储
+      returnedMessages['zh-CN'].hello = '修改后的内容';
+      
+      // 验证内部消息未被修改
+      i18n.setLocale('zh-CN');
+      expect(i18n.t('hello')).toBe('你好');
     });
   });
 });

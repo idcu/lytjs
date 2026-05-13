@@ -7,6 +7,27 @@ import { signal } from '@lytjs/reactivity';
 import { isString, isObject } from '@lytjs/common-is';
 
 /**
+ * 深度克隆对象，防止直接修改
+ */
+function deepClone<T>(obj: T): T {
+  if (obj === null || typeof obj !== 'object') {
+    return obj;
+  }
+  
+  if (Array.isArray(obj)) {
+    return obj.map(deepClone) as T;
+  }
+  
+  const cloned = {} as Record<string, any>;
+  for (const key in obj) {
+    if (Object.prototype.hasOwnProperty.call(obj, key)) {
+      cloned[key] = deepClone((obj as Record<string, any>)[key]);
+    }
+  }
+  return cloned as T;
+}
+
+/**
  * 创建 i18n 实例
  */
 export function createI18n(options: I18nOptions = {}): I18nInstance {
@@ -19,8 +40,11 @@ export function createI18n(options: I18nOptions = {}): I18nInstance {
   // 当前语言
   const currentLocale = signal(defaultLocale);
 
-  // 语言包存储
-  const localeMessages: Locale = { ...messages };
+  // 可用语言列表（响应式）
+  const availableLocalesState = signal<string[]>(Object.keys(messages));
+
+  // 语言包存储（深度克隆以防止外部修改）
+  const localeMessages: Locale = deepClone(messages);
 
   /**
    * 获取嵌套对象的值
@@ -107,26 +131,51 @@ export function createI18n(options: I18nOptions = {}): I18nInstance {
   }
 
   /**
-   * 获取可用语言列表
+   * 注册语言包
    */
-  const availableLocales = Object.keys(localeMessages);
+  function registerLocale(locale: string, messages: LocaleMessages): void {
+    // 如果是新语言，添加到可用语言列表
+    if (!localeMessages[locale]) {
+      localeMessages[locale] = {};
+      // 更新可用语言列表
+      const newLocales = [...Object.keys(localeMessages)];
+      availableLocalesState.set(newLocales);
+    }
+    // 合并语言包（支持部分更新，深度克隆以防止外部修改）
+    localeMessages[locale] = {
+      ...localeMessages[locale],
+      ...deepClone(messages),
+    };
+    console.log(`[i18n] Locale "${locale}" registered successfully`);
+  }
+
+  /**
+   * 获取所有语言包
+   */
+  function getMessages(): Locale {
+    // 返回深度克隆以防止外部直接修改
+    return deepClone(localeMessages);
+  }
 
   return {
-    locale: { get value() { return currentLocale(); }, set value(v: string) { currentLocale.set(v); } },
+    locale: { 
+      get value() { return currentLocale(); }, 
+      set value(v: string) { currentLocale.set(v); } 
+    },
     setLocale,
     t,
     te,
-    availableLocales,
+    get availableLocales() { return availableLocalesState(); },
+    registerLocale,
+    getMessages,
   };
 }
 
 /**
- * 注册语言包
+ * 注册语言包（独立函数版本）
  */
-export function registerLocale(_i18n: I18nInstance, locale: string, _messages: LocaleMessages): void {
-  // 这里需要访问内部的 localeMessages
-  // 简化实现：直接扩展
-  console.log(`[i18n] Registering locale: ${locale}`);
+export function registerLocale(i18n: I18nInstance, locale: string, messages: LocaleMessages): void {
+  i18n.registerLocale(locale, messages);
 }
 
 export type { I18nOptions, I18nInstance, Locale, LocaleMessages };
