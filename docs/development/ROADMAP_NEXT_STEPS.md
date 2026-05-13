@@ -301,6 +301,139 @@ engine.performEnter(el, props, doneFn);
 3. 代码复用 - 减少 vdom 中的重复代码
 4. 易于维护 - 过渡逻辑集中在 common-transition-engine
 
+#### 2.2.9 插件系统改进（v6.0 Plugin System Enhancement）
+**状态**: 🟡 规划中
+
+**背景**: v5.x 的插件系统包含 SDK 脚手架、PluginValidator、PluginRegistry 等基础设施，v6.0.0 目前只有基础的 `use()` 方法。
+
+**改进计划**:
+
+**P0 - 核心架构层（必须实现）**:
+
+1. **类型系统重构**
+   ```typescript
+   // 恢复泛型参数支持
+   export interface Plugin<TOptions = unknown, TApp = App> {
+     install: (app: TApp, ...options: TOptions[]) => void | Promise<void>;
+     name: string;  // 改为必填
+     version?: string;
+     meta?: {
+       description?: string;
+       author?: string;
+       keywords?: string[];
+     };
+   }
+   ```
+
+2. **PluginRegistry 注册表**
+   ```typescript
+   export class PluginRegistry {
+     private plugins = new Map<string, RegisteredPlugin>();
+     
+     register(plugin: Plugin, options?: unknown): RegistrationResult;
+     unregister(name: string): boolean;
+     get(name: string): RegisteredPlugin | undefined;
+     has(name: string): boolean;
+     
+     // 依赖管理
+     checkDependencies(plugin: Plugin): DependencyResult;
+     resolveLoadOrder(): Plugin[];
+     
+     // 生命周期钩子
+     on(event: PluginLifecycleEvent, handler: Function): () => void;
+     emit(event: PluginLifecycleEvent, ...args: unknown[]): void;
+   }
+   ```
+
+3. **PluginValidator 验证器**
+   ```typescript
+   export class PluginValidator {
+     validate(plugin: unknown): ValidationReport;
+     
+     // 验证规则
+     private rules = [
+       validateStructure,      // 必须有 install 方法
+       validateName,           // name 必须是有效字符串
+       validateCircularDeps,   // 无循环依赖
+       validateVersion,        // 版本格式正确
+     ];
+   }
+   ```
+
+**P1 - 功能扩展层（推荐实现）**:
+
+4. **生命周期增强**
+   ```typescript
+   export interface Plugin {
+     install: PluginInstallFunction;
+     name: string;
+     
+     // 新增生命周期钩子
+     beforeInstall?: (app: App) => boolean | Promise<boolean>;
+     afterInstall?: (app: App) => void | Promise<void>;
+     beforeMount?: (app: App) => void | Promise<void>;
+     afterMount?: (app: App) => void | Promise<void>;
+     cleanup?: () => void | Promise<void>;
+   }
+   ```
+
+5. **依赖管理系统**
+   ```typescript
+   export interface Plugin {
+     name: string;
+     install: PluginInstallFunction;
+     
+     dependencies?: PluginDependency[];
+     optionalDependencies?: PluginDependency[];
+     conflicts?: string[];
+     
+     peerRequirements?: {
+       lytjs?: string;
+       node?: string;
+     };
+   }
+   ```
+
+6. **配置 Schema 系统**
+   ```typescript
+   export interface Plugin<TOptions = unknown> {
+     name: string;
+     install: PluginInstallFunction;
+     configSchema?: ConfigSchema<TOptions>;
+   }
+   ```
+
+**P2 - 开发者工具层（可选实现）**:
+
+7. **Plugin SDK 脚手架**
+   ```typescript
+   // packages/plugin-sdk/src/index.ts
+   export function definePlugin<T, A>(config: PluginConfig<T, A>): Plugin<T, A>;
+   export function createPluginTemplate(options: CreateTemplateOptions): Promise<void>;
+   export function buildPlugin(entry: string): Promise<BuildResult>;
+   export function createPluginTester(plugin: Plugin): PluginTester;
+   ```
+
+8. **CLI 工具**
+   ```bash
+   lytjs plugin create my-plugin    # 创建插件模板
+   lytjs plugin build               # 构建插件
+   lytjs plugin test                # 运行测试
+   lytjs plugin publish             # 发布到 registry
+   lytjs plugin validate            # 验证插件
+   ```
+
+**实施路线图**:
+
+| 阶段 | 内容 | 优先级 | 工作量 | 状态 |
+|-----|------|--------|--------|------|
+| P0 | 类型系统重构 + PluginRegistry | 🔴 必须 | 2-3 天 | 🟡 规划中 |
+| P1 | PluginValidator + 依赖管理 | 🟡 重要 | 3-4 天 | ⚪ 待开始 |
+| P2 | 生命周期增强 + 配置 Schema | 🟢 推荐 | 2-3 天 | ⚪ 待开始 |
+| P3 | Plugin SDK + CLI 工具 | 🔵 可选 | 5-7 天 | ⚪ 待开始 |
+
+**向后兼容性**: 所有改进保持向后兼容，现有插件无需修改即可继续使用。
+
 ### 2.3 P2 - 中期目标（3-6个月）
 
 #### 2.3.1 完善生态系统
@@ -591,7 +724,12 @@ import { Button, Input, Dialog } from '@lytjs/ui';
 **验收标准**:
 - [ ] DevTools 正式版
 - [ ] SSR 完善
-- [ ] 插件生态
+- [ ] 插件系统改进（P0-P1 完成）
+  - [ ] 类型系统重构
+  - [ ] PluginRegistry 注册表
+  - [ ] PluginValidator 验证器
+  - [ ] 生命周期增强
+  - [ ] 依赖管理系统
 - [ ] 性能优化完成
 
 ### 6.4 里程碑四：v7.0（52周）
@@ -708,13 +846,21 @@ pnpm 11.x 引入了更严格的构建脚本安全检查机制。在 monorepo 子
 
 ---
 
-**文档版本**: v1.9
+**文档版本**: v1.10
 **最后更新**: 2026-05-13
 **维护者**: LytJS Team
 
 ---
 
 ## 更新日志
+
+### v1.10 (2026-05-13)
+- ✅ 插件系统改进计划（v6.0 Plugin System Enhancement）
+  - 类型系统重构：恢复泛型参数支持
+  - PluginRegistry 注册表：插件发现、依赖管理
+  - PluginValidator 验证器：结构验证、配置校验
+  - 生命周期增强：beforeInstall/afterMount/cleanup
+  - Plugin SDK 脚手架：模板生成、构建工具、测试框架
 
 ### v1.9 (2026-05-13)
 - ✅ i18n 国际化包（@lytjs/i18n v6.0.0）
