@@ -19,6 +19,9 @@ import {
   unregisterStore,
   getRegisteredStoreIds,
   clearStoreRegistry,
+  subscribeStore,
+  unsubscribeStore,
+  onStoreChange,
 } from './storeInspector';
 import {
   getCurrentRoute,
@@ -30,6 +33,10 @@ import {
   registerRouter,
   unregisterRouter,
   isRouterRegistered,
+  watchRouteChanges,
+  unwatchRouteChanges,
+  getRouteHistory,
+  clearRouteHistory,
 } from './routeInspector';
 
 // DevTools 实例
@@ -378,6 +385,9 @@ export {
   unregisterStore,
   getRegisteredStoreIds,
   clearStoreRegistry,
+  subscribeStore,
+  unsubscribeStore,
+  onStoreChange,
   
   // 路由检查器
   getCurrentRoute,
@@ -389,6 +399,10 @@ export {
   registerRouter,
   unregisterRouter,
   isRouterRegistered,
+  watchRouteChanges,
+  unwatchRouteChanges,
+  getRouteHistory,
+  clearRouteHistory,
 };
 
 export type { DevToolsOptions, DevToolsAPI };

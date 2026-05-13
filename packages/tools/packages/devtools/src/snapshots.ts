@@ -3,6 +3,7 @@
  */
 
 import type { StateSnapshot, ComponentTreeNode, SignalInfo, DevToolsEvent } from './types';
+import { setSignalValue } from './signals';
 
 // 重新导出 StateSnapshot 类型以保持兼容性
 export type { StateSnapshot as Snapshot };
@@ -132,14 +133,43 @@ export function importSnapshots(json: string): StateSnapshot[] {
 
 /**
  * 恢复快照
- * 注意：这是一个简化实现，实际恢复需要根据具体应用架构实现
+ *
+ * @description
+ * 遍历快照中的 signals，调用 setSignalValue 逐个恢复信号的值。
+ * 如果某个信号恢复失败，会记录错误但不会中断其余信号的恢复。
+ *
+ * @param snapshot - 要恢复的状态快照
+ * @returns 是否全部恢复成功
  */
 export function restoreSnapshot(snapshot: StateSnapshot): boolean {
   try {
-    // 这里应该实现实际的状态恢复逻辑
-    // 由于涉及具体的信号系统实现，这里仅作示例
-    console.log('[DevTools Snapshots] Restoring snapshot:', snapshot.id);
-    return true;
+    if (!snapshot.signals || snapshot.signals.length === 0) {
+      console.log('[DevTools Snapshots] No signals to restore in snapshot:', snapshot.id);
+      return true;
+    }
+
+    let allSuccess = true;
+
+    for (const signalInfo of snapshot.signals) {
+      try {
+        const success = setSignalValue(signalInfo.id, signalInfo.value);
+        if (!success) {
+          console.warn(
+            `[DevTools Snapshots] Failed to restore signal "${signalInfo.name}" (id: ${signalInfo.id}): not found in registry`
+          );
+          allSuccess = false;
+        }
+      } catch (err) {
+        console.error(
+          `[DevTools Snapshots] Error restoring signal "${signalInfo.name}":`,
+          err
+        );
+        allSuccess = false;
+      }
+    }
+
+    console.log('[DevTools Snapshots] Snapshot restored:', snapshot.id);
+    return allSuccess;
   } catch (e) {
     console.error('[DevTools Snapshots] Restore failed:', e);
     return false;

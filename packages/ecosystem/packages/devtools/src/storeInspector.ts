@@ -8,6 +8,17 @@ import { isObject, isFunction } from '@lytjs/common-is';
 // Store 注册表
 const storeRegistry = new Map<string, any>();
 
+// Store 变更订阅器 Map<storeId, unsubscribe 函数>
+const subscribers = new Map<string, () => void>();
+
+// 全局 Store 变更回调列表
+const globalChangeCallbacks = new Set<(storeId: string, state: Record<string, any>) => void>();
+
+/**
+ * Store 变更回调类型
+ */
+type StoreChangeCallback = (storeId: string, state: Record<string, any>) => void;
+
 /**
  * 注册 Store
  */
@@ -160,9 +171,76 @@ function deepClone<T>(obj: T): T {
 }
 
 /**
+ * 订阅 Store 变更
+ *
+ * @description
+ * 当 Store 的 $subscribe 方法可用时自动监听变更，
+ * 变更时会触发所有通过 onStoreChange 注册的全局回调
+ *
+ * @param storeId - 要订阅的 Store ID
+ * @returns 是否订阅成功
+ */
+export function subscribeStore(storeId: string): boolean {
+  const store = storeRegistry.get(storeId);
+  if (!store) return false;
+
+  // 如果已经订阅，先取消旧订阅
+  if (subscribers.has(storeId)) {
+    unsubscribeStore(storeId);
+  }
+
+  // 优先使用 $subscribe 方法（Pinia 风格）
+  if (isFunction(store.$subscribe)) {
+    const unsubscribe = store.$subscribe((mutation: any, state: any) => {
+      const currentState = isObject(state) ? deepClone(state) : {};
+      globalChangeCallbacks.forEach(cb => cb(storeId, currentState));
+    });
+    subscribers.set(storeId, isFunction(unsubscribe) ? unsubscribe : () => {});
+    return true;
+  }
+
+  // 降级方案：如果 Store 本身是响应式的，无法自动监听
+  return false;
+}
+
+/**
+ * 取消订阅 Store 变更
+ *
+ * @param storeId - 要取消订阅的 Store ID
+ */
+export function unsubscribeStore(storeId: string): void {
+  const unsubscribe = subscribers.get(storeId);
+  if (unsubscribe) {
+    unsubscribe();
+    subscribers.delete(storeId);
+  }
+}
+
+/**
+ * 注册全局 Store 变更回调
+ *
+ * @description
+ * 当任何已订阅的 Store 发生变更时，会调用此回调
+ *
+ * @param callback - 变更回调函数，接收 storeId 和当前 state
+ * @returns 取消注册的函数
+ */
+export function onStoreChange(callback: StoreChangeCallback): () => void {
+  globalChangeCallbacks.add(callback);
+  return () => {
+    globalChangeCallbacks.delete(callback);
+  };
+}
+
+/**
  * 清空所有注册的 Store（用于测试）
  */
 export function clearStoreRegistry(): void {
+  // 取消所有订阅
+  for (const storeId of subscribers.keys()) {
+    unsubscribeStore(storeId);
+  }
+  globalChangeCallbacks.clear();
   storeRegistry.clear();
 }
 

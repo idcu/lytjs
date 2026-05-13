@@ -31,7 +31,9 @@ export {
   getAllComponents,
   getRootComponents,
   clearComponents,
+  autoRegisterFromInstance,
 } from './component-tree';
+export type { ComponentInstance } from './component-tree';
 
 // Signals
 export {

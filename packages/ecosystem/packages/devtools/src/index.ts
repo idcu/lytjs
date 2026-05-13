@@ -27,6 +27,9 @@ export {
   unregisterStore,
   getRegisteredStoreIds,
   clearStoreRegistry,
+  subscribeStore,
+  unsubscribeStore,
+  onStoreChange,
   
   // 路由检查器
   getCurrentRoute,
@@ -38,6 +41,10 @@ export {
   registerRouter,
   unregisterRouter,
   isRouterRegistered,
+  watchRouteChanges,
+  unwatchRouteChanges,
+  getRouteHistory,
+  clearRouteHistory,
 } from './devtools';
 
 // 类型导出

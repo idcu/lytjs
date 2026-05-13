@@ -13,10 +13,17 @@ import {
   getStoreState,
   getRegisteredStoreIds,
   clearStoreRegistry,
+  subscribeStore,
+  unsubscribeStore,
+  onStoreChange,
   registerRouter,
   unregisterRouter,
   isRouterRegistered,
   getCurrentRoute,
+  watchRouteChanges,
+  unwatchRouteChanges,
+  getRouteHistory,
+  clearRouteHistory,
   getComponentTree,
   registerRootComponent,
   unregisterRootComponent,
@@ -153,15 +160,143 @@ describe('Store Inspector', () => {
       expect(getRegisteredStoreIds()).toHaveLength(0);
     });
   });
+
+  describe('subscribeStore / unsubscribeStore', () => {
+    it('should return false for unregistered store', () => {
+      expect(subscribeStore('nonexistent')).toBe(false);
+    });
+
+    it('should return false for store without $subscribe', () => {
+      registerStore('plain', { count: 1 });
+      expect(subscribeStore('plain')).toBe(false);
+    });
+
+    it('should subscribe to store with $subscribe', () => {
+      let subscribed = false;
+      const mockUnsubscribe = vi.fn();
+      const store = {
+        count: 0,
+        $subscribe: vi.fn((cb: any) => {
+          subscribed = true;
+          return mockUnsubscribe;
+        }),
+      };
+      registerStore('sub', store);
+      const result = subscribeStore('sub');
+
+      expect(result).toBe(true);
+      expect(store.$subscribe).toHaveBeenCalled();
+      expect(subscribed).toBe(true);
+    });
+
+    it('should unsubscribe from store', () => {
+      const mockUnsubscribe = vi.fn();
+      const store = {
+        count: 0,
+        $subscribe: vi.fn(() => mockUnsubscribe),
+      };
+      registerStore('sub2', store);
+      subscribeStore('sub2');
+      unsubscribeStore('sub2');
+
+      expect(mockUnsubscribe).toHaveBeenCalled();
+    });
+
+    it('should re-subscribe if already subscribed', () => {
+      const mockUnsubscribe1 = vi.fn();
+      const mockUnsubscribe2 = vi.fn();
+      let callCount = 0;
+      const store = {
+        count: 0,
+        $subscribe: vi.fn(() => {
+          callCount++;
+          return callCount === 1 ? mockUnsubscribe1 : mockUnsubscribe2;
+        }),
+      };
+      registerStore('resub', store);
+      subscribeStore('resub');
+      subscribeStore('resub');
+
+      // 第一次订阅的 unsubscribe 应该被调用
+      expect(mockUnsubscribe1).toHaveBeenCalled();
+      // $subscribe 应该被调用两次
+      expect(store.$subscribe).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe('onStoreChange', () => {
+    it('should register callback and return unsubscribe function', () => {
+      const callback = vi.fn();
+      const unsubscribe = onStoreChange(callback);
+
+      expect(typeof unsubscribe).toBe('function');
+
+      // 取消注册后回调不应再被触发
+      unsubscribe();
+    });
+
+    it('should trigger callback when subscribed store changes', () => {
+      let subscribeCallback: any = null;
+      const store = {
+        count: 0,
+        $state: { count: 0 },
+        $subscribe: vi.fn((cb: any) => {
+          subscribeCallback = cb;
+          return vi.fn();
+        }),
+      };
+      registerStore('changeStore', store);
+
+      const callback = vi.fn();
+      onStoreChange(callback);
+      subscribeStore('changeStore');
+
+      // 模拟 Store 变更
+      if (subscribeCallback) {
+        subscribeCallback({}, { count: 42 });
+      }
+
+      expect(callback).toHaveBeenCalledWith('changeStore', { count: 42 });
+    });
+
+    it('should not trigger callback after unsubscribing', () => {
+      let subscribeCallback: any = null;
+      const store = {
+        count: 0,
+        $state: { count: 0 },
+        $subscribe: vi.fn((cb: any) => {
+          subscribeCallback = cb;
+          return vi.fn();
+        }),
+      };
+      registerStore('unsubStore', store);
+
+      const callback = vi.fn();
+      const unsubscribe = onStoreChange(callback);
+      subscribeStore('unsubStore');
+
+      // 取消回调注册
+      unsubscribe();
+
+      // 模拟 Store 变更
+      if (subscribeCallback) {
+        subscribeCallback({}, { count: 99 });
+      }
+
+      expect(callback).not.toHaveBeenCalled();
+    });
+  });
 });
 
 describe('Route Inspector', () => {
   beforeEach(() => {
     unregisterRouter();
+    clearRouteHistory();
   });
 
   afterEach(() => {
     unregisterRouter();
+    clearRouteHistory();
   });
 
   describe('registerRouter', () => {
@@ -206,6 +341,94 @@ describe('Route Inspector', () => {
     it('should return true when router registered', () => {
       registerRouter({ currentRoute: () => ({}) });
       expect(isRouterRegistered()).toBe(true);
+    });
+  });
+
+  describe('watchRouteChanges / unwatchRouteChanges', () => {
+    it('should return false when router not registered', () => {
+      expect(watchRouteChanges()).toBe(false);
+    });
+
+    it('should return false when router has no afterEach', () => {
+      registerRouter({ currentRoute: () => ({}) });
+      expect(watchRouteChanges()).toBe(false);
+    });
+
+    it('should watch route changes with afterEach', () => {
+      const afterEachCallbacks: any[] = [];
+      const mockRouter = {
+        currentRoute: () => ({ path: '/', name: null }),
+        afterEach: vi.fn((cb: any) => {
+          afterEachCallbacks.push(cb);
+        }),
+      };
+      registerRouter(mockRouter);
+
+      const result = watchRouteChanges();
+      expect(result).toBe(true);
+      expect(mockRouter.afterEach).toHaveBeenCalled();
+    });
+
+    it('should record route history on navigation', () => {
+      const afterEachCallbacks: any[] = [];
+      const mockRouter = {
+        currentRoute: () => ({ path: '/', name: null }),
+        afterEach: vi.fn((cb: any) => {
+          afterEachCallbacks.push(cb);
+        }),
+      };
+      registerRouter(mockRouter);
+      watchRouteChanges();
+
+      // 模拟导航到 /home
+      afterEachCallbacks[0]({
+        path: '/home',
+        name: 'home',
+        params: { id: '1' },
+        query: { tab: 'overview' },
+        matched: [{ path: '/home', name: 'home' }],
+      });
+
+      // 模拟导航到 /about
+      afterEachCallbacks[0]({
+        path: '/about',
+        name: 'about',
+        params: {},
+        query: {},
+        matched: [{ path: '/about', name: 'about' }],
+      });
+
+      const history = getRouteHistory();
+      expect(history).toHaveLength(2);
+      expect(history[0].path).toBe('/home');
+      expect(history[0].name).toBe('home');
+      expect(history[1].path).toBe('/about');
+    });
+
+    it('should unwatch route changes', () => {
+      const mockRouter = {
+        currentRoute: () => ({ path: '/', name: null }),
+        afterEach: vi.fn(),
+      };
+      registerRouter(mockRouter);
+      watchRouteChanges();
+      unwatchRouteChanges();
+
+      // 重新监听应该再次调用 afterEach
+      watchRouteChanges();
+      expect(mockRouter.afterEach).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe('getRouteHistory', () => {
+    it('should return empty array initially', () => {
+      expect(getRouteHistory()).toEqual([]);
+    });
+
+    it('should return copy of history (not reference)', () => {
+      const history1 = getRouteHistory();
+      const history2 = getRouteHistory();
+      expect(history1).not.toBe(history2);
     });
   });
 });

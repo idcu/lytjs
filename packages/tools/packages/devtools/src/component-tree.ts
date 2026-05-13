@@ -122,3 +122,69 @@ export function clearComponentRegistry(): void {
   components.clear();
   idCounter = 0;
 }
+
+/**
+ * 组件实例接口（用于自动注册）
+ */
+export interface ComponentInstance {
+  /** 组件类型/名称 */
+  type?: string;
+  /** 组件名称（备用） */
+  name?: string;
+  /** 组件 props */
+  props?: Record<string, unknown>;
+  /** 子组件实例列表 */
+  children?: ComponentInstance[];
+  /** 父组件 ID */
+  parent?: string;
+  /** 插槽 */
+  slots?: Record<string, unknown>;
+}
+
+/**
+ * 从组件实例自动提取信息并注册
+ *
+ * @description
+ * 接受一个包含 type, props, children, parent 等字段的对象，
+ * 自动生成组件 ID 并注册到组件树中。同时递归注册所有子组件。
+ *
+ * @param instance - 组件实例对象
+ * @returns 注册后的组件 ID
+ */
+export function autoRegisterFromInstance(instance: ComponentInstance): string {
+  const id = generateComponentId();
+  const name = instance.type || instance.name || 'Anonymous';
+
+  // 提取 props（过滤掉函数类型的值）
+  const props: Record<string, unknown> = {};
+  if (instance.props) {
+    for (const [key, value] of Object.entries(instance.props)) {
+      if (typeof value !== 'function') {
+        props[key] = value;
+      }
+    }
+  }
+
+  const info: ComponentInfo = {
+    id,
+    name,
+    parentId: instance.parent,
+    children: [],
+    props,
+    slots: instance.slots,
+  };
+
+  registerComponent(info);
+
+  // 递归注册子组件
+  if (instance.children && Array.isArray(instance.children)) {
+    for (const child of instance.children) {
+      const childId = autoRegisterFromInstance({ ...child, parent: id });
+      if (!info.children.includes(childId)) {
+        info.children.push(childId);
+      }
+    }
+  }
+
+  return id;
+}
