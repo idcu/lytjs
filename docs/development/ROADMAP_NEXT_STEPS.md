@@ -366,12 +366,26 @@ engine.performEnter(el, props, doneFn);
 **API**:
 
 ```typescript
-import { PluginRegistry, PluginValidator, ConfigValidator, ConfigTransformer, definePlugin } from '@lytjs/core';
+import {
+  PluginRegistry,
+  PluginValidator,
+  ConfigValidator,
+  ConfigTransformer,
+  definePlugin,
+} from '@lytjs/core';
 import type {
-  EnhancedPlugin, PluginMeta, PluginDependency,
-  RegisteredPlugin, RegistrationResult, DependencyResult,
-  PluginLifecycleEvent, ValidationReport, ValidationIssue,
-  ConfigSchema, ConfigValidationReport, ConfigValidationError,
+  EnhancedPlugin,
+  PluginMeta,
+  PluginDependency,
+  RegisteredPlugin,
+  RegistrationResult,
+  DependencyResult,
+  PluginLifecycleEvent,
+  ValidationReport,
+  ValidationIssue,
+  ConfigSchema,
+  ConfigValidationReport,
+  ConfigValidationError,
 } from '@lytjs/core';
 
 // EnhancedPlugin 完整示例
@@ -462,6 +476,7 @@ if (!report.valid) {
    ```
 
 3. **PluginValidator 验证器** ✅
+
    ```typescript
    export class PluginValidator {
      validate(plugin: EnhancedPlugin | Plugin): ValidationReport;
@@ -491,6 +506,7 @@ if (!report.valid) {
 **P2 - 开发者工具层（✅ 已完成）**:
 
 6. **配置 Schema 系统** ✅
+
    ```typescript
    export interface ConfigSchema<T = unknown> {
      type: SchemaType;
@@ -511,9 +527,12 @@ if (!report.valid) {
    ```
 
 7. **Plugin SDK 脚手架** ✅
+
    ```typescript
    // @lytjs/core 内置
-   export function definePlugin<TOptions>(config: PluginConfig<TOptions>): PluginDefinition<TOptions>;
+   export function definePlugin<TOptions>(
+     config: PluginConfig<TOptions>,
+   ): PluginDefinition<TOptions>;
    export class PluginTester {
      async installPlugin(plugin: EnhancedPlugin, options?: unknown): Promise<void>;
      uninstallPlugin(name: string): void;
@@ -606,8 +625,8 @@ const i18n = createI18n({
   locale: 'zh-CN',
   messages: {
     'zh-CN': { hello: '你好' },
-    'en-US': { hello: 'Hello' }
-  }
+    'en-US': { hello: 'Hello' },
+  },
 });
 ```
 
@@ -640,6 +659,7 @@ const i18n = createI18n({
 **状态**: ✅ 已完成（v1.0 正式版）
 
 **已完成（预览版 v6.0.0）**:
+
 - ✅ 组件树查看器（registerRootComponent）
 - ✅ Store 状态检查器（registerStore、getStoreStates）
 - ✅ 路由查看器（registerRouter、getCurrentRoute）
@@ -647,6 +667,7 @@ const i18n = createI18n({
 - ✅ 21/21 测试通过
 
 **已完成（正式版 v1.0）**:
+
 - ✅ Store 变更实时监听（subscribeStore/unsubscribeStore/onStoreChange）
 - ✅ 路由变更实时监听（watchRouteChanges/unwatchRouteChanges/getRouteHistory）
 - ✅ 性能分析工具（组件渲染次数/时间、FPS 监控、内存趋势、渲染热力图、慢渲染检测）
@@ -664,6 +685,7 @@ const i18n = createI18n({
 **状态**: ✅ 已完成（v1.0 完善版）
 
 **已完成（基础版 v6.0.0）**:
+
 - ✅ renderToString（VNode 转 HTML 字符串）
 - ✅ renderToHtml（完整 HTML 页面渲染）
 - ✅ HTML 特殊字符转义（XSS 防护）
@@ -672,6 +694,7 @@ const i18n = createI18n({
 - ✅ 9/9 测试通过
 
 **已完成（完善版 v1.0）**:
+
 - ✅ 流式服务端渲染（renderToStream：ReadableStream 分块发送、Suspense 边界支持）
 - ✅ 异步流式渲染（renderToStreamAsync：支持异步组件）
 - ✅ 静态站点生成（generateStaticPages：预渲染页面为 HTML）
@@ -688,6 +711,7 @@ const i18n = createI18n({
 **状态**: 🚧 进行中（基础架构已完成，平台适配器待开发）
 
 **已完成（基础架构 v6.0.0）**:
+
 - ✅ PlatformAdapter 接口定义（节点/属性/样式/类名/事件/查询/生命周期）
 - ✅ PlatformConfig 配置接口
 - ✅ PlatformPlugin 插件接口
@@ -696,6 +720,7 @@ const i18n = createI18n({
 - ✅ 41/41 测试通过
 
 **待完成（平台适配器）**:
+
 - [ ] 小程序平台适配器（微信/支付宝/百度等）
 - [ ] 桌面应用支持（Electron/Tauri）
 - [ ] 移动端渲染器（React Native 风格）
@@ -796,6 +821,7 @@ const i18n = createI18n({
 #### 4.1.2 测试金字塔
 
 **当前状态**:
+
 - ✅ 单元测试: ~650+ 用例（reactivity/vdom/compiler/core/renderer 核心模块）
 - ⏳ 集成测试: 待完善（目标 > 15%）
 - ⏳ E2E 测试: 待建立（目标 < 5%，关键路径）
@@ -811,6 +837,7 @@ const i18n = createI18n({
 ```
 
 **测试覆盖现状**:
+
 - reactivity: ✅ 已达标（目标 90%+）
 - vdom: ✅ 已达标（目标 85%+）
 - compiler: ✅ 已达标（目标 80%+）
@@ -846,17 +873,17 @@ const i18n = createI18n({
 
 ### 5.1 官方包路线图
 
-| 包名              | 版本 | 状态    | 优先级 |
-| ----------------- | ---- | ------- | ------ |
-| @lytjs/router     | 1.0  | ✅ 已完成 | 🔴 高  |
-| @lytjs/store      | 1.0  | ✅ 已完成 | 🔴 高  |
-| @lytjs/ui         | 0.4  | ✅ 已完成 | 🟡 中  |
-| @lytjs/devtools   | 1.0  | ✅ 已完成 | 🟡 中  |
-| @lytjs/ssr        | 1.0  | ✅ 已完成 | 🟡 中  |
-| @lytjs/i18n       | 6.0  | ✅ 已完成 | 🟡 中  |
-| @lytjs/platform-adapter | 6.0 | 🚧 基础架构 | 🟡 中  |
-| @lytjs/test-utils | 1.0  | ✅ 已有 | 🟢 低  |
-| @lytjs/cli        | 1.0  | 需修复  | 🟢 低  |
+| 包名                    | 版本 | 状态        | 优先级 |
+| ----------------------- | ---- | ----------- | ------ |
+| @lytjs/router           | 1.0  | ✅ 已完成   | 🔴 高  |
+| @lytjs/store            | 1.0  | ✅ 已完成   | 🔴 高  |
+| @lytjs/ui               | 0.4  | ✅ 已完成   | 🟡 中  |
+| @lytjs/devtools         | 1.0  | ✅ 已完成   | 🟡 中  |
+| @lytjs/ssr              | 1.0  | ✅ 已完成   | 🟡 中  |
+| @lytjs/i18n             | 6.0  | ✅ 已完成   | 🟡 中  |
+| @lytjs/platform-adapter | 6.0  | 🚧 基础架构 | 🟡 中  |
+| @lytjs/test-utils       | 1.0  | ✅ 已有     | 🟢 低  |
+| @lytjs/cli              | 1.0  | 需修复      | 🟢 低  |
 
 ### 5.2 社区参与
 
@@ -1102,13 +1129,19 @@ pnpm 11.x 引入了更严格的构建脚本安全检查机制。在 monorepo 子
 
 ---
 
-**文档版本**: v1.14
+**文档版本**: v1.15
 **最后更新**: 2026-05-13
 **维护者**: LytJS Team
 
 ---
 
 ## 更新日志
+
+### v1.15 (2026-05-13)
+
+- ✅ 修复构建脚本，添加 @lytjs/platform-adapter 到 ecosystem 构建流程
+- ✅ 更新 pnpm lockfile，确保依赖一致性
+- ✅ 完成项目构建和测试验证
 
 ### v1.14 (2026-05-13)
 
