@@ -337,12 +337,15 @@ describe('Renderer - Fragment handling', () => {
       createTextVNode('c'),
     ]);
     renderer.mount(vnode, container);
-    // Fragment 使用两个注释锚点标记边界，所以总共有 5 个节点（2 个注释 + 3 个实际内容）
+    // Fragment 使用两个注释锚点标记边界
+    // DOM 结构: [startComment, div, span, text, endComment]
+    // children 被插入到 endAnchor 之前
     expect(container.childNodes.length).toBe(5);
-    // 跳过第一个注释锚点，检查实际内容
-    expect(container.childNodes[2]?.textContent).toBe('a'); // div
-    expect(container.childNodes[3]?.textContent).toBe('b'); // span
-    expect(container.childNodes[4]?.textContent).toBe('c'); // text
+    expect(container.childNodes[0]?.nodeType).toBe(8); // start comment
+    expect(container.childNodes[1]?.textContent).toBe('a'); // div
+    expect(container.childNodes[2]?.textContent).toBe('b'); // span
+    expect(container.childNodes[3]?.textContent).toBe('c'); // text
+    expect(container.childNodes[4]?.nodeType).toBe(8); // end comment
   });
 
   it('should patch fragment children', () => {
@@ -356,11 +359,12 @@ describe('Renderer - Fragment handling', () => {
     ]);
     renderer.mount(n1, container);
     renderer.patch(n1, n2, container);
-    // Fragment 使用两个注释锚点，所以总共有 4 个节点（2 个注释 + 2 个 div）
+    // DOM 结构: [startComment, div, div, endComment]
     expect(container.childNodes.length).toBe(4);
-    // 跳过锚点检查实际内容
-    expect(container.childNodes[2]?.textContent).toBe('a-updated');
-    expect(container.childNodes[3]?.textContent).toBe('b-updated');
+    expect(container.childNodes[0]?.nodeType).toBe(8); // start comment
+    expect(container.childNodes[1]?.textContent).toBe('a-updated');
+    expect(container.childNodes[2]?.textContent).toBe('b-updated');
+    expect(container.childNodes[3]?.nodeType).toBe(8); // end comment
   });
 
   it('should handle empty fragment', () => {
@@ -424,8 +428,9 @@ describe('Renderer - dynamic children optimization', () => {
   });
 
   it('should handle dynamic props update efficiently', () => {
-    const n1 = createVNode('div', { id: 'test' }, 'static', PatchFlags.TEXT, ['id']);
-    const n2 = createVNode('div', { id: 'updated' }, 'updated', PatchFlags.TEXT, ['id']);
+    // 需要同时设置 TEXT 和 PROPS flags 来更新文本和 props
+    const n1 = createVNode('div', { id: 'test' }, 'static', PatchFlags.TEXT | PatchFlags.PROPS, ['id']);
+    const n2 = createVNode('div', { id: 'updated' }, 'updated', PatchFlags.TEXT | PatchFlags.PROPS, ['id']);
     renderer.mount(n1, container);
     renderer.patch(n1, n2, container);
     const el = n2.el as HTMLElement;
