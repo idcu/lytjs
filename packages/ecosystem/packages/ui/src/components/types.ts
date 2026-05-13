@@ -166,4 +166,84 @@ export interface TableSlots {
   empty?: () => VNode[];
 }
 
+// ===== Icon 组件 =====
+
+export interface IconProps {
+  name?: string;
+  size?: string;
+  color?: string;
+  spin?: boolean;
+  class?: string;
+  style?: string | Record<string, string>;
+}
+
+export interface IconSlots {
+  default?: () => VNode[];
+}
+
+// ===== Badge 组件 =====
+
+export interface BadgeProps {
+  count?: number;
+  maxCount?: number;
+  dot?: boolean;
+  showZero?: boolean;
+  type?: ComponentStatus;
+  offset?: [number, number];
+  class?: string;
+  style?: string | Record<string, string>;
+}
+
+export interface BadgeSlots {
+  default?: () => VNode[];
+}
+
+// ===== Tag 组件 =====
+
+export interface TagProps {
+  type?: ComponentStatus;
+  closable?: boolean;
+  color?: string;
+  size?: ComponentSize;
+  class?: string;
+  style?: string | Record<string, string>;
+  onClose?: () => void;
+}
+
+export interface TagSlots {
+  default?: () => VNode[];
+}
+
+// ===== Spin 组件 =====
+
+export interface SpinProps {
+  spinning?: boolean;
+  size?: 'small' | 'default' | 'large';
+  tip?: string;
+  delay?: number;
+  class?: string;
+  style?: string | Record<string, string>;
+}
+
+export interface SpinSlots {
+  default?: () => VNode[];
+  tip?: () => VNode[];
+}
+
+// ===== Empty 组件 =====
+
+export interface EmptyProps {
+  description?: string;
+  image?: string;
+  imageSize?: number;
+  class?: string;
+  style?: string | Record<string, string>;
+}
+
+export interface EmptySlots {
+  default?: () => VNode[];
+  image?: () => VNode[];
+  description?: () => VNode[];
+}
+
 export type { VNode, Component };

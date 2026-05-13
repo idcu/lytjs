@@ -142,3 +142,133 @@
 .lyt-tree__label--selected { background-color: var(--lyt-color-primary); color: #ffffff; }
 .lyt-tree__checkbox { margin-right: 8px; color: var(--lyt-text-color-regular); cursor: pointer; }
 .lyt-tree__checkbox--checked { color: var(--lyt-color-primary); }
+
+/* ===== Icon 组件 ===== */
+.lyt-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-style: normal;
+  line-height: 1;
+  vertical-align: middle;
+  speak: none;
+  -webkit-font-smoothing: antialiased;
+}
+.lyt-icon--spin { animation: lyt-icon-spin 1s linear infinite; }
+@keyframes lyt-icon-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+/* ===== Badge 组件 ===== */
+.lyt-badge {
+  position: relative;
+  display: inline-flex;
+  vertical-align: middle;
+}
+.lyt-badge__count {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 6px;
+  font-size: 11px;
+  line-height: 18px;
+  color: #fff;
+  background-color: var(--lyt-color-danger);
+  border-radius: 9px;
+  transform: translateX(50%);
+  white-space: nowrap;
+  box-sizing: border-box;
+  z-index: 1;
+}
+.lyt-badge__count--dot { min-width: 8px; width: 8px; height: 8px; padding: 0; border-radius: 50%; top: -4px; right: -4px; }
+.lyt-badge__count--primary { background-color: var(--lyt-color-primary); }
+.lyt-badge__count--success { background-color: var(--lyt-color-success); }
+.lyt-badge__count--warning { background-color: var(--lyt-color-warning); }
+.lyt-badge__count--danger { background-color: var(--lyt-color-danger); }
+.lyt-badge__count--info { background-color: var(--lyt-color-info); }
+.lyt-badge__count--default { background-color: var(--lyt-color-info); }
+
+/* ===== Tag 组件 ===== */
+.lyt-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  font-size: 14px;
+  line-height: 1;
+  border: 1px solid var(--lyt-border-color);
+  border-radius: 4px;
+  background-color: var(--lyt-bg-color);
+  color: var(--lyt-color-primary);
+  box-sizing: border-box;
+  white-space: nowrap;
+  transition: all 0.3s;
+}
+.lyt-tag--small { padding: 2px 6px; font-size: 12px; }
+.lyt-tag--large { padding: 6px 14px; font-size: 16px; }
+.lyt-tag--default { background-color: var(--lyt-bg-color); border-color: var(--lyt-border-color); color: var(--lyt-color-info); }
+.lyt-tag--primary { background-color: var(--lyt-bg-color); border-color: var(--lyt-border-color); color: var(--lyt-color-primary); }
+.lyt-tag--success { background-color: var(--lyt-bg-color); border-color: var(--lyt-border-color); color: var(--lyt-color-success); }
+.lyt-tag--warning { background-color: var(--lyt-bg-color); border-color: var(--lyt-border-color); color: var(--lyt-color-warning); }
+.lyt-tag--danger { background-color: var(--lyt-bg-color); border-color: var(--lyt-border-color); color: var(--lyt-color-danger); }
+.lyt-tag--info { background-color: var(--lyt-bg-color); border-color: var(--lyt-border-color); color: var(--lyt-color-info); }
+.lyt-tag--custom { border-color: transparent; }
+.lyt-tag__close {
+  cursor: pointer;
+  font-size: 14px;
+  color: inherit;
+  opacity: 0.6;
+  border-radius: 50%;
+  transition: all 0.3s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.lyt-tag__close:hover { opacity: 1; background-color: rgba(0, 0, 0, 0.1); }
+
+/* ===== Spin 组件 ===== */
+.lyt-spin { display: inline-block; position: relative; }
+.lyt-spin__loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  background-color: rgba(255, 255, 255, 0.7);
+}
+.lyt-spin__icon { display: inline-flex; align-items: center; justify-content: center; }
+.lyt-spin__icon--small { width: 20px; height: 20px; }
+.lyt-spin__icon--default { width: 32px; height: 32px; }
+.lyt-spin__icon--large { width: 48px; height: 48px; }
+.lyt-spin__svg {
+  width: 100%;
+  height: 100%;
+  animation: lyt-spin-rotate 1s linear infinite;
+  color: var(--lyt-color-primary);
+}
+@keyframes lyt-spin-rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.lyt-spin__tip { margin-top: 8px; font-size: 14px; color: var(--lyt-text-color-secondary); }
+.lyt-spin__content { transition: opacity 0.3s; }
+.lyt-spin__content--hidden { opacity: 0.5; user-select: none; }
+
+/* ===== Empty 组件 ===== */
+.lyt-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 0;
+  color: var(--lyt-text-color-secondary);
+}
+.lyt-empty__image { margin-bottom: 16px; }
+.lyt-empty__svg { opacity: 0.6; }
+.lyt-empty__description { font-size: 14px; margin-bottom: 16px; }
+.lyt-empty__bottom { margin-top: 8px; }

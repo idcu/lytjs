@@ -29,6 +29,13 @@ export { Image } from './components/Image';
 export { Rate } from './components/Rate';
 export { ColorPicker } from './components/ColorPicker';
 
+// 新组件导出
+export { Icon } from './components/Icon';
+export { Badge } from './components/Badge';
+export { Tag } from './components/Tag';
+export { Spin } from './components/Spin';
+export { Empty } from './components/Empty';
+
 // 类型导出
 export type {
   ComponentSize,
@@ -48,7 +55,17 @@ export type {
   TableProps,
   TableSlots,
   TableColumn,
-} from './types';
+  IconProps,
+  IconSlots,
+  BadgeProps,
+  BadgeSlots,
+  TagProps,
+  TagSlots,
+  SpinProps,
+  SpinSlots,
+  EmptyProps,
+  EmptySlots,
+} from './components/types';
 
 // 组件安装
 import type { AppContext } from '@lytjs/component';
@@ -75,6 +92,11 @@ import { Calendar } from './components/Calendar';
 import { Image } from './components/Image';
 import { Rate } from './components/Rate';
 import { ColorPicker } from './components/ColorPicker';
+import { Icon } from './components/Icon';
+import { Badge } from './components/Badge';
+import { Tag } from './components/Tag';
+import { Spin } from './components/Spin';
+import { Empty } from './components/Empty';
 
 /**
  * 安装所有组件
@@ -107,6 +129,12 @@ export function install(app: AppContext): void {
   app.components['LytImage'] = Image;
   app.components['LytRate'] = Rate;
   app.components['LytColorPicker'] = ColorPicker;
+  // 新组件
+  app.components['LytIcon'] = Icon;
+  app.components['LytBadge'] = Badge;
+  app.components['LytTag'] = Tag;
+  app.components['LytSpin'] = Spin;
+  app.components['LytEmpty'] = Empty;
 }
 
 export default {
