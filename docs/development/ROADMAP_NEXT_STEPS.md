@@ -178,7 +178,7 @@ test('full app', async ({ page }) => {
 - ✅ 实现 TransitionEngine 实例缓存（按 host 实例 WeakMap 缓存）
 
 #### 2.2.4 Router 包开发
-**状态**: 🚧 进行中（核心功能已完成，测试 59/67 通过）
+**状态**: ✅ 已完成（v1.0.0，测试 67/67 通过）
 
 **已完成**:
 - ✅ 实现 `createRouter` 函数，支持声明式路由配置
@@ -187,30 +187,26 @@ test('full app', async ({ page }) => {
 - ✅ 实现导航守卫系统（beforeEach、beforeEnter、beforeResolve、afterEach）
 - ✅ 实现 `useRouter`、`useRoute`、`useLink` composables
 - ✅ 实现 `RouterView` 和 `RouterLink` 组件
-- ✅ 修复 signal API 兼容性问题（使用 `()` 而不是 `.value`）
-- ✅ 添加 67 个单元测试，59 个通过
-
-**待修复**:
-- 🐛 MemoryHistory 前进/后退历史管理问题
-- 🐛 beforeRouteLeave 组件内守卫
-- 🐛 404 处理返回类型问题
-- 🐛 未知路由名称导航处理
+- ✅ 修复 signal API 兼容性问题（使用 `computedSignal` 替代 `computed`）
+- ✅ 修复嵌套路由匹配问题（flattenMatchers 合并父/子 tokens）
+- ✅ 修复 404 处理（正确返回 aborted failure）
+- ✅ 修复 beforeRouteLeave 组件内守卫（添加 component 字段到 normalized record）
+- ✅ 添加 67 个单元测试，全部通过
 
 #### 2.2.5 Store 包开发
-**状态**: 🚧 进行中（核心功能已完成，测试 20/31 通过）
+**状态**: ✅ 已完成（v1.0.0，测试 31/31 通过）
 
 **已完成**:
 - ✅ 实现 `defineStore` 函数，支持 Options API 和 Setup API
 - ✅ 实现 `createPinia` 和插件系统
 - ✅ 实现 `storeToRefs` 工具函数
 - ✅ 实现 `$patch`、`$reset`、`$subscribe`、`$onAction` 等 Store API
-- ✅ 添加 31 个单元测试，20 个通过
-
-**待修复**:
-- 🐛 getters 循环依赖检测问题
-- 🐛 state 响应式更新通知问题
-- 🐛 $subscribe 回调触发问题
-- 🐛 Pinia 状态注册问题
+- ✅ 修复 signal API 兼容性问题（pinia.state 包装为 `.value` 对象）
+- ✅ 修复 state 响应式问题（使用 Object.defineProperties 复制 getter/setter）
+- ✅ 修复 getters 循环依赖问题（使用 Proxy 替代展开运算符）
+- ✅ 修复 action this 绑定问题（使用 Proxy 作为 thisContext）
+- ✅ 修复 $subscribe 通知问题（在 action wrapper 中触发通知）
+- ✅ 添加 31 个单元测试，全部通过
 
 **技术实现**:
 ```typescript
@@ -365,15 +361,15 @@ import { Button, Input, Dialog } from '@lytjs/ui';
 **目标**: 基础生态就位
 
 **任务清单**:
-- [x] Router 包 v0.9（核心功能完成，测试 59/67 通过）
-- [x] Store 包 v0.9（核心功能完成，测试 20/31 通过）
+- [x] Router 包 v1.0（测试 67/67 通过）
+- [x] Store 包 v1.0（测试 31/31 通过）
 - [ ] UI 基础组件
 - [ ] 集成示例项目
 - [ ] 开发者工具预览版
 
 **交付物**:
-- 🚧 @lytjs/router v0.9（待修复剩余测试）
-- 🚧 @lytjs/store v0.9（待修复剩余测试）
+- ✅ @lytjs/router v1.0
+- ✅ @lytjs/store v1.0
 - ⏳ @lytjs/ui v0.1
 - ⏳ 示例项目集合
 
@@ -517,10 +513,8 @@ import { Button, Input, Dialog } from '@lytjs/ui';
 **目标**: 基础生态就位
 
 **验收标准**:
-- [x] Router v0.9 核心功能完成（测试 59/67 通过）
-- [x] Store v0.9 核心功能完成（测试 20/31 通过）
-- [ ] Router v1.0 正式发布（测试全部通过）
-- [ ] Store v1.0 正式发布（测试全部通过）
+- [x] Router v1.0 正式发布（测试 67/67 通过）
+- [x] Store v1.0 正式发布（测试 31/31 通过）
 - [ ] UI 组件库预览
 - [ ] 示例项目完善
 
@@ -650,13 +644,25 @@ pnpm 11.x 引入了更严格的构建脚本安全检查机制。在 monorepo 子
 
 ---
 
-**文档版本**: v1.2
+**文档版本**: v1.3
 **最后更新**: 2026-05-13
 **维护者**: LytJS Team
 
 ---
 
 ## 更新日志
+
+### v1.3 (2026-05-13)
+- ✅ Router 包 v1.0 完成（67/67 测试通过）
+- ✅ Store 包 v1.0 完成（31/31 测试通过）
+- 修复 Router 嵌套路由匹配问题（flattenMatchers 合并父/子 tokens）
+- 修复 Router 404 处理（正确返回 aborted failure）
+- 修复 Router beforeRouteLeave 守卫（添加 component 字段）
+- 修复 Store state 响应式问题（Object.defineProperties 复制描述符）
+- 修复 Store getters 循环依赖（Proxy 替代展开运算符）
+- 修复 Store action this 绑定（Proxy 作为 thisContext）
+- 修复 Store $subscribe 通知（action wrapper 触发通知）
+- 统一使用 `computedSignal` 替代 `computed` 保持 API 一致性
 
 ### v1.2 (2026-05-13)
 - 更新 Router 包开发进度（59/67 测试通过）

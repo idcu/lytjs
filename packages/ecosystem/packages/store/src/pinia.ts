@@ -27,9 +27,19 @@ export function setActivePinia(pinia: Pinia | null): void {
  * Create a Pinia instance
  */
 export function createPinia(): Pinia {
-  const state = signal<Record<string, StateTree>>({});
+  const stateSignal = signal<Record<string, StateTree>>({});
   const plugins: PiniaPlugin[] = [];
   let isInstalled = false;
+
+  // Wrap signal with .value getter/setter for compatibility
+  const state = {
+    get value() {
+      return stateSignal();
+    },
+    set value(newValue: Record<string, StateTree>) {
+      stateSignal.set(newValue);
+    },
+  };
 
   const pinia: Pinia = {
     state,

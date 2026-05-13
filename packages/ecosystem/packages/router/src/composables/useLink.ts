@@ -7,7 +7,7 @@
 import type { RouteLocationRaw, RouteLocationNormalized } from '../types';
 import { useRouter } from './useRouter';
 import { useRoute } from './useRoute';
-import { computed } from '@lytjs/reactivity';
+import { computedSignal as computed } from '@lytjs/reactivity';
 import { resolveLocation, isSameRouteLocation } from '../location';
 
 export interface UseLinkOptions {

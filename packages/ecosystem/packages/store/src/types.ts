@@ -57,7 +57,7 @@ export type StoreToRefs<SS> = {
 
 export interface Pinia {
   install(app: any): void;
-  state: import('@lytjs/reactivity').WritableSignal<Record<string, StateTree>>;
+  state: { value: Record<string, StateTree> };
   use(plugin: PiniaPlugin): void;
 }
 

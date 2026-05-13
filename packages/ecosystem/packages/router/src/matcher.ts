@@ -185,13 +185,21 @@ export function normalizeRouteRecord(
   parent?: RouteRecordMatcher,
 ): RouteRecordMatcher {
   const tokens = tokenizePath(record.path);
+  
+  // Build full path for nested routes
+  const fullPath = parent 
+    ? parent.record.path + (record.path.startsWith('/') ? record.path : '/' + record.path)
+    : record.path;
+  
   const normalized: RouteRecordNormalized = {
-    path: record.path,
+    path: fullPath,
     name: record.name ?? null,
     meta: record.meta ?? {},
     children: [],
     beforeEnter: record.beforeEnter,
     props: record.props ?? false,
+    component: record.component,
+    components: record.components,
   };
 
   const matcher: RouteRecordMatcher = {
@@ -215,14 +223,25 @@ export function normalizeRouteRecord(
 
 /**
  * Build a flat list of all matchers from the tree
+ * For nested routes, combines parent and child tokens for matching
  */
 export function flattenMatchers(matchers: RouteRecordMatcher[]): RouteRecordMatcher[] {
   const result: RouteRecordMatcher[] = [];
 
-  function walk(matcher: RouteRecordMatcher) {
-    result.push(matcher);
+  function walk(matcher: RouteRecordMatcher, parentTokens: PathToken[] = []) {
+    // Combine parent tokens with current tokens for proper matching
+    const combinedTokens = [...parentTokens, ...matcher.tokens];
+    
+    // Create a copy with combined tokens for matching
+    const matcherWithCombinedTokens: RouteRecordMatcher = {
+      ...matcher,
+      tokens: combinedTokens,
+    };
+    
+    result.push(matcherWithCombinedTokens);
+    
     for (const child of matcher.children) {
-      walk(child);
+      walk(child, combinedTokens);
     }
   }
 

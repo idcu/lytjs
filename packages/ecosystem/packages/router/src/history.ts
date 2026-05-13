@@ -330,7 +330,7 @@ export function createMemoryHistory(initial: string = '/'): RouterHistory {
 
     pushState(location);
 
-    // Discard forward entries
+    // Discard forward entries (standard browser behavior)
     entries.splice(currentIndex + 1);
     entries.push(fullPath);
     currentIndex = entries.length - 1;

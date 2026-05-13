@@ -68,11 +68,31 @@ export function defineStore<Id extends string, S extends StateTree, G, A, SS>(
       // Execute setup to get the store object
       const storeObj = setup();
 
+      // Create Proxy for this context (lazy access, no circular dependency issues)
+      const thisContext = new Proxy({}, {
+        get(_target, prop: string | symbol) {
+          if (typeof prop === 'string') {
+            if (prop in wrappedStore) return (wrappedStore as any)[prop];
+          }
+          return undefined;
+        },
+        set(_target, prop: string | symbol, value) {
+          if (typeof prop === 'string' && prop in wrappedStore) {
+            (wrappedStore as any)[prop] = value;
+            return true;
+          }
+          return false;
+        },
+        has(_target, prop) {
+          return typeof prop === 'string' && prop in wrappedStore;
+        },
+      });
+
       // Wrap functions in storeObj as tracked actions
       const wrappedStore: Record<string, any> = { ...storeObj as Record<string, unknown> };
       for (const [key, value] of Object.entries(storeObj as Record<string, unknown>)) {
         if (typeof value === 'function' && !key.startsWith('$')) {
-          wrappedStore[key] = async function (...args: any[]) {
+          wrappedStore[key] = function (...args: any[]) {
             const context: any = { store: wrappedStore, name: key, args };
 
             // Notify before
@@ -81,10 +101,29 @@ export function defineStore<Id extends string, S extends StateTree, G, A, SS>(
             }
 
             try {
-              const result = await (value as Function).apply(wrappedStore, args);
-              // Trigger after callback
-              if (context.after) context.after(result);
-              return result;
+              const result = (value as Function).apply(thisContext, args);
+              
+              const handleResult = (r: any) => {
+                // Trigger after callback
+                if (context.after) context.after(r);
+                // Notify subscribers
+                for (const sub of subs) {
+                  sub(
+                    { storeId: id, type: 'direct', payload: { name: key } },
+                    (wrappedStore as any).$state,
+                  );
+                }
+                return r;
+              };
+
+              if (result instanceof Promise) {
+                return result.then(handleResult, (err: any) => {
+                  if (context.onError) context.onError(err);
+                  throw err;
+                });
+              } else {
+                return handleResult(result);
+              }
             } catch (error) {
               // Trigger onError callback
               if (context.onError) context.onError(error as Error);
@@ -149,8 +188,8 @@ export function defineStore<Id extends string, S extends StateTree, G, A, SS>(
 
       // Register in pinia state
       if (pinia) {
-        const currentState = pinia.state();
-        pinia.state.set({ ...currentState, [id]: (store as any).$state });
+        const currentState = pinia.state.value;
+        pinia.state.value = { ...currentState, [id]: (store as any).$state };
       }
 
       // Cache and return
@@ -206,12 +245,34 @@ export function defineStore<Id extends string, S extends StateTree, G, A, SS>(
         });
       }
 
+      // Create Proxy for this context (lazy access, no circular dependency issues)
+      const thisContext = new Proxy({}, {
+        get(_target, prop: string | symbol) {
+          if (typeof prop === 'string') {
+            if (prop in state) return (state as any)[prop];
+            if (prop in getters) return (getters as any)[prop];
+            if (prop in actionFns) return (actionFns as any)[prop];
+          }
+          return undefined;
+        },
+        set(_target, prop: string | symbol, value) {
+          if (typeof prop === 'string' && prop in state) {
+            (state as any)[prop] = value;
+            return true;
+          }
+          return false;
+        },
+        has(_target, prop) {
+          return typeof prop === 'string' && (prop in state || prop in getters || prop in actionFns);
+        },
+      });
+
       // Create getters (computed signals)
       const getters: Record<string, any> = {};
       if (options.getters) {
         for (const [key, fn] of Object.entries(options.getters)) {
           const getterFn = fn as (...args: any[]) => any;
-          const computedSig = computed(() => getterFn.call({ ...state, ...getters })) as import('@lytjs/reactivity').ComputedSignal<any>;
+          const computedSig = computed(() => getterFn.call(thisContext)) as import('@lytjs/reactivity').ComputedSignal<any>;
           Object.defineProperty(getters, key, {
             get: () => computedSig(),
             enumerable: true,
@@ -225,8 +286,8 @@ export function defineStore<Id extends string, S extends StateTree, G, A, SS>(
       if (options.actions) {
         for (const [key, fn] of Object.entries(options.actions)) {
           const actionFn = fn as _Method;
-          actionFns[key] = async function (...args: any[]) {
-            const context: any = { store, name: key, args };
+          actionFns[key] = function (...args: any[]) {
+            const context: any = { store: undefined as any, name: key, args };
 
             // Notify action callbacks before
             for (const cb of actions) {
@@ -234,10 +295,22 @@ export function defineStore<Id extends string, S extends StateTree, G, A, SS>(
             }
 
             try {
-              const result = await actionFn.call({ ...state, ...getters, ...actionFns }, ...args);
-              // Trigger after callback
-              if (context.after) context.after(result);
-              return result;
+              const result = actionFn.call(thisContext, ...args);
+              
+              const handleResult = (r: any) => {
+                // Trigger after callback
+                if (context.after) context.after(r);
+                return r;
+              };
+
+              if (result instanceof Promise) {
+                return result.then(handleResult, (err: any) => {
+                  if (context.onError) context.onError(err);
+                  throw err;
+                });
+              } else {
+                return handleResult(result);
+              }
             } catch (error) {
               // Trigger onError callback
               if (context.onError) context.onError(error as Error);
@@ -247,12 +320,24 @@ export function defineStore<Id extends string, S extends StateTree, G, A, SS>(
         }
       }
 
-      // Build the store object
-      const store: Store<Id, S, G, A> = {
-        $id: id,
-        $state: state as S,
+      // Build the store object using Object.defineProperties instead of spread
+      const store = {} as Store<Id, S, G, A>;
 
-        $patch(partialOrMutator: Partial<S> | ((state: S) => void)) {
+      // Define base properties
+      Object.defineProperty(store, '$id', {
+        value: id,
+        enumerable: true,
+        configurable: true,
+      });
+
+      Object.defineProperty(store, '$state', {
+        get: () => state as S,
+        enumerable: true,
+        configurable: true,
+      });
+
+      Object.defineProperty(store, '$patch', {
+        value: function(partialOrMutator: Partial<S> | ((state: S) => void)) {
           batch(() => {
             if (typeof partialOrMutator === 'function') {
               // Function patch
@@ -273,8 +358,12 @@ export function defineStore<Id extends string, S extends StateTree, G, A, SS>(
             }
           });
         },
+        enumerable: true,
+        configurable: true,
+      });
 
-        $reset() {
+      Object.defineProperty(store, '$reset', {
+        value: function() {
           if (options.state) {
             const newState = options.state();
             for (const key of Object.keys(newState)) {
@@ -284,36 +373,55 @@ export function defineStore<Id extends string, S extends StateTree, G, A, SS>(
             }
           }
         },
+        enumerable: true,
+        configurable: true,
+      });
 
-        $subscribe(callback: SubscriptionCallback<S>) {
+      Object.defineProperty(store, '$subscribe', {
+        value: function(callback: SubscriptionCallback<S>) {
           subs.add(callback);
           return () => {
             subs.delete(callback);
           };
         },
+        enumerable: true,
+        configurable: true,
+      });
 
-        $onAction(callback: ActionCallback) {
+      Object.defineProperty(store, '$onAction', {
+        value: function(callback: ActionCallback) {
           actions.add(callback);
           return () => {
             actions.delete(callback);
           };
         },
+        enumerable: true,
+        configurable: true,
+      });
 
-        $dispose() {
+      Object.defineProperty(store, '$dispose', {
+        value: function() {
           storeCache.delete(id);
           subscriptions.delete(id);
           actionCallbacks.delete(id);
         },
+        enumerable: true,
+        configurable: true,
+      });
 
-        ...state,
-        ...getters,
-        ...actionFns,
-      } as Store<Id, S, G, A>;
+      // Copy state property descriptors (preserve getter/setter)
+      Object.defineProperties(store, Object.getOwnPropertyDescriptors(state));
+
+      // Copy getters property descriptors (preserve getter)
+      Object.defineProperties(store, Object.getOwnPropertyDescriptors(getters));
+
+      // Copy actions (regular function properties)
+      Object.assign(store, actionFns);
 
       // Register in pinia state
       if (pinia) {
-        const currentState = pinia.state();
-        pinia.state.set({ ...currentState, [id]: state });
+        const currentState = pinia.state.value;
+        pinia.state.value = { ...currentState, [id]: state };
       }
 
       // Cache and return

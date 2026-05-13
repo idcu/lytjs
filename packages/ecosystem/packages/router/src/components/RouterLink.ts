@@ -7,7 +7,7 @@
 import type { RouterLinkProps } from './RouterLink';
 import { useRouter } from '../composables/useRouter';
 import { useRoute } from '../composables/useRoute';
-import { computed } from '@lytjs/reactivity';
+import { computedSignal as computed } from '@lytjs/reactivity';
 import { resolveLocation, isSameRouteLocation } from '../location';
 
 export interface RouterLinkProps {

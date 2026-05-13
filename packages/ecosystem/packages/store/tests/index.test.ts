@@ -421,11 +421,11 @@ describe('@lytjs/store', () => {
       
       const store = useStore();
       expect(store.subtotal).toBe(200);
-      expect(store.total).toBe(220);
+      expect(store.total).toBeCloseTo(220, 10);
       
       store.price = 50;
       expect(store.subtotal).toBe(100);
-      expect(store.total).toBe(110);
+      expect(store.total).toBeCloseTo(110, 10);
     });
 
     it('should handle async actions', async () => {

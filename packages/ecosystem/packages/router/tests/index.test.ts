@@ -18,6 +18,7 @@ import {
 } from '../src/matcher';
 import { resolveLocation, isSameRouteLocation, createRouteLocation } from '../src/location';
 import { setCurrentRouter, useRouter } from '../src/composables/useRouter';
+import { useLink } from '../src/composables/useLink';
 import { NavigationFailureType } from '../src/types';
 
 // ===== Matcher Tests =====
@@ -314,9 +315,9 @@ describe('createMemoryHistory', () => {
     await history.push('/a');
     await history.push('/b');
     history.go(-1); // back to /a
-    await history.push('/c'); // should discard /b
-    history.go(-1); // should go to /
-    expect(history.location.path).toBe('/');
+    await history.push('/c'); // should discard /b, history is now ['/','/a','/c']
+    history.go(-1); // should go to /a (standard browser behavior)
+    expect(history.location.path).toBe('/a');
   });
 });
 
@@ -544,7 +545,6 @@ describe('RouterLink', () => {
     });
     setCurrentRouter(router);
 
-    const { useLink } = require('../src/composables/useLink');
     const link = useLink({ to: '/users?page=1#top' });
     expect(link.href()).toContain('/users');
     expect(link.href()).toContain('page=1');
@@ -561,7 +561,6 @@ describe('RouterLink', () => {
     });
     setCurrentRouter(router);
 
-    const { useLink } = require('../src/composables/useLink');
     const link = useLink({ to: '/users' });
     // Current route is '/', which doesn't start with '/users' exactly
     // But after navigating to /users...

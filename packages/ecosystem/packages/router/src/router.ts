@@ -134,6 +134,15 @@ export function createRouter(options: RouterOptions): Router {
     const resolved = resolveLocation(to, currentRoute(), { resolveName });
     const targetPath = resolved.path;
 
+    // Check for name-based navigation with unknown route name
+    if (typeof to !== 'string' && to.name !== undefined && !resolveName(to.name, to.params)) {
+      return {
+        type: NavigationFailureType.aborted,
+        from: currentRoute(),
+        to: currentRoute(),
+      };
+    }
+
     // Resolve the route
     const { matched, params, meta } = resolveRoute(targetPath);
 
@@ -309,18 +318,22 @@ export function createRouter(options: RouterOptions): Router {
 
     async push(to) {
       if (pendingNavigation) return pendingNavigation;
-      pendingNavigation = navigate(to, false).finally(() => {
+      try {
+        pendingNavigation = navigate(to, false);
+        return await pendingNavigation;
+      } finally {
         pendingNavigation = null;
-      });
-      return pendingNavigation;
+      }
     },
 
     async replace(to) {
       if (pendingNavigation) return pendingNavigation;
-      pendingNavigation = navigate(to, true).finally(() => {
+      try {
+        pendingNavigation = navigate(to, true);
+        return await pendingNavigation;
+      } finally {
         pendingNavigation = null;
-      });
-      return pendingNavigation;
+      }
     },
 
     go(delta) {
