@@ -335,7 +335,7 @@ engine.performEnter(el, props, doneFn);
 
 #### 2.2.9 插件系统改进（v6.0 Plugin System Enhancement）
 
-**状态**: ✅ 已完成（P0 + P1，测试 77/77 通过）
+**状态**: ✅ 已完成（P0 + P1 + P2 + P3，测试 127/127 通过）
 
 **已完成内容**:
 
@@ -347,22 +347,23 @@ engine.performEnter(el, props, doneFn);
 - ✅ `app._pluginRegistry` 和 `app._pluginValidator` 内部 API 访问
 - ✅ 完整的 semver 版本比较（支持 ^, ~, >=, >, <, <=, = 前缀）
 - ✅ 自定义验证规则支持（`addRule` / `removeRule`）
-- ✅ 新增 77 个测试用例（registry 31 + validator 34 + 集成 12）
+- ✅ **ConfigSchema 系统**：JSON Schema 风格的配置验证（字符串/数字/布尔/对象/数组/枚举/联合类型）
+- ✅ **ConfigValidator**：完整的类型验证、格式校验（email/url/semver/date/uuid）、自定义验证
+- ✅ **ConfigTransformer**：默认值应用、类型转换、深度合并、警告收集
+- ✅ **definePlugin**：类型安全的插件定义辅助函数
+- ✅ **PluginTester**：隔离环境测试工具
+- ✅ **Plugin CLI**：`create` / `build` / `validate` 子命令，支持 3 种模板（default/minimal/withConfig）
+- ✅ 新增 127 个测试用例（registry 31 + validator 34 + 集成 12 + schema 30 + transformer 10 + sdk 10）
 
 **API**:
 
 ```typescript
-import { PluginRegistry, PluginValidator } from '@lytjs/core';
+import { PluginRegistry, PluginValidator, ConfigValidator, ConfigTransformer, definePlugin } from '@lytjs/core';
 import type {
-  EnhancedPlugin,
-  PluginMeta,
-  PluginDependency,
-  RegisteredPlugin,
-  RegistrationResult,
-  DependencyResult,
-  PluginLifecycleEvent,
-  ValidationReport,
-  ValidationIssue,
+  EnhancedPlugin, PluginMeta, PluginDependency,
+  RegisteredPlugin, RegistrationResult, DependencyResult,
+  PluginLifecycleEvent, ValidationReport, ValidationIssue,
+  ConfigSchema, ConfigValidationReport, ConfigValidationError,
 } from '@lytjs/core';
 
 // EnhancedPlugin 完整示例
@@ -479,34 +480,43 @@ if (!report.valid) {
    - 拓扑排序（`resolveLoadOrder`）
    - 循环依赖检测
 
-**P2 - 开发者工具层（⚪ 待开始）**:
+**P2 - 开发者工具层（✅ 已完成）**:
 
-6. **配置 Schema 系统** ⚪
-
+6. **配置 Schema 系统** ✅
    ```typescript
-   export interface Plugin<TOptions = unknown> {
-     name: string;
-     install: PluginInstallFunction;
-     configSchema?: ConfigSchema<TOptions>;
+   export interface ConfigSchema<T = unknown> {
+     type: SchemaType;
+     description?: string;
+     default?: T;
+     required?: boolean;
+     nullable?: boolean;
+     string?: StringSchema;
+     number?: NumberSchema;
+     boolean?: BooleanSchema;
+     object?: ObjectSchema<T>;
+     array?: ArraySchema;
+     enum?: EnumSchema<T>;
+     union?: UnionSchema;
+     validate?: (value: T, context: ValidationContext) => ValidationResult;
+     transform?: (value: unknown) => T;
    }
    ```
 
-7. **Plugin SDK 脚手架** ⚪
-
+7. **Plugin SDK 脚手架** ✅
    ```typescript
-   // packages/plugin-sdk/src/index.ts
-   export function definePlugin<T, A>(config: PluginConfig<T, A>): Plugin<T, A>;
-   export function createPluginTemplate(options: CreateTemplateOptions): Promise<void>;
-   export function buildPlugin(entry: string): Promise<BuildResult>;
-   export function createPluginTester(plugin: Plugin): PluginTester;
+   // @lytjs/core 内置
+   export function definePlugin<TOptions>(config: PluginConfig<TOptions>): PluginDefinition<TOptions>;
+   export class PluginTester {
+     async installPlugin(plugin: EnhancedPlugin, options?: unknown): Promise<void>;
+     uninstallPlugin(name: string): void;
+     cleanup(): void;
+   }
    ```
 
-8. **CLI 工具** ⚪
+8. **CLI 工具** ✅
    ```bash
-   lytjs plugin create my-plugin    # 创建插件模板
+   lytjs plugin create my-plugin    # 创建插件模板（--template default|minimal|withConfig）
    lytjs plugin build               # 构建插件
-   lytjs plugin test                # 运行测试
-   lytjs plugin publish             # 发布到 registry
    lytjs plugin validate            # 验证插件
    ```
 
@@ -516,8 +526,8 @@ if (!report.valid) {
 | ---- | ------------------------------------- | ------- | ------ | --------- |
 | P0   | 类型系统重构 + PluginRegistry         | 🔴 必须 | 2-3 天 | ✅ 已完成 |
 | P1   | PluginValidator + 依赖管理 + 生命周期 | 🟡 重要 | 3-4 天 | ✅ 已完成 |
-| P2   | 配置 Schema 系统                      | 🟢 推荐 | 2-3 天 | ⚪ 待开始 |
-| P3   | Plugin SDK + CLI 工具                 | 🔵 可选 | 5-7 天 | ⚪ 待开始 |
+| P2   | 配置 Schema 系统                      | 🟢 推荐 | 2-3 天 | ✅ 已完成 |
+| P3   | Plugin SDK + CLI 工具                 | 🔵 可选 | 5-7 天 | ✅ 已完成 |
 
 **向后兼容性**: 所有改进保持向后兼容，现有插件无需修改即可继续使用。
 

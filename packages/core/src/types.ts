@@ -143,6 +143,11 @@ export interface EnhancedPlugin<TOptions = unknown> extends Plugin<TOptions> {
     node?: string;
   };
 
+  // === 配置系统 ===
+
+  /** 插件选项的 Schema 定义，用于验证和文档生成 */
+  configSchema?: import('./config-schema').ConfigSchema<TOptions>;
+
   // === 生命周期钩子 ===
 
   /** 安装前钩子，返回 false 可取消安装 */

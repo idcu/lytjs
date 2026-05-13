@@ -43,7 +43,48 @@ export {
 // 插件系统增强
 export { PluginRegistry } from './plugin-registry';
 export { PluginValidator } from './plugin-validator';
-export type { ValidationReport, ValidationIssue } from './plugin-validator';
+export type {
+  ValidationReport,
+  ValidationIssue,
+} from './plugin-validator';
+
+// 配置 Schema 系统
+export { ConfigValidator, validateConfig } from './config-validator';
+export { ConfigTransformer, transformConfig, mergeConfig } from './config-transformer';
+export type {
+  ConfigSchema,
+  SchemaType,
+  StringSchema,
+  NumberSchema,
+  BooleanSchema,
+  ObjectSchema,
+  ArraySchema,
+  EnumSchema,
+  UnionSchema,
+  StringFormat,
+  ConfigValidationReport,
+  ConfigValidationError,
+  ValidationErrorCode,
+  ConfigTransformReport,
+  ValidationContext,
+  ValidationResult,
+} from './config-schema';
+
+// Plugin SDK
+export {
+  definePlugin,
+  validatePluginConfig,
+  transformPluginConfig,
+  mergePluginConfig,
+  createPluginTester,
+  testPluginInstall,
+} from './plugin-sdk';
+export type {
+  PluginConfig,
+  PluginDefinition,
+  PluginTesterOptions,
+  PluginTester,
+} from './plugin-sdk';
 
 // 全局配置系统
 export {

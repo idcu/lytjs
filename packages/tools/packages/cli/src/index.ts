@@ -15,6 +15,18 @@ export { dev } from './commands/dev';
 export { build } from './commands/build';
 export { test } from './commands/test';
 export { add } from './commands/add';
+export {
+  createPlugin,
+  buildPlugin,
+  validatePlugin,
+  listPluginTemplates,
+} from './commands/plugin';
+export type {
+  PluginCreateOptions,
+  PluginBuildOptions,
+  PluginValidateOptions,
+  PluginPublishOptions,
+} from './commands/plugin';
 
 // Utils
 export { logger } from './utils/logger';
