@@ -835,19 +835,21 @@ LytJS 采用 8 层架构设计，从底层到上层分别为：
 
 ### 7.2 分层依赖规则
 
-- **严格分层依赖**：上层只能依赖紧邻的下层，禁止跨层依赖
+- **基础工具层开放**：L0 基础工具层（common-*）可被所有上层直接依赖
+- **分层合理依赖**：核心层（L1-L4）遵循分层原则，尽量减少跨层依赖，但允许必要的跨层访问
 - **单向依赖**：只能从上层依赖下层，禁止反向依赖
 - **循环依赖检查**：使用 `pnpm run check-circular` 定期检查
 
 ```typescript
-// ✅ 正确：核心层依赖渲染引擎层
+// ✅ 正确：任意层都可以直接依赖 L0 基础工具层
+import { isArray } from '@lytjs/common-is';
+import { EMPTY_OBJ } from '@lytjs/common-constants';
+
+// ✅ 正确：上层依赖紧邻的下层
 import { render } from '@lytjs/renderer';
 
-// ❌ 错误：核心层直接依赖基础工具层（跨层）
-import { isArray } from '@lytjs/common-is';
-
-// ✅ 正确：通过 renderer 内部封装的工具使用
-import { render, internalUtils } from '@lytjs/renderer';
+// ✅ 允许：必要时可跨层依赖核心层
+import { ref, computed } from '@lytjs/reactivity';
 ````
 
 ### 7.3 各层开发规范
