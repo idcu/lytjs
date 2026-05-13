@@ -110,6 +110,8 @@ Lyt.js 采用精心设计的 8 层架构，从底层到上层：
 
 ## 包架构
 
+基于 8 层架构的包组织：
+
 ### L0: 基础工具层
 
 | 包 | 描述 |
@@ -118,42 +120,66 @@ Lyt.js 采用精心设计的 8 层架构，从底层到上层：
 | `@lytjs/host-contract` | 跨平台渲染接口定义 |
 | `@lytjs/common-*` | 30 个工具子包（constants, is, string, error 等） |
 
-### L1: 核心原语层
+### L1: 渲染引擎层
 
 | 包 | 描述 |
 | --- | --- |
 | `@lytjs/reactivity` | 响应式系统（ref, reactive, computed, watch） |
 | `@lytjs/vdom` | 虚拟 DOM 和 diff 算法 |
 | `@lytjs/compiler` | 模板编译器 |
-
-### L2: 平台/组件层
-
-| 包 | 描述 |
-| --- | --- |
-| `@lytjs/dom-runtime` | DOM 运行时工具 |
-| `@lytjs/dom` | DOM 平台封装 |
-| `@lytjs/component` | 组件系统 |
-
-### L3: 平台适配层
-
-| 包 | 描述 |
-| --- | --- |
-| `@lytjs/adapter-web` | Web 平台适配器 |
-
-### L4: 核心应用层
-
-| 包 | 描述 |
-| --- | --- |
 | `@lytjs/renderer` | DOM/SSR 渲染器 |
+
+### L2: 核心运行时层
+
+| 包 | 描述 |
+| --- | --- |
 | `@lytjs/core` | 核心应用 API（完整版） |
 | `@lytjs/core-vnode` | 核心应用 API（仅 VNode 模式） |
 | `@lytjs/core-signal` | 核心应用 API（仅 Signal 模式） |
 
-### L5: Web 工具层
+### L3: 插件核心层
 
 | 包 | 描述 |
 | --- | --- |
-| `@lytjs/web` | Web 平台工具（CSS 变量、ResizeObserver、Web Components） |
+| `@lytjs/plugin-sdk` | 插件开发 SDK |
+
+### L4: 官方插件层
+
+| 包 | 描述 |
+| --- | --- |
+| `@lytjs/plugin-theme` | 主题插件 |
+| `@lytjs/plugin-logger` | 日志插件 |
+| `@lytjs/plugin-auth` | 权限插件 |
+| `@lytjs/plugin-storage` | 存储插件 |
+| `@lytjs/plugin-i18n` | 国际化插件 |
+| `@lytjs/plugin-vite` | Vite 集成插件 |
+
+### L5: 组件基础层
+
+| 包 | 描述 |
+| --- | --- |
+| `@lytjs/component` | 组件系统 |
+| `@lytjs/dom` | DOM 平台封装 |
+| `@lytjs/dom-runtime` | DOM 运行时工具 |
+| `@lytjs/web` | Web 平台工具 |
+
+### L6: 业务组件层
+
+| 包 | 描述 |
+| --- | --- |
+| `@lytjs/ui` | UI 组件库 |
+| `@lytjs/router` | 路由 |
+| `@lytjs/store` | 状态管理 |
+| `@lytjs/devtools` | 开发者工具 |
+| `@lytjs/ssr` | SSR |
+| `@lytjs/platform-adapter` | 平台适配器 |
+
+### L7: 工程化工具层
+
+| 包 | 描述 |
+| --- | --- |
+| `@lytjs/tools` | 工程化工具集 |
+| `@lytjs/cli` | CLI 工具 |
 
 ## 安全特性
 

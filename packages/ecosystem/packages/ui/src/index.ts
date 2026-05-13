@@ -35,6 +35,16 @@ export { Badge } from './components/Badge';
 export { Tag } from './components/Tag';
 export { Spin } from './components/Spin';
 export { Empty } from './components/Empty';
+export { Link } from './components/Link';
+export { Container } from './components/Container';
+export { Divider } from './components/Divider';
+export { Toast } from './components/Toast';
+export { Alert } from './components/Alert';
+export { Tooltip } from './components/Tooltip';
+export { Checkbox } from './components/Checkbox';
+export { Radio } from './components/Radio';
+export { Switch } from './components/Switch';
+export { InputNumber } from './components/InputNumber';
 
 // 类型导出
 export type {
@@ -65,6 +75,26 @@ export type {
   SpinSlots,
   EmptyProps,
   EmptySlots,
+  LinkProps,
+  LinkSlots,
+  ContainerProps,
+  ContainerSlots,
+  DividerProps,
+  DividerSlots,
+  ToastProps,
+  ToastSlots,
+  AlertProps,
+  AlertSlots,
+  TooltipProps,
+  TooltipSlots,
+  CheckboxProps,
+  CheckboxSlots,
+  RadioProps,
+  RadioSlots,
+  SwitchProps,
+  SwitchSlots,
+  InputNumberProps,
+  InputNumberSlots,
 } from './components/types';
 
 // 组件安装
@@ -97,6 +127,16 @@ import { Badge } from './components/Badge';
 import { Tag } from './components/Tag';
 import { Spin } from './components/Spin';
 import { Empty } from './components/Empty';
+import { Link } from './components/Link';
+import { Container } from './components/Container';
+import { Divider } from './components/Divider';
+import { Toast } from './components/Toast';
+import { Alert } from './components/Alert';
+import { Tooltip } from './components/Tooltip';
+import { Checkbox } from './components/Checkbox';
+import { Radio } from './components/Radio';
+import { Switch } from './components/Switch';
+import { InputNumber } from './components/InputNumber';
 
 /**
  * 安装所有组件
@@ -135,6 +175,16 @@ export function install(app: AppContext): void {
   app.components['LytTag'] = Tag;
   app.components['LytSpin'] = Spin;
   app.components['LytEmpty'] = Empty;
+  app.components['LytLink'] = Link;
+  app.components['LytContainer'] = Container;
+  app.components['LytDivider'] = Divider;
+  app.components['LytToast'] = Toast;
+  app.components['LytAlert'] = Alert;
+  app.components['LytTooltip'] = Tooltip;
+  app.components['LytCheckbox'] = Checkbox;
+  app.components['LytRadio'] = Radio;
+  app.components['LytSwitch'] = Switch;
+  app.components['LytInputNumber'] = InputNumber;
 }
 
 export default {

@@ -272,3 +272,362 @@
 .lyt-empty__svg { opacity: 0.6; }
 .lyt-empty__description { font-size: 14px; margin-bottom: 16px; }
 .lyt-empty__bottom { margin-top: 8px; }
+
+/* ===== Link 组件 ===== */
+.lyt-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 14px;
+  line-height: 1;
+  color: var(--lyt-color-primary);
+  cursor: pointer;
+  transition: all 0.3s;
+  text-decoration: none;
+}
+.lyt-link:hover { opacity: 0.8; }
+.lyt-link--default { color: var(--lyt-text-color-regular); }
+.lyt-link--primary { color: var(--lyt-color-primary); }
+.lyt-link--success { color: var(--lyt-color-success); }
+.lyt-link--warning { color: var(--lyt-color-warning); }
+.lyt-link--danger { color: var(--lyt-color-danger); }
+.lyt-link--info { color: var(--lyt-color-info); }
+.lyt-link--underline { text-decoration: underline; }
+.lyt-link--disabled { cursor: not-allowed; opacity: 0.5; }
+
+/* ===== Container 组件 ===== */
+.lyt-container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+  box-sizing: border-box;
+}
+.lyt-container--fluid { max-width: 100%; padding: 0; }
+
+/* ===== Divider 组件 ===== */
+.lyt-divider {
+  display: flex;
+  align-items: center;
+  margin: 24px 0;
+  color: var(--lyt-text-color-secondary);
+  font-size: 14px;
+}
+.lyt-divider::before,
+.lyt-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background-color: var(--lyt-border-color-lighter);
+}
+.lyt-divider__text {
+  padding: 0 16px;
+  color: var(--lyt-text-color-regular);
+}
+.lyt-divider--vertical {
+  display: inline-block;
+  width: 1px;
+  height: 1em;
+  margin: 0 8px;
+  background-color: var(--lyt-border-color-lighter);
+}
+
+/* ===== Toast 组件 ===== */
+.lyt-toast {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border-radius: var(--lyt-border-radius-base);
+  background-color: var(--lyt-bg-color);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  font-size: 14px;
+  color: var(--lyt-text-color-primary);
+}
+.lyt-toast--info { background-color: #f4f4f5; color: #909399; }
+.lyt-toast--success { background-color: #f0f9eb; color: #67c23a; }
+.lyt-toast--warning { background-color: #fdf6ec; color: #e6a23c; }
+.lyt-toast--danger { background-color: #fef0f0; color: #f56c6c; }
+.lyt-toast--top { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 3000; }
+.lyt-toast--bottom { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 3000; }
+.lyt-toast__icon { font-size: 16px; }
+.lyt-toast__message { flex: 1; }
+.lyt-toast__close { cursor: pointer; opacity: 0.6; }
+.lyt-toast__close:hover { opacity: 1; }
+
+/* ===== Alert 组件 ===== */
+.lyt-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: var(--lyt-border-radius-base);
+  font-size: 14px;
+}
+.lyt-alert--center { justify-content: center; text-align: center; }
+.lyt-alert--success { background-color: #f0f9eb; border: 1px solid #e1f3d8; color: #67c23a; }
+.lyt-alert--warning { background-color: #fdf6ec; border: 1px solid #faecd8; color: #e6a23c; }
+.lyt-alert--danger { background-color: #fef0f0; border: 1px solid #fde2e2; color: #f56c6c; }
+.lyt-alert--info { background-color: #f4f4f5; border: 1px solid #e9e9eb; color: #909399; }
+.lyt-alert--dark {
+  .lyt-alert--success { background-color: #67c23a; color: #fff; border: none; }
+  .lyt-alert--warning { background-color: #e6a23c; color: #fff; border: none; }
+  .lyt-alert--danger { background-color: #f56c6c; color: #fff; border: none; }
+  .lyt-alert--info { background-color: #909399; color: #fff; border: none; }
+}
+.lyt-alert__icon { font-size: 16px; flex-shrink: 0; }
+.lyt-alert__content { flex: 1; min-width: 0; }
+.lyt-alert__title { font-weight: 500; margin-bottom: 4px; }
+.lyt-alert__description { font-size: 13px; opacity: 0.8; }
+.lyt-alert__close { cursor: pointer; opacity: 0.6; flex-shrink: 0; }
+.lyt-alert__close:hover { opacity: 1; }
+
+/* ===== Tooltip 组件 ===== */
+.lyt-tooltip-wrapper { position: relative; display: inline-block; }
+.lyt-tooltip {
+  position: absolute;
+  padding: 8px 12px;
+  background-color: #303133;
+  color: #fff;
+  font-size: 12px;
+  border-radius: 4px;
+  z-index: 2000;
+  max-width: 200px;
+  word-wrap: break-word;
+}
+.lyt-tooltip--top { bottom: 100%; left: 50%; transform: translateX(-50%); margin-bottom: 8px; }
+.lyt-tooltip--bottom { top: 100%; left: 50%; transform: translateX(-50%); margin-top: 8px; }
+.lyt-tooltip--left { right: 100%; top: 50%; transform: translateY(-50%); margin-right: 8px; }
+.lyt-tooltip--right { left: 100%; top: 50%; transform: translateY(-50%); margin-left: 8px; }
+.lyt-tooltip__arrow {
+  position: absolute;
+  width: 0;
+  height: 0;
+  border: 6px solid transparent;
+}
+.lyt-tooltip--top .lyt-tooltip__arrow { bottom: -12px; left: 50%; transform: translateX(-50%); border-top-color: #303133; }
+.lyt-tooltip--bottom .lyt-tooltip__arrow { top: -12px; left: 50%; transform: translateX(-50%); border-bottom-color: #303133; }
+.lyt-tooltip--left .lyt-tooltip__arrow { right: -12px; top: 50%; transform: translateY(-50%); border-left-color: #303133; }
+.lyt-tooltip--right .lyt-tooltip__arrow { left: -12px; top: 50%; transform: translateY(-50%); border-right-color: #303133; }
+.lyt-tooltip__content { line-height: 1.5; }
+
+/* ===== Checkbox 组件 ===== */
+.lyt-checkbox {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--lyt-text-color-regular);
+  user-select: none;
+}
+.lyt-checkbox--disabled { cursor: not-allowed; opacity: 0.5; }
+.lyt-checkbox--focus .lyt-checkbox__inner { box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2); }
+.lyt-checkbox__input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.lyt-checkbox__inner {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border: 1px solid var(--lyt-border-color);
+  border-radius: 2px;
+  background-color: var(--lyt-bg-color);
+  transition: all 0.3s;
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+.lyt-checkbox--checked .lyt-checkbox__inner {
+  background-color: var(--lyt-color-primary);
+  border-color: var(--lyt-color-primary);
+}
+.lyt-checkbox--checked .lyt-checkbox__inner::after {
+  content: '';
+  width: 4px;
+  height: 8px;
+  border: 2px solid #fff;
+  border-top: 0;
+  border-left: 0;
+  transform: rotate(45deg);
+}
+.lyt-checkbox--indeterminate .lyt-checkbox__inner {
+  background-color: var(--lyt-color-primary);
+  border-color: var(--lyt-color-primary);
+}
+.lyt-checkbox--indeterminate .lyt-checkbox__inner::after {
+  content: '';
+  width: 8px;
+  height: 2px;
+  background-color: #fff;
+}
+.lyt-checkbox__label { line-height: 1; }
+
+/* ===== Radio 组件 ===== */
+.lyt-radio {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--lyt-text-color-regular);
+  user-select: none;
+}
+.lyt-radio--disabled { cursor: not-allowed; opacity: 0.5; }
+.lyt-radio--focus .lyt-radio__inner { box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2); }
+.lyt-radio__input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.lyt-radio__inner {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border: 1px solid var(--lyt-border-color);
+  border-radius: 50%;
+  background-color: var(--lyt-bg-color);
+  transition: all 0.3s;
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+.lyt-radio--checked .lyt-radio__inner {
+  border-color: var(--lyt-color-primary);
+}
+.lyt-radio--checked .lyt-radio__inner::after {
+  content: '';
+  width: 6px;
+  height: 6px;
+  background-color: var(--lyt-color-primary);
+  border-radius: 50%;
+}
+.lyt-radio__label { line-height: 1; }
+
+/* ===== Switch 组件 ===== */
+.lyt-switch {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  font-size: 14px;
+  user-select: none;
+}
+.lyt-switch--disabled { cursor: not-allowed; opacity: 0.5; }
+.lyt-switch--loading { cursor: wait; }
+.lyt-switch--small .lyt-switch__wrapper { width: 40px; height: 20px; }
+.lyt-switch--small .lyt-switch__button { width: 16px; height: 16px; }
+.lyt-switch--large .lyt-switch__wrapper { width: 60px; height: 30px; }
+.lyt-switch--large .lyt-switch__button { width: 26px; height: 26px; }
+.lyt-switch--focus { box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2); border-radius: 20px; }
+.lyt-switch__wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: 50px;
+  height: 24px;
+  background-color: #dcdfe6;
+  border-radius: 12px;
+  transition: all 0.3s;
+  margin: 0 8px;
+}
+.lyt-switch--checked .lyt-switch__wrapper { background-color: var(--lyt-color-primary); }
+.lyt-switch__core {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px;
+}
+.lyt-switch__button {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  background-color: #fff;
+  border-radius: 50%;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.lyt-switch--checked .lyt-switch__button { left: calc(100% - 22px); }
+.lyt-switch__label {
+  font-size: 12px;
+  color: #fff;
+  font-weight: 500;
+}
+.lyt-switch--checked .lyt-switch__label--left { display: none; }
+.lyt-switch:not(.lyt-switch--checked) .lyt-switch__label--right { display: none; }
+
+/* ===== InputNumber 组件 ===== */
+.lyt-input-number {
+  position: relative;
+  display: inline-flex;
+  align-items: stretch;
+  width: 180px;
+}
+.lyt-input-number--small { width: 140px; }
+.lyt-input-number--large { width: 220px; }
+.lyt-input-number--disabled { opacity: 0.5; }
+.lyt-input-number--focus .lyt-input-number__input { box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2); }
+.lyt-input-number__decrease,
+.lyt-input-number__increase {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  background-color: var(--lyt-bg-color-page);
+  border: 1px solid var(--lyt-border-color);
+  cursor: pointer;
+  font-size: 16px;
+  color: var(--lyt-text-color-regular);
+  transition: all 0.3s;
+  user-select: none;
+}
+.lyt-input-number__decrease:hover,
+.lyt-input-number__increase:hover {
+  background-color: var(--lyt-border-color-light);
+}
+.lyt-input-number__decrease.is-disabled,
+.lyt-input-number__increase.is-disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+.lyt-input-number__decrease {
+  border-right: none;
+  border-radius: var(--lyt-border-radius-base) 0 0 var(--lyt-border-radius-base);
+}
+.lyt-input-number__increase {
+  border-left: none;
+  border-radius: 0 var(--lyt-border-radius-base) var(--lyt-border-radius-base) 0;
+}
+.lyt-input-number__input {
+  flex: 1;
+  padding: 0 12px;
+  font-size: 14px;
+  line-height: 1;
+  border: 1px solid var(--lyt-border-color);
+  background-color: var(--lyt-bg-color);
+  color: var(--lyt-text-color-primary);
+  text-align: center;
+  outline: none;
+  transition: all 0.3s;
+}
+.lyt-input-number--small .lyt-input-number__decrease,
+.lyt-input-number--small .lyt-input-number__increase,
+.lyt-input-number--small .lyt-input-number__input {
+  font-size: 12px;
+}
+.lyt-input-number--large .lyt-input-number__decrease,
+.lyt-input-number--large .lyt-input-number__increase,
+.lyt-input-number--large .lyt-input-number__input {
+  font-size: 16px;
+}
+

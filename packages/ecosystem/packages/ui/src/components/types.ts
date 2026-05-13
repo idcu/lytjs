@@ -246,4 +246,166 @@ export interface EmptySlots {
   description?: () => VNode[];
 }
 
+// ===== Link 组件 =====
+
+export interface LinkProps {
+  type?: ComponentStatus;
+  disabled?: boolean;
+  underline?: boolean;
+  href?: string;
+  target?: '_blank' | '_self' | '_parent' | '_top';
+  class?: string;
+  style?: string | Record<string, string>;
+  onClick?: (event: MouseEvent) => void;
+}
+
+export interface LinkSlots {
+  default?: () => VNode[];
+}
+
+// ===== Container 组件 =====
+
+export interface ContainerProps {
+  fluid?: boolean;
+  class?: string;
+  style?: string | Record<string, string>;
+}
+
+export interface ContainerSlots {
+  default?: () => VNode[];
+}
+
+// ===== Divider 组件 =====
+
+export interface DividerProps {
+  type?: 'horizontal' | 'vertical';
+  contentPosition?: 'left' | 'center' | 'right';
+  class?: string;
+  style?: string | Record<string, string>;
+}
+
+export interface DividerSlots {
+  default?: () => VNode[];
+}
+
+// ===== Toast 组件 =====
+
+export interface ToastProps {
+  type?: 'success' | 'warning' | 'info' | 'error';
+  message?: string;
+  duration?: number;
+  showClose?: boolean;
+  onClose?: () => void;
+}
+
+export interface ToastSlots {
+  default?: () => VNode[];
+}
+
+// ===== Alert 组件 =====
+
+export interface AlertProps {
+  type?: 'success' | 'warning' | 'info' | 'error';
+  title?: string;
+  description?: string;
+  closable?: boolean;
+  showIcon?: boolean;
+  class?: string;
+  style?: string | Record<string, string>;
+  onClose?: () => void;
+}
+
+export interface AlertSlots {
+  default?: () => VNode[];
+  title?: () => VNode[];
+  description?: () => VNode[];
+}
+
+// ===== Tooltip 组件 =====
+
+export interface TooltipProps {
+  content?: string;
+  placement?: 'top' | 'bottom' | 'left' | 'right';
+  disabled?: boolean;
+  class?: string;
+  style?: string | Record<string, string>;
+}
+
+export interface TooltipSlots {
+  default?: () => VNode[];
+  content?: () => VNode[];
+}
+
+// ===== Checkbox 组件 =====
+
+export interface CheckboxProps {
+  modelValue?: boolean | string | number;
+  label?: string;
+  disabled?: boolean;
+  indeterminate?: boolean;
+  name?: string;
+  checked?: boolean;
+  class?: string;
+  style?: string | Record<string, string>;
+  onChange?: (value: boolean) => void;
+}
+
+export interface CheckboxSlots {
+  default?: () => VNode[];
+}
+
+// ===== Radio 组件 =====
+
+export interface RadioProps {
+  modelValue?: string | number | boolean;
+  label?: string;
+  disabled?: boolean;
+  name?: string;
+  class?: string;
+  style?: string | Record<string, string>;
+  onChange?: (value: string | number | boolean) => void;
+}
+
+export interface RadioSlots {
+  default?: () => VNode[];
+}
+
+// ===== Switch 组件 =====
+
+export interface SwitchProps {
+  modelValue?: boolean;
+  disabled?: boolean;
+  activeText?: string;
+  inactiveText?: string;
+  activeColor?: string;
+  inactiveColor?: string;
+  class?: string;
+  style?: string | Record<string, string>;
+  onChange?: (value: boolean) => void;
+}
+
+export interface SwitchSlots {
+  default?: () => VNode[];
+}
+
+// ===== InputNumber 组件 =====
+
+export interface InputNumberProps {
+  modelValue?: number;
+  min?: number;
+  max?: number;
+  step?: number;
+  disabled?: boolean;
+  size?: ComponentSize;
+  controls?: boolean;
+  precision?: number;
+  class?: string;
+  style?: string | Record<string, string>;
+  onChange?: (value: number) => void;
+}
+
+export interface InputNumberSlots {
+  default?: () => VNode[];
+}
+
 export type { VNode, Component };
