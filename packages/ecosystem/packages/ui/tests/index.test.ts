@@ -6,6 +6,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Button } from '../src/components/Button';
 import { Input } from '../src/components/Input';
 import { Dialog } from '../src/components/Dialog';
+import { Tabs, TabPane } from '../src/components/Tabs';
 
 // ===== Button 组件测试 =====
 describe('Button', () => {
@@ -101,11 +102,65 @@ describe('Dialog', () => {
   });
 });
 
+// ===== Tabs 组件测试 =====
+describe('Tabs', () => {
+  it('should render Tabs with default props', () => {
+    expect(Tabs).toBeDefined();
+    expect(Tabs.name).toBe('LytTabs');
+  });
+
+  it('should have correct props definition', () => {
+    const props = Tabs.props;
+    expect(props.modelValue).toBeDefined();
+    expect(props.type).toBeDefined();
+    expect(props.class).toBeDefined();
+    expect(props.closable).toBeDefined();
+    expect(props.addable).toBeDefined();
+    expect(props.editable).toBeDefined();
+    expect(props.draggable).toBeDefined();
+  });
+
+  it('should have default values for props', () => {
+    const props = Tabs.props;
+    expect(props.modelValue.default).toBe('');
+    expect(props.type.default).toBe('');
+    expect(props.class.default).toBe('');
+    expect(props.closable.default).toBe(false);
+    expect(props.addable.default).toBe(false);
+    expect(props.editable.default).toBe(false);
+    expect(props.draggable.default).toBe(false);
+  });
+});
+
+// ===== TabPane 组件测试 =====
+describe('TabPane', () => {
+  it('should render TabPane with default props', () => {
+    expect(TabPane).toBeDefined();
+    expect(TabPane.name).toBe('LytTabPane');
+  });
+
+  it('should have correct props definition', () => {
+    const props = TabPane.props;
+    expect(props.label).toBeDefined();
+    expect(props.name).toBeDefined();
+    expect(props.disabled).toBeDefined();
+    expect(props.closable).toBeDefined();
+  });
+
+  it('should have default values for props', () => {
+    const props = TabPane.props;
+    expect(props.disabled.default).toBe(false);
+    expect(props.closable.default).toBe(false);
+  });
+});
+
 // ===== 导出测试 =====
 describe('exports', () => {
   it('should export all components', () => {
     expect(Button).toBeDefined();
     expect(Input).toBeDefined();
     expect(Dialog).toBeDefined();
+    expect(Tabs).toBeDefined();
+    expect(TabPane).toBeDefined();
   });
 });
