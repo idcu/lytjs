@@ -23,7 +23,10 @@ export default defineConfig({
       '@lytjs/common-env': resolve(root, 'packages/common/packages/env/dist/index.mjs'),
       '@lytjs/common-constants': resolve(root, 'packages/common/packages/constants/dist/index.mjs'),
       '@lytjs/common-dom': resolve(root, 'packages/common/packages/dom/dist/index.mjs'),
-      '@lytjs/common-dom-helpers': resolve(root, 'packages/common/packages/dom-helpers/dist/index.mjs'),
+      '@lytjs/common-dom-helpers': resolve(
+        root,
+        'packages/common/packages/dom-helpers/dist/index.mjs',
+      ),
       '@lytjs/common-path': resolve(root, 'packages/common/packages/path/dist/index.mjs'),
       '@lytjs/common-query': resolve(root, 'packages/common/packages/query/dist/index.mjs'),
       '@lytjs/common-a11y': resolve(root, 'packages/common/packages/a11y/dist/index.mjs'),
@@ -32,13 +35,34 @@ export default defineConfig({
       '@lytjs/common-validate': resolve(root, 'packages/common/packages/validate/dist/index.mjs'),
       '@lytjs/common-http': resolve(root, 'packages/common/packages/http/dist/index.mjs'),
       '@lytjs/common-raf': resolve(root, 'packages/common/packages/raf/dist/index.mjs'),
-      '@lytjs/common-render-queue': resolve(root, 'packages/common/packages/render-queue/dist/index.mjs'),
-      '@lytjs/common-event-normalizer': resolve(root, 'packages/common/packages/event-normalizer/dist/index.mjs'),
-      '@lytjs/common-node-cache': resolve(root, 'packages/common/packages/node-cache/dist/index.mjs'),
-      '@lytjs/common-async-scheduler': resolve(root, 'packages/common/packages/async-scheduler/dist/index.mjs'),
-      '@lytjs/common-transition-engine': resolve(root, 'packages/common/packages/transition-engine/dist/index.mjs'),
-      '@lytjs/common-performance': resolve(root, 'packages/common/packages/performance/dist/index.mjs'),
-      '@lytjs/common-assertions': resolve(root, 'packages/common/packages/assertions/dist/index.mjs'),
+      '@lytjs/common-render-queue': resolve(
+        root,
+        'packages/common/packages/render-queue/dist/index.mjs',
+      ),
+      '@lytjs/common-event-normalizer': resolve(
+        root,
+        'packages/common/packages/event-normalizer/dist/index.mjs',
+      ),
+      '@lytjs/common-node-cache': resolve(
+        root,
+        'packages/common/packages/node-cache/dist/index.mjs',
+      ),
+      '@lytjs/common-async-scheduler': resolve(
+        root,
+        'packages/common/packages/async-scheduler/dist/index.mjs',
+      ),
+      '@lytjs/common-transition-engine': resolve(
+        root,
+        'packages/common/packages/transition-engine/dist/index.mjs',
+      ),
+      '@lytjs/common-performance': resolve(
+        root,
+        'packages/common/packages/performance/dist/index.mjs',
+      ),
+      '@lytjs/common-assertions': resolve(
+        root,
+        'packages/common/packages/assertions/dist/index.mjs',
+      ),
       // 主包
       '@lytjs/shared-types': resolve(root, 'packages/shared-types/src'),
       '@lytjs/host-contract': resolve(root, 'packages/host-contract/src'),
@@ -57,6 +81,7 @@ export default defineConfig({
       '@lytjs/dom-runtime': resolve(root, 'packages/dom-runtime/src'),
       '@lytjs/dom': resolve(root, 'packages/dom/dist/index.mjs'),
     },
+    conditions: ['import', 'node', 'default'],
   },
   test: {
     environment: 'node',

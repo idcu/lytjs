@@ -40,6 +40,11 @@ export {
   onDeactivated,
 } from './lifecycle';
 
+// 插件系统增强
+export { PluginRegistry } from './plugin-registry';
+export { PluginValidator } from './plugin-validator';
+export type { ValidationReport, ValidationIssue } from './plugin-validator';
+
 // 全局配置系统
 export {
   ConfigManager,
@@ -69,6 +74,17 @@ export type {
   AppConfig,
   AppOptions,
   Plugin,
+  PluginInstallFunction,
+  PluginWithCleanup,
+  PluginFunctionWithCleanup,
+  EnhancedPlugin,
+  PluginMeta,
+  PluginDependency,
+  RegisteredPlugin,
+  RegistrationResult,
+  DependencyResult,
+  PluginLifecycleEvent,
+  PluginEventListener,
   Component,
   ComponentOptions,
   VNode,

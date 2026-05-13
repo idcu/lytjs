@@ -10,12 +10,15 @@ import type {
   Plugin,
   PluginWithCleanup,
   PluginFunctionWithCleanup,
+  EnhancedPlugin,
   Component,
   ComponentPublicInstance,
   ComponentOptions,
   DOMRenderer as CoreDOMRenderer,
 } from './types';
 import { createAppContext, createContextConfig } from './app-context';
+import { PluginRegistry } from './plugin-registry';
+import { PluginValidator } from './plugin-validator';
 import {
   createComponentInstance,
   setupComponent,
@@ -27,17 +30,20 @@ import type {
   AppContext as ComponentAppContext,
   ComponentInternalInstance,
 } from '@lytjs/component';
-import type {
-  SignalRenderer,
-} from '@lytjs/renderer';
+import type { SignalRenderer } from '@lytjs/renderer';
 
-let createSignalRenderer: ((template: string, ctx: Record<string, unknown>) => Promise<SignalRenderer>) | null = null;
+let createSignalRenderer:
+  | ((template: string, ctx: Record<string, unknown>) => Promise<SignalRenderer>)
+  | null = null;
 let createDOMRenderer: ((options?: unknown) => unknown) | null = null;
 
 async function getSignalRenderer() {
   if (!createSignalRenderer) {
     const renderer = await import('@lytjs/renderer');
-    createSignalRenderer = renderer.createSignalRenderer as (template: string, ctx: Record<string, unknown>) => Promise<SignalRenderer>;
+    createSignalRenderer = renderer.createSignalRenderer as (
+      template: string,
+      ctx: Record<string, unknown>,
+    ) => Promise<SignalRenderer>;
   }
   return createSignalRenderer;
 }
@@ -59,6 +65,8 @@ export function createApp(
   // 如果提供了父 app context，子 app 继承父 app 的全局配置
   const context = createAppContext();
   const installedPlugins = new Set<Plugin | ((app: App, ...options: unknown[]) => void)>();
+  const pluginRegistry = new PluginRegistry();
+  const pluginValidator = new PluginValidator();
   let _isUnmounted = false;
   let _isMounted = false;
 
@@ -83,10 +91,71 @@ export function createApp(
     use(plugin: Plugin | ((app: App, ...options: unknown[]) => void), ...options: unknown[]) {
       if (installedPlugins.has(plugin)) return app;
       try {
-        if (typeof plugin === 'function') {
-          (plugin as (app: App, ...options: unknown[]) => void)(app, ...options);
-        } else {
+        // 对 EnhancedPlugin 进行验证和注册
+        if (
+          typeof plugin !== 'function' &&
+          'name' in plugin &&
+          typeof (plugin as EnhancedPlugin).name === 'string'
+        ) {
+          const enhancedPlugin = plugin as EnhancedPlugin;
+
+          // 验证插件
+          const report = pluginValidator.validate(enhancedPlugin);
+          if (!report.valid) {
+            const errorMessages = report.issues
+              .filter((i) => i.level === 'error')
+              .map((i) => `[${i.rule}] ${i.message}`)
+              .join('; ');
+            throw new Error(`Plugin "${enhancedPlugin.name}" validation failed: ${errorMessages}`);
+          }
+
+          // 注册到 Registry
+          const regResult = pluginRegistry.register(enhancedPlugin, options);
+          if (!regResult.success) {
+            throw new Error(regResult.error);
+          }
+
+          // 检查依赖
+          const depResult = pluginRegistry.checkDependencies(enhancedPlugin);
+          if (!depResult.satisfied && depResult.missing.length > 0) {
+            const missingNames = depResult.missing.map((d) => d.name).join(', ');
+            throw new Error(
+              `Plugin "${enhancedPlugin.name}" has unsatisfied dependencies: ${missingNames}`,
+            );
+          }
+
+          // 触发 beforeInstall 生命周期钩子
+          if (enhancedPlugin.beforeInstall) {
+            const shouldContinue = enhancedPlugin.beforeInstall(app);
+            // 处理异步 beforeInstall
+            if (shouldContinue instanceof Promise) {
+              throw new Error(
+                'Plugin beforeInstall hook cannot be async when using synchronous app.use(). Use await app.use() for async plugins.',
+              );
+            }
+            if (shouldContinue === false) {
+              pluginRegistry.unregister(enhancedPlugin.name);
+              return app;
+            }
+          }
+
+          // 执行安装
           plugin.install(app, ...options);
+
+          // 标记为已安装
+          pluginRegistry.markInstalled(enhancedPlugin.name);
+
+          // 触发 afterInstall 生命周期钩子
+          if (enhancedPlugin.afterInstall) {
+            enhancedPlugin.afterInstall(app);
+          }
+        } else {
+          // 基础 Plugin 或函数式插件，保持原有行为
+          if (typeof plugin === 'function') {
+            (plugin as (app: App, ...options: unknown[]) => void)(app, ...options);
+          } else {
+            plugin.install(app, ...options);
+          }
         }
         installedPlugins.add(plugin);
       } catch (err) {
@@ -96,6 +165,22 @@ export function createApp(
         throw err;
       }
       return app;
+    },
+
+    /**
+     * 获取插件注册表实例
+     * @description 提供对 PluginRegistry 的访问，用于高级插件管理
+     */
+    get _pluginRegistry() {
+      return pluginRegistry;
+    },
+
+    /**
+     * 获取插件验证器实例
+     * @description 提供对 PluginValidator 的访问，用于自定义验证
+     */
+    get _pluginValidator() {
+      return pluginValidator;
     },
 
     async mount(rootContainer: string | Element) {
@@ -371,7 +456,8 @@ export function createApp(
           childInstance.appContext = context as ComponentAppContext;
         }
         setupComponent(childInstance);
-        (childVNode as unknown as { component: ComponentInternalInstance }).component = childInstance;
+        (childVNode as unknown as { component: ComponentInternalInstance }).component =
+          childInstance;
       },
       normalizeProps(inst: ComponentInternalInstance, rawProps: Record<string, unknown> | null) {
         initProps(inst, rawProps);
