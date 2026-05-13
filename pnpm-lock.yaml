@@ -152,6 +152,10 @@ importers:
         version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jsdom@29.1.1)
 
   packages/common/packages/assertions:
+    dependencies:
+      '@lytjs/common-is':
+        specifier: workspace:*
+        version: link:../is
     devDependencies:
       tsup:
         specifier: ^8.4.0
@@ -338,6 +342,10 @@ importers:
         version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jsdom@29.1.1)
 
   packages/common/packages/error:
+    dependencies:
+      '@lytjs/common-constants':
+        specifier: workspace:*
+        version: link:../constants
     devDependencies:
       tsup:
         specifier: ^8.4.0
@@ -441,6 +449,9 @@ importers:
 
   packages/common/packages/object:
     dependencies:
+      '@lytjs/common-constants':
+        specifier: workspace:*
+        version: link:../constants
       '@lytjs/common-is':
         specifier: workspace:*
         version: link:../is
@@ -569,6 +580,9 @@ importers:
 
   packages/common/packages/string:
     dependencies:
+      '@lytjs/common-constants':
+        specifier: workspace:*
+        version: link:../constants
       '@lytjs/common-security':
         specifier: workspace:*
         version: link:../security

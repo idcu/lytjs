@@ -23,7 +23,7 @@
   ],
   "sideEffects": false,
   "scripts": {
-    "build": "CI=true npx tsup",
+    "build": "tsup",
     "dev": "tsup --watch",
     "test": "vitest run",
     "test:watch": "vitest",

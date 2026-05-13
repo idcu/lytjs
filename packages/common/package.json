@@ -13,6 +13,13 @@
     "clean": "pnpm -r run clean"
   },
   "devDependencies": {
+    "@lytjs/common-async-scheduler": "workspace:*",
+    "@lytjs/common-constants": "workspace:*",
+    "@lytjs/common-event-normalizer": "workspace:*",
+    "@lytjs/common-node-cache": "workspace:*",
+    "@lytjs/common-performance": "workspace:*",
+    "@lytjs/common-render-queue": "workspace:*",
+    "@lytjs/common-transition-engine": "workspace:*",
     "@types/node": "^22.13.10",
     "@vitest/coverage-v8": "^3.0.7",
     "eslint": "^9.22.0",

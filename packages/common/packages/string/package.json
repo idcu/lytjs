@@ -28,6 +28,7 @@
   "sideEffects": false,
   "license": "MIT",
   "dependencies": {
+    "@lytjs/common-constants": "workspace:*",
     "@lytjs/common-security": "workspace:*"
   },
   "devDependencies": {

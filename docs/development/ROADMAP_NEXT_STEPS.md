@@ -537,6 +537,8 @@ if (!report.valid) {
 
 **1. Router - 路由系统**
 
+**状态**: ✅ 已完成（v6.0.0，测试通过）
+
 ```typescript
 // 设计理念: Vue Router 风格，简化 API
 import { createRouter, createWebHistory } from '@lytjs/router';
@@ -550,9 +552,9 @@ const router = createRouter({
 });
 ```
 
-**优先级**: 🔴 高
-
 **2. Store - 状态管理**
+
+**状态**: ✅ 已完成（v6.0.0，测试通过）
 
 ```typescript
 // 设计理念: Pinia 风格，简化 API
@@ -574,9 +576,9 @@ const useUserStore = defineStore('user', {
 });
 ```
 
-**优先级**: 🔴 高
-
 **3. UI 组件库基础**
+
+**状态**: ✅ 已完成（v6.0.0，测试通过）
 
 ```typescript
 // 设计理念: 提供核心组件，保持轻量
@@ -585,9 +587,25 @@ const useUserStore = defineStore('user', {
 import { Button, Input, Dialog } from '@lytjs/ui';
 ```
 
-**优先级**: 🟡 中
+**4. i18n 国际化**
+
+**状态**: ✅ 已完成（v6.0.0，测试通过）
+
+```typescript
+import { createI18n } from '@lytjs/i18n';
+
+const i18n = createI18n({
+  locale: 'zh-CN',
+  messages: {
+    'zh-CN': { hello: '你好' },
+    'en-US': { hello: 'Hello' }
+  }
+});
+```
 
 #### 2.3.2 性能优化与基准
+
+**状态**: ✅ 已完成
 
 **建立性能基准测试套件**:
 
@@ -602,10 +620,10 @@ import { Button, Input, Dialog } from '@lytjs/ui';
 
 **优化方向**:
 
-1. VDOM diff 算法进一步优化
-2. Signal 模式性能调优
-3. Tree Shaking 优化
-4. 编译时优化增强
+1. VDOM diff 算法进一步优化 ✅
+2. Signal 模式性能调优 ✅
+3. Tree Shaking 优化 ✅
+4. 编译时优化增强 ✅
 
 ### 2.4 P3 - 长期目标（6-12个月）
 
@@ -838,15 +856,20 @@ import { Button, Input, Dialog } from '@lytjs/ui';
 
 **验收标准**:
 
-- [ ] DevTools 正式版
-- [ ] SSR 完善
-- [ ] 插件系统改进（P0-P1 完成）
-  - [ ] 类型系统重构
-  - [ ] PluginRegistry 注册表
-  - [ ] PluginValidator 验证器
-  - [ ] 生命周期增强
-  - [ ] 依赖管理系统
-- [ ] 性能优化完成
+- [x] DevTools 正式版（@lytjs/devtools v6.0.0）
+- [x] SSR 完善（@lytjs/ssr v6.0.0）
+- [x] 插件系统改进（P0-P1-P2-P3 全部完成）
+  - [x] 类型系统重构
+  - [x] PluginRegistry 注册表
+  - [x] PluginValidator 验证器
+  - [x] 生命周期增强
+  - [x] 依赖管理系统
+  - [x] ConfigSchema 系统
+  - [x] Plugin SDK 脚手架
+  - [x] Plugin CLI 工具
+- [x] 性能优化完成（基准测试套件建立）
+- [x] i18n 国际化支持（@lytjs/i18n v6.0.0）
+- [x] UI 组件库扩展（Button/Input/Dialog/Select/Tabs/Table/DatePicker/Tree/Form/Transition）
 
 ### 6.4 里程碑四：v7.0（52周）
 
@@ -971,13 +994,21 @@ pnpm 11.x 引入了更严格的构建脚本安全检查机制。在 monorepo 子
 
 ---
 
-**文档版本**: v1.10
+**文档版本**: v1.11
 **最后更新**: 2026-05-13
 **维护者**: LytJS Team
 
 ---
 
 ## 更新日志
+
+### v1.11 (2026-05-13)
+
+- ✅ 修复构建依赖问题
+  - 添加缺少的 workspace 依赖声明（@lytjs/common-assertions, @lytjs/common-string, @lytjs/common-object, @lytjs/common-error）
+  - 优化构建脚本，支持分阶段构建（common → core → ecosystem → tools → plugins）
+  - 修复 @lytjs/cli Windows 构建脚本兼容性问题
+- ✅ 更新里程碑进度（v6.3 完善版全部完成）
 
 ### v1.10 (2026-05-13)
 

@@ -5,7 +5,7 @@
  */
 
 import { logger } from '../utils/logger';
-import { ensureDir, writeFile, readFile, exists } from '../utils/fs';
+import { ensureDir } from '../utils/fs';
 import { resolve, join } from 'path';
 import { execSync } from 'child_process';
 import { existsSync, mkdirSync, writeFileSync, readFileSync } from 'fs';
