@@ -629,26 +629,50 @@ const i18n = createI18n({
 
 #### 2.4.1 DevTools 完善
 
-**功能清单**:
+**状态**: ⏳ 进行中（预览版已完成，正式版待开发）
 
-- 组件树检查
-- 状态时间旅行
-- 性能分析
-- 信号依赖可视化
-- 事件日志
+**已完成（预览版 v6.0.0）**:
+- ✅ 组件树查看器（registerRootComponent）
+- ✅ Store 状态检查器（registerStore、getStoreStates）
+- ✅ 路由查看器（registerRouter、getCurrentRoute）
+- ✅ DevTools 面板（Ctrl+Shift+D 快捷键）
+- ✅ 21/21 测试通过
+
+**待完成（正式版 v1.0）**:
+- [ ] 状态时间旅行调试
+- [ ] 性能分析工具
+- [ ] 信号依赖可视化
+- [ ] 事件日志系统
+- [ ] 实时状态监控
 
 #### 2.4.2 SSR/SSG 增强
 
-- 流式服务端渲染
-- 组件级水合
-- 静态站点生成
-- 服务端组件
+**状态**: ⏳ 进行中（基础版已完成，高级功能待开发）
+
+**已完成（基础版 v6.0.0）**:
+- ✅ renderToString（VNode 转 HTML 字符串）
+- ✅ renderToHtml（完整 HTML 页面渲染）
+- ✅ HTML 特殊字符转义（XSS 防护）
+- ✅ class/style 对象处理
+- ✅ 自闭合标签处理
+- ✅ 9/9 测试通过
+
+**待完成（完善版 v1.0）**:
+- [ ] 流式服务端渲染（Streaming SSR）
+- [ ] 组件级水合（Selective Hydration）
+- [ ] 静态站点生成（SSG）
+- [ ] 服务端组件（Server Components）
+- [ ] 增量静态生成（ISR）
 
 #### 2.4.3 跨平台渲染
 
-- 小程序平台
-- 桌面应用（Electron/Tauri）
-- 移动端（React Native 风格）
+**状态**: ❌ 未开始
+
+**计划中**:
+- [ ] 小程序平台适配器（微信/支付宝/百度等）
+- [ ] 桌面应用支持（Electron/Tauri）
+- [ ] 移动端渲染器（React Native 风格）
+- [ ] 原生移动应用（iOS/Android）
 
 ---
 
@@ -705,17 +729,21 @@ const i18n = createI18n({
 
 **任务清单**:
 
-- [ ] DevTools 正式版
-- [ ] SSR/SSG 完善
-- [ ] 插件系统
+- [x] DevTools 预览版（v6.0.0，21/21 测试通过）
+- [ ] DevTools 正式版（v1.0）- 需补充：组件树检查、状态时间旅行、性能分析、信号依赖可视化、事件日志
+- [x] SSR 基础功能（v6.0.0，9/9 测试通过）
+- [ ] SSR/SSG 完善 - 需补充：流式 SSR、组件级水合、静态站点生成、服务端组件
+- [x] 插件系统改进（P0-P1-P2-P3 全部完成，127/127 测试通过）
 - [ ] 模板 CLI 增强
-- [ ] 性能优化
+- [x] 性能优化（基准测试套件已建立）
 
 **交付物**:
 
-- ✅ @lytjs/devtools v1.0
-- ✅ @lytjs/ssr v1.0
-- ✅ 完整插件生态
+- ✅ @lytjs/devtools v6.0.0（预览版）
+- ⏳ @lytjs/devtools v1.0（正式版 - 待完成）
+- ✅ @lytjs/ssr v6.0.0（基础版）
+- ⏳ @lytjs/ssr v1.0（完善版 - 待完成）
+- ✅ 完整插件生态（PluginRegistry + PluginValidator + ConfigSchema + Plugin SDK + CLI）
 - ✅ 性能优化报告
 
 ---
@@ -738,15 +766,27 @@ const i18n = createI18n({
 
 #### 4.1.2 测试金字塔
 
+**当前状态**:
+- ✅ 单元测试: ~450+ 用例（reactivity/vdom/compiler/core/renderer 核心模块）
+- ⏳ 集成测试: 待完善（目标 > 15%）
+- ⏳ E2E 测试: 待建立（目标 < 5%，关键路径）
+
 ```
         /\
-       /E2E\         < 5% (关键路径)
+       /E2E\         < 5% (关键路径) - ⏳ 待建立
       /------\
-     /集成测试\   < 15% (包间交互)
+     /集成测试\   < 15% (包间交互) - ⏳ 待完善
     /---------\
-   /  单元测试  \  > 80% (核心逻辑)
+   /  单元测试  \  > 80% (核心逻辑) - ✅ 已达标
   /-------------\
 ```
+
+**测试覆盖现状**:
+- reactivity: 🚧 进行中（已有显著提升，目标 90%+）
+- vdom: 🚧 进行中（vnode/diff 测试已增强，目标 85%+）
+- compiler: 🚧 进行中（codegen/optimize 测试已增强，目标 80%+）
+- core: 🚧 进行中（composition/h/config/plugin/web-component 测试已增强，目标 80%+）
+- renderer: ✅ 已完成（200+ 测试用例全覆盖）
 
 ### 4.2 发布流程
 
@@ -856,9 +896,23 @@ const i18n = createI18n({
 
 **验收标准**:
 
-- [x] DevTools 正式版（@lytjs/devtools v6.0.0）
-- [x] SSR 完善（@lytjs/ssr v6.0.0）
-- [x] 插件系统改进（P0-P1-P2-P3 全部完成）
+- [x] DevTools 预览版（@lytjs/devtools v6.0.0，21/21 测试通过）
+  - ✅ 组件树查看器（registerRootComponent）
+  - ✅ Store 状态检查器（registerStore、getStoreStates）
+  - ✅ 路由查看器（registerRouter、getCurrentRoute）
+  - ✅ DevTools 面板（Ctrl+Shift+D 快捷键）
+  - ⏳ 状态时间旅行（待完成）
+  - ⏳ 性能分析（待完成）
+  - ⏳ 信号依赖可视化（待完成）
+  - ⏳ 事件日志（待完成）
+- [x] SSR 基础功能（@lytjs/ssr v6.0.0，9/9 测试通过）
+  - ✅ renderToString / renderToHtml
+  - ✅ HTML 转义安全处理
+  - ⏳ 流式服务端渲染（待完成）
+  - ⏳ 组件级水合（待完成）
+  - ⏳ 静态站点生成（待完成）
+  - ⏳ 服务端组件（待完成）
+- [x] 插件系统改进（P0-P1-P2-P3 全部完成，127/127 测试通过）
   - [x] 类型系统重构
   - [x] PluginRegistry 注册表
   - [x] PluginValidator 验证器
@@ -868,8 +922,9 @@ const i18n = createI18n({
   - [x] Plugin SDK 脚手架
   - [x] Plugin CLI 工具
 - [x] 性能优化完成（基准测试套件建立）
-- [x] i18n 国际化支持（@lytjs/i18n v6.0.0）
-- [x] UI 组件库扩展（Button/Input/Dialog/Select/Tabs/Table/DatePicker/Tree/Form/Transition）
+- [x] i18n 国际化支持（@lytjs/i18n v6.0.0，11/11 测试通过）
+- [x] UI 组件库扩展（@lytjs/ui v0.4.0，20/20 测试通过）
+  - Button/Input/Dialog/Select/Tabs/Table/DatePicker/Tree/Form/Transition
 
 ### 6.4 里程碑四：v7.0（52周）
 
@@ -880,9 +935,21 @@ const i18n = createI18n({
 **验收标准**:
 
 - [ ] 性能重大提升
+  - VDOM diff 算法进一步优化
+  - Signal 模式性能调优
+  - Tree Shaking 优化增强
+  - 编译时优化增强
 - [ ] 完整生态系统
+  - DevTools 正式版（状态时间旅行、性能分析、信号依赖可视化）
+  - SSR/SSG 完善（流式渲染、组件级水合、静态站点生成）
+  - 跨平台渲染支持
 - [ ] 大型生产应用验证
+  - 至少 3 个中型以上项目采用
+  - 社区反馈收集与改进
 - [ ] 社区活跃度达标
+  - GitHub Stars 增长
+  - 活跃贡献者数量
+  - 社区插件生态
 
 ---
 
@@ -994,13 +1061,27 @@ pnpm 11.x 引入了更严格的构建脚本安全检查机制。在 monorepo 子
 
 ---
 
-**文档版本**: v1.12
+**文档版本**: v1.13
 **最后更新**: 2026-05-13
 **维护者**: LytJS Team
 
 ---
 
 ## 更新日志
+
+### v1.13 (2026-05-13)
+
+- ✅ 更新任务完成进度统计
+  - 明确标注已完成/进行中/未开始的任务状态
+  - 细化 DevTools 预览版与正式版的区别
+  - 细化 SSR 基础版与完善版的区别
+  - 补充跨平台渲染的详细计划
+  - 更新测试金字塔的当前状态
+  - 细化里程碑四（v7.0）的验收标准
+- ✅ 更新阶段三（v6.3）任务清单
+  - 标注 DevTools 正式版待完成的功能
+  - 标注 SSR/SSG 完善待完成的功能
+  - 标注模板 CLI 增强未完成
 
 ### v1.12 (2026-05-13)
 
