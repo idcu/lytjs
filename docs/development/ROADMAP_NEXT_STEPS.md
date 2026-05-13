@@ -208,6 +208,22 @@ test('full app', async ({ page }) => {
 - ✅ 修复 $subscribe 通知问题（在 action wrapper 中触发通知）
 - ✅ 添加 31 个单元测试，全部通过
 
+#### 2.2.6 UI 组件库开发
+**状态**: ✅ 已完成（v0.1.0，测试 10/10 通过）
+
+**已完成**:
+- ✅ 创建 UI 包基础结构（package.json、tsconfig.json、tsup.config.ts）
+- ✅ 实现 Button 组件（支持多种类型、尺寸、状态）
+- ✅ 实现 Input 组件（支持双向绑定、清除、密码显示）
+- ✅ 实现 Dialog 组件（支持模态、自定义内容、关闭确认）
+- ✅ 添加基础样式文件（CSS 变量、组件样式）
+- ✅ 添加 10 个单元测试，全部通过
+
+**组件特性**:
+- Button: type/size/disabled/loading/plain/round/circle
+- Input: modelValue/clearable/showPassword/prefix/suffix
+- Dialog: modelValue/title/width/closeOnClickModal/closeOnPressEscape
+
 **技术实现**:
 ```typescript
 // vdom/transition.ts 现在使用 TransitionEngine
@@ -363,14 +379,14 @@ import { Button, Input, Dialog } from '@lytjs/ui';
 **任务清单**:
 - [x] Router 包 v1.0（测试 67/67 通过）
 - [x] Store 包 v1.0（测试 31/31 通过）
-- [ ] UI 基础组件
+- [x] UI 组件库 v0.1（测试 10/10 通过）
 - [ ] 集成示例项目
 - [ ] 开发者工具预览版
 
 **交付物**:
 - ✅ @lytjs/router v1.0
 - ✅ @lytjs/store v1.0
-- ⏳ @lytjs/ui v0.1
+- ✅ @lytjs/ui v0.1
 - ⏳ 示例项目集合
 
 ### 3.3 阶段三：生态完善（v6.3）
@@ -644,13 +660,21 @@ pnpm 11.x 引入了更严格的构建脚本安全检查机制。在 monorepo 子
 
 ---
 
-**文档版本**: v1.3
+**文档版本**: v1.4
 **最后更新**: 2026-05-13
 **维护者**: LytJS Team
 
 ---
 
 ## 更新日志
+
+### v1.4 (2026-05-13)
+- ✅ UI 组件库 v0.1 完成（10/10 测试通过）
+- 实现 Button 组件（type/size/disabled/loading/plain/round/circle）
+- 实现 Input 组件（modelValue/clearable/showPassword/prefix/suffix）
+- 实现 Dialog 组件（modelValue/title/width/closeOnClickModal/closeOnPressEscape）
+- 添加基础样式文件（CSS 变量、组件样式）
+- 修复 vitest 配置（正则表达式匹配子路径导入）
 
 ### v1.3 (2026-05-13)
 - ✅ Router 包 v1.0 完成（67/67 测试通过）
