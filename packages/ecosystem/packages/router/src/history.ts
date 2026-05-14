@@ -13,8 +13,7 @@ import type {
   NavigationFailure,
   NavigationInfo,
 } from './types';
-import { NavigationFailureType } from './types';
-import { createRouteLocation, isSameRouteLocation } from './location';
+import { createRouteLocation } from './location';
 import { parseFullPath, resolveFullPath } from './matcher';
 
 // ===== Base History =====
@@ -42,7 +41,7 @@ function createBaseHistory(base: string): {
   return {
     listeners,
     currentLocation,
-    pushState(location, data) {
+    pushState(location, _data) {
       currentLocation.path = location.path;
       currentLocation.fullPath = location.fullPath;
       currentLocation.query = location.query;
@@ -52,7 +51,7 @@ function createBaseHistory(base: string): {
       currentLocation.meta = location.meta;
       currentLocation.name = location.name;
     },
-    replaceState(location, data) {
+    replaceState(location, _data) {
       currentLocation.path = location.path;
       currentLocation.fullPath = location.fullPath;
       currentLocation.query = location.query;
@@ -309,7 +308,6 @@ export function createMemoryHistory(initial: string = '/'): RouterHistory {
     createBaseHistory('/');
 
   const entries: string[] = [initial];
-  let index = 0;
   let currentIndex = 0;
 
   // Set initial location
@@ -361,7 +359,7 @@ export function createMemoryHistory(initial: string = '/'): RouterHistory {
       const from = { ...currentLocation };
       currentIndex = nextIndex;
 
-      const { path, query, hash } = parseFullPath(entries[currentIndex]);
+      const { path, query, hash } = parseFullPath(entries[currentIndex] as string);
       const to = createRouteLocation(path, query, hash);
       pushState(to);
 

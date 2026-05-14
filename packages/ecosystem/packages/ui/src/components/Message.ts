@@ -4,8 +4,6 @@
  * 消息提示组件，用于展示操作反馈信息
  */
 
-import { createVNode, type VNode, render } from '@lytjs/vdom';
-
 export type MessageType = 'success' | 'warning' | 'info' | 'error';
 
 export interface MessageOptions {
@@ -116,4 +114,4 @@ export const Message = {
   },
 };
 
-export type { MessageProps, MessageOptions, MessageType } from './types';
+export default Message;

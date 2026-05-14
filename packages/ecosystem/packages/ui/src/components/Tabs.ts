@@ -113,7 +113,7 @@ export const Tabs = defineComponent({
           // 找到下一个启用的标签页
           for (let i = 1; i <= panes.length; i++) {
             const nextIndex = (activeIndex() + i) % panes.length;
-            if (!panes[nextIndex].props.disabled) {
+            if (panes[nextIndex] && !panes[nextIndex].props.disabled) {
               newIndex = nextIndex;
               break;
             }
@@ -125,7 +125,7 @@ export const Tabs = defineComponent({
           // 找到上一个启用的标签页
           for (let i = 1; i <= panes.length; i++) {
             const prevIndex = (activeIndex() - i + panes.length) % panes.length;
-            if (!panes[prevIndex].props.disabled) {
+            if (panes[prevIndex] && !panes[prevIndex].props.disabled) {
               newIndex = prevIndex;
               break;
             }
@@ -134,13 +134,14 @@ export const Tabs = defineComponent({
         case 'Home':
           e.preventDefault();
           // 找到第一个启用的标签页
-          newIndex = panes.findIndex(pane => !pane.props.disabled);
+          newIndex = panes.findIndex(pane => pane != null && pane.props != null && !pane.props.disabled);
           break;
         case 'End':
           e.preventDefault();
           // 找到最后一个启用的标签页
           for (let i = panes.length - 1; i >= 0; i--) {
-            if (!panes[i].props.disabled) {
+            const pane = panes[i];
+            if (pane && pane.props && !pane.props.disabled) {
               newIndex = i;
               break;
             }

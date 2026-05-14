@@ -5,7 +5,7 @@
  */
 
 import type { VNode } from '@lytjs/vdom';
-import { isString, isArray } from '@lytjs/common-is';
+import { isString } from '@lytjs/common-is';
 import { renderToHtml } from './render';
 import { promises as fs } from 'fs';
 import { join, dirname } from 'path';
@@ -214,7 +214,7 @@ export async function writeStaticFiles(
   options?: SSGOptions
 ): Promise<void> {
   const resolvedOptions = { ...DEFAULT_SSG_OPTIONS, ...options };
-  const { outDir, generateSitemap, siteName } = resolvedOptions;
+  const { outDir, generateSitemap } = resolvedOptions;
 
   // 验证页面配置
   const errors = validatePages(pages);
@@ -338,21 +338,27 @@ export function validatePages(pages: SSGPage[]): string[] {
 
   for (let i = 0; i < pages.length; i++) {
     const page = pages[i];
+    if (!page) {
+      errors.push(`页面 ${i}: 无效的页面配置`);
+      continue;
+    }
+
+    const pagePath = page.path;
 
     // 检查 path
-    if (!page.path || !isString(page.path)) {
+    if (!pagePath || !isString(pagePath)) {
       errors.push(`页面 ${i}: path 必须是非空字符串`);
       continue;
     }
 
     // 检查 component
     if (!page.component) {
-      errors.push(`页面 "${page.path}": component 不能为空`);
+      errors.push(`页面 "${pagePath}": component 不能为空`);
     }
 
     // 检查路径合法性
-    if (isString(page.path) && !page.path.startsWith('/')) {
-      errors.push(`页面 "${page.path}": path 必须以 / 开头`);
+    if (isString(pagePath) && !pagePath.startsWith('/')) {
+      errors.push(`页面 "${pagePath}": path 必须以 / 开头`);
     }
   }
 

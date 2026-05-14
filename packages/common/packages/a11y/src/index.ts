@@ -220,7 +220,7 @@ export function getGroupA11yProps(props: A11yProps & { role?: 'radiogroup' | 'gr
  * 合并多个 a11y 属性对象
  */
 export function mergeA11yProps(...propsList: Array<Record<string, any>>): Record<string, any> {
-  const result = {};
+  const result: Record<string, any> = {};
   for (const props of propsList) {
     for (const [key, value] of Object.entries(props)) {
       if (value !== undefined && value !== null) {

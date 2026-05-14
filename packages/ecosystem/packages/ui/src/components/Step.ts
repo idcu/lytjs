@@ -6,7 +6,7 @@
 
 import type { StepProps, StepSlots, StepSetupProps } from './types';
 import { defineComponent } from '@lytjs/component';
-import { createVNode, type VNode } from '@lytjs/vdom';
+import { createVNode, createTextVNode, type VNode } from '@lytjs/vdom';
 import { isString, isObject } from '@lytjs/common-is';
 import { mergeA11yProps } from '@lytjs/common-a11y';
 
@@ -19,10 +19,10 @@ export const Step = defineComponent({
   props: {
     title: { type: String, default: '' },
     description: { type: String, default: '' },
-    icon: { type: [String, Object], default: '' },
+    icon: { type: [String, Object] as any, default: '' },
     status: { type: String as () => 'wait' | 'process' | 'finish' | 'error' | 'success', default: '' },
     class: { type: String, default: '' },
-    style: { type: [String, Object], default: '' },
+    style: { type: [String, Object] as any, default: '' },
     id: { type: String, default: '' },
     ariaLabel: { type: String, default: '' },
     ariaDescribedBy: { type: String, default: '' },
@@ -55,12 +55,12 @@ export const Step = defineComponent({
       if (slots.icon) {
         const iconContent = slots.icon();
         if (Array.isArray(iconContent)) {
-          return createVNode('div', { class: 'lyt-step__icon' }, iconContent);
+          return createVNode('div', { class: 'lyt-step__icon' }, iconContent as VNode[]);
         }
       }
       if (_props.icon) {
         if (typeof _props.icon === 'string') {
-          return createVNode('div', { class: 'lyt-step__icon' }, [_props.icon]);
+          return createVNode('div', { class: 'lyt-step__icon' }, [createTextVNode(_props.icon)]);
         }
         return createVNode('div', { class: 'lyt-step__icon' }, [_props.icon as VNode]);
       }
@@ -79,10 +79,10 @@ export const Step = defineComponent({
         if (slots.title) {
           const titleContent = slots.title();
           if (Array.isArray(titleContent)) {
-            titleChildren.push(...titleContent);
+            titleChildren.push(...(titleContent as VNode[]));
           }
         } else {
-          titleChildren.push(_props.title);
+          titleChildren.push(createTextVNode(_props.title));
         }
         contentChildren.push(createVNode('div', { class: 'lyt-step__title' }, titleChildren));
       }
@@ -92,10 +92,10 @@ export const Step = defineComponent({
         if (slots.description) {
           const descContent = slots.description();
           if (Array.isArray(descContent)) {
-            descChildren.push(...descContent);
+            descChildren.push(...(descContent as VNode[]));
           }
         } else {
-          descChildren.push(_props.description);
+          descChildren.push(createTextVNode(_props.description));
         }
         contentChildren.push(createVNode('div', { class: 'lyt-step__description' }, descChildren));
       }

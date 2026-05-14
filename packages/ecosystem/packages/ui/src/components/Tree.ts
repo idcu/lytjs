@@ -7,7 +7,7 @@
 import { defineComponent } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import { signal } from '@lytjs/reactivity';
-import { getButtonA11yProps, getGroupA11yProps, getInputControlA11yProps, mergeA11yProps } from '@lytjs/common-a11y';
+import { getButtonA11yProps, getInputControlA11yProps, mergeA11yProps } from '@lytjs/common-a11y';
 import type { TreeNode, TreeSetupProps } from './types';
 
 export interface FlattenNode extends TreeNode {
@@ -181,14 +181,14 @@ export const Tree = defineComponent({
         p.class,
       ].filter(Boolean).join(' ');
 
-      const a11yProps = getGroupA11yProps({
+      const a11yProps: Record<string, any> = {
         id: p.id,
-        ariaLabel: p.ariaLabel,
-        ariaDescribedBy: p.ariaDescribedBy,
-        role: 'tree'
-      });
+        role: 'tree',
+        'aria-label': p.ariaLabel,
+        'aria-describedby': p.ariaDescribedBy,
+      };
 
-      return createVNode('div', mergeA11yProps(a11yProps, { class: treeClass }), flatData.map(node => renderTreeNode(node)));
+      return createVNode('div', { ...a11yProps, class: treeClass }, flatData.map(node => renderTreeNode(node)));
     };
   },
 });

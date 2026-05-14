@@ -5,7 +5,7 @@
  */
 
 import type { VNode } from '@lytjs/vdom';
-import { isString, isNumber, isArray, isObject, isFunction, isPromise } from '@lytjs/common-is';
+import { isString, isNumber, isArray, isObject, isFunction } from '@lytjs/common-is';
 import { renderToString } from './render';
 
 /** 流式渲染配置选项 */
@@ -288,7 +288,6 @@ export function renderToStreamAsync(
     onError,
     prefetchContext,
     onDataPrefetched,
-    progressiveHydration,
   } = options || {};
 
   const encoder = new TextEncoder();
@@ -383,7 +382,7 @@ async function collectAndPrefetchData(
     }
     // 继续处理子节点
     if (node.children) {
-      const childData = await collectAndPrefetchData(node.children as VNode, context);
+      const childData = await collectAndPrefetchData(node.children as unknown as VNode, context);
       Object.assign(result, childData);
     }
     return result;
@@ -392,7 +391,7 @@ async function collectAndPrefetchData(
   // 处理元素类型
   if (isString(node.type)) {
     if (node.children) {
-      const childData = await collectAndPrefetchData(node.children as VNode, context);
+      const childData = await collectAndPrefetchData(node.children as unknown as VNode, context);
       Object.assign(result, childData);
     }
     return result;

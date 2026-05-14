@@ -50,6 +50,10 @@ import { Step } from '../src/components/Step';
 import { Carousel } from '../src/components/Carousel';
 import { CarouselItem } from '../src/components/CarouselItem';
 import { Popconfirm } from '../src/components/Popconfirm';
+import { DatePicker } from '../src/components/DatePicker';
+import { RichTextEditor } from '../src/components/RichTextEditor';
+import { Pagination } from '../src/components/Pagination';
+import { Transition } from '../src/components/Transition';
 
 // ===== Button 组件测试 =====
 describe('Button', () => {
@@ -991,6 +995,10 @@ describe('exports', () => {
       expect(Carousel).toBeDefined();
       expect(CarouselItem).toBeDefined();
       expect(Popconfirm).toBeDefined();
+      expect(DatePicker).toBeDefined();
+      expect(RichTextEditor).toBeDefined();
+      expect(Pagination).toBeDefined();
+      expect(Transition).toBeDefined();
   });
 });
 
@@ -1341,5 +1349,119 @@ describe('TreeSelect', () => {
     expect(props.filterable.default).toBe(false);
     expect(props.defaultExpandAll.default).toBe(false);
     expect(typeof props.defaultExpandedKeys.default).toBe('function');
+  });
+});
+
+// ===== DatePicker 组件测试 =====
+describe('DatePicker', () => {
+  it('should render DatePicker with default props', () => {
+    const { DatePicker } = require('../src/components/DatePicker');
+    expect(DatePicker).toBeDefined();
+    expect(DatePicker.name).toBe('LytDatePicker');
+  });
+
+  it('should have correct props definition', () => {
+    const { DatePicker } = require('../src/components/DatePicker');
+    const props = DatePicker.props;
+    expect(props.modelValue).toBeDefined();
+    expect(props.type).toBeDefined();
+    expect(props.placeholder).toBeDefined();
+    expect(props.format).toBeDefined();
+    expect(props.valueFormat).toBeDefined();
+    expect(props.disabled).toBeDefined();
+    expect(props.clearable).toBeDefined();
+    expect(props.editable).toBeDefined();
+    expect(props.readonly).toBeDefined();
+  });
+
+  it('should have default values for props', () => {
+    const { DatePicker } = require('../src/components/DatePicker');
+    const props = DatePicker.props;
+    expect(props.type.default).toBe('date');
+    expect(props.placeholder.default).toBe('请选择日期');
+    expect(props.disabled.default).toBe(false);
+    expect(props.clearable.default).toBe(true);
+    expect(props.editable.default).toBe(true);
+    expect(props.readonly.default).toBe(false);
+  });
+});
+
+// ===== RichTextEditor 组件测试 =====
+describe('RichTextEditor', () => {
+  it('should render RichTextEditor with default props', () => {
+    const { RichTextEditor } = require('../src/components/RichTextEditor');
+    expect(RichTextEditor).toBeDefined();
+    expect(RichTextEditor.name).toBe('LytRichTextEditor');
+  });
+
+  it('should have correct props definition', () => {
+    const { RichTextEditor } = require('../src/components/RichTextEditor');
+    const props = RichTextEditor.props;
+    expect(props.modelValue).toBeDefined();
+    expect(props.placeholder).toBeDefined();
+    expect(props.disabled).toBeDefined();
+    expect(props.height).toBeDefined();
+  });
+
+  it('should have default values for props', () => {
+    const { RichTextEditor } = require('../src/components/RichTextEditor');
+    const props = RichTextEditor.props;
+    expect(props.modelValue.default).toBe('');
+    expect(props.placeholder.default).toBe('请输入内容...');
+    expect(props.disabled.default).toBe(false);
+    expect(props.height.default).toBe('400px');
+  });
+});
+
+// ===== Pagination 组件测试 =====
+describe('Pagination', () => {
+  it('should render Pagination with default props', () => {
+    const { Pagination } = require('../src/components/Pagination');
+    expect(Pagination).toBeDefined();
+    expect(Pagination.name).toBe('LytPagination');
+  });
+
+  it('should have correct props definition', () => {
+    const { Pagination } = require('../src/components/Pagination');
+    const props = Pagination.props;
+    expect(props.total).toBeDefined();
+    expect(props.pageSize).toBeDefined();
+    expect(props.currentPage).toBeDefined();
+    expect(props.layout).toBeDefined();
+    expect(props.pageSizes).toBeDefined();
+    expect(props.background).toBeDefined();
+  });
+
+  it('should have default values for props', () => {
+    const { Pagination } = require('../src/components/Pagination');
+    const props = Pagination.props;
+    expect(props.total.default).toBe(0);
+    expect(props.pageSize.default).toBe(10);
+    expect(props.currentPage.default).toBe(1);
+    expect(props.background.default).toBe(false);
+    expect(typeof props.pageSizes.default).toBe('function');
+  });
+});
+
+// ===== Transition 组件测试 =====
+describe('Transition', () => {
+  it('should render Transition with default props', () => {
+    const { Transition } = require('../src/components/Transition');
+    expect(Transition).toBeDefined();
+    expect(Transition.name).toBe('LytTransition');
+  });
+
+  it('should have correct props definition', () => {
+    const { Transition } = require('../src/components/Transition');
+    const props = Transition.props;
+    expect(props.name).toBeDefined();
+    expect(props.mode).toBeDefined();
+    expect(props.duration).toBeDefined();
+  });
+
+  it('should have default values for props', () => {
+    const { Transition } = require('../src/components/Transition');
+    const props = Transition.props;
+    expect(props.name.default).toBe('fade');
   });
 });

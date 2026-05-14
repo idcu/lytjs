@@ -6,7 +6,6 @@
  */
 
 import type { RouteLocationNormalized } from '../types';
-import { useRouter } from '../composables/useRouter';
 import { useRoute } from '../composables/useRoute';
 import { computedSignal as computed } from '@lytjs/reactivity';
 
@@ -31,11 +30,11 @@ export const RouterView = {
   },
 
   setup(props: RouterViewProps) {
-    const router = useRouter();
     const route = useRoute();
 
     const matchedComponent = computed(() => {
-      const matched = route.matched;
+      const currentRoute = route();
+      const matched = currentRoute.matched;
       // Find the matched record for this view depth
       for (const record of matched) {
         if (record.components && record.components[props.name!]) {
@@ -49,7 +48,7 @@ export const RouterView = {
     });
 
     return () => {
-      const matched = matchedComponent.value;
+      const matched = matchedComponent();
       if (!matched) return null;
 
       const { component, record } = matched;
@@ -58,13 +57,14 @@ export const RouterView = {
 
       // Compute props from route record
       let routeProps: Record<string, any> = {};
+      const currentRoute = route();
       if (record.props) {
         if (typeof record.props === 'function') {
-          routeProps = record.props(route);
+          routeProps = record.props(currentRoute);
         } else if (typeof record.props === 'object') {
           routeProps = record.props;
         } else if (record.props === true) {
-          routeProps = route.params;
+          routeProps = currentRoute.params;
         }
       }
 

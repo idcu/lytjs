@@ -11,14 +11,11 @@ import { isString, isObject } from '@lytjs/common-is';
 import { signal } from '@lytjs/reactivity';
 import { mergeA11yProps } from '@lytjs/common-a11y';
 
-/**
- * Avatar 组件
- */
 export const Avatar = defineComponent({
   name: 'LytAvatar',
 
   props: {
-    size: { type: [Number, String], default: 'default' },
+    size: { type: [Number, String] as any, default: 'default' },
     shape: { type: String, default: 'circle' },
     icon: { type: String, default: '' },
     src: { type: String, default: '' },
@@ -26,14 +23,14 @@ export const Avatar = defineComponent({
     alt: { type: String, default: '' },
     fit: { type: String, default: 'cover' },
     class: { type: String, default: '' },
-    style: { type: [String, Object], default: '' },
+    style: { type: [String, Object] as any, default: '' },
     id: { type: String, default: '' },
     ariaLabel: { type: String, default: '' },
     ariaDescribedBy: { type: String, default: '' },
     onError: { type: Function, default: undefined },
   },
 
-  setup(props: Record<string, unknown>, { slots, emit }) {
+  setup(props: Record<string, unknown>, { slots }) {
     const _props = props as AvatarSetupProps;
     const isImageExist = signal(true);
 
@@ -46,17 +43,17 @@ export const Avatar = defineComponent({
         default: '40px',
         large: '48px',
       };
-      return sizeMap[_props.size] || sizeMap.default;
+      return sizeMap[_props.size] || '40px';
     };
 
-    const handleError = (e: Event) => {
+    const handleError = () => {
       if (_props.onError) {
         const result = _props.onError();
         if (result === false) {
           return;
         }
       }
-      isImageExist.value = false;
+      isImageExist.set(false);
     };
 
     const getAvatarClass = () => {
@@ -87,26 +84,28 @@ export const Avatar = defineComponent({
 
     return () => {
       const children: VNode[] = [];
-      
-      if (_props.src && isImageExist.value) {
+
+      if (_props.src && isImageExist()) {
         children.push(createVNode('img', {
           class: 'lyt-avatar__img',
           src: _props.src,
-          srcset: _props.srcSet,
-          alt: _props.alt,
+          srcset: _props.srcSet || undefined,
+          alt: _props.alt || undefined,
           style: {
             objectFit: _props.fit,
           },
           onError: handleError,
-        }));
+        }, []));
       } else if (_props.icon) {
         children.push(createVNode('span', {
           class: ['lyt-avatar__icon', _props.icon],
-        }));
+        }, []));
       } else if (slots.default) {
         const slotContent = slots.default();
         if (Array.isArray(slotContent)) {
-          children.push(...slotContent);
+          children.push(...(slotContent as VNode[]));
+        } else if (slotContent) {
+          children.push(slotContent as VNode);
         }
       }
 

@@ -12,7 +12,6 @@ import type {
   NavigationGuard,
   NavigationFailure,
   NavigationGuardNext,
-  NavigationGuardReturn,
   RouteParams,
 } from './types';
 import { NavigationFailureType } from './types';
@@ -135,7 +134,7 @@ export function createRouter(options: RouterOptions): Router {
     const targetPath = resolved.path;
 
     // Check for name-based navigation with unknown route name
-    if (typeof to !== 'string' && to.name !== undefined && !resolveName(to.name, to.params)) {
+    if (typeof to !== 'string' && to.name !== null && to.name !== undefined && !resolveName(to.name, to.params)) {
       return {
         type: NavigationFailureType.aborted,
         from: currentRoute(),
@@ -155,8 +154,9 @@ export function createRouter(options: RouterOptions): Router {
     }
 
     // Build the target location
+    const lastMatched = matched[matched.length - 1];
     const targetLocation: RouteLocationNormalized = {
-      name: matched[matched.length - 1].record.name,
+      name: lastMatched?.record?.name ?? null,
       path: targetPath,
       fullPath: resolved.path + (Object.keys(resolved.query).length ? '?' + new URLSearchParams(resolved.query as any).toString() : '') + (resolved.hash ? `#${resolved.hash}` : ''),
       query: resolved.query,
@@ -297,7 +297,7 @@ export function createRouter(options: RouterOptions): Router {
   function noop() {}
 
   // Listen to history changes (popstate/hashchange)
-  options.history.listen((to, from, info) => {
+  options.history.listen((to, _from, info) => {
     if (info.type === 'pop') {
       // Re-resolve the route for the new location
       const { matched, params, meta } = resolveRoute(to.path);

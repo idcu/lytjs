@@ -6,10 +6,9 @@
 
 import { defineComponent } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
-import { isString, isObject } from '@lytjs/common-is';
-import type { RichTextEditorSetupProps, RichTextEditorSlots } from '../types';
+import { isString } from '@lytjs/common-is';
+import { signal } from '@lytjs/reactivity';
 
-/** 格式化命令 */
 type FormatCommand =
   | 'bold'
   | 'italic'
@@ -29,137 +28,115 @@ export const RichTextEditor = defineComponent({
 
   props: {
     modelValue: { type: String, default: '' },
-    placeholder: { type: String, default: '请输入内容...' },
+    placeholder: { type: String, default: '请输入内容' },
     disabled: { type: Boolean, default: false },
     readonly: { type: Boolean, default: false },
-    height: { type: String, default: '300px' },
     class: { type: String, default: '' },
-    style: { type: String, default: '' },
-    onInput: { type: Function, default: undefined },
-    onFocus: { type: Function, default: undefined },
-    onBlur: { type: Function, default: undefined },
+    style: { type: [String, Object] as any, default: '' },
+    onChange: { type: Function, default: undefined },
   },
 
-  setup(props: Record<string, unknown>, { slots }: { slots: RichTextEditorSlots }) {
-    const p = props as RichTextEditorSetupProps;
-    let editorElement: HTMLElement | null = null;
-
-    /** 执行格式化命令 */
-    const execCommand = (command: FormatCommand, value?: string) => {
-      if (!editorElement || p.disabled || p.readonly) return;
-      editorElement.focus();
-      document.execCommand(command, false, value);
-      syncValue();
+  setup(props: Record<string, unknown>, { slots, emit }) {
+    const _props = props as {
+      modelValue?: string;
+      placeholder?: string;
+      disabled?: boolean;
+      readonly?: boolean;
+      class?: string;
+      style?: string | Record<string, string>;
+      onChange?: (value: string) => void;
     };
 
-    /** 同步值 */
-    const syncValue = () => {
-      if (editorElement) {
-        const value = editorElement.innerHTML;
-        p.onInput?.(value);
-      }
+    const isFocused = signal(false);
+    const editorRef = { current: null as HTMLElement | null };
+
+    const execCommand = (command: FormatCommand) => {
+      if (_props.disabled || _props.readonly) return;
+
+      const selection = window.getSelection();
+      if (!selection || selection.rangeCount === 0) return;
+
+      document.execCommand(command, false);
+      handleInput();
     };
 
-    /** 初始化编辑器 */
-    const initEditor = (element: HTMLElement) => {
-      editorElement = element;
-      if (editorElement) {
-        editorElement.innerHTML = p.modelValue;
-        editorElement.contentEditable = String(!p.disabled && !p.readonly);
-      }
-    };
-
-    /** 处理输入 */
     const handleInput = () => {
-      syncValue();
+      if (_props.disabled || _props.readonly) return;
+      const content = editorRef.current?.innerHTML || '';
+      emit('update:modelValue', content);
+      _props.onChange?.(content);
     };
 
-    /** 处理焦点 */
-    const handleFocus = (event: FocusEvent) => {
-      p.onFocus?.(event);
+    const getEditorClass = () => {
+      const classes = ['lyt-rich-text-editor'];
+      if (isFocused()) classes.push('is-focused');
+      if (_props.disabled) classes.push('is-disabled');
+      if (_props.readonly) classes.push('is-readonly');
+      if (_props.class) classes.push(_props.class);
+      return classes.join(' ');
     };
 
-    /** 处理失焦 */
-    const handleBlur = (event: FocusEvent) => {
-      p.onBlur?.(event);
-    };
-
-    /** 获取按钮类名 */
-    const getButtonClass = (isActive: boolean) => {
-      return `lyt-rich-text-editor__toolbar-btn ${isActive ? 'lyt-rich-text-editor__toolbar-btn--active' : ''}`;
-    };
-
-    /** 创建工具栏按钮 */
-    const createToolbarButton = (
-      command: FormatCommand,
-      icon: string,
-      title: string,
-    ) => {
-      return createVNode(
-        'button',
-        {
-          class: getButtonClass(false),
-          type: 'button',
-          title,
-          disabled: p.disabled || p.readonly,
-          onClick: () => execCommand(command),
-        },
-        [icon],
-      );
-    };
+    const toolbarItems: { command: FormatCommand; icon: string; title: string }[] = [
+      { command: 'bold', icon: 'B', title: '粗体' },
+      { command: 'italic', icon: 'I', title: '斜体' },
+      { command: 'underline', icon: 'U', title: '下划线' },
+      { command: 'strikeThrough', icon: 'S', title: '删除线' },
+      { command: 'justifyLeft', icon: '◢', title: '左对齐' },
+      { command: 'justifyCenter', icon: '◤', title: '居中' },
+      { command: 'justifyRight', icon: '◣', title: '右对齐' },
+      { command: 'insertUnorderedList', icon: '•', title: '无序列表' },
+      { command: 'insertOrderedList', icon: '1.', title: '有序列表' },
+      { command: 'indent', icon: '→|', title: '缩进' },
+      { command: 'outdent', icon: '|←', title: '取消缩进' },
+      { command: 'removeFormat', icon: '×', title: '清除格式' },
+    ];
 
     return () => {
-      const toolbarButtons = [
-        createToolbarButton('bold', 'B', '粗体'),
-        createToolbarButton('italic', 'I', '斜体'),
-        createToolbarButton('underline', 'U', '下划线'),
-        createToolbarButton('strikeThrough', 'S', '删除线'),
-        createVNode('span', { class: 'lyt-rich-text-editor__toolbar-divider' }, []),
-        createToolbarButton('justifyLeft', '↩', '左对齐'),
-        createToolbarButton('justifyCenter', '↔', '居中对齐'),
-        createToolbarButton('justifyRight', '↪', '右对齐'),
-        createVNode('span', { class: 'lyt-rich-text-editor__toolbar-divider' }, []),
-        createToolbarButton('insertUnorderedList', '•', '无序列表'),
-        createToolbarButton('insertOrderedList', '1.', '有序列表'),
-        createToolbarButton('indent', '→', '缩进'),
-        createToolbarButton('outdent', '←', '减少缩进'),
-        createVNode('span', { class: 'lyt-rich-text-editor__toolbar-divider' }, []),
-        createToolbarButton('removeFormat', '✕', '清除格式'),
-      ];
+      const children: VNode[] = [];
 
-      const editorStyle = {
-        height: p.height,
-        ...(isString(p.style) ? {} : p.style),
-      };
+      const toolbarChildren: VNode[] = toolbarItems.map(item => {
+        const btn = createVNode('button', {
+          type: 'button',
+          class: 'lyt-rich-text-editor__toolbar-btn',
+          title: item.title,
+          disabled: _props.disabled || _props.readonly,
+          onClick: () => execCommand(item.command),
+        }, [createVNode('span', {}, item.icon)]);
+        return btn;
+      });
 
-      return createVNode(
-        'div',
-        {
-          class: `lyt-rich-text-editor ${p.class} ${p.disabled ? 'lyt-rich-text-editor--disabled' : ''} ${p.readonly ? 'lyt-rich-text-editor--readonly' : ''}`,
-          style: isString(p.style) ? p.style : undefined,
-        },
-        [
-          // 工具栏
-          createVNode(
-            'div',
-            { class: 'lyt-rich-text-editor__toolbar' },
-            slots.toolbar ? slots.toolbar() : toolbarButtons,
-          ),
-          // 编辑区域
-          createVNode('div', {
-            class: 'lyt-rich-text-editor__content',
-            ref: initEditor,
-            contenteditable: !p.disabled && !p.readonly,
-            'data-placeholder': p.placeholder,
-            style: editorStyle,
-            onInput: handleInput,
-            onFocus: handleFocus,
-            onBlur: handleBlur,
-          }),
-        ],
-      );
+      children.push(createVNode('div', { class: 'lyt-rich-text-editor__toolbar' }, toolbarChildren));
+
+      const editorContent = _props.modelValue || '';
+      children.push(createVNode('div', {
+        ref: editorRef,
+        class: 'lyt-rich-text-editor__content',
+        contentEditable: !_props.disabled && !_props.readonly,
+        'data-placeholder': _props.placeholder,
+        onInput: handleInput,
+        onFocus: () => isFocused.set(true),
+        onBlur: () => isFocused.set(false),
+        innerHTML: editorContent,
+      }));
+
+      if (slots.footer) {
+        const footerContent = slots.footer();
+        children.push(createVNode('div', { class: 'lyt-rich-text-editor__footer' }, footerContent as VNode[]));
+      }
+
+      const editorStyle: Record<string, string> = {};
+      if (_props.style) {
+        if (isString(_props.style)) {
+          Object.assign(editorStyle, { cssText: _props.style });
+        } else {
+          Object.assign(editorStyle, _props.style);
+        }
+      }
+
+      return createVNode('div', {
+        class: getEditorClass(),
+        style: editorStyle,
+      }, children);
     };
   },
 });
-
-export type { RichTextEditorProps, RichTextEditorSlots, RichTextEditorSetupProps } from '../types';

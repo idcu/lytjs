@@ -622,19 +622,7 @@ export interface BadgeSetupProps extends Record<string, unknown> {
   style?: string | Record<string, string>;
 }
 
-export interface BadgeProps {
-  count?: number;
-  maxCount?: number;
-  dot?: boolean;
-  showZero?: boolean;
-  type?: string;
-  offset?: number[];
-  class?: string;
-  style?: string | Record<string, string>;
-  id?: string;
-  ariaLabel?: string;
-  ariaDescribedBy?: string;
-}
+
 
 // ===== Tag 组件 =====
 
@@ -2307,99 +2295,7 @@ export interface PopconfirmSetupProps extends Record<string, unknown> {
   onCancel?: () => void;
 }
 
-// ===== Transfer 穿梭框组件 =====
-export interface TransferItem {
-  key: string | number;
-  label: string;
-  disabled?: boolean;
-  [key: string]: unknown;
-}
 
-export interface TransferProps {
-  data?: TransferItem[];
-  value?: (string | number)[];
-  filterable?: boolean;
-  filterPlaceholder?: string;
-  filterMethod?: (query: string, item: TransferItem) => boolean;
-  titles?: string[];
-  buttonTexts?: string[];
-  renderContent?: (item: TransferItem) => VNode;
-  class?: string;
-  style?: string | Record<string, string>;
-  onChange?: (value: (string | number)[], direction: 'left' | 'right', movedKeys: (string | number)[]) => void;
-}
-
-export interface TransferSlots {
-  default?: () => VNode[];
-  leftFooter?: () => VNode[];
-  rightFooter?: () => VNode[];
-}
-
-export interface TransferSetupProps extends Record<string, unknown> {
-  data: TransferItem[];
-  value: (string | number)[];
-  filterable: boolean;
-  filterPlaceholder: string;
-  titles: string[];
-  buttonTexts: string[];
-  class: string;
-  style?: string | Record<string, string>;
-  onChange?: (value: (string | number)[], direction: 'left' | 'right', movedKeys: (string | number)[]) => void;
-}
-
-// ===== TreeSelect 树形选择器组件 =====
-export interface TreeSelectNode {
-  value: string | number;
-  label: string;
-  disabled?: boolean;
-  children?: TreeSelectNode[];
-  [key: string]: unknown;
-}
-
-export interface TreeSelectProps {
-  data?: TreeSelectNode[];
-  value?: string | number;
-  placeholder?: string;
-  multiple?: boolean;
-  clearable?: boolean;
-  filterable?: boolean;
-  filterPlaceholder?: string;
-  filterMethod?: (node: TreeSelectNode, query: string) => boolean;
-  nodeKey?: string;
-  props?: Record<string, string>;
-  renderAfterExpand?: boolean;
-  expandOnClickNode?: boolean;
-  checkOnClickNode?: boolean;
-  autoExpandParent?: boolean;
-  defaultExpandAll?: boolean;
-  defaultExpandedKeys?: (string | number)[];
-  class?: string;
-  style?: string | Record<string, string>;
-  id?: string;
-  ariaLabel?: string;
-  ariaDescribedBy?: string;
-  onChange?: (value: string | number | (string | number)[], nodeData: TreeSelectNode | TreeSelectNode[]) => void;
-}
-
-export interface TreeSelectSlots {
-  default?: () => VNode[];
-  empty?: () => VNode[];
-}
-
-export interface TreeSelectSetupProps extends Record<string, unknown> {
-  data: TreeSelectNode[];
-  value: string | number;
-  placeholder: string;
-  multiple: boolean;
-  clearable: boolean;
-  filterable: boolean;
-  class: string;
-  style?: string | Record<string, string>;
-  id: string;
-  ariaLabel: string;
-  ariaDescribedBy: string;
-  onChange?: (value: string | number | (string | number)[], nodeData: TreeSelectNode | TreeSelectNode[]) => void;
-}
 
 export type { VNode, Component };
 

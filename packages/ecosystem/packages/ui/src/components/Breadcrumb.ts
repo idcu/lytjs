@@ -1,25 +1,11 @@
 /**
- * @lytjs/ui - Breadcrumb 组件
+ * @lytjs/ui - Breadcrumb 面包屑组件
  *
  * 面包屑导航组件，显示当前页面在网站层级中的位置
  */
 
 import { defineComponent } from '@lytjs/component';
-import { createVNode, Fragment, type VNode } from '@lytjs/vdom';
-
-export interface BreadcrumbItem {
-  to?: string;
-  replace?: boolean;
-  disabled?: boolean;
-}
-
-export interface BreadcrumbItemSetupProps extends BreadcrumbItem {
-  label: string;
-}
-
-export interface BreadcrumbItemSlots {
-  default?: () => VNode[];
-}
+import { createVNode, type VNode } from '@lytjs/vdom';
 
 export const BreadcrumbItem = defineComponent({
   name: 'LytBreadcrumbItem',
@@ -31,42 +17,34 @@ export const BreadcrumbItem = defineComponent({
     label: { type: String, default: '' },
   },
 
-  setup(props: BreadcrumbItemSetupProps, { slots }: { slots: BreadcrumbItemSlots }) {
+  setup(props: Record<string, unknown>) {
     const handleClick = () => {
       if (props.disabled) return;
       if (props.to) {
         if (props.replace) {
-          window.location.replace(props.to);
+          window.location.replace(props.to as string);
         } else {
-          window.location.href = props.to;
+          window.location.href = props.to as string;
         }
       }
     };
 
     return () => {
-      return createVNode(Fragment, {}, [
-        createVNode('span', {
-          class: [
-            'lyt-breadcrumb__item',
-            props.disabled ? 'lyt-breadcrumb__item--disabled' : '',
-          ].filter(Boolean).join(' '),
-          onClick: handleClick,
-        }, [
-          slots.default ? slots.default() : props.label,
-        ]),
-      ]);
+      const children: VNode[] = [];
+      if (props.label) {
+        children.push(createVNode('span', {}, props.label as string));
+      }
+
+      return createVNode('span', {
+        class: [
+          'lyt-breadcrumb__item',
+          props.disabled ? 'lyt-breadcrumb__item--disabled' : '',
+        ].filter(Boolean).join(' '),
+        onClick: handleClick,
+      }, children);
     };
   },
 });
-
-export interface BreadcrumbProps {
-  separator: string;
-  separatorClass: string;
-}
-
-export interface BreadcrumbSlots {
-  default?: () => VNode[];
-}
 
 export const Breadcrumb = defineComponent({
   name: 'LytBreadcrumb',
@@ -76,26 +54,22 @@ export const Breadcrumb = defineComponent({
     separatorClass: { type: String, default: '' },
   },
 
-  setup(_props: BreadcrumbProps, { slots }: { slots: BreadcrumbSlots }) {
+  setup(props: Record<string, unknown>) {
     return () => {
-      const items = slots.default?.() || [];
-      
+      const items: VNode[] = [];
+
       const content: VNode[] = [];
-      
+
       items.forEach((item, index) => {
         if (index > 0) {
           content.push(createVNode('span', {
-            class: ['lyt-breadcrumb__separator', _props.separatorClass].filter(Boolean).join(' '),
-          }, [_props.separator]));
+            class: ['lyt-breadcrumb__separator', props.separatorClass as string].filter(Boolean).join(' '),
+          }, [createVNode('span', {}, props.separator as string)]));
         }
-        content.push(item);
+        content.push(item as VNode);
       });
 
-      return createVNode('div', { class: 'lyt-breadcrumb' }, [
-        content,
-      ]);
+      return createVNode('div', { class: 'lyt-breadcrumb' }, content);
     };
   },
 });
-
-export type { BreadcrumbProps, BreadcrumbSlots, BreadcrumbItemProps, BreadcrumbItemSlots } from './types';

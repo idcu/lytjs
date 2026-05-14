@@ -6,7 +6,7 @@
 
 import type { TimelineItemProps, TimelineItemSlots, TimelineItemSetupProps } from './types';
 import { defineComponent } from '@lytjs/component';
-import { createVNode, type VNode } from '@lytjs/vdom';
+import { createVNode, createTextVNode, type VNode } from '@lytjs/vdom';
 import { isString, isObject } from '@lytjs/common-is';
 import { mergeA11yProps } from '@lytjs/common-a11y';
 
@@ -20,12 +20,12 @@ export const TimelineItem = defineComponent({
     color: { type: String, default: '' },
     type: { type: String as () => 'primary' | 'success' | 'warning' | 'danger' | 'info', default: '' },
     size: { type: String as () => 'large' | 'default' | 'small', default: 'default' },
-    dot: { type: [String, Object], default: '' },
+    dot: { type: [String, Object] as any, default: '' },
     timestamp: { type: String, default: '' },
     placement: { type: String as () => 'top' | 'bottom', default: 'bottom' },
     hideTimestamp: { type: Boolean, default: false },
     class: { type: String, default: '' },
-    style: { type: [String, Object], default: '' },
+    style: { type: [String, Object] as any, default: '' },
     id: { type: String, default: '' },
     ariaLabel: { type: String, default: '' },
     ariaDescribedBy: { type: String, default: '' },
@@ -64,12 +64,12 @@ export const TimelineItem = defineComponent({
       if (slots.dot) {
         const dotContent = slots.dot();
         if (Array.isArray(dotContent)) {
-          return createVNode('div', { class: 'lyt-timeline-item__dot' }, dotContent);
+          return createVNode('div', { class: 'lyt-timeline-item__dot' }, dotContent as VNode[]);
         }
       }
       if (_props.dot) {
         if (typeof _props.dot === 'string') {
-          return createVNode('div', { class: 'lyt-timeline-item__dot' }, [_props.dot]);
+          return createVNode('div', { class: 'lyt-timeline-item__dot' }, [createTextVNode(_props.dot)]);
         }
         return createVNode('div', { class: 'lyt-timeline-item__dot' }, [_props.dot as VNode]);
       }
@@ -85,14 +85,14 @@ export const TimelineItem = defineComponent({
       const wrapperChildren: VNode[] = [];
       
       if (_props.timestamp && !_props.hideTimestamp) {
-        wrapperChildren.push(createVNode('div', { class: 'lyt-timeline-item__timestamp' }, [_props.timestamp]));
+        wrapperChildren.push(createVNode('div', { class: 'lyt-timeline-item__timestamp' }, [createTextVNode(_props.timestamp)]));
       }
       
       const contentChildren: VNode[] = [];
       if (slots.default) {
         const slotContent = slots.default();
         if (Array.isArray(slotContent)) {
-          contentChildren.push(...slotContent);
+          contentChildren.push(...(slotContent as VNode[]));
         }
       }
       wrapperChildren.push(createVNode('div', { class: 'lyt-timeline-item__content' }, contentChildren));

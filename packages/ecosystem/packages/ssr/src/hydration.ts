@@ -5,7 +5,7 @@
  * 用于 SSR 输出中嵌入客户端水合所需的信息
  */
 
-import type { VNode } from '@lytjs/vdom';
+import type { VNode, VNodeChildren } from '@lytjs/vdom';
 import { isString, isNumber, isArray, isObject, isFunction, isNullish } from '@lytjs/common-is';
 
 /** 水合策略类型 */
@@ -136,14 +136,14 @@ export function createHydrationMarkers(vnode: VNode): VNode {
 
     // 递归处理子节点
     const children = getVNodeChildren(node);
-    let processedChildren = children;
+    let processedChildren: VNodeChildren = children;
     if (children !== null && !isString(children) && !isNumber(children)) {
       if (isArray(children)) {
         processedChildren = children.map(child =>
           createHydrationMarkers(child as VNode)
         );
       } else if (isObject(children)) {
-        processedChildren = createHydrationMarkers(children as VNode);
+        processedChildren = [createHydrationMarkers(children as VNode)];
       }
     }
 
@@ -164,7 +164,7 @@ export function createHydrationMarkers(vnode: VNode): VNode {
       } else if (isObject(children)) {
         return {
           ...node,
-          children: createHydrationMarkers(children as VNode),
+          children: [createHydrationMarkers(children as VNode)],
         } as VNode;
       }
     }

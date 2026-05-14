@@ -10,18 +10,15 @@ import { createVNode, type VNode } from '@lytjs/vdom';
 import { isString, isObject } from '@lytjs/common-is';
 import { mergeA11yProps } from '@lytjs/common-a11y';
 
-/**
- * Card 组件
- */
 export const Card = defineComponent({
   name: 'LytCard',
 
   props: {
     header: { type: String, default: '' },
-    bodyStyle: { type: Object, default: () => ({}) },
+    bodyStyle: { type: Object as any, default: () => ({}) },
     shadow: { type: String, default: 'always' },
     class: { type: String, default: '' },
-    style: { type: [String, Object], default: '' },
+    style: { type: [String, Object] as any, default: '' },
     id: { type: String, default: '' },
     ariaLabel: { type: String, default: '' },
     ariaDescribedBy: { type: String, default: '' },
@@ -52,25 +49,37 @@ export const Card = defineComponent({
 
     return () => {
       const children: VNode[] = [];
-      
+
       if (_props.header || slots.header) {
+        const headerContent: VNode[] = [];
+        if (slots.header) {
+          const slotContent = slots.header();
+          if (Array.isArray(slotContent)) {
+            headerContent.push(...(slotContent as VNode[]));
+          } else if (slotContent) {
+            headerContent.push(slotContent as VNode);
+          }
+        } else if (_props.header) {
+          headerContent.push(createVNode('span', {}, _props.header));
+        }
         children.push(createVNode('div', {
           class: 'lyt-card__header',
-        }, [
-          slots.header 
-            ? (Array.isArray(slots.header()) ? slots.header() : [slots.header()])
-            : [createVNode('span', {}, _props.header)],
-        ]));
+        }, headerContent));
       }
 
+      const bodyContent: VNode[] = [];
+      if (slots.default) {
+        const slotContent = slots.default();
+        if (Array.isArray(slotContent)) {
+          bodyContent.push(...(slotContent as VNode[]));
+        } else if (slotContent) {
+          bodyContent.push(slotContent as VNode);
+        }
+      }
       children.push(createVNode('div', {
         class: 'lyt-card__body',
-        style: _props.bodyStyle,
-      }, [
-        slots.default 
-          ? (Array.isArray(slots.default()) ? slots.default() : [slots.default()])
-          : [],
-      ]));
+        style: _props.bodyStyle as any,
+      }, bodyContent));
 
       return createVNode('div', mergeA11yProps({
         id: _props.id,

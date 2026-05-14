@@ -6,8 +6,8 @@
  * @packageDocumentation
  */
 
-import { createApp, defineComponent, h, type Component, type ComponentOptions } from '@lytjs/component';
-import { reactive, signal, computed, watch, watchEffect, nextTick, type Signal } from '@lytjs/reactivity';
+import { createApp, defineComponent, h, nextTick, type ComponentOptions } from '@lytjs/core';
+import { signal, watch, type Signal } from '@lytjs/reactivity';
 
 // ============================================
 // Types
@@ -20,7 +20,7 @@ export interface MountOptions {
   props?: Record<string, unknown>;
   /** Global plugins to install */
   global?: {
-    plugins?: Plugin[];
+    plugins?: any[];
     provide?: Record<string, unknown>;
   };
 }
@@ -46,10 +46,6 @@ export interface Wrapper<T = unknown> {
   text: () => string;
   /** Get element inner HTML */
   html: () => string;
-}
-
-export interface Plugin {
-  install: (app: unknown, ...options: unknown[]) => void;
 }
 
 // ============================================
@@ -101,7 +97,7 @@ export function createContainer(): HTMLElement {
  * ```
  */
 export function mount<T = unknown>(
-  component: Component | ComponentOptions,
+  component: any,
   options: MountOptions = {}
 ): Wrapper<T> {
   const container = createContainer();
@@ -123,7 +119,7 @@ export function mount<T = unknown>(
   }
 
   // Create the app
-  const app = createApp(component);
+  const app: any = createApp(component);
 
   // Install global plugins
   if (options.global?.plugins) {
@@ -144,7 +140,7 @@ export function mount<T = unknown>(
   }
 
   // Mount the app
-  const instance = app.mount(targetEl, options.props || {});
+  const instance = app.mount(targetEl);
 
   // Create wrapper
   const wrapper: Wrapper<T> = {
@@ -201,7 +197,7 @@ export function mount<T = unknown>(
  * Mount a component and return a promise that resolves after initial render
  */
 export async function mountAsync<T = unknown>(
-  component: Component | ComponentOptions,
+  component: any,
   options: MountOptions = {}
 ): Promise<Wrapper<T>> {
   const wrapper = mount<T>(component, options);
@@ -273,31 +269,31 @@ export function wait(ms: number): Promise<void> {
 /**
  * Create a mock function that tracks calls
  */
-export function mockFn<T extends (...args: unknown[]) => unknown = (...args: unknown[]) => unknown>(
+export function mockFn<T extends (...args: any[]) => any = (...args: any[]) => any>(
   implementation?: T
 ): MockFunction<T> {
-  const calls: unknown[][] = [];
-  const instances: unknown[] = [];
+  const calls: any[][] = [];
+  const instances: any[] = [];
   let mockImplementation = implementation;
 
-  const fn = function (this: unknown, ...args: unknown[]) {
+  const fn: any = function (this: any, ...args: any[]) {
     calls.push(args);
     instances.push(this);
     if (mockImplementation) {
       return mockImplementation.apply(this, args);
     }
     return undefined;
-  } as MockFunction<T>;
+  };
 
   fn.calls = calls;
   fn.instances = instances;
 
-  fn.mockReturnValue = (value: unknown) => {
+  fn.mockReturnValue = (value: any) => {
     mockImplementation = (() => value) as T;
     return fn;
   };
 
-  fn.mockResolvedValue = (value: unknown) => {
+  fn.mockResolvedValue = (value: any) => {
     mockImplementation = (async () => value) as T;
     return fn;
   };
@@ -322,12 +318,12 @@ export function mockFn<T extends (...args: unknown[]) => unknown = (...args: unk
   return fn;
 }
 
-export interface MockFunction<T extends (...args: unknown[]) => unknown = (...args: unknown[]) => unknown> {
+export interface MockFunction<T extends (...args: any[]) => any = (...args: any[]) => any> {
   (...args: Parameters<T>): ReturnType<T>;
-  calls: unknown[][];
-  instances: unknown[];
-  mockReturnValue: (value: unknown) => MockFunction<T>;
-  mockResolvedValue: (value: unknown) => MockFunction<T>;
+  calls: any[][];
+  instances: any[];
+  mockReturnValue: (value: any) => MockFunction<T>;
+  mockResolvedValue: (value: any) => MockFunction<T>;
   mockImplementation: (impl: T) => MockFunction<T>;
   mockClear: () => MockFunction<T>;
   mockReset: () => MockFunction<T>;
@@ -339,13 +335,12 @@ export interface MockFunction<T extends (...args: unknown[]) => unknown = (...ar
 export function mockComponent(name: string, options: Partial<ComponentOptions> = {}): ComponentOptions {
   return defineComponent({
     name,
-    setup(props, { slots }) {
-      return () =>
-        h(
-          'mock-' + name.toLowerCase(),
-          { 'data-testid': `mock-${name.toLowerCase()}` },
-          slots.default ? slots.default() : `Mock: ${name}`
-        );
+    setup(_props, { slots }) {
+      return () => (h as any)(
+        'div',
+        { 'data-testid': `mock-${name.toLowerCase()}` },
+        slots.default ? slots.default() : `Mock: ${name}`
+      );
     },
     ...options,
   });
@@ -360,7 +355,7 @@ export function spyOn<T extends object, K extends keyof T>(
   implementation?: T[K]
 ): MockFunction {
   const original = obj[method];
-  const mock = mockFn(implementation as (...args: unknown[]) => unknown);
+  const mock = mockFn(implementation as (...args: any[]) => any);
 
   Object.defineProperty(obj, method, {
     value: mock,
@@ -368,7 +363,7 @@ export function spyOn<T extends object, K extends keyof T>(
     configurable: true,
   });
 
-  mock.mockRestore = () => {
+  (mock as any).mockRestore = () => {
     Object.defineProperty(obj, method, {
       value: original,
       writable: true,
@@ -392,15 +387,15 @@ export function createTestSignal<T>(initialValue: T): TestSignal<T> {
 
   const testSignal: TestSignal<T> = {
     get value() {
-      return sig.value;
+      return sig();
     },
     set value(v: T) {
-      sig.value = v;
+      sig.set(v);
       history.push(v);
     },
     history: () => [...history],
     reset: () => {
-      sig.value = initialValue;
+      sig.set(initialValue);
       history.length = 0;
       history.push(initialValue);
     },
@@ -421,7 +416,7 @@ export interface TestSignal<T> {
 export function trackSignal<T>(sig: Signal<T>): SignalTracker<T> {
   const values: { value: T; timestamp: number }[] = [];
   const stop = watch(
-    () => sig.value,
+    () => sig(),
     (value) => {
       values.push({ value, timestamp: Date.now() });
     }
@@ -454,14 +449,14 @@ export async function assertEmits(
   eventName: string,
   action: () => void | Promise<void>,
   timeout = 1000
-): Promise<unknown[]> {
-  const emitted: unknown[] = [];
+): Promise<any[]> {
+  const emitted: any[] = [];
 
-  const originalEmit = (wrapper.vm as { $emit?: (event: string, ...args: unknown[]) => void })?.$emit;
+  const originalEmit = (wrapper.vm as { $emit?: (event: string, ...args: any[]) => void })?.$emit;
   if (originalEmit) {
-    (wrapper.vm as { $emit: (event: string, ...args: unknown[]) => void }).$emit = (
+    (wrapper.vm as { $emit: (event: string, ...args: any[]) => void }).$emit = (
       event: string,
-      ...args: unknown[]
+      ...args: any[]
     ) => {
       if (event === eventName) {
         emitted.push(args.length === 1 ? args[0] : args);
@@ -481,23 +476,10 @@ export async function assertEmits(
 }
 
 /**
- * Assert that a value is reactive
- */
-export function assertReactive<T extends object>(value: T): void {
-  if (!isReactive(value)) {
-    throw new Error('Value is not reactive');
-  }
-}
-
-/**
  * Check if a value is reactive
  */
-export function isReactive(value: unknown): boolean {
-  try {
-    return !!value && typeof value === 'object' && !!(value as object).__v_reactive;
-  } catch {
-    return false;
-  }
+export function isReactive(_value: unknown): boolean {
+  return false; // LytJS v6 uses Signals instead of Reactive Objects
 }
 
 // ============================================
@@ -531,7 +513,7 @@ export function runCleanup(): void {
  * Auto-cleanup wrapper for mount
  */
 export function mountWithCleanup<T = unknown>(
-  component: Component | ComponentOptions,
+  component: any,
   options: MountOptions = {}
 ): Wrapper<T> {
   const wrapper = mount<T>(component, options);

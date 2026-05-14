@@ -8,7 +8,6 @@ import type { StepsProps, StepsSlots, StepsSetupProps } from './types';
 import { defineComponent } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import { isString, isObject } from '@lytjs/common-is';
-import { signal } from '@lytjs/reactivity';
 import { mergeA11yProps } from '@lytjs/common-a11y';
 
 /**
@@ -25,16 +24,15 @@ export const Steps = defineComponent({
     alignCenter: { type: Boolean, default: false },
     simple: { type: Boolean, default: false },
     class: { type: String, default: '' },
-    style: { type: [String, Object], default: '' },
+    style: { type: [String, Object] as any, default: '' },
     id: { type: String, default: '' },
     ariaLabel: { type: String, default: '' },
     ariaDescribedBy: { type: String, default: '' },
     onChange: { type: Function, default: undefined },
   },
 
-  setup(props: Record<string, unknown>, { slots, emit }) {
+  setup(props: Record<string, unknown>, { slots }) {
     const _props = props as StepsSetupProps;
-    const currentStep = signal(_props.active);
 
     const getStepsClass = () => {
       const classes = ['lyt-steps'];
@@ -58,20 +56,13 @@ export const Steps = defineComponent({
       return style;
     };
 
-    const handleStepClick = (index: number) => {
-      currentStep.value = index;
-      emit('update:active', index);
-      emit('change', index);
-      _props.onChange?.(index);
-    };
-
     return () => {
       const children: VNode[] = [];
-      
+
       if (slots.default) {
         const slotContent = slots.default();
         if (Array.isArray(slotContent)) {
-          children.push(...slotContent);
+          children.push(...(slotContent as VNode[]));
         }
       }
 

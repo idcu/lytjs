@@ -1,5 +1,5 @@
 /**
- * @lytjs/ui - Pagination 组件
+ * @lytjs/ui - Pagination 分页组件
  *
  * 分页组件，支持多种分页模式、总数显示、每页条数选择
  */
@@ -7,7 +7,7 @@
 import { defineComponent } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import { signal } from '@lytjs/reactivity';
-import { getButtonA11yProps, getFormControlA11yProps, getGroupA11yProps, mergeA11yProps } from '@lytjs/common-a11y';
+import { getButtonA11yProps, getFormControlA11yProps, mergeA11yProps } from '@lytjs/common-a11y';
 
 export interface PaginationSetupProps {
   current: number;
@@ -23,10 +23,6 @@ export interface PaginationSetupProps {
   ariaDescribedBy: string;
   onChange: ((current: number, pageSize: number) => void) | undefined;
   onSizeChange: ((size: number) => void) | undefined;
-}
-
-export interface PaginationSlots {
-  default?: () => VNode[];
 }
 
 export const Pagination = defineComponent({
@@ -48,12 +44,13 @@ export const Pagination = defineComponent({
     onSizeChange: { type: Function, default: undefined },
   },
 
-  setup(props: PaginationSetupProps, { slots }: { slots: PaginationSlots }) {
-    const currentPage = signal(props.current);
-    const currentPageSize = signal(props.pageSize);
+  setup(props: Record<string, unknown>) {
+    const p = props as unknown as PaginationSetupProps;
+    const currentPage = signal(p.current);
+    const currentPageSize = signal(p.pageSize);
 
     const totalPages = (): number => {
-      return Math.ceil(props.total / currentPageSize());
+      return Math.ceil(p.total / currentPageSize());
     };
 
     const getPageRange = (): number[] => {
@@ -81,7 +78,7 @@ export const Pagination = defineComponent({
     const handlePageChange = (page: number) => {
       if (page < 1 || page > totalPages() || page === currentPage()) return;
       currentPage.set(page);
-      props.onChange?.(page, currentPageSize());
+      p.onChange?.(page, currentPageSize());
     };
 
     const handlePrev = () => {
@@ -96,8 +93,8 @@ export const Pagination = defineComponent({
       const size = Number((e.target as HTMLSelectElement).value);
       currentPageSize.set(size);
       currentPage.set(1);
-      props.onSizeChange?.(size);
-      props.onChange?.(1, size);
+      p.onSizeChange?.(size);
+      p.onChange?.(1, size);
     };
 
     const handleJumperChange = (e: Event) => {
@@ -110,47 +107,48 @@ export const Pagination = defineComponent({
     return () => {
       const paginationClass = [
         'lyt-pagination',
-        props.background ? 'lyt-pagination--background' : '',
-        props.simple ? 'lyt-pagination--simple' : '',
-        props.class,
+        p.background ? 'lyt-pagination--background' : '',
+        p.simple ? 'lyt-pagination--simple' : '',
+        p.class,
       ].filter(Boolean).join(' ');
-      
-      const groupProps = getGroupA11yProps({ role: 'navigation', ariaLabel: props.ariaLabel || '分页' });
+
       const a11yProps = {
-        id: props.id,
-        'aria-describedby': props.ariaDescribedBy,
+        id: p.id,
+        'aria-label': p.ariaLabel || '分页',
+        'aria-describedby': p.ariaDescribedBy,
       };
 
       const children: VNode[] = [];
 
-      if (props.layout.includes('total')) {
+      if (p.layout.includes('total')) {
         children.push(createVNode('span', { class: 'lyt-pagination__total' }, [
-          `共 ${props.total} 条`,
+          createVNode('span', {}, `共 ${p.total} 条`),
         ]));
       }
 
-      if (props.layout.includes('prev')) {
+      if (p.layout.includes('prev')) {
         const prevProps = getButtonA11yProps({ ariaLabel: '上一页', disabled: currentPage() === 1 });
         children.push(createVNode('button', mergeA11yProps(prevProps, {
           class: ['lyt-pagination__btn', 'lyt-pagination__prev'],
           disabled: currentPage() === 1,
           onClick: handlePrev,
-        }), ['上一页']));
+        }), [createVNode('span', {}, '上一页')]));
       }
 
-      if (props.layout.includes('pager') && !props.simple) {
+      if (p.layout.includes('pager') && !p.simple) {
         const pageRange = getPageRange();
         const pagerChildren: VNode[] = [];
+        const firstPage = pageRange[0];
 
-        if (pageRange[0] > 1) {
+        if (firstPage !== undefined && firstPage > 1) {
           const firstProps = getButtonA11yProps({ ariaLabel: '第1页' });
           pagerChildren.push(createVNode('button', mergeA11yProps(firstProps, {
             class: 'lyt-pagination__btn',
             onClick: () => handlePageChange(1),
-          }), ['1']));
-          
-          if (pageRange[0] > 2) {
-            pagerChildren.push(createVNode('span', { class: 'lyt-pagination__ellipsis' }, ['...']));
+          }), [createVNode('span', {}, '1')]));
+
+          if (firstPage > 2) {
+            pagerChildren.push(createVNode('span', { class: 'lyt-pagination__ellipsis' }, [createVNode('span', {}, '...')]));
           }
         }
 
@@ -163,52 +161,52 @@ export const Pagination = defineComponent({
             ].filter(Boolean).join(' '),
             'aria-current': page === currentPage() ? 'page' : undefined,
             onClick: () => handlePageChange(page),
-          }), [String(page)]));
+          }), [createVNode('span', {}, String(page))]));
         }
 
-        if (pageRange[pageRange.length - 1] < totalPages()) {
-          if (pageRange[pageRange.length - 1] < totalPages() - 1) {
-            pagerChildren.push(createVNode('span', { class: 'lyt-pagination__ellipsis' }, ['...']));
+        const lastPage = pageRange[pageRange.length - 1] as number | undefined;
+        if (lastPage !== undefined && lastPage < totalPages()) {
+          if (lastPage < totalPages() - 1) {
+            pagerChildren.push(createVNode('span', { class: 'lyt-pagination__ellipsis' }, [createVNode('span', {}, '...')]));
           }
-          
+
           const lastProps = getButtonA11yProps({ ariaLabel: `第${totalPages()}页` });
           pagerChildren.push(createVNode('button', mergeA11yProps(lastProps, {
             class: 'lyt-pagination__btn',
             onClick: () => handlePageChange(totalPages()),
-          }), [String(totalPages())]));
+          }), [createVNode('span', {}, String(totalPages()))]));
         }
 
-        children.push(createVNode('div', { class: 'lyt-pagination__pager' }, [pagerChildren]));
+        children.push(createVNode('div', { class: 'lyt-pagination__pager' }, pagerChildren));
       }
 
-      if (props.layout.includes('next')) {
+      if (p.layout.includes('next')) {
         const nextProps = getButtonA11yProps({ ariaLabel: '下一页', disabled: currentPage() === totalPages() });
         children.push(createVNode('button', mergeA11yProps(nextProps, {
           class: ['lyt-pagination__btn', 'lyt-pagination__next'],
           disabled: currentPage() === totalPages(),
           onClick: handleNext,
-        }), ['下一页']));
+        }), [createVNode('span', {}, '下一页')]));
       }
 
-      if (props.layout.includes('sizes')) {
+      if (p.layout.includes('sizes')) {
         const selectProps = getFormControlA11yProps({ ariaLabel: '每页条数' });
+        const options = p.pageSizes.map((size: number) =>
+          createVNode('option', { value: size }, String(`${size} 条/页`))
+        );
         children.push(createVNode('div', { class: 'lyt-pagination__sizes' }, [
           createVNode('select', mergeA11yProps(selectProps, {
             class: 'lyt-pagination__select',
             value: currentPageSize(),
             onChange: handlePageSizeChange,
-          }), [
-            props.pageSizes.map((size: number) => 
-              createVNode('option', { value: size }, [`${size} 条/页`])
-            ),
-          ]),
+          }), options),
         ]));
       }
 
-      if (props.layout.includes('jumper')) {
+      if (p.layout.includes('jumper')) {
         const inputProps = getFormControlA11yProps({ ariaLabel: '跳转到第几页' });
         children.push(createVNode('div', { class: 'lyt-pagination__jumper' }, [
-          createVNode('span', {}, ['跳至']),
+          createVNode('span', {}, '跳至'),
           createVNode('input', mergeA11yProps(inputProps, {
             type: 'number',
             class: 'lyt-pagination__input',
@@ -216,17 +214,14 @@ export const Pagination = defineComponent({
             max: totalPages(),
             onChange: handleJumperChange,
           })),
-          createVNode('span', {}, ['页']),
+          createVNode('span', {}, '页'),
         ]));
       }
 
-      if (slots.default) {
-        children.push(slots.default());
-      }
-
-      return createVNode('div', mergeA11yProps(groupProps, a11yProps, { class: paginationClass }), [children]);
+      return createVNode('div', {
+        class: paginationClass,
+        ...a11yProps,
+      }, children);
     };
   },
 });
-
-export type { PaginationProps, PaginationSlots } from './types';

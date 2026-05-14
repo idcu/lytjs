@@ -42,7 +42,6 @@ export type {
   NavigationGuardNext,
   NavigationGuardReturn,
   NavigationFailure,
-  NavigationFailureType,
   RouterScrollBehavior,
   NavigationInfo,
 } from './types';

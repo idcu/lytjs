@@ -255,8 +255,9 @@ export const Cascader = defineComponent({
       const dropdownContent: VNode[] = [];
 
       if (p.filterable) {
-        const formProps = getGroupA11yProps({ role: 'search' });
-        dropdownContent.push(createVNode('div', mergeA11yProps(formProps, { class: 'lyt-cascader__search' }), [
+        dropdownContent.push(createVNode('div', mergeA11yProps({
+          role: 'search',
+        }, { class: 'lyt-cascader__search' }), [
           createVNode('input', {
             type: 'text',
             placeholder: '搜索',

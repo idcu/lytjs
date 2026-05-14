@@ -53,7 +53,7 @@ export const Switch = defineComponent({
 
     const handleClick = () => {
       if (_props.disabled || _props.loading) return;
-      
+
       const newValue = isChecked.value ? _props.inactiveValue : _props.activeValue;
       emit('update:modelValue', newValue);
       emit('change', newValue);
@@ -62,8 +62,7 @@ export const Switch = defineComponent({
 
     const handleKeydown = (event: KeyboardEvent) => {
       if (_props.disabled || _props.loading) return;
-      
-      // 支持 Space 或 Enter 键触发切换
+
       if (event.key === 'Enter' || event.key === ' ') {
         event.preventDefault();
         const newValue = isChecked.value ? _props.inactiveValue : _props.activeValue;
@@ -71,7 +70,7 @@ export const Switch = defineComponent({
         emit('change', newValue);
         _props.onChange?.(newValue as boolean);
       }
-      
+
       _props.onKeydown?.(event);
     };
 
@@ -115,11 +114,9 @@ export const Switch = defineComponent({
 
     return () => {
       const children: VNode[] = [];
-      
-      // 内部核心
+
       const coreChildren: VNode[] = [];
-      
-      // 左侧文字
+
       if (isChecked.value && _props.activeText) {
         coreChildren.push(createVNode('span', {
           class: 'lyt-switch__label lyt-switch__label--left',
@@ -144,7 +141,6 @@ export const Switch = defineComponent({
         }
       }
 
-      // 开关按钮
       const buttonChildren: VNode[] = [];
       if (_props.loading) {
         buttonChildren.push(createVNode('span', {}, '◌'));
@@ -157,7 +153,6 @@ export const Switch = defineComponent({
         }, buttonChildren),
       ]));
 
-      // 右侧文字
       if (isChecked.value && _props.activeText) {
         coreChildren.push(createVNode('span', {
           class: 'lyt-switch__label lyt-switch__label--right',
@@ -182,7 +177,7 @@ export const Switch = defineComponent({
         ariaRequired: _props.ariaRequired,
         tabIndex: _props.tabIndex,
       });
-      
+
       return createVNode('div', mergeA11yProps(a11yProps, {
         class: getSwitchClass(),
         style: getSwitchStyle(),

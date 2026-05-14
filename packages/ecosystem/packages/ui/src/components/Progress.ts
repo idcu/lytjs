@@ -9,11 +9,7 @@ import { defineComponent } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import { isString, isObject, isArray } from '@lytjs/common-is';
 import { computed } from '@lytjs/reactivity';
-import { mergeA11yProps } from '@lytjs/common-a11y';
 
-/**
- * Progress 组件
- */
 export const Progress = defineComponent({
   name: 'LytProgress',
 
@@ -24,12 +20,12 @@ export const Progress = defineComponent({
     strokeWidth: { type: Number, default: 6 },
     textInside: { type: Boolean, default: false },
     showText: { type: Boolean, default: true },
-    color: { type: [String, Array, Object], default: '' },
+    color: { type: [String, Array, Object] as any, default: '' },
     width: { type: Number, default: 126 },
     strokeLinecap: { type: String, default: 'round' },
     format: { type: Function, default: undefined },
     class: { type: String, default: '' },
-    style: { type: [String, Object], default: '' },
+    style: { type: [String, Object] as any, default: '' },
     id: { type: String, default: '' },
     ariaLabel: { type: String, default: '' },
     ariaDescribedBy: { type: String, default: '' },
@@ -55,7 +51,7 @@ export const Progress = defineComponent({
       const style: Record<string, string> = {
         width: `${validPercentage.value}%`,
       };
-      
+
       if (_props.color) {
         if (isString(_props.color)) {
           style.backgroundColor = _props.color;
@@ -64,20 +60,24 @@ export const Progress = defineComponent({
           for (const key in colorObj) {
             const percentage = parseInt(key);
             if (validPercentage.value >= percentage) {
-              style.backgroundColor = colorObj[key];
+              const colorValue = colorObj[key];
+              if (colorValue) {
+                style.backgroundColor = colorValue;
+              }
             }
           }
         }
       }
-      
+
       return style;
     });
 
     const getProgressClass = () => {
       const classes = ['lyt-progress'];
       if (_props.type) classes.push(`lyt-progress--${_props.type}`);
-      if (getStatus.value) classes.push(`lyt-progress--${getStatus.value}`);
-      if (_props.class) classes.push(_props.class);
+      const status = getStatus.value;
+      if (status) classes.push(`lyt-progress--${status}`);
+      if (_props.class) classes.push(_props.class as string);
       return classes.join(' ');
     };
 
@@ -103,24 +103,26 @@ export const Progress = defineComponent({
 
     const renderLine = () => {
       const children: VNode[] = [];
-      
+
+      const barStyle = getBarStyle.value;
+      const innerContent: VNode[] = [];
+      if (_props.textInside && _props.showText) {
+        innerContent.push(createVNode('div', { class: 'lyt-progress__inner-text' }, [createVNode('span', {}, formatText())]));
+      }
+
       children.push(createVNode('div', {
         class: 'lyt-progress__outer',
       }, [
         createVNode('div', {
           class: 'lyt-progress__inner',
-          style: getBarStyle.value,
-        }, [
-          _props.textInside && _props.showText 
-            ? createVNode('div', { class: 'lyt-progress__inner-text' }, [formatText()])
-            : null,
-        ]),
+          style: barStyle,
+        }, innerContent),
       ]));
 
       if (_props.showText && !_props.textInside) {
         children.push(createVNode('div', {
           class: 'lyt-progress__text',
-        }, [formatText()]));
+        }, [createVNode('span', {}, formatText())]));
       }
 
       return children;
@@ -130,9 +132,10 @@ export const Progress = defineComponent({
       const radius = 50 - _props.strokeWidth / 2;
       const circumference = 2 * Math.PI * radius;
       const strokeDashoffset = circumference - (validPercentage.value / 100) * circumference;
-      
+      const barStyle = getBarStyle.value;
+
       const children: VNode[] = [];
-      
+
       children.push(createVNode('svg', {
         class: 'lyt-progress__circle',
         viewBox: '0 0 100 100',
@@ -145,23 +148,23 @@ export const Progress = defineComponent({
           stroke: '#e5e9f2',
           strokeWidth: _props.strokeWidth,
           fill: 'none',
-        }),
+        }, []),
         createVNode('path', {
           class: 'lyt-progress__circle-path',
           d: `M 50 50 m 0,-${radius} a ${radius},${radius} 0 1 1 0,${radius * 2} a ${radius},${radius} 0 1 1 0,-${radius * 2}`,
-          stroke: getBarStyle.value.backgroundColor || '#409eff',
+          stroke: barStyle.backgroundColor || '#409eff',
           strokeWidth: _props.strokeWidth,
           fill: 'none',
           strokeDasharray: `${circumference}px, ${circumference}px`,
           strokeDashoffset: `${strokeDashoffset}px`,
           strokeLinecap: _props.strokeLinecap,
-        }),
+        }, []),
       ]));
 
       if (_props.showText) {
         children.push(createVNode('div', {
           class: 'lyt-progress__text',
-        }, [formatText()]));
+        }, [createVNode('span', {}, formatText())]));
       }
 
       return children;
@@ -169,25 +172,24 @@ export const Progress = defineComponent({
 
     return () => {
       let content: VNode[];
-      
+
       if (_props.type === 'circle' || _props.type === 'dashboard') {
         content = renderCircle();
       } else {
         content = renderLine();
       }
 
-      return createVNode('div', mergeA11yProps({
-        id: _props.id,
-        'aria-label': _props.ariaLabel,
-        'aria-describedby': _props.ariaDescribedBy,
+      return createVNode('div', {
+        id: _props.id as string,
+        'aria-label': _props.ariaLabel as string || 'Progress',
+        'aria-describedby': _props.ariaDescribedBy as string,
         role: 'progressbar',
         'aria-valuenow': String(validPercentage.value),
         'aria-valuemin': '0',
         'aria-valuemax': '100',
-      }, {
         class: getProgressClass(),
         style: getProgressStyle(),
-      }), content);
+      }, content);
     };
   },
 });

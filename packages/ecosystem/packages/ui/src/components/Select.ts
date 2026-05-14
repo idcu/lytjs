@@ -7,7 +7,7 @@
 import { defineComponent } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import { signal, effect } from '@lytjs/reactivity';
-import { getComboboxA11yProps, getOptionA11yProps, mergeA11yProps } from '@lytjs/common-a11y';
+import { getComboboxA11yProps, mergeA11yProps } from '@lytjs/common-a11y';
 import type { SelectOption, SelectSetupProps } from './types';
 
 export const Select = defineComponent({
@@ -41,7 +41,6 @@ export const Select = defineComponent({
     const searchValue = signal('');
     const highlightedIndex = signal(-1);
 
-    // 初始化选中值
     effect(() => {
       if (Array.isArray(p.modelValue)) {
         selectedValue.set(new Set(p.modelValue));
@@ -52,8 +51,9 @@ export const Select = defineComponent({
 
     const getFilteredOptions = () => {
       const opts = p.options || [];
-      return searchValue()
-        ? opts.filter(opt => opt.label.includes(searchValue()))
+      const query = searchValue();
+      return query
+        ? opts.filter(opt => opt.label.includes(query))
         : opts;
     };
 
@@ -66,7 +66,6 @@ export const Select = defineComponent({
       const newOpen = !isOpen();
       isOpen.set(newOpen);
       if (newOpen) {
-        // 打开时重置高亮索引
         const enabledOptions = getEnabledOptions();
         if (enabledOptions.length > 0) {
           const selectedValues = selectedValue();
@@ -110,14 +109,16 @@ export const Select = defineComponent({
 
     const handleKeydown = (event: KeyboardEvent) => {
       const enabledOptions = getEnabledOptions();
-      
+      const open = isOpen();
+      const hIndex = highlightedIndex();
+
       switch (event.key) {
         case 'Enter':
         case ' ':
           event.preventDefault();
-          if (isOpen()) {
-            if (highlightedIndex() >= 0 && highlightedIndex() < enabledOptions.length) {
-              const option = enabledOptions[highlightedIndex()];
+          if (open) {
+            if (hIndex >= 0 && hIndex < enabledOptions.length) {
+              const option = enabledOptions[hIndex];
               if (option) {
                 handleSelect(option);
               }
@@ -128,24 +129,24 @@ export const Select = defineComponent({
           break;
         case 'ArrowDown':
           event.preventDefault();
-          if (!isOpen()) {
+          if (!open) {
             toggleDropdown();
           } else {
             if (enabledOptions.length > 0) {
-              highlightedIndex.set(Math.min(highlightedIndex() + 1, enabledOptions.length - 1));
+              highlightedIndex.set(Math.min(hIndex + 1, enabledOptions.length - 1));
             }
           }
           break;
         case 'ArrowUp':
           event.preventDefault();
-          if (isOpen()) {
+          if (open) {
             if (enabledOptions.length > 0) {
-              highlightedIndex.set(Math.max(highlightedIndex() - 1, 0));
+              highlightedIndex.set(Math.max(hIndex - 1, 0));
             }
           }
           break;
         case 'Escape':
-          if (isOpen()) {
+          if (open) {
             event.preventDefault();
             isOpen.set(false);
             p.onVisibleChange?.(false);
@@ -153,18 +154,18 @@ export const Select = defineComponent({
           break;
         case 'Home':
           event.preventDefault();
-          if (isOpen() && enabledOptions.length > 0) {
+          if (open && enabledOptions.length > 0) {
             highlightedIndex.set(0);
           }
           break;
         case 'End':
           event.preventDefault();
-          if (isOpen() && enabledOptions.length > 0) {
+          if (open && enabledOptions.length > 0) {
             highlightedIndex.set(enabledOptions.length - 1);
           }
           break;
       }
-      
+
       p.onKeydown?.(event);
     };
 
@@ -178,29 +179,32 @@ export const Select = defineComponent({
     };
 
     return () => {
+      const open = isOpen();
       const selectClass = [
         'lyt-select',
         `lyt-select--${p.size}`,
         p.disabled ? 'lyt-select--disabled' : '',
-        isOpen() ? 'lyt-select--open' : '',
+        open ? 'lyt-select--open' : '',
         p.class,
       ].filter(Boolean).join(' ');
 
       const selectedLabel = getSelectedLabel();
       const displayValue = selectedLabel || p.placeholder;
       const filteredOptions = getFilteredOptions();
+      const selected = selectedValue();
+      const hIndex = highlightedIndex();
 
       const dropdownContent: VNode[] = [];
 
       if (filteredOptions.length === 0) {
-        dropdownContent.push(createVNode('div', { class: 'lyt-select__empty' }, '无匹配选项'));
+        dropdownContent.push(createVNode('div', { class: 'lyt-select__empty' }, [createVNode('span', {}, '无匹配选项')]));
       } else {
         filteredOptions.forEach((option: SelectOption, index: number) => {
-          const isSelected = selectedValue().has(option.value);
-          const isHighlighted = !option.disabled && index === highlightedIndex();
+          const isSelected = selected.has(option.value);
+          const isHighlighted = !option.disabled && index === hIndex;
           const optionChildren: VNode[] = [];
           if (isSelected) {
-            optionChildren.push(createVNode('span', { class: 'lyt-select__check' }, '✓'));
+            optionChildren.push(createVNode('span', { class: 'lyt-select__check' }, [createVNode('span', {}, '✓')]));
           }
           optionChildren.push(createVNode('span', {}, option.label));
           dropdownContent.push(createVNode('div', {
@@ -227,14 +231,14 @@ export const Select = defineComponent({
           'lyt-select__value',
           !selectedLabel ? 'lyt-select__value--placeholder' : '',
         ].filter(Boolean).join(' '),
-      }, displayValue));
-      if (p.clearable && selectedValue().size > 0) {
+      }, [createVNode('span', {}, displayValue)]));
+      if (p.clearable && selected.size > 0) {
         triggerChildren.push(createVNode('span', {
           class: 'lyt-select__clear',
           onClick: handleClear,
-        }, '×'));
+        }, [createVNode('span', {}, '×')]));
       }
-      triggerChildren.push(createVNode('span', { class: 'lyt-select__arrow' }, '▼'));
+      triggerChildren.push(createVNode('span', { class: 'lyt-select__arrow' }, [createVNode('span', {}, '▼')]));
 
       const resultChildren: VNode[] = [
         createVNode('div', {
@@ -242,8 +246,8 @@ export const Select = defineComponent({
           onClick: toggleDropdown,
         }, triggerChildren),
       ];
-      if (isOpen()) {
-        resultChildren.push(createVNode('div', { 
+      if (open) {
+        resultChildren.push(createVNode('div', {
           class: 'lyt-select__dropdown',
           role: 'listbox',
           'aria-multiselectable': p.multiple,
@@ -258,11 +262,11 @@ export const Select = defineComponent({
         ariaInvalid: p.ariaInvalid,
         disabled: p.disabled,
         tabIndex: p.tabIndex,
-        expanded: isOpen(),
+        expanded: open,
         controls: undefined,
       });
 
-      return createVNode('div', mergeA11yProps(a11yProps, { 
+      return createVNode('div', mergeA11yProps(a11yProps, {
         class: selectClass,
         onKeydown: handleKeydown,
       }), resultChildren);

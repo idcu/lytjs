@@ -8,7 +8,7 @@ import { defineComponent } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import { signal } from '@lytjs/reactivity';
 import type { TableData, TableRowData, TableColumn, TableSortOrder, TableSetupProps } from './types';
-import { getButtonA11yProps, getInputControlA11yProps, getGroupA11yProps, mergeA11yProps } from '@lytjs/common-a11y';
+import { getInputControlA11yProps, mergeA11yProps } from '@lytjs/common-a11y';
 export type { TableSlots } from './types';
 
 export const Table = defineComponent({

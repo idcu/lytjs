@@ -116,7 +116,18 @@
     </div>
     
     <div class="section">
-      <h2>📖 使用示例代码</h2>
+      <h2>� 图表插件</h2>
+      <div style="margin-bottom: 10px;">
+        <button id="chart-bar">柱状图</button>
+        <button id="chart-line">折线图</button>
+        <button id="chart-pie">饼图</button>
+        <button id="chart-doughnut">环形图</button>
+      </div>
+      <canvas id="chart-canvas" style="border: 1px solid #ddd; border-radius: 4px;"></canvas>
+    </div>
+    
+    <div class="section">
+      <h2>�📖 使用示例代码</h2>
       <pre>
 // 安装插件
 app.use(pluginTheme);
@@ -124,6 +135,7 @@ app.use(pluginLogger);
 app.use(pluginAuth);
 app.use(pluginStorage);
 app.use(pluginI18n);
+app.use(pluginChart);
 
 // 使用主题插件
 app.config.globalProperties.$theme.setTheme('dark');
@@ -139,6 +151,9 @@ app.config.globalProperties.$storage.set('key', 'value');
 
 // 使用国际化插件
 app.config.globalProperties.$t('greeting', { name: 'John' });
+
+// 使用图表插件
+const chart = app.config.globalProperties.$chart.create(canvas, config);
       </pre>
     </div>
   </div>

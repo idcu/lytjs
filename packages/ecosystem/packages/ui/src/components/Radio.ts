@@ -11,9 +11,6 @@ import { isString, isObject } from '@lytjs/common-is';
 import { reactive, computed } from '@lytjs/reactivity';
 import { getInputControlA11yProps, mergeA11yProps } from '@lytjs/common-a11y';
 
-/**
- * Radio 组件
- */
 export const Radio = defineComponent({
   name: 'LytRadio',
 
@@ -46,7 +43,7 @@ export const Radio = defineComponent({
 
     const handleChange = () => {
       if (_props.disabled) return;
-      
+
       const newValue = _props.label;
       emit('update:modelValue', newValue);
       emit('change', newValue);
@@ -85,10 +82,10 @@ export const Radio = defineComponent({
 
     return () => {
       const children: VNode[] = [];
-      
-      // 实际的 input 元素（隐藏）
+      const checked = isChecked.value;
+
       const a11yProps = getInputControlA11yProps({
-        checked: isChecked.value as boolean,
+        checked: checked,
         disabled: _props.disabled,
         id: _props.id,
         ariaLabel: _props.ariaLabel,
@@ -97,11 +94,11 @@ export const Radio = defineComponent({
         ariaRequired: _props.ariaRequired,
         tabIndex: _props.tabIndex,
       });
-      
+
       children.push(createVNode('input', mergeA11yProps(a11yProps, {
         type: 'radio',
         class: 'lyt-radio__input',
-        checked: isChecked.value as boolean,
+        checked: checked,
         disabled: _props.disabled,
         name: _props.name,
         onKeydown: _props.onKeydown,
@@ -110,12 +107,10 @@ export const Radio = defineComponent({
         onBlur: handleBlur,
       }), []));
 
-      // 自定义的单选框样式
       children.push(createVNode('span', {
         class: 'lyt-radio__inner',
       }, []));
 
-      // 标签内容
       if (_props.label !== undefined) {
         children.push(createVNode('span', {
           class: 'lyt-radio__label',

@@ -17,10 +17,10 @@ export const CarouselItem = defineComponent({
   name: 'LytCarouselItem',
 
   props: {
-    name: { type: [String, Number], default: '' },
+    name: { type: [String, Number] as any, default: '' },
     label: { type: String, default: '' },
     class: { type: String, default: '' },
-    style: { type: [String, Object], default: '' },
+    style: { type: [String, Object] as any, default: '' },
     id: { type: String, default: '' },
     ariaLabel: { type: String, default: '' },
     ariaDescribedBy: { type: String, default: '' },
@@ -31,7 +31,7 @@ export const CarouselItem = defineComponent({
 
     const getCarouselItemClass = () => {
       const classes = ['lyt-carousel-item'];
-      if (_props.class) classes.push(_props.class);
+      if (_props.class) classes.push(_props.class as string);
       return classes.join(' ');
     };
 
@@ -50,18 +50,20 @@ export const CarouselItem = defineComponent({
 
     return () => {
       const children: VNode[] = [];
-      
+
       if (slots.default) {
         const slotContent = slots.default();
         if (Array.isArray(slotContent)) {
-          children.push(...slotContent);
+          children.push(...(slotContent as VNode[]));
+        } else if (slotContent) {
+          children.push(slotContent as VNode);
         }
       }
 
       return createVNode('div', mergeA11yProps({
-        id: _props.id,
-        'aria-label': _props.ariaLabel || _props.label,
-        'aria-describedby': _props.ariaDescribedBy,
+        id: _props.id as string,
+        'aria-label': (_props.ariaLabel as string) || (_props.label as string),
+        'aria-describedby': _props.ariaDescribedBy as string,
       }, {
         class: getCarouselItemClass(),
         style: getCarouselItemStyle(),

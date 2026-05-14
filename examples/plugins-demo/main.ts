@@ -10,6 +10,7 @@ import { createLogger } from '@lytjs/plugin-logger';
 import { createAuth } from '@lytjs/plugin-auth';
 import { createStorage } from '@lytjs/plugin-storage';
 import { createI18n } from '@lytjs/plugin-i18n';
+import { createChart } from '@lytjs/plugin-chart';
 
 // 初始化插件实例
 const themeManager = createThemeManager();
@@ -186,3 +187,40 @@ updateStorageDisplay();
 updateI18nDisplay();
 
 logger.info('LytJS 插件示例初始化完成');
+
+// 图表插件演示
+const canvas = document.getElementById('chart-canvas') as HTMLCanvasElement;
+let currentChart: any = null;
+
+// 示例数据
+const sampleData = [
+  { label: '一月', value: 120 },
+  { label: '二月', value: 200 },
+  { label: '三月', value: 150 },
+  { label: '四月', value: 80 },
+  { label: '五月', value: 270 },
+];
+
+function renderChart(type: string) {
+  if (currentChart) {
+    currentChart.destroy();
+  }
+  
+  const config = {
+    type: type,
+    title: `${type === 'bar' ? '柱状' : type === 'line' ? '折线' : type === 'pie' ? '饼' : '环形'}图示例`,
+    datasets: [{ data: sampleData }],
+    width: 600,
+    height: 350,
+  };
+  
+  currentChart = createChart(canvas, config);
+}
+
+document.getElementById('chart-bar')?.addEventListener('click', () => renderChart('bar'));
+document.getElementById('chart-line')?.addEventListener('click', () => renderChart('line'));
+document.getElementById('chart-pie')?.addEventListener('click', () => renderChart('pie'));
+document.getElementById('chart-doughnut')?.addEventListener('click', () => renderChart('doughnut'));
+
+// 默认渲染柱状图
+renderChart('bar');

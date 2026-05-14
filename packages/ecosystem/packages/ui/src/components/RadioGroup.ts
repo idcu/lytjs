@@ -10,18 +10,15 @@ import { createVNode, type VNode } from '@lytjs/vdom';
 import { isString, isObject } from '@lytjs/common-is';
 import { getGroupA11yProps, mergeA11yProps } from '@lytjs/common-a11y';
 
-/**
- * RadioGroup 组件
- */
 export const RadioGroup = defineComponent({
   name: 'LytRadioGroup',
 
   props: {
-    modelValue: { type: [String, Number, Boolean], default: undefined },
+    modelValue: { type: [String, Number, Boolean] as any, default: undefined },
     disabled: { type: Boolean, default: false },
     size: { type: String, default: 'default' },
     class: { type: String, default: '' },
-    style: { type: [String, Object], default: '' },
+    style: { type: [String, Object] as any, default: '' },
     ariaLabel: { type: String, default: '' },
     ariaDescribedBy: { type: String, default: '' },
     ariaRequired: { type: Boolean, default: false },
@@ -29,18 +26,12 @@ export const RadioGroup = defineComponent({
     onChange: { type: Function, default: undefined },
   },
 
-  setup(props: Record<string, unknown>, { slots, emit }) {
+  setup(props: Record<string, unknown>, { slots }) {
     const _props = props as RadioGroupSetupProps;
-
-    const handleChange = (value: string | number | boolean) => {
-      emit('update:modelValue', value);
-      emit('change', value);
-      _props.onChange?.(value);
-    };
 
     const getRadioGroupClass = () => {
       const classes = ['lyt-radio-group'];
-      if (_props.class) classes.push(_props.class);
+      if (_props.class) classes.push(_props.class as string);
       return classes.join(' ');
     };
 
@@ -59,26 +50,28 @@ export const RadioGroup = defineComponent({
 
     return () => {
       const children: VNode[] = [];
-      
+
       if (slots.default) {
         const slotContent = slots.default();
         if (Array.isArray(slotContent)) {
-          children.push(...slotContent);
+          children.push(...(slotContent as VNode[]));
+        } else if (slotContent) {
+          children.push(slotContent as VNode);
         }
       }
 
       const a11yProps = getGroupA11yProps({
         role: 'radiogroup',
-        id: _props.id,
-        ariaLabel: _props.ariaLabel,
-        ariaDescribedBy: _props.ariaDescribedBy,
+        id: _props.id as string,
+        ariaLabel: _props.ariaLabel as string,
+        ariaDescribedBy: _props.ariaDescribedBy as string,
         ariaRequired: _props.ariaRequired,
       });
-      
+
       return createVNode('div', mergeA11yProps(a11yProps, {
         class: getRadioGroupClass(),
         style: getRadioGroupStyle(),
-        'aria-disabled': _props.disabled,
+        'aria-disabled': _props.disabled ? 'true' : undefined,
       }), children);
     };
   },

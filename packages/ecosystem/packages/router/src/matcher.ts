@@ -5,7 +5,7 @@
  * Supports: static paths, named params (:id), wildcard (*), optional params (:id?)
  */
 
-import type { RouteParams, RouteRecordRaw, RouteRecordNormalized, RouteLocationNormalized, LocationQuery } from './types';
+import type { RouteParams, RouteRecordRaw, RouteRecordNormalized, LocationQuery } from './types';
 
 // ===== Token Types =====
 
@@ -46,12 +46,14 @@ export function tokenizePath(path: string): PathToken[] {
     const paramMatch = segment.match(PARAM_RE);
     if (paramMatch) {
       const [, name, optional, repeatable] = paramMatch;
-      tokens.push({
-        type: 'param',
-        name,
-        repeatable: repeatable === '...',
-        optional: optional === '?',
-      });
+      if (name) {
+        tokens.push({
+          type: 'param',
+          name,
+          repeatable: repeatable === '...',
+          optional: optional === '?',
+        });
+      }
       continue;
     }
 
@@ -131,10 +133,9 @@ export function matchPath(
 
       case 'param':
         if (token.repeatable) {
-          // Collect remaining segments
           params[token.name] = pathSegments.slice(i);
           i = pathSegments.length;
-        } else {
+        } else if (segment !== undefined) {
           params[token.name] = segment;
           i++;
         }
@@ -199,7 +200,7 @@ export function normalizeRouteRecord(
     beforeEnter: record.beforeEnter,
     props: record.props ?? false,
     component: record.component,
-    components: record.components,
+    components: (record as any).components,
   };
 
   const matcher: RouteRecordMatcher = {
@@ -267,17 +268,19 @@ export function parseQuery(queryString: string): LocationQuery {
   for (const pair of pairs) {
     if (!pair) continue;
     const [key, value] = pair.split('=');
-    const decodedKey = decodeURIComponent(key);
-    const decodedValue = value ? decodeURIComponent(value) : null;
+    const decodedKey = decodeURIComponent(key!);
+    const decodedValue = value !== undefined ? decodeURIComponent(value) : undefined;
 
     if (decodedKey in query) {
       const existing = query[decodedKey];
       if (Array.isArray(existing)) {
-        existing.push(decodedValue);
-      } else {
-        query[decodedKey] = [existing, decodedValue];
+        if (decodedValue !== undefined) {
+          existing.push(decodedValue);
+        }
+      } else if (decodedValue !== undefined) {
+        query[decodedKey] = [existing, decodedValue] as (string | null)[];
       }
-    } else {
+    } else if (decodedValue !== undefined) {
       query[decodedKey] = decodedValue;
     }
   }
@@ -341,7 +344,6 @@ export function parseFullPath(fullPath: string): { path: string; query: Location
   }
 
   if (queryIndex > -1) {
-    const end = hashIndex > -1 && queryIndex > hashIndex ? path.length : queryIndex;
     queryString = path.slice(queryIndex);
     path = path.slice(0, queryIndex);
   }

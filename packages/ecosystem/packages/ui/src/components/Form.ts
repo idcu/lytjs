@@ -8,7 +8,7 @@ import { defineComponent } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import { signal } from '@lytjs/reactivity';
 import type { FormRules, FormSetupProps, FormSlots, FormItemSetupProps, FormItemSlots } from './types';
-import { getGroupA11yProps, mergeA11yProps } from '@lytjs/common-a11y';
+import { mergeA11yProps } from '@lytjs/common-a11y';
 
 export const Form = defineComponent({
   name: 'LytForm',
@@ -87,13 +87,13 @@ export const Form = defineComponent({
 
       const children: VNode[] = slots.default ? slots.default() : [];
 
-      return createVNode('form', mergeA11yProps(getGroupA11yProps({ role: 'form' }), {
+      return createVNode('form', {
         id: p.id,
         'aria-label': p.ariaLabel,
         'aria-describedby': p.ariaDescribedBy,
         class: formClass,
         onSubmit: handleSubmit,
-      }), children);
+      }, children);
     };
   },
 });

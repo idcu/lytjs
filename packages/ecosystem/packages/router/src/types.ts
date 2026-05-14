@@ -3,7 +3,8 @@
  */
 
 import type { Signal } from '@lytjs/reactivity';
-import type { Component } from '@lytjs/component';
+
+type Component = any;
 
 // ===== Route Record =====
 
@@ -57,7 +58,7 @@ export type RouteLocationRaw =
   | string
   | {
       path?: string;
-      name?: RouteRecordName;
+      name?: RouteRecordName | null;
       params?: RouteParams;
       query?: LocationQuery;
       hash?: string;

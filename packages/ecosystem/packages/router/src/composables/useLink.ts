@@ -22,16 +22,16 @@ export function useLink(options: UseLinkOptions) {
   const route = useRoute();
 
   const targetLocation = computed(() => {
-    return resolveLocation(options.to, route);
+    return resolveLocation(options.to, route());
   });
 
   const isActive = computed(() => {
     const target = targetLocation();
-    return route.path.startsWith(target.path);
+    return route().path.startsWith(target.path);
   });
 
   const isExactActive = computed(() => {
-    return isSameRouteLocation(route, targetLocation());
+    return isSameRouteLocation(route() as RouteLocationNormalized, targetLocation());
   });
 
   const href = computed(() => {
@@ -44,7 +44,7 @@ export function useLink(options: UseLinkOptions) {
     return path + query + hash;
   });
 
-  function navigate(e?: Event) {
+  function navigate(e?: MouseEvent) {
     if (e) {
       if (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return;
       if (e.defaultPrevented) return;

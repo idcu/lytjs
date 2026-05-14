@@ -7,7 +7,7 @@
 import { defineComponent } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import type { AlertType, AlertSetupProps } from './types';
-import { getButtonA11yProps, getGroupA11yProps, mergeA11yProps } from '@lytjs/common-a11y';
+import { getButtonA11yProps, mergeA11yProps } from '@lytjs/common-a11y';
 
 export const Alert = defineComponent({
   name: 'LytAlert',
@@ -98,13 +98,13 @@ export const Alert = defineComponent({
         }), [createVNode('span', {}, '×')]));
       }
 
-      const alertProps = getGroupA11yProps({ role: 'alert' });
-      return createVNode('div', mergeA11yProps(alertProps, {
+      return createVNode('div', {
         id: _props.id,
-        'aria-label': _props.ariaLabel,
+        'aria-label': _props.ariaLabel || _props.title || 'Alert',
         'aria-describedby': _props.ariaDescribedBy,
+        'role': 'alert',
         class: alertClass,
-      }), children);
+      }, children);
     };
   },
 });

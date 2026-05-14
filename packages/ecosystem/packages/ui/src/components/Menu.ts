@@ -7,8 +7,25 @@
 import { defineComponent } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import { signal } from '@lytjs/reactivity';
-import { getButtonA11yProps, mergeA11yProps, getGroupA11yProps } from '@lytjs/common-a11y';
-import type { MenuItem, MenuSetupProps, MenuSlots } from './types';
+import { getButtonA11yProps, mergeA11yProps } from '@lytjs/common-a11y';
+
+export interface MenuSetupProps {
+  mode: string;
+  defaultActive: string;
+  defaultOpeneds: string[];
+  uniqueOpened: boolean;
+  class: string;
+  id: string;
+  ariaLabel: string;
+  ariaDescribedBy: string;
+  onSelect: ((index: string) => void) | undefined;
+  onOpen: ((index: string) => void) | undefined;
+  onClose: ((index: string) => void) | undefined;
+}
+
+export interface MenuSlots {
+  default?: () => VNode[];
+}
 
 export const Menu = defineComponent({
   name: 'LytMenu',
@@ -28,7 +45,7 @@ export const Menu = defineComponent({
   },
 
   setup(props: Record<string, unknown>, { slots }: { slots: MenuSlots }) {
-    const p = props as MenuSetupProps;
+    const p = props as unknown as MenuSetupProps;
     const activeIndex = signal(p.defaultActive);
     const openedIndexes = signal(new Set<string>(p.defaultOpeneds));
 
@@ -64,55 +81,56 @@ export const Menu = defineComponent({
       const items = slots.default?.() || [];
 
       const menuItems: VNode[] = items.map((item: VNode) => {
-        const itemProps = (item as unknown as { props: MenuItem }).props;
+        const itemProps = (item as unknown as { props: { index?: string; label?: string; icon?: unknown; children?: unknown[]; disabled?: boolean } }).props;
         if (!itemProps) return item;
 
         const isActive = itemProps.index === activeIndex();
-        const isOpened = openedIndexes().has(itemProps.index);
+        const isOpened = openedIndexes().has(itemProps.index as string);
 
         const itemChildren: VNode[] = [];
 
         if (itemProps.icon) {
           itemChildren.push(createVNode('span', { class: 'lyt-menu__icon' }, [itemProps.icon as unknown as VNode]));
         }
-        itemChildren.push(createVNode('span', { class: 'lyt-menu__title' }, [createVNode('span', {}, String(itemProps.label))]));
+        itemChildren.push(createVNode('span', { class: 'lyt-menu__title' }, [createVNode('span', {}, String(itemProps.label || ''))]));
 
-        if (itemProps.children && itemProps.children.length > 0) {
+        if (itemProps.children && (itemProps.children as unknown[]).length > 0) {
           itemChildren.push(createVNode('span', {
             class: ['lyt-menu__arrow', isOpened ? 'lyt-menu__arrow--opened' : ''].filter(Boolean).join(' '),
           }, [createVNode('span', {}, isOpened ? '▲' : '▼')]));
 
-          const submenuChildren: VNode[] = itemProps.children.map((child: MenuItem) => {
-            const childBtnProps = getButtonA11yProps({ 
-              ariaLabel: child.label, 
-              disabled: child.disabled 
+          const submenuChildren: VNode[] = (itemProps.children as unknown[]).map((child: unknown) => {
+            const childItem = child as { index?: string; label?: string; icon?: unknown; disabled?: boolean };
+            const childBtnProps = getButtonA11yProps({
+              ariaLabel: childItem.label,
+              disabled: childItem.disabled,
             });
-            
+
             return createVNode('li', mergeA11yProps(childBtnProps, {
-              key: child.index,
+              key: childItem.index,
               class: [
                 'lyt-menu__item',
-                child.index === activeIndex() ? 'lyt-menu__item--active' : '',
-                child.disabled ? 'lyt-menu__item--disabled' : '',
+                childItem.index === activeIndex() ? 'lyt-menu__item--active' : '',
+                childItem.disabled ? 'lyt-menu__item--disabled' : '',
               ].filter(Boolean).join(' '),
               onClick: () => {
-                if (child.disabled) return;
-                handleSelect(child.index);
+                if (childItem.disabled) return;
+                handleSelect(childItem.index as string);
               },
             }), [
-              child.icon ? createVNode('span', { class: 'lyt-menu__icon' }, [child.icon as unknown as VNode]) : createVNode('span', {}, ''),
-              createVNode('span', { class: 'lyt-menu__title' }, [createVNode('span', {}, String(child.label))]),
+              childItem.icon ? createVNode('span', { class: 'lyt-menu__icon' }, [childItem.icon as unknown as VNode]) : createVNode('span', {}, ''),
+              createVNode('span', { class: 'lyt-menu__title' }, [createVNode('span', {}, String(childItem.label || ''))]),
             ]);
           });
 
           itemChildren.push(createVNode('ul', { class: 'lyt-menu__submenu' }, submenuChildren));
         }
 
-        const itemBtnProps = getButtonA11yProps({ 
-          ariaLabel: itemProps.label, 
-          disabled: itemProps.disabled 
+        const itemBtnProps = getButtonA11yProps({
+          ariaLabel: itemProps.label,
+          disabled: itemProps.disabled,
         });
-        
+
         return createVNode('li', mergeA11yProps(itemBtnProps, {
           key: itemProps.index,
           class: [
@@ -122,25 +140,18 @@ export const Menu = defineComponent({
           ].filter(Boolean).join(' '),
           onClick: () => {
             if (itemProps.disabled) return;
-            if (itemProps.children && itemProps.children.length > 0) {
-              toggleSubmenu(itemProps.index);
+            if (itemProps.children && (itemProps.children as unknown[]).length > 0) {
+              toggleSubmenu(itemProps.index as string);
             } else {
-              handleSelect(itemProps.index);
+              handleSelect(itemProps.index as string);
             }
           },
         }), itemChildren);
       });
 
-      const a11yProps = getGroupA11yProps({
-        id: p.id,
-        ariaLabel: p.ariaLabel,
-        ariaDescribedBy: p.ariaDescribedBy,
-        role: 'menubar'
-      });
-
-      return createVNode('ul', mergeA11yProps(a11yProps, { class: menuClass }), menuItems);
+      return createVNode('ul', { class: menuClass, role: 'menubar', id: p.id, 'aria-label': p.ariaLabel }, menuItems);
     };
   },
 });
 
-export type { MenuProps, MenuSlots, MenuItem, MenuSetupProps } from './types';
+export type { MenuProps } from './types';

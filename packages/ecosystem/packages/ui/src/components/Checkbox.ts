@@ -11,9 +11,6 @@ import { isString, isObject, isArray } from '@lytjs/common-is';
 import { reactive, computed } from '@lytjs/reactivity';
 import { getInputControlA11yProps, mergeA11yProps } from '@lytjs/common-a11y';
 
-/**
- * Checkbox 组件
- */
 export const Checkbox = defineComponent({
   name: 'LytCheckbox',
 
@@ -53,10 +50,10 @@ export const Checkbox = defineComponent({
 
     const handleChange = (e: Event) => {
       if (_props.disabled) return;
-      
+
       const target = e.target as HTMLInputElement;
       let newValue;
-      
+
       if (isArray(_props.modelValue)) {
         newValue = [...(_props.modelValue as unknown[])];
         const value = _props.label || _props.trueLabel;
@@ -73,7 +70,7 @@ export const Checkbox = defineComponent({
       } else {
         newValue = target.checked;
       }
-      
+
       emit('update:modelValue', newValue);
       emit('change', newValue);
       _props.onChange?.(newValue as boolean);
@@ -112,8 +109,8 @@ export const Checkbox = defineComponent({
 
     return () => {
       const children: VNode[] = [];
-      
-      // 实际的 input 元素（隐藏）
+      const checked = isChecked.value;
+
       const a11yProps = getInputControlA11yProps({
         id: _props.id,
         ariaLabel: _props.ariaLabel,
@@ -122,13 +119,13 @@ export const Checkbox = defineComponent({
         ariaRequired: _props.ariaRequired,
         disabled: _props.disabled,
         tabIndex: _props.tabIndex,
-        checked: isChecked.value as boolean,
+        checked: checked ? true : _props.indeterminate ? 'mixed' as const : false,
       });
-      
+
       children.push(createVNode('input', mergeA11yProps(a11yProps, {
         type: 'checkbox',
         class: 'lyt-checkbox__input',
-        checked: isChecked.value as boolean,
+        checked: checked,
         disabled: _props.disabled,
         name: _props.name,
         onKeydown: _props.onKeydown,
@@ -137,12 +134,10 @@ export const Checkbox = defineComponent({
         onBlur: handleBlur,
       }), []));
 
-      // 自定义的复选框样式
       children.push(createVNode('span', {
         class: 'lyt-checkbox__inner',
       }, []));
 
-      // 标签内容
       if (_props.label) {
         children.push(createVNode('span', {
           class: 'lyt-checkbox__label',

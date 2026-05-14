@@ -21,7 +21,7 @@ export function resolveLocation(
   const { name, path, query = {}, hash = '', params } = raw;
 
   // name-based resolution
-  if (name !== undefined && router) {
+  if (name !== undefined && name !== null && router) {
     const resolved = router.resolveName(name, params);
     if (resolved) {
       return {
@@ -51,12 +51,19 @@ export function resolveLocation(
   };
 }
 
+export interface RouteLocationSimplified {
+  path: string;
+  query: LocationQuery;
+  hash: string;
+  params?: RouteParams;
+}
+
 /**
  * Check if two locations are the same
  */
 export function isSameRouteLocation(
-  a: RouteLocationNormalized | undefined,
-  b: RouteLocationNormalized | undefined,
+  a: RouteLocationNormalized | RouteLocationSimplified | undefined,
+  b: RouteLocationNormalized | RouteLocationSimplified | undefined,
 ): boolean {
   if (!a || !b) return false;
   return (

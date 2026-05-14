@@ -20,7 +20,7 @@ export const Timeline = defineComponent({
     reverse: { type: Boolean, default: false },
     mode: { type: String as () => 'left' | 'right' | 'alternate', default: 'left' },
     class: { type: String, default: '' },
-    style: { type: [String, Object], default: '' },
+    style: { type: [String, Object] as any, default: '' },
     id: { type: String, default: '' },
     ariaLabel: { type: String, default: '' },
     ariaDescribedBy: { type: String, default: '' },
@@ -56,7 +56,7 @@ export const Timeline = defineComponent({
       if (slots.default) {
         const slotContent = slots.default();
         if (Array.isArray(slotContent)) {
-          children.push(...slotContent);
+          children.push(...(slotContent as VNode[]));
         }
       }
 

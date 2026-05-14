@@ -11,14 +11,11 @@ import { isString, isObject } from '@lytjs/common-is';
 import { reactive, computed, watch } from '@lytjs/reactivity';
 import { getSliderA11yProps, mergeA11yProps } from '@lytjs/common-a11y';
 
-/**
- * Slider 组件
- */
 export const Slider = defineComponent({
   name: 'LytSlider',
 
   props: {
-    modelValue: { type: [Number, Array], default: 0 },
+    modelValue: { type: Number, default: 0 },
     min: { type: Number, default: 0 },
     max: { type: Number, default: 100 },
     step: { type: Number, default: 1 },
@@ -34,7 +31,7 @@ export const Slider = defineComponent({
     height: { type: String, default: '' },
     label: { type: String, default: '' },
     class: { type: String, default: '' },
-    style: { type: [String, Object], default: '' },
+    style: { type: [String, Object] as any, default: '' },
     id: { type: String, default: '' },
     ariaLabel: { type: String, default: '' },
     ariaDescribedBy: { type: String, default: '' },
@@ -48,7 +45,7 @@ export const Slider = defineComponent({
 
   setup(props: Record<string, unknown>, { emit }) {
     const _props = props as SliderSetupProps;
-    
+
     const state = reactive({
       firstValue: 0,
       secondValue: 0,
@@ -90,11 +87,11 @@ export const Slider = defineComponent({
     const getValueByPercent = (percent: number) => {
       const range = _props.max - _props.min;
       let value = (percent / 100) * range + _props.min;
-      
+
       if (_props.step > 0) {
         value = Math.round(value / _props.step) * _props.step;
       }
-      
+
       value = Math.max(_props.min, Math.min(_props.max, value));
       return value;
     };
@@ -114,7 +111,7 @@ export const Slider = defineComponent({
     const handleKeydown = (event: KeyboardEvent) => {
       if (_props.disabled) return;
       
-      let newValue = state.firstValue;
+      let newValue: number;
       
       switch (event.key) {
         case 'ArrowLeft':
@@ -135,28 +132,30 @@ export const Slider = defineComponent({
           event.preventDefault();
           newValue = _props.max;
           break;
+        default:
+          _props.onKeydown?.(event);
+          return;
       }
       
       if (newValue !== state.firstValue) {
         state.firstValue = newValue;
         state.showTooltip = true;
-        
+
         if (!_props.range) {
           emit('update:modelValue', state.firstValue);
           emit('input', state.firstValue);
           _props.onInput?.(state.firstValue);
         }
-        
-        // 隐藏 tooltip
+
         setTimeout(() => {
           state.showTooltip = false;
         }, 1500);
       }
-      
+
       _props.onKeydown?.(event);
     };
 
-    const handleMouseDown = (event: MouseEvent) => {
+    const handleMouseDown = (_event: MouseEvent) => {
       if (_props.disabled) return;
       state.dragging = true;
       state.showTooltip = true;
@@ -166,36 +165,36 @@ export const Slider = defineComponent({
 
     const handleMouseMove = (event: MouseEvent) => {
       if (!state.dragging) return;
-      
+
       const slider = document.querySelector('.lyt-slider');
       if (!slider) return;
-      
+
       const rect = slider.getBoundingClientRect();
       let percent;
-      
+
       if (_props.vertical) {
         percent = ((rect.bottom - event.clientY) / rect.height) * 100;
       } else {
         percent = ((event.clientX - rect.left) / rect.width) * 100;
       }
-      
+
       percent = Math.max(0, Math.min(100, percent));
       const newValue = getValueByPercent(percent);
-      
+
       if (_props.range) {
         const diff1 = Math.abs(newValue - state.firstValue);
         const diff2 = Math.abs(newValue - state.secondValue);
-        
+
         if (diff1 < diff2) {
           state.firstValue = Math.min(newValue, state.secondValue);
         } else {
           state.secondValue = Math.max(newValue, state.firstValue);
         }
-        
+
         const newModelValue = [state.firstValue, state.secondValue];
-        emit('update:modelValue', newModelValue);
-        emit('input', newModelValue);
-        _props.onInput?.(newModelValue);
+        emit('update:modelValue', newModelValue as any);
+        emit('input', newModelValue as any);
+        _props.onInput?.(newModelValue as any);
       } else {
         state.firstValue = newValue;
         emit('update:modelValue', state.firstValue);
@@ -210,11 +209,11 @@ export const Slider = defineComponent({
       state.showTooltip = false;
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
-      
+
       if (_props.range) {
         const newModelValue = [state.firstValue, state.secondValue];
-        emit('change', newModelValue);
-        _props.onChange?.(newModelValue);
+        emit('change', newModelValue as any);
+        _props.onChange?.(newModelValue as any);
       } else {
         emit('change', state.firstValue);
         _props.onChange?.(state.firstValue);
@@ -247,100 +246,114 @@ export const Slider = defineComponent({
 
     const getStops = () => {
       if (!_props.showStops) return [];
-      
+
       const stops: VNode[] = [];
       const range = _props.max - _props.min;
       const stepCount = Math.floor(range / _props.step);
-      
+
       for (let i = 0; i <= stepCount; i++) {
         const percent = (i / stepCount) * 100;
         stops.push(createVNode('div', {
           class: 'lyt-slider__stop',
-          style: _props.vertical 
+          style: _props.vertical
             ? { bottom: `${percent}%` }
             : { left: `${percent}%` },
-        }));
+        }, []));
       }
-      
+
       return stops;
     };
 
     return () => {
+      const firstPct = firstPercent.value;
+      const secondPct = secondPercent.value;
       const children: VNode[] = [];
-      
+
+      const runwayChildren: VNode[] = [];
+
+      runwayChildren.push(createVNode('div', {
+        class: 'lyt-slider__bar',
+        style: _props.range
+          ? (_props.vertical
+              ? { bottom: `${firstPct}%`, height: `${secondPct - firstPct}%` }
+              : { left: `${firstPct}%`, width: `${secondPct - firstPct}%` })
+          : (_props.vertical
+              ? { bottom: '0%', height: `${firstPct}%` }
+              : { left: '0%', width: `${firstPct}%` }),
+      }, []));
+
+      const stops = getStops();
+      runwayChildren.push(...stops);
+
+      if (_props.range) {
+        const tooltip1 = _props.showTooltip
+          ? createVNode('div', { class: 'lyt-slider__tooltip' }, [createVNode('span', {}, formatValue(state.firstValue))])
+          : null;
+        const tooltip2 = _props.showTooltip
+          ? createVNode('div', { class: 'lyt-slider__tooltip' }, [createVNode('span', {}, formatValue(state.secondValue))])
+          : null;
+
+        if (tooltip1) {
+          runwayChildren.push(createVNode('div', mergeA11yProps(getSliderA11yProps({
+            ariaLabel: _props.ariaLabel || 'Left value',
+            disabled: _props.disabled,
+            value: state.firstValue,
+            min: _props.min,
+            max: _props.max,
+          }), {
+            class: 'lyt-slider__button',
+            style: _props.vertical
+              ? { bottom: `${firstPct}%` }
+              : { left: `${firstPct}%` },
+            onKeydown: handleKeydown,
+          }), [tooltip1]));
+        }
+
+        if (tooltip2) {
+          runwayChildren.push(createVNode('div', mergeA11yProps(getSliderA11yProps({
+            ariaLabel: 'Right value',
+            disabled: _props.disabled,
+            value: state.secondValue,
+            min: _props.min,
+            max: _props.max,
+          }), {
+            class: 'lyt-slider__button',
+            style: _props.vertical
+              ? { bottom: `${secondPct}%` }
+              : { left: `${secondPct}%` },
+            onKeydown: handleKeydown,
+          }), [tooltip2]));
+        }
+      } else {
+        const tooltip = _props.showTooltip
+          ? createVNode('div', { class: 'lyt-slider__tooltip' }, [createVNode('span', {}, formatValue(state.firstValue))])
+          : null;
+
+        if (tooltip) {
+          runwayChildren.push(createVNode('div', mergeA11yProps(getSliderA11yProps({
+            ariaLabel: _props.ariaLabel || 'Value',
+            ariaDescribedBy: _props.ariaDescribedBy,
+            ariaRequired: _props.ariaRequired,
+            ariaInvalid: _props.ariaInvalid,
+            disabled: _props.disabled,
+            tabIndex: _props.tabIndex,
+            value: state.firstValue,
+            min: _props.min,
+            max: _props.max,
+          }), {
+            class: 'lyt-slider__button',
+            style: _props.vertical
+              ? { bottom: `${firstPct}%` }
+              : { left: `${firstPct}%` },
+            onKeydown: handleKeydown,
+          }), [tooltip]));
+        }
+      }
+
       children.push(createVNode('div', {
         class: 'lyt-slider__runway',
         onMousedown: handleMouseDown,
-      }, [
-        createVNode('div', {
-          class: 'lyt-slider__bar',
-          style: _props.range
-            ? (_props.vertical
-                ? { bottom: `${firstPercent.value}%`, height: `${secondPercent.value - firstPercent.value}%` }
-                : { left: `${firstPercent.value}%`, width: `${secondPercent.value - firstPercent.value}%` })
-            : (_props.vertical
-                ? { bottom: '0%', height: `${firstPercent.value}%` }
-                : { left: '0%', width: `${firstPercent.value}%` }),
-        }),
-        ...getStops(),
-        _props.range
-          ? [
-              createVNode('div', mergeA11yProps(getSliderA11yProps({
-                ariaLabel: _props.ariaLabel || 'Left value',
-                disabled: _props.disabled,
-                value: state.firstValue,
-                min: _props.min,
-                max: _props.max,
-              }), {
-                class: 'lyt-slider__button',
-                style: _props.vertical
-                  ? { bottom: `${firstPercent.value}%` }
-                  : { left: `${firstPercent.value}%` },
-                onKeydown: handleKeydown,
-              }), [
-                _props.showTooltip
-                  ? createVNode('div', { class: 'lyt-slider__tooltip' }, [formatValue(state.firstValue)])
-                  : null,
-              ]),
-              createVNode('div', mergeA11yProps(getSliderA11yProps({
-                ariaLabel: 'Right value',
-                disabled: _props.disabled,
-                value: state.secondValue,
-                min: _props.min,
-                max: _props.max,
-              }), {
-                class: 'lyt-slider__button',
-                style: _props.vertical
-                  ? { bottom: `${secondPercent.value}%` }
-                  : { left: `${secondPercent.value}%` },
-              }), [
-                _props.showTooltip
-                  ? createVNode('div', { class: 'lyt-slider__tooltip' }, [formatValue(state.secondValue)])
-                  : null,
-              ]),
-            ]
-          : createVNode('div', mergeA11yProps(getSliderA11yProps({
-              ariaLabel: _props.ariaLabel || 'Value',
-              ariaDescribedBy: _props.ariaDescribedBy,
-              ariaRequired: _props.ariaRequired,
-              ariaInvalid: _props.ariaInvalid,
-              disabled: _props.disabled,
-              tabIndex: _props.tabIndex,
-              value: state.firstValue,
-              min: _props.min,
-              max: _props.max,
-            }), {
-              class: 'lyt-slider__button',
-              style: _props.vertical
-                ? { bottom: `${firstPercent.value}%` }
-                : { left: `${firstPercent.value}%` },
-              onKeydown: handleKeydown,
-            }), [
-              _props.showTooltip
-                ? createVNode('div', { class: 'lyt-slider__tooltip' }, [formatValue(state.firstValue)])
-                : null,
-            ]),
-      ]));
+      }, runwayChildren));
 
       if (_props.showInput && !_props.range) {
         children.push(createVNode('div', {
