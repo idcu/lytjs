@@ -45,6 +45,27 @@ export {
   unwatchRouteChanges,
   getRouteHistory,
   clearRouteHistory,
+  
+  // 信号检查器
+  getSignalNodes,
+  getSignalNode,
+  getDependencyGraph,
+  createSnapshot,
+  getSnapshots,
+  getTimeTravelState,
+  restoreSnapshot,
+  clearSnapshots,
+  getPerformanceStats,
+  getPerformanceRecords,
+  clearPerformanceRecords,
+  serializeSignalNode,
+  serializeDependencyGraph,
+  serializePerformanceStats,
+  registerSignal,
+  unregisterSignal,
+  recordSignalUpdate,
+  recordDependency,
+  clearSignalRegistry,
 } from './devtools';
 
 // 类型导出

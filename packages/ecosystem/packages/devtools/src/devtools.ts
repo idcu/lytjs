@@ -38,6 +38,27 @@ import {
   getRouteHistory,
   clearRouteHistory,
 } from './routeInspector';
+import {
+  getSignalNodes,
+  getSignalNode,
+  getDependencyGraph,
+  createSnapshot,
+  getSnapshots,
+  getTimeTravelState,
+  restoreSnapshot,
+  clearSnapshots,
+  getPerformanceStats,
+  getPerformanceRecords,
+  clearPerformanceRecords,
+  serializeSignalNode,
+  serializeDependencyGraph,
+  serializePerformanceStats,
+  registerSignal,
+  unregisterSignal,
+  recordSignalUpdate,
+  recordDependency,
+  clearSignalRegistry,
+} from './signalsInspector';
 
 // DevTools 实例
 let devtoolsInstance: DevTools | null = null;
@@ -165,6 +186,24 @@ class DevTools implements DevToolsAPI {
         cursor: pointer;
         border-bottom: 2px solid transparent;
       ">Router</button>
+      <button class="lytjs-devtools-tab" data-tab="signals" style="
+        flex: 1;
+        padding: 10px;
+        background: transparent;
+        border: none;
+        color: #d4d4d4;
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+      ">Signals</button>
+      <button class="lytjs-devtools-tab" data-tab="performance" style="
+        flex: 1;
+        padding: 10px;
+        background: transparent;
+        border: none;
+        color: #d4d4d4;
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+      ">Performance</button>
     `;
 
     // 内容区域
@@ -220,6 +259,12 @@ class DevTools implements DevToolsAPI {
       case 'router':
         content.innerHTML = this.renderRouterTab();
         break;
+      case 'signals':
+        content.innerHTML = this.renderSignalsTab();
+        break;
+      case 'performance':
+        content.innerHTML = this.renderPerformanceTab();
+        break;
     }
   }
 
@@ -247,6 +292,215 @@ class DevTools implements DevToolsAPI {
     html += `<strong>Registered Stores:</strong> ${getRegisteredStoreIds().join(', ')}`;
     html += '</div>';
     html += `<pre style="margin: 0; white-space: pre-wrap; word-break: break-all;">${serializeStoreStates(states)}</pre>`;
+    return html;
+  }
+
+  /**
+   * 渲染 Signals 标签页
+   */
+  private renderSignalsTab(): string {
+    const nodes = getSignalNodes();
+    
+    let html = `
+      <div style="margin-bottom: 15px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+          <strong>📊 Signals (${nodes.length})</strong>
+          <div>
+            <button id="lytjs-devtools-create-snapshot" style="
+              background: #4fc08d;
+              border: none;
+              color: white;
+              padding: 5px 10px;
+              border-radius: 4px;
+              cursor: pointer;
+              font-size: 11px;
+            ">创建快照</button>
+            <button id="lytjs-devtools-clear-signals" style="
+              background: #ff4d4f;
+              border: none;
+              color: white;
+              padding: 5px 10px;
+              border-radius: 4px;
+              cursor: pointer;
+              font-size: 11px;
+              margin-left: 5px;
+            ">清空</button>
+          </div>
+        </div>
+        
+        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+          <button id="lytjs-devtools-tab-signals-list" style="
+            flex: 1;
+            padding: 8px;
+            background: #4fc08d;
+            border: none;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+          ">列表视图</button>
+          <button id="lytjs-devtools-tab-signals-graph" style="
+            flex: 1;
+            padding: 8px;
+            background: #333;
+            border: none;
+            color: #d4d4d4;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+          ">依赖图</button>
+          <button id="lytjs-devtools-tab-signals-timetravel" style="
+            flex: 1;
+            padding: 8px;
+            background: #333;
+            border: none;
+            color: #d4d4d4;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+          ">时间旅行</button>
+        </div>
+        
+        <div id="lytjs-devtools-signals-content">
+          ${this.renderSignalsList(nodes)}
+        </div>
+      </div>
+    `;
+    
+    return html;
+  }
+
+  /**
+   * 渲染信号列表
+   */
+  private renderSignalsList(nodes: any[]): string {
+    if (nodes.length === 0) {
+      return '<div style="color: #666; text-align: center; padding: 40px;">暂无信号数据<br>使用 registerSignal() 注册信号</div>';
+    }
+    
+    let html = '<div style="max-height: 400px; overflow-y: auto;">';
+    nodes.forEach((node) => {
+      const typeIcon = node.type === 'signal' ? '📌' : node.type === 'computed' ? '🧮' : '⚡';
+      const typeColor = node.type === 'signal' ? '#4fc08d' : node.type === 'computed' ? '#1890ff' : '#faad14';
+      
+      html += `
+        <div style="
+          background: #252526;
+          border-radius: 4px;
+          padding: 10px;
+          margin-bottom: 8px;
+          border-left: 3px solid ${typeColor};
+        ">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-weight: bold;">${typeIcon} ${node.name}</span>
+            <span style="color: #888; font-size: 10px;">${node.type}</span>
+          </div>
+          <div style="color: #888; font-size: 11px; margin-top: 5px;">
+            更新次数: ${node.updateCount} | 
+            最后更新: ${node.lastUpdateTime ? new Date(node.lastUpdateTime).toLocaleTimeString() : 'N/A'}
+          </div>
+          ${node.averageUpdateTime > 0 ? `<div style="color: #888; font-size: 11px;">平均耗时: ${node.averageUpdateTime.toFixed(2)}ms</div>` : ''}
+          <div style="color: #888; font-size: 10px; margin-top: 5px;">
+            依赖: ${node.dependencies.length > 0 ? node.dependencies.join(', ') : '无'} |
+            被依赖: ${node.dependents.length > 0 ? node.dependents.join(', ') : '无'}
+          </div>
+        </div>
+      `;
+    });
+    html += '</div>';
+    
+    return html;
+  }
+
+  /**
+   * 渲染 Performance 标签页
+   */
+  private renderPerformanceTab(): string {
+    const stats = getPerformanceStats();
+    const records = getPerformanceRecords(50);
+    
+    let html = `
+      <div style="margin-bottom: 15px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+          <strong>⚡ Performance</strong>
+          <button id="lytjs-devtools-clear-performance" style="
+            background: #ff4d4f;
+            border: none;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+          ">清空记录</button>
+        </div>
+        
+        <div style="background: #252526; border-radius: 4px; padding: 15px; margin-bottom: 15px;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div style="text-align: center;">
+              <div style="color: #888; font-size: 11px;">总记录数</div>
+              <div style="font-size: 24px; font-weight: bold; color: #4fc08d;">${stats.totalRecords}</div>
+            </div>
+            <div style="text-align: center;">
+              <div style="color: #888; font-size: 11px;">平均耗时</div>
+              <div style="font-size: 24px; font-weight: bold; color: #1890ff;">${stats.averageDuration.toFixed(2)}ms</div>
+            </div>
+            <div style="text-align: center;">
+              <div style="color: #888; font-size: 11px;">最大耗时</div>
+              <div style="font-size: 24px; font-weight: bold; color: #ff4d4f;">${stats.maxDuration.toFixed(2)}ms</div>
+            </div>
+            <div style="text-align: center;">
+              <div style="color: #888; font-size: 11px;">最小耗时</div>
+              <div style="font-size: 24px; font-weight: bold; color: #52c41a;">${stats.minDuration.toFixed(2)}ms</div>
+            </div>
+          </div>
+        </div>
+    `;
+    
+    if (Object.keys(stats.byType).length > 0) {
+      html += `
+        <div style="margin-bottom: 15px;">
+          <strong style="display: block; margin-bottom: 10px;">按类型统计</strong>
+          <div style="background: #252526; border-radius: 4px; padding: 10px;">
+      `;
+      
+      Object.entries(stats.byType).forEach(([type, data]) => {
+        const typeColor = type === 'signal' ? '#4fc08d' : type === 'computed' ? '#1890ff' : '#faad14';
+        html += `
+          <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #333;">
+            <span style="color: ${typeColor};">${type}</span>
+            <span>${data.count} 次 | 平均 ${data.average.toFixed(2)}ms | 最大 ${data.max.toFixed(2)}ms</span>
+          </div>
+        `;
+      });
+      
+      html += '</div></div>';
+    }
+    
+    if (records.length > 0) {
+      html += `
+        <div>
+          <strong style="display: block; margin-bottom: 10px;">最近记录 (50条)</strong>
+          <div style="background: #252526; border-radius: 4px; padding: 10px; max-height: 300px; overflow-y: auto;">
+      `;
+      
+      records.slice().reverse().forEach((record) => {
+        const durationColor = record.duration > 16 ? '#ff4d4f' : record.duration > 8 ? '#faad14' : '#4fc08d';
+        html += `
+          <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #333; font-size: 11px;">
+            <span>${record.name}</span>
+            <span style="color: ${durationColor};">${record.duration.toFixed(2)}ms</span>
+            <span style="color: #888;">${new Date(record.timestamp).toLocaleTimeString()}</span>
+          </div>
+        `;
+      });
+      
+      html += '</div></div>';
+    } else {
+      html += '<div style="color: #666; text-align: center; padding: 40px;">暂无性能数据</div>';
+    }
+    
+    html += '</div>';
+    
     return html;
   }
 
@@ -403,6 +657,27 @@ export {
   unwatchRouteChanges,
   getRouteHistory,
   clearRouteHistory,
+  
+  // 信号检查器
+  getSignalNodes,
+  getSignalNode,
+  getDependencyGraph,
+  createSnapshot,
+  getSnapshots,
+  getTimeTravelState,
+  restoreSnapshot,
+  clearSnapshots,
+  getPerformanceStats,
+  getPerformanceRecords,
+  clearPerformanceRecords,
+  serializeSignalNode,
+  serializeDependencyGraph,
+  serializePerformanceStats,
+  registerSignal,
+  unregisterSignal,
+  recordSignalUpdate,
+  recordDependency,
+  clearSignalRegistry,
 };
 
 export type { DevToolsOptions, DevToolsAPI };

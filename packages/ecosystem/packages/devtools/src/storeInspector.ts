@@ -191,7 +191,7 @@ export function subscribeStore(storeId: string): boolean {
 
   // 优先使用 $subscribe 方法（Pinia 风格）
   if (isFunction(store.$subscribe)) {
-    const unsubscribe = store.$subscribe((mutation: any, state: any) => {
+    const unsubscribe = store.$subscribe((_mutation: any, state: any) => {
       const currentState = isObject(state) ? deepClone(state) : {};
       globalChangeCallbacks.forEach(cb => cb(storeId, currentState));
     });
