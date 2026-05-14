@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LytJS UI 组件库演示</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f5f7fa;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    .header {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      margin-bottom: 24px;
+    }
+    .header h1 {
+      color: #1a1a1a;
+      font-size: 2em;
+      margin-bottom: 8px;
+    }
+    .header p {
+      color: #666;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 24px;
+    }
+    .component-card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      overflow: hidden;
+    }
+    .card-header {
+      padding: 16px 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+    .card-header h3 {
+      font-size: 1.2em;
+    }
+    .card-body {
+      padding: 24px;
+    }
+    .code-block {
+      background: #f8f9fa;
+      padding: 16px;
+      border-radius: 8px;
+      font-family: 'Consolas', 'Monaco', monospace;
+      font-size: 0.85em;
+      overflow-x: auto;
+      margin-top: 16px;
+    }
+    .back-link {
+      display: inline-block;
+      margin-bottom: 20px;
+      color: #667eea;
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .back-link:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <a href="../index.html" class="back-link">← 返回示例首页</a>
+    
+    <div class="header">
+      <h1>🎨 LytJS UI 组件库</h1>
+      <p>零第三方依赖，支持主题切换的现代化 UI 组件库</p>
+    </div>
+    
+    <div class="grid">
+      <!-- 基础组件 -->
+      <div class="component-card">
+        <div class="card-header">
+          <h3>🔘 Button 按钮</h3>
+        </div>
+        <div class="card-body">
+          <p>支持多种类型和尺寸的按钮组件</p>
+          <div class="code-block">
+import { Button } from '@lytjs/ui'
+&lt;Button type="primary"&gt;
+  点击我
+&lt;/Button&gt;
+          </div>
+        </div>
+      </div>
+
+      <div class="component-card">
+        <div class="card-header">
+          <h3>📝 Input 输入框</h3>
+        </div>
+        <div class="card-body">
+          <p>支持多种类型的表单输入框</p>
+          <div class="code-block">
+import { Input } from '@lytjs/ui'
+&lt;Input placeholder="请输入内容" /&gt;
+          </div>
+        </div>
+      </div>
+
+      <div class="component-card">
+        <div class="card-header">
+          <h3>📋 Table 表格</h3>
+        </div>
+        <div class="card-body">
+          <p>功能强大的表格组件，支持排序、选择、固定列</p>
+          <div class="code-block">
+import { Table } from '@lytjs/ui'
+&lt;Table data={data} columns={cols} /&gt;
+          </div>
+        </div>
+      </div>
+
+      <div class="component-card">
+        <div class="card-header">
+          <h3>🌳 Tree 树形控件</h3>
+        </div>
+        <div class="card-body">
+          <p>树形选择器，支持拖拽、异步加载</p>
+          <div class="code-block">
+import { Tree } from '@lytjs/ui'
+&lt;Tree data={treeData} /&gt;
+          </div>
+        </div>
+      </div>
+
+      <div class="component-card">
+        <div class="card-header">
+          <h3>📑 Modal 弹窗</h3>
+        </div>
+        <div class="card-body">
+          <p>对话框组件，支持拖拽和全屏显示</p>
+          <div class="code-block">
+import { Modal } from '@lytjs/ui'
+&lt;Modal title="标题" visible={true}&gt;
+  内容
+&lt;/Modal&gt;
+          </div>
+        </div>
+      </div>
+
+      <div class="component-card">
+        <div class="card-header">
+          <h3>📬 Notification 通知</h3>
+        </div>
+        <div class="card-body">
+          <p>消息提示组件，支持多种位置和类型</p>
+          <div class="code-block">
+import { Notification } from '@lytjs/ui'
+Notification.success('操作成功')
+          </div>
+        </div>
+      </div>
+
+      <!-- 其他组件 -->
+      <div class="component-card">
+        <div class="card-header">
+          <h3>🏷️ Tag 标签</h3>
+        </div>
+        <div class="card-body">
+          <p>标签组件，可用于分类和筛选</p>
+          <div class="code-block">
+import { Tag } from '@lytjs/ui'
+&lt;Tag type="success"&gt;完成&lt;/Tag&gt;
+          </div>
+        </div>
+      </div>
+
+      <div class="component-card">
+        <div class="card-header">
+          <h3>🎭 Badge 徽标</h3>
+        </div>
+        <div class="card-body">
+          <p>用于显示数字或状态的徽标组件</p>
+          <div class="code-block">
+import { Badge } from '@lytjs/ui'
+&lt;Badge count={5}&gt;消息&lt;/Badge&gt;
+          </div>
+        </div>
+      </div>
+
+      <div class="component-card">
+        <div class="card-header">
+          <h3>⏰ DatePicker 日期选择</h3>
+        </div>
+        <div class="card-body">
+          <p>日期选择器，支持范围选择</p>
+          <div class="code-block">
+import { DatePicker } from '@lytjs/ui'
+&lt;DatePicker /&gt;
+          </div>
+        </div>
+      </div>
+
+      <div class="component-card">
+        <div class="card-header">
+          <h3>📤 Upload 文件上传</h3>
+        </div>
+        <div class="card-body">
+          <p>文件上传组件，支持分片上传</p>
+          <div class="code-block">
+import { Upload } from '@lytjs/ui'
+&lt;Upload action="/upload" /&gt;
+          </div>
+        </div>
+      </div>
+
+      <div class="component-card">
+        <div class="card-header">
+          <h3>📇 Drawer 抽屉</h3>
+        </div>
+        <div class="card-body">
+          <p>侧边抽屉组件</p>
+          <div class="code-block">
+import { Drawer } from '@lytjs/ui'
+&lt;Drawer title="菜单" /&gt;
+          </div>
+        </div>
+      </div>
+
+      <div class="component-card">
+        <div class="card-header">
+          <h3>📊 Descriptions 描述列表</h3>
+        </div>
+        <div class="card-body">
+          <p>详情描述组件</p>
+          <div class="code-block">
+import { Descriptions } from '@lytjs/ui'
+&lt;Descriptions title="用户信息" /&gt;
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
