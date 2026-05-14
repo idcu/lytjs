@@ -4,7 +4,7 @@
  * 单选框组件，用于单选场景
  */
 
-import type { RadioProps, RadioSlots } from './types';
+import type { RadioProps, RadioSlots, RadioSetupProps } from './types';
 import { defineComponent } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import { isString, isObject } from '@lytjs/common-is';
@@ -17,8 +17,8 @@ export const Radio = defineComponent({
   name: 'LytRadio',
 
   props: {
-    modelValue: { type: [String, Number, Boolean], default: undefined },
-    label: { type: [String, Number, Boolean], default: undefined },
+    modelValue: { type: String, default: undefined },
+    label: { type: String, default: undefined },
     disabled: { type: Boolean, default: false },
     name: { type: String, default: '' },
     class: { type: String, default: '' },
@@ -26,22 +26,23 @@ export const Radio = defineComponent({
     onChange: { type: Function, default: undefined },
   },
 
-  setup(props: any, { slots, emit }: any) {
+  setup(props: Record<string, unknown>, { slots, emit }) {
+    const _props = props as RadioSetupProps;
     const state = reactive({
       focus: false,
     });
 
     const isChecked = computed(() => {
-      return props.modelValue === props.label;
+      return _props.modelValue === _props.label;
     });
 
-    const handleChange = (e: Event) => {
-      if (props.disabled) return;
+    const handleChange = () => {
+      if (_props.disabled) return;
       
-      const newValue = props.label;
+      const newValue = _props.label;
       emit('update:modelValue', newValue);
       emit('change', newValue);
-      props.onChange?.(newValue);
+      _props.onChange?.(newValue as string | number | boolean);
     };
 
     const handleFocus = () => {
@@ -55,20 +56,20 @@ export const Radio = defineComponent({
     const getRadioClass = () => {
       const classes = ['lyt-radio'];
       if (isChecked.value) classes.push('lyt-radio--checked');
-      if (props.disabled) classes.push('lyt-radio--disabled');
+      if (_props.disabled) classes.push('lyt-radio--disabled');
       if (state.focus) classes.push('lyt-radio--focus');
-      if (props.class) classes.push(props.class);
+      if (_props.class) classes.push(_props.class);
       return classes.join(' ');
     };
 
     const getRadioStyle = () => {
       const style: Record<string, string> = {};
-      if (props.style) {
-        if (isString(props.style)) {
-          return props.style;
+      if (_props.style) {
+        if (isString(_props.style)) {
+          return _props.style;
         }
-        if (isObject(props.style)) {
-          Object.assign(style, props.style);
+        if (isObject(_props.style)) {
+          Object.assign(style, _props.style);
         }
       }
       return style;
@@ -81,9 +82,9 @@ export const Radio = defineComponent({
       children.push(createVNode('input', {
         type: 'radio',
         class: 'lyt-radio__input',
-        checked: isChecked.value,
-        disabled: props.disabled,
-        name: props.name,
+        checked: isChecked.value as boolean,
+        disabled: _props.disabled,
+        name: _props.name,
         onChange: handleChange,
         onFocus: handleFocus,
         onBlur: handleBlur,
@@ -95,14 +96,17 @@ export const Radio = defineComponent({
       }, []));
 
       // 标签内容
-      if (props.label !== undefined) {
+      if (_props.label !== undefined) {
         children.push(createVNode('span', {
           class: 'lyt-radio__label',
-        }, [String(props.label)]));
+        }, [createVNode('span', {}, String(_props.label))]));
       } else if (slots.default) {
-        children.push(createVNode('span', {
-          class: 'lyt-radio__label',
-        }, slots.default()));
+        const slotContent = slots.default();
+        if (Array.isArray(slotContent)) {
+          children.push(createVNode('span', {
+            class: 'lyt-radio__label',
+          }, slotContent as VNode[]));
+        }
       }
 
       return createVNode('label', {

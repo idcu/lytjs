@@ -316,13 +316,28 @@ packages/
 
 ---
 
-**文档版本**: v5.4
-**最后更新**: 2026-05-14
+**文档版本**: v5.5  
+**最后更新**: 2026-05-14  
 **维护者**: LytJS Team
 
 ---
 
 ## 更新日志
+
+### v5.5 (2026-05-14)
+
+- ✅ 修复多个包的类型检查错误：
+  - 在 `packages/web` 包中添加缺失的 `env.d.ts` 文件，解决 `__DEV__` 未定义的问题
+  - 修复 `packages/dom` 包中的未使用变量警告（将 `wcAttr` 改为 `_wcAttr`）
+  - 修复 `packages/ecosystem/packages/platform-adapter` 包中的未使用参数警告（将 `container` 改为 `_container`）
+  - 单独构建 `packages/common/packages/http` 包，生成缺失的类型声明文件
+- ✅ 验证项目构建成功，所有包均可正常编译
+- ✅ 验证核心功能完整性：
+  - 反应性包的所有 213 个测试通过
+  - UI 组件库的所有 135 个测试通过
+- ✅ 更新 AGENTS.md 文档，新增「类型检查常见问题」章节
+- ✅ 更新 AGENTS.md 文档，新增「大型项目 lint 检查内存问题」章节
+- ✅ 将 AGENTS.md 文档版本从 v4.1 更新到 v4.2
 
 ### v5.4 (2026-05-14)
 

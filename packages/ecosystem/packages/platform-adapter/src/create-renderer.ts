@@ -98,7 +98,7 @@ export function createPlatformRenderer<HN, HE extends HN>(
     /**
      * 卸载容器中的内容
      */
-    unmount(container: HN): void {
+    unmount(_container: HN): void {
       if (currentChild !== null) {
         adapter.remove(currentChild);
         currentChild = null;

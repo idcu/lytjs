@@ -7,43 +7,7 @@
 import { defineComponent } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import { signal } from '@lytjs/reactivity';
-
-export interface TreeNode {
-  id: string | number;
-  label: string;
-  children?: TreeNode[];
-  disabled?: boolean;
-  isLeaf?: boolean;
-  loading?: boolean;
-  expanded?: boolean;
-  checked?: boolean;
-  indeterminate?: boolean;
-}
-
-export interface TreeSetupProps {
-  data: TreeNode[];
-  showLine: boolean;
-  showCheckbox: boolean;
-  checkable: boolean;
-  draggable: boolean;
-  defaultExpandAll: boolean;
-  defaultExpandedKeys: (string | number)[];
-  defaultCheckedKeys: (string | number)[];
-  nodeKey: string;
-  class: string;
-  onCheck: ((data: TreeNode[], checked: boolean) => void) | undefined;
-  onSelect: ((data: TreeNode) => void) | undefined;
-  onExpand: ((data: TreeNode, expanded: boolean) => void) | undefined;
-  onNodeClick: ((data: TreeNode) => void) | undefined;
-  onDragStart: ((data: TreeNode, event: DragEvent) => void) | undefined;
-  onDragEnd: ((data: TreeNode, event: DragEvent) => void) | undefined;
-  onDrop: ((data: TreeNode, target: TreeNode, position: 'before' | 'after' | 'inner', event: DragEvent) => void) | undefined;
-}
-
-export interface TreeSlots {
-  default?: (data: TreeNode) => VNode[];
-  empty?: () => VNode[];
-}
+import type { TreeNode, TreeSetupProps } from './types';
 
 export interface FlattenNode extends TreeNode {
   parent: FlattenNode | null;
@@ -78,19 +42,20 @@ export const Tree = defineComponent({
     onDrop: { type: Function, default: undefined },
   },
 
-  setup(props: TreeSetupProps) {
-    const expandedKeys = signal(new Set<string | number>(props.defaultExpandedKeys));
-    const checkedKeys = signal(new Set<string | number>(props.defaultCheckedKeys));
+  setup(props: Record<string, unknown>) {
+    const p = props as TreeSetupProps;
+    const expandedKeys = signal(new Set<string | number>(p.defaultExpandedKeys));
+    const checkedKeys = signal(new Set<string | number>(p.defaultCheckedKeys));
     const selectedKey = signal<string | number | null>(null);
 
     const flattenTree = (nodes: TreeNode[], parent: FlattenNode | null = null, level = 0): FlattenNode[] => {
       const result: FlattenNode[] = [];
-      
+
       for (const node of nodes) {
         const nodeKey = node.id;
         const isExpanded = expandedKeys().has(nodeKey);
         const isChecked = checkedKeys().has(nodeKey);
-        
+
         const flatNode: FlattenNode = {
           ...node,
           parent,
@@ -101,21 +66,21 @@ export const Tree = defineComponent({
           isIndeterminate: false,
           isSelected: selectedKey() === nodeKey,
         };
-        
+
         result.push(flatNode);
-        
+
         if (isExpanded && node.children) {
           result.push(...flattenTree(node.children, flatNode, level + 1));
         }
       }
-      
+
       return result;
     };
 
     const handleNodeClick = (node: TreeNode) => {
       selectedKey.set(node.id);
-      props.onNodeClick?.(node);
-      props.onSelect?.(node);
+      p.onNodeClick?.(node);
+      p.onSelect?.(node);
     };
 
     const handleCheck = (node: TreeNode, checked: boolean) => {
@@ -126,48 +91,48 @@ export const Tree = defineComponent({
         newCheckedKeys.delete(node.id);
       }
       checkedKeys.set(newCheckedKeys);
-      props.onCheck?.(props.data, checked);
+      p.onCheck?.(p.data, checked);
     };
 
     const handleExpand = (node: TreeNode) => {
       const newExpandedKeys = new Set(expandedKeys());
       const isExpanded = expandedKeys().has(node.id);
-      
+
       if (isExpanded) {
         newExpandedKeys.delete(node.id);
       } else {
         newExpandedKeys.add(node.id);
       }
-      
+
       expandedKeys.set(newExpandedKeys);
-      props.onExpand?.(node, !isExpanded);
+      p.onExpand?.(node, !isExpanded);
     };
 
     const renderTreeNode = (node: FlattenNode): VNode => {
       const indent = node.level * 20;
-      
+
       const nodeContent: VNode[] = [];
-      
+
       if (!node.isLeaf) {
         nodeContent.push(createVNode('span', {
           class: 'lyt-tree__expand-icon',
           onClick: () => handleExpand(node),
-        }, [node.isExpanded ? '▼' : '▶']));
+        }, [createVNode('span', {}, node.isExpanded ? '▼' : '▶')]));
       }
-      
-      if (props.showCheckbox) {
+
+      if (p.showCheckbox) {
         nodeContent.push(createVNode('input', {
           type: 'checkbox',
           checked: node.isChecked,
           onChange: (e: Event) => handleCheck(node, (e.target as HTMLInputElement).checked),
         }));
       }
-      
+
       nodeContent.push(createVNode('span', {
         class: 'lyt-tree__label',
         onClick: () => handleNodeClick(node),
-      }, [node.label]));
-      
+      }, [createVNode('span', {}, String(node.label))]));
+
       return createVNode('div', {
         key: String(node.id),
         class: [
@@ -176,31 +141,29 @@ export const Tree = defineComponent({
           node.isChecked ? 'lyt-tree__node--checked' : '',
         ].filter(Boolean).join(' '),
         style: `padding-left: ${indent}px`,
-        draggable: props.draggable,
-        onDragStart: (e: DragEvent) => props.onDragStart?.(node, e),
-        onDragEnd: (e: DragEvent) => props.onDragEnd?.(node, e),
-      }, [nodeContent]);
+        draggable: p.draggable,
+        onDragStart: (e: DragEvent) => p.onDragStart?.(node, e),
+        onDragEnd: (e: DragEvent) => p.onDragEnd?.(node, e),
+      }, nodeContent);
     };
 
     return () => {
-      const data = props.data || [];
+      const data = p.data || [];
       const flatData = flattenTree(data);
-      
+
       if (flatData.length === 0) {
-        return createVNode('div', { class: 'lyt-tree__empty' }, ['暂无数据']);
+        return createVNode('div', { class: 'lyt-tree__empty' }, [createVNode('span', {}, '暂无数据')]);
       }
-      
+
       const treeClass = [
         'lyt-tree',
-        props.showLine ? 'lyt-tree--show-line' : '',
-        props.class,
+        p.showLine ? 'lyt-tree--show-line' : '',
+        p.class,
       ].filter(Boolean).join(' ');
-      
-      return createVNode('div', { class: treeClass }, [
-        flatData.map(node => renderTreeNode(node)),
-      ]);
+
+      return createVNode('div', { class: treeClass }, flatData.map(node => renderTreeNode(node)));
     };
   },
 });
 
-export type { TreeProps, TreeSlots, TreeNode } from './types';
+export type { TreeProps, TreeSlots, TreeNode, TreeSetupProps } from './types';

@@ -5,12 +5,10 @@
  */
 
 import { defineComponent } from '@lytjs/component';
-import { createVNode } from '@lytjs/vdom';
+import { createVNode, type VNode } from '@lytjs/vdom';
 import { signal } from '@lytjs/reactivity';
+import type { RateSetupProps } from './types';
 
-/**
- * Rate 组件
- */
 export const Rate = defineComponent({
   name: 'LytRate',
 
@@ -22,7 +20,7 @@ export const Rate = defineComponent({
     disabled: { type: Boolean, default: false },
     showText: { type: Boolean, default: false },
     showScore: { type: Boolean, default: false },
-    texts: { type: Array, default: () => ['极差', '失望', '一般', '满意', '惊喜'] },
+    texts: { type: Array, default: (): string[] => ['极差', '失望', '一般', '满意', '惊喜'] },
     voidIcon: { type: String, default: '☆' },
     voidColor: { type: String, default: '#c6d1de' },
     disabledVoidColor: { type: String, default: '#e8e8e8' },
@@ -30,51 +28,45 @@ export const Rate = defineComponent({
     onChange: { type: Function, default: undefined },
   },
 
-  setup(props: any, { slots, emit }: any) {
+  setup(props: Record<string, unknown>) {
+    const p = props as RateSetupProps;
     const hoverValue = signal(0);
     const isHovering = signal(false);
 
-    const displayValue = () => isHovering.value ? hoverValue.value : props.modelValue;
+    const displayValue = (): number => isHovering() ? hoverValue() : p.modelValue;
 
-    const isEmpty = () => {
-      if (props.allowHalf) {
-        return Math.floor(displayValue()) + 0.5;
-      }
-      return Math.ceil(displayValue());
-    };
-
-    const getStarClass = (index: number) => {
+    const getStarClass = (index: number): string => {
       const value = displayValue();
       if (value >= index + 1) return 'lyt-rate-star-full';
-      if (props.allowHalf && value >= index + 0.5) return 'lyt-rate-star-half';
+      if (p.allowHalf && value >= index + 0.5) return 'lyt-rate-star-half';
       return 'lyt-rate-star-void';
     };
 
-    const getStarStyle = (index: number) => {
+    const getStarStyle = (index: number): string => {
       const classes = ['lyt-rate-star'];
       if (getStarClass(index)) {
         classes.push(getStarClass(index));
       }
-      if (props.disabled || props.readonly) {
+      if (p.disabled || p.readonly) {
         classes.push('lyt-rate-star-disabled');
       }
       return classes.join(' ');
     };
 
     const handleMouseMove = (event: MouseEvent, index: number) => {
-      if (props.disabled || props.readonly) return;
-      
+      if (p.disabled || p.readonly) return;
+
       const target = event.target as HTMLElement;
       let newValue = index + 1;
 
-      if (props.allowHalf) {
+      if (p.allowHalf) {
         const rect = target.getBoundingClientRect();
         const halfWidth = rect.width / 2;
         if (event.clientX - rect.left < halfWidth) {
           newValue = index + 0.5;
         }
       }
-      
+
       hoverValue.set(newValue);
       isHovering.set(true);
     };
@@ -84,11 +76,11 @@ export const Rate = defineComponent({
     };
 
     const handleClick = (event: MouseEvent, index: number) => {
-      if (props.disabled || props.readonly) return;
+      if (p.disabled || p.readonly) return;
 
       let newValue = index + 1;
 
-      if (props.allowHalf) {
+      if (p.allowHalf) {
         const target = event.target as HTMLElement;
         const rect = target.getBoundingClientRect();
         const halfWidth = rect.width / 2;
@@ -97,66 +89,59 @@ export const Rate = defineComponent({
         }
       }
 
-      emit('update:modelValue', newValue);
-      if (props.onChange && props.onChange(newValue));
+      if (p.onChange) {
+        p.onChange(newValue);
+      }
     };
 
-    const getText = () => {
-      const value = props.texts || [];
+    const getText = (): string => {
+      const texts = (p.texts as string[]) || [];
       const index = Math.round(displayValue()) - 1;
-      return value[index] || '';
+      return texts[index] || '';
     };
 
-    const getScore = () => {
+    const getScore = (): string => {
       return displayValue().toFixed(1);
     };
 
-    const getRateClass = () => {
-      const classes = ['lyt-rate'];
-      if (props.class) classes.push(props.class);
-      if (props.disabled || props.readonly) {
-        classes.push('lyt-rate-disabled');
-      }
-      return classes.join(' ');
-    };
-
     return () => {
-      const starNodes = [];
+      const starNodes: VNode[] = [];
 
-      for (let i = 0; i < props.max; i++) {
+      for (let i = 0; i < p.max; i++) {
         starNodes.push(
           createVNode('span', {
             class: getStarStyle(i),
             key: i,
             onMousemove: (e: MouseEvent) => handleMouseMove(e, i),
             onMouseleave: handleMouseLeave,
-            onClick: (e: MouseEvent) => handleClick(e, i)
+            onClick: (e: MouseEvent) => handleClick(e, i),
           }, [
-            // 空星
-            createVNode('span', { class: 'lyt-rate-star-first' },
-              slots.voidIcon || props.voidIcon || '☆'
-            ),
-            // 满星
-            createVNode('span', { class: 'lyt-rate-star-second' },
-              slots.icon || '★'
-            )
+            createVNode('span', { class: 'lyt-rate-star-first' }, [createVNode('span', {}, String(p.voidIcon))]),
+            createVNode('span', { class: 'lyt-rate-star-second' }, [createVNode('span', {}, '★')]),
           ])
         );
       }
 
-      const children: any[] = [...starNodes];
+      const children: VNode[] = [...starNodes];
 
-      if (props.showText) {
-        children.push(createVNode('span', { class: 'lyt-rate-text' }, getText()));
+      if (p.showText) {
+        children.push(createVNode('span', { class: 'lyt-rate-text' }, [createVNode('span', {}, getText())]));
       }
 
-      if (props.showScore) {
-        children.push(createVNode('span', { class: 'lyt-rate-score' }, getScore()));
+      if (p.showScore) {
+        children.push(createVNode('span', { class: 'lyt-rate-score' }, [createVNode('span', {}, getScore())]));
       }
 
-      return createVNode('div', { class: getRateClass() }, children);
+      return createVNode('div', {
+        class: [
+          'lyt-rate',
+          p.class as string,
+          (p.disabled || p.readonly) ? 'lyt-rate-disabled' : '',
+        ].filter(Boolean).join(' '),
+      }, children);
     };
   },
 });
 
 export default Rate;
+export type { RateProps, RateSlots, RateSetupProps } from './types';

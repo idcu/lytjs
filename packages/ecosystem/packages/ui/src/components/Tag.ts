@@ -4,7 +4,7 @@
  * 标签组件，支持多种类型和可关闭功能
  */
 
-import type { TagProps, TagSlots } from './types';
+import type { TagProps, TagSlots, TagSetupProps } from './types';
 import { defineComponent } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import { isString, isObject } from '@lytjs/common-is';
@@ -26,7 +26,8 @@ export const Tag = defineComponent({
     onClose: { type: Function, default: undefined },
   },
 
-  setup(props: any, { slots, emit }: any) {
+  setup(props: Record<string, unknown>, { slots, emit }) {
+    const _props = props as TagSetupProps;
     const state = reactive({
       visible: true,
     });
@@ -35,52 +36,55 @@ export const Tag = defineComponent({
       e.stopPropagation();
       state.visible = false;
       emit('close');
-      props.onClose?.();
+      _props.onClose?.();
     };
 
     const getTagClass = () => {
       const classes = ['lyt-tag'];
-      if (props.type !== 'default') classes.push(`lyt-tag--${props.type}`);
-      if (props.size !== 'medium') classes.push(`lyt-tag--${props.size}`);
-      if (props.color) classes.push('lyt-tag--custom');
-      if (props.class) classes.push(props.class);
+      if (_props.type !== 'default') classes.push(`lyt-tag--${_props.type}`);
+      if (_props.size !== 'medium') classes.push(`lyt-tag--${_props.size}`);
+      if (_props.color) classes.push('lyt-tag--custom');
+      if (_props.class) classes.push(_props.class);
       return classes.join(' ');
     };
 
     const getTagStyle = () => {
       const style: Record<string, string> = {};
-      if (props.color) {
-        style.backgroundColor = props.color + '15';
-        style.borderColor = props.color;
-        style.color = props.color;
+      if (_props.color) {
+        style.backgroundColor = _props.color + '15';
+        style.borderColor = _props.color;
+        style.color = _props.color;
       }
-      if (props.style) {
-        if (isString(props.style)) {
-          return props.style;
+      if (_props.style) {
+        if (isString(_props.style)) {
+          return _props.style;
         }
-        if (isObject(props.style)) {
-          Object.assign(style, props.style);
+        if (isObject(_props.style)) {
+          Object.assign(style, _props.style);
         }
       }
       return style;
     };
 
     return () => {
-      if (!state.visible) return null;
+      if (!state.visible) return createVNode('div', { style: 'display: none;' }, []);
 
       const children: VNode[] = [];
       
       // 内容插槽
       if (slots.default) {
-        children.push(...slots.default());
+        const slotContent = slots.default();
+        if (Array.isArray(slotContent)) {
+          children.push(...(slotContent as VNode[]));
+        }
       }
 
       // 关闭按钮
-      if (props.closable) {
+      if (_props.closable) {
         children.push(createVNode('span', {
           class: 'lyt-tag__close',
           onClick: handleClose,
-        }, ['&times;']));
+        }, [createVNode('span', {}, '&times;')]));
       }
 
       return createVNode('span', {

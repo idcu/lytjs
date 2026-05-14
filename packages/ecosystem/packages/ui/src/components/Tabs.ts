@@ -7,21 +7,19 @@
 import { defineComponent } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import { signal } from '@lytjs/reactivity';
+import type { TabPaneSetupProps, TabsSetupProps, TabPaneSlots, TabsSlots } from './types';
 
-export interface TabPaneSetupProps {
-  label: string;
-  name: string;
-  disabled: boolean;
-  closable: boolean;
-}
-
-export interface TabPaneSlots {
-  default?: () => VNode[];
-}
+export type TabsType = '' | 'card' | 'border-card';
 
 export interface TabPane {
   props: TabPaneSetupProps;
   children: VNode[];
+}
+
+export interface DragState {
+  isDragging: boolean;
+  dragIndex: number;
+  dropIndex: number;
 }
 
 export const TabPane = defineComponent({
@@ -34,40 +32,14 @@ export const TabPane = defineComponent({
     closable: { type: Boolean, default: false },
   },
 
-  setup(_props: TabPaneSetupProps, { slots }: { slots: TabPaneSlots }) {
+  setup(_props: Record<string, unknown>, { slots }: { slots: TabPaneSlots }) {
     return () => {
-      return createVNode('div', { class: 'lyt-tab-pane' }, slots.default?.());
+      const defaultSlot = slots.default;
+      const children: VNode[] = defaultSlot ? defaultSlot() : [];
+      return createVNode('div', { class: 'lyt-tab-pane' }, children);
     };
   },
 });
-
-export type TabsType = '' | 'card' | 'border-card';
-
-export interface TabsSetupProps {
-  modelValue: string;
-  type: TabsType;
-  closable: boolean;
-  addable: boolean;
-  editable: boolean;
-  draggable: boolean;
-  class: string;
-  onChange: ((name: string) => void) | undefined;
-  onTabClick: ((pane: TabPane, index: number) => void) | undefined;
-  onTabRemove: ((name: string) => void) | undefined;
-  onTabAdd: (() => void) | undefined;
-  onTabDragStart: ((index: number) => void) | undefined;
-  onTabDragEnd: ((fromIndex: number, toIndex: number) => void) | undefined;
-}
-
-export interface TabsSlots {
-  default?: () => VNode[];
-}
-
-export interface DragState {
-  isDragging: boolean;
-  dragIndex: number;
-  dropIndex: number;
-}
 
 export const Tabs = defineComponent({
   name: 'LytTabs',
@@ -88,7 +60,8 @@ export const Tabs = defineComponent({
     onTabDragEnd: { type: Function, default: undefined },
   },
 
-  setup(props: TabsSetupProps, { slots }: { slots: TabsSlots; emit: (event: string, ...args: unknown[]) => void }) {
+  setup(props: Record<string, unknown>, { slots }: { slots: TabsSlots }) {
+    const p = props as TabsSetupProps;
     const dragState = signal<DragState>({
       isDragging: false,
       dragIndex: -1,
@@ -96,41 +69,41 @@ export const Tabs = defineComponent({
     });
 
     const getPanes = (): TabPane[] => {
-      const defaultSlot = slots.default?.();
-      if (!defaultSlot) return [];
+      const defaultSlot = slots.default;
+      const defaultSlotContent = defaultSlot ? defaultSlot() : [];
+      if (!defaultSlotContent || defaultSlotContent.length === 0) return [];
 
-      return defaultSlot
-        .filter((vnode: VNode) => vnode && (vnode as any).type?.name === 'LytTabPane')
+      return defaultSlotContent
+        .filter((vnode: VNode) => vnode && (vnode as unknown as { type: { name?: string } }).type?.name === 'LytTabPane')
         .map((vnode: VNode) => ({
-          props: (vnode as any).props as TabPaneSetupProps,
-          children: (vnode as any).children as VNode[],
+          props: (vnode as unknown as { props: TabPaneSetupProps }).props,
+          children: (vnode as unknown as { children: VNode[] }).children,
         }));
     };
 
     const handleTabClick = (pane: TabPane, index: number) => {
       if (pane.props.disabled) return;
-      emit('update:modelValue', pane.props.name);
-      props.onChange?.(pane.props.name);
-      props.onTabClick?.(pane, index);
+      p.onChange?.(pane.props.name);
+      p.onTabClick?.(pane, index);
     };
 
     const handleTabRemove = (pane: TabPane, e: Event) => {
       e.stopPropagation();
-      props.onTabRemove?.(pane.props.name);
+      p.onTabRemove?.(pane.props.name);
     };
 
     const handleTabAdd = () => {
-      props.onTabAdd?.();
+      p.onTabAdd?.();
     };
 
     const handleDragStart = (index: number) => {
-      if (!props.draggable) return;
+      if (!p.draggable) return;
       dragState.set({
         isDragging: true,
         dragIndex: index,
         dropIndex: -1,
       });
-      props.onTabDragStart?.(index);
+      p.onTabDragStart?.(index);
     };
 
     const handleDragOver = (index: number) => {
@@ -144,7 +117,7 @@ export const Tabs = defineComponent({
     const handleDragEnd = () => {
       const { dragIndex, dropIndex } = dragState();
       if (dragIndex !== -1 && dropIndex !== -1 && dragIndex !== dropIndex) {
-        props.onTabDragEnd?.(dragIndex, dropIndex);
+        p.onTabDragEnd?.(dragIndex, dropIndex);
       }
       dragState.set({
         isDragging: false,
@@ -155,20 +128,31 @@ export const Tabs = defineComponent({
 
     return () => {
       const panes = getPanes();
-      const currentName = props.modelValue || panes[0]?.props.name;
+      const currentName = p.modelValue || panes[0]?.props.name;
 
       const tabsClass = [
         'lyt-tabs',
-        `lyt-tabs--${props.type || 'normal'}`,
-        props.class,
+        `lyt-tabs--${p.type || 'normal'}`,
+        p.class,
       ].filter(Boolean).join(' ');
 
       const tabItems: VNode[] = panes.map((pane, index) => {
         const isActive = pane.props.name === currentName;
-        const isDraggable = props.draggable;
+        const isDraggable = p.draggable;
+
+        const tabChildren: VNode[] = [
+          createVNode('span', { class: 'lyt-tabs__label' }, String(pane.props.label)),
+        ];
+
+        if (pane.props.closable || p.closable) {
+          tabChildren.push(createVNode('span', {
+            class: 'lyt-tabs__close',
+            onClick: (e: Event) => handleTabRemove(pane, e),
+          }, '×'));
+        }
 
         return createVNode('div', {
-          key: pane.props.name,
+          key: String(pane.props.name),
           class: [
             'lyt-tabs__item',
             isActive ? 'lyt-tabs__item--active' : '',
@@ -180,31 +164,27 @@ export const Tabs = defineComponent({
           onDragStart: () => handleDragStart(index),
           onDragOver: (e: DragEvent) => { e.preventDefault(); handleDragOver(index); },
           onDragEnd: handleDragEnd,
-        }, [
-          createVNode('span', { class: 'lyt-tabs__label' }, [pane.props.label]),
-          (pane.props.closable || props.closable) && createVNode('span', {
-            class: 'lyt-tabs__close',
-            onClick: (e: Event) => handleTabRemove(pane, e),
-          }, ['×']),
-        ]);
+        }, tabChildren);
       });
 
-      if (props.addable || props.editable) {
+      if (p.addable || p.editable) {
         tabItems.push(createVNode('div', {
           class: 'lyt-tabs__add-btn',
           onClick: handleTabAdd,
-        }, ['+']));
+        }, '+'));
       }
 
-      const content = panes.find(p => p.props.name === currentName);
+      const content = panes.find(pane => pane.props.name === currentName);
+
+      const contentPane = content
+        ? createVNode('div', { class: 'lyt-tabs__pane' }, content.children)
+        : createVNode('div', { style: 'display: none;' }, []);
 
       return createVNode('div', { class: tabsClass }, [
         createVNode('div', { class: 'lyt-tabs__header' }, [
-          createVNode('div', { class: 'lyt-tabs__nav' }, [tabItems]),
+          createVNode('div', { class: 'lyt-tabs__nav' }, tabItems),
         ]),
-        createVNode('div', { class: 'lyt-tabs__content' }, [
-          content ? createVNode('div', { class: 'lyt-tabs__pane' }, [content.children]) : null,
-        ]),
+        createVNode('div', { class: 'lyt-tabs__content' }, [contentPane]),
       ]);
     };
   },

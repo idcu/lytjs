@@ -22,11 +22,23 @@ export type TableSortOrder = 'ascending' | 'descending' | '';
 export type NativeType = 'button' | 'submit' | 'reset';
 export type Target = '_blank' | '_self' | '_parent' | '_top';
 
-export interface Record<string, unknown> {
-  [key: string]: unknown;
-}
-
 // ===== Button 组件 =====
+
+export type ButtonNativeType = 'button' | 'submit' | 'reset';
+
+export interface ButtonSetupProps extends Record<string, unknown> {
+  type: ComponentStatus;
+  size: ComponentSize;
+  disabled: boolean;
+  loading: boolean;
+  plain: boolean;
+  round: boolean;
+  circle: boolean;
+  nativeType: ButtonNativeType;
+  class: string;
+  style: string;
+  onClick?: (event: MouseEvent) => void;
+}
 
 export interface ButtonProps {
   type?: ComponentStatus;
@@ -36,7 +48,7 @@ export interface ButtonProps {
   plain?: boolean;
   round?: boolean;
   circle?: boolean;
-  nativeType?: 'button' | 'submit' | 'reset';
+  nativeType?: ButtonNativeType;
   class?: string;
   style?: string | Record<string, string>;
   onClick?: (event: MouseEvent) => void;
@@ -49,6 +61,28 @@ export interface ButtonSlots {
 }
 
 // ===== Input 组件 =====
+
+export interface InputSetupProps extends Record<string, unknown> {
+  modelValue: string | number;
+  type: string;
+  placeholder: string;
+  disabled: boolean;
+  readonly: boolean;
+  clearable: boolean;
+  showPassword: boolean;
+  maxlength?: number;
+  minlength?: number;
+  size: ComponentSize;
+  prefixIcon: string;
+  suffixIcon: string;
+  class: string;
+  style: string;
+  onInput?: (value: string) => void;
+  onChange?: (value: string) => void;
+  onFocus?: (event: FocusEvent) => void;
+  onBlur?: (event: FocusEvent) => void;
+  onClear?: () => void;
+}
 
 export interface InputProps {
   modelValue?: string | number;
@@ -81,6 +115,23 @@ export interface InputSlots {
 
 // ===== Dialog 组件 =====
 
+export interface DialogSetupProps extends Record<string, unknown> {
+  modelValue: boolean;
+  title: string;
+  width: string | number;
+  showClose: boolean;
+  closeOnClickModal: boolean;
+  closeOnPressEscape: boolean;
+  lockScroll: boolean;
+  class: string;
+  onBeforeOpen?: () => boolean | void | Promise<boolean | void>;
+  onBeforeClose?: () => boolean | void | Promise<boolean | void>;
+  onOpen?: () => void;
+  onClose?: () => void;
+  onConfirm?: () => void;
+  onCancel?: () => void;
+}
+
 export interface DialogProps {
   modelValue?: boolean;
   title?: string;
@@ -105,12 +156,94 @@ export interface DialogSlots {
   footer?: () => VNode[];
 }
 
+export interface DialogSetupProps extends Record<string, unknown> {
+  modelValue: boolean;
+  title: string;
+  width: string | number;
+  top: string;
+  showClose: boolean;
+  closeOnClickModal: boolean;
+  closeOnPressEscape: boolean;
+  lockScroll: boolean;
+  class: string;
+  style?: string;
+  onBeforeOpen?: () => boolean | void | Promise<boolean | void>;
+  onBeforeClose?: () => boolean | void | Promise<boolean | void>;
+  onOpen?: () => void;
+  onClose?: () => void;
+  onConfirm?: () => void;
+  onCancel?: () => void;
+}
+
+export interface ModalProps {
+  modelValue?: boolean;
+  title?: string;
+  width?: string | number;
+  top?: string;
+  showClose?: boolean;
+  closeOnClickModal?: boolean;
+  closeOnPressEscape?: boolean;
+  lockScroll?: boolean;
+  draggable?: boolean;
+  fullscreen?: boolean;
+  appendToBody?: boolean;
+  customClass?: string;
+  class?: string;
+  onBeforeOpen?: () => boolean | void | Promise<boolean | void>;
+  onBeforeClose?: () => boolean | void | Promise<boolean | void>;
+  onOpen?: () => void;
+  onClose?: () => void;
+  onConfirm?: () => void;
+  onCancel?: () => void;
+}
+
+export interface ModalSlots {
+  header?: () => VNode[];
+  default?: () => VNode[];
+  footer?: () => VNode[];
+}
+
+export interface ModalSetupProps extends Record<string, unknown> {
+  modelValue: boolean;
+  title: string;
+  width: string | number;
+  top: string;
+  showClose: boolean;
+  closeOnClickModal: boolean;
+  closeOnPressEscape: boolean;
+  lockScroll: boolean;
+  draggable: boolean;
+  fullscreen: boolean;
+  appendToBody: boolean;
+  customClass: string;
+  class: string;
+  onBeforeOpen?: () => boolean | void | Promise<boolean | void>;
+  onBeforeClose?: () => boolean | void | Promise<boolean | void>;
+  onOpen?: () => void;
+  onClose?: () => void;
+  onConfirm?: () => void;
+  onCancel?: () => void;
+}
+
 // ===== Select 组件 =====
 
 export interface SelectOption {
   label: string;
   value: string | number;
   disabled?: boolean;
+}
+
+export interface SelectSetupProps extends Record<string, unknown> {
+  modelValue: string | number | (string | number)[];
+  options: SelectOption[];
+  placeholder: string;
+  disabled: boolean;
+  clearable: boolean;
+  multiple: boolean;
+  size: ComponentSize;
+  class: string;
+  onChange?: (value: string | number | (string | number)[]) => void;
+  onClear?: () => void;
 }
 
 export interface SelectProps {
@@ -129,15 +262,44 @@ export interface SelectProps {
 
 export interface SelectSlots {
   default?: () => VNode[];
+  option?: (option: SelectOption) => VNode[];
   empty?: () => VNode[];
 }
 
 // ===== Tabs 组件 =====
 
+export interface TabPaneSetupProps extends Record<string, unknown> {
+  label: string;
+  name: string;
+  disabled: boolean;
+  closable: boolean;
+}
+
+export interface TabPaneSlots {
+  default?: () => VNode[];
+}
+
 export interface TabPaneProps {
   label: string;
   name: string;
   disabled?: boolean;
+  closable?: boolean;
+}
+
+export interface TabsSetupProps extends Record<string, unknown> {
+  modelValue: string;
+  type: '' | 'card' | 'border-card';
+  closable: boolean;
+  addable: boolean;
+  editable: boolean;
+  draggable: boolean;
+  class: string;
+  onChange?: (name: string) => void;
+  onTabClick?: (pane: { props: TabPaneSetupProps; children: VNode[] }, index: number) => void;
+  onTabRemove?: (name: string) => void;
+  onTabAdd?: () => void;
+  onTabDragStart?: (index: number) => void;
+  onTabDragEnd?: (fromIndex: number, toIndex: number) => void;
 }
 
 export interface TabsProps {
@@ -145,11 +307,125 @@ export interface TabsProps {
   type?: 'card' | 'border-card';
   class?: string;
   style?: string | Record<string, string>;
+  closable?: boolean;
+  addable?: boolean;
+  editable?: boolean;
+  draggable?: boolean;
   onChange?: (name: string) => void;
+  onTabClick?: (pane: { props: TabPaneProps; children: VNode[] }, index: number) => void;
+  onTabRemove?: (name: string) => void;
+  onTabAdd?: () => void;
+  onTabDragStart?: (index: number) => void;
+  onTabDragEnd?: (fromIndex: number, toIndex: number) => void;
 }
 
 export interface TabsSlots {
   default?: () => VNode[];
+}
+
+// ===== Cascader 组件 =====
+
+export interface CascaderOption {
+  value: string | number;
+  label: string;
+  children?: CascaderOption[];
+  disabled?: boolean;
+  isLeaf?: boolean;
+  loading?: boolean;
+}
+
+export interface CascaderSetupProps extends Record<string, unknown> {
+  options: CascaderOption[];
+  modelValue: (string | number)[] | Array<(string | number)[]>;
+  placeholder: string;
+  disabled: boolean;
+  clearable: boolean;
+  multiple: boolean;
+  filterable: boolean;
+  checkStrictly: boolean;
+  showAllLevels: boolean;
+  collapseTags: boolean;
+  separator: string;
+  class: string;
+  load?: (node: CascaderOption, resolve: (children: CascaderOption[]) => void) => void;
+  onChange?: (value: (string | number)[] | Array<(string | number)[]>) => void;
+  onExpandChange?: (value: (string | number)[]) => void;
+  onVisibleChange?: (visible: boolean) => void;
+  onRemoveTag?: (value: Array<(string | number)[]>) => void;
+  onClear?: () => void;
+}
+
+export interface CascaderProps {
+  options?: CascaderOption[];
+  modelValue?: (string | number)[] | Array<(string | number)[]>;
+  placeholder?: string;
+  disabled?: boolean;
+  clearable?: boolean;
+  multiple?: boolean;
+  filterable?: boolean;
+  checkStrictly?: boolean;
+  showAllLevels?: boolean;
+  collapseTags?: boolean;
+  separator?: string;
+  class?: string;
+  style?: string | Record<string, string>;
+  load?: (node: CascaderOption, resolve: (children: CascaderOption[]) => void) => void;
+  onChange?: (value: (string | number)[] | Array<(string | number)[]>) => void;
+  onExpandChange?: (value: (string | number)[]) => void;
+  onVisibleChange?: (visible: boolean) => void;
+  onRemoveTag?: (value: (string | number)[]) => void;
+  onClear?: () => void;
+}
+
+export interface CascaderSlots {
+  default?: (option: CascaderOption) => VNode[];
+  empty?: () => VNode[];
+}
+
+// ===== DatePicker 组件 =====
+
+export type DatePickerType = 'date' | 'datetime' | 'daterange' | 'datetimerange';
+
+export interface DatePickerShortcut {
+  text: string;
+  value: Date | Date[];
+  onClick?: () => void;
+}
+
+export interface DatePickerSetupProps extends Record<string, unknown> {
+  modelValue: string | Date | (string | Date)[] | null;
+  placeholder: string;
+  disabled: boolean;
+  clearable: boolean;
+  format: string;
+  type: DatePickerType;
+  disabledDate?: (date: Date) => boolean;
+  shortcuts: DatePickerShortcut[];
+  class: string;
+  onChange?: (value: string | Date | (string | Date)[] | null) => void;
+  onOpen?: () => void;
+  onClose?: () => void;
+}
+
+export interface DatePickerProps {
+  modelValue?: string | Date | (string | Date)[] | null;
+  placeholder?: string;
+  disabled?: boolean;
+  clearable?: boolean;
+  format?: string;
+  type?: DatePickerType;
+  disabledDate?: (date: Date) => boolean;
+  shortcuts?: DatePickerShortcut[];
+  class?: string;
+  style?: string | Record<string, string>;
+  onChange?: (value: string | Date | (string | Date)[] | null) => void;
+  onOpen?: () => void;
+  onClose?: () => void;
+}
+
+export interface DatePickerSlots {
+  default?: () => VNode[];
+  footer?: () => VNode[];
 }
 
 // ===== Table 组件 =====
@@ -167,6 +443,20 @@ export type TableRowData = Record<string, unknown>;
 export type TableData = TableRowData[];
 export type TableSortCallback = (column: TableColumn, prop: string, order: TableSortOrder) => void;
 export type TableRowClickCallback = (row: TableRowData, index: number) => void;
+
+export interface TableSetupProps extends Record<string, unknown> {
+  data: TableData;
+  columns: TableColumn[];
+  stripe: boolean;
+  border: boolean;
+  rowKey: string;
+  showSelection: boolean;
+  highlightCurrentRow: boolean;
+  class: string;
+  onRowClick?: TableRowClickCallback;
+  onSortChange?: TableSortCallback;
+  onSelectionChange?: (rows: TableData) => void;
+}
 
 export interface TableProps {
   data?: TableData;
@@ -222,6 +512,17 @@ export interface BadgeSlots {
   default?: () => VNode[];
 }
 
+export interface BadgeSetupProps extends Record<string, unknown> {
+  count: number;
+  maxCount: number;
+  dot: boolean;
+  showZero: boolean;
+  type: string;
+  offset?: number[];
+  class: string;
+  style?: string | Record<string, string>;
+}
+
 // ===== Tag 组件 =====
 
 export interface TagProps {
@@ -236,6 +537,16 @@ export interface TagProps {
 
 export interface TagSlots {
   default?: () => VNode[];
+}
+
+export interface TagSetupProps extends Record<string, unknown> {
+  type: ComponentStatus;
+  closable: boolean;
+  color: string;
+  size: ComponentSize;
+  class: string;
+  style?: string | Record<string, string>;
+  onClose?: () => void;
 }
 
 // ===== Spin 组件 =====
@@ -326,14 +637,142 @@ export interface ToastSlots {
   default?: () => VNode[];
 }
 
+export interface ToastSetupProps extends Record<string, unknown> {
+  message: string;
+  type: 'success' | 'warning' | 'info' | 'error';
+  duration: number;
+  position: string;
+  icon: string;
+  closable: boolean;
+  class: string;
+  style?: string | Record<string, string>;
+  onClose?: () => void;
+}
+
+// ===== Form 组件 =====
+
+export type FormValidateStatus = 'success' | 'error' | 'validating' | '';
+
+export interface FormRule {
+  required?: boolean;
+  message?: string;
+  pattern?: RegExp;
+  validator?: (value: unknown, model: Record<string, unknown>) => boolean | string;
+  min?: number;
+  max?: number;
+  type?: 'string' | 'number' | 'boolean' | 'array' | 'date' | 'email' | 'url';
+}
+
+export interface FormRules {
+  [field: string]: FormRule[];
+}
+
+export interface FormSetupProps extends Record<string, unknown> {
+  model: Record<string, unknown>;
+  rules: FormRules;
+  labelWidth: string;
+  labelPosition: 'left' | 'right' | 'top';
+  class: string;
+  onSubmit?: (data: Record<string, unknown>) => void;
+}
+
+export interface FormProps {
+  model?: Record<string, unknown>;
+  rules?: FormRules;
+  labelWidth?: string;
+  labelPosition?: 'left' | 'right' | 'top';
+  class?: string;
+  style?: string | Record<string, string>;
+  onSubmit?: (data: Record<string, unknown>) => void;
+}
+
+export interface FormSlots {
+  default?: () => VNode[];
+}
+
+export interface FormItemSetupProps extends Record<string, unknown> {
+  label: string;
+  prop: string;
+  required: boolean;
+  rules: FormRule[];
+  error: string;
+  validateStatus: FormValidateStatus;
+}
+
+export interface FormItemProps {
+  label?: string;
+  prop?: string;
+  required?: boolean;
+  rules?: FormRule[];
+  error?: string;
+  validateStatus?: FormValidateStatus;
+}
+
+export interface FormItemSlots {
+  default?: () => VNode[];
+  label?: () => VNode[];
+  error?: () => VNode[];
+}
+
+// ===== Menu 组件 =====
+
+export interface MenuItem {
+  index: string;
+  label: string;
+  icon?: string;
+  disabled?: boolean;
+  children?: MenuItem[];
+}
+
+export interface MenuSetupProps extends Record<string, unknown> {
+  mode: 'horizontal' | 'vertical';
+  defaultActive: string;
+  defaultOpeneds: string[];
+  uniqueOpened: boolean;
+  class: string;
+  onSelect?: (index: string) => void;
+  onOpen?: (index: string) => void;
+  onClose?: (index: string) => void;
+}
+
+export interface MenuProps {
+  mode?: 'horizontal' | 'vertical';
+  defaultActive?: string;
+  defaultOpeneds?: string[];
+  uniqueOpened?: boolean;
+  class?: string;
+  style?: string | Record<string, string>;
+  onSelect?: (index: string) => void;
+  onOpen?: (index: string) => void;
+  onClose?: (index: string) => void;
+}
+
+export interface MenuSlots {
+  default?: () => VNode[];
+}
+
 // ===== Alert 组件 =====
 
+export type AlertEffect = 'light' | 'dark';
+
+export interface AlertSetupProps extends Record<string, unknown> {
+  title: string;
+  description: string;
+  type: AlertType;
+  closable: boolean;
+  showIcon: boolean;
+  effect: AlertEffect;
+  class: string;
+  onClose?: () => void;
+}
+
 export interface AlertProps {
-  type?: 'success' | 'warning' | 'info' | 'error';
+  type?: AlertType;
   title?: string;
   description?: string;
   closable?: boolean;
   showIcon?: boolean;
+  effect?: AlertEffect;
   class?: string;
   style?: string | Record<string, string>;
   onClose?: () => void;
@@ -378,6 +817,20 @@ export interface CheckboxSlots {
   default?: () => VNode[];
 }
 
+export interface CheckboxSetupProps extends Record<string, unknown> {
+  modelValue: boolean | string | number;
+  label: string;
+  trueLabel?: string | number;
+  falseLabel?: string | number;
+  disabled: boolean;
+  checked: boolean;
+  indeterminate: boolean;
+  name: string;
+  class: string;
+  style?: string | Record<string, string>;
+  onChange?: (value: boolean) => void;
+}
+
 // ===== Radio 组件 =====
 
 export interface RadioProps {
@@ -392,6 +845,16 @@ export interface RadioProps {
 
 export interface RadioSlots {
   default?: () => VNode[];
+}
+
+export interface RadioSetupProps extends Record<string, unknown> {
+  modelValue: string | number | boolean;
+  label?: string | number | boolean;
+  disabled: boolean;
+  name: string;
+  class: string;
+  style?: string | Record<string, string>;
+  onChange?: (value: string | number | boolean) => void;
 }
 
 // ===== Switch 组件 =====
@@ -410,6 +873,25 @@ export interface SwitchProps {
 
 export interface SwitchSlots {
   default?: () => VNode[];
+  active?: () => VNode[];
+  inactive?: () => VNode[];
+}
+
+export interface SwitchSetupProps extends Record<string, unknown> {
+  modelValue: boolean;
+  disabled: boolean;
+  loading: boolean;
+  size: string;
+  activeText: string;
+  inactiveText: string;
+  activeColor: string;
+  inactiveColor: string;
+  activeValue: boolean | string | number;
+  inactiveValue: boolean | string | number;
+  name: string;
+  class: string;
+  style?: string | Record<string, string>;
+  onChange?: (value: boolean) => void;
 }
 
 // ===== InputNumber 组件 =====
@@ -430,6 +912,515 @@ export interface InputNumberProps {
 
 export interface InputNumberSlots {
   default?: () => VNode[];
+}
+
+export interface InputNumberSetupProps extends Record<string, unknown> {
+  modelValue: number | undefined;
+  min: number;
+  max: number;
+  step: number;
+  stepStrictly: boolean;
+  precision: number | undefined;
+  size: string;
+  disabled: boolean;
+  controls: boolean;
+  controlsPosition: string;
+  name: string;
+  label: string;
+  placeholder: string;
+  class: string;
+  style?: string | Record<string, string>;
+  onChange?: (value: number | undefined) => void;
+  onInput?: (value: number | undefined) => void;
+}
+
+// ===== Transfer 组件 =====
+
+export interface TransferOption {
+  key: string | number;
+  label: string;
+  disabled?: boolean;
+}
+
+export interface TransferProps {
+  data?: TransferOption[];
+  modelValue?: (string | number)[];
+  filterable?: boolean;
+  filterPlaceholder?: string;
+  titles?: string[];
+  buttonTexts?: string[];
+  leftDefaultChecked?: (string | number)[];
+  rightDefaultChecked?: (string | number)[];
+  class?: string;
+  onChange?: (value: (string | number)[], direction: 'left' | 'right', movedKeys: (string | number)[]) => void;
+  onLeftCheckChange?: (checked: (string | number)[]) => void;
+  onRightCheckChange?: (checked: (string | number)[]) => void;
+}
+
+export interface TransferSetupProps extends Record<string, unknown> {
+  data: TransferOption[];
+  modelValue: (string | number)[];
+  filterable: boolean;
+  filterPlaceholder: string;
+  titles: string[];
+  buttonTexts: string[];
+  leftDefaultChecked: (string | number)[];
+  rightDefaultChecked: (string | number)[];
+  class: string;
+  onChange?: (value: (string | number)[], direction: 'left' | 'right', movedKeys: (string | number)[]) => void;
+  onLeftCheckChange?: (checked: (string | number)[]) => void;
+  onRightCheckChange?: (checked: (string | number)[]) => void;
+}
+
+export interface TransferSlots {
+  default?: (option: TransferOption) => VNode[];
+  footer?: () => VNode[];
+}
+
+// ===== Tree 组件 =====
+
+export interface TreeNode {
+  id: string | number;
+  label: string;
+  children?: TreeNode[];
+  disabled?: boolean;
+  isLeaf?: boolean;
+  loading?: boolean;
+  expanded?: boolean;
+  checked?: boolean;
+  indeterminate?: boolean;
+}
+
+export interface TreeProps {
+  data?: TreeNode[];
+  showLine?: boolean;
+  showCheckbox?: boolean;
+  checkable?: boolean;
+  draggable?: boolean;
+  defaultExpandAll?: boolean;
+  defaultExpandedKeys?: (string | number)[];
+  defaultCheckedKeys?: (string | number)[];
+  nodeKey?: string;
+  class?: string;
+  onCheck?: (data: TreeNode[], checked: boolean) => void;
+  onSelect?: (data: TreeNode) => void;
+  onExpand?: (data: TreeNode, expanded: boolean) => void;
+  onNodeClick?: (data: TreeNode) => void;
+  onDragStart?: (data: TreeNode, event: DragEvent) => void;
+  onDragEnd?: (data: TreeNode, event: DragEvent) => void;
+  onDrop?: (data: TreeNode, target: TreeNode, position: 'before' | 'after' | 'inner', event: DragEvent) => void;
+}
+
+export interface TreeSetupProps extends Record<string, unknown> {
+  data: TreeNode[];
+  showLine: boolean;
+  showCheckbox: boolean;
+  checkable: boolean;
+  draggable: boolean;
+  defaultExpandAll: boolean;
+  defaultExpandedKeys: (string | number)[];
+  defaultCheckedKeys: (string | number)[];
+  nodeKey: string;
+  class: string;
+  onCheck?: (data: TreeNode[], checked: boolean) => void;
+  onSelect?: (data: TreeNode) => void;
+  onExpand?: (data: TreeNode, expanded: boolean) => void;
+  onNodeClick?: (data: TreeNode) => void;
+  onDragStart?: (data: TreeNode, event: DragEvent) => void;
+  onDragEnd?: (data: TreeNode, event: DragEvent) => void;
+  onDrop?: (data: TreeNode, target: TreeNode, position: 'before' | 'after' | 'inner', event: DragEvent) => void;
+}
+
+export interface TreeSlots {
+  default?: (data: TreeNode) => VNode[];
+  empty?: () => VNode[];
+}
+
+// ===== TreeSelect 组件 =====
+
+export interface TreeSelectNode {
+  value: string | number;
+  label: string;
+  children?: TreeSelectNode[];
+  disabled?: boolean;
+  isLeaf?: boolean;
+}
+
+export interface TreeSelectProps {
+  modelValue?: string | number | (string | number)[];
+  options?: TreeSelectNode[];
+  placeholder?: string;
+  disabled?: boolean;
+  clearable?: boolean;
+  multiple?: boolean;
+  checkStrictly?: boolean;
+  filterable?: boolean;
+  showCheckbox?: boolean;
+  class?: string;
+  onChange?: (value: string | number | (string | number)[]) => void;
+  onClear?: () => void;
+}
+
+export interface TreeSelectSetupProps extends Record<string, unknown> {
+  modelValue: string | number | (string | number)[];
+  options: TreeSelectNode[];
+  placeholder: string;
+  disabled: boolean;
+  clearable: boolean;
+  multiple: boolean;
+  checkStrictly: boolean;
+  filterable: boolean;
+  showCheckbox: boolean;
+  class: string;
+  onChange?: (value: string | number | (string | number)[]) => void;
+  onClear?: () => void;
+}
+
+export interface TreeSelectSlots {
+  default?: (node: TreeSelectNode) => VNode[];
+}
+
+// ===== Upload 组件 =====
+
+export type UploadFileStatus = 'pending' | 'uploading' | 'success' | 'error';
+
+export interface UploadFile {
+  name: string;
+  size: number;
+  status: UploadFileStatus;
+  percentage?: number;
+  url?: string;
+  uid: number;
+  raw?: File;
+}
+
+export interface UploadProps {
+  action?: string;
+  headers?: Record<string, string>;
+  data?: Record<string, unknown>;
+  multiple?: boolean;
+  accept?: string;
+  autoUpload?: boolean;
+  disabled?: boolean;
+  limit?: number;
+  class?: string;
+  onChange?: (files: UploadFile[]) => void;
+  onSuccess?: (response: unknown, file: UploadFile) => void;
+  onError?: (error: Error, file: UploadFile) => void;
+  onProgress?: (percentage: number, file: UploadFile) => void;
+  onRemove?: (file: UploadFile) => void;
+  beforeUpload?: (file: File) => boolean | Promise<boolean>;
+}
+
+export interface UploadSetupProps extends Record<string, unknown> {
+  action: string;
+  headers: Record<string, string>;
+  data: Record<string, unknown>;
+  multiple: boolean;
+  accept: string;
+  autoUpload: boolean;
+  disabled: boolean;
+  limit: number;
+  class: string;
+  onChange?: (files: UploadFile[]) => void;
+  onSuccess?: (response: unknown, file: UploadFile) => void;
+  onError?: (error: Error, file: UploadFile) => void;
+  onProgress?: (percentage: number, file: UploadFile) => void;
+  onRemove?: (file: UploadFile) => void;
+  beforeUpload?: (file: File) => boolean | void | Promise<boolean | void>;
+}
+
+export interface UploadSlots {
+  default?: () => VNode[];
+  trigger?: () => VNode[];
+  tip?: () => VNode[];
+  file?: (file: UploadFile) => VNode[];
+}
+
+// ===== Image 组件 =====
+
+export type ImageFit = 'fill' | 'contain' | 'cover' | 'none' | 'scale-down';
+
+export interface ImageProps {
+  src?: string;
+  alt?: string;
+  fit?: ImageFit;
+  width?: string | number;
+  height?: string | number;
+  lazy?: boolean;
+  preview?: boolean;
+  errorSrc?: string;
+  placeholderSrc?: string;
+  round?: boolean;
+  radius?: string | number;
+  class?: string;
+  onLoad?: () => void;
+  onError?: () => void;
+}
+
+export interface ImageSlots {
+  default?: () => VNode[];
+}
+
+export interface ImageSetupProps extends Record<string, unknown> {
+  src: string;
+  alt: string;
+  fit: string;
+  width: string | number;
+  height: string | number;
+  lazy: boolean;
+  preview: boolean;
+  errorSrc: string;
+  placeholderSrc: string;
+  round: boolean;
+  radius: string | number;
+  class: string;
+  onLoad?: () => void;
+  onError?: () => void;
+}
+
+// ===== Notification 组件 =====
+
+export type NotificationType = 'success' | 'warning' | 'error' | 'info';
+export type NotificationPosition = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+
+export interface NotificationOptions {
+  type?: NotificationType;
+  title: string;
+  message?: string;
+  duration?: number;
+  position?: NotificationPosition;
+  showClose?: boolean;
+  onClose?: () => void;
+  onOpen?: () => void;
+}
+
+export interface NotificationProps {
+  position?: NotificationPosition;
+  class?: string;
+}
+
+export interface NotificationSlots {
+  default?: () => VNode[];
+}
+
+export interface NotificationSetupProps extends Record<string, unknown> {
+  position: NotificationPosition;
+  class?: string;
+}
+
+// ===== Calendar 组件 =====
+
+export type CalendarView = 'month' | 'week' | 'day';
+
+export interface CalendarEvent {
+  title: string;
+  start: Date;
+  end?: Date;
+  color?: string;
+  data?: unknown;
+}
+
+export interface CalendarProps {
+  modelValue?: string | Date;
+  view?: CalendarView;
+  events?: CalendarEvent[];
+  disabledDates?: (date: Date) => boolean;
+  firstDayOfWeek?: number;
+  weekNames?: string[];
+  monthNames?: string[];
+  class?: string;
+  onChange?: (date: Date) => void;
+  onEventClick?: (event: CalendarEvent) => void;
+  onDateClick?: (date: Date) => void;
+}
+
+export interface CalendarSlots {
+  default?: () => VNode[];
+}
+
+export interface CalendarSetupProps extends Record<string, unknown> {
+  modelValue: Date | string;
+  view: string;
+  events: CalendarEvent[];
+  disabledDates?: (date: Date) => boolean;
+  firstDayOfWeek: number;
+  weekNames: string[];
+  monthNames: string[];
+  class: string;
+  onChange?: (date: Date) => void;
+  onEventClick?: (event: CalendarEvent) => void;
+  onDateClick?: (date: Date) => void;
+}
+
+// ===== ColorPicker 组件 =====
+
+export interface ColorPickerProps {
+  modelValue?: string;
+  showAlpha?: boolean;
+  showClear?: boolean;
+  showPreset?: boolean;
+  showHistory?: boolean;
+  presets?: string[];
+  history?: string[];
+  class?: string;
+  onChange?: (color: string) => void;
+  onClear?: () => void;
+}
+
+export interface ColorPickerSlots {
+  default?: () => VNode[];
+}
+
+export interface ColorPickerSetupProps extends Record<string, unknown> {
+  modelValue: string;
+  showAlpha: boolean;
+  showClear: boolean;
+  showPreset: boolean;
+  showHistory: boolean;
+  presets: string[];
+  history: string[];
+  class: string;
+  onChange?: (color: string) => void;
+  onClear?: () => void;
+}
+
+// ===== Descriptions 组件 =====
+
+export interface DescriptionsItemData {
+  label: string;
+  value: string;
+  span?: number;
+  labelStyle?: Record<string, string>;
+  contentStyle?: Record<string, string>;
+}
+
+export interface DescriptionsProps {
+  title?: string;
+  column?: number;
+  border?: boolean;
+  size?: ComponentSize;
+  layout?: 'horizontal' | 'vertical';
+  class?: string;
+}
+
+export interface DescriptionsSetupProps extends Record<string, unknown> {
+  title: string;
+  column: number;
+  border: boolean;
+  size: ComponentSize;
+  layout: 'horizontal' | 'vertical';
+  class: string;
+}
+
+export interface DescriptionsSlots {
+  default?: () => VNode[];
+  title?: () => VNode[];
+}
+
+export interface DescriptionsItemProps {
+  label?: string;
+  span?: number;
+  labelStyle?: Record<string, string>;
+  contentStyle?: Record<string, string>;
+}
+
+export interface DescriptionsItemSetupProps extends Record<string, unknown> {
+  label: string;
+  span: number;
+  labelStyle?: Record<string, string>;
+  contentStyle?: Record<string, string>;
+}
+
+export interface DescriptionsItemSlots {
+  default?: () => VNode[];
+  label?: () => VNode[];
+}
+
+// ===== Drawer 组件 =====
+
+export type DrawerDirection = 'ltr' | 'rtl' | 'ttb' | 'btt';
+
+export interface DrawerProps {
+  modelValue?: boolean;
+  title?: string;
+  size?: string | number;
+  direction?: DrawerDirection;
+  showClose?: boolean;
+  closeOnClickModal?: boolean;
+  closeOnPressEscape?: boolean;
+  lockScroll?: boolean;
+  appendToBody?: boolean;
+  withHeader?: boolean;
+  customClass?: string;
+  class?: string;
+  onBeforeOpen?: () => boolean | void | Promise<boolean | void>;
+  onBeforeClose?: () => boolean | void | Promise<boolean | void>;
+  onOpen?: () => void;
+  onClose?: () => void;
+}
+
+export interface DrawerSlots {
+  default?: () => VNode[];
+  header?: () => VNode[];
+  footer?: () => VNode[];
+}
+
+export interface DrawerSetupProps extends Record<string, unknown> {
+  modelValue: boolean;
+  title: string;
+  size: string | number;
+  direction: DrawerDirection;
+  showClose: boolean;
+  closeOnClickModal: boolean;
+  closeOnPressEscape: boolean;
+  lockScroll: boolean;
+  appendToBody: boolean;
+  withHeader: boolean;
+  customClass: string;
+  class: string;
+  onBeforeOpen?: () => boolean | void | Promise<boolean | void>;
+  onBeforeClose?: () => boolean | void | Promise<boolean | void>;
+  onOpen?: () => void;
+  onClose?: () => void;
+}
+
+// ===== Rate 组件 =====
+
+export interface RateProps {
+  modelValue?: number;
+  max?: number;
+  allowHalf?: boolean;
+  readonly?: boolean;
+  disabled?: boolean;
+  showText?: boolean;
+  showScore?: boolean;
+  texts?: string[];
+  voidIcon?: string;
+  voidColor?: string;
+  disabledVoidColor?: string;
+  class?: string;
+  onChange?: (value: number) => void;
+}
+
+export interface RateSlots {
+  default?: () => VNode[];
+}
+
+export interface RateSetupProps extends Record<string, unknown> {
+  modelValue: number;
+  max: number;
+  allowHalf: boolean;
+  readonly: boolean;
+  disabled: boolean;
+  showText: boolean;
+  showScore: boolean;
+  texts: string[];
+  voidIcon: string;
+  voidColor: string;
+  disabledVoidColor: string;
+  class: string;
+  onChange?: (value: number) => void;
 }
 
 export type { VNode, Component };

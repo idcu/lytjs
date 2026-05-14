@@ -26,37 +26,38 @@ export const Link = defineComponent({
     onClick: { type: Function, default: undefined },
   },
 
-  setup(props: any, { slots, emit }: any) {
+  setup(props: Record<string, unknown>, { slots }) {
+    const _props = props as any;
     const handleClick = (event: MouseEvent) => {
-      if (props.disabled) {
+      if (_props.disabled) {
         event.preventDefault();
         return;
       }
-      props.onClick?.(event);
+      _props.onClick?.(event);
     };
 
     const getLinkClass = () => {
       const classes = ['lyt-link'];
-      if (props.type !== 'default') {
-        classes.push(`lyt-link--${props.type}`);
+      if (_props.type !== 'default') {
+        classes.push(`lyt-link--${_props.type}`);
       }
-      if (!props.underline) {
+      if (!_props.underline) {
         classes.push('lyt-link--no-underline');
       }
-      if (props.disabled) {
+      if (_props.disabled) {
         classes.push('lyt-link--disabled');
       }
-      if (props.class) {
-        classes.push(props.class);
+      if (_props.class) {
+        classes.push(_props.class);
       }
       return classes.join(' ');
     };
 
     const getLinkStyle = () => {
-      if (!props.style) return undefined;
-      if (isString(props.style)) return props.style;
-      if (isObject(props.style)) {
-        return Object.entries(props.style)
+      if (!_props.style) return undefined;
+      if (isString(_props.style)) return _props.style;
+      if (isObject(_props.style)) {
+        return Object.entries(_props.style)
           .map(([key, value]) => `${key}: ${value}`)
           .join('; ');
       }
@@ -66,15 +67,18 @@ export const Link = defineComponent({
     return () => {
       const children: VNode[] = [];
       if (slots.default) {
-        children.push(...slots.default());
+        const slotContent = slots.default();
+        if (Array.isArray(slotContent)) {
+          children.push(...(slotContent as VNode[]));
+        }
       }
 
-      if (props.href) {
+      if (_props.href) {
         return createVNode('a', {
           class: getLinkClass(),
           style: getLinkStyle(),
-          href: props.href,
-          target: props.target,
+          href: _props.href,
+          target: _props.target,
           onClick: handleClick,
         }, children);
       } else {

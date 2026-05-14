@@ -4,7 +4,7 @@
  * 复选框组件，用于多选场景
  */
 
-import type { CheckboxProps, CheckboxSlots } from './types';
+import type { CheckboxProps, CheckboxSlots, CheckboxSetupProps } from './types';
 import { defineComponent } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import { isString, isObject, isArray } from '@lytjs/common-is';
@@ -17,10 +17,10 @@ export const Checkbox = defineComponent({
   name: 'LytCheckbox',
 
   props: {
-    modelValue: { type: [Boolean, Array], default: false },
+    modelValue: { type: Boolean, default: false },
     label: { type: String, default: '' },
-    trueLabel: { type: [String, Number], default: undefined },
-    falseLabel: { type: [String, Number], default: undefined },
+    trueLabel: { type: String, default: undefined },
+    falseLabel: { type: String, default: undefined },
     disabled: { type: Boolean, default: false },
     checked: { type: Boolean, default: false },
     indeterminate: { type: Boolean, default: false },
@@ -30,27 +30,28 @@ export const Checkbox = defineComponent({
     onChange: { type: Function, default: undefined },
   },
 
-  setup(props: any, { slots, emit }: any) {
+  setup(props: Record<string, unknown>, { slots, emit }) {
+    const _props = props as CheckboxSetupProps;
     const state = reactive({
       focus: false,
     });
 
     const isChecked = computed(() => {
-      if (isArray(props.modelValue)) {
-        return props.modelValue.includes(props.label || props.trueLabel);
+      if (isArray(_props.modelValue)) {
+        return (_props.modelValue as unknown[]).includes(_props.label || _props.trueLabel);
       }
-      return props.modelValue || props.checked;
+      return _props.modelValue || _props.checked;
     });
 
     const handleChange = (e: Event) => {
-      if (props.disabled) return;
+      if (_props.disabled) return;
       
       const target = e.target as HTMLInputElement;
       let newValue;
       
-      if (isArray(props.modelValue)) {
-        newValue = [...props.modelValue];
-        const value = props.label || props.trueLabel;
+      if (isArray(_props.modelValue)) {
+        newValue = [...(_props.modelValue as unknown[])];
+        const value = _props.label || _props.trueLabel;
         if (target.checked) {
           if (!newValue.includes(value)) {
             newValue.push(value);
@@ -67,7 +68,7 @@ export const Checkbox = defineComponent({
       
       emit('update:modelValue', newValue);
       emit('change', newValue);
-      props.onChange?.(newValue);
+      _props.onChange?.(newValue as boolean);
     };
 
     const handleFocus = () => {
@@ -81,21 +82,21 @@ export const Checkbox = defineComponent({
     const getCheckboxClass = () => {
       const classes = ['lyt-checkbox'];
       if (isChecked.value) classes.push('lyt-checkbox--checked');
-      if (props.disabled) classes.push('lyt-checkbox--disabled');
-      if (props.indeterminate) classes.push('lyt-checkbox--indeterminate');
+      if (_props.disabled) classes.push('lyt-checkbox--disabled');
+      if (_props.indeterminate) classes.push('lyt-checkbox--indeterminate');
       if (state.focus) classes.push('lyt-checkbox--focus');
-      if (props.class) classes.push(props.class);
+      if (_props.class) classes.push(_props.class);
       return classes.join(' ');
     };
 
     const getCheckboxStyle = () => {
       const style: Record<string, string> = {};
-      if (props.style) {
-        if (isString(props.style)) {
-          return props.style;
+      if (_props.style) {
+        if (isString(_props.style)) {
+          return _props.style;
         }
-        if (isObject(props.style)) {
-          Object.assign(style, props.style);
+        if (isObject(_props.style)) {
+          Object.assign(style, _props.style);
         }
       }
       return style;
@@ -108,9 +109,9 @@ export const Checkbox = defineComponent({
       children.push(createVNode('input', {
         type: 'checkbox',
         class: 'lyt-checkbox__input',
-        checked: isChecked.value,
-        disabled: props.disabled,
-        name: props.name,
+        checked: isChecked.value as boolean,
+        disabled: _props.disabled,
+        name: _props.name,
         onChange: handleChange,
         onFocus: handleFocus,
         onBlur: handleBlur,
@@ -122,14 +123,17 @@ export const Checkbox = defineComponent({
       }, []));
 
       // 标签内容
-      if (props.label) {
+      if (_props.label) {
         children.push(createVNode('span', {
           class: 'lyt-checkbox__label',
-        }, [props.label]));
+        }, [createVNode('span', {}, _props.label)]));
       } else if (slots.default) {
-        children.push(createVNode('span', {
-          class: 'lyt-checkbox__label',
-        }, slots.default()));
+        const slotContent = slots.default();
+        if (Array.isArray(slotContent)) {
+          children.push(createVNode('span', {
+            class: 'lyt-checkbox__label',
+          }, slotContent as VNode[]));
+        }
       }
 
       return createVNode('label', {

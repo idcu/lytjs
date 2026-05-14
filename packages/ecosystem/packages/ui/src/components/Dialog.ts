@@ -7,29 +7,7 @@
 import { defineComponent } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import { signal } from '@lytjs/reactivity';
-
-export interface DialogSetupProps {
-  modelValue: boolean;
-  title: string;
-  width: string | number;
-  showClose: boolean;
-  closeOnClickModal: boolean;
-  closeOnPressEscape: boolean;
-  lockScroll: boolean;
-  class: string;
-  onBeforeOpen: (() => boolean | void | Promise<boolean | void>) | undefined;
-  onBeforeClose: (() => boolean | void | Promise<boolean | void>) | undefined;
-  onOpen: (() => void) | undefined;
-  onClose: (() => void) | undefined;
-  onConfirm: (() => void) | undefined;
-  onCancel: (() => void) | undefined;
-}
-
-export interface DialogSlots {
-  header?: () => VNode[];
-  default?: () => VNode[];
-  footer?: () => VNode[];
-}
+import type { DialogSetupProps, DialogSlots } from './types';
 
 export const Dialog = defineComponent({
   name: 'LytDialog',
@@ -37,7 +15,7 @@ export const Dialog = defineComponent({
   props: {
     modelValue: { type: Boolean, default: false },
     title: { type: String, default: '' },
-    width: { type: [String, Number], default: '50%' },
+    width: { type: [String, Number] as unknown as StringConstructor, default: '50%' },
     showClose: { type: Boolean, default: true },
     closeOnClickModal: { type: Boolean, default: true },
     closeOnPressEscape: { type: Boolean, default: true },
@@ -51,63 +29,59 @@ export const Dialog = defineComponent({
     onCancel: { type: Function, default: undefined },
   },
 
-  setup(props: DialogSetupProps, { slots }: { slots: DialogSlots }) {
-    const visible = signal(props.modelValue);
+  setup(props: Record<string, unknown>, { slots }: { slots: DialogSlots }) {
+    const p = props as DialogSetupProps;
+    const visible = signal(p.modelValue);
 
     const handleClose = async () => {
-      if (props.onBeforeClose) {
-        const result = await props.onBeforeClose();
+      if (p.onBeforeClose) {
+        const result = await p.onBeforeClose();
         if (result === false) return;
       }
       visible.set(false);
-      props.onClose?.();
-    };
-
-    const handleConfirm = () => {
-      props.onConfirm?.();
-    };
-
-    const handleCancel = () => {
-      props.onCancel?.();
-      handleClose();
+      p.onClose?.();
     };
 
     return () => {
-      if (!visible()) return null;
+      if (!visible()) {
+        return createVNode('div', { style: 'display: none;' }, []);
+      }
 
       const children: VNode[] = [];
 
       if (slots.header) {
-        children.push(createVNode('div', { class: 'lyt-dialog__header' }, [slots.header()]));
-      } else if (props.title) {
-        children.push(createVNode('div', { class: 'lyt-dialog__header' }, [
-          createVNode('span', { class: 'lyt-dialog__title' }, [props.title]),
-          props.showClose && createVNode('button', {
+        children.push(createVNode('div', { class: 'lyt-dialog__header' }, slots.header()));
+      } else if (p.title) {
+        const headerChildren: VNode[] = [];
+        headerChildren.push(createVNode('span', { class: 'lyt-dialog__title' }, p.title));
+        if (p.showClose) {
+          headerChildren.push(createVNode('button', {
             class: 'lyt-dialog__close',
             onClick: handleClose,
-          }, ['×']),
-        ]));
+          }, '×'));
+        }
+        children.push(createVNode('div', { class: 'lyt-dialog__header' }, headerChildren));
       }
 
       if (slots.default) {
-        children.push(createVNode('div', { class: 'lyt-dialog__body' }, [slots.default()]));
+        children.push(createVNode('div', { class: 'lyt-dialog__body' }, slots.default()));
       }
 
       if (slots.footer) {
-        children.push(createVNode('div', { class: 'lyt-dialog__footer' }, [slots.footer()]));
+        children.push(createVNode('div', { class: 'lyt-dialog__footer' }, slots.footer()));
       }
 
       const dialogClass = [
         'lyt-dialog',
-        props.class,
+        p.class,
       ].filter(Boolean).join(' ');
 
-      const dialogStyle = `width: ${typeof props.width === 'number' ? `${props.width}px` : props.width}`;
+      const dialogStyle = `width: ${typeof p.width === 'number' ? `${p.width}px` : p.width}`;
 
       return createVNode('div', { class: 'lyt-dialog__wrapper' }, [
         createVNode('div', {
           class: 'lyt-dialog__overlay',
-          onClick: props.closeOnClickModal ? handleClose : undefined,
+          onClick: p.closeOnClickModal ? handleClose : undefined,
         }),
         createVNode('div', {
           class: dialogClass,

@@ -7,26 +7,8 @@
 import { defineComponent } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import { signal } from '@lytjs/reactivity';
-import type { TableData, TableRowData, TableColumn, TableSortOrder, TableAlign } from './types';
-
-export interface TableSetupProps {
-  data: TableData;
-  columns: TableColumn[];
-  stripe: boolean;
-  border: boolean;
-  rowKey: string;
-  showSelection: boolean;
-  highlightCurrentRow: boolean;
-  class: string;
-  onRowClick: ((row: TableRowData, index: number) => void) | undefined;
-  onSortChange: ((column: TableColumn, prop: string, order: TableSortOrder) => void) | undefined;
-  onSelectionChange: ((rows: TableData) => void) | undefined;
-}
-
-export interface TableSlots {
-  default?: () => VNode[];
-  empty?: () => VNode[];
-}
+import type { TableData, TableRowData, TableColumn, TableSortOrder, TableSetupProps } from './types';
+export type { TableSlots } from './types';
 
 export const Table = defineComponent({
   name: 'LytTable',
@@ -45,7 +27,8 @@ export const Table = defineComponent({
     onSelectionChange: { type: Function, default: undefined },
   },
 
-  setup(props: TableSetupProps) {
+  setup(props: Record<string, unknown>) {
+    const p = props as TableSetupProps;
     const sortColumn = signal('');
     const sortOrder = signal<TableSortOrder>('');
     const selectedRows = signal<Set<TableRowData>>(new Set());
@@ -70,7 +53,7 @@ export const Table = defineComponent({
 
       sortColumn.set(column.prop);
       sortOrder.set(newOrder);
-      props.onSortChange?.(column, column.prop, newOrder);
+      p.onSortChange?.(column, column.prop, newOrder);
     };
 
     const handleRowSelect = (row: TableRowData, checked: boolean) => {
@@ -82,30 +65,30 @@ export const Table = defineComponent({
       }
       selectedRows.set(newSelected);
       
-      const data = props.data || [];
+      const data = p.data || [];
       allSelected.set(newSelected.size === data.length);
       
-      props.onSelectionChange?.(Array.from(newSelected));
+      p.onSelectionChange?.(Array.from(newSelected));
     };
 
     const handleSelectAll = (checked: boolean) => {
       allSelected.set(checked);
-      const data = props.data || [];
+      const data = p.data || [];
       
       if (checked) {
         selectedRows.set(new Set(data));
-        props.onSelectionChange?.([...data]);
+        p.onSelectionChange?.([...data]);
       } else {
         selectedRows.set(new Set());
-        props.onSelectionChange?.([]);
+        p.onSelectionChange?.([]);
       }
     };
 
     const handleRowClick = (row: TableRowData, index: number) => {
-      if (props.highlightCurrentRow) {
+      if (p.highlightCurrentRow) {
         currentRow.set(row);
       }
-      props.onRowClick?.(row, index);
+      p.onRowClick?.(row, index);
     };
 
     const getCellValue = (row: TableRowData, column: TableColumn): unknown => {
@@ -114,26 +97,26 @@ export const Table = defineComponent({
     };
 
     const getRowKey = (row: TableRowData, index: number): string => {
-      if (props.rowKey && row[props.rowKey]) {
-        return String(row[props.rowKey]);
+      if (p.rowKey && row[p.rowKey]) {
+        return String(row[p.rowKey]);
       }
       return String(index);
     };
 
     return () => {
-      const data = props.data || [];
-      const columns = props.columns || [];
+      const data = p.data || [];
+      const columns = p.columns || [];
       
       const tableClass = ['lyt-table'];
-      if (props.stripe) tableClass.push('lyt-table--stripe');
-      if (props.border) tableClass.push('lyt-table--border');
-      if (props.class) tableClass.push(props.class);
+      if (p.stripe) tableClass.push('lyt-table--stripe');
+      if (p.border) tableClass.push('lyt-table--border');
+      if (p.class) tableClass.push(p.class);
 
       const children: VNode[] = [];
 
       const thead = createVNode('thead', { class: 'lyt-table__header' }, [
         createVNode('tr', {}, [
-          ...(props.showSelection ? [
+          ...(p.showSelection ? [
             createVNode('th', { class: 'lyt-table__cell--selection' }, [
               createVNode('input', {
                 type: 'checkbox',
@@ -150,7 +133,7 @@ export const Table = defineComponent({
                 column.align ? `lyt-table__cell--${column.align}` : '',
               ].filter(Boolean).join(' '),
               onClick: () => handleSort(column),
-            }, [column.label])
+            }, [createVNode('span', {}, String(column.label))])
           ),
         ]),
       ]);
@@ -160,44 +143,51 @@ export const Table = defineComponent({
           ? [
               createVNode('tr', { class: 'lyt-table__empty-row' }, [
                 createVNode('td', {
-                  colspan: columns.length + (props.showSelection ? 1 : 0),
+                  colspan: columns.length + (p.showSelection ? 1 : 0),
                   class: 'lyt-table__empty-cell',
-                }, ['暂无数据']),
+                }, [createVNode('span', {}, '暂无数据')]),
               ]),
             ]
-          : data.map((row: TableRowData, index: number) => 
-              createVNode('tr', {
-                key: getRowKey(row, index),
-                class: [
-                  'lyt-table__row',
-                  currentRow() === row ? 'lyt-table__row--active' : '',
-                ].filter(Boolean).join(' '),
-                onClick: () => handleRowClick(row, index),
-              }, [
-                ...(props.showSelection ? [
+          : data.map((row: TableRowData, index: number) => {
+              const rowChildren: VNode[] = [];
+              
+              if (p.showSelection) {
+                rowChildren.push(
                   createVNode('td', { class: 'lyt-table__cell--selection' }, [
                     createVNode('input', {
                       type: 'checkbox',
                       checked: selectedRows().has(row),
                       onChange: (e: Event) => handleRowSelect(row, (e.target as HTMLInputElement).checked),
                     }),
-                  ]),
-                ] : []),
-                ...columns.map((column: TableColumn) => {
-                  const value = getCellValue(row, column);
-                  const displayValue = column.formatter 
-                    ? column.formatter(row, column, value)
-                    : String(value ?? '');
-                  
-                  return createVNode('td', {
+                  ])
+                );
+              }
+              
+              columns.forEach((column: TableColumn) => {
+                const value = getCellValue(row, column);
+                const displayValue = column.formatter 
+                  ? column.formatter(row, column, value)
+                  : String(value ?? '');
+                
+                rowChildren.push(
+                  createVNode('td', {
                     class: [
                       'lyt-table__cell',
                       column.align ? `lyt-table__cell--${column.align}` : '',
                     ].filter(Boolean).join(' '),
-                  }, [displayValue]);
-                }),
-              ])
-            )
+                  }, [createVNode('span', {}, displayValue)])
+                );
+              });
+              
+              return createVNode('tr', {
+                key: getRowKey(row, index),
+                class: [
+                  'lyt-table__row',
+                  currentRow() === row ? 'lyt-table__row--active' : '',
+                ].filter(Boolean).join(' '),
+                onClick: () => handleRowClick(row, index),
+              }, rowChildren);
+            })
       );
 
       children.push(thead, tbody);
@@ -206,5 +196,3 @@ export const Table = defineComponent({
     };
   },
 });
-
-export type { TableProps, TableSlots, TableColumn, TableData, TableRowData } from './types';

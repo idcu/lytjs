@@ -6,25 +6,7 @@
 
 import { defineComponent } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
-
-export type AlertType = 'success' | 'warning' | 'info' | 'error';
-export type AlertEffect = 'light' | 'dark';
-
-export interface AlertSetupProps {
-  title: string;
-  description: string;
-  type: AlertType;
-  closable: boolean;
-  showIcon: boolean;
-  effect: AlertEffect;
-  class: string;
-  onClose: (() => void) | undefined;
-}
-
-export interface AlertSlots {
-  default?: () => VNode[];
-  title?: () => VNode[];
-}
+import type { AlertType, AlertSetupProps } from './types';
 
 export const Alert = defineComponent({
   name: 'LytAlert',
@@ -40,10 +22,11 @@ export const Alert = defineComponent({
     onClose: { type: Function, default: undefined },
   },
 
-  setup(props: AlertSetupProps, { slots }: { slots: AlertSlots; emit: (event: string, ...args: unknown[]) => void }) {
+  setup(props: Record<string, unknown>, { slots, emit }) {
+    const _props = props as AlertSetupProps;
     const handleClose = () => {
       emit('close');
-      props.onClose?.();
+      _props.onClose?.();
     };
 
     const getIconMap = (): Record<AlertType, string> => ({
@@ -56,38 +39,61 @@ export const Alert = defineComponent({
     return () => {
       const alertClass = [
         'lyt-alert',
-        `lyt-alert--${props.type}`,
-        `lyt-alert--${props.effect}`,
-        props.class,
+        `lyt-alert--${_props.type}`,
+        `lyt-alert--${_props.effect}`,
+        _props.class,
       ].filter(Boolean).join(' ');
 
       const children: VNode[] = [];
 
-      if (props.showIcon) {
-        const icon = getIconMap()[props.type as AlertType] || 'ℹ';
-        children.push(createVNode('span', { class: 'lyt-alert__icon' }, [icon]));
+      if (_props.showIcon) {
+        const icon = getIconMap()[_props.type as AlertType] || 'ℹ';
+        children.push(createVNode('span', { class: 'lyt-alert__icon' }, [createVNode('span', {}, icon)]));
       }
 
-      children.push(createVNode('div', { class: 'lyt-alert__content' }, [
-        (slots.title || props.title) && createVNode('div', { class: 'lyt-alert__title' }, [
-          slots.title ? slots.title() : props.title,
-        ]),
-        props.description && createVNode('div', { class: 'lyt-alert__description' }, [
-          props.description,
-        ]),
-        slots.default && createVNode('div', { class: 'lyt-alert__message' }, [
-          slots.default(),
-        ]),
-      ]));
+      const contentChildren: VNode[] = [];
+      
+      // Title
+      if (slots.title || _props.title) {
+        const titleChildren: VNode[] = [];
+        if (slots.title) {
+          const slotContent = slots.title();
+          if (Array.isArray(slotContent)) {
+            titleChildren.push(...(slotContent as VNode[]));
+          }
+        } else if (_props.title) {
+          titleChildren.push(createVNode('span', {}, _props.title));
+        }
+        if (titleChildren.length > 0) {
+          contentChildren.push(createVNode('div', { class: 'lyt-alert__title' }, titleChildren));
+        }
+      }
 
-      if (props.closable) {
+      // Description
+      if (_props.description) {
+        contentChildren.push(createVNode('div', { class: 'lyt-alert__description' }, [createVNode('span', {}, _props.description)]));
+      }
+
+      // Default slot
+      if (slots.default) {
+        const slotContent = slots.default();
+        if (Array.isArray(slotContent)) {
+          contentChildren.push(createVNode('div', { class: 'lyt-alert__message' }, slotContent as VNode[]));
+        }
+      }
+
+      if (contentChildren.length > 0) {
+        children.push(createVNode('div', { class: 'lyt-alert__content' }, contentChildren));
+      }
+
+      if (_props.closable) {
         children.push(createVNode('button', {
           class: 'lyt-alert__close',
           onClick: handleClose,
-        }, ['×']));
+        }, [createVNode('span', {}, '×')]));
       }
 
-      return createVNode('div', { class: alertClass }, [children]);
+      return createVNode('div', { class: alertClass }, children);
     };
   },
 });

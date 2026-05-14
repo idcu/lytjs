@@ -5,12 +5,24 @@
  */
 
 import { defineComponent } from '@lytjs/component';
-import { createVNode } from '@lytjs/vdom';
+import { createVNode, type VNode } from '@lytjs/vdom';
 import { signal } from '@lytjs/reactivity';
+import type { NotificationSetupProps } from './types';
 
-// 通知管理器
+interface NotificationItem {
+  id: number;
+  type: string;
+  title: string;
+  message: string;
+  duration: number;
+  position: string;
+  showClose: boolean;
+  onClose?: () => void;
+  onOpen?: () => void;
+}
+
 class NotificationManager {
-  static notifications = signal<Array<{ id: number; type: string; title: string; message: string; duration: number; position: string; showClose: boolean; onClose?: () => void; onOpen?: () => void }>>([]);
+  static notifications = signal<NotificationItem[]>([]);
   static nextId = 1;
 
   static open(options: {
@@ -24,7 +36,7 @@ class NotificationManager {
     onOpen?: () => void;
   }) {
     const id = this.nextId++;
-    const notification = {
+    const notification: NotificationItem = {
       id,
       type: options.type || 'info',
       title: options.title,
@@ -37,12 +49,11 @@ class NotificationManager {
     };
 
     this.notifications.set([...this.notifications(), notification]);
-    
+
     if (notification.onOpen) {
       notification.onOpen();
     }
 
-    // 自动关闭
     if (notification.duration > 0) {
       setTimeout(() => {
         this.close(id);
@@ -97,18 +108,16 @@ class NotificationManager {
   }
 }
 
-// 获取图标
-const getIcon = (type: string) => {
+const getIcon = (type: string): string => {
   const icons: Record<string, string> = {
     success: '✓',
     warning: '⚠',
     error: '✕',
     info: 'ℹ',
   };
-  return icons[type] || icons.info;
+  return icons[type] || icons['info'] || 'ℹ';
 };
 
-// 通知组件
 export const Notification = defineComponent({
   name: 'LytNotification',
 
@@ -117,45 +126,52 @@ export const Notification = defineComponent({
     class: { type: String, default: '' },
   },
 
-  setup(props: any) {
-    // 生成容器类名
+  setup(props: Record<string, unknown>) {
+    const p = props as NotificationSetupProps;
+
     const getContainerClass = () => {
-      const classes = ['lyt-notification-container', `lyt-notification-container--${props.position}`];
-      if (props.class) classes.push(props.class);
+      const classes = ['lyt-notification-container', `lyt-notification-container--${p.position}`];
+      if (p.class) classes.push(p.class as string);
       return classes.join(' ');
     };
 
     return () => {
       const notifications = NotificationManager.notifications();
-      
-      const children = notifications.map((notification) => {
+
+      const children: VNode[] = notifications.map((notification) => {
         const notificationClass = [
           'lyt-notification',
           `lyt-notification--${notification.type}`,
           `lyt-notification--${notification.position}`,
         ].join(' ');
 
-        return createVNode('div', { 
-          class: notificationClass,
-          key: notification.id,
-        }, [
-          // 图标
-          createVNode('span', { 
-            class: 'lyt-notification__icon' 
-          }, getIcon(notification.type)),
-          
-          // 内容
-          createVNode('div', { class: 'lyt-notification__content' }, [
-            createVNode('div', { class: 'lyt-notification__title' }, notification.title),
-            notification.message ? createVNode('div', { class: 'lyt-notification__message' }, notification.message) : null,
-          ]),
-          
-          // 关闭按钮
-          notification.showClose ? createVNode('button', { 
+        const itemChildren: VNode[] = [
+          createVNode('span', {
+            class: 'lyt-notification__icon',
+          }, [createVNode('span', {}, getIcon(notification.type))]),
+        ];
+
+        const contentChildren: VNode[] = [
+          createVNode('div', { class: 'lyt-notification__title' }, [createVNode('span', {}, String(notification.title))]),
+        ];
+
+        if (notification.message) {
+          contentChildren.push(createVNode('div', { class: 'lyt-notification__message' }, [createVNode('span', {}, String(notification.message))]));
+        }
+
+        itemChildren.push(createVNode('div', { class: 'lyt-notification__content' }, contentChildren));
+
+        if (notification.showClose) {
+          itemChildren.push(createVNode('button', {
             class: 'lyt-notification__close',
             onClick: () => NotificationManager.close(notification.id),
-          }, '×') : null,
-        ]);
+          }, [createVNode('span', {}, '×')]));
+        }
+
+        return createVNode('div', {
+          class: notificationClass,
+          key: notification.id,
+        }, itemChildren);
       });
 
       return createVNode('div', { class: getContainerClass() }, children);
@@ -163,14 +179,14 @@ export const Notification = defineComponent({
   },
 });
 
-// 导出快捷方法
-Notification.open = NotificationManager.open.bind(NotificationManager);
-Notification.success = NotificationManager.success.bind(NotificationManager);
-Notification.warning = NotificationManager.warning.bind(NotificationManager);
-Notification.error = NotificationManager.error.bind(NotificationManager);
-Notification.info = NotificationManager.info.bind(NotificationManager);
-Notification.close = NotificationManager.close.bind(NotificationManager);
-Notification.closeAll = NotificationManager.closeAll.bind(NotificationManager);
+(Notification as Record<string, unknown>).open = NotificationManager.open.bind(NotificationManager);
+(Notification as Record<string, unknown>).success = NotificationManager.success.bind(NotificationManager);
+(Notification as Record<string, unknown>).warning = NotificationManager.warning.bind(NotificationManager);
+(Notification as Record<string, unknown>).error = NotificationManager.error.bind(NotificationManager);
+(Notification as Record<string, unknown>).info = NotificationManager.info.bind(NotificationManager);
+(Notification as Record<string, unknown>).close = NotificationManager.close.bind(NotificationManager);
+(Notification as Record<string, unknown>).closeAll = NotificationManager.closeAll.bind(NotificationManager);
 
 export default Notification;
 export { NotificationManager };
+export type { NotificationProps, NotificationSlots, NotificationSetupProps } from './types';

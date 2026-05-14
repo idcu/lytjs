@@ -7,37 +7,13 @@
 import { defineComponent } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import { signal } from '@lytjs/reactivity';
-
-export interface SelectOption {
-  label: string;
-  value: string | number;
-  disabled?: boolean;
-}
-
-export interface SelectSetupProps {
-  modelValue: string | number | (string | number)[];
-  options: SelectOption[];
-  placeholder: string;
-  disabled: boolean;
-  clearable: boolean;
-  multiple: boolean;
-  size: 'small' | 'medium' | 'large';
-  class: string;
-  onChange: ((value: string | number | (string | number)[]) => void) | undefined;
-  onClear: (() => void) | undefined;
-}
-
-export interface SelectSlots {
-  default?: () => VNode[];
-  option?: (option: SelectOption) => VNode[];
-  empty?: () => VNode[];
-}
+import type { SelectOption, SelectSetupProps } from './types';
 
 export const Select = defineComponent({
   name: 'LytSelect',
 
   props: {
-    modelValue: { type: [String, Number, Array], default: '' },
+    modelValue: { type: [String, Number, Array] as unknown as StringConstructor, default: '' },
     options: { type: Array, default: (): SelectOption[] => [] },
     placeholder: { type: String, default: '请选择' },
     disabled: { type: Boolean, default: false },
@@ -49,20 +25,21 @@ export const Select = defineComponent({
     onClear: { type: Function, default: undefined },
   },
 
-  setup(props: SelectSetupProps, { slots }: { slots: SelectSlots }) {
+  setup(props: Record<string, unknown>) {
+    const p = props as SelectSetupProps;
     const isOpen = signal(false);
     const selectedValue = signal<Set<string | number>>(new Set());
     const searchValue = signal('');
 
     const toggleDropdown = () => {
-      if (props.disabled) return;
+      if (p.disabled) return;
       isOpen.set(!isOpen());
     };
 
     const handleSelect = (option: SelectOption) => {
       if (option.disabled) return;
 
-      if (props.multiple) {
+      if (p.multiple) {
         const newSelected = new Set(selectedValue());
         if (newSelected.has(option.value)) {
           newSelected.delete(option.value);
@@ -70,54 +47,59 @@ export const Select = defineComponent({
           newSelected.add(option.value);
         }
         selectedValue.set(newSelected);
-        props.onChange?.(Array.from(newSelected));
+        p.onChange?.(Array.from(newSelected));
       } else {
         selectedValue.set(new Set([option.value]));
         isOpen.set(false);
-        props.onChange?.(option.value);
+        p.onChange?.(option.value);
       }
     };
 
     const handleClear = (event: Event) => {
       event.stopPropagation();
       selectedValue.set(new Set());
-      props.onClear?.();
-      props.onChange?.(props.multiple ? [] : '');
+      p.onClear?.();
+      p.onChange?.(p.multiple ? [] : '');
     };
 
     const getSelectedLabel = (): string => {
       const selected = Array.from(selectedValue());
       if (selected.length === 0) return '';
-      
-      const options = props.options || [];
-      const selectedOptions = options.filter(opt => selected.includes(opt.value));
+
+      const opts = p.options || [];
+      const selectedOptions = opts.filter(opt => selected.includes(opt.value));
       return selectedOptions.map(opt => opt.label).join(', ');
     };
 
     return () => {
       const selectClass = [
         'lyt-select',
-        `lyt-select--${props.size}`,
-        props.disabled ? 'lyt-select--disabled' : '',
+        `lyt-select--${p.size}`,
+        p.disabled ? 'lyt-select--disabled' : '',
         isOpen() ? 'lyt-select--open' : '',
-        props.class,
+        p.class,
       ].filter(Boolean).join(' ');
 
       const selectedLabel = getSelectedLabel();
-      const displayValue = selectedLabel || props.placeholder;
+      const displayValue = selectedLabel || p.placeholder;
 
       const dropdownContent: VNode[] = [];
-      
-      const options = props.options || [];
-      const filteredOptions = searchValue() 
-        ? options.filter(opt => opt.label.includes(searchValue()))
-        : options;
+
+      const opts = p.options || [];
+      const filteredOptions = searchValue()
+        ? opts.filter(opt => opt.label.includes(searchValue()))
+        : opts;
 
       if (filteredOptions.length === 0) {
-        dropdownContent.push(createVNode('div', { class: 'lyt-select__empty' }, ['无匹配选项']));
+        dropdownContent.push(createVNode('div', { class: 'lyt-select__empty' }, '无匹配选项'));
       } else {
         filteredOptions.forEach((option: SelectOption) => {
           const isSelected = selectedValue().has(option.value);
+          const optionChildren: VNode[] = [];
+          if (isSelected) {
+            optionChildren.push(createVNode('span', { class: 'lyt-select__check' }, '✓'));
+          }
+          optionChildren.push(createVNode('span', {}, option.label));
           dropdownContent.push(createVNode('div', {
             key: String(option.value),
             class: [
@@ -126,32 +108,36 @@ export const Select = defineComponent({
               option.disabled ? 'lyt-select__option--disabled' : '',
             ].filter(Boolean).join(' '),
             onClick: () => handleSelect(option),
-          }, [
-            isSelected && createVNode('span', { class: 'lyt-select__check' }, ['✓']),
-            option.label,
-          ]));
+          }, optionChildren));
         });
       }
 
-      return createVNode('div', { class: selectClass }, [
+      const triggerChildren: VNode[] = [];
+      triggerChildren.push(createVNode('span', {
+        class: [
+          'lyt-select__value',
+          !selectedLabel ? 'lyt-select__value--placeholder' : '',
+        ].filter(Boolean).join(' '),
+      }, displayValue));
+      if (p.clearable && selectedValue().size > 0) {
+        triggerChildren.push(createVNode('span', {
+          class: 'lyt-select__clear',
+          onClick: handleClear,
+        }, '×'));
+      }
+      triggerChildren.push(createVNode('span', { class: 'lyt-select__arrow' }, '▼'));
+
+      const resultChildren: VNode[] = [
         createVNode('div', {
           class: 'lyt-select__trigger',
           onClick: toggleDropdown,
-        }, [
-          createVNode('span', {
-            class: [
-              'lyt-select__value',
-              !selectedLabel ? 'lyt-select__value--placeholder' : '',
-            ].filter(Boolean).join(' '),
-          }, [displayValue]),
-          props.clearable && selectedValue().size > 0 && createVNode('span', {
-            class: 'lyt-select__clear',
-            onClick: handleClear,
-          }, ['×']),
-          createVNode('span', { class: 'lyt-select__arrow' }, ['▼']),
-        ]),
-        isOpen() && createVNode('div', { class: 'lyt-select__dropdown' }, [dropdownContent]),
-      ]);
+        }, triggerChildren),
+      ];
+      if (isOpen()) {
+        resultChildren.push(createVNode('div', { class: 'lyt-select__dropdown' }, dropdownContent));
+      }
+
+      return createVNode('div', { class: selectClass }, resultChildren);
     };
   },
 });

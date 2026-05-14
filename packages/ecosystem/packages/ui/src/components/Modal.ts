@@ -7,47 +7,7 @@
 import { defineComponent } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import { signal } from '@lytjs/reactivity';
-
-export interface ModalSetupProps {
-  modelValue: boolean;
-  title: string;
-  width: string | number;
-  top: string;
-  showClose: boolean;
-  closeOnClickModal: boolean;
-  closeOnPressEscape: boolean;
-  lockScroll: boolean;
-  draggable: boolean;
-  fullscreen: boolean;
-  appendToBody: boolean;
-  customClass: string;
-  class: string;
-  onBeforeOpen: (() => boolean | void | Promise<boolean | void>) | undefined;
-  onBeforeClose: (() => boolean | void | Promise<boolean | void>) | undefined;
-  onOpen: (() => void) | undefined;
-  onClose: (() => void) | undefined;
-  onConfirm: (() => void) | undefined;
-  onCancel: (() => void) | undefined;
-}
-
-export interface ModalSlots {
-  header?: () => VNode[];
-  default?: () => VNode[];
-  footer?: () => VNode[];
-}
-
-export interface DragState {
-  dragging: boolean;
-  startX: number;
-  startY: number;
-  startLeft: number;
-  startTop: number;
-}
-
-export interface ModalPosition {
-  left: string;
-  top: string;
-}
+import type { ModalSetupProps, ModalSlots } from './types';
 
 export const Modal = defineComponent({
   name: 'LytModal',
@@ -55,7 +15,7 @@ export const Modal = defineComponent({
   props: {
     modelValue: { type: Boolean, default: false },
     title: { type: String, default: '' },
-    width: { type: [String, Number], default: '50%' },
+    width: { type: [String, Number] as unknown as StringConstructor, default: '50%' },
     top: { type: String, default: '15vh' },
     showClose: { type: Boolean, default: true },
     closeOnClickModal: { type: Boolean, default: true },
@@ -74,91 +34,81 @@ export const Modal = defineComponent({
     onCancel: { type: Function, default: undefined },
   },
 
-  setup(props: ModalSetupProps, { slots }: { slots: ModalSlots; emit: (event: string, ...args: unknown[]) => void }) {
+  setup(props: Record<string, unknown>, { slots }: { slots: ModalSlots }) {
+    const p = props as ModalSetupProps;
     const isClosing = signal(false);
-    const isFullscreen = signal(props.fullscreen);
-    const dragState = signal<DragState>({
-      dragging: false,
-      startX: 0,
-      startY: 0,
-      startLeft: 0,
-      startTop: 0,
-    });
-    const modalPosition = signal<ModalPosition>({ left: '50%', top: props.top });
+    const isFullscreen = signal(p.fullscreen);
 
     const close = async () => {
       if (isClosing()) return;
-      if (props.onBeforeClose) {
-        const result = await props.onBeforeClose();
+      if (p.onBeforeClose) {
+        const result = await p.onBeforeClose();
         if (result === false) return;
       }
       isClosing.set(true);
-      // emit('update:modelValue', false);
-      props.onClose?.();
+      p.onClose?.();
       setTimeout(() => { isClosing.set(false); }, 300);
     };
 
     const handleModalClick = () => {
-      if (props.closeOnClickModal) close();
-    };
-
-    const handleKeydown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && props.closeOnPressEscape && props.modelValue) {
-        close();
-      }
-    };
-
-    const toggleFullscreen = () => {
-      isFullscreen.set(!isFullscreen());
+      if (p.closeOnClickModal) close();
     };
 
     return () => {
-      if (!props.modelValue) return null;
+      if (!p.modelValue) {
+        return createVNode('div', { style: 'display: none;' }, []);
+      }
 
-      const children: VNode[] = [];
+      const headerChildren: VNode[] = [];
 
       if (slots.header) {
-        children.push(createVNode('div', { class: 'lyt-modal__header' }, [slots.header()]));
-      } else if (props.title) {
-        children.push(createVNode('div', { class: 'lyt-modal__header' }, [
-          createVNode('span', { class: 'lyt-modal__title' }, [props.title]),
-          props.showClose && createVNode('button', {
+        headerChildren.push(...slots.header());
+      } else if (p.title) {
+        const titlePart: VNode[] = [
+          createVNode('span', { class: 'lyt-modal__title' }, [createVNode('span', {}, String(p.title))]),
+        ];
+
+        if (p.showClose) {
+          titlePart.push(createVNode('button', {
             class: 'lyt-modal__close',
             onClick: close,
-          }, ['×']),
-        ]));
+          }, [createVNode('span', {}, '×')]));
+        }
+
+        headerChildren.push(createVNode('div', { class: 'lyt-modal__header' }, titlePart));
       }
 
+      const bodyChildren: VNode[] = [];
       if (slots.default) {
-        children.push(createVNode('div', { class: 'lyt-modal__body' }, [slots.default()]));
+        bodyChildren.push(...slots.default());
       }
 
+      const footerChildren: VNode[] = [];
       if (slots.footer) {
-        children.push(createVNode('div', { class: 'lyt-modal__footer' }, [slots.footer()]));
+        footerChildren.push(...slots.footer());
       } else {
-        children.push(createVNode('div', { class: 'lyt-modal__footer' }, [
+        footerChildren.push(
           createVNode('button', {
             class: 'lyt-modal__cancel-btn',
             onClick: close,
-          }, ['取消']),
+          }, [createVNode('span', {}, '取消')]),
           createVNode('button', {
             class: 'lyt-modal__confirm-btn',
-            onClick: () => props.onConfirm?.(),
-          }, ['确定']),
-        ]));
+            onClick: () => p.onConfirm?.(),
+          }, [createVNode('span', {}, '确定')])
+        );
       }
 
       const modalClass = [
         'lyt-modal',
         isClosing() ? 'lyt-modal--closing' : '',
         isFullscreen() ? 'lyt-modal--fullscreen' : '',
-        props.customClass,
-        props.class,
+        p.customClass as string,
+        p.class as string,
       ].filter(Boolean).join(' ');
 
-      const modalStyle = isFullscreen()
-        ? ''
-        : `width: ${typeof props.width === 'number' ? `${props.width}px` : props.width};`;
+      const modalWidth = typeof p.width === 'number' ? `${p.width}px` : p.width as string;
+      const modalStyle = isFullscreen() ? '' : `width: ${modalWidth};`;
 
       return createVNode('div', {
         class: 'lyt-modal__overlay',
@@ -167,10 +117,14 @@ export const Modal = defineComponent({
         createVNode('div', {
           class: modalClass,
           style: modalStyle,
-        }, children),
+        }, [
+          ...headerChildren,
+          createVNode('div', { class: 'lyt-modal__body' }, bodyChildren),
+          createVNode('div', { class: 'lyt-modal__footer' }, footerChildren),
+        ]),
       ]);
     };
   },
 });
 
-export type { ModalProps, ModalSlots } from './types';
+export type { ModalProps, ModalSlots, ModalSetupProps } from './types';

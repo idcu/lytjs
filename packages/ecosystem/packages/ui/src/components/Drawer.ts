@@ -5,20 +5,18 @@
  */
 
 import { defineComponent } from '@lytjs/component';
-import { createVNode } from '@lytjs/vdom';
+import { createVNode, type VNode } from '@lytjs/vdom';
 import { signal } from '@lytjs/reactivity';
+import type { DrawerSetupProps, DrawerSlots } from './types';
 
-/**
- * Drawer 组件
- */
 export const Drawer = defineComponent({
   name: 'LytDrawer',
 
   props: {
     modelValue: { type: Boolean, default: false },
     title: { type: String, default: '' },
-    size: { type: [String, Number], default: '30%' },
-    direction: { type: String, default: 'rtl', validator: (v: string) => ['ltr', 'rtl', 'ttb', 'btt'].includes(v) },
+    size: { type: [String, Number] as unknown as StringConstructor, default: '30%' },
+    direction: { type: String, default: 'rtl' },
     showClose: { type: Boolean, default: true },
     closeOnClickModal: { type: Boolean, default: true },
     closeOnPressEscape: { type: Boolean, default: true },
@@ -33,27 +31,26 @@ export const Drawer = defineComponent({
     onClose: { type: Function, default: undefined },
   },
 
-  setup(props: any, { slots, emit }: any) {
+  setup(props: Record<string, unknown>, { slots }: { slots: DrawerSlots }) {
+    const p = props as DrawerSetupProps;
     const isClosing = signal(false);
 
     const close = async () => {
       if (isClosing()) return;
-      if (props.onBeforeClose) {
-        const result = await props.onBeforeClose();
+      if (p.onBeforeClose) {
+        const result = await p.onBeforeClose();
         if (result === false) return;
       }
       isClosing.set(true);
-      emit('update:modelValue', false);
-      props.onClose?.();
       setTimeout(() => { isClosing.set(false); }, 300);
     };
 
     const handleModalClick = () => {
-      if (props.closeOnClickModal) close();
+      if (p.closeOnClickModal) close();
     };
 
     const handleKeydown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && props.closeOnPressEscape && props.modelValue) {
+      if (event.key === 'Escape' && p.closeOnPressEscape && p.modelValue) {
         close();
       }
     };
@@ -64,19 +61,19 @@ export const Drawer = defineComponent({
 
     const getDrawerClass = () => {
       const classes = ['lyt-drawer'];
-      classes.push(`lyt-drawer--${props.direction}`);
-      if (props.modelValue) classes.push('lyt-drawer--visible');
+      classes.push(`lyt-drawer--${p.direction}`);
+      if (p.modelValue) classes.push('lyt-drawer--visible');
       if (isClosing()) classes.push('lyt-drawer--closing');
-      if (props.class) classes.push(props.class);
-      if (props.customClass) classes.push(props.customClass);
+      if (p.class) classes.push(p.class as string);
+      if (p.customClass) classes.push(p.customClass as string);
       return classes.join(' ');
     };
 
-    const getSizeStyle = () => {
-      const size = typeof props.size === 'number' ? `${props.size}px` : props.size;
-      const style: any = {};
-      
-      switch (props.direction) {
+    const getSizeStyle = (): Record<string, string> => {
+      const size = typeof p.size === 'number' ? `${p.size}px` : p.size as string;
+      const style: Record<string, string> = {};
+
+      switch (p.direction) {
         case 'ltr':
         case 'rtl':
           style.width = size;
@@ -86,39 +83,38 @@ export const Drawer = defineComponent({
           style.height = size;
           break;
       }
-      
+
       return style;
     };
 
-    const formatStyle = (style: any) => {
+    const formatStyle = (style: Record<string, string>) => {
       if (!style) return '';
-      if (typeof style === 'string') return style;
       return Object.entries(style)
         .map(([key, value]) => `${key}: ${value}`)
         .join('; ');
     };
 
     return () => {
-      if (!props.modelValue && !isClosing()) {
+      if (!p.modelValue && !isClosing()) {
         return createVNode('div', { style: 'display: none;' }, []);
       }
 
-      const children: any[] = [];
+      const children: VNode[] = [];
 
       children.push(createVNode('div', { class: 'lyt-drawer__overlay', onClick: handleModalClick }));
 
-      const drawerChildren: any[] = [];
+      const drawerChildren: VNode[] = [];
 
-      if (props.withHeader) {
-        const headerChildren: any[] = [];
-        
+      if (p.withHeader) {
+        const headerChildren: VNode[] = [];
+
         if (slots.header) {
           headerChildren.push(...slots.header());
-        } else if (props.title) {
-          headerChildren.push(createVNode('span', { class: 'lyt-drawer__title' }, props.title));
+        } else if (p.title) {
+          headerChildren.push(createVNode('span', { class: 'lyt-drawer__title' }, [createVNode('span', {}, String(p.title))]));
         }
 
-        if (props.showClose) {
+        if (p.showClose) {
           headerChildren.push(
             createVNode('button', { class: 'lyt-drawer__close', type: 'button', onClick: close }, [
               createVNode('svg', { viewBox: '0 0 1024 1024', width: '1em', height: '1em' }, [
@@ -145,9 +141,9 @@ export const Drawer = defineComponent({
       }
 
       children.push(
-        createVNode('div', { 
-          class: 'lyt-drawer__container', 
-          style: formatStyle(getSizeStyle()) 
+        createVNode('div', {
+          class: 'lyt-drawer__container',
+          style: formatStyle(getSizeStyle()),
         }, drawerChildren)
       );
 
@@ -157,3 +153,4 @@ export const Drawer = defineComponent({
 });
 
 export default Drawer;
+export type { DrawerProps, DrawerSlots, DrawerDirection, DrawerSetupProps } from './types';

@@ -7,27 +7,7 @@
 import { defineComponent } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import { isString, isObject } from '@lytjs/common-is';
-import type { ComponentStatus, ComponentSize, NativeType } from './types';
-
-export interface ButtonSetupProps {
-  type: ComponentStatus;
-  size: ComponentSize;
-  disabled: boolean;
-  loading: boolean;
-  plain: boolean;
-  round: boolean;
-  circle: boolean;
-  nativeType: NativeType;
-  class: string;
-  style: string;
-  onClick: ((event: MouseEvent) => void) | undefined;
-}
-
-export interface ButtonSlots {
-  default?: () => VNode[];
-  loading?: () => VNode[];
-  icon?: () => VNode[];
-}
+import type { ButtonSetupProps, ButtonSlots } from './types';
 
 export const Button = defineComponent({
   name: 'LytButton',
@@ -46,33 +26,34 @@ export const Button = defineComponent({
     onClick: { type: Function, default: undefined },
   },
 
-  setup(props: ButtonSetupProps, { slots }: { slots: ButtonSlots }) {
+  setup(props: Record<string, unknown>, { slots }: { slots: ButtonSlots }) {
+    const p = props as ButtonSetupProps;
     const handleClick = (event: MouseEvent) => {
-      if (props.disabled || props.loading) {
+      if (p.disabled || p.loading) {
         event.preventDefault();
         return;
       }
-      props.onClick?.(event);
+      p.onClick?.(event);
     };
 
     const getButtonClass = () => {
       const classes = ['lyt-button'];
-      if (props.type !== 'default') classes.push(`lyt-button--${props.type}`);
-      if (props.size !== 'medium') classes.push(`lyt-button--${props.size}`);
-      if (props.plain) classes.push('lyt-button--plain');
-      if (props.round) classes.push('lyt-button--round');
-      if (props.circle) classes.push('lyt-button--circle');
-      if (props.disabled) classes.push('lyt-button--disabled');
-      if (props.loading) classes.push('lyt-button--loading');
-      if (props.class) classes.push(props.class);
+      if (p.type !== 'default') classes.push(`lyt-button--${p.type}`);
+      if (p.size !== 'medium') classes.push(`lyt-button--${p.size}`);
+      if (p.plain) classes.push('lyt-button--plain');
+      if (p.round) classes.push('lyt-button--round');
+      if (p.circle) classes.push('lyt-button--circle');
+      if (p.disabled) classes.push('lyt-button--disabled');
+      if (p.loading) classes.push('lyt-button--loading');
+      if (p.class) classes.push(p.class);
       return classes.join(' ');
     };
 
     const getButtonStyle = () => {
-      if (!props.style) return undefined;
-      if (isString(props.style)) return props.style;
-      if (isObject(props.style)) {
-        return Object.entries(props.style)
+      if (!p.style) return undefined;
+      if (isString(p.style)) return p.style;
+      if (isObject(p.style)) {
+        return Object.entries(p.style)
           .map(([key, value]) => `${key}: ${value}`)
           .join('; ');
       }
@@ -82,7 +63,7 @@ export const Button = defineComponent({
     return () => {
       const children: VNode[] = [];
 
-      if (props.loading) {
+      if (p.loading) {
         children.push(
           createVNode('span', { class: 'lyt-button__loading' }, [
             createVNode('svg', { class: 'lyt-button__loading-icon', viewBox: '0 0 1024 1024' }, [
@@ -104,8 +85,8 @@ export const Button = defineComponent({
         {
           class: getButtonClass(),
           style: getButtonStyle(),
-          type: props.nativeType,
-          disabled: props.disabled || props.loading,
+          type: p.nativeType,
+          disabled: p.disabled || p.loading,
           onClick: handleClick,
         },
         children,
@@ -114,4 +95,4 @@ export const Button = defineComponent({
   },
 });
 
-export type { ButtonProps, ButtonSlots } from './types';
+export type { ButtonProps, ButtonSlots, ButtonSetupProps } from './types';

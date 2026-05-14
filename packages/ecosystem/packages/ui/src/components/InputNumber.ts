@@ -4,10 +4,10 @@
  * 数字输入框组件，用于数值输入
  */
 
-import type { InputNumberProps, InputNumberSlots } from './types';
+import type { InputNumberProps, InputNumberSlots, InputNumberSetupProps } from './types';
 import { defineComponent } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
-import { isString, isObject, isNumber } from '@lytjs/common-is';
+import { isString, isObject } from '@lytjs/common-is';
 import { reactive, computed, watch } from '@lytjs/reactivity';
 
 /**
@@ -36,9 +36,10 @@ export const InputNumber = defineComponent({
     onInput: { type: Function, default: undefined },
   },
 
-  setup(props: any, { slots, emit }: any) {
+  setup(props: Record<string, unknown>, { emit }) {
+    const _props = props as InputNumberSetupProps;
     const state = reactive({
-      inputValue: props.modelValue,
+      inputValue: _props.modelValue,
       focus: false,
     });
 
@@ -46,40 +47,40 @@ export const InputNumber = defineComponent({
       if (state.inputValue === undefined || state.inputValue === null) {
         return '';
       }
-      if (props.precision !== undefined) {
-        return state.inputValue.toFixed(props.precision);
+      if (_props.precision !== undefined) {
+        return state.inputValue.toFixed(_props.precision);
       }
       return String(state.inputValue);
     });
 
     const isAtMin = computed(() => {
-      return state.inputValue !== undefined && state.inputValue <= props.min;
+      return state.inputValue !== undefined && state.inputValue <= _props.min;
     });
 
     const isAtMax = computed(() => {
-      return state.inputValue !== undefined && state.inputValue >= props.max;
+      return state.inputValue !== undefined && state.inputValue >= _props.max;
     });
 
     const ensurePrecision = (value: number): number => {
-      if (props.precision !== undefined) {
-        const factor = Math.pow(10, props.precision);
+      if (_props.precision !== undefined) {
+        const factor = Math.pow(10, _props.precision);
         return Math.round(value * factor) / factor;
       }
       return value;
     };
 
     const ensureStep = (value: number): number => {
-      if (props.stepStrictly) {
-        const steps = Math.round(value / props.step);
-        return ensurePrecision(steps * props.step);
+      if (_props.stepStrictly) {
+        const steps = Math.round(value / _props.step);
+        return ensurePrecision(steps * _props.step);
       }
       return ensurePrecision(value);
     };
 
     const clampValue = (value: number): number => {
       let result = value;
-      if (result < props.min) result = props.min;
-      if (result > props.max) result = props.max;
+      if (result < _props.min) result = _props.min;
+      if (result > _props.max) result = _props.max;
       return ensureStep(result);
     };
 
@@ -88,7 +89,7 @@ export const InputNumber = defineComponent({
         state.inputValue = undefined;
         emit('update:modelValue', undefined);
         emit('change', undefined);
-        props.onChange?.(undefined);
+        _props.onChange?.(undefined);
         return;
       }
       
@@ -96,18 +97,18 @@ export const InputNumber = defineComponent({
       state.inputValue = newValue;
       emit('update:modelValue', newValue);
       emit('change', newValue);
-      props.onChange?.(newValue);
+      _props.onChange?.(newValue);
     };
 
     const handleIncrement = () => {
-      if (props.disabled || isAtMax.value) return;
-      const newValue = (state.inputValue || 0) + props.step;
+      if (_props.disabled || isAtMax.value) return;
+      const newValue = (state.inputValue || 0) + _props.step;
       setValue(newValue);
     };
 
     const handleDecrement = () => {
-      if (props.disabled || isAtMin.value) return;
-      const newValue = (state.inputValue || 0) - props.step;
+      if (_props.disabled || isAtMin.value) return;
+      const newValue = (state.inputValue || 0) - _props.step;
       setValue(newValue);
     };
 
@@ -119,7 +120,7 @@ export const InputNumber = defineComponent({
         state.inputValue = undefined;
         emit('update:modelValue', undefined);
         emit('input', undefined);
-        props.onInput?.(undefined);
+        _props.onInput?.(undefined);
         return;
       }
       
@@ -127,7 +128,7 @@ export const InputNumber = defineComponent({
       if (!isNaN(numValue)) {
         state.inputValue = numValue;
         emit('input', numValue);
-        props.onInput?.(numValue);
+        _props.onInput?.(numValue);
       }
     };
 
@@ -150,7 +151,7 @@ export const InputNumber = defineComponent({
       state.focus = true;
     };
 
-    watch(() => props.modelValue, (newValue) => {
+    watch(() => _props.modelValue, (newValue) => {
       if (newValue !== state.inputValue) {
         state.inputValue = newValue;
       }
@@ -158,21 +159,21 @@ export const InputNumber = defineComponent({
 
     const getInputNumberClass = () => {
       const classes = ['lyt-input-number'];
-      if (props.size !== 'default') classes.push(`lyt-input-number--${props.size}`);
-      if (props.disabled) classes.push('lyt-input-number--disabled');
+      if (_props.size !== 'default') classes.push(`lyt-input-number--${_props.size}`);
+      if (_props.disabled) classes.push('lyt-input-number--disabled');
       if (state.focus) classes.push('lyt-input-number--focus');
-      if (props.class) classes.push(props.class);
+      if (_props.class) classes.push(_props.class);
       return classes.join(' ');
     };
 
     const getInputNumberStyle = () => {
       const style: Record<string, string> = {};
-      if (props.style) {
-        if (isString(props.style)) {
-          return props.style;
+      if (_props.style) {
+        if (isString(_props.style)) {
+          return _props.style;
         }
-        if (isObject(props.style)) {
-          Object.assign(style, props.style);
+        if (isObject(_props.style)) {
+          Object.assign(style, _props.style);
         }
       }
       return style;
@@ -182,19 +183,19 @@ export const InputNumber = defineComponent({
       const children: VNode[] = [];
       
       // 减号按钮
-      if (props.controls) {
+      if (_props.controls) {
         children.push(createVNode('span', {
           class: `lyt-input-number__decrease ${isAtMin.value ? 'is-disabled' : ''}`,
           onClick: handleDecrement,
-        }, ['−']));
+        }, [createVNode('span', {}, '−')]));
       }
 
       // 加号按钮
-      if (props.controls) {
+      if (_props.controls) {
         children.push(createVNode('span', {
           class: `lyt-input-number__increase ${isAtMax.value ? 'is-disabled' : ''}`,
           onClick: handleIncrement,
-        }, ['+']));
+        }, [createVNode('span', {}, '+')]));
       }
 
       // 输入框
@@ -202,9 +203,9 @@ export const InputNumber = defineComponent({
         type: 'text',
         class: 'lyt-input-number__input',
         value: displayValue.value,
-        disabled: props.disabled,
-        placeholder: props.placeholder,
-        name: props.name,
+        disabled: _props.disabled,
+        placeholder: _props.placeholder,
+        name: _props.name,
         onInput: handleInput,
         onBlur: handleBlur,
         onFocus: handleFocus,

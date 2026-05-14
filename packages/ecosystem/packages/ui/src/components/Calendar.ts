@@ -5,161 +5,178 @@
  */
 
 import { defineComponent } from '@lytjs/component';
-import { createVNode } from '@lytjs/vdom';
+import { createVNode, type VNode } from '@lytjs/vdom';
 import { signal } from '@lytjs/reactivity';
+import type { CalendarSetupProps } from './types';
 
-/**
- * Calendar 事件数据结构
- */
 interface CalendarEvent {
   title: string;
   start: Date;
   end?: Date;
   color?: string;
-  data?: any;
+  data?: unknown;
 }
 
-/**
- * Calendar 组件
- */
 export const Calendar = defineComponent({
   name: 'LytCalendar',
 
   props: {
-    modelValue: { type: [String, Date], default: () => new Date() },
-    view: { type: String, default: 'month', validator: (v: string) => ['month', 'week', 'day'].includes(v) },
-    events: { type: Array, default: () => [] },
+    modelValue: { type: [String, Date] as unknown as StringConstructor, default: (): Date => new Date() },
+    view: { type: String, default: 'month' },
+    events: { type: Array, default: (): CalendarEvent[] => [] },
     disabledDates: { type: Function, default: undefined },
     firstDayOfWeek: { type: Number, default: 0 },
-    weekNames: { type: Array, default: () => ['日', '一', '二', '三', '四', '五', '六'] },
-    monthNames: { type: Array, default: () => ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'] },
+    weekNames: { type: Array, default: (): string[] => ['日', '一', '二', '三', '四', '五', '六'] },
+    monthNames: { type: Array, default: (): string[] => ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'] },
     class: { type: String, default: '' },
     onChange: { type: Function, default: undefined },
     onEventClick: { type: Function, default: undefined },
     onDateClick: { type: Function, default: undefined },
   },
 
-  setup(props: any, { slots, emit }: any) {
+  setup(props: Record<string, unknown>) {
+    const p = props as CalendarSetupProps;
     const currentDate = signal<Date>(
-      props.modelValue instanceof Date ? props.modelValue : new Date(props.modelValue)
+      p.modelValue instanceof Date ? p.modelValue : new Date()
     );
-    const currentView = signal<string>(props.view);
+    const currentView = signal<string>(p.view);
 
-    // 获取月份天数
     const getDaysInMonth = (year: number, month: number): number => {
       return new Date(year, month + 1, 0).getDate();
     };
 
-    // 获取月份第一天是星期几
     const getFirstDayOfMonth = (year: number, month: number): number => {
       return new Date(year, month, 1).getDay();
     };
 
-    // 格式化日期
-    const formatDate = (date: Date): string => {
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      return `${year}-${month}-${day}`;
-    };
-
-    // 检查是否是同一天
     const isSameDay = (d1: Date, d2: Date): boolean => {
       return d1.getFullYear() === d2.getFullYear() &&
         d1.getMonth() === d2.getMonth() &&
         d1.getDate() === d2.getDate();
     };
 
-    // 检查日期是否被禁用
-    const isDisabled = (date: Date): boolean => {
-      if (!props.disabledDates) return false;
-      return props.disabledDates(date);
+    const isDisabledDate = (date: Date): boolean => {
+      if (!p.disabledDates) return false;
+      return p.disabledDates(date);
     };
 
-    // 获取指定日期的事件
     const getEventsForDate = (date: Date): CalendarEvent[] => {
-      return props.events.filter((event: CalendarEvent) => {
+      return (p.events as CalendarEvent[]).filter((event: CalendarEvent) => {
         const eventDate = new Date(event.start);
         return isSameDay(date, eventDate);
       });
     };
 
-    // 切换到上个月
     const prevMonth = () => {
-      const date = new Date(currentDate.value);
+      const date = new Date(currentDate());
       date.setMonth(date.getMonth() - 1);
       currentDate.set(date);
       emitChange(date);
     };
 
-    // 切换到下个月
     const nextMonth = () => {
-      const date = new Date(currentDate.value);
+      const date = new Date(currentDate());
       date.setMonth(date.getMonth() + 1);
       currentDate.set(date);
       emitChange(date);
     };
 
-    // 切换到今天
     const goToToday = () => {
       const today = new Date();
       currentDate.set(today);
       emitChange(today);
     };
 
-    // 选择日期
     const selectDate = (date: Date) => {
-      if (isDisabled(date)) return;
+      if (isDisabledDate(date)) return;
       currentDate.set(date);
       emitChange(date);
-      if (props.onDateClick) {
-        props.onDateClick(date);
+      if (p.onDateClick) {
+        p.onDateClick(date);
       }
     };
 
-    // 触发变更事件
     const emitChange = (date: Date) => {
-      const formatted = formatDate(date);
-      emit('update:modelValue', formatted);
-      if (props.onChange) {
-        props.onChange(date);
+      if (p.onChange) {
+        p.onChange(date);
       }
     };
 
-    // 点击事件
     const handleEventClick = (event: CalendarEvent, e: Event) => {
       e.stopPropagation();
-      if (props.onEventClick) {
-        props.onEventClick(event);
+      if (p.onEventClick) {
+        p.onEventClick(event);
       }
     };
 
-    // 渲染月视图
-    const renderMonthView = () => {
-      const year = currentDate.value.getFullYear();
-      const month = currentDate.value.getMonth();
+    const renderDayCell = (
+      date: Date,
+      isCurrentMonth: boolean,
+      isToday: boolean,
+      isSelected: boolean,
+      disabled: boolean = false
+    ): VNode => {
+      const events = getEventsForDate(date);
+
+      const classes = [
+        'lyt-calendar-day',
+        !isCurrentMonth ? 'lyt-calendar-day-other' : '',
+        isToday ? 'lyt-calendar-day-today' : '',
+        isSelected ? 'lyt-calendar-day-selected' : '',
+        disabled ? 'lyt-calendar-day-disabled' : '',
+      ].filter(Boolean).join(' ');
+
+      const eventNodes: VNode[] = events.map((event: CalendarEvent) => {
+        const color = event.color || '#3b82f6';
+        return createVNode(
+          'div',
+          {
+            class: 'lyt-calendar-event',
+            style: { backgroundColor: color },
+            onClick: (e: Event) => handleEventClick(event, e),
+          },
+          [createVNode('span', {}, String(event.title))]
+        );
+      });
+
+      const cellChildren: VNode[] = [
+        createVNode('div', { class: 'lyt-calendar-day-number' }, [createVNode('span', {}, String(date.getDate()))]),
+        ...eventNodes,
+      ];
+
+      return createVNode(
+        'div',
+        {
+          class: classes,
+          onClick: () => selectDate(date),
+        },
+        cellChildren
+      );
+    };
+
+    const renderMonthView = (): VNode => {
+      const year = currentDate().getFullYear();
+      const month = currentDate().getMonth();
       const today = new Date();
-      
+
       const firstDay = getFirstDayOfMonth(year, month);
       const daysInMonth = getDaysInMonth(year, month);
       const daysInPrevMonth = getDaysInMonth(year, month - 1);
-      
-      const weeks: any[] = [];
-      let currentWeek: any[] = [];
 
-      // 上个月的日期
-      for (let i = props.firstDayOfWeek; i < firstDay; i++) {
+      const weeks: VNode[] = [];
+      let currentWeek: VNode[] = [];
+
+      for (let i = p.firstDayOfWeek; i < firstDay; i++) {
         const day = daysInPrevMonth - (firstDay - i - 1);
         const date = new Date(year, month - 1, day);
-        currentWeek.push(renderDayCell(date, false, false, false));
+        currentWeek.push(renderDayCell(date, false, false, false, false));
       }
 
-      // 当月的日期
       for (let day = 1; day <= daysInMonth; day++) {
         const date = new Date(year, month, day);
         const isToday = isSameDay(date, today);
-        const isSelected = isSameDay(date, currentDate.value);
-        const disabled = isDisabled(date);
+        const isSelected = isSameDay(date, currentDate());
+        const disabled = isDisabledDate(date);
 
         currentWeek.push(renderDayCell(date, true, isToday, isSelected, disabled));
 
@@ -169,12 +186,11 @@ export const Calendar = defineComponent({
         }
       }
 
-      // 下个月的日期
       if (currentWeek.length > 0) {
         let nextDay = 1;
         while (currentWeek.length < 7) {
           const date = new Date(year, month + 1, nextDay);
-          currentWeek.push(renderDayCell(date, false, false, false));
+          currentWeek.push(renderDayCell(date, false, false, false, false));
           nextDay++;
         }
         weeks.push(createVNode('div', { class: 'lyt-calendar-week' }, currentWeek));
@@ -183,91 +199,37 @@ export const Calendar = defineComponent({
       return createVNode('div', { class: 'lyt-calendar-month' }, weeks);
     };
 
-    // 渲染日期单元格
-    const renderDayCell = (
-      date: Date, 
-      isCurrentMonth: boolean, 
-      isToday: boolean, 
-      isSelected: boolean, 
-      isDisabled: boolean = false
-    ) => {
-      const day = date.getDate();
-      const events = getEventsForDate(date);
-      
-      let classes = ['lyt-calendar-day'];
-      if (!isCurrentMonth) classes.push('lyt-calendar-day-other');
-      if (isToday) classes.push('lyt-calendar-day-today');
-      if (isSelected) classes.push('lyt-calendar-day-selected');
-      if (isDisabled) classes.push('lyt-calendar-day-disabled');
-
-      const eventNodes = events.map((event: CalendarEvent, index: number) => {
-        const color = event.color || '#3b82f6';
-        return createVNode(
-          'div',
-          {
-            class: 'lyt-calendar-event',
-            style: { backgroundColor: color },
-            onClick: (e: Event) => handleEventClick(event, e)
-          },
-          event.title
-        );
-      });
-
-      return createVNode(
-        'div',
-        {
-          class: classes.join(' '),
-          onClick: () => selectDate(date)
-        },
-        [
-          createVNode('div', { class: 'lyt-calendar-day-number' }, day),
-          ...eventNodes
-        ]
-      );
-    };
-
-    // 渲染周视图
-    const renderWeekView = () => {
+    const renderWeekView = (): VNode => {
       return createVNode(
         'div',
         { class: 'lyt-calendar-week-view' },
-        '周视图（开发中）'
+        [createVNode('span', {}, '周视图（开发中）')]
       );
     };
 
-    // 渲染日视图
-    const renderDayView = () => {
+    const renderDayView = (): VNode => {
       return createVNode(
         'div',
         { class: 'lyt-calendar-day-view' },
-        '日视图（开发中）'
+        [createVNode('span', {}, '日视图（开发中）')]
       );
-    };
-
-    // 生成类名
-    const getCalendarClass = () => {
-      const classes = ['lyt-calendar', `lyt-calendar-${currentView.value}`];
-      if (props.class) classes.push(props.class);
-      return classes.join(' ');
     };
 
     return () => {
-      const current = currentDate.value;
-      const headerChildren = [
-        createVNode('button', { class: 'lyt-calendar-nav-btn', onClick: prevMonth }, '‹'),
-        createVNode('button', { class: 'lyt-calendar-today-btn', onClick: goToToday }, '今天'),
-        createVNode('div', { class: 'lyt-calendar-title' }, 
-          `${current.getFullYear()}年 ${props.monthNames[current.getMonth()]}`
-        ),
-        createVNode('button', { class: 'lyt-calendar-nav-btn', onClick: nextMonth }, '›')
+      const current = currentDate();
+      const headerChildren: VNode[] = [
+        createVNode('button', { class: 'lyt-calendar-nav-btn', onClick: prevMonth }, [createVNode('span', {}, '‹')]),
+        createVNode('button', { class: 'lyt-calendar-today-btn', onClick: goToToday }, [createVNode('span', {}, '今天')]),
+        createVNode('div', { class: 'lyt-calendar-title' }, [createVNode('span', {}, `${current.getFullYear()}年 ${(p.monthNames as string[])[current.getMonth()]}`)]),
+        createVNode('button', { class: 'lyt-calendar-nav-btn', onClick: nextMonth }, [createVNode('span', {}, '›')]),
       ];
 
-      const weekHeaderChildren = props.weekNames.map((name: string) => 
-        createVNode('div', { class: 'lyt-calendar-weekday' }, name)
+      const weekHeaderChildren: VNode[] = (p.weekNames as string[]).map((name: string) =>
+        createVNode('div', { class: 'lyt-calendar-weekday' }, [createVNode('span', {}, name)])
       );
 
-      let viewContent;
-      switch (currentView.value) {
+      let viewContent: VNode;
+      switch (currentView()) {
         case 'week':
           viewContent = renderWeekView();
           break;
@@ -281,11 +243,17 @@ export const Calendar = defineComponent({
 
       return createVNode(
         'div',
-        { class: getCalendarClass() },
+        {
+          class: [
+            'lyt-calendar',
+            `lyt-calendar-${currentView()}`,
+            p.class as string,
+          ].filter(Boolean).join(' '),
+        },
         [
           createVNode('div', { class: 'lyt-calendar-header' }, headerChildren),
           createVNode('div', { class: 'lyt-calendar-weekdays' }, weekHeaderChildren),
-          viewContent
+          viewContent,
         ]
       );
     };
@@ -294,3 +262,4 @@ export const Calendar = defineComponent({
 
 export default Calendar;
 export type { CalendarEvent };
+export type { CalendarProps, CalendarSlots, CalendarSetupProps } from './types';

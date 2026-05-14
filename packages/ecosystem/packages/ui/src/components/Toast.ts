@@ -4,11 +4,11 @@
  * 轻提示组件，用于显示简短的消息提示
  */
 
-import type { ToastProps, ToastSlots } from './types';
+import type { ToastProps, ToastSlots, ToastSetupProps } from './types';
 import { defineComponent } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import { isString, isObject } from '@lytjs/common-is';
-import { reactive, onMounted, onUnmounted } from '@lytjs/reactivity';
+import { reactive } from '@lytjs/reactivity';
 
 /**
  * Toast 组件
@@ -28,17 +28,18 @@ export const Toast = defineComponent({
     onClose: { type: Function, default: undefined },
   },
 
-  setup(props: any, { slots, emit }: any) {
+  setup(props: Record<string, unknown>, { slots, emit }) {
+    const _props = props as ToastSetupProps;
     const state = reactive({
       visible: true,
       timer: null as any,
     });
 
     const startTimer = () => {
-      if (props.duration > 0) {
+      if (_props.duration > 0) {
         state.timer = setTimeout(() => {
           close();
-        }, props.duration);
+        }, _props.duration);
       }
     };
 
@@ -52,7 +53,7 @@ export const Toast = defineComponent({
     const close = () => {
       state.visible = false;
       emit('close');
-      props.onClose?.();
+      _props.onClose?.();
     };
 
     const handleClose = (e: Event) => {
@@ -62,66 +63,67 @@ export const Toast = defineComponent({
 
     const getToastClass = () => {
       const classes = ['lyt-toast'];
-      classes.push(`lyt-toast--${props.type}`);
-      classes.push(`lyt-toast--${props.position}`);
-      if (props.class) classes.push(props.class);
+      classes.push(`lyt-toast--${_props.type}`);
+      classes.push(`lyt-toast--${_props.position}`);
+      if (_props.class) classes.push(_props.class);
       return classes.join(' ');
     };
 
     const getToastStyle = () => {
       const style: Record<string, string> = {};
-      if (props.style) {
-        if (isString(props.style)) {
-          return props.style;
+      if (_props.style) {
+        if (isString(_props.style)) {
+          return _props.style;
         }
-        if (isObject(props.style)) {
-          Object.assign(style, props.style);
+        if (isObject(_props.style)) {
+          Object.assign(style, _props.style);
         }
       }
       return style;
     };
 
-    onMounted(() => {
-      startTimer();
-    });
-
-    onUnmounted(() => {
-      clearTimer();
-    });
+    // 启动定时器
+    startTimer();
 
     return () => {
-      if (!state.visible) return null;
+      if (!state.visible) return createVNode('div', { style: 'display: none;' }, []);
 
       const children: VNode[] = [];
       
       // 图标
-      if (props.icon) {
+      if (_props.icon) {
         children.push(createVNode('span', {
           class: 'lyt-toast__icon',
-        }, [props.icon]));
+        }, [createVNode('span', {}, _props.icon)]));
       } else if (slots.icon) {
-        children.push(createVNode('span', {
-          class: 'lyt-toast__icon',
-        }, slots.icon()));
+        const slotIcon = slots.icon();
+        if (Array.isArray(slotIcon)) {
+          children.push(createVNode('span', {
+            class: 'lyt-toast__icon',
+          }, slotIcon as VNode[]));
+        }
       }
 
       // 消息内容
-      if (props.message) {
+      if (_props.message) {
         children.push(createVNode('span', {
           class: 'lyt-toast__message',
-        }, [props.message]));
+        }, [createVNode('span', {}, _props.message)]));
       } else if (slots.default) {
-        children.push(createVNode('span', {
-          class: 'lyt-toast__message',
-        }, slots.default()));
+        const slotContent = slots.default();
+        if (Array.isArray(slotContent)) {
+          children.push(createVNode('span', {
+            class: 'lyt-toast__message',
+          }, slotContent as VNode[]));
+        }
       }
 
       // 关闭按钮
-      if (props.closable) {
+      if (_props.closable) {
         children.push(createVNode('span', {
           class: 'lyt-toast__close',
           onClick: handleClose,
-        }, ['&times;']));
+        }, [createVNode('span', {}, '&times;')]));
       }
 
       return createVNode('div', {

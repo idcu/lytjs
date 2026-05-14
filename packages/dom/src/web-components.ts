@@ -470,7 +470,7 @@ export function defineLytJSWebComponent(
   ];
 
   if (propMapping) {
-    for (const [wcAttr, componentProp] of Object.entries(propMapping)) {
+    for (const [_wcAttr, componentProp] of Object.entries(propMapping)) {
       // 避免重复定义
       if (!mergedProperties.some((p) => p.name === componentProp)) {
         mergedProperties.push({

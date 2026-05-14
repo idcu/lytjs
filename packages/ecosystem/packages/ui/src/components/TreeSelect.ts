@@ -7,39 +7,13 @@
 import { defineComponent } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import { signal } from '@lytjs/reactivity';
-
-export interface TreeSelectNode {
-  value: string | number;
-  label: string;
-  children?: TreeSelectNode[];
-  disabled?: boolean;
-  isLeaf?: boolean;
-}
-
-export interface TreeSelectSetupProps {
-  modelValue: string | number | (string | number)[];
-  options: TreeSelectNode[];
-  placeholder: string;
-  disabled: boolean;
-  clearable: boolean;
-  multiple: boolean;
-  checkStrictly: boolean;
-  filterable: boolean;
-  showCheckbox: boolean;
-  class: string;
-  onChange: ((value: string | number | (string | number)[]) => void) | undefined;
-  onClear: (() => void) | undefined;
-}
-
-export interface TreeSelectSlots {
-  default?: (node: TreeSelectNode) => VNode[];
-}
+import type { TreeSelectNode, TreeSelectSetupProps, TreeSelectSlots } from './types';
 
 export const TreeSelect = defineComponent({
   name: 'LytTreeSelect',
 
   props: {
-    modelValue: { type: [String, Number, Array], default: '' },
+    modelValue: { type: [String, Number, Array] as unknown as StringConstructor, default: '' },
     options: { type: Array, default: (): TreeSelectNode[] => [] },
     placeholder: { type: String, default: '请选择' },
     disabled: { type: Boolean, default: false },
@@ -53,20 +27,21 @@ export const TreeSelect = defineComponent({
     onClear: { type: Function, default: undefined },
   },
 
-  setup(props: TreeSelectSetupProps, { slots }: { slots: TreeSelectSlots }) {
+  setup(props: Record<string, unknown>, { slots }: { slots: TreeSelectSlots }) {
+    const p = props as TreeSelectSetupProps;
     const isOpen = signal(false);
     const selectedValues = signal<Set<string | number>>(new Set());
     const searchText = signal('');
 
     const toggleDropdown = () => {
-      if (props.disabled) return;
+      if (p.disabled) return;
       isOpen.set(!isOpen());
     };
 
     const handleSelect = (node: TreeSelectNode) => {
       if (node.disabled) return;
 
-      if (props.multiple) {
+      if (p.multiple) {
         const newSelected = new Set(selectedValues());
         if (newSelected.has(node.value)) {
           newSelected.delete(node.value);
@@ -74,19 +49,19 @@ export const TreeSelect = defineComponent({
           newSelected.add(node.value);
         }
         selectedValues.set(newSelected);
-        props.onChange?.(Array.from(newSelected));
+        p.onChange?.(Array.from(newSelected));
       } else {
         selectedValues.set(new Set([node.value]));
         isOpen.set(false);
-        props.onChange?.(node.value);
+        p.onChange?.(node.value);
       }
     };
 
     const handleClear = (e: Event) => {
       e.stopPropagation();
       selectedValues.set(new Set());
-      props.onClear?.();
-      props.onChange?.(props.multiple ? [] : '');
+      p.onClear?.();
+      p.onChange?.(p.multiple ? [] : '');
     };
 
     const flattenTree = (nodes: TreeSelectNode[], result: TreeSelectNode[] = []): TreeSelectNode[] => {
@@ -100,14 +75,14 @@ export const TreeSelect = defineComponent({
     };
 
     const getSelectedLabels = (): string => {
-      const allNodes = flattenTree(props.options);
+      const allNodes = flattenTree(p.options);
       const selected = Array.from(selectedValues());
       const labels = selected.map(v => {
         const node = allNodes.find(n => n.value === v);
         return node?.label || '';
       }).filter(Boolean);
-      
-      if (!props.multiple) {
+
+      if (!p.multiple) {
         return labels[0] || '';
       }
       return labels.length > 0 ? `${labels.length} 项` : '';
@@ -116,7 +91,7 @@ export const TreeSelect = defineComponent({
     const filterOptions = (nodes: TreeSelectNode[], keyword: string): TreeSelectNode[] => {
       if (!keyword) return nodes;
       const result: TreeSelectNode[] = [];
-      
+
       for (const node of nodes) {
         if (node.label.includes(keyword)) {
           result.push(node);
@@ -127,13 +102,33 @@ export const TreeSelect = defineComponent({
           }
         }
       }
-      
+
       return result;
     };
 
     const renderNode = (node: TreeSelectNode, level: number = 0): VNode => {
       const isSelected = selectedValues().has(node.value);
       const indent = level * 20;
+
+      const nodeChildren: VNode[] = [];
+
+      if (node.children && node.children.length > 0) {
+        nodeChildren.push(createVNode('span', { class: 'lyt-tree-select__arrow' }, [createVNode('span', {}, '▶')]));
+      }
+
+      if (p.showCheckbox) {
+        nodeChildren.push(createVNode('input', {
+          type: 'checkbox',
+          checked: isSelected,
+          disabled: node.disabled,
+        }));
+      }
+
+      if (slots.default) {
+        nodeChildren.push(...slots.default(node));
+      } else {
+        nodeChildren.push(createVNode('span', {}, String(node.label)));
+      }
 
       return createVNode('div', {
         key: String(node.value),
@@ -144,62 +139,70 @@ export const TreeSelect = defineComponent({
         ].filter(Boolean).join(' '),
         style: `padding-left: ${indent}px`,
         onClick: () => handleSelect(node),
-      }, [
-        node.children && node.children.length > 0 && createVNode('span', { class: 'lyt-tree-select__arrow' }, ['▶']),
-        props.showCheckbox && createVNode('input', {
-          type: 'checkbox',
-          checked: isSelected,
-          disabled: node.disabled,
-        }),
-        slots.default ? slots.default(node) : node.label,
-      ]);
+      }, nodeChildren);
     };
 
     return () => {
       const selectClass = [
         'lyt-tree-select',
         isOpen() ? 'lyt-tree-select--open' : '',
-        props.disabled ? 'lyt-tree-select--disabled' : '',
-        props.class,
+        p.disabled ? 'lyt-tree-select--disabled' : '',
+        p.class,
       ].filter(Boolean).join(' ');
 
       const selectedLabel = getSelectedLabels();
-      const displayValue = selectedLabel || props.placeholder;
+      const displayValue = selectedLabel || p.placeholder;
 
-      const filteredOptions = searchText() ? filterOptions(props.options, searchText()) : props.options;
+      const filteredOptions = searchText() ? filterOptions(p.options, searchText()) : p.options;
 
-      return createVNode('div', { class: selectClass }, [
+      const triggerChildren: VNode[] = [
+        createVNode('span', {
+          class: ['lyt-tree-select__value', !selectedLabel ? 'lyt-tree-select__placeholder' : ''].filter(Boolean).join(' '),
+        }, [createVNode('span', {}, String(displayValue))]),
+      ];
+
+      if (p.clearable && selectedValues().size > 0) {
+        triggerChildren.push(createVNode('span', {
+          class: 'lyt-tree-select__clear',
+          onClick: handleClear,
+        }, [createVNode('span', {}, '×')]));
+      }
+
+      triggerChildren.push(createVNode('span', { class: 'lyt-tree-select__arrow' }, [createVNode('span', {}, '▼')]));
+
+      const dropdownChildren: VNode[] = [];
+
+      if (p.filterable) {
+        dropdownChildren.push(createVNode('div', { class: 'lyt-tree-select__search' }, [
+          createVNode('input', {
+            type: 'text',
+            placeholder: '搜索',
+            value: searchText(),
+            onInput: (e: Event) => searchText.set((e.target as HTMLInputElement).value),
+          }),
+        ]));
+      }
+
+      if (filteredOptions.length === 0) {
+        dropdownChildren.push(createVNode('div', { class: 'lyt-tree-select__empty' }, [createVNode('span', {}, '无匹配选项')]));
+      } else {
+        dropdownChildren.push(...filteredOptions.map(node => renderNode(node)));
+      }
+
+      const resultChildren: VNode[] = [
         createVNode('div', {
           class: 'lyt-tree-select__trigger',
           onClick: toggleDropdown,
-        }, [
-          createVNode('span', {
-            class: ['lyt-tree-select__value', !selectedLabel ? 'lyt-tree-select__placeholder' : ''].filter(Boolean).join(' '),
-          }, [displayValue]),
-          props.clearable && selectedValues().size > 0 && createVNode('span', {
-            class: 'lyt-tree-select__clear',
-            onClick: handleClear,
-          }, ['×']),
-          createVNode('span', { class: 'lyt-tree-select__arrow' }, ['▼']),
-        ]),
-        isOpen() && createVNode('div', { class: 'lyt-tree-select__dropdown' }, [
-          props.filterable && createVNode('div', { class: 'lyt-tree-select__search' }, [
-            createVNode('input', {
-              type: 'text',
-              placeholder: '搜索',
-              value: searchText(),
-              onInput: (e: Event) => searchText.set((e.target as HTMLInputElement).value),
-            }),
-          ]),
-          createVNode('div', { class: 'lyt-tree-select__tree' }, [
-            filteredOptions.length === 0
-              ? createVNode('div', { class: 'lyt-tree-select__empty' }, ['无匹配选项'])
-              : filteredOptions.map(node => renderNode(node)),
-          ]),
-        ]),
-      ]);
+        }, triggerChildren),
+      ];
+
+      if (isOpen()) {
+        resultChildren.push(createVNode('div', { class: 'lyt-tree-select__dropdown' }, dropdownChildren));
+      }
+
+      return createVNode('div', { class: selectClass }, resultChildren);
     };
   },
 });
 
-export type { TreeSelectProps, TreeSelectSlots, TreeSelectNode } from './types';
+export type { TreeSelectProps, TreeSelectSlots, TreeSelectNode, TreeSelectSetupProps } from './types';

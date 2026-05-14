@@ -4,15 +4,10 @@
  * 徽标组件，用于展示数字或点标记
  */
 
-import type { BadgeProps, BadgeSlots } from './types';
+import type { BadgeSetupProps, BadgeSlots, BadgeProps } from './types';
 import { defineComponent } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
-import { isString, isObject } from '@lytjs/common-is';
-import { reactive } from '@lytjs/reactivity';
 
-/**
- * Badge 组件
- */
 export const Badge = defineComponent({
   name: 'LytBadge',
 
@@ -27,74 +22,56 @@ export const Badge = defineComponent({
     style: { type: String, default: '' },
   },
 
-  setup(props: any, { slots }: any) {
-    const state = reactive({
-      visible: true,
-    });
+  setup(props: Record<string, unknown>, { slots }: { slots: BadgeSlots }) {
+    const p = props as BadgeSetupProps;
 
-    const displayCount = () => {
-      if (props.dot) return '';
-      if (props.count > props.maxCount) return `${props.maxCount}+`;
-      return String(props.count);
+    const displayCount = (): string => {
+      if (p.dot) return '';
+      if (p.count > p.maxCount) return `${p.maxCount}+`;
+      return String(p.count);
     };
 
-    const showBadge = () => {
-      if (props.dot) return true;
-      if (props.count === 0) return props.showZero;
+    const showBadge = (): boolean => {
+      if (p.dot) return true;
+      if (p.count === 0) return p.showZero;
       return true;
     };
 
-    const getBadgeClass = () => {
-      const classes = ['lyt-badge'];
-      if (props.class) classes.push(props.class);
-      return classes.join(' ');
-    };
-
-    const getCountClass = () => {
-      const classes = ['lyt-badge__count'];
-      classes.push(`lyt-badge__count--${props.type}`);
-      if (props.dot) classes.push('lyt-badge__count--dot');
-      return classes.join(' ');
-    };
-
-    const getCountStyle = () => {
+    const getCountStyle = (): Record<string, string> => {
       const style: Record<string, string> = {};
-      if (props.offset) {
-        style.top = `${props.offset[0]}px`;
-        style.right = `${props.offset[1]}px`;
-      }
-      if (props.style) {
-        if (isString(props.style)) {
-          return props.style;
-        }
-        if (isObject(props.style)) {
-          Object.assign(style, props.style);
-        }
+      if (p.offset) {
+        style.top = `${p.offset[0]}px`;
+        style.right = `${p.offset[1]}px`;
       }
       return style;
     };
 
     return () => {
       const children: VNode[] = [];
-      
-      // 内容插槽
+
       if (slots.default) {
         children.push(...slots.default());
       }
 
-      // 徽章计数
       if (showBadge()) {
         children.push(createVNode('sup', {
-          class: getCountClass(),
+          class: [
+            'lyt-badge__count',
+            `lyt-badge__count--${p.type}`,
+            p.dot ? 'lyt-badge__count--dot' : '',
+          ].filter(Boolean).join(' '),
           style: getCountStyle(),
-        }, [props.dot ? '' : displayCount()]));
+        }, [createVNode('span', {}, p.dot ? '' : displayCount())]));
       }
 
       return createVNode('span', {
-        class: getBadgeClass(),
+        class: [
+          'lyt-badge',
+          p.class as string,
+        ].filter(Boolean).join(' '),
       }, children);
     };
   },
 });
 
-export type { BadgeProps, BadgeSlots };
+export type { BadgeProps, BadgeSlots, BadgeSetupProps };

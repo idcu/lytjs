@@ -7,41 +7,7 @@
 import { defineComponent } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import { signal } from '@lytjs/reactivity';
-
-export interface UploadFile {
-  name: string;
-  size: number;
-  status: 'pending' | 'uploading' | 'success' | 'error';
-  percentage?: number;
-  url?: string;
-  uid: number;
-  raw?: File;
-}
-
-export interface UploadSetupProps {
-  action: string;
-  headers: Record<string, string>;
-  data: Record<string, unknown>;
-  multiple: boolean;
-  accept: string;
-  autoUpload: boolean;
-  disabled: boolean;
-  limit: number;
-  class: string;
-  onChange: ((files: UploadFile[]) => void) | undefined;
-  onSuccess: ((response: unknown, file: UploadFile) => void) | undefined;
-  onError: ((error: Error, file: UploadFile) => void) | undefined;
-  onProgress: ((percentage: number, file: UploadFile) => void) | undefined;
-  onRemove: ((file: UploadFile) => void) | undefined;
-  beforeUpload: ((file: File) => boolean | Promise<boolean>) | undefined;
-}
-
-export interface UploadSlots {
-  default?: () => VNode[];
-  trigger?: () => VNode[];
-  tip?: () => VNode[];
-  file?: (file: UploadFile) => VNode[];
-}
+import type { UploadFile, UploadSetupProps, UploadSlots } from './types';
 
 export const Upload = defineComponent({
   name: 'LytUpload',
@@ -64,7 +30,8 @@ export const Upload = defineComponent({
     beforeUpload: { type: Function, default: undefined },
   },
 
-  setup(props: UploadSetupProps, { slots }: { slots: UploadSlots }) {
+  setup(props: Record<string, unknown>, { slots }: { slots: UploadSlots }) {
+    const p = props as UploadSetupProps;
     const files = signal<UploadFile[]>([]);
     const dragOver = signal(false);
     const inputRef = { current: null as HTMLInputElement | null };
@@ -78,23 +45,24 @@ export const Upload = defineComponent({
       if (!fileList) return;
 
       for (let i = 0; i < fileList.length; i++) {
-        await uploadFile(fileList[i]);
+        const file = fileList[i];
+        if (file) await uploadFile(file);
       }
 
       input.value = '';
     };
 
     const uploadFile = async (file: File) => {
-      if (props.limit > 0 && files().length >= props.limit) {
+      if (p.limit > 0 && files().length >= p.limit) {
         return;
       }
 
-      if (props.beforeUpload) {
-        const result = await props.beforeUpload(file);
+      if (p.beforeUpload) {
+        const result = await p.beforeUpload(file);
         if (result === false) return;
       }
 
-      const uploadFile: UploadFile = {
+      const newFile: UploadFile = {
         name: file.name,
         size: file.size,
         status: 'pending',
@@ -102,11 +70,11 @@ export const Upload = defineComponent({
         raw: file,
       };
 
-      files.set([...files(), uploadFile]);
-      props.onChange?.(files());
+      files.set([...files(), newFile]);
+      p.onChange?.(files());
 
-      if (props.autoUpload && props.action) {
-        await uploadToServer(uploadFile);
+      if (p.autoUpload && p.action) {
+        await uploadToServer(newFile);
       }
     };
 
@@ -114,23 +82,23 @@ export const Upload = defineComponent({
       file.status = 'uploading';
       file.percentage = 0;
       files.set([...files()]);
-      props.onChange?.(files());
+      p.onChange?.(files());
 
       try {
         const formData = new FormData();
         formData.append('file', file.raw!);
-        
-        for (const [key, value] of Object.entries(props.data)) {
+
+        for (const [key, value] of Object.entries(p.data)) {
           formData.append(key, String(value));
         }
 
         const xhr = new XMLHttpRequest();
-        
+
         xhr.upload.onprogress = (e) => {
           if (e.lengthComputable) {
             file.percentage = Math.round((e.loaded / e.total) * 100);
             files.set([...files()]);
-            props.onProgress?.(file.percentage, file);
+            p.onProgress?.(file.percentage!, file);
           }
         };
 
@@ -139,24 +107,24 @@ export const Upload = defineComponent({
             file.status = 'success';
             file.percentage = 100;
             file.url = JSON.parse(xhr.responseText).url;
-            props.onSuccess?.(JSON.parse(xhr.responseText), file);
+            p.onSuccess?.(JSON.parse(xhr.responseText), file);
           } else {
             file.status = 'error';
-            props.onError?.(new Error('Upload failed'), file);
+            p.onError?.(new Error('Upload failed'), file);
           }
           files.set([...files()]);
-          props.onChange?.(files());
+          p.onChange?.(files());
         };
 
         xhr.onerror = () => {
           file.status = 'error';
           files.set([...files()]);
-          props.onError?.(new Error('Network error'), file);
-          props.onChange?.(files());
+          p.onError?.(new Error('Network error'), file);
+          p.onChange?.(files());
         };
 
-        xhr.open('POST', props.action);
-        for (const [key, value] of Object.entries(props.headers)) {
+        xhr.open('POST', p.action);
+        for (const [key, value] of Object.entries(p.headers)) {
           xhr.setRequestHeader(key, value);
         }
         xhr.send(formData);
@@ -164,16 +132,16 @@ export const Upload = defineComponent({
       } catch (error) {
         file.status = 'error';
         files.set([...files()]);
-        props.onError?.(error as Error, file);
-        props.onChange?.(files());
+        p.onError?.(error as Error, file);
+        p.onChange?.(files());
       }
     };
 
     const handleRemove = (file: UploadFile) => {
       const newFiles = files().filter(f => f.uid !== file.uid);
       files.set(newFiles);
-      props.onRemove?.(file);
-      props.onChange?.(files());
+      p.onRemove?.(file);
+      p.onChange?.(files());
     };
 
     const handleDragOver = (e: DragEvent) => {
@@ -188,81 +156,109 @@ export const Upload = defineComponent({
     const handleDrop = async (e: DragEvent) => {
       e.preventDefault();
       dragOver.set(false);
-      
+
       const fileList = e.dataTransfer?.files;
       if (!fileList) return;
 
       for (let i = 0; i < fileList.length; i++) {
-        await uploadFile(fileList[i]);
+        const file = fileList[i];
+        if (file) await uploadFile(file);
       }
     };
 
     const handleClick = () => {
-      if (props.disabled) return;
+      if (p.disabled) return;
       inputRef.current?.click();
     };
 
     const renderFile = (file: UploadFile): VNode => {
       const statusClass = `lyt-upload__file--${file.status}`;
-      
-      return createVNode('div', { class: `lyt-upload__file ${statusClass}`, key: file.uid }, [
-        slots.file
-          ? slots.file(file)
-          : createVNode('span', { class: 'lyt-upload__file-name' }, [file.name]),
-        file.status === 'uploading' && createVNode('div', { class: 'lyt-upload__progress' }, [
+      const fileChildren: VNode[] = [];
+
+      if (slots.file) {
+        fileChildren.push(...slots.file(file));
+      } else {
+        fileChildren.push(createVNode('span', { class: 'lyt-upload__file-name' }, [createVNode('span', {}, String(file.name))]));
+      }
+
+      if (file.status === 'uploading') {
+        fileChildren.push(createVNode('div', { class: 'lyt-upload__progress' }, [
           createVNode('div', {
             class: 'lyt-upload__progress-bar',
             style: `width: ${file.percentage || 0}%`,
-          }),
-          createVNode('span', { class: 'lyt-upload__percentage' }, [`${file.percentage || 0}%`]),
-        ]),
-        createVNode('span', {
-          class: 'lyt-upload__remove',
-          onClick: () => handleRemove(file),
-        }, ['×']),
-      ]);
+          }, []),
+          createVNode('span', { class: 'lyt-upload__percentage' }, [createVNode('span', {}, `${file.percentage || 0}%`)]),
+        ]));
+      }
+
+      fileChildren.push(createVNode('span', {
+        class: 'lyt-upload__remove',
+        onClick: () => handleRemove(file),
+      }, [createVNode('span', {}, '×')]));
+
+      return createVNode('div', { class: `lyt-upload__file ${statusClass}`, key: file.uid }, fileChildren);
     };
 
     return () => {
       const uploadClass = [
         'lyt-upload',
-        props.disabled ? 'lyt-upload--disabled' : '',
+        p.disabled ? 'lyt-upload--disabled' : '',
         dragOver() ? 'lyt-upload--dragover' : '',
-        props.class,
+        p.class,
       ].filter(Boolean).join(' ');
 
-      return createVNode('div', { class: uploadClass }, [
+      const triggerContent: VNode[] = [];
+
+      if (slots.trigger) {
+        triggerContent.push(...slots.trigger());
+      } else if (slots.default) {
+        triggerContent.push(...slots.default());
+      } else {
+        triggerContent.push(createVNode('div', { class: 'lyt-upload__content' }, [
+          createVNode('span', { class: 'lyt-upload__icon' }, [createVNode('span', {}, '📤')]),
+          createVNode('span', { class: 'lyt-upload__text' }, [createVNode('span', {}, '点击上传或拖拽文件')]),
+        ]));
+      }
+
+      const tipContent: VNode[] = [];
+      if (slots.tip) {
+        tipContent.push(...slots.tip());
+      }
+
+      const fileListContent: VNode[] = [];
+      if (files().length > 0) {
+        fileListContent.push(...files().map(file => renderFile(file)));
+      }
+
+      const children: VNode[] = [
         createVNode('input', {
           ref: inputRef,
           type: 'file',
           class: 'lyt-upload__input',
-          accept: props.accept,
-          multiple: props.multiple,
+          accept: p.accept,
+          multiple: p.multiple,
           onChange: handleFileChange,
-        }),
+        }, []),
         createVNode('div', {
           class: 'lyt-upload__trigger',
           onClick: handleClick,
           onDragOver: handleDragOver,
           onDragLeave: handleDragLeave,
           onDrop: handleDrop,
-        }, [
-          slots.trigger
-            ? slots.trigger()
-            : slots.default
-              ? slots.default()
-              : createVNode('div', { class: 'lyt-upload__content' }, [
-                  createVNode('span', { class: 'lyt-upload__icon' }, ['📤']),
-                  createVNode('span', { class: 'lyt-upload__text' }, ['点击上传或拖拽文件']),
-                ]),
-        ]),
-        slots.tip && createVNode('div', { class: 'lyt-upload__tip' }, [slots.tip()]),
-        files().length > 0 && createVNode('div', { class: 'lyt-upload__list' }, [
-          files().map(file => renderFile(file)),
-        ]),
-      ]);
+        }, triggerContent),
+      ];
+
+      if (tipContent.length > 0) {
+        children.push(createVNode('div', { class: 'lyt-upload__tip' }, tipContent));
+      }
+
+      if (fileListContent.length > 0) {
+        children.push(createVNode('div', { class: 'lyt-upload__list' }, fileListContent));
+      }
+
+      return createVNode('div', { class: uploadClass }, children);
     };
   },
 });
 
-export type { UploadProps, UploadSlots, UploadFile } from './types';
+export type { UploadProps, UploadSlots, UploadFile, UploadSetupProps } from './types';

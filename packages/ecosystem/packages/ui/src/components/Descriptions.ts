@@ -5,22 +5,17 @@
  */
 
 import { defineComponent } from '@lytjs/component';
-import { createVNode } from '@lytjs/vdom';
+import { createVNode, type VNode } from '@lytjs/vdom';
+import type { DescriptionsSetupProps, DescriptionsSlots, DescriptionsItemSetupProps, DescriptionsItemSlots } from './types';
 
-/**
- * Descriptions 项数据结构
- */
 interface DescriptionsItemData {
   label: string;
   value: string;
   span?: number;
-  labelStyle?: any;
-  contentStyle?: any;
+  labelStyle?: Record<string, string>;
+  contentStyle?: Record<string, string>;
 }
 
-/**
- * Descriptions 组件
- */
 export const Descriptions = defineComponent({
   name: 'LytDescriptions',
 
@@ -33,103 +28,53 @@ export const Descriptions = defineComponent({
     class: { type: String, default: '' },
   },
 
-  setup(props: any, { slots }: any) {
-    // 生成类名
-    const getDescriptionsClass = () => {
-      const classes = ['lyt-descriptions'];
-      if (props.border) classes.push('lyt-descriptions--bordered');
-      if (props.size !== 'medium') classes.push(`lyt-descriptions--${props.size}`);
-      if (props.class) classes.push(props.class);
-      return classes.join(' ');
-    };
-
-    // 渲染表头
-    const renderHeader = () => {
-      if (!props.title && !slots.title) return null;
-      return createVNode(
-        'div',
-        { class: 'lyt-descriptions__header' },
-        slots.title ? slots.title() : props.title
-      );
-    };
-
-    // 渲染项目
-    const renderItem = (item: any, index: number) => {
-      const label = item.label || (slots[`label-${index}`] ? slots[`label-${index}`]() : '');
-      const content = slots[`content-${index}`] ? slots[`content-${index}`]() : item.value;
-      
-      return createVNode(
-        'div',
-        { 
-          class: `lyt-descriptions__item ${props.border ? 'lyt-descriptions__item--bordered' : ''}`,
-          style: { gridColumn: `span ${item.span || 1}` },
-        },
-        [
-          createVNode(
-            'div',
-            { 
-              class: `lyt-descriptions__label ${props.border ? 'lyt-descriptions__label--bordered' : ''}`,
-              style: item.labelStyle,
-            },
-            label
-          ),
-          createVNode(
-            'div',
-            { 
-              class: `lyt-descriptions__content ${props.border ? 'lyt-descriptions__content--bordered' : ''}`,
-              style: item.contentStyle,
-            },
-            content
-          ),
-        ]
-      );
-    };
-
-    // 渲染主体
-    const renderBody = () => {
-      const items: any[] = [];
-      
-      // 收集子项
-      if (slots.default) {
-        // 如果有插槽，使用插槽内容
-        const defaultContent = slots.default();
-        if (Array.isArray(defaultContent)) {
-          items.push(...defaultContent);
-        } else {
-          items.push(defaultContent);
-        }
-      }
-
-      return createVNode(
-        'div',
-        { 
-          class: `lyt-descriptions__body ${props.layout === 'vertical' ? 'lyt-descriptions__body--vertical' : ''}`,
-          style: { 
-            display: 'grid',
-            gridTemplateColumns: `repeat(${props.column}, 1fr)`,
-            gap: props.border ? '0' : '16px 24px',
-          },
-        },
-        items
-      );
-    };
+  setup(props: Record<string, unknown>, { slots }: { slots: DescriptionsSlots }) {
+    const p = props as DescriptionsSetupProps;
 
     return () => {
-      return createVNode(
+      const resultChildren: VNode[] = [];
+
+      if (p.title || slots.title) {
+        const titleContent: VNode[] = [];
+        if (slots.title) {
+          titleContent.push(...slots.title());
+        } else {
+          titleContent.push(createVNode('span', {}, String(p.title)));
+        }
+        resultChildren.push(createVNode('div', { class: 'lyt-descriptions__header' }, titleContent));
+      }
+
+      const bodyChildren: VNode[] = [];
+
+      if (slots.default) {
+        bodyChildren.push(...slots.default());
+      }
+
+      resultChildren.push(createVNode(
         'div',
-        { class: getDescriptionsClass() },
-        [
-          renderHeader(),
-          renderBody(),
-        ]
-      );
+        {
+          class: `lyt-descriptions__body ${p.layout === 'vertical' ? 'lyt-descriptions__body--vertical' : ''}`,
+          style: {
+            display: 'grid',
+            gridTemplateColumns: `repeat(${p.column}, 1fr)`,
+            gap: p.border ? '0' : '16px 24px',
+          },
+        },
+        bodyChildren
+      ));
+
+      return createVNode('div', {
+        class: [
+          'lyt-descriptions',
+          p.border ? 'lyt-descriptions--bordered' : '',
+          p.size !== 'medium' ? `lyt-descriptions--${p.size}` : '',
+          p.class,
+        ].filter(Boolean).join(' '),
+      }, resultChildren);
     };
   },
 });
 
-/**
- * DescriptionsItem 组件
- */
 export const DescriptionsItem = defineComponent({
   name: 'LytDescriptionsItem',
 
@@ -140,33 +85,44 @@ export const DescriptionsItem = defineComponent({
     contentStyle: { type: Object, default: undefined },
   },
 
-  setup(props: any, { slots }: any) {
-    const label = props.label || (slots.label ? slots.label() : '');
-    const content = slots.default ? slots.default() : '';
+  setup(props: Record<string, unknown>, { slots }: { slots: DescriptionsItemSlots }) {
+    const p = props as DescriptionsItemSetupProps;
 
     return () => {
+      const labelContent: VNode[] = [];
+      if (slots.label) {
+        labelContent.push(...slots.label());
+      } else if (p.label) {
+        labelContent.push(createVNode('span', {}, String(p.label)));
+      }
+
+      const contentContent: VNode[] = [];
+      if (slots.default) {
+        contentContent.push(...slots.default());
+      }
+
       return createVNode(
         'div',
-        { 
+        {
           class: 'lyt-descriptions-item',
-          style: { gridColumn: `span ${props.span}` },
+          style: { gridColumn: `span ${p.span}` },
         },
         [
           createVNode(
             'div',
-            { 
+            {
               class: 'lyt-descriptions-item__label',
-              style: props.labelStyle,
+              style: p.labelStyle,
             },
-            label
+            labelContent.length > 0 ? labelContent : [createVNode('span', {}, '')]
           ),
           createVNode(
             'div',
-            { 
+            {
               class: 'lyt-descriptions-item__content',
-              style: props.contentStyle,
+              style: p.contentStyle,
             },
-            content
+            contentContent.length > 0 ? contentContent : [createVNode('span', {}, '')]
           ),
         ]
       );
@@ -176,3 +132,4 @@ export const DescriptionsItem = defineComponent({
 
 export default Descriptions;
 export type { DescriptionsItemData };
+export type { DescriptionsProps, DescriptionsSlots, DescriptionsSetupProps, DescriptionsItemProps, DescriptionsItemSlots, DescriptionsItemSetupProps } from './types';

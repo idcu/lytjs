@@ -5,39 +5,15 @@
  */
 
 import { defineComponent } from '@lytjs/component';
-import { createVNode, type VNode } from '@lytjs/vdom';
+import { createVNode } from '@lytjs/vdom';
 import { isString, isObject } from '@lytjs/common-is';
-import type { ComponentSize } from './types';
-
-export interface InputSetupProps {
-  modelValue: string | number;
-  type: string;
-  placeholder: string;
-  disabled: boolean;
-  readonly: boolean;
-  clearable: boolean;
-  showPassword: boolean;
-  maxlength: number;
-  minlength: number;
-  size: ComponentSize;
-  prefixIcon: string;
-  suffixIcon: string;
-  class: string;
-  style: string;
-}
-
-export interface InputSlots {
-  prefix?: () => VNode[];
-  suffix?: () => VNode[];
-  prepend?: () => VNode[];
-  append?: () => VNode[];
-}
+import type { InputSetupProps } from './types';
 
 export const Input = defineComponent({
   name: 'LytInput',
 
   props: {
-    modelValue: { type: [String, Number], default: '' },
+    modelValue: { type: [String, Number] as unknown as StringConstructor, default: '' },
     type: { type: String, default: 'text' },
     placeholder: { type: String, default: '' },
     disabled: { type: Boolean, default: false },
@@ -53,48 +29,23 @@ export const Input = defineComponent({
     style: { type: String, default: '' },
   },
 
-  setup(props: InputSetupProps, { slots }: { slots: InputSlots }) {
-    const inputRef = { current: null as HTMLInputElement | null };
+  setup(props: Record<string, unknown>) {
+    const p = props as InputSetupProps;
     const passwordVisible = { current: false };
-
-    const handleInput = (event: Event) => {
-      const target = event.target as HTMLInputElement;
-      const value = props.type === 'number' ? Number(target.value) : target.value;
-      // 在实际实现中应该 emit('update:modelValue', value)
-    };
-
-    const handleChange = (event: Event) => {
-      const target = event.target as HTMLInputElement;
-      const value = target.value;
-      // 在实际实现中应该 emit('change', value)
-    };
-
-    const handleFocus = (event: FocusEvent) => {
-      // emit('focus', event)
-    };
-
-    const handleBlur = (event: FocusEvent) => {
-      // emit('blur', event)
-    };
-
-    const handleClear = () => {
-      // emit('update:modelValue', '')
-      // emit('clear')
-    };
 
     const getInputClass = () => {
       const classes = ['lyt-input'];
-      if (props.size !== 'medium') classes.push(`lyt-input--${props.size}`);
-      if (props.disabled) classes.push('lyt-input--disabled');
-      if (props.class) classes.push(props.class);
+      if (p.size !== 'medium') classes.push(`lyt-input--${p.size}`);
+      if (p.disabled) classes.push('lyt-input--disabled');
+      if (p.class) classes.push(p.class);
       return classes.join(' ');
     };
 
     const getInputStyle = () => {
-      if (!props.style) return undefined;
-      if (isString(props.style)) return props.style;
-      if (isObject(props.style)) {
-        return Object.entries(props.style)
+      if (!p.style) return undefined;
+      if (isString(p.style)) return p.style;
+      if (isObject(p.style)) {
+        return Object.entries(p.style)
           .map(([key, value]) => `${key}: ${value}`)
           .join('; ');
       }
@@ -102,26 +53,21 @@ export const Input = defineComponent({
     };
 
     return () => {
-      const children: VNode[] = [];
       const inputProps: Record<string, unknown> = {
         class: getInputClass(),
         style: getInputStyle(),
-        type: props.type === 'password' && passwordVisible.current ? 'text' : props.type,
-        value: props.modelValue,
-        placeholder: props.placeholder,
-        disabled: props.disabled,
-        readonly: props.readonly,
-        maxlength: props.maxlength,
-        minlength: props.minlength,
-        onInput: handleInput,
-        onChange: handleChange,
-        onFocus: handleFocus,
-        onBlur: handleBlur,
+        type: p.type === 'password' && passwordVisible.current ? 'text' : p.type,
+        value: p.modelValue,
+        placeholder: p.placeholder,
+        disabled: p.disabled,
+        readonly: p.readonly,
+        maxlength: p.maxlength,
+        minlength: p.minlength,
       };
 
-      return createVNode('input', inputProps, children);
+      return createVNode('input', inputProps, []);
     };
   },
 });
 
-export type { InputProps, InputSlots } from './types';
+export type { InputProps, InputSlots, InputSetupProps } from './types';

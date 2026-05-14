@@ -7,32 +7,7 @@
 import { defineComponent } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import { signal } from '@lytjs/reactivity';
-
-export interface TransferOption {
-  key: string | number;
-  label: string;
-  disabled?: boolean;
-}
-
-export interface TransferSetupProps {
-  data: TransferOption[];
-  modelValue: (string | number)[];
-  filterable: boolean;
-  filterPlaceholder: string;
-  titles: string[];
-  buttonTexts: string[];
-  leftDefaultChecked: (string | number)[];
-  rightDefaultChecked: (string | number)[];
-  class: string;
-  onChange: ((value: (string | number)[], direction: 'left' | 'right', movedKeys: (string | number)[]) => void) | undefined;
-  onLeftCheckChange: ((checked: (string | number)[]) => void) | undefined;
-  onRightCheckChange: ((checked: (string | number)[]) => void) | undefined;
-}
-
-export interface TransferSlots {
-  default?: (option: TransferOption) => VNode[];
-  footer?: () => VNode[];
-}
+import type { TransferOption, TransferSetupProps, TransferSlots } from './types';
 
 export const Transfer = defineComponent({
   name: 'LytTransfer',
@@ -52,25 +27,26 @@ export const Transfer = defineComponent({
     onRightCheckChange: { type: Function, default: undefined },
   },
 
-  setup(props: TransferSetupProps, { slots }: { slots: TransferSlots; emit: (event: string, ...args: unknown[]) => void }) {
-    const leftChecked = signal<Set<string | number>>(new Set(props.leftDefaultChecked));
-    const rightChecked = signal<Set<string | number>>(new Set(props.rightDefaultChecked));
+  setup(props: Record<string, unknown>, { slots }: { slots: TransferSlots }) {
+    const p = props as TransferSetupProps;
+    const leftChecked = signal<Set<string | number>>(new Set(p.leftDefaultChecked));
+    const rightChecked = signal<Set<string | number>>(new Set(p.rightDefaultChecked));
     const leftFilter = signal('');
     const rightFilter = signal('');
 
     const getSourceData = () => {
-      const valueSet = new Set(props.modelValue);
-      return props.data.filter((item: TransferOption) => !valueSet.has(item.key));
+      const valueSet = new Set(p.modelValue);
+      return p.data.filter((item: TransferOption) => !valueSet.has(item.key));
     };
 
     const getTargetData = () => {
-      const valueSet = new Set(props.modelValue);
-      return props.data.filter((item: TransferOption) => valueSet.has(item.key));
+      const valueSet = new Set(p.modelValue);
+      return p.data.filter((item: TransferOption) => valueSet.has(item.key));
     };
 
     const filterData = (data: TransferOption[], filterText: string) => {
       if (!filterText) return data;
-      return data.filter((item) => 
+      return data.filter((item) =>
         item.label.toLowerCase().includes(filterText.toLowerCase())
       );
     };
@@ -79,10 +55,8 @@ export const Transfer = defineComponent({
       const currentLeftChecked = leftChecked();
       if (currentLeftChecked.size === 0) return;
 
-      const newModelValue = [...props.modelValue, ...Array.from(currentLeftChecked)];
-      emit('update:modelValue', newModelValue);
-      emit('change', newModelValue, 'right', Array.from(currentLeftChecked));
-      props.onChange?.(newModelValue, 'right', Array.from(currentLeftChecked));
+      const newModelValue = [...p.modelValue, ...Array.from(currentLeftChecked)];
+      p.onChange?.(newModelValue, 'right', Array.from(currentLeftChecked));
 
       leftChecked.set(new Set());
     };
@@ -91,10 +65,8 @@ export const Transfer = defineComponent({
       const currentRightChecked = rightChecked();
       if (currentRightChecked.size === 0) return;
 
-      const newModelValue = props.modelValue.filter(key => !currentRightChecked.has(key));
-      emit('update:modelValue', newModelValue);
-      emit('change', newModelValue, 'left', Array.from(currentRightChecked));
-      props.onChange?.(newModelValue, 'left', Array.from(currentRightChecked));
+      const newModelValue = p.modelValue.filter(key => !currentRightChecked.has(key));
+      p.onChange?.(newModelValue, 'left', Array.from(currentRightChecked));
 
       rightChecked.set(new Set());
     };
@@ -107,8 +79,7 @@ export const Transfer = defineComponent({
         newChecked.add(key);
       }
       leftChecked.set(newChecked);
-      emit('leftCheckChange', Array.from(newChecked));
-      props.onLeftCheckChange?.(Array.from(newChecked));
+      p.onLeftCheckChange?.(Array.from(newChecked));
     };
 
     const toggleRightChecked = (key: string | number) => {
@@ -119,8 +90,7 @@ export const Transfer = defineComponent({
         newChecked.add(key);
       }
       rightChecked.set(newChecked);
-      emit('rightCheckChange', Array.from(newChecked));
-      props.onRightCheckChange?.(Array.from(newChecked));
+      p.onRightCheckChange?.(Array.from(newChecked));
     };
 
     const toggleLeftAll = () => {
@@ -134,8 +104,7 @@ export const Transfer = defineComponent({
       } else {
         leftChecked.set(new Set(availableKeys));
       }
-      emit('leftCheckChange', Array.from(leftChecked()));
-      props.onLeftCheckChange?.(Array.from(leftChecked()));
+      p.onLeftCheckChange?.(Array.from(leftChecked()));
     };
 
     const toggleRightAll = () => {
@@ -149,12 +118,26 @@ export const Transfer = defineComponent({
       } else {
         rightChecked.set(new Set(availableKeys));
       }
-      emit('rightCheckChange', Array.from(rightChecked()));
-      props.onRightCheckChange?.(Array.from(rightChecked()));
+      p.onRightCheckChange?.(Array.from(rightChecked()));
     };
 
     const renderOption = (option: TransferOption, isLeft: boolean, checked: Set<string | number>): VNode => {
       const isDisabled = option.disabled;
+
+      const optionChildren: VNode[] = [
+        createVNode('input', {
+          type: 'checkbox',
+          checked: checked.has(option.key),
+          disabled: isDisabled,
+          onClick: (e: Event) => e.stopPropagation(),
+        }),
+      ];
+
+      if (slots.default) {
+        optionChildren.push(...slots.default(option));
+      } else {
+        optionChildren.push(createVNode('span', {}, String(option.label)));
+      }
 
       return createVNode('div', {
         key: String(option.key),
@@ -171,15 +154,7 @@ export const Transfer = defineComponent({
             toggleRightChecked(option.key);
           }
         },
-      }, [
-        createVNode('input', {
-          type: 'checkbox',
-          checked: checked.has(option.key),
-          disabled: isDisabled,
-          onClick: (e: Event) => e.stopPropagation(),
-        }),
-        slots.default ? slots.default(option) : option.label,
-      ]);
+      }, optionChildren);
     };
 
     const renderPanel = (data: TransferOption[], isLeft: boolean): VNode => {
@@ -194,11 +169,11 @@ export const Transfer = defineComponent({
 
       const contentChildren: VNode[] = [];
 
-      if (props.filterable) {
+      if (p.filterable) {
         contentChildren.push(createVNode('div', { class: 'lyt-transfer__filter' }, [
           createVNode('input', {
             type: 'text',
-            placeholder: props.filterPlaceholder,
+            placeholder: p.filterPlaceholder,
             value: filter,
             onInput: (e: Event) => {
               const value = (e.target as HTMLInputElement).value;
@@ -212,54 +187,58 @@ export const Transfer = defineComponent({
         ]));
       }
 
-      const headerChildren: VNode[] = [];
-      
-      headerChildren.push(createVNode('input', {
-        type: 'checkbox',
-        checked: allChecked,
-        indeterminate: indeterminate,
-        onClick: toggleAll,
-      }));
-      
-      headerChildren.push(createVNode('span', { class: 'lyt-transfer__title' }, [
-        `${props.titles[isLeft ? 0 : 1]} (${checked.size}/${availableCount})`,
-      ]));
-      
-      contentChildren.push(createVNode('div', { class: 'lyt-transfer__header' }, [headerChildren]));
+      const headerChildren: VNode[] = [
+        createVNode('input', {
+          type: 'checkbox',
+          checked: allChecked,
+          indeterminate: indeterminate,
+          onClick: toggleAll,
+        }),
+        createVNode('span', { class: 'lyt-transfer__title' }, [
+          createVNode('span', {}, `${p.titles[isLeft ? 0 : 1]} (${checked.size}/${availableCount})`),
+        ]),
+      ];
+
+      contentChildren.push(createVNode('div', { class: 'lyt-transfer__header' }, headerChildren));
 
       if (filteredData.length === 0) {
-        contentChildren.push(createVNode('div', { class: 'lyt-transfer__empty' }, ['暂无数据']));
+        contentChildren.push(createVNode('div', { class: 'lyt-transfer__empty' }, [createVNode('span', {}, '暂无数据')]));
       } else {
-        contentChildren.push(createVNode('div', { class: 'lyt-transfer__list' }, [
-          filteredData.map(option => renderOption(option, isLeft, checked)),
-        ]));
+        contentChildren.push(createVNode('div', { class: 'lyt-transfer__list' }, filteredData.map(option => renderOption(option, isLeft, checked))));
       }
 
-      return createVNode('div', { class: 'lyt-transfer__panel' }, [contentChildren]);
+      return createVNode('div', { class: 'lyt-transfer__panel' }, contentChildren);
     };
 
     return () => {
-      const transferClass = ['lyt-transfer', props.class].filter(Boolean).join(' ');
-      
-      return createVNode('div', { class: transferClass }, [
+      const transferClass = ['lyt-transfer', p.class].filter(Boolean).join(' ');
+
+      const buttons: VNode[] = [
+        createVNode('button', {
+          class: 'lyt-transfer__button',
+          disabled: leftChecked().size === 0,
+          onClick: moveToRight,
+        }, [createVNode('span', {}, p.buttonTexts[0] || '▶')]),
+        createVNode('button', {
+          class: 'lyt-transfer__button',
+          disabled: rightChecked().size === 0,
+          onClick: moveToLeft,
+        }, [createVNode('span', {}, p.buttonTexts[1] || '◀')]),
+      ];
+
+      const resultChildren: VNode[] = [
         renderPanel(getSourceData(), true),
-        createVNode('div', { class: 'lyt-transfer__buttons' }, [
-          createVNode('button', {
-            class: 'lyt-transfer__button',
-            disabled: leftChecked().size === 0,
-            onClick: moveToRight,
-          }, [props.buttonTexts[0] || '▶']),
-          createVNode('button', {
-            class: 'lyt-transfer__button',
-            disabled: rightChecked().size === 0,
-            onClick: moveToLeft,
-          }, [props.buttonTexts[1] || '◀']),
-        ]),
+        createVNode('div', { class: 'lyt-transfer__buttons' }, buttons),
         renderPanel(getTargetData(), false),
-        slots.footer && createVNode('div', { class: 'lyt-transfer__footer' }, [slots.footer()]),
-      ]);
+      ];
+
+      if (slots.footer) {
+        resultChildren.push(createVNode('div', { class: 'lyt-transfer__footer' }, slots.footer()));
+      }
+
+      return createVNode('div', { class: transferClass }, resultChildren);
     };
   },
 });
 
-export type { TransferProps, TransferSlots, TransferOption } from './types';
+export type { TransferProps, TransferSlots, TransferOption, TransferSetupProps } from './types';

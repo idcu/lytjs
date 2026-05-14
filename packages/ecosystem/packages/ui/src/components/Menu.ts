@@ -7,29 +7,7 @@
 import { defineComponent } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import { signal } from '@lytjs/reactivity';
-
-export interface MenuItem {
-  index: string;
-  label: string;
-  icon?: string;
-  disabled?: boolean;
-  children?: MenuItem[];
-}
-
-export interface MenuSetupProps {
-  mode: 'horizontal' | 'vertical';
-  defaultActive: string;
-  defaultOpeneds: string[];
-  uniqueOpened: boolean;
-  class: string;
-  onSelect: ((index: string) => void) | undefined;
-  onOpen: ((index: string) => void) | undefined;
-  onClose: ((index: string) => void) | undefined;
-}
-
-export interface MenuSlots {
-  default?: () => VNode[];
-}
+import type { MenuItem, MenuSetupProps, MenuSlots } from './types';
 
 export const Menu = defineComponent({
   name: 'LytMenu',
@@ -45,97 +23,103 @@ export const Menu = defineComponent({
     onClose: { type: Function, default: undefined },
   },
 
-  setup(props: MenuSetupProps, { slots }: { slots: MenuSlots; emit: (event: string, ...args: unknown[]) => void }) {
-    const activeIndex = signal(props.defaultActive);
-    const openedIndexes = signal(new Set<string>(props.defaultOpeneds));
+  setup(props: Record<string, unknown>, { slots }: { slots: MenuSlots }) {
+    const p = props as MenuSetupProps;
+    const activeIndex = signal(p.defaultActive);
+    const openedIndexes = signal(new Set<string>(p.defaultOpeneds));
 
     const handleSelect = (index: string) => {
       activeIndex.set(index);
-      emit('select', index);
-      props.onSelect?.(index);
+      p.onSelect?.(index);
     };
 
     const toggleSubmenu = (index: string) => {
       const newOpened = new Set(openedIndexes());
-      
+
       if (newOpened.has(index)) {
         newOpened.delete(index);
-        emit('close', index);
-        props.onClose?.(index);
+        p.onClose?.(index);
       } else {
-        if (props.uniqueOpened) {
+        if (p.uniqueOpened) {
           newOpened.clear();
         }
         newOpened.add(index);
-        emit('open', index);
-        props.onOpen?.(index);
+        p.onOpen?.(index);
       }
-      
+
       openedIndexes.set(newOpened);
     };
 
     return () => {
       const menuClass = [
         'lyt-menu',
-        `lyt-menu--${props.mode}`,
-        props.class,
+        `lyt-menu--${p.mode}`,
+        p.class,
       ].filter(Boolean).join(' ');
 
       const items = slots.default?.() || [];
 
-      return createVNode('ul', { class: menuClass }, [
-        items.map((item: VNode) => {
-          const itemProps = (item as any).props as MenuItem;
-          if (!itemProps) return item;
+      const menuItems: VNode[] = items.map((item: VNode) => {
+        const itemProps = (item as unknown as { props: MenuItem }).props;
+        if (!itemProps) return item;
 
-          const isActive = itemProps.index === activeIndex();
-          const isOpened = openedIndexes().has(itemProps.index);
+        const isActive = itemProps.index === activeIndex();
+        const isOpened = openedIndexes().has(itemProps.index);
 
-          return createVNode('li', {
-            key: itemProps.index,
-            class: [
-              'lyt-menu__item',
-              isActive ? 'lyt-menu__item--active' : '',
-              itemProps.disabled ? 'lyt-menu__item--disabled' : '',
-            ].filter(Boolean).join(' '),
-            onClick: () => {
-              if (itemProps.disabled) return;
-              if (itemProps.children && itemProps.children.length > 0) {
-                toggleSubmenu(itemProps.index);
-              } else {
-                handleSelect(itemProps.index);
-              }
-            },
-          }, [
-            itemProps.icon && createVNode('span', { class: 'lyt-menu__icon' }, [itemProps.icon]),
-            createVNode('span', { class: 'lyt-menu__title' }, [itemProps.label]),
-            itemProps.children && itemProps.children.length > 0 && createVNode('span', {
-              class: ['lyt-menu__arrow', isOpened ? 'lyt-menu__arrow--opened' : ''].filter(Boolean).join(' '),
-            }, [isOpened ? '▲' : '▼']),
-            isOpened && createVNode('ul', { class: 'lyt-menu__submenu' }, [
-              itemProps.children?.map((child: MenuItem) =>
-                createVNode('li', {
-                  key: child.index,
-                  class: [
-                    'lyt-menu__item',
-                    child.index === activeIndex() ? 'lyt-menu__item--active' : '',
-                    child.disabled ? 'lyt-menu__item--disabled' : '',
-                  ].filter(Boolean).join(' '),
-                  onClick: () => {
-                    if (child.disabled) return;
-                    handleSelect(child.index);
-                  },
-                }, [
-                  child.icon && createVNode('span', { class: 'lyt-menu__icon' }, [child.icon]),
-                  createVNode('span', { class: 'lyt-menu__title' }, [child.label]),
-                ])
-              ),
-            ]),
-          ]);
-        }),
-      ]);
+        const itemChildren: VNode[] = [];
+
+        if (itemProps.icon) {
+          itemChildren.push(createVNode('span', { class: 'lyt-menu__icon' }, [itemProps.icon as unknown as VNode]));
+        }
+        itemChildren.push(createVNode('span', { class: 'lyt-menu__title' }, [createVNode('span', {}, String(itemProps.label))]));
+
+        if (itemProps.children && itemProps.children.length > 0) {
+          itemChildren.push(createVNode('span', {
+            class: ['lyt-menu__arrow', isOpened ? 'lyt-menu__arrow--opened' : ''].filter(Boolean).join(' '),
+          }, [createVNode('span', {}, isOpened ? '▲' : '▼')]));
+
+          const submenuChildren: VNode[] = itemProps.children.map((child: MenuItem) =>
+            createVNode('li', {
+              key: child.index,
+              class: [
+                'lyt-menu__item',
+                child.index === activeIndex() ? 'lyt-menu__item--active' : '',
+                child.disabled ? 'lyt-menu__item--disabled' : '',
+              ].filter(Boolean).join(' '),
+              onClick: () => {
+                if (child.disabled) return;
+                handleSelect(child.index);
+              },
+            }, [
+              child.icon ? createVNode('span', { class: 'lyt-menu__icon' }, [child.icon as unknown as VNode]) : createVNode('span', {}, ''),
+              createVNode('span', { class: 'lyt-menu__title' }, [createVNode('span', {}, String(child.label))]),
+            ])
+          );
+
+          itemChildren.push(createVNode('ul', { class: 'lyt-menu__submenu' }, submenuChildren));
+        }
+
+        return createVNode('li', {
+          key: itemProps.index,
+          class: [
+            'lyt-menu__item',
+            isActive ? 'lyt-menu__item--active' : '',
+            itemProps.disabled ? 'lyt-menu__item--disabled' : '',
+          ].filter(Boolean).join(' '),
+          onClick: () => {
+            if (itemProps.disabled) return;
+            if (itemProps.children && itemProps.children.length > 0) {
+              toggleSubmenu(itemProps.index);
+            } else {
+              handleSelect(itemProps.index);
+            }
+          },
+        }, itemChildren);
+      });
+
+      return createVNode('ul', { class: menuClass }, menuItems);
     };
   },
 });
 
-export type { MenuProps, MenuSlots, MenuItem } from './types';
+export type { MenuProps, MenuSlots, MenuItem, MenuSetupProps } from './types';
