@@ -63,6 +63,13 @@ export default defineConfig({
           ],
         },
         {
+          text: '社区与生态',
+          items: [
+            { text: '生态与社区', link: '/tutorial/ecosystem' },
+            { text: '社区贡献指南', link: '/tutorial/contributing' },
+          ],
+        },
+        {
           text: '参考',
           items: [
             { text: '常见问题', link: '/tutorial/faq' },
