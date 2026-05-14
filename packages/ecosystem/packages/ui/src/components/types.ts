@@ -189,13 +189,11 @@ export interface DialogSetupProps extends Record<string, unknown> {
   modelValue: boolean;
   title: string;
   width: string | number;
-  top: string;
   showClose: boolean;
   closeOnClickModal: boolean;
   closeOnPressEscape: boolean;
   lockScroll: boolean;
   class: string;
-  style?: string;
   id: string;
   ariaLabel: string;
   ariaDescribedBy: string;
