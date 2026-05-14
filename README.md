@@ -79,25 +79,25 @@ Lyt.js 采用精心设计的 8 层架构，从底层到上层：
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │  L7: 工程化工具层                                            │
-│  构建、打包、测试、lint、零依赖规范校验                       │
+│  构建工具、CLI、DevTools、测试工具                       │
 ├─────────────────────────────────────────────────────────────┤
-│  L6: 业务组件层                                              │
-│  UI 组件库（基础组件、高级组件）                              │
+│  L6: 生态系统层                                              │
+│  UI 组件库、路由、状态管理、SSR、DevTools              │
 ├─────────────────────────────────────────────────────────────┤
 │  L5: 组件基础层                                              │
 │  组件通用逻辑、通信机制、样式规范统一                        │
 ├─────────────────────────────────────────────────────────────┤
-│  L4: 官方插件层                                              │
-│  主题、国际化、日志、权限、存储等内置插件                    │
+│  L4: 插件与适配层                                              │
+│  官方插件、跨平台适配器、Web 适配                        │
 ├─────────────────────────────────────────────────────────────┤
-│  L3: 插件核心层                                              │
-│  插件规范定义、插件生命周期管理、插件依赖解析                │
-├─────────────────────────────────────────────────────────────┤
-│  L2: 核心运行时层                                            │
+│  L3: 核心运行时层                                            │
 │  应用实例创建、生命周期、插件注册/卸载、依赖注入            │
 ├─────────────────────────────────────────────────────────────┤
-│  L1: 渲染引擎层                                              │
-│  Vapor无虚拟DOM渲染、指令解析与执行、虚拟DOM diff            │
+│  L2: 渲染引擎层                                              │
+│  Vapor 渲染器、VDOM 渲染器、组件系统                  │
+├─────────────────────────────────────────────────────────────┤
+│  L1: 核心原语层                                              │
+│  响应式系统、虚拟 DOM、编译器                          │
 ├─────────────────────────────────────────────────────────────┤
 │  L0: 基础工具层                                              │
 │  原生JS工具封装、常量定义、类型判断                          │
@@ -124,16 +124,23 @@ Lyt.js 采用精心设计的 8 层架构，从底层到上层：
 | `@lytjs/host-contract` | 跨平台渲染接口定义 |
 | `@lytjs/common-*` | 30 个工具子包（constants, is, string, error 等） |
 
-### L1: 渲染引擎层
+### L1: 核心原语层
 
 | 包 | 描述 |
 | --- | --- |
 | `@lytjs/reactivity` | 响应式系统（ref, reactive, computed, watch） |
 | `@lytjs/vdom` | 虚拟 DOM 和 diff 算法 |
 | `@lytjs/compiler` | 模板编译器 |
-| `@lytjs/renderer` | DOM/SSR 渲染器 |
 
-### L2: 核心运行时层
+### L2: 渲染引擎层
+
+| 包 | 描述 |
+| --- | --- |
+| `@lytjs/renderer` | DOM/SSR 渲染器 |
+| `@lytjs/component` | 组件系统 |
+| `@lytjs/dom-runtime` | DOM 运行时工具 |
+
+### L3: 核心运行时层
 
 | 包 | 描述 |
 | --- | --- |
@@ -141,13 +148,7 @@ Lyt.js 采用精心设计的 8 层架构，从底层到上层：
 | `@lytjs/core-vnode` | 核心应用 API（仅 VNode 模式） |
 | `@lytjs/core-signal` | 核心应用 API（仅 Signal 模式） |
 
-### L3: 插件核心层
-
-| 包 | 描述 |
-| --- | --- |
-| `@lytjs/plugin-sdk` | 插件开发 SDK |
-
-### L4: 官方插件层
+### L4: 插件与适配层
 
 | 包 | 描述 |
 | --- | --- |
@@ -157,17 +158,15 @@ Lyt.js 采用精心设计的 8 层架构，从底层到上层：
 | `@lytjs/plugin-storage` | 存储插件 |
 | `@lytjs/plugin-i18n` | 国际化插件 |
 | `@lytjs/plugin-vite` | Vite 集成插件 |
+| `@lytjs/adapter-web` | Web 平台适配器 |
+| `@lytjs/dom` | DOM 平台封装 |
+| `@lytjs/web` | Web 平台工具 |
 
 ### L5: 组件基础层
 
-| 包 | 描述 |
-| --- | --- |
-| `@lytjs/component` | 组件系统 |
-| `@lytjs/dom` | DOM 平台封装 |
-| `@lytjs/dom-runtime` | DOM 运行时工具 |
-| `@lytjs/web` | Web 平台工具 |
+（已包含在 L2 渲染引擎层和 L4 插件与适配层中）
 
-### L6: 业务组件层
+### L6: 生态系统层
 
 | 包 | 描述 |
 | --- | --- |
@@ -177,6 +176,7 @@ Lyt.js 采用精心设计的 8 层架构，从底层到上层：
 | `@lytjs/devtools` | 开发者工具 |
 | `@lytjs/ssr` | SSR |
 | `@lytjs/platform-adapter` | 平台适配器 |
+| `@lytjs/compat` | 兼容性层 |
 
 ### L7: 工程化工具层
 
@@ -238,18 +238,16 @@ lytjs/
 │   │   └── packages/        # 30+ 个工具子包
 │   ├── shared-types/        # L0 基础工具层 - 共享类型定义
 │   ├── host-contract/       # L0 基础工具层 - 跨平台渲染接口
-│   ├── reactivity/          # L1 渲染引擎层 - 响应式系统
-│   ├── vdom/                # L1 渲染引擎层 - 虚拟 DOM
-│   ├── compiler/            # L1 渲染引擎层 - 模板编译器
-│   ├── renderer/            # L1 渲染引擎层 - 渲染器
-│   ├── core/                # L2 核心运行时层 - 完整版
-│   ├── core-signal/         # L2 核心运行时层 - 仅 Signal 模式
-│   ├── core-vnode/          # L2 核心运行时层 - 仅 VNode 模式
-│   ├── component/           # L5 组件基础层 - 组件系统
-│   ├── dom/                 # L5 组件基础层 - DOM 平台封装
-│   ├── dom-runtime/         # L5 组件基础层 - DOM 运行时工具
-│   ├── adapter-web/         # L5 组件基础层 - Web 适配器
-│   ├── plugins/             # L3/L4 插件层
+│   ├── reactivity/          # L1 核心原语层 - 响应式系统
+│   ├── vdom/                # L1 核心原语层 - 虚拟 DOM
+│   ├── compiler/            # L1 核心原语层 - 模板编译器
+│   ├── renderer/            # L2 渲染引擎层 - 渲染器
+│   ├── component/           # L2 渲染引擎层 - 组件系统
+│   ├── dom-runtime/         # L2 渲染引擎层 - DOM 运行时工具
+│   ├── core/                # L3 核心运行时层 - 完整版
+│   ├── core-signal/         # L3 核心运行时层 - 仅 Signal 模式
+│   ├── core-vnode/          # L3 核心运行时层 - 仅 VNode 模式
+│   ├── plugins/             # L4 插件与适配层
 │   │   └── packages/
 │   │       ├── plugin-theme/
 │   │       ├── plugin-logger/
@@ -257,7 +255,10 @@ lytjs/
 │   │       ├── plugin-storage/
 │   │       ├── plugin-i18n/
 │   │       └── plugin-vite/
-│   ├── ecosystem/           # L6 业务组件层
+│   ├── adapter-web/         # L4 插件与适配层 - Web 适配器
+│   ├── dom/                 # L4 插件与适配层 - DOM 平台封装
+│   ├── web/                 # L4 插件与适配层 - Web 平台工具
+│   ├── ecosystem/           # L6 生态系统层
 │   │   └── packages/
 │   │       ├── ui/          # UI 组件库
 │   │       ├── router/      # 路由
@@ -284,6 +285,7 @@ lytjs/
 - [ROADMAP_NEXT_STEPS.md](./docs/development/ROADMAP_NEXT_STEPS.md) - 开发路线图
 - [PROJECT_STRUCTURE.md](./docs/development/PROJECT_STRUCTURE.md) - 项目结构说明
 - [PLUGIN_DEVELOPMENT.md](./docs/development/PLUGIN_DEVELOPMENT.md) - 插件开发指南
+- [ARCHITECTURE.md](./docs/development/ARCHITECTURE.md) - 架构设计文档
 
 ## 版本迭代里程碑
 

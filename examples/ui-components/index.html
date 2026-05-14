@@ -249,6 +249,97 @@ import { Descriptions } from '@lytjs/ui'
           </div>
         </div>
       </div>
+
+      <!-- 新增组件 -->
+      <div class="component-card">
+        <div class="card-header">
+          <h3>☑️ CheckboxGroup 复选框组</h3>
+        </div>
+        <div class="card-body">
+          <p>多选复选框组件，支持多选和禁用</p>
+          <div class="code-block">
+import { CheckboxGroup, Checkbox } from '@lytjs/ui'
+&lt;CheckboxGroup modelValue={['选项1']}&gt;
+  &lt;Checkbox label="选项1" /&gt;
+  &lt;Checkbox label="选项2" /&gt;
+&lt;/CheckboxGroup&gt;
+          </div>
+        </div>
+      </div>
+
+      <div class="component-card">
+        <div class="card-header">
+          <h3>🔘 RadioGroup 单选框组</h3>
+        </div>
+        <div class="card-body">
+          <p>单选框组件，支持单选和禁用</p>
+          <div class="code-block">
+import { RadioGroup, Radio } from '@lytjs/ui'
+&lt;RadioGroup modelValue="选项1"&gt;
+  &lt;Radio label="选项1" /&gt;
+  &lt;Radio label="选项2" /&gt;
+&lt;/RadioGroup&gt;
+          </div>
+        </div>
+      </div>
+
+      <div class="component-card">
+        <div class="card-header">
+          <h3>📊 Progress 进度条</h3>
+        </div>
+        <div class="card-body">
+          <p>进度条组件，支持线型和圆形</p>
+          <div class="code-block">
+import { Progress } from '@lytjs/ui'
+&lt;Progress percentage={60} /&gt;
+&lt;Progress type="circle" percentage={75} /&gt;
+          </div>
+        </div>
+      </div>
+
+      <div class="component-card">
+        <div class="card-header">
+          <h3>🎚️ Slider 滑块</h3>
+        </div>
+        <div class="card-body">
+          <p>滑块组件，支持单值和范围选择</p>
+          <div class="code-block">
+import { Slider } from '@lytjs/ui'
+&lt;Slider modelValue={50} /&gt;
+&lt;Slider range modelValue={[20, 80]} /&gt;
+          </div>
+        </div>
+      </div>
+
+      <div class="component-card">
+        <div class="card-header">
+          <h3>👤 Avatar 头像</h3>
+        </div>
+        <div class="card-body">
+          <p>头像组件，支持图片、图标和文字</p>
+          <div class="code-block">
+import { Avatar } from '@lytjs/ui'
+&lt;Avatar src="https://example.com/avatar.jpg" /&gt;
+&lt;Avatar icon="user" /&gt;
+&lt;Avatar&gt;用户&lt;/Avatar&gt;
+          </div>
+        </div>
+      </div>
+
+      <div class="component-card">
+        <div class="card-header">
+          <h3>📇 Card 卡片</h3>
+        </div>
+        <div class="card-body">
+          <p>卡片组件，支持阴影和标题</p>
+          <div class="code-block">
+import { Card } from '@lytjs/ui'
+&lt;Card title="卡片标题"&gt;
+  卡片内容
+&lt;/Card&gt;
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </body>

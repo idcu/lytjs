@@ -1423,4 +1423,197 @@ export interface RateSetupProps extends Record<string, unknown> {
   onChange?: (value: number) => void;
 }
 
+// ===== CheckboxGroup 组件 =====
+
+export interface CheckboxGroupProps {
+  modelValue?: (string | number | boolean)[];
+  disabled?: boolean;
+  min?: number;
+  max?: number;
+  size?: ComponentSize;
+  class?: string;
+  style?: string | Record<string, string>;
+  onChange?: (value: (string | number | boolean)[]) => void;
+}
+
+export interface CheckboxGroupSlots {
+  default?: () => VNode[];
+}
+
+export interface CheckboxGroupSetupProps extends Record<string, unknown> {
+  modelValue: (string | number | boolean)[];
+  disabled: boolean;
+  min: number;
+  max: number;
+  size: ComponentSize;
+  class: string;
+  style?: string | Record<string, string>;
+  onChange?: (value: (string | number | boolean)[]) => void;
+}
+
+// ===== RadioGroup 组件 =====
+
+export interface RadioGroupProps {
+  modelValue?: string | number | boolean;
+  disabled?: boolean;
+  size?: ComponentSize;
+  class?: string;
+  style?: string | Record<string, string>;
+  onChange?: (value: string | number | boolean) => void;
+}
+
+export interface RadioGroupSlots {
+  default?: () => VNode[];
+}
+
+export interface RadioGroupSetupProps extends Record<string, unknown> {
+  modelValue: string | number | boolean;
+  disabled: boolean;
+  size: ComponentSize;
+  class: string;
+  style?: string | Record<string, string>;
+  onChange?: (value: string | number | boolean) => void;
+}
+
+// ===== Progress 组件 =====
+
+export interface ProgressProps {
+  percentage?: number;
+  type?: 'line' | 'circle' | 'dashboard';
+  status?: 'success' | 'exception' | 'warning';
+  strokeWidth?: number;
+  textInside?: boolean;
+  showText?: boolean;
+  color?: string | string[] | Record<string, string>;
+  width?: number;
+  strokeLinecap?: 'butt' | 'round' | 'square';
+  format?: (percentage: number) => string;
+  class?: string;
+  style?: string | Record<string, string>;
+}
+
+export interface ProgressSlots {
+  default?: () => VNode[];
+}
+
+export interface ProgressSetupProps extends Record<string, unknown> {
+  percentage: number;
+  type: 'line' | 'circle' | 'dashboard';
+  status: 'success' | 'exception' | 'warning' | '';
+  strokeWidth: number;
+  textInside: boolean;
+  showText: boolean;
+  color: string | string[] | Record<string, string>;
+  width: number;
+  strokeLinecap: 'butt' | 'round' | 'square';
+  format?: (percentage: number) => string;
+  class: string;
+  style?: string | Record<string, string>;
+}
+
+// ===== Slider 组件 =====
+
+export interface SliderProps {
+  modelValue?: number | number[];
+  min?: number;
+  max?: number;
+  step?: number;
+  showInput?: boolean;
+  showInputControls?: boolean;
+  inputSize?: ComponentSize;
+  showStops?: boolean;
+  showTooltip?: boolean;
+  formatTooltip?: (value: number) => string;
+  disabled?: boolean;
+  range?: boolean;
+  vertical?: boolean;
+  height?: string;
+  label?: string;
+  class?: string;
+  style?: string | Record<string, string>;
+  onChange?: (value: number | number[]) => void;
+  onInput?: (value: number | number[]) => void;
+}
+
+export interface SliderSlots {
+  default?: () => VNode[];
+}
+
+export interface SliderSetupProps extends Record<string, unknown> {
+  modelValue: number | number[];
+  min: number;
+  max: number;
+  step: number;
+  showInput: boolean;
+  showInputControls: boolean;
+  inputSize: ComponentSize;
+  showStops: boolean;
+  showTooltip: boolean;
+  formatTooltip?: (value: number) => string;
+  disabled: boolean;
+  range: boolean;
+  vertical: boolean;
+  height: string;
+  label: string;
+  class: string;
+  style?: string | Record<string, string>;
+  onChange?: (value: number | number[]) => void;
+  onInput?: (value: number | number[]) => void;
+}
+
+// ===== Avatar 组件 =====
+
+export interface AvatarProps {
+  size?: number | ComponentSize;
+  shape?: 'circle' | 'square';
+  icon?: string;
+  src?: string;
+  srcSet?: string;
+  alt?: string;
+  fit?: 'fill' | 'contain' | 'cover' | 'none' | 'scale-down';
+  class?: string;
+  style?: string | Record<string, string>;
+  onError?: () => boolean;
+}
+
+export interface AvatarSlots {
+  default?: () => VNode[];
+}
+
+export interface AvatarSetupProps extends Record<string, unknown> {
+  size: number | ComponentSize;
+  shape: 'circle' | 'square';
+  icon: string;
+  src: string;
+  srcSet: string;
+  alt: string;
+  fit: 'fill' | 'contain' | 'cover' | 'none' | 'scale-down';
+  class: string;
+  style?: string | Record<string, string>;
+  onError?: () => boolean;
+}
+
+// ===== Card 组件 =====
+
+export interface CardProps {
+  header?: string;
+  bodyStyle?: Record<string, string>;
+  shadow?: 'always' | 'hover' | 'never';
+  class?: string;
+  style?: string | Record<string, string>;
+}
+
+export interface CardSlots {
+  default?: () => VNode[];
+  header?: () => VNode[];
+}
+
+export interface CardSetupProps extends Record<string, unknown> {
+  header: string;
+  bodyStyle: Record<string, string>;
+  shadow: 'always' | 'hover' | 'never';
+  class: string;
+  style?: string | Record<string, string>;
+}
+
 export type { VNode, Component };

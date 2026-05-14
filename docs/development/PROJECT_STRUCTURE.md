@@ -158,3 +158,9 @@ pnpm test
 - [插件开发指南](./PLUGIN_DEVELOPMENT.md)
 - [8层架构说明](./ARCHITECTURE.md)
 - [零第三方依赖规范](./ZERO_DEPENDENCY.md)
+
+---
+
+**文档版本**: v1.1
+**最后更新**: 2026-05-14
+**维护者**: LytJS Team

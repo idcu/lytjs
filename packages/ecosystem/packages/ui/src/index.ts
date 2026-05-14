@@ -4,6 +4,9 @@
  * LytJS UI 组件库
  */
 
+// 导入样式
+import './styles/index.css';
+
 // 组件导出
 export { Button } from './components/Button';
 export { Input } from './components/Input';
@@ -42,9 +45,15 @@ export { Toast } from './components/Toast';
 export { Alert } from './components/Alert';
 export { Tooltip } from './components/Tooltip';
 export { Checkbox } from './components/Checkbox';
+export { CheckboxGroup } from './components/CheckboxGroup';
 export { Radio } from './components/Radio';
+export { RadioGroup } from './components/RadioGroup';
 export { Switch } from './components/Switch';
 export { InputNumber } from './components/InputNumber';
+export { Progress } from './components/Progress';
+export { Slider } from './components/Slider';
+export { Avatar } from './components/Avatar';
+export { Card } from './components/Card';
 
 // 类型导出
 export type {
@@ -114,6 +123,24 @@ export type {
   InputNumberProps,
   InputNumberSlots,
   InputNumberSetupProps,
+  CheckboxGroupProps,
+  CheckboxGroupSlots,
+  CheckboxGroupSetupProps,
+  RadioGroupProps,
+  RadioGroupSlots,
+  RadioGroupSetupProps,
+  ProgressProps,
+  ProgressSlots,
+  ProgressSetupProps,
+  SliderProps,
+  SliderSlots,
+  SliderSetupProps,
+  AvatarProps,
+  AvatarSlots,
+  AvatarSetupProps,
+  CardProps,
+  CardSlots,
+  CardSetupProps,
   ImageProps,
   ImageSlots,
   ImageFit,
@@ -212,9 +239,15 @@ import { Toast } from './components/Toast';
 import { Alert } from './components/Alert';
 import { Tooltip } from './components/Tooltip';
 import { Checkbox } from './components/Checkbox';
+import { CheckboxGroup } from './components/CheckboxGroup';
 import { Radio } from './components/Radio';
+import { RadioGroup } from './components/RadioGroup';
 import { Switch } from './components/Switch';
 import { InputNumber } from './components/InputNumber';
+import { Progress } from './components/Progress';
+import { Slider } from './components/Slider';
+import { Avatar } from './components/Avatar';
+import { Card } from './components/Card';
 
 /**
  * 安装所有组件
@@ -260,9 +293,15 @@ export function install(app: AppContext): void {
   app.components['LytAlert'] = Alert;
   app.components['LytTooltip'] = Tooltip;
   app.components['LytCheckbox'] = Checkbox;
+  app.components['LytCheckboxGroup'] = CheckboxGroup;
   app.components['LytRadio'] = Radio;
+  app.components['LytRadioGroup'] = RadioGroup;
   app.components['LytSwitch'] = Switch;
   app.components['LytInputNumber'] = InputNumber;
+  app.components['LytProgress'] = Progress;
+  app.components['LytSlider'] = Slider;
+  app.components['LytAvatar'] = Avatar;
+  app.components['LytCard'] = Card;
 }
 
 export default {

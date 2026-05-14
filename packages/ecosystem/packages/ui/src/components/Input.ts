@@ -5,7 +5,8 @@
  */
 
 import { defineComponent } from '@lytjs/component';
-import { createVNode } from '@lytjs/vdom';
+import { createVNode, type VNode } from '@lytjs/vdom';
+import { signal } from '@lytjs/reactivity';
 import { isString, isObject } from '@lytjs/common-is';
 import type { InputSetupProps } from './types';
 
@@ -31,12 +32,14 @@ export const Input = defineComponent({
 
   setup(props: Record<string, unknown>) {
     const p = props as InputSetupProps;
-    const passwordVisible = { current: false };
+    const passwordVisible = signal(false);
+    const isFocused = signal(false);
 
     const getInputClass = () => {
       const classes = ['lyt-input'];
       if (p.size !== 'medium') classes.push(`lyt-input--${p.size}`);
       if (p.disabled) classes.push('lyt-input--disabled');
+      if (isFocused()) classes.push('lyt-input--focused');
       if (p.class) classes.push(p.class);
       return classes.join(' ');
     };
@@ -52,20 +55,110 @@ export const Input = defineComponent({
       return undefined;
     };
 
+    const getInputType = () => {
+      if (p.type === 'password' && p.showPassword) {
+        return passwordVisible() ? 'text' : 'password';
+      }
+      return p.type;
+    };
+
+    const handleInput = (e: Event) => {
+      const target = e.target as HTMLInputElement;
+      p.onInput?.(target.value);
+    };
+
+    const handleChange = (e: Event) => {
+      const target = e.target as HTMLInputElement;
+      p.onChange?.(target.value);
+    };
+
+    const handleFocus = (e: FocusEvent) => {
+      isFocused.set(true);
+      p.onFocus?.(e);
+    };
+
+    const handleBlur = (e: FocusEvent) => {
+      isFocused.set(false);
+      p.onBlur?.(e);
+    };
+
+    const handleClear = () => {
+      p.onClear?.();
+      p.onInput?.('');
+      p.onChange?.('');
+    };
+
+    const togglePasswordVisibility = () => {
+      passwordVisible.set(!passwordVisible());
+    };
+
     return () => {
+      const children: VNode[] = [];
+      
+      // 前缀图标
+      if (p.prefixIcon) {
+        children.push(
+          createVNode('span', { class: 'lyt-input__prefix' }, [
+            createVNode('i', { class: p.prefixIcon }, [])
+          ])
+        );
+      }
+
+      // 输入框
       const inputProps: Record<string, unknown> = {
-        class: getInputClass(),
+        class: 'lyt-input__inner',
         style: getInputStyle(),
-        type: p.type === 'password' && passwordVisible.current ? 'text' : p.type,
+        type: getInputType(),
         value: p.modelValue,
         placeholder: p.placeholder,
         disabled: p.disabled,
         readonly: p.readonly,
         maxlength: p.maxlength,
         minlength: p.minlength,
+        onInput: handleInput,
+        onChange: handleChange,
+        onFocus: handleFocus,
+        onBlur: handleBlur,
       };
+      children.push(createVNode('input', inputProps, []));
 
-      return createVNode('input', inputProps, []);
+      // 后缀图标或清除按钮
+      const suffixChildren: VNode[] = [];
+      
+      // 清除按钮
+      if (p.clearable && p.modelValue) {
+        suffixChildren.push(
+          createVNode('span', { 
+            class: 'lyt-input__clear', 
+            onClick: handleClear 
+          }, ['×'])
+        );
+      }
+      
+      // 密码显示切换按钮
+      if (p.type === 'password' && p.showPassword) {
+        suffixChildren.push(
+          createVNode('span', { 
+            class: 'lyt-input__password', 
+            onClick: togglePasswordVisibility 
+          }, [passwordVisible() ? '🙈' : '👁️'])
+        );
+      }
+      
+      // 后缀图标
+      if (p.suffixIcon) {
+        suffixChildren.push(
+          createVNode('i', { class: p.suffixIcon }, [])
+        );
+      }
+      
+      if (suffixChildren.length > 0) {
+        children.push(
+          createVNode('span', { class: 'lyt-input__suffix' }, suffixChildren)
+        );
+      }
+
+      return createVNode('div', { class: getInputClass() }, children);
     };
   },
 });

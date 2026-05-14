@@ -34,9 +34,15 @@ import { Toast } from '../src/components/Toast';
 import { Alert } from '../src/components/Alert';
 import { Tooltip } from '../src/components/Tooltip';
 import { Checkbox } from '../src/components/Checkbox';
+import { CheckboxGroup } from '../src/components/CheckboxGroup';
 import { Radio } from '../src/components/Radio';
+import { RadioGroup } from '../src/components/RadioGroup';
 import { Switch } from '../src/components/Switch';
 import { InputNumber } from '../src/components/InputNumber';
+import { Progress } from '../src/components/Progress';
+import { Slider } from '../src/components/Slider';
+import { Avatar } from '../src/components/Avatar';
+import { Card } from '../src/components/Card';
 
 // ===== Button 组件测试 =====
 describe('Button', () => {
@@ -1028,8 +1034,165 @@ describe('exports', () => {
     expect(Alert).toBeDefined();
     expect(Tooltip).toBeDefined();
     expect(Checkbox).toBeDefined();
+    expect(CheckboxGroup).toBeDefined();
     expect(Radio).toBeDefined();
+    expect(RadioGroup).toBeDefined();
     expect(Switch).toBeDefined();
     expect(InputNumber).toBeDefined();
+    expect(Progress).toBeDefined();
+    expect(Slider).toBeDefined();
+    expect(Avatar).toBeDefined();
+    expect(Card).toBeDefined();
+  });
+});
+
+// ===== CheckboxGroup 组件测试 =====
+describe('CheckboxGroup', () => {
+  it('should render CheckboxGroup with default props', () => {
+    expect(CheckboxGroup).toBeDefined();
+    expect(CheckboxGroup.name).toBe('LytCheckboxGroup');
+  });
+
+  it('should have correct props definition', () => {
+    const props = CheckboxGroup.props;
+    expect(props.modelValue).toBeDefined();
+    expect(props.disabled).toBeDefined();
+    expect(props.min).toBeDefined();
+    expect(props.max).toBeDefined();
+    expect(props.size).toBeDefined();
+  });
+
+  it('should have default values for props', () => {
+    const props = CheckboxGroup.props;
+    expect(props.modelValue.default).toBeUndefined();
+    expect(props.disabled.default).toBe(false);
+    expect(props.size.default).toBe('default');
+  });
+});
+
+// ===== RadioGroup 组件测试 =====
+describe('RadioGroup', () => {
+  it('should render RadioGroup with default props', () => {
+    expect(RadioGroup).toBeDefined();
+    expect(RadioGroup.name).toBe('LytRadioGroup');
+  });
+
+  it('should have correct props definition', () => {
+    const props = RadioGroup.props;
+    expect(props.modelValue).toBeDefined();
+    expect(props.disabled).toBeDefined();
+    expect(props.size).toBeDefined();
+  });
+
+  it('should have default values for props', () => {
+    const props = RadioGroup.props;
+    expect(props.disabled.default).toBe(false);
+    expect(props.size.default).toBe('default');
+  });
+});
+
+// ===== Progress 组件测试 =====
+describe('Progress', () => {
+  it('should render Progress with default props', () => {
+    expect(Progress).toBeDefined();
+    expect(Progress.name).toBe('LytProgress');
+  });
+
+  it('should have correct props definition', () => {
+    const props = Progress.props;
+    expect(props.percentage).toBeDefined();
+    expect(props.type).toBeDefined();
+    expect(props.status).toBeDefined();
+    expect(props.strokeWidth).toBeDefined();
+    expect(props.textInside).toBeDefined();
+    expect(props.showText).toBeDefined();
+    expect(props.color).toBeDefined();
+  });
+
+  it('should have default values for props', () => {
+    const props = Progress.props;
+    expect(props.percentage.default).toBe(0);
+    expect(props.type.default).toBe('line');
+    expect(props.strokeWidth.default).toBe(6);
+    expect(props.textInside.default).toBe(false);
+    expect(props.showText.default).toBe(true);
+  });
+});
+
+// ===== Slider 组件测试 =====
+describe('Slider', () => {
+  it('should render Slider with default props', () => {
+    expect(Slider).toBeDefined();
+    expect(Slider.name).toBe('LytSlider');
+  });
+
+  it('should have correct props definition', () => {
+    const props = Slider.props;
+    expect(props.modelValue).toBeDefined();
+    expect(props.min).toBeDefined();
+    expect(props.max).toBeDefined();
+    expect(props.step).toBeDefined();
+    expect(props.showInput).toBeDefined();
+    expect(props.disabled).toBeDefined();
+    expect(props.range).toBeDefined();
+    expect(props.vertical).toBeDefined();
+  });
+
+  it('should have default values for props', () => {
+    const props = Slider.props;
+    expect(props.modelValue.default).toBe(0);
+    expect(props.min.default).toBe(0);
+    expect(props.max.default).toBe(100);
+    expect(props.step.default).toBe(1);
+    expect(props.showInput.default).toBe(false);
+    expect(props.disabled.default).toBe(false);
+    expect(props.range.default).toBe(false);
+    expect(props.vertical.default).toBe(false);
+  });
+});
+
+// ===== Avatar 组件测试 =====
+describe('Avatar', () => {
+  it('should render Avatar with default props', () => {
+    expect(Avatar).toBeDefined();
+    expect(Avatar.name).toBe('LytAvatar');
+  });
+
+  it('should have correct props definition', () => {
+    const props = Avatar.props;
+    expect(props.size).toBeDefined();
+    expect(props.shape).toBeDefined();
+    expect(props.icon).toBeDefined();
+    expect(props.src).toBeDefined();
+    expect(props.alt).toBeDefined();
+    expect(props.fit).toBeDefined();
+  });
+
+  it('should have default values for props', () => {
+    const props = Avatar.props;
+    expect(props.size.default).toBe('default');
+    expect(props.shape.default).toBe('circle');
+    expect(props.fit.default).toBe('cover');
+  });
+});
+
+// ===== Card 组件测试 =====
+describe('Card', () => {
+  it('should render Card with default props', () => {
+    expect(Card).toBeDefined();
+    expect(Card.name).toBe('LytCard');
+  });
+
+  it('should have correct props definition', () => {
+    const props = Card.props;
+    expect(props.header).toBeDefined();
+    expect(props.bodyStyle).toBeDefined();
+    expect(props.shadow).toBeDefined();
+  });
+
+  it('should have default values for props', () => {
+    const props = Card.props;
+    expect(props.header.default).toBe('');
+    expect(props.shadow.default).toBe('always');
   });
 });
