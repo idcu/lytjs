@@ -1,208 +1,258 @@
 /**
- * @lytjs/ui - TreeSelect 组件
+ * @lytjs/ui - TreeSelect 树形选择器组件
  *
- * 树形选择器组件，支持单选、多选、搜索、懒加载等功能
+ * 树形选择器组件，结合了 Select 和 Tree 功能
  */
 
+import type { TreeSelectProps, TreeSelectSlots, TreeSelectSetupProps, TreeSelectNode } from './types';
 import { defineComponent } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
-import { signal } from '@lytjs/reactivity';
-import type { TreeSelectNode, TreeSelectSetupProps, TreeSelectSlots } from './types';
+import { isString, isObject } from '@lytjs/common-is';
+import { signal, computed } from '@lytjs/reactivity';
 
+/**
+ * TreeSelect 树形选择器组件
+ */
 export const TreeSelect = defineComponent({
   name: 'LytTreeSelect',
 
   props: {
-    modelValue: { type: [String, Number, Array] as unknown as StringConstructor, default: '' },
-    options: { type: Array, default: (): TreeSelectNode[] => [] },
+    data: { type: Array as () => TreeSelectNode[], default: () => [] },
+    value: { type: [String, Number], default: '' },
     placeholder: { type: String, default: '请选择' },
-    disabled: { type: Boolean, default: false },
-    clearable: { type: Boolean, default: true },
     multiple: { type: Boolean, default: false },
-    checkStrictly: { type: Boolean, default: false },
+    clearable: { type: Boolean, default: false },
     filterable: { type: Boolean, default: false },
-    showCheckbox: { type: Boolean, default: false },
+    filterPlaceholder: { type: String, default: '请输入搜索内容' },
+    nodeKey: { type: String, default: 'value' },
+    defaultExpandAll: { type: Boolean, default: false },
+    defaultExpandedKeys: { type: Array as () => (string | number)[], default: () => [] },
     class: { type: String, default: '' },
+    style: { type: [String, Object], default: '' },
     onChange: { type: Function, default: undefined },
-    onClear: { type: Function, default: undefined },
   },
 
-  setup(props: Record<string, unknown>, { slots }: { slots: TreeSelectSlots }) {
-    const p = props as TreeSelectSetupProps;
-    const isOpen = signal(false);
-    const selectedValues = signal<Set<string | number>>(new Set());
-    const searchText = signal('');
+  setup(props: Record<string, unknown>, { slots, emit }) {
+    const _props = props as TreeSelectSetupProps;
+    const visible = signal(false);
+    const filterQuery = signal('');
+    const expandedKeys = signal<(string | number)[]>(
+      _props.defaultExpandAll 
+        ? getAllNodeKeys(_props.data) 
+        : _props.defaultExpandedKeys
+    );
+    const selectedLabel = signal('');
 
-    const toggleDropdown = () => {
-      if (p.disabled) return;
-      isOpen.set(!isOpen());
+    function getAllNodeKeys(nodes: TreeSelectNode[]): (string | number)[] {
+      const keys: (string | number)[] = [];
+      const traverse = (nodeList: TreeSelectNode[]) => {
+        for (const node of nodeList) {
+          keys.push(node[_props.nodeKey]);
+          if (node.children && node.children.length > 0) {
+            traverse(node.children);
+          }
+        }
+      };
+      traverse(nodes);
+      return keys;
+    }
+
+    const filteredData = computed(() => {
+      if (!filterQuery.value) return _props.data;
+      
+      const filterNodes = (nodes: TreeSelectNode[]): TreeSelectNode[] => {
+        return nodes
+          .map(node => {
+            let filteredChildren: TreeSelectNode[] = [];
+            if (node.children && node.children.length > 0) {
+              filteredChildren = filterNodes(node.children);
+            }
+            
+            const labelMatch = node.label.toLowerCase().includes(filterQuery.value.toLowerCase());
+            const hasMatchingChildren = filteredChildren.length > 0;
+            
+            if (labelMatch || hasMatchingChildren) {
+              return {
+                ...node,
+                children: hasMatchingChildren ? filteredChildren : node.children,
+              };
+            }
+            
+            return null;
+          })
+          .filter(Boolean) as TreeSelectNode[];
+      };
+      
+      return filterNodes(_props.data);
+    });
+
+    const selectedNode = computed(() => {
+      const findNode = (nodes: TreeSelectNode[]): TreeSelectNode | null => {
+        for (const node of nodes) {
+          if (node[_props.nodeKey] === _props.value) {
+            return node;
+          }
+          if (node.children && node.children.length > 0) {
+            const found = findNode(node.children);
+            if (found) return found;
+          }
+        }
+        return null;
+      };
+      return findNode(_props.data);
+    });
+
+    const handleToggle = () => {
+      visible.value = !visible.value;
+    };
+
+    const handleClear = () => {
+      emit('update:value', '');
+      _props.onChange?.('', null);
     };
 
     const handleSelect = (node: TreeSelectNode) => {
       if (node.disabled) return;
-
-      if (p.multiple) {
-        const newSelected = new Set(selectedValues());
-        if (newSelected.has(node.value)) {
-          newSelected.delete(node.value);
-        } else {
-          newSelected.add(node.value);
-        }
-        selectedValues.set(newSelected);
-        p.onChange?.(Array.from(newSelected));
-      } else {
-        selectedValues.set(new Set([node.value]));
-        isOpen.set(false);
-        p.onChange?.(node.value);
-      }
+      emit('update:value', node[_props.nodeKey]);
+      _props.onChange?.(node[_props.nodeKey], node);
+      selectedLabel.value = node.label;
+      visible.value = false;
     };
 
-    const handleClear = (e: Event) => {
+    const handleToggleExpand = (node: TreeSelectNode, e: Event) => {
       e.stopPropagation();
-      selectedValues.set(new Set());
-      p.onClear?.();
-      p.onChange?.(p.multiple ? [] : '');
+      const key = node[_props.nodeKey];
+      if (expandedKeys.value.includes(key)) {
+        expandedKeys.value = expandedKeys.value.filter(k => k !== key);
+      } else {
+        expandedKeys.value.push(key);
+      }
     };
 
-    const flattenTree = (nodes: TreeSelectNode[], result: TreeSelectNode[] = []): TreeSelectNode[] => {
-      for (const node of nodes) {
-        result.push(node);
-        if (node.children) {
-          flattenTree(node.children, result);
+    const getTreeSelectClass = () => {
+      const classes = ['lyt-tree-select'];
+      if (visible.value) classes.push('is-visible');
+      if (_props.class) classes.push(_props.class);
+      return classes.join(' ');
+    };
+
+    const getTreeSelectStyle = () => {
+      const style: Record<string, string> = {};
+      if (_props.style) {
+        if (isString(_props.style)) {
+          return _props.style;
+        }
+        if (isObject(_props.style)) {
+          Object.assign(style, _props.style);
         }
       }
-      return result;
-    };
-
-    const getSelectedLabels = (): string => {
-      const allNodes = flattenTree(p.options);
-      const selected = Array.from(selectedValues());
-      const labels = selected.map(v => {
-        const node = allNodes.find(n => n.value === v);
-        return node?.label || '';
-      }).filter(Boolean);
-
-      if (!p.multiple) {
-        return labels[0] || '';
-      }
-      return labels.length > 0 ? `${labels.length} 项` : '';
-    };
-
-    const filterOptions = (nodes: TreeSelectNode[], keyword: string): TreeSelectNode[] => {
-      if (!keyword) return nodes;
-      const result: TreeSelectNode[] = [];
-
-      for (const node of nodes) {
-        if (node.label.includes(keyword)) {
-          result.push(node);
-        } else if (node.children) {
-          const filteredChildren = filterOptions(node.children, keyword);
-          if (filteredChildren.length > 0) {
-            result.push({ ...node, children: filteredChildren });
-          }
-        }
-      }
-
-      return result;
+      return style;
     };
 
     const renderNode = (node: TreeSelectNode, level: number = 0): VNode => {
-      const isSelected = selectedValues().has(node.value);
-      const indent = level * 20;
-
+      const isExpanded = expandedKeys.value.includes(node[_props.nodeKey]);
+      const isSelected = node[_props.nodeKey] === _props.value;
+      const hasChildren = node.children && node.children.length > 0;
+      
       const nodeChildren: VNode[] = [];
-
-      if (node.children && node.children.length > 0) {
-        nodeChildren.push(createVNode('span', { class: 'lyt-tree-select__arrow' }, [createVNode('span', {}, '▶')]));
-      }
-
-      if (p.showCheckbox) {
-        nodeChildren.push(createVNode('input', {
-          type: 'checkbox',
-          checked: isSelected,
-          disabled: node.disabled,
-        }));
-      }
-
-      if (slots.default) {
-        nodeChildren.push(...slots.default(node));
+      
+      // Expand button
+      if (hasChildren) {
+        nodeChildren.push(createVNode('span', {
+          class: ['lyt-tree-node-expand-icon', isExpanded ? 'is-expanded' : ''],
+          onClick: (e: Event) => handleToggleExpand(node, e),
+        }, isExpanded ? '▼' : '▶'));
       } else {
-        nodeChildren.push(createVNode('span', {}, String(node.label)));
+        nodeChildren.push(createVNode('span', { class: 'lyt-tree-node-expand-icon' }, ''));
+      }
+      
+      // Node label
+      nodeChildren.push(createVNode('span', {
+        class: 'lyt-tree-node-label',
+      }, node.label));
+
+      const nodeVNode = createVNode('div', {
+        class: ['lyt-tree-node', { 'is-selected': isSelected, 'is-disabled': node.disabled, 'is-expanded': isExpanded }],
+        style: { paddingLeft: `${level * 20}px` },
+        onClick: () => handleSelect(node),
+        key: node[_props.nodeKey],
+      }, nodeChildren);
+
+      if (hasChildren && isExpanded) {
+        return createVNode('div', { class: 'lyt-tree-node-wrapper' }, [
+          nodeVNode,
+          ...node.children!.map(child => renderNode(child, level + 1)),
+        ]);
       }
 
-      return createVNode('div', {
-        key: String(node.value),
-        class: [
-          'lyt-tree-select__node',
-          isSelected ? 'lyt-tree-select__node--selected' : '',
-          node.disabled ? 'lyt-tree-select__node--disabled' : '',
-        ].filter(Boolean).join(' '),
-        style: `padding-left: ${indent}px`,
-        onClick: () => handleSelect(node),
-      }, nodeChildren);
+      return nodeVNode;
     };
 
     return () => {
-      const selectClass = [
-        'lyt-tree-select',
-        isOpen() ? 'lyt-tree-select--open' : '',
-        p.disabled ? 'lyt-tree-select--disabled' : '',
-        p.class,
-      ].filter(Boolean).join(' ');
-
-      const selectedLabel = getSelectedLabels();
-      const displayValue = selectedLabel || p.placeholder;
-
-      const filteredOptions = searchText() ? filterOptions(p.options, searchText()) : p.options;
-
-      const triggerChildren: VNode[] = [
-        createVNode('span', {
-          class: ['lyt-tree-select__value', !selectedLabel ? 'lyt-tree-select__placeholder' : ''].filter(Boolean).join(' '),
-        }, [createVNode('span', {}, String(displayValue))]),
-      ];
-
-      if (p.clearable && selectedValues().size > 0) {
+      const children: VNode[] = [];
+      
+      // Trigger
+      const triggerChildren: VNode[] = [];
+      
+      triggerChildren.push(createVNode('span', { class: 'lyt-tree-select-value' }, 
+        selectedNode.value ? selectedNode.value.label : _props.placeholder
+      ));
+      
+      if (_props.clearable && selectedNode.value) {
         triggerChildren.push(createVNode('span', {
-          class: 'lyt-tree-select__clear',
-          onClick: handleClear,
-        }, [createVNode('span', {}, '×')]));
+          class: 'lyt-tree-select-clear',
+          onClick: (e: Event) => {
+            e.stopPropagation();
+            handleClear();
+          },
+        }, '×'));
+      }
+      
+      triggerChildren.push(createVNode('span', { class: 'lyt-tree-select-arrow' }, '▼'));
+      
+      children.push(createVNode('div', {
+        class: 'lyt-tree-select-trigger',
+        onClick: handleToggle,
+      }, triggerChildren));
+
+      // Dropdown
+      if (visible.value) {
+        const dropdownChildren: VNode[] = [];
+        
+        if (_props.filterable) {
+          dropdownChildren.push(createVNode('div', { class: 'lyt-tree-select-search' }, [
+            createVNode('input', {
+              type: 'text',
+              placeholder: _props.filterPlaceholder,
+              value: filterQuery.value,
+              onInput: (e: Event) => {
+                const target = e.target as HTMLInputElement;
+                filterQuery.value = target.value;
+              },
+            }),
+          ]));
+        }
+        
+        const treeChildren: VNode[] = [];
+        if (filteredData.value.length > 0) {
+          treeChildren.push(...filteredData.value.map(node => renderNode(node, 0)));
+        } else if (slots.empty) {
+          treeChildren.push(slots.empty());
+        } else {
+          treeChildren.push(createVNode('div', { class: 'lyt-tree-select-empty' }, '暂无数据'));
+        }
+        
+        dropdownChildren.push(createVNode('div', { class: 'lyt-tree-select-tree' }, treeChildren));
+        
+        children.push(createVNode('div', { class: 'lyt-tree-select-dropdown' }, dropdownChildren));
       }
 
-      triggerChildren.push(createVNode('span', { class: 'lyt-tree-select__arrow' }, [createVNode('span', {}, '▼')]));
-
-      const dropdownChildren: VNode[] = [];
-
-      if (p.filterable) {
-        dropdownChildren.push(createVNode('div', { class: 'lyt-tree-select__search' }, [
-          createVNode('input', {
-            type: 'text',
-            placeholder: '搜索',
-            value: searchText(),
-            onInput: (e: Event) => searchText.set((e.target as HTMLInputElement).value),
-          }),
-        ]));
-      }
-
-      if (filteredOptions.length === 0) {
-        dropdownChildren.push(createVNode('div', { class: 'lyt-tree-select__empty' }, [createVNode('span', {}, '无匹配选项')]));
-      } else {
-        dropdownChildren.push(...filteredOptions.map(node => renderNode(node)));
-      }
-
-      const resultChildren: VNode[] = [
-        createVNode('div', {
-          class: 'lyt-tree-select__trigger',
-          onClick: toggleDropdown,
-        }, triggerChildren),
-      ];
-
-      if (isOpen()) {
-        resultChildren.push(createVNode('div', { class: 'lyt-tree-select__dropdown' }, dropdownChildren));
-      }
-
-      return createVNode('div', { class: selectClass }, resultChildren);
+      return createVNode('div', {
+        class: getTreeSelectClass(),
+        style: getTreeSelectStyle(),
+      }, children);
     };
   },
 });
 
-export type { TreeSelectProps, TreeSelectSlots, TreeSelectNode, TreeSelectSetupProps } from './types';
+export type { TreeSelectProps, TreeSelectSlots };

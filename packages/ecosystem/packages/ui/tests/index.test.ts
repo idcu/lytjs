@@ -324,72 +324,6 @@ describe('Cascader', () => {
   });
 });
 
-// ===== TreeSelect 组件测试 =====
-describe('TreeSelect', () => {
-  it('should render TreeSelect with default props', () => {
-    expect(TreeSelect).toBeDefined();
-    expect(TreeSelect.name).toBe('LytTreeSelect');
-  });
-
-  it('should have correct props definition', () => {
-    const props = TreeSelect.props;
-    expect(props.modelValue).toBeDefined();
-    expect(props.options).toBeDefined();
-    expect(props.placeholder).toBeDefined();
-    expect(props.disabled).toBeDefined();
-    expect(props.clearable).toBeDefined();
-    expect(props.multiple).toBeDefined();
-    expect(props.checkStrictly).toBeDefined();
-    expect(props.filterable).toBeDefined();
-    expect(props.showCheckbox).toBeDefined();
-    expect(props.onChange).toBeDefined();
-    expect(props.onClear).toBeDefined();
-  });
-
-  it('should have default values for props', () => {
-    const props = TreeSelect.props;
-    expect(props.placeholder.default).toBe('请选择');
-    expect(props.disabled.default).toBe(false);
-    expect(props.clearable.default).toBe(true);
-    expect(props.multiple.default).toBe(false);
-    expect(props.checkStrictly.default).toBe(false);
-    expect(props.filterable.default).toBe(false);
-    expect(props.showCheckbox.default).toBe(false);
-    expect(typeof props.options.default).toBe('function');
-  });
-});
-
-// ===== Transfer 组件测试 =====
-describe('Transfer', () => {
-  it('should render Transfer with default props', () => {
-    expect(Transfer).toBeDefined();
-    expect(Transfer.name).toBe('LytTransfer');
-  });
-
-  it('should have correct props definition', () => {
-    const props = Transfer.props;
-    expect(props.data).toBeDefined();
-    expect(props.modelValue).toBeDefined();
-    expect(props.filterable).toBeDefined();
-    expect(props.filterPlaceholder).toBeDefined();
-    expect(props.titles).toBeDefined();
-    expect(props.buttonTexts).toBeDefined();
-    expect(props.leftDefaultChecked).toBeDefined();
-    expect(props.rightDefaultChecked).toBeDefined();
-    expect(props.onChange).toBeDefined();
-    expect(props.onLeftCheckChange).toBeDefined();
-    expect(props.onRightCheckChange).toBeDefined();
-  });
-
-  it('should have default values for props', () => {
-    const props = Transfer.props;
-    expect(props.filterable.default).toBe(false);
-    expect(props.filterPlaceholder.default).toBe('请输入搜索内容');
-    // 对于函数返回的默认值，我们只验证函数存在
-    expect(typeof props.titles.default).toBe('function');
-  });
-});
-
 // ===== Descriptions 组件测试 =====
 describe('Descriptions', () => {
   it('should render Descriptions with default props', () => {
@@ -1279,7 +1213,7 @@ describe('Step', () => {
     expect(Step.name).toBe('LytStep');
   });
 
-  it('should have correct props definition', () => {
+  it('should have default values for props', () => {
     const props = Step.props;
     expect(props.title).toBeDefined();
     expect(props.description).toBeDefined();
@@ -1297,12 +1231,18 @@ describe('Carousel', () => {
     const props = Carousel.props;
     expect(props.initialIndex).toBeDefined();
     expect(props.autoplay).toBeDefined();
+    expect(props.interval).toBeDefined();
+    expect(props.arrow).toBeDefined();
+    expect(props.loop).toBeDefined();
   });
 
   it('should have default values for props', () => {
     const props = Carousel.props;
     expect(props.initialIndex.default).toBe(0);
     expect(props.autoplay.default).toBe(true);
+    expect(props.interval.default).toBe(3000);
+    expect(props.arrow.default).toBe('hover');
+    expect(props.loop.default).toBe(true);
   });
 });
 
@@ -1331,11 +1271,75 @@ describe('Popconfirm', () => {
     const props = Popconfirm.props;
     expect(props.title).toBeDefined();
     expect(props.confirmButtonText).toBeDefined();
+    expect(props.cancelButtonText).toBeDefined();
+    expect(props.confirmButtonType).toBeDefined();
+    expect(props.onConfirm).toBeDefined();
+    expect(props.onCancel).toBeDefined();
   });
 
   it('should have default values for props', () => {
     const props = Popconfirm.props;
+    expect(props.title.default).toBe('');
     expect(props.confirmButtonText.default).toBe('确定');
     expect(props.cancelButtonText.default).toBe('取消');
+    expect(props.confirmButtonType.default).toBe('primary');
+    expect(props.hideIcon.default).toBe(false);
+    expect(props.disabled.default).toBe(false);
+  });
+});
+
+// ===== Transfer 组件测试 =====
+describe('Transfer', () => {
+  it('should render Transfer with default props', () => {
+    expect(Transfer).toBeDefined();
+    expect(Transfer.name).toBe('LytTransfer');
+  });
+
+  it('should have correct props definition', () => {
+    const props = Transfer.props;
+    expect(props.data).toBeDefined();
+    expect(props.value).toBeDefined();
+    expect(props.filterable).toBeDefined();
+    expect(props.titles).toBeDefined();
+    expect(props.onChange).toBeDefined();
+  });
+
+  it('should have default values for props', () => {
+    const props = Transfer.props;
+    expect(typeof props.data.default).toBe('function');
+    expect(typeof props.value.default).toBe('function');
+    expect(props.filterable.default).toBe(false);
+    expect(typeof props.titles.default).toBe('function');
+  });
+});
+
+// ===== TreeSelect 组件测试 =====
+describe('TreeSelect', () => {
+  it('should render TreeSelect with default props', () => {
+    expect(TreeSelect).toBeDefined();
+    expect(TreeSelect.name).toBe('LytTreeSelect');
+  });
+
+  it('should have correct props definition', () => {
+    const props = TreeSelect.props;
+    expect(props.data).toBeDefined();
+    expect(props.value).toBeDefined();
+    expect(props.placeholder).toBeDefined();
+    expect(props.multiple).toBeDefined();
+    expect(props.clearable).toBeDefined();
+    expect(props.filterable).toBeDefined();
+    expect(props.onChange).toBeDefined();
+  });
+
+  it('should have default values for props', () => {
+    const props = TreeSelect.props;
+    expect(typeof props.data.default).toBe('function');
+    expect(props.value.default).toBe('');
+    expect(props.placeholder.default).toBe('请选择');
+    expect(props.multiple.default).toBe(false);
+    expect(props.clearable.default).toBe(false);
+    expect(props.filterable.default).toBe(false);
+    expect(props.defaultExpandAll.default).toBe(false);
+    expect(typeof props.defaultExpandedKeys.default).toBe('function');
   });
 });

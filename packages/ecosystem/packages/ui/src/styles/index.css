@@ -1120,4 +1120,226 @@
   gap: 8px;
 }
 
+/* ===== Transfer 穿梭框组件 ===== */
+.lyt-transfer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lyt-transfer-panel {
+  flex: 1;
+  border: 1px solid var(--lyt-border-color-lighter);
+  border-radius: var(--lyt-border-radius-base);
+  overflow: hidden;
+  background-color: var(--lyt-bg-color);
+}
+
+.lyt-transfer-panel-header {
+  padding: 8px 12px;
+  background-color: var(--lyt-bg-color-page);
+  border-bottom: 1px solid var(--lyt-border-color-lighter);
+  font-weight: 500;
+  color: var(--lyt-text-color-primary);
+}
+
+.lyt-transfer-panel-body {
+  min-height: 200px;
+  max-height: 300px;
+  overflow-y: auto;
+  padding: 4px;
+}
+
+.lyt-transfer-filter {
+  width: 100%;
+  padding: 6px 8px;
+  margin-bottom: 4px;
+  border: 1px solid var(--lyt-border-color-lighter);
+  border-radius: var(--lyt-border-radius-base);
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.lyt-transfer-filter:focus {
+  outline: none;
+  border-color: var(--lyt-color-primary);
+}
+
+.lyt-transfer-panel-item {
+  padding: 6px 8px;
+  cursor: pointer;
+  border-radius: 4px;
+  margin-bottom: 2px;
+  transition: background-color 0.2s;
+}
+
+.lyt-transfer-panel-item:hover {
+  background-color: var(--lyt-fill-color-light);
+}
+
+.lyt-transfer-panel-item.is-checked {
+  background-color: var(--lyt-color-primary-light-9);
+  color: var(--lyt-color-primary);
+}
+
+.lyt-transfer-panel-item.is-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.lyt-transfer-panel-footer {
+  padding: 8px 12px;
+  border-top: 1px solid var(--lyt-border-color-lighter);
+}
+
+.lyt-transfer-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ===== TreeSelect 树形选择器组件 ===== */
+.lyt-tree-select {
+  position: relative;
+  display: inline-block;
+  width: 240px;
+}
+
+.lyt-tree-select-trigger {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  border: 1px solid var(--lyt-border-color-lighter);
+  border-radius: var(--lyt-border-radius-base);
+  cursor: pointer;
+  background-color: var(--lyt-bg-color);
+  transition: border-color 0.2s;
+}
+
+.lyt-tree-select-trigger:hover {
+  border-color: var(--lyt-border-color);
+}
+
+.lyt-tree-select.is-visible .lyt-tree-select-trigger {
+  border-color: var(--lyt-color-primary);
+}
+
+.lyt-tree-select-value {
+  flex: 1;
+  color: var(--lyt-text-color-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lyt-tree-select-clear {
+  margin-left: 8px;
+  color: var(--lyt-text-color-placeholder);
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.lyt-tree-select-clear:hover {
+  color: var(--lyt-color-danger);
+}
+
+.lyt-tree-select-arrow {
+  margin-left: 8px;
+  color: var(--lyt-text-color-placeholder);
+  transition: transform 0.2s;
+}
+
+.lyt-tree-select.is-visible .lyt-tree-select-arrow {
+  transform: rotate(180deg);
+}
+
+.lyt-tree-select-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 4px;
+  border: 1px solid var(--lyt-border-color-lighter);
+  border-radius: var(--lyt-border-radius-base);
+  background-color: var(--lyt-bg-color);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  overflow: hidden;
+}
+
+.lyt-tree-select-search {
+  padding: 8px;
+  border-bottom: 1px solid var(--lyt-border-color-lighter);
+}
+
+.lyt-tree-select-search input {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--lyt-border-color-lighter);
+  border-radius: var(--lyt-border-radius-base);
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.lyt-tree-select-search input:focus {
+  outline: none;
+  border-color: var(--lyt-color-primary);
+}
+
+.lyt-tree-select-tree {
+  max-height: 300px;
+  overflow-y: auto;
+  padding: 4px;
+}
+
+.lyt-tree-node {
+  display: flex;
+  align-items: center;
+  padding: 4px 8px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.lyt-tree-node:hover {
+  background-color: var(--lyt-fill-color-light);
+}
+
+.lyt-tree-node.is-selected {
+  background-color: var(--lyt-color-primary-light-9);
+  color: var(--lyt-color-primary);
+}
+
+.lyt-tree-node.is-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.lyt-tree-node-expand-icon {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: var(--lyt-text-color-secondary);
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.lyt-tree-node-expand-icon.is-expanded {
+  transform: rotate(90deg);
+}
+
+.lyt-tree-node-label {
+  flex: 1;
+  color: var(--lyt-text-color-primary);
+}
+
+.lyt-tree-select-empty {
+  padding: 20px;
+  text-align: center;
+  color: var(--lyt-text-color-placeholder);
+}
+
 

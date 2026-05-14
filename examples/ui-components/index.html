@@ -406,6 +406,42 @@ import { Popconfirm, Button } from '@lytjs/ui'
           </div>
         </div>
       </div>
+
+      <div class="component-card">
+        <div class="card-header">
+          <h3>↔️ Transfer 穿梭框</h3>
+        </div>
+        <div class="card-body">
+          <p>穿梭框组件，用于将数据从一侧移动到另一侧</p>
+          <div class="code-block">
+import { Transfer } from '@lytjs/ui'
+&lt;Transfer 
+  data={data} 
+  value={selectedValues} 
+  onChange={handleChange}
+  filterable
+/&gt;
+          </div>
+        </div>
+      </div>
+
+      <div class="component-card">
+        <div class="card-header">
+          <h3>🌳 TreeSelect 树形选择器</h3>
+        </div>
+        <div class="card-body">
+          <p>树形选择器组件，结合了 Select 和 Tree 的功能</p>
+          <div class="code-block">
+import { TreeSelect } from '@lytjs/ui'
+&lt;TreeSelect 
+  data={treeData} 
+  value={selectedValue} 
+  onChange={handleChange}
+  placeholder="请选择"
+/&gt;
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </body>
