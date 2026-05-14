@@ -41,39 +41,62 @@
 
 ## 二、下一步行动项
 
-### 立即执行
+### 已完成
 
-#### 1. UI 包类型修复
+#### 1. 核心包依赖修复
 
 **问题分析**：
-- 主要问题：Signal API 使用错误（使用 `.value` 而非函数调用）
-- `signal()` 返回 `WritableSignal`，使用 `()` 调用
-- `computed()` 返回 `ComputedRef`，使用 `.value` 访问
-- VNode 类型不兼容问题（字符串不能直接赋值给 VNode）
-- `mergeA11yProps` 函数找不到
-- types.ts 中存在重复类型声明
+- 多个核心包（core、reactivity、component、vdom、renderer、compiler）使用了 `@lytjs/common-*` 工具包
+- 但 package.json dependencies 中未声明这些依赖
+- 导致基准测试无法正常运行
 
-**修复策略**：
-1. 先修复 signal/computed API 使用问题
-2. 修复 VNode 子节点类型问题
-3. 统一 a11y props 类型
-4. 清理重复类型声明
+**修复内容**：
+- @lytjs/core: 添加 common-error、common-object
+- @lytjs/reactivity: 添加 common-error、common-constants、common-assertions
+- @lytjs/component: 添加 common-error、common-string
+- @lytjs/vdom: 添加 common-assertions、common-error、common-object、common-constants
+- @lytjs/renderer: 添加 common-error
+- @lytjs/compiler: 添加 common-string、common-constants
 
-#### 2. 测试覆盖率提升
+#### 2. 基准测试配置修复
 
-**当前状态**：
-- reactivity: 236/236 测试通过 ✅
-- vdom: 403/403 测试通过 ✅
-- 插件: 50/50 测试通过 ✅
-- UI 组件: 需要补充测试覆盖
+**修复内容**：
+- benchmarks/vitest.config.ts: 修改别名指向 dist 而非 src
+- 基准测试现已全部通过（render/update/memory）
 
-**目标**：
-- 核心包测试覆盖率达到 95%+
-- UI 组件测试覆盖率达到 90%+
+#### 3. E2E 测试增强
+
+**修复内容**：
+- e2e/playwright.config.ts: 修复 filter 名称（playground → lytjs-playground）
+- 新增 e2e/tests/scenarios.test.ts，覆盖：
+  - 计数器组件测试
+  - 待办事项组件测试
+  - 颜色选择器组件测试
+  - 计时器组件测试
+  - 购物车组件测试
+  - 井字棋组件测试
+  - 天气仪表盘组件测试
 
 ---
 
-## 三、暂缓任务
+## 三、下一步待执行任务
+
+### 🟡 中优先级
+
+| 任务 | 描述 | 状态 |
+| ---- | ---- | ---- |
+| **E2E 测试完善** | 完善 Playwright E2E 测试环境配置，确保测试可正常运行 | 🔄 进行中 |
+| **CI/CD 集成** | 完善 GitHub/Gitee Actions CI/CD 配置 | ⏸️ 待启动 |
+
+### 🟢 低优先级
+
+| 任务 | 描述 | 状态 |
+| ---- | ---- | ---- |
+| **性能优化** | 基于基准测试数据进行性能优化 | ⏸️ 待启动 |
+
+---
+
+## 四、暂缓任务
 
 ### 构建器多适配
 
@@ -149,13 +172,27 @@ pnpm build
 
 ---
 
-**文档版本**: v7.0
+**文档版本**: v7.1
 **最后更新**: 2026-05-14
 **维护者**: LytJS Team
 
 ---
 
 ## 更新日志
+
+### v7.1 (2026-05-14)
+
+- ✅ **核心包依赖修复**
+  - 修复 6 个核心包的 package.json dependencies 声明问题
+  - @lytjs/core、@lytjs/reactivity、@lytjs/component、@lytjs/vdom、@lytjs/renderer、@lytjs/compiler
+
+- ✅ **基准测试配置修复**
+  - benchmarks/vitest.config.ts: 修改别名指向 dist
+  - 基准测试现已全部通过（render/update/memory）
+
+- ✅ **E2E 测试增强**
+  - 修复 e2e/playwright.config.ts filter 名称
+  - 新增 scenarios.test.ts 覆盖 7 个组件场景
 
 ### v7.0 (2026-05-14)
 
