@@ -54,6 +54,12 @@ export default defineConfig({
           ],
         },
         {
+          text: '实战项目',
+          items: [
+            { text: 'Todo 应用', link: '/tutorial/todo-app-example' },
+          ],
+        },
+        {
           text: '高级教程',
           items: [
             { text: '性能优化', link: '/tutorial/performance' },
