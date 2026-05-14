@@ -316,13 +316,24 @@ packages/
 
 ---
 
-**文档版本**: v5.3
+**文档版本**: v5.4
 **最后更新**: 2026-05-14
 **维护者**: LytJS Team
 
 ---
 
 ## 更新日志
+
+### v5.4 (2026-05-14)
+
+- ✅ 继续完善 UI 组件库类型定义，新增 6 个核心组件
+- ✅ 修复 Tabs 组件，建立 TabPaneSetupProps、TabPaneSlots、DragState 等完整类型
+- ✅ 修复 Menu 组件，建立 MenuItem、MenuSetupProps、MenuSlots 等完整类型
+- ✅ 修复 Breadcrumb 组件，建立 BreadcrumbItem、BreadcrumbProps 等完整类型
+- ✅ 修复 Alert 组件，建立 AlertType、AlertEffect、AlertSetupProps 等完整类型
+- ✅ 修复 Message 组件，建立 MessageOptions、MessageInstance 等完整类型
+- ✅ 修复测试文件以匹配 Menu 组件的新 props 定义
+- ✅ 所有 135 个测试通过，性能表现卓越
 
 ### v5.3 (2026-05-14)
 

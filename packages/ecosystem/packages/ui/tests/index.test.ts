@@ -193,23 +193,21 @@ describe('Menu', () => {
 
   it('should have correct props definition', () => {
     const props = Menu.props;
-    expect(props.data).toBeDefined();
-    expect(props.defaultOpenKeys).toBeDefined();
-    expect(props.defaultSelectedKeys).toBeDefined();
     expect(props.mode).toBeDefined();
-    expect(props.theme).toBeDefined();
-    expect(props.collapsible).toBeDefined();
-    expect(props.collapsed).toBeDefined();
-    expect(props.onClick).toBeDefined();
-    expect(props.onOpenChange).toBeDefined();
+    expect(props.defaultActive).toBeDefined();
+    expect(props.defaultOpeneds).toBeDefined();
+    expect(props.uniqueOpened).toBeDefined();
+    expect(props.onSelect).toBeDefined();
+    expect(props.onOpen).toBeDefined();
+    expect(props.onClose).toBeDefined();
   });
 
   it('should have default values for props', () => {
     const props = Menu.props;
-    expect(props.mode.default).toBe('vertical');
-    expect(props.theme.default).toBe('light');
-    expect(props.collapsible.default).toBe(false);
-    expect(props.collapsed.default).toBe(false);
+    expect(props.mode.default).toBe('horizontal');
+    expect(props.defaultActive.default).toBe('');
+    expect(props.uniqueOpened.default).toBe(false);
+    expect(typeof props.defaultOpeneds.default).toBe('function');
   });
 });
 
