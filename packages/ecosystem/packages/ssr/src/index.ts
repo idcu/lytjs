@@ -11,11 +11,26 @@ export { renderToString, renderToHtml } from './render';
 export { VirtualList } from './virtualList';
 
 // 流式服务端渲染
-export { renderToStream, renderToStreamAsync } from './stream';
-export type { StreamRenderOptions } from './stream';
+export { 
+  renderToStream, 
+  renderToStreamAsync, 
+  renderToStreamEnhanced 
+} from './stream';
+export type { 
+  StreamRenderOptions, 
+  EnhancedStreamRenderOptions,
+  DataPrefetchContext,
+  PrefetchResult,
+  PrefetchableComponent
+} from './stream';
 
 // 静态站点生成
-export { generateStaticPages, generateRouteManifest, validatePages } from './ssg';
+export { 
+  generateStaticPages, 
+  generateRouteManifest, 
+  validatePages,
+  writeStaticFiles
+} from './ssg';
 export type { SSGPage, SSGOptions } from './ssg';
 
 // 水合提示

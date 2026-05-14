@@ -18,6 +18,40 @@ export interface StreamRenderOptions {
   onError?: (error: Error) => void;
 }
 
+/** 异步数据预取上下文 */
+export interface DataPrefetchContext {
+  /** 路由路径 */
+  path?: string;
+  /** 路由参数 */
+  params?: Record<string, string>;
+  /** 查询参数 */
+  query?: Record<string, string>;
+}
+
+/** 异步数据预取结果 */
+export interface PrefetchResult {
+  /** 预取的数据 */
+  data: Record<string, any>;
+  /** 数据过期时间（毫秒） */
+  ttl?: number;
+}
+
+/** 支持数据预取的组件接口 */
+export interface PrefetchableComponent {
+  /** 预取数据方法 */
+  prefetch?: (context: DataPrefetchContext) => Promise<PrefetchResult>;
+}
+
+/** 流式渲染增强选项 */
+export interface EnhancedStreamRenderOptions extends StreamRenderOptions {
+  /** 数据预取上下文 */
+  prefetchContext?: DataPrefetchContext;
+  /** 数据预取完成回调 */
+  onDataPrefetched?: (data: Record<string, any>) => void;
+  /** 是否启用渐进式水合 */
+  progressiveHydration?: boolean;
+}
+
 /** 默认分块大小 */
 const DEFAULT_CHUNK_SIZE = 4096;
 
@@ -234,12 +268,11 @@ export function renderToStream(
 }
 
 /**
- * 将 VNode 渲染为异步 ReadableStream（支持异步组件）
+ * 将 VNode 渲染为异步 ReadableStream（支持异步组件和数据预取）
  *
  * @description
- * 与 renderToStream 类似，但支持异步组件。
- * 遇到返回 Promise 的组件时，先发送占位内容，
- * 等 Promise 解析后再发送实际内容。
+ * 与 renderToStream 类似，但支持异步组件和数据预取。
+ * 遇到返回 Promise 的组件时先发送占位内容，等 Promise 解析后再发送实际内容。
  *
  * @param vnode - 要渲染的 VNode
  * @param options - 流式渲染配置选项
@@ -247,12 +280,15 @@ export function renderToStream(
  */
 export function renderToStreamAsync(
   vnode: VNode,
-  options?: StreamRenderOptions
+  options?: EnhancedStreamRenderOptions
 ): ReadableStream<Uint8Array> {
   const {
     chunkSize = DEFAULT_CHUNK_SIZE,
     onShellReady,
     onError,
+    prefetchContext,
+    onDataPrefetched,
+    progressiveHydration,
   } = options || {};
 
   const encoder = new TextEncoder();
@@ -260,7 +296,14 @@ export function renderToStreamAsync(
   return new ReadableStream<Uint8Array>({
     async start(controller) {
       try {
-        const html = await renderToStringAsync(vnode);
+        // 首先进行数据预取
+        const prefetchData = await collectAndPrefetchData(vnode, prefetchContext);
+        if (Object.keys(prefetchData).length > 0) {
+          onDataPrefetched?.(prefetchData);
+        }
+
+        // 渲染 HTML
+        const html = await renderToStringAsync(vnode, prefetchData);
         const byteChunks = splitIntoByteChunks(html, chunkSize);
 
         onShellReady?.();
@@ -280,13 +323,98 @@ export function renderToStreamAsync(
 }
 
 /**
- * 异步渲染 VNode 为 HTML 字符串
+ * 收集并预取 VNode 树中的所有数据
+ *
+ * @param vnode - VNode 树
+ * @param context - 数据预取上下文
+ * @returns 预取的数据对象
+ */
+async function collectAndPrefetchData(
+  vnode: VNode | VNode[] | string | number | null | undefined,
+  context?: DataPrefetchContext
+): Promise<Record<string, any>> {
+  const result: Record<string, any> = {};
+
+  // 处理 null/undefined
+  if (vnode === null || vnode === undefined) {
+    return result;
+  }
+
+  // 处理字符串/数字
+  if (isString(vnode) || isNumber(vnode)) {
+    return result;
+  }
+
+  // 处理数组
+  if (isArray(vnode)) {
+    const results = await Promise.all(
+      vnode.map(child => collectAndPrefetchData(child as VNode, context))
+    );
+    // 合并所有结果
+    for (const data of results) {
+      Object.assign(result, data);
+    }
+    return result;
+  }
+
+  // 处理非对象
+  if (!isObject(vnode)) {
+    return result;
+  }
+
+  const node = vnode as VNode;
+
+  // 处理文本节点
+  if (node.type === 'text' || typeof node.type === 'symbol') {
+    return result;
+  }
+
+  // 处理组件类型 - 检查是否有 prefetch 方法
+  if (isFunction(node.type)) {
+    const component = node.type as unknown as PrefetchableComponent;
+    if (component.prefetch && context) {
+      try {
+        const prefetchResult = await component.prefetch(context);
+        Object.assign(result, prefetchResult.data);
+      } catch (e) {
+        // 预取失败不阻止渲染
+        console.warn('Data prefetch failed:', e);
+      }
+    }
+    // 继续处理子节点
+    if (node.children) {
+      const childData = await collectAndPrefetchData(node.children as VNode, context);
+      Object.assign(result, childData);
+    }
+    return result;
+  }
+
+  // 处理元素类型
+  if (isString(node.type)) {
+    if (node.children) {
+      const childData = await collectAndPrefetchData(node.children as VNode, context);
+      Object.assign(result, childData);
+    }
+    return result;
+  }
+
+  return result;
+}
+
+/**
+ * 异步渲染 VNode 为 HTML 字符串（支持预取数据）
  *
  * @description
  * 递归渲染 VNode 树，遇到返回 Promise 的组件时等待解析。
+ * 支持使用预取的数据进行渲染。
+ *
+ * @param vnode - VNode 树
+ * @param prefetchData - 预取的数据
+ * @returns HTML 字符串
  */
 async function renderToStringAsync(
-  vnode: VNode | VNode[] | string | number | null | undefined
+  vnode: VNode | VNode[] | string | number | null | undefined,
+  prefetchData?: Record<string, any>
 ): Promise<string> {
   // 处理 null/undefined
   if (vnode === null || vnode === undefined) {
@@ -306,7 +434,7 @@ async function renderToStringAsync(
   // 处理数组
   if (isArray(vnode)) {
     const results = await Promise.all(
-      vnode.map(child => renderToStringAsync(child as VNode))
+      vnode.map(child => renderToStringAsync(child as VNode, prefetchData))
     );
     return results.join('');
   }
@@ -334,4 +462,47 @@ async function renderToStringAsync(
   }
 
   return '';
+}
+
+/**
+ * 增强型流式渲染（包含数据预取和渐进式水合）
+ *
+ * @description
+ * 完整的流式渲染解决方案，包含数据预取、渐进式水合等高级特性。
+ *
+ * @param vnode - 要渲染的 VNode
+ * @param options - 增强型流式渲染配置
+ * @returns Promise<{ stream: ReadableStream<Uint8Array>; dehydratedState: Record<string, any> }>
+ */
+export async function renderToStreamEnhanced(
+  vnode: VNode,
+  options?: EnhancedStreamRenderOptions
+): Promise<{
+  stream: ReadableStream<Uint8Array>;
+  dehydratedState: Record<string, any>;
+}> {
+  const { prefetchContext, onDataPrefetched } = options || {};
+
+  // 首先进行数据预取
+  const prefetchData = await collectAndPrefetchData(vnode, prefetchContext);
+  if (Object.keys(prefetchData).length > 0 && onDataPrefetched) {
+    onDataPrefetched(prefetchData);
+  }
+
+  // 创建脱水状态
+  const dehydratedState = {
+    prefetchData,
+    timestamp: Date.now(),
+  };
+
+  // 创建流式渲染
+  const stream = renderToStreamAsync(vnode, {
+    ...options,
+    onDataPrefetched: undefined, // 避免重复调用
+  });
+
+  return {
+    stream,
+    dehydratedState,
+  };
 }

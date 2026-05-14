@@ -2402,3 +2402,42 @@ export interface TreeSelectSetupProps extends Record<string, unknown> {
 }
 
 export type { VNode, Component };
+
+// ===== RichTextEditor 富文本编辑器组件 =====
+
+export interface RichTextEditorProps {
+  modelValue?: string;
+  placeholder?: string;
+  disabled?: boolean;
+  readonly?: boolean;
+  height?: string;
+  class?: string;
+  style?: string | Record<string, string>;
+  id?: string;
+  ariaLabel?: string;
+  ariaDescribedBy?: string;
+  onInput?: (value: string) => void;
+  onFocus?: (event: FocusEvent) => void;
+  onBlur?: (event: FocusEvent) => void;
+}
+
+export interface RichTextEditorSlots {
+  default?: () => VNode[];
+  toolbar?: () => VNode[];
+}
+
+export interface RichTextEditorSetupProps extends Record<string, unknown> {
+  modelValue: string;
+  placeholder: string;
+  disabled: boolean;
+  readonly: boolean;
+  height: string;
+  class: string;
+  style?: string | Record<string, string>;
+  id: string;
+  ariaLabel: string;
+  ariaDescribedBy: string;
+  onInput?: (value: string) => void;
+  onFocus?: (event: FocusEvent) => void;
+  onBlur?: (event: FocusEvent) => void;
+}

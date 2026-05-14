@@ -25,3 +25,14 @@ export type { I18nOptions, I18nInstance, Locale, LocaleMessages, TranslateFn } f
 export { createI18n, registerLocale } from '@lytjs/plugin-i18n';
 
 export { default as pluginVite } from '@lytjs/plugin-vite';
+
+export { default as pluginChart } from '@lytjs/plugin-chart';
+export type {
+  ChartDataPoint,
+  ChartDataset,
+  ChartType,
+  ChartConfig,
+  ChartInstance,
+  ChartPluginOptions,
+} from '@lytjs/plugin-chart';
+export { createChart, DEFAULT_COLORS } from '@lytjs/plugin-chart';

@@ -7,6 +7,8 @@
 import type { VNode } from '@lytjs/vdom';
 import { isString, isArray } from '@lytjs/common-is';
 import { renderToHtml } from './render';
+import { promises as fs } from 'fs';
+import { join, dirname } from 'path';
 
 /** SSG 页面配置 */
 export interface SSGPage {
@@ -23,6 +25,10 @@ export interface SSGPage {
     /** 元信息键值对 */
     meta?: Record<string, string>;
   };
+  /** 额外的脚本标签 */
+  scripts?: string[];
+  /** 额外的样式标签 */
+  styles?: string[];
 }
 
 /** SSG 生成选项 */
@@ -35,6 +41,16 @@ export interface SSGOptions {
   defaultTitle?: string;
   /** 默认语言 */
   lang?: string;
+  /** 是否生成 sitemap */
+  generateSitemap?: boolean;
+  /** 站点名称（用于 sitemap） */
+  siteName?: string;
+  /** 是否使用哈希路由 */
+  hashMode?: boolean;
+  /** 全局额外脚本 */
+  globalScripts?: string[];
+  /** 全局额外样式 */
+  globalStyles?: string[];
 }
 
 /** 默认 SSG 选项 */
@@ -43,6 +59,11 @@ const DEFAULT_SSG_OPTIONS: Required<SSGOptions> = {
   outDir: 'dist',
   defaultTitle: 'LytJS App',
   lang: 'zh-CN',
+  generateSitemap: false,
+  siteName: 'LytJS Site',
+  hashMode: false,
+  globalScripts: [],
+  globalStyles: [],
 };
 
 /**
@@ -105,7 +126,7 @@ function renderMetaTags(meta: Record<string, string>): string {
  * @returns 完整的 HTML 字符串
  */
 function renderPage(page: SSGPage, options: Required<SSGOptions>): string {
-  const { component, layout, head } = page;
+  const { component, layout, head, scripts, styles } = page;
   const title = head?.title || options.defaultTitle;
 
   // 构建 head 中的额外内容
@@ -114,12 +135,114 @@ function renderPage(page: SSGPage, options: Required<SSGOptions>): string {
     extraHead = renderMetaTags(head.meta);
   }
 
+  // 合并全局和页面的样式
+  const allStyles = [...(options.globalStyles || []), ...(styles || [])];
+  const allScripts = [...(options.globalScripts || []), ...(scripts || [])];
+
+  // 添加样式标签
+  if (allStyles.length > 0) {
+    extraHead += '\n  ' + allStyles.join('\n  ');
+  }
+
+  // 添加脚本标签到 head 结束之前
+  if (allScripts.length > 0) {
+    extraHead += '\n  ' + allScripts.join('\n  ');
+  }
+
   // 如果有布局，将组件包裹在布局中
   const content = layout
     ? renderToHtml(component, { title, lang: options.lang, head: extraHead })
     : renderToHtml(component, { title, lang: options.lang, head: extraHead });
 
   return content;
+}
+
+/**
+ * 生成 sitemap.xml
+ *
+ * @param pages - 页面配置数组
+ * @param options - SSG 选项
+ * @returns sitemap XML 字符串
+ */
+function generateSitemapXml(
+  pages: SSGPage[],
+  options: Required<SSGOptions>
+): string {
+  const baseUrl = options.baseUrl.endsWith('/') 
+    ? options.baseUrl.slice(0, -1) 
+    : options.baseUrl;
+
+  const urls = pages.map(page => {
+    const path = normalizePath(page.path);
+    const fullUrl = options.hashMode 
+      ? `${baseUrl}/#${path}` 
+      : `${baseUrl}${path}`;
+    const lastmod = new Date().toISOString().split('T')[0];
+    
+    return `  <url>
+    <loc>${fullUrl}</loc>
+    <lastmod>${lastmod}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>`;
+  }).join('\n');
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${urls}
+</urlset>`;
+}
+
+/**
+ * 将生成的 HTML 写入文件系统
+ *
+ * @description
+ * 将 generateStaticPages 生成的结果写入到指定的输出目录。
+ * 会自动创建所需的目录结构。
+ *
+ * @param pages - 页面配置数组
+ * @param options - SSG 选项
+ * @returns Promise<void>
+ *
+ * @example
+ * ```typescript
+ * await writeStaticFiles(pages, { outDir: 'build' });
+ * ```
+ */
+export async function writeStaticFiles(
+  pages: SSGPage[],
+  options?: SSGOptions
+): Promise<void> {
+  const resolvedOptions = { ...DEFAULT_SSG_OPTIONS, ...options };
+  const { outDir, generateSitemap, siteName } = resolvedOptions;
+
+  // 验证页面配置
+  const errors = validatePages(pages);
+  if (errors.length > 0) {
+    throw new Error(`页面配置验证失败:\n${errors.join('\n')}`);
+  }
+
+  // 生成静态页面
+  const staticPages = generateStaticPages(pages, resolvedOptions);
+
+  // 写入每个页面
+  for (const [filePath, html] of staticPages) {
+    const fullPath = join(outDir, filePath);
+    const dir = dirname(fullPath);
+    
+    // 创建目录（如果不存在）
+    await fs.mkdir(dir, { recursive: true });
+    
+    // 写入文件
+    await fs.writeFile(fullPath, html, 'utf-8');
+  }
+
+  // 如果需要，生成 sitemap
+  if (generateSitemap) {
+    const sitemapContent = generateSitemapXml(pages, resolvedOptions);
+    const sitemapPath = join(outDir, 'sitemap.xml');
+    await fs.writeFile(sitemapPath, sitemapContent, 'utf-8');
+  }
 }
 
 /**

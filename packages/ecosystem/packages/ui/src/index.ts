@@ -61,6 +61,7 @@ export { Step } from './components/Step';
 export { Carousel } from './components/Carousel';
 export { CarouselItem } from './components/CarouselItem';
 export { Popconfirm } from './components/Popconfirm';
+export { RichTextEditor } from './components/RichTextEditor';
 
 // 类型导出
 export type {
@@ -228,6 +229,9 @@ export type {
   MenuSlots,
   MenuItem,
   MenuSetupProps,
+  RichTextEditorProps,
+  RichTextEditorSlots,
+  RichTextEditorSetupProps,
 } from './components/types';
 
 // 组件安装
