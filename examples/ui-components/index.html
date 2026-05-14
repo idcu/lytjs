@@ -340,6 +340,72 @@ import { Card } from '@lytjs/ui'
           </div>
         </div>
       </div>
+
+      <div class="component-card">
+        <div class="card-header">
+          <h3>📅 Timeline 时间轴</h3>
+        </div>
+        <div class="card-body">
+          <p>时间轴组件，用于展示事件顺序</p>
+          <div class="code-block">
+import { Timeline, TimelineItem } from '@lytjs/ui'
+&lt;Timeline&gt;
+  &lt;TimelineItem timestamp="2026-05-14"&gt;
+    事件内容
+  &lt;/TimelineItem&gt;
+  &lt;TimelineItem type="success"&gt;完成&lt;/TimelineItem&gt;
+&lt;/Timeline&gt;
+          </div>
+        </div>
+      </div>
+
+      <div class="component-card">
+        <div class="card-header">
+          <h3>📊 Steps 步骤条</h3>
+        </div>
+        <div class="card-body">
+          <p>步骤条组件，用于引导操作流程</p>
+          <div class="code-block">
+import { Steps, Step } from '@lytjs/ui'
+&lt;Steps active={1}&gt;
+  &lt;Step title="步骤一" description="描述" /&gt;
+  &lt;Step title="步骤二" status="process" /&gt;
+  &lt;Step title="步骤三" /&gt;
+&lt;/Steps&gt;
+          </div>
+        </div>
+      </div>
+
+      <div class="component-card">
+        <div class="card-header">
+          <h3>🎠 Carousel 走马灯</h3>
+        </div>
+        <div class="card-body">
+          <p>走马灯组件，用于轮播展示内容</p>
+          <div class="code-block">
+import { Carousel, CarouselItem } from '@lytjs/ui'
+&lt;Carousel height="300px" autoplay&gt;
+  &lt;CarouselItem&gt;内容1&lt;/CarouselItem&gt;
+  &lt;CarouselItem&gt;内容2&lt;/CarouselItem&gt;
+&lt;/Carousel&gt;
+          </div>
+        </div>
+      </div>
+
+      <div class="component-card">
+        <div class="card-header">
+          <h3>💬 Popconfirm 气泡确认框</h3>
+        </div>
+        <div class="card-body">
+          <p>气泡确认框组件，用于操作前确认</p>
+          <div class="code-block">
+import { Popconfirm, Button } from '@lytjs/ui'
+&lt;Popconfirm title="确定要删除吗？" onConfirm={handleConfirm}&gt;
+  &lt;Button&gt;删除&lt;/Button&gt;
+&lt;/Popconfirm&gt;
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </body>
