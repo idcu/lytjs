@@ -5,58 +5,69 @@
  */
 
 import { defineComponent } from '@lytjs/component';
-import { createVNode } from '@lytjs/vdom';
+import { createVNode, type VNode } from '@lytjs/vdom';
 import { signal } from '@lytjs/reactivity';
 
-/**
- * Transfer 选项数据结构
- */
-interface TransferOption {
+export interface TransferOption {
   key: string | number;
   label: string;
   disabled?: boolean;
 }
 
-/**
- * Transfer 组件
- */
+export interface TransferSetupProps {
+  data: TransferOption[];
+  modelValue: (string | number)[];
+  filterable: boolean;
+  filterPlaceholder: string;
+  titles: string[];
+  buttonTexts: string[];
+  leftDefaultChecked: (string | number)[];
+  rightDefaultChecked: (string | number)[];
+  class: string;
+  onChange: ((value: (string | number)[], direction: 'left' | 'right', movedKeys: (string | number)[]) => void) | undefined;
+  onLeftCheckChange: ((checked: (string | number)[]) => void) | undefined;
+  onRightCheckChange: ((checked: (string | number)[]) => void) | undefined;
+}
+
+export interface TransferSlots {
+  default?: (option: TransferOption) => VNode[];
+  footer?: () => VNode[];
+}
+
 export const Transfer = defineComponent({
   name: 'LytTransfer',
 
   props: {
-    data: { type: Array, default: () => [] },
-    modelValue: { type: Array, default: () => [] },
+    data: { type: Array, default: (): TransferOption[] => [] },
+    modelValue: { type: Array, default: (): (string | number)[] => [] },
     filterable: { type: Boolean, default: false },
     filterPlaceholder: { type: String, default: '请输入搜索内容' },
-    titles: { type: Array, default: () => ['源列表', '目标列表'] },
-    buttonTexts: { type: Array, default: () => [] },
-    leftDefaultChecked: { type: Array, default: () => [] },
-    rightDefaultChecked: { type: Array, default: () => [] },
+    titles: { type: Array, default: (): string[] => ['源列表', '目标列表'] },
+    buttonTexts: { type: Array, default: (): string[] => [] },
+    leftDefaultChecked: { type: Array, default: (): (string | number)[] => [] },
+    rightDefaultChecked: { type: Array, default: (): (string | number)[] => [] },
     class: { type: String, default: '' },
     onChange: { type: Function, default: undefined },
     onLeftCheckChange: { type: Function, default: undefined },
     onRightCheckChange: { type: Function, default: undefined },
   },
 
-  setup(props: any, { emit }: any) {
+  setup(props: TransferSetupProps, { slots }: { slots: TransferSlots; emit: (event: string, ...args: unknown[]) => void }) {
     const leftChecked = signal<Set<string | number>>(new Set(props.leftDefaultChecked));
     const rightChecked = signal<Set<string | number>>(new Set(props.rightDefaultChecked));
     const leftFilter = signal('');
     const rightFilter = signal('');
 
-    // 获取源数据
     const getSourceData = () => {
       const valueSet = new Set(props.modelValue);
       return props.data.filter((item: TransferOption) => !valueSet.has(item.key));
     };
 
-    // 获取目标数据
     const getTargetData = () => {
       const valueSet = new Set(props.modelValue);
       return props.data.filter((item: TransferOption) => valueSet.has(item.key));
     };
 
-    // 过滤数据
     const filterData = (data: TransferOption[], filterText: string) => {
       if (!filterText) return data;
       return data.filter((item) => 
@@ -64,7 +75,6 @@ export const Transfer = defineComponent({
       );
     };
 
-    // 移动到右侧
     const moveToRight = () => {
       const currentLeftChecked = leftChecked();
       if (currentLeftChecked.size === 0) return;
@@ -77,14 +87,11 @@ export const Transfer = defineComponent({
       leftChecked.set(new Set());
     };
 
-    // 移动到左侧
     const moveToLeft = () => {
       const currentRightChecked = rightChecked();
       if (currentRightChecked.size === 0) return;
 
-      const valueSet = new Set(props.modelValue);
-      currentRightChecked.forEach((key) => valueSet.delete(key));
-      const newModelValue = Array.from(valueSet);
+      const newModelValue = props.modelValue.filter(key => !currentRightChecked.has(key));
       emit('update:modelValue', newModelValue);
       emit('change', newModelValue, 'left', Array.from(currentRightChecked));
       props.onChange?.(newModelValue, 'left', Array.from(currentRightChecked));
@@ -92,231 +99,167 @@ export const Transfer = defineComponent({
       rightChecked.set(new Set());
     };
 
-    // 切换左侧选中
-    const toggleLeftCheck = (key: string | number, checked: boolean) => {
-      const keys = leftChecked();
-      if (checked) {
-        keys.add(key);
+    const toggleLeftChecked = (key: string | number) => {
+      const newChecked = new Set(leftChecked());
+      if (newChecked.has(key)) {
+        newChecked.delete(key);
       } else {
-        keys.delete(key);
+        newChecked.add(key);
       }
-      leftChecked.set(new Set(keys));
-      emit('leftCheckChange', Array.from(keys));
-      props.onLeftCheckChange?.(Array.from(keys));
+      leftChecked.set(newChecked);
+      emit('leftCheckChange', Array.from(newChecked));
+      props.onLeftCheckChange?.(Array.from(newChecked));
     };
 
-    // 切换右侧选中
-    const toggleRightCheck = (key: string | number, checked: boolean) => {
-      const keys = rightChecked();
-      if (checked) {
-        keys.add(key);
+    const toggleRightChecked = (key: string | number) => {
+      const newChecked = new Set(rightChecked());
+      if (newChecked.has(key)) {
+        newChecked.delete(key);
       } else {
-        keys.delete(key);
+        newChecked.add(key);
       }
-      rightChecked.set(new Set(keys));
-      emit('rightCheckChange', Array.from(keys));
-      props.onRightCheckChange?.(Array.from(keys));
+      rightChecked.set(newChecked);
+      emit('rightCheckChange', Array.from(newChecked));
+      props.onRightCheckChange?.(Array.from(newChecked));
     };
 
-    // 全选/取消全选左侧
-    const toggleLeftCheckAll = (checked: boolean) => {
+    const toggleLeftAll = () => {
       const sourceData = filterData(getSourceData(), leftFilter());
-      const enabledData = sourceData.filter((item) => !item.disabled);
-      
-      if (checked) {
-        const keys = enabledData.map((item) => item.key);
-        leftChecked.set(new Set(keys));
-      } else {
+      const availableKeys = sourceData
+        .filter(item => !item.disabled)
+        .map(item => item.key);
+
+      if (leftChecked().size === availableKeys.length) {
         leftChecked.set(new Set());
+      } else {
+        leftChecked.set(new Set(availableKeys));
       }
-      
       emit('leftCheckChange', Array.from(leftChecked()));
       props.onLeftCheckChange?.(Array.from(leftChecked()));
     };
 
-    // 全选/取消全选右侧
-    const toggleRightCheckAll = (checked: boolean) => {
+    const toggleRightAll = () => {
       const targetData = filterData(getTargetData(), rightFilter());
-      const enabledData = targetData.filter((item) => !item.disabled);
-      
-      if (checked) {
-        const keys = enabledData.map((item) => item.key);
-        rightChecked.set(new Set(keys));
-      } else {
+      const availableKeys = targetData
+        .filter(item => !item.disabled)
+        .map(item => item.key);
+
+      if (rightChecked().size === availableKeys.length) {
         rightChecked.set(new Set());
+      } else {
+        rightChecked.set(new Set(availableKeys));
       }
-      
       emit('rightCheckChange', Array.from(rightChecked()));
       props.onRightCheckChange?.(Array.from(rightChecked()));
     };
 
-    // 渲染列表
-    const renderList = (
-      data: TransferOption[], 
-      checkedSet: Set<string | number>, 
-      filterText: string, 
-      onCheck: (key: string | number, checked: boolean) => void,
-      onCheckAll: (checked: boolean) => void,
-      title: string
-    ) => {
-      const filteredData = filterData(data, filterText);
-      const enabledData = filteredData.filter((item) => !item.disabled);
-      const allChecked = enabledData.length > 0 && enabledData.every((item) => checkedSet.has(item.key));
-      const indeterminate = enabledData.some((item) => checkedSet.has(item.key)) && !allChecked;
+    const renderOption = (option: TransferOption, isLeft: boolean, checked: Set<string | number>): VNode => {
+      const isDisabled = option.disabled;
 
-      const items = filteredData.map((item) => {
-        const isChecked = checkedSet.has(item.key);
-        return createVNode(
-          'div',
-          {
-            class: `lyt-transfer__item ${isChecked ? 'lyt-transfer__item--checked' : ''} ${item.disabled ? 'lyt-transfer__item--disabled' : ''}`,
-          },
-          [
-            createVNode(
-              'input',
-              {
-                type: 'checkbox',
-                checked: isChecked,
-                disabled: item.disabled,
-                onChange: (e: any) => onCheck(item.key, e.target.checked),
-              },
-            ),
-            createVNode('span', { class: 'lyt-transfer__item-label' }, item.label),
-          ]
-        );
-      });
-
-      return createVNode(
-        'div',
-        { class: 'lyt-transfer__panel' },
-        [
-          createVNode(
-            'div',
-            { class: 'lyt-transfer__header' },
-            [
-              createVNode(
-                'label',
-                { class: 'lyt-transfer__header-title' },
-                [
-                  createVNode(
-                    'input',
-                    {
-                      type: 'checkbox',
-                      checked: allChecked,
-                      indeterminate: indeterminate,
-                      onChange: (e: any) => onCheckAll(e.target.checked),
-                    },
-                  ),
-                  `${title} (${checkedSet.size}/${enabledData.length})`,
-                ]
-              ),
-            ]
-          ),
-          createVNode(
-            'div',
-            { class: 'lyt-transfer__body' },
-            items.length > 0 ? items : createVNode('div', { class: 'lyt-transfer__empty' }, '暂无数据')
-          ),
-        ]
-      );
-    };
-
-    // 渲染按钮
-    const renderButton = (direction: 'right' | 'left', onClick: () => void, disabled: boolean) => {
-      const isRight = direction === 'right';
-      const text = isRight ? (props.buttonTexts[0] || '→') : (props.buttonTexts[1] || '←');
-      return createVNode(
-        'button',
-        {
-          class: 'lyt-transfer__button',
-          disabled: disabled,
-          onClick: onClick,
+      return createVNode('div', {
+        key: String(option.key),
+        class: [
+          'lyt-transfer__option',
+          isDisabled ? 'lyt-transfer__option--disabled' : '',
+          checked.has(option.key) ? 'lyt-transfer__option--checked' : '',
+        ].filter(Boolean).join(' '),
+        onClick: () => {
+          if (isDisabled) return;
+          if (isLeft) {
+            toggleLeftChecked(option.key);
+          } else {
+            toggleRightChecked(option.key);
+          }
         },
-        text
-      );
+      }, [
+        createVNode('input', {
+          type: 'checkbox',
+          checked: checked.has(option.key),
+          disabled: isDisabled,
+          onClick: (e: Event) => e.stopPropagation(),
+        }),
+        slots.default ? slots.default(option) : option.label,
+      ]);
     };
 
-    // 生成类名
-    const getTransferClass = () => {
-      const classes = ['lyt-transfer'];
-      if (props.class) classes.push(props.class);
-      return classes.join(' ');
+    const renderPanel = (data: TransferOption[], isLeft: boolean): VNode => {
+      const filter = isLeft ? leftFilter() : rightFilter();
+      const checked = isLeft ? leftChecked() : rightChecked();
+      const toggleAll = isLeft ? toggleLeftAll : toggleRightAll;
+      const filteredData = filterData(data, filter);
+
+      const availableCount = data.filter(item => !item.disabled).length;
+      const allChecked = availableCount > 0 && checked.size === availableCount;
+      const indeterminate = checked.size > 0 && checked.size < availableCount;
+
+      const contentChildren: VNode[] = [];
+
+      if (props.filterable) {
+        contentChildren.push(createVNode('div', { class: 'lyt-transfer__filter' }, [
+          createVNode('input', {
+            type: 'text',
+            placeholder: props.filterPlaceholder,
+            value: filter,
+            onInput: (e: Event) => {
+              const value = (e.target as HTMLInputElement).value;
+              if (isLeft) {
+                leftFilter.set(value);
+              } else {
+                rightFilter.set(value);
+              }
+            },
+          }),
+        ]));
+      }
+
+      const headerChildren: VNode[] = [];
+      
+      headerChildren.push(createVNode('input', {
+        type: 'checkbox',
+        checked: allChecked,
+        indeterminate: indeterminate,
+        onClick: toggleAll,
+      }));
+      
+      headerChildren.push(createVNode('span', { class: 'lyt-transfer__title' }, [
+        `${props.titles[isLeft ? 0 : 1]} (${checked.size}/${availableCount})`,
+      ]));
+      
+      contentChildren.push(createVNode('div', { class: 'lyt-transfer__header' }, [headerChildren]));
+
+      if (filteredData.length === 0) {
+        contentChildren.push(createVNode('div', { class: 'lyt-transfer__empty' }, ['暂无数据']));
+      } else {
+        contentChildren.push(createVNode('div', { class: 'lyt-transfer__list' }, [
+          filteredData.map(option => renderOption(option, isLeft, checked)),
+        ]));
+      }
+
+      return createVNode('div', { class: 'lyt-transfer__panel' }, [contentChildren]);
     };
 
     return () => {
-      const sourceData = getSourceData();
-      const targetData = getTargetData();
-      const currentLeftChecked = leftChecked();
-      const currentRightChecked = rightChecked();
-
-      return createVNode(
-        'div',
-        { class: getTransferClass() },
-        [
-          // 左侧筛选
-          props.filterable ? createVNode(
-            'div',
-            { class: 'lyt-transfer__filter' },
-            [
-              createVNode('input', {
-                type: 'text',
-                class: 'lyt-transfer__filter-input',
-                placeholder: props.filterPlaceholder,
-                value: leftFilter(),
-                onInput: (e: any) => leftFilter.set(e.target.value),
-              }),
-            ]
-          ) : null,
-
-          // 左侧面板
-          renderList(
-            sourceData,
-            currentLeftChecked,
-            leftFilter(),
-            toggleLeftCheck,
-            toggleLeftCheckAll,
-            props.titles[0]
-          ),
-
-          // 操作按钮
-          createVNode(
-            'div',
-            { class: 'lyt-transfer__buttons' },
-            [
-              renderButton('right', moveToRight, currentLeftChecked.size === 0),
-              renderButton('left', moveToLeft, currentRightChecked.size === 0),
-            ]
-          ),
-
-          // 右侧面板
-          renderList(
-            targetData,
-            currentRightChecked,
-            rightFilter(),
-            toggleRightCheck,
-            toggleRightCheckAll,
-            props.titles[1]
-          ),
-
-          // 右侧筛选
-          props.filterable ? createVNode(
-            'div',
-            { class: 'lyt-transfer__filter' },
-            [
-              createVNode('input', {
-                type: 'text',
-                class: 'lyt-transfer__filter-input',
-                placeholder: props.filterPlaceholder,
-                value: rightFilter(),
-                onInput: (e: any) => rightFilter.set(e.target.value),
-              }),
-            ]
-          ) : null,
-        ]
-      );
+      const transferClass = ['lyt-transfer', props.class].filter(Boolean).join(' ');
+      
+      return createVNode('div', { class: transferClass }, [
+        renderPanel(getSourceData(), true),
+        createVNode('div', { class: 'lyt-transfer__buttons' }, [
+          createVNode('button', {
+            class: 'lyt-transfer__button',
+            disabled: leftChecked().size === 0,
+            onClick: moveToRight,
+          }, [props.buttonTexts[0] || '▶']),
+          createVNode('button', {
+            class: 'lyt-transfer__button',
+            disabled: rightChecked().size === 0,
+            onClick: moveToLeft,
+          }, [props.buttonTexts[1] || '◀']),
+        ]),
+        renderPanel(getTargetData(), false),
+        slots.footer && createVNode('div', { class: 'lyt-transfer__footer' }, [slots.footer()]),
+      ]);
     };
   },
 });
 
-export default Transfer;
-export type { TransferOption };
+export type { TransferProps, TransferSlots, TransferOption } from './types';

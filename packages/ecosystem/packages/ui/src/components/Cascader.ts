@@ -5,13 +5,10 @@
  */
 
 import { defineComponent } from '@lytjs/component';
-import { createVNode } from '@lytjs/vdom';
+import { createVNode, type VNode } from '@lytjs/vdom';
 import { signal } from '@lytjs/reactivity';
 
-/**
- * Cascader 选项数据结构
- */
-interface CascaderOption {
+export interface CascaderOption {
   value: string | number;
   label: string;
   children?: CascaderOption[];
@@ -20,15 +17,38 @@ interface CascaderOption {
   loading?: boolean;
 }
 
-/**
- * Cascader 组件
- */
+export interface CascaderSetupProps {
+  options: CascaderOption[];
+  modelValue: (string | number)[] | Array<(string | number)[]>;
+  placeholder: string;
+  disabled: boolean;
+  clearable: boolean;
+  multiple: boolean;
+  filterable: boolean;
+  checkStrictly: boolean;
+  showAllLevels: boolean;
+  collapseTags: boolean;
+  separator: string;
+  class: string;
+  load: ((node: CascaderOption, resolve: (children: CascaderOption[]) => void) => void) | undefined;
+  onChange: ((value: (string | number)[] | Array<(string | number)[]>) => void) | undefined;
+  onExpandChange: ((value: (string | number)[]) => void) | undefined;
+  onVisibleChange: ((visible: boolean) => void) | undefined;
+  onRemoveTag: ((value: (string | number)[]) => void) | undefined;
+  onClear: (() => void) | undefined;
+}
+
+export interface CascaderSlots {
+  default?: (option: CascaderOption) => VNode[];
+  empty?: () => VNode[];
+}
+
 export const Cascader = defineComponent({
   name: 'LytCascader',
 
   props: {
-    options: { type: Array, default: () => [] },
-    modelValue: { type: Array, default: () => [] },
+    options: { type: Array, default: (): CascaderOption[] => [] },
+    modelValue: { type: Array, default: (): (string | number)[] => [] },
     placeholder: { type: String, default: '请选择' },
     disabled: { type: Boolean, default: false },
     clearable: { type: Boolean, default: true },
@@ -47,23 +67,21 @@ export const Cascader = defineComponent({
     onClear: { type: Function, default: undefined },
   },
 
-  setup(props: any, { emit }: any) {
+  setup(props: CascaderSetupProps, { slots }: { slots: CascaderSlots; emit: (event: string, ...args: unknown[]) => void }) {
     const isDropdownOpen = signal(false);
     const activePath = signal<(string | number)[]>([]);
     const selectedValues = signal<Array<(string | number)[]>>([]);
     const searchText = signal('');
     const isFiltering = signal(false);
 
-    // 初始化选中值
     if (props.modelValue.length > 0) {
       if (props.multiple) {
-        selectedValues.set([...props.modelValue]);
+        selectedValues.set([...(props.modelValue as Array<(string | number)[]>)]);
       } else {
-        selectedValues.set(props.modelValue.length > 0 ? [props.modelValue] : []);
+        selectedValues.set([(props.modelValue as (string | number)[])]);
       }
     }
 
-    // 切换下拉菜单
     const toggleDropdown = (visible?: boolean) => {
       if (props.disabled) return;
 
@@ -72,316 +90,221 @@ export const Cascader = defineComponent({
       } else {
         isDropdownOpen.set(!isDropdownOpen());
       }
-
       emit('visibleChange', isDropdownOpen());
       props.onVisibleChange?.(isDropdownOpen());
     };
 
-    // 清除选中值
-    const clearValue = (e?: Event) => {
-      if (e) e.stopPropagation();
-      if (props.disabled) return;
-
+    const clear = () => {
       selectedValues.set([]);
       activePath.set([]);
-      searchText.set('');
-      isFiltering.set(false);
-      emit('update:modelValue', props.multiple ? [] : '');
-      emit('clear');
+      isDropdownOpen.set(false);
+      emit('update:modelValue', []);
+      emit('change', []);
       props.onClear?.();
+      props.onChange?.([]);
     };
 
-    // 移除标签
-    const removeTag = (index: number, e?: Event) => {
-      if (e) e.stopPropagation();
+    const removeTag = (index: number) => {
       if (props.disabled) return;
 
-      const newValues = [...selectedValues()];
-      newValues.splice(index, 1);
-      selectedValues.set(newValues);
-      emit('update:modelValue', props.multiple ? newValues : newValues[0] || '');
-      emit('removeTag', newValues);
-      props.onRemoveTag?.(newValues);
+      const newSelected = [...selectedValues()];
+      newSelected.splice(index, 1);
+      selectedValues.set(newSelected);
+      
+      emit('update:modelValue', newSelected);
+      emit('change', newSelected);
+      emit('removeTag', newSelected);
+      props.onRemoveTag?.(newSelected);
+      props.onChange?.(newSelected);
     };
 
-    // 处理选项点击
-    const handleOptionClick = (option: CascaderOption, path: (string | number)[]) => {
+    const selectOption = (option: CascaderOption, level: number) => {
       if (option.disabled) return;
 
-      // 更新激活路径
-      activePath.set([...path]);
-      emit('expandChange', activePath());
-      props.onExpandChange?.(activePath());
+      const newPath = [...activePath().slice(0, level), option.value];
+      activePath.set(newPath);
 
-      // 检查是否有子节点
-      const hasChildren = option.children && option.children.length > 0;
-      const isLeafNode = option.isLeaf || (!hasChildren && !props.load);
-
-      if (isLeafNode) {
-        // 叶子节点，选中
+      const optionsAtLevel = getOptionsAtLevel(level);
+      const nextOptions = option.children || [];
+      
+      if (option.isLeaf || nextOptions.length === 0) {
         if (props.multiple) {
-          // 多选模式
-          const currentSelected = selectedValues();
-          const existingIndex = currentSelected.findIndex(
-            (v) => JSON.stringify(v) === JSON.stringify(path)
-          );
-
-          if (existingIndex > -1) {
-            // 已选中，取消选中
-            const newValues = [...currentSelected];
-            newValues.splice(existingIndex, 1);
-            selectedValues.set(newValues);
-          } else {
-            // 未选中，添加
-            selectedValues.set([...currentSelected, path]);
-          }
-
-          const finalValues = selectedValues();
-          emit('update:modelValue', finalValues);
-          emit('change', finalValues, path);
-          props.onChange?.(finalValues, path);
+          const exists = selectedValues().some(item => item.join('-') === newPath.join('-'));
+          const newSelected = exists
+            ? selectedValues().filter(item => item.join('-') !== newPath.join('-'))
+            : [...selectedValues(), newPath];
+          selectedValues.set(newSelected);
+          emit('update:modelValue', newSelected);
+          emit('change', newSelected);
+          props.onChange?.(newSelected);
         } else {
-          // 单选模式
-          selectedValues.set([path]);
-          emit('update:modelValue', path);
-          emit('change', path, path);
-          props.onChange?.(path, path);
-          toggleDropdown(false);
+          selectedValues.set([newPath]);
+          isDropdownOpen.set(false);
+          emit('update:modelValue', newPath);
+          emit('change', newPath);
+          props.onChange?.(newPath);
         }
-      } else {
-        // 非叶子节点，展开下一级
-        if (props.load && !hasChildren && !option.isLeaf) {
-          // 异步加载子节点
-          handleLoad(option, path);
-        }
+      } else if (props.load && nextOptions.length === 0) {
+        option.loading = true;
+        props.load(option, (children: CascaderOption[]) => {
+          option.loading = false;
+          option.children = children;
+        });
       }
     };
 
-    // 异步加载子节点
-    const handleLoad = async (option: CascaderOption, path: (string | number)[]) => {
-      if (!props.load) return;
-
-      option.loading = true;
-
-      try {
-        const children = await props.load(option, path);
-        option.children = children;
-      } catch (error) {
-        console.error('Load cascader options failed:', error);
-      } finally {
-        option.loading = false;
+    const getOptionsAtLevel = (level: number): CascaderOption[] => {
+      if (isFiltering()) {
+        const keyword = searchText().toLowerCase();
+        return filterOptions(props.options, keyword);
       }
+
+      let options: CascaderOption[] = [...props.options];
+      for (let i = 0; i < level; i++) {
+        const found = options.find(opt => opt.value === activePath()[i]);
+        options = found?.children || [];
+        if (options.length === 0) break;
+      }
+      return options;
     };
 
-    // 处理输入搜索
-    const handleInput = (e: Event) => {
-      const target = e.target as HTMLInputElement;
-      searchText.set(target.value);
-      isFiltering.set(props.filterable && searchText().length > 0);
-    };
-
-    // 过滤选项
     const filterOptions = (options: CascaderOption[], keyword: string): CascaderOption[] => {
-      const result: CascaderOption[] = [];
-
-      options.forEach((option) => {
-        if (option.label.toLowerCase().includes(keyword.toLowerCase())) {
-          result.push(option);
+      return options.reduce((acc: CascaderOption[], option) => {
+        const match = option.label.toLowerCase().includes(keyword);
+        const children = option.children ? filterOptions(option.children, keyword) : [];
+        
+        if (match || children.length > 0) {
+          acc.push({ ...option, children: children.length > 0 ? children : undefined });
         }
-
-        if (option.children && option.children.length > 0) {
-          const filteredChildren = filterOptions(option.children, keyword);
-          if (filteredChildren.length > 0) {
-            result.push({ ...option, children: filteredChildren });
-          }
-        }
-      });
-
-      return result;
+        return acc;
+      }, []);
     };
 
-    // 获取显示文本
-    const getDisplayText = () => {
-      const currentSelected = selectedValues();
-      if (currentSelected.length === 0) {
-        return '';
+    const getDisplayText = (): string => {
+      const values = selectedValues();
+      
+      if (values.length === 0) {
+        return props.placeholder;
       }
 
-      if (props.multiple) {
-        // 多选模式，返回第一个
-        const firstPath = currentSelected[0];
-        return getOptionLabel(firstPath);
+      if (!props.multiple) {
+        return getPathLabel(values[0]);
       }
 
-      return getOptionLabel(currentSelected[0]);
+      return `${values.length} 项`;
     };
 
-    // 获取选项标签
-    const getOptionLabel = (path: (string | number)[]) => {
+    const getPathLabel = (path: (string | number)[]): string => {
       const labels: string[] = [];
-      let currentOptions = props.options;
-
-      path.forEach((value) => {
-        const option = currentOptions.find((o: CascaderOption) => o.value === value);
-        if (option) {
-          labels.push(option.label);
-          currentOptions = option.children || [];
+      let currentOptions: CascaderOption[] = props.options;
+      
+      for (const value of path) {
+        const found = currentOptions.find(opt => opt.value === value);
+        if (found) {
+          labels.push(found.label);
+          currentOptions = found.children || [];
         }
-      });
+      }
 
-      return labels.join(props.separator);
+      return props.showAllLevels ? labels.join(props.separator) : labels[labels.length - 1];
     };
 
-    // 渲染选项列表
-    const renderOptions = (options: CascaderOption[], path: (string | number)[] = [], level: number = 0) => {
-      if (options.length === 0) return null;
+    const renderOption = (option: CascaderOption, level: number): VNode => {
+      const isActive = activePath()[level] === option.value;
+      const isSelected = selectedValues().some(path => path.join('-') === [...activePath().slice(0, level), option.value].join('-'));
 
-      const items = options.map((option) => {
-        const currentActivePath = activePath();
-        const currentSelected = selectedValues();
-        const isActive = currentActivePath[level] === option.value;
-        const isSelected = currentSelected.some(
-          (p) => p[level] === option.value
-        );
-
-        const hasChildren = option.children && option.children.length > 0;
-        const childPath = [...path, option.value];
-
-        return createVNode(
-          'li',
-          {
-            class: `lyt-cascader-option 
-              ${isActive ? 'lyt-cascader-option--active' : ''} 
-              ${isSelected ? 'lyt-cascader-option--selected' : ''} 
-              ${option.disabled ? 'lyt-cascader-option--disabled' : ''}`,
-            onClick: () => handleOptionClick(option, childPath),
-          },
-          [
-            option.label,
-            option.loading ? createVNode('span', { class: 'lyt-cascader-loading' }, '⏳') : 
-            (hasChildren || (props.load && !option.isLeaf)) ? 
-              createVNode('span', { class: 'lyt-cascader-arrow' }, '›') : null,
-          ]
-        );
-      });
-
-      return createVNode('ul', { class: 'lyt-cascader-menu' }, items);
-    };
-
-    // 生成类名
-    const getCascaderClass = () => {
-      const classes = ['lyt-cascader'];
-      if (isDropdownOpen()) classes.push('lyt-cascader--open');
-      if (props.multiple) classes.push('lyt-cascader--multiple');
-      if (props.disabled) classes.push('lyt-cascader--disabled');
-      if (props.class) classes.push(props.class);
-      return classes.join(' ');
+      return createVNode('div', {
+        key: String(option.value),
+        class: [
+          'lyt-cascader__option',
+          isActive ? 'lyt-cascader__option--active' : '',
+          isSelected ? 'lyt-cascader__option--selected' : '',
+          option.disabled ? 'lyt-cascader__option--disabled' : '',
+        ].filter(Boolean).join(' '),
+        onClick: () => selectOption(option, level),
+      }, [
+        option.loading && createVNode('span', { class: 'lyt-cascader__loading' }, ['⏳']),
+        slots.default ? slots.default(option) : option.label,
+        option.children && !option.isLeaf && createVNode('span', { class: 'lyt-cascader__arrow' }, ['▶']),
+      ]);
     };
 
     return () => {
-      const displayText = getDisplayText();
-      const currentIsFiltering = isFiltering();
-      const currentSearchText = searchText();
-      const filteredOptions = currentIsFiltering 
-        ? filterOptions(props.options, currentSearchText) 
-        : props.options;
+      const cascaderClass = [
+        'lyt-cascader',
+        isDropdownOpen() ? 'lyt-cascader--open' : '',
+        props.disabled ? 'lyt-cascader--disabled' : '',
+        props.class,
+      ].filter(Boolean).join(' ');
 
-      // 构建下拉菜单
-      const menus: any[] = [];
+      const isValueSet = selectedValues().length > 0;
       
-      if (currentIsFiltering) {
-        // 搜索模式，只渲染过滤后的选项
-        menus.push(renderOptions(filteredOptions, [], 0));
-      } else {
-        // 正常模式，渲染级联菜单
-        let currentOptions = props.options;
-        let currentPath: (string | number)[] = [];
-
-        menus.push(renderOptions(currentOptions, [], 0));
-
-        activePath().forEach((value, level) => {
-          const option = currentOptions.find((o: CascaderOption) => o.value === value);
-          if (option && option.children) {
-            currentOptions = option.children;
-            currentPath.push(value);
-            menus.push(renderOptions(currentOptions, currentPath, level + 1));
-          }
+      const contentChildren: VNode[] = [];
+      
+      if (props.multiple && isValueSet) {
+        selectedValues().forEach((path, index) => {
+          contentChildren.push(createVNode('span', { class: 'lyt-cascader__tag', key: index }, [
+            getPathLabel(path),
+            createVNode('span', { class: 'lyt-cascader__tag-close', onClick: () => removeTag(index) }, ['×']),
+          ]));
         });
+      } else {
+        contentChildren.push(createVNode('span', {
+          class: ['lyt-cascader__value', !isValueSet ? 'lyt-cascader__placeholder' : ''].filter(Boolean).join(' '),
+        }, [getDisplayText()]));
+      }
+      
+      if (props.clearable && isValueSet) {
+        contentChildren.push(createVNode('span', {
+          class: 'lyt-cascader__clear',
+          onClick: (e: Event) => { e.stopPropagation(); clear(); },
+        }, ['×']));
       }
 
-      const dropdown = isDropdownOpen() ? createVNode(
-        'div',
-        { class: 'lyt-cascader-dropdown' },
-        menus
-      ) : null;
+      contentChildren.push(createVNode('span', { class: 'lyt-cascader__arrow' }, ['▼']));
 
-      // 渲染标签（多选模式）
-      const currentSelected = selectedValues();
-      const tags = props.multiple && currentSelected.length > 0 ? 
-        currentSelected.map((path, index) => {
-          return createVNode(
-            'span',
-            { class: 'lyt-cascader-tag' },
-            [
-              getOptionLabel(path),
-              createVNode(
-                'span',
-                { 
-                  class: 'lyt-cascader-tag-close',
-                  onClick: (e: Event) => removeTag(index, e) 
-                },
-                '×'
-              )
-            ]
-          );
-        }) : null;
-
-      return createVNode(
-        'div',
-        { class: getCascaderClass() },
-        [
-          createVNode(
-            'div',
-            { 
-              class: 'lyt-cascader-input-wrapper',
-              onClick: () => toggleDropdown() 
+      const dropdownContent: VNode[] = [];
+      
+      if (props.filterable) {
+        dropdownContent.push(createVNode('div', { class: 'lyt-cascader__search' }, [
+          createVNode('input', {
+            type: 'text',
+            placeholder: '搜索',
+            value: searchText(),
+            onInput: (e: Event) => {
+              const value = (e.target as HTMLInputElement).value;
+              searchText.set(value);
+              isFiltering.set(value.length > 0);
             },
-            [
-              tags,
-              createVNode(
-                'input',
-                {
-                  type: 'text',
-                  class: 'lyt-cascader-input',
-                  placeholder: currentSelected.length === 0 ? props.placeholder : '',
-                  value: currentIsFiltering ? currentSearchText : displayText,
-                  disabled: props.disabled,
-                  onInput: handleInput,
-                  readonly: !props.filterable,
-                }
-              ),
-              props.clearable && currentSelected.length > 0 ? 
-                createVNode(
-                  'span',
-                  { 
-                    class: 'lyt-cascader-clear',
-                    onClick: (e: Event) => clearValue(e) 
-                  },
-                  '×'
-                ) : null,
-              createVNode(
-                'span',
-                { class: `lyt-cascader-icon ${isDropdownOpen() ? 'lyt-cascader-icon--open' : ''}` },
-                isDropdownOpen() ? '▲' : '▼'
-              ),
-            ]
-          ),
-          dropdown,
-        ]
-      );
+          }),
+        ]));
+      }
+
+      const maxLevel = isFiltering() ? 1 : activePath().length + 1;
+      for (let i = 0; i < maxLevel; i++) {
+        const options = getOptionsAtLevel(i);
+        if (options.length > 0 || i === 0) {
+          dropdownContent.push(createVNode('div', { class: 'lyt-cascader__panel', key: i }, [
+            options.map(option => renderOption(option, i)),
+          ]));
+        }
+      }
+
+      return createVNode('div', {
+        class: cascaderClass,
+        onClick: () => toggleDropdown(),
+      }, [
+        createVNode('div', { class: 'lyt-cascader__trigger' }, [contentChildren]),
+        isDropdownOpen() && createVNode('div', { class: 'lyt-cascader__dropdown' }, [
+          props.options.length === 0
+            ? slots.empty
+              ? slots.empty()
+              : '暂无数据'
+            : dropdownContent,
+        ]),
+      ]);
     };
   },
 });
 
-export default Cascader;
-export type { CascaderOption };
+export type { CascaderProps, CascaderSlots, CascaderOption } from './types';

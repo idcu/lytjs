@@ -316,13 +316,20 @@ packages/
 
 ---
 
-**文档版本**: v5.1
+**文档版本**: v5.2
 **最后更新**: 2026-05-14
 **维护者**: LytJS Team
 
 ---
 
 ## 更新日志
+
+### v5.2 (2026-05-14)
+
+- ✅ 继续完善 UI 组件库类型定义，新增 Cascader、Transfer 组件
+- ✅ 修复 Cascader 组件，建立 CascaderSetupProps、CascaderSlots、CascaderOption 等完整类型
+- ✅ 修复 Transfer 组件，建立 TransferSetupProps、TransferSlots、TransferOption 等完整类型
+- ✅ 所有 135 个测试通过，性能表现出色（1000行数据处理 0.02ms）
 
 ### v5.1 (2026-05-14)
 
