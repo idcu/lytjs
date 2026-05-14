@@ -79,7 +79,7 @@ importers:
         version: 8.59.1(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3)
       vitest:
         specifier: ^3.0.0
-        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jsdom@29.1.1)
+        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@29.1.1)(tsx@4.21.0)(yaml@2.8.3)
 
   docs:
     devDependencies:
@@ -137,7 +137,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^3.0.7
-        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jsdom@26.1.0)
+        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@26.1.0)(tsx@4.21.0)(yaml@2.8.3)
 
   packages/common/packages/algorithm:
     devDependencies:
@@ -149,7 +149,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^3.0.7
-        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jsdom@29.1.1)
+        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@29.1.1)(tsx@4.21.0)(yaml@2.8.3)
 
   packages/common/packages/assertions:
     dependencies:
@@ -165,7 +165,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^3.0.7
-        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jsdom@29.1.1)
+        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@29.1.1)(tsx@4.21.0)(yaml@2.8.3)
 
   packages/common/packages/async-scheduler:
     dependencies:
@@ -181,7 +181,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^3.0.7
-        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jsdom@29.1.1)
+        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@29.1.1)(tsx@4.21.0)(yaml@2.8.3)
 
   packages/common/packages/cache:
     devDependencies:
@@ -193,7 +193,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^3.0.7
-        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jsdom@29.1.1)
+        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@29.1.1)(tsx@4.21.0)(yaml@2.8.3)
 
   packages/common/packages/common:
     dependencies:
@@ -272,7 +272,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^3.0.7
-        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jsdom@29.1.1)
+        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@29.1.1)(tsx@4.21.0)(yaml@2.8.3)
 
   packages/common/packages/constants:
     devDependencies:
@@ -312,7 +312,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^3.0.0
-        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jsdom@24.1.3)
+        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@24.1.3)(tsx@4.21.0)(yaml@2.8.3)
 
   packages/common/packages/dom-helpers:
     devDependencies:
@@ -327,7 +327,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^3.0.7
-        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jsdom@26.1.0)
+        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@26.1.0)(tsx@4.21.0)(yaml@2.8.3)
 
   packages/common/packages/env:
     devDependencies:
@@ -339,7 +339,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^3.0.7
-        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jsdom@29.1.1)
+        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@29.1.1)(tsx@4.21.0)(yaml@2.8.3)
 
   packages/common/packages/error:
     dependencies:
@@ -355,7 +355,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^3.0.7
-        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jsdom@29.1.1)
+        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@29.1.1)(tsx@4.21.0)(yaml@2.8.3)
 
   packages/common/packages/event-normalizer:
     dependencies:
@@ -374,7 +374,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^3.0.7
-        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jsdom@29.1.1)
+        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@29.1.1)(tsx@4.21.0)(yaml@2.8.3)
 
   packages/common/packages/events:
     dependencies:
@@ -390,7 +390,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^3.0.7
-        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jsdom@29.1.1)
+        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@29.1.1)(tsx@4.21.0)(yaml@2.8.3)
 
   packages/common/packages/http:
     devDependencies:
@@ -402,7 +402,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^3.0.7
-        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jsdom@29.1.1)
+        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@29.1.1)(tsx@4.21.0)(yaml@2.8.3)
 
   packages/common/packages/is:
     devDependencies:
@@ -414,7 +414,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^3.0.7
-        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jsdom@29.1.1)
+        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@29.1.1)(tsx@4.21.0)(yaml@2.8.3)
 
   packages/common/packages/keyboard:
     devDependencies:
@@ -429,7 +429,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^3.0.7
-        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jsdom@26.1.0)
+        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@26.1.0)(tsx@4.21.0)(yaml@2.8.3)
 
   packages/common/packages/node-cache:
     dependencies:
@@ -445,7 +445,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^3.0.7
-        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jsdom@29.1.1)
+        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@29.1.1)(tsx@4.21.0)(yaml@2.8.3)
 
   packages/common/packages/object:
     dependencies:
@@ -464,7 +464,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^3.0.7
-        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jsdom@29.1.1)
+        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@29.1.1)(tsx@4.21.0)(yaml@2.8.3)
 
   packages/common/packages/path:
     devDependencies:
@@ -476,7 +476,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^3.0.7
-        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jsdom@29.1.1)
+        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@29.1.1)(tsx@4.21.0)(yaml@2.8.3)
 
   packages/common/packages/performance:
     dependencies:
@@ -501,7 +501,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^3.0.7
-        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jsdom@29.1.1)
+        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@29.1.1)(tsx@4.21.0)(yaml@2.8.3)
 
   packages/common/packages/raf:
     devDependencies:
@@ -513,7 +513,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^3.0.7
-        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jsdom@29.1.1)
+        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@29.1.1)(tsx@4.21.0)(yaml@2.8.3)
 
   packages/common/packages/render-queue:
     dependencies:
@@ -529,7 +529,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^3.0.7
-        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jsdom@29.1.1)
+        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@29.1.1)(tsx@4.21.0)(yaml@2.8.3)
 
   packages/common/packages/scheduler:
     dependencies:
@@ -545,7 +545,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^3.0.7
-        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jsdom@29.1.1)
+        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@29.1.1)(tsx@4.21.0)(yaml@2.8.3)
 
   packages/common/packages/security:
     dependencies:
@@ -561,7 +561,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^3.0.0
-        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jsdom@29.1.1)
+        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@29.1.1)(tsx@4.21.0)(yaml@2.8.3)
 
   packages/common/packages/storage:
     devDependencies:
@@ -576,7 +576,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^3.0.7
-        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jsdom@26.1.0)
+        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@26.1.0)(tsx@4.21.0)(yaml@2.8.3)
 
   packages/common/packages/string:
     dependencies:
@@ -595,7 +595,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^3.0.7
-        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jsdom@29.1.1)
+        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@29.1.1)(tsx@4.21.0)(yaml@2.8.3)
 
   packages/common/packages/timing:
     devDependencies:
@@ -607,7 +607,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^3.0.7
-        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jsdom@29.1.1)
+        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@29.1.1)(tsx@4.21.0)(yaml@2.8.3)
 
   packages/common/packages/transition-engine:
     dependencies:
@@ -623,7 +623,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^3.0.7
-        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jsdom@29.1.1)
+        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@29.1.1)(tsx@4.21.0)(yaml@2.8.3)
 
   packages/common/packages/validate:
     devDependencies:
@@ -638,7 +638,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^3.0.7
-        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jsdom@26.1.0)
+        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@26.1.0)(tsx@4.21.0)(yaml@2.8.3)
 
   packages/common/packages/vnode:
     devDependencies:
@@ -650,7 +650,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^3.0.7
-        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jsdom@29.1.1)
+        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@29.1.1)(tsx@4.21.0)(yaml@2.8.3)
 
   packages/common/packages/warn:
     devDependencies:
@@ -662,7 +662,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^3.0.0
-        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jsdom@29.1.1)
+        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@29.1.1)(tsx@4.21.0)(yaml@2.8.3)
 
   packages/compiler:
     dependencies:
@@ -863,7 +863,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^3.0.0
-        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jsdom@29.1.1)
+        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@29.1.1)(tsx@4.21.0)(yaml@2.8.3)
 
   packages/dom-runtime:
     dependencies:
@@ -882,7 +882,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^3.0.7
-        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jsdom@26.1.0)
+        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@26.1.0)(tsx@4.21.0)(yaml@2.8.3)
 
   packages/ecosystem/packages/compat:
     dependencies:
@@ -904,7 +904,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^3.0.0
-        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jsdom@29.1.1)
+        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@29.1.1)(tsx@4.21.0)(yaml@2.8.3)
 
   packages/ecosystem/packages/devtools:
     dependencies:
@@ -944,7 +944,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^3.0.0
-        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jsdom@29.1.1)
+        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@29.1.1)(tsx@4.21.0)(yaml@2.8.3)
 
   packages/ecosystem/packages/platform-adapter:
     dependencies:
@@ -969,7 +969,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^3.0.0
-        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jsdom@29.1.1)
+        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@29.1.1)(tsx@4.21.0)(yaml@2.8.3)
 
   packages/ecosystem/packages/router:
     dependencies:
@@ -997,7 +997,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^3.0.0
-        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jsdom@29.1.1)
+        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@29.1.1)(tsx@4.21.0)(yaml@2.8.3)
 
   packages/ecosystem/packages/ssr:
     dependencies:
@@ -1028,7 +1028,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^3.0.0
-        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jsdom@29.1.1)
+        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@29.1.1)(tsx@4.21.0)(yaml@2.8.3)
 
   packages/ecosystem/packages/store:
     dependencies:
@@ -1053,7 +1053,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^3.0.0
-        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jsdom@29.1.1)
+        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@29.1.1)(tsx@4.21.0)(yaml@2.8.3)
 
   packages/ecosystem/packages/ui:
     dependencies:
@@ -1087,7 +1087,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^3.0.0
-        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jsdom@29.1.1)
+        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@29.1.1)(tsx@4.21.0)(yaml@2.8.3)
 
   packages/host-contract:
     devDependencies:
@@ -1118,7 +1118,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^3.0.0
-        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jsdom@29.1.1)
+        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@29.1.1)(tsx@4.21.0)(yaml@2.8.3)
 
   packages/plugins/packages/plugin-chart:
     dependencies:
@@ -1134,7 +1134,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^3.0.0
-        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jsdom@29.1.1)
+        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@29.1.1)(tsx@4.21.0)(yaml@2.8.3)
 
   packages/plugins/packages/plugin-i18n:
     dependencies:
@@ -1156,7 +1156,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^3.0.0
-        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jsdom@29.1.1)
+        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@29.1.1)(tsx@4.21.0)(yaml@2.8.3)
 
   packages/plugins/packages/plugin-logger:
     dependencies:
@@ -1178,7 +1178,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^3.0.0
-        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jsdom@29.1.1)
+        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@29.1.1)(tsx@4.21.0)(yaml@2.8.3)
 
   packages/plugins/packages/plugin-storage:
     dependencies:
@@ -1200,7 +1200,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^3.0.0
-        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jsdom@29.1.1)
+        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@29.1.1)(tsx@4.21.0)(yaml@2.8.3)
 
   packages/plugins/packages/plugin-theme:
     dependencies:
@@ -1222,7 +1222,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^3.0.0
-        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jsdom@29.1.1)
+        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@29.1.1)(tsx@4.21.0)(yaml@2.8.3)
 
   packages/plugins/packages/plugin-vite:
     dependencies:
@@ -1244,7 +1244,7 @@ importers:
         version: 5.4.21(@types/node@22.19.17)
       vitest:
         specifier: ^3.0.0
-        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jsdom@29.1.1)
+        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@29.1.1)(tsx@4.21.0)(yaml@2.8.3)
 
   packages/reactivity:
     dependencies:
@@ -1352,7 +1352,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^3.0.0
-        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jsdom@29.1.1)
+        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@29.1.1)(tsx@4.21.0)(yaml@2.8.3)
 
   packages/tools/packages/devtools:
     dependencies:
@@ -1374,7 +1374,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^3.0.0
-        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jsdom@29.1.1)
+        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@29.1.1)(tsx@4.21.0)(yaml@2.8.3)
 
   packages/tools/packages/test-utils:
     dependencies:
@@ -1396,7 +1396,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^3.0.0
-        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jsdom@29.1.1)
+        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@29.1.1)(tsx@4.21.0)(yaml@2.8.3)
 
   packages/vdom:
     dependencies:
@@ -1463,7 +1463,35 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^3.0.0
-        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jsdom@29.1.1)
+        version: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@29.1.1)(tsx@4.21.0)(yaml@2.8.3)
+
+  playground:
+    dependencies:
+      '@lytjs/compiler':
+        specifier: workspace:*
+        version: link:../packages/compiler
+      '@lytjs/core':
+        specifier: workspace:*
+        version: link:../packages/core
+      '@lytjs/dom-runtime':
+        specifier: workspace:*
+        version: link:../packages/dom-runtime
+      '@lytjs/reactivity':
+        specifier: workspace:*
+        version: link:../packages/reactivity
+      '@lytjs/renderer':
+        specifier: workspace:*
+        version: link:../packages/renderer
+      '@lytjs/vdom':
+        specifier: workspace:*
+        version: link:../packages/vdom
+    devDependencies:
+      typescript:
+        specifier: ^5.8.2
+        version: 5.9.3
+      vite:
+        specifier: ^5.4.21
+        version: 5.4.21(@types/node@22.19.17)
 
 packages:
 
@@ -5144,6 +5172,46 @@ packages:
       terser:
         optional: true
 
+  vite@7.3.3:
+    resolution: {integrity: sha512-/4XH147Ui7OGTjg3HbdWe5arnZQSbfuRzdr9Ec7TQi5I7R+ir0Rlc9GIvD4v0XZurELqA035KVXJXpR61xhiTA==}
+    engines: {node: ^20.19.0 || >=22.12.0}
+    hasBin: true
+    peerDependencies:
+      '@types/node': ^20.19.0 || >=22.12.0
+      jiti: '>=1.21.0'
+      less: ^4.0.0
+      lightningcss: ^1.21.0
+      sass: ^1.70.0
+      sass-embedded: ^1.70.0
+      stylus: '>=0.54.8'
+      sugarss: ^5.0.0
+      terser: ^5.16.0
+      tsx: ^4.8.1
+      yaml: ^2.4.2
+    peerDependenciesMeta:
+      '@types/node':
+        optional: true
+      jiti:
+        optional: true
+      less:
+        optional: true
+      lightningcss:
+        optional: true
+      sass:
+        optional: true
+      sass-embedded:
+        optional: true
+      stylus:
+        optional: true
+      sugarss:
+        optional: true
+      terser:
+        optional: true
+      tsx:
+        optional: true
+      yaml:
+        optional: true
+
   vitepress@1.6.4:
     resolution: {integrity: sha512-+2ym1/+0VVrbhNyRoFFesVvBvHAVMZMK0rw60E3X/5349M1GuVdKeazuksqopEdvkKwKGs21Q729jX81/bkBJg==}
     hasBin: true
@@ -6579,7 +6647,7 @@ snapshots:
       std-env: 3.10.0
       test-exclude: 7.0.2
       tinyrainbow: 2.0.0
-      vitest: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jsdom@29.1.1)
+      vitest: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@29.1.1)(tsx@4.21.0)(yaml@2.8.3)
     transitivePeerDependencies:
       - supports-color
 
@@ -6650,7 +6718,7 @@ snapshots:
       sirv: 3.0.2
       tinyglobby: 0.2.16
       tinyrainbow: 2.0.0
-      vitest: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jsdom@29.1.1)
+      vitest: 3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@29.1.1)(tsx@4.21.0)(yaml@2.8.3)
 
   '@vitest/utils@1.6.0':
     dependencies:
@@ -8998,15 +9066,16 @@ snapshots:
       - supports-color
       - terser
 
-  vite-node@3.2.4(@types/node@22.19.17):
+  vite-node@3.2.4(@types/node@22.19.17)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.3):
     dependencies:
       cac: 6.7.14
       debug: 4.4.3
       es-module-lexer: 1.7.0
       pathe: 2.0.3
-      vite: 5.4.21(@types/node@22.19.17)
+      vite: 7.3.3(@types/node@22.19.17)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.3)
     transitivePeerDependencies:
       - '@types/node'
+      - jiti
       - less
       - lightningcss
       - sass
@@ -9015,6 +9084,8 @@ snapshots:
       - sugarss
       - supports-color
       - terser
+      - tsx
+      - yaml
 
   vite@5.4.21(@types/node@22.19.17):
     dependencies:
@@ -9024,6 +9095,21 @@ snapshots:
     optionalDependencies:
       '@types/node': 22.19.17
       fsevents: 2.3.3
+
+  vite@7.3.3(@types/node@22.19.17)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.3):
+    dependencies:
+      esbuild: 0.27.7
+      fdir: 6.5.0(picomatch@4.0.4)
+      picomatch: 4.0.4
+      postcss: 8.5.12
+      rollup: 4.60.2
+      tinyglobby: 0.2.16
+    optionalDependencies:
+      '@types/node': 22.19.17
+      fsevents: 2.3.3
+      jiti: 2.6.1
+      tsx: 4.21.0
+      yaml: 2.8.3
 
   vitepress@1.6.4(@algolia/client-search@5.52.1)(@types/node@22.19.17)(postcss@8.5.14)(search-insights@2.17.3)(typescript@5.9.3):
     dependencies:
@@ -9146,7 +9232,7 @@ snapshots:
       - supports-color
       - terser
 
-  vitest@3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jsdom@24.1.3):
+  vitest@3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@24.1.3)(tsx@4.21.0)(yaml@2.8.3):
     dependencies:
       '@types/chai': 5.2.3
       '@vitest/expect': 3.2.4
@@ -9169,13 +9255,14 @@ snapshots:
       tinypool: 1.1.1
       tinyrainbow: 2.0.0
       vite: 5.4.21(@types/node@22.19.17)
-      vite-node: 3.2.4(@types/node@22.19.17)
+      vite-node: 3.2.4(@types/node@22.19.17)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.3)
       why-is-node-running: 2.3.0
     optionalDependencies:
       '@types/node': 22.19.17
       '@vitest/ui': 3.2.4(vitest@3.2.4)
       jsdom: 24.1.3
     transitivePeerDependencies:
+      - jiti
       - less
       - lightningcss
       - msw
@@ -9185,8 +9272,10 @@ snapshots:
       - sugarss
       - supports-color
       - terser
+      - tsx
+      - yaml
 
-  vitest@3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jsdom@26.1.0):
+  vitest@3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@26.1.0)(tsx@4.21.0)(yaml@2.8.3):
     dependencies:
       '@types/chai': 5.2.3
       '@vitest/expect': 3.2.4
@@ -9209,13 +9298,14 @@ snapshots:
       tinypool: 1.1.1
       tinyrainbow: 2.0.0
       vite: 5.4.21(@types/node@22.19.17)
-      vite-node: 3.2.4(@types/node@22.19.17)
+      vite-node: 3.2.4(@types/node@22.19.17)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.3)
       why-is-node-running: 2.3.0
     optionalDependencies:
       '@types/node': 22.19.17
       '@vitest/ui': 3.2.4(vitest@3.2.4)
       jsdom: 26.1.0
     transitivePeerDependencies:
+      - jiti
       - less
       - lightningcss
       - msw
@@ -9225,8 +9315,10 @@ snapshots:
       - sugarss
       - supports-color
       - terser
+      - tsx
+      - yaml
 
-  vitest@3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jsdom@29.1.1):
+  vitest@3.2.4(@types/node@22.19.17)(@vitest/ui@3.2.4)(jiti@2.6.1)(jsdom@29.1.1)(tsx@4.21.0)(yaml@2.8.3):
     dependencies:
       '@types/chai': 5.2.3
       '@vitest/expect': 3.2.4
@@ -9249,13 +9341,14 @@ snapshots:
       tinypool: 1.1.1
       tinyrainbow: 2.0.0
       vite: 5.4.21(@types/node@22.19.17)
-      vite-node: 3.2.4(@types/node@22.19.17)
+      vite-node: 3.2.4(@types/node@22.19.17)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.3)
       why-is-node-running: 2.3.0
     optionalDependencies:
       '@types/node': 22.19.17
       '@vitest/ui': 3.2.4(vitest@3.2.4)
       jsdom: 29.1.1
     transitivePeerDependencies:
+      - jiti
       - less
       - lightningcss
       - msw
@@ -9265,6 +9358,8 @@ snapshots:
       - sugarss
       - supports-color
       - terser
+      - tsx
+      - yaml
 
   vue@3.5.34(typescript@5.9.3):
     dependencies:

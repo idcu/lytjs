@@ -77,6 +77,14 @@
   - 井字棋组件测试
   - 天气仪表盘组件测试
 
+#### 4. E2E 测试环境完善
+
+**修复内容**：
+- 将 playground 加入 pnpm workspace（修改 pnpm-workspace.yaml）
+- 重构 playground/package.json，使用 workspace 依赖而非 file 路径
+- 更新 e2e/playwright.config.ts 使用正确的 @lytjs/playground 包名
+- 添加 e2e/README.md 使用指南
+
 ---
 
 ## 三、下一步待执行任务
@@ -85,7 +93,6 @@
 
 | 任务 | 描述 | 状态 |
 | ---- | ---- | ---- |
-| **E2E 测试完善** | 完善 Playwright E2E 测试环境配置，确保测试可正常运行 | 🔄 进行中 |
 | **CI/CD 集成** | 完善 GitHub/Gitee Actions CI/CD 配置 | ⏸️ 待启动 |
 
 ### 🟢 低优先级
@@ -172,13 +179,21 @@ pnpm build
 
 ---
 
-**文档版本**: v7.1
-**最后更新**: 2026-05-14
+**文档版本**: v7.2
+**最后更新**: 2026-05-15
 **维护者**: LytJS Team
 
 ---
 
 ## 更新日志
+
+### v7.2 (2026-05-15)
+
+- ✅ **E2E 测试环境完善**
+  - 将 playground 加入 pnpm workspace
+  - 重构 playground/package.json 使用 workspace 依赖
+  - 更新 e2e/playwright.config.ts 配置
+  - 添加 e2e/README.md 使用指南
 
 ### v7.1 (2026-05-14)
 

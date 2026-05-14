@@ -27,6 +27,7 @@ packages:
   - 'examples/*'
   - 'benchmarks/*'
   - 'e2e/*'
+  - 'playground'
 allowBuilds:
   esbuild: set this to true or false
 onlyBuiltDependencies:

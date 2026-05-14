@@ -18,7 +18,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'pnpm --filter lytjs-playground dev',
+    command: 'pnpm --filter @lytjs/playground dev',
     url: 'http://localhost:5173',
     reuseExistingServer: !process.env.CI,
   },

@@ -1,25 +1,22 @@
 {
-  "name": "lytjs-playground",
-  "version": "1.0.0",
+  "name": "@lytjs/playground",
+  "version": "6.0.0",
   "type": "module",
+  "private": true,
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview",
-    "test:e2e": "playwright test",
-    "test:e2e:ui": "playwright test --ui",
-    "test:e2e:headed": "playwright test --headed"
+    "preview": "vite preview"
   },
   "dependencies": {
-    "@lytjs/compiler": "file:../packages/compiler/dist",
-    "@lytjs/core": "file:../packages/core/dist",
-    "@lytjs/reactivity": "file:../packages/reactivity/dist",
-    "@lytjs/dom-runtime": "file:../packages/dom-runtime/dist",
-    "@lytjs/renderer": "file:../packages/renderer/dist",
-    "@lytjs/vdom": "file:../packages/vdom/dist"
+    "@lytjs/compiler": "workspace:*",
+    "@lytjs/core": "workspace:*",
+    "@lytjs/reactivity": "workspace:*",
+    "@lytjs/dom-runtime": "workspace:*",
+    "@lytjs/renderer": "workspace:*",
+    "@lytjs/vdom": "workspace:*"
   },
   "devDependencies": {
-    "@playwright/test": "^1.59.1",
     "typescript": "^5.8.2",
     "vite": "^5.4.21"
   }
