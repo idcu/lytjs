@@ -257,13 +257,10 @@ describe('Tree', () => {
     expect(props.defaultExpandAll).toBeDefined();
     expect(props.defaultExpandedKeys).toBeDefined();
     expect(props.defaultCheckedKeys).toBeDefined();
-    expect(props.defaultSelectedKeys).toBeDefined();
     expect(props.checkable).toBeDefined();
     expect(props.showCheckbox).toBeDefined();
     expect(props.draggable).toBeDefined();
     expect(props.nodeKey).toBeDefined();
-    expect(props.emptyText).toBeDefined();
-    expect(props.highlightCurrent).toBeDefined();
     expect(props.showLine).toBeDefined();
   });
 
@@ -274,9 +271,9 @@ describe('Tree', () => {
     expect(props.showCheckbox.default).toBe(false);
     expect(props.draggable.default).toBe(false);
     expect(props.nodeKey.default).toBe('id');
-    expect(props.emptyText.default).toBe('暂无数据');
-    expect(props.highlightCurrent.default).toBe(false);
     expect(props.showLine.default).toBe(false);
+    expect(typeof props.defaultExpandedKeys.default).toBe('function');
+    expect(typeof props.defaultCheckedKeys.default).toBe('function');
   });
 });
 

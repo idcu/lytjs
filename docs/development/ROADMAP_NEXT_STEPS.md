@@ -316,13 +316,24 @@ packages/
 
 ---
 
-**文档版本**: v4.9
+**文档版本**: v5.1
 **最后更新**: 2026-05-14
 **维护者**: LytJS Team
 
 ---
 
 ## 更新日志
+
+### v5.1 (2026-05-14)
+
+- ✅ 继续完善 UI 组件库类型定义，新增 6 个核心组件的类型修复
+- ✅ 修复 Modal 组件，建立 ModalSetupProps、ModalSlots、DragState、ModalPosition 等接口
+- ✅ 修复 Dialog 组件，建立 DialogSetupProps、DialogSlots 接口
+- ✅ 修复 Tree 组件，建立 TreeNode、FlattenNode、TreeSetupProps、TreeSlots 等接口
+- ✅ 修复 Form 组件，建立 FormRule、FormRules、FormSetupProps、FormSlots 等接口
+- ✅ 修复 Select 组件，建立 SelectOption、SelectSetupProps、SelectSlots 等接口
+- ✅ 修复测试文件以匹配新的 Tree 组件 props 定义
+- ✅ 所有 UI 组件测试共 135 个，全部通过
 
 ### v5.0 (2026-05-14)
 
