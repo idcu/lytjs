@@ -5,18 +5,35 @@
  */
 
 import { defineComponent } from '@lytjs/component';
-import { createVNode } from '@lytjs/vdom';
+import { createVNode, type VNode } from '@lytjs/vdom';
 import { signal } from '@lytjs/reactivity';
+import type { TableData, TableRowData, TableColumn, TableSortOrder, TableAlign } from './types';
 
-/**
- * Table 组件
- */
+export interface TableSetupProps {
+  data: TableData;
+  columns: TableColumn[];
+  stripe: boolean;
+  border: boolean;
+  rowKey: string;
+  showSelection: boolean;
+  highlightCurrentRow: boolean;
+  class: string;
+  onRowClick: ((row: TableRowData, index: number) => void) | undefined;
+  onSortChange: ((column: TableColumn, prop: string, order: TableSortOrder) => void) | undefined;
+  onSelectionChange: ((rows: TableData) => void) | undefined;
+}
+
+export interface TableSlots {
+  default?: () => VNode[];
+  empty?: () => VNode[];
+}
+
 export const Table = defineComponent({
   name: 'LytTable',
 
   props: {
-    data: { type: Array, default: () => [] },
-    columns: { type: Array, default: () => [] },
+    data: { type: Array, default: (): TableData => [] },
+    columns: { type: Array, default: (): TableColumn[] => [] },
     stripe: { type: Boolean, default: false },
     border: { type: Boolean, default: false },
     rowKey: { type: String, default: 'id' },
@@ -28,18 +45,17 @@ export const Table = defineComponent({
     onSelectionChange: { type: Function, default: undefined },
   },
 
-  setup(props: any, { slots, emit }: any) {
+  setup(props: TableSetupProps) {
     const sortColumn = signal('');
-    const sortOrder = signal<'ascending' | 'descending' | ''>('');
-    const selectedRows = signal<Set<any>>(new Set());
-    const currentRow = signal<any>(null);
+    const sortOrder = signal<TableSortOrder>('');
+    const selectedRows = signal<Set<TableRowData>>(new Set());
+    const currentRow = signal<TableRowData | null>(null);
     const allSelected = signal(false);
 
-    // 处理排序
-    const handleSort = (column: any) => {
+    const handleSort = (column: TableColumn) => {
       if (!column.sortable || !column.prop) return;
 
-      let newOrder: 'ascending' | 'descending' | '';
+      let newOrder: TableSortOrder;
       if (sortColumn() === column.prop) {
         if (sortOrder() === 'ascending') {
           newOrder = 'descending';
@@ -57,8 +73,7 @@ export const Table = defineComponent({
       props.onSortChange?.(column, column.prop, newOrder);
     };
 
-    // 处理行选择
-    const handleRowSelect = (row: any, checked: boolean) => {
+    const handleRowSelect = (row: TableRowData, checked: boolean) => {
       const newSelected = new Set(selectedRows());
       if (checked) {
         newSelected.add(row);
@@ -67,199 +82,129 @@ export const Table = defineComponent({
       }
       selectedRows.set(newSelected);
       
-      // 更新全选状态
       const data = props.data || [];
       allSelected.set(newSelected.size === data.length);
       
-      emit('selection-change', Array.from(newSelected));
       props.onSelectionChange?.(Array.from(newSelected));
     };
 
-    // 处理全选
     const handleSelectAll = (checked: boolean) => {
       allSelected.set(checked);
       const data = props.data || [];
       
       if (checked) {
         selectedRows.set(new Set(data));
-        emit('selection-change', [...data]);
         props.onSelectionChange?.([...data]);
       } else {
         selectedRows.set(new Set());
-        emit('selection-change', []);
         props.onSelectionChange?.([]);
       }
     };
 
-    // 处理行点击
-    const handleRowClick = (row: any, index: number) => {
+    const handleRowClick = (row: TableRowData, index: number) => {
       if (props.highlightCurrentRow) {
         currentRow.set(row);
       }
-      emit('row-click', row, index);
       props.onRowClick?.(row, index);
     };
 
-    // 生成类名
-    const getTableClass = () => {
-      const classes = ['lyt-table'];
-      if (props.stripe) classes.push('lyt-table--stripe');
-      if (props.border) classes.push('lyt-table--border');
-      if (props.class) classes.push(props.class);
-      return classes.join(' ');
+    const getCellValue = (row: TableRowData, column: TableColumn): unknown => {
+      if (!column.prop) return '';
+      return row[column.prop];
     };
 
-    // 生成行类名
-    const getRowClass = (row: any, index: number) => {
-      const classes = ['lyt-table__row'];
-      if (props.stripe && index % 2 === 1) classes.push('lyt-table__row--stripe');
-      if (currentRow() === row) classes.push('lyt-table__row--current');
-      if (selectedRows().has(row)) classes.push('lyt-table__row--selected');
-      return classes.join(' ');
-    };
-
-    // 生成单元格类名
-    const getCellClass = (column: any) => {
-      const classes = ['lyt-table__cell'];
-      if (column.fixed) classes.push(`lyt-table__cell--fixed-${column.fixed}`);
-      return classes.join(' ');
-    };
-
-    // 生成表头单元格类名
-    const getHeaderCellClass = (column: any) => {
-      const classes = ['lyt-table__cell', 'lyt-table__header-cell'];
-      if (column.sortable) classes.push('lyt-table__cell--sortable');
-      if (column.fixed) classes.push(`lyt-table__cell--fixed-${column.fixed}`);
-      return classes.join(' ');
-    };
-
-    // 获取单元格值
-    const getCellValue = (row: any, column: any) => {
-      if (column.prop) {
-        const keys = column.prop.split('.');
-        let value = row;
-        for (const key of keys) {
-          value = value?.[key];
-        }
-        return value !== undefined && value !== null ? String(value) : '';
+    const getRowKey = (row: TableRowData, index: number): string => {
+      if (props.rowKey && row[props.rowKey]) {
+        return String(row[props.rowKey]);
       }
-      return '';
-    };
-
-    // 检查是否选中
-    const isRowSelected = (row: any) => {
-      return selectedRows().has(row);
+      return String(index);
     };
 
     return () => {
       const data = props.data || [];
       const columns = props.columns || [];
-
-      // 表头单元格
-      const headerCells: any[] = [];
       
-      // 选择列
-      if (props.showSelection) {
-        headerCells.push(createVNode(
-          'th',
-          { class: 'lyt-table__cell lyt-table__header-cell lyt-table__cell--selection' },
-          [
-            createVNode('input', {
-              type: 'checkbox',
-              checked: allSelected(),
-              onChange: (e: any) => handleSelectAll(e.target.checked),
-            })
-          ]
-        ));
-      }
+      const tableClass = ['lyt-table'];
+      if (props.stripe) tableClass.push('lyt-table--stripe');
+      if (props.border) tableClass.push('lyt-table--border');
+      if (props.class) tableClass.push(props.class);
 
-      // 数据列
-      headerCells.push(...columns.map((column: any) => {
-        const children: any[] = [column.label];
-        if (column.sortable) {
-          children.push(createVNode(
-            'span',
-            { class: `lyt-table__sort-icon ${column.prop === sortColumn() ? 'lyt-table__sort-icon--active' : ''}` },
-            column.prop === sortColumn() ? (sortOrder() === 'ascending' ? '▲' : '▼') : '↕'
-          ));
-        }
-        return createVNode(
-          'th',
-          {
-            class: getHeaderCellClass(column),
-            style: column.width ? `width: ${column.width}px;` : '',
-            onClick: () => handleSort(column),
-          },
-          children
-        );
-      }));
+      const children: VNode[] = [];
 
-      // 表体行
-      const bodyRows: any[] = data.map((row: any, index: number) => {
-        const cells: any[] = [];
-        
-        // 选择列
-        if (props.showSelection) {
-          cells.push(createVNode(
-            'td',
-            { class: 'lyt-table__cell lyt-table__cell--selection' },
-            [
+      const thead = createVNode('thead', { class: 'lyt-table__header' }, [
+        createVNode('tr', {}, [
+          ...(props.showSelection ? [
+            createVNode('th', { class: 'lyt-table__cell--selection' }, [
               createVNode('input', {
                 type: 'checkbox',
-                checked: isRowSelected(row),
-                onChange: (e: any) => handleRowSelect(row, e.target.checked),
-              })
-            ]
-          ));
-        }
-        
-        // 数据列
-        cells.push(...columns.map((column: any) => {
-          const cellValue = getCellValue(row, column);
-          const cellContent = slots[column.slot]
-            ? slots[column.slot]({ row, column, index })
-            : cellValue;
-          
-          return createVNode(
-            'td',
-            {
-              class: getCellClass(column),
-              style: column.align 
-                ? `text-align: ${column.align};${column.width ? `width: ${column.width}px;` : ''}`
-                : column.width ? `width: ${column.width}px;` : '',
-            },
-            cellContent
-          );
-        }));
-        
-        return createVNode(
-          'tr',
-          {
-            class: getRowClass(row, index),
-            onClick: () => handleRowClick(row, index),
-          },
-          cells
-        );
-      });
+                checked: allSelected(),
+                onChange: (e: Event) => handleSelectAll((e.target as HTMLInputElement).checked),
+              }),
+            ]),
+          ] : []),
+          ...columns.map((column: TableColumn) => 
+            createVNode('th', {
+              class: [
+                'lyt-table__cell',
+                column.sortable ? 'lyt-table__cell--sortable' : '',
+                column.align ? `lyt-table__cell--${column.align}` : '',
+              ].filter(Boolean).join(' '),
+              onClick: () => handleSort(column),
+            }, [column.label])
+          ),
+        ]),
+      ]);
 
-      // 构建表格结构
-      const tableChildren: any[] = [
-        createVNode('thead', { class: 'lyt-table__header' }, [createVNode('tr', {}, headerCells)]),
-        createVNode('tbody', { class: 'lyt-table__body' }, bodyRows),
-      ];
-      
-      const wrapperChildren: any[] = [
-        createVNode('table', { class: getTableClass() }, tableChildren),
-      ];
-      
-      // 空状态
-      if (data.length === 0 && slots.empty) {
-        wrapperChildren.push(createVNode('div', { class: 'lyt-table__empty' }, slots.empty()));
-      }
-      
-      return createVNode('div', { class: 'lyt-table__wrapper' }, wrapperChildren);
+      const tbody = createVNode('tbody', { class: 'lyt-table__body' }, 
+        data.length === 0 
+          ? [
+              createVNode('tr', { class: 'lyt-table__empty-row' }, [
+                createVNode('td', {
+                  colspan: columns.length + (props.showSelection ? 1 : 0),
+                  class: 'lyt-table__empty-cell',
+                }, ['暂无数据']),
+              ]),
+            ]
+          : data.map((row: TableRowData, index: number) => 
+              createVNode('tr', {
+                key: getRowKey(row, index),
+                class: [
+                  'lyt-table__row',
+                  currentRow() === row ? 'lyt-table__row--active' : '',
+                ].filter(Boolean).join(' '),
+                onClick: () => handleRowClick(row, index),
+              }, [
+                ...(props.showSelection ? [
+                  createVNode('td', { class: 'lyt-table__cell--selection' }, [
+                    createVNode('input', {
+                      type: 'checkbox',
+                      checked: selectedRows().has(row),
+                      onChange: (e: Event) => handleRowSelect(row, (e.target as HTMLInputElement).checked),
+                    }),
+                  ]),
+                ] : []),
+                ...columns.map((column: TableColumn) => {
+                  const value = getCellValue(row, column);
+                  const displayValue = column.formatter 
+                    ? column.formatter(row, column, value)
+                    : String(value ?? '');
+                  
+                  return createVNode('td', {
+                    class: [
+                      'lyt-table__cell',
+                      column.align ? `lyt-table__cell--${column.align}` : '',
+                    ].filter(Boolean).join(' '),
+                  }, [displayValue]);
+                }),
+              ])
+            )
+      );
+
+      children.push(thead, tbody);
+
+      return createVNode('table', { class: tableClass.join(' ') }, children);
     };
   },
 });
 
-export default Table;
+export type { TableProps, TableSlots, TableColumn, TableData, TableRowData } from './types';

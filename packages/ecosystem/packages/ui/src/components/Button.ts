@@ -4,14 +4,31 @@
  * 基础按钮组件，支持多种类型、尺寸和状态
  */
 
-import type { ButtonProps, ButtonSlots } from './types';
 import { defineComponent } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import { isString, isObject } from '@lytjs/common-is';
+import type { ComponentStatus, ComponentSize, NativeType } from './types';
 
-/**
- * Button 组件
- */
+export interface ButtonSetupProps {
+  type: ComponentStatus;
+  size: ComponentSize;
+  disabled: boolean;
+  loading: boolean;
+  plain: boolean;
+  round: boolean;
+  circle: boolean;
+  nativeType: NativeType;
+  class: string;
+  style: string;
+  onClick: ((event: MouseEvent) => void) | undefined;
+}
+
+export interface ButtonSlots {
+  default?: () => VNode[];
+  loading?: () => VNode[];
+  icon?: () => VNode[];
+}
+
 export const Button = defineComponent({
   name: 'LytButton',
 
@@ -29,7 +46,7 @@ export const Button = defineComponent({
     onClick: { type: Function, default: undefined },
   },
 
-  setup(props: any, { slots }: any) {
+  setup(props: ButtonSetupProps, { slots }: { slots: ButtonSlots }) {
     const handleClick = (event: MouseEvent) => {
       if (props.disabled || props.loading) {
         event.preventDefault();
@@ -97,4 +114,4 @@ export const Button = defineComponent({
   },
 });
 
-export type { ButtonProps, ButtonSlots };
+export type { ButtonProps, ButtonSlots } from './types';

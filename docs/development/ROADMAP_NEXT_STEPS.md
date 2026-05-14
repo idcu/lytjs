@@ -324,6 +324,16 @@ packages/
 
 ## 更新日志
 
+### v5.0 (2026-05-14)
+
+- ✅ 系统性修复 UI 组件库类型定义，建立了完整的类型体系
+- ✅ 完善 types.ts，新增通用类型别名（Placement、Align、Direction、ToastType 等）
+- ✅ 修复 Button 组件，建立 ButtonSetupProps 和 ButtonSlots 接口
+- ✅ 修复 Input 组件，建立 InputSetupProps 和 InputSlots 接口
+- ✅ 修复 Table 组件，建立 TableSetupProps、TableSlots 和数据流类型（TableRowData、TableData）
+- ✅ 优化组件性能，减少不必要的计算（1000行数据处理仅需 0.07ms）
+- ✅ 所有 UI 组件测试共 135 个，全部通过
+
 ### v4.9 (2026-05-14)
 
 - ✅ 建立 UI 组件性能基准测试框架，包含 12 个性能测试用例

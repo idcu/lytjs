@@ -10,6 +10,21 @@ import type { VNode, Component } from '@lytjs/vdom';
 
 export type ComponentSize = 'small' | 'medium' | 'large';
 export type ComponentStatus = 'default' | 'primary' | 'success' | 'warning' | 'danger' | 'info';
+export type Placement = 'top' | 'bottom' | 'left' | 'right';
+export type Align = 'left' | 'center' | 'right';
+export type Direction = 'horizontal' | 'vertical';
+export type ContentPosition = 'left' | 'center' | 'right';
+export type ToastType = 'success' | 'warning' | 'info' | 'error';
+export type AlertType = 'success' | 'warning' | 'info' | 'error';
+export type TableAlign = 'left' | 'center' | 'right';
+export type TableSortOrder = 'ascending' | 'descending' | '';
+
+export type NativeType = 'button' | 'submit' | 'reset';
+export type Target = '_blank' | '_self' | '_parent' | '_top';
+
+export interface Record<string, unknown> {
+  [key: string]: unknown;
+}
 
 // ===== Button 组件 =====
 
@@ -143,22 +158,31 @@ export interface TableColumn {
   prop?: string;
   label: string;
   width?: string | number;
-  align?: 'left' | 'center' | 'right';
+  align?: TableAlign;
   sortable?: boolean;
-  formatter?: (row: any, column: TableColumn, cellValue: any) => string;
+  formatter?: (row: TableRowData, column: TableColumn, cellValue: unknown) => string;
 }
 
+export type TableRowData = Record<string, unknown>;
+export type TableData = TableRowData[];
+export type TableSortCallback = (column: TableColumn, prop: string, order: TableSortOrder) => void;
+export type TableRowClickCallback = (row: TableRowData, index: number) => void;
+
 export interface TableProps {
-  data?: any[];
+  data?: TableData;
   columns?: TableColumn[];
   stripe?: boolean;
   border?: boolean;
   height?: string | number;
   maxHeight?: string | number;
+  rowKey?: string;
+  showSelection?: boolean;
+  highlightCurrentRow?: boolean;
   class?: string;
   style?: string | Record<string, string>;
-  onRowClick?: (row: any, index: number) => void;
-  onSortChange?: (column: TableColumn, prop: string, order: 'ascending' | 'descending') => void;
+  onRowClick?: TableRowClickCallback;
+  onSortChange?: TableSortCallback;
+  onSelectionChange?: (rows: TableData) => void;
 }
 
 export interface TableSlots {
