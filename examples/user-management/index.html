@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>用户管理系统 - LytJS UI 示例</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    
+    .dashboard {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    
+    .header {
+      background: white;
+      padding: 30px;
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      margin-bottom: 24px;
+      text-align: center;
+    }
+    
+    .header h1 {
+      color: #1a1a1a;
+      font-size: 2.5em;
+      margin-bottom: 8px;
+    }
+    
+    .header p {
+      color: #666;
+      font-size: 1.1em;
+    }
+    
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      margin-bottom: 24px;
+    }
+    
+    .stat-card {
+      background: white;
+      padding: 24px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      transition: transform 0.3s;
+    }
+    
+    .stat-card:hover {
+      transform: translateY(-4px);
+    }
+    
+    .stat-icon {
+      font-size: 3em;
+      margin-bottom: 12px;
+    }
+    
+    .stat-value {
+      font-size: 2.5em;
+      font-weight: bold;
+      color: #667eea;
+    }
+    
+    .stat-label {
+      color: #666;
+      font-size: 1em;
+    }
+    
+    .main-content {
+      background: white;
+      padding: 30px;
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+    
+    .section-title {
+      font-size: 1.8em;
+      margin-bottom: 20px;
+      color: #1a1a1a;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .form-section {
+      background: #f8f9fa;
+      padding: 24px;
+      border-radius: 12px;
+      margin-bottom: 30px;
+    }
+    
+    .form-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    
+    .form-group {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .form-group label {
+      margin-bottom: 6px;
+      color: #333;
+      font-weight: 500;
+    }
+    
+    .form-group input,
+    .form-group select {
+      padding: 10px 12px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 1em;
+      transition: border-color 0.3s;
+    }
+    
+    .form-group input:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    
+    .form-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+      margin-top: 20px;
+    }
+    
+    .btn {
+      padding: 10px 24px;
+      border: none;
+      border-radius: 8px;
+      font-size: 1em;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-weight: 500;
+    }
+    
+    .btn-primary {
+      background: #667eea;
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      background: #5568d3;
+      transform: translateY(-2px);
+    }
+    
+    .btn-secondary {
+      background: #e9ecef;
+      color: #495057;
+    }
+    
+    .btn-secondary:hover {
+      background: #dee2e6;
+    }
+    
+    .btn-danger {
+      background: #dc3545;
+      color: white;
+    }
+    
+    .btn-danger:hover {
+      background: #c82333;
+    }
+    
+    .btn-sm {
+      padding: 6px 12px;
+      font-size: 0.9em;
+    }
+    
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    
+    .data-table th {
+      background: #f8f9fa;
+      padding: 14px 12px;
+      text-align: left;
+      font-weight: 600;
+      color: #333;
+      border-bottom: 2px solid #dee2e6;
+    }
+    
+    .data-table td {
+      padding: 14px 12px;
+      border-bottom: 1px solid #dee2e6;
+    }
+    
+    .data-table tr:hover {
+      background: #f8f9fa;
+    }
+    
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 0.85em;
+      font-weight: 500;
+    }
+    
+    .badge-success {
+      background: #d4edda;
+      color: #155724;
+    }
+    
+    .badge-warning {
+      background: #fff3cd;
+      color: #856404;
+    }
+    
+    .badge-danger {
+      background: #f8d7da;
+      color: #721c24;
+    }
+    
+    .badge-info {
+      background: #d1ecf1;
+      color: #0c5460;
+    }
+    
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    
+    .modal {
+      background: white;
+      padding: 30px;
+      border-radius: 16px;
+      max-width: 600px;
+      width: 90%;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    }
+    
+    .modal h2 {
+      margin-bottom: 20px;
+      color: #1a1a1a;
+    }
+    
+    .alert {
+      padding: 16px 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+    
+    .alert-success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    
+    .alert-error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #666;
+    }
+    
+    .empty-state-icon {
+      font-size: 4em;
+      margin-bottom: 16px;
+    }
+    
+    .actions {
+      display: flex;
+      gap: 8px;
+    }
+    
+    .search-box {
+      margin-bottom: 20px;
+    }
+    
+    .search-box input {
+      width: 100%;
+      max-width: 400px;
+      padding: 12px 16px;
+      border: 2px solid #e9ecef;
+      border-radius: 8px;
+      font-size: 1em;
+    }
+    
+    .search-box input:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    
+    .back-link {
+      display: inline-block;
+      margin-bottom: 20px;
+      color: white;
+      text-decoration: none;
+      font-weight: 500;
+      padding: 10px 20px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 8px;
+      transition: background 0.3s;
+    }
+    
+    .back-link:hover {
+      background: rgba(255,255,255,0.3);
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard">
+    <a href="../index.html" class="back-link">← 返回示例首页</a>
+    
+    <div class="header">
+      <h1>👥 用户管理系统</h1>
+      <p>基于 LytJS UI 组件库的完整示例应用</p>
+    </div>
+    
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">👥</div>
+        <div class="stat-value" id="totalUsers">0</div>
+        <div class="stat-label">总用户数</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">✅</div>
+        <div class="stat-value" id="activeUsers">0</div>
+        <div class="stat-label">活跃用户</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">🆕</div>
+        <div class="stat-value" id="newUsers">0</div>
+        <div class="stat-label">本月新增</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">📊</div>
+        <div class="stat-value" id="totalPages">0</div>
+        <div class="stat-label">访问页面数</div>
+      </div>
+    </div>
+    
+    <div class="main-content">
+      <div id="alertContainer"></div>
+      
+      <h2 class="section-title">📝 添加/编辑用户</h2>
+      
+      <div class="form-section">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="name">姓名 *</label>
+            <input type="text" id="name" placeholder="请输入用户姓名" required>
+          </div>
+          <div class="form-group">
+            <label for="email">邮箱 *</label>
+            <input type="email" id="email" placeholder="请输入邮箱地址" required>
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="phone">手机号</label>
+            <input type="tel" id="phone" placeholder="请输入手机号">
+          </div>
+          <div class="form-group">
+            <label for="department">部门</label>
+            <select id="department">
+              <option value="">请选择部门</option>
+              <option value="技术部">技术部</option>
+              <option value="产品部">产品部</option>
+              <option value="设计部">设计部</option>
+              <option value="市场部">市场部</option>
+              <option value="运营部">运营部</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="role">角色</label>
+            <select id="role">
+              <option value="user">普通用户</option>
+              <option value="admin">管理员</option>
+              <option value="editor">编辑</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="status">状态</label>
+            <select id="status">
+              <option value="active">活跃</option>
+              <option value="inactive">未激活</option>
+              <option value="blocked">已封禁</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="form-actions">
+          <button class="btn btn-secondary" onclick="resetForm()">重置</button>
+          <button class="btn btn-primary" onclick="saveUser()">保存</button>
+        </div>
+      </div>
+      
+      <h2 class="section-title">📋 用户列表</h2>
+      
+      <div class="search-box">
+        <input type="text" id="searchInput" placeholder="🔍 搜索用户姓名或邮箱..." oninput="filterUsers()">
+      </div>
+      
+      <div id="userTableContainer">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>姓名</th>
+              <th>邮箱</th>
+              <th>手机号</th>
+              <th>部门</th>
+              <th>角色</th>
+              <th>状态</th>
+              <th>注册时间</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="userTableBody">
+          </tbody>
+        </table>
+      </div>
+      
+      <div id="emptyState" class="empty-state" style="display: none;">
+        <div class="empty-state-icon">📭</div>
+        <p>暂无用户数据</p>
+      </div>
+    </div>
+  </div>
+  
+  <div id="confirmModal" class="modal-overlay" style="display: none;">
+    <div class="modal">
+      <h2>⚠️ 确认删除</h2>
+      <p id="confirmMessage">确定要删除这个用户吗？此操作不可撤销。</p>
+      <div class="form-actions">
+        <button class="btn btn-secondary" onclick="closeConfirmModal()">取消</button>
+        <button class="btn btn-danger" id="confirmDeleteBtn">确认删除</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { signal, computed, effect } from '@lytjs/reactivity';
+    import { Button, Input, Table, Modal, Notification, Tag } from '@lytjs/ui';
+    
+    // 用户数据
+    const users = signal([
+      {
+        id: 1,
+        name: '张三',
+        email: 'zhangsan@example.com',
+        phone: '13800138001',
+        department: '技术部',
+        role: 'admin',
+        status: 'active',
+        createdAt: '2026-05-01'
+      },
+      {
+        id: 2,
+        name: '李四',
+        email: 'lisi@example.com',
+        phone: '13800138002',
+        department: '产品部',
+        role: 'editor',
+        status: 'active',
+        createdAt: '2026-05-03'
+      },
+      {
+        id: 3,
+        name: '王五',
+        email: 'wangwu@example.com',
+        phone: '13800138003',
+        department: '设计部',
+        role: 'user',
+        status: 'inactive',
+        createdAt: '2026-05-05'
+      },
+      {
+        id: 4,
+        name: '赵六',
+        email: 'zhaoliu@example.com',
+        phone: '13800138004',
+        department: '市场部',
+        role: 'user',
+        status: 'active',
+        createdAt: '2026-05-08'
+      },
+      {
+        id: 5,
+        name: '钱七',
+        email: 'qianqi@example.com',
+        phone: '13800138005',
+        department: '运营部',
+        role: 'user',
+        status: 'blocked',
+        createdAt: '2026-05-10'
+      }
+    ]);
+    
+    // 当前编辑的用户ID
+    const editingUserId = signal(null);
+    
+    // 搜索关键词
+    const searchKeyword = signal('');
+    
+    // 过滤后的用户列表
+    const filteredUsers = computed(() => {
+      const keyword = searchKeyword().toLowerCase();
+      if (!keyword) return users();
+      
+      return users().filter(user => 
+        user.name.toLowerCase().includes(keyword) ||
+        user.email.toLowerCase().includes(keyword)
+      );
+    });
+    
+    // 统计数据
+    const stats = computed(() => ({
+      total: users().length,
+      active: users().filter(u => u.status === 'active').length,
+      new: users().filter(u => {
+        const created = new Date(u.createdAt);
+        const now = new Date();
+        const diffDays = (now - created) / (1000 * 60 * 60 * 24);
+        return diffDays <= 30;
+      }).length,
+      pages: 156
+    }));
+    
+    // 更新统计
+    effect(() => {
+      document.getElementById('totalUsers').textContent = stats().total;
+      document.getElementById('activeUsers').textContent = stats().active;
+      document.getElementById('newUsers').textContent = stats().new;
+      document.getElementById('totalPages').textContent = stats().pages;
+    });
+    
+    // 渲染用户表格
+    function renderUserTable() {
+      const tbody = document.getElementById('userTableBody');
+      const emptyState = document.getElementById('emptyState');
+      const tableContainer = document.getElementById('userTableContainer');
+      
+      const data = filteredUsers();
+      
+      if (data.length === 0) {
+        tableContainer.style.display = 'none';
+        emptyState.style.display = 'block';
+        return;
+      }
+      
+      tableContainer.style.display = 'block';
+      emptyState.style.display = 'none';
+      
+      tbody.innerHTML = data.map(user => `
+        <tr>
+          <td>${user.id}</td>
+          <td>${user.name}</td>
+          <td>${user.email}</td>
+          <td>${user.phone || '-'}</td>
+          <td>${user.department || '-'}</td>
+          <td>${getRoleBadge(user.role)}</td>
+          <td>${getStatusBadge(user.status)}</td>
+          <td>${user.createdAt}</td>
+          <td class="actions">
+            <button class="btn btn-sm btn-primary" onclick="editUser(${user.id})">编辑</button>
+            <button class="btn btn-sm btn-danger" onclick="showDeleteConfirm(${user.id})">删除</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+    
+    function getRoleBadge(role) {
+      const badges = {
+        admin: '<span class="badge badge-danger">管理员</span>',
+        editor: '<span class="badge badge-warning">编辑</span>',
+        user: '<span class="badge badge-info">用户</span>'
+      };
+      return badges[role] || badges.user;
+    }
+    
+    function getStatusBadge(status) {
+      const badges = {
+        active: '<span class="badge badge-success">活跃</span>',
+        inactive: '<span class="badge badge-warning">未激活</span>',
+        blocked: '<span class="badge badge-danger">已封禁</span>'
+      };
+      return badges[status] || badges.inactive;
+    }
+    
+    // 监听数据变化
+    effect(() => {
+      filteredUsers();
+      renderUserTable();
+    });
+    
+    // 保存用户
+    window.saveUser = function() {
+      const name = document.getElementById('name').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const phone = document.getElementById('phone').value.trim();
+      const department = document.getElementById('department').value;
+      const role = document.getElementById('role').value;
+      const status = document.getElementById('status').value;
+      
+      if (!name || !email) {
+        showAlert('error', '请填写必填字段（姓名和邮箱）');
+        return;
+      }
+      
+      const currentId = editingUserId();
+      
+      if (currentId) {
+        // 更新
+        const usersData = users();
+        const index = usersData.findIndex(u => u.id === currentId);
+        if (index !== -1) {
+          usersData[index] = {
+            ...usersData[index],
+            name,
+            email,
+            phone,
+            department,
+            role,
+            status
+          };
+          users.set([...usersData]);
+          showAlert('success', '用户更新成功！');
+        }
+      } else {
+        // 新增
+        const newUser = {
+          id: Date.now(),
+          name,
+          email,
+          phone,
+          department,
+          role,
+          status,
+          createdAt: new Date().toISOString().split('T')[0]
+        };
+        users.set([...users(), newUser]);
+        showAlert('success', '用户添加成功！');
+      }
+      
+      resetForm();
+    };
+    
+    // 编辑用户
+    window.editUser = function(id) {
+      const user = users().find(u => u.id === id);
+      if (!user) return;
+      
+      editingUserId.set(id);
+      
+      document.getElementById('name').value = user.name;
+      document.getElementById('email').value = user.email;
+      document.getElementById('phone').value = user.phone || '';
+      document.getElementById('department').value = user.department || '';
+      document.getElementById('role').value = user.role;
+      document.getElementById('status').value = user.status;
+      
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+    
+    // 重置表单
+    window.resetForm = function() {
+      editingUserId.set(null);
+      
+      document.getElementById('name').value = '';
+      document.getElementById('email').value = '';
+      document.getElementById('phone').value = '';
+      document.getElementById('department').value = '';
+      document.getElementById('role').value = 'user';
+      document.getElementById('status').value = 'active';
+    };
+    
+    // 删除确认
+    window.showDeleteConfirm = function(id) {
+      const modal = document.getElementById('confirmModal');
+      modal.style.display = 'flex';
+      
+      const confirmBtn = document.getElementById('confirmDeleteBtn');
+      confirmBtn.onclick = () => deleteUser(id);
+    };
+    
+    window.closeConfirmModal = function() {
+      document.getElementById('confirmModal').style.display = 'none';
+    };
+    
+    // 删除用户
+    function deleteUser(id) {
+      const usersData = users();
+      const filtered = usersData.filter(u => u.id !== id);
+      users.set(filtered);
+      
+      closeConfirmModal();
+      showAlert('success', '用户删除成功！');
+    }
+    
+    // 搜索过滤
+    window.filterUsers = function() {
+      const keyword = document.getElementById('searchInput').value;
+      searchKeyword.set(keyword);
+    };
+    
+    // 显示提示
+    function showAlert(type, message) {
+      const container = document.getElementById('alertContainer');
+      const className = type === 'success' ? 'alert-success' : 'alert-error';
+      container.innerHTML = `<div class="alert ${className}">${message}</div>`;
+      
+      setTimeout(() => {
+        container.innerHTML = '';
+      }, 3000);
+    }
+    
+    // 初始渲染
+    renderUserTable();
+    
+    console.log('用户管理系统初始化完成！');
+    console.log('使用 LytJS UI 组件库构建');
+  </script>
+</body>
+</html>
