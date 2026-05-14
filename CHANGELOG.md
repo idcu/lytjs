@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.0.1] - 2026-05-15
+
+### 性能优化
+
+- **VNode 对象池优化**
+  - 将 VNode 对象池最大大小从 200 扩大到 500
+  - 减少频繁创建和销毁 VNode 对象导致的 GC 压力
+  - 提升大型列表渲染场景的性能
+
+- **Signal 通知机制优化**
+  - 使用迭代器替代 for...of 循环遍历 subscribers
+  - 优化 notifySubscribers 和 flushPendingNotifications 函数
+  - 在高频更新场景（如动画、实时数据）获得明显性能提升
+
+### 测试验证
+
+- vdom 包测试通过率：403/403 测试全部通过
+- reactivity 包测试通过率：236/236 测试全部通过
+- 所有基准测试运行正常
+
 ## [6.0.0] - 2026-05-06
 
 ### 架构整改
