@@ -37,7 +37,11 @@ export interface ButtonSetupProps extends Record<string, unknown> {
   nativeType: ButtonNativeType;
   class: string;
   style: string;
+  ariaLabel: string;
+  ariaDescribedBy: string;
+  tabIndex?: number;
   onClick?: (event: MouseEvent) => void;
+  onKeydown?: (event: KeyboardEvent) => void;
 }
 
 export interface ButtonProps {
@@ -51,7 +55,11 @@ export interface ButtonProps {
   nativeType?: ButtonNativeType;
   class?: string;
   style?: string | Record<string, string>;
+  ariaLabel?: string;
+  ariaDescribedBy?: string;
+  tabIndex?: number;
   onClick?: (event: MouseEvent) => void;
+  onKeydown?: (event: KeyboardEvent) => void;
 }
 
 export interface ButtonSlots {
@@ -77,6 +85,14 @@ export interface InputSetupProps extends Record<string, unknown> {
   suffixIcon: string;
   class: string;
   style: string;
+  ariaLabel: string;
+  ariaDescribedBy: string;
+  ariaInvalid: boolean;
+  ariaRequired: boolean;
+  autocomplete: string;
+  name: string;
+  id: string;
+  tabIndex?: number;
   onInput?: (value: string) => void;
   onChange?: (value: string) => void;
   onFocus?: (event: FocusEvent) => void;
@@ -99,6 +115,14 @@ export interface InputProps {
   suffixIcon?: string;
   class?: string;
   style?: string | Record<string, string>;
+  ariaLabel?: string;
+  ariaDescribedBy?: string;
+  ariaInvalid?: boolean;
+  ariaRequired?: boolean;
+  autocomplete?: string;
+  name?: string;
+  id?: string;
+  tabIndex?: number;
   onInput?: (value: string) => void;
   onChange?: (value: string) => void;
   onFocus?: (event: FocusEvent) => void;
@@ -807,10 +831,17 @@ export interface CheckboxProps {
   disabled?: boolean;
   indeterminate?: boolean;
   name?: string;
+  id?: string;
   checked?: boolean;
   class?: string;
   style?: string | Record<string, string>;
+  ariaLabel?: string;
+  ariaDescribedBy?: string;
+  ariaInvalid?: boolean;
+  ariaRequired?: boolean;
+  tabIndex?: number;
   onChange?: (value: boolean) => void;
+  onKeydown?: (event: KeyboardEvent) => void;
 }
 
 export interface CheckboxSlots {
@@ -826,9 +857,16 @@ export interface CheckboxSetupProps extends Record<string, unknown> {
   checked: boolean;
   indeterminate: boolean;
   name: string;
+  id: string;
   class: string;
   style?: string | Record<string, string>;
+  ariaLabel: string;
+  ariaDescribedBy: string;
+  ariaInvalid: boolean;
+  ariaRequired: boolean;
+  tabIndex?: number;
   onChange?: (value: boolean) => void;
+  onKeydown?: (event: KeyboardEvent) => void;
 }
 
 // ===== Radio 组件 =====

@@ -23,17 +23,36 @@ export const Button = defineComponent({
     nativeType: { type: String, default: 'button' },
     class: { type: String, default: '' },
     style: { type: String, default: '' },
+    ariaLabel: { type: String, default: '' },
+    ariaDescribedBy: { type: String, default: '' },
+    tabIndex: { type: Number, default: undefined },
     onClick: { type: Function, default: undefined },
+    onKeydown: { type: Function, default: undefined },
   },
 
   setup(props: Record<string, unknown>, { slots }: { slots: ButtonSlots }) {
     const p = props as ButtonSetupProps;
+    
     const handleClick = (event: MouseEvent) => {
       if (p.disabled || p.loading) {
         event.preventDefault();
         return;
       }
       p.onClick?.(event);
+    };
+
+    const handleKeydown = (event: KeyboardEvent) => {
+      if (p.disabled || p.loading) {
+        return;
+      }
+      
+      // 支持Enter和Space键触发按钮
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        handleClick(event as unknown as MouseEvent);
+      }
+      
+      p.onKeydown?.(event);
     };
 
     const getButtonClass = () => {
@@ -87,7 +106,12 @@ export const Button = defineComponent({
           style: getButtonStyle(),
           type: p.nativeType,
           disabled: p.disabled || p.loading,
+          'aria-disabled': p.disabled || p.loading,
+          'aria-label': p.ariaLabel,
+          'aria-describedby': p.ariaDescribedBy,
+          tabindex: p.tabIndex !== undefined ? p.tabIndex : (p.disabled || p.loading ? -1 : 0),
           onClick: handleClick,
+          onKeydown: handleKeydown,
         },
         children,
       );

@@ -316,13 +316,28 @@ packages/
 
 ---
 
-**文档版本**: v5.12
+**文档版本**: v5.13
 **最后更新**: 2026-05-14
 **维护者**: LytJS Team
 
 ---
 
 ## 更新日志
+
+### v5.13 (2026-05-14)
+- ✅ **增强组件键盘和无障碍（a11y）支持**
+  - 为 Button 组件添加键盘事件处理（Enter/Space 触发）
+  - 为 Button 组件添加 aria-label、aria-described-by、aria-disabled 等 a11y 属性
+  - 为 Button 组件添加 onKeydown 事件支持
+  - 为 Input 组件添加完整的 a11y 属性支持
+  - 为 Input 组件添加 autocomplete、name、id 等表单属性
+  - 为 Checkbox 组件添加 a11y 属性支持
+  - 所有组件添加了合理的 tabindex 支持
+- ✅ **更新组件类型定义**
+  - 为 Button、Input、Checkbox 组件添加完整的 a11y 属性类型
+  - 添加了相关的事件处理类型
+- ✅ **全面测试验证**
+  - 所有172个测试通过，确保代码稳定
 
 ### v5.12 (2026-05-14)
 - ✅ **新增高级 UI 组件 (2个组件)**
