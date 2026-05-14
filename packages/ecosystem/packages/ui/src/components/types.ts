@@ -1616,4 +1616,223 @@ export interface CardSetupProps extends Record<string, unknown> {
   style?: string | Record<string, string>;
 }
 
+// ===== Timeline 时间轴组件 =====
+export interface TimelineItem {
+  color?: string;
+  type?: 'primary' | 'success' | 'warning' | 'danger' | 'info';
+  size?: 'large' | 'default' | 'small';
+  dot?: VNode | string;
+  timestamp?: string;
+  placement?: 'top' | 'bottom';
+  hideTimestamp?: boolean;
+  content?: string | VNode;
+}
+
+export interface TimelineProps {
+  reverse?: boolean;
+  mode?: 'left' | 'right' | 'alternate';
+  class?: string;
+  style?: string | Record<string, string>;
+}
+
+export interface TimelineSlots {
+  default?: () => VNode[];
+}
+
+export interface TimelineSetupProps extends Record<string, unknown> {
+  reverse: boolean;
+  mode: 'left' | 'right' | 'alternate';
+  class: string;
+  style?: string | Record<string, string>;
+}
+
+// ===== TimelineItem 时间轴项组件 =====
+export interface TimelineItemProps {
+  color?: string;
+  type?: 'primary' | 'success' | 'warning' | 'danger' | 'info';
+  size?: 'large' | 'default' | 'small';
+  dot?: VNode | string;
+  timestamp?: string;
+  placement?: 'top' | 'bottom';
+  hideTimestamp?: boolean;
+  class?: string;
+  style?: string | Record<string, string>;
+}
+
+export interface TimelineItemSlots {
+  default?: () => VNode[];
+  dot?: () => VNode[];
+}
+
+export interface TimelineItemSetupProps extends Record<string, unknown> {
+  color: string;
+  type: 'primary' | 'success' | 'warning' | 'danger' | 'info';
+  size: 'large' | 'default' | 'small';
+  dot: VNode | string;
+  timestamp: string;
+  placement: 'top' | 'bottom';
+  hideTimestamp: boolean;
+  class: string;
+  style?: string | Record<string, string>;
+}
+
+// ===== Steps 步骤条组件 =====
+export interface Step {
+  title?: string;
+  description?: string;
+  icon?: string | VNode;
+  status?: 'wait' | 'process' | 'finish' | 'error' | 'success';
+}
+
+export interface StepsProps {
+  active?: number;
+  processStatus?: 'process' | 'finish' | 'error' | 'success';
+  finishStatus?: 'wait' | 'process' | 'finish' | 'error' | 'success';
+  direction?: 'horizontal' | 'vertical';
+  alignCenter?: boolean;
+  simple?: boolean;
+  class?: string;
+  style?: string | Record<string, string>;
+  onChange?: (active: number) => void;
+}
+
+export interface StepsSlots {
+  default?: () => VNode[];
+}
+
+export interface StepsSetupProps extends Record<string, unknown> {
+  active: number;
+  processStatus: 'process' | 'finish' | 'error' | 'success';
+  finishStatus: 'wait' | 'process' | 'finish' | 'error' | 'success';
+  direction: 'horizontal' | 'vertical';
+  alignCenter: boolean;
+  simple: boolean;
+  class: string;
+  style?: string | Record<string, string>;
+  onChange?: (active: number) => void;
+}
+
+// ===== Step 步骤项组件 =====
+export interface StepProps {
+  title?: string;
+  description?: string;
+  icon?: string | VNode;
+  status?: 'wait' | 'process' | 'finish' | 'error' | 'success';
+  class?: string;
+  style?: string | Record<string, string>;
+}
+
+export interface StepSlots {
+  default?: () => VNode[];
+  icon?: () => VNode[];
+  title?: () => VNode[];
+  description?: () => VNode[];
+}
+
+export interface StepSetupProps extends Record<string, unknown> {
+  title: string;
+  description: string;
+  icon: string | VNode;
+  status: 'wait' | 'process' | 'finish' | 'error' | 'success';
+  class: string;
+  style?: string | Record<string, string>;
+}
+
+// ===== Carousel 走马灯组件 =====
+export interface CarouselProps {
+  initialIndex?: number;
+  height?: string;
+  trigger?: 'click' | 'hover';
+  autoplay?: boolean;
+  interval?: number;
+  indicatorPosition?: 'outside' | 'none';
+  arrow?: 'always' | 'hover' | 'never';
+  type?: '' | 'card';
+  loop?: boolean;
+  direction?: 'horizontal' | 'vertical';
+  class?: string;
+  style?: string | Record<string, string>;
+  onChange?: (index: number, prevIndex: number) => void;
+}
+
+export interface CarouselSlots {
+  default?: () => VNode[];
+}
+
+export interface CarouselSetupProps extends Record<string, unknown> {
+  initialIndex: number;
+  height: string;
+  trigger: 'click' | 'hover';
+  autoplay: boolean;
+  interval: number;
+  indicatorPosition: 'outside' | 'none';
+  arrow: 'always' | 'hover' | 'never';
+  type: '' | 'card';
+  loop: boolean;
+  direction: 'horizontal' | 'vertical';
+  class: string;
+  style?: string | Record<string, string>;
+  onChange?: (index: number, prevIndex: number) => void;
+}
+
+// ===== CarouselItem 走马灯项组件 =====
+export interface CarouselItemProps {
+  name?: string | number;
+  label?: string;
+  class?: string;
+  style?: string | Record<string, string>;
+}
+
+export interface CarouselItemSlots {
+  default?: () => VNode[];
+}
+
+export interface CarouselItemSetupProps extends Record<string, unknown> {
+  name: string | number;
+  label: string;
+  class: string;
+  style?: string | Record<string, string>;
+}
+
+// ===== Popconfirm 气泡确认框组件 =====
+export interface PopconfirmProps {
+  title?: string;
+  confirmButtonText?: string;
+  cancelButtonText?: string;
+  confirmButtonType?: string;
+  cancelButtonType?: string;
+  icon?: string;
+  iconColor?: string;
+  hideIcon?: boolean;
+  disabled?: boolean;
+  width?: number;
+  class?: string;
+  style?: string | Record<string, string>;
+  onConfirm?: () => void;
+  onCancel?: () => void;
+}
+
+export interface PopconfirmSlots {
+  default?: () => VNode[];
+  reference?: () => VNode[];
+  icon?: () => VNode[];
+}
+
+export interface PopconfirmSetupProps extends Record<string, unknown> {
+  title: string;
+  confirmButtonText: string;
+  cancelButtonText: string;
+  confirmButtonType: string;
+  cancelButtonType: string;
+  icon: string;
+  iconColor: string;
+  hideIcon: boolean;
+  disabled: boolean;
+  width: number;
+  class: string;
+  style?: string | Record<string, string>;
+  onConfirm?: () => void;
+  onCancel?: () => void;
+}
+
 export type { VNode, Component };

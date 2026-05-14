@@ -43,6 +43,13 @@ import { Progress } from '../src/components/Progress';
 import { Slider } from '../src/components/Slider';
 import { Avatar } from '../src/components/Avatar';
 import { Card } from '../src/components/Card';
+import { Timeline } from '../src/components/Timeline';
+import { TimelineItem } from '../src/components/TimelineItem';
+import { Steps } from '../src/components/Steps';
+import { Step } from '../src/components/Step';
+import { Carousel } from '../src/components/Carousel';
+import { CarouselItem } from '../src/components/CarouselItem';
+import { Popconfirm } from '../src/components/Popconfirm';
 
 // ===== Button 组件测试 =====
 describe('Button', () => {
@@ -1035,14 +1042,21 @@ describe('exports', () => {
     expect(Tooltip).toBeDefined();
     expect(Checkbox).toBeDefined();
     expect(CheckboxGroup).toBeDefined();
-    expect(Radio).toBeDefined();
-    expect(RadioGroup).toBeDefined();
-    expect(Switch).toBeDefined();
-    expect(InputNumber).toBeDefined();
-    expect(Progress).toBeDefined();
-    expect(Slider).toBeDefined();
-    expect(Avatar).toBeDefined();
-    expect(Card).toBeDefined();
+      expect(Radio).toBeDefined();
+      expect(RadioGroup).toBeDefined();
+      expect(Switch).toBeDefined();
+      expect(InputNumber).toBeDefined();
+      expect(Progress).toBeDefined();
+      expect(Slider).toBeDefined();
+      expect(Avatar).toBeDefined();
+      expect(Card).toBeDefined();
+      expect(Timeline).toBeDefined();
+      expect(TimelineItem).toBeDefined();
+      expect(Steps).toBeDefined();
+      expect(Step).toBeDefined();
+      expect(Carousel).toBeDefined();
+      expect(CarouselItem).toBeDefined();
+      expect(Popconfirm).toBeDefined();
   });
 });
 
@@ -1194,5 +1208,134 @@ describe('Card', () => {
     const props = Card.props;
     expect(props.header.default).toBe('');
     expect(props.shadow.default).toBe('always');
+  });
+});
+
+// ===== Timeline 组件测试 =====
+describe('Timeline', () => {
+  it('should render Timeline with default props', () => {
+    expect(Timeline).toBeDefined();
+    expect(Timeline.name).toBe('LytTimeline');
+  });
+
+  it('should have correct props definition', () => {
+    const props = Timeline.props;
+    expect(props.reverse).toBeDefined();
+    expect(props.mode).toBeDefined();
+  });
+
+  it('should have default values for props', () => {
+    const props = Timeline.props;
+    expect(props.reverse.default).toBe(false);
+    expect(props.mode.default).toBe('left');
+  });
+});
+
+// ===== TimelineItem 组件测试 =====
+describe('TimelineItem', () => {
+  it('should render TimelineItem with default props', () => {
+    expect(TimelineItem).toBeDefined();
+    expect(TimelineItem.name).toBe('LytTimelineItem');
+  });
+
+  it('should have correct props definition', () => {
+    const props = TimelineItem.props;
+    expect(props.color).toBeDefined();
+    expect(props.type).toBeDefined();
+    expect(props.timestamp).toBeDefined();
+  });
+
+  it('should have default values for props', () => {
+    const props = TimelineItem.props;
+    expect(props.size.default).toBe('default');
+    expect(props.placement.default).toBe('bottom');
+  });
+});
+
+// ===== Steps 组件测试 =====
+describe('Steps', () => {
+  it('should render Steps with default props', () => {
+    expect(Steps).toBeDefined();
+    expect(Steps.name).toBe('LytSteps');
+  });
+
+  it('should have correct props definition', () => {
+    const props = Steps.props;
+    expect(props.active).toBeDefined();
+    expect(props.direction).toBeDefined();
+  });
+
+  it('should have default values for props', () => {
+    const props = Steps.props;
+    expect(props.active.default).toBe(0);
+    expect(props.direction.default).toBe('horizontal');
+  });
+});
+
+// ===== Step 组件测试 =====
+describe('Step', () => {
+  it('should render Step with default props', () => {
+    expect(Step).toBeDefined();
+    expect(Step.name).toBe('LytStep');
+  });
+
+  it('should have correct props definition', () => {
+    const props = Step.props;
+    expect(props.title).toBeDefined();
+    expect(props.description).toBeDefined();
+  });
+});
+
+// ===== Carousel 组件测试 =====
+describe('Carousel', () => {
+  it('should render Carousel with default props', () => {
+    expect(Carousel).toBeDefined();
+    expect(Carousel.name).toBe('LytCarousel');
+  });
+
+  it('should have correct props definition', () => {
+    const props = Carousel.props;
+    expect(props.initialIndex).toBeDefined();
+    expect(props.autoplay).toBeDefined();
+  });
+
+  it('should have default values for props', () => {
+    const props = Carousel.props;
+    expect(props.initialIndex.default).toBe(0);
+    expect(props.autoplay.default).toBe(true);
+  });
+});
+
+// ===== CarouselItem 组件测试 =====
+describe('CarouselItem', () => {
+  it('should render CarouselItem with default props', () => {
+    expect(CarouselItem).toBeDefined();
+    expect(CarouselItem.name).toBe('LytCarouselItem');
+  });
+
+  it('should have correct props definition', () => {
+    const props = CarouselItem.props;
+    expect(props.name).toBeDefined();
+    expect(props.label).toBeDefined();
+  });
+});
+
+// ===== Popconfirm 组件测试 =====
+describe('Popconfirm', () => {
+  it('should render Popconfirm with default props', () => {
+    expect(Popconfirm).toBeDefined();
+    expect(Popconfirm.name).toBe('LytPopconfirm');
+  });
+
+  it('should have correct props definition', () => {
+    const props = Popconfirm.props;
+    expect(props.title).toBeDefined();
+    expect(props.confirmButtonText).toBeDefined();
+  });
+
+  it('should have default values for props', () => {
+    const props = Popconfirm.props;
+    expect(props.confirmButtonText.default).toBe('确定');
+    expect(props.cancelButtonText.default).toBe('取消');
   });
 });

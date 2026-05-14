@@ -54,6 +54,13 @@ export { Progress } from './components/Progress';
 export { Slider } from './components/Slider';
 export { Avatar } from './components/Avatar';
 export { Card } from './components/Card';
+export { Timeline } from './components/Timeline';
+export { TimelineItem } from './components/TimelineItem';
+export { Steps } from './components/Steps';
+export { Step } from './components/Step';
+export { Carousel } from './components/Carousel';
+export { CarouselItem } from './components/CarouselItem';
+export { Popconfirm } from './components/Popconfirm';
 
 // 类型导出
 export type {
@@ -141,6 +148,27 @@ export type {
   CardProps,
   CardSlots,
   CardSetupProps,
+  TimelineProps,
+  TimelineSlots,
+  TimelineSetupProps,
+  TimelineItemProps,
+  TimelineItemSlots,
+  TimelineItemSetupProps,
+  StepsProps,
+  StepsSlots,
+  StepsSetupProps,
+  StepProps,
+  StepSlots,
+  StepSetupProps,
+  CarouselProps,
+  CarouselSlots,
+  CarouselSetupProps,
+  CarouselItemProps,
+  CarouselItemSlots,
+  CarouselItemSetupProps,
+  PopconfirmProps,
+  PopconfirmSlots,
+  PopconfirmSetupProps,
   ImageProps,
   ImageSlots,
   ImageFit,
