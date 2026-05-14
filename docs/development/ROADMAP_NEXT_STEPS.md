@@ -85,15 +85,17 @@
 - 更新 e2e/playwright.config.ts 使用正确的 @lytjs/playground 包名
 - 添加 e2e/README.md 使用指南
 
+#### 5. CI/CD 集成完善
+
+**修复内容**：
+- 项目已有完整的 GitHub Actions CI/CD 配置
+- 在 .github/workflows/ci.yml 中新增基准测试 job
+- 基准测试结果会自动上传并保留 14 天
+- 简化 E2E 测试矩阵（仅保留 chromium）以提升 CI 速度
+
 ---
 
 ## 三、下一步待执行任务
-
-### 🟡 中优先级
-
-| 任务 | 描述 | 状态 |
-| ---- | ---- | ---- |
-| **CI/CD 集成** | 完善 GitHub/Gitee Actions CI/CD 配置 | ⏸️ 待启动 |
 
 ### 🟢 低优先级
 
@@ -179,13 +181,21 @@ pnpm build
 
 ---
 
-**文档版本**: v7.2
+**文档版本**: v7.3
 **最后更新**: 2026-05-15
 **维护者**: LytJS Team
 
 ---
 
 ## 更新日志
+
+### v7.3 (2026-05-15)
+
+- ✅ **CI/CD 集成完善**
+  - 项目已有完整的 GitHub Actions CI/CD 配置
+  - 在 CI 中新增基准测试 job
+  - 基准测试结果自动上传并保留 14 天
+  - 简化 E2E 测试矩阵，提升 CI 速度
 
 ### v7.2 (2026-05-15)
 

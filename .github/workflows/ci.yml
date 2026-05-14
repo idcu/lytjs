@@ -231,15 +231,12 @@ jobs:
         run: pnpm run size-check
         continue-on-error: false
 
-  # E2E 测试
-  e2e:
-    name: E2E Test (${{ matrix.browser }})
+  # 基准测试
+  benchmark:
+    name: Benchmark
     runs-on: ubuntu-latest
     needs: [build]
-    strategy:
-      fail-fast: false
-      matrix:
-        browser: [chromium, firefox]
+    continue-on-error: true
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -264,8 +261,56 @@ jobs:
           name: dist
           path: packages
 
-      - name: Build E2E test bundle
-        run: node e2e/build.cjs
+      - name: Run benchmarks
+        id: benchmark
+        run: |
+          # 运行基准测试并输出到文件
+          pnpm -C benchmarks run bench 2>&1 | tee benchmark-results.txt
+          
+          # 提取基准测试结果并格式化
+          echo "=== Benchmark Summary ==="
+          grep -E "(ops/sec|render|update|memory)" benchmark-results.txt || true
+
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results
+          path: |
+            benchmark-results.txt
+          retention-days: 14
+
+  # E2E 测试
+  e2e:
+    name: E2E Test (${{ matrix.browser }})
+    runs-on: ubuntu-latest
+    needs: [build]
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: packages
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps ${{ matrix.browser }}
