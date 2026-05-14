@@ -66,6 +66,27 @@ export {
   recordSignalUpdate,
   recordDependency,
   clearSignalRegistry,
+  
+  // 性能监控
+  initPerformanceMonitor,
+  recordMetric,
+  getMetrics,
+  getStats,
+  registerAlertRule,
+  unregisterAlertRule,
+  setAlertRuleEnabled,
+  getAlertRules,
+  getAlerts,
+  acknowledgeAlert,
+  acknowledgeAllAlerts,
+  clearAlerts,
+  addObserver,
+  removeObserver,
+  clearMetrics,
+  resetPerformanceMonitor,
+  getPerformanceReport,
+  serializePerformanceReport,
+  startTimer,
 } from './devtools';
 
 // 类型导出
@@ -75,7 +96,46 @@ export type {
   ComponentTreeNode,
   StoreStateInfo,
   RouteInfo,
+  SignalNode,
+  Snapshot,
+  PerformanceRecord,
+  DependencyGraph,
+  TimeTravelState,
+  PerformanceStats as DevPerformanceStats,
 } from './types';
+
+export type {
+  MetricType,
+  PerformanceMetric,
+  AlertLevel,
+  AlertRule,
+  Alert,
+  MonitorOptions,
+} from './performance';
+
+// 基准测试
+export {
+  runBenchmark,
+  runAsyncBenchmark,
+  getBenchmarkResults,
+  getLatestBenchmarkResult,
+  clearBenchmarkResults,
+  serializeBenchmarkResult,
+  serializeAllBenchmarkResults,
+  compareBenchmarkResults,
+  createLargeScaleBenchmark,
+  getMemoryUsage,
+  serializeMemoryUsage,
+  createRegressionDetector,
+  LARGE_SCALE_SCENARIOS,
+} from './devtools';
+
+export type {
+  BenchmarkResult,
+  BenchmarkConfig,
+  LargeScaleScenario,
+  MemoryUsage,
+} from './devtools';
 
 // 默认导出
 export { installDevTools as default } from './devtools';

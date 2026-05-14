@@ -680,4 +680,61 @@ export {
   clearSignalRegistry,
 };
 
+// 性能监控
+export {
+  initPerformanceMonitor,
+  recordMetric,
+  getMetrics,
+  getStats,
+  registerAlertRule,
+  unregisterAlertRule,
+  setAlertRuleEnabled,
+  getAlertRules,
+  getAlerts,
+  acknowledgeAlert,
+  acknowledgeAllAlerts,
+  clearAlerts,
+  addObserver,
+  removeObserver,
+  clearMetrics,
+  resetPerformanceMonitor,
+  getPerformanceReport,
+  serializePerformanceReport,
+  startTimer,
+} from './performance';
+
+export type {
+  MetricType,
+  PerformanceMetric,
+  AlertLevel,
+  AlertRule,
+  Alert,
+  PerformanceStats,
+  MonitorOptions,
+} from './performance';
+
+// 基准测试
+export {
+  runBenchmark,
+  runAsyncBenchmark,
+  getBenchmarkResults,
+  getLatestBenchmarkResult,
+  clearBenchmarkResults,
+  serializeBenchmarkResult,
+  serializeAllBenchmarkResults,
+  compareBenchmarkResults,
+  createLargeScaleBenchmark,
+  getMemoryUsage,
+  serializeMemoryUsage,
+  createRegressionDetector,
+  LARGE_SCALE_SCENARIOS,
+} from './benchmark';
+
+export type {
+  BenchmarkResult,
+  BenchmarkConfig,
+  LargeScaleScenario,
+  MemoryUsage,
+} from './benchmark';
+
 export type { DevToolsOptions, DevToolsAPI };
