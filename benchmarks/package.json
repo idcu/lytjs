@@ -12,6 +12,7 @@
   "devDependencies": {
     "@lytjs/core": "workspace:*",
     "@lytjs/reactivity": "workspace:*",
+    "@lytjs/component": "workspace:*",
     "vitest": "^3.0.0"
   }
 }

@@ -42,6 +42,7 @@
     "@lytjs/common-string": "workspace:*",
     "@lytjs/common-events": "workspace:*",
     "@lytjs/common-dom": "workspace:*",
+    "@lytjs/common-error": "workspace:*",
     "@lytjs/dom-runtime": "workspace:*",
     "@lytjs/compiler": "workspace:*",
     "@lytjs/host-contract": "workspace:*",

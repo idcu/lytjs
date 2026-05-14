@@ -36,7 +36,9 @@
     "@lytjs/component": "workspace:*",
     "@lytjs/common-is": "workspace:*",
     "@lytjs/common-string": "workspace:*",
-    "@lytjs/common-scheduler": "workspace:*"
+    "@lytjs/common-scheduler": "workspace:*",
+    "@lytjs/common-error": "workspace:*",
+    "@lytjs/common-object": "workspace:*"
   },
   "devDependencies": {
     "tsup": "^8.0.0",

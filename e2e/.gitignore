@@ -1,0 +1,8 @@
+# Playwright 测试报告
+playwright-report/
+
+# Playwright 测试结果
+test-results/
+
+# npm 临时锁文件
+package-lock.json

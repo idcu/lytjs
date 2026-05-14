@@ -12,9 +12,35 @@ export default defineConfig({
     environment: 'node',
   },
   resolve: {
-    alias: {
-      '@lytjs/core': path.resolve(__dirname, '../packages/core/src/index.ts'),
-      '@lytjs/reactivity': path.resolve(__dirname, '../packages/reactivity/src/index.ts'),
-    },
+    alias: [
+      {
+        find: /^@lytjs\/core$/,
+        replacement: path.resolve(__dirname, '../packages/core/dist/index.mjs'),
+      },
+      {
+        find: /^@lytjs\/component$/,
+        replacement: path.resolve(__dirname, '../packages/component/dist/index.mjs'),
+      },
+      {
+        find: /^@lytjs\/reactivity$/,
+        replacement: path.resolve(__dirname, '../packages/reactivity/dist/index.mjs'),
+      },
+      {
+        find: /^@lytjs\/reactivity\/scope$/,
+        replacement: path.resolve(__dirname, '../packages/reactivity/dist/scope.mjs'),
+      },
+      {
+        find: /^@lytjs\/reactivity\/signal$/,
+        replacement: path.resolve(__dirname, '../packages/reactivity/dist/signal.mjs'),
+      },
+      {
+        find: /^@lytjs\/reactivity\/signal-component$/,
+        replacement: path.resolve(__dirname, '../packages/reactivity/dist/signal-component.mjs'),
+      },
+      {
+        find: /^@lytjs\/reactivity\/async$/,
+        replacement: path.resolve(__dirname, '../packages/reactivity/dist/async.mjs'),
+      },
+    ],
   },
 });

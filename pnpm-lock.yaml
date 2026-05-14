@@ -666,12 +666,18 @@ importers:
 
   packages/compiler:
     dependencies:
+      '@lytjs/common-constants':
+        specifier: workspace:*
+        version: link:../common/packages/constants
       '@lytjs/common-error':
         specifier: workspace:*
         version: link:../common/packages/error
       '@lytjs/common-is':
         specifier: workspace:*
         version: link:../common/packages/is
+      '@lytjs/common-string':
+        specifier: workspace:*
+        version: link:../common/packages/string
       '@lytjs/common-vnode':
         specifier: workspace:*
         version: link:../common/packages/vnode
@@ -688,12 +694,18 @@ importers:
 
   packages/component:
     dependencies:
+      '@lytjs/common-error':
+        specifier: workspace:*
+        version: link:../common/packages/error
       '@lytjs/common-is':
         specifier: workspace:*
         version: link:../common/packages/is
       '@lytjs/common-scheduler':
         specifier: workspace:*
         version: link:../common/packages/scheduler
+      '@lytjs/common-string':
+        specifier: workspace:*
+        version: link:../common/packages/string
       '@lytjs/common-vnode':
         specifier: workspace:*
         version: link:../common/packages/vnode
@@ -719,9 +731,15 @@ importers:
 
   packages/core:
     dependencies:
+      '@lytjs/common-error':
+        specifier: workspace:*
+        version: link:../common/packages/error
       '@lytjs/common-is':
         specifier: workspace:*
         version: link:../common/packages/is
+      '@lytjs/common-object':
+        specifier: workspace:*
+        version: link:../common/packages/object
       '@lytjs/common-scheduler':
         specifier: workspace:*
         version: link:../common/packages/scheduler
@@ -1230,6 +1248,15 @@ importers:
 
   packages/reactivity:
     dependencies:
+      '@lytjs/common-assertions':
+        specifier: workspace:*
+        version: link:../common/packages/assertions
+      '@lytjs/common-constants':
+        specifier: workspace:*
+        version: link:../common/packages/constants
+      '@lytjs/common-error':
+        specifier: workspace:*
+        version: link:../common/packages/error
       '@lytjs/common-is':
         specifier: workspace:*
         version: link:../common/packages/is
@@ -1258,6 +1285,9 @@ importers:
       '@lytjs/common-dom':
         specifier: workspace:*
         version: link:../common/packages/dom
+      '@lytjs/common-error':
+        specifier: workspace:*
+        version: link:../common/packages/error
       '@lytjs/common-events':
         specifier: workspace:*
         version: link:../common/packages/events
@@ -1373,15 +1403,27 @@ importers:
       '@lytjs/common-algorithm':
         specifier: workspace:*
         version: link:../common/packages/algorithm
+      '@lytjs/common-assertions':
+        specifier: workspace:*
+        version: link:../common/packages/assertions
+      '@lytjs/common-constants':
+        specifier: workspace:*
+        version: link:../common/packages/constants
       '@lytjs/common-dom':
         specifier: workspace:*
         version: link:../common/packages/dom
+      '@lytjs/common-error':
+        specifier: workspace:*
+        version: link:../common/packages/error
       '@lytjs/common-events':
         specifier: workspace:*
         version: link:../common/packages/events
       '@lytjs/common-is':
         specifier: workspace:*
         version: link:../common/packages/is
+      '@lytjs/common-object':
+        specifier: workspace:*
+        version: link:../common/packages/object
       '@lytjs/common-string':
         specifier: workspace:*
         version: link:../common/packages/string

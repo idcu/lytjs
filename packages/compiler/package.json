@@ -50,7 +50,9 @@
   "dependencies": {
     "@lytjs/common-is": "workspace:*",
     "@lytjs/common-error": "workspace:*",
-    "@lytjs/common-vnode": "workspace:*"
+    "@lytjs/common-vnode": "workspace:*",
+    "@lytjs/common-string": "workspace:*",
+    "@lytjs/common-constants": "workspace:*"
   },
   "devDependencies": {
     "tsup": "^8.0.0",
