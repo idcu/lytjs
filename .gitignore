@@ -49,10 +49,13 @@ lerna-debug.log*
 .size-limit.json.tmp
 
 # Root markdown (only keep README, CHANGELOG, CONTRIBUTING)
+# Note: AGENTS.md is intentionally excluded from root markdown rule
+# as it contains project-specific development rules
 /*.md
 !README.md
 !CHANGELOG.md
 !CONTRIBUTING.md
+!AGENTS.md
 
 # AI IDE development files (local only)
 .traesolo.json
