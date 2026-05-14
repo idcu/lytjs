@@ -322,19 +322,16 @@ describe('TreeSelect', () => {
 
   it('should have correct props definition', () => {
     const props = TreeSelect.props;
-    expect(props.data).toBeDefined();
     expect(props.modelValue).toBeDefined();
+    expect(props.options).toBeDefined();
     expect(props.placeholder).toBeDefined();
     expect(props.disabled).toBeDefined();
     expect(props.clearable).toBeDefined();
     expect(props.multiple).toBeDefined();
-    expect(props.nodeKey).toBeDefined();
-    expect(props.defaultExpandAll).toBeDefined();
-    expect(props.defaultExpandedKeys).toBeDefined();
-    expect(props.load).toBeDefined();
+    expect(props.checkStrictly).toBeDefined();
+    expect(props.filterable).toBeDefined();
+    expect(props.showCheckbox).toBeDefined();
     expect(props.onChange).toBeDefined();
-    expect(props.onExpand).toBeDefined();
-    expect(props.onVisibleChange).toBeDefined();
     expect(props.onClear).toBeDefined();
   });
 
@@ -344,8 +341,10 @@ describe('TreeSelect', () => {
     expect(props.disabled.default).toBe(false);
     expect(props.clearable.default).toBe(true);
     expect(props.multiple.default).toBe(false);
-    expect(props.nodeKey.default).toBe('value');
-    expect(props.defaultExpandAll.default).toBe(false);
+    expect(props.checkStrictly.default).toBe(false);
+    expect(props.filterable.default).toBe(false);
+    expect(props.showCheckbox.default).toBe(false);
+    expect(typeof props.options.default).toBe('function');
   });
 });
 
@@ -503,28 +502,31 @@ describe('Upload', () => {
   it('should have correct props definition', () => {
     const props = Upload.props;
     expect(props.action).toBeDefined();
+    expect(props.headers).toBeDefined();
+    expect(props.data).toBeDefined();
     expect(props.multiple).toBeDefined();
     expect(props.accept).toBeDefined();
-    expect(props.drag).toBeDefined();
-    expect(props.listType).toBeDefined();
     expect(props.autoUpload).toBeDefined();
-    expect(props.limit).toBeDefined();
     expect(props.disabled).toBeDefined();
-    expect(props.withCredentials).toBeDefined();
-    expect(props.chunkSize).toBeDefined();
-    expect(props.showFileList).toBeDefined();
+    expect(props.limit).toBeDefined();
+    expect(props.onChange).toBeDefined();
+    expect(props.onSuccess).toBeDefined();
+    expect(props.onError).toBeDefined();
+    expect(props.onProgress).toBeDefined();
+    expect(props.onRemove).toBeDefined();
+    expect(props.beforeUpload).toBeDefined();
   });
 
   it('should have default values for props', () => {
     const props = Upload.props;
+    expect(props.action.default).toBe('');
     expect(props.multiple.default).toBe(false);
-    expect(props.drag.default).toBe(false);
-    expect(props.listType.default).toBe('text');
+    expect(props.accept.default).toBe('');
     expect(props.autoUpload.default).toBe(true);
     expect(props.disabled.default).toBe(false);
-    expect(props.withCredentials.default).toBe(false);
-    expect(props.chunkSize.default).toBe(10 * 1024 * 1024);
-    expect(props.showFileList.default).toBe(true);
+    expect(props.limit.default).toBe(0);
+    expect(typeof props.headers.default).toBe('function');
+    expect(typeof props.data.default).toBe('function');
   });
 });
 

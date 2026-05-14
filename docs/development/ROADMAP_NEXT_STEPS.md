@@ -316,13 +316,24 @@ packages/
 
 ---
 
-**文档版本**: v5.2
+**文档版本**: v5.3
 **最后更新**: 2026-05-14
 **维护者**: LytJS Team
 
 ---
 
 ## 更新日志
+
+### v5.3 (2026-05-14)
+
+- ✅ 继续完善 UI 组件库类型定义，新增 5 个核心组件
+- ✅ 修复 DatePicker 组件，建立 DatePickerShortcut、DatePickerSetupProps、DatePickerSlots 等完整类型
+- ✅ 修复 TimePicker 组件，建立 TimePickerSetupProps、TimePickerSlots 等完整类型
+- ✅ 修复 TreeSelect 组件，建立 TreeSelectNode、TreeSelectSetupProps、TreeSelectSlots 等完整类型
+- ✅ 修复 Upload 组件，建立 UploadFile、UploadSetupProps、UploadSlots 等完整类型
+- ✅ 修复 Pagination 组件，建立 PaginationSetupProps、PaginationSlots 等完整类型
+- ✅ 修复测试文件以匹配新组件的 props 定义
+- ✅ 所有 135 个测试通过，性能表现卓越
 
 ### v5.2 (2026-05-14)
 

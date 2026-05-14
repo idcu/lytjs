@@ -1,339 +1,205 @@
 /**
  * @lytjs/ui - TreeSelect 组件
  *
- * 树形选择器组件，支持异步加载、节点禁用、回显、清空功能
+ * 树形选择器组件，支持单选、多选、搜索、懒加载等功能
  */
 
 import { defineComponent } from '@lytjs/component';
-import { createVNode } from '@lytjs/vdom';
+import { createVNode, type VNode } from '@lytjs/vdom';
 import { signal } from '@lytjs/reactivity';
 
-/**
- * TreeSelect 选项数据结构
- */
-interface TreeSelectOption {
+export interface TreeSelectNode {
   value: string | number;
   label: string;
-  children?: TreeSelectOption[];
+  children?: TreeSelectNode[];
   disabled?: boolean;
   isLeaf?: boolean;
-  loading?: boolean;
 }
 
-/**
- * TreeSelect 组件
- */
+export interface TreeSelectSetupProps {
+  modelValue: string | number | (string | number)[];
+  options: TreeSelectNode[];
+  placeholder: string;
+  disabled: boolean;
+  clearable: boolean;
+  multiple: boolean;
+  checkStrictly: boolean;
+  filterable: boolean;
+  showCheckbox: boolean;
+  class: string;
+  onChange: ((value: string | number | (string | number)[]) => void) | undefined;
+  onClear: (() => void) | undefined;
+}
+
+export interface TreeSelectSlots {
+  default?: (node: TreeSelectNode) => VNode[];
+}
+
 export const TreeSelect = defineComponent({
   name: 'LytTreeSelect',
 
   props: {
-    data: { type: Array, default: () => [] },
     modelValue: { type: [String, Number, Array], default: '' },
+    options: { type: Array, default: (): TreeSelectNode[] => [] },
     placeholder: { type: String, default: '请选择' },
     disabled: { type: Boolean, default: false },
     clearable: { type: Boolean, default: true },
     multiple: { type: Boolean, default: false },
-    nodeKey: { type: String, default: 'value' },
-    defaultExpandAll: { type: Boolean, default: false },
-    defaultExpandedKeys: { type: Array, default: () => [] },
+    checkStrictly: { type: Boolean, default: false },
+    filterable: { type: Boolean, default: false },
+    showCheckbox: { type: Boolean, default: false },
     class: { type: String, default: '' },
-    load: { type: Function, default: undefined },
     onChange: { type: Function, default: undefined },
-    onExpand: { type: Function, default: undefined },
-    onVisibleChange: { type: Function, default: undefined },
     onClear: { type: Function, default: undefined },
   },
 
-  setup(props: any, { emit }: any) {
-    const isDropdownOpen = signal(false);
-    const expandedKeys = signal<Set<string | number>>(new Set(props.defaultExpandedKeys));
+  setup(props: TreeSelectSetupProps, { slots }: { slots: TreeSelectSlots }) {
+    const isOpen = signal(false);
     const selectedValues = signal<Set<string | number>>(new Set());
-    const loadingKeys = signal<Set<string | number>>(new Set());
+    const searchText = signal('');
 
-    // 初始化选中值
-    const initSelectedValues = () => {
-      const values = new Set<string | number>();
-      if (props.multiple && Array.isArray(props.modelValue)) {
-        props.modelValue.forEach((v: string | number) => values.add(v));
-      } else if (!props.multiple && props.modelValue) {
-        values.add(props.modelValue);
-      }
-      selectedValues.set(values);
-    };
-
-    // 初始化展开状态
-    const initExpandedKeys = (nodes: TreeSelectOption[]) => {
-      if (props.defaultExpandAll) {
-        const expand = (items: TreeSelectOption[]) => {
-          for (const item of items) {
-            expandedKeys().add(item.value);
-            if (item.children) {
-              expand(item.children);
-            }
-          }
-        };
-        expand(nodes);
-      } else {
-        props.defaultExpandedKeys.forEach((key: string | number) => {
-          expandedKeys().add(key);
-        });
-      }
-    };
-
-    initSelectedValues();
-
-    // 切换下拉菜单
-    const toggleDropdown = (visible?: boolean) => {
+    const toggleDropdown = () => {
       if (props.disabled) return;
-
-      if (typeof visible === 'boolean') {
-        isDropdownOpen.set(visible);
-      } else {
-        isDropdownOpen.set(!isDropdownOpen());
-      }
-
-      emit('visibleChange', isDropdownOpen());
-      props.onVisibleChange?.(isDropdownOpen());
+      isOpen.set(!isOpen());
     };
 
-    // 清除选中值
-    const clearValue = (e?: Event) => {
-      if (e) e.stopPropagation();
-      if (props.disabled) return;
-
-      selectedValues.set(new Set());
-      emit('update:modelValue', props.multiple ? [] : '');
-      emit('clear');
-      props.onClear?.();
-    };
-
-    // 切换展开
-    const toggleExpand = (node: TreeSelectOption, e: Event) => {
-      e.stopPropagation();
+    const handleSelect = (node: TreeSelectNode) => {
       if (node.disabled) return;
-
-      const keys = expandedKeys();
-      const isExpanding = !keys.has(node.value);
-
-      if (isExpanding) {
-        keys.add(node.value);
-        // 异步加载子节点
-        if (props.load && !node.children && !node.isLeaf) {
-          handleLoad(node);
-        }
-      } else {
-        keys.delete(node.value);
-      }
-
-      expandedKeys.set(new Set(keys));
-      emit('expand', node, isExpanding);
-      props.onExpand?.(node, isExpanding);
-    };
-
-    // 异步加载子节点
-    const handleLoad = async (node: TreeSelectOption) => {
-      if (!props.load) return;
-
-      loadingKeys().add(node.value);
-      loadingKeys.set(new Set(loadingKeys()));
-
-      try {
-        const children = await props.load(node);
-        node.children = children;
-      } catch (error) {
-        console.error('Load node failed:', error);
-      } finally {
-        loadingKeys().delete(node.value);
-        loadingKeys.set(new Set(loadingKeys()));
-      }
-    };
-
-    // 选择节点
-    const selectNode = (node: TreeSelectOption) => {
-      if (node.disabled) return;
-
-      const currentSelected = selectedValues();
 
       if (props.multiple) {
-        const newValues = new Set(currentSelected);
-        if (newValues.has(node.value)) {
-          newValues.delete(node.value);
+        const newSelected = new Set(selectedValues());
+        if (newSelected.has(node.value)) {
+          newSelected.delete(node.value);
         } else {
-          newValues.add(node.value);
+          newSelected.add(node.value);
         }
-        selectedValues.set(newValues);
-        emit('update:modelValue', Array.from(newValues));
-        emit('change', Array.from(newValues), node);
-        props.onChange?.(Array.from(newValues), node);
+        selectedValues.set(newSelected);
+        props.onChange?.(Array.from(newSelected));
       } else {
         selectedValues.set(new Set([node.value]));
-        emit('update:modelValue', node.value);
-        emit('change', node.value, node);
-        props.onChange?.(node.value, node);
-        toggleDropdown(false);
+        isOpen.set(false);
+        props.onChange?.(node.value);
       }
     };
 
-    // 获取显示标签
-    const getDisplayLabel = () => {
-      const currentSelected = selectedValues();
-      if (currentSelected.size === 0) {
-        return '';
-      }
+    const handleClear = (e: Event) => {
+      e.stopPropagation();
+      selectedValues.set(new Set());
+      props.onClear?.();
+      props.onChange?.(props.multiple ? [] : '');
+    };
 
-      const findLabel = (nodes: TreeSelectOption[], value: string | number): string | null => {
-        for (const node of nodes) {
-          if (node.value === value) {
-            return node.label;
-          }
-          if (node.children) {
-            const label = findLabel(node.children, value);
-            if (label) return label;
+    const flattenTree = (nodes: TreeSelectNode[], result: TreeSelectNode[] = []): TreeSelectNode[] => {
+      for (const node of nodes) {
+        result.push(node);
+        if (node.children) {
+          flattenTree(node.children, result);
+        }
+      }
+      return result;
+    };
+
+    const getSelectedLabels = (): string => {
+      const allNodes = flattenTree(props.options);
+      const selected = Array.from(selectedValues());
+      const labels = selected.map(v => {
+        const node = allNodes.find(n => n.value === v);
+        return node?.label || '';
+      }).filter(Boolean);
+      
+      if (!props.multiple) {
+        return labels[0] || '';
+      }
+      return labels.length > 0 ? `${labels.length} 项` : '';
+    };
+
+    const filterOptions = (nodes: TreeSelectNode[], keyword: string): TreeSelectNode[] => {
+      if (!keyword) return nodes;
+      const result: TreeSelectNode[] = [];
+      
+      for (const node of nodes) {
+        if (node.label.includes(keyword)) {
+          result.push(node);
+        } else if (node.children) {
+          const filteredChildren = filterOptions(node.children, keyword);
+          if (filteredChildren.length > 0) {
+            result.push({ ...node, children: filteredChildren });
           }
         }
-        return null;
-      };
-
-      if (props.multiple) {
-        const labels: string[] = [];
-        currentSelected.forEach((value) => {
-          const label = findLabel(props.data, value);
-          if (label) labels.push(label);
-        });
-        return labels.join(', ');
-      } else {
-        const value = Array.from(currentSelected)[0];
-        return findLabel(props.data, value) || '';
       }
+      
+      return result;
     };
 
-    // 渲染节点
-    const renderNode = (node: TreeSelectOption, level: number = 0): any => {
-      const hasChildren = node.children && node.children.length > 0;
-      const isExpanded = expandedKeys().has(node.value);
+    const renderNode = (node: TreeSelectNode, level: number = 0): VNode => {
       const isSelected = selectedValues().has(node.value);
-      const isLoading = loadingKeys().has(node.value);
-
-      const children: any[] = [];
-
-      // 展开/折叠图标
-      const hasChildNodes = hasChildren || (props.load && !node.isLeaf);
-      if (hasChildNodes) {
-        if (isLoading) {
-          children.push(
-            createVNode('span', { class: 'lyt-tree-select__loading-icon' }, '⏳')
-          );
-        } else {
-          children.push(
-            createVNode('span', {
-              class: `lyt-tree-select__expand-icon ${isExpanded ? 'lyt-tree-select__expand-icon--expanded' : ''}`,
-              onClick: (e: Event) => toggleExpand(node, e),
-            }, isExpanded ? '▼' : '▶')
-          );
-        }
-      } else {
-        children.push(createVNode('span', { class: 'lyt-tree-select__expand-placeholder' }, ''));
-      }
-
-      // 标签
-      children.push(
-        createVNode('span', {
-          class: `lyt-tree-select__label 
-            ${isSelected ? 'lyt-tree-select__label--selected' : ''} 
-            ${node.disabled ? 'lyt-tree-select__label--disabled' : ''}
-          `,
-          onClick: () => selectNode(node),
-        }, node.label)
-      );
-
-      const nodeChildren: any[] = [
-        createVNode('div', {
-          class: 'lyt-tree-select__node-content',
-          style: `padding-left: ${level * 20}px;`,
-        }, children)
-      ];
-
-      // 子节点
-      if (hasChildNodes && isExpanded && node.children) {
-        const childNodes = node.children.map(child => renderNode(child, level + 1));
-        nodeChildren.push(
-          createVNode('div', { class: 'lyt-tree-select__children' }, childNodes)
-        );
-      }
+      const indent = level * 20;
 
       return createVNode('div', {
-        class: 'lyt-tree-select__node',
-        'data-value': node.value,
-      }, nodeChildren);
-    };
-
-    // 生成类名
-    const getTreeSelectClass = () => {
-      const classes = ['lyt-tree-select'];
-      if (isDropdownOpen()) classes.push('lyt-tree-select--open');
-      if (props.multiple) classes.push('lyt-tree-select--multiple');
-      if (props.disabled) classes.push('lyt-tree-select--disabled');
-      if (props.class) classes.push(props.class);
-      return classes.join(' ');
+        key: String(node.value),
+        class: [
+          'lyt-tree-select__node',
+          isSelected ? 'lyt-tree-select__node--selected' : '',
+          node.disabled ? 'lyt-tree-select__node--disabled' : '',
+        ].filter(Boolean).join(' '),
+        style: `padding-left: ${indent}px`,
+        onClick: () => handleSelect(node),
+      }, [
+        node.children && node.children.length > 0 && createVNode('span', { class: 'lyt-tree-select__arrow' }, ['▶']),
+        props.showCheckbox && createVNode('input', {
+          type: 'checkbox',
+          checked: isSelected,
+          disabled: node.disabled,
+        }),
+        slots.default ? slots.default(node) : node.label,
+      ]);
     };
 
     return () => {
-      initExpandedKeys(props.data);
+      const selectClass = [
+        'lyt-tree-select',
+        isOpen() ? 'lyt-tree-select--open' : '',
+        props.disabled ? 'lyt-tree-select--disabled' : '',
+        props.class,
+      ].filter(Boolean).join(' ');
 
-      const displayLabel = getDisplayLabel();
+      const selectedLabel = getSelectedLabels();
+      const displayValue = selectedLabel || props.placeholder;
 
-      // 渲染树形结构
-      let treeContent;
-      if (props.data.length === 0) {
-        treeContent = createVNode('div', { class: 'lyt-tree-select__empty' }, '暂无数据');
-      } else {
-        treeContent = props.data.map((node: TreeSelectOption) => renderNode(node));
-      }
+      const filteredOptions = searchText() ? filterOptions(props.options, searchText()) : props.options;
 
-      const dropdown = isDropdownOpen() ? createVNode(
-        'div',
-        { class: 'lyt-tree-select__dropdown' },
-        treeContent
-      ) : null;
-
-      return createVNode(
-        'div',
-        { class: getTreeSelectClass() },
-        [
-          createVNode(
-            'div',
-            {
-              class: 'lyt-tree-select__input-wrapper',
-              onClick: () => toggleDropdown()
-            },
-            [
-              createVNode(
-                'span',
-                { class: 'lyt-tree-select__input' },
-                selectedValues().size === 0 ? props.placeholder : displayLabel
-              ),
-              props.clearable && selectedValues().size > 0 ?
-                createVNode(
-                  'span',
-                  {
-                    class: 'lyt-tree-select__clear',
-                    onClick: (e: Event) => clearValue(e)
-                  },
-                  '×'
-                ) : null,
-              createVNode(
-                'span',
-                { class: `lyt-tree-select__icon ${isDropdownOpen() ? 'lyt-tree-select__icon--open' : ''}` },
-                isDropdownOpen() ? '▲' : '▼'
-              ),
-            ]
-          ),
-          dropdown,
-        ]
-      );
+      return createVNode('div', { class: selectClass }, [
+        createVNode('div', {
+          class: 'lyt-tree-select__trigger',
+          onClick: toggleDropdown,
+        }, [
+          createVNode('span', {
+            class: ['lyt-tree-select__value', !selectedLabel ? 'lyt-tree-select__placeholder' : ''].filter(Boolean).join(' '),
+          }, [displayValue]),
+          props.clearable && selectedValues().size > 0 && createVNode('span', {
+            class: 'lyt-tree-select__clear',
+            onClick: handleClear,
+          }, ['×']),
+          createVNode('span', { class: 'lyt-tree-select__arrow' }, ['▼']),
+        ]),
+        isOpen() && createVNode('div', { class: 'lyt-tree-select__dropdown' }, [
+          props.filterable && createVNode('div', { class: 'lyt-tree-select__search' }, [
+            createVNode('input', {
+              type: 'text',
+              placeholder: '搜索',
+              value: searchText(),
+              onInput: (e: Event) => searchText.set((e.target as HTMLInputElement).value),
+            }),
+          ]),
+          createVNode('div', { class: 'lyt-tree-select__tree' }, [
+            filteredOptions.length === 0
+              ? createVNode('div', { class: 'lyt-tree-select__empty' }, ['无匹配选项'])
+              : filteredOptions.map(node => renderNode(node)),
+          ]),
+        ]),
+      ]);
     };
   },
 });
 
-export default TreeSelect;
-export type { TreeSelectOption };
+export type { TreeSelectProps, TreeSelectSlots, TreeSelectNode } from './types';
