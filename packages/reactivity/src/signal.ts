@@ -380,8 +380,11 @@ function notifySubscribers(
   // FIX: P0-02 当 isNotifying 为 true 时也走 batch 路径，
   // 避免在 flushPendingNotifications 执行期间嵌套触发同步通知导致无限递归
   if (batchDepth > 0 || isNotifying) {
-    for (const sub of subscribers) {
-      pendingNotifications.add(sub);
+    const it = subscribers.values();
+    let next = it.next();
+    while (!next.done) {
+      pendingNotifications.add(next.value);
+      next = it.next();
     }
     // effect 系统桥接：batch 期间也延迟 trigger（去重）
     if (store && signalKey !== undefined) {
@@ -390,8 +393,11 @@ function notifySubscribers(
     }
     return;
   }
-  for (const sub of subscribers) {
-    sub();
+  const it = subscribers.values();
+  let next = it.next();
+  while (!next.done) {
+    next.value();
+    next = it.next();
   }
   // effect 系统桥接触发
   if (store && signalKey !== undefined) {
@@ -405,17 +411,27 @@ function flushPendingNotifications(): void {
   try {
     let iterations = 0;
     while ((pendingNotifications.size > 0 || pendingTriggerOps.size > 0) && iterations < REACTIVITY_MAX_TRIGGER_DEPTH) {
-      const notifications = Array.from(pendingNotifications);
-      const triggers = Array.from(pendingTriggerOps.values());
+      const notifications = new Set(pendingNotifications);
+      const triggers = new Set(pendingTriggerOps.values());
       pendingNotifications.clear();
       pendingTriggerOps.clear();
-      for (const sub of notifications) {
-        sub();
+      
+      const notifIt = notifications.values();
+      let notifNext = notifIt.next();
+      while (!notifNext.done) {
+        notifNext.value();
+        notifNext = notifIt.next();
       }
+      
       // 执行延迟的 effect 系统 trigger（已去重）
-      for (const { store, signalKey, newValue } of triggers) {
+      const triggerIt = triggers.values();
+      let triggerNext = triggerIt.next();
+      while (!triggerNext.done) {
+        const { store, signalKey, newValue } = triggerNext.value;
         trigger(store, TriggerOpTypes.SET, signalKey, newValue);
+        triggerNext = triggerIt.next();
       }
+      
       iterations++;
     }
   } finally {

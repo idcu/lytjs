@@ -740,14 +740,14 @@ describe('VNode 池化边界', () => {
     expect(vnode.patchFlag).toBe(0);
   });
 
-  it('池化容量上限应为 200', () => {
-    // 归还超过 200 个 vnode
-    for (let i = 0; i < 250; i++) {
+  it('池化容量上限应为 500', () => {
+    // 归还超过 500 个 vnode
+    for (let i = 0; i < 550; i++) {
       const vnode = createVNode('div');
       releaseVNode(vnode);
     }
     const stats = getVNodePoolStats();
-    expect(stats.size).toBeLessThanOrEqual(200);
+    expect(stats.size).toBeLessThanOrEqual(500);
   });
 
   it('多次 releaseVNode 后 size 应正确增长', () => {
