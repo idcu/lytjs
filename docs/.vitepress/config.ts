@@ -19,6 +19,7 @@ export default defineConfig({
     siteTitle: 'LytJS',
 
     nav: [
+      { text: '教程', link: '/tutorial/', activeMatch: '/tutorial/' },
       { text: '指南', link: '/guide/', activeMatch: '/guide/' },
       { text: 'API', link: '/api/', activeMatch: '/api/' },
       { text: '生态系统', link: '/ecosystem/', activeMatch: '/ecosystem/' },
@@ -27,6 +28,48 @@ export default defineConfig({
     ],
 
     sidebar: {
+      '/tutorial/': [
+        {
+          text: '教程',
+          items: [
+            { text: '教程总览', link: '/tutorial/' },
+            { text: '快速开始', link: '/tutorial/quick-start' },
+          ],
+        },
+        {
+          text: '入门教程',
+          items: [
+            { text: '基础概念', link: '/tutorial/basics' },
+            { text: '响应式基础', link: '/tutorial/reactivity' },
+            { text: '组件基础', link: '/tutorial/components' },
+          ],
+        },
+        {
+          text: '进阶教程',
+          items: [
+            { text: '状态管理', link: '/tutorial/state-management' },
+            { text: '路由导航', link: '/tutorial/routing' },
+            { text: '表单处理', link: '/tutorial/forms' },
+            { text: 'API 集成', link: '/tutorial/api-integration' },
+          ],
+        },
+        {
+          text: '高级教程',
+          items: [
+            { text: '性能优化', link: '/tutorial/performance' },
+            { text: '测试指南', link: '/tutorial/testing' },
+            { text: '部署指南', link: '/tutorial/deployment' },
+            { text: '自定义插件', link: '/tutorial/custom-plugins' },
+          ],
+        },
+        {
+          text: '参考',
+          items: [
+            { text: '常见问题', link: '/tutorial/faq' },
+            { text: '最佳实践', link: '/tutorial/best-practices' },
+          ],
+        },
+      ],
       '/guide/': [
         {
           text: '开始',
