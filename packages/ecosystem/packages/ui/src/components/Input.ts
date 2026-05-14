@@ -5,9 +5,10 @@
  */
 
 import { defineComponent } from '@lytjs/component';
-import { createVNode, type VNode } from '@lytjs/vdom';
+import { createVNode, createTextVNode, type VNode } from '@lytjs/vdom';
 import { signal } from '@lytjs/reactivity';
 import { isString, isObject } from '@lytjs/common-is';
+import { getFormControlA11yProps, getButtonA11yProps, mergeA11yProps } from '@lytjs/common-a11y';
 import type { InputSetupProps } from './types';
 
 export const Input = defineComponent({
@@ -113,7 +114,16 @@ export const Input = defineComponent({
       }
 
       // 输入框
-      const inputProps: Record<string, unknown> = {
+      const a11yProps = getFormControlA11yProps({
+        id: p.id,
+        ariaLabel: p.ariaLabel,
+        ariaDescribedBy: p.ariaDescribedBy,
+        ariaInvalid: p.ariaInvalid,
+        ariaRequired: p.ariaRequired,
+        disabled: p.disabled,
+        tabIndex: p.tabIndex,
+      });
+      const inputProps = mergeA11yProps(a11yProps, {
         class: 'lyt-input__inner',
         style: getInputStyle(),
         type: getInputType(),
@@ -123,21 +133,14 @@ export const Input = defineComponent({
         readonly: p.readonly,
         maxlength: p.maxlength,
         minlength: p.minlength,
-        'aria-label': p.ariaLabel,
-        'aria-describedby': p.ariaDescribedBy,
-        'aria-invalid': p.ariaInvalid,
-        'aria-required': p.ariaRequired,
-        'aria-disabled': p.disabled,
         'aria-readonly': p.readonly,
         autocomplete: p.autocomplete,
         name: p.name,
-        id: p.id,
-        tabindex: p.tabIndex !== undefined ? p.tabIndex : (p.disabled ? -1 : 0),
         onInput: handleInput,
         onChange: handleChange,
         onFocus: handleFocus,
         onBlur: handleBlur,
-      };
+      });
       children.push(createVNode('input', inputProps, []));
 
       // 后缀图标或清除按钮
@@ -145,21 +148,27 @@ export const Input = defineComponent({
       
       // 清除按钮
       if (p.clearable && p.modelValue) {
+        const clearBtnProps = getButtonA11yProps({
+          ariaLabel: 'Clear input',
+        });
         suffixChildren.push(
-          createVNode('span', { 
+          createVNode('span', mergeA11yProps(clearBtnProps, {
             class: 'lyt-input__clear', 
             onClick: handleClear 
-          }, ['×'])
+          }), [createTextVNode('×')])
         );
       }
       
       // 密码显示切换按钮
       if (p.type === 'password' && p.showPassword) {
+        const toggleBtnProps = getButtonA11yProps({
+          ariaLabel: passwordVisible() ? 'Hide password' : 'Show password',
+        });
         suffixChildren.push(
-          createVNode('span', { 
+          createVNode('span', mergeA11yProps(toggleBtnProps, {
             class: 'lyt-input__password', 
             onClick: togglePasswordVisibility 
-          }, [passwordVisible() ? '🙈' : '👁️'])
+          }), [createTextVNode(passwordVisible() ? '🙈' : '👁️')])
         );
       }
       

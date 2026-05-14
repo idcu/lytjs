@@ -9,6 +9,7 @@ import { defineComponent } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import { isString, isObject } from '@lytjs/common-is';
 import { signal } from '@lytjs/reactivity';
+import { mergeA11yProps } from '@lytjs/common-a11y';
 
 /**
  * Steps 步骤条组件
@@ -25,6 +26,9 @@ export const Steps = defineComponent({
     simple: { type: Boolean, default: false },
     class: { type: String, default: '' },
     style: { type: [String, Object], default: '' },
+    id: { type: String, default: '' },
+    ariaLabel: { type: String, default: '' },
+    ariaDescribedBy: { type: String, default: '' },
     onChange: { type: Function, default: undefined },
   },
 
@@ -71,10 +75,15 @@ export const Steps = defineComponent({
         }
       }
 
-      return createVNode('div', {
+      return createVNode('div', mergeA11yProps({
+        id: _props.id,
+        'aria-label': _props.ariaLabel,
+        'aria-describedby': _props.ariaDescribedBy,
+        role: 'navigation',
+      }, {
         class: getStepsClass(),
         style: getStepsStyle(),
-      }, children);
+      }), children);
     };
   },
 });

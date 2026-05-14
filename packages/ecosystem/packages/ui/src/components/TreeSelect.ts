@@ -9,6 +9,7 @@ import { defineComponent } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import { isString, isObject } from '@lytjs/common-is';
 import { signal, computed } from '@lytjs/reactivity';
+import { getComboboxA11yProps, getButtonA11yProps, getGroupA11yProps, mergeA11yProps } from '@lytjs/common-a11y';
 
 /**
  * TreeSelect 树形选择器组件
@@ -29,6 +30,9 @@ export const TreeSelect = defineComponent({
     defaultExpandedKeys: { type: Array as () => (string | number)[], default: () => [] },
     class: { type: String, default: '' },
     style: { type: [String, Object], default: '' },
+    id: { type: String, default: '' },
+    ariaLabel: { type: String, default: '' },
+    ariaDescribedBy: { type: String, default: '' },
     onChange: { type: Function, default: undefined },
   },
 
@@ -158,18 +162,26 @@ export const TreeSelect = defineComponent({
       
       // Expand button
       if (hasChildren) {
-        nodeChildren.push(createVNode('span', {
+        const expandBtnProps = getButtonA11yProps({ 
+          ariaLabel: isExpanded ? '收起' : '展开', 
+          disabled: node.disabled 
+        });
+        nodeChildren.push(createVNode('span', mergeA11yProps(expandBtnProps, {
           class: ['lyt-tree-node-expand-icon', isExpanded ? 'is-expanded' : ''],
           onClick: (e: Event) => handleToggleExpand(node, e),
-        }, isExpanded ? '▼' : '▶'));
+        }), isExpanded ? '▼' : '▶'));
       } else {
         nodeChildren.push(createVNode('span', { class: 'lyt-tree-node-expand-icon' }, ''));
       }
       
       // Node label
-      nodeChildren.push(createVNode('span', {
+      const labelBtnProps = getButtonA11yProps({ 
+        ariaLabel: node.label, 
+        disabled: node.disabled 
+      });
+      nodeChildren.push(createVNode('span', mergeA11yProps(labelBtnProps, {
         class: 'lyt-tree-node-label',
-      }, node.label));
+      }), node.label));
 
       const nodeVNode = createVNode('div', {
         class: ['lyt-tree-node', { 'is-selected': isSelected, 'is-disabled': node.disabled, 'is-expanded': isExpanded }],
@@ -194,33 +206,44 @@ export const TreeSelect = defineComponent({
       // Trigger
       const triggerChildren: VNode[] = [];
       
+      const a11yProps = getComboboxA11yProps({
+        id: _props.id,
+        ariaLabel: _props.ariaLabel,
+        ariaDescribedBy: _props.ariaDescribedBy,
+        disabled: false,
+        expanded: visible.value,
+        controls: undefined,
+      });
+      
       triggerChildren.push(createVNode('span', { class: 'lyt-tree-select-value' }, 
         selectedNode.value ? selectedNode.value.label : _props.placeholder
       ));
       
       if (_props.clearable && selectedNode.value) {
-        triggerChildren.push(createVNode('span', {
+        const clearBtnProps = getButtonA11yProps({ ariaLabel: '清除' });
+        triggerChildren.push(createVNode('span', mergeA11yProps(clearBtnProps, {
           class: 'lyt-tree-select-clear',
           onClick: (e: Event) => {
             e.stopPropagation();
             handleClear();
           },
-        }, '×'));
+        }), '×'));
       }
       
       triggerChildren.push(createVNode('span', { class: 'lyt-tree-select-arrow' }, '▼'));
       
-      children.push(createVNode('div', {
+      children.push(createVNode('div', mergeA11yProps(a11yProps, {
         class: 'lyt-tree-select-trigger',
         onClick: handleToggle,
-      }, triggerChildren));
+      }), triggerChildren));
 
       // Dropdown
       if (visible.value) {
         const dropdownChildren: VNode[] = [];
         
         if (_props.filterable) {
-          dropdownChildren.push(createVNode('div', { class: 'lyt-tree-select-search' }, [
+          const formProps = getGroupA11yProps({ role: 'search' });
+          dropdownChildren.push(createVNode('div', mergeA11yProps(formProps, { class: 'lyt-tree-select-search' }), [
             createVNode('input', {
               type: 'text',
               placeholder: _props.filterPlaceholder,
@@ -234,6 +257,7 @@ export const TreeSelect = defineComponent({
         }
         
         const treeChildren: VNode[] = [];
+        const treeProps = getGroupA11yProps({ role: 'tree' });
         if (filteredData.value.length > 0) {
           treeChildren.push(...filteredData.value.map(node => renderNode(node, 0)));
         } else if (slots.empty) {
@@ -242,7 +266,7 @@ export const TreeSelect = defineComponent({
           treeChildren.push(createVNode('div', { class: 'lyt-tree-select-empty' }, '暂无数据'));
         }
         
-        dropdownChildren.push(createVNode('div', { class: 'lyt-tree-select-tree' }, treeChildren));
+        dropdownChildren.push(createVNode('div', mergeA11yProps(treeProps, { class: 'lyt-tree-select-tree' }), treeChildren));
         
         children.push(createVNode('div', { class: 'lyt-tree-select-dropdown' }, dropdownChildren));
       }

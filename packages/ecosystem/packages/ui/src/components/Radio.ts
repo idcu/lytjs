@@ -9,6 +9,7 @@ import { defineComponent } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import { isString, isObject } from '@lytjs/common-is';
 import { reactive, computed } from '@lytjs/reactivity';
+import { getInputControlA11yProps, mergeA11yProps } from '@lytjs/common-a11y';
 
 /**
  * Radio 组件
@@ -21,9 +22,16 @@ export const Radio = defineComponent({
     label: { type: String, default: undefined },
     disabled: { type: Boolean, default: false },
     name: { type: String, default: '' },
+    id: { type: String, default: '' },
     class: { type: String, default: '' },
     style: { type: String, default: '' },
+    ariaLabel: { type: String, default: '' },
+    ariaDescribedBy: { type: String, default: '' },
+    ariaInvalid: { type: Boolean, default: false },
+    ariaRequired: { type: Boolean, default: false },
+    tabIndex: { type: Number, default: undefined },
     onChange: { type: Function, default: undefined },
+    onKeydown: { type: Function, default: undefined },
   },
 
   setup(props: Record<string, unknown>, { slots, emit }) {
@@ -79,16 +87,28 @@ export const Radio = defineComponent({
       const children: VNode[] = [];
       
       // 实际的 input 元素（隐藏）
-      children.push(createVNode('input', {
+      const a11yProps = getInputControlA11yProps({
+        checked: isChecked.value as boolean,
+        disabled: _props.disabled,
+        id: _props.id,
+        ariaLabel: _props.ariaLabel,
+        ariaDescribedBy: _props.ariaDescribedBy,
+        ariaInvalid: _props.ariaInvalid,
+        ariaRequired: _props.ariaRequired,
+        tabIndex: _props.tabIndex,
+      });
+      
+      children.push(createVNode('input', mergeA11yProps(a11yProps, {
         type: 'radio',
         class: 'lyt-radio__input',
         checked: isChecked.value as boolean,
         disabled: _props.disabled,
         name: _props.name,
+        onKeydown: _props.onKeydown,
         onChange: handleChange,
         onFocus: handleFocus,
         onBlur: handleBlur,
-      }, []));
+      }), []));
 
       // 自定义的单选框样式
       children.push(createVNode('span', {

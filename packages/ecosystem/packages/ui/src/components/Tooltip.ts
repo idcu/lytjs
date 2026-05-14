@@ -9,6 +9,7 @@ import { defineComponent } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import { isString, isObject } from '@lytjs/common-is';
 import { reactive } from '@lytjs/reactivity';
+import { mergeA11yProps } from '@lytjs/common-a11y';
 
 /**
  * Tooltip 组件
@@ -26,6 +27,9 @@ export const Tooltip = defineComponent({
     showArrow: { type: Boolean, default: true },
     class: { type: String, default: '' },
     style: { type: String, default: '' },
+    id: { type: String, default: '' },
+    ariaLabel: { type: String, default: '' },
+    ariaDescribedBy: { type: String, default: '' },
   },
 
   setup(props: any, { slots }: any) {
@@ -137,9 +141,13 @@ export const Tooltip = defineComponent({
         }, contentChildren));
       }
 
-      return createVNode('div', {
+      return createVNode('div', mergeA11yProps({
+        id: props.id,
+        'aria-label': props.ariaLabel,
+        'aria-describedby': props.ariaDescribedBy,
+      }, {
         class: 'lyt-tooltip-wrapper',
-      }, children);
+      }), children);
     };
   },
 });

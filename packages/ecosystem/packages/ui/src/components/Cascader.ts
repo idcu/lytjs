@@ -8,6 +8,7 @@ import { defineComponent } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import { signal } from '@lytjs/reactivity';
 import type { CascaderOption, CascaderSetupProps, CascaderSlots } from './types';
+import { getComboboxA11yProps, getButtonA11yProps, getGroupA11yProps, mergeA11yProps } from '@lytjs/common-a11y';
 
 export const Cascader = defineComponent({
   name: 'LytCascader',
@@ -25,6 +26,9 @@ export const Cascader = defineComponent({
     collapseTags: { type: Boolean, default: false },
     separator: { type: String, default: ' / ' },
     class: { type: String, default: '' },
+    id: { type: String, default: '' },
+    ariaLabel: { type: String, default: '' },
+    ariaDescribedBy: { type: String, default: '' },
     load: { type: Function, default: undefined },
     onChange: { type: Function, default: undefined },
     onExpandChange: { type: Function, default: undefined },
@@ -177,7 +181,11 @@ export const Cascader = defineComponent({
       if (slots.default) {
         optionChildren.push(...slots.default(option));
       } else {
-        optionChildren.push(createVNode('span', {}, String(option.label)));
+        const labelBtnProps = getButtonA11yProps({ 
+          ariaLabel: option.label, 
+          disabled: option.disabled 
+        });
+        optionChildren.push(createVNode('span', mergeA11yProps(labelBtnProps, {}), String(option.label)));
       }
 
       if (option.children && !option.isLeaf) {
@@ -205,14 +213,27 @@ export const Cascader = defineComponent({
       ].filter(Boolean).join(' ');
 
       const isValueSet = selectedValues().length > 0;
+      
+      const a11yProps = getComboboxA11yProps({
+        id: p.id,
+        ariaLabel: p.ariaLabel,
+        ariaDescribedBy: p.ariaDescribedBy,
+        disabled: p.disabled,
+        expanded: isDropdownOpen(),
+        controls: undefined,
+      });
 
       const contentChildren: VNode[] = [];
 
       if (p.multiple && isValueSet) {
         selectedValues().forEach((path, index) => {
+          const removeBtnProps = getButtonA11yProps({ ariaLabel: '移除标签' });
           contentChildren.push(createVNode('span', { class: 'lyt-cascader__tag', key: index }, [
             createVNode('span', {}, getPathLabel(path)),
-            createVNode('span', { class: 'lyt-cascader__tag-close', onClick: () => removeTag(index) }, [createVNode('span', {}, '×')]),
+            createVNode('span', mergeA11yProps(removeBtnProps, { 
+              class: 'lyt-cascader__tag-close', 
+              onClick: () => removeTag(index) 
+            }), [createVNode('span', {}, '×')]),
           ]));
         });
       } else {
@@ -222,10 +243,11 @@ export const Cascader = defineComponent({
       }
 
       if (p.clearable && isValueSet) {
-        contentChildren.push(createVNode('span', {
+        const clearBtnProps = getButtonA11yProps({ ariaLabel: '清除' });
+        contentChildren.push(createVNode('span', mergeA11yProps(clearBtnProps, {
           class: 'lyt-cascader__clear',
           onClick: (e: Event) => { e.stopPropagation(); clear(); },
-        }, [createVNode('span', {}, '×')]));
+        }), [createVNode('span', {}, '×')]));
       }
 
       contentChildren.push(createVNode('span', { class: 'lyt-cascader__arrow' }, [createVNode('span', {}, '▼')]));
@@ -233,7 +255,8 @@ export const Cascader = defineComponent({
       const dropdownContent: VNode[] = [];
 
       if (p.filterable) {
-        dropdownContent.push(createVNode('div', { class: 'lyt-cascader__search' }, [
+        const formProps = getGroupA11yProps({ role: 'search' });
+        dropdownContent.push(createVNode('div', mergeA11yProps(formProps, { class: 'lyt-cascader__search' }), [
           createVNode('input', {
             type: 'text',
             placeholder: '搜索',
@@ -251,12 +274,13 @@ export const Cascader = defineComponent({
       for (let i = 0; i < maxLevel; i++) {
         const options = getOptionsAtLevel(i);
         if (options.length > 0 || i === 0) {
-          dropdownContent.push(createVNode('div', { class: 'lyt-cascader__panel', key: i }, options.map(option => renderOption(option, i))));
+          const panelProps = getGroupA11yProps({ role: 'listbox' });
+          dropdownContent.push(createVNode('div', mergeA11yProps(panelProps, { class: 'lyt-cascader__panel', key: i }), options.map(option => renderOption(option, i))));
         }
       }
 
       const resultChildren: VNode[] = [
-        createVNode('div', { class: 'lyt-cascader__trigger' }, contentChildren),
+        createVNode('div', mergeA11yProps(a11yProps, { class: 'lyt-cascader__trigger' }), contentChildren),
       ];
 
       if (isDropdownOpen()) {

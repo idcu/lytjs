@@ -9,6 +9,7 @@ import { defineComponent } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import { isString, isObject, isArray } from '@lytjs/common-is';
 import { computed } from '@lytjs/reactivity';
+import { mergeA11yProps } from '@lytjs/common-a11y';
 
 /**
  * Progress 组件
@@ -29,6 +30,9 @@ export const Progress = defineComponent({
     format: { type: Function, default: undefined },
     class: { type: String, default: '' },
     style: { type: [String, Object], default: '' },
+    id: { type: String, default: '' },
+    ariaLabel: { type: String, default: '' },
+    ariaDescribedBy: { type: String, default: '' },
   },
 
   setup(props: Record<string, unknown>) {
@@ -172,10 +176,18 @@ export const Progress = defineComponent({
         content = renderLine();
       }
 
-      return createVNode('div', {
+      return createVNode('div', mergeA11yProps({
+        id: _props.id,
+        'aria-label': _props.ariaLabel,
+        'aria-describedby': _props.ariaDescribedBy,
+        role: 'progressbar',
+        'aria-valuenow': String(validPercentage.value),
+        'aria-valuemin': '0',
+        'aria-valuemax': '100',
+      }, {
         class: getProgressClass(),
         style: getProgressStyle(),
-      }, content);
+      }), content);
     };
   },
 });

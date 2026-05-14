@@ -8,6 +8,7 @@ import { defineComponent } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import { signal } from '@lytjs/reactivity';
 import type { TableData, TableRowData, TableColumn, TableSortOrder, TableSetupProps } from './types';
+import { getButtonA11yProps, getInputControlA11yProps, getGroupA11yProps, mergeA11yProps } from '@lytjs/common-a11y';
 export type { TableSlots } from './types';
 
 export const Table = defineComponent({
@@ -22,6 +23,9 @@ export const Table = defineComponent({
     showSelection: { type: Boolean, default: false },
     highlightCurrentRow: { type: Boolean, default: false },
     class: { type: String, default: '' },
+    id: { type: String, default: '' },
+    ariaLabel: { type: String, default: '' },
+    ariaDescribedBy: { type: String, default: '' },
     onRowClick: { type: Function, default: undefined },
     onSortChange: { type: Function, default: undefined },
     onSelectionChange: { type: Function, default: undefined },
@@ -118,11 +122,11 @@ export const Table = defineComponent({
         createVNode('tr', {}, [
           ...(p.showSelection ? [
             createVNode('th', { class: 'lyt-table__cell--selection' }, [
-              createVNode('input', {
+              createVNode('input', mergeA11yProps(getInputControlA11yProps({ ariaLabel: '全选' }), {
                 type: 'checkbox',
                 checked: allSelected(),
                 onChange: (e: Event) => handleSelectAll((e.target as HTMLInputElement).checked),
-              }),
+              })),
             ]),
           ] : []),
           ...columns.map((column: TableColumn) => 
@@ -154,11 +158,11 @@ export const Table = defineComponent({
               if (p.showSelection) {
                 rowChildren.push(
                   createVNode('td', { class: 'lyt-table__cell--selection' }, [
-                    createVNode('input', {
+                    createVNode('input', mergeA11yProps(getInputControlA11yProps({ ariaLabel: '选择行' }), {
                       type: 'checkbox',
                       checked: selectedRows().has(row),
                       onChange: (e: Event) => handleRowSelect(row, (e.target as HTMLInputElement).checked),
-                    }),
+                    })),
                   ])
                 );
               }
@@ -192,7 +196,12 @@ export const Table = defineComponent({
 
       children.push(thead, tbody);
 
-      return createVNode('table', { class: tableClass.join(' ') }, children);
+      return createVNode('table', mergeA11yProps({
+        id: p.id,
+        'aria-label': p.ariaLabel,
+        'aria-describedby': p.ariaDescribedBy,
+        role: 'grid',
+      }, { class: tableClass.join(' ') }), children);
     };
   },
 });

@@ -8,6 +8,7 @@ import type { LinkProps, LinkSlots } from './types';
 import { defineComponent } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import { isString, isObject } from '@lytjs/common-is';
+import { mergeA11yProps } from '@lytjs/common-a11y';
 
 /**
  * Link 组件
@@ -23,6 +24,9 @@ export const Link = defineComponent({
     target: { type: String, default: '_self' },
     class: { type: String, default: '' },
     style: { type: String, default: '' },
+    id: { type: String, default: '' },
+    ariaLabel: { type: String, default: '' },
+    ariaDescribedBy: { type: String, default: '' },
     onClick: { type: Function, default: undefined },
   },
 
@@ -74,19 +78,28 @@ export const Link = defineComponent({
       }
 
       if (_props.href) {
-        return createVNode('a', {
+        return createVNode('a', mergeA11yProps({
+          id: _props.id,
+          'aria-label': _props.ariaLabel,
+          'aria-describedby': _props.ariaDescribedBy,
+        }, {
           class: getLinkClass(),
           style: getLinkStyle(),
           href: _props.href,
           target: _props.target,
           onClick: handleClick,
-        }, children);
+        }), children);
       } else {
-        return createVNode('span', {
+        return createVNode('span', mergeA11yProps({
+          id: _props.id,
+          'aria-label': _props.ariaLabel,
+          'aria-describedby': _props.ariaDescribedBy,
+          role: 'link',
+        }, {
           class: getLinkClass(),
           style: getLinkStyle(),
           onClick: handleClick,
-        }, children);
+        }), children);
       }
     };
   },

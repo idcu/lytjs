@@ -8,6 +8,7 @@ import { defineComponent } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import { signal } from '@lytjs/reactivity';
 import type { FormRules, FormSetupProps, FormSlots, FormItemSetupProps, FormItemSlots } from './types';
+import { getGroupA11yProps, mergeA11yProps } from '@lytjs/common-a11y';
 
 export const Form = defineComponent({
   name: 'LytForm',
@@ -18,6 +19,9 @@ export const Form = defineComponent({
     labelWidth: { type: String, default: '100px' },
     labelPosition: { type: String, default: 'right' },
     class: { type: String, default: '' },
+    id: { type: String, default: '' },
+    ariaLabel: { type: String, default: '' },
+    ariaDescribedBy: { type: String, default: '' },
     onSubmit: { type: Function, default: undefined },
   },
 
@@ -83,10 +87,13 @@ export const Form = defineComponent({
 
       const children: VNode[] = slots.default ? slots.default() : [];
 
-      return createVNode('form', {
+      return createVNode('form', mergeA11yProps(getGroupA11yProps({ role: 'form' }), {
+        id: p.id,
+        'aria-label': p.ariaLabel,
+        'aria-describedby': p.ariaDescribedBy,
         class: formClass,
         onSubmit: handleSubmit,
-      }, children);
+      }), children);
     };
   },
 });
@@ -101,6 +108,9 @@ export const FormItem = defineComponent({
     rules: { type: [Object, Array] as unknown as StringConstructor, default: () => [] },
     error: { type: String, default: '' },
     validateStatus: { type: String, default: '' },
+    id: { type: String, default: '' },
+    ariaLabel: { type: String, default: '' },
+    ariaDescribedBy: { type: String, default: '' },
   },
 
   setup(props: Record<string, unknown>, { slots }: { slots: FormItemSlots }) {
@@ -130,10 +140,18 @@ export const FormItem = defineComponent({
       }
 
       if (p.error) {
-        children.push(createVNode('div', { class: 'lyt-form-item__error' }, [createVNode('span', {}, String(p.error))]));
+        children.push(createVNode('div', { 
+          class: 'lyt-form-item__error',
+          role: 'alert',
+          'aria-live': 'polite'
+        }, [createVNode('span', {}, String(p.error))]));
       }
 
-      return createVNode('div', { class: itemClass }, children);
+      return createVNode('div', mergeA11yProps({
+        id: p.id,
+        'aria-label': p.ariaLabel,
+        'aria-describedby': p.ariaDescribedBy,
+      }, { class: itemClass }), children);
     };
   },
 });

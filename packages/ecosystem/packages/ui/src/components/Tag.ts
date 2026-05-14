@@ -9,6 +9,7 @@ import { defineComponent } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import { isString, isObject } from '@lytjs/common-is';
 import { reactive } from '@lytjs/reactivity';
+import { getButtonA11yProps, mergeA11yProps } from '@lytjs/common-a11y';
 
 /**
  * Tag 组件
@@ -23,6 +24,9 @@ export const Tag = defineComponent({
     size: { type: String, default: 'medium' },
     class: { type: String, default: '' },
     style: { type: String, default: '' },
+    id: { type: String, default: '' },
+    ariaLabel: { type: String, default: '' },
+    ariaDescribedBy: { type: String, default: '' },
     onClose: { type: Function, default: undefined },
   },
 
@@ -81,16 +85,21 @@ export const Tag = defineComponent({
 
       // 关闭按钮
       if (_props.closable) {
-        children.push(createVNode('span', {
+        const closeBtnProps = getButtonA11yProps({ ariaLabel: '关闭标签' });
+        children.push(createVNode('span', mergeA11yProps(closeBtnProps, {
           class: 'lyt-tag__close',
           onClick: handleClose,
-        }, [createVNode('span', {}, '&times;')]));
+        }), [createVNode('span', {}, '&times;')]));
       }
 
-      return createVNode('span', {
+      return createVNode('span', mergeA11yProps({
+        id: _props.id,
+        'aria-label': _props.ariaLabel,
+        'aria-describedby': _props.ariaDescribedBy,
+      }, {
         class: getTagClass(),
         style: getTagStyle(),
-      }, children);
+      }), children);
     };
   },
 });

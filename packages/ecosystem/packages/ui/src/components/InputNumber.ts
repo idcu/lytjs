@@ -6,9 +6,10 @@
 
 import type { InputNumberProps, InputNumberSlots, InputNumberSetupProps } from './types';
 import { defineComponent } from '@lytjs/component';
-import { createVNode, type VNode } from '@lytjs/vdom';
+import { createVNode, createTextVNode, type VNode } from '@lytjs/vdom';
 import { isString, isObject } from '@lytjs/common-is';
 import { reactive, computed, watch } from '@lytjs/reactivity';
+import { getSpinbuttonA11yProps, getButtonA11yProps, mergeA11yProps } from '@lytjs/common-a11y';
 
 /**
  * InputNumber 组件
@@ -32,8 +33,15 @@ export const InputNumber = defineComponent({
     placeholder: { type: String, default: '' },
     class: { type: String, default: '' },
     style: { type: String, default: '' },
+    id: { type: String, default: '' },
+    ariaLabel: { type: String, default: '' },
+    ariaDescribedBy: { type: String, default: '' },
+    ariaRequired: { type: Boolean, default: false },
+    ariaInvalid: { type: Boolean, default: false },
+    tabIndex: { type: Number, default: undefined },
     onChange: { type: Function, default: undefined },
     onInput: { type: Function, default: undefined },
+    onKeydown: { type: Function, default: undefined },
   },
 
   setup(props: Record<string, unknown>, { emit }) {
@@ -151,6 +159,32 @@ export const InputNumber = defineComponent({
       state.focus = true;
     };
 
+    const handleKeydown = (e: KeyboardEvent) => {
+      switch (e.key) {
+        case 'ArrowUp':
+          e.preventDefault();
+          handleIncrement();
+          break;
+        case 'ArrowDown':
+          e.preventDefault();
+          handleDecrement();
+          break;
+        case 'Home':
+          if (_props.min !== -Infinity) {
+            e.preventDefault();
+            setValue(_props.min);
+          }
+          break;
+        case 'End':
+          if (_props.max !== Infinity) {
+            e.preventDefault();
+            setValue(_props.max);
+          }
+          break;
+      }
+      _props.onKeydown?.(e);
+    };
+
     watch(() => _props.modelValue, (newValue) => {
       if (newValue !== state.inputValue) {
         state.inputValue = newValue;
@@ -184,22 +218,42 @@ export const InputNumber = defineComponent({
       
       // 减号按钮
       if (_props.controls) {
-        children.push(createVNode('span', {
+        const decreaseBtnProps = getButtonA11yProps({
+          ariaLabel: '减少',
+          disabled: _props.disabled || isAtMin.value,
+        });
+        children.push(createVNode('span', mergeA11yProps(decreaseBtnProps, {
           class: `lyt-input-number__decrease ${isAtMin.value ? 'is-disabled' : ''}`,
           onClick: handleDecrement,
-        }, [createVNode('span', {}, '−')]));
+        }), [createTextVNode('−')]));
       }
 
       // 加号按钮
       if (_props.controls) {
-        children.push(createVNode('span', {
+        const increaseBtnProps = getButtonA11yProps({
+          ariaLabel: '增加',
+          disabled: _props.disabled || isAtMax.value,
+        });
+        children.push(createVNode('span', mergeA11yProps(increaseBtnProps, {
           class: `lyt-input-number__increase ${isAtMax.value ? 'is-disabled' : ''}`,
           onClick: handleIncrement,
-        }, [createVNode('span', {}, '+')]));
+        }), [createTextVNode('+')]));
       }
 
       // 输入框
-      children.push(createVNode('input', {
+      const spinbuttonProps = getSpinbuttonA11yProps({
+        id: _props.id,
+        ariaLabel: _props.ariaLabel,
+        ariaDescribedBy: _props.ariaDescribedBy,
+        ariaRequired: _props.ariaRequired,
+        ariaInvalid: _props.ariaInvalid,
+        disabled: _props.disabled,
+        tabIndex: _props.tabIndex,
+        value: state.inputValue,
+        min: _props.min === -Infinity ? undefined : _props.min,
+        max: _props.max === Infinity ? undefined : _props.max,
+      });
+      children.push(createVNode('input', mergeA11yProps(spinbuttonProps, {
         type: 'text',
         class: 'lyt-input-number__input',
         value: displayValue.value,
@@ -209,7 +263,8 @@ export const InputNumber = defineComponent({
         onInput: handleInput,
         onBlur: handleBlur,
         onFocus: handleFocus,
-      }, []));
+        onKeydown: handleKeydown,
+      }), []));
 
       return createVNode('div', {
         class: getInputNumberClass(),

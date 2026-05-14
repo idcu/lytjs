@@ -7,6 +7,7 @@
 import { defineComponent } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import { isString, isObject } from '@lytjs/common-is';
+import { getButtonA11yProps, mergeA11yProps } from '@lytjs/common-a11y';
 import type { ButtonSetupProps, ButtonSlots } from './types';
 
 export const Button = defineComponent({
@@ -99,20 +100,24 @@ export const Button = defineComponent({
         children.push(createVNode('span', { class: 'lyt-button__text' }, slots.default()));
       }
 
+      const isDisabled = p.disabled || p.loading;
+      const a11yProps = getButtonA11yProps({
+        ariaLabel: p.ariaLabel,
+        ariaDescribedBy: p.ariaDescribedBy,
+        disabled: isDisabled,
+        tabIndex: p.tabIndex,
+      });
+
       return createVNode(
         'button',
-        {
+        mergeA11yProps(a11yProps, {
           class: getButtonClass(),
           style: getButtonStyle(),
           type: p.nativeType,
-          disabled: p.disabled || p.loading,
-          'aria-disabled': p.disabled || p.loading,
-          'aria-label': p.ariaLabel,
-          'aria-describedby': p.ariaDescribedBy,
-          tabindex: p.tabIndex !== undefined ? p.tabIndex : (p.disabled || p.loading ? -1 : 0),
+          disabled: isDisabled,
           onClick: handleClick,
           onKeydown: handleKeydown,
-        },
+        }),
         children,
       );
     };

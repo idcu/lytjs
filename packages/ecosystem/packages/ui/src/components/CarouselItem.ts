@@ -8,6 +8,7 @@ import type { CarouselItemProps, CarouselItemSlots, CarouselItemSetupProps } fro
 import { defineComponent } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import { isString, isObject } from '@lytjs/common-is';
+import { mergeA11yProps } from '@lytjs/common-a11y';
 
 /**
  * CarouselItem 走马灯项组件
@@ -20,6 +21,9 @@ export const CarouselItem = defineComponent({
     label: { type: String, default: '' },
     class: { type: String, default: '' },
     style: { type: [String, Object], default: '' },
+    id: { type: String, default: '' },
+    ariaLabel: { type: String, default: '' },
+    ariaDescribedBy: { type: String, default: '' },
   },
 
   setup(props: Record<string, unknown>, { slots }) {
@@ -54,10 +58,14 @@ export const CarouselItem = defineComponent({
         }
       }
 
-      return createVNode('div', {
+      return createVNode('div', mergeA11yProps({
+        id: _props.id,
+        'aria-label': _props.ariaLabel || _props.label,
+        'aria-describedby': _props.ariaDescribedBy,
+      }, {
         class: getCarouselItemClass(),
         style: getCarouselItemStyle(),
-      }, children);
+      }), children);
     };
   },
 });

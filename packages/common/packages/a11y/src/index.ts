@@ -10,6 +10,230 @@ export interface FocusTrapOptions {
   escapeDeactivates?: boolean;
 }
 
+/**
+ * 通用无障碍属性接口
+ */
+export interface A11yProps {
+  id?: string;
+  ariaLabel?: string;
+  ariaDescribedBy?: string;
+  ariaLabelledBy?: string;
+  ariaRequired?: boolean;
+  ariaInvalid?: boolean;
+  ariaDisabled?: boolean;
+  ariaHidden?: boolean;
+  ariaExpanded?: boolean;
+  ariaChecked?: boolean | 'mixed';
+  ariaSelected?: boolean;
+  ariaPressed?: boolean;
+  ariaHasPopup?: boolean | 'menu' | 'listbox' | 'tree' | 'grid' | 'dialog';
+  ariaControls?: string;
+  ariaOwns?: string;
+  ariaLive?: 'off' | 'polite' | 'assertive';
+  ariaValuenow?: number | string;
+  ariaValuemax?: number;
+  ariaValuemin?: number;
+  ariaModal?: boolean;
+  tabIndex?: number;
+  role?: string;
+}
+
+/**
+ * 生成 tabindex 属性值
+ */
+export function getTabIndex(disabled: boolean, customTabIndex?: number): number | undefined {
+  if (customTabIndex !== undefined) return customTabIndex;
+  return disabled ? -1 : 0;
+}
+
+/**
+ * 为按钮组件生成 a11y 属性
+ */
+export function getButtonA11yProps(props: A11yProps & { disabled?: boolean }): Record<string, any> {
+  return {
+    role: 'button',
+    'aria-label': props.ariaLabel,
+    'aria-describedby': props.ariaDescribedBy,
+    'aria-labelledby': props.ariaLabelledBy,
+    'aria-disabled': props.ariaDisabled ?? props.disabled,
+    'aria-pressed': props.ariaPressed,
+    'tabindex': getTabIndex(props.disabled ?? !!props.ariaDisabled, props.tabIndex),
+    id: props.id,
+  };
+}
+
+/**
+ * 为表单控件生成 a11y 属性
+ */
+export function getFormControlA11yProps(props: A11yProps & { disabled?: boolean; required?: boolean; invalid?: boolean }): Record<string, any> {
+  return {
+    'aria-label': props.ariaLabel,
+    'aria-describedby': props.ariaDescribedBy,
+    'aria-labelledby': props.ariaLabelledBy,
+    'aria-required': props.ariaRequired ?? props.required,
+    'aria-invalid': props.ariaInvalid ?? props.invalid,
+    'aria-disabled': props.ariaDisabled ?? props.disabled,
+    tabindex: getTabIndex(props.disabled ?? !!props.ariaDisabled, props.tabIndex),
+    id: props.id,
+  };
+}
+
+/**
+ * 为复选框/单选框生成 a11y 属性
+ */
+export function getInputControlA11yProps(props: A11yProps & { disabled?: boolean; checked?: boolean | 'mixed'; required?: boolean; invalid?: boolean }): Record<string, any> {
+  return {
+    ...getFormControlA11yProps(props),
+    'aria-checked': props.checked,
+  };
+}
+
+/**
+ * 为开关组件生成 a11y 属性
+ */
+export function getSwitchA11yProps(props: A11yProps & { disabled?: boolean; checked?: boolean; required?: boolean; invalid?: boolean }): Record<string, any> {
+  return {
+    role: 'switch',
+    'aria-checked': props.checked,
+    ...getFormControlA11yProps(props),
+  };
+}
+
+/**
+ * 为下拉选择组件生成 a11y 属性
+ */
+export function getComboboxA11yProps(props: A11yProps & { disabled?: boolean; expanded?: boolean; controls?: string; required?: boolean; invalid?: boolean }): Record<string, any> {
+  return {
+    role: 'combobox',
+    'aria-expanded': props.expanded,
+    'aria-controls': props.ariaControls ?? props.controls,
+    'aria-haspopup': 'listbox',
+    ...getFormControlA11yProps(props),
+  };
+}
+
+/**
+ * 为列表框选项生成 a11y 属性
+ */
+export function getOptionA11yProps(props: A11yProps & { selected?: boolean; disabled?: boolean }): Record<string, any> {
+  return {
+    role: 'option',
+    'aria-selected': props.selected,
+    'aria-disabled': props.disabled,
+    tabindex: props.disabled ? -1 : 0,
+    id: props.id,
+  };
+}
+
+/**
+ * 为滑块组件生成 a11y 属性
+ */
+export function getSliderA11yProps(props: A11yProps & { disabled?: boolean; value?: number | string; min?: number; max?: number }): Record<string, any> {
+  return {
+    role: 'slider',
+    'aria-valuenow': props.value,
+    'aria-valuemin': props.min,
+    'aria-valuemax': props.max,
+    ...getFormControlA11yProps(props),
+  };
+}
+
+/**
+ * 为数字输入组件生成 a11y 属性
+ */
+export function getSpinbuttonA11yProps(props: A11yProps & { disabled?: boolean; value?: number | string; min?: number; max?: number }): Record<string, any> {
+  return {
+    role: 'spinbutton',
+    'aria-valuenow': props.value,
+    'aria-valuemin': props.min,
+    'aria-valuemax': props.max,
+    ...getFormControlA11yProps(props),
+  };
+}
+
+/**
+ * 为标签页列表生成 a11y 属性
+ */
+export function getTablistA11yProps(props: A11yProps & { label?: string }): Record<string, any> {
+  return {
+    role: 'tablist',
+    'aria-label': props.ariaLabel ?? props.label,
+    'aria-describedby': props.ariaDescribedBy,
+    id: props.id,
+  };
+}
+
+/**
+ * 为单个标签页生成 a11y 属性
+ */
+export function getTabA11yProps(props: A11yProps & { selected?: boolean; disabled?: boolean; controls?: string }): Record<string, any> {
+  return {
+    role: 'tab',
+    'aria-selected': props.selected,
+    'aria-disabled': props.disabled,
+    'aria-controls': props.ariaControls ?? props.controls,
+    tabindex: props.selected ? 0 : -1,
+    id: props.id,
+  };
+}
+
+/**
+ * 为标签面板生成 a11y 属性
+ */
+export function getTabpanelA11yProps(props: A11yProps & { labelledBy?: string; hidden?: boolean }): Record<string, any> {
+  return {
+    role: 'tabpanel',
+    'aria-labelledby': props.ariaLabelledBy ?? props.labelledBy,
+    'aria-hidden': props.hidden,
+    id: props.id,
+  };
+}
+
+/**
+ * 为对话框/模态框生成 a11y 属性
+ */
+export function getDialogA11yProps(props: A11yProps & { labelledBy?: string; describedBy?: string; modal?: boolean }): Record<string, any> {
+  return {
+    role: 'dialog',
+    'aria-modal': props.ariaModal ?? props.modal ?? true,
+    'aria-labelledby': props.ariaLabelledBy ?? props.labelledBy,
+    'aria-describedby': props.ariaDescribedBy ?? props.describedBy,
+    'aria-label': props.ariaLabel,
+    id: props.id,
+  };
+}
+
+/**
+ * 为分组组件（checkboxGroup/radioGroup）生成 a11y 属性
+ */
+export function getGroupA11yProps(props: A11yProps & { role?: 'radiogroup' | 'group' | 'listbox'; required?: boolean; label?: string }): Record<string, any> {
+  return {
+    role: props.role ?? 'group',
+    'aria-label': props.ariaLabel ?? props.label,
+    'aria-describedby': props.ariaDescribedBy,
+    'aria-required': props.ariaRequired ?? props.required,
+    id: props.id,
+  };
+}
+
+/**
+ * 合并多个 a11y 属性对象
+ */
+export function mergeA11yProps(...propsList: Array<Record<string, any>>): Record<string, any> {
+  const result = {};
+  for (const props of propsList) {
+    for (const [key, value] of Object.entries(props)) {
+      if (value !== undefined && value !== null) {
+        result[key] = value;
+      }
+    }
+  }
+  // 过滤 undefined 值
+  return Object.fromEntries(
+    Object.entries(result).filter(([_, v]) => v !== undefined && v !== null)
+  );
+}
+
 /** ARIA 角色到必需属性的映射 */
 export const ARIA_ROLES: Record<string, string[]> = {
   alert: ['aria-live'],
@@ -205,4 +429,80 @@ export function setAriaProps(
  */
 export function assertActiveElement(element: Element): boolean {
   return document.activeElement === element;
+}
+
+/**
+ * 键盘导航辅助函数 - 在启用的选项间循环
+ */
+export function getNextEnabledIndex(
+  currentIndex: number,
+  totalItems: number,
+  isEnabled: (index: number) => boolean,
+  direction: 'forward' | 'backward' = 'forward'
+): number {
+  const step = direction === 'forward' ? 1 : -1;
+  let nextIndex = (currentIndex + step + totalItems) % totalItems;
+  
+  for (let i = 0; i < totalItems; i++) {
+    if (isEnabled(nextIndex)) {
+      return nextIndex;
+    }
+    nextIndex = (nextIndex + step + totalItems) % totalItems;
+  }
+  
+  return currentIndex;
+}
+
+/**
+ * 处理列表组件的键盘导航
+ */
+export function handleListKeydown(
+  event: KeyboardEvent,
+  currentIndex: number,
+  totalItems: number,
+  isEnabled: (index: number) => boolean,
+  onSelect: (index: number) => void,
+  onClose?: () => void
+): void {
+  switch (event.key) {
+    case 'ArrowDown':
+    case 'ArrowRight':
+      event.preventDefault();
+      onSelect(getNextEnabledIndex(currentIndex, totalItems, isEnabled, 'forward'));
+      break;
+    case 'ArrowUp':
+    case 'ArrowLeft':
+      event.preventDefault();
+      onSelect(getNextEnabledIndex(currentIndex, totalItems, isEnabled, 'backward'));
+      break;
+    case 'Home':
+      event.preventDefault();
+      for (let i = 0; i < totalItems; i++) {
+        if (isEnabled(i)) {
+          onSelect(i);
+          break;
+        }
+      }
+      break;
+    case 'End':
+      event.preventDefault();
+      for (let i = totalItems - 1; i >= 0; i--) {
+        if (isEnabled(i)) {
+          onSelect(i);
+          break;
+        }
+      }
+      break;
+    case 'Enter':
+    case ' ':
+      event.preventDefault();
+      if (isEnabled(currentIndex)) {
+        onSelect(currentIndex);
+      }
+      break;
+    case 'Escape':
+      event.preventDefault();
+      onClose?.();
+      break;
+  }
 }

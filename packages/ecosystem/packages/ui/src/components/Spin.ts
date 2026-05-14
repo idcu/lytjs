@@ -9,6 +9,7 @@ import { defineComponent, onUnmounted } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import { isString, isObject } from '@lytjs/common-is';
 import { reactive, watch } from '@lytjs/reactivity';
+import { mergeA11yProps } from '@lytjs/common-a11y';
 
 /**
  * Spin 组件
@@ -23,6 +24,9 @@ export const Spin = defineComponent({
     delay: { type: Number, default: 0 },
     class: { type: String, default: '' },
     style: { type: String, default: '' },
+    id: { type: String, default: '' },
+    ariaLabel: { type: String, default: '' },
+    ariaDescribedBy: { type: String, default: '' },
   },
 
   setup(props: any, { slots }: any) {
@@ -101,10 +105,16 @@ export const Spin = defineComponent({
         }, slots.default()));
       }
 
-      return createVNode('div', {
+      return createVNode('div', mergeA11yProps({
+        id: props.id,
+        'aria-label': props.ariaLabel,
+        'aria-describedby': props.ariaDescribedBy,
+        role: 'alert',
+        'aria-live': 'polite',
+      }, {
         class: getSpinClass(),
         style: getSpinStyle(),
-      }, children);
+      }), children);
     };
   },
 });

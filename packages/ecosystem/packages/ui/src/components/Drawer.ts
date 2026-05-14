@@ -7,6 +7,7 @@
 import { defineComponent } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import { signal } from '@lytjs/reactivity';
+import { getDialogA11yProps, getButtonA11yProps, mergeA11yProps } from '@lytjs/common-a11y';
 import type { DrawerSetupProps, DrawerSlots } from './types';
 
 export const Drawer = defineComponent({
@@ -25,6 +26,10 @@ export const Drawer = defineComponent({
     withHeader: { type: Boolean, default: true },
     customClass: { type: String, default: '' },
     class: { type: String, default: '' },
+    id: { type: String, default: '' },
+    ariaLabel: { type: String, default: '' },
+    ariaDescribedBy: { type: String, default: '' },
+    ariaModal: { type: Boolean, default: true },
     onBeforeOpen: { type: Function, default: undefined },
     onBeforeClose: { type: Function, default: undefined },
     onOpen: { type: Function, default: undefined },
@@ -111,12 +116,13 @@ export const Drawer = defineComponent({
         if (slots.header) {
           headerChildren.push(...slots.header());
         } else if (p.title) {
-          headerChildren.push(createVNode('span', { class: 'lyt-drawer__title' }, [createVNode('span', {}, String(p.title))]));
+          headerChildren.push(createVNode('span', { class: 'lyt-drawer__title', id: p.id ? `${p.id}-title` : undefined }, [createVNode('span', {}, String(p.title))]));
         }
 
         if (p.showClose) {
+          const closeBtnProps = getButtonA11yProps({ ariaLabel: 'Close drawer' });
           headerChildren.push(
-            createVNode('button', { class: 'lyt-drawer__close', type: 'button', onClick: close }, [
+            createVNode('button', mergeA11yProps(closeBtnProps, { class: 'lyt-drawer__close', type: 'button', onClick: close }), [
               createVNode('svg', { viewBox: '0 0 1024 1024', width: '1em', height: '1em' }, [
                 createVNode('path', {
                   d: 'M563.8 512l262.5-312.9c4.4-5.2.7-13.1-6.1-13.1h-79.8c-4.7 0-9.2 2.1-12.3 5.7L511.6 449.8 295.1 191.7c-3-3.6-7.5-5.7-12.3-5.7H203c-6.8 0-10.5 7.9-6.1 13.1L459.4 512 196.9 824.9c-4.4 5.2-.7 13.1 6.1 13.1h79.8c4.7 0 9.2-2.1 12.3-5.7l216.5-258.1 216.5 258.1c3 3.6 7.5 5.7 12.3 5.7h79.8c6.8 0 10.5-7.9 6.1-13.1L563.8 512z',
@@ -128,26 +134,33 @@ export const Drawer = defineComponent({
         }
 
         if (headerChildren.length > 0) {
-          drawerChildren.push(createVNode('div', { class: 'lyt-drawer__header' }, headerChildren));
+          drawerChildren.push(createVNode('div', { class: 'lyt-drawer__header', id: p.id ? `${p.id}-header` : undefined }, headerChildren));
         }
       }
 
       if (slots.default) {
-        drawerChildren.push(createVNode('div', { class: 'lyt-drawer__body' }, slots.default()));
+        drawerChildren.push(createVNode('div', { class: 'lyt-drawer__body', id: p.id ? `${p.id}-body` : undefined }, slots.default()));
       }
 
       if (slots.footer) {
-        drawerChildren.push(createVNode('div', { class: 'lyt-drawer__footer' }, slots.footer()));
+        drawerChildren.push(createVNode('div', { class: 'lyt-drawer__footer', id: p.id ? `${p.id}-footer` : undefined }, slots.footer()));
       }
 
-      children.push(
-        createVNode('div', {
-          class: 'lyt-drawer__container',
-          style: formatStyle(getSizeStyle()),
-        }, drawerChildren)
-      );
+      const drawerContainer = createVNode('div', {
+        class: 'lyt-drawer__container',
+        style: formatStyle(getSizeStyle()),
+      }, drawerChildren);
+      children.push(drawerContainer);
 
-      return createVNode('div', { class: getDrawerClass() }, children);
+      const a11yProps = getDialogA11yProps({
+        id: p.id,
+        ariaLabel: p.ariaLabel || p.title,
+        ariaDescribedBy: p.ariaDescribedBy || (p.id ? `${p.id}-body` : undefined),
+        labelledBy: p.title && p.id ? `${p.id}-title` : undefined,
+        modal: p.ariaModal,
+      });
+
+      return createVNode('div', mergeA11yProps(a11yProps, { class: getDrawerClass() }), children);
     };
   },
 });

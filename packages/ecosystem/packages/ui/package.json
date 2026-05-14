@@ -35,6 +35,7 @@
     "@lytjs/common-is": "workspace:*",
     "@lytjs/common-env": "workspace:*",
     "@lytjs/common-dom": "workspace:*",
+    "@lytjs/common-a11y": "workspace:*",
     "@lytjs/reactivity": "workspace:*",
     "@lytjs/component": "workspace:*",
     "@lytjs/vdom": "workspace:*"

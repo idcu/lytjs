@@ -7,6 +7,7 @@
 import { defineComponent } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import { signal } from '@lytjs/reactivity';
+import { getButtonA11yProps, mergeA11yProps, getGroupA11yProps } from '@lytjs/common-a11y';
 import type { MenuItem, MenuSetupProps, MenuSlots } from './types';
 
 export const Menu = defineComponent({
@@ -18,6 +19,9 @@ export const Menu = defineComponent({
     defaultOpeneds: { type: Array, default: (): string[] => [] },
     uniqueOpened: { type: Boolean, default: false },
     class: { type: String, default: '' },
+    id: { type: String, default: '' },
+    ariaLabel: { type: String, default: '' },
+    ariaDescribedBy: { type: String, default: '' },
     onSelect: { type: Function, default: undefined },
     onOpen: { type: Function, default: undefined },
     onClose: { type: Function, default: undefined },
@@ -78,8 +82,13 @@ export const Menu = defineComponent({
             class: ['lyt-menu__arrow', isOpened ? 'lyt-menu__arrow--opened' : ''].filter(Boolean).join(' '),
           }, [createVNode('span', {}, isOpened ? '▲' : '▼')]));
 
-          const submenuChildren: VNode[] = itemProps.children.map((child: MenuItem) =>
-            createVNode('li', {
+          const submenuChildren: VNode[] = itemProps.children.map((child: MenuItem) => {
+            const childBtnProps = getButtonA11yProps({ 
+              ariaLabel: child.label, 
+              disabled: child.disabled 
+            });
+            
+            return createVNode('li', mergeA11yProps(childBtnProps, {
               key: child.index,
               class: [
                 'lyt-menu__item',
@@ -90,16 +99,21 @@ export const Menu = defineComponent({
                 if (child.disabled) return;
                 handleSelect(child.index);
               },
-            }, [
+            }), [
               child.icon ? createVNode('span', { class: 'lyt-menu__icon' }, [child.icon as unknown as VNode]) : createVNode('span', {}, ''),
               createVNode('span', { class: 'lyt-menu__title' }, [createVNode('span', {}, String(child.label))]),
-            ])
-          );
+            ]);
+          });
 
           itemChildren.push(createVNode('ul', { class: 'lyt-menu__submenu' }, submenuChildren));
         }
 
-        return createVNode('li', {
+        const itemBtnProps = getButtonA11yProps({ 
+          ariaLabel: itemProps.label, 
+          disabled: itemProps.disabled 
+        });
+        
+        return createVNode('li', mergeA11yProps(itemBtnProps, {
           key: itemProps.index,
           class: [
             'lyt-menu__item',
@@ -114,10 +128,17 @@ export const Menu = defineComponent({
               handleSelect(itemProps.index);
             }
           },
-        }, itemChildren);
+        }), itemChildren);
       });
 
-      return createVNode('ul', { class: menuClass }, menuItems);
+      const a11yProps = getGroupA11yProps({
+        id: p.id,
+        ariaLabel: p.ariaLabel,
+        ariaDescribedBy: p.ariaDescribedBy,
+        role: 'menubar'
+      });
+
+      return createVNode('ul', mergeA11yProps(a11yProps, { class: menuClass }), menuItems);
     };
   },
 });

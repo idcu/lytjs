@@ -9,6 +9,7 @@ import { defineComponent } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import { isString, isObject, isArray } from '@lytjs/common-is';
 import { reactive, computed } from '@lytjs/reactivity';
+import { getInputControlA11yProps, mergeA11yProps } from '@lytjs/common-a11y';
 
 /**
  * Checkbox 组件
@@ -113,24 +114,28 @@ export const Checkbox = defineComponent({
       const children: VNode[] = [];
       
       // 实际的 input 元素（隐藏）
-      children.push(createVNode('input', {
+      const a11yProps = getInputControlA11yProps({
+        id: _props.id,
+        ariaLabel: _props.ariaLabel,
+        ariaDescribedBy: _props.ariaDescribedBy,
+        ariaInvalid: _props.ariaInvalid,
+        ariaRequired: _props.ariaRequired,
+        disabled: _props.disabled,
+        tabIndex: _props.tabIndex,
+        checked: isChecked.value as boolean,
+      });
+      
+      children.push(createVNode('input', mergeA11yProps(a11yProps, {
         type: 'checkbox',
         class: 'lyt-checkbox__input',
         checked: isChecked.value as boolean,
         disabled: _props.disabled,
         name: _props.name,
-        id: _props.id,
-        'aria-label': _props.ariaLabel,
-        'aria-describedby': _props.ariaDescribedBy,
-        'aria-invalid': _props.ariaInvalid,
-        'aria-required': _props.ariaRequired,
-        'aria-disabled': _props.disabled,
-        tabindex: _props.tabIndex !== undefined ? _props.tabIndex : (_props.disabled ? -1 : 0),
         onKeydown: _props.onKeydown,
         onChange: handleChange,
         onFocus: handleFocus,
         onBlur: handleBlur,
-      }, []));
+      }), []));
 
       // 自定义的复选框样式
       children.push(createVNode('span', {

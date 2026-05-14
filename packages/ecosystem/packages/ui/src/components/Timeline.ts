@@ -8,6 +8,7 @@ import type { TimelineProps, TimelineSlots, TimelineSetupProps } from './types';
 import { defineComponent } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import { isString, isObject } from '@lytjs/common-is';
+import { mergeA11yProps } from '@lytjs/common-a11y';
 
 /**
  * Timeline 时间轴组件
@@ -20,6 +21,9 @@ export const Timeline = defineComponent({
     mode: { type: String as () => 'left' | 'right' | 'alternate', default: 'left' },
     class: { type: String, default: '' },
     style: { type: [String, Object], default: '' },
+    id: { type: String, default: '' },
+    ariaLabel: { type: String, default: '' },
+    ariaDescribedBy: { type: String, default: '' },
   },
 
   setup(props: Record<string, unknown>, { slots }) {
@@ -56,10 +60,14 @@ export const Timeline = defineComponent({
         }
       }
 
-      return createVNode('div', {
+      return createVNode('div', mergeA11yProps({
+        id: _props.id,
+        'aria-label': _props.ariaLabel,
+        'aria-describedby': _props.ariaDescribedBy,
+      }, {
         class: getTimelineClass(),
         style: getTimelineStyle(),
-      }, children);
+      }), children);
     };
   },
 });

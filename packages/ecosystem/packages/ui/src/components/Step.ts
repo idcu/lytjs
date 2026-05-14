@@ -8,6 +8,7 @@ import type { StepProps, StepSlots, StepSetupProps } from './types';
 import { defineComponent } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import { isString, isObject } from '@lytjs/common-is';
+import { mergeA11yProps } from '@lytjs/common-a11y';
 
 /**
  * Step 步骤项组件
@@ -22,6 +23,9 @@ export const Step = defineComponent({
     status: { type: String as () => 'wait' | 'process' | 'finish' | 'error' | 'success', default: '' },
     class: { type: String, default: '' },
     style: { type: [String, Object], default: '' },
+    id: { type: String, default: '' },
+    ariaLabel: { type: String, default: '' },
+    ariaDescribedBy: { type: String, default: '' },
   },
 
   setup(props: Record<string, unknown>, { slots }) {
@@ -98,10 +102,14 @@ export const Step = defineComponent({
       
       children.push(createVNode('div', { class: 'lyt-step__content' }, contentChildren));
 
-      return createVNode('div', {
+      return createVNode('div', mergeA11yProps({
+        id: _props.id,
+        'aria-label': _props.ariaLabel || _props.title,
+        'aria-describedby': _props.ariaDescribedBy,
+      }, {
         class: getStepClass(),
         style: getStepStyle(),
-      }, children);
+      }), children);
     };
   },
 });

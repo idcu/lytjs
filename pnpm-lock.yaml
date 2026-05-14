@@ -1039,6 +1039,9 @@ importers:
 
   packages/ecosystem/packages/ui:
     dependencies:
+      '@lytjs/common-a11y':
+        specifier: workspace:*
+        version: link:../../../common/packages/a11y
       '@lytjs/common-dom':
         specifier: workspace:*
         version: link:../../../common/packages/dom

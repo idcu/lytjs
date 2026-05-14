@@ -8,7 +8,8 @@ import type { AvatarProps, AvatarSlots, AvatarSetupProps } from './types';
 import { defineComponent } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import { isString, isObject } from '@lytjs/common-is';
-import { reactive, signal } from '@lytjs/reactivity';
+import { signal } from '@lytjs/reactivity';
+import { mergeA11yProps } from '@lytjs/common-a11y';
 
 /**
  * Avatar 组件
@@ -26,6 +27,9 @@ export const Avatar = defineComponent({
     fit: { type: String, default: 'cover' },
     class: { type: String, default: '' },
     style: { type: [String, Object], default: '' },
+    id: { type: String, default: '' },
+    ariaLabel: { type: String, default: '' },
+    ariaDescribedBy: { type: String, default: '' },
     onError: { type: Function, default: undefined },
   },
 
@@ -106,10 +110,14 @@ export const Avatar = defineComponent({
         }
       }
 
-      return createVNode('span', {
+      return createVNode('span', mergeA11yProps({
+        id: _props.id,
+        'aria-label': _props.ariaLabel,
+        'aria-describedby': _props.ariaDescribedBy,
+      }, {
         class: getAvatarClass(),
         style: getAvatarStyle(),
-      }, children);
+      }), children);
     };
   },
 });

@@ -7,6 +7,7 @@
 import { defineComponent } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import type { AlertType, AlertSetupProps } from './types';
+import { getButtonA11yProps, getGroupA11yProps, mergeA11yProps } from '@lytjs/common-a11y';
 
 export const Alert = defineComponent({
   name: 'LytAlert',
@@ -19,6 +20,9 @@ export const Alert = defineComponent({
     showIcon: { type: Boolean, default: true },
     effect: { type: String, default: 'light' },
     class: { type: String, default: '' },
+    id: { type: String, default: '' },
+    ariaLabel: { type: String, default: '' },
+    ariaDescribedBy: { type: String, default: '' },
     onClose: { type: Function, default: undefined },
   },
 
@@ -87,13 +91,20 @@ export const Alert = defineComponent({
       }
 
       if (_props.closable) {
-        children.push(createVNode('button', {
+        const closeBtnProps = getButtonA11yProps({ ariaLabel: '关闭提示' });
+        children.push(createVNode('button', mergeA11yProps(closeBtnProps, {
           class: 'lyt-alert__close',
           onClick: handleClose,
-        }, [createVNode('span', {}, '×')]));
+        }), [createVNode('span', {}, '×')]));
       }
 
-      return createVNode('div', { class: alertClass }, children);
+      const alertProps = getGroupA11yProps({ role: 'alert' });
+      return createVNode('div', mergeA11yProps(alertProps, {
+        id: _props.id,
+        'aria-label': _props.ariaLabel,
+        'aria-describedby': _props.ariaDescribedBy,
+        class: alertClass,
+      }), children);
     };
   },
 });

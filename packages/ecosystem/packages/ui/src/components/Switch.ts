@@ -9,6 +9,7 @@ import { defineComponent } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import { isString, isObject } from '@lytjs/common-is';
 import { reactive, computed } from '@lytjs/reactivity';
+import { getSwitchA11yProps, mergeA11yProps } from '@lytjs/common-a11y';
 
 /**
  * Switch 组件
@@ -28,9 +29,16 @@ export const Switch = defineComponent({
     activeValue: { type: Boolean, default: true },
     inactiveValue: { type: Boolean, default: false },
     name: { type: String, default: '' },
+    id: { type: String, default: '' },
     class: { type: String, default: '' },
     style: { type: String, default: '' },
+    ariaLabel: { type: String, default: '' },
+    ariaDescribedBy: { type: String, default: '' },
+    ariaInvalid: { type: Boolean, default: false },
+    ariaRequired: { type: Boolean, default: false },
+    tabIndex: { type: Number, default: undefined },
     onChange: { type: Function, default: undefined },
+    onKeydown: { type: Function, default: undefined },
   },
 
   setup(props: Record<string, unknown>, { slots, emit }) {
@@ -50,6 +58,21 @@ export const Switch = defineComponent({
       emit('update:modelValue', newValue);
       emit('change', newValue);
       _props.onChange?.(newValue as boolean);
+    };
+
+    const handleKeydown = (event: KeyboardEvent) => {
+      if (_props.disabled || _props.loading) return;
+      
+      // 支持 Space 或 Enter 键触发切换
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        const newValue = isChecked.value ? _props.inactiveValue : _props.activeValue;
+        emit('update:modelValue', newValue);
+        emit('change', newValue);
+        _props.onChange?.(newValue as boolean);
+      }
+      
+      _props.onKeydown?.(event);
     };
 
     const handleFocus = () => {
@@ -149,14 +172,25 @@ export const Switch = defineComponent({
         class: 'lyt-switch__wrapper',
       }, coreChildren));
 
-      return createVNode('div', {
+      const a11yProps = getSwitchA11yProps({
+        checked: isChecked.value,
+        disabled: _props.disabled,
+        id: _props.id,
+        ariaLabel: _props.ariaLabel,
+        ariaDescribedBy: _props.ariaDescribedBy,
+        ariaInvalid: _props.ariaInvalid,
+        ariaRequired: _props.ariaRequired,
+        tabIndex: _props.tabIndex,
+      });
+      
+      return createVNode('div', mergeA11yProps(a11yProps, {
         class: getSwitchClass(),
         style: getSwitchStyle(),
         onClick: handleClick,
+        onKeydown: handleKeydown,
         onFocus: handleFocus,
         onBlur: handleBlur,
-        tabindex: _props.disabled ? -1 : 0,
-      }, children);
+      }), children);
     };
   },
 });

@@ -9,6 +9,7 @@ import { defineComponent } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import { isString, isObject } from '@lytjs/common-is';
 import { signal, effect } from '@lytjs/reactivity';
+import { mergeA11yProps } from '@lytjs/common-a11y';
 
 /**
  * Carousel 走马灯组件
@@ -29,6 +30,9 @@ export const Carousel = defineComponent({
     direction: { type: String as () => 'horizontal' | 'vertical', default: 'horizontal' },
     class: { type: String, default: '' },
     style: { type: [String, Object], default: '' },
+    id: { type: String, default: '' },
+    ariaLabel: { type: String, default: '' },
+    ariaDescribedBy: { type: String, default: '' },
     onChange: { type: Function, default: undefined },
   },
 
@@ -74,10 +78,15 @@ export const Carousel = defineComponent({
       }
       children.push(createVNode('div', { class: 'lyt-carousel__container' }, containerChildren));
 
-      return createVNode('div', {
+      return createVNode('div', mergeA11yProps({
+        id: _props.id,
+        'aria-label': _props.ariaLabel,
+        'aria-describedby': _props.ariaDescribedBy,
+        role: 'region',
+      }, {
         class: getCarouselClass(),
         style: getCarouselStyle(),
-      }, children);
+      }), children);
     };
   },
 });

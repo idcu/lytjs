@@ -166,12 +166,17 @@ export interface DialogProps {
   lockScroll?: boolean;
   class?: string;
   style?: string | Record<string, string>;
+  id?: string;
+  ariaLabel?: string;
+  ariaDescribedBy?: string;
+  ariaModal?: boolean;
   onBeforeOpen?: () => boolean | void | Promise<boolean | void>;
   onBeforeClose?: () => boolean | void | Promise<boolean | void>;
   onOpen?: () => void;
   onClose?: () => void;
   onConfirm?: () => void;
   onCancel?: () => void;
+  onKeydown?: (event: KeyboardEvent) => void;
 }
 
 export interface DialogSlots {
@@ -191,12 +196,17 @@ export interface DialogSetupProps extends Record<string, unknown> {
   lockScroll: boolean;
   class: string;
   style?: string;
+  id: string;
+  ariaLabel: string;
+  ariaDescribedBy: string;
+  ariaModal: boolean;
   onBeforeOpen?: () => boolean | void | Promise<boolean | void>;
   onBeforeClose?: () => boolean | void | Promise<boolean | void>;
   onOpen?: () => void;
   onClose?: () => void;
   onConfirm?: () => void;
   onCancel?: () => void;
+  onKeydown?: (event: KeyboardEvent) => void;
 }
 
 export interface ModalProps {
@@ -213,12 +223,17 @@ export interface ModalProps {
   appendToBody?: boolean;
   customClass?: string;
   class?: string;
+  id?: string;
+  ariaLabel?: string;
+  ariaDescribedBy?: string;
+  ariaModal?: boolean;
   onBeforeOpen?: () => boolean | void | Promise<boolean | void>;
   onBeforeClose?: () => boolean | void | Promise<boolean | void>;
   onOpen?: () => void;
   onClose?: () => void;
   onConfirm?: () => void;
   onCancel?: () => void;
+  onKeydown?: (event: KeyboardEvent) => void;
 }
 
 export interface ModalSlots {
@@ -241,12 +256,17 @@ export interface ModalSetupProps extends Record<string, unknown> {
   appendToBody: boolean;
   customClass: string;
   class: string;
+  id: string;
+  ariaLabel: string;
+  ariaDescribedBy: string;
+  ariaModal: boolean;
   onBeforeOpen?: () => boolean | void | Promise<boolean | void>;
   onBeforeClose?: () => boolean | void | Promise<boolean | void>;
   onOpen?: () => void;
   onClose?: () => void;
   onConfirm?: () => void;
   onCancel?: () => void;
+  onKeydown?: (event: KeyboardEvent) => void;
 }
 
 // ===== Select 组件 =====
@@ -266,8 +286,16 @@ export interface SelectSetupProps extends Record<string, unknown> {
   multiple: boolean;
   size: ComponentSize;
   class: string;
+  id: string;
+  ariaLabel: string;
+  ariaDescribedBy: string;
+  ariaInvalid: boolean;
+  ariaRequired: boolean;
+  tabIndex?: number;
   onChange?: (value: string | number | (string | number)[]) => void;
   onClear?: () => void;
+  onKeydown?: (event: KeyboardEvent) => void;
+  onVisibleChange?: (visible: boolean) => void;
 }
 
 export interface SelectProps {
@@ -280,8 +308,16 @@ export interface SelectProps {
   size?: ComponentSize;
   class?: string;
   style?: string | Record<string, string>;
+  id?: string;
+  ariaLabel?: string;
+  ariaDescribedBy?: string;
+  ariaInvalid?: boolean;
+  ariaRequired?: boolean;
+  tabIndex?: number;
   onChange?: (value: string | number | (string | number)[]) => void;
   onClear?: () => void;
+  onKeydown?: (event: KeyboardEvent) => void;
+  onVisibleChange?: (visible: boolean) => void;
 }
 
 export interface SelectSlots {
@@ -318,12 +354,17 @@ export interface TabsSetupProps extends Record<string, unknown> {
   editable: boolean;
   draggable: boolean;
   class: string;
+  style?: string | Record<string, string>;
+  id: string;
+  ariaLabel: string;
+  ariaDescribedBy: string;
   onChange?: (name: string) => void;
   onTabClick?: (pane: { props: TabPaneSetupProps; children: VNode[] }, index: number) => void;
   onTabRemove?: (name: string) => void;
   onTabAdd?: () => void;
   onTabDragStart?: (index: number) => void;
   onTabDragEnd?: (fromIndex: number, toIndex: number) => void;
+  onKeydown?: (event: KeyboardEvent) => void;
 }
 
 export interface TabsProps {
@@ -335,12 +376,16 @@ export interface TabsProps {
   addable?: boolean;
   editable?: boolean;
   draggable?: boolean;
+  id?: string;
+  ariaLabel?: string;
+  ariaDescribedBy?: string;
   onChange?: (name: string) => void;
   onTabClick?: (pane: { props: TabPaneProps; children: VNode[] }, index: number) => void;
   onTabRemove?: (name: string) => void;
   onTabAdd?: () => void;
   onTabDragStart?: (index: number) => void;
   onTabDragEnd?: (fromIndex: number, toIndex: number) => void;
+  onKeydown?: (event: KeyboardEvent) => void;
 }
 
 export interface TabsSlots {
@@ -371,6 +416,9 @@ export interface CascaderSetupProps extends Record<string, unknown> {
   collapseTags: boolean;
   separator: string;
   class: string;
+  id: string;
+  ariaLabel: string;
+  ariaDescribedBy: string;
   load?: (node: CascaderOption, resolve: (children: CascaderOption[]) => void) => void;
   onChange?: (value: (string | number)[] | Array<(string | number)[]>) => void;
   onExpandChange?: (value: (string | number)[]) => void;
@@ -393,6 +441,9 @@ export interface CascaderProps {
   separator?: string;
   class?: string;
   style?: string | Record<string, string>;
+  id?: string;
+  ariaLabel?: string;
+  ariaDescribedBy?: string;
   load?: (node: CascaderOption, resolve: (children: CascaderOption[]) => void) => void;
   onChange?: (value: (string | number)[] | Array<(string | number)[]>) => void;
   onExpandChange?: (value: (string | number)[]) => void;
@@ -477,6 +528,9 @@ export interface TableSetupProps extends Record<string, unknown> {
   showSelection: boolean;
   highlightCurrentRow: boolean;
   class: string;
+  id: string;
+  ariaLabel: string;
+  ariaDescribedBy: string;
   onRowClick?: TableRowClickCallback;
   onSortChange?: TableSortCallback;
   onSelectionChange?: (rows: TableData) => void;
@@ -494,6 +548,9 @@ export interface TableProps {
   highlightCurrentRow?: boolean;
   class?: string;
   style?: string | Record<string, string>;
+  id?: string;
+  ariaLabel?: string;
+  ariaDescribedBy?: string;
   onRowClick?: TableRowClickCallback;
   onSortChange?: TableSortCallback;
   onSelectionChange?: (rows: TableData) => void;
@@ -513,6 +570,21 @@ export interface IconProps {
   spin?: boolean;
   class?: string;
   style?: string | Record<string, string>;
+  id?: string;
+  ariaLabel?: string;
+  ariaDescribedBy?: string;
+}
+
+export interface IconSetupProps extends Record<string, unknown> {
+  name?: string;
+  size?: string;
+  color?: string;
+  spin?: boolean;
+  class?: string;
+  style?: string | Record<string, string>;
+  id?: string;
+  ariaLabel?: string;
+  ariaDescribedBy?: string;
 }
 
 export interface IconSlots {
@@ -544,7 +616,24 @@ export interface BadgeSetupProps extends Record<string, unknown> {
   type: string;
   offset?: number[];
   class: string;
+  id: string;
+  ariaLabel: string;
+  ariaDescribedBy: string;
   style?: string | Record<string, string>;
+}
+
+export interface BadgeProps {
+  count?: number;
+  maxCount?: number;
+  dot?: boolean;
+  showZero?: boolean;
+  type?: string;
+  offset?: number[];
+  class?: string;
+  style?: string | Record<string, string>;
+  id?: string;
+  ariaLabel?: string;
+  ariaDescribedBy?: string;
 }
 
 // ===== Tag 组件 =====
@@ -556,6 +645,9 @@ export interface TagProps {
   size?: ComponentSize;
   class?: string;
   style?: string | Record<string, string>;
+  id?: string;
+  ariaLabel?: string;
+  ariaDescribedBy?: string;
   onClose?: () => void;
 }
 
@@ -569,6 +661,9 @@ export interface TagSetupProps extends Record<string, unknown> {
   color: string;
   size: ComponentSize;
   class: string;
+  id: string;
+  ariaLabel: string;
+  ariaDescribedBy: string;
   style?: string | Record<string, string>;
   onClose?: () => void;
 }
@@ -582,6 +677,21 @@ export interface SpinProps {
   delay?: number;
   class?: string;
   style?: string | Record<string, string>;
+  id?: string;
+  ariaLabel?: string;
+  ariaDescribedBy?: string;
+}
+
+export interface SpinSetupProps extends Record<string, unknown> {
+  spinning?: boolean;
+  size?: 'small' | 'default' | 'large';
+  tip?: string;
+  delay?: number;
+  class?: string;
+  style?: string | Record<string, string>;
+  id?: string;
+  ariaLabel?: string;
+  ariaDescribedBy?: string;
 }
 
 export interface SpinSlots {
@@ -597,6 +707,20 @@ export interface EmptyProps {
   imageSize?: number;
   class?: string;
   style?: string | Record<string, string>;
+  id?: string;
+  ariaLabel?: string;
+  ariaDescribedBy?: string;
+}
+
+export interface EmptySetupProps extends Record<string, unknown> {
+  description?: string;
+  image?: string;
+  imageSize?: number;
+  class?: string;
+  style?: string | Record<string, string>;
+  id?: string;
+  ariaLabel?: string;
+  ariaDescribedBy?: string;
 }
 
 export interface EmptySlots {
@@ -615,6 +739,23 @@ export interface LinkProps {
   target?: '_blank' | '_self' | '_parent' | '_top';
   class?: string;
   style?: string | Record<string, string>;
+  id?: string;
+  ariaLabel?: string;
+  ariaDescribedBy?: string;
+  onClick?: (event: MouseEvent) => void;
+}
+
+export interface LinkSetupProps extends Record<string, unknown> {
+  type?: ComponentStatus;
+  disabled?: boolean;
+  underline?: boolean;
+  href?: string;
+  target?: '_blank' | '_self' | '_parent' | '_top';
+  class?: string;
+  style?: string | Record<string, string>;
+  id?: string;
+  ariaLabel?: string;
+  ariaDescribedBy?: string;
   onClick?: (event: MouseEvent) => void;
 }
 
@@ -628,6 +769,9 @@ export interface ContainerProps {
   fluid?: boolean;
   class?: string;
   style?: string | Record<string, string>;
+  id?: string;
+  ariaLabel?: string;
+  ariaDescribedBy?: string;
 }
 
 export interface ContainerSlots {
@@ -641,6 +785,19 @@ export interface DividerProps {
   contentPosition?: 'left' | 'center' | 'right';
   class?: string;
   style?: string | Record<string, string>;
+  id?: string;
+  ariaLabel?: string;
+  ariaDescribedBy?: string;
+}
+
+export interface DividerSetupProps extends Record<string, unknown> {
+  type?: 'horizontal' | 'vertical';
+  contentPosition?: 'left' | 'center' | 'right';
+  class?: string;
+  style?: string | Record<string, string>;
+  id?: string;
+  ariaLabel?: string;
+  ariaDescribedBy?: string;
 }
 
 export interface DividerSlots {
@@ -654,6 +811,11 @@ export interface ToastProps {
   message?: string;
   duration?: number;
   showClose?: boolean;
+  class?: string;
+  style?: string | Record<string, string>;
+  id?: string;
+  ariaLabel?: string;
+  ariaDescribedBy?: string;
   onClose?: () => void;
 }
 
@@ -669,6 +831,9 @@ export interface ToastSetupProps extends Record<string, unknown> {
   icon: string;
   closable: boolean;
   class: string;
+  id: string;
+  ariaLabel: string;
+  ariaDescribedBy: string;
   style?: string | Record<string, string>;
   onClose?: () => void;
 }
@@ -697,6 +862,9 @@ export interface FormSetupProps extends Record<string, unknown> {
   labelWidth: string;
   labelPosition: 'left' | 'right' | 'top';
   class: string;
+  id: string;
+  ariaLabel: string;
+  ariaDescribedBy: string;
   onSubmit?: (data: Record<string, unknown>) => void;
 }
 
@@ -707,6 +875,9 @@ export interface FormProps {
   labelPosition?: 'left' | 'right' | 'top';
   class?: string;
   style?: string | Record<string, string>;
+  id?: string;
+  ariaLabel?: string;
+  ariaDescribedBy?: string;
   onSubmit?: (data: Record<string, unknown>) => void;
 }
 
@@ -721,6 +892,9 @@ export interface FormItemSetupProps extends Record<string, unknown> {
   rules: FormRule[];
   error: string;
   validateStatus: FormValidateStatus;
+  id: string;
+  ariaLabel: string;
+  ariaDescribedBy: string;
 }
 
 export interface FormItemProps {
@@ -730,6 +904,9 @@ export interface FormItemProps {
   rules?: FormRule[];
   error?: string;
   validateStatus?: FormValidateStatus;
+  id?: string;
+  ariaLabel?: string;
+  ariaDescribedBy?: string;
 }
 
 export interface FormItemSlots {
@@ -754,6 +931,9 @@ export interface MenuSetupProps extends Record<string, unknown> {
   defaultOpeneds: string[];
   uniqueOpened: boolean;
   class: string;
+  id: string;
+  ariaLabel: string;
+  ariaDescribedBy: string;
   onSelect?: (index: string) => void;
   onOpen?: (index: string) => void;
   onClose?: (index: string) => void;
@@ -766,6 +946,9 @@ export interface MenuProps {
   uniqueOpened?: boolean;
   class?: string;
   style?: string | Record<string, string>;
+  id?: string;
+  ariaLabel?: string;
+  ariaDescribedBy?: string;
   onSelect?: (index: string) => void;
   onOpen?: (index: string) => void;
   onClose?: (index: string) => void;
@@ -787,6 +970,9 @@ export interface AlertSetupProps extends Record<string, unknown> {
   showIcon: boolean;
   effect: AlertEffect;
   class: string;
+  id: string;
+  ariaLabel: string;
+  ariaDescribedBy: string;
   onClose?: () => void;
 }
 
@@ -799,6 +985,9 @@ export interface AlertProps {
   effect?: AlertEffect;
   class?: string;
   style?: string | Record<string, string>;
+  id?: string;
+  ariaLabel?: string;
+  ariaDescribedBy?: string;
   onClose?: () => void;
 }
 
@@ -816,6 +1005,20 @@ export interface TooltipProps {
   disabled?: boolean;
   class?: string;
   style?: string | Record<string, string>;
+  id?: string;
+  ariaLabel?: string;
+  ariaDescribedBy?: string;
+}
+
+export interface TooltipSetupProps extends Record<string, unknown> {
+  content?: string;
+  placement?: 'top' | 'bottom' | 'left' | 'right';
+  disabled?: boolean;
+  class?: string;
+  style?: string | Record<string, string>;
+  id?: string;
+  ariaLabel?: string;
+  ariaDescribedBy?: string;
 }
 
 export interface TooltipSlots {
@@ -876,9 +1079,16 @@ export interface RadioProps {
   label?: string;
   disabled?: boolean;
   name?: string;
+  id?: string;
   class?: string;
   style?: string | Record<string, string>;
+  ariaLabel?: string;
+  ariaDescribedBy?: string;
+  ariaInvalid?: boolean;
+  ariaRequired?: boolean;
+  tabIndex?: number;
   onChange?: (value: string | number | boolean) => void;
+  onKeydown?: (event: KeyboardEvent) => void;
 }
 
 export interface RadioSlots {
@@ -890,9 +1100,16 @@ export interface RadioSetupProps extends Record<string, unknown> {
   label?: string | number | boolean;
   disabled: boolean;
   name: string;
+  id: string;
   class: string;
   style?: string | Record<string, string>;
+  ariaLabel: string;
+  ariaDescribedBy: string;
+  ariaInvalid: boolean;
+  ariaRequired: boolean;
+  tabIndex?: number;
   onChange?: (value: string | number | boolean) => void;
+  onKeydown?: (event: KeyboardEvent) => void;
 }
 
 // ===== Switch 组件 =====
@@ -906,7 +1123,14 @@ export interface SwitchProps {
   inactiveColor?: string;
   class?: string;
   style?: string | Record<string, string>;
+  id?: string;
+  ariaLabel?: string;
+  ariaDescribedBy?: string;
+  ariaInvalid?: boolean;
+  ariaRequired?: boolean;
+  tabIndex?: number;
   onChange?: (value: boolean) => void;
+  onKeydown?: (event: KeyboardEvent) => void;
 }
 
 export interface SwitchSlots {
@@ -927,9 +1151,16 @@ export interface SwitchSetupProps extends Record<string, unknown> {
   activeValue: boolean | string | number;
   inactiveValue: boolean | string | number;
   name: string;
+  id: string;
   class: string;
   style?: string | Record<string, string>;
+  ariaLabel: string;
+  ariaDescribedBy: string;
+  ariaInvalid: boolean;
+  ariaRequired: boolean;
+  tabIndex?: number;
   onChange?: (value: boolean) => void;
+  onKeydown?: (event: KeyboardEvent) => void;
 }
 
 // ===== InputNumber 组件 =====
@@ -939,13 +1170,26 @@ export interface InputNumberProps {
   min?: number;
   max?: number;
   step?: number;
+  stepStrictly?: boolean;
   disabled?: boolean;
   size?: ComponentSize;
   controls?: boolean;
+  controlsPosition?: string;
   precision?: number;
+  name?: string;
+  label?: string;
+  placeholder?: string;
   class?: string;
   style?: string | Record<string, string>;
-  onChange?: (value: number) => void;
+  id?: string;
+  ariaLabel?: string;
+  ariaDescribedBy?: string;
+  ariaRequired?: boolean;
+  ariaInvalid?: boolean;
+  tabIndex?: number;
+  onChange?: (value: number | undefined) => void;
+  onInput?: (value: number | undefined) => void;
+  onKeydown?: (event: KeyboardEvent) => void;
 }
 
 export interface InputNumberSlots {
@@ -968,8 +1212,15 @@ export interface InputNumberSetupProps extends Record<string, unknown> {
   placeholder: string;
   class: string;
   style?: string | Record<string, string>;
+  id: string;
+  ariaLabel: string;
+  ariaDescribedBy: string;
+  ariaRequired: boolean;
+  ariaInvalid: boolean;
+  tabIndex?: number;
   onChange?: (value: number | undefined) => void;
   onInput?: (value: number | undefined) => void;
+  onKeydown?: (event: KeyboardEvent) => void;
 }
 
 // ===== Transfer 组件 =====
@@ -990,6 +1241,10 @@ export interface TransferProps {
   leftDefaultChecked?: (string | number)[];
   rightDefaultChecked?: (string | number)[];
   class?: string;
+  style?: string | Record<string, string>;
+  id?: string;
+  ariaLabel?: string;
+  ariaDescribedBy?: string;
   onChange?: (value: (string | number)[], direction: 'left' | 'right', movedKeys: (string | number)[]) => void;
   onLeftCheckChange?: (checked: (string | number)[]) => void;
   onRightCheckChange?: (checked: (string | number)[]) => void;
@@ -1005,6 +1260,10 @@ export interface TransferSetupProps extends Record<string, unknown> {
   leftDefaultChecked: (string | number)[];
   rightDefaultChecked: (string | number)[];
   class: string;
+  id: string;
+  ariaLabel: string;
+  ariaDescribedBy: string;
+  style?: string | Record<string, string>;
   onChange?: (value: (string | number)[], direction: 'left' | 'right', movedKeys: (string | number)[]) => void;
   onLeftCheckChange?: (checked: (string | number)[]) => void;
   onRightCheckChange?: (checked: (string | number)[]) => void;
@@ -1040,6 +1299,10 @@ export interface TreeProps {
   defaultCheckedKeys?: (string | number)[];
   nodeKey?: string;
   class?: string;
+  style?: string | Record<string, string>;
+  id?: string;
+  ariaLabel?: string;
+  ariaDescribedBy?: string;
   onCheck?: (data: TreeNode[], checked: boolean) => void;
   onSelect?: (data: TreeNode) => void;
   onExpand?: (data: TreeNode, expanded: boolean) => void;
@@ -1060,6 +1323,10 @@ export interface TreeSetupProps extends Record<string, unknown> {
   defaultCheckedKeys: (string | number)[];
   nodeKey: string;
   class: string;
+  style?: string | Record<string, string>;
+  id: string;
+  ariaLabel: string;
+  ariaDescribedBy: string;
   onCheck?: (data: TreeNode[], checked: boolean) => void;
   onSelect?: (data: TreeNode) => void;
   onExpand?: (data: TreeNode, expanded: boolean) => void;
@@ -1095,6 +1362,9 @@ export interface TreeSelectProps {
   filterable?: boolean;
   showCheckbox?: boolean;
   class?: string;
+  id?: string;
+  ariaLabel?: string;
+  ariaDescribedBy?: string;
   onChange?: (value: string | number | (string | number)[]) => void;
   onClear?: () => void;
 }
@@ -1110,6 +1380,9 @@ export interface TreeSelectSetupProps extends Record<string, unknown> {
   filterable: boolean;
   showCheckbox: boolean;
   class: string;
+  id: string;
+  ariaLabel: string;
+  ariaDescribedBy: string;
   onChange?: (value: string | number | (string | number)[]) => void;
   onClear?: () => void;
 }
@@ -1142,6 +1415,10 @@ export interface UploadProps {
   disabled?: boolean;
   limit?: number;
   class?: string;
+  style?: string | Record<string, string>;
+  id?: string;
+  ariaLabel?: string;
+  ariaDescribedBy?: string;
   onChange?: (files: UploadFile[]) => void;
   onSuccess?: (response: unknown, file: UploadFile) => void;
   onError?: (error: Error, file: UploadFile) => void;
@@ -1160,6 +1437,10 @@ export interface UploadSetupProps extends Record<string, unknown> {
   disabled: boolean;
   limit: number;
   class: string;
+  id: string;
+  ariaLabel: string;
+  ariaDescribedBy: string;
+  style?: string | Record<string, string>;
   onChange?: (files: UploadFile[]) => void;
   onSuccess?: (response: unknown, file: UploadFile) => void;
   onError?: (error: Error, file: UploadFile) => void;
@@ -1192,6 +1473,10 @@ export interface ImageProps {
   round?: boolean;
   radius?: string | number;
   class?: string;
+  style?: string | Record<string, string>;
+  id?: string;
+  ariaLabel?: string;
+  ariaDescribedBy?: string;
   onLoad?: () => void;
   onError?: () => void;
 }
@@ -1213,6 +1498,10 @@ export interface ImageSetupProps extends Record<string, unknown> {
   round: boolean;
   radius: string | number;
   class: string;
+  id: string;
+  ariaLabel: string;
+  ariaDescribedBy: string;
+  style?: string | Record<string, string>;
   onLoad?: () => void;
   onError?: () => void;
 }
@@ -1229,6 +1518,9 @@ export interface NotificationOptions {
   duration?: number;
   position?: NotificationPosition;
   showClose?: boolean;
+  id?: string;
+  ariaLabel?: string;
+  ariaDescribedBy?: string;
   onClose?: () => void;
   onOpen?: () => void;
 }
@@ -1236,6 +1528,9 @@ export interface NotificationOptions {
 export interface NotificationProps {
   position?: NotificationPosition;
   class?: string;
+  id?: string;
+  ariaLabel?: string;
+  ariaDescribedBy?: string;
 }
 
 export interface NotificationSlots {
@@ -1245,6 +1540,9 @@ export interface NotificationSlots {
 export interface NotificationSetupProps extends Record<string, unknown> {
   position: NotificationPosition;
   class?: string;
+  id: string;
+  ariaLabel: string;
+  ariaDescribedBy: string;
 }
 
 // ===== Calendar 组件 =====
@@ -1268,6 +1566,10 @@ export interface CalendarProps {
   weekNames?: string[];
   monthNames?: string[];
   class?: string;
+  style?: string | Record<string, string>;
+  id?: string;
+  ariaLabel?: string;
+  ariaDescribedBy?: string;
   onChange?: (date: Date) => void;
   onEventClick?: (event: CalendarEvent) => void;
   onDateClick?: (date: Date) => void;
@@ -1286,6 +1588,10 @@ export interface CalendarSetupProps extends Record<string, unknown> {
   weekNames: string[];
   monthNames: string[];
   class: string;
+  id: string;
+  ariaLabel: string;
+  ariaDescribedBy: string;
+  style?: string | Record<string, string>;
   onChange?: (date: Date) => void;
   onEventClick?: (event: CalendarEvent) => void;
   onDateClick?: (date: Date) => void;
@@ -1302,6 +1608,10 @@ export interface ColorPickerProps {
   presets?: string[];
   history?: string[];
   class?: string;
+  style?: string | Record<string, string>;
+  id?: string;
+  ariaLabel?: string;
+  ariaDescribedBy?: string;
   onChange?: (color: string) => void;
   onClear?: () => void;
 }
@@ -1319,6 +1629,10 @@ export interface ColorPickerSetupProps extends Record<string, unknown> {
   presets: string[];
   history: string[];
   class: string;
+  id: string;
+  ariaLabel: string;
+  ariaDescribedBy: string;
+  style?: string | Record<string, string>;
   onChange?: (color: string) => void;
   onClear?: () => void;
 }
@@ -1340,6 +1654,10 @@ export interface DescriptionsProps {
   size?: ComponentSize;
   layout?: 'horizontal' | 'vertical';
   class?: string;
+  style?: string | Record<string, string>;
+  id?: string;
+  ariaLabel?: string;
+  ariaDescribedBy?: string;
 }
 
 export interface DescriptionsSetupProps extends Record<string, unknown> {
@@ -1349,6 +1667,10 @@ export interface DescriptionsSetupProps extends Record<string, unknown> {
   size: ComponentSize;
   layout: 'horizontal' | 'vertical';
   class: string;
+  id: string;
+  ariaLabel: string;
+  ariaDescribedBy: string;
+  style?: string | Record<string, string>;
 }
 
 export interface DescriptionsSlots {
@@ -1361,6 +1683,9 @@ export interface DescriptionsItemProps {
   span?: number;
   labelStyle?: Record<string, string>;
   contentStyle?: Record<string, string>;
+  id?: string;
+  ariaLabel?: string;
+  ariaDescribedBy?: string;
 }
 
 export interface DescriptionsItemSetupProps extends Record<string, unknown> {
@@ -1368,6 +1693,9 @@ export interface DescriptionsItemSetupProps extends Record<string, unknown> {
   span: number;
   labelStyle?: Record<string, string>;
   contentStyle?: Record<string, string>;
+  id: string;
+  ariaLabel: string;
+  ariaDescribedBy: string;
 }
 
 export interface DescriptionsItemSlots {
@@ -1392,6 +1720,10 @@ export interface DrawerProps {
   withHeader?: boolean;
   customClass?: string;
   class?: string;
+  id?: string;
+  ariaLabel?: string;
+  ariaDescribedBy?: string;
+  ariaModal?: boolean;
   onBeforeOpen?: () => boolean | void | Promise<boolean | void>;
   onBeforeClose?: () => boolean | void | Promise<boolean | void>;
   onOpen?: () => void;
@@ -1417,6 +1749,10 @@ export interface DrawerSetupProps extends Record<string, unknown> {
   withHeader: boolean;
   customClass: string;
   class: string;
+  id: string;
+  ariaLabel: string;
+  ariaDescribedBy: string;
+  ariaModal: boolean;
   onBeforeOpen?: () => boolean | void | Promise<boolean | void>;
   onBeforeClose?: () => boolean | void | Promise<boolean | void>;
   onOpen?: () => void;
@@ -1438,6 +1774,10 @@ export interface RateProps {
   voidColor?: string;
   disabledVoidColor?: string;
   class?: string;
+  style?: string | Record<string, string>;
+  id?: string;
+  ariaLabel?: string;
+  ariaDescribedBy?: string;
   onChange?: (value: number) => void;
 }
 
@@ -1458,6 +1798,10 @@ export interface RateSetupProps extends Record<string, unknown> {
   voidColor: string;
   disabledVoidColor: string;
   class: string;
+  id: string;
+  ariaLabel: string;
+  ariaDescribedBy: string;
+  style?: string | Record<string, string>;
   onChange?: (value: number) => void;
 }
 
@@ -1471,6 +1815,10 @@ export interface CheckboxGroupProps {
   size?: ComponentSize;
   class?: string;
   style?: string | Record<string, string>;
+  id?: string;
+  ariaLabel?: string;
+  ariaDescribedBy?: string;
+  ariaRequired?: boolean;
   onChange?: (value: (string | number | boolean)[]) => void;
 }
 
@@ -1486,6 +1834,10 @@ export interface CheckboxGroupSetupProps extends Record<string, unknown> {
   size: ComponentSize;
   class: string;
   style?: string | Record<string, string>;
+  id: string;
+  ariaLabel: string;
+  ariaDescribedBy: string;
+  ariaRequired: boolean;
   onChange?: (value: (string | number | boolean)[]) => void;
 }
 
@@ -1497,6 +1849,10 @@ export interface RadioGroupProps {
   size?: ComponentSize;
   class?: string;
   style?: string | Record<string, string>;
+  id?: string;
+  ariaLabel?: string;
+  ariaDescribedBy?: string;
+  ariaRequired?: boolean;
   onChange?: (value: string | number | boolean) => void;
 }
 
@@ -1510,6 +1866,10 @@ export interface RadioGroupSetupProps extends Record<string, unknown> {
   size: ComponentSize;
   class: string;
   style?: string | Record<string, string>;
+  id: string;
+  ariaLabel: string;
+  ariaDescribedBy: string;
+  ariaRequired: boolean;
   onChange?: (value: string | number | boolean) => void;
 }
 
@@ -1528,6 +1888,9 @@ export interface ProgressProps {
   format?: (percentage: number) => string;
   class?: string;
   style?: string | Record<string, string>;
+  id?: string;
+  ariaLabel?: string;
+  ariaDescribedBy?: string;
 }
 
 export interface ProgressSlots {
@@ -1546,6 +1909,9 @@ export interface ProgressSetupProps extends Record<string, unknown> {
   strokeLinecap: 'butt' | 'round' | 'square';
   format?: (percentage: number) => string;
   class: string;
+  id: string;
+  ariaLabel: string;
+  ariaDescribedBy: string;
   style?: string | Record<string, string>;
 }
 
@@ -1569,8 +1935,15 @@ export interface SliderProps {
   label?: string;
   class?: string;
   style?: string | Record<string, string>;
+  id?: string;
+  ariaLabel?: string;
+  ariaDescribedBy?: string;
+  ariaRequired?: boolean;
+  ariaInvalid?: boolean;
+  tabIndex?: number;
   onChange?: (value: number | number[]) => void;
   onInput?: (value: number | number[]) => void;
+  onKeydown?: (event: KeyboardEvent) => void;
 }
 
 export interface SliderSlots {
@@ -1595,8 +1968,15 @@ export interface SliderSetupProps extends Record<string, unknown> {
   label: string;
   class: string;
   style?: string | Record<string, string>;
+  id: string;
+  ariaLabel: string;
+  ariaDescribedBy: string;
+  ariaRequired: boolean;
+  ariaInvalid: boolean;
+  tabIndex?: number;
   onChange?: (value: number | number[]) => void;
   onInput?: (value: number | number[]) => void;
+  onKeydown?: (event: KeyboardEvent) => void;
 }
 
 // ===== Avatar 组件 =====
@@ -1611,6 +1991,9 @@ export interface AvatarProps {
   fit?: 'fill' | 'contain' | 'cover' | 'none' | 'scale-down';
   class?: string;
   style?: string | Record<string, string>;
+  id?: string;
+  ariaLabel?: string;
+  ariaDescribedBy?: string;
   onError?: () => boolean;
 }
 
@@ -1627,6 +2010,9 @@ export interface AvatarSetupProps extends Record<string, unknown> {
   alt: string;
   fit: 'fill' | 'contain' | 'cover' | 'none' | 'scale-down';
   class: string;
+  id: string;
+  ariaLabel: string;
+  ariaDescribedBy: string;
   style?: string | Record<string, string>;
   onError?: () => boolean;
 }
@@ -1639,6 +2025,9 @@ export interface CardProps {
   shadow?: 'always' | 'hover' | 'never';
   class?: string;
   style?: string | Record<string, string>;
+  id?: string;
+  ariaLabel?: string;
+  ariaDescribedBy?: string;
 }
 
 export interface CardSlots {
@@ -1651,6 +2040,9 @@ export interface CardSetupProps extends Record<string, unknown> {
   bodyStyle: Record<string, string>;
   shadow: 'always' | 'hover' | 'never';
   class: string;
+  id: string;
+  ariaLabel: string;
+  ariaDescribedBy: string;
   style?: string | Record<string, string>;
 }
 
@@ -1671,6 +2063,9 @@ export interface TimelineProps {
   mode?: 'left' | 'right' | 'alternate';
   class?: string;
   style?: string | Record<string, string>;
+  id?: string;
+  ariaLabel?: string;
+  ariaDescribedBy?: string;
 }
 
 export interface TimelineSlots {
@@ -1681,6 +2076,9 @@ export interface TimelineSetupProps extends Record<string, unknown> {
   reverse: boolean;
   mode: 'left' | 'right' | 'alternate';
   class: string;
+  id: string;
+  ariaLabel: string;
+  ariaDescribedBy: string;
   style?: string | Record<string, string>;
 }
 
@@ -1695,6 +2093,9 @@ export interface TimelineItemProps {
   hideTimestamp?: boolean;
   class?: string;
   style?: string | Record<string, string>;
+  id?: string;
+  ariaLabel?: string;
+  ariaDescribedBy?: string;
 }
 
 export interface TimelineItemSlots {
@@ -1711,6 +2112,9 @@ export interface TimelineItemSetupProps extends Record<string, unknown> {
   placement: 'top' | 'bottom';
   hideTimestamp: boolean;
   class: string;
+  id: string;
+  ariaLabel: string;
+  ariaDescribedBy: string;
   style?: string | Record<string, string>;
 }
 
@@ -1731,6 +2135,9 @@ export interface StepsProps {
   simple?: boolean;
   class?: string;
   style?: string | Record<string, string>;
+  id?: string;
+  ariaLabel?: string;
+  ariaDescribedBy?: string;
   onChange?: (active: number) => void;
 }
 
@@ -1746,6 +2153,9 @@ export interface StepsSetupProps extends Record<string, unknown> {
   alignCenter: boolean;
   simple: boolean;
   class: string;
+  id: string;
+  ariaLabel: string;
+  ariaDescribedBy: string;
   style?: string | Record<string, string>;
   onChange?: (active: number) => void;
 }
@@ -1758,6 +2168,9 @@ export interface StepProps {
   status?: 'wait' | 'process' | 'finish' | 'error' | 'success';
   class?: string;
   style?: string | Record<string, string>;
+  id?: string;
+  ariaLabel?: string;
+  ariaDescribedBy?: string;
 }
 
 export interface StepSlots {
@@ -1773,6 +2186,9 @@ export interface StepSetupProps extends Record<string, unknown> {
   icon: string | VNode;
   status: 'wait' | 'process' | 'finish' | 'error' | 'success';
   class: string;
+  id: string;
+  ariaLabel: string;
+  ariaDescribedBy: string;
   style?: string | Record<string, string>;
 }
 
@@ -1790,6 +2206,9 @@ export interface CarouselProps {
   direction?: 'horizontal' | 'vertical';
   class?: string;
   style?: string | Record<string, string>;
+  id?: string;
+  ariaLabel?: string;
+  ariaDescribedBy?: string;
   onChange?: (index: number, prevIndex: number) => void;
 }
 
@@ -1809,6 +2228,9 @@ export interface CarouselSetupProps extends Record<string, unknown> {
   loop: boolean;
   direction: 'horizontal' | 'vertical';
   class: string;
+  id: string;
+  ariaLabel: string;
+  ariaDescribedBy: string;
   style?: string | Record<string, string>;
   onChange?: (index: number, prevIndex: number) => void;
 }
@@ -1819,6 +2241,9 @@ export interface CarouselItemProps {
   label?: string;
   class?: string;
   style?: string | Record<string, string>;
+  id?: string;
+  ariaLabel?: string;
+  ariaDescribedBy?: string;
 }
 
 export interface CarouselItemSlots {
@@ -1829,6 +2254,9 @@ export interface CarouselItemSetupProps extends Record<string, unknown> {
   name: string | number;
   label: string;
   class: string;
+  id: string;
+  ariaLabel: string;
+  ariaDescribedBy: string;
   style?: string | Record<string, string>;
 }
 
@@ -1846,6 +2274,9 @@ export interface PopconfirmProps {
   width?: number;
   class?: string;
   style?: string | Record<string, string>;
+  id?: string;
+  ariaLabel?: string;
+  ariaDescribedBy?: string;
   onConfirm?: () => void;
   onCancel?: () => void;
 }
@@ -1869,6 +2300,9 @@ export interface PopconfirmSetupProps extends Record<string, unknown> {
   width: number;
   class: string;
   style?: string | Record<string, string>;
+  id: string;
+  ariaLabel: string;
+  ariaDescribedBy: string;
   onConfirm?: () => void;
   onCancel?: () => void;
 }
@@ -1941,6 +2375,9 @@ export interface TreeSelectProps {
   defaultExpandedKeys?: (string | number)[];
   class?: string;
   style?: string | Record<string, string>;
+  id?: string;
+  ariaLabel?: string;
+  ariaDescribedBy?: string;
   onChange?: (value: string | number | (string | number)[], nodeData: TreeSelectNode | TreeSelectNode[]) => void;
 }
 
@@ -1958,6 +2395,9 @@ export interface TreeSelectSetupProps extends Record<string, unknown> {
   filterable: boolean;
   class: string;
   style?: string | Record<string, string>;
+  id: string;
+  ariaLabel: string;
+  ariaDescribedBy: string;
   onChange?: (value: string | number | (string | number)[], nodeData: TreeSelectNode | TreeSelectNode[]) => void;
 }
 

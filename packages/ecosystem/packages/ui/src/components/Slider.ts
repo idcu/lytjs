@@ -9,6 +9,7 @@ import { defineComponent } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import { isString, isObject } from '@lytjs/common-is';
 import { reactive, computed, watch } from '@lytjs/reactivity';
+import { getSliderA11yProps, mergeA11yProps } from '@lytjs/common-a11y';
 
 /**
  * Slider 组件
@@ -34,8 +35,15 @@ export const Slider = defineComponent({
     label: { type: String, default: '' },
     class: { type: String, default: '' },
     style: { type: [String, Object], default: '' },
+    id: { type: String, default: '' },
+    ariaLabel: { type: String, default: '' },
+    ariaDescribedBy: { type: String, default: '' },
+    ariaRequired: { type: Boolean, default: false },
+    ariaInvalid: { type: Boolean, default: false },
+    tabIndex: { type: Number, default: undefined },
     onChange: { type: Function, default: undefined },
     onInput: { type: Function, default: undefined },
+    onKeydown: { type: Function, default: undefined },
   },
 
   setup(props: Record<string, unknown>, { emit }) {
@@ -98,6 +106,55 @@ export const Slider = defineComponent({
 
     const firstPercent = computed(() => getPercentByValue(state.firstValue));
     const secondPercent = computed(() => getPercentByValue(state.secondValue));
+
+    const clampValue = (value: number) => {
+      return Math.max(_props.min, Math.min(_props.max, value));
+    };
+
+    const handleKeydown = (event: KeyboardEvent) => {
+      if (_props.disabled) return;
+      
+      let newValue = state.firstValue;
+      
+      switch (event.key) {
+        case 'ArrowLeft':
+        case 'ArrowDown':
+          event.preventDefault();
+          newValue = clampValue(state.firstValue - _props.step);
+          break;
+        case 'ArrowRight':
+        case 'ArrowUp':
+          event.preventDefault();
+          newValue = clampValue(state.firstValue + _props.step);
+          break;
+        case 'Home':
+          event.preventDefault();
+          newValue = _props.min;
+          break;
+        case 'End':
+          event.preventDefault();
+          newValue = _props.max;
+          break;
+      }
+      
+      if (newValue !== state.firstValue) {
+        state.firstValue = newValue;
+        state.showTooltip = true;
+        
+        if (!_props.range) {
+          emit('update:modelValue', state.firstValue);
+          emit('input', state.firstValue);
+          _props.onInput?.(state.firstValue);
+        }
+        
+        // 隐藏 tooltip
+        setTimeout(() => {
+          state.showTooltip = false;
+        }, 1500);
+      }
+      
+      _props.onKeydown?.(event);
+    };
 
     const handleMouseDown = (event: MouseEvent) => {
       if (_props.disabled) return;
@@ -228,33 +285,57 @@ export const Slider = defineComponent({
         ...getStops(),
         _props.range
           ? [
-              createVNode('div', {
+              createVNode('div', mergeA11yProps(getSliderA11yProps({
+                ariaLabel: _props.ariaLabel || 'Left value',
+                disabled: _props.disabled,
+                value: state.firstValue,
+                min: _props.min,
+                max: _props.max,
+              }), {
                 class: 'lyt-slider__button',
                 style: _props.vertical
                   ? { bottom: `${firstPercent.value}%` }
                   : { left: `${firstPercent.value}%` },
-              }, [
+                onKeydown: handleKeydown,
+              }), [
                 _props.showTooltip
                   ? createVNode('div', { class: 'lyt-slider__tooltip' }, [formatValue(state.firstValue)])
                   : null,
               ]),
-              createVNode('div', {
+              createVNode('div', mergeA11yProps(getSliderA11yProps({
+                ariaLabel: 'Right value',
+                disabled: _props.disabled,
+                value: state.secondValue,
+                min: _props.min,
+                max: _props.max,
+              }), {
                 class: 'lyt-slider__button',
                 style: _props.vertical
                   ? { bottom: `${secondPercent.value}%` }
                   : { left: `${secondPercent.value}%` },
-              }, [
+              }), [
                 _props.showTooltip
                   ? createVNode('div', { class: 'lyt-slider__tooltip' }, [formatValue(state.secondValue)])
                   : null,
               ]),
             ]
-          : createVNode('div', {
+          : createVNode('div', mergeA11yProps(getSliderA11yProps({
+              ariaLabel: _props.ariaLabel || 'Value',
+              ariaDescribedBy: _props.ariaDescribedBy,
+              ariaRequired: _props.ariaRequired,
+              ariaInvalid: _props.ariaInvalid,
+              disabled: _props.disabled,
+              tabIndex: _props.tabIndex,
+              value: state.firstValue,
+              min: _props.min,
+              max: _props.max,
+            }), {
               class: 'lyt-slider__button',
               style: _props.vertical
                 ? { bottom: `${firstPercent.value}%` }
                 : { left: `${firstPercent.value}%` },
-            }, [
+              onKeydown: handleKeydown,
+            }), [
               _props.showTooltip
                 ? createVNode('div', { class: 'lyt-slider__tooltip' }, [formatValue(state.firstValue)])
                 : null,
@@ -288,6 +369,8 @@ export const Slider = defineComponent({
       return createVNode('div', {
         class: getSliderClass(),
         style: getSliderStyle(),
+        id: _props.id,
+        onKeydown: handleKeydown,
       }, children);
     };
   },

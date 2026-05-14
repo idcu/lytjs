@@ -8,6 +8,7 @@ import type { TimelineItemProps, TimelineItemSlots, TimelineItemSetupProps } fro
 import { defineComponent } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import { isString, isObject } from '@lytjs/common-is';
+import { mergeA11yProps } from '@lytjs/common-a11y';
 
 /**
  * TimelineItem 时间轴项组件
@@ -25,6 +26,9 @@ export const TimelineItem = defineComponent({
     hideTimestamp: { type: Boolean, default: false },
     class: { type: String, default: '' },
     style: { type: [String, Object], default: '' },
+    id: { type: String, default: '' },
+    ariaLabel: { type: String, default: '' },
+    ariaDescribedBy: { type: String, default: '' },
   },
 
   setup(props: Record<string, unknown>, { slots }) {
@@ -95,10 +99,14 @@ export const TimelineItem = defineComponent({
       
       children.push(createVNode('div', { class: 'lyt-timeline-item__wrapper' }, wrapperChildren));
 
-      return createVNode('div', {
+      return createVNode('div', mergeA11yProps({
+        id: _props.id,
+        'aria-label': _props.ariaLabel,
+        'aria-describedby': _props.ariaDescribedBy,
+      }, {
         class: getTimelineItemClass(),
         style: getTimelineItemStyle(),
-      }, children);
+      }), children);
     };
   },
 });

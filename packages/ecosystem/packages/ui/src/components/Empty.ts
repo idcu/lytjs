@@ -8,6 +8,7 @@ import type { EmptyProps, EmptySlots } from './types';
 import { defineComponent } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import { isString, isObject } from '@lytjs/common-is';
+import { mergeA11yProps } from '@lytjs/common-a11y';
 
 /**
  * Empty 组件
@@ -21,6 +22,9 @@ export const Empty = defineComponent({
     imageSize: { type: Number, default: 160 },
     class: { type: String, default: '' },
     style: { type: String, default: '' },
+    id: { type: String, default: '' },
+    ariaLabel: { type: String, default: '' },
+    ariaDescribedBy: { type: String, default: '' },
   },
 
   setup(props: any, { slots }: any) {
@@ -90,10 +94,16 @@ export const Empty = defineComponent({
         children.push(createVNode('div', { class: 'lyt-empty__bottom' }, slots.default()));
       }
 
-      return createVNode('div', {
+      return createVNode('div', mergeA11yProps({
+        id: props.id,
+        'aria-label': props.ariaLabel,
+        'aria-describedby': props.ariaDescribedBy,
+        role: 'status',
+        'aria-live': 'polite',
+      }, {
         class: getEmptyClass(),
         style: getEmptyStyle(),
-      }, children);
+      }), children);
     };
   },
 });

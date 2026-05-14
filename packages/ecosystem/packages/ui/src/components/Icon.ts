@@ -8,6 +8,7 @@ import type { IconProps, IconSlots } from './types';
 import { defineComponent } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import { isString, isObject } from '@lytjs/common-is';
+import { mergeA11yProps } from '@lytjs/common-a11y';
 
 /**
  * Icon 组件
@@ -22,6 +23,9 @@ export const Icon = defineComponent({
     spin: { type: Boolean, default: false },
     class: { type: String, default: '' },
     style: { type: String, default: '' },
+    id: { type: String, default: '' },
+    ariaLabel: { type: String, default: '' },
+    ariaDescribedBy: { type: String, default: '' },
   },
 
   setup(props: any, { slots }: any) {
@@ -56,10 +60,14 @@ export const Icon = defineComponent({
         children.push(...slots.default());
       }
 
-      return createVNode('i', {
+      return createVNode('i', mergeA11yProps({
+        id: props.id,
+        'aria-label': props.ariaLabel,
+        'aria-describedby': props.ariaDescribedBy,
+      }, {
         class: getIconClass(),
         style: getIconStyle(),
-      }, children);
+      }), children);
     };
   },
 });
