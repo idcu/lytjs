@@ -433,6 +433,185 @@ declare const __DEV__: boolean;
 - 优先使用类型检查来发现代码问题
 - 内存限制较大时，可以跳过全局 lint 检查，专注于单个包
 
+### CLI 包发布问题（重要经验）
+
+#### 问题 1：npm bin 配置被移除
+
+**现象**：发布 CLI 包时，npm 报告 `"bin[lyt]" script name was invalid and removed`
+
+**原因**：
+- npm 对 bin 脚本文件名有严格要求
+- 当包名是 `@lytjs/cli` 但命令名是 `lyt` 时，npm 会认为配置无效
+- 在 `"type": "module"` 项目中，bin 脚本需要特别注意格式
+
+**解决方案**：
+
+1. **创建独立的入口文件**（推荐）：
+
+```javascript
+// lyt-cli.js（放在包根目录）
+#!/usr/bin/env node
+require('./dist/index.cjs');
+```
+
+2. **更新 package.json**：
+
+```json
+{
+  "bin": {
+    "lyt": "./lyt-cli.js"
+  },
+  "files": [
+    "dist",
+    "lyt-cli.js"
+  ]
+}
+```
+
+3. **确保入口文件有 shebang**：`#!/usr/bin/env node`
+
+**验证方法**：
+```bash
+# 发布后安装测试
+npm install -g @lytjs/cli
+lyt --help
+```
+
+#### 问题 2：CLI 入口不自动执行
+
+**现象**：运行 `lyt` 命令没有输出
+
+**原因**：
+- `require.main === module` 检查在通过 bin 脚本加载时不会正确执行
+- 需要在入口文件中显式调用主函数
+
+**解决方案**：
+
+```javascript
+// lyt-cli.js
+#!/usr/bin/env node
+const { runCli } = require('./dist/index.cjs');
+runCli().catch(console.error);
+```
+
+```typescript
+// src/index.ts
+export async function runCli(): Promise<void> {
+  // CLI 逻辑
+}
+
+// 仅在直接运行时执行（可选）
+if (require.main === module) {
+  runCli().catch(console.error);
+}
+```
+
+#### 问题 3：tsup 多配置冲突
+
+**现象**：构建后只生成部分文件
+
+**原因**：
+- 多个 tsup 配置中的 `clean: true` 会清除之前配置生成的文件
+
+**解决方案**：合并为单一配置
+
+```typescript
+// tsup.config.ts
+export default defineConfig({
+  entry: {
+    'index': 'src/index.ts',
+    'create': 'src/create.ts',
+    'lyt': 'src/index.ts',  // CLI 入口
+  },
+  format: ['esm', 'cjs'],
+  dts: true,
+  clean: true,
+  banner: {
+    js: '#!/usr/bin/env node',  // 添加 shebang
+  },
+});
+```
+
+#### 问题 4：logger 工具函数返回值问题
+
+**现象**：帮助信息中出现 `undefined`
+
+**原因**：
+- `logger.bold()` 等函数直接调用 `console.log()` 而不是返回字符串
+
+**解决方案**：
+
+```typescript
+// ❌ 错误：直接输出
+bold(message: string): void {
+  console.log(colorize(message, 'bright'));
+}
+
+// ✅ 正确：返回字符串
+bold(message: string): string {
+  return colorize(message, 'bright');
+}
+```
+
+#### 问题 5：npm unpublish 后无法重新发布相同版本
+
+**现象**：`You cannot publish over the previously published versions: 6.0.0`
+
+**原因**：
+- npm 安全限制：unpublish 后 24 小时内不能重新发布相同版本号
+- 防止恶意替换已发布的包
+
+**解决方案**：
+
+1. **等待 24 小时后发布**（推荐）
+2. **使用新版本号**（如 6.0.36）
+
+**批量撤销版本脚本**：
+
+```javascript
+// unpublish-all.mjs
+import { execSync } from 'child_process';
+
+const versions = ['6.0.1', '6.0.2', /* ... */];
+
+for (const version of versions) {
+  try {
+    execSync(`npm unpublish @lytjs/cli@${version} --force --//registry.npmjs.org/:_authToken=YOUR_TOKEN`);
+    console.log(`✓ Unpublished @lytjs/cli@${version}`);
+  } catch {
+    console.log(`✗ Failed to unpublish @lytjs/cli@${version}`);
+  }
+}
+```
+
+#### CLI 发布最佳实践
+
+1. **发布前检查清单**：
+   - [ ] package.json 版本号正确
+   - [ ] bin 配置指向正确的入口文件
+   - [ ] 入口文件有 shebang（`#!/usr/bin/env node`）
+   - [ ] files 字段包含所有必要文件
+   - [ ] 已运行 `npx tsup` 构建
+   - [ ] 本地测试 `node dist/index.cjs --help` 正常
+
+2. **发布命令**：
+   ```bash
+   npm publish --access public --registry https://registry.npmjs.org/ --//registry.npmjs.org/:_authToken=YOUR_TOKEN
+   ```
+
+3. **发布后验证**：
+   ```bash
+   npm uninstall -g @lytjs/cli
+   npm install -g @lytjs/cli@VERSION
+   lyt --help
+   ```
+
+4. **遇到问题时的排查步骤**：
+   - 检查 npm 上的包内容：`npm view @lytjs/cli`
+   - 检查全局安装位置：`npm root -g`
+   - 检查 bin 文件内容：`cat $(npm root -g)/@lytjs/cli/lyt-cli.js`
+   - 手动运行入口文件：`node $(npm root -g)/@lytjs/cli/dist/index.cjs --help`
+
 ---
 
 ## 快速参考
@@ -1011,6 +1190,6 @@ import { camelize, toPascalCase } from '@lytjs/common-string';
 
 ---
 
-**文档版本**: v4.6  
+**文档版本**: v4.7  
 **最后更新**: 2026-05-15  
 **维护者**: LytJS Team
