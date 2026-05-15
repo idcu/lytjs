@@ -895,13 +895,30 @@ pnpm build
 - `packages/tools/packages/cli/src/types.ts` - CLI 类型更新
 - `packages/shared-types/src/index.ts` - 类型导出完善
 
-### 10.8 下一步建议（剩余高优先级）
+### 10.8 SSR/SSG 增强（✅ 已完成）
+
+完善 SSR/SSG 功能，添加 ISR（增量静态再生成）和服务端组件支持：
+
+- ✅ **ISR（Incremental Static Regeneration）** - 增量静态再生成支持，包括缓存管理、后台重新验证、按需重新生成
+- ✅ **服务端组件** - 完善的服务端组件架构，包括定义、注册、渲染、水合支持
+- ✅ **Server Actions** - 服务端函数调用机制，类型安全的客户端-服务端通信
+- ✅ **数据序列化** - 支持 Date、Map、Set、BigInt 等特殊类型的序列化/反序列化
+
+**新增功能：**
+- `createISRMiddleware()` - 用于 Express/Fastify 的 ISR 中间件
+- `revalidateOnDemand()` - 按需触发页面重新验证
+- `getISRCacheStats()` - 获取缓存统计信息
+- `clearISRCache()` - 清除缓存
+- `defineServerComponent()` - 定义服务端组件
+- `registerServerFunction()` - 注册服务端函数
+- `callServer()` - 客户端调用服务端函数
+- `autoHydrate()` - 自动水合服务端组件
+
+### 10.9 下一步建议（剩余高优先级）
 
 可继续推进的剩余任务：
-1. **SSR/SSG 完整功能** - ISR、服务端组件
-2. **TypeScript 类型覆盖率** - 达到 100%
-3. **更多测试覆盖** - 模糊测试、性能回归测试
-4. **DevTools 完善** - 性能开销优化、使用文档
+1. **TypeScript 类型覆盖率** - 达到 100%
+2. **DevTools 完善** - 性能开销优化、使用文档
 
 ---
 

@@ -51,10 +51,19 @@ export interface SSGOptions {
   globalScripts?: string[];
   /** 全局额外样式 */
   globalStyles?: string[];
+  /** ISR 配置（增量静态再生成） */
+  isr?: {
+    /** 重新验证间隔（秒），0 表示按需重新验证 */
+    revalidate?: number;
+    /** 是否启用增量静态再生成 */
+    enabled?: boolean;
+    /** 预渲染 fallback 页面 */
+    fallback?: 'blocking' | boolean;
+  };
 }
 
 /** 默认 SSG 选项 */
-const DEFAULT_SSG_OPTIONS: Required<SSGOptions> = {
+const DEFAULT_SSG_OPTIONS: Required<SSGOptions> & { isr: Required<NonNullable<SSGOptions['isr']>> } = {
   baseUrl: '/',
   outDir: 'dist',
   defaultTitle: 'LytJS App',
@@ -64,6 +73,11 @@ const DEFAULT_SSG_OPTIONS: Required<SSGOptions> = {
   hashMode: false,
   globalScripts: [],
   globalStyles: [],
+  isr: {
+    revalidate: 60,
+    enabled: false,
+    fallback: false,
+  },
 };
 
 /**
@@ -363,4 +377,313 @@ export function validatePages(pages: SSGPage[]): string[] {
   }
 
   return errors;
+}
+
+// ============================================================
+// ISR (Incremental Static Regeneration) 功能
+// ============================================================
+
+/** ISR 缓存条目 */
+interface ISRCacheEntry {
+  /** HTML 内容 */
+  html: string;
+  /** 生成时间戳 */
+  timestamp: number;
+  /** 是否正在重新生成 */
+  isRevalidating: boolean;
+}
+
+/** ISR 缓存管理器 */
+class ISRCacheManager {
+  private cache: Map<string, ISRCacheEntry> = new Map();
+  private revalidateTasks: Map<string, Promise<string>> = new Map();
+
+  /**
+   * 获取缓存的页面
+   */
+  get(path: string): ISRCacheEntry | undefined {
+    return this.cache.get(path);
+  }
+
+  /**
+   * 设置缓存
+   */
+  set(path: string, html: string): void {
+    this.cache.set(path, {
+      html,
+      timestamp: Date.now(),
+      isRevalidating: false,
+    });
+  }
+
+  /**
+   * 检查是否需要重新验证
+   */
+  needsRevalidation(path: string, revalidateSeconds: number): boolean {
+    const entry = this.cache.get(path);
+    if (!entry) return true;
+    
+    const age = (Date.now() - entry.timestamp) / 1000;
+    return age > revalidateSeconds && !entry.isRevalidating;
+  }
+
+  /**
+   * 标记为正在重新生成
+   */
+  markRevalidating(path: string): void {
+    const entry = this.cache.get(path);
+    if (entry) {
+      entry.isRevalidating = true;
+    }
+  }
+
+  /**
+   * 完成重新生成
+   */
+  finishRevalidation(path: string, html: string): void {
+    this.set(path, html);
+    this.revalidateTasks.delete(path);
+  }
+
+  /**
+   * 获取正在进行的重新生成任务
+   */
+  getRevalidateTask(path: string): Promise<string> | undefined {
+    return this.revalidateTasks.get(path);
+  }
+
+  /**
+   * 设置重新生成任务
+   */
+  setRevalidateTask(path: string, task: Promise<string>): void {
+    this.revalidateTasks.set(path, task);
+  }
+
+  /**
+   * 清除过期的缓存
+   */
+  clearExpired(maxAgeSeconds: number): number {
+    const now = Date.now();
+    let cleared = 0;
+
+    for (const [path, entry] of this.cache) {
+      const age = (now - entry.timestamp) / 1000;
+      if (age > maxAgeSeconds) {
+        this.cache.delete(path);
+        cleared++;
+      }
+    }
+
+    return cleared;
+  }
+
+  /**
+   * 获取缓存统计信息
+   */
+  getStats(): {
+    total: number;
+    paths: string[];
+  } {
+    return {
+      total: this.cache.size,
+      paths: Array.from(this.cache.keys()),
+    };
+  }
+}
+
+// 全局 ISR 缓存实例
+const isrCache = new ISRCacheManager();
+
+/**
+ * 创建 ISR 中间件
+ *
+ * @description
+ * 创建用于 Express/Fastify 等框架的 ISR 中间件，
+ * 支持增量静态再生成和背景重新验证。
+ *
+ * @param options - ISR 选项
+ * @returns 中间件函数
+ *
+ * @example
+ * ```typescript
+ * import express from 'express';
+ * import { createISRMiddleware, generateStaticPages } from '@lytjs/ssr';
+ *
+ * const app = express();
+ *
+ * // 预生成的页面
+ * const pages = [
+ *   { path: '/', component: homeComponent },
+ * ];
+ *
+ * const staticPages = generateStaticPages(pages);
+ *
+ * app.use(createISRMiddleware({
+ *   staticPages,
+ *   revalidate: 60, // 60秒后重新验证
+ *   async regenerate(path) {
+ *     const page = pages.find(p => p.path === path);
+ *     if (page) {
+ *       return generateStaticPages([page]).get('/index.html')!;
+ *     }
+ *     throw new Error('Page not found');
+ *   }
+ * }));
+ * ```
+ */
+export function createISRMiddleware(options: {
+  /** 预生成的静态页面 */
+  staticPages: Map<string, string>;
+  /** 重新验证间隔（秒） */
+  revalidate?: number;
+  /** 是否启用 ISR */
+  enabled?: boolean;
+  /** 重新生成页面的函数 */
+  regenerate?: (path: string) => Promise<string>;
+}) {
+  const { staticPages, revalidate = 60, enabled = true, regenerate } = options;
+
+  // 初始化缓存
+  for (const [path, html] of staticPages) {
+    isrCache.set(path, html);
+  }
+
+  return async (req: any, res: any, next: any) => {
+    if (!enabled) {
+      return next();
+    }
+
+    // 获取请求路径
+    let path = req.path;
+    if (path.endsWith('/')) {
+      path = path + 'index.html';
+    } else if (!path.endsWith('.html')) {
+      path = path + '/index.html';
+    }
+
+    // 检查缓存
+    const cached = isrCache.get(path);
+
+    if (cached) {
+      // 返回缓存内容
+      res.setHeader('Cache-Control', `s-maxage=${revalidate}, stale-while-revalidate`);
+      res.setHeader('X-ISR-Cache', 'HIT');
+      res.setHeader('X-ISR-Timestamp', cached.timestamp.toString());
+      res.send(cached.html);
+
+      // 后台重新验证
+      if (isrCache.needsRevalidation(path, revalidate) && regenerate) {
+        isrCache.markRevalidating(path);
+        
+        try {
+          const newHtml = await regenerate(path);
+          isrCache.finishRevalidation(path, newHtml);
+        } catch (error) {
+          console.error('[ISR] Revalidation failed for', path, error);
+          // 重新验证失败，保持旧缓存
+          const entry = isrCache.get(path);
+          if (entry) {
+            entry.isRevalidating = false;
+          }
+        }
+      }
+    } else {
+      // 缓存未命中
+      if (regenerate) {
+        // 动态生成
+        try {
+          const html = await regenerate(path);
+          isrCache.set(path, html);
+          res.setHeader('X-ISR-Cache', 'MISS');
+          res.send(html);
+        } catch (error) {
+          next(error);
+        }
+      } else {
+        // 没有重新生成函数，继续
+        next();
+      }
+    }
+  };
+}
+
+/**
+ * 触发按需重新验证
+ *
+ * @description
+ * 手动触发特定路径的重新验证，适合于内容更新后调用。
+ *
+ * @param path - 要重新验证的路径
+ * @param regenerate - 重新生成页面的函数
+ * @returns Promise<string> 新生成的 HTML
+ *
+ * @example
+ * ```typescript
+ * // 当博客文章更新时
+ * await revalidateOnDemand(
+ *   '/blog/my-post',
+ *   async () => generatePostHTML('my-post')
+ * );
+ * ```
+ */
+export async function revalidateOnDemand(
+  path: string,
+  regenerate: () => Promise<string>
+): Promise<string> {
+  // 检查是否已经在重新生成
+  const existingTask = isrCache.getRevalidateTask(path);
+  if (existingTask) {
+    return existingTask;
+  }
+
+  // 创建新的重新生成任务
+  const task = (async () => {
+    isrCache.markRevalidating(path);
+    try {
+      const html = await regenerate();
+      isrCache.finishRevalidation(path, html);
+      return html;
+    } catch (error) {
+      const entry = isrCache.get(path);
+      if (entry) {
+        entry.isRevalidating = false;
+      }
+      throw error;
+    }
+  })();
+
+  isrCache.setRevalidateTask(path, task);
+  return task;
+}
+
+/**
+ * 获取 ISR 缓存统计信息
+ *
+ * @description
+ * 获取当前 ISR 缓存的统计信息，用于监控和调试。
+ *
+ * @returns 缓存统计信息
+ */
+export function getISRCacheStats() {
+  return isrCache.getStats();
+}
+
+/**
+ * 清除 ISR 缓存
+ *
+ * @description
+ * 清除指定路径或所有过期的缓存。
+ *
+ * @param path - 可选，要清除的特定路径
+ * @param maxAge - 可选，清除超过指定秒数的缓存
+ */
+export function clearISRCache(path?: string, maxAge?: number): void {
+  if (path) {
+    // 清除特定路径
+    const cache = (isrCache as any).cache;
+    cache.delete(path);
+  } else if (maxAge) {
+    // 清除过期缓存
+    isrCache.clearExpired(maxAge);
+  }
 }

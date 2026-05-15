@@ -29,7 +29,11 @@ export {
   generateStaticPages, 
   generateRouteManifest, 
   validatePages,
-  writeStaticFiles
+  writeStaticFiles,
+  createISRMiddleware,
+  revalidateOnDemand,
+  getISRCacheStats,
+  clearISRCache
 } from './ssg';
 export type { SSGPage, SSGOptions } from './ssg';
 
