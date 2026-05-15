@@ -38,18 +38,18 @@ LytJS 框架的 API 参考文档，按包分类组织。
 
 ## 快速导航
 
-### 响应式 API
+### 响应式 API（新手推荐 Signal 优先）
 
 | API | 说明 | 文档 |
 |-----|------|------|
+| `signal` | 创建 Signal（新手推荐） | [reactivity.md](./reactivity#signal) |
+| `computedSignal` | 创建计算 Signal（新手推荐） | [reactivity.md](./reactivity#computedsignal) |
 | `ref` | 创建响应式引用 | [reactivity.md](./reactivity#ref) |
 | `reactive` | 创建响应式对象 | [reactivity.md](./reactivity#reactive) |
 | `computed` | 创建计算属性 | [reactivity.md](./reactivity#computed) |
 | `watch` | 侦听数据变化 | [reactivity.md](./reactivity#watch) |
 | `watchEffect` | 自动追踪依赖 | [reactivity.md](./reactivity#watcheffect) |
 | `effect` | 创建副作用 | [reactivity.md](./reactivity#effect) |
-| `signal` | 创建 Signal | [reactivity.md](./reactivity#signal) |
-| `computedSignal` | 创建计算 Signal | [reactivity.md](./reactivity#computedsignal) |
 
 ### 类型守卫
 

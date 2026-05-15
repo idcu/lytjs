@@ -1,157 +1,112 @@
 # 基础概念
 
-本文档介绍 LytJS 的核心概念和设计理念。
+欢迎学习 LytJS 的基础概念！本文将介绍你需要了解的核心知识。
 
 ## 什么是 LytJS？
 
-LytJS 是一个轻量级、高性能的渐进式 JavaScript 框架，具有以下特点：
+LytJS 是一个轻量级、高性能的渐进式 JavaScript 框架，专为构建现代 Web 应用而设计。
 
-- **8 层架构**：清晰的分层设计，从底层工具到业务组件
-- **零运行时依赖**：所有核心功能自主实现，代码纯净可控
-- **Signal 响应式**：细粒度的响应式系统，只更新需要更新的部分
-- **双渲染模式**：支持 Vapor 和 VDOM 两种渲染模式
-- **TypeScript 优先**：完整的类型定义，提供卓越的开发体验
+### 核心特性
 
-## 8 层架构
+- ⚡ **Signal 响应式** - 细粒度的响应式更新
+- 🧩 **渐进式架构** - 从简单到复杂，按需使用
+- 📦 **TypeScript 优先** - 完整的类型支持
+- 🛡️ **零运行时依赖** - 代码纯净可控
 
-LytJS 采用 8 层架构设计，从底层到上层分别为：
-
-### L0 - 基础工具层
-
-提供最底层的工具函数和常量定义：
-
-- 类型判断（`isArray`、`isString` 等）
-- 常量定义（`EMPTY_OBJ`、`NOOP` 等）
-- DOM 操作助手
-- 字符串处理工具
-
-### L1 - 核心原语层
-
-实现框架的核心能力：
-
-- **响应式系统**：`signal`、`ref`、`computed`、`effect`
-- **虚拟 DOM**：VNode、patch、diff 算法
-- **编译器**：模板解析、优化、代码生成
-
-### L2 - 渲染引擎层
-
-提供渲染能力：
-
-- **Vapor 渲染器**：无虚拟 DOM 的高性能渲染
-- **VDOM 渲染器**：传统虚拟 DOM 渲染
-- **组件系统**：组件创建、生命周期、渲染
-
-### L3 - 核心运行时层
-
-应用级别的运行时：
-
-- **应用实例**：`createApp`
-- **生命周期**：`onMounted`、`onUpdated` 等
-- **插件机制**：插件注册、卸载、生命周期管理
-
-### L4 - 插件与适配层
-
-官方插件和平台适配：
-
-- **主题插件**：CSS 变量、主题切换
-- **日志插件**：日志分级、持久化
-- **国际化**：多语言支持
-- **认证插件**：权限管理
-- **存储插件**：本地存储
-
-### L5 - 组件基础层
-
-业务组件的基础能力：
-
-- 统一组件 API
-- 组件通信机制
-- 样式规范定义
-
-### L6 - 生态系统层
-
-完整的业务组件生态：
-
-- **UI 组件库**：60+ 精心设计的组件
-- **Router**：路由管理
-- **Store**：状态管理
-- **SSR**：服务端渲染
-
-### L7 - 工程化工具层
-
-开发辅助工具：
-
-- **CLI**：项目创建、构建
-- **DevTools**：调试工具
-- **测试工具**：单元测试、集成测试
-
-## 与其他框架的对比
-
-### LytJS vs Vue
-
-| 特性       | LytJS            | Vue                             |
-| ---------- | ---------------- | ------------------------------- |
-| 响应式系统 | Signal（细粒度） | Proxy（基于组件）               |
-| 架构       | 8 层清晰分层     | 3 层（Options/Composition/SFC） |
-| 运行时依赖 | 零依赖           | 有依赖                          |
-| 渲染模式   | Vapor + VDOM     | VDOM                            |
-| 体积       | 更小             | 较大                            |
-
-### LytJS vs React
-
-| 特性       | LytJS              | React             |
-| ---------- | ------------------ | ----------------- |
-| 响应式系统 | Signal（自动追踪） | Hooks（手动依赖） |
-| 状态管理   | 内置响应式         | 需引入 Redux 等   |
-| 渲染模式   | Vapor + VDOM       | VDOM              |
-| 类型安全   | TypeScript 优先    | 需要额外配置      |
-| 体积       | 更小               | 较大              |
-
-## 设计理念
-
-### 1. 渐进式
-
-LytJS 遵循渐进式架构理念：
-
-- 可以只使用核心响应式系统
-- 可以逐步引入组件、路由、状态管理
-- 按需引入，不强制使用全部功能
-
-### 2. 零依赖
-
-所有核心功能自主实现：
-
-- 不引入第三方运行时依赖
-- 保证代码纯净可控
-- 减少外部依赖风险
-
-### 3. 性能优先
-
-性能是 LytJS 的核心关注点：
-
-- Signal 细粒度更新，减少不必要的渲染
-- Vapor 模式零虚拟 DOM 开销
-- 编译时优化，减少运行时代码
-
-### 4. 开发者体验
-
-注重开发体验：
-
-- 完整的 TypeScript 类型支持
-- 强大的 DevTools 调试能力
-- 清晰的错误提示
+---
 
 ## 核心概念
 
-在 LytJS 中，你需要了解以下核心概念：
+### 1. Signal（推荐）
 
-1. **Signal** - 响应式数据的基本单位
-2. **Computed** - 计算属性，自动追踪依赖
-3. **Effect** - 副作用，执行响应式操作
-4. **Component** - 组件，封装视图和逻辑
-5. **Plugin** - 插件，扩展框架功能
+Signal 是 LytJS 响应式系统的基础。它是一个可以读写的响应式数据：
+
+```typescript
+import { signal } from '@lytjs/core';
+
+// 创建一个 Signal
+const count = signal(0);
+
+// 读取值
+console.log(count()); // 0
+
+// 更新值
+count(10);
+console.log(count()); // 10
+```
+
+当 Signal 的值改变时，所有使用它的地方会自动更新。
+
+### 2. Computed（计算属性）
+
+Computed 用于创建基于其他响应式数据的派生状态：
+
+```typescript
+import { signal, computed } from '@lytjs/core';
+
+const firstName = signal('张');
+const lastName = signal('三');
+
+const fullName = computed(() => `${firstName()} ${lastName()}`);
+
+console.log(fullName()); // "张 三"
+
+firstName('李');
+console.log(fullName()); // "李 三"（自动更新）
+```
+
+### 3. Effect（副作用）
+
+Effect 用于执行响应式数据变化时的副作用操作：
+
+```typescript
+import { signal, effect } from '@lytjs/core';
+
+const count = signal(0);
+
+effect(() => {
+  console.log('当前计数:', count());
+});
+
+count(1); // 打印: 当前计数: 1
+count(2); // 打印: 当前计数: 2
+```
+
+### 4. 组件
+
+组件是构建 UI 的基本单元：
+
+```vue
+<script setup lang="ts">
+import { signal } from '@lytjs/core';
+
+const count = signal(0);
+</script>
+
+<template>
+  <div>
+    <p>计数: {{ count }}</p>
+    <button @click="count(count() + 1)">+1</button>
+  </div>
+</template>
+```
+
+---
+
+## 学习路径
+
+按以下顺序学习，效果最佳：
+
+1. ✅ 快速上手 - 5 分钟创建你的第一个应用
+2. 📖 基础概念（本文）- 了解核心概念
+3. 🎯 响应式基础 - 深入学习 Signal
+4. 🧩 组件基础 - 学习组件开发
+5. 🚀 实战项目 - 构建完整应用
+
+---
 
 ## 下一步
 
-- 学习 [响应式基础](./reactivity.md) 深入了解 Signal
-- 阅读 [组件基础](./components.md) 学习组件开发
-- 查看 [快速开始](./quick-start.md) 动手实践
+- 学习 [响应式基础](./reactivity) - 深入了解 Signal
+- 学习 [组件基础](./components) - 开始组件开发
+- 查看 [示例项目](../examples) - 查看更多代码示例

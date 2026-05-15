@@ -1,6 +1,6 @@
 # 计数器示例
 
-一个简单的计数器应用，展示 Lyt.js 的基础响应式特性。
+一个简单的计数器应用，展示 LytJS 的基础响应式特性。
 
 ## 在线演示
 
@@ -9,53 +9,53 @@
 ## 完整代码
 
 ```javascript
-import { createApp, ref, h } from '@lytjs/core'
+import { createApp, signal, h } from '@lytjs/core';
 
 function setup() {
-  // 响应式状态
-  const count = ref(0)
+  // 响应式状态 - Signal 是推荐方式
+  const count = signal(0);
 
   // 方法
   const increment = () => {
-    count.value++
-  }
+    count(count() + 1);
+  };
 
   const decrement = () => {
-    if (count.value > 0) {
-      count.value--
+    if (count() > 0) {
+      count(count() - 1);
     }
-  }
+  };
 
   const reset = () => {
-    count.value = 0
-  }
+    count(0);
+  };
 
   return {
     count,
     increment,
     decrement,
     reset,
-  }
+  };
 }
 
 function render({ count, increment, decrement, reset }) {
   return h('div', { class: 'counter' }, [
     h('h1', {}, '计数器'),
-    h('p', { class: 'count' }, count.value),
+    h('p', { class: 'count' }, count()),
     h('div', { class: 'buttons' }, [
       h('button', { 
         onClick: decrement, 
-        disabled: count.value <= 0 
+        disabled: count() <= 0 
       }, '-'),
       h('button', { onClick: reset }, '重置'),
       h('button', { onClick: increment }, '+'),
     ]),
     h('p', { class: 'hint' }, '点击按钮改变数值'),
-  ])
+  ]);
 }
 
-const app = createApp({ setup, render })
-app.mount('#app')
+const app = createApp({ setup, render });
+app.mount('#app');
 ```
 
 ```css
@@ -110,17 +110,17 @@ button:disabled {
 ### 1. 响应式状态
 
 ```typescript
-import { ref } from '@lytjs/core'
+import { signal } from '@lytjs/core';
 
-const count = ref(0)
+const count = signal(0);
 ```
 
-使用 `ref` 创建响应式数据。`ref` 返回一个包装对象，通过 `.value` 访问和修改值。当 `count.value` 改变时，视图会自动更新。
+使用 `signal` 创建响应式数据。Signal 是一个函数，通过调用函数来读取和修改值。当值改变时，视图会自动更新。
 
 ### 2. 事件处理
 
 ```javascript
-h('button', { onClick: increment }, '+')
+h('button', { onClick: increment }, '+');
 ```
 
 使用 `h` 函数创建虚拟 DOM 元素，通过 `onClick` 属性绑定点击事件。
@@ -130,8 +130,8 @@ h('button', { onClick: increment }, '+')
 ```javascript
 h('button', { 
   onClick: decrement, 
-  disabled: count.value <= 0 
-}, '-')
+  disabled: count() <= 0 
+}, '-');
 ```
 
 动态绑定 `disabled` 属性。当 `count <= 0` 时，按钮会被禁用。
@@ -139,30 +139,10 @@ h('button', {
 ### 4. 文本渲染
 
 ```javascript
-h('p', { class: 'count' }, count.value)
+h('p', { class: 'count' }, count());
 ```
 
 将响应式数据渲染到视图中。
-
-## 进阶：使用 Signal 模式
-
-同样的计数器使用 Signal 模式实现：
-
-```javascript
-import { createApp, ref, h } from '@lytjs/core-signal'
-
-function setup() {
-  const count = ref(0)
-
-  const increment = () => {
-    count.value++
-  }
-
-  return { count, increment }
-}
-```
-
-Signal 模式提供了更细粒度的更新，在数据密集型场景下性能更好。
 
 ## 下一步
 

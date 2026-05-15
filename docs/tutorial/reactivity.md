@@ -1,15 +1,15 @@
 # 响应式基础
 
-LytJS 的响应式系统是其核心特性之一，提供了一种直观、高效的状态管理方式。本教程将详细介绍响应式系统的使用方法。
+LytJS 的响应式系统是其核心特性之一。**Signal 是官方推荐的响应式方式**，简单、高效、直观。
 
-## Signal
+## Signal（推荐）
 
 Signal 是 LytJS 响应式系统的基本单位，用于创建响应式数据。
 
 ### 创建 Signal
 
 ```typescript
-import { signal } from '@lytjs/reactivity';
+import { signal } from '@lytjs/core';
 
 // 创建基本类型 signal
 const count = signal(0);
@@ -48,6 +48,8 @@ console.log(name()); // 'New Name'
 当 signal 的值发生变化时，所有依赖该 signal 的地方都会自动更新：
 
 ```typescript
+import { signal, effect } from '@lytjs/core';
+
 const count = signal(0);
 
 // 这个 effect 依赖于 count
@@ -66,7 +68,7 @@ Computed 用于创建计算属性，自动追踪依赖并缓存结果。
 ### 创建 Computed
 
 ```typescript
-import { signal, computed } from '@lytjs/reactivity';
+import { signal, computed } from '@lytjs/core';
 
 const firstName = signal('张');
 const lastName = signal('三');
@@ -112,7 +114,7 @@ Effect 用于执行副作用操作，自动追踪依赖并响应变化。
 ### 基本用法
 
 ```typescript
-import { signal, effect } from '@lytjs/reactivity';
+import { signal, effect } from '@lytjs/core';
 
 const name = signal('LytJS');
 
@@ -161,43 +163,50 @@ if (shouldStop) {
 }
 ```
 
-## Ref
+## 批量更新
 
-Ref 是 Signal 的另一种形式，适用于需要 `.value` 语法的场景。
-
-### 创建 Ref
+使用 batch 批量处理多个更新，减少不必要的渲染：
 
 ```typescript
-import { ref } from '@lytjs/reactivity';
+import { signal, batch } from '@lytjs/core';
 
-// 创建基本类型 ref
-const count = ref(0);
+const x = signal(0);
+const y = signal(0);
 
-// 创建对象 ref
-const state = ref({
-  name: 'LytJS',
-  version: '1.0',
+effect(() => {
+  console.log(x(), y());
+});
+
+// 批量更新，只触发一次更新
+batch(() => {
+  x(10);
+  y(20);
 });
 ```
 
-### 访问值
+---
 
-Ref 使用 `.value` 访问值：
+## Ref/Reactive（兼容选项）
+
+如果你习惯 Vue 的语法，也可以使用 Ref/Reactive API。但在新项目中，**推荐使用 Signal**。
+
+### Ref
 
 ```typescript
+import { ref } from '@lytjs/core';
+
+const count = ref(0);
+
+// 读取和设置值
 console.log(count.value); // 0
 count.value = 10;
 console.log(count.value); // 10
 ```
 
-## Reactive
-
-Reactive 用于创建深层响应式对象。
-
-### 基本用法
+### Reactive
 
 ```typescript
-import { reactive } from '@lytjs/reactivity';
+import { reactive } from '@lytjs/core';
 
 const state = reactive({
   name: 'LytJS',
@@ -221,28 +230,9 @@ effect(() => {
 2. **不需要 `.value`**：像普通对象一样使用
 3. **自动追踪**：所有属性访问都会被追踪
 
-## 批量更新
+---
 
-使用 batch 批量处理多个更新，减少不必要的渲染：
-
-```typescript
-import { signal, batch } from '@lytjs/reactivity';
-
-const x = signal(0);
-const y = signal(0);
-
-effect(() => {
-  console.log(x(), y());
-});
-
-// 批量更新，只触发一次更新
-batch(() => {
-  x(10);
-  y(20);
-});
-```
-
-## 响应式系统最佳实践
+## 最佳实践
 
 ### ✅ 推荐做法
 
@@ -257,12 +247,6 @@ const double = computed(() => count() * 2);
 effect(() => {
   document.title = `Count: ${count()}`;
 });
-
-// 4. 及时清理 effect
-const stop = effect(() => {
-  // ...
-});
-onCleanup(stop);
 ```
 
 ### ❌ 避免做法
@@ -287,4 +271,4 @@ effect(() => {
 
 - 学习 [组件基础](./components.md) 了解如何在组件中使用响应式
 - 阅读 [状态管理](./state-management.md) 学习更高级的状态管理
-- 查看 [性能优化](./performance.md) 优化响应式性能
+- 查看 [API 文档](../api/reactivity.md) 了解完整的 API

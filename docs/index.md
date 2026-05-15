@@ -10,8 +10,8 @@ hero:
     alt: LytJS
   actions:
     - theme: brand
-      text: 快速开始
-      link: /guide/getting-started
+      text: 5 分钟快速上手
+      link: /tutorial/quick-start
     - theme: alt
       text: 查看示例
       link: /examples/
@@ -22,59 +22,126 @@ hero:
 features:
   - icon: ⚡
     title: 极致性能
-    details: 基于 Signal 的细粒度响应式系统，只更新真正需要更新的部分，带来极致的性能体验
+    details: 基于 Signal 的细粒度响应式系统，只更新真正需要更新的部分，带来毫秒级更新体验
   - icon: 🧩
     title: 渐进式架构
-    details: 8 层清晰架构，按需引入，从简单组件到复杂应用，逐步增强，灵活可扩展
+    details: 8 层清晰架构，按需引入，从简单组件到复杂应用，逐步增强
   - icon: 🔧
     title: 完整生态
-    details: Router、Store、UI 组件库、DevTools、SSR、图表库一应俱全，开箱即用
+    details: Router、Store、UI 组件库、DevTools、SSR 一应俱全，开箱即用
   - icon: 📦
     title: TypeScript 优先
     details: 完整的类型定义，零运行时第三方依赖，提供卓越的类型安全开发体验
-  - icon: 🎨
-    title: 组件化开发
-    details: 声明式组件系统，支持组合式 API，60+ UI 组件，适配多种主题
   - icon: 🚀
-    title: 服务端渲染
-    details: 内置 SSR 支持，流式渲染、静态生成，轻松构建 SEO 友好的高性能应用
-  - icon: 🔍
-    title: 强大 DevTools
-    details: 时间旅行调试、信号依赖图、性能分析面板，让开发调试更高效
+    title: 双渲染模式
+    details: 支持 VNode 虚拟 DOM 模式和 Signal 细粒度渲染模式，自由选择最佳方案
   - icon: 🛡️
-    title: 零运行时依赖
-    details: 所有核心功能自主实现，零第三方运行时依赖，保证代码纯净可控
+    title: 零依赖
+    details: 所有核心包零第三方依赖，可预测、易维护、安全性高
 ---
 
-<style>
-:root {
-  --vp-home-hero-name-color: transparent;
-  --vp-home-hero-name-background: -webkit-linear-gradient(120deg, #4fc08d 30%, #42b883);
-  --vp-home-hero-image-background-image: linear-gradient(-45deg, #4fc08d50 50%, #42b88350 50%);
-  --vp-home-hero-image-filter: blur(44px);
-}
-</style>
+## 两条学习路径
 
-## 快速开始
+### 🎯 我是新手 / 想快速上手
+简单三步骤，马上开始！
 
 ```bash
-# 使用 LytJS CLI 创建新项目
+# 1. 创建项目
 npx @lytjs/cli create my-app
 
-# 进入项目目录
+# 2. 安装依赖
 cd my-app
-
-# 安装依赖
 pnpm install
 
-# 启动开发服务器
+# 3. 启动开发服务器
 pnpm dev
 ```
+
+然后按照 [学习路径](#学习路径) 循序渐进！
+
+---
+
+### 👨‍💻 我是有经验的开发者 / 想快速了解框架
+直接查看核心文档！
+
+| 技术维度 | 快速入口 |
+|---------|---------|
+| **响应式系统** | [API 参考 - Reactivity](./api/reactivity.md) |
+| **核心架构** | [架构设计](./development/ARCHITECTURE.md) |
+| **8 层架构** | [Guide - Architecture](./guide/architecture.md) |
+| **性能优化** | [渲染模式](./guide/rendering-modes.md) |
+| **生态系统** | [Ecosystem 总览](./ecosystem/index.md) |
+| **插件开发** | [插件开发指南](./development/PLUGIN_DEVELOPMENT.md) |
+| **项目结构** | [项目结构说明](./development/PROJECT_STRUCTURE.md) |
+
+**开发者快速阅读清单：**
+1. ✅ 了解 [Signal 响应式系统](api/reactivity.md#signal-api) - 了解核心性能优势
+2. ✅ 查看 [架构设计](development/ARCHITECTURE.md) - 理解 8 层架构
+3. ✅ 探索 [渲染模式](guide/rendering-modes.md) - Vapor vs VNode
+4. ✅ 浏览 [API 总览](api/index.md) - 快速查找需要的 API
+
+---
+
+## 学习路径
+
+### 新手友好路径
+
+按顺序学习，循序渐进：
+
+```
+新手入门
+  ↓
+[tutorial/quick-start] → [tutorial/basics] → [tutorial/reactivity] → [tutorial/components]
+  ↓
+深入学习
+  ↓
+[guide/] → [api/] → 实战项目
+```
+
+### 开发者深入路径
+
+```
+已了解概念
+  ↓
+[api/reactivity] → [guide/rendering-modes] → [development/ARCHITECTURE]
+  ↓
+深入应用开发
+  ↓
+[ecosystem/router] → [ecosystem/store] → [guide/ssr]
+```
+
+---
 
 ## 项目状态
 
 - **版本**: v6.0.0
 - **状态**: 稳定版
 - **许可证**: MIT
-- **生态**: 完整
-- **测试**: 高覆盖率
+
+## 技术亮点
+
+### 🔬 Signal 细粒度响应式
+- 独立的信号订阅通知机制
+- 桥接 Effect 系统，完全兼容
+- 最小化更新成本，极致性能
+
+### 🌊 Vapor 渲染模式
+- 基于 Signal 的细粒度 DOM 更新
+- 无需虚拟 DOM 对比开销
+- 支持 Island Architecture 水合策略
+
+### 📦 完整 8 层架构
+```
+L0: 基础工具层
+L1: 核心原语层
+L2: 渲染引擎层
+L3: 核心运行时层
+L4: 插件与适配层
+L5: 组件基础层
+L6: 生态系统层
+L7: 工程化工具层
+```
+
+---
+
+**开始你的 LytJS 之旅吧！** 🚀

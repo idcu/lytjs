@@ -4,6 +4,18 @@
 
 ---
 
+## 新手提示
+
+**如果你是刚接触 LytJS，建议先从** [Signal 系列](#signal-api) 开始！
+
+Signal 是 LytJS 推荐的响应式原语，它更简单、更高效，也更容易学习。Ref 和 Reactive 是为了兼容而保留的高级选项。
+
+先了解教程请查看：[响应式基础教程](../tutorial/reactivity.md)
+
+---
+
+---
+
 ## Ref 系列
 
 ### ref()

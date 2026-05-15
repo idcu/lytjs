@@ -1,14 +1,19 @@
-# 快速开始
+# 高级手动配置
 
-本指南将帮助你在 5 分钟内创建你的第一个 LytJS 应用。
+::: tip 提示
+如果你是新手，推荐先阅读 [快速入门教程](../tutorial/quick-start)，使用 CLI 创建项目更简单。
 
-## 在线体验
+本文档适用于想要从零开始手动配置项目的高级用户。
+:::
 
-你可以直接在 [StackBlitz](https://stackblitz.com) 上体验 LytJS，无需安装任何东西。
+## 前置准备
 
-## 创建项目
+- Node.js >= 18.0.0
+- pnpm >= 9.0.0（推荐）
 
-### 使用 pnpm（推荐）
+## 从零创建项目
+
+### 1. 初始化项目
 
 ```bash
 # 创建项目目录
@@ -17,58 +22,21 @@ cd my-lytjs-app
 
 # 初始化项目
 pnpm init
-
-# 安装 LytJS
-pnpm add @lytjs/core @lytjs/component @lytjs/vdom
 ```
 
-### 使用 npm
+### 2. 安装依赖
 
 ```bash
-mkdir my-lytjs-app
-cd my-lytjs-app
-npm init -y
-npm install @lytjs/core @lytjs/component @lytjs/vdom
+# 安装 LytJS 核心包
+pnpm add @lytjs/core
+
+# 安装 Vite 作为开发服务器
+pnpm add -D vite
 ```
 
-## 你的第一个组件
+### 3. 创建项目文件
 
-创建 `src/main.ts` 文件：
-
-```typescript
-import { createApp, defineComponent, signal } from '@lytjs/core';
-import { createVNode } from '@lytjs/vdom';
-
-// 定义一个计数器组件
-const Counter = defineComponent({
-  name: 'Counter',
-  
-  setup() {
-    // 创建响应式状态
-    const count = signal(0);
-    
-    // 定义方法
-    const increment = () => count.set(count() + 1);
-    const decrement = () => count.set(count() - 1);
-    
-    // 返回渲染函数
-    return () => {
-      return createVNode('div', { class: 'counter' }, [
-        createVNode('h1', {}, `Count: ${count()}`),
-        createVNode('button', { onClick: decrement }, '-'),
-        createVNode('button', { onClick: increment }, '+'),
-      ]);
-    };
-  }
-});
-
-// 创建应用并挂载
-createApp(Counter).mount('#app');
-```
-
-## HTML 模板
-
-创建 `index.html` 文件：
+#### `index.html`
 
 ```html
 <!DOCTYPE html>
@@ -96,22 +64,130 @@ createApp(Counter).mount('#app');
 </html>
 ```
 
-## 运行项目
+#### `src/main.ts`
 
-使用 Vite 运行开发服务器：
+使用 Signal API（推荐）：
+
+```typescript
+import { createApp, signal } from '@lytjs/core';
+
+const App = {
+  setup() {
+    const count = signal(0);
+    const increment = () => count(count() + 1);
+    const decrement = () => count(count() - 1);
+    
+    return { count, increment, decrement };
+  },
+  template: `
+    <div class="counter">
+      <h1>Count: {{ count }}</h1>
+      <button @click="decrement">-</button>
+      <button @click="increment">+</button>
+    </div>
+  `
+};
+
+createApp(App).mount('#app');
+```
+
+#### `vite.config.ts`
+
+```typescript
+import { defineConfig } from 'vite';
+
+export default defineConfig({
+  server: {
+    port: 5173
+  }
+});
+```
+
+#### `tsconfig.json`
+
+```json
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "module": "ESNext",
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true
+  },
+  "include": ["src"]
+}
+```
+
+### 4. 运行项目
 
 ```bash
-# 安装 Vite
-pnpm add -D vite
-
 # 启动开发服务器
 pnpm vite
 ```
 
-打开浏览器访问 `http://localhost:5173`，你将看到一个可交互的计数器！
+打开浏览器访问 `http://localhost:5173`。
+
+---
+
+## 使用渲染函数（高级）
+
+如果你不想使用模板语法，也可以使用 `h` 函数手动创建 VNode：
+
+```typescript
+import { createApp, signal, h } from '@lytjs/core';
+
+const App = {
+  setup() {
+    const count = signal(0);
+    const increment = () => count(count() + 1);
+    
+    return () => h('div', { class: 'counter' }, [
+      h('h1', {}, `Count: ${count()}`),
+      h('button', { onClick: increment }, '+')
+    ]);
+  }
+};
+
+createApp(App).mount('#app');
+```
+
+---
+
+## 选择渲染模式
+
+### 使用 Signal 模式（性能优先）
+
+```bash
+pnpm add @lytjs/core-signal
+```
+
+```typescript
+import { createApp, signal } from '@lytjs/core-signal';
+```
+
+### 使用 VNode 模式（兼容优先）
+
+```bash
+pnpm add @lytjs/core-vnode
+```
+
+```typescript
+import { createApp, ref } from '@lytjs/core-vnode';
+```
+
+---
 
 ## 下一步
 
-- [安装](/guide/installation) - 了解更多安装方式
-- [响应式系统](/guide/reactivity) - 深入理解 Signal
-- [组件](/guide/component) - 学习组件开发
+- 阅读 [响应式系统](./reactivity) - 深入了解响应式原理
+- 学习 [组件](./component) - 了解组件开发
+- 查看 [渲染模式](./rendering-modes) - 了解不同渲染模式的区别

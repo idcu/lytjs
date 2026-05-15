@@ -10,6 +10,33 @@
 - **逻辑（Script）**：组件的行为和数据处理
 - **样式（Style）**：组件的视觉表现
 
+## 简单组件示例
+
+让我们从一个简单的计数器组件开始：
+
+```vue
+<script setup lang="ts">
+import { signal } from '@lytjs/core';
+
+const count = signal(0);
+const increment = () => count(count() + 1);
+</script>
+
+<template>
+  <div class="counter">
+    <p>计数: {{ count }}</p>
+    <button @click="increment">+1</button>
+  </div>
+</template>
+
+<style scoped>
+.counter {
+  padding: 20px;
+  text-align: center;
+}
+</style>
+```
+
 ## 定义组件
 
 使用 `defineComponent` 定义组件：
@@ -434,6 +461,7 @@ setup() {
 
 ## 下一步
 
-- 学习 [响应式基础](./reactivity.md) 了解响应式系统
-- 阅读 [状态管理](./state-management.md) 学习状态管理
-- 查看 [路由导航](./routing.md) 了解路由使用
+- 学习 [Todo 应用实战](./todo-app-example) - 构建一个完整的应用
+- 阅读 [状态管理](./state-management) - 学习更高级的状态管理
+- 查看 [路由导航](./routing) - 了解路由使用
+- 参考 [示例项目](../examples) - 查看更多代码示例

@@ -5,40 +5,100 @@
 - Node.js >= 18.0.0
 - pnpm >= 9.0.0（推荐）
 
-## 选择渲染模式
+## 快速开始（推荐）
 
-LytJS 提供两种核心渲染模式，安装时请根据需求选择：
-
-| 模式 | 包名 | 说明 |
-|------|------|------|
-| VNode 模式 | `@lytjs/core` | 默认模式，使用虚拟 DOM diff |
-| Signal 模式 | `@lytjs/core-signal` | 细粒度响应式更新，性能更高 |
-
-## 包管理器
-
-推荐使用 pnpm：
+最简单的方式是使用 LytJS CLI 创建项目：
 
 ```bash
-# VNode 模式（默认）
-pnpm add @lytjs/core
+# 创建新项目
+npx @lytjs/cli create my-lytjs-app
 
-# Signal 模式
+# 进入目录
+cd my-lytjs-app
+
+# 安装依赖
+pnpm install
+
+# 启动开发服务器
+pnpm dev
+```
+
+CLI 会自动配置好一切，包括推荐的 Signal 响应式 API。
+
+---
+
+## 手动安装
+
+如果你想手动配置项目，推荐使用 `@lytjs/core` 包：
+
+### 使用 pnpm（推荐）
+
+```bash
+pnpm add @lytjs/core
+```
+
+### 使用 npm
+
+```bash
+npm install @lytjs/core
+```
+
+### 使用 yarn
+
+```bash
+yarn add @lytjs/core
+```
+
+---
+
+## 基本使用示例
+
+安装后，你可以这样使用：
+
+```typescript
+import { createApp, signal } from '@lytjs/core';
+
+const App = {
+  setup() {
+    const count = signal(0);
+    return { count };
+  },
+  template: `
+    <div>
+      <p>计数: {{ count }}</p>
+      <button @click="count(count() + 1)">+1</button>
+    </div>
+  `
+};
+
+createApp(App).mount('#app');
+```
+
+---
+
+## 高级：渲染模式选择（可选）
+
+`@lytjs/core` 是默认的完整包，同时支持两种渲染模式。如果你想使用独立的渲染模式包，可以选择：
+
+### Signal 模式（性能优先）
+
+```bash
 pnpm add @lytjs/core-signal
 ```
 
-也支持 npm 和 yarn：
+### VNode 模式（兼容优先）
 
 ```bash
-# npm
-npm install @lytjs/core
-npm install @lytjs/core-signal
-
-# yarn
-yarn add @lytjs/core
-yarn add @lytjs/core-signal
+pnpm add @lytjs/core-vnode
 ```
 
-## 按需引入
+::: warning 注意
+请选择一种渲染模式并在整个应用中保持一致，不要混合使用。
+:::
+
+---
+
+## 按需引入（高级）
 
 LytJS 采用模块化架构，你可以只安装需要的包：
 
@@ -49,82 +109,15 @@ pnpm add @lytjs/reactivity
 # 只需要工具函数
 pnpm add @lytjs/common-is
 pnpm add @lytjs/common-object
-
-# 需要路由
-pnpm add @lytjs/router（规划中）
-
-# 需要状态管理
-pnpm add @lytjs/store（规划中）
 ```
 
-## 独立渲染模式包
-
-除了默认的 `@lytjs/core`，LytJS 提供独立的渲染模式包：
-
-### @lytjs/core-vnode
-
-VNode 模式的独立包，等同于 `@lytjs/core`：
-
-```bash
-pnpm add @lytjs/core-vnode
-```
-
-### @lytjs/core-signal
-
-Signal 模式的独立包：
-
-```bash
-pnpm add @lytjs/core-signal
-```
-
-::: warning 注意
-`@lytjs/core-vnode` 和 `@lytjs/core-signal` 是独立的渲染模式包，**不支持在同一应用中混合使用**。请根据项目需求选择一种渲染模式，并在整个应用中保持一致。
-:::
+---
 
 ## TypeScript
 
 LytJS 使用 TypeScript 编写，类型定义已内置，无需额外安装 `@types` 包。
 
-### 类型守卫
-
-LytJS 提供了完整的类型守卫函数，用于在运行时判断响应式类型：
-
-```typescript
-import { 
-  isRef, 
-  isReactive, 
-  isReadonly, 
-  isProxy,
-  isShallowRef,
-  isComputedRef,
-  isSignal 
-} from '@lytjs/reactivity';
-
-const count = ref(0);
-const state = reactive({ name: 'LytJS' });
-const doubled = computed(() => count.value * 2);
-const sig = signal(0);
-
-if (isRef(count)) {
-  console.log('count 是一个 Ref');
-}
-
-if (isShallowRef(count)) {
-  console.log('count 是一个浅层 Ref');
-}
-
-if (isComputedRef(doubled)) {
-  console.log('doubled 是一个计算属性 Ref');
-}
-
-if (isReactive(state)) {
-  console.log('state 是一个响应式对象');
-}
-
-if (isSignal(sig)) {
-  console.log('sig 是一个 Signal');
-}
-```
+---
 
 ## 浏览器兼容性
 
@@ -135,6 +128,8 @@ if (isSignal(sig)) {
 | Safari  | >= 14 |
 | Edge    | >= 80 |
 
+---
+
 ## 开发工具
 
 ### Vite 插件
@@ -143,38 +138,16 @@ if (isSignal(sig)) {
 `@lytjs/vite-plugin` 目前尚未发布，请关注后续版本更新。
 :::
 
-<!-- TODO: Vite 插件包尚未实现，取消注释当包就绪时
-LytJS 提供官方 Vite 插件，支持模板编译和热更新：
-
-```bash
-pnpm add @lytjs/vite-plugin -D
-```
-
-```typescript
-// vite.config.ts
-import { defineConfig } from 'vite';
-import lytjs from '@lytjs/vite-plugin';
-
-export default defineConfig({
-  plugins: [lytjs()],
-});
-```
--->
-
 ### ESLint 插件
 
 ::: warning 尚未实现
 `eslint-plugin-lytjs` 目前尚未发布，请关注后续版本更新。
 :::
 
-<!-- TODO: ESLint 插件包尚未实现，取消注释当包就绪时
-```bash
-pnpm add eslint-plugin-lytjs -D
-```
--->
+---
 
 ## 下一步
 
-- [快速开始](./getting-started) - 创建你的第一个 LytJS 应用
-- [响应式系统](./reactivity) - 深入理解响应式原理
-- [渲染模式](./rendering-modes) - 了解 VNode 和 Signal 模式的详细区别
+- [快速开始](../tutorial/quick-start) - 创建你的第一个 LytJS 应用
+- [响应式基础](../tutorial/reactivity) - 学习 Signal API
+- [组件基础](../tutorial/components) - 学习组件开发

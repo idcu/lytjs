@@ -7,523 +7,363 @@
 我们将创建一个功能完整的 Todo 应用，包含以下功能：
 - 添加 Todo
 - 删除 Todo
-- 标记 Todo
-- 筛选（待办筛选（全部/未完成/已完成）
+- 标记完成/未完成
+- 筛选（全部/未完成/已完成）
 - 本地存储
-- 响应式布局
 
-## 项目结构
+## 第一步：创建项目
 
-```
-todo-app/
-├── components/
-│   ├── TodoInput.vue
-│   ├── TodoList.vue
-│   ├── TodoItem.vue
-│   └── TodoFilter.vue
-├── store/
-│   └── todo.store.ts
-├── App.vue
-└── main.ts
+使用 CLI 创建一个新项目：
+
+```bash
+npx @lytjs/cli create todo-app
+cd todo-app
+pnpm install
+pnpm dev
 ```
 
-## 1. 创建 Store
+## 第二步：实现基础功能
 
-首先，我们创建一个 Todo Store 来管理应用状态。
+让我们修改 `App.vue`，实现完整的 Todo 功能：
 
-```typescript
-// store/todo.store.ts
-import { defineStore } from '@lytjs/store'
-import { signal, computed } from '@lytjs/reactivity'
+```vue
+<script setup lang="ts">
+import { signal, computed, onMounted } from '@lytjs/core';
 
-export interface Todo {
-  id: number
-  text: string
-  completed: boolean
+interface Todo {
+  id: number;
+  text: string;
+  completed: boolean;
 }
 
-export type Filter = 'all' | 'active' | 'completed'
+type Filter = 'all' | 'active' | 'completed';
 
-export const useTodoStore = defineStore('todo', {
-  state: () => ({
-    todos: [] as Todo[],
-    filter: 'all' as Filter
-  }),
+// 响应式数据
+const newTodoText = signal('');
+const todos = signal<Todo[]>([]);
+const filter = signal<Filter>('all');
 
-  getters: {
-    filteredTodos: (state) => {
-      switch (state) {
-        case 'active':
-          return state.todos.filter(todo => !todo.completed)
-        case 'completed':
-          return state.todos.filter(todo => todo.completed)
-        default:
-          return state.todos
-      }
-    },
-
-    remainingCount: (state) => {
-      return state.todos.filter(todo => !todo.completed).length
-    }
-  },
-
-  actions: {
-    addTodo(text: string) {
-      if (!text.trim()) return
-      this.todos.push({
-        id: Date.now(),
-        text: text.trim(),
-        completed: false
-      })
-    },
-
-    toggleTodo(id: number) {
-      const todo = this.todos.find(todo => todo.id === id)
-      if (todo) todo.completed = !todo.completed
-    },
-
-    deleteTodo(id: number) {
-      this.todos = this.todos.filter(todo => todo.id !== id)
-    },
-
-    setFilter(filter: Filter) {
-      this.filter = filter
-    },
-
-    clearCompleted() {
-      this.todos = this.todos.filter(todo => !todo.completed)
-    }
+// 计算属性：筛选后的 todos
+const filteredTodos = computed(() => {
+  switch (filter()) {
+    case 'active':
+      return todos().filter(todo => !todo.completed);
+    case 'completed':
+      return todos().filter(todo => todo.completed);
+    default:
+      return todos();
   }
-})
-```
+});
 
-## 2. 创建组件
+// 计算属性：未完成的数量
+const remainingCount = computed(() => {
+  return todos().filter(todo => !todo.completed).length;
+});
 
-### TodoInput 组件
+// 添加 Todo
+const addTodo = (e?: Event) => {
+  e?.preventDefault();
+  const text = newTodoText().trim();
+  if (text) {
+    todos([
+      ...todos(),
+      { id: Date.now(), text, completed: false }
+    ]);
+    newTodoText('');
+  }
+};
 
-```typescript
-// components/TodoInput.vue
-import { defineComponent, signal } from '@lytjs/core'
-import { useTodoStore } from '../store/todo.store'
+// 切换完成状态
+const toggleTodo = (id: number) => {
+  todos(todos().map(todo => 
+    todo.id === id ? { ...todo, completed: !todo.completed } : todo
+  ));
+};
 
-export default defineComponent({
-  name: 'TodoInput',
+// 删除 Todo
+const deleteTodo = (id: number) => {
+  todos(todos().filter(todo => todo.id !== id));
+};
 
-  setup() {
-    const todoStore = useTodoStore()
-    const inputText = signal('')
+// 清除已完成
+const clearCompleted = () => {
+  todos(todos().filter(todo => !todo.completed));
+};
 
-    const handleSubmit = (e: Event) => {
-      e.preventDefault()
-      todoStore.addTodo(inputText())
-      inputText('')
-    }
+// 本地存储
+onMounted(() => {
+  const saved = localStorage.getItem('lytjs-todos');
+  if (saved) {
+    todos(JSON.parse(saved));
+  }
+});
 
-    return {
-      inputText,
-      handleSubmit
-    }
-  },
+// 监听变化并保存
+const originalTodos = todos;
+todos = ((val?: Todo[] | ((prev: Todo[]) => Todo[])) => {
+  if (typeof val !== 'undefined') {
+    const newValue = typeof val === 'function' ? val(originalTodos()) : val;
+    localStorage.setItem('lytjs-todos', JSON.stringify(newValue));
+    return originalTodos(newValue);
+  }
+  return originalTodos();
+}) as typeof originalTodos;
+</script>
 
-  template: `
-    <form @submit="handleSubmit" class="todo-input">
+<template>
+  <div class="app">
+    <h1>Todo 应用</h1>
+    
+    <!-- 添加输入框 -->
+    <form @submit="addTodo" class="todo-input">
       <input
-        type="text"
-        v-model="inputText"
+        v-model="newTodoText"
         placeholder="需要做什么？"
         autocomplete="off"
-        class="new-todo"
       />
-      <button type="submit" class="add-btn">添加</button>
+      <button type="submit">添加</button>
     </form>
-  `,
 
-  styles: `
-    .todo-input {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 16px;
-    }
-
-    .new-todo {
-      flex: 1;
-      padding: 8px 12px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-    }
-
-    .add-btn {
-      padding: 8px 16px;
-      background: #4fc08d;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-  `
-})
-```
-
-### TodoItem 组件
-
-```typescript
-// components/TodoItem.vue
-import { defineComponent, PropType } from '@lytjs/core'
-import { useTodoStore, type Todo } from '../store/todo.store'
-
-export default defineComponent({
-  name: 'TodoItem',
-
-  props: {
-    todo: Object as PropType<Todo>
-  },
-
-  setup(props) {
-    const todoStore = useTodoStore()
-
-    const toggleTodo = () => {
-      todoStore.toggleTodo(props.todo.id)
-    }
-
-    const deleteTodo = () => {
-      todoStore.deleteTodo(props.todo.id)
-    }
-
-    return {
-      toggleTodo,
-      deleteTodo
-    }
-  },
-
-  template: `
-    <div class="todo-item" :class="{ completed: todo.completed }">
-      <input
-        type="checkbox"
-        :checked="todo.completed"
-        @change="toggleTodo"
-        class="toggle"
-      />
-      <div class="todo-text">{{ todo.text }}</div>
-      <button @click="deleteTodo" class="destroy">×</button>
-    </div>
-  `,
-
-  styles: `
-    .todo-item {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px;
-      border-bottom: 1px solid #eee;
-    }
-
-    .todo-item.completed .todo-text {
-      text-decoration: line-through;
-      color: #888;
-    }
-
-    .toggle {
-      width: 18px;
-      height: 18px;
-    }
-
-    .todo-text {
-      flex: 1;
-      font-size: 16px;
-    }
-
-    .destroy {
-      background: none;
-      border: none;
-      color: #cc9a9a;
-      cursor: pointer;
-      font-size: 20px;
-      opacity: 0;
-      transition: opacity 0.2s;
-    }
-
-    .todo-item:hover .destroy {
-      opacity: 1;
-    }
-  `
-})
-```
-
-### TodoList 组件
-
-```typescript
-// components/TodoList.vue
-import { defineComponent } from '@lytjs/core'
-import { useTodoStore } from '../store/todo.store'
-import TodoItem from './TodoItem.vue'
-
-export default defineComponent({
-  name: 'TodoList',
-
-  components: { TodoItem },
-
-  setup() {
-    const todoStore = useTodoStore()
-
-    return {
-      todoStore
-    }
-  },
-
-  template: `
+    <!-- Todo 列表 -->
     <div class="todo-list">
-      <div
-        v-if="todoStore.filteredTodos.length === 0"
-        class="empty-state"
-      >
+      <div v-if="filteredTodos.length === 0" class="empty">
         暂无待办事项
       </div>
-      <TodoItem
-        v-for="todo in todoStore.filteredTodos"
-        :key="todo.id"
-        :todo="todo"
-      />
+      <div v-for="todo in filteredTodos" :key="todo.id" class="todo-item">
+        <input
+          type="checkbox"
+          :checked="todo.completed"
+          @change="toggleTodo(todo.id)"
+        />
+        <span class="text" :class="{ completed: todo.completed }">
+          {{ todo.text }}
+        </span>
+        <button class="delete" @click="deleteTodo(todo.id)">×</button>
+      </div>
     </div>
-  `,
 
-  styles: `
-    .todo-list {
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      margin-bottom: 16px;
-    }
-
-    .empty-state {
-      padding: 20px;
-      text-align: center;
-      color: #888;
-    }
-  `
-})
-```
-
-### TodoFilter 组件
-
-```typescript
-// components/TodoFilter.vue
-import { defineComponent } from '@lytjs/core'
-import { useTodoStore, type Filter } from '../store/todo.store'
-
-export default defineComponent({
-  name: 'TodoFilter',
-
-  setup() {
-    const todoStore = useTodoStore()
-
-    const setFilter = (filter: Filter) => {
-      todoStore.setFilter(filter)
-    }
-
-    const clearCompleted = () => {
-      todoStore.clearCompleted()
-    }
-
-    return {
-      todoStore,
-      setFilter,
-      clearCompleted
-    }
-  },
-
-  template: `
-    <div class="todo-footer">
-      <span class="todo-count">
-        <strong>{{ todoStore.remainingCount }}</strong> 项未完成
-      </span>
+    <!-- 底部筛选 -->
+    <div v-if="todos.length > 0" class="footer">
+      <span>{{ remainingCount }} 项未完成</span>
       <div class="filters">
         <button
-          :class="{ selected: todoStore.filter === 'all' }"
-          @click="setFilter('all')"
-        >
-          全部
-        </button>
+          :class="{ active: filter === 'all' }"
+          @click="filter('all')"
+        >全部</button>
         <button
-          :class="{ selected: todoStore.filter === 'active' }"
-          @click="setFilter('active')"
-        >
-          未完成
-        </button>
+          :class="{ active: filter === 'active' }"
+          @click="filter('active')"
+        >未完成</button>
         <button
-          :class="{ selected: todoStore.filter === 'completed' }"
-          @click="setFilter('completed')"
-        >
-          已完成
-        </button>
+          :class="{ active: filter === 'completed' }"
+          @click="filter('completed')"
+        >已完成</button>
       </div>
       <button
-        class="clear-completed"
+        v-if="todos.some(t => t.completed)"
         @click="clearCompleted"
-        v-if="todoStore.todos.some(t => t.completed)"
-      >
-        清除已完成
-      </button>
+        class="clear"
+      >清除已完成</button>
     </div>
-  `,
+  </div>
+</template>
 
-  styles: `
-    .todo-footer {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 8px 0;
-    }
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
 
-    .todo-count {
-      font-size: 14px;
-      color: #888;
-    }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #f5f5f5;
+  padding: 40px 20px;
+}
 
-    .filters {
-      display: flex;
-      gap: 8px;
-    }
+.app {
+  max-width: 550px;
+  margin: 0 auto;
+  background: white;
+  border-radius: 8px;
+  padding: 30px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
 
-    .filters button {
-      padding: 4px 8px;
-      border: 1px solid #eee;
-      background: white;
-      border-radius: 4px;
-      cursor: pointer;
-    }
+h1 {
+  text-align: center;
+  color: #4fc08d;
+  margin-bottom: 30px;
+}
 
-    .filters button.selected {
-      border-color: #4fc08d;
-    }
+.todo-input {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
 
-    .clear-completed {
-      padding: 4px 8px;
-      border: none;
-      background: none;
-      color: #888;
-      cursor: pointer;
-    }
-  `
-})
+.todo-input input {
+  flex: 1;
+  padding: 12px 16px;
+  border: 2px solid #eee;
+  border-radius: 6px;
+  font-size: 16px;
+}
+
+.todo-input button {
+  padding: 12px 24px;
+  background: #4fc08d;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.todo-list {
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.empty {
+  text-align: center;
+  padding: 30px;
+  color: #888;
+}
+
+.todo-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 15px;
+  border-bottom: 1px solid #eee;
+}
+
+.todo-item:last-child {
+  border-bottom: none;
+}
+
+.todo-item input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+}
+
+.todo-item .text {
+  flex: 1;
+  font-size: 16px;
+}
+
+.todo-item .text.completed {
+  text-decoration: line-through;
+  color: #888;
+}
+
+.todo-item .delete {
+  background: none;
+  border: none;
+  color: #cc9a9a;
+  font-size: 24px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.todo-item:hover .delete {
+  opacity: 1;
+}
+
+.footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 20px;
+  margin-top: 20px;
+  border-top: 1px solid #eee;
+  font-size: 14px;
+  color: #666;
+}
+
+.filters {
+  display: flex;
+  gap: 8px;
+}
+
+.filters button {
+  padding: 6px 12px;
+  border: 1px solid #eee;
+  background: white;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.filters button.active {
+  border-color: #4fc08d;
+  color: #4fc08d;
+}
+
+.clear {
+  background: none;
+  border: none;
+  color: #888;
+  cursor: pointer;
+}
+</style>
 ```
 
-## 3. 组装 App 组件
+## 代码解析
+
+### 1. 响应式数据
+
+使用 `signal` 创建响应式数据：
 
 ```typescript
-// App.vue
-import { defineComponent } from '@lytjs/core'
-import TodoInput from './components/TodoInput.vue'
-import TodoList from './components/TodoList.vue'
-import TodoFilter from './components/TodoFilter.vue'
-
-export default defineComponent({
-  name: 'App',
-
-  components: { TodoInput, TodoList, TodoFilter },
-
-  setup() {
-    return {}
-  },
-
-  template: `
-    <div class="app">
-      <h1>Todo 应用</h1>
-      <TodoInput />
-      <TodoList />
-      <TodoFilter />
-    </div>
-  `,
-
-  styles: `
-    .app {
-      max-width: 550px;
-      margin: 40px auto;
-      padding: 0 20px;
-    }
-
-    h1 {
-      text-align: center;
-      color: #4fc08d;
-      margin-bottom: 32px;
-    }
-  `
-})
+const newTodoText = signal('');
+const todos = signal<Todo[]>([]);
+const filter = signal<Filter>('all');
 ```
 
-## 4. 入口文件
+### 2. 计算属性
+
+使用 `computed` 创建派生状态：
 
 ```typescript
-// main.ts
-import { createApp } from '@lytjs/core'
-import App from './App.vue'
-
-const app = createApp(App)
-app.mount('#app')
+const filteredTodos = computed(() => {
+  // 根据 filter 返回筛选后的 todos
+});
 ```
 
-## 5. HTML 入口
+### 3. 本地存储
 
-```html
-<!-- index.html -->
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Todo 应用</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #f5f5f5;
-    }
-  </style>
-</head>
-<body>
-  <div id="app"></div>
-  <script type="module" src="/main.ts"></script>
-</body>
-</html>
-```
-
-## 本地存储持久化
-
-我们可以添加本地存储功能，让数据刷新页面后仍然保存：
+使用 `onMounted` 读取本地存储，通过包装 signal 实现自动保存：
 
 ```typescript
-// 在 todo.store.ts 中添加
-
-export const useTodoStore = defineStore('todo', {
-  state: () => {
-    const saved = localStorage.getItem('lytjs-todos')
-    return {
-      todos: saved ? JSON.parse(saved) : [],
-      filter: 'all' as Filter
-    }
-  },
-
-  actions: {
-    // ... 其他 actions ...
-  },
-
-  // 监听变化保存
-  $subscribe((mutation, state) => {
-    localStorage.setItem('lytjs-todos', JSON.stringify(state.todos))
+onMounted(() => {
+  const saved = localStorage.getItem('lytjs-todos');
+  if (saved) {
+    todos(JSON.parse(saved));
   }
-})
+});
 ```
+
+## 运行应用
+
+```bash
+pnpm dev
+```
+
+打开浏览器访问 `http://localhost:5173`，你就可以使用 Todo 应用了！
 
 ## 总结
 
 这个 Todo 应用展示了 LytJS 的核心功能：
-- ✅ 响应式数据管理
+- ✅ Signal 响应式数据
+- ✅ Computed 计算属性
 - ✅ 组件化开发
-- ✅ 状态管理
-- ✅ 组件通信
 - ✅ 本地存储持久化
 - ✅ 响应式 UI
 
-希望这个示例能帮助你快速上手 LytJS！
+下一步可以继续学习：
+- [状态管理](./state-management) - 更高级的状态管理
+- [路由导航](./routing) - 单页应用路由
+- [API 集成](./api-integration) - 与后端 API 交互
