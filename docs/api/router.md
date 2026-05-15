@@ -1,12 +1,12 @@
-# @lytjs/router API Reference
+# @lytjs/router API 参考
 
-## Installation
+## 安装
 
 ```bash
 pnpm add @lytjs/router
 ```
 
-## Basic Usage
+## 基础用法
 
 ```typescript
 import { createRouter, createWebHistory } from '@lytjs/router';
@@ -24,96 +24,96 @@ const router = createRouter({
 
 ### createRouter(options)
 
-Creates a router instance.
+创建路由实例。
 
-**Options:**
+**选项：**
 
-- `history` - History mode (required)
-- `routes` - Array of route records (required)
-- `scrollBehavior` - Scroll behavior function
+- `history` - 历史模式（必填）
+- `routes` - 路由记录数组（必填）
+- `scrollBehavior` - 滚动行为函数
 
-**Returns:** `Router` instance
+**返回：** `Router` 实例
 
 ### createWebHistory(base?)
 
-Creates HTML5 history mode.
+创建 HTML5 历史模式。
 
 ### createWebHashHistory(base?)
 
-Creates hash-based history mode.
+创建基于哈希的历史模式。
 
 ### createMemoryHistory(initial?)
 
-Creates memory-based history mode (for SSR/testing).
+创建基于内存的历史模式（用于 SSR/测试）。
 
 ### useRouter()
 
-Returns the current router instance.
+返回当前路由实例。
 
 ### useRoute()
 
-Returns the current route location.
+返回当前路由位置。
 
 ### useLink(options)
 
-Returns reactive link properties.
+返回响应式链接属性。
 
-**Options:**
+**选项：**
 
-- `to` - Target route
-- `replace` - Use replace mode
-- `activeClass` - CSS class for active link
-- `exactActiveClass` - CSS class for exact active link
+- `to` - 目标路由
+- `replace` - 使用替换模式
+- `activeClass` - 激活链接的 CSS 类名
+- `exactActiveClass` - 完全匹配激活的 CSS 类名
 
-**Returns:**
+**返回：**
 
-- `route` - Resolved route location
-- `href` - Resolved href
-- `isActive` - Whether the link is active
-- `isExactActive` - Whether the link is exactly active
-- `navigate` - Navigation function
+- `route` - 解析后的路由位置
+- `href` - 解析后的 href
+- `isActive` - 是否激活
+- `isExactActive` - 是否完全匹配激活
+- `navigate` - 导航函数
 
-## Components
+## 组件
 
 ### RouterView
 
-Renders the matched component for the current route.
+渲染当前路由匹配的组件。
 
-**Props:**
+**属性：**
 
-- `name` - Named view name (default: 'default')
+- `name` - 命名视图名称（默认：'default'）
 
 ### RouterLink
 
-Creates a navigation link.
+创建导航链接。
 
-**Props:**
+**属性：**
 
-- `to` - Target route (required)
-- `replace` - Use replace mode
-- `activeClass` - CSS class for active link
-- `exactActiveClass` - CSS class for exact active link
-- `ariaCurrentValue` - aria-current value
+- `to` - 目标路由（必填）
+- `replace` - 使用替换模式
+- `activeClass` - 激活链接的 CSS 类名
+- `exactActiveClass` - 完全匹配激活的 CSS 类名
+- `ariaCurrentValue` - aria-current 值
 
-## Navigation Guards
+## 导航守卫
 
 ### router.beforeEach(guard)
 
-Add a global before navigation guard.
+添加全局前置导航守卫。
 
 ### router.afterEach(guard)
 
-Add a global after navigation hook.
+添加全局后置导航钩子。
 
 ### router.beforeResolve(guard)
 
-Add a global before resolve guard.
+添加全局解析前守卫。
 
-### In-Component Guards
+### 组件内守卫
 
-- `beforeRouteLeave(to, from, next)` - Called when leaving the route
+- `beforeRouteLeave(to, from, next)` - 离开路由时调用
 
-## Route Record
+## 路由记录
 
 ```typescript
 interface RouteRecordRaw {

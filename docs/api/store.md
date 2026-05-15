@@ -1,14 +1,14 @@
-# @lytjs/store API Reference
+# @lytjs/store API 参考
 
-## Installation
+## 安装
 
 ```bash
 pnpm add @lytjs/store
 ```
 
-## Basic Usage
+## 基础用法
 
-### Options Store
+### Options Store 语法
 
 ```typescript
 import { defineStore } from '@lytjs/store';
@@ -26,7 +26,7 @@ const useCounterStore = defineStore('counter', {
 });
 ```
 
-### Setup Store
+### Setup Store 语法
 
 ```typescript
 import { defineStore } from '@lytjs/store';
@@ -48,49 +48,49 @@ const useCounterStore = defineStore('counter', () => {
 
 ### defineStore(id, options)
 
-Creates a store definition.
+创建 Store 定义。
 
-**Options Store:**
+**Options Store 选项：**
 
-- `state` - Function returning initial state
-- `getters` - Computed properties
-- `actions` - Methods
+- `state` - 返回初始状态的函数
+- `getters` - 计算属性
+- `actions` - 方法
 
-**Setup Store:**
+**Setup Store 选项：**
 
-- Accepts a setup function that returns store properties
+- 接受返回 Store 属性的 setup 函数
 
 ### createPinia()
 
-Creates a Pinia instance.
+创建 Pinia 实例。
 
 ### storeToRefs(store)
 
-Extracts refs from a store, preserving reactivity.
+从 Store 中提取 refs，保持响应式。
 
 ### useStore()
 
-Returns the store instance.
+返回 Store 实例。
 
-## Store Instance
+## Store 实例
 
 ### $id
 
-Store unique identifier.
+Store 唯一标识符。
 
 ### $state
 
-Reactive state object.
+响应式状态对象。
 
 ### $patch(partialOrMutator)
 
-Update state partially.
+部分更新状态。
 
 ```typescript
-// Object syntax
+// 对象语法
 store.$patch({ count: 10 });
 
-// Function syntax
+// 函数语法
 store.$patch((state) => {
   state.count++;
 });
@@ -98,40 +98,41 @@ store.$patch((state) => {
 
 ### $reset()
 
-Reset state to initial values.
+重置状态到初始值。
 
 ### $subscribe(callback)
 
-Subscribe to state changes.
+订阅状态变化。
 
 ```typescript
 const unsubscribe = store.$subscribe((mutation, state) => {
-  console.log('Type:', mutation.type);
+  console.log('类型:', mutation.type);
   console.log('Store ID:', mutation.storeId);
 });
 
-// Later: unsubscribe()
+// 取消订阅
+unsubscribe();
 ```
 
 ### $onAction(callback)
 
-Subscribe to action calls.
+订阅 action 调用。
 
 ```typescript
 const unsubscribe = store.$onAction((context) => {
   console.log('Action:', context.name);
-  console.log('Args:', context.args);
+  console.log('参数:', context.args);
 
   context.after = (result) => {
-    console.log('After:', result);
+    console.log('之后:', result);
   };
 
   context.onError = (error) => {
-    console.error('Error:', error);
+    console.error('错误:', error);
   };
 });
 ```
 
 ### $dispose()
 
-Dispose the store and clear subscriptions.
+销毁 Store 并清除订阅。
