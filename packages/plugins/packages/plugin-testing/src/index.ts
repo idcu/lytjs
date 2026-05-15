@@ -198,23 +198,31 @@ function createSignalTestHelpers(): SignalTestHelpers {
     trackUpdates: <T>(signal: { value: T }) => {
       const history: T[] = [signal.value];
       let updateCount = 0;
+      let currentValue = signal.value;
 
-      const proxy = new Proxy(signal, {
-        set(target, prop, newValue) {
-          if (prop === 'value') {
-            history.push(newValue);
-            updateCount++;
-          }
-          return Reflect.set(target, prop, newValue);
+      // 监听原始对象的修改
+      const originalDescriptor = Object.getOwnPropertyDescriptor(signal, 'value');
+      Object.defineProperty(signal, 'value', {
+        get() {
+          return currentValue;
         },
-        get(target, prop) {
-          return Reflect.get(target, prop);
+        set(newValue) {
+          history.push(newValue);
+          updateCount++;
+          currentValue = newValue;
         },
+        enumerable: originalDescriptor?.enumerable ?? true,
+        configurable: true,
       });
 
       return {
         get value() {
-          return proxy.value;
+          return currentValue;
+        },
+        set value(newValue) {
+          history.push(newValue);
+          updateCount++;
+          currentValue = newValue;
         },
         get updateCount() {
           return updateCount;
