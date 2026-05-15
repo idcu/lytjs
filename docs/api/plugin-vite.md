@@ -1,12 +1,12 @@
-# @lytjs/plugin-vite API Reference
+# @lytjs/plugin-vite API 参考
 
-## Installation
+## 安装
 
 ```bash
 pnpm add -D @lytjs/plugin-vite
 ```
 
-## Usage
+## 使用方法
 
 ```typescript
 // vite.config.ts
@@ -18,7 +18,7 @@ export default defineConfig({
 });
 ```
 
-## Options
+## 配置选项
 
 ```typescript
 interface LytjsPluginOptions {
@@ -31,41 +31,41 @@ interface LytjsPluginOptions {
 
 ### include
 
-Files to include for transformation. Default: `/\.lyt$/`
+要包含进行转换的文件。默认值：`/\.lyt$/`
 
 ### exclude
 
-Files to exclude. Default: `/node_modules/`
+要排除的文件。默认值：`/node_modules/`
 
 ### ssr
 
-Enable SSR mode. Default: `false`
+启用 SSR 模式。默认值：`false`
 
 ### signalMode
 
-Enable signal mode compilation. Default: `false`
+启用 signal 模式编译。默认值：`false`
 
-## Features
+## 功能特性
 
-### SFC Compilation
+### 单文件组件编译
 
-Compiles `.lyt` single-file components:
+编译 `.lyt` 单文件组件：
 
-- `<template>` - Component template
-- `<script setup>` - Composition API script
-- `<style scoped>` - Scoped styles
+- `<template>` - 组件模板
+- `<script setup>` - 组合式 API 脚本
+- `<style scoped>` - 作用域样式
 
-### Hot Module Replacement (HMR)
+### 模块热替换（HMR）
 
-Automatic HMR for `.lyt` files:
+自动支持 `.lyt` 文件的 HMR：
 
-- Template changes: Component-level HMR
-- Script changes: Full page reload
-- Style changes: CSS HMR
+- 模板修改：组件级别 HMR
+- 脚本修改：整页重载
+- 样式修改：CSS HMR
 
-### Scoped Styles
+### 作用域样式
 
-Scoped CSS with unique `__scopeId`:
+使用唯一的 `__scopeId` 实现作用域 CSS：
 
 ```html
 <style scoped>
@@ -75,17 +75,17 @@ Scoped CSS with unique `__scopeId`:
 </style>
 ```
 
-### Custom Blocks
+### 自定义块
 
-#### `<route>` Block
+#### `<route>` 块
 
-Define route configuration in component:
+在组件中定义路由配置：
 
 ```html
 <route> { "path": "/users/:id", "name": "user-detail" } </route>
 ```
 
-Import route config:
+导入路由配置：
 
 ```typescript
 import routeConfig from './UserDetail.lyt.route';
