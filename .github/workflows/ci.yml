@@ -17,7 +17,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  PNPM_VERSION: '9.15.4'
+  PNPM_VERSION: '11.1.1'
   NODE_VERSION: '20'
 
 jobs:
@@ -266,7 +266,7 @@ jobs:
         run: |
           # 运行基准测试并输出到文件
           pnpm -C benchmarks run bench 2>&1 | tee benchmark-results.txt
-          
+
           # 提取基准测试结果并格式化
           echo "=== Benchmark Summary ==="
           grep -E "(ops/sec|render|update|memory)" benchmark-results.txt || true

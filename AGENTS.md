@@ -1,4 +1,4 @@
-# LytJS 项目规则 - 通义灵码适配版
+# LytJS 项目规则
 
 ## 项目基础信息
 
@@ -62,12 +62,14 @@ git push origin feature/xxx-功能描述
 ```
 
 **分支命名规范**：
+
 - `feature/xxx` - 新功能开发
 - `fix/xxx` - Bug 修复
 - `refactor/xxx` - 代码重构
 - `docs/xxx` - 文档更新
 
 **Commit 规范**（Conventional Commits）：
+
 ```
 <type>(<scope>): <中文描述>
 
@@ -116,13 +118,13 @@ pnpm run size-check       # 包体积检查
 
 ```typescript
 // PascalCase: 类型、类、组件、接口
-interface UserProfile { }
-class Component { }
-const MyComponent = defineComponent({ });
+interface UserProfile {}
+class Component {}
+const MyComponent = defineComponent({});
 
 // camelCase: 变量、函数、属性
 const userName = ref('');
-function getUserInfo() { }
+function getUserInfo() {}
 
 // UPPER_CASE: 常量
 const MAX_COUNT = 100;
@@ -218,12 +220,12 @@ packages/
 
 ### 测试覆盖率
 
-| 模块 | 最低覆盖率 |
-|------|-----------|
-| reactivity | ≥ 90% |
-| vdom | ≥ 85% |
-| compiler | ≥ 80% |
-| core | ≥ 80% |
+| 模块       | 最低覆盖率 |
+| ---------- | ---------- |
+| reactivity | ≥ 90%      |
+| vdom       | ≥ 85%      |
+| compiler   | ≥ 80%      |
+| core       | ≥ 80%      |
 
 ### 包体积限制
 
@@ -245,6 +247,7 @@ packages/
 ### 代码审查要点
 
 生成代码后，人工应关注：
+
 - ✅ 正确性：逻辑是否正确，边界情况是否处理
 - ✅ 类型安全：是否正确使用 TypeScript 类型
 - ✅ 性能影响：是否存在性能问题
@@ -264,7 +267,7 @@ packages/
 
 ### JSDoc 注释模板
 
-```typescript
+````typescript
 /**
  * 函数功能描述（中文）
  *
@@ -285,7 +288,7 @@ packages/
 export function functionName<T>(paramName: T): ReturnType {
   // 实现
 }
-```
+````
 
 ### 代码注释示例
 
@@ -345,6 +348,7 @@ pnpm type-check
 ### 构建失败
 
 常见原因：
+
 - 缺少依赖：重新运行 `pnpm install`
 - 类型错误：运行 `pnpm type-check`
 - tsup 配置：检查 `tsup.config.ts`（必须启用 `dts: true`）
@@ -367,12 +371,14 @@ iconv -f GBK -t UTF-8 input.ts > output.ts
 **原因**：vitest 路径别名不支持通配符子路径匹配
 
 **解决方案**：
+
 ```typescript
 // 直接导入构建后的文件而非源码
 const pluginModule = require('../dist/index.cjs');
 ```
 
 **步骤**：
+
 1. 先运行 `pnpm build` 构建依赖包
 2. 在测试中使用 require() 导入构建后的文件
 3. 这样可以避免路径别名配置问题
@@ -382,6 +388,7 @@ const pluginModule = require('../dist/index.cjs');
 **问题**：vitest 运行大量测试时内存溢出
 
 **解决方案**：
+
 - 减少并发测试数量
 - 分批运行测试
 - 单个包目录下运行 `pnpm test` 而非全局运行
@@ -393,6 +400,7 @@ const pluginModule = require('../dist/index.cjs');
 
 **解决方案**：
 在包的 src 目录下创建 `env.d.ts` 文件，内容如下：
+
 ```typescript
 // 全局 __DEV__ 声明
 // 规范版本位于 @lytjs/shared-types/src/global.d.ts
@@ -403,12 +411,14 @@ declare const __DEV__: boolean;
 **问题 2**：`'xxx' is declared but its value is never read`
 
 **解决方案**：
+
 - 在变量名前添加下划线前缀：`const _unusedVar = ...`
 - 或者删除未使用的变量
 
 **问题 3**：找不到某个包的类型声明文件
 
 **解决方案**：
+
 - 先单独构建该包：`cd packages/xxx && pnpm build`
 - 确保 tsup.config.ts 中启用了 `dts: true`
 - 再次运行类型检查
@@ -418,6 +428,7 @@ declare const __DEV__: boolean;
 **问题**：`pnpm lint:check` 出现内存溢出
 
 **解决方案**：
+
 - 可以在单个包目录下运行 lint 检查
 - 优先使用类型检查来发现代码问题
 - 内存限制较大时，可以跳过全局 lint 检查，专注于单个包
@@ -448,38 +459,38 @@ git checkout -b feature/你的功能
 
 ### 核心包速查
 
-| 功能 | 包名 |
-|------|------|
-| 类型检查 | `@lytjs/common-is` |
-| 常量定义 | `@lytjs/common-constants` |
-| VNode 工具 | `@lytjs/common-vnode` |
-| 过渡动画 | `@lytjs/common-transition-engine` |
-| DOM 操作 | `@lytjs/common-dom-helpers` |
-| 响应式系统 | `@lytjs/reactivity` |
-| 虚拟 DOM | `@lytjs/vdom` |
-| 核心框架 | `@lytjs/core` |
+| 功能       | 包名                              |
+| ---------- | --------------------------------- |
+| 类型检查   | `@lytjs/common-is`                |
+| 常量定义   | `@lytjs/common-constants`         |
+| VNode 工具 | `@lytjs/common-vnode`             |
+| 过渡动画   | `@lytjs/common-transition-engine` |
+| DOM 操作   | `@lytjs/common-dom-helpers`       |
+| 响应式系统 | `@lytjs/reactivity`               |
+| 虚拟 DOM   | `@lytjs/vdom`                     |
+| 核心框架   | `@lytjs/core`                     |
 
 ### 官方插件包速查
 
-| 功能 | 包名 |
-|------|------|
-| 主题管理 | `@lytjs/plugin-theme` |
-| 日志记录 | `@lytjs/plugin-logger` |
-| 权限控制 | `@lytjs/plugin-auth` |
-| 本地存储 | `@lytjs/plugin-storage` |
-| 国际化 | `@lytjs/plugin-i18n` |
-| 图表渲染 | `@lytjs/plugin-chart` |
-| Vite 集成 | `@lytjs/plugin-vite` |
+| 功能      | 包名                    |
+| --------- | ----------------------- |
+| 主题管理  | `@lytjs/plugin-theme`   |
+| 日志记录  | `@lytjs/plugin-logger`  |
+| 权限控制  | `@lytjs/plugin-auth`    |
+| 本地存储  | `@lytjs/plugin-storage` |
+| 国际化    | `@lytjs/plugin-i18n`    |
+| 图表渲染  | `@lytjs/plugin-chart`   |
+| Vite 集成 | `@lytjs/plugin-vite`    |
 
 ### 生态系统包速查
 
-| 功能 | 包名 |
-|------|------|
-| 路由 | `@lytjs/router` |
-| 状态管理 | `@lytjs/store` |
-| UI 组件库 | `@lytjs/ui` |
-| 开发者工具 | `@lytjs/devtools` |
-| SSR | `@lytjs/ssr` |
+| 功能       | 包名                      |
+| ---------- | ------------------------- |
+| 路由       | `@lytjs/router`           |
+| 状态管理   | `@lytjs/store`            |
+| UI 组件库  | `@lytjs/ui`               |
+| 开发者工具 | `@lytjs/devtools`         |
+| SSR        | `@lytjs/ssr`              |
 | 平台适配器 | `@lytjs/platform-adapter` |
 
 ---
@@ -491,6 +502,7 @@ git checkout -b feature/你的功能
 **适用场景**: 为已有模块补充测试覆盖
 
 **模板**:
+
 ```typescript
 // packages/{module}/tests/{feature}.test.ts
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -521,6 +533,7 @@ describe('{feature}', () => {
 ```
 
 **注意事项**:
+
 - vdom 包测试需要使用 `--config packages/vdom/vitest.config.ts` 指定 jsdom 环境
 - mock 外部依赖时使用 `vi.mock()`
 - 使用 `vi.fn()` 创建 spy
@@ -536,6 +549,7 @@ describe('{feature}', () => {
 **适用场景**: 在 packages/ecosystem/packages/ 下创建新包
 
 **步骤**:
+
 1. 创建目录结构：`src/`, `tests/`, `package.json`, `tsconfig.json`, `tsup.config.ts`
 2. package.json 中声明 workspace 依赖
 3. tsup.config.ts 启用 `dts: true`
@@ -546,6 +560,7 @@ describe('{feature}', () => {
 8. 更新 pnpm-workspace.yaml
 
 **包模板**:
+
 ```json
 {
   "name": "@lytjs/{package-name}",
@@ -569,6 +584,7 @@ describe('{feature}', () => {
 **适用场景**: 测试运行失败时的排查流程
 
 **排查步骤**:
+
 1. 确认测试环境（node vs jsdom）
 2. 检查 vitest 配置（根目录 vs 包目录）
 3. 确认依赖包已构建（`pnpm build`）
@@ -577,6 +593,7 @@ describe('{feature}', () => {
 6. 如遇路径别名问题，尝试直接导入构建后文件
 
 **常见问题**:
+
 - `document is not defined` → 需要使用 jsdom 环境
 - `Cannot find module` → 需要先构建依赖包
 - `process is not defined` → vitest 与 Node.js 版本兼容性问题
@@ -587,12 +604,14 @@ describe('{feature}', () => {
 **适用场景**: 扩展 DevTools 功能
 
 **架构说明**:
+
 - `ecosystem/devtools`: 轻量级内嵌面板，面向开发者快速调试
 - `tools/devtools`: 浏览器扩展后端，提供高级调试能力
 
 **开发指南**:
+
 - ecosystem 版本：直接修改 `src/devtools.ts` 中的面板渲染逻辑
-- tools 版本：在对应子模块（signals/events/snapshots/panel/*）中添加功能
+- tools 版本：在对应子模块（signals/events/snapshots/panel/\*）中添加功能
 - 新增功能需同步更新 `src/index.ts` 导出和测试文件
 
 ### Skill 5: 创建官方插件
@@ -600,6 +619,7 @@ describe('{feature}', () => {
 **适用场景**: 在 packages/plugins/packages/ 下创建新官方插件
 
 **步骤**:
+
 1. 使用 PLUGIN_DEVELOPMENT.md 中提供的模板创建插件
 2. 确保包名格式为 `@lytjs/plugin-{name}`
 3. 使用 definePlugin() API 实现插件功能
@@ -611,6 +631,7 @@ describe('{feature}', () => {
 9. 更新插件文档 README.md
 
 **测试技巧**:
+
 ```typescript
 const pluginModule = require('../dist/index.cjs');
 
@@ -618,7 +639,7 @@ describe('@lytjs/plugin-{name}', () => {
   it('应导出默认插件', () => {
     expect(pluginModule.default).toBeDefined();
   });
-  
+
   it('应导出主要工具函数', () => {
     expect(pluginModule.someFunction).toBeDefined();
   });
@@ -630,6 +651,7 @@ describe('@lytjs/plugin-{name}', () => {
 **适用场景**: 将包从一个目录移动到另一个目录（如从 ecosystem 迁移到 plugins）
 
 **步骤**:
+
 1. 复制目标包的完整目录结构
 2. 重命名包名（如从 `@lytjs/i18n` 到 `@lytjs/plugin-i18n`）
 3. 更新 package.json 中的 name、repository、keywords 等字段
@@ -641,6 +663,7 @@ describe('@lytjs/plugin-{name}', () => {
 9. 更新 pnpm-workspace.yaml
 
 **验证检查**:
+
 - [ ] 构建成功，无类型错误
 - [ ] 所有测试通过
 - [ ] 零依赖规范检查通过
@@ -652,6 +675,7 @@ describe('@lytjs/plugin-{name}', () => {
 **适用场景**: 开发项目级别的脚本工具（如零依赖检查、版本同步等）
 
 **步骤**:
+
 1. 在 `scripts/` 目录下创建新脚本
 2. 使用 Node.js 原生 API，零第三方依赖
 3. 在 package.json 中添加对应脚本命令
@@ -659,6 +683,7 @@ describe('@lytjs/plugin-{name}', () => {
 5. 更新 AGENTS.md 文档加入新命令
 
 **零依赖检查脚本示例**:
+
 ```typescript
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
@@ -676,22 +701,22 @@ import { join, relative } from 'node:path';
 
 LytJS 采用 8 层架构设计，从底层到上层分别为：
 
-| 层级 | 层名 | 核心能力 |
-| --- | --- | --- |
-| L0 | 基础工具层 | 原生 JS 工具封装、常量定义 |
-| L1 | 核心原语层 | 响应式系统、虚拟 DOM、编译器 |
-| L2 | 渲染引擎层 | Vapor 渲染器、VDOM 渲染器、组件系统 |
-| L3 | 核心运行时层 | 应用实例、生命周期、插件机制 |
-| L4 | 插件与适配层 | 官方插件、跨平台适配器、Web 适配 |
-| L5 | 组件基础层 | 组件通用逻辑、通信机制 |
-| L6 | 生态系统层 | UI 组件库、路由、状态管理、SSR |
-| L7 | 工程化工具层 | 构建工具、CLI、DevTools、测试工具 |
+| 层级 | 层名         | 核心能力                            |
+| ---- | ------------ | ----------------------------------- |
+| L0   | 基础工具层   | 原生 JS 工具封装、常量定义          |
+| L1   | 核心原语层   | 响应式系统、虚拟 DOM、编译器        |
+| L2   | 渲染引擎层   | Vapor 渲染器、VDOM 渲染器、组件系统 |
+| L3   | 核心运行时层 | 应用实例、生命周期、插件机制        |
+| L4   | 插件与适配层 | 官方插件、跨平台适配器、Web 适配    |
+| L5   | 组件基础层   | 组件通用逻辑、通信机制              |
+| L6   | 生态系统层   | UI 组件库、路由、状态管理、SSR      |
+| L7   | 工程化工具层 | 构建工具、CLI、DevTools、测试工具   |
 
 > **详细文档**：请参考 [ARCHITECTURE.md](./ARCHITECTURE.md) 获取完整的架构说明
 
 ### 分层依赖规则
 
-- **基础工具层开放**：L0 基础工具层（common-*）可被所有上层直接依赖
+- **基础工具层开放**：L0 基础工具层（common-\*）可被所有上层直接依赖
 - **分层合理依赖**：核心层（L1-L4）遵循分层原则，尽量减少跨层依赖，但允许必要的跨层访问
 - **单向依赖**：只能从上层依赖下层，禁止反向依赖
 - **循环依赖检查**：使用 `pnpm run check-circular` 定期检查
@@ -711,48 +736,56 @@ import { ref, computed } from '@lytjs/reactivity';
 ### 各层开发规范
 
 #### L0 基础工具层
+
 - 只提供纯函数，无副作用
 - 禁止依赖任何其他层
 - 必须有完整的单元测试覆盖
 - 文档必须详细说明每个函数的用途、参数和返回值
 
 #### L1 核心原语层
+
 - 响应式系统（signal/ref/computed）
 - 虚拟 DOM（VNode）
 - 模板编译器
 - 零第三方依赖，性能优先
 
 #### L2 渲染引擎层
+
 - 基于 Host Contract 接口开发
 - 支持 Vapor 和 VDOM 双模式
 - 提供可插拔的渲染器实现
 - 组件系统核心逻辑
 
 #### L3 核心运行时层
+
 - 提供最小化的 API
 - 插件注册与卸载机制
 - 应用实例生命周期管理
 - 依赖注入容器实现
 
 #### L4 插件与适配层
+
 - 统一插件接口定义（基于 definePlugin API）
 - 插件依赖解析与生命周期管理
 - 跨平台适配器实现（Web、未来可扩展）
 - 官方插件实现（主题、日志、认证等）
 
 #### L5 组件基础层
+
 - 统一组件 API
 - 组件通信机制
 - 样式规范定义
 - 主题适配接口
 
 #### L6 生态系统层
+
 - 基于组件基础层开发
 - 支持主题定制
 - 可以引入第三方依赖
 - 提供完整的测试用例和文档
 
 #### L7 工程化工具层
+
 - 只在开发/构建时使用
 - 不影响运行时
 - 可以引入第三方依赖
@@ -887,17 +920,21 @@ import { camelize, toPascalCase } from '@lytjs/common-string';
 在开始新的开发任务前，建议按以下顺序检查项目状态：
 
 1. **Git 状态检查**
+
    ```bash
    git status
    git branch
    ```
+
    - 确保工作区干净
    - 确认当前分支正确
 
 2. **类型检查**
+
    ```bash
    pnpm type-check
    ```
+
    - 这是最快速验证代码健康状态的方式
    - 优先于完整的构建和测试
 
