@@ -20,25 +20,19 @@ import {
 
 const VERSION = '6.0.0';
 
-/**
- * Run the CLI with given options
- */
 export async function runCli(rawArgs: string[] = process.argv.slice(2)): Promise<void> {
   const { command, args, options } = parseArgs(rawArgs);
   
-  // Handle help and version
   if (options.help || command === 'help') {
     showHelp();
     return;
   }
   
   if (options.version || command === 'version' || command === '-v' || command === '--version') {
-    // eslint-disable-next-line no-console
     console.log(`LytJS CLI v${VERSION}`);
     return;
   }
   
-  // Route to commands
   switch (command) {
     case 'create':
       await create(args[0] || 'my-lytjs-app', {
@@ -77,8 +71,8 @@ export async function runCli(rawArgs: string[] = process.argv.slice(2)): Promise
 
     case 'add':
       if (!args[0] || !['component', 'page', 'store'].includes(args[0])) {
-        logger.error('Usage: lytjs add <component|page|store> <name>');
-        logger.info('Example: lytjs add component Button');
+        logger.error('Usage: lyt add <component|page|store> <name>');
+        logger.info('Example: lyt add component Button');
         process.exit(1);
       }
       await add(args[0] as 'component' | 'page' | 'store', args[1] || 'Unnamed', {
@@ -88,8 +82,8 @@ export async function runCli(rawArgs: string[] = process.argv.slice(2)): Promise
       
     case 'plugin':
       if (!args[0]) {
-        logger.error('Usage: lytjs plugin <create|build|validate|templates>');
-        logger.info('Example: lytjs plugin create my-plugin');
+        logger.error('Usage: lyt plugin <create|build|validate|templates>');
+        logger.info('Example: lyt plugin create my-plugin');
         process.exit(1);
       }
       
@@ -128,7 +122,7 @@ export async function runCli(rawArgs: string[] = process.argv.slice(2)): Promise
     default:
       if (command) {
         logger.error(`Unknown command: ${command}`);
-        logger.info('Run "lytjs --help" for usage information.');
+        logger.info('Run "lyt --help" for usage information.');
         process.exit(1);
       } else {
         showHelp();
@@ -136,15 +130,18 @@ export async function runCli(rawArgs: string[] = process.argv.slice(2)): Promise
   }
 }
 
-/**
- * Parse command line arguments
- */
 function parseArgs(args: string[]): CliOptions {
-  const command = args[0] ?? '';
+  let command = args[0] ?? '';
   const positional: string[] = [];
   const options: Record<string, unknown> = {};
   
-  for (let i = command ? 1 : 0; i < args.length; i++) {
+  if (command.startsWith('--') || command.startsWith('-')) {
+    command = '';
+  }
+  
+  const startIndex = command ? 1 : 0;
+  
+  for (let i = startIndex; i < args.length; i++) {
     const arg = args[i] ?? '';
     
     if (arg.startsWith('--')) {
@@ -174,16 +171,12 @@ function parseArgs(args: string[]): CliOptions {
   return { command, args: positional, options };
 }
 
-/**
- * Show help message
- */
 function showHelp(): void {
-  // eslint-disable-next-line no-console
   console.log(`
 ${logger.bold('LytJS CLI')} v${VERSION}
 
 ${logger.bold('Usage:')}
-  lytjs <command> [options]
+  lyt <command> [options]
 
 ${logger.bold('Commands:')}
   create <name>            Create a new LytJS project
@@ -229,18 +222,18 @@ ${logger.bold('Plugin Options:')}
   --warningsAsErrors   Treat warnings as errors
 
 ${logger.bold('Examples:')}
-  lytjs create my-app
-  lytjs create my-app --template minimal
-  lytjs create my-app --template router
-  lytjs create my-app --template full
-  lytjs dev --port 3000
-  lytjs build --ssr
-  lytjs add component Button
-  lytjs add page About
-  lytjs add store user
-  lytjs plugin create my-plugin
-  lytjs plugin create my-plugin --template withConfig
-  lytjs plugin build
-  lytjs plugin validate
+  lyt create my-app
+  lyt create my-app --template minimal
+  lyt create my-app --template router
+  lyt create my-app --template full
+  lyt dev --port 3000
+  lyt build --ssr
+  lyt add component Button
+  lyt add page About
+  lyt add store user
+  lyt plugin create my-plugin
+  lyt plugin create my-plugin --template withConfig
+  lyt plugin build
+  lyt plugin validate
 `);
 }

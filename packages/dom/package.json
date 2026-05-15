@@ -32,8 +32,8 @@
     "clean": "rm -rf dist node_modules .turbo"
   },
   "dependencies": {
-    "@lytjs/common-is": "workspace:*",
-    "@lytjs/common-string": "workspace:*"
+    "@lytjs/common-is": "^6.0.0",
+    "@lytjs/common-string": "^6.0.0"
   },
   "devDependencies": {
     "tsup": "^8.3.6",

@@ -33,10 +33,10 @@
     "clean": "rm -rf dist .tsbuildinfo"
   },
   "dependencies": {
-    "@lytjs/common-is": "workspace:*",
-    "@lytjs/common-string": "workspace:*",
-    "@lytjs/common-events": "workspace:*",
-    "@lytjs/common-error": "workspace:*"
+    "@lytjs/common-is": "^6.0.0",
+    "@lytjs/common-string": "^6.0.0",
+    "@lytjs/common-events": "^6.0.0",
+    "@lytjs/common-error": "^6.0.0"
   },
   "devDependencies": {
     "typescript": "^5.8.2",

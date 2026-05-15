@@ -43,9 +43,8 @@ export const logger = {
     console.log(colorize(message, 'dim'));
   },
   
-  bold(message: string): void {
-    // eslint-disable-next-line no-console
-    console.log(colorize(message, 'bright'));
+  bold(message: string): string {
+    return colorize(message, 'bright');
   },
 };
 

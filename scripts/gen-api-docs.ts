@@ -68,7 +68,7 @@ const PACKAGES: PackageConfig[] = [
     description: '状态管理库，提供 Pinia 兼容的 API',
   },
   {
-    name: '@lytjs/devtools',
+    name: '@lytjs/devtools-extension',
     packagePath: 'packages/tools/packages/devtools/src',
     outputFile: 'docs/api/devtools.md',
     description: '浏览器 DevTools 扩展，用于调试 Lyt.js 应用',

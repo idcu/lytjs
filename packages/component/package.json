@@ -26,14 +26,14 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@lytjs/shared-types": "workspace:*",
-    "@lytjs/reactivity": "workspace:*",
-    "@lytjs/vdom": "workspace:*",
-    "@lytjs/common-vnode": "workspace:*",
-    "@lytjs/common-is": "workspace:*",
-    "@lytjs/common-scheduler": "workspace:*",
-    "@lytjs/common-error": "workspace:*",
-    "@lytjs/common-string": "workspace:*"
+    "@lytjs/shared-types": "^6.0.0",
+    "@lytjs/reactivity": "^6.0.0",
+    "@lytjs/vdom": "^6.0.0",
+    "@lytjs/common-vnode": "^6.0.0",
+    "@lytjs/common-is": "^6.0.0",
+    "@lytjs/common-scheduler": "^6.0.0",
+    "@lytjs/common-error": "^6.0.0",
+    "@lytjs/common-string": "^6.0.0"
   },
   "devDependencies": {
     "tsup": "^8.0.0",

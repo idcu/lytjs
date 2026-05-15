@@ -24,12 +24,12 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@lytjs/common-is": "workspace:*",
-    "@lytjs/common-env": "workspace:*",
-    "@lytjs/common-dom": "workspace:*",
-    "@lytjs/reactivity": "workspace:*",
-    "@lytjs/component": "workspace:*",
-    "@lytjs/vdom": "workspace:*"
+    "@lytjs/common-is": "^6.0.0",
+    "@lytjs/common-env": "^6.0.0",
+    "@lytjs/common-dom": "^6.0.0",
+    "@lytjs/reactivity": "^6.0.0",
+    "@lytjs/component": "^6.0.0",
+    "@lytjs/vdom": "^6.0.0"
   },
   "devDependencies": {
     "tsup": "^8.0.0",

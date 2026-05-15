@@ -6,10 +6,10 @@
  * @packageDocumentation
  */
 
-// CLI entry point
+import { runCli } from './commands/run';
+
 export { runCli } from './commands/run';
 
-// Commands
 export { create, listTemplates } from './commands/create';
 export { dev } from './commands/dev';
 export { build } from './commands/build';
@@ -28,12 +28,10 @@ export type {
   PluginPublishOptions,
 } from './commands/plugin';
 
-// Utils
 export { logger } from './utils/logger';
 export { ensureDir, writeFile, readFile, exists } from './utils/fs';
 export { detectPackageManager, getInstallCommand, getRunCommand, getAddCommand } from './utils/package';
 
-// Types
 export type {
   CliOptions,
   CreateOptions,
@@ -42,3 +40,7 @@ export type {
   TestOptions,
   PackageJson,
 } from './types';
+
+if (require.main === module) {
+  runCli().catch(console.error);
+}

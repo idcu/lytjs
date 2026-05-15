@@ -36,17 +36,17 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@lytjs/reactivity": "workspace:*",
-    "@lytjs/vdom": "workspace:*",
-    "@lytjs/common-is": "workspace:*",
-    "@lytjs/common-string": "workspace:*",
-    "@lytjs/common-events": "workspace:*",
-    "@lytjs/common-dom": "workspace:*",
-    "@lytjs/common-error": "workspace:*",
-    "@lytjs/dom-runtime": "workspace:*",
-    "@lytjs/compiler": "workspace:*",
-    "@lytjs/host-contract": "workspace:*",
-    "@lytjs/adapter-web": "workspace:*"
+    "@lytjs/reactivity": "^6.0.0",
+    "@lytjs/vdom": "^6.0.0",
+    "@lytjs/common-is": "^6.0.0",
+    "@lytjs/common-string": "^6.0.0",
+    "@lytjs/common-events": "^6.0.0",
+    "@lytjs/common-dom": "^6.0.0",
+    "@lytjs/common-error": "^6.0.0",
+    "@lytjs/dom-runtime": "^6.0.0",
+    "@lytjs/compiler": "^6.0.0",
+    "@lytjs/host-contract": "^6.0.0",
+    "@lytjs/adapter-web": "^6.0.0"
   },
   "devDependencies": {
     "tsup": "^8.0.0",

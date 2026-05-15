@@ -23,7 +23,12 @@ const TEMPLATES = {
 /**
  * Create a new LytJS project
  */
-export async function create(projectName: string, options: Partial<CreateOptions> = {}): Promise<void> {
+export async function create(projectName?: string, options: Partial<CreateOptions> = {}): Promise<void> {
+  if (!projectName) {
+    logger.error('Please provide a project name.');
+    logger.info('Usage: lyt create <project-name>');
+    process.exit(1);
+  }
   const targetDir = resolve(process.cwd(), projectName);
   
   // Check if directory exists and is not empty

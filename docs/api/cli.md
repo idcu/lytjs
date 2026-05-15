@@ -1,4 +1,4 @@
-﻿# CLI 工具 API 参考
+# CLI 工具 API 参考
 
 ## 安装
 
@@ -8,7 +8,7 @@ pnpm add -D @lytjs/cli
 
 ## 命令
 
-### lytjs create [项目名称]
+### lyt create [项目名称]
 
 创建一个新的 LytJS 项目。
 
@@ -17,7 +17,7 @@ pnpm add -D @lytjs/cli
 - `--template` - 项目模板 (default, minimal, ssr)
 - `--force` - 覆盖现有目录
 
-### lytjs add <类型> <名称>
+### lyt add <类型> <名称>
 
 生成组件、页面或状态管理模块。
 
@@ -30,12 +30,12 @@ pnpm add -D @lytjs/cli
 **示例**
 
 ```bash
-lytjs add component Button
-lytjs add page About
-lytjs add store user
+lyt add component Button
+lyt add page About
+lyt add store user
 ```
 
-### lytjs dev
+### lyt dev
 
 启动开发服务器。
 
@@ -45,7 +45,7 @@ lytjs add store user
 - `--host` - 服务器主机
 - `--open` - 在浏览器中打开
 
-### lytjs build
+### lyt build
 
 构建生产版本。
 
@@ -55,7 +55,7 @@ lytjs add store user
 - `--ssr` - 构建 SSR 版本
 - `--minify` - 压缩输出
 
-### lytjs test
+### lyt test
 
 使用 Vitest 运行测试。
 
@@ -65,6 +65,6 @@ lytjs add store user
 - `--coverage` - 生成覆盖率报告
 - `--grep` - 按模式过滤测试
 
-### lytjs templates
+### lyt templates
 
 列出可用的项目模板。

@@ -48,12 +48,12 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@lytjs/shared-types": "workspace:*",
-    "@lytjs/common-is": "workspace:*",
-    "@lytjs/common-scheduler": "workspace:*",
-    "@lytjs/common-error": "workspace:*",
-    "@lytjs/common-constants": "workspace:*",
-    "@lytjs/common-assertions": "workspace:*"
+    "@lytjs/shared-types": "^6.0.0",
+    "@lytjs/common-is": "^6.0.0",
+    "@lytjs/common-scheduler": "^6.0.0",
+    "@lytjs/common-error": "^6.0.0",
+    "@lytjs/common-constants": "^6.0.0",
+    "@lytjs/common-assertions": "^6.0.0"
   },
   "devDependencies": {
     "tsup": "^8.0.0",

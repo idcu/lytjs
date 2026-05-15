@@ -1,5 +1,5 @@
 {
-  "name": "@lytjs/devtools",
+  "name": "@lytjs/devtools-extension",
   "version": "6.0.0",
   "description": "LytJS browser DevTools extension for debugging LytJS applications",
   "type": "module",
@@ -29,9 +29,9 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@lytjs/reactivity": "workspace:*",
-    "@lytjs/component": "workspace:*",
-    "@lytjs/common-string": "workspace:*"
+    "@lytjs/reactivity": "^6.0.0",
+    "@lytjs/component": "^6.0.0",
+    "@lytjs/common-string": "^6.0.0"
   },
   "devDependencies": {
     "tsup": "^8.0.0",
@@ -48,6 +48,7 @@
     "lytjs",
     "devtools",
     "debug",
-    "inspector"
+    "inspector",
+    "extension"
   ]
 }

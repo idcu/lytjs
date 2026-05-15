@@ -2,13 +2,11 @@
   "name": "@lytjs/cli",
   "version": "6.0.0",
   "description": "LytJS project scaffolding and development CLI tool",
-  "type": "module",
-  "main": "./dist/index.cjs",
+  "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "bin": {
-    "lytjs": "./dist/index.mjs",
-    "create-lytjs": "./dist/create.mjs"
+    "lyt": "./lyt-cli.js"
   },
   "exports": {
     ".": {
@@ -19,7 +17,8 @@
     "./package.json": "./package.json"
   },
   "files": [
-    "dist"
+    "dist",
+    "lyt-cli.js"
   ],
   "sideEffects": false,
   "scripts": {
@@ -33,8 +32,8 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@lytjs/common-is": "workspace:*",
-    "@lytjs/common-env": "workspace:*"
+    "@lytjs/common-is": "^6.0.0",
+    "@lytjs/common-env": "^6.0.0"
   },
   "devDependencies": {
     "tsup": "^8.0.0",
@@ -48,9 +47,9 @@
     "directory": "packages/tools/packages/cli"
   },
   "keywords": [
-    "lytjs",
+    "lyt",
     "cli",
     "scaffold",
-    "create-lytjs"
+    "create-lyt"
   ]
 }
