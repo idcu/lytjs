@@ -41,3 +41,8 @@ export { default as pluginForm } from '@lytjs/plugin-form';
 export type {
   FormOptions, FormInstance, FormState, FieldState, FieldConfig, FieldValidationRule } from '@lytjs/plugin-form';
 export { createFormManager } from '@lytjs/plugin-form';
+
+export { default as pluginAnimation } from '@lytjs/plugin-animation';
+export type {
+  AnimationOptions, AnimationInstance, EasingFunction, TransitionOptions, Keyframe, AnimationPluginOptions } from '@lytjs/plugin-animation';
+export { createAnimation, createKeyframeAnimation, transitionElement, PRESETS, createAnimationManager } from '@lytjs/plugin-animation';
