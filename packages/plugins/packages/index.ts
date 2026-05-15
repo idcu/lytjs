@@ -36,3 +36,8 @@ export type {
   ChartPluginOptions,
 } from '@lytjs/plugin-chart';
 export { createChart, DEFAULT_COLORS } from '@lytjs/plugin-chart';
+
+export { default as pluginForm } from '@lytjs/plugin-form';
+export type {
+  FormOptions, FormInstance, FormState, FieldState, FieldConfig, FieldValidationRule } from '@lytjs/plugin-form';
+export { createFormManager } from '@lytjs/plugin-form';
