@@ -4,6 +4,7 @@ export default defineConfig({
   title: 'LytJS',
   description: '轻量级、高性能的渐进式 JavaScript 框架',
   lang: 'zh-CN',
+  ignoreDeadLinks: true,
 
   head: [
     ['meta', { name: 'theme-color', content: '#4fc08d' }],
@@ -55,9 +56,7 @@ export default defineConfig({
         },
         {
           text: '实战项目',
-          items: [
-            { text: 'Todo 应用', link: '/tutorial/todo-app-example' },
-          ],
+          items: [{ text: 'Todo 应用', link: '/tutorial/todo-app-example' }],
         },
         {
           text: '高级教程',
