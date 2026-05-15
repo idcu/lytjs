@@ -1,27 +1,23 @@
 /**
  * Render Benchmark - js-framework-benchmark style rendering tests
- * 
+ *
  * Tests the performance of initial rendering operations.
  */
 import { describe, bench } from 'vitest';
-import { h, createApp, ref, computed } from '@lytjs/core';
+import { h } from '@lytjs/vdom';
+import { signal } from '@lytjs/reactivity';
 
 describe('render benchmark', () => {
   // Helper to create a simple component
   const createItem = (id: number, label: string) => h('div', { key: id, class: 'item' }, label);
   const createRow = (id: number, label: string) =>
-    h('tr', { key: id }, [
-      h('td', {}, `${id}`),
-      h('td', {}, label),
-      h('td', {}, 'Some content'),
-    ]);
+    h('tr', { key: id }, [h('td', {}, `${id}`), h('td', {}, label), h('td', {}, 'Some content')]);
 
   bench('create 1000 nodes (divs)', () => {
     const nodes: any[] = [];
     for (let i = 0; i < 1000; i++) {
       nodes.push(h('div', { class: 'item' }, `Item ${i}`));
     }
-    // Return nodes to prevent optimization
     return nodes.length;
   });
 
@@ -33,21 +29,13 @@ describe('render benchmark', () => {
     return nodes.length;
   });
 
-  bench('create 1000 components (simple)', () => {
-    const components: any[] = [];
+  bench('create 1000 signals (simple)', () => {
+    const signals: any[] = [];
     for (let i = 0; i < 1000; i++) {
-      const comp = {
-        setup() {
-          const count = ref(i);
-          return { count };
-        },
-        render() {
-          return h('div', {}, `Count: ${this.count}`);
-        },
-      };
-      components.push(comp);
+      const count = signal(i);
+      signals.push(count);
     }
-    return components.length;
+    return signals.length;
   });
 
   bench('create 1000 rows (table)', () => {

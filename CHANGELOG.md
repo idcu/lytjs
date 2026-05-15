@@ -2,6 +2,132 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.0.1] - 2026-05-16
+
+### 教程与实战案例体系
+- ✅ **完整的 LytJS 学习资源体系**
+  - Vue → LytJS 迁移指南
+  - React → LytJS 迁移指南
+  - 实战案例教程（Todo、用户管理系统、购物车、博客系统）
+  - 官方插件使用指南（所有 11 个官方插件）
+
+### TypeScript 类型系统增强
+- ✅ **通用类型工具库** `packages/shared-types/src/type-utils.ts`
+  - 80+ 个实用类型工具
+  - 完整类型导出和文档
+- ✅ **TypeScript 开发体验优化**
+  - TypeScript 类型指南文档
+  - 完整类型示例代码库
+  - 类型系统导出完善
+
+### 文档体系完善
+- ✅ **全面的文档体系**
+  - 综合文档索引 `docs/SUMMARY.md`
+  - 快速入门指南
+  - 常见问题 FAQ
+  - SSR/SSG 使用指南
+  - CLI 使用指南
+  - 管理后台完整示例应用
+
+### 开发工具增强
+- ✅ **CLI 工具功能增强**
+  - 新增 5 种代码生成类型：directive, composable, hook, util, middleware
+  - 完善插件创建和管理流程
+- ✅ **Vapor 模式性能优化**
+  - DOM 操作批量处理优化
+  - 事件委托机制
+  - 增量更新优化
+
+### 测试体系增强
+- ✅ **完整测试体系**
+  - 管理后台 E2E 测试（Playwright）
+  - 完整测试指南文档
+  - 模糊测试和性能回归测试功能
+
+### 文档站点优化
+- ✅ **美观且功能完善的文档站点**
+  - 交互式组件示例
+  - VitePress 主题优化（渐变色彩、代码块美化）
+  - 完整导航结构
+  - VitePress 本地搜索功能
+
+### SSR/SSG 增强
+- ✅ **完整的服务端渲染能力**
+  - ISR（Incremental Static Regeneration）增量静态再生成
+  - 服务端组件架构
+  - Server Actions 服务端函数调用
+  - 特殊类型数据序列化支持
+
+### DevTools 完善
+- ✅ **强大的调试能力**
+  - 信号检查器与时间旅行调试
+  - 性能监控与告警
+  - 基准测试与回归检测
+  - 完整的 API 参考文档
+
+### 插件类型问题修复
+- ✅ **所有官方插件类型安全**
+  - plugin-animation：修复 signal API 使用和导出问题
+  - plugin-data-fetch：修复命名冲突和类型问题
+  - plugin-form：使用 signalComputed 替代 computed
+  - shared-types：简化复杂类型定义
+  - 所有包通过完整类型检查
+
+### 官方插件测试覆盖增强
+- ✅ **11 个官方插件测试完全通过**
+  - plugin-testing：修复信号跟踪问题
+  - plugin-vite：优化测试配置
+  - 所有插件通过完整测试套件
+
+### 开发体验增强
+- ✅ **Trae 可调用的 skill 支持**
+  - LytJS ROADMAP 维护与性能优化 skill
+  - 完整的项目状态检查流程
+  - 类型安全问题修复流程
+  - 性能优化完整指南
+
+### 性能基准测试完善
+- ✅ **完整的性能基准测试体系**
+  - 修复基准测试文件以适配 LytJS signal API
+  - 涵盖 signal 读写、signalComputed、effect、深度计算链、VNode 树创建
+  - 完整的测试环境构建
+
+### 官方插件扩展
+- ✅ **新增 4 个官方插件（共 11 个）**
+  - plugin-form：表单管理与验证
+  - plugin-animation：动画库
+  - plugin-data-fetch：数据获取与缓存
+  - plugin-testing：测试工具集成
+  - 所有插件零第三方运行时依赖
+
+### 新增文件清单
+**新增文档（20+ 个新文件）：**
+- `docs/SUMMARY.md` - 综合文档索引
+- `docs/tutorial/migration-from-vue.md` - Vue 迁移指南
+- `docs/tutorial/migration-from-react.md` - React 迁移指南
+- `docs/tutorial/tutorials.md` - 实战案例教程
+- `docs/tutorial/todo-app.md` - Todo 应用
+- `docs/tutorial/user-management.md` - 用户管理系统
+- `docs/tutorial/shopping-cart.md` - 购物车
+- `docs/tutorial/blog-system.md` - 博客系统
+- `docs/tutorial/official-plugins.md` - 官方插件使用指南
+- `docs/tutorial/cli-guide.md` - CLI 使用指南
+- `docs/tutorial/ssr-guide.md` - SSR/SSG 指南
+- `docs/tutorial/typescript-guide.md` - TypeScript 指南
+- `docs/tutorial/quick-start.md` - 快速入门
+- `docs/tutorial/faq.md` - 常见问题
+- `docs/guides/TESTING_GUIDE.md` - 完整测试指南
+- `docs/examples/typescript-examples.ts` - 类型示例
+- `docs/examples/interactive-counter.md` - 交互式示例
+- `docs/components/InteractiveCounter.vue` - 交互式组件
+- `examples/admin-dashboard/` - 管理后台示例（完整应用）
+- `e2e/tests/admin-dashboard.test.ts` - 管理后台 E2E 测试
+- `e2e/tests/scenarios.test.ts` - 场景化 E2E 测试
+- `packages/shared-types/src/type-utils.ts` - 80+ 类型工具
+- `.trae/skills/lytjs-roadmap-performance/SKILL.md` - Trae skill
+
+---
+
 ## [6.0.0] - 2026-05-15
 
 ### 核心功能完善

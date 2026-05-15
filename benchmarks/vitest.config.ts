@@ -6,10 +6,7 @@ export default defineConfig({
     include: ['src/**/*.bench.ts'],
     benchmark: {
       include: ['src/**/*.bench.ts'],
-      reporters: ['default', 'json'],
-      outputFile: {
-        json: './results/benchmark-results.json',
-      },
+      reporters: ['default'],
     },
     globals: true,
     environment: 'jsdom',

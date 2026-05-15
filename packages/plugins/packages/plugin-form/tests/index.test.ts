@@ -210,9 +210,11 @@ describe('@lytjs/plugin-form', () => {
       await form.submit(callback);
 
       expect(callback).toHaveBeenCalled();
-      expect(callback).toHaveBeenCalledWith(expect.objectContaining({
-        username: 'testuser',
-      }));
+      expect(callback).toHaveBeenCalledWith(
+        expect.objectContaining({
+          username: 'testuser',
+        }),
+      );
     });
 
     it('should reset form', () => {
@@ -286,6 +288,128 @@ describe('@lytjs/plugin-form', () => {
 
       form.unregisterField('test');
       expect(form.getFieldConfig('test')).toBeUndefined();
+    });
+
+    it('should handle multiple validation rules', async () => {
+      const form = createFormManager({
+        fields: {
+          password: {
+            rules: [
+              { type: 'required' },
+              { type: 'minLength', value: 8 },
+              { type: 'maxLength', value: 20 },
+            ],
+          },
+        },
+      });
+
+      // Empty password
+      form.setValue('password', '');
+      expect(await form.validateField('password')).toBe(false);
+
+      // Too short
+      form.setValue('password', '12345');
+      expect(await form.validateField('password')).toBe(false);
+
+      // Too long
+      form.setValue('password', '1234567890123456789012');
+      expect(await form.validateField('password')).toBe(false);
+
+      // Valid
+      form.setValue('password', '12345678');
+      expect(await form.validateField('password')).toBe(true);
+    });
+
+    it('should validate with async custom validator', async () => {
+      const asyncValidator = vi.fn(async (value: unknown) => {
+        await new Promise((resolve) => setTimeout(resolve, 10));
+        return String(value).length > 3;
+      });
+
+      const form = createFormManager({
+        fields: {
+          name: {
+            rules: [
+              {
+                type: 'custom',
+                validator: asyncValidator,
+              },
+            ],
+          },
+        },
+      });
+
+      form.setValue('name', 'abc');
+      expect(await form.validateField('name')).toBe(false);
+      expect(asyncValidator).toHaveBeenCalled();
+
+      form.setValue('name', 'abcd');
+      expect(await form.validateField('name')).toBe(true);
+    });
+
+    it('should touch and track touched fields', () => {
+      const form = createFormManager({
+        fields: {
+          username: {},
+          password: {},
+        },
+      });
+
+      form.registerField('username');
+      form.registerField('password');
+
+      expect(form.state.fields.username.touched).toBe(false);
+      expect(form.state.fields.password.touched).toBe(false);
+
+      form.touchField('username');
+
+      expect(form.state.fields.username.touched).toBe(true);
+      expect(form.state.fields.password.touched).toBe(false);
+
+      form.touchAllFields();
+
+      expect(form.state.fields.username.touched).toBe(true);
+      expect(form.state.fields.password.touched).toBe(true);
+    });
+
+    it('should track dirty state', () => {
+      const form = createFormManager({
+        fields: {
+          username: {
+            initialValue: 'test',
+          },
+        },
+      });
+
+      form.registerField('username');
+
+      expect(form.state.isDirty).toBe(false);
+
+      form.setValue('username', 'changed');
+
+      expect(form.state.isDirty).toBe(true);
+    });
+
+    it('should handle submit errors', async () => {
+      const submitError = new Error('Submission failed');
+      const callback = vi.fn().mockRejectedValue(submitError);
+
+      const form = createFormManager({
+        fields: {
+          username: { initialValue: 'testuser' },
+        },
+        validateOnSubmit: false,
+      });
+
+      let error = null;
+      try {
+        await form.submit(callback);
+      } catch (e) {
+        error = e;
+      }
+
+      expect(callback).toHaveBeenCalled();
+      expect(error).toBe(submitError);
     });
   });
 });
