@@ -774,6 +774,130 @@ export function flushSyncDOM(): void {
   }
 }
 
+// ==================== 事件委托机制 ====================
+
+/**
+ * 事件委托处理器注册表
+ *
+ * 使用事件委托可以显著减少事件监听器的数量，特别是对于频繁创建/销毁的组件。
+ * 我们在根元素上监听事件，然后根据实际触发事件的元素匹配处理函数。
+ */
+interface DelegateHandlerEntry {
+  el: Element;
+  handler: (event: Event) => void;
+}
+
+const delegateHandlers = new Map<string, DelegateHandlerEntry[]>();
+
+/**
+ * 已全局注册的事件监听器
+ */
+const globalListeners = new Set<string>();
+
+/**
+ * 处理事件委托的全局事件处理器
+ */
+function handleDelegatedEvent(event: Event) {
+  const eventType = event.type;
+  const handlers = delegateHandlers.get(eventType);
+  if (!handlers) return;
+
+  let target = event.target as Element | null;
+  while (target) {
+    for (const entry of handlers) {
+      if (entry.el === target) {
+        entry.handler(event);
+      }
+    }
+    target = target.parentElement;
+  }
+}
+
+/**
+ * 使用事件委托添加事件监听器
+ *
+ * @param el - 目标元素
+ * @param event - 事件名称
+ * @param handler - 事件处理函数
+ * @returns 取消监听的函数
+ */
+export function addEventListenerDelegate(
+  el: Element,
+  event: string,
+  handler: (event: Event) => void,
+): () => void {
+  if (!isBrowser) {
+    return () => {};
+  }
+
+  // 注册全局事件监听器（如果尚未注册）
+  if (!globalListeners.has(event)) {
+    document.addEventListener(event, handleDelegatedEvent, true);
+    globalListeners.add(event);
+  }
+
+  // 记录处理函数
+  let handlers = delegateHandlers.get(event);
+  if (!handlers) {
+    handlers = [];
+    delegateHandlers.set(event, handlers);
+  }
+  const entry: DelegateHandlerEntry = { el, handler };
+  handlers.push(entry);
+
+  // 返回取消监听的函数
+  return () => removeEventListenerDelegate(el, event, handler);
+}
+
+/**
+ * 使用事件委托移除事件监听器
+ *
+ * @param el - 目标元素
+ * @param event - 事件名称
+ * @param handler - 事件处理函数
+ */
+export function removeEventListenerDelegate(
+  el: Element,
+  event: string,
+  handler: (event: Event) => void,
+): void {
+  if (!isBrowser) return;
+
+  const handlers = delegateHandlers.get(event);
+  if (!handlers) return;
+
+  // 找到并移除对应的处理函数
+  const index = handlers.findIndex((entry) => entry.el === el && entry.handler === handler);
+  if (index !== -1) {
+    handlers.splice(index, 1);
+  }
+
+  // 如果没有处理函数了，移除全局监听器
+  if (handlers.length === 0) {
+    document.removeEventListener(event, handleDelegatedEvent, true);
+    globalListeners.delete(event);
+    delegateHandlers.delete(event);
+  }
+}
+
+/**
+ * 清理特定元素的所有委托事件监听器
+ */
+export function cleanupElementDelegates(el: Element): void {
+  if (!isBrowser) return;
+
+  for (const [event, handlers] of delegateHandlers) {
+    const filteredHandlers = handlers.filter((entry) => entry.el !== el);
+    if (filteredHandlers.length === 0) {
+      document.removeEventListener(event, handleDelegatedEvent, true);
+      globalListeners.delete(event);
+      delegateHandlers.delete(event);
+    } else {
+      delegateHandlers.set(event, filteredHandlers);
+    }
+  }
+}
+
 // ==================== 卸载 ====================
 
 export type CleanupFn = () => void;
