@@ -44,5 +44,12 @@ export { createFormManager } from '@lytjs/plugin-form';
 
 export { default as pluginAnimation } from '@lytjs/plugin-animation';
 export type {
-  AnimationOptions, AnimationInstance, EasingFunction, TransitionOptions, Keyframe, AnimationPluginOptions } from '@lytjs/plugin-animation';
+  AnimationOptions, AnimationInstance, EasingFunction, TransitionOptions, Keyframe, AnimationPluginOptions
+} from '@lytjs/plugin-animation';
 export { createAnimation, createKeyframeAnimation, transitionElement, PRESETS, createAnimationManager } from '@lytjs/plugin-animation';
+
+export { default as pluginDataFetch } from '@lytjs/plugin-data-fetch';
+export type {
+  RequestOptions, FetchError, CacheEntry, CacheStorage, Interceptor, FetchState, FetchInstance, FetchPluginOptions, RequestInterceptor, ResponseInterceptor, ErrorInterceptor
+} from '@lytjs/plugin-data-fetch';
+export { createFetch, createFetchManager, DefaultCacheStorage, generateCacheKey } from '@lytjs/plugin-data-fetch';
