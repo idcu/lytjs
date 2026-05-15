@@ -2,11 +2,15 @@
  * @lytjs/ssr - 静态站点生成测试
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import {
   generateStaticPages,
   generateRouteManifest,
   validatePages,
+  createISRMiddleware,
+  revalidateOnDemand,
+  getISRCacheStats,
+  clearISRCache,
 } from '../src/ssg';
 import type { SSGPage } from '../src/ssg';
 
@@ -237,5 +241,120 @@ describe('validatePages', () => {
     // 第一个页面：路径不以 / 开头 + 缺失 component
     // 第二个页面：缺失 component
     expect(errors.length).toBeGreaterThanOrEqual(2);
+  });
+});
+
+describe('ISR (Incremental Static Regeneration)', () => {
+  beforeEach(() => {
+    clearISRCache();
+  });
+
+  describe('ISR 缓存管理', () => {
+    it('应该返回空的缓存统计信息', () => {
+      const stats = getISRCacheStats();
+      expect(stats).toBeDefined();
+      expect(stats.total).toBe(0);
+      expect(stats.paths).toEqual([]);
+    });
+
+    it('应该能够清除缓存', () => {
+      // 先创建一些缓存（通过中间件）
+      const pages = new Map([['/index.html', '<html></html>']]);
+      const middleware = createISRMiddleware({ staticPages: pages });
+      
+      // 调用一下中间件会初始化缓存
+      const mockReq = { path: '/' };
+      const mockRes = {
+        setHeader: () => {},
+        send: () => {},
+      };
+      
+      middleware(mockReq as any, mockRes as any, () => {});
+      
+      const statsBefore = getISRCacheStats();
+      expect(statsBefore.total).toBeGreaterThan(0);
+      
+      clearISRCache();
+      
+      const statsAfter = getISRCacheStats();
+      expect(statsAfter.total).toBe(0);
+    });
+  });
+
+  describe('createISRMiddleware', () => {
+    it('应该创建 ISR 中间件函数', () => {
+      const pages = new Map();
+      const middleware = createISRMiddleware({ staticPages: pages });
+      expect(typeof middleware).toBe('function');
+    });
+
+    it('应该初始化 ISR 缓存', () => {
+      const pages = new Map([
+        ['/index.html', '<html>Home</html>'],
+        ['/about/index.html', '<html>About</html>'],
+      ]);
+      
+      createISRMiddleware({ staticPages: pages });
+      
+      const stats = getISRCacheStats();
+      expect(stats.total).toBe(2);
+      expect(stats.paths).toContain('/index.html');
+      expect(stats.paths).toContain('/about/index.html');
+    });
+
+    it('应该支持禁用 ISR', () => {
+      const pages = new Map([['/index.html', '<html>Home</html>']]);
+      let nextCalled = false;
+      
+      const middleware = createISRMiddleware({ 
+        staticPages: pages, 
+        enabled: false 
+      });
+      
+      const mockReq = { path: '/' };
+      const mockRes = {};
+      const mockNext = () => { nextCalled = true; };
+      
+      middleware(mockReq as any, mockRes as any, mockNext);
+      
+      expect(nextCalled).toBe(true);
+    });
+  });
+
+  describe('revalidateOnDemand', () => {
+    it('应该能够按需重新验证页面', async () => {
+      let regenerateCalled = false;
+      const testPath = '/page/index.html';
+      const regenerateFn = async () => {
+        regenerateCalled = true;
+        return '<html>New Content</html>';
+      };
+      
+      // 先设置缓存
+      const pages = new Map([[testPath, '<html>Old Content</html>']]);
+      createISRMiddleware({ staticPages: pages });
+      
+      // 执行重新验证
+      const result = await revalidateOnDemand(testPath, regenerateFn);
+      
+      expect(regenerateCalled).toBe(true);
+      expect(result).toBe('<html>New Content</html>');
+    });
+
+    it('应该处理重新验证过程中的错误', async () => {
+      const testPath = '/error/index.html';
+      const regenerateFn = async () => {
+        throw new Error('Revalidation failed');
+      };
+      
+      // 先设置缓存
+      const pages = new Map([[testPath, '<html>Content</html>']]);
+      createISRMiddleware({ staticPages: pages });
+      
+      // 应该抛出错误
+      await expect(revalidateOnDemand(testPath, regenerateFn))
+        .rejects
+        .toThrow('Revalidation failed');
+    });
   });
 });

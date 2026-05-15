@@ -27,6 +27,28 @@ import {
   getComponentTree,
   registerRootComponent,
   unregisterRootComponent,
+  registerSignal,
+  unregisterSignal,
+  getSignalNodes,
+  getSignalNode,
+  getDependencyGraph,
+  createSnapshot,
+  getSnapshots,
+  getTimeTravelState,
+  restoreSnapshot,
+  clearSnapshots,
+  getPerformanceStats,
+  getPerformanceRecords,
+  clearPerformanceRecords,
+  runBenchmark,
+  runAsyncBenchmark,
+  getBenchmarkResults,
+  getLatestBenchmarkResult,
+  clearBenchmarkResults,
+  compareBenchmarkResults,
+  createRegressionDetector,
+  LARGE_SCALE_SCENARIOS,
+  getMemoryUsage,
 } from '../src/index';
 
 // Mock document for DevTools tests
@@ -481,3 +503,282 @@ describe('Component Tree', () => {
     });
   });
 });
+
+describe('信号检查器', () => {
+  beforeEach(() => {
+    clearSnapshots();
+    clearSignalRegistry();
+  });
+
+  describe('registerSignal', () => {
+    it('应该注册信号', () => {
+      const mockSignal = { value: 0 };
+      registerSignal(mockSignal as any, 'count', 'signal');
+      
+      const signals = getSignalNodes();
+      expect(signals).toHaveLength(1);
+      expect(signals[0].name).toBe('count');
+      expect(signals[0].type).toBe('signal');
+    });
+  });
+
+  describe('getSignalNodes', () => {
+    it('应该返回所有信号节点', () => {
+      registerSignal({ value: 0 } as any, 'count', 'signal');
+      registerSignal({ value: '' } as any, 'name', 'signal');
+      
+      const nodes = getSignalNodes();
+      expect(nodes).toHaveLength(2);
+    });
+
+    it('应该返回空数组当没有信号注册时', () => {
+      const nodes = getSignalNodes();
+      expect(nodes).toEqual([]);
+    });
+  });
+
+  describe('快照功能', () => {
+    it('应该创建快照', () => {
+      registerSignal({ value: 42 } as any, 'count', 'signal');
+      
+      const snapshotId = createSnapshot('test-snapshot');
+      
+      expect(snapshotId).toBeDefined();
+      expect(typeof snapshotId).toBe('string');
+    });
+
+    it('应该获取所有快照', () => {
+      registerSignal({ value: 0 } as any, 'count', 'signal');
+      
+      createSnapshot('snapshot-1');
+      createSnapshot('snapshot-2');
+      
+      const snapshots = getSnapshots();
+      expect(snapshots).toHaveLength(2);
+    });
+
+    it('应该清除所有快照', () => {
+      registerSignal({ value: 0 } as any, 'count', 'signal');
+      
+      createSnapshot('to-be-cleared');
+      clearSnapshots();
+      
+      const snapshots = getSnapshots();
+      expect(snapshots).toHaveLength(0);
+    });
+
+    it('应该获取时间旅行状态', () => {
+      registerSignal({ value: 0 } as any, 'count', 'signal');
+      
+      createSnapshot('snapshot-1');
+      createSnapshot('snapshot-2');
+      
+      const state = getTimeTravelState();
+      expect(state.snapshots).toHaveLength(2);
+      expect(state.canUndo).toBe(false);
+      expect(state.canRedo).toBe(false);
+    });
+  });
+
+  describe('依赖图', () => {
+    it('应该返回依赖图', () => {
+      registerSignal({ value: 0 } as any, 'count', 'signal');
+      
+      const graph = getDependencyGraph();
+      expect(graph).toBeDefined();
+      expect(graph.nodes).toBeDefined();
+      expect(graph.edges).toBeDefined();
+    });
+  });
+});
+
+describe('性能监控', () => {
+  beforeEach(() => {
+    clearPerformanceRecords();
+  });
+
+  describe('getPerformanceStats', () => {
+    it('应该返回性能统计信息', () => {
+      const stats = getPerformanceStats();
+      expect(stats).toBeDefined();
+      expect(stats.totalRecords).toBe(0);
+      expect(stats.averageDuration).toBe(0);
+    });
+  });
+
+  describe('getPerformanceRecords', () => {
+    it('应该返回性能记录数组', () => {
+      const records = getPerformanceRecords();
+      expect(Array.isArray(records)).toBe(true);
+    });
+  });
+
+  describe('clearPerformanceRecords', () => {
+    it('应该清除所有性能记录', () => {
+      clearPerformanceRecords();
+      const records = getPerformanceRecords();
+      expect(records).toHaveLength(0);
+    });
+  });
+});
+
+describe('基准测试', () => {
+  beforeEach(() => {
+    clearBenchmarkResults();
+  });
+
+  describe('runBenchmark', () => {
+    it('应该运行同步基准测试', () => {
+      const result = runBenchmark({
+        name: 'test-benchmark',
+        iterations: 10,
+        warmup: 2,
+        fn: () => {
+          let sum = 0;
+          for (let i = 0; i < 100; i++) {
+            sum += i;
+          }
+        },
+      });
+
+      expect(result).toBeDefined();
+      expect(result.name).toBe('test-benchmark');
+      expect(result.iterations).toBe(10);
+      expect(result.totalDuration).toBeGreaterThanOrEqual(0);
+      expect(result.averageDuration).toBeGreaterThanOrEqual(0);
+      expect(result.opsPerSecond).toBeGreaterThan(0);
+    });
+  });
+
+  describe('runAsyncBenchmark', () => {
+    it('应该运行异步基准测试', async () => {
+      const result = await runAsyncBenchmark({
+        name: 'async-benchmark',
+        iterations: 5,
+        warmup: 1,
+        asyncFn: async () => {
+          await new Promise(resolve => setTimeout(resolve, 1));
+        },
+      });
+
+      expect(result).toBeDefined();
+      expect(result.name).toBe('async-benchmark');
+      expect(result.iterations).toBe(5);
+    });
+  });
+
+  describe('getBenchmarkResults', () => {
+    it('应该获取所有基准测试结果', () => {
+      runBenchmark({
+        name: 'result-test',
+        iterations: 5,
+        fn: () => {},
+      });
+
+      const results = getBenchmarkResults();
+      expect(results).toHaveLength(1);
+      expect(results[0].name).toBe('result-test');
+    });
+
+    it('应该按名称筛选基准测试结果', () => {
+      runBenchmark({ name: 'test-1', iterations: 5, fn: () => {} });
+      runBenchmark({ name: 'test-2', iterations: 5, fn: () => {} });
+
+      const results = getBenchmarkResults('test-1');
+      expect(results).toHaveLength(1);
+      expect(results[0].name).toBe('test-1');
+    });
+  });
+
+  describe('getLatestBenchmarkResult', () => {
+    it('应该获取最新的基准测试结果', () => {
+      runBenchmark({ name: 'latest-test', iterations: 5, fn: () => {} });
+      
+      const latest = getLatestBenchmarkResult('latest-test');
+      expect(latest).toBeDefined();
+      expect(latest?.name).toBe('latest-test');
+    });
+
+    it('应该返回 undefined 当没有结果时', () => {
+      const latest = getLatestBenchmarkResult('non-existent');
+      expect(latest).toBeUndefined();
+    });
+  });
+
+  describe('compareBenchmarkResults', () => {
+    it('应该比较两个基准测试结果', () => {
+      const result1 = runBenchmark({ 
+        name: 'compare-test', 
+        iterations: 10, 
+        fn: () => {} 
+      });
+      
+      const result2 = runBenchmark({ 
+        name: 'compare-test', 
+        iterations: 10, 
+        fn: () => {} 
+      });
+
+      const comparison = compareBenchmarkResults(result1, result2);
+      expect(comparison).toBeDefined();
+      expect(comparison.durationDiff).toBeDefined();
+      expect(comparison.improved).toBeDefined();
+    });
+  });
+
+  describe('clearBenchmarkResults', () => {
+    it('应该清除所有基准测试结果', () => {
+      runBenchmark({ name: 'clear-test', iterations: 5, fn: () => {} });
+      
+      clearBenchmarkResults();
+      
+      const results = getBenchmarkResults();
+      expect(results).toHaveLength(0);
+    });
+
+    it('应该按名称清除基准测试结果', () => {
+      runBenchmark({ name: 'keep-this', iterations: 5, fn: () => {} });
+      runBenchmark({ name: 'clear-this', iterations: 5, fn: () => {} });
+      
+      clearBenchmarkResults('clear-this');
+      
+      const keepResults = getBenchmarkResults('keep-this');
+      const clearResults = getBenchmarkResults('clear-this');
+      
+      expect(keepResults).toHaveLength(1);
+      expect(clearResults).toHaveLength(0);
+    });
+  });
+
+  describe('createRegressionDetector', () => {
+    it('应该创建性能回归检测器', () => {
+      const detector = createRegressionDetector(0.1);
+      
+      expect(detector).toBeDefined();
+      expect(typeof detector.addResult).toBe('function');
+      expect(typeof detector.getHistory).toBe('function');
+      expect(typeof detector.clear).toBe('function');
+    });
+  });
+
+  describe('LARGE_SCALE_SCENARIOS', () => {
+    it('应该提供预定义的大规模测试场景', () => {
+      expect(Array.isArray(LARGE_SCALE_SCENARIOS)).toBe(true);
+      expect(LARGE_SCALE_SCENARIOS.length).toBeGreaterThan(0);
+      
+      LARGE_SCALE_SCENARIOS.forEach(scenario => {
+        expect(typeof scenario.name).toBe('string');
+        expect(typeof scenario.nodeCount).toBe('number');
+        expect(typeof scenario.description).toBe('string');
+      });
+    });
+  });
+});
+
+// 辅助函数 - 清除信号注册表（用于测试）
+function clearSignalRegistry() {
+  const signals = getSignalNodes();
+  signals.forEach(signal => {
+    unregisterSignal(signal.name);
+  });
+}
