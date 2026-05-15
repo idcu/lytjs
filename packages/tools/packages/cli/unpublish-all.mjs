@@ -14,10 +14,17 @@ const versions = [
 
 console.log('Unpublishing all 6.0.x versions...');
 
+// Get token from environment variable
+const npmToken = process.env.NPM_TOKEN;
+if (!npmToken) {
+  console.error('Error: NPM_TOKEN environment variable not set');
+  process.exit(1);
+}
+
 for (const version of versions) {
   try {
     console.log(`Unpublishing @lytjs/cli@${version}...`);
-    execSync(`npm unpublish @lytjs/cli@${version} --force --//registry.npmjs.org/:_authToken=[REDACTED]`, { 
+    execSync(`npm unpublish @lytjs/cli@${version} --force --//registry.npmjs.org/:_authToken=${npmToken}`, { 
       stdio: 'inherit',
       cwd: process.cwd()
     });
