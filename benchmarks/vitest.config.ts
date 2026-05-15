@@ -6,10 +6,15 @@ export default defineConfig({
     include: ['src/**/*.bench.ts'],
     benchmark: {
       include: ['src/**/*.bench.ts'],
-      reporters: ['default'],
+      reporters: ['default', 'json'],
+      outputFile: {
+        json: './results/benchmark-results.json',
+      },
     },
     globals: true,
-    environment: 'node',
+    environment: 'jsdom',
+    includeSource: ['src/**/*.{js,ts}'],
+    pool: 'forks',
   },
   resolve: {
     alias: [
@@ -40,6 +45,10 @@ export default defineConfig({
       {
         find: /^@lytjs\/reactivity\/async$/,
         replacement: path.resolve(__dirname, '../packages/reactivity/dist/async.mjs'),
+      },
+      {
+        find: /^@lytjs\/renderer$/,
+        replacement: path.resolve(__dirname, '../packages/renderer/dist/index.mjs'),
       },
     ],
   },
