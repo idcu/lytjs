@@ -9,7 +9,7 @@ import { logger } from '../utils/logger';
 import { ensureDir, writeFile, exists } from '../utils/fs';
 import { join, resolve } from 'path';
 
-type AddType = 'component' | 'page' | 'store';
+type AddType = 'component' | 'page' | 'store' | 'directive' | 'composable' | 'util' | 'middleware' | 'hook';
 
 const TEMPLATES: Record<AddType, (name: string, path: string) => { filePath: string; content: string }[]> = {
   component(name, basePath) {
@@ -102,6 +102,162 @@ export const use${toPascalCase(name)}Store = defineStore('${name}', () => {
 `,
     }];
   },
+
+  directive(name, basePath) {
+    const filePath = join(basePath, `${name}.ts`);
+    const camelCaseName = toCamelCase(name);
+    return [{
+      filePath,
+      content: `import type { Directive } from '@lytjs/core';
+
+/**
+ * ${toPascalCase(name)} Directive
+ *
+ * @example
+ * \`\`\`vue
+ * <div v-${camelCaseName} />
+ * \`\`\`
+ */
+export const v${toPascalCase(name)}: Directive = {
+  mounted(el, binding) {
+    // Directive mounted
+  },
+
+  updated(el, binding) {
+    // Directive updated
+  },
+
+  unmounted(el) {
+    // Directive unmounted
+  },
+};
+`,
+    }];
+  },
+
+  composable(name, basePath) {
+    const filePath = join(basePath, `use${toPascalCase(name)}.ts`);
+    return [{
+      filePath,
+      content: `import { signal, computed } from '@lytjs/reactivity';
+
+/**
+ * ${toPascalCase(name)} Composable
+ *
+ * @example
+ * \`\`\`typescript
+ * const { state, actions } = use${toPascalCase(name)}();
+ * \`\`\`
+ */
+export function use${toPascalCase(name)}() {
+  // State
+  const isLoading = signal(false);
+  const error = signal<Error | null>(null);
+  const data = signal<any>(null);
+
+  // Computed
+  const hasData = computed(() => data.value !== null);
+
+  // Actions
+  async function fetch() {
+    isLoading.value = true;
+    error.value = null;
+    try {
+      // TODO: Fetch logic here
+      // data.value = await someApi();
+    } catch (e) {
+      error.value = e as Error;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  function reset() {
+    isLoading.value = false;
+    error.value = null;
+    data.value = null;
+  }
+
+  return {
+    isLoading,
+    error,
+    data,
+    hasData,
+    fetch,
+    reset,
+  };
+}
+`,
+    }];
+  },
+
+  hook(name, basePath) {
+    const filePath = join(basePath, `use${toPascalCase(name)}.ts`);
+    return [{
+      filePath,
+      content: `import { signal, onMounted, onUnmounted } from '@lytjs/core';
+
+/**
+ * ${toPascalCase(name)} Hook
+ */
+export function use${toPascalCase(name)}() {
+  const state = signal(null);
+
+  onMounted(() => {
+    // Setup code on mount
+  });
+
+  onUnmounted(() => {
+    // Cleanup on unmount
+  });
+
+  return {
+    state,
+  };
+}
+`,
+    }];
+  },
+
+  util(name, basePath) {
+    const filePath = join(basePath, `${name}.ts`);
+    return [{
+      filePath,
+      content: `/**
+ * ${toPascalCase(name)} Utility Functions
+ */
+
+/**
+ * ${toPascalCase(name)} function
+ *
+ * @param input - The input value
+ * @returns The processed result
+ */
+export function ${toCamelCase(name)}(input: any) {
+  // TODO: Implement function
+  return input;
+}
+`,
+    }];
+  },
+
+  middleware(name, basePath) {
+    const filePath = join(basePath, `${name}.ts`);
+    return [{
+      filePath,
+      content: `import type { NavigationGuard } from '@lytjs/router';
+
+/**
+ * ${toPascalCase(name)} Middleware
+ */
+export const ${toCamelCase(name)}Middleware: NavigationGuard = (to, from, next) => {
+  // Middleware logic
+  console.log('Middleware:', to.path);
+  next();
+};
+`,
+    }];
+  },
 };
 
 /**
@@ -112,6 +268,14 @@ function toPascalCase(str: string): string {
     .split(/[-_]/)
     .map(part => part.charAt(0).toUpperCase() + part.slice(1))
     .join('');
+}
+
+/**
+ * Convert string to camelCase
+ */
+function toCamelCase(str: string): string {
+  const pascalCase = toPascalCase(str);
+  return pascalCase.charAt(0).toLowerCase() + pascalCase.slice(1);
 }
 
 /**
@@ -126,6 +290,16 @@ function resolveTargetDir(type: AddType): string {
       return join(cwd, 'src', 'pages');
     case 'store':
       return join(cwd, 'src', 'stores');
+    case 'directive':
+      return join(cwd, 'src', 'directives');
+    case 'composable':
+      return join(cwd, 'src', 'composables');
+    case 'util':
+      return join(cwd, 'src', 'utils');
+    case 'middleware':
+      return join(cwd, 'src', 'middleware');
+    case 'hook':
+      return join(cwd, 'src', 'hooks');
   }
 }
 

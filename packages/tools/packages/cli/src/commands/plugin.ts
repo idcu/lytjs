@@ -138,8 +138,6 @@ const optionsSchema: ConfigSchema<${pluginName.replace(/-/g, '')}Options> = {
   additionalProperties: false,
 };
 
-${pluginName.replace(/-/g, '')}Options\`;
-
 export interface ${pluginName.replace(/-/g, '')}Options {
   debug?: boolean;
   option1?: string;

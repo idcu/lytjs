@@ -33,6 +33,14 @@ export interface TestOptions {
 
 export interface AddOptions {
   force?: boolean;
+  typescript?: boolean;
+  scoped?: boolean;
+}
+
+export interface GenerateOptions extends AddOptions {
+  type?: string;
+  name?: string;
+  path?: string;
 }
 
 export interface PackageJson {

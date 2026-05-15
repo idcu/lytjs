@@ -70,12 +70,14 @@ export async function runCli(rawArgs: string[] = process.argv.slice(2)): Promise
       break;
 
     case 'add':
-      if (!args[0] || !['component', 'page', 'store'].includes(args[0])) {
-        logger.error('Usage: lyt add <component|page|store> <name>');
+      const addTypes = ['component', 'page', 'store', 'directive', 'composable', 'util', 'middleware', 'hook'];
+      if (!args[0] || !addTypes.includes(args[0])) {
+        logger.error('Usage: lyt add <type> <name>');
+        logger.info('Types: component, page, store, directive, composable, util, middleware, hook');
         logger.info('Example: lyt add component Button');
         process.exit(1);
       }
-      await add(args[0] as 'component' | 'page' | 'store', args[1] || 'Unnamed', {
+      await add(args[0] as any, args[1] || 'Unnamed', {
         force: options.force as boolean | undefined,
       });
       break;
@@ -184,7 +186,7 @@ ${logger.bold('Commands:')}
   dev                      Start development server
   build                    Build for production
   test                     Run tests
-  add <type> <name>        Generate a component, page, or store
+  add <type> <name>        Generate a component, page, store, directive, composable, etc.
   plugin <subcmd>          Plugin development commands
   help                     Show this help message
 
@@ -231,6 +233,10 @@ ${logger.bold('Examples:')}
   lyt add component Button
   lyt add page About
   lyt add store user
+  lyt add directive click-outside
+  lyt add composable fetch-data
+  lyt add util format
+  lyt add hook window-size
   lyt plugin create my-plugin
   lyt plugin create my-plugin --template withConfig
   lyt plugin build
