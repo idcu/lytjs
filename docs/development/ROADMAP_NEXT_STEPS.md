@@ -341,19 +341,24 @@
 - ✅ 创建管理后台 E2E 测试（Playwright）
 - ✅ 创建完整测试指南（TESTING_GUIDE.md）
 - ✅ 测试体系文档完善
+- ✅ 模糊测试功能（Fuzz Testing）
+- ✅ 性能基准测试（Benchmarking）
+- ✅ 性能回归测试（Performance Regression Testing）
 
 **验收标准**：
 
 - [x] 管理后台 E2E 测试覆盖完整
 - [x] 完整测试指南文档
 - [x] 测试体系清晰明确
+- [x] 模糊测试和性能测试工具集成
 
 **工作量估算**：1周
 
 **已完成**：
 1. [管理后台 E2E 测试](file:///f:/trae/lytjs/e2e/tests/admin-dashboard.test.ts)
 2. [完整测试指南](file:///f:/trae/lytjs/docs/guides/TESTING_GUIDE.md)
-3. 测试体系文档完善
+3. [DevTools 文档修复](file:///f:/trae/lytjs/docs/api/devtools.md)
+4. [测试插件增强（模糊测试 + 性能回归测试）](file:///f:/trae/lytjs/packages/plugins/packages/plugin-testing/src/index.ts)
 
 #### 🟡 中优先级任务
 

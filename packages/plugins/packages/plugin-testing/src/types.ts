@@ -103,6 +103,143 @@ export interface DOMTestHelpers {
   hasClass: (selector: string | Element, className: string) => boolean;
 }
 
+/**
+ * 模糊测试生成器配置
+ */
+export interface FuzzGeneratorOptions {
+  /** 生成值的最大长度（针对字符串、数组等） */
+  maxLength?: number;
+  /** 最小值（针对数字） */
+  min?: number;
+  /** 最大值（针对数字） */
+  max?: number;
+  /** 是否允许 null/undefined */
+  allowNull?: boolean;
+  /** 是否允许 undefined */
+  allowUndefined?: boolean;
+}
+
+/**
+ * 模糊测试结果
+ */
+export interface FuzzTestResult {
+  /** 测试用例总数 */
+  totalCases: number;
+  /** 通过的测试用例数 */
+  passedCases: number;
+  /** 失败的测试用例 */
+  failedCases: Array<{
+    input: unknown;
+    error: Error;
+  }>;
+  /** 是否全部通过 */
+  success: boolean;
+}
+
+/**
+ * 性能基准测试配置
+ */
+export interface BenchmarkOptions {
+  /** 迭代次数 */
+  iterations?: number;
+  /** 预热次数 */
+  warmupIterations?: number;
+  /** 是否输出详细信息 */
+  verbose?: boolean;
+}
+
+/**
+ * 性能基准测试结果
+ */
+export interface BenchmarkResult {
+  /** 操作名称 */
+  name: string;
+  /** 总执行时间（毫秒） */
+  totalTime: number;
+  /** 平均执行时间（毫秒） */
+  averageTime: number;
+  /** 最快执行时间（毫秒） */
+  minTime: number;
+  /** 最慢执行时间（毫秒） */
+  maxTime: number;
+  /** 操作次数 */
+  iterations: number;
+  /** 每秒操作数 */
+  opsPerSecond: number;
+}
+
+/**
+ * 性能回归测试配置
+ */
+export interface RegressionTestOptions {
+  /** 性能阈值（百分比），如果新的性能比基准慢超过这个百分比则失败 */
+  threshold?: number;
+  /** 基准数据 */
+  baseline?: BenchmarkResult;
+}
+
+/**
+ * 性能回归测试结果
+ */
+export interface RegressionTestResult {
+  /** 是否通过回归测试 */
+  passed: boolean;
+  /** 基准结果 */
+  baseline: BenchmarkResult;
+  /** 当前结果 */
+  current: BenchmarkResult;
+  /** 性能差异百分比（正值表示变慢，负值表示变快） */
+  regressionPercent: number;
+  /** 消息 */
+  message: string;
+}
+
+export interface FuzzTestHelpers {
+  /** 生成随机字符串 */
+  randomString: (options?: FuzzGeneratorOptions) => string;
+  /** 生成随机数字 */
+  randomNumber: (options?: FuzzGeneratorOptions) => number;
+  /** 生成随机布尔值 */
+  randomBoolean: () => boolean;
+  /** 生成随机数组 */
+  randomArray: <T>(generator: () => T, options?: FuzzGeneratorOptions) => T[];
+  /** 生成随机对象 */
+  randomObject: (options?: FuzzGeneratorOptions) => Record<string, unknown>;
+  /** 生成随机日期 */
+  randomDate: (options?: FuzzGeneratorOptions) => Date;
+  /** 运行模糊测试 */
+  fuzz: <T>(
+    generator: () => T,
+    testFn: (input: T) => void | Promise<void>,
+    iterations?: number
+  ) => Promise<FuzzTestResult>;
+}
+
+export interface PerformanceTestHelpers {
+  /** 运行基准测试 */
+  benchmark: (
+    name: string,
+    fn: () => void | Promise<void>,
+    options?: BenchmarkOptions
+  ) => Promise<BenchmarkResult>;
+  /** 比较两次基准测试结果 */
+  compare: (
+    baseline: BenchmarkResult,
+    current: BenchmarkResult
+  ) => { percentChange: number; isFaster: boolean; isSlower: boolean };
+  /** 性能回归测试 */
+  regressionTest: (
+    name: string,
+    fn: () => void | Promise<void>,
+    baseline: BenchmarkResult,
+    options?: RegressionTestOptions
+  ) => Promise<RegressionTestResult>;
+  /** 保存基准数据 */
+  saveBaseline: (result: BenchmarkResult, path?: string) => void;
+  /** 加载基准数据 */
+  loadBaseline: (name: string, path?: string) => BenchmarkResult | null;
+}
+
 export interface TestingContext {
   /** 组件包装器 */
   mount: <T = unknown>(component: unknown, options?: WrapperOptions) => ComponentWrapper<T>;
@@ -122,4 +259,8 @@ export interface TestingContext {
   waitFor: (condition: () => boolean | Promise<boolean>, timeout?: number) => Promise<void>;
   /** 下一帧 */
   nextTick: () => Promise<void>;
+  /** 模糊测试助手 */
+  fuzz: FuzzTestHelpers;
+  /** 性能测试助手 */
+  performance: PerformanceTestHelpers;
 }

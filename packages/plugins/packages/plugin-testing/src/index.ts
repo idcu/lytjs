@@ -16,6 +16,14 @@ import type {
   SignalTestHelpers,
   DOMTestHelpers,
   TestingContext,
+  FuzzTestHelpers,
+  PerformanceTestHelpers,
+  FuzzGeneratorOptions,
+  FuzzTestResult,
+  BenchmarkOptions,
+  BenchmarkResult,
+  RegressionTestOptions,
+  RegressionTestResult,
 } from './types';
 
 /**
@@ -232,6 +240,249 @@ function createSignalTestHelpers(): SignalTestHelpers {
 }
 
 /**
+ * 创建模糊测试助手
+ */
+function createFuzzTestHelpers(): FuzzTestHelpers {
+  const randomString = (options: FuzzGeneratorOptions = {}): string => {
+    const maxLength = options.maxLength ?? 100;
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=[]{}|;:,.<>?';
+    const length = Math.floor(Math.random() * maxLength) + 1;
+    let result = '';
+    for (let i = 0; i < length; i++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
+  };
+
+  const randomNumber = (options: FuzzGeneratorOptions = {}): number => {
+    const min = options.min ?? -1000;
+    const max = options.max ?? 1000;
+    return Math.random() * (max - min) + min;
+  };
+
+  const randomBoolean = (): boolean => {
+    return Math.random() < 0.5;
+  };
+
+  const randomArray = <T>(generator: () => T, options: FuzzGeneratorOptions = {}): T[] => {
+    const maxLength = options.maxLength ?? 20;
+    const length = Math.floor(Math.random() * maxLength) + 1;
+    const result: T[] = [];
+    for (let i = 0; i < length; i++) {
+      result.push(generator());
+    }
+    return result;
+  };
+
+  const randomObject = (options: FuzzGeneratorOptions = {}): Record<string, unknown> => {
+    const maxLength = options.maxLength ?? 10;
+    const length = Math.floor(Math.random() * maxLength) + 1;
+    const result: Record<string, unknown> = {};
+    for (let i = 0; i < length; i++) {
+      const key = `key_${i}`;
+      const type = Math.random();
+      if (type < 0.3) {
+        result[key] = randomString({ maxLength: 20 });
+      } else if (type < 0.6) {
+        result[key] = randomNumber({ min: -100, max: 100 });
+      } else if (type < 0.8) {
+        result[key] = randomBoolean();
+      } else {
+        result[key] = null;
+      }
+    }
+    return result;
+  };
+
+  const randomDate = (options: FuzzGeneratorOptions = {}): Date => {
+    const now = Date.now();
+    const offset = Math.floor(Math.random() * 10000000000) - 5000000000;
+    return new Date(now + offset);
+  };
+
+  const fuzz = async <T>(
+    generator: () => T,
+    testFn: (input: T) => void | Promise<void>,
+    iterations = 100
+  ): Promise<FuzzTestResult> => {
+    const failedCases: Array<{ input: unknown; error: Error }> = [];
+    let passedCases = 0;
+
+    for (let i = 0; i < iterations; i++) {
+      const input = generator();
+      try {
+        await testFn(input);
+        passedCases++;
+      } catch (error) {
+        failedCases.push({
+          input,
+          error: error instanceof Error ? error : new Error(String(error)),
+        });
+      }
+    }
+
+    return {
+      totalCases: iterations,
+      passedCases,
+      failedCases,
+      success: failedCases.length === 0,
+    };
+  };
+
+  return {
+    randomString,
+    randomNumber,
+    randomBoolean,
+    randomArray,
+    randomObject,
+    randomDate,
+    fuzz,
+  };
+}
+
+/**
+ * 创建性能测试助手
+ */
+function createPerformanceTestHelpers(): PerformanceTestHelpers {
+  const benchmarks = new Map<string, BenchmarkResult>();
+
+  const benchmark = async (
+    name: string,
+    fn: () => void | Promise<void>,
+    options: BenchmarkOptions = {}
+  ): Promise<BenchmarkResult> => {
+    const iterations = options.iterations ?? 1000;
+    const warmupIterations = options.warmupIterations ?? 100;
+
+    // 预热
+    for (let i = 0; i < warmupIterations; i++) {
+      await fn();
+    }
+
+    const times: number[] = [];
+    const start = performance.now();
+
+    for (let i = 0; i < iterations; i++) {
+      const iterStart = performance.now();
+      await fn();
+      times.push(performance.now() - iterStart);
+    }
+
+    const totalTime = performance.now() - start;
+    const averageTime = totalTime / iterations;
+    const minTime = Math.min(...times);
+    const maxTime = Math.max(...times);
+    const opsPerSecond = 1000 / averageTime;
+
+    const result: BenchmarkResult = {
+      name,
+      totalTime,
+      averageTime,
+      minTime,
+      maxTime,
+      iterations,
+      opsPerSecond,
+    };
+
+    benchmarks.set(name, result);
+
+    if (options.verbose) {
+      console.log(`Benchmark "${name}":`);
+      console.log(`  Average: ${averageTime.toFixed(4)}ms`);
+      console.log(`  Min: ${minTime.toFixed(4)}ms`);
+      console.log(`  Max: ${maxTime.toFixed(4)}ms`);
+      console.log(`  Ops/s: ${opsPerSecond.toFixed(2)}`);
+    }
+
+    return result;
+  };
+
+  const compare = (
+    baseline: BenchmarkResult,
+    current: BenchmarkResult
+  ): { percentChange: number; isFaster: boolean; isSlower: boolean } => {
+    const percentChange = ((current.averageTime - baseline.averageTime) / baseline.averageTime) * 100;
+    return {
+      percentChange,
+      isFaster: percentChange < 0,
+      isSlower: percentChange > 0,
+    };
+  };
+
+  const regressionTest = async (
+    name: string,
+    fn: () => void | Promise<void>,
+    baseline: BenchmarkResult,
+    options: RegressionTestOptions = {}
+  ): Promise<RegressionTestResult> => {
+    const threshold = options.threshold ?? 10;
+    const current = await benchmark(name, fn);
+    const { percentChange, isSlower } = compare(baseline, current);
+
+    let message = '';
+    if (isSlower && percentChange > threshold) {
+      message = `Performance regression detected: ${percentChange.toFixed(2)}% slower (threshold: ${threshold}%)`;
+    } else if (isSlower) {
+      message = `Performance slightly slower: ${percentChange.toFixed(2)}% (within threshold)`;
+    } else if (percentChange < 0) {
+      message = `Performance improved: ${Math.abs(percentChange).toFixed(2)}% faster`;
+    } else {
+      message = 'Performance unchanged';
+    }
+
+    return {
+      passed: !isSlower || percentChange <= threshold,
+      baseline,
+      current,
+      regressionPercent: percentChange,
+      message,
+    };
+  };
+
+  const saveBaseline = (result: BenchmarkResult, path = './benchmarks'): void => {
+    try {
+      if (typeof window === 'undefined') {
+        // Node.js 环境
+        const fs = require('fs');
+        const fspath = require('path');
+        if (!fs.existsSync(path)) {
+          fs.mkdirSync(path, { recursive: true });
+        }
+        const filePath = fspath.join(path, `${result.name}.json`);
+        fs.writeFileSync(filePath, JSON.stringify(result, null, 2));
+      }
+    } catch (e) {
+      console.warn('Could not save baseline:', e);
+    }
+  };
+
+  const loadBaseline = (name: string, path = './benchmarks'): BenchmarkResult | null => {
+    try {
+      if (typeof window === 'undefined') {
+        // Node.js 环境
+        const fs = require('fs');
+        const fspath = require('path');
+        const filePath = fspath.join(path, `${name}.json`);
+        if (fs.existsSync(filePath)) {
+          return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+        }
+      }
+    } catch (e) {
+      console.warn('Could not load baseline:', e);
+    }
+    return null;
+  };
+
+  return {
+    benchmark,
+    compare,
+    regressionTest,
+    saveBaseline,
+    loadBaseline,
+  };
+}
+
+/**
  * 创建测试上下文
  */
 function createTestingContext(options: TestingPluginOptions = {}): TestingContext {
@@ -239,6 +490,8 @@ function createTestingContext(options: TestingPluginOptions = {}): TestingContex
   const mockFns: MockFn[] = [];
   const domHelpers = createDOMTestHelpers();
   const signalHelpers = createSignalTestHelpers();
+  const fuzzHelpers = createFuzzTestHelpers();
+  const performanceHelpers = createPerformanceTestHelpers();
 
   return {
     mount: <T = unknown>(component: unknown, options: WrapperOptions = {}): ComponentWrapper<T> => {
@@ -295,6 +548,8 @@ function createTestingContext(options: TestingPluginOptions = {}): TestingContex
 
     signal: signalHelpers,
     dom: domHelpers,
+    fuzz: fuzzHelpers,
+    performance: performanceHelpers,
 
     wait: async (ms: number): Promise<void> => {
       await new Promise(resolve => setTimeout(resolve, ms));
@@ -321,9 +576,9 @@ function createTestingContext(options: TestingPluginOptions = {}): TestingContex
 const pluginTesting = definePlugin({
   name: 'testing',
   version: '6.0.0',
-  description: 'LytJS official testing plugin with testing utilities and helpers',
+  description: 'LytJS official testing plugin with testing utilities and helpers, including fuzz testing and performance regression testing',
   author: 'LytJS Team',
-  keywords: ['lytjs', 'testing', 'test-utilities'],
+  keywords: ['lytjs', 'testing', 'test-utilities', 'fuzz-testing', 'benchmark'],
   schema: {
     type: 'object',
     object: {
@@ -353,5 +608,13 @@ export type {
   SignalTestHelpers,
   DOMTestHelpers,
   TestingContext,
+  FuzzTestHelpers,
+  PerformanceTestHelpers,
+  FuzzGeneratorOptions,
+  FuzzTestResult,
+  BenchmarkOptions,
+  BenchmarkResult,
+  RegressionTestOptions,
+  RegressionTestResult,
 };
 export { createTestingContext, createMockFn };
