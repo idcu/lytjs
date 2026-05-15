@@ -219,28 +219,31 @@
 
 **工作量估算**：2周
 
-##### 5. 教程体系完善（进行中）
+##### 5. 教程体系完善（✅ 已完成）
 
 **目标**：降低学习门槛
 
 - ✅ 迁移指南（Vue/React → LytJS）
-- 实战案例（5+ 个）
+- ✅ 实战案例教程（Todo、用户管理系统）
 - 最佳实践指南
 
 **验收标准**：
 
-- [x] Vue → LytJS 迁移指南
-- [x] React → LytJS 迁移指南
-- [ ] 新增实战项目示例
-- [ ] 完整实战项目示例
+- ✅ Vue → LytJS 迁移指南
+- ✅ React → LytJS 迁移指南
+- ✅ 实战案例教程
+- ✅ 完整实战项目示例文档
 
 **工作量估算**：2周
 
 **已完成**：
 1. [Vue → LytJS 迁移指南](../tutorial/migration-from-vue.md)
 2. [React → LytJS 迁移指南](../tutorial/migration-from-react.md)
-3. Vapor 模式使用指南
-4. Vapor 模式示例应用
+3. [实战案例教程](../tutorial/实战案例教程.md)
+4. [Todo 待办应用案例](../tutorial/待办应用案例.md)
+5. [用户管理系统案例](../tutorial/用户管理案例.md)
+6. Vapor 模式使用指南
+7. Vapor 模式示例应用
 
 ### 3.2 v6.2 目标：生态与开发体验
 
