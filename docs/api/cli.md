@@ -1,33 +1,33 @@
-﻿# @lytjs/cli API Reference
+﻿# CLI 工具 API 参考
 
-## Installation
+## 安装
 
 ```bash
 pnpm add -D @lytjs/cli
 ```
 
-## Commands
+## 命令
 
-### lytjs create [project-name]
+### lytjs create [项目名称]
 
-Create a new LytJS project.
+创建一个新的 LytJS 项目。
 
-Options:
+**选项**
 
---template - Project template (default, minimal, ssr)
---force - Overwrite existing directory
+- `--template` - 项目模板 (default, minimal, ssr)
+- `--force` - 覆盖现有目录
 
-### lytjs add type name
+### lytjs add <类型> <名称>
 
-Generate a component, page, or store.
+生成组件、页面或状态管理模块。
 
-Types:
+**类型**
 
-- component - Generate a .lyt component
-- page - Generate a page component
-- store - Generate a store module
+- component - 生成 .lyt 组件
+- page - 生成页面组件
+- store - 生成状态管理模块
 
-Examples:
+**示例**
 
 ```bash
 lytjs add component Button
@@ -37,34 +37,34 @@ lytjs add store user
 
 ### lytjs dev
 
-Start the development server.
+启动开发服务器。
 
-Options:
+**选项**
 
---port - Server port
---host - Server host
---open - Open in browser
+- `--port` - 服务器端口
+- `--host` - 服务器主机
+- `--open` - 在浏览器中打开
 
 ### lytjs build
 
-Build for production.
+构建生产版本。
 
-Options:
+**选项**
 
---outDir - Output directory
---ssr - Build for SSR
---minify - Minify output
+- `--outDir` - 输出目录
+- `--ssr` - 构建 SSR 版本
+- `--minify` - 压缩输出
 
 ### lytjs test
 
-Run tests with Vitest.
+使用 Vitest 运行测试。
 
-Options:
+**选项**
 
---watch - Watch mode
---coverage - Generate coverage
---grep - Filter tests by pattern
+- `--watch` - 监听模式
+- `--coverage` - 生成覆盖率报告
+- `--grep` - 按模式过滤测试
 
 ### lytjs templates
 
-List available project templates.
+列出可用的项目模板。
