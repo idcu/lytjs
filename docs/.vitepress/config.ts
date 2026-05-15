@@ -97,7 +97,7 @@ export default defineConfig({
           items: [
             { text: '响应式系统', link: '/guide/reactivity' },
             { text: '组件', link: '/guide/component' },
-            { text: '虚拟 DOM', link: '/guide/vdom' },
+            { text: '虚拟 DOM', link: '/guide/packages/vdom-deep' },
             { text: '组合式 API', link: '/guide/composition-api' },
             { text: '模板语法', link: '/guide/template-syntax' },
             { text: '事件处理', link: '/guide/events' },
