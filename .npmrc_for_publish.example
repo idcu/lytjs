@@ -1,0 +1,6 @@
+# .npmrc_for_publish 示例配置
+# 请复制此文件为 .npmrc_for_publish 并填入你的 npm 认证令牌
+# 重要：.npmrc_for_publish 文件已加入 .gitignore，不会被提交到仓库
+
+# npm 注册表认证令牌（请从 https://www.npmjs.com/settings/<your-username>/tokens 获取）
+# //registry.npmjs.org/:_authToken=你的_npm_令牌
