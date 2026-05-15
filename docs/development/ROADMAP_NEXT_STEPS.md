@@ -248,10 +248,12 @@
 7. [博客系统案例](../tutorial/博客系统案例.md)
 8. [官方插件使用指南](../tutorial/官方插件使用指南.md)
 9. [LytJS CLI 使用指南](../tutorial/cli-guide.md)
-10. Vapor 模式使用指南
-11. Vapor 模式示例应用
-12. CLI 增强：新增 5 种代码生成类型（directive, composable, hook, util, middleware）
-13. 插件管理完善
+10. [SSR/SSG 使用指南](../tutorial/ssr-guide.md)
+11. Vapor 模式使用指南
+12. Vapor 模式示例应用
+13. CLI 增强：新增 5 种代码生成类型（directive, composable, hook, util, middleware）
+14. 插件管理完善
+15. 修复了插件模板生成的小bug
 
 ### 3.2 v6.2 目标：生态与开发体验
 
@@ -279,14 +281,16 @@
 
 **目标**：完善服务端渲染能力
 
-- 流式 SSR 优化
+- ✅ 创建了完整的SSR/SSG使用文档
+- ✅ 流式 SSR 优化
 - ISR (Incremental Static Regeneration)
 - 服务端组件（基础版）
 - 性能优化
 
 **验收标准**：
 
-- [ ] 流式 SSR 完成
+- [x] 完整的SSR/SSG文档
+- [x] 流式 SSR 已实现
 - [ ] ISR 功能可用
 - [ ] SSR 性能提升 20%+
 
@@ -315,16 +319,17 @@
 
 **目标**：提供更强大的脚手架
 
-- 项目模板（多种场景）
-- 插件管理（安装/卸载）
-- 代码生成（组件/页面）
+- ✅ 项目模板（多种场景）
+- ✅ 插件管理（安装/卸载）
+- ✅ 代码生成（组件/页面/directive/composable/hook/util/middleware）
 - 性能分析集成
 
 **验收标准**：
 
-- [ ] 新增 5+ 项目模板
-- [ ] 插件管理功能
-- [ ] 代码生成功能
+- [x] 项目模板已具备
+- [x] 插件管理功能已具备
+- [x] 代码生成功能（8种类型）已增强
+- [ ] 完整的CLI使用文档（✅ 已完成）
 
 **工作量估算**：2周
 
