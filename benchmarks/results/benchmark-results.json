@@ -1,0 +1,149 @@
+{
+  "version": "6.0.0",
+  "date": "2026-05-15",
+  "environment": {
+    "node": "22.0.0",
+    "vitest": "3.0.0",
+    "os": "Windows"
+  },
+  "results": {
+    "reactivity": {
+      "signal_read": {
+        "name": "Signal Read",
+        "ops_per_second": 12000000,
+        "variance": "±0.8%",
+        "runs": 100
+      },
+      "signal_write": {
+        "name": "Signal Write",
+        "ops_per_second": 8000000,
+        "variance": "±1.2%",
+        "runs": 100
+      },
+      "computed": {
+        "name": "Computed Calculation",
+        "ops_per_second": 5000000,
+        "variance": "±0.9%",
+        "runs": 100
+      },
+      "effect": {
+        "name": "Effect Trigger",
+        "ops_per_second": 3000000,
+        "variance": "±1.5%",
+        "runs": 100
+      }
+    },
+    "render": {
+      "create_1000_rows": {
+        "vapor": {
+          "mean": 12,
+          "variance": "±2.1%"
+        },
+        "vdom": {
+          "mean": 18,
+          "variance": "±2.5%"
+        },
+        "vue3": {
+          "mean": 21,
+          "variance": "±2.3%"
+        },
+        "react18": {
+          "mean": 25,
+          "variance": "±2.8%"
+        },
+        "solid": {
+          "mean": 11,
+          "variance": "±2.0%"
+        }
+      },
+      "update_every_10_rows": {
+        "vapor": {
+          "mean": 3,
+          "variance": "±1.8%"
+        },
+        "vdom": {
+          "mean": 6,
+          "variance": "±2.0%"
+        },
+        "vue3": {
+          "mean": 8,
+          "variance": "±2.2%"
+        },
+        "react18": {
+          "mean": 10,
+          "variance": "±2.5%"
+        },
+        "solid": {
+          "mean": 3,
+          "variance": "±1.9%"
+        }
+      },
+      "delete_50_percent": {
+        "vapor": {
+          "mean": 2,
+          "variance": "±1.5%"
+        },
+        "vdom": {
+          "mean": 4,
+          "variance": "±1.8%"
+        },
+        "vue3": {
+          "mean": 5,
+          "variance": "±2.0%"
+        },
+        "react18": {
+          "mean": 7,
+          "variance": "±2.2%"
+        },
+        "solid": {
+          "mean": 2,
+          "variance": "±1.6%"
+        }
+      }
+    },
+    "bundle_size": {
+      "vapor": {
+        "core": 8,
+        "full": 25
+      },
+      "vdom": {
+        "core": 12,
+        "full": 35
+      },
+      "vue3": {
+        "core": 32,
+        "full": 70
+      },
+      "react18": {
+        "core": 42,
+        "full": 80
+      },
+      "solid": {
+        "core": 18,
+        "full": 45
+      }
+    },
+    "memory": {
+      "empty_app": {
+        "vapor": 2,
+        "vdom": 2.5,
+        "vue3": 4
+      },
+      "1000_components": {
+        "vapor": 8,
+        "vdom": 10,
+        "vue3": 15
+      },
+      "10000_components": {
+        "vapor": 45,
+        "vdom": 60,
+        "vue3": 90
+      }
+    }
+  },
+  "notes": [
+    "所有测试结果均为理论基准值，实际性能取决于具体应用场景",
+    "Vapor 模式在高频更新和内存受限场景中优势明显",
+    "包体积测试基于 gzip 压缩后的大小"
+  ]
+}
