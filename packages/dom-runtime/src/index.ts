@@ -729,18 +729,49 @@ export function bindEffect(fn: () => void): () => void {
 /**
  * 批量执行 DOM 操作（减少重排）
  *
- * 当前使用微任务（Promise.resolve().then）延迟执行，合并同一 tick 内的多次 DOM 操作。
- * TODO (P2-14): 未来可考虑使用 requestAnimationFrame 替代微任务，
- * 使 DOM 批量更新与浏览器渲染帧对齐，进一步减少不必要的重排重绘。
- * 但需注意 requestAnimationFrame 的回调时机晚于微任务，可能影响更新时序。
+ * 使用 requestAnimationFrame 延迟执行，使 DOM 批量更新与浏览器渲染帧对齐，
+ * 进一步减少不必要的重排重绘。如果已有待执行的回调，新的回调会追加到同一帧中。
+ *
+ * 对于需要同步更新的场景（例如需要立即读取布局信息），请使用 flushSyncDOM()
  */
+let batchedFns: (() => void)[] | null = null;
+let rafId: number | null = null;
+
 export function batchDOM(fn: () => void): void {
   if (!isBrowser) {
     fn();
     return;
   }
-  // 使用微任务延迟执行，合并同一 tick 内的多次 DOM 操作
-  Promise.resolve().then(fn);
+  if (!batchedFns) {
+    batchedFns = [];
+    rafId = requestAnimationFrame(() => {
+      const fns = batchedFns!;
+      batchedFns = null;
+      rafId = null;
+      for (const f of fns) {
+        f();
+      }
+    });
+  }
+  batchedFns.push(fn);
+}
+
+/**
+ * 同步执行所有待批量处理的 DOM 操作
+ *
+ * 用于需要立即更新 DOM 并读取布局信息的场景（例如在用户交互后获取元素尺寸）
+ */
+export function flushSyncDOM(): void {
+  if (!isBrowser || !batchedFns) return;
+  if (rafId !== null) {
+    cancelAnimationFrame(rafId);
+    rafId = null;
+  }
+  const fns = batchedFns!;
+  batchedFns = null;
+  for (const f of fns) {
+    f();
+  }
 }
 
 // ==================== 卸载 ====================
