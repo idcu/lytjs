@@ -1,1 +1,107 @@
-﻿
+/**
+ * LytJS 文档主题样式
+ */
+
+/* 主要颜色变量
+ */
+:root {
+  --lyt-primary: #4fc08d;
+  --lyt-primary-dark: #3da677;
+  --lyt-accent: #7054f3;
+  --lyt-gradient-start: #667eea;
+  --lyt-gradient-end: #764ba2;
+  --lyt-code-bg: #f6f8fa;
+  --lyt-code-border: #e1e4e8;
+}
+
+.dark {
+  --lyt-code-bg: #1e1e1e;
+  --lyt-code-border: #2d2d2d;
+}
+
+/* 主页 Hero 区域
+ */
+.VPHero .name {
+  background: linear-gradient(90deg, var(--lyt-gradient-start) 0%, var(--lyt-gradient-end) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* 代码块优化
+ */
+.vp-code-group {
+  border-radius: 10px !important;
+  overflow: hidden !important;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+}
+
+/* 提示框优化
+ */
+.vp-doc .custom-block {
+  border-radius: 8px !important;
+}
+
+/* 强调样式优化
+ */
+.vp-doc h2 {
+  border-bottom: 1px solid rgba(60, 60, 60, 0.1) !important;
+}
+
+/* 按钮样式
+ */
+.vp-doc a {
+  color: var(--lyt-primary) !important;
+}
+
+.vp-doc a:hover {
+  color: var(--lyt-primary-dark) !important;
+  text-decoration: underline !important;
+}
+
+/* 侧边栏优化
+ */
+.VPSidebarItem.is-active > a {
+  border-left: 3px solid var(--lyt-primary) !important;
+  background: rgba(79, 192, 141, 0.06) !important;
+}
+
+/* 自定义标记样式
+ */
+.vp-doc em {
+  color: var(--lyt-accent);
+  font-style: normal;
+  font-weight: 600;
+}
+
+/* 代码高亮优化
+ */
+.vp-doc :not(pre) > code {
+  border: 1px solid var(--lyt-code-border);
+  background-color: var(--lyt-code-bg);
+  border-radius: 5px;
+  padding: 0.25em 0.5em;
+  font-size: 0.9em;
+}
+
+/* 表格优化
+ */
+.vp-doc table {
+  border-radius: 10px !important;
+  overflow: hidden !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+/* 响应式设计
+ */
+@media (max-width: 640px) {
+  .vp-doc h1 {
+    font-size: 1.8rem !important;
+  }
+}
+
+/* 平滑滚动
+ */
+html {
+  scroll-behavior: smooth;
+}

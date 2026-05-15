@@ -32,10 +32,10 @@ export default defineConfig({
     sidebar: {
       '/tutorial/': [
         {
-          text: '教程',
+          text: '快速入门',
           items: [
-            { text: '教程总览', link: '/tutorial/' },
             { text: '快速开始', link: '/tutorial/quick-start' },
+            { text: '项目总览', link: '/PROJECT_SUMMARY' },
           ],
         },
         {
@@ -47,17 +47,45 @@ export default defineConfig({
           ],
         },
         {
+          text: '迁移指南',
+          items: [
+            { text: '从 Vue 迁移', link: '/tutorial/migration-from-vue' },
+            { text: '从 React 迁移', link: '/tutorial/migration-from-react' },
+          ],
+        },
+        {
           text: '进阶教程',
           items: [
             { text: '状态管理', link: '/tutorial/state-management' },
             { text: '路由导航', link: '/tutorial/routing' },
             { text: '表单处理', link: '/tutorial/forms' },
             { text: 'API 集成', link: '/tutorial/api-integration' },
+            { text: 'TypeScript 开发', link: '/tutorial/typescript-guide' },
+            { text: 'SSR/SSG 指南', link: '/tutorial/ssr-guide' },
           ],
         },
         {
-          text: '实战项目',
-          items: [{ text: 'Todo 应用', link: '/tutorial/todo-app-example' }],
+          text: '实战案例',
+          items: [
+            { text: '案例总览', link: '/tutorial/实战案例教程' },
+            { text: 'Todo 待办应用', link: '/tutorial/待办应用案例' },
+            { text: '用户管理系统', link: '/tutorial/用户管理案例' },
+            { text: '购物车系统', link: '/tutorial/购物车案例' },
+            { text: '博客系统', link: '/tutorial/博客系统案例' },
+          ],
+        },
+        {
+          text: '官方插件',
+          items: [
+            { text: '插件总览', link: '/tutorial/官方插件使用指南' },
+            { text: '自定义插件', link: '/tutorial/custom-plugins' },
+          ],
+        },
+        {
+          text: '工具与配置',
+          items: [
+            { text: 'CLI 使用指南', link: '/tutorial/cli-guide' },
+          ],
         },
         {
           text: '高级教程',
@@ -65,7 +93,6 @@ export default defineConfig({
             { text: '性能优化', link: '/tutorial/performance' },
             { text: '测试指南', link: '/tutorial/testing' },
             { text: '部署指南', link: '/tutorial/deployment' },
-            { text: '自定义插件', link: '/tutorial/custom-plugins' },
           ],
         },
         {
@@ -80,6 +107,7 @@ export default defineConfig({
           items: [
             { text: '常见问题', link: '/tutorial/faq' },
             { text: '最佳实践', link: '/tutorial/best-practices' },
+            { text: '故障排除', link: '/tutorial/troubleshooting' },
           ],
         },
       ],
@@ -174,12 +202,14 @@ export default defineConfig({
         {
           text: '开发文档',
           items: [
+            { text: '项目总结', link: '/PROJECT_SUMMARY' },
             { text: 'AI 开发规则', link: '/development/AI_IDE_RULES' },
             { text: '架构设计', link: '/development/ARCHITECTURE' },
             { text: '中文文档指南', link: '/development/CHINESE_DOCS_GUIDE' },
             { text: '插件开发指南', link: '/development/PLUGIN_DEVELOPMENT' },
             { text: '项目结构说明', link: '/development/PROJECT_STRUCTURE' },
             { text: '路线图', link: '/development/ROADMAP_NEXT_STEPS' },
+            { text: '变更日志', link: '/development/CHANGELOG' },
           ],
         },
       ],
