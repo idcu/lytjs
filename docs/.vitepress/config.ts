@@ -5,7 +5,7 @@ export default defineConfig({
   description: '轻量级、高性能的渐进式 JavaScript 框架',
   lang: 'zh-CN',
   ignoreDeadLinks: true,
-  base: '/',
+  base: '/lytjs/',
 
   head: [
     ['meta', { name: 'theme-color', content: '#4fc08d' }],
