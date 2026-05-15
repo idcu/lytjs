@@ -124,16 +124,13 @@
 - ✅ plugin-form：表单管理和验证
 - ✅ plugin-animation：动画库
 - ✅ plugin-data-fetch：数据获取和缓存
+- ✅ plugin-testing：测试工具集成
 - plugin-theme：主题管理
 - plugin-logger：日志记录
 - plugin-auth：权限控制
 - plugin-storage：本地存储
 - plugin-i18n：国际化
 - plugin-chart：图表渲染
-
-**待实现**：
-
-- plugin-testing：测试工具集成
 
 **验收标准**：
 

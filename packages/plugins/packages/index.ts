@@ -53,3 +53,9 @@ export type {
   RequestOptions, FetchError, CacheEntry, CacheStorage, Interceptor, FetchState, FetchInstance, FetchPluginOptions, RequestInterceptor, ResponseInterceptor, ErrorInterceptor
 } from '@lytjs/plugin-data-fetch';
 export { createFetch, createFetchManager, DefaultCacheStorage, generateCacheKey } from '@lytjs/plugin-data-fetch';
+
+export { default as pluginTesting } from '@lytjs/plugin-testing';
+export type {
+  TestingPluginOptions, WrapperOptions, ComponentWrapper, MockOptions, MockFn, SignalTestHelpers, DOMTestHelpers, TestingContext
+} from '@lytjs/plugin-testing';
+export { createTestingContext, createMockFn } from '@lytjs/plugin-testing';
