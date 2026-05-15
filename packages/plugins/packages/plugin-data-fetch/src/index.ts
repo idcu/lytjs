@@ -7,7 +7,8 @@
  */
 
 import { definePlugin } from '@lytjs/core';
-import { signal, computed } from '@lytjs/reactivity';
+import { signal, signalComputed as computed } from '@lytjs/reactivity';
+import type { ComputedSignal } from '@lytjs/reactivity';
 import type {
   RequestOptions,
   FetchError,
@@ -129,13 +130,13 @@ export function createFetch<T = unknown>(
   const refetchCountSignal = signal(0);
   let abortController: AbortController | null = null;
 
-  const state = computed<FetchState<T>>(() => ({
-    data: dataSignal.value,
-    isLoading: isLoadingSignal.value,
-    error: errorSignal.value,
-    isSuccess: !isLoadingSignal.value && dataSignal.value !== null && errorSignal.value === null,
-    isError: !isLoadingSignal.value && errorSignal.value !== null,
-    refetchCount: refetchCountSignal.value,
+  const state: ComputedSignal<FetchState<T>> = computed<FetchState<T>>(() => ({
+    data: dataSignal(),
+    isLoading: isLoadingSignal(),
+    error: errorSignal(),
+    isSuccess: !isLoadingSignal() && dataSignal() !== null && errorSignal() === null,
+    isError: !isLoadingSignal() && errorSignal() !== null,
+    refetchCount: refetchCountSignal(),
   }));
 
   const {
@@ -158,12 +159,13 @@ export function createFetch<T = unknown>(
     }
 
     abortController = new AbortController();
-    const signal = abortController.signal;
+    const abortSignal = abortController.signal;
 
-    let currentConfig: RequestOptions = { ...options, signal };
+    let currentConfig: RequestOptions = { ...options, signal: abortSignal };
 
     // 应用请求拦截器
-    for (const interceptor of globalOptions.requestInterceptors || []) {
+    const requestInterceptors = (globalOptions.requestInterceptors || []) as RequestInterceptor[];
+    for (const interceptor of requestInterceptors) {
       currentConfig = await interceptor(currentConfig);
     }
 
@@ -183,21 +185,22 @@ export function createFetch<T = unknown>(
       }
     }
 
-    isLoadingSignal.value = true;
-    errorSignal.value = null;
+    isLoadingSignal.set(true);
+    errorSignal.set(null);
 
     let lastError: FetchError | null = null;
 
     for (let attempt = 0; attempt <= retries; attempt++) {
       try {
-        const response = await fetchWithTimeout(fullUrl, currentConfig, timeout, signal);
+        const response = await fetchWithTimeout(fullUrl, currentConfig, timeout, abortSignal);
 
         if (!response.ok) {
           const error = createFetchError(`HTTP ${response.status}`, currentConfig, response);
 
           // 应用错误拦截器
           let processedError = error;
-          for (const interceptor of globalOptions.errorInterceptors || []) {
+          const errorInterceptors = (globalOptions.errorInterceptors || []) as ErrorInterceptor[];
+          for (const interceptor of errorInterceptors) {
             processedError = await interceptor(processedError);
           }
 
@@ -226,8 +229,9 @@ export function createFetch<T = unknown>(
         }
 
         // 应用响应拦截器
-        for (const interceptor of globalOptions.responseInterceptors || []) {
-          result = await interceptor(result);
+        const responseInterceptors = (globalOptions.responseInterceptors || []) as ResponseInterceptor[];
+        for (const interceptor of responseInterceptors) {
+          result = (await interceptor(result)) as T;
         }
 
         // 更新缓存
@@ -239,12 +243,12 @@ export function createFetch<T = unknown>(
           });
         }
 
-        dataSignal.value = result;
-        isLoadingSignal.value = false;
+        dataSignal.set(result);
+        isLoadingSignal.set(false);
 
         return result;
       } catch (error) {
-        if (signal.aborted) {
+        if (abortSignal.aborted) {
           lastError = createFetchError('Request cancelled', currentConfig, undefined, error as Error);
           break;
         }
@@ -266,14 +270,14 @@ export function createFetch<T = unknown>(
       if (cacheStrategy === 'network-first' && cacheStorage.has(cacheKey)) {
         const cached = cacheStorage.get<T>(cacheKey);
         if (cached) {
-          dataSignal.value = cached.data;
-          isLoadingSignal.value = false;
+          dataSignal.set(cached.data);
+          isLoadingSignal.set(false);
           return cached.data;
         }
       }
 
-      errorSignal.value = lastError;
-      isLoadingSignal.value = false;
+      errorSignal.set(lastError);
+      isLoadingSignal.set(false);
       throw lastError;
     }
 
@@ -283,31 +287,19 @@ export function createFetch<T = unknown>(
   async function fetchWithTimeout(
     url: string,
     config: RequestOptions,
-    timeout: number,
-    signal: AbortSignal,
+    _timeout: number,
+    _signal: AbortSignal,
   ): Promise<Response> {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeout);
-
-    try {
-      const response = await fetch(url, {
-        ...config,
-        signal: AbortSignal.any([signal, controller.signal]),
-      });
-      clearTimeout(timeoutId);
-      return response;
-    } catch (error) {
-      clearTimeout(timeoutId);
-      throw error;
-    }
+    const response = await fetch(url, config as RequestInit);
+    return response;
   }
 
-  const fetch = async (): Promise<T> => {
+  const doFetch = async (): Promise<T> => {
     return executeFetch();
   };
 
   const refetch = async (): Promise<T> => {
-    refetchCountSignal.value++;
+    refetchCountSignal.update(v => v + 1);
     return executeFetch();
   };
 
@@ -316,34 +308,34 @@ export function createFetch<T = unknown>(
       abortController.abort();
       abortController = null;
     }
-    isLoadingSignal.value = false;
+    isLoadingSignal.set(false);
   };
 
   const setData = (data: T | ((prev: T | null) => T)): void => {
     if (typeof data === 'function') {
-      dataSignal.value = (data as (prev: T | null) => T)(dataSignal.value);
+      dataSignal.update(prev => (data as (prev: T | null) => T)(prev));
     } else {
-      dataSignal.value = data;
+      dataSignal.set(data);
     }
   };
 
   const setError = (error: FetchError | null): void => {
-    errorSignal.value = error;
+    errorSignal.set(error);
   };
 
   const reset = (): void => {
-    dataSignal.value = null;
-    isLoadingSignal.value = false;
-    errorSignal.value = null;
-    refetchCountSignal.value = 0;
+    dataSignal.set(null);
+    isLoadingSignal.set(false);
+    errorSignal.set(null);
+    refetchCountSignal.set(0);
     abortController = null;
   };
 
   return {
     get state() {
-      return state.value;
+      return state();
     },
-    fetch,
+    fetch: doFetch,
     refetch,
     cancel,
     setData,
@@ -357,9 +349,9 @@ export function createFetch<T = unknown>(
  */
 function createFetchManager(globalOptions: FetchPluginOptions = {}) {
   const cacheStorage = globalOptions.cacheStorage || new DefaultCacheStorage();
-  const requestInterceptors: RequestInterceptor[] = [...(globalOptions.requestInterceptors || [])];
-  const responseInterceptors: ResponseInterceptor[] = [...(globalOptions.responseInterceptors || [])];
-  const errorInterceptors: ErrorInterceptor[] = [...(globalOptions.errorInterceptors || [])];
+  const requestInterceptors: RequestInterceptor[] = (globalOptions.requestInterceptors || []) as RequestInterceptor[];
+  const responseInterceptors: ResponseInterceptor[] = (globalOptions.responseInterceptors || []) as ResponseInterceptor[];
+  const errorInterceptors: ErrorInterceptor[] = (globalOptions.errorInterceptors || []) as ErrorInterceptor[];
 
   return {
     /**
@@ -534,4 +526,4 @@ export type {
   ResponseInterceptor,
   ErrorInterceptor,
 };
-export { createFetch, createFetchManager, DefaultCacheStorage, generateCacheKey };
+export { createFetchManager, DefaultCacheStorage, generateCacheKey };

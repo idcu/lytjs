@@ -7,7 +7,7 @@
  */
 
 import { definePlugin } from '@lytjs/core';
-import { signal } from '@lytjs/reactivity';
+import { signal, signalComputed as computed } from '@lytjs/reactivity';
 import type {
   AnimationOptions,
   AnimationInstance,
@@ -148,7 +148,7 @@ export function createAnimation(
       }
 
       progress = adjustedProgress;
-      progressSignal.value = adjustedProgress;
+      progressSignal.set(adjustedProgress);
 
       const easedProgress = easingFn(adjustedProgress);
 
@@ -231,7 +231,7 @@ export function createAnimation(
     state = 'idle';
     progress = 0;
     currentIteration = 0;
-    progressSignal.value = 0;
+    progressSignal.set(0);
     startTime = 0;
     pausedTime = 0;
     isReversed = direction === 'reverse' || direction === 'alternate-reverse';
@@ -239,7 +239,7 @@ export function createAnimation(
 
   function seek(newProgress: number) {
     progress = Math.max(0, Math.min(1, newProgress));
-    progressSignal.value = progress;
+    progressSignal.set(progress);
     const easedProgress = easingFn(progress);
     animateFn(easedProgress);
     if (onUpdate) {
@@ -257,7 +257,7 @@ export function createAnimation(
       return state;
     },
     get progress() {
-      return progressSignal.value;
+      return progressSignal();
     },
     play,
     pause,
@@ -391,9 +391,9 @@ export function createKeyframeAnimation(
 
         if (onUpdate) {
           updateInterval = window.setInterval(() => {
-            if (webAnimation) {
-              const progress = webAnimation.currentTime / duration;
-              progressSignal.value = progress;
+            if (webAnimation && webAnimation.currentTime !== null && webAnimation.currentTime !== undefined) {
+              const progress = (webAnimation.currentTime as number) / duration;
+              progressSignal.set(progress);
               onUpdate(progress);
             }
           }, 16);
@@ -437,7 +437,7 @@ export function createKeyframeAnimation(
       if (webAnimation) {
         webAnimation.cancel();
         webAnimation = null;
-        progressSignal.value = 0;
+        progressSignal.set(0);
         if (updateInterval) {
           clearInterval(updateInterval);
           updateInterval = null;
@@ -448,7 +448,7 @@ export function createKeyframeAnimation(
     const seek = (progress: number) => {
       if (webAnimation) {
         webAnimation.currentTime = progress * duration;
-        progressSignal.value = progress;
+        progressSignal.set(progress);
       }
     };
 
@@ -464,7 +464,7 @@ export function createKeyframeAnimation(
         return isPlaying ? 'playing' : webAnimation ? 'paused' : 'idle';
       },
       get progress() {
-        return progressSignal.value;
+        return progressSignal();
       },
       play,
       pause,
@@ -598,7 +598,7 @@ function createAnimationManager(options: AnimationPluginOptions = {}) {
 
       keyframes.push({
         offset,
-        ...keyframe,
+        ...(keyframe as object),
       });
     }
 
@@ -678,9 +678,5 @@ export type {
   Keyframe,
 };
 export {
-  createAnimation,
-  createKeyframeAnimation,
-  transitionElement,
-  PRESETS,
   createAnimationManager,
 };

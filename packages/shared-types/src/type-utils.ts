@@ -124,9 +124,9 @@ export type NumberKeyOf<T> = Extract<keyof T, number>;
 
 export type SymbolKeyOf<T> = Extract<keyof T, symbol>;
 
-export type WritableKeys<T> = { [P in keyof T]-?: IfAny<{ [Q in P]: T[P] } extends { -readonly [Q in P]: T[P] }, false, true> }[keyof T];
+export type WritableKeys<T> = keyof { [P in keyof T as { [Q in P]: T[P] } extends { -readonly [Q in P]: T[P] } ? P : never]: unknown };
 
-export type ReadonlyKeys<T> = { [P in keyof T]-?: IfAny<{ [Q in P]: T[P] } extends { -readonly [Q in P]: T[P] }, false, false> }[keyof T];
+export type ReadonlyKeys<T> = keyof { [P in keyof T as { [Q in P]: T[P] } extends { -readonly [Q in P]: T[P] } ? never : P]: unknown };
 
 export type RequiredKeys<T> = { [P in keyof T]-?: {} extends Pick<T, P> ? never : P }[keyof T];
 

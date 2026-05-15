@@ -942,7 +942,21 @@ pnpm build
 - `packages/ecosystem/packages/ssr/tests/ssg.test.ts` - 新增 ISR 测试
 - `packages/ecosystem/packages/devtools/tests/index.test.ts` - 新增信号和基准测试
 
-### 10.11 下一步建议（剩余可选任务）
+### 10.11 插件类型问题修复（✅ 已完成）
+
+修复了多个官方插件的 TypeScript 类型问题：
+
+- ✅ **plugin-animation** - 修复了 signal API 使用方式，使用 `signalComputed` 替代 `computed`，修复重复导出问题
+- ✅ **plugin-data-fetch** - 修复了 signal API 使用方式，修复了命名冲突问题（避免局部变量名 `signal` 和 `fetch` 与全局名称冲突）
+- ✅ **plugin-form** - 使用 `signalComputed` 替代 `computed` 以避免类型冲突
+- ✅ **shared-types** - 简化了 `WritableKeys` 和 `ReadonlyKeys` 类型定义，解决了复杂类型语法导致的 TypeScript 错误
+
+**验收标准**：
+- [x] 所有修复的包都通过完整的类型检查
+- [x] 所有修复的包都通过完整的测试套件
+- [x] 没有引入新的功能问题
+
+### 10.12 下一步建议（剩余可选任务）
 
 可继续推进的剩余任务（低优先级）：
 1. **TypeScript 类型覆盖率** - 达到 100%（已有很好的类型覆盖）

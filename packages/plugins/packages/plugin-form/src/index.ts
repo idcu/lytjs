@@ -7,7 +7,7 @@
  */
 
 import { definePlugin } from '@lytjs/core';
-import { signal, computed } from '@lytjs/reactivity';
+import { signal, signalComputed as computed } from '@lytjs/reactivity';
 import type {
   FormOptions,
   FormInstance,
@@ -16,6 +16,7 @@ import type {
   FieldConfig,
   FieldValidationRule,
 } from './types';
+import type { ComputedSignal } from '@lytjs/reactivity';
 
 const defaultMessages: Record<string, string> = {
   required: '此字段为必填项',
@@ -176,7 +177,7 @@ function createFormManager(options: FormOptions = {}): FormInstance {
     const disabledSignal = signal<boolean>(config.disabled ?? false);
     const readOnlySignal = signal<boolean>(config.readOnly ?? false);
     const validatingSignal = signal<boolean>(false);
-    const validSignal = computed<boolean>(() => errorsSignal().length === 0);
+    const validSignal: ComputedSignal<boolean> = computed<boolean>(() => errorsSignal().length === 0);
 
     return {
       get value() {
@@ -245,7 +246,7 @@ function createFormManager(options: FormOptions = {}): FormInstance {
     }
   }
 
-  const stateSignal = computed<FormState>(() => {
+  const stateSignal: ComputedSignal<FormState> = computed<FormState>(() => {
     const fieldsState: Record<string, FieldState> = {};
     let isTouched = false;
     let hasDirty = false;
