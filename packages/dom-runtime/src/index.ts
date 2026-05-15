@@ -314,34 +314,40 @@ function unwrapValue(value: unknown): unknown {
 }
 
 /**
- * 设置元素的文本内容
+ * 设置元素的文本内容（增量更新：相同值跳过）
  */
 export function setText(el: unknown, value: unknown): void {
   if (!isBrowser) return;
   const realNode = getRealNode(el);
-  const realValue = unwrapValue(value);
-  realNode.textContent = String(realValue);
+  const realValue = String(unwrapValue(value));
+  // 增量更新：值相同时跳过
+  if (realNode.textContent === realValue) return;
+  realNode.textContent = realValue;
 }
 
 /**
- * 设置元素的 HTML 内容（带 XSS 防护）
+ * 设置元素的 HTML 内容（带 XSS 防护，增量更新：相同值跳过）
  * 自动过滤危险的 script/iframe 标签和事件属性
  */
 export function setHTML(el: unknown, value: unknown): void {
   if (!isBrowser) return;
   const realNode = getRealNode(el) as Element;
-  const realValue = unwrapValue(value);
-  realNode.innerHTML = sanitizeHTML(String(realValue));
+  const safeHTML = sanitizeHTML(String(unwrapValue(value)));
+  // 增量更新：值相同时跳过
+  if (realNode.innerHTML === safeHTML) return;
+  realNode.innerHTML = safeHTML;
 }
 
 /**
- * 设置元素的属性
+ * 设置元素的属性（增量更新：相同值跳过）
  */
 export function setAttribute(el: unknown, key: string, value: unknown): void {
   if (!isBrowser) return;
   const realNode = getRealNode(el) as Element;
-  const realValue = unwrapValue(value);
-  realNode.setAttribute(key, String(realValue));
+  const realValue = String(unwrapValue(value));
+  // 增量更新：值相同时跳过
+  if (realNode.getAttribute(key) === realValue) return;
+  realNode.setAttribute(key, realValue);
 }
 
 /**
@@ -350,6 +356,8 @@ export function setAttribute(el: unknown, key: string, value: unknown): void {
 export function removeAttribute(el: unknown, key: string): void {
   if (!isBrowser) return;
   const realNode = getRealNode(el) as Element;
+  // 增量更新：属性不存在时跳过
+  if (!realNode.hasAttribute(key)) return;
   realNode.removeAttribute(key);
 }
 
@@ -375,7 +383,7 @@ const PROPERTY_KEYS = new Set([
 ]);
 
 /**
- * 设置元素的属性（智能判断属性/property）
+ * 设置元素的属性（智能判断属性/property，增量更新：相同值跳过）
  *
  * 对于 value、checked、disabled 等布尔/值属性，
  * 直接设置 DOM property 而非 HTML attribute
@@ -389,18 +397,23 @@ export function setProperty(el: unknown, key: string, value: unknown): void {
   // 避免意外触发原型链上的 getter/setter
   const hasOwnProperty = Object.prototype.hasOwnProperty;
   if (PROPERTY_KEYS.has(key) || hasOwnProperty.call(realNode, key)) {
+    // 增量更新：值相同时跳过
+    if ((realNode as unknown as Record<string, unknown>)[key] === realValue) return;
     (realNode as unknown as Record<string, unknown>)[key] = realValue;
   } else {
     if (realValue === null || realValue === undefined || realValue === false) {
+      if (!realNode.hasAttribute(key)) return;
       realNode.removeAttribute(key);
     } else {
-      realNode.setAttribute(key, String(realValue));
+      const strVal = String(realValue);
+      if (realNode.getAttribute(key) === strVal) return;
+      realNode.setAttribute(key, strVal);
     }
   }
 }
 
 /**
- * 设置元素的样式
+ * 设置元素的样式（增量更新：相同值跳过）
  * FIX: P1-54 使用 setProperty 替代直接赋值，
  * 正确处理包含连字符的 CSS 属性名（如 background-color、font-size）
  * FIX: P2-45 对数值类型的 CSS 属性自动添加 px 单位
@@ -409,6 +422,8 @@ export function setStyle(el: unknown, style: unknown): void {
   if (!isBrowser) return;
   const realNode = getRealNode(el) as HTMLElement;
   if (typeof style === 'string') {
+    // 增量更新：值相同时跳过
+    if (realNode.style.cssText === style) return;
     realNode.style.cssText = style;
   } else if (style !== null && typeof style === 'object') {
     const styleObj = style as Record<string, string | number>;
@@ -423,19 +438,23 @@ export function setStyle(el: unknown, style: unknown): void {
       } else {
         finalValue = String(unwrappedVal);
       }
+      // 增量更新：值相同时跳过
+      if (realNode.style.getPropertyValue(key) === finalValue) continue;
       realNode.style.setProperty(key, finalValue);
     }
   }
 }
 
 /**
- * 设置元素的 class
+ * 设置元素的 class（增量更新：相同值跳过）
  */
 export function setClass(el: unknown, value: unknown): void {
   if (!isBrowser) return;
   const realNode = getRealNode(el) as Element;
-  const realValue = unwrapValue(value);
-  realNode.setAttribute('class', String(realValue));
+  const realValue = String(unwrapValue(value));
+  // 增量更新：值相同时跳过
+  if (realNode.getAttribute('class') === realValue) return;
+  realNode.setAttribute('class', realValue);
 }
 
 /**
