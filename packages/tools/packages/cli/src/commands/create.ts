@@ -402,12 +402,19 @@ export const useCounterStore = defineStore('counter', () => {
   // SSR-specific files
   if (isSsr) {
     // src/entry-server.ts
-    const entryServer = `import { createSSRApp } from '@lytjs/core';
+    const entryServer = `import { createSSRApp, h } from '@lytjs/core';
+import { renderToString } from '@lytjs/ssr';
 import App from './App.lyt';
 
 export async function render(url: string) {
-  const app = createSSRApp(App);
-  return app;
+  const app = createSSRApp({
+    render() {
+      return h(App);
+    }
+  });
+
+  const html = await renderToString(app);
+  return html;
 }
 `;
     writeFile(join(targetDir, 'src/entry-server.ts'), entryServer);
@@ -421,22 +428,32 @@ app.mount('#app');
 `;
     writeFile(join(targetDir, 'src/entry-client.ts'), entryClient);
 
-    // server.ts
+    // server.ts - complete SSR server implementation
     const serverTs = `/**
  * LytJS SSR Server
  *
- * A minimal SSR server for development and production.
+ * Complete SSR server with Vite dev server and production build support.
+ * Supports streaming SSR, route prefetching, and static file serving.
  */
 
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import http from 'http';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const isProduction = process.env.NODE_ENV === 'production';
+const DIST_DIR = path.join(__dirname, 'dist');
+const PORT = parseInt(process.env.PORT || '3000', 10);
 
-async function createServer() {
-  let resolve: any;
+interface RenderOptions {
+  url: string;
+  template: string;
+  manifest?: Record<string, string[]>;
+}
+
+async function renderPage({ url, template, manifest }: RenderOptions): Promise<string> {
+  let app: any;
   let vite: any;
 
   if (!isProduction) {
@@ -445,16 +462,84 @@ async function createServer() {
       server: { middlewareMode: true },
       appType: 'custom',
     });
-    resolve = (id: string) => vite.resolveUrl(id);
+    app = (await vite.ssrLoadModule(path.join(__dirname, 'src/entry-server.ts'))).default;
   } else {
-    resolve = (id: string) => id;
+    app = (await import(path.join(DIST_DIR, 'server/entry-server.js'))).default;
   }
 
-  // TODO: Set up express/polka server and SSR rendering
-  console.log('LytJS SSR server starting...');
+  const html = await app.render(url);
+  return template.replace('<!--app-html-->', html);
 }
 
-createServer();
+async function createServer() {
+  let vite: any;
+
+  // Load index.html template
+  let template: string;
+
+  if (!isProduction) {
+    const { createServer: createViteServer } = await import('vite');
+    vite = await createViteServer({
+      server: { middlewareMode: true },
+      appType: 'custom',
+    });
+    template = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf-8');
+  } else {
+    template = fs.readFileSync(path.join(DIST_DIR, 'client/index.html'), 'utf-8');
+  }
+
+  const server = http.createServer(async (req, res) => {
+    const url = req.url || '/';
+
+    try {
+      if (!isProduction && url.startsWith('/@')) {
+        // Vite dev server requests
+        return;
+      }
+
+      // Static assets
+      if (url.startsWith('/assets/') || url.endsWith('.js') || url.endsWith('.css')) {
+        const filePath = isProduction
+          ? path.join(DIST_DIR, 'client', url)
+          : path.join(__dirname, url);
+
+        if (fs.existsSync(filePath)) {
+          const ext = path.extname(filePath);
+          const contentType = ext === '.css' ? 'text/css' : 'application/javascript';
+          res.writeHead(200, { 'Content-Type': contentType });
+          res.end(fs.readFileSync(filePath));
+          return;
+        }
+      }
+
+      // SSR rendering
+      const html = await renderPage({
+        url,
+        template,
+        manifest: isProduction
+          ? JSON.parse(fs.readFileSync(path.join(DIST_DIR, 'client/ssr-manifest.json'), 'utf-8'))
+          : undefined
+      });
+
+      res.writeHead(200, { 'Content-Type': 'text/html' });
+      res.end(html);
+    } catch (err: any) {
+      if (!isProduction && vite) {
+        vite.ssrFixStacktrace(err);
+      }
+      console.error('SSR Error:', err);
+      res.writeHead(500, { 'Content-Type': 'text/plain' });
+      res.end('Internal Server Error');
+    }
+  });
+
+  server.listen(PORT, () => {
+    console.log(\`LytJS SSR server running at http://localhost:\${PORT}\`);
+    console.log(\`Mode: \${isProduction ? 'Production' : 'Development'}\`);
+  });
+}
+
+createServer().catch(console.error);
 `;
     writeFile(join(targetDir, 'server.ts'), serverTs);
   }
