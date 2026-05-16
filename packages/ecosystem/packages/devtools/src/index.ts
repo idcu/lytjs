@@ -10,13 +10,13 @@ export {
   installDevTools,
   getDevTools,
   uninstallDevTools,
-  
+
   // 组件树
   getComponentTree,
   serializeComponentTree,
   registerRootComponent,
   unregisterRootComponent,
-  
+
   // Store 检查器
   getStoreStates,
   getStoreState,
@@ -30,7 +30,7 @@ export {
   subscribeStore,
   unsubscribeStore,
   onStoreChange,
-  
+
   // 路由检查器
   getCurrentRoute,
   navigateTo,
@@ -45,28 +45,7 @@ export {
   unwatchRouteChanges,
   getRouteHistory,
   clearRouteHistory,
-  
-  // 信号检查器
-  getSignalNodes,
-  getSignalNode,
-  getDependencyGraph,
-  createSnapshot,
-  getSnapshots,
-  getTimeTravelState,
-  restoreSnapshot,
-  clearSnapshots,
-  getPerformanceStats,
-  getPerformanceRecords,
-  clearPerformanceRecords,
-  serializeSignalNode,
-  serializeDependencyGraph,
-  serializePerformanceStats,
-  registerSignal,
-  unregisterSignal,
-  recordSignalUpdate,
-  recordDependency,
-  clearSignalRegistry,
-  
+
   // 性能监控
   initPerformanceMonitor,
   recordMetric,
@@ -89,28 +68,50 @@ export {
   startTimer,
 } from './devtools';
 
-// 类型导出
-export type {
-  DevToolsOptions,
-  DevToolsAPI,
-  ComponentTreeNode,
-  StoreStateInfo,
-  RouteInfo,
-  SignalNode,
-  Snapshot,
-  PerformanceRecord,
-  DependencyGraph,
-  TimeTravelState,
-  PerformanceStats as DevPerformanceStats,
-} from './types';
+// 信号检查器
+export {
+  getSignalNodes,
+  getSignalNode,
+  getDependencyGraph,
+  createSnapshot,
+  getSnapshots,
+  getTimeTravelState,
+  restoreSnapshot,
+  clearSnapshots,
+  getPerformanceStats,
+  getPerformanceRecords,
+  clearPerformanceRecords,
+  serializeSignalNode,
+  serializeDependencyGraph,
+  serializePerformanceStats,
+  registerSignal,
+  unregisterSignal,
+  recordSignalUpdate,
+  recordDependency,
+  clearSignalRegistry,
+  getVisualLayoutGraph,
+  getSubgraph,
+  searchSignals,
+  filterSignals,
+  compareSnapshots,
+  serializeSnapshotDiff,
+  getDiffBetweenSnapshots,
+  getTimeTravelNavigator,
+  timeTravelBack,
+  timeTravelForward,
+} from './signalsInspector';
 
-export type {
-  MetricType,
-  PerformanceMetric,
-  AlertLevel,
-  AlertRule,
-  Alert,
-  MonitorOptions,
+// 时序事件
+export {
+  beginTimelineEvent,
+  endTimelineEvent,
+  getTimelineEvents,
+  getTimelineEventsInRange,
+  getSlowOperations,
+  getFlameGraphData,
+  clearTimelineEvents,
+  exportTimelineAsJSON,
+  serializeTimelineEvents,
 } from './performance';
 
 // 基准测试
@@ -130,12 +131,46 @@ export {
   LARGE_SCALE_SCENARIOS,
 } from './devtools';
 
+// 类型导出
+export type {
+  DevToolsOptions,
+  DevToolsAPI,
+  ComponentTreeNode,
+  StoreStateInfo,
+  RouteInfo,
+} from './types';
+
+export type {
+  SignalNode,
+  Snapshot,
+  PerformanceRecord,
+  DependencyGraph,
+  TimeTravelState,
+  VisualLayoutNode,
+  VisualLayoutEdge,
+  VisualLayoutGraph,
+  SnapshotDiff,
+  TimeTravelNavigator,
+} from './signalsInspector';
+
+export type {
+  MetricType,
+  PerformanceMetric,
+  AlertLevel,
+  AlertRule,
+  Alert,
+  MonitorOptions,
+  PerformanceStats,
+  TimelineEvent,
+  FlameGraphNode,
+} from './performance';
+
 export type {
   BenchmarkResult,
   BenchmarkConfig,
   LargeScaleScenario,
   MemoryUsage,
-} from './devtools';
+} from './benchmark';
 
 // 默认导出
 export { installDevTools as default } from './devtools';

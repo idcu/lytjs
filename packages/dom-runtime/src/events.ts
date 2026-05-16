@@ -88,9 +88,9 @@ export function delegateEvent(
     if (currentEvents[eventType].length === 0) {
       delete currentEvents[eventType];
 
-      const nativeHandler = currentEvents._nativeHandler as EventListener;
+      const nativeHandler = currentEvents._nativeHandler;
       if (nativeHandler) {
-        element.removeEventListener(eventType, nativeHandler);
+        element.removeEventListener(eventType, nativeHandler as unknown as EventListener);
         delete currentEvents._nativeHandler;
       }
 

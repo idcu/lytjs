@@ -48,7 +48,7 @@ export const VaporTag = defineVaporComponent({
 
     const tagStyle = computed(() => {
       if (!props.color) return '';
-      return `background-color: ${props.color};";
+      return `background-color: ${props.color}`;
     });
 
     const handleClose = (event: MouseEvent) => {

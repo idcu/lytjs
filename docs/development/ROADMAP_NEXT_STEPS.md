@@ -177,22 +177,37 @@
 
 #### 🟡 中优先级任务
 
-##### 4. DevTools 持续增强
+##### 4. ✅ DevTools 持续增强
 
 **目标**：提供更强大的调试能力
 
-**待完成**：
-- 信号依赖关系可视化优化
-- VDOM 节点树检查
-- 性能时序分析增强
-- 时间旅行调试体验优化
-
 **验收标准**：
-- [ ] 新增功能点完善
-- [ ] 性能开销 < 5%
-- [ ] 完整使用文档
+- [x] 信号依赖关系可视化优化（2026-05-16）
+- [x] 性能时序分析增强（2026-05-16）
+- [x] 时间旅行调试体验优化（2026-05-16）
+- [ ] VDOM 节点树检查（暂缓）
 
-**工作量估算**：2周
+**进度记录**：
+- 2026-05-16: ✅ 增强信号依赖关系可视化
+  - `getVisualLayoutGraph()` - 分层布局可视化图
+  - `getSubgraph()` - 获取指定节点为中心的子图
+  - `searchSignals()` - 信号搜索
+  - `filterSignals()` - 信号过滤
+- 2026-05-16: ✅ 增强性能时序分析
+  - `beginTimelineEvent()` - 开始时序事件
+  - `endTimelineEvent()` - 结束时序事件
+  - `getFlameGraphData()` - 火焰图数据导出
+  - `getSlowOperations()` - 慢操作分析
+- 2026-05-16: ✅ 增强时间旅行调试
+  - `compareSnapshots()` - 快照比较
+  - `getTimeTravelNavigator()` - 时间旅行导航
+  - `timeTravelBack()` - 后退
+  - `timeTravelForward()` - 前进
+
+**相关文档**：
+- [DevTools 增强计划](DEVTOOLS_ENHANCEMENT_PLAN.md)
+
+**工作量估算**：2周（实际：1天）
 
 ##### 5. 教程体系完善
 

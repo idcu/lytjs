@@ -61,12 +61,14 @@ export function diffLists<T>(
   const newKeyMap = new Map<string | number, { item: T; index: number }>();
 
   for (let i = 0; i < oldList.length; i++) {
-    oldKeyMap.set(keyFn(oldList[i]), { item: oldList[i], index: i });
+    const item = oldList[i]!;
+    oldKeyMap.set(keyFn(item), { item, index: i });
   }
 
   for (let i = 0; i < newList.length; i++) {
-    const key = keyFn(newList[i]);
-    newKeyMap.set(key, { item: newList[i], index: i });
+    const item = newList[i]!;
+    const key = keyFn(item);
+    newKeyMap.set(key, { item, index: i });
   }
 
   for (const [key, { item, index }] of oldKeyMap) {
@@ -298,7 +300,8 @@ export function setClassBatch(elements: unknown[], classNames: string[]): void {
   const len = Math.min(elements.length, classNames.length);
   for (let i = 0; i < len; i++) {
     const el = elements[i] as Element;
-    el.className = classNames[i];
+    const className = classNames[i] ?? '';
+    el.className = className;
   }
 }
 
@@ -323,26 +326,24 @@ export function setClassBatch(elements: unknown[], classNames: string[]): void {
  */
 export function createRenderScheduler(renderFn: () => void, delay = 16): () => void {
   let pending = false;
-  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
+  const executeRender = () => {
+    renderFn();
+    pending = false;
+  };
 
   return () => {
     if (pending) return;
     pending = true;
 
-    timeoutId = setTimeout(() => {
-      renderFn();
-      pending = false;
-      timeoutId = null;
-    }, delay);
+    setTimeout(executeRender, delay);
   };
 }
 
 /**
  * 取消待执行的渲染
- *
- * @param scheduleFn - createRenderScheduler 返回的调度函数
+ * 注意：由于 setTimeout 无法取消，此函数仅作为占位符
  */
-export function cancelScheduledRender(scheduleFn: () => void): void {
-  // 无法取消 setTimeout，但可以标记为 pending=false
-  // 实际取消需要返回取消函数
+export function cancelScheduledRender(_scheduleFn: () => void): void {
+  // 无法取消 setTimeout，下次渲染仍会执行
 }

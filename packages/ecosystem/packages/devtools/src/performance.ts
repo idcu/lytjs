@@ -571,3 +571,238 @@ export function startTimer(name: string, type: MetricType = 'custom'): () => voi
     recordMetric({ name, type, duration });
   };
 }
+
+// ===== 时序事件功能 =====
+
+/** 时序事件 */
+export interface TimelineEvent {
+  id: string;
+  name: string;
+  category: 'render' | 'effect' | 'custom';
+  startTime: number;
+  duration: number;
+  depth: number;
+  metadata?: Record<string, unknown>;
+}
+
+/** 火焰图节点 */
+export interface FlameGraphNode {
+  name: string;
+  value: number;
+  children?: FlameGraphNode[];
+  category?: 'render' | 'effect' | 'custom';
+}
+
+/** 时序事件栈 */
+const timelineEventStack: Array<{
+  event: TimelineEvent;
+  startTime: number;
+}> = [];
+
+const timelineEvents: TimelineEvent[] = [];
+const maxTimelineEvents = 1000;
+
+/** 当前深度 */
+let currentDepth = 0;
+
+/**
+ * 开始时序事件
+ */
+export function beginTimelineEvent(
+  name: string,
+  category: TimelineEvent['category'] = 'custom',
+  metadata?: Record<string, unknown>
+): string {
+  const id = `timeline_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  const event: TimelineEvent = {
+    id,
+    name,
+    category,
+    startTime: performance.now(),
+    duration: 0,
+    depth: currentDepth,
+    metadata,
+  };
+
+  timelineEventStack.push({
+    event,
+    startTime: performance.now(),
+  });
+
+  currentDepth++;
+
+  return id;
+}
+
+/**
+ * 结束指定时序事件
+ */
+export function endTimelineEvent(id: string): TimelineEvent | null {
+  const stackIndex = timelineEventStack.findIndex((item) => item.event.id === id);
+
+  if (stackIndex === -1) {
+    console.warn(`[DevTools] Timeline event ${id} not found in stack`);
+    return null;
+  }
+
+  const { event } = timelineEventStack[stackIndex]!;
+  const endTime = performance.now();
+
+  event.duration = endTime - event.startTime;
+
+  for (let i = stackIndex + 1; i < timelineEventStack.length; i++) {
+    const nestedEvent = timelineEventStack[i]!;
+    event.duration = Math.max(event.duration, nestedEvent.startTime - event.startTime + nestedEvent.event.duration);
+  }
+
+  timelineEventStack.splice(stackIndex);
+  currentDepth = Math.max(0, currentDepth - 1);
+
+  timelineEvents.push(event);
+  if (timelineEvents.length > maxTimelineEvents) {
+    timelineEvents.shift();
+  }
+
+  return event;
+}
+
+/**
+ * 获取所有时序事件
+ */
+export function getTimelineEvents(): TimelineEvent[] {
+  return [...timelineEvents];
+}
+
+/**
+ * 获取指定时间范围内的时序事件
+ */
+export function getTimelineEventsInRange(startTime: number, endTime: number): TimelineEvent[] {
+  return timelineEvents.filter(
+    (event) => event.startTime >= startTime && event.startTime <= endTime
+  );
+}
+
+/**
+ * 获取慢操作
+ */
+export function getSlowOperations(limit: number = 10, threshold?: number): TimelineEvent[] {
+  const sorted = [...timelineEvents].sort((a, b) => b.duration - a.duration);
+  const result = threshold !== undefined
+    ? sorted.filter((e) => e.duration >= threshold)
+    : sorted;
+  return result.slice(0, limit);
+}
+
+/**
+ * 获取火焰图数据
+ */
+export function getFlameGraphData(): FlameGraphNode {
+  const root: FlameGraphNode = {
+    name: 'root',
+    value: 0,
+    children: [],
+    category: 'custom',
+  };
+
+  const nodeMap = new Map<string, FlameGraphNode>();
+  nodeMap.set('root', root);
+
+  timelineEvents.forEach((event) => {
+    const node: FlameGraphNode = {
+      name: event.name,
+      value: event.duration,
+      category: event.category,
+      children: [],
+    };
+
+    const parentNode = event.depth === 0
+      ? root
+      : findParentNode(root, event.depth);
+
+    if (parentNode) {
+      if (!parentNode.children) {
+        parentNode.children = [];
+      }
+      parentNode.children.push(node);
+    }
+
+    nodeMap.set(event.id, node);
+  });
+
+  aggregateFlameGraphValues(root);
+
+  return root;
+}
+
+function findParentNode(node: FlameGraphNode, depth: number): FlameGraphNode | null {
+  if (!node.children || node.children.length === 0) {
+    return depth === 1 ? node : null;
+  }
+
+  let targetDepth = depth - 1;
+  let currentNode: FlameGraphNode | null = node;
+
+  while (targetDepth > 0 && currentNode) {
+    const children: FlameGraphNode[] = currentNode.children || [];
+    if (children.length === 0) {
+      return currentNode;
+    }
+    const lastChild: FlameGraphNode = children[children.length - 1]!;
+    currentNode = lastChild;
+    targetDepth--;
+  }
+
+  return currentNode;
+}
+
+function aggregateFlameGraphValues(node: FlameGraphNode): number {
+  if (!node.children || node.children.length === 0) {
+    return node.value;
+  }
+
+  let totalValue = node.value;
+  node.children.forEach((child) => {
+    totalValue += aggregateFlameGraphValues(child);
+  });
+
+  node.value = totalValue;
+  return totalValue;
+}
+
+/**
+ * 清除时序事件
+ */
+export function clearTimelineEvents(): void {
+  timelineEvents.length = 0;
+  timelineEventStack.length = 0;
+  currentDepth = 0;
+}
+
+/**
+ * 导出时序事件为 JSON
+ */
+export function exportTimelineAsJSON(): string {
+  return JSON.stringify({
+    events: timelineEvents,
+    exportedAt: Date.now(),
+  }, null, 2);
+}
+
+/**
+ * 序列化为可读文本
+ */
+export function serializeTimelineEvents(): string {
+  if (timelineEvents.length === 0) {
+    return '暂无时序事件数据';
+  }
+
+  let result = `📊 时序事件 (${timelineEvents.length} 个)\n\n`;
+
+  timelineEvents.slice(-20).forEach((event) => {
+    const indent = '  '.repeat(event.depth);
+    const duration = event.duration.toFixed(2);
+    result += `${indent}├─ ${event.name} [${event.category}] ${duration}ms\n`;
+  });
+
+  return result;
+}
