@@ -42,12 +42,13 @@ defineEmits<{
   },
 
   page(name, basePath) {
+    const pascalName = toPascalCase(name);
     const filePath = join(basePath, `${name}.lyt`);
     return [{
       filePath,
       content: `<template>
   <div class="page-${name}">
-    <h1>${toPascalCase(name)}</h1>
+    <h1>${pascalName}</h1>
   </div>
 </template>
 

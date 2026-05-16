@@ -173,7 +173,7 @@ export default ${data.pascalName}Page;${testImport}
 `;
   },
 
-  service: (data: TemplateData, withStyles: boolean, withTest: boolean, template: string, lang: string) => {
+  service: (data: TemplateData, _withStyles: boolean, _withTest: boolean, _template: string, lang: string) => {
     const tsOnly = lang === 'ts';
 
     return `/**
@@ -248,7 +248,7 @@ export default ${data.pascalName}Service;
 `;
   },
 
-  hook: (data: TemplateData, withStyles: boolean, withTest: boolean, template: string, lang: string) => {
+  hook: (data: TemplateData, _withStyles: boolean, _withTest: boolean, _template: string, lang: string) => {
     const tsOnly = lang === 'ts';
 
     return `/**
@@ -316,7 +316,7 @@ export default use${data.pascalName};
 `;
   },
 
-  store: (data: TemplateData, withStyles: boolean, withTest: boolean, template: string, lang: string) => {
+  store: (data: TemplateData, _withStyles: boolean, _withTest: boolean, _template: string, lang: string) => {
     const tsOnly = lang === 'ts';
 
     return `/**
@@ -418,7 +418,7 @@ ${tsOnly ? `export type ${data.pascalName}Store = ReturnType<typeof create${data
 `;
   },
 
-  layout: (data: TemplateData, withStyles: boolean, withTest: boolean, template: string, lang: string) => {
+  layout: (data: TemplateData, withStyles: boolean, _withTest: boolean, _template: string, lang: string) => {
     const tsOnly = lang === 'ts';
     const styleImport = withStyles ? `\nimport './${data.kebabName}.styles.css';` : '';
 
@@ -460,7 +460,7 @@ export default ${data.pascalName}Layout;
 `;
   },
 
-  middleware: (data: TemplateData, withStyles: boolean, withTest: boolean, template: string, lang: string) => {
+  middleware: (data: TemplateData, _withStyles: boolean, _withTest: boolean, _template: string, lang: string) => {
     const tsOnly = lang === 'ts';
 
     return `/**
