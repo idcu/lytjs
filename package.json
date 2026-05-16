@@ -57,7 +57,9 @@
     "docs:build": "vitepress build docs",
     "docs:preview": "vitepress preview docs",
     "size-check": "size-limit",
-    "clean": "pnpm -r exec rm -rf dist node_modules .turbo && rm -rf node_modules"
+    "clean": "pnpm -r exec rm -rf dist node_modules .turbo && rm -rf node_modules",
+    "lighthouse": "tsx scripts/lighthouse.ts",
+    "lighthouse:verify": "tsx scripts/lighthouse-runner.ts"
   },
   "devDependencies": {
     "@changesets/cli": "^2.28.1",

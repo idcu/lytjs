@@ -7,7 +7,7 @@
 import { defineComponent } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import { signal } from '@lytjs/reactivity';
-import type { FormRules, FormSetupProps, FormSlots, FormItemSetupProps, FormItemSlots, FormRule } from './types';
+import type { FormRules, FormSetupProps, FormSlots, FormItemSetupProps, FormItemSlots } from './types';
 import { mergeA11yProps } from '@lytjs/common-a11y';
 
 export interface FormLocale {
@@ -163,6 +163,9 @@ export const Form = defineComponent({
       }
     };
 
+    void validateAll;
+    void clearValidate;
+
     const handleSubmit = async (event: Event) => {
       event.preventDefault();
       const isValid = await validate();
@@ -276,5 +279,5 @@ export const FormItem = defineComponent({
   },
 });
 
-export type { FormSlots, FormItemSlots, FormLocale } from './types';
+export type { FormSlots, FormItemSlots } from './types';
 export type { FormProps, FormRules, FormSetupProps, FormItemProps, FormItemSetupProps, FormRule, FormValidateStatus } from './types';
