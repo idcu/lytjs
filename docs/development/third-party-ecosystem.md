@@ -484,9 +484,9 @@ describe('myPlugin', () => {
 
 ### 联系方式
 
-- 📧 邮箱：contact@lytjs.dev
-- 💬 GitHub Issues：[创建 Issue](https://gitee.com/lytjs/lytjs/issues)
-- 🌐 官网：https://lytjs.dev
+- 📧 邮箱：idcu@qq.com
+- 💬 GitHub Issues：https://gitee.com/lytjs/lytjs/issues
+- 🌐 官网：https://idcu.github.io/lytjs/
 
 ### 贡献者许可证
 
@@ -498,9 +498,9 @@ describe('myPlugin', () => {
 
 如有任何问题或建议，欢迎：
 
-- 在 GitHub/Gitee 上创建 Issue
-- 加入我们的社区讨论
-- 发送邮件到 contact@lytjs.dev
+- 在 GitHub/Gitee 上创建 Issue：https://gitee.com/lytjs/lytjs/issues
+- 访问官网：https://idcu.github.io/lytjs/
+- 发送邮件到 idcu@qq.com
 
 感谢您对 LytJS 社区的贡献！🎉
 
