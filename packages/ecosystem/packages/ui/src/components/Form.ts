@@ -7,8 +7,40 @@
 import { defineComponent } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import { signal } from '@lytjs/reactivity';
-import type { FormRules, FormSetupProps, FormSlots, FormItemSetupProps, FormItemSlots } from './types';
+import type { FormRules, FormSetupProps, FormSlots, FormItemSetupProps, FormItemSlots, FormRule } from './types';
 import { mergeA11yProps } from '@lytjs/common-a11y';
+
+export interface FormLocale {
+  required: string;
+  pattern: string;
+  min: string;
+  max: string;
+  type: string;
+  validator: string;
+  default: string;
+}
+
+const DEFAULT_LOCALE: FormLocale = {
+  required: '此字段必填',
+  pattern: '格式不正确',
+  min: '长度不能少于 {min} 个字符',
+  max: '长度不能超过 {max} 个字符',
+  type: '类型不正确',
+  validator: '验证失败',
+  default: '验证失败',
+};
+
+export function createFormLocale(locale: Partial<FormLocale>): FormLocale {
+  return { ...DEFAULT_LOCALE, ...locale };
+}
+
+function formatMessage(template: string, params: Record<string, string | number>): string {
+  let message = template;
+  for (const [key, value] of Object.entries(params)) {
+    message = message.replace(new RegExp(`\\{${key}\\}`, 'g'), String(value));
+  }
+  return message;
+}
 
 export const Form = defineComponent({
   name: 'LytForm',
@@ -18,6 +50,7 @@ export const Form = defineComponent({
     rules: { type: Object, default: (): FormRules => ({}) },
     labelWidth: { type: String, default: '100px' },
     labelPosition: { type: String, default: 'right' },
+    locale: { type: Object, default: (): FormLocale => DEFAULT_LOCALE },
     class: { type: String, default: '' },
     id: { type: String, default: '' },
     ariaLabel: { type: String, default: '' },
@@ -28,29 +61,70 @@ export const Form = defineComponent({
   setup(props: Record<string, unknown>, { slots }: { slots: FormSlots }) {
     const p = props as FormSetupProps;
     const errors = signal<Record<string, string>>({});
+    const validating = signal<Record<string, boolean>>({});
+    const locale = (p.locale || DEFAULT_LOCALE) as FormLocale;
 
-    const validateField = (field: string): boolean => {
+    const validateField = async (field: string): Promise<boolean> => {
       const rules = p.rules[field];
       if (!rules || rules.length === 0) return true;
 
       const value = p.model[field];
+      const fieldErrors: string[] = [];
 
       for (const rule of rules) {
         if (rule.required && (!value || value === '')) {
-          errors.set({ ...errors(), [field]: rule.message || '此字段必填' });
-          return false;
+          const message = rule.message || formatMessage(locale.required, { field });
+          fieldErrors.push(message);
+          continue;
         }
-        if (rule.pattern && !rule.pattern.test(String(value || ''))) {
-          errors.set({ ...errors(), [field]: rule.message || '格式不正确' });
-          return false;
-        }
-        if (rule.validator) {
-          const result = rule.validator(value, p.model);
-          if (result !== true) {
-            errors.set({ ...errors(), [field]: typeof result === 'string' ? result : '验证失败' });
-            return false;
+
+        if (value !== undefined && value !== null && value !== '') {
+          if (rule.type) {
+            const typeValid = validateType(value, rule.type);
+            if (!typeValid) {
+              fieldErrors.push(rule.message || formatMessage(locale.type, { type: rule.type, field }));
+              continue;
+            }
+          }
+
+          if (rule.pattern && !rule.pattern.test(String(value))) {
+            fieldErrors.push(rule.message || formatMessage(locale.pattern, { field }));
+            continue;
+          }
+
+          if (typeof value === 'string') {
+            if (rule.min !== undefined && value.length < rule.min) {
+              fieldErrors.push(rule.message || formatMessage(locale.min, { min: rule.min, field }));
+              continue;
+            }
+            if (rule.max !== undefined && value.length > rule.max) {
+              fieldErrors.push(rule.message || formatMessage(locale.max, { max: rule.max, field }));
+              continue;
+            }
           }
         }
+
+        if (rule.validator) {
+          validating.set({ ...validating(), [field]: true });
+
+          try {
+            const result = await Promise.resolve(rule.validator(value, p.model));
+
+            if (result !== true) {
+              const errorMessage = typeof result === 'string' ? result : formatMessage(locale.validator, { field });
+              fieldErrors.push(errorMessage);
+            }
+          } catch (error) {
+            fieldErrors.push(rule.message || formatMessage(locale.validator, { field }));
+          } finally {
+            validating.set({ ...validating(), [field]: false });
+          }
+        }
+      }
+
+      if (fieldErrors.length > 0) {
+        errors.set({ ...errors(), [field]: fieldErrors[0]! });
+        return false;
       }
 
       const newErrors = { ...errors() };
@@ -59,11 +133,13 @@ export const Form = defineComponent({
       return true;
     };
 
-    const validate = (): boolean => {
+    const validate = async (): Promise<boolean> => {
       let isValid = true;
+      const fieldNames = Object.keys(p.rules);
 
-      for (const field in p.rules) {
-        if (!validateField(field)) {
+      for (const field of fieldNames) {
+        const fieldValid = await validateField(field);
+        if (!fieldValid) {
           isValid = false;
         }
       }
@@ -71,9 +147,26 @@ export const Form = defineComponent({
       return isValid;
     };
 
-    const handleSubmit = (event: Event) => {
+    const validateAll = async (): Promise<boolean> => {
+      const fieldNames = Object.keys(p.rules);
+      const results = await Promise.all(fieldNames.map(field => validateField(field)));
+      return results.every(result => result);
+    };
+
+    const clearValidate = (field?: string) => {
+      if (field) {
+        const newErrors = { ...errors() };
+        delete newErrors[field];
+        errors.set(newErrors);
+      } else {
+        errors.set({});
+      }
+    };
+
+    const handleSubmit = async (event: Event) => {
       event.preventDefault();
-      if (validate()) {
+      const isValid = await validate();
+      if (isValid) {
         p.onSubmit?.(p.model);
       }
     };
@@ -97,6 +190,33 @@ export const Form = defineComponent({
     };
   },
 });
+
+function validateType(value: unknown, type: string): boolean {
+  switch (type) {
+    case 'string':
+      return typeof value === 'string';
+    case 'number':
+      return typeof value === 'number' && !isNaN(value);
+    case 'boolean':
+      return typeof value === 'boolean';
+    case 'array':
+      return Array.isArray(value);
+    case 'date':
+      return value instanceof Date || !isNaN(Date.parse(String(value)));
+    case 'email':
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return typeof value === 'string' && emailRegex.test(value);
+    case 'url':
+      try {
+        new URL(String(value));
+        return true;
+      } catch {
+        return false;
+      }
+    default:
+      return true;
+  }
+}
 
 export const FormItem = defineComponent({
   name: 'LytFormItem',
@@ -140,7 +260,7 @@ export const FormItem = defineComponent({
       }
 
       if (p.error) {
-        children.push(createVNode('div', { 
+        children.push(createVNode('div', {
           class: 'lyt-form-item__error',
           role: 'alert',
           'aria-live': 'polite'
@@ -156,5 +276,5 @@ export const FormItem = defineComponent({
   },
 });
 
-export type { FormSlots, FormItemSlots } from './types';
+export type { FormSlots, FormItemSlots, FormLocale } from './types';
 export type { FormProps, FormRules, FormSetupProps, FormItemProps, FormItemSetupProps, FormRule, FormValidateStatus } from './types';

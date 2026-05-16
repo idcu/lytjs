@@ -832,10 +832,12 @@ export interface FormRule {
   required?: boolean;
   message?: string;
   pattern?: RegExp;
-  validator?: (value: unknown, model: Record<string, unknown>) => boolean | string;
+  validator?: (value: unknown, model: Record<string, unknown>) => boolean | string | Promise<boolean | string>;
+  asyncValidator?: (value: unknown, model: Record<string, unknown>) => Promise<boolean | string>;
   min?: number;
   max?: number;
   type?: 'string' | 'number' | 'boolean' | 'array' | 'date' | 'email' | 'url';
+  trigger?: 'blur' | 'change' | '';
 }
 
 export interface FormRules {
