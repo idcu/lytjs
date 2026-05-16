@@ -1,0 +1,285 @@
+name: Coverage Check
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+
+env:
+  PNPM_VERSION: '11.1.1'
+  NODE_VERSION: '22'
+
+jobs:
+  coverage-check:
+    name: Coverage Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run tests with coverage
+        run: pnpm run test:coverage
+
+      - name: Check @lytjs/core coverage
+        run: |
+          node -e "
+            const coverage = require('./packages/core/coverage/coverage-summary.json');
+            const threshold = 90;
+            
+            const checks = {
+              'lines': coverage.total.lines.pct,
+              'statements': coverage.total.statements.pct,
+              'functions': coverage.total.functions.pct,
+              'branches': coverage.total.branches.pct
+            };
+            
+            let passed = true;
+            console.log('\\n📊 @lytjs/core Coverage Report');
+            console.log('─'.repeat(50));
+            
+            for (const [key, value] of Object.entries(checks)) {
+              const status = value >= threshold ? '✅' : '❌';
+              console.log(\`  \${key.padEnd(12)}: \${value.toFixed(2)}% (threshold: \${threshold}%)\`);
+              if (value < threshold) passed = false;
+            }
+            
+            console.log('─'.repeat(50));
+            if (passed) {
+              console.log('✅ All coverage checks passed!');
+              process.exit(0);
+            } else {
+              console.log('❌ Coverage below threshold!');
+              process.exit(1);
+            }
+          "
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage/coverage-final.json
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: false
+          verbose: true
+
+  error-boundary-coverage:
+    name: ErrorBoundary Coverage
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run ErrorBoundary tests with coverage
+        run: pnpm -C packages/core run test -- tests/error-boundary.test.ts --coverage
+
+      - name: Check ErrorBoundary coverage
+        run: |
+          node -e "
+            const coverage = require('./packages/core/coverage/coverage-summary.json');
+            const ebCoverage = coverage['src/error-boundary.ts'];
+            
+            console.log('\\n🎯 ErrorBoundary Coverage Report');
+            console.log('─'.repeat(50));
+            console.log(\`  Lines:      \${ebCoverage.lines.pct.toFixed(2)}%\`);
+            console.log(\`  Statements: \${ebCoverage.statements.pct.toFixed(2)}%\`);
+            console.log(\`  Functions:   \${ebCoverage.functions.pct.toFixed(2)}%\`);
+            console.log(\`  Branches:    \${ebCoverage.branches.pct.toFixed(2)}%\`);
+            console.log('─'.repeat(50));
+            
+            const threshold = 95;
+            if (ebCoverage.lines.pct >= threshold && 
+                ebCoverage.statements.pct >= threshold) {
+              console.log('✅ ErrorBoundary coverage above 95%!');
+            } else {
+              console.log('⚠️  ErrorBoundary coverage below 95%');
+            }
+          "
+
+  bundle-size-regression:
+    name: Bundle Size Regression Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build core package
+        run: pnpm -C packages/core run build
+
+      - name: Check bundle size
+        run: |
+          node -e "
+            const fs = require('fs');
+            const path = require('path');
+            
+            const distDir = './packages/core/dist';
+            const files = fs.readdirSync(distDir).filter(f => f.endsWith('.js'));
+            
+            console.log('\\n📦 Bundle Size Report');
+            console.log('─'.repeat(50));
+            
+            files.forEach(file => {
+              const stats = fs.statSync(path.join(distDir, file));
+              const sizeKB = (stats.size / 1024).toFixed(2);
+              console.log(\`  \${file.padEnd(20)}: \${sizeKB} KB\`);
+            });
+            
+            const totalSize = files.reduce((sum, file) => {
+              return sum + fs.statSync(path.join(distDir, file)).size;
+            }, 0);
+            
+            console.log('─'.repeat(50));
+            console.log(\`  Total:              \${(totalSize / 1024).toFixed(2)} KB\`);
+            console.log('─'.repeat(50));
+          "
+
+  test-statistics:
+    name: Test Statistics
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run tests and generate report
+        run: pnpm run test:coverage
+
+      - name: Generate test statistics
+        run: |
+          node -e "
+            const fs = require('fs');
+            
+            console.log('\\n📈 Test Statistics Report');
+            console.log('─'.repeat(50));
+            
+            // Count test files
+            const testFiles = [];
+            function walkSync(dir) {
+              if (!fs.existsSync(dir)) return;
+              const files = fs.readdirSync(dir);
+              files.forEach(file => {
+                const filePath = path.join(dir, file);
+                if (fs.statSync(filePath).isDirectory()) {
+                  walkSync(filePath);
+                } else if (file.endsWith('.test.ts')) {
+                  testFiles.push(filePath);
+                }
+              });
+            }
+            walkSync('./packages');
+            
+            console.log(\`  Total Test Files:   \${testFiles.length}\`);
+            console.log('─'.repeat(50));
+          "
+        shell: bash
+
+  dependency-check:
+    name: Dependency Health Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Check for unused dependencies
+        run: pnpm dedupe --check || true
+
+      - name: List external dependencies
+        run: |
+          node -e "
+            const fs = require('fs');
+            
+            console.log('\\n📦 External Dependencies Analysis');
+            console.log('─'.repeat(50));
+            
+            const packages = ['core', 'vdom', 'reactivity', 'router', 'store'];
+            
+            packages.forEach(pkg => {
+              const pkgPath = \`./packages/\${pkg}/package.json\`;
+              if (fs.existsSync(pkgPath)) {
+                const pkgJson = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
+                const deps = pkgJson.dependencies || {};
+                const peerDeps = pkgJson.peerDependencies || {};
+                
+                console.log(\`  @lytjs/\${pkg}:\`);
+                console.log(\`    dependencies:    \${Object.keys(deps).length}\`);
+                console.log(\`    peerDependencies: \${Object.keys(peerDeps).length}\`);
+              }
+            });
+            
+            console.log('─'.repeat(50));
+          "
