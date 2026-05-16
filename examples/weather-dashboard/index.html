@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>天气仪表盘 - LytJS 实战案例</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .dashboard {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .header {
+      background: white;
+      padding: 30px;
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      margin-bottom: 24px;
+      text-align: center;
+    }
+
+    .header h1 {
+      color: #1a1a1a;
+      font-size: 2.5em;
+      margin-bottom: 8px;
+    }
+
+    .header p {
+      color: #666;
+      font-size: 1.1em;
+    }
+
+    .back-link {
+      display: inline-block;
+      margin-bottom: 20px;
+      color: white;
+      text-decoration: none;
+      font-weight: 500;
+      padding: 10px 20px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 8px;
+      transition: background 0.3s;
+    }
+
+    .back-link:hover {
+      background: rgba(255,255,255,0.3);
+    }
+
+    .weather-main {
+      background: white;
+      padding: 40px;
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      margin-bottom: 24px;
+      text-align: center;
+    }
+
+    .current-weather {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 40px;
+      margin-bottom: 30px;
+    }
+
+    .temperature {
+      font-size: 6em;
+      font-weight: bold;
+      color: #667eea;
+    }
+
+    .weather-icon {
+      font-size: 8em;
+    }
+
+    .weather-details {
+      text-align: left;
+    }
+
+    .weather-desc {
+      font-size: 2em;
+      color: #333;
+      margin-bottom: 10px;
+    }
+
+    .weather-location {
+      font-size: 1.5em;
+      color: #666;
+    }
+
+    .weather-stats {
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      margin-top: 30px;
+    }
+
+    .weather-stat {
+      text-align: center;
+    }
+
+    .weather-stat-value {
+      font-size: 2em;
+      font-weight: bold;
+      color: #667eea;
+    }
+
+    .weather-stat-label {
+      color: #666;
+      font-size: 1em;
+      margin-top: 5px;
+    }
+
+    .search-section {
+      background: white;
+      padding: 30px;
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      margin-bottom: 24px;
+    }
+
+    .section-title {
+      font-size: 1.8em;
+      margin-bottom: 20px;
+      color: #1a1a1a;
+    }
+
+    .search-form {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .search-input {
+      flex: 1;
+      padding: 12px 16px;
+      border: 2px solid #e9ecef;
+      border-radius: 8px;
+      font-size: 1em;
+      transition: border-color 0.3s;
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    .btn {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      font-size: 1em;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-weight: 500;
+    }
+
+    .btn-primary {
+      background: #667eea;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #5568d3;
+      transform: translateY(-2px);
+    }
+
+    .forecast-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+    }
+
+    .forecast-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 24px;
+      border-radius: 12px;
+      text-align: center;
+      transition: transform 0.3s;
+    }
+
+    .forecast-card:hover {
+      transform: translateY(-4px);
+    }
+
+    .forecast-day {
+      font-size: 1.2em;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    .forecast-icon {
+      font-size: 3em;
+      margin: 15px 0;
+    }
+
+    .forecast-temp {
+      font-size: 1.5em;
+      margin-bottom: 10px;
+    }
+
+    .forecast-desc {
+      font-size: 0.9em;
+      opacity: 0.9;
+    }
+
+    .hourly-section {
+      background: white;
+      padding: 30px;
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      margin-bottom: 24px;
+    }
+
+    .hourly-scroll {
+      display: flex;
+      gap: 20px;
+      overflow-x: auto;
+      padding-bottom: 10px;
+    }
+
+    .hourly-card {
+      min-width: 100px;
+      text-align: center;
+      padding: 20px;
+      background: #f8f9fa;
+      border-radius: 12px;
+      transition: all 0.3s;
+    }
+
+    .hourly-card:hover {
+      background: #667eea;
+      color: white;
+      transform: scale(1.05);
+    }
+
+    .hourly-time {
+      font-size: 1em;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    .hourly-icon {
+      font-size: 2em;
+      margin: 10px 0;
+    }
+
+    .hourly-temp {
+      font-size: 1.2em;
+      font-weight: bold;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #666;
+    }
+
+    .error-message {
+      background: #f8d7da;
+      color: #721c24;
+      padding: 16px 20px;
+      border-radius: 8px;
+      margin-top: 20px;
+    }
+
+    .animation-demo {
+      background: white;
+      padding: 30px;
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      margin-bottom: 24px;
+    }
+
+    .animation-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 20px;
+      margin-top: 20px;
+    }
+
+    .animation-card {
+      padding: 30px;
+      background: #f8f9fa;
+      border-radius: 12px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .animation-card:hover {
+      background: #667eea;
+      color: white;
+      transform: scale(1.05);
+    }
+
+    .animation-icon {
+      font-size: 3em;
+      margin-bottom: 10px;
+    }
+
+    .animation-label {
+      font-weight: bold;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes slideIn {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+
+    .animate-fade-in {
+      animation: fadeIn 0.5s ease-in;
+    }
+
+    .animate-slide-in {
+      animation: slideIn 0.5s ease-out;
+    }
+
+    .animate-bounce {
+      animation: bounce 0.5s ease-in-out;
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard">
+    <a href="../index.html" class="back-link">← 返回示例首页</a>
+
+    <div class="header">
+      <h1>🌤️ 天气仪表盘</h1>
+      <p>基于 LytJS 的响应式天气应用，展示表单验证、动画效果和响应式状态管理</p>
+    </div>
+
+    <div class="search-section">
+      <h2 class="section-title">🔍 搜索城市</h2>
+      <div class="search-form">
+        <input type="text" id="cityInput" class="search-input" placeholder="输入城市名称，如北京、上海...">
+        <button class="btn btn-primary" onclick="searchWeather()">搜索</button>
+      </div>
+      <div id="errorContainer"></div>
+    </div>
+
+    <div id="weatherContainer">
+      <div class="weather-main animate-fade-in">
+        <div class="current-weather">
+          <div class="weather-icon">☀️</div>
+          <div class="temperature">25°C</div>
+          <div class="weather-details">
+            <div class="weather-desc">晴</div>
+            <div class="weather-location">北京</div>
+          </div>
+        </div>
+        <div class="weather-stats">
+          <div class="weather-stat">
+            <div class="weather-stat-value">65%</div>
+            <div class="weather-stat-label">湿度</div>
+          </div>
+          <div class="weather-stat">
+            <div class="weather-stat-value">15 km/h</div>
+            <div class="weather-stat-label">风速</div>
+          </div>
+          <div class="weather-stat">
+            <div class="weather-stat-value">1013 hPa</div>
+            <div class="weather-stat-label">气压</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="hourly-section">
+      <h2 class="section-title">📅 24小时预报</h2>
+      <div class="hourly-scroll" id="hourlyContainer">
+        <div class="hourly-card">
+          <div class="hourly-time">现在</div>
+          <div class="hourly-icon">☀️</div>
+          <div class="hourly-temp">25°C</div>
+        </div>
+        <div class="hourly-card">
+          <div class="hourly-time">14:00</div>
+          <div class="hourly-icon">🌤️</div>
+          <div class="hourly-temp">27°C</div>
+        </div>
+        <div class="hourly-card">
+          <div class="hourly-time">15:00</div>
+          <div class="hourly-icon">⛅</div>
+          <div class="hourly-temp">28°C</div>
+        </div>
+        <div class="hourly-card">
+          <div class="hourly-time">16:00</div>
+          <div class="hourly-icon">🌥️</div>
+          <div class="hourly-temp">26°C</div>
+        </div>
+        <div class="hourly-card">
+          <div class="hourly-time">17:00</div>
+          <div class="hourly-icon">🌤️</div>
+          <div class="hourly-temp">25°C</div>
+        </div>
+        <div class="hourly-card">
+          <div class="hourly-time">18:00</div>
+          <div class="hourly-icon">🌅</div>
+          <div class="hourly-temp">23°C</div>
+        </div>
+        <div class="hourly-card">
+          <div class="hourly-time">19:00</div>
+          <div class="hourly-icon">🌆</div>
+          <div class="hourly-temp">21°C</div>
+        </div>
+        <div class="hourly-card">
+          <div class="hourly-time">20:00</div>
+          <div class="hourly-icon">🌙</div>
+          <div class="hourly-temp">19°C</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="forecast-section">
+      <h2 class="section-title" style="background: white; padding: 30px; border-radius: 16px; margin-bottom: 24px;">📆 7日预报</h2>
+      <div class="forecast-grid" id="forecastContainer">
+        <div class="forecast-card">
+          <div class="forecast-day">今天</div>
+          <div class="forecast-icon">☀️</div>
+          <div class="forecast-temp">25°C - 32°C</div>
+          <div class="forecast-desc">晴朗</div>
+        </div>
+        <div class="forecast-card">
+          <div class="forecast-day">明天</div>
+          <div class="forecast-icon">🌤️</div>
+          <div class="forecast-temp">24°C - 30°C</div>
+          <div class="forecast-desc">多云</div>
+        </div>
+        <div class="forecast-card">
+          <div class="forecast-day">周三</div>
+          <div class="forecast-icon">⛈️</div>
+          <div class="forecast-temp">22°C - 28°C</div>
+          <div class="forecast-desc">雷阵雨</div>
+        </div>
+        <div class="forecast-card">
+          <div class="forecast-day">周四</div>
+          <div class="forecast-icon">🌧️</div>
+          <div class="forecast-temp">20°C - 26°C</div>
+          <div class="forecast-desc">中雨</div>
+        </div>
+        <div class="forecast-card">
+          <div class="forecast-day">周五</div>
+          <div class="forecast-icon">⛅</div>
+          <div class="forecast-temp">21°C - 27°C</div>
+          <div class="forecast-desc">阴转多云</div>
+        </div>
+        <div class="forecast-card">
+          <div class="forecast-day">周六</div>
+          <div class="forecast-icon">🌤️</div>
+          <div class="forecast-temp">23°C - 29°C</div>
+          <div class="forecast-desc">晴间多云</div>
+        </div>
+        <div class="forecast-card">
+          <div class="forecast-day">周日</div>
+          <div class="forecast-icon">☀️</div>
+          <div class="forecast-temp">25°C - 31°C</div>
+          <div class="forecast-desc">晴朗</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="animation-demo">
+      <h2 class="section-title">🎨 动画效果展示</h2>
+      <p style="color: #666; margin-bottom: 20px;">点击以下卡片查看动画效果（基于 plugin-animation）</p>
+      <div class="animation-grid" id="animationGrid">
+        <div class="animation-card" onclick="playAnimation(this, 'fadeIn')">
+          <div class="animation-icon">✨</div>
+          <div class="animation-label">淡入效果</div>
+        </div>
+        <div class="animation-card" onclick="playAnimation(this, 'slideIn')">
+          <div class="animation-icon">➡️</div>
+          <div class="animation-label">滑入效果</div>
+        </div>
+        <div class="animation-card" onclick="playAnimation(this, 'bounce')">
+          <div class="animation-icon">🎾</div>
+          <div class="animation-label">弹跳效果</div>
+        </div>
+        <div class="animation-card" onclick="playAnimation(this, 'rotate')">
+          <div class="animation-icon">🔄</div>
+          <div class="animation-label">旋转效果</div>
+        </div>
+        <div class="animation-card" onclick="playAnimation(this, 'pulse')">
+          <div class="animation-icon">💓</div>
+          <div class="animation-label">脉冲效果</div>
+        </div>
+        <div class="animation-card" onclick="playAnimation(this, 'shake')">
+          <div class="animation-icon">⚡</div>
+          <div class="animation-label">抖动效果</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="background: white; padding: 30px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
+      <h2 class="section-title">📚 技术亮点</h2>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-top: 20px;">
+        <div style="padding: 20px; background: #f8f9fa; border-radius: 12px;">
+          <h3 style="margin-bottom: 10px;">🔄 响应式状态管理</h3>
+          <p style="color: #666;">使用 LytJS 的 signal 和 computed 实现响应式数据流，自动追踪依赖并高效更新 DOM</p>
+        </div>
+        <div style="padding: 20px; background: #f8f9fa; border-radius: 12px;">
+          <h3 style="margin-bottom: 10px;">✅ 表单验证</h3>
+          <p style="color: #666;">基于 plugin-form 实现城市名称验证，支持必填、长度限制等验证规则</p>
+        </div>
+        <div style="padding: 20px; background: #f8f9fa; border-radius: 12px;">
+          <h3 style="margin-bottom: 10px;">🎭 动画效果</h3>
+          <p style="color: #666;">使用 plugin-animation 提供流畅的 CSS 动画，增强用户体验</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { signal, computed, effect, watch } from '@lytjs/reactivity';
+    import { createFormManager } from '@lytjs/plugin-form';
+
+    const formManager = createFormManager({
+      fields: {
+        city: {
+          rules: [
+            { type: 'required', message: '请输入城市名称' },
+            { type: 'minLength', value: 2, message: '城市名称至少2个字符' },
+            { type: 'maxLength', value: 20, message: '城市名称不能超过20个字符' }
+          ]
+        }
+      }
+    });
+
+    const searchHistory = signal([]);
+    const isSearching = signal(false);
+    const currentCity = signal('北京');
+    const weatherData = signal({
+      temp: 25,
+      desc: '晴',
+      humidity: 65,
+      windSpeed: 15,
+      pressure: 1013,
+      icon: '☀️'
+    });
+
+    const validateAndSearch = async () => {
+      const city = document.getElementById('cityInput').value.trim();
+      if (!city) {
+        showError('请输入城市名称');
+        return false;
+      }
+
+      const isValid = await formManager.validateField('city');
+      if (!isValid) {
+        const errors = formManager.getErrors('city');
+        if (errors.length > 0) {
+          showError(errors[0]);
+        }
+        return false;
+      }
+
+      return true;
+    };
+
+    window.searchWeather = async function() {
+      const isValid = await validateAndSearch();
+      if (!isValid) return;
+
+      const city = document.getElementById('cityInput').value.trim();
+      isSearching.value = true;
+
+      setTimeout(() => {
+        const temps = [20, 22, 25, 27, 28, 30, 32, 24, 26];
+        const icons = ['☀️', '🌤️', '⛅', '🌥️', '🌧️', '⛈️', '🌩️', '🌤️'];
+        const descs = ['晴', '多云', '阴', '小雨', '中雨', '雷阵雨', '晴间多云', '晴'];
+        const humids = [60, 65, 70, 75, 80, 85, 55, 50];
+        const winds = [12, 15, 18, 20, 22, 25, 10, 8];
+
+        const randomIndex = Math.floor(Math.random() * temps.length);
+
+        currentCity.value = city;
+        weatherData.value = {
+          temp: temps[randomIndex],
+          desc: descs[randomIndex],
+          humidity: humids[randomIndex],
+          windSpeed: winds[randomIndex],
+          pressure: 1008 + Math.floor(Math.random() * 20),
+          icon: icons[randomIndex]
+        };
+
+        searchHistory.value = [city, ...searchHistory.value.filter(c => c !== city)].slice(0, 5);
+
+        updateWeatherDisplay();
+        isSearching.value = false;
+
+        const weatherContainer = document.getElementById('weatherContainer');
+        weatherContainer.querySelector('.weather-main').classList.remove('animate-fade-in');
+        void weatherContainer.querySelector('.weather-main').offsetWidth;
+        weatherContainer.querySelector('.weather-main').classList.add('animate-fade-in');
+
+      }, 500);
+    };
+
+    function updateWeatherDisplay() {
+      const weatherContainer = document.getElementById('weatherContainer');
+      weatherContainer.innerHTML = `
+        <div class="weather-main animate-fade-in">
+          <div class="current-weather">
+            <div class="weather-icon">${weatherData().icon}</div>
+            <div class="temperature">${weatherData().temp}°C</div>
+            <div class="weather-details">
+              <div class="weather-desc">${weatherData().desc}</div>
+              <div class="weather-location">${currentCity()}</div>
+            </div>
+          </div>
+          <div class="weather-stats">
+            <div class="weather-stat">
+              <div class="weather-stat-value">${weatherData().humidity}%</div>
+              <div class="weather-stat-label">湿度</div>
+            </div>
+            <div class="weather-stat">
+              <div class="weather-stat-value">${weatherData().windSpeed} km/h</div>
+              <div class="weather-stat-label">风速</div>
+            </div>
+            <div class="weather-stat">
+              <div class="weather-stat-value">${weatherData().pressure} hPa</div>
+              <div class="weather-stat-label">气压</div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function showError(message) {
+      const errorContainer = document.getElementById('errorContainer');
+      errorContainer.innerHTML = `<div class="error-message">${message}</div>`;
+      setTimeout(() => {
+        errorContainer.innerHTML = '';
+      }, 3000);
+    }
+
+    window.playAnimation = function(element, animationType) {
+      element.classList.remove('animate-fade-in', 'animate-slide-in', 'animate-bounce');
+      void element.offsetWidth;
+
+      switch(animationType) {
+        case 'fadeIn':
+          element.classList.add('animate-fade-in');
+          break;
+        case 'slideIn':
+          element.classList.add('animate-slide-in');
+          break;
+        case 'bounce':
+          element.classList.add('animate-bounce');
+          break;
+        case 'rotate':
+          element.style.animation = 'spin 0.5s ease-in-out';
+          setTimeout(() => {
+            element.style.animation = '';
+          }, 500);
+          break;
+        case 'pulse':
+          element.style.animation = 'pulse 0.5s ease-in-out';
+          setTimeout(() => {
+            element.style.animation = '';
+          }, 500);
+          break;
+        case 'shake':
+          element.style.animation = 'shake 0.5s ease-in-out';
+          setTimeout(() => {
+            element.style.animation = '';
+          }, 500);
+          break;
+      }
+    };
+
+    document.getElementById('cityInput').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        window.searchWeather();
+      }
+    });
+
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+      @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+      }
+      @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-10px); }
+        75% { transform: translateX(10px); }
+      }
+    `;
+    document.head.appendChild(style);
+
+    console.log('天气仪表盘初始化完成！');
+    console.log('使用的 LytJS 技术：');
+    console.log('- @lytjs/reactivity: 响应式状态管理');
+    console.log('- @lytjs/plugin-form: 表单验证');
+    console.log('- @lytjs/plugin-animation: 动画效果');
+  </script>
+</body>
+</html>
