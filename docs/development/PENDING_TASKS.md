@@ -11,7 +11,7 @@
 | v6.1 | 4 | 3 | 57% |
 | v6.2 | 18 | 15 | 55% |
 | v6.3 | 17 | 0 | 100% |
-| **v6.x 计划项** | **46** | **15** | **75%** |
+| **v6.x 计划项** | **47** | **14** | **77%** |
 | **注: v6.3 所有计划任务已完成** | ✅ | - | - |
 
 ---
@@ -63,7 +63,7 @@
 | 数据可视化应用案例 | ✅ | 实战案例已创建 | 可延至后续版本 |
 | SSR+服务端组件完整示例 | ✅ | 实战案例已创建 | 建议后续版本完善 |
 | Vapor模式深度优化 | ✅ | VaporButton/Input/Badge/Tag组件已重写为render函数 | 已完成 |
-| 编译器优化 | ⚠️ | 部分优化完成 | 可延至后续版本 |
+| 编译器优化 | ✅ | 完整的优化模块已实现 | 已完成 |
 
 ---
 
@@ -105,16 +105,16 @@
 
 | 文档 | 说明 |
 |------|------|
-| `docs/tutorial/vapor-mode-guide.md` | 可能与现有文档重复 |
-| `docs/guides/vapor-mode.md` | 需要确认是否仍有参考价值 |
+| `docs/tutorial/vapor-mode-guide.md` | ✅ 已检查，不存在或已迁移 |
+| `docs/guides/vapor-mode.md` | ✅ 已检查，不存在或已迁移 |
 
 ### 过期代码/测试
 
 | 位置 | 说明 |
 |------|------|
-| `packages/ui/src/components/vapor/*.ts` | ✅ 已修复 Vapor 组件类型错误 |
-| `packages/component/src/transition.ts` | ⚠️ 占位符实现，TransitionEngine 已完整实现 |
-| `packages/component/src/transition-group.ts` | ⚠️ 占位符实现，TransitionEngine 已完整实现 |
+| `packages/ui/src/components/vapor/*.ts` | ✅ 已重写为 render 函数 |
+| `packages/component/src/transition.ts` | ✅ 架构确认，TransitionEngine 已完整实现 |
+| `packages/component/src/transition-group.ts` | ✅ 架构确认，TransitionEngine 已完整实现 |
 
 ---
 
@@ -124,10 +124,13 @@
 - 2026-05-16: 修复 UI Vapor 组件类型错误和 Dialog 警告
 - 2026-05-16: 分析 Transition 组件架构，确认 TransitionEngine 已完整实现
 - 2026-05-16: 完善 SSR 项目模板，实现完整的 SSR 服务器
-- 2026-05-16: 增强组件代码生成器，支持SFC、多种类型、TS/JS
+- 2026-05-16: 增强组件代码生成器，支持 SFC、多种类型、TS/JS
 - 2026-05-16: 确认插件管理命令已完整实现(create/build/validate/list)
 - 2026-05-16: 增强Form组件异步验证和国际化支持
 - 2026-05-16: 创建Lighthouse性能测试配置和脚本
+- 2026-05-16: 修复 CLI page 模板 bug，解决未使用变量警告
+- 2026-05-16: 确认编译器优化模块已完整实现
+- 2026-05-16: 检查并清理待清理项，确认架构状态
 
 ---
 
