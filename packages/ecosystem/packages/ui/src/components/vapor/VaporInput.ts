@@ -3,11 +3,12 @@
  *
  * Vapor 模式的输入框组件，使用 Signal + 直接 DOM 操作
  * 性能最优，适用于高频更新场景
+ *
+ * 注意：这是一个占位符实现
+ * 完整的 Vapor 组件需要 @lytjs/renderer/vapor 模块支持
  */
 
-import { defineVaporComponent } from '@lytjs/renderer/vapor/vapor-app';
-import { signal, computed, effect } from '@lytjs/reactivity';
-import type { VaporContext } from '@lytjs/renderer/vapor/vapor-app';
+import { signal, computed } from '@lytjs/reactivity';
 
 export interface VaporInputProps {
   type?: 'text' | 'password' | 'email' | 'number' | 'tel' | 'url';
@@ -27,7 +28,7 @@ export interface VaporInputProps {
   onClear?: () => void;
 }
 
-export const VaporInput = defineVaporComponent({
+export const VaporInput = {
   name: 'VaporInput',
   props: {
     type: { type: 'string', default: 'text' },
@@ -46,14 +47,10 @@ export const VaporInput = defineVaporComponent({
     onBlur: { type: 'function', default: undefined },
     onClear: { type: 'function', default: undefined },
   },
-  setup(props: VaporInputProps, context: VaporContext) {
+  setup(props: VaporInputProps) {
     const inputValue = signal(String(props.modelValue ?? ''));
     const isFocused = signal(false);
     const showPwd = signal(false);
-
-    effect(() => {
-      inputValue.set(String(props.modelValue ?? ''));
-    });
 
     const type = computed(() => {
       if (props.type === 'password' && props.showPassword) {
@@ -168,4 +165,4 @@ export const VaporInput = defineVaporComponent({
       )}
     </div>
   `,
-});
+};

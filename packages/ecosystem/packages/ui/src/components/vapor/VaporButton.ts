@@ -3,11 +3,12 @@
  *
  * Vapor 模式的按钮组件，使用 Signal + 直接 DOM 操作
  * 性能最优，适用于高频更新场景
+ *
+ * 注意：这是一个占位符实现
+ * 完整的 Vapor 组件需要 @lytjs/renderer/vapor 模块支持
  */
 
-import { defineVaporComponent } from '@lytjs/renderer/vapor/vapor-app';
-import { signal, computed } from '@lytjs/reactivity';
-import type { VaporContext } from '@lytjs/renderer/vapor/vapor-app';
+import { computed } from '@lytjs/reactivity';
 
 export interface VaporButtonProps {
   type?: 'primary' | 'success' | 'warning' | 'danger' | 'info' | 'default';
@@ -23,7 +24,7 @@ export interface VaporButtonProps {
   onClick?: (event: MouseEvent) => void;
 }
 
-export const VaporButton = defineVaporComponent({
+export const VaporButton = {
   name: 'VaporButton',
   props: {
     type: { type: 'string', default: 'default' },
@@ -38,7 +39,7 @@ export const VaporButton = defineVaporComponent({
     style: { type: 'string', default: '' },
     onClick: { type: 'function', default: undefined },
   },
-  setup(props: VaporButtonProps, context: VaporContext) {
+  setup(props: VaporButtonProps) {
     const classes = computed(() => {
       const cls = ['vapor-button'];
       if (props.type !== 'default') cls.push(`vapor-button--${props.type}`);
@@ -52,29 +53,20 @@ export const VaporButton = defineVaporComponent({
       return cls.join(' ');
     });
 
-    const isDisabled = computed(() => props.disabled || props.loading);
+    const isDisabled = computed(() => props.disabled || props.loading).value;
 
     const handleClick = (event: MouseEvent) => {
-      if (isDisabled()) {
+      if (isDisabled) {
         event.preventDefault();
         return;
       }
       props.onClick?.(event);
     };
 
-    const handleKeydown = (event: KeyboardEvent) => {
-      if (isDisabled()) return;
-      if (event.key === 'Enter' || event.key === ' ') {
-        event.preventDefault();
-        handleClick(event as unknown as MouseEvent);
-      }
-    };
-
     return {
       classes,
       isDisabled,
       handleClick,
-      handleKeydown,
     };
   },
   template: `
@@ -84,10 +76,9 @@ export const VaporButton = defineVaporComponent({
       style={props.style}
       disabled={isDisabled}
       onClick={handleClick}
-      onKeydown={handleKeydown}
     >
       {props.loading && <span class="vapor-button__loading">⟳</span>}
       <slot />
     </button>
   `,
-});
+};

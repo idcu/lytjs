@@ -9,7 +9,7 @@
 
 import { defineComponent } from '@lytjs/component';
 import { createVNode, createTextVNode, type VNode } from '@lytjs/vdom';
-import { signal, watch, onMounted, onUnmounted, effect } from '@lytjs/reactivity';
+import { signal, watch, effect } from '@lytjs/reactivity';
 import { getDialogA11yProps, getButtonA11yProps, mergeA11yProps } from '@lytjs/common-a11y';
 import type { DialogSetupProps, DialogSlots } from './types';
 
@@ -101,8 +101,8 @@ export const Dialog = defineComponent({
       const focusableElements = getFocusableElements(dialog);
       if (focusableElements.length === 0) return;
 
-      const firstElement = focusableElements[0];
-      const lastElement = focusableElements[focusableElements.length - 1];
+      const firstElement = focusableElements[0]!;
+      const lastElement = focusableElements[focusableElements.length - 1]!;
 
       if (e.shiftKey) {
         if (document.activeElement === firstElement) {
@@ -132,14 +132,14 @@ export const Dialog = defineComponent({
                 initialEl.focus();
               } else {
                 const focusableElements = getFocusableElements(dialog);
-                if (focusableElements.length > 0 && focusableElements[0].focus) {
-                  focusableElements[0].focus();
+                if (focusableElements.length > 0) {
+                  (focusableElements[0] as HTMLElement).focus();
                 }
               }
             } else {
               const focusableElements = getFocusableElements(dialog);
-              if (focusableElements.length > 0 && focusableElements[0].focus) {
-                focusableElements[0].focus();
+              if (focusableElements.length > 0) {
+                (focusableElements[0] as HTMLElement).focus();
               }
             }
           }

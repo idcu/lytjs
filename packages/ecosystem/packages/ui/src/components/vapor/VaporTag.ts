@@ -3,11 +3,12 @@
  *
  * Vapor 模式的标签组件，使用 Signal + 直接 DOM 操作
  * 性能最优，适用于高频更新场景
+ *
+ * 注意：这是一个占位符实现
+ * 完整的 Vapor 组件需要 @lytjs/renderer/vapor 模块支持
  */
 
-import { defineVaporComponent } from '@lytjs/renderer/vapor/vapor-app';
 import { computed } from '@lytjs/reactivity';
-import type { VaporContext } from '@lytjs/renderer/vapor/vapor-app';
 
 export interface VaporTagProps {
   type?: 'primary' | 'success' | 'warning' | 'danger' | 'info';
@@ -21,7 +22,7 @@ export interface VaporTagProps {
   onClose?: (event: MouseEvent) => void;
 }
 
-export const VaporTag = defineVaporComponent({
+export const VaporTag = {
   name: 'VaporTag',
   props: {
     type: { type: 'string', default: 'primary' },
@@ -34,7 +35,7 @@ export const VaporTag = defineVaporComponent({
     class: { type: 'string', default: '' },
     onClose: { type: 'function', default: undefined },
   },
-  setup(props: VaporTagProps, context: VaporContext) {
+  setup(props: VaporTagProps) {
     const classes = computed(() => {
       const cls = ['vapor-tag'];
       if (props.type) cls.push(`vapor-tag--${props.type}`);
@@ -69,4 +70,4 @@ export const VaporTag = defineVaporComponent({
       )}
     </span>
   `,
-});
+};

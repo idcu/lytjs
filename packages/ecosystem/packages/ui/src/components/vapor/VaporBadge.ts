@@ -3,11 +3,12 @@
  *
  * Vapor 模式的徽标组件，使用 Signal + 直接 DOM 操作
  * 性能最优，适用于高频更新场景
+ *
+ * 注意：这是一个占位符实现
+ * 完整的 Vapor 组件需要 @lytjs/renderer/vapor 模块支持
  */
 
-import { defineVaporComponent } from '@lytjs/renderer/vapor/vapor-app';
 import { computed } from '@lytjs/reactivity';
-import type { VaporContext } from '@lytjs/renderer/vapor/vapor-app';
 
 export interface VaporBadgeProps {
   value?: string | number;
@@ -18,7 +19,7 @@ export interface VaporBadgeProps {
   class?: string;
 }
 
-export const VaporBadge = defineVaporComponent({
+export const VaporBadge = {
   name: 'VaporBadge',
   props: {
     value: { type: 'string', default: '' },
@@ -28,7 +29,7 @@ export const VaporBadge = defineVaporComponent({
     type: { type: 'string', default: 'danger' },
     class: { type: 'string', default: '' },
   },
-  setup(props: VaporBadgeProps, context: VaporContext) {
+  setup(props: VaporBadgeProps) {
     const content = computed(() => {
       if (props.isDot) return '';
       if (typeof props.value === 'number' && typeof props.max === 'number') {
@@ -60,4 +61,4 @@ export const VaporBadge = defineVaporComponent({
       )}
     </div>
   `,
-});
+};

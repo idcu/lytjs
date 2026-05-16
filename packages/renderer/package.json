@@ -21,6 +21,16 @@
       "types": "./dist/ssr.d.ts",
       "import": "./dist/ssr.mjs",
       "require": "./dist/ssr.cjs"
+    },
+    "./vapor": {
+      "types": "./dist/vapor/vapor-app.d.ts",
+      "import": "./dist/vapor/vapor-app.mjs",
+      "require": "./dist/vapor/vapor-app.cjs"
+    },
+    "./vapor/vapor-app": {
+      "types": "./dist/vapor/vapor-app.d.ts",
+      "import": "./dist/vapor/vapor-app.mjs",
+      "require": "./dist/vapor/vapor-app.cjs"
     }
   },
   "files": [

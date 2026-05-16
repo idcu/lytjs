@@ -5,6 +5,7 @@ export default defineConfig({
     index: 'src/index.ts',
     dom: 'src/dom/dom-renderer.ts',
     ssr: 'src/ssr/ssr-renderer.ts',
+    'vapor/vapor-app': 'src/vapor/vapor-app.ts',
   },
   format: ['esm', 'cjs'],
   dts: true,
