@@ -37,6 +37,25 @@ export {
 } from './ssg';
 export type { SSGPage, SSGOptions } from './ssg';
 
+// 服务端组件
+export {
+  registerServerComponent,
+  unregisterServerComponent,
+  collectPrefetchComponents,
+  prefetchAllComponents,
+  safeSerializeState,
+  safeDeserializeState,
+  buildDehydratedState,
+  ServerComponent,
+  stateManager,
+} from './server-components';
+export type {
+  ServerLifecycleHook,
+  ServerComponentContext,
+  ServerComponentRegistration,
+  ComponentDehydratedState,
+} from './server-components';
+
 // 水合提示
 export {
   createHydrationMarkers,
