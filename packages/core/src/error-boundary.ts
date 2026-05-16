@@ -18,7 +18,10 @@ export interface FallbackProps {
   error: Error;
   errorInfo: ErrorInfo;
   reset: () => void;
+  retry: () => void;
   retryCount: number;
+  maxRetries: number;
+  hasRetries: boolean;
 }
 
 /** 错误边界属性 */
@@ -28,6 +31,8 @@ export interface ErrorBoundaryProps {
   onError?: (error: Error, errorInfo: ErrorInfo) => void;
   maxRetries?: number;
   retryDelay?: number;
+  onRetry?: (retryCount: number) => void;
+  onMaxRetriesReached?: (error: Error) => void;
 }
 
 /** 错误报告上下文 */
@@ -52,6 +57,7 @@ export interface ErrorLog {
   error: Error;
   errorInfo: ErrorInfo;
   context: ErrorContext;
+  retryCount: number;
 }
 
 /** 默认错误报告器 - 控制台输出 */
@@ -113,13 +119,31 @@ class ErrorLogManager {
   getLogsByDateRange(start: Date, end: Date): ErrorLog[] {
     return this.logs.filter(log => log.timestamp >= start && log.timestamp <= end);
   }
+
+  getErrorStats(): {
+    totalErrors: number;
+    errorTypes: Record<string, number>;
+    recentErrors: ErrorLog[];
+  } {
+    const errorTypes: Record<string, number> = {};
+    this.logs.forEach(log => {
+      const type = log.error.name || 'Unknown';
+      errorTypes[type] = (errorTypes[type] || 0) + 1;
+    });
+
+    return {
+      totalErrors: this.logs.length,
+      errorTypes,
+      recentErrors: this.logs.slice(0, 10),
+    };
+  }
 }
 
 /** 全局错误日志管理器实例 */
 export const errorLogManager = new ErrorLogManager();
 
 /** 生成唯一 ID */
-function generateErrorId(): string {
+export function generateErrorId(): string {
   return `err_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 }
 
@@ -136,13 +160,19 @@ function DefaultErrorFallback(props: FallbackProps): VNode {
   }, [
     createElement('h3', { style: 'color: #c00; margin-bottom: 10px;' }, '出错了'),
     createElement('p', { style: 'color: #666; margin-bottom: 10px;' }, props.error.message),
-    createElement('button', {
-      style: 'padding: 8px 16px; background: #667eea; color: white; border: none; border-radius: 4px; cursor: pointer;',
-      onClick: () => props.reset(),
-    }, '重试'),
-    props.retryCount > 0 ? createElement('p', { style: 'color: #999; font-size: 0.9em; margin-top: 10px;' },
+    createElement('div', { style: 'display: flex; gap: 10px; margin-top: 10px;' }, [
+      props.hasRetries && createElement('button', {
+        style: 'padding: 8px 16px; background: #667eea; color: white; border: none; border-radius: 4px; cursor: pointer;',
+        onClick: () => props.retry(),
+      }, `重试 (${props.retryCount}/${props.maxRetries})`),
+      createElement('button', {
+        style: 'padding: 8px 16px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;',
+        onClick: () => props.reset(),
+      }, '重置'),
+    ]),
+    props.retryCount > 0 && createElement('p', { style: 'color: #999; font-size: 0.9em; margin-top: 10px;' },
       `已重试 ${props.retryCount} 次`
-    ) : null,
+    ),
   ]);
 }
 
@@ -152,30 +182,60 @@ interface ErrorBoundaryState {
   errorInfo: ErrorInfo | null;
   retryCount: number;
   resetKey: number;
+  isRetrying: boolean;
 }
 
 /** 错误边界组件实现 */
-export function ErrorBoundary(props: ErrorBoundaryProps & { children?: VNode }): VNode {
+export function ErrorBoundary(props: ErrorBoundaryProps): VNode {
+  const maxRetries = props.maxRetries ?? 3;
+  const retryDelay = props.retryDelay ?? 1000;
+
   const state: ErrorBoundaryState = {
     error: null,
     errorInfo: null,
     retryCount: 0,
     resetKey: 0,
+    isRetrying: false,
   };
 
   const reset = () => {
     state.error = null;
     state.errorInfo = null;
+    state.retryCount = 0;
+    state.isRetrying = false;
     state.resetKey++;
   };
 
+  const retry = () => {
+    if (state.retryCount < maxRetries) {
+      state.isRetrying = true;
+
+      if (props.onRetry) {
+        props.onRetry(state.retryCount + 1);
+      }
+
+      setTimeout(() => {
+        reset();
+      }, retryDelay);
+    } else {
+      if (props.onMaxRetriesReached && state.error) {
+        props.onMaxRetriesReached(state.error);
+      }
+    }
+  };
+
   const getFallback = (): VNode => {
+    const hasRetries = state.retryCount < maxRetries;
+
     if (props.fallback) {
       return createElement(props.fallback, {
         error: state.error!,
         errorInfo: state.errorInfo!,
         reset,
+        retry,
         retryCount: state.retryCount,
+        maxRetries,
+        hasRetries,
       } as FallbackProps);
     }
 
@@ -187,7 +247,10 @@ export function ErrorBoundary(props: ErrorBoundaryProps & { children?: VNode }):
       error: state.error!,
       errorInfo: state.errorInfo!,
       reset,
+      retry,
       retryCount: state.retryCount,
+      maxRetries,
+      hasRetries,
     });
   };
 
@@ -200,13 +263,10 @@ export function ErrorBoundary(props: ErrorBoundaryProps & { children?: VNode }):
   return createElement('error-boundary-wrapper', {
     'data-error': 'false',
     key: `reset-${state.resetKey}`,
-  }, props.children);
+  }, null);
 }
 
-/** 导出错误 ID 生成函数供外部使用 */
-export { generateErrorId };
-
-/** 错误边界钩子 */
+/** 错误边界钩子 - 用于手动触发错误 */
 export function useErrorHandler(): (error: Error) => void {
   return (error: Error) => {
     throw error;
