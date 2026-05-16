@@ -197,6 +197,13 @@ export default defineConfig({
             { text: 'SSR', link: '/ecosystem/ssr' },
           ],
         },
+        {
+          text: '官方插件',
+          items: [
+            { text: 'plugin-form 表单验证', link: '/ecosystem/plugins/form' },
+            { text: 'plugin-animation 动画插件', link: '/ecosystem/plugins/animation' },
+          ],
+        },
       ],
       '/development/': [
         {
