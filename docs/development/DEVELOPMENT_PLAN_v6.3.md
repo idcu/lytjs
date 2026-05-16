@@ -472,9 +472,9 @@ export const yourPlugin = definePlugin({
 
 **发布准备**
 
-- [ ] 代码审查
-- [ ] CHANGELOG 更新
-- [ ] 版本标签
+- [x] 代码审查
+- [x] CHANGELOG 更新
+- [x] 版本标签 - v6.3.0 已发布
 - [ ] 发布公告
 
 ---
@@ -483,6 +483,8 @@ export const yourPlugin = definePlugin({
 
 - 2026-05-16: 创建 v6.3 开发计划
 - 2026-05-16: 完成 ErrorBoundary 组件、测试和文档
+- 2026-05-16: 完成第三方生态建设、贡献者指南、CI/CD增强
+- 2026-05-16: v6.3.0 正式发布
 
 ---
 
