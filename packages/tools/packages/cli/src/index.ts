@@ -15,6 +15,8 @@ export { dev } from './commands/dev';
 export { build } from './commands/build';
 export { test } from './commands/test';
 export { add } from './commands/add';
+export { generate } from './commands/generate';
+export type { GenerateOptions } from './commands/generate';
 export {
   createPlugin,
   buildPlugin,

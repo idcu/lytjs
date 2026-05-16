@@ -11,6 +11,7 @@ import { dev } from './dev';
 import { build } from './build';
 import { test } from './test';
 import { add } from './add';
+import { generate } from './generate';
 import {
   createPlugin,
   buildPlugin,
@@ -79,6 +80,25 @@ export async function runCli(rawArgs: string[] = process.argv.slice(2)): Promise
       }
       await add(args[0] as any, args[1] || 'Unnamed', {
         force: options.force as boolean | undefined,
+      });
+      break;
+
+    case 'generate':
+    case 'g':
+      const genTypes = ['component', 'page', 'service', 'hook', 'store'];
+      if (!args[0] || !genTypes.includes(args[0])) {
+        logger.error('Usage: lyt generate <type> <name>');
+        logger.info('Types: component, page, service, hook, store');
+        logger.info('Example: lyt generate component Button');
+        process.exit(1);
+      }
+      await generate({
+        type: args[0] as any,
+        name: args[1] || 'Unnamed',
+        path: options.path as string | undefined,
+        withStyles: options.styles as boolean | undefined,
+        withTest: options.test as boolean | undefined,
+        withStorybook: options.storybook as boolean | undefined,
       });
       break;
       
@@ -187,9 +207,10 @@ ${logger.bold('Commands:')}
   build                    Build for production
   test                     Run tests
   add <type> <name>        Generate a component, page, store, directive, composable, etc.
+  generate, g              Advanced code generation (component, page, service, hook, store)
   plugin <subcmd>          Plugin development commands
   help                     Show this help message
-
+  
 ${logger.bold('Options:')}
   --version, -v     Show version number
   --help            Show help
@@ -213,6 +234,12 @@ ${logger.bold('Test Options:')}
   --coverage        Generate coverage report
   --grep <pattern>  Filter tests by pattern
 
+${logger.bold('Generate Options:')}
+  --path <dir>      Output directory (default: ./src)
+  --styles          Generate CSS styles file
+  --test            Generate test file
+  --storybook       Generate Storybook story file
+
 ${logger.bold('Plugin Options:')}
   --template <name>    Use a specific plugin template (default, minimal, withConfig)
   --force              Overwrite existing directory
@@ -233,10 +260,16 @@ ${logger.bold('Examples:')}
   lyt add component Button
   lyt add page About
   lyt add store user
-  lyt add directive click-outside
+  lyt directive click-outside
   lyt add composable fetch-data
   lyt add util format
   lyt add hook window-size
+  lyt generate component Button --styles --test
+  lyt generate page Dashboard --path ./src/pages
+  lyt generate service User --path ./src/services
+  lyt generate hook useCounter
+  lyt generate store Auth --path ./src/stores
+  lyt g page Login
   lyt plugin create my-plugin
   lyt plugin create my-plugin --template withConfig
   lyt plugin build
