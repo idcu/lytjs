@@ -3,12 +3,9 @@
  *
  * Vapor 模式的按钮组件，使用 Signal + 直接 DOM 操作
  * 性能最优，适用于高频更新场景
- *
- * 注意：这是一个占位符实现
- * 完整的 Vapor 组件需要 @lytjs/renderer/vapor 模块支持
  */
 
-import { computed } from '@lytjs/reactivity';
+import { createVNode } from '@lytjs/vdom';
 
 export interface VaporButtonProps {
   type?: 'primary' | 'success' | 'warning' | 'danger' | 'info' | 'default';
@@ -27,58 +24,68 @@ export interface VaporButtonProps {
 export const VaporButton = {
   name: 'VaporButton',
   props: {
-    type: { type: 'string', default: 'default' },
-    size: { type: 'string', default: 'medium' },
-    disabled: { type: 'boolean', default: false },
-    loading: { type: 'boolean', default: false },
-    plain: { type: 'boolean', default: false },
-    round: { type: 'boolean', default: false },
-    circle: { type: 'boolean', default: false },
-    nativeType: { type: 'string', default: 'button' },
-    class: { type: 'string', default: '' },
-    style: { type: 'string', default: '' },
-    onClick: { type: 'function', default: undefined },
+    type: { type: String, default: 'default' },
+    size: { type: String, default: 'medium' },
+    disabled: { type: Boolean, default: false },
+    loading: { type: Boolean, default: false },
+    plain: { type: Boolean, default: false },
+    round: { type: Boolean, default: false },
+    circle: { type: Boolean, default: false },
+    nativeType: { type: String, default: 'button' },
+    class: { type: String, default: '' },
+    style: { type: String, default: '' },
+    onClick: { type: Function, default: undefined },
   },
-  setup(props: VaporButtonProps) {
-    const classes = computed(() => {
-      const cls = ['vapor-button'];
-      if (props.type !== 'default') cls.push(`vapor-button--${props.type}`);
-      if (props.size !== 'medium') cls.push(`vapor-button--${props.size}`);
-      if (props.plain) cls.push('vapor-button--plain');
-      if (props.round) cls.push('vapor-button--round');
-      if (props.circle) cls.push('vapor-button--circle');
-      if (props.disabled) cls.push('vapor-button--disabled');
-      if (props.loading) cls.push('vapor-button--loading');
-      if (props.class) cls.push(props.class);
-      return cls.join(' ');
-    });
+  setup(props: Record<string, unknown>) {
+    const p = props as unknown as VaporButtonProps;
 
-    const isDisabled = computed(() => props.disabled || props.loading).value;
+    const getClasses = (): string => {
+      const cls = ['vapor-button'];
+      if (p.type !== 'default') cls.push(`vapor-button--${p.type}`);
+      if (p.size !== 'medium') cls.push(`vapor-button--${p.size}`);
+      if (p.plain) cls.push('vapor-button--plain');
+      if (p.round) cls.push('vapor-button--round');
+      if (p.circle) cls.push('vapor-button--circle');
+      if (p.disabled) cls.push('vapor-button--disabled');
+      if (p.loading) cls.push('vapor-button--loading');
+      if (p.class) cls.push(p.class as string);
+      return cls.join(' ');
+    };
 
     const handleClick = (event: MouseEvent) => {
-      if (isDisabled) {
+      if (p.disabled || p.loading) {
         event.preventDefault();
         return;
       }
-      props.onClick?.(event);
+      (p.onClick as ((event: MouseEvent) => void) | undefined)?.(event);
     };
 
-    return {
-      classes,
-      isDisabled,
-      handleClick,
+    return () => {
+      const children: any[] = [];
+
+      if (p.loading) {
+        children.push(createVNode('span', { class: 'vapor-button__loading' }, [
+          createVNode('svg', {
+            class: 'vapor-button__loading-icon',
+            viewBox: '0 0 1024 1024',
+          }, [
+            createVNode('path', {
+              d: 'M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64z',
+              fill: 'currentColor',
+            }),
+          ]),
+        ]));
+      }
+
+      children.push(createVNode('span', { class: 'vapor-button__text' }, []));
+
+      return createVNode('button', {
+        type: p.nativeType as 'button' | 'submit' | 'reset',
+        class: getClasses(),
+        style: p.style as string || undefined,
+        disabled: p.disabled || p.loading || undefined,
+        onClick: handleClick,
+      }, children);
     };
   },
-  template: `
-    <button
-      type={props.nativeType}
-      class={classes}
-      style={props.style}
-      disabled={isDisabled}
-      onClick={handleClick}
-    >
-      {props.loading && <span class="vapor-button__loading">⟳</span>}
-      <slot />
-    </button>
-  `,
 };
