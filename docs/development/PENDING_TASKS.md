@@ -111,7 +111,7 @@
 
 | 位置 | 说明 |
 |------|------|
-| `packages/ui/src/components/vapor/*.ts` | VaporBadge等组件有类型错误待修复 |
+| `packages/ui/src/components/vapor/*.ts` | ✅ 已修复 Vapor 组件类型错误 |
 | `packages/transition/src/transition-group.ts` | 浏览器环境测试失败 |
 
 ---
@@ -119,6 +119,7 @@
 ## 📝 更新记录
 
 - 2026-05-16: 创建未完成任务汇总文档
+- 2026-05-16: 修复 UI Vapor 组件类型错误和 Dialog 警告
 
 ---
 
