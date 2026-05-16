@@ -159,3 +159,21 @@ export type {
   CacheUtilsLike,
   CoreIntegrations,
 } from './common-integration';
+
+// 错误边界系统（v6.3 新增）
+export {
+  ErrorBoundary,
+  useErrorHandler,
+  useErrorBoundaryReset,
+  setGlobalErrorReporter,
+  getGlobalErrorReporter,
+  errorLogManager,
+} from './error-boundary';
+export type {
+  ErrorBoundaryProps,
+  FallbackProps,
+  ErrorInfo,
+  ErrorReporter,
+  ErrorContext,
+  ErrorLog,
+} from './error-boundary';
