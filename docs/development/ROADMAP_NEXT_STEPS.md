@@ -154,7 +154,7 @@
 **验收标准**：
 - [x] 创建 UI 组件增强计划文档（2026-05-16）
 - [x] 增强 Dialog 组件 Accessibility（焦点陷阱、焦点管理）（2026-05-16）
-- [ ] 新增 Vapor 模式组件（Button, Input, Badge, Icon, Tag）
+- [x] 新增 Vapor 模式组件（Button, Badge, Input, Tag）（2026-05-16）
 - [ ] 增强更多组件 Accessibility（Select, Tabs, Menu）
 - [ ] 所有组件支持 Vapor 模式
 - [ ] 组件性能提升 10%+
@@ -166,7 +166,12 @@
   - 添加焦点管理（打开聚焦，关闭返回）
   - 添加 Tab 键循环导航
   - 添加 `initialFocus` 和 `returnFocusOnClose` 属性
-  - `packages/ecosystem/packages/ui/src/components/Dialog.ts`
+- 2026-05-16: ✅ 新增 Vapor 模式组件
+  - VaporButton - 按钮组件
+  - VaporBadge - 徽标组件
+  - VaporInput - 输入框组件
+  - VaporTag - 标签组件
+  - `packages/ecosystem/packages/ui/src/components/vapor/`
 
 **工作量估算**：4周
 
