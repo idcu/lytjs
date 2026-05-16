@@ -5,6 +5,105 @@
 
 ---
 
+## v6.3.0 (2026-05-16) - 生态繁荣
+
+### ErrorBoundary 增强
+
+- ✅ **错误边界组件完善**
+  - 完整的 ErrorBoundary 组件实现
+  - 自定义降级 UI 支持（`fallback`、`fallbackRender`）
+  - 错误重试机制（`maxRetries`、`retryDelay`、`onRetry`）
+  - 错误回调支持（`onError`、`onMaxRetriesReached`）
+  - 默认降级组件（DefaultErrorFallback）
+  - 60 个单元测试用例全部通过
+  - 类型检查通过
+
+- ✅ **错误报告系统**
+  - ErrorReporter 接口定义
+  - ConsoleErrorReporter 默认实现
+  - `setGlobalErrorReporter()` 全局报告器设置
+  - `getGlobalErrorReporter()` 获取当前报告器
+  - 支持自定义错误报告器集成
+
+- ✅ **错误日志系统**
+  - ErrorLogManager 错误日志管理器
+  - 日志记录（`addLog`）
+  - 日志查询（`getLogs`、`getLogById`、`getLogsByErrorType`、`getLogsByDateRange`）
+  - 日志统计（`getErrorStats`）
+  - 日志导出（`exportLogs`）
+  - 日志清理（`clearLogs`）
+  - 日志数量限制（默认 100 条）
+
+- ✅ **错误处理钩子**
+  - `useErrorHandler()` - 手动触发错误
+  - `useErrorBoundaryReset()` - 重置错误边界状态
+
+### 第三方生态建设
+
+- ✅ **插件审核机制**
+  - 完整的审核标准文档
+  - 审核流程（GitHub Issue 申请 → 代码审查 → 功能测试 → 安全扫描 → 发布）
+  - 审核维度（代码质量、文档完整性、功能完整性、安全性）
+  - 文档：`docs/development/third-party-ecosystem.md`
+
+- ✅ **官方推荐插件列表**
+  - 核心插件（官方维护）：@lytjs/plugin-form、@lytjs/plugin-animation、@lytjs/plugin-router、@lytjs/plugin-store、@lytjs/ssr
+  - 社区插件生态指南
+  - 插件推荐等级（Official/Recommended/Community）
+
+- ✅ **社区治理文档**
+  - 行为准则（CODE_OF_CONDUCT.md）
+  - 联系方式：邮箱 idcu@qq.com、官网 https://idcu.github.io/lytjs/
+
+### 贡献者指南
+
+- ✅ **CONTRIBUTING.md**
+  - 贡献类型（代码、文档、社区）
+  - 开发环境配置
+  - 代码规范（TypeScript、命名、注释、导入）
+  - 提交规范（feat、fix、docs、style、refactor、test、chore）
+  - 测试要求（覆盖率 >= 80%）
+  - 插件开发指南
+  - 社区规范和行为准则
+
+### CI/CD 增强
+
+- ✅ **覆盖率检查 Workflow**
+  - `.github/workflows/coverage-check.yml`
+  - @lytjs/core 覆盖率检查（阈值 90%）
+  - ErrorBoundary 专项覆盖率检查
+  - 体积回归检查
+  - 测试统计报告
+  - 依赖健康检查
+  - Codecov 集成支持
+
+### 文档与教程
+
+- ✅ **ErrorBoundary 使用指南**
+  - 基础用法
+  - 全局错误处理
+  - 重试机制
+  - 错误日志系统
+  - 6 个最佳实践案例
+  - 完整 API 参考
+  - 文档：`docs/guides/error-boundary.md`
+
+- ✅ **ErrorBoundary 实战教程**
+  - 数据获取组件场景
+  - 表单组件场景
+  - 路由级别错误边界
+  - 第三方组件包装
+  - 错误恢复策略
+  - 文档：`docs/tutorial/error-boundary-best-practices.md`
+
+### 测试验证
+
+- ✅ **ErrorBoundary 单元测试**：60 个测试用例全部通过
+- ✅ **核心包类型检查**：通过
+- ✅ **基准测试**：核心性能测试通过
+
+---
+
 ## v6.2.0 (2026-05-16) - SSR 增强与插件生态完善
 
 ### SSR 稳定与增强
