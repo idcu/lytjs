@@ -1,0 +1,18 @@
+{
+  "name": "lytjs-keyed",
+  "private": true,
+  "version": "6.0.0",
+  "type": "module",
+  "description": "LytJS js-framework-benchmark implementation",
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@lytjs/reactivity": "workspace:*"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0"
+  }
+}
