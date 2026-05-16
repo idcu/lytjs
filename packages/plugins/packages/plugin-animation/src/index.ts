@@ -688,8 +688,5 @@ export type {
   TransitionOptions,
   Keyframe,
 } from './types';
-export {
-  createAnimationManager,
-} from './types';
 
 
