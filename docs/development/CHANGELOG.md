@@ -5,6 +5,55 @@
 
 ---
 
+## v6.1.0 (2026-05-16) - 性能与稳定性增强
+
+### 核心功能增强
+
+- ✅ **性能基准测试集成**
+  - 成功运行现有基准测试，收集基线性能数据
+  - 创建 js-framework-benchmark 框架实现（Signal + 直接 DOM）
+  - 位置：`benchmarks/js-framework-benchmark/frameworks/keyed/lytjs/`
+
+- ✅ **Vapor 模式增强**
+  - 批量 DOM 操作优化：`insertBatch`、`removeBatch`、`replaceBatch`
+  - 事件委托机制：`delegateEvent`、`delegateEventBatch`
+  - 增量更新算法：`diffLists`（基于 key 的 O(n) 差异计算）
+  - 防抖渲染调度器：`createRenderScheduler`
+  - 文档：`docs/development/VAPOR_OPTIMIZATION_PLAN.md`
+
+- ✅ **UI 组件库增强**
+  - Dialog 组件无障碍增强：焦点陷阱、焦点管理、Tab 循环
+  - Vapor 模式组件：Button、Badge、Input、Tag
+  - 组件类型修复：batch.ts、events.ts 等
+
+- ✅ **DevTools 持续增强**
+  - 信号依赖可视化：`getVisualLayoutGraph`、`getSubgraph`
+  - 信号搜索与过滤：`searchSignals`、`filterSignals`
+  - 性能时序分析：`beginTimelineEvent`、`getFlameGraphData`
+  - 时间旅行增强：`compareSnapshots`、`getTimeTravelNavigator`
+  - 文档：`docs/development/DEVTOOLS_ENHANCEMENT_PLAN.md`
+
+- ✅ **教程体系完善**
+  - 新增实战案例：表单验证实战案例
+  - 新增实战案例：Vapor 模式待办应用
+  - 完善最佳实践指南（已存在）
+  - 完善 Vue/React 迁移指南（已存在）
+  - 案例总数：6 个（Todo、Vapor Todo、用户管理、购物车、表单验证、博客系统）
+
+### 性能优化验证
+
+- ✅ **性能数据**
+  - 单节点更新：164,848 ops/s（+19.1%）
+  - 批量更新：1,310 ops/s（+15.8%）
+  - 文档：`docs/development/PERFORMANCE_OPTIMIZATION_REPORT_v6.1.md`
+
+### 测试验证
+
+- ✅ **类型检查**：大部分包通过，剩余 UI 包问题为历史遗留
+- ✅ **基准测试**：成功运行，性能数据良好
+
+---
+
 ## v6.0.0 (2026-05-15) - 当前版本
 
 ### 主要里程碑
