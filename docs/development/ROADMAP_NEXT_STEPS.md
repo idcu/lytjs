@@ -147,20 +147,26 @@
 
 **工作量估算**：3周（实际：2天核心优化 + 测试验证）
 
-##### 3. UI 组件库增强
+##### 3. 🔄 UI 组件库增强
 
 **目标**：持续完善 UI 组件库
 
-**待完成**：
-- 新增高频使用组件
-- 完善现有组件：优化 Accessibility、完善主题
-- 添加组件性能优化
-- 确保所有组件支持 Vapor 模式
-
 **验收标准**：
-- [ ] 新增组件完善组件库
+- [x] 创建 UI 组件增强计划文档（2026-05-16）
+- [x] 增强 Dialog 组件 Accessibility（焦点陷阱、焦点管理）（2026-05-16）
+- [ ] 新增 Vapor 模式组件（Button, Input, Badge, Icon, Tag）
+- [ ] 增强更多组件 Accessibility（Select, Tabs, Menu）
 - [ ] 所有组件支持 Vapor 模式
 - [ ] 组件性能提升 10%+
+
+**进度记录**：
+- 2026-05-16: ✅ 创建 UI 组件增强计划文档
+- 2026-05-16: ✅ 增强 Dialog 组件 Accessibility
+  - 添加焦点陷阱（Focus Trap）
+  - 添加焦点管理（打开聚焦，关闭返回）
+  - 添加 Tab 键循环导航
+  - 添加 `initialFocus` 和 `returnFocusOnClose` 属性
+  - `packages/ecosystem/packages/ui/src/components/Dialog.ts`
 
 **工作量估算**：4周
 
