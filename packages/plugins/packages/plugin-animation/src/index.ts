@@ -16,6 +16,17 @@ import type {
   Keyframe,
   AnimationPluginOptions,
 } from './types';
+export type { GPUAccelerationOptions } from './gpu-acceleration';
+export {
+  to3DTransform,
+  canUseGPU,
+  enableGPUAcceleration,
+  disableGPUAcceleration,
+  GPU_PRESETS,
+  PerformanceOptimizer,
+  getGlobalOptimizer,
+  resetGlobalOptimizer,
+} from './gpu-acceleration';
 
 /**
  * 缓动函数映射
@@ -676,7 +687,9 @@ export type {
   EasingFunction,
   TransitionOptions,
   Keyframe,
-};
+} from './types';
 export {
   createAnimationManager,
-};
+} from './types';
+
+
