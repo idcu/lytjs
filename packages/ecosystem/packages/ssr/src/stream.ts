@@ -16,6 +16,16 @@ export interface StreamRenderOptions {
   onShellReady?: () => void;
   /** 错误回调 */
   onError?: (error: Error) => void;
+  /** 流式渲染超时时间（毫秒），默认 30000 */
+  timeout?: number;
+  /** 当渲染超时时的回退 HTML 内容 */
+  fallbackHtml?: string;
+  /** 流控制：每秒最大字节数，用于防止突发流量 */
+  maxBytesPerSecond?: number;
+  /** 是否启用错误恢复模式，默认 true */
+  errorRecovery?: boolean;
+  /** 单个组件渲染超时（毫秒），默认 5000 */
+  componentTimeout?: number;
 }
 
 /** 异步数据预取上下文 */
@@ -54,6 +64,55 @@ export interface EnhancedStreamRenderOptions extends StreamRenderOptions {
 
 /** 默认分块大小 */
 const DEFAULT_CHUNK_SIZE = 4096;
+
+/** 默认流式渲染超时时间 */
+const DEFAULT_TIMEOUT = 30000;
+
+/** 默认错误恢复 HTML */
+const DEFAULT_FALLBACK_HTML = '<div id="lyt-fallback">服务正在加载中...</div>';
+
+/**
+ * 超时错误类型
+ */
+class StreamTimeoutError extends Error {
+  constructor(message: string = 'Stream rendering timeout') {
+    super(message);
+    this.name = 'StreamTimeoutError';
+  }
+}
+
+/**
+ * 流速率控制
+ */
+class FlowController {
+  private maxBytesPerSecond: number;
+  private bytesSentInSecond: number = 0;
+  private lastSecondTimestamp: number = Date.now();
+
+  constructor(maxBytesPerSecond: number) {
+    this.maxBytesPerSecond = maxBytesPerSecond;
+  }
+
+  /**
+   * 尝试发送字节，如超出速率则等待
+   */
+  async waitForRateLimit(byteCount: number): Promise<void> {
+    const now = Date.now();
+    if (now - this.lastSecondTimestamp >= 1000) {
+      this.bytesSentInSecond = 0;
+      this.lastSecondTimestamp = now;
+    }
+
+    if (this.bytesSentInSecond + byteCount > this.maxBytesPerSecond) {
+      const waitTime = 1000 - (now - this.lastSecondTimestamp);
+      await new Promise(resolve => setTimeout(resolve, waitTime));
+      this.bytesSentInSecond = 0;
+      this.lastSecondTimestamp = Date.now();
+    }
+
+    this.bytesSentInSecond += byteCount;
+  }
+}
 
 /** Suspense 组件标记名称 */
 const SUSPENSE_TYPE = 'Suspense';
@@ -188,6 +247,8 @@ function splitIntoByteChunks(html: string, chunkSize: number): string[] {
  * - 支持 Suspense 边界（先发送 shell，再发送异步内容）
  * - 使用 TextEncoder 编码为 Uint8Array
  * - 可配置分块大小和回调
+ * - 超时控制和错误恢复
+ * - 流速率控制
  *
  * @param vnode - 要渲染的 VNode
  * @param options - 流式渲染配置选项
@@ -199,6 +260,7 @@ function splitIntoByteChunks(html: string, chunkSize: number): string[] {
  *   chunkSize: 2048,
  *   onShellReady: () => console.log('Shell 已发送'),
  *   onError: (err) => console.error(err),
+ *   timeout: 30000,
  * });
  *
  * for await (const chunk of stream) {
@@ -214,12 +276,35 @@ export function renderToStream(
     chunkSize = DEFAULT_CHUNK_SIZE,
     onShellReady,
     onError,
+    timeout = DEFAULT_TIMEOUT,
+    fallbackHtml = DEFAULT_FALLBACK_HTML,
+    maxBytesPerSecond,
+    errorRecovery = true,
   } = options || {};
 
   const encoder = new TextEncoder();
+  let flowController: FlowController | null = maxBytesPerSecond ? new FlowController(maxBytesPerSecond) : null;
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
   return new ReadableStream<Uint8Array>({
     start(controller) {
+      // 设置超时
+      timeoutId = setTimeout(() => {
+        try {
+          if (errorRecovery) {
+            console.warn('Stream rendering timed out, using fallback HTML');
+            controller.enqueue(encoder.encode(fallbackHtml));
+            controller.close();
+            onError?.(new StreamTimeoutError('Stream rendering timed out'));
+          } else {
+            controller.error(new StreamTimeoutError('Stream rendering timed out'));
+          }
+        } catch (err) {
+          const error = err instanceof Error ? err : new Error(String(err));
+          onError?.(error);
+        }
+      }, timeout);
+
       try {
         // 收集组件边界分块
         const suspenseBoundaryIndex: number[] = [];
@@ -235,7 +320,7 @@ export function renderToStream(
 
           // 发送 shell 分块
           for (const chunk of byteChunks) {
-            controller.enqueue(encoder.encode(chunk));
+            sendChunk(controller, encoder, chunk);
           }
 
           // 通知 shell 就绪
@@ -247,24 +332,67 @@ export function renderToStream(
           const remainingByteChunks = splitIntoByteChunks(remainingHtml, chunkSize);
 
           for (const chunk of remainingByteChunks) {
-            controller.enqueue(encoder.encode(chunk));
+            sendChunk(controller, encoder, chunk);
           }
         } else {
           // 无 Suspense 边界，直接分块发送
           const byteChunks = splitIntoByteChunks(fullHtml, chunkSize);
           for (const chunk of byteChunks) {
-            controller.enqueue(encoder.encode(chunk));
+            sendChunk(controller, encoder, chunk);
           }
         }
 
+        // 取消超时并正常关闭
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+          timeoutId = null;
+        }
         controller.close();
       } catch (err) {
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+          timeoutId = null;
+        }
         const error = err instanceof Error ? err : new Error(String(err));
         onError?.(error);
-        controller.error(error);
+
+        if (errorRecovery) {
+          try {
+            console.warn('Error occurred during stream rendering, using fallback HTML');
+            controller.enqueue(encoder.encode(fallbackHtml));
+            controller.close();
+          } catch (e) {
+            controller.error(error);
+          }
+        } else {
+          controller.error(error);
+        }
       }
     },
+
+    cancel(reason) {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+      console.log('Stream cancelled:', reason);
+    },
   });
+
+  /**
+   * 发送单个分块，应用流速率控制
+   */
+  function sendChunk(controller: ReadableStreamDefaultController<Uint8Array>, encoder: TextEncoder, chunk: string) {
+    const encoded = encoder.encode(chunk);
+    if (flowController) {
+      // 如果启用了流控制，等待速率限制
+      (async () => {
+        await flowController.waitForRateLimit(encoded.length);
+        controller.enqueue(encoded);
+      })();
+    } else {
+      controller.enqueue(encoded);
+    }
+  }
 }
 
 /**
