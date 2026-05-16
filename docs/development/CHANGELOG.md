@@ -5,6 +5,66 @@
 
 ---
 
+## v6.2.0 (2026-05-16) - SSR 增强与插件生态完善
+
+### SSR 稳定与增强
+
+- ✅ **流式 SSR 稳定化**
+  - 新增超时机制（`timeout` 配置）
+  - 新增流控制（`maxBytesPerSecond` 配置）
+  - 新增错误恢复机制（`errorRecovery`、`fallbackHtml`）
+  - 新增 `StreamTimeoutError` 错误类
+  - 新增 `FlowController` 流控制类
+  - 完善 `renderToStream` 函数，支持超时和错误恢复
+  - 新增完整的 SSR 使用指南：`docs/development/SSR_GUIDE.md`
+
+- ✅ **服务端组件完善**
+  - 新增 `server-components.ts` 模块
+  - 服务端组件生命周期管理（`onServerInit`、`onServerCleanup`）
+  - 数据预取优化（并发预取、请求去重、缓存）
+  - 服务端状态序列化/反序列化（支持 Date、RegExp、Set、Map）
+  - 服务端组件管理器装饰器（`@ServerComponent`）
+  - 完整的 TypeScript 类型支持
+
+### 插件生态完善
+
+- ✅ **plugin-form 验证**
+  - 表单状态管理（`createFormManager`）
+  - 内置验证规则（required、email、phone、number、min、max、minLength、maxLength、pattern）
+  - 自定义验证规则和异步验证
+  - 错误信息本地化
+  - 22 个完整测试用例全部通过
+  - 类型检查通过
+
+- ✅ **plugin-animation 验证**
+  - 动画 API（`createAnimation`、`createKeyframeAnimation`）
+  - 20+ 种缓动函数
+  - 常见动画预设（fadeIn/fadeOut、slideIn/slideOut、zoomIn/zoomOut、bounceIn、shake）
+  - Web Animations API 支持
+  - 完整测试用例通过
+  - 类型检查通过
+
+### 开发工具完善
+
+- ✅ **CLI 工具验证**
+  - 完整的项目脚手架（create、dev、build、test）
+  - 插件管理（plugin create、plugin build、plugin validate）
+  - 类型检查通过
+
+### 文档与教程
+
+- ✅ **SSR 指南完善**
+  - 创建完整的 SSR 使用指南（`docs/development/SSR_GUIDE.md`）
+  - 包含基础使用、流式渲染、服务端组件、错误处理等内容
+  - 提供详细代码示例
+
+### 测试验证
+
+- ✅ **类型检查**：ssr、plugin-form、plugin-animation、cli 包全部通过
+- ✅ **单元测试**：plugin-form 22 个测试通过，plugin-animation 测试通过
+
+---
+
 ## v6.1.0 (2026-05-16) - 性能与稳定性增强
 
 ### 核心功能增强
