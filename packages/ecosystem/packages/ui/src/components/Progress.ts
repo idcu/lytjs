@@ -5,7 +5,7 @@
  */
 
 import type { ProgressProps, ProgressSlots, ProgressSetupProps } from './types';
-import { defineComponent } from '@lytjs/component';
+import { defineComponent, type PropType } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import { isString, isObject, isArray } from '@lytjs/common-is';
 import { computed } from '@lytjs/reactivity';
@@ -20,12 +20,12 @@ export const Progress = defineComponent({
     strokeWidth: { type: Number, default: 6 },
     textInside: { type: Boolean, default: false },
     showText: { type: Boolean, default: true },
-    color: { type: [String, Array, Object] as any, default: '' },
+    color: { type: [String, Array, Object] as unknown as PropType<string | string[] | Record<string, string>>, default: '' },
     width: { type: Number, default: 126 },
     strokeLinecap: { type: String, default: 'round' },
     format: { type: Function, default: undefined },
     class: { type: String, default: '' },
-    style: { type: [String, Object] as any, default: '' },
+    style: { type: [String, Object] as unknown as PropType<string | Record<string, string>>, default: '' },
     id: { type: String, default: '' },
     ariaLabel: { type: String, default: '' },
     ariaDescribedBy: { type: String, default: '' },

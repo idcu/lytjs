@@ -4,15 +4,12 @@
  * 基础图标组件，支持多种尺寸和颜色
  */
 
-import type { IconProps, IconSlots } from './types';
+import type { IconProps, IconSlots, IconSetupProps } from './types';
 import { defineComponent } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import { isString, isObject } from '@lytjs/common-is';
 import { mergeA11yProps } from '@lytjs/common-a11y';
 
-/**
- * Icon 组件
- */
 export const Icon = defineComponent({
   name: 'LytIcon',
 
@@ -28,26 +25,27 @@ export const Icon = defineComponent({
     ariaDescribedBy: { type: String, default: '' },
   },
 
-  setup(props: any, { slots }: any) {
+  setup(props: Record<string, unknown>, { slots }: { slots: IconSlots }) {
+    const p = props as unknown as IconSetupProps;
+
     const getIconClass = () => {
       const classes = ['lyt-icon'];
-      if (props.name) classes.push(`lyt-icon--${props.name}`);
-      if (props.spin) classes.push('lyt-icon--spin');
-      if (props.class) classes.push(props.class);
+      if (p.name) classes.push(`lyt-icon--${p.name}`);
+      if (p.spin) classes.push('lyt-icon--spin');
+      if (p.class) classes.push(p.class);
       return classes.join(' ');
     };
 
     const getIconStyle = () => {
       const style: Record<string, string> = {};
-      if (props.size) style.fontSize = props.size;
-      if (props.color) style.color = props.color;
-      if (props.style) {
-        if (isString(props.style)) {
-          // 简单处理字符串风格
-          return props.style;
+      if (p.size) style.fontSize = p.size;
+      if (p.color) style.color = p.color;
+      if (p.style) {
+        if (isString(p.style)) {
+          return p.style;
         }
-        if (isObject(props.style)) {
-          Object.assign(style, props.style);
+        if (isObject(p.style)) {
+          Object.assign(style, p.style);
         }
       }
       return style;
@@ -61,9 +59,9 @@ export const Icon = defineComponent({
       }
 
       return createVNode('i', mergeA11yProps({
-        id: props.id,
-        'aria-label': props.ariaLabel,
-        'aria-describedby': props.ariaDescribedBy,
+        id: p.id,
+        'aria-label': p.ariaLabel,
+        'aria-describedby': p.ariaDescribedBy,
       }, {
         class: getIconClass(),
         style: getIconStyle(),

@@ -32,7 +32,7 @@ export const Toast = defineComponent({
     const _props = props as ToastSetupProps;
     const state = reactive({
       visible: true,
-      timer: null as any,
+      timer: null as ReturnType<typeof setTimeout> | null,
     });
 
     const startTimer = () => {
@@ -45,7 +45,7 @@ export const Toast = defineComponent({
 
     const clearTimer = () => {
       if (state.timer) {
-        clearTimeout(state.timer);
+        clearTimeout(state.timer as ReturnType<typeof setTimeout>);
         state.timer = null;
       }
     };

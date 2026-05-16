@@ -128,6 +128,7 @@ export type {
 
 // 类型定义
 /** 组件相关类型定义 */
+export type { PropType } from './types';
 export type {
   ComponentOptions,
   ComponentInternalInstance,

@@ -1,18 +1,9 @@
-/**
- * @lytjs/ui - Empty 组件
- *
- * 空状态组件，用于展示无数据的状态
- */
-
-import type { EmptyProps, EmptySlots } from './types';
+import type { EmptyProps, EmptySlots, EmptySetupProps } from './types';
 import { defineComponent } from '@lytjs/component';
-import { createVNode, type VNode } from '@lytjs/vdom';
+import { createVNode, createTextVNode, type VNode } from '@lytjs/vdom';
 import { isString, isObject } from '@lytjs/common-is';
 import { mergeA11yProps } from '@lytjs/common-a11y';
 
-/**
- * Empty 组件
- */
 export const Empty = defineComponent({
   name: 'LytEmpty',
 
@@ -27,18 +18,20 @@ export const Empty = defineComponent({
     ariaDescribedBy: { type: String, default: '' },
   },
 
-  setup(props: any, { slots }: any) {
+  setup(props: Record<string, unknown>, { slots }: { slots: EmptySlots }) {
+    const p = props as unknown as EmptySetupProps;
+
     const getEmptyClass = () => {
       const classes = ['lyt-empty'];
-      if (props.class) classes.push(props.class);
+      if (p.class) classes.push(p.class);
       return classes.join(' ');
     };
 
     const getEmptyStyle = () => {
-      if (!props.style) return undefined;
-      if (isString(props.style)) return props.style;
-      if (isObject(props.style)) {
-        return Object.entries(props.style)
+      if (!p.style) return undefined;
+      if (isString(p.style)) return p.style;
+      if (isObject(p.style)) {
+        return Object.entries(p.style)
           .map(([key, value]) => `${key}: ${value}`)
           .join('; ');
       }
@@ -48,24 +41,22 @@ export const Empty = defineComponent({
     return () => {
       const children: VNode[] = [];
       
-      // 图片区域
       if (slots.image) {
         children.push(createVNode('div', { class: 'lyt-empty__image' }, slots.image()));
-      } else if (props.image) {
+      } else if (p.image) {
         children.push(createVNode('div', { class: 'lyt-empty__image' }, [
           createVNode('img', {
-            src: props.image,
+            src: p.image,
             alt: 'empty',
-            style: { width: `${props.imageSize}px`, height: `${props.imageSize}px` },
+            style: { width: `${p.imageSize}px`, height: `${p.imageSize}px` },
           }),
         ]));
       } else {
-        // 默认 SVG 图标
         children.push(createVNode('div', { class: 'lyt-empty__image' }, [
           createVNode('svg', {
             viewBox: '0 0 400 320',
             class: 'lyt-empty__svg',
-            style: { width: `${props.imageSize}px`, height: `${props.imageSize * 0.8}px` },
+            style: { width: `${p.imageSize || 160}px`, height: `${(p.imageSize || 160) * 0.8}px` },
           }, [
             createVNode('g', { fill: 'none', 'fill-rule': 'evenodd' }, [
               createVNode('g', { transform: 'translate(40 40)' }, [
@@ -82,22 +73,20 @@ export const Empty = defineComponent({
         ]));
       }
 
-      // 描述区域
       if (slots.description) {
         children.push(createVNode('div', { class: 'lyt-empty__description' }, slots.description()));
-      } else if (props.description) {
-        children.push(createVNode('div', { class: 'lyt-empty__description' }, [props.description]));
+      } else if (p.description) {
+        children.push(createVNode('div', { class: 'lyt-empty__description' }, [createTextVNode(p.description)]));
       }
 
-      // 底部内容
       if (slots.default) {
         children.push(createVNode('div', { class: 'lyt-empty__bottom' }, slots.default()));
       }
 
       return createVNode('div', mergeA11yProps({
-        id: props.id,
-        'aria-label': props.ariaLabel,
-        'aria-describedby': props.ariaDescribedBy,
+        id: p.id,
+        'aria-label': p.ariaLabel,
+        'aria-describedby': p.ariaDescribedBy,
         role: 'status',
         'aria-live': 'polite',
       }, {

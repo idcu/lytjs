@@ -5,7 +5,7 @@
  */
 
 import type { SliderProps, SliderSlots, SliderSetupProps } from './types';
-import { defineComponent } from '@lytjs/component';
+import { defineComponent, type PropType } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import { isString, isObject } from '@lytjs/common-is';
 import { reactive, computed, watch } from '@lytjs/reactivity';
@@ -31,7 +31,7 @@ export const Slider = defineComponent({
     height: { type: String, default: '' },
     label: { type: String, default: '' },
     class: { type: String, default: '' },
-    style: { type: [String, Object] as any, default: '' },
+    style: { type: [String, Object] as unknown as PropType<string | Record<string, string>>, default: '' },
     id: { type: String, default: '' },
     ariaLabel: { type: String, default: '' },
     ariaDescribedBy: { type: String, default: '' },
@@ -191,15 +191,17 @@ export const Slider = defineComponent({
           state.secondValue = Math.max(newValue, state.firstValue);
         }
 
-        const newModelValue = [state.firstValue, state.secondValue];
-        emit('update:modelValue', newModelValue as any);
-        emit('input', newModelValue as any);
-        _props.onInput?.(newModelValue as any);
+        const newModelValue: number | number[] = _props.range
+          ? [state.firstValue, state.secondValue]
+          : state.firstValue;
+        emit('update:modelValue', newModelValue);
+        emit('input', newModelValue);
+        (_props.onInput as ((value: number | number[]) => void) | undefined)?.(newModelValue);
       } else {
         state.firstValue = newValue;
         emit('update:modelValue', state.firstValue);
         emit('input', state.firstValue);
-        _props.onInput?.(state.firstValue);
+        (_props.onInput as ((value: number) => void) | undefined)?.(state.firstValue);
       }
     };
 
@@ -211,12 +213,12 @@ export const Slider = defineComponent({
       document.removeEventListener('mouseup', handleMouseUp);
 
       if (_props.range) {
-        const newModelValue = [state.firstValue, state.secondValue];
-        emit('change', newModelValue as any);
-        _props.onChange?.(newModelValue as any);
+        const newModelValue: number[] = [state.firstValue, state.secondValue];
+        emit('change', newModelValue);
+        (_props.onChange as ((value: number[]) => void) | undefined)?.(newModelValue);
       } else {
         emit('change', state.firstValue);
-        _props.onChange?.(state.firstValue);
+        (_props.onChange as ((value: number) => void) | undefined)?.(state.firstValue);
       }
     };
 

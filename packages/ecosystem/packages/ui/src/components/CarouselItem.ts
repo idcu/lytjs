@@ -5,7 +5,7 @@
  */
 
 import type { CarouselItemProps, CarouselItemSlots, CarouselItemSetupProps } from './types';
-import { defineComponent } from '@lytjs/component';
+import { defineComponent, type PropType } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import { isString, isObject } from '@lytjs/common-is';
 import { mergeA11yProps } from '@lytjs/common-a11y';
@@ -17,10 +17,10 @@ export const CarouselItem = defineComponent({
   name: 'LytCarouselItem',
 
   props: {
-    name: { type: [String, Number] as any, default: '' },
+    name: { type: [String, Number] as unknown as PropType<string | number>, default: '' },
     label: { type: String, default: '' },
     class: { type: String, default: '' },
-    style: { type: [String, Object] as any, default: '' },
+    style: { type: [String, Object] as unknown as PropType<string | Record<string, string>>, default: '' },
     id: { type: String, default: '' },
     ariaLabel: { type: String, default: '' },
     ariaDescribedBy: { type: String, default: '' },

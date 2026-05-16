@@ -6,7 +6,7 @@
  */
 
 import { signal } from '@lytjs/reactivity';
-import { createVNode } from '@lytjs/vdom';
+import { createVNode, createTextVNode, type VNode } from '@lytjs/vdom';
 
 export interface VaporInputProps {
   type?: 'text' | 'password' | 'email' | 'number' | 'tel' | 'url' | 'textarea';
@@ -136,20 +136,20 @@ export const VaporInput = {
             onBlur: handleBlur,
           });
 
-      const children: any[] = [inputElement];
+      const children: VNode[] = [inputElement];
 
       if (p.clearable && inputValue() && !p.disabled) {
         children.push(createVNode('span', {
           class: 'vapor-input__clear',
           onClick: handleClear,
-        }, ['×'] as any));
+        }, [createTextVNode('×')]));
       }
 
       if (p.type === 'password' && p.showPassword) {
         children.push(createVNode('span', {
           class: 'vapor-input__password',
           onClick: togglePassword,
-        }, [(showPwd() ? '🙈' : '👁')] as any));
+        }, [createTextVNode(showPwd() ? '🙈' : '👁')]));
       }
 
       return createVNode('div', { class: getWrapperClasses() }, children);

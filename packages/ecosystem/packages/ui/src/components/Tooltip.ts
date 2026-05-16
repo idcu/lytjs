@@ -4,16 +4,13 @@
  * 文字提示组件，用于显示额外的提示信息
  */
 
-import type { TooltipProps, TooltipSlots } from './types';
+import type { TooltipProps, TooltipSlots, TooltipSetupProps } from './types';
 import { defineComponent } from '@lytjs/component';
-import { createVNode, type VNode } from '@lytjs/vdom';
+import { createVNode, createTextVNode, type VNode } from '@lytjs/vdom';
 import { isString, isObject } from '@lytjs/common-is';
 import { reactive } from '@lytjs/reactivity';
 import { mergeA11yProps } from '@lytjs/common-a11y';
 
-/**
- * Tooltip 组件
- */
 export const Tooltip = defineComponent({
   name: 'LytTooltip',
 
@@ -32,67 +29,68 @@ export const Tooltip = defineComponent({
     ariaDescribedBy: { type: String, default: '' },
   },
 
-  setup(props: any, { slots }: any) {
+  setup(props: Record<string, unknown>, { slots }: { slots: TooltipSlots }) {
+    const p = props as unknown as TooltipSetupProps;
     const state = reactive({
       visible: false,
-      openTimer: null as any,
-      closeTimer: null as any,
     });
+    let openTimer: ReturnType<typeof setTimeout> | null = null;
+    let closeTimer: ReturnType<typeof setTimeout> | null = null;
 
     const handleMouseEnter = () => {
-      if (props.disabled || props.trigger !== 'hover') return;
-      clearTimeout(state.closeTimer);
-      if (props.openDelay > 0) {
-        state.openTimer = setTimeout(() => {
+      if (p.disabled || p.trigger !== 'hover') return;
+      if (closeTimer) clearTimeout(closeTimer);
+      if (p.openDelay && p.openDelay > 0) {
+        openTimer = setTimeout(() => {
           state.visible = true;
-        }, props.openDelay);
+        }, p.openDelay);
       } else {
         state.visible = true;
       }
     };
 
     const handleMouseLeave = () => {
-      if (props.disabled || props.trigger !== 'hover') return;
-      clearTimeout(state.openTimer);
-      if (props.closeDelay > 0) {
-        state.closeTimer = setTimeout(() => {
+      if (p.disabled || p.trigger !== 'hover') return;
+      if (openTimer) clearTimeout(openTimer);
+      if (p.closeDelay && p.closeDelay > 0) {
+        closeTimer = setTimeout(() => {
           state.visible = false;
-        }, props.closeDelay);
+        }, p.closeDelay);
       } else {
         state.visible = false;
       }
     };
 
     const handleClick = () => {
-      if (props.disabled || props.trigger !== 'click') return;
+      if (p.disabled || p.trigger !== 'click') return;
       state.visible = !state.visible;
     };
 
     const handleFocus = () => {
-      if (props.disabled || props.trigger !== 'focus') return;
+      if (p.disabled || p.trigger !== 'focus') return;
       state.visible = true;
     };
 
     const handleBlur = () => {
-      if (props.disabled || props.trigger !== 'focus') return;
+      if (p.disabled || p.trigger !== 'focus') return;
       state.visible = false;
     };
 
     const getTooltipClass = () => {
       const classes = ['lyt-tooltip'];
-      classes.push(`lyt-tooltip--${props.placement}`);
-      if (props.class) classes.push(props.class);
+      classes.push(`lyt-tooltip--${p.placement}`);
+      if (p.class) classes.push(p.class);
       return classes.join(' ');
     };
 
     const getTooltipStyle = () => {
       const style: Record<string, string> = {};
-      if (props.style) {
-        if (isString(props.style)) {
-          return props.style;
+      if (p.style) {
+        if (isString(p.style)) {
+          return p.style;
         }
-        if (isObject(props.style)) {
-          Object.assign(style, props.style);
+        if (isObject(p.style)) {
+          Object.assign(style, p.style);
         }
       }
       return style;
@@ -101,7 +99,6 @@ export const Tooltip = defineComponent({
     return () => {
       const children: VNode[] = [];
       
-      // 触发元素
       if (slots.default) {
         children.push(createVNode('div', {
           class: 'lyt-tooltip__trigger',
@@ -113,22 +110,19 @@ export const Tooltip = defineComponent({
         }, slots.default()));
       }
 
-      // 提示内容
-      if (state.visible && !props.disabled) {
+      if (state.visible && !p.disabled) {
         const contentChildren: VNode[] = [];
         
-        // 箭头
-        if (props.showArrow) {
+        if (p.showArrow) {
           contentChildren.push(createVNode('div', {
             class: 'lyt-tooltip__arrow',
           }, []));
         }
 
-        // 内容
-        if (props.content) {
+        if (p.content) {
           contentChildren.push(createVNode('div', {
             class: 'lyt-tooltip__content',
-          }, [props.content]));
+          }, [createTextVNode(p.content)]));
         } else if (slots.content) {
           contentChildren.push(createVNode('div', {
             class: 'lyt-tooltip__content',
@@ -142,9 +136,9 @@ export const Tooltip = defineComponent({
       }
 
       return createVNode('div', mergeA11yProps({
-        id: props.id,
-        'aria-label': props.ariaLabel,
-        'aria-describedby': props.ariaDescribedBy,
+        id: p.id,
+        'aria-label': p.ariaLabel,
+        'aria-describedby': p.ariaDescribedBy,
       }, {
         class: 'lyt-tooltip-wrapper',
       }), children);

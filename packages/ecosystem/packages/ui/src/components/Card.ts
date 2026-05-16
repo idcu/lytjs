@@ -5,7 +5,7 @@
  */
 
 import type { CardProps, CardSlots, CardSetupProps } from './types';
-import { defineComponent } from '@lytjs/component';
+import { defineComponent, type PropType } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import { isString, isObject } from '@lytjs/common-is';
 import { mergeA11yProps } from '@lytjs/common-a11y';
@@ -15,10 +15,10 @@ export const Card = defineComponent({
 
   props: {
     header: { type: String, default: '' },
-    bodyStyle: { type: Object as any, default: () => ({}) },
+    bodyStyle: { type: Object as PropType<Record<string, string>>, default: () => ({}) },
     shadow: { type: String, default: 'always' },
     class: { type: String, default: '' },
-    style: { type: [String, Object] as any, default: '' },
+    style: { type: [String, Object] as unknown as PropType<string | Record<string, string>>, default: '' },
     id: { type: String, default: '' },
     ariaLabel: { type: String, default: '' },
     ariaDescribedBy: { type: String, default: '' },
@@ -78,7 +78,7 @@ export const Card = defineComponent({
       }
       children.push(createVNode('div', {
         class: 'lyt-card__body',
-        style: _props.bodyStyle as any,
+        style: _props.bodyStyle as string | Record<string, string>,
       }, bodyContent));
 
       return createVNode('div', mergeA11yProps({

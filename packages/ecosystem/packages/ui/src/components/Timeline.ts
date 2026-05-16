@@ -5,7 +5,7 @@
  */
 
 import type { TimelineProps, TimelineSlots, TimelineSetupProps } from './types';
-import { defineComponent } from '@lytjs/component';
+import { defineComponent, type PropType } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import { isString, isObject } from '@lytjs/common-is';
 import { mergeA11yProps } from '@lytjs/common-a11y';
@@ -20,7 +20,7 @@ export const Timeline = defineComponent({
     reverse: { type: Boolean, default: false },
     mode: { type: String as () => 'left' | 'right' | 'alternate', default: 'left' },
     class: { type: String, default: '' },
-    style: { type: [String, Object] as any, default: '' },
+    style: { type: [String, Object] as unknown as PropType<string | Record<string, string>>, default: '' },
     id: { type: String, default: '' },
     ariaLabel: { type: String, default: '' },
     ariaDescribedBy: { type: String, default: '' },

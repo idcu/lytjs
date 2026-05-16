@@ -5,7 +5,7 @@
  */
 
 import type { RadioGroupProps, RadioGroupSlots, RadioGroupSetupProps } from './types';
-import { defineComponent } from '@lytjs/component';
+import { defineComponent, type PropType } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import { isString, isObject } from '@lytjs/common-is';
 import { getGroupA11yProps, mergeA11yProps } from '@lytjs/common-a11y';
@@ -14,11 +14,11 @@ export const RadioGroup = defineComponent({
   name: 'LytRadioGroup',
 
   props: {
-    modelValue: { type: [String, Number, Boolean] as any, default: undefined },
+    modelValue: { type: [String, Number, Boolean] as unknown as PropType<string | number | boolean>, default: undefined },
     disabled: { type: Boolean, default: false },
     size: { type: String, default: 'default' },
     class: { type: String, default: '' },
-    style: { type: [String, Object] as any, default: '' },
+    style: { type: [String, Object] as unknown as PropType<string | Record<string, string>>, default: '' },
     ariaLabel: { type: String, default: '' },
     ariaDescribedBy: { type: String, default: '' },
     ariaRequired: { type: Boolean, default: false },

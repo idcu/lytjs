@@ -5,7 +5,7 @@
  * 性能最优，适用于高频更新场景
  */
 
-import { createVNode } from '@lytjs/vdom';
+import { createVNode, createTextVNode, type VNode } from '@lytjs/vdom';
 
 export interface VaporTagProps {
   type?: 'primary' | 'success' | 'warning' | 'danger' | 'info';
@@ -56,13 +56,13 @@ export const VaporTag = {
     };
 
     return () => {
-      const children: any[] = [createVNode('slot', {}, [])];
+      const children: VNode[] = [createVNode('slot', {}, [])];
 
       if (p.closable) {
         children.push(createVNode('span', {
           class: 'vapor-tag__close',
           onClick: handleClose,
-        }, ['×'] as any));
+        }, [createTextVNode('×')]));
       }
 
       return createVNode('span', {

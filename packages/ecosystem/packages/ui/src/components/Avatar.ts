@@ -5,7 +5,7 @@
  */
 
 import type { AvatarProps, AvatarSlots, AvatarSetupProps } from './types';
-import { defineComponent } from '@lytjs/component';
+import { defineComponent, type PropType } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import { isString, isObject } from '@lytjs/common-is';
 import { signal } from '@lytjs/reactivity';
@@ -15,7 +15,7 @@ export const Avatar = defineComponent({
   name: 'LytAvatar',
 
   props: {
-    size: { type: [Number, String] as any, default: 'default' },
+    size: { type: [Number, String] as unknown as PropType<number | string>, default: 'default' },
     shape: { type: String, default: 'circle' },
     icon: { type: String, default: '' },
     src: { type: String, default: '' },
@@ -23,7 +23,7 @@ export const Avatar = defineComponent({
     alt: { type: String, default: '' },
     fit: { type: String, default: 'cover' },
     class: { type: String, default: '' },
-    style: { type: [String, Object] as any, default: '' },
+    style: { type: [String, Object] as unknown as PropType<string | Record<string, string>>, default: '' },
     id: { type: String, default: '' },
     ariaLabel: { type: String, default: '' },
     ariaDescribedBy: { type: String, default: '' },

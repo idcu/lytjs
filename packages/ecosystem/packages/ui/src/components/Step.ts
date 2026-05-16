@@ -5,7 +5,7 @@
  */
 
 import type { StepProps, StepSlots, StepSetupProps } from './types';
-import { defineComponent } from '@lytjs/component';
+import { defineComponent, type PropType } from '@lytjs/component';
 import { createVNode, createTextVNode, type VNode } from '@lytjs/vdom';
 import { isString, isObject } from '@lytjs/common-is';
 import { mergeA11yProps } from '@lytjs/common-a11y';
@@ -19,10 +19,10 @@ export const Step = defineComponent({
   props: {
     title: { type: String, default: '' },
     description: { type: String, default: '' },
-    icon: { type: [String, Object] as any, default: '' },
+    icon: { type: [String, Object] as unknown as PropType<string | VNode>, default: '' },
     status: { type: String as () => 'wait' | 'process' | 'finish' | 'error' | 'success', default: '' },
     class: { type: String, default: '' },
-    style: { type: [String, Object] as any, default: '' },
+    style: { type: [String, Object] as unknown as PropType<string | Record<string, string>>, default: '' },
     id: { type: String, default: '' },
     ariaLabel: { type: String, default: '' },
     ariaDescribedBy: { type: String, default: '' },

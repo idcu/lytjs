@@ -5,7 +5,7 @@
  */
 
 import type { TransferProps, TransferSlots, TransferSetupProps, TransferOption } from './types';
-import { defineComponent } from '@lytjs/component';
+import { defineComponent, type PropType } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import { isString, isObject } from '@lytjs/common-is';
 import { signal } from '@lytjs/reactivity';
@@ -21,7 +21,7 @@ export const Transfer = defineComponent({
     titles: { type: Array as () => string[], default: () => ['源列表', '目标列表'] },
     buttonTexts: { type: Array as () => string[], default: () => ['', ''] },
     class: { type: String, default: '' },
-    style: { type: [String, Object] as any, default: '' },
+    style: { type: [String, Object] as unknown as PropType<string | Record<string, string>>, default: '' },
     onChange: { type: Function, default: undefined },
   },
 

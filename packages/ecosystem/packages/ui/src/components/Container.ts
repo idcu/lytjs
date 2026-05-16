@@ -1,17 +1,14 @@
-/**
- * @lytjs/ui - Container 组件
- *
- * 容器组件，用于布局
- */
-
 import type { ContainerProps, ContainerSlots } from './types';
 import { defineComponent } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import { isString, isObject } from '@lytjs/common-is';
 
-/**
- * Container 组件
- */
+export interface ContainerSetupProps {
+  fluid: boolean;
+  class: string;
+  style: string;
+}
+
 export const Container = defineComponent({
   name: 'LytContainer',
 
@@ -21,23 +18,25 @@ export const Container = defineComponent({
     style: { type: String, default: '' },
   },
 
-  setup(props: any, { slots }: any) {
+  setup(props: Record<string, unknown>, { slots }: { slots: ContainerSlots }) {
+    const p = props as unknown as ContainerSetupProps;
+
     const getContainerClass = () => {
       const classes = ['lyt-container'];
-      if (props.fluid) {
+      if (p.fluid) {
         classes.push('lyt-container--fluid');
       }
-      if (props.class) {
-        classes.push(props.class);
+      if (p.class) {
+        classes.push(p.class);
       }
       return classes.join(' ');
     };
 
     const getContainerStyle = () => {
-      if (!props.style) return undefined;
-      if (isString(props.style)) return props.style;
-      if (isObject(props.style)) {
-        return Object.entries(props.style)
+      if (!p.style) return undefined;
+      if (isString(p.style)) return p.style;
+      if (isObject(p.style)) {
+        return Object.entries(p.style)
           .map(([key, value]) => `${key}: ${value}`)
           .join('; ');
       }

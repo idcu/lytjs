@@ -1001,7 +1001,11 @@ export interface TooltipProps {
 export interface TooltipSetupProps extends Record<string, unknown> {
   content?: string;
   placement?: 'top' | 'bottom' | 'left' | 'right';
+  trigger?: string;
   disabled?: boolean;
+  openDelay?: number;
+  closeDelay?: number;
+  showArrow?: boolean;
   class?: string;
   style?: string | Record<string, string>;
   id?: string;

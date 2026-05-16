@@ -5,11 +5,20 @@
  */
 
 import { defineComponent } from '@lytjs/component';
-import { createVNode } from '@lytjs/vdom';
+import { createVNode, type VNode } from '@lytjs/vdom';
 
-/**
- * Transition 组件
- */
+export interface TransitionSetupProps {
+  name: string;
+  appear: boolean;
+  mode: string;
+  duration: number;
+  class: string;
+}
+
+export interface TransitionSlots {
+  default?: () => VNode[];
+}
+
 export const Transition = defineComponent({
   name: 'LytTransition',
 
@@ -21,19 +30,19 @@ export const Transition = defineComponent({
     class: { type: String, default: '' },
   },
 
-  setup(props: any, { slots }: any) {
-    // 生成类名
+  setup(props: Record<string, unknown>, { slots }: { slots: TransitionSlots }) {
+    const p = props as unknown as TransitionSetupProps;
+
     const getTransitionClass = () => {
-      const classes = [`${props.name}-transition`];
-      if (props.class) {
-        classes.push(props.class);
+      const classes = [`${p.name}-transition`];
+      if (p.class) {
+        classes.push(p.class);
       }
       return classes.join(' ');
     };
 
-    // 生成样式
     const getTransitionStyle = () => {
-      return `transition-duration: ${props.duration}ms;`;
+      return `transition-duration: ${p.duration}ms;`;
     };
 
     return () => {
@@ -45,9 +54,17 @@ export const Transition = defineComponent({
   },
 });
 
-/**
- * TransitionGroup 组件
- */
+export interface TransitionGroupSetupProps {
+  name: string;
+  tag: string;
+  duration: number;
+  class: string;
+}
+
+export interface TransitionGroupSlots {
+  default?: () => VNode[];
+}
+
 export const TransitionGroup = defineComponent({
   name: 'LytTransitionGroup',
 
@@ -58,20 +75,22 @@ export const TransitionGroup = defineComponent({
     class: { type: String, default: '' },
   },
 
-  setup(props: any, { slots }: any) {
+  setup(props: Record<string, unknown>, { slots }: { slots: TransitionGroupSlots }) {
+    const p = props as unknown as TransitionGroupSetupProps;
+
     return () => {
       const children = slots.default?.() || [];
       
-      const wrappedChildren = children.map((child: any, index: number) =>
+      const wrappedChildren: VNode[] = children.map((child: VNode, index: number) =>
         createVNode('div', {
-          key: child.key || index,
-          class: `${props.name}-item`,
-          style: `transition: all ${props.duration}ms ease;`,
+          key: (child as unknown as { key?: string | number }).key || index,
+          class: `${p.name}-item`,
+          style: `transition: all ${p.duration}ms ease;`,
         }, [child])
       );
 
-      return createVNode(props.tag, {
-        class: `lyt-transition-group ${props.class}`,
+      return createVNode(p.tag as string, {
+        class: `lyt-transition-group ${p.class}`,
       }, wrappedChildren);
     };
   },

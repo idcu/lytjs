@@ -5,7 +5,7 @@
  */
 
 import type { PopconfirmProps, PopconfirmSlots, PopconfirmSetupProps } from './types';
-import { defineComponent } from '@lytjs/component';
+import { defineComponent, type PropType } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import { isString, isObject } from '@lytjs/common-is';
 import { signal } from '@lytjs/reactivity';
@@ -26,7 +26,7 @@ export const Popconfirm = defineComponent({
     disabled: { type: Boolean, default: false },
     width: { type: Number, default: 0 },
     class: { type: String, default: '' },
-    style: { type: [String, Object] as any, default: '' },
+    style: { type: [String, Object] as unknown as PropType<string | Record<string, string>>, default: '' },
     id: { type: String, default: '' },
     ariaLabel: { type: String, default: '' },
     ariaDescribedBy: { type: String, default: '' },

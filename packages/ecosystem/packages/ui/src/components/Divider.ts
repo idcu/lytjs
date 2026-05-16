@@ -1,18 +1,9 @@
-/**
- * @lytjs/ui - Divider 组件
- *
- * 分割线组件
- */
-
-import type { DividerProps, DividerSlots } from './types';
+import type { DividerProps, DividerSlots, DividerSetupProps } from './types';
 import { defineComponent } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import { isString, isObject } from '@lytjs/common-is';
 import { mergeA11yProps } from '@lytjs/common-a11y';
 
-/**
- * Divider 组件
- */
 export const Divider = defineComponent({
   name: 'LytDivider',
 
@@ -26,26 +17,28 @@ export const Divider = defineComponent({
     ariaDescribedBy: { type: String, default: '' },
   },
 
-  setup(props: any, { slots }: any) {
+  setup(props: Record<string, unknown>, { slots }: { slots: DividerSlots }) {
+    const p = props as unknown as DividerSetupProps;
+
     const getDividerClass = () => {
       const classes = ['lyt-divider'];
-      if (props.type !== 'horizontal') {
-        classes.push(`lyt-divider--${props.type}`);
+      if (p.type !== 'horizontal') {
+        classes.push(`lyt-divider--${p.type}`);
       }
       if (slots.default) {
-        classes.push(`lyt-divider--${props.contentPosition}`);
+        classes.push(`lyt-divider--${p.contentPosition}`);
       }
-      if (props.class) {
-        classes.push(props.class);
+      if (p.class) {
+        classes.push(p.class);
       }
       return classes.join(' ');
     };
 
     const getDividerStyle = () => {
-      if (!props.style) return undefined;
-      if (isString(props.style)) return props.style;
-      if (isObject(props.style)) {
-        return Object.entries(props.style)
+      if (!p.style) return undefined;
+      if (isString(p.style)) return p.style;
+      if (isObject(p.style)) {
+        return Object.entries(p.style)
           .map(([key, value]) => `${key}: ${value}`)
           .join('; ');
       }
@@ -60,9 +53,9 @@ export const Divider = defineComponent({
       }
 
       return createVNode('div', mergeA11yProps({
-        id: props.id,
-        'aria-label': props.ariaLabel,
-        'aria-describedby': props.ariaDescribedBy,
+        id: p.id,
+        'aria-label': p.ariaLabel,
+        'aria-describedby': p.ariaDescribedBy,
         role: 'separator',
       }, {
         class: getDividerClass(),

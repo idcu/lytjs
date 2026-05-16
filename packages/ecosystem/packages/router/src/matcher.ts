@@ -276,12 +276,18 @@ export function parseQuery(queryString: string): LocationQuery {
       if (Array.isArray(existing)) {
         if (decodedValue !== undefined) {
           existing.push(decodedValue);
+        } else {
+          existing.push(null);
         }
       } else if (decodedValue !== undefined) {
         query[decodedKey] = [existing, decodedValue] as (string | null)[];
+      } else {
+        query[decodedKey] = [existing, null] as (string | null)[];
       }
     } else if (decodedValue !== undefined) {
       query[decodedKey] = decodedValue;
+    } else {
+      query[decodedKey] = null;
     }
   }
 

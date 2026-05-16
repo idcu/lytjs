@@ -4,7 +4,7 @@
  * 链接组件，支持多种类型和样式
  */
 
-import type { LinkProps, LinkSlots } from './types';
+import type { LinkProps, LinkSlots, LinkSetupProps } from './types';
 import { defineComponent } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import { isString, isObject } from '@lytjs/common-is';
@@ -31,7 +31,7 @@ export const Link = defineComponent({
   },
 
   setup(props: Record<string, unknown>, { slots }) {
-    const _props = props as any;
+    const _props = props as LinkSetupProps;
     const handleClick = (event: MouseEvent) => {
       if (_props.disabled) {
         event.preventDefault();

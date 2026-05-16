@@ -5,7 +5,7 @@
  * 性能最优，适用于高频更新场景
  */
 
-import { createVNode } from '@lytjs/vdom';
+import { createVNode, type VNode } from '@lytjs/vdom';
 
 export interface VaporButtonProps {
   type?: 'primary' | 'success' | 'warning' | 'danger' | 'info' | 'default';
@@ -61,7 +61,7 @@ export const VaporButton = {
     };
 
     return () => {
-      const children: any[] = [];
+      const children: VNode[] = [];
 
       if (p.loading) {
         children.push(createVNode('span', { class: 'vapor-button__loading' }, [

@@ -181,7 +181,7 @@ export const Tree = defineComponent({
         p.class,
       ].filter(Boolean).join(' ');
 
-      const a11yProps: Record<string, any> = {
+      const a11yProps: Record<string, string | undefined> = {
         id: p.id,
         role: 'tree',
         'aria-label': p.ariaLabel,

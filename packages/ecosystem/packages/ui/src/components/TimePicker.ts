@@ -4,7 +4,7 @@
  * 时间选择器组件，支持任意时间点、范围选择、自定义格式
  */
 
-import { defineComponent } from '@lytjs/component';
+import { defineComponent, type PropType } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import { signal } from '@lytjs/reactivity';
 
@@ -28,7 +28,7 @@ export const TimePicker = defineComponent({
   name: 'LytTimePicker',
 
   props: {
-    modelValue: { type: [String, Array] as any, default: null },
+    modelValue: { type: [String, Array] as unknown as PropType<string | [string, string] | null>, default: null },
     placeholder: { type: String, default: '选择时间' },
     disabled: { type: Boolean, default: false },
     clearable: { type: Boolean, default: true },

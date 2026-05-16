@@ -4,7 +4,7 @@
  * 树形选择器组件，结合了 Select 和 Tree 功能
  */
 
-import { defineComponent } from '@lytjs/component';
+import { defineComponent, type PropType } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import { isString, isObject } from '@lytjs/common-is';
 import { signal } from '@lytjs/reactivity';
@@ -43,7 +43,7 @@ export const TreeSelect = defineComponent({
 
   props: {
     data: { type: Array as () => TreeSelectNode[], default: () => [] },
-    value: { type: [String, Number] as any, default: '' },
+    value: { type: [String, Number] as unknown as PropType<string | number>, default: '' },
     placeholder: { type: String, default: '请选择' },
     multiple: { type: Boolean, default: false },
     clearable: { type: Boolean, default: false },
@@ -53,7 +53,7 @@ export const TreeSelect = defineComponent({
     defaultExpandAll: { type: Boolean, default: false },
     defaultExpandedKeys: { type: Array as () => (string | number)[], default: () => [] },
     class: { type: String, default: '' },
-    style: { type: [String, Object] as any, default: '' },
+    style: { type: [String, Object] as unknown as PropType<string | Record<string, string>>, default: '' },
     id: { type: String, default: '' },
     ariaLabel: { type: String, default: '' },
     ariaDescribedBy: { type: String, default: '' },

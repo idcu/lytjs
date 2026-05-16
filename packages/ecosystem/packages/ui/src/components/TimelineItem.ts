@@ -5,7 +5,7 @@
  */
 
 import type { TimelineItemProps, TimelineItemSlots, TimelineItemSetupProps } from './types';
-import { defineComponent } from '@lytjs/component';
+import { defineComponent, type PropType } from '@lytjs/component';
 import { createVNode, createTextVNode, type VNode } from '@lytjs/vdom';
 import { isString, isObject } from '@lytjs/common-is';
 import { mergeA11yProps } from '@lytjs/common-a11y';
@@ -20,12 +20,12 @@ export const TimelineItem = defineComponent({
     color: { type: String, default: '' },
     type: { type: String as () => 'primary' | 'success' | 'warning' | 'danger' | 'info', default: '' },
     size: { type: String as () => 'large' | 'default' | 'small', default: 'default' },
-    dot: { type: [String, Object] as any, default: '' },
+    dot: { type: [String, Object] as unknown as PropType<string | VNode>, default: '' },
     timestamp: { type: String, default: '' },
     placement: { type: String as () => 'top' | 'bottom', default: 'bottom' },
     hideTimestamp: { type: Boolean, default: false },
     class: { type: String, default: '' },
-    style: { type: [String, Object] as any, default: '' },
+    style: { type: [String, Object] as unknown as PropType<string | Record<string, string>>, default: '' },
     id: { type: String, default: '' },
     ariaLabel: { type: String, default: '' },
     ariaDescribedBy: { type: String, default: '' },

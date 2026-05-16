@@ -5,7 +5,7 @@
  * 性能最优，适用于高频更新场景
  */
 
-import { createVNode } from '@lytjs/vdom';
+import { createVNode, createTextVNode, type VNode } from '@lytjs/vdom';
 
 export interface VaporBadgeProps {
   value?: string | number;
@@ -50,7 +50,7 @@ export const VaporBadge = {
         return createVNode('slot', {}, []);
       }
 
-      const badgeContent: any[] = [getContent()];
+      const badgeContent: VNode[] = [createTextVNode(getContent())];
       const badge = createVNode('span', { class: getClasses() }, badgeContent);
       const slotNode = createVNode('slot', {}, []);
 
