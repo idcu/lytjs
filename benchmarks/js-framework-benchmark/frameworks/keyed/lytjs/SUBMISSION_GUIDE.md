@@ -2,13 +2,34 @@
 
 本指南说明如何将 LytJS 实现提交到官方 js-framework-benchmark 仓库。
 
-## 📋 前置条件
+## 🚀 一键脚本（推荐）
 
-1. 已在本地完成性能验证
-2. 已创建完整的实现代码
-3. 已准备好 package.json
+项目已提供一键脚本，自动完成整个提交流程：
 
-## 🚀 提交步骤
+```bash
+cd benchmarks
+pnpm pr:benchmark all
+```
+
+### 脚本命令说明
+
+| 命令 | 说明 |
+|------|------|
+| `setup` | Fork 并克隆官方仓库 |
+| `prepare` | 复制 LytJS 实现到目标仓库 |
+| `validate` | 验证实现是否符合要求 |
+| `commit` | 提交更改 |
+| `push` | 推送到 GitHub 并创建 PR |
+| `all` | 执行完整流程 |
+
+### 脚本位置
+
+- Windows: `benchmarks/scripts/js-framework-benchmark-pr.ps1`
+- Linux/Mac: `benchmarks/scripts/js-framework-benchmark-pr.sh`
+
+## 📋 手动提交流程
+
+如果需要手动操作，请按照以下步骤进行：
 
 ### 1. Fork 官方仓库
 

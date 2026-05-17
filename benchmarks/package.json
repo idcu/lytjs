@@ -7,7 +7,8 @@
     "bench": "vitest bench",
     "bench:render": "vitest bench --testNamePattern=render",
     "bench:update": "vitest bench --testNamePattern=update",
-    "compare": "node scripts/compare.js"
+    "compare": "node scripts/compare.js",
+    "pr:benchmark": "powershell -ExecutionPolicy Bypass -File scripts/js-framework-benchmark-pr.ps1"
   },
   "devDependencies": {
     "@lytjs/core": "workspace:*",
