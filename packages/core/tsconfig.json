@@ -9,6 +9,8 @@
     "paths": {
       "@lytjs/shared-types": ["../shared-types/dist/index.d.ts"],
       "@lytjs/reactivity": ["../reactivity/dist/index.d.ts"],
+      "@lytjs/reactivity/scope": ["../reactivity/dist/scope.d.ts"],
+      "@lytjs/reactivity/async": ["../reactivity/dist/async.d.ts"],
       "@lytjs/vdom": ["../vdom/dist/index.d.ts"],
       "@lytjs/compiler": ["../compiler/dist/index.d.ts"],
       "@lytjs/renderer": ["../renderer/dist/index.d.ts"],

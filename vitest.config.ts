@@ -1,4 +1,5 @@
 import { defineConfig } from 'vitest/config';
+import tsconfigPaths from 'vite-tsconfig-paths';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -6,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 const root = dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
+  plugins: [tsconfigPaths()],
   // 定义全局变量
   define: {
     __DEV__: 'true',
@@ -107,6 +109,7 @@ export default defineConfig({
       },
     },
     // 排除需要 DOM 环境的包，这些包使用自己的 vitest 配置
+    // 也排除 E2E 测试（使用 Playwright，不是 Vitest）
     exclude: [
       '**/node_modules/**',
       '**/packages/web/tests/**',
@@ -118,6 +121,8 @@ export default defineConfig({
       '**/packages/ecosystem/packages/ssr/tests/**',
       '**/packages/tools/packages/devtools/tests/**',
       '**/packages/common/packages/env/tests/**',
+      '**/e2e/**',
+      '**/playground/e2e/**',
     ],
     coverage: {
       provider: 'v8',

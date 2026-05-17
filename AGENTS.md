@@ -1,233 +1,195 @@
 # LytJS 项目规则与架构
 
-**注意**: 这是 Trae SOLO Code 模式的主要入口文档，请先阅读本文档了解项目
+## 项目概述
 
----
+LytJS 是一个从零构建的现代 JavaScript 框架项目，采用 Monorepo 结构管理多个包。
 
-## ⚡ Skill 自动调度（重要）
-
-### 自动调用机制
-
-**Agent 必须在任务处理的整个过程中主动调用 Skill**：
-
-| 阶段 | 时机 | 自动调用的 Skill |
-|------|------|----------------|
-| **任务开始前** | 用户提出新任务时 | `master-skill-dispatcher` → 获取任务规划 |
-| **任务规划** | 需要制定步骤时 | `TodoWrite` → 创建任务清单 |
-| **任务进行中** | 遇到技术问题时 | 相关 Skill（如 `testing`, `troubleshooting` 等）|
-| **任务进行中** | 需要最佳实践时 | 相关 Skill（如 `code-review`, `performance-optimization` 等）|
-| **任务完成前** | 代码检查时 | `testing` → 验证测试通过 |
-| **任务完成后** | 用户表示完成时 | `task-retrospective` → 任务复盘 |
+## 🤖 智能体行为规范
 
 ### 核心原则
 
-**主动调用，而非被动响应**：
+> Agent 必须根据任务上下文，自动参考相关的 Skill 文档，无需用户显式调用！
+
+### 工作原理
+
+所有 Skill 文档位于 `.trae/skills/` 目录，按层级组织。Agent 在处理任务时：
+
+1. **自动识别任务类型**：分析用户请求，确定是功能开发、Bug 修复、重构等
+2. **自动查找相关 Skill**：根据任务类型，读取对应的 Skill 文档
+3. **自动应用指导**：按照 Skill 文档中的指南执行任务
+
+### 任务类型 → Skill 映射表
+
+| 任务类型 | 自动参考的 Skill 文档 | 说明 |
+|---------|---------------------|------|
+| 新功能开发 | [master-skill-dispatcher](file:///e:/trae/lytjs/.trae/skills/7-organ/master-skill-dispatcher/SKILL.md) → [dev-guide](file:///e:/trae/lytjs/.trae/skills/4-organic/dev-guide/SKILL.md) → [testing](file:///e:/trae/lytjs/.trae/skills/3-inorganic/testing/SKILL.md) | 完整开发流程 |
+| Bug 修复 | [troubleshooting](file:///e:/trae/lytjs/.trae/skills/3-inorganic/troubleshooting/SKILL.md) → [testing](file:///e:/trae/lytjs/.trae/skills/3-inorganic/testing/SKILL.md) | 问题排查与修复 |
+| 代码重构 | [refactoring](file:///e:/trae/lytjs/.trae/skills/4-organic/refactoring/SKILL.md) → [code-review](file:///e:/trae/lytjs/.trae/skills/3-inorganic/code-review/SKILL.md) | 代码质量改进 |
+| 创建新包 | [create-ecosystem-package](file:///e:/trae/lytjs/.trae/skills/5-cellular/create-ecosystem-package/SKILL.md) | 生态包开发 |
+| 性能优化 | [performance-optimization](file:///e:/trae/lytjs/.trae/skills/4-organic/performance-optimization/SKILL.md) | 性能分析与优化 |
+| 添加测试 | [testing](file:///e:/trae/lytjs/.trae/skills/3-inorganic/testing/SKILL.md) → [add-test-cases](file:///e:/trae/lytjs/.trae/skills/2-molecular/add-test-cases/SKILL.md) | 测试用例开发 |
+| 快速查询 | [quick-reference](file:///e:/trae/lytjs/.trae/skills/1-atomic/quick-reference/SKILL.md) | 项目信息查询 |
+| 查找命令 | [command-reference](file:///e:/trae/lytjs/.trae/skills/1-atomic/command-reference/SKILL.md) | 常用命令参考 |
+| 任务完成 | [task-retrospective](file:///e:/trae/lytjs/.trae/skills/7-organ/task-retrospective/SKILL.md) | 任务复盘总结 |
+| 智能分析 | [smart-task-analysis](file:///e:/trae/lytjs/.trae/skills/4-organic/smart-task-analysis/SKILL.md) | 任务类型识别 |
+| 预定义工作流 | [predefined-workflows](file:///e:/trae/lytjs/.trae/skills/8-organism/predefined-workflows/SKILL.md) | 标准工作流程 |
+
+### 自动调用 Checklist
+
+在处理任何任务时，Agent 必须：
+
+- [ ] **分析任务类型**：识别用户请求的性质
+- [ ] **查找相关 Skill**：读取对应层级的 Skill 文档
+- [ ] **应用 Skill 指导**：按照 Skill 文档中的步骤执行
+- [ ] **使用 TodoWrite**：根据 Skill 创建任务清单
+- [ ] **任务完成复盘**：最后参考 task-retrospective 进行总结
+
+---
+
+## 🧬 Skill 组织体系
+
+本项目采用**从原子到生物体**的 Skill 层级架构：
 
 ```
-✅ 主动：发现测试失败 → 立即调用 testing Skill
-✅ 主动：发现性能问题 → 立即调用 performance-optimization Skill
-✅ 主动：开始新功能 → 调用 master-skill-dispatcher
-✅ 主动：任务完成 → 调用 task-retrospective
-
-❌ 被动：等待用户说"帮我检查测试"
-❌ 被动：等待用户说"我需要代码审查"
+原子 (Atomic) → 分子 (Molecular) → 无机物 (Inorganic) → 有机物 (Organic)
+→ 细胞 (Cellular) → 组织 (Tissue) → 器官 (Organ) → 生物体 (Organism)
 ```
 
-### 何时主动调用
+详细说明请参考：[SKILL_ORGANIZATION.md](file:///e:/trae/lytjs/.trae/skills/SKILL_ORGANIZATION.md)
 
-| 遇到的情况 | 自动调用的 Skill |
-|-----------|---------------|
-| 开始新任务 | `master-skill-dispatcher` |
-| 编写或修改测试 | `testing` |
-| 代码审查需求 | `code-review` |
-| 性能问题 | `performance-optimization` |
-| 类型错误 | `troubleshooting` |
-| 测试失败 | `testing` |
-| 文档需求 | `documentation` |
-| 安全问题 | `security-scan` |
-| 重构需求 | `refactoring` |
-| 创建新包 | `create-ecosystem-package` 或 `create-plugin` |
-| 任务完成 | `task-retrospective` |
+---
 
-### 工作流程
+## ⚡ 核心工作流（必须遵守）
 
 ```
 用户提出任务
     ↓
-[阶段1] 调用 master-skill-dispatcher
+[阶段1] 调用 master-skill-dispatcher（器官级）→ 获取任务规划
     ↓
-获取 Skill 推荐，制定任务计划
+[阶段2] 使用 TodoWrite 创建任务清单
     ↓
-使用 TodoWrite 创建任务清单
+[阶段3] 执行任务（按需调用相关 Skill：原子 → 有机物级）
     ↓
-[阶段2] 执行任务
-    ├── 需要测试 → 调用 testing
-    ├── 需要审查 → 调用 code-review
-    ├── 遇到问题 → 调用 troubleshooting
-    ├── 性能问题 → 调用 performance-optimization
-    └── ... (按需调用其他 Skill)
-    ↓
-[阶段3] 验证完成
-    └── 运行测试 → 调用 testing
-    ↓
-[阶段4] 调用 task-retrospective
-    ↓
-完成复盘，记录经验
+[阶段4] 调用 task-retrospective（器官级）进行复盘
 ```
 
-### 如何使用
+### 强制规则
 
-```markdown
-# 任务开始时
-Skill: master-skill-dispatcher
-
-# 任务进行中（按需）
-Skill: testing
-Skill: troubleshooting
-Skill: code-review
-Skill: performance-optimization
-
-# 任务结束时
-Skill: task-retrospective
-```
-
-### 快速参考
-
-- 查看所有 Skill：[SKILLS.md](file:///f:/trae/lytjs/SKILLS.md)
-- Skill 使用指南：[.trae/skills/master-skill-dispatcher/SKILL.md](file:///e:/trae/lytjs/.trae/skills/master-skill-dispatcher/SKILL.md)
+- ✅ **必须调用**：任何新任务开始时，首先调用 `master-skill-dispatcher`
+- ❌ **禁止跳过**：不允许直接开始执行任务
+- 📋 **必须规划**：获取规划后，必须用 `TodoWrite` 创建任务清单
 
 ---
 
-## 快速开始
+## 📋 任务开始前 Checklist
 
-### 1. 常用命令
+- [ ] 已调用 master-skill-dispatcher 获取任务规划
+- [ ] 已明确任务类型和涉及的技术栈
+- [ ] 已获取推荐的 Skill 列表
+- [ ] 已使用 TodoWrite 创建任务清单
+- [ ] 已确认任务范围和边界
+
+---
+
+## 🎯 何时调用 Skill
+
+| 阶段 | 时机 | Skill | 层级 |
+|------|------|-------|------|
+| 任务开始前 | 新任务时 | `master-skill-dispatcher` | 器官级 |
+| 任务开始前 | 识别任务类型时 | `smart-task-analysis` | 有机物级 |
+| 需要工作流 | 套用标准流程时 | `predefined-workflows` | 生物体级 |
+| 任务规划 | 制定步骤时 | `TodoWrite` | - |
+| 需要清单 | 生成检查清单 | `task-checklist` | 原子级 |
+| 需要命令 | 查找命令 | `command-reference` | 原子级 |
+| 需要模板 | 获取代码模板 | `template-provider` | 原子级 |
+| 快速查询 | 包/进度查询 | `quick-reference` | 原子级 |
+| Git 操作 | 提交/分支 | `git-workflow` | 分子级 |
+| 构建项目 | 构建相关 | `build-guide` | 分子级 |
+| 运行测试 | 测试相关 | `test-commands` | 分子级 |
+| 完整测试 | 测试指南 | `testing` | 无机物级 |
+| 修复问题 | 问题排查 | `troubleshooting` | 无机物级 |
+| 开发新功能 | 完整开发 | `dev-guide` | 有机物级 |
+| 创建包 | 包创建 | `create-ecosystem-package` | 细胞级 |
+| 任务完成 | 复盘 | `task-retrospective` | 器官级 |
+
+---
+
+## 📚 详细文档索引
+
+### Skill 目录索引
+
+| 层级 | 路径 | 说明 |
+|------|------|------|
+| 原子级 | `.trae/skills/1-atomic/` | 最小可复用单元 |
+| 分子级 | `.trae/skills/2-molecular/` | 多个原子组合 |
+| 无机物级 | `.trae/skills/3-inorganic/` | 功能模块 |
+| 有机物级 | `.trae/skills/4-organic/` | 完整工作流 |
+| 细胞级 | `.trae/skills/5-cellular/` | 独立功能模块 |
+| 组织级 | `.trae/skills/6-tissue/` | 相关功能组织 |
+| 器官级 | `.trae/skills/7-organ/` | 完整能力系统 |
+| 生物体级 | `.trae/skills/8-organism/` | 端到端完整体验 |
+
+### 关键文档
+
+- [SKILL_ORGANIZATION.md](file:///e:/trae/lytjs/.trae/skills/SKILL_ORGANIZATION.md) - 🌟 Skill 组织体系说明
+- [DEVELOPMENT_GUIDELINES.md](file:///f:/trae/lytjs/docs/development/DEVELOPMENT_GUIDELINES.md) - 完整开发规范
+- [TROUBLESHOOTING.md](file:///f:/trae/lytjs/docs/development/TROUBLESHOOTING.md) - 常见问题
+
+---
+
+## 🔧 快速命令
 
 ```bash
 pnpm install          # 安装依赖
 pnpm build            # 构建
 pnpm test             # 测试
-pnpm lint:check        # 代码检查
-pnpm type-check     # 类型检查
+pnpm lint:check       # 代码检查
+pnpm lint:batch       # 分包 lint（避免内存溢出）
+pnpm type-check       # 类型检查
+pnpm check-scripts    # 检查 package.json scripts
 ```
 
-### 2. Git 工作流
-
-```bash
-git checkout -b feature/xxx
-pnpm lint:check && pnpm type-check
-git commit --no-verify -m "feat(scope): 描述"
-```
+**注意**: 大型项目 lint 使用 `pnpm lint:batch` 避免内存溢出
 
 ---
 
-## 项目核心规则
+## ⚡ 快速启动
 
-### 语言与类型
+```markdown
+# 任务开始时（必须）
+Skill: master-skill-dispatcher
 
-- **语言**: 所有回答使用中文，变量名函数名用英文（camelCase/PascalCase）
-- **注释**: 公共 API 必须有中文 JSDoc，关键逻辑加中文注释
-- **类型**: 禁止 any（测试除外），优先 import type
-- **代码**: 单个函数不超过 50 行，避免过度设计
-- **零依赖**: L0-L6 层运行时无第三方依赖，优先用 @lytjs/common-*
+# 识别任务类型（推荐）
+Skill: smart-task-analysis
 
----
+# 套用标准工作流
+Skill: predefined-workflows
 
-## 包速查
+# 快速查询（原子级）
+Skill: quick-reference
+Skill: command-reference
+Skill: template-provider
 
-| 包 | 路径 | 说明 |
-|----|------|------|
-| @lytjs/reactivity | packages/reactivity/ | 响应式核心 |
-| @lytjs/vdom | packages/vdom/ | 虚拟 DOM |
-| @lytjs/component | packages/component/ | 组件系统 |
-| @lytjs/core | packages/core/ | 核心框架 |
-| @lytjs/ui | packages/ecosystem/packages/ui/ | UI 组件库 |
-| @lytjs/router | packages/ecosystem/packages/router/ | 路由 |
-| @lytjs/store | packages/ecosystem/packages/store/ | 状态管理 |
-| @lytjs/ssr | packages/ecosystem/packages/ssr/ | 服务端渲染 |
+# 特定工作流（分子级）
+Skill: git-workflow
+Skill: build-guide
+Skill: test-commands
 
----
+# 完整工作流（有机物/细胞级）
+Skill: dev-guide
+Skill: testing
+Skill: troubleshooting
 
-## Monorepo 结构
-
-```
-lytjs/
-├── packages/
-│   ├── reactivity/
-│   ├── vdom/
-│   ├── component/
-│   ├── core/
-│   └── ecosystem/packages/
-│       ├── ui/
-│       ├── router/
-│       ├── store/
-│       └── ssr/
-├── .trae/          # Trae SOLO 目录
-│   └── skills/      # Trae SOLO 技能文档
-├── docs/
-│   └── development/
-└── benchmarks/
-```
-
----
-
-## 当前项目进度 (2026-05-17)
-
-### v6.x 完成度: 93%
-
-- v6.1: 57%
-- v6.2: 100% ✅
-- v6.3: 100% ✅
-
-### 剩余任务 (v6.1)
-
-- js-framework-benchmark 集成
-- 性能排名验证
-
----
-
-## 下一步
-
-1. 查看 [SKILLS.md](file:///f:/trae/lytjs/SKILLS.md) - 技能索引
-2. 查看 [INDEX.md](file:///f:/trae/lytjs/INDEX.md) - AI 索引（新！）
-3. 参考 [docs/development/PENDING_TASKS.md](file:///f:/trae/lytjs/docs/development/PENDING_TASKS.md) - 任务清单
-
----
-
-## 任务结束后的经验教训分析
-
-每次任务完成后，**必须调用 `task-retrospective` Skill** 进行完整的任务复盘：
-
-### ⚡ 快速启动：使用 task-retrospective Skill
-
-任务结束时立即执行：
-
-```
+# 任务结束时
 Skill: task-retrospective
 ```
 
-这个 Skill 将引导你完成：
-1. ✅ 任务状态确认
-2. ✅ 成功因素分析
-3. ✅ 遇到的问题记录
-4. ✅ Skill 评估（新建/改进）
-5. ✅ 代码资产复用分析
-6. ✅ 开发效率优化建议
-7. ✅ 文档记录
-
-### Skill 使用场景
-
-| 任务类型 | 是否使用 | 说明 |
-|---------|---------|------|
-| 功能开发 | ✅ 是 | 完整功能开发必须复盘 |
-| Bug 修复 | ✅ 是 | 问题解决经验需要记录 |
-| Release 发布 | ✅ 是 | 发布流程需要优化 |
-| 文档更新 | ⚠️ 视情况 | 重大文档更新建议复盘 |
-| 小修复/微调 | ❌ 否 | 单次小修改可省略 |
-
 ---
 
-**详细文档参考:
-- [task-retrospective Skill](file:///e:/trae/lytjs/.trae/skills/task-retrospective/SKILL.md) - 完整任务复盘指南
-- 开发规范: [docs/development/DEVELOPMENT_GUIDELINES.md](file:///f:/trae/lytjs/docs/development/DEVELOPMENT_GUIDELINES.md)
-- 常见问题: [docs/development/TROUBLESHOOTING.md](file:///f:/trae/lytjs/docs/development/TROUBLESHOOTING.md)
-- 完整知识库: [docs/development/KNOWLEDGE_BASE.md](file:///f:/trae/lytjs/docs/development/KNOWLEDGE_BASE.md)
+## 💡 最佳实践
+
+1. **控制 Skill 内容粒度**：保持每个 Skill 清晰、聚焦、易于理解
+2. **避免冲突**：各 Skill 之间不得彼此冲突或相互覆盖
+3. **路径规范**：在指定文件路径时，使用相对于项目根目录的相对路径
+4. **规则更新**：新建或修改规则后，建议开启全新对话使用
+5. **代码重构**：若项目已有大量不符合规范的代码，明确任务为"重构"并强制遵循新规则

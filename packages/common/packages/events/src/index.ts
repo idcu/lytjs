@@ -39,10 +39,14 @@ export function normalizeEventName(rawName: string): string {
 /**
  * 事件缓存 key 转换：click → onClick
  * 先去除修饰符后缀（`.` 之后的部分），再进行首字母大写转换。
+ * 支持输入格式：click / onClick / onClick.stop
  */
 export function getEventKey(name: string): string {
-  const baseName = name.split('.')[0];
-  return 'on' + baseName![0]!.toUpperCase() + baseName!.slice(1);
+  const baseName = name.split('.')[0]!;
+  if (baseName.startsWith('on') && baseName.length > 2 && /^[A-Z]$/.test(baseName[2]!)) {
+    return baseName;
+  }
+  return 'on' + baseName[0]!.toUpperCase() + baseName.slice(1);
 }
 
 /**

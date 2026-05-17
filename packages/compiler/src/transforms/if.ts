@@ -42,16 +42,35 @@ export function transformIf(node: RootNode | TemplateChildNode, context: Transfo
   const currentIndex = siblings.indexOf(node as TemplateChildNode);
 
   // 查找链中的第一个 v-if
+  // FIX: 只有 v-else-if 和 v-else 可以和前面的 v-if 组成链
+  // 独立的 v-if（没有 v-else-if/v-else）应该是一个新链的开始
   let chainStart = currentIndex;
   for (let i = currentIndex - 1; i >= 0; i--) {
     const sibling = siblings[i];
     if (
       sibling &&
-      sibling.type === NodeTypes.ELEMENT &&
-      (findDirective(sibling as ElementNode, 'if') ||
-        findDirective(sibling as ElementNode, 'else-if'))
+      sibling.type === NodeTypes.ELEMENT
     ) {
-      chainStart = i;
+      const sibElement = sibling as ElementNode;
+      const hasIf = !!findDirective(sibElement, 'if');
+      const hasElseIf = !!findDirective(sibElement, 'else-if');
+      const hasElse = !!findDirective(sibElement, 'else');
+      
+      // 只有 v-else-if 可以继续链（表示这是链的中间部分）
+      // v-else 表示链的结束
+      // 独立的 v-if 表示新链的开始，应该停止向前查找
+      if (hasElseIf) {
+        chainStart = i;
+      } else if (hasElse) {
+        // v-else 后面不应该有 v-if，这是错误用法，但停止查找
+        break;
+      } else if (hasIf) {
+        // 遇到独立的 v-if，这是新链的开始，停止查找
+        break;
+      } else {
+        // 没有条件指令，停止查找
+        break;
+      }
     } else {
       break;
     }
@@ -70,6 +89,11 @@ export function transformIf(node: RootNode | TemplateChildNode, context: Transfo
     const sibIf = findDirective(sibElement, 'if');
     const sibElseIf = findDirective(sibElement, 'else-if');
     const sibElse = findDirective(sibElement, 'else');
+
+    // FIX: 独立的 v-if（不在链首）表示新链的开始，停止收集
+    if (sibIf && i !== chainStart) {
+      break;
+    }
 
     if (!sibIf && !sibElseIf && !sibElse) break;
 

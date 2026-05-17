@@ -109,14 +109,15 @@ describe('useModel', () => {
   });
 
   it('多次设置值触发多次 emit', () => {
-    const props = { count: 0 };
-    const model = useModel(props, 'count');
-    model.value = 1;
-    model.value = 2;
-    model.value = 3;
-    expect(mockInstance.emit).toHaveBeenCalledTimes(3);
-    expect(mockInstance.emit).toHaveBeenCalledWith('update:count', 3);
-  });
+      const props = { count: 0 };
+      mockInstance.emit.mockClear(); // 先清除之前的调用
+      const model = useModel(props, 'count');
+      model.value = 1;
+      model.value = 2;
+      model.value = 3;
+      expect(mockInstance.emit).toHaveBeenCalledTimes(3);
+      expect(mockInstance.emit).toHaveBeenCalledWith('update:count', 3);
+    });
 
   it('设置为相同值仍然触发 emit', () => {
     const props = { value: 'same' };

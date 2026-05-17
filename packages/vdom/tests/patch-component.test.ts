@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 /**
  * Tests for patch-component.ts
  * 测试 createComponentPatch 工厂函数及其返回的 mountComponent

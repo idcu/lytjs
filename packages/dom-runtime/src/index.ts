@@ -477,16 +477,26 @@ export function setStyle(el: unknown, style: unknown): void {
       // FIX: P2-45 对数值类型的 CSS 属性自动添加 px 单位
       let finalValue: string;
       const unwrappedVal = unwrapValue(val);
-      if (typeof unwrappedVal === 'number' && isNumericStyleProperty(key)) {
+      // FIX: 将 camelCase 转换为 kebab-case，确保 setProperty 正确工作
+      const cssKey = camelToKebab(key);
+      if (typeof unwrappedVal === 'number' && isNumericStyleProperty(cssKey)) {
         finalValue = `${unwrappedVal}px`;
       } else {
         finalValue = String(unwrappedVal);
       }
       // 增量更新：值相同时跳过
-      if (realNode.style.getPropertyValue(key) === finalValue) continue;
-      realNode.style.setProperty(key, finalValue);
+      if (realNode.style.getPropertyValue(cssKey) === finalValue) continue;
+      realNode.style.setProperty(cssKey, finalValue);
     }
   }
+}
+
+/**
+ * 将 camelCase 字符串转换为 kebab-case
+ * 例如：fontSize -> font-size, backgroundColor -> background-color
+ */
+function camelToKebab(str: string): string {
+  return str.replace(/([A-Z])/g, '-$1').toLowerCase();
 }
 
 /**

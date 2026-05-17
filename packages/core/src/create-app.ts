@@ -89,6 +89,10 @@ export function createApp(
     config: createContextConfig(context),
 
     use(plugin: Plugin | ((app: App, ...options: unknown[]) => void), ...options: unknown[]) {
+      // 处理 null/undefined 的情况
+      if (plugin == null) {
+        return app;
+      }
       if (installedPlugins.has(plugin)) return app;
       try {
         // 对 EnhancedPlugin 进行验证和注册
@@ -139,8 +143,10 @@ export function createApp(
             }
           }
 
-          // 执行安装
-          plugin.install(app, ...options);
+          // 执行安装 - 检查是否存在 install 方法
+          if (typeof plugin.install === 'function') {
+            plugin.install(app, ...options);
+          }
 
           // 标记为已安装
           pluginRegistry.markInstalled(enhancedPlugin.name);
@@ -153,8 +159,8 @@ export function createApp(
           // 基础 Plugin 或函数式插件，保持原有行为
           if (typeof plugin === 'function') {
             (plugin as (app: App, ...options: unknown[]) => void)(app, ...options);
-          } else {
-            plugin.install(app, ...options);
+          } else if (plugin && typeof (plugin as any).install === 'function') {
+            (plugin as any).install(app, ...options);
           }
         }
         installedPlugins.add(plugin);

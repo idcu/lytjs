@@ -4,7 +4,8 @@
 
 import { hasOwn } from '@lytjs/common-is';
 import { getCurrentInstance } from '../lifecycle';
-import { effectScope, onScopeDispose, type EffectScope } from '@lytjs/reactivity/scope';
+import { effectScope, onScopeDispose } from '@lytjs/reactivity';
+import type { EffectScope } from '@lytjs/reactivity';
 
 // ============================================================
 // Phase 1.10: InjectionToken - 类型安全的注入令牌

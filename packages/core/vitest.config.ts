@@ -1,12 +1,15 @@
 import { defineConfig } from 'vitest/config';
+import tsconfigPaths from 'vite-tsconfig-paths';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const commonRoot = resolve(__dirname, '../common/packages');
-const packagesRoot = resolve(__dirname, '..');
+const root = resolve(__dirname, '../..');
+const commonRoot = resolve(root, 'packages/common/packages');
+const packagesRoot = resolve(root, 'packages');
 
 export default defineConfig({
+  plugins: [tsconfigPaths()],
   // 定义全局变量
   define: {
     __DEV__: 'true',
@@ -14,50 +17,51 @@ export default defineConfig({
     __TEST__: 'true',
   },
   resolve: {
-    alias: {
+    alias: [
       // common 子包
-      '@lytjs/common-is': `${commonRoot}/is/dist/index.mjs`,
-      '@lytjs/common-scheduler': `${commonRoot}/scheduler/dist/index.mjs`,
-      '@lytjs/common-error': `${commonRoot}/error/dist/index.mjs`,
-      '@lytjs/common-dom': `${commonRoot}/dom/dist/index.mjs`,
-      '@lytjs/common-dom-helpers': `${commonRoot}/dom-helpers/dist/index.mjs`,
-      '@lytjs/common-vnode': `${commonRoot}/vnode/dist/index.mjs`,
-      '@lytjs/common-string': `${commonRoot}/string/dist/index.mjs`,
-      '@lytjs/common-events': `${commonRoot}/events/dist/index.mjs`,
-      '@lytjs/common-object': `${commonRoot}/object/dist/index.mjs`,
-      '@lytjs/common-algorithm': `${commonRoot}/algorithm/dist/index.mjs`,
-      '@lytjs/common-timing': `${commonRoot}/timing/dist/index.mjs`,
-      '@lytjs/common-cache': `${commonRoot}/cache/dist/index.mjs`,
-      '@lytjs/common-env': `${commonRoot}/env/dist/index.mjs`,
-      '@lytjs/common-constants': `${commonRoot}/constants/dist/index.mjs`,
-      '@lytjs/common-assertions': `${commonRoot}/assertions/dist/index.mjs`,
-      '@lytjs/common-warn': `${commonRoot}/warn/dist/index.mjs`,
-      '@lytjs/common-security': `${commonRoot}/security/dist/index.mjs`,
-      '@lytjs/common-path': `${commonRoot}/path/dist/index.mjs`,
-      '@lytjs/common-http': `${commonRoot}/http/dist/index.mjs`,
-      '@lytjs/common-query': `${commonRoot}/query/dist/index.mjs`,
-      '@lytjs/common-storage': `${commonRoot}/storage/dist/index.mjs`,
-      '@lytjs/common-validate': `${commonRoot}/validate/dist/index.mjs`,
-      '@lytjs/common-performance': `${commonRoot}/performance/dist/index.mjs`,
-      '@lytjs/common-render-queue': `${commonRoot}/render-queue/dist/index.mjs`,
-      '@lytjs/common-raf': `${commonRoot}/raf/dist/index.mjs`,
-      '@lytjs/common-keyboard': `${commonRoot}/keyboard/dist/index.mjs`,
-      '@lytjs/common-a11y': `${commonRoot}/a11y/dist/index.mjs`,
-      '@lytjs/common-node-cache': `${commonRoot}/node-cache/dist/index.mjs`,
-      '@lytjs/common-event-normalizer': `${commonRoot}/event-normalizer/dist/index.mjs`,
-      '@lytjs/common-async-scheduler': `${commonRoot}/async-scheduler/dist/index.mjs`,
-      '@lytjs/common-transition-engine': `${commonRoot}/transition-engine/dist/index.mjs`,
+      { find: '@lytjs/common-is', replacement: `${commonRoot}/is/dist/index.mjs` },
+      { find: '@lytjs/common-scheduler', replacement: `${commonRoot}/scheduler/dist/index.mjs` },
+      { find: '@lytjs/common-error', replacement: `${commonRoot}/error/dist/index.mjs` },
+      { find: '@lytjs/common-dom', replacement: `${commonRoot}/dom/dist/index.mjs` },
+      { find: '@lytjs/common-dom-helpers', replacement: `${commonRoot}/dom-helpers/dist/index.mjs` },
+      { find: '@lytjs/common-vnode', replacement: `${commonRoot}/vnode/dist/index.mjs` },
+      { find: '@lytjs/common-string', replacement: `${commonRoot}/string/dist/index.mjs` },
+      { find: '@lytjs/common-events', replacement: `${commonRoot}/events/dist/index.mjs` },
+      { find: '@lytjs/common-object', replacement: `${commonRoot}/object/dist/index.mjs` },
+      { find: '@lytjs/common-algorithm', replacement: `${commonRoot}/algorithm/dist/index.mjs` },
+      { find: '@lytjs/common-timing', replacement: `${commonRoot}/timing/dist/index.mjs` },
+      { find: '@lytjs/common-cache', replacement: `${commonRoot}/cache/dist/index.mjs` },
+      { find: '@lytjs/common-env', replacement: `${commonRoot}/env/dist/index.mjs` },
+      { find: '@lytjs/common-constants', replacement: `${commonRoot}/constants/dist/index.mjs` },
+      { find: '@lytjs/common-assertions', replacement: `${commonRoot}/assertions/dist/index.mjs` },
+      { find: '@lytjs/common-warn', replacement: `${commonRoot}/warn/dist/index.mjs` },
+      { find: '@lytjs/common-security', replacement: `${commonRoot}/security/dist/index.mjs` },
+      { find: '@lytjs/common-path', replacement: `${commonRoot}/path/dist/index.mjs` },
+      { find: '@lytjs/common-http', replacement: `${commonRoot}/http/dist/index.mjs` },
+      { find: '@lytjs/common-query', replacement: `${commonRoot}/query/dist/index.mjs` },
+      { find: '@lytjs/common-storage', replacement: `${commonRoot}/storage/dist/index.mjs` },
+      { find: '@lytjs/common-validate', replacement: `${commonRoot}/validate/dist/index.mjs` },
+      { find: '@lytjs/common-performance', replacement: `${commonRoot}/performance/dist/index.mjs` },
+      { find: '@lytjs/common-render-queue', replacement: `${commonRoot}/render-queue/dist/index.mjs` },
+      { find: '@lytjs/common-raf', replacement: `${commonRoot}/raf/dist/index.mjs` },
+      { find: '@lytjs/common-keyboard', replacement: `${commonRoot}/keyboard/dist/index.mjs` },
+      { find: '@lytjs/common-a11y', replacement: `${commonRoot}/a11y/dist/index.mjs` },
+      { find: '@lytjs/common-node-cache', replacement: `${commonRoot}/node-cache/dist/index.mjs` },
+      { find: '@lytjs/common-event-normalizer', replacement: `${commonRoot}/event-normalizer/dist/index.mjs` },
+      { find: '@lytjs/common-async-scheduler', replacement: `${commonRoot}/async-scheduler/dist/index.mjs` },
+      { find: '@lytjs/common-transition-engine', replacement: `${commonRoot}/transition-engine/dist/index.mjs` },
       // 主包
-      '@lytjs/shared-types': resolve(packagesRoot, 'shared-types/src'),
-      '@lytjs/vdom': resolve(packagesRoot, 'vdom/dist/index.mjs'),
-      '@lytjs/reactivity': resolve(packagesRoot, 'reactivity/dist/index.mjs'),
-      '@lytjs/reactivity/scope': resolve(packagesRoot, 'reactivity/dist/scope.mjs'),
-      '@lytjs/reactivity/async': resolve(packagesRoot, 'reactivity/dist/async.mjs'),
-      '@lytjs/renderer': resolve(packagesRoot, 'renderer/dist/index.mjs'),
-      '@lytjs/component': resolve(packagesRoot, 'component/dist/index.mjs'),
-      '@lytjs/compiler': resolve(packagesRoot, 'compiler/dist/index.mjs'),
-      '@lytjs/host-contract': resolve(packagesRoot, 'host-contract/src'),
-    },
+      { find: '@lytjs/shared-types', replacement: resolve(packagesRoot, 'shared-types/src') },
+      { find: '@lytjs/vdom', replacement: resolve(packagesRoot, 'vdom/dist/index.mjs') },
+      { find: '@lytjs/reactivity', replacement: resolve(packagesRoot, 'reactivity/dist/index.mjs') },
+      { find: /^@lytjs\/reactivity\/scope$/, replacement: resolve(packagesRoot, 'reactivity/dist/scope.mjs') },
+      { find: /^@lytjs\/reactivity\/async$/, replacement: resolve(packagesRoot, 'reactivity/dist/async.mjs') },
+      { find: '@lytjs/renderer', replacement: resolve(packagesRoot, 'renderer/dist/index.mjs') },
+      { find: '@lytjs/component', replacement: resolve(packagesRoot, 'component/dist/index.mjs') },
+      { find: '@lytjs/compiler', replacement: resolve(packagesRoot, 'compiler/dist/index.mjs') },
+      { find: '@lytjs/host-contract', replacement: resolve(packagesRoot, 'host-contract/src') },
+      { find: '@lytjs/core', replacement: resolve(packagesRoot, 'core/dist/index.mjs') },
+    ],
   },
   test: {
     environment: 'jsdom',

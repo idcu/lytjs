@@ -39,6 +39,9 @@ export {
 //   @lytjs/reactivity/scope   - effectScope, getCurrentScope, onScopeDispose
 //   @lytjs/reactivity/async   - asyncComputed, useAsyncState
 
+export { effectScope, getCurrentScope, onScopeDispose } from './effect-scope';
+export type { EffectScope, EffectScopeOptions } from './effect-scope';
+
 export {
   // watch
   watch,

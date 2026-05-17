@@ -114,12 +114,12 @@ describe('patch-props', () => {
       expect(handler2).toHaveBeenCalledTimes(1);
     });
 
-    it('should cache invoker on el._vei when adding event', () => {
+    it('should cache invoker via WeakMap when adding event', () => {
       const handler = vi.fn();
       patchEvent(el, 'onClick', handler);
-      expect((el as any)._vei).toBeDefined();
-      expect((el as any)._vei.onClick).toBeDefined();
-      expect((el as any)._vei.onClick.value).toBe(handler);
+      // FIX: WeakMap 不暴露内部状态，通过事件触发验证
+      el.click();
+      expect(handler).toHaveBeenCalledTimes(1);
     });
 
     it('should only replace invoker.value when updating event (no DOM re-bind)', () => {
@@ -145,11 +145,13 @@ describe('patch-props', () => {
       removeSpy.mockRestore();
     });
 
-    it('should clear el._vei entry when removing event', () => {
+    it('should remove event listener when clearing event', () => {
       const handler = vi.fn();
       patchEvent(el, 'onClick', handler);
       patchEvent(el, 'onClick', null);
-      expect((el as any)._vei.onClick).toBeUndefined();
+      // FIX: WeakMap 不暴露内部状态，通过行为验证
+      el.click();
+      expect(handler).not.toHaveBeenCalled();
     });
   });
 

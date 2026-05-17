@@ -159,12 +159,12 @@ describe('patch-events', () => {
       expect(handler).toHaveBeenCalledTimes(1);
     });
 
-    it('should cache invoker on el._vei', () => {
+    it('should cache invoker via WeakMap', () => {
       const handler = vi.fn();
       patchEvent(el, 'onClick', handler);
-      expect((el as any)._vei).toBeDefined();
-      expect((el as any)._vei.onClick).toBeDefined();
-      expect((el as any)._vei.onClick.value).toBe(handler);
+      // FIX: 使用 WeakMap 替代 el._vei，通过事件触发验证缓存工作正常
+      el.click();
+      expect(handler).toHaveBeenCalledTimes(1);
     });
 
     it('should replace invoker.value without re-binding (branch 1)', () => {
@@ -199,7 +199,7 @@ describe('patch-events', () => {
       patchEvent(el, 'onClick', null);
       el.click();
       expect(handler).not.toHaveBeenCalled();
-      expect((el as any)._vei.onClick).toBeUndefined();
+      // FIX: WeakMap 不暴露内部状态，通过行为验证
     });
 
     it('should do nothing when no nextValue and no existing (branch 4)', () => {
@@ -267,10 +267,9 @@ describe('patch-events', () => {
       const handler = vi.fn();
       patchEvent(el, 'onClick.capture', handler);
 
-      // capture 模式下，事件在捕获阶段触发
-      // 验证 invoker 被创建且 value 正确
-      expect((el as any)._vei.onClick).toBeDefined();
-      expect((el as any)._vei.onClick.value).toBe(handler);
+      // FIX: WeakMap 不暴露内部状态，通过事件触发验证
+      el.click();
+      expect(handler).toHaveBeenCalledTimes(1);
     });
 
     it('should support object format { handler, capture, once, passive }', () => {
@@ -319,7 +318,7 @@ describe('patch-events', () => {
 
       expect(clickHandler).not.toHaveBeenCalled();
       expect(inputHandler).not.toHaveBeenCalled();
-      expect((el as any)._vei).toBeUndefined();
+      // FIX: WeakMap 不暴露内部状态，通过行为验证
     });
 
     it('should do nothing when no events are cached', () => {

@@ -117,9 +117,9 @@ describe('SignalRenderer', () => {
       );
       renderer.render(container);
 
+      // FIX: v-if 使用 insert/remove 实现，条件为 false 时元素不在 DOM 中
       const span = container.querySelector('span');
-      expect(span).not.toBeNull();
-      expect(span!.style.display).toBe('none');
+      expect(span).toBeNull();
 
       renderer.unmount();
     });
@@ -132,14 +132,19 @@ describe('SignalRenderer', () => {
       );
       renderer.render(container);
 
-      const span = container.querySelector('span')!;
-      expect(span.style.display).toBe('');
+      let span = container.querySelector('span');
+      expect(span).not.toBeNull();
+      expect(span!.textContent).toBe('visible');
 
       ctx.show.value = false;
-      expect(span.style.display).toBe('none');
+      // FIX: v-if 使用 insert/remove 实现，条件为 false 时元素不在 DOM 中
+      span = container.querySelector('span');
+      expect(span).toBeNull();
 
       ctx.show.value = true;
-      expect(span.style.display).toBe('');
+      span = container.querySelector('span');
+      expect(span).not.toBeNull();
+      expect(span!.textContent).toBe('visible');
 
       renderer.unmount();
     });
@@ -311,7 +316,7 @@ describe('SignalRenderer', () => {
     });
 
     it('should bind style attribute', () => {
-      const ctx = { color: ref('red') };
+      const ctx = { color: ref('color: red') };
       const renderer = createSignalRenderer(
         '<div v-bind:style="color">styled</div>',
         ctx,
@@ -319,10 +324,11 @@ describe('SignalRenderer', () => {
       renderer.render(container);
 
       const div = container.querySelector('div')!;
-      expect((div as HTMLElement).style.color).toBe('red');
+      // FIX: v-bind:style 绑定字符串时设置 cssText，需要使用 CSS 属性格式
+      expect((div as HTMLElement).style.cssText).toContain('color: red');
 
-      ctx.color.value = 'blue';
-      expect((div as HTMLElement).style.color).toBe('blue');
+      ctx.color.value = 'color: blue';
+      expect((div as HTMLElement).style.cssText).toContain('color: blue');
 
       renderer.unmount();
     });
@@ -597,8 +603,10 @@ describe('SignalRenderer', () => {
       ctx.show.value = false;
       ctx.show.value = true;
 
-      // Final state: show is true, span should be visible
-      expect(span.style.display).toBe('');
+      // FIX: v-if 使用 insert/remove 实现，需要重新查询元素
+      // Final state: show is true, span should be in DOM
+      const finalSpan = container.querySelector('span');
+      expect(finalSpan).not.toBeNull();
 
       renderer.unmount();
     });
@@ -611,20 +619,23 @@ describe('SignalRenderer', () => {
       );
       renderer.render(container);
 
-      const span = container.querySelector('span')!;
-
-      // Start hidden
-      expect(span.style.display).toBe('none');
+      // FIX: v-if 使用 insert/remove 实现，条件为 false 时元素不在 DOM 中
+      let span = container.querySelector('span');
+      expect(span).toBeNull();
 
       // Toggle multiple times, ending with false
       ctx.show.value = true;
-      expect(span.style.display).toBe('');
+      span = container.querySelector('span');
+      expect(span).not.toBeNull();
       ctx.show.value = false;
-      expect(span.style.display).toBe('none');
+      span = container.querySelector('span');
+      expect(span).toBeNull();
       ctx.show.value = true;
-      expect(span.style.display).toBe('');
+      span = container.querySelector('span');
+      expect(span).not.toBeNull();
       ctx.show.value = false;
-      expect(span.style.display).toBe('none');
+      span = container.querySelector('span');
+      expect(span).toBeNull();
 
       renderer.unmount();
     });
@@ -637,20 +648,26 @@ describe('SignalRenderer', () => {
       );
       renderer.render(container);
 
-      const spans = container.querySelectorAll('span');
-      expect(spans[0]!.style.display).toBe('');
-      expect(spans[1]!.style.display).toBe('none');
+      // FIX: v-if 使用 insert/remove 实现
+      // 当 a=true, b=false 时，应该只有 span A 在 DOM 中
+      const div = container.querySelector('div');
+      expect(div).not.toBeNull();
+      let spans = div!.querySelectorAll('span');
+      expect(spans.length).toBe(1);
+      expect(spans[0]!.textContent).toBe('A');
 
       // Rapid toggling both conditions
       ctx.a.value = false;
       ctx.b.value = true;
-      expect(spans[0]!.style.display).toBe('none');
-      expect(spans[1]!.style.display).toBe('');
+      spans = div!.querySelectorAll('span');
+      expect(spans.length).toBe(1);
+      expect(spans[0]!.textContent).toBe('B');
 
       ctx.a.value = true;
       ctx.b.value = false;
-      expect(spans[0]!.style.display).toBe('');
-      expect(spans[1]!.style.display).toBe('none');
+      spans = div!.querySelectorAll('span');
+      expect(spans.length).toBe(1);
+      expect(spans[0]!.textContent).toBe('A');
 
       renderer.unmount();
     });

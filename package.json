@@ -32,6 +32,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:ui": "vitest --ui",
+    "test:batch": "tsx scripts/test-batch.ts",
     "test:e2e": "playwright test --config=e2e/playwright.config.ts",
     "test:e2e:build": "node e2e/build.cjs",
     "test:reactivity": "pnpm --filter '@lytjs/reactivity' test",
@@ -45,6 +46,8 @@
     "bench:compare": "pnpm -C benchmarks run compare",
     "lint": "eslint . --fix",
     "lint:check": "eslint .",
+    "lint:batch": "tsx scripts/lint-batch.ts",
+    "lint:batch:fix": "tsx scripts/lint-batch.ts --fix",
     "lint:reactivity": "eslint packages/reactivity --ext .ts",
     "lint:vdom": "eslint packages/vdom --ext .ts",
     "lint:renderer": "eslint packages/renderer --ext .ts",
@@ -97,6 +100,7 @@
     "tsx": "^4.19.2",
     "typescript": "^5.8.2",
     "typescript-eslint": "^8.20.0",
+    "vite-tsconfig-paths": "^6.1.1",
     "vitest": "^3.0.0"
   },
   "lint-staged": {

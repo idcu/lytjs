@@ -2,8 +2,7 @@
 // @lytjs/core - Composition API 辅助函数
 
 import { getCurrentInstance, onMounted } from '@lytjs/component';
-import { computed, shallowRef, watch, watchEffect, readonly } from '@lytjs/reactivity';
-import { onScopeDispose } from '@lytjs/reactivity/scope';
+import { computed, shallowRef, watch, watchEffect, readonly, onScopeDispose } from '@lytjs/reactivity';
 import { warnOnce } from '@lytjs/common-error';
 import type { WritableComputedRef, Ref } from '@lytjs/reactivity';
 import type { InternalSlots } from './types';

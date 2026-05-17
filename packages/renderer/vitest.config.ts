@@ -30,6 +30,7 @@ export default defineConfig({
       '@lytjs/host-contract': `${packagesRoot}/host-contract/dist/index.mjs`,
       '@lytjs/adapter-web': `${packagesRoot}/adapter-web/dist/index.mjs`,
       '@lytjs/shared-types': `${packagesRoot}/shared-types/dist/index.mjs`,
+      '@lytjs/component': `${packagesRoot}/component/dist/index.mjs`,
     },
   },
   test: {
