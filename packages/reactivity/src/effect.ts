@@ -138,6 +138,7 @@ export function track(target: object, _type: string, key: string | symbol) {
   // 调试：触发 onTrack
   if (__DEV__ && activeEffect.onTrack) {
     activeEffect.onTrack({
+      effect: activeEffect,
       target,
       type: _type,
       key,
@@ -186,8 +187,8 @@ export function trigger(
   target: object,
   type: string,
   key?: string | symbol,
-  _newValue?: unknown,
-  _oldValue?: unknown,
+  newValue?: unknown,
+  oldValue?: unknown,
 ) {
   const depsMap = targetMap.get(target);
   if (!depsMap) return;
@@ -228,7 +229,7 @@ export function trigger(
   }
 
   // 去重：同一个 effect 可能同时存在于多个 dep 中
-  triggerEffects([...new Set(effects)]);
+  triggerEffects([...new Set(effects)], target, type, key, newValue, oldValue);
 }
 
 /**
@@ -237,8 +238,20 @@ export function trigger(
  * 内置递归深度限制，超过最大深度时静默丢弃并发出警告。
  *
  * @param effects - 需要触发的 ReactiveEffect 数组
+ * @param target - 被修改的目标对象（用于调试回调）
+ * @param type - 触发操作类型（用于调试回调）
+ * @param key - 被修改的属性键（用于调试回调）
+ * @param newValue - 新值（用于调试回调）
+ * @param oldValue - 旧值（用于调试回调）
  */
-export function triggerEffects(effects: ReactiveEffect[]) {
+export function triggerEffects(
+  effects: ReactiveEffect[],
+  target: object,
+  type: string,
+  key?: string | symbol,
+  newValue?: unknown,
+  oldValue?: unknown,
+) {
   if (triggerDepth > REACTIVITY_MAX_TRIGGER_DEPTH) {
     // FIX: P2-1 triggerDepth 超限时改为 warn + 静默丢弃，与 Vue 3 行为一致。
     // 之前直接 throw Error 过于激进，会导致整个响应式链断裂。
@@ -256,12 +269,12 @@ export function triggerEffects(effects: ReactiveEffect[]) {
   try {
     for (const effect of effects) {
       if (effect.computed) {
-        triggerEffect(effect);
+        triggerEffect(effect, target, type, key, newValue, oldValue);
       }
     }
     for (const effect of effects) {
       if (!effect.computed) {
-        triggerEffect(effect);
+        triggerEffect(effect, target, type, key, newValue, oldValue);
       }
     }
   } finally {
@@ -269,8 +282,26 @@ export function triggerEffects(effects: ReactiveEffect[]) {
   }
 }
 
-function triggerEffect(effect: ReactiveEffect) {
+function triggerEffect(
+  effect: ReactiveEffect,
+  target: object,
+  type: string,
+  key?: string | symbol,
+  newValue?: unknown,
+  oldValue?: unknown,
+) {
   if (effect !== activeEffect || effect.allowRecurse) {
+    // 调用 onTrigger 回调（用于调试）
+    if (__DEV__ && effect.onTrigger) {
+      effect.onTrigger({
+        effect,
+        target,
+        type,
+        key,
+        newValue,
+        oldValue,
+      });
+    }
     if (effect.scheduler) {
       effect.scheduler();
     } else {
@@ -305,10 +336,11 @@ export class ReactiveEffect<T = unknown> {
   computed?: boolean;
   allowRecurse?: boolean;
   onStop?: () => void;
-  onTrack?: (event: { target: object; key: string | symbol; type: string }) => void;
+  onTrack?: (event: { effect: ReactiveEffect; target: object; key?: string | symbol; type: string }) => void;
   onTrigger?: (event: {
+    effect: ReactiveEffect;
     target: object;
-    key: string | symbol;
+    key?: string | symbol;
     type: string;
     newValue?: unknown;
     oldValue?: unknown;
@@ -418,10 +450,11 @@ export function effect(
     scheduler?: (...args: unknown[]) => unknown;
     allowRecurse?: boolean;
     onStop?: () => void;
-    onTrack?: (event: { target: object; key: string | symbol; type: string }) => void;
+    onTrack?: (event: { effect: ReactiveEffect; target: object; key?: string | symbol; type: string }) => void;
     onTrigger?: (event: {
+      effect: ReactiveEffect;
       target: object;
-      key: string | symbol;
+      key?: string | symbol;
       type: string;
       newValue?: unknown;
       oldValue?: unknown;
@@ -437,10 +470,11 @@ export function effect<T>(
     scheduler?: (...args: unknown[]) => unknown;
     allowRecurse?: boolean;
     onStop?: () => void;
-    onTrack?: (event: { target: object; key: string | symbol; type: string }) => void;
+    onTrack?: (event: { effect: ReactiveEffect; target: object; key?: string | symbol; type: string }) => void;
     onTrigger?: (event: {
+      effect: ReactiveEffect;
       target: object;
-      key: string | symbol;
+      key?: string | symbol;
       type: string;
       newValue?: unknown;
       oldValue?: unknown;
@@ -456,10 +490,11 @@ export function effect<T = unknown>(
     scheduler?: (...args: unknown[]) => unknown;
     allowRecurse?: boolean;
     onStop?: () => void;
-    onTrack?: (event: { target: object; key: string | symbol; type: string }) => void;
+    onTrack?: (event: { effect: ReactiveEffect; target: object; key?: string | symbol; type: string }) => void;
     onTrigger?: (event: {
+      effect: ReactiveEffect;
       target: object;
-      key: string | symbol;
+      key?: string | symbol;
       type: string;
       newValue?: unknown;
       oldValue?: unknown;

@@ -172,5 +172,9 @@ export type {
   MemoryUsage,
 } from './benchmark';
 
+export type {
+  VDOMNodeInfo,
+} from './vdomInspector';
+
 // 默认导出
 export { installDevTools as default } from './devtools';

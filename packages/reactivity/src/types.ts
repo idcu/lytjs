@@ -40,7 +40,9 @@ export interface DebuggerEvent {
   effect: ReactiveEffect;
   target: object;
   type: 'track' | 'trigger';
-  key: unknown;
+  key?: string | symbol;
+  newValue?: unknown;
+  oldValue?: unknown;
 }
 
 // ==================== Watch 类型 ====================

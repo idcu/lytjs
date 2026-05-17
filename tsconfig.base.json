@@ -21,6 +21,7 @@
     "verbatimModuleSyntax": true,
     "baseUrl": ".",
     "paths": {
+      "@lytjs/common-constants": ["packages/common/packages/constants/src"],
       "@lytjs/common-is": ["packages/common/packages/is/src"],
       "@lytjs/common-object": ["packages/common/packages/object/src"],
       "@lytjs/common-string": ["packages/common/packages/string/src"],

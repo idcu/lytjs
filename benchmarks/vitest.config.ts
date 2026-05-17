@@ -47,6 +47,14 @@ export default defineConfig({
         find: /^@lytjs\/renderer$/,
         replacement: path.resolve(__dirname, '../packages/renderer/dist/index.mjs'),
       },
+      {
+        find: /^@lytjs\/vdom$/,
+        replacement: path.resolve(__dirname, '../packages/vdom/dist/index.mjs'),
+      },
+      {
+        find: /^@lytjs\/dom-runtime$/,
+        replacement: path.resolve(__dirname, '../packages/dom-runtime/dist/index.mjs'),
+      },
     ],
   },
 });

@@ -347,3 +347,186 @@ export function createRenderScheduler(renderFn: () => void, delay = 16): () => v
 export function cancelScheduledRender(_scheduleFn: () => void): void {
   // 无法取消 setTimeout，下次渲染仍会执行
 }
+
+/**
+ * 高效列表渲染器接口
+ * 提供基于 key 的增量更新，最小化 DOM 操作
+ */
+export interface VaporListRenderer<T> {
+  container: HTMLElement;
+  render: (items: T[]) => void;
+  destroy: () => void;
+}
+
+export interface VaporListOptions<T> {
+  keyFn: (item: T) => string | number;
+  renderItem: (item: T, index: number) => Node | Node[];
+  updateItem?: (item: T, index: number, nodes: Node[]) => void;
+  onMount?: (item: T, index: number, nodes: Node[]) => void;
+  onUnmount?: (item: T, index: number, nodes: Node[]) => void;
+}
+
+/**
+ * 创建高效列表渲染器
+ * 使用虚拟 DOM 差异算法实现增量更新，最小化 DOM 操作
+ *
+ * @param container - 容器元素
+ * @param options - 配置选项
+ * @returns 列表渲染器
+ *
+ * @example
+ * ```ts
+ * const container = document.getElementById('list')!;
+ *
+ * const listRenderer = createVaporListRenderer(container, {
+ *   keyFn: (item) => item.id,
+ *   renderItem: (item, index) => {
+ *     const div = document.createElement('div');
+ *     div.textContent = `${index}: ${item.name}`;
+ *     return div;
+ *   },
+ * });
+ *
+ * // 渲染 1000 个列表项
+ * listRenderer.render(items);
+ *
+ * // 增量更新（仅操作变化的节点）
+ * listRenderer.render(updatedItems);
+ *
+ * // 清理
+ * listRenderer.destroy();
+ * ```
+ */
+export function createVaporListRenderer<T>(
+  container: HTMLElement,
+  options: VaporListOptions<T>,
+): VaporListRenderer<T> {
+  const { keyFn, renderItem, updateItem, onMount, onUnmount } = options;
+  const itemCache = new Map<string | number, { item: T; nodes: Node[]; index: number }>();
+  let currentItems: T[] = [];
+
+  const render = (items: T[]) => {
+    const diff = diffLists(currentItems, items, keyFn);
+    currentItems = [...items];
+
+    // 处理删除（从后往前，避免索引问题）
+    for (let i = diff.removed.length - 1; i >= 0; i--) {
+      const removed = diff.removed[i]!;
+      const key = keyFn(removed.item);
+      const cached = itemCache.get(key);
+      if (cached) {
+        if (onUnmount) onUnmount(removed.item, cached.index, cached.nodes);
+        removeBatch(cached.nodes);
+        itemCache.delete(key);
+      }
+    }
+
+    // 处理移动
+    const movedCache = new Map<string | number, { item: T; nodes: Node[] }>();
+    for (const moved of diff.moved) {
+      const key = keyFn(moved.item);
+      const cached = itemCache.get(key);
+      if (cached) {
+        movedCache.set(key, { item: moved.item, nodes: cached.nodes });
+        removeBatch(cached.nodes);
+      }
+    }
+
+    // 处理更新
+    for (const updated of diff.updated) {
+      const key = keyFn(updated.item);
+      const cached = itemCache.get(key);
+      if (cached && updateItem) {
+        updateItem(updated.item, updated.index, cached.nodes);
+      }
+    }
+
+    // 重新按正确顺序插入
+    const fragment = document.createDocumentFragment();
+    for (let index = 0; index < items.length; index++) {
+      const item = items[index]!;
+      const key = keyFn(item);
+      let nodes: Node[];
+
+      // 检查是否是新增的项
+      const added = diff.added.find(a => keyFn(a.item) === key);
+      const moved = movedCache.get(key);
+      const cached = itemCache.get(key);
+
+      if (added) {
+        // 新增项
+        const rendered = renderItem(item, index);
+        nodes = Array.isArray(rendered) ? rendered : [rendered];
+        if (onMount) onMount(item, index, nodes);
+      } else if (moved) {
+        // 移动项
+        nodes = moved.nodes;
+      } else if (cached) {
+        // 保持原样的项
+        nodes = cached.nodes;
+        removeBatch(nodes); // 先移除再重新插入以保持顺序
+      } else {
+        // 理论上不会到这里，兜底处理
+        const rendered = renderItem(item, index);
+        nodes = Array.isArray(rendered) ? rendered : [rendered];
+        if (onMount) onMount(item, index, nodes);
+      }
+
+      // 插入到 fragment
+      for (const node of nodes) {
+        fragment.appendChild(node);
+      }
+
+      // 更新缓存
+      itemCache.set(key, { item, nodes, index });
+    }
+
+    // 一次性更新 DOM
+    container.textContent = '';
+    container.appendChild(fragment);
+  };
+
+  const destroy = () => {
+    for (const [, cached] of itemCache) {
+      if (onUnmount) onUnmount(cached.item, cached.index, cached.nodes);
+      removeBatch(cached.nodes);
+    }
+    itemCache.clear();
+    container.textContent = '';
+  };
+
+  return { container, render, destroy };
+}
+
+/**
+ * 批量更新多个列表
+ * 合并多个列表的更新操作，进一步减少重排重绘
+ *
+ * @param renderers - 列表渲染器数组
+ * @param itemsArrays - 对应的数据数组
+ */
+export function renderListsBatch<T extends unknown[]>(
+  renderers: VaporListRenderer<T[number]>[],
+  itemsArrays: T[],
+): void {
+  if (renderers.length !== itemsArrays.length) {
+    throw new Error('renderers and itemsArrays length must match');
+  }
+
+  // 先禁用布局
+  const originalDisplay: string[] = [];
+  for (const renderer of renderers) {
+    originalDisplay.push(renderer.container.style.display);
+    renderer.container.style.display = 'none';
+  }
+
+  // 批量更新
+  for (let i = 0; i < renderers.length; i++) {
+    renderers[i]!.render(itemsArrays[i]!);
+  }
+
+  // 恢复布局，一次性触发重排
+  for (let i = 0; i < renderers.length; i++) {
+    renderers[i]!.container.style.display = originalDisplay[i]!;
+  }
+}

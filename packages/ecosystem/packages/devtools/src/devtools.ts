@@ -59,6 +59,11 @@ import {
   recordDependency,
   clearSignalRegistry,
 } from './signalsInspector';
+import {
+  getVDOMTree,
+  getVDOMStats,
+  serializeVDOMTree,
+} from './vdomInspector';
 
 // DevTools 实例
 let devtoolsInstance: DevTools | null = null;
@@ -195,6 +200,15 @@ class DevTools implements DevToolsAPI {
         cursor: pointer;
         border-bottom: 2px solid transparent;
       ">Signals</button>
+      <button class="lytjs-devtools-tab" data-tab="vdom" style="
+        flex: 1;
+        padding: 10px;
+        background: transparent;
+        border: none;
+        color: #d4d4d4;
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+      ">VDOM</button>
       <button class="lytjs-devtools-tab" data-tab="performance" style="
         flex: 1;
         padding: 10px;
@@ -261,6 +275,9 @@ class DevTools implements DevToolsAPI {
         break;
       case 'signals':
         content.innerHTML = this.renderSignalsTab();
+        break;
+      case 'vdom':
+        content.innerHTML = this.renderVDOMTab();
         break;
       case 'performance':
         content.innerHTML = this.renderPerformanceTab();
@@ -408,6 +425,101 @@ class DevTools implements DevToolsAPI {
       `;
     });
     html += '</div>';
+    
+    return html;
+  }
+
+  /**
+   * 渲染 VDOM 标签页
+   */
+  private renderVDOMTab(): string {
+    const roots = getVDOMTree();
+    const stats = getVDOMStats();
+    
+    if (roots.length === 0) {
+      return `
+        <div style="color: #666; text-align: center; padding: 40px;">
+          <div style="font-size: 48px; margin-bottom: 15px;">🌳</div>
+          <div>No VDOM roots registered.</div>
+          <div style="font-size: 11px; margin-top: 10px; color: #555;">
+            Use registerVDOMRoot() to register your VDOM roots.
+          </div>
+        </div>
+      `;
+    }
+    
+    let html = `
+      <div style="margin-bottom: 15px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+          <strong>🌳 VDOM Tree</strong>
+          <button id="lytjs-devtools-clear-vdom" style="
+            background: #ff4d4f;
+            border: none;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+          ">清空</button>
+        </div>
+        
+        <div style="background: #252526; border-radius: 4px; padding: 15px; margin-bottom: 15px;">
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; text-align: center;">
+            <div>
+              <div style="color: #888; font-size: 11px;">总节点数</div>
+              <div style="font-size: 20px; font-weight: bold; color: #4fc08d;">${stats.totalNodes}</div>
+            </div>
+            <div>
+              <div style="color: #888; font-size: 11px;">组件数</div>
+              <div style="font-size: 20px; font-weight: bold; color: #1890ff;">${stats.componentCount}</div>
+            </div>
+            <div>
+              <div style="color: #888; font-size: 11px;">元素数</div>
+              <div style="font-size: 20px; font-weight: bold; color: #faad14;">${stats.elementCount}</div>
+            </div>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; text-align: center; margin-top: 10px;">
+            <div>
+              <div style="color: #888; font-size: 11px;">文本节点</div>
+              <div style="font-size: 16px; font-weight: bold; color: #888;">${stats.textCount}</div>
+            </div>
+            <div>
+              <div style="color: #888; font-size: 11px;">根节点</div>
+              <div style="font-size: 16px; font-weight: bold; color: #888;">${stats.rootCount}</div>
+            </div>
+            <div>
+              <div style="color: #888; font-size: 11px;">最大深度</div>
+              <div style="font-size: 16px; font-weight: bold; color: #888;">${stats.maxDepth}</div>
+            </div>
+          </div>
+        </div>
+        
+        <div style="margin-bottom: 10px;">
+          <input id="lytjs-devtools-vdom-search" type="text" placeholder="搜索标签名..." style="
+            width: 100%;
+            padding: 8px;
+            background: #252526;
+            border: 1px solid #3d3d3d;
+            border-radius: 4px;
+            color: #d4d4d4;
+            font-size: 12px;
+          " />
+        </div>
+        
+        <div id="lytjs-devtools-vdom-tree" style="
+          background: #252526;
+          border-radius: 4px;
+          padding: 15px;
+          max-height: 400px;
+          overflow: auto;
+          font-family: 'Consolas', 'Monaco', monospace;
+          font-size: 11px;
+          line-height: 1.6;
+        ">
+          <pre style="margin: 0; white-space: pre-wrap; word-break: break-all;">${serializeVDOMTree()}</pre>
+        </div>
+      </div>
+    `;
     
     return html;
   }

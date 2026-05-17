@@ -9,9 +9,19 @@
 export const NOOP = (): void => {};
 
 /**
+ * 空函数别名（兼容性）
+ */
+export const EMPTY_FN = NOOP;
+
+/**
  * 冻结的空对象，用于避免重复创建
  */
 export const EMPTY_OBJ: Readonly<Record<string, never>> = Object.freeze({});
+
+/**
+ * 空数组常量（冻结）
+ */
+export const EMPTY_ARR: readonly unknown[] = Object.freeze([]);
 
 /**
  * 检查值是否为字符串
@@ -144,16 +154,4 @@ export const isDate = (val: unknown): val is Date => toTypeString(val) === '[obj
  */
 export const isRegExp = (val: unknown): val is RegExp => toTypeString(val) === '[object RegExp]';
 
-// ============================================================
-// 常量（从 @lytjs/shared 迁移）
-// ============================================================
-
-/**
- * 空数组常量（冻结）
- */
-export const EMPTY_ARR: readonly unknown[] = Object.freeze([]);
-
-/**
- * 空函数常量
- */
-export const EMPTY_FN = (): void => {};
+// 已移除重复的 EMPTY_FN，使用 NOOP 替代

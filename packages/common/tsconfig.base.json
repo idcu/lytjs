@@ -23,6 +23,7 @@
     "tsBuildInfoFile": "./dist/.tsbuildinfo",
     "baseUrl": ".",
     "paths": {
+      "@lytjs/common-constants": ["./packages/constants/src"],
       "@lytjs/common-env": ["./packages/env/src"],
       "@lytjs/common-is": ["./packages/is/src"],
       "@lytjs/common-string": ["./packages/string/src"],

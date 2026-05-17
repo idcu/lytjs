@@ -89,7 +89,7 @@ function signal(initialValue) {
 | **1000行更新** | 1,131 ops/s | ⭐⭐⭐ 良好 |
 | **综合评分** | - | ⭐⭐⭐⭐ 优秀 |
 
-详细性能数据请参考：[BASELINE_PERFORMANCE_v6.0.0.md](../../docs/development/BASELINE_PERFORMANCE_v6.0.0.md)
+详细性能数据请参考：[PERFORMANCE_BASELINE_AND_PLANS.md](../../docs/development/PERFORMANCE_BASELINE_AND_PLANS.md)
 
 ## 📁 项目结构
 
@@ -116,8 +116,7 @@ lytjs/
 ## 📚 相关文档
 
 - [ROADMAP_NEXT_STEPS.md](../../docs/development/ROADMAP_NEXT_STEPS.md)
-- [BASELINE_PERFORMANCE_v6.0.0.md](../../docs/development/BASELINE_PERFORMANCE_v6.0.0.md)
-- [DEVELOPMENT_PLAN_v6.1.md](../../docs/development/DEVELOPMENT_PLAN_v6.1.md)
+- [PERFORMANCE_BASELINE_AND_PLANS.md](../../docs/development/PERFORMANCE_BASELINE_AND_PLANS.md)
 - [js-framework-benchmark 官方仓库](https://github.com/krausest/js-framework-benchmark)
 - [LytJS 官方文档](https://lytjs.dev)
 
