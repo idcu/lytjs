@@ -175,7 +175,7 @@ const largeData = Array.from({ length: 10000 }, (_, i) => ({
 import { useStore } from '@lytjs/store';
 
 // ✅ 好的做法：只订阅需要的状态
-const userName = useStore('user', state => state.profile.name);
+const userName = useStore('user', (state) => state.profile.name);
 ```
 
 ### 构建优化
@@ -377,7 +377,7 @@ pnpm type-check
 
 #### 2. 任务选择
 
-查看 [ROADMAP_NEXT_STEPS.md](file:///f:/trae/lytjs/docs/development/ROADMAP_NEXT_STEPS.md)，选择合适的任务：
+查看 [ROADMAP_NEXT_STEPS.md](file:///e:/trae/lytjs/docs/development/ROADMAP_NEXT_STEPS.md)，选择合适的任务：
 
 - 🟢 高优先级：核心优势、用户痛点
 - 🟡 中优先级：生态建设、体验优化
@@ -386,6 +386,7 @@ pnpm type-check
 #### 3. 开发实施
 
 1. **创建功能分支**：
+
 ```bash
 git checkout -b feature/your-feature-name
 ```
@@ -396,6 +397,7 @@ git checkout -b feature/your-feature-name
    - 编写或更新测试
 
 3. **提交和推送**：
+
 ```bash
 git add .
 git commit --no-verify -m "feat: 描述你的功能"
@@ -414,6 +416,7 @@ git push origin feature/your-feature-name
 #### 5. 文档同步
 
 同步更新相关文档：
+
 - 功能文档
 - API 参考
 - 示例代码
@@ -465,10 +468,10 @@ git push origin feature/your-feature-name
 
 ## 参考文档
 
-- [性能优化指南](file:///f:/trae/lytjs/docs/tutorial/performance.md)
-- [最佳实践](file:///f:/trae/lytjs/docs/tutorial/best-practices.md)
-- [ROADMAP_NEXT_STEPS.md](file:///f:/trae/lytjs/docs/development/ROADMAP_NEXT_STEPS.md)
-- [项目架构说明](file:///f:/trae/lytjs/docs/development/ARCHITECTURE.md)
+- [性能优化指南](file:///e:/trae/lytjs/docs/tutorial/performance.md)
+- [最佳实践](file:///e:/trae/lytjs/docs/tutorial/best-practices.md)
+- [ROADMAP_NEXT_STEPS.md](file:///e:/trae/lytjs/docs/development/ROADMAP_NEXT_STEPS.md)
+- [项目架构说明](file:///e:/trae/lytjs/docs/development/ARCHITECTURE.md)
 
 ---
 

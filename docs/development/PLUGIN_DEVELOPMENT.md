@@ -19,6 +19,7 @@
 ### 什么是 LytJS 插件？
 
 LytJS 插件是基于 `definePlugin` API 创建的可插拔功能模块，提供以下特性：
+
 - **可按需引入**：只引入需要的插件
 - **配置灵活**：支持插件选项配置
 - **生命周期管理**：统一的安装/卸载机制
@@ -26,14 +27,14 @@ LytJS 插件是基于 `definePlugin` API 创建的可插拔功能模块，提供
 
 ### 官方插件列表
 
-| 插件名称 | 包名 | 功能描述 |
-|---------|------|---------|
-| 主题插件 | `@lytjs/plugin-theme` | 深色/浅色主题、CSS 变量管理 |
-| 日志插件 | `@lytjs/plugin-logger` | 日志分级、性能追踪、持久化 |
-| 认证插件 | `@lytjs/plugin-auth` | 角色管理、权限验证 |
-| 存储插件 | `@lytjs/plugin-storage` | localStorage/sessionStorage 封装 |
-| 国际化插件 | `@lytjs/plugin-i18n` | 多语言支持、翻译插值 |
-| Vite 插件 | `@lytjs/plugin-vite` | Vite 构建集成 |
+| 插件名称   | 包名                    | 功能描述                         |
+| ---------- | ----------------------- | -------------------------------- |
+| 主题插件   | `@lytjs/plugin-theme`   | 深色/浅色主题、CSS 变量管理      |
+| 日志插件   | `@lytjs/plugin-logger`  | 日志分级、性能追踪、持久化       |
+| 认证插件   | `@lytjs/plugin-auth`    | 角色管理、权限验证               |
+| 存储插件   | `@lytjs/plugin-storage` | localStorage/sessionStorage 封装 |
+| 国际化插件 | `@lytjs/plugin-i18n`    | 多语言支持、翻译插值             |
+| Vite 插件  | `@lytjs/plugin-vite`    | Vite 构建集成                    |
 
 ---
 
@@ -108,6 +109,7 @@ packages/plugins/packages/plugin-xxx/
 ### 3. 配置 TypeScript
 
 **tsconfig.json**
+
 ```json
 {
   "extends": "../../../../tsconfig.base.json",
@@ -128,6 +130,7 @@ packages/plugins/packages/plugin-xxx/
 ### 4. 配置 tsup
 
 **tsup.config.ts**
+
 ```typescript
 import { defineConfig } from 'tsup';
 
@@ -145,17 +148,14 @@ export default defineConfig({
       js: format === 'cjs' ? '.cjs' : '.mjs',
     };
   },
-  external: [
-    '@lytjs/core',
-    '@lytjs/reactivity',
-    '@lytjs/common-is',
-  ],
+  external: ['@lytjs/core', '@lytjs/reactivity', '@lytjs/common-is'],
 });
 ```
 
 ### 5. 配置 Vitest
 
 **vitest.config.ts**
+
 ```typescript
 import { defineConfig } from 'vitest/config';
 import { resolve, dirname } from 'node:path';
@@ -327,9 +327,15 @@ function createPlugin() {
   });
 
   return {
-    get value() { return state(); },
-    set value(v) { state.set(v); },
-    get doubled() { return derived(); },
+    get value() {
+      return state();
+    },
+    set value(v) {
+      state.set(v);
+    },
+    get doubled() {
+      return derived();
+    },
   };
 }
 ```
@@ -493,24 +499,28 @@ npm publish --access public
 
 ## 示例插件参考
 
-- [plugin-theme](file:///f:/trae/lytjs/packages/plugins/packages/plugin-theme/src/index.ts) - 主题插件
-- [plugin-logger](file:///f:/trae/lytjs/packages/plugins/packages/plugin-logger/src/index.ts) - 日志插件
-- [plugin-i18n](file:///f:/trae/lytjs/packages/plugins/packages/plugin-i18n/src/index.ts) - 国际化插件
+- [plugin-theme](file:///e:/trae/lytjs/packages/plugins/packages/plugin-theme/src/index.ts) - 主题插件
+- [plugin-logger](file:///e:/trae/lytjs/packages/plugins/packages/plugin-logger/src/index.ts) - 日志插件
+- [plugin-i18n](file:///e:/trae/lytjs/packages/plugins/packages/plugin-i18n/src/index.ts) - 国际化插件
 
 ---
 
 ## 常见问题
 
 ### Q: 如何处理 DOM 操作？
+
 A: 使用原生 DOM API，或导入 `@lytjs/common-dom-helpers`
 
 ### Q: 如何处理日期时间？
+
 A: 使用原生 `Date` 对象和 `Intl.DateTimeFormat`
 
 ### Q: 如何处理深拷贝？
+
 A: 使用原生 `structuredClone()` 或自己实现
 
 ### Q: 如何处理 URL？
+
 A: 使用原生 `URL` 和 `URLSearchParams` API
 
 ---

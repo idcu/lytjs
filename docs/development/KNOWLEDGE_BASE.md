@@ -23,14 +23,16 @@ size: { type: [Number, String] as unknown as PropType<number | string>, default:
 ```
 
 **适用场景**:
+
 - 支持多种类型的 prop（如 `number | string`）
 - 支持可选 null/undefined 的情况
 - 数组/对象类型转换
 
 **适用文件**:
-- [Avatar.ts](file:///f:/trae/lytjs/packages/ecosystem/packages/ui/src/components/Avatar.ts)
-- [Card.ts](file:///f:/trae/lytjs/packages/ecosystem/packages/ui/src/components/Card.ts)
-- [Carousel.ts](file:///f:/trae/lytjs/packages/ecosystem/packages/ui/src/components/Carousel.ts)
+
+- [Avatar.ts](file:///e:/trae/lytjs/packages/ecosystem/packages/ui/src/components/Avatar.ts)
+- [Card.ts](file:///e:/trae/lytjs/packages/ecosystem/packages/ui/src/components/Card.ts)
+- [Carousel.ts](file:///e:/trae/lytjs/packages/ecosystem/packages/ui/src/components/Carousel.ts)
 
 ### 1.2 类型导出与导入问题
 
@@ -109,9 +111,10 @@ test: {
 
 **测试框架**: LytJS 内置 SSR 压力测试框架
 
-**测试文件**: [stress-test.ts](file:///f:/trae/lytjs/packages/ecosystem/packages/ssr/tests/stress-test.ts)
+**测试文件**: [stress-test.ts](file:///e:/trae/lytjs/packages/ecosystem/packages/ssr/tests/stress-test.ts)
 
 **测试场景**:
+
 - 基础测试 (100请求/10并发)
 - 中等并发 (500请求/50并发)
 - 高并发 (1000请求/100并发)
@@ -119,17 +122,19 @@ test: {
 - 极限测试 (10000+/15000请求)
 
 **关键指标**:
+
 - 总请求数、成功数、失败数
 - QPS (每秒请求数)
 - 平均响应时间、最小/最大响应时间
 
 **运行方式**:
+
 ```bash
 cd packages/ecosystem/packages/ssr
 npx tsx tests/stress-test.ts
 ```
 
-**结果报告**: [ssr-stress-test-2026-05-16.md](file:///f:/trae/lytjs/benchmarks/results/ssr-stress-test-2026-05-16.md)
+**结果报告**: [ssr-stress-test-2026-05-16.md](file:///e:/trae/lytjs/benchmarks/results/ssr-stress-test-2026-05-16.md)
 
 ### 2.3 测试覆盖率目标
 
@@ -147,9 +152,10 @@ npx tsx tests/stress-test.ts
 
 **问题描述**: parseQuery 对空查询参数未正确处理为 null
 
-**修复位置**: [matcher.ts](file:///f:/trae/lytjs/packages/ecosystem/packages/router/src/matcher.ts#L261-L295)
+**修复位置**: [matcher.ts](file:///e:/trae/lytjs/packages/ecosystem/packages/router/src/matcher.ts#L261-L295)
 
 **修复代码**:
+
 ```typescript
 for (const pair of pairs) {
   if (!pair) continue;
@@ -163,17 +169,17 @@ for (const pair of pairs) {
       if (decodedValue !== undefined) {
         existing.push(decodedValue);
       } else {
-        existing.push(null);  // ✅ null 处理
+        existing.push(null); // ✅ null 处理
       }
     } else if (decodedValue !== undefined) {
       query[decodedKey] = [existing, decodedValue] as (string | null)[];
     } else {
-      query[decodedKey] = [existing, null] as (string | null)[];  // ✅ null 处理
+      query[decodedKey] = [existing, null] as (string | null)[]; // ✅ null 处理
     }
   } else if (decodedValue !== undefined) {
     query[decodedKey] = decodedValue;
   } else {
-    query[decodedKey] = null;  // ✅ null 处理
+    query[decodedKey] = null; // ✅ null 处理
   }
 }
 ```
@@ -196,17 +202,19 @@ for (const pair of pairs) {
 ```
 
 **进度统计格式**:
+
 ```markdown
-| 版本 | 已完成 | 未完成 | 完成率 |
-|------|--------|--------|--------|
-| v6.1 | 4 | 3 | 57% |
-| v6.2 | 20 | 0 | **100%** ✅ |
-| **v6.x 计划项** | **41** | **3** | **93%** |
+| 版本            | 已完成 | 未完成 | 完成率      |
+| --------------- | ------ | ------ | ----------- |
+| v6.1            | 4      | 3      | 57%         |
+| v6.2            | 20     | 0      | **100%** ✅ |
+| **v6.x 计划项** | **41** | **3**  | **93%**     |
 ```
 
 ### 4.2 Git 提交规范
 
 **提交信息格式**:
+
 ```
 feat(scope): 标题
 
@@ -215,6 +223,7 @@ feat(scope): 标题
 ```
 
 **例子**:
+
 ```
 feat(ui): 完善类型安全与性能验证
 
@@ -228,6 +237,7 @@ feat(ui): 完善类型安全与性能验证
 ```
 
 **Hook 跳过**: 当内存限制时使用 `--no-verify`
+
 ```bash
 git commit --no-verify -m "..."
 ```
@@ -238,12 +248,12 @@ git commit --no-verify -m "..."
 
 ### 5.1 SSR 性能数据
 
-| 指标 | 数值 |
-|------|------|
-| 最高 QPS | 74,336.95 |
-| 10000请求成功率 | 100% |
-| 15000请求成功率 | 100% |
-| 平均响应时间 | < 20ms |
+| 指标                | 数值              |
+| ------------------- | ----------------- |
+| 最高 QPS            | 74,336.95         |
+| 10000请求成功率     | 100%              |
+| 15000请求成功率     | 100%              |
+| 平均响应时间        | < 20ms            |
 | 稳定性测试 (3000ms) | 9698 请求，0 失败 |
 
 ### 5.2 类型安全指标
@@ -279,13 +289,13 @@ lytjs/
 
 ### 6.2 关键文件位置
 
-| 功能 | 文件路径 |
-|------|---------|
-| 类型检查 | `pnpm type-check` |
-| 测试运行 | `pnpm test` |
-| 包入口 | `packages/[package]/src/index.ts` |
+| 功能        | 文件路径                              |
+| ----------- | ------------------------------------- |
+| 类型检查    | `pnpm type-check`                     |
+| 测试运行    | `pnpm test`                           |
+| 包入口      | `packages/[package]/src/index.ts`     |
 | Vitest 配置 | `packages/[package]/vitest.config.ts` |
-| 任务清单 | `docs/development/PENDING_TASKS.md` |
+| 任务清单    | `docs/development/PENDING_TASKS.md`   |
 
 ---
 
@@ -376,6 +386,7 @@ ls packages/[package]/dist/
 **适用场景**: 新增或修改 UI 组件后，类型检查出现错误
 
 **操作步骤**:
+
 1. 导入 `PropType` 从 `@lytjs/component`
 2. 使用 `as unknown as PropType<T>` 模式
 3. 运行类型检查验证
@@ -389,6 +400,7 @@ ls packages/[package]/dist/
 **描述**: 配置 Vitest 以处理内存密集的测试文件
 
 **操作步骤**:
+
 1. 在 vitest.config.ts 中添加 exclude 配置
 2. 可选：增加超时时间
 3. 运行剩余测试验证
@@ -402,6 +414,7 @@ ls packages/[package]/dist/
 **描述**: 执行 SSR 压力测试并生成报告
 
 **操作步骤**:
+
 1. 运行 `npx tsx tests/stress-test.ts`
 2. 记录测试结果
 3. 创建报告文件到 `benchmarks/results/`
@@ -414,6 +427,7 @@ ls packages/[package]/dist/
 **描述**: 规范地更新任务清单文档
 
 **操作步骤**:
+
 1. 更新总体完成率表格
 2. 标记完成的任务
 3. 添加更新记录条目
@@ -428,6 +442,7 @@ ls packages/[package]/dist/
 **适用场景**: LytJS UI 组件开发，类型安全问题修复
 
 **操作步骤**:
+
 1. 运行类型检查定位问题：`pnpm type-check`
 2. 识别常见问题模式（PropType 未导出、类型转换错误等）
 3. 修复 PropType 导出问题：在 `packages/component/src/index.ts` 中添加 `export type { PropType } from './types'`
@@ -435,6 +450,7 @@ ls packages/[package]/dist/
 5. 验证修复结果：再次运行类型检查和测试
 
 **常见问题**:
+
 - 为什么需要 `as unknown as PropType<T>`：TypeScript 类型系统对复杂类型转换有严格限制
 - 修复后需要重新构建吗：修改了 `@lytjs/component` 包时需要
 
@@ -446,9 +462,10 @@ ls packages/[package]/dist/
 
 **适用场景**: SSR 性能验证、版本发布前测试
 
-**测试文件**: [packages/ecosystem/packages/ssr/tests/stress-test.ts](file:///f:/trae/lytjs/packages/ecosystem/packages/ssr/tests/stress-test.ts)
+**测试文件**: [packages/ecosystem/packages/ssr/tests/stress-test.ts](file:///e:/trae/lytjs/packages/ecosystem/packages/ssr/tests/stress-test.ts)
 
 **操作步骤**:
+
 1. 定位测试文件
 2. 运行压力测试：`cd packages/ecosystem/packages/ssr && npx tsx tests/stress-test.ts`
 3. 分析测试结果（总请求数、成功率、QPS、平均响应时间等）
@@ -467,6 +484,7 @@ ls packages/[package]/dist/
 | 极限2 | 15000 | 1000 | 100% | 74,336.95 | 16.52ms |
 
 **性能优化建议**:
+
 - 响应时间 > 50ms：检查组件渲染优化和数据获取策略
 - QPS < 10000：考虑增加服务器实例，检查资源利用率
 - 成功率 < 99%：检查超时配置和错误处理
@@ -477,40 +495,44 @@ ls packages/[package]/dist/
 
 **适用场景**: 解决测试运行时内存溢出问题
 
-**问题测试文件示例**: [packages/reactivity/tests/edge-cases.test.ts](file:///f:/trae/lytjs/packages/reactivity/tests/edge-cases.test.ts)
+**问题测试文件示例**: [packages/reactivity/tests/edge-cases.test.ts](file:///e:/trae/lytjs/packages/reactivity/tests/edge-cases.test.ts)
 
 **解决方案**:
 
 **方案一：排除问题测试文件**
+
 - 在 vitest.config.ts 中添加 `exclude` 配置
 - 优点：快速解决问题
 - 缺点：某些测试不运行
 
 **方案二：调整测试运行器配置**
+
 - 单线程运行：`poolOptions.threads.singleThread = true`
 - 增加超时时间：`testTimeout: 30000`
 - 组合使用效果更佳
 
 **方案三：调整 Node.js 内存限制**
+
 ```bash
 NODE_OPTIONS="--max-old-space-size=4096" pnpm test
 ```
 
 **完整配置示例** (reactivity/vitest.config.ts):
+
 ```typescript
 export default defineConfig({
   test: {
     exclude: ['**/tests/edge-cases.test.ts'],
     poolOptions: {
-      threads: { singleThread: true }
+      threads: { singleThread: true },
     },
     testTimeout: 30000,
     hookTimeout: 30000,
     coverage: {
-      exclude: ['**/tests/edge-cases.test.ts']
-    }
-  }
-})
+      exclude: ['**/tests/edge-cases.test.ts'],
+    },
+  },
+});
 ```
 
 ---
@@ -518,26 +540,34 @@ export default defineConfig({
 ## 12. 通用开发技能模板
 
 ### 12.1 添加新测试用例
+
 **适用场景**: 为已有模块补充测试覆盖
+
 - vdom 包测试需指定 jsdom 环境
 - 注意 UI 组件测试的特殊事项
 
 ### 12.2 创建新生态系统包
+
 **适用场景**: 在 packages/ecosystem/packages/ 下创建新包
 
 ### 12.3 修复测试失败
+
 **适用场景**: 测试运行失败时的排查流程
 
 ### 12.4 DevTools 功能开发
+
 **适用场景**: 扩展 DevTools 功能
 
 ### 12.5 创建官方插件
+
 **适用场景**: 在 packages/plugins/packages/ 下创建新官方插件
 
 ### 12.6 包迁移与重构
+
 **适用场景**: 将包从一个目录移动到另一个目录
 
 ### 12.7 创建工程化工具脚本
+
 **适用场景**: 开发项目级别的脚本工具
 
 > 详细技能模板参考: [DEVELOPMENT_SKILLS.md](./DEVELOPMENT_SKILLS.md)
@@ -546,13 +576,13 @@ export default defineConfig({
 
 ## 13. 项目状态速查
 
-| 指标 | 状态 | 说明 |
-|------|------|------|
-| v6.2 任务 | ✅ 100% | 全部完成 |
-| v6.3 任务 | ✅ 100% | 全部完成 |
-| 总体进度 | ✅ 93% | 3/44 待完成 |
-| 类型安全 | ✅ 69/70 包通过 | 基本完整 |
-| 核心测试 | ✅ 全部通过 | vdom/ui/store/router |
+| 指标      | 状态            | 说明                 |
+| --------- | --------------- | -------------------- |
+| v6.2 任务 | ✅ 100%         | 全部完成             |
+| v6.3 任务 | ✅ 100%         | 全部完成             |
+| 总体进度  | ✅ 93%          | 3/44 待完成          |
+| 类型安全  | ✅ 69/70 包通过 | 基本完整             |
+| 核心测试  | ✅ 全部通过     | vdom/ui/store/router |
 
 ---
 

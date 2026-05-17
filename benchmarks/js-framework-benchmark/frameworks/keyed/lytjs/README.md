@@ -32,14 +32,14 @@ pnpm dev
 
 ### 实现的测试场景
 
-| 场景 | 按钮 | 说明 |
-|------|------|------|
-| 创建 1,000 行 | `Create 1,000 rows` | 生成 1,000 个随机数据行 |
-| 创建 10,000 行 | `Create 10,000 rows` | 生成 10,000 个随机数据行 |
-| 追加 1,000 行 | `Append 1,000 rows` | 向现有数据追加 1,000 行 |
-| 更新每 10 行 | `Update every 10th row` | 更新每第 10 行的文本 |
-| 清空表格 | `Clear` | 清空所有数据 |
-| 交换行 | `Swap Rows` | 交换第 1 行和第 998 行 |
+| 场景           | 按钮                    | 说明                     |
+| -------------- | ----------------------- | ------------------------ |
+| 创建 1,000 行  | `Create 1,000 rows`     | 生成 1,000 个随机数据行  |
+| 创建 10,000 行 | `Create 10,000 rows`    | 生成 10,000 个随机数据行 |
+| 追加 1,000 行  | `Append 1,000 rows`     | 向现有数据追加 1,000 行  |
+| 更新每 10 行   | `Update every 10th row` | 更新每第 10 行的文本     |
+| 清空表格       | `Clear`                 | 清空所有数据             |
+| 交换行         | `Swap Rows`             | 交换第 1 行和第 998 行   |
 
 ## 🔧 技术细节
 
@@ -50,19 +50,19 @@ function signal(initialValue) {
   let value = initialValue;
   const subscribers = new Set();
 
-  const signalFn = function() {
+  const signalFn = function () {
     // 读取值并追踪订阅者
     return value;
   };
 
-  signalFn.set = function(newValue) {
+  signalFn.set = function (newValue) {
     if (Object.is(newValue, value)) return;
     value = newValue;
     // 通知所有订阅者
-    subscribers.forEach(sub => sub());
+    subscribers.forEach((sub) => sub());
   };
 
-  signalFn._subscribe = function(subscriber) {
+  signalFn._subscribe = function (subscriber) {
     subscribers.add(subscriber);
     return () => subscribers.delete(subscriber);
   };
@@ -80,14 +80,21 @@ function signal(initialValue) {
 
 ## 📈 性能基准
 
-根据已收集的基线性能数据：
+根据最新基准测试数据（2026-05-18）：
 
-| 指标 | 数值 | 评级 |
-|------|------|------|
-| **单节点更新** | 138,434 ops/s | ⭐⭐⭐⭐⭐ 卓越 |
-| **1000行创建** | 3,329 ops/s | ⭐⭐⭐ 良好 |
-| **1000行更新** | 1,131 ops/s | ⭐⭐⭐ 良好 |
-| **综合评分** | - | ⭐⭐⭐⭐ 优秀 |
+| 指标               | 数值         | 评级            |
+| ------------------ | ------------ | --------------- |
+| **单节点更新**     | 39,417 ops/s | ⭐⭐⭐⭐⭐ 卓越 |
+| **交换两行**       | 5,771 ops/s  | ⭐⭐⭐⭐ 优秀   |
+| **删除中间行**     | 5,833 ops/s  | ⭐⭐⭐⭐ 优秀   |
+| **反转列表**       | 5,783 ops/s  | ⭐⭐⭐⭐ 优秀   |
+| **筛选列表(一半)** | 5,251 ops/s  | ⭐⭐⭐⭐ 优秀   |
+| **排序**           | 1,433 ops/s  | ⭐⭐⭐ 良好     |
+| **选择行(高亮)**   | 1,236 ops/s  | ⭐⭐⭐ 良好     |
+| **追加1000行**     | 2,544 ops/s  | ⭐⭐⭐ 良好     |
+| **前置1000行**     | 2,503 ops/s  | ⭐⭐⭐ 良好     |
+| **更新1000节点**   | 271 ops/s    | ⭐⭐ 一般       |
+| **综合评分**       | -            | ⭐⭐⭐⭐ 优秀   |
 
 详细性能数据请参考：[PERFORMANCE_BASELINE_AND_PLANS.md](../../docs/development/PERFORMANCE_BASELINE_AND_PLANS.md)
 
@@ -127,5 +134,5 @@ MIT License - 与 LytJS 项目保持一致
 ---
 
 **版本**：v6.0.0
-**最后更新**：2026-05-16
+**最后更新**：2026-05-18
 **维护者**：LytJS Team
