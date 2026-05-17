@@ -115,6 +115,7 @@ export interface TemplateWrapper {
   remove(): void;
   firstChild: Node | null;
   lastChild: Node | null;
+  firstElementChild: Element | null; // 为了兼容编译后的代码
   children: Element[];
   childNodes: Node[];
   [Symbol.iterator](): IterableIterator<Element>;
@@ -149,6 +150,7 @@ export function createTemplate(html: string): TemplateWrapper {
       content: mockContent,
       firstChild: null,
       lastChild: null,
+      firstElementChild: null,
       children: [],
       childNodes: [],
       remove() {},
@@ -164,11 +166,15 @@ export function createTemplate(html: string): TemplateWrapper {
   const content = template.content;
   const childNodes = Array.from(content.childNodes);
   const children = Array.from(content.children);
+  const firstElementChild = children[0] || null;
+  const rootElement = firstElementChild as Element;
 
+  // 创建 proxy 来包装 rootElement，提供 remove 方法
   const wrapper = {
     content,
     firstChild: childNodes[0] || null,
     lastChild: childNodes[childNodes.length - 1] || null,
+    firstElementChild,
     children,
     childNodes,
     remove() {
@@ -184,7 +190,32 @@ export function createTemplate(html: string): TemplateWrapper {
     },
   };
 
-  return wrapper;
+  // 为了让 _div.value、_div.style 等工作，我们用Proxy代理wrapper
+  return new Proxy(wrapper, {
+    get(target, prop) {
+      if (prop in target) {
+        return (target as any)[prop];
+      }
+      if (rootElement) {
+        if (typeof (rootElement as any)[prop] === 'function') {
+          return (...args: any[]) => (rootElement as any)[prop](...args);
+        }
+        return (rootElement as any)[prop];
+      }
+      return undefined;
+    },
+    set(target, prop, value) {
+      if (prop in target) {
+        (target as any)[prop] = value;
+        return true;
+      }
+      if (rootElement) {
+        (rootElement as any)[prop] = value;
+        return true;
+      }
+      return false;
+    },
+  });
 }
 
 export function getContent(wrapper: TemplateWrapper): Node[] {
@@ -257,18 +288,31 @@ interface RemovableWrapper {
  * 将节点插入到父元素中
  * ref 为 null 时追加到末尾
  */
-export function insert(child: unknown, parent: Node, ref?: Node | null): void {
+export function insert(child: unknown, parent: unknown, ref?: Node | null): void {
   if (!isBrowser) return;
+  // 处理 parent 是 TemplateWrapper 的情况：获取真实的 parent DOM
+  let realParent: Node;
+  if ('content' in (parent as any)) {
+    // parent 是 TemplateWrapper，取它的 firstChild（真实的 DOM 元素）作为 parent
+    const wrapper = parent as TemplateWrapper;
+    if (!wrapper.firstChild) {
+      return;
+    }
+    realParent = wrapper.firstChild;
+  } else {
+    realParent = parent as Node;
+  }
+  
   const wrapper = child as RemovableWrapper;
   if ('content' in wrapper) {
     // 如果是 TemplateWrapper，调用 appendChild 处理
-    appendChild(parent, child as TemplateWrapper);
+    appendChild(realParent, child as TemplateWrapper);
   } else {
     // 否则作为普通 Node 处理
     if (ref != null) {
-      parent.insertBefore(child as Node, ref);
+      realParent.insertBefore(child as Node, ref);
     } else {
-      parent.appendChild(child as Node);
+      realParent.appendChild(child as Node);
     }
   }
 }
@@ -513,15 +557,16 @@ function isNumericStyleProperty(prop: string): boolean {
  * 添加事件监听器，返回取消监听函数
  */
 export function addEventListener(
-  el: Element,
+  el: unknown,
   event: string,
   handler: EventListener,
   options?: AddEventListenerOptions,
 ): () => void {
   if (!isBrowser) return () => {};
-  el.addEventListener(event, handler, options);
+  const realNode = getRealNode(el) as Element;
+  realNode.addEventListener(event, handler, options);
   return () => {
-    el.removeEventListener(event, handler, options);
+    realNode.removeEventListener(event, handler, options);
   };
 }
 
@@ -536,12 +581,14 @@ export function addEventListener(
  * FIX: P2-57 使用更具体的事件处理器类型替代宽泛的 Function 类型
  */
 export function createEventHandler(
-  el: Element,
+  el: unknown,
   event: string,
   handler: (event: Event) => void,
   modifiers?: Record<string, boolean>,
 ): () => void {
   if (!isBrowser) return () => {};
+  
+  const realNode = getRealNode(el) as Element;
 
   const mods = modifiers ?? {};
   const wrappedHandler = (e: Event) => {
@@ -562,9 +609,9 @@ export function createEventHandler(
     options.once = true;
   }
 
-  el.addEventListener(event, wrappedHandler as EventListener, options);
+  realNode.addEventListener(event, wrappedHandler as EventListener, options);
   return () => {
-    el.removeEventListener(event, wrappedHandler as EventListener, options);
+    realNode.removeEventListener(event, wrappedHandler as EventListener, options);
   };
 }
 
@@ -601,32 +648,44 @@ export interface ReconcileOptions<T> {
  * 这是列表协调的常用优化手段，能显著提升大量节点更新时的性能
  */
 export function reconcileArray<T>(
-  parent: Node,
+  parent: unknown,
   list: T[],
   options: ReconcileOptions<T>,
   ref?: Node | null,
 ): void {
   if (!isBrowser) return;
+  
+  // 如果 parent 是 TemplateWrapper，获取真实的 DOM 元素
+  let realParent: Node;
+  if ('content' in (parent as any)) {
+    const wrapper = parent as TemplateWrapper;
+    if (!wrapper.firstElementChild) {
+      return;
+    }
+    realParent = wrapper.firstElementChild;
+  } else {
+    realParent = parent as Node;
+  }
 
   // 使用 Map 追踪已有节点
   const existingMap = new Map<string | number, { node: Node; item: T }>();
   const existingNodes: Node[] = [];
 
-  // 收集当前 parent 中已有的 reconcileArray 管理的节点
-  // 通过遍历 parent.childNodes 中 ref 之前的节点
+  // 收集当前 realParent 中已有的 reconcileArray 管理的节点
+  // 通过遍历 realParent.childNodes 中 ref 之前的节点
   // 使用 WeakMap 存储节点的 reconcile key，避免污染 DOM 元素属性空间
-  const childNodes = parent.childNodes;
+  const childNodes = realParent.childNodes;
   let endIdx =
     ref != null
       ? Array.from(childNodes as ArrayLike<ChildNode>).indexOf(ref as ChildNode)
       : childNodes.length;
 
-  // 当 ref 不在 parent 中时，回退到 childNodes.length（等同于 ref 为 null 的行为）
-  // FIX: P1-52 添加 DEV 警告，提醒开发者 ref 不在 parent 中可能是逻辑错误
+  // 当 ref 不在 realParent 中时，回退到 childNodes.length（等同于 ref 为 null 的行为）
+  // FIX: P1-52 添加 DEV 警告，提醒开发者 ref 不在 realParent 中可能是逻辑错误
   if (endIdx < 0) {
     if (__DEV__) {
       console.warn(
-        '[lytjs/dom-runtime] reconcileArray: ref node is not a child of parent. ' +
+        '[lytjs/dom-runtime] reconcileArray: ref node is not a child of realParent. ' +
           'Falling back to appending at the end.',
       );
     }
@@ -718,11 +777,11 @@ export function reconcileArray<T>(
     }
   }
 
-  // 将 fragment 插入到 parent 中（ref 之前或末尾）
+  // 将 fragment 插入到 realParent 中（ref 之前或末尾）
   if (ref != null) {
-    parent.insertBefore(fragment, ref);
+    realParent.insertBefore(fragment, ref);
   } else {
-    parent.appendChild(fragment);
+    realParent.appendChild(fragment);
   }
 }
 

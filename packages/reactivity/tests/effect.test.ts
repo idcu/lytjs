@@ -322,9 +322,7 @@ describe('untrack', () => {
   it('should allow stopping effect inside effect callback', () => {
     const count = ref(0);
     const fn = vi.fn();
-    let runner: any;
-
-    runner = effect(() => {
+    const runner = effect(() => {
       fn(count.value);
       if (count.value >= 2) {
         stop(runner);

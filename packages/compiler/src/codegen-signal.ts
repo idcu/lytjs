@@ -417,13 +417,13 @@ function processVNodeCallProps(
       // v-text 转换后的结果
       dynamicBindings.push({
         varName,
-        code: `effect(() => setText(${varName}, ${value}));`,
+        code: `effect(() => setText(${varName}, _ctx.${value}));`,
       });
     } else if (key === 'innerHTML') {
       // v-html 转换后的结果
       dynamicBindings.push({
         varName,
-        code: `effect(() => setHTML(${varName}, ${value}));`,
+        code: `effect(() => setHTML(${varName}, _ctx.${value}));`,
       });
     } else if (key === 'modelValue') {
       // v-model 转换后的结果 - 已在 processDirective 中处理
@@ -982,7 +982,11 @@ function processCallExpression(
                   'type' in vnode.children &&
                   (vnode.children as SimpleExpressionNode).type === NodeTypes.SIMPLE_EXPRESSION
                 ) {
-                  createBody += `\n      setText(${tagInfo.varName}, ${itemVar}.${(vnode.children as SimpleExpressionNode).content});`;
+                  let propAccess = (vnode.children as SimpleExpressionNode).content;
+                  if (propAccess.startsWith(itemVar + '.')) {
+                    propAccess = propAccess.slice(itemVar.length + 1);
+                  }
+                  createBody += `\n      setText(${tagInfo.varName}, ${itemVar}.${propAccess});`;
                 } else if (
                   vnode.children &&
                   typeof vnode.children === 'object' &&
@@ -1000,7 +1004,10 @@ function processCallExpression(
                       !Array.isArray(arg) &&
                       arg.type === NodeTypes.SIMPLE_EXPRESSION
                     ) {
-                      const propAccess = (arg as SimpleExpressionNode).content;
+                      let propAccess = (arg as SimpleExpressionNode).content;
+                      if (propAccess.startsWith(itemVar + '.')) {
+                        propAccess = propAccess.slice(itemVar.length + 1);
+                      }
                       createBody += `\n      setText(${tagInfo.varName}, ${itemVar}.${propAccess});`;
                     }
                   }
