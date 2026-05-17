@@ -4,6 +4,37 @@
 
 ---
 
+## ⚡ Skill 自动调度（重要）
+
+### 自动调用机制
+
+**Agent 应该在以下时机自动调用 Skill**：
+
+| 场景 | 时机 | 自动调用的 Skill |
+|------|------|----------------|
+| **任务开始** | 用户提出新任务时 | `master-skill-dispatcher` |
+| **遇到问题** | 测试失败、类型错误等 | `master-skill-dispatcher` |
+| **任务完成** | 用户表示完成时 | `task-retrospective` |
+
+### 如何使用
+
+```markdown
+# 任务开始时
+Skill: master-skill-dispatcher
+
+# 任务结束时
+Skill: master-skill-dispatcher
+# 然后自动触发
+Skill: task-retrospective
+```
+
+### 快速参考
+
+- 查看所有 Skill：[SKILLS.md](file:///f:/trae/lytjs/SKILLS.md)
+- Skill 使用指南：[.trae/skills/master-skill-dispatcher/SKILL.md](file:///e:/trae/lytjs/.trae/skills/master-skill-dispatcher/SKILL.md)
+
+---
+
 ## 快速开始
 
 ### 1. 常用命令
