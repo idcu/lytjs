@@ -8,13 +8,72 @@
 
 ### 自动调用机制
 
-**Agent 应该在以下时机自动调用 Skill**：
+**Agent 必须在任务处理的整个过程中主动调用 Skill**：
 
-| 场景 | 时机 | 自动调用的 Skill |
+| 阶段 | 时机 | 自动调用的 Skill |
 |------|------|----------------|
-| **任务开始** | 用户提出新任务时 | `master-skill-dispatcher` |
-| **遇到问题** | 测试失败、类型错误等 | `master-skill-dispatcher` |
-| **任务完成** | 用户表示完成时 | `task-retrospective` |
+| **任务开始前** | 用户提出新任务时 | `master-skill-dispatcher` → 获取任务规划 |
+| **任务规划** | 需要制定步骤时 | `TodoWrite` → 创建任务清单 |
+| **任务进行中** | 遇到技术问题时 | 相关 Skill（如 `testing`, `troubleshooting` 等）|
+| **任务进行中** | 需要最佳实践时 | 相关 Skill（如 `code-review`, `performance-optimization` 等）|
+| **任务完成前** | 代码检查时 | `testing` → 验证测试通过 |
+| **任务完成后** | 用户表示完成时 | `task-retrospective` → 任务复盘 |
+
+### 核心原则
+
+**主动调用，而非被动响应**：
+
+```
+✅ 主动：发现测试失败 → 立即调用 testing Skill
+✅ 主动：发现性能问题 → 立即调用 performance-optimization Skill
+✅ 主动：开始新功能 → 调用 master-skill-dispatcher
+✅ 主动：任务完成 → 调用 task-retrospective
+
+❌ 被动：等待用户说"帮我检查测试"
+❌ 被动：等待用户说"我需要代码审查"
+```
+
+### 何时主动调用
+
+| 遇到的情况 | 自动调用的 Skill |
+|-----------|---------------|
+| 开始新任务 | `master-skill-dispatcher` |
+| 编写或修改测试 | `testing` |
+| 代码审查需求 | `code-review` |
+| 性能问题 | `performance-optimization` |
+| 类型错误 | `troubleshooting` |
+| 测试失败 | `testing` |
+| 文档需求 | `documentation` |
+| 安全问题 | `security-scan` |
+| 重构需求 | `refactoring` |
+| 创建新包 | `create-ecosystem-package` 或 `create-plugin` |
+| 任务完成 | `task-retrospective` |
+
+### 工作流程
+
+```
+用户提出任务
+    ↓
+[阶段1] 调用 master-skill-dispatcher
+    ↓
+获取 Skill 推荐，制定任务计划
+    ↓
+使用 TodoWrite 创建任务清单
+    ↓
+[阶段2] 执行任务
+    ├── 需要测试 → 调用 testing
+    ├── 需要审查 → 调用 code-review
+    ├── 遇到问题 → 调用 troubleshooting
+    ├── 性能问题 → 调用 performance-optimization
+    └── ... (按需调用其他 Skill)
+    ↓
+[阶段3] 验证完成
+    └── 运行测试 → 调用 testing
+    ↓
+[阶段4] 调用 task-retrospective
+    ↓
+完成复盘，记录经验
+```
 
 ### 如何使用
 
@@ -22,9 +81,13 @@
 # 任务开始时
 Skill: master-skill-dispatcher
 
+# 任务进行中（按需）
+Skill: testing
+Skill: troubleshooting
+Skill: code-review
+Skill: performance-optimization
+
 # 任务结束时
-Skill: master-skill-dispatcher
-# 然后自动触发
 Skill: task-retrospective
 ```
 
