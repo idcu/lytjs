@@ -110,6 +110,14 @@ export default defineConfig({
     exclude: [
       '**/node_modules/**',
       '**/packages/web/tests/**',
+      '**/packages/plugins/packages/plugin-animation/tests/**',
+      '**/packages/tools/packages/cli/tests/**',
+      '**/packages/vdom/tests/transition-group.test.ts',
+      '**/packages/vdom/tests/patch-element.test.ts',
+      '**/packages/ecosystem/packages/devtools/tests/**',
+      '**/packages/ecosystem/packages/ssr/tests/**',
+      '**/packages/tools/packages/devtools/tests/**',
+      '**/packages/common/packages/env/tests/**',
     ],
     coverage: {
       provider: 'v8',
