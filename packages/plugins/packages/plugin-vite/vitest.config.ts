@@ -7,6 +7,12 @@ const root = resolve(__dirname, '../../../../');
 const commonRoot = resolve(root, 'packages/common/packages');
 
 export default defineConfig({
+  // 定义全局变量
+  define: {
+    __DEV__: 'true',
+    __PROD__: 'false',
+    __TEST__: 'true',
+  },
   resolve: {
     alias: {
       // compiler 子路径

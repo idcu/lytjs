@@ -6,6 +6,12 @@ import { fileURLToPath } from 'node:url';
 const root = dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
+  // 定义全局变量
+  define: {
+    __DEV__: 'true',
+    __PROD__: 'false',
+    __TEST__: 'true',
+  },
   resolve: {
     alias: {
       // common 子包
@@ -93,7 +99,8 @@ export default defineConfig({
   test: {
     environment: 'node',
     globals: true,
-    setupFiles: ['./packages/reactivity/tests/setup.ts'],
+    // 使用绝对路径的全局 setup 文件
+    setupFiles: [resolve(root, './vitest.setup.ts')],
     environmentOptions: {
       jsdom: {
         url: 'http://localhost',

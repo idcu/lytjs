@@ -6,8 +6,11 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const commonRoot = resolve(__dirname, '../common/packages');
 
 export default defineConfig({
+  // 定义全局变量
   define: {
-    __DEV__: true,
+    __DEV__: 'true',
+    __PROD__: 'false',
+    __TEST__: 'true',
   },
   resolve: {
     alias: {

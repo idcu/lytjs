@@ -6,6 +6,12 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const commonRoot = resolve(__dirname, '../common/packages');
 
 export default defineConfig({
+  // 定义全局变量
+  define: {
+    __DEV__: 'true',
+    __PROD__: 'false',
+    __TEST__: 'true',
+  },
   resolve: {
     alias: {
       '@lytjs/common-vnode': `${commonRoot}/vnode/dist/index.mjs`,
@@ -13,9 +19,6 @@ export default defineConfig({
       '@lytjs/common-error': `${commonRoot}/error/dist/index.mjs`,
       '@lytjs/common-constants': `${commonRoot}/constants/dist/index.mjs`,
     },
-  },
-  define: {
-    __DEV__: true,
   },
   test: {
     globals: true,

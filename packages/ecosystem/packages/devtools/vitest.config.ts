@@ -7,6 +7,12 @@ const commonRoot = resolve(__dirname, '../../../common/packages');
 const pkgRoot = resolve(__dirname, '../../..');
 
 export default defineConfig({
+  // 定义全局变量
+  define: {
+    __DEV__: 'true',
+    __PROD__: 'false',
+    __TEST__: 'true',
+  },
   resolve: {
     alias: [
       { find: /^@lytjs\/reactivity\/(.*)$/, replacement: `${pkgRoot}/reactivity/dist/$1.mjs` },

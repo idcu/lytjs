@@ -7,6 +7,12 @@ const packagesRoot = resolve(__dirname, '..');
 const commonRoot = resolve(packagesRoot, 'common/packages');
 
 export default defineConfig({
+  // 定义全局变量
+  define: {
+    __DEV__: 'true',
+    __PROD__: 'false',
+    __TEST__: 'true',
+  },
   resolve: {
     alias: {
       '@lytjs/reactivity': resolve(packagesRoot, 'reactivity/dist/index.mjs'),
