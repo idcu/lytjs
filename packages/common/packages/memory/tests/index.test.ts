@@ -1,6 +1,6 @@
 /**
  * @lytjs/common-memory - Tests
- * 
+ *
  * FIX: P6.4-MEMORY-01 - v6.4 Memory optimization tests
  */
 
@@ -20,7 +20,9 @@ describe('ObjectPool', () => {
     const pool = new ObjectPool<{ id: number }>({
       maxSize: 10,
       create: () => ({ id: 0 }),
-      reset: (obj) => { obj.id = 0; },
+      reset: (obj) => {
+        obj.id = 0;
+      },
     });
 
     expect(pool).toBeDefined();
@@ -30,7 +32,9 @@ describe('ObjectPool', () => {
     const pool = new ObjectPool<{ id: number }>({
       maxSize: 10,
       create: () => ({ id: 0 }),
-      reset: (obj) => { obj.id = 0; },
+      reset: (obj) => {
+        obj.id = 0;
+      },
     });
 
     const obj1 = pool.acquire();
@@ -45,7 +49,9 @@ describe('ObjectPool', () => {
     const pool = new ObjectPool<{ id: number }>({
       maxSize: 10,
       create: () => ({ id: 0 }),
-      reset: (obj) => { obj.id = 0; },
+      reset: (obj) => {
+        obj.id = 0;
+      },
     });
 
     pool.acquire();
@@ -60,7 +66,9 @@ describe('ObjectPool', () => {
     const pool = new ObjectPool<{ id: number }>({
       maxSize: 10,
       create: () => ({ id: 0 }),
-      reset: (obj) => { obj.id = 0; },
+      reset: (obj) => {
+        obj.id = 0;
+      },
       warmupSize: 5,
     });
 
@@ -72,7 +80,9 @@ describe('ObjectPool', () => {
     const pool = new ObjectPool<{ id: number }>({
       maxSize: 10,
       create: () => ({ id: 0 }),
-      reset: (obj) => { obj.id = 0; },
+      reset: (obj) => {
+        obj.id = 0;
+      },
     });
 
     pool.resize(5);
@@ -88,7 +98,9 @@ describe('ObjectPool', () => {
     const pool = new ObjectPool<{ id: number }>({
       maxSize: 10,
       create: () => ({ id: 0 }),
-      reset: (obj) => { obj.id = 0; },
+      reset: (obj) => {
+        obj.id = 0;
+      },
       warmupSize: 5,
     });
 
@@ -101,14 +113,12 @@ describe('ObjectPool', () => {
     const pool = new ObjectPool<{ id: number }>({
       maxSize: 10,
       create: () => ({ id: 0 }),
-      reset: (obj) => { obj.id = 0; },
+      reset: (obj) => {
+        obj.id = 0;
+      },
     });
 
-    const objects = [
-      { id: 1 },
-      { id: 2 },
-      { id: 3 },
-    ];
+    const objects = [{ id: 1 }, { id: 2 }, { id: 3 }];
 
     pool.releaseMany(objects);
     const stats = pool.getStats();
@@ -131,6 +141,7 @@ describe('MemoryLeakDetector', () => {
       checkInterval: 1000,
       warningThreshold: 10,
     });
+    detector.start();
 
     for (let i = 0; i < 5; i++) {
       detector.track('test-object', { id: i });
@@ -138,6 +149,7 @@ describe('MemoryLeakDetector', () => {
 
     const report = detector.generateReport();
     expect(report.totalTracked).toBeGreaterThan(0);
+    detector.stop();
   });
 
   it('should track releases', () => {
@@ -145,6 +157,7 @@ describe('MemoryLeakDetector', () => {
       checkInterval: 1000,
       warningThreshold: 10,
     });
+    detector.start();
 
     for (let i = 0; i < 5; i++) {
       detector.track('test-object', { id: i });
@@ -156,6 +169,7 @@ describe('MemoryLeakDetector', () => {
 
     const report = detector.generateReport();
     expect(report.totalTracked).toBe(2);
+    detector.stop();
   });
 
   it('should generate a report', () => {

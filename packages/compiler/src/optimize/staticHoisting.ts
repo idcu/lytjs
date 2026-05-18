@@ -1,8 +1,8 @@
 /**
  * @lytjs/compiler - Static Hoisting Optimization
- * 
+ *
  * Extracts static subtrees to reduce runtime overhead
- * 
+ *
  * FIX: P6.4-COMPILER-01 - Compile-time optimization
  */
 
@@ -13,7 +13,6 @@ import type {
   TemplateChildNode,
   TextNode,
   CommentNode,
-  InterpolationNode,
   DirectiveNode,
 } from '../types';
 

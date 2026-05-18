@@ -15,7 +15,7 @@ import { unsafeCast } from '@lytjs/common-assertions';
 // ============================================================
 
 /** VNode 对象池最大容量 */
-const VNODE_POOL_MAX_SIZE = 1000;
+const VNODE_POOL_MAX_SIZE = 500;
 /** VNode 对象池 */
 const vnodePool: VNode[] = [];
 /** 池化对象使用计数（用于调试） */

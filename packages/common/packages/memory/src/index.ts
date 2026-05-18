@@ -6,6 +6,17 @@
 
 declare const __DEV__: boolean;
 
+/** Performance memory interface */
+interface PerformanceMemory {
+  usedJSHeapSize: number;
+  totalJSHeapSize: number;
+}
+
+/** Performance interface with memory property */
+interface PerformanceWithMemory extends Performance {
+  memory?: PerformanceMemory;
+}
+
 // ==================== Types ====================
 
 /**
@@ -228,13 +239,17 @@ export class ObjectPool<T> {
  * Only active in development mode
  */
 export class MemoryLeakDetector {
-  private trackedObjects = new Map<string, {
-    count: number;
-    firstSeen: number;
-    lastSeen: number;
-    stackTraces: Set<string>;
-  }>();
-  private config: Required<MemoryLeakDetectorConfig>;
+  private trackedObjects = new Map<
+    string,
+    {
+      count: number;
+      firstSeen: number;
+      lastSeen: number;
+      stackTraces: Set<string>;
+    }
+  >();
+  /** @internal */
+  config: Required<MemoryLeakDetectorConfig>;
   private checkTimer: ReturnType<typeof setInterval> | null = null;
   private enabled = false;
 
@@ -272,7 +287,7 @@ export class MemoryLeakDetector {
   /**
    * Track an object allocation
    */
-  track(type: string, obj: unknown): void {
+  track(type: string, _obj: unknown): void {
     if (!this.enabled || !__DEV__) return;
 
     const existing = this.trackedObjects.get(type);
@@ -364,11 +379,14 @@ export class MemoryLeakDetector {
         total: mu.heapTotal,
       };
     } else if (typeof performance !== 'undefined' && 'memory' in performance) {
-      const mem = (performance as any).memory;
-      report.memoryUsage = {
-        used: mem.usedJSHeapSize,
-        total: mem.totalJSHeapSize,
-      };
+      const perf = performance as PerformanceWithMemory;
+      const mem = perf.memory;
+      if (mem) {
+        report.memoryUsage = {
+          used: mem.usedJSHeapSize,
+          total: mem.totalJSHeapSize,
+        };
+      }
     }
 
     return report;
@@ -404,7 +422,7 @@ export function startMemoryLeakDetection(config?: MemoryLeakDetectorConfig): voi
   const detector = getMemoryLeakDetector();
   if (config) {
     // Update config
-    Object.assign((detector as any).config, config);
+    Object.assign(detector.config, config);
   }
   detector.start();
 }
@@ -441,7 +459,6 @@ export function releaseObject(type: string): void {
  */
 export function estimateObjectSize(obj: unknown): number {
   const seen = new Set();
-  let size = 0;
 
   const estimate = (val: unknown): number => {
     if (val === null || val === undefined) return 0;
@@ -503,7 +520,9 @@ export function forceGC(): void {
  * Memory pressure monitor - alerts when memory usage is high
  */
 export class MemoryPressureMonitor {
-  private highPressureCallbacks: Array<(usage: { used: number; total: number; percent: number }) => void> = [];
+  private highPressureCallbacks: Array<
+    (usage: { used: number; total: number; percent: number }) => void
+  > = [];
   private checkTimer: ReturnType<typeof setInterval> | null = null;
   private thresholdPercent = 80;
 
@@ -532,7 +551,9 @@ export class MemoryPressureMonitor {
     }
   }
 
-  onHighPressure(callback: (usage: { used: number; total: number; percent: number }) => void): () => void {
+  onHighPressure(
+    callback: (usage: { used: number; total: number; percent: number }) => void,
+  ): () => void {
     this.highPressureCallbacks.push(callback);
     return () => {
       const idx = this.highPressureCallbacks.indexOf(callback);
@@ -546,8 +567,11 @@ export class MemoryPressureMonitor {
       return { used: mu.heapUsed, total: mu.heapTotal };
     }
     if (typeof performance !== 'undefined' && 'memory' in performance) {
-      const mem = (performance as any).memory;
-      return { used: mem.usedJSHeapSize, total: mem.totalJSHeapSize };
+      const perf = performance as PerformanceWithMemory;
+      const mem = perf.memory;
+      if (mem) {
+        return { used: mem.usedJSHeapSize, total: mem.totalJSHeapSize };
+      }
     }
     return null;
   }

@@ -1,139 +1,228 @@
-# LytJS 项目规则与架构
+# LytJS 项目智能体规则
 
 ## 项目概述
 
 LytJS 是一个从零构建的现代 JavaScript 框架项目，采用 Monorepo 结构管理多个包。
 
-## 🤖 智能体行为规范
-
-### 核心原则
-
-> Agent 必须根据任务上下文，自动参考相关的 Skill 文档，无需用户显式调用！
-
-### 工作原理
-
-所有 Skill 文档位于 `.trae/skills/` 目录，按层级组织。Agent 在处理任务时：
-
-1. **自动识别任务类型**：分析用户请求，确定是功能开发、Bug 修复、重构等
-2. **自动查找相关 Skill**：根据任务类型，读取对应的 Skill 文档
-3. **自动应用指导**：按照 Skill 文档中的指南执行任务
-
-### 任务类型 → Skill 映射表
-
-| 任务类型     | 自动参考的 Skill 文档                                                                                                                                                                                                                                              | 说明           |
-| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------- |
-| 新功能开发   | [master-skill-dispatcher](file:///e:/trae/lytjs/.trae/skills/7-organ/master-skill-dispatcher/SKILL.md) → [dev-guide](file:///e:/trae/lytjs/.trae/skills/4-organic/dev-guide/SKILL.md) → [testing](file:///e:/trae/lytjs/.trae/skills/3-inorganic/testing/SKILL.md) | 完整开发流程   |
-| Bug 修复     | [troubleshooting](file:///e:/trae/lytjs/.trae/skills/3-inorganic/troubleshooting/SKILL.md) → [testing](file:///e:/trae/lytjs/.trae/skills/3-inorganic/testing/SKILL.md)                                                                                            | 问题排查与修复 |
-| 代码重构     | [refactoring](file:///e:/trae/lytjs/.trae/skills/4-organic/refactoring/SKILL.md) → [code-review](file:///e:/trae/lytjs/.trae/skills/3-inorganic/code-review/SKILL.md)                                                                                              | 代码质量改进   |
-| 创建新包     | [create-ecosystem-package](file:///e:/trae/lytjs/.trae/skills/5-cellular/create-ecosystem-package/SKILL.md)                                                                                                                                                        | 生态包开发     |
-| 性能优化     | [performance-optimization](file:///e:/trae/lytjs/.trae/skills/4-organic/performance-optimization/SKILL.md)                                                                                                                                                         | 性能分析与优化 |
-| 添加测试     | [testing](file:///e:/trae/lytjs/.trae/skills/3-inorganic/testing/SKILL.md) → [add-test-cases](file:///e:/trae/lytjs/.trae/skills/2-molecular/add-test-cases/SKILL.md)                                                                                              | 测试用例开发   |
-| 快速查询     | [quick-reference](file:///e:/trae/lytjs/.trae/skills/1-atomic/quick-reference/SKILL.md)                                                                                                                                                                            | 项目信息查询   |
-| 查找命令     | [command-reference](file:///e:/trae/lytjs/.trae/skills/1-atomic/command-reference/SKILL.md)                                                                                                                                                                        | 常用命令参考   |
-| 任务完成     | [task-retrospective](file:///e:/trae/lytjs/.trae/skills/7-organ/task-retrospective/SKILL.md)                                                                                                                                                                       | 任务复盘总结   |
-| 智能分析     | [smart-task-analysis](file:///e:/trae/lytjs/.trae/skills/4-organic/smart-task-analysis/SKILL.md)                                                                                                                                                                   | 任务类型识别   |
-| 预定义工作流 | [predefined-workflows](file:///e:/trae/lytjs/.trae/skills/8-organism/predefined-workflows/SKILL.md)                                                                                                                                                                | 标准工作流程   |
-
-### 自动调用 Checklist
-
-在处理任何任务时，Agent 必须：
-
-- [ ] **分析任务类型**：识别用户请求的性质
-- [ ] **查找相关 Skill**：读取对应层级的 Skill 文档
-- [ ] **应用 Skill 指导**：按照 Skill 文档中的步骤执行
-- [ ] **使用 TodoWrite**：根据 Skill 创建任务清单
-- [ ] **任务完成复盘**：最后参考 task-retrospective 进行总结
-
 ---
 
-## 🧬 Skill 组织体系
+## ⚡ 快速开始
 
-本项目采用**从原子到生物体**的 Skill 层级架构：
+### 第一步：确定任务类型
+
+| 任务           | 怎么做            |
+| -------------- | ----------------- |
+| 新功能/修复Bug | 直接开始写代码    |
+| 复杂任务       | 用 /spec 或 /plan |
+| 常用操作       | 调用对应 Skill    |
+
+### 第二步：验证和提交
 
 ```
-原子 (Atomic) → 分子 (Molecular) → 无机物 (Inorganic) → 有机物 (Organic)
-→ 细胞 (Cellular) → 组织 (Tissue) → 器官 (Organ) → 生物体 (Organism)
+1. 类型检查 → 代码检查 → 测试 → 提交
 ```
 
-详细说明请参考：[SKILL_ORGANIZATION.md](file:///e:/trae/lytjs/.trae/skills/SKILL_ORGANIZATION.md)
+### 第三步：查看完整指南
+
+详细内容见下方「推荐工作流」
 
 ---
 
-## ⚡ 核心工作流（必须遵守）
+## 🎯 核心概念与定位
+
+### 三者关系图
 
 ```
-用户提出任务
-    ↓
-[阶段1] 调用 master-skill-dispatcher（器官级）→ 获取任务规划
-    ↓
-[阶段2] 使用 TodoWrite 创建任务清单
-    ↓
-[阶段3] 执行任务（按需调用相关 Skill：原子 → 有机物级）
-    ↓
-[阶段4] 调用 task-retrospective（器官级）进行复盘
+┌─────────────────────────────────────────────────────┐
+│                    用户需求                           │
+└────────────────────┬────────────────────────────────┘
+                     ↓
+         ┌───────────────────────────┐
+         │   1. 任务分析与规划        │
+         │   ├─ 使用 /spec 或 /plan  │
+         │   └─ 生成规划文档          │
+         └───────────┬───────────────┘
+                     ↓
+         ┌───────────────────────────┐
+         │   2. 执行任务              │
+         │   ├─ 按需调用 Skill       │
+         │   ├─ 使用 TodoWrite       │
+         │   └─ 执行具体操作          │
+         └───────────┬───────────────┘
+                     ↓
+         ┌───────────────────────────┐
+         │   3. 验证与提交            │
+         │   └─ 调用相关 Skill        │
+         └───────────────────────────┘
 ```
 
-### 强制规则
+---
 
-- ✅ **必须调用**：任何新任务开始时，首先调用 `master-skill-dispatcher`
-- ❌ **禁止跳过**：不允许直接开始执行任务
-- 📋 **必须规划**：获取规划后，必须用 `TodoWrite` 创建任务清单
+## 📋 明确定位
+
+### 1. Spec & Plan：任务规划工具
+
+**职责**：为具体任务生成规划文档
+
+| 类型     | 使用场景                                           | 输出内容                          | 输出位置                |
+| -------- | -------------------------------------------------- | --------------------------------- | ----------------------- |
+| **Spec** | 复杂系统级任务（创建新包、性能优化、架构改造）     | spec.md + tasks.md + checklist.md | `.trae/specs/<任务名>/` |
+| **Plan** | 中小型任务（新功能、Bug 修复、代码重构、添加测试） | plan.md                           | `.trae/documents/`      |
+
+**何时选择：**
+
+- 任务涉及多个阶段、需要详细规范 → Spec
+- 单模块、快速迭代的改进 → Plan
 
 ---
 
-## 📋 任务开始前 Checklist
+### 2. Skill：可复用工具库
 
-- [ ] 已调用 master-skill-dispatcher 获取任务规划
-- [ ] 已明确任务类型和涉及的技术栈
-- [ ] 已获取推荐的 Skill 列表
-- [ ] 已使用 TodoWrite 创建任务清单
-- [ ] 已确认任务范围和边界
+**职责**：提供可复用的知识和工具
 
----
+Skill 分为三类：
 
-## 🎯 何时调用 Skill
+| Skill 类型 | 说明             | 示例                                                                                                                             |
+| ---------- | ---------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| **工具类** | 可直接执行的操作 | [create-ecosystem-package](.trae/skills/create-ecosystem-package/SKILL.md), [create-branch](.trae/skills/create-branch/SKILL.md) |
+| **参考类** | 规范与指南文档   | [code-style](.trae/skills/code-style/SKILL.md), [zero-dependency](.trae/skills/zero-dependency/SKILL.md)                         |
+| **验证类** | 检查与测试工具   | [type-check](.trae/skills/type-check/SKILL.md), [run-tests](.trae/skills/run-tests/SKILL.md)                                     |
 
-| 阶段       | 时机           | Skill                      | 层级     |
-| ---------- | -------------- | -------------------------- | -------- |
-| 任务开始前 | 新任务时       | `master-skill-dispatcher`  | 器官级   |
-| 任务开始前 | 识别任务类型时 | `smart-task-analysis`      | 有机物级 |
-| 需要工作流 | 套用标准流程时 | `predefined-workflows`     | 生物体级 |
-| 任务规划   | 制定步骤时     | `TodoWrite`                | -        |
-| 需要清单   | 生成检查清单   | `task-checklist`           | 原子级   |
-| 需要命令   | 查找命令       | `command-reference`        | 原子级   |
-| 需要模板   | 获取代码模板   | `template-provider`        | 原子级   |
-| 快速查询   | 包/进度查询    | `quick-reference`          | 原子级   |
-| Git 操作   | 提交/分支      | `git-workflow`             | 分子级   |
-| 构建项目   | 构建相关       | `build-guide`              | 分子级   |
-| 运行测试   | 测试相关       | `test-commands`            | 分子级   |
-| 完整测试   | 测试指南       | `testing`                  | 无机物级 |
-| 修复问题   | 问题排查       | `troubleshooting`          | 无机物级 |
-| 开发新功能 | 完整开发       | `dev-guide`                | 有机物级 |
-| 创建包     | 包创建         | `create-ecosystem-package` | 细胞级   |
-| 任务完成   | 复盘           | `task-retrospective`       | 器官级   |
+**核心原则：Agent 自动按需调用 Skill，无需用户显式指定！**
 
 ---
 
-## 📚 详细文档索引
+## 🚀 推荐工作流
 
-### Skill 目录索引
+### 完整流程示例
 
-| 层级     | 路径                        | 说明           |
-| -------- | --------------------------- | -------------- |
-| 原子级   | `.trae/skills/1-atomic/`    | 最小可复用单元 |
-| 分子级   | `.trae/skills/2-molecular/` | 多个原子组合   |
-| 无机物级 | `.trae/skills/3-inorganic/` | 功能模块       |
-| 有机物级 | `.trae/skills/4-organic/`   | 完整工作流     |
-| 细胞级   | `.trae/skills/5-cellular/`  | 独立功能模块   |
-| 组织级   | `.trae/skills/6-tissue/`    | 相关功能组织   |
-| 器官级   | `.trae/skills/7-organ/`     | 完整能力系统   |
-| 生物体级 | `.trae/skills/8-organism/`  | 端到端完整体验 |
+```
+1. 用户说："创建一个新的 UI 组件包"
+   ↓
+2. Agent 分析：复杂任务 → 使用 /spec
+   ↓
+3. 生成规划文档到 .trae/specs/create-ui-package/
+   ↓
+4. 执行阶段：
+   - 调用 [create-ecosystem-package](.trae/skills/create-ecosystem-package/SKILL.md) 初始化
+   - 调用 [create-branch](.trae/skills/create-branch/SKILL.md) 创建分支
+   - 使用 TodoWrite 管理步骤
+   - 遵循 [code-style](.trae/skills/code-style/SKILL.md) 编写代码
+   ↓
+5. 验证阶段：
+   - 调用 [type-check](.trae/skills/type-check/SKILL.md)
+   - 调用 [lint-code](.trae/skills/lint-code/SKILL.md)
+   - 调用 [run-tests](.trae/skills/run-tests/SKILL.md)
+   ↓
+6. 提交阶段：
+   - 调用 [git-commit](.trae/skills/git-commit/SKILL.md)
+   ↓
+7. 复盘阶段（可选但推荐）：
+   - 调用 [task-retrospective](.trae/skills/task-retrospective/SKILL.md) 进行任务复盘
+```
 
-### 关键文档
+---
 
-- [SKILL_ORGANIZATION.md](file:///e:/trae/lytjs/.trae/skills/SKILL_ORGANIZATION.md) - 🌟 Skill 组织体系说明
-- [DEVELOPMENT_GUIDELINES.md](file:///e:/trae/lytjs/docs/development/DEVELOPMENT_GUIDELINES.md) - 完整开发规范
-- [TROUBLESHOOTING.md](file:///e:/trae/lytjs/docs/development/TROUBLESHOOTING.md) - 常见问题
+## 📊 任务类型映射表
+
+| 优先级 | 任务类型   | 规划方式 | 常用 Skill                                                                                                                                                                               |
+| ------ | ---------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 🔴 P0  | Bug 修复   | `/plan`  | [quick-reference](.trae/skills/quick-reference/SKILL.md), [create-branch](.trae/skills/create-branch/SKILL.md), [fix-test-failures](.trae/skills/fix-test-failures/SKILL.md)             |
+| 🟡 P1  | 新功能开发 | `/plan`  | [quick-reference](.trae/skills/quick-reference/SKILL.md), [create-branch](.trae/skills/create-branch/SKILL.md), [write-tests](.trae/skills/write-tests/SKILL.md)                         |
+| 🟡 P1  | 添加测试   | `/plan`  | [write-tests](.trae/skills/write-tests/SKILL.md), [add-test-cases](.trae/skills/add-test-cases/SKILL.md), [run-tests](.trae/skills/run-tests/SKILL.md)                                   |
+| 🟢 P2  | 代码重构   | `/plan`  | [refactoring](.trae/skills/refactoring/SKILL.md), [code-review](.trae/skills/code-review/SKILL.md)                                                                                       |
+| 🟢 P2  | 创建新包   | `/spec`  | [architecture](.trae/skills/architecture/SKILL.md), [create-ecosystem-package](.trae/skills/create-ecosystem-package/SKILL.md), [zero-dependency](.trae/skills/zero-dependency/SKILL.md) |
+| 🟢 P2  | 性能优化   | `/spec`  | [performance-analysis](.trae/skills/performance-analysis/SKILL.md), [performance-optimization](.trae/skills/performance-optimization/SKILL.md)                                           |
+
+---
+
+## 📁 规范参考
+
+### Spec 模板
+
+- [create-package-template](.trae/specs/create-package-template/)
+
+### Plan 模板
+
+- [feature-dev-plan.md](.trae/documents/feature-dev-plan.md)
+- [bug-fix-plan.md](.trae/documents/bug-fix-plan.md)
+- [refactor-plan.md](.trae/documents/refactor-plan.md)
+- [add-tests-plan.md](.trae/documents/add-tests-plan.md)
+
+---
+
+## 📚 项目 Skill 索引
+
+### 工具类
+
+| Skill                                                                      | 说明         |
+| -------------------------------------------------------------------------- | ------------ |
+| [create-ecosystem-package](.trae/skills/create-ecosystem-package/SKILL.md) | 创建生态包   |
+| [create-plugin](.trae/skills/create-plugin/SKILL.md)                       | 创建插件     |
+| [create-tool-script](.trae/skills/create-tool-script/SKILL.md)             | 创建工具脚本 |
+| [create-branch](.trae/skills/create-branch/SKILL.md)                       | 创建分支     |
+| [git-commit](.trae/skills/git-commit/SKILL.md)                             | 提交代码     |
+| [git-push](.trae/skills/git-push/SKILL.md)                                 | 推送代码     |
+| [template-provider](.trae/skills/template-provider/SKILL.md)               | 模板提供     |
+
+### 参考类
+
+| Skill                                                          | 说明         |
+| -------------------------------------------------------------- | ------------ |
+| [dev-guide](.trae/skills/dev-guide/SKILL.md)                   | 开发指南     |
+| [quick-reference](.trae/skills/quick-reference/SKILL.md)       | 快速参考     |
+| [command-reference](.trae/skills/command-reference/SKILL.md)   | 命令参考     |
+| [code-style](.trae/skills/code-style/SKILL.md)                 | 代码风格     |
+| [zero-dependency](.trae/skills/zero-dependency/SKILL.md)       | 零依赖规范   |
+| [architecture](.trae/skills/architecture/SKILL.md)             | 架构指南     |
+| [chinese-docs-guide](.trae/skills/chinese-docs-guide/SKILL.md) | 中文文档规范 |
+| [git-workflow](.trae/skills/git-workflow/SKILL.md)             | Git 工作流   |
+| [build-guide](.trae/skills/build-guide/SKILL.md)               | 构建指南     |
+| [testing](.trae/skills/testing/SKILL.md)                       | 测试指南     |
+
+### 验证类
+
+| Skill                                                                      | 说明         |
+| -------------------------------------------------------------------------- | ------------ |
+| [type-check](.trae/skills/type-check/SKILL.md)                             | 类型检查     |
+| [lint-code](.trae/skills/lint-code/SKILL.md)                               | 代码检查     |
+| [run-tests](.trae/skills/run-tests/SKILL.md)                               | 运行测试     |
+| [write-tests](.trae/skills/write-tests/SKILL.md)                           | 编写测试     |
+| [add-test-cases](.trae/skills/add-test-cases/SKILL.md)                     | 添加测试用例 |
+| [fix-test-failures](.trae/skills/fix-test-failures/SKILL.md)               | 修复测试失败 |
+| [fix-type-safety](.trae/skills/fix-type-safety/SKILL.md)                   | 修复类型安全 |
+| [test-commands](.trae/skills/test-commands/SKILL.md)                       | 测试命令     |
+| [test-memory-optimization](.trae/skills/test-memory-optimization/SKILL.md) | 测试内存优化 |
+| [code-review](.trae/skills/code-review/SKILL.md)                           | 代码审查     |
+| [security-scan](.trae/skills/security-scan/SKILL.md)                       | 安全扫描     |
+
+### 问题排查类
+
+| Skill                                                        | 说明         |
+| ------------------------------------------------------------ | ------------ |
+| [common-errors](.trae/skills/common-errors/SKILL.md)         | 常见错误     |
+| [type-check-errors](.trae/skills/type-check-errors/SKILL.md) | 类型检查错误 |
+
+### 性能类
+
+| Skill                                                                      | 说明         |
+| -------------------------------------------------------------------------- | ------------ |
+| [performance-analysis](.trae/skills/performance-analysis/SKILL.md)         | 性能分析     |
+| [performance-optimization](.trae/skills/performance-optimization/SKILL.md) | 性能优化     |
+| [ssr-stress-test](.trae/skills/ssr-stress-test/SKILL.md)                   | SSR 压力测试 |
+
+### 辅助类
+
+| Skill                                                            | 说明            |
+| ---------------------------------------------------------------- | --------------- |
+| [refactoring](.trae/skills/refactoring/SKILL.md)                 | 重构指南        |
+| [task-checklist](.trae/skills/task-checklist/SKILL.md)           | 任务清单        |
+| [task-retrospective](.trae/skills/task-retrospective/SKILL.md)   | 任务复盘        |
+| [roadmap-performance](.trae/skills/roadmap-performance/SKILL.md) | 路线图维护      |
+| [documentation](.trae/skills/documentation/SKILL.md)             | 文档指南        |
+| [devtools](.trae/skills/devtools/SKILL.md)                       | DevTools 开发   |
+| [devtools-workflow](.trae/skills/devtools-workflow/SKILL.md)     | DevTools 工作流 |
+| [migrate-package](.trae/skills/migrate-package/SKILL.md)         | 迁移包          |
 
 ---
 
@@ -148,55 +237,3 @@ pnpm lint:batch       # 分包 lint（避免内存溢出）
 pnpm type-check       # 类型检查
 pnpm check-scripts    # 检查 package.json scripts
 ```
-
-**注意**: 大型项目 lint 使用 `pnpm lint:batch` 避免内存溢出
-
----
-
-## ⚡ 快速启动
-
-```markdown
-# 任务开始时（必须）
-
-Skill: master-skill-dispatcher
-
-# 识别任务类型（推荐）
-
-Skill: smart-task-analysis
-
-# 套用标准工作流
-
-Skill: predefined-workflows
-
-# 快速查询（原子级）
-
-Skill: quick-reference
-Skill: command-reference
-Skill: template-provider
-
-# 特定工作流（分子级）
-
-Skill: git-workflow
-Skill: build-guide
-Skill: test-commands
-
-# 完整工作流（有机物/细胞级）
-
-Skill: dev-guide
-Skill: testing
-Skill: troubleshooting
-
-# 任务结束时
-
-Skill: task-retrospective
-```
-
----
-
-## 💡 最佳实践
-
-1. **控制 Skill 内容粒度**：保持每个 Skill 清晰、聚焦、易于理解
-2. **避免冲突**：各 Skill 之间不得彼此冲突或相互覆盖
-3. **路径规范**：在指定文件路径时，使用相对于项目根目录的相对路径
-4. **规则更新**：新建或修改规则后，建议开启全新对话使用
-5. **代码重构**：若项目已有大量不符合规范的代码，明确任务为"重构"并强制遵循新规则
