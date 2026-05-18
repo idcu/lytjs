@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/docs",
-  "version": "6.0.0",
+  "version": "6.4.0",
   "description": "LytJS 官方文档",
   "type": "module",
   "scripts": {

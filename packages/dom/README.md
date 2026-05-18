@@ -235,3 +235,8 @@ interface LytJSBridgeOptions {
 - [@lytjs/core](../core) - 框架核心入口
 - [@lytjs/host-contract](../host-contract) - 渲染器宿主抽象
 - [@lytjs/dom-runtime](../dom-runtime) - DOM 运行时工具
+
+## 依赖版本
+
+- [@lytjs/common-is](https://www.npmjs.com/package/@lytjs/common-is): ^6.4.0
+- [@lytjs/common-string](https://www.npmjs.com/package/@lytjs/common-string): ^6.4.0

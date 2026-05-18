@@ -22,7 +22,7 @@ export interface DevToolsOptions {
 export interface ComponentTreeNode {
   id: string;
   name: string;
-  props?: Record<string, any>;
+  props?: Record<string, unknown>;
   children?: ComponentTreeNode[];
   parent?: string;
 }
@@ -32,8 +32,8 @@ export interface ComponentTreeNode {
  */
 export interface StoreStateInfo {
   id: string;
-  state: Record<string, any>;
-  getters?: Record<string, any>;
+  state: Record<string, unknown>;
+  getters?: Record<string, unknown>;
 }
 
 /**

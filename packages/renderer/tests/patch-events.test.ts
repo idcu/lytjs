@@ -55,7 +55,7 @@ describe('patch-events', () => {
     });
 
     it('should handle raw names with modifiers', () => {
-      expect(getEventKey('onClick.stop')).toBe('onClick');
+      expect(getEventKey('click.stop')).toBe('onClick');
     });
   });
 

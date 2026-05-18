@@ -18,14 +18,18 @@ function generateComponentId(): string {
 /**
  * 提取组件信息
  */
-function extractComponentInfo(component: any): ComponentTreeNode | null {
+function extractComponentInfo(component: {
+  name?: string;
+  displayName?: string;
+  props?: Record<string, unknown>;
+}): ComponentTreeNode | null {
   if (!component) return null;
 
   const id = generateComponentId();
   const name = component.name || component.displayName || 'Anonymous';
-  
+
   // 提取 props
-  const props: Record<string, any> = {};
+  const props: Record<string, unknown> = {};
   if (component.props && isObject(component.props)) {
     for (const [key, value] of Object.entries(component.props)) {
       if (typeof value !== 'function') {
@@ -45,7 +49,7 @@ function extractComponentInfo(component: any): ComponentTreeNode | null {
  * 递归构建组件树
  */
 function buildComponentTreeRecursive(
-  component: any,
+  component: { name?: string; displayName?: string; props?: Record<string, unknown>; children?: unknown[] },
   parentId?: string,
 ): ComponentTreeNode | null {
   const node = extractComponentInfo(component);
@@ -59,7 +63,7 @@ function buildComponentTreeRecursive(
   if (component.children && Array.isArray(component.children)) {
     const children: ComponentTreeNode[] = [];
     for (const child of component.children) {
-      const childNode = buildComponentTreeRecursive(child, node.id);
+      const childNode = buildComponentTreeRecursive(child as { name?: string; displayName?: string; props?: Record<string, unknown>; children?: unknown[] }, node.id);
       if (childNode) {
         children.push(childNode);
       }
@@ -75,14 +79,19 @@ function buildComponentTreeRecursive(
 /**
  * 获取组件树
  */
-export function getComponentTree(rootComponent?: any): ComponentTreeNode[] {
+export function getComponentTree(rootComponent?: {
+  name?: string;
+  displayName?: string;
+  props?: Record<string, unknown>;
+  children?: unknown[];
+}): ComponentTreeNode[] {
   if (!rootComponent) {
     // 尝试从全局获取根组件
-    const globalRoot = (globalThis as any).__LYTJS_ROOT__;
+    const globalRoot = (globalThis as { __LYTJS_ROOT__?: unknown }).__LYTJS_ROOT__;
     if (!globalRoot) {
       return [];
     }
-    rootComponent = globalRoot;
+    rootComponent = globalRoot as { name?: string; displayName?: string; props?: Record<string, unknown>; children?: unknown[] };
   }
 
   const tree = buildComponentTreeRecursive(rootComponent);
@@ -117,13 +126,13 @@ export function serializeComponentTree(nodes: ComponentTreeNode[], indent = 0): 
 /**
  * 注册根组件（供开发时使用）
  */
-export function registerRootComponent(component: any): void {
-  (globalThis as any).__LYTJS_ROOT__ = component;
+export function registerRootComponent(component: unknown): void {
+  (globalThis as { __LYTJS_ROOT__?: unknown }).__LYTJS_ROOT__ = component;
 }
 
 /**
  * 清除注册的根组件
  */
 export function unregisterRootComponent(): void {
-  delete (globalThis as any).__LYTJS_ROOT__;
+  delete (globalThis as { __LYTJS_ROOT__?: unknown }).__LYTJS_ROOT__;
 }

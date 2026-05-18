@@ -548,6 +548,7 @@ export function createISRMiddleware(options: {
     isrCache.set(path, html);
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return async (req: any, res: any, next: any) => {
     if (!enabled) {
       return next();
@@ -680,6 +681,7 @@ export function getISRCacheStats() {
 export function clearISRCache(path?: string, maxAge?: number): void {
   if (path) {
     // 清除特定路径
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const cache = (isrCache as any).cache;
     cache.delete(path);
   } else if (maxAge) {

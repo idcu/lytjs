@@ -507,3 +507,14 @@ import type {
 - [@lytjs/core](../core) - 框架核心入口，整合所有子包
 - [@lytjs/reactivity](../reactivity) - 响应式系统，组件状态管理的基础
 - [@lytjs/vdom](../vdom) - 虚拟 DOM，组件渲染的基础
+
+## 依赖版本
+
+- [@lytjs/shared-types](https://www.npmjs.com/package/@lytjs/shared-types): ^6.4.0
+- [@lytjs/reactivity](https://www.npmjs.com/package/@lytjs/reactivity): ^6.4.0
+- [@lytjs/vdom](https://www.npmjs.com/package/@lytjs/vdom): ^6.4.0
+- [@lytjs/common-vnode](https://www.npmjs.com/package/@lytjs/common-vnode): ^6.4.0
+- [@lytjs/common-is](https://www.npmjs.com/package/@lytjs/common-is): ^6.4.0
+- [@lytjs/common-scheduler](https://www.npmjs.com/package/@lytjs/common-scheduler): ^6.4.0
+- [@lytjs/common-error](https://www.npmjs.com/package/@lytjs/common-error): ^6.4.0
+- [@lytjs/common-string](https://www.npmjs.com/package/@lytjs/common-string): ^6.4.0

@@ -1,7 +1,7 @@
 {
   "name": "@lytjs/dom-runtime",
-  "version": "6.0.0",
-  "description": "LytJS Signal-pattern DOM runtime - fine-grained DOM operations",
+  "version": "6.4.0",
+  "description": "LytJS Signal 模式 DOM 运行时 - 细粒度 DOM 操作",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
@@ -28,7 +28,7 @@
   "sideEffects": false,
   "license": "MIT",
   "dependencies": {
-    "@lytjs/reactivity": "^6.0.0"
+    "@lytjs/reactivity": "^6.4.0"
   },
   "devDependencies": {
     "tsup": "^8.4.0",

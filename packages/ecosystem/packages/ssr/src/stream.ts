@@ -41,7 +41,7 @@ export interface DataPrefetchContext {
 /** 异步数据预取结果 */
 export interface PrefetchResult {
   /** 预取的数据 */
-  data: Record<string, any>;
+  data: Record<string, unknown>;
   /** 数据过期时间（毫秒） */
   ttl?: number;
 }
@@ -57,7 +57,7 @@ export interface EnhancedStreamRenderOptions extends StreamRenderOptions {
   /** 数据预取上下文 */
   prefetchContext?: DataPrefetchContext;
   /** 数据预取完成回调 */
-  onDataPrefetched?: (data: Record<string, any>) => void;
+  onDataPrefetched?: (data: Record<string, unknown>) => void;
   /** 是否启用渐进式水合 */
   progressiveHydration?: boolean;
 }
@@ -283,7 +283,7 @@ export function renderToStream(
   } = options || {};
 
   const encoder = new TextEncoder();
-  let flowController: FlowController | null = maxBytesPerSecond ? new FlowController(maxBytesPerSecond) : null;
+  const flowController: FlowController | null = maxBytesPerSecond ? new FlowController(maxBytesPerSecond) : null;
   let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
   return new ReadableStream<Uint8Array>({
@@ -361,7 +361,7 @@ export function renderToStream(
             console.warn('Error occurred during stream rendering, using fallback HTML');
             controller.enqueue(encoder.encode(fallbackHtml));
             controller.close();
-          } catch (e) {
+          } catch (_) {
             controller.error(error);
           }
         } else {
@@ -374,7 +374,7 @@ export function renderToStream(
       if (timeoutId) {
         clearTimeout(timeoutId);
       }
-      console.log('Stream cancelled:', reason);
+      console.warn('Stream cancelled:', reason);
     },
   });
 
@@ -459,8 +459,8 @@ export function renderToStreamAsync(
 async function collectAndPrefetchData(
   vnode: VNode | VNode[] | string | number | null | undefined,
   context?: DataPrefetchContext
-): Promise<Record<string, any>> {
-  const result: Record<string, any> = {};
+): Promise<Record<string, unknown>> {
+  const result: Record<string, unknown> = {};
 
   // 处理 null/undefined
   if (vnode === null || vnode === undefined) {
@@ -541,7 +541,7 @@ async function collectAndPrefetchData(
  */
 async function renderToStringAsync(
   vnode: VNode | VNode[] | string | number | null | undefined,
-  prefetchData?: Record<string, any>
+  prefetchData?: Record<string, unknown>
 ): Promise<string> {
   // 处理 null/undefined
   if (vnode === null || vnode === undefined) {
@@ -606,7 +606,7 @@ export async function renderToStreamEnhanced(
   options?: EnhancedStreamRenderOptions
 ): Promise<{
   stream: ReadableStream<Uint8Array>;
-  dehydratedState: Record<string, any>;
+  dehydratedState: Record<string, unknown>;
 }> {
   const { prefetchContext, onDataPrefetched } = options || {};
 

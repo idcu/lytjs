@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/reactivity",
-  "version": "6.0.0",
+  "version": "6.4.0",
   "description": "LytJS reactive system - signals, refs, computed, watch, and effects",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -48,12 +48,12 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@lytjs/shared-types": "^6.0.0",
-    "@lytjs/common-is": "^6.0.0",
-    "@lytjs/common-scheduler": "^6.0.0",
-    "@lytjs/common-error": "^6.0.0",
-    "@lytjs/common-constants": "^6.0.0",
-    "@lytjs/common-assertions": "^6.0.0"
+    "@lytjs/shared-types": "^6.4.0",
+    "@lytjs/common-is": "^6.4.0",
+    "@lytjs/common-scheduler": "^6.4.0",
+    "@lytjs/common-error": "^6.4.0",
+    "@lytjs/common-constants": "^6.4.0",
+    "@lytjs/common-assertions": "^6.4.0"
   },
   "devDependencies": {
     "tsup": "^8.0.0",

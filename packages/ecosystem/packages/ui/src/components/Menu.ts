@@ -219,7 +219,7 @@ export const Menu = defineComponent({
           }
           break;
 
-        case 'Home':
+        case 'Home': {
           e.preventDefault();
           const firstEnabled = menuItems.find(item => !item.disabled);
           if (firstEnabled) {
@@ -227,6 +227,7 @@ export const Menu = defineComponent({
             focusedIndex.set(menuItems.indexOf(firstEnabled));
           }
           break;
+        }
 
         case 'End':
           e.preventDefault();

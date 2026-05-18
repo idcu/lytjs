@@ -76,7 +76,7 @@
 
 | 任务 | 状态 | 说明 |
 |------|------|------|
-| js-framework-benchmark 完整集成到官方仓库 | 🟡 待提交 | 完整实现已完成，SUBMISSION_GUIDE.md 已创建 |
+| js-framework-benchmark 完整集成到官方仓库 | 🟡 待提交 | 完整实现已完成，PR 准备文档已创建 |
 | 性能排名进入前 3（轻量级组） | 🟡 待验证 | 需在官方基准测试中验证 |
 | 组件性能提升 10%+ | ✅ 完成 | 2026-05-17，基准测试验证通过 |
 
@@ -85,7 +85,10 @@
 
 **相关文件**：
 - `benchmarks/js-framework-benchmark/frameworks/keyed/lytjs/` - 完整实现
-- `benchmarks/js-framework-benchmark/frameworks/keyed/lytjs/SUBMISSION_GUIDE.md` - 官方仓库提交流程指南
+- `benchmarks/js-framework-benchmark/frameworks/keyed/lytjs/PR_PREPARATION_GUIDE.md` - PR 准备详细指南
+- `benchmarks/js-framework-benchmark/frameworks/keyed/lytjs/prepare-pr.sh` - Linux/Mac PR 准备脚本
+- `benchmarks/js-framework-benchmark/frameworks/keyed/lytjs/prepare-pr.bat` - Windows PR 准备脚本
+- `benchmarks/js-framework-benchmark/PR_CHECKLIST.md` - PR 检查清单和完整步骤
 
 ---
 

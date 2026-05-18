@@ -44,7 +44,7 @@ export function createPinia(): Pinia {
   const pinia: Pinia = {
     state,
 
-    install(app: any) {
+    install(_app: unknown) {
       if (isInstalled) {
         if (__DEV__) {
           console.warn(`[@lytjs/store] Pinia has already been installed.`);
@@ -55,13 +55,13 @@ export function createPinia(): Pinia {
       activePinia = pinia;
 
       // Provide the pinia instance
-      if (app.provide) {
-        app.provide('__lytjs_pinia__', pinia);
+      if ((_app as { provide?: unknown }).provide) {
+        (_app as { provide: (key: string, value: unknown) => void }).provide('__lytjs_pinia__', pinia);
       }
 
       // Add global properties
-      if (app.config?.globalProperties) {
-        app.config.globalProperties.$pinia = pinia;
+      if ((_app as { config?: { globalProperties?: Record<string, unknown> } }).config?.globalProperties) {
+        (_app as { config: { globalProperties: Record<string, unknown> } }).config.globalProperties.$pinia = pinia;
       }
 
       // TODO: DevTools integration

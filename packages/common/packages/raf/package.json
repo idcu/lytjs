@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/common-raf",
-  "version": "6.0.0",
+  "version": "6.4.0",
   "description": "Cross-platform requestAnimationFrame utilities for LytJS",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",

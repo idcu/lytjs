@@ -12,6 +12,7 @@ import {
   onCleanup,
   createTemplate,
   setText,
+  setHTML,
   setAttribute,
   setProperty,
   setStyle,
@@ -19,89 +20,6 @@ import {
   createEventHandler,
   reconcileArray,
 } from '@lytjs/dom-runtime';
-
-// ============================================================
-// 安全辅助函数
-// ============================================================
-
-interface TemplateWrapperLike {
-  firstChild: Node | null;
-  content?: unknown;
-}
-
-function setSafeHTML(el: unknown, value: unknown): void {
-  const wrapper = el as TemplateWrapperLike;
-  const realNode =
-    'content' in wrapper && 'firstChild' in wrapper && wrapper.firstChild !== null
-      ? wrapper.firstChild
-      : (el as Element);
-  
-  // 解包 ref
-  function unwrapValue(v: unknown): unknown {
-    const ref = v as { value?: unknown };
-    if (v !== null && typeof v === 'object' && 'value' in ref) {
-      return ref.value;
-    }
-    return v;
-  }
-
-  // XSS 防护 - 同 dom-runtime
-  function sanitizeHTML(html: string): string {
-    const DANGEROUS_TAG_NAMES = 'script|iframe|object|embed|applet|form';
-    const DANGEROUS_SELF_CLOSING_TAG_NAMES = `${DANGEROUS_TAG_NAMES}|input|textarea|select|button|link|meta`;
-    const MAX_ITERATIONS = 10;
-    let result = html;
-    let prevResult = '';
-    let iterations = 0;
-
-    while (result !== prevResult && iterations < MAX_ITERATIONS) {
-      prevResult = result;
-      iterations++;
-      result = result.replace(
-        new RegExp(`<\\s*/?\\s*(${DANGEROUS_TAG_NAMES})[^>]*>[\\s\\S]*?<\\s*/\\s*\\1\\s*>`, 'gi'),
-        ''
-      );
-      result = result.replace(
-        new RegExp(`<\\s*(${DANGEROUS_SELF_CLOSING_TAG_NAMES})[^>]*/?>`, 'gi'),
-        ''
-      );
-      result = result.replace(/\s+on\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]*)/gi, '');
-      result = result.replace(
-        /\s+(srcdoc|formaction|xlink:href)\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]*)/gi,
-        ''
-      );
-      result = result.replace(
-        /\s+(href|src|action|formaction|data)\s*=\s*(?:"[^"]*"|'[^']*')/gi,
-        (match) => {
-          const valueMatch = match.match(/=\s*(?:"([^"]*)"|'([^']*)')/);
-          if (valueMatch) {
-            const val = (valueMatch[1] ?? valueMatch[2] ?? '').replace(
-            // eslint-disable-next-line no-control-regex
-            /[\s\u0000-\u001F]+/g,
-            ''
-          );
-            if (/^javascript\s*:/i.test(val)) {
-              return '';
-            }
-          }
-          return match;
-        }
-      );
-      result = result.replace(/<\s*foreignObject[^>]*>[\s\S]*?<\s*\/\s*foreignObject\s*>/gi, '');
-      result = result.replace(/<\s*style[^>]*>[\s\S]*?<\s*\/\s*style\s*>/gi, '');
-      result = result.replace(/<\s*base[^>]*\/?>/gi, '');
-      result = result.replace(
-        /\s+(href|src|action|formaction)\s*=\s*(?:"[^"]*data:[^"]*"|'[^']*data:[^']*')/gi,
-        ''
-      );
-    }
-    return result;
-  }
-
-  const safeHTML = sanitizeHTML(String(unwrapValue(value)));
-  if ((realNode as Element).innerHTML === safeHTML) return;
-  (realNode as Element).innerHTML = safeHTML;
-}
 
 // ============================================================
 // SignalRenderer 接口
@@ -245,7 +163,7 @@ export function createSignalRenderer(
           reconcileArray,
           createTemplate,
           setText,
-          setSafeHTML,
+          setHTML,
           setAttribute,
           setProperty,
           setStyle,

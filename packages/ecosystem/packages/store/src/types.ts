@@ -47,7 +47,7 @@ export type StoreDefinition<
   S extends StateTree = {},
   _G = {},
   _A = {},
-> = (pinia?: any) => Store<_Id, S, _G, _A>;
+> = (pinia?: Pinia) => Store<_Id, S, _G, _A>;
 
 export type StoreToRefs<SS> = {
   [K in keyof SS]: SS[K] extends Signal<infer T> ? Signal<T> : SS[K];
@@ -56,7 +56,7 @@ export type StoreToRefs<SS> = {
 // ===== Pinia =====
 
 export interface Pinia {
-  install(app: any): void;
+  install(app: unknown): void;
   state: { value: Record<string, StateTree> };
   use(plugin: PiniaPlugin): void;
 }
@@ -68,14 +68,14 @@ export interface PiniaPlugin {
 // ===== Callbacks =====
 
 export type SubscriptionCallback<S> = (
-  mutation: { storeId: string; type: 'direct' | 'patch object' | 'patch function'; payload: any },
+  mutation: { storeId: string; type: 'direct' | 'patch object' | 'patch function'; payload: unknown },
   state: S,
 ) => void;
 
-export type ActionCallback = (context: {
-  store: any;
+export type ActionCallbackContext = {
+  store: Record<string, unknown>;
   name: string;
   args: unknown[];
-  after?: () => void;
-  onError?: (error: Error) => void;
-}) => void;
+};
+
+export type ActionCallback = (context: ActionCallbackContext) => void;

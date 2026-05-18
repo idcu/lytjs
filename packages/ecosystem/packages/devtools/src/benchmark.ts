@@ -294,7 +294,7 @@ export interface MemoryUsage {
 export function getMemoryUsage(): MemoryUsage | null {
   if (typeof performance === 'undefined') return null;
 
-  const memory = (performance as any).memory;
+  const memory = (performance as { memory?: { usedJSHeapSize: number; totalJSHeapSize: number; jsHeapSizeLimit: number } }).memory;
   if (!memory) return null;
 
   return {

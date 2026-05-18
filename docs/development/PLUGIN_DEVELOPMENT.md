@@ -1,6 +1,6 @@
 # LytJS 插件开发指南
 
-> 本指南帮助开发者创建符合 LytJS v6.0.0 规范的官方插件
+> 本指南帮助开发者创建符合 LytJS v6.4.0 规范的官方插件
 
 ## 📋 目录
 
@@ -60,7 +60,7 @@ packages/plugins/packages/plugin-xxx/
 ```json
 {
   "name": "@lytjs/plugin-xxx",
-  "version": "6.0.0",
+  "version": "6.4.0",
   "description": "LytJS official plugin for...",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -221,7 +221,7 @@ export function createPlugin(options: PluginOptions = {}): PluginInstance {
  */
 const pluginXxx = definePlugin({
   name: 'xxx',
-  version: '6.0.0',
+  version: '6.4.0',
   description: 'LytJS official plugin description',
   author: 'LytJS Team',
   keywords: ['lytjs', 'plugin', 'xxx'],

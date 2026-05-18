@@ -5,24 +5,31 @@
 import type { StoreStateInfo } from './types';
 import { isObject, isFunction } from '@lytjs/common-is';
 
+interface StoreInstance {
+  $state?: Record<string, unknown>;
+  $id?: string;
+  $subscribe?: (cb: (mutation: unknown, state: Record<string, unknown>) => void) => () => void;
+  [key: string]: unknown;
+}
+
 // Store 注册表
-const storeRegistry = new Map<string, any>();
+const storeRegistry = new Map<string, StoreInstance>();
 
 // Store 变更订阅器 Map<storeId, unsubscribe 函数>
 const subscribers = new Map<string, () => void>();
 
 // 全局 Store 变更回调列表
-const globalChangeCallbacks = new Set<(storeId: string, state: Record<string, any>) => void>();
+const globalChangeCallbacks = new Set<(storeId: string, state: Record<string, unknown>) => void>();
 
 /**
  * Store 变更回调类型
  */
-type StoreChangeCallback = (storeId: string, state: Record<string, any>) => void;
+type StoreChangeCallback = (storeId: string, state: Record<string, unknown>) => void;
 
 /**
  * 注册 Store
  */
-export function registerStore(id: string, store: any): void {
+export function registerStore(id: string, store: StoreInstance): void {
   storeRegistry.set(id, store);
 }
 
@@ -96,26 +103,24 @@ export function getStoreState(storeId: string): StoreStateInfo | null {
 /**
  * 修改 Store 状态（用于开发时调试）
  */
-export function setStoreState(storeId: string, path: string, value: any): boolean {
+export function setStoreState(storeId: string, path: string, value: unknown): boolean {
   const store = storeRegistry.get(storeId);
   if (!store) return false;
 
   const keys = path.split('.');
-  let current: any = store.$state || store;
+  let current: unknown = store;
 
   // 遍历到倒数第二个 key
   for (let i = 0; i < keys.length - 1; i++) {
     const key = keys[i]!;
-    if (!isObject(current[key])) {
-      return false;
-    }
-    current = current[key];
+    if (!isObject(current)) return false;
+    current = (current as Record<string, unknown>)[key];
   }
 
   // 设置最终值
   const lastKey = keys[keys.length - 1];
-  if (lastKey) {
-    current[lastKey] = value;
+  if (lastKey && isObject(current)) {
+    (current as Record<string, unknown>)[lastKey] = value;
   }
 
   return true;
@@ -124,16 +129,16 @@ export function setStoreState(storeId: string, path: string, value: any): boolea
 /**
  * 触发 Store Action
  */
-export function dispatchStoreAction(storeId: string, actionName: string, ...args: any[]): any {
+export function dispatchStoreAction(storeId: string, actionName: string, ...args: unknown[]): unknown {
   const store = storeRegistry.get(storeId);
   if (!store) return null;
 
-  const action = store[actionName];
+  const action = (store as Record<string, unknown>)[actionName];
   if (!isFunction(action)) {
     throw new Error(`Action "${actionName}" not found in store "${storeId}"`);
   }
 
-  return action.apply(store, args);
+  return (action as (...args: unknown[]) => unknown).apply(store, args);
 }
 
 /**
@@ -160,11 +165,11 @@ function deepClone<T>(obj: T): T {
   }
 
   if (isObject(obj)) {
-    const cloned: Record<string, any> = {};
+    const cloned: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(obj)) {
       cloned[key] = deepClone(value);
     }
-    return cloned as T;
+    return cloned as unknown as T;
   }
 
   return obj;
@@ -191,8 +196,8 @@ export function subscribeStore(storeId: string): boolean {
 
   // 优先使用 $subscribe 方法（Pinia 风格）
   if (isFunction(store.$subscribe)) {
-    const unsubscribe = store.$subscribe((_mutation: any, state: any) => {
-      const currentState = isObject(state) ? deepClone(state) : {};
+    const unsubscribe = store.$subscribe?.((_mutation: unknown, state: Record<string, unknown>) => {
+      const currentState = isObject(state) ? deepClone<Record<string, unknown>>(state) : {};
       globalChangeCallbacks.forEach(cb => cb(storeId, currentState));
     });
     subscribers.set(storeId, isFunction(unsubscribe) ? unsubscribe : () => {});

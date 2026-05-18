@@ -5,8 +5,29 @@
 import type { RouteInfo } from './types';
 import { isFunction } from '@lytjs/common-is';
 
+interface RouterMatched {
+  path?: string;
+  name?: string | null;
+}
+
+interface RouterLocation {
+  path?: string;
+  name?: string | null;
+  params?: Record<string, string>;
+  query?: Record<string, string>;
+  matched?: RouterMatched[];
+}
+
+interface RouterInstance {
+  currentRoute?: () => RouterLocation;
+  afterEach?: (cb: (to: RouterLocation) => void) => void;
+  getRoutes?: () => RouterMatched[];
+  push?: (path: string) => Promise<void>;
+  back?: () => void;
+}
+
 // 路由器实例
-let routerInstance: any = null;
+let routerInstance: RouterInstance | null = null;
 
 // 路由变更历史记录
 const routeHistory: RouteInfo[] = [];
@@ -17,7 +38,7 @@ let afterEachHandler: (() => void) | null = null;
 /**
  * 注册路由器
  */
-export function registerRouter(router: any): void {
+export function registerRouter(router: RouterInstance): void {
   routerInstance = router;
 }
 
@@ -43,7 +64,7 @@ export function getCurrentRoute(): RouteInfo | null {
     name: currentRoute.name || null,
     params: currentRoute.params || {},
     query: currentRoute.query || {},
-    matched: (currentRoute.matched || []).map((m: any) => ({
+    matched: (currentRoute.matched || []).map((m: { path?: string; name?: string | null }) => ({
       path: m.path || '',
       name: m.name || null,
     })),
@@ -81,13 +102,13 @@ export function watchRouteChanges(): boolean {
   }
 
   // 注册 afterEach 钩子
-  routerInstance.afterEach((to: any) => {
+  routerInstance.afterEach?.((to: RouterLocation) => {
     const routeInfo: RouteInfo = {
       path: to.path || '/',
       name: to.name || null,
       params: to.params || {},
       query: to.query || {},
-      matched: (to.matched || []).map((m: any) => ({
+      matched: ((to.matched as RouterMatched[]) || []).map((m) => ({
         path: m.path || '',
         name: m.name || null,
       })),
@@ -136,7 +157,8 @@ export function navigateToName(name: string, params?: Record<string, string>): P
     return Promise.reject(new Error('Router not registered'));
   }
 
-  return routerInstance.push?.({ name, params }) || Promise.resolve();
+  const path = `/${name}${params ? '?' + new URLSearchParams(params).toString() : ''}`;
+  return routerInstance.push?.(path) || Promise.resolve();
 }
 
 /**
@@ -180,7 +202,7 @@ export function getRoutes(): Array<{ path: string; name?: string | null }> {
   if (!routerInstance) return [];
 
   const routes = routerInstance.getRoutes?.() || [];
-  return routes.map((r: any) => ({
+  return routes.map((r) => ({
     path: r.path || '',
     name: r.name || null,
   }));

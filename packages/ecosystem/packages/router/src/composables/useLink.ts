@@ -5,6 +5,7 @@
  */
 
 import type { RouteLocationRaw, RouteLocationNormalized } from '../types';
+import { locationQueryToSearchParams } from '../types';
 import { useRouter } from './useRouter';
 import { useRoute } from './useRoute';
 import { computedSignal as computed } from '@lytjs/reactivity';
@@ -38,7 +39,7 @@ export function useLink(options: UseLinkOptions) {
     const loc = targetLocation();
     const path = loc.path;
     const query = Object.keys(loc.query).length
-      ? '?' + new URLSearchParams(loc.query as any).toString()
+      ? '?' + locationQueryToSearchParams(loc.query).toString()
       : '';
     const hash = loc.hash ? `#${loc.hash}` : '';
     return path + query + hash;

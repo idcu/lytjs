@@ -1,7 +1,7 @@
 {
   "name": "@lytjs/shared-types",
-  "version": "6.0.0",
-  "description": "LytJS shared type definitions",
+  "version": "6.4.0",
+  "description": "LytJS 共享类型定义",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",

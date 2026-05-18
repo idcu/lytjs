@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/renderer",
-  "version": "6.0.0",
+  "version": "6.4.0",
   "description": "LytJS renderer - DOM, SSR, and Vapor rendering backends",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -46,17 +46,17 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@lytjs/reactivity": "^6.0.0",
-    "@lytjs/vdom": "^6.0.0",
-    "@lytjs/common-is": "^6.0.0",
-    "@lytjs/common-string": "^6.0.0",
-    "@lytjs/common-events": "^6.0.0",
-    "@lytjs/common-dom": "^6.0.0",
-    "@lytjs/common-error": "^6.0.0",
-    "@lytjs/dom-runtime": "^6.0.0",
-    "@lytjs/compiler": "^6.0.0",
-    "@lytjs/host-contract": "^6.0.0",
-    "@lytjs/adapter-web": "^6.0.0"
+    "@lytjs/reactivity": "^6.4.0",
+    "@lytjs/vdom": "^6.4.0",
+    "@lytjs/common-is": "^6.4.0",
+    "@lytjs/common-string": "^6.4.0",
+    "@lytjs/common-events": "^6.4.0",
+    "@lytjs/common-dom": "^6.4.0",
+    "@lytjs/common-error": "^6.4.0",
+    "@lytjs/dom-runtime": "^6.4.0",
+    "@lytjs/compiler": "^6.4.0",
+    "@lytjs/host-contract": "^6.4.0",
+    "@lytjs/adapter-web": "^6.4.0"
   },
   "devDependencies": {
     "tsup": "^8.0.0",

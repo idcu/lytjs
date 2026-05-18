@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/core-vnode",
-  "version": "6.0.0",
+  "version": "6.4.0",
   "description": "Lyt.js Core - VNode rendering mode only",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -22,14 +22,14 @@
     "dev": "tsup --watch"
   },
   "dependencies": {
-    "@lytjs/component": "^6.0.0",
-    "@lytjs/reactivity": "^6.0.0",
-    "@lytjs/vdom": "^6.0.0",
-    "@lytjs/compiler": "^6.0.0",
-    "@lytjs/renderer": "^6.0.0",
-    "@lytjs/common-scheduler": "^6.0.0",
-    "@lytjs/common-error": "^6.0.0",
-    "@lytjs/shared-types": "^6.0.0"
+    "@lytjs/component": "^6.4.0",
+    "@lytjs/reactivity": "^6.4.0",
+    "@lytjs/vdom": "^6.4.0",
+    "@lytjs/compiler": "^6.4.0",
+    "@lytjs/renderer": "^6.4.0",
+    "@lytjs/common-scheduler": "^6.4.0",
+    "@lytjs/common-error": "^6.4.0",
+    "@lytjs/shared-types": "^6.4.0"
   },
   "devDependencies": {
     "tsup": "^8.0.0",

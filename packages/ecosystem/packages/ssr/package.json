@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/ssr",
-  "version": "6.0.0",
+  "version": "6.4.0",
   "description": "LytJS Server-Side Rendering support",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -27,9 +27,9 @@
     "@lytjs/common-is": "^6.0.0",
     "@lytjs/common-env": "^6.0.0",
     "@lytjs/common-dom": "^6.0.0",
-    "@lytjs/reactivity": "^6.0.0",
-    "@lytjs/component": "^6.0.0",
-    "@lytjs/vdom": "^6.0.0"
+    "@lytjs/reactivity": "^6.1.0",
+    "@lytjs/component": "^6.1.0",
+    "@lytjs/vdom": "^6.1.0"
   },
   "devDependencies": {
     "tsup": "^8.0.0",

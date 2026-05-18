@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/common-cache",
-  "version": "6.0.0",
+  "version": "6.4.0",
   "description": "Caching strategies for LytJS",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",

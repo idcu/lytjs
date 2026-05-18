@@ -2,7 +2,7 @@
  * @lytjs/devtools - 开发者工具主入口
  */
 
-import type { DevToolsOptions, DevToolsAPI } from './types';
+import type { DevToolsOptions, DevToolsAPI, SignalNode } from './types';
 import {
   getComponentTree,
   serializeComponentTree,
@@ -104,7 +104,7 @@ class DevTools implements DevToolsAPI {
       }
     });
 
-    console.log('[LytJS DevTools] Initialized. Press Ctrl+Shift+D to toggle.');
+    console.warn('[LytJS DevTools] Initialized. Press Ctrl+Shift+D to toggle.');
   }
 
   /**
@@ -318,7 +318,7 @@ class DevTools implements DevToolsAPI {
   private renderSignalsTab(): string {
     const nodes = getSignalNodes();
     
-    let html = `
+    const html = `
       <div style="margin-bottom: 15px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
           <strong>📊 Signals (${nodes.length})</strong>
@@ -390,7 +390,7 @@ class DevTools implements DevToolsAPI {
   /**
    * 渲染信号列表
    */
-  private renderSignalsList(nodes: any[]): string {
+  private renderSignalsList(nodes: SignalNode[]): string {
     if (nodes.length === 0) {
       return '<div style="color: #666; text-align: center; padding: 40px;">暂无信号数据<br>使用 registerSignal() 注册信号</div>';
     }
@@ -448,7 +448,7 @@ class DevTools implements DevToolsAPI {
       `;
     }
     
-    let html = `
+    const html = `
       <div style="margin-bottom: 15px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
           <strong>🌳 VDOM Tree</strong>
@@ -530,7 +530,7 @@ class DevTools implements DevToolsAPI {
   private renderPerformanceTab(): string {
     const stats = getPerformanceStats();
     const records = getPerformanceRecords(50);
-    
+
     let html = `
       <div style="margin-bottom: 15px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">

@@ -1,7 +1,7 @@
 {
   "name": "@lytjs/adapter-web",
-  "version": "6.0.0",
-  "description": "LytJS Web platform adapter - RendererHost implementation for browser DOM",
+  "version": "6.4.0",
+  "description": "LytJS Web 平台适配器 - 浏览器 DOM 的 RendererHost 实现",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
@@ -24,15 +24,15 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@lytjs/host-contract": "^6.0.0",
-    "@lytjs/common-dom": "^6.0.0",
-    "@lytjs/common-events": "^6.0.0",
-    "@lytjs/common-is": "^6.0.0",
-    "@lytjs/common-string": "^6.0.0",
-    "@lytjs/common-error": "^6.0.0",
-    "@lytjs/shared-types": "^6.0.0",
-    "@lytjs/vdom": "^6.0.0",
-    "@lytjs/reactivity": "^6.0.0"
+    "@lytjs/host-contract": "^6.4.0",
+    "@lytjs/common-dom": "^6.4.0",
+    "@lytjs/common-events": "^6.4.0",
+    "@lytjs/common-is": "^6.4.0",
+    "@lytjs/common-string": "^6.4.0",
+    "@lytjs/common-error": "^6.4.0",
+    "@lytjs/shared-types": "^6.4.0",
+    "@lytjs/vdom": "^6.4.0",
+    "@lytjs/reactivity": "^6.4.0"
   },
   "devDependencies": {
     "tsup": "^8.3.0",

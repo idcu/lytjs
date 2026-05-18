@@ -10,8 +10,10 @@
 import type {
   RouterHistory,
   RouteLocationNormalized,
+  RouteLocationRaw,
   NavigationFailure,
   NavigationInfo,
+  HistoryState,
 } from './types';
 import { createRouteLocation } from './location';
 import { parseFullPath, resolveFullPath } from './matcher';
@@ -27,8 +29,8 @@ type HistoryListener = (
 function createBaseHistory(base: string): {
   listeners: HistoryListener[];
   currentLocation: RouteLocationNormalized;
-  pushState(location: RouteLocationNormalized, data?: any): void;
-  replaceState(location: RouteLocationNormalized, data?: any): void;
+  pushState(location: RouteLocationNormalized, data?: HistoryState): void;
+  replaceState(location: RouteLocationNormalized, data?: HistoryState): void;
   triggerListeners(
     to: RouteLocationNormalized,
     from: RouteLocationNormalized,
@@ -120,10 +122,11 @@ export function createWebHistory(base: string = ''): RouterHistory {
     listeners.length = 0;
   }
 
-  function push(to: any): Promise<NavigationFailure | void> {
-    const { path, query, hash } = typeof to === 'string'
-      ? parseFullPath(to)
-      : { path: to.path || '/', query: to.query || {}, hash: to.hash || '' };
+  function push(to: RouteLocationRaw): Promise<NavigationFailure | void> {
+    const routeLocation = typeof to === 'string' ? parseFullPath(to) : to;
+    const path = routeLocation.path || '/';
+    const query = routeLocation.query || {};
+    const hash = routeLocation.hash || '';
 
     const fullPath = resolveFullPath(path, query, hash);
     const from = { ...currentLocation };
@@ -136,10 +139,11 @@ export function createWebHistory(base: string = ''): RouterHistory {
     return Promise.resolve();
   }
 
-  function replace(to: any): Promise<NavigationFailure | void> {
-    const { path, query, hash } = typeof to === 'string'
-      ? parseFullPath(to)
-      : { path: to.path || '/', query: to.query || {}, hash: to.hash || '' };
+  function replace(to: RouteLocationRaw): Promise<NavigationFailure | void> {
+    const routeLocation = typeof to === 'string' ? parseFullPath(to) : to;
+    const path = routeLocation.path || '/';
+    const query = routeLocation.query || {};
+    const hash = routeLocation.hash || '';
 
     const fullPath = resolveFullPath(path, query, hash);
     const from = { ...currentLocation };
@@ -237,10 +241,11 @@ export function createWebHashHistory(base: string = ''): RouterHistory {
     listeners.length = 0;
   }
 
-  function push(to: any): Promise<NavigationFailure | void> {
-    const { path, query, hash } = typeof to === 'string'
-      ? parseFullPath(to)
-      : { path: to.path || '/', query: to.query || {}, hash: to.hash || '' };
+  function push(to: RouteLocationRaw): Promise<NavigationFailure | void> {
+    const routeLocation = typeof to === 'string' ? parseFullPath(to) : to;
+    const path = routeLocation.path || '/';
+    const query = routeLocation.query || {};
+    const hash = routeLocation.hash || '';
 
     const fullPath = resolveFullPath(path, query, hash);
     const from = { ...currentLocation };
@@ -253,10 +258,11 @@ export function createWebHashHistory(base: string = ''): RouterHistory {
     return Promise.resolve();
   }
 
-  function replace(to: any): Promise<NavigationFailure | void> {
-    const { path, query, hash } = typeof to === 'string'
-      ? parseFullPath(to)
-      : { path: to.path || '/', query: to.query || {}, hash: to.hash || '' };
+  function replace(to: RouteLocationRaw): Promise<NavigationFailure | void> {
+    const routeLocation = typeof to === 'string' ? parseFullPath(to) : to;
+    const path = routeLocation.path || '/';
+    const query = routeLocation.query || {};
+    const hash = routeLocation.hash || '';
 
     const fullPath = resolveFullPath(path, query, hash);
     const from = { ...currentLocation };
@@ -288,7 +294,7 @@ export function createWebHashHistory(base: string = ''): RouterHistory {
 
   return {
     get location() { return currentLocation; },
-    get state() { return undefined; },
+    get state() { return null; },
     base: normalizedBase,
     push,
     replace,
@@ -317,7 +323,7 @@ export function createMemoryHistory(initial: string = '/'): RouterHistory {
   currentLocation.query = query;
   currentLocation.hash = hash;
 
-  function push(to: any): Promise<NavigationFailure | void> {
+  function push(to: RouteLocationRaw): Promise<NavigationFailure | void> {
     const { path, query, hash } = typeof to === 'string'
       ? parseFullPath(to)
       : { path: to.path || '/', query: to.query || {}, hash: to.hash || '' };
@@ -337,7 +343,7 @@ export function createMemoryHistory(initial: string = '/'): RouterHistory {
     return Promise.resolve();
   }
 
-  function replace(to: any): Promise<NavigationFailure | void> {
+  function replace(to: RouteLocationRaw): Promise<NavigationFailure | void> {
     const { path, query, hash } = typeof to === 'string'
       ? parseFullPath(to)
       : { path: to.path || '/', query: to.query || {}, hash: to.hash || '' };
@@ -385,7 +391,7 @@ export function createMemoryHistory(initial: string = '/'): RouterHistory {
 
   return {
     get location() { return currentLocation; },
-    get state() { return undefined; },
+    get state() { return null; },
     base: '',
     push,
     replace,

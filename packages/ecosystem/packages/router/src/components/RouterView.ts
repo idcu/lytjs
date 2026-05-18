@@ -56,7 +56,7 @@ export const RouterView = {
       const resolvedComponent = typeof component === 'function' ? component() : component;
 
       // Compute props from route record
-      let routeProps: Record<string, any> = {};
+      let routeProps: Record<string, unknown> = {};
       const currentRoute = route();
       if (record.props) {
         if (typeof record.props === 'function') {

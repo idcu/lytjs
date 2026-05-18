@@ -203,7 +203,7 @@ function collectComponentsRecursive(
 
   // 检查是否是带有预取的组件
   if (isFunction(node.type)) {
-    const compName = (node.type as any).name;
+    const compName = (node.type as { name?: string }).name;
     if (compName && stateManager.getRegistration(compName)) {
       if (!result.includes(compName)) {
         result.push(compName);
@@ -215,10 +215,10 @@ function collectComponentsRecursive(
   const children = node.children;
   if (isArray(children)) {
     for (const child of children) {
-      collectComponentsRecursive(child as any, result);
+      collectComponentsRecursive(child as VNode, result);
     }
   } else if (isObject(children)) {
-    collectComponentsRecursive(children as any, result);
+    collectComponentsRecursive(children as unknown as VNode, result);
   }
 }
 
@@ -351,10 +351,10 @@ export function ServerComponent(options: {
   onInit?: ServerLifecycleHook;
   onCleanup?: ServerLifecycleHook;
 }) {
-  return function (target: any) {
+  return function (target: { name?: string; render?: () => VNode }) {
     registerServerComponent(options.name, {
       name: options.name,
-      render: target.render || (() => ({ type: 'div' })),
+      render: target.render || (() => ({ type: 'div' } as VNode)),
       prefetch: options.prefetch,
       onServerInit: options.onInit,
       onServerCleanup: options.onCleanup,

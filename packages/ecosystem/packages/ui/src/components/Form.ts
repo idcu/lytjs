@@ -114,7 +114,7 @@ export const Form = defineComponent({
               const errorMessage = typeof result === 'string' ? result : formatMessage(locale.validator, { field });
               fieldErrors.push(errorMessage);
             }
-          } catch (error) {
+          } catch (_error) {
             fieldErrors.push(rule.message || formatMessage(locale.validator, { field }));
           } finally {
             validating.set({ ...validating(), [field]: false });
@@ -206,9 +206,10 @@ function validateType(value: unknown, type: string): boolean {
       return Array.isArray(value);
     case 'date':
       return value instanceof Date || !isNaN(Date.parse(String(value)));
-    case 'email':
+    case 'email': {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       return typeof value === 'string' && emailRegex.test(value);
+    }
     case 'url':
       try {
         new URL(String(value));

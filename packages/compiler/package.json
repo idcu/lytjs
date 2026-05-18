@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/compiler",
-  "version": "6.0.0",
+  "version": "6.4.0",
   "description": "LytJS template compiler - parse, transform, optimize and codegen",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -48,11 +48,11 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@lytjs/common-is": "^6.0.0",
-    "@lytjs/common-error": "^6.0.0",
-    "@lytjs/common-vnode": "^6.0.0",
-    "@lytjs/common-string": "^6.0.0",
-    "@lytjs/common-constants": "^6.0.0"
+    "@lytjs/common-is": "^6.4.0",
+    "@lytjs/common-error": "^6.4.0",
+    "@lytjs/common-vnode": "^6.4.0",
+    "@lytjs/common-string": "^6.4.0",
+    "@lytjs/common-constants": "^6.4.0"
   },
   "devDependencies": {
     "tsup": "^8.0.0",

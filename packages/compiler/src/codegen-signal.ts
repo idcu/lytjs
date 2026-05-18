@@ -560,19 +560,6 @@ function processDirective(
       break;
     }
 
-    case 'text': {
-      // v-text 在 transform 阶段已被转换为 textContent 属性
-      // 在 processVNodeCallProps 中处理
-      // 此处作为后备
-      if (expContent) {
-        dynamicBindings.push({
-          varName,
-          code: `effect(() => setText(${varName}, _ctx.${expContent}));`,
-        });
-      }
-      break;
-    }
-
     case 'html': {
       // v-html 在 transform 阶段已被转换为 innerHTML 属性
       // 在 processVNodeCallProps 中处理

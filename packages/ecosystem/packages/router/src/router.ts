@@ -14,7 +14,7 @@ import type {
   NavigationGuardNext,
   RouteParams,
 } from './types';
-import { NavigationFailureType } from './types';
+import { NavigationFailureType, locationQueryToSearchParams } from './types';
 import { signal } from '@lytjs/reactivity';
 import {
   normalizeRouteRecord,
@@ -158,7 +158,7 @@ export function createRouter(options: RouterOptions): Router {
     const targetLocation: RouteLocationNormalized = {
       name: lastMatched?.record?.name ?? null,
       path: targetPath,
-      fullPath: resolved.path + (Object.keys(resolved.query).length ? '?' + new URLSearchParams(resolved.query as any).toString() : '') + (resolved.hash ? `#${resolved.hash}` : ''),
+      fullPath: resolved.path + (Object.keys(resolved.query).length ? '?' + locationQueryToSearchParams(resolved.query).toString() : '') + (resolved.hash ? `#${resolved.hash}` : ''),
       query: resolved.query,
       hash: resolved.hash,
       params,
@@ -230,9 +230,9 @@ export function createRouter(options: RouterOptions): Router {
   ): Promise<NavigationFailure | void> {
     // 1. in-component beforeRouteLeave guards (from current matched components)
     for (const matcher of fromMatched) {
-      const component = matcher.record.component;
-      if (component && typeof component === 'object' && (component as any).beforeRouteLeave) {
-        const result = await (component as any).beforeRouteLeave(to, from, noop as NavigationGuardNext);
+      const component = matcher.record.component as Record<string, unknown> | undefined;
+      if (component && component.beforeRouteLeave) {
+        const result = await (component.beforeRouteLeave as (to: RouteLocationNormalized, from: RouteLocationNormalized, next: NavigationGuardNext) => unknown)(to, from, noop as NavigationGuardNext);
         if (result === false || result instanceof Error) {
           return { type: NavigationFailureType.aborted, from, to };
         }
@@ -372,16 +372,13 @@ export function createRouter(options: RouterOptions): Router {
       };
     },
 
-    install(app) {
-      // Set the router instance for composables
+    install(app: { config?: { globalProperties?: Record<string, unknown> }; provide?: (key: string, value: unknown) => void }) {
       setCurrentRouter(router);
 
-      // Register global properties
-      if (app.config) {
+      if (app.config?.globalProperties) {
         app.config.globalProperties.$router = router;
       }
 
-      // Provide the router via inject
       if (app.provide) {
         app.provide('__lytjs_router__', router);
       }

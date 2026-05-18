@@ -369,3 +369,17 @@ import type {
 - [@lytjs/core](../core) - 框架核心入口，整合所有子包
 - [@lytjs/adapter-web](../adapter-web) - Web 平台适配器
 - [@lytjs/host-contract](../host-contract) - 渲染器宿主抽象
+
+## 依赖版本
+
+- [@lytjs/reactivity](https://www.npmjs.com/package/@lytjs/reactivity): ^6.4.0
+- [@lytjs/vdom](https://www.npmjs.com/package/@lytjs/vdom): ^6.4.0
+- [@lytjs/common-is](https://www.npmjs.com/package/@lytjs/common-is): ^6.4.0
+- [@lytjs/common-string](https://www.npmjs.com/package/@lytjs/common-string): ^6.4.0
+- [@lytjs/common-events](https://www.npmjs.com/package/@lytjs/common-events): ^6.4.0
+- [@lytjs/common-dom](https://www.npmjs.com/package/@lytjs/common-dom): ^6.4.0
+- [@lytjs/common-error](https://www.npmjs.com/package/@lytjs/common-error): ^6.4.0
+- [@lytjs/dom-runtime](https://www.npmjs.com/package/@lytjs/dom-runtime): ^6.4.0
+- [@lytjs/compiler](https://www.npmjs.com/package/@lytjs/compiler): ^6.4.0
+- [@lytjs/host-contract](https://www.npmjs.com/package/@lytjs/host-contract): ^6.4.0
+- [@lytjs/adapter-web](https://www.npmjs.com/package/@lytjs/adapter-web): ^6.4.0

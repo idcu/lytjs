@@ -183,7 +183,7 @@ function initLongTaskObserver(): void {
             name: 'Long Task',
             type: 'custom',
             duration: entry.duration,
-            metadata: { attribution: (entry as any).attribution },
+            metadata: { attribution: (entry as { attribution?: unknown }).attribution },
           });
         }
       }
@@ -453,7 +453,7 @@ function outputAlert(alert: Alert): void {
     critical: 'color: #722ed1; background: #ff4d4f; padding: 2px 5px;',
   };
 
-  console.log(
+  console.warn(
     `%c[LytJS Alert] ${alert.ruleName}%c ${alert.message}`,
     levelStyles[alert.level],
     'color: inherit;'

@@ -5,6 +5,7 @@
  */
 
 import type { RouteLocationNormalized } from '../types';
+import { locationQueryToSearchParams } from '../types';
 import { useRouter } from '../composables/useRouter';
 import { useRoute } from '../composables/useRoute';
 import { computedSignal as computed } from '@lytjs/reactivity';
@@ -49,7 +50,7 @@ export const RouterLink = {
     },
   },
 
-  setup(props: RouterLinkProps, { slots }: any) {
+  setup(props: RouterLinkProps, { slots }: { slots?: { default?: (props?: unknown) => unknown; [key: string]: ((props?: unknown) => unknown) | undefined } }) {
     const router = useRouter();
     const route = useRoute();
 
@@ -70,7 +71,7 @@ export const RouterLink = {
       const loc = targetLocation();
       const path = loc.path;
       const query = Object.keys(loc.query).length
-        ? '?' + new URLSearchParams(loc.query as any).toString()
+        ? '?' + locationQueryToSearchParams(loc.query).toString()
         : '';
       const hash = loc.hash ? `#${loc.hash}` : '';
       return path + query + hash;
@@ -103,7 +104,7 @@ export const RouterLink = {
           'aria-current': isExactActive() ? props.ariaCurrentValue : undefined,
           onClick: handleClick,
         },
-        children: slots.default ? slots.default({ isActive: isActive(), isExactActive: isExactActive() }) : null,
+        children: slots?.default ? slots.default({ isActive: isActive(), isExactActive: isExactActive() }) : null,
       };
 
       return linkData;

@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/common-http",
-  "version": "6.0.0",
+  "version": "6.4.0",
   "description": "Lightweight HTTP client for LytJS based on native fetch API",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",

@@ -1,7 +1,7 @@
 # 🚀 js-framework-benchmark PR 准备完成
 
 **日期**: 2026-05-18
-**版本**: LytJS v6.0.0
+**版本**: LytJS v6.4.0
 **状态**: ✅ 准备完毕
 
 ---
@@ -27,11 +27,11 @@ e:\trae\lytjs\benchmarks\js-framework-benchmark\frameworks\keyed\lytjs\
 
 | 测试项目   | 性能         |
 | ---------- | ------------ |
-| 单节点更新 | 39,417 ops/s |
-| 交换两行   | 5,771 ops/s  |
-| 删除中间行 | 5,833 ops/s  |
-| 反转列表   | 5,783 ops/s  |
-| 筛选列表   | 5,251 ops/s  |
+| 单节点更新 | 158,873 ops/s |
+| 交换两行   | 25,010 ops/s  |
+| 删除中间行 | 24,699 ops/s  |
+| 反转列表   | 24,175 ops/s  |
+| 筛选列表   | 21,480 ops/s  |
 
 ---
 
@@ -84,13 +84,13 @@ git push origin add-lytjs
 ### 标题
 
 ```
-Add LytJS v6.0.0 - Lightweight Zero-Dependency Framework
+Add LytJS v6.4.0 - Lightweight Zero-Dependency Framework
 ```
 
 ### 描述
 
 ```markdown
-## LytJS v6.0.0
+## LytJS v6.4.0
 
 **Website**: https://lytjs.dev
 **Repository**: https://github.com/lytjs/lytjs
@@ -110,11 +110,11 @@ This implementation uses LytJS's Signal reactivity system with direct DOM operat
 
 Based on internal benchmarks (2026-05-18):
 
-- Single node update: 39,417 ops/s
-- Swap rows: 5,771 ops/s
-- Remove row: 5,833 ops/s
-- Reverse list: 5,783 ops/s
-- Filter list: 5,251 ops/s
+- Single node update: 158,873 ops/s
+- Swap rows: 25,010 ops/s
+- Remove row: 24,699 ops/s
+- Reverse list: 24,175 ops/s
+- Filter list: 21,480 ops/s
 
 ### Testing
 

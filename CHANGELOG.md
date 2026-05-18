@@ -1,6 +1,56 @@
 # Changelog
 
-All notable changes to this project will be documented in this file.
+本项目的所有重要变更将记录在此文件中。
+
+## [6.4.0] - 2026-05-18
+
+### 完整 Monorepo 发布
+- ✅ **所有官方包发布到 npm**
+  - @lytjs/shared-types@6.4.0
+  - @lytjs/reactivity@6.4.0
+  - @lytjs/vdom@6.4.0
+  - @lytjs/component@6.4.0
+  - @lytjs/renderer@6.4.0
+  - @lytjs/compiler@6.4.0
+  - @lytjs/core@6.4.0
+  - @lytjs/core-signal@6.4.0
+  - @lytjs/core-vnode@6.4.0
+  - @lytjs/dom@6.4.0
+  - @lytjs/web@6.4.0
+  - @lytjs/adapter-web@6.4.0
+  - @lytjs/host-contract@6.4.0
+  - @lytjs/dom-runtime@6.4.0
+  - @lytjs/router@6.4.0
+  - @lytjs/store@6.4.0
+  - @lytjs/ssr@6.4.0
+  - @lytjs/ui@6.4.0
+  - @lytjs/devtools@6.4.0
+  - @lytjs/compat@6.4.0
+  - @lytjs/platform-adapter@6.4.0
+  - @lytjs/plugin-vite@6.4.0
+  - @lytjs/plugin-theme@6.4.0
+  - @lytjs/plugin-logger@6.4.0
+  - @lytjs/plugin-auth@6.4.0
+  - @lytjs/plugin-storage@6.4.0
+  - @lytjs/plugin-i18n@6.4.0
+  - @lytjs/cli@6.4.0
+  - @lytjs/devtools-extension@6.4.0
+  - @lytjs/test-utils@6.4.0
+  - 所有 common-* 工具包 @6.4.0
+
+### 核心修复
+- ✅ **类型系统修复**
+  - 修复 ColorPicker 组件 const 赋值错误
+  - 将 const 变量改为 let 以允许赋值
+- ✅ **文档体系完善**
+  - 全项目文档版本统一为 v6.4.0
+  - 所有包的 CHANGELOG 更新
+  - 文档站配置检查完成
+- ✅ **构建与发布**
+  - npm 令牌配置
+  - Monorepo 包发布流程优化
+
+---
 
 ## [6.0.1] - 2026-05-16
 
@@ -99,32 +149,6 @@ All notable changes to this project will be documented in this file.
   - plugin-data-fetch：数据获取与缓存
   - plugin-testing：测试工具集成
   - 所有插件零第三方运行时依赖
-
-### 新增文件清单
-**新增文档（20+ 个新文件）：**
-- `docs/SUMMARY.md` - 综合文档索引
-- `docs/tutorial/migration-from-vue.md` - Vue 迁移指南
-- `docs/tutorial/migration-from-react.md` - React 迁移指南
-- `docs/tutorial/tutorials.md` - 实战案例教程
-- `docs/tutorial/todo-app.md` - Todo 应用
-- `docs/tutorial/user-management.md` - 用户管理系统
-- `docs/tutorial/shopping-cart.md` - 购物车
-- `docs/tutorial/blog-system.md` - 博客系统
-- `docs/tutorial/official-plugins.md` - 官方插件使用指南
-- `docs/tutorial/cli-guide.md` - CLI 使用指南
-- `docs/tutorial/ssr-guide.md` - SSR/SSG 指南
-- `docs/tutorial/typescript-guide.md` - TypeScript 指南
-- `docs/tutorial/quick-start.md` - 快速入门
-- `docs/tutorial/faq.md` - 常见问题
-- `docs/guides/TESTING_GUIDE.md` - 完整测试指南
-- `docs/examples/typescript-examples.ts` - 类型示例
-- `docs/examples/interactive-counter.md` - 交互式示例
-- `docs/components/InteractiveCounter.vue` - 交互式组件
-- `examples/admin-dashboard/` - 管理后台示例（完整应用）
-- `e2e/tests/admin-dashboard.test.ts` - 管理后台 E2E 测试
-- `e2e/tests/scenarios.test.ts` - 场景化 E2E 测试
-- `packages/shared-types/src/type-utils.ts` - 80+ 类型工具
-- `.trae/skills/lytjs-roadmap-performance/SKILL.md` - Trae skill
 
 ---
 

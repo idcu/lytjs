@@ -1,6 +1,16 @@
 # 开发技能模板
 
 > 本文档包含 LytJS 项目的 AI 辅助开发技能模板
+>
+> **注意**: 完整开发流程请参考 [开发流程指南](./WORKFLOW.md)
+
+---
+
+## 说明
+
+本文档提供具体的技能模板，涵盖常见开发场景的操作步骤。这些模板是对 [开发流程指南](./WORKFLOW.md) 的补充，提供更具体的操作细节。
+
+---
 
 ## Skill 1: 添加新测试用例
 
@@ -71,7 +81,7 @@ describe('{feature}', () => {
 ```json
 {
   "name": "@lytjs/{package-name}",
-  "version": "6.0.0",
+  "version": "6.4.0",
   "type": "module",
   "main": "./dist/index.mjs",
   "types": "./dist/index.d.ts",

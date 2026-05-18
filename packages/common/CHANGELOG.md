@@ -1,0 +1,29 @@
+# @lytjs/common-monorepo 更新日志
+
+## [6.4.0] - 2026-05-18
+
+### 🚀 Monorepo 包发布
+
+本版本为 LytJS 6.4.0 Monorepo 统一发布的一部分。
+
+### 📦 子包依赖更新
+
+- `@lytjs/common-async-scheduler` 更新至 `^6.4.0`
+- `@lytjs/common-constants` 更新至 `^6.4.0`
+- `@lytjs/common-event-normalizer` 更新至 `^6.4.0`
+- `@lytjs/common-node-cache` 更新至 `^6.4.0`
+- `@lytjs/common-performance` 更新至 `^6.4.0`
+- `@lytjs/common-render-queue` 更新至 `^6.4.0`
+- `@lytjs/common-transition-engine` 更新至 `^6.4.0`
+
+### 🔧 内部改进
+
+- 包管理器 `pnpm` 升级至 `9.15.4`
+- Node.js 版本要求提升至 `>=18.0.0`
+- 类型定义 `@types/node` 升级至 `^22.13.10`
+- 测试覆盖率工具 `@vitest/coverage-v8` 升级至 `^3.0.7`
+- 代码检查工具 `eslint` 升级至 `^9.22.0`
+- 代码格式化工具 `prettier` 升级至 `^3.5.3`
+- 构建工具 `tsup` 升级至 `^8.4.0`
+- TypeScript 升级至 `^5.8.2`
+- 测试框架 `vitest` 升级至 `^3.0.7`

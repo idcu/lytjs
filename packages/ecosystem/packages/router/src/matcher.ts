@@ -200,7 +200,7 @@ export function normalizeRouteRecord(
     beforeEnter: record.beforeEnter,
     props: record.props ?? false,
     component: record.component,
-    components: (record as any).components,
+    components: ('components' in record ? (record as { components?: Record<string, unknown> }).components : undefined),
   };
 
   const matcher: RouteRecordMatcher = {
@@ -276,13 +276,13 @@ export function parseQuery(queryString: string): LocationQuery {
       if (Array.isArray(existing)) {
         if (decodedValue !== undefined) {
           existing.push(decodedValue);
-        } else {
-          existing.push(null);
         }
       } else if (decodedValue !== undefined) {
-        query[decodedKey] = [existing, decodedValue] as (string | null)[];
-      } else {
-        query[decodedKey] = [existing, null] as (string | null)[];
+        if (existing === null) {
+          query[decodedKey] = [decodedValue as string];
+        } else {
+          query[decodedKey] = [existing as string, decodedValue as string];
+        }
       }
     } else if (decodedValue !== undefined) {
       query[decodedKey] = decodedValue;

@@ -4,15 +4,34 @@
 
 import type { Signal } from '@lytjs/reactivity';
 
-type Component = any;
+type App = { provide?: unknown; config?: { globalProperties?: Record<string, unknown> } };
 
-// ===== Route Record =====
+type Component = unknown;
 
 export type RouteRecordName = string | symbol;
 
 export type RouteParams = Record<string, string | string[]>;
 
-export type LocationQuery = Record<string, string | null | (string | null)[]>;
+export type LocationQuery = Record<string, string | string[] | null>;
+
+export function locationQueryToSearchParams(query: LocationQuery): URLSearchParams {
+  const searchParams = new URLSearchParams();
+  for (const [key, value] of Object.entries(query)) {
+    if (value === null) {
+      continue;
+    }
+    if (Array.isArray(value)) {
+      for (const v of value) {
+        if (v !== null) {
+          searchParams.append(key, v);
+        }
+      }
+    } else {
+      searchParams.append(key, value);
+    }
+  }
+  return searchParams;
+}
 
 export type RouteMeta = Record<string | number | symbol, unknown>;
 
@@ -25,7 +44,7 @@ export interface RouteRecordRaw {
   alias?: string | string[];
   meta?: RouteMeta;
   beforeEnter?: NavigationGuard;
-  props?: boolean | Record<string, any> | ((to: RouteLocationNormalized) => Record<string, any>);
+  props?: boolean | Record<string, unknown> | ((to: RouteLocationNormalized) => Record<string, unknown>);
 }
 
 export interface RouteRecordNormalized {
@@ -35,7 +54,7 @@ export interface RouteRecordNormalized {
   children: RouteRecordNormalized[];
   aliasOf?: RouteRecordNormalized;
   beforeEnter?: NavigationGuard | undefined;
-  props: boolean | Record<string, any> | ((to: RouteLocationNormalized) => Record<string, any>);
+  props: boolean | Record<string, unknown> | ((to: RouteLocationNormalized) => Record<string, unknown>);
   component?: Component | (() => Promise<Component>);
   components?: Record<string, Component | (() => Promise<Component>)>;
 }
@@ -119,24 +138,26 @@ export interface Router {
   beforeEach(guard: NavigationGuard): () => void;
   afterEach(hook: (to: RouteLocationNormalized, from: RouteLocationNormalized, failure?: NavigationFailure) => void): () => void;
   beforeResolve(guard: NavigationGuard): () => void;
-  install(app: any): void;
+  install(app: App): void;
   isReady(): Promise<void>;
   resolveName(name: string | symbol, params?: RouteParams): { path: string } | null;
 }
 
+export type HistoryState = Record<string, unknown>;
+
+export interface NavigationInfo {
+  type: 'push' | 'replace' | 'pop';
+  direction: 'back' | 'forward' | 'unknown';
+  delta: number;
+}
+
 export interface RouterHistory {
   readonly location: RouteLocationNormalized;
-  readonly state: any;
+  readonly state: HistoryState | null;
   base: string;
   push(to: RouteLocationRaw): Promise<NavigationFailure | void>;
   replace(to: RouteLocationRaw): Promise<NavigationFailure | void>;
   go(delta: number): void;
   listen(callback: (to: RouteLocationNormalized, from: RouteLocationNormalized, info: NavigationInfo) => void): () => void;
   destroy(): void;
-}
-
-export interface NavigationInfo {
-  type: 'push' | 'replace' | 'pop';
-  direction: 'back' | 'forward' | 'unknown';
-  delta: number;
 }

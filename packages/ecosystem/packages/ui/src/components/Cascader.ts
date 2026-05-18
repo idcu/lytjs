@@ -90,7 +90,7 @@ export const Cascader = defineComponent({
 
       const nextOptions = option.children || [];
 
-      if (option.isLeaf || nextOptions.length === 0) {
+      if (option.isLeaf) {
         if (p.multiple) {
           const exists = selectedValues().some(item => item.join('-') === newPath.join('-'));
           const newSelected = exists
@@ -103,7 +103,7 @@ export const Cascader = defineComponent({
           isDropdownOpen.set(false);
           p.onChange?.(newPath);
         }
-      } else if (p.load && nextOptions.length === 0) {
+      } else if (nextOptions.length === 0 && p.load) {
         option.loading = true;
         p.load(option, (children: CascaderOption[]) => {
           option.loading = false;

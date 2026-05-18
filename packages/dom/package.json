@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
   "name": "@lytjs/dom",
-  "version": "6.0.0",
+  "version": "6.4.0",
   "description": "LytJS DOM utilities - Web Components integration and DOM enhancements",
   "author": "lytjs",
   "license": "MIT",
@@ -32,8 +32,8 @@
     "clean": "rm -rf dist node_modules .turbo"
   },
   "dependencies": {
-    "@lytjs/common-is": "^6.0.0",
-    "@lytjs/common-string": "^6.0.0"
+    "@lytjs/common-is": "^6.4.0",
+    "@lytjs/common-string": "^6.4.0"
   },
   "devDependencies": {
     "tsup": "^8.3.6",

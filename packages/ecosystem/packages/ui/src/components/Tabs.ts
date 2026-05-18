@@ -175,13 +175,14 @@ export const Tabs = defineComponent({
           }
           break;
         case 'Enter':
-        case ' ':
+        case ' ': {
           e.preventDefault();
           const currentPane = panes[activeIndex()];
           if (currentPane && !currentPane.props.disabled) {
             handleTabClick(currentPane, activeIndex());
           }
           break;
+        }
         case 'Delete':
         case 'Backspace':
           if (p.closable) {

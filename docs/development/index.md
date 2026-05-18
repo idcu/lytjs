@@ -11,6 +11,7 @@
 
 ### 🛠️ 开发指南
 
+- [开发流程指南](./WORKFLOW.md) - **必读**：完整的开发工作流程，结合 Skill Chain 和 Skill
 - [开发规范指南](./DEVELOPMENT_GUIDELINES.md) - 完整的开发规范（编码、测试、构建等）
 - [TypeScript 类型系统增强指南](./TYPESCRIPT_ENHANCEMENT_GUIDE.md) - 类型系统最佳实践和增强计划
 - [AI 开发规则](./AI_IDE_RULES.md) - AI 辅助开发的规范和最佳实践

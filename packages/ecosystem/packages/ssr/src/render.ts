@@ -73,7 +73,7 @@ export function renderToString(vnode: VNode | VNode[] | string | number | null |
     }
 
     // 渲染子元素
-    const children = renderToString(node.children as any);
+    const children = renderToString(node.children as VNode | VNode[] | string | number | null | undefined);
 
     return `<${tag}${renderAttributes(props)}>${children}</${tag}>`;
   }
@@ -84,7 +84,7 @@ export function renderToString(vnode: VNode | VNode[] | string | number | null |
 /**
  * 渲染属性为 HTML 属性字符串
  */
-function renderAttributes(props: Record<string, any>): string {
+function renderAttributes(props: Record<string, unknown>): string {
   const attrs: string[] = [];
 
   for (const [key, value] of Object.entries(props)) {

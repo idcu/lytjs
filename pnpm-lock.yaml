@@ -93,32 +93,32 @@ importers:
   packages/adapter-web:
     dependencies:
       '@lytjs/common-dom':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/common-error':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/common-events':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/common-is':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/common-string':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/host-contract':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/reactivity':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/shared-types':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/vdom':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
     devDependencies:
       tsup:
         specifier: ^8.3.0
@@ -700,20 +700,20 @@ importers:
   packages/compiler:
     dependencies:
       '@lytjs/common-constants':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/common-error':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/common-is':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/common-string':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/common-vnode':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
     devDependencies:
       tsup:
         specifier: ^8.0.0
@@ -728,29 +728,29 @@ importers:
   packages/component:
     dependencies:
       '@lytjs/common-error':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/common-is':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/common-scheduler':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/common-string':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/common-vnode':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/reactivity':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/shared-types':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/vdom':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
     devDependencies:
       tsup:
         specifier: ^8.0.0
@@ -765,38 +765,38 @@ importers:
   packages/core:
     dependencies:
       '@lytjs/common-error':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/common-is':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/common-object':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/common-scheduler':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/common-string':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/compiler':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/component':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/reactivity':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/renderer':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/shared-types':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/vdom':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
     devDependencies:
       jsdom:
         specifier: ^24.0.0
@@ -814,29 +814,29 @@ importers:
   packages/core-signal:
     dependencies:
       '@lytjs/common-error':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/common-scheduler':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/compiler':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/component':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/dom-runtime':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/reactivity':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/renderer':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/shared-types':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
     devDependencies:
       tsup:
         specifier: ^8.0.0
@@ -848,29 +848,29 @@ importers:
   packages/core-vnode:
     dependencies:
       '@lytjs/common-error':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/common-scheduler':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/compiler':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/component':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/reactivity':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/renderer':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/shared-types':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/vdom':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
     devDependencies:
       tsup:
         specifier: ^8.0.0
@@ -882,11 +882,11 @@ importers:
   packages/dom:
     dependencies:
       '@lytjs/common-is':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/common-string':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
     devDependencies:
       tsup:
         specifier: ^8.3.6
@@ -901,8 +901,8 @@ importers:
   packages/dom-runtime:
     dependencies:
       '@lytjs/reactivity':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
     devDependencies:
       jsdom:
         specifier: ^26.0.0
@@ -954,20 +954,20 @@ importers:
         specifier: ^6.0.0
         version: 6.0.0
       '@lytjs/component':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.1.0
+        version: 6.4.0
       '@lytjs/reactivity':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.1.0
+        version: 6.4.0
       '@lytjs/router':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.1.0
+        version: 6.4.0
       '@lytjs/store':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.1.0
+        version: 6.4.0
       '@lytjs/vdom':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.1.0
+        version: 6.4.0
     devDependencies:
       tsup:
         specifier: ^8.0.0
@@ -1013,14 +1013,14 @@ importers:
         specifier: ^6.0.0
         version: 6.0.0
       '@lytjs/component':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.1.0
+        version: 6.4.0
       '@lytjs/reactivity':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.1.0
+        version: 6.4.0
       '@lytjs/vdom':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.1.0
+        version: 6.4.0
     devDependencies:
       tsup:
         specifier: ^8.0.0
@@ -1044,14 +1044,14 @@ importers:
         specifier: ^6.0.0
         version: 6.0.0
       '@lytjs/component':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.1.0
+        version: 6.4.0
       '@lytjs/reactivity':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.1.0
+        version: 6.4.0
       '@lytjs/vdom':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.1.0
+        version: 6.4.0
     devDependencies:
       tsup:
         specifier: ^8.0.0
@@ -1072,11 +1072,11 @@ importers:
         specifier: ^6.0.0
         version: 6.0.0
       '@lytjs/component':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.1.0
+        version: 6.4.0
       '@lytjs/reactivity':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.1.0
+        version: 6.4.0
     devDependencies:
       tsup:
         specifier: ^8.0.0
@@ -1091,26 +1091,26 @@ importers:
   packages/ecosystem/packages/ui:
     dependencies:
       '@lytjs/common-a11y':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/common-dom':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/common-env':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/common-is':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/component':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/reactivity':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/vdom':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
     devDependencies:
       tsup:
         specifier: ^8.0.0
@@ -1358,23 +1358,23 @@ importers:
   packages/reactivity:
     dependencies:
       '@lytjs/common-assertions':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/common-constants':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/common-error':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/common-is':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/common-scheduler':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/shared-types':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
     devDependencies:
       tsup:
         specifier: ^8.0.0
@@ -1389,38 +1389,38 @@ importers:
   packages/renderer:
     dependencies:
       '@lytjs/adapter-web':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/common-dom':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/common-error':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/common-events':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/common-is':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/common-string':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/compiler':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/dom-runtime':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/host-contract':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/reactivity':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/vdom':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
     devDependencies:
       jsdom:
         specifier: ^24.0.0
@@ -1510,44 +1510,44 @@ importers:
   packages/vdom:
     dependencies:
       '@lytjs/common-algorithm':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/common-assertions':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/common-constants':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/common-dom':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/common-error':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/common-events':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/common-is':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/common-object':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/common-string':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/common-transition-engine':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/common-vnode':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/host-contract':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
       '@lytjs/shared-types':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.4.0
+        version: 6.4.0
     devDependencies:
       jsdom:
         specifier: ^24.0.0
@@ -2789,134 +2789,204 @@ packages:
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
 
   '@lytjs/adapter-web@6.0.0':
-    resolution: {integrity: sha512-bYD3HC9rNyOw0S9H4b+cW3QMwpm82T22loNSB+HnXXFmRLw1yRCUbFwliEgmVOixI402WkdFYBPHYbgQDRb9Mw==, tarball: https://registry.npmjs.org/@lytjs/adapter-web/-/adapter-web-6.0.0.tgz}
+    resolution: {integrity: sha512-bYD3HC9rNyOw0S9H4b+cW3QMwpm82T22loNSB+HnXXFmRLw1yRCUbFwliEgmVOixI402WkdFYBPHYbgQDRb9Mw==}
+
+  '@lytjs/adapter-web@6.4.0':
+    resolution: {integrity: sha512-V17yAmqns4armCmy1xxPFlekWpMSWz7vsZ/A4JWd2bGGpSsZsGeoi0CxXGKGOg+vEk+HSb5V68pDw9Q01zfHVw==}
 
   '@lytjs/common-a11y@6.0.0':
-    resolution: {integrity: sha512-AZml3d4MFdyjCZLS2xBGcPBmcs5EB1HsHaMjrcUS+co9EOVY5xf2M5/Ih3pM6ME3PGnWY6hVCdwEu4xPZVnhkw==, tarball: https://registry.npmjs.org/@lytjs/common-a11y/-/common-a11y-6.0.0.tgz}
+    resolution: {integrity: sha512-AZml3d4MFdyjCZLS2xBGcPBmcs5EB1HsHaMjrcUS+co9EOVY5xf2M5/Ih3pM6ME3PGnWY6hVCdwEu4xPZVnhkw==}
+
+  '@lytjs/common-a11y@6.4.0':
+    resolution: {integrity: sha512-k094Wew8mGJWeHJ1qu/ZUcjAozneb0gigSXVeGF/hDn2xWx3ExmbNH/65vFgzZyO/AjMnvaqousJ45C/pxlOfw==}
 
   '@lytjs/common-algorithm@6.0.0':
-    resolution: {integrity: sha512-3NYxnuM7Wj05zJ5x0bNtXhor+o+StQuT95mvnmkQjNImwdJz47aFF/mx4LhS1aqsVpgkh7jjhoOBmKYAHZXqlw==, tarball: https://registry.npmjs.org/@lytjs/common-algorithm/-/common-algorithm-6.0.0.tgz}
+    resolution: {integrity: sha512-3NYxnuM7Wj05zJ5x0bNtXhor+o+StQuT95mvnmkQjNImwdJz47aFF/mx4LhS1aqsVpgkh7jjhoOBmKYAHZXqlw==}
+
+  '@lytjs/common-algorithm@6.4.0':
+    resolution: {integrity: sha512-xlIn+cEBwCq0xBlpGmi/3cToqi7Zo4vTB4EyBzSPIZAPLtcqVpWxUbxhebYIE8MMPyE7ytBZCVWSKz4T+EWOnw==}
 
   '@lytjs/common-assertions@6.0.0':
-    resolution: {integrity: sha512-cyf28O2rDxfFqmS/t8iGIAUBBV2UPpsa6pRfM2du4N+ECK1ueOYJGZoqCzeap7n6t/AIK8qHuUghMM2zLo4Oqg==, tarball: https://registry.npmjs.org/@lytjs/common-assertions/-/common-assertions-6.0.0.tgz}
+    resolution: {integrity: sha512-cyf28O2rDxfFqmS/t8iGIAUBBV2UPpsa6pRfM2du4N+ECK1ueOYJGZoqCzeap7n6t/AIK8qHuUghMM2zLo4Oqg==}
+
+  '@lytjs/common-assertions@6.4.0':
+    resolution: {integrity: sha512-p40l1IzwBwyK64RjD7txjxE+6QT1f1joF3nyCcUgotGiDh7p6SR1QskoGyx6BzXTjfN8DjxjcmV0Swl1HgJb8Q==}
 
   '@lytjs/common-async-scheduler@6.0.0':
-    resolution: {integrity: sha512-Q38zeXiRxru8YNZWlq4b4euZY5oP5FvPEpPyTMEQAuXTHZFPOKa9W5mYWSA6ntyzhQfUMz0yCr4MctQSVqu7RQ==, tarball: https://registry.npmjs.org/@lytjs/common-async-scheduler/-/common-async-scheduler-6.0.0.tgz}
+    resolution: {integrity: sha512-Q38zeXiRxru8YNZWlq4b4euZY5oP5FvPEpPyTMEQAuXTHZFPOKa9W5mYWSA6ntyzhQfUMz0yCr4MctQSVqu7RQ==}
 
   '@lytjs/common-cache@6.0.0':
-    resolution: {integrity: sha512-USjn9Ighqpna3QivDTnFEqkb9HK+SKtcH+EfHwClFfiJmZnTeRE44KeaLMi+EsYU6g+ksLwtUE7LIuFgZs+R7w==, tarball: https://registry.npmjs.org/@lytjs/common-cache/-/common-cache-6.0.0.tgz}
+    resolution: {integrity: sha512-USjn9Ighqpna3QivDTnFEqkb9HK+SKtcH+EfHwClFfiJmZnTeRE44KeaLMi+EsYU6g+ksLwtUE7LIuFgZs+R7w==}
 
   '@lytjs/common-constants@6.0.0':
-    resolution: {integrity: sha512-CPuk3MZr0A/fA2PjOtXKyvMeIFU3awtn/9bRtRy2uMlqHBx0rTtIYYHGitYnjyBTDJvoUKbCnKOH6vNdWM77Gg==, tarball: https://registry.npmjs.org/@lytjs/common-constants/-/common-constants-6.0.0.tgz}
+    resolution: {integrity: sha512-CPuk3MZr0A/fA2PjOtXKyvMeIFU3awtn/9bRtRy2uMlqHBx0rTtIYYHGitYnjyBTDJvoUKbCnKOH6vNdWM77Gg==}
+
+  '@lytjs/common-constants@6.4.0':
+    resolution: {integrity: sha512-2ojjQBIUmDx+gRLqMXNEfePXqonREGCo4UiwdagpoUyjf8EKN/p+g7iKAORnQ9KUbwFZ7pL1jIkMUQGU+x7R2A==}
 
   '@lytjs/common-dom-helpers@6.0.0':
-    resolution: {integrity: sha512-Rep8U8UvCG8fLxjn6SfYS5quPQklYdsChhtk7zYb3yUnM5/wOJMlQQw8DC7PNxTppffeJnPFj5fOGPHTsf5IbA==, tarball: https://registry.npmjs.org/@lytjs/common-dom-helpers/-/common-dom-helpers-6.0.0.tgz}
+    resolution: {integrity: sha512-Rep8U8UvCG8fLxjn6SfYS5quPQklYdsChhtk7zYb3yUnM5/wOJMlQQw8DC7PNxTppffeJnPFj5fOGPHTsf5IbA==}
 
   '@lytjs/common-dom@6.0.0':
-    resolution: {integrity: sha512-bA3mjsvG+sfgV3RDHU7Q2nJjaN+zWHIeHiWeArAEUFLElV5pmE43t3G+YEuMoceaJSWZ/Yjjhez1DDH9ZGss1Q==, tarball: https://registry.npmjs.org/@lytjs/common-dom/-/common-dom-6.0.0.tgz}
+    resolution: {integrity: sha512-bA3mjsvG+sfgV3RDHU7Q2nJjaN+zWHIeHiWeArAEUFLElV5pmE43t3G+YEuMoceaJSWZ/Yjjhez1DDH9ZGss1Q==}
+    engines: {node: '>=18.0.0'}
+
+  '@lytjs/common-dom@6.4.0':
+    resolution: {integrity: sha512-N+cZIb4xkq1PL2POWYQJroD/6Eu641DfrFhsPxlhhXCrXE9XJEBrCk17+rDD3wxOuq+ySvh2R9aPbysX9hNbsw==}
     engines: {node: '>=18.0.0'}
 
   '@lytjs/common-env@6.0.0':
-    resolution: {integrity: sha512-m3Uh6lnVCPn/LBoudkE2tVh3kg2iZdoo3G88qGFUmopJNY05O93vHh4pnyRS3TgNW0rOcMHzy2OcZsgrxVRs9w==, tarball: https://registry.npmjs.org/@lytjs/common-env/-/common-env-6.0.0.tgz}
+    resolution: {integrity: sha512-m3Uh6lnVCPn/LBoudkE2tVh3kg2iZdoo3G88qGFUmopJNY05O93vHh4pnyRS3TgNW0rOcMHzy2OcZsgrxVRs9w==}
+
+  '@lytjs/common-env@6.4.0':
+    resolution: {integrity: sha512-QbWdhj+8+0XVjglIovAySZ3jwbhTeM3sAutFuZXUeLrHrf/7VIc+NeUkFl+3hLh3XiFeV8MA94ryt36hkiZxLw==}
 
   '@lytjs/common-error@6.0.0':
-    resolution: {integrity: sha512-gYUZEOF0hL5jphjHLKa+Psp8sT6CklAG0MYda/0vRybwvMJOxS8roltQd4/kvSFxsEV/eO9k5QQ8IJKYmyVz3A==, tarball: https://registry.npmjs.org/@lytjs/common-error/-/common-error-6.0.0.tgz}
+    resolution: {integrity: sha512-gYUZEOF0hL5jphjHLKa+Psp8sT6CklAG0MYda/0vRybwvMJOxS8roltQd4/kvSFxsEV/eO9k5QQ8IJKYmyVz3A==}
+
+  '@lytjs/common-error@6.4.0':
+    resolution: {integrity: sha512-/PHfSbGmld1dGEAWyUvI4RMFIKiMguNoaEhD6Md6UN6CKR/0yIFJQ8/xp1TPfmRhO+JBz3wttKPGdCt8j8pc8w==}
 
   '@lytjs/common-event-normalizer@6.0.0':
-    resolution: {integrity: sha512-/gAFMLkafKAFqhHCziFUJEgD2IN9Ee+uKlReCtUuCQsIFX/KLDK7RsbRJ/8emCmmTg/5zFOlC1qg2cjP7YhfoA==, tarball: https://registry.npmjs.org/@lytjs/common-event-normalizer/-/common-event-normalizer-6.0.0.tgz}
+    resolution: {integrity: sha512-/gAFMLkafKAFqhHCziFUJEgD2IN9Ee+uKlReCtUuCQsIFX/KLDK7RsbRJ/8emCmmTg/5zFOlC1qg2cjP7YhfoA==}
 
   '@lytjs/common-events@6.0.0':
-    resolution: {integrity: sha512-no36sNcIi7RWppBtD3ht/5rUt/uFO1kWf6awtDIFhDdKi2XVLczb3xSJZrhwPcWEUuSktYj1ZWJLmw5mdF8mlQ==, tarball: https://registry.npmjs.org/@lytjs/common-events/-/common-events-6.0.0.tgz}
+    resolution: {integrity: sha512-no36sNcIi7RWppBtD3ht/5rUt/uFO1kWf6awtDIFhDdKi2XVLczb3xSJZrhwPcWEUuSktYj1ZWJLmw5mdF8mlQ==}
+
+  '@lytjs/common-events@6.4.0':
+    resolution: {integrity: sha512-1RgcnezCAxLdWcliuuEPpvqKIBgXzjVOgTf4hU/sjnqENsoyBlO52qD6HUfVKpRzlHQdUBkSSPVCOYrzmZaDgQ==}
 
   '@lytjs/common-http@6.0.0':
-    resolution: {integrity: sha512-SYWhCeTDgoIRrzrrs5sJG6lrfLWSQPnOYnv3aqHSjmcA6ubzbl9cwD3GOij4PlJOUIAavt4hUnOrojYQ0+UP6A==, tarball: https://registry.npmjs.org/@lytjs/common-http/-/common-http-6.0.0.tgz}
+    resolution: {integrity: sha512-SYWhCeTDgoIRrzrrs5sJG6lrfLWSQPnOYnv3aqHSjmcA6ubzbl9cwD3GOij4PlJOUIAavt4hUnOrojYQ0+UP6A==}
 
   '@lytjs/common-is@6.0.0':
-    resolution: {integrity: sha512-KEbw9EnepU4xNu+KGpuZEm3EZ5cAqxxemVkLaZUo8oPzp8Kv8AAiio5es7EVg+Bwf6pTbFDgyPY6WbjNI0DyLQ==, tarball: https://registry.npmjs.org/@lytjs/common-is/-/common-is-6.0.0.tgz}
+    resolution: {integrity: sha512-KEbw9EnepU4xNu+KGpuZEm3EZ5cAqxxemVkLaZUo8oPzp8Kv8AAiio5es7EVg+Bwf6pTbFDgyPY6WbjNI0DyLQ==}
+
+  '@lytjs/common-is@6.4.0':
+    resolution: {integrity: sha512-yhlhzCimAu04gL+lpvHLM1dLFPPGICc7eHbXSQIJSeMwgFG8aim5cfraFmdbl9MRdDPPPRpUnjVHQ12qxANjvg==}
 
   '@lytjs/common-keyboard@6.0.0':
-    resolution: {integrity: sha512-XQVbk80+4G0r9M+xFaBLpp0/z26wA7wCdcxsdiaFAthJEPNNziw3OqQfPFnNWbMWEqRGv1hBhLMu4tSzv6BYWA==, tarball: https://registry.npmjs.org/@lytjs/common-keyboard/-/common-keyboard-6.0.0.tgz}
+    resolution: {integrity: sha512-XQVbk80+4G0r9M+xFaBLpp0/z26wA7wCdcxsdiaFAthJEPNNziw3OqQfPFnNWbMWEqRGv1hBhLMu4tSzv6BYWA==}
 
   '@lytjs/common-node-cache@6.0.0':
-    resolution: {integrity: sha512-FOuwSg+gvLoRgci06k/qsWh0ZeI8SC69dRf2Zc2l/wWQPt06OvnMW9hnSyIHECtq/A+Ie0R9OJMgXDNaIExpmw==, tarball: https://registry.npmjs.org/@lytjs/common-node-cache/-/common-node-cache-6.0.0.tgz}
+    resolution: {integrity: sha512-FOuwSg+gvLoRgci06k/qsWh0ZeI8SC69dRf2Zc2l/wWQPt06OvnMW9hnSyIHECtq/A+Ie0R9OJMgXDNaIExpmw==}
 
   '@lytjs/common-object@6.0.0':
-    resolution: {integrity: sha512-tFK4aGpWXg2cVUNRoYuNvltvBJ+Zi1Gaka+p0GU4yb8r8PHPpgZfcw6hDqzd0V7sNtxmTWHGI/y/Skk83cGJtQ==, tarball: https://registry.npmjs.org/@lytjs/common-object/-/common-object-6.0.0.tgz}
+    resolution: {integrity: sha512-tFK4aGpWXg2cVUNRoYuNvltvBJ+Zi1Gaka+p0GU4yb8r8PHPpgZfcw6hDqzd0V7sNtxmTWHGI/y/Skk83cGJtQ==}
+
+  '@lytjs/common-object@6.4.0':
+    resolution: {integrity: sha512-JMK8KodKFTLgeIoDO+WPmkXeRUwxyMBMzIiCNWLGs5q7PEV51v3DseBnMUTo7WXy/VgBZ+L8sAgAmCzTvNrExA==}
 
   '@lytjs/common-path@6.0.0':
-    resolution: {integrity: sha512-NDNun5VfaK1iOgoUJXAoRFHeScfwA2QTafuOF+IYnrkDSpv4W5MPJ3Ws96GbAJEs2k049QZgjjL7omc3/a4+zQ==, tarball: https://registry.npmjs.org/@lytjs/common-path/-/common-path-6.0.0.tgz}
+    resolution: {integrity: sha512-NDNun5VfaK1iOgoUJXAoRFHeScfwA2QTafuOF+IYnrkDSpv4W5MPJ3Ws96GbAJEs2k049QZgjjL7omc3/a4+zQ==}
 
   '@lytjs/common-performance@6.0.0':
-    resolution: {integrity: sha512-WhtDgo13cXkjL24ixaR3Eisn5PAhGGiyiOvOJSenH4uebzr2k5cK0hvZFuUE/H2IpblQOjeLWdhX6c3yfYrKag==, tarball: https://registry.npmjs.org/@lytjs/common-performance/-/common-performance-6.0.0.tgz}
+    resolution: {integrity: sha512-WhtDgo13cXkjL24ixaR3Eisn5PAhGGiyiOvOJSenH4uebzr2k5cK0hvZFuUE/H2IpblQOjeLWdhX6c3yfYrKag==}
 
   '@lytjs/common-query@6.0.0':
-    resolution: {integrity: sha512-72fHHxuSnNQr+q9BX0Whqua0SEy1Yevl9nkUZLfuz+3gPlsiy+tao8n0ESxiZqoLFR+OQdeGsqNyXPvBMV7Tlw==, tarball: https://registry.npmjs.org/@lytjs/common-query/-/common-query-6.0.0.tgz}
+    resolution: {integrity: sha512-72fHHxuSnNQr+q9BX0Whqua0SEy1Yevl9nkUZLfuz+3gPlsiy+tao8n0ESxiZqoLFR+OQdeGsqNyXPvBMV7Tlw==}
 
   '@lytjs/common-raf@6.0.0':
-    resolution: {integrity: sha512-X7aEAwixw575nklfNz1kU/K0Qsm1iFRTVt5YnEmv5pV6p44gcNyoca0IgZ5zxXVL5JrRmXsi21NIyxXZD1XKmQ==, tarball: https://registry.npmjs.org/@lytjs/common-raf/-/common-raf-6.0.0.tgz}
+    resolution: {integrity: sha512-X7aEAwixw575nklfNz1kU/K0Qsm1iFRTVt5YnEmv5pV6p44gcNyoca0IgZ5zxXVL5JrRmXsi21NIyxXZD1XKmQ==}
 
   '@lytjs/common-render-queue@6.0.0':
-    resolution: {integrity: sha512-YaHLJGvzBH0X238sTFvlDPDO8AfqRAT8+MduUIMIWCJqEbpfVKDeugDnVKAcsL622GU7Y8WJG/Djv7YRkWzjAw==, tarball: https://registry.npmjs.org/@lytjs/common-render-queue/-/common-render-queue-6.0.0.tgz}
+    resolution: {integrity: sha512-YaHLJGvzBH0X238sTFvlDPDO8AfqRAT8+MduUIMIWCJqEbpfVKDeugDnVKAcsL622GU7Y8WJG/Djv7YRkWzjAw==}
 
   '@lytjs/common-scheduler@6.0.0':
-    resolution: {integrity: sha512-mIQKXV0J2adC6hPHZSJHeB0VkBknDc9NjnAn+DeoeJRrXLH1ify1lFXb7bExcchRMuyYnfXI0ZbgI8Tus2IPuw==, tarball: https://registry.npmjs.org/@lytjs/common-scheduler/-/common-scheduler-6.0.0.tgz}
+    resolution: {integrity: sha512-mIQKXV0J2adC6hPHZSJHeB0VkBknDc9NjnAn+DeoeJRrXLH1ify1lFXb7bExcchRMuyYnfXI0ZbgI8Tus2IPuw==}
+
+  '@lytjs/common-scheduler@6.4.0':
+    resolution: {integrity: sha512-FTBiyWhvmNQ4Oa94M3KZSyG2eUaX/GkI1vT2IuN3XQnyhXkABTE6TLwS970bp1rZeK1utAgBduqL4fRJM1drcw==}
 
   '@lytjs/common-security@6.0.0':
-    resolution: {integrity: sha512-u1CKgINcyd0f50i4AeUDFHv+55XIyZNyuRA5OQ0rGXVUR+q+jH555jrHVV/is7vCyDG9Sa+K7MQ/YfQPtQiRMw==, tarball: https://registry.npmjs.org/@lytjs/common-security/-/common-security-6.0.0.tgz}
+    resolution: {integrity: sha512-u1CKgINcyd0f50i4AeUDFHv+55XIyZNyuRA5OQ0rGXVUR+q+jH555jrHVV/is7vCyDG9Sa+K7MQ/YfQPtQiRMw==}
 
   '@lytjs/common-storage@6.0.0':
-    resolution: {integrity: sha512-tbzkm9JpfveOxcg9q+mmS3Bvhlz6bG5EbrEWZhrpCzQIfuKvL/RS3SCQrH3r3OwfQuGm36VRTVTAhMZ+EJw8gg==, tarball: https://registry.npmjs.org/@lytjs/common-storage/-/common-storage-6.0.0.tgz}
+    resolution: {integrity: sha512-tbzkm9JpfveOxcg9q+mmS3Bvhlz6bG5EbrEWZhrpCzQIfuKvL/RS3SCQrH3r3OwfQuGm36VRTVTAhMZ+EJw8gg==}
 
   '@lytjs/common-string@6.0.0':
-    resolution: {integrity: sha512-0coCLkCs5jdvpcgisuMIDPyACA7HIJd0xhaFE9OuP4pODYy1fEfyVF+zJhzR1rYcN/jQX+BFXglkDD3jP0EMRg==, tarball: https://registry.npmjs.org/@lytjs/common-string/-/common-string-6.0.0.tgz}
+    resolution: {integrity: sha512-0coCLkCs5jdvpcgisuMIDPyACA7HIJd0xhaFE9OuP4pODYy1fEfyVF+zJhzR1rYcN/jQX+BFXglkDD3jP0EMRg==}
+
+  '@lytjs/common-string@6.4.0':
+    resolution: {integrity: sha512-TbsYrkpDtUeiDHjxfWlTfYFOcG0jNpzmBUhK40Nx5mrYOevsjuh4z/xDScRCz5YMFjkd0wLx3fNoCV0+N9GlhA==}
 
   '@lytjs/common-timing@6.0.0':
-    resolution: {integrity: sha512-LT0p+u2Bry8ehZs7Rrh0i5jeHGvQCafjh0v1uHx0eXy6VKXfH71t6Zg2szjZja6M31VnxDHOIfbIxYGaexYd3g==, tarball: https://registry.npmjs.org/@lytjs/common-timing/-/common-timing-6.0.0.tgz}
+    resolution: {integrity: sha512-LT0p+u2Bry8ehZs7Rrh0i5jeHGvQCafjh0v1uHx0eXy6VKXfH71t6Zg2szjZja6M31VnxDHOIfbIxYGaexYd3g==}
 
   '@lytjs/common-transition-engine@6.0.0':
-    resolution: {integrity: sha512-TcPdXSdgMHkeNqlfe5kY/HmOhaemGvX3PzjdD3Sc113/ZCuxYhNHQT5zav3bw5O6dTvAt6mL1m3+jJs+Qovyjg==, tarball: https://registry.npmjs.org/@lytjs/common-transition-engine/-/common-transition-engine-6.0.0.tgz}
+    resolution: {integrity: sha512-TcPdXSdgMHkeNqlfe5kY/HmOhaemGvX3PzjdD3Sc113/ZCuxYhNHQT5zav3bw5O6dTvAt6mL1m3+jJs+Qovyjg==}
+
+  '@lytjs/common-transition-engine@6.4.0':
+    resolution: {integrity: sha512-xdMnt4m8jq4KL0EZKWViUg2YOO4f3lI9P3HdBq5sP3eOpPMJ2WqLzN6ALKwXMjmB7Sqz5y2YXfiEWCRPCiBYzw==}
 
   '@lytjs/common-validate@6.0.0':
-    resolution: {integrity: sha512-GEwaYj6jikBOQZo/P4NdRC9qtQ6CB7g8jLECvK7GknbVaXsVtI+x5a7UTWi/hIKzXTA4mNHxHASyV88yoRO+qw==, tarball: https://registry.npmjs.org/@lytjs/common-validate/-/common-validate-6.0.0.tgz}
+    resolution: {integrity: sha512-GEwaYj6jikBOQZo/P4NdRC9qtQ6CB7g8jLECvK7GknbVaXsVtI+x5a7UTWi/hIKzXTA4mNHxHASyV88yoRO+qw==}
 
   '@lytjs/common-vnode@6.0.0':
-    resolution: {integrity: sha512-QYhWCUMcM5PLOIuU4qgpeYZ9waA1m1IFZaS4og87Gaof6klPpB0lan/ZVUNgGL9+w4N5dbpZK8aI+WXsVkhFbQ==, tarball: https://registry.npmjs.org/@lytjs/common-vnode/-/common-vnode-6.0.0.tgz}
+    resolution: {integrity: sha512-QYhWCUMcM5PLOIuU4qgpeYZ9waA1m1IFZaS4og87Gaof6klPpB0lan/ZVUNgGL9+w4N5dbpZK8aI+WXsVkhFbQ==}
+
+  '@lytjs/common-vnode@6.4.0':
+    resolution: {integrity: sha512-CioyoZ51xA47tTSVOkrTcbRYCDb5HQ6cWHewPBq93/x1WSVprJq2epmaO8wrDEloKIX9O1VoKbwrYMCHY29m+g==}
 
   '@lytjs/common-warn@6.0.0':
-    resolution: {integrity: sha512-h6tg7Li1fk2aSTes23mjqthIX/J6zTgp/cLP0kBe66MUh4kEp/k7yXTjKc6n0Uy4wCyfzIKzSXmMgpvySj47Fw==, tarball: https://registry.npmjs.org/@lytjs/common-warn/-/common-warn-6.0.0.tgz}
+    resolution: {integrity: sha512-h6tg7Li1fk2aSTes23mjqthIX/J6zTgp/cLP0kBe66MUh4kEp/k7yXTjKc6n0Uy4wCyfzIKzSXmMgpvySj47Fw==}
 
   '@lytjs/compiler@6.0.0':
     resolution: {integrity: sha512-rlllUZarCPZq/vE39p3+T8rjSK+2/YiIyA5orkXT0hGJvyZ6YyvlUpgp5DpVqeScNAmNSH3N7S9s9mCqGleVqg==}
 
+  '@lytjs/compiler@6.4.0':
+    resolution: {integrity: sha512-ciNonSq/3HIMuZEJF5+O3Y5vvdxl28UoErGlOhVsq9VrYkB8bGCg3yho2y/s/hsle7pFDjKM2bDj+6XccjiJbg==}
+
   '@lytjs/component@6.0.0':
     resolution: {integrity: sha512-kicZUQ8MtcTxkgewT9gu4f3I9ZAeSInELdYK/80jYpkOVwZvrsWq2D/BCA69DV2ib637MA17lv3MR8exU3HDkA==}
+
+  '@lytjs/component@6.4.0':
+    resolution: {integrity: sha512-Oohe7p60zq8zPkPrzK89Uufx6M1Lb0cm1W4zD4P7S7vtujOSgv87Z1QkyFHrpVcIFXhxxESkd9CsRsFXBI4Mzw==}
 
   '@lytjs/core@6.0.0':
     resolution: {integrity: sha512-/ga7uPx30mQO2rttPOc7CneH0Fjasr5JhEUlgu6sJ9B8HmCWhidyPQLuGXs7AVLbfQ4vVnzj5Ttkf4YWoCspfA==}
 
   '@lytjs/dom-runtime@6.0.0':
-    resolution: {integrity: sha512-2ycnOIghp7HyzoLXl50jo5XdQQfjUiA/ps7BwML+zVXpSCiVFGsUbFuJCnH9jnBzVITdlczYGsuS63YEOc9Zug==, tarball: https://registry.npmjs.org/@lytjs/dom-runtime/-/dom-runtime-6.0.0.tgz}
+    resolution: {integrity: sha512-2ycnOIghp7HyzoLXl50jo5XdQQfjUiA/ps7BwML+zVXpSCiVFGsUbFuJCnH9jnBzVITdlczYGsuS63YEOc9Zug==}
+
+  '@lytjs/dom-runtime@6.4.0':
+    resolution: {integrity: sha512-EhTfKhxSSXDgiK81LieKG2nJcUSyQXG5sQItGAeOo3oeT2sICeaBNWiJjfvvVAV+Gx2Si+DZCxi2rUPStpXKaw==}
 
   '@lytjs/host-contract@6.0.0':
-    resolution: {integrity: sha512-LRM1Gfd0frEbjibrFIar/vvZweqgCpFmKJsJlz03R8HNkf1xtHKjy9dljs9OursVNlzxbh9O//bvuPA2tv67Rw==, tarball: https://registry.npmjs.org/@lytjs/host-contract/-/host-contract-6.0.0.tgz}
+    resolution: {integrity: sha512-LRM1Gfd0frEbjibrFIar/vvZweqgCpFmKJsJlz03R8HNkf1xtHKjy9dljs9OursVNlzxbh9O//bvuPA2tv67Rw==}
+
+  '@lytjs/host-contract@6.4.0':
+    resolution: {integrity: sha512-T7ujqe5UpzzzaeU3R9J7WwVhFBS/1UP/LNAYWo6Bk5Lr/PpNPLQRZrS77iguxwYj3387nCV7+vLjHXVj5C222w==}
 
   '@lytjs/reactivity@6.0.0':
     resolution: {integrity: sha512-rshkfEg7z3DlzTdG30h9Tci8rQKNSpPJuq2nk36rS5qc8sPSfQUqiBscEn80id3ZW2BObpxk3ur/0hTnJCJApw==}
 
+  '@lytjs/reactivity@6.4.0':
+    resolution: {integrity: sha512-TJkEhhghNBzoxCDN+x7yGx+jUfJIHM5A15tLx82n//JJgJmjDHHxnuoAaBhJjI02TR+fhU38XRTl3I0fDpILMw==}
+
   '@lytjs/renderer@6.0.0':
     resolution: {integrity: sha512-UU02L8Z0/WabcAf5SzEuAPE6MACJIHC+hNODcSNBXe2XPloj+b+CTYZHSnHCNSEAOPRThououCsKnyxYamgjdQ==}
 
-  '@lytjs/router@6.0.0':
-    resolution: {integrity: sha512-UX3wVpF+1uYKZCllqTI33iZbC7xN4PASvkLHJ/lNHR3v8xumiULjEmYcy5RmXXSMRq3XqapSSHmvTxytk/keAg==}
+  '@lytjs/renderer@6.4.0':
+    resolution: {integrity: sha512-oLi6HDbCqDH7yqu3zFDsHq2UAoZouj+rYgYB+QN0cg2l35rx1dP24gewtHhpsRStHa2K61+hXD14BxhJFgaBqg==}
+
+  '@lytjs/router@6.4.0':
+    resolution: {integrity: sha512-V8EF51C6DFVKKo9A8S5dIUXYMthHYYU3bISxKuVrGjqFlsKgEOXsZXUiDFS0RUAxEJENOPmm18sDlKb7U+LI9g==}
 
   '@lytjs/shared-types@6.0.0':
-    resolution: {integrity: sha512-84Y3V4bCkloO4N6kU0XjM7yCdzbF4VWu9dv+DlXUFv7XJsNSrEQ0gEdj6/CEpY+XZ82+EZVdk1YoTShXenZPYQ==, tarball: https://registry.npmjs.org/@lytjs/shared-types/-/shared-types-6.0.0.tgz}
+    resolution: {integrity: sha512-84Y3V4bCkloO4N6kU0XjM7yCdzbF4VWu9dv+DlXUFv7XJsNSrEQ0gEdj6/CEpY+XZ82+EZVdk1YoTShXenZPYQ==}
 
-  '@lytjs/store@6.0.0':
-    resolution: {integrity: sha512-Aw/8n6ImAhbJ7XWtZb+EHv6gfPz1ucIO4xa8Zo3PNyAcuGCCLNhdkbc5ypA9pI+bV10kLI52Lsln4uCTtPU1Sw==}
+  '@lytjs/shared-types@6.4.0':
+    resolution: {integrity: sha512-BRwBoIzda20sPBWkzLAHoABgjZtX6GheHLu6GyeosrtZOhz78EWHh2rrNnkOB15zML20WAKdgIgc3DMFytwAtQ==}
+
+  '@lytjs/store@6.4.0':
+    resolution: {integrity: sha512-USyfUwSwzLfP9lJmNAmzlqGYJZmrxTuYFZfWcNwNBwXf7iLImMhK9dCq/TzLbIDiAq87UNarOr3DjA0Yayy1AQ==}
 
   '@lytjs/vdom@6.0.0':
     resolution: {integrity: sha512-qeYEcFTabloHzYd0Mg5Si31ScrzBFQj14XYJslHjjDGPWSKjLByziscLJK74tYvZZNzHuj2AYQmjFjh3WtYOFw==}
+
+  '@lytjs/vdom@6.4.0':
+    resolution: {integrity: sha512-0nNAdfy4/p5ujQREFVTog8NrVgV090rv+qspzxmRybuut3NdNyroOjZZPy7LD/ROMG2+pMknlcAg2AYh7up8JQ==}
 
   '@manypkg/find-root@1.1.0':
     resolution: {integrity: sha512-mki5uBvhHzO8kYYix/WRy2WX8S3B5wdVSc9D6KcU5lQNglP2yt58/VfLuAK49glRXChosY8ap2oJ1qgma3GUVA==}
@@ -5236,10 +5306,6 @@ packages:
     resolution: {integrity: sha512-aqD2Q0144Z+/RqG52NeHEkZauTAUWJO8c6yTftGJKO3Tja5tUgIfmIl6kExvhtxSDP7fXB6DvzkfMpCd/F3G+Q==}
     engines: {node: '>=0.6.19'}
 
-  string-width@4.2.0:
-    resolution: {integrity: sha512-zUz5JD+tgqtuDjMhwIg5uFVV3dtqZ9yQJlZVfq4I01/K5Paj5UHj7VyrQOJvzawSVlKpObApbfD0Ed6yJc+1eg==}
-    engines: {node: '>=8'}
-
   string-width@4.2.3:
     resolution: {integrity: sha512-wKyQRQpjJ0sIp62ErSZdGsjMJWsap5oRNihHhu6G7JVO/9jIB6UyevL+tXuOqrng8j/cxKTWyWUwvSTriiZz/g==}
     engines: {node: '>=8'}
@@ -6775,7 +6841,7 @@ snapshots:
   '@isaacs/cliui@8.0.2':
     dependencies:
       string-width: 5.1.2
-      string-width-cjs: string-width@4.2.0
+      string-width-cjs: string-width@4.2.3
       strip-ansi: 7.2.0
       strip-ansi-cjs: strip-ansi@6.0.1
       wrap-ansi: 8.1.0
@@ -6813,11 +6879,31 @@ snapshots:
       '@lytjs/shared-types': 6.0.0
       '@lytjs/vdom': 6.0.0
 
+  '@lytjs/adapter-web@6.4.0':
+    dependencies:
+      '@lytjs/common-dom': 6.0.0
+      '@lytjs/common-error': 6.0.0
+      '@lytjs/common-events': 6.0.0
+      '@lytjs/common-is': 6.0.0
+      '@lytjs/common-string': 6.0.0
+      '@lytjs/host-contract': 6.0.0
+      '@lytjs/reactivity': 6.0.0
+      '@lytjs/shared-types': 6.0.0
+      '@lytjs/vdom': 6.0.0
+
   '@lytjs/common-a11y@6.0.0': {}
+
+  '@lytjs/common-a11y@6.4.0': {}
 
   '@lytjs/common-algorithm@6.0.0': {}
 
+  '@lytjs/common-algorithm@6.4.0': {}
+
   '@lytjs/common-assertions@6.0.0':
+    dependencies:
+      '@lytjs/common-is': 6.0.0
+
+  '@lytjs/common-assertions@6.4.0':
     dependencies:
       '@lytjs/common-is': 6.0.0
 
@@ -6829,6 +6915,8 @@ snapshots:
 
   '@lytjs/common-constants@6.0.0': {}
 
+  '@lytjs/common-constants@6.4.0': {}
+
   '@lytjs/common-dom-helpers@6.0.0': {}
 
   '@lytjs/common-dom@6.0.0':
@@ -6838,9 +6926,22 @@ snapshots:
       '@lytjs/common-is': 6.0.0
       '@lytjs/common-string': 6.0.0
 
+  '@lytjs/common-dom@6.4.0':
+    dependencies:
+      '@lytjs/common-error': 6.0.0
+      '@lytjs/common-events': 6.0.0
+      '@lytjs/common-is': 6.0.0
+      '@lytjs/common-string': 6.0.0
+
   '@lytjs/common-env@6.0.0': {}
 
+  '@lytjs/common-env@6.4.0': {}
+
   '@lytjs/common-error@6.0.0':
+    dependencies:
+      '@lytjs/common-constants': 6.0.0
+
+  '@lytjs/common-error@6.4.0':
     dependencies:
       '@lytjs/common-constants': 6.0.0
 
@@ -6853,9 +6954,15 @@ snapshots:
     dependencies:
       '@lytjs/common-is': 6.0.0
 
+  '@lytjs/common-events@6.4.0':
+    dependencies:
+      '@lytjs/common-is': 6.0.0
+
   '@lytjs/common-http@6.0.0': {}
 
   '@lytjs/common-is@6.0.0': {}
+
+  '@lytjs/common-is@6.4.0': {}
 
   '@lytjs/common-keyboard@6.0.0': {}
 
@@ -6864,6 +6971,11 @@ snapshots:
       '@lytjs/host-contract': 6.0.0
 
   '@lytjs/common-object@6.0.0':
+    dependencies:
+      '@lytjs/common-constants': 6.0.0
+      '@lytjs/common-is': 6.0.0
+
+  '@lytjs/common-object@6.4.0':
     dependencies:
       '@lytjs/common-constants': 6.0.0
       '@lytjs/common-is': 6.0.0
@@ -6886,6 +6998,10 @@ snapshots:
     dependencies:
       '@lytjs/common-env': 6.0.0
 
+  '@lytjs/common-scheduler@6.4.0':
+    dependencies:
+      '@lytjs/common-env': 6.0.0
+
   '@lytjs/common-security@6.0.0':
     dependencies:
       '@lytjs/common-is': 6.0.0
@@ -6897,9 +7013,18 @@ snapshots:
       '@lytjs/common-constants': 6.0.0
       '@lytjs/common-security': 6.0.0
 
+  '@lytjs/common-string@6.4.0':
+    dependencies:
+      '@lytjs/common-constants': 6.0.0
+      '@lytjs/common-security': 6.0.0
+
   '@lytjs/common-timing@6.0.0': {}
 
   '@lytjs/common-transition-engine@6.0.0':
+    dependencies:
+      '@lytjs/host-contract': 6.0.0
+
+  '@lytjs/common-transition-engine@6.4.0':
     dependencies:
       '@lytjs/host-contract': 6.0.0
 
@@ -6907,9 +7032,19 @@ snapshots:
 
   '@lytjs/common-vnode@6.0.0': {}
 
+  '@lytjs/common-vnode@6.4.0': {}
+
   '@lytjs/common-warn@6.0.0': {}
 
   '@lytjs/compiler@6.0.0':
+    dependencies:
+      '@lytjs/common-constants': 6.0.0
+      '@lytjs/common-error': 6.0.0
+      '@lytjs/common-is': 6.0.0
+      '@lytjs/common-string': 6.0.0
+      '@lytjs/common-vnode': 6.0.0
+
+  '@lytjs/compiler@6.4.0':
     dependencies:
       '@lytjs/common-constants': 6.0.0
       '@lytjs/common-error': 6.0.0
@@ -6927,6 +7062,17 @@ snapshots:
       '@lytjs/reactivity': 6.0.0
       '@lytjs/shared-types': 6.0.0
       '@lytjs/vdom': 6.0.0
+
+  '@lytjs/component@6.4.0':
+    dependencies:
+      '@lytjs/common-error': 6.0.0
+      '@lytjs/common-is': 6.0.0
+      '@lytjs/common-scheduler': 6.0.0
+      '@lytjs/common-string': 6.0.0
+      '@lytjs/common-vnode': 6.0.0
+      '@lytjs/reactivity': 6.4.0
+      '@lytjs/shared-types': 6.0.0
+      '@lytjs/vdom': 6.4.0
 
   '@lytjs/core@6.0.0':
     dependencies:
@@ -6946,9 +7092,24 @@ snapshots:
     dependencies:
       '@lytjs/reactivity': 6.0.0
 
+  '@lytjs/dom-runtime@6.4.0':
+    dependencies:
+      '@lytjs/reactivity': 6.0.0
+
   '@lytjs/host-contract@6.0.0': {}
 
+  '@lytjs/host-contract@6.4.0': {}
+
   '@lytjs/reactivity@6.0.0':
+    dependencies:
+      '@lytjs/common-assertions': 6.0.0
+      '@lytjs/common-constants': 6.0.0
+      '@lytjs/common-error': 6.0.0
+      '@lytjs/common-is': 6.0.0
+      '@lytjs/common-scheduler': 6.0.0
+      '@lytjs/shared-types': 6.0.0
+
+  '@lytjs/reactivity@6.4.0':
     dependencies:
       '@lytjs/common-assertions': 6.0.0
       '@lytjs/common-constants': 6.0.0
@@ -6971,24 +7132,56 @@ snapshots:
       '@lytjs/reactivity': 6.0.0
       '@lytjs/vdom': 6.0.0
 
-  '@lytjs/router@6.0.0':
+  '@lytjs/renderer@6.4.0':
+    dependencies:
+      '@lytjs/adapter-web': 6.0.0
+      '@lytjs/common-dom': 6.0.0
+      '@lytjs/common-error': 6.0.0
+      '@lytjs/common-events': 6.0.0
+      '@lytjs/common-is': 6.0.0
+      '@lytjs/common-string': 6.0.0
+      '@lytjs/compiler': 6.4.0
+      '@lytjs/dom-runtime': 6.0.0
+      '@lytjs/host-contract': 6.0.0
+      '@lytjs/reactivity': 6.4.0
+      '@lytjs/vdom': 6.4.0
+
+  '@lytjs/router@6.4.0':
     dependencies:
       '@lytjs/common-env': 6.0.0
       '@lytjs/common-is': 6.0.0
-      '@lytjs/component': 6.0.0
-      '@lytjs/reactivity': 6.0.0
-      '@lytjs/vdom': 6.0.0
+      '@lytjs/component': 6.4.0
+      '@lytjs/reactivity': 6.4.0
+      '@lytjs/vdom': 6.4.0
 
   '@lytjs/shared-types@6.0.0': {}
 
-  '@lytjs/store@6.0.0':
+  '@lytjs/shared-types@6.4.0': {}
+
+  '@lytjs/store@6.4.0':
     dependencies:
       '@lytjs/common-is': 6.0.0
       '@lytjs/common-object': 6.0.0
-      '@lytjs/component': 6.0.0
-      '@lytjs/reactivity': 6.0.0
+      '@lytjs/component': 6.4.0
+      '@lytjs/reactivity': 6.4.0
 
   '@lytjs/vdom@6.0.0':
+    dependencies:
+      '@lytjs/common-algorithm': 6.0.0
+      '@lytjs/common-assertions': 6.0.0
+      '@lytjs/common-constants': 6.0.0
+      '@lytjs/common-dom': 6.0.0
+      '@lytjs/common-error': 6.0.0
+      '@lytjs/common-events': 6.0.0
+      '@lytjs/common-is': 6.0.0
+      '@lytjs/common-object': 6.0.0
+      '@lytjs/common-string': 6.0.0
+      '@lytjs/common-transition-engine': 6.0.0
+      '@lytjs/common-vnode': 6.0.0
+      '@lytjs/host-contract': 6.0.0
+      '@lytjs/shared-types': 6.0.0
+
+  '@lytjs/vdom@6.4.0':
     dependencies:
       '@lytjs/common-algorithm': 6.0.0
       '@lytjs/common-assertions': 6.0.0
@@ -9521,12 +9714,6 @@ snapshots:
       any-promise: 1.3.0
 
   string-argv@0.3.2: {}
-
-  string-width@4.2.0:
-    dependencies:
-      emoji-regex: 8.0.0
-      is-fullwidth-code-point: 3.0.0
-      strip-ansi: 6.0.0
 
   string-width@4.2.3:
     dependencies:

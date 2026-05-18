@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/router",
-  "version": "6.0.0",
+  "version": "6.4.0",
   "description": "LytJS declarative routing system with support for nested routes, navigation guards, and history modes",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -31,9 +31,9 @@
   "dependencies": {
     "@lytjs/common-is": "^6.0.0",
     "@lytjs/common-env": "^6.0.0",
-    "@lytjs/reactivity": "^6.0.0",
-    "@lytjs/component": "^6.0.0",
-    "@lytjs/vdom": "^6.0.0"
+    "@lytjs/reactivity": "^6.1.0",
+    "@lytjs/component": "^6.1.0",
+    "@lytjs/vdom": "^6.1.0"
   },
   "devDependencies": {
     "tsup": "^8.0.0",

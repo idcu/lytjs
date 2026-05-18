@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/store",
-  "version": "6.0.0",
+  "version": "6.4.0",
   "description": "LytJS Signal-based state management with Option Store and Setup Store patterns",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -31,8 +31,8 @@
   "dependencies": {
     "@lytjs/common-is": "^6.0.0",
     "@lytjs/common-object": "^6.0.0",
-    "@lytjs/reactivity": "^6.0.0",
-    "@lytjs/component": "^6.0.0"
+    "@lytjs/reactivity": "^6.1.0",
+    "@lytjs/component": "^6.1.0"
   },
   "devDependencies": {
     "tsup": "^8.0.0",
