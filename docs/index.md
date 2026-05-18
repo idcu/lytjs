@@ -1,4 +1,3 @@
-
 ---
 layout: home
 
@@ -44,6 +43,7 @@ features:
 ## 两条学习路径
 
 ### 🎯 我是新手 / 想快速上手
+
 简单三步骤，马上开始！
 
 ```bash
@@ -63,19 +63,21 @@ pnpm dev
 ---
 
 ### 👨‍💻 我是有经验的开发者 / 想快速了解框架
+
 直接查看核心文档！
 
-| 技术维度 | 快速入口 |
-|---------|---------|
-| **响应式系统** | [API 参考 - Reactivity](./api/reactivity.md) |
-| **核心架构** | [架构设计](./development/ARCHITECTURE.md) |
-| **8 层架构** | [Guide - Architecture](./guide/architecture.md) |
-| **性能优化** | [渲染模式](./guide/rendering-modes.md) |
-| **生态系统** | [Ecosystem 总览](./ecosystem/index.md) |
-| **插件开发** | [插件开发指南](./development/PLUGIN_DEVELOPMENT.md) |
-| **项目结构** | [项目结构说明](./development/PROJECT_STRUCTURE.md) |
+| 技术维度       | 快速入口                                            |
+| -------------- | --------------------------------------------------- |
+| **响应式系统** | [API 参考 - Reactivity](./api/reactivity.md)        |
+| **核心架构**   | [架构设计](./development/ARCHITECTURE.md)           |
+| **8 层架构**   | [Guide - Architecture](./guide/architecture.md)     |
+| **性能优化**   | [渲染模式](./guide/rendering-modes.md)              |
+| **生态系统**   | [Ecosystem 总览](./ecosystem/index.md)              |
+| **插件开发**   | [插件开发指南](./development/PLUGIN_DEVELOPMENT.md) |
+| **项目结构**   | [项目结构说明](./development/PROJECT_STRUCTURE.md)  |
 
 **开发者快速阅读清单：**
+
 1. ✅ 了解 [Signal 响应式系统](api/reactivity.md#signal-api) - 了解核心性能优势
 2. ✅ 查看 [架构设计](development/ARCHITECTURE.md) - 理解 8 层架构
 3. ✅ 探索 [渲染模式](guide/rendering-modes.md) - Vapor vs VNode
@@ -122,16 +124,19 @@ pnpm dev
 ## 技术亮点
 
 ### 🔬 Signal 细粒度响应式
+
 - 独立的信号订阅通知机制
 - 桥接 Effect 系统，完全兼容
 - 最小化更新成本，极致性能
 
 ### 🌊 Vapor 渲染模式
+
 - 基于 Signal 的细粒度 DOM 更新
 - 无需虚拟 DOM 对比开销
 - 支持 Island Architecture 水合策略
 
 ### 📦 完整 8 层架构
+
 ```
 L0: 基础工具层
 L1: 核心原语层
@@ -146,11 +151,13 @@ L7: 工程化工具层
 ### 🎉 v6.4.0 更新内容
 
 #### 核心包发布
+
 - ✅ 完整 Monorepo 包发布到 npm
 - 所有核心包、生态包、插件、工具包统一版本 6.4.0
-- 包含 29+ common-* 系列工具包
+- 包含 29+ common-\* 系列工具包
 
 #### 核心修复
+
 - 修复 ColorPicker 组件 const 赋值错误
 - 将 const 变量改为 let 以允许赋值
 - 全项目文档版本统一为 v6.4.0
