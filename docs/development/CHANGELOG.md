@@ -5,6 +5,92 @@
 
 ---
 
+## v6.4.0 (2026-05-18) - 性能极致
+
+### 编译时优化
+
+- ✅ **静态提升优化**
+  - 新增 `staticHoisting.ts` 模块，分析和提取静态子树
+  - 静态节点识别与标记（`isStaticNode()`）
+  - 静态文本内容提取（`extractStaticText()`）
+  - 静态子树分组与优化（`analyzeStatic()`）
+  - 减少运行时渲染开销，提升渲染性能
+
+- ✅ **Tree Shaking 增强**
+  - 优化模块导出结构
+  - 更好的静态分析支持
+  - 减小最终打包体积
+
+### 内存优化
+
+- ✅ **通用对象池实现**
+  - 新增 `ObjectPool<T>` 泛型类，支持任意类型对象池
+  - 对象预热（warmup）、获取（acquire）、释放（release）
+  - 对象验证（validate）、重置（reset）、统计（stats）
+  - 可配置最大池大小、预热数量
+  - 显著减少 GC 压力
+
+- ✅ **内存泄漏检测工具**
+  - 新增 `MemoryLeakDetector` 类
+  - 对象分配跟踪与释放计数
+  - 定期检查潜在泄漏
+  - 堆栈跟踪捕获（开发模式）
+  - 完整内存报告生成（`generateReport()`）
+
+- ✅ **内存压力监控**
+  - 新增 `MemoryPressureMonitor` 类
+  - 内存使用监控与预警
+  - 可配置压力阈值（默认 80%）
+  - 高压回调支持
+
+- ✅ **工具函数**
+  - `estimateObjectSize()` - 对象内存占用估算
+  - `forceGC()` - 强制 GC（如果可用）
+  - `getMemoryLeakDetector()` - 获取全局泄漏检测器
+  - `trackObject()` / `releaseObject()` - 便捷跟踪 API
+
+### 测试体系完善
+
+- ✅ **性能回归测试框架**
+  - 新增 `performance-regression.ts` 基准测试
+  - 支持多场景性能数据收集
+  - 性能变化趋势分析
+  - 回归检测与告警
+
+- ✅ **基准测试增强**
+  - 内存基准测试（`memory.bench.ts`）
+  - 渲染基准测试（`render.bench.ts`）
+  - 更新基准测试（`update.bench.ts`）
+  - 批量优化基准测试（`batch-optimization.bench.ts`）
+  - Vapor 列表基准测试（`vapor-list.bench.ts`）
+
+- ✅ **性能报告**
+  - 完整性能数据记录
+  - 性能对比分析
+  - 优化效果追踪
+
+### 核心包更新
+
+- ✅ **@lytjs/common-memory**
+  - 新包创建，提供内存优化工具
+  - 完整 TypeScript 类型支持
+  - 零运行时依赖
+  - 完整单元测试覆盖
+
+- ✅ **@lytjs/compiler**
+  - 新增 `optimize/` 目录
+  - 静态提升优化模块
+  - 优化模块入口（`optimize/index.ts`）
+
+### 文档更新
+
+- ✅ **ROADMAP_NEXT_STEPS.md**
+  - 更新 v6.4 任务状态为已完成
+  - 记录完成的工作内容
+  - 相关文件链接
+
+---
+
 ## v6.3.0 (2026-05-16) - 生态繁荣
 
 ### ErrorBoundary 增强
