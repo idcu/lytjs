@@ -64,3 +64,20 @@ lerna-debug.log*
 
 # Auto-generated verification reports (local only)
 docs/development/*_VERIFICATION_REPORT.md
+
+# Archive files
+*.zip
+*.tar
+*.tar.gz
+*.rar
+
+# Temporary test and script files
+compile-test.test.ts
+test-compile-result.js
+test-compile-result.mjs
+copy-lytx.cjs
+copy-lytx.js
+init-lytx-git.cjs
+
+# Memory analysis reports
+memlab-report.json
