@@ -62,14 +62,14 @@ docs/
 - docs/index.md: 版本号从 v6.4.0 升级到 v6.5.0，更新内容
 - docs/SUMMARY.md: 版本号从 v6.4.0 升级到 v6.5.0
 
-### 批次 2：用户指南 (高优先级)
+### 批次 2：用户指南 (高优先级)🚧 进行中
 
 **目标：** 更新面向用户的使用指南
 
 - [ ] [docs/guide/](file:///e:/trae/lytjs/docs/guide/) 下的所有文档
   - [ ] getting-started.md
-  - [ ] installation.md
-  - [ ] architecture.md
+  - [x] installation.md
+  - [x] architecture.md
   - [ ] reactivity.md
   - [ ] component.md
   - [ ] composition-api.md
@@ -78,10 +78,15 @@ docs/
   - [ ] custom-directives.md
   - [ ] lifecycle.md
   - [ ] events.md
-  - [ ] plugins.md
+  - [x] plugins.md
   - [ ] ssr.md
   - [ ] typescript.md
   - [ ] 等等...
+
+**已完成的更新**:
+- installation.md: 更新 Vite 插件说明（从"尚未实现"到已发布）
+- architecture.md: 更新插件列表（从 7 个到 13 个）、更新生态包列表（新增 6 个生态包）
+- plugins.md: 添加官方插件完整列表
 
 ### 批次 3：教程和实战案例 (高优先级)
 

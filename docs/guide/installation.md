@@ -134,9 +134,22 @@ LytJS 使用 TypeScript 编写，类型定义已内置，无需额外安装 `@ty
 
 ### Vite 插件
 
-::: warning 尚未实现
-`@lytjs/vite-plugin` 目前尚未发布，请关注后续版本更新。
-:::
+```bash
+pnpm add -D @lytjs/plugin-vite
+```
+
+在 `vite.config.ts` 中配置：
+
+```typescript
+import { defineConfig } from 'vite';
+import lytjs from '@lytjs/plugin-vite';
+
+export default defineConfig({
+  plugins: [
+    lytjs()
+  ]
+});
+```
 
 ### ESLint 插件
 

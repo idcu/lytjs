@@ -143,7 +143,7 @@ core-signal → reactivity, compiler, component, renderer, common-*
 | --- | --- |
 | `@lytjs/adapter-web` | Web 平台适配器（DOM 渲染器、事件包装、属性补丁、水合支持） |
 | `@lytjs/web` | Web 平台工具（CSS 变量、ResizeObserver、Web Components） |
-| `@lytjs/plugin-*` | 官方插件（theme、logger、auth、storage、i18n、vite） |
+| `@lytjs/plugin-*` | 官方插件（theme、logger、auth、storage、i18n、vite、chart、animation、form、data-fetch、data、validation、testing） |
 
 ### 依赖关系
 
@@ -169,11 +169,18 @@ plugins → core, common-*
 
 | 包 | 描述 |
 | --- | --- |
-| `@lytjs/ui` | UI 组件库（30+ 组件） |
+| `@lytjs/ui` | UI 组件库（60+ 组件） |
 | `@lytjs/router` | 路由系统 |
+| `@lytjs/router-fs` | 文件系统路由引擎 |
+| `@lytjs/api` | API 路由引擎 |
 | `@lytjs/store` | 状态管理 |
 | `@lytjs/ssr` | 服务端渲染 |
+| `@lytjs/bundler` | 构建工具集成 |
+| `@lytjs/hmr` | 热模块替换 |
+| `@lytjs/runtime-edge` | 边缘运行时支持 |
 | `@lytjs/devtools` | 开发者工具 |
+| `@lytjs/platform-adapter` | 平台适配器 |
+| `@lytjs/compat` | 兼容性层 |
 
 ## L7: 工程化工具层
 
