@@ -547,13 +547,13 @@ features:
 - [x] 移动现有文档到新位置
 - [x] 创建必要的索引文件
 
-### 阶段三：内容重组（contribute 已完成）
+### 阶段三：内容重组（contribute/packages/plugins/ecosystem 已完成）
 - [x] 重组 contribute 文档 - 已完成开发者文档重组
+- [x] 创建 packages 目录文档 - 已完成包文档结构
+- [x] 创建 plugins 目录文档 - 已完成插件文档结构
+- [x] 重组 ecosystem 目录文档 - 已完成生态文档结构
 - [ ] 重组 guide 文档
 - [ ] 重组 tutorial 文档
-- [ ] 创建 packages 目录文档
-- [ ] 创建 plugins 目录文档
-- [ ] 创建 ecosystem 目录文档
 
 ### 阶段四：首页和菜单更新
 - [ ] 更新首页 index.md
@@ -637,6 +637,45 @@ contribute/
 - **📚 最佳实践** - 开发经验和规范
 - **🤖 AI 辅助开发** - AI 相关文档
 - **🌐 其他** - 其他相关文档
+
+---
+
+## 📦 Packages 目录文档重组完成
+
+### ✅ 已完成
+
+- **packages/index.md** - 包文档首页，分类清晰
+- **packages/core/** - 核心包文档
+- **packages/common/** - Common 系列包（重点突出）
+- **packages/reactivity/** - 响应式系统文档
+- **packages/component/** - 组件系统文档
+- **packages/vdom/** - 渲染系统文档
+- **packages/other/** - 其他包文档
+
+---
+
+## 🔌 Plugins 目录文档重组完成
+
+### ✅ 已完成
+
+- **plugins/index.md** - 插件生态首页
+- **plugins/official/** - 官方插件文档
+- **plugins/development/** - 插件开发指南
+
+---
+
+## 🌐 Ecosystem 目录文档重组完成
+
+### ✅ 已完成
+
+- **ecosystem/index.md** - 生态系统首页
+- **ecosystem/router/** - 路由系统文档
+- **ecosystem/store/** - 状态管理文档
+- **ecosystem/ui/** - UI 组件库文档
+- **ecosystem/ssr/** - 服务端渲染文档
+- **ecosystem/devtools/** - 开发工具文档
+- **ecosystem/cli/** - CLI 工具文档
+- **ecosystem/other/** - 其他生态包文档
 
 ---
 
