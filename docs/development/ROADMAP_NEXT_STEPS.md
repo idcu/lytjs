@@ -793,12 +793,19 @@ registerIntegrations({
   └─ 总计：11-15 周完成核心层
 ```
 
-### 7.3 下一步行动（立即开始）
+### 7.3 已完成（阶段一核心增强）
 
-1. 开始 @lytjs/plugin-validation 开发
-2. 设计 @lytjs/plugin-data 架构
-3. 规划从 LytX 提取 router-fs、api、ssg、isr、bundler、hmr
-4. 准备 UI 组件库迁出的迁移计划
+✅ **@lytjs/plugin-validation** - 验证插件已完成  
+✅ **@lytjs/plugin-data** - 增强版数据获取插件已完成  
+✅ **@lytjs/router-fs** - 文件系统路由引擎已完成  
+✅ **@lytjs/api** - API 路由引擎已完成  
+
+### 下一步行动
+
+1. 开始 @lytjs/ssg 开发（静态站点生成）
+2. 开始 @lytjs/isr 开发（增量静态再生成）
+3. 开始 @lytjs/bundler 开发（构建工具集成）
+4. 开始 @lytjs/hmr 开发（热模块替换）
 
 ---
 

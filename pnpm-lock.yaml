@@ -917,6 +917,22 @@ importers:
         specifier: ^3.0.7
         version: 3.0.7(@types/node@22.19.19)(@vitest/ui@3.0.0(vitest@3.0.7))(jiti@2.7.0)(jsdom@26.0.0)(tsx@4.22.0)(yaml@2.6.1)
 
+  packages/ecosystem/packages/api:
+    dependencies:
+      '@lytjs/common-http':
+        specifier: ^6.0.0
+        version: 6.0.0
+    devDependencies:
+      tsup:
+        specifier: ^8.3.6
+        version: 8.5.1(jiti@2.7.0)(postcss@8.5.14)(tsx@4.22.0)(typescript@5.8.2)(yaml@2.6.1)
+      typescript:
+        specifier: ^5.7.3
+        version: 5.8.2
+      vitest:
+        specifier: ^3.0.0
+        version: 3.0.7(@types/node@22.19.19)(@vitest/ui@3.0.0)(jiti@2.7.0)(jsdom@29.1.1)(tsx@4.22.0)(yaml@2.6.1)
+
   packages/ecosystem/packages/compat:
     dependencies:
       '@lytjs/component':
@@ -1027,6 +1043,18 @@ importers:
         version: 8.5.1(jiti@2.7.0)(postcss@8.5.14)(tsx@4.22.0)(typescript@5.8.2)(yaml@2.6.1)
       typescript:
         specifier: ^5.4.0
+        version: 5.8.2
+      vitest:
+        specifier: ^3.0.0
+        version: 3.0.7(@types/node@22.19.19)(@vitest/ui@3.0.0)(jiti@2.7.0)(jsdom@29.1.1)(tsx@4.22.0)(yaml@2.6.1)
+
+  packages/ecosystem/packages/router-fs:
+    devDependencies:
+      tsup:
+        specifier: ^8.3.6
+        version: 8.5.1(jiti@2.7.0)(postcss@8.5.14)(tsx@4.22.0)(typescript@5.8.2)(yaml@2.6.1)
+      typescript:
+        specifier: ^5.7.3
         version: 5.8.2
       vitest:
         specifier: ^3.0.0
@@ -1183,6 +1211,28 @@ importers:
         version: 8.5.1(jiti@2.7.0)(postcss@8.5.14)(tsx@4.22.0)(typescript@5.8.2)(yaml@2.6.1)
       typescript:
         specifier: ^5.4.0
+        version: 5.8.2
+      vitest:
+        specifier: ^3.0.0
+        version: 3.0.7(@types/node@22.19.19)(@vitest/ui@3.0.0)(jiti@2.7.0)(jsdom@29.1.1)(tsx@4.22.0)(yaml@2.6.1)
+
+  packages/plugins/packages/plugin-data:
+    dependencies:
+      '@lytjs/core':
+        specifier: ^6.0.0
+        version: 6.0.0
+      '@lytjs/plugin-data-fetch':
+        specifier: ^6.0.0
+        version: 6.4.0
+      '@lytjs/reactivity':
+        specifier: ^6.0.0
+        version: 6.0.0
+    devDependencies:
+      tsup:
+        specifier: ^8.3.6
+        version: 8.5.1(jiti@2.7.0)(postcss@8.5.14)(tsx@4.22.0)(typescript@5.8.2)(yaml@2.6.1)
+      typescript:
+        specifier: ^5.7.3
         version: 5.8.2
       vitest:
         specifier: ^3.0.0
@@ -2982,6 +3032,9 @@ packages:
 
   '@lytjs/host-contract@6.4.0':
     resolution: {integrity: sha512-T7ujqe5UpzzzaeU3R9J7WwVhFBS/1UP/LNAYWo6Bk5Lr/PpNPLQRZrS77iguxwYj3387nCV7+vLjHXVj5C222w==}
+
+  '@lytjs/plugin-data-fetch@6.4.0':
+    resolution: {integrity: sha512-+VqH3sZ0WvlhY7FFnFO0z0s7xlnwMRGEK4V3jD1LsOv019gS+Mdf7HnUQFZfUtBp/Tv006ts7Fz7X55OgG8o+A==, tarball: https://registry.npmjs.org/@lytjs/plugin-data-fetch/-/plugin-data-fetch-6.4.0.tgz}
 
   '@lytjs/plugin-form@6.4.0':
     resolution: {integrity: sha512-ROtJPgxMu842AgnChNShDeCBdcRYG47VdcXpwTX/onDQNEdxlllbiBXohHJWE+UuS9Lb4kLQs/2BxwJNfYdvvA==, tarball: https://registry.npmjs.org/@lytjs/plugin-form/-/plugin-form-6.4.0.tgz}
@@ -7141,6 +7194,11 @@ snapshots:
   '@lytjs/host-contract@6.0.0': {}
 
   '@lytjs/host-contract@6.4.0': {}
+
+  '@lytjs/plugin-data-fetch@6.4.0':
+    dependencies:
+      '@lytjs/core': 6.4.0
+      '@lytjs/reactivity': 6.4.0
 
   '@lytjs/plugin-form@6.4.0':
     dependencies:

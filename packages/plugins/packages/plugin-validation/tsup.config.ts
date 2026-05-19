@@ -6,7 +6,12 @@ export default defineConfig({
   outDir: 'dist',
   clean: true,
   dts: true,
-  sourcemap: true,
+  sourceMap: true,
   splitting: false,
   minify: false,
+  outExtension({ format }) {
+    return {
+      js: format === 'cjs' ? '.cjs' : '.mjs',
+    };
+  },
 });
