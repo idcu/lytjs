@@ -52,7 +52,13 @@
     "url": "https://gitee.com/lytjs/lytjs.git",
     "directory": "packages/plugins/packages/plugin-data"
   },
-  "keywords": ["lytjs", "data", "fetch", "optimistic", "store"],
+  "keywords": [
+    "lytjs",
+    "data",
+    "fetch",
+    "optimistic",
+    "store"
+  ],
   "homepage": "https://gitee.com/lytjs/lytjs/tree/develop/packages/plugins/packages/plugin-data#readme",
   "bugs": {
     "url": "https://gitee.com/lytjs/lytjs/issues"

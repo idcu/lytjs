@@ -17,7 +17,11 @@ export function isFile(path: string): boolean {
 }
 
 /** 转换文件路径到路由路径 */
-export function filePathToRoutePath(filePath: string, baseDir: string, extensions: string[]): string {
+export function filePathToRoutePath(
+  filePath: string,
+  baseDir: string,
+  extensions: string[],
+): string {
   let normalized = normalize(relative(baseDir, filePath));
   // 移除扩展名
   for (const ext of extensions) {
@@ -42,17 +46,15 @@ export function filePathToRoutePath(filePath: string, baseDir: string, extension
 /** 提取动态路由参数名 */
 export function extractDynamicParams(routePath: string): string[] {
   const matches = routePath.match(/:(\w+)/g);
-  return matches ? matches.map(m => m.slice(1)) : [];
+  return matches ? matches.map((m) => m.slice(1)) : [];
 }
-
-
 
 /** 递归扫描目录收集路由文件 */
 export function scanDirectory(
   dir: string,
   baseDir: string,
   extensions: string[],
-  ignorePatterns: string[]
+  ignorePatterns: string[],
 ): RouteConfig[] {
   const routes: RouteConfig[] = [];
   if (!isDirectory(dir)) return routes;
@@ -61,19 +63,21 @@ export function scanDirectory(
   for (const file of files) {
     const fullPath = join(dir, file);
     const relativePath = relative(baseDir, fullPath);
-    
+
     // 检查是否应该忽略
-    if (ignorePatterns.some(pattern => {
-      if (relativePath.includes(pattern)) return true;
-      return file.includes(pattern);
-    })) {
+    if (
+      ignorePatterns.some((pattern) => {
+        if (relativePath.includes(pattern)) return true;
+        return file.includes(pattern);
+      })
+    ) {
       continue;
     }
 
     if (isDirectory(fullPath)) {
       routes.push(...scanDirectory(fullPath, baseDir, extensions, ignorePatterns));
     } else if (isFile(fullPath)) {
-      const ext = extensions.find(e => file.endsWith(e));
+      const ext = extensions.find((e) => file.endsWith(e));
       if (ext) {
         const routePath = filePathToRoutePath(fullPath, baseDir, extensions);
         const params = extractDynamicParams(routePath);

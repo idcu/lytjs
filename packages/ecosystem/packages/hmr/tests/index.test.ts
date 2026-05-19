@@ -1,10 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import {
-  createHMRClient,
-  getHMRClient,
-  accept,
-  dispose,
-} from '../src';
+import { createHMRClient, getHMRClient, accept, dispose } from '../src';
 
 // 模拟 WebSocket
 class MockWebSocket {
@@ -73,10 +68,10 @@ describe('@lytjs/hmr', () => {
     it('should register accept handler', () => {
       const client = createHMRClient({ autoConnect: false });
       const handler = vi.fn();
-      
+
       // 使用内部方法测试
       (client as any).register('/test.ts', { accept: handler });
-      
+
       expect(handler).not.toHaveBeenCalled();
       client.disconnect();
     });
@@ -86,9 +81,9 @@ describe('@lytjs/hmr', () => {
     it('should register dispose handler', () => {
       const client = createHMRClient({ autoConnect: false });
       const handler = vi.fn();
-      
+
       (client as any).register('/test.ts', { dispose: handler });
-      
+
       expect(handler).not.toHaveBeenCalled();
       client.disconnect();
     });

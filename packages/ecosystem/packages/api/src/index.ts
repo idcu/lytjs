@@ -29,9 +29,7 @@ const DEFAULT_OPTIONS: Required<ApiRouterOptions> = {
 /**
  * 创建 API 路由器
  */
-export function createApiRouter(
-  options?: ApiRouterOptions
-): ApiRouter {
+export function createApiRouter(options?: ApiRouterOptions): ApiRouter {
   const config = { ...DEFAULT_OPTIONS, ...options };
   let routes: ApiRouteConfig[] = [];
 
@@ -40,7 +38,7 @@ export function createApiRouter(
       config.apiDir,
       config.apiDir,
       config.extensions,
-      config.ignorePatterns
+      config.ignorePatterns,
     );
   }
 
@@ -98,7 +96,7 @@ export function createApiRouter(
   async function handleRequest(
     method: HttpMethod,
     path: string,
-    _context: ApiRequestContext
+    _context: ApiRequestContext,
   ): Promise<ApiResponse> {
     const matched = match(method, path);
     if (!matched) {
@@ -141,14 +139,14 @@ export function createApiRouter(
   }
 
   function removeRoute(path: string) {
-    routes = routes.filter(r => r.path !== path);
+    routes = routes.filter((r) => r.path !== path);
   }
 
   function clearRoutes() {
     routes = [];
   }
 
-  refresh().catch(err => {
+  refresh().catch((err) => {
     console.warn('Failed to scan API routes:', err);
   });
 

@@ -1,10 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  createVitePlugin,
-  createWebpackPlugin,
-  getPreset,
-  createViteConfig,
-} from '../src';
+import { createVitePlugin, createWebpackPlugin, getPreset, createViteConfig } from '../src';
 
 describe('@lytjs/bundler', () => {
   describe('createVitePlugin', () => {

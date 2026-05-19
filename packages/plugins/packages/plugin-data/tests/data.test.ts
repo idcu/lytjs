@@ -1,11 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import {
-  createData,
-  createDataManager,
-  TTLCache,
-  LRUCache,
-  generateCacheKey,
-} from '../src';
+import { createData, createDataManager, TTLCache, LRUCache, generateCacheKey } from '../src';
 
 describe('@lytjs/plugin-data', () => {
   beforeEach(() => {
@@ -146,7 +140,11 @@ describe('@lytjs/plugin-data', () => {
     it('should handle cache operations', () => {
       const manager = createDataManager();
       const cache = manager.getCacheStorage();
-      cache.set('test-key', { data: { test: true }, createdAt: Date.now(), expiresAt: Date.now() + 1000 });
+      cache.set('test-key', {
+        data: { test: true },
+        createdAt: Date.now(),
+        expiresAt: Date.now() + 1000,
+      });
       expect(cache.has('test-key')).toBe(true);
       manager.invalidateCache('test-key');
       expect(cache.has('test-key')).toBe(false);

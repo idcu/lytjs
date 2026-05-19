@@ -66,7 +66,7 @@ export function filePathToApiPath(filePath: string, baseDir: string, extensions:
 /** 提取动态路由参数名 */
 export function extractDynamicParams(apiPath: string): string[] {
   const matches = apiPath.match(/:(\w+)/g);
-  return matches ? matches.map(m => m.slice(1)) : [];
+  return matches ? matches.map((m) => m.slice(1)) : [];
 }
 
 /** 递归扫描目录收集 API 路由文件 */
@@ -74,7 +74,7 @@ export function scanApiDirectory(
   dir: string,
   baseDir: string,
   extensions: string[],
-  ignorePatterns: string[]
+  ignorePatterns: string[],
 ): ApiRouteConfig[] {
   const routes: ApiRouteConfig[] = [];
   if (!isDirectory(dir)) return routes;
@@ -83,19 +83,21 @@ export function scanApiDirectory(
   for (const file of files) {
     const fullPath = join(dir, file);
     const relativePath = relative(baseDir, fullPath);
-    
+
     // 检查是否应该忽略
-    if (ignorePatterns.some(pattern => {
-      if (relativePath.includes(pattern)) return true;
-      return file.includes(pattern);
-    })) {
+    if (
+      ignorePatterns.some((pattern) => {
+        if (relativePath.includes(pattern)) return true;
+        return file.includes(pattern);
+      })
+    ) {
       continue;
     }
 
     if (isDirectory(fullPath)) {
       routes.push(...scanApiDirectory(fullPath, baseDir, extensions, ignorePatterns));
     } else if (isFile(fullPath)) {
-      const ext = extensions.find(e => file.endsWith(e));
+      const ext = extensions.find((e) => file.endsWith(e));
       if (ext) {
         const apiPath = filePathToApiPath(fullPath, baseDir, extensions);
         const params = extractDynamicParams(apiPath);

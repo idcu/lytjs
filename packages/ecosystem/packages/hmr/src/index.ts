@@ -4,12 +4,7 @@
  * 提供热模块替换的核心功能
  */
 
-import type {
-  HMRClientOptions,
-  HMRMessage,
-  HMRUpdate,
-  HMRHandler,
-} from './types';
+import type { HMRClientOptions, HMRMessage, HMRUpdate, HMRHandler } from './types';
 
 /**
  * HMR 客户端类

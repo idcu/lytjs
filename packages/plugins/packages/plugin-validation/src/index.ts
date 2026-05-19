@@ -54,7 +54,7 @@ function getMessage(
   messages: ValidationMessages,
   type: string,
   ruleValue?: unknown,
-  label?: string
+  label?: string,
 ): string {
   const msg = messages[type];
   if (typeof msg === 'function') {
@@ -69,7 +69,7 @@ async function validateRule(
   allValues: Record<string, unknown>,
   validators: Record<ValidationRuleType, Validator>,
   messages: ValidationMessages,
-  label?: string
+  label?: string,
 ): Promise<string | null> {
   let isValid: boolean;
 
@@ -94,7 +94,7 @@ async function validateFieldInternal(
   allValues: Record<string, unknown>,
   validators: Record<ValidationRuleType, Validator>,
   messages: ValidationMessages,
-  stopOnFirstError: boolean = false
+  stopOnFirstError: boolean = false,
 ): Promise<ValidationResult> {
   const errors: string[] = [];
 
@@ -113,10 +113,7 @@ async function validateFieldInternal(
 }
 
 function createValidationInstance(options?: ValidationPluginOptions): ValidationInstance {
-  const {
-    messages = {},
-    stopOnFirstError = false,
-  } = options || {};
+  const { messages = {}, stopOnFirstError = false } = options || {};
 
   const customMessages = { ...defaultMessages, ...messages };
   const customValidators: Record<string, Validator> = {};
@@ -126,7 +123,7 @@ function createValidationInstance(options?: ValidationPluginOptions): Validation
       field: string,
       value: unknown,
       rules: ValidationRule[],
-      allValues?: Record<string, unknown>
+      allValues?: Record<string, unknown>,
     ): Promise<ValidationResult> => {
       return await validateFieldInternal(
         value,
@@ -134,13 +131,13 @@ function createValidationInstance(options?: ValidationPluginOptions): Validation
         allValues || {},
         { ...builtInValidators, ...customValidators },
         customMessages,
-        stopOnFirstError
+        stopOnFirstError,
       );
     },
 
     validate: async (
       schema: ValidationSchema,
-      values: Record<string, unknown>
+      values: Record<string, unknown>,
     ): Promise<ValidationResult> => {
       const allErrors: string[] = [];
 
@@ -151,7 +148,7 @@ function createValidationInstance(options?: ValidationPluginOptions): Validation
           values,
           { ...builtInValidators, ...customValidators },
           customMessages,
-          stopOnFirstError
+          stopOnFirstError,
         );
         if (!result.valid) {
           allErrors.push(...result.errors);

@@ -21,13 +21,7 @@ export interface RequestOptions extends BaseRequestOptions {
   prefetch?: boolean;
 }
 
-export type {
-  FetchError,
-  FetchState,
-  FetchInstance,
-  CacheStorage,
-  CacheEntry,
-};
+export type { FetchError, FetchState, FetchInstance, CacheStorage, CacheEntry };
 
 export interface DataPluginOptions extends FetchPluginOptions {
   /** 默认去重设置 */
@@ -60,7 +54,9 @@ export interface DataManager {
   delete<T = unknown>(url: string, options?: RequestOptions): Promise<T>;
 
   /** 添加请求拦截器 */
-  addRequestInterceptor(interceptor: (config: RequestOptions) => RequestOptions | Promise<RequestOptions>): void;
+  addRequestInterceptor(
+    interceptor: (config: RequestOptions) => RequestOptions | Promise<RequestOptions>,
+  ): void;
 
   /** 添加响应拦截器 */
   addResponseInterceptor(interceptor: <T = unknown>(response: T) => T | Promise<T>): void;

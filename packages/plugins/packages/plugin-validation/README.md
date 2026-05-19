@@ -55,10 +55,7 @@ const schema = {
     rules: [{ type: 'required' }, { type: 'email' }],
   },
   password: {
-    rules: [
-      { type: 'required' },
-      { type: 'minLength', value: 8 },
-    ],
+    rules: [{ type: 'required' }, { type: 'minLength', value: 8 }],
   },
 };
 
@@ -76,22 +73,22 @@ console.log(validationResult.valid); // true 或 false
 
 ### 内置规则
 
-| 规则类型 | 说明 | 参数 |
-|---------|------|------|
-| `required` | 必填验证 | - |
-| `email` | 邮箱格式验证 | - |
-| `phone` | 手机号验证 | - |
-| `number` | 数字验证 | - |
-| `min` | 最小值验证 | `value: number` |
-| `max` | 最大值验证 | `value: number` |
-| `minLength` | 最小长度验证 | `value: number` |
-| `maxLength` | 最大长度验证 | `value: number` |
-| `length` | 精确长度验证 | `value: number` |
-| `pattern` | 正则表达式验证 | `value: RegExp \| string` |
-| `url` | URL 格式验证 | - |
-| `uuid` | UUID 格式验证 | - |
-| `date` | 日期格式验证 | - |
-| `custom` | 自定义验证 | `validator: Function` |
+| 规则类型    | 说明           | 参数                      |
+| ----------- | -------------- | ------------------------- |
+| `required`  | 必填验证       | -                         |
+| `email`     | 邮箱格式验证   | -                         |
+| `phone`     | 手机号验证     | -                         |
+| `number`    | 数字验证       | -                         |
+| `min`       | 最小值验证     | `value: number`           |
+| `max`       | 最大值验证     | `value: number`           |
+| `minLength` | 最小长度验证   | `value: number`           |
+| `maxLength` | 最大长度验证   | `value: number`           |
+| `length`    | 精确长度验证   | `value: number`           |
+| `pattern`   | 正则表达式验证 | `value: RegExp \| string` |
+| `url`       | URL 格式验证   | -                         |
+| `uuid`      | UUID 格式验证  | -                         |
+| `date`      | 日期格式验证   | -                         |
+| `custom`    | 自定义验证     | `validator: Function`     |
 
 ### 规则示例
 
@@ -99,37 +96,37 @@ console.log(validationResult.valid); // true 或 false
 const rules = [
   // 必填
   { type: 'required' },
-  
+
   // 邮箱
   { type: 'email' },
-  
+
   // 手机号
   { type: 'phone' },
-  
+
   // 数字
   { type: 'number' },
-  
+
   // 范围
   { type: 'min', value: 18 },
   { type: 'max', value: 100 },
-  
+
   // 长度
   { type: 'minLength', value: 6 },
   { type: 'maxLength', value: 20 },
   { type: 'length', value: 4 },
-  
+
   // 正则
   { type: 'pattern', value: /^\d+$/ },
-  
+
   // URL
   { type: 'url' },
-  
+
   // UUID
   { type: 'uuid' },
-  
+
   // 日期
   { type: 'date' },
-  
+
   // 自定义
   {
     type: 'custom',
@@ -137,7 +134,7 @@ const rules = [
       return String(value).includes('test');
     },
   },
-  
+
   // 自定义错误消息
   { type: 'required', message: '请输入用户名' },
 ];
@@ -195,13 +192,11 @@ validation.setMessages({
 validation.addRule(
   'startsWithLyt',
   (value: unknown) => String(value).startsWith('lyt'),
-  '必须以 lyt 开头'
+  '必须以 lyt 开头',
 );
 
 // 使用自定义规则
-const result = await validation.validateField('name', 'lytjs', [
-  { type: 'startsWithLyt' as any },
-]);
+const result = await validation.validateField('name', 'lytjs', [{ type: 'startsWithLyt' as any }]);
 ```
 
 ## 与 @lytjs/plugin-form 配合使用
@@ -215,10 +210,7 @@ const validation = createValidationInstance();
 const form = createFormManager({
   fields: {
     email: {
-      rules: [
-        { type: 'required' },
-        { type: 'email' },
-      ],
+      rules: [{ type: 'required' }, { type: 'email' }],
     },
   },
 });

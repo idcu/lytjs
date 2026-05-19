@@ -26,7 +26,11 @@ export interface ValidationRule {
 }
 
 export interface Validator {
-  (value: unknown, ruleValue?: unknown, allValues?: Record<string, unknown>): boolean | Promise<boolean>;
+  (
+    value: unknown,
+    ruleValue?: unknown,
+    allValues?: Record<string, unknown>,
+  ): boolean | Promise<boolean>;
 }
 
 export interface ValidationResult {
@@ -55,8 +59,16 @@ export interface ValidationOptions {
 }
 
 export interface ValidationInstance {
-  validate: (schema: ValidationSchema, values: Record<string, unknown>) => Promise<ValidationResult>;
-  validateField: (field: string, value: unknown, rules: ValidationRule[], allValues?: Record<string, unknown>) => Promise<ValidationResult>;
+  validate: (
+    schema: ValidationSchema,
+    values: Record<string, unknown>,
+  ) => Promise<ValidationResult>;
+  validateField: (
+    field: string,
+    value: unknown,
+    rules: ValidationRule[],
+    allValues?: Record<string, unknown>,
+  ) => Promise<ValidationResult>;
   setMessages: (messages: ValidationMessages) => void;
   addRule: (type: ValidationRuleType, validator: Validator, defaultMessage?: string) => void;
 }

@@ -27,12 +27,12 @@ function createEdgeCache(): EdgeCache {
     async get<T>(key: string): Promise<T | null> {
       const entry = cache.get(key);
       if (!entry) return null;
-      
+
       if (entry.expires && Date.now() > entry.expires) {
         cache.delete(key);
         return null;
       }
-      
+
       return entry.value as T;
     },
 
@@ -56,12 +56,12 @@ function createEdgeCache(): EdgeCache {
     async has(key: string): Promise<boolean> {
       const entry = cache.get(key);
       if (!entry) return false;
-      
+
       if (entry.expires && Date.now() > entry.expires) {
         cache.delete(key);
         return false;
       }
-      
+
       return true;
     },
   };
@@ -104,10 +104,13 @@ function createEdgeRouter(options: EdgeRouterOptions = {}): EdgeRouter {
     }
 
     try {
-      const response = await route.handler(request, context ?? {
-        waitUntil: () => {},
-        passThroughOnException: () => {},
-      });
+      const response = await route.handler(
+        request,
+        context ?? {
+          waitUntil: () => {},
+          passThroughOnException: () => {},
+        },
+      );
       return response;
     } catch (error) {
       console.error('Edge handler error:', error);

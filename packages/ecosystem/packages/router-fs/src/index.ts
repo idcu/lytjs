@@ -6,12 +6,7 @@
  * @packageDocumentation
  */
 
-import type {
-  FileSystemRouterOptions,
-  RouteConfig,
-  RouteMatch,
-  FileSystemRouter,
-} from './types';
+import type { FileSystemRouterOptions, RouteConfig, RouteMatch, FileSystemRouter } from './types';
 import { scanDirectory } from './utils';
 
 /** 默认配置选项 */
@@ -26,9 +21,7 @@ const DEFAULT_OPTIONS: Required<FileSystemRouterOptions> = {
 /**
  * 创建文件系统路由管理器
  */
-export function createFileSystemRouter(
-  options?: FileSystemRouterOptions
-): FileSystemRouter {
+export function createFileSystemRouter(options?: FileSystemRouterOptions): FileSystemRouter {
   const config = { ...DEFAULT_OPTIONS, ...options };
   let routes: RouteConfig[] = [];
 
@@ -37,7 +30,7 @@ export function createFileSystemRouter(
       config.pagesDir,
       config.pagesDir,
       config.extensions,
-      config.ignorePatterns
+      config.ignorePatterns,
     );
   }
 
@@ -97,14 +90,14 @@ export function createFileSystemRouter(
   }
 
   function removeRoute(path: string) {
-    routes = routes.filter(r => r.path !== path);
+    routes = routes.filter((r) => r.path !== path);
   }
 
   function clearRoutes() {
     routes = [];
   }
 
-  refresh().catch(err => {
+  refresh().catch((err) => {
     console.warn('Failed to scan routes:', err);
   });
 
@@ -118,12 +111,5 @@ export function createFileSystemRouter(
   };
 }
 
-
-
 // 导出类型
-export type {
-  FileSystemRouterOptions,
-  RouteConfig,
-  RouteMatch,
-  FileSystemRouter,
-} from './types';
+export type { FileSystemRouterOptions, RouteConfig, RouteMatch, FileSystemRouter } from './types';

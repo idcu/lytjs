@@ -67,7 +67,7 @@ export type ApiHandler = (context: ApiRequestContext) => Promise<ApiResponse> | 
 /** API 中间件函数 */
 export type ApiMiddleware = (
   context: ApiRequestContext,
-  next: () => Promise<ApiResponse>
+  next: () => Promise<ApiResponse>,
 ) => Promise<ApiResponse>;
 
 /** API 匹配结果 */

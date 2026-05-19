@@ -130,7 +130,7 @@ export function createData<T = unknown>(
         }
         pendingRequests.delete(cacheKey);
         throw error;
-      }
+      },
     );
 
     if (dedupe) {
@@ -158,7 +158,7 @@ export function createData<T = unknown>(
   };
 
   const refetch = async (): Promise<T> => {
-    refetchCountSignal.update(v => v + 1);
+    refetchCountSignal.update((v) => v + 1);
     return executeFetch();
   };
 
@@ -172,7 +172,7 @@ export function createData<T = unknown>(
 
   const setData = (data: T | ((prev: T | null) => T)): void => {
     if (typeof data === 'function') {
-      dataSignal.update(prev => (data as (prev: T | null) => T)(prev));
+      dataSignal.update((prev) => (data as (prev: T | null) => T)(prev));
     } else {
       dataSignal.set(data);
     }
@@ -224,54 +224,72 @@ export function createDataManager(globalOptions: DataPluginOptions = {}): DataMa
     },
 
     async get<T = unknown>(url: string, options: RequestOptions = {}): Promise<T> {
-      const instance = createData<T>(url, { ...options, method: 'GET' }, {
-        ...globalOptions,
-        cacheStorage,
-      });
+      const instance = createData<T>(
+        url,
+        { ...options, method: 'GET' },
+        {
+          ...globalOptions,
+          cacheStorage,
+        },
+      );
       return instance.fetch();
     },
 
     async post<T = unknown>(url: string, body?: unknown, options: RequestOptions = {}): Promise<T> {
-      const instance = createData<T>(url, {
-        ...options,
-        method: 'POST',
-        body: body ? (typeof body === 'string' ? body : JSON.stringify(body)) : undefined,
-        headers: {
-          'Content-Type': 'application/json',
-          ...options.headers,
+      const instance = createData<T>(
+        url,
+        {
+          ...options,
+          method: 'POST',
+          body: body ? (typeof body === 'string' ? body : JSON.stringify(body)) : undefined,
+          headers: {
+            'Content-Type': 'application/json',
+            ...options.headers,
+          },
         },
-      }, {
-        ...globalOptions,
-        cacheStorage,
-      });
+        {
+          ...globalOptions,
+          cacheStorage,
+        },
+      );
       return instance.fetch();
     },
 
     async put<T = unknown>(url: string, body?: unknown, options: RequestOptions = {}): Promise<T> {
-      const instance = createData<T>(url, {
-        ...options,
-        method: 'PUT',
-        body: body ? (typeof body === 'string' ? body : JSON.stringify(body)) : undefined,
-        headers: {
-          'Content-Type': 'application/json',
-          ...options.headers,
+      const instance = createData<T>(
+        url,
+        {
+          ...options,
+          method: 'PUT',
+          body: body ? (typeof body === 'string' ? body : JSON.stringify(body)) : undefined,
+          headers: {
+            'Content-Type': 'application/json',
+            ...options.headers,
+          },
         },
-      }, {
-        ...globalOptions,
-        cacheStorage,
-      });
+        {
+          ...globalOptions,
+          cacheStorage,
+        },
+      );
       return instance.fetch();
     },
 
     async delete<T = unknown>(url: string, options: RequestOptions = {}): Promise<T> {
-      const instance = createData<T>(url, { ...options, method: 'DELETE' }, {
-        ...globalOptions,
-        cacheStorage,
-      });
+      const instance = createData<T>(
+        url,
+        { ...options, method: 'DELETE' },
+        {
+          ...globalOptions,
+          cacheStorage,
+        },
+      );
       return instance.fetch();
     },
 
-    addRequestInterceptor(interceptor: (config: RequestOptions) => RequestOptions | Promise<RequestOptions>): void {
+    addRequestInterceptor(
+      interceptor: (config: RequestOptions) => RequestOptions | Promise<RequestOptions>,
+    ): void {
       manager.addRequestInterceptor(interceptor as any);
     },
 
@@ -279,7 +297,9 @@ export function createDataManager(globalOptions: DataPluginOptions = {}): DataMa
       manager.addResponseInterceptor(interceptor);
     },
 
-    addErrorInterceptor(interceptor: (error: FetchError) => FetchError | Promise<FetchError>): void {
+    addErrorInterceptor(
+      interceptor: (error: FetchError) => FetchError | Promise<FetchError>,
+    ): void {
       manager.addErrorInterceptor(interceptor);
     },
 
@@ -296,10 +316,14 @@ export function createDataManager(globalOptions: DataPluginOptions = {}): DataMa
     },
 
     async prefetch<T = unknown>(url: string, options: RequestOptions = {}): Promise<T> {
-      const instance = createData<T>(url, { ...options, prefetch: true }, {
-        ...globalOptions,
-        cacheStorage,
-      });
+      const instance = createData<T>(
+        url,
+        { ...options, prefetch: true },
+        {
+          ...globalOptions,
+          cacheStorage,
+        },
+      );
       return instance.fetch();
     },
 
@@ -323,7 +347,8 @@ export function createDataManager(globalOptions: DataPluginOptions = {}): DataMa
 const pluginData = definePlugin({
   name: 'data',
   version: '6.0.0',
-  description: 'LytJS official enhanced data plugin with optimistic updates, deduplication, and store integration',
+  description:
+    'LytJS official enhanced data plugin with optimistic updates, deduplication, and store integration',
   author: 'LytJS Team',
   keywords: ['lytjs', 'data', 'fetch', 'optimistic', 'store'],
   schema: {
