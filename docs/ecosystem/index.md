@@ -70,6 +70,9 @@ API 路由引擎，基于文件系统的 API 路由系统。
 | plugin-validation | 表单验证插件          |
 | plugin-data       | 增强版数据获取插件    |
 | plugin-data-fetch | 基础数据获取插件      |
+| plugin-animation  | 动画效果              |
+| plugin-form       | 表单管理              |
+| plugin-testing    | 测试工具              |
 
 ## 特点
 

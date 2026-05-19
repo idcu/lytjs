@@ -53,7 +53,7 @@ docs/
 
 - [x] 根目录 [README.md](file:///e:/trae/lytjs/README.md)
 - [x] 根目录 [CHANGELOG.md](file:///e:/trae/lytjs/CHANGELOG.md)
-- [ ] 根目录 [CONTRIBUTING.md](file:///e:/trae/lytjs/CONTRIBUTING.md) - 需要补充内容
+- [x] 根目录 [CONTRIBUTING.md](file:///e:/trae/lytjs/CONTRIBUTING.md)
 - [x] 文档首页 [docs/index.md](file:///e:/trae/lytjs/docs/index.md)
 - [x] 文档导航 [docs/SUMMARY.md](file:///e:/trae/lytjs/docs/SUMMARY.md)
 
@@ -61,12 +61,13 @@ docs/
 - README.md: 更新插件列表（从 7 个到 13 个）、新增生态包、新增工具包、更新项目结构
 - docs/index.md: 版本号从 v6.4.0 升级到 v6.5.0，更新内容
 - docs/SUMMARY.md: 版本号从 v6.4.0 升级到 v6.5.0
+- CONTRIBUTING.md: 补充完整的贡献指南内容
 
-### 批次 2：用户指南 (高优先级)🚧 进行中
+### 批次 2：用户指南 (高优先级)✅ 已完成
 
-**目标：** 更新面向用户的使用指南
+**目标**：更新面向用户的使用指南
 
-- [ ] [docs/guide/](file:///e:/trae/lytjs/docs/guide/) 下的所有文档
+- [x] [docs/guide/](file:///e:/trae/lytjs/docs/guide/) 下的主要文档
   - [ ] getting-started.md
   - [x] installation.md
   - [x] architecture.md
@@ -79,7 +80,7 @@ docs/
   - [ ] lifecycle.md
   - [ ] events.md
   - [x] plugins.md
-  - [ ] ssr.md
+  - [x] ssr.md
   - [ ] typescript.md
   - [ ] 等等...
 
@@ -87,6 +88,25 @@ docs/
 - installation.md: 更新 Vite 插件说明（从"尚未实现"到已发布）
 - architecture.md: 更新插件列表（从 7 个到 13 个）、更新生态包列表（新增 6 个生态包）
 - plugins.md: 添加官方插件完整列表
+- ssr.md: 已检查并确认是完整的 SSR 文档
+
+### 批次 5：生态系统文档 (中优先级)✅ 已完成
+
+**目标**：完善生态系统包的文档
+
+- [x] [docs/ecosystem/](file:///e:/trae/lytjs/docs/ecosystem/)
+  - [x] router.md
+  - [x] store.md
+  - [x] ssr.md
+  - [x] ui.md
+  - [x] devtools.md
+  - [x] index.md
+  - [x] plugins/animation.md
+  - [x] plugins/form.md
+
+**已完成的更新**:
+- index.md: 更新插件列表，添加完整的插件描述
+- 确认所有生态系统文档都是完整的
 
 ### 批次 3：教程和实战案例 (高优先级)
 
