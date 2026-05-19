@@ -1,165 +1,140 @@
-# LytJS 文档索引
+# LytJS 文档导航
 
-> **LytJS v6.5.0** - 下一代轻量级前端框架
-
----
-
-## 📚 目录
-
-### 🏠 入门指南
-
-- [README](../README.md) - 项目介绍和快速开始
-- [快速入门](./tutorial/quick-start.md) - 5分钟上手 LytJS
-- [安装指南](./tutorial/installation.md) - 详细安装说明
-
-### 📖 核心文档
-
-- [核心概念](./tutorial/index.md) - LytJS 核心概念介绍
-- [响应式系统](./tutorial/reactivity.md) - 信号、计算、效应
-- [组件系统](./tutorial/components.md) - 组件开发指南
-- [虚拟 DOM](./tutorial/vdom.md) - VDOM 模式详解
-- [Vapor 模式](./tutorial/vapor-mode.md) - 细粒度渲染模式
-
-### 🔌 插件生态
-
-- [官方插件使用指南](./tutorial/official-plugins.md) - 所有官方插件详解
-- [插件开发指南](./tutorial/plugin-development.md) - 如何开发插件
-
-### 🛠️ 开发工具
-
-- [CLI 工具使用指南](./tutorial/cli-guide.md) - LytJS CLI 完整文档
-- [TypeScript 类型指南](./tutorial/typescript-guide.md) - 类型安全开发
-
-### 🌐 SSR 和 SSG
-
-- [SSR/SSG 使用指南](./tutorial/ssr-guide.md) - 服务端渲染和静态生成
-
-### 📚 实战教程
-
-- [实战案例教程](./tutorial/tutorials.md) - 完整案例索引
-  - [Todo 待办应用](./tutorial/todo-app.md)
-  - [用户管理系统](./tutorial/user-management.md)
-  - [购物车案例](./tutorial/shopping-cart.md)
-  - [博客系统案例](./tutorial/blog-system.md)
-
-### 🚀 迁移指南
-
-- [Vue → LytJS 迁移指南](./tutorial/migration-from-vue.md)
-- [React → LytJS 迁移指南](./tutorial/migration-from-react.md)
-
-### 📋 项目文档
-
-- [开发路线图](./development/ROADMAP_NEXT_STEPS.md) - 开发计划和进展
-- [变更日志](../CHANGELOG.md) - 版本更新历史
-- [v6.5.0 发布公告](./community/RELEASE_v6.5.0.md) - 最新版本发布说明
-- [v6.4.0 发布公告](./community/RELEASE_v6.4.0.md) - 历史版本公告
-- [v6.3.0 发布公告](./community/RELEASE_v6.3.0.md) - 历史版本公告
-- [贡献指南](./development/CONTRIBUTING.md) - 如何贡献代码
-- [架构设计](./development/ARCHITECTURE.md) - 8层架构详解
-- [AI 辅助开发规则](./development/AI_IDE_RULES.md)
-
-### 🔍 参考文档
-
-- [API 参考](./api/README.md)
-- [常见问题 FAQ](./tutorial/faq.md)
-- [故障排除](./tutorial/troubleshooting.md)
-
-### 🎨 UI 组件库
-
-- [UI 组件库文档](./components/README.md)
-- [Vapor 模式组件指南](./components/VAPOR_GUIDE.md)
+> 按目标群体查找需要的文档
 
 ---
 
-## 🎯 学习路径
+## 🏠 新手入门
 
-### 初学者路线
+- [新手入门](./getting-started/index.md)
+- [快速开始](./getting-started/quick-start.md)
+- [安装指南](./getting-started/installation.md)
 
-1. 阅读 [README](../README.md) 了解项目概览
-2. 完成 [快速入门](./tutorial/quick-start.md)
-3. 学习 [核心概念](./tutorial/index.md)
-4. 开始 [实战案例](./tutorial/tutorials.md)
+## 📚 核心指南
 
-### 从 Vue 迁移
+- [核心指南](./guide/index.md)
+- 响应式系统
+  - [响应式基础](./guide/reactivity/index.md)
+- 组件系统
+  - [组件基础](./guide/components/index.md)
+- 渲染模式
+  - [渲染模式概览](./guide/rendering/index.md)
+- 高级特性
+  - [TypeScript](./guide/advanced/typescript.md)
+  - [服务端渲染](./guide/advanced/ssr.md)
+  - [Error Boundary](./guide/advanced/error-boundary.md)
+- 内置组件
+  - [内置组件](./guide/built-in/index.md)
+- 插件开发
+  - [插件系统](./guide/plugins/index.md)
 
-1. 阅读 [Vue 迁移指南](./tutorial/migration-from-vue.md)
-2. 理解 [响应式系统区别](./tutorial/reactivity.md#与-vue-对比)
-3. 查看 [Vue 兼容性](./tutorial/migration-from-vue.md#兼容性)
+## 🎓 实战教程
 
-### 从 React 迁移
+- [实战教程](./tutorials/index.md)
+- 初级教程
+  - [Todo 应用](./getting-started/tutorials/todo-app.md)
+  - [用户列表](./getting-started/tutorials/user-list.md)
+- 中级教程
+  - [用户管理系统](./getting-started/tutorials/user-management.md)
+  - [购物车](./getting-started/tutorials/shopping-cart.md)
+  - [表单验证](./getting-started/tutorials/form-validation.md)
+  - [博客系统](./getting-started/tutorials/blog-system.md)
+- 高级教程
+  - [企业级最佳实践](./tutorials/enterprise-best-practices.md)
+  - [性能优化](./tutorials/performance-tuning.md)
+- 迁移指南
+  - [从 Vue 迁移](./tutorials/migration-from-vue.md)
+  - [从 React 迁移](./tutorials/migration-from-react.md)
 
-1. 阅读 [React 迁移指南](./tutorial/migration-from-react.md)
-2. 理解 [VDOM 模式](./tutorial/vdom.md)
-3. 查看 [React 兼容性](./tutorial/migration-from-react.md#兼容性)
+## 📦 包文档
 
----
+- [包文档](./packages/index.md)
+- 核心包
+  - [Core](./packages/core/core.md)
+  - [Core VNode](./packages/core/core-vnode.md)
+  - [Core Signal](./packages/core/core-signal.md)
+- Common 系列
+  - [Common 概览](./packages/common/index.md)
+- 响应式系统
+  - [Reactivity](./packages/reactivity/reactivity.md)
+- 组件系统
+  - [Component](./packages/component/component.md)
+- 渲染系统
+  - [Vdom](./packages/vdom/vdom.md)
+  - [Renderer](./packages/vdom/renderer.md)
+  - [Compiler](./packages/vdom/compiler.md)
+- 其他包
+  - [Adapter Web](./packages/other/adapter-web.md)
+  - [Dom](./packages/other/dom.md)
+  - [Host Contract](./packages/other/host-contract.md)
 
-## 📂 文件结构
+## 🔌 插件生态
 
-```
-docs/
-├── SUMMARY.md              # 本文档 - 完整索引
-├── README.md               # 文档首页
-├── tutorial/               # 教程文档
-│   ├── index.md
-│   ├── quick-start.md
-│   ├── installation.md
-│   ├── components.md
-│   ├── reactivity.md
-│   ├── vdom.md
-│   ├── vapor-mode.md
-│   ├── official-plugins.md
-│   ├── plugin-development.md
-│   ├── cli-guide.md
-│   ├── typescript-guide.md
-│   ├── ssr-guide.md
-│   ├── tutorials.md
-│   ├── todo-app.md
-│   ├── user-management.md
-│   ├── shopping-cart.md
-│   ├── blog-system.md
-│   ├── migration-from-vue.md
-│   ├── migration-from-react.md
-│   ├── faq.md
-│   └── troubleshooting.md
-├── development/            # 开发相关文档
-│   ├── ROADMAP_NEXT_STEPS.md
-│   ├── ARCHITECTURE.md
-│   ├── CONTRIBUTING.md
-│   ├── AI_IDE_RULES.md
-│   └── ...
-├── api/                    # API 参考文档
-│   └── README.md
-├── components/             # UI 组件库文档
-│   ├── README.md
-│   └── VAPOR_GUIDE.md
-└── examples/               # 示例代码
-    └── typescript-examples.ts
-```
+- [插件生态](./plugins/index.md)
+- 官方插件
+  - [插件概览](./plugins/official/index.md)
+- 插件开发
+  - [开发指南](./plugins/development/index.md)
 
----
+## 🌐 生态系统
 
-## 🚀 快速链接
+- [生态系统](./ecosystem/index.md)
+- 路由
+  - [Router](./ecosystem/router/router.md)
+- 状态管理
+  - [Store](./ecosystem/store/store.md)
+- UI 组件
+  - [UI 组件库](./ecosystem/ui/index.md)
+- SSR
+  - [SSR](./ecosystem/ssr/ssr.md)
+- 开发工具
+  - [DevTools](./ecosystem/devtools/devtools.md)
+- CLI
+  - [CLI](./ecosystem/cli/index.md)
+- 其他生态
+  - [其他包](./ecosystem/other/index.md)
 
-- [GitHub 仓库](https://github.com/lytjs/lytjs)
-- [NPM 包](https://npmjs.com/package/lytjs)
-- [问题反馈](https://github.com/lytjs/lytjs/issues)
-- [Discord 社区](https://discord.gg/lytjs)
-- [Twitter](https://twitter.com/lytjs)
+## 🔍 API 参考
 
----
+- [API 概览](./api/index.md)
+- [Core](./api/core.md)
+- [Reactivity](./api/reactivity.md)
+- [Component](./api/component.md)
+- [更多 API...](./api/)
 
-## 💡 发现文档问题？
+## 💻 示例代码
 
-如果发现文档有问题，请：
+- [示例概览](./examples/index.md)
+- [Counter](./examples/counter.md)
+- [TodoMVC](./examples/todomvc.md)
+- [交互式计数器](./examples/interactive-counter.md)
 
-1. 查看 [常见问题 FAQ](./tutorial/faq.md)
-2. 搜索 [现有 issue](https://github.com/lytjs/lytjs/issues)
-3. 创建 [新 issue](https://github.com/lytjs/lytjs/issues/new)
-4. 或者提交 PR 修复
+## 🔗 参考资料
 
----
+- [参考资料](./reference/index.md)
+- [常见问题](./reference/faq.md)
+- [故障排除](./reference/troubleshooting.md)
 
-**文档版本**: v6.5.0  
-**最后更新**: 2026-05-19  
-**维护者**: LytJS Team
+## 🤝 贡献指南
+
+- [贡献首页](./contribute/index.md)
+- [开始贡献](./contribute/getting-started.md)
+- 架构设计
+  - [架构概览](./contribute/architecture/index.md)
+  - [8 层架构](./contribute/architecture/8-layer-architecture.md)
+- 开发指南
+  - [工作流程](./contribute/development/workflow.md)
+  - [开发规范](./contribute/development/guidelines.md)
+  - [测试指南](./contribute/development/testing.md)
+- 知识库
+  - [知识库](./contribute/knowledge-base/index.md)
+- 其他
+  - [路线图](./contribute/roadmap/index.md)
+  - [变更日志](./contribute/other/changelog.md)
+  - [待办任务](./contribute/other/pending-tasks.md)
+
+## 👥 社区
+
+- [社区首页](./community/index.md)
+- [v6.5.0 发布](./community/RELEASE_v6.5.0.md)
+- [v6.4.0 发布](./community/RELEASE_v6.4.0.md)

@@ -10,78 +10,80 @@ hero:
     alt: LytJS
   actions:
     - theme: brand
-      text: 5 分钟快速上手
-      link: /tutorial/quick-start
+      text: 🏠 我是新手 - 开始学习
+      link: /getting-started/
     - theme: alt
-      text: 查看示例
-      link: /examples/
+      text: 👨‍💻 我是开发者 - 查看文档
+      link: /guide/
     - theme: alt
-      text: 在 Gitee 查看
-      link: https://gitee.com/lytjs/lytjs
+      text: 🤝 我想贡献 - 贡献指南
+      link: /contribute/
+    - theme: alt
+      text: 📦 查看所有包
+      link: /packages/
+    - theme: alt
+      text: 🔌 查看插件
+      link: /plugins/
+    - theme: alt
+      text: 🌐 生态系统
+      link: /ecosystem/
 
 features:
   - icon: ⚡
     title: 极致性能
-    details: 基于 Signal 的细粒度响应式系统，只更新真正需要更新的部分，带来毫秒级更新体验
+    details: 基于 Signal 的细粒度响应式系统，只更新真正需要的部分
   - icon: 🧩
     title: 渐进式架构
-    details: 8 层清晰架构，按需引入，从简单组件到复杂应用，逐步增强
+    details: 8 层清晰架构，按需引入，从简单组件到复杂应用
   - icon: 🔧
     title: 完整生态
-    details: Router、Store、UI 组件库、DevTools、SSR 一应俱全，开箱即用
+    details: Router、Store、UI 组件库、DevTools、SSR 一应俱全
   - icon: 📦
     title: TypeScript 优先
-    details: 完整的类型定义，零运行时第三方依赖，提供卓越的类型安全开发体验
+    details: 完整的类型定义，零运行时第三方依赖
   - icon: 🚀
     title: 双渲染模式
-    details: 支持 VNode 虚拟 DOM 模式和 Signal 细粒度渲染模式，自由选择最佳方案
+    details: 支持 VNode 虚拟 DOM 模式和 Signal 细粒度渲染模式
   - icon: 🛡️
     title: 零依赖
-    details: 所有核心包零第三方依赖，可预测、易维护、安全性高
+    details: 所有核心包零第三方依赖，可预测、易维护
 ---
 
-## 两条学习路径
+## 按目标群体导航
 
-### 🎯 我是新手 / 想快速上手
+### 🏠 新手用户
 
-简单三步骤，马上开始！
+简单三步骤，快速开始！
 
-```bash
-# 1. 创建项目
-npx @lytjs/cli create my-app
+1. 阅读 [快速开始](./getting-started/quick-start.md)
+2. 完成 [Todo 应用](./getting-started/tutorials/todo-app.md)
+3. 继续学习 [核心指南](./guide/)
 
-# 2. 安装依赖
-cd my-app
-pnpm install
+### 👨‍💻 有经验的开发者
 
-# 3. 启动开发服务器
-pnpm dev
-```
+直接查看核心文档和 API 参考！
 
-然后按照 [学习路径](#学习路径) 循序渐进！
+- [核心指南](./guide/) - 完整参考文档
+- [API 参考](./api/) - 快速查找 API
+- [包文档](./packages/) - 所有包的文档
+- [生态系统](./ecosystem/) - 生态包文档
+- [插件生态](./plugins/) - 官方插件
 
----
+### 🤝 贡献者
 
-### 👨‍💻 我是有经验的开发者 / 想快速了解框架
+了解如何为 LytJS 贡献！
 
-直接查看核心文档！
+- [贡献首页](./contribute/) - 贡献指南
+- [架构设计](./contribute/architecture/8-layer-architecture.md) - 了解架构
+- [开发规范](./contribute/development/guidelines.md) - 遵循规范
 
-| 技术维度       | 快速入口                                            |
-| -------------- | --------------------------------------------------- |
-| **响应式系统** | [API 参考 - Reactivity](./api/reactivity.md)        |
-| **核心架构**   | [架构设计](./development/ARCHITECTURE.md)           |
-| **8 层架构**   | [Guide - Architecture](./guide/architecture.md)     |
-| **性能优化**   | [渲染模式](./guide/rendering-modes.md)              |
-| **生态系统**   | [Ecosystem 总览](./ecosystem/index.md)              |
-| **插件开发**   | [插件开发指南](./development/PLUGIN_DEVELOPMENT.md) |
-| **项目结构**   | [项目结构说明](./development/PROJECT_STRUCTURE.md)  |
+### 🤖 AI 助手
 
-**开发者快速阅读清单：**
+清晰的文档结构便于快速定位！
 
-1. ✅ 了解 [Signal 响应式系统](api/reactivity.md#signal-api) - 了解核心性能优势
-2. ✅ 查看 [架构设计](development/ARCHITECTURE.md) - 理解 8 层架构
-3. ✅ 探索 [渲染模式](guide/rendering-modes.md) - Vapor vs VNode
-4. ✅ 浏览 [API 总览](api/index.md) - 快速查找需要的 API
+- [SUMMARY](./SUMMARY.md) - 完整文档导航
+- [API 参考](./api/) - API 索引
+- [架构设计](./contribute/architecture/) - 架构文档
 
 ---
 
@@ -92,90 +94,39 @@ pnpm dev
 按顺序学习，循序渐进：
 
 ```
-新手入门
+新手入门 → 快速开始 → 响应式基础 → 组件开发 → 实战案例
   ↓
-[tutorial/quick-start] → [tutorial/basics] → [tutorial/reactivity] → [tutorial/components]
-  ↓
-深入学习
-  ↓
-[guide/] → [api/] → 实战项目
+核心指南 → API 参考 → 生态系统
 ```
 
 ### 开发者深入路径
 
 ```
-已了解概念
+已了解概念 → 架构设计 → API 参考 → 包文档 → 插件开发
   ↓
-[api/reactivity] → [guide/rendering-modes] → [development/ARCHITECTURE]
-  ↓
-深入应用开发
-  ↓
-[ecosystem/router] → [ecosystem/store] → [guide/ssr]
+生态系统 → 性能优化 → 贡献指南
 ```
 
 ---
 
-## 项目状态
-
-- **版本**: v6.5.0
-- **状态**: 稳定版
-- **许可证**: MIT
-
-## 技术亮点
-
-### 🔬 Signal 细粒度响应式
-
-- 独立的信号订阅通知机制
-- 桥接 Effect 系统，完全兼容
-- 最小化更新成本，极致性能
-
-### 🌊 Vapor 渲染模式
-
-- 基于 Signal 的细粒度 DOM 更新
-- 无需虚拟 DOM 对比开销
-- 支持 Island Architecture 水合策略
-
-### 📦 完整 8 层架构
+## 文档结构概览
 
 ```
-L0: 基础工具层
-L1: 核心原语层
-L2: 渲染引擎层
-L3: 核心运行时层
-L4: 插件与适配层
-L5: 组件基础层
-L6: 生态系统层
-L7: 工程化工具层
+docs/
+├── getting-started/  # 🏠 新手入门
+├── guide/            # 📚 核心指南
+├── tutorials/        # 🎓 实战教程
+├── packages/         # 📦 包文档
+├── plugins/          # 🔌 插件生态
+├── ecosystem/        # 🌐 生态系统
+├── api/              # 🔍 API 参考
+├── examples/         # 💻 示例代码
+├── reference/        # 🔗 参考资料
+├── contribute/       # 🤝 贡献指南
+├── community/        # 👥 社区文档
+└── legacy/           # 📦 旧文档备份
 ```
-
-### 🎉 v6.5.0 更新内容
-
-#### 新增核心包
-
-- ✅ 6 个新增官方插件
-  - @lytjs/plugin-data - 增强版数据获取插件
-  - @lytjs/plugin-validation - 表单验证插件
-  - @lytjs/plugin-animation - 动画库插件
-  - @lytjs/plugin-form - 表单管理插件
-  - @lytjs/plugin-data-fetch - 数据获取基础插件
-  - @lytjs/plugin-testing - 测试工具插件
-- ✅ 5 个新增生态系统包
-  - @lytjs/router-fs - 文件系统路由引擎
-  - @lytjs/api - API 路由引擎
-  - @lytjs/bundler - 构建工具集成
-  - @lytjs/hmr - 热模块替换
-  - @lytjs/runtime-edge - 边缘运行时支持
-- ✅ 新增工具包
-  - @lytjs/common-memory - 内存工具包
-  - @lytjs/dom - DOM 平台封装
-  - @lytjs/web - Web 平台工具
-
-#### 核心增强
-
-- ✅ 完整的 SSG/ISR 支持
-- ✅ Tree-shaking 优化
-- ✅ 所有包统一版本 v6.5.0
 
 ---
 
-**开始你的 LytJS 之旅吧！** 🚀
+开始你的 LytJS 之旅吧！ 🚀

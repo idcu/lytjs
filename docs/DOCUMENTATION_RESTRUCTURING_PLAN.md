@@ -547,17 +547,19 @@ features:
 - [x] 移动现有文档到新位置
 - [x] 创建必要的索引文件
 
-### 阶段三：内容重组（contribute/packages/plugins/ecosystem 已完成）
+### 阶段三：内容重组（全部已完成）
 - [x] 重组 contribute 文档 - 已完成开发者文档重组
 - [x] 创建 packages 目录文档 - 已完成包文档结构
 - [x] 创建 plugins 目录文档 - 已完成插件文档结构
 - [x] 重组 ecosystem 目录文档 - 已完成生态文档结构
-- [ ] 重组 guide 文档
-- [ ] 重组 tutorial 文档
+- [x] 创建 getting-started 目录文档 - 已完成新手入门文档
+- [x] 重组 guide 目录文档 - 已完成核心指南文档
+- [x] 重组 tutorial 目录文档 - 已完成实战教程文档
+- [x] 重组 reference 目录文档 - 已完成参考资料文档
 
 ### 阶段四：首页和菜单更新
-- [ ] 更新首页 index.md
-- [ ] 创建新的 SUMMARY.md
+- [x] 更新首页 index.md - 已按用户角色导航
+- [x] 创建新的 SUMMARY.md - 完整的文档导航
 - [ ] 测试侧边栏导航
 
 ### 阶段五：检查和修复
@@ -676,6 +678,80 @@ contribute/
 - **ecosystem/devtools/** - 开发工具文档
 - **ecosystem/cli/** - CLI 工具文档
 - **ecosystem/other/** - 其他生态包文档
+
+---
+
+## 🏠 Getting-started 目录文档创建完成
+
+### ✅ 已完成
+
+- **getting-started/index.md** - 新手入门首页，包含学习路径
+- **getting-started/quick-start.md** - 快速开始（已迁移）
+- **getting-started/installation.md** - 安装指南（已迁移）
+- **getting-started/tutorials/** - 入门教程（已迁移所有实战案例）
+
+---
+
+## 📚 Guide 目录文档重组完成
+
+### ✅ 已完成
+
+- **guide/index.md** - 核心指南首页，分类清晰
+- **reference/index.md** - 参考资料首页
+
+---
+
+## 🎯 首页和 SUMMARY 更新完成
+
+### ✅ 已完成
+
+- **index.md** - 全新首页，按用户角色导航
+  - 新手用户入口
+  - 有经验的开发者入口
+  - 贡献者入口
+  - AI 助手入口
+  - 学习路径推荐
+- **SUMMARY.md** - 完整的文档导航
+  - 按功能分类组织
+  - 清晰的层级关系
+  - 便于快速查找
+
+---
+
+## 🎉 文档站重组基本完成！
+
+### 新的完整文档结构
+
+```
+docs/
+├── index.md             # 首页（用户角色分流）
+├── SUMMARY.md           # 新侧边栏导航
+├── getting-started/     # 🏠 新手入门
+├── guide/               # 📚 核心指南
+├── tutorials/           # 🎓 实战教程
+├── packages/            # 📦 包文档（独立大菜单）
+├── plugins/             # 🔌 插件生态（独立大菜单）
+├── ecosystem/           # 🌐 生态系统（独立大菜单）
+├── api/                 # 🔍 API 参考
+├── examples/            # 💻 示例代码
+├── reference/           # 🔗 参考资料
+├── contribute/          # 🤝 贡献指南
+├── community/           # 👥 社区文档
+└── legacy/              # 📦 旧文档备份
+```
+
+### 目标群体优化
+
+- **新手用户** - 通过首页快速进入 getting-started
+- **有经验的开发者** - 直接进入 guide/packages/plugins/ecosystem
+- **贡献者** - 在 contribute 找到所有需要的文档
+- **AI 助手** - 清晰的目录结构和完整的 SUMMARY 便于定位
+
+### 下一步（可选）
+
+- 检查和修复所有链接
+- 完整填充各个目录的文档内容
+- 旧文档的进一步清理和迁移
 
 ---
 

@@ -1,47 +1,50 @@
-# 简介
+# 核心指南
 
-## 什么是 LytJS？
+> LytJS 完整参考文档
 
-LytJS 是一个轻量级、高性能的渐进式 JavaScript 框架，专为构建现代 Web 应用而设计。
+---
 
-### 核心特性
+## 📚 文档分类
 
-- **⚡ 极致性能**：基于 Signal 的细粒度响应式系统，只更新真正需要更新的部分
-- **🧩 渐进式架构**：按需引入，从简单组件到复杂应用，逐步增强
-- **🔧 完整生态**：Router、Store、UI 组件库、DevTools、SSR 一应俱全
-- **📦 TypeScript 优先**：完整的类型定义，提供卓越的开发体验
-- **🎨 组件化开发**：声明式组件系统，支持组合式 API
-- **🚀 服务端渲染**：内置 SSR 支持，轻松构建 SEO 友好的应用
+### 响应式系统
 
-## 为什么选择 LytJS？
+- [响应式基础](./reactivity/index.md) - Signal 响应式系统
+- [计算属性](./reactivity/computed.md)
+- [Effect](./reactivity/effect.md)
+- [作用域](./reactivity/scope.md)
 
-### 与其他框架对比
+### 组件系统
 
-| 特性 | LytJS | Vue | React |
-|------|-------|-----|-------|
-| 响应式系统 | Signal | Proxy | setState |
-| 包大小 | ~10KB | ~40KB | ~40KB |
-| TypeScript | 原生支持 | 需配置 | 需配置 |
-| 学习曲线 | 平缓 | 中等 | 较陡 |
-| SSR 支持 | 内置 | Nuxt | Next.js |
+- [组件基础](./components/index.md) - 组件开发完整指南
+- [生命周期](./components/lifecycle.md)
+- [组件通信](./components/props.md)
+- [内置组件](./built-in/index.md)
 
-### 适用场景
+### 渲染模式
 
-- **小型项目**：快速原型开发、静态网站
-- **中型项目**：企业后台、内容管理系统
-- **大型项目**：电商平台、社交应用
+- [渲染模式概览](./rendering/index.md) - VDOM 和 Vapor 模式
+- [VDOM 模式](./rendering/vdom-mode.md)
+- [Vapor 模式](./rendering/signal-mode.md)
 
-## 浏览器支持
+### 高级特性
 
-LytJS 支持所有现代浏览器：
+- [TypeScript](./advanced/typescript.md)
+- [服务端渲染](./advanced/ssr.md)
+- [自定义渲染器](./advanced/custom-renderer.md)
+- [Error Boundary](./advanced/error-boundary.md)
+- [构建优化](./advanced/build-optimization.md)
 
-- Chrome >= 80
-- Firefox >= 78
-- Safari >= 14
-- Edge >= 80
+### 插件开发
 
-## 下一步
+- [插件系统](./plugins/index.md) - 插件开发指南
 
-- [快速开始](/guide/getting-started) - 5 分钟上手 LytJS
-- [安装](/guide/installation) - 了解各种安装方式
-- [响应式系统](/guide/reactivity) - 深入理解 Signal
+---
+
+## 📂 导航
+
+- [响应式系统](./reactivity/)
+- [组件系统](./components/)
+- [渲染模式](./rendering/)
+- [高级特性](./advanced/)
+- [内置组件](./built-in/)
+- [插件开发](./plugins/)
