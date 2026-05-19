@@ -540,20 +540,20 @@ features:
 - [x] 分析目标用户需求
 - [x] 设计新文档架构
 - [x] 创建重构计划文档
-- [ ] 备份现有文档
+- [x] 备份现有文档（到 legacy/development）
 
-### 阶段二：目录结构调整
-- [ ] 创建新目录结构
-- [ ] 移动现有文档到新位置
-- [ ] 创建必要的索引文件
+### 阶段二：目录结构调整（contribute）
+- [x] 创建新目录结构
+- [x] 移动现有文档到新位置
+- [x] 创建必要的索引文件
 
-### 阶段三：内容重组
+### 阶段三：内容重组（contribute 已完成）
+- [x] 重组 contribute 文档 - 已完成开发者文档重组
 - [ ] 重组 guide 文档
 - [ ] 重组 tutorial 文档
 - [ ] 创建 packages 目录文档
 - [ ] 创建 plugins 目录文档
 - [ ] 创建 ecosystem 目录文档
-- [ ] 创建 contribute 目录文档
 
 ### 阶段四：首页和菜单更新
 - [ ] 更新首页 index.md
@@ -567,9 +567,76 @@ features:
 - [ ] 更新所有引用
 
 ### 阶段六：清理
-- [ ] 归档旧文档
+- [x] 归档旧文档（legacy/development）
 - [ ] 删除临时文件
 - [ ] 提交变更
+
+---
+
+## 📊 贡献者文档重组完成
+
+### ✅ 已完成
+
+已成功将原来混乱的 `development/` 目录（27 个文档）重组为清晰的 `contribute/` 目录结构：
+
+```
+contribute/
+├── index.md                          # 贡献指南首页
+├── getting-started.md                # 开始贡献
+├── architecture/                     # 架构设计
+│   ├── index.md
+│   └── 8-layer-architecture.md
+├── development/                      # 开发指南
+│   ├── index.md
+│   ├── workflow.md
+│   ├── guidelines.md
+│   ├── typescript.md
+│   ├── testing.md
+│   └── benchmark-pr.md
+├── plugins/                          # 插件开发
+│   ├── index.md
+│   └── plugin-development.md
+├── roadmap/                          # 路线图
+│   ├── index.md
+│   └── current.md
+├── knowledge-base/                   # 知识库
+│   ├── index.md
+│   ├── knowledge-base.md
+│   └── development-skills.md
+├── principles/                       # 开发原则
+│   ├── index.md
+│   ├── zero-dependency.md
+│   ├── chinese-docs.md
+│   └── common-modules.md
+├── performance/                      # 性能优化
+│   ├── index.md
+│   ├── baseline-and-plans.md
+│   └── optimization-report-v64.md
+├── ai/                               # AI 辅助开发
+│   ├── index.md
+│   ├── ide-rules.md
+│   └── agents-optimization.md
+└── other/                            # 其他文档
+    ├── index.md
+    ├── changelog.md
+    ├── pending-tasks.md
+    ├── troubleshooting.md
+    ├── code-analysis-report.md
+    ├── v64-v65-transition.md
+    ├── third-party-ecosystem.md
+    ├── incentive-program.md
+    └── code-of-conduct.md
+```
+
+### 📂 分类说明
+
+- **🏛️ 架构设计** - 架构相关文档
+- **🛠️ 开发指南** - 开发流程和规范
+- **✅ 测试与质量** - 测试相关文档
+- **📈 项目管理** - 路线图和进度
+- **📚 最佳实践** - 开发经验和规范
+- **🤖 AI 辅助开发** - AI 相关文档
+- **🌐 其他** - 其他相关文档
 
 ---
 
