@@ -116,11 +116,16 @@ const PUBLISH_ORDER = [
 
   // L4: 生态系统
   'packages/ecosystem/packages/router',
+  'packages/ecosystem/packages/router-fs',
+  'packages/ecosystem/packages/api',
   'packages/ecosystem/packages/store',
   'packages/ecosystem/packages/ssr',
   'packages/ecosystem/packages/compat',
   'packages/ecosystem/packages/devtools',
   'packages/ecosystem/packages/platform-adapter',
+  'packages/ecosystem/packages/bundler',
+  'packages/ecosystem/packages/hmr',
+  'packages/ecosystem/packages/runtime-edge',
 
   // L5: UI 组件
   'packages/ecosystem/packages/ui',
@@ -132,7 +137,12 @@ const PUBLISH_ORDER = [
   'packages/plugins/packages/plugin-auth',
   'packages/plugins/packages/plugin-storage',
   'packages/plugins/packages/plugin-i18n',
+  'packages/plugins/packages/plugin-validation',
+  'packages/plugins/packages/plugin-data',
+  'packages/plugins/packages/plugin-data-fetch',
   'packages/plugins/packages/plugin-chart',
+  'packages/plugins/packages/plugin-animation',
+  'packages/plugins/packages/plugin-testing',
 
   // L5: 工具包
   'packages/tools/packages/cli',
