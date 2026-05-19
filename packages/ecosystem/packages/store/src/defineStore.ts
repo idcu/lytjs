@@ -79,30 +79,49 @@ export function defineStore<Id extends string, S extends StateTree, G, A, SS>(
       for (const [key, value] of Object.entries(storeObj as Record<string, unknown>)) {
         if (typeof value === 'function' && !key.startsWith('$')) {
           wrappedStore[key] = function (...args: unknown[]) {
-            const context = { store: wrappedStore, name: key, args };
+            const context = { 
+              store: wrappedStore, 
+              name: key, 
+              args,
+              after: undefined as ((result: unknown) => void) | undefined,
+              onError: undefined as ((error: unknown) => void) | undefined
+            };
 
             for (const cb of actionCbs) {
               (cb as any)(context);
             }
 
-            const result = (value as any).apply(thisContext, args);
+            try {
+              const result = (value as any).apply(thisContext, args);
 
-            const handleResult = (r: unknown) => {
-              for (const sub of subs) {
-                sub(
-                  { storeId: id, type: 'direct', payload: { name: key } },
-                  wrappedStore.$state as Record<string, unknown>,
-                );
+              const handleResult = (r: unknown) => {
+                for (const sub of subs) {
+                  sub(
+                    { storeId: id, type: 'direct', payload: { name: key } },
+                    wrappedStore.$state as Record<string, unknown>,
+                  );
+                }
+                if (context.after) {
+                  context.after(r);
+                }
+                return r;
+              };
+
+              if (result instanceof Promise) {
+                return result.then(handleResult, (err: unknown) => {
+                  if (context.onError) {
+                    context.onError(err);
+                  }
+                  throw err;
+                });
+              } else {
+                return handleResult(result);
               }
-              return r;
-            };
-
-            if (result instanceof Promise) {
-              return result.then(handleResult, (err: unknown) => {
-                throw err;
-              });
-            } else {
-              return handleResult(result);
+            } catch (err) {
+              if (context.onError) {
+                context.onError(err);
+              }
+              throw err;
             }
           };
         }
@@ -247,24 +266,43 @@ export function defineStore<Id extends string, S extends StateTree, G, A, SS>(
         for (const [key, fn] of Object.entries(options.actions)) {
           const actionFn = fn as _Method;
           actionFns[key] = function (...args: unknown[]) {
-            const context = { store: undefined as any, name: key, args };
+            const context = { 
+              store: store as any, 
+              name: key, 
+              args,
+              after: undefined as ((result: unknown) => void) | undefined,
+              onError: undefined as ((error: unknown) => void) | undefined
+            };
 
             for (const cb of actions) {
               (cb as any)(context);
             }
 
-            const result = (actionFn as any).apply(thisContext, args);
+            try {
+              const result = (actionFn as any).apply(thisContext, args);
 
-            const handleResult = (r: unknown) => {
-              return r;
-            };
+              const handleResult = (r: unknown) => {
+                if (context.after) {
+                  context.after(r);
+                }
+                return r;
+              };
 
-            if (result instanceof Promise) {
-              return result.then(handleResult, (err: unknown) => {
-                throw err;
-              });
-            } else {
-              return handleResult(result);
+              if (result instanceof Promise) {
+                return result.then(handleResult, (err: unknown) => {
+                  if (context.onError) {
+                    context.onError(err);
+                  }
+                  throw err;
+                });
+              } else {
+                return handleResult(result);
+              }
+            } catch (err) {
+              if (context.onError) {
+                context.onError(err);
+              }
+              throw err;
             }
           };
         }

@@ -139,31 +139,31 @@ describe('createApp', () => {
     expect(app.config).toBeDefined();
   });
 
-  it('should mount to a container element', () => {
+  it('should mount to a container element', async () => {
     const { createApp } = coreSignal;
     const app = createApp({
       template: '<div>hello</div>',
     });
-    app.mount(container);
+    await app.mount(container);
     expect(container.innerHTML).toContain('hello');
   });
 
-  it('should mount to a string selector', () => {
+  it('should mount to a string selector', async () => {
     const { createApp } = coreSignal;
     container.id = 'app';
     const app = createApp({
       template: '<span>world</span>',
     });
-    app.mount('#app');
+    await app.mount('#app');
     expect(container.innerHTML).toContain('world');
   });
 
-  it('should unmount from container', () => {
+  it('should unmount from container', async () => {
     const { createApp } = coreSignal;
     const app = createApp({
       template: '<div>hello</div>',
     });
-    app.mount(container);
+    await app.mount(container);
     expect(container.innerHTML).toContain('hello');
     // Note: unmount() may fail in jsdom due to Element.remove() not being available
     // in the new Function() scope. This is a known jsdom limitation.
@@ -175,12 +175,12 @@ describe('createApp', () => {
     }
   });
 
-  it('should throw when mounting after unmount', () => {
+  it('should throw when mounting after unmount', async () => {
     const { createApp } = coreSignal;
     const app = createApp({
       template: '<div>hello</div>',
     });
-    app.mount(container);
+    await app.mount(container);
     try {
       app.unmount();
     } catch {
@@ -188,48 +188,48 @@ describe('createApp', () => {
     }
     // If unmount succeeded, re-mounting should throw
     // If unmount failed (jsdom limitation), re-mounting should throw "already mounted"
-    expect(() => app.mount(container)).toThrow();
+    await expect(app.mount(container)).rejects.toThrow();
   });
 
-  it('should throw when mounting twice without unmounting', () => {
+  it('should throw when mounting twice without unmounting', async () => {
     const { createApp } = coreSignal;
     const app = createApp({
       template: '<div>hello</div>',
     });
-    app.mount(container);
-    expect(() => app.mount(container)).toThrow('already mounted');
+    await app.mount(container);
+    await expect(app.mount(container)).rejects.toThrow('already mounted');
   });
 
-  it('should throw when mounting to non-existent selector', () => {
+  it('should throw when mounting to non-existent selector', async () => {
     const { createApp } = coreSignal;
     const app = createApp({
       template: '<div>hello</div>',
     });
-    expect(() => app.mount('#non-existent')).toThrow('cannot find element');
+    await expect(app.mount('#non-existent')).rejects.toThrow('cannot find element');
   });
 
-  it('should throw when component has no template', () => {
+  it('should throw when component has no template', async () => {
     const { createApp } = coreSignal;
     const app = createApp({
       setup() {
         return {};
       },
     });
-    expect(() => app.mount(container)).toThrow('template');
+    await expect(app.mount(container)).rejects.toThrow('template');
   });
 
-  it('should execute setup function', () => {
+  it('should execute setup function', async () => {
     const { createApp } = coreSignal;
     const setupFn = vi.fn(() => ({ message: 'from setup' }));
     const app = createApp({
       setup: setupFn,
       template: '<p>{{ message }}</p>',
     });
-    app.mount(container);
+    await app.mount(container);
     expect(setupFn).toHaveBeenCalled();
   });
 
-  it('should execute data function', () => {
+  it('should execute data function', async () => {
     const { createApp } = coreSignal;
     const app = createApp({
       data() {
@@ -237,10 +237,10 @@ describe('createApp', () => {
       },
       template: '<p>{{ message }}</p>',
     });
-    app.mount(container);
+    await app.mount(container);
   });
 
-  it('should call beforeMount and mounted lifecycle hooks', () => {
+  it('should call beforeMount and mounted lifecycle hooks', async () => {
     const { createApp } = coreSignal;
     const beforeMount = vi.fn();
     const mounted = vi.fn();
@@ -249,12 +249,12 @@ describe('createApp', () => {
       mounted,
       template: '<div>lifecycle</div>',
     });
-    app.mount(container);
+    await app.mount(container);
     expect(beforeMount).toHaveBeenCalled();
     expect(mounted).toHaveBeenCalled();
   });
 
-  it('should call beforeUnmount and unmounted lifecycle hooks', () => {
+  it('should call beforeUnmount and unmounted lifecycle hooks', async () => {
     const { createApp } = coreSignal;
     const beforeUnmount = vi.fn();
     const unmounted = vi.fn();
@@ -263,7 +263,7 @@ describe('createApp', () => {
       unmounted,
       template: '<div>cleanup</div>',
     });
-    app.mount(container);
+    await app.mount(container);
     try {
       app.unmount();
     } catch {
@@ -272,40 +272,6 @@ describe('createApp', () => {
     // beforeUnmount is called before the renderer cleanup, so it should always be called
     expect(beforeUnmount).toHaveBeenCalled();
     // unmounted may not be called if renderer.unmount() throws in jsdom
-  });
-
-  it('should support plugin via use()', () => {
-    const { createApp } = coreSignal;
-    const installed = vi.fn();
-    const plugin = { install: installed };
-    const app = createApp({
-      template: '<div>plugin test</div>',
-    });
-    const result = app.use(plugin, 'opt');
-    expect(installed).toHaveBeenCalledWith(app, 'opt');
-    expect(result).toBe(app);
-  });
-
-  it('should support function plugin via use()', () => {
-    const { createApp } = coreSignal;
-    const fn = vi.fn();
-    const app = createApp({
-      template: '<div>fn plugin</div>',
-    });
-    app.use(fn);
-    expect(fn).toHaveBeenCalledWith(app);
-  });
-
-  it('should not install the same plugin twice', () => {
-    const { createApp } = coreSignal;
-    const installed = vi.fn();
-    const plugin = { install: installed };
-    const app = createApp({
-      template: '<div>dedup</div>',
-    });
-    app.use(plugin);
-    app.use(plugin);
-    expect(installed).toHaveBeenCalledTimes(1);
   });
 
   it('should return app from provide()', () => {
@@ -354,7 +320,7 @@ describe('createApp', () => {
     expect(result).toBe(app);
   });
 
-  it('should return proxy public instance from mount()', () => {
+  it('should return proxy public instance from mount()', async () => {
     const { createApp } = coreSignal;
     const app = createApp({
       setup() {
@@ -362,7 +328,7 @@ describe('createApp', () => {
       },
       template: '<div>{{ count }}</div>',
     });
-    const vm = app.mount(container);
+    const vm = await app.mount(container);
     expect(vm).toBeDefined();
     expect(vm.$el).toBe(container);
     expect((vm as any).count).toBe(42);

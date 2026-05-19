@@ -65,7 +65,7 @@ describe('@lytjs/runtime-edge', () => {
       await cache.set('key1', 'value1');
       await cache.set('key2', 'value2');
       await cache.clear();
-      expect(await cache.has('key1')).toBeFalse();
+      expect(await cache.has('key1')).toBe(false);
     });
   });
 
