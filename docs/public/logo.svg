@@ -8,11 +8,14 @@
   
   <rect width="200" height="200" rx="40" fill="url(#g)"/>
   
-  <g transform="translate(50, 30)">
-    <!-- Simple Lyt mark - clean geometric -->
-    <path d="M50 30 L30 110 L70 110 L50 70 L130 110 L170 110 L150 30 Z" fill="white"/>
+  <g transform="translate(40, 35)">
+    <!-- LYT text with style -->
+    <text x="60" y="90" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="60" font-weight="800" fill="white" letter-spacing="2">Lyt</text>
     
     <!-- JS text -->
-    <text x="100" y="150" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="36" font-weight="700" fill="white" letter-spacing="4">JS</text>
+    <text x="60" y="145" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="38" font-weight="600" fill="white" letter-spacing="5">JS</text>
   </g>
+  
+  <!-- Decorative ring -->
+  <circle cx="100" cy="100" r="88" stroke="white" stroke-width="1.5" opacity="0.2"/>
 </svg>
