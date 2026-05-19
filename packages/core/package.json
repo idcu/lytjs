@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/core",
-  "version": "6.4.0",
+  "version": "6.5.0",
   "description": "LytJS core - createApp, h, defineComponent, and plugin system",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -28,17 +28,17 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@lytjs/shared-types": "^6.4.0",
-    "@lytjs/reactivity": "^6.4.0",
-    "@lytjs/vdom": "^6.4.0",
-    "@lytjs/compiler": "^6.4.0",
-    "@lytjs/renderer": "^6.4.0",
-    "@lytjs/component": "^6.4.0",
-    "@lytjs/common-is": "^6.4.0",
-    "@lytjs/common-string": "^6.4.0",
-    "@lytjs/common-scheduler": "^6.4.0",
-    "@lytjs/common-error": "^6.4.0",
-    "@lytjs/common-object": "^6.4.0"
+    "@lytjs/shared-types": "^6.5.0",
+    "@lytjs/reactivity": "^6.5.0",
+    "@lytjs/vdom": "^6.5.0",
+    "@lytjs/compiler": "^6.5.0",
+    "@lytjs/renderer": "^6.5.0",
+    "@lytjs/component": "^6.5.0",
+    "@lytjs/common-is": "^6.5.0",
+    "@lytjs/common-string": "^6.5.0",
+    "@lytjs/common-scheduler": "^6.5.0",
+    "@lytjs/common-error": "^6.5.0",
+    "@lytjs/common-object": "^6.5.0"
   },
   "devDependencies": {
     "tsup": "^8.0.0",

@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/api",
-  "version": "6.4.0",
+  "version": "6.5.0",
   "description": "LytJS API Router Engine",
   "author": "lytjs",
   "license": "MIT",
@@ -31,7 +31,7 @@
     "clean": "rm -rf dist node_modules .turbo"
   },
   "dependencies": {
-    "@lytjs/common-http": "^6.0.0"
+    "@lytjs/common-http": "^6.5.0"
   },
   "devDependencies": {
     "tsup": "^8.3.6",

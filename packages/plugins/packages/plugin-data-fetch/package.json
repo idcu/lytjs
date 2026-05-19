@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/plugin-data-fetch",
-  "version": "6.0.0",
+  "version": "6.5.0",
   "description": "LytJS official data fetch plugin with caching, retries, and interceptors",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -29,8 +29,8 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@lytjs/core": "^6.0.0",
-    "@lytjs/reactivity": "^6.0.0"
+    "@lytjs/core": "^6.5.0",
+    "@lytjs/reactivity": "^6.5.0"
   },
   "devDependencies": {
     "tsup": "^8.0.0",
