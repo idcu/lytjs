@@ -1333,6 +1333,28 @@ importers:
         specifier: ^3.0.0
         version: 3.0.7(@types/node@22.19.19)(@vitest/ui@3.0.0)(jiti@2.7.0)(jsdom@29.1.1)(tsx@4.22.0)(yaml@2.6.1)
 
+  packages/plugins/packages/plugin-validation:
+    dependencies:
+      '@lytjs/core':
+        specifier: ^6.0.0
+        version: 6.0.0
+      '@lytjs/plugin-form':
+        specifier: ^6.0.0
+        version: 6.4.0
+      '@lytjs/reactivity':
+        specifier: ^6.0.0
+        version: 6.0.0
+    devDependencies:
+      tsup:
+        specifier: ^8.0.0
+        version: 8.5.1(jiti@2.7.0)(postcss@8.5.14)(tsx@4.22.0)(typescript@5.8.2)(yaml@2.6.1)
+      typescript:
+        specifier: ^5.4.0
+        version: 5.8.2
+      vitest:
+        specifier: ^3.0.0
+        version: 3.0.7(@types/node@22.19.19)(@vitest/ui@3.0.0)(jiti@2.7.0)(jsdom@29.1.1)(tsx@4.22.0)(yaml@2.6.1)
+
   packages/plugins/packages/plugin-vite:
     dependencies:
       '@lytjs/common-is':
@@ -2946,6 +2968,9 @@ packages:
   '@lytjs/core@6.0.0':
     resolution: {integrity: sha512-/ga7uPx30mQO2rttPOc7CneH0Fjasr5JhEUlgu6sJ9B8HmCWhidyPQLuGXs7AVLbfQ4vVnzj5Ttkf4YWoCspfA==}
 
+  '@lytjs/core@6.4.0':
+    resolution: {integrity: sha512-CkA2/U3r6gT35+2Elgg/NipiLr9wcyK7i4drZVLsv+UPGp/iu4KSyudWZWtA5mpJ1xaXxP2+eAfXZQougDcW0A==}
+
   '@lytjs/dom-runtime@6.0.0':
     resolution: {integrity: sha512-2ycnOIghp7HyzoLXl50jo5XdQQfjUiA/ps7BwML+zVXpSCiVFGsUbFuJCnH9jnBzVITdlczYGsuS63YEOc9Zug==}
 
@@ -2957,6 +2982,9 @@ packages:
 
   '@lytjs/host-contract@6.4.0':
     resolution: {integrity: sha512-T7ujqe5UpzzzaeU3R9J7WwVhFBS/1UP/LNAYWo6Bk5Lr/PpNPLQRZrS77iguxwYj3387nCV7+vLjHXVj5C222w==}
+
+  '@lytjs/plugin-form@6.4.0':
+    resolution: {integrity: sha512-ROtJPgxMu842AgnChNShDeCBdcRYG47VdcXpwTX/onDQNEdxlllbiBXohHJWE+UuS9Lb4kLQs/2BxwJNfYdvvA==, tarball: https://registry.npmjs.org/@lytjs/plugin-form/-/plugin-form-6.4.0.tgz}
 
   '@lytjs/reactivity@6.0.0':
     resolution: {integrity: sha512-rshkfEg7z3DlzTdG30h9Tci8rQKNSpPJuq2nk36rS5qc8sPSfQUqiBscEn80id3ZW2BObpxk3ur/0hTnJCJApw==}
@@ -7088,6 +7116,20 @@ snapshots:
       '@lytjs/shared-types': 6.0.0
       '@lytjs/vdom': 6.0.0
 
+  '@lytjs/core@6.4.0':
+    dependencies:
+      '@lytjs/common-error': 6.0.0
+      '@lytjs/common-is': 6.0.0
+      '@lytjs/common-object': 6.0.0
+      '@lytjs/common-scheduler': 6.0.0
+      '@lytjs/common-string': 6.0.0
+      '@lytjs/compiler': 6.4.0
+      '@lytjs/component': 6.4.0
+      '@lytjs/reactivity': 6.4.0
+      '@lytjs/renderer': 6.4.0
+      '@lytjs/shared-types': 6.0.0
+      '@lytjs/vdom': 6.4.0
+
   '@lytjs/dom-runtime@6.0.0':
     dependencies:
       '@lytjs/reactivity': 6.0.0
@@ -7099,6 +7141,11 @@ snapshots:
   '@lytjs/host-contract@6.0.0': {}
 
   '@lytjs/host-contract@6.4.0': {}
+
+  '@lytjs/plugin-form@6.4.0':
+    dependencies:
+      '@lytjs/core': 6.4.0
+      '@lytjs/reactivity': 6.4.0
 
   '@lytjs/reactivity@6.0.0':
     dependencies:

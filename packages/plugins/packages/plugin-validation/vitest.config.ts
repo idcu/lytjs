@@ -1,0 +1,19 @@
+import { defineConfig } from 'vitest/config';
+
+export default defineConfig({
+  define: {
+    __DEV__: 'true',
+    __PROD__: 'false',
+    __TEST__: 'true',
+  },
+  test: {
+    globals: true,
+    environment: 'node',
+    include: ['**/*.test.ts'],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'json', 'html'],
+      include: ['src/**/*.ts'],
+    },
+  },
+});

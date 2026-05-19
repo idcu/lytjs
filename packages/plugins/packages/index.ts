@@ -42,6 +42,13 @@ export type {
   FormOptions, FormInstance, FormState, FieldState, FieldConfig, FieldValidationRule } from '@lytjs/plugin-form';
 export { createFormManager } from '@lytjs/plugin-form';
 
+export { default as pluginValidation } from '@lytjs/plugin-validation';
+export type {
+  ValidationRule, ValidationRuleType, ValidationSchema, ValidationMessages, ValidationResult,
+  ValidationInstance, ValidationOptions, ValidationPluginOptions, Validator, FieldValidationConfig
+} from '@lytjs/plugin-validation';
+export { createValidationInstance, defaultMessages } from '@lytjs/plugin-validation';
+
 export { default as pluginAnimation } from '@lytjs/plugin-animation';
 export type {
   AnimationOptions, AnimationInstance, EasingFunction, TransitionOptions, Keyframe, AnimationPluginOptions
