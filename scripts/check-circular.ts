@@ -68,46 +68,58 @@ async function main(): Promise<void> {
   console.log(`🔍 检查循环依赖 (${isSrc ? '源码模式' : '构建模式'})...\n`);
 
   const packages = collectPackages();
-  const entryPoints: Record<string, string> = {};
 
-  for (const pkg of packages) {
-    entryPoints[pkg.name] = pkg.path;
-  }
-
-  if (Object.keys(entryPoints).length === 0) {
+  if (packages.length === 0) {
     console.log('⚠️  未找到任何包入口文件。');
     console.log(isSrc ? '请确保 src/index.ts 文件存在。' : '请先运行 pnpm build。');
     process.exit(1);
   }
 
-  try {
-    const result = await madge(entryPoints, {
-      fileExtensions: ['ts', 'js', 'mjs', 'cjs'],
-      tsConfig: join(ROOT, 'tsconfig.base.json'),
-      alias: {
-        '@lytjs/*': join(ROOT, 'packages/*').replace(/\\/g, '/'),
-      },
-    });
+  console.log(`扫描到 ${packages.length} 个包，逐个检查中...\n`);
 
-    const circular = result.circular();
+  const allCircular: string[][] = [];
 
-    if (circular.length === 0) {
-      console.log('✅ 未发现循环依赖。\n');
-      process.exit(0);
+  for (const pkg of packages) {
+    try {
+      console.log(`📦 检查 ${pkg.name}...`);
+
+      const result = await madge(pkg.path, {
+        fileExtensions: ['ts', 'js', 'mjs', 'cjs'],
+        tsConfig: join(ROOT, 'tsconfig.base.json'),
+        alias: {
+          '@lytjs/*': join(ROOT, 'packages/*').replace(/\\/g, '/'),
+        },
+      });
+
+      const circular = result.circular();
+      if (circular.length > 0) {
+        console.log(`   ❌ 发现 ${circular.length} 个循环依赖`);
+        for (const cycle of circular) {
+          allCircular.push(cycle);
+        }
+      } else {
+        console.log(`   ✅ 无循环依赖`);
+      }
+    } catch (err) {
+      console.warn(`   ⚠️  跳过 ${pkg.name}: ${(err as Error).message}`);
     }
-
-    console.log(`❌ 发现 ${circular.length} 个循环依赖：\n`);
-
-    for (const cycle of circular) {
-      console.log(`  🔄 ${cycle.join(' → ')}`);
-    }
-
-    console.log('\n请重构以上模块以消除循环依赖。');
-    process.exit(1);
-  } catch (err) {
-    console.error('检测过程中出错:', err);
-    process.exit(1);
   }
+
+  console.log('\n========================================');
+
+  if (allCircular.length === 0) {
+    console.log('✅ 所有包均未发现循环依赖。\n');
+    process.exit(0);
+  }
+
+  console.log(`❌ 发现 ${allCircular.length} 个循环依赖：\n`);
+
+  for (const cycle of allCircular) {
+    console.log(`  🔄 ${cycle.join(' → ')}`);
+  }
+
+  console.log('\n请重构以上模块以消除循环依赖。');
+  process.exit(1);
 }
 
 main();

@@ -76,10 +76,3 @@ export interface ValidationInstance {
 export interface ValidationPluginOptions extends ValidationOptions {
   name?: string;
 }
-
-export interface ValidationOptions {
-  messages?: ValidationMessages;
-  validateOnChange?: boolean;
-  validateOnBlur?: boolean;
-  stopOnFirstError?: boolean;
-}
