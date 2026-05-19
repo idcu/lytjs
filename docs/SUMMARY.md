@@ -9,61 +9,49 @@
 - [新手入门](./getting-started/index.md)
 - [快速开始](./getting-started/quick-start.md)
 - [安装指南](./getting-started/installation.md)
-
-## 📚 核心指南
-
-- [核心指南](./guide/index.md)
-- 响应式系统
-  - [响应式基础](./guide/reactivity/index.md)
-- 组件系统
-  - [组件基础](./guide/components/index.md)
-- 渲染模式
-  - [渲染模式概览](./guide/rendering/index.md)
-- 高级特性
-  - [TypeScript](./guide/advanced/typescript.md)
-  - [服务端渲染](./guide/advanced/ssr.md)
-  - [Error Boundary](./guide/advanced/error-boundary.md)
-- 内置组件
-  - [内置组件](./guide/built-in/index.md)
-- 插件开发
-  - [插件系统](./guide/plugins/index.md)
-
-## 🎓 实战教程
-
-- [实战教程](./tutorials/index.md)
-- 初级教程
+- [实战教程](./getting-started/tutorials/index.md)
   - [Todo 应用](./getting-started/tutorials/todo-app.md)
   - [用户列表](./getting-started/tutorials/user-list.md)
-- 中级教程
   - [用户管理系统](./getting-started/tutorials/user-management.md)
   - [购物车](./getting-started/tutorials/shopping-cart.md)
   - [表单验证](./getting-started/tutorials/form-validation.md)
   - [博客系统](./getting-started/tutorials/blog-system.md)
-- 高级教程
-  - [企业级最佳实践](./tutorials/enterprise-best-practices.md)
-  - [性能优化](./tutorials/performance-tuning.md)
-- 迁移指南
-  - [从 Vue 迁移](./tutorials/migration-from-vue.md)
-  - [从 React 迁移](./tutorials/migration-from-react.md)
+
+## 📚 核心指南
+
+- [核心指南](./guide/index.md)
+- [响应式系统](./guide/reactivity.md)
+- [组件系统](./guide/component.md)
+- [模板语法](./guide/template-syntax.md)
+- [事件处理](./guide/events.md)
+- [内置组件](./guide/built-in-components.md)
+- [自定义指令](./guide/custom-directives.md)
+- [渲染模式](./guide/rendering-modes.md)
+- [服务端渲染](./guide/ssr.md)
+- [错误边界](./guide/error-boundary.md)
+- [TypeScript](./guide/typescript.md)
+- [构建优化](./guide/build-optimization.md)
+- [本地使用](./guide/local-usage.md)
+- [插件开发](./guide/plugins.md)
 
 ## 📦 包文档
 
 - [包文档](./packages/index.md)
-- 核心包
+- [Core](./packages/core/index.md)
   - [Core](./packages/core/core.md)
   - [Core VNode](./packages/core/core-vnode.md)
   - [Core Signal](./packages/core/core-signal.md)
-- Common 系列
-  - [Common 概览](./packages/common/index.md)
-- 响应式系统
+- [Common](./packages/common/index.md)
+  - [Common 概览](./packages/common/overview.md)
+- [Reactivity](./packages/reactivity/index.md)
   - [Reactivity](./packages/reactivity/reactivity.md)
-- 组件系统
+- [Component](./packages/component/index.md)
   - [Component](./packages/component/component.md)
-- 渲染系统
+- [Vdom](./packages/vdom/index.md)
   - [Vdom](./packages/vdom/vdom.md)
   - [Renderer](./packages/vdom/renderer.md)
   - [Compiler](./packages/vdom/compiler.md)
-- 其他包
+- [其他包](./packages/other/index.md)
   - [Adapter Web](./packages/other/adapter-web.md)
   - [Dom](./packages/other/dom.md)
   - [Host Contract](./packages/other/host-contract.md)
@@ -71,36 +59,53 @@
 ## 🔌 插件生态
 
 - [插件生态](./plugins/index.md)
-- 官方插件
-  - [插件概览](./plugins/official/index.md)
-- 插件开发
-  - [开发指南](./plugins/development/index.md)
+- [官方插件](./plugins/official/index.md)
+- [插件开发](./plugins/development/index.md)
 
 ## 🌐 生态系统
 
 - [生态系统](./ecosystem/index.md)
-- 路由
+- [Router](./ecosystem/router/index.md)
   - [Router](./ecosystem/router/router.md)
-- 状态管理
+- [Store](./ecosystem/store/index.md)
   - [Store](./ecosystem/store/store.md)
-- UI 组件
-  - [UI 组件库](./ecosystem/ui/index.md)
-- SSR
+- [UI 组件](./ecosystem/ui/index.md)
+  - [Components](./ecosystem/ui/components.md)
+  - [Vapor 指南](./ecosystem/ui/vapor-guide.md)
+- [SSR](./ecosystem/ssr/index.md)
   - [SSR](./ecosystem/ssr/ssr.md)
-- 开发工具
+- [DevTools](./ecosystem/devtools/index.md)
   - [DevTools](./ecosystem/devtools/devtools.md)
-- CLI
-  - [CLI](./ecosystem/cli/index.md)
-- 其他生态
-  - [其他包](./ecosystem/other/index.md)
+- [CLI](./ecosystem/cli/index.md)
+- [其他包](./ecosystem/other/index.md)
+  - [API](./ecosystem/other/api.md)
+  - [Bundler](./ecosystem/other/bundler.md)
+  - [Compat](./ecosystem/other/compat.md)
+  - [HMR](./ecosystem/other/hmr.md)
+  - [Runtime Edge](./ecosystem/other/runtime-edge.md)
+- [Plugins](./ecosystem/plugins/index.md)
+  - [Animation](./ecosystem/plugins/animation.md)
+  - [Form](./ecosystem/plugins/form.md)
 
 ## 🔍 API 参考
 
 - [API 概览](./api/index.md)
 - [Core](./api/core.md)
+- [Core Variants](./api/core-variants.md)
 - [Reactivity](./api/reactivity.md)
 - [Component](./api/component.md)
-- [更多 API...](./api/)
+- [Compiler](./api/compiler.md)
+- [Renderer](./api/renderer.md)
+- [Vdom](./api/vdom.md)
+- [Common](./api/common.md)
+- [Router](./api/router.md)
+- [Store](./api/store.md)
+- [DevTools](./api/devtools.md)
+- [Plugin Vite](./api/plugin-vite.md)
+- [Host Contract](./api/host-contract.md)
+- [Shared Types](./api/shared-types.md)
+- [CLI](./api/cli.md)
+- [Test Utils](./api/test-utils.md)
 
 ## 💻 示例代码
 
@@ -108,30 +113,47 @@
 - [Counter](./examples/counter.md)
 - [TodoMVC](./examples/todomvc.md)
 - [交互式计数器](./examples/interactive-counter.md)
+- [用户列表](./examples/user-list.md)
 
 ## 🔗 参考资料
 
 - [参考资料](./reference/index.md)
-- [常见问题](./reference/faq.md)
-- [故障排除](./reference/troubleshooting.md)
 
 ## 🤝 贡献指南
 
 - [贡献首页](./contribute/index.md)
 - [开始贡献](./contribute/getting-started.md)
-- 架构设计
-  - [架构概览](./contribute/architecture/index.md)
+- [架构设计](./contribute/architecture/index.md)
   - [8 层架构](./contribute/architecture/8-layer-architecture.md)
-- 开发指南
+- [开发指南](./contribute/development/index.md)
   - [工作流程](./contribute/development/workflow.md)
   - [开发规范](./contribute/development/guidelines.md)
   - [测试指南](./contribute/development/testing.md)
-- 知识库
-  - [知识库](./contribute/knowledge-base/index.md)
-- 其他
-  - [路线图](./contribute/roadmap/index.md)
+  - [TypeScript](./contribute/development/typescript.md)
+  - [Benchmark PR](./contribute/development/benchmark-pr.md)
+- [知识库](./contribute/knowledge-base/index.md)
+  - [知识库](./contribute/knowledge-base/knowledge-base.md)
+  - [开发技巧](./contribute/knowledge-base/development-skills.md)
+- [原则](./contribute/principles/index.md)
+  - [中文文档](./contribute/principles/chinese-docs.md)
+  - [Common 模块](./contribute/principles/common-modules.md)
+  - [零依赖](./contribute/principles/zero-dependency.md)
+- [性能](./contribute/performance/index.md)
+  - [基准与计划](./contribute/performance/baseline-and-plans.md)
+  - [优化报告 v6.4](./contribute/performance/optimization-report-v64.md)
+- [插件](./contribute/plugins/index.md)
+  - [插件开发](./contribute/plugins/plugin-development.md)
+- [路线图](./contribute/roadmap/index.md)
+  - [当前](./contribute/roadmap/current.md)
+- [其他](./contribute/other/index.md)
   - [变更日志](./contribute/other/changelog.md)
+  - [代码分析报告](./contribute/other/code-analysis-report.md)
+  - [社区行为准则](./contribute/other/code-of-conduct.md)
+  - [社区激励计划](./contribute/other/incentive-program.md)
   - [待办任务](./contribute/other/pending-tasks.md)
+  - [第三方生态](./contribute/other/third-party-ecosystem.md)
+  - [故障排除](./contribute/other/troubleshooting.md)
+  - [v6.4 到 v6.5 过渡](./contribute/other/v64-v65-transition.md)
 
 ## 👥 社区
 
