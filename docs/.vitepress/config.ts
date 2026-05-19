@@ -245,6 +245,14 @@ export default defineConfig({
           ],
         },
         {
+          text: 'AI 助手',
+          items: [
+            { text: 'AI 助手', link: '/contribute/ai/' },
+            { text: 'IDE 规则', link: '/contribute/ai/ide-rules' },
+            { text: 'Agents 优化', link: '/contribute/ai/agents-optimization' },
+          ],
+        },
+        {
           text: '其他',
           items: [
             { text: '其他', link: '/contribute/other/' },
