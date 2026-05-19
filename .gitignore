@@ -84,3 +84,12 @@ memlab-report.json
 
 # npm publish cache
 .npm-publish-cache/
+
+# Playwright test reports
+playwright-report/
+test-results/
+
+# Package lock files (anywhere in the repo)
+package-lock.json
+**/package-lock.json
+
