@@ -14,9 +14,7 @@ describe('@lytjs/plugin-validation', () => {
 
     it('should validate required fields', async () => {
       const validation = createValidationInstance();
-      const result = await validation.validateField('username', '', [
-        { type: 'required' },
-      ]);
+      const result = await validation.validateField('username', '', [{ type: 'required' }]);
       expect(result.valid).toBe(false);
       expect(result.errors.length).toBeGreaterThan(0);
 
@@ -43,9 +41,7 @@ describe('@lytjs/plugin-validation', () => {
     it('should validate phone fields', async () => {
       const validation = createValidationInstance();
 
-      const invalidResult = await validation.validateField('phone', '12345', [
-        { type: 'phone' },
-      ]);
+      const invalidResult = await validation.validateField('phone', '12345', [{ type: 'phone' }]);
       expect(invalidResult.valid).toBe(false);
 
       const validResult = await validation.validateField('phone', '13812345678', [
@@ -62,23 +58,17 @@ describe('@lytjs/plugin-validation', () => {
       ]);
       expect(invalidResult.valid).toBe(false);
 
-      const validResult = await validation.validateField('age', '30', [
-        { type: 'number' },
-      ]);
+      const validResult = await validation.validateField('age', '30', [{ type: 'number' }]);
       expect(validResult.valid).toBe(true);
     });
 
     it('should validate min and max values', async () => {
       const validation = createValidationInstance();
 
-      const tooSmall = await validation.validateField('age', '10', [
-        { type: 'min', value: 18 },
-      ]);
+      const tooSmall = await validation.validateField('age', '10', [{ type: 'min', value: 18 }]);
       expect(tooSmall.valid).toBe(false);
 
-      const tooBig = await validation.validateField('age', '110', [
-        { type: 'max', value: 100 },
-      ]);
+      const tooBig = await validation.validateField('age', '110', [{ type: 'max', value: 100 }]);
       expect(tooBig.valid).toBe(false);
 
       const valid = await validation.validateField('age', '30', [
@@ -144,14 +134,14 @@ describe('@lytjs/plugin-validation', () => {
     it('should validate UUID', async () => {
       const validation = createValidationInstance();
 
-      const invalidResult = await validation.validateField('id', 'not-a-uuid', [
-        { type: 'uuid' },
-      ]);
+      const invalidResult = await validation.validateField('id', 'not-a-uuid', [{ type: 'uuid' }]);
       expect(invalidResult.valid).toBe(false);
 
-      const validResult = await validation.validateField('id', '550e8400-e29b-41d4-a716-446655440000', [
-        { type: 'uuid' },
-      ]);
+      const validResult = await validation.validateField(
+        'id',
+        '550e8400-e29b-41d4-a716-446655440000',
+        [{ type: 'uuid' }],
+      );
       expect(validResult.valid).toBe(true);
     });
 
@@ -163,9 +153,7 @@ describe('@lytjs/plugin-validation', () => {
       ]);
       expect(invalidResult.valid).toBe(false);
 
-      const validResult = await validation.validateField('date', '2024-01-01', [
-        { type: 'date' },
-      ]);
+      const validResult = await validation.validateField('date', '2024-01-01', [{ type: 'date' }]);
       expect(validResult.valid).toBe(true);
     });
 
@@ -221,9 +209,7 @@ describe('@lytjs/plugin-validation', () => {
         required: '必填项哦！',
       });
 
-      const result = await validation.validateField('username', '', [
-        { type: 'required' },
-      ]);
+      const result = await validation.validateField('username', '', [{ type: 'required' }]);
       expect(result.errors[0]).toBe('必填项哦！');
     });
 
@@ -232,7 +218,7 @@ describe('@lytjs/plugin-validation', () => {
       validation.addRule(
         'containsLyt',
         (value: unknown) => String(value).includes('lyt'),
-        '必须包含 lyt'
+        '必须包含 lyt',
       );
 
       const invalidResult = await validation.validateField('name', 'test', [
@@ -288,14 +274,21 @@ describe('@lytjs/plugin-validation', () => {
     it('should validate with multiple rules', async () => {
       const validation = createValidationInstance();
 
-      const result = await validation.validateField('password', '', [
-        { type: 'required' },
-        { type: 'minLength', value: 8 },
-        { type: 'maxLength', value: 20 },
+      // 让我们禁用 stopOnFirstError 来测试多个错误
+      const validationWithMultipleErrors = createValidationInstance({ stopOnFirstError: false });
+
+      // 创建一个自定义验证器，对于相同的值总是失败
+      validationWithMultipleErrors.addRule('alwaysFail1', () => false, '错误1');
+      validationWithMultipleErrors.addRule('alwaysFail2', () => false, '错误2');
+
+      const result = await validationWithMultipleErrors.validateField('test', 'some value', [
+        { type: 'required' }, // 通过
+        { type: 'alwaysFail1' as any }, // 失败
+        { type: 'alwaysFail2' as any }, // 失败
       ]);
 
       expect(result.valid).toBe(false);
-      expect(result.errors.length).toBeGreaterThan(1);
+      expect(result.errors.length).toBe(2);
     });
   });
 });
