@@ -57,7 +57,7 @@ function publishPackage(pkgPath: string): boolean {
 // 发布顺序定义（按依赖层级）
 const PUBLISH_ORDER = [
   // L0: 基础工具层
-  'packages/common/packages/shared-types',
+  'packages/shared-types',
   'packages/common/packages/constants',
   'packages/common/packages/is',
   'packages/common/packages/object',
@@ -89,6 +89,7 @@ const PUBLISH_ORDER = [
   'packages/common/packages/node-cache',
   'packages/common/packages/render-queue',
   'packages/common/packages/transition-engine',
+  'packages/common/packages/memory',
   'packages/common/packages/common',
   'packages/host-contract',
 
@@ -102,6 +103,8 @@ const PUBLISH_ORDER = [
   'packages/component',
   'packages/renderer',
   'packages/adapter-web',
+  'packages/dom',
+  'packages/web',
 
   // L3: 核心框架层
   'packages/core',
@@ -131,6 +134,7 @@ const PUBLISH_ORDER = [
   'packages/plugins/packages/plugin-auth',
   'packages/plugins/packages/plugin-storage',
   'packages/plugins/packages/plugin-i18n',
+  'packages/plugins/packages/plugin-form',
   'packages/plugins/packages/plugin-validation',
   'packages/plugins/packages/plugin-data',
   'packages/plugins/packages/plugin-data-fetch',

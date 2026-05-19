@@ -111,6 +111,7 @@ const PUBLISH_ORDER = [
   'packages/common/packages/node-cache',
   'packages/common/packages/render-queue',
   'packages/common/packages/transition-engine',
+  'packages/common/packages/memory',
   'packages/common/packages/common',
   'packages/host-contract',
 
@@ -124,6 +125,8 @@ const PUBLISH_ORDER = [
   'packages/component',
   'packages/renderer',
   'packages/adapter-web',
+  'packages/dom',
+  'packages/web',
 
   // L3: 核心框架层
   'packages/core',
@@ -153,6 +156,7 @@ const PUBLISH_ORDER = [
   'packages/plugins/packages/plugin-auth',
   'packages/plugins/packages/plugin-storage',
   'packages/plugins/packages/plugin-i18n',
+  'packages/plugins/packages/plugin-form',
   'packages/plugins/packages/plugin-validation',
   'packages/plugins/packages/plugin-data',
   'packages/plugins/packages/plugin-data-fetch',
