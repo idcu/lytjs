@@ -2,6 +2,80 @@
 
 本项目的所有重要变更将记录在此文件中。
 
+## [6.5.0] - 2026-05-19
+
+### 核心增强
+
+- ✅ **新增验证插件** - @lytjs/plugin-validation 完整实现
+  - 支持多种验证规则（required, email, phone, minLength 等）
+  - 自定义验证规则支持
+  - 完整的 TypeScript 类型定义
+
+- ✅ **新增数据获取插件** - @lytjs/plugin-data
+  - 乐观更新支持
+  - 请求去重
+  - TTL 和 LRU 缓存策略
+  - 与 @lytjs/plugin-data-fetch 深度集成
+
+- ✅ **新增文件系统路由引擎** - @lytjs/router-fs
+  - 基于文件系统的自动路由生成
+  - 动态路由参数支持
+  - 嵌套路由支持
+  - 零外部依赖
+
+- ✅ **新增 API 路由引擎** - @lytjs/api
+  - 文件系统驱动的 API 路由
+  - RESTful API 规范支持
+  - 中间件支持
+
+### 静态与构建
+
+- ✅ **新增构建工具集成** - @lytjs/bundler
+  - Vite 插件支持
+  - Webpack 插件支持
+  - SSG/SSR 预设配置
+
+- ✅ **新增热模块替换** - @lytjs/hmr
+  - WebSocket 连接管理
+  - 模块更新处理
+  - 自动重连
+
+- ✅ **SSG/ISR 支持** - 已完整包含在 @lytjs/ssr
+  - 静态站点生成
+  - 增量静态再生成
+  - 预渲染支持
+
+### 生态完善
+
+- ✅ **新增边缘运行时支持** - @lytjs/runtime-edge
+  - 边缘函数支持
+  - 边缘路由器
+  - 内存缓存
+  - 响应辅助工具
+
+- ✅ **现有插件升级**
+  - @lytjs/plugin-i18n - 国际化插件 v6.5.0
+  - @lytjs/plugin-auth - 认证插件 v6.5.0
+  - @lytjs/plugin-storage - 存储插件 v6.5.0
+  - @lytjs/plugin-testing - 测试插件 v6.5.0
+  - @lytjs/plugin-data-fetch - 数据获取基础插件 v6.5.0
+
+- ✅ **核心包升级**
+  - @lytjs/core - v6.4.0 → v6.5.0
+  - @lytjs/reactivity - v6.4.0 → v6.5.0
+
+### 性能优化
+
+- ✅ **Tree-shaking 优化** - 所有包已添加 sideEffects: false
+- ✅ **构建配置统一** - 完善所有包的 tsup 配置
+- ✅ **版本统一** - 所有相关包统一为 v6.5.0
+
+### 文档完善
+
+- ✅ **完整的发布文档** - docs/community/RELEASE_v6.5.0.md
+- ✅ **路线图更新** - docs/development/ROADMAP_NEXT_STEPS.md
+- ✅ **新包 README** - 所有 6 个新包的完整文档
+
 ## [6.4.0] - 2026-05-18
 
 ### 完整 Monorepo 发布

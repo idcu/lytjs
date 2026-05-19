@@ -316,7 +316,28 @@ lytjs/
 
 ## 版本历史
 
-### v6.4.0（当前版本）
+### v6.5.0（最新版本）
+
+- 📦 **新增核心增强包**
+  - @lytjs/plugin-data - 增强版数据获取插件
+  - @lytjs/plugin-validation - 验证插件
+  - @lytjs/router-fs - 文件系统路由引擎
+  - @lytjs/api - API 路由引擎
+- 🛠️ **新增构建与静态化包**
+  - @lytjs/bundler - 构建工具集成
+  - @lytjs/hmr - 热模块替换
+  - 完整的 SSG/ISR 支持（已包含在 @lytjs/ssr）
+- 🌍 **生态系统完善**
+  - @lytjs/runtime-edge - 边缘运行时支持
+  - 所有现有插件版本升级至 v6.5.0
+- ⚡ **性能优化**
+  - Tree-shaking 优化
+  - 统一 tsup 构建配置
+- 📝 **文档完善**
+  - 完整的发布说明
+  - 所有新包的 README
+
+### v6.4.0
 
 - 全新 8 层模块化架构
 - 双渲染模式（Vapor + VDOM）
