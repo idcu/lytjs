@@ -81,3 +81,6 @@ init-lytx-git.cjs
 
 # Memory analysis reports
 memlab-report.json
+
+# npm publish cache
+.npm-publish-cache/
