@@ -1,6 +1,6 @@
 # LytJS 文档索引
 
-> **LytJS v6.4.0** - 下一代轻量级前端框架
+> **LytJS v6.5.0** - 下一代轻量级前端框架
 
 ---
 
@@ -51,7 +51,8 @@
 
 - [开发路线图](./development/ROADMAP_NEXT_STEPS.md) - 开发计划和进展
 - [变更日志](../CHANGELOG.md) - 版本更新历史
-- [v6.4.0 发布公告](./community/RELEASE_v6.4.0.md) - 最新版本发布说明
+- [v6.5.0 发布公告](./community/RELEASE_v6.5.0.md) - 最新版本发布说明
+- [v6.4.0 发布公告](./community/RELEASE_v6.4.0.md) - 历史版本公告
 - [v6.3.0 发布公告](./community/RELEASE_v6.3.0.md) - 历史版本公告
 - [贡献指南](./development/CONTRIBUTING.md) - 如何贡献代码
 - [架构设计](./development/ARCHITECTURE.md) - 8层架构详解
@@ -159,6 +160,6 @@ docs/
 
 ---
 
-**文档版本**: v6.4.0  
-**最后更新**: 2026-05-18  
+**文档版本**: v6.5.0  
+**最后更新**: 2026-05-19  
 **维护者**: LytJS Team

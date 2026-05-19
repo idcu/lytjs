@@ -49,15 +49,21 @@ Lyt.js 提供两种渲染模式，可根据场景选择：
 
 基于 8 层架构的可插拔插件体系，所有插件均为运行时零依赖：
 
-| 插件名                  | 描述                             |
-| ----------------------- | -------------------------------- |
-| `@lytjs/plugin-theme`   | 主题切换、主题定制、CSS 变量管理 |
-| `@lytjs/plugin-logger`  | 日志分级、性能追踪、持久化存储   |
-| `@lytjs/plugin-auth`    | 权限路由、权限验证、角色管理     |
-| `@lytjs/plugin-storage` | 本地存储、状态持久化、过期时间   |
-| `@lytjs/plugin-i18n`    | 国际化支持、语言切换、翻译管理   |
-| `@lytjs/plugin-vite`    | Vite 集成、热更新、构建优化      |
-| `@lytjs/plugin-chart`   | 图表渲染、ECharts 集成           |
+| 插件名                      | 描述                             |
+| --------------------------- | -------------------------------- |
+| `@lytjs/plugin-theme`       | 主题切换、主题定制、CSS 变量管理 |
+| `@lytjs/plugin-logger`      | 日志分级、性能追踪、持久化存储   |
+| `@lytjs/plugin-auth`        | 权限路由、权限验证、角色管理     |
+| `@lytjs/plugin-storage`     | 本地存储、状态持久化、过期时间   |
+| `@lytjs/plugin-i18n`        | 国际化支持、语言切换、翻译管理   |
+| `@lytjs/plugin-vite`        | Vite 集成、热更新、构建优化      |
+| `@lytjs/plugin-chart`       | 图表渲染、ECharts 集成           |
+| `@lytjs/plugin-animation`   | 动画库、FLIP 动画、过渡组件      |
+| `@lytjs/plugin-form`        | 表单管理、状态绑定、验证集成     |
+| `@lytjs/plugin-data-fetch`  | 数据获取基础、缓存支持           |
+| `@lytjs/plugin-data`        | 增强版数据获取、乐观更新         |
+| `@lytjs/plugin-validation`  | 表单验证、规则系统、自定义验证   |
+| `@lytjs/plugin-testing`     | 测试工具集成、组件测试           |
 
 ## UI 组件库
 
@@ -118,15 +124,15 @@ Lyt.js 采用精心设计的 8 层架构，从底层到上层：
 
 基于 8 层架构的包组织：
 
-### L0: 基础工具层（29+ 个工具包）
+### L0: 基础工具层（30+ 个工具包）
 
 | 包                     | 描述               |
 | ---------------------- | ------------------ |
 | `@lytjs/shared-types`  | 共享类型定义       |
 | `@lytjs/host-contract` | 跨平台渲染接口定义 |
-| `@lytjs/common-*`      | 29+ 个工具子包     |
+| `@lytjs/common-*`      | 30+ 个工具子包     |
 
-**工具包列表**：common-is, common-constants, common-string, common-object, common-error, common-warn, common-events, common-scheduler, common-algorithm, common-dom, common-dom-helpers, common-performance, common-a11y, common-keyboard, common-storage, common-validate, common-http, common-raf, common-render-queue, common-event-normalizer, common-node-cache, common-async-scheduler, common-transition-engine, common-assertions, common-security, common-path, common-query, common-timing, common-cache
+**工具包列表**：common-is, common-constants, common-string, common-object, common-error, common-warn, common-events, common-scheduler, common-algorithm, common-dom, common-dom-helpers, common-performance, common-a11y, common-keyboard, common-storage, common-validate, common-http, common-raf, common-render-queue, common-event-normalizer, common-node-cache, common-async-scheduler, common-transition-engine, common-assertions, common-security, common-path, common-query, common-timing, common-cache, common-memory
 
 ### L1: 核心原语层
 
@@ -163,6 +169,12 @@ Lyt.js 采用精心设计的 8 层架构，从底层到上层：
 | `@lytjs/plugin-i18n`    | 国际化插件     |
 | `@lytjs/plugin-vite`    | Vite 集成插件  |
 | `@lytjs/plugin-chart`   | 图表插件       |
+| `@lytjs/plugin-animation` | 动画插件     |
+| `@lytjs/plugin-form`    | 表单插件       |
+| `@lytjs/plugin-data-fetch` | 数据获取插件 |
+| `@lytjs/plugin-data`    | 数据插件       |
+| `@lytjs/plugin-validation` | 验证插件      |
+| `@lytjs/plugin-testing` | 测试插件       |
 | `@lytjs/adapter-web`    | Web 平台适配器 |
 | `@lytjs/dom`            | DOM 平台封装   |
 | `@lytjs/web`            | Web 平台工具   |
@@ -177,9 +189,14 @@ Lyt.js 采用精心设计的 8 层架构，从底层到上层：
 | ------------------------- | -------------------------- |
 | `@lytjs/ui`               | UI 组件库（60+ 组件）      |
 | `@lytjs/router`           | 路由系统                   |
+| `@lytjs/router-fs`        | 文件系统路由引擎           |
+| `@lytjs/api`              | API 路由引擎               |
 | `@lytjs/store`            | 状态管理（灵感来自 Pinia） |
 | `@lytjs/devtools`         | 开发者工具                 |
 | `@lytjs/ssr`              | 服务端渲染                 |
+| `@lytjs/bundler`          | 构建工具集成               |
+| `@lytjs/hmr`              | 热模块替换                 |
+| `@lytjs/runtime-edge`     | 边缘运行时支持             |
 | `@lytjs/platform-adapter` | 平台适配器                 |
 | `@lytjs/compat`           | 兼容性层                   |
 
@@ -260,7 +277,7 @@ lytjs/
 ├── packages/
 │   ├── _templates/          # 新包模板
 │   ├── common/              # L0 基础工具层
-│   │   └── packages/        # 29+ 个工具子包
+│   │   └── packages/        # 30+ 个工具子包
 │   ├── shared-types/        # L0 基础工具层 - 共享类型定义
 │   ├── host-contract/       # L0 基础工具层 - 跨平台渲染接口
 │   ├── reactivity/          # L1 核心原语层 - 响应式系统
@@ -280,7 +297,13 @@ lytjs/
 │   │       ├── plugin-storage/
 │   │       ├── plugin-i18n/
 │   │       ├── plugin-vite/
-│   │       └── plugin-chart/
+│   │       ├── plugin-chart/
+│   │       ├── plugin-animation/
+│   │       ├── plugin-form/
+│   │       ├── plugin-data-fetch/
+│   │       ├── plugin-data/
+│   │       ├── plugin-validation/
+│   │       └── plugin-testing/
 │   ├── adapter-web/         # L4 插件与适配层 - Web 适配器
 │   ├── dom/                 # L4 插件与适配层 - DOM 平台封装
 │   ├── web/                 # L4 插件与适配层 - Web 平台工具
@@ -288,14 +311,20 @@ lytjs/
 │   │   └── packages/
 │   │       ├── ui/          # UI 组件库（60+ 组件）
 │   │       ├── router/      # 路由
+│   │       ├── router-fs/   # 文件系统路由
+│   │       ├── api/         # API 路由引擎
 │   │       ├── store/       # 状态管理
 │   │       ├── devtools/    # 开发者工具
 │   │       ├── ssr/         # 服务端渲染
+│   │       ├── bundler/     # 构建工具
+│   │       ├── hmr/         # 热模块替换
+│   │       ├── runtime-edge/ # 边缘运行时
 │   │       ├── platform-adapter/  # 平台适配器
 │   │       └── compat/       # 兼容性层
 │   └── tools/               # L7 工程化工具层
 │       └── packages/
 │           ├── cli/         # CLI 工具
+│           ├── devtools/    # DevTools 扩展
 │           └── test-utils/  # 测试工具
 ├── playground/              # 开发调试
 ├── benchmarks/              # 基准测试

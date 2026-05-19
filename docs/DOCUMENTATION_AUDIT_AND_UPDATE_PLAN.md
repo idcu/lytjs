@@ -47,15 +47,20 @@ docs/
 
 ## 三、分批更新计划
 
-### 批次 1：核心项目文档 (高优先级)
+### 批次 1：核心项目文档（高优先级）✅ 已完成
 
-**目标：** 完善项目级核心文档
+**目标**: 完善项目级核心文档
 
-- [ ] 根目录 [README.md](file:///e:/trae/lytjs/README.md)
-- [ ] 根目录 [CHANGELOG.md](file:///e:/trae/lytjs/CHANGELOG.md)
-- [ ] 根目录 [CONTRIBUTING.md](file:///e:/trae/lytjs/CONTRIBUTING.md)
-- [ ] 文档首页 [docs/index.md](file:///e:/trae/lytjs/docs/index.md)
-- [ ] 文档导航 [docs/SUMMARY.md](file:///e:/trae/lytjs/docs/SUMMARY.md)
+- [x] 根目录 [README.md](file:///e:/trae/lytjs/README.md)
+- [x] 根目录 [CHANGELOG.md](file:///e:/trae/lytjs/CHANGELOG.md)
+- [ ] 根目录 [CONTRIBUTING.md](file:///e:/trae/lytjs/CONTRIBUTING.md) - 需要补充内容
+- [x] 文档首页 [docs/index.md](file:///e:/trae/lytjs/docs/index.md)
+- [x] 文档导航 [docs/SUMMARY.md](file:///e:/trae/lytjs/docs/SUMMARY.md)
+
+**已完成的更新**:
+- README.md: 更新插件列表（从 7 个到 13 个）、新增生态包、新增工具包、更新项目结构
+- docs/index.md: 版本号从 v6.4.0 升级到 v6.5.0，更新内容
+- docs/SUMMARY.md: 版本号从 v6.4.0 升级到 v6.5.0
 
 ### 批次 2：用户指南 (高优先级)
 

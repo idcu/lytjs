@@ -117,7 +117,7 @@ pnpm dev
 
 ## 项目状态
 
-- **版本**: v6.4.0
+- **版本**: v6.5.0
 - **状态**: 稳定版
 - **许可证**: MIT
 
@@ -148,19 +148,33 @@ L6: 生态系统层
 L7: 工程化工具层
 ```
 
-### 🎉 v6.4.0 更新内容
+### 🎉 v6.5.0 更新内容
 
-#### 核心包发布
+#### 新增核心包
 
-- ✅ 完整 Monorepo 包发布到 npm
-- 所有核心包、生态包、插件、工具包统一版本 6.4.0
-- 包含 29+ common-\* 系列工具包
+- ✅ 6 个新增官方插件
+  - @lytjs/plugin-data - 增强版数据获取插件
+  - @lytjs/plugin-validation - 表单验证插件
+  - @lytjs/plugin-animation - 动画库插件
+  - @lytjs/plugin-form - 表单管理插件
+  - @lytjs/plugin-data-fetch - 数据获取基础插件
+  - @lytjs/plugin-testing - 测试工具插件
+- ✅ 5 个新增生态系统包
+  - @lytjs/router-fs - 文件系统路由引擎
+  - @lytjs/api - API 路由引擎
+  - @lytjs/bundler - 构建工具集成
+  - @lytjs/hmr - 热模块替换
+  - @lytjs/runtime-edge - 边缘运行时支持
+- ✅ 新增工具包
+  - @lytjs/common-memory - 内存工具包
+  - @lytjs/dom - DOM 平台封装
+  - @lytjs/web - Web 平台工具
 
-#### 核心修复
+#### 核心增强
 
-- 修复 ColorPicker 组件 const 赋值错误
-- 将 const 变量改为 let 以允许赋值
-- 全项目文档版本统一为 v6.4.0
+- ✅ 完整的 SSG/ISR 支持
+- ✅ Tree-shaking 优化
+- ✅ 所有包统一版本 v6.5.0
 
 ---
 
