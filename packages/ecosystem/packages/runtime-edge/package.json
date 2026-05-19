@@ -1,7 +1,7 @@
 {
-  "name": "@lytjs/plugin-auth",
+  "name": "@lytjs/runtime-edge",
   "version": "6.5.0",
-  "description": "LytJS official auth plugin for route authorization, permission checking, and role management",
+  "description": "LytJS edge runtime support for serverless and edge computing environments",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
@@ -22,17 +22,11 @@
     "build": "tsup",
     "dev": "tsup --watch",
     "test": "vitest run",
-    "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage",
     "type-check": "tsc --noEmit",
     "lint": "eslint \"src/**/*.ts\"",
     "clean": "rm -rf dist"
   },
-  "dependencies": {
-    "@lytjs/core": "^6.0.0",
-    "@lytjs/reactivity": "^6.0.0",
-    "@lytjs/common-is": "^6.0.0"
-  },
+  "dependencies": {},
   "devDependencies": {
     "tsup": "^8.0.0",
     "typescript": "^5.4.0",
@@ -42,13 +36,13 @@
   "repository": {
     "type": "git",
     "url": "https://gitee.com/lytjs/lytjs.git",
-    "directory": "packages/plugins/packages/plugin-auth"
+    "directory": "packages/ecosystem/packages/runtime-edge"
   },
   "keywords": [
     "lytjs",
-    "auth",
-    "authorization",
-    "permission",
-    "role"
+    "edge",
+    "serverless",
+    "runtime",
+    "edge-functions"
   ]
 }

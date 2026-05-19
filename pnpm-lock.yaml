@@ -1084,6 +1084,18 @@ importers:
         specifier: ^3.0.0
         version: 3.0.7(@types/node@22.19.19)(@vitest/ui@3.0.0)(jiti@2.7.0)(jsdom@29.1.1)(tsx@4.22.0)(yaml@2.6.1)
 
+  packages/ecosystem/packages/runtime-edge:
+    devDependencies:
+      tsup:
+        specifier: ^8.0.0
+        version: 8.5.1(jiti@2.7.0)(postcss@8.5.14)(tsx@4.22.0)(typescript@5.8.2)(yaml@2.6.1)
+      typescript:
+        specifier: ^5.4.0
+        version: 5.8.2
+      vitest:
+        specifier: ^3.0.0
+        version: 3.0.7(@types/node@22.19.19)(@vitest/ui@3.0.0)(jiti@2.7.0)(jsdom@29.1.1)(tsx@4.22.0)(yaml@2.6.1)
+
   packages/ecosystem/packages/ssr:
     dependencies:
       '@lytjs/common-dom':
