@@ -4,7 +4,7 @@ export interface ISRCacheConfig {
   staleWhileRevalidate?: number;
 }
 
-export interface ISRCacheEntry<T = any> {
+export interface ISRCacheEntry<T = unknown> {
   key: string;
   value: T;
   createdAt: number;

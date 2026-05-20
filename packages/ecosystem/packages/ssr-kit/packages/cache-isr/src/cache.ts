@@ -1,5 +1,4 @@
-import type { ISRCacheConfig, ISRCacheEntry } from './types';
-import { ExpiringCache } from '@lytjs/common-cache';
+import type { ISRCacheConfig } from './types';
 
 interface ExtendedCacheEntry<V> {
   value: V;

@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 /**
  * @lytjs/hmr - LytJS 热模块替换
  *
