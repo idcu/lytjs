@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/common-monorepo",
-  "version": "6.4.0",
+  "version": "6.6.0",
   "private": true,
   "description": "LytJS 公共工具库 monorepo",
   "packageManager": "pnpm@9.15.4",

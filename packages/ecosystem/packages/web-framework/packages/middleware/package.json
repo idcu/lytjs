@@ -53,7 +53,12 @@
     "url": "https://gitee.com/lytjs/lytjs.git",
     "directory": "packages/ecosystem/packages/web-framework/packages/middleware"
   },
-  "keywords": ["lytjs", "middleware", "onion-model", "web-framework"],
+  "keywords": [
+    "lytjs",
+    "middleware",
+    "onion-model",
+    "web-framework"
+  ],
   "homepage": "https://gitee.com/lytjs/lytjs/tree/develop/packages/ecosystem/packages/web-framework/packages/middleware#readme",
   "bugs": {
     "url": "https://gitee.com/lytjs/lytjs/issues"

@@ -52,7 +52,12 @@
     "url": "https://gitee.com/lytjs/lytjs.git",
     "directory": "packages/ecosystem/packages/web-framework/packages/middleware-cors"
   },
-  "keywords": ["lytjs", "middleware", "cors", "cross-origin"],
+  "keywords": [
+    "lytjs",
+    "middleware",
+    "cors",
+    "cross-origin"
+  ],
   "homepage": "https://gitee.com/lytjs/lytjs/tree/develop/packages/ecosystem/packages/web-framework/packages/middleware-cors#readme",
   "bugs": {
     "url": "https://gitee.com/lytjs/lytjs/issues"

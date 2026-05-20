@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/router-fs",
-  "version": "6.5.0",
+  "version": "6.6.0",
   "description": "LytJS File-System based Router Engine",
   "author": "lytjs",
   "license": "MIT",

@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/common-http",
-  "version": "6.5.0",
+  "version": "6.6.0",
   "description": "Lightweight HTTP client based on native fetch API",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
@@ -28,7 +28,7 @@
   "sideEffects": false,
   "license": "MIT",
   "dependencies": {
-    "@lytjs/common-query": "^6.5.0"
+    "@lytjs/common-query": "^6.6.0"
   },
   "devDependencies": {
     "tsup": "^8.4.0",
