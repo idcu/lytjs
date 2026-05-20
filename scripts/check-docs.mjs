@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 #!/usr/bin/env node
 
 import { readdir, readFile, writeFile, stat } from 'fs/promises';
