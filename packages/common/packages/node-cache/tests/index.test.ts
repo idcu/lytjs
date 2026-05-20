@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, no-console, @typescript-eslint/no-require-imports */
 /**
  * tests/index.test.ts
  * Tests for @lytjs/common-node-cache

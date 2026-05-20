@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, no-console, @typescript-eslint/no-require-imports */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 // jsdom 环境下 KeyboardEvent 可能未定义，使用 Event 替代

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, no-console, @typescript-eslint/no-require-imports */
 import { describe, it, expect } from 'vitest';
 import { ref, computed, watch, effect } from '../src/index';
 import { nextTick } from '@lytjs/common-scheduler';

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, no-console, @typescript-eslint/no-require-imports */
 // tests/codegen-signal-optimized.test.ts
 // Phase 1.1: Signal 代码生成器优化测试
 

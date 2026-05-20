@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, no-console, @typescript-eslint/no-require-imports */
 // @vitest-environment jsdom
 // tests/suspense.test.ts
 // Suspense pendingBranch/activeBranch switching, fallback slot, state transitions

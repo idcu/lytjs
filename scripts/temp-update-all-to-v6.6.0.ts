@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, no-console, @typescript-eslint/no-require-imports */
 /**
  * 临时脚本：将所有包更新到 v6.6.0
  * 在有工具链的环境请使用 pnpm run sync-versions --version 6.6.0

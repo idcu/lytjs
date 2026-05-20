@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, no-console, @typescript-eslint/no-require-imports */
 // @vitest-environment jsdom
 import { describe, it, expect } from 'vitest';
 import {

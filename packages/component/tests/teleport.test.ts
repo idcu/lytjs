@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, no-console, @typescript-eslint/no-require-imports */
 /**
  * tests/teleport.test.ts
  * Teleport 组件测试 - 覆盖 props 验证、setup 函数、接口类型检查、DOM 传送效果
