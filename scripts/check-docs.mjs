@@ -1,5 +1,5 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 #!/usr/bin/env node
+/* eslint-disable @typescript-eslint/no-unused-vars */
 
 import { readdir, readFile, writeFile, stat } from 'fs/promises';
 import { join } from 'path';

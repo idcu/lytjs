@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 /**
  * @lytjs/bundler - LytJS 构建工具集成
  *
