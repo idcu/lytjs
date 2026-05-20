@@ -3,6 +3,7 @@
  *
  * 演示 theme、logger、auth、storage、i18n 插件的基本用法
  */
+/* eslint-disable @typescript-eslint/no-explicit-any, no-console */
 
 // 导入插件
 import { createThemeManager } from '@lytjs/plugin-theme';

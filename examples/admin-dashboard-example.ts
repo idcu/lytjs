@@ -8,6 +8,7 @@
  * - 表单处理
  * - 图表展示
  */
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, no-console */
 
 import { signal, computed } from '@lytjs/reactivity';
 import { createVNode } from '@lytjs/vdom';

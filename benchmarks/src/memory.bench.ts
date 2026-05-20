@@ -3,6 +3,7 @@
  *
  * Tests the memory footprint of various operations.
  */
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import { describe, bench } from 'vitest';
 import { h, createApp, ref, reactive, computed, watch, effectScope } from '@lytjs/core';
 

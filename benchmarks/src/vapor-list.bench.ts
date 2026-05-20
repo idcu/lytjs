@@ -1,5 +1,6 @@
 // benchmarks/src/vapor-list.bench.ts
 // Vapor 模式列表渲染性能测试
+/* eslint-disable @typescript-eslint/no-unused-vars */
 
 import { bench, describe } from 'vitest';
 import {

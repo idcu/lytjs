@@ -8,6 +8,7 @@
  * - 实时通知
  * - 用户资料页
  */
+/* eslint-disable @typescript-eslint/no-explicit-any, no-console */
 
 import { signal, computed } from '@lytjs/reactivity';
 import { createVNode } from '@lytjs/vdom';

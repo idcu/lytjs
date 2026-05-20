@@ -7,6 +7,7 @@
  * 3. 客户端hydration
  * 4. 数据预取和状态序列化
  */
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, no-console */
 
 import { renderToStream } from '../../src/stream';
 import { createVNode } from '@lytjs/vdom';

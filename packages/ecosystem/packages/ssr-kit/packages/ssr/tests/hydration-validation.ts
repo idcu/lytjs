@@ -3,6 +3,7 @@
  *
  * 验证服务端渲染后客户端hydration的性能优化效果
  */
+/* eslint-disable @typescript-eslint/no-unused-expressions, no-console */
 
 interface HydrationResult {
   hydrationTime: number;

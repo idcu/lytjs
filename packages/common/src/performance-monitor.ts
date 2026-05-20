@@ -7,6 +7,7 @@
  * - 错误追踪
  * - 性能报告
  */
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, no-console */
 
 interface PerformanceMetrics {
   fcp: number | null;

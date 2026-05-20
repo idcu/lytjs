@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { describe, bench } from 'vitest';
 import { signal, signalComputed as computed, effect } from '@lytjs/reactivity';
 

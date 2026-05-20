@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createApp, defineComponent, h, signal, computed } from '@lytjs/core';
 
 // --- 类型定义 ---

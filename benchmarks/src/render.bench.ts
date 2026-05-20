@@ -3,6 +3,7 @@
  *
  * Tests the performance of initial rendering operations.
  */
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import { describe, bench } from 'vitest';
 import { h } from '@lytjs/vdom';
 import { signal } from '@lytjs/reactivity';

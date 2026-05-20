@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, bench } from 'vitest';
 import { createVNode, createTextVNode, cloneVNode, mergeProps } from '@lytjs/vdom';
 

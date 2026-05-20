@@ -3,6 +3,7 @@
  *
  * 测试流式SSR在高并发场景下的稳定性和性能
  */
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, no-console */
 
 interface StressTestResult {
   totalRequests: number;

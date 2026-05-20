@@ -3,6 +3,7 @@
  *
  * 测量SSR流式渲染的阻塞时间指标
  */
+/* eslint-disable no-console */
 
 interface PerformanceResult {
   totalTime: number;

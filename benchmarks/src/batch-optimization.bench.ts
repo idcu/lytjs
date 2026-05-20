@@ -1,5 +1,6 @@
 // benchmarks/src/batch-optimization.bench.ts
 // 批量操作和事件委托性能测试
+/* eslint-disable @typescript-eslint/no-unused-vars */
 
 import { bench, describe } from 'vitest';
 import {

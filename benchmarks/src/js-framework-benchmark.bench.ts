@@ -4,6 +4,7 @@
  * A complete benchmark suite replicating the standard js-framework-benchmark
  * tests to allow fair comparison with other frameworks.
  */
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import { describe, bench, beforeEach, afterEach } from 'vitest';
 import { h, createApp, ref, computed, signal, effect } from '@lytjs/core';
 import { render } from '@lytjs/renderer';

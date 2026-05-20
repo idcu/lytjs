@@ -11,7 +11,7 @@ describe('@lytjs/common-env', () => {
 
     it('should return false when window is undefined', () => {
       const originalWindow = globalThis.window;
-      // @ts-expect-error - 故意删除 window
+      // @ts-expect-error test - 故意删除 window
       delete globalThis.window;
       expect(isBrowser()).toBe(false);
       globalThis.window = originalWindow;
@@ -19,7 +19,7 @@ describe('@lytjs/common-env', () => {
 
     it('should return false when document is undefined', () => {
       const originalDocument = globalThis.document;
-      // @ts-expect-error - 故意删除 document
+      // @ts-expect-error test - 故意删除 document
       delete globalThis.document;
       expect(isBrowser()).toBe(false);
       globalThis.document = originalDocument;
@@ -33,7 +33,7 @@ describe('@lytjs/common-env', () => {
 
     it('should return true when process.versions.node exists', () => {
       const originalProcess = globalThis.process;
-      // @ts-expect-error - 故意设置 process
+      // @ts-expect-error test - 故意设置 process
       globalThis.process = { versions: { node: '18.0.0' } } as any;
       expect(isNode()).toBe(true);
       globalThis.process = originalProcess;
@@ -41,7 +41,7 @@ describe('@lytjs/common-env', () => {
 
     it('should return false when process is undefined', () => {
       const originalProcess = globalThis.process;
-      // @ts-expect-error - 故意删除 process
+      // @ts-expect-error test - 故意删除 process
       delete globalThis.process;
       expect(isNode()).toBe(false);
       globalThis.process = originalProcess;
@@ -56,9 +56,9 @@ describe('@lytjs/common-env', () => {
     it('should return true when not in browser and not in node', () => {
       const originalWindow = globalThis.window;
       const originalProcess = globalThis.process;
-      // @ts-expect-error
+      // @ts-expect-error test
       delete globalThis.window;
-      // @ts-expect-error
+      // @ts-expect-error test
       delete globalThis.process;
       expect(isSSR()).toBe(true);
       globalThis.window = originalWindow;

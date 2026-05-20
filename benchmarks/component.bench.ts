@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import { describe, bench, beforeAll } from 'vitest';
 import { ref, computed } from '@lytjs/reactivity';
 import {

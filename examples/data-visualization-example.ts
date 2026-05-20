@@ -7,6 +7,7 @@
  * - 数据筛选和排序
  * - 仪表盘布局
  */
+/* eslint-disable @typescript-eslint/no-explicit-any, no-console */
 
 import { signal, computed } from '@lytjs/reactivity';
 import { createVNode } from '@lytjs/vdom';

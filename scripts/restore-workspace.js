@@ -26,7 +26,9 @@ function findPackageJsonFiles(dir) {
         if (require('fs').existsSync(pkgJsonPath)) {
           results.push(pkgJsonPath);
         }
-      } catch (e) {}
+      } catch (e) {
+        // 忽略错误
+      }
 
       // 递归搜索子目录
       if (

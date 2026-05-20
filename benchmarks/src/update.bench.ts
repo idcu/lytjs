@@ -3,6 +3,7 @@
  *
  * Tests the performance of updating existing nodes.
  */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { describe, bench } from 'vitest';
 import { h, ref, computed, watch, nextTick } from '@lytjs/core';
 

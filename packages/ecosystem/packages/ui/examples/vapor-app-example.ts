@@ -3,6 +3,7 @@
  *
  * 演示如何在 Vapor 模式下使用 LytJS UI 组件
  */
+/* eslint-disable no-console */
 
 import { defineVaporComponent, createVaporApp } from '@lytjs/renderer';
 import { signal, computed } from '@lytjs/reactivity';

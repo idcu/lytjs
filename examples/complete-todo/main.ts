@@ -3,6 +3,7 @@
  *
  * 演示: 响应式状态管理、计算属性、事件处理、组件组合等功能
  */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { createApp, h, ref, computed, watch } from '@lytjs/core';
 

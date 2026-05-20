@@ -3,6 +3,7 @@
  *
  * 提供错误追踪与性能监控的无缝集成
  */
+/* eslint-disable no-console */
 
 import type { ErrorReporter, ErrorContext } from './error-boundary';
 

@@ -1,5 +1,6 @@
 // src/component-init.ts
 // 组件完成 setup：data、methods、computed、watch、render 初始化
+/* eslint-disable @typescript-eslint/no-unsafe-function-type */
 
 import { reactive, computed, watch } from '@lytjs/reactivity';
 import { hasOwn } from '@lytjs/common-is';

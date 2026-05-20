@@ -1,5 +1,6 @@
 // src/plugin-sdk.ts
 // @lytjs/core - 插件开发 SDK
+/* eslint-disable no-console */
 
 import type { EnhancedPlugin, App } from './types';
 import type { ConfigSchema, ConfigValidationReport, ConfigTransformReport } from './config-schema';

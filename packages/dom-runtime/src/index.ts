@@ -1,5 +1,6 @@
 // src/index.ts
 // @lytjs/dom-runtime - Signal 模式 DOM 运行时，提供细粒度 DOM 操作能力
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { effect, stop } from '@lytjs/reactivity';
 

@@ -2,6 +2,7 @@
  * LytJS TypeScript 使用示例
  * 展示如何在 LytJS 项目中使用类型安全特性
  */
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, @typescript-eslint/no-unsafe-function-type, no-console */
 
 import { signal, computed, effect, defineComponent, h, createApp } from '@lytjs/core';
 
