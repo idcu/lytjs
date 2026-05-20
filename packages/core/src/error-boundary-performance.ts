@@ -123,6 +123,7 @@ export function initErrorBoundaryPerformanceIntegration(
   const reporter = new PerformanceErrorReporter(options);
   globalPerformanceReporter = reporter;
 
+  /* eslint-disable @typescript-eslint/no-require-imports */
   const { setGlobalErrorReporter } = require('./error-boundary');
   setGlobalErrorReporter(reporter);
 

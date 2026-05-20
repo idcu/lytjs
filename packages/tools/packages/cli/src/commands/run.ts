@@ -25,7 +25,7 @@ export async function runCli(rawArgs: string[] = process.argv.slice(2)): Promise
   }
 
   if (options.version || command === 'version' || command === '-v' || command === '--version') {
-    console.log(`LytJS CLI v${VERSION}`);
+    console.warn(`LytJS CLI v${VERSION}`);
     return;
   }
 
@@ -65,7 +65,7 @@ export async function runCli(rawArgs: string[] = process.argv.slice(2)): Promise
       });
       break;
 
-    case 'add':
+    case 'add': {
       const addTypes = [
         'component',
         'page',
@@ -82,13 +82,14 @@ export async function runCli(rawArgs: string[] = process.argv.slice(2)): Promise
         logger.info('Example: lyt add component Button');
         process.exit(1);
       }
-      await add(args[0] as any, args[1] || 'Unnamed', {
+      await add(args[0] as unknown as string, args[1] || 'Unnamed', {
         force: options.force as boolean | undefined,
       });
       break;
+    }
 
     case 'generate':
-    case 'g':
+    case 'g': {
       const genTypes = ['component', 'page', 'service', 'hook', 'store'];
       if (!args[0] || !genTypes.includes(args[0])) {
         logger.error('Usage: lyt generate <type> <name>');
@@ -97,7 +98,7 @@ export async function runCli(rawArgs: string[] = process.argv.slice(2)): Promise
         process.exit(1);
       }
       await generate({
-        type: args[0] as any,
+        type: args[0] as unknown as string,
         name: args[1] || 'Unnamed',
         path: options.path as string | undefined,
         withStyles: options.styles as boolean | undefined,
@@ -105,8 +106,9 @@ export async function runCli(rawArgs: string[] = process.argv.slice(2)): Promise
         withStorybook: options.storybook as boolean | undefined,
       });
       break;
+    }
 
-    case 'plugin':
+    case 'plugin': {
       if (!args[0]) {
         logger.error('Usage: lyt plugin <create|build|validate|templates>');
         logger.info('Example: lyt plugin create my-plugin');
@@ -144,6 +146,7 @@ export async function runCli(rawArgs: string[] = process.argv.slice(2)): Promise
           process.exit(1);
       }
       break;
+    }
 
     default:
       if (command) {
@@ -198,7 +201,7 @@ function parseArgs(args: string[]): CliOptions {
 }
 
 function showHelp(): void {
-  console.log(`
+  console.warn(`
 ${logger.bold('LytJS CLI')} v${VERSION}
 
 ${logger.bold('Usage:')}

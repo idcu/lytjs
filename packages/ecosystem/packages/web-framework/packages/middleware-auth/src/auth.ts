@@ -1,7 +1,7 @@
 /**
  * 认证中间件实现
  */
-import type { AuthOptions, AuthUser } from './types';
+import type { AuthOptions } from './types';
 import type { Middleware, MiddlewareContext } from '@lytjs/middleware';
 
 /**

@@ -40,27 +40,28 @@ export type Optional<T> = T | undefined;
 
 export type Without<T, K extends keyof T> = Omit<T, K>;
 
+// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 export type FunctionKeys<T> = ExtractKeysByType<T, Function>;
 
 export type NonFunctionKeys<T> = Exclude<keyof T, FunctionKeys<T>>;
 
-export type Constructor<T = any> = new (...args: any[]) => T;
+export type Constructor<T = unknown> = new (...args: unknown[]) => T;
 
-export type AbstractConstructor<T = any> = abstract new (...args: any[]) => T;
+export type AbstractConstructor<T = unknown> = abstract new (...args: unknown[]) => T;
 
 export type ValueOf<T> = T[keyof T];
 
 export type PromiseOrValue<T> = T | Promise<T>;
 
-export type AsyncFunction<T = any, Args extends any[] = any[]> = (...args: Args) => Promise<T>;
+export type AsyncFunction<T = unknown, Args extends unknown[] = unknown[]> = (...args: Args) => Promise<T>;
 
-export type AnyFunction<T = any> = (...args: any[]) => T;
+export type AnyFunction<T = unknown> = (...args: unknown[]) => T;
 
 export type EmptyObject = Record<string, never>;
 
-export type Dictionary<T = any> = Record<string, T>;
+export type Dictionary<T = unknown> = Record<string, T>;
 
-export type NumericDictionary<T = any> = Record<number, T>;
+export type NumericDictionary<T = unknown> = Record<number, T>;
 
 export type Primitive = string | number | boolean | bigint | symbol | null | undefined;
 
@@ -72,13 +73,13 @@ export type NonNullish<T> = Exclude<T, null | undefined>;
 
 export type ArrayElement<T> = T extends (infer E)[] ? E : never;
 
-export type Last<T extends any[]> = T extends [...any[], infer L] ? L : never;
+export type Last<T extends unknown[]> = T extends [...unknown[], infer L] ? L : never;
 
-export type First<T extends any[]> = T extends [infer F, ...any[]] ? F : never;
+export type First<T extends unknown[]> = T extends [infer F, ...unknown[]] ? F : never;
 
-export type TupleToUnion<T extends any[]> = T[number];
+export type TupleToUnion<T extends unknown[]> = T[number];
 
-export type UnionToIntersection<U> = (U extends any ? (k: U) => void : never) extends (
+export type UnionToIntersection<U> = (U extends unknown ? (k: U) => void : never) extends (
   k: infer I,
 ) => void
   ? I
@@ -98,8 +99,8 @@ export type IfUnknown<T, Y, N> = IsUnknown<T> extends true ? Y : N;
 
 export type Awaited<T> = T extends null | undefined
   ? T
-  : T extends object & { then(onfulfilled: infer F, ...args: any[]): any }
-    ? F extends (value: infer V, ...args: any[]) => any
+  : T extends object & { then(onfulfilled: infer F, ...args: unknown[]): unknown }
+    ? F extends (value: infer V, ...args: unknown[]) => unknown
       ? Awaited<V>
       : never
     : T;

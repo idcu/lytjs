@@ -447,8 +447,8 @@ export async function validatePlugin(options: PluginValidateOptions = {}): Promi
   }
 
   // Report results
-  let hasErrors = errors.length > 0;
-  let hasWarnings = warnings.length > 0;
+  const hasErrors = errors.length > 0;
+  const hasWarnings = warnings.length > 0;
 
   if (hasErrors) {
     logger.error('Validation failed with errors:');
@@ -483,7 +483,7 @@ export async function validatePlugin(options: PluginValidateOptions = {}): Promi
 
 function isEmptyDir(dir: string): boolean {
   if (!existsSync(dir)) return true;
-  const files = require('fs').readdirSync(dir);
+  const files = readdirSync(dir);
   return files.length === 0;
 }
 

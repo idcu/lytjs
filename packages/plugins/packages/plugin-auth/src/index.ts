@@ -27,6 +27,7 @@ function createAuth(options: AuthOptions = {}): AuthInstance {
       const stored = localStorage.getItem(storageKey);
       return stored ? JSON.parse(stored) : null;
     } catch {
+      /* empty */
       return null;
     }
   }
@@ -39,7 +40,9 @@ function createAuth(options: AuthOptions = {}): AuthInstance {
       } else {
         localStorage.removeItem(storageKey);
       }
-    } catch {}
+    } catch {
+      /* empty */
+    }
   }
 
   function login(user: User) {

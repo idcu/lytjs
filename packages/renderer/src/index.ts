@@ -297,6 +297,7 @@ export async function createOptimizedStream(
 ): Promise<ReadableStream> {
   const { createOptimizedStream: _createOptimizedStream } =
     await import('./ssr/ssr-stream-optimized');
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return _createOptimizedStream(vnode as VNodeType, options as any);
 }
 export async function renderDocumentToStream(
@@ -305,6 +306,7 @@ export async function renderDocumentToStream(
 ): Promise<ReadableStream> {
   const { renderDocumentToStream: _renderDocumentToStream } =
     await import('./ssr/ssr-stream-optimized');
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return _renderDocumentToStream(vnode as VNodeType, options as any);
 }
 export type { OptimizedStreamOptions, PreloadHint, StreamStats } from './ssr/ssr-stream-optimized';

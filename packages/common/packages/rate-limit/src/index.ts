@@ -81,7 +81,6 @@ export class SlidingWindowLimiter {
       entry.windowStart = currentWindowStart;
     }
 
-    const remaining = Math.max(0, this.max - entry.count);
     const reset = entry.windowStart + this.windowMs;
 
     if (entry.count >= this.max) {
@@ -168,7 +167,6 @@ export class TokenBucketLimiter {
       }
     }
 
-    const remaining = Math.max(0, entry.tokens);
     const nextRefill = entry.lastRefill + this.refillTime;
 
     if (entry.tokens <= 0) {
@@ -242,8 +240,6 @@ export class FixedWindowLimiter {
       };
       this.windows.set(key, entry);
     }
-
-    const remaining = Math.max(0, this.max - entry.count);
 
     if (entry.count >= this.max) {
       return {

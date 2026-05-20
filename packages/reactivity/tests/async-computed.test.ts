@@ -1,6 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { asyncComputed, useAsyncState } from '../src/async-computed';
-import type { AsyncComputedRef } from '../src/async-computed';
 import { ref, effect } from '../src/index';
 
 describe('asyncComputed', () => {

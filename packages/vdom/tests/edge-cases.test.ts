@@ -3,16 +3,14 @@
  * 覆盖 VNode 创建、ShapeFlags、PatchFlags、Fragment、Block Tree、
  * VNode 池化、工具函数、Diff 分析等模块的边界场景
  */
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import {
   createVNode,
   createTextVNode,
-  createCommentVNode,
   cloneVNode,
   mergeProps,
   normalizeChildren,
   getShapeFlag,
-  EMPTY_OBJ,
   isStaticVNode,
   isDynamicVNode,
   getVNodeText,
@@ -44,8 +42,6 @@ import {
   Fragment,
   Text,
   Comment,
-  isVNode,
-  isSameVNodeType,
   hasPatchFlag,
   describePatchFlag,
 } from '../src/index';
@@ -635,7 +631,7 @@ describe('Block Tree 边界', () => {
 
     it('createBlock 无外层 block 时不注册', () => {
       openBlock();
-      const block = createBlock('div', null, null, 0);
+      const _block = createBlock('div', null, null, 0);
       expect(getCurrentBlock()).toBeNull();
     });
   });

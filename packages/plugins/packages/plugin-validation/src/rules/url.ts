@@ -3,7 +3,7 @@
  */
 import type { Validator } from '../types';
 
-const URL_REGEX = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/i;
+const URL_REGEX = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/i;
 
 export const validateUrl: Validator = (value: unknown): boolean => {
   if (value == null || value === '') return true;

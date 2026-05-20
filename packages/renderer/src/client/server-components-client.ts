@@ -103,6 +103,7 @@ export function createServerFunction<T>(
  * 获取服务端预取的数据
  */
 export function getServerData<T = unknown>(key?: string): T | undefined {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const serverData = (window as any).__LYTJS_SERVER_DATA__;
   if (!serverData) return undefined;
 
@@ -117,6 +118,7 @@ export function getServerData<T = unknown>(key?: string): T | undefined {
  * 检查是否有服务端数据
  */
 export function hasServerData(): boolean {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return !!(window as any).__LYTJS_SERVER_DATA__;
 }
 

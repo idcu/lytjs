@@ -90,7 +90,9 @@ function createLogger(options: LoggerOptions = {}): LoggerInstance {
     if (typeof localStorage === 'undefined') return;
     try {
       localStorage.setItem(storageKey, JSON.stringify(logsSignal()));
-    } catch {}
+    } catch {
+      /* empty */
+    }
   }
 
   function loadLogs(): LogEntry[] {
@@ -99,6 +101,7 @@ function createLogger(options: LoggerOptions = {}): LoggerInstance {
       const stored = localStorage.getItem(storageKey);
       return stored ? JSON.parse(stored) : [];
     } catch {
+      /* empty */
       return [];
     }
   }
@@ -164,7 +167,9 @@ function createLogger(options: LoggerOptions = {}): LoggerInstance {
     if (enablePersistence && typeof localStorage !== 'undefined') {
       try {
         localStorage.removeItem(storageKey);
-      } catch {}
+      } catch {
+        /* empty */
+      }
     }
   }
 

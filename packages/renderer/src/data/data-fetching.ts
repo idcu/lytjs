@@ -10,7 +10,7 @@ import { isArray } from '@lytjs/common-is';
 // ============================================================
 
 /** 数据获取状态 */
-export interface DataFetchState<T extends unknown = unknown> {
+export interface DataFetchState<T = unknown> {
   /** 数据 */
   data: T | undefined;
   /** 是否正在加载 */
@@ -24,7 +24,7 @@ export interface DataFetchState<T extends unknown = unknown> {
 }
 
 /** 数据获取选项 */
-export interface DataFetchOptions<T extends unknown = unknown> {
+export interface DataFetchOptions<T = unknown> {
   /** 是否立即执行 */
   immediate?: boolean;
   /** 初始数据 */

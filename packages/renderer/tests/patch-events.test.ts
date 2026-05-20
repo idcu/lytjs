@@ -8,7 +8,7 @@ import {
   patchEvent,
   removeAllEventListeners,
 } from '@lytjs/adapter-web';
-import type { EventInvoker, ParsedEvent } from '@lytjs/adapter-web';
+
 
 describe('patch-events', () => {
   let el: HTMLElement;

@@ -148,7 +148,7 @@ export function importSnapshots(json: string): StateSnapshot[] {
 export function restoreSnapshot(snapshot: StateSnapshot): boolean {
   try {
     if (!snapshot.signals || snapshot.signals.length === 0) {
-      console.log('[DevTools Snapshots] No signals to restore in snapshot:', snapshot.id);
+      console.warn('[DevTools Snapshots] No signals to restore in snapshot:', snapshot.id);
       return true;
     }
 
@@ -169,7 +169,7 @@ export function restoreSnapshot(snapshot: StateSnapshot): boolean {
       }
     }
 
-    console.log('[DevTools Snapshots] Snapshot restored:', snapshot.id);
+    console.warn('[DevTools Snapshots] Snapshot restored:', snapshot.id);
     return allSuccess;
   } catch (e) {
     console.error('[DevTools Snapshots] Restore failed:', e);

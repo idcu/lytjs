@@ -156,7 +156,7 @@ if (import.meta.hot) {
 
         return {
           code: compiledCode,
-          map: result.sourceMap as any,
+          map: result.sourceMap,
         };
       } catch (error) {
         // Log compilation errors

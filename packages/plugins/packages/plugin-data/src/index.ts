@@ -17,7 +17,6 @@ import type {
   RequestOptions,
   FetchError,
   CacheStorage,
-  CacheEntry,
   DataPluginOptions,
   DataManager,
   DataInstance,
@@ -72,14 +71,14 @@ export function createData<T = unknown>(
 
   const {
     baseUrl = globalOptions.baseUrl || '',
-    timeout = globalOptions.timeout || 30000,
-    retries = globalOptions.retries || 0,
-    retryDelay = globalOptions.retryDelay || 1000,
-    cacheStrategy = globalOptions.defaultCacheStrategy || 'no-cache',
-    cacheTime = globalOptions.defaultCacheTime || 300000,
+    timeout: _timeout = globalOptions.timeout || 30000,
+    retries: _retries = globalOptions.retries || 0,
+    retryDelay: _retryDelay = globalOptions.retryDelay || 1000,
+    cacheStrategy: _cacheStrategy = globalOptions.defaultCacheStrategy || 'no-cache',
+    cacheTime: _cacheTime = globalOptions.defaultCacheTime || 300000,
     dedupe = globalOptions.defaultDedupe || false,
     optimisticData,
-    prefetch = false,
+    prefetch: _prefetch = false,
   } = options;
 
   const cacheStorage = globalOptions.cacheStorage || new DefaultCacheStorage();
@@ -290,7 +289,7 @@ export function createDataManager(globalOptions: DataPluginOptions = {}): DataMa
     addRequestInterceptor(
       interceptor: (config: RequestOptions) => RequestOptions | Promise<RequestOptions>,
     ): void {
-      manager.addRequestInterceptor(interceptor as any);
+      manager.addRequestInterceptor(interceptor as (config: Record<string, unknown>) => Record<string, unknown> | Promise<Record<string, unknown>>);
     },
 
     addResponseInterceptor(interceptor: <T = unknown>(response: T) => T | Promise<T>): void {

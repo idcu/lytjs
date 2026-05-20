@@ -1,10 +1,10 @@
+/* eslint-disable @typescript-eslint/no-unused-expressions */
 import { describe, it, expect, vi } from 'vitest';
 import {
   ref,
   reactive,
   effect,
   stop,
-  batch,
   batchAsync,
   untrack,
   onEffectCleanup,
@@ -64,9 +64,9 @@ describe('effect', () => {
   it('should stop the effect', () => {
     const obj = reactive({ count: 0 });
     const fn = vi.fn();
-    let dummy: number;
+    let _dummy: number;
     const runner = effect(() => {
-      dummy = obj.count;
+      _dummy = obj.count;
       fn();
     });
     expect(fn).toHaveBeenCalledTimes(1);
@@ -102,9 +102,9 @@ describe('effect', () => {
   it('should pause and resume tracking', () => {
     const obj = reactive({ count: 0 });
     const fn = vi.fn();
-    let dummy: number;
+    let _dummy: number;
     effect(() => {
-      dummy = obj.count;
+      _dummy = obj.count;
       fn();
     });
     pauseTracking();

@@ -13,7 +13,7 @@ export interface HMRMessage {
   /** 消息类型 */
   type: 'connected' | 'update' | 'full-reload' | 'custom';
   /** 数据 */
-  data?: any;
+  data?: unknown;
 }
 
 export interface HMRUpdate {

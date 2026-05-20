@@ -143,6 +143,7 @@ export async function handleServerAction(
  * 用于 Express/Fastify 等服务端框架
  */
 export function createServerActionHandler() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return async (req: any, res: any) => {
     const componentName = req.headers['x-server-component'];
     const functionName = req.headers['x-server-function'];

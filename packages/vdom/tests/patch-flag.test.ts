@@ -7,7 +7,6 @@ import {
   createVNode,
   createRenderer,
   PatchFlags,
-  ShapeFlags,
   hasPatchFlag,
   isStaticVNode,
   isDynamicVNode,

@@ -7,10 +7,8 @@ import {
   createVNode,
   createTextVNode,
   createRenderer,
-  ShapeFlags,
   PatchFlags,
   Fragment,
-  Text,
 } from '../src/index';
 import { WebRendererHost } from '@lytjs/adapter-web';
 

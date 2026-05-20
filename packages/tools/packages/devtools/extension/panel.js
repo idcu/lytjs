@@ -1,3 +1,4 @@
+ 
 /* eslint-env browser, webextensions */
 /* global chrome, document */
 

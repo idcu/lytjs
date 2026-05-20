@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { ref, reactive } from '@lytjs/reactivity';
+import { ref } from '@lytjs/reactivity';
 import { createSignalRenderer } from '../src/signal/signal-renderer';
 
 describe('SignalRenderer', () => {
@@ -539,7 +539,7 @@ describe('SignalRenderer', () => {
       const renderer = createSignalRenderer('<div><span v-if="show">visible</span></div>', ctx);
       renderer.render(container);
 
-      const span = container.querySelector('span')!;
+      const _span = container.querySelector('span')!;
 
       // Rapid toggling
       ctx.show.value = false;

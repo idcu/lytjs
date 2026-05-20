@@ -8,7 +8,6 @@ import {
   to3DTransform,
   canUseGPU,
   enableGPUAcceleration,
-  disableGPUAcceleration,
   GPU_PRESETS,
   PerformanceOptimizer,
   getGlobalOptimizer,

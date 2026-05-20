@@ -17,6 +17,7 @@ function createStorage(options: StorageOptions = {}): StorageInstance {
     try {
       return type === 'local' ? window.localStorage : window.sessionStorage;
     } catch {
+      /* empty */
       return null;
     }
   }
@@ -36,7 +37,9 @@ function createStorage(options: StorageOptions = {}): StorageInstance {
 
     try {
       storage.setItem(getKey(key), JSON.stringify(item));
-    } catch {}
+    } catch {
+      /* empty */
+    }
   }
 
   function get<T>(key: string, defaultValue?: T): T | null {
@@ -56,6 +59,7 @@ function createStorage(options: StorageOptions = {}): StorageInstance {
 
       return item.value;
     } catch {
+      /* empty */
       return defaultValue ?? null;
     }
   }
@@ -66,7 +70,9 @@ function createStorage(options: StorageOptions = {}): StorageInstance {
 
     try {
       storage.removeItem(getKey(key));
-    } catch {}
+    } catch {
+      /* empty */
+    }
   }
 
   function clear() {
@@ -82,7 +88,9 @@ function createStorage(options: StorageOptions = {}): StorageInstance {
         }
       }
       keysToRemove.forEach((k) => storage.removeItem(k));
-    } catch {}
+    } catch {
+      /* empty */
+    }
   }
 
   function has(key: string): boolean {
@@ -101,7 +109,9 @@ function createStorage(options: StorageOptions = {}): StorageInstance {
           result.push(key.slice(prefix.length));
         }
       }
-    } catch {}
+    } catch {
+      /* empty */
+    }
     return result;
   }
 
@@ -123,10 +133,14 @@ function createStorage(options: StorageOptions = {}): StorageInstance {
           if (item.expires && Date.now() > item.expires) {
             keysToRemove.push(fullKey);
           }
-        } catch {}
+        } catch {
+          /* empty */
+        }
       }
       keysToRemove.forEach((k) => storage.removeItem(k));
-    } catch {}
+    } catch {
+      /* empty */
+    }
   }
 
   return {

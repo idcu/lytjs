@@ -14,7 +14,7 @@ import type {
   TableSortOrder,
   TableSetupProps,
 } from './types';
-import { getInputControlA11yProps, mergeA11yProps } from '@lytjs/common-a11y';
+import { mergeA11yProps } from '@lytjs/common-a11y';
 export type { TableSlots } from './types';
 
 export const Table = defineComponent({

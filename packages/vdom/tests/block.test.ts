@@ -201,7 +201,7 @@ describe('Block Tree runtime', () => {
   describe('nested Block Tree integration', () => {
     it('should build correct Block Tree with nested blocks', () => {
       openBlock(); // outer block
-      const staticChild = createVNode('span'); // static, not tracked
+      const _staticChild = createVNode('span'); // static, not tracked
       const dynamicChild1 = createVNode('em');
       trackDynamicChild(dynamicChild1);
 

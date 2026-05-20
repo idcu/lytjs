@@ -86,6 +86,7 @@ function createThemeManager(options: ThemeOptions = {}): ThemeInstance {
     try {
       return localStorage.getItem(storageKey);
     } catch {
+      /* empty */
       return null;
     }
   }
@@ -94,7 +95,9 @@ function createThemeManager(options: ThemeOptions = {}): ThemeInstance {
     if (typeof localStorage === 'undefined') return;
     try {
       localStorage.setItem(storageKey, name);
-    } catch {}
+    } catch {
+      /* empty */
+    }
   }
 
   function setTheme(name: string) {

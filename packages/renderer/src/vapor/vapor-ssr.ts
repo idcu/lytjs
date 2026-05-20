@@ -327,6 +327,7 @@ export function usePrefetchData<T>(
 ): { data: T | undefined; pending: boolean; error: Error | null } {
   // 检查是否有预取数据
   if (typeof window !== 'undefined') {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const prefetchData = (window as any).__LYTJS_PREFETCH_DATA__;
     if (prefetchData && prefetchData[key]) {
       return {

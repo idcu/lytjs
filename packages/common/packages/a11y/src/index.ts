@@ -49,7 +49,7 @@ export function getTabIndex(disabled: boolean, customTabIndex?: number): number 
 /**
  * 为按钮组件生成 a11y 属性
  */
-export function getButtonA11yProps(props: A11yProps & { disabled?: boolean }): Record<string, any> {
+export function getButtonA11yProps(props: A11yProps & { disabled?: boolean }): Record<string, unknown> {
   return {
     role: 'button',
     'aria-label': props.ariaLabel,
@@ -67,7 +67,7 @@ export function getButtonA11yProps(props: A11yProps & { disabled?: boolean }): R
  */
 export function getFormControlA11yProps(
   props: A11yProps & { disabled?: boolean; required?: boolean; invalid?: boolean },
-): Record<string, any> {
+): Record<string, unknown> {
   return {
     'aria-label': props.ariaLabel,
     'aria-describedby': props.ariaDescribedBy,
@@ -90,7 +90,7 @@ export function getInputControlA11yProps(
     required?: boolean;
     invalid?: boolean;
   },
-): Record<string, any> {
+): Record<string, unknown> {
   return {
     ...getFormControlA11yProps(props),
     'aria-checked': props.checked,
@@ -107,7 +107,7 @@ export function getSwitchA11yProps(
     required?: boolean;
     invalid?: boolean;
   },
-): Record<string, any> {
+): Record<string, unknown> {
   return {
     role: 'switch',
     'aria-checked': props.checked,
@@ -126,7 +126,7 @@ export function getComboboxA11yProps(
     required?: boolean;
     invalid?: boolean;
   },
-): Record<string, any> {
+): Record<string, unknown> {
   return {
     role: 'combobox',
     'aria-expanded': props.expanded,
@@ -141,7 +141,7 @@ export function getComboboxA11yProps(
  */
 export function getOptionA11yProps(
   props: A11yProps & { selected?: boolean; disabled?: boolean },
-): Record<string, any> {
+): Record<string, unknown> {
   return {
     role: 'option',
     'aria-selected': props.selected,
@@ -156,7 +156,7 @@ export function getOptionA11yProps(
  */
 export function getSliderA11yProps(
   props: A11yProps & { disabled?: boolean; value?: number | string; min?: number; max?: number },
-): Record<string, any> {
+): Record<string, unknown> {
   return {
     role: 'slider',
     'aria-valuenow': props.value,
@@ -171,7 +171,7 @@ export function getSliderA11yProps(
  */
 export function getSpinbuttonA11yProps(
   props: A11yProps & { disabled?: boolean; value?: number | string; min?: number; max?: number },
-): Record<string, any> {
+): Record<string, unknown> {
   return {
     role: 'spinbutton',
     'aria-valuenow': props.value,
@@ -184,7 +184,7 @@ export function getSpinbuttonA11yProps(
 /**
  * 为标签页列表生成 a11y 属性
  */
-export function getTablistA11yProps(props: A11yProps & { label?: string }): Record<string, any> {
+export function getTablistA11yProps(props: A11yProps & { label?: string }): Record<string, unknown> {
   return {
     role: 'tablist',
     'aria-label': props.ariaLabel ?? props.label,
@@ -198,7 +198,7 @@ export function getTablistA11yProps(props: A11yProps & { label?: string }): Reco
  */
 export function getTabA11yProps(
   props: A11yProps & { selected?: boolean; disabled?: boolean; controls?: string },
-): Record<string, any> {
+): Record<string, unknown> {
   return {
     role: 'tab',
     'aria-selected': props.selected,
@@ -214,7 +214,7 @@ export function getTabA11yProps(
  */
 export function getTabpanelA11yProps(
   props: A11yProps & { labelledBy?: string; hidden?: boolean },
-): Record<string, any> {
+): Record<string, unknown> {
   return {
     role: 'tabpanel',
     'aria-labelledby': props.ariaLabelledBy ?? props.labelledBy,
@@ -228,7 +228,7 @@ export function getTabpanelA11yProps(
  */
 export function getDialogA11yProps(
   props: A11yProps & { labelledBy?: string; describedBy?: string; modal?: boolean },
-): Record<string, any> {
+): Record<string, unknown> {
   return {
     role: 'dialog',
     'aria-modal': props.ariaModal ?? props.modal ?? true,
@@ -248,7 +248,7 @@ export function getGroupA11yProps(
     required?: boolean;
     label?: string;
   },
-): Record<string, any> {
+): Record<string, unknown> {
   return {
     role: props.role ?? 'group',
     'aria-label': props.ariaLabel ?? props.label,
@@ -261,8 +261,8 @@ export function getGroupA11yProps(
 /**
  * 合并多个 a11y 属性对象
  */
-export function mergeA11yProps(...propsList: Array<Record<string, any>>): Record<string, any> {
-  const result: Record<string, any> = {};
+export function mergeA11yProps(...propsList: Array<Record<string, unknown>>): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
   for (const props of propsList) {
     for (const [key, value] of Object.entries(props)) {
       if (value !== undefined && value !== null) {

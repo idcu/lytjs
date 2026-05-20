@@ -340,6 +340,7 @@ if (import.meta.hot) {
 
 // 在浏览器环境中创建全局注册表
 if (typeof window !== 'undefined') {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (window as any).__LYTJS_HMR_REGISTRY__ = componentRegistry;
 }
 
@@ -351,7 +352,7 @@ if (typeof window !== 'undefined') {
  * 检测是否支持 HMR
  */
 export function isHMRAvailable(): boolean {
-  return typeof import.meta !== 'undefined' && !!(import.meta as any).hot;
+  return typeof import.meta !== 'undefined' && !!(import.meta as unknown as { hot: unknown }).hot;
 }
 
 /**

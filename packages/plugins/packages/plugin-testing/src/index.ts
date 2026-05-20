@@ -499,7 +499,7 @@ function createPerformanceTestHelpers(): PerformanceTestHelpers {
 /**
  * 创建测试上下文
  */
-function createTestingContext(options: TestingPluginOptions = {}): TestingContext {
+function createTestingContext(_options: TestingPluginOptions = {}): TestingContext {
   const mocks: Map<string, unknown> = new Map();
   const mockFns: MockFn[] = [];
   const domHelpers = createDOMTestHelpers();
@@ -522,7 +522,7 @@ function createTestingContext(options: TestingPluginOptions = {}): TestingContex
         document.body.appendChild(container);
       }
 
-      let instance: T = {} as T;
+      const instance: T = {} as T;
       const element = container as Element;
 
       return {

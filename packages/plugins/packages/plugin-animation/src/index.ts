@@ -7,7 +7,7 @@
  */
 
 import { definePlugin } from '@lytjs/core';
-import { signal, signalComputed as computed } from '@lytjs/reactivity';
+import { signal } from '@lytjs/reactivity';
 import type {
   AnimationOptions,
   AnimationInstance,
@@ -124,7 +124,7 @@ export function createAnimation(
     delay = 0,
     iterations = 1,
     direction = 'normal',
-    fill = 'none',
+    fill: _fill = 'none',
     onStart,
     onUpdate,
     onComplete,
@@ -138,7 +138,7 @@ export function createAnimation(
   let state: 'idle' | 'playing' | 'paused' | 'completed' | 'cancelled' = 'idle';
   let progress = 0;
   let startTime = 0;
-  let pausedTime = 0;
+  let _pausedTime = 0;
   let animationFrameId: number | null = null;
   let currentIteration = 0;
   let isReversed = direction === 'reverse' || direction === 'alternate-reverse';
@@ -223,7 +223,7 @@ export function createAnimation(
     if (state !== 'playing') return;
 
     state = 'paused';
-    pausedTime = performance.now();
+    _pausedTime = performance.now();
 
     if (animationFrameId) {
       cancelAnimationFrame(animationFrameId);
@@ -257,7 +257,7 @@ export function createAnimation(
     currentIteration = 0;
     progressSignal.set(0);
     startTime = 0;
-    pausedTime = 0;
+    _pausedTime = 0;
     isReversed = direction === 'reverse' || direction === 'alternate-reverse';
   }
 
@@ -314,7 +314,7 @@ export function transitionElement(
   } = options;
 
   const propertyStr = Array.isArray(property) ? property.join(', ') : property;
-  const easingFn = getEasingFunction(easing);
+  const _easingFn = getEasingFunction(easing);
 
   if (toggle) {
     // 显示元素
@@ -573,7 +573,7 @@ export const PRESETS = {
  * 动画管理器
  */
 function createAnimationManager(options: AnimationPluginOptions = {}) {
-  const { defaultDuration = 300, defaultEasing = 'ease', autoCleanup = true } = options;
+  const { defaultDuration = 300, defaultEasing = 'ease', autoCleanup: _autoCleanup = true } = options;
 
   const animations = new Map<string, AnimationInstance>();
 
@@ -654,7 +654,7 @@ function createAnimationManager(options: AnimationPluginOptions = {}) {
    * 清理所有动画
    */
   function clear() {
-    for (const [id, animation] of animations) {
+    for (const [_id, animation] of animations) {
       animation.cancel();
     }
     animations.clear();

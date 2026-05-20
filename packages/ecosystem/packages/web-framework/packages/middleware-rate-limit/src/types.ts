@@ -7,7 +7,7 @@ export interface RateLimitOptions {
   /** 时间窗口内最大请求数 */
   max: number;
   /** 键生成函数，用于标识请求来源 */
-  keyGenerator?: (request: Request, ctx: any) => string;
+  keyGenerator?: (request: Request, ctx: unknown) => string;
 }
 
 /**

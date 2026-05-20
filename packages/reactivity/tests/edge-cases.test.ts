@@ -1,23 +1,17 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+/* eslint-disable @typescript-eslint/no-unused-expressions */
+import { describe, it, expect, vi } from 'vitest';
 import {
   reactive,
   shallowReactive,
   readonly,
-  shallowReadonly,
   isReactive,
   isReadonly,
-  isProxy,
-  toRaw,
   markRaw,
   ref,
   shallowRef,
   isRef,
-  unref,
-  toRef,
-  toRefs,
   computed,
   watch,
-  watchEffect,
   effect,
   stop,
   pauseTracking,
@@ -30,9 +24,7 @@ import {
   readonlySignal,
   set,
   update,
-  valueOf,
   signalBatch,
-  triggerRef,
 } from '../src/index';
 import { nextTick } from '@lytjs/common-scheduler';
 
@@ -454,7 +446,7 @@ describe('computed edge cases', () => {
     effect(() => {
       try {
         fn(failing.value);
-      } catch (e) {
+      } catch (_e) {
         fn('error');
       }
     });
@@ -767,19 +759,19 @@ describe('effect edge cases', () => {
   it('pauseTracking should prevent dependency collection', () => {
     const obj = reactive({ count: 0 });
     const fn = vi.fn();
-    let dummy: number;
+    let _dummy: number;
     effect(() => {
-      dummy = obj.count;
+      _dummy = obj.count;
       fn();
     });
     expect(fn).toHaveBeenCalledTimes(1);
 
     pauseTracking();
     // 在 pauseTracking 期间创建新 effect，不应收集依赖
-    let dummy2: number;
+    let _dummy2: number;
     const fn2 = vi.fn();
     effect(() => {
-      dummy2 = obj.count;
+      _dummy2 = obj.count;
       fn2();
     });
     expect(fn2).toHaveBeenCalledTimes(1);
@@ -795,11 +787,11 @@ describe('effect edge cases', () => {
   it('enableTracking should re-enable dependency collection', () => {
     const obj = reactive({ count: 0 });
     const fn = vi.fn();
-    let dummy: number;
+    let _dummy: number;
 
     pauseTracking();
     effect(() => {
-      dummy = obj.count;
+      _dummy = obj.count;
       fn();
     });
     expect(fn).toHaveBeenCalledTimes(1);

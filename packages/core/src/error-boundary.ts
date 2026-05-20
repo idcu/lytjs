@@ -26,7 +26,7 @@ export interface FallbackProps {
 
 /** 错误边界属性 */
 export interface ErrorBoundaryProps {
-  fallback?: any;
+  fallback?: unknown;
   fallbackRender?: (error: Error, errorInfo: ErrorInfo, reset: () => void) => VNode;
   onError?: (error: Error, errorInfo: ErrorInfo) => void;
   maxRetries?: number;
@@ -148,7 +148,7 @@ export function generateErrorId(): string {
 }
 
 /** 创建 VNode 的辅助函数 */
-function createElement(type: any, props: any, ...children: any[]): VNode {
+function createElement(type: unknown, props: unknown, ...children: unknown[]): VNode {
   return createVNode(type, props, children);
 }
 

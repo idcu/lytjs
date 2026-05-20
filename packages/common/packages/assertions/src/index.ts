@@ -148,7 +148,7 @@ export function hasTypedProperty<K extends PropertyKey, V>(
  */
 export function isInstanceOf<T>(
   value: unknown,
-  constructor: new (...args: any[]) => T,
+  constructor: new (...args: unknown[]) => T,
 ): value is T {
   return value instanceof constructor;
 }
@@ -190,7 +190,7 @@ export function safeGetString(obj: unknown, key: PropertyKey): string | undefine
 export function safeGetFunction(
   obj: unknown,
   key: PropertyKey,
-): ((...args: any[]) => any) | undefined {
+): ((...args: unknown[]) => unknown) | undefined {
   if (hasTypedProperty(obj, key, isFunction)) {
     return obj[key];
   }

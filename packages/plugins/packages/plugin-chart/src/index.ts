@@ -48,7 +48,7 @@ function createChart(
 ): ChartInstance {
   const { defaultAnimationDuration = 500 } = options;
 
-  let currentConfig = { ...DEFAULT_CONFIG, ...config };
+  const currentConfig = { ...DEFAULT_CONFIG, ...config };
   let animationFrame: number | null = null;
 
   // 获取颜色
@@ -274,7 +274,7 @@ function createChart(
 
     let legendX = currentConfig.padding;
     const legendY = currentConfig.height - 20;
-    let _itemIndex = 0;
+    const _itemIndex = 0;
 
     currentConfig.datasets.forEach((dataset, datasetIndex) => {
       dataset.data.forEach((point, dataIndex) => {

@@ -2,7 +2,7 @@
  * @lytjs/devtools - Type definitions
  */
 
-import type { ComponentInternalInstance } from '@lytjs/component';
+
 
 // ===== DevTools State =====
 

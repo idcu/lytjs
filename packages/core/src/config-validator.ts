@@ -46,8 +46,6 @@ export class ConfigValidator {
     if (value === undefined) {
       if (schema.required) {
         errors.push(this.createError(path, 'required', 'Value is required'));
-      } else if (schema.default !== undefined) {
-        // 使用默认值，不报错
       }
       return { valid: errors.length === 0, errors, errorCount: errors.length, warningCount: 0 };
     }

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-expressions */
 import { describe, it, expect, vi } from 'vitest';
 import {
   reactive,
@@ -183,9 +184,9 @@ describe('reactive', () => {
   it('should only track first level with shallowReactive', () => {
     const obj = shallowReactive({ nested: { count: 0 } });
     const fn = vi.fn();
-    let dummy: any;
+    let _dummy: any;
     effect(() => {
-      dummy = obj.nested;
+      _dummy = obj.nested;
       fn();
     });
     expect(fn).toHaveBeenCalledTimes(1);

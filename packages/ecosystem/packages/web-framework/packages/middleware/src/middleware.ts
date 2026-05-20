@@ -16,7 +16,7 @@ export function createMiddleware(fn: MiddlewareFn): MiddlewareFn {
  */
 export function combineMiddlewares(...middlewares: MiddlewareFn[]): MiddlewareFn {
   return async (ctx: MiddlewareContext, next: () => Promise<void>) => {
-    let index = 0;
+    const index = 0;
 
     const dispatch = async (i: number): Promise<void> => {
       if (i >= middlewares.length) {

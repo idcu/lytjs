@@ -72,14 +72,14 @@ describe('UI 组件性能基准测试', () => {
     it('Table 处理 1000 行数据应该高效', () => {
       const props = Table.props;
 
-      const largeData = Array.from({ length: 1000 }, (_, i) => ({
+      const _largeData = Array.from({ length: 1000 }, (_, i) => ({
         id: i + 1,
         name: `用户${i + 1}`,
         age: Math.floor(Math.random() * 50) + 20,
         city: ['北京', '上海', '广州', '深圳'][i % 4],
       }));
 
-      const columns = [
+      const _columns = [
         { prop: 'id', label: 'ID' },
         { prop: 'name', label: '姓名' },
         { prop: 'age', label: '年龄' },
@@ -87,8 +87,8 @@ describe('UI 组件性能基准测试', () => {
       ];
 
       const start = performance.now();
-      const data = props.data.default();
-      const colData = props.columns.default();
+      const _data = props.data.default();
+      const _colData = props.columns.default();
       const end = performance.now();
 
       const processingTime = end - start;

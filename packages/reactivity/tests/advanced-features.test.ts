@@ -4,24 +4,17 @@
  * 测试响应式系统的高级特性和复杂场景
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+/* eslint-disable @typescript-eslint/no-unused-expressions */
+import { describe, it, expect, vi } from 'vitest';
 import {
   reactive,
   ref,
   computed,
   effect,
-  stop,
   batch,
   signal,
   computedSignal,
   set,
-  update,
-  triggerRef,
-  shallowRef,
-  trigger,
-  pauseTracking,
-  enableTracking,
-  resetTracking,
 } from '../src/index';
 import { watch, watchEffect } from '../src/watch';
 import { effectScope } from '../src/scope';

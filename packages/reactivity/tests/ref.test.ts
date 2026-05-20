@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-expressions */
 import { describe, it, expect, vi } from 'vitest';
 import {
   ref,

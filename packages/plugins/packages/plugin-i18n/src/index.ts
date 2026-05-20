@@ -23,10 +23,10 @@ function deepClone<T>(obj: T): T {
     return obj.map(deepClone) as T;
   }
 
-  const cloned = {} as Record<string, any>;
+  const cloned = {} as Record<string, unknown>;
   for (const key in obj) {
     if (Object.prototype.hasOwnProperty.call(obj, key)) {
-      cloned[key] = deepClone((obj as Record<string, any>)[key]);
+      cloned[key] = deepClone((obj as Record<string, unknown>)[key]);
     }
   }
   return cloned as T;
@@ -57,13 +57,13 @@ function createI18n(options: I18nOptions = {}): I18nInstance {
    */
   function getNestedValue(obj: LocaleMessages, path: string): string | undefined {
     const keys = path.split('.');
-    let current: any = obj;
+    let current: unknown = obj;
 
     for (const key of keys) {
       if (!isObject(current) || !(key in current)) {
         return undefined;
       }
-      current = current[key as keyof typeof current];
+      current = (current as Record<string, unknown>)[key];
     }
 
     return isString(current) ? current : undefined;
@@ -72,7 +72,7 @@ function createI18n(options: I18nOptions = {}): I18nInstance {
   /**
    * 替换插值
    */
-  function interpolate(message: string, args: any[]): string {
+  function interpolate(message: string, args: unknown[]): string {
     if (args.length === 0) return message;
 
     // 支持命名参数 {name} 和位置参数 {0}
@@ -83,8 +83,8 @@ function createI18n(options: I18nOptions = {}): I18nInstance {
       }
       // 命名参数（从对象中获取）
       if (isObject(args[0])) {
-        return (args[0] as Record<string, any>)[key] !== undefined
-          ? String((args[0] as Record<string, any>)[key])
+        return (args[0] as Record<string, unknown>)[key] !== undefined
+          ? String((args[0] as Record<string, unknown>)[key])
           : match;
       }
       return match;
@@ -94,7 +94,7 @@ function createI18n(options: I18nOptions = {}): I18nInstance {
   /**
    * 翻译函数
    */
-  function t(key: string, ...args: any[]): string {
+  function t(key: string, ...args: unknown[]): string {
     const locale = currentLocale();
     const msgs = localeMessages[locale];
     const fallbackMessages = localeMessages[fallbackLocale];
@@ -152,7 +152,7 @@ function createI18n(options: I18nOptions = {}): I18nInstance {
       ...localeMessages[locale],
       ...deepClone(messages),
     };
-    console.log(`[i18n] Locale "${locale}" registered successfully`);
+    console.warn(`[i18n] Locale "${locale}" registered successfully`);
   }
 
   /**

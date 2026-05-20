@@ -154,6 +154,7 @@ export function createComponentPatch<HN, HE extends HN>(
         const appContext = rootAny.appContext as Record<string, unknown> | undefined;
         const appErrorHandler = appContext?.config as Record<string, unknown> | undefined;
         if (appErrorHandler && typeof appErrorHandler.errorHandler === 'function') {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
           (appErrorHandler.errorHandler as Function)(renderError, component.ctx, 'render function');
         }
       }
@@ -166,7 +167,7 @@ export function createComponentPatch<HN, HE extends HN>(
     // FIX: P2-11 组件挂载 __DEV__ 日志：在组件首次挂载时输出调试信息
     if (__DEV__) {
       const compName = (component.type as ComponentInternalRuntimeProps).name || 'anonymous';
-      console.log(`[lytjs/patch-component] Mounting component: ${compName}`);
+      console.warn(`[lytjs/patch-component] Mounting component: ${compName}`);
     }
 
     // 应用 inheritAttrs：将实例的 attrs 合并到根 VNode props

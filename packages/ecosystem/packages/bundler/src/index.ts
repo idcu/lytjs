@@ -12,12 +12,10 @@ import type { LytPluginOptions, LytPluginConfig, BundlerPreset } from './types';
  * @param options - 插件选项
  * @returns Vite 插件
  */
-export function createVitePlugin(options: LytPluginOptions = {}): any {
-  const { ssg = false, ssgPages = [], ssr = false } = options;
-
+export function createVitePlugin(_options: LytPluginOptions = {}): Record<string, unknown> {
   return {
     name: 'lytjs',
-    configResolved(config: any) {
+    configResolved(_config: Record<string, unknown>) {
       console.log('[lytjs] Vite plugin resolved');
     },
     transform(code: string, id: string) {
@@ -26,7 +24,7 @@ export function createVitePlugin(options: LytPluginOptions = {}): any {
       }
       return null;
     },
-    configureServer(server: any) {
+    configureServer(_server: Record<string, unknown>) {
       console.log('[lytjs] Dev server configured');
     },
   };
@@ -38,13 +36,12 @@ export function createVitePlugin(options: LytPluginOptions = {}): any {
  * @param options - 插件选项
  * @returns Webpack 插件
  */
-export function createWebpackPlugin(options: LytPluginOptions = {}): any {
-  const { ssg = false, ssgPages = [], ssr = false } = options;
-
+export function createWebpackPlugin(_options: LytPluginOptions = {}): Record<string, unknown> {
   return {
     name: 'lytjs',
-    apply(compiler: any) {
-      compiler.hooks.beforeCompile.tap('LytPlugin', () => {
+    apply(compiler: Record<string, unknown>) {
+      const hooks = compiler.hooks as Record<string, { tap: (name: string, callback: () => void) => void }>;
+      hooks.beforeCompile.tap('LytPlugin', () => {
         console.log('[lytjs] Webpack plugin applied');
       });
     },
@@ -88,7 +85,7 @@ export function getPreset(name: string = 'default'): BundlerPreset {
  * @param options - 插件选项
  * @returns Vite 配置
  */
-export function createViteConfig(options: LytPluginOptions = {}): any {
+export function createViteConfig(options: LytPluginOptions = {}): Record<string, unknown> {
   const preset = getPreset(options.ssg ? 'ssg' : options.ssr ? 'ssr' : 'default');
   return {
     ...preset.vite,

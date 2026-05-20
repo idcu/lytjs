@@ -32,7 +32,7 @@ export class MiddlewareChain {
     context: MiddlewareContext,
     finalHandler: FinalHandler,
   ): Promise<Response> {
-    let index = 0;
+    const index = 0;
     const middlewares = this.middlewares;
 
     const dispatch = async (i: number): Promise<Response> => {

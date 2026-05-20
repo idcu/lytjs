@@ -6,10 +6,10 @@
 
 import { defineVaporComponent, createVaporApp } from '@lytjs/renderer';
 import { signal, computed } from '@lytjs/reactivity';
-import { Button, Input, Card, Alert } from '@lytjs/ui';
+import { Button } from '@lytjs/ui';
 
 // 示例组件 1: 简单计数器
-const Counter = defineVaporComponent({
+const _Counter = defineVaporComponent({
   name: 'Counter',
   setup() {
     const count = signal(0);
@@ -49,7 +49,7 @@ const Counter = defineVaporComponent({
 });
 
 // 示例组件 2: 待办事项列表
-const TodoList = defineVaporComponent({
+const _TodoList = defineVaporComponent({
   name: 'TodoList',
   setup() {
     const newTodo = signal('');

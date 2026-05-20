@@ -4,10 +4,8 @@
 
 import {
   MiddlewareFn,
-  MiddlewareContext,
   MiddlewareComposerConfig,
   HandlerFn,
-  ErrorHandlerFn,
 } from './types';
 import { createContext } from './context';
 import { combineMiddlewares } from './middleware';

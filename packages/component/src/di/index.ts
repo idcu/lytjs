@@ -4,7 +4,7 @@
 
 import { hasOwn } from '@lytjs/common-is';
 import { getCurrentInstance } from '../lifecycle';
-import { effectScope, onScopeDispose } from '@lytjs/reactivity';
+import { effectScope } from '@lytjs/reactivity';
 import type { EffectScope } from '@lytjs/reactivity';
 
 // ============================================================
@@ -368,7 +368,7 @@ export function inject<T>(
  * 从组件实例注入
  */
 function injectFromInstance(
-  instance: any,
+  instance: Record<string, unknown>,
   key: string | symbol,
   options?: EnhancedInjectOptions,
 ): unknown {

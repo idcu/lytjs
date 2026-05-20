@@ -13,16 +13,16 @@ export interface LytPluginOptions {
 
 export interface LytPluginConfig {
   /** Vite 插件配置 */
-  vite?: any;
+  vite?: Record<string, unknown>;
   /** Webpack 插件配置 */
-  webpack?: any;
+  webpack?: Record<string, unknown>;
 }
 
 export interface BundlerPreset {
   /** 预设名称 */
   name: string;
   /** Vite 配置 */
-  vite?: any;
+  vite?: Record<string, unknown>;
   /** Webpack 配置 */
-  webpack?: any;
+  webpack?: Record<string, unknown>;
 }

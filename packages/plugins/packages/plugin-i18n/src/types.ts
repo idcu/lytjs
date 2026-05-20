@@ -5,7 +5,7 @@
 /**
  * 语言消息定义
  */
-export type LocaleMessages = Record<string, string | Record<string, any>>;
+export type LocaleMessages = Record<string, string | Record<string, unknown>>;
 
 /**
  * 语言包
@@ -31,7 +31,7 @@ export interface I18nOptions {
 /**
  * 翻译函数
  */
-export type TranslateFn = (key: string, ...args: any[]) => string;
+export type TranslateFn = (key: string, ...args: unknown[]) => string;
 
 /**
  * i18n 实例

@@ -2,6 +2,7 @@
  * @lytjs/plugin-storage 单元测试
  */
 
+/* eslint-disable @typescript-eslint/no-require-imports */
 import { describe, it, expect } from 'vitest';
 
 const pluginModule = require('../dist/index.cjs');

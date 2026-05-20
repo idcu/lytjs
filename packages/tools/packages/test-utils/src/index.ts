@@ -20,7 +20,7 @@ export interface MountOptions {
   props?: Record<string, unknown>;
   /** Global plugins to install */
   global?: {
-    plugins?: any[];
+    plugins?: unknown[];
     provide?: Record<string, unknown>;
   };
 }
@@ -96,7 +96,7 @@ export function createContainer(): HTMLElement {
  * wrapper.unmount();
  * ```
  */
-export function mount<T = unknown>(component: any, options: MountOptions = {}): Wrapper<T> {
+export function mount<T = unknown>(component: unknown, options: MountOptions = {}): Wrapper<T> {
   const container = createContainer();
   const doc = createDOMEnvironment();
 
@@ -116,7 +116,12 @@ export function mount<T = unknown>(component: any, options: MountOptions = {}): 
   }
 
   // Create the app
-  const app: any = createApp(component);
+  const app: {
+    use: (plugin: unknown) => void;
+    provide: (key: string, value: unknown) => void;
+    mount: (el: HTMLElement) => T;
+    unmount: () => void;
+  } = createApp(component as Parameters<typeof createApp>[0]);
 
   // Install global plugins
   if (options.global?.plugins) {
@@ -194,7 +199,7 @@ export function mount<T = unknown>(component: any, options: MountOptions = {}): 
  * Mount a component and return a promise that resolves after initial render
  */
 export async function mountAsync<T = unknown>(
-  component: any,
+  component: unknown,
   options: MountOptions = {},
 ): Promise<Wrapper<T>> {
   const wrapper = mount<T>(component, options);
@@ -266,31 +271,31 @@ export function wait(ms: number): Promise<void> {
 /**
  * Create a mock function that tracks calls
  */
-export function mockFn<T extends (...args: any[]) => any = (...args: any[]) => any>(
+export function mockFn<T extends (...args: unknown[]) => unknown = (...args: unknown[]) => unknown>(
   implementation?: T,
 ): MockFunction<T> {
-  const calls: any[][] = [];
-  const instances: any[] = [];
+  const calls: unknown[][] = [];
+  const instances: unknown[] = [];
   let mockImplementation = implementation;
 
-  const fn: any = function (this: any, ...args: any[]) {
+  const fn: MockFunction<T> = function (this: unknown, ...args: unknown[]) {
     calls.push(args);
     instances.push(this);
     if (mockImplementation) {
       return mockImplementation.apply(this, args);
     }
     return undefined;
-  };
+  } as MockFunction<T>;
 
   fn.calls = calls;
   fn.instances = instances;
 
-  fn.mockReturnValue = (value: any) => {
+  fn.mockReturnValue = (value: unknown) => {
     mockImplementation = (() => value) as T;
     return fn;
   };
 
-  fn.mockResolvedValue = (value: any) => {
+  fn.mockResolvedValue = (value: unknown) => {
     mockImplementation = (async () => value) as T;
     return fn;
   };
@@ -315,12 +320,12 @@ export function mockFn<T extends (...args: any[]) => any = (...args: any[]) => a
   return fn;
 }
 
-export interface MockFunction<T extends (...args: any[]) => any = (...args: any[]) => any> {
+export interface MockFunction<T extends (...args: unknown[]) => unknown = (...args: unknown[]) => unknown> {
   (...args: Parameters<T>): ReturnType<T>;
-  calls: any[][];
-  instances: any[];
-  mockReturnValue: (value: any) => MockFunction<T>;
-  mockResolvedValue: (value: any) => MockFunction<T>;
+  calls: unknown[][];
+  instances: unknown[];
+  mockReturnValue: (value: unknown) => MockFunction<T>;
+  mockResolvedValue: (value: unknown) => MockFunction<T>;
   mockImplementation: (impl: T) => MockFunction<T>;
   mockClear: () => MockFunction<T>;
   mockReset: () => MockFunction<T>;
@@ -337,7 +342,7 @@ export function mockComponent(
     name,
     setup(_props, { slots }) {
       return () =>
-        (h as any)(
+        (h as unknown as (tag: string, attrs: Record<string, unknown>, children?: unknown) => unknown)(
           'div',
           { 'data-testid': `mock-${name.toLowerCase()}` },
           slots.default ? slots.default() : `Mock: ${name}`,
@@ -450,14 +455,14 @@ export async function assertEmits(
   eventName: string,
   action: () => void | Promise<void>,
   timeout = 1000,
-): Promise<any[]> {
-  const emitted: any[] = [];
+): Promise<unknown[]> {
+  const emitted: unknown[] = [];
 
-  const originalEmit = (wrapper.vm as { $emit?: (event: string, ...args: any[]) => void })?.$emit;
+  const originalEmit = (wrapper.vm as { $emit?: (event: string, ...args: unknown[]) => void })?.$emit;
   if (originalEmit) {
-    (wrapper.vm as { $emit: (event: string, ...args: any[]) => void }).$emit = (
+    (wrapper.vm as { $emit: (event: string, ...args: unknown[]) => void }).$emit = (
       event: string,
-      ...args: any[]
+      ...args: unknown[]
     ) => {
       if (event === eventName) {
         emitted.push(args.length === 1 ? args[0] : args);
@@ -514,7 +519,7 @@ export function runCleanup(): void {
  * Auto-cleanup wrapper for mount
  */
 export function mountWithCleanup<T = unknown>(
-  component: any,
+  component: unknown,
   options: MountOptions = {},
 ): Wrapper<T> {
   const wrapper = mount<T>(component, options);

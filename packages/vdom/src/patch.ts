@@ -446,7 +446,7 @@ export function createRenderer<HN, HE extends HN>(
             update();
           } else if (__DEV__ && !propsChanged && !slotsChanged) {
             const compName = (n2.component.type as { name?: string }).name || 'anonymous';
-            console.log(`[lytjs/patch] 跳过组件更新 "${compName}"：props 和 slots 未变化`);
+            console.warn(`[lytjs/patch] 跳过组件更新 "${compName}"：props 和 slots 未变化`);
           }
         }
       } else if (n2ShapeFlag & ShapeFlags.TELEPORT) {

@@ -3,7 +3,7 @@
  */
 import type { RateLimitOptions, RateLimitInfo } from './types';
 import type { Middleware, MiddlewareContext } from '@lytjs/middleware';
-import { createRateLimiter, SlidingWindowLimiter } from '@lytjs/common-rate-limit';
+import { createRateLimiter } from '@lytjs/common-rate-limit';
 
 /**
  * 创建限流中间件
@@ -18,7 +18,7 @@ export function createRateLimitMiddleware(options: RateLimitOptions): Middleware
   });
   const keyGenerator =
     options.keyGenerator ||
-    ((request: Request, ctx: MiddlewareContext) =>
+    ((request: Request, _ctx: MiddlewareContext) =>
       request.headers.get('x-forwarded-for') || 'unknown');
 
   return async (request: Request, ctx: MiddlewareContext, next: () => Promise<void>) => {

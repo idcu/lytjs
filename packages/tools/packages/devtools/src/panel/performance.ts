@@ -6,8 +6,6 @@
 
 import { sendToPanel, onPanelMessage } from '../bridge';
 import { recordEvent } from '../events';
-import type { ComponentTreeNode } from '../types';
-import { getComponentTree, getComponentById } from '../component-tree';
 
 // ===== Types =====
 
