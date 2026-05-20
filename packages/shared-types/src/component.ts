@@ -4,9 +4,7 @@
  * 插槽函数类型
  * @template Props - 插槽 props 类型
  */
-export type SlotFunction<Props = Record<string, unknown>> = (
-  props?: Props,
-) => unknown[];
+export type SlotFunction<Props = Record<string, unknown>> = (props?: Props) => unknown[];
 
 /**
  * 内部插槽映射类型
@@ -134,11 +132,7 @@ export interface ComponentOptionsBase {
   updated?: () => void;
   beforeUnmount?: () => void;
   unmounted?: () => void;
-  errorCaptured?: (
-    err: Error,
-    instance: ComponentPublicInstance,
-    info: string,
-  ) => boolean | void;
+  errorCaptured?: (err: Error, instance: ComponentPublicInstance, info: string) => boolean | void;
   renderTracked?: (...args: unknown[]) => void;
   renderTriggered?: (...args: unknown[]) => void;
 }

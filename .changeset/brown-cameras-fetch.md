@@ -1,6 +1,6 @@
 ---
-"@lytjs/plugin-validation": minor
-"@lytjs/plugins-monorepo": minor
+'@lytjs/plugin-validation': minor
+'@lytjs/plugins-monorepo': minor
 ---
 
 feat: add @lytjs/plugin-validation

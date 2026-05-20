@@ -14,11 +14,17 @@ export const RadioGroup = defineComponent({
   name: 'LytRadioGroup',
 
   props: {
-    modelValue: { type: [String, Number, Boolean] as unknown as PropType<string | number | boolean>, default: undefined },
+    modelValue: {
+      type: [String, Number, Boolean] as unknown as PropType<string | number | boolean>,
+      default: undefined,
+    },
     disabled: { type: Boolean, default: false },
     size: { type: String, default: 'default' },
     class: { type: String, default: '' },
-    style: { type: [String, Object] as unknown as PropType<string | Record<string, string>>, default: '' },
+    style: {
+      type: [String, Object] as unknown as PropType<string | Record<string, string>>,
+      default: '',
+    },
     ariaLabel: { type: String, default: '' },
     ariaDescribedBy: { type: String, default: '' },
     ariaRequired: { type: Boolean, default: false },
@@ -68,11 +74,15 @@ export const RadioGroup = defineComponent({
         ariaRequired: _props.ariaRequired,
       });
 
-      return createVNode('div', mergeA11yProps(a11yProps, {
-        class: getRadioGroupClass(),
-        style: getRadioGroupStyle(),
-        'aria-disabled': _props.disabled ? 'true' : undefined,
-      }), children);
+      return createVNode(
+        'div',
+        mergeA11yProps(a11yProps, {
+          class: getRadioGroupClass(),
+          style: getRadioGroupStyle(),
+          'aria-disabled': _props.disabled ? 'true' : undefined,
+        }),
+        children,
+      );
     };
   },
 });

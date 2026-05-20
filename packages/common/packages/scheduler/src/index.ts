@@ -25,11 +25,11 @@ export interface SchedulerJobWithPriority extends SchedulerJob {
  * 优先级常量
  */
 export const Priority = {
-  IDLE: 1000,       // 空闲任务
-  LOW: 500,         // 低优先级
-  NORMAL: 0,        // 普通优先级（默认）
-  HIGH: -500,       // 高优先级
-  CRITICAL: -1000,  // 关键任务
+  IDLE: 1000, // 空闲任务
+  LOW: 500, // 低优先级
+  NORMAL: 0, // 普通优先级（默认）
+  HIGH: -500, // 高优先级
+  CRITICAL: -1000, // 关键任务
 } as const;
 
 // ============================================================

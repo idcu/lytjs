@@ -293,9 +293,9 @@ clearEditHistory();
 ```typescript
 import { parseValue, formatValue } from '@lytjs/devtools-extension';
 
-parseValue('123', 'number');    // 123
+parseValue('123', 'number'); // 123
 parseValue('"hello"', 'string'); // "hello"
-formatValue({ a: 1 });         // '{\n  "a": 1\n}'
+formatValue({ a: 1 }); // '{\n  "a": 1\n}'
 ```
 
 ---
@@ -330,7 +330,7 @@ jumpToHistory(5); // 跳转到第 5 条记录
 ```typescript
 import { goBack, goForward } from '@lytjs/devtools-extension';
 
-goBack();   // 后退一步
+goBack(); // 后退一步
 goForward(); // 前进一步
 ```
 
@@ -342,7 +342,7 @@ goForward(); // 前进一步
 import { goToStart, goToEnd } from '@lytjs/devtools-extension';
 
 goToStart(); // 跳转到最初状态
-goToEnd();   // 跳转到最新状态
+goToEnd(); // 跳转到最新状态
 ```
 
 ### getHistory()
@@ -501,7 +501,9 @@ import { sendToPanel } from '@lytjs/devtools-extension';
 
 sendToPanel({
   type: 'STATE_UPDATE',
-  payload: { /* ... */ },
+  payload: {
+    /* ... */
+  },
 });
 ```
 

@@ -685,7 +685,10 @@ describe('@lytjs/dom-runtime', () => {
     });
 
     it('should call destroy callback for removed items', () => {
-      const list1 = [{ id: 1, text: 'a' }, { id: 2, text: 'b' }];
+      const list1 = [
+        { id: 1, text: 'a' },
+        { id: 2, text: 'b' },
+      ];
       const list2 = [{ id: 1, text: 'a' }];
 
       const destroyFn = vi.fn();
@@ -744,8 +747,14 @@ describe('@lytjs/dom-runtime', () => {
 
     it('should handle key changes correctly', () => {
       // Items where keys change between renders
-      const list1 = [{ id: 'a', text: 'first' }, { id: 'b', text: 'second' }];
-      const list2 = [{ id: 'b', text: 'second' }, { id: 'c', text: 'third' }];
+      const list1 = [
+        { id: 'a', text: 'first' },
+        { id: 'b', text: 'second' },
+      ];
+      const list2 = [
+        { id: 'b', text: 'second' },
+        { id: 'c', text: 'third' },
+      ];
 
       reconcileArray(container, list1, {
         key: (item) => item.id,
@@ -778,16 +787,24 @@ describe('@lytjs/dom-runtime', () => {
       const sentinel = document.createElement('hr');
       container.appendChild(sentinel);
 
-      const list = [{ id: 1, text: 'a' }, { id: 2, text: 'b' }];
+      const list = [
+        { id: 1, text: 'a' },
+        { id: 2, text: 'b' },
+      ];
 
-      reconcileArray(container, list, {
-        key: (item) => item.id,
-        create: (item) => {
-          const el = document.createElement('li');
-          el.textContent = item.text;
-          return el;
+      reconcileArray(
+        container,
+        list,
+        {
+          key: (item) => item.id,
+          create: (item) => {
+            const el = document.createElement('li');
+            el.textContent = item.text;
+            return el;
+          },
         },
-      }, sentinel);
+        sentinel,
+      );
 
       // Items should be before sentinel
       expect(container.childNodes[0]!.textContent).toBe('a');
@@ -876,7 +893,7 @@ describe('@lytjs/dom-runtime', () => {
         called = true;
       });
       // batchDOM 使用 requestAnimationFrame，需要等待
-      await new Promise(resolve => requestAnimationFrame(resolve));
+      await new Promise((resolve) => requestAnimationFrame(resolve));
       expect(called).toBe(true);
     });
 
@@ -887,7 +904,7 @@ describe('@lytjs/dom-runtime', () => {
         container.appendChild(el);
       });
       // batchDOM 使用 requestAnimationFrame，需要等待
-      await new Promise(resolve => requestAnimationFrame(resolve));
+      await new Promise((resolve) => requestAnimationFrame(resolve));
       expect(container.textContent).toBe('batched');
     });
   });

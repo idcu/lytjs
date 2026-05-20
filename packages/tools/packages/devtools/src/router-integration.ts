@@ -15,11 +15,8 @@ export function trackRouterNavigation(
 ): void {
   if (!isEventRecording()) return;
 
-  recordEvent(
-    'router:navigation',
-    {
-      from: { path: from.path, fullPath: from.fullPath },
-      to: { path: to.path, fullPath: to.fullPath },
-    },
-  );
+  recordEvent('router:navigation', {
+    from: { path: from.path, fullPath: from.fullPath },
+    to: { path: to.path, fullPath: to.fullPath },
+  });
 }

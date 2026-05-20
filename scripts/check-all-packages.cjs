@@ -122,17 +122,22 @@ for (const pkgPath of publishOrder) {
 
   try {
     // 检查 npm 上的最新版本
-    const result = execSync(`npm view ${pkgName} version --registry=https://registry.npmjs.org/ 2>&1`, {
-      encoding: 'utf8',
-      stdio: ['pipe', 'pipe', 'pipe']
-    });
+    const result = execSync(
+      `npm view ${pkgName} version --registry=https://registry.npmjs.org/ 2>&1`,
+      {
+        encoding: 'utf8',
+        stdio: ['pipe', 'pipe', 'pipe'],
+      },
+    );
     const npmVersion = result.trim();
 
     if (npmVersion === pkgVersion) {
       console.log(`[${index}/${publishOrder.length}] ✅ ${pkgName}@${pkgVersion} - 已发布`);
       published.push({ path: pkgPath, name: pkgName, version: pkgVersion });
     } else {
-      console.log(`[${index}/${publishOrder.length}] ⚠️  ${pkgName} - 本地: ${pkgVersion}, npm: ${npmVersion}`);
+      console.log(
+        `[${index}/${publishOrder.length}] ⚠️  ${pkgName} - 本地: ${pkgVersion}, npm: ${npmVersion}`,
+      );
       missing.push({ path: pkgPath, name: pkgName, localVersion: pkgVersion, npmVersion });
     }
   } catch (error) {
@@ -141,7 +146,9 @@ for (const pkgPath of publishOrder) {
       console.log(`[${index}/${publishOrder.length}] ❌ ${pkgName} - 未在 npm 上找到`);
       missing.push({ path: pkgPath, name: pkgName, localVersion: pkgVersion, npmVersion: null });
     } else {
-      console.log(`[${index}/${publishOrder.length}] ❌ ${pkgName} - 检查失败: ${stderr.substring(0, 100)}`);
+      console.log(
+        `[${index}/${publishOrder.length}] ❌ ${pkgName} - 检查失败: ${stderr.substring(0, 100)}`,
+      );
       failed.push({ path: pkgPath, name: pkgName, error: stderr });
     }
   }
@@ -152,11 +159,11 @@ for (const pkgPath of publishOrder) {
 console.log('\n========================================');
 console.log('📊 检查结果汇总\n');
 console.log(`✅ 已发布 (${published.length}/${publishOrder.length}):`);
-published.forEach(p => console.log(`   - ${p.name}@${p.version}`));
+published.forEach((p) => console.log(`   - ${p.name}@${p.version}`));
 
 console.log(`\n❌ 未找到或版本不匹配 (${missing.length}):`);
 if (missing.length > 0) {
-  missing.forEach(p => {
+  missing.forEach((p) => {
     if (p.npmVersion) {
       console.log(`   - ${p.name}: 本地 ${p.localVersion}, npm ${p.npmVersion}`);
     } else {
@@ -169,7 +176,7 @@ if (missing.length > 0) {
 
 console.log(`\n⚠️  检查失败 (${failed.length}):`);
 if (failed.length > 0) {
-  failed.forEach(p => console.log(`   - ${p.name}`));
+  failed.forEach((p) => console.log(`   - ${p.name}`));
 } else {
   console.log('   无');
 }

@@ -71,10 +71,10 @@ describe('GPU Acceleration', () => {
     it('should return false in non-browser environment', () => {
       const originalWindow = globalThis.window;
       Object.defineProperty(globalThis, 'window', { value: undefined });
-      
+
       const element = document.createElement('div');
       expect(canUseGPU(element)).toBe(false);
-      
+
       Object.defineProperty(globalThis, 'window', { value: originalWindow });
     });
   });
@@ -82,9 +82,9 @@ describe('GPU Acceleration', () => {
   describe('enableGPUAcceleration', () => {
     it('should set willChange style', () => {
       const element = document.createElement('div') as HTMLElement;
-      
+
       enableGPUAcceleration(element);
-      
+
       expect(element.style.willChange).toBe('transform');
       expect(element.style.backfaceVisibility).toBe('hidden');
       expect(element.style.perspective).toBe('1000px');
@@ -93,18 +93,18 @@ describe('GPU Acceleration', () => {
     it('should use custom willChange option', () => {
       const element = document.createElement('div') as HTMLElement;
       const options: GPUAccelerationOptions = { willChange: 'opacity' };
-      
+
       enableGPUAcceleration(element, options);
-      
+
       expect(element.style.willChange).toBe('opacity');
     });
 
     it('should use custom perspective option', () => {
       const element = document.createElement('div') as HTMLElement;
       const options: GPUAccelerationOptions = { willChange: 'transform' };
-      
+
       enableGPUAcceleration(element, options);
-      
+
       expect(element.style.perspective).toBe('1000px');
     });
   });
@@ -112,10 +112,10 @@ describe('GPU Acceleration', () => {
   describe('disableGPUAcceleration', () => {
     it('should reset GPU acceleration styles', () => {
       const element = document.createElement('div') as HTMLElement;
-      
+
       enableGPUAcceleration(element);
       disableGPUAcceleration(element);
-      
+
       expect(element.style.willChange).toBe('auto');
       expect(element.style.backfaceVisibility).toBe('');
       expect(element.style.perspective).toBe('');
@@ -197,7 +197,7 @@ describe('GPU Acceleration', () => {
       optimizer.batchAnimation('anim-1', update1);
       optimizer.batchAnimation('anim-2', update2);
 
-      return new Promise(resolve => {
+      return new Promise((resolve) => {
         setTimeout(() => {
           expect(update1).toHaveBeenCalled();
           expect(update2).toHaveBeenCalled();
@@ -209,9 +209,9 @@ describe('GPU Acceleration', () => {
     it('should cleanup properly', () => {
       optimizer.trackAnimation('anim-1');
       optimizer.batchAnimation('anim-1', vi.fn());
-      
+
       optimizer.cleanup();
-      
+
       expect(optimizer.getActiveAnimationCount()).toBe(0);
     });
 
@@ -224,9 +224,9 @@ describe('GPU Acceleration', () => {
 
     it('should optimize element for GPU', () => {
       const element = document.createElement('div') as HTMLElement;
-      
+
       optimizer.optimizeElement(element);
-      
+
       expect(element.style.willChange).toBe('transform');
     });
   });

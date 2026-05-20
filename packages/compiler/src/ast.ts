@@ -1,7 +1,6 @@
 // src/ast.ts
 // AST node creation helper functions
 
-
 import { NodeTypes, ElementTypes } from './constants';
 import type {
   RootNode,

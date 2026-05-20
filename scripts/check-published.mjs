@@ -73,7 +73,10 @@ const notPublished = [];
 
 for (const pkg of packages) {
   try {
-    const version = execSync(`npm view @lytjs/${pkg} version 2>/dev/null`, { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] }).trim();
+    const version = execSync(`npm view @lytjs/${pkg} version 2>/dev/null`, {
+      encoding: 'utf-8',
+      stdio: ['pipe', 'pipe', 'pipe'],
+    }).trim();
     published.push({ name: pkg, version });
   } catch {
     notPublished.push(pkg);
@@ -81,7 +84,7 @@ for (const pkg of packages) {
 }
 
 console.log(`✅ 已发布 (${published.length}):`);
-published.forEach(p => console.log(`   @lytjs/${p.name}: ${p.version}`));
+published.forEach((p) => console.log(`   @lytjs/${p.name}: ${p.version}`));
 
 console.log(`\n❌ 未发布 (${notPublished.length}):`);
-notPublished.forEach(p => console.log(`   @lytjs/${p}`));
+notPublished.forEach((p) => console.log(`   @lytjs/${p}`));

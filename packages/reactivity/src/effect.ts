@@ -336,7 +336,12 @@ export class ReactiveEffect<T = unknown> {
   computed?: boolean;
   allowRecurse?: boolean;
   onStop?: () => void;
-  onTrack?: (event: { effect: ReactiveEffect; target: object; key?: string | symbol; type: string }) => void;
+  onTrack?: (event: {
+    effect: ReactiveEffect;
+    target: object;
+    key?: string | symbol;
+    type: string;
+  }) => void;
   onTrigger?: (event: {
     effect: ReactiveEffect;
     target: object;
@@ -450,7 +455,12 @@ export function effect(
     scheduler?: (...args: unknown[]) => unknown;
     allowRecurse?: boolean;
     onStop?: () => void;
-    onTrack?: (event: { effect: ReactiveEffect; target: object; key?: string | symbol; type: string }) => void;
+    onTrack?: (event: {
+      effect: ReactiveEffect;
+      target: object;
+      key?: string | symbol;
+      type: string;
+    }) => void;
     onTrigger?: (event: {
       effect: ReactiveEffect;
       target: object;
@@ -470,7 +480,12 @@ export function effect<T>(
     scheduler?: (...args: unknown[]) => unknown;
     allowRecurse?: boolean;
     onStop?: () => void;
-    onTrack?: (event: { effect: ReactiveEffect; target: object; key?: string | symbol; type: string }) => void;
+    onTrack?: (event: {
+      effect: ReactiveEffect;
+      target: object;
+      key?: string | symbol;
+      type: string;
+    }) => void;
     onTrigger?: (event: {
       effect: ReactiveEffect;
       target: object;
@@ -490,7 +505,12 @@ export function effect<T = unknown>(
     scheduler?: (...args: unknown[]) => unknown;
     allowRecurse?: boolean;
     onStop?: () => void;
-    onTrack?: (event: { effect: ReactiveEffect; target: object; key?: string | symbol; type: string }) => void;
+    onTrack?: (event: {
+      effect: ReactiveEffect;
+      target: object;
+      key?: string | symbol;
+      type: string;
+    }) => void;
     onTrigger?: (event: {
       effect: ReactiveEffect;
       target: object;

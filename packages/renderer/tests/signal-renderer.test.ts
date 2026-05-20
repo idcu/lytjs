@@ -40,9 +40,7 @@ describe('SignalRenderer', () => {
 
     it('should throw if container is not found', () => {
       const renderer = createSignalRenderer('<p>test</p>', {});
-      expect(() => renderer.render('#nonexistent')).toThrow(
-        /cannot find element matching/,
-      );
+      expect(() => renderer.render('#nonexistent')).toThrow(/cannot find element matching/);
     });
 
     it('should render nested elements', () => {
@@ -96,10 +94,7 @@ describe('SignalRenderer', () => {
   describe('v-if conditional rendering', () => {
     it('should show element when condition is true', () => {
       const ctx = { show: ref(true) };
-      const renderer = createSignalRenderer(
-        '<div><span v-if="show">visible</span></div>',
-        ctx,
-      );
+      const renderer = createSignalRenderer('<div><span v-if="show">visible</span></div>', ctx);
       renderer.render(container);
 
       const span = container.querySelector('span');
@@ -111,10 +106,7 @@ describe('SignalRenderer', () => {
 
     it('should hide element when condition is false', () => {
       const ctx = { show: ref(false) };
-      const renderer = createSignalRenderer(
-        '<div><span v-if="show">visible</span></div>',
-        ctx,
-      );
+      const renderer = createSignalRenderer('<div><span v-if="show">visible</span></div>', ctx);
       renderer.render(container);
 
       // FIX: v-if 使用 insert/remove 实现，条件为 false 时元素不在 DOM 中
@@ -126,10 +118,7 @@ describe('SignalRenderer', () => {
 
     it('should toggle visibility when condition changes', () => {
       const ctx = { show: ref(true) };
-      const renderer = createSignalRenderer(
-        '<div><span v-if="show">visible</span></div>',
-        ctx,
-      );
+      const renderer = createSignalRenderer('<div><span v-if="show">visible</span></div>', ctx);
       renderer.render(container);
 
       let span = container.querySelector('span');
@@ -211,10 +200,7 @@ describe('SignalRenderer', () => {
     it('should bind click event', () => {
       const handler = vi.fn();
       const ctx = { onClick: handler };
-      const renderer = createSignalRenderer(
-        '<button v-on:click="onClick">Click me</button>',
-        ctx,
-      );
+      const renderer = createSignalRenderer('<button v-on:click="onClick">Click me</button>', ctx);
       renderer.render(container);
 
       const button = container.querySelector('button')!;
@@ -227,10 +213,7 @@ describe('SignalRenderer', () => {
     it('should bind event with shorthand', () => {
       const handler = vi.fn();
       const ctx = { handleClick: handler };
-      const renderer = createSignalRenderer(
-        '<button @click="handleClick">Click</button>',
-        ctx,
-      );
+      const renderer = createSignalRenderer('<button @click="handleClick">Click</button>', ctx);
       renderer.render(container);
 
       const button = container.querySelector('button')!;
@@ -246,10 +229,7 @@ describe('SignalRenderer', () => {
   describe('v-model two-way binding', () => {
     it('should bind input value', () => {
       const ctx = { text: ref('initial') };
-      const renderer = createSignalRenderer(
-        '<input v-model="text" />',
-        ctx,
-      );
+      const renderer = createSignalRenderer('<input v-model="text" />', ctx);
       renderer.render(container);
 
       const input = container.querySelector('input') as HTMLInputElement;
@@ -260,10 +240,7 @@ describe('SignalRenderer', () => {
 
     it('should update ref when input changes', () => {
       const ctx = { text: ref('initial') };
-      const renderer = createSignalRenderer(
-        '<input v-model="text" />',
-        ctx,
-      );
+      const renderer = createSignalRenderer('<input v-model="text" />', ctx);
       renderer.render(container);
 
       const input = container.querySelector('input') as HTMLInputElement;
@@ -279,10 +256,7 @@ describe('SignalRenderer', () => {
 
     it('should update input when ref changes', () => {
       const ctx = { text: ref('initial') };
-      const renderer = createSignalRenderer(
-        '<input v-model="text" />',
-        ctx,
-      );
+      const renderer = createSignalRenderer('<input v-model="text" />', ctx);
       renderer.render(container);
 
       const input = container.querySelector('input') as HTMLInputElement;
@@ -300,10 +274,7 @@ describe('SignalRenderer', () => {
   describe('v-bind attribute binding', () => {
     it('should bind class attribute', () => {
       const ctx = { className: ref('active') };
-      const renderer = createSignalRenderer(
-        '<div v-bind:class="className">styled</div>',
-        ctx,
-      );
+      const renderer = createSignalRenderer('<div v-bind:class="className">styled</div>', ctx);
       renderer.render(container);
 
       const div = container.querySelector('div')!;
@@ -317,10 +288,7 @@ describe('SignalRenderer', () => {
 
     it('should bind style attribute', () => {
       const ctx = { color: ref('color: red') };
-      const renderer = createSignalRenderer(
-        '<div v-bind:style="color">styled</div>',
-        ctx,
-      );
+      const renderer = createSignalRenderer('<div v-bind:style="color">styled</div>', ctx);
       renderer.render(container);
 
       const div = container.querySelector('div')!;
@@ -335,10 +303,7 @@ describe('SignalRenderer', () => {
 
     it('should bind arbitrary attributes', () => {
       const ctx = { title: ref('tooltip') };
-      const renderer = createSignalRenderer(
-        '<div v-bind:title="title">content</div>',
-        ctx,
-      );
+      const renderer = createSignalRenderer('<div v-bind:title="title">content</div>', ctx);
       renderer.render(container);
 
       const div = container.querySelector('div')!;
@@ -422,10 +387,7 @@ describe('SignalRenderer', () => {
   describe('v-show directive', () => {
     it('should toggle display based on condition', () => {
       const ctx = { visible: ref(true) };
-      const renderer = createSignalRenderer(
-        '<div v-show="visible">content</div>',
-        ctx,
-      );
+      const renderer = createSignalRenderer('<div v-show="visible">content</div>', ctx);
       renderer.render(container);
 
       const div = container.querySelector('div')!;
@@ -446,10 +408,7 @@ describe('SignalRenderer', () => {
   describe('v-text and v-html directives', () => {
     it('should render v-text content', () => {
       const ctx = { text: ref('hello') };
-      const renderer = createSignalRenderer(
-        '<div v-text="text"></div>',
-        ctx,
-      );
+      const renderer = createSignalRenderer('<div v-text="text"></div>', ctx);
       renderer.render(container);
 
       const div = container.querySelector('div')!;
@@ -463,10 +422,7 @@ describe('SignalRenderer', () => {
 
     it('should render v-html content', () => {
       const ctx = { html: ref('<strong>bold</strong>') };
-      const renderer = createSignalRenderer(
-        '<div v-html="html"></div>',
-        ctx,
-      );
+      const renderer = createSignalRenderer('<div v-html="html"></div>', ctx);
       renderer.render(container);
 
       const div = container.querySelector('div')!;
@@ -483,10 +439,7 @@ describe('SignalRenderer', () => {
     describe('v-html XSS safety', () => {
       it('should sanitize <script> tags in v-html', () => {
         const ctx = { html: ref('<script>alert("xss")</script><p>safe</p>') };
-        const renderer = createSignalRenderer(
-          '<div v-html="html"></div>',
-          ctx,
-        );
+        const renderer = createSignalRenderer('<div v-html="html"></div>', ctx);
         renderer.render(container);
 
         const div = container.querySelector('div')!;
@@ -501,10 +454,7 @@ describe('SignalRenderer', () => {
 
       it('should sanitize event handler attributes in v-html', () => {
         const ctx = { html: ref('<div onclick="alert(1)">click me</div>') };
-        const renderer = createSignalRenderer(
-          '<div v-html="html"></div>',
-          ctx,
-        );
+        const renderer = createSignalRenderer('<div v-html="html"></div>', ctx);
         renderer.render(container);
 
         const inner = container.querySelector('div > div');
@@ -516,10 +466,7 @@ describe('SignalRenderer', () => {
 
       it('should sanitize <iframe> tags in v-html', () => {
         const ctx = { html: ref('<iframe src="evil.com"></iframe><span>ok</span>') };
-        const renderer = createSignalRenderer(
-          '<div v-html="html"></div>',
-          ctx,
-        );
+        const renderer = createSignalRenderer('<div v-html="html"></div>', ctx);
         renderer.render(container);
 
         const div = container.querySelector('div')!;
@@ -589,10 +536,7 @@ describe('SignalRenderer', () => {
   describe('multiple v-if rapid switching', () => {
     it('should maintain correct DOM after rapid v-if toggling', () => {
       const ctx = { show: ref(true) };
-      const renderer = createSignalRenderer(
-        '<div><span v-if="show">visible</span></div>',
-        ctx,
-      );
+      const renderer = createSignalRenderer('<div><span v-if="show">visible</span></div>', ctx);
       renderer.render(container);
 
       const span = container.querySelector('span')!;
@@ -613,10 +557,7 @@ describe('SignalRenderer', () => {
 
     it('should end with correct state after multiple v-if toggles', () => {
       const ctx = { show: ref(false) };
-      const renderer = createSignalRenderer(
-        '<div><span v-if="show">conditional</span></div>',
-        ctx,
-      );
+      const renderer = createSignalRenderer('<div><span v-if="show">conditional</span></div>', ctx);
       renderer.render(container);
 
       // FIX: v-if 使用 insert/remove 实现，条件为 false 时元素不在 DOM 中

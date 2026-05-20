@@ -12,7 +12,7 @@ export class MetadataBuilder {
 
   /**
    * 设置标题
-   * 
+   *
    * @param title - 标题
    * @returns 构建器实例
    */
@@ -23,7 +23,7 @@ export class MetadataBuilder {
 
   /**
    * 设置描述
-   * 
+   *
    * @param description - 描述
    * @returns 构建器实例
    */
@@ -34,7 +34,7 @@ export class MetadataBuilder {
 
   /**
    * 设置关键词
-   * 
+   *
    * @param keywords - 关键词数组
    * @returns 构建器实例
    */
@@ -45,7 +45,7 @@ export class MetadataBuilder {
 
   /**
    * 设置 Open Graph 元数据
-   * 
+   *
    * @param og - Open Graph 元数据
    * @returns 构建器实例
    */
@@ -56,7 +56,7 @@ export class MetadataBuilder {
 
   /**
    * 设置 Twitter 元数据
-   * 
+   *
    * @param twitter - Twitter 元数据
    * @returns 构建器实例
    */
@@ -67,7 +67,7 @@ export class MetadataBuilder {
 
   /**
    * 设置自定义属性
-   * 
+   *
    * @param key - 键
    * @param value - 值
    * @returns 构建器实例
@@ -79,7 +79,7 @@ export class MetadataBuilder {
 
   /**
    * 构建元数据
-   * 
+   *
    * @returns 元数据对象
    */
   build(): Metadata {
@@ -89,7 +89,7 @@ export class MetadataBuilder {
 
 /**
  * 创建元数据构建器
- * 
+ *
  * @returns 构建器实例
  */
 export function createMetadataBuilder(): MetadataBuilder {

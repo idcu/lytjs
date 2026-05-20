@@ -166,9 +166,15 @@ export function createWarnContext(): WarnContext {
     error: (msg: string, options?: WarnOptions) => localLog('error', msg, options),
     debug: (msg: string, options?: WarnOptions) => localLog('debug', msg, options),
     fatal: (msg: string, options?: WarnOptions) => localLog('fatal', msg, options),
-    setLevel: (level: LogLevel) => { localLevel = level; },
+    setLevel: (level: LogLevel) => {
+      localLevel = level;
+    },
     getLevel: () => localLevel,
-    setHandler: (handler: LogHandler | null) => { localHandler = handler; },
-    resetWarned: () => { localWarnedSet.clear(); },
+    setHandler: (handler: LogHandler | null) => {
+      localHandler = handler;
+    },
+    resetWarned: () => {
+      localWarnedSet.clear();
+    },
   };
 }

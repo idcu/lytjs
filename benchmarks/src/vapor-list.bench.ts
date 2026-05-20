@@ -2,7 +2,11 @@
 // Vapor 模式列表渲染性能测试
 
 import { bench, describe } from 'vitest';
-import { createVaporListRenderer, diffLists, insertBatch } from '../../packages/dom-runtime/src/batch';
+import {
+  createVaporListRenderer,
+  diffLists,
+  insertBatch,
+} from '../../packages/dom-runtime/src/batch';
 
 describe('Vapor 列表渲染性能', () => {
   bench('createVaporListRenderer - 初始渲染 1000 项', () => {
@@ -50,10 +54,7 @@ describe('Vapor 列表渲染性能', () => {
       return item;
     });
     updatedItems.splice(100, 50); // 删除 50 项
-    updatedItems.push(
-      { id: 1000, name: 'New Item 1000' },
-      { id: 1001, name: 'New Item 1001' },
-    );
+    updatedItems.push({ id: 1000, name: 'New Item 1000' }, { id: 1001, name: 'New Item 1001' });
 
     // 增量更新
     renderer.render(updatedItems);
@@ -145,7 +146,12 @@ describe('列表差异算法性能', () => {
     newList.push({ id: 1000, value: 'new-item' });
     newList.push({ id: 1001, value: 'new-item-2' });
 
-    diffLists(oldList, newList, (item) => item.id, (a, b) => a.value !== b.value);
+    diffLists(
+      oldList,
+      newList,
+      (item) => item.id,
+      (a, b) => a.value !== b.value,
+    );
   });
 
   bench('diffLists - 1000 个元素（50%删除，50%新增）', () => {
@@ -155,7 +161,12 @@ describe('列表差异算法性能', () => {
       value: `new-item-${i}`,
     }));
 
-    diffLists(oldList, newList, (item) => item.id, (a, b) => a.value !== b.value);
+    diffLists(
+      oldList,
+      newList,
+      (item) => item.id,
+      (a, b) => a.value !== b.value,
+    );
   });
 });
 

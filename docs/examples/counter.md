@@ -43,10 +43,14 @@ function render({ count, increment, decrement, reset }) {
     h('h1', {}, '计数器'),
     h('p', { class: 'count' }, count()),
     h('div', { class: 'buttons' }, [
-      h('button', { 
-        onClick: decrement, 
-        disabled: count() <= 0 
-      }, '-'),
+      h(
+        'button',
+        {
+          onClick: decrement,
+          disabled: count() <= 0,
+        },
+        '-',
+      ),
       h('button', { onClick: reset }, '重置'),
       h('button', { onClick: increment }, '+'),
     ]),
@@ -128,10 +132,14 @@ h('button', { onClick: increment }, '+');
 ### 3. 条件渲染
 
 ```javascript
-h('button', { 
-  onClick: decrement, 
-  disabled: count() <= 0 
-}, '-');
+h(
+  'button',
+  {
+    onClick: decrement,
+    disabled: count() <= 0,
+  },
+  '-',
+);
 ```
 
 动态绑定 `disabled` 属性。当 `count <= 0` 时，按钮会被禁用。

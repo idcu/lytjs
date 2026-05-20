@@ -295,21 +295,19 @@ export async function createOptimizedStream(
   vnode: unknown,
   options?: unknown,
 ): Promise<ReadableStream> {
-  const { createOptimizedStream: _createOptimizedStream } = await import('./ssr/ssr-stream-optimized');
+  const { createOptimizedStream: _createOptimizedStream } =
+    await import('./ssr/ssr-stream-optimized');
   return _createOptimizedStream(vnode as VNodeType, options as any);
 }
 export async function renderDocumentToStream(
   vnode: unknown,
   options?: unknown,
 ): Promise<ReadableStream> {
-  const { renderDocumentToStream: _renderDocumentToStream } = await import('./ssr/ssr-stream-optimized');
+  const { renderDocumentToStream: _renderDocumentToStream } =
+    await import('./ssr/ssr-stream-optimized');
   return _renderDocumentToStream(vnode as VNodeType, options as any);
 }
-export type {
-  OptimizedStreamOptions,
-  PreloadHint,
-  StreamStats,
-} from './ssr/ssr-stream-optimized';
+export type { OptimizedStreamOptions, PreloadHint, StreamStats } from './ssr/ssr-stream-optimized';
 export { OptimizedSSRStream } from './ssr/ssr-stream-optimized';
 
 // SSR Island 架构
@@ -399,11 +397,7 @@ export async function getVaporHMRFunctions() {
     onHMRUpdate: vaporHMR.onHMRUpdate,
   };
 }
-export type {
-  HMRUpdateType,
-  HMRUpdate,
-  HMRStatePreservation,
-} from './vapor/vapor-hmr';
+export type { HMRUpdateType, HMRUpdate, HMRStatePreservation } from './vapor/vapor-hmr';
 export { DEFAULT_STATE_PRESERVATION } from './vapor/vapor-hmr';
 
 // Vapor SSR API (Phase 1.3)

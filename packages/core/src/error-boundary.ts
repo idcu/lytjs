@@ -109,15 +109,15 @@ class ErrorLogManager {
   }
 
   getLogById(id: string): ErrorLog | undefined {
-    return this.logs.find(log => log.id === id);
+    return this.logs.find((log) => log.id === id);
   }
 
   getLogsByErrorType(errorType: string): ErrorLog[] {
-    return this.logs.filter(log => log.error.name === errorType);
+    return this.logs.filter((log) => log.error.name === errorType);
   }
 
   getLogsByDateRange(start: Date, end: Date): ErrorLog[] {
-    return this.logs.filter(log => log.timestamp >= start && log.timestamp <= end);
+    return this.logs.filter((log) => log.timestamp >= start && log.timestamp <= end);
   }
 
   getErrorStats(): {
@@ -126,7 +126,7 @@ class ErrorLogManager {
     recentErrors: ErrorLog[];
   } {
     const errorTypes: Record<string, number> = {};
-    this.logs.forEach(log => {
+    this.logs.forEach((log) => {
       const type = log.error.name || 'Unknown';
       errorTypes[type] = (errorTypes[type] || 0) + 1;
     });
@@ -154,26 +154,44 @@ function createElement(type: any, props: any, ...children: any[]): VNode {
 
 /** 默认错误降级组件 */
 function DefaultErrorFallback(props: FallbackProps): VNode {
-  return createElement('div', {
-    class: 'error-boundary-fallback',
-    style: 'padding: 20px; background: #fee; border: 1px solid #fcc; border-radius: 8px;',
-  }, [
-    createElement('h3', { style: 'color: #c00; margin-bottom: 10px;' }, '出错了'),
-    createElement('p', { style: 'color: #666; margin-bottom: 10px;' }, props.error.message),
-    createElement('div', { style: 'display: flex; gap: 10px; margin-top: 10px;' }, [
-      props.hasRetries && createElement('button', {
-        style: 'padding: 8px 16px; background: #667eea; color: white; border: none; border-radius: 4px; cursor: pointer;',
-        onClick: () => props.retry(),
-      }, `重试 (${props.retryCount}/${props.maxRetries})`),
-      createElement('button', {
-        style: 'padding: 8px 16px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;',
-        onClick: () => props.reset(),
-      }, '重置'),
-    ]),
-    props.retryCount > 0 && createElement('p', { style: 'color: #999; font-size: 0.9em; margin-top: 10px;' },
-      `已重试 ${props.retryCount} 次`
-    ),
-  ]);
+  return createElement(
+    'div',
+    {
+      class: 'error-boundary-fallback',
+      style: 'padding: 20px; background: #fee; border: 1px solid #fcc; border-radius: 8px;',
+    },
+    [
+      createElement('h3', { style: 'color: #c00; margin-bottom: 10px;' }, '出错了'),
+      createElement('p', { style: 'color: #666; margin-bottom: 10px;' }, props.error.message),
+      createElement('div', { style: 'display: flex; gap: 10px; margin-top: 10px;' }, [
+        props.hasRetries &&
+          createElement(
+            'button',
+            {
+              style:
+                'padding: 8px 16px; background: #667eea; color: white; border: none; border-radius: 4px; cursor: pointer;',
+              onClick: () => props.retry(),
+            },
+            `重试 (${props.retryCount}/${props.maxRetries})`,
+          ),
+        createElement(
+          'button',
+          {
+            style:
+              'padding: 8px 16px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;',
+            onClick: () => props.reset(),
+          },
+          '重置',
+        ),
+      ]),
+      props.retryCount > 0 &&
+        createElement(
+          'p',
+          { style: 'color: #999; font-size: 0.9em; margin-top: 10px;' },
+          `已重试 ${props.retryCount} 次`,
+        ),
+    ],
+  );
 }
 
 /** 错误边界组件状态 */
@@ -255,15 +273,21 @@ export function ErrorBoundary(props: ErrorBoundaryProps): VNode {
   };
 
   if (state.error) {
-    return createElement('error-boundary-wrapper', { 'data-error': 'true', key: `reset-${state.resetKey}` }, [
-      getFallback(),
-    ]);
+    return createElement(
+      'error-boundary-wrapper',
+      { 'data-error': 'true', key: `reset-${state.resetKey}` },
+      [getFallback()],
+    );
   }
 
-  return createElement('error-boundary-wrapper', {
-    'data-error': 'false',
-    key: `reset-${state.resetKey}`,
-  }, null);
+  return createElement(
+    'error-boundary-wrapper',
+    {
+      'data-error': 'false',
+      key: `reset-${state.resetKey}`,
+    },
+    null,
+  );
 }
 
 /** 错误边界钩子 - 用于手动触发错误 */

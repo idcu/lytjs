@@ -28,7 +28,7 @@ export default defineComponent({
       <p>Count: {{ count }}</p>
       <button @click="increment">Increment</button>
     </div>
-  `
+  `,
 });
 ```
 
@@ -81,7 +81,7 @@ defineComponent({
       <h3>{{ props.name }}</h3>
       <p>Age: {{ props.age }}</p>
     </div>
-  `
+  `,
 });
 ```
 
@@ -122,7 +122,7 @@ defineComponent({
   template: `
     <button @click="handleClick">Click</button>
     <button @click="handleSubmit">Submit</button>
-  `
+  `,
 });
 ```
 
@@ -144,12 +144,7 @@ const onSubmit = (data) => console.log('data:', data);
 组件提供完整的生命周期钩子：
 
 ```typescript
-import { 
-  onMounted, 
-  onUnmounted,
-  onBeforeMount,
-  onBeforeUnmount 
-} from '@lytjs/core';
+import { onMounted, onUnmounted, onBeforeMount, onBeforeUnmount } from '@lytjs/core';
 
 defineComponent({
   setup() {
@@ -162,7 +157,7 @@ defineComponent({
     });
 
     return {};
-  }
+  },
 });
 ```
 
@@ -179,7 +174,7 @@ defineComponent({
     const theme = signal('light');
     provide('theme', theme);
     return {};
-  }
+  },
 });
 
 // 后代组件
@@ -189,7 +184,7 @@ defineComponent({
   setup() {
     const theme = inject('theme');
     return { theme };
-  }
+  },
 });
 ```
 

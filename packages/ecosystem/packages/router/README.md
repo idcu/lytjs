@@ -57,20 +57,20 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
-      component: Home
+      component: Home,
     },
     {
       path: '/about',
       name: 'about',
-      component: About
+      component: About,
     },
     {
       path: '/user/:id',
       name: 'user-profile',
       component: UserProfile,
-      props: true
-    }
-  ]
+      props: true,
+    },
+  ],
 });
 
 export default router;
@@ -84,7 +84,7 @@ import App from './App';
 import router from './router';
 
 const app = mount(document.getElementById('app'), App, {
-  router
+  router,
 });
 ```
 
@@ -107,20 +107,20 @@ const router = createRouter({
       children: [
         {
           path: '',
-          redirect: '/dashboard'
+          redirect: '/dashboard',
         },
         {
           path: 'dashboard',
           name: 'dashboard',
-          component: Dashboard
+          component: Dashboard,
         },
         {
           path: 'settings',
           name: 'settings',
           component: Settings,
-          meta: { requiresAuth: true }
-        }
-      ]
+          meta: { requiresAuth: true },
+        },
+      ],
     },
     {
       path: '/users',
@@ -130,11 +130,11 @@ const router = createRouter({
           path: ':id',
           name: 'user-detail',
           component: UserDetail,
-          props: route => ({ id: route.params.id })
-        }
-      ]
-    }
-  ]
+          props: (route) => ({ id: route.params.id }),
+        },
+      ],
+    },
+  ],
 });
 ```
 
@@ -157,19 +157,19 @@ const router = createRouter({
       return savedPosition;
     }
     return { top: 0 };
-  }
+  },
 });
 ```
 
 **选项说明：**
 
-| 选项 | 类型 | 描述 |
-|------|------|------|
-| `history` | `RouterHistory` | 历史模式实例 |
-| `routes` | `RouteRecordRaw[]` | 路由配置数组 |
-| `scrollBehavior` | `RouterScrollBehavior` | 滚动行为函数 |
-| `parseQuery` | `Function` | 自定义查询字符串解析 |
-| `stringifyQuery` | `Function` | 自定义查询字符串序列化 |
+| 选项             | 类型                   | 描述                   |
+| ---------------- | ---------------------- | ---------------------- |
+| `history`        | `RouterHistory`        | 历史模式实例           |
+| `routes`         | `RouteRecordRaw[]`     | 路由配置数组           |
+| `scrollBehavior` | `RouterScrollBehavior` | 滚动行为函数           |
+| `parseQuery`     | `Function`             | 自定义查询字符串解析   |
+| `stringifyQuery` | `Function`             | 自定义查询字符串序列化 |
 
 #### `createWebHistory(base?)`
 
@@ -208,7 +208,7 @@ import { createRouter } from '@lytjs/router';
 
 const router = createRouter({
   history: createWebHistory(),
-  routes: []
+  routes: [],
 });
 
 router.beforeEach((to, from) => {
@@ -381,7 +381,7 @@ interface RouteRecordRaw {
 ```typescript
 type NavigationGuard = (
   to: RouteLocationNormalized,
-  from: RouteLocationNormalized
+  from: RouteLocationNormalized,
 ) => NavigationGuardReturn;
 
 type NavigationGuardReturn =
@@ -403,14 +403,14 @@ const router = createRouter({
   routes: [
     {
       path: '/dashboard',
-      component: () => import('./pages/Dashboard')
+      component: () => import('./pages/Dashboard'),
     },
     {
       path: '/settings',
       component: () => import('./pages/Settings'),
-      meta: { requiresAuth: true }
-    }
-  ]
+      meta: { requiresAuth: true },
+    },
+  ],
 });
 ```
 
@@ -427,7 +427,7 @@ const router = createRouter({
       return { el: to.hash };
     }
     return { top: 0, behavior: 'smooth' };
-  }
+  },
 });
 ```
 
@@ -446,10 +446,8 @@ const routes = [
     path: '/admin',
     component: AdminLayout,
     meta: { requiresAuth: true, roles: ['admin'] },
-    children: [
-      { path: 'users', component: UserManagement, meta: { title: '用户管理' } }
-    ]
-  }
+    children: [{ path: 'users', component: UserManagement, meta: { title: '用户管理' } }],
+  },
 ];
 ```
 

@@ -62,17 +62,36 @@ export function parseEventModifier(rawName: string): {
   self: boolean;
   passive: boolean;
 } {
-  const modifiers = { stop: false, prevent: false, capture: false, once: false, self: false, passive: false };
+  const modifiers = {
+    stop: false,
+    prevent: false,
+    capture: false,
+    once: false,
+    self: false,
+    passive: false,
+  };
   const match = rawName.match(EVENT_MODIFIER_RE);
   if (match) {
     for (const mod of match) {
       switch (mod) {
-        case '.stop': modifiers.stop = true; break;
-        case '.prevent': modifiers.prevent = true; break;
-        case '.capture': modifiers.capture = true; break;
-        case '.once': modifiers.once = true; break;
-        case '.self': modifiers.self = true; break;
-        case '.passive': modifiers.passive = true; break;
+        case '.stop':
+          modifiers.stop = true;
+          break;
+        case '.prevent':
+          modifiers.prevent = true;
+          break;
+        case '.capture':
+          modifiers.capture = true;
+          break;
+        case '.once':
+          modifiers.once = true;
+          break;
+        case '.self':
+          modifiers.self = true;
+          break;
+        case '.passive':
+          modifiers.passive = true;
+          break;
       }
     }
   }

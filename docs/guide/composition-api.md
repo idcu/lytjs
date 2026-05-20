@@ -27,12 +27,12 @@ const Counter = {
 
 `setup` 的上下文对象 `ctx` 包含以下属性：
 
-| 属性 | 说明 |
-|------|------|
-| `attrs` | 非 props 的透传属性（等同于 `this.$attrs`） |
-| `slots` | 插槽（等同于 `this.$slots`） |
-| `emit` | 触发事件（等同于 `this.$emit`） |
-| `expose` | 显式暴露组件的公共属性/方法 |
+| 属性     | 说明                                        |
+| -------- | ------------------------------------------- |
+| `attrs`  | 非 props 的透传属性（等同于 `this.$attrs`） |
+| `slots`  | 插槽（等同于 `this.$slots`）                |
+| `emit`   | 触发事件（等同于 `this.$emit`）             |
+| `expose` | 显式暴露组件的公共属性/方法                 |
 
 ## ref 和 reactive
 
@@ -460,9 +460,13 @@ const TodoApp = {
     };
 
     // 监听器
-    watch(todos, (newTodos) => {
-      localStorage.setItem('todos', JSON.stringify(newTodos));
-    }, { deep: true });
+    watch(
+      todos,
+      (newTodos) => {
+        localStorage.setItem('todos', JSON.stringify(newTodos));
+      },
+      { deep: true },
+    );
 
     // 副作用
     watchEffect(() => {

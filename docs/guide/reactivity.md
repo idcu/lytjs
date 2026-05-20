@@ -100,7 +100,7 @@ console.log(count()); // 0
 count.set(1);
 
 // 通过 updater 函数更新
-count.update(prev => prev + 1);
+count.update((prev) => prev + 1);
 console.log(count()); // 2
 
 // 在 effect 中自动追踪
@@ -150,7 +150,7 @@ const count = signal(0);
 set(count, 10);
 
 // update 函数更新值
-update(count, prev => prev + 1);
+update(count, (prev) => prev + 1);
 
 // valueOf 获取当前值
 console.log(valueOf(count)); // 11
@@ -292,14 +292,7 @@ LytJS 提供了完整的类型守卫函数，用于在运行时判断响应式�
 ### Ref 类型守卫
 
 ```typescript
-import { 
-  ref, 
-  shallowRef, 
-  computed,
-  isRef, 
-  isShallowRef, 
-  isComputedRef 
-} from '@lytjs/reactivity';
+import { ref, shallowRef, computed, isRef, isShallowRef, isComputedRef } from '@lytjs/reactivity';
 
 const count = ref(0);
 const shallow = shallowRef({ count: 0 });
@@ -321,13 +314,13 @@ console.log(isComputedRef(doubled)); // true
 ### Reactive 类型守卫
 
 ```typescript
-import { 
-  reactive, 
+import {
+  reactive,
   shallowReactive,
   readonly,
-  isReactive, 
-  isReadonly, 
-  isProxy 
+  isReactive,
+  isReadonly,
+  isProxy,
 } from '@lytjs/reactivity';
 
 const state = reactive({ count: 0 });
@@ -365,15 +358,15 @@ console.log(isSignal(ref(0))); // false
 ### 实际应用示例
 
 ```typescript
-import { 
-  ref, 
-  reactive, 
+import {
+  ref,
+  reactive,
   computed,
   signal,
-  isRef, 
-  isReactive, 
+  isRef,
+  isReactive,
   isSignal,
-  unref 
+  unref,
 } from '@lytjs/reactivity';
 
 // 工具函数：解包任意响应式值
@@ -388,10 +381,7 @@ function unwrap<T>(value: T): T {
 }
 
 // 工具函数：安全访问响应式对象属性
-function getProperty<T extends object, K extends keyof T>(
-  obj: T,
-  key: K
-): T[K] {
+function getProperty<T extends object, K extends keyof T>(obj: T, key: K): T[K] {
   if (isReactive(obj)) {
     return obj[key];
   }

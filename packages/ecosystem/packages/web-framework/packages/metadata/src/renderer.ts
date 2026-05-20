@@ -6,7 +6,7 @@ import { escapeHTML } from '@lytjs/common-string';
 
 /**
  * 渲染元数据为 HTML 标签
- * 
+ *
  * @param metadata - 元数据对象
  * @returns HTML 标签字符串
  */

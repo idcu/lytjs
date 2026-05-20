@@ -4,26 +4,26 @@
       <span class="count">{{ count }}</span>
       <span class="label">当前计数</span>
     </div>
-    
+
     <div class="counter-controls">
       <button class="btn btn-decrement" @click="decrement">
         <span>−</span>
       </button>
-      
+
       <button class="btn btn-reset" @click="reset">
         <span>重置</span>
       </button>
-      
+
       <button class="btn btn-increment" @click="increment">
         <span>+</span>
       </button>
     </div>
-    
+
     <div class="counter-info">
-      <p>加倍后: <strong>{{ doubled }}</strong></p>
-      <p v-if="history.length > 0" class="history">
-        历史: {{ history.join(', ') }}
+      <p>
+        加倍后: <strong>{{ doubled }}</strong>
       </p>
+      <p v-if="history.length > 0" class="history">历史: {{ history.join(', ') }}</p>
     </div>
   </div>
 </template>

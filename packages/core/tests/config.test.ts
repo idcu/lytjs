@@ -308,7 +308,7 @@ describe('Config System', () => {
       config.setMultiple({
         'a.b': 1,
         'c.d': 2,
-        'e': 3,
+        e: 3,
       });
       expect(config.get('a.b')).toBe(1);
       expect(config.get('c.d')).toBe(2);

@@ -15,12 +15,7 @@ import type {
   SimpleExpressionNode,
   ParserContext,
 } from './types';
-import {
-  createText,
-  createAttribute,
-  createDirective,
-  createSimpleExpression,
-} from './ast';
+import { createText, createAttribute, createDirective, createSimpleExpression } from './ast';
 
 import {
   advanceBy,

@@ -119,42 +119,70 @@ export const Checkbox = defineComponent({
         ariaRequired: _props.ariaRequired,
         disabled: _props.disabled,
         tabIndex: _props.tabIndex,
-        checked: checked ? true : _props.indeterminate ? 'mixed' as const : false,
+        checked: checked ? true : _props.indeterminate ? ('mixed' as const) : false,
       });
 
-      children.push(createVNode('input', mergeA11yProps(a11yProps, {
-        type: 'checkbox',
-        class: 'lyt-checkbox__input',
-        checked: checked,
-        disabled: _props.disabled,
-        name: _props.name,
-        onKeydown: _props.onKeydown,
-        onChange: handleChange,
-        onFocus: handleFocus,
-        onBlur: handleBlur,
-      }), []));
+      children.push(
+        createVNode(
+          'input',
+          mergeA11yProps(a11yProps, {
+            type: 'checkbox',
+            class: 'lyt-checkbox__input',
+            checked: checked,
+            disabled: _props.disabled,
+            name: _props.name,
+            onKeydown: _props.onKeydown,
+            onChange: handleChange,
+            onFocus: handleFocus,
+            onBlur: handleBlur,
+          }),
+          [],
+        ),
+      );
 
-      children.push(createVNode('span', {
-        class: 'lyt-checkbox__inner',
-      }, []));
+      children.push(
+        createVNode(
+          'span',
+          {
+            class: 'lyt-checkbox__inner',
+          },
+          [],
+        ),
+      );
 
       if (_props.label) {
-        children.push(createVNode('span', {
-          class: 'lyt-checkbox__label',
-        }, [createVNode('span', {}, _props.label)]));
+        children.push(
+          createVNode(
+            'span',
+            {
+              class: 'lyt-checkbox__label',
+            },
+            [createVNode('span', {}, _props.label)],
+          ),
+        );
       } else if (slots.default) {
         const slotContent = slots.default();
         if (Array.isArray(slotContent)) {
-          children.push(createVNode('span', {
-            class: 'lyt-checkbox__label',
-          }, slotContent as VNode[]));
+          children.push(
+            createVNode(
+              'span',
+              {
+                class: 'lyt-checkbox__label',
+              },
+              slotContent as VNode[],
+            ),
+          );
         }
       }
 
-      return createVNode('label', {
-        class: getCheckboxClass(),
-        style: getCheckboxStyle(),
-      }, children);
+      return createVNode(
+        'label',
+        {
+          class: getCheckboxClass(),
+          style: getCheckboxStyle(),
+        },
+        children,
+      );
     };
   },
 });

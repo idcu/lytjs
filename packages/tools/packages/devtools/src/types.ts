@@ -45,7 +45,7 @@ export interface StoreInspection {
 
 // ===== Event Recording =====
 
-export type EventType = 
+export type EventType =
   | 'component:created'
   | 'component:mounted'
   | 'component:updated'
@@ -91,26 +91,26 @@ export interface DevToolsAPI {
   getState(): DevToolsState;
   enable(): void;
   disable(): void;
-  
+
   // Component Tree
   getComponentTree(): ComponentTreeNode[];
   getComponentById(id: string): ComponentTreeNode | undefined;
-  
+
   // Signal Inspection
   getSignals(): SignalInfo[];
   getSignalValue(id: string): unknown;
-  
+
   // Event Recording
   startRecording(): void;
   stopRecording(): void;
   getEvents(filter?: EventType[]): DevToolsEvent[];
   clearEvents(): void;
-  
+
   // Time Travel
   takeSnapshot(): StateSnapshot;
   restoreSnapshot(snapshot: StateSnapshot): void;
   getSnapshots(): StateSnapshot[];
-  
+
   // Communication
   sendToPanel(message: unknown): void;
   onPanelMessage(handler: (message: unknown) => void): () => void;

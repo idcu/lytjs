@@ -14,7 +14,7 @@ test.describe('颜色选择器场景 E2E 测试', () => {
   test('选择颜色', async ({ page }) => {
     const colorButton = page.locator('button[data-color="#28a745"]');
     const display = page.locator('#color-display');
-    
+
     await colorButton.click();
     await expect(display).toContainText('#28a745');
   });

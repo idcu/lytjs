@@ -104,7 +104,7 @@ packagePaths.forEach((pkgPath, index) => {
 
     const isPrivate = pkgJson.private === true;
     const hasName = pkgJson.name && pkgJson.name.startsWith('@lytjs/');
-    
+
     const dirParts = pkgPath.split('/');
     let isMonorepoRoot = false;
     if (dirParts[1] === 'common' && dirParts.length === 3) isMonorepoRoot = true;
@@ -128,7 +128,9 @@ packagePaths.forEach((pkgPath, index) => {
       console.log(`[${String(index + 1).padStart(2, '0')}/81] 🔒 Private 包: ${info.name}`);
     } else {
       results.publishable.push(info);
-      console.log(`[${String(index + 1).padStart(2, '0')}/81] ✅ 可发布包: ${info.name}@${info.version}`);
+      console.log(
+        `[${String(index + 1).padStart(2, '0')}/81] ✅ 可发布包: ${info.name}@${info.version}`,
+      );
     }
   } catch (e) {
     console.log(`[${index + 1}/81] ❌ 错误: ${pkgPath} - ${e.message}`);
@@ -141,10 +143,10 @@ console.log('━━━━━━━━━━━━━━━━━━━━━━�
 console.log(`📦 总共有 ${results.total} 个 package.json 文件`);
 console.log('');
 console.log(`🏠 Monorepo 根包 (4个):`);
-results.monorepoRoots.forEach(pkg => console.log(`   - ${pkg.name}`));
+results.monorepoRoots.forEach((pkg) => console.log(`   - ${pkg.name}`));
 console.log('');
 console.log(`🔒 Private 包 (${results.private.length}个):`);
-results.private.forEach(pkg => console.log(`   - ${pkg.name}`));
+results.private.forEach((pkg) => console.log(`   - ${pkg.name}`));
 console.log('');
 console.log(`✅ 可发布包 (${results.publishable.length}个):`);
 console.log('');
@@ -164,28 +166,37 @@ const categories = {
   'L7 工具包': [],
 };
 
-results.publishable.forEach(pkg => {
+results.publishable.forEach((pkg) => {
   if (pkg.path.includes('packages/common/packages/')) {
     categories['L0 基础工具层'].push(pkg);
-  } else if (pkg.path.includes('packages/shared-types') || 
-             pkg.path.includes('packages/host-contract') || 
-             pkg.path.includes('packages/common/packages/common') ||
-             pkg.path.includes('packages/reactivity') || 
-             pkg.path.includes('packages/vdom')) {
+  } else if (
+    pkg.path.includes('packages/shared-types') ||
+    pkg.path.includes('packages/host-contract') ||
+    pkg.path.includes('packages/common/packages/common') ||
+    pkg.path.includes('packages/reactivity') ||
+    pkg.path.includes('packages/vdom')
+  ) {
     categories['L1 核心原语层'].push(pkg);
-  } else if (pkg.path.includes('packages/dom-runtime') || 
-             pkg.path.includes('packages/compiler') || 
-             pkg.path.includes('packages/component') || 
-             pkg.path.includes('packages/renderer') || 
-             pkg.path.includes('packages/adapter-web') || 
-             pkg.path.includes('packages/dom') || 
-             pkg.path.includes('packages/web')) {
+  } else if (
+    pkg.path.includes('packages/dom-runtime') ||
+    pkg.path.includes('packages/compiler') ||
+    pkg.path.includes('packages/component') ||
+    pkg.path.includes('packages/renderer') ||
+    pkg.path.includes('packages/adapter-web') ||
+    pkg.path.includes('packages/dom') ||
+    pkg.path.includes('packages/web')
+  ) {
     categories['L2 渲染引擎层'].push(pkg);
-  } else if (pkg.path.includes('packages/core') || 
-             pkg.path.includes('packages/core-signal') || 
-             pkg.path.includes('packages/core-vnode')) {
+  } else if (
+    pkg.path.includes('packages/core') ||
+    pkg.path.includes('packages/core-signal') ||
+    pkg.path.includes('packages/core-vnode')
+  ) {
     categories['L3 核心框架层'].push(pkg);
-  } else if (pkg.path.includes('packages/ecosystem/') && !pkg.path.includes('packages/ecosystem/packages/ui')) {
+  } else if (
+    pkg.path.includes('packages/ecosystem/') &&
+    !pkg.path.includes('packages/ecosystem/packages/ui')
+  ) {
     categories['L4 生态系统'].push(pkg);
   } else if (pkg.path.includes('packages/ecosystem/packages/ui')) {
     categories['L5 UI 组件'].push(pkg);
@@ -198,7 +209,7 @@ results.publishable.forEach(pkg => {
 
 for (const [cat, pkgs] of Object.entries(categories)) {
   console.log(`\n## ${cat} (${pkgs.length}个)`);
-  pkgs.forEach(pkg => {
+  pkgs.forEach((pkg) => {
     console.log(`   - ${pkg.name}@${pkg.version}`);
     console.log(`     路径: ${pkg.path}`);
   });
@@ -212,14 +223,22 @@ console.log(`   - Monorepo 根包: ${results.monorepoRoots.length}`);
 console.log(`   - Private 包: ${results.private.length}`);
 
 // Check if we have runtime-edge
-const hasRuntimeEdge = results.publishable.some(p => p.name === '@lytjs/runtime-edge');
+const hasRuntimeEdge = results.publishable.some((p) => p.name === '@lytjs/runtime-edge');
 console.log(`\n⚠️  特别检查: @lytjs/runtime-edge ${hasRuntimeEdge ? '✅ 存在' : '❌ 缺失'}`);
 
 if (!hasRuntimeEdge) {
-  const runtimeEdgePath = path.join(packagesDir, 'ecosystem', 'packages', 'runtime-edge', 'package.json');
+  const runtimeEdgePath = path.join(
+    packagesDir,
+    'ecosystem',
+    'packages',
+    'runtime-edge',
+    'package.json',
+  );
   if (fs.existsSync(runtimeEdgePath)) {
     const runtimeEdgePkg = JSON.parse(fs.readFileSync(runtimeEdgePath, 'utf-8'));
-    console.log(`   检查发现 runtime-edge 的 package.json 存在，但没有在 Glob 结果中或被过滤。name: ${runtimeEdgePkg.name}`);
+    console.log(
+      `   检查发现 runtime-edge 的 package.json 存在，但没有在 Glob 结果中或被过滤。name: ${runtimeEdgePkg.name}`,
+    );
   }
 }
 

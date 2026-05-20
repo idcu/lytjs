@@ -1,10 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import {
-  createStorage,
-  createSessionStorage,
-  isStorageAvailable,
-  parseJSON,
-} from '../src/index';
+import { createStorage, createSessionStorage, isStorageAvailable, parseJSON } from '../src/index';
 
 class MockStorage implements Storage {
   private store: Record<string, string> = {};

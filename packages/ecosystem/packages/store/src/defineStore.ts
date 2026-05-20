@@ -36,14 +36,20 @@ export function defineStore<Id extends string, SS>(
 export function defineStore<Id extends string, S extends StateTree, G, A, SS>(
   id: Id,
   optionsOrSetup: DefineStoreOptions<Id, S, G, A> | (() => SS),
-): StoreDefinition<Id, S, G, A> | (() => SS & Store<Id, Record<string, unknown>, Record<string, unknown>, Record<string, unknown>>) {
+):
+  | StoreDefinition<Id, S, G, A>
+  | (() => SS &
+      Store<Id, Record<string, unknown>, Record<string, unknown>, Record<string, unknown>>) {
   if (typeof optionsOrSetup === 'function') {
     const setup = optionsOrSetup;
     const cacheKey = `${id}:setup`;
 
-    return function useStore(pinia?: Pinia): SS & Store<Id, Record<string, unknown>, Record<string, unknown>, Record<string, unknown>> {
+    return function useStore(
+      pinia?: Pinia,
+    ): SS & Store<Id, Record<string, unknown>, Record<string, unknown>, Record<string, unknown>> {
       if (storeCache.has(cacheKey)) {
-        return storeCache.get(cacheKey) as unknown as SS & Store<Id, Record<string, unknown>, Record<string, unknown>, Record<string, unknown>>;
+        return storeCache.get(cacheKey) as unknown as SS &
+          Store<Id, Record<string, unknown>, Record<string, unknown>, Record<string, unknown>>;
       }
 
       if (!subscriptions.has(cacheKey)) {
@@ -58,7 +64,7 @@ export function defineStore<Id extends string, S extends StateTree, G, A, SS>(
 
       const storeObj = setup();
 
-      const wrappedStore: Record<string, unknown> = { ...storeObj as Record<string, unknown> };
+      const wrappedStore: Record<string, unknown> = { ...(storeObj as Record<string, unknown>) };
 
       const thisContext = new Proxy(wrappedStore, {
         get(target, prop: string | symbol) {
@@ -79,12 +85,12 @@ export function defineStore<Id extends string, S extends StateTree, G, A, SS>(
       for (const [key, value] of Object.entries(storeObj as Record<string, unknown>)) {
         if (typeof value === 'function' && !key.startsWith('$')) {
           wrappedStore[key] = function (...args: unknown[]) {
-            const context = { 
-              store: wrappedStore, 
-              name: key, 
+            const context = {
+              store: wrappedStore,
+              name: key,
               args,
               after: undefined as ((result: unknown) => void) | undefined,
-              onError: undefined as ((error: unknown) => void) | undefined
+              onError: undefined as ((error: unknown) => void) | undefined,
             };
 
             for (const cb of actionCbs) {
@@ -127,7 +133,8 @@ export function defineStore<Id extends string, S extends StateTree, G, A, SS>(
         }
       }
 
-      const store = wrappedStore as unknown as SS & Store<Id, Record<string, unknown>, Record<string, unknown>, Record<string, unknown>>;
+      const store = wrappedStore as unknown as SS &
+        Store<Id, Record<string, unknown>, Record<string, unknown>, Record<string, unknown>>;
 
       (store as any).$id = id;
 
@@ -138,11 +145,18 @@ export function defineStore<Id extends string, S extends StateTree, G, A, SS>(
         }
       }
 
-      (store as any).$patch = (partialOrMutator: Partial<Record<string, unknown>> | ((state: Record<string, unknown>) => void)) => {
+      (store as any).$patch = (
+        partialOrMutator:
+          | Partial<Record<string, unknown>>
+          | ((state: Record<string, unknown>) => void),
+      ) => {
         if (typeof partialOrMutator === 'function') {
           partialOrMutator((store as any).$state);
           for (const sub of subs) {
-            sub({ storeId: id, type: 'patch function', payload: partialOrMutator }, (store as any).$state);
+            sub(
+              { storeId: id, type: 'patch function', payload: partialOrMutator },
+              (store as any).$state,
+            );
           }
         } else {
           for (const [key, value] of Object.entries(partialOrMutator)) {
@@ -151,23 +165,32 @@ export function defineStore<Id extends string, S extends StateTree, G, A, SS>(
             }
           }
           for (const sub of subs) {
-            sub({ storeId: id, type: 'patch object', payload: partialOrMutator }, (store as any).$state);
+            sub(
+              { storeId: id, type: 'patch object', payload: partialOrMutator },
+              (store as any).$state,
+            );
           }
         }
       };
 
       (store as any).$reset = () => {
-        console.warn(`[@lytjs/store] $reset() is not fully supported for setup stores. Store "${id}" needs to be disposed and recreated.`);
+        console.warn(
+          `[@lytjs/store] $reset() is not fully supported for setup stores. Store "${id}" needs to be disposed and recreated.`,
+        );
       };
 
       (store as any).$subscribe = (callback: SubscriptionCallback<Record<string, unknown>>) => {
         subs.add(callback);
-        return () => { subs.delete(callback); };
+        return () => {
+          subs.delete(callback);
+        };
       };
 
       (store as any).$onAction = (callback: ActionCallback) => {
         actionCbs.add(callback);
-        return () => { actionCbs.delete(callback); };
+        return () => {
+          actionCbs.delete(callback);
+        };
       };
 
       (store as any).$dispose = () => {
@@ -227,26 +250,31 @@ export function defineStore<Id extends string, S extends StateTree, G, A, SS>(
         });
       }
 
-      const thisContext = new Proxy({}, {
-        get(_target, prop: string | symbol) {
-          if (typeof prop === 'string') {
-            if (prop in state) return (state as Record<string, unknown>)[prop];
-            if (prop in getters) return (getters as Record<string, unknown>)[prop];
-            if (prop in actionFns) return (actionFns as Record<string, unknown>)[prop];
-          }
-          return undefined;
+      const thisContext = new Proxy(
+        {},
+        {
+          get(_target, prop: string | symbol) {
+            if (typeof prop === 'string') {
+              if (prop in state) return (state as Record<string, unknown>)[prop];
+              if (prop in getters) return (getters as Record<string, unknown>)[prop];
+              if (prop in actionFns) return (actionFns as Record<string, unknown>)[prop];
+            }
+            return undefined;
+          },
+          set(_target, prop: string | symbol, value: unknown) {
+            if (typeof prop === 'string' && prop in state) {
+              (state as Record<string, unknown>)[prop] = value;
+              return true;
+            }
+            return false;
+          },
+          has(_target, prop) {
+            return (
+              typeof prop === 'string' && (prop in state || prop in getters || prop in actionFns)
+            );
+          },
         },
-        set(_target, prop: string | symbol, value: unknown) {
-          if (typeof prop === 'string' && prop in state) {
-            (state as Record<string, unknown>)[prop] = value;
-            return true;
-          }
-          return false;
-        },
-        has(_target, prop) {
-          return typeof prop === 'string' && (prop in state || prop in getters || prop in actionFns);
-        },
-      });
+      );
 
       const getters: Record<string, unknown> = {};
       if (options.getters) {
@@ -266,12 +294,12 @@ export function defineStore<Id extends string, S extends StateTree, G, A, SS>(
         for (const [key, fn] of Object.entries(options.actions)) {
           const actionFn = fn as _Method;
           actionFns[key] = function (...args: unknown[]) {
-            const context = { 
-              store: store as any, 
-              name: key, 
+            const context = {
+              store: store as any,
+              name: key,
               args,
               after: undefined as ((result: unknown) => void) | undefined,
-              onError: undefined as ((error: unknown) => void) | undefined
+              onError: undefined as ((error: unknown) => void) | undefined,
             };
 
             for (const cb of actions) {
@@ -323,12 +351,15 @@ export function defineStore<Id extends string, S extends StateTree, G, A, SS>(
       });
 
       Object.defineProperty(store, '$patch', {
-        value: function(partialOrMutator: Partial<S> | ((state: S) => void) | any) {
+        value: function (partialOrMutator: Partial<S> | ((state: S) => void) | any) {
           batch(() => {
             if (typeof partialOrMutator === 'function') {
               partialOrMutator(state as any);
               for (const sub of subs) {
-                sub({ storeId: id, type: 'patch function', payload: partialOrMutator }, state as any);
+                sub(
+                  { storeId: id, type: 'patch function', payload: partialOrMutator },
+                  state as any,
+                );
               }
             } else {
               for (const [key, value] of Object.entries(partialOrMutator)) {
@@ -347,12 +378,14 @@ export function defineStore<Id extends string, S extends StateTree, G, A, SS>(
       });
 
       Object.defineProperty(store, '$reset', {
-        value: function() {
+        value: function () {
           if (options.state) {
             const newState = options.state();
             for (const key of Object.keys(newState)) {
               if (key in state) {
-                (state as Record<string, unknown>)[key] = (newState as Record<string, unknown>)[key];
+                (state as Record<string, unknown>)[key] = (newState as Record<string, unknown>)[
+                  key
+                ];
               }
             }
           }
@@ -362,7 +395,7 @@ export function defineStore<Id extends string, S extends StateTree, G, A, SS>(
       });
 
       Object.defineProperty(store, '$subscribe', {
-        value: function(callback: SubscriptionCallback<S>) {
+        value: function (callback: SubscriptionCallback<S>) {
           subs.add(callback as any);
           return () => {
             subs.delete(callback as any);
@@ -373,7 +406,7 @@ export function defineStore<Id extends string, S extends StateTree, G, A, SS>(
       });
 
       Object.defineProperty(store, '$onAction', {
-        value: function(callback: ActionCallback) {
+        value: function (callback: ActionCallback) {
           actions.add(callback);
           return () => {
             actions.delete(callback);
@@ -384,7 +417,7 @@ export function defineStore<Id extends string, S extends StateTree, G, A, SS>(
       });
 
       Object.defineProperty(store, '$dispose', {
-        value: function() {
+        value: function () {
           storeCache.delete(id);
           subscriptions.delete(id);
           actionCallbacks.delete(id);

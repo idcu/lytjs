@@ -71,11 +71,11 @@
 
 1. **任务复杂度判断**:
 
-| 复杂度 | 特征 | 示例 |
-|--------|------|------|
-| 简单 | 单个文件修改、明确的修复 | 类型错误修复、测试失败修复 |
-| 中等 | 多个文件、需要规划 | 新功能开发、代码重构 |
-| 复杂 | 架构变更、新建包 | 创建新生态系统包、性能优化 |
+| 复杂度 | 特征                     | 示例                       |
+| ------ | ------------------------ | -------------------------- |
+| 简单   | 单个文件修改、明确的修复 | 类型错误修复、测试失败修复 |
+| 中等   | 多个文件、需要规划       | 新功能开发、代码重构       |
+| 复杂   | 架构变更、新建包         | 创建新生态系统包、性能优化 |
 
 2. **需求理解**:
 
@@ -102,6 +102,7 @@
 **核心 Skill**: [create-plan](../.trae/skills/create-plan/SKILL.md)
 
 **Plan 文档应包含**:
+
 - 任务概述
 - 实现步骤
 - 涉及文件
@@ -113,6 +114,7 @@
 **核心 Skill**: [create-spec](../.trae/skills/create-spec/SKILL.md)
 
 **Spec 文档应包含**:
+
 - 需求分析
 - 设计方案
 - 技术选型
@@ -194,20 +196,20 @@ scope 可选值: reactivity, vdom, compiler, core, renderer, common-*, web, tool
 
 ## Skill Chain 场景映射表
 
-| 用户需求关键词 | 匹配 Skill Chain | 复杂度 | 主要 Skill 组合 |
-|--------------|----------------|--------|----------------|
-| 类型错误、type-check 失败 | [fix-type-error](../.trae/skills/skill-chains/SKILL.md#fix-type-error-修复类型错误) | 简单 | type-check-issues → type-fix → testing |
-| 测试失败、test 报错 | [fix-test-failure](../.trae/skills/skill-chains/SKILL.md#fix-test-failure-修复测试失败) | 简单 | test-issues → fix-test-failures → testing |
-| 构建失败、build 报错 | [fix-build-error](../.trae/skills/skill-chains/SKILL.md#fix-build-error-修复构建失败) | 简单 | build-issues → lint-guide → testing |
-| 运行报错、功能异常 | [fix-runtime-error](../.trae/skills/skill-chains/SKILL.md#fix-runtime-error-修复运行时报错) | 简单 | troubleshooting → debug-console → [具体修复 Skill] |
-| 添加功能、实现需求 | [new-feature](../.trae/skills/skill-chains/SKILL.md#new-feature-新功能开发) | 中等 | create-plan → architecture-overview → code-style → test-template |
-| 重构代码、改写 | [refactor-code](../.trae/skills/skill-chains/SKILL.md#refactor-code-代码重构) | 中等 | create-plan → code-smells → refactoring-patterns |
-| 优化性能（单模块） | [perf-optimize-local](../.trae/skills/skill-chains/SKILL.md#perf-optimize-local-局部性能优化) | 中等 | create-plan → perf-bottlenecks → perf-best-practices |
-| 优化性能（全面） | [perf-optimize-system](../.trae/skills/skill-chains/SKILL.md#perf-optimize-system-系统级性能优化) | 复杂 | create-spec → perf-bottlenecks → vnode-pool-optimization / signal-optimization |
-| 创建生态包、新建模块 | [create-package](../.trae/skills/skill-chains/SKILL.md#create-package-创建生态包) | 复杂 | create-spec → architecture-overview → create-ecosystem-package |
-| 创建插件 | [create-plugin](../.trae/skills/skill-chains/SKILL.md#create-plugin-创建插件) | 复杂 | create-spec → create-plugin |
-| 写文档、更新文档 | [write-docs](../.trae/skills/skill-chains/SKILL.md#write-docs-编写文档) | 中等 | create-plan → chinese-writing-standards → documentation |
-| 发布 npm、版本更新 | [publish-release](../.trae/skills/skill-chains/SKILL.md#publish-release-发布版本) | 中等 | manage-version → generate-changelog → publish-package |
+| 用户需求关键词            | 匹配 Skill Chain                                                                                  | 复杂度 | 主要 Skill 组合                                                                |
+| ------------------------- | ------------------------------------------------------------------------------------------------- | ------ | ------------------------------------------------------------------------------ |
+| 类型错误、type-check 失败 | [fix-type-error](../.trae/skills/skill-chains/SKILL.md#fix-type-error-修复类型错误)               | 简单   | type-check-issues → type-fix → testing                                         |
+| 测试失败、test 报错       | [fix-test-failure](../.trae/skills/skill-chains/SKILL.md#fix-test-failure-修复测试失败)           | 简单   | test-issues → fix-test-failures → testing                                      |
+| 构建失败、build 报错      | [fix-build-error](../.trae/skills/skill-chains/SKILL.md#fix-build-error-修复构建失败)             | 简单   | build-issues → lint-guide → testing                                            |
+| 运行报错、功能异常        | [fix-runtime-error](../.trae/skills/skill-chains/SKILL.md#fix-runtime-error-修复运行时报错)       | 简单   | troubleshooting → debug-console → [具体修复 Skill]                             |
+| 添加功能、实现需求        | [new-feature](../.trae/skills/skill-chains/SKILL.md#new-feature-新功能开发)                       | 中等   | create-plan → architecture-overview → code-style → test-template               |
+| 重构代码、改写            | [refactor-code](../.trae/skills/skill-chains/SKILL.md#refactor-code-代码重构)                     | 中等   | create-plan → code-smells → refactoring-patterns                               |
+| 优化性能（单模块）        | [perf-optimize-local](../.trae/skills/skill-chains/SKILL.md#perf-optimize-local-局部性能优化)     | 中等   | create-plan → perf-bottlenecks → perf-best-practices                           |
+| 优化性能（全面）          | [perf-optimize-system](../.trae/skills/skill-chains/SKILL.md#perf-optimize-system-系统级性能优化) | 复杂   | create-spec → perf-bottlenecks → vnode-pool-optimization / signal-optimization |
+| 创建生态包、新建模块      | [create-package](../.trae/skills/skill-chains/SKILL.md#create-package-创建生态包)                 | 复杂   | create-spec → architecture-overview → create-ecosystem-package                 |
+| 创建插件                  | [create-plugin](../.trae/skills/skill-chains/SKILL.md#create-plugin-创建插件)                     | 复杂   | create-spec → create-plugin                                                    |
+| 写文档、更新文档          | [write-docs](../.trae/skills/skill-chains/SKILL.md#write-docs-编写文档)                           | 中等   | create-plan → chinese-writing-standards → documentation                        |
+| 发布 npm、版本更新        | [publish-release](../.trae/skills/skill-chains/SKILL.md#publish-release-发布版本)                 | 中等   | manage-version → generate-changelog → publish-package                          |
 
 ---
 
@@ -215,59 +217,59 @@ scope 可选值: reactivity, vdom, compiler, core, renderer, common-*, web, tool
 
 ### 1. 开发类核心 Skill
 
-| 类别 | Skill | 作用 | 文件 |
-|-----|-------|------|------|
-| 架构 | architecture-overview | 理解 8 层架构 | [SKILL.md](../.trae/skills/architecture-overview/SKILL.md) |
-| 架构 | dependency-rules | 依赖单向规则 | [SKILL.md](../.trae/skills/dependency-rules/SKILL.md) |
-| 架构 | project-mapping | 目录结构映射 | [SKILL.md](../.trae/skills/project-mapping/SKILL.md) |
-| 开发 | dev-guide | 开发指南 | [SKILL.md](../.trae/skills/dev-guide/SKILL.md) |
-| 风格 | code-style | 代码风格导航 | [SKILL.md](../.trae/skills/code-style/SKILL.md) |
-| 风格 | code-formatting | 格式化规则 | [SKILL.md](../.trae/skills/code-formatting/SKILL.md) |
-| 风格 | naming-conventions | 命名规范 | [SKILL.md](../.trae/skills/naming-conventions/SKILL.md) |
-| 风格 | function-standards | 函数规范 | [SKILL.md](../.trae/skills/function-standards/SKILL.md) |
-| 风格 | comment-standards | 注释规范 | [SKILL.md](../.trae/skills/comment-standards/SKILL.md) |
+| 类别 | Skill                 | 作用           | 文件                                                       |
+| ---- | --------------------- | -------------- | ---------------------------------------------------------- |
+| 架构 | architecture-overview | 理解 8 层架构  | [SKILL.md](../.trae/skills/architecture-overview/SKILL.md) |
+| 架构 | dependency-rules      | 依赖单向规则   | [SKILL.md](../.trae/skills/dependency-rules/SKILL.md)      |
+| 架构 | project-mapping       | 目录结构映射   | [SKILL.md](../.trae/skills/project-mapping/SKILL.md)       |
+| 开发 | dev-guide             | 开发指南       | [SKILL.md](../.trae/skills/dev-guide/SKILL.md)             |
+| 风格 | code-style            | 代码风格导航   | [SKILL.md](../.trae/skills/code-style/SKILL.md)            |
+| 风格 | code-formatting       | 格式化规则     | [SKILL.md](../.trae/skills/code-formatting/SKILL.md)       |
+| 风格 | naming-conventions    | 命名规范       | [SKILL.md](../.trae/skills/naming-conventions/SKILL.md)    |
+| 风格 | function-standards    | 函数规范       | [SKILL.md](../.trae/skills/function-standards/SKILL.md)    |
+| 风格 | comment-standards     | 注释规范       | [SKILL.md](../.trae/skills/comment-standards/SKILL.md)     |
 | 规范 | zero-dependency-rules | 零依赖检查清单 | [SKILL.md](../.trae/skills/zero-dependency-rules/SKILL.md) |
-| 规范 | native-api-guide | 原生 API 使用 | [SKILL.md](../.trae/skills/native-api-guide/SKILL.md) |
+| 规范 | native-api-guide      | 原生 API 使用  | [SKILL.md](../.trae/skills/native-api-guide/SKILL.md)      |
 
 ### 2. 测试与验证类 Skill
 
-| 类别 | Skill | 作用 | 文件 |
-|-----|-------|------|------|
-| 测试 | testing | 测试命令指南 | [SKILL.md](../.trae/skills/testing/SKILL.md) |
-| 测试 | test-template | 测试代码模板 | [SKILL.md](../.trae/skills/test-template/SKILL.md) |
-| 测试 | fix-test-failures | 修复测试失败 | [SKILL.md](../.trae/skills/fix-test-failures/SKILL.md) |
-| 测试 | test-memory-optimization | 测试内存优化 | [SKILL.md](../.trae/skills/test-memory-optimization/SKILL.md) |
-| 类型 | type-fix | 类型修复 | [SKILL.md](../.trae/skills/type-fix/SKILL.md) |
-| 类型 | type-check-issues | 类型问题排查 | [SKILL.md](../.trae/skills/type-check-issues/SKILL.md) |
-| 代码审查 | code-review-checklist | 审查清单 | [SKILL.md](../.trae/skills/code-review-checklist/SKILL.md) |
-| 代码审查 | code-review-process | 审查流程 | [SKILL.md](../.trae/skills/code-review-process/SKILL.md) |
+| 类别     | Skill                    | 作用         | 文件                                                          |
+| -------- | ------------------------ | ------------ | ------------------------------------------------------------- |
+| 测试     | testing                  | 测试命令指南 | [SKILL.md](../.trae/skills/testing/SKILL.md)                  |
+| 测试     | test-template            | 测试代码模板 | [SKILL.md](../.trae/skills/test-template/SKILL.md)            |
+| 测试     | fix-test-failures        | 修复测试失败 | [SKILL.md](../.trae/skills/fix-test-failures/SKILL.md)        |
+| 测试     | test-memory-optimization | 测试内存优化 | [SKILL.md](../.trae/skills/test-memory-optimization/SKILL.md) |
+| 类型     | type-fix                 | 类型修复     | [SKILL.md](../.trae/skills/type-fix/SKILL.md)                 |
+| 类型     | type-check-issues        | 类型问题排查 | [SKILL.md](../.trae/skills/type-check-issues/SKILL.md)        |
+| 代码审查 | code-review-checklist    | 审查清单     | [SKILL.md](../.trae/skills/code-review-checklist/SKILL.md)    |
+| 代码审查 | code-review-process      | 审查流程     | [SKILL.md](../.trae/skills/code-review-process/SKILL.md)      |
 
 ### 3. 创建与发布类 Skill
 
-| 类别 | Skill | 作用 | 文件 |
-|-----|-------|------|------|
-| 创建 | create-ecosystem-package | 创建生态包 | [SKILL.md](../.trae/skills/create-ecosystem-package/SKILL.md) |
-| 创建 | create-plugin | 创建插件 | [SKILL.md](../.trae/skills/create-plugin/SKILL.md) |
-| 创建 | create-tool-script | 创建脚本 | [SKILL.md](../.trae/skills/create-tool-script/SKILL.md) |
-| 创建 | create-spec | 创建 Spec 规范 | [SKILL.md](../.trae/skills/create-spec/SKILL.md) |
-| 创建 | create-plan | 创建 Plan 规划 | [SKILL.md](../.trae/skills/create-plan/SKILL.md) |
-| 发布 | publish-package | 发布 npm 包 | [SKILL.md](../.trae/skills/publish-package/SKILL.md) |
-| 发布 | generate-changelog | 生成变更日志 | [SKILL.md](../.trae/skills/generate-changelog/SKILL.md) |
-| 发布 | manage-version | 版本管理 | [SKILL.md](../.trae/skills/manage-version/SKILL.md) |
-| 迁移 | migrate-package | 迁移包 | [SKILL.md](../.trae/skills/migrate-package/SKILL.md) |
+| 类别 | Skill                    | 作用           | 文件                                                          |
+| ---- | ------------------------ | -------------- | ------------------------------------------------------------- |
+| 创建 | create-ecosystem-package | 创建生态包     | [SKILL.md](../.trae/skills/create-ecosystem-package/SKILL.md) |
+| 创建 | create-plugin            | 创建插件       | [SKILL.md](../.trae/skills/create-plugin/SKILL.md)            |
+| 创建 | create-tool-script       | 创建脚本       | [SKILL.md](../.trae/skills/create-tool-script/SKILL.md)       |
+| 创建 | create-spec              | 创建 Spec 规范 | [SKILL.md](../.trae/skills/create-spec/SKILL.md)              |
+| 创建 | create-plan              | 创建 Plan 规划 | [SKILL.md](../.trae/skills/create-plan/SKILL.md)              |
+| 发布 | publish-package          | 发布 npm 包    | [SKILL.md](../.trae/skills/publish-package/SKILL.md)          |
+| 发布 | generate-changelog       | 生成变更日志   | [SKILL.md](../.trae/skills/generate-changelog/SKILL.md)       |
+| 发布 | manage-version           | 版本管理       | [SKILL.md](../.trae/skills/manage-version/SKILL.md)           |
+| 迁移 | migrate-package          | 迁移包         | [SKILL.md](../.trae/skills/migrate-package/SKILL.md)          |
 
 ### 4. 性能与安全类 Skill
 
-| 类别 | Skill | 作用 | 文件 |
-|-----|-------|------|------|
-| 性能 | perf-analysis-methods | 性能分析方法 | [SKILL.md](../.trae/skills/perf-analysis-methods/SKILL.md) |
-| 性能 | perf-bottlenecks | 性能瓶颈识别 | [SKILL.md](../.trae/skills/perf-bottlenecks/SKILL.md) |
-| 性能 | perf-best-practices | 性能优化建议 | [SKILL.md](../.trae/skills/perf-best-practices/SKILL.md) |
+| 类别 | Skill                   | 作用         | 文件                                                         |
+| ---- | ----------------------- | ------------ | ------------------------------------------------------------ |
+| 性能 | perf-analysis-methods   | 性能分析方法 | [SKILL.md](../.trae/skills/perf-analysis-methods/SKILL.md)   |
+| 性能 | perf-bottlenecks        | 性能瓶颈识别 | [SKILL.md](../.trae/skills/perf-bottlenecks/SKILL.md)        |
+| 性能 | perf-best-practices     | 性能优化建议 | [SKILL.md](../.trae/skills/perf-best-practices/SKILL.md)     |
 | 性能 | vnode-pool-optimization | VNode 对象池 | [SKILL.md](../.trae/skills/vnode-pool-optimization/SKILL.md) |
-| 性能 | signal-optimization | Signal 优化 | [SKILL.md](../.trae/skills/signal-optimization/SKILL.md) |
-| 性能 | ssr-stress-test | SSR 压测 | [SKILL.md](../.trae/skills/ssr-stress-test/SKILL.md) |
-| 安全 | security-checklist | 安全检查清单 | [SKILL.md](../.trae/skills/security-checklist/SKILL.md) |
-| 安全 | xss-check | XSS 风险检查 | [SKILL.md](../.trae/skills/xss-check/SKILL.md) |
+| 性能 | signal-optimization     | Signal 优化  | [SKILL.md](../.trae/skills/signal-optimization/SKILL.md)     |
+| 性能 | ssr-stress-test         | SSR 压测     | [SKILL.md](../.trae/skills/ssr-stress-test/SKILL.md)         |
+| 安全 | security-checklist      | 安全检查清单 | [SKILL.md](../.trae/skills/security-checklist/SKILL.md)      |
+| 安全 | xss-check               | XSS 风险检查 | [SKILL.md](../.trae/skills/xss-check/SKILL.md)               |
 
 **完整 Skill 索引**: [SKILL_INDEX.md](../.trae/skills/SKILL_INDEX.md)
 
@@ -363,16 +365,16 @@ scope 可选值: reactivity, vdom, compiler, core, renderer, common-*, web, tool
 
 ## 关键文档导航
 
-| 文档 | 作用 | 链接 |
-|-----|------|------|
-| 入口规则 | 项目入口，必看 | [AGENTS.md](../../AGENTS.md) |
-| 技能链 | 预定义 Skill 组合 | [skill-chains](../.trae/skills/skill-chains/SKILL.md) |
-| 任务类型 | 任务与 Skill 映射 | [task-types](../.trae/skills/task-types/SKILL.md) |
-| 完整索引 | 所有 Skill 列表 | [SKILL_INDEX.md](../.trae/skills/SKILL_INDEX.md) |
-| 命令参考 | 常用命令速查 | [command-reference](../.trae/skills/command-reference/SKILL.md) |
-| 开发规范 | 详细开发规范 | [DEVELOPMENT_GUIDELINES.md](./DEVELOPMENT_GUIDELINES.md) |
-| 架构设计 | 8 层架构详解 | [ARCHITECTURE.md](./ARCHITECTURE.md) |
-| AI IDE 规则 | AI IDE 开发核心规则 | [AI_IDE_RULES.md](./AI_IDE_RULES.md) |
+| 文档        | 作用                | 链接                                                            |
+| ----------- | ------------------- | --------------------------------------------------------------- |
+| 入口规则    | 项目入口，必看      | [AGENTS.md](../../AGENTS.md)                                    |
+| 技能链      | 预定义 Skill 组合   | [skill-chains](../.trae/skills/skill-chains/SKILL.md)           |
+| 任务类型    | 任务与 Skill 映射   | [task-types](../.trae/skills/task-types/SKILL.md)               |
+| 完整索引    | 所有 Skill 列表     | [SKILL_INDEX.md](../.trae/skills/SKILL_INDEX.md)                |
+| 命令参考    | 常用命令速查        | [command-reference](../.trae/skills/command-reference/SKILL.md) |
+| 开发规范    | 详细开发规范        | [DEVELOPMENT_GUIDELINES.md](./DEVELOPMENT_GUIDELINES.md)        |
+| 架构设计    | 8 层架构详解        | [ARCHITECTURE.md](./ARCHITECTURE.md)                            |
+| AI IDE 规则 | AI IDE 开发核心规则 | [AI_IDE_RULES.md](./AI_IDE_RULES.md)                            |
 
 ---
 

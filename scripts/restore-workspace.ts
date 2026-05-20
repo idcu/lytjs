@@ -31,7 +31,11 @@ function main(): void {
     for (const field of depFields) {
       if (pkg[field]) {
         for (const [dep, version] of Object.entries(pkg[field])) {
-          if (typeof version === 'string' && dep.startsWith('@lytjs/') && !version.startsWith('workspace:')) {
+          if (
+            typeof version === 'string' &&
+            dep.startsWith('@lytjs/') &&
+            !version.startsWith('workspace:')
+          ) {
             pkg[field][dep] = 'workspace:*';
             modified = true;
             console.log(`  恢复 ${pkg.name} 的 ${dep}: ${version} → workspace:*`);

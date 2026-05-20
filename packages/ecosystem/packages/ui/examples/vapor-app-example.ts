@@ -1,6 +1,6 @@
 /**
  * Vapor 模式示例应用
- * 
+ *
  * 演示如何在 Vapor 模式下使用 LytJS UI 组件
  */
 
@@ -13,24 +13,24 @@ const Counter = defineVaporComponent({
   name: 'Counter',
   setup() {
     const count = signal(0);
-    
+
     const increment = () => {
       count.set(count() + 1);
     };
-    
+
     const decrement = () => {
       count.set(count() - 1);
     };
-    
+
     const reset = () => {
       count.set(0);
     };
-    
+
     return {
       count,
       increment,
       decrement,
-      reset
+      reset,
     };
   },
   template: `
@@ -58,7 +58,7 @@ const TodoList = defineVaporComponent({
       { id: 2, text: '创建第一个项目', done: false },
       { id: 3, text: '探索 Vapor 模式', done: false },
     ]);
-    
+
     const addTodo = () => {
       if (newTodo().trim()) {
         todos.set([
@@ -72,17 +72,13 @@ const TodoList = defineVaporComponent({
         newTodo.set('');
       }
     };
-    
+
     const toggleTodo = (id: number) => {
-      todos.set(todos().map(todo => 
-        todo.id === id ? { ...todo, done: !todo.done } : todo
-      ));
+      todos.set(todos().map((todo) => (todo.id === id ? { ...todo, done: !todo.done } : todo)));
     };
-    
-    const completedCount = computed(() => 
-      todos().filter(todo => todo.done).length
-    );
-    
+
+    const completedCount = computed(() => todos().filter((todo) => todo.done).length);
+
     return {
       newTodo,
       todos,
@@ -122,7 +118,7 @@ const App = defineVaporComponent({
   name: 'VaporAppExample',
   setup() {
     const activeTab = signal('counter');
-    
+
     return {
       activeTab,
     };
@@ -166,4 +162,7 @@ const app = createVaporApp(App);
 
 app.mount('#app');
 
-console.log('%c✅ Vapor 模式示例应用已启动！', 'color: #42b883; font-size: 14px; font-weight: bold;');
+console.log(
+  '%c✅ Vapor 模式示例应用已启动！',
+  'color: #42b883; font-size: 14px; font-weight: bold;',
+);

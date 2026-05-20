@@ -34,20 +34,23 @@ export const Spin = defineComponent({
 
     let delayTimer: ReturnType<typeof setTimeout> | null = null;
 
-    watch(() => props.spinning, (val: boolean) => {
-      if (delayTimer) clearTimeout(delayTimer);
-      if (val) {
-        if (p.delay && p.delay > 0) {
-          delayTimer = setTimeout(() => {
+    watch(
+      () => props.spinning,
+      (val: boolean) => {
+        if (delayTimer) clearTimeout(delayTimer);
+        if (val) {
+          if (p.delay && p.delay > 0) {
+            delayTimer = setTimeout(() => {
+              state.visible = true;
+            }, p.delay);
+          } else {
             state.visible = true;
-          }, p.delay);
+          }
         } else {
-          state.visible = true;
+          state.visible = false;
         }
-      } else {
-        state.visible = false;
-      }
-    });
+      },
+    );
 
     onUnmounted(() => {
       if (delayTimer) clearTimeout(delayTimer);
@@ -73,41 +76,64 @@ export const Spin = defineComponent({
 
     return () => {
       const children: VNode[] = [];
-      
+
       if (state.visible) {
         const loadingChildren: VNode[] = [];
-        
-        loadingChildren.push(createVNode('div', { class: `lyt-spin__icon lyt-spin__icon--${p.size}` }, [
-          createVNode('svg', { viewBox: '0 0 1024 1024', class: 'lyt-spin__svg' }, [
-            createVNode('path', {
-              d: 'M512 64a32 32 0 0 1 32 32v192a32 32 0 0 1-64 0V96a32 32 0 0 1 32-32zm0 640a32 32 0 0 1 32 32v192a32 32 0 0 1-64 0V736a32 32 0 0 1 32-32zm-448-192a32 32 0 0 1 32-32h192a32 32 0 0 1 0 64H96a32 32 0 0 1-32-32zm640 0a32 32 0 0 1 32-32h192a32 32 0 0 1 0 64H736a32 32 0 0 1-32-32z',
-            }),
+
+        loadingChildren.push(
+          createVNode('div', { class: `lyt-spin__icon lyt-spin__icon--${p.size}` }, [
+            createVNode('svg', { viewBox: '0 0 1024 1024', class: 'lyt-spin__svg' }, [
+              createVNode('path', {
+                d: 'M512 64a32 32 0 0 1 32 32v192a32 32 0 0 1-64 0V96a32 32 0 0 1 32-32zm0 640a32 32 0 0 1 32 32v192a32 32 0 0 1-64 0V736a32 32 0 0 1 32-32zm-448-192a32 32 0 0 1 32-32h192a32 32 0 0 1 0 64H96a32 32 0 0 1-32-32zm640 0a32 32 0 0 1 32-32h192a32 32 0 0 1 0 64H736a32 32 0 0 1-32-32z',
+              }),
+            ]),
           ]),
-        ]));
-        
+        );
+
         if (p.tip || slots.tip) {
-          loadingChildren.push(createVNode('div', { class: 'lyt-spin__tip' }, slots.tip ? slots.tip() : [createTextVNode(p.tip)]));
+          loadingChildren.push(
+            createVNode(
+              'div',
+              { class: 'lyt-spin__tip' },
+              slots.tip ? slots.tip() : [createTextVNode(p.tip)],
+            ),
+          );
         }
 
         children.push(createVNode('div', { class: 'lyt-spin__loading' }, loadingChildren));
       }
 
       if (slots.default) {
-        children.push(createVNode('div', {
-          class: state.visible ? 'lyt-spin__content lyt-spin__content--hidden' : 'lyt-spin__content',
-        }, slots.default()));
+        children.push(
+          createVNode(
+            'div',
+            {
+              class: state.visible
+                ? 'lyt-spin__content lyt-spin__content--hidden'
+                : 'lyt-spin__content',
+            },
+            slots.default(),
+          ),
+        );
       }
 
-      return createVNode('div', mergeA11yProps({
-        id: p.id,
-        'aria-label': p.ariaLabel,
-        'aria-describedby': p.ariaDescribedBy,
-        role: 'alert',
-        'aria-live': 'polite',
-      }, {
-        class: getSpinClass(),
-        style: getSpinStyle(),
-      }), children);
+      return createVNode(
+        'div',
+        mergeA11yProps(
+          {
+            id: p.id,
+            'aria-label': p.ariaLabel,
+            'aria-describedby': p.ariaDescribedBy,
+            role: 'alert',
+            'aria-live': 'polite',
+          },
+          {
+            class: getSpinClass(),
+            style: getSpinStyle(),
+          },
+        ),
+        children,
+      );
     };
   },
 });

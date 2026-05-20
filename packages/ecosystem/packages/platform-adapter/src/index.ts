@@ -8,11 +8,7 @@
  */
 
 // 类型导出
-export type {
-  PlatformAdapter,
-  PlatformConfig,
-  PlatformPlugin,
-} from './types';
+export type { PlatformAdapter, PlatformConfig, PlatformPlugin } from './types';
 
 // 适配器注册表
 export { adapterRegistry } from './adapter-registry';

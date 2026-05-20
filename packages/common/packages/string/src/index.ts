@@ -418,7 +418,7 @@ export { escapeHTML as escapeHtml };
  */
 export function parseDuration(value: string | undefined | null): number {
   if (value == null || value === '' || value === '0s' || value === '0ms') return 0;
-  const values = value.split(',').map(v => {
+  const values = value.split(',').map((v) => {
     v = v.trim();
     if (v.endsWith('ms')) return parseFloat(v);
     if (v.endsWith('s')) return parseFloat(v) * 1000;

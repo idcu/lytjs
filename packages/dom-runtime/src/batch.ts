@@ -449,7 +449,7 @@ export function createVaporListRenderer<T>(
       let nodes: Node[];
 
       // 检查是否是新增的项
-      const added = diff.added.find(a => keyFn(a.item) === key);
+      const added = diff.added.find((a) => keyFn(a.item) === key);
       const moved = movedCache.get(key);
       const cached = itemCache.get(key);
 

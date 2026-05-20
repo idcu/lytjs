@@ -15,11 +15,11 @@ test.describe('计时器场景 E2E 测试', () => {
     const startBtn = page.locator('#btn-start-timer');
     const stopBtn = page.locator('#btn-stop-timer');
     const display = page.locator('#timer-display');
-    
+
     await startBtn.click();
     await page.waitForTimeout(2000);
     await stopBtn.click();
-    
+
     const time = await display.textContent();
     expect(time).not.toBe('00:00');
   });
@@ -29,12 +29,12 @@ test.describe('计时器场景 E2E 测试', () => {
     const stopBtn = page.locator('#btn-stop-timer');
     const resetBtn = page.locator('#btn-reset-timer');
     const display = page.locator('#timer-display');
-    
+
     await startBtn.click();
     await page.waitForTimeout(1500);
     await stopBtn.click();
     await resetBtn.click();
-    
+
     await expect(display).toHaveText('00:00');
   });
 });

@@ -1,12 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import {
-  patchProp,
-  patchClass,
-  patchStyle,
-  patchEvent,
-  patchAttr,
-} from '@lytjs/adapter-web';
+import { patchProp, patchClass, patchStyle, patchEvent, patchAttr } from '@lytjs/adapter-web';
 import { isOn } from '@lytjs/common-events';
 import { isBooleanAttr } from '../src/utils';
 

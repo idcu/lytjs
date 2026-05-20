@@ -73,10 +73,7 @@ export async function renderVaporToString(
   props: Record<string, unknown> = {},
   options: VaporSSROptions = {},
 ): Promise<VaporSSRResult> {
-  const {
-    includePrefetchScript = false,
-    serialize = defaultSerialize,
-  } = options;
+  const { includePrefetchScript = false, serialize = defaultSerialize } = options;
 
   // 1. 执行 setup 函数获取初始状态
   const setupResult = await executeSetup(component, props);
@@ -96,9 +93,7 @@ export async function renderVaporToString(
   // 5. 生成预取脚本
   const scripts: string[] = [];
   if (includePrefetchScript && prefetchData) {
-    scripts.push(
-      `<script>window.__LYTJS_PREFETCH_DATA__=${serialize(prefetchData)};</script>`
-    );
+    scripts.push(`<script>window.__LYTJS_PREFETCH_DATA__=${serialize(prefetchData)};</script>`);
   }
 
   return {
@@ -217,10 +212,7 @@ function compileTemplateForSSR(template: string): string {
 /**
  * 将模板渲染为 HTML
  */
-function renderTemplateToHTML(
-  _compiledCode: string,
-  ctx: Record<string, unknown>,
-): string {
+function renderTemplateToHTML(_compiledCode: string, ctx: Record<string, unknown>): string {
   // 简化实现：直接从上下文渲染模板
   // 实际实现需要执行编译后的代码
   return renderContextToHTML(ctx);
@@ -243,10 +235,7 @@ function renderContextToHTML(ctx: Record<string, unknown>): string {
 /**
  * 将模板渲染为 HTML 块（流式渲染）
  */
-function renderTemplateToChunks(
-  _compiledCode: string,
-  ctx: Record<string, unknown>,
-): string[] {
+function renderTemplateToChunks(_compiledCode: string, ctx: Record<string, unknown>): string[] {
   const html = renderContextToHTML(ctx);
 
   // 将 HTML 分块返回
@@ -317,9 +306,10 @@ function yieldToMicrotask(): Promise<void> {
  * });
  * ```
  */
-export function definePrefetch<T>(
-  fetcher: () => Promise<T>,
-): { data: T | undefined; __prefetchFn__: () => Promise<T> } {
+export function definePrefetch<T>(fetcher: () => Promise<T>): {
+  data: T | undefined;
+  __prefetchFn__: () => Promise<T>;
+} {
   // 在服务端，返回预取函数
   // 在客户端，从 window.__LYTJS_PREFETCH_DATA__ 读取
   return {
@@ -381,9 +371,7 @@ export async function hydrateVaporComponent(
   component: VaporComponentDefinition,
   _options: VaporHydrationOptions = {},
 ): Promise<void> {
-  const el = typeof container === 'string'
-    ? document.querySelector(container)
-    : container;
+  const el = typeof container === 'string' ? document.querySelector(container) : container;
 
   if (!el) {
     throw new Error(`[LytJS] hydrateVaporComponent: container not found`);
@@ -423,7 +411,4 @@ export async function hydrateVaporComponent(
 // 导出
 // ============================================================
 
-export {
-  renderVaporToString as renderToString,
-  renderVaporToStream as renderToStream,
-};
+export { renderVaporToString as renderToString, renderVaporToStream as renderToStream };

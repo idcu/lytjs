@@ -1,11 +1,7 @@
 // src/config-transformer.ts
 // @lytjs/core - 插件配置转换器
 
-import type {
-  ConfigSchema,
-  ConfigTransformReport,
-  ConfigValidationError,
-} from './config-schema';
+import type { ConfigSchema, ConfigTransformReport, ConfigValidationError } from './config-schema';
 import { ConfigValidator } from './config-validator';
 
 /**
@@ -26,7 +22,11 @@ export class ConfigTransformer {
    * @param path - 当前路径
    * @returns 转换报告
    */
-  transform<T>(value: unknown, schema: ConfigSchema<T>, path: string = ''): ConfigTransformReport<T> {
+  transform<T>(
+    value: unknown,
+    schema: ConfigSchema<T>,
+    path: string = '',
+  ): ConfigTransformReport<T> {
     const warnings: string[] = [];
     const transforms: string[] = [];
     const errors: ConfigValidationError[] = [];
@@ -86,14 +86,27 @@ export class ConfigTransformer {
     }
 
     // 4. 递归处理复杂类型
-    if (schema.type === 'object' && schema.object && typeof transformed === 'object' && transformed !== null) {
-      const objectResult = this.transformObject(transformed as Record<string, unknown>, schema as ConfigSchema<Record<string, unknown>>, path);
+    if (
+      schema.type === 'object' &&
+      schema.object &&
+      typeof transformed === 'object' &&
+      transformed !== null
+    ) {
+      const objectResult = this.transformObject(
+        transformed as Record<string, unknown>,
+        schema as ConfigSchema<Record<string, unknown>>,
+        path,
+      );
       transformed = objectResult.value as unknown as T;
       errors.push(...objectResult.errors);
       warnings.push(...objectResult.warnings);
       transforms.push(...objectResult.transforms);
     } else if (schema.type === 'array' && schema.array && Array.isArray(transformed)) {
-      const arrayResult = this.transformArray(transformed, schema as unknown as ConfigSchema<unknown[]>, path);
+      const arrayResult = this.transformArray(
+        transformed,
+        schema as unknown as ConfigSchema<unknown[]>,
+        path,
+      );
       transformed = arrayResult.value as unknown as T;
       errors.push(...arrayResult.errors);
       warnings.push(...arrayResult.warnings);
@@ -102,7 +115,11 @@ export class ConfigTransformer {
 
     // 5. 验证转换后的值
     if (transformed !== undefined && transformed !== null) {
-      const validationReport = this.validator.validate(transformed, schema as ConfigSchema<unknown>, path);
+      const validationReport = this.validator.validate(
+        transformed,
+        schema as ConfigSchema<unknown>,
+        path,
+      );
       errors.push(...validationReport.errors);
     }
 
@@ -122,7 +139,12 @@ export class ConfigTransformer {
     obj: Record<string, unknown>,
     schema: ConfigSchema<Record<string, unknown>>,
     path: string,
-  ): { value: Record<string, unknown>; errors: ConfigValidationError[]; warnings: string[]; transforms: string[] } {
+  ): {
+    value: Record<string, unknown>;
+    errors: ConfigValidationError[];
+    warnings: string[];
+    transforms: string[];
+  } {
     const result: Record<string, unknown> = {};
     const errors: ConfigValidationError[] = [];
     const warnings: string[] = [];
@@ -204,7 +226,12 @@ export class ConfigTransformer {
     arr: unknown[],
     schema: ConfigSchema<unknown[]>,
     path: string,
-  ): { value: unknown[]; errors: ConfigValidationError[]; warnings: string[]; transforms: string[] } {
+  ): {
+    value: unknown[];
+    errors: ConfigValidationError[];
+    warnings: string[];
+    transforms: string[];
+  } {
     const result: unknown[] = [];
     const errors: ConfigValidationError[] = [];
     const warnings: string[] = [];
@@ -241,16 +268,26 @@ export class ConfigTransformer {
    * @param schema - 配置 Schema
    * @returns 合并后的配置
    */
-  merge<T>(defaults: Partial<T>, overrides: Partial<T>, schema: ConfigSchema<T>): ConfigTransformReport<T> {
+  merge<T>(
+    defaults: Partial<T>,
+    overrides: Partial<T>,
+    schema: ConfigSchema<T>,
+  ): ConfigTransformReport<T> {
     // 深度合并
-    const merged = this.deepMerge(defaults as Record<string, unknown>, overrides as Record<string, unknown>);
+    const merged = this.deepMerge(
+      defaults as Record<string, unknown>,
+      overrides as Record<string, unknown>,
+    );
     return this.transform(merged, schema as ConfigSchema<T>);
   }
 
   /**
    * 深度合并两个对象
    */
-  private deepMerge(target: Record<string, unknown>, source: Record<string, unknown>): Record<string, unknown> {
+  private deepMerge(
+    target: Record<string, unknown>,
+    source: Record<string, unknown>,
+  ): Record<string, unknown> {
     const result: Record<string, unknown> = { ...target };
 
     for (const [key, value] of Object.entries(source)) {
@@ -263,7 +300,10 @@ export class ConfigTransformer {
           result[key] !== null &&
           !Array.isArray(result[key])
         ) {
-          result[key] = this.deepMerge(result[key] as Record<string, unknown>, value as Record<string, unknown>);
+          result[key] = this.deepMerge(
+            result[key] as Record<string, unknown>,
+            value as Record<string, unknown>,
+          );
         } else {
           result[key] = value;
         }
@@ -288,7 +328,11 @@ export class ConfigTransformer {
       if (key in configObj) {
         const propertySchema = schema.object?.properties?.[key as string];
         if (propertySchema) {
-          const propertyReport = this.transform(configObj[key as string], propertySchema as ConfigSchema<unknown>, String(key));
+          const propertyReport = this.transform(
+            configObj[key as string],
+            propertySchema as ConfigSchema<unknown>,
+            String(key),
+          );
           if (propertyReport.success) {
             (result as Record<string, unknown>)[key as string] = propertyReport.config;
           }
@@ -307,7 +351,10 @@ export class ConfigTransformer {
 /**
  * 快速转换配置
  */
-export function transformConfig<T>(value: unknown, schema: ConfigSchema<T>): ConfigTransformReport<T> {
+export function transformConfig<T>(
+  value: unknown,
+  schema: ConfigSchema<T>,
+): ConfigTransformReport<T> {
   const transformer = new ConfigTransformer();
   return transformer.transform(value, schema);
 }
@@ -315,7 +362,11 @@ export function transformConfig<T>(value: unknown, schema: ConfigSchema<T>): Con
 /**
  * 快速合并配置
  */
-export function mergeConfig<T>(defaults: Partial<T>, overrides: Partial<T>, schema: ConfigSchema<T>): ConfigTransformReport<T> {
+export function mergeConfig<T>(
+  defaults: Partial<T>,
+  overrides: Partial<T>,
+  schema: ConfigSchema<T>,
+): ConfigTransformReport<T> {
   const transformer = new ConfigTransformer();
   return transformer.merge(defaults, overrides, schema);
 }

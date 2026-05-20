@@ -1,6 +1,6 @@
 /**
  * LytJS 性能监控集成
- * 
+ *
  * 功能：
  * - Core Web Vitals 监控
  * - 自定义性能指标
@@ -32,9 +32,9 @@ class PerformanceMonitor {
     fid: null,
     cls: null,
     ttfb: null,
-    fmp: null
+    fmp: null,
   };
-  
+
   private customMetrics: Map<string, number> = new Map();
   private errors: Error[] = [];
   private marks: Map<string, number> = new Map();
@@ -49,19 +49,19 @@ class PerformanceMonitor {
   // 初始化 Web Vitals 监控
   private initWebVitals() {
     if (typeof window === 'undefined') return;
-    
+
     // TTFB 监控
     this.measureTTFB();
-    
+
     // FCP 监控
     this.observeFCP();
-    
+
     // LCP 监控
     this.observeLCP();
-    
+
     // CLS 监控
     this.observeCLS();
-    
+
     // FID 监控
     this.observeFID();
   }
@@ -174,7 +174,7 @@ class PerformanceMonitor {
   // 测量两个标记之间的时间
   measure(name: string, startMark: string, endMark: string) {
     let duration = 0;
-    
+
     if (typeof performance !== 'undefined') {
       try {
         performance.measure(name, startMark, endMark);
@@ -191,7 +191,7 @@ class PerformanceMonitor {
         }
       }
     }
-    
+
     this.measures.set(name, duration);
     this.customMetrics.set(name, duration);
     return duration;
@@ -221,35 +221,35 @@ class PerformanceMonitor {
       customMetrics: new Map(this.customMetrics),
       errors: [...this.errors],
       timestamp: Date.now(),
-      url: typeof window !== 'undefined' ? window.location.href : 'unknown'
+      url: typeof window !== 'undefined' ? window.location.href : 'unknown',
     };
   }
 
   // 发送报告
   sendReport(url: string) {
     const report = this.generateReport();
-    
+
     if (this.reportCallback) {
       this.reportCallback(report);
     }
-    
+
     if (typeof fetch !== 'undefined') {
       fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(report)
-      }).catch(err => {
+        body: JSON.stringify(report),
+      }).catch((err) => {
         console.error('Failed to send performance report:', err);
       });
     }
-    
+
     return report;
   }
 
   // 打印性能报告
   printReport() {
     const report = this.generateReport();
-    
+
     console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     console.log('           LytJS Performance Report');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
@@ -257,34 +257,44 @@ class PerformanceMonitor {
     console.log(`  Time:           ${new Date(report.timestamp).toLocaleString()}`);
     console.log('');
     console.log('  Core Web Vitals:');
-    console.log(`    FCP (First Contentful Paint):  ${report.metrics.fcp ? report.metrics.fcp.toFixed(2) + 'ms' : 'N/A'}`);
-    console.log(`    LCP (Largest Contentful Paint): ${report.metrics.lcp ? report.metrics.lcp.toFixed(2) + 'ms' : 'N/A'}`);
-    console.log(`    FID (First Input Delay):        ${report.metrics.fid ? report.metrics.fid.toFixed(2) + 'ms' : 'N/A'}`);
-    console.log(`    CLS (Cumulative Layout Shift):  ${report.metrics.cls ? report.metrics.cls.toFixed(4) : 'N/A'}`);
-    console.log(`    TTFB (Time to First Byte):      ${report.metrics.ttfb ? report.metrics.ttfb.toFixed(2) + 'ms' : 'N/A'}`);
-    
+    console.log(
+      `    FCP (First Contentful Paint):  ${report.metrics.fcp ? report.metrics.fcp.toFixed(2) + 'ms' : 'N/A'}`,
+    );
+    console.log(
+      `    LCP (Largest Contentful Paint): ${report.metrics.lcp ? report.metrics.lcp.toFixed(2) + 'ms' : 'N/A'}`,
+    );
+    console.log(
+      `    FID (First Input Delay):        ${report.metrics.fid ? report.metrics.fid.toFixed(2) + 'ms' : 'N/A'}`,
+    );
+    console.log(
+      `    CLS (Cumulative Layout Shift):  ${report.metrics.cls ? report.metrics.cls.toFixed(4) : 'N/A'}`,
+    );
+    console.log(
+      `    TTFB (Time to First Byte):      ${report.metrics.ttfb ? report.metrics.ttfb.toFixed(2) + 'ms' : 'N/A'}`,
+    );
+
     if (report.customMetrics.size > 0) {
       console.log('\n  Custom Metrics:');
       report.customMetrics.forEach((value, name) => {
         console.log(`    ${name}: ${value.toFixed(2)}ms`);
       });
     }
-    
+
     if (report.errors.length > 0) {
       console.log(`\n  Errors (${report.errors.length}):`);
       report.errors.forEach((err, idx) => {
         console.log(`    ${idx + 1}. ${err.message}`);
       });
     }
-    
+
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
-    
+
     return report;
   }
 
   // 清理
   cleanup() {
-    this.observers.forEach(observer => {
+    this.observers.forEach((observer) => {
       try {
         observer.disconnect();
       } catch (e) {
@@ -318,7 +328,7 @@ export {
   PerformanceMetrics,
   PerformanceReport,
   getPerformanceMonitor,
-  resetPerformanceMonitor
+  resetPerformanceMonitor,
 };
 
 if (typeof require !== 'undefined' && require.main === module) {
@@ -328,11 +338,11 @@ if (typeof require !== 'undefined' && require.main === module) {
   console.log('   - 自定义性能指标');
   console.log('   - 错误追踪');
   console.log('   - 性能报告生成');
-  
+
   // 测试示例
   const monitor = new PerformanceMonitor();
   monitor.mark('app-start');
-  
+
   setTimeout(() => {
     monitor.mark('app-ready');
     monitor.measure('app-startup', 'app-start', 'app-ready');

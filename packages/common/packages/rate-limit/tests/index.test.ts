@@ -87,10 +87,10 @@ describe('@lytjs/common-rate-limit', () => {
 
   describe('TokenBucketLimiter', () => {
     it('should create and allow requests while tokens available', () => {
-      const limiter = new TokenBucketLimiter({ 
-        capacity: 3, 
-        refillRate: 1, 
-        refillTime: 1000 
+      const limiter = new TokenBucketLimiter({
+        capacity: 3,
+        refillRate: 1,
+        refillTime: 1000,
       });
 
       const result1 = limiter.check('test-key');
@@ -98,10 +98,10 @@ describe('@lytjs/common-rate-limit', () => {
     });
 
     it('should reject requests when no tokens', () => {
-      const limiter = new TokenBucketLimiter({ 
-        capacity: 2, 
-        refillRate: 1, 
-        refillTime: 1000 
+      const limiter = new TokenBucketLimiter({
+        capacity: 2,
+        refillRate: 1,
+        refillTime: 1000,
       });
 
       limiter.check('test-key');
@@ -124,10 +124,10 @@ describe('@lytjs/common-rate-limit', () => {
     });
 
     it('createTokenBucketLimiter should create a TokenBucketLimiter', () => {
-      const limiter = createTokenBucketLimiter({ 
-        capacity: 5, 
-        refillRate: 1, 
-        refillTime: 1000 
+      const limiter = createTokenBucketLimiter({
+        capacity: 5,
+        refillRate: 1,
+        refillTime: 1000,
       });
       expect(limiter).toBeInstanceOf(TokenBucketLimiter);
     });

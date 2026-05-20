@@ -429,8 +429,16 @@ describe('Renderer - dynamic children optimization', () => {
 
   it('should handle dynamic props update efficiently', () => {
     // 需要同时设置 TEXT 和 PROPS flags 来更新文本和 props
-    const n1 = createVNode('div', { id: 'test' }, 'static', PatchFlags.TEXT | PatchFlags.PROPS, ['id']);
-    const n2 = createVNode('div', { id: 'updated' }, 'updated', PatchFlags.TEXT | PatchFlags.PROPS, ['id']);
+    const n1 = createVNode('div', { id: 'test' }, 'static', PatchFlags.TEXT | PatchFlags.PROPS, [
+      'id',
+    ]);
+    const n2 = createVNode(
+      'div',
+      { id: 'updated' },
+      'updated',
+      PatchFlags.TEXT | PatchFlags.PROPS,
+      ['id'],
+    );
     renderer.mount(n1, container);
     renderer.patch(n1, n2, container);
     const el = n2.el as HTMLElement;

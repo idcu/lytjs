@@ -59,100 +59,135 @@ export const Image = defineComponent({
     };
 
     return () => {
-      const imageClass = [
-        'lyt-image',
-        p.class as string,
-        p.round ? 'lyt-image-round' : '',
-      ].filter(Boolean).join(' ');
+      const imageClass = ['lyt-image', p.class as string, p.round ? 'lyt-image-round' : '']
+        .filter(Boolean)
+        .join(' ');
 
       const imageStyle: Record<string, string> = {};
       if (p.width) {
-        imageStyle.width = typeof p.width === 'number' ? `${p.width}px` : p.width as string;
+        imageStyle.width = typeof p.width === 'number' ? `${p.width}px` : (p.width as string);
       }
       if (p.height) {
-        imageStyle.height = typeof p.height === 'number' ? `${p.height}px` : p.height as string;
+        imageStyle.height = typeof p.height === 'number' ? `${p.height}px` : (p.height as string);
       }
       if (p.radius) {
-        imageStyle.borderRadius = typeof p.radius === 'number' ? `${p.radius}px` : p.radius as string;
+        imageStyle.borderRadius =
+          typeof p.radius === 'number' ? `${p.radius}px` : (p.radius as string);
       }
 
       const children: VNode[] = [];
 
       if (!isLoaded() && !isError()) {
         if (p.placeholderSrc) {
-          children.push(createVNode('img', {
-            class: 'lyt-image-placeholder',
-            src: p.placeholderSrc as string,
-            alt: p.alt as string,
-            style: { objectFit: p.fit as string },
-          }));
+          children.push(
+            createVNode('img', {
+              class: 'lyt-image-placeholder',
+              src: p.placeholderSrc as string,
+              alt: p.alt as string,
+              style: { objectFit: p.fit as string },
+            }),
+          );
         } else {
-          children.push(createVNode('div', { class: 'lyt-image-placeholder' }, [
-            createVNode('svg', { viewBox: '0 0 100 100', fill: 'currentColor' }, [
-              createVNode('path', {
-                d: 'M50 10a40 40 0 1 0 40 40A40 40 0 0 0 50 10zm0 70a30 30 0 1 1 30-30 30 30 0 0 1-30 30z',
-                opacity: '0.3',
-              }),
-              createVNode('path', {
-                d: 'M50 40a10 10 0 1 0 10 10 10 10 0 0 0-10-10zm30 35a24.9 24.9 0 0 0-7.7-18.3l-11.2-9.4a10 10 0 0 0-12.8 0L34.3 54A25 25 0 0 0 25 75z',
-                opacity: '0.6',
-              }),
+          children.push(
+            createVNode('div', { class: 'lyt-image-placeholder' }, [
+              createVNode('svg', { viewBox: '0 0 100 100', fill: 'currentColor' }, [
+                createVNode('path', {
+                  d: 'M50 10a40 40 0 1 0 40 40A40 40 0 0 0 50 10zm0 70a30 30 0 1 1 30-30 30 30 0 0 1-30 30z',
+                  opacity: '0.3',
+                }),
+                createVNode('path', {
+                  d: 'M50 40a10 10 0 1 0 10 10 10 10 0 0 0-10-10zm30 35a24.9 24.9 0 0 0-7.7-18.3l-11.2-9.4a10 10 0 0 0-12.8 0L34.3 54A25 25 0 0 0 25 75z',
+                  opacity: '0.6',
+                }),
+              ]),
             ]),
-          ]));
+          );
         }
       }
 
-      children.push(createVNode('img', {
-        class: 'lyt-image-inner',
-        src: p.src as string,
-        alt: p.alt as string,
-        style: {
-          objectFit: p.fit as string,
-          display: (isLoaded() || isError()) ? 'block' : 'none',
-        },
-        loading: p.lazy ? 'lazy' : 'eager',
-        onLoad: handleLoad,
-        onError: handleError,
-        onClick: openPreview,
-      }));
+      children.push(
+        createVNode('img', {
+          class: 'lyt-image-inner',
+          src: p.src as string,
+          alt: p.alt as string,
+          style: {
+            objectFit: p.fit as string,
+            display: isLoaded() || isError() ? 'block' : 'none',
+          },
+          loading: p.lazy ? 'lazy' : 'eager',
+          onLoad: handleLoad,
+          onError: handleError,
+          onClick: openPreview,
+        }),
+      );
 
       if (isError()) {
         if (p.errorSrc) {
-          children.push(createVNode('img', {
-            class: 'lyt-image-error',
-            src: p.errorSrc as string,
-            alt: p.alt as string,
-            style: { objectFit: p.fit as string },
-          }));
+          children.push(
+            createVNode('img', {
+              class: 'lyt-image-error',
+              src: p.errorSrc as string,
+              alt: p.alt as string,
+              style: { objectFit: p.fit as string },
+            }),
+          );
         } else {
-          children.push(createVNode('div', { class: 'lyt-image-error' }, [
-            createVNode('svg', { viewBox: '0 0 100 100', fill: 'currentColor' }, [
-              createVNode('circle', { cx: '50', cy: '50', r: '40', opacity: '0.2' }),
-              createVNode('line', { x1: '30', y1: '30', x2: '70', y2: '70', stroke: 'currentColor', strokeWidth: '6', strokeLinecap: 'round' }),
-              createVNode('line', { x1: '70', y1: '30', x2: '30', y2: '70', stroke: 'currentColor', strokeWidth: '6', strokeLinecap: 'round' }),
+          children.push(
+            createVNode('div', { class: 'lyt-image-error' }, [
+              createVNode('svg', { viewBox: '0 0 100 100', fill: 'currentColor' }, [
+                createVNode('circle', { cx: '50', cy: '50', r: '40', opacity: '0.2' }),
+                createVNode('line', {
+                  x1: '30',
+                  y1: '30',
+                  x2: '70',
+                  y2: '70',
+                  stroke: 'currentColor',
+                  strokeWidth: '6',
+                  strokeLinecap: 'round',
+                }),
+                createVNode('line', {
+                  x1: '70',
+                  y1: '30',
+                  x2: '30',
+                  y2: '70',
+                  stroke: 'currentColor',
+                  strokeWidth: '6',
+                  strokeLinecap: 'round',
+                }),
+              ]),
             ]),
-          ]));
+          );
         }
       }
 
       if (p.preview && !isError() && isLoaded()) {
-        children.push(createVNode('div', {
-          class: 'lyt-image-preview-trigger',
-          onClick: openPreview,
-        }));
+        children.push(
+          createVNode('div', {
+            class: 'lyt-image-preview-trigger',
+            onClick: openPreview,
+          }),
+        );
       }
 
       if (isPreviewVisible()) {
-        children.push(createVNode('div', { class: 'lyt-image-preview', onClick: closePreview }, [
-          createVNode('div', { class: 'lyt-image-preview-mask' }, []),
-          createVNode('img', {
-            class: 'lyt-image-preview-content',
-            src: p.src as string,
-            alt: p.alt as string,
-            onClick: (e: Event) => e.stopPropagation(),
-          }, []),
-          createVNode('button', { class: 'lyt-image-preview-close', onClick: closePreview }, [createVNode('span', {}, '×')]),
-        ]));
+        children.push(
+          createVNode('div', { class: 'lyt-image-preview', onClick: closePreview }, [
+            createVNode('div', { class: 'lyt-image-preview-mask' }, []),
+            createVNode(
+              'img',
+              {
+                class: 'lyt-image-preview-content',
+                src: p.src as string,
+                alt: p.alt as string,
+                onClick: (e: Event) => e.stopPropagation(),
+              },
+              [],
+            ),
+            createVNode('button', { class: 'lyt-image-preview-close', onClick: closePreview }, [
+              createVNode('span', {}, '×'),
+            ]),
+          ]),
+        );
       }
 
       return createVNode('div', { class: imageClass, style: imageStyle }, children);

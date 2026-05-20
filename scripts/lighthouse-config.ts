@@ -1,6 +1,6 @@
 /**
  * LytJS Lighthouse 性能测试配置
- * 
+ *
  * 用于验证 Lighthouse 性能分数 >= 90
  */
 

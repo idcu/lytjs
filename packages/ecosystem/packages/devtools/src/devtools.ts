@@ -59,11 +59,7 @@ import {
   recordDependency,
   clearSignalRegistry,
 } from './signalsInspector';
-import {
-  getVDOMTree,
-  getVDOMStats,
-  serializeVDOMTree,
-} from './vdomInspector';
+import { getVDOMTree, getVDOMStats, serializeVDOMTree } from './vdomInspector';
 
 // DevTools 实例
 let devtoolsInstance: DevTools | null = null;
@@ -236,19 +232,19 @@ class DevTools implements DevToolsAPI {
 
     // 绑定事件
     document.getElementById('lytjs-devtools-close')?.addEventListener('click', () => this.close());
-    
+
     tabs.querySelectorAll('.lytjs-devtools-tab').forEach((tab) => {
       tab.addEventListener('click', (e) => {
         const target = e.target as HTMLElement;
         const tabName = target.dataset.tab;
-        
+
         tabs.querySelectorAll('.lytjs-devtools-tab').forEach((t) => {
           (t as HTMLElement).style.background = 'transparent';
           (t as HTMLElement).style.borderBottomColor = 'transparent';
         });
         target.style.background = '#1e1e1e';
         target.style.borderBottomColor = '#4fc08d';
-        
+
         this.renderTab(tabName || 'components');
       });
     });
@@ -304,7 +300,7 @@ class DevTools implements DevToolsAPI {
     if (states.length === 0) {
       return '<div style="color: #666; text-align: center; padding: 40px;">No stores registered.<br>Use registerStore() to register your stores.</div>';
     }
-    
+
     let html = '<div style="margin-bottom: 10px;">';
     html += `<strong>Registered Stores:</strong> ${getRegisteredStoreIds().join(', ')}`;
     html += '</div>';
@@ -317,7 +313,7 @@ class DevTools implements DevToolsAPI {
    */
   private renderSignalsTab(): string {
     const nodes = getSignalNodes();
-    
+
     const html = `
       <div style="margin-bottom: 15px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
@@ -383,7 +379,7 @@ class DevTools implements DevToolsAPI {
         </div>
       </div>
     `;
-    
+
     return html;
   }
 
@@ -394,12 +390,13 @@ class DevTools implements DevToolsAPI {
     if (nodes.length === 0) {
       return '<div style="color: #666; text-align: center; padding: 40px;">暂无信号数据<br>使用 registerSignal() 注册信号</div>';
     }
-    
+
     let html = '<div style="max-height: 400px; overflow-y: auto;">';
     nodes.forEach((node) => {
       const typeIcon = node.type === 'signal' ? '📌' : node.type === 'computed' ? '🧮' : '⚡';
-      const typeColor = node.type === 'signal' ? '#4fc08d' : node.type === 'computed' ? '#1890ff' : '#faad14';
-      
+      const typeColor =
+        node.type === 'signal' ? '#4fc08d' : node.type === 'computed' ? '#1890ff' : '#faad14';
+
       html += `
         <div style="
           background: #252526;
@@ -425,7 +422,7 @@ class DevTools implements DevToolsAPI {
       `;
     });
     html += '</div>';
-    
+
     return html;
   }
 
@@ -435,7 +432,7 @@ class DevTools implements DevToolsAPI {
   private renderVDOMTab(): string {
     const roots = getVDOMTree();
     const stats = getVDOMStats();
-    
+
     if (roots.length === 0) {
       return `
         <div style="color: #666; text-align: center; padding: 40px;">
@@ -447,7 +444,7 @@ class DevTools implements DevToolsAPI {
         </div>
       `;
     }
-    
+
     const html = `
       <div style="margin-bottom: 15px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
@@ -520,7 +517,7 @@ class DevTools implements DevToolsAPI {
         </div>
       </div>
     `;
-    
+
     return html;
   }
 
@@ -567,16 +564,17 @@ class DevTools implements DevToolsAPI {
           </div>
         </div>
     `;
-    
+
     if (Object.keys(stats.byType).length > 0) {
       html += `
         <div style="margin-bottom: 15px;">
           <strong style="display: block; margin-bottom: 10px;">按类型统计</strong>
           <div style="background: #252526; border-radius: 4px; padding: 10px;">
       `;
-      
+
       Object.entries(stats.byType).forEach(([type, data]) => {
-        const typeColor = type === 'signal' ? '#4fc08d' : type === 'computed' ? '#1890ff' : '#faad14';
+        const typeColor =
+          type === 'signal' ? '#4fc08d' : type === 'computed' ? '#1890ff' : '#faad14';
         html += `
           <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #333;">
             <span style="color: ${typeColor};">${type}</span>
@@ -584,35 +582,39 @@ class DevTools implements DevToolsAPI {
           </div>
         `;
       });
-      
+
       html += '</div></div>';
     }
-    
+
     if (records.length > 0) {
       html += `
         <div>
           <strong style="display: block; margin-bottom: 10px;">最近记录 (50条)</strong>
           <div style="background: #252526; border-radius: 4px; padding: 10px; max-height: 300px; overflow-y: auto;">
       `;
-      
-      records.slice().reverse().forEach((record) => {
-        const durationColor = record.duration > 16 ? '#ff4d4f' : record.duration > 8 ? '#faad14' : '#4fc08d';
-        html += `
+
+      records
+        .slice()
+        .reverse()
+        .forEach((record) => {
+          const durationColor =
+            record.duration > 16 ? '#ff4d4f' : record.duration > 8 ? '#faad14' : '#4fc08d';
+          html += `
           <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #333; font-size: 11px;">
             <span>${record.name}</span>
             <span style="color: ${durationColor};">${record.duration.toFixed(2)}ms</span>
             <span style="color: #888;">${new Date(record.timestamp).toLocaleTimeString()}</span>
           </div>
         `;
-      });
-      
+        });
+
       html += '</div></div>';
     } else {
       html += '<div style="color: #666; text-align: center; padding: 40px;">暂无性能数据</div>';
     }
-    
+
     html += '</div>';
-    
+
     return html;
   }
 
@@ -623,15 +625,15 @@ class DevTools implements DevToolsAPI {
     if (!isRouterRegistered()) {
       return '<div style="color: #666; text-align: center; padding: 40px;">Router not registered.<br>Use registerRouter() to register your router.</div>';
     }
-    
+
     const route = getCurrentRoute();
     const routes = getRoutes();
-    
+
     let html = '<div style="margin-bottom: 15px;">';
     html += '<strong>Current Route:</strong>';
     html += '</div>';
     html += `<pre style="margin: 0 0 15px 0; white-space: pre-wrap; word-break: break-all; background: #252526; padding: 10px; border-radius: 4px;">${serializeRouteInfo(route)}</pre>`;
-    
+
     if (routes.length > 0) {
       html += '<div style="margin-bottom: 10px;">';
       html += '<strong>All Routes:</strong>';
@@ -642,7 +644,7 @@ class DevTools implements DevToolsAPI {
       }
       html += '</ul>';
     }
-    
+
     return html;
   }
 
@@ -651,7 +653,7 @@ class DevTools implements DevToolsAPI {
    */
   open(): void {
     if (!this.options.enabled) return;
-    
+
     const panel = document.getElementById('lytjs-devtools');
     if (panel) {
       panel.style[this.options.position] = '0';
@@ -724,7 +726,7 @@ export function uninstallDevTools(): void {
     devtoolsInstance.close();
     devtoolsInstance = null;
   }
-  
+
   if (typeof document !== 'undefined') {
     const panel = document.getElementById('lytjs-devtools');
     if (panel) {
@@ -740,7 +742,7 @@ export {
   serializeComponentTree,
   registerRootComponent,
   unregisterRootComponent,
-  
+
   // Store 检查器
   getStoreStates,
   getStoreState,
@@ -754,7 +756,7 @@ export {
   subscribeStore,
   unsubscribeStore,
   onStoreChange,
-  
+
   // 路由检查器
   getCurrentRoute,
   navigateTo,
@@ -769,7 +771,7 @@ export {
   unwatchRouteChanges,
   getRouteHistory,
   clearRouteHistory,
-  
+
   // 信号检查器
   getSignalNodes,
   getSignalNode,

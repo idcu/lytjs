@@ -16,4 +16,3 @@ export type {
  * 请求处理器函数
  */
 export type Handler = (ctx: Context) => Promise<void> | void;
-

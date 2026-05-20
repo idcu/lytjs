@@ -57,7 +57,9 @@ export interface PluginDefinition<TOptions = unknown> extends EnhancedPlugin<TOp
  * });
  * ```
  */
-export function definePlugin<TOptions = unknown>(config: PluginConfig<TOptions>): PluginDefinition<TOptions> {
+export function definePlugin<TOptions = unknown>(
+  config: PluginConfig<TOptions>,
+): PluginDefinition<TOptions> {
   const { name, version, description, author, keywords, schema, install } = config;
 
   const plugin: PluginDefinition<TOptions> = {

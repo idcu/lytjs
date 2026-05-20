@@ -180,14 +180,14 @@ const UserProfile = {
 </template>
 
 <script>
-export default {
-  methods: {
-    handleError(error) {
-      console.error('加载失败:', error);
-      // 可以在此处显示错误提示或重试按钮
+  export default {
+    methods: {
+      handleError(error) {
+        console.error('加载失败:', error);
+        // 可以在此处显示错误提示或重试按钮
+      },
     },
-  },
-};
+  };
 </script>
 ```
 
@@ -279,14 +279,14 @@ export default {
 </template>
 
 <style>
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.3s ease;
-}
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
+  .fade-enter-active,
+  .fade-leave-active {
+    transition: opacity 0.3s ease;
+  }
+  .fade-enter-from,
+  .fade-leave-to {
+    opacity: 0;
+  }
 </style>
 ```
 
@@ -294,14 +294,14 @@ export default {
 
 `<Transition>` 会在不同阶段应用以下 CSS 类：
 
-| 类名 | 说明 |
-|------|------|
-| `v-enter-from` | 进入动画的起始状态 |
+| 类名             | 说明               |
+| ---------------- | ------------------ |
+| `v-enter-from`   | 进入动画的起始状态 |
 | `v-enter-active` | 进入动画的激活状态 |
-| `v-enter-to` | 进入动画的结束状态 |
-| `v-leave-from` | 离开动画的起始状态 |
+| `v-enter-to`     | 进入动画的结束状态 |
+| `v-leave-from`   | 离开动画的起始状态 |
 | `v-leave-active` | 离开动画的激活状态 |
-| `v-leave-to` | 离开动画的结束状态 |
+| `v-leave-to`     | 离开动画的结束状态 |
 
 使用 `name` 属性替换 `v-` 前缀：
 
@@ -338,35 +338,35 @@ export default {
 </template>
 
 <script>
-export default {
-  methods: {
-    onBeforeEnter(el) {
-      el.style.opacity = 0;
+  export default {
+    methods: {
+      onBeforeEnter(el) {
+        el.style.opacity = 0;
+      },
+      onEnter(el, done) {
+        // 使用 Web Animations API
+        const animation = el.animate([{ opacity: 0 }, { opacity: 1 }], {
+          duration: 300,
+        });
+        animation.onfinish = done;
+      },
+      onAfterEnter(el) {
+        console.log('进入完成');
+      },
+      onBeforeLeave(el) {
+        el.style.opacity = 1;
+      },
+      onLeave(el, done) {
+        const animation = el.animate([{ opacity: 1 }, { opacity: 0 }], {
+          duration: 300,
+        });
+        animation.onfinish = done;
+      },
+      onAfterLeave(el) {
+        console.log('离开完成');
+      },
     },
-    onEnter(el, done) {
-      // 使用 Web Animations API
-      const animation = el.animate([{ opacity: 0 }, { opacity: 1 }], {
-        duration: 300,
-      });
-      animation.onfinish = done;
-    },
-    onAfterEnter(el) {
-      console.log('进入完成');
-    },
-    onBeforeLeave(el) {
-      el.style.opacity = 1;
-    },
-    onLeave(el, done) {
-      const animation = el.animate([{ opacity: 1 }, { opacity: 0 }], {
-        duration: 300,
-      });
-      animation.onfinish = done;
-    },
-    onAfterLeave(el) {
-      console.log('离开完成');
-    },
-  },
-};
+  };
 </script>
 ```
 
@@ -385,21 +385,21 @@ export default {
 </template>
 
 <style>
-.list-enter-active,
-.list-leave-active {
-  transition: all 0.3s ease;
-}
-.list-enter-from {
-  opacity: 0;
-  transform: translateX(-30px);
-}
-.list-leave-to {
-  opacity: 0;
-  transform: translateX(30px);
-}
-.list-move {
-  transition: transform 0.3s ease;
-}
+  .list-enter-active,
+  .list-leave-active {
+    transition: all 0.3s ease;
+  }
+  .list-enter-from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  .list-leave-to {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  .list-move {
+    transition: transform 0.3s ease;
+  }
 </style>
 ```
 
@@ -456,14 +456,14 @@ export default {
 </template>
 
 <script>
-export default {
-  methods: {
-    handleError(error) {
-      console.error('捕获到错误:', error);
-      // 可以将错误上报到监控服务
+  export default {
+    methods: {
+      handleError(error) {
+        console.error('捕获到错误:', error);
+        // 可以将错误上报到监控服务
+      },
     },
-  },
-};
+  };
 </script>
 ```
 
@@ -498,10 +498,10 @@ export default {
 
 ### Props
 
-| Prop | 类型 | 默认值 | 说明 |
-|------|------|--------|------|
-| `maxErrors` | `number` | `5` | 最大错误捕获次数，超过后不再捕获 |
-| `scope` | `string` | - | 错误范围标识，用于错误分类 |
+| Prop        | 类型     | 默认值 | 说明                             |
+| ----------- | -------- | ------ | -------------------------------- |
+| `maxErrors` | `number` | `5`    | 最大错误捕获次数，超过后不再捕获 |
+| `scope`     | `string` | -      | 错误范围标识，用于错误分类       |
 
 ```html
 <template>

@@ -302,7 +302,7 @@ export function insert(child: unknown, parent: unknown, ref?: Node | null): void
   } else {
     realParent = parent as Node;
   }
-  
+
   const wrapper = child as RemovableWrapper;
   if ('content' in wrapper) {
     // 如果是 TemplateWrapper，调用 appendChild 处理
@@ -597,7 +597,7 @@ export function createEventHandler(
   modifiers?: Record<string, boolean>,
 ): () => void {
   if (!isBrowser) return () => {};
-  
+
   const realNode = getRealNode(el) as Element;
 
   const mods = modifiers ?? {};
@@ -664,7 +664,7 @@ export function reconcileArray<T>(
   ref?: Node | null,
 ): void {
   if (!isBrowser) return;
-  
+
   // 如果 parent 是 TemplateWrapper，获取真实的 DOM 元素
   let realParent: Node;
   if ('content' in (parent as any)) {

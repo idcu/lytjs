@@ -62,7 +62,7 @@ export function createDOMEnvironment(): Document {
 
   // For Node.js environment, you would need jsdom or happy-dom
   throw new Error(
-    'DOM environment not available. Please install jsdom or happy-dom and set up your test environment.'
+    'DOM environment not available. Please install jsdom or happy-dom and set up your test environment.',
   );
 }
 
@@ -96,10 +96,7 @@ export function createContainer(): HTMLElement {
  * wrapper.unmount();
  * ```
  */
-export function mount<T = unknown>(
-  component: any,
-  options: MountOptions = {}
-): Wrapper<T> {
+export function mount<T = unknown>(component: any, options: MountOptions = {}): Wrapper<T> {
   const container = createContainer();
   const doc = createDOMEnvironment();
 
@@ -144,7 +141,7 @@ export function mount<T = unknown>(
 
   // Create wrapper
   const wrapper: Wrapper<T> = {
-    root: targetEl.firstElementChild as HTMLElement || targetEl,
+    root: (targetEl.firstElementChild as HTMLElement) || targetEl,
     vm: instance as T,
 
     unmount() {
@@ -198,7 +195,7 @@ export function mount<T = unknown>(
  */
 export async function mountAsync<T = unknown>(
   component: any,
-  options: MountOptions = {}
+  options: MountOptions = {},
 ): Promise<Wrapper<T>> {
   const wrapper = mount<T>(component, options);
   await flushPromises();
@@ -241,7 +238,7 @@ export { nextTick };
  */
 export async function waitFor(
   condition: () => boolean,
-  options: { timeout?: number; interval?: number } = {}
+  options: { timeout?: number; interval?: number } = {},
 ): Promise<void> {
   const { timeout = 1000, interval = 50 } = options;
 
@@ -270,7 +267,7 @@ export function wait(ms: number): Promise<void> {
  * Create a mock function that tracks calls
  */
 export function mockFn<T extends (...args: any[]) => any = (...args: any[]) => any>(
-  implementation?: T
+  implementation?: T,
 ): MockFunction<T> {
   const calls: any[][] = [];
   const instances: any[] = [];
@@ -332,15 +329,19 @@ export interface MockFunction<T extends (...args: any[]) => any = (...args: any[
 /**
  * Create a mock component for testing
  */
-export function mockComponent(name: string, options: Partial<ComponentOptions> = {}): ComponentOptions {
+export function mockComponent(
+  name: string,
+  options: Partial<ComponentOptions> = {},
+): ComponentOptions {
   return defineComponent({
     name,
     setup(_props, { slots }) {
-      return () => (h as any)(
-        'div',
-        { 'data-testid': `mock-${name.toLowerCase()}` },
-        slots.default ? slots.default() : `Mock: ${name}`
-      );
+      return () =>
+        (h as any)(
+          'div',
+          { 'data-testid': `mock-${name.toLowerCase()}` },
+          slots.default ? slots.default() : `Mock: ${name}`,
+        );
     },
     ...options,
   });
@@ -352,7 +353,7 @@ export function mockComponent(name: string, options: Partial<ComponentOptions> =
 export function spyOn<T extends object, K extends keyof T>(
   obj: T,
   method: K,
-  implementation?: T[K]
+  implementation?: T[K],
 ): MockFunction {
   const original = obj[method];
   const mock = mockFn(implementation as (...args: any[]) => any);
@@ -419,7 +420,7 @@ export function trackSignal<T>(sig: Signal<T>): SignalTracker<T> {
     () => sig(),
     (value) => {
       values.push({ value, timestamp: Date.now() });
-    }
+    },
   );
 
   return {
@@ -448,7 +449,7 @@ export async function assertEmits(
   wrapper: Wrapper,
   eventName: string,
   action: () => void | Promise<void>,
-  timeout = 1000
+  timeout = 1000,
 ): Promise<any[]> {
   const emitted: any[] = [];
 
@@ -514,7 +515,7 @@ export function runCleanup(): void {
  */
 export function mountWithCleanup<T = unknown>(
   component: any,
-  options: MountOptions = {}
+  options: MountOptions = {},
 ): Wrapper<T> {
   const wrapper = mount<T>(component, options);
   registerCleanup(() => wrapper.unmount());

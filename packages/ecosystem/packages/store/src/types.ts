@@ -26,12 +26,7 @@ export interface DefineStoreOptions<_Id extends string, S extends StateTree, G, 
   actions?: A & ThisType<S & StoreGetters<G> & StoreActions<A>>;
 }
 
-export interface Store<
-  _Id extends string = string,
-  S extends StateTree = {},
-  _G = {},
-  _A = {},
-> {
+export interface Store<_Id extends string = string, S extends StateTree = {}, _G = {}, _A = {}> {
   readonly $id: string;
   $state: S;
   $patch(partialState: Partial<S>): void;
@@ -68,7 +63,11 @@ export interface PiniaPlugin {
 // ===== Callbacks =====
 
 export type SubscriptionCallback<S> = (
-  mutation: { storeId: string; type: 'direct' | 'patch object' | 'patch function'; payload: unknown },
+  mutation: {
+    storeId: string;
+    type: 'direct' | 'patch object' | 'patch function';
+    payload: unknown;
+  },
   state: S,
 ) => void;
 

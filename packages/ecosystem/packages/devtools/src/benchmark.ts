@@ -242,7 +242,7 @@ export function serializeAllBenchmarkResults(): string {
  */
 export function compareBenchmarkResults(
   oldResult: BenchmarkResult,
-  newResult: BenchmarkResult
+  newResult: BenchmarkResult,
 ): {
   durationDiff: number;
   durationDiffPercent: number;
@@ -269,7 +269,7 @@ export function compareBenchmarkResults(
  */
 export function createLargeScaleBenchmark(
   scenario: LargeScaleScenario,
-  testFn: (nodeCount: number) => void | Promise<void>
+  testFn: (nodeCount: number) => void | Promise<void>,
 ): BenchmarkConfig {
   return {
     name: `大规模测试-${scenario.name}`,
@@ -294,7 +294,11 @@ export interface MemoryUsage {
 export function getMemoryUsage(): MemoryUsage | null {
   if (typeof performance === 'undefined') return null;
 
-  const memory = (performance as { memory?: { usedJSHeapSize: number; totalJSHeapSize: number; jsHeapSizeLimit: number } }).memory;
+  const memory = (
+    performance as {
+      memory?: { usedJSHeapSize: number; totalJSHeapSize: number; jsHeapSizeLimit: number };
+    }
+  ).memory;
   if (!memory) return null;
 
   return {
@@ -341,8 +345,9 @@ export function createRegressionDetector(threshold: number = 0.1) {
 
       const previous = results[results.length - 2];
       if (!previous) return false;
-      
-      const regression = previous.averageDuration < result.averageDuration &&
+
+      const regression =
+        previous.averageDuration < result.averageDuration &&
         (result.averageDuration - previous.averageDuration) / previous.averageDuration > threshold;
 
       return regression;

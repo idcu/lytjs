@@ -1,22 +1,11 @@
 // src/parser-children.ts
 // Parse children and whitespace condensing
 
-import {
-  NodeTypes,
-  TextModes,
-} from './constants';
+import { NodeTypes, TextModes } from './constants';
 import { warn } from '@lytjs/common-error';
-import type {
-  TextNode,
-  TemplateChildNode,
-  ParentNode,
-  ParserContext,
-} from './types';
+import type { TextNode, TemplateChildNode, ParentNode, ParserContext } from './types';
 
-import {
-  advanceBy,
-  RE_DOCTYPE,
-} from './parser-base';
+import { advanceBy, RE_DOCTYPE } from './parser-base';
 
 import { parseComment } from './parser-comment';
 import { parseInterpolation, parseText } from './parser-text';

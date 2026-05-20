@@ -22,9 +22,7 @@ interface Violation {
 }
 
 const INTERNAL_PREFIX = '@lytjs/';
-const EXEMPT_PACKAGES = new Set([
-  '@lytjs/test-utils',
-]);
+const EXEMPT_PACKAGES = new Set(['@lytjs/test-utils']);
 
 const SCAN_TARGETS = [
   'packages/common/packages',

@@ -7,10 +7,7 @@
 
 export interface CustomBlockProcessor {
   name: string;
-  transform: (
-    source: string,
-    attrs: Record<string, string>,
-  ) => { code: string; map?: object };
+  transform: (source: string, attrs: Record<string, string>) => { code: string; map?: object };
 }
 
 // ============================================================
@@ -22,12 +19,7 @@ export interface CustomBlockProcessor {
  * 这些被工具（IDE、linter 等）识别但没有
  * built-in processors unless registered.
  */
-export const KNOWN_CUSTOM_BLOCKS: readonly string[] = [
-  'i18n',
-  'route',
-  'graphql',
-  'md',
-] as const;
+export const KNOWN_CUSTOM_BLOCKS: readonly string[] = ['i18n', 'route', 'graphql', 'md'] as const;
 
 // ============================================================
 // 处理器注册表
@@ -41,9 +33,7 @@ const processorMap = new Map<string, CustomBlockProcessor>();
  * @param processor - The processor to register
  * @throws Error if a processor with the same name is already registered
  */
-export function registerCustomBlockProcessor(
-  processor: CustomBlockProcessor,
-): void {
+export function registerCustomBlockProcessor(processor: CustomBlockProcessor): void {
   if (processorMap.has(processor.name)) {
     if (__DEV__) {
       console.warn(
@@ -60,9 +50,7 @@ export function registerCustomBlockProcessor(
  * @param name - The block type name
  * @returns The processor if registered, undefined otherwise
  */
-export function getCustomBlockProcessor(
-  name: string,
-): CustomBlockProcessor | undefined {
+export function getCustomBlockProcessor(name: string): CustomBlockProcessor | undefined {
   return processorMap.get(name);
 }
 

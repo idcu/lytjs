@@ -29,10 +29,7 @@ h('div', 'Hello World');
 h('div', { id: 'app', class: 'container' }, 'Hello');
 
 // 创建带有子元素的元素
-h('div', { class: 'container' }, [
-  h('h1', '标题'),
-  h('p', '段落内容'),
-]);
+h('div', { class: 'container' }, [h('h1', '标题'), h('p', '段落内容')]);
 ```
 
 ### 事件绑定
@@ -127,9 +124,7 @@ export default defineConfig({
 ```typescript
 import { createVNode } from '@lytjs/core';
 
-const vnode = createVNode('div', { id: 'app' }, [
-  createVNode('p', null, 'Hello'),
-]);
+const vnode = createVNode('div', { id: 'app' }, [createVNode('p', null, 'Hello')]);
 ```
 
 ## Fragment
@@ -141,10 +136,7 @@ import { h, Fragment } from '@lytjs/core';
 
 const MultiRoot = {
   render() {
-    return h(Fragment, null, [
-      h('h1', '标题'),
-      h('p', '内容'),
-    ]);
+    return h(Fragment, null, [h('h1', '标题'), h('p', '内容')]);
   },
 };
 ```

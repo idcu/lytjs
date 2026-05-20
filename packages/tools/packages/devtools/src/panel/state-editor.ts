@@ -90,7 +90,12 @@ export function extractComponentState(componentId: string): ComponentState | nul
   const signals = getSignals();
   for (const signal of signals) {
     // Check if signal belongs to this component (by naming convention or metadata)
-    if (isSignalBelongsToComponent(signal as Parameters<typeof isSignalBelongsToComponent>[0], componentId)) {
+    if (
+      isSignalBelongsToComponent(
+        signal as Parameters<typeof isSignalBelongsToComponent>[0],
+        componentId,
+      )
+    ) {
       state[signal.name] = {
         type: signal.type,
         value: signal.value,
@@ -137,11 +142,7 @@ function isSignalBelongsToComponent(signal: SignalInfo, componentId: string): bo
 /**
  * Apply a state edit to a component
  */
-export function applyStateEdit(
-  componentId: string,
-  path: string,
-  value: unknown,
-): StateEditResult {
+export function applyStateEdit(componentId: string, path: string, value: unknown): StateEditResult {
   try {
     // Get current value for history
     const oldValue = getStateValue(componentId, path);
@@ -239,9 +240,14 @@ function findSignalIdForPath(componentId: string, path: string): string | null {
 
   for (const signal of signals) {
     // Match by component association and path
-    if (isSignalBelongsToComponent(signal as Parameters<typeof isSignalBelongsToComponent>[0], componentId)) {
+    if (
+      isSignalBelongsToComponent(
+        signal as Parameters<typeof isSignalBelongsToComponent>[0],
+        componentId,
+      )
+    ) {
       const stateName = component
-        ? signal.name.substring(component.name.length + 1)  // 使用 substring 而不是 replace
+        ? signal.name.substring(component.name.length + 1) // 使用 substring 而不是 replace
         : signal.name;
       if (stateName === path || signal.name === path) {
         return signal.id;
@@ -257,7 +263,11 @@ function findSignalIdForPath(componentId: string, path: string): string | null {
 /**
  * Set a nested value in an object by path
  */
-export function setNestedValue(obj: Record<string, unknown>, path: string, value: unknown): boolean {
+export function setNestedValue(
+  obj: Record<string, unknown>,
+  path: string,
+  value: unknown,
+): boolean {
   const parts = path.split('.');
   let current: any = obj;
 
@@ -301,12 +311,14 @@ export function parseValue(input: string, targetType: string): unknown {
   const trimmed = input.trim();
 
   // Try to parse as JSON first
-  if ((trimmed.startsWith('{') && trimmed.endsWith('}')) ||
-      (trimmed.startsWith('[') && trimmed.endsWith(']')) ||
-      trimmed === 'true' ||
-      trimmed === 'false' ||
-      trimmed === 'null' ||
-      /^-?\d+(\.\d+)?$/.test(trimmed)) {
+  if (
+    (trimmed.startsWith('{') && trimmed.endsWith('}')) ||
+    (trimmed.startsWith('[') && trimmed.endsWith(']')) ||
+    trimmed === 'true' ||
+    trimmed === 'false' ||
+    trimmed === 'null' ||
+    /^-?\d+(\.\d+)?$/.test(trimmed)
+  ) {
     try {
       return JSON.parse(trimmed);
     } catch {
@@ -442,6 +454,4 @@ function handleUndoLastEdit(): void {
 
 // ===== Exports =====
 
-export {
-  editorState,
-};
+export { editorState };

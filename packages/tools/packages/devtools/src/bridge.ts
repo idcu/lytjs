@@ -39,7 +39,7 @@ export function onPanelMessage(type: MessageType, handler: MessageHandler): () =
 export function onPanelMessage(handler: GenericMessageHandler): () => void;
 export function onPanelMessage(
   typeOrHandler: MessageType | GenericMessageHandler,
-  handler?: MessageHandler
+  handler?: MessageHandler,
 ): () => void {
   // 处理通用处理器（只传入一个函数参数）
   if (typeof typeOrHandler === 'function') {
@@ -73,7 +73,7 @@ export function sendToPanel(message: BridgeMessage): void {
   // 简化版本：直接触发对应类型的处理器
   const typeHandlers = handlers.get(message.type);
   if (typeHandlers) {
-    typeHandlers.forEach(handler => {
+    typeHandlers.forEach((handler) => {
       try {
         handler(message);
       } catch (e) {
@@ -83,7 +83,7 @@ export function sendToPanel(message: BridgeMessage): void {
   }
 
   // 触发通用处理器
-  genericHandlers.forEach(handler => {
+  genericHandlers.forEach((handler) => {
     try {
       handler(message);
     } catch (e) {
@@ -99,7 +99,7 @@ export function broadcastToPanel(message: BridgeMessage): void {
   // 广播到所有类型的处理器
   handlers.forEach((typeHandlers, type) => {
     if (type !== message.type) return;
-    typeHandlers.forEach(handler => {
+    typeHandlers.forEach((handler) => {
       try {
         handler(message);
       } catch (e) {
@@ -109,7 +109,7 @@ export function broadcastToPanel(message: BridgeMessage): void {
   });
 
   // 触发通用处理器
-  genericHandlers.forEach(handler => {
+  genericHandlers.forEach((handler) => {
     try {
       handler(message);
     } catch (e) {

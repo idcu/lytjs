@@ -5,13 +5,7 @@
  */
 
 /** 性能指标类型 */
-export type MetricType =
-  | 'render'
-  | 'update'
-  | 'effect'
-  | 'computed'
-  | 'reaction'
-  | 'custom';
+export type MetricType = 'render' | 'update' | 'effect' | 'computed' | 'reaction' | 'custom';
 
 /** 性能指标 */
 export interface PerformanceMetric {
@@ -234,7 +228,9 @@ function initDefaultAlertRules(): void {
 /**
  * 记录性能指标
  */
-export function recordMetric(metric: Omit<PerformanceMetric, 'id' | 'timestamp'>): PerformanceMetric {
+export function recordMetric(
+  metric: Omit<PerformanceMetric, 'id' | 'timestamp'>,
+): PerformanceMetric {
   if (!options.enabled) {
     return { id: '', timestamp: 0, ...metric };
   }
@@ -282,9 +278,7 @@ export function getMetrics(limit?: number): PerformanceMetric[] {
  * 获取性能统计
  */
 export function getStats(type?: MetricType): PerformanceStats {
-  const filteredMetrics = type
-    ? metrics.filter((m) => m.type === type)
-    : [...metrics];
+  const filteredMetrics = type ? metrics.filter((m) => m.type === type) : [...metrics];
 
   if (filteredMetrics.length === 0) {
     return {
@@ -456,7 +450,7 @@ function outputAlert(alert: Alert): void {
   console.warn(
     `%c[LytJS Alert] ${alert.ruleName}%c ${alert.message}`,
     levelStyles[alert.level],
-    'color: inherit;'
+    'color: inherit;',
   );
 }
 
@@ -552,7 +546,14 @@ export function serializePerformanceReport(): string {
   if (report.alerts.length > 0) {
     result += `\n🚨 最近告警:\n`;
     report.alerts.slice(-5).forEach((alert) => {
-      const levelIcon = alert.level === 'critical' ? '🔴' : alert.level === 'error' ? '❌' : alert.level === 'warning' ? '⚠️' : 'ℹ️';
+      const levelIcon =
+        alert.level === 'critical'
+          ? '🔴'
+          : alert.level === 'error'
+            ? '❌'
+            : alert.level === 'warning'
+              ? '⚠️'
+              : 'ℹ️';
       result += `  ${levelIcon} [${alert.level}] ${alert.ruleName}: ${alert.message}\n`;
     });
   }
@@ -611,7 +612,7 @@ let currentDepth = 0;
 export function beginTimelineEvent(
   name: string,
   category: TimelineEvent['category'] = 'custom',
-  metadata?: Record<string, unknown>
+  metadata?: Record<string, unknown>,
 ): string {
   const id = `timeline_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   const event: TimelineEvent = {
@@ -652,7 +653,10 @@ export function endTimelineEvent(id: string): TimelineEvent | null {
 
   for (let i = stackIndex + 1; i < timelineEventStack.length; i++) {
     const nestedEvent = timelineEventStack[i]!;
-    event.duration = Math.max(event.duration, nestedEvent.startTime - event.startTime + nestedEvent.event.duration);
+    event.duration = Math.max(
+      event.duration,
+      nestedEvent.startTime - event.startTime + nestedEvent.event.duration,
+    );
   }
 
   timelineEventStack.splice(stackIndex);
@@ -678,7 +682,7 @@ export function getTimelineEvents(): TimelineEvent[] {
  */
 export function getTimelineEventsInRange(startTime: number, endTime: number): TimelineEvent[] {
   return timelineEvents.filter(
-    (event) => event.startTime >= startTime && event.startTime <= endTime
+    (event) => event.startTime >= startTime && event.startTime <= endTime,
   );
 }
 
@@ -687,9 +691,7 @@ export function getTimelineEventsInRange(startTime: number, endTime: number): Ti
  */
 export function getSlowOperations(limit: number = 10, threshold?: number): TimelineEvent[] {
   const sorted = [...timelineEvents].sort((a, b) => b.duration - a.duration);
-  const result = threshold !== undefined
-    ? sorted.filter((e) => e.duration >= threshold)
-    : sorted;
+  const result = threshold !== undefined ? sorted.filter((e) => e.duration >= threshold) : sorted;
   return result.slice(0, limit);
 }
 
@@ -715,9 +717,7 @@ export function getFlameGraphData(): FlameGraphNode {
       children: [],
     };
 
-    const parentNode = event.depth === 0
-      ? root
-      : findParentNode(root, event.depth);
+    const parentNode = event.depth === 0 ? root : findParentNode(root, event.depth);
 
     if (parentNode) {
       if (!parentNode.children) {
@@ -782,10 +782,14 @@ export function clearTimelineEvents(): void {
  * 导出时序事件为 JSON
  */
 export function exportTimelineAsJSON(): string {
-  return JSON.stringify({
-    events: timelineEvents,
-    exportedAt: Date.now(),
-  }, null, 2);
+  return JSON.stringify(
+    {
+      events: timelineEvents,
+      exportedAt: Date.now(),
+    },
+    null,
+    2,
+  );
 }
 
 /**

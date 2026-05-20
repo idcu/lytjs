@@ -31,34 +31,19 @@ export {
   RE_COMMA_INDEX_IN_OF,
   RE_DOCTYPE,
 } from './parser-base';
-export type {
-  ParserContext,
-  ParserOptions,
-  SourceLocation,
-} from './parser-base';
+export type { ParserContext, ParserOptions, SourceLocation } from './parser-base';
 
 // parser-children.ts: 子节点解析
-export {
-  parseChildren,
-} from './parser-children';
+export { parseChildren } from './parser-children';
 
 // parser-text.ts: 文本和插值解析
-export {
-  parseText,
-  parseInterpolation,
-} from './parser-text';
+export { parseText, parseInterpolation } from './parser-text';
 
 // parser-comment.ts: 注释解析
-export {
-  parseComment,
-} from './parser-comment';
+export { parseComment } from './parser-comment';
 
 // parser-element.ts: 元素解析
-export {
-  parseElement,
-} from './parser-element';
+export { parseElement } from './parser-element';
 
 // parser-attribute.ts: 属性和指令解析
-export {
-  parseAttribute,
-} from './parser-attribute';
+export { parseAttribute } from './parser-attribute';

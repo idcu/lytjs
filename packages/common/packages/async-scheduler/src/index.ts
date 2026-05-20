@@ -57,8 +57,6 @@ const PRIORITY_WEIGHT: Record<SchedulerPriority, number> = {
   low: 3,
 };
 
-
-
 // ============================================================
 // AsyncScheduler
 // ============================================================
@@ -119,11 +117,7 @@ export class AsyncScheduler<HN = unknown, HE extends HN = HN> {
    * @param allowMerge - 是否允许合并（默认 true）
    * @returns 任务 ID
    */
-  schedule(
-    fn: () => void,
-    priority?: SchedulerPriority,
-    allowMerge?: boolean,
-  ): number {
+  schedule(fn: () => void, priority?: SchedulerPriority, allowMerge?: boolean): number {
     // FIX: P2-43 使用实例属性 nextJobId 替代全局变量
     const id = ++this.nextJobId;
     const job: SchedulerJob = {

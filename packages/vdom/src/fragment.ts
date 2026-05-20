@@ -21,10 +21,10 @@ export { isFragment as isFragmentVNode } from '@lytjs/common-vnode';
  */
 export function flattenFragmentChildren(children: VNode[]): VNode[] {
   const flattened: VNode[] = [];
-  
+
   for (const child of children) {
     if (!child) continue;
-    
+
     // 如果子节点是 Fragment，递归扁平化其 children
     if (child.type === Fragment) {
       const fragmentChildren = getFragmentChildren(child);
@@ -36,7 +36,7 @@ export function flattenFragmentChildren(children: VNode[]): VNode[] {
       flattened.push(child);
     }
   }
-  
+
   return flattened;
 }
 
@@ -69,7 +69,7 @@ export function getFragmentChildCount(vnode: VNode): number {
 export function createFragment(children: VNode[]): VNode {
   // 扁平化嵌套的 Fragment
   const flattenedChildren = flattenFragmentChildren(children);
-  
+
   return createBaseVNode({
     type: Fragment,
     children: flattenedChildren,

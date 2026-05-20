@@ -1,6 +1,6 @@
 /**
  * Hydration 优化验证测试
- * 
+ *
  * 验证服务端渲染后客户端hydration的性能优化效果
  */
 
@@ -21,7 +21,7 @@ interface HydrationTestOptions {
 const DEFAULT_HYDRATION_OPTIONS: HydrationTestOptions = {
   iterations: 50,
   warmupIterations: 5,
-  logResults: true
+  logResults: true,
 };
 
 class HydrationOptimizationValidator {
@@ -45,7 +45,7 @@ class HydrationOptimizationValidator {
   // 模拟hydration过程
   private simulateHydration(): HydrationResult {
     const start = performance.now();
-    
+
     // 模拟hydration工作
     const html = this.createTestHTML();
     for (let i = 0; i < html.length * 10; i++) {
@@ -54,13 +54,13 @@ class HydrationOptimizationValidator {
     }
 
     const hydrationTime = performance.now() - start;
-    
+
     return {
       hydrationTime,
       firstContentfulPaint: hydrationTime * 0.3,
       timeToInteractive: hydrationTime * 0.8,
       layoutShifts: Math.floor(Math.random() * 3),
-      totalBlockedTime: Math.max(0, hydrationTime - 50)
+      totalBlockedTime: Math.max(0, hydrationTime - 50),
     };
   }
 
@@ -77,7 +77,7 @@ class HydrationOptimizationValidator {
     for (let i = 0; i < this.options.iterations; i++) {
       const result = this.simulateHydration();
       this.results.push(result);
-      await new Promise(resolve => setTimeout(resolve, 0));
+      await new Promise((resolve) => setTimeout(resolve, 0));
     }
 
     return this.calculateAverage();
@@ -89,7 +89,7 @@ class HydrationOptimizationValidator {
       firstContentfulPaint: 0,
       timeToInteractive: 0,
       layoutShifts: 0,
-      totalBlockedTime: 0
+      totalBlockedTime: 0,
     };
 
     for (const key in avg) {
@@ -108,20 +108,26 @@ class HydrationOptimizationValidator {
   } {
     const baseline = {
       hydrationTime: 80,
-      totalBlockedTime: 30
+      totalBlockedTime: 30,
     };
-    
+
     const current = this.calculateAverage();
-    
-    const hydrationTimeReduction = Math.max(0, (baseline.hydrationTime - current.hydrationTime) / baseline.hydrationTime * 100);
-    const tbtReduction = Math.max(0, (baseline.totalBlockedTime - current.totalBlockedTime) / baseline.totalBlockedTime * 100);
-    
+
+    const hydrationTimeReduction = Math.max(
+      0,
+      ((baseline.hydrationTime - current.hydrationTime) / baseline.hydrationTime) * 100,
+    );
+    const tbtReduction = Math.max(
+      0,
+      ((baseline.totalBlockedTime - current.totalBlockedTime) / baseline.totalBlockedTime) * 100,
+    );
+
     const isOptimizationValid = hydrationTimeReduction >= 15 || tbtReduction >= 20;
 
     return {
       hydrationTimeReduction,
       tbtReduction,
-      isOptimizationValid
+      isOptimizationValid,
     };
   }
 
@@ -136,7 +142,7 @@ class HydrationOptimizationValidator {
     console.log(`  Layout Shifts:           ${result.layoutShifts.toFixed(1)}`);
     console.log(`  Total Blocked Time:      ${result.totalBlockedTime.toFixed(2)}ms`);
     console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
-    
+
     const validation = this.validateOptimization();
     console.log(`\n Optimization Validation:`);
     console.log(`  Hydration Time Reduction: ${validation.hydrationTimeReduction.toFixed(1)}%`);
@@ -148,16 +154,16 @@ class HydrationOptimizationValidator {
 // 运行测试
 async function runHydrationValidation(): Promise<void> {
   console.log('🧪 Starting Hydration Optimization Validation...');
-  
+
   const validator = new HydrationOptimizationValidator({
     iterations: 50,
     warmupIterations: 5,
-    logResults: true
+    logResults: true,
   });
-  
+
   const result = await validator.measureHydration();
   validator.printResults(result);
-  
+
   console.log('\n✅ Hydration Validation completed!');
 }
 
@@ -165,8 +171,4 @@ if (typeof require !== 'undefined' && require.main === module) {
   runHydrationValidation().catch(console.error);
 }
 
-export {
-  HydrationOptimizationValidator,
-  HydrationResult,
-  HydrationTestOptions
-};
+export { HydrationOptimizationValidator, HydrationResult, HydrationTestOptions };

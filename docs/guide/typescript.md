@@ -154,11 +154,7 @@ import { defineComponent, ref } from '@lytjs/core';
 export default defineComponent({
   setup() {
     const count = ref(0);
-    return () => (
-      <button onClick={() => count.value++}>
-        Count: {count.value}
-      </button>
-    );
+    return () => <button onClick={() => count.value++}>Count: {count.value}</button>;
   },
 });
 ```

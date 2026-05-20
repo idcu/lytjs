@@ -66,9 +66,7 @@ export async function callServer<T = unknown>(
     });
 
     if (!response.ok) {
-      throw new Error(
-        `Server action failed: ${response.status} ${response.statusText}`
-      );
+      throw new Error(`Server action failed: ${response.status} ${response.statusText}`);
     }
 
     const result = await response.json();
@@ -129,11 +127,14 @@ export function hasServerData(): boolean {
 /**
  * Hydration 状态
  */
-const hydrationState = new Map<string, {
-  hydrated: boolean;
-  pending: boolean;
-  error: Error | null;
-}>();
+const hydrationState = new Map<
+  string,
+  {
+    hydrated: boolean;
+    pending: boolean;
+    error: Error | null;
+  }
+>();
 
 /**
  * 检查组件是否已 hydration
@@ -161,11 +162,13 @@ export function getHydrationState(componentId: string): {
   pending: boolean;
   error: Error | null;
 } {
-  return hydrationState.get(componentId) ?? {
-    hydrated: false,
-    pending: false,
-    error: null,
-  };
+  return (
+    hydrationState.get(componentId) ?? {
+      hydrated: false,
+      pending: false,
+      error: null,
+    }
+  );
 }
 
 // ============================================================

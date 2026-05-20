@@ -58,26 +58,38 @@ export const Badge = defineComponent({
       }
 
       if (showBadge()) {
-        children.push(createVNode('sup', {
-          class: [
-            'lyt-badge__count',
-            `lyt-badge__count--${p.type}`,
-            p.dot ? 'lyt-badge__count--dot' : '',
-          ].filter(Boolean).join(' '),
-          style: getCountStyle(),
-        }, [createVNode('span', {}, p.dot ? '' : displayCount())]));
+        children.push(
+          createVNode(
+            'sup',
+            {
+              class: [
+                'lyt-badge__count',
+                `lyt-badge__count--${p.type}`,
+                p.dot ? 'lyt-badge__count--dot' : '',
+              ]
+                .filter(Boolean)
+                .join(' '),
+              style: getCountStyle(),
+            },
+            [createVNode('span', {}, p.dot ? '' : displayCount())],
+          ),
+        );
       }
 
-      return createVNode('span', mergeA11yProps({
-        id: p.id,
-        'aria-label': p.ariaLabel,
-        'aria-describedby': p.ariaDescribedBy,
-      }, {
-        class: [
-          'lyt-badge',
-          p.class as string,
-        ].filter(Boolean).join(' '),
-      }), children);
+      return createVNode(
+        'span',
+        mergeA11yProps(
+          {
+            id: p.id,
+            'aria-label': p.ariaLabel,
+            'aria-describedby': p.ariaDescribedBy,
+          },
+          {
+            class: ['lyt-badge', p.class as string].filter(Boolean).join(' '),
+          },
+        ),
+        children,
+      );
     };
   },
 });

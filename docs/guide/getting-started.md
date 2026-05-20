@@ -41,26 +41,26 @@ pnpm add -D vite
 ```html
 <!DOCTYPE html>
 <html lang="zh-CN">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My LytJS App</title>
-  <style>
-    .counter {
-      text-align: center;
-      padding: 20px;
-    }
-    button {
-      margin: 0 10px;
-      padding: 10px 20px;
-      font-size: 16px;
-    }
-  </style>
-</head>
-<body>
-  <div id="app"></div>
-  <script type="module" src="/src/main.ts"></script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>My LytJS App</title>
+    <style>
+      .counter {
+        text-align: center;
+        padding: 20px;
+      }
+      button {
+        margin: 0 10px;
+        padding: 10px 20px;
+        font-size: 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
 </html>
 ```
 
@@ -76,7 +76,7 @@ const App = {
     const count = signal(0);
     const increment = () => count(count() + 1);
     const decrement = () => count(count() - 1);
-    
+
     return { count, increment, decrement };
   },
   template: `
@@ -85,7 +85,7 @@ const App = {
       <button @click="decrement">-</button>
       <button @click="increment">+</button>
     </div>
-  `
+  `,
 };
 
 createApp(App).mount('#app');
@@ -98,8 +98,8 @@ import { defineConfig } from 'vite';
 
 export default defineConfig({
   server: {
-    port: 5173
-  }
+    port: 5173,
+  },
 });
 ```
 
@@ -149,12 +149,13 @@ const App = {
   setup() {
     const count = signal(0);
     const increment = () => count(count() + 1);
-    
-    return () => h('div', { class: 'counter' }, [
-      h('h1', {}, `Count: ${count()}`),
-      h('button', { onClick: increment }, '+')
-    ]);
-  }
+
+    return () =>
+      h('div', { class: 'counter' }, [
+        h('h1', {}, `Count: ${count()}`),
+        h('button', { onClick: increment }, '+'),
+      ]);
+  },
 };
 
 createApp(App).mount('#app');

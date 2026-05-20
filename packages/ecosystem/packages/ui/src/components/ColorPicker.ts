@@ -10,10 +10,22 @@ import { signal } from '@lytjs/reactivity';
 import type { ColorPickerSetupProps } from './types';
 
 const DEFAULT_PRESETS = [
-  '#ff4500', '#ff6600', '#ff8c00', '#ff9900',
-  '#ffcc00', '#ffff00', '#9acd32', '#32cd32',
-  '#3cb371', '#00fa9a', '#00ced1', '#1e90ff',
-  '#4169e1', '#8a2be2', '#da70d6', '#ff1493'
+  '#ff4500',
+  '#ff6600',
+  '#ff8c00',
+  '#ff9900',
+  '#ffcc00',
+  '#ffff00',
+  '#9acd32',
+  '#32cd32',
+  '#3cb371',
+  '#00fa9a',
+  '#00ced1',
+  '#1e90ff',
+  '#4169e1',
+  '#8a2be2',
+  '#da70d6',
+  '#ff1493',
 ];
 
 export const ColorPicker = defineComponent({
@@ -43,7 +55,9 @@ export const ColorPicker = defineComponent({
     const colorInputValue = signal(p.modelValue);
 
     const hexToHsl = (hex: string) => {
-      let r = 0, g = 0, b = 0;
+      let r = 0,
+        g = 0,
+        b = 0;
 
       if (hex.length === 4) {
         r = parseInt(String(hex[1]) + String(hex[1]), 16);
@@ -55,17 +69,28 @@ export const ColorPicker = defineComponent({
         b = parseInt(String(hex[5]) + String(hex[6]), 16);
       }
 
-      r /= 255; g /= 255; b /= 255;
-      const max = Math.max(r, g, b), min = Math.min(r, g, b);
-      let h = 0, s = 0, l = (max + min) / 2;
+      r /= 255;
+      g /= 255;
+      b /= 255;
+      const max = Math.max(r, g, b),
+        min = Math.min(r, g, b);
+      let h = 0,
+        s = 0,
+        l = (max + min) / 2;
 
       if (max !== min) {
         const d = max - min;
         s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
         switch (max) {
-          case r: h = (g - b) / d + (g < b ? 6 : 0); break;
-          case g: h = (b - r) / d + 2; break;
-          case b: h = (r - g) / d + 4; break;
+          case r:
+            h = (g - b) / d + (g < b ? 6 : 0);
+            break;
+          case g:
+            h = (b - r) / d + 2;
+            break;
+          case b:
+            h = (r - g) / d + 4;
+            break;
         }
         h *= 60;
       }
@@ -85,22 +110,24 @@ export const ColorPicker = defineComponent({
     };
 
     const hslToRgb = (h: number, s: number, l: number): number[] => {
-      s /= 100; l /= 100;
+      s /= 100;
+      l /= 100;
       const k = (n: number) => (n + h / 30) % 12;
       const a = s * Math.min(l, 1 - l);
       const f = (n: number) => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
-      return [
-        Math.round(f(0) * 255),
-        Math.round(f(8) * 255),
-        Math.round(f(4) * 255)
-      ];
+      return [Math.round(f(0) * 255), Math.round(f(8) * 255), Math.round(f(4) * 255)];
     };
 
     const rgbToHex = (r: number, g: number, b: number): string => {
-      return '#' + [r, g, b].map((x: number) => {
-        const hex = x.toString(16);
-        return hex.length === 1 ? '0' + hex : hex;
-      }).join('');
+      return (
+        '#' +
+        [r, g, b]
+          .map((x: number) => {
+            const hex = x.toString(16);
+            return hex.length === 1 ? '0' + hex : hex;
+          })
+          .join('')
+      );
     };
 
     const getCurrentColor = (): string => {
@@ -206,88 +233,128 @@ export const ColorPicker = defineComponent({
 
     return () => {
       const saturationPointer: VNode[] = [];
-      saturationPointer.push(createVNode('div', {
-        class: 'lyt-color-picker-pointer',
-        style: {
-          left: `${currentSaturation()}%`,
-          top: `${100 - currentLightness()}%`
-        }
-      }));
+      saturationPointer.push(
+        createVNode('div', {
+          class: 'lyt-color-picker-pointer',
+          style: {
+            left: `${currentSaturation()}%`,
+            top: `${100 - currentLightness()}%`,
+          },
+        }),
+      );
 
       const hueChildren: VNode[] = [];
-      hueChildren.push(createVNode('div', {
-        class: 'lyt-color-picker-pointer',
-        style: { left: `${(currentHue() / 360) * 100}%` }
-      }));
+      hueChildren.push(
+        createVNode('div', {
+          class: 'lyt-color-picker-pointer',
+          style: { left: `${(currentHue() / 360) * 100}%` },
+        }),
+      );
 
       const saturationPicker: VNode[] = [];
-      saturationPicker.push(createVNode('div', {
-        class: 'lyt-color-picker-saturation',
-        style: {
-          background: `linear-gradient(to top, rgb(0, 0, 0), transparent),
-                      linear-gradient(to right, rgb(255, 255, 255), hsl(${currentHue()}, 100%, 50%))`
-        },
-        onMousedown: (e: MouseEvent) => handlePickerClick(e, 'saturation'),
-        onMousemove: (e: MouseEvent) => handlePickerMouseMove(e, 'saturation'),
-        onMouseup: handlePickerMouseUp,
-        onMouseleave: handlePickerMouseUp
-      }, saturationPointer));
+      saturationPicker.push(
+        createVNode(
+          'div',
+          {
+            class: 'lyt-color-picker-saturation',
+            style: {
+              background: `linear-gradient(to top, rgb(0, 0, 0), transparent),
+                      linear-gradient(to right, rgb(255, 255, 255), hsl(${currentHue()}, 100%, 50%))`,
+            },
+            onMousedown: (e: MouseEvent) => handlePickerClick(e, 'saturation'),
+            onMousemove: (e: MouseEvent) => handlePickerMouseMove(e, 'saturation'),
+            onMouseup: handlePickerMouseUp,
+            onMouseleave: handlePickerMouseUp,
+          },
+          saturationPointer,
+        ),
+      );
 
       const huePicker: VNode[] = [];
-      huePicker.push(createVNode('div', {
-        class: 'lyt-color-picker-hue-slider',
-        onMousedown: (e: MouseEvent) => handlePickerClick(e, 'hue'),
-        onMousemove: (e: MouseEvent) => handlePickerMouseMove(e, 'hue'),
-        onMouseup: handlePickerMouseUp,
-        onMouseleave: handlePickerMouseUp
-      }, hueChildren));
+      huePicker.push(
+        createVNode(
+          'div',
+          {
+            class: 'lyt-color-picker-hue-slider',
+            onMousedown: (e: MouseEvent) => handlePickerClick(e, 'hue'),
+            onMousemove: (e: MouseEvent) => handlePickerMouseMove(e, 'hue'),
+            onMouseup: handlePickerMouseUp,
+            onMouseleave: handlePickerMouseUp,
+          },
+          hueChildren,
+        ),
+      );
 
       const alphaChildren: VNode[] = [];
-      alphaChildren.push(createVNode('div', {
-        class: 'lyt-color-picker-pointer',
-        style: { left: `${currentAlpha()}%` }
-      }));
+      alphaChildren.push(
+        createVNode('div', {
+          class: 'lyt-color-picker-pointer',
+          style: { left: `${currentAlpha()}%` },
+        }),
+      );
 
       const alphaPicker: VNode[] = [];
-      alphaPicker.push(createVNode('div', {
-        class: 'lyt-color-picker-alpha-slider',
-        style: {
-          background: `linear-gradient(to right, transparent, ${hslToRgb(currentHue(), currentSaturation(), currentLightness()).map((v: number) => `rgb(${v})`).join(',')})`
-        },
-        onMousedown: (e: MouseEvent) => handlePickerClick(e, 'alpha'),
-        onMousemove: (e: MouseEvent) => handlePickerMouseMove(e, 'alpha'),
-        onMouseup: handlePickerMouseUp,
-        onMouseleave: handlePickerMouseUp
-      }, alphaChildren));
+      alphaPicker.push(
+        createVNode(
+          'div',
+          {
+            class: 'lyt-color-picker-alpha-slider',
+            style: {
+              background: `linear-gradient(to right, transparent, ${hslToRgb(
+                currentHue(),
+                currentSaturation(),
+                currentLightness(),
+              )
+                .map((v: number) => `rgb(${v})`)
+                .join(',')})`,
+            },
+            onMousedown: (e: MouseEvent) => handlePickerClick(e, 'alpha'),
+            onMousemove: (e: MouseEvent) => handlePickerMouseMove(e, 'alpha'),
+            onMouseup: handlePickerMouseUp,
+            onMouseleave: handlePickerMouseUp,
+          },
+          alphaChildren,
+        ),
+      );
 
       const presetColors: VNode[] = [];
       const presets = (p.presets || DEFAULT_PRESETS) as string[];
       presets.forEach((color: string, index: number) => {
-        presetColors.push(createVNode('span', {
-          class: 'lyt-color-picker-color',
-          key: index,
-          style: { backgroundColor: color },
-          onClick: () => handlePresetClick(color)
-        }));
+        presetColors.push(
+          createVNode('span', {
+            class: 'lyt-color-picker-color',
+            key: index,
+            style: { backgroundColor: color },
+            onClick: () => handlePresetClick(color),
+          }),
+        );
       });
 
       const historyColors: VNode[] = [];
       const history = localHistory() as string[];
       history.forEach((color: string, index: number) => {
-        historyColors.push(createVNode('span', {
-          class: 'lyt-color-picker-color',
-          key: index,
-          style: { backgroundColor: color },
-          onClick: () => handleColorClick(color)
-        }));
+        historyColors.push(
+          createVNode('span', {
+            class: 'lyt-color-picker-color',
+            key: index,
+            style: { backgroundColor: color },
+            onClick: () => handleColorClick(color),
+          }),
+        );
       });
 
       const pickerDropdown: VNode[] = [];
 
       const panelChildren: VNode[] = [];
-      panelChildren.push(createVNode('div', {
-        class: 'lyt-color-picker-saturation'
-      }, saturationPicker));
+      panelChildren.push(
+        createVNode(
+          'div',
+          {
+            class: 'lyt-color-picker-saturation',
+          },
+          saturationPicker,
+        ),
+      );
       panelChildren.push(createVNode('div', { class: 'lyt-color-picker-hue' }, huePicker));
       if (p.showAlpha) {
         panelChildren.push(createVNode('div', { class: 'lyt-color-picker-alpha' }, alphaPicker));
@@ -296,55 +363,97 @@ export const ColorPicker = defineComponent({
       pickerDropdown.push(createVNode('div', { class: 'lyt-color-picker-panel' }, panelChildren));
 
       const inputChildren: VNode[] = [];
-      inputChildren.push(createVNode('input', {
-        type: 'text',
-        value: colorInputValue(),
-        onInput: handleColorInput,
-        onChange: handleColorChange,
-        placeholder: '请输入颜色'
-      }));
-      inputChildren.push(createVNode('span', {
-        class: 'lyt-color-picker-preview',
-        style: { backgroundColor: getCurrentColor() }
-      }));
-      inputChildren.push(createVNode('button', {
-        class: 'lyt-color-picker-confirm',
-        onClick: () => handleColorClick(getCurrentColor())
-      }, [createVNode('span', {}, '确认')]));
+      inputChildren.push(
+        createVNode('input', {
+          type: 'text',
+          value: colorInputValue(),
+          onInput: handleColorInput,
+          onChange: handleColorChange,
+          placeholder: '请输入颜色',
+        }),
+      );
+      inputChildren.push(
+        createVNode('span', {
+          class: 'lyt-color-picker-preview',
+          style: { backgroundColor: getCurrentColor() },
+        }),
+      );
+      inputChildren.push(
+        createVNode(
+          'button',
+          {
+            class: 'lyt-color-picker-confirm',
+            onClick: () => handleColorClick(getCurrentColor()),
+          },
+          [createVNode('span', {}, '确认')],
+        ),
+      );
 
       pickerDropdown.push(createVNode('div', { class: 'lyt-color-picker-input' }, inputChildren));
 
       if (p.showPreset) {
         const presetChildren: VNode[] = [];
-        presetChildren.push(createVNode('div', { class: 'lyt-color-picker-title' }, [createVNode('span', {}, '预设颜色')]));
-        presetChildren.push(createVNode('div', { class: 'lyt-color-picker-palette' }, presetColors));
-        pickerDropdown.push(createVNode('div', { class: 'lyt-color-picker-presets' }, presetChildren));
+        presetChildren.push(
+          createVNode('div', { class: 'lyt-color-picker-title' }, [
+            createVNode('span', {}, '预设颜色'),
+          ]),
+        );
+        presetChildren.push(
+          createVNode('div', { class: 'lyt-color-picker-palette' }, presetColors),
+        );
+        pickerDropdown.push(
+          createVNode('div', { class: 'lyt-color-picker-presets' }, presetChildren),
+        );
       }
 
       if (p.showHistory && history.length > 0) {
         const historyChildren: VNode[] = [];
-        historyChildren.push(createVNode('div', { class: 'lyt-color-picker-title' }, [createVNode('span', {}, '历史颜色')]));
-        historyChildren.push(createVNode('div', { class: 'lyt-color-picker-palette' }, historyColors));
-        pickerDropdown.push(createVNode('div', { class: 'lyt-color-picker-history' }, historyChildren));
+        historyChildren.push(
+          createVNode('div', { class: 'lyt-color-picker-title' }, [
+            createVNode('span', {}, '历史颜色'),
+          ]),
+        );
+        historyChildren.push(
+          createVNode('div', { class: 'lyt-color-picker-palette' }, historyColors),
+        );
+        pickerDropdown.push(
+          createVNode('div', { class: 'lyt-color-picker-history' }, historyChildren),
+        );
       }
 
       const triggerChildren: VNode[] = [];
-      triggerChildren.push(createVNode('div', {
-        class: 'lyt-color-picker-display',
-        style: { backgroundColor: p.modelValue || 'transparent' }
-      }));
+      triggerChildren.push(
+        createVNode('div', {
+          class: 'lyt-color-picker-display',
+          style: { backgroundColor: p.modelValue || 'transparent' },
+        }),
+      );
 
       if (p.showClear && p.modelValue) {
-        triggerChildren.push(createVNode('span', {
-          class: 'lyt-color-picker-clear',
-          onClick: clearColor
-        }, [createVNode('span', {}, '×')]));
+        triggerChildren.push(
+          createVNode(
+            'span',
+            {
+              class: 'lyt-color-picker-clear',
+              onClick: clearColor,
+            },
+            [createVNode('span', {}, '×')],
+          ),
+        );
       }
 
-      triggerChildren.push(createVNode('span', { class: 'lyt-color-picker-arrow' }, [createVNode('span', {}, '▼')]));
+      triggerChildren.push(
+        createVNode('span', { class: 'lyt-color-picker-arrow' }, [createVNode('span', {}, '▼')]),
+      );
 
       const trigger: VNode[] = [];
-      trigger.push(createVNode('div', { class: 'lyt-color-picker-trigger', onClick: toggleDropdown }, triggerChildren));
+      trigger.push(
+        createVNode(
+          'div',
+          { class: 'lyt-color-picker-trigger', onClick: toggleDropdown },
+          triggerChildren,
+        ),
+      );
 
       if (isDropdownVisible()) {
         trigger.push(createVNode('div', { class: 'lyt-color-picker-dropdown' }, pickerDropdown));

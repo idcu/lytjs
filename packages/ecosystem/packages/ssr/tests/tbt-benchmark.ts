@@ -1,6 +1,6 @@
 /**
  * TBT (Total Blocking Time) 性能基准测试
- * 
+ *
  * 测量SSR流式渲染的阻塞时间指标
  */
 
@@ -21,7 +21,7 @@ interface TestOptions {
 const DEFAULT_OPTIONS: TestOptions = {
   iterations: 100,
   warmupIterations: 10,
-  logResults: true
+  logResults: true,
 };
 
 class TBTPerformanceBenchmark {
@@ -35,29 +35,29 @@ class TBTPerformanceBenchmark {
   // 测量单次渲染的阻塞时间
   private measureRender(fn: () => void): PerformanceResult {
     const start = performance.now();
-    
+
     // 记录渲染开始前的长任务
     const initialLongTasks = this.countLongTasks();
-    
+
     fn();
-    
+
     const end = performance.now();
     const totalTime = end - start;
-    
+
     // 计算阻塞时间
     const finalLongTasks = this.countLongTasks();
     const longTasks = finalLongTasks - initialLongTasks;
-    
+
     // 估算TBT (这里用简化估算)
-    const blockingTime = totalTime > 50 ? (totalTime - 50) : 0;
+    const blockingTime = totalTime > 50 ? totalTime - 50 : 0;
     const tbt = Math.max(0, blockingTime);
-    
+
     return {
       totalTime,
       blockingTime,
       longTasks,
       longTaskTime: longTasks * 100, // 估算
-      tbt
+      tbt,
     };
   }
 
@@ -84,7 +84,7 @@ class TBTPerformanceBenchmark {
     }
 
     const avgResult = this.calculateAverage();
-    
+
     if (this.options.logResults) {
       this.logBenchmarkResult(name, avgResult);
     }
@@ -102,7 +102,7 @@ class TBTPerformanceBenchmark {
       blockingTime: this.average('blockingTime'),
       longTasks: this.average('longTasks'),
       longTaskTime: this.average('longTaskTime'),
-      tbt: this.average('tbt')
+      tbt: this.average('tbt'),
     };
   }
 
@@ -124,7 +124,7 @@ class TBTPerformanceBenchmark {
   }
 
   private sleep(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 }
 
@@ -136,8 +136,8 @@ function createTestComponent(): any {
     children: Array.from({ length: 100 }, (_, i) => ({
       type: 'div',
       props: { key: `item-${i}`, className: 'item' },
-      children: `Item ${i}`
-    }))
+      children: `Item ${i}`,
+    })),
   };
 }
 
@@ -155,13 +155,13 @@ async function main(): Promise<void> {
   const benchmark = new TBTPerformanceBenchmark({
     iterations: 50,
     warmupIterations: 5,
-    logResults: true
+    logResults: true,
   });
 
   console.log('🧪 Starting TBT Performance Benchmark...');
-  
+
   await benchmark.runBenchmark('Simple Component Render', mockRender);
-  
+
   console.log('\n✅ Benchmark completed!');
 }
 
@@ -169,8 +169,4 @@ if (typeof require !== 'undefined' && require.main === module) {
   main().catch(console.error);
 }
 
-export {
-  TBTPerformanceBenchmark,
-  PerformanceResult,
-  TestOptions
-};
+export { TBTPerformanceBenchmark, PerformanceResult, TestOptions };

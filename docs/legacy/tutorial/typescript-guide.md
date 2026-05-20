@@ -3,6 +3,7 @@
 本指南帮助你在 LytJS 项目中充分利用 TypeScript 的类型安全特性。
 
 ## 目录
+
 1. [类型系统概述](#类型系统概述)
 2. [核心类型导入](#核心类型导入)
 3. [组件类型安全](#组件类型安全)
@@ -31,7 +32,7 @@ LytJS 提供完整的 TypeScript 类型系统，包括：
 
 ```typescript
 // ✅ 推荐的类型导入方式
-import type { 
+import type {
   ComponentPublicInstance,
   BaseAppConfig,
   BaseAppContext,
@@ -39,7 +40,7 @@ import type {
   DirectiveBinding,
   SlotFunction,
   InternalSlots,
-  Plugin
+  Plugin,
 } from '@lytjs/shared-types';
 
 // 类型定义
@@ -49,18 +50,18 @@ import type { Signal, Computed } from '@lytjs/reactivity';
 
 ### 完整类型列表
 
-| 导入来源 | 类型 | 说明 |
-|---------|------|------|
-| `@lytjs/shared-types` | `ComponentPublicInstance` | 组件公共实例类型 |
+| 导入来源              | 类型                        | 说明             |
+| --------------------- | --------------------------- | ---------------- |
+| `@lytjs/shared-types` | `ComponentPublicInstance`   | 组件公共实例类型 |
 | `@lytjs/shared-types` | `ComponentInternalInstance` | 组件内部实例类型 |
-| `@lytjs/shared-types` | `ComponentOptionsBase` | 组件选项类型 |
-| `@lytjs/shared-types` | `BaseAppConfig` | 应用配置类型 |
-| `@lytjs/shared-types` | `BaseAppContext` | 应用上下文类型 |
-| `@lytjs/shared-types` | `Plugin` | 插件类型 |
-| `@lytjs/shared-types` | `Directive` | 指令类型 |
-| `@lytjs/shared-types` | `DirectiveBinding` | 指令绑定类型 |
-| `@lytjs/shared-types` | `SlotFunction` | 插槽函数类型 |
-| `@lytjs/shared-types` | `InternalSlots` | 内部插槽类型 |
+| `@lytjs/shared-types` | `ComponentOptionsBase`      | 组件选项类型     |
+| `@lytjs/shared-types` | `BaseAppConfig`             | 应用配置类型     |
+| `@lytjs/shared-types` | `BaseAppContext`            | 应用上下文类型   |
+| `@lytjs/shared-types` | `Plugin`                    | 插件类型         |
+| `@lytjs/shared-types` | `Directive`                 | 指令类型         |
+| `@lytjs/shared-types` | `DirectiveBinding`          | 指令绑定类型     |
+| `@lytjs/shared-types` | `SlotFunction`              | 插槽函数类型     |
+| `@lytjs/shared-types` | `InternalSlots`             | 内部插槽类型     |
 
 ---
 
@@ -91,22 +92,22 @@ const MyComponent = defineComponent<Props, Emits>({
     }
   },
   emits: ['update:count', 'click'],
-  
+
   setup(props, { emit }) {
     // props 会有类型提示
     console.log(props.title);
-    
+
     // emit 会有类型检查
     emit('update:count', 100);
-    
+
     return {};
   }
 });
 
 // 使用时类型安全
-<MyComponent 
-  title="Hello" 
-  @update:count={(val) => console.log(val)} 
+<MyComponent
+  title="Hello"
+  @update:count={(val) => console.log(val)}
 />
 ```
 
@@ -118,16 +119,16 @@ import type { ComponentPublicInstance } from '@lytjs/shared-types';
 
 const MyComponent = defineComponent({
   expose: ['increment'],
-  
+
   setup() {
     const count = ref(0);
-    
+
     const increment = () => {
       count.value++;
     };
-    
+
     return { count, increment };
-  }
+  },
 });
 
 // 使用时类型安全
@@ -161,7 +162,7 @@ interface User {
 
 const user = signal<User>({
   name: 'Alice',
-  age: 25
+  age: 25,
 });
 
 // Computed 类型
@@ -186,30 +187,31 @@ interface Todo {
 // 类型安全的 Todo Store
 function useTodoStore() {
   const todos = signal<Todo[]>([]);
-  
-  const completedCount = computed(() => 
-    todos.value.filter(todo => todo.done).length
-  );
-  
+
+  const completedCount = computed(() => todos.value.filter((todo) => todo.done).length);
+
   const addTodo = (text: string) => {
-    todos.value = [...todos.value, {
-      id: Date.now(),
-      text,
-      done: false
-    }];
+    todos.value = [
+      ...todos.value,
+      {
+        id: Date.now(),
+        text,
+        done: false,
+      },
+    ];
   };
-  
+
   const toggleTodo = (id: number) => {
-    todos.value = todos.value.map(todo => 
-      todo.id === id ? { ...todo, done: !todo.done } : todo
+    todos.value = todos.value.map((todo) =>
+      todo.id === id ? { ...todo, done: !todo.done } : todo,
     );
   };
-  
+
   return {
     todos,
     completedCount,
     addTodo,
-    toggleTodo
+    toggleTodo,
   };
 }
 ```
@@ -236,24 +238,24 @@ const myPlugin = definePlugin<PluginOptions>({
     properties: {
       apiBaseUrl: { type: 'string', required: true },
       timeout: { type: 'number', default: 5000 },
-      debug: { type: 'boolean', default: false }
-    }
+      debug: { type: 'boolean', default: false },
+    },
   },
   install(app, options) {
     // options 类型安全
     console.log(options.apiBaseUrl);
-    
+
     // 全局属性
     app.config.globalProperties.$api = {
-      baseUrl: options.apiBaseUrl
+      baseUrl: options.apiBaseUrl,
     };
-  }
+  },
 });
 
 // 使用时类型检查
 app.use(myPlugin, {
   apiBaseUrl: 'https://api.example.com',
-  debug: true
+  debug: true,
 });
 ```
 
@@ -275,10 +277,10 @@ const pages: SSGPage[] = [
     head: {
       title: 'Home',
       meta: {
-        description: 'Welcome'
-      }
-    }
-  }
+        description: 'Welcome',
+      },
+    },
+  },
 ];
 
 // SSG 选项类型
@@ -286,7 +288,7 @@ const ssgOptions: SSGOptions = {
   baseUrl: 'https://example.com',
   outDir: 'dist',
   defaultTitle: 'My Site',
-  generateSitemap: true
+  generateSitemap: true,
 };
 ```
 
@@ -322,17 +324,17 @@ function processValue(value: unknown) {
     // value: string
     return value.toUpperCase();
   }
-  
+
   if (isNumber(value)) {
     // value: number
     return value * 2;
   }
-  
+
   if (isFunction(value)) {
     // value: Function
     return value();
   }
-  
+
   throw new Error('Invalid value');
 }
 ```
@@ -382,7 +384,7 @@ type WithoutCount = OmitProps<Props, 'count'>;
 // 获取值的类型
 const config = {
   apiUrl: 'https://api.example.com',
-  timeout: 5000
+  timeout: 5000,
 };
 
 type Config = typeof config;

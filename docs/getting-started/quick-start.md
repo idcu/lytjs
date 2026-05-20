@@ -89,15 +89,15 @@ touch index.html src/main.ts src/App.lyt
 ```html
 <!DOCTYPE html>
 <html lang="zh-CN">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>我的第一个 LytJS 应用</title>
-</head>
-<body>
-  <div id="app"></div>
-  <script type="module" src="/src/main.ts"></script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>我的第一个 LytJS 应用</title>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
 </html>
 ```
 
@@ -116,27 +116,27 @@ touch index.html src/main.ts src/App.lyt
 </template>
 
 <script setup lang="ts">
-import { signal, computed } from '@lytjs/reactivity'
+import { signal, computed } from '@lytjs/reactivity';
 
 // 创建响应式状态
-const count = signal(0)
-const message = signal('欢迎使用 LytJS!')
+const count = signal(0);
+const message = signal('欢迎使用 LytJS!');
 
 // 计算属性
-const doubleCount = computed(() => count.value * 2)
+const doubleCount = computed(() => count.value * 2);
 
 // 方法
 const increment = () => {
-  count.value++
-}
+  count.value++;
+};
 
 const decrement = () => {
-  count.value--
-}
+  count.value--;
+};
 
 const reset = () => {
-  count.value = 0
-}
+  count.value = 0;
+};
 </script>
 
 <style scoped>
@@ -172,26 +172,26 @@ button:hover {
 ### 3. `src/main.ts` (入口文件)
 
 ```typescript
-import { createApp } from '@lytjs/core'
-import App from './App.lyt'
+import { createApp } from '@lytjs/core';
+import App from './App.lyt';
 
-const app = createApp(App)
-app.mount('#app')
+const app = createApp(App);
+app.mount('#app');
 ```
 
 ### 4. `vite.config.ts` (Vite 配置)
 
 ```typescript
-import { defineConfig } from 'vite'
-import lytjs from '@lytjs/plugin-vite'
+import { defineConfig } from 'vite';
+import lytjs from '@lytjs/plugin-vite';
 
 export default defineConfig({
   plugins: [
     lytjs({
-      vapor: true  // 启用 Vapor 模式 (可选)
-    })
-  ]
-})
+      vapor: true, // 启用 Vapor 模式 (可选)
+    }),
+  ],
+});
 ```
 
 ---
@@ -201,59 +201,59 @@ export default defineConfig({
 ### 信号 (Signal)
 
 ```typescript
-import { signal } from '@lytjs/reactivity'
+import { signal } from '@lytjs/reactivity';
 
 // 创建信号
-const count = signal(0)
-const user = signal({ name: '张三', age: 25 })
+const count = signal(0);
+const user = signal({ name: '张三', age: 25 });
 
 // 读取值
-console.log(count.value)  // 0
-console.log(user.value)  // { name: '张三', age: 25 }
+console.log(count.value); // 0
+console.log(user.value); // { name: '张三', age: 25 }
 
 // 更新值
-count.value = 100
-user.value.name = '李四'
+count.value = 100;
+user.value.name = '李四';
 
 // 批量更新 (避免多次渲染)
-user.value = { ...user.value, name: '王五', age: 30 }
+user.value = { ...user.value, name: '王五', age: 30 };
 ```
 
 ### 计算属性 (Computed)
 
 ```typescript
-import { signal, computed } from '@lytjs/reactivity'
+import { signal, computed } from '@lytjs/reactivity';
 
-const firstName = signal('张')
-const lastName = signal('三')
+const firstName = signal('张');
+const lastName = signal('三');
 
 // 计算属性会自动追踪依赖
 const fullName = computed(() => {
-  return `${firstName.value}${lastName.value}`
-})
+  return `${firstName.value}${lastName.value}`;
+});
 
-console.log(fullName.value)  // '张三'
+console.log(fullName.value); // '张三'
 
 // 更新依赖会自动更新计算值
-lastName.value = '四'
-console.log(fullName.value)  // '张四'
+lastName.value = '四';
+console.log(fullName.value); // '张四'
 ```
 
 ### 效应 (Effect)
 
 ```typescript
-import { signal, effect } from '@lytjs/reactivity'
+import { signal, effect } from '@lytjs/reactivity';
 
-const count = signal(0)
+const count = signal(0);
 
 // 创建效应 - 会在依赖变化时自动运行
 effect(() => {
-  console.log(`计数变为: ${count.value}`)
-})
+  console.log(`计数变为: ${count.value}`);
+});
 
 // 更新值会触发效应
-count.value = 1  // 输出: 计数变为: 1
-count.value = 2  // 输出: 计数变为: 2
+count.value = 1; // 输出: 计数变为: 1
+count.value = 2; // 输出: 计数变为: 2
 ```
 
 ---
@@ -296,79 +296,66 @@ pnpm preview
 <template>
   <div class="todo-app">
     <h2>Todo 列表</h2>
-    
-    <input 
-      type="text" 
-      :value="newTodo" 
-      @input="handleInput"
-      placeholder="添加新 todo..."
-    />
+
+    <input type="text" :value="newTodo" @input="handleInput" placeholder="添加新 todo..." />
     <button @click="addTodo">添加</button>
-    
+
     <ul>
       <li v-for="todo in todos" :key="todo.id">
-        <input 
-          type="checkbox" 
-          :checked="todo.done"
-          @change="toggleTodo(todo.id)"
-        />
+        <input type="checkbox" :checked="todo.done" @change="toggleTodo(todo.id)" />
         <span :class="{ done: todo.done }">{{ todo.text }}</span>
         <button @click="removeTodo(todo.id)">删除</button>
       </li>
     </ul>
-    
+
     <p>完成: {{ doneCount }} / {{ todos.length }}</p>
   </div>
 </template>
 
 <script setup lang="ts">
-import { signal, computed } from '@lytjs/reactivity'
+import { signal, computed } from '@lytjs/reactivity';
 
 interface Todo {
-  id: number
-  text: string
-  done: boolean
+  id: number;
+  text: string;
+  done: boolean;
 }
 
 const todos = signal<Todo[]>([
   { id: 1, text: '学习 LytJS', done: false },
-  { id: 2, text: '创建第一个应用', done: true }
-])
+  { id: 2, text: '创建第一个应用', done: true },
+]);
 
-const newTodo = signal('')
+const newTodo = signal('');
 
-const doneCount = computed(() => 
-  todos.value.filter(todo => todo.done).length
-)
+const doneCount = computed(() => todos.value.filter((todo) => todo.done).length);
 
 const handleInput = (e: Event) => {
-  const target = e.target as HTMLInputElement
-  newTodo.value = target.value
-}
+  const target = e.target as HTMLInputElement;
+  newTodo.value = target.value;
+};
 
 const addTodo = () => {
-  if (!newTodo.value.trim()) return
-  
+  if (!newTodo.value.trim()) return;
+
   todos.value = [
     ...todos.value,
     {
       id: Date.now(),
       text: newTodo.value,
-      done: false
-    }
-  ]
-  newTodo.value = ''
-}
+      done: false,
+    },
+  ];
+  newTodo.value = '';
+};
 
 const toggleTodo = (id: number) => {
-  todos.value = todos.value.map(todo => 
-    todo.id === id ? { ...todo, done: !todo.done } : todo
-  )
-}
+  todos.value = todos.value.map((todo) => (todo.id === id ? { ...todo, done: !todo.done } : todo));
+};
 
 const removeTodo = (id: number) => {
-  todos.value = todos.value.filter(todo => todo.id !== id)
-}
+  todos.value = todos.value.filter((todo) => todo.id !== id);
+};
 </script>
 
 <style scoped>
@@ -417,6 +404,7 @@ li {
 ### Q: LytJS 和 Vue/React 的主要区别？
 
 查看我们的迁移指南：
+
 - [Vue → LytJS](./migration-from-vue.md)
 - [React → LytJS](./migration-from-react.md)
 

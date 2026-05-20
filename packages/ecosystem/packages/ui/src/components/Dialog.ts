@@ -55,12 +55,15 @@ export const Dialog = defineComponent({
     const dialogRef = signal<HTMLElement | null>(null);
     const previousActiveElement = signal<HTMLElement | null>(null);
 
-    watch(() => p.modelValue, (newVal) => {
-      visible.set(newVal);
-      if (newVal) {
-        p.onOpen?.();
-      }
-    });
+    watch(
+      () => p.modelValue,
+      (newVal) => {
+        visible.set(newVal);
+        if (newVal) {
+          p.onOpen?.();
+        }
+      },
+    );
 
     const handleClose = async () => {
       if (p.onBeforeClose) {
@@ -87,11 +90,11 @@ export const Dialog = defineComponent({
     };
 
     const getFocusableElements = (container: HTMLElement): HTMLElement[] => {
-      return Array.from(
-        container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTORS)
-      ).filter(el => {
-        return el.offsetParent !== null && !el.hasAttribute('aria-hidden');
-      });
+      return Array.from(container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTORS)).filter(
+        (el) => {
+          return el.offsetParent !== null && !el.hasAttribute('aria-hidden');
+        },
+      );
     };
 
     const handleTabKey = (e: KeyboardEvent) => {
@@ -125,9 +128,10 @@ export const Dialog = defineComponent({
           const dialog = dialogRef();
           if (dialog) {
             if (p.initialFocus) {
-              const initialEl = typeof p.initialFocus === 'string'
-                ? dialog.querySelector<HTMLElement>(p.initialFocus)
-                : p.initialFocus as HTMLElement;
+              const initialEl =
+                typeof p.initialFocus === 'string'
+                  ? dialog.querySelector<HTMLElement>(p.initialFocus)
+                  : (p.initialFocus as HTMLElement);
               if (initialEl && initialEl.focus) {
                 initialEl.focus();
               } else {
@@ -155,49 +159,82 @@ export const Dialog = defineComponent({
       const children: VNode[] = [];
 
       if (slots.header) {
-        children.push(createVNode('div', {
-          class: 'lyt-dialog__header',
-          id: p.id ? `${p.id}-header` : undefined,
-        }, slots.header()));
+        children.push(
+          createVNode(
+            'div',
+            {
+              class: 'lyt-dialog__header',
+              id: p.id ? `${p.id}-header` : undefined,
+            },
+            slots.header(),
+          ),
+        );
       } else if (p.title) {
         const headerChildren: VNode[] = [];
-        headerChildren.push(createVNode('span', {
-          class: 'lyt-dialog__title',
-          id: p.id ? `${p.id}-title` : undefined,
-        }, [createTextVNode(p.title)]));
+        headerChildren.push(
+          createVNode(
+            'span',
+            {
+              class: 'lyt-dialog__title',
+              id: p.id ? `${p.id}-title` : undefined,
+            },
+            [createTextVNode(p.title)],
+          ),
+        );
         if (p.showClose) {
           const closeBtnProps = getButtonA11yProps({
             ariaLabel: 'Close dialog',
           });
-          headerChildren.push(createVNode('button', mergeA11yProps(closeBtnProps, {
-            class: 'lyt-dialog__close',
-            onClick: handleClose,
-          }), [createTextVNode('×')]));
+          headerChildren.push(
+            createVNode(
+              'button',
+              mergeA11yProps(closeBtnProps, {
+                class: 'lyt-dialog__close',
+                onClick: handleClose,
+              }),
+              [createTextVNode('×')],
+            ),
+          );
         }
-        children.push(createVNode('div', {
-          class: 'lyt-dialog__header',
-          id: p.id ? `${p.id}-header` : undefined,
-        }, headerChildren));
+        children.push(
+          createVNode(
+            'div',
+            {
+              class: 'lyt-dialog__header',
+              id: p.id ? `${p.id}-header` : undefined,
+            },
+            headerChildren,
+          ),
+        );
       }
 
       if (slots.default) {
-        children.push(createVNode('div', {
-          class: 'lyt-dialog__body',
-          id: p.id ? `${p.id}-body` : undefined,
-        }, slots.default()));
+        children.push(
+          createVNode(
+            'div',
+            {
+              class: 'lyt-dialog__body',
+              id: p.id ? `${p.id}-body` : undefined,
+            },
+            slots.default(),
+          ),
+        );
       }
 
       if (slots.footer) {
-        children.push(createVNode('div', {
-          class: 'lyt-dialog__footer',
-          id: p.id ? `${p.id}-footer` : undefined,
-        }, slots.footer()));
+        children.push(
+          createVNode(
+            'div',
+            {
+              class: 'lyt-dialog__footer',
+              id: p.id ? `${p.id}-footer` : undefined,
+            },
+            slots.footer(),
+          ),
+        );
       }
 
-      const dialogClass = [
-        'lyt-dialog',
-        p.class,
-      ].filter(Boolean).join(' ');
+      const dialogClass = ['lyt-dialog', p.class].filter(Boolean).join(' ');
 
       const dialogStyle = `width: ${typeof p.width === 'number' ? `${p.width}px` : p.width}`;
 
@@ -209,30 +246,38 @@ export const Dialog = defineComponent({
         modal: p.ariaModal,
       });
 
-      return createVNode('div', {
-        class: 'lyt-dialog__wrapper',
-        onKeydown: (e: KeyboardEvent) => {
-          if (e.key === 'Tab') {
-            handleTabKey(e);
-          }
-          handleKeydown(e);
+      return createVNode(
+        'div',
+        {
+          class: 'lyt-dialog__wrapper',
+          onKeydown: (e: KeyboardEvent) => {
+            if (e.key === 'Tab') {
+              handleTabKey(e);
+            }
+            handleKeydown(e);
+          },
+          ref: (el: HTMLElement | null) => {
+            dialogRef.set(el);
+          },
         },
-        ref: (el: HTMLElement | null) => {
-          dialogRef.set(el);
-        },
-      }, [
-        createVNode('div', {
-          class: 'lyt-dialog__overlay',
-          'aria-hidden': true,
-          onClick: p.closeOnClickModal ? handleClose : undefined,
-        }),
-        createVNode('div', mergeA11yProps(dialogA11yProps, {
-          class: dialogClass,
-          style: dialogStyle,
-          role: 'dialog',
-          'aria-modal': p.ariaModal,
-        }), children),
-      ]);
+        [
+          createVNode('div', {
+            class: 'lyt-dialog__overlay',
+            'aria-hidden': true,
+            onClick: p.closeOnClickModal ? handleClose : undefined,
+          }),
+          createVNode(
+            'div',
+            mergeA11yProps(dialogA11yProps, {
+              class: dialogClass,
+              style: dialogStyle,
+              role: 'dialog',
+              'aria-modal': p.ariaModal,
+            }),
+            children,
+          ),
+        ],
+      );
     };
   },
 });

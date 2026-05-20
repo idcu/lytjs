@@ -325,8 +325,8 @@ describe('@lytjs/common-a11y', () => {
       const el = document.createElement('div');
       setAriaProps(el, {
         'aria-label': 'test',
-        'role': 'button',
-        'id': 'myId',
+        role: 'button',
+        id: 'myId',
       } as Record<string, string>);
       expect(el.getAttribute('aria-label')).toBe('test');
       expect(el.getAttribute('role')).toBeNull();

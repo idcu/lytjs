@@ -343,12 +343,18 @@ describe('@lytjs/common-validate', () => {
 
   describe('custom', () => {
     it('should pass when custom function returns true', () => {
-      const rule = custom((v) => typeof v === 'string' && v.startsWith('http'), 'Must start with http');
+      const rule = custom(
+        (v) => typeof v === 'string' && v.startsWith('http'),
+        'Must start with http',
+      );
       expect(rule.validate('https://example.com')).toBe(true);
     });
 
     it('should fail when custom function returns false', () => {
-      const rule = custom((v) => typeof v === 'string' && v.startsWith('http'), 'Must start with http');
+      const rule = custom(
+        (v) => typeof v === 'string' && v.startsWith('http'),
+        'Must start with http',
+      );
       expect(rule.validate('ftp://example.com')).toBe(false);
     });
 
@@ -386,10 +392,7 @@ describe('@lytjs/common-validate', () => {
     });
 
     it('should fail validation for invalid username', () => {
-      const result = validate('a', [
-        required,
-        minLength(3),
-      ]);
+      const result = validate('a', [required, minLength(3)]);
       expect(result.valid).toBe(false);
     });
 

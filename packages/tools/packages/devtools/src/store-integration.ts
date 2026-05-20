@@ -14,10 +14,7 @@ import { generateId } from '@lytjs/common-string';
 export function trackStoreMutation(storeId: string, type: string, payload: unknown): void {
   if (!isEventRecording()) return;
 
-  recordEvent(
-    'store:mutation',
-    { storeId, mutationType: type, payload },
-  );
+  recordEvent('store:mutation', { storeId, mutationType: type, payload });
 }
 
 /**

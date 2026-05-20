@@ -51,7 +51,7 @@ function publishPackage(pkgPath) {
 
   try {
     const cacheDir = join(process.cwd(), '.npm-publish-cache');
-    
+
     execSync(
       `npm publish --access public --registry https://registry.npmjs.org/ --//registry.npmjs.org/:_authToken=${NPM_TOKEN} --cache ${cacheDir}`,
       {
@@ -62,7 +62,7 @@ function publishPackage(pkgPath) {
           npm_config_registry: 'https://registry.npmjs.org/',
           npm_config_cache: cacheDir,
         },
-      }
+      },
     );
     console.log(`✅ ${pkgName}@${version} 发布成功！`);
     return true;

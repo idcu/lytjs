@@ -47,9 +47,7 @@ export class PerformanceErrorReporter implements ErrorReporter {
       return;
     }
 
-    const snapshot = this.snapshotOnError
-      ? this.captureSnapshot()
-      : undefined;
+    const snapshot = this.snapshotOnError ? this.captureSnapshot() : undefined;
 
     if (snapshot) {
       this.snapshots.set(error.message, snapshot);
@@ -79,11 +77,13 @@ export class PerformanceErrorReporter implements ErrorReporter {
       },
     };
 
-    const perfWithMemory = performance as typeof performance & { memory?: {
-      usedJSHeapSize: number;
-      totalJSHeapSize: number;
-      jsHeapSizeLimit: number;
-    } };
+    const perfWithMemory = performance as typeof performance & {
+      memory?: {
+        usedJSHeapSize: number;
+        totalJSHeapSize: number;
+        jsHeapSizeLimit: number;
+      };
+    };
     if (perfWithMemory.memory) {
       snapshot.metrics.memory = {
         usedJSHeapSize: perfWithMemory.memory.usedJSHeapSize,
@@ -92,7 +92,9 @@ export class PerformanceErrorReporter implements ErrorReporter {
       };
     }
 
-    const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
+    const navigation = performance.getEntriesByType('navigation')[0] as
+      | PerformanceNavigationTiming
+      | undefined;
     if (navigation) {
       snapshot.metrics.navigation = {
         type: navigation.type,

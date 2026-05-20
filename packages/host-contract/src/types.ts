@@ -109,7 +109,6 @@ export interface HostEventOptions {
  * @template HE - 宿主元素类型，HN 的子类型（Web: Element, 小程序: WxElement）
  */
 export interface RendererHost<HN = unknown, HE extends HN = HN> {
-
   // FIX: P0-03 添加渲染宿主标识符号，用于 createRenderer 中精确区分 RendererHost 和 RendererOptions
   /** @internal 渲染宿主标识符号，用于类型检测 */
   readonly __isRendererHost?: true;
@@ -177,13 +176,7 @@ export interface RendererHost<HN = unknown, HE extends HN = HN> {
    * @param nextValue - 新值
    * @param isSVG - 是否 SVG 元素
    */
-  patchProp(
-    el: HE,
-    key: string,
-    prevValue: unknown,
-    nextValue: unknown,
-    isSVG?: boolean,
-  ): void;
+  patchProp(el: HE, key: string, prevValue: unknown, nextValue: unknown, isSVG?: boolean): void;
 
   // ==========================================================
   // 三、样式操作 (Style Operations)

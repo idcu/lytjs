@@ -22,16 +22,24 @@ describe('check-zero-deps 脚本', () => {
     }
   });
 
-  function createPackage(name: string, deps: Record<string, string> = {}, devDeps: Record<string, string> = {}): void {
+  function createPackage(
+    name: string,
+    deps: Record<string, string> = {},
+    devDeps: Record<string, string> = {},
+  ): void {
     const pkgDir = join(testDir, name);
     mkdirSync(pkgDir, { recursive: true });
     writeFileSync(
       join(pkgDir, 'package.json'),
-      JSON.stringify({
-        name,
-        dependencies: deps,
-        devDependencies: devDeps,
-      }, null, 2)
+      JSON.stringify(
+        {
+          name,
+          dependencies: deps,
+          devDependencies: devDeps,
+        },
+        null,
+        2,
+      ),
     );
   }
 
@@ -45,19 +53,23 @@ describe('check-zero-deps 脚本', () => {
 
   it('应正确识别第三方运行时依赖', () => {
     createPackage('@lytjs/third-party-test', {
-      'lodash': '^4.17.21',
+      lodash: '^4.17.21',
       '@lytjs/reactivity': '^6.0.0',
     });
     expect(true).toBe(true);
   });
 
   it('应允许 devDependencies 中的第三方依赖', () => {
-    createPackage('@lytjs/dev-deps-test', {
-      '@lytjs/reactivity': '^6.0.0',
-    }, {
-      'vitest': '^1.0.0',
-      'typescript': '^5.0.0',
-    });
+    createPackage(
+      '@lytjs/dev-deps-test',
+      {
+        '@lytjs/reactivity': '^6.0.0',
+      },
+      {
+        vitest: '^1.0.0',
+        typescript: '^5.0.0',
+      },
+    );
     expect(true).toBe(true);
   });
 

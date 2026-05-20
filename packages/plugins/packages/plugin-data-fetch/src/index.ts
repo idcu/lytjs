@@ -77,8 +77,8 @@ function generateCacheKey(url: string, options: RequestOptions = {}): string {
     const headerEntries = Array.isArray(headers)
       ? headers
       : headers instanceof Headers
-      ? Array.from(headers.entries())
-      : Object.entries(headers);
+        ? Array.from(headers.entries())
+        : Object.entries(headers);
     headerString = JSON.stringify(headerEntries.sort());
   }
 
@@ -229,7 +229,8 @@ export function createFetch<T = unknown>(
         }
 
         // 应用响应拦截器
-        const responseInterceptors = (globalOptions.responseInterceptors || []) as ResponseInterceptor[];
+        const responseInterceptors = (globalOptions.responseInterceptors ||
+          []) as ResponseInterceptor[];
         for (const interceptor of responseInterceptors) {
           result = (await interceptor(result)) as T;
         }
@@ -249,7 +250,12 @@ export function createFetch<T = unknown>(
         return result;
       } catch (error) {
         if (abortSignal.aborted) {
-          lastError = createFetchError('Request cancelled', currentConfig, undefined, error as Error);
+          lastError = createFetchError(
+            'Request cancelled',
+            currentConfig,
+            undefined,
+            error as Error,
+          );
           break;
         }
 
@@ -299,7 +305,7 @@ export function createFetch<T = unknown>(
   };
 
   const refetch = async (): Promise<T> => {
-    refetchCountSignal.update(v => v + 1);
+    refetchCountSignal.update((v) => v + 1);
     return executeFetch();
   };
 
@@ -313,7 +319,7 @@ export function createFetch<T = unknown>(
 
   const setData = (data: T | ((prev: T | null) => T)): void => {
     if (typeof data === 'function') {
-      dataSignal.update(prev => (data as (prev: T | null) => T)(prev));
+      dataSignal.update((prev) => (data as (prev: T | null) => T)(prev));
     } else {
       dataSignal.set(data);
     }
@@ -349,9 +355,12 @@ export function createFetch<T = unknown>(
  */
 function createFetchManager(globalOptions: FetchPluginOptions = {}) {
   const cacheStorage = globalOptions.cacheStorage || new DefaultCacheStorage();
-  const requestInterceptors: RequestInterceptor[] = (globalOptions.requestInterceptors || []) as RequestInterceptor[];
-  const responseInterceptors: ResponseInterceptor[] = (globalOptions.responseInterceptors || []) as ResponseInterceptor[];
-  const errorInterceptors: ErrorInterceptor[] = (globalOptions.errorInterceptors || []) as ErrorInterceptor[];
+  const requestInterceptors: RequestInterceptor[] = (globalOptions.requestInterceptors ||
+    []) as RequestInterceptor[];
+  const responseInterceptors: ResponseInterceptor[] = (globalOptions.responseInterceptors ||
+    []) as ResponseInterceptor[];
+  const errorInterceptors: ErrorInterceptor[] = (globalOptions.errorInterceptors ||
+    []) as ErrorInterceptor[];
 
   return {
     /**
@@ -371,13 +380,17 @@ function createFetchManager(globalOptions: FetchPluginOptions = {}) {
      * 简单 GET 请求
      */
     async get<T = unknown>(url: string, options: RequestOptions = {}): Promise<T> {
-      const instance = createFetch<T>(url, { ...options, method: 'GET' }, {
-        ...globalOptions,
-        cacheStorage,
-        requestInterceptors,
-        responseInterceptors,
-        errorInterceptors,
-      });
+      const instance = createFetch<T>(
+        url,
+        { ...options, method: 'GET' },
+        {
+          ...globalOptions,
+          cacheStorage,
+          requestInterceptors,
+          responseInterceptors,
+          errorInterceptors,
+        },
+      );
       return instance.fetch();
     },
 
@@ -385,21 +398,25 @@ function createFetchManager(globalOptions: FetchPluginOptions = {}) {
      * 简单 POST 请求
      */
     async post<T = unknown>(url: string, body?: unknown, options: RequestOptions = {}): Promise<T> {
-      const instance = createFetch<T>(url, {
-        ...options,
-        method: 'POST',
-        body: body ? (typeof body === 'string' ? body : JSON.stringify(body)) : undefined,
-        headers: {
-          'Content-Type': 'application/json',
-          ...options.headers,
+      const instance = createFetch<T>(
+        url,
+        {
+          ...options,
+          method: 'POST',
+          body: body ? (typeof body === 'string' ? body : JSON.stringify(body)) : undefined,
+          headers: {
+            'Content-Type': 'application/json',
+            ...options.headers,
+          },
         },
-      }, {
-        ...globalOptions,
-        cacheStorage,
-        requestInterceptors,
-        responseInterceptors,
-        errorInterceptors,
-      });
+        {
+          ...globalOptions,
+          cacheStorage,
+          requestInterceptors,
+          responseInterceptors,
+          errorInterceptors,
+        },
+      );
       return instance.fetch();
     },
 
@@ -407,21 +424,25 @@ function createFetchManager(globalOptions: FetchPluginOptions = {}) {
      * 简单 PUT 请求
      */
     async put<T = unknown>(url: string, body?: unknown, options: RequestOptions = {}): Promise<T> {
-      const instance = createFetch<T>(url, {
-        ...options,
-        method: 'PUT',
-        body: body ? (typeof body === 'string' ? body : JSON.stringify(body)) : undefined,
-        headers: {
-          'Content-Type': 'application/json',
-          ...options.headers,
+      const instance = createFetch<T>(
+        url,
+        {
+          ...options,
+          method: 'PUT',
+          body: body ? (typeof body === 'string' ? body : JSON.stringify(body)) : undefined,
+          headers: {
+            'Content-Type': 'application/json',
+            ...options.headers,
+          },
         },
-      }, {
-        ...globalOptions,
-        cacheStorage,
-        requestInterceptors,
-        responseInterceptors,
-        errorInterceptors,
-      });
+        {
+          ...globalOptions,
+          cacheStorage,
+          requestInterceptors,
+          responseInterceptors,
+          errorInterceptors,
+        },
+      );
       return instance.fetch();
     },
 
@@ -429,13 +450,17 @@ function createFetchManager(globalOptions: FetchPluginOptions = {}) {
      * 简单 DELETE 请求
      */
     async delete<T = unknown>(url: string, options: RequestOptions = {}): Promise<T> {
-      const instance = createFetch<T>(url, { ...options, method: 'DELETE' }, {
-        ...globalOptions,
-        cacheStorage,
-        requestInterceptors,
-        responseInterceptors,
-        errorInterceptors,
-      });
+      const instance = createFetch<T>(
+        url,
+        { ...options, method: 'DELETE' },
+        {
+          ...globalOptions,
+          cacheStorage,
+          requestInterceptors,
+          responseInterceptors,
+          errorInterceptors,
+        },
+      );
       return instance.fetch();
     },
 

@@ -118,26 +118,50 @@ export const Switch = defineComponent({
       const coreChildren: VNode[] = [];
 
       if (isChecked.value && _props.activeText) {
-        coreChildren.push(createVNode('span', {
-          class: 'lyt-switch__label lyt-switch__label--left',
-        }, [createVNode('span', {}, _props.activeText)]));
+        coreChildren.push(
+          createVNode(
+            'span',
+            {
+              class: 'lyt-switch__label lyt-switch__label--left',
+            },
+            [createVNode('span', {}, _props.activeText)],
+          ),
+        );
       } else if (!isChecked.value && _props.inactiveText) {
-        coreChildren.push(createVNode('span', {
-          class: 'lyt-switch__label lyt-switch__label--left',
-        }, [createVNode('span', {}, _props.inactiveText)]));
+        coreChildren.push(
+          createVNode(
+            'span',
+            {
+              class: 'lyt-switch__label lyt-switch__label--left',
+            },
+            [createVNode('span', {}, _props.inactiveText)],
+          ),
+        );
       } else if (slots.active && isChecked.value) {
         const slotContent = slots.active();
         if (Array.isArray(slotContent)) {
-          coreChildren.push(createVNode('span', {
-            class: 'lyt-switch__label lyt-switch__label--left',
-          }, slotContent as VNode[]));
+          coreChildren.push(
+            createVNode(
+              'span',
+              {
+                class: 'lyt-switch__label lyt-switch__label--left',
+              },
+              slotContent as VNode[],
+            ),
+          );
         }
       } else if (slots.inactive && !isChecked.value) {
         const slotContent = slots.inactive();
         if (Array.isArray(slotContent)) {
-          coreChildren.push(createVNode('span', {
-            class: 'lyt-switch__label lyt-switch__label--left',
-          }, slotContent as VNode[]));
+          coreChildren.push(
+            createVNode(
+              'span',
+              {
+                class: 'lyt-switch__label lyt-switch__label--left',
+              },
+              slotContent as VNode[],
+            ),
+          );
         }
       }
 
@@ -145,27 +169,55 @@ export const Switch = defineComponent({
       if (_props.loading) {
         buttonChildren.push(createVNode('span', {}, '◌'));
       }
-      coreChildren.push(createVNode('span', {
-        class: 'lyt-switch__core',
-      }, [
-        createVNode('span', {
-          class: 'lyt-switch__button',
-        }, buttonChildren),
-      ]));
+      coreChildren.push(
+        createVNode(
+          'span',
+          {
+            class: 'lyt-switch__core',
+          },
+          [
+            createVNode(
+              'span',
+              {
+                class: 'lyt-switch__button',
+              },
+              buttonChildren,
+            ),
+          ],
+        ),
+      );
 
       if (isChecked.value && _props.activeText) {
-        coreChildren.push(createVNode('span', {
-          class: 'lyt-switch__label lyt-switch__label--right',
-        }, [createVNode('span', {}, _props.activeText)]));
+        coreChildren.push(
+          createVNode(
+            'span',
+            {
+              class: 'lyt-switch__label lyt-switch__label--right',
+            },
+            [createVNode('span', {}, _props.activeText)],
+          ),
+        );
       } else if (!isChecked.value && _props.inactiveText) {
-        coreChildren.push(createVNode('span', {
-          class: 'lyt-switch__label lyt-switch__label--right',
-        }, [createVNode('span', {}, _props.inactiveText)]));
+        coreChildren.push(
+          createVNode(
+            'span',
+            {
+              class: 'lyt-switch__label lyt-switch__label--right',
+            },
+            [createVNode('span', {}, _props.inactiveText)],
+          ),
+        );
       }
 
-      children.push(createVNode('div', {
-        class: 'lyt-switch__wrapper',
-      }, coreChildren));
+      children.push(
+        createVNode(
+          'div',
+          {
+            class: 'lyt-switch__wrapper',
+          },
+          coreChildren,
+        ),
+      );
 
       const a11yProps = getSwitchA11yProps({
         checked: isChecked.value,
@@ -178,14 +230,18 @@ export const Switch = defineComponent({
         tabIndex: _props.tabIndex,
       });
 
-      return createVNode('div', mergeA11yProps(a11yProps, {
-        class: getSwitchClass(),
-        style: getSwitchStyle(),
-        onClick: handleClick,
-        onKeydown: handleKeydown,
-        onFocus: handleFocus,
-        onBlur: handleBlur,
-      }), children);
+      return createVNode(
+        'div',
+        mergeA11yProps(a11yProps, {
+          class: getSwitchClass(),
+          style: getSwitchStyle(),
+          onClick: handleClick,
+          onKeydown: handleKeydown,
+          onFocus: handleFocus,
+          onBlur: handleBlur,
+        }),
+        children,
+      );
     };
   },
 });

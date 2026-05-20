@@ -43,25 +43,25 @@ const PACKAGES = [
   'packages/common/packages/memory',
   'packages/common/packages/common',
   'packages/host-contract',
-  
+
   // L1: 核心原语层
   'packages/reactivity',
   'packages/vdom',
   'packages/dom-runtime',
   'packages/compiler',
-  
+
   // L2: 渲染引擎层
   'packages/component',
   'packages/renderer',
   'packages/adapter-web',
-  
+
   // L3: 核心框架层
   'packages/core',
   'packages/core-signal',
   'packages/core-vnode',
   'packages/dom',
   'packages/web',
-  
+
   // L4: 生态系统
   'packages/ecosystem/packages/router',
   'packages/ecosystem/packages/store',
@@ -70,7 +70,7 @@ const PACKAGES = [
   'packages/ecosystem/packages/devtools',
   'packages/ecosystem/packages/platform-adapter',
   'packages/ecosystem/packages/ui',
-  
+
   // L5: 插件
   'packages/plugins/packages/plugin-vite',
   'packages/plugins/packages/plugin-theme',
@@ -78,7 +78,7 @@ const PACKAGES = [
   'packages/plugins/packages/plugin-auth',
   'packages/plugins/packages/plugin-storage',
   'packages/plugins/packages/plugin-i18n',
-  
+
   // L6: 工具
   'packages/tools/packages/cli',
   'packages/tools/packages/devtools',
@@ -88,18 +88,18 @@ const PACKAGES = [
 function updatePackageVersion(pkgPath) {
   const pkgFile = path.join(ROOT, pkgPath, 'package.json');
   if (!fs.existsSync(pkgFile)) return null;
-  
+
   const pkg = JSON.parse(fs.readFileSync(pkgFile, 'utf8'));
-  
+
   if (pkg.private) {
     return { name: pkg.name, private: true };
   }
-  
+
   if (pkg.version !== VERSION) {
     pkg.version = VERSION;
     fs.writeFileSync(pkgFile, JSON.stringify(pkg, null, 2) + '\n');
   }
-  
+
   return { name: pkg.name, path: pkgPath, version: pkg.version };
 }
 
@@ -108,10 +108,10 @@ function publishPackage(pkgInfo) {
     console.log(`⏭️  跳过私有包: ${pkgInfo.name}`);
     return true;
   }
-  
+
   const fullPath = path.join(ROOT, pkgInfo.path);
   console.log(`\n📦 发布 ${pkgInfo.name}@${VERSION}...`);
-  
+
   try {
     execSync('npm publish --access public', {
       cwd: fullPath,
@@ -124,7 +124,10 @@ function publishPackage(pkgInfo) {
     console.log(`✅ ${pkgInfo.name}@${VERSION} 发布成功！`);
     return true;
   } catch (error) {
-    if (error.status === 409 || (error.stdout && error.stdout.toString().includes('already published'))) {
+    if (
+      error.status === 409 ||
+      (error.stdout && error.stdout.toString().includes('already published'))
+    ) {
       console.log(`⚠️  ${pkgInfo.name}@${VERSION} 已存在，跳过`);
       return true;
     }

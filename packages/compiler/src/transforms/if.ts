@@ -47,15 +47,12 @@ export function transformIf(node: RootNode | TemplateChildNode, context: Transfo
   let chainStart = currentIndex;
   for (let i = currentIndex - 1; i >= 0; i--) {
     const sibling = siblings[i];
-    if (
-      sibling &&
-      sibling.type === NodeTypes.ELEMENT
-    ) {
+    if (sibling && sibling.type === NodeTypes.ELEMENT) {
       const sibElement = sibling as ElementNode;
       const hasIf = !!findDirective(sibElement, 'if');
       const hasElseIf = !!findDirective(sibElement, 'else-if');
       const hasElse = !!findDirective(sibElement, 'else');
-      
+
       // 只有 v-else-if 可以继续链（表示这是链的中间部分）
       // v-else 表示链的结束
       // 独立的 v-if 表示新链的开始，应该停止向前查找

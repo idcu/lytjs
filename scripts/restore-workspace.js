@@ -65,9 +65,7 @@ function main() {
           ) {
             pkg[field][dep] = 'workspace:*';
             modified = true;
-            console.log(
-              `  恢复 ${pkg.name} 的 ${dep}: ${version} → workspace:*`
-            );
+            console.log(`  恢复 ${pkg.name} 的 ${dep}: ${version} → workspace:*`);
           }
         }
       }

@@ -53,7 +53,10 @@ export const TreeSelect = defineComponent({
     defaultExpandAll: { type: Boolean, default: false },
     defaultExpandedKeys: { type: Array as () => (string | number)[], default: () => [] },
     class: { type: String, default: '' },
-    style: { type: [String, Object] as unknown as PropType<string | Record<string, string>>, default: '' },
+    style: {
+      type: [String, Object] as unknown as PropType<string | Record<string, string>>,
+      default: '',
+    },
     id: { type: String, default: '' },
     ariaLabel: { type: String, default: '' },
     ariaDescribedBy: { type: String, default: '' },
@@ -65,9 +68,7 @@ export const TreeSelect = defineComponent({
     const visible = signal(false);
     const filterQuery = signal('');
     const expandedKeys = signal<(string | number)[]>(
-      _props.defaultExpandAll
-        ? getAllNodeKeys(_props.data)
-        : _props.defaultExpandedKeys
+      _props.defaultExpandAll ? getAllNodeKeys(_props.data) : _props.defaultExpandedKeys,
     );
     const selectedLabel = signal('');
 
@@ -137,7 +138,7 @@ export const TreeSelect = defineComponent({
     };
 
     const handleToggle = () => {
-      visible.update(v => !v);
+      visible.update((v) => !v);
     };
 
     const handleClear = () => {
@@ -161,9 +162,9 @@ export const TreeSelect = defineComponent({
       const nodeKey = nodeDict[_props.nodeKey] as string | number;
       const keys = expandedKeys();
       if (keys.includes(nodeKey)) {
-        expandedKeys.set(keys.filter(k => k !== nodeKey));
+        expandedKeys.set(keys.filter((k) => k !== nodeKey));
       } else {
-        expandedKeys.update(k => [...k, nodeKey]);
+        expandedKeys.update((k) => [...k, nodeKey]);
       }
     };
 
@@ -194,32 +195,57 @@ export const TreeSelect = defineComponent({
       if (hasChildren) {
         const expandBtnProps = getButtonA11yProps({
           ariaLabel: isExpanded ? '收起' : '展开',
-          disabled: node.disabled
+          disabled: node.disabled,
         });
-        nodeChildren.push(createVNode('span', mergeA11yProps(expandBtnProps, {
-          class: ['lyt-tree-node-expand-icon', isExpanded ? 'is-expanded' : ''],
-          onClick: (e: Event) => handleToggleExpand(node, e),
-        }), [createVNode('span', {}, isExpanded ? '▼' : '▶')]));
+        nodeChildren.push(
+          createVNode(
+            'span',
+            mergeA11yProps(expandBtnProps, {
+              class: ['lyt-tree-node-expand-icon', isExpanded ? 'is-expanded' : ''],
+              onClick: (e: Event) => handleToggleExpand(node, e),
+            }),
+            [createVNode('span', {}, isExpanded ? '▼' : '▶')],
+          ),
+        );
       } else {
-        nodeChildren.push(createVNode('span', { class: 'lyt-tree-node-expand-icon' }, [createVNode('span', {}, '')]));
+        nodeChildren.push(
+          createVNode('span', { class: 'lyt-tree-node-expand-icon' }, [
+            createVNode('span', {}, ''),
+          ]),
+        );
       }
 
       const labelBtnProps = getButtonA11yProps({
         ariaLabel: node.label,
-        disabled: node.disabled
+        disabled: node.disabled,
       });
-      nodeChildren.push(createVNode('span', mergeA11yProps(labelBtnProps, {
-        class: 'lyt-tree-node-label',
-      }), [createVNode('span', {}, node.label)]));
+      nodeChildren.push(
+        createVNode(
+          'span',
+          mergeA11yProps(labelBtnProps, {
+            class: 'lyt-tree-node-label',
+          }),
+          [createVNode('span', {}, node.label)],
+        ),
+      );
 
-      const nodeVNode = createVNode('div', {
-        class: ['lyt-tree-node', { 'is-selected': isSelected, 'is-disabled': node.disabled, 'is-expanded': isExpanded }],
-        style: { paddingLeft: `${level * 20}px` },
-        onClick: () => handleSelect(node),
-      }, nodeChildren);
+      const nodeVNode = createVNode(
+        'div',
+        {
+          class: [
+            'lyt-tree-node',
+            { 'is-selected': isSelected, 'is-disabled': node.disabled, 'is-expanded': isExpanded },
+          ],
+          style: { paddingLeft: `${level * 20}px` },
+          onClick: () => handleSelect(node),
+        },
+        nodeChildren,
+      );
 
       if (hasChildren && isExpanded && node.children) {
-        const childNodes = node.children.map((child: TreeSelectNode) => renderNode(child, level + 1));
+        const childNodes = node.children.map((child: TreeSelectNode) =>
+          renderNode(child, level + 1),
+        );
         return createVNode('div', { class: 'lyt-tree-node-wrapper' }, [nodeVNode, ...childNodes]);
       }
 
@@ -241,43 +267,65 @@ export const TreeSelect = defineComponent({
       });
 
       const currentNode = selectedNode();
-      triggerChildren.push(createVNode('span', { class: 'lyt-tree-select-value' },
-        currentNode ? [createVNode('span', {}, currentNode.label)] : [createVNode('span', {}, _props.placeholder)]
-      ));
+      triggerChildren.push(
+        createVNode(
+          'span',
+          { class: 'lyt-tree-select-value' },
+          currentNode
+            ? [createVNode('span', {}, currentNode.label)]
+            : [createVNode('span', {}, _props.placeholder)],
+        ),
+      );
 
       if (_props.clearable && currentNode) {
         const clearBtnProps = getButtonA11yProps({ ariaLabel: '清除' });
-        triggerChildren.push(createVNode('span', mergeA11yProps(clearBtnProps, {
-          class: 'lyt-tree-select-clear',
-          onClick: (e: Event) => {
-            e.stopPropagation();
-            handleClear();
-          },
-        }), [createVNode('span', {}, '×')]));
+        triggerChildren.push(
+          createVNode(
+            'span',
+            mergeA11yProps(clearBtnProps, {
+              class: 'lyt-tree-select-clear',
+              onClick: (e: Event) => {
+                e.stopPropagation();
+                handleClear();
+              },
+            }),
+            [createVNode('span', {}, '×')],
+          ),
+        );
       }
 
-      triggerChildren.push(createVNode('span', { class: 'lyt-tree-select-arrow' }, [createVNode('span', {}, '▼')]));
+      triggerChildren.push(
+        createVNode('span', { class: 'lyt-tree-select-arrow' }, [createVNode('span', {}, '▼')]),
+      );
 
-      children.push(createVNode('div', mergeA11yProps(a11yProps, {
-        class: 'lyt-tree-select-trigger',
-        onClick: handleToggle,
-      }), triggerChildren));
+      children.push(
+        createVNode(
+          'div',
+          mergeA11yProps(a11yProps, {
+            class: 'lyt-tree-select-trigger',
+            onClick: handleToggle,
+          }),
+          triggerChildren,
+        ),
+      );
 
       if (visible()) {
         const dropdownChildren: VNode[] = [];
 
         if (_props.filterable) {
-          dropdownChildren.push(createVNode('div', { role: 'search', class: 'lyt-tree-select-search' }, [
-            createVNode('input', {
-              type: 'text',
-              placeholder: _props.filterPlaceholder,
-              value: filterQuery(),
-              onInput: (e: Event) => {
-                const target = e.target as HTMLInputElement;
-                filterQuery.set(target.value);
-              },
-            }),
-          ]));
+          dropdownChildren.push(
+            createVNode('div', { role: 'search', class: 'lyt-tree-select-search' }, [
+              createVNode('input', {
+                type: 'text',
+                placeholder: _props.filterPlaceholder,
+                value: filterQuery(),
+                onInput: (e: Event) => {
+                  const target = e.target as HTMLInputElement;
+                  filterQuery.set(target.value);
+                },
+              }),
+            ]),
+          );
         }
 
         const treeChildren: VNode[] = [];
@@ -288,20 +336,32 @@ export const TreeSelect = defineComponent({
           }
         } else if (slots.empty) {
           const emptyContent = slots.empty();
-          treeChildren.push(createVNode('div', { class: 'lyt-tree-select-empty' }, emptyContent as VNode[]));
+          treeChildren.push(
+            createVNode('div', { class: 'lyt-tree-select-empty' }, emptyContent as VNode[]),
+          );
         } else {
-          treeChildren.push(createVNode('div', { class: 'lyt-tree-select-empty' }, [createVNode('span', {}, '暂无数据')]));
+          treeChildren.push(
+            createVNode('div', { class: 'lyt-tree-select-empty' }, [
+              createVNode('span', {}, '暂无数据'),
+            ]),
+          );
         }
 
-        dropdownChildren.push(createVNode('div', { role: 'tree', class: 'lyt-tree-select-tree' }, treeChildren));
+        dropdownChildren.push(
+          createVNode('div', { role: 'tree', class: 'lyt-tree-select-tree' }, treeChildren),
+        );
 
         children.push(createVNode('div', { class: 'lyt-tree-select-dropdown' }, dropdownChildren));
       }
 
-      return createVNode('div', {
-        class: getTreeSelectClass(),
-        style: getTreeSelectStyle(),
-      }, children);
+      return createVNode(
+        'div',
+        {
+          class: getTreeSelectClass(),
+          style: getTreeSelectStyle(),
+        },
+        children,
+      );
     };
   },
 });

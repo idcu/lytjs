@@ -12,7 +12,7 @@ export default defineConfig({
     '@lytjs/common-is',
     '@lytjs/common-string',
     '@lytjs/common-events',
-    '@lytjs/common-error'
+    '@lytjs/common-error',
   ],
   outExtension({ format }) {
     return {

@@ -8,12 +8,12 @@ Vapor 模式是 LytJS 的一种直接 DOM 操作渲染模式，与传统虚拟 D
 
 ### Vapor 模式优势
 
-| 特性 | 传统 VDOM | Vapor 模式 |
-|------|-----------|------------|
-| DOM 操作 | 批量更新后 Diff | 直接操作 |
-| 内存占用 | 需保存 VDOM 树 | 仅当前状态 |
-| 更新性能 | 依赖 Diff 算法 | O(1) 定向更新 |
-| 适用场景 | 复杂组件树 | 高频简单更新 |
+| 特性     | 传统 VDOM       | Vapor 模式    |
+| -------- | --------------- | ------------- |
+| DOM 操作 | 批量更新后 Diff | 直接操作      |
+| 内存占用 | 需保存 VDOM 树  | 仅当前状态    |
+| 更新性能 | 依赖 Diff 算法  | O(1) 定向更新 |
+| 适用场景 | 复杂组件树      | 高频简单更新  |
 
 ## 📁 项目结构
 
@@ -83,9 +83,7 @@ export const removeTodo = (id: string): void => {
 
 export const toggleTodo = (id: string): void => {
   todos.update((currentTodos) =>
-    currentTodos.map((todo) =>
-      todo.id === id ? { ...todo, completed: !todo.completed } : todo
-    )
+    currentTodos.map((todo) => (todo.id === id ? { ...todo, completed: !todo.completed } : todo)),
   );
 };
 
@@ -97,9 +95,7 @@ export const editTodo = (id: string, newText: string): void => {
   }
 
   todos.update((currentTodos) =>
-    currentTodos.map((todo) =>
-      todo.id === id ? { ...todo, text: trimmedText } : todo
-    )
+    currentTodos.map((todo) => (todo.id === id ? { ...todo, text: trimmedText } : todo)),
   );
 };
 
@@ -108,9 +104,7 @@ export const clearCompleted = (): void => {
 };
 
 export const toggleAll = (completed: boolean): void => {
-  todos.update((currentTodos) =>
-    currentTodos.map((todo) => ({ ...todo, completed }))
-  );
+  todos.update((currentTodos) => currentTodos.map((todo) => ({ ...todo, completed })));
 };
 
 export const filteredTodos = computed(() => {
@@ -374,14 +368,18 @@ export const TodoList = defineVaporComponent({
   },
   template: `
     <ul class="vapor-todo__list">
-      ${filteredTodos().map(todo => `
+      ${filteredTodos()
+        .map(
+          (todo) => `
         <TodoItem
           :key="todo.id"
           :id="todo.id"
           :text="todo.text"
           :completed="todo.completed"
         />
-      `).join('')}
+      `,
+        )
+        .join('')}
     </ul>
   `,
 });
@@ -530,7 +528,9 @@ export const TodoApp = defineVaporComponent({
   color: #ccc;
   cursor: pointer;
   opacity: 0;
-  transition: opacity 0.2s, color 0.2s;
+  transition:
+    opacity 0.2s,
+    color 0.2s;
 }
 
 .vapor-todo__item:hover .vapor-todo__delete {
@@ -606,7 +606,7 @@ export const TodoApp = defineVaporComponent({
 import { batch } from '@lytjs/dom-runtime';
 
 batch(() => {
-  todos.forEach(todo => {
+  todos.forEach((todo) => {
     toggleTodo(todo.id);
   });
 });
@@ -642,12 +642,12 @@ const handleSearch = () => {
 
 ## 📊 性能对比
 
-| 操作 | VDOM 模式 | Vapor 模式 |
-|------|-----------|------------|
-| 添加单个待办 | ~2ms | ~0.5ms |
-| 切换完成状态 | ~1.5ms | ~0.3ms |
-| 删除单个待办 | ~1.5ms | ~0.3ms |
-| 1000 项筛选 | ~15ms | ~3ms |
+| 操作         | VDOM 模式 | Vapor 模式 |
+| ------------ | --------- | ---------- |
+| 添加单个待办 | ~2ms      | ~0.5ms     |
+| 切换完成状态 | ~1.5ms    | ~0.3ms     |
+| 删除单个待办 | ~1.5ms    | ~0.3ms     |
+| 1000 项筛选  | ~15ms     | ~3ms       |
 
 ## 🎯 核心要点
 
@@ -667,7 +667,7 @@ export const filteredTodos = computed(() => {
 
 // 动作
 export const addTodo = (text: string) => {
-  todos.update(current => [...current, newTodo]);
+  todos.update((current) => [...current, newTodo]);
 };
 ```
 
@@ -680,7 +680,7 @@ Vapor 模式下，只有使用到的 Signal 才会触发组件更新：
 const TodoItem = defineVaporComponent({
   setup(props: TodoItemProps) {
     // 只有 props.id/completed/text 变化时才更新
-  }
+  },
 });
 ```
 
@@ -694,7 +694,7 @@ return {
   handleClick: () => {
     // 直接修改 DOM
     element.classList.add('active');
-  }
+  },
 };
 ```
 

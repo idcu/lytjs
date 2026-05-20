@@ -29,14 +29,14 @@ describe('@lytjs/middleware-cors', () => {
       const chain = createMiddlewareChain();
       chain.use(middleware);
 
-      const request = new Request('https://example.com', { 
+      const request = new Request('https://example.com', {
         method: 'OPTIONS',
         headers: {
-          'Origin': 'https://test.com',
-          'Access-Control-Request-Method': 'POST'
-        }
+          Origin: 'https://test.com',
+          'Access-Control-Request-Method': 'POST',
+        },
       });
-      
+
       const context = { params: {}, query: new URLSearchParams() };
       const response = await chain.execute(request, context, () => new Response('OK'));
 
@@ -49,9 +49,9 @@ describe('@lytjs/middleware-cors', () => {
       chain.use(middleware);
 
       const request = new Request('https://example.com', {
-        headers: { Origin: 'https://allowed.com' }
+        headers: { Origin: 'https://allowed.com' },
       });
-      
+
       const context = { params: {}, query: new URLSearchParams() };
       const response = await chain.execute(request, context, () => new Response('OK'));
 

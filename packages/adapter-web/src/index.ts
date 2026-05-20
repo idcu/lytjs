@@ -44,11 +44,7 @@ export { patchProp, patchClass, patchStyle, patchAttr } from './web-patch-props'
 // Patch Events (re-export for backward compatibility)
 // ============================================================
 
-export {
-  patchEvent,
-  createInvoker,
-  removeAllEventListeners,
-} from './web-patch-events';
+export { patchEvent, createInvoker, removeAllEventListeners } from './web-patch-events';
 export type { ParsedEvent, EventInvoker } from './web-patch-events';
 
 // normalizeEventName, getEventKey, parseEventModifier 已迁移到 @lytjs/common-events

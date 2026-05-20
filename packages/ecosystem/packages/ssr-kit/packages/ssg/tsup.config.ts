@@ -14,9 +14,5 @@ export default defineConfig({
       js: format === 'cjs' ? '.cjs' : '.mjs',
     };
   },
-  external: [
-    '@lytjs/ssr',
-    '@lytjs/common-is',
-    '@lytjs/common-path',
-  ],
+  external: ['@lytjs/ssr', '@lytjs/common-is', '@lytjs/common-path'],
 });

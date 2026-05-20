@@ -24,7 +24,7 @@ const registeredCustomElements = new Set<string>();
 // ============================================================
 
 /** DOM 操作类型 */
-type DOMOperation = 
+type DOMOperation =
   | { type: 'insert'; child: Node; parent: Node; anchor: Node | null }
   | { type: 'remove'; child: Node }
   | { type: 'setText'; node: Node; text: string }
@@ -81,7 +81,7 @@ export function queueSetElementText(node: Element, text: string): void {
 function scheduleBatch(): void {
   if (isBatchScheduled) return;
   isBatchScheduled = true;
-  
+
   if (typeof requestAnimationFrame !== 'undefined') {
     requestAnimationFrame(flushDOMOperations);
   } else {
@@ -95,17 +95,17 @@ function scheduleBatch(): void {
  */
 function flushDOMOperations(): void {
   isBatchScheduled = false;
-  
+
   if (domOperationQueue.length === 0) return;
-  
+
   // 复制队列并清空原队列
   const operations = domOperationQueue;
   domOperationQueue = [];
-  
+
   // 合并相同父元素的 insert 操作，使用 DocumentFragment
   const fragmentMap = new Map<Node, DocumentFragment>();
   const otherOperations: DOMOperation[] = [];
-  
+
   for (const op of operations) {
     if (op.type === 'insert') {
       // 检查是否可以使用 DocumentFragment 批量插入
@@ -124,14 +124,14 @@ function flushDOMOperations(): void {
       otherOperations.push(op);
     }
   }
-  
+
   // 执行 DocumentFragment 批量插入
   for (const [parent, fragment] of fragmentMap) {
     if (fragment.childNodes.length > 0) {
       parent.appendChild(fragment);
     }
   }
-  
+
   // 执行其他操作
   for (const op of otherOperations) {
     switch (op.type) {
@@ -196,7 +196,9 @@ export function defineCustomElement(
 
   // 检查名称是否有效（必须包含连字符）
   if (!name.includes('-')) {
-    console.warn(`[lytjs/adapter-web] Invalid custom element name "${name}". Name must contain a hyphen.`);
+    console.warn(
+      `[lytjs/adapter-web] Invalid custom element name "${name}". Name must contain a hyphen.`,
+    );
     return false;
   }
 
@@ -266,7 +268,9 @@ export interface DOMRenderer {
  * @param extraOptions 可选的额外渲染器选项，例如 setupChildComponent
  */
 export function createDOMRenderer(
-  extraOptions?: Partial<Pick<RendererOptions<Node, Element>, 'setupChildComponent' | 'normalizeProps'>>,
+  extraOptions?: Partial<
+    Pick<RendererOptions<Node, Element>, 'setupChildComponent' | 'normalizeProps'>
+  >,
 ): DOMRenderer {
   // VNode 存储，作用域隔离到此渲染器实例
   const vnodeMap = new WeakMap<Element, VNode | null>();
@@ -325,9 +329,7 @@ export function createDOMRenderer(
     ...(extraOptions?.setupChildComponent
       ? { setupChildComponent: extraOptions.setupChildComponent }
       : {}),
-    ...(extraOptions?.normalizeProps
-      ? { normalizeProps: extraOptions.normalizeProps }
-      : {}),
+    ...(extraOptions?.normalizeProps ? { normalizeProps: extraOptions.normalizeProps } : {}),
   };
 
   const renderer = createRenderer(options);

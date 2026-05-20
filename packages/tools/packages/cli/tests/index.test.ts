@@ -9,7 +9,12 @@ import { create, listTemplates } from '../src/commands/create';
 import { add } from '../src/commands/add';
 import { logger } from '../src/utils/logger';
 import { exists, isEmptyDir, ensureDir, writeFile, readFile } from '../src/utils/fs';
-import { detectPackageManager, getInstallCommand, getRunCommand, getAddCommand } from '../src/utils/package';
+import {
+  detectPackageManager,
+  getInstallCommand,
+  getRunCommand,
+  getAddCommand,
+} from '../src/utils/package';
 
 // Mock fs module - use inline factory to avoid hoisting issues
 vi.mock('fs', () => ({
@@ -210,7 +215,9 @@ describe('@lytjs/cli', () => {
 
     it('should error on unknown command', async () => {
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-      const processExit = vi.spyOn(process, 'exit').mockImplementation(() => { throw new Error('exit'); });
+      const processExit = vi.spyOn(process, 'exit').mockImplementation(() => {
+        throw new Error('exit');
+      });
 
       try {
         await runCli(['unknown-command']);
@@ -225,7 +232,9 @@ describe('@lytjs/cli', () => {
 
     it('should show help for add command with missing type', async () => {
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-      const processExit = vi.spyOn(process, 'exit').mockImplementation(() => { throw new Error('exit'); });
+      const processExit = vi.spyOn(process, 'exit').mockImplementation(() => {
+        throw new Error('exit');
+      });
 
       try {
         await runCli(['add']);
@@ -245,7 +254,9 @@ describe('@lytjs/cli', () => {
       mockReaddirSync.mockReturnValue(['existing-file']);
 
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-      const processExit = vi.spyOn(process, 'exit').mockImplementation(() => { throw new Error('exit'); });
+      const processExit = vi.spyOn(process, 'exit').mockImplementation(() => {
+        throw new Error('exit');
+      });
 
       try {
         await create('existing-project');
@@ -263,13 +274,13 @@ describe('@lytjs/cli', () => {
 
       await create('new-project', { force: true });
 
-      const packageJsonCall = mockWriteFileSync.mock.calls.find(
-        (call: any[]) => call[0].includes('package.json')
+      const packageJsonCall = mockWriteFileSync.mock.calls.find((call: any[]) =>
+        call[0].includes('package.json'),
       );
       expect(packageJsonCall).toBeDefined();
 
-      const viteConfigCall = mockWriteFileSync.mock.calls.find(
-        (call: any[]) => call[0].includes('vite.config.ts')
+      const viteConfigCall = mockWriteFileSync.mock.calls.find((call: any[]) =>
+        call[0].includes('vite.config.ts'),
       );
       expect(viteConfigCall).toBeDefined();
     });
@@ -279,14 +290,14 @@ describe('@lytjs/cli', () => {
 
       await create('router-project', { force: true, template: 'router' });
 
-      const packageJsonCall = mockWriteFileSync.mock.calls.find(
-        (call: any[]) => call[0].includes('package.json')
+      const packageJsonCall = mockWriteFileSync.mock.calls.find((call: any[]) =>
+        call[0].includes('package.json'),
       );
       expect(packageJsonCall).toBeDefined();
       expect(packageJsonCall[1]).toContain('@lytjs/router');
 
-      const homePageCall = mockWriteFileSync.mock.calls.find(
-        (call: any[]) => call[0].includes('Home.lyt')
+      const homePageCall = mockWriteFileSync.mock.calls.find((call: any[]) =>
+        call[0].includes('Home.lyt'),
       );
       expect(homePageCall).toBeDefined();
     });
@@ -296,14 +307,14 @@ describe('@lytjs/cli', () => {
 
       await create('store-project', { force: true, template: 'store' });
 
-      const packageJsonCall = mockWriteFileSync.mock.calls.find(
-        (call: any[]) => call[0].includes('package.json')
+      const packageJsonCall = mockWriteFileSync.mock.calls.find((call: any[]) =>
+        call[0].includes('package.json'),
       );
       expect(packageJsonCall).toBeDefined();
       expect(packageJsonCall[1]).toContain('@lytjs/store');
 
-      const counterStoreCall = mockWriteFileSync.mock.calls.find(
-        (call: any[]) => call[0].includes('counter.ts')
+      const counterStoreCall = mockWriteFileSync.mock.calls.find((call: any[]) =>
+        call[0].includes('counter.ts'),
       );
       expect(counterStoreCall).toBeDefined();
     });
@@ -313,8 +324,8 @@ describe('@lytjs/cli', () => {
 
       await create('full-project', { force: true, template: 'full' });
 
-      const packageJsonCall = mockWriteFileSync.mock.calls.find(
-        (call: any[]) => call[0].includes('package.json')
+      const packageJsonCall = mockWriteFileSync.mock.calls.find((call: any[]) =>
+        call[0].includes('package.json'),
       );
       expect(packageJsonCall).toBeDefined();
       expect(packageJsonCall[1]).toContain('@lytjs/router');
@@ -326,7 +337,9 @@ describe('@lytjs/cli', () => {
   describe('plugin command', () => {
     it('should show help for plugin command with no sub-command', async () => {
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-      const processExit = vi.spyOn(process, 'exit').mockImplementation(() => { throw new Error('exit'); });
+      const processExit = vi.spyOn(process, 'exit').mockImplementation(() => {
+        throw new Error('exit');
+      });
 
       try {
         await runCli(['plugin']);
@@ -345,7 +358,9 @@ describe('@lytjs/cli', () => {
       mockExistsSync.mockReturnValue(false);
 
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-      const processExit = vi.spyOn(process, 'exit').mockImplementation(() => { throw new Error('exit'); });
+      const processExit = vi.spyOn(process, 'exit').mockImplementation(() => {
+        throw new Error('exit');
+      });
 
       try {
         await add('component', 'Button');
@@ -363,8 +378,8 @@ describe('@lytjs/cli', () => {
 
       await add('component', 'Button');
 
-      const componentCall = mockWriteFileSync.mock.calls.find(
-        (call: any[]) => call[0].includes('Button.lyt')
+      const componentCall = mockWriteFileSync.mock.calls.find((call: any[]) =>
+        call[0].includes('Button.lyt'),
       );
       expect(componentCall).toBeDefined();
       expect(componentCall[1]).toContain('template');
@@ -376,8 +391,8 @@ describe('@lytjs/cli', () => {
 
       await add('page', 'About');
 
-      const pageCall = mockWriteFileSync.mock.calls.find(
-        (call: any[]) => call[0].includes('About.lyt')
+      const pageCall = mockWriteFileSync.mock.calls.find((call: any[]) =>
+        call[0].includes('About.lyt'),
       );
       expect(pageCall).toBeDefined();
       expect(pageCall[1]).toContain('page-about');
@@ -388,8 +403,8 @@ describe('@lytjs/cli', () => {
 
       await add('store', 'user');
 
-      const storeCall = mockWriteFileSync.mock.calls.find(
-        (call: any[]) => call[0].includes('user.ts')
+      const storeCall = mockWriteFileSync.mock.calls.find((call: any[]) =>
+        call[0].includes('user.ts'),
       );
       expect(storeCall).toBeDefined();
       expect(storeCall[1]).toContain('defineStore');

@@ -149,12 +149,15 @@ describe('createComponentPatch', () => {
       });
 
       // render 返回 subTree
-      mockInstance.type.render = vi.fn(() => ({
-        type: 'div',
-        el: document.createElement('div'),
-        children: null,
-        props: null,
-      } as unknown as VNode));
+      mockInstance.type.render = vi.fn(
+        () =>
+          ({
+            type: 'div',
+            el: document.createElement('div'),
+            children: null,
+            props: null,
+          }) as unknown as VNode,
+      );
 
       api.mountComponent(vnode, container, null, null, null, false);
 
@@ -201,7 +204,15 @@ describe('createComponentPatch', () => {
       api.mountComponent(vnode, container, null, null, null, false);
 
       expect(componentType.render).toHaveBeenCalledWith(mockInstance.ctx);
-      expect(ctx.patch).toHaveBeenCalledWith(null, subTree, container, null, mockInstance, null, false);
+      expect(ctx.patch).toHaveBeenCalledWith(
+        null,
+        subTree,
+        container,
+        null,
+        mockInstance,
+        null,
+        false,
+      );
       expect(mockInstance.subTree).toBe(subTree);
     });
 
@@ -445,7 +456,11 @@ describe('createComponentPatch', () => {
       }).toThrow(renderError);
 
       // app errorHandler 应被调用
-      expect(appErrorHandler).toHaveBeenCalledWith(renderError, mockInstance.ctx, 'render function');
+      expect(appErrorHandler).toHaveBeenCalledWith(
+        renderError,
+        mockInstance.ctx,
+        'render function',
+      );
     });
 
     it('递归深度超过 MAX_RECURSION_DEPTH 时应抛出错误', () => {

@@ -52,7 +52,11 @@ export const Tree = defineComponent({
     const checkedKeys = signal(new Set<string | number>(p.defaultCheckedKeys));
     const selectedKey = signal<string | number | null>(null);
 
-    const flattenTree = (nodes: TreeNode[], parent: FlattenNode | null = null, level = 0): FlattenNode[] => {
+    const flattenTree = (
+      nodes: TreeNode[],
+      parent: FlattenNode | null = null,
+      level = 0,
+    ): FlattenNode[] => {
       const result: FlattenNode[] = [];
 
       for (const node of nodes) {
@@ -118,53 +122,76 @@ export const Tree = defineComponent({
       const nodeContent: VNode[] = [];
 
       if (!node.isLeaf) {
-        const expandBtnProps = getButtonA11yProps({ 
-          ariaLabel: node.isExpanded ? '收起' : '展开', 
-          disabled: node.disabled 
+        const expandBtnProps = getButtonA11yProps({
+          ariaLabel: node.isExpanded ? '收起' : '展开',
+          disabled: node.disabled,
         });
-        
-        nodeContent.push(createVNode('span', mergeA11yProps(expandBtnProps, {
-          class: 'lyt-tree__expand-icon',
-          onClick: () => handleExpand(node),
-        }), [createVNode('span', {}, node.isExpanded ? '▼' : '▶')]));
+
+        nodeContent.push(
+          createVNode(
+            'span',
+            mergeA11yProps(expandBtnProps, {
+              class: 'lyt-tree__expand-icon',
+              onClick: () => handleExpand(node),
+            }),
+            [createVNode('span', {}, node.isExpanded ? '▼' : '▶')],
+          ),
+        );
       }
 
       if (p.showCheckbox) {
-        const checkboxProps = getInputControlA11yProps({ 
-          checked: node.isChecked, 
-          disabled: node.disabled, 
-          ariaLabel: node.label 
-        });
-        
-        nodeContent.push(createVNode('input', mergeA11yProps(checkboxProps, {
-          type: 'checkbox',
+        const checkboxProps = getInputControlA11yProps({
           checked: node.isChecked,
-          onChange: (e: Event) => handleCheck(node, (e.target as HTMLInputElement).checked),
-        })));
+          disabled: node.disabled,
+          ariaLabel: node.label,
+        });
+
+        nodeContent.push(
+          createVNode(
+            'input',
+            mergeA11yProps(checkboxProps, {
+              type: 'checkbox',
+              checked: node.isChecked,
+              onChange: (e: Event) => handleCheck(node, (e.target as HTMLInputElement).checked),
+            }),
+          ),
+        );
       }
 
-      const labelBtnProps = getButtonA11yProps({ 
-        ariaLabel: node.label, 
-        disabled: node.disabled 
+      const labelBtnProps = getButtonA11yProps({
+        ariaLabel: node.label,
+        disabled: node.disabled,
       });
-      
-      nodeContent.push(createVNode('span', mergeA11yProps(labelBtnProps, {
-        class: 'lyt-tree__label',
-        onClick: () => handleNodeClick(node),
-      }), [createVNode('span', {}, String(node.label))]));
 
-      return createVNode('div', {
-        key: String(node.id),
-        class: [
-          'lyt-tree__node',
-          node.isSelected ? 'lyt-tree__node--selected' : '',
-          node.isChecked ? 'lyt-tree__node--checked' : '',
-        ].filter(Boolean).join(' '),
-        style: `padding-left: ${indent}px`,
-        draggable: p.draggable,
-        onDragStart: (e: DragEvent) => p.onDragStart?.(node, e),
-        onDragEnd: (e: DragEvent) => p.onDragEnd?.(node, e),
-      }, nodeContent);
+      nodeContent.push(
+        createVNode(
+          'span',
+          mergeA11yProps(labelBtnProps, {
+            class: 'lyt-tree__label',
+            onClick: () => handleNodeClick(node),
+          }),
+          [createVNode('span', {}, String(node.label))],
+        ),
+      );
+
+      return createVNode(
+        'div',
+        {
+          key: String(node.id),
+          class: [
+            'lyt-tree__node',
+            node.isSelected ? 'lyt-tree__node--selected' : '',
+            node.isChecked ? 'lyt-tree__node--checked' : '',
+          ]
+            .filter(Boolean)
+            .join(' '),
+          style: `padding-left: ${indent}px`,
+          draggable: p.draggable,
+          onDragStart: (e: DragEvent) => p.onDragStart?.(node, e),
+          onDragEnd: (e: DragEvent) => p.onDragEnd?.(node, e),
+        },
+        nodeContent,
+      );
     };
 
     return () => {
@@ -172,14 +199,14 @@ export const Tree = defineComponent({
       const flatData = flattenTree(data);
 
       if (flatData.length === 0) {
-        return createVNode('div', { class: 'lyt-tree__empty' }, [createVNode('span', {}, '暂无数据')]);
+        return createVNode('div', { class: 'lyt-tree__empty' }, [
+          createVNode('span', {}, '暂无数据'),
+        ]);
       }
 
-      const treeClass = [
-        'lyt-tree',
-        p.showLine ? 'lyt-tree--show-line' : '',
-        p.class,
-      ].filter(Boolean).join(' ');
+      const treeClass = ['lyt-tree', p.showLine ? 'lyt-tree--show-line' : '', p.class]
+        .filter(Boolean)
+        .join(' ');
 
       const a11yProps: Record<string, string | undefined> = {
         id: p.id,
@@ -188,7 +215,11 @@ export const Tree = defineComponent({
         'aria-describedby': p.ariaDescribedBy,
       };
 
-      return createVNode('div', { ...a11yProps, class: treeClass }, flatData.map(node => renderTreeNode(node)));
+      return createVNode(
+        'div',
+        { ...a11yProps, class: treeClass },
+        flatData.map((node) => renderTreeNode(node)),
+      );
     };
   },
 });

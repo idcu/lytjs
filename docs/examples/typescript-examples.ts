@@ -3,22 +3,36 @@
  * 展示如何在 LytJS 项目中使用类型安全特性
  */
 
-import { 
-  signal, computed, effect,
-  defineComponent, h, createApp
-} from '@lytjs/core';
+import { signal, computed, effect, defineComponent, h, createApp } from '@lytjs/core';
 
 import type {
   ComponentPublicInstance,
-  Maybe, MaybeArray, Nullable, Optional,
-  Prettify, DeepPartial, Override,
-  Dictionary, Primitive, Nullish,
-  PromiseOrValue, AsyncFunction,
-  ArrayElement, Constructor,
-  MarkRequired, MarkOptional, MarkNonNullable, MarkNullable,
-  ExtractKeysByType, PickByType, OmitByType,
-  FunctionKeys, NonFunctionKeys,
-  ValueOf, First, Last
+  Maybe,
+  MaybeArray,
+  Nullable,
+  Optional,
+  Prettify,
+  DeepPartial,
+  Override,
+  Dictionary,
+  Primitive,
+  Nullish,
+  PromiseOrValue,
+  AsyncFunction,
+  ArrayElement,
+  Constructor,
+  MarkRequired,
+  MarkOptional,
+  MarkNonNullable,
+  MarkNullable,
+  ExtractKeysByType,
+  PickByType,
+  OmitByType,
+  FunctionKeys,
+  NonFunctionKeys,
+  ValueOf,
+  First,
+  Last,
 } from '@lytjs/shared-types';
 
 // =======================================
@@ -63,51 +77,55 @@ interface ButtonProps {
 }
 
 interface ButtonEmits {
-  'click': () => void;
-  'hover': () => void;
+  click: () => void;
+  hover: () => void;
 }
 
 // 使用 defineComponent 类型安全
 const Button = defineComponent<ButtonProps, ButtonEmits>({
   name: 'Button',
-  
+
   props: {
     text: { type: String, required: true },
     size: { type: String, default: 'medium' },
     onClick: { type: Function, required: true },
     disabled: Boolean,
-    variant: { type: String, default: 'primary' }
+    variant: { type: String, default: 'primary' },
   },
-  
+
   emits: ['click', 'hover'],
-  
+
   setup(props, { emit }) {
     // props 自动类型安全
     console.log(props.text);
     console.log(props.size);
-    
+
     // emit 自动类型安全
     const handleClick = () => {
       emit('click');
     };
-    
+
     const handleMouseEnter = () => {
       emit('hover');
     };
-    
+
     return {
       handleClick,
-      handleMouseEnter
+      handleMouseEnter,
     };
   },
-  
+
   render(props) {
-    return h('button', {
-      class: ['button', `button-${props.variant}`, `button-${props.size}`],
-      disabled: props.disabled,
-      onClick: () => props.onClick()
-    }, props.text);
-  }
+    return h(
+      'button',
+      {
+        class: ['button', `button-${props.variant}`, `button-${props.size}`],
+        disabled: props.disabled,
+        onClick: () => props.onClick(),
+      },
+      props.text,
+    );
+  },
 });
 
 // =======================================
@@ -123,44 +141,36 @@ interface Todo {
 
 function useTodoStore() {
   // Signal 自动类型推断
-  const todos = signal<Todo[]>([
-    { id: 1, text: '学习 LytJS', done: false, priority: 'high' }
-  ]);
-  
+  const todos = signal<Todo[]>([{ id: 1, text: '学习 LytJS', done: false, priority: 'high' }]);
+
   // Computed 自动类型推断
-  const completedCount = computed(() => 
-    todos.value.filter(todo => todo.done).length
-  );
-  
-  const remainingCount = computed(() => 
-    todos.value.length - completedCount.value
-  );
-  
-  const highPriorityTodos = computed(() => 
-    todos.value.filter(todo => todo.priority === 'high')
-  );
-  
+  const completedCount = computed(() => todos.value.filter((todo) => todo.done).length);
+
+  const remainingCount = computed(() => todos.value.length - completedCount.value);
+
+  const highPriorityTodos = computed(() => todos.value.filter((todo) => todo.priority === 'high'));
+
   // Action 类型安全
   const addTodo = (text: string, priority: Todo['priority'] = 'medium') => {
     const newTodo: Todo = {
       id: Date.now(),
       text,
       done: false,
-      priority
+      priority,
     };
     todos.value = [...todos.value, newTodo];
   };
-  
+
   const toggleTodo = (id: number) => {
-    todos.value = todos.value.map(todo => 
-      todo.id === id ? { ...todo, done: !todo.done } : todo
+    todos.value = todos.value.map((todo) =>
+      todo.id === id ? { ...todo, done: !todo.done } : todo,
     );
   };
-  
+
   const deleteTodo = (id: number) => {
-    todos.value = todos.value.filter(todo => todo.id !== id);
+    todos.value = todos.value.filter((todo) => todo.id !== id);
   };
-  
+
   return {
     todos,
     completedCount,
@@ -168,7 +178,7 @@ function useTodoStore() {
     highPriorityTodos,
     addTodo,
     toggleTodo,
-    deleteTodo
+    deleteTodo,
   };
 }
 
@@ -297,33 +307,33 @@ interface AppActions {
 // 创建组件
 const App = defineComponent({
   name: 'App',
-  
+
   setup() {
     const count = signal(0);
     const theme = signal<'light' | 'dark'>('light');
-    
+
     const doubled = computed(() => count.value * 2);
-    
+
     const increment = () => count.value++;
     const decrement = () => count.value--;
     const toggleTheme = () => {
       theme.value = theme.value === 'light' ? 'dark' : 'light';
     };
-    
+
     effect(() => {
       console.log(`Count changed to: ${count.value}`);
     });
-    
+
     return {
       count,
       theme,
       doubled,
       increment,
       decrement,
-      toggleTheme
+      toggleTheme,
     };
   },
-  
+
   render(_ctx) {
     return h('div', { class: 'app' }, [
       h('h1', _ctx.theme === 'dark' ? 'Dark Mode' : 'Light Mode'),
@@ -331,9 +341,9 @@ const App = defineComponent({
       h('p', `Doubled: ${_ctx.doubled}`),
       h('button', { onClick: () => _ctx.increment() }, '+'),
       h('button', { onClick: () => _ctx.decrement() }, '-'),
-      h('button', { onClick: () => _ctx.toggleTheme() }, 'Toggle Theme')
+      h('button', { onClick: () => _ctx.toggleTheme() }, 'Toggle Theme'),
     ]);
-  }
+  },
 });
 
 // 创建应用
@@ -348,7 +358,7 @@ app.mount('#app');
 const config: Dictionary<Primitive> = {
   appName: 'LytJS App',
   version: 1,
-  enabled: true
+  enabled: true,
 };
 
 // ValueOf
@@ -369,30 +379,32 @@ interface ThemePluginOptions {
 
 const themePlugin = definePlugin<ThemePluginOptions>({
   name: 'theme',
-  
+
   schema: {
     type: 'object',
     properties: {
       defaultTheme: { type: 'string', required: true },
       storageKey: { type: 'string', required: true },
-      availableThemes: { type: 'array', default: ['light', 'dark'] }
-    }
+      availableThemes: { type: 'array', default: ['light', 'dark'] },
+    },
   },
-  
+
   install(app, options) {
     // options 类型安全
     console.log('Plugin installed with:', options);
-    
+
     app.config.globalProperties.$theme = {
       current: signal(options.defaultTheme),
-      set: (theme: string) => { /* ... */ }
+      set: (theme: string) => {
+        /* ... */
+      },
     };
-  }
+  },
 });
 
 app.use(themePlugin, {
   defaultTheme: 'light',
-  storageKey: 'lytjs-theme'
+  storageKey: 'lytjs-theme',
 });
 
 // =======================================

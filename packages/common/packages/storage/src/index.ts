@@ -91,9 +91,7 @@ export function createStorage<T>(options: StorageOptions<T>): StorageAdapter<T> 
 
   const handleStorageEvent = (event: StorageEvent) => {
     if (event.key === key) {
-      const newValue = event.newValue
-        ? deserializer(event.newValue)
-        : null;
+      const newValue = event.newValue ? deserializer(event.newValue) : null;
       notifyListeners(newValue);
     }
   };

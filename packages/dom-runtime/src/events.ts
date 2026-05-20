@@ -80,7 +80,9 @@ export function delegateEvent(
     const currentEvents = delegatedEventsMap.get(element);
     if (!currentEvents || !currentEvents[eventType]) return;
 
-    const index = currentEvents[eventType].findIndex((h) => h.selector === selector && h.handler === handler);
+    const index = currentEvents[eventType].findIndex(
+      (h) => h.selector === selector && h.handler === handler,
+    );
     if (index !== -1) {
       currentEvents[eventType].splice(index, 1);
     }
@@ -121,7 +123,11 @@ export function delegateEvent(
  */
 export function delegateEventBatch(
   element: Element,
-  events: Array<{ eventType: string; selector: string; handler: (event: Event, target: Element) => void }>,
+  events: Array<{
+    eventType: string;
+    selector: string;
+    handler: (event: Event, target: Element) => void;
+  }>,
 ): () => void {
   const unregisters = events.map(({ eventType, selector, handler }) =>
     delegateEvent(element, eventType, selector, handler),
@@ -156,7 +162,25 @@ export function stopEvent(event: Event): void {
 
 // ==================== 事件类型定义 ====================
 
-export type EventType = 'click' | 'input' | 'change' | 'submit' | 'keydown' | 'keyup' | 'keypress' | 'focus' | 'blur' | 'scroll' | 'resize' | 'mouseenter' | 'mouseleave' | 'mouseover' | 'mouseout' | 'touchstart' | 'touchmove' | 'touchend';
+export type EventType =
+  | 'click'
+  | 'input'
+  | 'change'
+  | 'submit'
+  | 'keydown'
+  | 'keyup'
+  | 'keypress'
+  | 'focus'
+  | 'blur'
+  | 'scroll'
+  | 'resize'
+  | 'mouseenter'
+  | 'mouseleave'
+  | 'mouseover'
+  | 'mouseout'
+  | 'touchstart'
+  | 'touchmove'
+  | 'touchend';
 
 /**
  * 常见事件类型列表，用于类型检查

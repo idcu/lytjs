@@ -47,7 +47,7 @@ let isReflowScheduled = false;
  */
 function scheduleForcedReflow(el: Element): void {
   pendingReflowElements.add(el);
-  
+
   if (!isReflowScheduled) {
     isReflowScheduled = true;
     requestAnimationFrame(() => {
@@ -78,7 +78,6 @@ function scheduleForcedReflow(el: Element): void {
  * 实现 RendererHost<Node, Element> 接口，将所有操作直接翻译为浏览器 DOM API。
  */
 export class WebRendererHost implements RendererHost<Node, Element> {
-
   // FIX: P0-03 渲染宿主标识符号，用于 createRenderer 精确类型检测
   readonly __isRendererHost = true as const;
 
@@ -288,7 +287,7 @@ export class WebRendererHost implements RendererHost<Node, Element> {
     if (cached && Date.now() - cached.timestamp < REFLOW_CACHE_DURATION) {
       return { width: cached.width, height: cached.height };
     }
-    
+
     // 读取并缓存
     const rect = el.getBoundingClientRect();
     const size = { width: rect.width, height: rect.height };
@@ -344,11 +343,7 @@ export class WebRendererHost implements RendererHost<Node, Element> {
     // FIX: P0-12 从映射中查找包装后的 handler，确保能正确移除
     const wrappedHandler = WebRendererHost.getWrappedHandler(el, event, handler);
     if (wrappedHandler) {
-      el.removeEventListener(
-        event,
-        wrappedHandler,
-        options as AddEventListenerOptions | undefined,
-      );
+      el.removeEventListener(event, wrappedHandler, options as AddEventListenerOptions | undefined);
       // 清理映射
       const elMap = WebRendererHost.wrappedHandlerMap.get(el);
       if (elMap) {

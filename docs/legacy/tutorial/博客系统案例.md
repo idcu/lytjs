@@ -5,6 +5,7 @@
 ## 项目概述
 
 ### 功能特性
+
 - 📝 文章列表和详情
 - 🔍 文章搜索
 - 🏷️ 分类和标签
@@ -13,6 +14,7 @@
 - 🎨 深色/浅色主题
 
 ### 技术要点
+
 - Signal 响应式系统
 - Vapor 模式渲染
 - 组件化开发
@@ -89,7 +91,7 @@ count.value++; // 输出: Count: 1
     tags: ['LytJS', '响应式', '前端'],
     date: '2024-01-15',
     author: '张三',
-    views: 1234
+    views: 1234,
   },
   {
     id: '2',
@@ -108,7 +110,7 @@ count.value++; // 输出: Count: 1
     tags: ['Vapor', '性能优化', '前端'],
     date: '2024-01-12',
     author: '李四',
-    views: 856
+    views: 856,
   },
   {
     id: '3',
@@ -131,7 +133,7 @@ count.value++; // 输出: Count: 1
     tags: ['组件库', '教程', '前端'],
     date: '2024-01-10',
     author: '王五',
-    views: 678
+    views: 678,
   },
   {
     id: '4',
@@ -156,7 +158,7 @@ count.value++; // 输出: Count: 1
     tags: ['对比', 'Vue', 'React', '前端'],
     date: '2024-01-08',
     author: '张三',
-    views: 1567
+    views: 1567,
   },
   {
     id: '5',
@@ -179,15 +181,27 @@ count.value++; // 输出: Count: 1
     tags: ['最佳实践', '前端'],
     date: '2024-01-05',
     author: '李四',
-    views: 987
-  }
+    views: 987,
+  },
 ];
 
 // 模拟评论数据
 const mockComments: Comment[] = [
-  { id: '1', articleId: '1', author: '访客A', content: '写得太好了！学到了很多。', date: '2024-01-16' },
+  {
+    id: '1',
+    articleId: '1',
+    author: '访客A',
+    content: '写得太好了！学到了很多。',
+    date: '2024-01-16',
+  },
   { id: '2', articleId: '1', author: '访客B', content: '期待更多这样的文章！', date: '2024-01-17' },
-  { id: '3', articleId: '2', author: '技术爱好者', content: 'Vapor 模式真的很快！', date: '2024-01-13' }
+  {
+    id: '3',
+    articleId: '2',
+    author: '技术爱好者',
+    content: 'Vapor 模式真的很快！',
+    date: '2024-01-13',
+  },
 ];
 ```
 
@@ -209,36 +223,36 @@ const selectedTag = ref('');
 
 // 获取所有分类
 const categories = computed(() => {
-  const cats = new Set(articles.value.map(a => a.category));
+  const cats = new Set(articles.value.map((a) => a.category));
   return ['all', ...Array.from(cats)];
 });
 
 // 获取所有标签
 const allTags = computed(() => {
-  const tags = new Set(articles.value.flatMap(a => a.tags));
+  const tags = new Set(articles.value.flatMap((a) => a.tags));
   return Array.from(tags);
 });
 
 // 筛选文章
 const filteredArticles = computed(() => {
-  return articles.value.filter(article => {
-    const matchesSearch = searchQuery.value === '' || 
+  return articles.value.filter((article) => {
+    const matchesSearch =
+      searchQuery.value === '' ||
       article.title.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
       article.excerpt.toLowerCase().includes(searchQuery.value.toLowerCase());
-    
-    const matchesCategory = selectedCategory.value === 'all' || 
-      article.category === selectedCategory.value;
-    
-    const matchesTag = selectedTag.value === '' || 
-      article.tags.includes(selectedTag.value);
-    
+
+    const matchesCategory =
+      selectedCategory.value === 'all' || article.category === selectedCategory.value;
+
+    const matchesTag = selectedTag.value === '' || article.tags.includes(selectedTag.value);
+
     return matchesSearch && matchesCategory && matchesTag;
   });
 });
 
 // 获取文章评论
 const getArticleComments = (articleId: string) => {
-  return comments.value.filter(c => c.articleId === articleId);
+  return comments.value.filter((c) => c.articleId === articleId);
 };
 
 // 添加评论
@@ -248,7 +262,7 @@ const addComment = (articleId: string, author: string, content: string) => {
     articleId,
     author,
     content,
-    date: new Date().toISOString().split('T')[0]
+    date: new Date().toISOString().split('T')[0],
   };
   comments.value.push(newComment);
   saveComments();
@@ -273,7 +287,7 @@ const loadComments = () => {
 
 // 增加文章浏览量
 const incrementViews = (articleId: string) => {
-  const article = articles.value.find(a => a.id === articleId);
+  const article = articles.value.find((a) => a.id === articleId);
   if (article) {
     article.views++;
   }
@@ -294,71 +308,106 @@ loadComments();
 const ArticleCard = defineComponent({
   name: 'ArticleCard',
   props: {
-    article: { type: Object as () => Article, required: true }
+    article: { type: Object as () => Article, required: true },
   },
   setup(props) {
     const router = useRouter();
-    
-    return () => h('article', {
-      style: {
-        border: '1px solid #e5e7eb',
-        borderRadius: '8px',
-        padding: '20px',
-        marginBottom: '16px',
-        backgroundColor: 'white',
-        cursor: 'pointer',
-        transition: 'box-shadow 0.2s, transform 0.2s'
-      },
-      onmouseenter: (e: MouseEvent) => {
-        const target = e.target as HTMLElement;
-        target.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
-        target.style.transform = 'translateY(-2px)';
-      },
-      onmouseleave: (e: MouseEvent) => {
-        const target = e.target as HTMLElement;
-        target.style.boxShadow = 'none';
-        target.style.transform = 'translateY(0)';
-      },
-      onclick: () => {
-        router.push(`/article/${props.article.id}`);
-      }
-    }, [
-      h('div', {
-        style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }
-      }, [
-        h('span', {
+
+    return () =>
+      h(
+        'article',
+        {
           style: {
-          backgroundColor: '#3b82f6',
-          color: 'white',
-          padding: '4px 12px',
-          borderRadius: '4px',
-          fontSize: '12px'
-        }
-        }, props.article.category),
-        h('span', { style: { color: '#6b7280', fontSize: '14px' } }, props.article.date)
-      ]),
-      h('h2', { style: { margin: '0 0 8px 0', fontSize: '20px' } }, props.article.title),
-      h('p', { style: { margin: '0 0 12px 0', color: '#4b5563' } }, props.article.excerpt),
-      h('div', { style: { display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' } },
-        props.article.tags.map(tag => 
-          h('span', {
-            key: tag,
-            style: {
-            backgroundColor: '#f3f4f6',
-            color: '#374151',
-            padding: '2px 8px',
-            borderRadius: '4px',
-            fontSize: '12px'
-          }
-          }, `#${tag}`)
-        )
-      ),
-      h('div', { style: { display: 'flex', justifyContent: 'space-between', color: '#6b7280', fontSize: '14px' } }, [
-        h('span', `作者: ${props.article.author}`),
-        h('span', `👁 ${props.article.views} 阅读`)
-      ])
-    ]);
-  }
+            border: '1px solid #e5e7eb',
+            borderRadius: '8px',
+            padding: '20px',
+            marginBottom: '16px',
+            backgroundColor: 'white',
+            cursor: 'pointer',
+            transition: 'box-shadow 0.2s, transform 0.2s',
+          },
+          onmouseenter: (e: MouseEvent) => {
+            const target = e.target as HTMLElement;
+            target.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+            target.style.transform = 'translateY(-2px)';
+          },
+          onmouseleave: (e: MouseEvent) => {
+            const target = e.target as HTMLElement;
+            target.style.boxShadow = 'none';
+            target.style.transform = 'translateY(0)';
+          },
+          onclick: () => {
+            router.push(`/article/${props.article.id}`);
+          },
+        },
+        [
+          h(
+            'div',
+            {
+              style: {
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '12px',
+              },
+            },
+            [
+              h(
+                'span',
+                {
+                  style: {
+                    backgroundColor: '#3b82f6',
+                    color: 'white',
+                    padding: '4px 12px',
+                    borderRadius: '4px',
+                    fontSize: '12px',
+                  },
+                },
+                props.article.category,
+              ),
+              h('span', { style: { color: '#6b7280', fontSize: '14px' } }, props.article.date),
+            ],
+          ),
+          h('h2', { style: { margin: '0 0 8px 0', fontSize: '20px' } }, props.article.title),
+          h('p', { style: { margin: '0 0 12px 0', color: '#4b5563' } }, props.article.excerpt),
+          h(
+            'div',
+            { style: { display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' } },
+            props.article.tags.map((tag) =>
+              h(
+                'span',
+                {
+                  key: tag,
+                  style: {
+                    backgroundColor: '#f3f4f6',
+                    color: '#374151',
+                    padding: '2px 8px',
+                    borderRadius: '4px',
+                    fontSize: '12px',
+                  },
+                },
+                `#${tag}`,
+              ),
+            ),
+          ),
+          h(
+            'div',
+            {
+              style: {
+                display: 'flex',
+                justifyContent: 'space-between',
+                color: '#6b7280',
+                fontSize: '14px',
+              },
+            },
+            [
+              h('span', `作者: ${props.article.author}`),
+              h('span', `👁 ${props.article.views} 阅读`),
+            ],
+          ),
+        ],
+      );
+  },
 });
 ```
 
@@ -369,86 +418,120 @@ const ArticleCard = defineComponent({
 const ArticleList = defineComponent({
   name: 'ArticleList',
   setup() {
-    return () => h('div', { class: 'article-list' }, [
-      // 搜索栏
-      h('div', {
-        style: { marginBottom: '24px' }
-      }, [
-        h('input', {
-          type: 'text',
-          placeholder: '搜索文章...',
-          value: searchQuery.value,
-          style: {
-          width: '100%',
-          maxWidth: '400px',
-          padding: '12px 16px',
-          border: '1px solid #d1d5db',
-          borderRadius: '8px',
-          fontSize: '16px'
-        },
-          oninput: (e: Event) => {
-            searchQuery.value = (e.target as HTMLInputElement).value;
-          }
-        })
-      ]),
-      
-      // 分类筛选
-      h('div', {
-        style: { marginBottom: '24px' }
-      }, [
-        h('h3', { style: { marginBottom: '12px' } }, '分类'),
-        h('div', { style: { display: 'flex', flexWrap: 'wrap', gap: '8px' } },
-          categories.value.map(cat => 
-            h('button', {
-              key: cat,
+    return () =>
+      h('div', { class: 'article-list' }, [
+        // 搜索栏
+        h(
+          'div',
+          {
+            style: { marginBottom: '24px' },
+          },
+          [
+            h('input', {
+              type: 'text',
+              placeholder: '搜索文章...',
+              value: searchQuery.value,
               style: {
-              padding: '6px 16px',
-              border: selectedCategory.value === cat ? '2px solid #3b82f6' : '1px solid #d1d5db',
-              borderRadius: '4px',
-              backgroundColor: selectedCategory.value === cat ? '#3b82f6' : 'white',
-              color: selectedCategory.value === cat ? 'white' : '#374151',
-              cursor: 'pointer'
-            },
-              onclick: () => { selectedCategory.value = cat; selectedTag.value = ''; }
-            }, cat === 'all' ? '全部' : cat)
-          )
-        )
-      ]),
-      
-      // 标签筛选
-      h('div', {
-        style: { marginBottom: '24px' }
-      }, [
-        h('h3', { style: { marginBottom: '12px' } }, '标签'),
-        h('div', { style: { display: 'flex', flexWrap: 'wrap', gap: '8px' } },
-          allTags.value.map(tag => 
-            h('button', {
-              key: tag,
-              style: {
-              padding: '4px 12px',
-              border: selectedTag.value === tag ? '2px solid #10b981' : '1px solid #d1d5db',
-              borderRadius: '4px',
-              backgroundColor: selectedTag.value === tag ? '#10b981' : 'white',
-              color: selectedTag.value === tag ? 'white' : '#374151',
-              cursor: 'pointer',
-              fontSize: '14px'
-            },
-              onclick: () => { selectedTag.value = selectedTag.value === tag ? '' : tag; selectedCategory.value = 'all'; }
-            }, `#${tag}`)
-          )
-        )
-      ]),
-      
-      // 文章列表
-      h('div', {}, [
-        filteredArticles.value.length === 0 ? 
-          h('p', { style: { textAlign: 'center', color: '#6b7280', padding: '40px' } }, '没有找到相关文章') :
-          filteredArticles.value.map(article => 
-            h(ArticleCard, { article, key: article.id })
-          )
-      ])
-    ]);
-  }
+                width: '100%',
+                maxWidth: '400px',
+                padding: '12px 16px',
+                border: '1px solid #d1d5db',
+                borderRadius: '8px',
+                fontSize: '16px',
+              },
+              oninput: (e: Event) => {
+                searchQuery.value = (e.target as HTMLInputElement).value;
+              },
+            }),
+          ],
+        ),
+
+        // 分类筛选
+        h(
+          'div',
+          {
+            style: { marginBottom: '24px' },
+          },
+          [
+            h('h3', { style: { marginBottom: '12px' } }, '分类'),
+            h(
+              'div',
+              { style: { display: 'flex', flexWrap: 'wrap', gap: '8px' } },
+              categories.value.map((cat) =>
+                h(
+                  'button',
+                  {
+                    key: cat,
+                    style: {
+                      padding: '6px 16px',
+                      border:
+                        selectedCategory.value === cat ? '2px solid #3b82f6' : '1px solid #d1d5db',
+                      borderRadius: '4px',
+                      backgroundColor: selectedCategory.value === cat ? '#3b82f6' : 'white',
+                      color: selectedCategory.value === cat ? 'white' : '#374151',
+                      cursor: 'pointer',
+                    },
+                    onclick: () => {
+                      selectedCategory.value = cat;
+                      selectedTag.value = '';
+                    },
+                  },
+                  cat === 'all' ? '全部' : cat,
+                ),
+              ),
+            ),
+          ],
+        ),
+
+        // 标签筛选
+        h(
+          'div',
+          {
+            style: { marginBottom: '24px' },
+          },
+          [
+            h('h3', { style: { marginBottom: '12px' } }, '标签'),
+            h(
+              'div',
+              { style: { display: 'flex', flexWrap: 'wrap', gap: '8px' } },
+              allTags.value.map((tag) =>
+                h(
+                  'button',
+                  {
+                    key: tag,
+                    style: {
+                      padding: '4px 12px',
+                      border: selectedTag.value === tag ? '2px solid #10b981' : '1px solid #d1d5db',
+                      borderRadius: '4px',
+                      backgroundColor: selectedTag.value === tag ? '#10b981' : 'white',
+                      color: selectedTag.value === tag ? 'white' : '#374151',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                    },
+                    onclick: () => {
+                      selectedTag.value = selectedTag.value === tag ? '' : tag;
+                      selectedCategory.value = 'all';
+                    },
+                  },
+                  `#${tag}`,
+                ),
+              ),
+            ),
+          ],
+        ),
+
+        // 文章列表
+        h('div', {}, [
+          filteredArticles.value.length === 0
+            ? h(
+                'p',
+                { style: { textAlign: 'center', color: '#6b7280', padding: '40px' } },
+                '没有找到相关文章',
+              )
+            : filteredArticles.value.map((article) => h(ArticleCard, { article, key: article.id })),
+        ]),
+      ]);
+  },
 });
 ```
 
@@ -462,16 +545,16 @@ const ArticleDetail = defineComponent({
     const route = useRoute();
     const router = useRouter();
     const articleId = route.params.id as string;
-    const article = computed(() => articles.value.find(a => a.id === articleId));
+    const article = computed(() => articles.value.find((a) => a.id === articleId));
     const articleComments = computed(() => getArticleComments(articleId));
     const newCommentAuthor = ref('');
     const newCommentContent = ref('');
-    
+
     // 增加浏览量
     if (article.value) {
       incrementViews(articleId);
     }
-    
+
     const handleSubmitComment = () => {
       if (newCommentAuthor.value.trim() && newCommentContent.value.trim()) {
         addComment(articleId, newCommentAuthor.value, newCommentContent.value);
@@ -479,7 +562,7 @@ const ArticleDetail = defineComponent({
         newCommentContent.value = '';
       }
     };
-    
+
     // 将 Markdown 转换为简单 HTML
     const renderMarkdown = (content: string) => {
       return content
@@ -487,158 +570,206 @@ const ArticleDetail = defineComponent({
         .replace(/^## (.*$)/gm, '<h2 style="margin: 24px 0 12px 0; font-size: 24px;">$1</h2>')
         .replace(/^# (.*$)/gm, '<h1 style="margin: 32px 0 16px 0; font-size: 32px;">$1</h1>')
         .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-        .replace(/`([^`]+)`/g, '<code style="background: #f3f4f6; padding: 2px 6px; border-radius: 4px;">$1</code>')
+        .replace(
+          /`([^`]+)`/g,
+          '<code style="background: #f3f4f6; padding: 2px 6px; border-radius: 4px;">$1</code>',
+        )
         .replace(/\n\n/g, '</p><p style="margin: 12px 0;">')
         .replace(/^- (.*$)/gm, '<li style="margin-left: 20px;">$1</li>');
     };
-    
+
     if (!article.value) {
       return () => h('div', { style: { textAlign: 'center', padding: '40px' } }, '文章不存在');
     }
-    
-    return () => h('div', { class: 'article-detail', style: { maxWidth: '800px', margin: '0 auto' } }, [
-      // 返回按钮
-      h('button', {
-        style: {
-          marginBottom: '24px',
-          padding: '8px 16px',
-          border: '1px solid #d1d5db',
-          borderRadius: '4px',
-          backgroundColor: 'white',
-          cursor: 'pointer'
-        },
-        onclick: () => router.push('/')
-      }, '← 返回列表'),
-      
-      // 文章标题
-      h('h1', { style: { margin: '0 0 16px 0', fontSize: '32px' } }, article.value.title),
-      
-      // 文章信息
-      h('div', { style: { display: 'flex', gap: '16px', marginBottom: '24px', color: '#6b7280' } }, [
-        h('span', `📅 ${article.value.date}`),
-        h('span', `👤 ${article.value.author}`),
-        h('span', `👁 ${article.value.views} 阅读`),
-        h('span', { style: {
-          backgroundColor: '#3b82f6',
-          color: 'white',
-          padding: '2px 8px',
-          borderRadius: '4px'
-        } }, article.value.category)
-      ]),
-      
-      // 标签
-      h('div', { style: { display: 'flex', gap: '8px', marginBottom: '32px' } },
-        article.value.tags.map(tag => 
-          h('span', {
-            key: tag,
+
+    return () =>
+      h('div', { class: 'article-detail', style: { maxWidth: '800px', margin: '0 auto' } }, [
+        // 返回按钮
+        h(
+          'button',
+          {
             style: {
-            backgroundColor: '#f3f4f6',
-            color: '#374151',
-            padding: '4px 12px',
-            borderRadius: '4px',
-            fontSize: '14px'
-          }
-          }, `#${tag}`)
-        )
-      ),
-      
-      // 文章内容
-      h('div', {
-        style: {
-          lineHeight: '1.8',
-          fontSize: '16px',
-          color: '#374151',
-          padding: '24px',
-          backgroundColor: 'white',
-          borderRadius: '8px',
-          border: '1px solid #e5e7eb'
-        },
-        innerHTML: renderMarkdown(article.value.content)
-      }),
-      
-      // 评论区
-      h('div', { style: { marginTop: '48px' } }, [
-        h('h2', { style: { marginBottom: '24px' } }, `💬 评论 (${articleComments.value.length})`),
-        
-        // 评论表单
+              marginBottom: '24px',
+              padding: '8px 16px',
+              border: '1px solid #d1d5db',
+              borderRadius: '4px',
+              backgroundColor: 'white',
+              cursor: 'pointer',
+            },
+            onclick: () => router.push('/'),
+          },
+          '← 返回列表',
+        ),
+
+        // 文章标题
+        h('h1', { style: { margin: '0 0 16px 0', fontSize: '32px' } }, article.value.title),
+
+        // 文章信息
+        h(
+          'div',
+          { style: { display: 'flex', gap: '16px', marginBottom: '24px', color: '#6b7280' } },
+          [
+            h('span', `📅 ${article.value.date}`),
+            h('span', `👤 ${article.value.author}`),
+            h('span', `👁 ${article.value.views} 阅读`),
+            h(
+              'span',
+              {
+                style: {
+                  backgroundColor: '#3b82f6',
+                  color: 'white',
+                  padding: '2px 8px',
+                  borderRadius: '4px',
+                },
+              },
+              article.value.category,
+            ),
+          ],
+        ),
+
+        // 标签
+        h(
+          'div',
+          { style: { display: 'flex', gap: '8px', marginBottom: '32px' } },
+          article.value.tags.map((tag) =>
+            h(
+              'span',
+              {
+                key: tag,
+                style: {
+                  backgroundColor: '#f3f4f6',
+                  color: '#374151',
+                  padding: '4px 12px',
+                  borderRadius: '4px',
+                  fontSize: '14px',
+                },
+              },
+              `#${tag}`,
+            ),
+          ),
+        ),
+
+        // 文章内容
         h('div', {
           style: {
+            lineHeight: '1.8',
+            fontSize: '16px',
+            color: '#374151',
             padding: '24px',
             backgroundColor: 'white',
             borderRadius: '8px',
             border: '1px solid #e5e7eb',
-            marginBottom: '24px'
-          }
-        }, [
-          h('h3', { style: { marginBottom: '16px' } }, '发表评论'),
-          h('input', {
-            type: 'text',
-            placeholder: '您的名字',
-            value: newCommentAuthor.value,
-            style: {
-            width: '100%',
-            padding: '8px 12px',
-            border: '1px solid #d1d5db',
-            borderRadius: '4px',
-            marginBottom: '12px'
           },
-            oninput: (e: Event) => {
-              newCommentAuthor.value = (e.target as HTMLInputElement).value;
-            }
-          }),
-          h('textarea', {
-            placeholder: '评论内容...',
-            value: newCommentContent.value,
-            style: {
-            width: '100%',
-            minHeight: '100px',
-            padding: '8px 12px',
-            border: '1px solid #d1d5db',
-            borderRadius: '4px',
-            marginBottom: '12px',
-            resize: 'vertical'
-          },
-            oninput: (e: Event) => {
-              newCommentContent.value = (e.target as HTMLTextAreaElement).value;
-            }
-          }),
-          h('button', {
-            style: {
-            backgroundColor: '#3b82f6',
-            color: 'white',
-            border: 'none',
-            padding: '10px 24px',
-            borderRadius: '4px',
-            cursor: 'pointer'
-          },
-            onclick: handleSubmitComment
-          }, '提交评论')
-        ]),
-        
-        // 评论列表
-        h('div', {},
-          articleComments.value.map(comment => 
-            h('div', {
-              key: comment.id,
+          innerHTML: renderMarkdown(article.value.content),
+        }),
+
+        // 评论区
+        h('div', { style: { marginTop: '48px' } }, [
+          h('h2', { style: { marginBottom: '24px' } }, `💬 评论 (${articleComments.value.length})`),
+
+          // 评论表单
+          h(
+            'div',
+            {
               style: {
-                padding: '16px',
+                padding: '24px',
                 backgroundColor: 'white',
                 borderRadius: '8px',
                 border: '1px solid #e5e7eb',
-                marginBottom: '12px'
-              }
-            }, [
-              h('div', { style: { display: 'flex', justifyContent: 'space-between', marginBottom: '8px' } }, [
-                h('span', { style: { fontWeight: 'bold' } }, comment.author),
-                h('span', { style: { color: '#6b7280', fontSize: '14px' } }, comment.date)
-              ]),
-              h('p', { style: { margin: 0, color: '#374151' } }, comment.content)
-            ])
-          )
-        )
-      ])
-    ]);
-  }
+                marginBottom: '24px',
+              },
+            },
+            [
+              h('h3', { style: { marginBottom: '16px' } }, '发表评论'),
+              h('input', {
+                type: 'text',
+                placeholder: '您的名字',
+                value: newCommentAuthor.value,
+                style: {
+                  width: '100%',
+                  padding: '8px 12px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '4px',
+                  marginBottom: '12px',
+                },
+                oninput: (e: Event) => {
+                  newCommentAuthor.value = (e.target as HTMLInputElement).value;
+                },
+              }),
+              h('textarea', {
+                placeholder: '评论内容...',
+                value: newCommentContent.value,
+                style: {
+                  width: '100%',
+                  minHeight: '100px',
+                  padding: '8px 12px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '4px',
+                  marginBottom: '12px',
+                  resize: 'vertical',
+                },
+                oninput: (e: Event) => {
+                  newCommentContent.value = (e.target as HTMLTextAreaElement).value;
+                },
+              }),
+              h(
+                'button',
+                {
+                  style: {
+                    backgroundColor: '#3b82f6',
+                    color: 'white',
+                    border: 'none',
+                    padding: '10px 24px',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                  },
+                  onclick: handleSubmitComment,
+                },
+                '提交评论',
+              ),
+            ],
+          ),
+
+          // 评论列表
+          h(
+            'div',
+            {},
+            articleComments.value.map((comment) =>
+              h(
+                'div',
+                {
+                  key: comment.id,
+                  style: {
+                    padding: '16px',
+                    backgroundColor: 'white',
+                    borderRadius: '8px',
+                    border: '1px solid #e5e7eb',
+                    marginBottom: '12px',
+                  },
+                },
+                [
+                  h(
+                    'div',
+                    {
+                      style: {
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        marginBottom: '8px',
+                      },
+                    },
+                    [
+                      h('span', { style: { fontWeight: 'bold' } }, comment.author),
+                      h('span', { style: { color: '#6b7280', fontSize: '14px' } }, comment.date),
+                    ],
+                  ),
+                  h('p', { style: { margin: 0, color: '#374151' } }, comment.content),
+                ],
+              ),
+            ),
+          ),
+        ]),
+      ]);
+  },
 });
 ```
 
@@ -652,55 +783,75 @@ const App = defineComponent({
   name: 'App',
   setup() {
     const { isDark, toggleTheme } = ThemePlugin.useTheme();
-    
-    return () => h('div', {
-      style: {
-        minHeight: '100vh',
-        backgroundColor: isDark.value ? '#1f2937' : '#f9fafb',
-        color: isDark.value ? 'white' : '#1f2937',
-        transition: 'background-color 0.3s, color 0.3s'
-      }
-    }, [
-      // 头部
-      h('header', {
-        style: {
-          backgroundColor: isDark.value ? '#111827' : 'white',
-          padding: '20px',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-          marginBottom: '32px'
-        }
-      }, [
-        h('div', {
+
+    return () =>
+      h(
+        'div',
+        {
           style: {
-            maxWidth: '1200px',
-            margin: '0 auto',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center'
-          }
-        }, [
-          h('h1', { style: { margin: 0, fontSize: '24px' } }, '📖 LytJS 博客'),
-          h('button', {
-            style: {
-            padding: '8px 16px',
-            border: '1px solid #d1d5db',
-            borderRadius: '4px',
-            backgroundColor: isDark.value ? '#374151' : 'white',
-            color: isDark.value ? 'white' : '#374151',
-            cursor: 'pointer'
+            minHeight: '100vh',
+            backgroundColor: isDark.value ? '#1f2937' : '#f9fafb',
+            color: isDark.value ? 'white' : '#1f2937',
+            transition: 'background-color 0.3s, color 0.3s',
           },
-            onclick: toggleTheme
-          }, isDark.value ? '☀️ 浅色模式' : '🌙 深色模式')
-        ])
-      ]),
-      
-      // 主内容区
-      h('main', {
-        style: { maxWidth: '1200px', margin: '0 auto', padding: '0 20px 40px' } }, [
-        h('router-view')
-      ])
-    ]);
-  }
+        },
+        [
+          // 头部
+          h(
+            'header',
+            {
+              style: {
+                backgroundColor: isDark.value ? '#111827' : 'white',
+                padding: '20px',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                marginBottom: '32px',
+              },
+            },
+            [
+              h(
+                'div',
+                {
+                  style: {
+                    maxWidth: '1200px',
+                    margin: '0 auto',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  },
+                },
+                [
+                  h('h1', { style: { margin: 0, fontSize: '24px' } }, '📖 LytJS 博客'),
+                  h(
+                    'button',
+                    {
+                      style: {
+                        padding: '8px 16px',
+                        border: '1px solid #d1d5db',
+                        borderRadius: '4px',
+                        backgroundColor: isDark.value ? '#374151' : 'white',
+                        color: isDark.value ? 'white' : '#374151',
+                        cursor: 'pointer',
+                      },
+                      onclick: toggleTheme,
+                    },
+                    isDark.value ? '☀️ 浅色模式' : '🌙 深色模式',
+                  ),
+                ],
+              ),
+            ],
+          ),
+
+          // 主内容区
+          h(
+            'main',
+            {
+              style: { maxWidth: '1200px', margin: '0 auto', padding: '0 20px 40px' },
+            },
+            [h('router-view')],
+          ),
+        ],
+      );
+  },
 });
 
 // 创建路由
@@ -708,8 +859,8 @@ const router = createRouter({
   history: 'hash',
   routes: [
     { path: '/', component: ArticleList },
-    { path: '/article/:id', component: ArticleDetail }
-  ]
+    { path: '/article/:id', component: ArticleDetail },
+  ],
 });
 
 // 创建并挂载应用
@@ -726,27 +877,27 @@ app.mount('#app');
 ```html
 <!DOCTYPE html>
 <html lang="zh-CN">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LytJS 博客系统</title>
-  <style>
-    * {
-      box-sizing: border-box;
-    }
-    body {
-      margin: 0;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    }
-    #app {
-      min-height: 100vh;
-    }
-  </style>
-</head>
-<body>
-  <div id="app"></div>
-  <script type="module" src="./blog.ts"></script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LytJS 博客系统</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      }
+      #app {
+        min-height: 100vh;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="./blog.ts"></script>
+  </body>
 </html>
 ```
 
@@ -755,6 +906,7 @@ app.mount('#app');
 ## 完整功能说明
 
 ### 1. 文章管理
+
 - ✅ 文章列表展示
 - ✅ 文章详情页
 - ✅ 文章搜索
@@ -763,17 +915,20 @@ app.mount('#app');
 - ✅ 浏览量统计
 
 ### 2. 评论系统
+
 - ✅ 评论展示
 - ✅ 添加评论
 - ✅ 评论存储
 
 ### 3. 用户体验
+
 - ✅ 深色/浅色主题切换
 - ✅ 响应式设计
 - ✅ 路由导航
 - ✅ 交互动画
 
 ### 4. 内容展示
+
 - ✅ Markdown 简单渲染
 - ✅ 标签和分类
 
@@ -782,6 +937,7 @@ app.mount('#app');
 ## 进阶扩展建议
 
 ### 1. 添加更多功能
+
 - 🔄 用户登录/注册
 - 🔄 文章编辑和发布
 - 🔄 图片上传
@@ -790,12 +946,14 @@ app.mount('#app');
 - 🔄 文章归档
 
 ### 2. 性能优化
+
 - 🔄 文章列表分页
 - 🔄 图片懒加载
 - 🔄 文章内容缓存
 - 🔄 服务端渲染 (SSR)
 
 ### 3. 测试覆盖
+
 - 🔄 单元测试
 - 🔄 组件测试
 - 🔄 E2E 测试

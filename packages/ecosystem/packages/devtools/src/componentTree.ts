@@ -49,7 +49,12 @@ function extractComponentInfo(component: {
  * 递归构建组件树
  */
 function buildComponentTreeRecursive(
-  component: { name?: string; displayName?: string; props?: Record<string, unknown>; children?: unknown[] },
+  component: {
+    name?: string;
+    displayName?: string;
+    props?: Record<string, unknown>;
+    children?: unknown[];
+  },
   parentId?: string,
 ): ComponentTreeNode | null {
   const node = extractComponentInfo(component);
@@ -63,7 +68,15 @@ function buildComponentTreeRecursive(
   if (component.children && Array.isArray(component.children)) {
     const children: ComponentTreeNode[] = [];
     for (const child of component.children) {
-      const childNode = buildComponentTreeRecursive(child as { name?: string; displayName?: string; props?: Record<string, unknown>; children?: unknown[] }, node.id);
+      const childNode = buildComponentTreeRecursive(
+        child as {
+          name?: string;
+          displayName?: string;
+          props?: Record<string, unknown>;
+          children?: unknown[];
+        },
+        node.id,
+      );
       if (childNode) {
         children.push(childNode);
       }
@@ -91,7 +104,12 @@ export function getComponentTree(rootComponent?: {
     if (!globalRoot) {
       return [];
     }
-    rootComponent = globalRoot as { name?: string; displayName?: string; props?: Record<string, unknown>; children?: unknown[] };
+    rootComponent = globalRoot as {
+      name?: string;
+      displayName?: string;
+      props?: Record<string, unknown>;
+      children?: unknown[];
+    };
   }
 
   const tree = buildComponentTreeRecursive(rootComponent);
@@ -104,7 +122,7 @@ export function getComponentTree(rootComponent?: {
 export function serializeComponentTree(nodes: ComponentTreeNode[], indent = 0): string {
   let result = '';
   const prefix = '  '.repeat(indent);
-  
+
   for (const node of nodes) {
     result += `${prefix}- ${node.name}`;
     if (node.props && Object.keys(node.props).length > 0) {
@@ -114,12 +132,12 @@ export function serializeComponentTree(nodes: ComponentTreeNode[], indent = 0): 
       result += ` (${propsStr})`;
     }
     result += '\n';
-    
+
     if (node.children && node.children.length > 0) {
       result += serializeComponentTree(node.children, indent + 1);
     }
   }
-  
+
   return result;
 }
 

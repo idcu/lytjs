@@ -23,29 +23,32 @@ const TEMPLATES = {
 /**
  * Create a new LytJS project
  */
-export async function create(projectName?: string, options: Partial<CreateOptions> = {}): Promise<void> {
+export async function create(
+  projectName?: string,
+  options: Partial<CreateOptions> = {},
+): Promise<void> {
   if (!projectName) {
     logger.error('Please provide a project name.');
     logger.info('Usage: lyt create <project-name>');
     process.exit(1);
   }
   const targetDir = resolve(process.cwd(), projectName);
-  
+
   // Check if directory exists and is not empty
   if (exists(targetDir) && !isEmptyDir(targetDir) && !options.force) {
     logger.error(`Directory "${projectName}" already exists and is not empty.`);
     logger.info('Use --force to overwrite.');
     process.exit(1);
   }
-  
+
   logger.info(`Creating a new LytJS project in ${targetDir}...`);
-  
+
   // Create directory
   ensureDir(targetDir);
-  
+
   // Generate project files
   generateProjectFiles(targetDir, projectName, options.template || 'default');
-  
+
   // Install dependencies
   logger.info('Installing dependencies...');
   const pm = detectPackageManager();
@@ -56,7 +59,7 @@ export async function create(projectName?: string, options: Partial<CreateOption
     logger.warning('Failed to install dependencies automatically.');
     logger.info(`Please run "${getInstallCommand(pm)}" manually.`);
   }
-  
+
   // Print next steps
   logger.success(`Project "${projectName}" created successfully!`);
   logger.info('');
@@ -100,7 +103,7 @@ function generateProjectFiles(targetDir: string, projectName: string, template: 
     },
     devDependencies: {
       '@lytjs/plugin-vite': '^6.0.0',
-      'vite': '^5.0.0',
+      vite: '^5.0.0',
     },
   };
 
@@ -188,7 +191,9 @@ ${isStore ? "import { createPinia } from '@lytjs/store';" : ''}
 
 const app = createSSRApp(App);
 ${isStore ? 'app.use(createPinia());' : ''}
-${isRouter ? `
+${
+  isRouter
+    ? `
 const router = createRouter({
   history: createWebHistory(),
   routes: [
@@ -197,7 +202,9 @@ const router = createRouter({
   ],
 });
 app.use(router);
-` : ''}
+`
+    : ''
+}
 app.mount('#app');
 `;
   } else if (isRouter || isStore) {
@@ -208,7 +215,9 @@ ${isStore ? "import { createPinia } from '@lytjs/store';" : ''}
 
 const app = createApp(App);
 ${isStore ? 'app.use(createPinia());' : ''}
-${isRouter ? `
+${
+  isRouter
+    ? `
 const router = createRouter({
   history: createWebHistory(),
   routes: [
@@ -217,7 +226,9 @@ const router = createRouter({
   ],
 });
 app.use(router);
-` : ''}
+`
+    : ''
+}
 app.mount('#app');
 `;
   } else {
@@ -316,20 +327,28 @@ h1 {
     const homePage = `<template>
   <div class="home">
     <h1>Home</h1>
-    ${isStore ? `
+    ${
+      isStore
+        ? `
     <p>Count: {{ count }}</p>
     <button @click="increment">Increment</button>
     <button @click="decrement">Decrement</button>
-    ` : ''}
+    `
+        : ''
+    }
     <p>Welcome to the Home page!</p>
   </div>
 </template>
 
 <script setup lang="ts">
-${isStore ? `import { useCounterStore } from '../stores/counter';
+${
+  isStore
+    ? `import { useCounterStore } from '../stores/counter';
 const counterStore = useCounterStore();
 const { count, increment, decrement } = counterStore;
-` : ''}
+`
+    : ''
+}
 </script>
 
 <style scoped>

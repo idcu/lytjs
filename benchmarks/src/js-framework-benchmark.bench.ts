@@ -1,6 +1,6 @@
 /**
  * js-framework-benchmark style comprehensive benchmark
- * 
+ *
  * A complete benchmark suite replicating the standard js-framework-benchmark
  * tests to allow fair comparison with other frameworks.
  */
@@ -100,10 +100,14 @@ describe('js-framework-benchmark', () => {
         return { isSelected: computed(() => props.selected) };
       },
       render() {
-        return h('div', {
-          key: this.item.id,
-          class: this.isSelected ? 'selected' : '',
-        }, this.item.label);
+        return h(
+          'div',
+          {
+            key: this.item.id,
+            class: this.isSelected ? 'selected' : '',
+          },
+          this.item.label,
+        );
       },
     };
 
@@ -112,9 +116,11 @@ describe('js-framework-benchmark', () => {
         return { items, selectedId };
       },
       render() {
-        return h('div', { class: 'list' }, items.value.map((item) =>
-          h(TodoItem, { item, selected: item.id === selectedId.value }),
-        ));
+        return h(
+          'div',
+          { class: 'list' },
+          items.value.map((item) => h(TodoItem, { item, selected: item.id === selectedId.value })),
+        );
       },
     };
     const app = createApp(App);

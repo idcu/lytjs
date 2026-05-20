@@ -18,14 +18,20 @@ export const TimelineItem = defineComponent({
 
   props: {
     color: { type: String, default: '' },
-    type: { type: String as () => 'primary' | 'success' | 'warning' | 'danger' | 'info', default: '' },
+    type: {
+      type: String as () => 'primary' | 'success' | 'warning' | 'danger' | 'info',
+      default: '',
+    },
     size: { type: String as () => 'large' | 'default' | 'small', default: 'default' },
     dot: { type: [String, Object] as unknown as PropType<string | VNode>, default: '' },
     timestamp: { type: String, default: '' },
     placement: { type: String as () => 'top' | 'bottom', default: 'bottom' },
     hideTimestamp: { type: Boolean, default: false },
     class: { type: String, default: '' },
-    style: { type: [String, Object] as unknown as PropType<string | Record<string, string>>, default: '' },
+    style: {
+      type: [String, Object] as unknown as PropType<string | Record<string, string>>,
+      default: '',
+    },
     id: { type: String, default: '' },
     ariaLabel: { type: String, default: '' },
     ariaDescribedBy: { type: String, default: '' },
@@ -37,7 +43,8 @@ export const TimelineItem = defineComponent({
     const getTimelineItemClass = () => {
       const classes = ['lyt-timeline-item'];
       if (_props.type) classes.push(`lyt-timeline-item--${_props.type}`);
-      if (_props.size && _props.size !== 'default') classes.push(`lyt-timeline-item--${_props.size}`);
+      if (_props.size && _props.size !== 'default')
+        classes.push(`lyt-timeline-item--${_props.size}`);
       if (_props.placement) classes.push(`lyt-timeline-item--${_props.placement}`);
       if (_props.hideTimestamp) classes.push('lyt-timeline-item--hide-timestamp');
       if (_props.class) classes.push(_props.class);
@@ -69,7 +76,9 @@ export const TimelineItem = defineComponent({
       }
       if (_props.dot) {
         if (typeof _props.dot === 'string') {
-          return createVNode('div', { class: 'lyt-timeline-item__dot' }, [createTextVNode(_props.dot)]);
+          return createVNode('div', { class: 'lyt-timeline-item__dot' }, [
+            createTextVNode(_props.dot),
+          ]);
         }
         return createVNode('div', { class: 'lyt-timeline-item__dot' }, [_props.dot as VNode]);
       }
@@ -78,16 +87,20 @@ export const TimelineItem = defineComponent({
 
     return () => {
       const children: VNode[] = [];
-      
+
       children.push(createVNode('div', { class: 'lyt-timeline-item__tail' }, null));
       children.push(renderDot());
-      
+
       const wrapperChildren: VNode[] = [];
-      
+
       if (_props.timestamp && !_props.hideTimestamp) {
-        wrapperChildren.push(createVNode('div', { class: 'lyt-timeline-item__timestamp' }, [createTextVNode(_props.timestamp)]));
+        wrapperChildren.push(
+          createVNode('div', { class: 'lyt-timeline-item__timestamp' }, [
+            createTextVNode(_props.timestamp),
+          ]),
+        );
       }
-      
+
       const contentChildren: VNode[] = [];
       if (slots.default) {
         const slotContent = slots.default();
@@ -95,18 +108,27 @@ export const TimelineItem = defineComponent({
           contentChildren.push(...(slotContent as VNode[]));
         }
       }
-      wrapperChildren.push(createVNode('div', { class: 'lyt-timeline-item__content' }, contentChildren));
-      
+      wrapperChildren.push(
+        createVNode('div', { class: 'lyt-timeline-item__content' }, contentChildren),
+      );
+
       children.push(createVNode('div', { class: 'lyt-timeline-item__wrapper' }, wrapperChildren));
 
-      return createVNode('div', mergeA11yProps({
-        id: _props.id,
-        'aria-label': _props.ariaLabel,
-        'aria-describedby': _props.ariaDescribedBy,
-      }, {
-        class: getTimelineItemClass(),
-        style: getTimelineItemStyle(),
-      }), children);
+      return createVNode(
+        'div',
+        mergeA11yProps(
+          {
+            id: _props.id,
+            'aria-label': _props.ariaLabel,
+            'aria-describedby': _props.ariaDescribedBy,
+          },
+          {
+            class: getTimelineItemClass(),
+            style: getTimelineItemStyle(),
+          },
+        ),
+        children,
+      );
     };
   },
 });

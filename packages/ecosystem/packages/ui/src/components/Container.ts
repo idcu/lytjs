@@ -49,10 +49,14 @@ export const Container = defineComponent({
         children.push(...slots.default());
       }
 
-      return createVNode('div', {
-        class: getContainerClass(),
-        style: getContainerStyle(),
-      }, children);
+      return createVNode(
+        'div',
+        {
+          class: getContainerClass(),
+          style: getContainerStyle(),
+        },
+        children,
+      );
     };
   },
 });

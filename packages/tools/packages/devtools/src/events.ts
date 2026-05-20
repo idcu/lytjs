@@ -51,7 +51,7 @@ export function recordEvent(
   }
 
   // 通知订阅者
-  eventSubscribers.forEach(callback => {
+  eventSubscribers.forEach((callback) => {
     try {
       callback(record);
     } catch (e) {
@@ -67,11 +67,11 @@ export function getEvents(): EventRecord[] {
 }
 
 export function getEventsByComponent(componentId: string): EventRecord[] {
-  return events.filter(e => e.componentId === componentId);
+  return events.filter((e) => e.componentId === componentId);
 }
 
 export function getEventsByType(type: string): EventRecord[] {
-  return events.filter(e => e.type === type);
+  return events.filter((e) => e.type === type);
 }
 
 export function clearEvents(): void {
@@ -80,7 +80,7 @@ export function clearEvents(): void {
 
 export function getEventStats(): Record<string, number> {
   const stats: Record<string, number> = {};
-  events.forEach(e => {
+  events.forEach((e) => {
     stats[e.type] = (stats[e.type] || 0) + 1;
   });
   return stats;

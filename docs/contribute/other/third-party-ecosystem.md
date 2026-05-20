@@ -48,7 +48,7 @@ export const myPlugin = definePlugin<MyPluginOptions>({
       setup() {
         // 组件实现
         return () => h('div', 'Hello from MyPlugin!');
-      }
+      },
     });
 
     // 提供依赖
@@ -57,7 +57,7 @@ export const myPlugin = definePlugin<MyPluginOptions>({
       timeout,
       doSomething() {
         console.log('Doing something...');
-      }
+      },
     });
   },
 
@@ -68,7 +68,7 @@ export const myPlugin = definePlugin<MyPluginOptions>({
 
   onUnmounted() {
     console.log('[MyPlugin] App unmounted');
-  }
+  },
 });
 
 export default myPlugin;
@@ -79,17 +79,19 @@ export default myPlugin;
 所有核心运行时代码应该保持**零第三方依赖**，只可以在开发/构建工具中引入依赖。
 
 **允许的依赖**：
+
 - TypeScript 类型定义包
 - 构建工具（tsup、vite、rollup 等）
 - 测试框架（vitest、jest 等）
 - Lint 工具（eslint、prettier 等）
 
 **禁止的依赖**：
+
 - 运行时业务逻辑库
 - UI 组件库
 - 状态管理库
 - HTTP 客户端库
-- 工具函数库（请使用 @lytjs/common-* 系列）
+- 工具函数库（请使用 @lytjs/common-\* 系列）
 
 ### TypeScript 类型
 
@@ -160,13 +162,13 @@ export default myPlugin;
 
 ### 审核维度权重
 
-| 维度 | 权重 | 最低要求 |
-|------|------|---------|
-| 代码质量 | 30% | 必须达标 |
-| 文档完整性 | 25% | 必须达标 |
-| 功能完整性 | 25% | 必须达标 |
-| 安全性 | 20% | 必须达标 |
-| 额外特性 | 加分项 | 可选 |
+| 维度       | 权重   | 最低要求 |
+| ---------- | ------ | -------- |
+| 代码质量   | 30%    | 必须达标 |
+| 文档完整性 | 25%    | 必须达标 |
+| 功能完整性 | 25%    | 必须达标 |
+| 安全性     | 20%    | 必须达标 |
+| 额外特性   | 加分项 | 可选     |
 
 ### 推荐等级
 
@@ -242,38 +244,38 @@ export default myPlugin;
 
 ### 核心插件（官方维护）
 
-| 插件 | 版本 | 说明 | 推荐场景 | 状态 |
-|------|------|------|---------|------|
-| @lytjs/plugin-form | 6.2.0 | 表单验证 | 所有应用 | 🏆 官方 |
-| @lytjs/plugin-animation | 6.2.0 | 动画效果 | 交互应用 | 🏆 官方 |
-| @lytjs/plugin-router | 6.0.0 | 路由管理 | SPA 应用 | 🏆 官方 |
-| @lytjs/plugin-store | 6.0.0 | 状态管理 | 复杂应用 | 🏆 官方 |
-| @lytjs/ssr | 6.2.0 | 服务端渲染 | SSR/SSG | 🏆 官方 |
+| 插件                    | 版本  | 说明       | 推荐场景 | 状态    |
+| ----------------------- | ----- | ---------- | -------- | ------- |
+| @lytjs/plugin-form      | 6.2.0 | 表单验证   | 所有应用 | 🏆 官方 |
+| @lytjs/plugin-animation | 6.2.0 | 动画效果   | 交互应用 | 🏆 官方 |
+| @lytjs/plugin-router    | 6.0.0 | 路由管理   | SPA 应用 | 🏆 官方 |
+| @lytjs/plugin-store     | 6.0.0 | 状态管理   | 复杂应用 | 🏆 官方 |
+| @lytjs/ssr              | 6.2.0 | 服务端渲染 | SSR/SSG  | 🏆 官方 |
 
 ### 社区插件（审核通过）
 
 #### 表单与验证
 
-| 插件 | 作者 | 说明 | 推荐场景 | 状态 |
-|------|------|------|---------|------|
+| 插件                    | 作者 | 说明         | 推荐场景 | 状态    |
+| ----------------------- | ---- | ------------ | -------- | ------- |
 | lytjs-plugin-validation | 社区 | 高级验证规则 | 表单验证 | ⭐ 推荐 |
-| lytjs-plugin-schema | 社区 | Schema 验证 | 数据验证 | ⭐ 推荐 |
+| lytjs-plugin-schema     | 社区 | Schema 验证  | 数据验证 | ⭐ 推荐 |
 
 #### UI 组件
 
-| 插件 | 作者 | 说明 | 推荐场景 | 状态 |
-|------|------|------|---------|------|
-| lytjs-plugin-charts | 社区 | 图表组件 | 数据可视化 | ⭐ 推荐 |
-| lytjs-plugin-icons | 社区 | 图标库集成 | UI 开发 | ⭐ 推荐 |
+| 插件                | 作者 | 说明       | 推荐场景   | 状态    |
+| ------------------- | ---- | ---------- | ---------- | ------- |
+| lytjs-plugin-charts | 社区 | 图表组件   | 数据可视化 | ⭐ 推荐 |
+| lytjs-plugin-icons  | 社区 | 图标库集成 | UI 开发    | ⭐ 推荐 |
 
 #### 工具类
 
-| 插件 | 作者 | 说明 | 推荐场景 | 状态 |
-|------|------|------|---------|------|
-| lytjs-plugin-http | 社区 | HTTP 客户端 | API 调用 | ⭐ 推荐 |
-| lytjs-plugin-storage | 社区 | 本地存储 | 数据持久化 | ⭐ 推荐 |
+| 插件                 | 作者 | 说明        | 推荐场景   | 状态    |
+| -------------------- | ---- | ----------- | ---------- | ------- |
+| lytjs-plugin-http    | 社区 | HTTP 客户端 | API 调用   | ⭐ 推荐 |
+| lytjs-plugin-storage | 社区 | 本地存储    | 数据持久化 | ⭐ 推荐 |
 
-*持续更新中，欢迎提交插件！*
+_持续更新中，欢迎提交插件！_
 
 ---
 
@@ -342,11 +344,7 @@ git push origin v1.0.0
     "type": "git",
     "url": "https://github.com/your-username/lytjs-plugin-xxx.git"
   },
-  "keywords": [
-    "lytjs",
-    "plugin",
-    "lytjs-plugin"
-  ],
+  "keywords": ["lytjs", "plugin", "lytjs-plugin"],
   "author": "Your Name",
   "license": "MIT",
   "engines": {
@@ -373,7 +371,7 @@ lytjs-plugin-xxx          # 官方格式
 
 提供完整的示例代码：
 
-```typescript
+````typescript
 // README.md
 # 安装
 
@@ -381,7 +379,7 @@ lytjs-plugin-xxx          # 官方格式
 npm install lytjs-plugin-xxx
 # 或
 pnpm add lytjs-plugin-xxx
-```
+````
 
 # 使用
 
@@ -401,10 +399,10 @@ app.mount('#app');
 
 ## Options
 
-| 属性 | 类型 | 默认值 | 说明 |
-|------|------|--------|------|
-| debug | boolean | false | 开启调试模式 |
-| timeout | number | 5000 | 超时时间（毫秒） |
+| 属性    | 类型    | 默认值 | 说明             |
+| ------- | ------- | ------ | ---------------- |
+| debug   | boolean | false  | 开启调试模式     |
+| timeout | number  | 5000   | 超时时间（毫秒） |
 
 ## 示例
 
@@ -433,7 +431,8 @@ const pluginInstance = app.use(myPlugin, {
 const pluginApi = app.inject('myPlugin');
 pluginApi.doSomething();
 ```
-```
+
+````
 
 ### 测试规范
 
@@ -456,7 +455,7 @@ describe('myPlugin', () => {
     // ...
   });
 });
-```
+````
 
 ---
 

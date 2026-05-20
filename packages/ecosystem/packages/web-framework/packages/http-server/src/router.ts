@@ -19,7 +19,7 @@ export class Router {
 
   /**
    * 添加路由
-   * 
+   *
    * @param method - HTTP 方法
    * @param path - 路径
    * @param handler - 处理器
@@ -33,7 +33,7 @@ export class Router {
 
   /**
    * 添加 GET 路由
-   * 
+   *
    * @param path - 路径
    * @param handler - 处理器
    * @returns 路由实例
@@ -44,7 +44,7 @@ export class Router {
 
   /**
    * 添加 POST 路由
-   * 
+   *
    * @param path - 路径
    * @param handler - 处理器
    * @returns 路由实例
@@ -55,7 +55,7 @@ export class Router {
 
   /**
    * 添加 PUT 路由
-   * 
+   *
    * @param path - 路径
    * @param handler - 处理器
    * @returns 路由实例
@@ -66,7 +66,7 @@ export class Router {
 
   /**
    * 添加 PATCH 路由
-   * 
+   *
    * @param path - 路径
    * @param handler - 处理器
    * @returns 路由实例
@@ -77,7 +77,7 @@ export class Router {
 
   /**
    * 添加 DELETE 路由
-   * 
+   *
    * @param path - 路径
    * @param handler - 处理器
    * @returns 路由实例
@@ -88,14 +88,17 @@ export class Router {
 
   /**
    * 匹配路由
-   * 
+   *
    * @param method - HTTP 方法
    * @param path - 路径
    * @returns 匹配结果或 null
    */
-  match(method: HttpMethod, path: string): { handler: Handler; params: Record<string, string | string[]> } | null {
-    const candidates = this.routes.filter(r => r.method === method);
-    
+  match(
+    method: HttpMethod,
+    path: string,
+  ): { handler: Handler; params: Record<string, string | string[]> } | null {
+    const candidates = this.routes.filter((r) => r.method === method);
+
     let bestMatch: { handler: Handler; params: Record<string, string | string[]> } | null = null;
     let bestScore = -1;
 
@@ -113,7 +116,7 @@ export class Router {
 
 /**
  * 创建路由
- * 
+ *
  * @returns 路由实例
  */
 export function createRouter(): Router {

@@ -5,11 +5,11 @@ export class SSGGenerator {
 
   async generate(): Promise<SSGResult[]> {
     const results: SSGResult[] = [];
-    
+
     for (const route of this.config.routes) {
       results.push(await this.generateRoute(route));
     }
-    
+
     return results;
   }
 

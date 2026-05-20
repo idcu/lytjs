@@ -217,7 +217,7 @@ const paginatedData = computed(() => {
 import { useStore } from '@lytjs/store';
 
 // ✅ 好的做法：只订阅需要的状态
-const userName = useStore('user', state => state.profile.name);
+const userName = useStore('user', (state) => state.profile.name);
 
 // ❌ 避免：订阅整个 store
 const store = useStore('user');
@@ -236,9 +236,9 @@ const normalizedData = {
     '2': { id: '2', name: 'Bob', postIds: ['c'] },
   },
   posts: {
-    'a': { id: 'a', title: 'Post A' },
-    'b': { id: 'b', title: 'Post B' },
-    'c': { id: 'c', title: 'Post C' },
+    a: { id: 'a', title: 'Post A' },
+    b: { id: 'b', title: 'Post B' },
+    c: { id: 'c', title: 'Post C' },
   },
 };
 
@@ -323,7 +323,7 @@ const searchQuery = signal('');
 
 // 300ms 防抖
 const debouncedSearch = debounce((query: string) => {
-  api.search(query).then(results => {
+  api.search(query).then((results) => {
     searchResults.set(results);
   });
 }, 300);
@@ -440,13 +440,13 @@ recordMetric('render_count', count);
 
 LytJS 在标准硬件上的性能基准：
 
-| 操作 | 平均耗时 |
-|------|----------|
-| signal 读取 | < 0.01ms |
-| signal 写入 | < 0.05ms |
-| computed 计算 | < 0.1ms |
-| 1000 节点 diff | < 5ms |
-| 列表渲染 (1000 items) | < 10ms |
+| 操作                  | 平均耗时 |
+| --------------------- | -------- |
+| signal 读取           | < 0.01ms |
+| signal 写入           | < 0.05ms |
+| computed 计算         | < 0.1ms  |
+| 1000 节点 diff        | < 5ms    |
+| 列表渲染 (1000 items) | < 10ms   |
 
 ## 总结
 

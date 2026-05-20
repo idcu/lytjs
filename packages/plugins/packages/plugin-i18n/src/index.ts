@@ -165,13 +165,19 @@ function createI18n(options: I18nOptions = {}): I18nInstance {
 
   return {
     locale: {
-      get value() { return currentLocale(); },
-      set value(v: string) { currentLocale.set(v); }
+      get value() {
+        return currentLocale();
+      },
+      set value(v: string) {
+        currentLocale.set(v);
+      },
     },
     setLocale,
     t,
     te,
-    get availableLocales() { return availableLocalesState(); },
+    get availableLocales() {
+      return availableLocalesState();
+    },
     registerLocale,
     getMessages,
   };

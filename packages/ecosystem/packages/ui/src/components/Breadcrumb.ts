@@ -35,13 +35,16 @@ export const BreadcrumbItem = defineComponent({
         children.push(createVNode('span', {}, props.label as string));
       }
 
-      return createVNode('span', {
-        class: [
-          'lyt-breadcrumb__item',
-          props.disabled ? 'lyt-breadcrumb__item--disabled' : '',
-        ].filter(Boolean).join(' '),
-        onClick: handleClick,
-      }, children);
+      return createVNode(
+        'span',
+        {
+          class: ['lyt-breadcrumb__item', props.disabled ? 'lyt-breadcrumb__item--disabled' : '']
+            .filter(Boolean)
+            .join(' '),
+          onClick: handleClick,
+        },
+        children,
+      );
     };
   },
 });
@@ -62,9 +65,17 @@ export const Breadcrumb = defineComponent({
 
       items.forEach((item, index) => {
         if (index > 0) {
-          content.push(createVNode('span', {
-            class: ['lyt-breadcrumb__separator', props.separatorClass as string].filter(Boolean).join(' '),
-          }, [createVNode('span', {}, props.separator as string)]));
+          content.push(
+            createVNode(
+              'span',
+              {
+                class: ['lyt-breadcrumb__separator', props.separatorClass as string]
+                  .filter(Boolean)
+                  .join(' '),
+              },
+              [createVNode('span', {}, props.separator as string)],
+            ),
+          );
         }
         content.push(item as VNode);
       });

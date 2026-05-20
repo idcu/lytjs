@@ -61,7 +61,7 @@ export function subscribeState(callback: (state: DevToolsState) => void): () => 
 
 export function notifyStateChange(): void {
   const state = devtoolsState();
-  stateSubscribers.forEach(callback => callback(state));
+  stateSubscribers.forEach((callback) => callback(state));
 }
 
 export function resetState(): void {

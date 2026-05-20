@@ -25,7 +25,8 @@ const DEFAULT_GPU_OPTIONS: GPUAccelerationOptions = {
  * 将 2D transform 转换为 3D（启用 GPU 加速）
  */
 export function to3DTransform(transform: string): string {
-  return transform.replace(/translateX\(([^)]+)\)/g, 'translate3d($1, 0, 0)')
+  return transform
+    .replace(/translateX\(([^)]+)\)/g, 'translate3d($1, 0, 0)')
     .replace(/translateY\(([^)]+)\)/g, 'translate3d(0, $1, 0)')
     .replace(/translate\(([^,]+),\s*([^)]+)\)/g, 'translate3d($1, $2, 0)')
     .replace(/scale\(([^)]+)\)/g, 'scale3d($1, $1, 1)')
@@ -37,18 +38,18 @@ export function to3DTransform(transform: string): string {
  */
 export function canUseGPU(element: Element): boolean {
   const el = element as HTMLElement;
-  
+
   if (typeof window === 'undefined') return false;
-  
+
   const noGPU = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-    navigator.userAgent
+    navigator.userAgent,
   );
-  
+
   if (noGPU) {
     const hasGPU = el.style.transform !== undefined;
     return hasGPU;
   }
-  
+
   return true;
 }
 
@@ -60,7 +61,7 @@ export function enableGPUAcceleration(
   options: GPUAccelerationOptions = DEFAULT_GPU_OPTIONS,
 ): void {
   const { willChange = 'transform' } = options;
-  
+
   element.style.willChange = willChange;
   element.style.backfaceVisibility = 'hidden';
   element.style.perspective = '1000px';
@@ -83,13 +84,13 @@ export const GPU_PRESETS = {
    * 快速滑入（GPU 加速）
    */
   gpuSlideIn: {
-    from: { 
-      transform: 'translate3d(0, -100%, 0)', 
-      opacity: 0 
+    from: {
+      transform: 'translate3d(0, -100%, 0)',
+      opacity: 0,
     },
-    to: { 
-      transform: 'translate3d(0, 0, 0)', 
-      opacity: 1 
+    to: {
+      transform: 'translate3d(0, 0, 0)',
+      opacity: 1,
     },
   },
 
@@ -97,13 +98,13 @@ export const GPU_PRESETS = {
    * 快速滑出（GPU 加速）
    */
   gpuSlideOut: {
-    from: { 
-      transform: 'translate3d(0, 0, 0)', 
-      opacity: 1 
+    from: {
+      transform: 'translate3d(0, 0, 0)',
+      opacity: 1,
     },
-    to: { 
-      transform: 'translate3d(0, -100%, 0)', 
-      opacity: 0 
+    to: {
+      transform: 'translate3d(0, -100%, 0)',
+      opacity: 0,
     },
   },
 
@@ -111,13 +112,13 @@ export const GPU_PRESETS = {
    * 缩放进入（GPU 加速）
    */
   gpuZoomIn: {
-    from: { 
-      transform: 'translate3d(-50%, -50%, 0) scale(0)', 
-      opacity: 0 
+    from: {
+      transform: 'translate3d(-50%, -50%, 0) scale(0)',
+      opacity: 0,
     },
-    to: { 
-      transform: 'translate3d(-50%, -50%, 0) scale(1)', 
-      opacity: 1 
+    to: {
+      transform: 'translate3d(-50%, -50%, 0) scale(1)',
+      opacity: 1,
     },
   },
 
@@ -125,13 +126,13 @@ export const GPU_PRESETS = {
    * 缩放离开（GPU 加速）
    */
   gpuZoomOut: {
-    from: { 
-      transform: 'translate3d(-50%, -50%, 0) scale(1)', 
-      opacity: 1 
+    from: {
+      transform: 'translate3d(-50%, -50%, 0) scale(1)',
+      opacity: 1,
     },
-    to: { 
-      transform: 'translate3d(-50%, -50%, 0) scale(0)', 
-      opacity: 0 
+    to: {
+      transform: 'translate3d(-50%, -50%, 0) scale(0)',
+      opacity: 0,
     },
   },
 
@@ -139,13 +140,13 @@ export const GPU_PRESETS = {
    * 3D 旋转进入
    */
   rotate3dIn: {
-    from: { 
+    from: {
       transform: 'rotate3d(0, 1, 0, 90deg)',
-      opacity: 0 
+      opacity: 0,
     },
-    to: { 
+    to: {
       transform: 'rotate3d(0, 0, 0, 0deg)',
-      opacity: 1 
+      opacity: 1,
     },
   },
 
@@ -153,13 +154,13 @@ export const GPU_PRESETS = {
    * 3D 旋转离开
    */
   rotate3dOut: {
-    from: { 
+    from: {
       transform: 'rotate3d(0, 0, 0, 0deg)',
-      opacity: 1 
+      opacity: 1,
     },
-    to: { 
+    to: {
       transform: 'rotate3d(0, 1, 0, 90deg)',
-      opacity: 0 
+      opacity: 0,
     },
   },
 
@@ -167,25 +168,25 @@ export const GPU_PRESETS = {
    * 弹性弹跳（GPU 加速）
    */
   elasticBounce: {
-    '0%': { 
-      transform: 'translate3d(0, 0, 0) scale(1)', 
-      opacity: 1 
+    '0%': {
+      transform: 'translate3d(0, 0, 0) scale(1)',
+      opacity: 1,
     },
-    '30%': { 
-      transform: 'translate3d(0, -30px, 0) scale(1.1)', 
-      opacity: 1 
+    '30%': {
+      transform: 'translate3d(0, -30px, 0) scale(1.1)',
+      opacity: 1,
     },
-    '50%': { 
-      transform: 'translate3d(0, -15px, 0) scale(0.95)', 
-      opacity: 1 
+    '50%': {
+      transform: 'translate3d(0, -15px, 0) scale(0.95)',
+      opacity: 1,
     },
-    '70%': { 
-      transform: 'translate3d(0, -7px, 0) scale(1.02)', 
-      opacity: 1 
+    '70%': {
+      transform: 'translate3d(0, -7px, 0) scale(1.02)',
+      opacity: 1,
     },
-    '100%': { 
-      transform: 'translate3d(0, 0, 0) scale(1)', 
-      opacity: 1 
+    '100%': {
+      transform: 'translate3d(0, 0, 0) scale(1)',
+      opacity: 1,
     },
   },
 
@@ -193,17 +194,17 @@ export const GPU_PRESETS = {
    * 翻转进入
    */
   flipIn: {
-    from: { 
+    from: {
       transform: 'perspective(400px) rotate3d(1, 0, 0, 90deg)',
-      opacity: 0 
+      opacity: 0,
     },
-    '40%': { 
+    '40%': {
       transform: 'perspective(400px) rotate3d(1, 0, 0, -10deg)',
-      opacity: 1 
+      opacity: 1,
     },
-    '100%': { 
+    '100%': {
       transform: 'perspective(400px) rotate3d(1, 0, 0, 0deg)',
-      opacity: 1 
+      opacity: 1,
     },
   },
 
@@ -211,17 +212,17 @@ export const GPU_PRESETS = {
    * 翻转离开
    */
   flipOut: {
-    from: { 
+    from: {
       transform: 'perspective(400px) rotate3d(1, 0, 0, 0deg)',
-      opacity: 1 
+      opacity: 1,
     },
-    '30%': { 
+    '30%': {
       transform: 'perspective(400px) rotate3d(1, 0, 0, 20deg)',
-      opacity: 1 
+      opacity: 1,
     },
-    '100%': { 
+    '100%': {
       transform: 'perspective(400px) rotate3d(1, 0, 0, -90deg)',
-      opacity: 0 
+      opacity: 0,
     },
   },
 };
@@ -243,7 +244,7 @@ export class PerformanceOptimizer {
 
   private checkGPUAvailability(): boolean {
     if (typeof window === 'undefined') return false;
-    
+
     try {
       const canvas = document.createElement('canvas');
       const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
@@ -259,11 +260,11 @@ export class PerformanceOptimizer {
 
   shouldUseGPU(properties: string[]): boolean {
     if (!this.gpuEnabled) return false;
-    
+
     const gpuFriendly = ['transform', 'opacity', 'filter'];
-    
-    return properties.every(prop => 
-      gpuFriendly.some(gpuProp => prop.toLowerCase().includes(gpuProp))
+
+    return properties.every((prop) =>
+      gpuFriendly.some((gpuProp) => prop.toLowerCase().includes(gpuProp)),
     );
   }
 
@@ -275,7 +276,7 @@ export class PerformanceOptimizer {
 
   batchAnimation(id: string, update: () => void): void {
     this.batchedUpdates.set(id, update);
-    
+
     if (this.rafId === null) {
       this.rafId = requestAnimationFrame(() => {
         this.flushBatchedUpdates();
@@ -284,7 +285,7 @@ export class PerformanceOptimizer {
   }
 
   private flushBatchedUpdates(): void {
-    this.batchedUpdates.forEach(update => update());
+    this.batchedUpdates.forEach((update) => update());
     this.batchedUpdates.clear();
     this.rafId = null;
   }

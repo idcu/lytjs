@@ -70,7 +70,7 @@ export const VirtualList = defineComponent({
             style: `height: ${props.itemHeight}px;`,
             'data-index': actualIndex,
           },
-          slotContent
+          slotContent,
         );
       });
 
@@ -95,11 +95,11 @@ export const VirtualList = defineComponent({
                   class: 'lyt-virtual-list__visible',
                   style: `position: absolute; top: ${offset()}px; left: 0; right: 0;`,
                 },
-                items
+                items,
               ),
-            ]
+            ],
           ),
-        ]
+        ],
       );
     };
   },

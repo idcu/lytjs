@@ -14,7 +14,10 @@ import { createFilter, generateScopeId } from './utils';
 import { parseSFC, compileSFC } from '@lytjs/compiler/sfc';
 
 // HMR cache for tracking component updates
-const hmrCache = new Map<string, { script: string; template: string; styles: string[]; isVapor: boolean }>();
+const hmrCache = new Map<
+  string,
+  { script: string; template: string; styles: string[]; isVapor: boolean }
+>();
 
 // Route block collection
 const routeBlockMap = new Map<string, string>();
@@ -85,7 +88,7 @@ export default function lytjs(rawOptions: LytjsPluginOptions = {}): Plugin {
 
         // Handle <route> custom block
         const routeBlock = descriptor.customBlocks.find(
-          (block: SFCCustomBlock) => block.type === 'route'
+          (block: SFCCustomBlock) => block.type === 'route',
         );
         if (routeBlock) {
           // Store route info for later collection
@@ -108,7 +111,7 @@ export default function lytjs(rawOptions: LytjsPluginOptions = {}): Plugin {
           // Inject __scopeId into the component setup
           compiledCode = compiledCode.replace(
             /(export default\s*\{)/,
-            `$1\n  __scopeId: '${scopeId}',`
+            `$1\n  __scopeId: '${scopeId}',`,
           );
         }
 
@@ -165,7 +168,7 @@ if (import.meta.hot) {
             code: `
               export default function ErrorComponent() {
                 throw new Error(${JSON.stringify(
-                  error instanceof Error ? error.message : String(error)
+                  error instanceof Error ? error.message : String(error),
                 )});
               }
             `,

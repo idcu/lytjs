@@ -25,17 +25,17 @@ npx @lytjs/cli create my-app
 
 ## 命令列表
 
-| 命令 | 描述 |
-|------|------|
-| `lyt create` | 创建新的 LytJS 项目 |
-| `lyt dev` | 启动开发服务器 |
-| `lyt build` | 构建生产版本 |
-| `lyt test` | 运行测试 |
-| `lyt add` | 生成组件、页面或 store |
-| `lyt plugin` | 插件开发命令 |
-| `lyt templates` | 列出可用的项目模板 |
-| `lyt --version/-v` | 显示版本号 |
-| `lyt --help` | 显示帮助信息 |
+| 命令               | 描述                   |
+| ------------------ | ---------------------- |
+| `lyt create`       | 创建新的 LytJS 项目    |
+| `lyt dev`          | 启动开发服务器         |
+| `lyt build`        | 构建生产版本           |
+| `lyt test`         | 运行测试               |
+| `lyt add`          | 生成组件、页面或 store |
+| `lyt plugin`       | 插件开发命令           |
+| `lyt templates`    | 列出可用的项目模板     |
+| `lyt --version/-v` | 显示版本号             |
+| `lyt --help`       | 显示帮助信息           |
 
 ---
 
@@ -56,14 +56,14 @@ lyt create my-app --force
 
 ### 项目模板
 
-| 模板名 | 描述 |
-|--------|------|
+| 模板名    | 描述                                      |
+| --------- | ----------------------------------------- |
 | `default` | 默认模板，包含 TypeScript、Vite、测试支持 |
-| `minimal` | 最小化模板，无额外依赖 |
-| `ssr` | 支持 SSR 的模板 |
-| `router` | 集成 Router 的模板 |
-| `store` | 集成 Store 的模板 |
-| `full` | 全功能模板，包含 Router、Store 和 UI 组件 |
+| `minimal` | 最小化模板，无额外依赖                    |
+| `ssr`     | 支持 SSR 的模板                           |
+| `router`  | 集成 Router 的模板                        |
+| `store`   | 集成 Store 的模板                         |
+| `full`    | 全功能模板，包含 Router、Store 和 UI 组件 |
 
 ### 查看所有模板
 

@@ -21,9 +21,14 @@ const DEFAULT_CONFIG: CorsConfig = {
 export function createCorsMiddleware(config: CorsConfig = {}): Middleware {
   const finalConfig = { ...DEFAULT_CONFIG, ...config };
 
-  return async (request: Request, ctx: MiddlewareContext, next: () => Promise<void>): Promise<Response | void | undefined> => {
+  return async (
+    request: Request,
+    ctx: MiddlewareContext,
+    next: () => Promise<void>,
+  ): Promise<Response | void | undefined> => {
     const origin = request.headers.get('Origin');
-    const isPreflight = request.method === 'OPTIONS' && request.headers.has('Access-Control-Request-Method');
+    const isPreflight =
+      request.method === 'OPTIONS' && request.headers.has('Access-Control-Request-Method');
 
     // 设置 CORS 响应头
     const headers = new Headers();

@@ -20,12 +20,20 @@ export const Progress = defineComponent({
     strokeWidth: { type: Number, default: 6 },
     textInside: { type: Boolean, default: false },
     showText: { type: Boolean, default: true },
-    color: { type: [String, Array, Object] as unknown as PropType<string | string[] | Record<string, string>>, default: '' },
+    color: {
+      type: [String, Array, Object] as unknown as PropType<
+        string | string[] | Record<string, string>
+      >,
+      default: '',
+    },
     width: { type: Number, default: 126 },
     strokeLinecap: { type: String, default: 'round' },
     format: { type: Function, default: undefined },
     class: { type: String, default: '' },
-    style: { type: [String, Object] as unknown as PropType<string | Record<string, string>>, default: '' },
+    style: {
+      type: [String, Object] as unknown as PropType<string | Record<string, string>>,
+      default: '',
+    },
     id: { type: String, default: '' },
     ariaLabel: { type: String, default: '' },
     ariaDescribedBy: { type: String, default: '' },
@@ -107,22 +115,42 @@ export const Progress = defineComponent({
       const barStyle = getBarStyle.value;
       const innerContent: VNode[] = [];
       if (_props.textInside && _props.showText) {
-        innerContent.push(createVNode('div', { class: 'lyt-progress__inner-text' }, [createVNode('span', {}, formatText())]));
+        innerContent.push(
+          createVNode('div', { class: 'lyt-progress__inner-text' }, [
+            createVNode('span', {}, formatText()),
+          ]),
+        );
       }
 
-      children.push(createVNode('div', {
-        class: 'lyt-progress__outer',
-      }, [
-        createVNode('div', {
-          class: 'lyt-progress__inner',
-          style: barStyle,
-        }, innerContent),
-      ]));
+      children.push(
+        createVNode(
+          'div',
+          {
+            class: 'lyt-progress__outer',
+          },
+          [
+            createVNode(
+              'div',
+              {
+                class: 'lyt-progress__inner',
+                style: barStyle,
+              },
+              innerContent,
+            ),
+          ],
+        ),
+      );
 
       if (_props.showText && !_props.textInside) {
-        children.push(createVNode('div', {
-          class: 'lyt-progress__text',
-        }, [createVNode('span', {}, formatText())]));
+        children.push(
+          createVNode(
+            'div',
+            {
+              class: 'lyt-progress__text',
+            },
+            [createVNode('span', {}, formatText())],
+          ),
+        );
       }
 
       return children;
@@ -136,35 +164,55 @@ export const Progress = defineComponent({
 
       const children: VNode[] = [];
 
-      children.push(createVNode('svg', {
-        class: 'lyt-progress__circle',
-        viewBox: '0 0 100 100',
-        width: _props.width,
-        height: _props.width,
-      }, [
-        createVNode('path', {
-          class: 'lyt-progress__circle-trail',
-          d: `M 50 50 m 0,-${radius} a ${radius},${radius} 0 1 1 0,${radius * 2} a ${radius},${radius} 0 1 1 0,-${radius * 2}`,
-          stroke: '#e5e9f2',
-          strokeWidth: _props.strokeWidth,
-          fill: 'none',
-        }, []),
-        createVNode('path', {
-          class: 'lyt-progress__circle-path',
-          d: `M 50 50 m 0,-${radius} a ${radius},${radius} 0 1 1 0,${radius * 2} a ${radius},${radius} 0 1 1 0,-${radius * 2}`,
-          stroke: barStyle.backgroundColor || '#409eff',
-          strokeWidth: _props.strokeWidth,
-          fill: 'none',
-          strokeDasharray: `${circumference}px, ${circumference}px`,
-          strokeDashoffset: `${strokeDashoffset}px`,
-          strokeLinecap: _props.strokeLinecap,
-        }, []),
-      ]));
+      children.push(
+        createVNode(
+          'svg',
+          {
+            class: 'lyt-progress__circle',
+            viewBox: '0 0 100 100',
+            width: _props.width,
+            height: _props.width,
+          },
+          [
+            createVNode(
+              'path',
+              {
+                class: 'lyt-progress__circle-trail',
+                d: `M 50 50 m 0,-${radius} a ${radius},${radius} 0 1 1 0,${radius * 2} a ${radius},${radius} 0 1 1 0,-${radius * 2}`,
+                stroke: '#e5e9f2',
+                strokeWidth: _props.strokeWidth,
+                fill: 'none',
+              },
+              [],
+            ),
+            createVNode(
+              'path',
+              {
+                class: 'lyt-progress__circle-path',
+                d: `M 50 50 m 0,-${radius} a ${radius},${radius} 0 1 1 0,${radius * 2} a ${radius},${radius} 0 1 1 0,-${radius * 2}`,
+                stroke: barStyle.backgroundColor || '#409eff',
+                strokeWidth: _props.strokeWidth,
+                fill: 'none',
+                strokeDasharray: `${circumference}px, ${circumference}px`,
+                strokeDashoffset: `${strokeDashoffset}px`,
+                strokeLinecap: _props.strokeLinecap,
+              },
+              [],
+            ),
+          ],
+        ),
+      );
 
       if (_props.showText) {
-        children.push(createVNode('div', {
-          class: 'lyt-progress__text',
-        }, [createVNode('span', {}, formatText())]));
+        children.push(
+          createVNode(
+            'div',
+            {
+              class: 'lyt-progress__text',
+            },
+            [createVNode('span', {}, formatText())],
+          ),
+        );
       }
 
       return children;
@@ -179,17 +227,21 @@ export const Progress = defineComponent({
         content = renderLine();
       }
 
-      return createVNode('div', {
-        id: _props.id as string,
-        'aria-label': _props.ariaLabel as string || 'Progress',
-        'aria-describedby': _props.ariaDescribedBy as string,
-        role: 'progressbar',
-        'aria-valuenow': String(validPercentage.value),
-        'aria-valuemin': '0',
-        'aria-valuemax': '100',
-        class: getProgressClass(),
-        style: getProgressStyle(),
-      }, content);
+      return createVNode(
+        'div',
+        {
+          id: _props.id as string,
+          'aria-label': (_props.ariaLabel as string) || 'Progress',
+          'aria-describedby': _props.ariaDescribedBy as string,
+          role: 'progressbar',
+          'aria-valuenow': String(validPercentage.value),
+          'aria-valuemin': '0',
+          'aria-valuemax': '100',
+          class: getProgressClass(),
+          style: getProgressStyle(),
+        },
+        content,
+      );
     };
   },
 });

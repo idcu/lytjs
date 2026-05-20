@@ -143,7 +143,7 @@ describe('Store Inspector', () => {
     it('should return registered store states', () => {
       const store = { count: 42, $id: 'counter' };
       registerStore('counter', store);
-      
+
       const states = getStoreStates();
       expect(states).toHaveLength(1);
       expect(states[0].id).toBe('counter');
@@ -159,7 +159,7 @@ describe('Store Inspector', () => {
     it('should return state for registered store', () => {
       const store = { value: 'test' };
       registerStore('myStore', store);
-      
+
       const state = getStoreState('myStore');
       expect(state).not.toBeNull();
       expect(state?.state.value).toBe('test');
@@ -347,7 +347,7 @@ describe('Route Inspector', () => {
         }),
       };
       registerRouter(mockRouter);
-      
+
       const route = getCurrentRoute();
       expect(route).not.toBeNull();
       expect(route?.path).toBe('/home');
@@ -479,7 +479,7 @@ describe('Component Tree', () => {
         ],
       };
       registerRootComponent(mockComponent);
-      
+
       const tree = getComponentTree();
       expect(tree).toHaveLength(1);
       expect(tree[0].name).toBe('App');
@@ -514,7 +514,7 @@ describe('信号检查器', () => {
     it('应该注册信号', () => {
       const mockSignal = { value: 0 };
       registerSignal(mockSignal as any, 'count', 'signal');
-      
+
       const signals = getSignalNodes();
       expect(signals).toHaveLength(1);
       expect(signals[0].name).toBe('count');
@@ -526,7 +526,7 @@ describe('信号检查器', () => {
     it('应该返回所有信号节点', () => {
       registerSignal({ value: 0 } as any, 'count', 'signal');
       registerSignal({ value: '' } as any, 'name', 'signal');
-      
+
       const nodes = getSignalNodes();
       expect(nodes).toHaveLength(2);
     });
@@ -540,39 +540,39 @@ describe('信号检查器', () => {
   describe('快照功能', () => {
     it('应该创建快照', () => {
       registerSignal({ value: 42 } as any, 'count', 'signal');
-      
+
       const snapshotId = createSnapshot('test-snapshot');
-      
+
       expect(snapshotId).toBeDefined();
       expect(typeof snapshotId).toBe('string');
     });
 
     it('应该获取所有快照', () => {
       registerSignal({ value: 0 } as any, 'count', 'signal');
-      
+
       createSnapshot('snapshot-1');
       createSnapshot('snapshot-2');
-      
+
       const snapshots = getSnapshots();
       expect(snapshots).toHaveLength(2);
     });
 
     it('应该清除所有快照', () => {
       registerSignal({ value: 0 } as any, 'count', 'signal');
-      
+
       createSnapshot('to-be-cleared');
       clearSnapshots();
-      
+
       const snapshots = getSnapshots();
       expect(snapshots).toHaveLength(0);
     });
 
     it('应该获取时间旅行状态', () => {
       registerSignal({ value: 0 } as any, 'count', 'signal');
-      
+
       createSnapshot('snapshot-1');
       createSnapshot('snapshot-2');
-      
+
       const state = getTimeTravelState();
       expect(state.snapshots).toHaveLength(2);
       expect(state.canUndo).toBe(false);
@@ -583,7 +583,7 @@ describe('信号检查器', () => {
   describe('依赖图', () => {
     it('应该返回依赖图', () => {
       registerSignal({ value: 0 } as any, 'count', 'signal');
-      
+
       const graph = getDependencyGraph();
       expect(graph).toBeDefined();
       expect(graph.nodes).toBeDefined();
@@ -657,7 +657,7 @@ describe('基准测试', () => {
         iterations: 5,
         warmup: 1,
         asyncFn: async () => {
-          await new Promise(resolve => setTimeout(resolve, 1));
+          await new Promise((resolve) => setTimeout(resolve, 1));
         },
       });
 
@@ -693,7 +693,7 @@ describe('基准测试', () => {
   describe('getLatestBenchmarkResult', () => {
     it('应该获取最新的基准测试结果', () => {
       runBenchmark({ name: 'latest-test', iterations: 5, fn: () => {} });
-      
+
       const latest = getLatestBenchmarkResult('latest-test');
       expect(latest).toBeDefined();
       expect(latest?.name).toBe('latest-test');
@@ -707,16 +707,16 @@ describe('基准测试', () => {
 
   describe('compareBenchmarkResults', () => {
     it('应该比较两个基准测试结果', () => {
-      const result1 = runBenchmark({ 
-        name: 'compare-test', 
-        iterations: 10, 
-        fn: () => {} 
+      const result1 = runBenchmark({
+        name: 'compare-test',
+        iterations: 10,
+        fn: () => {},
       });
-      
-      const result2 = runBenchmark({ 
-        name: 'compare-test', 
-        iterations: 10, 
-        fn: () => {} 
+
+      const result2 = runBenchmark({
+        name: 'compare-test',
+        iterations: 10,
+        fn: () => {},
       });
 
       const comparison = compareBenchmarkResults(result1, result2);
@@ -729,9 +729,9 @@ describe('基准测试', () => {
   describe('clearBenchmarkResults', () => {
     it('应该清除所有基准测试结果', () => {
       runBenchmark({ name: 'clear-test', iterations: 5, fn: () => {} });
-      
+
       clearBenchmarkResults();
-      
+
       const results = getBenchmarkResults();
       expect(results).toHaveLength(0);
     });
@@ -739,12 +739,12 @@ describe('基准测试', () => {
     it('应该按名称清除基准测试结果', () => {
       runBenchmark({ name: 'keep-this', iterations: 5, fn: () => {} });
       runBenchmark({ name: 'clear-this', iterations: 5, fn: () => {} });
-      
+
       clearBenchmarkResults('clear-this');
-      
+
       const keepResults = getBenchmarkResults('keep-this');
       const clearResults = getBenchmarkResults('clear-this');
-      
+
       expect(keepResults).toHaveLength(1);
       expect(clearResults).toHaveLength(0);
     });
@@ -753,7 +753,7 @@ describe('基准测试', () => {
   describe('createRegressionDetector', () => {
     it('应该创建性能回归检测器', () => {
       const detector = createRegressionDetector(0.1);
-      
+
       expect(detector).toBeDefined();
       expect(typeof detector.addResult).toBe('function');
       expect(typeof detector.getHistory).toBe('function');
@@ -765,8 +765,8 @@ describe('基准测试', () => {
     it('应该提供预定义的大规模测试场景', () => {
       expect(Array.isArray(LARGE_SCALE_SCENARIOS)).toBe(true);
       expect(LARGE_SCALE_SCENARIOS.length).toBeGreaterThan(0);
-      
-      LARGE_SCALE_SCENARIOS.forEach(scenario => {
+
+      LARGE_SCALE_SCENARIOS.forEach((scenario) => {
         expect(typeof scenario.name).toBe('string');
         expect(typeof scenario.nodeCount).toBe('number');
         expect(typeof scenario.description).toBe('string');
@@ -778,7 +778,7 @@ describe('基准测试', () => {
 // 辅助函数 - 清除信号注册表（用于测试）
 function clearSignalRegistry() {
   const signals = getSignalNodes();
-  signals.forEach(signal => {
+  signals.forEach((signal) => {
     unregisterSignal(signal.name);
   });
 }

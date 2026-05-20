@@ -109,47 +109,60 @@ export const VaporInput = {
     };
 
     return () => {
-      const inputElement = p.type === 'textarea'
-        ? createVNode('textarea', {
-            class: getClasses(),
-            style: p.style as string || undefined,
-            placeholder: p.placeholder as string || undefined,
-            disabled: p.disabled || undefined,
-            readonly: p.readonly || undefined,
-            value: inputValue(),
-            onInput: handleInput,
-            onChange: handleChange,
-            onFocus: handleFocus,
-            onBlur: handleBlur,
-          })
-        : createVNode('input', {
-            type: getType(),
-            class: getClasses(),
-            style: p.style as string || undefined,
-            placeholder: p.placeholder as string || undefined,
-            disabled: p.disabled || undefined,
-            readonly: p.readonly || undefined,
-            value: inputValue(),
-            onInput: handleInput,
-            onChange: handleChange,
-            onFocus: handleFocus,
-            onBlur: handleBlur,
-          });
+      const inputElement =
+        p.type === 'textarea'
+          ? createVNode('textarea', {
+              class: getClasses(),
+              style: (p.style as string) || undefined,
+              placeholder: (p.placeholder as string) || undefined,
+              disabled: p.disabled || undefined,
+              readonly: p.readonly || undefined,
+              value: inputValue(),
+              onInput: handleInput,
+              onChange: handleChange,
+              onFocus: handleFocus,
+              onBlur: handleBlur,
+            })
+          : createVNode('input', {
+              type: getType(),
+              class: getClasses(),
+              style: (p.style as string) || undefined,
+              placeholder: (p.placeholder as string) || undefined,
+              disabled: p.disabled || undefined,
+              readonly: p.readonly || undefined,
+              value: inputValue(),
+              onInput: handleInput,
+              onChange: handleChange,
+              onFocus: handleFocus,
+              onBlur: handleBlur,
+            });
 
       const children: VNode[] = [inputElement];
 
       if (p.clearable && inputValue() && !p.disabled) {
-        children.push(createVNode('span', {
-          class: 'vapor-input__clear',
-          onClick: handleClear,
-        }, [createTextVNode('×')]));
+        children.push(
+          createVNode(
+            'span',
+            {
+              class: 'vapor-input__clear',
+              onClick: handleClear,
+            },
+            [createTextVNode('×')],
+          ),
+        );
       }
 
       if (p.type === 'password' && p.showPassword) {
-        children.push(createVNode('span', {
-          class: 'vapor-input__password',
-          onClick: togglePassword,
-        }, [createTextVNode(showPwd() ? '🙈' : '👁')]));
+        children.push(
+          createVNode(
+            'span',
+            {
+              class: 'vapor-input__password',
+              onClick: togglePassword,
+            },
+            [createTextVNode(showPwd() ? '🙈' : '👁')],
+          ),
+        );
       }
 
       return createVNode('div', { class: getWrapperClasses() }, children);

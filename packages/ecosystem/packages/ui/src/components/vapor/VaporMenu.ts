@@ -71,12 +71,16 @@ export const VaporSubMenu = {
   setup(_props: Record<string, unknown>, { slots }: { slots: { default?: () => VNode[] } }) {
     return () => {
       const children = slots.default?.() || [];
-      return createVNode('div', {
-        class: 'vapor-menu__submenu',
-      }, [
-        createVNode('div', { class: 'vapor-menu__submenu-title' }, []),
-        createVNode('div', { class: 'vapor-menu__submenu-content' }, children),
-      ]);
+      return createVNode(
+        'div',
+        {
+          class: 'vapor-menu__submenu',
+        },
+        [
+          createVNode('div', { class: 'vapor-menu__submenu-title' }, []),
+          createVNode('div', { class: 'vapor-menu__submenu-content' }, children),
+        ],
+      );
     };
   },
 };
@@ -135,56 +139,70 @@ export const VaporMenu = {
         itemChildren.push(createVNode('span', { class: 'vapor-menu__icon' }, [item.icon]));
       }
 
-      itemChildren.push(createVNode('span', { class: 'vapor-menu__title' }, [
-        createVNode('span', {}, item.label),
-      ]));
+      itemChildren.push(
+        createVNode('span', { class: 'vapor-menu__title' }, [createVNode('span', {}, item.label)]),
+      );
 
       if (hasChildren) {
-        itemChildren.push(createVNode('span', { class: 'vapor-menu__arrow' }, [
-          createVNode('span', {}, isOpened ? '▲' : '▼'),
-        ]));
-
-        const submenuChildren: VNode[] = (item.children || []).map(child =>
-          renderMenuItem(child, depth + 1)
+        itemChildren.push(
+          createVNode('span', { class: 'vapor-menu__arrow' }, [
+            createVNode('span', {}, isOpened ? '▲' : '▼'),
+          ]),
         );
 
-        itemChildren.push(createVNode('div', {
-          class: ['vapor-menu__submenu', isOpened ? 'vapor-menu__submenu--opened' : ''].filter(Boolean).join(' '),
-        }, [
-          createVNode('ul', { class: 'vapor-menu__submenu-list' }, submenuChildren),
-        ]));
+        const submenuChildren: VNode[] = (item.children || []).map((child) =>
+          renderMenuItem(child, depth + 1),
+        );
+
+        itemChildren.push(
+          createVNode(
+            'div',
+            {
+              class: ['vapor-menu__submenu', isOpened ? 'vapor-menu__submenu--opened' : '']
+                .filter(Boolean)
+                .join(' '),
+            },
+            [createVNode('ul', { class: 'vapor-menu__submenu-list' }, submenuChildren)],
+          ),
+        );
       }
 
-      return createVNode('li', {
-        class: [
-          'vapor-menu__item',
-          isActive ? 'vapor-menu__item--active' : '',
-          item.disabled ? 'vapor-menu__item--disabled' : '',
-        ].filter(Boolean).join(' '),
-        onClick: () => {
-          if (item.disabled) return;
-          if (hasChildren) {
-            toggleSubmenu(item.index);
-          } else {
-            handleSelect(item.index);
-          }
+      return createVNode(
+        'li',
+        {
+          class: [
+            'vapor-menu__item',
+            isActive ? 'vapor-menu__item--active' : '',
+            item.disabled ? 'vapor-menu__item--disabled' : '',
+          ]
+            .filter(Boolean)
+            .join(' '),
+          onClick: () => {
+            if (item.disabled) return;
+            if (hasChildren) {
+              toggleSubmenu(item.index);
+            } else {
+              handleSelect(item.index);
+            }
+          },
         },
-      }, itemChildren);
+        itemChildren,
+      );
     };
 
     return () => {
-      const menuClass = [
-        'vapor-menu',
-        `vapor-menu--${p.mode}`,
-        p.class,
-      ].filter(Boolean).join(' ');
+      const menuClass = ['vapor-menu', `vapor-menu--${p.mode}`, p.class].filter(Boolean).join(' ');
 
       const items = p.items || [];
-      const menuItems: VNode[] = items.map(item => renderMenuItem(item));
+      const menuItems: VNode[] = items.map((item) => renderMenuItem(item));
 
-      return createVNode('ul', {
-        class: menuClass,
-      }, menuItems);
+      return createVNode(
+        'ul',
+        {
+          class: menuClass,
+        },
+        menuItems,
+      );
     };
   },
 };

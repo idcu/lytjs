@@ -193,11 +193,7 @@ function hydrateComment(
 // FIX: P2-61 将 Element 匹配成功的水合逻辑提取为独立函数
 // ============================================================
 
-function hydrateMatchedElement(
-  vnode: VNode,
-  existingNode: Node,
-  host: WebRendererHost,
-): number {
+function hydrateMatchedElement(vnode: VNode, existingNode: Node, host: WebRendererHost): number {
   const { shapeFlag, children, props } = vnode;
   vnode.el = existingNode as Element;
 

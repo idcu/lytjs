@@ -444,24 +444,24 @@ describe('defineCustomElement shadow DOM 高级用例', () => {
   });
 
   it('should support closed shadow DOM mode', () => {
-      const MyComponent = {
-        name: 'closed-shadow-component',
-        render() {
-          return null;
-        },
-      };
+    const MyComponent = {
+      name: 'closed-shadow-component',
+      render() {
+        return null;
+      },
+    };
 
-      defineCustomElement(MyComponent, {
-        name: 'test-closed-shadow-el',
-        shadowRoot: false, // 使用 false 来禁用 shadow DOM
-      });
-
-      const el = document.createElement('test-closed-shadow-el');
-      container.appendChild(el);
-
-      // 当 shadowRoot 设置为 false 时，不应该创建 shadow DOM
-      expect(el.shadowRoot).toBeNull();
+    defineCustomElement(MyComponent, {
+      name: 'test-closed-shadow-el',
+      shadowRoot: false, // 使用 false 来禁用 shadow DOM
     });
+
+    const el = document.createElement('test-closed-shadow-el');
+    container.appendChild(el);
+
+    // 当 shadowRoot 设置为 false 时，不应该创建 shadow DOM
+    expect(el.shadowRoot).toBeNull();
+  });
 
   it('should inject multiple styles', () => {
     const MyComponent = {
@@ -502,11 +502,11 @@ describe('defineCustomElement 生命周期', () => {
   });
 
   it('should call adoptedCallback when element is moved', () => {
-      // 注意：adoptedCallback 只在元素被移动到不同的 document 时触发
-      // 同一 document 内的移动不会触发，所以我们跳过这个测试
-      // 或者调整测试内容
-      expect(true).toBe(true);
-    });
+    // 注意：adoptedCallback 只在元素被移动到不同的 document 时触发
+    // 同一 document 内的移动不会触发，所以我们跳过这个测试
+    // 或者调整测试内容
+    expect(true).toBe(true);
+  });
 
   it('should call attributeChangedCallback when attribute changes', () => {
     const attributeChanged = vi.fn();

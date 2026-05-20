@@ -20,9 +20,15 @@ export const Step = defineComponent({
     title: { type: String, default: '' },
     description: { type: String, default: '' },
     icon: { type: [String, Object] as unknown as PropType<string | VNode>, default: '' },
-    status: { type: String as () => 'wait' | 'process' | 'finish' | 'error' | 'success', default: '' },
+    status: {
+      type: String as () => 'wait' | 'process' | 'finish' | 'error' | 'success',
+      default: '',
+    },
     class: { type: String, default: '' },
-    style: { type: [String, Object] as unknown as PropType<string | Record<string, string>>, default: '' },
+    style: {
+      type: [String, Object] as unknown as PropType<string | Record<string, string>>,
+      default: '',
+    },
     id: { type: String, default: '' },
     ariaLabel: { type: String, default: '' },
     ariaDescribedBy: { type: String, default: '' },
@@ -69,11 +75,11 @@ export const Step = defineComponent({
 
     return () => {
       const children: VNode[] = [];
-      
+
       children.push(renderIcon());
-      
+
       const contentChildren: VNode[] = [];
-      
+
       if (slots.title || _props.title) {
         const titleChildren: VNode[] = [];
         if (slots.title) {
@@ -86,7 +92,7 @@ export const Step = defineComponent({
         }
         contentChildren.push(createVNode('div', { class: 'lyt-step__title' }, titleChildren));
       }
-      
+
       if (slots.description || _props.description) {
         const descChildren: VNode[] = [];
         if (slots.description) {
@@ -99,17 +105,24 @@ export const Step = defineComponent({
         }
         contentChildren.push(createVNode('div', { class: 'lyt-step__description' }, descChildren));
       }
-      
+
       children.push(createVNode('div', { class: 'lyt-step__content' }, contentChildren));
 
-      return createVNode('div', mergeA11yProps({
-        id: _props.id,
-        'aria-label': _props.ariaLabel || _props.title,
-        'aria-describedby': _props.ariaDescribedBy,
-      }, {
-        class: getStepClass(),
-        style: getStepStyle(),
-      }), children);
+      return createVNode(
+        'div',
+        mergeA11yProps(
+          {
+            id: _props.id,
+            'aria-label': _props.ariaLabel || _props.title,
+            'aria-describedby': _props.ariaDescribedBy,
+          },
+          {
+            class: getStepClass(),
+            style: getStepStyle(),
+          },
+        ),
+        children,
+      );
     };
   },
 });

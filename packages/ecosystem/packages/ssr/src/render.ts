@@ -22,7 +22,9 @@ function escapeHtml(str: string): string {
 /**
  * 渲染 VNode 为 HTML 字符串
  */
-export function renderToString(vnode: VNode | VNode[] | string | number | null | undefined): string {
+export function renderToString(
+  vnode: VNode | VNode[] | string | number | null | undefined,
+): string {
   // 处理 null/undefined
   if (vnode === null || vnode === undefined) {
     return '';
@@ -40,7 +42,7 @@ export function renderToString(vnode: VNode | VNode[] | string | number | null |
 
   // 处理数组
   if (isArray(vnode)) {
-    return vnode.map(child => renderToString(child)).join('');
+    return vnode.map((child) => renderToString(child)).join('');
   }
 
   // 处理 VNode 对象
@@ -65,15 +67,32 @@ export function renderToString(vnode: VNode | VNode[] | string | number | null |
   if (isString(node.type)) {
     const tag = node.type;
     const props = node.props || {};
-    
+
     // 自闭合标签
-    const voidTags = ['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr'];
+    const voidTags = [
+      'area',
+      'base',
+      'br',
+      'col',
+      'embed',
+      'hr',
+      'img',
+      'input',
+      'link',
+      'meta',
+      'param',
+      'source',
+      'track',
+      'wbr',
+    ];
     if (voidTags.includes(tag)) {
       return `<${tag}${renderAttributes(props)}>`;
     }
 
     // 渲染子元素
-    const children = renderToString(node.children as VNode | VNode[] | string | number | null | undefined);
+    const children = renderToString(
+      node.children as VNode | VNode[] | string | number | null | undefined,
+    );
 
     return `<${tag}${renderAttributes(props)}>${children}</${tag}>`;
   }
@@ -96,8 +115,11 @@ function renderAttributes(props: Record<string, unknown>): string {
     // 处理 class
     if (key === 'class' || key === 'className') {
       if (value) {
-        const classValue = isObject(value) 
-          ? Object.entries(value).filter(([, v]) => v).map(([k]) => k).join(' ')
+        const classValue = isObject(value)
+          ? Object.entries(value)
+              .filter(([, v]) => v)
+              .map(([k]) => k)
+              .join(' ')
           : String(value);
         if (classValue) {
           attrs.push(` class="${escapeHtml(classValue)}"`);
@@ -110,7 +132,9 @@ function renderAttributes(props: Record<string, unknown>): string {
     if (key === 'style') {
       if (value) {
         const styleValue = isObject(value)
-          ? Object.entries(value).map(([k, v]) => `${k}:${v}`).join(';')
+          ? Object.entries(value)
+              .map(([k, v]) => `${k}:${v}`)
+              .join(';')
           : String(value);
         if (styleValue) {
           attrs.push(` style="${escapeHtml(styleValue)}"`);
@@ -147,7 +171,7 @@ export function renderToHtml(
     lang?: string;
     head?: string;
     bodyAttrs?: Record<string, string>;
-  } = {}
+  } = {},
 ): string {
   const { title = 'LytJS App', lang = 'zh-CN', head = '', bodyAttrs = {} } = options;
 

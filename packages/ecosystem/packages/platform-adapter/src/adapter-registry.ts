@@ -34,9 +34,7 @@ class AdapterRegistry {
    */
   register(adapter: PlatformAdapter): void {
     if (!isString(adapter.name) || adapter.name.length === 0) {
-      throw new Error(
-        '[platform-adapter] 适配器名称不能为空',
-      );
+      throw new Error('[platform-adapter] 适配器名称不能为空');
     }
     this.adapters.set(adapter.name, adapter);
   }

@@ -59,16 +59,26 @@ export const VaporTag = {
       const children: VNode[] = [createVNode('slot', {}, [])];
 
       if (p.closable) {
-        children.push(createVNode('span', {
-          class: 'vapor-tag__close',
-          onClick: handleClose,
-        }, [createTextVNode('×')]));
+        children.push(
+          createVNode(
+            'span',
+            {
+              class: 'vapor-tag__close',
+              onClick: handleClose,
+            },
+            [createTextVNode('×')],
+          ),
+        );
       }
 
-      return createVNode('span', {
-        class: getClasses(),
-        style: getStyle() || undefined,
-      }, children);
+      return createVNode(
+        'span',
+        {
+          class: getClasses(),
+          style: getStyle() || undefined,
+        },
+        children,
+      );
     };
   },
 };

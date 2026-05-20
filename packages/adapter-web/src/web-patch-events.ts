@@ -7,11 +7,7 @@
  * 通过对象池复用 invoker 对象，减少内存分配和垃圾回收压力
  */
 
-import {
-  normalizeEventName,
-  getEventKey,
-  parseEventModifier,
-} from '@lytjs/common-events';
+import { normalizeEventName, getEventKey, parseEventModifier } from '@lytjs/common-events';
 
 // ============================================================
 // Types
@@ -208,11 +204,7 @@ export function patchEvent(
     // 确保移除时的 options 与绑定时完全一致
     // FIX: DTS build error - existingInvoker._parsed 可能为 undefined
     const removeOptions = buildEventListenerOptions(existingInvoker._parsed!);
-    el.removeEventListener(
-      existingInvoker._parsed!.name,
-      existingInvoker,
-      removeOptions,
-    );
+    el.removeEventListener(existingInvoker._parsed!.name, existingInvoker, removeOptions);
     // FIX: P1-12 DOM-NEW-01 - 将 invoker 归还到对象池
     releaseInvoker(existingInvoker);
     invokers[eventKey] = undefined;

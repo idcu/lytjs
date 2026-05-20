@@ -20,7 +20,10 @@ export const CarouselItem = defineComponent({
     name: { type: [String, Number] as unknown as PropType<string | number>, default: '' },
     label: { type: String, default: '' },
     class: { type: String, default: '' },
-    style: { type: [String, Object] as unknown as PropType<string | Record<string, string>>, default: '' },
+    style: {
+      type: [String, Object] as unknown as PropType<string | Record<string, string>>,
+      default: '',
+    },
     id: { type: String, default: '' },
     ariaLabel: { type: String, default: '' },
     ariaDescribedBy: { type: String, default: '' },
@@ -60,14 +63,21 @@ export const CarouselItem = defineComponent({
         }
       }
 
-      return createVNode('div', mergeA11yProps({
-        id: _props.id as string,
-        'aria-label': (_props.ariaLabel as string) || (_props.label as string),
-        'aria-describedby': _props.ariaDescribedBy as string,
-      }, {
-        class: getCarouselItemClass(),
-        style: getCarouselItemStyle(),
-      }), children);
+      return createVNode(
+        'div',
+        mergeA11yProps(
+          {
+            id: _props.id as string,
+            'aria-label': (_props.ariaLabel as string) || (_props.label as string),
+            'aria-describedby': _props.ariaDescribedBy as string,
+          },
+          {
+            class: getCarouselItemClass(),
+            style: getCarouselItemStyle(),
+          },
+        ),
+        children,
+      );
     };
   },
 });

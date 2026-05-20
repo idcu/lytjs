@@ -1,23 +1,24 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 // jsdom 环境下 KeyboardEvent 可能未定义，使用 Event 替代
-const KeyboardEventCtor = (typeof KeyboardEvent !== 'undefined')
-  ? KeyboardEvent
-  : class extends Event {
-      key: string;
-      ctrlKey: boolean;
-      shiftKey: boolean;
-      altKey: boolean;
-      metaKey: boolean;
-      constructor(type: string, init: Record<string, unknown> = {}) {
-        super(type, init);
-        this.key = (init.key as string) || '';
-        this.ctrlKey = (init.ctrlKey as boolean) || false;
-        this.shiftKey = (init.shiftKey as boolean) || false;
-        this.altKey = (init.altKey as boolean) || false;
-        this.metaKey = (init.metaKey as boolean) || false;
-      }
-    };
+const KeyboardEventCtor =
+  typeof KeyboardEvent !== 'undefined'
+    ? KeyboardEvent
+    : class extends Event {
+        key: string;
+        ctrlKey: boolean;
+        shiftKey: boolean;
+        altKey: boolean;
+        metaKey: boolean;
+        constructor(type: string, init: Record<string, unknown> = {}) {
+          super(type, init);
+          this.key = (init.key as string) || '';
+          this.ctrlKey = (init.ctrlKey as boolean) || false;
+          this.shiftKey = (init.shiftKey as boolean) || false;
+          this.altKey = (init.altKey as boolean) || false;
+          this.metaKey = (init.metaKey as boolean) || false;
+        }
+      };
 
 import {
   matchShortcut,

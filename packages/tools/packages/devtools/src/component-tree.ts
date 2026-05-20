@@ -38,7 +38,7 @@ export function unregisterComponent(id: string): void {
   if (component?.parentId) {
     const parent = components.get(component.parentId);
     if (parent) {
-      parent.children = parent.children.filter(cid => cid !== id);
+      parent.children = parent.children.filter((cid) => cid !== id);
     }
   }
   components.delete(id);
@@ -53,7 +53,7 @@ export function getAllComponents(): ComponentInfo[] {
 }
 
 export function getRootComponents(): ComponentInfo[] {
-  return Array.from(components.values()).filter(c => !c.parentId);
+  return Array.from(components.values()).filter((c) => !c.parentId);
 }
 
 export function clearComponents(): void {

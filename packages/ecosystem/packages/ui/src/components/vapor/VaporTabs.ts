@@ -73,43 +73,55 @@ export const VaporTabs = {
       const panes = p.panes || [];
       const currentName = p.modelValue || panes[0]?.name;
 
-      const tabsClass = [
-        'vapor-tabs',
-        `vapor-tabs--${p.type || 'normal'}`,
-        p.class,
-      ].filter(Boolean).join(' ');
+      const tabsClass = ['vapor-tabs', `vapor-tabs--${p.type || 'normal'}`, p.class]
+        .filter(Boolean)
+        .join(' ');
 
       const tabItems: VNode[] = panes.map((pane, index) => {
         const isActive = pane.name === currentName;
 
         const tabChildren: VNode[] = [
-          createVNode('span', { class: 'vapor-tabs__label' }, [createVNode('span', {}, pane.label)]),
+          createVNode('span', { class: 'vapor-tabs__label' }, [
+            createVNode('span', {}, pane.label),
+          ]),
         ];
 
         if (pane.closable || p.closable) {
-          tabChildren.push(createVNode('span', {
-            class: 'vapor-tabs__close',
-            onClick: (e: Event) => {
-              e.stopPropagation();
-              p.onTabRemove?.(pane.name);
-            },
-          }, [createVNode('span', {}, '×')]));
+          tabChildren.push(
+            createVNode(
+              'span',
+              {
+                class: 'vapor-tabs__close',
+                onClick: (e: Event) => {
+                  e.stopPropagation();
+                  p.onTabRemove?.(pane.name);
+                },
+              },
+              [createVNode('span', {}, '×')],
+            ),
+          );
         }
 
-        return createVNode('div', {
-          key: pane.name,
-          class: [
-            'vapor-tabs__item',
-            isActive ? 'vapor-tabs__item--active' : '',
-            pane.disabled ? 'vapor-tabs__item--disabled' : '',
-          ].filter(Boolean).join(' '),
-          onClick: () => {
-            if (!pane.disabled) {
-              p.onChange?.(pane.name);
-              p.onTabClick?.(pane, index);
-            }
+        return createVNode(
+          'div',
+          {
+            key: pane.name,
+            class: [
+              'vapor-tabs__item',
+              isActive ? 'vapor-tabs__item--active' : '',
+              pane.disabled ? 'vapor-tabs__item--disabled' : '',
+            ]
+              .filter(Boolean)
+              .join(' '),
+            onClick: () => {
+              if (!pane.disabled) {
+                p.onChange?.(pane.name);
+                p.onTabClick?.(pane, index);
+              }
+            },
           },
-        }, tabChildren);
+          tabChildren,
+        );
       });
 
       return createVNode('div', { class: tabsClass }, [

@@ -43,9 +43,11 @@ const chain = createMiddlewareChain();
 chain.use(createCorsMiddleware());
 
 // 或者只允许特定源
-chain.use(createCorsMiddleware({
-  origin: 'https://example.com'
-}));
+chain.use(
+  createCorsMiddleware({
+    origin: 'https://example.com',
+  }),
+);
 ```
 
 ### 配置 CORS
@@ -60,7 +62,7 @@ const cors = createCorsMiddleware({
   allowedHeaders: ['Content-Type', 'Authorization'],
   exposedHeaders: ['X-Custom-Header'],
   credentials: true,
-  maxAge: 86400 // 24 hours
+  maxAge: 86400, // 24 hours
 });
 ```
 
@@ -69,7 +71,7 @@ const cors = createCorsMiddleware({
 ```typescript
 const cors = createCorsMiddleware({
   origin: /\.example\.com$/,
-  credentials: true
+  credentials: true,
 });
 ```
 
@@ -83,7 +85,7 @@ const cors = createCorsMiddleware({
       return requestOrigin;
     }
     return false;
-  }
+  },
 });
 ```
 
@@ -100,20 +102,20 @@ const cors = createCorsMiddleware({
   origin: '*',
   methods: ['GET', 'POST'],
   credentials: false,
-  maxAge: 86400
+  maxAge: 86400,
 });
 ```
 
 #### 选项说明
 
-| 选项 | 类型 | 默认值 | 说明 |
-|------|------|--------|------|
-| `origin` | string \| string[] \| RegExp \| boolean \| (origin: string \| null) => boolean \| string | `'*'` | 允许的来源 |
-| `methods` | string \| string[] | `['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE']` | 允许的 HTTP 方法 |
-| `allowedHeaders` | string \| string[] | `['Accept', 'Accept-Language', 'Content-Language', 'Content-Type']` | 允许的请求头部 |
-| `exposedHeaders` | string \| string[] | | 暴露的响应头部 |
-| `credentials` | boolean | `false` | 是否允许携带凭证 |
-| `maxAge` | number | | 预检请求缓存时间（秒） |
+| 选项             | 类型                                                                                     | 默认值                                                              | 说明                   |
+| ---------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------- | ---------------------- |
+| `origin`         | string \| string[] \| RegExp \| boolean \| (origin: string \| null) => boolean \| string | `'*'`                                                               | 允许的来源             |
+| `methods`        | string \| string[]                                                                       | `['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE']`                 | 允许的 HTTP 方法       |
+| `allowedHeaders` | string \| string[]                                                                       | `['Accept', 'Accept-Language', 'Content-Language', 'Content-Type']` | 允许的请求头部         |
+| `exposedHeaders` | string \| string[]                                                                       |                                                                     | 暴露的响应头部         |
+| `credentials`    | boolean                                                                                  | `false`                                                             | 是否允许携带凭证       |
+| `maxAge`         | number                                                                                   |                                                                     | 预检请求缓存时间（秒） |
 
 ## 许可证
 

@@ -16,7 +16,7 @@ export function detectPackageManager(cwd: string = process.cwd()): PackageManage
   if (existsSync(join(cwd, 'pnpm-lock.yaml'))) return 'pnpm';
   if (existsSync(join(cwd, 'yarn.lock'))) return 'yarn';
   if (existsSync(join(cwd, 'package-lock.json'))) return 'npm';
-  
+
   // Default to pnpm if available
   try {
     execSync('pnpm --version', { stdio: 'ignore' });
@@ -32,9 +32,12 @@ export function detectPackageManager(cwd: string = process.cwd()): PackageManage
  */
 export function getInstallCommand(pm: PackageManager): string {
   switch (pm) {
-    case 'pnpm': return 'pnpm install';
-    case 'yarn': return 'yarn';
-    case 'npm': return 'npm install';
+    case 'pnpm':
+      return 'pnpm install';
+    case 'yarn':
+      return 'yarn';
+    case 'npm':
+      return 'npm install';
   }
 }
 
@@ -43,9 +46,12 @@ export function getInstallCommand(pm: PackageManager): string {
  */
 export function getRunCommand(pm: PackageManager, script: string): string {
   switch (pm) {
-    case 'pnpm': return `pnpm run ${script}`;
-    case 'yarn': return `yarn ${script}`;
-    case 'npm': return `npm run ${script}`;
+    case 'pnpm':
+      return `pnpm run ${script}`;
+    case 'yarn':
+      return `yarn ${script}`;
+    case 'npm':
+      return `npm run ${script}`;
   }
 }
 
@@ -55,8 +61,11 @@ export function getRunCommand(pm: PackageManager, script: string): string {
 export function getAddCommand(pm: PackageManager, dep: string, dev: boolean = false): string {
   const devFlag = dev ? ' -D' : '';
   switch (pm) {
-    case 'pnpm': return `pnpm add${devFlag} ${dep}`;
-    case 'yarn': return `yarn add${devFlag} ${dep}`;
-    case 'npm': return `npm install${devFlag} ${dep}`;
+    case 'pnpm':
+      return `pnpm add${devFlag} ${dep}`;
+    case 'yarn':
+      return `yarn add${devFlag} ${dep}`;
+    case 'npm':
+      return `npm install${devFlag} ${dep}`;
   }
 }

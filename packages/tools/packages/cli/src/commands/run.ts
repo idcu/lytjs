@@ -12,28 +12,23 @@ import { build } from './build';
 import { test } from './test';
 import { add } from './add';
 import { generate } from './generate';
-import {
-  createPlugin,
-  buildPlugin,
-  validatePlugin,
-  listPluginTemplates,
-} from './plugin';
+import { createPlugin, buildPlugin, validatePlugin, listPluginTemplates } from './plugin';
 
 const VERSION = '6.0.0';
 
 export async function runCli(rawArgs: string[] = process.argv.slice(2)): Promise<void> {
   const { command, args, options } = parseArgs(rawArgs);
-  
+
   if (options.help || command === 'help') {
     showHelp();
     return;
   }
-  
+
   if (options.version || command === 'version' || command === '-v' || command === '--version') {
     console.log(`LytJS CLI v${VERSION}`);
     return;
   }
-  
+
   switch (command) {
     case 'create':
       await create(args[0] || 'my-lytjs-app', {
@@ -41,11 +36,11 @@ export async function runCli(rawArgs: string[] = process.argv.slice(2)): Promise
         force: options.force as boolean | undefined,
       });
       break;
-      
+
     case 'templates':
       listTemplates();
       break;
-      
+
     case 'dev':
       await dev({
         port: options.port ? parseInt(options.port as string, 10) : undefined,
@@ -53,7 +48,7 @@ export async function runCli(rawArgs: string[] = process.argv.slice(2)): Promise
         open: options.open as boolean | undefined,
       });
       break;
-      
+
     case 'build':
       await build({
         outDir: options.outDir as string | undefined,
@@ -61,7 +56,7 @@ export async function runCli(rawArgs: string[] = process.argv.slice(2)): Promise
         minify: (options.minify as string) !== 'false',
       });
       break;
-      
+
     case 'test':
       await test({
         watch: (options.watch as string) !== 'false',
@@ -71,7 +66,16 @@ export async function runCli(rawArgs: string[] = process.argv.slice(2)): Promise
       break;
 
     case 'add':
-      const addTypes = ['component', 'page', 'store', 'directive', 'composable', 'util', 'middleware', 'hook'];
+      const addTypes = [
+        'component',
+        'page',
+        'store',
+        'directive',
+        'composable',
+        'util',
+        'middleware',
+        'hook',
+      ];
       if (!args[0] || !addTypes.includes(args[0])) {
         logger.error('Usage: lyt add <type> <name>');
         logger.info('Types: component, page, store, directive, composable, util, middleware, hook');
@@ -101,14 +105,14 @@ export async function runCli(rawArgs: string[] = process.argv.slice(2)): Promise
         withStorybook: options.storybook as boolean | undefined,
       });
       break;
-      
+
     case 'plugin':
       if (!args[0]) {
         logger.error('Usage: lyt plugin <create|build|validate|templates>');
         logger.info('Example: lyt plugin create my-plugin');
         process.exit(1);
       }
-      
+
       const subCommand = args[0];
       switch (subCommand) {
         case 'create':
@@ -140,7 +144,7 @@ export async function runCli(rawArgs: string[] = process.argv.slice(2)): Promise
           process.exit(1);
       }
       break;
-      
+
     default:
       if (command) {
         logger.error(`Unknown command: ${command}`);
@@ -156,16 +160,16 @@ function parseArgs(args: string[]): CliOptions {
   let command = args[0] ?? '';
   const positional: string[] = [];
   const options: Record<string, unknown> = {};
-  
+
   if (command.startsWith('--') || command.startsWith('-')) {
     command = '';
   }
-  
+
   const startIndex = command ? 1 : 0;
-  
+
   for (let i = startIndex; i < args.length; i++) {
     const arg = args[i] ?? '';
-    
+
     if (arg.startsWith('--')) {
       const parts = arg.slice(2).split('=');
       const key = parts[0];
@@ -189,7 +193,7 @@ function parseArgs(args: string[]): CliOptions {
       positional.push(arg);
     }
   }
-  
+
   return { command, args: positional, options };
 }
 

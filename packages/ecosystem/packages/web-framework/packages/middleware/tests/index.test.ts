@@ -41,34 +41,28 @@ describe('@lytjs/middleware', () => {
 
       await handler(new Request('http://localhost'));
 
-      expect(order).toEqual([
-        'm1-start',
-        'm2-start',
-        'handler',
-        'm2-end',
-        'm1-end',
-      ]);
+      expect(order).toEqual(['m1-start', 'm2-start', 'handler', 'm2-end', 'm1-end']);
     });
   });
 
   describe('combineMiddlewares', () => {
     it('should combine multiple middlewares', async () => {
       const calls: string[] = [];
-      
+
       const m1 = createMiddleware(async (ctx, next) => {
         calls.push('m1');
         await next();
       });
-      
+
       const m2 = createMiddleware(async (ctx, next) => {
         calls.push('m2');
         await next();
       });
 
       const combined = combineMiddlewares(m1, m2);
-      
+
       await combined({ request: new Request('http://localhost') }, async () => {});
-      
+
       expect(calls).toEqual(['m1', 'm2']);
     });
   });

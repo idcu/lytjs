@@ -13,15 +13,15 @@ describe('@lytjs/middleware-auth', () => {
     });
 
     it('应该验证 Bearer token', async () => {
-      const authenticate = vi.fn(async (token) => token === 'valid-token' ? { id: '1' } : null);
+      const authenticate = vi.fn(async (token) => (token === 'valid-token' ? { id: '1' } : null));
       const middleware = createAuthMiddleware({ authenticate });
       const chain = createMiddlewareChain();
       chain.use(middleware);
 
       const request = new Request('https://example.com', {
-        headers: { Authorization: 'Bearer valid-token' }
+        headers: { Authorization: 'Bearer valid-token' },
       });
-      
+
       const context = { params: {}, query: new URLSearchParams() };
       const response = await chain.execute(request, context, () => new Response('OK'));
 
@@ -49,9 +49,9 @@ describe('@lytjs/middleware-auth', () => {
       chain.use(middleware);
 
       const request = new Request('https://example.com', {
-        headers: { Authorization: 'Bearer invalid-token' }
+        headers: { Authorization: 'Bearer invalid-token' },
       });
-      
+
       const context = { params: {}, query: new URLSearchParams() };
       const response = await chain.execute(request, context, () => new Response('OK'));
 

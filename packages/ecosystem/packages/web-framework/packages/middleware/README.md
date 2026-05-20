@@ -59,7 +59,7 @@ const response = await chain.execute(
   { params: {}, query: new URLSearchParams() },
   (req, ctx) => {
     return new Response('Hello, World!');
-  }
+  },
 );
 ```
 
@@ -122,11 +122,7 @@ chain.use((req, ctx, next) => {
 });
 
 // 或者添加多个
-chain.use([
-  middleware1,
-  middleware2,
-  middleware3
-]);
+chain.use([middleware1, middleware2, middleware3]);
 ```
 
 #### `execute(request, context, finalHandler)`
@@ -134,13 +130,9 @@ chain.use([
 执行中间件链。
 
 ```typescript
-const response = await chain.execute(
-  request,
-  context,
-  (req, ctx) => {
-    return new Response('Final response');
-  }
-);
+const response = await chain.execute(request, context, (req, ctx) => {
+  return new Response('Final response');
+});
 ```
 
 #### `size`

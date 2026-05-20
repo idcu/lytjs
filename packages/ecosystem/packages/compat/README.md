@@ -47,7 +47,7 @@ import { enableCompat } from '@lytjs/compat';
 
 enableCompat({
   vue2Mode: true,
-  vue3Mode: false
+  vue3Mode: false,
 });
 ```
 
@@ -101,28 +101,28 @@ export const MyComponent = defineComponent({
 
 ### Vue 2 → LytJS 映射
 
-| Vue 2 钩子 | LytJS 对应 |
-|-----------|-----------|
-| `beforeCreate` | `onBeforeInit` |
-| `created` | `onInit` |
-| `beforeMount` | `onBeforeMount` |
-| `mounted` | `onMounted` |
-| `beforeUpdate` | `onBeforeUpdate` |
-| `updated` | `onUpdated` |
+| Vue 2 钩子      | LytJS 对应        |
+| --------------- | ----------------- |
+| `beforeCreate`  | `onBeforeInit`    |
+| `created`       | `onInit`          |
+| `beforeMount`   | `onBeforeMount`   |
+| `mounted`       | `onMounted`       |
+| `beforeUpdate`  | `onBeforeUpdate`  |
+| `updated`       | `onUpdated`       |
 | `beforeDestroy` | `onBeforeUnmount` |
-| `destroyed` | `onUnmounted` |
+| `destroyed`     | `onUnmounted`     |
 | `errorCaptured` | `onErrorCaptured` |
 
 ### Vue 3 → LytJS 映射
 
-| Vue 3 钩子 | LytJS 对应 |
-|-----------|-----------|
-| `setup` | `onInit` |
-| `onMounted` | `onMounted` |
-| `onUpdated` | `onUpdated` |
-| `onUnmounted` | `onUnmounted` |
-| `onErrorCaptured` | `onErrorCaptured` |
-| `onRenderTracked` | `onRenderTracked` |
+| Vue 3 钩子          | LytJS 对应          |
+| ------------------- | ------------------- |
+| `setup`             | `onInit`            |
+| `onMounted`         | `onMounted`         |
+| `onUpdated`         | `onUpdated`         |
+| `onUnmounted`       | `onUnmounted`       |
+| `onErrorCaptured`   | `onErrorCaptured`   |
+| `onRenderTracked`   | `onRenderTracked`   |
 | `onRenderTriggered` | `onRenderTriggered` |
 
 ### 使用示例
@@ -336,14 +336,14 @@ export const CartItems = defineComponent({
 
 ### 路由守卫命名映射
 
-| Vue Router | LytJS Router |
-|-----------|-------------|
-| `beforeEach` | `beforeEach` |
-| `beforeResolve` | `beforeResolve` |
-| `afterEach` | `afterEach` |
-| `beforeRouteEnter` | `onBeforeRouteEnter` |
+| Vue Router          | LytJS Router          |
+| ------------------- | --------------------- |
+| `beforeEach`        | `beforeEach`          |
+| `beforeResolve`     | `beforeResolve`       |
+| `afterEach`         | `afterEach`           |
+| `beforeRouteEnter`  | `onBeforeRouteEnter`  |
 | `beforeRouteUpdate` | `onBeforeRouteUpdate` |
-| `beforeRouteLeave` | `onBeforeRouteLeave` |
+| `beforeRouteLeave`  | `onBeforeRouteLeave`  |
 
 ### 使用示例
 
@@ -585,7 +585,7 @@ import { enableCompat } from '@lytjs/compat';
 enableCompat({
   vue2Mode: true,
   vue3Mode: false,
-  silent: false
+  silent: false,
 });
 ```
 
@@ -597,10 +597,18 @@ enableCompat({
 import { defineComponent } from '@lytjs/compat';
 
 const MyComponent = defineComponent({
-  data() { /* ... */ },
-  methods: { /* ... */ },
-  computed: { /* ... */ },
-  render() { /* ... */ }
+  data() {
+    /* ... */
+  },
+  methods: {
+    /* ... */
+  },
+  computed: {
+    /* ... */
+  },
+  render() {
+    /* ... */
+  },
 });
 ```
 
@@ -616,9 +624,9 @@ export default {
     ...mapState('user', ['name', 'email']),
     ...mapState('cart', {
       cartCount: 'items.length',
-      isEmpty: (state) => state.items.length === 0
-    })
-  }
+      isEmpty: (state) => state.items.length === 0,
+    }),
+  },
 };
 ```
 
@@ -631,8 +639,8 @@ import { mapGetters } from '@lytjs/compat';
 
 export default {
   computed: {
-    ...mapGetters('product', ['sortedList', 'featuredItems'])
-  }
+    ...mapGetters('product', ['sortedList', 'featuredItems']),
+  },
 };
 ```
 
@@ -648,9 +656,9 @@ export default {
     ...mapActions('user', ['login', 'logout']),
     ...mapActions('cart', {
       addToCart: 'addItem',
-      removeFromCart: 'removeItem'
-    })
-  }
+      removeFromCart: 'removeItem',
+    }),
+  },
 };
 ```
 
@@ -663,8 +671,8 @@ import { mapMutations } from '@lytjs/compat';
 
 export default {
   methods: {
-    ...mapMutations('counter', ['INCREMENT', 'DECREMENT'])
-  }
+    ...mapMutations('counter', ['INCREMENT', 'DECREMENT']),
+  },
 };
 ```
 

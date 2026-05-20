@@ -13,7 +13,7 @@ describe('@lytjs/html-renderer', () => {
 
     it('应该支持自定义模板', () => {
       const renderer = new HTMLRenderer({
-        template: (content) => `<!DOCTYPE html><html><body>${content}</body></html>`
+        template: (content) => `<!DOCTYPE html><html><body>${content}</body></html>`,
       });
       expect(typeof renderer).toBe('object');
     });

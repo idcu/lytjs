@@ -67,7 +67,7 @@ const renderer = createPlatformRenderer({
   },
   createTextNode(text) {
     return document.createTextNode(text);
-  }
+  },
 });
 ```
 
@@ -107,14 +107,14 @@ const renderer = createPlatformRenderer({
   features: {
     portals: true,
     suspense: true,
-    errorBoundary: true
+    errorBoundary: true,
   },
   render(vnode, container) {
     // 渲染逻辑
   },
   hydrate(vnode, container) {
     // 水合逻辑
-  }
+  },
 });
 ```
 
@@ -291,7 +291,7 @@ const webRenderer = createPlatformRenderer({
     suspense: true,
     errorBoundary: true,
     transition: true,
-    teleport: true
+    teleport: true,
   },
 
   createElement(type, props) {
@@ -342,7 +342,7 @@ const webRenderer = createPlatformRenderer({
     const el = this.createElement(vnode.type, vnode.props);
     // 渲染逻辑
     container.appendChild(el);
-  }
+  },
 });
 
 export default webRenderer;
@@ -359,7 +359,7 @@ const ssrRenderer = createPlatformRenderer({
   features: {
     portals: true,
     suspense: true,
-    errorBoundary: true
+    errorBoundary: true,
   },
 
   createElement(type, props) {
@@ -367,7 +367,7 @@ const ssrRenderer = createPlatformRenderer({
       type,
       props: props || {},
       children: [],
-      text: ''
+      text: '',
     };
   },
 
@@ -390,11 +390,9 @@ const ssrRenderer = createPlatformRenderer({
     if (node.text) {
       return node.text;
     }
-    const children = (node.children || [])
-      .map(child => this.stringify(child))
-      .join('');
+    const children = (node.children || []).map((child) => this.stringify(child)).join('');
     return `<${node.type}>${children}</${node.type}>`;
-  }
+  },
 });
 
 export default ssrRenderer;
@@ -411,14 +409,14 @@ const miniappRenderer = createPlatformRenderer({
   features: {
     portals: false,
     suspense: false,
-    errorBoundary: false
+    errorBoundary: false,
   },
 
   createElement(type, props) {
     return {
       type,
       props: props || {},
-      children: []
+      children: [],
     };
   },
 
@@ -431,11 +429,9 @@ const miniappRenderer = createPlatformRenderer({
     return {
       tag: node.type,
       attrs: node.props,
-      children: (node.children || []).map(child =>
-        this.flatten(child, depth + 1)
-      )
+      children: (node.children || []).map((child) => this.flatten(child, depth + 1)),
     };
-  }
+  },
 });
 
 export default miniappRenderer;
@@ -457,10 +453,12 @@ const loggerPlugin = {
       originalRender.call(platform, vnode, container);
       console.log(`[${platform.name}] 渲染完成，耗时: ${performance.now() - start}ms`);
     };
-  }
+  },
 };
 
-const webRenderer = createPlatformRenderer({ /* ... */ });
+const webRenderer = createPlatformRenderer({
+  /* ... */
+});
 webRenderer.use?.(loggerPlugin);
 
 adapterRegistry.register('web', webRenderer);
@@ -499,7 +497,7 @@ async function loadPlatformAdapter(platform) {
   const modules = {
     web: () => import('./adapters/web'),
     ssr: () => import('./adapters/ssr'),
-    miniapp: () => import('./adapters/miniapp')
+    miniapp: () => import('./adapters/miniapp'),
   };
 
   if (modules[platform]) {
@@ -527,15 +525,11 @@ const pipelineRenderer = createPlatformRenderer({
   features: {
     portals: true,
     suspense: true,
-    errorBoundary: true
+    errorBoundary: true,
   },
 
   render(vnode, container) {
-    const pipeline = [
-      this.optimize,
-      this.transform,
-      this.render
-    ];
+    const pipeline = [this.optimize, this.transform, this.render];
 
     let current = vnode;
     for (const step of pipeline) {
@@ -552,7 +546,7 @@ const pipelineRenderer = createPlatformRenderer({
   transform(vnode) {
     // 转换阶段
     return vnode;
-  }
+  },
 });
 ```
 
@@ -566,11 +560,11 @@ function createMonitoredRenderer(config) {
 
   const metrics = {
     renderCount: 0,
-    totalTime: 0
+    totalTime: 0,
   };
 
   const originalRender = renderer.render;
-  renderer.render = function(vnode, container) {
+  renderer.render = function (vnode, container) {
     const start = performance.now();
     originalRender.call(this, vnode, container);
     metrics.renderCount++;
@@ -601,13 +595,11 @@ debugRenderer.debug = {
   logTree(vnode, depth = 0) {
     const indent = '  '.repeat(depth);
     console.log(`${indent}${vnode.type}`);
-    (vnode.children || []).forEach(child =>
-      this.logTree(child, depth + 1)
-    );
+    (vnode.children || []).forEach((child) => this.logTree(child, depth + 1));
   },
   logOperations(operations) {
     console.table(operations);
-  }
+  },
 };
 ```
 
@@ -639,8 +631,8 @@ const renderer = createPlatformRenderer({
   features: {
     portals: typeof document.createElement === 'function',
     suspense: 'requestIdleCallback' in window,
-    errorBoundary: true
-  }
+    errorBoundary: true,
+  },
 });
 ```
 
@@ -664,7 +656,7 @@ const safeRenderer = createPlatformRenderer({
 
   handleError(error, vnode) {
     // 显示错误边界
-  }
+  },
 });
 ```
 

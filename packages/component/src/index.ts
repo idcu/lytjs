@@ -162,9 +162,4 @@ export {
   getCurrentProviderNode,
   InjectionError,
 } from './di';
-export type {
-  ProviderLifecycle,
-  ProviderConfig,
-  ProviderNode,
-  EnhancedInjectOptions,
-} from './di';
+export type { ProviderLifecycle, ProviderConfig, ProviderNode, EnhancedInjectOptions } from './di';

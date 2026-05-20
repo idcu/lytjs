@@ -3,7 +3,11 @@
  * 测试 createElementPatch 工厂函数及其返回的所有 API
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { createElementPatch, type RendererContext, type ElementPatchAPI } from '../src/patch-element';
+import {
+  createElementPatch,
+  type RendererContext,
+  type ElementPatchAPI,
+} from '../src/patch-element';
 import type { VNode, ComponentInternalInstance } from '@lytjs/common-vnode';
 import { ShapeFlags, PatchFlags } from '@lytjs/common-vnode';
 
@@ -143,7 +147,12 @@ describe('createElementPatch', () => {
   describe('mountElement', () => {
     it('应创建元素、设置 props、挂载 children 并插入容器', () => {
       const container = document.createElement('div');
-      const vnode = createElementVNode('span', { id: 'test', class: 'foo' }, 'hello', ShapeFlags.ELEMENT | ShapeFlags.TEXT_CHILDREN);
+      const vnode = createElementVNode(
+        'span',
+        { id: 'test', class: 'foo' },
+        'hello',
+        ShapeFlags.ELEMENT | ShapeFlags.TEXT_CHILDREN,
+      );
 
       api.mountElement(vnode, container, null, false, null, null);
 
@@ -163,7 +172,12 @@ describe('createElementPatch', () => {
     it('应跳过 key 和 ref props', () => {
       const container = document.createElement('div');
       const ref = { current: null };
-      const vnode = createElementVNode('div', { key: 'my-key', ref, id: 'app' }, null, ShapeFlags.ELEMENT);
+      const vnode = createElementVNode(
+        'div',
+        { key: 'my-key', ref, id: 'app' },
+        null,
+        ShapeFlags.ELEMENT,
+      );
 
       api.mountElement(vnode, container, null, false, null, null);
 
@@ -192,16 +206,33 @@ describe('createElementPatch', () => {
     it('对 ARRAY_CHILDREN 应调用 mountChildren', () => {
       const container = document.createElement('div');
       const child = createElementVNode('span');
-      const vnode = createElementVNode('div', null, [child], ShapeFlags.ELEMENT | ShapeFlags.ARRAY_CHILDREN);
+      const vnode = createElementVNode(
+        'div',
+        null,
+        [child],
+        ShapeFlags.ELEMENT | ShapeFlags.ARRAY_CHILDREN,
+      );
 
       api.mountElement(vnode, container, null, false, null, null);
 
-      expect(ctx.mountChildren).toHaveBeenCalledWith(vnode, expect.anything(), null, false, null, null);
+      expect(ctx.mountChildren).toHaveBeenCalledWith(
+        vnode,
+        expect.anything(),
+        null,
+        false,
+        null,
+        null,
+      );
     });
 
     it('对 TEXT_CHILDREN 应调用 setElementText', () => {
       const container = document.createElement('div');
-      const vnode = createElementVNode('div', null, 'text content', ShapeFlags.ELEMENT | ShapeFlags.TEXT_CHILDREN);
+      const vnode = createElementVNode(
+        'div',
+        null,
+        'text content',
+        ShapeFlags.ELEMENT | ShapeFlags.TEXT_CHILDREN,
+      );
 
       api.mountElement(vnode, container, null, false, null, null);
 
@@ -253,7 +284,12 @@ describe('createElementPatch', () => {
 
     it('children 为函数时应创建空文本节点', () => {
       const container = document.createElement('div');
-      const vnode = createElementVNode('text', null, (() => 'lazy') as unknown as string, ShapeFlags.TEXT_CHILDREN);
+      const vnode = createElementVNode(
+        'text',
+        null,
+        (() => 'lazy') as unknown as string,
+        ShapeFlags.TEXT_CHILDREN,
+      );
 
       api.mountTextNode(vnode, container, null);
 
@@ -353,9 +389,19 @@ describe('createElementPatch', () => {
   // ----------------------------------------------------------
   describe('patchElement', () => {
     it('n1.el 为 null 时应返回', () => {
-      const n1 = createElementVNode('div', { id: 'old' }, 'old text', ShapeFlags.ELEMENT | ShapeFlags.TEXT_CHILDREN);
+      const n1 = createElementVNode(
+        'div',
+        { id: 'old' },
+        'old text',
+        ShapeFlags.ELEMENT | ShapeFlags.TEXT_CHILDREN,
+      );
       n1.el = null; // el 为 null
-      const n2 = createElementVNode('div', { id: 'new' }, 'new text', ShapeFlags.ELEMENT | ShapeFlags.TEXT_CHILDREN);
+      const n2 = createElementVNode(
+        'div',
+        { id: 'new' },
+        'new text',
+        ShapeFlags.ELEMENT | ShapeFlags.TEXT_CHILDREN,
+      );
 
       api.patchElement(n1, n2, null, null, false);
 
@@ -365,9 +411,19 @@ describe('createElementPatch', () => {
     });
 
     it('PatchFlags.FULL_PROPS 应执行完整 diff', () => {
-      const n1 = createElementVNode('div', { id: 'old', class: 'a' }, 'text', ShapeFlags.ELEMENT | ShapeFlags.TEXT_CHILDREN);
+      const n1 = createElementVNode(
+        'div',
+        { id: 'old', class: 'a' },
+        'text',
+        ShapeFlags.ELEMENT | ShapeFlags.TEXT_CHILDREN,
+      );
       n1.el = document.createElement('div');
-      const n2 = createElementVNode('div', { id: 'new', class: 'b' }, 'text', ShapeFlags.ELEMENT | ShapeFlags.TEXT_CHILDREN);
+      const n2 = createElementVNode(
+        'div',
+        { id: 'new', class: 'b' },
+        'text',
+        ShapeFlags.ELEMENT | ShapeFlags.TEXT_CHILDREN,
+      );
       n2.patchFlag = PatchFlags.FULL_PROPS;
 
       api.patchElement(n1, n2, null, null, false);
@@ -378,15 +434,30 @@ describe('createElementPatch', () => {
     });
 
     it('PatchFlags.CLASS 应仅 diff class', () => {
-      const n1 = createElementVNode('div', { class: 'old-class', id: 'same' }, null, ShapeFlags.ELEMENT);
+      const n1 = createElementVNode(
+        'div',
+        { class: 'old-class', id: 'same' },
+        null,
+        ShapeFlags.ELEMENT,
+      );
       n1.el = document.createElement('div');
-      const n2 = createElementVNode('div', { class: 'new-class', id: 'same' }, null, ShapeFlags.ELEMENT);
+      const n2 = createElementVNode(
+        'div',
+        { class: 'new-class', id: 'same' },
+        null,
+        ShapeFlags.ELEMENT,
+      );
       n2.patchFlag = PatchFlags.CLASS;
 
       api.patchElement(n1, n2, null, null, false);
 
       // patchProp 应仅对 class 被调用
-      expect(ctx.patchProp).toHaveBeenCalledWith(expect.anything(), 'class', 'old-class', 'new-class');
+      expect(ctx.patchProp).toHaveBeenCalledWith(
+        expect.anything(),
+        'class',
+        'old-class',
+        'new-class',
+      );
       // 不应调用 patchChildren（因为 dynamicChildren 都为空）
     });
 
@@ -398,13 +469,28 @@ describe('createElementPatch', () => {
 
       api.patchElement(n1, n2, null, null, false);
 
-      expect(ctx.patchProp).toHaveBeenCalledWith(expect.anything(), 'style', 'color: red', 'color: blue');
+      expect(ctx.patchProp).toHaveBeenCalledWith(
+        expect.anything(),
+        'style',
+        'color: red',
+        'color: blue',
+      );
     });
 
     it('PatchFlags.TEXT 应仅 diff children', () => {
-      const n1 = createElementVNode('div', null, 'old text', ShapeFlags.ELEMENT | ShapeFlags.TEXT_CHILDREN);
+      const n1 = createElementVNode(
+        'div',
+        null,
+        'old text',
+        ShapeFlags.ELEMENT | ShapeFlags.TEXT_CHILDREN,
+      );
       n1.el = document.createElement('div');
-      const n2 = createElementVNode('div', null, 'new text', ShapeFlags.ELEMENT | ShapeFlags.TEXT_CHILDREN);
+      const n2 = createElementVNode(
+        'div',
+        null,
+        'new text',
+        ShapeFlags.ELEMENT | ShapeFlags.TEXT_CHILDREN,
+      );
       n2.patchFlag = PatchFlags.TEXT;
 
       api.patchElement(n1, n2, null, null, false);
@@ -413,9 +499,19 @@ describe('createElementPatch', () => {
     });
 
     it('PatchFlags.TEXT 且 children 相同时不应更新', () => {
-      const n1 = createElementVNode('div', null, 'same text', ShapeFlags.ELEMENT | ShapeFlags.TEXT_CHILDREN);
+      const n1 = createElementVNode(
+        'div',
+        null,
+        'same text',
+        ShapeFlags.ELEMENT | ShapeFlags.TEXT_CHILDREN,
+      );
       n1.el = document.createElement('div');
-      const n2 = createElementVNode('div', null, 'same text', ShapeFlags.ELEMENT | ShapeFlags.TEXT_CHILDREN);
+      const n2 = createElementVNode(
+        'div',
+        null,
+        'same text',
+        ShapeFlags.ELEMENT | ShapeFlags.TEXT_CHILDREN,
+      );
       n2.patchFlag = PatchFlags.TEXT;
 
       api.patchElement(n1, n2, null, null, false);
@@ -432,7 +528,14 @@ describe('createElementPatch', () => {
 
       api.patchElement(n1, n2, null, null, false);
 
-      expect(ctx.patchBlockChildren).toHaveBeenCalledWith(n1, n2, expect.anything(), null, null, false);
+      expect(ctx.patchBlockChildren).toHaveBeenCalledWith(
+        n1,
+        n2,
+        expect.anything(),
+        null,
+        null,
+        false,
+      );
       expect(ctx.patchChildren).not.toHaveBeenCalled();
     });
 
@@ -526,9 +629,19 @@ describe('createElementPatch', () => {
     });
 
     it('diffProps 应跳过 key 和 ref', () => {
-      const n1 = createElementVNode('div', { key: 'a', ref: 'r1', id: 'x' }, null, ShapeFlags.ELEMENT);
+      const n1 = createElementVNode(
+        'div',
+        { key: 'a', ref: 'r1', id: 'x' },
+        null,
+        ShapeFlags.ELEMENT,
+      );
       n1.el = document.createElement('div');
-      const n2 = createElementVNode('div', { key: 'b', ref: 'r2', id: 'y' }, null, ShapeFlags.ELEMENT);
+      const n2 = createElementVNode(
+        'div',
+        { key: 'b', ref: 'r2', id: 'y' },
+        null,
+        ShapeFlags.ELEMENT,
+      );
       n2.patchFlag = PatchFlags.FULL_PROPS;
 
       api.patchElement(n1, n2, null, null, false);
@@ -541,9 +654,19 @@ describe('createElementPatch', () => {
     });
 
     it('PatchFlags.PROPS 应仅 diff dynamicProps 中指定的属性', () => {
-      const n1 = createElementVNode('div', { id: 'old', class: 'same', style: 'color: red' }, null, ShapeFlags.ELEMENT);
+      const n1 = createElementVNode(
+        'div',
+        { id: 'old', class: 'same', style: 'color: red' },
+        null,
+        ShapeFlags.ELEMENT,
+      );
       n1.el = document.createElement('div');
-      const n2 = createElementVNode('div', { id: 'new', class: 'same', style: 'color: blue' }, null, ShapeFlags.ELEMENT);
+      const n2 = createElementVNode(
+        'div',
+        { id: 'new', class: 'same', style: 'color: blue' },
+        null,
+        ShapeFlags.ELEMENT,
+      );
       n2.patchFlag = PatchFlags.PROPS;
       n2.dynamicProps = ['id'];
 

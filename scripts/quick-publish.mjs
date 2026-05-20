@@ -74,9 +74,9 @@ const PUBLISH_ORDER = [
 function updateVersion(pkgPath) {
   const pkgFile = join(ROOT, pkgPath, 'package.json');
   if (!existsSync(pkgFile)) return;
-  
+
   const pkg = JSON.parse(readFileSync(pkgFile, 'utf-8'));
-  
+
   if (pkg.version !== VERSION) {
     console.log(`🔄 更新 ${pkg.name}: ${pkg.version} -> ${VERSION}`);
     pkg.version = VERSION;
@@ -87,23 +87,23 @@ function updateVersion(pkgPath) {
 function publishPackage(pkgPath) {
   const fullPath = join(ROOT, pkgPath);
   const pkgFile = join(fullPath, 'package.json');
-  
+
   if (!existsSync(pkgFile)) {
     console.log(`⚠️  跳过: ${pkgPath} (不存在)`);
     return true;
   }
-  
+
   const pkg = JSON.parse(readFileSync(pkgFile, 'utf-8'));
   const pkgName = pkg.name;
   const version = pkg.version;
-  
+
   if (pkg.private) {
     console.log(`⏭️  跳过私有包: ${pkgName}`);
     return true;
   }
-  
+
   console.log(`\n📦 发布 ${pkgName}@${version}...`);
-  
+
   try {
     execSync('npm publish --access public', {
       cwd: fullPath,

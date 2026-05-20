@@ -148,7 +148,9 @@ export function recordComponentRender(
 /**
  * Calculate update frequency based on render count and time
  */
-function calculateUpdateFrequency(performance: ComponentPerformance): ComponentPerformance['updateFrequency'] {
+function calculateUpdateFrequency(
+  performance: ComponentPerformance,
+): ComponentPerformance['updateFrequency'] {
   const recentRenders = performance.renderTimes.length;
   const avgTime = performance.averageRenderTime;
 
@@ -293,9 +295,10 @@ function updatePerformanceMetrics(): void {
 function collectPerformanceMetrics(): PerformanceMetrics {
   const components = getAllComponentPerformance();
   const totalRenders = components.reduce((sum, c) => sum + c.renderCount, 0);
-  const avgRenderTime = components.length > 0
-    ? components.reduce((sum, c) => sum + c.averageRenderTime, 0) / components.length
-    : 0;
+  const avgRenderTime =
+    components.length > 0
+      ? components.reduce((sum, c) => sum + c.averageRenderTime, 0) / components.length
+      : 0;
 
   return {
     timestamp: Date.now(),
@@ -365,23 +368,25 @@ export function getRenderHeatmap(): RenderHeatmapData[] {
   if (components.length === 0) return [];
 
   // Find max render count for normalization
-  const maxRenders = Math.max(...components.map(c => c.renderCount), 1);
-  const maxAvgTime = Math.max(...components.map(c => c.averageRenderTime), 1);
+  const maxRenders = Math.max(...components.map((c) => c.renderCount), 1);
+  const maxAvgTime = Math.max(...components.map((c) => c.averageRenderTime), 1);
 
-  return components.map(c => {
-    // Calculate intensity based on render count and average time
-    const countIntensity = c.renderCount / maxRenders;
-    const timeIntensity = Math.min(c.averageRenderTime / maxAvgTime, 1);
-    const intensity = (countIntensity * 0.5 + timeIntensity * 0.5);
+  return components
+    .map((c) => {
+      // Calculate intensity based on render count and average time
+      const countIntensity = c.renderCount / maxRenders;
+      const timeIntensity = Math.min(c.averageRenderTime / maxAvgTime, 1);
+      const intensity = countIntensity * 0.5 + timeIntensity * 0.5;
 
-    return {
-      componentId: c.componentId,
-      componentName: c.componentName,
-      intensity: Math.round(intensity * 100) / 100,
-      renderCount: c.renderCount,
-      frequency: c.updateFrequency,
-    };
-  }).sort((a, b) => b.intensity - a.intensity);
+      return {
+        componentId: c.componentId,
+        componentName: c.componentName,
+        intensity: Math.round(intensity * 100) / 100,
+        renderCount: c.renderCount,
+        frequency: c.updateFrequency,
+      };
+    })
+    .sort((a, b) => b.intensity - a.intensity);
 }
 
 // ===== Timeline =====
@@ -403,10 +408,10 @@ export function getPerformanceTimelineSummary(): {
   renderCounts: number[];
 } {
   return {
-    timestamps: performanceTimeline.map(e => e.timestamp),
-    fps: performanceTimeline.map(e => e.metrics.fps || 0),
-    memory: performanceTimeline.map(e => e.metrics.memoryUsage?.usedJSHeapSize || 0),
-    renderCounts: performanceTimeline.map(e => e.metrics.totalRenders),
+    timestamps: performanceTimeline.map((e) => e.timestamp),
+    fps: performanceTimeline.map((e) => e.metrics.fps || 0),
+    memory: performanceTimeline.map((e) => e.metrics.memoryUsage?.usedJSHeapSize || 0),
+    renderCounts: performanceTimeline.map((e) => e.metrics.totalRenders),
   };
 }
 
@@ -428,13 +433,13 @@ export function getMemoryTrend(): {
   total: number[];
   limit: number[];
 } {
-  const entries = performanceTimeline.filter(e => e.metrics.memoryUsage);
+  const entries = performanceTimeline.filter((e) => e.metrics.memoryUsage);
 
   return {
-    timestamps: entries.map(e => e.timestamp),
-    used: entries.map(e => e.metrics.memoryUsage!.usedJSHeapSize / 1024 / 1024), // MB
-    total: entries.map(e => e.metrics.memoryUsage!.totalJSHeapSize / 1024 / 1024), // MB
-    limit: entries.map(e => e.metrics.memoryUsage!.jsHeapSizeLimit / 1024 / 1024), // MB
+    timestamps: entries.map((e) => e.timestamp),
+    used: entries.map((e) => e.metrics.memoryUsage!.usedJSHeapSize / 1024 / 1024), // MB
+    total: entries.map((e) => e.metrics.memoryUsage!.totalJSHeapSize / 1024 / 1024), // MB
+    limit: entries.map((e) => e.metrics.memoryUsage!.jsHeapSizeLimit / 1024 / 1024), // MB
   };
 }
 
@@ -608,8 +613,4 @@ function handleGetMemoryTrend(): void {
 
 // ===== Exports =====
 
-export {
-  performanceConfig,
-  componentPerformanceMap,
-  performanceTimeline,
-};
+export { performanceConfig, componentPerformanceMap, performanceTimeline };

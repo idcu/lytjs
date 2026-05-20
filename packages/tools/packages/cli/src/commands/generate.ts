@@ -30,10 +30,16 @@ interface TemplateData {
 }
 
 const TEMPLATES = {
-  component: (data: TemplateData, withStyles: boolean, withTest: boolean, template: string, lang: string) => {
+  component: (
+    data: TemplateData,
+    withStyles: boolean,
+    withTest: boolean,
+    template: string,
+    lang: string,
+  ) => {
     const styleImport = withStyles ? `\nimport './${data.kebabName}.styles.css';` : '';
     const tsOnly = lang === 'ts';
-    
+
     if (template === 'sfc') {
       return `<template>
   <div class="${data.kebabName}">
@@ -45,13 +51,17 @@ const TEMPLATES = {
 
 <script setup${tsOnly ? ' lang="ts"' : ''}>
 ${tsOnly ? `import { ref } from '@lytjs/reactivity';\n` : ''}
-${tsOnly ? `
+${
+  tsOnly
+    ? `
 export interface ${data.pascalName}Props {
   className?: string;
 }
 
 const props = defineProps<${data.pascalName}Props>();
-` : ''}
+`
+    : ''
+}
 
 const title = ref('${data.pascalName}');
 </script>
@@ -63,11 +73,13 @@ const title = ref('${data.pascalName}');
 </style>
 `;
     }
-    
-    const testImport = withTest ? `\nimport { describe, it, expect } from 'vitest';\nimport { ${data.pascalName} } from './${data.kebabName}';\n\ndescribe('${data.pascalName}', () => {\n  it('should render', () => {\n    // Add test here\n    expect(true).toBe(true);\n  });\n});` : '';
+
+    const testImport = withTest
+      ? `\nimport { describe, it, expect } from 'vitest';\nimport { ${data.pascalName} } from './${data.kebabName}';\n\ndescribe('${data.pascalName}', () => {\n  it('should render', () => {\n    // Add test here\n    expect(true).toBe(true);\n  });\n});`
+      : '';
 
     const propsDecl = tsOnly ? `['className', 'children']` : `[]`;
-    
+
     return `/**
  * ${data.pascalName} 组件
  *
@@ -77,12 +89,18 @@ const title = ref('${data.pascalName}');
 
 import { h, defineComponent } from '@lytjs/core';${styleImport}
 
-${tsOnly ? `export interface ${data.pascalName}Props {
+${
+  tsOnly
+    ? `export interface ${data.pascalName}Props {
   className?: string;
   children?: any;
 }
 
-` : ''}${template === 'functional' ? `export function ${data.pascalName}(${tsOnly ? `props: ${data.pascalName}Props` : 'props'}) {
+`
+    : ''
+}${
+      template === 'functional'
+        ? `export function ${data.pascalName}(${tsOnly ? `props: ${data.pascalName}Props` : 'props'}) {
   const { className = '', children } = props;
 
   return (
@@ -90,7 +108,8 @@ ${tsOnly ? `export interface ${data.pascalName}Props {
       {children || '${data.pascalName} Component'}
     </div>
   );
-}` : `export const ${data.pascalName} = defineComponent({
+}`
+        : `export const ${data.pascalName} = defineComponent({
   name: '${data.pascalName}',
   props: ${propsDecl},
   setup(props) {
@@ -102,13 +121,20 @@ ${tsOnly ? `export interface ${data.pascalName}Props {
       </div>
     );
   },
-});`}
+});`
+    }
 
 export default ${data.pascalName};${testImport}
 `;
   },
 
-  page: (data: TemplateData, withStyles: boolean, withTest: boolean, template: string, lang: string) => {
+  page: (
+    data: TemplateData,
+    withStyles: boolean,
+    withTest: boolean,
+    template: string,
+    lang: string,
+  ) => {
     const styleImport = withStyles ? `\nimport './${data.kebabName}.styles.css';` : '';
     const tsOnly = lang === 'ts';
 
@@ -123,13 +149,17 @@ export default ${data.pascalName};${testImport}
 
 <script setup${tsOnly ? ' lang="ts"' : ''}>
 ${tsOnly ? `import { ref } from '@lytjs/reactivity';\n` : ''}
-${tsOnly ? `
+${
+  tsOnly
+    ? `
 export interface ${data.pascalName}PageProps {
   title?: string;
 }
 
 const props = defineProps<${data.pascalName}PageProps>();
-` : ''}
+`
+    : ''
+}
 
 const title = ref(props.title || '${data.pascalName}');
 </script>
@@ -142,7 +172,9 @@ const title = ref(props.title || '${data.pascalName}');
 `;
     }
 
-    const testImport = withTest ? `\nimport { describe, it, expect } from 'vitest';\nimport { ${data.pascalName}Page } from './${data.kebabName}';\n\ndescribe('${data.pascalName}Page', () => {\n  it('should render', () => {\n    // Add test here\n    expect(true).toBe(true);\n  });\n});` : '';
+    const testImport = withTest
+      ? `\nimport { describe, it, expect } from 'vitest';\nimport { ${data.pascalName}Page } from './${data.kebabName}';\n\ndescribe('${data.pascalName}Page', () => {\n  it('should render', () => {\n    // Add test here\n    expect(true).toBe(true);\n  });\n});`
+      : '';
 
     return `/**
  * ${data.pascalName} 页面
@@ -154,11 +186,15 @@ const title = ref(props.title || '${data.pascalName}');
 import { h, ${tsOnly ? 'signal' : 'signal'} } from '@lytjs/core';
 ${styleImport}
 
-${tsOnly ? `export interface ${data.pascalName}PageProps {
+${
+  tsOnly
+    ? `export interface ${data.pascalName}PageProps {
   title?: string;
 }
 
-` : ''}export function ${data.pascalName}Page(${tsOnly ? `props: ${data.pascalName}PageProps` : 'props'}) {
+`
+    : ''
+}export function ${data.pascalName}Page(${tsOnly ? `props: ${data.pascalName}PageProps` : 'props'}) {
   const { title = '${data.pascalName}' } = props;
 
   return (
@@ -173,7 +209,13 @@ export default ${data.pascalName}Page;${testImport}
 `;
   },
 
-  service: (data: TemplateData, _withStyles: boolean, _withTest: boolean, _template: string, lang: string) => {
+  service: (
+    data: TemplateData,
+    _withStyles: boolean,
+    _withTest: boolean,
+    _template: string,
+    lang: string,
+  ) => {
     const tsOnly = lang === 'ts';
 
     return `/**
@@ -183,16 +225,24 @@ export default ${data.pascalName}Page;${testImport}
  * @created ${data.date}
  */
 
-${tsOnly ? `export interface ${data.pascalName}ServiceOptions {
+${
+  tsOnly
+    ? `export interface ${data.pascalName}ServiceOptions {
   baseUrl?: string;
   timeout?: number;
 }
 
-` : ''}${tsOnly ? `export class ${data.pascalName}Service {
+`
+    : ''
+}${
+      tsOnly
+        ? `export class ${data.pascalName}Service {
   private baseUrl: string;
   private timeout: number;
-` : `export class ${data.pascalName}Service {
-`}
+`
+        : `export class ${data.pascalName}Service {
+`
+    }
   constructor(${tsOnly ? `options: ${data.pascalName}ServiceOptions = {}` : 'options = {}'}) {
     this.baseUrl = options.baseUrl || '/api';
     this.timeout = options.timeout || 30000;
@@ -248,7 +298,13 @@ export default ${data.pascalName}Service;
 `;
   },
 
-  hook: (data: TemplateData, _withStyles: boolean, _withTest: boolean, _template: string, lang: string) => {
+  hook: (
+    data: TemplateData,
+    _withStyles: boolean,
+    _withTest: boolean,
+    _template: string,
+    lang: string,
+  ) => {
     const tsOnly = lang === 'ts';
 
     return `/**
@@ -260,7 +316,9 @@ export default ${data.pascalName}Service;
 
 import { signal, effect } from '@lytjs/reactivity';
 
-${tsOnly ? `export interface ${data.pascalName}Options {
+${
+  tsOnly
+    ? `export interface ${data.pascalName}Options {
   immediate?: boolean;
 }
 
@@ -272,7 +330,9 @@ export interface ${data.pascalName}Return {
   reset: () => void;
 }
 
-` : ''}export function use${data.pascalName}(${tsOnly ? `options: ${data.pascalName}Options = {}` : 'options = {}'})${tsOnly ? `: ${data.pascalName}Return` : ''} {
+`
+    : ''
+}export function use${data.pascalName}(${tsOnly ? `options: ${data.pascalName}Options = {}` : 'options = {}'})${tsOnly ? `: ${data.pascalName}Return` : ''} {
   const { immediate = false } = options;
 
   const data = signal<any>(null);
@@ -316,7 +376,13 @@ export default use${data.pascalName};
 `;
   },
 
-  store: (data: TemplateData, _withStyles: boolean, _withTest: boolean, _template: string, lang: string) => {
+  store: (
+    data: TemplateData,
+    _withStyles: boolean,
+    _withTest: boolean,
+    _template: string,
+    lang: string,
+  ) => {
     const tsOnly = lang === 'ts';
 
     return `/**
@@ -328,14 +394,18 @@ export default use${data.pascalName};
 
 import { signal, computed } from '@lytjs/reactivity';
 
-${tsOnly ? `export interface ${data.pascalName}State {
+${
+  tsOnly
+    ? `export interface ${data.pascalName}State {
   items: any[];
   selectedId: string | null;
   loading: boolean;
   error: Error | null;
 }
 
-` : ''}export function create${data.pascalName}Store() {
+`
+    : ''
+}export function create${data.pascalName}Store() {
   const state = signal${tsOnly ? `<${data.pascalName}State>` : ''}({
     items: [],
     selectedId: null,
@@ -418,7 +488,13 @@ ${tsOnly ? `export type ${data.pascalName}Store = ReturnType<typeof create${data
 `;
   },
 
-  layout: (data: TemplateData, withStyles: boolean, _withTest: boolean, _template: string, lang: string) => {
+  layout: (
+    data: TemplateData,
+    withStyles: boolean,
+    _withTest: boolean,
+    _template: string,
+    lang: string,
+  ) => {
     const tsOnly = lang === 'ts';
     const styleImport = withStyles ? `\nimport './${data.kebabName}.styles.css';` : '';
 
@@ -431,11 +507,15 @@ ${tsOnly ? `export type ${data.pascalName}Store = ReturnType<typeof create${data
 
 import { h, defineComponent } from '@lytjs/core';${styleImport}
 
-${tsOnly ? `export interface ${data.pascalName}LayoutProps {
+${
+  tsOnly
+    ? `export interface ${data.pascalName}LayoutProps {
   children?: any;
 }
 
-` : ''}export const ${data.pascalName}Layout = defineComponent({
+`
+    : ''
+}export const ${data.pascalName}Layout = defineComponent({
   name: '${data.pascalName}Layout',
   setup(props) {
     return () => (
@@ -460,7 +540,13 @@ export default ${data.pascalName}Layout;
 `;
   },
 
-  middleware: (data: TemplateData, _withStyles: boolean, _withTest: boolean, _template: string, lang: string) => {
+  middleware: (
+    data: TemplateData,
+    _withStyles: boolean,
+    _withTest: boolean,
+    _template: string,
+    lang: string,
+  ) => {
     const tsOnly = lang === 'ts';
 
     return `/**
@@ -488,7 +574,7 @@ export default ${data.camelName}Middleware;
 function toPascalCase(name: string): string {
   return name
     .split(/[-_]/)
-    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join('');
 }
 
@@ -535,11 +621,7 @@ export async function generate(options: GenerateOptions): Promise<void> {
     middleware: 'middleware',
   };
 
-  const targetDir = path.join(
-    process.cwd(),
-    basePath,
-    typeDirs[type] || 'components'
-  );
+  const targetDir = path.join(process.cwd(), basePath, typeDirs[type] || 'components');
   await ensureDir(targetDir);
 
   const templateFn = TEMPLATES[type];
@@ -577,7 +659,9 @@ export async function generate(options: GenerateOptions): Promise<void> {
 
   logger.info('\nNext steps:');
   logger.info(`  cd ${targetDir}`);
-  logger.info(`  Import your ${type}: import { ${template === 'sfc' ? 'default' : templateData.pascalName} } from './${templateData.kebabName}'`);
+  logger.info(
+    `  Import your ${type}: import { ${template === 'sfc' ? 'default' : templateData.pascalName} } from './${templateData.kebabName}'`,
+  );
 
   logger.info('\nAvailable options:');
   logger.info('  --template=sfc : Single File Component (.lyt)');

@@ -63,6 +63,7 @@ function App() {
 ```
 
 默认显示：
+
 - 错误消息
 - 重试按钮
 - 重置按钮
@@ -441,34 +442,34 @@ if (log) {
 
 ### ErrorBoundary Props
 
-| 属性 | 类型 | 默认值 | 说明 |
-|------|------|--------|------|
-| `fallback` | `Component<FallbackProps>` | 内置组件 | 降级组件 |
-| `fallbackRender` | `(error, errorInfo, reset) => VNode` | - | 降级渲染函数 |
-| `onError` | `(error, errorInfo) => void` | - | 错误回调 |
-| `maxRetries` | `number` | `3` | 最大重试次数 |
-| `retryDelay` | `number` | `1000` | 重试延迟（毫秒） |
-| `onRetry` | `(retryCount) => void` | - | 重试回调 |
-| `onMaxRetriesReached` | `(error) => void` | - | 达到最大重试次数回调 |
+| 属性                  | 类型                                 | 默认值   | 说明                 |
+| --------------------- | ------------------------------------ | -------- | -------------------- |
+| `fallback`            | `Component<FallbackProps>`           | 内置组件 | 降级组件             |
+| `fallbackRender`      | `(error, errorInfo, reset) => VNode` | -        | 降级渲染函数         |
+| `onError`             | `(error, errorInfo) => void`         | -        | 错误回调             |
+| `maxRetries`          | `number`                             | `3`      | 最大重试次数         |
+| `retryDelay`          | `number`                             | `1000`   | 重试延迟（毫秒）     |
+| `onRetry`             | `(retryCount) => void`               | -        | 重试回调             |
+| `onMaxRetriesReached` | `(error) => void`                    | -        | 达到最大重试次数回调 |
 
 ### FallbackProps
 
-| 属性 | 类型 | 说明 |
-|------|------|------|
-| `error` | `Error` | 捕获的错误对象 |
-| `errorInfo` | `ErrorInfo` | 错误详情信息 |
-| `reset` | `() => void` | 重置函数 |
-| `retry` | `() => void` | 重试函数 |
-| `retryCount` | `number` | 当前重试次数 |
-| `maxRetries` | `number` | 最大重试次数 |
-| `hasRetries` | `boolean` | 是否还有重试机会 |
+| 属性         | 类型         | 说明             |
+| ------------ | ------------ | ---------------- |
+| `error`      | `Error`      | 捕获的错误对象   |
+| `errorInfo`  | `ErrorInfo`  | 错误详情信息     |
+| `reset`      | `() => void` | 重置函数         |
+| `retry`      | `() => void` | 重试函数         |
+| `retryCount` | `number`     | 当前重试次数     |
+| `maxRetries` | `number`     | 最大重试次数     |
+| `hasRetries` | `boolean`    | 是否还有重试机会 |
 
 ### ErrorInfo
 
-| 属性 | 类型 | 说明 |
-|------|------|------|
+| 属性             | 类型     | 说明         |
+| ---------------- | -------- | ------------ |
 | `componentStack` | `string` | 组件堆栈信息 |
-| `timestamp` | `Date` | 错误发生时间 |
+| `timestamp`      | `Date`   | 错误发生时间 |
 
 ### 错误报告 API
 

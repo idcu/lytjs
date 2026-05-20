@@ -1,6 +1,6 @@
 /**
  * 社交媒体应用实战案例
- * 
+ *
  * 包含功能：
  * - 用户认证和状态管理
  * - 动态Feed流
@@ -20,24 +20,20 @@ function createUserStore() {
     avatar: '/avatars/xiaoming.jpg',
     bio: '前端开发者 | 开源贡献者',
     followers: 1234,
-    following: 567
+    following: 567,
   });
 
   const isLoggedIn = signal(true);
   const notifications = signal([
     { id: 1, type: 'like', content: '张三点赞了你的动态', read: false },
     { id: 2, type: 'comment', content: '李四评论: 写得真好！', read: false },
-    { id: 3, type: 'follow', content: '王五关注了你', read: true }
+    { id: 3, type: 'follow', content: '王五关注了你', read: true },
   ]);
 
-  const unreadCount = computed(() => 
-    notifications.value.filter(n => !n.read).length
-  );
+  const unreadCount = computed(() => notifications.value.filter((n) => !n.read).length);
 
   function markAsRead(id: number) {
-    notifications.value = notifications.value.map(n => 
-      n.id === id ? { ...n, read: true } : n
-    );
+    notifications.value = notifications.value.map((n) => (n.id === id ? { ...n, read: true } : n));
   }
 
   function login(user: any) {
@@ -57,7 +53,7 @@ function createUserStore() {
     unreadCount,
     markAsRead,
     login,
-    logout
+    logout,
   };
 }
 
@@ -76,8 +72,8 @@ function createFeedStore() {
       timestamp: Date.now() - 3600000,
       comments_list: [
         { id: 1, author: '李四', content: '确实不错！' },
-        { id: 2, author: '王五', content: '同意楼上' }
-      ]
+        { id: 2, author: '王五', content: '同意楼上' },
+      ],
     },
     {
       id: 2,
@@ -89,7 +85,7 @@ function createFeedStore() {
       shares: 45,
       liked: true,
       timestamp: Date.now() - 7200000,
-      comments_list: []
+      comments_list: [],
     },
     {
       id: 3,
@@ -101,8 +97,8 @@ function createFeedStore() {
       shares: 12,
       liked: false,
       timestamp: Date.now() - 10800000,
-      comments_list: []
-    }
+      comments_list: [],
+    },
   ]);
 
   const newPostContent = signal('');
@@ -120,7 +116,7 @@ function createFeedStore() {
       shares: 0,
       liked: false,
       timestamp: Date.now(),
-      comments_list: []
+      comments_list: [],
     };
     posts.value = [newPost, ...posts.value];
     newPostContent.value = '';
@@ -128,12 +124,12 @@ function createFeedStore() {
   }
 
   function toggleLike(postId: number) {
-    posts.value = posts.value.map(post => {
+    posts.value = posts.value.map((post) => {
       if (post.id === postId) {
         return {
           ...post,
           liked: !post.liked,
-          likes: post.liked ? post.likes - 1 : post.likes + 1
+          likes: post.liked ? post.likes - 1 : post.likes + 1,
         };
       }
       return post;
@@ -141,15 +137,12 @@ function createFeedStore() {
   }
 
   function addComment(postId: number, content: string) {
-    posts.value = posts.value.map(post => {
+    posts.value = posts.value.map((post) => {
       if (post.id === postId) {
         return {
           ...post,
           comments: post.comments + 1,
-          comments_list: [
-            ...post.comments_list,
-            { id: Date.now(), author: '小明', content }
-          ]
+          comments_list: [...post.comments_list, { id: Date.now(), author: '小明', content }],
         };
       }
       return post;
@@ -162,7 +155,7 @@ function createFeedStore() {
     isPosting,
     addPost,
     toggleLike,
-    addComment
+    addComment,
   };
 }
 
@@ -172,131 +165,155 @@ function Navbar(props: { userStore: any; onToggleNotifications: () => void }) {
   return createVNode('nav', { class: 'social-nav' }, [
     createVNode('div', { class: 'nav-logo' }, 'SocialApp'),
     createVNode('div', { class: 'nav-search' }, [
-      createVNode('input', { type: 'text', placeholder: '搜索用户、动态...' })
+      createVNode('input', { type: 'text', placeholder: '搜索用户、动态...' }),
     ]),
     createVNode('div', { class: 'nav-actions' }, [
       createVNode('button', { class: 'nav-btn' }, '🏠'),
       createVNode('button', { class: 'nav-btn' }, '✉️'),
-      createVNode('button', { 
-        class: 'nav-btn notification-btn',
-        onclick: props.onToggleNotifications
-      }, [
-        '🔔',
-        props.userStore.unreadCount.value > 0 
-          ? createVNode('span', { class: 'badge' }, props.userStore.unreadCount.value)
-          : null
-      ]),
-      createVNode('img', { 
+      createVNode(
+        'button',
+        {
+          class: 'nav-btn notification-btn',
+          onclick: props.onToggleNotifications,
+        },
+        [
+          '🔔',
+          props.userStore.unreadCount.value > 0
+            ? createVNode('span', { class: 'badge' }, props.userStore.unreadCount.value)
+            : null,
+        ],
+      ),
+      createVNode('img', {
         class: 'nav-avatar',
         src: props.userStore.currentUser.value.avatar,
-        alt: props.userStore.currentUser.value.name
-      })
-    ])
+        alt: props.userStore.currentUser.value.name,
+      }),
+    ]),
   ]);
 }
 
 function PostComposer(props: { feedStore: any }) {
   return createVNode('div', { class: 'post-composer' }, [
-    createVNode('img', { 
+    createVNode('img', {
       class: 'composer-avatar',
-      src: 'https://via.placeholder.com/40'
+      src: 'https://via.placeholder.com/40',
     }),
     createVNode('div', { class: 'composer-content' }, [
       createVNode('textarea', {
         placeholder: '分享你的想法...',
         value: props.feedStore.newPostContent.value,
-        oninput: (e: any) => props.feedStore.newPostContent.value = e.target.value
+        oninput: (e: any) => (props.feedStore.newPostContent.value = e.target.value),
       }),
       createVNode('div', { class: 'composer-actions' }, [
         createVNode('button', { class: 'action-btn' }, '📷 图片'),
         createVNode('button', { class: 'action-btn' }, '📍 位置'),
         createVNode('button', { class: 'action-btn' }, '😊 表情'),
-        createVNode('button', {
-          class: 'post-btn',
-          onclick: () => {
-            if (props.feedStore.newPostContent.value.trim()) {
-              props.feedStore.addPost(props.feedStore.newPostContent.value);
-            }
-          }
-        }, '发布')
-      ])
-    ])
+        createVNode(
+          'button',
+          {
+            class: 'post-btn',
+            onclick: () => {
+              if (props.feedStore.newPostContent.value.trim()) {
+                props.feedStore.addPost(props.feedStore.newPostContent.value);
+              }
+            },
+          },
+          '发布',
+        ),
+      ]),
+    ]),
   ]);
 }
 
 function CommentItem(props: { comment: any }) {
   return createVNode('div', { class: 'comment-item' }, [
     createVNode('span', { class: 'comment-author' }, props.comment.author),
-    createVNode('span', { class: 'comment-content' }, props.comment.content)
+    createVNode('span', { class: 'comment-content' }, props.comment.content),
   ]);
 }
 
 function PostCard(props: { post: any; feedStore: any }) {
   const { post } = props;
-  
+
   return createVNode('div', { class: 'post-card' }, [
     createVNode('div', { class: 'post-header' }, [
       createVNode('img', { class: 'post-avatar', src: post.author.avatar }),
       createVNode('div', { class: 'post-meta' }, [
         createVNode('span', { class: 'post-author' }, post.author.name),
-        createVNode('span', { class: 'post-time' }, formatTime(post.timestamp))
-      ])
+        createVNode('span', { class: 'post-time' }, formatTime(post.timestamp)),
+      ]),
     ]),
     createVNode('div', { class: 'post-content' }, post.content),
-    post.images.length > 0 
-      ? createVNode('div', { class: 'post-images' }, 
-          post.images.map((img: string) => 
-            createVNode('img', { class: 'post-image', src: img })
-          )
+    post.images.length > 0
+      ? createVNode(
+          'div',
+          { class: 'post-images' },
+          post.images.map((img: string) => createVNode('img', { class: 'post-image', src: img })),
         )
       : null,
     createVNode('div', { class: 'post-stats' }, [
       createVNode('span', {}, `${post.likes} 赞`),
       createVNode('span', {}, `${post.comments} 评论`),
-      createVNode('span', {}, `${post.shares} 分享`)
+      createVNode('span', {}, `${post.shares} 分享`),
     ]),
     createVNode('div', { class: 'post-actions' }, [
-      createVNode('button', { 
-        class: post.liked ? 'action-btn liked' : 'action-btn',
-        onclick: () => props.feedStore.toggleLike(post.id)
-      }, post.liked ? '❤️ 点赞' : '🤍 点赞'),
+      createVNode(
+        'button',
+        {
+          class: post.liked ? 'action-btn liked' : 'action-btn',
+          onclick: () => props.feedStore.toggleLike(post.id),
+        },
+        post.liked ? '❤️ 点赞' : '🤍 点赞',
+      ),
       createVNode('button', { class: 'action-btn' }, '💬 评论'),
-      createVNode('button', { class: 'action-btn' }, '↗️ 分享')
+      createVNode('button', { class: 'action-btn' }, '↗️ 分享'),
     ]),
     post.comments_list.length > 0
-      ? createVNode('div', { class: 'post-comments' },
-          post.comments_list.slice(0, 2).map((comment: any) =>
-            createVNode(CommentItem, { comment })
-          )
+      ? createVNode(
+          'div',
+          { class: 'post-comments' },
+          post.comments_list
+            .slice(0, 2)
+            .map((comment: any) => createVNode(CommentItem, { comment })),
         )
-      : null
+      : null,
   ]);
 }
 
 function FeedList(props: { feedStore: any }) {
-  return createVNode('div', { class: 'feed-list' },
+  return createVNode(
+    'div',
+    { class: 'feed-list' },
     props.feedStore.posts.value.map((post: any) =>
-      createVNode(PostCard, { key: post.id, post, feedStore: props.feedStore })
-    )
+      createVNode(PostCard, { key: post.id, post, feedStore: props.feedStore }),
+    ),
   );
 }
 
 function NotificationPanel(props: { userStore: any }) {
   return createVNode('div', { class: 'notification-panel' }, [
     createVNode('h3', {}, '通知'),
-    createVNode('div', { class: 'notification-list' },
+    createVNode(
+      'div',
+      { class: 'notification-list' },
       props.userStore.notifications.value.map((n: any) =>
-        createVNode('div', { 
-          class: n.read ? 'notification-item read' : 'notification-item unread',
-          onclick: () => props.userStore.markAsRead(n.id)
-        }, [
-          createVNode('span', { class: 'notification-icon' }, 
-            n.type === 'like' ? '❤️' : n.type === 'comment' ? '💬' : '👤'
-          ),
-          createVNode('span', { class: 'notification-content' }, n.content)
-        ])
-      )
-    )
+        createVNode(
+          'div',
+          {
+            class: n.read ? 'notification-item read' : 'notification-item unread',
+            onclick: () => props.userStore.markAsRead(n.id),
+          },
+          [
+            createVNode(
+              'span',
+              { class: 'notification-icon' },
+              n.type === 'like' ? '❤️' : n.type === 'comment' ? '💬' : '👤',
+            ),
+            createVNode('span', { class: 'notification-content' }, n.content),
+          ],
+        ),
+      ),
+    ),
   ]);
 }
 
@@ -305,7 +322,7 @@ function formatTime(timestamp: number): string {
   const minutes = Math.floor(diff / 60000);
   const hours = Math.floor(diff / 3600000);
   const days = Math.floor(diff / 86400000);
-  
+
   if (minutes < 1) return '刚刚';
   if (minutes < 60) return `${minutes}分钟前`;
   if (hours < 24) return `${hours}小时前`;
@@ -318,39 +335,37 @@ function SocialApp() {
   const showNotifications = signal(false);
 
   return createVNode('div', { class: 'social-app' }, [
-    createVNode(Navbar, { 
+    createVNode(Navbar, {
       userStore,
-      onToggleNotifications: () => showNotifications.value = !showNotifications.value
+      onToggleNotifications: () => (showNotifications.value = !showNotifications.value),
     }),
     createVNode('div', { class: 'social-content' }, [
       createVNode('div', { class: 'main-column' }, [
         createVNode(PostComposer, { feedStore }),
-        createVNode(FeedList, { feedStore })
+        createVNode(FeedList, { feedStore }),
       ]),
       createVNode('div', { class: 'side-column' }, [
         createVNode('div', { class: 'user-card' }, [
-          createVNode('img', { 
+          createVNode('img', {
             class: 'user-avatar-lg',
-            src: userStore.currentUser.value.avatar
+            src: userStore.currentUser.value.avatar,
           }),
           createVNode('h3', {}, userStore.currentUser.value.name),
           createVNode('p', { class: 'user-bio' }, userStore.currentUser.value.bio),
           createVNode('div', { class: 'user-stats' }, [
             createVNode('span', {}, `${userStore.currentUser.value.followers} 粉丝`),
-            createVNode('span', {}, `${userStore.currentUser.value.following} 关注`)
-          ])
+            createVNode('span', {}, `${userStore.currentUser.value.following} 关注`),
+          ]),
         ]),
         createVNode('div', { class: 'trending' }, [
           createVNode('h4', {}, '热门话题'),
           createVNode('div', { class: 'trending-item' }, '#前端开发'),
           createVNode('div', { class: 'trending-item' }, '#开源项目'),
-          createVNode('div', { class: 'trending-item' }, '#TypeScript')
-        ])
-      ])
+          createVNode('div', { class: 'trending-item' }, '#TypeScript'),
+        ]),
+      ]),
     ]),
-    showNotifications.value 
-      ? createVNode(NotificationPanel, { userStore })
-      : null
+    showNotifications.value ? createVNode(NotificationPanel, { userStore }) : null,
   ]);
 }
 
@@ -402,12 +417,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #
 .notification-item:hover { background: #f0f2f5; }
 `;
 
-export {
-  SocialApp,
-  createUserStore,
-  createFeedStore,
-  SOCIAL_APP_STYLES
-};
+export { SocialApp, createUserStore, createFeedStore, SOCIAL_APP_STYLES };
 
 if (typeof require !== 'undefined' && require.main === module) {
   console.log('🧪 LytJS 社交媒体应用实战案例');

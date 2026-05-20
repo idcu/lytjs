@@ -46,17 +46,21 @@ export const Alert = defineComponent({
         `lyt-alert--${_props.type}`,
         `lyt-alert--${_props.effect}`,
         _props.class,
-      ].filter(Boolean).join(' ');
+      ]
+        .filter(Boolean)
+        .join(' ');
 
       const children: VNode[] = [];
 
       if (_props.showIcon) {
         const icon = getIconMap()[_props.type as AlertType] || 'ℹ';
-        children.push(createVNode('span', { class: 'lyt-alert__icon' }, [createVNode('span', {}, icon)]));
+        children.push(
+          createVNode('span', { class: 'lyt-alert__icon' }, [createVNode('span', {}, icon)]),
+        );
       }
 
       const contentChildren: VNode[] = [];
-      
+
       // Title
       if (slots.title || _props.title) {
         const titleChildren: VNode[] = [];
@@ -75,14 +79,20 @@ export const Alert = defineComponent({
 
       // Description
       if (_props.description) {
-        contentChildren.push(createVNode('div', { class: 'lyt-alert__description' }, [createVNode('span', {}, _props.description)]));
+        contentChildren.push(
+          createVNode('div', { class: 'lyt-alert__description' }, [
+            createVNode('span', {}, _props.description),
+          ]),
+        );
       }
 
       // Default slot
       if (slots.default) {
         const slotContent = slots.default();
         if (Array.isArray(slotContent)) {
-          contentChildren.push(createVNode('div', { class: 'lyt-alert__message' }, slotContent as VNode[]));
+          contentChildren.push(
+            createVNode('div', { class: 'lyt-alert__message' }, slotContent as VNode[]),
+          );
         }
       }
 
@@ -92,19 +102,29 @@ export const Alert = defineComponent({
 
       if (_props.closable) {
         const closeBtnProps = getButtonA11yProps({ ariaLabel: '关闭提示' });
-        children.push(createVNode('button', mergeA11yProps(closeBtnProps, {
-          class: 'lyt-alert__close',
-          onClick: handleClose,
-        }), [createVNode('span', {}, '×')]));
+        children.push(
+          createVNode(
+            'button',
+            mergeA11yProps(closeBtnProps, {
+              class: 'lyt-alert__close',
+              onClick: handleClose,
+            }),
+            [createVNode('span', {}, '×')],
+          ),
+        );
       }
 
-      return createVNode('div', {
-        id: _props.id,
-        'aria-label': _props.ariaLabel || _props.title || 'Alert',
-        'aria-describedby': _props.ariaDescribedBy,
-        'role': 'alert',
-        class: alertClass,
-      }, children);
+      return createVNode(
+        'div',
+        {
+          id: _props.id,
+          'aria-label': _props.ariaLabel || _props.title || 'Alert',
+          'aria-describedby': _props.ariaDescribedBy,
+          role: 'alert',
+          class: alertClass,
+        },
+        children,
+      );
     };
   },
 });

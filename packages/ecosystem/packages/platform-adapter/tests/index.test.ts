@@ -9,11 +9,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { adapterRegistry } from '../src/adapter-registry';
 import { createPlatformRenderer } from '../src/create-renderer';
-import type {
-  PlatformAdapter,
-  PlatformPlugin,
-  PlatformRenderer,
-} from '../src/types';
+import type { PlatformAdapter, PlatformPlugin, PlatformRenderer } from '../src/types';
 import type { VNode } from '@lytjs/common-vnode';
 
 // ============================================================
@@ -180,9 +176,7 @@ describe('AdapterRegistry', () => {
 
     it('应该在名称为空字符串时抛出错误', () => {
       const adapter = createMockAdapter('');
-      expect(() => adapterRegistry.register(adapter)).toThrow(
-        '适配器名称不能为空',
-      );
+      expect(() => adapterRegistry.register(adapter)).toThrow('适配器名称不能为空');
     });
   });
 
@@ -398,7 +392,7 @@ describe('createPlatformRenderer', () => {
     expect(el.tag).toBe('button');
     expect((el.attrs as Record<string, string>).id).toBe('btn');
     expect(el.style).toBe('color: red');
-    expect((el.classes as string[])).toContain('primary');
+    expect(el.classes as string[]).toContain('primary');
   });
 
   it('unmount 应清除容器内容', () => {
@@ -458,9 +452,7 @@ describe('createPlatformRenderer', () => {
     renderer.render(vnode, container as never);
     renderer.unmount(container as never);
 
-    expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining('卸载完成'),
-    );
+    expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('卸载完成'));
 
     consoleSpy.mockRestore();
   });

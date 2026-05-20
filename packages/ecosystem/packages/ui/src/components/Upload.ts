@@ -128,7 +128,6 @@ export const Upload = defineComponent({
           xhr.setRequestHeader(key, value);
         }
         xhr.send(formData);
-
       } catch (error) {
         file.status = 'error';
         files.set([...files()]);
@@ -138,7 +137,7 @@ export const Upload = defineComponent({
     };
 
     const handleRemove = (file: UploadFile) => {
-      const newFiles = files().filter(f => f.uid !== file.uid);
+      const newFiles = files().filter((f) => f.uid !== file.uid);
       files.set(newFiles);
       p.onRemove?.(file);
       p.onChange?.(files());
@@ -178,25 +177,47 @@ export const Upload = defineComponent({
       if (slots.file) {
         fileChildren.push(...slots.file(file));
       } else {
-        fileChildren.push(createVNode('span', { class: 'lyt-upload__file-name' }, [createVNode('span', {}, String(file.name))]));
+        fileChildren.push(
+          createVNode('span', { class: 'lyt-upload__file-name' }, [
+            createVNode('span', {}, String(file.name)),
+          ]),
+        );
       }
 
       if (file.status === 'uploading') {
-        fileChildren.push(createVNode('div', { class: 'lyt-upload__progress' }, [
-          createVNode('div', {
-            class: 'lyt-upload__progress-bar',
-            style: `width: ${file.percentage || 0}%`,
-          }, []),
-          createVNode('span', { class: 'lyt-upload__percentage' }, [createVNode('span', {}, `${file.percentage || 0}%`)]),
-        ]));
+        fileChildren.push(
+          createVNode('div', { class: 'lyt-upload__progress' }, [
+            createVNode(
+              'div',
+              {
+                class: 'lyt-upload__progress-bar',
+                style: `width: ${file.percentage || 0}%`,
+              },
+              [],
+            ),
+            createVNode('span', { class: 'lyt-upload__percentage' }, [
+              createVNode('span', {}, `${file.percentage || 0}%`),
+            ]),
+          ]),
+        );
       }
 
-      fileChildren.push(createVNode('span', {
-        class: 'lyt-upload__remove',
-        onClick: () => handleRemove(file),
-      }, [createVNode('span', {}, '×')]));
+      fileChildren.push(
+        createVNode(
+          'span',
+          {
+            class: 'lyt-upload__remove',
+            onClick: () => handleRemove(file),
+          },
+          [createVNode('span', {}, '×')],
+        ),
+      );
 
-      return createVNode('div', { class: `lyt-upload__file ${statusClass}`, key: file.uid }, fileChildren);
+      return createVNode(
+        'div',
+        { class: `lyt-upload__file ${statusClass}`, key: file.uid },
+        fileChildren,
+      );
     };
 
     return () => {
@@ -205,7 +226,9 @@ export const Upload = defineComponent({
         p.disabled ? 'lyt-upload--disabled' : '',
         dragOver() ? 'lyt-upload--dragover' : '',
         p.class,
-      ].filter(Boolean).join(' ');
+      ]
+        .filter(Boolean)
+        .join(' ');
 
       const triggerContent: VNode[] = [];
 
@@ -214,10 +237,14 @@ export const Upload = defineComponent({
       } else if (slots.default) {
         triggerContent.push(...slots.default());
       } else {
-        triggerContent.push(createVNode('div', { class: 'lyt-upload__content' }, [
-          createVNode('span', { class: 'lyt-upload__icon' }, [createVNode('span', {}, '📤')]),
-          createVNode('span', { class: 'lyt-upload__text' }, [createVNode('span', {}, '点击上传或拖拽文件')]),
-        ]));
+        triggerContent.push(
+          createVNode('div', { class: 'lyt-upload__content' }, [
+            createVNode('span', { class: 'lyt-upload__icon' }, [createVNode('span', {}, '📤')]),
+            createVNode('span', { class: 'lyt-upload__text' }, [
+              createVNode('span', {}, '点击上传或拖拽文件'),
+            ]),
+          ]),
+        );
       }
 
       const tipContent: VNode[] = [];
@@ -227,25 +254,33 @@ export const Upload = defineComponent({
 
       const fileListContent: VNode[] = [];
       if (files().length > 0) {
-        fileListContent.push(...files().map(file => renderFile(file)));
+        fileListContent.push(...files().map((file) => renderFile(file)));
       }
 
       const children: VNode[] = [
-        createVNode('input', {
-          ref: inputRef,
-          type: 'file',
-          class: 'lyt-upload__input',
-          accept: p.accept,
-          multiple: p.multiple,
-          onChange: handleFileChange,
-        }, []),
-        createVNode('div', {
-          class: 'lyt-upload__trigger',
-          onClick: handleClick,
-          onDragOver: handleDragOver,
-          onDragLeave: handleDragLeave,
-          onDrop: handleDrop,
-        }, triggerContent),
+        createVNode(
+          'input',
+          {
+            ref: inputRef,
+            type: 'file',
+            class: 'lyt-upload__input',
+            accept: p.accept,
+            multiple: p.multiple,
+            onChange: handleFileChange,
+          },
+          [],
+        ),
+        createVNode(
+          'div',
+          {
+            class: 'lyt-upload__trigger',
+            onClick: handleClick,
+            onDragOver: handleDragOver,
+            onDragLeave: handleDragLeave,
+            onDrop: handleDrop,
+          },
+          triggerContent,
+        ),
       ];
 
       if (tipContent.length > 0) {

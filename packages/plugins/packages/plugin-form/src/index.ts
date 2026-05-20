@@ -177,7 +177,9 @@ function createFormManager(options: FormOptions = {}): FormInstance {
     const disabledSignal = signal<boolean>(config.disabled ?? false);
     const readOnlySignal = signal<boolean>(config.readOnly ?? false);
     const validatingSignal = signal<boolean>(false);
-    const validSignal: ComputedSignal<boolean> = computed<boolean>(() => errorsSignal().length === 0);
+    const validSignal: ComputedSignal<boolean> = computed<boolean>(
+      () => errorsSignal().length === 0,
+    );
 
     return {
       get value() {
@@ -377,7 +379,9 @@ function createFormManager(options: FormOptions = {}): FormInstance {
     return allValid;
   }
 
-  async function submit(callback?: (values: Record<string, unknown>) => void | Promise<void>): Promise<boolean> {
+  async function submit(
+    callback?: (values: Record<string, unknown>) => void | Promise<void>,
+  ): Promise<boolean> {
     isSubmittingSignal.set(true);
 
     try {
@@ -469,12 +473,5 @@ const pluginForm = definePlugin({
 });
 
 export default pluginForm;
-export type {
-  FormOptions,
-  FormInstance,
-  FormState,
-  FieldState,
-  FieldConfig,
-  FieldValidationRule,
-};
+export type { FormOptions, FormInstance, FormState, FieldState, FieldConfig, FieldValidationRule };
 export { createFormManager };

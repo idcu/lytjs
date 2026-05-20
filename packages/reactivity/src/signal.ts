@@ -410,19 +410,22 @@ function flushPendingNotifications(): void {
   isNotifying = true;
   try {
     let iterations = 0;
-    while ((pendingNotifications.size > 0 || pendingTriggerOps.size > 0) && iterations < REACTIVITY_MAX_TRIGGER_DEPTH) {
+    while (
+      (pendingNotifications.size > 0 || pendingTriggerOps.size > 0) &&
+      iterations < REACTIVITY_MAX_TRIGGER_DEPTH
+    ) {
       const notifications = new Set(pendingNotifications);
       const triggers = new Set(pendingTriggerOps.values());
       pendingNotifications.clear();
       pendingTriggerOps.clear();
-      
+
       const notifIt = notifications.values();
       let notifNext = notifIt.next();
       while (!notifNext.done) {
         notifNext.value();
         notifNext = notifIt.next();
       }
-      
+
       // 执行延迟的 effect 系统 trigger（已去重）
       const triggerIt = triggers.values();
       let triggerNext = triggerIt.next();
@@ -431,7 +434,7 @@ function flushPendingNotifications(): void {
         trigger(store, TriggerOpTypes.SET, signalKey, newValue);
         triggerNext = triggerIt.next();
       }
-      
+
       iterations++;
     }
   } finally {

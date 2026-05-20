@@ -165,11 +165,7 @@ export interface PlatformAdapter<HN = unknown, HE = unknown> {
    * @param event - 事件名称
    * @param handler - 事件处理函数
    */
-  addEventListener(
-    el: HE,
-    event: string,
-    handler: (...args: unknown[]) => void,
-  ): void;
+  addEventListener(el: HE, event: string, handler: (...args: unknown[]) => void): void;
 
   /**
    * 移除事件监听器
@@ -177,11 +173,7 @@ export interface PlatformAdapter<HN = unknown, HE = unknown> {
    * @param event - 事件名称
    * @param handler - 事件处理函数
    */
-  removeEventListener(
-    el: HE,
-    event: string,
-    handler: (...args: unknown[]) => void,
-  ): void;
+  removeEventListener(el: HE, event: string, handler: (...args: unknown[]) => void): void;
 
   // ---- 查询 ----
 

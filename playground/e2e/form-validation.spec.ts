@@ -37,11 +37,11 @@ test.describe('表单验证场景 E2E 测试', () => {
   });
 
   test('有效表单提交', async ({ page }) => {
-    page.on('dialog', dialog => {
+    page.on('dialog', (dialog) => {
       expect(dialog.message()).toBe('表单提交成功！');
       dialog.accept();
     });
-    
+
     await page.locator('#email').fill('test@example.com');
     await page.locator('#password').fill('password123');
     await page.locator('#confirm-password').fill('password123');

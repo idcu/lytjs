@@ -41,10 +41,23 @@ export const RENDER_PRIORITY_WEIGHT: Record<RenderPriority, number> = {
  * 渲染操作类型。
  */
 export type RenderOperation =
-  | { type: 'insert'; vnode: VNode; container: unknown; anchor?: unknown; priority?: RenderPriority }
+  | {
+      type: 'insert';
+      vnode: VNode;
+      container: unknown;
+      anchor?: unknown;
+      priority?: RenderPriority;
+    }
   | { type: 'remove'; vnode: VNode; priority?: RenderPriority }
   | { type: 'move'; vnode: VNode; container: unknown; anchor?: unknown; priority?: RenderPriority }
-  | { type: 'patch'; oldVNode: VNode; newVNode: VNode; container: unknown; anchor?: unknown; priority?: RenderPriority }
+  | {
+      type: 'patch';
+      oldVNode: VNode;
+      newVNode: VNode;
+      container: unknown;
+      anchor?: unknown;
+      priority?: RenderPriority;
+    }
   | { type: 'custom'; fn: () => void; priority?: RenderPriority };
 
 /**
@@ -255,7 +268,7 @@ export class RenderQueue<HN = unknown, HE extends HN = HN> {
         if (__DEV__) {
           console.warn(
             `[lytjs/render-queue] Operation type "${op.type}" should be wrapped in a "custom" operation. ` +
-            `Direct ${op.type} operations in RenderQueue are no-ops.`,
+              `Direct ${op.type} operations in RenderQueue are no-ops.`,
           );
         }
         break;

@@ -20,7 +20,10 @@ export const Timeline = defineComponent({
     reverse: { type: Boolean, default: false },
     mode: { type: String as () => 'left' | 'right' | 'alternate', default: 'left' },
     class: { type: String, default: '' },
-    style: { type: [String, Object] as unknown as PropType<string | Record<string, string>>, default: '' },
+    style: {
+      type: [String, Object] as unknown as PropType<string | Record<string, string>>,
+      default: '',
+    },
     id: { type: String, default: '' },
     ariaLabel: { type: String, default: '' },
     ariaDescribedBy: { type: String, default: '' },
@@ -52,7 +55,7 @@ export const Timeline = defineComponent({
 
     return () => {
       const children: VNode[] = [];
-      
+
       if (slots.default) {
         const slotContent = slots.default();
         if (Array.isArray(slotContent)) {
@@ -60,14 +63,21 @@ export const Timeline = defineComponent({
         }
       }
 
-      return createVNode('div', mergeA11yProps({
-        id: _props.id,
-        'aria-label': _props.ariaLabel,
-        'aria-describedby': _props.ariaDescribedBy,
-      }, {
-        class: getTimelineClass(),
-        style: getTimelineStyle(),
-      }), children);
+      return createVNode(
+        'div',
+        mergeA11yProps(
+          {
+            id: _props.id,
+            'aria-label': _props.ariaLabel,
+            'aria-describedby': _props.ariaDescribedBy,
+          },
+          {
+            class: getTimelineClass(),
+            style: getTimelineStyle(),
+          },
+        ),
+        children,
+      );
     };
   },
 });

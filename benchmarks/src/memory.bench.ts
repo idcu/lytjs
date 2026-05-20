@@ -1,6 +1,6 @@
 /**
  * Memory Benchmark - Memory usage tests
- * 
+ *
  * Tests the memory footprint of various operations.
  */
 import { describe, bench } from 'vitest';
@@ -38,24 +38,24 @@ describe('memory benchmark', () => {
   bench('create/destroy 1000 watchers', () => {
     const refs: any[] = [];
     const stoppers: any[] = [];
-    
+
     for (let i = 0; i < 1000; i++) {
       const r = ref(i);
       refs.push(r);
       stoppers.push(watch(r, () => {}));
     }
-    
+
     // Cleanup
-    stoppers.forEach(stop => stop());
+    stoppers.forEach((stop) => stop());
     refs.length = 0;
     stoppers.length = 0;
-    
+
     return stoppers.length;
   });
 
   bench('create/destroy 1000 effect scopes', () => {
     const scopes: any[] = [];
-    
+
     for (let i = 0; i < 1000; i++) {
       const scope = effectScope();
       scope.run(() => {
@@ -64,28 +64,28 @@ describe('memory benchmark', () => {
       });
       scopes.push(scope);
     }
-    
+
     // Cleanup
-    scopes.forEach(scope => scope.stop());
+    scopes.forEach((scope) => scope.stop());
     scopes.length = 0;
-    
+
     return scopes.length;
   });
 
   bench('create/destroy 1000 vnodes', () => {
     const vnodes: any[] = [];
-    
+
     for (let i = 0; i < 1000; i++) {
       vnodes.push(h('div', { class: 'item', key: i }, `Item ${i}`));
     }
-    
+
     vnodes.length = 0;
     return vnodes.length;
   });
 
   bench('create/destroy 1000 component definitions', () => {
     const components: any[] = [];
-    
+
     for (let i = 0; i < 1000; i++) {
       components.push({
         name: `TestComponent${i}`,
@@ -99,47 +99,49 @@ describe('memory benchmark', () => {
         },
       });
     }
-    
+
     components.length = 0;
     return components.length;
   });
 
   bench('create/destroy 1000 nested reactive objects', () => {
     const objects: any[] = [];
-    
+
     for (let i = 0; i < 1000; i++) {
-      objects.push(reactive({
-        id: i,
-        nested: {
-          level1: {
-            level2: {
-              level3: {
-                value: i,
+      objects.push(
+        reactive({
+          id: i,
+          nested: {
+            level1: {
+              level2: {
+                level3: {
+                  value: i,
+                },
               },
             },
           },
-        },
-        array: [1, 2, 3, 4, 5],
-      }));
+          array: [1, 2, 3, 4, 5],
+        }),
+      );
     }
-    
+
     objects.length = 0;
     return objects.length;
   });
 
   bench('large reactive array operations', () => {
     const arr = reactive<number[]>([]);
-    
+
     // Push 10000 items
     for (let i = 0; i < 10000; i++) {
       arr.push(i);
     }
-    
+
     // Pop all items
     while (arr.length > 0) {
       arr.pop();
     }
-    
+
     return arr.length;
   });
 });

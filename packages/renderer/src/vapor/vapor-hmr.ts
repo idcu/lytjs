@@ -122,10 +122,7 @@ export function captureStateSnapshot(id: string): Map<string, unknown> | null {
 /**
  * 恢复组件状态
  */
-export function restoreStateSnapshot(
-  id: string,
-  snapshot: Map<string, unknown>,
-): boolean {
+export function restoreStateSnapshot(id: string, snapshot: Map<string, unknown>): boolean {
   const instance = componentRegistry.get(id);
   if (!instance) return false;
 
@@ -169,7 +166,7 @@ function emitHMRUpdate(update: HMRUpdate): void {
 
 /**
  * 处理组件更新
- * 
+ *
  * @param componentId 组件 ID
  * @param newComponent 新组件定义
  * @param updateType 更新类型
@@ -261,7 +258,7 @@ export function handleComponentUpdate(
 
 /**
  * 创建 Vite HMR accept 处理器
- * 
+ *
  * 用于在组件中调用：
  * ```ts
  * if (import.meta.hot) {
@@ -297,8 +294,7 @@ export function createVaporHMRHandler(componentId: string) {
     const templateChanged = oldComponent.template !== newComponent.template;
 
     // 检测 setup 变化（脚本变化）
-    const setupChanged =
-      oldComponent.setup?.toString() !== newComponent.setup?.toString();
+    const setupChanged = oldComponent.setup?.toString() !== newComponent.setup?.toString();
 
     // 确定更新类型
     let updateType: HMRUpdateType;
@@ -316,7 +312,7 @@ export function createVaporHMRHandler(componentId: string) {
 
 /**
  * 生成 HMR 代码
- * 
+ *
  * 在编译时注入到组件代码中
  */
 export function generateHMRCode(componentId: string): string {

@@ -183,7 +183,7 @@ export function serializeRouteInfo(route: RouteInfo | null): string {
   result += `Params: ${JSON.stringify(route.params)}\n`;
   result += `Query: ${JSON.stringify(route.query)}\n`;
   result += `Matched Routes:\n`;
-  
+
   if (route.matched.length === 0) {
     result += '  (none)\n';
   } else {

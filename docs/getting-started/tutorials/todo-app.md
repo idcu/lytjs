@@ -50,7 +50,7 @@ function TodoApp() {
   const todos = ref<Todo[]>([]);
   const filter = ref<FilterType>('all');
   const darkMode = ref(false);
-  
+
   // ... 后续代码
 }
 ```
@@ -89,21 +89,17 @@ watch(darkMode, () => saveToStorage());
 const filteredTodos = computed(() => {
   switch (filter.value) {
     case 'active':
-      return todos.value.filter(todo => !todo.completed);
+      return todos.value.filter((todo) => !todo.completed);
     case 'completed':
-      return todos.value.filter(todo => todo.completed);
+      return todos.value.filter((todo) => todo.completed);
     default:
       return todos.value;
   }
 });
 
-const activeCount = computed(() => 
-  todos.value.filter(todo => !todo.completed).length
-);
+const activeCount = computed(() => todos.value.filter((todo) => !todo.completed).length);
 
-const hasCompleted = computed(() => 
-  todos.value.some(todo => todo.completed)
-);
+const hasCompleted = computed(() => todos.value.some((todo) => todo.completed));
 ```
 
 ### 5. 核心功能实现
@@ -117,44 +113,42 @@ const addTodo = (e: Event) => {
       id: Date.now(),
       text,
       completed: false,
-      createdAt: Date.now()
+      createdAt: Date.now(),
     });
     inputText.value = '';
   }
 };
 
 const toggleTodo = (id: number) => {
-  const todo = todos.value.find(t => t.id === id);
+  const todo = todos.value.find((t) => t.id === id);
   if (todo) {
     todo.completed = !todo.completed;
   }
 };
 
 const deleteTodo = (id: number) => {
-  const index = todos.value.findIndex(t => t.id === id);
+  const index = todos.value.findIndex((t) => t.id === id);
   if (index !== -1) {
     todos.value.splice(index, 1);
   }
 };
 
 const clearCompleted = () => {
-  todos.value = todos.value.filter(todo => !todo.completed);
+  todos.value = todos.value.filter((todo) => !todo.completed);
 };
 ```
 
 ### 6. 渲染函数
 
 ```typescript
-return h('div', {
-  class: darkMode.value ? 'dark-mode' : '',
-  style: { transition: 'all 0.3s ease' }
-}, [
-  renderHeader(),
-  renderInputSection(),
-  renderFilterButtons(),
-  renderTodoList(),
-  renderStats()
-]);
+return h(
+  'div',
+  {
+    class: darkMode.value ? 'dark-mode' : '',
+    style: { transition: 'all 0.3s ease' },
+  },
+  [renderHeader(), renderInputSection(), renderFilterButtons(), renderTodoList(), renderStats()],
+);
 ```
 
 ---
@@ -168,16 +162,19 @@ return h('div', {
 ## 🔑 技术要点
 
 ### 1. 响应式系统
+
 - 使用 `ref` 管理基础类型状态
 - 使用 `computed` 派生状态
 - 使用 `watch` 监听数据变化
 
 ### 2. 性能优化
+
 - 过滤数据使用计算属性自动缓存
 - 使用 key 优化列表渲染
 - 批量更新避免多次重渲染
 
 ### 3. 用户体验
+
 - 本地存储持久化数据
 - 主题切换动画
 - 友好的统计展示
@@ -219,5 +216,6 @@ npm run dev
 ## 🎯 下一步
 
 完成本案例后，继续学习：
+
 - [用户管理系统](./用户管理案例.md) - 学习状态管理和路由
 - [API 集成](./api-integration.md) - 学习与后端交互

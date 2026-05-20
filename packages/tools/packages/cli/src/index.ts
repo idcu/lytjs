@@ -17,12 +17,7 @@ export { test } from './commands/test';
 export { add } from './commands/add';
 export { generate } from './commands/generate';
 export type { GenerateOptions } from './commands/generate';
-export {
-  createPlugin,
-  buildPlugin,
-  validatePlugin,
-  listPluginTemplates,
-} from './commands/plugin';
+export { createPlugin, buildPlugin, validatePlugin, listPluginTemplates } from './commands/plugin';
 export type {
   PluginCreateOptions,
   PluginBuildOptions,
@@ -32,7 +27,12 @@ export type {
 
 export { logger } from './utils/logger';
 export { ensureDir, writeFile, readFile, exists } from './utils/fs';
-export { detectPackageManager, getInstallCommand, getRunCommand, getAddCommand } from './utils/package';
+export {
+  detectPackageManager,
+  getInstallCommand,
+  getRunCommand,
+  getAddCommand,
+} from './utils/package';
 
 export type {
   CliOptions,

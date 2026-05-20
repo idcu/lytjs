@@ -45,7 +45,7 @@ export function unregisterStore(id: string): void {
  */
 export function getStoreStates(): StoreStateInfo[] {
   const states: StoreStateInfo[] = [];
-  
+
   for (const [id, store] of storeRegistry.entries()) {
     const stateInfo: StoreStateInfo = {
       id,
@@ -129,7 +129,11 @@ export function setStoreState(storeId: string, path: string, value: unknown): bo
 /**
  * 触发 Store Action
  */
-export function dispatchStoreAction(storeId: string, actionName: string, ...args: unknown[]): unknown {
+export function dispatchStoreAction(
+  storeId: string,
+  actionName: string,
+  ...args: unknown[]
+): unknown {
   const store = storeRegistry.get(storeId);
   if (!store) return null;
 
@@ -161,7 +165,7 @@ function deepClone<T>(obj: T): T {
   }
 
   if (Array.isArray(obj)) {
-    return obj.map(item => deepClone(item)) as unknown as T;
+    return obj.map((item) => deepClone(item)) as unknown as T;
   }
 
   if (isObject(obj)) {
@@ -198,7 +202,7 @@ export function subscribeStore(storeId: string): boolean {
   if (isFunction(store.$subscribe)) {
     const unsubscribe = store.$subscribe?.((_mutation: unknown, state: Record<string, unknown>) => {
       const currentState = isObject(state) ? deepClone<Record<string, unknown>>(state) : {};
-      globalChangeCallbacks.forEach(cb => cb(storeId, currentState));
+      globalChangeCallbacks.forEach((cb) => cb(storeId, currentState));
     });
     subscribers.set(storeId, isFunction(unsubscribe) ? unsubscribe : () => {});
     return true;

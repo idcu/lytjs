@@ -133,7 +133,11 @@ export function createWebHistory(base: string = ''): RouterHistory {
     const location = createRouteLocation(path, query, hash);
 
     pushState(location);
-    window.history.pushState({ ...window.history.state, current: fullPath }, '', `${normalizedBase}${fullPath}`);
+    window.history.pushState(
+      { ...window.history.state, current: fullPath },
+      '',
+      `${normalizedBase}${fullPath}`,
+    );
     triggerListeners(location, from, { type: 'push', direction: 'forward', delta: 1 });
 
     return Promise.resolve();
@@ -150,7 +154,11 @@ export function createWebHistory(base: string = ''): RouterHistory {
     const location = createRouteLocation(path, query, hash);
 
     replaceState(location);
-    window.history.replaceState({ ...window.history.state, current: fullPath }, '', `${normalizedBase}${fullPath}`);
+    window.history.replaceState(
+      { ...window.history.state, current: fullPath },
+      '',
+      `${normalizedBase}${fullPath}`,
+    );
     triggerListeners(location, from, { type: 'replace', direction: 'unknown', delta: 0 });
 
     return Promise.resolve();
@@ -172,8 +180,12 @@ export function createWebHistory(base: string = ''): RouterHistory {
   setupListeners();
 
   return {
-    get location() { return currentLocation; },
-    get state() { return window.history.state; },
+    get location() {
+      return currentLocation;
+    },
+    get state() {
+      return window.history.state;
+    },
     base: normalizedBase,
     push,
     replace,
@@ -293,8 +305,12 @@ export function createWebHashHistory(base: string = ''): RouterHistory {
   setupListeners();
 
   return {
-    get location() { return currentLocation; },
-    get state() { return null; },
+    get location() {
+      return currentLocation;
+    },
+    get state() {
+      return null;
+    },
     base: normalizedBase,
     push,
     replace,
@@ -324,9 +340,10 @@ export function createMemoryHistory(initial: string = '/'): RouterHistory {
   currentLocation.hash = hash;
 
   function push(to: RouteLocationRaw): Promise<NavigationFailure | void> {
-    const { path, query, hash } = typeof to === 'string'
-      ? parseFullPath(to)
-      : { path: to.path || '/', query: to.query || {}, hash: to.hash || '' };
+    const { path, query, hash } =
+      typeof to === 'string'
+        ? parseFullPath(to)
+        : { path: to.path || '/', query: to.query || {}, hash: to.hash || '' };
 
     const fullPath = resolveFullPath(path, query, hash);
     const from = { ...currentLocation };
@@ -344,9 +361,10 @@ export function createMemoryHistory(initial: string = '/'): RouterHistory {
   }
 
   function replace(to: RouteLocationRaw): Promise<NavigationFailure | void> {
-    const { path, query, hash } = typeof to === 'string'
-      ? parseFullPath(to)
-      : { path: to.path || '/', query: to.query || {}, hash: to.hash || '' };
+    const { path, query, hash } =
+      typeof to === 'string'
+        ? parseFullPath(to)
+        : { path: to.path || '/', query: to.query || {}, hash: to.hash || '' };
 
     const fullPath = resolveFullPath(path, query, hash);
     const from = { ...currentLocation };
@@ -390,8 +408,12 @@ export function createMemoryHistory(initial: string = '/'): RouterHistory {
   }
 
   return {
-    get location() { return currentLocation; },
-    get state() { return null; },
+    get location() {
+      return currentLocation;
+    },
+    get state() {
+      return null;
+    },
     base: '',
     push,
     replace,

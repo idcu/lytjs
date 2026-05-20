@@ -75,21 +75,19 @@ export const Select = defineComponent({
       const query = searchValue();
       if (!p.filterable || !query) return opts;
       const lowerQuery = query.toLowerCase();
-      return opts.filter(opt => 
-        opt.label.toLowerCase().includes(lowerQuery)
-      );
+      return opts.filter((opt) => opt.label.toLowerCase().includes(lowerQuery));
     };
 
     const getEnabledOptions = () => {
-      return getFilteredOptions().filter(opt => !opt.disabled);
+      return getFilteredOptions().filter((opt) => !opt.disabled);
     };
 
     const getFocusableElements = (container: HTMLElement): HTMLElement[] => {
-      return Array.from(
-        container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTORS)
-      ).filter(el => {
-        return el.offsetParent !== null && !el.hasAttribute('aria-hidden');
-      });
+      return Array.from(container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTORS)).filter(
+        (el) => {
+          return el.offsetParent !== null && !el.hasAttribute('aria-hidden');
+        },
+      );
     };
 
     const toggleDropdown = () => {
@@ -103,17 +101,17 @@ export const Select = defineComponent({
           const selectedValues = selectedValue();
           let currentValue = 0;
           if (selectedValues.size > 0) {
-            const foundIndex = enabledOptions.findIndex(opt => selectedValues.has(opt.value));
+            const foundIndex = enabledOptions.findIndex((opt) => selectedValues.has(opt.value));
             currentValue = foundIndex >= 0 ? foundIndex : 0;
           }
           highlightedIndex.set(currentValue);
-          
+
           const option = enabledOptions[currentValue];
           if (option) {
             activeDescendant.set(`lyt-select-option-${option.value}`);
           }
         }
-        
+
         previousActiveElement.set(document.activeElement as HTMLElement);
         setTimeout(() => {
           const dropdown = dropdownRef();
@@ -152,7 +150,7 @@ export const Select = defineComponent({
           p.onVisibleChange?.(false);
         }
         p.onChange?.(option.value);
-        
+
         const prevEl = previousActiveElement();
         if (prevEl && prevEl.focus) {
           setTimeout(() => prevEl.focus(), 10);
@@ -291,8 +289,8 @@ export const Select = defineComponent({
       if (selected.length === 0) return '';
 
       const opts = p.options || [];
-      const selectedOptions = opts.filter(opt => selected.includes(opt.value));
-      return selectedOptions.map(opt => opt.label).join(', ');
+      const selectedOptions = opts.filter((opt) => selected.includes(opt.value));
+      return selectedOptions.map((opt) => opt.label).join(', ');
     };
 
     return () => {
@@ -303,7 +301,9 @@ export const Select = defineComponent({
         p.disabled ? 'lyt-select--disabled' : '',
         open ? 'lyt-select--open' : '',
         p.class,
-      ].filter(Boolean).join(' ');
+      ]
+        .filter(Boolean)
+        .join(' ');
 
       const selectedLabel = getSelectedLabel();
       const displayValue = selectedLabel || p.placeholder;
@@ -316,10 +316,16 @@ export const Select = defineComponent({
       const dropdownContent: VNode[] = [];
 
       if (filteredOptions.length === 0) {
-        dropdownContent.push(createVNode('div', { 
-          class: 'lyt-select__empty',
-          role: 'status',
-        }, [createVNode('span', {}, '无匹配选项')]));
+        dropdownContent.push(
+          createVNode(
+            'div',
+            {
+              class: 'lyt-select__empty',
+              role: 'status',
+            },
+            [createVNode('span', {}, '无匹配选项')],
+          ),
+        );
       } else {
         filteredOptions.forEach((option: SelectOption, index: number) => {
           const isSelected = selected.has(option.value);
@@ -327,96 +333,139 @@ export const Select = defineComponent({
           const optionId = `lyt-select-option-${option.value}`;
           const optionChildren: VNode[] = [];
           if (isSelected) {
-            optionChildren.push(createVNode('span', { class: 'lyt-select__check' }, [createVNode('span', {}, '✓')]));
+            optionChildren.push(
+              createVNode('span', { class: 'lyt-select__check' }, [createVNode('span', {}, '✓')]),
+            );
           }
           optionChildren.push(createVNode('span', {}, option.label));
-          dropdownContent.push(createVNode('div', {
-            key: String(option.value),
-            id: optionId,
-            role: 'option',
-            'aria-selected': isSelected,
-            'aria-disabled': option.disabled,
-            class: [
-              'lyt-select__option',
-              isSelected ? 'lyt-select__option--selected' : '',
-              option.disabled ? 'lyt-select__option--disabled' : '',
-              isHighlighted ? 'lyt-select__option--highlighted' : '',
-            ].filter(Boolean).join(' '),
-            onClick: () => handleSelect(option),
-            onMouseenter: () => {
-              if (!option.disabled) {
-                highlightedIndex.set(index);
-                activeDescendant.set(optionId);
-              }
-            },
-            onKeydown: (e: KeyboardEvent) => handleOptionKeydown(e, option),
-          }, optionChildren));
+          dropdownContent.push(
+            createVNode(
+              'div',
+              {
+                key: String(option.value),
+                id: optionId,
+                role: 'option',
+                'aria-selected': isSelected,
+                'aria-disabled': option.disabled,
+                class: [
+                  'lyt-select__option',
+                  isSelected ? 'lyt-select__option--selected' : '',
+                  option.disabled ? 'lyt-select__option--disabled' : '',
+                  isHighlighted ? 'lyt-select__option--highlighted' : '',
+                ]
+                  .filter(Boolean)
+                  .join(' '),
+                onClick: () => handleSelect(option),
+                onMouseenter: () => {
+                  if (!option.disabled) {
+                    highlightedIndex.set(index);
+                    activeDescendant.set(optionId);
+                  }
+                },
+                onKeydown: (e: KeyboardEvent) => handleOptionKeydown(e, option),
+              },
+              optionChildren,
+            ),
+          );
         });
       }
 
       const triggerChildren: VNode[] = [];
-      triggerChildren.push(createVNode('span', {
-        class: [
-          'lyt-select__value',
-          !selectedLabel ? 'lyt-select__value--placeholder' : '',
-        ].filter(Boolean).join(' '),
-      }, [createVNode('span', {}, displayValue)]));
+      triggerChildren.push(
+        createVNode(
+          'span',
+          {
+            class: ['lyt-select__value', !selectedLabel ? 'lyt-select__value--placeholder' : '']
+              .filter(Boolean)
+              .join(' '),
+          },
+          [createVNode('span', {}, displayValue)],
+        ),
+      );
       if (p.clearable && selected.size > 0) {
-        triggerChildren.push(createVNode('span', {
-          class: 'lyt-select__clear',
-          onClick: handleClear,
-          role: 'button',
-          'aria-label': '清除选择',
-          tabIndex: 0,
-        }, [createVNode('span', {}, '×')]));
+        triggerChildren.push(
+          createVNode(
+            'span',
+            {
+              class: 'lyt-select__clear',
+              onClick: handleClear,
+              role: 'button',
+              'aria-label': '清除选择',
+              tabIndex: 0,
+            },
+            [createVNode('span', {}, '×')],
+          ),
+        );
       }
-      triggerChildren.push(createVNode('span', { class: 'lyt-select__arrow' }, [createVNode('span', {}, '▼')]));
+      triggerChildren.push(
+        createVNode('span', { class: 'lyt-select__arrow' }, [createVNode('span', {}, '▼')]),
+      );
 
       const resultChildren: VNode[] = [];
 
       if (p.filterable) {
-        resultChildren.push(createVNode('input', {
-          class: 'lyt-select__search',
-          type: 'text',
-          placeholder: '搜索...',
-          value: searchValue(),
-          onInput: (e: Event) => {
-            searchValue.set((e.target as HTMLInputElement).value);
-          },
-          onKeydown: handleTriggerKeydown,
-          'aria-label': '搜索选项',
-          'aria-controls': listId,
-        }));
+        resultChildren.push(
+          createVNode('input', {
+            class: 'lyt-select__search',
+            type: 'text',
+            placeholder: '搜索...',
+            value: searchValue(),
+            onInput: (e: Event) => {
+              searchValue.set((e.target as HTMLInputElement).value);
+            },
+            onKeydown: handleTriggerKeydown,
+            'aria-label': '搜索选项',
+            'aria-controls': listId,
+          }),
+        );
       }
 
-      resultChildren.push(createVNode('div', {
-        ref: (el: HTMLElement) => triggerRef.set(el),
-        class: 'lyt-select__trigger',
-        onClick: toggleDropdown,
-        onKeydown: handleTriggerKeydown,
-        tabIndex: p.disabled ? -1 : (p.tabIndex ?? 0),
-        role: 'combobox',
-        'aria-haspopup': 'listbox',
-        'aria-expanded': open,
-        'aria-controls': listId,
-        'aria-activedescendant': open ? activeId : undefined,
-      }, triggerChildren));
-      
+      resultChildren.push(
+        createVNode(
+          'div',
+          {
+            ref: (el: HTMLElement) => triggerRef.set(el),
+            class: 'lyt-select__trigger',
+            onClick: toggleDropdown,
+            onKeydown: handleTriggerKeydown,
+            tabIndex: p.disabled ? -1 : (p.tabIndex ?? 0),
+            role: 'combobox',
+            'aria-haspopup': 'listbox',
+            'aria-expanded': open,
+            'aria-controls': listId,
+            'aria-activedescendant': open ? activeId : undefined,
+          },
+          triggerChildren,
+        ),
+      );
+
       if (open) {
-        resultChildren.push(createVNode('div', {
-          ref: (el: HTMLElement) => dropdownRef.set(el),
-          id: listId,
-          class: 'lyt-select__dropdown',
-          role: 'listbox',
-          'aria-multiselectable': p.multiple,
-          'aria-label': p.ariaLabel || '选择选项',
-        }, dropdownContent));
-        
-        resultChildren.push(createVNode('div', {
-          class: 'lyt-select__sro',
-          role: 'status',
-          'aria-live': 'polite',
-        }, `已选择 ${selected.size} 个选项`));
+        resultChildren.push(
+          createVNode(
+            'div',
+            {
+              ref: (el: HTMLElement) => dropdownRef.set(el),
+              id: listId,
+              class: 'lyt-select__dropdown',
+              role: 'listbox',
+              'aria-multiselectable': p.multiple,
+              'aria-label': p.ariaLabel || '选择选项',
+            },
+            dropdownContent,
+          ),
+        );
+
+        resultChildren.push(
+          createVNode(
+            'div',
+            {
+              class: 'lyt-select__sro',
+              role: 'status',
+              'aria-live': 'polite',
+            },
+            `已选择 ${selected.size} 个选项`,
+          ),
+        );
       }
 
       const a11yProps = getComboboxA11yProps({
@@ -431,10 +480,14 @@ export const Select = defineComponent({
         controls: listId,
       });
 
-      return createVNode('div', mergeA11yProps(a11yProps, {
-        class: selectClass,
-        onKeydown: handleKeydown,
-      }), resultChildren);
+      return createVNode(
+        'div',
+        mergeA11yProps(a11yProps, {
+          class: selectClass,
+          onKeydown: handleKeydown,
+        }),
+        resultChildren,
+      );
     };
   },
 });

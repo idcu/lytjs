@@ -1,6 +1,6 @@
 /**
  * Update Benchmark - js-framework-benchmark style update tests
- * 
+ *
  * Tests the performance of updating existing nodes.
  */
 import { describe, bench } from 'vitest';
@@ -19,7 +19,7 @@ describe('update benchmark', () => {
   bench('update single node', () => {
     const count = ref(0);
     const node = h('div', {}, () => count.value.toString());
-    
+
     for (let i = 0; i < 100; i++) {
       count.value = i;
     }
@@ -27,7 +27,7 @@ describe('update benchmark', () => {
   });
 
   bench('update 1000 nodes (text content)', () => {
-    const items = generateData(1000).map(item => ({
+    const items = generateData(1000).map((item) => ({
       ...item,
       count: ref(0),
     }));
@@ -43,17 +43,17 @@ describe('update benchmark', () => {
 
   bench('swap two rows', () => {
     const data = generateData(1000);
-    
+
     // Swap rows 1 and 998 (js-framework-benchmark style)
     const temp = data[1];
     data[1] = data[998];
     data[998] = temp;
-    
+
     return data.length;
   });
 
   bench('select row (highlight)', () => {
-    const data = generateData(1000).map(item => ({
+    const data = generateData(1000).map((item) => ({
       ...item,
       selected: ref(false),
     }));
@@ -61,10 +61,10 @@ describe('update benchmark', () => {
     // Select a random row
     const selectedIndex = 500;
     data[selectedIndex].selected.value = true;
-    
+
     // Deselect
     data[selectedIndex].selected.value = false;
-    
+
     return data.length;
   });
 
@@ -76,7 +76,7 @@ describe('update benchmark', () => {
 
   bench('append 1000 rows', () => {
     const data = generateData(1000);
-    const newRows = generateData(1000).map(item => ({
+    const newRows = generateData(1000).map((item) => ({
       ...item,
       id: item.id + 1000,
     }));
@@ -86,7 +86,7 @@ describe('update benchmark', () => {
 
   bench('prepend 1000 rows', () => {
     const data = generateData(1000);
-    const newRows = generateData(1000).map(item => ({
+    const newRows = generateData(1000).map((item) => ({
       ...item,
       id: item.id - 1000,
     }));
@@ -107,7 +107,7 @@ describe('update benchmark', () => {
   });
 
   bench('sort list', () => {
-    const data = generateData(1000).map(item => ({
+    const data = generateData(1000).map((item) => ({
       ...item,
       sortKey: Math.random(),
     }));

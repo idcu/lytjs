@@ -253,7 +253,9 @@ describe('WebRendererHost', () => {
     it('should wrap the native event into a HostEvent', () => {
       const el = document.createElement('button');
       let receivedEvent: any = null;
-      const handler = (e: any) => { receivedEvent = e; };
+      const handler = (e: any) => {
+        receivedEvent = e;
+      };
       host.addEventListener(el, 'click', handler);
 
       el.click();
@@ -656,27 +658,37 @@ describe('Extended Web Host', () => {
     };
 
     it('should create extended host with insertBefore', () => {
-      const host = createExtendedWebHost({ baseHost: mockBaseHost as unknown as ExtendedRendererHost });
+      const host = createExtendedWebHost({
+        baseHost: mockBaseHost as unknown as ExtendedRendererHost,
+      });
       expect(host.insertBefore).toBeDefined();
     });
 
     it('should create extended host with replaceChild', () => {
-      const host = createExtendedWebHost({ baseHost: mockBaseHost as unknown as ExtendedRendererHost });
+      const host = createExtendedWebHost({
+        baseHost: mockBaseHost as unknown as ExtendedRendererHost,
+      });
       expect(host.replaceChild).toBeDefined();
     });
 
     it('should create extended host with querySelectorAll', () => {
-      const host = createExtendedWebHost({ baseHost: mockBaseHost as unknown as ExtendedRendererHost });
+      const host = createExtendedWebHost({
+        baseHost: mockBaseHost as unknown as ExtendedRendererHost,
+      });
       expect(host.querySelectorAll).toBeDefined();
     });
 
     it('should create extended host with setStyles', () => {
-      const host = createExtendedWebHost({ baseHost: mockBaseHost as unknown as ExtendedRendererHost });
+      const host = createExtendedWebHost({
+        baseHost: mockBaseHost as unknown as ExtendedRendererHost,
+      });
       expect(host.setStyles).toBeDefined();
     });
 
     it('should create extended host with dispatchEvent', () => {
-      const host = createExtendedWebHost({ baseHost: mockBaseHost as unknown as ExtendedRendererHost });
+      const host = createExtendedWebHost({
+        baseHost: mockBaseHost as unknown as ExtendedRendererHost,
+      });
       expect(host.dispatchEvent).toBeDefined();
     });
   });

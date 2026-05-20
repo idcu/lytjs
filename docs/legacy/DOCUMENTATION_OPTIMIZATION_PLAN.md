@@ -22,6 +22,7 @@
 ### 1. 贡献指南重复
 
 #### 发现的文档
+
 - `CONTRIBUTING.md` (根目录)
 - `docs/guide/contributing.md`
 - `docs/community/CONTRIBUTING.md`
@@ -29,6 +30,7 @@
 - `docs/development/DEVELOPMENT_GUIDELINES.md` (部分内容重复)
 
 #### 分析
+
 - 4份贡献指南，内容相似但侧重点不同
 - 用户不知道应该看哪一份
 - 维护时需要同时更新多处
@@ -38,7 +40,9 @@
 ### 2. 用户指南 vs 教程重复
 
 #### 发现的文档
+
 **Guide 目录** (`docs/guide/`):
+
 - `getting-started.md`
 - `installation.md`
 - `reactivity.md`
@@ -48,6 +52,7 @@
 - `plugins.md`
 
 **Tutorial 目录** (`docs/tutorial/`):
+
 - `quick-start.md`
 - `basics.md`
 - `reactivity.md`
@@ -57,6 +62,7 @@
 - `custom-plugins.md`
 
 #### 分析
+
 - 两个目录下有大量内容相似的文档
 - `guide/` 倾向于参考文档
 - `tutorial/` 倾向于教程文档
@@ -67,13 +73,16 @@
 ### 3. 示例与案例重复
 
 #### 发现的文档
+
 **Examples 目录** (`docs/examples/`):
+
 - `counter.md`
 - `interactive-counter.md`
 - `todomvc.md`
 - `user-list.md`
 
 **Tutorial 目录** (`docs/tutorial/`):
+
 - `todo-app-example.md`
 - `待办应用案例.md`
 - `用户管理案例.md`
@@ -82,6 +91,7 @@
 - `实战案例教程.md`
 
 #### 分析
+
 - 两份待办应用案例
 - `examples/` 是简单示例
 - `tutorial/` 是完整案例
@@ -92,11 +102,13 @@
 ### 4. 测试相关文档重复
 
 #### 发现的文档
+
 - `docs/tutorial/testing.md`
 - `docs/guides/TESTING_GUIDE.md`
 - `docs/development/DEVELOPMENT_GUIDELINES.md` (部分内容)
 
 #### 分析
+
 - 多份测试指南
 - 内容相似但侧重点不同
 
@@ -105,11 +117,13 @@
 ### 5. TypeScript 相关文档重复
 
 #### 发现的文档
+
 - `docs/guide/typescript.md`
 - `docs/tutorial/typescript-guide.md`
 - `docs/development/TYPESCRIPT_ENHANCEMENT_GUIDE.md`
 
 #### 分析
+
 - 多份 TypeScript 指南
 - 用户文档和开发文档混合
 
@@ -118,12 +132,14 @@
 ### 6. SSR 相关文档重复
 
 #### 发现的文档
+
 - `docs/guide/ssr.md`
 - `docs/ecosystem/ssr.md`
 - `docs/tutorial/ssr-guide.md`
 - `docs/development/SSR_GUIDE.md`
 
 #### 分析
+
 - 多份 SSR 文档
 - 内容重复度高
 
@@ -132,6 +148,7 @@
 ### 7. 插件相关文档重复
 
 #### 发现的文档
+
 - `docs/guide/plugins.md`
 - `docs/tutorial/custom-plugins.md`
 - `docs/tutorial/官方插件使用指南.md`
@@ -140,6 +157,7 @@
 - `docs/development/PLUGIN_DEVELOPMENT.md`
 
 #### 分析
+
 - 多份插件文档
 - 分散在不同位置
 
@@ -148,10 +166,12 @@
 ### 8. Guides 目录位置尴尬
 
 #### 发现的文档
+
 - `docs/guides/TESTING_GUIDE.md`
 - `docs/guides/error-boundary.md`
 
 #### 分析
+
 - `guides/` 目录下只有两份文档
 - 位置不明确，容易被忽略
 
@@ -160,6 +180,7 @@
 ### 9. 其他重复
 
 #### 发现的文档
+
 - `docs/tutorial/troubleshooting.md`
 - `docs/development/TROUBLESHOOTING.md`
 - `docs/tutorial/error-boundary-best-practices.md`
@@ -184,7 +205,9 @@
 ### 方案一：文档分类重组织
 
 #### 1. 用户文档 (面向所有用户)
+
 **目录**: `docs/user/`
+
 - `getting-started.md` (快速开始)
 - `installation.md` (安装指南)
 - `concepts/` (核心概念)
@@ -226,7 +249,9 @@
   - `error-boundary.md`
 
 #### 2. 开发文档 (面向框架贡献者)
+
 **目录**: `docs/development/` (保持)
+
 - `index.md` (开发文档首页)
 - `ARCHITECTURE.md` (架构设计)
 - `WORKFLOW.md` (开发流程)
@@ -249,6 +274,7 @@
   - `RELEASE_v6.3.0.md`
 
 #### 3. 根目录文档
+
 - `README.md` (保持 - 项目介绍)
 - `AGENTS.md` (保持 - AI 规则)
 - `CONTRIBUTING.md` (删除 - 引用 `docs/development/CONTRIBUTING.md`)
@@ -261,6 +287,7 @@
 #### 阶段 1: 贡献指南统一
 
 **操作**:
+
 1. 保留 `docs/development/CONTRIBUTING.md` 作为权威版本
 2. 删除 `docs/guide/contributing.md`
 3. 删除 `docs/community/CONTRIBUTING.md`
@@ -268,6 +295,7 @@
 5. 更新根目录 `CONTRIBUTING.md`，只保留一个链接到 `docs/development/CONTRIBUTING.md`
 
 **结果**:
+
 - 只有一份权威的贡献指南
 - 其他位置只保留引用链接
 
@@ -276,10 +304,12 @@
 #### 阶段 2: 明确 guide 与 tutorial 的分工
 
 **定义**:
+
 - **`docs/guide/`**: 参考文档，以"是什么"为主，面向需要查找特定功能的用户
 - **`docs/tutorial/`**: 教程文档，以"怎么做"为主，面向初学者
 
 **操作**:
+
 1. 删除 `docs/guide/getting-started.md` (功能与 tutorial/quick-start.md 重复)
 2. 保持 `docs/guide/installation.md` (作为安装参考文档)
 3. 删除 `docs/tutorial/installation.md` (如果存在，参考 guide/installation.md)
@@ -287,6 +317,7 @@
 5. 将 `tutorial/` 目录下的案例文档保留，作为完整教程
 
 **结果**:
+
 - 消除内容重复
 - 用户知道应该看哪一份
 
@@ -295,12 +326,14 @@
 #### 阶段 3: 统一示例文档
 
 **操作**:
+
 1. 保持 `docs/examples/` 作为简单示例代码
 2. 保持 `docs/tutorial/` 下的完整案例作为教程
 3. 删除 `docs/tutorial/todo-app-example.md` (与 `待办应用案例.md` 重复)
 4. 更新 `docs/examples/index.md`，链接到 tutorial 中的完整案例
 
 **结果**:
+
 - examples: 简单、快速的示例
 - tutorial: 完整、详细的案例教程
 
@@ -309,12 +342,14 @@
 #### 阶段 4: 解决 guides 目录问题
 
 **操作**:
+
 1. 将 `docs/guides/TESTING_GUIDE.md` 移动到 `docs/tutorial/testing.md` 或 `docs/guide/testing.md`
 2. 将 `docs/guides/error-boundary.md` 移动到 `docs/guide/` 或 `docs/tutorial/`
 3. 删除 `docs/guides/` 目录
 4. 更新 SUMMARY.md 中的链接
 
 **结果**:
+
 - 消除位置尴尬的目录
 - 文档位置更清晰
 
@@ -323,6 +358,7 @@
 #### 阶段 5: 清理临时和临时文档
 
 **操作**:
+
 1. 检查 `.trae/` 目录下的文档
 2. 评估是否需要在公开文档中保留
 3. 考虑将部分内容合并到 `docs/development/` 中
@@ -335,10 +371,12 @@
 对于已经删除的文档，可以通过以下方式处理：
 
 1. **创建重定向文件**:
+
 ```markdown
 ---
 redirect_to: /development/CONTRIBUTING.md
 ---
+
 本文档已移动，请访问新位置。
 ```
 
@@ -453,6 +491,7 @@ docs/
 ### 下一步建议
 
 此文档优化计划完成，建议继续：
+
 - 检查 SUMMARY.md 是否需要更新
 - 确保所有链接正确
 - 文档优化工作至此完成！🎉
@@ -495,14 +534,14 @@ docs/
 
 ## 🔗 关键文档引用关系
 
-| 场景 | 应该看 | 位置 |
-|------|--------|------|
-| 想了解如何使用框架 | 用户文档 | `docs/user/` |
-| 想为框架做贡献 | 开发文档 | `docs/development/` |
-| 查找 API 参考 | API 文档 | `docs/reference/api/` |
-| 想快速上手 | 快速开始 | `docs/user/getting-started.md` |
-| 想看完整案例 | 教程 | `docs/user/tutorials/` |
-| 想了解框架架构 | 架构文档 | `docs/development/ARCHITECTURE.md` |
+| 场景               | 应该看   | 位置                               |
+| ------------------ | -------- | ---------------------------------- |
+| 想了解如何使用框架 | 用户文档 | `docs/user/`                       |
+| 想为框架做贡献     | 开发文档 | `docs/development/`                |
+| 查找 API 参考      | API 文档 | `docs/reference/api/`              |
+| 想快速上手         | 快速开始 | `docs/user/getting-started.md`     |
+| 想看完整案例       | 教程     | `docs/user/tutorials/`             |
+| 想了解框架架构     | 架构文档 | `docs/development/ARCHITECTURE.md` |
 
 ---
 

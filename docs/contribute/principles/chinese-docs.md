@@ -20,12 +20,12 @@
 
 **所有源文件必须使用 UTF-8 编码，无 BOM**
 
-| 文件类型 | 编码要求 |
-| --- | --- |
+| 文件类型                     | 编码要求     |
+| ---------------------------- | ------------ |
 | `.ts`, `.tsx`, `.js`, `.jsx` | UTF-8 无 BOM |
-| `.md`, `.mdx` | UTF-8 无 BOM |
-| `.json` | UTF-8 无 BOM |
-| `.html`, `.css`, `.scss` | UTF-8 无 BOM |
+| `.md`, `.mdx`                | UTF-8 无 BOM |
+| `.json`                      | UTF-8 无 BOM |
+| `.html`, `.css`, `.scss`     | UTF-8 无 BOM |
 
 ### 1.2 换行符规范
 
@@ -55,6 +55,7 @@
 ### 2.1 基本原则
 
 ✅ **所有文档使用中文**，包括：
+
 - README.md
 - API 文档
 - 架构文档
@@ -62,6 +63,7 @@
 - 提交信息
 
 ✅ **保留必要的英文术语**，如：
+
 - API, SDK, UI, CLI
 - React, Vue, TypeScript
 - HTTP, JSON, URL
@@ -71,14 +73,14 @@
 
 建立统一的术语表，避免混淆：
 
-| 推荐 | 不推荐 | 说明 |
-| --- | --- | --- |
-| 组件 | 元件 | 前端通用译法 |
-| 响应式 | 反应式 | 保持与 Vue 一致 |
-| 虚拟 DOM | VDOM | 可混用，首次出现注明 |
-| 钩子 | Hook | 可混用 |
-| 属性 | Props | 可混用 |
-| 插槽 | Slot | 可混用 |
+| 推荐     | 不推荐 | 说明                 |
+| -------- | ------ | -------------------- |
+| 组件     | 元件   | 前端通用译法         |
+| 响应式   | 反应式 | 保持与 Vue 一致      |
+| 虚拟 DOM | VDOM   | 可混用，首次出现注明 |
+| 钩子     | Hook   | 可混用               |
+| 属性     | Props  | 可混用               |
+| 插槽     | Slot   | 可混用               |
 
 ### 2.3 文档写作规范
 
@@ -86,8 +88,11 @@
 
 ```markdown
 # 一级标题
+
 ## 二级标题
+
 ### 三级标题
+
 #### 四级标题
 ```
 
@@ -99,7 +104,9 @@
  * 创建响应式引用
  * @param value - 初始值
  */
-function ref(value) { /* ... */ }
+function ref(value) {
+  /* ... */
+}
 ```
 
 #### 文档结构模板
@@ -127,10 +134,12 @@ import { ... } from '@lytjs/包名';
 ### 函数名
 
 #### 参数
+
 - `param1`: 描述
 - `param2`: 描述
 
 #### 返回值
+
 描述
 
 ## 示例
@@ -140,6 +149,7 @@ import { ... } from '@lytjs/包名';
 \`\`\`
 
 ## 相关链接
+
 - [其他文档](../...)
 - [GitHub](https://...)
 ```
@@ -313,6 +323,7 @@ find . -name "*.ts" -exec bash -c 'iconv -f GBK -t UTF-8 "$0" > "$0.tmp" && mv "
 ### 5.1 乱码问题
 
 #### 症状
+
 ```
 - 文件打开显示乱码
 - 编译出现 SyntaxError
@@ -322,11 +333,13 @@ find . -name "*.ts" -exec bash -c 'iconv -f GBK -t UTF-8 "$0" > "$0.tmp" && mv "
 #### 解决步骤
 
 1. **确认文件编码**
+
 ```bash
 file -i 问题文件.ts
 ```
 
 2. **转换为 UTF-8**
+
 ```bash
 # 如果是 GBK
 iconv -f GBK -t UTF-8 问题文件.ts > 问题文件.ts.tmp
@@ -337,6 +350,7 @@ mv 问题文件.ts.tmp 问题文件.ts
 ```
 
 3. **验证修复**
+
 ```bash
 file -i 问题文件.ts
 # 应该显示 charset=utf-8
@@ -345,6 +359,7 @@ file -i 问题文件.ts
 ### 5.2 Git 换行符问题
 
 #### 症状
+
 ```
 warning: LF will be replaced by CRLF in ...
 ```
@@ -354,6 +369,7 @@ warning: LF will be replaced by CRLF in ...
 项目已配置 `.gitattributes`，无需担心。
 
 如需手动设置：
+
 ```bash
 # Windows 用户
 git config --global core.autocrlf true
@@ -365,6 +381,7 @@ git config --global core.autocrlf input
 ### 5.3 BOM 头问题
 
 #### 症状
+
 ```typescript
 // 文件开头出现 ï»¿ 或其他奇怪字符
 ```
@@ -427,13 +444,13 @@ echo "检查完成！"
 
 ### A. 常用工具推荐
 
-| 工具 | 用途 |
-| --- | --- |
-| `file` | 检查文件编码 |
-| `iconv` | 转换文件编码 |
-| `dos2unix` | 转换换行符 |
-| `prettier` | 格式化代码 |
-| `eslint` | 代码检查 |
+| 工具       | 用途         |
+| ---------- | ------------ |
+| `file`     | 检查文件编码 |
+| `iconv`    | 转换文件编码 |
+| `dos2unix` | 转换换行符   |
+| `prettier` | 格式化代码   |
+| `eslint`   | 代码检查     |
 
 ### B. 参考资源
 

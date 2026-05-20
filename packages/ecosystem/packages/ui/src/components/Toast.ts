@@ -89,49 +89,83 @@ export const Toast = defineComponent({
       if (!state.visible) return createVNode('div', { style: 'display: none;' }, []);
 
       const children: VNode[] = [];
-      
+
       // 图标
       if (_props.icon) {
-        children.push(createVNode('span', {
-          class: 'lyt-toast__icon',
-        }, [createVNode('span', {}, _props.icon)]));
+        children.push(
+          createVNode(
+            'span',
+            {
+              class: 'lyt-toast__icon',
+            },
+            [createVNode('span', {}, _props.icon)],
+          ),
+        );
       } else if (slots.icon) {
         const slotIcon = slots.icon();
         if (Array.isArray(slotIcon)) {
-          children.push(createVNode('span', {
-            class: 'lyt-toast__icon',
-          }, slotIcon as VNode[]));
+          children.push(
+            createVNode(
+              'span',
+              {
+                class: 'lyt-toast__icon',
+              },
+              slotIcon as VNode[],
+            ),
+          );
         }
       }
 
       // 消息内容
       if (_props.message) {
-        children.push(createVNode('span', {
-          class: 'lyt-toast__message',
-        }, [createVNode('span', {}, _props.message)]));
+        children.push(
+          createVNode(
+            'span',
+            {
+              class: 'lyt-toast__message',
+            },
+            [createVNode('span', {}, _props.message)],
+          ),
+        );
       } else if (slots.default) {
         const slotContent = slots.default();
         if (Array.isArray(slotContent)) {
-          children.push(createVNode('span', {
-            class: 'lyt-toast__message',
-          }, slotContent as VNode[]));
+          children.push(
+            createVNode(
+              'span',
+              {
+                class: 'lyt-toast__message',
+              },
+              slotContent as VNode[],
+            ),
+          );
         }
       }
 
       // 关闭按钮
       if (_props.closable) {
-        children.push(createVNode('span', {
-          class: 'lyt-toast__close',
-          onClick: handleClose,
-        }, [createVNode('span', {}, '&times;')]));
+        children.push(
+          createVNode(
+            'span',
+            {
+              class: 'lyt-toast__close',
+              onClick: handleClose,
+            },
+            [createVNode('span', {}, '&times;')],
+          ),
+        );
       }
 
-      return createVNode('div', {
-        class: getToastClass(),
-        style: getToastStyle(),
-        onMouseenter: clearTimer,
-        onMouseleave: startTimer,
-      }, children);
+      return createVNode(
+        'div',
+        {
+          class: getToastClass(),
+          style: getToastStyle(),
+          onMouseenter: clearTimer,
+          onMouseleave: startTimer,
+        },
+        children,
+      );
     };
   },
 });

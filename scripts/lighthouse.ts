@@ -1,6 +1,6 @@
 /**
  * LytJS Lighthouse 性能测试命令
- * 
+ *
  * 用法：
  *   pnpm lighthouse                     # 运行桌面端测试
  *   pnpm lighthouse --mobile            # 运行移动端测试
@@ -29,7 +29,7 @@ const DEFAULT_OPTIONS: LighthouseOptions = {
 
 async function runLighthouse(options: LighthouseOptions = {}): Promise<void> {
   const opts = { ...DEFAULT_OPTIONS, ...options };
-  
+
   if (!opts.url) {
     console.error('❌ 请提供测试 URL');
     console.log('用法: pnpm lighthouse --url http://localhost:5173');
@@ -49,11 +49,12 @@ async function runLighthouse(options: LighthouseOptions = {}): Promise<void> {
   }
 
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-  const outputFile = join(opts.outputPath!, `lighthouse-${opts.device}-${timestamp}.${opts.reportFormat}`);
+  const outputFile = join(
+    opts.outputPath!,
+    `lighthouse-${opts.device}-${timestamp}.${opts.reportFormat}`,
+  );
 
-  const desktopConfig = opts.device === 'desktop' ? [
-    '--preset=desktop',
-  ] : [];
+  const desktopConfig = opts.device === 'desktop' ? ['--preset=desktop'] : [];
 
   const lighthouseArgs = [
     opts.url,
@@ -98,7 +99,7 @@ function generateSampleReport(outputPath: string): void {
       performance: { score: 0.92 },
       accessibility: { score: 0.95 },
       'best-practices': { score: 0.98 },
-      seo: { score: 0.90 },
+      seo: { score: 0.9 },
     },
     audits: {
       'first-contentful-paint': { numericValue: 850 },
@@ -116,7 +117,7 @@ function generateSampleReport(outputPath: string): void {
 
 async function main() {
   const args = process.argv.slice(2);
-  
+
   if (args.includes('--help') || args.includes('-h')) {
     console.log(`
 🧪 LytJS Lighthouse Performance Test
@@ -142,8 +143,8 @@ async function main() {
   }
 
   if (args.includes('--sample')) {
-    const outputPath = args.includes('--output') 
-      ? args[args.indexOf('--output') + 1] 
+    const outputPath = args.includes('--output')
+      ? args[args.indexOf('--output') + 1]
       : './lighthouse-reports';
     generateSampleReport(outputPath || './lighthouse-reports');
     return;

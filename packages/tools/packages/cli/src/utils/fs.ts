@@ -42,11 +42,11 @@ export function exists(path: string): boolean {
 export function copyDir(src: string, dest: string): void {
   ensureDir(dest);
   const entries = readdirSync(src, { withFileTypes: true });
-  
+
   for (const entry of entries) {
     const srcPath = join(src, entry.name);
     const destPath = join(dest, entry.name);
-    
+
     if (entry.isDirectory()) {
       copyDir(srcPath, destPath);
     } else {

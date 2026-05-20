@@ -207,7 +207,7 @@ function createTransformContext(root: RootNode, options: TransformOptions): Tran
         ? ` (at line ${node.loc.start.line}, column ${node.loc.start.column})`
         : '';
       const fullMsg = `[LytJS] ${msg}${location}`;
-      
+
       // 优先调用 options.onError 回调，否则直接抛出错误
       if (options.onError) {
         options.onError(new Error(fullMsg));

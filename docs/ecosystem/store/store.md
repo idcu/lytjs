@@ -60,7 +60,7 @@ import App from './App';
 import { pinia } from './stores';
 
 const app = mount(document.getElementById('app'), App, {
-  plugins: [pinia]
+  plugins: [pinia],
 });
 ```
 
@@ -80,14 +80,13 @@ export const useUserStore = defineStore('user', {
     email: '',
     avatar: '',
     isLoggedIn: false,
-    permissions: []
+    permissions: [],
   }),
 
   getters: {
     displayName: (state) => state.name || state.email || '匿名用户',
     isAdmin: (state) => state.permissions.includes('admin'),
-    hasPermission: (state) => (permission: string) =>
-      state.permissions.includes(permission)
+    hasPermission: (state) => (permission: string) => state.permissions.includes(permission),
   },
 
   actions: {
@@ -113,8 +112,8 @@ export const useUserStore = defineStore('user', {
     updateProfile(data: Partial<{ name: string; avatar: string }>) {
       if (data.name) this.name = data.name;
       if (data.avatar) this.avatar = data.avatar;
-    }
-  }
+    },
+  },
 });
 ```
 
@@ -154,7 +153,7 @@ export const useCartStore = defineStore('cart', () => {
   const itemCount = computed(() => items.value.length);
 
   const totalPrice = computed(() =>
-    items.value.reduce((sum, item) => sum + item.price * item.quantity, 0)
+    items.value.reduce((sum, item) => sum + item.price * item.quantity, 0),
   );
 
   const discountedPrice = computed(() => {
@@ -168,7 +167,7 @@ export const useCartStore = defineStore('cart', () => {
   });
 
   function addItem(product: { id: string; name: string; price: number }) {
-    const existing = items.value.find(item => item.id === product.id);
+    const existing = items.value.find((item) => item.id === product.id);
     if (existing) {
       existing.quantity++;
     } else {
@@ -177,14 +176,14 @@ export const useCartStore = defineStore('cart', () => {
   }
 
   function removeItem(productId: string) {
-    const index = items.value.findIndex(item => item.id === productId);
+    const index = items.value.findIndex((item) => item.id === productId);
     if (index !== -1) {
       items.value.splice(index, 1);
     }
   }
 
   function updateQuantity(productId: string, quantity: number) {
-    const item = items.value.find(item => item.id === productId);
+    const item = items.value.find((item) => item.id === productId);
     if (item) {
       if (quantity <= 0) {
         removeItem(productId);
@@ -206,7 +205,7 @@ export const useCartStore = defineStore('cart', () => {
   async function checkout() {
     const order = await api.createOrder({
       items: items.value,
-      total: discountedPrice.value
+      total: discountedPrice.value,
     });
     clearCart();
     return order;
@@ -223,7 +222,7 @@ export const useCartStore = defineStore('cart', () => {
     updateQuantity,
     applyCoupon,
     clearCart,
-    checkout
+    checkout,
   };
 });
 ```
@@ -285,8 +284,12 @@ import { defineStore } from '@lytjs/store';
 
 const useStore = defineStore('storeId', {
   state: () => ({ count: 0 }),
-  getters: { /* ... */ },
-  actions: { /* ... */ }
+  getters: {
+    /* ... */
+  },
+  actions: {
+    /* ... */
+  },
 });
 ```
 
@@ -318,7 +321,7 @@ import { createPinia } from '@lytjs/store';
 
 const pinia = createPinia({
   plugins: [logPlugin],
-  depGroups: {}
+  depGroups: {},
 });
 ```
 
@@ -389,7 +392,7 @@ const persistPlugin: PiniaPlugin = ({ store, options }) => {
 import { createPinia } from '@lytjs/store';
 
 const pinia = createPinia({
-  plugins: [persistPlugin]
+  plugins: [persistPlugin],
 });
 ```
 
@@ -403,7 +406,9 @@ store.$state.count;
 
 // 更新状态
 store.$patch({ count: 10 });
-store.$patch((state) => { state.count++; });
+store.$patch((state) => {
+  state.count++;
+});
 
 // 重置状态
 store.$reset();
@@ -447,11 +452,17 @@ interface Store<G = any, S = any, A = any> {
 
 ```typescript
 // ✅ 推荐：使用 use 前缀
-const useUserStore = defineStore('user', { /* ... */ });
-const useCartStore = defineStore('cart', { /* ... */ });
+const useUserStore = defineStore('user', {
+  /* ... */
+});
+const useCartStore = defineStore('cart', {
+  /* ... */
+});
 
 // ❌ 避免：不使用 use 前缀
-const useUser = defineStore('user', { /* ... */ });
+const useUser = defineStore('user', {
+  /* ... */
+});
 ```
 
 ### 状态结构
@@ -460,19 +471,19 @@ const useUser = defineStore('user', { /* ... */ });
 // ✅ 推荐：使用扁平状态结构
 state: () => ({
   user: { id: '', name: '', email: '' },
-  preferences: { theme: 'light', language: 'zh-CN' }
-})
+  preferences: { theme: 'light', language: 'zh-CN' },
+});
 
 // ❌ 避免：过深的嵌套
 state: () => ({
   app: {
     user: {
       profile: {
-        name: ''
-      }
-    }
-  }
-})
+        name: '',
+      },
+    },
+  },
+});
 ```
 
 ### 动作命名

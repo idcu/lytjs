@@ -18,24 +18,20 @@ import type { SSGPage } from '../src/ssg';
 function createTestVNode(
   type: string,
   props: Record<string, unknown> | null,
-  children?: unknown
+  children?: unknown,
 ): any {
   return { type, props: props || {}, children: children ?? null };
 }
 
 describe('generateStaticPages', () => {
   it('应该返回 Map 实例', () => {
-    const pages: SSGPage[] = [
-      { path: '/', component: createTestVNode('div', null, 'Home') },
-    ];
+    const pages: SSGPage[] = [{ path: '/', component: createTestVNode('div', null, 'Home') }];
     const result = generateStaticPages(pages);
     expect(result).toBeInstanceOf(Map);
   });
 
   it('应该为根路径生成 index.html', () => {
-    const pages: SSGPage[] = [
-      { path: '/', component: createTestVNode('div', null, 'Home') },
-    ];
+    const pages: SSGPage[] = [{ path: '/', component: createTestVNode('div', null, 'Home') }];
     const result = generateStaticPages(pages);
 
     expect(result.has('/index.html')).toBe(true);
@@ -44,9 +40,7 @@ describe('generateStaticPages', () => {
   });
 
   it('应该为子路径生成正确的文件路径', () => {
-    const pages: SSGPage[] = [
-      { path: '/about', component: createTestVNode('div', null, 'About') },
-    ];
+    const pages: SSGPage[] = [{ path: '/about', component: createTestVNode('div', null, 'About') }];
     const result = generateStaticPages(pages);
 
     expect(result.has('/about/index.html')).toBe(true);
@@ -55,9 +49,7 @@ describe('generateStaticPages', () => {
   });
 
   it('应该生成完整的 HTML 文档', () => {
-    const pages: SSGPage[] = [
-      { path: '/', component: createTestVNode('div', null, 'Content') },
-    ];
+    const pages: SSGPage[] = [{ path: '/', component: createTestVNode('div', null, 'Content') }];
     const result = generateStaticPages(pages);
     const html = result.get('/index.html')!;
 
@@ -84,9 +76,7 @@ describe('generateStaticPages', () => {
   });
 
   it('应该使用默认标题当页面未设置标题时', () => {
-    const pages: SSGPage[] = [
-      { path: '/', component: createTestVNode('div', null, 'Home') },
-    ];
+    const pages: SSGPage[] = [{ path: '/', component: createTestVNode('div', null, 'Home') }];
     const result = generateStaticPages(pages, { defaultTitle: '默认站点' });
     const html = result.get('/index.html')!;
 
@@ -129,9 +119,7 @@ describe('generateStaticPages', () => {
   });
 
   it('应该规范化不以 / 开头的路径', () => {
-    const pages: SSGPage[] = [
-      { path: 'about', component: createTestVNode('div', null, 'About') },
-    ];
+    const pages: SSGPage[] = [{ path: 'about', component: createTestVNode('div', null, 'About') }];
     const result = generateStaticPages(pages);
 
     expect(result.has('/about/index.html')).toBe(true);
@@ -147,9 +135,7 @@ describe('generateStaticPages', () => {
   });
 
   it('应该支持自定义语言设置', () => {
-    const pages: SSGPage[] = [
-      { path: '/', component: createTestVNode('div', null, 'Home') },
-    ];
+    const pages: SSGPage[] = [{ path: '/', component: createTestVNode('div', null, 'Home') }];
     const result = generateStaticPages(pages, { lang: 'en-US' });
     const html = result.get('/index.html')!;
 
@@ -191,9 +177,7 @@ describe('generateRouteManifest', () => {
   });
 
   it('应该使用自定义 baseUrl', () => {
-    const pages: SSGPage[] = [
-      { path: '/about', component: createTestVNode('div', null, 'About') },
-    ];
+    const pages: SSGPage[] = [{ path: '/about', component: createTestVNode('div', null, 'About') }];
     const manifest = generateRouteManifest(pages, 'https://example.com');
 
     expect(manifest[0].path).toBe('https://example.com/about');
@@ -202,9 +186,7 @@ describe('generateRouteManifest', () => {
 
 describe('validatePages', () => {
   it('应该对合法页面返回空错误数组', () => {
-    const pages: SSGPage[] = [
-      { path: '/', component: createTestVNode('div', null, 'Home') },
-    ];
+    const pages: SSGPage[] = [{ path: '/', component: createTestVNode('div', null, 'Home') }];
     const errors = validatePages(pages);
     expect(errors).toHaveLength(0);
   });
@@ -224,19 +206,14 @@ describe('validatePages', () => {
   });
 
   it('应该检测不以 / 开头的路径', () => {
-    const pages: SSGPage[] = [
-      { path: 'invalid', component: createTestVNode('div', null, 'Test') },
-    ];
+    const pages: SSGPage[] = [{ path: 'invalid', component: createTestVNode('div', null, 'Test') }];
     const errors = validatePages(pages);
     expect(errors.length).toBeGreaterThan(0);
     expect(errors[0]).toContain('/');
   });
 
   it('应该同时报告多个错误', () => {
-    const pages = [
-      { path: 'bad-path' },
-      { path: '/' },
-    ] as SSGPage[];
+    const pages = [{ path: 'bad-path' }, { path: '/' }] as SSGPage[];
     const errors = validatePages(pages);
     // 第一个页面：路径不以 / 开头 + 缺失 component
     // 第二个页面：缺失 component
@@ -261,21 +238,21 @@ describe('ISR (Incremental Static Regeneration)', () => {
       // 先创建一些缓存（通过中间件）
       const pages = new Map([['/index.html', '<html></html>']]);
       const middleware = createISRMiddleware({ staticPages: pages });
-      
+
       // 调用一下中间件会初始化缓存
       const mockReq = { path: '/' };
       const mockRes = {
         setHeader: () => {},
         send: () => {},
       };
-      
+
       middleware(mockReq as any, mockRes as any, () => {});
-      
+
       const statsBefore = getISRCacheStats();
       expect(statsBefore.total).toBeGreaterThan(0);
-      
+
       clearISRCache();
-      
+
       const statsAfter = getISRCacheStats();
       expect(statsAfter.total).toBe(0);
     });
@@ -293,9 +270,9 @@ describe('ISR (Incremental Static Regeneration)', () => {
         ['/index.html', '<html>Home</html>'],
         ['/about/index.html', '<html>About</html>'],
       ]);
-      
+
       createISRMiddleware({ staticPages: pages });
-      
+
       const stats = getISRCacheStats();
       expect(stats.total).toBe(2);
       expect(stats.paths).toContain('/index.html');
@@ -305,18 +282,20 @@ describe('ISR (Incremental Static Regeneration)', () => {
     it('应该支持禁用 ISR', () => {
       const pages = new Map([['/index.html', '<html>Home</html>']]);
       let nextCalled = false;
-      
-      const middleware = createISRMiddleware({ 
-        staticPages: pages, 
-        enabled: false 
+
+      const middleware = createISRMiddleware({
+        staticPages: pages,
+        enabled: false,
       });
-      
+
       const mockReq = { path: '/' };
       const mockRes = {};
-      const mockNext = () => { nextCalled = true; };
-      
+      const mockNext = () => {
+        nextCalled = true;
+      };
+
       middleware(mockReq as any, mockRes as any, mockNext);
-      
+
       expect(nextCalled).toBe(true);
     });
   });
@@ -329,14 +308,14 @@ describe('ISR (Incremental Static Regeneration)', () => {
         regenerateCalled = true;
         return '<html>New Content</html>';
       };
-      
+
       // 先设置缓存
       const pages = new Map([[testPath, '<html>Old Content</html>']]);
       createISRMiddleware({ staticPages: pages });
-      
+
       // 执行重新验证
       const result = await revalidateOnDemand(testPath, regenerateFn);
-      
+
       expect(regenerateCalled).toBe(true);
       expect(result).toBe('<html>New Content</html>');
     });
@@ -346,15 +325,15 @@ describe('ISR (Incremental Static Regeneration)', () => {
       const regenerateFn = async () => {
         throw new Error('Revalidation failed');
       };
-      
+
       // 先设置缓存
       const pages = new Map([[testPath, '<html>Content</html>']]);
       createISRMiddleware({ staticPages: pages });
-      
+
       // 应该抛出错误
-      await expect(revalidateOnDemand(testPath, regenerateFn))
-        .rejects
-        .toThrow('Revalidation failed');
+      await expect(revalidateOnDemand(testPath, regenerateFn)).rejects.toThrow(
+        'Revalidation failed',
+      );
     });
   });
 });

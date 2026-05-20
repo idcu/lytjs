@@ -64,28 +64,38 @@ export const VaporButton = {
       const children: VNode[] = [];
 
       if (p.loading) {
-        children.push(createVNode('span', { class: 'vapor-button__loading' }, [
-          createVNode('svg', {
-            class: 'vapor-button__loading-icon',
-            viewBox: '0 0 1024 1024',
-          }, [
-            createVNode('path', {
-              d: 'M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64z',
-              fill: 'currentColor',
-            }),
+        children.push(
+          createVNode('span', { class: 'vapor-button__loading' }, [
+            createVNode(
+              'svg',
+              {
+                class: 'vapor-button__loading-icon',
+                viewBox: '0 0 1024 1024',
+              },
+              [
+                createVNode('path', {
+                  d: 'M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64z',
+                  fill: 'currentColor',
+                }),
+              ],
+            ),
           ]),
-        ]));
+        );
       }
 
       children.push(createVNode('span', { class: 'vapor-button__text' }, []));
 
-      return createVNode('button', {
-        type: p.nativeType as 'button' | 'submit' | 'reset',
-        class: getClasses(),
-        style: p.style as string || undefined,
-        disabled: p.disabled || p.loading || undefined,
-        onClick: handleClick,
-      }, children);
+      return createVNode(
+        'button',
+        {
+          type: p.nativeType as 'button' | 'submit' | 'reset',
+          class: getClasses(),
+          style: (p.style as string) || undefined,
+          disabled: p.disabled || p.loading || undefined,
+          onClick: handleClick,
+        },
+        children,
+      );
     };
   },
 };

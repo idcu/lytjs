@@ -1,574 +1,585 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>电商购物车 - LytJS 实战案例</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      min-height: 100vh;
-      padding: 20px;
-    }
-
-    .container {
-      max-width: 1400px;
-      margin: 0 auto;
-    }
-
-    .header {
-      background: white;
-      padding: 30px;
-      border-radius: 16px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-      margin-bottom: 24px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .header h1 {
-      color: #1a1a1a;
-      font-size: 2em;
-    }
-
-    .cart-badge {
-      background: #ff4757;
-      color: white;
-      padding: 8px 16px;
-      border-radius: 20px;
-      font-weight: bold;
-      font-size: 1.2em;
-    }
-
-    .back-link {
-      display: inline-block;
-      margin-bottom: 20px;
-      color: white;
-      text-decoration: none;
-      font-weight: 500;
-      padding: 10px 20px;
-      background: rgba(255,255,255,0.2);
-      border-radius: 8px;
-      transition: background 0.3s;
-    }
-
-    .back-link:hover {
-      background: rgba(255,255,255,0.3);
-    }
-
-    .main-content {
-      display: grid;
-      grid-template-columns: 1fr 400px;
-      gap: 24px;
-    }
-
-    .products-section {
-      background: white;
-      padding: 30px;
-      border-radius: 16px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-    }
-
-    .section-title {
-      font-size: 1.8em;
-      margin-bottom: 20px;
-      color: #1a1a1a;
-    }
-
-    .products-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-      gap: 20px;
-    }
-
-    .product-card {
-      border: 2px solid #e9ecef;
-      border-radius: 12px;
-      padding: 20px;
-      text-align: center;
-      transition: all 0.3s;
-      background: white;
-    }
-
-    .product-card:hover {
-      border-color: #667eea;
-      transform: translateY(-4px);
-      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-    }
-
-    .product-image {
-      font-size: 4em;
-      margin-bottom: 15px;
-    }
-
-    .product-name {
-      font-size: 1.2em;
-      font-weight: bold;
-      margin-bottom: 10px;
-      color: #333;
-    }
-
-    .product-desc {
-      font-size: 0.9em;
-      color: #666;
-      margin-bottom: 15px;
-    }
-
-    .product-price {
-      font-size: 1.5em;
-      color: #667eea;
-      font-weight: bold;
-      margin-bottom: 15px;
-    }
-
-    .btn {
-      padding: 10px 20px;
-      border: none;
-      border-radius: 8px;
-      font-size: 1em;
-      cursor: pointer;
-      transition: all 0.3s;
-      font-weight: 500;
-    }
-
-    .btn-primary {
-      background: #667eea;
-      color: white;
-    }
-
-    .btn-primary:hover {
-      background: #5568d3;
-      transform: translateY(-2px);
-    }
-
-    .btn-danger {
-      background: #ff4757;
-      color: white;
-    }
-
-    .btn-danger:hover {
-      background: #ff3344;
-    }
-
-    .btn-sm {
-      padding: 6px 12px;
-      font-size: 0.9em;
-    }
-
-    .cart-section {
-      background: white;
-      padding: 30px;
-      border-radius: 16px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-      height: fit-content;
-      position: sticky;
-      top: 20px;
-    }
-
-    .cart-items {
-      margin: 20px 0;
-    }
-
-    .cart-item {
-      display: flex;
-      align-items: center;
-      gap: 15px;
-      padding: 15px;
-      border: 1px solid #e9ecef;
-      border-radius: 8px;
-      margin-bottom: 12px;
-      transition: all 0.3s;
-    }
-
-    .cart-item:hover {
-      background: #f8f9fa;
-    }
-
-    .cart-item-icon {
-      font-size: 2em;
-    }
-
-    .cart-item-info {
-      flex: 1;
-    }
-
-    .cart-item-name {
-      font-weight: bold;
-      margin-bottom: 4px;
-    }
-
-    .cart-item-price {
-      color: #667eea;
-      font-weight: bold;
-    }
-
-    .cart-item-quantity {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .quantity-btn {
-      width: 30px;
-      height: 30px;
-      border: 2px solid #667eea;
-      background: white;
-      color: #667eea;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 1.2em;
-      font-weight: bold;
-      transition: all 0.3s;
-    }
-
-    .quantity-btn:hover {
-      background: #667eea;
-      color: white;
-    }
-
-    .quantity-value {
-      font-weight: bold;
-      min-width: 30px;
-      text-align: center;
-    }
-
-    .cart-summary {
-      border-top: 2px solid #e9ecef;
-      padding-top: 20px;
-      margin-top: 20px;
-    }
-
-    .summary-row {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 12px;
-      font-size: 1.1em;
-    }
-
-    .summary-row.total {
-      font-size: 1.5em;
-      font-weight: bold;
-      color: #667eea;
-      border-top: 2px solid #667eea;
-      padding-top: 12px;
-      margin-top: 12px;
-    }
-
-    .checkout-form {
-      margin-top: 20px;
-      padding-top: 20px;
-      border-top: 2px solid #e9ecef;
-    }
-
-    .form-group {
-      margin-bottom: 15px;
-    }
-
-    .form-label {
-      display: block;
-      margin-bottom: 6px;
-      font-weight: 500;
-      color: #333;
-    }
-
-    .form-input {
-      width: 100%;
-      padding: 10px;
-      border: 2px solid #e9ecef;
-      border-radius: 8px;
-      font-size: 1em;
-      transition: border-color 0.3s;
-    }
-
-    .form-input:focus {
-      outline: none;
-      border-color: #667eea;
-    }
-
-    .form-error {
-      color: #ff4757;
-      font-size: 0.9em;
-      margin-top: 4px;
-    }
-
-    .checkout-btn {
-      width: 100%;
-      padding: 15px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      border: none;
-      border-radius: 8px;
-      font-size: 1.2em;
-      font-weight: bold;
-      cursor: pointer;
-      transition: all 0.3s;
-      margin-top: 10px;
-    }
-
-    .checkout-btn:hover:not(:disabled) {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-    }
-
-    .checkout-btn:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    .empty-cart {
-      text-align: center;
-      padding: 40px;
-      color: #999;
-    }
-
-    .empty-cart-icon {
-      font-size: 5em;
-      margin-bottom: 20px;
-    }
-
-    .toast {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      background: #667eea;
-      color: white;
-      padding: 16px 24px;
-      border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      z-index: 1000;
-      animation: slideIn 0.3s ease-out;
-    }
-
-    .toast.error {
-      background: #ff4757;
-    }
-
-    .toast.success {
-      background: #2ed573;
-    }
-
-    @keyframes slideIn {
-      from {
-        transform: translateX(100%);
-        opacity: 0;
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>电商购物车 - LytJS 实战案例</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
       }
-      to {
-        transform: translateX(0);
-        opacity: 1;
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px;
       }
-    }
 
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+      }
 
-    .animate-fade-in {
-      animation: fadeIn 0.5s ease-in;
-    }
+      .header {
+        background: white;
+        padding: 30px;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        margin-bottom: 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
 
-    .cart-item-enter {
-      animation: slideIn 0.3s ease-out;
-    }
+      .header h1 {
+        color: #1a1a1a;
+        font-size: 2em;
+      }
 
-    @media (max-width: 900px) {
+      .cart-badge {
+        background: #ff4757;
+        color: white;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-weight: bold;
+        font-size: 1.2em;
+      }
+
+      .back-link {
+        display: inline-block;
+        margin-bottom: 20px;
+        color: white;
+        text-decoration: none;
+        font-weight: 500;
+        padding: 10px 20px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 8px;
+        transition: background 0.3s;
+      }
+
+      .back-link:hover {
+        background: rgba(255, 255, 255, 0.3);
+      }
+
       .main-content {
-        grid-template-columns: 1fr;
+        display: grid;
+        grid-template-columns: 1fr 400px;
+        gap: 24px;
+      }
+
+      .products-section {
+        background: white;
+        padding: 30px;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      }
+
+      .section-title {
+        font-size: 1.8em;
+        margin-bottom: 20px;
+        color: #1a1a1a;
+      }
+
+      .products-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 20px;
+      }
+
+      .product-card {
+        border: 2px solid #e9ecef;
+        border-radius: 12px;
+        padding: 20px;
+        text-align: center;
+        transition: all 0.3s;
+        background: white;
+      }
+
+      .product-card:hover {
+        border-color: #667eea;
+        transform: translateY(-4px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+      }
+
+      .product-image {
+        font-size: 4em;
+        margin-bottom: 15px;
+      }
+
+      .product-name {
+        font-size: 1.2em;
+        font-weight: bold;
+        margin-bottom: 10px;
+        color: #333;
+      }
+
+      .product-desc {
+        font-size: 0.9em;
+        color: #666;
+        margin-bottom: 15px;
+      }
+
+      .product-price {
+        font-size: 1.5em;
+        color: #667eea;
+        font-weight: bold;
+        margin-bottom: 15px;
+      }
+
+      .btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 8px;
+        font-size: 1em;
+        cursor: pointer;
+        transition: all 0.3s;
+        font-weight: 500;
+      }
+
+      .btn-primary {
+        background: #667eea;
+        color: white;
+      }
+
+      .btn-primary:hover {
+        background: #5568d3;
+        transform: translateY(-2px);
+      }
+
+      .btn-danger {
+        background: #ff4757;
+        color: white;
+      }
+
+      .btn-danger:hover {
+        background: #ff3344;
+      }
+
+      .btn-sm {
+        padding: 6px 12px;
+        font-size: 0.9em;
       }
 
       .cart-section {
-        position: static;
+        background: white;
+        padding: 30px;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        height: fit-content;
+        position: sticky;
+        top: 20px;
       }
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <a href="../index.html" class="back-link">← 返回示例首页</a>
 
-    <div class="header">
-      <div>
-        <h1>🛒 电商购物车</h1>
-        <p style="color: #666; margin-top: 5px;">展示 LytJS 响应式状态管理和插件应用</p>
-      </div>
-      <div class="cart-badge" id="cartBadge">0</div>
-    </div>
+      .cart-items {
+        margin: 20px 0;
+      }
 
-    <div class="main-content">
-      <div class="products-section">
-        <h2 class="section-title">商品列表</h2>
-        <div class="products-grid" id="productsGrid"></div>
-      </div>
+      .cart-item {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        padding: 15px;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        margin-bottom: 12px;
+        transition: all 0.3s;
+      }
 
-      <div class="cart-section">
-        <h2 class="section-title">🛒 购物车</h2>
-        <div class="cart-items" id="cartItems"></div>
+      .cart-item:hover {
+        background: #f8f9fa;
+      }
 
-        <div class="cart-summary">
-          <div class="summary-row">
-            <span>商品总数</span>
-            <span id="totalItems">0 件</span>
-          </div>
-          <div class="summary-row">
-            <span>商品金额</span>
-            <span id="subtotal">¥0.00</span>
-          </div>
-          <div class="summary-row">
-            <span>运费</span>
-            <span id="shipping">¥0.00</span>
-          </div>
-          <div class="summary-row total">
-            <span>合计</span>
-            <span id="total">¥0.00</span>
-          </div>
-        </div>
+      .cart-item-icon {
+        font-size: 2em;
+      }
 
-        <div class="checkout-form">
-          <h3 style="margin-bottom: 15px;">📦 收货信息</h3>
-          <div class="form-group">
-            <label class="form-label">收货人姓名 *</label>
-            <input type="text" id="nameInput" class="form-input" placeholder="请输入收货人姓名">
-            <div class="form-error" id="nameError"></div>
-          </div>
-          <div class="form-group">
-            <label class="form-label">手机号码 *</label>
-            <input type="tel" id="phoneInput" class="form-input" placeholder="请输入手机号码">
-            <div class="form-error" id="phoneError"></div>
-          </div>
-          <div class="form-group">
-            <label class="form-label">收货地址 *</label>
-            <input type="text" id="addressInput" class="form-input" placeholder="请输入详细地址">
-            <div class="form-error" id="addressError"></div>
-          </div>
-          <button class="checkout-btn" id="checkoutBtn" disabled onclick="handleCheckout()">
-            提交订单
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
+      .cart-item-info {
+        flex: 1;
+      }
 
-  <script type="module">
-    import { signal, computed, effect } from '@lytjs/reactivity';
-    import { createFormManager } from '@lytjs/plugin-form';
+      .cart-item-name {
+        font-weight: bold;
+        margin-bottom: 4px;
+      }
 
-    const formManager = createFormManager({
-      fields: {
-        name: {
-          initialValue: '',
-          rules: [
-            { type: 'required', message: '请输入收货人姓名' },
-            { type: 'minLength', value: 2, message: '姓名至少2个字符' }
-          ]
-        },
-        phone: {
-          initialValue: '',
-          rules: [
-            { type: 'required', message: '请输入手机号码' },
-            { type: 'phone', message: '请输入有效的手机号码' }
-          ]
-        },
-        address: {
-          initialValue: '',
-          rules: [
-            { type: 'required', message: '请输入收货地址' },
-            { type: 'minLength', value: 5, message: '地址至少5个字符' }
-          ]
+      .cart-item-price {
+        color: #667eea;
+        font-weight: bold;
+      }
+
+      .cart-item-quantity {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .quantity-btn {
+        width: 30px;
+        height: 30px;
+        border: 2px solid #667eea;
+        background: white;
+        color: #667eea;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 1.2em;
+        font-weight: bold;
+        transition: all 0.3s;
+      }
+
+      .quantity-btn:hover {
+        background: #667eea;
+        color: white;
+      }
+
+      .quantity-value {
+        font-weight: bold;
+        min-width: 30px;
+        text-align: center;
+      }
+
+      .cart-summary {
+        border-top: 2px solid #e9ecef;
+        padding-top: 20px;
+        margin-top: 20px;
+      }
+
+      .summary-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 12px;
+        font-size: 1.1em;
+      }
+
+      .summary-row.total {
+        font-size: 1.5em;
+        font-weight: bold;
+        color: #667eea;
+        border-top: 2px solid #667eea;
+        padding-top: 12px;
+        margin-top: 12px;
+      }
+
+      .checkout-form {
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 2px solid #e9ecef;
+      }
+
+      .form-group {
+        margin-bottom: 15px;
+      }
+
+      .form-label {
+        display: block;
+        margin-bottom: 6px;
+        font-weight: 500;
+        color: #333;
+      }
+
+      .form-input {
+        width: 100%;
+        padding: 10px;
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        font-size: 1em;
+        transition: border-color 0.3s;
+      }
+
+      .form-input:focus {
+        outline: none;
+        border-color: #667eea;
+      }
+
+      .form-error {
+        color: #ff4757;
+        font-size: 0.9em;
+        margin-top: 4px;
+      }
+
+      .checkout-btn {
+        width: 100%;
+        padding: 15px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 1.2em;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s;
+        margin-top: 10px;
+      }
+
+      .checkout-btn:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+      }
+
+      .checkout-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .empty-cart {
+        text-align: center;
+        padding: 40px;
+        color: #999;
+      }
+
+      .empty-cart-icon {
+        font-size: 5em;
+        margin-bottom: 20px;
+      }
+
+      .toast {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #667eea;
+        color: white;
+        padding: 16px 24px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        z-index: 1000;
+        animation: slideIn 0.3s ease-out;
+      }
+
+      .toast.error {
+        background: #ff4757;
+      }
+
+      .toast.success {
+        background: #2ed573;
+      }
+
+      @keyframes slideIn {
+        from {
+          transform: translateX(100%);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
         }
       }
-    });
 
-    const products = signal([
-      { id: 1, name: 'MacBook Pro', desc: 'Apple M3 Pro 芯片', price: 19999, icon: '💻' },
-      { id: 2, name: 'iPhone 15 Pro', desc: 'A17 Pro 芯片', price: 8999, icon: '📱' },
-      { id: 3, name: 'AirPods Pro', desc: '主动降噪无线耳机', price: 1899, icon: '🎧' },
-      { id: 4, name: 'Apple Watch', desc: 'Series 9 智能手表', price: 3299, icon: '⌚' },
-      { id: 5, name: 'iPad Pro', desc: 'M2 芯片 12.9英寸', price: 9999, icon: '📲' },
-      { id: 6, name: 'Magic Keyboard', desc: '触控板无线键盘', price: 999, icon: '⌨️' },
-      { id: 7, name: 'Magic Mouse', desc: '无线蓝牙鼠标', price: 699, icon: '🖱️' },
-      { id: 8, name: 'AirTag', desc: '智能追踪器', price: 249, icon: '📍' }
-    ]);
-
-    const cart = signal([]);
-    const shipping = signal(0);
-
-    const cartBadge = computed(() => {
-      return cart.value.reduce((sum, item) => sum + item.quantity, 0);
-    });
-
-    const cartTotal = computed(() => {
-      return cart.value.reduce((sum, item) => sum + item.price * item.quantity, 0);
-    });
-
-    const orderTotal = computed(() => {
-      return cartTotal.value + shipping.value;
-    });
-
-    function addToCart(product) {
-      const existingItem = cart.value.find(item => item.id === product.id);
-      if (existingItem) {
-        cart.value = cart.value.map(item =>
-          item.id === product.id
-            ? { ...item, quantity: item.quantity + 1 }
-            : item
-        );
-        showToast(`${product.name} 数量 +1`);
-      } else {
-        cart.value = [...cart.value, { ...product, quantity: 1 }];
-        showToast(`${product.name} 已加入购物车`, 'success');
-      }
-      updateShipping();
-      updateUI();
-    }
-
-    function removeFromCart(productId) {
-      const item = cart.value.find(i => i.id === productId);
-      cart.value = cart.value.filter(item => item.id !== productId);
-      if (item) {
-        showToast(`${item.name} 已从购物车移除`, 'error');
-      }
-      updateShipping();
-      updateUI();
-    }
-
-    function updateQuantity(productId, delta) {
-      cart.value = cart.value.map(item => {
-        if (item.id === productId) {
-          const newQuantity = item.quantity + delta;
-          if (newQuantity <= 0) {
-            return null;
-          }
-          return { ...item, quantity: newQuantity };
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
         }
-        return item;
-      }).filter(Boolean);
-      updateShipping();
-      updateUI();
-    }
-
-    function updateShipping() {
-      const total = cartTotal.value;
-      if (total === 0) {
-        shipping.value = 0;
-      } else if (total >= 99) {
-        shipping.value = 0;
-        showToast('🎉 订单金额满 ¥99，免运费！', 'success');
-      } else {
-        shipping.value = 10;
+        to {
+          opacity: 1;
+        }
       }
-    }
 
-    function renderProducts() {
-      const grid = document.getElementById('productsGrid');
-      grid.innerHTML = products.value.map(product => `
+      .animate-fade-in {
+        animation: fadeIn 0.5s ease-in;
+      }
+
+      .cart-item-enter {
+        animation: slideIn 0.3s ease-out;
+      }
+
+      @media (max-width: 900px) {
+        .main-content {
+          grid-template-columns: 1fr;
+        }
+
+        .cart-section {
+          position: static;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <a href="../index.html" class="back-link">← 返回示例首页</a>
+
+      <div class="header">
+        <div>
+          <h1>🛒 电商购物车</h1>
+          <p style="color: #666; margin-top: 5px">展示 LytJS 响应式状态管理和插件应用</p>
+        </div>
+        <div class="cart-badge" id="cartBadge">0</div>
+      </div>
+
+      <div class="main-content">
+        <div class="products-section">
+          <h2 class="section-title">商品列表</h2>
+          <div class="products-grid" id="productsGrid"></div>
+        </div>
+
+        <div class="cart-section">
+          <h2 class="section-title">🛒 购物车</h2>
+          <div class="cart-items" id="cartItems"></div>
+
+          <div class="cart-summary">
+            <div class="summary-row">
+              <span>商品总数</span>
+              <span id="totalItems">0 件</span>
+            </div>
+            <div class="summary-row">
+              <span>商品金额</span>
+              <span id="subtotal">¥0.00</span>
+            </div>
+            <div class="summary-row">
+              <span>运费</span>
+              <span id="shipping">¥0.00</span>
+            </div>
+            <div class="summary-row total">
+              <span>合计</span>
+              <span id="total">¥0.00</span>
+            </div>
+          </div>
+
+          <div class="checkout-form">
+            <h3 style="margin-bottom: 15px">📦 收货信息</h3>
+            <div class="form-group">
+              <label class="form-label">收货人姓名 *</label>
+              <input type="text" id="nameInput" class="form-input" placeholder="请输入收货人姓名" />
+              <div class="form-error" id="nameError"></div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">手机号码 *</label>
+              <input type="tel" id="phoneInput" class="form-input" placeholder="请输入手机号码" />
+              <div class="form-error" id="phoneError"></div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">收货地址 *</label>
+              <input
+                type="text"
+                id="addressInput"
+                class="form-input"
+                placeholder="请输入详细地址"
+              />
+              <div class="form-error" id="addressError"></div>
+            </div>
+            <button class="checkout-btn" id="checkoutBtn" disabled onclick="handleCheckout()">
+              提交订单
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script type="module">
+      import { signal, computed, effect } from '@lytjs/reactivity';
+      import { createFormManager } from '@lytjs/plugin-form';
+
+      const formManager = createFormManager({
+        fields: {
+          name: {
+            initialValue: '',
+            rules: [
+              { type: 'required', message: '请输入收货人姓名' },
+              { type: 'minLength', value: 2, message: '姓名至少2个字符' },
+            ],
+          },
+          phone: {
+            initialValue: '',
+            rules: [
+              { type: 'required', message: '请输入手机号码' },
+              { type: 'phone', message: '请输入有效的手机号码' },
+            ],
+          },
+          address: {
+            initialValue: '',
+            rules: [
+              { type: 'required', message: '请输入收货地址' },
+              { type: 'minLength', value: 5, message: '地址至少5个字符' },
+            ],
+          },
+        },
+      });
+
+      const products = signal([
+        { id: 1, name: 'MacBook Pro', desc: 'Apple M3 Pro 芯片', price: 19999, icon: '💻' },
+        { id: 2, name: 'iPhone 15 Pro', desc: 'A17 Pro 芯片', price: 8999, icon: '📱' },
+        { id: 3, name: 'AirPods Pro', desc: '主动降噪无线耳机', price: 1899, icon: '🎧' },
+        { id: 4, name: 'Apple Watch', desc: 'Series 9 智能手表', price: 3299, icon: '⌚' },
+        { id: 5, name: 'iPad Pro', desc: 'M2 芯片 12.9英寸', price: 9999, icon: '📲' },
+        { id: 6, name: 'Magic Keyboard', desc: '触控板无线键盘', price: 999, icon: '⌨️' },
+        { id: 7, name: 'Magic Mouse', desc: '无线蓝牙鼠标', price: 699, icon: '🖱️' },
+        { id: 8, name: 'AirTag', desc: '智能追踪器', price: 249, icon: '📍' },
+      ]);
+
+      const cart = signal([]);
+      const shipping = signal(0);
+
+      const cartBadge = computed(() => {
+        return cart.value.reduce((sum, item) => sum + item.quantity, 0);
+      });
+
+      const cartTotal = computed(() => {
+        return cart.value.reduce((sum, item) => sum + item.price * item.quantity, 0);
+      });
+
+      const orderTotal = computed(() => {
+        return cartTotal.value + shipping.value;
+      });
+
+      function addToCart(product) {
+        const existingItem = cart.value.find((item) => item.id === product.id);
+        if (existingItem) {
+          cart.value = cart.value.map((item) =>
+            item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item,
+          );
+          showToast(`${product.name} 数量 +1`);
+        } else {
+          cart.value = [...cart.value, { ...product, quantity: 1 }];
+          showToast(`${product.name} 已加入购物车`, 'success');
+        }
+        updateShipping();
+        updateUI();
+      }
+
+      function removeFromCart(productId) {
+        const item = cart.value.find((i) => i.id === productId);
+        cart.value = cart.value.filter((item) => item.id !== productId);
+        if (item) {
+          showToast(`${item.name} 已从购物车移除`, 'error');
+        }
+        updateShipping();
+        updateUI();
+      }
+
+      function updateQuantity(productId, delta) {
+        cart.value = cart.value
+          .map((item) => {
+            if (item.id === productId) {
+              const newQuantity = item.quantity + delta;
+              if (newQuantity <= 0) {
+                return null;
+              }
+              return { ...item, quantity: newQuantity };
+            }
+            return item;
+          })
+          .filter(Boolean);
+        updateShipping();
+        updateUI();
+      }
+
+      function updateShipping() {
+        const total = cartTotal.value;
+        if (total === 0) {
+          shipping.value = 0;
+        } else if (total >= 99) {
+          shipping.value = 0;
+          showToast('🎉 订单金额满 ¥99，免运费！', 'success');
+        } else {
+          shipping.value = 10;
+        }
+      }
+
+      function renderProducts() {
+        const grid = document.getElementById('productsGrid');
+        grid.innerHTML = products.value
+          .map(
+            (product) => `
         <div class="product-card">
           <div class="product-image">${product.icon}</div>
           <div class="product-name">${product.name}</div>
@@ -578,29 +589,33 @@
             加入购物车
           </button>
         </div>
-      `).join('');
-    }
+      `,
+          )
+          .join('');
+      }
 
-    function renderCart() {
-      const cartItems = document.getElementById('cartItems');
-      const cartBadge = document.getElementById('cartBadge');
-      const checkoutBtn = document.getElementById('checkoutBtn');
+      function renderCart() {
+        const cartItems = document.getElementById('cartItems');
+        const cartBadge = document.getElementById('cartBadge');
+        const checkoutBtn = document.getElementById('checkoutBtn');
 
-      cartBadge.textContent = cartBadge.value;
-      checkoutBtn.disabled = cart.value.length === 0;
+        cartBadge.textContent = cartBadge.value;
+        checkoutBtn.disabled = cart.value.length === 0;
 
-      if (cart.value.length === 0) {
-        cartItems.innerHTML = `
+        if (cart.value.length === 0) {
+          cartItems.innerHTML = `
           <div class="empty-cart">
             <div class="empty-cart-icon">🛒</div>
             <p>购物车是空的</p>
             <p style="font-size: 0.9em; margin-top: 10px;">快去挑选心仪的商品吧</p>
           </div>
         `;
-        return;
-      }
+          return;
+        }
 
-      cartItems.innerHTML = cart.value.map(item => `
+        cartItems.innerHTML = cart.value
+          .map(
+            (item) => `
         <div class="cart-item cart-item-enter">
           <div class="cart-item-icon">${item.icon}</div>
           <div class="cart-item-info">
@@ -614,123 +629,126 @@
           </div>
           <button class="btn btn-danger btn-sm" onclick="removeFromCart(${item.id})">删除</button>
         </div>
-      `).join('');
-    }
-
-    function updateUI() {
-      renderCart();
-      document.getElementById('totalItems').textContent = `${cartBadge.value} 件`;
-      document.getElementById('subtotal').textContent = `¥${cartTotal.value.toLocaleString()}`;
-      document.getElementById('shipping').textContent = shipping.value === 0 ? '免费' : `¥${shipping.value}`;
-      document.getElementById('total').textContent = `¥${orderTotal.value.toLocaleString()}`;
-    }
-
-    function showToast(message, type = 'info') {
-      const existingToast = document.querySelector('.toast');
-      if (existingToast) {
-        existingToast.remove();
+      `,
+          )
+          .join('');
       }
 
-      const toast = document.createElement('div');
-      toast.className = `toast ${type}`;
-      toast.textContent = message;
-      document.body.appendChild(toast);
+      function updateUI() {
+        renderCart();
+        document.getElementById('totalItems').textContent = `${cartBadge.value} 件`;
+        document.getElementById('subtotal').textContent = `¥${cartTotal.value.toLocaleString()}`;
+        document.getElementById('shipping').textContent =
+          shipping.value === 0 ? '免费' : `¥${shipping.value}`;
+        document.getElementById('total').textContent = `¥${orderTotal.value.toLocaleString()}`;
+      }
 
-      setTimeout(() => {
-        toast.remove();
-      }, 2000);
-    }
-
-    window.addToCart = addToCart;
-    window.updateQuantity = updateQuantity;
-    window.removeFromCart = removeFromCart;
-    window.products = products;
-
-    async function handleCheckout() {
-      const nameInput = document.getElementById('nameInput');
-      const phoneInput = document.getElementById('phoneInput');
-      const addressInput = document.getElementById('addressInput');
-
-      const nameValid = await formManager.validateField('name');
-      const phoneValid = await formManager.validateField('phone');
-      const addressValid = await formManager.validateField('address');
-
-      document.getElementById('nameError').textContent = '';
-      document.getElementById('phoneError').textContent = '';
-      document.getElementById('addressError').textContent = '';
-
-      if (!nameValid) {
-        const errors = formManager.getErrors('name');
-        if (errors.length > 0) {
-          document.getElementById('nameError').textContent = errors[0];
+      function showToast(message, type = 'info') {
+        const existingToast = document.querySelector('.toast');
+        if (existingToast) {
+          existingToast.remove();
         }
+
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.textContent = message;
+        document.body.appendChild(toast);
+
+        setTimeout(() => {
+          toast.remove();
+        }, 2000);
       }
 
-      if (!phoneValid) {
-        const errors = formManager.getErrors('phone');
-        if (errors.length > 0) {
-          document.getElementById('phoneError').textContent = errors[0];
+      window.addToCart = addToCart;
+      window.updateQuantity = updateQuantity;
+      window.removeFromCart = removeFromCart;
+      window.products = products;
+
+      async function handleCheckout() {
+        const nameInput = document.getElementById('nameInput');
+        const phoneInput = document.getElementById('phoneInput');
+        const addressInput = document.getElementById('addressInput');
+
+        const nameValid = await formManager.validateField('name');
+        const phoneValid = await formManager.validateField('phone');
+        const addressValid = await formManager.validateField('address');
+
+        document.getElementById('nameError').textContent = '';
+        document.getElementById('phoneError').textContent = '';
+        document.getElementById('addressError').textContent = '';
+
+        if (!nameValid) {
+          const errors = formManager.getErrors('name');
+          if (errors.length > 0) {
+            document.getElementById('nameError').textContent = errors[0];
+          }
         }
-      }
 
-      if (!addressValid) {
-        const errors = formManager.getErrors('address');
-        if (errors.length > 0) {
-          document.getElementById('addressError').textContent = errors[0];
+        if (!phoneValid) {
+          const errors = formManager.getErrors('phone');
+          if (errors.length > 0) {
+            document.getElementById('phoneError').textContent = errors[0];
+          }
         }
+
+        if (!addressValid) {
+          const errors = formManager.getErrors('address');
+          if (errors.length > 0) {
+            document.getElementById('addressError').textContent = errors[0];
+          }
+        }
+
+        if (!nameValid || !phoneValid || !addressValid) {
+          showToast('请检查表单信息', 'error');
+          return;
+        }
+
+        const checkoutBtn = document.getElementById('checkoutBtn');
+        checkoutBtn.disabled = true;
+        checkoutBtn.textContent = '提交中...';
+
+        setTimeout(() => {
+          showToast('🎉 订单提交成功！', 'success');
+          cart.value = [];
+          formManager.reset();
+          nameInput.value = '';
+          phoneInput.value = '';
+          addressInput.value = '';
+          updateShipping();
+          updateUI();
+
+          checkoutBtn.disabled = false;
+          checkoutBtn.textContent = '提交订单';
+        }, 1500);
       }
 
-      if (!nameValid || !phoneValid || !addressValid) {
-        showToast('请检查表单信息', 'error');
-        return;
-      }
+      window.handleCheckout = handleCheckout;
 
-      const checkoutBtn = document.getElementById('checkoutBtn');
-      checkoutBtn.disabled = true;
-      checkoutBtn.textContent = '提交中...';
+      document.getElementById('nameInput').addEventListener('input', (e) => {
+        formManager.setValue('name', e.target.value);
+      });
 
-      setTimeout(() => {
-        showToast('🎉 订单提交成功！', 'success');
-        cart.value = [];
-        formManager.reset();
-        nameInput.value = '';
-        phoneInput.value = '';
-        addressInput.value = '';
-        updateShipping();
-        updateUI();
+      document.getElementById('phoneInput').addEventListener('input', (e) => {
+        formManager.setValue('phone', e.target.value);
+      });
 
-        checkoutBtn.disabled = false;
-        checkoutBtn.textContent = '提交订单';
-      }, 1500);
-    }
+      document.getElementById('addressInput').addEventListener('input', (e) => {
+        formManager.setValue('address', e.target.value);
+      });
 
-    window.handleCheckout = handleCheckout;
+      renderProducts();
+      updateUI();
 
-    document.getElementById('nameInput').addEventListener('input', (e) => {
-      formManager.setValue('name', e.target.value);
-    });
-
-    document.getElementById('phoneInput').addEventListener('input', (e) => {
-      formManager.setValue('phone', e.target.value);
-    });
-
-    document.getElementById('addressInput').addEventListener('input', (e) => {
-      formManager.setValue('address', e.target.value);
-    });
-
-    renderProducts();
-    updateUI();
-
-    console.log('电商购物车初始化完成！');
-    console.log('使用的 LytJS 技术：');
-    console.log('- @lytjs/reactivity: 响应式状态管理');
-    console.log('- @lytjs/plugin-form: 表单验证');
-    console.log('功能特性：');
-    console.log('- 商品列表展示');
-    console.log('- 购物车增删改');
-    console.log('- 运费计算（满99免运费）');
-    console.log('- 表单验证');
-    console.log('- 响应式 UI 更新');
-  </script>
-</body>
+      console.log('电商购物车初始化完成！');
+      console.log('使用的 LytJS 技术：');
+      console.log('- @lytjs/reactivity: 响应式状态管理');
+      console.log('- @lytjs/plugin-form: 表单验证');
+      console.log('功能特性：');
+      console.log('- 商品列表展示');
+      console.log('- 购物车增删改');
+      console.log('- 运费计算（满99免运费）');
+      console.log('- 表单验证');
+      console.log('- 响应式 UI 更新');
+    </script>
+  </body>
 </html>

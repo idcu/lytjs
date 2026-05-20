@@ -23,11 +23,7 @@ import { patchEvent as invokerPatchEvent } from './web-patch-events';
 export { patchClass, patchStyle, patchAttr } from '@lytjs/common-dom';
 
 // Re-export web-patch-events types and functions
-export {
-  patchEvent,
-  createInvoker,
-  removeAllEventListeners,
-} from './web-patch-events';
+export { patchEvent, createInvoker, removeAllEventListeners } from './web-patch-events';
 export type { ParsedEvent, EventInvoker } from './web-patch-events';
 
 // normalizeEventName, getEventKey, parseEventModifier 已迁移到 @lytjs/common-events

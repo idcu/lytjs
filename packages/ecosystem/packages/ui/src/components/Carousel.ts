@@ -25,7 +25,10 @@ export const Carousel = defineComponent({
     loop: { type: Boolean, default: true },
     direction: { type: String as () => 'horizontal' | 'vertical', default: 'horizontal' },
     class: { type: String, default: '' },
-    style: { type: [String, Object] as unknown as PropType<string | Record<string, string>>, default: '' },
+    style: {
+      type: [String, Object] as unknown as PropType<string | Record<string, string>>,
+      default: '',
+    },
     id: { type: String, default: '' },
     ariaLabel: { type: String, default: '' },
     ariaDescribedBy: { type: String, default: '' },
@@ -53,7 +56,8 @@ export const Carousel = defineComponent({
         const classes = ['lyt-carousel'];
         if (_props.type) classes.push(`lyt-carousel--${_props.type}`);
         if (_props.direction) classes.push(`lyt-carousel--${_props.direction}`);
-        if (_props.indicatorPosition) classes.push(`lyt-carousel--indicator-${_props.indicatorPosition}`);
+        if (_props.indicatorPosition)
+          classes.push(`lyt-carousel--indicator-${_props.indicatorPosition}`);
         if (_props.class) classes.push(_props.class);
         return classes.join(' ');
       };
@@ -74,15 +78,22 @@ export const Carousel = defineComponent({
         return style;
       };
 
-      return createVNode('div', mergeA11yProps({
-        id: _props.id,
-        'aria-label': _props.ariaLabel,
-        'aria-describedby': _props.ariaDescribedBy,
-        role: 'region',
-      }, {
-        class: getCarouselClass(),
-        style: getCarouselStyle(),
-      }), children);
+      return createVNode(
+        'div',
+        mergeA11yProps(
+          {
+            id: _props.id,
+            'aria-label': _props.ariaLabel,
+            'aria-describedby': _props.ariaDescribedBy,
+            role: 'region',
+          },
+          {
+            class: getCarouselClass(),
+            style: getCarouselStyle(),
+          },
+        ),
+        children,
+      );
     };
   },
 });

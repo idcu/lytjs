@@ -64,9 +64,7 @@ const registry: ServerComponentRegistry = {
 /**
  * 注册 Server Component
  */
-export function registerServerComponent(
-  component: ServerComponentDefinition,
-): void {
+export function registerServerComponent(component: ServerComponentDefinition): void {
   registry.components.set(component.id, component);
 }
 

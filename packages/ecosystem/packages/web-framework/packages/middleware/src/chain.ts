@@ -2,11 +2,7 @@
  * 中间件链实现 - 洋葱圈模型
  */
 import { isArray } from '@lytjs/common-is';
-import type {
-  Middleware,
-  MiddlewareContext,
-  FinalHandler,
-} from './types';
+import type { Middleware, MiddlewareContext, FinalHandler } from './types';
 
 /**
  * 中间件链类
@@ -45,11 +41,7 @@ export class MiddlewareChain {
       }
 
       const middleware = middlewares[i];
-      const result = await middleware(
-        request,
-        context,
-        () => dispatch(i + 1),
-      );
+      const result = await middleware(request, context, () => dispatch(i + 1));
 
       if (result instanceof Response) {
         return result;

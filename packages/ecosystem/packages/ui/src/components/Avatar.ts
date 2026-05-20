@@ -23,7 +23,10 @@ export const Avatar = defineComponent({
     alt: { type: String, default: '' },
     fit: { type: String, default: 'cover' },
     class: { type: String, default: '' },
-    style: { type: [String, Object] as unknown as PropType<string | Record<string, string>>, default: '' },
+    style: {
+      type: [String, Object] as unknown as PropType<string | Record<string, string>>,
+      default: '',
+    },
     id: { type: String, default: '' },
     ariaLabel: { type: String, default: '' },
     ariaDescribedBy: { type: String, default: '' },
@@ -86,20 +89,32 @@ export const Avatar = defineComponent({
       const children: VNode[] = [];
 
       if (_props.src && isImageExist()) {
-        children.push(createVNode('img', {
-          class: 'lyt-avatar__img',
-          src: _props.src,
-          srcset: _props.srcSet || undefined,
-          alt: _props.alt || undefined,
-          style: {
-            objectFit: _props.fit,
-          },
-          onError: handleError,
-        }, []));
+        children.push(
+          createVNode(
+            'img',
+            {
+              class: 'lyt-avatar__img',
+              src: _props.src,
+              srcset: _props.srcSet || undefined,
+              alt: _props.alt || undefined,
+              style: {
+                objectFit: _props.fit,
+              },
+              onError: handleError,
+            },
+            [],
+          ),
+        );
       } else if (_props.icon) {
-        children.push(createVNode('span', {
-          class: ['lyt-avatar__icon', _props.icon],
-        }, []));
+        children.push(
+          createVNode(
+            'span',
+            {
+              class: ['lyt-avatar__icon', _props.icon],
+            },
+            [],
+          ),
+        );
       } else if (slots.default) {
         const slotContent = slots.default();
         if (Array.isArray(slotContent)) {
@@ -109,14 +124,21 @@ export const Avatar = defineComponent({
         }
       }
 
-      return createVNode('span', mergeA11yProps({
-        id: _props.id,
-        'aria-label': _props.ariaLabel,
-        'aria-describedby': _props.ariaDescribedBy,
-      }, {
-        class: getAvatarClass(),
-        style: getAvatarStyle(),
-      }), children);
+      return createVNode(
+        'span',
+        mergeA11yProps(
+          {
+            id: _props.id,
+            'aria-label': _props.ariaLabel,
+            'aria-describedby': _props.ariaDescribedBy,
+          },
+          {
+            class: getAvatarClass(),
+            style: getAvatarStyle(),
+          },
+        ),
+        children,
+      );
     };
   },
 });

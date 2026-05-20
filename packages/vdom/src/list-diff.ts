@@ -204,8 +204,6 @@ function domOpsToResolved(ops: DOMOperations): ResolvedOps {
   };
 }
 
-
-
 // ============================================================
 // patchKeyedChildren — 带 key 的子节点 diff（核心）
 // ============================================================

@@ -74,7 +74,7 @@ export const Tag = defineComponent({
       if (!state.visible) return createVNode('div', { style: 'display: none;' }, []);
 
       const children: VNode[] = [];
-      
+
       // 内容插槽
       if (slots.default) {
         const slotContent = slots.default();
@@ -86,20 +86,33 @@ export const Tag = defineComponent({
       // 关闭按钮
       if (_props.closable) {
         const closeBtnProps = getButtonA11yProps({ ariaLabel: '关闭标签' });
-        children.push(createVNode('span', mergeA11yProps(closeBtnProps, {
-          class: 'lyt-tag__close',
-          onClick: handleClose,
-        }), [createVNode('span', {}, '&times;')]));
+        children.push(
+          createVNode(
+            'span',
+            mergeA11yProps(closeBtnProps, {
+              class: 'lyt-tag__close',
+              onClick: handleClose,
+            }),
+            [createVNode('span', {}, '&times;')],
+          ),
+        );
       }
 
-      return createVNode('span', mergeA11yProps({
-        id: _props.id,
-        'aria-label': _props.ariaLabel,
-        'aria-describedby': _props.ariaDescribedBy,
-      }, {
-        class: getTagClass(),
-        style: getTagStyle(),
-      }), children);
+      return createVNode(
+        'span',
+        mergeA11yProps(
+          {
+            id: _props.id,
+            'aria-label': _props.ariaLabel,
+            'aria-describedby': _props.ariaDescribedBy,
+          },
+          {
+            class: getTagClass(),
+            style: getTagStyle(),
+          },
+        ),
+        children,
+      );
     };
   },
 });

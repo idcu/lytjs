@@ -1,8 +1,8 @@
 /**
  * Performance Regression Testing
- * 
+ *
  * Benchmark comparison for v6.4 performance optimizations
- * 
+ *
  * FIX: P6.4-TEST-01 - Test infrastructure
  */
 
@@ -14,7 +14,9 @@ describe('Memory Optimization Benchmarks', () => {
     const pool = new ObjectPool<{ id: number }>({
       maxSize: 1000,
       create: () => ({ id: 0 }),
-      reset: (obj) => { obj.id = 0; },
+      reset: (obj) => {
+        obj.id = 0;
+      },
       warmupSize: 500,
     });
 
@@ -29,7 +31,9 @@ describe('Memory Optimization Benchmarks', () => {
     const pool = new ObjectPool<{ id: number }>({
       maxSize: 1000,
       create: () => ({ id: 0 }),
-      reset: (obj) => { obj.id = 0; },
+      reset: (obj) => {
+        obj.id = 0;
+      },
     });
 
     const objects = [];

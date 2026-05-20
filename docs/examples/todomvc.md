@@ -9,128 +9,128 @@
 ## 完整代码
 
 ```javascript
-import { createApp, ref, computed, watch, onMounted, h } from '@lytjs/core'
+import { createApp, ref, computed, watch, onMounted, h } from '@lytjs/core';
 
 // 存储键名
-const STORAGE_KEY = 'lytjs-todomvc'
+const STORAGE_KEY = 'lytjs-todomvc';
 
 function setup() {
   // 状态
-  const todos = ref([])
-  const newTodo = ref('')
-  const editingTodo = ref(null)
-  const beforeEditCache = ref('')
-  const visibility = ref('all')
+  const todos = ref([]);
+  const newTodo = ref('');
+  const editingTodo = ref(null);
+  const beforeEditCache = ref('');
+  const visibility = ref('all');
 
   // 从本地存储加载
   onMounted(() => {
-    const stored = localStorage.getItem(STORAGE_KEY)
+    const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
-      todos.value = JSON.parse(stored)
+      todos.value = JSON.parse(stored);
     }
-  })
+  });
 
   // 保存到本地存储
   watch(
     todos,
     (newVal) => {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(newVal))
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(newVal));
     },
-    { deep: true }
-  )
+    { deep: true },
+  );
 
   // 计算属性：过滤后的待办事项
   const filteredTodos = computed(() => {
     switch (visibility.value) {
       case 'active':
-        return todos.value.filter((todo) => !todo.completed)
+        return todos.value.filter((todo) => !todo.completed);
       case 'completed':
-        return todos.value.filter((todo) => todo.completed)
+        return todos.value.filter((todo) => todo.completed);
       default:
-        return todos.value
+        return todos.value;
     }
-  })
+  });
 
   // 计算属性：未完成的数量
   const remaining = computed(() => {
-    return todos.value.filter((todo) => !todo.completed).length
-  })
+    return todos.value.filter((todo) => !todo.completed).length;
+  });
 
   // 计算属性：是否全部完成
   const allDone = computed({
     get() {
-      return remaining.value === 0 && todos.value.length > 0
+      return remaining.value === 0 && todos.value.length > 0;
     },
     set(value) {
       todos.value.forEach((todo) => {
-        todo.completed = value
-      })
+        todo.completed = value;
+      });
     },
-  })
+  });
 
   // 方法：添加待办事项
   const addTodo = () => {
-    const value = newTodo.value.trim()
-    if (!value) return
+    const value = newTodo.value.trim();
+    if (!value) return;
 
     todos.value.push({
       id: Date.now(),
       title: value,
       completed: false,
-    })
-    newTodo.value = ''
-  }
+    });
+    newTodo.value = '';
+  };
 
   // 方法：删除待办事项
   const removeTodo = (todo) => {
-    const index = todos.value.indexOf(todo)
+    const index = todos.value.indexOf(todo);
     if (index > -1) {
-      todos.value.splice(index, 1)
+      todos.value.splice(index, 1);
     }
-  }
+  };
 
   // 方法：切换待办事项状态
   const toggleTodo = (todo) => {
-    todo.completed = !todo.completed
-  }
+    todo.completed = !todo.completed;
+  };
 
   // 方法：切换全部状态
   const toggleAll = (e) => {
-    allDone.value = e.target.checked
-  }
+    allDone.value = e.target.checked;
+  };
 
   // 方法：开始编辑
   const editTodo = (todo) => {
-    beforeEditCache.value = todo.title
-    editingTodo.value = todo
-  }
+    beforeEditCache.value = todo.title;
+    editingTodo.value = todo;
+  };
 
   // 方法：完成编辑
   const doneEdit = (todo) => {
-    if (!editingTodo.value) return
+    if (!editingTodo.value) return;
 
-    todo.title = todo.title.trim()
+    todo.title = todo.title.trim();
     if (!todo.title) {
-      removeTodo(todo)
+      removeTodo(todo);
     }
-    editingTodo.value = null
-  }
+    editingTodo.value = null;
+  };
 
   // 方法：取消编辑
   const cancelEdit = (todo) => {
-    editingTodo.value = null
-    todo.title = beforeEditCache.value
-  }
+    editingTodo.value = null;
+    todo.title = beforeEditCache.value;
+  };
 
   // 方法：删除已完成的
   const removeCompleted = () => {
-    todos.value = todos.value.filter((todo) => !todo.completed)
-  }
+    todos.value = todos.value.filter((todo) => !todo.completed);
+  };
 
   // 过滤器：复数化
   const pluralize = (n) => {
-    return n === 1 ? 'item' : 'items'
-  }
+    return n === 1 ? 'item' : 'items';
+  };
 
   return {
     todos,
@@ -149,7 +149,7 @@ function setup() {
     cancelEdit,
     removeCompleted,
     pluralize,
-  }
+  };
 }
 
 function render(ctx) {
@@ -170,7 +170,7 @@ function render(ctx) {
     cancelEdit,
     removeCompleted,
     pluralize,
-  } = ctx
+  } = ctx;
 
   return h('div', { class: 'todoapp' }, [
     // Header
@@ -180,89 +180,133 @@ function render(ctx) {
         class: 'new-todo',
         placeholder: 'What needs to be done?',
         value: newTodo.value,
-        onInput: (e) => { newTodo.value = e.target.value },
-        onKeyup: (e) => { if (e.key === 'Enter') addTodo() },
+        onInput: (e) => {
+          newTodo.value = e.target.value;
+        },
+        onKeyup: (e) => {
+          if (e.key === 'Enter') addTodo();
+        },
         autofocus: true,
       }),
     ]),
 
     // Main
-    todos.value.length > 0 && h('section', { class: 'main' }, [
-      h('input', {
-        id: 'toggle-all',
-        class: 'toggle-all',
-        type: 'checkbox',
-        checked: allDone.value,
-        onChange: toggleAll,
-      }),
-      h('label', { for: 'toggle-all' }, 'Mark all as complete'),
+    todos.value.length > 0 &&
+      h('section', { class: 'main' }, [
+        h('input', {
+          id: 'toggle-all',
+          class: 'toggle-all',
+          type: 'checkbox',
+          checked: allDone.value,
+          onChange: toggleAll,
+        }),
+        h('label', { for: 'toggle-all' }, 'Mark all as complete'),
 
-      h('ul', { class: 'todo-list' },
-        filteredTodos.value.map(todo =>
-          h('li', {
-            key: todo.id,
-            class: {
-              completed: todo.completed,
-              editing: todo === editingTodo.value,
-            },
-          }, [
-            h('div', { class: 'view' }, [
-              h('input', {
-                class: 'toggle',
-                type: 'checkbox',
-                checked: todo.completed,
-                onChange: () => toggleTodo(todo),
-              }),
-              h('label', { onDblclick: () => editTodo(todo) }, todo.title),
-              h('button', { class: 'destroy', onClick: () => removeTodo(todo) }),
-            ]),
-            editingTodo.value === todo && h('input', {
-              class: 'edit',
-              value: todo.title,
-              onInput: (e) => { todo.title = e.target.value },
-              onBlur: () => doneEdit(todo),
-              onKeyup: (e) => {
-                if (e.key === 'Enter') doneEdit(todo)
-                if (e.key === 'Escape') cancelEdit(todo)
+        h(
+          'ul',
+          { class: 'todo-list' },
+          filteredTodos.value.map((todo) =>
+            h(
+              'li',
+              {
+                key: todo.id,
+                class: {
+                  completed: todo.completed,
+                  editing: todo === editingTodo.value,
+                },
               },
-            }),
-          ])
-        )
-      ),
-    ]),
+              [
+                h('div', { class: 'view' }, [
+                  h('input', {
+                    class: 'toggle',
+                    type: 'checkbox',
+                    checked: todo.completed,
+                    onChange: () => toggleTodo(todo),
+                  }),
+                  h('label', { onDblclick: () => editTodo(todo) }, todo.title),
+                  h('button', { class: 'destroy', onClick: () => removeTodo(todo) }),
+                ]),
+                editingTodo.value === todo &&
+                  h('input', {
+                    class: 'edit',
+                    value: todo.title,
+                    onInput: (e) => {
+                      todo.title = e.target.value;
+                    },
+                    onBlur: () => doneEdit(todo),
+                    onKeyup: (e) => {
+                      if (e.key === 'Enter') doneEdit(todo);
+                      if (e.key === 'Escape') cancelEdit(todo);
+                    },
+                  }),
+              ],
+            ),
+          ),
+        ),
+      ]),
 
     // Footer
-    todos.value.length > 0 && h('footer', { class: 'footer' }, [
-      h('span', { class: 'todo-count' }, [
-        h('strong', {}, remaining.value),
-        ` ${pluralize(remaining.value)} left`,
-      ]),
+    todos.value.length > 0 &&
+      h('footer', { class: 'footer' }, [
+        h('span', { class: 'todo-count' }, [
+          h('strong', {}, remaining.value),
+          ` ${pluralize(remaining.value)} left`,
+        ]),
 
-      h('ul', { class: 'filters' }, [
-        h('li', {}, h('a', {
-          href: '#/all',
-          class: { selected: visibility.value === 'all' },
-        }, 'All')),
-        h('li', {}, h('a', {
-          href: '#/active',
-          class: { selected: visibility.value === 'active' },
-        }, 'Active')),
-        h('li', {}, h('a', {
-          href: '#/completed',
-          class: { selected: visibility.value === 'completed' },
-        }, 'Completed')),
-      ]),
+        h('ul', { class: 'filters' }, [
+          h(
+            'li',
+            {},
+            h(
+              'a',
+              {
+                href: '#/all',
+                class: { selected: visibility.value === 'all' },
+              },
+              'All',
+            ),
+          ),
+          h(
+            'li',
+            {},
+            h(
+              'a',
+              {
+                href: '#/active',
+                class: { selected: visibility.value === 'active' },
+              },
+              'Active',
+            ),
+          ),
+          h(
+            'li',
+            {},
+            h(
+              'a',
+              {
+                href: '#/completed',
+                class: { selected: visibility.value === 'completed' },
+              },
+              'Completed',
+            ),
+          ),
+        ]),
 
-      todos.value.length > remaining.value && h('button', {
-        class: 'clear-completed',
-        onClick: removeCompleted,
-      }, 'Clear completed'),
-    ]),
-  ])
+        todos.value.length > remaining.value &&
+          h(
+            'button',
+            {
+              class: 'clear-completed',
+              onClick: removeCompleted,
+            },
+            'Clear completed',
+          ),
+      ]),
+  ]);
 }
 
-const app = createApp({ setup, render })
-app.mount('#app')
+const app = createApp({ setup, render });
+app.mount('#app');
 ```
 
 ```css
@@ -271,7 +315,9 @@ app.mount('#app')
   background: #fff;
   margin: 130px 0 40px 0;
   position: relative;
-  box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.2), 0 25px 50px 0 rgba(0, 0, 0, 0.1);
+  box-shadow:
+    0 2px 4px 0 rgba(0, 0, 0, 0.2),
+    0 25px 50px 0 rgba(0, 0, 0, 0.1);
 }
 
 .todoapp h1 {
@@ -469,8 +515,11 @@ app.mount('#app')
   left: 0;
   height: 50px;
   overflow: hidden;
-  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.2), 0 8px 0 -3px #f6f6f6,
-    0 9px 1px -3px rgba(0, 0, 0, 0.2), 0 16px 0 -6px #f6f6f6,
+  box-shadow:
+    0 1px 1px rgba(0, 0, 0, 0.2),
+    0 8px 0 -3px #f6f6f6,
+    0 9px 1px -3px rgba(0, 0, 0, 0.2),
+    0 16px 0 -6px #f6f6f6,
     0 17px 2px -6px rgba(0, 0, 0, 0.2);
 }
 
@@ -547,13 +596,13 @@ h('ul', { class: 'todo-list' },
 const filteredTodos = computed(() => {
   switch (visibility.value) {
     case 'active':
-      return todos.value.filter((todo) => !todo.completed)
+      return todos.value.filter((todo) => !todo.completed);
     case 'completed':
-      return todos.value.filter((todo) => todo.completed)
+      return todos.value.filter((todo) => todo.completed);
     default:
-      return todos.value
+      return todos.value;
   }
-})
+});
 ```
 
 计算属性会根据依赖的响应式数据自动重新计算。这里根据当前筛选条件返回不同的待办事项列表。
@@ -563,8 +612,10 @@ const filteredTodos = computed(() => {
 ```javascript
 h('input', {
   value: newTodo.value,
-  onInput: (e) => { newTodo.value = e.target.value },
-})
+  onInput: (e) => {
+    newTodo.value = e.target.value;
+  },
+});
 ```
 
 通过 `value` 和 `onInput` 实现表单输入和状态之间的双向绑定。
@@ -575,10 +626,10 @@ h('input', {
 watch(
   todos,
   (newVal) => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(newVal))
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(newVal));
   },
-  { deep: true }
-)
+  { deep: true },
+);
 ```
 
 使用 `watch` 监听 `todos` 的变化，并保存到 `localStorage`。`deep: true` 确保嵌套属性的变化也能被监听到。
@@ -591,7 +642,7 @@ h('li', {
     completed: todo.completed,
     editing: todo === editingTodo.value,
   },
-})
+});
 ```
 
 使用对象语法动态绑定类。当条件为真时，对应的类会被添加到元素上。

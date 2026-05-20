@@ -124,7 +124,11 @@ describe('@lytjs/plugin-data-fetch', () => {
     it('should manage cache operations', () => {
       const manager = createFetchManager();
       const cache = manager.getCacheStorage();
-      cache.set('test-key', { data: { test: true }, createdAt: Date.now(), expiresAt: Date.now() + 1000 });
+      cache.set('test-key', {
+        data: { test: true },
+        createdAt: Date.now(),
+        expiresAt: Date.now() + 1000,
+      });
       expect(cache.has('test-key')).toBe(true);
       manager.invalidateCache('test-key');
       expect(cache.has('test-key')).toBe(false);

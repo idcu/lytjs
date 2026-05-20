@@ -14,7 +14,7 @@ test.describe('天气仪表盘场景 E2E 测试', () => {
   test('切换城市', async ({ page }) => {
     const shanghaiBtn = page.locator('#city-shanghai');
     const cityName = page.locator('#city-name');
-    
+
     await shanghaiBtn.click();
     await expect(cityName).toContainText('上海');
   });

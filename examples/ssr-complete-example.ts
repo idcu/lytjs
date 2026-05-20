@@ -1,6 +1,6 @@
 /**
  * SSR 完整示例 - 服务端渲染 + 流式渲染 + hydration
- * 
+ *
  * 这个示例展示：
  * 1. 服务端组件
  * 2. 流式SSR渲染
@@ -14,21 +14,21 @@ import { createVNode } from '@lytjs/vdom';
 // 服务端数据预取函数
 async function fetchUser(userId: string) {
   // 模拟数据库/API调用
-  await new Promise(resolve => setTimeout(resolve, 100));
+  await new Promise((resolve) => setTimeout(resolve, 100));
   return {
     id: userId,
     name: '张三',
     email: 'zhangsan@example.com',
-    avatar: '/avatars/user.jpg'
+    avatar: '/avatars/user.jpg',
   };
 }
 
 async function fetchPosts(userId: string) {
-  await new Promise(resolve => setTimeout(resolve, 150));
+  await new Promise((resolve) => setTimeout(resolve, 150));
   return [
     { id: 1, title: '第一篇博客', content: '这是我的第一篇博客内容...' },
     { id: 2, title: '技术分享', content: '今天我们来谈谈...' },
-    { id: 3, title: '生活记录', content: '记录生活中的美好...' }
+    { id: 3, title: '生活记录', content: '记录生活中的美好...' },
   ];
 }
 
@@ -37,7 +37,7 @@ async function fetchPosts(userId: string) {
 function Avatar(props: { src: string; name: string }) {
   return createVNode('div', { class: 'avatar' }, [
     createVNode('img', { src: props.src, alt: props.name }),
-    createVNode('span', { class: 'avatar-name' }, props.name)
+    createVNode('span', { class: 'avatar-name' }, props.name),
   ]);
 }
 
@@ -46,8 +46,8 @@ function PostItem(props: { post: { id: number; title: string; content: string } 
     createVNode('h3', { class: 'post-title' }, props.post.title),
     createVNode('p', { class: 'post-content' }, props.post.content),
     createVNode('div', { class: 'post-footer' }, [
-      createVNode('time', { class: 'post-date' }, new Date().toLocaleDateString())
-    ])
+      createVNode('time', { class: 'post-date' }, new Date().toLocaleDateString()),
+    ]),
   ]);
 }
 
@@ -58,33 +58,33 @@ function Sidebar() {
         createVNode('li', {}, createVNode('a', { href: '/home' }, '首页')),
         createVNode('li', {}, createVNode('a', { href: '/profile' }, '个人资料')),
         createVNode('li', {}, createVNode('a', { href: '/posts' }, '我的博客')),
-        createVNode('li', {}, createVNode('a', { href: '/settings' }, '设置'))
-      ])
-    ])
+        createVNode('li', {}, createVNode('a', { href: '/settings' }, '设置')),
+      ]),
+    ]),
   ]);
 }
 
 function UserProfile(props: { user: any; posts: any[] }) {
   return createVNode('div', { class: 'profile-page' }, [
     createVNode('div', { class: 'profile-header' }, [
-      createVNode('img', { 
-        class: 'profile-avatar', 
-        src: props.user.avatar, 
-        alt: props.user.name 
+      createVNode('img', {
+        class: 'profile-avatar',
+        src: props.user.avatar,
+        alt: props.user.name,
       }),
       createVNode('div', { class: 'profile-info' }, [
         createVNode('h1', {}, props.user.name),
-        createVNode('p', { class: 'profile-email' }, props.user.email)
-      ])
+        createVNode('p', { class: 'profile-email' }, props.user.email),
+      ]),
     ]),
     createVNode('div', { class: 'posts-section' }, [
       createVNode('h2', {}, '我的博客'),
-      createVNode('div', { class: 'posts-grid' }, 
-        props.posts.map((post: any) => 
-          createVNode(PostItem, { key: post.id, post })
-        )
-      )
-    ])
+      createVNode(
+        'div',
+        { class: 'posts-grid' },
+        props.posts.map((post: any) => createVNode(PostItem, { key: post.id, post })),
+      ),
+    ]),
   ]);
 }
 
@@ -93,21 +93,16 @@ function ProfilePage(props: { userId: string }) {
   return createVNode('div', { class: 'app-layout' }, [
     createVNode(Sidebar),
     createVNode('main', { class: 'main-content' }, [
-      createVNode('header', { class: 'app-header' }, [
-        createVNode('h1', {}, 'LytJS 博客平台')
-      ]),
-      createVNode(UserProfile, { userId: props.userId })
-    ])
+      createVNode('header', { class: 'app-header' }, [createVNode('h1', {}, 'LytJS 博客平台')]),
+      createVNode(UserProfile, { userId: props.userId }),
+    ]),
   ]);
 }
 
 // 服务端渲染入口
 async function renderProfilePageSSR(userId: string) {
   // 并行预取数据
-  const [user, posts] = await Promise.all([
-    fetchUser(userId),
-    fetchPosts(userId)
-  ]);
+  const [user, posts] = await Promise.all([fetchUser(userId), fetchPosts(userId)]);
 
   const app = createVNode(ProfilePage, { userId });
 
@@ -118,7 +113,7 @@ async function renderProfilePageSSR(userId: string) {
     errorFallback: '<div class="error-fallback">页面加载出错</div>',
     onError: (error) => {
       console.error('SSR Error:', error);
-    }
+    },
   });
 
   // 注入初始状态
@@ -159,7 +154,7 @@ async function renderProfilePageSSR(userId: string) {
 </head>
 <body>
   <div id="app">
-`
+`,
   };
 }
 
@@ -175,16 +170,16 @@ async function handleRequest(path: string) {
 
   return {
     stream: null,
-    htmlTemplate: `<div class="error-fallback">页面未找到</div>`
+    htmlTemplate: `<div class="error-fallback">页面未找到</div>`,
   };
 }
 
 // 运行示例
 async function main() {
   console.log('🧪 LytJS SSR 完整示例 - 服务端渲染\n');
-  
+
   const result = await handleRequest('/profile/user123');
-  
+
   if (result.stream) {
     console.log('✅ SSR 渲染成功');
     console.log('📦 初始状态已序列化');
@@ -200,9 +195,4 @@ if (typeof require !== 'undefined' && require.main === module) {
   main().catch(console.error);
 }
 
-export {
-  renderProfilePageSSR,
-  handleRequest,
-  ProfilePage,
-  UserProfile
-};
+export { renderProfilePageSSR, handleRequest, ProfilePage, UserProfile };

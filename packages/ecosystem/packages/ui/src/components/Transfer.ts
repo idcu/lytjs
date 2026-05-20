@@ -21,7 +21,10 @@ export const Transfer = defineComponent({
     titles: { type: Array as () => string[], default: () => ['源列表', '目标列表'] },
     buttonTexts: { type: Array as () => string[], default: () => ['', ''] },
     class: { type: String, default: '' },
-    style: { type: [String, Object] as unknown as PropType<string | Record<string, string>>, default: '' },
+    style: {
+      type: [String, Object] as unknown as PropType<string | Record<string, string>>,
+      default: '',
+    },
     onChange: { type: Function, default: undefined },
   },
 
@@ -33,29 +36,29 @@ export const Transfer = defineComponent({
     const rightFilterQuery = signal('');
 
     const leftData = () => {
-      return (_props.data as TransferOption[]).filter(item => !(_props.value as (string | number)[]).includes(item.key));
+      return (_props.data as TransferOption[]).filter(
+        (item) => !(_props.value as (string | number)[]).includes(item.key),
+      );
     };
 
     const rightData = () => {
-      return (_props.data as TransferOption[]).filter(item => (_props.value as (string | number)[]).includes(item.key));
+      return (_props.data as TransferOption[]).filter((item) =>
+        (_props.value as (string | number)[]).includes(item.key),
+      );
     };
 
     const filteredLeftData = () => {
       const query = leftFilterQuery();
       const data = leftData();
       if (!query) return data;
-      return data.filter(item =>
-        item.label.toLowerCase().includes(query.toLowerCase())
-      );
+      return data.filter((item) => item.label.toLowerCase().includes(query.toLowerCase()));
     };
 
     const filteredRightData = () => {
       const query = rightFilterQuery();
       const data = rightData();
       if (!query) return data;
-      return data.filter(item =>
-        item.label.toLowerCase().includes(query.toLowerCase())
-      );
+      return data.filter((item) => item.label.toLowerCase().includes(query.toLowerCase()));
     };
 
     const handleMoveToRight = () => {
@@ -66,7 +69,9 @@ export const Transfer = defineComponent({
     };
 
     const handleMoveToLeft = () => {
-      const newValues = (_props.value as (string | number)[]).filter(key => !rightCheckedKeys().includes(key));
+      const newValues = (_props.value as (string | number)[]).filter(
+        (key) => !rightCheckedKeys().includes(key),
+      );
       emit('update:value', newValues);
       _props.onChange?.(newValues, 'left', rightCheckedKeys());
       rightCheckedKeys.set([]);
@@ -94,9 +99,8 @@ export const Transfer = defineComponent({
     const renderItem = (item: TransferOption, list: 'left' | 'right') => {
       const leftChecked = leftCheckedKeys();
       const rightChecked = rightCheckedKeys();
-      const checked = list === 'left'
-        ? leftChecked.includes(item.key)
-        : rightChecked.includes(item.key);
+      const checked =
+        list === 'left' ? leftChecked.includes(item.key) : rightChecked.includes(item.key);
 
       const handleCheck = () => {
         if (item.disabled) return;
@@ -104,29 +108,40 @@ export const Transfer = defineComponent({
           if (checked) {
             leftCheckedKeys.set(leftChecked.filter((k: string | number) => k !== item.key));
           } else {
-            leftCheckedKeys.update(keys => [...keys, item.key]);
+            leftCheckedKeys.update((keys) => [...keys, item.key]);
           }
         } else {
           if (checked) {
             rightCheckedKeys.set(rightChecked.filter((k: string | number) => k !== item.key));
           } else {
-            rightCheckedKeys.update(keys => [...keys, item.key]);
+            rightCheckedKeys.update((keys) => [...keys, item.key]);
           }
         }
       };
 
-      return createVNode('div', {
-        class: ['lyt-transfer-panel-item', { 'is-disabled': item.disabled, 'is-checked': checked }],
-        onClick: handleCheck,
-        key: item.key,
-      }, [createVNode('span', {}, item.label)]);
+      return createVNode(
+        'div',
+        {
+          class: [
+            'lyt-transfer-panel-item',
+            { 'is-disabled': item.disabled, 'is-checked': checked },
+          ],
+          onClick: handleCheck,
+          key: item.key,
+        },
+        [createVNode('span', {}, item.label)],
+      );
     };
 
     return () => {
       const children: VNode[] = [];
 
       const leftPanelChildren: VNode[] = [];
-      leftPanelChildren.push(createVNode('div', { class: 'lyt-transfer-panel-header' }, [createVNode('span', {}, (_props.titles as string[])[0] || '')]));
+      leftPanelChildren.push(
+        createVNode('div', { class: 'lyt-transfer-panel-header' }, [
+          createVNode('span', {}, (_props.titles as string[])[0] || ''),
+        ]),
+      );
 
       if (_props.filterable) {
         const filterInput = createVNode('input', {
@@ -140,7 +155,9 @@ export const Transfer = defineComponent({
           },
         });
         const items = filteredLeftData().map((item: TransferOption) => renderItem(item, 'left'));
-        leftPanelChildren.push(createVNode('div', { class: 'lyt-transfer-panel-body' }, [filterInput, ...items]));
+        leftPanelChildren.push(
+          createVNode('div', { class: 'lyt-transfer-panel-body' }, [filterInput, ...items]),
+        );
       } else {
         const items = filteredLeftData().map((item: TransferOption) => renderItem(item, 'left'));
         leftPanelChildren.push(createVNode('div', { class: 'lyt-transfer-panel-body' }, items));
@@ -148,30 +165,48 @@ export const Transfer = defineComponent({
 
       if (slots.leftFooter) {
         const footerContent = slots.leftFooter();
-        leftPanelChildren.push(createVNode('div', { class: 'lyt-transfer-panel-footer' }, footerContent as VNode[]));
+        leftPanelChildren.push(
+          createVNode('div', { class: 'lyt-transfer-panel-footer' }, footerContent as VNode[]),
+        );
       }
 
       children.push(createVNode('div', { class: 'lyt-transfer-panel' }, leftPanelChildren));
 
       const buttonChildren: VNode[] = [];
       const rightDisabled = leftCheckedKeys().length === 0;
-      buttonChildren.push(createVNode('button', {
-        class: ['lyt-button', 'lyt-button--default', rightDisabled ? 'is-disabled' : ''],
-        disabled: rightDisabled,
-        onClick: handleMoveToRight,
-      }, [createVNode('span', {}, (_props.buttonTexts as string[])[0] || '→')]));
+      buttonChildren.push(
+        createVNode(
+          'button',
+          {
+            class: ['lyt-button', 'lyt-button--default', rightDisabled ? 'is-disabled' : ''],
+            disabled: rightDisabled,
+            onClick: handleMoveToRight,
+          },
+          [createVNode('span', {}, (_props.buttonTexts as string[])[0] || '→')],
+        ),
+      );
 
       const leftDisabled = rightCheckedKeys().length === 0;
-      buttonChildren.push(createVNode('button', {
-        class: ['lyt-button', 'lyt-button--default', leftDisabled ? 'is-disabled' : ''],
-        disabled: leftDisabled,
-        onClick: handleMoveToLeft,
-      }, [createVNode('span', {}, (_props.buttonTexts as string[])[1] || '←')]));
+      buttonChildren.push(
+        createVNode(
+          'button',
+          {
+            class: ['lyt-button', 'lyt-button--default', leftDisabled ? 'is-disabled' : ''],
+            disabled: leftDisabled,
+            onClick: handleMoveToLeft,
+          },
+          [createVNode('span', {}, (_props.buttonTexts as string[])[1] || '←')],
+        ),
+      );
 
       children.push(createVNode('div', { class: 'lyt-transfer-buttons' }, buttonChildren));
 
       const rightPanelChildren: VNode[] = [];
-      rightPanelChildren.push(createVNode('div', { class: 'lyt-transfer-panel-header' }, [createVNode('span', {}, (_props.titles as string[])[1] || '')]));
+      rightPanelChildren.push(
+        createVNode('div', { class: 'lyt-transfer-panel-header' }, [
+          createVNode('span', {}, (_props.titles as string[])[1] || ''),
+        ]),
+      );
 
       if (_props.filterable) {
         const filterInput = createVNode('input', {
@@ -185,7 +220,9 @@ export const Transfer = defineComponent({
           },
         });
         const items = filteredRightData().map((item: TransferOption) => renderItem(item, 'right'));
-        rightPanelChildren.push(createVNode('div', { class: 'lyt-transfer-panel-body' }, [filterInput, ...items]));
+        rightPanelChildren.push(
+          createVNode('div', { class: 'lyt-transfer-panel-body' }, [filterInput, ...items]),
+        );
       } else {
         const items = filteredRightData().map((item: TransferOption) => renderItem(item, 'right'));
         rightPanelChildren.push(createVNode('div', { class: 'lyt-transfer-panel-body' }, items));
@@ -193,15 +230,21 @@ export const Transfer = defineComponent({
 
       if (slots.rightFooter) {
         const footerContent = slots.rightFooter();
-        rightPanelChildren.push(createVNode('div', { class: 'lyt-transfer-panel-footer' }, footerContent as VNode[]));
+        rightPanelChildren.push(
+          createVNode('div', { class: 'lyt-transfer-panel-footer' }, footerContent as VNode[]),
+        );
       }
 
       children.push(createVNode('div', { class: 'lyt-transfer-panel' }, rightPanelChildren));
 
-      return createVNode('div', {
-        class: getTransferClass(),
-        style: getTransferStyle(),
-      }, children);
+      return createVNode(
+        'div',
+        {
+          class: getTransferClass(),
+          style: getTransferStyle(),
+        },
+        children,
+      );
     };
   },
 });

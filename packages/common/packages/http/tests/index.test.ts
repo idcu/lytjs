@@ -182,7 +182,9 @@ describe('@lytjs/common-http', () => {
 
     describe('responseType', () => {
       it('should handle text responseType', async () => {
-        mockFetch.mockResolvedValue(createMockResponse('plain text', 200, 'OK', { 'content-type': 'text/plain' }));
+        mockFetch.mockResolvedValue(
+          createMockResponse('plain text', 200, 'OK', { 'content-type': 'text/plain' }),
+        );
         const client = new HttpClient();
         const result = await client.get<string>('/api/text', { responseType: 'text' });
         expect(result.data).toBe('plain text');
@@ -207,7 +209,9 @@ describe('@lytjs/common-http', () => {
       });
 
       it('should throw HttpError for 500 responses', async () => {
-        mockFetch.mockResolvedValue(createMockResponse({ error: 'Server Error' }, 500, 'Internal Server Error'));
+        mockFetch.mockResolvedValue(
+          createMockResponse({ error: 'Server Error' }, 500, 'Internal Server Error'),
+        );
         const client = new HttpClient();
         await expect(client.get('/api/error')).rejects.toThrow(HttpError);
       });
@@ -248,7 +252,13 @@ describe('@lytjs/common-http', () => {
         const client = new HttpClient();
         const interceptor: Interceptor = {
           error(error) {
-            return { data: 'fallback', status: 200, statusText: 'OK', headers: {}, ok: true } as HttpResponse<unknown>;
+            return {
+              data: 'fallback',
+              status: 200,
+              statusText: 'OK',
+              headers: {},
+              ok: true,
+            } as HttpResponse<unknown>;
           },
         };
         client.use(interceptor);
@@ -352,7 +362,10 @@ describe('@lytjs/common-http', () => {
     describe('response headers', () => {
       it('should parse response headers', async () => {
         mockFetch.mockResolvedValue(
-          createMockResponse({ ok: true }, 200, 'OK', { 'x-custom': 'value', 'content-type': 'application/json' }),
+          createMockResponse({ ok: true }, 200, 'OK', {
+            'x-custom': 'value',
+            'content-type': 'application/json',
+          }),
         );
         const client = new HttpClient();
         const result = await client.get('/api');
@@ -531,13 +544,17 @@ describe('@lytjs/common-http', () => {
 
       it('putJson should send data and return response', async () => {
         mockFetch.mockResolvedValue(createMockResponse({ id: 1, name: 'updated' }));
-        const result = await putJson<{ id: number; name: string }>('/api/users/1', { name: 'updated' });
+        const result = await putJson<{ id: number; name: string }>('/api/users/1', {
+          name: 'updated',
+        });
         expect(result).toEqual({ id: 1, name: 'updated' });
       });
 
       it('patchJson should send data and return response', async () => {
         mockFetch.mockResolvedValue(createMockResponse({ id: 1, name: 'patched' }));
-        const result = await patchJson<{ id: number; name: string }>('/api/users/1', { name: 'patched' });
+        const result = await patchJson<{ id: number; name: string }>('/api/users/1', {
+          name: 'patched',
+        });
         expect(result).toEqual({ id: 1, name: 'patched' });
       });
 
@@ -569,7 +586,9 @@ describe('@lytjs/common-http', () => {
     it('should mix single and array query parameters', async () => {
       mockFetch.mockResolvedValue(createMockResponse([]));
       const client = new HttpClient();
-      await client.get('/api/search', { params: { q: 'test', page: 1, filters: ['active', 'verified'] } });
+      await client.get('/api/search', {
+        params: { q: 'test', page: 1, filters: ['active', 'verified'] },
+      });
       const [url] = mockFetch.mock.calls[0]!;
       expect(url).toContain('q=test');
       expect(url).toContain('page=1');

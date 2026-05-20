@@ -13,14 +13,14 @@ LytJS 与 Vue 有很多相似之处，但提供了一些独特优势：
 
 ## 快速对比
 
-| 功能 | Vue 3 | LytJS |
-|------|-------|-------|
-| 响应式系统 | ref/reactive | signal/reactive |
-| 组件定义 | defineComponent | defineComponent |
-| 模板语法 | 相同 | 相同 |
-| 生命周期 | onMounted 等 | 相同 |
-| 渲染模式 | VDOM | Vapor + VDOM |
-| 生态插件 | VueUse 等 | 官方 10+ 插件 |
+| 功能       | Vue 3           | LytJS           |
+| ---------- | --------------- | --------------- |
+| 响应式系统 | ref/reactive    | signal/reactive |
+| 组件定义   | defineComponent | defineComponent |
+| 模板语法   | 相同            | 相同            |
+| 生命周期   | onMounted 等    | 相同            |
+| 渲染模式   | VDOM            | Vapor + VDOM    |
+| 生态插件   | VueUse 等       | 官方 10+ 插件   |
 
 ## 第一步：安装和设置
 
@@ -37,30 +37,32 @@ npm install @lytjs/core @lytjs/reactivity @lytjs/router @lytjs/store @lytjs/ui
 ### 创建应用
 
 **Vue:**
-```typescript
-import { createApp } from 'vue'
-import App from './App.vue'
 
-const app = createApp(App)
-app.use(router)
-app.use(pinia)
-app.mount('#app')
+```typescript
+import { createApp } from 'vue';
+import App from './App.vue';
+
+const app = createApp(App);
+app.use(router);
+app.use(pinia);
+app.mount('#app');
 ```
 
 **LytJS:**
-```typescript
-import { createApp } from '@lytjs/core'
-import App from './App.vue'
 
-const app = createApp(App)
-app.use(router)
-app.use(store)
-app.mount('#app')
+```typescript
+import { createApp } from '@lytjs/core';
+import App from './App.vue';
+
+const app = createApp(App);
+app.use(router);
+app.use(store);
+app.mount('#app');
 
 // 或者使用 Vapor 模式（性能更佳）
-import { createVaporApp } from '@lytjs/renderer'
-const app = createVaporApp(App)
-app.mount('#app')
+import { createVaporApp } from '@lytjs/renderer';
+const app = createVaporApp(App);
+app.mount('#app');
 ```
 
 ## 响应式系统迁移
@@ -68,53 +70,57 @@ app.mount('#app')
 ### 基础响应式值
 
 **Vue 3:**
+
 ```typescript
-import { ref, computed, watch, watchEffect } from 'vue'
+import { ref, computed, watch, watchEffect } from 'vue';
 
-const count = ref(0)
-const doubled = computed(() => count.value * 2)
+const count = ref(0);
+const doubled = computed(() => count.value * 2);
 
-watch(count, (newVal) => console.log(newVal))
+watch(count, (newVal) => console.log(newVal));
 ```
 
 **LytJS:**
+
 ```typescript
-import { signal, computed, watch, watchEffect } from '@lytjs/reactivity'
+import { signal, computed, watch, watchEffect } from '@lytjs/reactivity';
 
-const count = signal(0)
-const doubled = computed(() => count() * 2)
+const count = signal(0);
+const doubled = computed(() => count() * 2);
 
-watch(count, (newVal) => console.log(newVal))
+watch(count, (newVal) => console.log(newVal));
 
 // ⚠️ 注意：signal 使用函数调用语法
-console.log(count())  // 读取
-count.set(1)           // 写入
+console.log(count()); // 读取
+count.set(1); // 写入
 ```
 
 ### 响应式对象
 
 **Vue 3:**
+
 ```typescript
-import { reactive } from 'vue'
+import { reactive } from 'vue';
 
 const state = reactive({
   name: 'LytJS',
-  count: 0
-})
+  count: 0,
+});
 
-state.count++
+state.count++;
 ```
 
 **LytJS:**
+
 ```typescript
-import { reactive } from '@lytjs/reactivity'
+import { reactive } from '@lytjs/reactivity';
 
 const state = reactive({
   name: 'LytJS',
-  count: 0
-})
+  count: 0,
+});
 
-state.count++  // 相同的语法！
+state.count++; // 相同的语法！
 ```
 
 ## 组件定义
@@ -122,65 +128,68 @@ state.count++  // 相同的语法！
 ### 基础组件
 
 **Vue 3 (Options API):**
+
 ```typescript
 export default {
   name: 'MyComponent',
   props: {
-    message: String
+    message: String,
   },
   data() {
     return {
-      count: 0
-    }
+      count: 0,
+    };
   },
   methods: {
     increment() {
-      this.count++
-    }
-  }
-}
+      this.count++;
+    },
+  },
+};
 ```
 
 **Vue 3 (Composition API):**
+
 ```typescript
-import { defineComponent, ref } from 'vue'
+import { defineComponent, ref } from 'vue';
 
 export default defineComponent({
   name: 'MyComponent',
   props: {
-    message: String
+    message: String,
   },
   setup(props) {
-    const count = ref(0)
-    
+    const count = ref(0);
+
     const increment = () => {
-      count.value++
-    }
-    
-    return { count, increment }
-  }
-})
+      count.value++;
+    };
+
+    return { count, increment };
+  },
+});
 ```
 
 **LytJS:**
+
 ```typescript
-import { defineComponent, signal } from '@lytjs/component'
+import { defineComponent, signal } from '@lytjs/component';
 
 export default defineComponent({
   name: 'MyComponent',
   props: {
-    message: String
+    message: String,
   },
   setup(props) {
-    const count = signal(0)
-    
+    const count = signal(0);
+
     const increment = () => {
-      count.set(count() + 1)
-    }
-    
-    return { count, increment }
-  }
-})
+      count.set(count() + 1);
+    };
+
+    return { count, increment };
+  },
+});
 ```
 
 ### 模板语法
@@ -205,43 +214,43 @@ export default defineComponent({
 ### Vue (Pinia)
 
 ```typescript
-import { defineStore } from 'pinia'
+import { defineStore } from 'pinia';
 
 export const useCounterStore = defineStore('counter', {
   state: () => ({
     count: 0,
-    name: 'Pinia'
+    name: 'Pinia',
   }),
   actions: {
     increment() {
-      this.count++
-    }
+      this.count++;
+    },
   },
   getters: {
-    doubleCount: (state) => state.count * 2
-  }
-})
+    doubleCount: (state) => state.count * 2,
+  },
+});
 ```
 
 ### LytJS (Store)
 
 ```typescript
-import { defineStore } from '@lytjs/store'
+import { defineStore } from '@lytjs/store';
 
 export const useCounterStore = defineStore('counter', {
   state: () => ({
     count: 0,
-    name: 'LytJS'
+    name: 'LytJS',
   }),
   actions: {
     increment() {
-      this.count++
-    }
+      this.count++;
+    },
   },
   getters: {
-    doubleCount: (state) => state.count * 2
-  }
-})
+    doubleCount: (state) => state.count * 2,
+  },
+});
 ```
 
 ## 路由
@@ -267,7 +276,7 @@ import { useRouter, useRoute } from 'vue-router'
 setup() {
   const router = useRouter()
   const route = useRoute()
-  
+
   const goToAbout = () => {
     router.push('/about')
   }
@@ -295,7 +304,7 @@ import { useRouter, useRoute } from '@lytjs/router'
 setup() {
   const router = useRouter()
   const route = useRoute()
-  
+
   const goToAbout = () => {
     router.push('/about')
   }
@@ -304,14 +313,14 @@ setup() {
 
 ## 生命周期钩子
 
-| Vue 3 | LytJS |
-|------|-------|
-| `onBeforeMount` | `onBeforeMount` |
-| `onMounted` | `onMounted` |
-| `onBeforeUpdate` | `onBeforeUpdate` |
-| `onUpdated` | `onUpdated` |
+| Vue 3             | LytJS             |
+| ----------------- | ----------------- |
+| `onBeforeMount`   | `onBeforeMount`   |
+| `onMounted`       | `onMounted`       |
+| `onBeforeUpdate`  | `onBeforeUpdate`  |
+| `onUpdated`       | `onUpdated`       |
 | `onBeforeUnmount` | `onBeforeUnmount` |
-| `onUnmounted` | `onUnmounted` |
+| `onUnmounted`     | `onUnmounted`     |
 
 **示例：**
 
@@ -322,7 +331,7 @@ setup() {
   onMounted(() => {
     console.log('组件已挂载')
   })
-  
+
   onUnmounted(() => {
     console.log('组件已卸载')
   })
@@ -350,6 +359,7 @@ import { Button, Input, Card, Dialog } from '@lytjs/ui'
 ### Q: LytJS 和 Vue 的主要区别是什么？
 
 A: 主要区别在：
+
 1. **signal vs ref** - LytJS 使用 signal 函数调用语法
 2. **双渲染模式** - LytJS 同时支持 Vapor 和 VDOM 模式
 3. **零依赖** - LytJS 运行时没有任何第三方依赖
@@ -357,6 +367,7 @@ A: 主要区别在：
 ### Q: 可以渐进式迁移吗？
 
 A: 完全可以！你可以：
+
 - 先在新项目中使用 LytJS
 - 逐步重构现有模块
 - 使用 LytJS 的 Vue 兼容插件
@@ -364,6 +375,7 @@ A: 完全可以！你可以：
 ### Q: Vue 项目迁移难度如何？
 
 A: 由于语法非常相似，迁移难度较低。主要需要：
+
 - 将 `ref` 替换为 `signal`
 - 调整响应式值的访问方式（`.value` → `()`）
 - 其他语法基本保持一致

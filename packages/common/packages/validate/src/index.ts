@@ -47,9 +47,7 @@ export function validate(value: unknown, rules: ValidationRule[]): ValidationRes
  * @param rules - 验证规则列表
  * @returns 验证函数
  */
-export function createValidator(
-  rules: ValidationRule[],
-): (value: unknown) => ValidationResult {
+export function createValidator(rules: ValidationRule[]): (value: unknown) => ValidationResult {
   return (value: unknown) => validate(value, rules);
 }
 
@@ -197,10 +195,7 @@ export function oneOf(values: unknown[]): ValidationRule {
 /**
  * 自定义验证规则
  */
-export function custom(
-  fn: (value: unknown) => boolean,
-  message: string,
-): ValidationRule {
+export function custom(fn: (value: unknown) => boolean, message: string): ValidationRule {
   return {
     name: 'custom',
     validate: fn,

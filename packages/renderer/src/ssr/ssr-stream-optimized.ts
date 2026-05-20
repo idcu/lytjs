@@ -69,7 +69,7 @@ const COMPONENT_MASK = ShapeFlags.STATEFUL_COMPONENT | ShapeFlags.FUNCTIONAL_COM
 
 /**
  * 优化的 SSR 流式渲染器
- * 
+ *
  * 特性：
  * - Early Flush：尽早发送初始 HTML
  * - 智能缓冲：自动管理缓冲区大小
@@ -221,10 +221,7 @@ export class OptimizedSSRStream {
   /**
    * 生成文档尾部
    */
-  generateDocumentFooter(options: {
-    scripts?: string[];
-    inlineScripts?: string[];
-  }): string {
+  generateDocumentFooter(options: { scripts?: string[]; inlineScripts?: string[] }): string {
     const { scripts = [], inlineScripts = [] } = options;
 
     let footer = '';

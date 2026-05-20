@@ -6,7 +6,7 @@ import type { Middleware, MiddlewareContext } from '@lytjs/middleware';
 
 /**
  * 创建认证中间件
- * 
+ *
  * @param options - 认证配置选项
  * @returns 认证中间件函数
  */

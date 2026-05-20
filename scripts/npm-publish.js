@@ -37,17 +37,14 @@ function publishPackage(pkgPath) {
   }
 
   try {
-    execSync(
-      `npm publish --access public --registry https://registry.npmjs.org/`,
-      {
-        cwd: pkgPath,
-        stdio: 'inherit',
-        env: {
-          ...process.env,
-          npm_config_registry: 'https://registry.npmjs.org/',
-        },
-      }
-    );
+    execSync(`npm publish --access public --registry https://registry.npmjs.org/`, {
+      cwd: pkgPath,
+      stdio: 'inherit',
+      env: {
+        ...process.env,
+        npm_config_registry: 'https://registry.npmjs.org/',
+      },
+    });
     console.log(`✅ ${pkgName}@${version} 发布成功！`);
     return true;
   } catch (error) {

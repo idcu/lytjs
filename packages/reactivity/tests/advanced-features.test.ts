@@ -142,7 +142,7 @@ describe('Watch 功能', () => {
 
     count.value = 1;
 
-    await new Promise(resolve => setTimeout(resolve, 0));
+    await new Promise((resolve) => setTimeout(resolve, 0));
 
     expect(fn).toHaveBeenCalledTimes(1);
     expect(fn).toHaveBeenLastCalledWith(1, 0);
@@ -156,14 +156,14 @@ describe('Watch 功能', () => {
       () => state.count,
       (newVal, oldVal) => {
         fn(newVal, oldVal);
-      }
+      },
     );
 
     expect(fn).not.toHaveBeenCalled();
 
     state.count = 1;
 
-    await new Promise(resolve => setTimeout(resolve, 0));
+    await new Promise((resolve) => setTimeout(resolve, 0));
 
     expect(fn).toHaveBeenCalledTimes(1);
     expect(fn).toHaveBeenLastCalledWith(1, 0);
@@ -182,14 +182,14 @@ describe('Watch 功能', () => {
 
     a.value = 10;
 
-    await new Promise(resolve => setTimeout(resolve, 0));
+    await new Promise((resolve) => setTimeout(resolve, 0));
 
     expect(fn).toHaveBeenCalledTimes(1);
     expect(fn).toHaveBeenLastCalledWith(10, 2, 1, 2);
 
     b.value = 20;
 
-    await new Promise(resolve => setTimeout(resolve, 0));
+    await new Promise((resolve) => setTimeout(resolve, 0));
 
     expect(fn).toHaveBeenCalledTimes(2);
     expect(fn).toHaveBeenLastCalledWith(10, 20, 10, 2);
@@ -214,7 +214,7 @@ describe('WatchEffect 功能', () => {
 
     count.value = 1;
 
-    await new Promise(resolve => setTimeout(resolve, 0));
+    await new Promise((resolve) => setTimeout(resolve, 0));
 
     expect(fn).toHaveBeenCalledTimes(2);
     expect(fn).toHaveBeenLastCalledWith(1);
@@ -232,14 +232,14 @@ describe('WatchEffect 功能', () => {
 
     count.value = 1;
 
-    await new Promise(resolve => setTimeout(resolve, 0));
+    await new Promise((resolve) => setTimeout(resolve, 0));
 
     expect(fn).toHaveBeenCalledTimes(2);
 
     stop();
     count.value = 2;
 
-    await new Promise(resolve => setTimeout(resolve, 0));
+    await new Promise((resolve) => setTimeout(resolve, 0));
 
     expect(fn).toHaveBeenCalledTimes(2); // 已停止，不再触发
   });
@@ -295,10 +295,10 @@ describe('性能基准测试', () => {
       });
     }
 
-    expect(effects.every(fn => fn.mock.calls.length === 1)).toBe(true);
+    expect(effects.every((fn) => fn.mock.calls.length === 1)).toBe(true);
 
     count.value = 1;
-    expect(effects.every(fn => fn.mock.calls.length === 2)).toBe(true);
+    expect(effects.every((fn) => fn.mock.calls.length === 2)).toBe(true);
   });
 
   it('应该高效处理 computed 缓存', () => {
@@ -441,10 +441,10 @@ describe('深度响应式', () => {
       level1: {
         level2: {
           level3: {
-            value: 1
-          }
-        }
-      }
+            value: 1,
+          },
+        },
+      },
     });
 
     const fn = vi.fn();
@@ -521,4 +521,3 @@ describe('计算属性高级特性', () => {
 // ============================================================
 
 // 此功能已在 effect.test.ts 中完整测试，这里不再重复测试
-

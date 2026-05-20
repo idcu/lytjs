@@ -2,7 +2,12 @@
 // 批量操作和事件委托性能测试
 
 import { bench, describe } from 'vitest';
-import { insertBatch, removeBatch, diffLists, createRenderScheduler } from '../../packages/dom-runtime/src/batch';
+import {
+  insertBatch,
+  removeBatch,
+  diffLists,
+  createRenderScheduler,
+} from '../../packages/dom-runtime/src/batch';
 import { delegateEvent, delegateEventBatch } from '../../packages/dom-runtime/src/events';
 
 describe('批量 DOM 操作性能', () => {
@@ -52,7 +57,12 @@ describe('列表差异算法性能', () => {
     newList.push({ id: 1000, value: 'new-item' });
     newList.push({ id: 1001, value: 'new-item-2' });
 
-    diffLists(oldList, newList, (item) => item.id, (a, b) => a.value !== b.value);
+    diffLists(
+      oldList,
+      newList,
+      (item) => item.id,
+      (a, b) => a.value !== b.value,
+    );
   });
 
   bench('diffLists - 1000 个元素（50%变化）', () => {
@@ -62,7 +72,12 @@ describe('列表差异算法性能', () => {
       value: `updated-item-${i}`,
     }));
 
-    diffLists(oldList, newList, (item) => item.id, (a, b) => a.value !== b.value);
+    diffLists(
+      oldList,
+      newList,
+      (item) => item.id,
+      (a, b) => a.value !== b.value,
+    );
   });
 
   bench('diffLists - 100 个元素（完全替换）', () => {
@@ -72,7 +87,12 @@ describe('列表差异算法性能', () => {
       value: `new-item-${i}`,
     }));
 
-    diffLists(oldList, newList, (item) => item.id, (a, b) => a.value !== b.value);
+    diffLists(
+      oldList,
+      newList,
+      (item) => item.id,
+      (a, b) => a.value !== b.value,
+    );
   });
 });
 

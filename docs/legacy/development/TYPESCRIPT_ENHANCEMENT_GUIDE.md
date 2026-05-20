@@ -1,7 +1,7 @@
 # TypeScript 类型系统增强指南
 
 > 本文档概述了 LytJS 项目的 TypeScript 类型系统状态、最佳实践和未来增强计划
-> 
+>
 > **当前状态**: ✅ 类型检查 100% 通过
 > **最后更新**: 2026-05-17
 
@@ -21,12 +21,12 @@
 
 ### ✅ 已验证状态
 
-| 检查项 | 状态 | 说明 |
-| ------ | ---- | ---- |
-| **总体类型检查** | ✅ 通过 | 69/70 项目全部通过 |
-| **Strict 模式** | ✅ 启用 | tsconfig 配置了 strict: true |
-| **类型覆盖率** | ✅ 高 | 所有核心包均有完整类型 |
-| **零依赖检查** | ✅ 通过 | 无第三方运行时依赖 |
+| 检查项           | 状态    | 说明                         |
+| ---------------- | ------- | ---------------------------- |
+| **总体类型检查** | ✅ 通过 | 69/70 项目全部通过           |
+| **Strict 模式**  | ✅ 启用 | tsconfig 配置了 strict: true |
+| **类型覆盖率**   | ✅ 高   | 所有核心包均有完整类型       |
+| **零依赖检查**   | ✅ 通过 | 无第三方运行时依赖           |
 
 ### 📊 已完成的类型增强
 
@@ -53,7 +53,7 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedIndexedAccess": true,
-    "verbatimModuleSyntax": true,
+    "verbatimModuleSyntax": true
     // ... 其他配置
   }
 }
@@ -61,14 +61,14 @@
 
 ### 配置亮点
 
-| 配置项 | 值 | 说明 |
-| ------ | --- | ---- |
-| `strict` | `true` | 启用所有严格类型检查 |
-| `noUnusedLocals` | `true` | 禁止未使用的局部变量 |
-| `noUnusedParameters` | `true` | 禁止未使用的参数 |
+| 配置项                       | 值     | 说明                                   |
+| ---------------------------- | ------ | -------------------------------------- |
+| `strict`                     | `true` | 启用所有严格类型检查                   |
+| `noUnusedLocals`             | `true` | 禁止未使用的局部变量                   |
+| `noUnusedParameters`         | `true` | 禁止未使用的参数                       |
 | `noFallthroughCasesInSwitch` | `true` | 禁止 case 穿透（除非显式 fallthrough） |
-| `noUncheckedIndexedAccess` | `true` | 索引访问结果可能为 undefined |
-| `verbatimModuleSyntax` | `true` | 严格的模块导入/导出语法 |
+| `noUncheckedIndexedAccess`   | `true` | 索引访问结果可能为 undefined           |
+| `verbatimModuleSyntax`       | `true` | 严格的模块导入/导出语法                |
 
 ---
 
@@ -113,12 +113,7 @@ function isArray<T>(value: unknown): value is T[] {
 }
 
 function isLytComponent(value: unknown): value is Component {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    'setup' in value &&
-    'render' in value
-  );
+  return typeof value === 'object' && value !== null && 'setup' in value && 'render' in value;
 }
 ```
 
@@ -200,26 +195,26 @@ import { createUser, type User, type UserId } from './module';
 
 ### 🎯 短期计划（v6.2）
 
-| 任务 | 优先级 | 状态 | 说明 |
-| ---- | ------ | ---- | ---- |
-| **更严格的 exactOptionalPropertyTypes** | 🟡 中 | ⏳ 待启用 | 精确的可选属性类型检查 |
-| **类型测试覆盖** | 🟡 中 | ⏳ 待添加 | 确保关键类型行为有测试 |
-| **类型文档完善** | 🟢 低 | ⏳ 待添加 | 增强 JSDoc 注释 |
+| 任务                                    | 优先级 | 状态      | 说明                   |
+| --------------------------------------- | ------ | --------- | ---------------------- |
+| **更严格的 exactOptionalPropertyTypes** | 🟡 中  | ⏳ 待启用 | 精确的可选属性类型检查 |
+| **类型测试覆盖**                        | 🟡 中  | ⏳ 待添加 | 确保关键类型行为有测试 |
+| **类型文档完善**                        | 🟢 低  | ⏳ 待添加 | 增强 JSDoc 注释        |
 
 ### 🚀 中期计划（v6.3 - v6.4）
 
-| 任务 | 优先级 | 状态 | 说明 |
-| ---- | ------ | ---- | ---- |
-| **类型推断优化** | 🟡 中 | ⏳ 待计划 | 改善泛型推断体验 |
-| **模板字面量类型** | 🟢 低 | ⏳ 待计划 | 增强字符串类型安全 |
-| **条件类型优化** | 🟢 低 | ⏳ 待计划 | 更强大的条件类型 |
+| 任务               | 优先级 | 状态      | 说明               |
+| ------------------ | ------ | --------- | ------------------ |
+| **类型推断优化**   | 🟡 中  | ⏳ 待计划 | 改善泛型推断体验   |
+| **模板字面量类型** | 🟢 低  | ⏳ 待计划 | 增强字符串类型安全 |
+| **条件类型优化**   | 🟢 低  | ⏳ 待计划 | 更强大的条件类型   |
 
 ### 🌟 长期探索（v7.0+）
 
-| 任务 | 状态 | 说明 |
-| ---- | ---- | ---- |
-| **类型级编程** | 🤔 探索 | 探索高级类型模式 |
-| **运行时类型检查** | 🤔 探索 | 考虑 io-ts 或 zod 风格 |
+| 任务                    | 状态    | 说明                     |
+| ----------------------- | ------- | ------------------------ |
+| **类型级编程**          | 🤔 探索 | 探索高级类型模式         |
+| **运行时类型检查**      | 🤔 探索 | 考虑 io-ts 或 zod 风格   |
 | **TypeScript 版本升级** | ⏳ 计划 | 保持最新 TypeScript 版本 |
 
 ---
@@ -238,7 +233,7 @@ interface Signal<T> {
 // ✅ 使用示例
 const count = signal(0);
 count.set(1);
-count.set(c => c + 1);
+count.set((c) => c + 1);
 
 // Computed 信号
 const doubled = computed(() => count() * 2);
@@ -276,10 +271,7 @@ const Button = defineComponent({
 import { h, Text, Comment, Fragment } from '@lytjs/vdom';
 import type { VNode, VNodeChildren } from '@lytjs/vdom';
 
-const vnode: VNode = h('div', { class: 'container' }, [
-  h('h1', 'Hello'),
-  h(Text, 'World'),
-]);
+const vnode: VNode = h('div', { class: 'container' }, [h('h1', 'Hello'), h(Text, 'World')]);
 ```
 
 ---

@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 /**
  * 分包执行 ESLint 检查，避免内存溢出
- * 
+ *
  * 使用方法：
  *   pnpm lint:batch           # 检查所有包
  *   pnpm lint:batch --fix     # 自动修复
- * 
+ *
  * 原理：
  *   将大型项目分成多个批次执行 ESLint，每批执行完毕后释放内存，
  *   避免一次性扫描所有文件导致 JavaScript heap out of memory 错误。
@@ -25,11 +25,13 @@ const IGNORE_DIRS = ['node_modules', 'dist', 'lib', 'coverage', '.git', '.trae']
 function getSubdirectories(dir: string): string[] {
   try {
     return readdirSync(dir)
-      .filter(name => {
+      .filter((name) => {
         const fullPath = join(dir, name);
-        return statSync(fullPath).isDirectory() && !IGNORE_DIRS.includes(name) && !name.startsWith('.');
+        return (
+          statSync(fullPath).isDirectory() && !IGNORE_DIRS.includes(name) && !name.startsWith('.')
+        );
       })
-      .map(name => join(dir, name));
+      .map((name) => join(dir, name));
   } catch {
     return [];
   }
@@ -52,10 +54,10 @@ function runEslintOnDir(dir: string, label: string): boolean {
   }
   console.log(`  Checking: ${label}`);
   try {
-    execSync(eslintCmd, { 
-      cwd: dir, 
+    execSync(eslintCmd, {
+      cwd: dir,
       stdio: 'inherit',
-      env: { ...process.env, NODE_OPTIONS }
+      env: { ...process.env, NODE_OPTIONS },
     });
     return true;
   } catch {
@@ -86,10 +88,10 @@ console.log('🔍 Running ESLint in batches to avoid memory issues...\n');
 
 for (const batch of batches) {
   if (batch.dirs.length === 0) continue;
-  
+
   console.log(`\n📦 ${batch.name}`);
   console.log('─'.repeat(50));
-  
+
   for (const dir of batch.dirs) {
     const fullPath = resolve(process.cwd(), dir);
     const label = dir

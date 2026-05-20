@@ -186,12 +186,12 @@ export function normalizeRouteRecord(
   parent?: RouteRecordMatcher,
 ): RouteRecordMatcher {
   const tokens = tokenizePath(record.path);
-  
+
   // Build full path for nested routes
-  const fullPath = parent 
+  const fullPath = parent
     ? parent.record.path + (record.path.startsWith('/') ? record.path : '/' + record.path)
     : record.path;
-  
+
   const normalized: RouteRecordNormalized = {
     path: fullPath,
     name: record.name ?? null,
@@ -200,7 +200,10 @@ export function normalizeRouteRecord(
     beforeEnter: record.beforeEnter,
     props: record.props ?? false,
     component: record.component,
-    components: ('components' in record ? (record as { components?: Record<string, unknown> }).components : undefined),
+    components:
+      'components' in record
+        ? (record as { components?: Record<string, unknown> }).components
+        : undefined,
   };
 
   const matcher: RouteRecordMatcher = {
@@ -232,15 +235,15 @@ export function flattenMatchers(matchers: RouteRecordMatcher[]): RouteRecordMatc
   function walk(matcher: RouteRecordMatcher, parentTokens: PathToken[] = []) {
     // Combine parent tokens with current tokens for proper matching
     const combinedTokens = [...parentTokens, ...matcher.tokens];
-    
+
     // Create a copy with combined tokens for matching
     const matcherWithCombinedTokens: RouteRecordMatcher = {
       ...matcher,
       tokens: combinedTokens,
     };
-    
+
     result.push(matcherWithCombinedTokens);
-    
+
     for (const child of matcher.children) {
       walk(child, combinedTokens);
     }
@@ -334,7 +337,11 @@ export function resolveFullPath(
 /**
  * Parse a full path into path, query, and hash
  */
-export function parseFullPath(fullPath: string): { path: string; query: LocationQuery; hash: string } {
+export function parseFullPath(fullPath: string): {
+  path: string;
+  query: LocationQuery;
+  hash: string;
+} {
   const hashIndex = fullPath.indexOf('#');
   const queryIndex = fullPath.indexOf('?');
 

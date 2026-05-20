@@ -63,7 +63,9 @@ export interface SSGOptions {
 }
 
 /** 默认 SSG 选项 */
-const DEFAULT_SSG_OPTIONS: Required<SSGOptions> & { isr: Required<NonNullable<SSGOptions['isr']>> } = {
+const DEFAULT_SSG_OPTIONS: Required<SSGOptions> & {
+  isr: Required<NonNullable<SSGOptions['isr']>>;
+} = {
   baseUrl: '/',
   outDir: 'dist',
   defaultTitle: 'LytJS App',
@@ -178,28 +180,23 @@ function renderPage(page: SSGPage, options: Required<SSGOptions>): string {
  * @param options - SSG 选项
  * @returns sitemap XML 字符串
  */
-function generateSitemapXml(
-  pages: SSGPage[],
-  options: Required<SSGOptions>
-): string {
-  const baseUrl = options.baseUrl.endsWith('/') 
-    ? options.baseUrl.slice(0, -1) 
-    : options.baseUrl;
+function generateSitemapXml(pages: SSGPage[], options: Required<SSGOptions>): string {
+  const baseUrl = options.baseUrl.endsWith('/') ? options.baseUrl.slice(0, -1) : options.baseUrl;
 
-  const urls = pages.map(page => {
-    const path = normalizePath(page.path);
-    const fullUrl = options.hashMode 
-      ? `${baseUrl}/#${path}` 
-      : `${baseUrl}${path}`;
-    const lastmod = new Date().toISOString().split('T')[0];
-    
-    return `  <url>
+  const urls = pages
+    .map((page) => {
+      const path = normalizePath(page.path);
+      const fullUrl = options.hashMode ? `${baseUrl}/#${path}` : `${baseUrl}${path}`;
+      const lastmod = new Date().toISOString().split('T')[0];
+
+      return `  <url>
     <loc>${fullUrl}</loc>
     <lastmod>${lastmod}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>`;
-  }).join('\n');
+    })
+    .join('\n');
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
@@ -223,10 +220,7 @@ ${urls}
  * await writeStaticFiles(pages, { outDir: 'build' });
  * ```
  */
-export async function writeStaticFiles(
-  pages: SSGPage[],
-  options?: SSGOptions
-): Promise<void> {
+export async function writeStaticFiles(pages: SSGPage[], options?: SSGOptions): Promise<void> {
   const resolvedOptions = { ...DEFAULT_SSG_OPTIONS, ...options };
   const { outDir, generateSitemap } = resolvedOptions;
 
@@ -243,10 +237,10 @@ export async function writeStaticFiles(
   for (const [filePath, html] of staticPages) {
     const fullPath = join(outDir, filePath);
     const dir = dirname(fullPath);
-    
+
     // 创建目录（如果不存在）
     await fs.mkdir(dir, { recursive: true });
-    
+
     // 写入文件
     await fs.writeFile(fullPath, html, 'utf-8');
   }
@@ -294,10 +288,7 @@ export async function writeStaticFiles(
  * }
  * ```
  */
-export function generateStaticPages(
-  pages: SSGPage[],
-  options?: SSGOptions
-): Map<string, string> {
+export function generateStaticPages(pages: SSGPage[], options?: SSGOptions): Map<string, string> {
   const resolvedOptions = { ...DEFAULT_SSG_OPTIONS, ...options };
   const results = new Map<string, string>();
 
@@ -324,9 +315,9 @@ export function generateStaticPages(
  */
 export function generateRouteManifest(
   pages: SSGPage[],
-  baseUrl: string = '/'
+  baseUrl: string = '/',
 ): Array<{ path: string; filePath: string; title?: string }> {
-  return pages.map(page => {
+  return pages.map((page) => {
     const normalizedPath = normalizePath(page.path);
     const filePath = pathToFilePath(normalizedPath);
     return {
@@ -422,7 +413,7 @@ class ISRCacheManager {
   needsRevalidation(path: string, revalidateSeconds: number): boolean {
     const entry = this.cache.get(path);
     if (!entry) return true;
-    
+
     const age = (Date.now() - entry.timestamp) / 1000;
     return age > revalidateSeconds && !entry.isRevalidating;
   }
@@ -575,7 +566,7 @@ export function createISRMiddleware(options: {
       // 后台重新验证
       if (isrCache.needsRevalidation(path, revalidate) && regenerate) {
         isrCache.markRevalidating(path);
-        
+
         try {
           const newHtml = await regenerate(path);
           isrCache.finishRevalidation(path, newHtml);
@@ -629,7 +620,7 @@ export function createISRMiddleware(options: {
  */
 export async function revalidateOnDemand(
   path: string,
-  regenerate: () => Promise<string>
+  regenerate: () => Promise<string>,
 ): Promise<string> {
   // 检查是否已经在重新生成
   const existingTask = isrCache.getRevalidateTask(path);

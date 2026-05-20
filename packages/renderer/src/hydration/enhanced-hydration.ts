@@ -78,12 +78,12 @@ export interface HydrationStats {
 
 /**
  * 全应用 Hydration
- * 
+ *
  * @example
  * ```ts
  * // 服务端渲染的 HTML
  * const html = '<div id="app">...</div>';
- * 
+ *
  * // 客户端 Hydration
  * hydrateApp(App, '#app');
  * ```
@@ -106,9 +106,7 @@ export async function hydrateApp(
     duration: 0,
   };
 
-  const containerEl = typeof container === 'string'
-    ? document.querySelector(container)
-    : container;
+  const containerEl = typeof container === 'string' ? document.querySelector(container) : container;
 
   if (!containerEl) {
     throw new Error(`[LytJS] hydrateApp: container not found: ${container}`);
@@ -199,7 +197,7 @@ async function hydrateElement(
 
   // 检查事件监听器
   const eventAttrs = Array.from(element.attributes).filter(
-    attr => attr.name.startsWith('on') || attr.name.startsWith('@'),
+    (attr) => attr.name.startsWith('on') || attr.name.startsWith('@'),
   );
 
   for (const attr of eventAttrs) {
@@ -208,9 +206,7 @@ async function hydrateElement(
   }
 
   // 检查指令
-  const directives = Array.from(element.attributes).filter(
-    attr => attr.name.startsWith('v-'),
-  );
+  const directives = Array.from(element.attributes).filter((attr) => attr.name.startsWith('v-'));
 
   for (const attr of directives) {
     // 处理指令
@@ -291,12 +287,12 @@ let isProcessingQueue = false;
 
 /**
  * 选择性 Hydration
- * 
+ *
  * @example
  * ```ts
  * // 只 Hydration 可见区域
  * hydrateVisible(App, '#app');
- * 
+ *
  * // 基于 IntersectionObserver
  * hydrateOnVisible(App, '#app', {
  *   rootMargin: '100px',
@@ -311,9 +307,7 @@ export async function hydrateVisible(
   app: App;
   stats: HydrationStats;
 }> {
-  const containerEl = typeof container === 'string'
-    ? document.querySelector(container)
-    : container;
+  const containerEl = typeof container === 'string' ? document.querySelector(container) : container;
 
   if (!containerEl) {
     throw new Error(`[LytJS] hydrateVisible: container not found: ${container}`);
@@ -409,7 +403,7 @@ async function processHydrationQueue(): Promise<void> {
     }
 
     // 让出控制权
-    await new Promise(resolve => requestIdleCallback(resolve));
+    await new Promise((resolve) => requestIdleCallback(resolve));
   }
 
   isProcessingQueue = false;
@@ -496,8 +490,7 @@ export class HydrationErrorHandler {
     }
 
     // 属性顺序差异
-    const normalize = (html: string) =>
-      html.replace(/\s+/g, ' ').replace(/\s*=\s*/g, '=');
+    const normalize = (html: string) => html.replace(/\s+/g, ' ').replace(/\s*=\s*/g, '=');
     if (normalize(mismatch.expected) === normalize(mismatch.actual)) {
       return true;
     }
@@ -571,9 +564,7 @@ export class HydrationErrorHandler {
 /**
  * 创建错误处理器
  */
-export function createHydrationErrorHandler(
-  options: HydrationOptions = {},
-): HydrationErrorHandler {
+export function createHydrationErrorHandler(options: HydrationOptions = {}): HydrationErrorHandler {
   return new HydrationErrorHandler(options);
 }
 
@@ -610,9 +601,8 @@ export async function safeHydrate(
     };
   } catch (error) {
     // 尝试降级渲染
-    const containerEl = typeof container === 'string'
-      ? document.querySelector(container)
-      : container;
+    const containerEl =
+      typeof container === 'string' ? document.querySelector(container) : container;
 
     if (containerEl) {
       // 清空容器并重新渲染

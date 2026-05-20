@@ -3,12 +3,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import {
-  getState,
-  enable,
-  disable,
-  setConnected,
-} from '../src/state';
+import { getState, enable, disable, setConnected } from '../src/state';
 import {
   generateComponentId,
   registerComponent,
@@ -194,10 +189,7 @@ describe('@lytjs/devtools', () => {
       it('should recursively register children', () => {
         const instance: ComponentInstance = {
           type: 'Parent',
-          children: [
-            { type: 'ChildA' },
-            { type: 'ChildB' },
-          ],
+          children: [{ type: 'ChildA' }, { type: 'ChildB' }],
         };
 
         autoRegisterFromInstance(instance);
@@ -316,16 +308,28 @@ describe('@lytjs/devtools', () => {
 
     it('should detect different signal types', () => {
       const refInfo: SignalInfo = {
-        id: generateSignalId(), name: 'ref', type: 'ref',
-        value: 1, dependencies: [], dependents: [],
+        id: generateSignalId(),
+        name: 'ref',
+        type: 'ref',
+        value: 1,
+        dependencies: [],
+        dependents: [],
       };
       const computedInfo: SignalInfo = {
-        id: generateSignalId(), name: 'computed', type: 'computed',
-        value: 2, dependencies: [], dependents: [],
+        id: generateSignalId(),
+        name: 'computed',
+        type: 'computed',
+        value: 2,
+        dependencies: [],
+        dependents: [],
       };
       const reactiveInfo: SignalInfo = {
-        id: generateSignalId(), name: 'reactive', type: 'reactive',
-        value: 3, dependencies: [], dependents: [],
+        id: generateSignalId(),
+        name: 'reactive',
+        type: 'reactive',
+        value: 3,
+        dependencies: [],
+        dependents: [],
       };
 
       registerSignal(refInfo);
@@ -333,9 +337,9 @@ describe('@lytjs/devtools', () => {
       registerSignal(reactiveInfo);
 
       const signals = getSignals();
-      expect(signals.find(s => s.name === 'ref')?.type).toBe('ref');
-      expect(signals.find(s => s.name === 'computed')?.type).toBe('computed');
-      expect(signals.find(s => s.name === 'reactive')?.type).toBe('reactive');
+      expect(signals.find((s) => s.name === 'ref')?.type).toBe('ref');
+      expect(signals.find((s) => s.name === 'computed')?.type).toBe('computed');
+      expect(signals.find((s) => s.name === 'reactive')?.type).toBe('reactive');
     });
 
     it('should set signal value', () => {
@@ -479,14 +483,19 @@ describe('@lytjs/devtools', () => {
         });
 
         // 创建包含该信号的快照（值为 42）
-        const snapshot = takeSnapshot([], [{
-          id: signalId,
-          name: 'count',
-          type: 'signal',
-          value: 42,
-          dependencies: [],
-          dependents: [],
-        }]);
+        const snapshot = takeSnapshot(
+          [],
+          [
+            {
+              id: signalId,
+              name: 'count',
+              type: 'signal',
+              value: 42,
+              dependencies: [],
+              dependents: [],
+            },
+          ],
+        );
 
         // 恢复快照
         const result = restoreSnapshot(snapshot);
@@ -497,14 +506,19 @@ describe('@lytjs/devtools', () => {
       });
 
       it('should return false when signal not found in registry', () => {
-        const snapshot = takeSnapshot([], [{
-          id: 'non-existent-signal',
-          name: 'missing',
-          type: 'signal',
-          value: 100,
-          dependencies: [],
-          dependents: [],
-        }]);
+        const snapshot = takeSnapshot(
+          [],
+          [
+            {
+              id: 'non-existent-signal',
+              name: 'missing',
+              type: 'signal',
+              value: 100,
+              dependencies: [],
+              dependents: [],
+            },
+          ],
+        );
 
         const result = restoreSnapshot(snapshot);
         expect(result).toBe(false);
@@ -521,24 +535,27 @@ describe('@lytjs/devtools', () => {
           dependents: [],
         });
 
-        const snapshot = takeSnapshot([], [
-          {
-            id: validId,
-            name: 'valid',
-            type: 'signal',
-            value: 55,
-            dependencies: [],
-            dependents: [],
-          },
-          {
-            id: 'invalid-id',
-            name: 'invalid',
-            type: 'signal',
-            value: 99,
-            dependencies: [],
-            dependents: [],
-          },
-        ]);
+        const snapshot = takeSnapshot(
+          [],
+          [
+            {
+              id: validId,
+              name: 'valid',
+              type: 'signal',
+              value: 55,
+              dependencies: [],
+              dependents: [],
+            },
+            {
+              id: 'invalid-id',
+              name: 'invalid',
+              type: 'signal',
+              value: 99,
+              dependencies: [],
+              dependents: [],
+            },
+          ],
+        );
 
         const result = restoreSnapshot(snapshot);
         // 部分失败应返回 false
@@ -576,10 +593,13 @@ describe('@lytjs/devtools', () => {
       const unsubscribe = onPanelMessage(handler);
 
       // Simulate panel message
-      window.postMessage({
-        source: 'lytjs-devtools-panel',
-        payload: { type: 'test' },
-      }, '*');
+      window.postMessage(
+        {
+          source: 'lytjs-devtools-panel',
+          payload: { type: 'test' },
+        },
+        '*',
+      );
 
       // Handler should be called asynchronously
       setTimeout(() => {

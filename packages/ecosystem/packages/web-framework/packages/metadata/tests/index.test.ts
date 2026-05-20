@@ -28,7 +28,7 @@ describe('@lytjs/metadata', () => {
         .openGraph({
           title: 'OG Title',
           description: 'OG Description',
-          image: 'https://example.com/image.jpg'
+          image: 'https://example.com/image.jpg',
         })
         .build();
 
@@ -40,7 +40,7 @@ describe('@lytjs/metadata', () => {
       const metadata = createMetadataBuilder()
         .twitter({
           card: 'summary_large_image',
-          title: 'Twitter Title'
+          title: 'Twitter Title',
         })
         .build();
 
@@ -50,11 +50,8 @@ describe('@lytjs/metadata', () => {
 
   describe('renderMetadata', () => {
     it('应该渲染 meta 标签字符串', () => {
-      const metadata = createMetadataBuilder()
-        .title('Test')
-        .description('Test')
-        .build();
-      
+      const metadata = createMetadataBuilder().title('Test').description('Test').build();
+
       const rendered = renderMetadata(metadata);
 
       expect(typeof rendered).toBe('string');

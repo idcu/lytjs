@@ -1,19 +1,10 @@
 // src/parser-element.ts
 // 元素解析: parseElement, parseTag
 
-import {
-  ElementTypes,
-  TagType,
-  TextModes,
-} from './constants';
+import { ElementTypes, TagType, TextModes } from './constants';
 import { VOID_ELEMENTS } from '@lytjs/common-string';
 import { warn } from '@lytjs/common-error';
-import type {
-  ElementNode,
-  ParserContext,
-  AttributeNode,
-  DirectiveNode,
-} from './types';
+import type { ElementNode, ParserContext, AttributeNode, DirectiveNode } from './types';
 import { createElement } from './ast';
 
 import {

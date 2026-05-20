@@ -134,10 +134,7 @@ describe('matcher', () => {
     it('should normalize nested route records', () => {
       const matcher = normalizeRouteRecord({
         path: '/users',
-        children: [
-          { path: ':id' },
-          { path: 'settings' },
-        ],
+        children: [{ path: ':id' }, { path: 'settings' }],
       });
       expect(matcher.children.length).toBe(2);
       expect(matcher.children[0].tokens[0].type).toBe('param');
@@ -150,10 +147,7 @@ describe('matcher', () => {
       const matchers = [
         normalizeRouteRecord({
           path: '/users',
-          children: [
-            { path: ':id' },
-            { path: 'settings' },
-          ],
+          children: [{ path: ':id' }, { path: 'settings' }],
         }),
       ];
       const flat = flattenMatchers(matchers);
@@ -336,9 +330,7 @@ describe('createRouter', () => {
         {
           path: '/posts',
           name: 'posts',
-          children: [
-            { path: ':id', name: 'post-detail' },
-          ],
+          children: [{ path: ':id', name: 'post-detail' }],
         },
       ],
     });

@@ -75,7 +75,7 @@ export function setSignalValue(id: string, value: unknown): boolean {
  * 通过组件 ID 获取信号
  */
 export function getSignalsByComponent(componentId: string): SignalInfo[] {
-  return Array.from(signals.values()).filter(s => s.componentId === componentId);
+  return Array.from(signals.values()).filter((s) => s.componentId === componentId);
 }
 
 /**

@@ -22,10 +22,7 @@ export function parseText(context: ParserContext): TextNode {
   let endIndex = context.source.length;
   let searchStart = 0;
   while (searchStart < context.source.length) {
-    const searchLength = Math.min(
-      context.source.length - searchStart,
-      MAX_REGEX_INPUT_LENGTH,
-    );
+    const searchLength = Math.min(context.source.length - searchStart, MAX_REGEX_INPUT_LENGTH);
     const segment = context.source.slice(searchStart, searchStart + searchLength);
     let segmentEndIndex = searchLength;
     for (const token of endTokens) {
@@ -77,7 +74,11 @@ export function parseInterpolation(context: ParserContext): InterpolationNode | 
       backslashCount = 0;
       if (char === '"' || char === "'") {
         inString = char;
-      } else if (char === '}' && endIndex + 1 < context.source.length && context.source[endIndex + 1] === '}') {
+      } else if (
+        char === '}' &&
+        endIndex + 1 < context.source.length &&
+        context.source[endIndex + 1] === '}'
+      ) {
         break;
       }
     }

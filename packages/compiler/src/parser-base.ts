@@ -1,22 +1,16 @@
 // src/parser-base.ts
 // 基础解析器框架：工具函数、常量、主解析函数
 
-import {
-  TextModes,
-} from './constants';
+import { TextModes } from './constants';
 import { escapeRegExp } from '@lytjs/common-string';
-import { 
+import {
   warn,
   createCompilerError,
   LytErrorCodes,
   type SourceLocation,
-  getErrorSuggestion
+  getErrorSuggestion,
 } from '@lytjs/common-error';
-import type {
-  RootNode,
-  ParserContext,
-  ParserOptions,
-} from './types';
+import type { RootNode, ParserContext, ParserOptions } from './types';
 import { createRoot } from './ast';
 
 import {
@@ -126,21 +120,22 @@ function createParseError(
   code: LytErrorCodes = LytErrorCodes.UNEXPECTED_TOKEN,
 ): Error {
   const { line, column, offset } = context;
-  
+
   const loc: SourceLocation = {
     start: { line, column, offset },
     end: { line, column: column + 1, offset: offset + 1 },
     source: context.originalSource,
   };
-  
+
   // 创建带源码片段的错误消息
   const snippet = extractCodeSnippet(context.originalSource, line, column);
   const suggestion = getErrorSuggestion(code);
-  
-  const fullMessage = `Parse error at line ${line}, column ${column}: ${message}` +
+
+  const fullMessage =
+    `Parse error at line ${line}, column ${column}: ${message}` +
     `\n\n${snippet}` +
     (suggestion ? `\n\n💡 Suggestion: ${suggestion}` : '');
-  
+
   const error = createCompilerError(code, loc, fullMessage);
   return error;
 }
@@ -169,30 +164,26 @@ function extractCodeSnippet(
   source: string,
   line: number,
   column: number,
-  contextLines: number = 2
+  contextLines: number = 2,
 ): string {
   const lines = source.split('\n');
   const startLine = Math.max(0, line - contextLines - 1);
   const endLine = Math.min(lines.length, line + contextLines);
-  
+
   const snippet: string[] = [];
   const maxLineNumberWidth = String(endLine).length;
-  
+
   for (let i = startLine; i < endLine; i++) {
     const currentLine = i + 1;
     const lineContent = lines[i];
-    
-    snippet.push(
-      `${String(currentLine).padStart(maxLineNumberWidth)} | ${lineContent}`
-    );
-    
+
+    snippet.push(`${String(currentLine).padStart(maxLineNumberWidth)} | ${lineContent}`);
+
     if (currentLine === line) {
-      snippet.push(
-        `${' '.repeat(maxLineNumberWidth)} | ${' '.repeat(column - 1)}^`
-      );
+      snippet.push(`${' '.repeat(maxLineNumberWidth)} | ${' '.repeat(column - 1)}^`);
     }
   }
-  
+
   return snippet.join('\n');
 }
 
@@ -214,7 +205,7 @@ export function parse(source: string, options: ParserOptions = {}): RootNode {
     if (__DEV__) {
       warn(
         `Input length (${source.length}) exceeds maximum recommended length (${MAX_INPUT_LENGTH}). ` +
-        `Parsing may be slower for large inputs.`
+          `Parsing may be slower for large inputs.`,
       );
     }
   }
@@ -252,8 +243,4 @@ export {
   RE_COMMA_INDEX_IN_OF,
   RE_DOCTYPE,
 };
-export type {
-  ParserContext,
-  ParserOptions,
-  SourceLocation,
-};
+export type { ParserContext, ParserOptions, SourceLocation };

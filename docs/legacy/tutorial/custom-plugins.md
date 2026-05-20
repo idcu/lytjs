@@ -15,7 +15,9 @@ const myPlugin: Plugin = {
   },
 };
 
-app.use(myPlugin, { /* 插件选项 */ });
+app.use(myPlugin, {
+  /* 插件选项 */
+});
 ```
 
 ## 插件基础
@@ -149,9 +151,7 @@ export function useTheme() {
   const theme = signal<Theme>('auto');
   const resolvedTheme = computed(() => {
     if (theme() === 'auto') {
-      return window.matchMedia('(prefers-color-scheme: dark)').matches
-        ? 'dark'
-        : 'light';
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     }
     return theme();
   });
@@ -256,7 +256,7 @@ const requestPlugin: Plugin<RequestOptions> = {
       method: string,
       url: string,
       data?: any,
-      extraOptions?: RequestInit
+      extraOptions?: RequestInit,
     ): Promise<T> => {
       isLoading.value = true;
 
@@ -288,8 +288,7 @@ const requestPlugin: Plugin<RequestOptions> = {
     };
 
     const requestAPI: RequestPlugin = {
-      get: <T>(url: string, options?: RequestInit) =>
-        request<T>('GET', url, undefined, options),
+      get: <T>(url: string, options?: RequestInit) => request<T>('GET', url, undefined, options),
       post: <T>(url: string, data: any, options?: RequestInit) =>
         request<T>('POST', url, data, options),
       put: <T>(url: string, data: any, options?: RequestInit) =>
@@ -343,9 +342,7 @@ const authPlugin: Plugin = {
 
     const hasPermission = (resource: string, action: string) => {
       if (isAuthenticated.value === false) return false;
-      return permissions().some(
-        (p) => p.resource === resource && p.actions.includes(action)
-      );
+      return permissions().some((p) => p.resource === resource && p.actions.includes(action));
     };
 
     const login = async (credentials: any) => {
@@ -406,7 +403,7 @@ describe('counterPlugin', () => {
         get: expect.any(Function),
         increment: expect.any(Function),
         reset: expect.any(Function),
-      })
+      }),
     );
   });
 
@@ -480,10 +477,7 @@ my-lytjs-plugin/
       "types": "./dist/index.d.ts"
     }
   },
-  "keywords": [
-    "lytjs",
-    "plugin"
-  ],
+  "keywords": ["lytjs", "plugin"],
   "peerDependencies": {
     "@lytjs/core": ">=6.0.0"
   }

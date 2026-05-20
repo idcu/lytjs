@@ -7,14 +7,7 @@
  */
 
 /** Schema 类型枚举 */
-export type SchemaType =
-  | 'string'
-  | 'number'
-  | 'boolean'
-  | 'object'
-  | 'array'
-  | 'enum'
-  | 'union';
+export type SchemaType = 'string' | 'number' | 'boolean' | 'object' | 'array' | 'enum' | 'union';
 
 /** JSON Schema 风格的配置 Schema */
 export interface ConfigSchema<T = unknown> {

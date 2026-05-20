@@ -3,8 +3,19 @@
  */
 
 import { initStateEditor } from './state-editor';
-import { initTimeTravel, startHistoryRecording, stopHistoryRecording, getHistory, getCurrentIndex } from './time-travel';
-import { initPerformancePanel, recordComponentRender, startPerformanceMonitoring, stopPerformanceMonitoring } from './performance';
+import {
+  initTimeTravel,
+  startHistoryRecording,
+  stopHistoryRecording,
+  getHistory,
+  getCurrentIndex,
+} from './time-travel';
+import {
+  initPerformancePanel,
+  recordComponentRender,
+  startPerformanceMonitoring,
+  stopPerformanceMonitoring,
+} from './performance';
 import { sendToPanel, onPanelMessage } from '../bridge';
 import { getState, enable, setConnected } from '../state';
 import { getComponentTree } from '../component-tree';
@@ -46,7 +57,7 @@ export function initDevToolsPanel(): void {
 export function cleanupDevToolsPanel(): void {
   if (!panelState.isInitialized) return;
 
-  cleanupFunctions.forEach(cleanup => cleanup());
+  cleanupFunctions.forEach((cleanup) => cleanup());
   cleanupFunctions.length = 0;
   setConnected(false);
   panelState.isInitialized = false;
@@ -111,4 +122,15 @@ export function getActiveTab(): PanelState['activeTab'] {
   return panelState.activeTab;
 }
 
-export { initStateEditor, initTimeTravel, initPerformancePanel, recordComponentRender, startPerformanceMonitoring, stopPerformanceMonitoring, startHistoryRecording, stopHistoryRecording, getHistory, getCurrentIndex };
+export {
+  initStateEditor,
+  initTimeTravel,
+  initPerformancePanel,
+  recordComponentRender,
+  startPerformanceMonitoring,
+  stopPerformanceMonitoring,
+  startHistoryRecording,
+  stopHistoryRecording,
+  getHistory,
+  getCurrentIndex,
+};

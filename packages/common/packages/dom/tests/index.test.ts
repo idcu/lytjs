@@ -1,6 +1,14 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { SVG_TAGS, SVG_NS, isSVGTag, patchClass, patchStyle, patchAttr, patchProp } from '../src/index';
+import {
+  SVG_TAGS,
+  SVG_NS,
+  isSVGTag,
+  patchClass,
+  patchStyle,
+  patchAttr,
+  patchProp,
+} from '../src/index';
 
 // Set __DEV__ global for tests that exercise dev-mode warning paths
 declare const __DEV__: boolean;
@@ -393,14 +401,16 @@ describe('@lytjs/common-dom', () => {
       // Reset module registry so doMock takes effect on next dynamic import
       vi.resetModules();
       vi.doMock('@lytjs/common-string', async () => {
-        const actual = await vi.importActual<typeof import('@lytjs/common-string')>('@lytjs/common-string');
+        const actual =
+          await vi.importActual<typeof import('@lytjs/common-string')>('@lytjs/common-string');
         return {
           ...actual,
           isSafeAttribute: () => false,
         };
       });
       vi.doMock('@lytjs/common-error', async () => {
-        const actual = await vi.importActual<typeof import('@lytjs/common-error')>('@lytjs/common-error');
+        const actual =
+          await vi.importActual<typeof import('@lytjs/common-error')>('@lytjs/common-error');
         return actual;
       });
       // Dynamic import to get a fresh module with mocked isSafeAttribute

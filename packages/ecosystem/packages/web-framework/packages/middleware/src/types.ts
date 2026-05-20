@@ -20,44 +20,35 @@ export interface MiddlewareContext {
 export type Middleware = (
   request: Request,
   context: MiddlewareContext,
-  next: () => Promise<void>
+  next: () => Promise<void>,
 ) => Promise<Response | void | undefined>;
 
 /**
  * 中间件函数类型 - 洋葱圈模型签名
- * 
+ *
  * @param ctx - 当前中间件上下文
  * @param next - 调用链中下一个中间件的函数
  * @returns 中间件完成时的 Promise
  */
-export type MiddlewareFn = (
-  ctx: MiddlewareContext,
-  next: () => Promise<void>
-) => Promise<void>;
+export type MiddlewareFn = (ctx: MiddlewareContext, next: () => Promise<void>) => Promise<void>;
 
 /**
  * 最终处理器函数
  */
-export type FinalHandler = (
-  request: Request,
-  context: MiddlewareContext
-) => Promise<Response>;
+export type FinalHandler = (request: Request, context: MiddlewareContext) => Promise<Response>;
 
 /**
  * 中间件处理器函数
  */
 export type HandlerFn = (
   request: Request,
-  ctx: Record<string, unknown>
+  ctx: Record<string, unknown>,
 ) => Promise<Response> | Response;
 
 /**
  * 错误处理函数
  */
-export type ErrorHandlerFn = (
-  error: Error,
-  ctx: MiddlewareContext
-) => Promise<Response> | Response;
+export type ErrorHandlerFn = (error: Error, ctx: MiddlewareContext) => Promise<Response> | Response;
 
 /**
  * 中间件组合器配置

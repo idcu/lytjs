@@ -24,7 +24,11 @@ import type { TransitionGroupProps } from '../src/transition-group';
 // ============================================================
 
 /** 创建带有 data-key 属性的 DOM 元素 */
-function createKeyedElement(tag: string, key: string, styles?: Partial<CSSStyleDeclaration>): HTMLElement {
+function createKeyedElement(
+  tag: string,
+  key: string,
+  styles?: Partial<CSSStyleDeclaration>,
+): HTMLElement {
   const el = document.createElement(tag);
   el.setAttribute('data-key', key);
   if (styles) {
@@ -144,7 +148,11 @@ describe('transition-group', () => {
     it('应跳过 null/undefined 元素', () => {
       const el = createKeyedElement('div', 'a');
 
-      const positions = recordPositions([el, null as unknown as Element, undefined as unknown as Element]);
+      const positions = recordPositions([
+        el,
+        null as unknown as Element,
+        undefined as unknown as Element,
+      ]);
 
       expect(positions.size).toBe(1);
       expect(positions.has('a')).toBe(true);

@@ -1,7 +1,12 @@
 // @lytjs/common-event-normalizer
 // 事件归一化：解析事件名、提供 invoker 缓存模式、通过 RendererHost 操作事件
 
-import type { RendererHost, HostEvent, HostEventHandler, HostEventOptions } from '@lytjs/host-contract';
+import type {
+  RendererHost,
+  HostEvent,
+  HostEventHandler,
+  HostEventOptions,
+} from '@lytjs/host-contract';
 import { EVENT_MODIFIER_RE } from '@lytjs/common-events';
 
 // ============================================================
@@ -238,11 +243,7 @@ export class EventNormalizer<HN extends object = object, HE extends HN = HN> {
    * @param rawName - 原始事件名
    * @param nextValue - 新的事件处理函数
    */
-  patchEvent(
-    el: HE,
-    rawName: string,
-    nextValue: HostEventHandler | null,
-  ): void {
+  patchEvent(el: HE, rawName: string, nextValue: HostEventHandler | null): void {
     const eventKey = this.getEventKey(rawName);
     const parsed = this.parseEventName(rawName);
 

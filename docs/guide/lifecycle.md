@@ -323,7 +323,15 @@ KeepAlive 缓存:
 ### 完整示例
 
 ```typescript
-import { ref, onBeforeMount, onMounted, onBeforeUpdate, onUpdated, onBeforeUnmount, onUnmounted } from '@lytjs/core';
+import {
+  ref,
+  onBeforeMount,
+  onMounted,
+  onBeforeUpdate,
+  onUpdated,
+  onBeforeUnmount,
+  onUnmounted,
+} from '@lytjs/core';
 
 export default {
   setup() {

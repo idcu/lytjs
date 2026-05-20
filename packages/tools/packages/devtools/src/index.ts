@@ -102,9 +102,7 @@ export {
 } from './store-integration';
 
 // Router Integration
-export {
-  trackRouterNavigation,
-} from './router-integration';
+export { trackRouterNavigation } from './router-integration';
 
 // Panel
 export {

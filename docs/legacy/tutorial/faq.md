@@ -69,14 +69,15 @@ LytJS 支持现代浏览器：
 
 ### Q: 如何选择 Vapor 模式还是 VDOM 模式？
 
-| 特点 | Vapor 模式 | VDOM 模式 |
-|------|-----------|----------|
-| **性能** | ⭐⭐⭐⭐⭐ 更优秀 | ⭐⭐⭐⭐ 良好 |
-| **包体积** | ⭐⭐⭐⭐⭐ 更小 | ⭐⭐⭐⭐ 稍大 |
+| 特点         | Vapor 模式          | VDOM 模式         |
+| ------------ | ------------------- | ----------------- |
+| **性能**     | ⭐⭐⭐⭐⭐ 更优秀   | ⭐⭐⭐⭐ 良好     |
+| **包体积**   | ⭐⭐⭐⭐⭐ 更小     | ⭐⭐⭐⭐ 稍大     |
 | **学习曲线** | ⭐⭐⭐ 需要理解信号 | ⭐⭐⭐⭐⭐ 更熟悉 |
-| **兼容性** | ⭐⭐⭐⭐ 良好 | ⭐⭐⭐⭐⭐ 最好 |
+| **兼容性**   | ⭐⭐⭐⭐ 良好       | ⭐⭐⭐⭐⭐ 最好   |
 
-**推荐**: 
+**推荐**:
+
 - 新项目 → Vapor 模式
 - 从 Vue/React 迁移 → VDOM 模式（先熟悉，再优化）
 
@@ -98,12 +99,12 @@ LytJS 内置 TypeScript 支持，只需确保：
 
 ```typescript
 // Signal - 推荐，基础响应式单元
-const count = signal(0)
-count.value++
+const count = signal(0);
+count.value++;
 
 // Ref - 为了兼容性保留，API 相同
-const count = ref(0)
-count.value++
+const count = ref(0);
+count.value++;
 ```
 
 它们在 LytJS 中是相同的，推荐使用 `signal`。
@@ -113,32 +114,34 @@ count.value++
 LytJS 提供多种方式：
 
 ```typescript
-import { signal, effect } from '@lytjs/reactivity'
-import { useDataFetch } from '@lytjs/plugin-data-fetch'
+import { signal, effect } from '@lytjs/reactivity';
+import { useDataFetch } from '@lytjs/plugin-data-fetch';
 
 // 方式 1: 基础异步
-const data = signal(null)
-const loading = signal(false)
+const data = signal(null);
+const loading = signal(false);
 
 async function fetchData() {
-  loading.value = true
+  loading.value = true;
   try {
-    data.value = await fetch('/api/data').then(r => r.json())
+    data.value = await fetch('/api/data').then((r) => r.json());
   } finally {
-    loading.value = false
+    loading.value = false;
   }
 }
 
 // 方式 2: 使用插件
-const { data, loading, error } = useDataFetch('/api/data')
+const { data, loading, error } = useDataFetch('/api/data');
 ```
 
 ### Q: 如何进行状态管理？
 
 对于简单应用：
+
 - 使用 `signal` 和 `computed`
 
 对于复杂应用：
+
 - 使用 store 模式
 - 或者使用 [`@lytjs/store`](https://github.com/lytjs/store) 插件
 
@@ -184,24 +187,24 @@ LytJS 性能非常优秀：
 
 ### Q: LytJS vs Vue
 
-| 特点 | LytJS | Vue 3 |
-|------|------|-------|
-| **响应式** | 信号系统 | Proxy 响应式 |
-| **核心体积** | <10KB | ~30KB |
-| **更新粒度** | 细粒度 | 组件级 |
-| **VDOM 支持** | ✅ (可选) | ✅ (主要) |
-| **学习曲线** | 中等 | 中等 |
+| 特点          | LytJS     | Vue 3        |
+| ------------- | --------- | ------------ |
+| **响应式**    | 信号系统  | Proxy 响应式 |
+| **核心体积**  | <10KB     | ~30KB        |
+| **更新粒度**  | 细粒度    | 组件级       |
+| **VDOM 支持** | ✅ (可选) | ✅ (主要)    |
+| **学习曲线**  | 中等      | 中等         |
 
 详见 [Vue 迁移指南](./migration-from-vue.md)
 
 ### Q: LytJS vs React
 
-| 特点 | LytJS | React |
-|------|------|-------|
-| **响应式** | 信号系统 | 状态 + Effect |
-| **渲染模式** | 细粒度更新 | 重渲染 + Diff |
-| **核心体积** | <10KB | ~40KB + ReactDOM |
-| **更新策略** | 精确更新 | 调度更新 |
+| 特点         | LytJS      | React            |
+| ------------ | ---------- | ---------------- |
+| **响应式**   | 信号系统   | 状态 + Effect    |
+| **渲染模式** | 细粒度更新 | 重渲染 + Diff    |
+| **核心体积** | <10KB      | ~40KB + ReactDOM |
+| **更新策略** | 精确更新   | 调度更新         |
 
 详见 [React 迁移指南](./migration-from-react.md)
 

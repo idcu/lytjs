@@ -32,8 +32,8 @@ const animation = createAnimation(
   },
   {
     duration: 1000,
-    easing: 'ease'
-  }
+    easing: 'ease',
+  },
 );
 
 // 播放动画
@@ -72,8 +72,8 @@ const animation = createAnimation(
     },
     onCancel: () => {
       console.log('动画取消');
-    }
-  }
+    },
+  },
 );
 ```
 
@@ -143,15 +143,12 @@ const spring = createAnimation(callback, { easing: 'spring' });
 
 ```typescript
 // 使用自定义函数
-const animation = createAnimation(
-  callback,
-  {
-    easing: (t) => {
-      // 自定义缓动逻辑
-      return t * t * t; // 相当于 ease-in-cubic
-    }
-  }
-);
+const animation = createAnimation(callback, {
+  easing: (t) => {
+    // 自定义缓动逻辑
+    return t * t * t; // 相当于 ease-in-cubic
+  },
+});
 ```
 
 ## 关键帧动画
@@ -167,13 +164,13 @@ const element = document.getElementById('box');
 const keyframes = [
   { offset: 0, transform: 'translateX(0)', opacity: 0 },
   { offset: 0.5, transform: 'translateX(100px)', opacity: 1 },
-  { offset: 1, transform: 'translateX(200px)', opacity: 0 }
+  { offset: 1, transform: 'translateX(200px)', opacity: 0 },
 ];
 
 const animation = createKeyframeAnimation(element, keyframes, {
   duration: 2000,
   iterations: 3,
-  direction: 'alternate'
+  direction: 'alternate',
 });
 
 animation.play();
@@ -183,17 +180,17 @@ animation.play();
 
 ```typescript
 const animation = createKeyframeAnimation(element, keyframes, {
-  duration: 1000,          // 动画时长（毫秒）
-  delay: 0,                // 延迟开始时间
-  easing: 'ease',          // 缓动函数
-  iterations: 1,            // 重复次数（Infinity 表示无限）
-  direction: 'normal',     // 播放方向
-  fill: 'forwards',        // 填充模式
-  onStart: () => {},       // 开始回调
-  onUpdate: () => {},      // 更新回调
-  onComplete: () => {},    // 完成回调
-  onPause: () => {},       // 暂停回调
-  onCancel: () => {}       // 取消回调
+  duration: 1000, // 动画时长（毫秒）
+  delay: 0, // 延迟开始时间
+  easing: 'ease', // 缓动函数
+  iterations: 1, // 重复次数（Infinity 表示无限）
+  direction: 'normal', // 播放方向
+  fill: 'forwards', // 填充模式
+  onStart: () => {}, // 开始回调
+  onUpdate: () => {}, // 更新回调
+  onComplete: () => {}, // 完成回调
+  onPause: () => {}, // 暂停回调
+  onCancel: () => {}, // 取消回调
 });
 ```
 
@@ -207,89 +204,129 @@ import { PRESETS, createKeyframeAnimation } from '@lytjs/plugin-animation';
 const element = document.getElementById('box');
 
 // 淡入
-const fadeIn = createKeyframeAnimation(element, [
-  { offset: 0, opacity: 0 },
-  { offset: 1, opacity: 1 }
-], { duration: 500 });
+const fadeIn = createKeyframeAnimation(
+  element,
+  [
+    { offset: 0, opacity: 0 },
+    { offset: 1, opacity: 1 },
+  ],
+  { duration: 500 },
+);
 
 // 淡出
-const fadeOut = createKeyframeAnimation(element, [
-  { offset: 0, opacity: 1 },
-  { offset: 1, opacity: 0 }
-], { duration: 500 });
+const fadeOut = createKeyframeAnimation(
+  element,
+  [
+    { offset: 0, opacity: 1 },
+    { offset: 1, opacity: 0 },
+  ],
+  { duration: 500 },
+);
 ```
 
 ### 滑入滑出
 
 ```typescript
 // 从上方滑入
-const slideInDown = createKeyframeAnimation(element, [
-  { offset: 0, transform: 'translateY(-100%)', opacity: 0 },
-  { offset: 1, transform: 'translateY(0)', opacity: 1 }
-], { duration: 300 });
+const slideInDown = createKeyframeAnimation(
+  element,
+  [
+    { offset: 0, transform: 'translateY(-100%)', opacity: 0 },
+    { offset: 1, transform: 'translateY(0)', opacity: 1 },
+  ],
+  { duration: 300 },
+);
 
 // 从下方滑入
-const slideInUp = createKeyframeAnimation(element, [
-  { offset: 0, transform: 'translateY(100%)', opacity: 0 },
-  { offset: 1, transform: 'translateY(0)', opacity: 1 }
-], { duration: 300 });
+const slideInUp = createKeyframeAnimation(
+  element,
+  [
+    { offset: 0, transform: 'translateY(100%)', opacity: 0 },
+    { offset: 1, transform: 'translateY(0)', opacity: 1 },
+  ],
+  { duration: 300 },
+);
 
 // 从左侧滑入
-const slideInLeft = createKeyframeAnimation(element, [
-  { offset: 0, transform: 'translateX(-100%)', opacity: 0 },
-  { offset: 1, transform: 'translateX(0)', opacity: 1 }
-], { duration: 300 });
+const slideInLeft = createKeyframeAnimation(
+  element,
+  [
+    { offset: 0, transform: 'translateX(-100%)', opacity: 0 },
+    { offset: 1, transform: 'translateX(0)', opacity: 1 },
+  ],
+  { duration: 300 },
+);
 
 // 从右侧滑入
-const slideInRight = createKeyframeAnimation(element, [
-  { offset: 0, transform: 'translateX(100%)', opacity: 0 },
-  { offset: 1, transform: 'translateX(0)', opacity: 1 }
-], { duration: 300 });
+const slideInRight = createKeyframeAnimation(
+  element,
+  [
+    { offset: 0, transform: 'translateX(100%)', opacity: 0 },
+    { offset: 1, transform: 'translateX(0)', opacity: 1 },
+  ],
+  { duration: 300 },
+);
 ```
 
 ### 缩放动画
 
 ```typescript
 // 放大进入
-const zoomIn = createKeyframeAnimation(element, [
-  { offset: 0, transform: 'scale(0)', opacity: 0 },
-  { offset: 1, transform: 'scale(1)', opacity: 1 }
-], { duration: 300 });
+const zoomIn = createKeyframeAnimation(
+  element,
+  [
+    { offset: 0, transform: 'scale(0)', opacity: 0 },
+    { offset: 1, transform: 'scale(1)', opacity: 1 },
+  ],
+  { duration: 300 },
+);
 
 // 缩小退出
-const zoomOut = createKeyframeAnimation(element, [
-  { offset: 0, transform: 'scale(1)', opacity: 1 },
-  { offset: 1, transform: 'scale(0)', opacity: 0 }
-], { duration: 300 });
+const zoomOut = createKeyframeAnimation(
+  element,
+  [
+    { offset: 0, transform: 'scale(1)', opacity: 1 },
+    { offset: 1, transform: 'scale(0)', opacity: 0 },
+  ],
+  { duration: 300 },
+);
 ```
 
 ### 弹跳效果
 
 ```typescript
-const bounceIn = createKeyframeAnimation(element, [
-  { offset: 0, transform: 'scale(0.3)', opacity: 0 },
-  { offset: 0.4, transform: 'scale(1.1)' },
-  { offset: 0.7, transform: 'scale(0.9)' },
-  { offset: 1, transform: 'scale(1)', opacity: 1 }
-], { duration: 500 });
+const bounceIn = createKeyframeAnimation(
+  element,
+  [
+    { offset: 0, transform: 'scale(0.3)', opacity: 0 },
+    { offset: 0.4, transform: 'scale(1.1)' },
+    { offset: 0.7, transform: 'scale(0.9)' },
+    { offset: 1, transform: 'scale(1)', opacity: 1 },
+  ],
+  { duration: 500 },
+);
 ```
 
 ### 抖动效果
 
 ```typescript
-const shake = createKeyframeAnimation(element, [
-  { offset: 0, transform: 'translateX(0)' },
-  { offset: 0.1, transform: 'translateX(-1px)' },
-  { offset: 0.2, transform: 'translateX(2px)' },
-  { offset: 0.3, transform: 'translateX(-4px)' },
-  { offset: 0.4, transform: 'translateX(4px)' },
-  { offset: 0.5, transform: 'translateX(-4px)' },
-  { offset: 0.6, transform: 'translateX(4px)' },
-  { offset: 0.7, transform: 'translateX(-4px)' },
-  { offset: 0.8, transform: 'translateX(2px)' },
-  { offset: 0.9, transform: 'translateX(-1px)' },
-  { offset: 1, transform: 'translateX(0)' }
-], { duration: 500 });
+const shake = createKeyframeAnimation(
+  element,
+  [
+    { offset: 0, transform: 'translateX(0)' },
+    { offset: 0.1, transform: 'translateX(-1px)' },
+    { offset: 0.2, transform: 'translateX(2px)' },
+    { offset: 0.3, transform: 'translateX(-4px)' },
+    { offset: 0.4, transform: 'translateX(4px)' },
+    { offset: 0.5, transform: 'translateX(-4px)' },
+    { offset: 0.6, transform: 'translateX(4px)' },
+    { offset: 0.7, transform: 'translateX(-4px)' },
+    { offset: 0.8, transform: 'translateX(2px)' },
+    { offset: 0.9, transform: 'translateX(-1px)' },
+    { offset: 1, transform: 'translateX(0)' },
+  ],
+  { duration: 500 },
+);
 ```
 
 ## 动画控制
@@ -331,7 +368,7 @@ console.log(animation.id); // 唯一标识符
 ```typescript
 const animation = createAnimation(callback, {
   duration: 1000,
-  direction: 'normal'        // 正常方向播放
+  direction: 'normal', // 正常方向播放
   // direction: 'reverse'    // 反向播放
   // direction: 'alternate' // 交替播放
   // direction: 'alternate-reverse' // 反向交替播放
@@ -343,7 +380,7 @@ const animation = createAnimation(callback, {
 ```typescript
 const animation = createAnimation(callback, {
   duration: 1000,
-  iterations: 1,    // 播放1次
+  iterations: 1, // 播放1次
   // iterations: 3, // 播放3次
   // iterations: Infinity, // 无限循环
 });
@@ -368,7 +405,7 @@ transitionElement(element, true, {
   },
   onAfterEnter: () => {
     console.log('显示完成');
-  }
+  },
 });
 
 // 隐藏过渡
@@ -377,7 +414,7 @@ transitionElement(element, false, {
   duration: 300,
   onAfterLeave: () => {
     element.style.display = 'none';
-  }
+  },
 });
 ```
 
@@ -390,7 +427,7 @@ transitionElement(element, true, {
   easing: 'ease-out',
   onBeforeEnter: () => {
     element.style.display = 'flex';
-  }
+  },
 });
 ```
 
@@ -404,7 +441,7 @@ import { createAnimationManager } from '@lytjs/plugin-animation';
 const manager = createAnimationManager({
   defaultDuration: 300,
   defaultEasing: 'ease',
-  autoCleanup: true
+  autoCleanup: true,
 });
 ```
 
@@ -412,15 +449,18 @@ const manager = createAnimationManager({
 
 ```typescript
 // 创建自定义动画
-const animation = manager.animate((progress) => {
-  element.style.opacity = String(progress);
-}, {
-  duration: 1000
-});
+const animation = manager.animate(
+  (progress) => {
+    element.style.opacity = String(progress);
+  },
+  {
+    duration: 1000,
+  },
+);
 
 // 应用预设动画
 const preset = manager.applyPreset(element, 'fadeIn', {
-  duration: 500
+  duration: 500,
 });
 
 // 移除动画
@@ -440,7 +480,7 @@ const animation = createAnimation(
   (progress) => {
     element.style.transform = `translateX(${progress * 100}px)`;
   },
-  { duration: 1000 }
+  { duration: 1000 },
 );
 
 // ❌ 不推荐：使用 top/left
@@ -448,7 +488,7 @@ const badAnimation = createAnimation(
   (progress) => {
     element.style.left = `${progress * 100}px`; // 触发重排
   },
-  { duration: 1000 }
+  { duration: 1000 },
 );
 ```
 
@@ -472,11 +512,11 @@ animation.onComplete = () => {
 const animations = [
   createAnimation(callback1, { duration: 1000 }),
   createAnimation(callback2, { duration: 1000 }),
-  createAnimation(callback3, { duration: 1000 })
+  createAnimation(callback3, { duration: 1000 }),
 ];
 
 // 播放所有动画
-animations.forEach(anim => anim.play());
+animations.forEach((anim) => anim.play());
 ```
 
 ### 动画防抖
@@ -511,17 +551,17 @@ animation.onComplete = () => {
 ```typescript
 // 快速交互反馈：100-200ms
 const quickFeedback = createAnimation(callback, {
-  duration: 150
+  duration: 150,
 });
 
 // 常规过渡：200-400ms
 const normalTransition = createAnimation(callback, {
-  duration: 300
+  duration: 300,
 });
 
 // 复杂动画：400-800ms
 const complexAnimation = createAnimation(callback, {
-  duration: 600
+  duration: 600,
 });
 ```
 
@@ -573,13 +613,17 @@ queue.add(animation3);
 ```typescript
 function showModal(element: HTMLElement) {
   // 显示动画
-  const showAnim = createKeyframeAnimation(element, [
-    { offset: 0, opacity: 0, transform: 'scale(0.9)' },
-    { offset: 1, opacity: 1, transform: 'scale(1)' }
-  ], {
-    duration: 200,
-    easing: 'ease-out'
-  });
+  const showAnim = createKeyframeAnimation(
+    element,
+    [
+      { offset: 0, opacity: 0, transform: 'scale(0.9)' },
+      { offset: 1, opacity: 1, transform: 'scale(1)' },
+    ],
+    {
+      duration: 200,
+      easing: 'ease-out',
+    },
+  );
 
   element.style.display = 'flex';
   showAnim.play();
@@ -587,16 +631,20 @@ function showModal(element: HTMLElement) {
 
 function hideModal(element: HTMLElement) {
   // 隐藏动画
-  const hideAnim = createKeyframeAnimation(element, [
-    { offset: 0, opacity: 1, transform: 'scale(1)' },
-    { offset: 1, opacity: 0, transform: 'scale(0.9)' }
-  ], {
-    duration: 150,
-    easing: 'ease-in',
-    onComplete: () => {
-      element.style.display = 'none';
-    }
-  });
+  const hideAnim = createKeyframeAnimation(
+    element,
+    [
+      { offset: 0, opacity: 1, transform: 'scale(1)' },
+      { offset: 1, opacity: 0, transform: 'scale(0.9)' },
+    ],
+    {
+      duration: 150,
+      easing: 'ease-in',
+      onComplete: () => {
+        element.style.display = 'none';
+      },
+    },
+  );
 
   hideAnim.play();
 }
@@ -606,13 +654,17 @@ function hideModal(element: HTMLElement) {
 
 ```typescript
 function animateListItem(element: HTMLElement) {
-  const animation = createKeyframeAnimation(element, [
-    { offset: 0, transform: 'translateY(-20px)', opacity: 0 },
-    { offset: 1, transform: 'translateY(0)', opacity: 1 }
-  ], {
-    duration: 300,
-    easing: 'ease-out'
-  });
+  const animation = createKeyframeAnimation(
+    element,
+    [
+      { offset: 0, transform: 'translateY(-20px)', opacity: 0 },
+      { offset: 1, transform: 'translateY(0)', opacity: 1 },
+    ],
+    {
+      duration: 300,
+      easing: 'ease-out',
+    },
+  );
 
   animation.play();
 }
@@ -636,8 +688,8 @@ function createLoadingAnimation(element: HTMLElement) {
     {
       duration: 1000,
       iterations: Infinity,
-      easing: 'linear'
-    }
+      easing: 'linear',
+    },
   );
 
   return animation;
@@ -651,39 +703,39 @@ function createLoadingAnimation(element: HTMLElement) {
 ```typescript
 function createAnimation(
   animateFn: (progress: number) => void,
-  options?: AnimationOptions
-): AnimationInstance
+  options?: AnimationOptions,
+): AnimationInstance;
 ```
 
 ### AnimationOptions
 
-| 选项 | 类型 | 默认值 | 说明 |
-|------|------|--------|------|
-| `duration` | `number` | `300` | 动画时长（毫秒） |
-| `easing` | `EasingFunction` | `'ease'` | 缓动函数 |
-| `delay` | `number` | `0` | 延迟时间（毫秒） |
-| `iterations` | `number` | `1` | 重复次数 |
-| `direction` | `string` | `'normal'` | 播放方向 |
-| `fill` | `string` | `'none'` | 填充模式 |
-| `onStart` | `Function` | - | 开始回调 |
-| `onUpdate` | `Function` | - | 更新回调 |
-| `onComplete` | `Function` | - | 完成回调 |
-| `onPause` | `Function` | - | 暂停回调 |
-| `onCancel` | `Function` | - | 取消回调 |
+| 选项         | 类型             | 默认值     | 说明             |
+| ------------ | ---------------- | ---------- | ---------------- |
+| `duration`   | `number`         | `300`      | 动画时长（毫秒） |
+| `easing`     | `EasingFunction` | `'ease'`   | 缓动函数         |
+| `delay`      | `number`         | `0`        | 延迟时间（毫秒） |
+| `iterations` | `number`         | `1`        | 重复次数         |
+| `direction`  | `string`         | `'normal'` | 播放方向         |
+| `fill`       | `string`         | `'none'`   | 填充模式         |
+| `onStart`    | `Function`       | -          | 开始回调         |
+| `onUpdate`   | `Function`       | -          | 更新回调         |
+| `onComplete` | `Function`       | -          | 完成回调         |
+| `onPause`    | `Function`       | -          | 暂停回调         |
+| `onCancel`   | `Function`       | -          | 取消回调         |
 
 ### AnimationInstance
 
-| 属性/方法 | 类型 | 说明 |
-|-----------|------|------|
-| `id` | `string` | 唯一标识符 |
-| `state` | `string` | 动画状态 |
-| `progress` | `number` | 当前进度（0-1） |
-| `play()` | `void` | 开始播放 |
-| `pause()` | `void` | 暂停 |
-| `cancel()` | `void` | 取消 |
-| `reset()` | `void` | 重置 |
-| `seek(progress)` | `void` | 跳转到指定进度 |
-| `reverse()` | `void` | 反转方向 |
+| 属性/方法        | 类型     | 说明            |
+| ---------------- | -------- | --------------- |
+| `id`             | `string` | 唯一标识符      |
+| `state`          | `string` | 动画状态        |
+| `progress`       | `number` | 当前进度（0-1） |
+| `play()`         | `void`   | 开始播放        |
+| `pause()`        | `void`   | 暂停            |
+| `cancel()`       | `void`   | 取消            |
+| `reset()`        | `void`   | 重置            |
+| `seek(progress)` | `void`   | 跳转到指定进度  |
+| `reverse()`      | `void`   | 反转方向        |
 
 ## 下一步
 

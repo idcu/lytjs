@@ -80,7 +80,7 @@ describe('@lytjs/plugin-theme', () => {
 
     it('应该支持关闭系统主题检测', () => {
       const manager = pluginModule.createThemeManager({
-        enableSystemTheme: false
+        enableSystemTheme: false,
       });
       expect(manager).toBeDefined();
     });

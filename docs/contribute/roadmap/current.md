@@ -3,6 +3,7 @@
 > **本文档**：聚焦未完成开发任务和下一步行动项，已完成的历史记录请查看 [CHANGELOG.md](./CHANGELOG.md)  
 > **当前版本**：v6.4.0  
 > **重要更新**：
+>
 > - ✅ LytX（官方 Metaframework）已独立成独立项目
 > - 🟡 UI 组件库准备迁出
 > - 严格遵循项目 8 层架构设计初衷与运行时零第三方依赖原则
@@ -13,27 +14,27 @@
 
 ### ✅ 已完成（v6.1 - v6.4）
 
-| 版本 | 目标 | 状态 |
-|------|------|------|
+| 版本 | 目标             | 状态        |
+| ---- | ---------------- | ----------- |
 | v6.1 | 性能与稳定性增强 | ✅ 全部完成 |
-| v6.2 | 生态与开发体验 | ✅ 全部完成 |
-| v6.3 | 生态繁荣 | ✅ 全部完成 |
-| v6.4 | 性能极致 | ✅ 全部完成 |
+| v6.2 | 生态与开发体验   | ✅ 全部完成 |
+| v6.3 | 生态繁荣         | ✅ 全部完成 |
+| v6.4 | 性能极致         | ✅ 全部完成 |
 
 ### ⏸️ 待开发/调整中（v6.5+）
 
-| 版本 | 目标 | 状态 |
-|------|------|------|
-| v6.5 | 核心聚焦与架构优化 | ✅ 已完成 |
-| v6.6 | 生态系统模块化重构 | ⏸️ 待开发 |
-| v7.0+ | 未来探索 | ⏸️ 探索中 |
+| 版本  | 目标               | 状态      |
+| ----- | ------------------ | --------- |
+| v6.5  | 核心聚焦与架构优化 | ✅ 已完成 |
+| v6.6  | 生态系统模块化重构 | ⏸️ 待开发 |
+| v7.0+ | 未来探索           | ⏸️ 探索中 |
 
 ### 🟡 调整项目
 
-| 项目 | 状态 | 说明 |
-|------|------|------|
-| LytX | ✅ 已独立 | Metaframework 已独立成独立项目 |
-| UI 组件库 | 🟡 准备迁出 | 计划从 LytJS 核心包中迁出 |
+| 项目      | 状态        | 说明                           |
+| --------- | ----------- | ------------------------------ |
+| LytX      | ✅ 已独立   | Metaframework 已独立成独立项目 |
+| UI 组件库 | 🟡 准备迁出 | 计划从 LytJS 核心包中迁出      |
 
 ---
 
@@ -109,28 +110,28 @@ LytJS 生态系统
 
 ### 2.2 与竞品的差距分析
 
-| 维度 | 主要差距 | 影响 |
-|------|----------|------|
-| **生态成熟度** | 第三方插件/组件少 | ⭐⭐⭐ 高 |
-| **企业采用** | 缺乏大型案例验证 | ⭐⭐⭐ 高 |
-| **学习资源** | 教程、案例相对少 | ⭐⭐ 中 |
-| **性能基准** | 缺乏 js-framework-benchmark 公开数据 | ⭐⭐ 中 |
-| **SSR完善度** | 服务端组件、流式 SSR 稳定性待提升 | ⭐⭐⭐ 高 |
+| 维度           | 主要差距                             | 影响      |
+| -------------- | ------------------------------------ | --------- |
+| **生态成熟度** | 第三方插件/组件少                    | ⭐⭐⭐ 高 |
+| **企业采用**   | 缺乏大型案例验证                     | ⭐⭐⭐ 高 |
+| **学习资源**   | 教程、案例相对少                     | ⭐⭐ 中   |
+| **性能基准**   | 缺乏 js-framework-benchmark 公开数据 | ⭐⭐ 中   |
+| **SSR完善度**  | 服务端组件、流式 SSR 稳定性待提升    | ⭐⭐⭐ 高 |
 
 ### 2.3 SWOT 分析
 
 | 优势（Strengths） | 劣势（Weaknesses） |
-|------------------|------------------|
-| 零依赖、体积小 | 生态系统尚小 |
-| 双渲染模式 | 企业案例少 |
-| 架构清晰 | 学习资源有限 |
-| 性能优秀 | |
+| ----------------- | ------------------ |
+| 零依赖、体积小    | 生态系统尚小       |
+| 双渲染模式        | 企业案例少         |
+| 架构清晰          | 学习资源有限       |
+| 性能优秀          |                    |
 
-| 机会（Opportunities） | 威胁（Threats） |
-|---------------------|----------------|
-| 轻量级框架需求增长 | Vue/React 持续优化 |
-| 微前端架构兴起 | SolidJS/Svelte 竞争 |
-| 嵌入式/IoT 场景 | Preact 已有先发 |
+| 机会（Opportunities） | 威胁（Threats）     |
+| --------------------- | ------------------- |
+| 轻量级框架需求增长    | Vue/React 持续优化  |
+| 微前端架构兴起        | SolidJS/Svelte 竞争 |
+| 嵌入式/IoT 场景       | Preact 已有先发     |
 
 ---
 
@@ -270,14 +271,14 @@ LytJS 生态系统
 
 ### 4.2 包统计
 
-| 类型 | 数量 | 说明 |
-|------|------|------|
-| **已有核心包** | 4 | core, router, store, ssr（UI 计划迁出） |
-| **已有工具包** | 30+ | @lytjs/common 及其所有子包 |
-| **已有插件** | 5 | plugin-form, plugin-chart, plugin-data-fetch, plugin-animation |
-| **新包** | 8 | router-fs, ssg, isr, ssr-enhanced, api, bundler, hmr, runtime-edge, testing |
-| **新插件** | 3 | plugin-data, plugin-validation, plugin-perf |
-| **完善包** | 5 | plugin-auth, plugin-i18n, plugin-storage, plugin-logger, plugin-theme |
+| 类型           | 数量 | 说明                                                                        |
+| -------------- | ---- | --------------------------------------------------------------------------- |
+| **已有核心包** | 4    | core, router, store, ssr（UI 计划迁出）                                     |
+| **已有工具包** | 30+  | @lytjs/common 及其所有子包                                                  |
+| **已有插件**   | 5    | plugin-form, plugin-chart, plugin-data-fetch, plugin-animation              |
+| **新包**       | 8    | router-fs, ssg, isr, ssr-enhanced, api, bundler, hmr, runtime-edge, testing |
+| **新插件**     | 3    | plugin-data, plugin-validation, plugin-perf                                 |
+| **完善包**     | 5    | plugin-auth, plugin-i18n, plugin-storage, plugin-logger, plugin-theme       |
 
 **总计**：需要新建/完善 16 个包
 
@@ -291,18 +292,19 @@ LytJS 生态系统
 
 **现有工具包概览**：
 
-| 包名 | 功能 |
-|------|------|
-| `@lytjs/common-is` | 类型判断工具 |
-| `@lytjs/common-object` | 对象操作工具 |
-| `@lytjs/common-string` | 字符串处理工具 |
-| `@lytjs/common-validate` | 验证规则工具 |
-| `@lytjs/common-http` | HTTP 客户端工具 |
-| `@lytjs/common-cache` | 缓存相关工具 |
-| `@lytjs/common-storage` | 存储相关工具 |
-| ... | 更多 20+ 个工具包 |
+| 包名                     | 功能              |
+| ------------------------ | ----------------- |
+| `@lytjs/common-is`       | 类型判断工具      |
+| `@lytjs/common-object`   | 对象操作工具      |
+| `@lytjs/common-string`   | 字符串处理工具    |
+| `@lytjs/common-validate` | 验证规则工具      |
+| `@lytjs/common-http`     | HTTP 客户端工具   |
+| `@lytjs/common-cache`    | 缓存相关工具      |
+| `@lytjs/common-storage`  | 存储相关工具      |
+| ...                      | 更多 20+ 个工具包 |
 
 **开发建议**：
+
 - 新功能优先考虑是否可归入现有工具包
 - 如需新增通用工具，应在 `@lytjs/common-monorepo` 下按细分原则添加
 - 新包开发应充分利用现有工具，避免重复造轮子
@@ -312,6 +314,7 @@ LytJS 生态系统
 #### 关于 common-utils 的改造建议
 
 **现状分析**：
+
 - 原计划中的 `common-utils` 命名与现有架构不符
 - 现有 `@lytjs/common` 已经采用了功能细分的 monorepo 模式
 - 已有 30+ 个细分功能包覆盖各类工具需求
@@ -323,6 +326,7 @@ LytJS 生态系统
 **重要发现**：现有架构已经有非常优雅的解决方案！
 
 **现有架构分析**：
+
 - [`@lytjs/core`](file:///f:/trae/lytjs/packages/core) 包中已有 [`common-integration.ts`](file:///f:/trae/lytjs/packages/core/src/common-integration.ts) 模块
 - 该模块采用**接口 + 注册模式**，完美避免循环依赖
 
@@ -332,7 +336,7 @@ LytJS 生态系统
 ├── @lytjs/core/
 │   └── common-integration.ts  # 集成点（仅类型，无运行时依赖）
 │       ├── HttpClientLike 接口
-│       ├── QueryUtilsLike 接口  
+│       ├── QueryUtilsLike 接口
 │       ├── SecurityUtilsLike 接口
 │       ├── CacheUtilsLike 接口
 │       ├── registerIntegrations()  # 注册点
@@ -346,10 +350,12 @@ LytJS 生态系统
 ```
 
 **依赖方向**：
+
 - ✅ `@lytjs/core` 依赖 `@lytjs/common-*`（单向依赖，无循环）
 - ✅ `@lytjs/common-*` 不依赖 core（纯工具）
 
 **改造建议**：
+
 1. **删除"common-utils"计划**
 2. **工具层完全保持在 `@lytjs/common` monorepo 中**
 3. **core 与 common 的交互通过集成点模式**：
@@ -365,11 +371,12 @@ registerIntegrations({
   http,
   query,
   security,
-  cache
+  cache,
 });
 ```
 
 **方案 2：如有全新通用工具集合，新增细分包**
+
 - 如果确实有一类新的通用工具，按细分原则在 `packages/common/packages/` 下新建对应子包
 - 命名规范：`@lytjs/common-xxx`（xxx 为功能类别）
 
@@ -378,21 +385,22 @@ registerIntegrations({
 #### 关于 shared-types 的架构评估
 
 **现状分析**：
+
 - 项目中**已经存在** [`@lytjs/shared-types`](file:///f:/trae/lytjs/packages/shared-types) 包
 - 这是一个**经过精心设计**的架构方案！
 - 包的作用：提取多个子包之间共享的类型定义，避免循环依赖
 
 **现有 shared-types 的组成**：
 
-| 类型类别 | 包含内容 | 用途说明 |
-|----------|----------|----------|
-| **类型工具** | `Prettify`, `PartialExcept`, `RequiredExcept`, `Mutable`, `DeepMutable`, `Nullable`, `Optional`, `Maybe`, `MaybeArray`, `PromiseOrValue` 等 70+ 个类型工具 | 全局通用的类型帮助工具，避免重复定义 |
-| **RefLike** | 最小化的 Ref 接口 | 用于类型保护，避免从 `@lytjs/reactivity` 导入产生循环依赖 |
-| **AppContext** | `BaseAppConfig`, `BaseAppContext`, `Plugin` | 应用上下文基础类型，被 core、component、renderer 等包共享 |
-| **VNode** | `Props` | VNode 属性基础类型 |
-| **Debug** | `ReactiveEffectRef`, `DebuggerEvent` | 调试系统共享类型 |
-| **Renderer** | `Renderer`, `Directive`, `DirectiveBinding`, `DirectiveArguments` | 渲染器和指令共享接口 |
-| **Component** | `SlotFunction`, `InternalSlots`, `ComponentPublicInstance`, `ComponentInternalInstance`, `ComponentOptionsBase` | 组件系统核心类型，被多个包共享使用 |
+| 类型类别       | 包含内容                                                                                                                                                   | 用途说明                                                  |
+| -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| **类型工具**   | `Prettify`, `PartialExcept`, `RequiredExcept`, `Mutable`, `DeepMutable`, `Nullable`, `Optional`, `Maybe`, `MaybeArray`, `PromiseOrValue` 等 70+ 个类型工具 | 全局通用的类型帮助工具，避免重复定义                      |
+| **RefLike**    | 最小化的 Ref 接口                                                                                                                                          | 用于类型保护，避免从 `@lytjs/reactivity` 导入产生循环依赖 |
+| **AppContext** | `BaseAppConfig`, `BaseAppContext`, `Plugin`                                                                                                                | 应用上下文基础类型，被 core、component、renderer 等包共享 |
+| **VNode**      | `Props`                                                                                                                                                    | VNode 属性基础类型                                        |
+| **Debug**      | `ReactiveEffectRef`, `DebuggerEvent`                                                                                                                       | 调试系统共享类型                                          |
+| **Renderer**   | `Renderer`, `Directive`, `DirectiveBinding`, `DirectiveArguments`                                                                                          | 渲染器和指令共享接口                                      |
+| **Component**  | `SlotFunction`, `InternalSlots`, `ComponentPublicInstance`, `ComponentInternalInstance`, `ComponentOptionsBase`                                            | 组件系统核心类型，被多个包共享使用                        |
 
 **评估结论**：**保留现有架构！**
 
@@ -450,6 +458,7 @@ registerIntegrations({
 **核心目标**：js-framework-benchmark 集成、Vapor 模式增强、UI 组件库优化
 
 **关键任务**：
+
 - 性能基准测试集成（✅ 已完成）
 - Vapor 模式增强（✅ 已完成）
 - UI 组件库增强（✅ 已完成）
@@ -461,6 +470,7 @@ registerIntegrations({
 **核心目标**：SSR 增强与生态完善
 
 **关键任务**：
+
 - 流式 SSR 稳定化（✅ 已完成）
 - 服务端组件完善（✅ 已完成）
 - 官方插件增强（✅ 已完成）
@@ -473,6 +483,7 @@ registerIntegrations({
 **核心目标**：第三方生态建设、企业级特性增强
 
 **关键任务**：
+
 - 错误边界增强（✅ 已完成）
 - 第三方生态建设（✅ 已完成）
 - 社区治理文档（✅ 已完成）
@@ -484,6 +495,7 @@ registerIntegrations({
 **核心目标**：编译时优化、内存优化、测试体系完善
 
 **关键任务**：
+
 - 编译时优化（✅ 已完成）
 - 内存优化（✅ 已完成）
 - 测试体系完善（✅ 已完成）
@@ -498,15 +510,16 @@ registerIntegrations({
 
 目标：完善 LytJS 基础层的核心能力
 
-| 任务 | 包名 | 类型 | 预计时间 | 依赖 | 说明 |
-|------|------|------|----------|------|------|
-| 1.1 | @lytjs/plugin-validation | 新增 | 5 天 | @lytjs/core, @lytjs/plugin-form | 验证插件，表单验证是高频需求 |
-| 1.2 | @lytjs/plugin-data | 新增 | 6 天 | @lytjs/core, @lytjs/store | 增强版数据获取插件，替代 plugin-data-fetch |
-| 1.3 | @lytjs/ssr-enhanced | 新增 | 7 天 | @lytjs/core, @lytjs/ssr | 增强版 SSR，流式 SSR、组件级缓存等 |
-| 1.4 | @lytjs/router-fs | 新增 | 5 天 | @lytjs/core, @lytjs/router | 从 LytX 提取，文件系统路由引擎 |
-| 1.5 | @lytjs/api | 新增 | 5 天 | @lytjs/core | 从 LytX 提取，API 路由引擎 |
+| 任务 | 包名                     | 类型 | 预计时间 | 依赖                            | 说明                                       |
+| ---- | ------------------------ | ---- | -------- | ------------------------------- | ------------------------------------------ |
+| 1.1  | @lytjs/plugin-validation | 新增 | 5 天     | @lytjs/core, @lytjs/plugin-form | 验证插件，表单验证是高频需求               |
+| 1.2  | @lytjs/plugin-data       | 新增 | 6 天     | @lytjs/core, @lytjs/store       | 增强版数据获取插件，替代 plugin-data-fetch |
+| 1.3  | @lytjs/ssr-enhanced      | 新增 | 7 天     | @lytjs/core, @lytjs/ssr         | 增强版 SSR，流式 SSR、组件级缓存等         |
+| 1.4  | @lytjs/router-fs         | 新增 | 5 天     | @lytjs/core, @lytjs/router      | 从 LytX 提取，文件系统路由引擎             |
+| 1.5  | @lytjs/api               | 新增 | 5 天     | @lytjs/core                     | 从 LytX 提取，API 路由引擎                 |
 
 **阶段一交付物**：
+
 - 5 个新包
 - 完善的类型定义
 - 基础测试用例
@@ -518,14 +531,15 @@ registerIntegrations({
 
 目标：提供静态生成和构建工具的基础能力
 
-| 任务 | 包名 | 类型 | 预计时间 | 依赖 | 说明 |
-|------|------|------|----------|------|------|
-| 2.1 | @lytjs/ssg | 新增 | 5 天 | @lytjs/core, @lytjs/ssr | 从 LytX 提取，静态站点生成 |
-| 2.2 | @lytjs/isr | 新增 | 4 天 | @lytjs/core, @lytjs/ssg | 从 LytX 提取，增量静态再生成 |
-| 2.3 | @lytjs/bundler | 新增 | 5 天 | @lytjs/core | 从 LytX 提取，Vite/Webpack 基础集成 |
-| 2.4 | @lytjs/hmr | 新增 | 4 天 | @lytjs/core, @lytjs/bundler | 从 LytX 提取，热模块替换 |
+| 任务 | 包名           | 类型 | 预计时间 | 依赖                        | 说明                                |
+| ---- | -------------- | ---- | -------- | --------------------------- | ----------------------------------- |
+| 2.1  | @lytjs/ssg     | 新增 | 5 天     | @lytjs/core, @lytjs/ssr     | 从 LytX 提取，静态站点生成          |
+| 2.2  | @lytjs/isr     | 新增 | 4 天     | @lytjs/core, @lytjs/ssg     | 从 LytX 提取，增量静态再生成        |
+| 2.3  | @lytjs/bundler | 新增 | 5 天     | @lytjs/core                 | 从 LytX 提取，Vite/Webpack 基础集成 |
+| 2.4  | @lytjs/hmr     | 新增 | 4 天     | @lytjs/core, @lytjs/bundler | 从 LytX 提取，热模块替换            |
 
 **阶段二交付物**：
+
 - 4 个新包
 - 完善的类型定义
 - 基础测试用例
@@ -537,15 +551,16 @@ registerIntegrations({
 
 目标：完善 LytJS 基础层的生态包
 
-| 任务 | 包名 | 类型 | 预计时间 | 依赖 | 说明 |
-|------|------|------|----------|------|------|
-| 3.1 | @lytjs/plugin-i18n | 完善 | 4 天 | @lytjs/core, @lytjs/router | 完善国际化插件 |
-| 3.2 | @lytjs/plugin-auth | 完善 | 5 天 | @lytjs/core, @lytjs/store, @lytjs/router | 完善认证插件 |
-| 3.3 | @lytjs/plugin-storage | 完善 | 4 天 | @lytjs/core, @lytjs/store | 完善存储插件 |
-| 3.4 | @lytjs/runtime-edge | 新增 | 5 天 | @lytjs/core | Edge 运行时适配 |
-| 3.5 | @lytjs/testing | 新增 | 5 天 | @lytjs/core, @lytjs/router, @lytjs/store | 测试工具库 |
+| 任务 | 包名                  | 类型 | 预计时间 | 依赖                                     | 说明            |
+| ---- | --------------------- | ---- | -------- | ---------------------------------------- | --------------- |
+| 3.1  | @lytjs/plugin-i18n    | 完善 | 4 天     | @lytjs/core, @lytjs/router               | 完善国际化插件  |
+| 3.2  | @lytjs/plugin-auth    | 完善 | 5 天     | @lytjs/core, @lytjs/store, @lytjs/router | 完善认证插件    |
+| 3.3  | @lytjs/plugin-storage | 完善 | 4 天     | @lytjs/core, @lytjs/store                | 完善存储插件    |
+| 3.4  | @lytjs/runtime-edge   | 新增 | 5 天     | @lytjs/core                              | Edge 运行时适配 |
+| 3.5  | @lytjs/testing        | 新增 | 5 天     | @lytjs/core, @lytjs/router, @lytjs/store | 测试工具库      |
 
 **阶段三交付物**：
+
 - 2 个新包，3 个完善包
 - 完善的类型定义
 - 完整测试用例
@@ -557,13 +572,14 @@ registerIntegrations({
 
 目标：提供可选的增强功能
 
-| 任务 | 包名 | 类型 | 预计时间 | 依赖 | 说明 |
-|------|------|------|----------|------|------|
-| 4.1 | @lytjs/plugin-logger | 完善 | 3 天 | @lytjs/core | 完善日志插件 |
-| 4.2 | @lytjs/plugin-theme | 完善 | 3 天 | @lytjs/core, @lytjs/store | 完善主题插件 |
-| 4.3 | @lytjs/plugin-perf | 新增 | 4 天 | @lytjs/core | 性能监控插件 |
+| 任务 | 包名                 | 类型 | 预计时间 | 依赖                      | 说明         |
+| ---- | -------------------- | ---- | -------- | ------------------------- | ------------ |
+| 4.1  | @lytjs/plugin-logger | 完善 | 3 天     | @lytjs/core               | 完善日志插件 |
+| 4.2  | @lytjs/plugin-theme  | 完善 | 3 天     | @lytjs/core, @lytjs/store | 完善主题插件 |
+| 4.3  | @lytjs/plugin-perf   | 新增 | 4 天     | @lytjs/core               | 性能监控插件 |
 
 **阶段四交付物**：
+
 - 1 个新包，2 个完善包
 - 完善的类型定义
 - 完整测试用例
@@ -574,6 +590,7 @@ registerIntegrations({
 ### 5.3 v7.0+：未来探索 ⏸️ 探索中
 
 **革命性升级**：
+
 - 更智能的编译器
 - AI 辅助开发
 - 多语言支持（Rust/WebAssembly）
@@ -588,6 +605,7 @@ registerIntegrations({
 **目标**：提供类型安全的表单验证能力
 
 **功能需求**：
+
 - ✅ 声明式验证规则
 - ✅ 类型安全的验证
 - ✅ 同步/异步验证
@@ -596,12 +614,14 @@ registerIntegrations({
 - ✅ 与 @lytjs/plugin-form 深度集成
 
 **验收标准**：
+
 - 覆盖常见验证场景（必填、邮箱、手机号、长度、范围等）
 - 支持自定义验证规则
 - 完善的 TypeScript 类型定义
 - 单元测试覆盖率 >= 85%
 
 **文件结构**：
+
 ```
 @lytjs/plugin-validation/
 ├── src/
@@ -627,6 +647,7 @@ registerIntegrations({
 **目标**：提供强大的数据获取和状态管理能力
 
 **功能需求**：
+
 - ✅ 请求/响应拦截器
 - ✅ 数据缓存策略（TTL、LRU 等）
 - ✅ 乐观更新
@@ -637,12 +658,14 @@ registerIntegrations({
 - ✅ 与 @lytjs/store 深度集成
 
 **验收标准**：
+
 - 支持常见的 HTTP 方法
 - 提供灵活的缓存策略
 - 与 store 无缝集成
 - 单元测试覆盖率 >= 80%
 
 **文件结构**：
+
 ```
 @lytjs/plugin-data/
 ├── src/
@@ -670,6 +693,7 @@ registerIntegrations({
 **目标**：提供企业级 SSR 能力
 
 **功能需求**：
+
 - ✅ 流式 SSR
 - ✅ 组件级缓存
 - ✅ 代码分割
@@ -677,6 +701,7 @@ registerIntegrations({
 - ✅ 与部署平台的基础适配接口
 
 **验收标准**：
+
 - 流式渲染性能提升 >= 30%
 - 组件级缓存正常工作
 - 完善的 TypeScript 类型定义
@@ -689,6 +714,7 @@ registerIntegrations({
 **目标**：提供基于文件系统的路由生成能力（从 LytX 提取）
 
 **功能需求**：
+
 - ✅ 基于文件系统自动生成路由
 - ✅ 不绑定具体目录约定（用户自己指定目录）
 - ✅ 支持动态路由
@@ -696,6 +722,7 @@ registerIntegrations({
 - ✅ 可独立使用，不依赖 LytX
 
 **验收标准**：
+
 - 灵活的目录配置
 - 支持各种路由模式
 - 与 @lytjs/router 无缝集成
@@ -708,6 +735,7 @@ registerIntegrations({
 **目标**：提供 API 路由的基础能力（从 LytX 提取）
 
 **功能需求**：
+
 - ✅ 基于文件系统的 API 路由
 - ✅ 不绑定具体目录约定
 - ✅ 不绑定具体服务器框架
@@ -715,6 +743,7 @@ registerIntegrations({
 - ✅ 可独立使用，不依赖 LytX
 
 **验收标准**：
+
 - 灵活的目录配置
 - 支持 RESTful API 风格
 - 中间件机制完善
@@ -727,6 +756,7 @@ registerIntegrations({
 **目标**：提供静态站点生成的核心能力（从 LytX 提取）
 
 **功能需求**：
+
 - ✅ 静态页面生成
 - ✅ 不绑定具体渲染函数
 - ✅ 不绑定具体部署平台
@@ -734,6 +764,7 @@ registerIntegrations({
 - ✅ 可独立使用，不依赖 LytX
 
 **验收标准**：
+
 - 支持各种渲染方式
 - 构建性能优化
 - 与 @lytjs/ssr 无缝集成
@@ -746,12 +777,14 @@ registerIntegrations({
 **目标**：提供增量静态再生成的能力（从 LytX 提取）
 
 **功能需求**：
+
 - ✅ 增量更新页面
 - ✅ 基于时间或事件触发
 - ✅ 与 @lytjs/ssg 深度集成
 - ✅ 可独立使用，不依赖 LytX
 
 **验收标准**：
+
 - ISR 功能正常工作
 - 与 SSG 无缝集成
 - 单元测试覆盖率 >= 75%
@@ -763,12 +796,14 @@ registerIntegrations({
 **目标**：提供 Vite/Webpack 的基础集成（从 LytX 提取）
 
 **功能需求**：
+
 - ✅ Vite 集成
 - ✅ Webpack 集成（可选）
 - ✅ 配置预设
 - ✅ 可独立使用，不依赖 LytX
 
 **验收标准**：
+
 - Vite 集成完善
 - 配置简单易用
 - 单元测试覆盖率 >= 70%
@@ -780,12 +815,14 @@ registerIntegrations({
 **目标**：提供热模块替换的核心能力（从 LytX 提取）
 
 **功能需求**：
+
 - ✅ 组件热更新
 - ✅ 状态保持
 - ✅ 与 @lytjs/bundler 集成
 - ✅ 可独立使用，不依赖 LytX
 
 **验收标准**：
+
 - HMR 功能正常工作
 - 状态保持正常
 - 单元测试覆盖率 >= 70%
@@ -796,11 +833,11 @@ registerIntegrations({
 
 ### 7.1 优先级框架
 
-| 优先级 | 标准 | 资源占比 |
-|------|------|----------|
-| 🔴 P0 | 核心优势、用户痛点 | 50% |
-| 🟡 P1 | 生态建设、体验优化 | 30% |
-| 🟢 P2 | 长期探索、创新 | 20% |
+| 优先级 | 标准               | 资源占比 |
+| ------ | ------------------ | -------- |
+| 🔴 P0  | 核心优势、用户痛点 | 50%      |
+| 🟡 P1  | 生态建设、体验优化 | 30%      |
+| 🟢 P2  | 长期探索、创新     | 20%      |
 
 ### 7.2 里程碑时间线
 
@@ -834,14 +871,14 @@ registerIntegrations({
 ✅ **@lytjs/runtime-edge** - 边缘运行时支持已完成  
 ✅ **@lytjs/plugin-testing** - 测试插件已完成  
 ✅ **Tree-shaking 优化** - 所有包已添加 sideEffects: false 和 treeshake 优化  
-✅ **版本升级** - 所有相关包已升级至 v6.5.0  
+✅ **版本升级** - 所有相关包已升级至 v6.5.0
 
 ### LytJS v6.5 开发已完成！
 
 ### 下一步行动（v6.6）
 
-1. 开始 v6.6 生态系统模块化重构  
-2. 创建 web-framework 和 ssr-kit 功能域  
+1. 开始 v6.6 生态系统模块化重构
+2. 创建 web-framework 和 ssr-kit 功能域
 3. 添加中间件生态、HTTP 服务器、元数据管理等新包
 
 ---
@@ -851,6 +888,7 @@ registerIntegrations({
 **目标**：对 L6 生态系统层进行模块化重构，参考 `@lytjs/common` 的 monorepo 架构，提升可维护性和扩展性。
 
 **核心原则**：
+
 - ✅ **不破坏 8 层架构**：所有改动都在 L6 生态系统层内部
 - ✅ **完全向后兼容**：现有包的导入路径和 API 保持不变
 - ✅ **统一模块化架构**：web-framework 和 ssr-kit 采用相同的组织模式
@@ -862,18 +900,19 @@ registerIntegrations({
 
 **目标**：创建 web-framework 功能域，整合路由、API、中间件等包
 
-| 任务 | 包名 | 类型 | 预计时间 | 依赖 | 说明 |
-|------|------|------|----------|------|------|
-| 1.1 | web-framework 结构 | 重构 | 3 天 | - | 创建 web-framework monorepo 目录结构 |
-| 1.2 | @lytjs/middleware | 新增 | 5 天 | @lytjs/core | 中间件核心系统（洋葱圈模型） |
-| 1.3 | @lytjs/middleware-cors | 新增 | 3 天 | @lytjs/middleware | CORS 中间件 |
-| 1.4 | @lytjs/middleware-auth | 新增 | 4 天 | @lytjs/middleware | 认证中间件 |
-| 1.5 | @lytjs/middleware-rate-limit | 新增 | 4 天 | @lytjs/middleware | 限流中间件 |
-| 1.6 | @lytjs/http-server | 新增 | 6 天 | @lytjs/middleware | HTTP 服务器（基于 Fetch API） |
-| 1.7 | @lytjs/metadata | 新增 | 4 天 | - | 元数据管理（SEO、OpenGraph 等） |
-| 1.8 | 迁移现有包 | 迁移 | 2 天 | - | 将 router、router-fs、api 迁移到 web-framework |
+| 任务 | 包名                         | 类型 | 预计时间 | 依赖              | 说明                                           |
+| ---- | ---------------------------- | ---- | -------- | ----------------- | ---------------------------------------------- |
+| 1.1  | web-framework 结构           | 重构 | 3 天     | -                 | 创建 web-framework monorepo 目录结构           |
+| 1.2  | @lytjs/middleware            | 新增 | 5 天     | @lytjs/core       | 中间件核心系统（洋葱圈模型）                   |
+| 1.3  | @lytjs/middleware-cors       | 新增 | 3 天     | @lytjs/middleware | CORS 中间件                                    |
+| 1.4  | @lytjs/middleware-auth       | 新增 | 4 天     | @lytjs/middleware | 认证中间件                                     |
+| 1.5  | @lytjs/middleware-rate-limit | 新增 | 4 天     | @lytjs/middleware | 限流中间件                                     |
+| 1.6  | @lytjs/http-server           | 新增 | 6 天     | @lytjs/middleware | HTTP 服务器（基于 Fetch API）                  |
+| 1.7  | @lytjs/metadata              | 新增 | 4 天     | -                 | 元数据管理（SEO、OpenGraph 等）                |
+| 1.8  | 迁移现有包                   | 迁移 | 2 天     | -                 | 将 router、router-fs、api 迁移到 web-framework |
 
 **阶段一交付物**：
+
 - web-framework 功能域完整结构
 - 7 个新包（middleware 系列 + http-server + metadata）
 - 3 个现有包迁移
@@ -886,16 +925,17 @@ registerIntegrations({
 
 **目标**：创建 ssr-kit 功能域，将 SSR 相关包进行模块化组织
 
-| 任务 | 包名 | 类型 | 预计时间 | 依赖 | 说明 |
-|------|------|------|----------|------|------|
-| 2.1 | ssr-kit 结构 | 重构 | 3 天 | - | 创建 ssr-kit monorepo 目录结构 |
-| 2.2 | @lytjs/ssg | 拆分 | 4 天 | @lytjs/ssr | 从现有 ssr 包中拆分为独立包 |
-| 2.3 | @lytjs/cache-isr | 新增 | 5 天 | @lytjs/common-cache | ISR 缓存系统（从 LytX 提取） |
-| 2.4 | @lytjs/html-renderer | 新增 | 5 天 | @lytjs/metadata | HTML 渲染器（从 LytX 提取） |
-| 2.5 | 迁移现有包 | 迁移 | 2 天 | - | 将 ssr、hmr 迁移到 ssr-kit |
-| 2.6 | 增强 @lytjs/ssr | 增强 | 3 天 | - | 保持现有 API，内部结构优化 |
+| 任务 | 包名                 | 类型 | 预计时间 | 依赖                | 说明                           |
+| ---- | -------------------- | ---- | -------- | ------------------- | ------------------------------ |
+| 2.1  | ssr-kit 结构         | 重构 | 3 天     | -                   | 创建 ssr-kit monorepo 目录结构 |
+| 2.2  | @lytjs/ssg           | 拆分 | 4 天     | @lytjs/ssr          | 从现有 ssr 包中拆分为独立包    |
+| 2.3  | @lytjs/cache-isr     | 新增 | 5 天     | @lytjs/common-cache | ISR 缓存系统（从 LytX 提取）   |
+| 2.4  | @lytjs/html-renderer | 新增 | 5 天     | @lytjs/metadata     | HTML 渲染器（从 LytX 提取）    |
+| 2.5  | 迁移现有包           | 迁移 | 2 天     | -                   | 将 ssr、hmr 迁移到 ssr-kit     |
+| 2.6  | 增强 @lytjs/ssr      | 增强 | 3 天     | -                   | 保持现有 API，内部结构优化     |
 
 **阶段二交付物**：
+
 - ssr-kit 功能域完整结构
 - 3 个新包（ssg、cache-isr、html-renderer）
 - 2 个现有包迁移
@@ -908,14 +948,15 @@ registerIntegrations({
 
 **目标**：更新构建工具、文档和 workspace 配置
 
-| 任务 | 范围 | 类型 | 预计时间 | 说明 |
-|------|------|------|----------|------|
-| 3.1 | pnpm-workspace.yaml | 更新 | 2 天 | 更新 workspace 配置 |
-| 3.2 | package.json scripts | 更新 | 2 天 | 更新构建脚本 |
-| 3.3 | 文档更新 | 更新 | 5 天 | 更新架构文档、API 文档 |
-| 3.4 | 迁移指南 | 新增 | 3 天 | 为用户提供迁移指南（如需要） |
+| 任务 | 范围                 | 类型 | 预计时间 | 说明                         |
+| ---- | -------------------- | ---- | -------- | ---------------------------- |
+| 3.1  | pnpm-workspace.yaml  | 更新 | 2 天     | 更新 workspace 配置          |
+| 3.2  | package.json scripts | 更新 | 2 天     | 更新构建脚本                 |
+| 3.3  | 文档更新             | 更新 | 5 天     | 更新架构文档、API 文档       |
+| 3.4  | 迁移指南             | 新增 | 3 天     | 为用户提供迁移指南（如需要） |
 
 **阶段三交付物**：
+
 - 更新的构建工具配置
 - 完整的架构文档
 - 迁移指南（如有必要）
@@ -951,6 +992,7 @@ packages/ecosystem/packages/{domain}/
 #### web-framework 功能域详解
 
 **包含包**：
+
 - `@lytjs/router` - 核心路由（已有）
 - `@lytjs/router-fs` - 文件系统路由（已有）
 - `@lytjs/api` - API 路由（已有）
@@ -962,14 +1004,16 @@ packages/ecosystem/packages/{domain}/
 - `@lytjs/metadata` - 元数据管理
 
 **职责划分**：
+
 - 路由系统（router、router-fs、api）
-- 中间件生态（middleware、middleware-*）
+- 中间件生态（middleware、middleware-\*）
 - 服务器层（http-server）
 - 元数据层（metadata）
 
 #### ssr-kit 功能域详解
 
 **包含包**：
+
 - `@lytjs/ssr` - SSR 核心（已有）
 - `@lytjs/ssg` - 静态站点生成
 - `@lytjs/cache-isr` - ISR 缓存
@@ -977,6 +1021,7 @@ packages/ecosystem/packages/{domain}/
 - `@lytjs/hmr` - 热模块替换（已有）
 
 **职责划分**：
+
 - 渲染核心（ssr）
 - 静态生成（ssg、html-renderer）
 - 缓存层（cache-isr）
@@ -987,6 +1032,7 @@ packages/ecosystem/packages/{domain}/
 **关键原则**：用户代码无需修改！
 
 **技术方案**：
+
 1. **保持包名不变**：`@lytjs/router` 等包名继续使用
 2. **保持导出 API 不变**：现有导入语句继续工作
 3. **双轨运行**：同时保留旧位置和新位置（过渡期）
@@ -994,6 +1040,7 @@ packages/ecosystem/packages/{domain}/
 5. **重定向**：通过 package.json 的 exports 字段保持兼容性
 
 **示例**：
+
 ```typescript
 // 现有代码无需修改
 import { createRouter } from '@lytjs/router';
@@ -1006,6 +1053,7 @@ import { createRouter } from '@lytjs/router';
 ### 5.6 v7.0+：未来探索 ⏸️ 探索中
 
 **革命性升级**：
+
 - 更智能的编译器
 - AI 辅助开发
 - 多语言支持（Rust/WebAssembly）
@@ -1017,53 +1065,53 @@ import { createRouter } from '@lytjs/router';
 
 ### 8.1 技术指标
 
-| 指标 | 目标 | 测量方式 |
-|------|------|----------|
-| **性能排名** | js-framework-benchmark 前 3 | 官方排名 |
-| **包体积** | 核心 < 8KB（gzip） | size-limit |
-| **测试覆盖率** | 核心包 > 95% | vitest coverage |
-| **内存占用** | 比 v6.0 降低 40% | 基准测试 |
-| **编译速度** | 比 v6.0 提升 50% | 基准测试 |
-| **核心层新包数** | 16 个包全部完成 | 包统计 |
+| 指标             | 目标                        | 测量方式        |
+| ---------------- | --------------------------- | --------------- |
+| **性能排名**     | js-framework-benchmark 前 3 | 官方排名        |
+| **包体积**       | 核心 < 8KB（gzip）          | size-limit      |
+| **测试覆盖率**   | 核心包 > 95%                | vitest coverage |
+| **内存占用**     | 比 v6.0 降低 40%            | 基准测试        |
+| **编译速度**     | 比 v6.0 提升 50%            | 基准测试        |
+| **核心层新包数** | 16 个包全部完成             | 包统计          |
 
 ### 8.2 生态指标
 
-| 指标 | 目标 | 测量方式 |
-|------|------|----------|
-| **官方插件** | 11+ | 插件列表 |
-| **第三方插件** | 20+ | 社区统计 |
-| **实战案例** | 20+ | 案例展示 |
-| **企业用户** | 5+ | 案例展示 |
+| 指标           | 目标 | 测量方式 |
+| -------------- | ---- | -------- |
+| **官方插件**   | 11+  | 插件列表 |
+| **第三方插件** | 20+  | 社区统计 |
+| **实战案例**   | 20+  | 案例展示 |
+| **企业用户**   | 5+   | 案例展示 |
 
 ### 8.3 社区指标
 
-| 指标 | 目标 | 测量方式 |
-|------|------|----------|
-| **GitHub Stars** | 5000+ | GitHub |
-| **贡献者** | 50+ | GitHub |
-| **月活跃用户** | 1000+ | npm 统计 |
-| **下载量** | 50K+/月 | npm 统计 |
-| **社区活跃度** | 高 | 问题响应速度 |
+| 指标             | 目标    | 测量方式     |
+| ---------------- | ------- | ------------ |
+| **GitHub Stars** | 5000+   | GitHub       |
+| **贡献者**       | 50+     | GitHub       |
+| **月活跃用户**   | 1000+   | npm 统计     |
+| **下载量**       | 50K+/月 | npm 统计     |
+| **社区活跃度**   | 高      | 问题响应速度 |
 
 ### 8.4 质量指标
 
-| 指标 | 目标 | 测量方式 |
-|------|------|----------|
-| **Bug 修复速度** | 24小时内响应 | 问题追踪 |
-| **文档完整性** | 100% API 覆盖 | 文档检查 |
-| **向后兼容** | 95% 兼容性 | 测试验证 |
-| **CI/CD 通过率** | 99%+ | CI 统计 |
+| 指标             | 目标          | 测量方式 |
+| ---------------- | ------------- | -------- |
+| **Bug 修复速度** | 24小时内响应  | 问题追踪 |
+| **文档完整性**   | 100% API 覆盖 | 文档检查 |
+| **向后兼容**     | 95% 兼容性    | 测试验证 |
+| **CI/CD 通过率** | 99%+          | CI 统计  |
 
 ### 8.5 v6.6 专项成功指标
 
-| 指标 | 目标 | 测量方式 |
-|------|------|----------|
-| **架构一致性** | web-framework 和 ssr-kit 采用相同模式 | 代码审查 |
-| **向后兼容性** | 100% API 兼容 | 自动化测试验证 |
-| **新增包数** | 10+ 个新生态包 | 包统计 |
-| **模块化覆盖率** | 所有生态包按功能域组织 | 目录结构检查 |
-| **文档完整性** | 100% 新包有完整文档 | 文档检查 |
-| **测试覆盖率** | 新包测试覆盖率 > 80% | vitest coverage |
+| 指标             | 目标                                  | 测量方式        |
+| ---------------- | ------------------------------------- | --------------- |
+| **架构一致性**   | web-framework 和 ssr-kit 采用相同模式 | 代码审查        |
+| **向后兼容性**   | 100% API 兼容                         | 自动化测试验证  |
+| **新增包数**     | 10+ 个新生态包                        | 包统计          |
+| **模块化覆盖率** | 所有生态包按功能域组织                | 目录结构检查    |
+| **文档完整性**   | 100% 新包有完整文档                   | 文档检查        |
+| **测试覆盖率**   | 新包测试覆盖率 > 80%                  | vitest coverage |
 
 ### 8.6 关键成功因素
 
@@ -1076,7 +1124,7 @@ import { createRouter } from '@lytjs/router';
 ✅ 提供优秀的开发体验  
 ✅ 保持 100% 向后兼容性  
 ✅ 建立企业用户案例  
-✅ 成功完成 UI 组件库迁出（如有）  
+✅ 成功完成 UI 组件库迁出（如有）
 
 ---
 
@@ -1084,46 +1132,46 @@ import { createRouter } from '@lytjs/router';
 
 ### 构建器多适配
 
-| 任务 | 优先级 | 说明 |
-|------|------|------|
-| **Webpack 适配** | 🟡 中 | 探索 Webpack 适配方案 |
-| **Rollup 适配** | 🟡 中 | 探索 Rollup 适配方案 |
+| 任务             | 优先级 | 说明                  |
+| ---------------- | ------ | --------------------- |
+| **Webpack 适配** | 🟡 中  | 探索 Webpack 适配方案 |
+| **Rollup 适配**  | 🟡 中  | 探索 Rollup 适配方案  |
 
 **暂缓原因**：当前 Vite 适配方案已足够满足需求，暂不投入资源。
 
 ### 跨平台支持
 
-| 任务 | 优先级 | 说明 |
-|------|------|------|
-| **微信小程序适配器** | 🟢 低 | 扩展到更多平台 |
-| **React Native 适配器** | 🟢 低 | React Native 适配器（概念验证） |
-| **跨平台抽象层完善** | 🟢 低 | 跨平台抽象层完善 |
+| 任务                    | 优先级 | 说明                            |
+| ----------------------- | ------ | ------------------------------- |
+| **微信小程序适配器**    | 🟢 低  | 扩展到更多平台                  |
+| **React Native 适配器** | 🟢 低  | React Native 适配器（概念验证） |
+| **跨平台抽象层完善**    | 🟢 低  | 跨平台抽象层完善                |
 
 **暂缓原因**：当前专注于 Web 平台深耕，跨平台支持暂不投入资源。
 
 ### 全新渲染模式
 
-| 任务 | 优先级 | 说明 |
-|------|------|------|
-| **WebGPU 渲染探索** | 🟢 低 | 探索 WebGPU 渲染 |
-| **VR/AR 支持** | 🟢 低 | VR/AR 支持 |
-| **3D 场景优化** | 🟢 低 | 3D 场景优化 |
+| 任务                | 优先级 | 说明             |
+| ------------------- | ------ | ---------------- |
+| **WebGPU 渲染探索** | 🟢 低  | 探索 WebGPU 渲染 |
+| **VR/AR 支持**      | 🟢 低  | VR/AR 支持       |
+| **3D 场景优化**     | 🟢 低  | 3D 场景优化      |
 
 **暂缓原因**：技术成熟度和市场需求暂不明确，暂不投入资源。
 
 ### 视频教程
 
-| 任务 | 优先级 | 说明 |
-|------|------|------|
-| **视频教程制作** | 🟢 低 | 视频教程（5-10 个） |
+| 任务             | 优先级 | 说明                |
+| ---------------- | ------ | ------------------- |
+| **视频教程制作** | 🟢 低  | 视频教程（5-10 个） |
 
 **暂缓原因**：当前资源优先投入到核心功能开发，视频教程暂不投入资源。
 
 ### UI 组件库迁出
 
-| 任务 | 优先级 | 说明 |
-|------|------|------|
-| **UI 组件库独立** | 🟡 中 | UI 组件库从 LytJS 核心包中迁出 |
+| 任务              | 优先级 | 说明                           |
+| ----------------- | ------ | ------------------------------ |
+| **UI 组件库独立** | 🟡 中  | UI 组件库从 LytJS 核心包中迁出 |
 
 **状态**：准备中，待 v6.5 核心层完成后再评估
 
@@ -1141,7 +1189,7 @@ import { createRouter } from '@lytjs/router';
 ### 10.2 8 层架构约束
 
 - **严格遵循分层职责**
-- **L0 基础工具层开放**：L0 基础工具层（common-*）可被所有上层直接依赖
+- **L0 基础工具层开放**：L0 基础工具层（common-\*）可被所有上层直接依赖
 - **核心层合理依赖**：核心层（L1-L4）尽量减少跨层依赖，但允许必要的跨层访问
 - **不循环依赖**
 - **底层为上层提供支撑**

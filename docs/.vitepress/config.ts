@@ -91,9 +91,7 @@ export default defineConfig({
       '/packages/': [
         {
           text: '包文档',
-          items: [
-            { text: '包文档总览', link: '/packages/' },
-          ],
+          items: [{ text: '包文档总览', link: '/packages/' }],
         },
         {
           text: '核心包',

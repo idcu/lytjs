@@ -364,8 +364,7 @@ export function shallowClone<T extends Record<string, unknown>>(obj: T): T {
  * merge({ a: 1, b: 2 }, { b: 3, c: 4 }) // { a: 1, b: 3, c: 4 }
  * ```
  */
-export function merge<T extends Record<string, unknown>,
-  U extends Record<string, unknown>>(
+export function merge<T extends Record<string, unknown>, U extends Record<string, unknown>>(
   target: T,
   source: U,
 ): T & U {
@@ -445,10 +444,13 @@ export function groupBy<T extends Record<string, unknown>>(
   arr: T[],
   key: keyof T,
 ): Record<string, T[]> {
-  return arr.reduce((acc, item) => {
-    const groupKey = String(item[key]);
-    if (!acc[groupKey]) acc[groupKey] = [];
-    acc[groupKey].push(item);
-    return acc;
-  }, {} as Record<string, T[]>);
+  return arr.reduce(
+    (acc, item) => {
+      const groupKey = String(item[key]);
+      if (!acc[groupKey]) acc[groupKey] = [];
+      acc[groupKey].push(item);
+      return acc;
+    },
+    {} as Record<string, T[]>,
+  );
 }

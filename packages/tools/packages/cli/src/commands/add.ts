@@ -9,14 +9,26 @@ import { logger } from '../utils/logger';
 import { ensureDir, writeFile, exists } from '../utils/fs';
 import { join, resolve } from 'path';
 
-type AddType = 'component' | 'page' | 'store' | 'directive' | 'composable' | 'util' | 'middleware' | 'hook';
+type AddType =
+  | 'component'
+  | 'page'
+  | 'store'
+  | 'directive'
+  | 'composable'
+  | 'util'
+  | 'middleware'
+  | 'hook';
 
-const TEMPLATES: Record<AddType, (name: string, path: string) => { filePath: string; content: string }[]> = {
+const TEMPLATES: Record<
+  AddType,
+  (name: string, path: string) => { filePath: string; content: string }[]
+> = {
   component(name, basePath) {
     const filePath = join(basePath, `${name}.lyt`);
-    return [{
-      filePath,
-      content: `<template>
+    return [
+      {
+        filePath,
+        content: `<template>
   <div class="${name}">
     <slot />
   </div>
@@ -38,15 +50,17 @@ defineEmits<{
 }
 </style>
 `,
-    }];
+      },
+    ];
   },
 
   page(name, basePath) {
     const pascalName = toPascalCase(name);
     const filePath = join(basePath, `${name}.lyt`);
-    return [{
-      filePath,
-      content: `<template>
+    return [
+      {
+        filePath,
+        content: `<template>
   <div class="page-${name}">
     <h1>${pascalName}</h1>
   </div>
@@ -62,14 +76,16 @@ defineEmits<{
 }
 </style>
 `,
-    }];
+      },
+    ];
   },
 
   store(name, basePath) {
     const filePath = join(basePath, `${name}.ts`);
-    return [{
-      filePath,
-      content: `import { defineStore } from '@lytjs/store';
+    return [
+      {
+        filePath,
+        content: `import { defineStore } from '@lytjs/store';
 import { signal, computed } from '@lytjs/reactivity';
 
 export const use${toPascalCase(name)}Store = defineStore('${name}', () => {
@@ -101,15 +117,17 @@ export const use${toPascalCase(name)}Store = defineStore('${name}', () => {
   };
 });
 `,
-    }];
+      },
+    ];
   },
 
   directive(name, basePath) {
     const filePath = join(basePath, `${name}.ts`);
     const camelCaseName = toCamelCase(name);
-    return [{
-      filePath,
-      content: `import type { Directive } from '@lytjs/core';
+    return [
+      {
+        filePath,
+        content: `import type { Directive } from '@lytjs/core';
 
 /**
  * ${toPascalCase(name)} Directive
@@ -133,14 +151,16 @@ export const v${toPascalCase(name)}: Directive = {
   },
 };
 `,
-    }];
+      },
+    ];
   },
 
   composable(name, basePath) {
     const filePath = join(basePath, `use${toPascalCase(name)}.ts`);
-    return [{
-      filePath,
-      content: `import { signal, computed } from '@lytjs/reactivity';
+    return [
+      {
+        filePath,
+        content: `import { signal, computed } from '@lytjs/reactivity';
 
 /**
  * ${toPascalCase(name)} Composable
@@ -189,14 +209,16 @@ export function use${toPascalCase(name)}() {
   };
 }
 `,
-    }];
+      },
+    ];
   },
 
   hook(name, basePath) {
     const filePath = join(basePath, `use${toPascalCase(name)}.ts`);
-    return [{
-      filePath,
-      content: `import { signal, onMounted, onUnmounted } from '@lytjs/core';
+    return [
+      {
+        filePath,
+        content: `import { signal, onMounted, onUnmounted } from '@lytjs/core';
 
 /**
  * ${toPascalCase(name)} Hook
@@ -217,14 +239,16 @@ export function use${toPascalCase(name)}() {
   };
 }
 `,
-    }];
+      },
+    ];
   },
 
   util(name, basePath) {
     const filePath = join(basePath, `${name}.ts`);
-    return [{
-      filePath,
-      content: `/**
+    return [
+      {
+        filePath,
+        content: `/**
  * ${toPascalCase(name)} Utility Functions
  */
 
@@ -239,14 +263,16 @@ export function ${toCamelCase(name)}(input: any) {
   return input;
 }
 `,
-    }];
+      },
+    ];
   },
 
   middleware(name, basePath) {
     const filePath = join(basePath, `${name}.ts`);
-    return [{
-      filePath,
-      content: `import type { NavigationGuard } from '@lytjs/router';
+    return [
+      {
+        filePath,
+        content: `import type { NavigationGuard } from '@lytjs/router';
 
 /**
  * ${toPascalCase(name)} Middleware
@@ -257,7 +283,8 @@ export const ${toCamelCase(name)}Middleware: NavigationGuard = (to, from, next) 
   next();
 };
 `,
-    }];
+      },
+    ];
   },
 };
 
@@ -267,7 +294,7 @@ export const ${toCamelCase(name)}Middleware: NavigationGuard = (to, from, next) 
 function toPascalCase(str: string): string {
   return str
     .split(/[-_]/)
-    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join('');
 }
 

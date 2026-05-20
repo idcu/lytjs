@@ -101,7 +101,7 @@ function createDOMTestHelpers(): DOMTestHelpers {
         if (el) {
           return el;
         }
-        await new Promise(resolve => setTimeout(resolve, 10));
+        await new Promise((resolve) => setTimeout(resolve, 10));
       }
       throw new Error(`Element not found within timeout: ${selector}`);
     },
@@ -113,7 +113,7 @@ function createDOMTestHelpers(): DOMTestHelpers {
         if (!el) {
           return;
         }
-        await new Promise(resolve => setTimeout(resolve, 10));
+        await new Promise((resolve) => setTimeout(resolve, 10));
       }
       throw new Error(`Element did not disappear within timeout: ${selector}`);
     },
@@ -121,13 +121,13 @@ function createDOMTestHelpers(): DOMTestHelpers {
     waitForText: async (text: string, timeout = 5000): Promise<Element> => {
       const startTime = Date.now();
       while (Date.now() - startTime < timeout) {
-        const el = Array.from(document.body.querySelectorAll('*')).find(el =>
+        const el = Array.from(document.body.querySelectorAll('*')).find((el) =>
           el.textContent?.includes(text),
         );
         if (el) {
           return el;
         }
-        await new Promise(resolve => setTimeout(resolve, 10));
+        await new Promise((resolve) => setTimeout(resolve, 10));
       }
       throw new Error(`Text not found within timeout: ${text}`);
     },
@@ -240,7 +240,7 @@ function createSignalTestHelpers(): SignalTestHelpers {
         if (signal.value !== initialValue) {
           return;
         }
-        await new Promise(resolve => setTimeout(resolve, 10));
+        await new Promise((resolve) => setTimeout(resolve, 10));
       }
       throw new Error('Signal did not update within timeout');
     },
@@ -253,7 +253,8 @@ function createSignalTestHelpers(): SignalTestHelpers {
 function createFuzzTestHelpers(): FuzzTestHelpers {
   const randomString = (options: FuzzGeneratorOptions = {}): string => {
     const maxLength = options.maxLength ?? 100;
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=[]{}|;:,.<>?';
+    const chars =
+      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=[]{}|;:,.<>?';
     const length = Math.floor(Math.random() * maxLength) + 1;
     let result = '';
     for (let i = 0; i < length; i++) {
@@ -311,7 +312,7 @@ function createFuzzTestHelpers(): FuzzTestHelpers {
   const fuzz = async <T>(
     generator: () => T,
     testFn: (input: T) => void | Promise<void>,
-    iterations = 100
+    iterations = 100,
   ): Promise<FuzzTestResult> => {
     const failedCases: Array<{ input: unknown; error: Error }> = [];
     let passedCases = 0;
@@ -357,7 +358,7 @@ function createPerformanceTestHelpers(): PerformanceTestHelpers {
   const benchmark = async (
     name: string,
     fn: () => void | Promise<void>,
-    options: BenchmarkOptions = {}
+    options: BenchmarkOptions = {},
   ): Promise<BenchmarkResult> => {
     const iterations = options.iterations ?? 1000;
     const warmupIterations = options.warmupIterations ?? 100;
@@ -407,9 +408,10 @@ function createPerformanceTestHelpers(): PerformanceTestHelpers {
 
   const compare = (
     baseline: BenchmarkResult,
-    current: BenchmarkResult
+    current: BenchmarkResult,
   ): { percentChange: number; isFaster: boolean; isSlower: boolean } => {
-    const percentChange = ((current.averageTime - baseline.averageTime) / baseline.averageTime) * 100;
+    const percentChange =
+      ((current.averageTime - baseline.averageTime) / baseline.averageTime) * 100;
     return {
       percentChange,
       isFaster: percentChange < 0,
@@ -421,7 +423,7 @@ function createPerformanceTestHelpers(): PerformanceTestHelpers {
     name: string,
     fn: () => void | Promise<void>,
     baseline: BenchmarkResult,
-    options: RegressionTestOptions = {}
+    options: RegressionTestOptions = {},
   ): Promise<RegressionTestResult> => {
     const threshold = options.threshold ?? 10;
     const current = await benchmark(name, fn);
@@ -550,7 +552,7 @@ function createTestingContext(options: TestingPluginOptions = {}): TestingContex
     },
 
     clearAllMocks: () => {
-      mockFns.forEach(mockFn => mockFn.mockClear());
+      mockFns.forEach((mockFn) => mockFn.mockClear());
       mocks.clear();
     },
 
@@ -560,7 +562,7 @@ function createTestingContext(options: TestingPluginOptions = {}): TestingContex
     performance: performanceHelpers,
 
     wait: async (ms: number): Promise<void> => {
-      await new Promise(resolve => setTimeout(resolve, ms));
+      await new Promise((resolve) => setTimeout(resolve, ms));
     },
 
     waitFor: async (condition: () => boolean | Promise<boolean>, timeout = 5000): Promise<void> => {
@@ -570,13 +572,13 @@ function createTestingContext(options: TestingPluginOptions = {}): TestingContex
         if (result) {
           return;
         }
-        await new Promise(resolve => setTimeout(resolve, 10));
+        await new Promise((resolve) => setTimeout(resolve, 10));
       }
       throw new Error('Condition not met within timeout');
     },
 
     nextTick: async (): Promise<void> => {
-      await new Promise(resolve => setTimeout(resolve, 0));
+      await new Promise((resolve) => setTimeout(resolve, 0));
     },
   };
 }
@@ -584,7 +586,8 @@ function createTestingContext(options: TestingPluginOptions = {}): TestingContex
 const pluginTesting = definePlugin({
   name: 'testing',
   version: '6.0.0',
-  description: 'LytJS official testing plugin with testing utilities and helpers, including fuzz testing and performance regression testing',
+  description:
+    'LytJS official testing plugin with testing utilities and helpers, including fuzz testing and performance regression testing',
   author: 'LytJS Team',
   keywords: ['lytjs', 'testing', 'test-utilities', 'fuzz-testing', 'benchmark'],
   schema: {

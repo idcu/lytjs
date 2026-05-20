@@ -64,35 +64,83 @@ class NotificationManager {
   }
 
   static close(id: number) {
-    const notification = this.notifications().find(n => n.id === id);
+    const notification = this.notifications().find((n) => n.id === id);
     if (notification && notification.onClose) {
       notification.onClose();
     }
-    this.notifications.set(this.notifications().filter(n => n.id !== id));
+    this.notifications.set(this.notifications().filter((n) => n.id !== id));
   }
 
-  static success(options: string | { title: string; message?: string; duration?: number; position?: string; showClose?: boolean; onClose?: () => void; onOpen?: () => void }) {
+  static success(
+    options:
+      | string
+      | {
+          title: string;
+          message?: string;
+          duration?: number;
+          position?: string;
+          showClose?: boolean;
+          onClose?: () => void;
+          onOpen?: () => void;
+        },
+  ) {
     if (typeof options === 'string') {
       return this.open({ type: 'success', title: options, message: '' });
     }
     return this.open({ ...options, type: 'success' });
   }
 
-  static warning(options: string | { title: string; message?: string; duration?: number; position?: string; showClose?: boolean; onClose?: () => void; onOpen?: () => void }) {
+  static warning(
+    options:
+      | string
+      | {
+          title: string;
+          message?: string;
+          duration?: number;
+          position?: string;
+          showClose?: boolean;
+          onClose?: () => void;
+          onOpen?: () => void;
+        },
+  ) {
     if (typeof options === 'string') {
       return this.open({ type: 'warning', title: options, message: '' });
     }
     return this.open({ ...options, type: 'warning' });
   }
 
-  static error(options: string | { title: string; message?: string; duration?: number; position?: string; showClose?: boolean; onClose?: () => void; onOpen?: () => void }) {
+  static error(
+    options:
+      | string
+      | {
+          title: string;
+          message?: string;
+          duration?: number;
+          position?: string;
+          showClose?: boolean;
+          onClose?: () => void;
+          onOpen?: () => void;
+        },
+  ) {
     if (typeof options === 'string') {
       return this.open({ type: 'error', title: options, message: '' });
     }
     return this.open({ ...options, type: 'error' });
   }
 
-  static info(options: string | { title: string; message?: string; duration?: number; position?: string; showClose?: boolean; onClose?: () => void; onOpen?: () => void }) {
+  static info(
+    options:
+      | string
+      | {
+          title: string;
+          message?: string;
+          duration?: number;
+          position?: string;
+          showClose?: boolean;
+          onClose?: () => void;
+          onOpen?: () => void;
+        },
+  ) {
     if (typeof options === 'string') {
       return this.open({ type: 'info', title: options, message: '' });
     }
@@ -101,7 +149,7 @@ class NotificationManager {
 
   static closeAll() {
     const current = this.notifications();
-    current.forEach(n => {
+    current.forEach((n) => {
       if (n.onClose) n.onClose();
     });
     this.notifications.set([]);
@@ -146,32 +194,54 @@ export const Notification = defineComponent({
         ].join(' ');
 
         const itemChildren: VNode[] = [
-          createVNode('span', {
-            class: 'lyt-notification__icon',
-          }, [createVNode('span', {}, getIcon(notification.type))]),
+          createVNode(
+            'span',
+            {
+              class: 'lyt-notification__icon',
+            },
+            [createVNode('span', {}, getIcon(notification.type))],
+          ),
         ];
 
         const contentChildren: VNode[] = [
-          createVNode('div', { class: 'lyt-notification__title' }, [createVNode('span', {}, String(notification.title))]),
+          createVNode('div', { class: 'lyt-notification__title' }, [
+            createVNode('span', {}, String(notification.title)),
+          ]),
         ];
 
         if (notification.message) {
-          contentChildren.push(createVNode('div', { class: 'lyt-notification__message' }, [createVNode('span', {}, String(notification.message))]));
+          contentChildren.push(
+            createVNode('div', { class: 'lyt-notification__message' }, [
+              createVNode('span', {}, String(notification.message)),
+            ]),
+          );
         }
 
-        itemChildren.push(createVNode('div', { class: 'lyt-notification__content' }, contentChildren));
+        itemChildren.push(
+          createVNode('div', { class: 'lyt-notification__content' }, contentChildren),
+        );
 
         if (notification.showClose) {
-          itemChildren.push(createVNode('button', {
-            class: 'lyt-notification__close',
-            onClick: () => NotificationManager.close(notification.id),
-          }, [createVNode('span', {}, '×')]));
+          itemChildren.push(
+            createVNode(
+              'button',
+              {
+                class: 'lyt-notification__close',
+                onClick: () => NotificationManager.close(notification.id),
+              },
+              [createVNode('span', {}, '×')],
+            ),
+          );
         }
 
-        return createVNode('div', {
-          class: notificationClass,
-          key: notification.id,
-        }, itemChildren);
+        return createVNode(
+          'div',
+          {
+            class: notificationClass,
+            key: notification.id,
+          },
+          itemChildren,
+        );
       });
 
       return createVNode('div', { class: getContainerClass() }, children);
@@ -180,12 +250,17 @@ export const Notification = defineComponent({
 });
 
 (Notification as Record<string, unknown>).open = NotificationManager.open.bind(NotificationManager);
-(Notification as Record<string, unknown>).success = NotificationManager.success.bind(NotificationManager);
-(Notification as Record<string, unknown>).warning = NotificationManager.warning.bind(NotificationManager);
-(Notification as Record<string, unknown>).error = NotificationManager.error.bind(NotificationManager);
+(Notification as Record<string, unknown>).success =
+  NotificationManager.success.bind(NotificationManager);
+(Notification as Record<string, unknown>).warning =
+  NotificationManager.warning.bind(NotificationManager);
+(Notification as Record<string, unknown>).error =
+  NotificationManager.error.bind(NotificationManager);
 (Notification as Record<string, unknown>).info = NotificationManager.info.bind(NotificationManager);
-(Notification as Record<string, unknown>).close = NotificationManager.close.bind(NotificationManager);
-(Notification as Record<string, unknown>).closeAll = NotificationManager.closeAll.bind(NotificationManager);
+(Notification as Record<string, unknown>).close =
+  NotificationManager.close.bind(NotificationManager);
+(Notification as Record<string, unknown>).closeAll =
+  NotificationManager.closeAll.bind(NotificationManager);
 
 export default Notification;
 export { NotificationManager };

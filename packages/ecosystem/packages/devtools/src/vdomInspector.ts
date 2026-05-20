@@ -57,15 +57,15 @@ function extractTextContent(vnode: VNode): string | undefined {
   if (vnode.children === null || vnode.children === undefined) {
     return undefined;
   }
-  
+
   if (typeof vnode.children === 'string') {
     return vnode.children;
   }
-  
+
   if (typeof vnode.children === 'number') {
     return String(vnode.children);
   }
-  
+
   if (Array.isArray(vnode.children)) {
     const texts: string[] = [];
     for (const child of vnode.children) {
@@ -80,7 +80,7 @@ function extractTextContent(vnode: VNode): string | undefined {
     }
     return texts.length > 0 ? texts.join('') : undefined;
   }
-  
+
   return undefined;
 }
 
@@ -88,35 +88,32 @@ function extractProps(vnode: VNode): Record<string, unknown> | undefined {
   if (!vnode.props || Object.keys(vnode.props).length === 0) {
     return undefined;
   }
-  
+
   const props: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(vnode.props)) {
     if (key.startsWith('on')) continue;
     if (typeof value === 'function') continue;
     props[key] = value;
   }
-  
+
   return Object.keys(props).length > 0 ? props : undefined;
 }
 
-export function registerVDOMRoot(
-  vnode: VNode,
-  componentId?: string
-): string {
+export function registerVDOMRoot(vnode: VNode, componentId?: string): string {
   const id = generateId();
   const nodeInfo = processVNode(vnode, id, null, 0, componentId);
-  
+
   if (nodeInfo) {
     registry.roots.set(id, nodeInfo);
     registry.nodes.set(id, nodeInfo);
-    
+
     if (componentId) {
       const existing = componentVDOMMap.get(componentId) || [];
       existing.push(id);
       componentVDOMMap.set(componentId, existing);
     }
   }
-  
+
   return id;
 }
 
@@ -125,12 +122,12 @@ function processVNode(
   parentId: string | undefined,
   _parentDom: HTMLElement | null,
   depth: number,
-  componentId?: string
+  componentId?: string,
 ): VDOMNodeInfo | null {
   if (vnode === null || vnode === undefined) {
     return null;
   }
-  
+
   if (typeof vnode === 'string' || typeof vnode === 'number') {
     const id = generateId();
     const text = typeof vnode === 'number' ? String(vnode) : vnode;
@@ -146,22 +143,23 @@ function processVNode(
     registry.nodes.set(id, nodeInfo);
     return nodeInfo;
   }
-  
+
   if (typeof vnode !== 'object') {
     return null;
   }
-  
+
   const id = generateId();
   const { type, tagName, isComponent } = getVNodeType(vnode);
   const text = extractTextContent(vnode);
   const props = extractProps(vnode);
-  
-  const key = vnode.key !== null && vnode.key !== undefined && typeof vnode.key !== 'symbol' 
-    ? vnode.key 
-    : undefined;
+
+  const key =
+    vnode.key !== null && vnode.key !== undefined && typeof vnode.key !== 'symbol'
+      ? vnode.key
+      : undefined;
   const el = vnode.el;
   const domElement = el && el instanceof HTMLElement ? el : null;
-  
+
   const nodeInfo: VDOMNodeInfo = {
     id,
     type,
@@ -177,24 +175,18 @@ function processVNode(
     ref: typeof vnode.ref === 'string' ? vnode.ref : undefined,
     domElement,
   };
-  
+
   registry.nodes.set(id, nodeInfo);
-  
+
   if (vnode.children && Array.isArray(vnode.children)) {
     for (const child of vnode.children) {
-      const childInfo = processVNode(
-        child as VNode,
-        id,
-        domElement,
-        depth + 1,
-        componentId
-      );
+      const childInfo = processVNode(child as VNode, id, domElement, depth + 1, componentId);
       if (childInfo) {
         nodeInfo.children.push(childInfo);
       }
     }
   }
-  
+
   return nodeInfo;
 }
 
@@ -235,10 +227,7 @@ export function findVDOMNodesByTag(tagName: string): VDOMNodeInfo[] {
   return results;
 }
 
-export function findVDOMNodesByProp(
-  propName: string,
-  value?: unknown
-): VDOMNodeInfo[] {
+export function findVDOMNodesByProp(propName: string, value?: unknown): VDOMNodeInfo[] {
   const results: VDOMNodeInfo[] = [];
   for (const node of registry.nodes.values()) {
     if (node.props && propName in node.props) {
@@ -262,14 +251,14 @@ export function getVDOMStats(): {
   let componentCount = 0;
   let elementCount = 0;
   let textCount = 0;
-  
+
   for (const node of registry.nodes.values()) {
     if (node.depth > maxDepth) maxDepth = node.depth;
     if (node.isComponent) componentCount++;
     else if (node.type === 'element') elementCount++;
     else if (node.type === 'text') textCount++;
   }
-  
+
   return {
     totalNodes: registry.nodes.size,
     rootCount: registry.roots.size,
@@ -290,7 +279,7 @@ export function clearVDOMRegistry(): void {
 export function serializeVDOMNode(node: VDOMNodeInfo, indent = 0): string {
   const spaces = '  '.repeat(indent);
   let result = '';
-  
+
   if (node.type === 'text') {
     result += `${spaces}📝 "${node.text || ''}"\n`;
   } else if (node.isComponent) {
@@ -312,15 +301,15 @@ export function serializeVDOMNode(node: VDOMNodeInfo, indent = 0): string {
     }
     result += '>\n';
   }
-  
+
   for (const child of node.children) {
     result += serializeVDOMNode(child, indent + 1);
   }
-  
+
   if ((node.isComponent || node.type === 'element') && node.children.length === 0) {
     result += `${spaces}  (empty)\n`;
   }
-  
+
   return result;
 }
 
@@ -329,33 +318,33 @@ export function serializeVDOMTree(): string {
   if (roots.length === 0) {
     return 'No VDOM roots registered.';
   }
-  
+
   let result = `📦 VDOM Tree (${roots.length} root(s))\n`;
   result += '─'.repeat(40) + '\n';
-  
+
   for (const root of roots) {
     result += serializeVDOMNode(root);
     result += '\n';
   }
-  
+
   const stats = getVDOMStats();
   result += '─'.repeat(40) + '\n';
   result += `📊 Stats: ${stats.totalNodes} nodes, ${stats.componentCount} components, `;
   result += `${stats.elementCount} elements, ${stats.textCount} text nodes\n`;
   result += `📏 Max depth: ${stats.maxDepth}\n`;
-  
+
   return result;
 }
 
 export function getVDOMPath(nodeId: string): VDOMNodeInfo[] {
   const path: VDOMNodeInfo[] = [];
   let current = registry.nodes.get(nodeId);
-  
+
   while (current) {
     path.unshift(current);
     current = current.parentId ? registry.nodes.get(current.parentId) : undefined;
   }
-  
+
   return path;
 }
 
@@ -365,10 +354,10 @@ export function highlightVDOMNode(nodeId: string): void {
     const el = node.domElement;
     const originalOutline = el.style.outline;
     const originalBackground = el.style.backgroundColor;
-    
+
     el.style.outline = '2px solid #4fc08d';
     el.style.backgroundColor = 'rgba(79, 192, 141, 0.1)';
-    
+
     setTimeout(() => {
       el.style.outline = originalOutline;
       el.style.backgroundColor = originalBackground;
@@ -383,7 +372,7 @@ export function inspectVDOMNode(nodeId: string): {
 } | null {
   const node = registry.nodes.get(nodeId);
   if (!node) return null;
-  
+
   return {
     node,
     path: getVDOMPath(nodeId),

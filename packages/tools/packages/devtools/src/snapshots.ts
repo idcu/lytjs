@@ -24,7 +24,7 @@ function generateSnapshotId(): string {
 export function takeSnapshot(
   components?: ComponentTreeNode[],
   signals?: SignalInfo[],
-  events?: DevToolsEvent[]
+  events?: DevToolsEvent[],
 ): StateSnapshot {
   const snapshot: StateSnapshot = {
     id: generateSnapshotId(),
@@ -43,7 +43,7 @@ export function takeSnapshot(
 export function createSnapshot(
   id: string,
   data: Record<string, unknown>,
-  description?: string
+  description?: string,
 ): StateSnapshot {
   const snapshot: StateSnapshot = {
     id,
@@ -57,12 +57,16 @@ export function createSnapshot(
       dependencies: [],
       dependents: [],
     })),
-    events: description ? [{
-      id: `event-${Date.now()}`,
-      type: 'store:mutation',
-      timestamp: Date.now(),
-      payload: { description },
-    }] : [],
+    events: description
+      ? [
+          {
+            id: `event-${Date.now()}`,
+            type: 'store:mutation',
+            timestamp: Date.now(),
+            payload: { description },
+          },
+        ]
+      : [],
   };
   snapshots.set(id, snapshot);
   return snapshot;
@@ -123,7 +127,7 @@ export function exportSnapshots(): string {
 export function importSnapshots(json: string): StateSnapshot[] {
   try {
     const parsed = JSON.parse(json) as StateSnapshot[];
-    parsed.forEach(s => snapshots.set(s.id, s));
+    parsed.forEach((s) => snapshots.set(s.id, s));
     return parsed;
   } catch (e) {
     console.error('[DevTools Snapshots] Import failed:', e);
@@ -155,15 +159,12 @@ export function restoreSnapshot(snapshot: StateSnapshot): boolean {
         const success = setSignalValue(signalInfo.id, signalInfo.value);
         if (!success) {
           console.warn(
-            `[DevTools Snapshots] Failed to restore signal "${signalInfo.name}" (id: ${signalInfo.id}): not found in registry`
+            `[DevTools Snapshots] Failed to restore signal "${signalInfo.name}" (id: ${signalInfo.id}): not found in registry`,
           );
           allSuccess = false;
         }
       } catch (err) {
-        console.error(
-          `[DevTools Snapshots] Error restoring signal "${signalInfo.name}":`,
-          err
-        );
+        console.error(`[DevTools Snapshots] Error restoring signal "${signalInfo.name}":`, err);
         allSuccess = false;
       }
     }

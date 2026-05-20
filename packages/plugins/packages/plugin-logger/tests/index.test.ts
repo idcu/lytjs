@@ -64,7 +64,7 @@ describe('@lytjs/plugin-logger', () => {
 
     it('应该支持 JSON 格式化', () => {
       const logger = pluginModule.createLogger({
-        format: 'json'
+        format: 'json',
       });
       expect(logger).toBeDefined();
     });
@@ -72,7 +72,7 @@ describe('@lytjs/plugin-logger', () => {
     it('应该支持持久化', () => {
       const logger = pluginModule.createLogger({
         enablePersistence: true,
-        storageKey: 'test-logger'
+        storageKey: 'test-logger',
       });
       expect(logger).toBeDefined();
     });

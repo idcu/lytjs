@@ -57,7 +57,7 @@ export function getButtonA11yProps(props: A11yProps & { disabled?: boolean }): R
     'aria-labelledby': props.ariaLabelledBy,
     'aria-disabled': props.ariaDisabled ?? props.disabled,
     'aria-pressed': props.ariaPressed,
-    'tabindex': getTabIndex(props.disabled ?? !!props.ariaDisabled, props.tabIndex),
+    tabindex: getTabIndex(props.disabled ?? !!props.ariaDisabled, props.tabIndex),
     id: props.id,
   };
 }
@@ -65,7 +65,9 @@ export function getButtonA11yProps(props: A11yProps & { disabled?: boolean }): R
 /**
  * 为表单控件生成 a11y 属性
  */
-export function getFormControlA11yProps(props: A11yProps & { disabled?: boolean; required?: boolean; invalid?: boolean }): Record<string, any> {
+export function getFormControlA11yProps(
+  props: A11yProps & { disabled?: boolean; required?: boolean; invalid?: boolean },
+): Record<string, any> {
   return {
     'aria-label': props.ariaLabel,
     'aria-describedby': props.ariaDescribedBy,
@@ -81,7 +83,14 @@ export function getFormControlA11yProps(props: A11yProps & { disabled?: boolean;
 /**
  * 为复选框/单选框生成 a11y 属性
  */
-export function getInputControlA11yProps(props: A11yProps & { disabled?: boolean; checked?: boolean | 'mixed'; required?: boolean; invalid?: boolean }): Record<string, any> {
+export function getInputControlA11yProps(
+  props: A11yProps & {
+    disabled?: boolean;
+    checked?: boolean | 'mixed';
+    required?: boolean;
+    invalid?: boolean;
+  },
+): Record<string, any> {
   return {
     ...getFormControlA11yProps(props),
     'aria-checked': props.checked,
@@ -91,7 +100,14 @@ export function getInputControlA11yProps(props: A11yProps & { disabled?: boolean
 /**
  * 为开关组件生成 a11y 属性
  */
-export function getSwitchA11yProps(props: A11yProps & { disabled?: boolean; checked?: boolean; required?: boolean; invalid?: boolean }): Record<string, any> {
+export function getSwitchA11yProps(
+  props: A11yProps & {
+    disabled?: boolean;
+    checked?: boolean;
+    required?: boolean;
+    invalid?: boolean;
+  },
+): Record<string, any> {
   return {
     role: 'switch',
     'aria-checked': props.checked,
@@ -102,7 +118,15 @@ export function getSwitchA11yProps(props: A11yProps & { disabled?: boolean; chec
 /**
  * 为下拉选择组件生成 a11y 属性
  */
-export function getComboboxA11yProps(props: A11yProps & { disabled?: boolean; expanded?: boolean; controls?: string; required?: boolean; invalid?: boolean }): Record<string, any> {
+export function getComboboxA11yProps(
+  props: A11yProps & {
+    disabled?: boolean;
+    expanded?: boolean;
+    controls?: string;
+    required?: boolean;
+    invalid?: boolean;
+  },
+): Record<string, any> {
   return {
     role: 'combobox',
     'aria-expanded': props.expanded,
@@ -115,7 +139,9 @@ export function getComboboxA11yProps(props: A11yProps & { disabled?: boolean; ex
 /**
  * 为列表框选项生成 a11y 属性
  */
-export function getOptionA11yProps(props: A11yProps & { selected?: boolean; disabled?: boolean }): Record<string, any> {
+export function getOptionA11yProps(
+  props: A11yProps & { selected?: boolean; disabled?: boolean },
+): Record<string, any> {
   return {
     role: 'option',
     'aria-selected': props.selected,
@@ -128,7 +154,9 @@ export function getOptionA11yProps(props: A11yProps & { selected?: boolean; disa
 /**
  * 为滑块组件生成 a11y 属性
  */
-export function getSliderA11yProps(props: A11yProps & { disabled?: boolean; value?: number | string; min?: number; max?: number }): Record<string, any> {
+export function getSliderA11yProps(
+  props: A11yProps & { disabled?: boolean; value?: number | string; min?: number; max?: number },
+): Record<string, any> {
   return {
     role: 'slider',
     'aria-valuenow': props.value,
@@ -141,7 +169,9 @@ export function getSliderA11yProps(props: A11yProps & { disabled?: boolean; valu
 /**
  * 为数字输入组件生成 a11y 属性
  */
-export function getSpinbuttonA11yProps(props: A11yProps & { disabled?: boolean; value?: number | string; min?: number; max?: number }): Record<string, any> {
+export function getSpinbuttonA11yProps(
+  props: A11yProps & { disabled?: boolean; value?: number | string; min?: number; max?: number },
+): Record<string, any> {
   return {
     role: 'spinbutton',
     'aria-valuenow': props.value,
@@ -166,7 +196,9 @@ export function getTablistA11yProps(props: A11yProps & { label?: string }): Reco
 /**
  * 为单个标签页生成 a11y 属性
  */
-export function getTabA11yProps(props: A11yProps & { selected?: boolean; disabled?: boolean; controls?: string }): Record<string, any> {
+export function getTabA11yProps(
+  props: A11yProps & { selected?: boolean; disabled?: boolean; controls?: string },
+): Record<string, any> {
   return {
     role: 'tab',
     'aria-selected': props.selected,
@@ -180,7 +212,9 @@ export function getTabA11yProps(props: A11yProps & { selected?: boolean; disable
 /**
  * 为标签面板生成 a11y 属性
  */
-export function getTabpanelA11yProps(props: A11yProps & { labelledBy?: string; hidden?: boolean }): Record<string, any> {
+export function getTabpanelA11yProps(
+  props: A11yProps & { labelledBy?: string; hidden?: boolean },
+): Record<string, any> {
   return {
     role: 'tabpanel',
     'aria-labelledby': props.ariaLabelledBy ?? props.labelledBy,
@@ -192,7 +226,9 @@ export function getTabpanelA11yProps(props: A11yProps & { labelledBy?: string; h
 /**
  * 为对话框/模态框生成 a11y 属性
  */
-export function getDialogA11yProps(props: A11yProps & { labelledBy?: string; describedBy?: string; modal?: boolean }): Record<string, any> {
+export function getDialogA11yProps(
+  props: A11yProps & { labelledBy?: string; describedBy?: string; modal?: boolean },
+): Record<string, any> {
   return {
     role: 'dialog',
     'aria-modal': props.ariaModal ?? props.modal ?? true,
@@ -206,7 +242,13 @@ export function getDialogA11yProps(props: A11yProps & { labelledBy?: string; des
 /**
  * 为分组组件（checkboxGroup/radioGroup）生成 a11y 属性
  */
-export function getGroupA11yProps(props: A11yProps & { role?: 'radiogroup' | 'group' | 'listbox'; required?: boolean; label?: string }): Record<string, any> {
+export function getGroupA11yProps(
+  props: A11yProps & {
+    role?: 'radiogroup' | 'group' | 'listbox';
+    required?: boolean;
+    label?: string;
+  },
+): Record<string, any> {
   return {
     role: props.role ?? 'group',
     'aria-label': props.ariaLabel ?? props.label,
@@ -230,7 +272,7 @@ export function mergeA11yProps(...propsList: Array<Record<string, any>>): Record
   }
   // 过滤 undefined 值
   return Object.fromEntries(
-    Object.entries(result).filter(([_, v]) => v !== undefined && v !== null)
+    Object.entries(result).filter(([_, v]) => v !== undefined && v !== null),
   );
 }
 
@@ -286,8 +328,13 @@ export function isFocusable(element: Element): boolean {
 
   const tag = element.tagName.toLowerCase();
   const focusableTags = new Set([
-    'a', 'button', 'input', 'select', 'textarea',
-    'details', 'summary',
+    'a',
+    'button',
+    'input',
+    'select',
+    'textarea',
+    'details',
+    'summary',
   ]);
 
   if (focusableTags.has(tag)) return true;
@@ -302,9 +349,7 @@ export function isFocusable(element: Element): boolean {
  */
 export function getFocusableElements(container: Element): HTMLElement[] {
   const elements = Array.from(container.querySelectorAll(FOCUSABLE_SELECTOR));
-  return elements.filter(
-    (el): el is HTMLElement => el instanceof HTMLElement && isFocusable(el),
-  );
+  return elements.filter((el): el is HTMLElement => el instanceof HTMLElement && isFocusable(el));
 }
 
 /**
@@ -314,10 +359,7 @@ export function getFocusableElements(container: Element): HTMLElement[] {
  * @param options - 配置选项
  * @returns 清理函数
  */
-export function focusTrap(
-  container: HTMLElement,
-  options?: FocusTrapOptions,
-): () => void {
+export function focusTrap(container: HTMLElement, options?: FocusTrapOptions): () => void {
   const { initialFocus, escapeDeactivates = true } = options || {};
 
   const focusableElements = getFocusableElements(container);
@@ -373,10 +415,7 @@ export function focusTrap(
  * @param triggerEl - 触发元素，恢复焦点时优先回到此元素
  * @returns 恢复函数
  */
-export function manageFocus(
-  container: HTMLElement,
-  triggerEl?: HTMLElement,
-): () => void {
+export function manageFocus(container: HTMLElement, triggerEl?: HTMLElement): () => void {
   const previousFocus = document.activeElement as HTMLElement | null;
 
   const focusableElements = getFocusableElements(container);
@@ -413,10 +452,7 @@ export function getAriaProps(element: Element): Record<string, string> {
 /**
  * 批量设置 aria-* 属性
  */
-export function setAriaProps(
-  element: Element,
-  props: Record<string, string>,
-): void {
+export function setAriaProps(element: Element, props: Record<string, string>): void {
   for (const key of Object.keys(props)) {
     if (key.startsWith('aria-')) {
       element.setAttribute(key, props[key]!);
@@ -438,18 +474,18 @@ export function getNextEnabledIndex(
   currentIndex: number,
   totalItems: number,
   isEnabled: (index: number) => boolean,
-  direction: 'forward' | 'backward' = 'forward'
+  direction: 'forward' | 'backward' = 'forward',
 ): number {
   const step = direction === 'forward' ? 1 : -1;
   let nextIndex = (currentIndex + step + totalItems) % totalItems;
-  
+
   for (let i = 0; i < totalItems; i++) {
     if (isEnabled(nextIndex)) {
       return nextIndex;
     }
     nextIndex = (nextIndex + step + totalItems) % totalItems;
   }
-  
+
   return currentIndex;
 }
 
@@ -462,7 +498,7 @@ export function handleListKeydown(
   totalItems: number,
   isEnabled: (index: number) => boolean,
   onSelect: (index: number) => void,
-  onClose?: () => void
+  onClose?: () => void,
 ): void {
   switch (event.key) {
     case 'ArrowDown':

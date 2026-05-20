@@ -46,10 +46,14 @@ export const Transition = defineComponent({
     };
 
     return () => {
-      return createVNode('div', {
-        class: getTransitionClass(),
-        style: getTransitionStyle(),
-      }, slots.default?.());
+      return createVNode(
+        'div',
+        {
+          class: getTransitionClass(),
+          style: getTransitionStyle(),
+        },
+        slots.default?.(),
+      );
     };
   },
 });
@@ -80,18 +84,26 @@ export const TransitionGroup = defineComponent({
 
     return () => {
       const children = slots.default?.() || [];
-      
+
       const wrappedChildren: VNode[] = children.map((child: VNode, index: number) =>
-        createVNode('div', {
-          key: (child as unknown as { key?: string | number }).key || index,
-          class: `${p.name}-item`,
-          style: `transition: all ${p.duration}ms ease;`,
-        }, [child])
+        createVNode(
+          'div',
+          {
+            key: (child as unknown as { key?: string | number }).key || index,
+            class: `${p.name}-item`,
+            style: `transition: all ${p.duration}ms ease;`,
+          },
+          [child],
+        ),
       );
 
-      return createVNode(p.tag as string, {
-        class: `lyt-transition-group ${p.class}`,
-      }, wrappedChildren);
+      return createVNode(
+        p.tag as string,
+        {
+          class: `lyt-transition-group ${p.class}`,
+        },
+        wrappedChildren,
+      );
     };
   },
 });

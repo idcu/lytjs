@@ -75,10 +75,8 @@ export interface AttributeReflectionConfig {
  * 字符串类型转换器
  */
 export const StringConverter = {
-  toAttribute: (value: unknown): string | null =>
-    value == null ? null : String(value),
-  fromAttribute: (value: string | null): string =>
-    value ?? '',
+  toAttribute: (value: unknown): string | null => (value == null ? null : String(value)),
+  fromAttribute: (value: string | null): string => value ?? '',
 };
 
 /**
@@ -98,10 +96,8 @@ export const NumberConverter = {
  * 布尔类型转换器
  */
 export const BooleanConverter = {
-  toAttribute: (value: unknown): string | null =>
-    value ? '' : null,
-  fromAttribute: (value: string | null): boolean =>
-    value !== null,
+  toAttribute: (value: unknown): string | null => (value ? '' : null),
+  fromAttribute: (value: string | null): boolean => value !== null,
 };
 
 /**
@@ -179,11 +175,7 @@ export class AttributeReflector {
   /**
    * 属性值变更时同步到 attribute
    */
-  reflectToAttribute(
-    element: HTMLElement,
-    prop: string,
-    value: unknown,
-  ): void {
+  reflectToAttribute(element: HTMLElement, prop: string, value: unknown): void {
     const config = this.configs.get(prop);
     if (!config) return;
 
@@ -281,10 +273,7 @@ export function createEnhancedElementClass(
 
   class EnhancedElement extends HTMLElement {
     static get observedAttributes(): string[] {
-      return [
-        ...(options.observedAttributes ?? []),
-        ...reflector.getObservedAttributes(),
-      ];
+      return [...(options.observedAttributes ?? []), ...reflector.getObservedAttributes()];
     }
 
     private _propertyValues = new Map<string, unknown>();
@@ -296,9 +285,7 @@ export function createEnhancedElementClass(
       // 初始化 Shadow DOM
       if (options.shadow) {
         const shadowInit: ShadowRootInit =
-          typeof options.shadow === 'object'
-            ? options.shadow
-            : { mode: 'open' };
+          typeof options.shadow === 'object' ? options.shadow : { mode: 'open' };
         this.attachShadow(shadowInit);
 
         // 注入样式
@@ -327,11 +314,7 @@ export function createEnhancedElementClass(
       this.onDisconnected?.();
     }
 
-    attributeChangedCallback(
-      name: string,
-      oldValue: string | null,
-      newValue: string | null,
-    ): void {
+    attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null): void {
       if (oldValue === newValue) return;
 
       const reflection = reflector.reflectFromAttribute(this, name);
@@ -340,9 +323,7 @@ export function createEnhancedElementClass(
         this._propertyValues.set(reflection.prop, reflection.value);
 
         // 触发属性变更回调
-        const propDef = options.properties?.find(
-          (p) => p.name === reflection.prop,
-        );
+        const propDef = options.properties?.find((p) => p.name === reflection.prop);
         if (propDef?.onChange) {
           propDef.onChange(reflection.value, oldPropValue);
         }
@@ -368,7 +349,12 @@ export function createEnhancedElementClass(
       // FIX: P1-17 使用 Object.is() 替代 ===，正确处理 NaN 和 +/-0 等边界情况；
       // 对对象类型使用 JSON 序列化进行深度比较，避免引用不同但内容相同导致误判
       // FIX: P2-batch2-14 添加 try-catch 防止循环引用导致 JSON.stringify 抛出异常
-      if (typeof value === 'object' && value !== null && typeof oldValue === 'object' && oldValue !== null) {
+      if (
+        typeof value === 'object' &&
+        value !== null &&
+        typeof oldValue === 'object' &&
+        oldValue !== null
+      ) {
         try {
           if (JSON.stringify(value) === JSON.stringify(oldValue)) return;
         } catch {
@@ -414,11 +400,7 @@ export function createEnhancedElementClass(
     /**
      * 生命周期钩子：属性变更
      */
-    protected onPropertyChanged?(
-      name: string,
-      newValue: unknown,
-      oldValue: unknown,
-    ): void;
+    protected onPropertyChanged?(name: string, newValue: unknown, oldValue: unknown): void;
 
     /**
      * 生命周期钩子：attribute 变更
@@ -465,9 +447,7 @@ export function defineLytJSWebComponent(
   const { component, propMapping, eventMapping, slotMapping } = bridgeOptions;
 
   // 合并属性定义：将 propMapping 中的属性名转换为 WCPropertyDefinition
-  const mergedProperties: WCPropertyDefinition[] = [
-    ...(options?.properties ?? []),
-  ];
+  const mergedProperties: WCPropertyDefinition[] = [...(options?.properties ?? [])];
 
   if (propMapping) {
     for (const [_wcAttr, componentProp] of Object.entries(propMapping)) {
@@ -508,7 +488,12 @@ export function defineLytJSWebComponent(
  */
 export function getBridgeMeta(
   element: Element,
-): { component: unknown; propMapping: Record<string, string>; eventMapping: Record<string, string>; slotMapping: Record<string, string> } | null {
+): {
+  component: unknown;
+  propMapping: Record<string, string>;
+  eventMapping: Record<string, string>;
+  slotMapping: Record<string, string>;
+} | null {
   const constructor = element.constructor as unknown as Record<symbol, unknown>;
   return (constructor[Symbol.for('lytjs.bridge')] ?? null) as ReturnType<typeof getBridgeMeta>;
 }
@@ -521,11 +506,7 @@ export function getBridgeMeta(
  * 检查浏览器是否支持 Web Components
  */
 export function supportsWebComponents(): boolean {
-  return (
-    typeof window !== 'undefined' &&
-    'customElements' in window &&
-    'HTMLElement' in window
-  );
+  return typeof window !== 'undefined' && 'customElements' in window && 'HTMLElement' in window;
 }
 
 /**
@@ -559,7 +540,4 @@ export function upgradeAll(root: HTMLElement = document.body): void {
 // 导出
 // ============================================================
 
-export {
-  camelToKebab,
-  kebabToCamel,
-};
+export { camelToKebab, kebabToCamel };

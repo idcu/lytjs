@@ -6,10 +6,10 @@
 
 LytJS 提供两种独立的渲染模式包，可以根据项目需求选择合适的变体以优化包体积：
 
-| 变体 | 包名 | 特点 |
-|------|------|------|
-| VNode 模式 | `@lytjs/core` / `@lytjs/core-vnode` | 包含完整 VDOM 支持，功能最全 |
-| Signal 模式 | `@lytjs/core-signal` | 无 VDOM 开销，包体积更小 |
+| 变体        | 包名                                | 特点                         |
+| ----------- | ----------------------------------- | ---------------------------- |
+| VNode 模式  | `@lytjs/core` / `@lytjs/core-vnode` | 包含完整 VDOM 支持，功能最全 |
+| Signal 模式 | `@lytjs/core-signal`                | 无 VDOM 开销，包体积更小     |
 
 ### 选择建议
 
@@ -129,7 +129,5 @@ const filteredList = computed(() => list.value.filter((item) => item > 2));
 </div>
 
 <!-- 条件缓存使用 v-memo -->
-<div v-memo="[item.id]">
-  {{ item.name }}
-</div>
+<div v-memo="[item.id]">{{ item.name }}</div>
 ```

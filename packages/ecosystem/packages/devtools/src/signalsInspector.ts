@@ -126,45 +126,48 @@ const DEFAULT_LAYOUT_OPTIONS: LayoutOptions = {
 };
 
 // 信号注册表
-const signalRegistry = new Map<string, {
-  type: 'signal' | 'computed' | 'effect';
-  name: string;
-  dependencies: Set<string>;
-  dependents: Set<string>;
-  value: unknown;
-  previousValue?: unknown;
-  updateCount: number;
-  updateTimes: number[];
-  lastUpdateTime: number;
-}>();
+const signalRegistry = new Map<
+  string,
+  {
+    type: 'signal' | 'computed' | 'effect';
+    name: string;
+    dependencies: Set<string>;
+    dependents: Set<string>;
+    value: unknown;
+    previousValue?: unknown;
+    updateCount: number;
+    updateTimes: number[];
+    lastUpdateTime: number;
+  }
+>();
 
 // 快照管理器
 const snapshotManager = {
   snapshots: [] as Snapshot[],
   maxSnapshots: 100,
-  
+
   add(snapshot: Snapshot) {
     this.snapshots.push(snapshot);
     if (this.snapshots.length > this.maxSnapshots) {
       this.snapshots.shift();
     }
   },
-  
+
   getAll(): Snapshot[] {
     return [...this.snapshots];
   },
-  
+
   get(index: number): Snapshot | undefined {
     return this.snapshots[index];
   },
-  
+
   clear() {
     this.snapshots = [];
   },
-  
+
   getLength(): number {
     return this.snapshots.length;
-  }
+  },
 };
 
 // 性能记录
@@ -178,7 +181,7 @@ export function registerSignal(
   id: string,
   name: string,
   type: 'signal' | 'computed' | 'effect',
-  initialValue?: unknown
+  initialValue?: unknown,
 ): void {
   signalRegistry.set(id, {
     type,
@@ -217,25 +220,21 @@ export function unregisterSignal(id: string): void {
 /**
  * 记录信号更新
  */
-export function recordSignalUpdate(
-  id: string,
-  newValue: unknown,
-  duration?: number
-): void {
+export function recordSignalUpdate(id: string, newValue: unknown, duration?: number): void {
   const node = signalRegistry.get(id);
   if (node) {
     node.previousValue = node.value;
     node.value = newValue;
     node.updateCount++;
     node.lastUpdateTime = Date.now();
-    
+
     if (duration !== undefined) {
       node.updateTimes.push(duration);
       if (node.updateTimes.length > 10) {
         node.updateTimes.shift();
       }
     }
-    
+
     if (duration !== undefined) {
       recordPerformance({
         id,
@@ -254,7 +253,7 @@ export function recordSignalUpdate(
 export function recordDependency(sourceId: string, targetId: string): void {
   const source = signalRegistry.get(sourceId);
   const target = signalRegistry.get(targetId);
-  
+
   if (source && target) {
     source.dependencies.add(targetId);
     target.dependents.add(sourceId);
@@ -275,9 +274,10 @@ export function getSignalNodes(): SignalNode[] {
     dependents: Array.from(node.dependents),
     updateCount: node.updateCount,
     lastUpdateTime: node.lastUpdateTime,
-    averageUpdateTime: node.updateTimes.length > 0
-      ? node.updateTimes.reduce((a, b) => a + b, 0) / node.updateTimes.length
-      : 0,
+    averageUpdateTime:
+      node.updateTimes.length > 0
+        ? node.updateTimes.reduce((a, b) => a + b, 0) / node.updateTimes.length
+        : 0,
   }));
 }
 
@@ -287,7 +287,7 @@ export function getSignalNodes(): SignalNode[] {
 export function getSignalNode(id: string): SignalNode | undefined {
   const node = signalRegistry.get(id);
   if (!node) return undefined;
-  
+
   return {
     id,
     name: node.name,
@@ -298,9 +298,10 @@ export function getSignalNode(id: string): SignalNode | undefined {
     dependents: Array.from(node.dependents),
     updateCount: node.updateCount,
     lastUpdateTime: node.lastUpdateTime,
-    averageUpdateTime: node.updateTimes.length > 0
-      ? node.updateTimes.reduce((a, b) => a + b, 0) / node.updateTimes.length
-      : 0,
+    averageUpdateTime:
+      node.updateTimes.length > 0
+        ? node.updateTimes.reduce((a, b) => a + b, 0) / node.updateTimes.length
+        : 0,
   };
 }
 
@@ -310,14 +311,14 @@ export function getSignalNode(id: string): SignalNode | undefined {
 export function getDependencyGraph(): DependencyGraph {
   const nodes: DependencyGraphNode[] = [];
   const edges: DependencyGraphEdge[] = [];
-  
+
   signalRegistry.forEach((node, id) => {
     nodes.push({
       id,
       name: node.name,
       type: node.type,
     });
-    
+
     node.dependencies.forEach((depId) => {
       edges.push({
         source: depId,
@@ -326,7 +327,7 @@ export function getDependencyGraph(): DependencyGraph {
       });
     });
   });
-  
+
   return { nodes, edges };
 }
 
@@ -340,14 +341,14 @@ export function createSnapshot(label?: string): Snapshot {
     label,
     signals: {},
   };
-  
+
   signalRegistry.forEach((node, id) => {
     snapshot.signals[id] = {
       value: node.value,
       dependencies: Array.from(node.dependencies),
     };
   });
-  
+
   snapshotManager.add(snapshot);
   return snapshot;
 }
@@ -385,14 +386,14 @@ export function getTimeTravelState(): TimeTravelState {
 export function restoreSnapshot(index: number): Snapshot | undefined {
   const snapshot = snapshotManager.get(index);
   if (!snapshot) return undefined;
-  
+
   Object.entries(snapshot.signals).forEach(([id, signalSnapshot]) => {
     const node = signalRegistry.get(id);
     if (node) {
       node.value = signalSnapshot.value;
     }
   });
-  
+
   return snapshot;
 }
 
@@ -443,10 +444,10 @@ export function getPerformanceStats(): {
       byType: {},
     };
   }
-  
+
   const durations = performanceRecords.map((r) => r.duration);
   const byType: Record<string, { count: number; total: number; max: number }> = {};
-  
+
   performanceRecords.forEach((record) => {
     if (!byType[record.type]) {
       byType[record.type] = { count: 0, total: 0, max: 0 };
@@ -456,7 +457,7 @@ export function getPerformanceStats(): {
     typeStats.total += record.duration;
     typeStats.max = Math.max(typeStats.max, record.duration);
   });
-  
+
   const byTypeResult: Record<string, { count: number; average: number; max: number }> = {};
   Object.entries(byType).forEach(([type, data]) => {
     byTypeResult[type] = {
@@ -465,7 +466,7 @@ export function getPerformanceStats(): {
       max: data.max,
     };
   });
-  
+
   return {
     totalRecords: performanceRecords.length,
     averageDuration: durations.reduce((a, b) => a + b, 0) / durations.length,
@@ -497,19 +498,19 @@ export function serializeSignalNode(node: SignalNode): string {
   result += `   ID: ${node.id}\n`;
   result += `   更新次数: ${node.updateCount}\n`;
   result += `   最后更新: ${new Date(node.lastUpdateTime).toLocaleTimeString()}\n`;
-  
+
   if (node.averageUpdateTime > 0) {
     result += `   平均更新耗时: ${node.averageUpdateTime.toFixed(2)}ms\n`;
   }
-  
+
   if (node.dependencies.length > 0) {
     result += `   依赖: ${node.dependencies.join(', ')}\n`;
   }
-  
+
   if (node.dependents.length > 0) {
     result += `   被依赖: ${node.dependents.join(', ')}\n`;
   }
-  
+
   return result;
 }
 
@@ -521,14 +522,14 @@ export function serializeDependencyGraph(): string {
   if (graph.nodes.length === 0) {
     return '暂无信号数据';
   }
-  
+
   let result = `📈 依赖图 (${graph.nodes.length} 个节点, ${graph.edges.length} 条边)\n\n`;
-  
+
   graph.nodes.forEach((node) => {
     const nodeInfo = signalRegistry.get(node.id);
     const deps = nodeInfo?.dependencies || new Set();
     const dependents = nodeInfo?.dependents || new Set();
-    
+
     result += `🔹 ${node.name} (${node.type})\n`;
     if (deps.size > 0) {
       result += `   ↓ 依赖: ${Array.from(deps).join(', ')}\n`;
@@ -538,7 +539,7 @@ export function serializeDependencyGraph(): string {
     }
     result += '\n';
   });
-  
+
   return result;
 }
 
@@ -547,22 +548,22 @@ export function serializeDependencyGraph(): string {
  */
 export function serializePerformanceStats(): string {
   const stats = getPerformanceStats();
-  
+
   if (stats.totalRecords === 0) {
     return '暂无性能数据';
   }
-  
+
   let result = `⚡ 性能统计\n\n`;
   result += `总记录数: ${stats.totalRecords}\n`;
   result += `平均耗时: ${stats.averageDuration.toFixed(2)}ms\n`;
   result += `最大耗时: ${stats.maxDuration.toFixed(2)}ms\n`;
   result += `最小耗时: ${stats.minDuration.toFixed(2)}ms\n\n`;
-  
+
   result += `按类型统计:\n`;
   Object.entries(stats.byType).forEach(([type, data]) => {
     result += `  ${type}: ${data.count} 次, 平均 ${data.average.toFixed(2)}ms, 最大 ${data.max.toFixed(2)}ms\n`;
   });
-  
+
   return result;
 }
 
@@ -574,7 +575,7 @@ export function serializePerformanceStats(): string {
 function calculateNodeLevels(): Map<string, number> {
   const levels = new Map<string, number>();
   const visited = new Set<string>();
-  
+
   function visitNode(nodeId: string, level: number): void {
     if (visited.has(nodeId)) {
       const existingLevel = levels.get(nodeId);
@@ -583,10 +584,10 @@ function calculateNodeLevels(): Map<string, number> {
       }
       return;
     }
-    
+
     visited.add(nodeId);
     levels.set(nodeId, level);
-    
+
     const node = signalRegistry.get(nodeId);
     if (node) {
       node.dependents.forEach((depId) => {
@@ -594,19 +595,19 @@ function calculateNodeLevels(): Map<string, number> {
       });
     }
   }
-  
+
   signalRegistry.forEach((node, id) => {
     if (node.dependencies.size === 0) {
       visitNode(id, 0);
     }
   });
-  
+
   signalRegistry.forEach((_, id) => {
     if (!visited.has(id)) {
       visitNode(id, 0);
     }
   });
-  
+
   return levels;
 }
 
@@ -615,14 +616,14 @@ function calculateNodeLevels(): Map<string, number> {
  */
 function calculateNodeDegrees(): Map<string, { inDegree: number; outDegree: number }> {
   const degrees = new Map<string, { inDegree: number; outDegree: number }>();
-  
+
   signalRegistry.forEach((node, id) => {
     degrees.set(id, {
       inDegree: node.dependencies.size,
       outDegree: node.dependents.size,
     });
   });
-  
+
   return degrees;
 }
 
@@ -631,42 +632,47 @@ function calculateNodeDegrees(): Map<string, { inDegree: number; outDegree: numb
  */
 export function getVisualLayoutGraph(options?: Partial<LayoutOptions>): VisualLayoutGraph {
   const opts: LayoutOptions = { ...DEFAULT_LAYOUT_OPTIONS, ...options };
-  
+
   if (signalRegistry.size === 0) {
     return { nodes: [], edges: [], width: 0, height: 0 };
   }
-  
+
   const levels = calculateNodeLevels();
   const degrees = calculateNodeDegrees();
-  
+
   const levelNodes = new Map<number, string[]>();
   levels.forEach((level, nodeId) => {
     const nodes = levelNodes.get(level) || [];
     nodes.push(nodeId);
     levelNodes.set(level, nodes);
   });
-  
+
   const maxLevel = Math.max(...Array.from(levels.values()), 0);
   const maxNodesInLevel = Math.max(...Array.from(levelNodes.values()).map((n) => n.length), 1);
-  
+
   const graphWidth = (maxNodesInLevel + 1) * (opts.nodeWidth + opts.horizontalSpacing);
   const graphHeight = (maxLevel + 2) * (opts.nodeHeight + opts.verticalSpacing);
-  
+
   const nodes: VisualLayoutNode[] = [];
   const edges: VisualLayoutEdge[] = [];
-  
+
   levelNodes.forEach((nodeIds, level) => {
-    const levelWidth = nodeIds.length * (opts.nodeWidth + opts.horizontalSpacing) - opts.horizontalSpacing;
+    const levelWidth =
+      nodeIds.length * (opts.nodeWidth + opts.horizontalSpacing) - opts.horizontalSpacing;
     const startX = (graphWidth - levelWidth) / 2;
-    
+
     nodeIds.forEach((nodeId, index) => {
       const node = signalRegistry.get(nodeId);
       if (!node) return;
-      
+
       const degree = degrees.get(nodeId) || { inDegree: 0, outDegree: 0 };
       const x = startX + index * (opts.nodeWidth + opts.horizontalSpacing);
-      const y = opts.centerY - (graphHeight / 2) + level * (opts.nodeHeight + opts.verticalSpacing) + opts.verticalSpacing / 2;
-      
+      const y =
+        opts.centerY -
+        graphHeight / 2 +
+        level * (opts.nodeHeight + opts.verticalSpacing) +
+        opts.verticalSpacing / 2;
+
       nodes.push({
         id: nodeId,
         name: node.name,
@@ -679,7 +685,7 @@ export function getVisualLayoutGraph(options?: Partial<LayoutOptions>): VisualLa
         inDegree: degree.inDegree,
         outDegree: degree.outDegree,
       });
-      
+
       node.dependencies.forEach((depId) => {
         const depNode = nodes.find((n) => n.id === depId);
         if (depNode) {
@@ -696,7 +702,7 @@ export function getVisualLayoutGraph(options?: Partial<LayoutOptions>): VisualLa
       });
     });
   });
-  
+
   return { nodes, edges, width: graphWidth, height: graphHeight };
 }
 
@@ -706,11 +712,11 @@ export function getVisualLayoutGraph(options?: Partial<LayoutOptions>): VisualLa
 export function getSubgraph(centerId: string, depth: number = 2): VisualLayoutGraph {
   const includedNodes = new Set<string>([centerId]);
   const queue: Array<{ id: string; currentDepth: number }> = [{ id: centerId, currentDepth: 0 }];
-  
+
   while (queue.length > 0) {
     const { id, currentDepth } = queue.shift()!;
     if (currentDepth >= depth) continue;
-    
+
     const node = signalRegistry.get(id);
     if (node) {
       node.dependencies.forEach((depId) => {
@@ -719,7 +725,7 @@ export function getSubgraph(centerId: string, depth: number = 2): VisualLayoutGr
           queue.push({ id: depId, currentDepth: currentDepth + 1 });
         }
       });
-      
+
       node.dependents.forEach((depId) => {
         if (!includedNodes.has(depId)) {
           includedNodes.add(depId);
@@ -728,7 +734,7 @@ export function getSubgraph(centerId: string, depth: number = 2): VisualLayoutGr
       });
     }
   }
-  
+
   const tempRegistry = new Map(signalRegistry);
 
   signalRegistry.forEach((_, id) => {
@@ -756,7 +762,7 @@ export function searchSignals(query: string): SignalNode[] {
     (node) =>
       node.name.toLowerCase().includes(lowerQuery) ||
       node.id.toLowerCase().includes(lowerQuery) ||
-      node.type.toLowerCase().includes(lowerQuery)
+      node.type.toLowerCase().includes(lowerQuery),
   );
 }
 
@@ -808,10 +814,10 @@ export function compareSnapshots(snapshot1: Snapshot, snapshot2: Snapshot): Snap
     removed: [],
     changed: [],
   };
-  
+
   const ids1 = new Set(Object.keys(snapshot1.signals));
   const ids2 = new Set(Object.keys(snapshot2.signals));
-  
+
   ids2.forEach((id) => {
     if (!ids1.has(id)) {
       diff.added.push({
@@ -839,7 +845,7 @@ export function compareSnapshots(snapshot1: Snapshot, snapshot2: Snapshot): Snap
       }
     }
   });
-  
+
   return diff;
 }
 
@@ -848,7 +854,7 @@ export function compareSnapshots(snapshot1: Snapshot, snapshot2: Snapshot): Snap
  */
 export function serializeSnapshotDiff(diff: SnapshotDiff): string {
   let result = '';
-  
+
   if (diff.added.length > 0) {
     result += `➕ 新增信号 (${diff.added.length}):\n`;
     diff.added.forEach(({ id, value }) => {
@@ -856,7 +862,7 @@ export function serializeSnapshotDiff(diff: SnapshotDiff): string {
     });
     result += '\n';
   }
-  
+
   if (diff.removed.length > 0) {
     result += `➖ 移除信号 (${diff.removed.length}):\n`;
     diff.removed.forEach(({ id, value }) => {
@@ -864,7 +870,7 @@ export function serializeSnapshotDiff(diff: SnapshotDiff): string {
     });
     result += '\n';
   }
-  
+
   if (diff.changed.length > 0) {
     result += `🔄 变更信号 (${diff.changed.length}):\n`;
     diff.changed.forEach(({ id, oldValue, newValue }) => {
@@ -874,11 +880,11 @@ export function serializeSnapshotDiff(diff: SnapshotDiff): string {
     });
     result += '\n';
   }
-  
+
   if (result === '') {
     result = '✨ 快照完全相同';
   }
-  
+
   return result;
 }
 
@@ -888,11 +894,11 @@ export function serializeSnapshotDiff(diff: SnapshotDiff): string {
 export function getDiffBetweenSnapshots(index1: number, index2: number): SnapshotDiff | null {
   const snapshot1 = getSnapshot(index1);
   const snapshot2 = getSnapshot(index2);
-  
+
   if (!snapshot1 || !snapshot2) {
     return null;
   }
-  
+
   return compareSnapshots(snapshot1, snapshot2);
 }
 
@@ -925,9 +931,10 @@ export function getTimeTravelNavigator(index?: number): TimeTravelNavigator {
     currentSnapshot: snapshots[currentIndex] ?? null,
     previousSnapshot: currentIndex > 0 ? (snapshots[currentIndex - 1] ?? null) : null,
     nextSnapshot: snapshots[currentIndex + 1] ?? null,
-    diff: currentIndex > 0
-      ? compareSnapshots(snapshots[currentIndex - 1]!, snapshots[currentIndex]!)
-      : null,
+    diff:
+      currentIndex > 0
+        ? compareSnapshots(snapshots[currentIndex - 1]!, snapshots[currentIndex]!)
+        : null,
   };
 }
 

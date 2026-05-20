@@ -15,10 +15,5 @@ export default defineConfig({
       js: format === 'cjs' ? '.cjs' : '.mjs',
     };
   },
-  external: [
-    '@lytjs/compiler',
-    '@lytjs/common-is',
-    '@lytjs/shared-types',
-    'vite',
-  ],
+  external: ['@lytjs/compiler', '@lytjs/common-is', '@lytjs/shared-types', 'vite'],
 });

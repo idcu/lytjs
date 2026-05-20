@@ -11,16 +11,19 @@
 **排查步骤**：
 
 1. 检查 Node.js 版本
+
 ```bash
 node -v  # 确保 >= 18.0.0
 ```
 
 2. 检查 pnpm 版本
+
 ```bash
 pnpm -v  # 确保 >= 9.0.0
 ```
 
 3. 清理缓存并重试
+
 ```bash
 pnpm store prune
 rm -rf node_modules pnpm-lock.yaml
@@ -28,6 +31,7 @@ pnpm install
 ```
 
 4. 使用国内镜像（如有必要）
+
 ```bash
 pnpm config set registry https://registry.npmmirror.com
 pnpm install
@@ -40,22 +44,26 @@ pnpm install
 **排查步骤**：
 
 1. 检查类型错误
+
 ```bash
 pnpm type-check
 ```
 
 2. 检查 lint 错误
+
 ```bash
 pnpm lint:check
 ```
 
 3. 检查是否有缺失的依赖
+
 ```bash
 pnpm install
 pnpm build
 ```
 
 4. 查看详细错误信息
+
 ```bash
 pnpm build --verbose
 ```
@@ -67,16 +75,19 @@ pnpm build --verbose
 **排查步骤**：
 
 1. 确认依赖已安装
+
 ```bash
 pnpm ls <package-name>
 ```
 
 2. 确认包的构建产物存在
+
 ```bash
 ls packages/<package-name>/dist/
 ```
 
 3. 重新构建依赖包
+
 ```bash
 cd packages/<package-name>
 pnpm build
@@ -84,7 +95,7 @@ pnpm build
 
 ## 类型问题
 
-### __DEV__ 未定义
+### **DEV** 未定义
 
 **症状**：`Cannot find name '__DEV__'`
 
@@ -104,6 +115,7 @@ declare const __DEV__: boolean;
 **排查步骤**：
 
 1. 检查 tsconfig.json 配置
+
 ```json
 {
   "compilerOptions": {
@@ -114,16 +126,18 @@ declare const __DEV__: boolean;
 ```
 
 2. 确保导入了正确的类型
+
 ```typescript
 // 使用 import type
 import type { Component } from '@lytjs/core';
 
 // 避免使用 any
-const data: any = fetchData();  // ❌ 不推荐
-const data: unknown = fetchData();  // ✅ 推荐
+const data: any = fetchData(); // ❌ 不推荐
+const data: unknown = fetchData(); // ✅ 推荐
 ```
 
 3. 检查类型定义文件
+
 ```bash
 ls packages/<package-name>/dist/*.d.ts
 ```
@@ -137,16 +151,19 @@ ls packages/<package-name>/dist/*.d.ts
 **排查步骤**：
 
 1. 查看详细错误
+
 ```bash
 pnpm test --reporter=verbose
 ```
 
 2. 运行单个测试文件
+
 ```bash
 pnpm test --filter <package-name> -- src/tests/specific.test.ts
 ```
 
 3. 检查测试环境配置
+
 ```bash
 cat packages/<package-name>/vitest.config.ts
 ```
@@ -158,17 +175,20 @@ cat packages/<package-name>/vitest.config.ts
 **解决方案**：
 
 1. 限制 worker 数量
+
 ```bash
 pnpm test --maxWorkers=2
 ```
 
 2. 在单个包目录运行测试
+
 ```bash
 cd packages/<package-name>
 pnpm test
 ```
 
 3. 使用 `--pool=forks` 替代默认池
+
 ```bash
 pnpm test --pool=forks
 ```
@@ -201,17 +221,19 @@ export default defineConfig({
 **排查步骤**：
 
 1. 确认使用了响应式 API
+
 ```typescript
 // ✅ 正确
 const count = signal(0);
-count.value++;  // 使用 signal
+count.value++; // 使用 signal
 
 // ❌ 错误
 let count = 0;
-count++;  // 普通变量不会触发更新
+count++; // 普通变量不会触发更新
 ```
 
 2. 检查 effect 依赖追踪
+
 ```typescript
 // ✅ 正确：effect 会追踪 signal()
 effect(() => {
@@ -221,11 +243,12 @@ effect(() => {
 // ❌ 错误：effect 不会追踪普通变量
 const name = 'Alice';
 effect(() => {
-  console.log(name);  // 只执行一次
+  console.log(name); // 只执行一次
 });
 ```
 
 3. 检查 computed 依赖
+
 ```typescript
 // ✅ 正确
 const doubled = computed(() => count.value * 2);
@@ -233,7 +256,7 @@ const doubled = computed(() => count.value * 2);
 // ❌ 错误：在 computed 中修改状态
 const count = signal(0);
 const doubled = computed(() => {
-  count.value++;  // ❌ 不要在 computed 中修改状态
+  count.value++; // ❌ 不要在 computed 中修改状态
   return count.value * 2;
 });
 ```
@@ -245,24 +268,27 @@ const doubled = computed(() => {
 **排查步骤**：
 
 1. 确认在 effect 中访问了信号
+
 ```typescript
 // ✅ 正确
 effect(() => {
-  console.log(count.value);  // 追踪 count
+  console.log(count.value); // 追踪 count
 });
 
 // ❌ 错误：信号在 effect 外使用
-const current = count.value;  // 不追踪
+const current = count.value; // 不追踪
 effect(() => {
-  console.log(current);  // 不会响应 count 变化
+  console.log(current); // 不会响应 count 变化
 });
 ```
 
 2. 检查条件判断
+
 ```typescript
 // ✅ 正确：确保信号在 effect 中被访问
 effect(() => {
-  if (count.value > 0) {  // 追踪 count
+  if (count.value > 0) {
+    // 追踪 count
     console.log('count > 0');
   }
 });
@@ -277,24 +303,27 @@ effect(() => {
 **排查步骤**：
 
 1. 确认路由配置正确
+
 ```typescript
 const routes = [
   { path: '/', component: Home },
   { path: '/about', component: About },
-  { path: '/users/:id', component: UserDetail },  // 动态路由
+  { path: '/users/:id', component: UserDetail }, // 动态路由
 ];
 ```
 
 2. 检查 History 模式配置
+
 ```typescript
 // ✅ Web History（需要服务器配置）
-createWebHistory()
+createWebHistory();
 
 // ✅ Hash 模式（无需服务器配置）
-createWebHashHistory()
+createWebHashHistory();
 ```
 
 3. 确认 Router 已挂载
+
 ```typescript
 app.use(router);
 app.mount('#app');
@@ -307,6 +336,7 @@ app.mount('#app');
 **排查步骤**：
 
 1. 检查路由定义
+
 ```typescript
 // ✅ 正确
 { path: '/user/:id', component: User }
@@ -316,11 +346,12 @@ app.mount('#app');
 ```
 
 2. 访问路由参数
+
 ```typescript
 import { useRoute } from '@lytjs/router';
 
 const route = useRoute();
-const userId = route.params.id;  // 字符串类型
+const userId = route.params.id; // 字符串类型
 ```
 
 ## 插件问题
@@ -332,6 +363,7 @@ const userId = route.params.id;  // 字符串类型
 **排查步骤**：
 
 1. 确认插件格式正确
+
 ```typescript
 // ✅ 正确
 const plugin = {
@@ -340,10 +372,13 @@ const plugin = {
   },
 };
 
-app.use(plugin, { /* options */ });
+app.use(plugin, {
+  /* options */
+});
 ```
 
 2. 检查插件依赖
+
 ```typescript
 // 在插件中检查选项
 const plugin = {
@@ -362,6 +397,7 @@ const plugin = {
 **排查步骤**：
 
 1. 检查选项传递
+
 ```typescript
 // ✅ 正确
 app.use(myPlugin, {
@@ -371,6 +407,7 @@ app.use(myPlugin, {
 ```
 
 2. 检查插件实现
+
 ```typescript
 const plugin = {
   install(app, options) {
@@ -391,11 +428,13 @@ const plugin = {
 **排查步骤**：
 
 1. 确认样式文件已导入
+
 ```typescript
 import '@lytjs/ui/dist/style.css';
 ```
 
 2. 检查选择器优先级
+
 ```css
 /* ✅ 提高优先级 */
 .lyt-button.primary {
@@ -404,6 +443,7 @@ import '@lytjs/ui/dist/style.css';
 ```
 
 3. 检查 CSS 模块配置
+
 ```typescript
 // vite.config.ts
 export default {
@@ -422,6 +462,7 @@ export default {
 **解决方案**：
 
 1. 使用 CSS Modules
+
 ```vue
 <style module>
 .button {
@@ -431,6 +472,7 @@ export default {
 ```
 
 2. 使用 BEM 命名
+
 ```css
 .lyt-form__input--error {
   border-color: red;
@@ -438,6 +480,7 @@ export default {
 ```
 
 3. 使用 scoped CSS
+
 ```vue
 <style scoped>
 .form-input {
@@ -455,23 +498,24 @@ export default {
 **排查步骤**：
 
 1. 检查包体积
+
 ```bash
 pnpm build
 ls -lh dist/assets/*.js
 ```
 
 2. 启用代码分割
+
 ```typescript
 // ✅ 路由懒加载
 const About = () => import('./views/About.vue');
 
 // ✅ 组件懒加载
-const HeavyComponent = defineAsyncComponent(() =>
-  import('./HeavyComponent.vue')
-);
+const HeavyComponent = defineAsyncComponent(() => import('./HeavyComponent.vue'));
 ```
 
 3. 启用压缩
+
 ```bash
 # 确保生产构建使用压缩
 pnpm build --mode production
@@ -484,6 +528,7 @@ pnpm build --mode production
 **排查步骤**：
 
 1. 检查未清理的 effect
+
 ```typescript
 // ✅ 正确
 const stop = effect(() => {
@@ -496,6 +541,7 @@ onCleanup(() => {
 ```
 
 2. 检查未移除的事件监听
+
 ```typescript
 // ✅ 正确
 window.addEventListener('resize', handler);
@@ -506,6 +552,7 @@ onCleanup(() => {
 ```
 
 3. 检查未清理的定时器
+
 ```typescript
 // ✅ 正确
 const timer = setInterval(() => {
@@ -524,6 +571,7 @@ onCleanup(() => {
 **排查步骤**：
 
 1. 检查是否创建了新对象
+
 ```typescript
 // ✅ 正确：保持对象引用
 const user = reactive({ name: 'Alice', age: 25 });
@@ -531,10 +579,11 @@ user.age++;
 
 // ❌ 错误：创建新对象
 const user = { name: 'Alice', age: 25 };
-user = { ...user, age: 26 };  // 触发更新
+user = { ...user, age: 26 }; // 触发更新
 ```
 
 2. 使用 computed 缓存
+
 ```typescript
 // ✅ 正确
 const fullName = computed(() => `${firstName()} ${lastName()}`);
@@ -555,16 +604,19 @@ effect(() => {
 **排查步骤**：
 
 1. 确认开发模式
+
 ```typescript
 // 确保 __DEV__ 为 true
 // 开发环境默认开启
 ```
 
 2. 安装 DevTools 扩展
+
 - Chrome: LytJS DevTools
 - Firefox: LytJS DevTools
 
 3. 检查扩展设置
+
 - 确认扩展已启用
 - 确认页面使用 LytJS
 
@@ -575,6 +627,7 @@ effect(() => {
 **排查步骤**：
 
 1. 确认使用响应式 API
+
 ```typescript
 import { signal } from '@lytjs/reactivity';
 
@@ -582,20 +635,21 @@ const count = signal(0);
 ```
 
 2. 确认在 effect 中使用信号
+
 ```typescript
 effect(() => {
-  console.log(count.value);  // 才会显示在追踪中
+  console.log(count.value); // 才会显示在追踪中
 });
 ```
 
 ## 常见错误代码
 
-| 错误代码 | 含义 | 解决方案 |
-|---------|------|---------|
-| `MODULE_NOT_FOUND` | 模块未找到 | 运行 `pnpm install` |
-| `TYPE_ERROR` | 类型错误 | 检查类型定义 |
-| `CANNOT_READ_PROPERTY` | 读取 undefined 属性 | 检查对象初始化 |
-| `CIRCULAR_DEPENDENCY` | 循环依赖 | 检查 import 结构 |
+| 错误代码               | 含义                | 解决方案            |
+| ---------------------- | ------------------- | ------------------- |
+| `MODULE_NOT_FOUND`     | 模块未找到          | 运行 `pnpm install` |
+| `TYPE_ERROR`           | 类型错误            | 检查类型定义        |
+| `CANNOT_READ_PROPERTY` | 读取 undefined 属性 | 检查对象初始化      |
+| `CIRCULAR_DEPENDENCY`  | 循环依赖            | 检查 import 结构    |
 
 ## 获取帮助
 

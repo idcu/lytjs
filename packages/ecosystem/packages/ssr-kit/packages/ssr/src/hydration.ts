@@ -117,9 +117,7 @@ export function createHydrationMarkers(vnode: VNode): VNode {
 
   // 处理数组
   if (isArray(vnode)) {
-    return vnode.map(child =>
-      createHydrationMarkers(child as VNode)
-    ) as unknown as VNode;
+    return vnode.map((child) => createHydrationMarkers(child as VNode)) as unknown as VNode;
   }
 
   // 处理元素节点 - 添加水合标记
@@ -139,9 +137,7 @@ export function createHydrationMarkers(vnode: VNode): VNode {
     let processedChildren: VNodeChildren = children;
     if (children !== null && !isString(children) && !isNumber(children)) {
       if (isArray(children)) {
-        processedChildren = children.map(child =>
-          createHydrationMarkers(child as VNode)
-        );
+        processedChildren = children.map((child) => createHydrationMarkers(child as VNode));
       } else if (isObject(children)) {
         processedChildren = [createHydrationMarkers(children as VNode)];
       }
@@ -157,9 +153,7 @@ export function createHydrationMarkers(vnode: VNode): VNode {
       if (isArray(children)) {
         return {
           ...node,
-          children: children.map(child =>
-            createHydrationMarkers(child as VNode)
-          ),
+          children: children.map((child) => createHydrationMarkers(child as VNode)),
         } as VNode;
       } else if (isObject(children)) {
         return {
@@ -219,10 +213,7 @@ export function getHydrationStrategy(vnode: VNode): HydrationStrategy {
  * 遍历 VNode 树，收集所有组件的水合信息，
  * 包括组件 ID、水合策略和 props 快照。
  */
-function collectHydrationHints(
-  vnode: VNode,
-  hints: HydrationHints[] = []
-): HydrationHints[] {
+function collectHydrationHints(vnode: VNode, hints: HydrationHints[] = []): HydrationHints[] {
   if (!isObject(vnode)) {
     return hints;
   }
@@ -337,7 +328,7 @@ export function serializeHydrationState(state: unknown): string {
  */
 export function createDehydratedState(
   vnode: VNode,
-  initialState?: Record<string, unknown>
+  initialState?: Record<string, unknown>,
 ): string {
   // 重置计数器以确保一致性
   resetComponentIdCounter();

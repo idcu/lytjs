@@ -53,7 +53,9 @@ export const Modal = defineComponent({
       }
       isClosing.set(true);
       p.onClose?.();
-      setTimeout(() => { isClosing.set(false); }, 300);
+      setTimeout(() => {
+        isClosing.set(false);
+      }, 300);
     };
 
     const handleModalClick = () => {
@@ -76,32 +78,54 @@ export const Modal = defineComponent({
       const headerChildren: VNode[] = [];
 
       if (slots.header) {
-        headerChildren.push(createVNode('div', { 
-          class: 'lyt-modal__header',
-          id: p.id ? `${p.id}-header` : undefined,
-        }, slots.header()));
+        headerChildren.push(
+          createVNode(
+            'div',
+            {
+              class: 'lyt-modal__header',
+              id: p.id ? `${p.id}-header` : undefined,
+            },
+            slots.header(),
+          ),
+        );
       } else if (p.title) {
         const titlePart: VNode[] = [
-          createVNode('span', { 
-            class: 'lyt-modal__title',
-            id: p.id ? `${p.id}-title` : undefined,
-          }, [createTextVNode(String(p.title))]),
+          createVNode(
+            'span',
+            {
+              class: 'lyt-modal__title',
+              id: p.id ? `${p.id}-title` : undefined,
+            },
+            [createTextVNode(String(p.title))],
+          ),
         ];
 
         if (p.showClose) {
           const closeBtnProps = getButtonA11yProps({
             ariaLabel: 'Close dialog',
           });
-          titlePart.push(createVNode('button', mergeA11yProps(closeBtnProps, {
-            class: 'lyt-modal__close',
-            onClick: close,
-          }), [createTextVNode('×')]));
+          titlePart.push(
+            createVNode(
+              'button',
+              mergeA11yProps(closeBtnProps, {
+                class: 'lyt-modal__close',
+                onClick: close,
+              }),
+              [createTextVNode('×')],
+            ),
+          );
         }
 
-        headerChildren.push(createVNode('div', { 
-          class: 'lyt-modal__header',
-          id: p.id ? `${p.id}-header` : undefined,
-        }, titlePart));
+        headerChildren.push(
+          createVNode(
+            'div',
+            {
+              class: 'lyt-modal__header',
+              id: p.id ? `${p.id}-header` : undefined,
+            },
+            titlePart,
+          ),
+        );
       }
 
       const bodyChildren: VNode[] = [];
@@ -111,10 +135,16 @@ export const Modal = defineComponent({
 
       const footerChildren: VNode[] = [];
       if (slots.footer) {
-        footerChildren.push(createVNode('div', { 
-          class: 'lyt-modal__footer',
-          id: p.id ? `${p.id}-footer` : undefined,
-        }, slots.footer()));
+        footerChildren.push(
+          createVNode(
+            'div',
+            {
+              class: 'lyt-modal__footer',
+              id: p.id ? `${p.id}-footer` : undefined,
+            },
+            slots.footer(),
+          ),
+        );
       } else {
         const cancelBtnProps = getButtonA11yProps({
           ariaLabel: 'Cancel',
@@ -123,19 +153,31 @@ export const Modal = defineComponent({
           ariaLabel: 'Confirm',
         });
         footerChildren.push(
-          createVNode('div', { 
-            class: 'lyt-modal__footer',
-            id: p.id ? `${p.id}-footer` : undefined,
-          }, [
-            createVNode('button', mergeA11yProps(cancelBtnProps, {
-              class: 'lyt-modal__cancel-btn',
-              onClick: close,
-            }), [createTextVNode('取消')]),
-            createVNode('button', mergeA11yProps(confirmBtnProps, {
-              class: 'lyt-modal__confirm-btn',
-              onClick: () => p.onConfirm?.(),
-            }), [createTextVNode('确定')]),
-          ])
+          createVNode(
+            'div',
+            {
+              class: 'lyt-modal__footer',
+              id: p.id ? `${p.id}-footer` : undefined,
+            },
+            [
+              createVNode(
+                'button',
+                mergeA11yProps(cancelBtnProps, {
+                  class: 'lyt-modal__cancel-btn',
+                  onClick: close,
+                }),
+                [createTextVNode('取消')],
+              ),
+              createVNode(
+                'button',
+                mergeA11yProps(confirmBtnProps, {
+                  class: 'lyt-modal__confirm-btn',
+                  onClick: () => p.onConfirm?.(),
+                }),
+                [createTextVNode('确定')],
+              ),
+            ],
+          ),
         );
       }
 
@@ -145,9 +187,11 @@ export const Modal = defineComponent({
         isFullscreen() ? 'lyt-modal--fullscreen' : '',
         p.customClass as string,
         p.class as string,
-      ].filter(Boolean).join(' ');
+      ]
+        .filter(Boolean)
+        .join(' ');
 
-      const modalWidth = typeof p.width === 'number' ? `${p.width}px` : p.width as string;
+      const modalWidth = typeof p.width === 'number' ? `${p.width}px` : (p.width as string);
       const modalStyle = isFullscreen() ? '' : `width: ${modalWidth};`;
 
       const modalA11yProps = getDialogA11yProps({
@@ -158,24 +202,36 @@ export const Modal = defineComponent({
         modal: p.ariaModal,
       });
 
-      return createVNode('div', {
-        class: 'lyt-modal__overlay',
-        'aria-hidden': true,
-        onClick: handleModalClick,
-      }, [
-        createVNode('div', mergeA11yProps(modalA11yProps, {
-          class: modalClass,
-          style: modalStyle,
-          onKeydown: handleKeydown,
-        }), [
-          ...headerChildren,
-          createVNode('div', { 
-            class: 'lyt-modal__body',
-            id: p.id ? `${p.id}-body` : undefined,
-          }, bodyChildren),
-          ...(Array.isArray(footerChildren) ? footerChildren : [footerChildren]),
-        ]),
-      ]);
+      return createVNode(
+        'div',
+        {
+          class: 'lyt-modal__overlay',
+          'aria-hidden': true,
+          onClick: handleModalClick,
+        },
+        [
+          createVNode(
+            'div',
+            mergeA11yProps(modalA11yProps, {
+              class: modalClass,
+              style: modalStyle,
+              onKeydown: handleKeydown,
+            }),
+            [
+              ...headerChildren,
+              createVNode(
+                'div',
+                {
+                  class: 'lyt-modal__body',
+                  id: p.id ? `${p.id}-body` : undefined,
+                },
+                bodyChildren,
+              ),
+              ...(Array.isArray(footerChildren) ? footerChildren : [footerChildren]),
+            ],
+          ),
+        ],
+      );
     };
   },
 });

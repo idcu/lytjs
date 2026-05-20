@@ -6,10 +6,10 @@ const rootDir = process.cwd();
 // Glob 功能实现
 function findPackageJson(dir, result = []) {
   const entries = fs.readdirSync(dir, { withFileTypes: true });
-  
+
   for (const entry of entries) {
     const fullPath = path.join(dir, entry.name);
-    
+
     if (entry.isDirectory()) {
       // 跳过 node_modules 和 .git 等目录
       if (entry.name === 'node_modules' || entry.name === '.git' || entry.name === '.pnpm-store') {
@@ -21,7 +21,7 @@ function findPackageJson(dir, result = []) {
       result.push(relativePath);
     }
   }
-  
+
   return result;
 }
 
@@ -47,10 +47,10 @@ for (const pkgPath of allPackages) {
   try {
     const fullPath = path.join(rootDir, pkgPath);
     const pkgJson = JSON.parse(fs.readFileSync(fullPath, 'utf-8'));
-    
+
     const isPrivate = pkgJson.private === true;
     const isInPackages = pkgPath.startsWith('packages/');
-    
+
     let category = '其他';
     if (pkgPath.startsWith('packages/common/packages/')) {
       category = 'common 子包';
@@ -60,22 +60,24 @@ for (const pkgPath of allPackages) {
       category = 'ecosystem 子包';
     } else if (pkgPath.startsWith('packages/tools/packages/')) {
       category = 'tools 子包';
-    } else if (pkgPath === 'packages/common/package.json' || 
-               pkgPath === 'packages/ecosystem/package.json' || 
-               pkgPath === 'packages/plugins/package.json' || 
-               pkgPath === 'packages/tools/package.json') {
+    } else if (
+      pkgPath === 'packages/common/package.json' ||
+      pkgPath === 'packages/ecosystem/package.json' ||
+      pkgPath === 'packages/plugins/package.json' ||
+      pkgPath === 'packages/tools/package.json'
+    ) {
       category = 'Monorepo 根包';
     } else if (pkgPath.startsWith('packages/')) {
       category = '独立包';
     }
-    
+
     details.push({
       index: count,
       path: pkgPath,
       name: pkgJson.name || '(无名称)',
       version: pkgJson.version || '(无版本)',
       isPrivate,
-      category
+      category,
     });
   } catch (e) {
     details.push({
@@ -84,26 +86,34 @@ for (const pkgPath of allPackages) {
       name: '(解析错误)',
       version: '',
       isPrivate: false,
-      category: '错误'
+      category: '错误',
     });
   }
 }
 
 // 输出分类表格
-console.log('┌─────┬────────────────────────────────────────┬─────────────────────────┬──────────┬──────────────┐');
-console.log('│ 序号 │ package.json 路径                     │ 包名                   │ private? │ 分类         │');
-console.log('├─────┼────────────────────────────────────────┼─────────────────────────┼──────────┼──────────────┤');
+console.log(
+  '┌─────┬────────────────────────────────────────┬─────────────────────────┬──────────┬──────────────┐',
+);
+console.log(
+  '│ 序号 │ package.json 路径                     │ 包名                   │ private? │ 分类         │',
+);
+console.log(
+  '├─────┼────────────────────────────────────────┼─────────────────────────┼──────────┼──────────────┤',
+);
 
 for (const item of details) {
   const name = item.name.length > 25 ? item.name.substring(0, 22) + '...' : item.name;
   const isPrivate = item.isPrivate ? '   yes   ' : '   no    ';
   const pathShort = item.path.length > 40 ? item.path.substring(0, 37) + '...' : item.path;
-  
+
   console.log(
-    `│ ${String(item.index).padStart(3)} │ ${pathShort.padEnd(40)} │ ${name.padEnd(23)} │ ${isPrivate} │ ${item.category.padEnd(12)} │`
+    `│ ${String(item.index).padStart(3)} │ ${pathShort.padEnd(40)} │ ${name.padEnd(23)} │ ${isPrivate} │ ${item.category.padEnd(12)} │`,
   );
 }
-console.log('└─────┴────────────────────────────────────────┴─────────────────────────┴──────────┴──────────────┘');
+console.log(
+  '└─────┴────────────────────────────────────────┴─────────────────────────┴──────────┴──────────────┘',
+);
 
 // 统计
 const categories = {};

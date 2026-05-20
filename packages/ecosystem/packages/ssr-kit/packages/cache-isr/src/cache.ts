@@ -31,9 +31,9 @@ export class ISRCache {
 
   set<T>(key: string, value: T, config?: ISRCacheConfig): void {
     const now = Date.now();
-    const { maxAge = this.defaultMaxAge, revalidate } = { 
-      maxAge: this.defaultMaxAge, 
-      revalidate: config?.revalidate 
+    const { maxAge = this.defaultMaxAge, revalidate } = {
+      maxAge: this.defaultMaxAge,
+      revalidate: config?.revalidate,
     };
 
     this.cache.set(key, {

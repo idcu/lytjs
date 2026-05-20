@@ -47,20 +47,27 @@ export const Divider = defineComponent({
 
     return () => {
       const children: VNode[] = [];
-      
+
       if (slots.default) {
         children.push(createVNode('span', { class: 'lyt-divider__text' }, slots.default()));
       }
 
-      return createVNode('div', mergeA11yProps({
-        id: p.id,
-        'aria-label': p.ariaLabel,
-        'aria-describedby': p.ariaDescribedBy,
-        role: 'separator',
-      }, {
-        class: getDividerClass(),
-        style: getDividerStyle(),
-      }), children);
+      return createVNode(
+        'div',
+        mergeA11yProps(
+          {
+            id: p.id,
+            'aria-label': p.ariaLabel,
+            'aria-describedby': p.ariaDescribedBy,
+            role: 'separator',
+          },
+          {
+            class: getDividerClass(),
+            style: getDividerStyle(),
+          },
+        ),
+        children,
+      );
     };
   },
 });

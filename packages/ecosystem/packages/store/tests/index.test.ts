@@ -155,11 +155,11 @@ describe('@lytjs/store', () => {
       const store = useCounter();
       const callback = vi.fn();
       const unsubscribe = store.$subscribe(callback);
-      
+
       store.count = 5;
       expect(callback).toHaveBeenCalled();
       expect(callback.mock.calls[0][0].storeId).toBe('counter');
-      
+
       unsubscribe();
       store.count = 10;
       // Should not be called again after unsubscribe
@@ -178,11 +178,11 @@ describe('@lytjs/store', () => {
       const store = useCounter();
       const callback = vi.fn();
       const unsubscribe = store.$onAction(callback);
-      
+
       store.increment();
       expect(callback).toHaveBeenCalled();
       expect(callback.mock.calls[0][0].name).toBe('increment');
-      
+
       unsubscribe();
       store.increment();
       expect(callback).toHaveBeenCalledTimes(1);
@@ -242,7 +242,7 @@ describe('@lytjs/store', () => {
       });
       const store = useCounter();
       store.$dispose();
-      
+
       // After dispose, getting a new store should create a fresh instance
       const newStore = useCounter();
       expect(newStore).not.toBe(store);
@@ -264,7 +264,9 @@ describe('@lytjs/store', () => {
       const useCounter = defineStore('counter', () => {
         const count = { value: 0 };
         const doubleCount = { value: 0 }; // Simplified for test
-        const increment = () => { count.value++; };
+        const increment = () => {
+          count.value++;
+        };
         return { count, doubleCount, increment };
       });
       expect(useCounter).toBeDefined();
@@ -283,7 +285,9 @@ describe('@lytjs/store', () => {
     it('should work with reactive values in setup store', () => {
       const useCounter = defineStore('counter', () => {
         const count = { value: 0 };
-        const increment = () => { count.value++; };
+        const increment = () => {
+          count.value++;
+        };
         return { count, increment };
       });
       const store = useCounter();
@@ -295,7 +299,9 @@ describe('@lytjs/store', () => {
     it('should support $subscribe in setup store', () => {
       const useCounter = defineStore('counter', () => {
         const count = { value: 0 };
-        const increment = () => { count.value++; };
+        const increment = () => {
+          count.value++;
+        };
         return { count, increment };
       });
       const store = useCounter();
@@ -361,7 +367,7 @@ describe('@lytjs/store', () => {
       });
       const store = useCounter();
       const refs = storeToRefs(store);
-      
+
       expect(refs.count).toBeDefined();
       expect(refs.name).toBeDefined();
     });
@@ -372,7 +378,7 @@ describe('@lytjs/store', () => {
       });
       const store = useCounter();
       const refs = storeToRefs(store);
-      
+
       expect(refs.$id).toBeUndefined();
       expect(refs.$state).toBeUndefined();
       expect(refs.$patch).toBeUndefined();
@@ -384,7 +390,7 @@ describe('@lytjs/store', () => {
       });
       const store = useCounter();
       const { count } = storeToRefs(store);
-      
+
       store.count = 10;
       expect(count.value).toBe(10);
     });
@@ -398,10 +404,10 @@ describe('@lytjs/store', () => {
       const useSettings = defineStore('settings', {
         state: () => ({ theme: 'dark' }),
       });
-      
+
       const user = useUser();
       const settings = useSettings();
-      
+
       expect(user.name).toBe('John');
       expect(settings.theme).toBe('dark');
     });
@@ -418,11 +424,11 @@ describe('@lytjs/store', () => {
           },
         },
       });
-      
+
       const store = useStore();
       expect(store.subtotal).toBe(200);
       expect(store.total).toBeCloseTo(220, 10);
-      
+
       store.price = 50;
       expect(store.subtotal).toBe(100);
       expect(store.total).toBeCloseTo(110, 10);
@@ -440,14 +446,14 @@ describe('@lytjs/store', () => {
           },
         },
       });
-      
+
       const store = useStore();
       expect(store.loading).toBe(false);
       expect(store.data).toBeNull();
-      
+
       const promise = store.fetchData();
       expect(store.loading).toBe(true);
-      
+
       await promise;
       expect(store.loading).toBe(false);
       expect(store.data).toBe('fetched');

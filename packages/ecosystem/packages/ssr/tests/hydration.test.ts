@@ -16,7 +16,7 @@ import type { HydrationStrategy } from '../src/hydration';
 function createTestVNode(
   type: string,
   props: Record<string, unknown> | null,
-  children?: unknown
+  children?: unknown,
 ): any {
   return { type, props: props || {}, children: children ?? null };
 }
@@ -70,11 +70,7 @@ describe('createHydrationMarkers', () => {
     const vnode = createTestVNode(
       'div',
       null,
-      createTestVNode(
-        'section',
-        null,
-        createTestVNode('p', null, 'deep')
-      )
+      createTestVNode('section', null, createTestVNode('p', null, 'deep')),
     );
     const marked = createHydrationMarkers(vnode);
 

@@ -105,7 +105,7 @@ class FlowController {
 
     if (this.bytesSentInSecond + byteCount > this.maxBytesPerSecond) {
       const waitTime = 1000 - (now - this.lastSecondTimestamp);
-      await new Promise(resolve => setTimeout(resolve, waitTime));
+      await new Promise((resolve) => setTimeout(resolve, waitTime));
       this.bytesSentInSecond = 0;
       this.lastSecondTimestamp = Date.now();
     }
@@ -123,7 +123,8 @@ const SUSPENSE_TYPE = 'Suspense';
 function isSuspenseVNode(vnode: VNode): boolean {
   return (
     isObject(vnode) &&
-    ((typeof vnode.type === 'object' && vnode.type !== null &&
+    ((typeof vnode.type === 'object' &&
+      vnode.type !== null &&
       '__suspense' in (vnode.type as Record<string, unknown>)) ||
       (isString(vnode.type) && vnode.type === SUSPENSE_TYPE))
   );
@@ -136,10 +137,7 @@ function isSuspenseVNode(vnode: VNode): boolean {
  * 遍历 VNode 树，在每个元素组件边界处拆分，
  * 返回 HTML 片段数组。遇到 Suspense 边界时标记 shell 结束位置。
  */
-function collectChunks(
-  vnode: VNode,
-  suspenseBoundaryIndex: number[] = []
-): string[] {
+function collectChunks(vnode: VNode, suspenseBoundaryIndex: number[] = []): string[] {
   const chunks: string[] = [];
 
   // 处理 null/undefined
@@ -270,7 +268,7 @@ function splitIntoByteChunks(html: string, chunkSize: number): string[] {
  */
 export function renderToStream(
   vnode: VNode,
-  options?: StreamRenderOptions
+  options?: StreamRenderOptions,
 ): ReadableStream<Uint8Array> {
   const {
     chunkSize = DEFAULT_CHUNK_SIZE,
@@ -283,7 +281,9 @@ export function renderToStream(
   } = options || {};
 
   const encoder = new TextEncoder();
-  const flowController: FlowController | null = maxBytesPerSecond ? new FlowController(maxBytesPerSecond) : null;
+  const flowController: FlowController | null = maxBytesPerSecond
+    ? new FlowController(maxBytesPerSecond)
+    : null;
   let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
   return new ReadableStream<Uint8Array>({
@@ -381,7 +381,11 @@ export function renderToStream(
   /**
    * 发送单个分块，应用流速率控制
    */
-  function sendChunk(controller: ReadableStreamDefaultController<Uint8Array>, encoder: TextEncoder, chunk: string) {
+  function sendChunk(
+    controller: ReadableStreamDefaultController<Uint8Array>,
+    encoder: TextEncoder,
+    chunk: string,
+  ) {
     const encoded = encoder.encode(chunk);
     if (flowController) {
       // 如果启用了流控制，等待速率限制
@@ -408,7 +412,7 @@ export function renderToStream(
  */
 export function renderToStreamAsync(
   vnode: VNode,
-  options?: EnhancedStreamRenderOptions
+  options?: EnhancedStreamRenderOptions,
 ): ReadableStream<Uint8Array> {
   const {
     chunkSize = DEFAULT_CHUNK_SIZE,
@@ -458,7 +462,7 @@ export function renderToStreamAsync(
  */
 async function collectAndPrefetchData(
   vnode: VNode | VNode[] | string | number | null | undefined,
-  context?: DataPrefetchContext
+  context?: DataPrefetchContext,
 ): Promise<Record<string, unknown>> {
   const result: Record<string, unknown> = {};
 
@@ -475,7 +479,7 @@ async function collectAndPrefetchData(
   // 处理数组
   if (isArray(vnode)) {
     const results = await Promise.all(
-      vnode.map(child => collectAndPrefetchData(child as VNode, context))
+      vnode.map((child) => collectAndPrefetchData(child as VNode, context)),
     );
     // 合并所有结果
     for (const data of results) {
@@ -541,7 +545,7 @@ async function collectAndPrefetchData(
  */
 async function renderToStringAsync(
   vnode: VNode | VNode[] | string | number | null | undefined,
-  prefetchData?: Record<string, unknown>
+  prefetchData?: Record<string, unknown>,
 ): Promise<string> {
   // 处理 null/undefined
   if (vnode === null || vnode === undefined) {
@@ -561,7 +565,7 @@ async function renderToStringAsync(
   // 处理数组
   if (isArray(vnode)) {
     const results = await Promise.all(
-      vnode.map(child => renderToStringAsync(child as VNode, prefetchData))
+      vnode.map((child) => renderToStringAsync(child as VNode, prefetchData)),
     );
     return results.join('');
   }
@@ -603,7 +607,7 @@ async function renderToStringAsync(
  */
 export async function renderToStreamEnhanced(
   vnode: VNode,
-  options?: EnhancedStreamRenderOptions
+  options?: EnhancedStreamRenderOptions,
 ): Promise<{
   stream: ReadableStream<Uint8Array>;
   dehydratedState: Record<string, unknown>;

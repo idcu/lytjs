@@ -59,8 +59,8 @@ const searchKeyword = signal('');
 const filteredUsers = computed(() => {
   const keyword = searchKeyword().toLowerCase();
   if (!keyword) return users();
-  
-  return users().filter(user => 
+
+  return users().filter(user =>
     user.name.toLowerCase().includes(keyword) ||
     user.email.toLowerCase().includes(keyword)
   );
@@ -72,14 +72,14 @@ const filteredUsers = computed(() => {
 ```typescript
 const stats = computed(() => ({
   total: users().length,
-  active: users().filter(u => u.status === 'active').length,
-  new: users().filter(u => {
+  active: users().filter((u) => u.status === 'active').length,
+  new: users().filter((u) => {
     const created = new Date(u.createdAt);
     const now = new Date();
     const diffDays = (now - created) / (1000 * 60 * 60 * 24);
     return diffDays <= 30;
   }).length,
-  pages: 156
+  pages: 156,
 }));
 ```
 
@@ -89,13 +89,13 @@ const stats = computed(() => ({
 // 添加用户
 const saveUser = () => {
   const currentId = editingUserId();
-  
+
   if (currentId) {
     // 更新
     const usersData = users();
-    const index = usersData.findIndex(u => u.id === currentId);
+    const index = usersData.findIndex((u) => u.id === currentId);
     if (index !== -1) {
-      usersData[index] = { ...usersData[index], /* 更新字段 */ };
+      usersData[index] = { ...usersData[index] /* 更新字段 */ };
       users.set([...usersData]);
     }
   } else {
@@ -103,7 +103,7 @@ const saveUser = () => {
     const newUser = {
       id: Date.now(),
       /* 用户数据 */
-      createdAt: new Date().toISOString().split('T')[0]
+      createdAt: new Date().toISOString().split('T')[0],
     };
     users.set([...users(), newUser]);
   }
@@ -112,7 +112,7 @@ const saveUser = () => {
 // 删除用户
 const deleteUser = (id: number) => {
   const usersData = users();
-  const filtered = usersData.filter(u => u.id !== id);
+  const filtered = usersData.filter((u) => u.id !== id);
   users.set(filtered);
 };
 ```
@@ -128,8 +128,10 @@ effect(() => {
 function renderUserTable() {
   const tbody = document.getElementById('userTableBody');
   const data = filteredUsers();
-  
-  tbody.innerHTML = data.map(user => `
+
+  tbody.innerHTML = data
+    .map(
+      (user) => `
     <tr>
       <td>${user.id}</td>
       <td>${user.name}</td>
@@ -141,7 +143,9 @@ function renderUserTable() {
         <button onclick="showDeleteConfirm(${user.id})">删除</button>
       </td>
     </tr>
-  `).join('');
+  `,
+    )
+    .join('');
 }
 ```
 
@@ -183,14 +187,14 @@ console.log(count());
 count.set(10);
 
 // 或者
-count.set(prev => prev + 1);
+count.set((prev) => prev + 1);
 ```
 
 ### 2. Computed 派生状态
 
 ```typescript
 const activeUsers = computed(() => {
-  return users().filter(u => u.status === 'active');
+  return users().filter((u) => u.status === 'active');
 });
 
 // 自动缓存，只有依赖变化时才重新计算
@@ -211,12 +215,12 @@ effect(() => {
 const validateForm = () => {
   const name = document.getElementById('name').value.trim();
   const email = document.getElementById('email').value.trim();
-  
+
   if (!name || !email) {
     showAlert('error', '请填写必填字段');
     return false;
   }
-  
+
   return true;
 };
 ```
@@ -261,6 +265,7 @@ open index.html
 ## 🎯 下一步
 
 完成本案例后，继续学习：
+
 - [购物车案例](./购物车案例.md) - 复杂状态管理
 - [状态管理](./state-management.md) - 学习使用 Store
 - [路由](./routing.md) - 学习使用 Router

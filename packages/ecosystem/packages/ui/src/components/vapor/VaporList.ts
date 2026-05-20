@@ -74,10 +74,14 @@ export const VaporList = {
         }
       }
 
-      return createVNode('div', {
-        class: ['vapor-list', p.class].filter(Boolean).join(' '),
-        style: p.style || undefined,
-      }, children);
+      return createVNode(
+        'div',
+        {
+          class: ['vapor-list', p.class].filter(Boolean).join(' '),
+          style: p.style || undefined,
+        },
+        children,
+      );
     };
   },
 };

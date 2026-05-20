@@ -388,7 +388,9 @@ export function once<T extends (...args: unknown[]) => unknown>(
   let result: ReturnType<T>;
   let pendingPromise: Promise<ReturnType<T>> | null = null;
 
-  return (...args: Parameters<T>): ReturnType<T> | undefined | Promise<ReturnType<T> | undefined> => {
+  return (
+    ...args: Parameters<T>
+  ): ReturnType<T> | undefined | Promise<ReturnType<T> | undefined> => {
     if (!called) {
       called = true;
       try {
@@ -397,8 +399,14 @@ export function once<T extends (...args: unknown[]) => unknown>(
         if (result instanceof Promise) {
           pendingPromise = result;
           return result.then(
-            (val) => { pendingPromise = null; return val; },
-            (err) => { pendingPromise = null; throw err; },
+            (val) => {
+              pendingPromise = null;
+              return val;
+            },
+            (err) => {
+              pendingPromise = null;
+              throw err;
+            },
           ) as Promise<ReturnType<T> | undefined>;
         }
         return result;

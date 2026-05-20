@@ -21,7 +21,11 @@ import type { TransitionProps } from '@lytjs/vdom/transition';
 
 function createMockHost(): RendererHost<object, object> {
   return {
-    createElement: vi.fn(() => ({ tagName: 'div', classList: new Set<string>(), style: {} as any })),
+    createElement: vi.fn(() => ({
+      tagName: 'div',
+      classList: new Set<string>(),
+      style: {} as any,
+    })),
     createText: vi.fn(() => ({ nodeType: 3, textContent: '' })),
     createComment: vi.fn(() => ({ nodeType: 8, textContent: '' })),
     setElementText: vi.fn(),
@@ -41,9 +45,18 @@ function createMockHost(): RendererHost<object, object> {
     forceReflow: vi.fn(),
     addEventListener: vi.fn(),
     removeEventListener: vi.fn(),
-    getBoundingClientRect: vi.fn(() => ({ left: 0, top: 0, width: 100, height: 50, right: 100, bottom: 50 })),
+    getBoundingClientRect: vi.fn(() => ({
+      left: 0,
+      top: 0,
+      width: 100,
+      height: 50,
+      right: 100,
+      bottom: 50,
+    })),
     getAttribute: vi.fn(() => null),
-    getTransitionInfo: vi.fn((): TransitionDurationInfo => ({ duration: 300, hasTransition: true, hasAnimation: false })),
+    getTransitionInfo: vi.fn(
+      (): TransitionDurationInfo => ({ duration: 300, hasTransition: true, hasAnimation: false }),
+    ),
     nextFrame: vi.fn((fn) => setTimeout(fn, 0)),
     setTimeout: vi.fn((fn, ms) => {
       const id = Date.now() + Math.random();
@@ -206,7 +219,14 @@ describe('TransitionEngine', () => {
       const el = {};
       const record = engine.flipRecordFirst(el);
       expect(record.el).toBe(el);
-      expect(record.first).toEqual({ left: 0, top: 0, width: 100, height: 50, right: 100, bottom: 50 });
+      expect(record.first).toEqual({
+        left: 0,
+        top: 0,
+        width: 100,
+        height: 50,
+        right: 100,
+        bottom: 50,
+      });
     });
 
     it('should record last state and compute invert', () => {
@@ -216,7 +236,12 @@ describe('TransitionEngine', () => {
 
       // Simulate position change
       (host.getBoundingClientRect as any).mockReturnValueOnce({
-        left: 20, top: 10, width: 100, height: 50, right: 120, bottom: 60,
+        left: 20,
+        top: 10,
+        width: 100,
+        height: 50,
+        right: 120,
+        bottom: 60,
       });
 
       const updated = engine.flipRecordLast(record);

@@ -116,7 +116,9 @@ describe('optimize', () => {
     });
 
     it('should handle nested static elements', () => {
-      const ast = compileForOptimize('<div><section><article><p>deep static</p></article></section></div>');
+      const ast = compileForOptimize(
+        '<div><section><article><p>deep static</p></article></section></div>',
+      );
       const div = ast.children[0] as ElementNode;
       expect(div.isStatic).toBe(true);
     });

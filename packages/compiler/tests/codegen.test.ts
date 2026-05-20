@@ -131,9 +131,7 @@ describe('codegen', () => {
     });
 
     it('should handle multiple v-if/v-else-if/v-else branches', () => {
-      const result = compile(
-        '<div v-if="a">A</div><div v-else-if="b">B</div><div v-else>C</div>',
-      );
+      const result = compile('<div v-if="a">A</div><div v-else-if="b">B</div><div v-else>C</div>');
       expect(result.code).toContain('?');
       expect(result.code).toContain(':');
     });
@@ -162,7 +160,9 @@ describe('codegen', () => {
     it('should handle v-slot shorthand', () => {
       // #default 是默认插槽的简写，编译器会处理为插槽内容
       // 验证编译成功且生成正确的代码结构
-      const result = compile('<MyComponent #default="slotProps">{{ slotProps.text }}</MyComponent>');
+      const result = compile(
+        '<MyComponent #default="slotProps">{{ slotProps.text }}</MyComponent>',
+      );
       expect(result.code).toContain('slotProps');
       expect(result.code).toContain('toDisplayString');
     });

@@ -33,31 +33,43 @@ export {
  */
 const EASING_FUNCTIONS: Record<string, (t: number) => number> = {
   linear: (t: number) => t,
-  ease: (t: number) => t < 0.5 ? 4 * t * t * t : (t - 1) * (2 * t - 2) * (2 * t - 2) + 1,
+  ease: (t: number) => (t < 0.5 ? 4 * t * t * t : (t - 1) * (2 * t - 2) * (2 * t - 2) + 1),
   'ease-in': (t: number) => t * t * t,
-  'ease-out': (t: number) => (--t) * t * t + 1,
-  'ease-in-out': (t: number) => t < 0.5 ? 4 * t * t * t : (t - 1) * (2 * t - 2) * (2 * t - 2) + 1,
+  'ease-out': (t: number) => --t * t * t + 1,
+  'ease-in-out': (t: number) => (t < 0.5 ? 4 * t * t * t : (t - 1) * (2 * t - 2) * (2 * t - 2) + 1),
   'ease-in-quad': (t: number) => t * t,
   'ease-out-quad': (t: number) => t * (2 - t),
-  'ease-in-out-quad': (t: number) => t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t,
+  'ease-in-out-quad': (t: number) => (t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t),
   'ease-in-cubic': (t: number) => t * t * t,
-  'ease-out-cubic': (t: number) => (--t) * t * t + 1,
-  'ease-in-out-cubic': (t: number) => t < 0.5 ? 4 * t * t * t : (t - 1) * (2 * t - 2) * (2 * t - 2) + 1,
+  'ease-out-cubic': (t: number) => --t * t * t + 1,
+  'ease-in-out-cubic': (t: number) =>
+    t < 0.5 ? 4 * t * t * t : (t - 1) * (2 * t - 2) * (2 * t - 2) + 1,
   'ease-in-quart': (t: number) => t * t * t * t,
-  'ease-out-quart': (t: number) => 1 - (--t) * t * t * t,
-  'ease-in-out-quart': (t: number) => t < 0.5 ? 8 * t * t * t * t : 1 - 8 * (--t) * t * t * t,
+  'ease-out-quart': (t: number) => 1 - --t * t * t * t,
+  'ease-in-out-quart': (t: number) => (t < 0.5 ? 8 * t * t * t * t : 1 - 8 * --t * t * t * t),
   'ease-in-quint': (t: number) => t * t * t * t * t,
-  'ease-out-quint': (t: number) => 1 + (--t) * t * t * t * t,
-  'ease-in-out-quint': (t: number) => t < 0.5 ? 16 * t * t * t * t * t : 1 + 16 * (--t) * t * t * t * t,
-  'ease-in-sine': (t: number) => 1 - Math.cos(t * Math.PI / 2),
-  'ease-out-sine': (t: number) => Math.sin(t * Math.PI / 2),
+  'ease-out-quint': (t: number) => 1 + --t * t * t * t * t,
+  'ease-in-out-quint': (t: number) =>
+    t < 0.5 ? 16 * t * t * t * t * t : 1 + 16 * --t * t * t * t * t,
+  'ease-in-sine': (t: number) => 1 - Math.cos((t * Math.PI) / 2),
+  'ease-out-sine': (t: number) => Math.sin((t * Math.PI) / 2),
   'ease-in-out-sine': (t: number) => -(Math.cos(Math.PI * t) - 1) / 2,
-  'ease-in-expo': (t: number) => t === 0 ? 0 : Math.pow(2, 10 * (t - 1)),
-  'ease-out-expo': (t: number) => t === 1 ? 1 : 1 - Math.pow(2, -10 * t),
-  'ease-in-out-expo': (t: number) => t === 0 ? 0 : t === 1 ? 1 : t < 0.5 ? Math.pow(2, 20 * t - 10) / 2 : (2 - Math.pow(2, -20 * t + 10)) / 2,
+  'ease-in-expo': (t: number) => (t === 0 ? 0 : Math.pow(2, 10 * (t - 1))),
+  'ease-out-expo': (t: number) => (t === 1 ? 1 : 1 - Math.pow(2, -10 * t)),
+  'ease-in-out-expo': (t: number) =>
+    t === 0
+      ? 0
+      : t === 1
+        ? 1
+        : t < 0.5
+          ? Math.pow(2, 20 * t - 10) / 2
+          : (2 - Math.pow(2, -20 * t + 10)) / 2,
   'ease-in-circ': (t: number) => 1 - Math.sqrt(1 - t * t),
-  'ease-out-circ': (t: number) => Math.sqrt(1 - (--t) * t),
-  'ease-in-out-circ': (t: number) => t < 0.5 ? (1 - Math.sqrt(1 - 4 * t * t)) / 2 : (Math.sqrt(1 - (2 * t - 2) * (2 * t - 2)) + 1) / 2,
+  'ease-out-circ': (t: number) => Math.sqrt(1 - --t * t),
+  'ease-in-out-circ': (t: number) =>
+    t < 0.5
+      ? (1 - Math.sqrt(1 - 4 * t * t)) / 2
+      : (Math.sqrt(1 - (2 * t - 2) * (2 * t - 2)) + 1) / 2,
   'ease-in-back': (t: number) => {
     const c1 = 1.70158;
     const c3 = c1 + 1;
@@ -155,7 +167,8 @@ export function createAnimation(
         const cycleProgress = rawProgress * iterations;
         const currentCycle = Math.floor(cycleProgress);
         const cycleProgressRemainder = cycleProgress - currentCycle;
-        adjustedProgress = currentCycle % 2 === 0 ? cycleProgressRemainder : 1 - cycleProgressRemainder;
+        adjustedProgress =
+          currentCycle % 2 === 0 ? cycleProgressRemainder : 1 - cycleProgressRemainder;
       }
 
       progress = adjustedProgress;
@@ -310,7 +323,8 @@ export function transitionElement(
     }
 
     // 应用过渡样式
-    (element as HTMLElement).style.transition = `${propertyStr} ${duration}ms ${typeof easing === 'string' ? easing : 'ease'} ${delay}ms`;
+    (element as HTMLElement).style.transition =
+      `${propertyStr} ${duration}ms ${typeof easing === 'string' ? easing : 'ease'} ${delay}ms`;
 
     requestAnimationFrame(() => {
       if (onEnter) {
@@ -329,7 +343,8 @@ export function transitionElement(
       onBeforeLeave();
     }
 
-    (element as HTMLElement).style.transition = `${propertyStr} ${duration}ms ${typeof easing === 'string' ? easing : 'ease'} ${delay}ms`;
+    (element as HTMLElement).style.transition =
+      `${propertyStr} ${duration}ms ${typeof easing === 'string' ? easing : 'ease'} ${delay}ms`;
 
     requestAnimationFrame(() => {
       if (onLeave) {
@@ -402,7 +417,11 @@ export function createKeyframeAnimation(
 
         if (onUpdate) {
           updateInterval = window.setInterval(() => {
-            if (webAnimation && webAnimation.currentTime !== null && webAnimation.currentTime !== undefined) {
+            if (
+              webAnimation &&
+              webAnimation.currentTime !== null &&
+              webAnimation.currentTime !== undefined
+            ) {
               const progress = (webAnimation.currentTime as number) / duration;
               progressSignal.set(progress);
               onUpdate(progress);
@@ -554,11 +573,7 @@ export const PRESETS = {
  * 动画管理器
  */
 function createAnimationManager(options: AnimationPluginOptions = {}) {
-  const {
-    defaultDuration = 300,
-    defaultEasing = 'ease',
-    autoCleanup = true,
-  } = options;
+  const { defaultDuration = 300, defaultEasing = 'ease', autoCleanup = true } = options;
 
   const animations = new Map<string, AnimationInstance>();
 
@@ -688,5 +703,3 @@ export type {
   TransitionOptions,
   Keyframe,
 } from './types';
-
-

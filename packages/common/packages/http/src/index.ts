@@ -44,7 +44,9 @@ export interface InternalRequestConfig {
 
 export interface Interceptor {
   request?(config: InternalRequestConfig): InternalRequestConfig | Promise<InternalRequestConfig>;
-  response?(response: HttpResponse<unknown>): HttpResponse<unknown> | Promise<HttpResponse<unknown>>;
+  response?(
+    response: HttpResponse<unknown>,
+  ): HttpResponse<unknown> | Promise<HttpResponse<unknown>>;
   error?(error: HttpError): unknown;
 }
 
@@ -116,20 +118,38 @@ export class HttpClient {
     return this.request<T>('GET', url, options);
   }
 
-  post<T = unknown>(url: string, data?: unknown, options?: RequestOptions): Promise<HttpResponse<T>> {
-    return this.request<T>('POST', url, { ...options, body: data } as RequestOptions & { body?: unknown });
+  post<T = unknown>(
+    url: string,
+    data?: unknown,
+    options?: RequestOptions,
+  ): Promise<HttpResponse<T>> {
+    return this.request<T>('POST', url, { ...options, body: data } as RequestOptions & {
+      body?: unknown;
+    });
   }
 
-  put<T = unknown>(url: string, data?: unknown, options?: RequestOptions): Promise<HttpResponse<T>> {
-    return this.request<T>('PUT', url, { ...options, body: data } as RequestOptions & { body?: unknown });
+  put<T = unknown>(
+    url: string,
+    data?: unknown,
+    options?: RequestOptions,
+  ): Promise<HttpResponse<T>> {
+    return this.request<T>('PUT', url, { ...options, body: data } as RequestOptions & {
+      body?: unknown;
+    });
   }
 
   delete<T = unknown>(url: string, options?: RequestOptions): Promise<HttpResponse<T>> {
     return this.request<T>('DELETE', url, options);
   }
 
-  patch<T = unknown>(url: string, data?: unknown, options?: RequestOptions): Promise<HttpResponse<T>> {
-    return this.request<T>('PATCH', url, { ...options, body: data } as RequestOptions & { body?: unknown });
+  patch<T = unknown>(
+    url: string,
+    data?: unknown,
+    options?: RequestOptions,
+  ): Promise<HttpResponse<T>> {
+    return this.request<T>('PATCH', url, { ...options, body: data } as RequestOptions & {
+      body?: unknown;
+    });
   }
 
   async request<T = unknown>(
@@ -153,7 +173,9 @@ export class HttpClient {
       // Apply response interceptors
       for (const interceptor of this._interceptors) {
         if (interceptor.response) {
-          httpResponse = (await interceptor.response(httpResponse as HttpResponse<unknown>)) as HttpResponse<T>;
+          httpResponse = (await interceptor.response(
+            httpResponse as HttpResponse<unknown>,
+          )) as HttpResponse<T>;
         }
       }
 
@@ -162,7 +184,9 @@ export class HttpClient {
       // Apply error interceptors
       for (const interceptor of this._interceptors) {
         if (interceptor.error) {
-          const result = interceptor.error(err instanceof HttpError ? err : new HttpError(String(err)));
+          const result = interceptor.error(
+            err instanceof HttpError ? err : new HttpError(String(err)),
+          );
           if (result !== undefined) return result as HttpResponse<T>;
         }
       }
@@ -219,8 +243,8 @@ export class HttpClient {
   }
 
   private _resolveURL(
-    base: string, 
-    url: string, 
+    base: string,
+    url: string,
     params?: Record<string, string | number | boolean | Array<string | number | boolean>>,
   ): string {
     let resolved = base ? base.replace(/\/+$/, '') + '/' + url.replace(/^\/+/, '') : url;
@@ -250,10 +274,14 @@ export class HttpClient {
           clearTimeout(timeoutId);
           throw new HttpError('Request was aborted', undefined);
         }
-        signal.addEventListener('abort', () => {
-          clearTimeout(timeoutId);
-          timeoutController!.abort();
-        }, { once: true });
+        signal.addEventListener(
+          'abort',
+          () => {
+            clearTimeout(timeoutId);
+            timeoutController!.abort();
+          },
+          { once: true },
+        );
       }
     }
 
@@ -276,10 +304,7 @@ export class HttpClient {
           headers: this._parseHeaders(response.headers),
           ok: false,
         };
-        throw new HttpError(
-          `HTTP ${response.status}: ${response.statusText}`,
-          errorResponse,
-        );
+        throw new HttpError(`HTTP ${response.status}: ${response.statusText}`, errorResponse);
       }
 
       return response;
@@ -351,14 +376,22 @@ export function get<T = unknown>(url: string, options?: RequestOptions): Promise
 /**
  * 便捷 POST 请求
  */
-export function post<T = unknown>(url: string, data?: unknown, options?: RequestOptions): Promise<HttpResponse<T>> {
+export function post<T = unknown>(
+  url: string,
+  data?: unknown,
+  options?: RequestOptions,
+): Promise<HttpResponse<T>> {
   return http.post<T>(url, data, options);
 }
 
 /**
  * 便捷 PUT 请求
  */
-export function put<T = unknown>(url: string, data?: unknown, options?: RequestOptions): Promise<HttpResponse<T>> {
+export function put<T = unknown>(
+  url: string,
+  data?: unknown,
+  options?: RequestOptions,
+): Promise<HttpResponse<T>> {
   return http.put<T>(url, data, options);
 }
 
@@ -372,7 +405,11 @@ export function del<T = unknown>(url: string, options?: RequestOptions): Promise
 /**
  * 便捷 PATCH 请求
  */
-export function patch<T = unknown>(url: string, data?: unknown, options?: RequestOptions): Promise<HttpResponse<T>> {
+export function patch<T = unknown>(
+  url: string,
+  data?: unknown,
+  options?: RequestOptions,
+): Promise<HttpResponse<T>> {
   return http.patch<T>(url, data, options);
 }
 
@@ -386,12 +423,12 @@ export async function requestJson<T = unknown>(
   options?: RequestOptions & { data?: unknown },
 ): Promise<T> {
   const { data, ...config } = options || {};
-  
+
   if (method === 'GET' || method === 'DELETE') {
     const response = await http.request<T>(method, url, config);
     return response.data;
   }
-  
+
   const response = await http.request<T>(method, url, { ...config, body: data });
   return response.data;
 }
@@ -406,21 +443,33 @@ export async function getJson<T = unknown>(url: string, options?: RequestOptions
 /**
  * 发送 POST JSON 请求
  */
-export async function postJson<T = unknown>(url: string, data?: unknown, options?: RequestOptions): Promise<T> {
+export async function postJson<T = unknown>(
+  url: string,
+  data?: unknown,
+  options?: RequestOptions,
+): Promise<T> {
   return requestJson<T>('POST', url, { ...options, data });
 }
 
 /**
  * 发送 PUT JSON 请求
  */
-export async function putJson<T = unknown>(url: string, data?: unknown, options?: RequestOptions): Promise<T> {
+export async function putJson<T = unknown>(
+  url: string,
+  data?: unknown,
+  options?: RequestOptions,
+): Promise<T> {
   return requestJson<T>('PUT', url, { ...options, data });
 }
 
 /**
  * 发送 PATCH JSON 请求
  */
-export async function patchJson<T = unknown>(url: string, data?: unknown, options?: RequestOptions): Promise<T> {
+export async function patchJson<T = unknown>(
+  url: string,
+  data?: unknown,
+  options?: RequestOptions,
+): Promise<T> {
   return requestJson<T>('PATCH', url, { ...options, data });
 }
 

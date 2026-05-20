@@ -1,7 +1,7 @@
 /**
  * @lytjs/reactivity - batch.ts
  * FIX: P2-4 REACTIVITY-NEW-05 - 批量操作 API
- * 
+ *
  * 提供 batchScope 函数，支持嵌套批量操作和自动提交。
  * 允许在批量作用域内执行多个响应式操作，只在作用域结束时统一触发更新。
  */
@@ -57,17 +57,17 @@ const MAX_NESTING_DEPTH = 100;
 /**
  * 创建批量作用域并执行回调函数。
  * 在作用域内所有响应式操作会被批量收集，只在作用域结束时统一触发更新。
- * 
+ *
  * 支持嵌套调用：嵌套的 batchScope 会继承外层的批量状态，
  * 只有最外层作用域结束时才会真正提交所有更新。
- * 
+ *
  * @example
  * ```typescript
  * batchScope((ctx) => {
  *   signal1.set(1);
  *   signal2.set(2);
  *   // 此时不会触发更新
- *   
+ *
  *   batchScope((innerCtx) => {
  *     signal3.set(3);
  *     // 嵌套作用域，仍然不会触发更新
@@ -75,22 +75,19 @@ const MAX_NESTING_DEPTH = 100;
  * });
  * // 所有更新在这里统一触发
  * ```
- * 
+ *
  * @param callback - 在批量作用域内执行的回调函数
  * @param options - 批量作用域配置选项
  * @returns 回调函数的返回值
  */
-export function batchScope<T>(
-  callback: BatchScopeCallback<T>,
-  options: BatchScopeOptions = {}
-): T {
+export function batchScope<T>(callback: BatchScopeCallback<T>, options: BatchScopeOptions = {}): T {
   const { async = false, name = 'batchScope', onError } = options;
 
   // 检查嵌套深度限制
   if (globalBatchDepth >= MAX_NESTING_DEPTH) {
     const error = new Error(
       `[lytjs/reactivity] Maximum batchScope nesting depth (${MAX_NESTING_DEPTH}) exceeded. ` +
-      `This may indicate an infinite loop.`
+        `This may indicate an infinite loop.`,
     );
     if (onError) {
       onError(error);
@@ -124,21 +121,23 @@ export function batchScope<T>(
       const promise = batchAsync(() => {
         result = callback(ctx);
       });
-      promise.then(() => {
-        ctx.committed = true;
-        // 异步操作完成后再弹出作用域栈
-        scopeStack.pop();
-        globalBatchDepth--;
-      }).catch((error) => {
-        // 异步操作失败时也要弹出作用域栈
-        scopeStack.pop();
-        globalBatchDepth--;
-        if (onError) {
-          onError(error);
-        } else {
-          throw error;
-        }
-      });
+      promise
+        .then(() => {
+          ctx.committed = true;
+          // 异步操作完成后再弹出作用域栈
+          scopeStack.pop();
+          globalBatchDepth--;
+        })
+        .catch((error) => {
+          // 异步操作失败时也要弹出作用域栈
+          scopeStack.pop();
+          globalBatchDepth--;
+          if (onError) {
+            onError(error);
+          } else {
+            throw error;
+          }
+        });
       // FIX: P1-6 移除对 undefined 返回值的检查，void 函数合法返回 undefined
       return result as T;
     } else {
@@ -150,9 +149,7 @@ export function batchScope<T>(
       });
       ctx.committed = true;
       if (result === undefined) {
-        throw new Error(
-          '[lytjs/reactivity] batchScope sync mode: callback returned undefined.',
-        );
+        throw new Error('[lytjs/reactivity] batchScope sync mode: callback returned undefined.');
       }
       return result;
     }
@@ -176,7 +173,7 @@ export function batchScope<T>(
 /**
  * 创建异步批量作用域。
  * 与 batchScope 类似，但支持 async/await。
- * 
+ *
  * @example
  * ```typescript
  * await batchScopeAsync(async (ctx) => {
@@ -185,21 +182,21 @@ export function batchScope<T>(
  *   signal2.set(2);
  * });
  * ```
- * 
+ *
  * @param callback - 异步回调函数
  * @param options - 批量作用域配置选项
  * @returns Promise，在批量作用域完成时 resolve
  */
 export async function batchScopeAsync<T>(
   callback: BatchScopeCallback<Promise<T> | T>,
-  options: BatchScopeOptions = {}
+  options: BatchScopeOptions = {},
 ): Promise<T> {
   const { name = 'batchScopeAsync', onError } = options;
 
   // 检查嵌套深度限制
   if (globalBatchDepth >= MAX_NESTING_DEPTH) {
     const error = new Error(
-      `[lytjs/reactivity] Maximum batchScope nesting depth (${MAX_NESTING_DEPTH}) exceeded.`
+      `[lytjs/reactivity] Maximum batchScope nesting depth (${MAX_NESTING_DEPTH}) exceeded.`,
     );
     if (onError) {
       onError(error);
@@ -246,7 +243,7 @@ export async function batchScopeAsync<T>(
 /**
  * 在批量作用域内执行无追踪操作。
  * 函数内读取 signal 不会建立依赖关系。
- * 
+ *
  * @param fn - 要执行的函数
  * @returns 函数的返回值
  */

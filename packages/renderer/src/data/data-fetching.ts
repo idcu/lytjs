@@ -395,13 +395,7 @@ export function useAsyncData<T extends string | number | boolean | object | null
   error: Ref<Error | null>;
   refresh: () => Promise<void>;
 } {
-  const {
-    immediate = true,
-    initialData,
-    transform,
-    onError,
-    onSuccess,
-  } = options;
+  const { immediate = true, initialData, transform, onError, onSuccess } = options;
 
   const data = ref<T | undefined>(initialData);
   const pending = ref<boolean>(false);
@@ -429,7 +423,7 @@ export function useAsyncData<T extends string | number | boolean | object | null
     error.value = null;
 
     try {
-      let result: T = await fetcher() as T;
+      let result: T = (await fetcher()) as T;
 
       if (transform) {
         result = transform(result as unknown) as T;

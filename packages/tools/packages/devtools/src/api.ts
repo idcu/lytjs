@@ -2,11 +2,24 @@
  * @lytjs/devtools - Public API implementation
  */
 
-import type { DevToolsAPI, DevToolsState, EventType, StateSnapshot, ComponentTreeNode, SignalInfo, DevToolsEvent } from './types';
+import type {
+  DevToolsAPI,
+  DevToolsState,
+  EventType,
+  StateSnapshot,
+  ComponentTreeNode,
+  SignalInfo,
+  DevToolsEvent,
+} from './types';
 import { getState, enable, disable } from './state';
 import { getComponentTree, getComponentById } from './component-tree';
 import { getSignals, getSignalById } from './signals';
-import { startRecording as startEventRecording, stopRecording as stopEventRecording, getEvents, clearEvents } from './events';
+import {
+  startRecording as startEventRecording,
+  stopRecording as stopEventRecording,
+  getEvents,
+  clearEvents,
+} from './events';
 import { takeSnapshot, restoreSnapshot, getSnapshots } from './snapshots';
 import { sendToPanel, onPanelMessage } from './bridge';
 

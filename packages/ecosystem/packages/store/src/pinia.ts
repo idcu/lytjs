@@ -56,12 +56,20 @@ export function createPinia(): Pinia {
 
       // Provide the pinia instance
       if ((_app as { provide?: unknown }).provide) {
-        (_app as { provide: (key: string, value: unknown) => void }).provide('__lytjs_pinia__', pinia);
+        (_app as { provide: (key: string, value: unknown) => void }).provide(
+          '__lytjs_pinia__',
+          pinia,
+        );
       }
 
       // Add global properties
-      if ((_app as { config?: { globalProperties?: Record<string, unknown> } }).config?.globalProperties) {
-        (_app as { config: { globalProperties: Record<string, unknown> } }).config.globalProperties.$pinia = pinia;
+      if (
+        (_app as { config?: { globalProperties?: Record<string, unknown> } }).config
+          ?.globalProperties
+      ) {
+        (
+          _app as { config: { globalProperties: Record<string, unknown> } }
+        ).config.globalProperties.$pinia = pinia;
       }
 
       // TODO: DevTools integration
@@ -73,9 +81,7 @@ export function createPinia(): Pinia {
     use(plugin: PiniaPlugin) {
       if (isInstalled) {
         if (__DEV__) {
-          console.warn(
-            `[@lytjs/store] Plugins should be added before calling app.use(pinia).`,
-          );
+          console.warn(`[@lytjs/store] Plugins should be added before calling app.use(pinia).`);
         }
       }
       plugins.push(plugin);

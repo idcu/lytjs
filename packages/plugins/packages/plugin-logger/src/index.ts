@@ -90,8 +90,7 @@ function createLogger(options: LoggerOptions = {}): LoggerInstance {
     if (typeof localStorage === 'undefined') return;
     try {
       localStorage.setItem(storageKey, JSON.stringify(logsSignal()));
-    } catch {
-    }
+    } catch {}
   }
 
   function loadLogs(): LogEntry[] {
@@ -165,8 +164,7 @@ function createLogger(options: LoggerOptions = {}): LoggerInstance {
     if (enablePersistence && typeof localStorage !== 'undefined') {
       try {
         localStorage.removeItem(storageKey);
-      } catch {
-      }
+      } catch {}
     }
   }
 
@@ -207,7 +205,8 @@ function createLogger(options: LoggerOptions = {}): LoggerInstance {
 const pluginLogger = definePlugin({
   name: 'logger',
   version: '6.0.0',
-  description: 'LytJS official logger plugin with log levels, persistence, and performance tracing support',
+  description:
+    'LytJS official logger plugin with log levels, persistence, and performance tracing support',
   author: 'LytJS Team',
   keywords: ['lytjs', 'logger', 'logging', 'debug', 'performance'],
   schema: {

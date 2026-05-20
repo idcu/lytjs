@@ -33,7 +33,7 @@ export const Button = defineComponent({
 
   setup(props: Record<string, unknown>, { slots }: { slots: ButtonSlots }) {
     const p = props as ButtonSetupProps;
-    
+
     const handleClick = (event: MouseEvent) => {
       if (p.disabled || p.loading) {
         event.preventDefault();
@@ -46,13 +46,13 @@ export const Button = defineComponent({
       if (p.disabled || p.loading) {
         return;
       }
-      
+
       // 支持Enter和Space键触发按钮
       if (event.key === 'Enter' || event.key === ' ') {
         event.preventDefault();
         handleClick(event as unknown as MouseEvent);
       }
-      
+
       p.onKeydown?.(event);
     };
 

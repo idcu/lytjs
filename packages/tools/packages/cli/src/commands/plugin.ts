@@ -49,47 +49,55 @@ function getTemplateContent(template: string, pluginName: string): Record<string
   const files: Record<string, string> = {};
 
   // package.json
-  files['package.json'] = JSON.stringify({
-    name: packageName,
-    version: '0.1.0',
-    description: `LytJS plugin: ${pluginName}`,
-    main: 'dist/index.cjs',
-    module: 'dist/index.mjs',
-    types: 'dist/index.d.ts',
-    exports: {
-      '.': {
-        import: './dist/index.mjs',
-        require: './dist/index.cjs',
-        types: './dist/index.d.ts',
+  files['package.json'] = JSON.stringify(
+    {
+      name: packageName,
+      version: '0.1.0',
+      description: `LytJS plugin: ${pluginName}`,
+      main: 'dist/index.cjs',
+      module: 'dist/index.mjs',
+      types: 'dist/index.d.ts',
+      exports: {
+        '.': {
+          import: './dist/index.mjs',
+          require: './dist/index.cjs',
+          types: './dist/index.d.ts',
+        },
+      },
+      files: ['dist'],
+      scripts: {
+        build: 'tsup',
+        dev: 'tsup --watch',
+        test: 'vitest',
+        lint: 'eslint src',
+        prepublishOnly: 'npm run build',
+      },
+      keywords: ['lytjs', 'plugin'],
+      license: 'MIT',
+      peerDependencies: {
+        '@lytjs/core': '>=6.0.0',
       },
     },
-    files: ['dist'],
-    scripts: {
-      build: 'tsup',
-      dev: 'tsup --watch',
-      test: 'vitest',
-      lint: 'eslint src',
-      'prepublishOnly': 'npm run build',
-    },
-    keywords: ['lytjs', 'plugin'],
-    license: 'MIT',
-    peerDependencies: {
-      '@lytjs/core': '>=6.0.0',
-    },
-  }, null, 2);
+    null,
+    2,
+  );
 
   // tsconfig.json
-  files['tsconfig.json'] = JSON.stringify({
-    extends: '@lytjs/core/tsconfig.json',
-    compilerOptions: {
-      outDir: './dist',
-      rootDir: './src',
-      declaration: true,
-      declarationMap: true,
+  files['tsconfig.json'] = JSON.stringify(
+    {
+      extends: '@lytjs/core/tsconfig.json',
+      compilerOptions: {
+        outDir: './dist',
+        rootDir: './src',
+        declaration: true,
+        declarationMap: true,
+      },
+      include: ['src'],
+      exclude: ['node_modules', 'dist', 'tests'],
     },
-    include: ['src'],
-    exclude: ['node_modules', 'dist', 'tests'],
-  }, null, 2);
+    null,
+    2,
+  );
 
   // tsup.config.ts
   files['tsup.config.ts'] = `import { defineConfig } from 'tsup';
@@ -334,7 +342,16 @@ export async function buildPlugin(options: PluginBuildOptions = {}): Promise<voi
 
   try {
     const buildCmd = 'tsup';
-    const args = ['--entry', 'src/index.ts', '--outDir', outDir, '--format', 'esm,cjs', '--dts', '--sourcemap'];
+    const args = [
+      '--entry',
+      'src/index.ts',
+      '--outDir',
+      outDir,
+      '--format',
+      'esm,cjs',
+      '--dts',
+      '--sourcemap',
+    ];
 
     if (options.minify) {
       args.push('--minify');

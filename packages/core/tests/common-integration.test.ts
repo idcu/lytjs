@@ -441,7 +441,7 @@ describe('safeEscapeHtml', () => {
     expect(safeEscapeHtml('a"b')).toBe('a&quot;b');
   });
 
-  it('应转义单引号 \' 字符', () => {
+  it("应转义单引号 ' 字符", () => {
     expect(safeEscapeHtml("a'b")).toBe('a&#39;b');
   });
 

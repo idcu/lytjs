@@ -620,8 +620,6 @@ export interface BadgeSetupProps extends Record<string, unknown> {
   style?: string | Record<string, string>;
 }
 
-
-
 // ===== Tag 组件 =====
 
 export interface TagProps {
@@ -832,7 +830,10 @@ export interface FormRule {
   required?: boolean;
   message?: string;
   pattern?: RegExp;
-  validator?: (value: unknown, model: Record<string, unknown>) => boolean | string | Promise<boolean | string>;
+  validator?: (
+    value: unknown,
+    model: Record<string, unknown>,
+  ) => boolean | string | Promise<boolean | string>;
   asyncValidator?: (value: unknown, model: Record<string, unknown>) => Promise<boolean | string>;
   min?: number;
   max?: number;
@@ -1237,7 +1238,11 @@ export interface TransferProps {
   id?: string;
   ariaLabel?: string;
   ariaDescribedBy?: string;
-  onChange?: (value: (string | number)[], direction: 'left' | 'right', movedKeys: (string | number)[]) => void;
+  onChange?: (
+    value: (string | number)[],
+    direction: 'left' | 'right',
+    movedKeys: (string | number)[],
+  ) => void;
   onLeftCheckChange?: (checked: (string | number)[]) => void;
   onRightCheckChange?: (checked: (string | number)[]) => void;
 }
@@ -1256,7 +1261,11 @@ export interface TransferSetupProps extends Record<string, unknown> {
   ariaLabel: string;
   ariaDescribedBy: string;
   style?: string | Record<string, string>;
-  onChange?: (value: (string | number)[], direction: 'left' | 'right', movedKeys: (string | number)[]) => void;
+  onChange?: (
+    value: (string | number)[],
+    direction: 'left' | 'right',
+    movedKeys: (string | number)[],
+  ) => void;
   onLeftCheckChange?: (checked: (string | number)[]) => void;
   onRightCheckChange?: (checked: (string | number)[]) => void;
 }
@@ -1301,7 +1310,12 @@ export interface TreeProps {
   onNodeClick?: (data: TreeNode) => void;
   onDragStart?: (data: TreeNode, event: DragEvent) => void;
   onDragEnd?: (data: TreeNode, event: DragEvent) => void;
-  onDrop?: (data: TreeNode, target: TreeNode, position: 'before' | 'after' | 'inner', event: DragEvent) => void;
+  onDrop?: (
+    data: TreeNode,
+    target: TreeNode,
+    position: 'before' | 'after' | 'inner',
+    event: DragEvent,
+  ) => void;
 }
 
 export interface TreeSetupProps extends Record<string, unknown> {
@@ -1325,7 +1339,12 @@ export interface TreeSetupProps extends Record<string, unknown> {
   onNodeClick?: (data: TreeNode) => void;
   onDragStart?: (data: TreeNode, event: DragEvent) => void;
   onDragEnd?: (data: TreeNode, event: DragEvent) => void;
-  onDrop?: (data: TreeNode, target: TreeNode, position: 'before' | 'after' | 'inner', event: DragEvent) => void;
+  onDrop?: (
+    data: TreeNode,
+    target: TreeNode,
+    position: 'before' | 'after' | 'inner',
+    event: DragEvent,
+  ) => void;
 }
 
 export interface TreeSlots {
@@ -2298,8 +2317,6 @@ export interface PopconfirmSetupProps extends Record<string, unknown> {
   onConfirm?: () => void;
   onCancel?: () => void;
 }
-
-
 
 export type { VNode, Component };
 

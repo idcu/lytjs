@@ -26,7 +26,10 @@ export const Popconfirm = defineComponent({
     disabled: { type: Boolean, default: false },
     width: { type: Number, default: 0 },
     class: { type: String, default: '' },
-    style: { type: [String, Object] as unknown as PropType<string | Record<string, string>>, default: '' },
+    style: {
+      type: [String, Object] as unknown as PropType<string | Record<string, string>>,
+      default: '',
+    },
     id: { type: String, default: '' },
     ariaLabel: { type: String, default: '' },
     ariaDescribedBy: { type: String, default: '' },
@@ -78,7 +81,9 @@ export const Popconfirm = defineComponent({
       if (slots.reference) {
         const refContent = slots.reference();
         if (Array.isArray(refContent)) {
-          children.push(createVNode('div', { class: 'lyt-popconfirm__reference' }, refContent as VNode[]));
+          children.push(
+            createVNode('div', { class: 'lyt-popconfirm__reference' }, refContent as VNode[]),
+          );
         }
       }
 
@@ -91,7 +96,7 @@ export const Popconfirm = defineComponent({
         if (slots.icon) {
           const iconContent = slots.icon();
           if (Array.isArray(iconContent)) {
-            iconChildren.push(...iconContent as VNode[]);
+            iconChildren.push(...(iconContent as VNode[]));
           }
         }
         contentChildren.push(createVNode('span', { class: 'lyt-popconfirm__icon' }, iconChildren));
@@ -103,31 +108,49 @@ export const Popconfirm = defineComponent({
         if (slots.default) {
           const titleContent = slots.default();
           if (Array.isArray(titleContent)) {
-            titleChildren.push(...titleContent as VNode[]);
+            titleChildren.push(...(titleContent as VNode[]));
           }
         } else {
           titleChildren.push(createVNode('span', {}, _props.title as string));
         }
-        contentChildren.push(createVNode('span', {
-          class: 'lyt-popconfirm__title',
-          id: titleId,
-        }, titleChildren));
+        contentChildren.push(
+          createVNode(
+            'span',
+            {
+              class: 'lyt-popconfirm__title',
+              id: titleId,
+            },
+            titleChildren,
+          ),
+        );
       }
 
       popupChildren.push(createVNode('div', { class: 'lyt-popconfirm__content' }, contentChildren));
 
       const buttonChildren: VNode[] = [];
       const cancelBtnProps = getButtonA11yProps({ ariaLabel: _props.cancelButtonText as string });
-      buttonChildren.push(createVNode('button', mergeA11yProps(cancelBtnProps, {
-        class: 'lyt-button lyt-button--small',
-        onClick: handleCancel,
-      }), [createVNode('span', {}, _props.cancelButtonText as string)]));
+      buttonChildren.push(
+        createVNode(
+          'button',
+          mergeA11yProps(cancelBtnProps, {
+            class: 'lyt-button lyt-button--small',
+            onClick: handleCancel,
+          }),
+          [createVNode('span', {}, _props.cancelButtonText as string)],
+        ),
+      );
 
       const confirmBtnProps = getButtonA11yProps({ ariaLabel: _props.confirmButtonText as string });
-      buttonChildren.push(createVNode('button', mergeA11yProps(confirmBtnProps, {
-        class: `lyt-button lyt-button--small lyt-button--${_props.confirmButtonType}`,
-        onClick: handleConfirm,
-      }), [createVNode('span', {}, _props.confirmButtonText as string)]));
+      buttonChildren.push(
+        createVNode(
+          'button',
+          mergeA11yProps(confirmBtnProps, {
+            class: `lyt-button lyt-button--small lyt-button--${_props.confirmButtonType}`,
+            onClick: handleConfirm,
+          }),
+          [createVNode('span', {}, _props.confirmButtonText as string)],
+        ),
+      );
       popupChildren.push(createVNode('div', { class: 'lyt-popconfirm__buttons' }, buttonChildren));
 
       const a11yProps = getDialogA11yProps({
@@ -138,12 +161,22 @@ export const Popconfirm = defineComponent({
         modal: true,
       });
 
-      children.push(createVNode('div', mergeA11yProps(a11yProps, { class: 'lyt-popconfirm__popup' }), popupChildren));
+      children.push(
+        createVNode(
+          'div',
+          mergeA11yProps(a11yProps, { class: 'lyt-popconfirm__popup' }),
+          popupChildren,
+        ),
+      );
 
-      return createVNode('div', {
-        class: getPopconfirmClass(),
-        style: getPopconfirmStyle(),
-      }, children);
+      return createVNode(
+        'div',
+        {
+          class: getPopconfirmClass(),
+          style: getPopconfirmStyle(),
+        },
+        children,
+      );
     };
   },
 });

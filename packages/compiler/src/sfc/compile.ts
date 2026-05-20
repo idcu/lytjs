@@ -4,9 +4,7 @@
 import { compile } from '../index';
 import type { CompilerOptions } from '../types';
 import type { SFCDescriptor } from './parse';
-import {
-  getCustomBlockProcessor,
-} from './custom-blocks';
+import { getCustomBlockProcessor } from './custom-blocks';
 
 // ============================================================
 // 编译选项和结果类型
@@ -115,14 +113,16 @@ export function compileSFC(
   }
 
   // 5. Assemble the final JS module
-  parts.push(generateModuleCode({
-    scriptContent,
-    scriptSetupContent,
-    renderFnCode,
-    scopedId,
-    filename,
-    customBlockImports,
-  }));
+  parts.push(
+    generateModuleCode({
+      scriptContent,
+      scriptSetupContent,
+      renderFnCode,
+      scopedId,
+      filename,
+      customBlockImports,
+    }),
+  );
 
   const result: SFCCompileResult = {
     code: parts.join('\n'),
@@ -244,7 +244,7 @@ function scopeCSS(css: string, scopeId: string): string {
         if (__DEV__) {
           console.warn(
             `[scopeCSS] 检测到可能的 CSS 嵌套规则，当前实现可能无法正确处理。` +
-            `建议使用 PostCSS 进行生产环境的 CSS 作用域处理。`
+              `建议使用 PostCSS 进行生产环境的 CSS 作用域处理。`,
           );
         }
       }

@@ -53,19 +53,26 @@ export const Icon = defineComponent({
 
     return () => {
       const children: VNode[] = [];
-      
+
       if (slots.default) {
         children.push(...slots.default());
       }
 
-      return createVNode('i', mergeA11yProps({
-        id: p.id,
-        'aria-label': p.ariaLabel,
-        'aria-describedby': p.ariaDescribedBy,
-      }, {
-        class: getIconClass(),
-        style: getIconStyle(),
-      }), children);
+      return createVNode(
+        'i',
+        mergeA11yProps(
+          {
+            id: p.id,
+            'aria-label': p.ariaLabel,
+            'aria-describedby': p.ariaDescribedBy,
+          },
+          {
+            class: getIconClass(),
+            style: getIconStyle(),
+          },
+        ),
+        children,
+      );
     };
   },
 });

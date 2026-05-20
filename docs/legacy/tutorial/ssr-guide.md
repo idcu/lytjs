@@ -51,10 +51,7 @@ console.log(html); // 输出: <div class="app"><h1>Hello LytJS SSR</h1><p>这是
 import { h } from '@lytjs/core';
 import { renderToHtml } from '@lytjs/ssr';
 
-const App = h('div', { class: 'app' }, [
-  h('h1', '我的网站'),
-  h('p', '欢迎访问'),
-]);
+const App = h('div', { class: 'app' }, [h('h1', '我的网站'), h('p', '欢迎访问')]);
 
 const html = renderToHtml(App, {
   title: '我的网站',
@@ -98,11 +95,11 @@ const stream = renderToStream(App, {
 // 在服务器响应中使用
 async function handleRequest(req, res) {
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
-  
+
   for await (const chunk of stream) {
     res.write(chunk);
   }
-  
+
   res.end();
 }
 ```
@@ -152,10 +149,7 @@ import { writeStaticFiles } from '@lytjs/ssr';
 const pages = [
   {
     path: '/',
-    component: h('div', [
-      h('h1', '首页'),
-      h('p', '欢迎访问'),
-    ]),
+    component: h('div', [h('h1', '首页'), h('p', '欢迎访问')]),
     head: {
       title: '我的网站 - 首页',
       meta: {
@@ -166,18 +160,12 @@ const pages = [
   },
   {
     path: '/about',
-    component: h('div', [
-      h('h1', '关于我们'),
-      h('p', '关于我们的信息'),
-    ]),
+    component: h('div', [h('h1', '关于我们'), h('p', '关于我们的信息')]),
     head: { title: '我的网站 - 关于' },
   },
   {
     path: '/blog/post-1',
-    component: h('article', [
-      h('h1', '博客文章 1'),
-      h('p', '这是文章内容'),
-    ]),
+    component: h('article', [h('h1', '博客文章 1'), h('p', '这是文章内容')]),
   },
 ];
 
@@ -188,12 +176,8 @@ await writeStaticFiles(pages, {
   defaultTitle: '我的网站',
   generateSitemap: true,
   siteName: '我的网站',
-  globalScripts: [
-    '<script src="/main.js" defer></script>',
-  ],
-  globalStyles: [
-    '<link rel="stylesheet" href="/style.css">',
-  ],
+  globalScripts: ['<script src="/main.js" defer></script>'],
+  globalStyles: ['<link rel="stylesheet" href="/style.css">'],
 });
 ```
 
@@ -205,7 +189,9 @@ await writeStaticFiles(pages, {
 import { h } from '@lytjs/core';
 import { generateStaticPages, generateRouteManifest } from '@lytjs/ssr';
 
-const pages = [/* ... */];
+const pages = [
+  /* ... */
+];
 
 const results = generateStaticPages(pages, {
   baseUrl: 'https://example.com',
@@ -228,12 +214,14 @@ console.log(manifest);
 ```typescript
 import { validatePages } from '@lytjs/ssr';
 
-const pages = [/* ... */];
+const pages = [
+  /* ... */
+];
 const errors = validatePages(pages);
 
 if (errors.length > 0) {
   console.error('页面配置错误:');
-  errors.forEach(error => console.error('  -', error));
+  errors.forEach((error) => console.error('  -', error));
 }
 ```
 
@@ -252,35 +240,36 @@ const app = express();
 const port = 3000;
 
 // 定义应用组件
-const App = (props: { page: string }) => h('div', { class: 'app' }, [
-  h('header', [h('h1', '我的应用')]),
-  h('main', [h('p', `当前页面: ${props.page}`)]),
-  h('footer', [h('p', '底部信息')]),
-]);
+const App = (props: { page: string }) =>
+  h('div', { class: 'app' }, [
+    h('header', [h('h1', '我的应用')]),
+    h('main', [h('p', `当前页面: ${props.page}`)]),
+    h('footer', [h('p', '底部信息')]),
+  ]);
 
 // 传统 SSR - 完整字符串
 app.get('/', (req, res) => {
   const html = renderToHtml(h(App, { page: '首页' }), {
     title: '首页',
   });
-  
+
   res.send(html);
 });
 
 // 流式 SSR
 app.get('/stream', async (req, res) => {
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
-  
+
   const stream = renderToStream(h(App, { page: '流式渲染' }), {
     onShellReady: () => {
       console.log('Shell 已发送');
     },
   });
-  
+
   for await (const chunk of stream) {
     res.write(chunk);
   }
-  
+
   res.end();
 });
 
@@ -297,15 +286,9 @@ import { h } from '@lytjs/core';
 import { writeStaticFiles } from '@lytjs/ssr';
 
 // 页面组件
-const Home = h('div', [
-  h('h1', '首页'),
-  h('p', '欢迎访问'),
-]);
+const Home = h('div', [h('h1', '首页'), h('p', '欢迎访问')]);
 
-const About = h('div', [
-  h('h1', '关于我们'),
-  h('p', '我们的使命是...'),
-]);
+const About = h('div', [h('h1', '关于我们'), h('p', '我们的使命是...')]);
 
 // 定义页面
 const pages = [
@@ -324,7 +307,7 @@ const pages = [
 // 生成静态文件
 async function build() {
   console.log('开始生成静态站点...');
-  
+
   await writeStaticFiles(pages, {
     outDir: 'dist',
     defaultTitle: '我的网站',
@@ -332,7 +315,7 @@ async function build() {
     baseUrl: 'https://example.com',
     siteName: '我的网站',
   });
-  
+
   console.log('静态站点生成完成!');
   console.log('输出目录: dist/');
 }
@@ -351,9 +334,7 @@ build().catch(console.error);
 import { createApp, h } from '@lytjs/core';
 
 // 与服务端相同的组件
-const App = () => h('div', { class: 'app' }, [
-  h('h1', 'Hello LytJS'),
-]);
+const App = () => h('div', { class: 'app' }, [h('h1', 'Hello LytJS')]);
 
 // 水合到服务端渲染的 DOM
 const app = createApp(App);
@@ -369,18 +350,14 @@ import { createApp, h } from '@lytjs/core';
 const App = (props: { dehydratedState?: any }) => {
   // 使用脱水状态恢复组件数据
   const data = props.dehydratedState?.prefetchData || {};
-  
-  return h('div', [
-    h('h1', 'Hello LytJS'),
-    h('pre', JSON.stringify(data, null, 2)),
-  ]);
+
+  return h('div', [h('h1', 'Hello LytJS'), h('pre', JSON.stringify(data, null, 2))]);
 };
 
 // 获取页面中的脱水状态
 const dehydratedState = window.__LYTJS_STATE__ || {};
 
-createApp(App)
-  .mount('#app', true);
+createApp(App).mount('#app', true);
 ```
 
 ### 水合标记工具
@@ -451,6 +428,7 @@ renderToStream(
 将 VNode 渲染为 ReadableStream。
 
 **选项:**
+
 - `chunkSize?: number` - 每个分块的最大字节数，默认 4096
 - `onShellReady?: () => void` - Shell 就绪回调
 - `onError?: (error: Error) => void` - 错误回调

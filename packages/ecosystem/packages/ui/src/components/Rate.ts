@@ -33,7 +33,7 @@ export const Rate = defineComponent({
     const hoverValue = signal(0);
     const isHovering = signal(false);
 
-    const displayValue = (): number => isHovering() ? hoverValue() : p.modelValue;
+    const displayValue = (): number => (isHovering() ? hoverValue() : p.modelValue);
 
     const getStarClass = (index: number): string => {
       const value = displayValue();
@@ -109,36 +109,54 @@ export const Rate = defineComponent({
 
       for (let i = 0; i < p.max; i++) {
         starNodes.push(
-          createVNode('span', {
-            class: getStarStyle(i),
-            key: i,
-            onMousemove: (e: MouseEvent) => handleMouseMove(e, i),
-            onMouseleave: handleMouseLeave,
-            onClick: (e: MouseEvent) => handleClick(e, i),
-          }, [
-            createVNode('span', { class: 'lyt-rate-star-first' }, [createVNode('span', {}, String(p.voidIcon))]),
-            createVNode('span', { class: 'lyt-rate-star-second' }, [createVNode('span', {}, '★')]),
-          ])
+          createVNode(
+            'span',
+            {
+              class: getStarStyle(i),
+              key: i,
+              onMousemove: (e: MouseEvent) => handleMouseMove(e, i),
+              onMouseleave: handleMouseLeave,
+              onClick: (e: MouseEvent) => handleClick(e, i),
+            },
+            [
+              createVNode('span', { class: 'lyt-rate-star-first' }, [
+                createVNode('span', {}, String(p.voidIcon)),
+              ]),
+              createVNode('span', { class: 'lyt-rate-star-second' }, [
+                createVNode('span', {}, '★'),
+              ]),
+            ],
+          ),
         );
       }
 
       const children: VNode[] = [...starNodes];
 
       if (p.showText) {
-        children.push(createVNode('span', { class: 'lyt-rate-text' }, [createVNode('span', {}, getText())]));
+        children.push(
+          createVNode('span', { class: 'lyt-rate-text' }, [createVNode('span', {}, getText())]),
+        );
       }
 
       if (p.showScore) {
-        children.push(createVNode('span', { class: 'lyt-rate-score' }, [createVNode('span', {}, getScore())]));
+        children.push(
+          createVNode('span', { class: 'lyt-rate-score' }, [createVNode('span', {}, getScore())]),
+        );
       }
 
-      return createVNode('div', {
-        class: [
-          'lyt-rate',
-          p.class as string,
-          (p.disabled || p.readonly) ? 'lyt-rate-disabled' : '',
-        ].filter(Boolean).join(' '),
-      }, children);
+      return createVNode(
+        'div',
+        {
+          class: [
+            'lyt-rate',
+            p.class as string,
+            p.disabled || p.readonly ? 'lyt-rate-disabled' : '',
+          ]
+            .filter(Boolean)
+            .join(' '),
+        },
+        children,
+      );
     };
   },
 });

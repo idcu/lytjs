@@ -50,7 +50,17 @@ export const RouterLink = {
     },
   },
 
-  setup(props: RouterLinkProps, { slots }: { slots?: { default?: (props?: unknown) => unknown; [key: string]: ((props?: unknown) => unknown) | undefined } }) {
+  setup(
+    props: RouterLinkProps,
+    {
+      slots,
+    }: {
+      slots?: {
+        default?: (props?: unknown) => unknown;
+        [key: string]: ((props?: unknown) => unknown) | undefined;
+      };
+    },
+  ) {
     const router = useRouter();
     const route = useRoute();
 
@@ -104,7 +114,9 @@ export const RouterLink = {
           'aria-current': isExactActive() ? props.ariaCurrentValue : undefined,
           onClick: handleClick,
         },
-        children: slots?.default ? slots.default({ isActive: isActive(), isExactActive: isExactActive() }) : null,
+        children: slots?.default
+          ? slots.default({ isActive: isActive(), isExactActive: isExactActive() })
+          : null,
       };
 
       return linkData;

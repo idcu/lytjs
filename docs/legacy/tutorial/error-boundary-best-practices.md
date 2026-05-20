@@ -21,19 +21,32 @@ import { ErrorBoundary } from '@lytjs/core';
 import { createApp, h } from '@lytjs/core';
 
 function App() {
-  return h(ErrorBoundary, {
-    fallback: ({ error, reset }) => h('div', {
-      class: 'error-fallback'
-    }, [
-      h('h2', null, '出错了'),
-      h('p', null, error.message),
-      h('button', {
-        onClick: reset
-      }, '重试')
-    ])
-  }, [
-    // 子组件
-  ]);
+  return h(
+    ErrorBoundary,
+    {
+      fallback: ({ error, reset }) =>
+        h(
+          'div',
+          {
+            class: 'error-fallback',
+          },
+          [
+            h('h2', null, '出错了'),
+            h('p', null, error.message),
+            h(
+              'button',
+              {
+                onClick: reset,
+              },
+              '重试',
+            ),
+          ],
+        ),
+    },
+    [
+      // 子组件
+    ],
+  );
 }
 ```
 
@@ -43,28 +56,41 @@ function App() {
 import { ErrorBoundary, type FallbackProps } from '@lytjs/core';
 
 function ErrorFallback(props: FallbackProps) {
-  return h('div', {
-    class: 'error-boundary'
-  }, [
-    h('h3', null, '组件加载失败'),
-    h('p', null, `错误信息: ${props.error.message}`),
-    h('p', null, `重试次数: ${props.retryCount}/${props.maxRetries}`),
-    h('div', { class: 'actions' }, [
-      props.hasRetries && h('button', {
-        onClick: props.retry
-      }, '重试'),
-      h('button', {
-        onClick: props.reset
-      }, '重置')
-    ])
-  ]);
+  return h(
+    'div',
+    {
+      class: 'error-boundary',
+    },
+    [
+      h('h3', null, '组件加载失败'),
+      h('p', null, `错误信息: ${props.error.message}`),
+      h('p', null, `重试次数: ${props.retryCount}/${props.maxRetries}`),
+      h('div', { class: 'actions' }, [
+        props.hasRetries &&
+          h(
+            'button',
+            {
+              onClick: props.retry,
+            },
+            '重试',
+          ),
+        h(
+          'button',
+          {
+            onClick: props.reset,
+          },
+          '重置',
+        ),
+      ]),
+    ],
+  );
 }
 
 function App() {
   return h(ErrorBoundary, {
     fallback: ErrorFallback,
     maxRetries: 3,
-    retryDelay: 1000
+    retryDelay: 1000,
   });
 }
 ```
@@ -76,11 +102,11 @@ function App() {
 ### 1. 设置全局错误报告器
 
 ```typescript
-import { 
-  setGlobalErrorReporter, 
+import {
+  setGlobalErrorReporter,
   getGlobalErrorReporter,
   type ErrorReporter,
-  type ErrorContext 
+  type ErrorContext,
 } from '@lytjs/core';
 
 class CustomErrorReporter implements ErrorReporter {
@@ -92,16 +118,16 @@ class CustomErrorReporter implements ErrorReporter {
         componentName: context.componentName,
         url: context.url,
         userAgent: context.userAgent,
-        timestamp: context.timestamp
-      }
+        timestamp: context.timestamp,
+      },
     });
 
     // 可以发送到错误追踪服务
     if (typeof window !== 'undefined' && (window as any).Sentry) {
       (window as any).Sentry.captureException(error, {
         contexts: {
-          component: context
-        }
+          component: context,
+        },
       });
     }
   }
@@ -121,9 +147,9 @@ const app = createApp({
       onError: (error, errorInfo) => {
         console.error('应用错误:', error);
         console.error('错误信息:', errorInfo);
-      }
+      },
     });
-  }
+  },
 });
 
 app.config.errorHandler = (err, instance, info) => {
@@ -161,7 +187,7 @@ function RetryableComponent(props: RetryableComponentProps) {
     onMaxRetriesReached: (error) => {
       console.error('已达到最大重试次数:', error);
       // 可以发送告警通知
-    }
+    },
   });
 }
 ```
@@ -182,13 +208,13 @@ function ConditionalRetryBoundary() {
     },
     fallback: ({ retryCount, maxRetries, retry }) => {
       const shouldAutoRetry = retryCount < maxRetries;
-      
+
       return h('div', { class: 'retry-container' }, [
-        shouldAutoRetry 
+        shouldAutoRetry
           ? h('button', { onClick: retry }, `自动重试 (${retryCount}/${maxRetries})`)
-          : h('div', null, '重试已达上限，请手动刷新页面')
+          : h('div', null, '重试已达上限，请手动刷新页面'),
       ]);
-    }
+    },
   });
 }
 ```
@@ -210,45 +236,45 @@ function addErrorLog(error: Error, componentName: string) {
     error: error,
     errorInfo: {
       componentStack: componentName,
-      timestamp: new Date()
+      timestamp: new Date(),
     },
     context: {
       componentName: componentName,
       url: typeof window !== 'undefined' ? window.location.href : '',
       userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : '',
-      timestamp: new Date()
+      timestamp: new Date(),
     },
-    retryCount: 0
+    retryCount: 0,
   });
 }
 
 // 获取错误统计
 function getErrorStats() {
   const stats = errorLogManager.getErrorStats();
-  
+
   return {
     总错误数: stats.totalErrors,
     错误类型分布: stats.errorTypes,
-    最近错误: stats.recentErrors.map(log => ({
+    最近错误: stats.recentErrors.map((log) => ({
       时间: log.timestamp,
       错误: log.error.message,
-      类型: log.error.name
-    }))
+      类型: log.error.name,
+    })),
   };
 }
 
 // 导出错误日志
 function exportErrorLogs() {
   const logs = errorLogManager.exportLogs();
-  
+
   const blob = new Blob([logs], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
-  
+
   const a = document.createElement('a');
   a.href = url;
   a.download = `error-logs-${new Date().toISOString()}.json`;
   a.click();
-  
+
   URL.revokeObjectURL(url);
 }
 ```
@@ -266,29 +292,43 @@ function ErrorLogPanel() {
     h('h2', null, '错误日志面板'),
     h('div', { class: 'stats' }, [
       h('span', null, `总计: ${stats.totalErrors}`),
-      h('span', null, `错误类型: ${Object.keys(stats.errorTypes).length}`)
+      h('span', null, `错误类型: ${Object.keys(stats.errorTypes).length}`),
     ]),
-    h('button', {
-      onClick: () => errorLogManager.clearLogs()
-    }, '清空日志'),
-    h('button', {
-      onClick: () => {
-        const data = errorLogManager.exportLogs();
-        console.log(data);
-      }
-    }, '导出日志'),
-    h('div', { class: 'log-list' },
-      logs.map(log => 
-        h('div', { 
-          class: 'log-item',
-          key: log.id 
-        }, [
-          h('span', { class: 'timestamp' }, log.timestamp.toLocaleString()),
-          h('span', { class: 'error-type' }, log.error.name),
-          h('span', { class: 'error-message' }, log.error.message)
-        ])
-      )
-    )
+    h(
+      'button',
+      {
+        onClick: () => errorLogManager.clearLogs(),
+      },
+      '清空日志',
+    ),
+    h(
+      'button',
+      {
+        onClick: () => {
+          const data = errorLogManager.exportLogs();
+          console.log(data);
+        },
+      },
+      '导出日志',
+    ),
+    h(
+      'div',
+      { class: 'log-list' },
+      logs.map((log) =>
+        h(
+          'div',
+          {
+            class: 'log-item',
+            key: log.id,
+          },
+          [
+            h('span', { class: 'timestamp' }, log.timestamp.toLocaleString()),
+            h('span', { class: 'error-type' }, log.error.name),
+            h('span', { class: 'error-message' }, log.error.message),
+          ],
+        ),
+      ),
+    ),
   ]);
 }
 ```
@@ -324,30 +364,27 @@ function DataFetcher(props: DataFetcherProps) {
     }
   }
 
-  return h(ErrorBoundary, {
-    fallback: ({ retry }) => h('div', { class: 'error-state' }, [
-      h('p', null, '数据加载失败'),
-      h('button', { onClick: retry }, '重试'),
-      h('button', { onClick: fetchData }, '重新获取')
-    ]),
-    onError: (err) => console.error('数据获取错误:', err)
-  }, [
-    loading.value 
-      ? h('div', null, '加载中...')
-      : error.value 
-        ? null 
-        : props.children(data.value)
-  ]);
+  return h(
+    ErrorBoundary,
+    {
+      fallback: ({ retry }) =>
+        h('div', { class: 'error-state' }, [
+          h('p', null, '数据加载失败'),
+          h('button', { onClick: retry }, '重试'),
+          h('button', { onClick: fetchData }, '重新获取'),
+        ]),
+      onError: (err) => console.error('数据获取错误:', err),
+    },
+    [loading.value ? h('div', null, '加载中...') : error.value ? null : props.children(data.value)],
+  );
 }
 
 // 使用示例
 function UserProfile({ userId }: { userId: string }) {
   return h(DataFetcher, {
     url: `/api/users/${userId}`,
-    children: (user) => h('div', { class: 'user-profile' }, [
-      h('h1', null, user.name),
-      h('p', null, user.email)
-    ])
+    children: (user) =>
+      h('div', { class: 'user-profile' }, [h('h1', null, user.name), h('p', null, user.email)]),
   });
 }
 ```
@@ -363,13 +400,18 @@ interface FormSectionProps {
 }
 
 function FormSection(props: FormSectionProps) {
-  return h(ErrorBoundary, {
-    fallback: ({ error, reset }) => h('div', { class: 'form-error' }, [
-      h('strong', null, `表单 "${props.title}" 部分出错`),
-      h('small', null, error.message),
-      h('button', { onClick: reset }, '重置此部分')
-    ])
-  }, [props.children]);
+  return h(
+    ErrorBoundary,
+    {
+      fallback: ({ error, reset }) =>
+        h('div', { class: 'form-error' }, [
+          h('strong', null, `表单 "${props.title}" 部分出错`),
+          h('small', null, error.message),
+          h('button', { onClick: reset }, '重置此部分'),
+        ]),
+    },
+    [props.children],
+  );
 }
 
 function RegistrationForm() {
@@ -378,16 +420,16 @@ function RegistrationForm() {
       title: '基本信息',
       children: h('div', { class: 'form-section' }, [
         h('input', { name: 'username', placeholder: '用户名' }),
-        h('input', { name: 'email', placeholder: '邮箱' })
-      ])
+        h('input', { name: 'email', placeholder: '邮箱' }),
+      ]),
     }),
     h(FormSection, {
       title: '详细信息',
       children: h('div', { class: 'form-section' }, [
         h('input', { name: 'phone', placeholder: '电话' }),
-        h('textarea', { name: 'bio', placeholder: '简介' })
-      ])
-    })
+        h('textarea', { name: 'bio', placeholder: '简介' }),
+      ]),
+    }),
   ]);
 }
 ```
@@ -403,21 +445,24 @@ interface RouteBoundaryProps {
 }
 
 function RouteBoundary(props: RouteBoundaryProps) {
-  return h(ErrorBoundary, {
-    fallback: ({ error, reset }) => h('div', { class: 'route-error' }, [
-      h('h2', null, '页面加载失败'),
-      h('p', null, `路径: ${props.path}`),
-      h('pre', null, error.message),
-      h('div', { class: 'actions' }, [
-        h('button', { onClick: reset }, '重试'),
-        h('a', { href: '/' }, '返回首页')
-      ])
-    ]),
-    maxRetries: 2,
-    retryDelay: 1500
-  }, [
-    h(props.component)
-  ]);
+  return h(
+    ErrorBoundary,
+    {
+      fallback: ({ error, reset }) =>
+        h('div', { class: 'route-error' }, [
+          h('h2', null, '页面加载失败'),
+          h('p', null, `路径: ${props.path}`),
+          h('pre', null, error.message),
+          h('div', { class: 'actions' }, [
+            h('button', { onClick: reset }, '重试'),
+            h('a', { href: '/' }, '返回首页'),
+          ]),
+        ]),
+      maxRetries: 2,
+      retryDelay: 1500,
+    },
+    [h(props.component)],
+  );
 }
 
 // 路由配置
@@ -425,18 +470,20 @@ const routes = [
   { path: '/', component: HomePage },
   { path: '/users', component: UserListPage },
   { path: '/users/:id', component: UserDetailPage },
-  { path: '/settings', component: SettingsPage }
+  { path: '/settings', component: SettingsPage },
 ];
 
 function AppRouter() {
-  return h('div', { class: 'router' },
-    routes.map(route =>
+  return h(
+    'div',
+    { class: 'router' },
+    routes.map((route) =>
       h(RouteBoundary, {
         key: route.path,
         path: route.path,
-        component: route.component
-      })
-    )
+        component: route.component,
+      }),
+    ),
   );
 }
 ```
@@ -453,20 +500,23 @@ interface SafeComponentProps {
 }
 
 function SafeComponent(props: SafeComponentProps) {
-  return h(ErrorBoundary, {
-    fallback: props.fallback ?? (({ error }) => 
-      h('div', { class: 'component-error' }, [
-        h('p', null, '组件渲染失败'),
-        h('small', null, error.message)
-      ])
-    ),
-    onError: (error, info) => {
-      console.error('第三方组件错误:', error);
-      console.error('组件堆栈:', info.componentStack);
-    }
-  }, [
-    h(props.component, props.props)
-  ]);
+  return h(
+    ErrorBoundary,
+    {
+      fallback:
+        props.fallback ??
+        (({ error }) =>
+          h('div', { class: 'component-error' }, [
+            h('p', null, '组件渲染失败'),
+            h('small', null, error.message),
+          ])),
+      onError: (error, info) => {
+        console.error('第三方组件错误:', error);
+        console.error('组件堆栈:', info.componentStack);
+      },
+    },
+    [h(props.component, props.props)],
+  );
 }
 
 // 使用示例
@@ -474,16 +524,13 @@ function ThirdPartyDemo() {
   return h('div', null, [
     h(SafeComponent, {
       component: UnstableChart,
-      props: { data: chartData }
+      props: { data: chartData },
     }),
     h(SafeComponent, {
       component: ExternalWidget,
       props: { config: widgetConfig },
-      fallback: ({ reset }) => h('div', [
-        '组件加载失败',
-        h('button', { onClick: reset }, '重试')
-      ])
-    })
+      fallback: ({ reset }) => h('div', ['组件加载失败', h('button', { onClick: reset }, '重试')]),
+    }),
   ]);
 }
 ```
@@ -501,17 +548,18 @@ function FineGrainedExample() {
     h(ErrorBoundary, { key: 'header' }, [h(Header)]),
     h(ErrorBoundary, { key: 'sidebar' }, [h(Sidebar)]),
     h(ErrorBoundary, { key: 'main' }, [h(MainContent)]),
-    h(ErrorBoundary, { key: 'footer' }, [h(Footer)])
+    h(ErrorBoundary, { key: 'footer' }, [h(Footer)]),
   ]);
 }
 
 // ❌ 不好的实践：粗粒度错误边界
 function CoarseGrainedExample() {
-  return h(ErrorBoundary, null, [ // 整个应用只有一个错误边界
+  return h(ErrorBoundary, null, [
+    // 整个应用只有一个错误边界
     h(Header),
     h(Sidebar),
     h(MainContent),
-    h(Footer)
+    h(Footer),
   ]);
 }
 ```
@@ -554,17 +602,11 @@ function RecoveryStrategy() {
     },
     fallback: ({ error, retry }) => {
       if (recoveryState.value === 'failed') {
-        return h('div', null, [
-          h('p', null, '无法恢复'),
-          h('a', { href: '/' }, '返回首页')
-        ]);
+        return h('div', null, [h('p', null, '无法恢复'), h('a', { href: '/' }, '返回首页')]);
       }
-      
-      return h('div', null, [
-        h('p', null, error.message),
-        h('button', { onClick: retry }, '重试')
-      ]);
-    }
+
+      return h('div', null, [h('p', null, error.message), h('button', { onClick: retry }, '重试')]);
+    },
   });
 }
 ```

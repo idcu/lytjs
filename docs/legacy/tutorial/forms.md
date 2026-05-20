@@ -7,25 +7,25 @@
 ### 简单输入框
 
 ```typescript
-import { defineComponent, signal } from '@lytjs/core'
+import { defineComponent, signal } from '@lytjs/core';
 
 export default defineComponent({
   setup() {
-    const name = signal('')
-    const email = signal('')
-    
+    const name = signal('');
+    const email = signal('');
+
     const handleSubmit = (e: Event) => {
-      e.preventDefault()
-      console.log('提交数据:', { name: name(), email: email() })
-    }
-    
+      e.preventDefault();
+      console.log('提交数据:', { name: name(), email: email() });
+    };
+
     return {
       name,
       email,
-      handleSubmit
-    }
+      handleSubmit,
+    };
   },
-  
+
   template: `
     <form @submit="handleSubmit">
       <div>
@@ -46,28 +46,28 @@ export default defineComponent({
       </div>
       <button type="submit">提交</button>
     </form>
-  `
-})
+  `,
+});
 ```
 
 ### 复选框与单选框
 
 ```typescript
-import { defineComponent, signal } from '@lytjs/core'
+import { defineComponent, signal } from '@lytjs/core';
 
 export default defineComponent({
   setup() {
-    const isActive = signal(false)
-    const gender = signal('')
-    const hobbies = signal<string[]>([])
-    
+    const isActive = signal(false);
+    const gender = signal('');
+    const hobbies = signal<string[]>([]);
+
     return {
       isActive,
       gender,
-      hobbies
-    }
+      hobbies,
+    };
   },
-  
+
   template: `
     <div>
       <!-- 复选框 -->
@@ -127,30 +127,30 @@ export default defineComponent({
         </label>
       </div>
     </div>
-  `
-})
+  `,
+});
 ```
 
 ### 下拉选择
 
 ```typescript
-import { defineComponent, signal } from '@lytjs/core'
+import { defineComponent, signal } from '@lytjs/core';
 
 export default defineComponent({
   setup() {
-    const selected = signal('')
+    const selected = signal('');
     const options = signal([
       { value: 'js', label: 'JavaScript' },
       { value: 'ts', label: 'TypeScript' },
-      { value: 'py', label: 'Python' }
-    ])
-    
+      { value: 'py', label: 'Python' },
+    ]);
+
     return {
       selected,
-      options
-    }
+      options,
+    };
   },
-  
+
   template: `
     <div>
       <select v-model="selected">
@@ -165,8 +165,8 @@ export default defineComponent({
       </select>
       <p>已选择：{{ selected }}</p>
     </div>
-  `
-})
+  `,
+});
 ```
 
 ## 表单验证
@@ -174,43 +174,43 @@ export default defineComponent({
 ### 基础验证
 
 ```typescript
-import { defineComponent, signal, computed } from '@lytjs/core'
+import { defineComponent, signal, computed } from '@lytjs/core';
 
 export default defineComponent({
   setup() {
-    const email = signal('')
-    const password = signal('')
-    
+    const email = signal('');
+    const password = signal('');
+
     const isValidEmail = computed(() => {
-      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email())
-    })
-    
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email());
+    });
+
     const isValidPassword = computed(() => {
-      return password().length >= 6
-    })
-    
+      return password().length >= 6;
+    });
+
     const errors = computed(() => {
-      const errs: string[] = []
-      if (!isValidEmail()) errs.push('邮箱格式不正确')
-      if (!isValidPassword()) errs.push('密码至少6个字符')
-      return errs
-    })
-    
+      const errs: string[] = [];
+      if (!isValidEmail()) errs.push('邮箱格式不正确');
+      if (!isValidPassword()) errs.push('密码至少6个字符');
+      return errs;
+    });
+
     const handleSubmit = (e: Event) => {
-      e.preventDefault()
+      e.preventDefault();
       if (errors().length === 0) {
-        console.log('提交成功')
+        console.log('提交成功');
       }
-    }
-    
+    };
+
     return {
       email,
       password,
       errors,
-      handleSubmit
-    }
+      handleSubmit,
+    };
   },
-  
+
   template: `
     <form @submit="handleSubmit">
       <div>
@@ -239,47 +239,47 @@ export default defineComponent({
         提交
       </button>
     </form>
-  `
-})
+  `,
+});
 ```
 
 ### 自定义验证函数
 
 ```typescript
-import { defineComponent, signal } from '@lytjs/core'
+import { defineComponent, signal } from '@lytjs/core';
 
 interface ValidationRule {
-  (value: any): boolean | string
+  (value: any): boolean | string;
 }
 
 export default defineComponent({
   setup() {
-    const username = signal('')
-    const errors = signal<string[]>([])
-    
+    const username = signal('');
+    const errors = signal<string[]>([]);
+
     const validateUsername = (value: string): boolean | string => {
-      if (!value) return '用户名不能为空'
-      if (value.length < 3) return '用户名至少3个字符'
-      if (value.length > 20) return '用户名最多20个字符'
-      return true
-    }
-    
+      if (!value) return '用户名不能为空';
+      if (value.length < 3) return '用户名至少3个字符';
+      if (value.length > 20) return '用户名最多20个字符';
+      return true;
+    };
+
     const handleBlur = () => {
-      const result = validateUsername(username())
+      const result = validateUsername(username());
       if (result !== true) {
-        errors([result])
+        errors([result]);
       } else {
-        errors([])
+        errors([]);
       }
-    }
-    
+    };
+
     return {
       username,
       errors,
-      handleBlur
-    }
+      handleBlur,
+    };
   },
-  
+
   template: `
     <div>
       <label>用户名：</label>
@@ -292,8 +292,8 @@ export default defineComponent({
         {{ errors[0] }}
       </p>
     </div>
-  `
-})
+  `,
+});
 ```
 
 ## 表单最佳实践
@@ -303,24 +303,24 @@ export default defineComponent({
 ```typescript
 // 1. 使用类型安全的表单数据
 interface FormData {
-  name: string
-  email: string
-  age: number
+  name: string;
+  email: string;
+  age: number;
 }
 
 // 2. 分离验证逻辑
 const validators = {
   name: (value: string) => !!value.trim(),
   email: (value: string) => /^\S+@\S+\.\S+$/.test(value),
-  age: (value: number) => value >= 18
-}
+  age: (value: number) => value >= 18,
+};
 
 // 3. 提供用户友好的错误信息
 const errorMessages = {
   name: '请输入姓名',
   email: '请输入有效的邮箱',
-  age: '年龄必须大于等于18岁'
-}
+  age: '年龄必须大于等于18岁',
+};
 ```
 
 ### ❌ 避免做法

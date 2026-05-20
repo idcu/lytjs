@@ -108,7 +108,7 @@ export const Message = {
   },
 
   closeAll(): void {
-    instances.forEach(instance => {
+    instances.forEach((instance) => {
       instance.close();
     });
   },

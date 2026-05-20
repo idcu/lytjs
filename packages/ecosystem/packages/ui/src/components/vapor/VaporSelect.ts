@@ -84,7 +84,7 @@ export const VaporSelect = {
     };
 
     const handleKeydown = (event: KeyboardEvent) => {
-      const options = (p.options || []).filter(opt => !opt.disabled);
+      const options = (p.options || []).filter((opt) => !opt.disabled);
       const hIndex = highlightedIndex();
 
       switch (event.key) {
@@ -142,44 +142,67 @@ export const VaporSelect = {
         p.disabled ? 'vapor-select--disabled' : '',
         open ? 'vapor-select--open' : '',
         p.class,
-      ].filter(Boolean).join(' ');
+      ]
+        .filter(Boolean)
+        .join(' ');
 
       const selectedLabels = options
-        .filter(opt => selected.has(opt.value))
-        .map(opt => opt.label)
+        .filter((opt) => selected.has(opt.value))
+        .map((opt) => opt.label)
         .join(', ');
 
       const displayText = selectedLabels || p.placeholder;
 
       const triggerChildren: VNode[] = [
-        createVNode('span', {
-          class: ['vapor-select__value', !selectedLabels ? 'vapor-select__value--placeholder' : ''].filter(Boolean).join(' '),
-        }, [createVNode('span', {}, displayText)]),
+        createVNode(
+          'span',
+          {
+            class: [
+              'vapor-select__value',
+              !selectedLabels ? 'vapor-select__value--placeholder' : '',
+            ]
+              .filter(Boolean)
+              .join(' '),
+          },
+          [createVNode('span', {}, displayText)],
+        ),
       ];
 
       if (p.clearable && selected.size > 0) {
-        triggerChildren.push(createVNode('span', {
-          class: 'vapor-select__clear',
-          onClick: handleClear,
-        }, [createVNode('span', {}, '×')]));
+        triggerChildren.push(
+          createVNode(
+            'span',
+            {
+              class: 'vapor-select__clear',
+              onClick: handleClear,
+            },
+            [createVNode('span', {}, '×')],
+          ),
+        );
       }
 
-      triggerChildren.push(createVNode('span', { class: 'vapor-select__arrow' }, [
-        createVNode('span', {}, open ? '▲' : '▼'),
-      ]));
+      triggerChildren.push(
+        createVNode('span', { class: 'vapor-select__arrow' }, [
+          createVNode('span', {}, open ? '▲' : '▼'),
+        ]),
+      );
 
       const result: VNode[] = [
-        createVNode('div', {
-          class: 'vapor-select__trigger',
-          onClick: () => {
-            if (!p.disabled) isOpen.set(!isOpen());
+        createVNode(
+          'div',
+          {
+            class: 'vapor-select__trigger',
+            onClick: () => {
+              if (!p.disabled) isOpen.set(!isOpen());
+            },
+            onKeydown: handleKeydown,
+            tabIndex: p.disabled ? -1 : 0,
+            role: 'combobox',
+            'aria-haspopup': 'listbox',
+            'aria-expanded': open,
           },
-          onKeydown: handleKeydown,
-          tabIndex: p.disabled ? -1 : 0,
-          role: 'combobox',
-          'aria-haspopup': 'listbox',
-          'aria-expanded': open,
-        }, triggerChildren),
+          triggerChildren,
+        ),
       ];
 
       if (open) {
@@ -187,38 +210,58 @@ export const VaporSelect = {
           const isSelected = selected.has(option.value);
           const isHighlighted = !option.disabled && index === hIndex;
 
-          return createVNode('div', {
-            key: String(option.value),
-            class: [
-              'vapor-select__option',
-              isSelected ? 'vapor-select__option--selected' : '',
-              option.disabled ? 'vapor-select__option--disabled' : '',
-              isHighlighted ? 'vapor-select__option--highlighted' : '',
-            ].filter(Boolean).join(' '),
-            onClick: () => handleSelect(option),
-            onMouseenter: () => {
-              if (!option.disabled) highlightedIndex.set(index);
+          return createVNode(
+            'div',
+            {
+              key: String(option.value),
+              class: [
+                'vapor-select__option',
+                isSelected ? 'vapor-select__option--selected' : '',
+                option.disabled ? 'vapor-select__option--disabled' : '',
+                isHighlighted ? 'vapor-select__option--highlighted' : '',
+              ]
+                .filter(Boolean)
+                .join(' '),
+              onClick: () => handleSelect(option),
+              onMouseenter: () => {
+                if (!option.disabled) highlightedIndex.set(index);
+              },
+              role: 'option',
+              'aria-selected': isSelected,
+              'aria-disabled': option.disabled,
             },
-            role: 'option',
-            'aria-selected': isSelected,
-            'aria-disabled': option.disabled,
-          }, [
-            isSelected ? createVNode('span', { class: 'vapor-select__check' }, [createVNode('span', {}, '✓')]) : createVNode('span', {}, ''),
-            createVNode('span', {}, option.label),
-          ]);
+            [
+              isSelected
+                ? createVNode('span', { class: 'vapor-select__check' }, [
+                    createVNode('span', {}, '✓'),
+                  ])
+                : createVNode('span', {}, ''),
+              createVNode('span', {}, option.label),
+            ],
+          );
         });
 
-        result.push(createVNode('div', {
-          class: 'vapor-select__dropdown',
-          role: 'listbox',
-          'aria-multiselectable': p.multiple,
-        }, optionItems));
+        result.push(
+          createVNode(
+            'div',
+            {
+              class: 'vapor-select__dropdown',
+              role: 'listbox',
+              'aria-multiselectable': p.multiple,
+            },
+            optionItems,
+          ),
+        );
       }
 
-      return createVNode('div', {
-        class: selectClass,
-        onKeydown: handleKeydown,
-      }, result);
+      return createVNode(
+        'div',
+        {
+          class: selectClass,
+          onKeydown: handleKeydown,
+        },
+        result,
+      );
     };
   },
 };

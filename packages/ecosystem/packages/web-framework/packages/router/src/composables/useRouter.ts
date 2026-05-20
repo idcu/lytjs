@@ -20,7 +20,7 @@ export function useRouter(): Router {
   if (!currentRouter) {
     throw new Error(
       '[@lytjs/router] No active router instance. ' +
-      'Make sure to call app.use(router) before using useRouter().',
+        'Make sure to call app.use(router) before using useRouter().',
     );
   }
   return currentRouter;

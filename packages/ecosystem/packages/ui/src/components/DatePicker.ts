@@ -35,9 +35,11 @@ function formatDate(date: Date, format: string = 'YYYY-MM-DD'): string {
 }
 
 function isSameDay(date1: Date, date2: Date): boolean {
-  return date1.getFullYear() === date2.getFullYear() &&
+  return (
+    date1.getFullYear() === date2.getFullYear() &&
     date1.getMonth() === date2.getMonth() &&
-    date1.getDate() === date2.getDate();
+    date1.getDate() === date2.getDate()
+  );
 }
 
 export const DatePicker = defineComponent({
@@ -223,7 +225,9 @@ export const DatePicker = defineComponent({
         isOpen() ? 'lyt-date-picker--open' : '',
         p.disabled ? 'lyt-date-picker--disabled' : '',
         p.class,
-      ].filter(Boolean).join(' ');
+      ]
+        .filter(Boolean)
+        .join(' ');
 
       const calendarDays = getCalendarDays();
       const displayValue = getDisplayValue();
@@ -231,26 +235,44 @@ export const DatePicker = defineComponent({
       const calendarContent: VNode[] = [];
 
       const headerChildren: VNode[] = [
-        createVNode('button', {
-          class: 'lyt-date-picker__nav-btn',
-          onClick: prevMonth,
-        }, [createVNode('span', {}, '◀')]),
-        createVNode('span', { class: 'lyt-date-picker__month-label' }, [createVNode('span', {}, getMonthLabel())]),
-        createVNode('button', {
-          class: 'lyt-date-picker__nav-btn',
-          onClick: nextMonth,
-        }, [createVNode('span', {}, '▶')]),
+        createVNode(
+          'button',
+          {
+            class: 'lyt-date-picker__nav-btn',
+            onClick: prevMonth,
+          },
+          [createVNode('span', {}, '◀')],
+        ),
+        createVNode('span', { class: 'lyt-date-picker__month-label' }, [
+          createVNode('span', {}, getMonthLabel()),
+        ]),
+        createVNode(
+          'button',
+          {
+            class: 'lyt-date-picker__nav-btn',
+            onClick: nextMonth,
+          },
+          [createVNode('span', {}, '▶')],
+        ),
       ];
-      calendarContent.push(createVNode('div', { class: 'lyt-date-picker__header' }, headerChildren));
-
-      const weekHeaderChildren: VNode[] = weekDays.map(day =>
-        createVNode('span', { class: 'lyt-date-picker__weekday' }, [createVNode('span', {}, day)])
+      calendarContent.push(
+        createVNode('div', { class: 'lyt-date-picker__header' }, headerChildren),
       );
-      calendarContent.push(createVNode('div', { class: 'lyt-date-picker__week-header' }, weekHeaderChildren));
+
+      const weekHeaderChildren: VNode[] = weekDays.map((day) =>
+        createVNode('span', { class: 'lyt-date-picker__weekday' }, [createVNode('span', {}, day)]),
+      );
+      calendarContent.push(
+        createVNode('div', { class: 'lyt-date-picker__week-header' }, weekHeaderChildren),
+      );
 
       const dayButtons: VNode[] = calendarDays.map((date, index) => {
         if (!date) {
-          return createVNode('span', { key: `empty-${index}`, class: 'lyt-date-picker__day lyt-date-picker__day--empty' }, [createVNode('span', {}, ' ')]);
+          return createVNode(
+            'span',
+            { key: `empty-${index}`, class: 'lyt-date-picker__day lyt-date-picker__day--empty' },
+            [createVNode('span', {}, ' ')],
+          );
         }
 
         const selected = isDateSelected(date);
@@ -258,18 +280,24 @@ export const DatePicker = defineComponent({
         const today = isToday(date);
         const disabled = isDisabled(date);
 
-        return createVNode('button', {
-          key: date.toISOString(),
-          class: [
-            'lyt-date-picker__day',
-            selected ? 'lyt-date-picker__day--selected' : '',
-            inRange ? 'lyt-date-picker__day--in-range' : '',
-            today ? 'lyt-date-picker__day--today' : '',
-            disabled ? 'lyt-date-picker__day--disabled' : '',
-          ].filter(Boolean).join(' '),
-          disabled: disabled,
-          onClick: () => handleSelectDate(date),
-        }, [createVNode('span', {}, String(date.getDate()))]);
+        return createVNode(
+          'button',
+          {
+            key: date.toISOString(),
+            class: [
+              'lyt-date-picker__day',
+              selected ? 'lyt-date-picker__day--selected' : '',
+              inRange ? 'lyt-date-picker__day--in-range' : '',
+              today ? 'lyt-date-picker__day--today' : '',
+              disabled ? 'lyt-date-picker__day--disabled' : '',
+            ]
+              .filter(Boolean)
+              .join(' '),
+            disabled: disabled,
+            onClick: () => handleSelectDate(date),
+          },
+          [createVNode('span', {}, String(date.getDate()))],
+        );
       });
       calendarContent.push(createVNode('div', { class: 'lyt-date-picker__days' }, dayButtons));
 
@@ -303,23 +331,33 @@ export const DatePicker = defineComponent({
             onInput: (e: Event) => currentSeconds.set(Number((e.target as HTMLInputElement).value)),
           }),
         ];
-        calendarContent.push(createVNode('div', { class: 'lyt-date-picker__time' }, [
-          ...timeControls,
-          createVNode('button', {
-            class: 'lyt-date-picker__confirm-btn',
-            onClick: handleTimeChange,
-          }, [createVNode('span', {}, '确定')]),
-        ]));
+        calendarContent.push(
+          createVNode('div', { class: 'lyt-date-picker__time' }, [
+            ...timeControls,
+            createVNode(
+              'button',
+              {
+                class: 'lyt-date-picker__confirm-btn',
+                onClick: handleTimeChange,
+              },
+              [createVNode('span', {}, '确定')],
+            ),
+          ]),
+        );
       }
 
       const footerContent: VNode[] = [];
 
       if (p.shortcuts.length > 0) {
         const shortcuts: VNode[] = p.shortcuts.map((shortcut: DatePickerShortcut) =>
-          createVNode('button', {
-            class: 'lyt-date-picker__shortcut',
-            onClick: () => handleShortcutClick(shortcut),
-          }, [createVNode('span', {}, String(shortcut.text))])
+          createVNode(
+            'button',
+            {
+              class: 'lyt-date-picker__shortcut',
+              onClick: () => handleShortcutClick(shortcut),
+            },
+            [createVNode('span', {}, String(shortcut.text))],
+          ),
         );
         footerContent.push(createVNode('div', { class: 'lyt-date-picker__shortcuts' }, shortcuts));
       }
@@ -329,31 +367,54 @@ export const DatePicker = defineComponent({
       }
 
       if (footerContent.length > 0) {
-        calendarContent.push(createVNode('div', { class: 'lyt-date-picker__footer' }, footerContent));
+        calendarContent.push(
+          createVNode('div', { class: 'lyt-date-picker__footer' }, footerContent),
+        );
       }
 
       const triggerChildren: VNode[] = [
-        createVNode('span', {
-          class: ['lyt-date-picker__input', !displayValue ? 'lyt-date-picker__input--placeholder' : ''].filter(Boolean).join(' '),
-        }, [createVNode('span', {}, displayValue || String(p.placeholder))]),
+        createVNode(
+          'span',
+          {
+            class: [
+              'lyt-date-picker__input',
+              !displayValue ? 'lyt-date-picker__input--placeholder' : '',
+            ]
+              .filter(Boolean)
+              .join(' '),
+          },
+          [createVNode('span', {}, displayValue || String(p.placeholder))],
+        ),
       ];
 
       if (p.clearable && displayValue) {
-        triggerChildren.push(createVNode('span', {
-          class: 'lyt-date-picker__clear',
-          onClick: handleClear,
-        }, [createVNode('span', {}, '×')]));
+        triggerChildren.push(
+          createVNode(
+            'span',
+            {
+              class: 'lyt-date-picker__clear',
+              onClick: handleClear,
+            },
+            [createVNode('span', {}, '×')],
+          ),
+        );
       }
 
       const dropdownChildren: VNode[] = [];
       if (isOpen()) {
-        dropdownChildren.push(createVNode('div', { class: 'lyt-date-picker__dropdown' }, [
-          createVNode('div', { class: 'lyt-date-picker__calendar' }, calendarContent),
-        ]));
+        dropdownChildren.push(
+          createVNode('div', { class: 'lyt-date-picker__dropdown' }, [
+            createVNode('div', { class: 'lyt-date-picker__calendar' }, calendarContent),
+          ]),
+        );
       }
 
       return createVNode('div', { class: pickerClass }, [
-        createVNode('div', { class: 'lyt-date-picker__trigger', onClick: toggleDropdown }, triggerChildren),
+        createVNode(
+          'div',
+          { class: 'lyt-date-picker__trigger', onClick: toggleDropdown },
+          triggerChildren,
+        ),
         ...dropdownChildren,
       ]);
     };

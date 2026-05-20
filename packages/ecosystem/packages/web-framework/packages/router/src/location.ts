@@ -2,7 +2,12 @@
  * @lytjs/router - Location utilities
  */
 
-import type { RouteLocationNormalized, RouteLocationRaw, LocationQuery, RouteParams } from './types';
+import type {
+  RouteLocationNormalized,
+  RouteLocationRaw,
+  LocationQuery,
+  RouteParams,
+} from './types';
 import { parseFullPath, resolveFullPath } from './matcher';
 
 /**
@@ -11,7 +16,9 @@ import { parseFullPath, resolveFullPath } from './matcher';
 export function resolveLocation(
   raw: RouteLocationRaw,
   currentLocation?: RouteLocationNormalized,
-  router?: { resolveName: (name: string | symbol, params?: RouteParams) => { path: string } | null },
+  router?: {
+    resolveName: (name: string | symbol, params?: RouteParams) => { path: string } | null;
+  },
 ): { path: string; query: LocationQuery; hash: string; params?: RouteParams } {
   if (typeof raw === 'string') {
     const { path, query, hash } = parseFullPath(raw);
@@ -67,9 +74,7 @@ export function isSameRouteLocation(
 ): boolean {
   if (!a || !b) return false;
   return (
-    a.path === b.path &&
-    a.hash === b.hash &&
-    JSON.stringify(a.query) === JSON.stringify(b.query)
+    a.path === b.path && a.hash === b.hash && JSON.stringify(a.query) === JSON.stringify(b.query)
   );
 }
 

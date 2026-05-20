@@ -264,8 +264,8 @@ export function analyzeDiff(c1: VNode[], c2: VNode[]): DiffAnalysis {
   const removed = countRemovedNodes(c1, c2);
 
   // 计算不变的节点数量（通过 key 匹配）
-  const c1Keys = new Set(c1.map(n => n.key).filter(k => k != null));
-  const c2Keys = new Set(c2.map(n => n.key).filter(k => k != null));
+  const c1Keys = new Set(c1.map((n) => n.key).filter((k) => k != null));
+  const c2Keys = new Set(c2.map((n) => n.key).filter((k) => k != null));
   let unchanged = 0;
   for (const key of c1Keys) {
     if (c2Keys.has(key)) {

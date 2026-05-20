@@ -18,7 +18,7 @@ export class MiddlewareComposer {
 
   constructor(config?: MiddlewareComposerConfig) {
     this.config = {
-      errorHandler: (err: Error) => 
+      errorHandler: (err: Error) =>
         new Response(`内部服务器错误: ${err.message}`, {
           status: 500,
         }),
@@ -46,7 +46,9 @@ export class MiddlewareComposer {
   /**
    * 使用最终处理器组合中间件链
    */
-  compose(handler: HandlerFn): (request: Request, extra?: Record<string, unknown>) => Promise<Response> {
+  compose(
+    handler: HandlerFn,
+  ): (request: Request, extra?: Record<string, unknown>) => Promise<Response> {
     const combined = combineMiddlewares(...this.middlewares);
 
     return async (request: Request, extra?: Record<string, unknown>): Promise<Response> => {
@@ -65,9 +67,9 @@ export class MiddlewareComposer {
 
         ctx.response = await this.config.errorHandler(
           error instanceof Error ? error : new Error(String(error)),
-          ctx
+          ctx,
         );
-        
+
         return ctx.response;
       }
     };

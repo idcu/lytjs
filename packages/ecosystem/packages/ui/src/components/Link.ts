@@ -78,28 +78,42 @@ export const Link = defineComponent({
       }
 
       if (_props.href) {
-        return createVNode('a', mergeA11yProps({
-          id: _props.id,
-          'aria-label': _props.ariaLabel,
-          'aria-describedby': _props.ariaDescribedBy,
-        }, {
-          class: getLinkClass(),
-          style: getLinkStyle(),
-          href: _props.href,
-          target: _props.target,
-          onClick: handleClick,
-        }), children);
+        return createVNode(
+          'a',
+          mergeA11yProps(
+            {
+              id: _props.id,
+              'aria-label': _props.ariaLabel,
+              'aria-describedby': _props.ariaDescribedBy,
+            },
+            {
+              class: getLinkClass(),
+              style: getLinkStyle(),
+              href: _props.href,
+              target: _props.target,
+              onClick: handleClick,
+            },
+          ),
+          children,
+        );
       } else {
-        return createVNode('span', mergeA11yProps({
-          id: _props.id,
-          'aria-label': _props.ariaLabel,
-          'aria-describedby': _props.ariaDescribedBy,
-          role: 'link',
-        }, {
-          class: getLinkClass(),
-          style: getLinkStyle(),
-          onClick: handleClick,
-        }), children);
+        return createVNode(
+          'span',
+          mergeA11yProps(
+            {
+              id: _props.id,
+              'aria-label': _props.ariaLabel,
+              'aria-describedby': _props.ariaDescribedBy,
+              role: 'link',
+            },
+            {
+              class: getLinkClass(),
+              style: getLinkStyle(),
+              onClick: handleClick,
+            },
+          ),
+          children,
+        );
       }
     };
   },

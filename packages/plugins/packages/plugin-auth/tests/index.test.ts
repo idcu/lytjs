@@ -59,7 +59,7 @@ describe('@lytjs/plugin-auth', () => {
     it('应该支持持久化', () => {
       const auth = pluginModule.createAuth({
         enablePersistence: true,
-        storageKey: 'test-auth'
+        storageKey: 'test-auth',
       });
       expect(auth).toBeDefined();
     });

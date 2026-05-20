@@ -1,6 +1,6 @@
 /**
  * SSR 压力测试脚本
- * 
+ *
  * 测试流式SSR在高并发场景下的稳定性和性能
  */
 
@@ -36,7 +36,7 @@ function createTestVNode(depth: number, width: number): VNode {
     return {
       type: 'div',
       props: { class: 'leaf' },
-      children: [`Content at depth 0`]
+      children: [`Content at depth 0`],
     };
   }
 
@@ -48,7 +48,7 @@ function createTestVNode(depth: number, width: number): VNode {
   return {
     type: 'div',
     props: { class: `level-${depth}` },
-    children
+    children,
   };
 }
 
@@ -61,32 +61,35 @@ function createLargeListVNode(itemCount: number): VNode {
     items.push({
       type: 'li',
       props: { key: `item-${i}`, class: 'list-item' },
-      children: [`Item ${i}: test content`]
+      children: [`Item ${i}: test content`],
     });
   }
 
   return {
     type: 'ul',
     props: { class: 'large-list' },
-    children: items
+    children: items,
   };
 }
 
 /**
  * 模拟SSR渲染延迟
  */
-async function simulateSSRRender(vnode: VNode, timeout: number): Promise<{ success: boolean; time: number; error?: string }> {
+async function simulateSSRRender(
+  vnode: VNode,
+  timeout: number,
+): Promise<{ success: boolean; time: number; error?: string }> {
   const startTime = performance.now();
   const renderTime = Math.random() * 5 + 1; // 1-6ms 随机延迟
 
   return new Promise((resolve) => {
     const elapsed = performance.now() - startTime;
-    
+
     if (elapsed >= timeout) {
       resolve({
         success: false,
         time: elapsed,
-        error: 'Timeout'
+        error: 'Timeout',
       });
       return;
     }
@@ -94,7 +97,7 @@ async function simulateSSRRender(vnode: VNode, timeout: number): Promise<{ succe
     setTimeout(() => {
       resolve({
         success: true,
-        time: performance.now() - startTime + renderTime
+        time: performance.now() - startTime + renderTime,
       });
     }, renderTime);
   });
@@ -103,7 +106,10 @@ async function simulateSSRRender(vnode: VNode, timeout: number): Promise<{ succe
 /**
  * 执行单个SSR请求（模拟）
  */
-async function executeSSRRequest(vnode: VNode, timeout: number): Promise<{ success: boolean; time: number; error?: string }> {
+async function executeSSRRequest(
+  vnode: VNode,
+  timeout: number,
+): Promise<{ success: boolean; time: number; error?: string }> {
   return simulateSSRRender(vnode, timeout);
 }
 
@@ -127,7 +133,7 @@ async function stressTest(options: TestOptions): Promise<StressTestResult> {
 
   const startTime = performance.now();
 
-  const worker = async(): Promise<void> => {
+  const worker = async (): Promise<void> => {
     while (completedRequests < totalRequests) {
       if (activeRequests < concurrent) {
         activeRequests++;
@@ -142,18 +148,20 @@ async function stressTest(options: TestOptions): Promise<StressTestResult> {
 
         activeRequests--;
       } else {
-        await new Promise(resolve => setTimeout(resolve, 10));
+        await new Promise((resolve) => setTimeout(resolve, 10));
       }
     }
   };
 
-  const workers = Array(Math.min(concurrent, totalRequests)).fill(null).map(() => worker());
+  const workers = Array(Math.min(concurrent, totalRequests))
+    .fill(null)
+    .map(() => worker());
   await Promise.all(workers);
 
   const totalTime = performance.now() - startTime;
-  const successfulRequests = results.filter(r => r.success).length;
-  const failedRequests = results.filter(r => !r.success).length;
-  const times = results.map(r => r.time);
+  const successfulRequests = results.filter((r) => r.success).length;
+  const failedRequests = results.filter((r) => !r.success).length;
+  const times = results.map((r) => r.time);
 
   const result: StressTestResult = {
     totalRequests,
@@ -164,7 +172,7 @@ async function stressTest(options: TestOptions): Promise<StressTestResult> {
     minTime: Math.min(...times),
     maxTime: Math.max(...times),
     requestsPerSecond: (totalRequests / totalTime) * 1000,
-    errors: [...new Set(errors)]
+    errors: [...new Set(errors)],
   };
 
   return result;
@@ -177,8 +185,12 @@ function printResults(result: StressTestResult): void {
   console.log('\n📊 测试结果');
   console.log('─'.repeat(50));
   console.log(`   总请求数:     ${result.totalRequests}`);
-  console.log(`   成功:         ${result.successfulRequests} (${(result.successfulRequests / result.totalRequests * 100).toFixed(2)}%)`);
-  console.log(`   失败:         ${result.failedRequests} (${(result.failedRequests / result.totalRequests * 100).toFixed(2)}%)`);
+  console.log(
+    `   成功:         ${result.successfulRequests} (${((result.successfulRequests / result.totalRequests) * 100).toFixed(2)}%)`,
+  );
+  console.log(
+    `   失败:         ${result.failedRequests} (${((result.failedRequests / result.totalRequests) * 100).toFixed(2)}%)`,
+  );
   console.log(`   总耗时:       ${result.totalTime.toFixed(2)}ms`);
   console.log(`   平均耗时:     ${result.avgTime.toFixed(2)}ms`);
   console.log(`   最小耗时:     ${result.minTime.toFixed(2)}ms`);
@@ -187,7 +199,7 @@ function printResults(result: StressTestResult): void {
 
   if (result.errors.length > 0) {
     console.log(`\n   错误类型:`);
-    result.errors.forEach(err => console.log(`     - ${err}`));
+    result.errors.forEach((err) => console.log(`     - ${err}`));
   }
 
   console.log('─'.repeat(50));
@@ -216,17 +228,19 @@ async function stabilityTest(duration: number, concurrency: number): Promise<voi
   let failedRequests = 0;
   const startTime = performance.now();
 
-  const workers = Array(concurrency).fill(null).map(async () => {
-    while (performance.now() - startTime < duration) {
-      totalRequests++;
-      const result = await executeSSRRequest(vnode, 5000);
-      if (result.success) {
-        successfulRequests++;
-      } else {
-        failedRequests++;
+  const workers = Array(concurrency)
+    .fill(null)
+    .map(async () => {
+      while (performance.now() - startTime < duration) {
+        totalRequests++;
+        const result = await executeSSRRequest(vnode, 5000);
+        if (result.success) {
+          successfulRequests++;
+        } else {
+          failedRequests++;
+        }
       }
-    }
-  });
+    });
 
   await Promise.all(workers);
 

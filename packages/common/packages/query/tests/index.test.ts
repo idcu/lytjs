@@ -1,10 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  parseQueryString,
-  stringifyQueryString,
-  parseURL,
-  buildURL,
-} from '../src/index';
+import { parseQueryString, stringifyQueryString, parseURL, buildURL } from '../src/index';
 
 describe('@lytjs/common-query', () => {
   // parseQueryString

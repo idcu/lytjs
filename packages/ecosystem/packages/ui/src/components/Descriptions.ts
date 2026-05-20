@@ -6,7 +6,12 @@
 
 import { defineComponent } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
-import type { DescriptionsSetupProps, DescriptionsSlots, DescriptionsItemSetupProps, DescriptionsItemSlots } from './types';
+import type {
+  DescriptionsSetupProps,
+  DescriptionsSlots,
+  DescriptionsItemSetupProps,
+  DescriptionsItemSlots,
+} from './types';
 
 interface DescriptionsItemData {
   label: string;
@@ -41,7 +46,9 @@ export const Descriptions = defineComponent({
         } else {
           titleContent.push(createVNode('span', {}, String(p.title)));
         }
-        resultChildren.push(createVNode('div', { class: 'lyt-descriptions__header' }, titleContent));
+        resultChildren.push(
+          createVNode('div', { class: 'lyt-descriptions__header' }, titleContent),
+        );
       }
 
       const bodyChildren: VNode[] = [];
@@ -50,27 +57,35 @@ export const Descriptions = defineComponent({
         bodyChildren.push(...slots.default());
       }
 
-      resultChildren.push(createVNode(
+      resultChildren.push(
+        createVNode(
+          'div',
+          {
+            class: `lyt-descriptions__body ${p.layout === 'vertical' ? 'lyt-descriptions__body--vertical' : ''}`,
+            style: {
+              display: 'grid',
+              gridTemplateColumns: `repeat(${p.column}, 1fr)`,
+              gap: p.border ? '0' : '16px 24px',
+            },
+          },
+          bodyChildren,
+        ),
+      );
+
+      return createVNode(
         'div',
         {
-          class: `lyt-descriptions__body ${p.layout === 'vertical' ? 'lyt-descriptions__body--vertical' : ''}`,
-          style: {
-            display: 'grid',
-            gridTemplateColumns: `repeat(${p.column}, 1fr)`,
-            gap: p.border ? '0' : '16px 24px',
-          },
+          class: [
+            'lyt-descriptions',
+            p.border ? 'lyt-descriptions--bordered' : '',
+            p.size !== 'medium' ? `lyt-descriptions--${p.size}` : '',
+            p.class,
+          ]
+            .filter(Boolean)
+            .join(' '),
         },
-        bodyChildren
-      ));
-
-      return createVNode('div', {
-        class: [
-          'lyt-descriptions',
-          p.border ? 'lyt-descriptions--bordered' : '',
-          p.size !== 'medium' ? `lyt-descriptions--${p.size}` : '',
-          p.class,
-        ].filter(Boolean).join(' '),
-      }, resultChildren);
+        resultChildren,
+      );
     };
   },
 });
@@ -114,7 +129,7 @@ export const DescriptionsItem = defineComponent({
               class: 'lyt-descriptions-item__label',
               style: p.labelStyle,
             },
-            labelContent.length > 0 ? labelContent : [createVNode('span', {}, '')]
+            labelContent.length > 0 ? labelContent : [createVNode('span', {}, '')],
           ),
           createVNode(
             'div',
@@ -122,9 +137,9 @@ export const DescriptionsItem = defineComponent({
               class: 'lyt-descriptions-item__content',
               style: p.contentStyle,
             },
-            contentContent.length > 0 ? contentContent : [createVNode('span', {}, '')]
+            contentContent.length > 0 ? contentContent : [createVNode('span', {}, '')],
           ),
-        ]
+        ],
       );
     };
   },
@@ -132,4 +147,11 @@ export const DescriptionsItem = defineComponent({
 
 export default Descriptions;
 export type { DescriptionsItemData };
-export type { DescriptionsProps, DescriptionsSlots, DescriptionsSetupProps, DescriptionsItemProps, DescriptionsItemSlots, DescriptionsItemSetupProps } from './types';
+export type {
+  DescriptionsProps,
+  DescriptionsSlots,
+  DescriptionsSetupProps,
+  DescriptionsItemProps,
+  DescriptionsItemSlots,
+  DescriptionsItemSetupProps,
+} from './types';

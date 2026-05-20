@@ -211,7 +211,7 @@ export interface FuzzTestHelpers {
   fuzz: <T>(
     generator: () => T,
     testFn: (input: T) => void | Promise<void>,
-    iterations?: number
+    iterations?: number,
   ) => Promise<FuzzTestResult>;
 }
 
@@ -220,19 +220,19 @@ export interface PerformanceTestHelpers {
   benchmark: (
     name: string,
     fn: () => void | Promise<void>,
-    options?: BenchmarkOptions
+    options?: BenchmarkOptions,
   ) => Promise<BenchmarkResult>;
   /** 比较两次基准测试结果 */
   compare: (
     baseline: BenchmarkResult,
-    current: BenchmarkResult
+    current: BenchmarkResult,
   ) => { percentChange: number; isFaster: boolean; isSlower: boolean };
   /** 性能回归测试 */
   regressionTest: (
     name: string,
     fn: () => void | Promise<void>,
     baseline: BenchmarkResult,
-    options?: RegressionTestOptions
+    options?: RegressionTestOptions,
   ) => Promise<RegressionTestResult>;
   /** 保存基准数据 */
   saveBaseline: (result: BenchmarkResult, path?: string) => void;

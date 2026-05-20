@@ -31,7 +31,10 @@ export const Slider = defineComponent({
     height: { type: String, default: '' },
     label: { type: String, default: '' },
     class: { type: String, default: '' },
-    style: { type: [String, Object] as unknown as PropType<string | Record<string, string>>, default: '' },
+    style: {
+      type: [String, Object] as unknown as PropType<string | Record<string, string>>,
+      default: '',
+    },
     id: { type: String, default: '' },
     ariaLabel: { type: String, default: '' },
     ariaDescribedBy: { type: String, default: '' },
@@ -73,9 +76,12 @@ export const Slider = defineComponent({
 
     initValues();
 
-    watch(() => _props.modelValue, () => {
-      initValues();
-    });
+    watch(
+      () => _props.modelValue,
+      () => {
+        initValues();
+      },
+    );
 
     const formatValue = (value: number) => {
       if (_props.formatTooltip) {
@@ -110,9 +116,9 @@ export const Slider = defineComponent({
 
     const handleKeydown = (event: KeyboardEvent) => {
       if (_props.disabled) return;
-      
+
       let newValue: number;
-      
+
       switch (event.key) {
         case 'ArrowLeft':
         case 'ArrowDown':
@@ -136,7 +142,7 @@ export const Slider = defineComponent({
           _props.onKeydown?.(event);
           return;
       }
-      
+
       if (newValue !== state.firstValue) {
         state.firstValue = newValue;
         state.showTooltip = true;
@@ -255,12 +261,16 @@ export const Slider = defineComponent({
 
       for (let i = 0; i <= stepCount; i++) {
         const percent = (i / stepCount) * 100;
-        stops.push(createVNode('div', {
-          class: 'lyt-slider__stop',
-          style: _props.vertical
-            ? { bottom: `${percent}%` }
-            : { left: `${percent}%` },
-        }, []));
+        stops.push(
+          createVNode(
+            'div',
+            {
+              class: 'lyt-slider__stop',
+              style: _props.vertical ? { bottom: `${percent}%` } : { left: `${percent}%` },
+            },
+            [],
+          ),
+        );
       }
 
       return stops;
@@ -273,120 +283,169 @@ export const Slider = defineComponent({
 
       const runwayChildren: VNode[] = [];
 
-      runwayChildren.push(createVNode('div', {
-        class: 'lyt-slider__bar',
-        style: _props.range
-          ? (_props.vertical
-              ? { bottom: `${firstPct}%`, height: `${secondPct - firstPct}%` }
-              : { left: `${firstPct}%`, width: `${secondPct - firstPct}%` })
-          : (_props.vertical
-              ? { bottom: '0%', height: `${firstPct}%` }
-              : { left: '0%', width: `${firstPct}%` }),
-      }, []));
+      runwayChildren.push(
+        createVNode(
+          'div',
+          {
+            class: 'lyt-slider__bar',
+            style: _props.range
+              ? _props.vertical
+                ? { bottom: `${firstPct}%`, height: `${secondPct - firstPct}%` }
+                : { left: `${firstPct}%`, width: `${secondPct - firstPct}%` }
+              : _props.vertical
+                ? { bottom: '0%', height: `${firstPct}%` }
+                : { left: '0%', width: `${firstPct}%` },
+          },
+          [],
+        ),
+      );
 
       const stops = getStops();
       runwayChildren.push(...stops);
 
       if (_props.range) {
         const tooltip1 = _props.showTooltip
-          ? createVNode('div', { class: 'lyt-slider__tooltip' }, [createVNode('span', {}, formatValue(state.firstValue))])
+          ? createVNode('div', { class: 'lyt-slider__tooltip' }, [
+              createVNode('span', {}, formatValue(state.firstValue)),
+            ])
           : null;
         const tooltip2 = _props.showTooltip
-          ? createVNode('div', { class: 'lyt-slider__tooltip' }, [createVNode('span', {}, formatValue(state.secondValue))])
+          ? createVNode('div', { class: 'lyt-slider__tooltip' }, [
+              createVNode('span', {}, formatValue(state.secondValue)),
+            ])
           : null;
 
         if (tooltip1) {
-          runwayChildren.push(createVNode('div', mergeA11yProps(getSliderA11yProps({
-            ariaLabel: _props.ariaLabel || 'Left value',
-            disabled: _props.disabled,
-            value: state.firstValue,
-            min: _props.min,
-            max: _props.max,
-          }), {
-            class: 'lyt-slider__button',
-            style: _props.vertical
-              ? { bottom: `${firstPct}%` }
-              : { left: `${firstPct}%` },
-            onKeydown: handleKeydown,
-          }), [tooltip1]));
+          runwayChildren.push(
+            createVNode(
+              'div',
+              mergeA11yProps(
+                getSliderA11yProps({
+                  ariaLabel: _props.ariaLabel || 'Left value',
+                  disabled: _props.disabled,
+                  value: state.firstValue,
+                  min: _props.min,
+                  max: _props.max,
+                }),
+                {
+                  class: 'lyt-slider__button',
+                  style: _props.vertical ? { bottom: `${firstPct}%` } : { left: `${firstPct}%` },
+                  onKeydown: handleKeydown,
+                },
+              ),
+              [tooltip1],
+            ),
+          );
         }
 
         if (tooltip2) {
-          runwayChildren.push(createVNode('div', mergeA11yProps(getSliderA11yProps({
-            ariaLabel: 'Right value',
-            disabled: _props.disabled,
-            value: state.secondValue,
-            min: _props.min,
-            max: _props.max,
-          }), {
-            class: 'lyt-slider__button',
-            style: _props.vertical
-              ? { bottom: `${secondPct}%` }
-              : { left: `${secondPct}%` },
-            onKeydown: handleKeydown,
-          }), [tooltip2]));
+          runwayChildren.push(
+            createVNode(
+              'div',
+              mergeA11yProps(
+                getSliderA11yProps({
+                  ariaLabel: 'Right value',
+                  disabled: _props.disabled,
+                  value: state.secondValue,
+                  min: _props.min,
+                  max: _props.max,
+                }),
+                {
+                  class: 'lyt-slider__button',
+                  style: _props.vertical ? { bottom: `${secondPct}%` } : { left: `${secondPct}%` },
+                  onKeydown: handleKeydown,
+                },
+              ),
+              [tooltip2],
+            ),
+          );
         }
       } else {
         const tooltip = _props.showTooltip
-          ? createVNode('div', { class: 'lyt-slider__tooltip' }, [createVNode('span', {}, formatValue(state.firstValue))])
+          ? createVNode('div', { class: 'lyt-slider__tooltip' }, [
+              createVNode('span', {}, formatValue(state.firstValue)),
+            ])
           : null;
 
         if (tooltip) {
-          runwayChildren.push(createVNode('div', mergeA11yProps(getSliderA11yProps({
-            ariaLabel: _props.ariaLabel || 'Value',
-            ariaDescribedBy: _props.ariaDescribedBy,
-            ariaRequired: _props.ariaRequired,
-            ariaInvalid: _props.ariaInvalid,
-            disabled: _props.disabled,
-            tabIndex: _props.tabIndex,
-            value: state.firstValue,
-            min: _props.min,
-            max: _props.max,
-          }), {
-            class: 'lyt-slider__button',
-            style: _props.vertical
-              ? { bottom: `${firstPct}%` }
-              : { left: `${firstPct}%` },
-            onKeydown: handleKeydown,
-          }), [tooltip]));
+          runwayChildren.push(
+            createVNode(
+              'div',
+              mergeA11yProps(
+                getSliderA11yProps({
+                  ariaLabel: _props.ariaLabel || 'Value',
+                  ariaDescribedBy: _props.ariaDescribedBy,
+                  ariaRequired: _props.ariaRequired,
+                  ariaInvalid: _props.ariaInvalid,
+                  disabled: _props.disabled,
+                  tabIndex: _props.tabIndex,
+                  value: state.firstValue,
+                  min: _props.min,
+                  max: _props.max,
+                }),
+                {
+                  class: 'lyt-slider__button',
+                  style: _props.vertical ? { bottom: `${firstPct}%` } : { left: `${firstPct}%` },
+                  onKeydown: handleKeydown,
+                },
+              ),
+              [tooltip],
+            ),
+          );
         }
       }
 
-      children.push(createVNode('div', {
-        class: 'lyt-slider__runway',
-        onMousedown: handleMouseDown,
-      }, runwayChildren));
+      children.push(
+        createVNode(
+          'div',
+          {
+            class: 'lyt-slider__runway',
+            onMousedown: handleMouseDown,
+          },
+          runwayChildren,
+        ),
+      );
 
       if (_props.showInput && !_props.range) {
-        children.push(createVNode('div', {
-          class: 'lyt-slider__input',
-        }, [
-          createVNode('input', {
-            type: 'number',
-            class: `lyt-input lyt-input--${_props.inputSize}`,
-            value: state.firstValue,
-            min: _props.min,
-            max: _props.max,
-            step: _props.step,
-            disabled: _props.disabled,
-            onInput: (e: Event) => {
-              const input = e.target as HTMLInputElement;
-              const value = parseFloat(input.value);
-              if (!isNaN(value)) {
-                state.firstValue = Math.max(_props.min, Math.min(_props.max, value));
-                emit('update:modelValue', state.firstValue);
-              }
+        children.push(
+          createVNode(
+            'div',
+            {
+              class: 'lyt-slider__input',
             },
-          }),
-        ]));
+            [
+              createVNode('input', {
+                type: 'number',
+                class: `lyt-input lyt-input--${_props.inputSize}`,
+                value: state.firstValue,
+                min: _props.min,
+                max: _props.max,
+                step: _props.step,
+                disabled: _props.disabled,
+                onInput: (e: Event) => {
+                  const input = e.target as HTMLInputElement;
+                  const value = parseFloat(input.value);
+                  if (!isNaN(value)) {
+                    state.firstValue = Math.max(_props.min, Math.min(_props.max, value));
+                    emit('update:modelValue', state.firstValue);
+                  }
+                },
+              }),
+            ],
+          ),
+        );
       }
 
-      return createVNode('div', {
-        class: getSliderClass(),
-        style: getSliderStyle(),
-        id: _props.id,
-        onKeydown: handleKeydown,
-      }, children);
+      return createVNode(
+        'div',
+        {
+          class: getSliderClass(),
+          style: getSliderStyle(),
+          id: _props.id,
+          onKeydown: handleKeydown,
+        },
+        children,
+      );
     };
   },
 });

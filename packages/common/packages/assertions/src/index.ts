@@ -66,9 +66,7 @@ export function assertType<T>(
   errorMessage?: string,
 ): asserts value is T {
   if (__DEV__ && validator && !validator(value)) {
-    throw new TypeError(
-      errorMessage || `Value is not of expected type`,
-    );
+    throw new TypeError(errorMessage || `Value is not of expected type`);
   }
 }
 
@@ -120,9 +118,7 @@ export function hasProperties<K extends PropertyKey>(
   value: unknown,
   keys: K[],
 ): value is Record<K, unknown> {
-  return (
-    isObject(value) && keys.every((key) => key in value)
-  );
+  return isObject(value) && keys.every((key) => key in value);
 }
 
 /**
@@ -138,11 +134,7 @@ export function hasTypedProperty<K extends PropertyKey, V>(
   key: K,
   typeGuard: (v: unknown) => v is V,
 ): value is Record<K, V> {
-  return (
-    isObject(value) &&
-    key in value &&
-    typeGuard((value as Record<K, unknown>)[key])
-  );
+  return isObject(value) && key in value && typeGuard((value as Record<K, unknown>)[key]);
 }
 
 // ==================== 实例类型守卫 ====================
@@ -168,10 +160,7 @@ export function isInstanceOf<T>(
  * @param elementGuard - 元素类型守卫
  * @returns 是否是符合要求的数组
  */
-export function isArrayOf<T>(
-  value: unknown,
-  elementGuard: (v: unknown) => v is T,
-): value is T[] {
+export function isArrayOf<T>(value: unknown, elementGuard: (v: unknown) => v is T): value is T[] {
   return Array.isArray(value) && value.every(elementGuard);
 }
 
@@ -184,10 +173,7 @@ export function isArrayOf<T>(
  * @param key - 属性名
  * @returns 属性值或 undefined
  */
-export function safeGetString(
-  obj: unknown,
-  key: PropertyKey,
-): string | undefined {
+export function safeGetString(obj: unknown, key: PropertyKey): string | undefined {
   if (hasTypedProperty(obj, key, isString)) {
     return obj[key];
   }

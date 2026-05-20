@@ -32,7 +32,10 @@ export const RichTextEditor = defineComponent({
     disabled: { type: Boolean, default: false },
     readonly: { type: Boolean, default: false },
     class: { type: String, default: '' },
-    style: { type: [String, Object] as unknown as PropType<string | Record<string, string>>, default: '' },
+    style: {
+      type: [String, Object] as unknown as PropType<string | Record<string, string>>,
+      default: '',
+    },
     onChange: { type: Function, default: undefined },
   },
 
@@ -94,34 +97,44 @@ export const RichTextEditor = defineComponent({
     return () => {
       const children: VNode[] = [];
 
-      const toolbarChildren: VNode[] = toolbarItems.map(item => {
-        const btn = createVNode('button', {
-          type: 'button',
-          class: 'lyt-rich-text-editor__toolbar-btn',
-          title: item.title,
-          disabled: _props.disabled || _props.readonly,
-          onClick: () => execCommand(item.command),
-        }, [createVNode('span', {}, item.icon)]);
+      const toolbarChildren: VNode[] = toolbarItems.map((item) => {
+        const btn = createVNode(
+          'button',
+          {
+            type: 'button',
+            class: 'lyt-rich-text-editor__toolbar-btn',
+            title: item.title,
+            disabled: _props.disabled || _props.readonly,
+            onClick: () => execCommand(item.command),
+          },
+          [createVNode('span', {}, item.icon)],
+        );
         return btn;
       });
 
-      children.push(createVNode('div', { class: 'lyt-rich-text-editor__toolbar' }, toolbarChildren));
+      children.push(
+        createVNode('div', { class: 'lyt-rich-text-editor__toolbar' }, toolbarChildren),
+      );
 
       const editorContent = _props.modelValue || '';
-      children.push(createVNode('div', {
-        ref: editorRef,
-        class: 'lyt-rich-text-editor__content',
-        contentEditable: !_props.disabled && !_props.readonly,
-        'data-placeholder': _props.placeholder,
-        onInput: handleInput,
-        onFocus: () => isFocused.set(true),
-        onBlur: () => isFocused.set(false),
-        innerHTML: editorContent,
-      }));
+      children.push(
+        createVNode('div', {
+          ref: editorRef,
+          class: 'lyt-rich-text-editor__content',
+          contentEditable: !_props.disabled && !_props.readonly,
+          'data-placeholder': _props.placeholder,
+          onInput: handleInput,
+          onFocus: () => isFocused.set(true),
+          onBlur: () => isFocused.set(false),
+          innerHTML: editorContent,
+        }),
+      );
 
       if (slots.footer) {
         const footerContent = slots.footer();
-        children.push(createVNode('div', { class: 'lyt-rich-text-editor__footer' }, footerContent as VNode[]));
+        children.push(
+          createVNode('div', { class: 'lyt-rich-text-editor__footer' }, footerContent as VNode[]),
+        );
       }
 
       const editorStyle: Record<string, string> = {};
@@ -133,10 +146,14 @@ export const RichTextEditor = defineComponent({
         }
       }
 
-      return createVNode('div', {
-        class: getEditorClass(),
-        style: editorStyle,
-      }, children);
+      return createVNode(
+        'div',
+        {
+          class: getEditorClass(),
+          style: editorStyle,
+        },
+        children,
+      );
     };
   },
 });

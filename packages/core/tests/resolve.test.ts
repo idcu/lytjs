@@ -16,11 +16,7 @@ vi.mock('@lytjs/common-error', () => ({
   warn: mockWarn,
 }));
 
-import {
-  resolveComponent,
-  resolveDirective,
-  resolveDynamicComponent,
-} from '../src/resolve';
+import { resolveComponent, resolveDirective, resolveDynamicComponent } from '../src/resolve';
 import type { Component, Directive } from '../src/types';
 
 describe('resolveComponent', () => {

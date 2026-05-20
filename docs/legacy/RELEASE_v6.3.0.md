@@ -51,7 +51,7 @@ import { ErrorBoundary } from '@lytjs/core';
   )}
 >
   <MyComponent />
-</ErrorBoundary>
+</ErrorBoundary>;
 ```
 
 ---
@@ -73,24 +73,24 @@ ErrorBoundary 组件现已具备完整的单元测试覆盖：
 
 v6.3.0 建立了完整的第三方生态审核标准：
 
-| 审核维度 | 标准 |
-|----------|------|
-| 代码质量 | TypeScript 类型完整，测试覆盖率 >= 80% |
-| 文档完整性 | README.md 完整，API 文档齐全 |
-| 功能完整性 | 核心功能稳定，边界情况处理完善 |
-| 安全性 | 无恶意代码，依赖安全 |
+| 审核维度   | 标准                                   |
+| ---------- | -------------------------------------- |
+| 代码质量   | TypeScript 类型完整，测试覆盖率 >= 80% |
+| 文档完整性 | README.md 完整，API 文档齐全           |
+| 功能完整性 | 核心功能稳定，边界情况处理完善         |
+| 安全性     | 无恶意代码，依赖安全                   |
 
 ### 官方推荐插件
 
 现已收录以下官方/社区插件：
 
-| 插件 | 版本 | 说明 |
-|------|------|------|
-| @lytjs/plugin-form | 6.2.0 | 表单验证 |
-| @lytjs/plugin-animation | 6.2.0 | 动画效果 |
-| @lytjs/plugin-router | 6.0.0 | 路由管理 |
-| @lytjs/plugin-store | 6.0.0 | 状态管理 |
-| @lytjs/ssr | 6.2.0 | 服务端渲染 |
+| 插件                    | 版本  | 说明       |
+| ----------------------- | ----- | ---------- |
+| @lytjs/plugin-form      | 6.2.0 | 表单验证   |
+| @lytjs/plugin-animation | 6.2.0 | 动画效果   |
+| @lytjs/plugin-router    | 6.0.0 | 路由管理   |
+| @lytjs/plugin-store     | 6.0.0 | 状态管理   |
+| @lytjs/ssr              | 6.2.0 | 服务端渲染 |
 
 ---
 
@@ -164,4 +164,4 @@ yarn add @lytjs/core@6.3.0
 
 ---
 
-*关注我们: [Twitter](https://twitter.com/lytjs) | [GitHub](https://github.com/lytjs)*
+_关注我们: [Twitter](https://twitter.com/lytjs) | [GitHub](https://github.com/lytjs)_

@@ -56,7 +56,7 @@ import { installDevTools } from '@lytjs/devtools';
 if (import.meta.env.DEV) {
   installDevTools({
     displayPanel: true,
-    position: 'bottom-right'
+    position: 'bottom-right',
   });
 }
 ```
@@ -87,8 +87,8 @@ const devtools = installDevTools({
   theme: 'dark',
   filters: {
     components: ['MyApp', 'Layout'],
-    stores: ['userStore']
-  }
+    stores: ['userStore'],
+  },
 });
 ```
 
@@ -134,7 +134,7 @@ import { registerRootComponent } from '@lytjs/devtools';
 
 registerRootComponent(App, {
   id: 'main-app',
-  name: 'MyApp'
+  name: 'MyApp',
 });
 ```
 
@@ -372,7 +372,7 @@ import { initPerformanceMonitor, recordMetric, getMetrics } from '@lytjs/devtool
 initPerformanceMonitor({
   fps: true,
   memory: true,
-  custom: true
+  custom: true,
 });
 
 recordMetric('render', performance.now());
@@ -400,14 +400,14 @@ import {
   getAlertRules,
   getAlerts,
   acknowledgeAlert,
-  clearAlerts
+  clearAlerts,
 } from '@lytjs/devtools';
 
 registerAlertRule({
   id: 'high-memory',
   condition: (metrics) => metrics.memory.used > 100 * 1024 * 1024,
   level: 'warning',
-  message: '内存使用过高'
+  message: '内存使用过高',
 });
 
 const rules = getAlertRules();
@@ -444,7 +444,7 @@ import {
   endTimelineEvent,
   getTimelineEvents,
   getTimelineEventsInRange,
-  clearTimelineEvents
+  clearTimelineEvents,
 } from '@lytjs/devtools';
 
 const eventId = beginTimelineEvent('render', { component: 'App' });
@@ -482,7 +482,7 @@ import {
   runBenchmark,
   runAsyncBenchmark,
   getBenchmarkResults,
-  compareBenchmarkResults
+  compareBenchmarkResults,
 } from '@lytjs/devtools';
 
 const result = await runBenchmark({
@@ -492,15 +492,15 @@ const result = await runBenchmark({
       arr.push(i);
     }
   },
-  iterations: 100
+  iterations: 100,
 });
 
 const asyncResult = await runAsyncBenchmark({
   name: 'fetch-data',
   fn: async () => {
-    return await fetch('/api/data').then(r => r.json());
+    return await fetch('/api/data').then((r) => r.json());
   },
-  iterations: 10
+  iterations: 10,
 });
 
 const allResults = getBenchmarkResults();
@@ -514,7 +514,7 @@ import { createLargeScaleBenchmark, LARGE_SCALE_SCENARIOS } from '@lytjs/devtool
 
 const result = await createLargeScaleBenchmark({
   scenario: LARGE_SCALE_SCENARIOS.LARGE_LIST,
-  options: { items: 10000 }
+  options: { items: 10000 },
 });
 ```
 
@@ -535,7 +535,7 @@ import { createRegressionDetector } from '@lytjs/devtools';
 
 const detector = createRegressionDetector({
   baseline: baselineResults,
-  threshold: 0.1
+  threshold: 0.1,
 });
 
 detector.addResult(newResults);
@@ -630,9 +630,9 @@ installDevTools({
   theme: 'dark',
   filters: {
     components: ['App', 'Layout', 'Header', 'Footer'],
-    stores: ['userStore', 'cartStore']
+    stores: ['userStore', 'cartStore'],
   },
-  enabled: import.meta.env.DEV
+  enabled: import.meta.env.DEV,
 });
 ```
 
@@ -684,7 +684,7 @@ function measureAsyncOperation(name: string, fn: () => Promise<any>) {
   return fn().finally(end);
 }
 
-measureAsyncOperation('api-fetch', () => fetch('/api/data').then(r => r.json()));
+measureAsyncOperation('api-fetch', () => fetch('/api/data').then((r) => r.json()));
 ```
 
 ### 告警规则配置
@@ -696,14 +696,14 @@ registerAlertRule({
   id: 'low-fps',
   condition: (stats) => stats.fps?.current < 30,
   level: 'warning',
-  message: 'FPS 过低，可能存在性能问题'
+  message: 'FPS 过低，可能存在性能问题',
 });
 
 registerAlertRule({
   id: 'memory-leak',
   condition: (stats) => stats.memory?.leaked > 10 * 1024 * 1024,
   level: 'error',
-  message: '检测到可能的内存泄漏'
+  message: '检测到可能的内存泄漏',
 });
 ```
 

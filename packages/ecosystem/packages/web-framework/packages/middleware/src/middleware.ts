@@ -37,7 +37,7 @@ export function combineMiddlewares(...middlewares: MiddlewareFn[]): MiddlewareFn
 export function conditionalMiddleware(
   condition: (ctx: MiddlewareContext) => boolean,
   middleware: MiddlewareFn,
-  fallback?: MiddlewareFn
+  fallback?: MiddlewareFn,
 ): MiddlewareFn {
   return async (ctx: MiddlewareContext, next: () => Promise<void>) => {
     if (condition(ctx)) {

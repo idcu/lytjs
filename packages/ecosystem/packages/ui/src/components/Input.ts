@@ -103,13 +103,13 @@ export const Input = defineComponent({
 
     return () => {
       const children: VNode[] = [];
-      
+
       // 前缀图标
       if (p.prefixIcon) {
         children.push(
           createVNode('span', { class: 'lyt-input__prefix' }, [
-            createVNode('i', { class: p.prefixIcon }, [])
-          ])
+            createVNode('i', { class: p.prefixIcon }, []),
+          ]),
         );
       }
 
@@ -145,44 +145,48 @@ export const Input = defineComponent({
 
       // 后缀图标或清除按钮
       const suffixChildren: VNode[] = [];
-      
+
       // 清除按钮
       if (p.clearable && p.modelValue) {
         const clearBtnProps = getButtonA11yProps({
           ariaLabel: 'Clear input',
         });
         suffixChildren.push(
-          createVNode('span', mergeA11yProps(clearBtnProps, {
-            class: 'lyt-input__clear', 
-            onClick: handleClear 
-          }), [createTextVNode('×')])
+          createVNode(
+            'span',
+            mergeA11yProps(clearBtnProps, {
+              class: 'lyt-input__clear',
+              onClick: handleClear,
+            }),
+            [createTextVNode('×')],
+          ),
         );
       }
-      
+
       // 密码显示切换按钮
       if (p.type === 'password' && p.showPassword) {
         const toggleBtnProps = getButtonA11yProps({
           ariaLabel: passwordVisible() ? 'Hide password' : 'Show password',
         });
         suffixChildren.push(
-          createVNode('span', mergeA11yProps(toggleBtnProps, {
-            class: 'lyt-input__password', 
-            onClick: togglePasswordVisibility 
-          }), [createTextVNode(passwordVisible() ? '🙈' : '👁️')])
+          createVNode(
+            'span',
+            mergeA11yProps(toggleBtnProps, {
+              class: 'lyt-input__password',
+              onClick: togglePasswordVisibility,
+            }),
+            [createTextVNode(passwordVisible() ? '🙈' : '👁️')],
+          ),
         );
       }
-      
+
       // 后缀图标
       if (p.suffixIcon) {
-        suffixChildren.push(
-          createVNode('i', { class: p.suffixIcon }, [])
-        );
+        suffixChildren.push(createVNode('i', { class: p.suffixIcon }, []));
       }
-      
+
       if (suffixChildren.length > 0) {
-        children.push(
-          createVNode('span', { class: 'lyt-input__suffix' }, suffixChildren)
-        );
+        children.push(createVNode('span', { class: 'lyt-input__suffix' }, suffixChildren));
       }
 
       return createVNode('div', { class: getInputClass() }, children);

@@ -25,8 +25,8 @@ e:\trae\lytjs\benchmarks\js-framework-benchmark\frameworks\keyed\lytjs\
 
 基于 2026-05-18 的 `bench:update` 测试：
 
-| 测试项目   | 性能         |
-| ---------- | ------------ |
+| 测试项目   | 性能          |
+| ---------- | ------------- |
 | 单节点更新 | 158,873 ops/s |
 | 交换两行   | 25,010 ops/s  |
 | 删除中间行 | 24,699 ops/s  |

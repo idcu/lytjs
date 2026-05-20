@@ -78,7 +78,17 @@ export const Menu = defineComponent({
       const menuItems: MenuItemInfo[] = [];
 
       items.forEach((item: VNode) => {
-        const itemProps = (item as unknown as { props: { index?: string; label?: string; icon?: unknown; children?: unknown[]; disabled?: boolean } }).props;
+        const itemProps = (
+          item as unknown as {
+            props: {
+              index?: string;
+              label?: string;
+              icon?: unknown;
+              children?: unknown[];
+              disabled?: boolean;
+            };
+          }
+        ).props;
         if (!itemProps || !itemProps.index) return;
 
         const hasChildren = !!(itemProps.children && (itemProps.children as unknown[]).length > 0);
@@ -141,9 +151,14 @@ export const Menu = defineComponent({
       openedIndexes.set(newOpened);
     };
 
-    const handleKeydown = (e: KeyboardEvent, itemIndex: string, hasChildren: boolean, itemLabel: string) => {
+    const handleKeydown = (
+      e: KeyboardEvent,
+      itemIndex: string,
+      hasChildren: boolean,
+      itemLabel: string,
+    ) => {
       const menuItems = getMenuItems();
-      const currentIndex = menuItems.findIndex(item => item.index === itemIndex);
+      const currentIndex = menuItems.findIndex((item) => item.index === itemIndex);
 
       switch (e.key) {
         case 'ArrowDown':
@@ -221,7 +236,7 @@ export const Menu = defineComponent({
 
         case 'Home': {
           e.preventDefault();
-          const firstEnabled = menuItems.find(item => !item.disabled);
+          const firstEnabled = menuItems.find((item) => !item.disabled);
           if (firstEnabled) {
             announce(`导航到第一个菜单项：${firstEnabled.label}`);
             focusedIndex.set(menuItems.indexOf(firstEnabled));
@@ -244,17 +259,23 @@ export const Menu = defineComponent({
     };
 
     return () => {
-      const menuClass = [
-        'lyt-menu',
-        `lyt-menu--${p.mode}`,
-        p.class,
-      ].filter(Boolean).join(' ');
+      const menuClass = ['lyt-menu', `lyt-menu--${p.mode}`, p.class].filter(Boolean).join(' ');
 
       const items = slots.default?.() || [];
       const menuListId = menuId();
 
       const menuItems: VNode[] = items.map((item: VNode, index: number) => {
-        const itemProps = (item as unknown as { props: { index?: string; label?: string; icon?: unknown; children?: unknown[]; disabled?: boolean } }).props;
+        const itemProps = (
+          item as unknown as {
+            props: {
+              index?: string;
+              label?: string;
+              icon?: unknown;
+              children?: unknown[];
+              disabled?: boolean;
+            };
+          }
+        ).props;
         if (!itemProps) return item;
 
         const isActive = itemProps.index === activeIndex();
@@ -264,55 +285,100 @@ export const Menu = defineComponent({
         const itemChildren: VNode[] = [];
 
         if (itemProps.icon) {
-          itemChildren.push(createVNode('span', { class: 'lyt-menu__icon' }, [itemProps.icon as unknown as VNode]));
+          itemChildren.push(
+            createVNode('span', { class: 'lyt-menu__icon' }, [itemProps.icon as unknown as VNode]),
+          );
         }
-        itemChildren.push(createVNode('span', { class: 'lyt-menu__title' }, [createVNode('span', {}, String(itemProps.label || ''))]));
+        itemChildren.push(
+          createVNode('span', { class: 'lyt-menu__title' }, [
+            createVNode('span', {}, String(itemProps.label || '')),
+          ]),
+        );
 
         const hasChildren = !!(itemProps.children && (itemProps.children as unknown[]).length > 0);
         const itemId = `${menuListId}-item-${itemProps.index}`;
 
         if (hasChildren) {
-          itemChildren.push(createVNode('span', {
-            class: ['lyt-menu__arrow', isOpened ? 'lyt-menu__arrow--opened' : ''].filter(Boolean).join(' '),
-            'aria-hidden': 'true',
-          }, [createVNode('span', {}, isOpened ? '▲' : '▼')]));
-
-          const submenuChildren: VNode[] = (itemProps.children as unknown[]).map((child: unknown) => {
-            const childItem = child as { index?: string; label?: string; icon?: unknown; disabled?: boolean };
-            const childItemId = `${itemId}-child-${childItem.index}`;
-            const isChildActive = childItem.index === activeIndex();
-
-            return createVNode('li', {
-              key: childItem.index,
-              id: childItemId,
-              class: [
-                'lyt-menu__item',
-                'lyt-menu__submenu-item',
-                isChildActive ? 'lyt-menu__item--active' : '',
-                childItem.disabled ? 'lyt-menu__item--disabled' : '',
-              ].filter(Boolean).join(' '),
-              role: 'menuitem',
-              'aria-disabled': childItem.disabled,
-              onClick: () => {
-                if (childItem.disabled) return;
-                handleSelect(childItem.index as string);
+          itemChildren.push(
+            createVNode(
+              'span',
+              {
+                class: ['lyt-menu__arrow', isOpened ? 'lyt-menu__arrow--opened' : '']
+                  .filter(Boolean)
+                  .join(' '),
+                'aria-hidden': 'true',
               },
-            }, [
-              childItem.icon ? createVNode('span', { class: 'lyt-menu__icon' }, [childItem.icon as unknown as VNode]) : createVNode('span', {}, ''),
-              createVNode('span', { class: 'lyt-menu__title' }, [createVNode('span', {}, String(childItem.label || ''))]),
-            ]);
-          });
+              [createVNode('span', {}, isOpened ? '▲' : '▼')],
+            ),
+          );
 
-          itemChildren.push(createVNode('div', {
-            'data-submenu-id': itemProps.index,
-            class: ['lyt-menu__submenu', isOpened ? 'lyt-menu__submenu--opened' : ''].filter(Boolean).join(' '),
-            'aria-label': itemProps.label,
-          }, [
-            createVNode('ul', {
-              class: 'lyt-menu__submenu-list',
-              role: 'menu',
-            }, submenuChildren),
-          ]));
+          const submenuChildren: VNode[] = (itemProps.children as unknown[]).map(
+            (child: unknown) => {
+              const childItem = child as {
+                index?: string;
+                label?: string;
+                icon?: unknown;
+                disabled?: boolean;
+              };
+              const childItemId = `${itemId}-child-${childItem.index}`;
+              const isChildActive = childItem.index === activeIndex();
+
+              return createVNode(
+                'li',
+                {
+                  key: childItem.index,
+                  id: childItemId,
+                  class: [
+                    'lyt-menu__item',
+                    'lyt-menu__submenu-item',
+                    isChildActive ? 'lyt-menu__item--active' : '',
+                    childItem.disabled ? 'lyt-menu__item--disabled' : '',
+                  ]
+                    .filter(Boolean)
+                    .join(' '),
+                  role: 'menuitem',
+                  'aria-disabled': childItem.disabled,
+                  onClick: () => {
+                    if (childItem.disabled) return;
+                    handleSelect(childItem.index as string);
+                  },
+                },
+                [
+                  childItem.icon
+                    ? createVNode('span', { class: 'lyt-menu__icon' }, [
+                        childItem.icon as unknown as VNode,
+                      ])
+                    : createVNode('span', {}, ''),
+                  createVNode('span', { class: 'lyt-menu__title' }, [
+                    createVNode('span', {}, String(childItem.label || '')),
+                  ]),
+                ],
+              );
+            },
+          );
+
+          itemChildren.push(
+            createVNode(
+              'div',
+              {
+                'data-submenu-id': itemProps.index,
+                class: ['lyt-menu__submenu', isOpened ? 'lyt-menu__submenu--opened' : '']
+                  .filter(Boolean)
+                  .join(' '),
+                'aria-label': itemProps.label,
+              },
+              [
+                createVNode(
+                  'ul',
+                  {
+                    class: 'lyt-menu__submenu-list',
+                    role: 'menu',
+                  },
+                  submenuChildren,
+                ),
+              ],
+            ),
+          );
         }
 
         const itemMenuitemProps = {
@@ -322,46 +388,65 @@ export const Menu = defineComponent({
           'aria-haspopup': hasChildren ? true : undefined,
         };
 
-        return createVNode('li', mergeA11yProps(itemMenuitemProps, {
-          key: itemProps.index,
-          class: [
-            'lyt-menu__item',
-            isActive ? 'lyt-menu__item--active' : '',
-            isFocused ? 'lyt-menu__item--focused' : '',
-            itemProps.disabled ? 'lyt-menu__item--disabled' : '',
-          ].filter(Boolean).join(' '),
-          role: 'menuitem',
-          tabIndex: isFocused ? 0 : -1,
-          'aria-haspopup': hasChildren,
-          'aria-expanded': hasChildren ? isOpened : undefined,
-          onClick: () => {
-            if (itemProps.disabled) return;
-            if (hasChildren) {
-              toggleSubmenu(itemProps.index as string, itemProps.label || '');
-            } else {
-              handleSelect(itemProps.index as string);
-            }
-          },
-          onKeydown: (e: KeyboardEvent) => handleKeydown(e, itemProps.index as string, hasChildren, itemProps.label || ''),
-        }), itemChildren);
+        return createVNode(
+          'li',
+          mergeA11yProps(itemMenuitemProps, {
+            key: itemProps.index,
+            class: [
+              'lyt-menu__item',
+              isActive ? 'lyt-menu__item--active' : '',
+              isFocused ? 'lyt-menu__item--focused' : '',
+              itemProps.disabled ? 'lyt-menu__item--disabled' : '',
+            ]
+              .filter(Boolean)
+              .join(' '),
+            role: 'menuitem',
+            tabIndex: isFocused ? 0 : -1,
+            'aria-haspopup': hasChildren,
+            'aria-expanded': hasChildren ? isOpened : undefined,
+            onClick: () => {
+              if (itemProps.disabled) return;
+              if (hasChildren) {
+                toggleSubmenu(itemProps.index as string, itemProps.label || '');
+              } else {
+                handleSelect(itemProps.index as string);
+              }
+            },
+            onKeydown: (e: KeyboardEvent) =>
+              handleKeydown(e, itemProps.index as string, hasChildren, itemProps.label || ''),
+          }),
+          itemChildren,
+        );
       });
 
-      return createVNode('div', {
-        ref: (el: HTMLElement) => menuRef.set(el),
-      }, [
-        createVNode('ul', {
-          class: menuClass,
-          role: 'menubar',
-          id: p.id || menuListId,
-          'aria-label': p.ariaLabel || '主菜单',
-        }, menuItems),
-        createVNode('div', {
-          class: 'lyt-menu__sro',
-          role: 'status',
-          'aria-live': 'polite',
-          'aria-atomic': 'true',
-        }, announcement()),
-      ]);
+      return createVNode(
+        'div',
+        {
+          ref: (el: HTMLElement) => menuRef.set(el),
+        },
+        [
+          createVNode(
+            'ul',
+            {
+              class: menuClass,
+              role: 'menubar',
+              id: p.id || menuListId,
+              'aria-label': p.ariaLabel || '主菜单',
+            },
+            menuItems,
+          ),
+          createVNode(
+            'div',
+            {
+              class: 'lyt-menu__sro',
+              role: 'status',
+              'aria-live': 'polite',
+              'aria-atomic': 'true',
+            },
+            announcement(),
+          ),
+        ],
+      );
     };
   },
 });

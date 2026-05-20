@@ -1,6 +1,6 @@
 /**
  * 管理后台实战案例
- * 
+ *
  * 包含：
  * - 响应式状态管理
  * - 路由导航
@@ -20,17 +20,17 @@ function createAdminStore() {
   const users = signal([
     { id: 1, name: '张三', email: 'zhangsan@example.com', role: '管理员', status: 'active' },
     { id: 2, name: '李四', email: 'lisi@example.com', role: '编辑', status: 'active' },
-    { id: 3, name: '王五', email: 'wangwu@example.com', role: '用户', status: 'inactive' }
+    { id: 3, name: '王五', email: 'wangwu@example.com', role: '用户', status: 'inactive' },
   ]);
   const stats = signal({
     users: 1524,
     orders: 3258,
     revenue: 89450,
-    pageviews: 48520
+    pageviews: 48520,
   });
 
   const activeMenuItem = computed(() => currentRoute.value);
-  const activeUsers = computed(() => users.value.filter(u => u.status === 'active').length);
+  const activeUsers = computed(() => users.value.filter((u) => u.status === 'active').length);
 
   function toggleSidebar() {
     sidebarOpen.value = !sidebarOpen.value;
@@ -45,11 +45,11 @@ function createAdminStore() {
   }
 
   function deleteUser(id: number) {
-    users.value = users.value.filter(u => u.id !== id);
+    users.value = users.value.filter((u) => u.id !== id);
   }
 
   function updateUser(id: number, updates: any) {
-    users.value = users.value.map(u => u.id === id ? { ...u, ...updates } : u);
+    users.value = users.value.map((u) => (u.id === id ? { ...u, ...updates } : u));
   }
 
   return {
@@ -64,7 +64,7 @@ function createAdminStore() {
     setRoute,
     addUser,
     deleteUser,
-    updateUser
+    updateUser,
   };
 }
 
@@ -72,38 +72,48 @@ function createAdminStore() {
 
 function Sidebar(props: { store: any }) {
   const { sidebarOpen, setRoute, activeMenuItem } = props.store;
-  
+
   const menuItems = [
     { key: 'dashboard', icon: '📊', label: '仪表板' },
     { key: 'users', icon: '👥', label: '用户管理' },
     { key: 'orders', icon: '🛒', label: '订单管理' },
     { key: 'analytics', icon: '📈', label: '数据分析' },
-    { key: 'settings', icon: '⚙️', label: '系统设置' }
+    { key: 'settings', icon: '⚙️', label: '系统设置' },
   ];
 
-  return createVNode('aside', {
-    class: sidebarOpen.value ? 'sidebar open' : 'sidebar',
-    style: {
-      width: sidebarOpen.value ? '240px' : '60px',
-      transition: 'all 0.3s ease'
-    }
-  }, [
-    createVNode('div', { class: 'sidebar-header' }, [
-      createVNode('h1', { style: { display: sidebarOpen.value ? 'block' : 'none' } }, 'Admin'),
-      createVNode('button', { onclick: props.store.toggleSidebar }, '☰')
-    ]),
-    createVNode('nav', { class: 'sidebar-nav' }, 
-      menuItems.map(item => 
-        createVNode('div', {
-          class: activeMenuItem.value === item.key ? 'menu-item active' : 'menu-item',
-          onclick: () => setRoute(item.key)
-        }, [
-          createVNode('span', { class: 'menu-icon' }, item.icon),
-          sidebarOpen.value ? createVNode('span', { class: 'menu-label' }, item.label) : null
-        ])
-      )
-    )
-  ]);
+  return createVNode(
+    'aside',
+    {
+      class: sidebarOpen.value ? 'sidebar open' : 'sidebar',
+      style: {
+        width: sidebarOpen.value ? '240px' : '60px',
+        transition: 'all 0.3s ease',
+      },
+    },
+    [
+      createVNode('div', { class: 'sidebar-header' }, [
+        createVNode('h1', { style: { display: sidebarOpen.value ? 'block' : 'none' } }, 'Admin'),
+        createVNode('button', { onclick: props.store.toggleSidebar }, '☰'),
+      ]),
+      createVNode(
+        'nav',
+        { class: 'sidebar-nav' },
+        menuItems.map((item) =>
+          createVNode(
+            'div',
+            {
+              class: activeMenuItem.value === item.key ? 'menu-item active' : 'menu-item',
+              onclick: () => setRoute(item.key),
+            },
+            [
+              createVNode('span', { class: 'menu-icon' }, item.icon),
+              sidebarOpen.value ? createVNode('span', { class: 'menu-label' }, item.label) : null,
+            ],
+          ),
+        ),
+      ),
+    ],
+  );
 }
 
 function StatsCard(props: { title: string; value: string | number; icon: string; trend?: number }) {
@@ -111,13 +121,21 @@ function StatsCard(props: { title: string; value: string | number; icon: string;
     createVNode('div', { class: 'stats-icon' }, props.icon),
     createVNode('div', { class: 'stats-content' }, [
       createVNode('h3', {}, props.title),
-      createVNode('p', { class: 'stats-value' }, typeof props.value === 'number' 
-        ? props.value.toLocaleString() 
-        : props.value),
-      props.trend ? createVNode('span', { 
-        class: props.trend > 0 ? 'trend-up' : 'trend-down' 
-      }, `${props.trend > 0 ? '+' : ''}${props.trend}%`) : null
-    ])
+      createVNode(
+        'p',
+        { class: 'stats-value' },
+        typeof props.value === 'number' ? props.value.toLocaleString() : props.value,
+      ),
+      props.trend
+        ? createVNode(
+            'span',
+            {
+              class: props.trend > 0 ? 'trend-up' : 'trend-down',
+            },
+            `${props.trend > 0 ? '+' : ''}${props.trend}%`,
+          )
+        : null,
+    ]),
   ]);
 }
 
@@ -127,21 +145,41 @@ function Dashboard(props: { store: any }) {
   return createVNode('div', { class: 'dashboard' }, [
     createVNode('h2', { class: 'page-title' }, '仪表板'),
     createVNode('div', { class: 'stats-grid' }, [
-      createVNode(StatsCard, { title: '用户总数', value: stats.value.users, icon: '👥', trend: 12.5 }),
-      createVNode(StatsCard, { title: '订单总数', value: stats.value.orders, icon: '🛒', trend: 8.3 }),
-      createVNode(StatsCard, { title: '收入', value: `¥${stats.value.revenue.toLocaleString()}`, icon: '💰', trend: 5.2 }),
-      createVNode(StatsCard, { title: '页面浏览', value: stats.value.pageviews, icon: '📊', trend: -1.5 })
+      createVNode(StatsCard, {
+        title: '用户总数',
+        value: stats.value.users,
+        icon: '👥',
+        trend: 12.5,
+      }),
+      createVNode(StatsCard, {
+        title: '订单总数',
+        value: stats.value.orders,
+        icon: '🛒',
+        trend: 8.3,
+      }),
+      createVNode(StatsCard, {
+        title: '收入',
+        value: `¥${stats.value.revenue.toLocaleString()}`,
+        icon: '💰',
+        trend: 5.2,
+      }),
+      createVNode(StatsCard, {
+        title: '页面浏览',
+        value: stats.value.pageviews,
+        icon: '📊',
+        trend: -1.5,
+      }),
     ]),
     createVNode('div', { class: 'charts-section' }, [
       createVNode('div', { class: 'chart-card' }, [
         createVNode('h3', {}, '访问趋势'),
-        createVNode('div', { class: 'chart-placeholder' }, '📈 图表区域')
+        createVNode('div', { class: 'chart-placeholder' }, '📈 图表区域'),
       ]),
       createVNode('div', { class: 'chart-card' }, [
         createVNode('h3', {}, '热门页面'),
-        createVNode('div', { class: 'chart-placeholder' }, '📊 图表区域')
-      ])
-    ])
+        createVNode('div', { class: 'chart-placeholder' }, '📊 图表区域'),
+      ]),
+    ]),
   ]);
 }
 
@@ -151,7 +189,7 @@ function UserTable(props: { store: any }) {
   return createVNode('div', { class: 'users-page' }, [
     createVNode('div', { class: 'page-header' }, [
       createVNode('h2', {}, '用户管理'),
-      createVNode('button', { class: 'btn btn-primary' }, '+ 添加用户')
+      createVNode('button', { class: 'btn btn-primary' }, '+ 添加用户'),
     ]),
     createVNode('div', { class: 'table-container' }, [
       createVNode('table', { class: 'data-table' }, [
@@ -162,36 +200,50 @@ function UserTable(props: { store: any }) {
             createVNode('th', {}, '邮箱'),
             createVNode('th', {}, '角色'),
             createVNode('th', {}, '状态'),
-            createVNode('th', {}, '操作')
-          ])
+            createVNode('th', {}, '操作'),
+          ]),
         ]),
-        createVNode('tbody', {}, 
-          users.value.map(user => 
+        createVNode(
+          'tbody',
+          {},
+          users.value.map((user) =>
             createVNode('tr', { key: user.id }, [
               createVNode('td', {}, user.id),
               createVNode('td', {}, user.name),
               createVNode('td', {}, user.email),
               createVNode('td', {}, user.role),
               createVNode('td', {}, [
-                createVNode('span', { 
-                  class: `status-badge status-${user.status}`
-                }, user.status === 'active' ? '活跃' : '禁用')
+                createVNode(
+                  'span',
+                  {
+                    class: `status-badge status-${user.status}`,
+                  },
+                  user.status === 'active' ? '活跃' : '禁用',
+                ),
               ]),
               createVNode('td', {}, [
-                createVNode('button', { 
-                  class: 'btn btn-sm btn-secondary',
-                  onclick: () => console.log('Edit user:', user.id)
-                }, '编辑'),
-                createVNode('button', { 
-                  class: 'btn btn-sm btn-danger',
-                  onclick: () => deleteUser(user.id)
-                }, '删除')
-              ])
-            ])
-          )
-        )
-      ])
-    ])
+                createVNode(
+                  'button',
+                  {
+                    class: 'btn btn-sm btn-secondary',
+                    onclick: () => console.log('Edit user:', user.id),
+                  },
+                  '编辑',
+                ),
+                createVNode(
+                  'button',
+                  {
+                    class: 'btn btn-sm btn-danger',
+                    onclick: () => deleteUser(user.id),
+                  },
+                  '删除',
+                ),
+              ]),
+            ]),
+          ),
+        ),
+      ]),
+    ]),
   ]);
 }
 
@@ -216,17 +268,15 @@ function AdminApp() {
     createVNode('main', { class: 'admin-main' }, [
       createVNode('header', { class: 'topbar' }, [
         createVNode('div', { class: 'search-box' }, [
-          createVNode('input', { type: 'text', placeholder: '搜索...' })
+          createVNode('input', { type: 'text', placeholder: '搜索...' }),
         ]),
         createVNode('div', { class: 'user-menu' }, [
           createVNode('div', { class: 'avatar' }, '管'),
-          createVNode('span', {}, '管理员')
-        ])
+          createVNode('span', {}, '管理员'),
+        ]),
       ]),
-      createVNode('div', { class: 'content-area' }, [
-        createVNode(PageRouter, { store })
-      ])
-    ])
+      createVNode('div', { class: 'content-area' }, [createVNode(PageRouter, { store })]),
+    ]),
   ]);
 }
 
@@ -292,11 +342,7 @@ function AdminAppHTML() {
   `;
 }
 
-export {
-  AdminApp,
-  createAdminStore,
-  AdminAppHTML
-};
+export { AdminApp, createAdminStore, AdminAppHTML };
 
 if (typeof require !== 'undefined' && require.main === module) {
   console.log('🧪 LytJS 管理后台实战案例');

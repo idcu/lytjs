@@ -47,7 +47,9 @@ export const Drawer = defineComponent({
         if (result === false) return;
       }
       isClosing.set(true);
-      setTimeout(() => { isClosing.set(false); }, 300);
+      setTimeout(() => {
+        isClosing.set(false);
+      }, 300);
     };
 
     const handleModalClick = () => {
@@ -75,7 +77,7 @@ export const Drawer = defineComponent({
     };
 
     const getSizeStyle = (): Record<string, string> => {
-      const size = typeof p.size === 'number' ? `${p.size}px` : p.size as string;
+      const size = typeof p.size === 'number' ? `${p.size}px` : (p.size as string);
       const style: Record<string, string> = {};
 
       switch (p.direction) {
@@ -106,7 +108,9 @@ export const Drawer = defineComponent({
 
       const children: VNode[] = [];
 
-      children.push(createVNode('div', { class: 'lyt-drawer__overlay', onClick: handleModalClick }));
+      children.push(
+        createVNode('div', { class: 'lyt-drawer__overlay', onClick: handleModalClick }),
+      );
 
       const drawerChildren: VNode[] = [];
 
@@ -116,40 +120,76 @@ export const Drawer = defineComponent({
         if (slots.header) {
           headerChildren.push(...slots.header());
         } else if (p.title) {
-          headerChildren.push(createVNode('span', { class: 'lyt-drawer__title', id: p.id ? `${p.id}-title` : undefined }, [createVNode('span', {}, String(p.title))]));
+          headerChildren.push(
+            createVNode(
+              'span',
+              { class: 'lyt-drawer__title', id: p.id ? `${p.id}-title` : undefined },
+              [createVNode('span', {}, String(p.title))],
+            ),
+          );
         }
 
         if (p.showClose) {
           const closeBtnProps = getButtonA11yProps({ ariaLabel: 'Close drawer' });
           headerChildren.push(
-            createVNode('button', mergeA11yProps(closeBtnProps, { class: 'lyt-drawer__close', type: 'button', onClick: close }), [
-              createVNode('svg', { viewBox: '0 0 1024 1024', width: '1em', height: '1em' }, [
-                createVNode('path', {
-                  d: 'M563.8 512l262.5-312.9c4.4-5.2.7-13.1-6.1-13.1h-79.8c-4.7 0-9.2 2.1-12.3 5.7L511.6 449.8 295.1 191.7c-3-3.6-7.5-5.7-12.3-5.7H203c-6.8 0-10.5 7.9-6.1 13.1L459.4 512 196.9 824.9c-4.4 5.2-.7 13.1 6.1 13.1h79.8c4.7 0 9.2-2.1 12.3-5.7l216.5-258.1 216.5 258.1c3 3.6 7.5 5.7 12.3 5.7h79.8c6.8 0 10.5-7.9 6.1-13.1L563.8 512z',
-                  fill: 'currentColor',
-                }),
-              ]),
-            ])
+            createVNode(
+              'button',
+              mergeA11yProps(closeBtnProps, {
+                class: 'lyt-drawer__close',
+                type: 'button',
+                onClick: close,
+              }),
+              [
+                createVNode('svg', { viewBox: '0 0 1024 1024', width: '1em', height: '1em' }, [
+                  createVNode('path', {
+                    d: 'M563.8 512l262.5-312.9c4.4-5.2.7-13.1-6.1-13.1h-79.8c-4.7 0-9.2 2.1-12.3 5.7L511.6 449.8 295.1 191.7c-3-3.6-7.5-5.7-12.3-5.7H203c-6.8 0-10.5 7.9-6.1 13.1L459.4 512 196.9 824.9c-4.4 5.2-.7 13.1 6.1 13.1h79.8c4.7 0 9.2-2.1 12.3-5.7l216.5-258.1 216.5 258.1c3 3.6 7.5 5.7 12.3 5.7h79.8c6.8 0 10.5-7.9 6.1-13.1L563.8 512z',
+                    fill: 'currentColor',
+                  }),
+                ]),
+              ],
+            ),
           );
         }
 
         if (headerChildren.length > 0) {
-          drawerChildren.push(createVNode('div', { class: 'lyt-drawer__header', id: p.id ? `${p.id}-header` : undefined }, headerChildren));
+          drawerChildren.push(
+            createVNode(
+              'div',
+              { class: 'lyt-drawer__header', id: p.id ? `${p.id}-header` : undefined },
+              headerChildren,
+            ),
+          );
         }
       }
 
       if (slots.default) {
-        drawerChildren.push(createVNode('div', { class: 'lyt-drawer__body', id: p.id ? `${p.id}-body` : undefined }, slots.default()));
+        drawerChildren.push(
+          createVNode(
+            'div',
+            { class: 'lyt-drawer__body', id: p.id ? `${p.id}-body` : undefined },
+            slots.default(),
+          ),
+        );
       }
 
       if (slots.footer) {
-        drawerChildren.push(createVNode('div', { class: 'lyt-drawer__footer', id: p.id ? `${p.id}-footer` : undefined }, slots.footer()));
+        drawerChildren.push(
+          createVNode(
+            'div',
+            { class: 'lyt-drawer__footer', id: p.id ? `${p.id}-footer` : undefined },
+            slots.footer(),
+          ),
+        );
       }
 
-      const drawerContainer = createVNode('div', {
-        class: 'lyt-drawer__container',
-        style: formatStyle(getSizeStyle()),
-      }, drawerChildren);
+      const drawerContainer = createVNode(
+        'div',
+        {
+          class: 'lyt-drawer__container',
+          style: formatStyle(getSizeStyle()),
+        },
+        drawerChildren,
+      );
       children.push(drawerContainer);
 
       const a11yProps = getDialogA11yProps({

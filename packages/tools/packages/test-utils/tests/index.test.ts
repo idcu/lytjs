@@ -87,7 +87,7 @@ describe('async utilities', () => {
 
   it('waitFor should timeout if condition never true', async () => {
     await expect(waitFor(() => false, { timeout: 100, interval: 20 })).rejects.toThrow(
-      'waitFor timeout'
+      'waitFor timeout',
     );
   });
 

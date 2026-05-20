@@ -27,6 +27,7 @@
 v6.4.0 将所有官方包统一发布到 npm，版本号统一为 6.4.0。
 
 **核心包:**
+
 - `@lytjs/core` - 完整核心
 - `@lytjs/core-signal` - Signal 模式
 - `@lytjs/core-vnode` - VNode 模式
@@ -43,6 +44,7 @@ v6.4.0 将所有官方包统一发布到 npm，版本号统一为 6.4.0。
 - `@lytjs/host-contract` - 宿主契约
 
 **生态包:**
+
 - `@lytjs/router` - 路由系统
 - `@lytjs/store` - 状态管理
 - `@lytjs/ssr` - 服务端渲染
@@ -52,6 +54,7 @@ v6.4.0 将所有官方包统一发布到 npm，版本号统一为 6.4.0。
 - `@lytjs/platform-adapter` - 平台适配器
 
 **官方插件:**
+
 - `@lytjs/plugin-vite` - Vite 集成
 - `@lytjs/plugin-theme` - 主题管理
 - `@lytjs/plugin-logger` - 日志插件
@@ -60,6 +63,7 @@ v6.4.0 将所有官方包统一发布到 npm，版本号统一为 6.4.0。
 - `@lytjs/plugin-i18n` - 国际化插件
 
 **工具包:**
+
 - `@lytjs/cli` - 命令行工具
 - `@lytjs/devtools-extension` - DevTools 扩展
 - `@lytjs/test-utils` - 测试工具
@@ -72,6 +76,7 @@ v6.4.0 将所有官方包统一发布到 npm，版本号统一为 6.4.0。
 修复了 UI 组件库中的类型问题：
 
 **问题解决:**
+
 - ColorPicker 组件中 const 变量赋值错误
 - 将 const 改为 let 以允许赋值操作
 - 所有包完整类型检查通过
@@ -83,6 +88,7 @@ v6.4.0 将所有官方包统一发布到 npm，版本号统一为 6.4.0。
 对全项目文档进行了全面升级：
 
 **更新内容:**
+
 - 所有包的 README.md 翻译为中文
 - 所有包的 CHANGELOG.md 更新到 v6.4.0
 - 文档站所有文档版本号统一更新

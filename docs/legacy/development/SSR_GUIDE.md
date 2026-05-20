@@ -44,7 +44,7 @@ const stream = renderToStream(app, {
 app.get('/', async (req, res) => {
   res.setHeader('Content-Type', 'text/html');
   const stream = renderToStream(MyApp);
-  
+
   for await (const chunk of stream) {
     res.write(chunk);
   }
@@ -60,7 +60,7 @@ import { renderToStream } from '@lytjs/ssr';
 const stream = renderToStream(MyApp, {
   chunkSize: 8192,
   // 30秒超时
-  timeout: 30000, 
+  timeout: 30000,
   // 超时时的回退内容
   fallbackHtml: '<div>正在加载中...</div>',
   // 启用错误恢复
@@ -140,7 +140,7 @@ const UserProfile: PrefetchableComponent = {
   prefetch: async (context: DataPrefetchContext) => {
     const userId = context.params?.id;
     const userData = await fetchUserData(userId);
-    
+
     return {
       data: { user: userData },
       ttl: 60000, // 1分钟过期
@@ -174,11 +174,7 @@ const result = await renderToStreamEnhanced(MyApp, {
 import { generateStaticPages, writeStaticFiles } from '@lytjs/ssr';
 
 // 生成静态页面
-const pages = await generateStaticPages([
-  '/',
-  '/about',
-  '/products/[id]',
-], {
+const pages = await generateStaticPages(['/', '/about', '/products/[id]'], {
   // 动态路由参数
   getStaticParams: (path) => {
     if (path === '/products/[id]') {
@@ -200,4 +196,3 @@ await writeStaticPages(pages, './out');
 2. **合理的分块大小**：对于大型页面，分块大小设为 4096-8192 字节
 3. **数据预取**：使用 `renderToStreamEnhanced` 实现数据预加载
 4. **监控性能**：监控 TTFB (Time To First Byte) 和完全加载时间
-

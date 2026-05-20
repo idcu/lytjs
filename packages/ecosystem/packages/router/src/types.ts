@@ -44,7 +44,10 @@ export interface RouteRecordRaw {
   alias?: string | string[];
   meta?: RouteMeta;
   beforeEnter?: NavigationGuard;
-  props?: boolean | Record<string, unknown> | ((to: RouteLocationNormalized) => Record<string, unknown>);
+  props?:
+    | boolean
+    | Record<string, unknown>
+    | ((to: RouteLocationNormalized) => Record<string, unknown>);
 }
 
 export interface RouteRecordNormalized {
@@ -54,7 +57,10 @@ export interface RouteRecordNormalized {
   children: RouteRecordNormalized[];
   aliasOf?: RouteRecordNormalized;
   beforeEnter?: NavigationGuard | undefined;
-  props: boolean | Record<string, unknown> | ((to: RouteLocationNormalized) => Record<string, unknown>);
+  props:
+    | boolean
+    | Record<string, unknown>
+    | ((to: RouteLocationNormalized) => Record<string, unknown>);
   component?: Component | (() => Promise<Component>);
   components?: Record<string, Component | (() => Promise<Component>)>;
 }
@@ -136,7 +142,13 @@ export interface Router {
   back(): void;
   forward(): void;
   beforeEach(guard: NavigationGuard): () => void;
-  afterEach(hook: (to: RouteLocationNormalized, from: RouteLocationNormalized, failure?: NavigationFailure) => void): () => void;
+  afterEach(
+    hook: (
+      to: RouteLocationNormalized,
+      from: RouteLocationNormalized,
+      failure?: NavigationFailure,
+    ) => void,
+  ): () => void;
   beforeResolve(guard: NavigationGuard): () => void;
   install(app: App): void;
   isReady(): Promise<void>;
@@ -158,6 +170,12 @@ export interface RouterHistory {
   push(to: RouteLocationRaw): Promise<NavigationFailure | void>;
   replace(to: RouteLocationRaw): Promise<NavigationFailure | void>;
   go(delta: number): void;
-  listen(callback: (to: RouteLocationNormalized, from: RouteLocationNormalized, info: NavigationInfo) => void): () => void;
+  listen(
+    callback: (
+      to: RouteLocationNormalized,
+      from: RouteLocationNormalized,
+      info: NavigationInfo,
+    ) => void,
+  ): () => void;
   destroy(): void;
 }

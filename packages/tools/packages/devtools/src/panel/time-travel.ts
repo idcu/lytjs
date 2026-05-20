@@ -328,7 +328,7 @@ export function exportHistory(): string {
     history: timeTravelState.history,
     snapshots: getSnapshots(),
     metadata: {
-      totalEvents: timeTravelState.history.filter(h => h.type === 'event').length,
+      totalEvents: timeTravelState.history.filter((h) => h.type === 'event').length,
       recordingDuration: recordingStartTime ? Date.now() - recordingStartTime : 0,
     },
   };
@@ -382,7 +382,11 @@ export function importHistory(json: string): boolean {
  */
 export function downloadHistory(filename?: string): void {
   // 浏览器环境检测
-  if (typeof document === 'undefined' || typeof Blob === 'undefined' || typeof URL === 'undefined') {
+  if (
+    typeof document === 'undefined' ||
+    typeof Blob === 'undefined' ||
+    typeof URL === 'undefined'
+  ) {
     console.warn('[DevTools TimeTravel] downloadHistory is only available in browser environment');
     return;
   }
@@ -410,8 +414,8 @@ export function compareSnapshots(snapshot1: StateSnapshot, snapshot2: StateSnaps
   const diffs: StateDiff[] = [];
 
   // Compare signals
-  const signals1 = new Map(snapshot1.signals.map(s => [s.id, s]));
-  const signals2 = new Map(snapshot2.signals.map(s => [s.id, s]));
+  const signals1 = new Map(snapshot1.signals.map((s) => [s.id, s]));
+  const signals2 = new Map(snapshot2.signals.map((s) => [s.id, s]));
 
   // Find changed and added signals
   for (const [id, signal2] of signals2) {
@@ -605,6 +609,4 @@ function handleGetStateDiff(data: { index: number } | undefined): void {
 
 // ===== Exports =====
 
-export {
-  timeTravelState,
-};
+export { timeTravelState };

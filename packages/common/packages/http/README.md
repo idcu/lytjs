@@ -31,7 +31,7 @@ import { createHttpClient } from '@lytjs/common-http';
 const apiClient = createHttpClient({
   baseURL: 'https://api.example.com',
   headers: {
-    'Authorization': 'Bearer YOUR_TOKEN',
+    Authorization: 'Bearer YOUR_TOKEN',
     'Content-Type': 'application/json',
   },
   timeout: 5000,
@@ -44,18 +44,18 @@ const users = await apiClient.get('/users');
 
 ### 便捷方法
 
-| 方法 | 说明 |
-|-----|------|
-| `get<T>(url, options?)` | 发送 GET 请求 |
-| `post<T>(url, data?, options?)` | 发送 POST 请求 |
-| `put<T>(url, data?, options?)` | 发送 PUT 请求 |
-| `patch<T>(url, data?, options?)` | 发送 PATCH 请求 |
-| `del<T>(url, options?)` | 发送 DELETE 请求 |
-| `getJson<T>(url, options?)` | 发送 GET 请求并直接返回 JSON 数据 |
-| `postJson<T>(url, data?, options?)` | 发送 POST 请求并直接返回 JSON 数据 |
-| `putJson<T>(url, data?, options?)` | 发送 PUT 请求并直接返回 JSON 数据 |
-| `patchJson<T>(url, data?, options?)` | 发送 PATCH 请求并直接返回 JSON 数据 |
-| `deleteJson<T>(url, options?)` | 发送 DELETE 请求并直接返回 JSON 数据 |
+| 方法                                 | 说明                                 |
+| ------------------------------------ | ------------------------------------ |
+| `get<T>(url, options?)`              | 发送 GET 请求                        |
+| `post<T>(url, data?, options?)`      | 发送 POST 请求                       |
+| `put<T>(url, data?, options?)`       | 发送 PUT 请求                        |
+| `patch<T>(url, data?, options?)`     | 发送 PATCH 请求                      |
+| `del<T>(url, options?)`              | 发送 DELETE 请求                     |
+| `getJson<T>(url, options?)`          | 发送 GET 请求并直接返回 JSON 数据    |
+| `postJson<T>(url, data?, options?)`  | 发送 POST 请求并直接返回 JSON 数据   |
+| `putJson<T>(url, data?, options?)`   | 发送 PUT 请求并直接返回 JSON 数据    |
+| `patchJson<T>(url, data?, options?)` | 发送 PATCH 请求并直接返回 JSON 数据  |
+| `deleteJson<T>(url, options?)`       | 发送 DELETE 请求并直接返回 JSON 数据 |
 
 ### HttpClient 类
 
@@ -196,12 +196,7 @@ try {
 ## 完整示例
 
 ```typescript
-import {
-  createHttpClient,
-  getJson,
-  postJson,
-  HttpError,
-} from '@lytjs/common-http';
+import { createHttpClient, getJson, postJson, HttpError } from '@lytjs/common-http';
 
 // 创建 API 客户端
 const api = createHttpClient({

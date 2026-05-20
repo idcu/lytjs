@@ -9,9 +9,7 @@ import { isObject, isFunction, isArray } from '@lytjs/common-is';
 import type { DataPrefetchContext, PrefetchResult } from './stream';
 
 /** 服务端组件生命周期钩子类型 */
-export type ServerLifecycleHook = (
-  context: ServerComponentContext
-) => Promise<void> | void;
+export type ServerLifecycleHook = (context: ServerComponentContext) => Promise<void> | void;
 
 /** 服务端组件上下文 */
 export interface ServerComponentContext {
@@ -77,10 +75,7 @@ class ServerComponentStateManager {
   /**
    * 初始化服务端组件
    */
-  async initializeComponent(
-    name: string,
-    context: ServerComponentContext
-  ): Promise<void> {
+  async initializeComponent(name: string, context: ServerComponentContext): Promise<void> {
     const registration = this.registrations.get(name);
     if (!registration) {
       throw new Error(`Server component ${name} not registered`);
@@ -100,10 +95,7 @@ class ServerComponentStateManager {
   /**
    * 清理服务端组件
    */
-  async cleanupComponent(
-    name: string,
-    context: ServerComponentContext
-  ): Promise<void> {
+  async cleanupComponent(name: string, context: ServerComponentContext): Promise<void> {
     const registration = this.registrations.get(name);
     if (!registration) {
       return;
@@ -122,7 +114,7 @@ class ServerComponentStateManager {
   async prefetchComponentData(
     name: string,
     context: DataPrefetchContext,
-    cacheKey?: string
+    cacheKey?: string,
   ): Promise<PrefetchResult> {
     const registration = this.registrations.get(name);
     if (!registration || !registration.prefetch) {
@@ -161,7 +153,7 @@ export const stateManager = new ServerComponentStateManager();
  */
 export function registerServerComponent(
   name: string,
-  registration: ServerComponentRegistration
+  registration: ServerComponentRegistration,
 ): void {
   stateManager.register(name, registration);
 }
@@ -177,7 +169,7 @@ export function unregisterServerComponent(name: string): void {
  * 从 VNode 树中收集需要预取数据的组件
  */
 export function collectPrefetchComponents(
-  vnode: VNode | VNode[] | string | number | null | undefined
+  vnode: VNode | VNode[] | string | number | null | undefined,
 ): string[] {
   const components: string[] = [];
   collectComponentsRecursive(vnode, components);
@@ -186,7 +178,7 @@ export function collectPrefetchComponents(
 
 function collectComponentsRecursive(
   vnode: VNode | VNode[] | string | number | null | undefined,
-  result: string[]
+  result: string[],
 ): void {
   if (!isObject(vnode)) {
     return;
@@ -227,7 +219,7 @@ function collectComponentsRecursive(
  */
 export async function prefetchAllComponents(
   components: string[],
-  context: DataPrefetchContext
+  context: DataPrefetchContext,
 ): Promise<Record<string, PrefetchResult>> {
   const results: Record<string, PrefetchResult> = {};
   const promises: Array<Promise<void>> = [];
@@ -329,7 +321,7 @@ export interface ComponentDehydratedState {
  * 构建完整的脱水状态
  */
 export function buildDehydratedState(
-  prefetchResults: Record<string, PrefetchResult>
+  prefetchResults: Record<string, PrefetchResult>,
 ): Record<string, ComponentDehydratedState> {
   const state: Record<string, ComponentDehydratedState> = {};
   for (const [name, result] of Object.entries(prefetchResults)) {
@@ -354,7 +346,7 @@ export function ServerComponent(options: {
   return function (target: { name?: string; render?: () => VNode }) {
     registerServerComponent(options.name, {
       name: options.name,
-      render: target.render || (() => ({ type: 'div' } as VNode)),
+      render: target.render || (() => ({ type: 'div' }) as VNode),
       prefetch: options.prefetch,
       onServerInit: options.onInit,
       onServerCleanup: options.onCleanup,

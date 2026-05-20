@@ -4,7 +4,17 @@
 
 export interface FieldValidationRule {
   /** 校验类型 */
-  type: 'required' | 'email' | 'phone' | 'number' | 'min' | 'max' | 'minLength' | 'maxLength' | 'pattern' | 'custom';
+  type:
+    | 'required'
+    | 'email'
+    | 'phone'
+    | 'number'
+    | 'min'
+    | 'max'
+    | 'minLength'
+    | 'maxLength'
+    | 'pattern'
+    | 'custom';
   /** 错误消息 */
   message?: string;
   /** 校验值（如 min/max 值等） */
@@ -99,7 +109,9 @@ export interface FormInstance {
   /** 校验整个表单 */
   validate: () => Promise<boolean>;
   /** 提交表单 */
-  submit: (callback?: (values: Record<string, unknown>) => void | Promise<void>) => Promise<boolean>;
+  submit: (
+    callback?: (values: Record<string, unknown>) => void | Promise<void>,
+  ) => Promise<boolean>;
   /** 设置字段禁用状态 */
   setFieldDisabled: (name: string, disabled: boolean) => void;
   /** 设置字段只读状态 */

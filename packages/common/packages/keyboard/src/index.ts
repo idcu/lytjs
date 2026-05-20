@@ -14,12 +14,7 @@ export interface ParsedShortcut {
 }
 
 /** 修饰键名称集合 */
-export const MODIFIER_KEYS: Set<string> = new Set([
-  'ctrl',
-  'shift',
-  'alt',
-  'meta',
-]);
+export const MODIFIER_KEYS: Set<string> = new Set(['ctrl', 'shift', 'alt', 'meta']);
 
 /** 特殊键名称到 KeyboardEvent.key 的映射 */
 export const SPECIAL_KEYS: Record<string, string> = {
@@ -58,7 +53,10 @@ export const SPECIAL_KEYS: Record<string, string> = {
  * @returns 解析后的快捷键对象
  */
 export function parseShortcut(shortcut: string): ParsedShortcut {
-  const parts = shortcut.toLowerCase().split('+').map((p) => p.trim());
+  const parts = shortcut
+    .toLowerCase()
+    .split('+')
+    .map((p) => p.trim());
   const result: ParsedShortcut = {
     key: '',
     ctrl: false,
@@ -110,9 +108,7 @@ export function matchShortcut(event: KeyboardEvent, shortcut: string): boolean {
  * @param keys - 按键序列，如 ["ctrl", "k", "s"] 表示先按 Ctrl+K 再按 S
  * @returns 匹配函数，每次调用传入 KeyboardEvent，按顺序匹配
  */
-export function createKeySequence(
-  keys: string[],
-): (event: KeyboardEvent) => boolean {
+export function createKeySequence(keys: string[]): (event: KeyboardEvent) => boolean {
   let currentIndex = 0;
 
   return (event: KeyboardEvent): boolean => {

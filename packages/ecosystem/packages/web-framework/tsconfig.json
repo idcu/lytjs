@@ -4,10 +4,7 @@
     "rootDir": ".",
     "outDir": "dist"
   },
-  "include": [
-    "packages/*/src/**/*",
-    "src/**/*"
-  ],
+  "include": ["packages/*/src/**/*", "src/**/*"],
   "references": [
     { "path": "packages/middleware" },
     { "path": "packages/middleware-cors" },

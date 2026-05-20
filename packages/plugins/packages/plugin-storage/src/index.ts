@@ -10,10 +10,7 @@ import { definePlugin } from '@lytjs/core';
 import type { StorageType, StorageItem, StorageOptions, StorageInstance } from './types';
 
 function createStorage(options: StorageOptions = {}): StorageInstance {
-  const {
-    defaultType = 'local',
-    prefix = 'lyt_',
-  } = options;
+  const { defaultType = 'local', prefix = 'lyt_' } = options;
 
   function getStorage(type: StorageType): Storage | null {
     if (typeof window === 'undefined') return null;
@@ -39,8 +36,7 @@ function createStorage(options: StorageOptions = {}): StorageInstance {
 
     try {
       storage.setItem(getKey(key), JSON.stringify(item));
-    } catch {
-    }
+    } catch {}
   }
 
   function get<T>(key: string, defaultValue?: T): T | null {
@@ -70,8 +66,7 @@ function createStorage(options: StorageOptions = {}): StorageInstance {
 
     try {
       storage.removeItem(getKey(key));
-    } catch {
-    }
+    } catch {}
   }
 
   function clear() {
@@ -87,8 +82,7 @@ function createStorage(options: StorageOptions = {}): StorageInstance {
         }
       }
       keysToRemove.forEach((k) => storage.removeItem(k));
-    } catch {
-    }
+    } catch {}
   }
 
   function has(key: string): boolean {
@@ -107,8 +101,7 @@ function createStorage(options: StorageOptions = {}): StorageInstance {
           result.push(key.slice(prefix.length));
         }
       }
-    } catch {
-    }
+    } catch {}
     return result;
   }
 
@@ -130,12 +123,10 @@ function createStorage(options: StorageOptions = {}): StorageInstance {
           if (item.expires && Date.now() > item.expires) {
             keysToRemove.push(fullKey);
           }
-        } catch {
-        }
+        } catch {}
       }
       keysToRemove.forEach((k) => storage.removeItem(k));
-    } catch {
-    }
+    } catch {}
   }
 
   return {
@@ -152,7 +143,8 @@ function createStorage(options: StorageOptions = {}): StorageInstance {
 const pluginStorage = definePlugin({
   name: 'storage',
   version: '6.0.0',
-  description: 'LytJS official storage plugin with localStorage and sessionStorage support, plus JSON serialization',
+  description:
+    'LytJS official storage plugin with localStorage and sessionStorage support, plus JSON serialization',
   author: 'LytJS Team',
   keywords: ['lytjs', 'storage', 'localStorage', 'sessionStorage', 'persistence'],
   schema: {

@@ -7,7 +7,13 @@
 import { defineComponent } from '@lytjs/component';
 import { createVNode, type VNode } from '@lytjs/vdom';
 import { signal } from '@lytjs/reactivity';
-import type { FormRules, FormSetupProps, FormSlots, FormItemSetupProps, FormItemSlots } from './types';
+import type {
+  FormRules,
+  FormSetupProps,
+  FormSlots,
+  FormItemSetupProps,
+  FormItemSlots,
+} from './types';
 import { mergeA11yProps } from '@lytjs/common-a11y';
 
 export interface FormLocale {
@@ -82,7 +88,9 @@ export const Form = defineComponent({
           if (rule.type) {
             const typeValid = validateType(value, rule.type);
             if (!typeValid) {
-              fieldErrors.push(rule.message || formatMessage(locale.type, { type: rule.type, field }));
+              fieldErrors.push(
+                rule.message || formatMessage(locale.type, { type: rule.type, field }),
+              );
               continue;
             }
           }
@@ -111,7 +119,8 @@ export const Form = defineComponent({
             const result = await Promise.resolve(rule.validator(value, p.model));
 
             if (result !== true) {
-              const errorMessage = typeof result === 'string' ? result : formatMessage(locale.validator, { field });
+              const errorMessage =
+                typeof result === 'string' ? result : formatMessage(locale.validator, { field });
               fieldErrors.push(errorMessage);
             }
           } catch (_error) {
@@ -149,8 +158,8 @@ export const Form = defineComponent({
 
     const validateAll = async (): Promise<boolean> => {
       const fieldNames = Object.keys(p.rules);
-      const results = await Promise.all(fieldNames.map(field => validateField(field)));
-      return results.every(result => result);
+      const results = await Promise.all(fieldNames.map((field) => validateField(field)));
+      return results.every((result) => result);
     };
 
     const clearValidate = (field?: string) => {
@@ -175,21 +184,23 @@ export const Form = defineComponent({
     };
 
     return () => {
-      const formClass = [
-        'lyt-form',
-        `lyt-form--label-${p.labelPosition}`,
-        p.class,
-      ].filter(Boolean).join(' ');
+      const formClass = ['lyt-form', `lyt-form--label-${p.labelPosition}`, p.class]
+        .filter(Boolean)
+        .join(' ');
 
       const children: VNode[] = slots.default ? slots.default() : [];
 
-      return createVNode('form', {
-        id: p.id,
-        'aria-label': p.ariaLabel,
-        'aria-describedby': p.ariaDescribedBy,
-        class: formClass,
-        onSubmit: handleSubmit,
-      }, children);
+      return createVNode(
+        'form',
+        {
+          id: p.id,
+          'aria-label': p.ariaLabel,
+          'aria-describedby': p.ariaDescribedBy,
+          class: formClass,
+          onSubmit: handleSubmit,
+        },
+        children,
+      );
     };
   },
 });
@@ -245,17 +256,25 @@ export const FormItem = defineComponent({
         'lyt-form-item',
         p.error ? 'lyt-form-item--error' : '',
         p.validateStatus ? `lyt-form-item--${p.validateStatus}` : '',
-      ].filter(Boolean).join(' ');
+      ]
+        .filter(Boolean)
+        .join(' ');
 
       const labelStyle = p.label ? { width: '100px' } : {};
 
       const children: VNode[] = [];
 
       if (p.label) {
-        children.push(createVNode('label', {
-          class: 'lyt-form-item__label',
-          style: labelStyle,
-        }, [createVNode('span', {}, String(p.label))]));
+        children.push(
+          createVNode(
+            'label',
+            {
+              class: 'lyt-form-item__label',
+              style: labelStyle,
+            },
+            [createVNode('span', {}, String(p.label))],
+          ),
+        );
       }
 
       if (slots.default) {
@@ -264,21 +283,42 @@ export const FormItem = defineComponent({
       }
 
       if (p.error) {
-        children.push(createVNode('div', {
-          class: 'lyt-form-item__error',
-          role: 'alert',
-          'aria-live': 'polite'
-        }, [createVNode('span', {}, String(p.error))]));
+        children.push(
+          createVNode(
+            'div',
+            {
+              class: 'lyt-form-item__error',
+              role: 'alert',
+              'aria-live': 'polite',
+            },
+            [createVNode('span', {}, String(p.error))],
+          ),
+        );
       }
 
-      return createVNode('div', mergeA11yProps({
-        id: p.id,
-        'aria-label': p.ariaLabel,
-        'aria-describedby': p.ariaDescribedBy,
-      }, { class: itemClass }), children);
+      return createVNode(
+        'div',
+        mergeA11yProps(
+          {
+            id: p.id,
+            'aria-label': p.ariaLabel,
+            'aria-describedby': p.ariaDescribedBy,
+          },
+          { class: itemClass },
+        ),
+        children,
+      );
     };
   },
 });
 
 export type { FormSlots, FormItemSlots } from './types';
-export type { FormProps, FormRules, FormSetupProps, FormItemProps, FormItemSetupProps, FormRule, FormValidateStatus } from './types';
+export type {
+  FormProps,
+  FormRules,
+  FormSetupProps,
+  FormItemProps,
+  FormItemSetupProps,
+  FormRule,
+  FormValidateStatus,
+} from './types';

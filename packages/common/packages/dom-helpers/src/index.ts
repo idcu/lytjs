@@ -10,29 +10,73 @@ const isBrowser =
 
 /** 危险的事件属性黑名单，防止通过属性注入事件处理器 */
 const DANGEROUS_EVENT_ATTRS = new Set([
-  'onclick', 'ondblclick', 'onmousedown', 'onmouseup', 'onmouseover',
-  'onmousemove', 'onmouseout', 'onmouseenter', 'onmouseleave',
-  'onkeydown', 'onkeyup', 'onkeypress',
-  'onfocus', 'onblur', 'oninput', 'onchange', 'onsubmit', 'onreset',
-  'onload', 'onunload', 'onbeforeunload', 'onerror', 'onresize',
-  'onscroll', 'onwheel', 'ondrag', 'ondragstart', 'ondragend',
-  'ondragenter', 'ondragleave', 'ondragover', 'ondrop',
-  'oncopy', 'oncut', 'onpaste',
-  'oncontextmenu', 'onselect', 'onselectstart',
-  'ontouchstart', 'ontouchend', 'ontouchmove', 'ontouchcancel',
-  'onpointerdown', 'onpointerup', 'onpointermove',
-  'onanimationstart', 'onanimationend', 'onanimationiteration',
-  'ontransitionstart', 'ontransitionend', 'ontransitioncancel',
+  'onclick',
+  'ondblclick',
+  'onmousedown',
+  'onmouseup',
+  'onmouseover',
+  'onmousemove',
+  'onmouseout',
+  'onmouseenter',
+  'onmouseleave',
+  'onkeydown',
+  'onkeyup',
+  'onkeypress',
+  'onfocus',
+  'onblur',
+  'oninput',
+  'onchange',
+  'onsubmit',
+  'onreset',
+  'onload',
+  'onunload',
+  'onbeforeunload',
+  'onerror',
+  'onresize',
+  'onscroll',
+  'onwheel',
+  'ondrag',
+  'ondragstart',
+  'ondragend',
+  'ondragenter',
+  'ondragleave',
+  'ondragover',
+  'ondrop',
+  'oncopy',
+  'oncut',
+  'onpaste',
+  'oncontextmenu',
+  'onselect',
+  'onselectstart',
+  'ontouchstart',
+  'ontouchend',
+  'ontouchmove',
+  'ontouchcancel',
+  'onpointerdown',
+  'onpointerup',
+  'onpointermove',
+  'onanimationstart',
+  'onanimationend',
+  'onanimationiteration',
+  'ontransitionstart',
+  'ontransitionend',
+  'ontransitioncancel',
 ]);
 
 /** 需要 URL 安全检查的属性 */
-const URL_ATTRS = new Set([
-  'href', 'src', 'action', 'formaction', 'xlink:href', 'data', 'poster',
-]);
+const URL_ATTRS = new Set(['href', 'src', 'action', 'formaction', 'xlink:href', 'data', 'poster']);
 
 /** 安全的 URL 协议白名单 */
 const SAFE_URL_PROTOCOLS = new Set([
-  'http:', 'https:', 'mailto:', 'tel:', 'ftp:', '.', '/', '#', '?',
+  'http:',
+  'https:',
+  'mailto:',
+  'tel:',
+  'ftp:',
+  '.',
+  '/',
+  '#',
+  '?',
 ]);
 
 /**
@@ -48,7 +92,12 @@ function isSafeAttr(key: string): boolean {
 function isSafeURL(value: string): boolean {
   const trimmed = value.trim().toLowerCase();
   // 相对 URL、hash、query 是安全的
-  if (trimmed.startsWith('#') || trimmed.startsWith('?') || trimmed.startsWith('/') || trimmed.startsWith('.')) {
+  if (
+    trimmed.startsWith('#') ||
+    trimmed.startsWith('?') ||
+    trimmed.startsWith('/') ||
+    trimmed.startsWith('.')
+  ) {
     return true;
   }
   // 检查协议
@@ -112,11 +161,7 @@ export function createElement(
  * @param child - 要插入的子节点
  * @param ref - 参考节点，为 null 时等同于 appendChild
  */
-export function insertBefore(
-  parent: Node,
-  child: Node,
-  ref: Node | null,
-): void {
+export function insertBefore(parent: Node, child: Node, ref: Node | null): void {
   if (!isBrowser) {
     throw new Error('insertBefore is only available in browser environments');
   }
@@ -199,10 +244,7 @@ export function createComment(text: string): Comment {
  * @param el - 目标元素
  * @param styles - 样式键值对
  */
-export function setStyle(
-  el: Element,
-  styles: Record<string, string | number>,
-): void {
+export function setStyle(el: Element, styles: Record<string, string | number>): void {
   if (!isBrowser) {
     throw new Error('setStyle is only available in browser environments');
   }

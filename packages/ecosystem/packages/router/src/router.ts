@@ -49,7 +49,11 @@ export function createRouter(options: RouterOptions): Router {
   const beforeEachGuards: NavigationGuard[] = [];
   const beforeResolveGuards: NavigationGuard[] = [];
   const afterEachHooks: Array<
-    (to: RouteLocationNormalized, from: RouteLocationNormalized, failure?: NavigationFailure) => void
+    (
+      to: RouteLocationNormalized,
+      from: RouteLocationNormalized,
+      failure?: NavigationFailure,
+    ) => void
   > = [];
 
   // Ready state
@@ -64,9 +68,11 @@ export function createRouter(options: RouterOptions): Router {
   /**
    * Resolve a route location by matching against all route records
    */
-  function resolveRoute(
-    path: string,
-  ): { matched: RouteRecordMatcher[]; params: Record<string, string | string[]>; meta: Record<string | number | symbol, unknown> } {
+  function resolveRoute(path: string): {
+    matched: RouteRecordMatcher[];
+    params: Record<string, string | string[]>;
+    meta: Record<string | number | symbol, unknown>;
+  } {
     let bestMatch: RouteRecordMatcher | null = null;
     let bestScore = -1;
     let bestParams: Record<string, string | string[]> = {};
@@ -134,7 +140,12 @@ export function createRouter(options: RouterOptions): Router {
     const targetPath = resolved.path;
 
     // Check for name-based navigation with unknown route name
-    if (typeof to !== 'string' && to.name !== null && to.name !== undefined && !resolveName(to.name, to.params)) {
+    if (
+      typeof to !== 'string' &&
+      to.name !== null &&
+      to.name !== undefined &&
+      !resolveName(to.name, to.params)
+    ) {
       return {
         type: NavigationFailureType.aborted,
         from: currentRoute(),
@@ -158,7 +169,12 @@ export function createRouter(options: RouterOptions): Router {
     const targetLocation: RouteLocationNormalized = {
       name: lastMatched?.record?.name ?? null,
       path: targetPath,
-      fullPath: resolved.path + (Object.keys(resolved.query).length ? '?' + locationQueryToSearchParams(resolved.query).toString() : '') + (resolved.hash ? `#${resolved.hash}` : ''),
+      fullPath:
+        resolved.path +
+        (Object.keys(resolved.query).length
+          ? '?' + locationQueryToSearchParams(resolved.query).toString()
+          : '') +
+        (resolved.hash ? `#${resolved.hash}` : ''),
       query: resolved.query,
       hash: resolved.hash,
       params,
@@ -178,8 +194,8 @@ export function createRouter(options: RouterOptions): Router {
     const from = currentRoute();
 
     // Run navigation guards (pass fromMatched for beforeRouteLeave)
-    const fromMatched = currentRoute().matched
-      .map((record) => {
+    const fromMatched = currentRoute()
+      .matched.map((record) => {
         // Find the corresponding matcher for the from route records
         return flatMatchers.find((m) => m.record === record);
       })
@@ -232,7 +248,13 @@ export function createRouter(options: RouterOptions): Router {
     for (const matcher of fromMatched) {
       const component = matcher.record.component as Record<string, unknown> | undefined;
       if (component && component.beforeRouteLeave) {
-        const result = await (component.beforeRouteLeave as (to: RouteLocationNormalized, from: RouteLocationNormalized, next: NavigationGuardNext) => unknown)(to, from, noop as NavigationGuardNext);
+        const result = await (
+          component.beforeRouteLeave as (
+            to: RouteLocationNormalized,
+            from: RouteLocationNormalized,
+            next: NavigationGuardNext,
+          ) => unknown
+        )(to, from, noop as NavigationGuardNext);
         if (result === false || result instanceof Error) {
           return { type: NavigationFailureType.aborted, from, to };
         }
@@ -372,7 +394,10 @@ export function createRouter(options: RouterOptions): Router {
       };
     },
 
-    install(app: { config?: { globalProperties?: Record<string, unknown> }; provide?: (key: string, value: unknown) => void }) {
+    install(app: {
+      config?: { globalProperties?: Record<string, unknown> };
+      provide?: (key: string, value: unknown) => void;
+    }) {
       setCurrentRouter(router);
 
       if (app.config?.globalProperties) {

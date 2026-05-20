@@ -40,9 +40,13 @@ export function resolveOptions(options: LytjsPluginOptions): Required<LytjsPlugi
  */
 export function validateOptions(options: LytjsPluginOptions): void {
   if (options.include && !Array.isArray(options.include) && !(options.include instanceof RegExp)) {
-    throw new TypeError('[@lytjs/plugin-vite] Option "include" must be a RegExp or an array of RegExp');
+    throw new TypeError(
+      '[@lytjs/plugin-vite] Option "include" must be a RegExp or an array of RegExp',
+    );
   }
   if (options.exclude && !Array.isArray(options.exclude) && !(options.exclude instanceof RegExp)) {
-    throw new TypeError('[@lytjs/plugin-vite] Option "exclude" must be a RegExp or an array of RegExp');
+    throw new TypeError(
+      '[@lytjs/plugin-vite] Option "exclude" must be a RegExp or an array of RegExp',
+    );
   }
 }

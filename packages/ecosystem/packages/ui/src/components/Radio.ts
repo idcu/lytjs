@@ -95,39 +95,67 @@ export const Radio = defineComponent({
         tabIndex: _props.tabIndex,
       });
 
-      children.push(createVNode('input', mergeA11yProps(a11yProps, {
-        type: 'radio',
-        class: 'lyt-radio__input',
-        checked: checked,
-        disabled: _props.disabled,
-        name: _props.name,
-        onKeydown: _props.onKeydown,
-        onChange: handleChange,
-        onFocus: handleFocus,
-        onBlur: handleBlur,
-      }), []));
+      children.push(
+        createVNode(
+          'input',
+          mergeA11yProps(a11yProps, {
+            type: 'radio',
+            class: 'lyt-radio__input',
+            checked: checked,
+            disabled: _props.disabled,
+            name: _props.name,
+            onKeydown: _props.onKeydown,
+            onChange: handleChange,
+            onFocus: handleFocus,
+            onBlur: handleBlur,
+          }),
+          [],
+        ),
+      );
 
-      children.push(createVNode('span', {
-        class: 'lyt-radio__inner',
-      }, []));
+      children.push(
+        createVNode(
+          'span',
+          {
+            class: 'lyt-radio__inner',
+          },
+          [],
+        ),
+      );
 
       if (_props.label !== undefined) {
-        children.push(createVNode('span', {
-          class: 'lyt-radio__label',
-        }, [createVNode('span', {}, String(_props.label))]));
+        children.push(
+          createVNode(
+            'span',
+            {
+              class: 'lyt-radio__label',
+            },
+            [createVNode('span', {}, String(_props.label))],
+          ),
+        );
       } else if (slots.default) {
         const slotContent = slots.default();
         if (Array.isArray(slotContent)) {
-          children.push(createVNode('span', {
-            class: 'lyt-radio__label',
-          }, slotContent as VNode[]));
+          children.push(
+            createVNode(
+              'span',
+              {
+                class: 'lyt-radio__label',
+              },
+              slotContent as VNode[],
+            ),
+          );
         }
       }
 
-      return createVNode('label', {
-        class: getRadioClass(),
-        style: getRadioStyle(),
-      }, children);
+      return createVNode(
+        'label',
+        {
+          class: getRadioClass(),
+          style: getRadioStyle(),
+        },
+        children,
+      );
     };
   },
 });

@@ -33,7 +33,7 @@ export class Server {
 
   /**
    * 添加中间件
-   * 
+   *
    * @param middleware - 中间件函数
    * @returns 服务器实例
    */
@@ -44,7 +44,7 @@ export class Server {
 
   /**
    * 添加路由
-   * 
+   *
    * @param method - HTTP 方法
    * @param path - 路径
    * @param handler - 处理器
@@ -57,7 +57,7 @@ export class Server {
 
   /**
    * 添加 GET 路由
-   * 
+   *
    * @param path - 路径
    * @param handler - 处理器
    * @returns 服务器实例
@@ -68,7 +68,7 @@ export class Server {
 
   /**
    * 添加 POST 路由
-   * 
+   *
    * @param path - 路径
    * @param handler - 处理器
    * @returns 服务器实例
@@ -79,7 +79,7 @@ export class Server {
 
   /**
    * 添加 PUT 路由
-   * 
+   *
    * @param path - 路径
    * @param handler - 处理器
    * @returns 服务器实例
@@ -90,7 +90,7 @@ export class Server {
 
   /**
    * 添加 PATCH 路由
-   * 
+   *
    * @param path - 路径
    * @param handler - 处理器
    * @returns 服务器实例
@@ -101,7 +101,7 @@ export class Server {
 
   /**
    * 添加 DELETE 路由
-   * 
+   *
    * @param path - 路径
    * @param handler - 处理器
    * @returns 服务器实例
@@ -112,7 +112,7 @@ export class Server {
 
   /**
    * 启动服务器监听
-   * 
+   *
    * @param port - 端口
    * @param hostname - 主机名
    * @returns Promise
@@ -128,7 +128,7 @@ export class Server {
 
   /**
    * 关闭服务器
-   * 
+   *
    * @returns Promise
    */
   close(): Promise<void> {
@@ -149,7 +149,7 @@ export class Server {
 
   /**
    * 处理请求
-   * 
+   *
    * @param req - Node.js 请求对象
    * @param res - Node.js 响应对象
    */
@@ -208,7 +208,7 @@ export class Server {
 
   /**
    * 发送响应
-   * 
+   *
    * @param res - Node.js 响应对象
    * @param response - 响应对象
    */
@@ -226,12 +226,14 @@ export class Server {
     }
 
     if (response.body !== undefined) {
-      const body = typeof response.body === 'string'
-        ? response.body
-        : JSON.stringify(response.body);
+      const body =
+        typeof response.body === 'string' ? response.body : JSON.stringify(response.body);
 
       if (!response.headers['content-type']) {
-        res.setHeader('content-type', typeof response.body === 'string' ? 'text/plain' : 'application/json');
+        res.setHeader(
+          'content-type',
+          typeof response.body === 'string' ? 'text/plain' : 'application/json',
+        );
       }
 
       res.end(body);
@@ -243,7 +245,7 @@ export class Server {
 
 /**
  * 创建 HTTP 服务器
- * 
+ *
  * @returns 服务器实例
  */
 export function createServer(): Server {

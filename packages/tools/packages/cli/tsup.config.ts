@@ -2,9 +2,9 @@ import { defineConfig } from 'tsup';
 
 export default defineConfig({
   entry: {
-    'index': 'src/index.ts',
-    'create': 'src/create.ts',
-    'lyt': 'src/index.ts',
+    index: 'src/index.ts',
+    create: 'src/create.ts',
+    lyt: 'src/index.ts',
   },
   format: ['esm', 'cjs'],
   dts: true,
@@ -22,8 +22,5 @@ export default defineConfig({
   banner: {
     js: '#!/usr/bin/env node',
   },
-  external: [
-    '@lytjs/common-is',
-    '@lytjs/common-env',
-  ],
+  external: ['@lytjs/common-is', '@lytjs/common-env'],
 });

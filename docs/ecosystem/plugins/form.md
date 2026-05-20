@@ -30,13 +30,13 @@ const form = createFormManager({
   fields: {
     username: {
       initialValue: '',
-      rules: [{ type: 'required', message: '用户名不能为空' }]
+      rules: [{ type: 'required', message: '用户名不能为空' }],
     },
     email: {
       initialValue: '',
-      rules: [{ type: 'required' }, { type: 'email' }]
-    }
-  }
+      rules: [{ type: 'required' }, { type: 'email' }],
+    },
+  },
 });
 ```
 
@@ -55,7 +55,7 @@ const values = form.getValues();
 // 批量设置值
 form.setValues({
   username: 'john',
-  email: 'john@example.com'
+  email: 'john@example.com',
 });
 
 // 获取/设置错误
@@ -76,7 +76,7 @@ if (formValid) {
   const data = form.getValues();
   await fetch('/api/submit', {
     method: 'POST',
-    body: JSON.stringify(data)
+    body: JSON.stringify(data),
   });
 }
 ```
@@ -88,7 +88,7 @@ const result = await form.submit(async (values) => {
   // 在这里处理表单提交
   const response = await fetch('/api/submit', {
     method: 'POST',
-    body: JSON.stringify(values)
+    body: JSON.stringify(values),
   });
   return response.json();
 });
@@ -103,9 +103,7 @@ if (result) {
 ### 必填验证
 
 ```typescript
-const rules = [
-  { type: 'required', message: '此字段为必填项' }
-];
+const rules = [{ type: 'required', message: '此字段为必填项' }];
 ```
 
 ### 邮箱验证
@@ -113,24 +111,20 @@ const rules = [
 ```typescript
 const rules = [
   { type: 'required', message: '邮箱不能为空' },
-  { type: 'email', message: '请输入有效的邮箱地址' }
+  { type: 'email', message: '请输入有效的邮箱地址' },
 ];
 ```
 
 ### 手机号验证
 
 ```typescript
-const rules = [
-  { type: 'phone', message: '请输入有效的手机号码' }
-];
+const rules = [{ type: 'phone', message: '请输入有效的手机号码' }];
 ```
 
 ### 数字验证
 
 ```typescript
-const rules = [
-  { type: 'number', message: '请输入数字' }
-];
+const rules = [{ type: 'number', message: '请输入数字' }];
 ```
 
 ### 范围验证
@@ -138,7 +132,7 @@ const rules = [
 ```typescript
 const rules = [
   { type: 'min', value: 18, message: '年龄不能小于18岁' },
-  { type: 'max', value: 100, message: '年龄不能大于100岁' }
+  { type: 'max', value: 100, message: '年龄不能大于100岁' },
 ];
 ```
 
@@ -147,16 +141,14 @@ const rules = [
 ```typescript
 const rules = [
   { type: 'minLength', value: 6, message: '密码至少6个字符' },
-  { type: 'maxLength', value: 20, message: '密码不能超过20个字符' }
+  { type: 'maxLength', value: 20, message: '密码不能超过20个字符' },
 ];
 ```
 
 ### 正则验证
 
 ```typescript
-const rules = [
-  { type: 'pattern', value: /^[a-zA-Z]+$/, message: '只能输入英文字母' }
-];
+const rules = [{ type: 'pattern', value: /^[a-zA-Z]+$/, message: '只能输入英文字母' }];
 ```
 
 ### 自定义验证
@@ -170,8 +162,8 @@ const rules = [
       // allValues: 所有字段的值
       return String(value).includes('admin');
     },
-    message: '用户名不能包含 admin'
-  }
+    message: '用户名不能包含 admin',
+  },
 ];
 ```
 
@@ -187,8 +179,8 @@ const rules = [
       const data = await response.json();
       return !data.exists; // 返回 true 表示验证通过
     },
-    message: '用户名已被注册'
-  }
+    message: '用户名已被注册',
+  },
 ];
 ```
 
@@ -202,18 +194,18 @@ const rules = [
   {
     type: 'custom',
     validator: (value) => /[A-Z]/.test(value),
-    message: '密码必须包含大写字母'
+    message: '密码必须包含大写字母',
   },
   {
     type: 'custom',
     validator: (value) => /[a-z]/.test(value),
-    message: '密码必须包含小写字母'
+    message: '密码必须包含小写字母',
   },
   {
     type: 'custom',
     validator: (value) => /[0-9]/.test(value),
-    message: '密码必须包含数字'
-  }
+    message: '密码必须包含数字',
+  },
 ];
 ```
 
@@ -225,11 +217,11 @@ const rules = [
 // 获取整个表单状态
 const state = form.state;
 
-console.log(state.fields);      // 所有字段状态
-console.log(state.isValid);     // 表单是否有效
-console.log(state.isDirty);     // 表单是否被修改
-console.log(state.isTouched);   // 表单是否被触碰
-console.log(state.isSubmitting);// 表单是否正在提交
+console.log(state.fields); // 所有字段状态
+console.log(state.isValid); // 表单是否有效
+console.log(state.isDirty); // 表单是否被修改
+console.log(state.isTouched); // 表单是否被触碰
+console.log(state.isSubmitting); // 表单是否正在提交
 ```
 
 ### 字段状态
@@ -238,13 +230,13 @@ console.log(state.isSubmitting);// 表单是否正在提交
 const state = form.state;
 const emailField = state.fields.email;
 
-console.log(emailField.value);     // 字段值
-console.log(emailField.errors);     // 错误消息数组
-console.log(emailField.touched);    // 是否被触碰
-console.log(emailField.valid);       // 字段是否有效
+console.log(emailField.value); // 字段值
+console.log(emailField.errors); // 错误消息数组
+console.log(emailField.touched); // 是否被触碰
+console.log(emailField.valid); // 字段是否有效
 console.log(emailField.validating); // 是否正在验证
-console.log(emailField.disabled);  // 是否禁用
-console.log(emailField.readOnly);   // 是否只读
+console.log(emailField.disabled); // 是否禁用
+console.log(emailField.readOnly); // 是否只读
 ```
 
 ### 字段操作
@@ -277,7 +269,7 @@ form.resetToInitial();
 // 动态添加字段
 form.registerField('phone', {
   initialValue: '',
-  rules: [{ type: 'required' }]
+  rules: [{ type: 'required' }],
 });
 
 // 动态移除字段
@@ -290,7 +282,7 @@ form.unregisterField('phone');
 const form = createFormManager({
   fields: {
     membershipType: {
-      initialValue: 'free'
+      initialValue: 'free',
     },
     couponCode: {
       initialValue: '',
@@ -304,11 +296,11 @@ const form = createFormManager({
             }
             return true;
           },
-          message: '付费会员必须填写优惠码'
-        }
-      ]
-    }
-  }
+          message: '付费会员必须填写优惠码',
+        },
+      ],
+    },
+  },
 });
 ```
 
@@ -338,7 +330,7 @@ await form.submit(async (values) => {
   try {
     await fetch('/api/submit', {
       method: 'POST',
-      body: JSON.stringify(values)
+      body: JSON.stringify(values),
     });
     // 成功后重置表单
     form.resetToInitial();
@@ -357,18 +349,18 @@ await form.submit(async (values) => {
 // 方式一：实时验证（在字段变化时验证）
 const form = createFormManager({
   validateOnChange: true,
-  validateOnBlur: false
+  validateOnBlur: false,
 });
 
 // 方式二：失焦验证（在字段失焦时验证）
 const form = createFormManager({
   validateOnChange: false,
-  validateOnBlur: true
+  validateOnBlur: true,
 });
 
 // 方式三：仅提交验证
 const form = createFormManager({
-  validateOnSubmit: true
+  validateOnSubmit: true,
 });
 ```
 
@@ -430,8 +422,8 @@ const form = createFormManager({
   fields: {
     username: { rules: [{ type: 'required' }] },
     email: { rules: [{ type: 'required' }, { type: 'email' }] },
-    password: { rules: [{ type: 'required' }, { type: 'minLength', value: 6 }] }
-  }
+    password: { rules: [{ type: 'required' }, { type: 'minLength', value: 6 }] },
+  },
 });
 
 // 在组件中使用
@@ -445,9 +437,11 @@ function LoginForm() {
         value="${state.fields.username.value}"
         onInput="form.setValue('username', this.value)"
       />
-      ${state.fields.username.touched && state.fields.username.errors[0]
-        ? `<span class="error">${state.fields.username.errors[0]}</span>`
-        : ''}
+      ${
+        state.fields.username.touched && state.fields.username.errors[0]
+          ? `<span class="error">${state.fields.username.errors[0]}</span>`
+          : ''
+      }
 
       <input
         type="email"
@@ -483,11 +477,11 @@ const form = createFormManager({
             const data = await res.json();
             return data.available;
           },
-          message: '该邮箱已被注册'
-        }
-      ]
-    }
-  }
+          message: '该邮箱已被注册',
+        },
+      ],
+    },
+  },
 });
 ```
 
@@ -496,34 +490,34 @@ const form = createFormManager({
 ### createFormManager
 
 ```typescript
-function createFormManager(options?: FormOptions): FormInstance
+function createFormManager(options?: FormOptions): FormInstance;
 ```
 
 ### FormOptions
 
-| 选项 | 类型 | 默认值 | 说明 |
-|------|------|--------|------|
-| `fields` | `Record<string, FieldConfig>` | `{}` | 字段配置 |
-| `initialValues` | `Record<string, unknown>` | `{}` | 初始值 |
-| `validateOnSubmit` | `boolean` | `true` | 提交时验证 |
-| `validateOnChange` | `boolean` | `false` | 变化时验证 |
-| `validateOnBlur` | `boolean` | `false` | 失焦时验证 |
+| 选项               | 类型                          | 默认值  | 说明       |
+| ------------------ | ----------------------------- | ------- | ---------- |
+| `fields`           | `Record<string, FieldConfig>` | `{}`    | 字段配置   |
+| `initialValues`    | `Record<string, unknown>`     | `{}`    | 初始值     |
+| `validateOnSubmit` | `boolean`                     | `true`  | 提交时验证 |
+| `validateOnChange` | `boolean`                     | `false` | 变化时验证 |
+| `validateOnBlur`   | `boolean`                     | `false` | 失焦时验证 |
 
 ### FormInstance
 
-| 方法 | 返回值 | 说明 |
-|------|--------|------|
-| `getValue(name)` | `unknown` | 获取字段值 |
-| `setValue(name, value)` | `void` | 设置字段值 |
-| `getValues()` | `Record<string, unknown>` | 获取所有值 |
-| `setValues(values)` | `void` | 批量设置值 |
-| `validate()` | `Promise<boolean>` | 验证整个表单 |
-| `validateField(name)` | `Promise<boolean>` | 验证单个字段 |
-| `submit(callback)` | `Promise<boolean>` | 提交表单 |
-| `reset()` | `void` | 重置表单 |
-| `resetToInitial()` | `void` | 重置为初始值 |
-| `touchField(name)` | `void` | 标记字段为已触碰 |
-| `touchAllFields()` | `void` | 触碰所有字段 |
+| 方法                    | 返回值                    | 说明             |
+| ----------------------- | ------------------------- | ---------------- |
+| `getValue(name)`        | `unknown`                 | 获取字段值       |
+| `setValue(name, value)` | `void`                    | 设置字段值       |
+| `getValues()`           | `Record<string, unknown>` | 获取所有值       |
+| `setValues(values)`     | `void`                    | 批量设置值       |
+| `validate()`            | `Promise<boolean>`        | 验证整个表单     |
+| `validateField(name)`   | `Promise<boolean>`        | 验证单个字段     |
+| `submit(callback)`      | `Promise<boolean>`        | 提交表单         |
+| `reset()`               | `void`                    | 重置表单         |
+| `resetToInitial()`      | `void`                    | 重置为初始值     |
+| `touchField(name)`      | `void`                    | 标记字段为已触碰 |
+| `touchAllFields()`      | `void`                    | 触碰所有字段     |
 
 ## 下一步
 

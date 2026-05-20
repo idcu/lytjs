@@ -373,13 +373,7 @@ export {
 } from '@lytjs/common-http';
 
 // raf
-export {
-  raf,
-  caf,
-  nextFrame,
-  rafThrottle,
-  rafDebounce,
-} from '@lytjs/common-raf';
+export { raf, caf, nextFrame, rafThrottle, rafDebounce } from '@lytjs/common-raf';
 
 // render-queue
 export {

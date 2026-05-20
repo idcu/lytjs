@@ -23,26 +23,26 @@ export const logger = {
     // eslint-disable-next-line no-console
     console.log(colorize('ℹ ', 'blue') + message);
   },
-  
+
   success(message: string): void {
     // eslint-disable-next-line no-console
     console.log(colorize('✔ ', 'green') + message);
   },
-  
+
   warning(message: string): void {
     // eslint-disable-next-line no-console
     console.log(colorize('⚠ ', 'yellow') + message);
   },
-  
+
   error(message: string): void {
     console.error(colorize('✖ ', 'red') + message);
   },
-  
+
   dim(message: string): void {
     // eslint-disable-next-line no-console
     console.log(colorize(message, 'dim'));
   },
-  
+
   bold(message: string): string {
     return colorize(message, 'bright');
   },

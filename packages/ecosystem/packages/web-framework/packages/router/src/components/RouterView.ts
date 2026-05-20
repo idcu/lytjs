@@ -69,7 +69,11 @@ export const RouterView = {
       }
 
       // Return the component vnode
-      if (resolvedComponent && typeof resolvedComponent === 'object' && 'setup' in resolvedComponent) {
+      if (
+        resolvedComponent &&
+        typeof resolvedComponent === 'object' &&
+        'setup' in resolvedComponent
+      ) {
         // Component object - return it for the renderer
         return { ...resolvedComponent, props: { ...routeProps, ...resolvedComponent.props } };
       }

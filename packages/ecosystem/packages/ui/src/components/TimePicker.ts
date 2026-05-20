@@ -28,7 +28,10 @@ export const TimePicker = defineComponent({
   name: 'LytTimePicker',
 
   props: {
-    modelValue: { type: [String, Array] as unknown as PropType<string | [string, string] | null>, default: null },
+    modelValue: {
+      type: [String, Array] as unknown as PropType<string | [string, string] | null>,
+      default: null,
+    },
     placeholder: { type: String, default: '选择时间' },
     disabled: { type: Boolean, default: false },
     clearable: { type: Boolean, default: true },
@@ -93,7 +96,7 @@ export const TimePicker = defineComponent({
       if (_props.isRange && Array.isArray(_props.modelValue)) {
         return `${_props.modelValue[0]} - ${_props.modelValue[1]}`;
       }
-      return _props.modelValue as string || '';
+      return (_props.modelValue as string) || '';
     };
 
     return () => {
@@ -102,7 +105,9 @@ export const TimePicker = defineComponent({
         isOpen() ? 'lyt-time-picker--open' : '',
         _props.disabled ? 'lyt-time-picker--disabled' : '',
         _props.class,
-      ].filter(Boolean).join(' ');
+      ]
+        .filter(Boolean)
+        .join(' ');
 
       const displayValue = getDisplayValue();
 
@@ -113,20 +118,37 @@ export const TimePicker = defineComponent({
 
       const minuteSecondOptions: VNode[] = [];
       for (let i = 0; i < 60; i++) {
-        minuteSecondOptions.push(createVNode('option', { value: String(i) }, String(i).padStart(2, '0')));
+        minuteSecondOptions.push(
+          createVNode('option', { value: String(i) }, String(i).padStart(2, '0')),
+        );
       }
 
       const triggerChildren: VNode[] = [
-        createVNode('span', {
-          class: ['lyt-time-picker__input', !displayValue ? 'lyt-time-picker__input--placeholder' : ''].filter(Boolean).join(' '),
-        }, displayValue || _props.placeholder),
+        createVNode(
+          'span',
+          {
+            class: [
+              'lyt-time-picker__input',
+              !displayValue ? 'lyt-time-picker__input--placeholder' : '',
+            ]
+              .filter(Boolean)
+              .join(' '),
+          },
+          displayValue || _props.placeholder,
+        ),
       ];
 
       if (_props.clearable && displayValue) {
-        triggerChildren.push(createVNode('span', {
-          class: 'lyt-time-picker__clear',
-          onClick: handleClear,
-        }, '×'));
+        triggerChildren.push(
+          createVNode(
+            'span',
+            {
+              class: 'lyt-time-picker__clear',
+              onClick: handleClear,
+            },
+            '×',
+          ),
+        );
       }
 
       const dropdownContent: VNode[] = [];
@@ -135,72 +157,118 @@ export const TimePicker = defineComponent({
         dropdownContent.push(
           createVNode('div', { class: 'lyt-time-picker__range' }, [
             createVNode('div', { class: 'lyt-time-picker__select-group' }, [
-              createVNode('select', {
-                class: 'lyt-time-picker__select',
-                value: String(rangeStartHour()),
-                onChange: (e: Event) => rangeStartHour.set(Number((e.target as HTMLSelectElement).value)),
-              }, hourOptions),
+              createVNode(
+                'select',
+                {
+                  class: 'lyt-time-picker__select',
+                  value: String(rangeStartHour()),
+                  onChange: (e: Event) =>
+                    rangeStartHour.set(Number((e.target as HTMLSelectElement).value)),
+                },
+                hourOptions,
+              ),
               createVNode('span', {}, ':'),
-              createVNode('select', {
-                class: 'lyt-time-picker__select',
-                value: String(rangeStartMinute()),
-                onChange: (e: Event) => rangeStartMinute.set(Number((e.target as HTMLSelectElement).value)),
-              }, minuteSecondOptions),
+              createVNode(
+                'select',
+                {
+                  class: 'lyt-time-picker__select',
+                  value: String(rangeStartMinute()),
+                  onChange: (e: Event) =>
+                    rangeStartMinute.set(Number((e.target as HTMLSelectElement).value)),
+                },
+                minuteSecondOptions,
+              ),
               createVNode('span', {}, ':'),
-              createVNode('select', {
-                class: 'lyt-time-picker__select',
-                value: String(rangeStartSecond()),
-                onChange: (e: Event) => rangeStartSecond.set(Number((e.target as HTMLSelectElement).value)),
-              }, minuteSecondOptions),
+              createVNode(
+                'select',
+                {
+                  class: 'lyt-time-picker__select',
+                  value: String(rangeStartSecond()),
+                  onChange: (e: Event) =>
+                    rangeStartSecond.set(Number((e.target as HTMLSelectElement).value)),
+                },
+                minuteSecondOptions,
+              ),
             ]),
             createVNode('span', { class: 'lyt-time-picker__separator' }, '-'),
             createVNode('div', { class: 'lyt-time-picker__select-group' }, [
-              createVNode('select', {
-                class: 'lyt-time-picker__select',
-                value: String(rangeEndHour()),
-                onChange: (e: Event) => rangeEndHour.set(Number((e.target as HTMLSelectElement).value)),
-              }, hourOptions),
+              createVNode(
+                'select',
+                {
+                  class: 'lyt-time-picker__select',
+                  value: String(rangeEndHour()),
+                  onChange: (e: Event) =>
+                    rangeEndHour.set(Number((e.target as HTMLSelectElement).value)),
+                },
+                hourOptions,
+              ),
               createVNode('span', {}, ':'),
-              createVNode('select', {
-                class: 'lyt-time-picker__select',
-                value: String(rangeEndMinute()),
-                onChange: (e: Event) => rangeEndMinute.set(Number((e.target as HTMLSelectElement).value)),
-              }, minuteSecondOptions),
+              createVNode(
+                'select',
+                {
+                  class: 'lyt-time-picker__select',
+                  value: String(rangeEndMinute()),
+                  onChange: (e: Event) =>
+                    rangeEndMinute.set(Number((e.target as HTMLSelectElement).value)),
+                },
+                minuteSecondOptions,
+              ),
               createVNode('span', {}, ':'),
-              createVNode('select', {
-                class: 'lyt-time-picker__select',
-                value: String(rangeEndSecond()),
-                onChange: (e: Event) => rangeEndSecond.set(Number((e.target as HTMLSelectElement).value)),
-              }, minuteSecondOptions),
+              createVNode(
+                'select',
+                {
+                  class: 'lyt-time-picker__select',
+                  value: String(rangeEndSecond()),
+                  onChange: (e: Event) =>
+                    rangeEndSecond.set(Number((e.target as HTMLSelectElement).value)),
+                },
+                minuteSecondOptions,
+              ),
             ]),
-          ])
+          ]),
         );
       } else {
         dropdownContent.push(
           createVNode('div', { class: 'lyt-time-picker__select-group' }, [
-            createVNode('select', {
-              class: 'lyt-time-picker__select',
-              value: String(hours()),
-              onChange: (e: Event) => hours.set(Number((e.target as HTMLSelectElement).value)),
-            }, hourOptions),
+            createVNode(
+              'select',
+              {
+                class: 'lyt-time-picker__select',
+                value: String(hours()),
+                onChange: (e: Event) => hours.set(Number((e.target as HTMLSelectElement).value)),
+              },
+              hourOptions,
+            ),
             createVNode('span', {}, ':'),
-            createVNode('select', {
-              class: 'lyt-time-picker__select',
-              value: String(minutes()),
-              onChange: (e: Event) => minutes.set(Number((e.target as HTMLSelectElement).value)),
-            }, minuteSecondOptions),
+            createVNode(
+              'select',
+              {
+                class: 'lyt-time-picker__select',
+                value: String(minutes()),
+                onChange: (e: Event) => minutes.set(Number((e.target as HTMLSelectElement).value)),
+              },
+              minuteSecondOptions,
+            ),
             createVNode('span', {}, ':'),
-            createVNode('select', {
-              class: 'lyt-time-picker__select',
-              value: String(seconds()),
-              onChange: (e: Event) => seconds.set(Number((e.target as HTMLSelectElement).value)),
-            }, minuteSecondOptions),
-          ])
+            createVNode(
+              'select',
+              {
+                class: 'lyt-time-picker__select',
+                value: String(seconds()),
+                onChange: (e: Event) => seconds.set(Number((e.target as HTMLSelectElement).value)),
+              },
+              minuteSecondOptions,
+            ),
+          ]),
         );
       }
 
       const children: VNode[] = [
-        createVNode('div', { class: 'lyt-time-picker__trigger', onClick: toggleDropdown }, triggerChildren),
+        createVNode(
+          'div',
+          { class: 'lyt-time-picker__trigger', onClick: toggleDropdown },
+          triggerChildren,
+        ),
       ];
 
       if (isOpen()) {
@@ -208,12 +276,16 @@ export const TimePicker = defineComponent({
           createVNode('div', { class: 'lyt-time-picker__dropdown' }, [
             createVNode('div', { class: 'lyt-time-picker__panel' }, dropdownContent),
             createVNode('div', { class: 'lyt-time-picker__footer' }, [
-              createVNode('button', {
-                class: 'lyt-time-picker__confirm-btn',
-                onClick: handleSelectTime,
-              }, '确定'),
+              createVNode(
+                'button',
+                {
+                  class: 'lyt-time-picker__confirm-btn',
+                  onClick: handleSelectTime,
+                },
+                '确定',
+              ),
             ]),
-          ])
+          ]),
         );
       }
 

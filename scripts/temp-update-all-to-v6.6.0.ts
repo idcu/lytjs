@@ -20,7 +20,7 @@ async function main() {
   const pkgFiles = await glob('packages/**/package.json', {
     cwd: ROOT,
     absolute: true,
-    ignore: ['**/node_modules/**']
+    ignore: ['**/node_modules/**'],
   });
 
   let updatedCount = 0;
@@ -72,7 +72,7 @@ async function main() {
   console.log(`\n✅ 完成！共处理 ${pkgFiles.length} 个包。`);
 }
 
-main().catch(err => {
+main().catch((err) => {
   console.error(err);
   process.exit(1);
 });

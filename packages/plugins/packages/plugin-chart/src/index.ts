@@ -44,11 +44,9 @@ const DEFAULT_CONFIG = {
 function createChart(
   canvas: HTMLCanvasElement,
   config: ChartConfig,
-  options: ChartPluginOptions = {}
+  options: ChartPluginOptions = {},
 ): ChartInstance {
-  const {
-    defaultAnimationDuration = 500,
-  } = options;
+  const { defaultAnimationDuration = 500 } = options;
 
   let currentConfig = { ...DEFAULT_CONFIG, ...config };
   let animationFrame: number | null = null;
@@ -92,18 +90,14 @@ function createChart(
         ctx.fillStyle = '#666';
         ctx.font = '12px sans-serif';
         ctx.textAlign = 'right';
-        ctx.fillText(
-          Math.round((maxValue - (maxValue / 5) * i)).toString(),
-          padding - 10,
-          y + 4
-        );
+        ctx.fillText(Math.round(maxValue - (maxValue / 5) * i).toString(), padding - 10, y + 4);
       }
     }
 
     // 绘制柱状图
     const totalBars = datasets.reduce((sum, ds) => sum + ds.data.length, 0);
-    const barWidth = ctxWidth / totalBars * 0.7;
-    const gap = ctxWidth / totalBars * 0.3;
+    const barWidth = (ctxWidth / totalBars) * 0.7;
+    const gap = (ctxWidth / totalBars) * 0.3;
 
     let x = padding + gap / 2;
 
@@ -119,11 +113,7 @@ function createChart(
         ctx.fillStyle = '#666';
         ctx.font = '11px sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText(
-          point.label,
-          x + barWidth / 2,
-          height - padding + 20
-        );
+        ctx.fillText(point.label, x + barWidth / 2, height - padding + 20);
 
         x += barWidth + gap;
       });
@@ -159,11 +149,7 @@ function createChart(
         ctx.fillStyle = '#666';
         ctx.font = '12px sans-serif';
         ctx.textAlign = 'right';
-        ctx.fillText(
-          Math.round((maxValue - (maxValue / 5) * i)).toString(),
-          padding - 10,
-          y + 4
-        );
+        ctx.fillText(Math.round(maxValue - (maxValue / 5) * i).toString(), padding - 10, y + 4);
       }
     }
 
@@ -198,11 +184,7 @@ function createChart(
         ctx.fillStyle = '#666';
         ctx.font = '11px sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText(
-          point.label,
-          x,
-          height - padding + 20
-        );
+        ctx.fillText(point.label, x, height - padding + 20);
       });
 
       ctx.stroke();
@@ -331,7 +313,7 @@ function createChart(
 
     function animate() {
       if (!ctx) return;
-      
+
       const elapsed = Date.now() - startTime;
       const progress = Math.min(elapsed / duration, 1);
 
@@ -401,8 +383,8 @@ const pluginChart = definePlugin({
     type: 'object',
     object: {
       properties: {
-        defaultColors: { 
-          type: 'array', 
+        defaultColors: {
+          type: 'array',
           default: DEFAULT_COLORS,
         },
         defaultAnimationDuration: { type: 'number', default: 500 },

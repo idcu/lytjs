@@ -53,7 +53,7 @@ import { createApp } from './app';
 async function render(url: string) {
   const app = createApp({
     url,
-    context: { url }
+    context: { url },
   });
 
   const html = await renderToString(app);
@@ -72,7 +72,7 @@ async function renderPage(url: string) {
 
   const { html, state } = await renderToHtml(app, {
     title: 'LytJS SSR App',
-    baseUrl: 'https://example.com'
+    baseUrl: 'https://example.com',
   });
 
   return html;
@@ -107,7 +107,7 @@ const { html, state } = await renderToHtml(app, {
   lang: 'zh-CN',
   baseUrl: 'https://example.com',
   scripts: ['/client.js'],
-  styles: ['/styles.css']
+  styles: ['/styles.css'],
 });
 ```
 
@@ -123,7 +123,7 @@ import { renderToStream } from '@lytjs/ssr';
 const stream = await renderToStream(app, {
   onShellReady() {
     response.setHeader('Content-Type', 'text/html');
-  }
+  },
 });
 
 stream.pipe(response);
@@ -140,7 +140,7 @@ const stream = await renderToStreamAsync(app, {
   context: { data: await fetchInitialData() },
   onAllReady() {
     response.setHeader('Content-Type', 'text/html');
-  }
+  },
 });
 ```
 
@@ -157,7 +157,7 @@ const enhancedStream = await renderToStreamEnhanced(app, {
   },
   onError(error) {
     console.error('渲染错误:', error);
-  }
+  },
 });
 ```
 
@@ -196,7 +196,7 @@ async function buildStaticSite() {
     render: async (url) => {
       const app = createApp({ url });
       return renderToHtml(app, { title: 'My Site' });
-    }
+    },
   });
 }
 ```
@@ -209,7 +209,7 @@ import { generateRouteManifest } from '@lytjs/ssr';
 const manifest = await generateRouteManifest(routes, {
   basePath: '/pages',
   includePatterns: ['*.html'],
-  excludePatterns: ['**/404.html']
+  excludePatterns: ['**/404.html'],
 });
 
 console.log(manifest);
@@ -224,7 +224,7 @@ import { validatePages } from '@lytjs/ssr';
 const results = await validatePages('./dist', {
   checkLinks: true,
   checkImages: true,
-  checkScripts: true
+  checkScripts: true,
 });
 
 if (results.errors.length > 0) {
@@ -238,10 +238,12 @@ if (results.errors.length > 0) {
 import { writeStaticFiles } from '@lytjs/ssr';
 
 await writeStaticFiles('./dist', {
-  manifest: { /* 路由清单 */ },
+  manifest: {
+    /* 路由清单 */
+  },
   copyAssets: ['./public/**/*'],
   minify: true,
-  sitemap: true
+  sitemap: true,
 });
 ```
 
@@ -255,7 +257,7 @@ import { createISRMiddleware } from '@lytjs/ssr';
 const isr = createISRMiddleware({
   revalidate: '/blog/:slug',
   revalidateInterval: 60,
-  maxRetries: 3
+  maxRetries: 3,
 });
 
 app.use(isr);
@@ -267,7 +269,7 @@ app.use(isr);
 import { revalidateOnDemand } from '@lytjs/ssr';
 
 await revalidateOnDemand('/blog/my-post', {
-  secret: process.env.REVALIDATE_SECRET
+  secret: process.env.REVALIDATE_SECRET,
 });
 ```
 
@@ -294,7 +296,7 @@ registerServerComponent('UserProfile', {
   fetchData: async (context) => {
     return await api.getUser(context.params.id);
   },
-  serverOnly: true
+  serverOnly: true,
 });
 ```
 
@@ -314,7 +316,7 @@ console.log(components);
 import { prefetchAllComponents } from '@lytjs/ssr';
 
 await prefetchAllComponents(components, {
-  context: { userId: '123' }
+  context: { userId: '123' },
 });
 ```
 
@@ -345,7 +347,7 @@ import { createHydrationMarkers } from '@lytjs/ssr';
 
 const markers = createHydrationMarkers(app, {
   includeTimestamps: true,
-  includeVersions: true
+  includeVersions: true,
 });
 ```
 
@@ -356,7 +358,7 @@ import { getHydrationStrategy } from '@lytjs/ssr';
 
 const strategy = getHydrationStrategy(app, {
   mode: 'eager',
-  delay: 100
+  delay: 100,
 });
 ```
 
@@ -375,7 +377,7 @@ import { createDehydratedState } from '@lytjs/ssr';
 
 const dehydrated = createDehydratedState(app, {
   includeSignals: true,
-  includeComponents: true
+  includeComponents: true,
 });
 ```
 
@@ -419,14 +421,14 @@ const app = express();
 app.get('*', async (req, res) => {
   const router = createRouter({
     history: createMemoryHistory(req.url),
-    routes: getRoutes()
+    routes: getRoutes(),
   });
 
   const lytApp = createSSRApp(App, { router });
 
   const html = await renderToHtml(lytApp, {
     title: 'LytJS SSR',
-    lang: 'zh-CN'
+    lang: 'zh-CN',
   });
 
   res.send(html);
@@ -449,7 +451,7 @@ const app = new Koa();
 app.use(async (ctx) => {
   const router = createRouter({
     history: createMemoryHistory(ctx.url),
-    routes: getRoutes()
+    routes: getRoutes(),
   });
 
   const lytApp = createSSRApp(App, { router });
@@ -513,7 +515,7 @@ const stream = await renderToStream(app, {
   onShellReady() {
     response.setHeader('Content-Type', 'text/html');
     response.setHeader('Transfer-Encoding', 'chunked');
-  }
+  },
 });
 
 stream.pipe(response);
@@ -535,7 +537,7 @@ registerServerComponent('ProductList', {
     await cache.set(cacheKey, data, { ttl: 300 });
 
     return data;
-  }
+  },
 });
 ```
 
@@ -547,7 +549,7 @@ import { getHydrationStrategy } from '@lytjs/ssr';
 const strategy = getHydrationStrategy(app, {
   mode: 'lazy',
   threshold: 0.1,
-  priority: ['above-fold', 'critical']
+  priority: ['above-fold', 'critical'],
 });
 ```
 

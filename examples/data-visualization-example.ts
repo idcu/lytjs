@@ -1,6 +1,6 @@
 /**
  * 数据可视化应用实战案例
- * 
+ *
  * 包含功能：
  * - 多类型图表（柱状图、折线图、饼图）
  * - 实时数据更新
@@ -19,7 +19,7 @@ function createDashboardStore() {
     { month: '3月', sales: 5100, profit: 2200 },
     { month: '4月', sales: 4600, profit: 1900 },
     { month: '5月', sales: 5800, profit: 2500 },
-    { month: '6月', sales: 6200, profit: 2800 }
+    { month: '6月', sales: 6200, profit: 2800 },
   ]);
 
   const categoryData = signal([
@@ -27,7 +27,7 @@ function createDashboardStore() {
     { name: '服装', value: 25, color: '#764ba2' },
     { name: '食品', value: 20, color: '#f093fb' },
     { name: '家居', value: 12, color: '#4facfe' },
-    { name: '其他', value: 8, color: '#43e97b' }
+    { name: '其他', value: 8, color: '#43e97b' },
   ]);
 
   const regionData = signal([
@@ -35,22 +35,20 @@ function createDashboardStore() {
     { region: '华北', sales: 9800, growth: 12 },
     { region: '华南', sales: 11200, growth: 18 },
     { region: '西南', sales: 7500, growth: 8 },
-    { region: '东北', sales: 6200, growth: 5 }
+    { region: '东北', sales: 6200, growth: 5 },
   ]);
 
   const timeRange = signal<'week' | 'month' | 'year'>('month');
   const selectedRegion = signal<string | null>(null);
 
-  const totalSales = computed(() => 
-    salesData.value.reduce((sum, item) => sum + item.sales, 0)
-  );
+  const totalSales = computed(() => salesData.value.reduce((sum, item) => sum + item.sales, 0));
 
-  const totalProfit = computed(() => 
-    salesData.value.reduce((sum, item) => sum + item.profit, 0)
-  );
+  const totalProfit = computed(() => salesData.value.reduce((sum, item) => sum + item.profit, 0));
 
-  const avgGrowth = computed(() => 
-    Math.round(regionData.value.reduce((sum, item) => sum + item.growth, 0) / regionData.value.length)
+  const avgGrowth = computed(() =>
+    Math.round(
+      regionData.value.reduce((sum, item) => sum + item.growth, 0) / regionData.value.length,
+    ),
   );
 
   function updateSalesData(newData: typeof salesData.value) {
@@ -66,75 +64,85 @@ function createDashboardStore() {
     totalSales,
     totalProfit,
     avgGrowth,
-    updateSalesData
+    updateSalesData,
   };
 }
 
 // 图表组件
 
 function BarChart(props: { data: Array<{ label: string; value: number; color?: string }> }) {
-  const maxValue = Math.max(...props.data.map(d => d.value));
-  
-  return createVNode('div', { class: 'bar-chart' },
+  const maxValue = Math.max(...props.data.map((d) => d.value));
+
+  return createVNode(
+    'div',
+    { class: 'bar-chart' },
     props.data.map((item, index) =>
       createVNode('div', { key: index, class: 'bar-item' }, [
         createVNode('div', { class: 'bar-label' }, item.label),
         createVNode('div', { class: 'bar-container' }, [
-          createVNode('div', { 
-            class: 'bar-fill',
-            style: {
-              width: `${(item.value / maxValue) * 100}%`,
-              backgroundColor: item.color || '#667eea'
-            }
-          }, item.value.toLocaleString())
-        ])
-      ])
-    )
+          createVNode(
+            'div',
+            {
+              class: 'bar-fill',
+              style: {
+                width: `${(item.value / maxValue) * 100}%`,
+                backgroundColor: item.color || '#667eea',
+              },
+            },
+            item.value.toLocaleString(),
+          ),
+        ]),
+      ]),
+    ),
   );
 }
 
 function LineChart(props: { data: Array<{ month: string; sales: number; profit: number }> }) {
-  const maxValue = Math.max(...props.data.map(d => Math.max(d.sales, d.profit)));
-  
+  const maxValue = Math.max(...props.data.map((d) => Math.max(d.sales, d.profit)));
+
   return createVNode('div', { class: 'line-chart' }, [
     createVNode('div', { class: 'line-legend' }, [
       createVNode('span', { class: 'legend-item' }, [
         createVNode('span', { class: 'legend-color sales' }, ''),
-        '销售额'
+        '销售额',
       ]),
       createVNode('span', { class: 'legend-item' }, [
         createVNode('span', { class: 'legend-color profit' }, ''),
-        '利润'
-      ])
+        '利润',
+      ]),
     ]),
-    createVNode('div', { class: 'line-chart-area' },
+    createVNode(
+      'div',
+      { class: 'line-chart-area' },
       props.data.map((item, index) => {
         const salesHeight = (item.sales / maxValue) * 100;
         const profitHeight = (item.profit / maxValue) * 100;
         return createVNode('div', { key: index, class: 'line-column' }, [
           createVNode('div', { class: 'line-bars' }, [
-            createVNode('div', { 
+            createVNode('div', {
               class: 'line-bar sales',
-              style: { height: `${salesHeight}%` }
+              style: { height: `${salesHeight}%` },
             }),
-            createVNode('div', { 
+            createVNode('div', {
               class: 'line-bar profit',
-              style: { height: `${profitHeight}%` }
-            })
+              style: { height: `${profitHeight}%` },
+            }),
           ]),
-          createVNode('span', { class: 'line-label' }, item.month)
+          createVNode('span', { class: 'line-label' }, item.month),
         ]);
-      })
-    )
+      }),
+    ),
   ]);
 }
 
 function PieChart(props: { data: Array<{ name: string; value: number; color: string }> }) {
   const total = props.data.reduce((sum, item) => sum + item.value, 0);
   let currentAngle = 0;
-  
+
   return createVNode('div', { class: 'pie-chart-container' }, [
-    createVNode('div', { class: 'pie-chart' },
+    createVNode(
+      'div',
+      { class: 'pie-chart' },
       props.data.map((item, index) => {
         const angle = (item.value / total) * 360;
         const startAngle = currentAngle;
@@ -143,76 +151,93 @@ function PieChart(props: { data: Array<{ name: string; value: number; color: str
           key: index,
           class: 'pie-segment',
           style: {
-            background: `conic-gradient(${item.color} ${startAngle}deg ${currentAngle}deg)`
-          }
+            background: `conic-gradient(${item.color} ${startAngle}deg ${currentAngle}deg)`,
+          },
         });
-      })
+      }),
     ),
-    createVNode('div', { class: 'pie-legend' },
+    createVNode(
+      'div',
+      { class: 'pie-legend' },
       props.data.map((item, index) =>
         createVNode('div', { key: index, class: 'pie-legend-item' }, [
-          createVNode('span', { 
+          createVNode('span', {
             class: 'pie-legend-color',
-            style: { backgroundColor: item.color }
+            style: { backgroundColor: item.color },
           }),
           createVNode('span', { class: 'pie-legend-name' }, item.name),
-          createVNode('span', { class: 'pie-legend-value' }, `${item.value}%`)
-        ])
-      )
-    )
+          createVNode('span', { class: 'pie-legend-value' }, `${item.value}%`),
+        ]),
+      ),
+    ),
   ]);
 }
 
-function StatCard(props: { 
-  title: string; 
-  value: string | number; 
-  change?: number; 
+function StatCard(props: {
+  title: string;
+  value: string | number;
+  change?: number;
   icon: string;
   color?: string;
 }) {
   return createVNode('div', { class: 'stat-card' }, [
-    createVNode('div', { class: 'stat-icon', style: { backgroundColor: props.color || '#667eea' } }, props.icon),
+    createVNode(
+      'div',
+      { class: 'stat-icon', style: { backgroundColor: props.color || '#667eea' } },
+      props.icon,
+    ),
     createVNode('div', { class: 'stat-content' }, [
       createVNode('span', { class: 'stat-title' }, props.title),
-      createVNode('span', { class: 'stat-value' }, typeof props.value === 'number' 
-        ? props.value.toLocaleString() 
-        : props.value
+      createVNode(
+        'span',
+        { class: 'stat-value' },
+        typeof props.value === 'number' ? props.value.toLocaleString() : props.value,
       ),
       props.change !== undefined
-        ? createVNode('span', { 
-            class: props.change >= 0 ? 'stat-change positive' : 'stat-change negative'
-          }, `${props.change >= 0 ? '+' : ''}${props.change}%`)
-        : null
-    ])
+        ? createVNode(
+            'span',
+            {
+              class: props.change >= 0 ? 'stat-change positive' : 'stat-change negative',
+            },
+            `${props.change >= 0 ? '+' : ''}${props.change}%`,
+          )
+        : null,
+    ]),
   ]);
 }
 
 function RegionTable(props: { data: Array<{ region: string; sales: number; growth: number }> }) {
   return createVNode('div', { class: 'region-table' }, [
-    createVNode('table', {},
-      [
-        createVNode('thead', {},
-          createVNode('tr', {}, [
-            createVNode('th', {}, '地区'),
-            createVNode('th', {}, '销售额'),
-            createVNode('th', {}, '增长率')
-          ])
+    createVNode('table', {}, [
+      createVNode(
+        'thead',
+        {},
+        createVNode('tr', {}, [
+          createVNode('th', {}, '地区'),
+          createVNode('th', {}, '销售额'),
+          createVNode('th', {}, '增长率'),
+        ]),
+      ),
+      createVNode(
+        'tbody',
+        {},
+        props.data.map((item) =>
+          createVNode('tr', { key: item.region }, [
+            createVNode('td', {}, item.region),
+            createVNode('td', {}, `¥${item.sales.toLocaleString()}`),
+            createVNode('td', {}, [
+              createVNode(
+                'span',
+                {
+                  class: item.growth >= 10 ? 'growth-high' : 'growth-low',
+                },
+                `${item.growth >= 0 ? '+' : ''}${item.growth}%`,
+              ),
+            ]),
+          ]),
         ),
-        createVNode('tbody', {},
-          props.data.map(item =>
-            createVNode('tr', { key: item.region }, [
-              createVNode('td', {}, item.region),
-              createVNode('td', {}, `¥${item.sales.toLocaleString()}`),
-              createVNode('td', {}, [
-                createVNode('span', { 
-                  class: item.growth >= 10 ? 'growth-high' : 'growth-low'
-                }, `${item.growth >= 0 ? '+' : ''}${item.growth}%`)
-              ])
-            ])
-          )
-        )
-      ]
-    )
+      ),
+    ]),
   ]);
 }
 
@@ -226,106 +251,112 @@ function Dashboard() {
     createVNode('header', { class: 'dashboard-header' }, [
       createVNode('h1', {}, '数据可视化仪表盘'),
       createVNode('div', { class: 'header-actions' }, [
-        createVNode('select', { 
-          class: 'time-selector',
-          value: store.timeRange.value,
-          onchange: (e: any) => store.timeRange.value = e.target.value
-        },
-          timeRangeOptions.map(opt => 
-            createVNode('option', { value: opt }, 
-              opt === 'week' ? '本周' : opt === 'month' ? '本月' : '本年'
-            )
-          )
+        createVNode(
+          'select',
+          {
+            class: 'time-selector',
+            value: store.timeRange.value,
+            onchange: (e: any) => (store.timeRange.value = e.target.value),
+          },
+          timeRangeOptions.map((opt) =>
+            createVNode(
+              'option',
+              { value: opt },
+              opt === 'week' ? '本周' : opt === 'month' ? '本月' : '本年',
+            ),
+          ),
         ),
-        createVNode('button', { class: 'refresh-btn' }, '🔄 刷新')
-      ])
+        createVNode('button', { class: 'refresh-btn' }, '🔄 刷新'),
+      ]),
     ]),
-    
+
     createVNode('div', { class: 'stats-row' }, [
-      createVNode(StatCard, { 
-        title: '总销售额', 
+      createVNode(StatCard, {
+        title: '总销售额',
         value: `¥${store.totalSales.value.toLocaleString()}`,
         change: 12.5,
         icon: '💰',
-        color: '#667eea'
+        color: '#667eea',
       }),
-      createVNode(StatCard, { 
-        title: '总利润', 
+      createVNode(StatCard, {
+        title: '总利润',
         value: `¥${store.totalProfit.value.toLocaleString()}`,
         change: 8.3,
         icon: '📈',
-        color: '#764ba2'
+        color: '#764ba2',
       }),
-      createVNode(StatCard, { 
-        title: '平均增长率', 
+      createVNode(StatCard, {
+        title: '平均增长率',
         value: `${store.avgGrowth.value}%`,
         change: 2.1,
         icon: '📊',
-        color: '#43e97b'
+        color: '#43e97b',
       }),
-      createVNode(StatCard, { 
-        title: '活跃地区', 
+      createVNode(StatCard, {
+        title: '活跃地区',
         value: store.regionData.value.length,
         icon: '🌍',
-        color: '#4facfe'
-      })
+        color: '#4facfe',
+      }),
     ]),
 
     createVNode('div', { class: 'charts-grid' }, [
       createVNode('div', { class: 'chart-card large' }, [
         createVNode('h3', { class: 'chart-title' }, '销售趋势'),
-        createVNode(LineChart, { data: store.salesData.value })
+        createVNode(LineChart, { data: store.salesData.value }),
       ]),
       createVNode('div', { class: 'chart-card' }, [
         createVNode('h3', { class: 'chart-title' }, '产品分类占比'),
-        createVNode(PieChart, { data: store.categoryData.value })
-      ])
+        createVNode(PieChart, { data: store.categoryData.value }),
+      ]),
     ]),
 
     createVNode('div', { class: 'charts-grid' }, [
       createVNode('div', { class: 'chart-card' }, [
         createVNode('h3', { class: 'chart-title' }, '地区销售额'),
-        createVNode(BarChart, { 
-          data: store.regionData.value.map(item => ({
+        createVNode(BarChart, {
+          data: store.regionData.value.map((item) => ({
             label: item.region,
             value: item.sales,
-            color: '#667eea'
-          }))
-        })
+            color: '#667eea',
+          })),
+        }),
       ]),
       createVNode('div', { class: 'chart-card' }, [
         createVNode('h3', { class: 'chart-title' }, '地区详情'),
-        createVNode(RegionTable, { data: store.regionData.value })
-      ])
+        createVNode(RegionTable, { data: store.regionData.value }),
+      ]),
     ]),
 
     createVNode('div', { class: 'data-table-section' }, [
       createVNode('h3', { class: 'section-title' }, '详细数据'),
       createVNode('table', { class: 'detail-table' }, [
-        createVNode('thead', {},
+        createVNode(
+          'thead',
+          {},
           createVNode('tr', {}, [
             createVNode('th', {}, '月份'),
             createVNode('th', {}, '销售额'),
             createVNode('th', {}, '利润'),
             createVNode('th', {}, '利润率'),
-            createVNode('th', {}, '操作')
-          ])
+            createVNode('th', {}, '操作'),
+          ]),
         ),
-        createVNode('tbody', {},
-          store.salesData.value.map(item =>
+        createVNode(
+          'tbody',
+          {},
+          store.salesData.value.map((item) =>
             createVNode('tr', { key: item.month }, [
               createVNode('td', {}, item.month),
               createVNode('td', {}, `¥${item.sales.toLocaleString()}`),
               createVNode('td', {}, `¥${item.profit.toLocaleString()}`),
               createVNode('td', {}, `${((item.profit / item.sales) * 100).toFixed(1)}%`),
-              createVNode('td', {}, [
-                createVNode('button', { class: 'table-btn' }, '查看详情')
-              ])
-            ])
-          )
-        )
-      ])
-    ])
+              createVNode('td', {}, [createVNode('button', { class: 'table-btn' }, '查看详情')]),
+            ]),
+          ),
+        ),
+      ]),
+    ]),
   ]);
 }
 
@@ -388,11 +419,7 @@ th { background: #f8f9fa; font-weight: 600; color: #333; }
 .table-btn { padding: 6px 12px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; }
 `;
 
-export {
-  Dashboard,
-  createDashboardStore,
-  DASHBOARD_STYLES
-};
+export { Dashboard, createDashboardStore, DASHBOARD_STYLES };
 
 if (typeof require !== 'undefined' && require.main === module) {
   console.log('🧪 LytJS 数据可视化应用实战案例');

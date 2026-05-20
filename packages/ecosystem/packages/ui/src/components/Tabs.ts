@@ -12,7 +12,13 @@
 import { defineComponent } from '@lytjs/component';
 import { createVNode, createTextVNode, type VNode } from '@lytjs/vdom';
 import { signal } from '@lytjs/reactivity';
-import { getTablistA11yProps, getTabA11yProps, getTabpanelA11yProps, getButtonA11yProps, mergeA11yProps } from '@lytjs/common-a11y';
+import {
+  getTablistA11yProps,
+  getTabA11yProps,
+  getTabpanelA11yProps,
+  getButtonA11yProps,
+  mergeA11yProps,
+} from '@lytjs/common-a11y';
 import type { TabPaneSetupProps, TabsSetupProps, TabPaneSlots, TabsSlots } from './types';
 
 export type TabsType = '' | 'card' | 'border-card';
@@ -89,7 +95,10 @@ export const Tabs = defineComponent({
       if (!defaultSlotContent || defaultSlotContent.length === 0) return [];
 
       return defaultSlotContent
-        .filter((vnode: VNode) => vnode && (vnode as unknown as { type: { name?: string } }).type?.name === 'LytTabPane')
+        .filter(
+          (vnode: VNode) =>
+            vnode && (vnode as unknown as { type: { name?: string } }).type?.name === 'LytTabPane',
+        )
         .map((vnode: VNode) => ({
           props: (vnode as unknown as { props: TabPaneSetupProps }).props,
           children: (vnode as unknown as { children: VNode[] }).children,
@@ -97,7 +106,7 @@ export const Tabs = defineComponent({
     };
 
     const getEnabledPanes = (panes: TabPane[]) => {
-      return panes.filter(pane => !pane.props.disabled);
+      return panes.filter((pane) => !pane.props.disabled);
     };
 
     const announce = (message: string) => {
@@ -107,15 +116,15 @@ export const Tabs = defineComponent({
 
     const handleTabClick = (pane: TabPane, index: number) => {
       if (pane.props.disabled) return;
-      
+
       const oldIndex = activeIndex();
       activeIndex.set(index);
-      
+
       if (oldIndex !== index) {
         const panes = getPanes();
         announce(`已切换到标签页 ${index + 1}：${pane.props.label}，共 ${panes.length} 个标签页`);
       }
-      
+
       p.onChange?.(pane.props.name);
       p.onTabClick?.(pane, index);
 
@@ -123,7 +132,9 @@ export const Tabs = defineComponent({
       setTimeout(() => {
         const tabList = tabListRef();
         if (tabList) {
-          const activeTab = tabList.querySelector('[role="tab"][aria-selected="true"]') as HTMLElement;
+          const activeTab = tabList.querySelector(
+            '[role="tab"][aria-selected="true"]',
+          ) as HTMLElement;
           activeTab?.focus();
         }
       }, 10);
@@ -132,11 +143,11 @@ export const Tabs = defineComponent({
     const handleKeydown = (e: KeyboardEvent) => {
       const panes = getPanes();
       const enabledPanes = getEnabledPanes(panes);
-      
+
       if (enabledPanes.length === 0) return;
 
       let newIndex = activeIndex();
-      
+
       switch (e.key) {
         case 'ArrowRight':
         case 'ArrowDown':
@@ -162,7 +173,9 @@ export const Tabs = defineComponent({
           break;
         case 'Home':
           e.preventDefault();
-          newIndex = panes.findIndex(pane => pane != null && pane.props != null && !pane.props.disabled);
+          newIndex = panes.findIndex(
+            (pane) => pane != null && pane.props != null && !pane.props.disabled,
+          );
           break;
         case 'End':
           e.preventDefault();
@@ -210,8 +223,8 @@ export const Tabs = defineComponent({
     const handleTabRemove = (pane: TabPane, e: Event) => {
       e.stopPropagation();
       const panes = getPanes();
-      const index = panes.findIndex(p => p.props.name === pane.props.name);
-      
+      const index = panes.findIndex((p) => p.props.name === pane.props.name);
+
       if (index > 0) {
         const prevPane = panes[index - 1];
         activeIndex.set(index - 1);
@@ -227,7 +240,7 @@ export const Tabs = defineComponent({
       } else {
         announce(`已关闭标签页 ${pane.props.label}，现在没有标签页`);
       }
-      
+
       p.onTabRemove?.(pane.props.name);
     };
 
@@ -270,17 +283,15 @@ export const Tabs = defineComponent({
     return () => {
       const panes = getPanes();
       const currentName = p.modelValue || panes[0]?.props.name;
-      const currentIndex = panes.findIndex(pane => pane.props.name === currentName);
-      
+      const currentIndex = panes.findIndex((pane) => pane.props.name === currentName);
+
       if (currentIndex !== -1 && currentIndex !== activeIndex()) {
         activeIndex.set(currentIndex);
       }
 
-      const tabsClass = [
-        'lyt-tabs',
-        `lyt-tabs--${p.type || 'normal'}`,
-        p.class,
-      ].filter(Boolean).join(' ');
+      const tabsClass = ['lyt-tabs', `lyt-tabs--${p.type || 'normal'}`, p.class]
+        .filter(Boolean)
+        .join(' ');
 
       const tabListId = tablistId();
 
@@ -289,7 +300,9 @@ export const Tabs = defineComponent({
         const isDraggable = p.draggable;
 
         const tabChildren: VNode[] = [
-          createVNode('span', { class: 'lyt-tabs__label' }, [createTextVNode(String(pane.props.label))]),
+          createVNode('span', { class: 'lyt-tabs__label' }, [
+            createTextVNode(String(pane.props.label)),
+          ]),
         ];
 
         if (pane.props.closable || p.closable) {
@@ -297,10 +310,16 @@ export const Tabs = defineComponent({
             ariaLabel: `关闭标签页 ${pane.props.label}`,
             disabled: pane.props.disabled,
           });
-          tabChildren.push(createVNode('span', mergeA11yProps(closeBtnProps, {
-            class: 'lyt-tabs__close',
-            onClick: (e: Event) => handleTabRemove(pane, e),
-          }), [createTextVNode('×')]));
+          tabChildren.push(
+            createVNode(
+              'span',
+              mergeA11yProps(closeBtnProps, {
+                class: 'lyt-tabs__close',
+                onClick: (e: Event) => handleTabRemove(pane, e),
+              }),
+              [createTextVNode('×')],
+            ),
+          );
         }
 
         const tabId = `${p.id || tabListId}-tab-${pane.props.name}`;
@@ -313,47 +332,68 @@ export const Tabs = defineComponent({
           controls: panelId,
         });
 
-        return createVNode('div', mergeA11yProps(tabA11yProps, {
-          key: String(pane.props.name),
-          class: [
-            'lyt-tabs__item',
-            isActive ? 'lyt-tabs__item--active' : '',
-            pane.props.disabled ? 'lyt-tabs__item--disabled' : '',
-            dragState().dropIndex === index ? 'lyt-tabs__item--drop' : '',
-          ].filter(Boolean).join(' '),
-          draggable: isDraggable,
-          onClick: () => handleTabClick(pane, index),
-          onKeydown: handleKeydown,
-          onDragStart: () => handleDragStart(index),
-          onDragOver: (e: DragEvent) => { e.preventDefault(); handleDragOver(index); },
-          onDragEnd: handleDragEnd,
-        }), tabChildren);
+        return createVNode(
+          'div',
+          mergeA11yProps(tabA11yProps, {
+            key: String(pane.props.name),
+            class: [
+              'lyt-tabs__item',
+              isActive ? 'lyt-tabs__item--active' : '',
+              pane.props.disabled ? 'lyt-tabs__item--disabled' : '',
+              dragState().dropIndex === index ? 'lyt-tabs__item--drop' : '',
+            ]
+              .filter(Boolean)
+              .join(' '),
+            draggable: isDraggable,
+            onClick: () => handleTabClick(pane, index),
+            onKeydown: handleKeydown,
+            onDragStart: () => handleDragStart(index),
+            onDragOver: (e: DragEvent) => {
+              e.preventDefault();
+              handleDragOver(index);
+            },
+            onDragEnd: handleDragEnd,
+          }),
+          tabChildren,
+        );
       });
 
       if (p.addable || p.editable) {
         const addBtnProps = getButtonA11yProps({
           ariaLabel: '添加新标签页',
         });
-        tabItems.push(createVNode('div', mergeA11yProps(addBtnProps, {
-          class: 'lyt-tabs__add-btn',
-          onClick: handleTabAdd,
-        }), [createTextVNode('+')]));
+        tabItems.push(
+          createVNode(
+            'div',
+            mergeA11yProps(addBtnProps, {
+              class: 'lyt-tabs__add-btn',
+              onClick: handleTabAdd,
+            }),
+            [createTextVNode('+')],
+          ),
+        );
       }
 
-      const content = panes.find(pane => pane.props.name === currentName);
+      const content = panes.find((pane) => pane.props.name === currentName);
       const panelId = `${p.id || tabListId}-panel-${content?.props.name || 'default'}`;
 
-      const tabpanelProps = content ? getTabpanelA11yProps({
-        id: panelId,
-        labelledBy: `${p.id || tabListId}-tab-${content.props.name}`,
-      }) : {};
+      const tabpanelProps = content
+        ? getTabpanelA11yProps({
+            id: panelId,
+            labelledBy: `${p.id || tabListId}-tab-${content.props.name}`,
+          })
+        : {};
 
       const contentPane = content
-        ? createVNode('div', mergeA11yProps(tabpanelProps, { 
-            class: 'lyt-tabs__pane',
-            id: panelId,
-            role: 'tabpanel',
-          }), content.children)
+        ? createVNode(
+            'div',
+            mergeA11yProps(tabpanelProps, {
+              class: 'lyt-tabs__pane',
+              id: panelId,
+              role: 'tabpanel',
+            }),
+            content.children,
+          )
         : createVNode('div', { style: 'display: none;', id: panelId }, []);
 
       const tablistA11yProps = getTablistA11yProps({
@@ -362,26 +402,36 @@ export const Tabs = defineComponent({
         ariaDescribedBy: p.ariaDescribedBy,
       });
 
-      return createVNode('div', mergeA11yProps(tablistA11yProps, { 
-        class: tabsClass,
-        onKeydown: handleKeydown,
-      }), [
-        createVNode('div', {
-          ref: (el: HTMLElement) => tabListRef.set(el),
-          class: 'lyt-tabs__header',
-          role: 'tablist',
-          'aria-label': p.ariaLabel || '标签页',
-        }, [
-          createVNode('div', { class: 'lyt-tabs__nav' }, tabItems),
-        ]),
-        createVNode('div', { class: 'lyt-tabs__content' }, [contentPane]),
-        createVNode('div', {
-          class: 'lyt-tabs__sro',
-          role: 'status',
-          'aria-live': 'polite',
-          'aria-atomic': 'true',
-        }, announcement()),
-      ]);
+      return createVNode(
+        'div',
+        mergeA11yProps(tablistA11yProps, {
+          class: tabsClass,
+          onKeydown: handleKeydown,
+        }),
+        [
+          createVNode(
+            'div',
+            {
+              ref: (el: HTMLElement) => tabListRef.set(el),
+              class: 'lyt-tabs__header',
+              role: 'tablist',
+              'aria-label': p.ariaLabel || '标签页',
+            },
+            [createVNode('div', { class: 'lyt-tabs__nav' }, tabItems)],
+          ),
+          createVNode('div', { class: 'lyt-tabs__content' }, [contentPane]),
+          createVNode(
+            'div',
+            {
+              class: 'lyt-tabs__sro',
+              role: 'status',
+              'aria-live': 'polite',
+              'aria-atomic': 'true',
+            },
+            announcement(),
+          ),
+        ],
+      );
     };
   },
 });

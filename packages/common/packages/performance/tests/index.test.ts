@@ -390,9 +390,7 @@ describe('@lytjs/common-performance', () => {
           duration: 10,
         });
         expect(onEntry).toHaveBeenCalledTimes(1);
-        expect(onEntry).toHaveBeenCalledWith(
-          expect.objectContaining({ componentName: 'A' }),
-        );
+        expect(onEntry).toHaveBeenCalledWith(expect.objectContaining({ componentName: 'A' }));
       });
 
       it('onStatsUpdate 应在统计更新时被调用', () => {

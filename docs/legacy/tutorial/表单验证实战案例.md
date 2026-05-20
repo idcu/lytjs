@@ -133,7 +133,7 @@ export const password = (message = '密码强度不足'): ValidationRule => ({
 
 export const confirmed = (
   getTargetValue: () => string,
-  message = '两次输入的密码不一致'
+  message = '两次输入的密码不一致',
 ): ValidationRule => ({
   validator: (value: unknown) => {
     return value === getTargetValue();
@@ -143,7 +143,7 @@ export const confirmed = (
 
 export const custom = (
   validatorFn: (value: unknown) => boolean,
-  message: string
+  message: string,
 ): ValidationRule => ({
   validator: validatorFn,
   message,
@@ -375,7 +375,7 @@ export const ValidationMessage = defineComponent({
 
     const message = computed(() => {
       if (!props.touched) return '';
-      return props.error || (props.successMessage || '');
+      return props.error || props.successMessage || '';
     });
 
     return {
@@ -455,13 +455,7 @@ import { defineComponent } from '@lytjs/component';
 import { useForm } from './composables/useForm';
 import { FormInput } from './components/FormInput';
 import { FormButton } from './components/FormButton';
-import {
-  required,
-  email,
-  minLength,
-  password,
-  confirmed,
-} from './validators/rules';
+import { required, email, minLength, password, confirmed } from './validators/rules';
 
 export const RegistrationForm = defineComponent({
   name: 'RegistrationForm',
@@ -490,10 +484,7 @@ export const RegistrationForm = defineComponent({
           name: 'phone',
           label: '手机号',
           initialValue: '',
-          rules: [
-            required('请输入手机号'),
-            pattern(/^1[3-9]\d{9}$/, '请输入有效的手机号码'),
-          ],
+          rules: [required('请输入手机号'), pattern(/^1[3-9]\d{9}$/, '请输入有效的手机号码')],
         },
         {
           name: 'password',
@@ -518,10 +509,7 @@ export const RegistrationForm = defineComponent({
           name: 'agreeTerms',
           label: '我已阅读并同意',
           initialValue: '',
-          rules: [
-            (value: unknown) => value === true || value === 'true',
-            '请勾选同意条款',
-          ] as any,
+          rules: [(value: unknown) => value === true || value === 'true', '请勾选同意条款'] as any,
         },
       ],
       onSubmit: async (values) => {
@@ -540,7 +528,7 @@ export const RegistrationForm = defineComponent({
         () => passwordField.value(),
         (newValue) => {
           passwordSignal.set(newValue);
-        }
+        },
       );
     }
 
@@ -837,17 +825,17 @@ watch(value, () => {
 
 ## 📊 验证规则一览
 
-| 规则 | 说明 | 示例 |
-|------|------|------|
-| `required` | 必填验证 | `required('不能为空')` |
-| `email` | 邮箱格式 | `email()` |
-| `phone` | 手机号格式 | `phone()` |
-| `minLength` | 最小长度 | `minLength(8)` |
-| `maxLength` | 最大长度 | `maxLength(20)` |
-| `pattern` | 正则匹配 | `pattern(/^\d+$/, '仅数字')` |
-| `password` | 密码强度 | `password()` |
-| `confirmed` | 确认匹配 | `confirmed(() => passwordValue, '不一致')` |
-| `custom` | 自定义规则 | `custom(v => v > 0, '必须正数')` |
+| 规则        | 说明       | 示例                                       |
+| ----------- | ---------- | ------------------------------------------ |
+| `required`  | 必填验证   | `required('不能为空')`                     |
+| `email`     | 邮箱格式   | `email()`                                  |
+| `phone`     | 手机号格式 | `phone()`                                  |
+| `minLength` | 最小长度   | `minLength(8)`                             |
+| `maxLength` | 最大长度   | `maxLength(20)`                            |
+| `pattern`   | 正则匹配   | `pattern(/^\d+$/, '仅数字')`               |
+| `password`  | 密码强度   | `password()`                               |
+| `confirmed` | 确认匹配   | `confirmed(() => passwordValue, '不一致')` |
+| `custom`    | 自定义规则 | `custom(v => v > 0, '必须正数')`           |
 
 ## 🚀 运行项目
 

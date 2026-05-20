@@ -130,39 +130,26 @@ describe('h', () => {
   describe('嵌套 VNode', () => {
     it('should create deeply nested VNodes', () => {
       const vnode = h('div', null, [
-        h('section', null, [
-          h('article', null, [
-            h('p', null, 'deep content'),
-          ]),
-        ]),
+        h('section', null, [h('article', null, [h('p', null, 'deep content')])]),
       ]);
       expect(vnode.type).toBe('div');
       expect((vnode.children as any[])[0].type).toBe('section');
     });
 
     it('should handle mixed children types', () => {
-      const vnode = h('div', null, [
-        'text node',
-        h('span', null, 'child'),
-        null,
-        h('br'),
-      ]);
+      const vnode = h('div', null, ['text node', h('span', null, 'child'), null, h('br')]);
       expect((vnode.children as any[]).length).toBe(4);
     });
 
     it('should handle Fragment as child', () => {
-      const vnode = h('div', null, [
-        h(Fragment, null, [h('p'), h('p')]),
-      ]);
+      const vnode = h('div', null, [h(Fragment, null, [h('p'), h('p')])]);
       expect((vnode.children as any[])[0].type).toBe(Fragment);
     });
   });
 
   describe('特殊元素类型', () => {
     it('should handle SVG elements', () => {
-      const vnode = h('svg', null, [
-        h('circle', { cx: 50, cy: 50, r: 40 }),
-      ]);
+      const vnode = h('svg', null, [h('circle', { cx: 50, cy: 50, r: 40 })]);
       expect(vnode.type).toBe('svg');
     });
 
@@ -179,7 +166,7 @@ describe('h', () => {
 
     it('should handle void elements', () => {
       const voidElements = ['br', 'hr', 'img', 'input', 'meta', 'link'];
-      voidElements.forEach(tag => {
+      voidElements.forEach((tag) => {
         const vnode = h(tag);
         expect(vnode.type).toBe(tag);
       });

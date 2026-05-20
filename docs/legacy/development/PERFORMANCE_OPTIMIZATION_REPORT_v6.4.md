@@ -25,17 +25,17 @@
 ```typescript
 export class ObjectPool<T> {
   // 配置选项
-  maxSize: number;           // 最大池大小
-  create: () => T;         // 对象创建函数
-  reset?: (obj: T) => void;    // 对象重置函数
+  maxSize: number; // 最大池大小
+  create: () => T; // 对象创建函数
+  reset?: (obj: T) => void; // 对象重置函数
   validate?: (obj: T) => boolean; // 对象验证函数
-  warmupSize?: number;     // 预热数量
+  warmupSize?: number; // 预热数量
 
   // 核心方法
-  warmup(count: number): void;      // 预分配对象
-  acquire(): T;                   // 获取对象
-  release(obj: T): void;          // 释放对象
-  getStats(): ObjectPoolStats;  // 获取统计信息
+  warmup(count: number): void; // 预分配对象
+  acquire(): T; // 获取对象
+  release(obj: T): void; // 释放对象
+  getStats(): ObjectPoolStats; // 获取统计信息
 }
 ```
 
@@ -90,17 +90,17 @@ console.log(vnodePool.getStats());
 #### 使用示例
 
 ```typescript
-import { 
+import {
   startMemoryLeakDetection,
   trackObject,
   releaseObject,
-  getMemoryLeakDetector
+  getMemoryLeakDetector,
 } from '@lytjs/common-memory';
 
 // 启动检测
 startMemoryLeakDetection({
-  checkInterval: 5000,      // 5秒检查一次
-  warningThreshold: 100,       // 100个对象时警告
+  checkInterval: 5000, // 5秒检查一次
+  warningThreshold: 100, // 100个对象时警告
   captureStackTrace: true,
 });
 
@@ -157,26 +157,31 @@ export function extractStaticText(node: TemplateChildNode): string;
 
 #### 优化效果
 
-**优化前：
+\*\*优化前：
+
 ```html
 <div>
-  <h1>Welcome</h1>  <!-- 静态 -->
-  <p>Static content</p>  <!-- 静态 -->
-  <div>{{ dynamic }}</div>  <!-- 动态 -->
+  <h1>Welcome</h1>
+  <!-- 静态 -->
+  <p>Static content</p>
+  <!-- 静态 -->
+  <div>{{ dynamic }}</div>
+  <!-- 动态 -->
 </div>
 ```
 
 优化后：
+
 - 静态子树 `<h1>Welcome</h1><p>Static content</p>` 被提取为常量
 - 运行时只需处理动态部分
 
-性能提升 **30-50%
+性能提升 \*\*30-50%
 
 ### 2.2 Tree Shaking 增强
 
 - 优化模块导出结构
 - 更好的静态分析支持
-- 减小最终打包体积 **15-20%
+- 减小最终打包体积 \*\*15-20%
 
 ---
 
@@ -184,22 +189,19 @@ export function extractStaticText(node: TemplateChildNode): string;
 
 ### 3.1 测试覆盖
 
-| 测试类型 | 文件 | 说明 |
-|---------|------|------|
-| 渲染性能 | `render.bench.ts` | 组件渲染基准测试 |
-| 更新性能 | `update.bench.ts` | 状态更新性能测试 |
-| 内存性能 | `memory.bench.ts` | 内存使用基准测试 |
-| 批量优化 | `batch-optimization.bench.ts` | 批量操作性能测试 |
-| Vapor 列表 | `vapor-list.bench.ts` | Vapor 模式列表性能 |
+| 测试类型   | 文件                          | 说明               |
+| ---------- | ----------------------------- | ------------------ |
+| 渲染性能   | `render.bench.ts`             | 组件渲染基准测试   |
+| 更新性能   | `update.bench.ts`             | 状态更新性能测试   |
+| 内存性能   | `memory.bench.ts`             | 内存使用基准测试   |
+| 批量优化   | `batch-optimization.bench.ts` | 批量操作性能测试   |
+| Vapor 列表 | `vapor-list.bench.ts`         | Vapor 模式列表性能 |
 
 ### 3.2 性能数据收集
 
 ```typescript
 // 性能回归测试框架提供：
-- 多场景性能数据收集
-- 历史数据对比
-- 性能变化趋势分析
-- 性能回归检测与告警
+-多场景性能数据收集 - 历史数据对比 - 性能变化趋势分析 - 性能回归检测与告警;
 ```
 
 ---
@@ -208,32 +210,32 @@ export function extractStaticText(node: TemplateChildNode): string;
 
 ### 4.1 渲染性能
 
-| 指标 | v6.3 | v6.4 | 提升 |
-|-----|------|------|
-| 简单组件渲染 | 10000 ops/s | 13500 ops/s | +35% |
-| 复杂组件树渲染 | 2000 ops/s | 2600 ops/s | +30% |
-| Vapor 模式列表 | 800 ops/s | 1040 ops/s | +30% |
+| 指标           | v6.3        | v6.4        | 提升 |
+| -------------- | ----------- | ----------- | ---- |
+| 简单组件渲染   | 10000 ops/s | 13500 ops/s | +35% |
+| 复杂组件树渲染 | 2000 ops/s  | 2600 ops/s  | +30% |
+| Vapor 模式列表 | 800 ops/s   | 1040 ops/s  | +30% |
 
 ### 4.2 更新性能
 
-| 指标 | v6.3 | v6.4 | 提升 |
-|-----|------|------|
-| 单节点更新 | 150000 ops/s | 180000 ops/s | +20% |
-| 批量更新 (100节点) | 1200 ops/s | 1500 ops/s | +25% |
+| 指标               | v6.3         | v6.4         | 提升 |
+| ------------------ | ------------ | ------------ | ---- |
+| 单节点更新         | 150000 ops/s | 180000 ops/s | +20% |
+| 批量更新 (100节点) | 1200 ops/s   | 1500 ops/s   | +25% |
 
 ### 4.3 内存占用
 
-| 指标 | v6.3 | v6.4 | 降低 |
-|-----|------|------|
-| 峰值内存 (10k VNodes) | 25MB | 18MB | -28% |
-| GC 频率 (10分钟) | 120次 | 45次 | -62.5% |
-| 长期运行内存增长 | 15MB/h | 3MB/h | -80% |
+| 指标                  | v6.3   | v6.4  | 降低   |
+| --------------------- | ------ | ----- | ------ |
+| 峰值内存 (10k VNodes) | 25MB   | 18MB  | -28%   |
+| GC 频率 (10分钟)      | 120次  | 45次  | -62.5% |
+| 长期运行内存增长      | 15MB/h | 3MB/h | -80%   |
 
 ### 4.4 包体积
 
-| 指标 | v6.3 | v6.4 | 减小 |
-|-----|------|------|
-| 核心包 (gzip) | 8.2KB | 7.0KB | -14.6% |
+| 指标          | v6.3   | v6.4   | 减小   |
+| ------------- | ------ | ------ | ------ |
+| 核心包 (gzip) | 8.2KB  | 7.0KB  | -14.6% |
 | 完整包 (gzip) | 15.5KB | 13.2KB | -14.8% |
 
 ---
@@ -297,11 +299,13 @@ if (__DEV__) {
 ## 7. 未来优化方向
 
 ### 7.1 短期 (v6.5)
+
 - 更多编译时优化
 - 服务端渲染优化
 - 元框架集成
 
 ### 7.2 长期 (v7.0)
+
 - WebAssembly 编译支持
 - AI 辅助优化
 - 多语言支持
@@ -321,4 +325,4 @@ v6.4 版本成功实现了：
 ---
 
 **报告生成时间: 2026-05-18
-**维护者**: LytJS Team
+**维护者\*\*: LytJS Team

@@ -121,7 +121,7 @@ function parseSourceFile(filePath: string): APIDoc[] {
     filePath,
     fs.readFileSync(filePath, 'utf-8'),
     ts.ScriptTarget.Latest,
-    true
+    true,
   );
 
   const docs: APIDoc[] = [];
@@ -215,9 +215,14 @@ function extractDocFromNode(node: ts.Node, jsDoc: ts.JSDoc[]): APIDoc | null {
  * Get the name of a node
  */
 function getNodeName(node: ts.Node): string | null {
-  if (ts.isFunctionDeclaration(node) || ts.isInterfaceDeclaration(node) ||
-      ts.isClassDeclaration(node) || ts.isEnumDeclaration(node) ||
-      ts.isTypeAliasDeclaration(node) || ts.isVariableStatement(node)) {
+  if (
+    ts.isFunctionDeclaration(node) ||
+    ts.isInterfaceDeclaration(node) ||
+    ts.isClassDeclaration(node) ||
+    ts.isEnumDeclaration(node) ||
+    ts.isTypeAliasDeclaration(node) ||
+    ts.isVariableStatement(node)
+  ) {
     const name = (node as any).name;
     return name ? name.text : null;
   }
@@ -250,7 +255,7 @@ function extractDescription(jsDoc: ts.JSDoc[]): string {
     return doc.comment;
   }
   if (Array.isArray(doc.comment)) {
-    return doc.comment.map(c => c.text).join('');
+    return doc.comment.map((c) => c.text).join('');
   }
   return '';
 }
@@ -515,7 +520,9 @@ function generateDocMarkdown(doc: APIDoc): string[] {
     for (const param of doc.parameters) {
       const optional = param.optional ? '是' : '否';
       const defaultVal = param.defaultValue || '-';
-      lines.push(`| ${param.name} | \`${param.type}\` | ${param.description} | ${optional} | ${defaultVal} |`);
+      lines.push(
+        `| ${param.name} | \`${param.type}\` | ${param.description} | ${optional} | ${defaultVal} |`,
+      );
     }
     lines.push('');
   }

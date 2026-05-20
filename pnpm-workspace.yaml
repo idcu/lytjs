@@ -5,7 +5,7 @@ packages:
   - 'packages/ecosystem/packages/ssr-kit/packages/*'
   - 'packages/plugins/packages/*'
   - 'packages/tools/packages/*'
-  
+
   # 生态系统单包（已整合到功能域的除外）
   - 'packages/ecosystem/packages/ui'
   - 'packages/ecosystem/packages/store'

@@ -98,50 +98,87 @@ export const Tooltip = defineComponent({
 
     return () => {
       const children: VNode[] = [];
-      
+
       if (slots.default) {
-        children.push(createVNode('div', {
-          class: 'lyt-tooltip__trigger',
-          onMouseenter: handleMouseEnter,
-          onMouseleave: handleMouseLeave,
-          onClick: handleClick,
-          onFocus: handleFocus,
-          onBlur: handleBlur,
-        }, slots.default()));
+        children.push(
+          createVNode(
+            'div',
+            {
+              class: 'lyt-tooltip__trigger',
+              onMouseenter: handleMouseEnter,
+              onMouseleave: handleMouseLeave,
+              onClick: handleClick,
+              onFocus: handleFocus,
+              onBlur: handleBlur,
+            },
+            slots.default(),
+          ),
+        );
       }
 
       if (state.visible && !p.disabled) {
         const contentChildren: VNode[] = [];
-        
+
         if (p.showArrow) {
-          contentChildren.push(createVNode('div', {
-            class: 'lyt-tooltip__arrow',
-          }, []));
+          contentChildren.push(
+            createVNode(
+              'div',
+              {
+                class: 'lyt-tooltip__arrow',
+              },
+              [],
+            ),
+          );
         }
 
         if (p.content) {
-          contentChildren.push(createVNode('div', {
-            class: 'lyt-tooltip__content',
-          }, [createTextVNode(p.content)]));
+          contentChildren.push(
+            createVNode(
+              'div',
+              {
+                class: 'lyt-tooltip__content',
+              },
+              [createTextVNode(p.content)],
+            ),
+          );
         } else if (slots.content) {
-          contentChildren.push(createVNode('div', {
-            class: 'lyt-tooltip__content',
-          }, slots.content()));
+          contentChildren.push(
+            createVNode(
+              'div',
+              {
+                class: 'lyt-tooltip__content',
+              },
+              slots.content(),
+            ),
+          );
         }
 
-        children.push(createVNode('div', {
-          class: getTooltipClass(),
-          style: getTooltipStyle(),
-        }, contentChildren));
+        children.push(
+          createVNode(
+            'div',
+            {
+              class: getTooltipClass(),
+              style: getTooltipStyle(),
+            },
+            contentChildren,
+          ),
+        );
       }
 
-      return createVNode('div', mergeA11yProps({
-        id: p.id,
-        'aria-label': p.ariaLabel,
-        'aria-describedby': p.ariaDescribedBy,
-      }, {
-        class: 'lyt-tooltip-wrapper',
-      }), children);
+      return createVNode(
+        'div',
+        mergeA11yProps(
+          {
+            id: p.id,
+            'aria-label': p.ariaLabel,
+            'aria-describedby': p.ariaDescribedBy,
+          },
+          {
+            class: 'lyt-tooltip-wrapper',
+          },
+        ),
+        children,
+      );
     };
   },
 });

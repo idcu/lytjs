@@ -39,8 +39,7 @@ function createAuth(options: AuthOptions = {}): AuthInstance {
       } else {
         localStorage.removeItem(storageKey);
       }
-    } catch {
-    }
+    } catch {}
   }
 
   function login(user: User) {
@@ -132,7 +131,8 @@ function createAuth(options: AuthOptions = {}): AuthInstance {
 const pluginAuth = definePlugin({
   name: 'auth',
   version: '6.0.0',
-  description: 'LytJS official auth plugin for route authorization, permission checking, and role management',
+  description:
+    'LytJS official auth plugin for route authorization, permission checking, and role management',
   author: 'LytJS Team',
   keywords: ['lytjs', 'auth', 'authorization', 'permission', 'role'],
   schema: {

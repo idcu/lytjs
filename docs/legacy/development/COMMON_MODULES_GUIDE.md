@@ -5,7 +5,7 @@
 ## 目录
 
 - [核心原则](#核心原则)
-- [@lytjs/common-* 包速查](#lytjscommon-包速查)
+- [@lytjs/common-\* 包速查](#lytjscommon-包速查)
 - [常量使用规范](#常量使用规范)
 - [工具函数使用规范](#工具函数使用规范)
 - [类型使用规范](#类型使用规范)
@@ -22,53 +22,53 @@
 
 ---
 
-## @lytjs/common-* 包速查
+## @lytjs/common-\* 包速查
 
 ### 常量与类型
 
-| 包名 | 主要功能 | 常用导出 |
-|------|---------|---------|
-| `@lytjs/common-constants` | 通用常量 | `NOOP`, `EMPTY_FN`, `EMPTY_OBJ`, `EMPTY_ARR`, `EMPTY_STRING`, `TRUE`, `FALSE`, `PROTO_POLLUTION_KEYS` |
-| `@lytjs/shared-types` | 共享类型定义 | `DebuggerEvent`, `VNode`, `Component`, 类型工具函数 |
+| 包名                      | 主要功能     | 常用导出                                                                                              |
+| ------------------------- | ------------ | ----------------------------------------------------------------------------------------------------- |
+| `@lytjs/common-constants` | 通用常量     | `NOOP`, `EMPTY_FN`, `EMPTY_OBJ`, `EMPTY_ARR`, `EMPTY_STRING`, `TRUE`, `FALSE`, `PROTO_POLLUTION_KEYS` |
+| `@lytjs/shared-types`     | 共享类型定义 | `DebuggerEvent`, `VNode`, `Component`, 类型工具函数                                                   |
 
 ### 工具函数
 
-| 包名 | 主要功能 | 常用导出 |
-|------|---------|---------|
-| `@lytjs/common-is` | 类型检查 | `isString`, `isNumber`, `isBoolean`, `isObject`, `isArray`, `isFunction`, `isPlainObject`, `isNullish`, `hasOwn` |
-| `@lytjs/common-object` | 对象与数组工具 | `merge`, `deepMerge`, `deepClone`, `shallowEqual`, `deepEqual`, `pick`, `omit`, `unique`, `chunk`, `flatten`, `groupBy` |
-| `@lytjs/common-timing` | 定时与 Promise 工具 | `debounce`, `throttle`, `delay`, `retry`, `timeout`, `poll`, `TaskQueue` |
-| `@lytjs/common-string` | 字符串工具 | `camelize`, `capitalize`, `kebabCase` |
-| `@lytjs/common-path` | 路径工具 | 路径操作函数 |
-| `@lytjs/common-warn` | 警告与日志 | 警告和日志工具 |
-| `@lytjs/common-error` | 错误处理 | 错误处理工具 |
-| `@lytjs/common-assertions` | 类型断言 | `unsafeCast`, 类型安全的断言函数 |
+| 包名                       | 主要功能            | 常用导出                                                                                                                |
+| -------------------------- | ------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `@lytjs/common-is`         | 类型检查            | `isString`, `isNumber`, `isBoolean`, `isObject`, `isArray`, `isFunction`, `isPlainObject`, `isNullish`, `hasOwn`        |
+| `@lytjs/common-object`     | 对象与数组工具      | `merge`, `deepMerge`, `deepClone`, `shallowEqual`, `deepEqual`, `pick`, `omit`, `unique`, `chunk`, `flatten`, `groupBy` |
+| `@lytjs/common-timing`     | 定时与 Promise 工具 | `debounce`, `throttle`, `delay`, `retry`, `timeout`, `poll`, `TaskQueue`                                                |
+| `@lytjs/common-string`     | 字符串工具          | `camelize`, `capitalize`, `kebabCase`                                                                                   |
+| `@lytjs/common-path`       | 路径工具            | 路径操作函数                                                                                                            |
+| `@lytjs/common-warn`       | 警告与日志          | 警告和日志工具                                                                                                          |
+| `@lytjs/common-error`      | 错误处理            | 错误处理工具                                                                                                            |
+| `@lytjs/common-assertions` | 类型断言            | `unsafeCast`, 类型安全的断言函数                                                                                        |
 
 ### 其他工具
 
-| 包名 | 主要功能 |
-|------|---------|
-| `@lytjs/common-dom` | DOM 操作工具 |
-| `@lytjs/common-dom-helpers` | DOM 辅助工具 |
-| `@lytjs/common-vnode` | VNode 工具 |
-| `@lytjs/common-scheduler` | 调度器 |
-| `@lytjs/common-async-scheduler` | 异步调度器 |
-| `@lytjs/common-render-queue` | 渲染队列 |
-| `@lytjs/common-event-normalizer` | 事件标准化 |
-| `@lytjs/common-node-cache` | 节点缓存 |
-| `@lytjs/common-performance` | 性能工具 |
-| `@lytjs/common-transition-engine` | 过渡引擎 |
-| `@lytjs/common-algorithm` | 算法工具 |
-| `@lytjs/common-http` | HTTP 工具 |
-| `@lytjs/common-raf` | requestAnimationFrame 包装 |
-| `@lytjs/common-storage` | 存储工具 |
-| `@lytjs/common-validate` | 验证工具 |
-| `@lytjs/common-keyboard` | 键盘事件工具 |
-| `@lytjs/common-query` | 查询字符串工具 |
-| `@lytjs/common-a11y` | 无障碍工具 |
-| `@lytjs/common-cache` | 缓存工具 |
-| `@lytjs/common-events` | 事件工具 |
-| `@lytjs/common-security` | 安全工具 |
+| 包名                              | 主要功能                   |
+| --------------------------------- | -------------------------- |
+| `@lytjs/common-dom`               | DOM 操作工具               |
+| `@lytjs/common-dom-helpers`       | DOM 辅助工具               |
+| `@lytjs/common-vnode`             | VNode 工具                 |
+| `@lytjs/common-scheduler`         | 调度器                     |
+| `@lytjs/common-async-scheduler`   | 异步调度器                 |
+| `@lytjs/common-render-queue`      | 渲染队列                   |
+| `@lytjs/common-event-normalizer`  | 事件标准化                 |
+| `@lytjs/common-node-cache`        | 节点缓存                   |
+| `@lytjs/common-performance`       | 性能工具                   |
+| `@lytjs/common-transition-engine` | 过渡引擎                   |
+| `@lytjs/common-algorithm`         | 算法工具                   |
+| `@lytjs/common-http`              | HTTP 工具                  |
+| `@lytjs/common-raf`               | requestAnimationFrame 包装 |
+| `@lytjs/common-storage`           | 存储工具                   |
+| `@lytjs/common-validate`          | 验证工具                   |
+| `@lytjs/common-keyboard`          | 键盘事件工具               |
+| `@lytjs/common-query`             | 查询字符串工具             |
+| `@lytjs/common-a11y`              | 无障碍工具                 |
+| `@lytjs/common-cache`             | 缓存工具                   |
+| `@lytjs/common-events`            | 事件工具                   |
+| `@lytjs/common-security`          | 安全工具                   |
 
 ---
 
@@ -155,12 +155,12 @@ import type { SomeType } from '@lytjs/shared-types';
 
 ## 包依赖规则
 
-### @lytjs/common-* 包之间的依赖
+### @lytjs/common-\* 包之间的依赖
 
 - `@lytjs/common-*` 包之间可以相互依赖
 - 应避免循环依赖
 
-### 业务包对 @lytjs/common-* 的依赖
+### 业务包对 @lytjs/common-\* 的依赖
 
 - 所有业务包都可以依赖任意 `@lytjs/common-*` 包
 - 业务包之间不应直接相互依赖（除了明确的架构依赖）

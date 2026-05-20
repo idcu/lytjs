@@ -37,16 +37,16 @@
 
 ### 🔧 改进
 
-| 组件/模块 | 改进内容 | 性能影响 |
-|------------|----------|----------|
+| 组件/模块   | 改进内容      | 性能影响 |
+| ----------- | ------------- | -------- |
 | {COMPONENT} | {DESCRIPTION} | {IMPACT} |
 
 ---
 
 ### 🐛 问题修复
 
-| 问题 | 修复 | 贡献者 |
-|------|------|--------|
+| 问题       | 修复              | 贡献者         |
+| ---------- | ----------------- | -------------- |
 | {ISSUE_ID} | {FIX_DESCRIPTION} | @{CONTRIBUTOR} |
 
 ---
@@ -76,13 +76,17 @@
 ### 📦 安装更新
 
 \`\`\`bash
+
 # npm
+
 npm install @lytjs/core@{VERSION}
 
 # pnpm
+
 pnpm add @lytjs/core@{VERSION}
 
 # yarn
+
 yarn add @lytjs/core@{VERSION}
 \`\`\`
 
@@ -122,4 +126,4 @@ yarn add @lytjs/core@{VERSION}
 
 ---
 
-*关注我们: [Twitter]({TWITTER_URL}) | [GitHub]({GITHUB_URL})*
+_关注我们: [Twitter]({TWITTER_URL}) | [GitHub]({GITHUB_URL})_

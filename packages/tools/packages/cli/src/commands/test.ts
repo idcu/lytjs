@@ -20,27 +20,27 @@ export async function test(options: TestOptions = {}): Promise<void> {
     logger.error('No package.json found. Are you in a LytJS project directory?');
     process.exit(1);
   }
-  
+
   const pm = detectPackageManager();
   logger.info('Running tests...');
-  
+
   // Build the command
   const args = ['vitest'];
   if (options.watch === false) args.push('run');
   if (options.coverage) args.push('--coverage');
   if (options.grep) args.push('--grep', options.grep);
-  
+
   // Spawn the test process
   const child = spawn(pm === 'npm' ? 'npx' : pm, args, {
     stdio: 'inherit',
     shell: true,
   });
-  
+
   child.on('error', (error) => {
     logger.error(`Tests failed: ${error.message}`);
     process.exit(1);
   });
-  
+
   child.on('exit', (code) => {
     process.exit(code || 0);
   });

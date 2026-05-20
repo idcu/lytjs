@@ -64,7 +64,7 @@ describe('@lytjs/plugin-i18n', () => {
     it('应该支持自定义配置', () => {
       const i18n = pluginModule.createI18n({
         locale: 'en-US',
-        fallbackLocale: 'zh-CN'
+        fallbackLocale: 'zh-CN',
       });
       expect(i18n).toBeDefined();
     });
@@ -74,9 +74,9 @@ describe('@lytjs/plugin-i18n', () => {
         locale: 'test',
         messages: {
           test: {
-            hello: '你好'
-          }
-        }
+            hello: '你好',
+          },
+        },
       });
       expect(i18n.t('hello')).toBe('你好');
     });

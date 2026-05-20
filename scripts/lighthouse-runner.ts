@@ -1,6 +1,6 @@
 /**
  * LytJS Lighthouse 性能测试运行器
- * 
+ *
  * 用于运行 Lighthouse 性能测试并验证分数
  */
 
@@ -91,14 +91,14 @@ async function runLighthouseTest(reportPath: string): Promise<{
     const scoreTests = validateScores(result);
     const metricTests = validateMetrics(result);
 
-    const allPassed = [...scoreTests, ...metricTests].every(t => t.passed);
+    const allPassed = [...scoreTests, ...metricTests].every((t) => t.passed);
     const avgScore = scoreTests.reduce((sum, t) => sum + t.score, 0) / scoreTests.length;
 
     return {
       passed: allPassed,
       scoreTests,
       metricTests,
-      summary: `Performance Score: ${(avgScore * 100).toFixed(0)}% | Tests Passed: ${[...scoreTests, ...metricTests].filter(t => t.passed).length}/${scoreTests.length + metricTests.length}`,
+      summary: `Performance Score: ${(avgScore * 100).toFixed(0)}% | Tests Passed: ${[...scoreTests, ...metricTests].filter((t) => t.passed).length}/${scoreTests.length + metricTests.length}`,
     };
   } catch (error) {
     return {
@@ -123,13 +123,17 @@ function printTestResults(results: {
   console.log('📊 Category Scores:');
   for (const test of results.scoreTests) {
     const icon = test.passed ? '✅' : '❌';
-    console.log(`   ${icon} ${test.metric}: ${(test.score * 100).toFixed(0)}% (threshold: ${(test.threshold * 100).toFixed(0)}%)`);
+    console.log(
+      `   ${icon} ${test.metric}: ${(test.score * 100).toFixed(0)}% (threshold: ${(test.threshold * 100).toFixed(0)}%)`,
+    );
   }
 
   console.log('\n⏱️  Performance Metrics:');
   for (const test of results.metricTests) {
     const icon = test.passed ? '✅' : '❌';
-    console.log(`   ${icon} ${test.metric}: ${test.score.toFixed(2)}ms (threshold: ${test.threshold}ms)`);
+    console.log(
+      `   ${icon} ${test.metric}: ${test.score.toFixed(2)}ms (threshold: ${test.threshold}ms)`,
+    );
   }
 
   console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
@@ -142,11 +146,11 @@ export { runLighthouseTest, printTestResults, LighthouseResult, TestResult };
 
 if (require.main === module) {
   const reportPath = process.argv[2] || resolve(process.cwd(), 'lighthouse-report.json');
-  
+
   console.log(`\n🧪 LytJS Lighthouse Performance Test`);
   console.log(`📄 Loading report from: ${reportPath}\n`);
-  
-  runLighthouseTest(reportPath).then(results => {
+
+  runLighthouseTest(reportPath).then((results) => {
     printTestResults(results);
     process.exit(results.passed ? 0 : 1);
   });

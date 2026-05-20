@@ -122,13 +122,7 @@ describe('Plugin', () => {
       const plugin = { install };
       const app = createApp({ render: () => h('div') });
       app.use(plugin, 'option1', 'option2', { key: 'value' }, [1, 2, 3]);
-      expect(install).toHaveBeenCalledWith(
-        app,
-        'option1',
-        'option2',
-        { key: 'value' },
-        [1, 2, 3],
-      );
+      expect(install).toHaveBeenCalledWith(app, 'option1', 'option2', { key: 'value' }, [1, 2, 3]);
     });
 
     it('should pass no options to plugin', () => {
@@ -153,9 +147,9 @@ describe('Plugin', () => {
       const p3 = { install: vi.fn() };
       const p4 = { install: vi.fn() };
       const app = createApp({ render: () => h('div') });
-      
+
       app.use(p1).use(p2).use(p3).use(p4);
-      
+
       expect(p1.install).toHaveBeenCalled();
       expect(p2.install).toHaveBeenCalled();
       expect(p3.install).toHaveBeenCalled();
@@ -168,9 +162,9 @@ describe('Plugin', () => {
       const p2 = { install: () => order.push('p2') };
       const p3 = { install: () => order.push('p3') };
       const app = createApp({ render: () => h('div') });
-      
+
       app.use(p1).use(p2).use(p3);
-      
+
       expect(order).toEqual(['p1', 'p2', 'p3']);
     });
   });
@@ -180,11 +174,11 @@ describe('Plugin', () => {
       const install = vi.fn();
       const plugin = { install };
       const app = createApp({ render: () => h('div') });
-      
+
       app.use(plugin);
       app.use(plugin);
       app.use(plugin);
-      
+
       expect(install).toHaveBeenCalledTimes(1);
     });
 
@@ -194,10 +188,10 @@ describe('Plugin', () => {
       const plugin1 = { install: install1 };
       const plugin2 = { install: install2 };
       const app = createApp({ render: () => h('div') });
-      
+
       app.use(plugin1);
       app.use(plugin2);
-      
+
       expect(install1).toHaveBeenCalledTimes(1);
       expect(install2).toHaveBeenCalledTimes(1);
     });
@@ -213,7 +207,7 @@ describe('Plugin', () => {
       };
       const app = createApp({ render: () => h('div') });
       app.use(plugin);
-      
+
       expect(app.config.globalProperties.$myProp).toBe('test');
       expect(app.config.globalProperties.$myMethod()).toBe('result');
     });
@@ -227,7 +221,7 @@ describe('Plugin', () => {
       };
       const app = createApp({ render: () => h('div') });
       app.use(plugin);
-      
+
       expect(app.config.errorHandler).toBe(errorHandler);
     });
 
@@ -239,7 +233,7 @@ describe('Plugin', () => {
       };
       const app = createApp({ render: () => h('div') });
       app.use(plugin);
-      
+
       expect(app.config.performance).toBe(true);
     });
   });
@@ -255,7 +249,7 @@ describe('Plugin', () => {
       };
       const app = createApp({ render: () => h('div') });
       app.use(plugin);
-      
+
       expect(app.inject('key1')).toBe('value1');
       expect(app.inject('key2')).toBe('value2');
       expect(app.inject('key3')).toEqual({ nested: 'value' });
@@ -264,14 +258,14 @@ describe('Plugin', () => {
     it('should override existing provides via plugin', () => {
       const app = createApp({ render: () => h('div') });
       app.provide('key', 'original');
-      
+
       const plugin = {
         install(app: any) {
           app.provide('key', 'overridden');
         },
       };
       app.use(plugin);
-      
+
       expect(app.inject('key')).toBe('overridden');
     });
   });
@@ -385,7 +379,7 @@ describe('Plugin', () => {
       };
       const app = createApp({ render: () => h('div') });
       await app.use(plugin);
-      
+
       expect(sideEffect).toBe(true);
       expect(app.config.globalProperties.$async).toBe(true);
     });
@@ -399,10 +393,10 @@ describe('Plugin', () => {
         },
       };
       const app = createApp({ render: () => h('div') });
-      
+
       app.use(syncPlugin);
       await app.use(asyncPlugin);
-      
+
       expect(syncPlugin.install).toHaveBeenCalled();
       expect(app.config.globalProperties.$async).toBe(true);
     });
@@ -413,9 +407,9 @@ describe('Plugin', () => {
       const install = vi.fn();
       const plugin = { install };
       const app = createApp({ render: () => h('div') });
-      
+
       app.use(plugin);
-      
+
       // 内部应该有机制检测已安装的插件
       expect(install).toHaveBeenCalledTimes(1);
     });

@@ -13,10 +13,10 @@ import type { EffectScope } from '@lytjs/reactivity';
 
 /**
  * InjectionToken - 类型安全的注入令牌
- * 
+ *
  * 与 InjectionKey 不同，InjectionToken 是一个类实例，
  * 可以携带更多元数据（如描述、工厂函数、生命周期等）
- * 
+ *
  * @example
  * ```ts
  * const API_URL = new InjectionToken<string>('api-url');
@@ -212,16 +212,16 @@ export class InjectionError extends Error {
 
 /**
  * 提供值到当前 Provider 作用域
- * 
+ *
  * @example
  * ```ts
  * // 简单值
  * provide('api-url', 'https://api.example.com');
- * 
+ *
  * // 使用 InjectionToken
  * const API_URL = new InjectionToken<string>('api-url');
  * provide(API_URL, 'https://api.example.com');
- * 
+ *
  * // 使用配置对象
  * provide(API_URL, {
  *   useFactory: () => config.apiUrl,
@@ -292,18 +292,18 @@ export function provide<T>(
 
 /**
  * 从 Provider 作用域注入值
- * 
+ *
  * @example
  * ```ts
  * // 简单注入
  * const apiUrl = inject('api-url');
- * 
+ *
  * // 使用 InjectionToken
  * const apiUrl = inject(API_URL);
- * 
+ *
  * // 可选注入
  * const logger = inject(LOGGER, { optional: true });
- * 
+ *
  * // 带默认值
  * const timeout = inject(TIMEOUT, { default: 5000 });
  * ```
@@ -354,9 +354,7 @@ export function inject<T>(
 
   // 5. 返回默认值或抛出错误
   if (options?.default !== undefined) {
-    return typeof options.default === 'function'
-      ? (options.default as () => T)()
-      : options.default;
+    return typeof options.default === 'function' ? (options.default as () => T)() : options.default;
   }
 
   if (!options?.optional) {
@@ -376,9 +374,7 @@ function injectFromInstance(
 ): unknown {
   if (options?.local) {
     const provides = instance.provides as Record<string | symbol, unknown>;
-    const hasOwnProvides = instance.parent
-      ? provides !== instance.parent.provides
-      : true;
+    const hasOwnProvides = instance.parent ? provides !== instance.parent.provides : true;
     if (hasOwnProvides && hasOwn(provides, key as string)) {
       return provides[key];
     }
@@ -447,10 +443,7 @@ function isProviderConfig<T>(value: unknown): value is ProviderConfig<T> {
   return (
     typeof value === 'object' &&
     value !== null &&
-    ('provide' in value ||
-      'useFactory' in value ||
-      'useExisting' in value ||
-      'lifecycle' in value)
+    ('provide' in value || 'useFactory' in value || 'useExisting' in value || 'lifecycle' in value)
   );
 }
 
@@ -474,10 +467,7 @@ export function provideSingleton<T>(
 /**
  * 创建并注册一个作用域 Provider
  */
-export function provideScoped<T>(
-  key: InjectionToken<T> | string | symbol,
-  factory: () => T,
-): void {
+export function provideScoped<T>(key: InjectionToken<T> | string | symbol, factory: () => T): void {
   provide(key, {
     useFactory: factory,
     lifecycle: 'scoped',
@@ -500,13 +490,15 @@ export function provideTransient<T>(
 /**
  * 批量注册 Providers
  */
-export function provideAll(providers: Array<{
-  provide: InjectionToken<unknown> | string | symbol;
-  useValue?: unknown;
-  useFactory?: () => unknown;
-  useExisting?: InjectionToken<unknown> | string | symbol;
-  lifecycle?: ProviderLifecycle;
-}>): void {
+export function provideAll(
+  providers: Array<{
+    provide: InjectionToken<unknown> | string | symbol;
+    useValue?: unknown;
+    useFactory?: () => unknown;
+    useExisting?: InjectionToken<unknown> | string | symbol;
+    lifecycle?: ProviderLifecycle;
+  }>,
+): void {
   for (const provider of providers) {
     const { provide: key, useValue, useFactory, useExisting, lifecycle } = provider;
     provide(key, {

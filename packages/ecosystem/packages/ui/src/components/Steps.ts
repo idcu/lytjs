@@ -18,13 +18,22 @@ export const Steps = defineComponent({
 
   props: {
     active: { type: Number, default: 0 },
-    processStatus: { type: String as () => 'process' | 'finish' | 'error' | 'success', default: 'process' },
-    finishStatus: { type: String as () => 'wait' | 'process' | 'finish' | 'error' | 'success', default: 'success' },
+    processStatus: {
+      type: String as () => 'process' | 'finish' | 'error' | 'success',
+      default: 'process',
+    },
+    finishStatus: {
+      type: String as () => 'wait' | 'process' | 'finish' | 'error' | 'success',
+      default: 'success',
+    },
     direction: { type: String as () => 'horizontal' | 'vertical', default: 'horizontal' },
     alignCenter: { type: Boolean, default: false },
     simple: { type: Boolean, default: false },
     class: { type: String, default: '' },
-    style: { type: [String, Object] as unknown as PropType<string | Record<string, string>>, default: '' },
+    style: {
+      type: [String, Object] as unknown as PropType<string | Record<string, string>>,
+      default: '',
+    },
     id: { type: String, default: '' },
     ariaLabel: { type: String, default: '' },
     ariaDescribedBy: { type: String, default: '' },
@@ -66,15 +75,22 @@ export const Steps = defineComponent({
         }
       }
 
-      return createVNode('div', mergeA11yProps({
-        id: _props.id,
-        'aria-label': _props.ariaLabel,
-        'aria-describedby': _props.ariaDescribedBy,
-        role: 'navigation',
-      }, {
-        class: getStepsClass(),
-        style: getStepsStyle(),
-      }), children);
+      return createVNode(
+        'div',
+        mergeA11yProps(
+          {
+            id: _props.id,
+            'aria-label': _props.ariaLabel,
+            'aria-describedby': _props.ariaDescribedBy,
+            role: 'navigation',
+          },
+          {
+            class: getStepsClass(),
+            style: getStepsStyle(),
+          },
+        ),
+        children,
+      );
     };
   },
 });

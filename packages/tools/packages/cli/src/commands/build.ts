@@ -20,27 +20,27 @@ export async function build(options: BuildOptions = {}): Promise<void> {
     logger.error('No package.json found. Are you in a LytJS project directory?');
     process.exit(1);
   }
-  
+
   const pm = detectPackageManager();
   logger.info('Building for production...');
-  
+
   // Build the command
   const args = ['vite', 'build'];
   if (options.outDir) args.push('--outDir', options.outDir);
   if (options.ssr) args.push('--ssr');
   if (options.minify === false) args.push('--minify', 'false');
-  
+
   // Spawn the build process
   const child = spawn(pm === 'npm' ? 'npx' : pm, args, {
     stdio: 'inherit',
     shell: true,
   });
-  
+
   child.on('error', (error) => {
     logger.error(`Build failed: ${error.message}`);
     process.exit(1);
   });
-  
+
   child.on('exit', (code) => {
     if (code === 0) {
       logger.success('Build completed successfully!');

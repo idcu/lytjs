@@ -18,7 +18,10 @@ export const Card = defineComponent({
     bodyStyle: { type: Object as PropType<Record<string, string>>, default: () => ({}) },
     shadow: { type: String, default: 'always' },
     class: { type: String, default: '' },
-    style: { type: [String, Object] as unknown as PropType<string | Record<string, string>>, default: '' },
+    style: {
+      type: [String, Object] as unknown as PropType<string | Record<string, string>>,
+      default: '',
+    },
     id: { type: String, default: '' },
     ariaLabel: { type: String, default: '' },
     ariaDescribedBy: { type: String, default: '' },
@@ -62,9 +65,15 @@ export const Card = defineComponent({
         } else if (_props.header) {
           headerContent.push(createVNode('span', {}, _props.header));
         }
-        children.push(createVNode('div', {
-          class: 'lyt-card__header',
-        }, headerContent));
+        children.push(
+          createVNode(
+            'div',
+            {
+              class: 'lyt-card__header',
+            },
+            headerContent,
+          ),
+        );
       }
 
       const bodyContent: VNode[] = [];
@@ -76,19 +85,32 @@ export const Card = defineComponent({
           bodyContent.push(slotContent as VNode);
         }
       }
-      children.push(createVNode('div', {
-        class: 'lyt-card__body',
-        style: _props.bodyStyle as string | Record<string, string>,
-      }, bodyContent));
+      children.push(
+        createVNode(
+          'div',
+          {
+            class: 'lyt-card__body',
+            style: _props.bodyStyle as string | Record<string, string>,
+          },
+          bodyContent,
+        ),
+      );
 
-      return createVNode('div', mergeA11yProps({
-        id: _props.id,
-        'aria-label': _props.ariaLabel,
-        'aria-describedby': _props.ariaDescribedBy,
-      }, {
-        class: getCardClass(),
-        style: getCardStyle(),
-      }), children);
+      return createVNode(
+        'div',
+        mergeA11yProps(
+          {
+            id: _props.id,
+            'aria-label': _props.ariaLabel,
+            'aria-describedby': _props.ariaDescribedBy,
+          },
+          {
+            class: getCardClass(),
+            style: getCardStyle(),
+          },
+        ),
+        children,
+      );
     };
   },
 });

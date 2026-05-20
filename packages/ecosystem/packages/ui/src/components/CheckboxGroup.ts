@@ -23,7 +23,10 @@ export const CheckboxGroup = defineComponent({
     max: { type: Number, default: undefined },
     size: { type: String, default: 'default' },
     class: { type: String, default: '' },
-    style: { type: [String, Object] as unknown as PropType<string | Record<string, string>>, default: '' },
+    style: {
+      type: [String, Object] as unknown as PropType<string | Record<string, string>>,
+      default: '',
+    },
     ariaLabel: { type: String, default: '' },
     ariaDescribedBy: { type: String, default: '' },
     ariaRequired: { type: Boolean, default: false },
@@ -65,17 +68,24 @@ export const CheckboxGroup = defineComponent({
         }
       }
 
-      return createVNode('div', mergeA11yProps({
-        id: _props.id as string,
-        'aria-label': _props.ariaLabel as string,
-        'aria-describedby': _props.ariaDescribedBy as string,
-        'aria-required': _props.ariaRequired ? 'true' : undefined,
-        role: 'group',
-      }, {
-        class: getCheckboxGroupClass(),
-        style: getCheckboxGroupStyle(),
-        'aria-disabled': _props.disabled ? 'true' : undefined,
-      }), children);
+      return createVNode(
+        'div',
+        mergeA11yProps(
+          {
+            id: _props.id as string,
+            'aria-label': _props.ariaLabel as string,
+            'aria-describedby': _props.ariaDescribedBy as string,
+            'aria-required': _props.ariaRequired ? 'true' : undefined,
+            role: 'group',
+          },
+          {
+            class: getCheckboxGroupClass(),
+            style: getCheckboxGroupStyle(),
+            'aria-disabled': _props.disabled ? 'true' : undefined,
+          },
+        ),
+        children,
+      );
     };
   },
 });

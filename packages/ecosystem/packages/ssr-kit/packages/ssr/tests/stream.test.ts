@@ -9,7 +9,7 @@ import { renderToStream, renderToStreamAsync } from '../src/stream';
 function createTestVNode(
   type: string,
   props: Record<string, unknown> | null,
-  children?: unknown
+  children?: unknown,
 ): any {
   return { type, props: props || {}, children: children ?? null };
 }
@@ -30,9 +30,7 @@ async function streamToString(stream: ReadableStream<Uint8Array>): Promise<strin
 }
 
 /** 将 ReadableStream 读取为分块数组 */
-async function streamToChunks(
-  stream: ReadableStream<Uint8Array>
-): Promise<Uint8Array[]> {
+async function streamToChunks(stream: ReadableStream<Uint8Array>): Promise<Uint8Array[]> {
   const reader = stream.getReader();
   const chunks: Uint8Array[] = [];
 
@@ -108,7 +106,7 @@ describe('renderToStream', () => {
     const suspenseVNode = createTestVNode(
       'Suspense',
       { __suspense: true },
-      createTestVNode('div', null, 'content')
+      createTestVNode('div', null, 'content'),
     );
     const onShellReady = vi.fn();
     const stream = renderToStream(suspenseVNode, { onShellReady });
@@ -130,7 +128,7 @@ describe('renderToStream', () => {
     const vnode = createTestVNode(
       'div',
       { class: 'container' },
-      createTestVNode('p', null, 'nested text')
+      createTestVNode('p', null, 'nested text'),
     );
     const stream = renderToStream(vnode);
     const html = await streamToString(stream);
@@ -152,11 +150,14 @@ describe('renderToStream', () => {
   it('应该在错误时调用 onError', async () => {
     // 构造一个会触发错误的 VNode：
     // props 中包含 getter，在 renderAttributes 遍历时抛出错误
-    const badProps = new Proxy({}, {
-      ownKeys() {
-        throw new Error('proxy error');
+    const badProps = new Proxy(
+      {},
+      {
+        ownKeys() {
+          throw new Error('proxy error');
+        },
       },
-    });
+    );
     const badVNode = createTestVNode('div', badProps, 'text');
     const onError = vi.fn();
     const stream = renderToStream(badVNode, { onError });

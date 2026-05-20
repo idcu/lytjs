@@ -28,8 +28,4 @@ export type { CustomBlockProcessor } from './custom-blocks';
 
 // TypeScript 声明
 export { generateComponentTypes } from './typescript';
-export type {
-  ComponentTypeInfo,
-  PropDeclaration,
-  EmitDeclaration,
-} from './typescript';
+export type { ComponentTypeInfo, PropDeclaration, EmitDeclaration } from './typescript';

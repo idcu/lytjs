@@ -112,7 +112,9 @@ export function generateComponentTypes(descriptor: SFCDescriptor): string {
   // 生成组件实例类型
   const propsType = info.props.length > 0 ? `${componentName}Props` : '{}';
   const emitsType = info.emits.length > 0 ? `, ${componentName}Emits` : '';
-  lines.push(`export type ${componentName}Instance = InstanceType<Component<${propsType}${emitsType}>>;`);
+  lines.push(
+    `export type ${componentName}Instance = InstanceType<Component<${propsType}${emitsType}>>;`,
+  );
   lines.push('');
 
   // 默认导出声明
@@ -131,8 +133,7 @@ export function generateComponentTypes(descriptor: SFCDescriptor): string {
  * 从 SFC 描述符的 script 块中提取组件类型信息。
  */
 function extractComponentInfo(descriptor: SFCDescriptor): ComponentTypeInfo {
-  const scriptContent =
-    descriptor.script?.content ?? descriptor.scriptSetup?.content ?? '';
+  const scriptContent = descriptor.script?.content ?? descriptor.scriptSetup?.content ?? '';
 
   const info: ComponentTypeInfo = {
     name: '',
@@ -155,7 +156,10 @@ function extractComponentInfo(descriptor: SFCDescriptor): ComponentTypeInfo {
   // 首先尝试从 defineComponent 提取
   const dcStartMatch = scriptContent.match(RE_DEFINE_COMPONENT_START);
   if (dcStartMatch) {
-    const dcBody = extractBracedContent(scriptContent, dcStartMatch.index! + dcStartMatch[0]!.length - 1);
+    const dcBody = extractBracedContent(
+      scriptContent,
+      dcStartMatch.index! + dcStartMatch[0]!.length - 1,
+    );
     if (dcBody) {
       extractPropsFromObject(dcBody, info);
       extractEmitsFromObject(dcBody, info);
@@ -164,7 +168,10 @@ function extractComponentInfo(descriptor: SFCDescriptor): ComponentTypeInfo {
     // 回退到 export default { ... }
     const edStartMatch = scriptContent.match(RE_EXPORT_DEFAULT_START);
     if (edStartMatch) {
-      const exportBody = extractBracedContent(scriptContent, edStartMatch.index! + edStartMatch[0]!.length - 1);
+      const exportBody = extractBracedContent(
+        scriptContent,
+        edStartMatch.index! + edStartMatch[0]!.length - 1,
+      );
       if (exportBody) {
         extractPropsFromObject(exportBody, info);
         extractEmitsFromObject(exportBody, info);
@@ -231,16 +238,16 @@ function extractBracedContent(source: string, openBraceIndex: number): string | 
 /**
  * 从对象字面量字符串中提取 props 声明。
  */
-function extractPropsFromObject(
-  body: string,
-  info: ComponentTypeInfo,
-): void {
+function extractPropsFromObject(body: string, info: ComponentTypeInfo): void {
   const propsStartMatch = body.match(RE_PROPS_START);
   if (!propsStartMatch) {
     return;
   }
 
-  const propsBody = extractBracedContent(body, propsStartMatch.index! + propsStartMatch[0]!.length - 1);
+  const propsBody = extractBracedContent(
+    body,
+    propsStartMatch.index! + propsStartMatch[0]!.length - 1,
+  );
   if (!propsBody) return;
 
   // 首先尝试详细 prop 声明：propName: { type: X, required: Y }
@@ -275,10 +282,7 @@ function extractPropsFromObject(
 /**
  * 从对象字面量字符串中提取 emits 声明。
  */
-function extractEmitsFromObject(
-  body: string,
-  info: ComponentTypeInfo,
-): void {
+function extractEmitsFromObject(body: string, info: ComponentTypeInfo): void {
   // 尝试数组形式：emits: ['event1', 'event2']
   const arrayMatch = body.match(RE_EMITS_ARRAY);
   if (arrayMatch) {
@@ -296,7 +300,10 @@ function extractEmitsFromObject(
   // 尝试对象形式：emits: { event1: (payload: Type) => true }
   const objectStartMatch = body.match(RE_EMITS_OBJECT_START);
   if (objectStartMatch) {
-    const emitsBody = extractBracedContent(body, objectStartMatch.index! + objectStartMatch[0]!.length - 1);
+    const emitsBody = extractBracedContent(
+      body,
+      objectStartMatch.index! + objectStartMatch[0]!.length - 1,
+    );
     if (emitsBody) {
       const eventNames = emitsBody.match(/(\w+)\s*:/g);
       if (eventNames) {

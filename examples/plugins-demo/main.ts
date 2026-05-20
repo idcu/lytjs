@@ -1,6 +1,6 @@
 /**
  * LytJS 官方插件使用示例
- * 
+ *
  * 演示 theme、logger、auth、storage、i18n 插件的基本用法
  */
 
@@ -24,14 +24,14 @@ const i18n = createI18n({
     'zh-CN': {
       greeting: '欢迎',
       personalGreeting: '你好，{name}！',
-      changeLang: '切换语言'
+      changeLang: '切换语言',
     },
     'en-US': {
       greeting: 'Welcome',
       personalGreeting: 'Hello, {name}!',
-      changeLang: 'Change Language'
-    }
-  }
+      changeLang: 'Change Language',
+    },
+  },
 });
 
 // 主题插件演示
@@ -60,7 +60,7 @@ function updateThemeDisplay() {
 // 日志插件演示
 document.getElementById('log-info')?.addEventListener('click', () => {
   logger.info('这是一条信息日志', { timestamp: new Date().toISOString() }, 'demo');
-  logger.logs.forEach(log => console.log(log));
+  logger.logs.forEach((log) => console.log(log));
 });
 
 document.getElementById('log-warn')?.addEventListener('click', () => {
@@ -82,7 +82,7 @@ document.getElementById('auth-login')?.addEventListener('click', () => {
     id: '1',
     username: 'admin',
     roles: ['admin', 'user'],
-    permissions: ['read', 'write', 'delete']
+    permissions: ['read', 'write', 'delete'],
   };
   auth.login(user);
   updateAuthDisplay();
@@ -98,8 +98,8 @@ document.getElementById('auth-check')?.addEventListener('click', () => {
   const hasWritePermission = auth.hasPermission('write');
   alert(
     `认证状态: ${auth.isAuthenticated ? '已登录' : '未登录'}\n` +
-    `是否有 admin 角色: ${hasAdminRole}\n` +
-    `是否有 write 权限: ${hasWritePermission}`
+      `是否有 admin 角色: ${hasAdminRole}\n` +
+      `是否有 write 权限: ${hasWritePermission}`,
   );
 });
 
@@ -118,7 +118,7 @@ function updateAuthDisplay() {
 document.getElementById('storage-set')?.addEventListener('click', () => {
   const keyInput = document.getElementById('storage-key') as HTMLInputElement;
   const valueInput = document.getElementById('storage-value') as HTMLInputElement;
-  
+
   if (keyInput && valueInput && keyInput.value) {
     storage.set(keyInput.value, valueInput.value);
     alert('保存成功');
@@ -147,9 +147,7 @@ function updateStorageDisplay() {
   const keys = storage.keys();
   const displaySpan = document.getElementById('storage-display');
   if (displaySpan) {
-    displaySpan.textContent = keys.length > 0 
-      ? `键列表: ${keys.join(', ')}` 
-      : '空';
+    displaySpan.textContent = keys.length > 0 ? `键列表: ${keys.join(', ')}` : '空';
   }
 }
 
@@ -205,7 +203,7 @@ function renderChart(type: string) {
   if (currentChart) {
     currentChart.destroy();
   }
-  
+
   const config = {
     type: type,
     title: `${type === 'bar' ? '柱状' : type === 'line' ? '折线' : type === 'pie' ? '饼' : '环形'}图示例`,
@@ -213,7 +211,7 @@ function renderChart(type: string) {
     width: 600,
     height: 350,
   };
-  
+
   currentChart = createChart(canvas, config);
 }
 

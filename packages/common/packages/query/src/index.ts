@@ -134,14 +134,10 @@ export function stringifyQueryString(
     const value = params[key];
     if (Array.isArray(value)) {
       for (const item of value) {
-        parts.push(
-          encodeURIComponent(key) + '=' + encodeURIComponent(String(item)),
-        );
+        parts.push(encodeURIComponent(key) + '=' + encodeURIComponent(String(item)));
       }
     } else {
-      parts.push(
-        encodeURIComponent(key) + '=' + encodeURIComponent(String(value)),
-      );
+      parts.push(encodeURIComponent(key) + '=' + encodeURIComponent(String(value)));
     }
   }
 
@@ -154,10 +150,7 @@ export function stringifyQueryString(
  * @param url - URL 字符串，支持绝对 URL 和相对 URL
  * @returns 解析后的 ParsedURL 对象
  */
-export function parseURL(
-  url: string,
-  options?: { supportArrays?: boolean },
-): ParsedURL {
+export function parseURL(url: string, options?: { supportArrays?: boolean }): ParsedURL {
   let rest = url;
 
   // Extract hash

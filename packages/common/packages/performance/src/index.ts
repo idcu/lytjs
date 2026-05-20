@@ -393,20 +393,22 @@ export class PerformanceMonitor {
     const averageRenderTime = this.getGlobalAverageRenderTime();
 
     // Find slowest component
-    const slowestComponent = allStats.length > 0
-      ? allStats.reduce((slowest, current) => {
-          const currentAvg = current.averagePatchTime || current.averageMountTime;
-          const slowestAvg = slowest.averagePatchTime || slowest.averageMountTime;
-          return currentAvg > slowestAvg ? current : slowest;
-        })
-      : null;
+    const slowestComponent =
+      allStats.length > 0
+        ? allStats.reduce((slowest, current) => {
+            const currentAvg = current.averagePatchTime || current.averageMountTime;
+            const slowestAvg = slowest.averagePatchTime || slowest.averageMountTime;
+            return currentAvg > slowestAvg ? current : slowest;
+          })
+        : null;
 
     // Find most rendered component
-    const mostRenderedComponent = allStats.length > 0
-      ? allStats.reduce((most, current) =>
-          current.patchCount > most.patchCount ? current : most
-        )
-      : null;
+    const mostRenderedComponent =
+      allStats.length > 0
+        ? allStats.reduce((most, current) =>
+            current.patchCount > most.patchCount ? current : most,
+          )
+        : null;
 
     return {
       timestamp: Date.now(),
@@ -476,7 +478,9 @@ export function setPerformanceMonitor(monitor: PerformanceMonitor): void {
 /**
  * Initialize the global performance monitor with options
  */
-export function initPerformanceMonitor(options: PerformanceMonitorOptions = {}): PerformanceMonitor {
+export function initPerformanceMonitor(
+  options: PerformanceMonitorOptions = {},
+): PerformanceMonitor {
   globalMonitor = new PerformanceMonitor(options);
   return globalMonitor;
 }
@@ -571,7 +575,8 @@ export function connectToDevTools(): void {
 
   // Expose monitor to window for DevTools access
   // FIX: DTS build error - 先转换为 unknown 再转换为 Record
-  (window as unknown as Record<string, unknown>).__LYTJS_PERFORMANCE_MONITOR__ = getPerformanceMonitor();
+  (window as unknown as Record<string, unknown>).__LYTJS_PERFORMANCE_MONITOR__ =
+    getPerformanceMonitor();
 
   // Mark initialization for DevTools detection
   (window as unknown as Record<string, unknown>).__LYTJS_DEVTOOLS_HOOK__ = true;

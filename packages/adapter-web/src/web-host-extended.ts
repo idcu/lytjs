@@ -32,8 +32,10 @@ export type {
  * 扩展的 RendererHost 接口
  * 在基础 RendererHost 上添加了更多宿主操作方法
  */
-export interface ExtendedRendererHost<HN = unknown, HE extends HN = HN>
-  extends RendererHost<HN, HE> {
+export interface ExtendedRendererHost<HN = unknown, HE extends HN = HN> extends RendererHost<
+  HN,
+  HE
+> {
   // ==========================================================
   // 扩展的节点操作
   // ==========================================================
@@ -247,9 +249,7 @@ export interface ExtendedRendererHost<HN = unknown, HE extends HN = HN>
    * @param el - 宿主元素（null 表示 document）
    * @returns 滚动位置
    */
-  getScrollPosition?(
-    el?: HE | null,
-  ): { scrollLeft: number; scrollTop: number };
+  getScrollPosition?(el?: HE | null): { scrollLeft: number; scrollTop: number };
 
   /**
    * 设置元素的滚动位置
@@ -365,8 +365,7 @@ export function detectHostCapabilities(): HostCapabilities {
 
   // CSS 变量
   try {
-    caps.cssVariables =
-      window.CSS && CSS.supports && CSS.supports('color', 'var(--test)');
+    caps.cssVariables = window.CSS && CSS.supports && CSS.supports('color', 'var(--test)');
   } catch {
     caps.cssVariables = false;
   }
@@ -424,14 +423,26 @@ export function createExtendedWebHost(
     ...baseHost,
     // FIX: P2-v11-31 添加 Document 类型检查，
     // Document 节点也支持 insertBefore/replaceChild 操作
-    insertBefore(parent: Element | DocumentFragment | Document, newChild: Node, referenceNode: Node | null) {
-      if (parent instanceof Element || parent instanceof DocumentFragment || parent instanceof Document) {
+    insertBefore(
+      parent: Element | DocumentFragment | Document,
+      newChild: Node,
+      referenceNode: Node | null,
+    ) {
+      if (
+        parent instanceof Element ||
+        parent instanceof DocumentFragment ||
+        parent instanceof Document
+      ) {
         parent.insertBefore(newChild as Node, referenceNode as Node | null);
       }
     },
 
     replaceChild(parent: Element | DocumentFragment | Document, newChild: Node, oldChild: Node) {
-      if (parent instanceof Element || parent instanceof DocumentFragment || parent instanceof Document) {
+      if (
+        parent instanceof Element ||
+        parent instanceof DocumentFragment ||
+        parent instanceof Document
+      ) {
         parent.replaceChild(newChild as Node, oldChild as Node);
       }
       return oldChild;
@@ -462,7 +473,10 @@ export function createExtendedWebHost(
       return [];
     },
 
-    setAttributes(el: Element, attrs: Record<string, string | number | boolean | null | undefined>) {
+    setAttributes(
+      el: Element,
+      attrs: Record<string, string | number | boolean | null | undefined>,
+    ) {
       if (el instanceof Element) {
         Object.entries(attrs).forEach(([key, value]) => {
           if (value == null) {
@@ -512,10 +526,7 @@ export function createExtendedWebHost(
       if (el instanceof Element) {
         let evt: Event;
         if (typeof event === 'string') {
-          evt =
-            detail !== undefined
-              ? new CustomEvent(event, { detail })
-              : new Event(event);
+          evt = detail !== undefined ? new CustomEvent(event, { detail }) : new Event(event);
         } else {
           // FIX: DTS build error - HostEvent 无法直接转换为 Event，需要 unknown 中间类型
           evt = event as unknown as Event;
@@ -525,7 +536,12 @@ export function createExtendedWebHost(
       return false;
     },
 
-    onceEventListener(el: Element, event: string, handler: (e: HostEvent) => void, options?: AddEventListenerOptions) {
+    onceEventListener(
+      el: Element,
+      event: string,
+      handler: (e: HostEvent) => void,
+      options?: AddEventListenerOptions,
+    ) {
       if (el instanceof Element) {
         // FIX: P2-batch2-16 将原生 Event 包装为 HostEvent 格式后再传递给 handler，
         // 避免直接类型断言导致 handler 接收到不符合 HostEvent 接口的对象
@@ -550,8 +566,7 @@ export function createExtendedWebHost(
     // 扩展的 DOM 查询
     querySelectorAll(selector: string, context?: Element | Document) {
       const root =
-        (context as Element | undefined) ??
-        (typeof document !== 'undefined' ? document : null);
+        (context as Element | undefined) ?? (typeof document !== 'undefined' ? document : null);
       if (root instanceof Element || root instanceof Document) {
         return Array.from(root.querySelectorAll(selector)) as Element[];
       }
@@ -671,9 +686,7 @@ export function createExtendedWebHost(
  */
 let cachedCapabilities: HostCapabilities | null = null;
 
-export function supportsHostCapability(
-  capability: keyof HostCapabilities,
-): boolean {
+export function supportsHostCapability(capability: keyof HostCapabilities): boolean {
   if (!cachedCapabilities) {
     cachedCapabilities = detectHostCapabilities();
   }

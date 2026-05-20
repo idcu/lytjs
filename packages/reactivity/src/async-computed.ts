@@ -153,10 +153,7 @@ class AsyncComputedRefImpl<T> {
  * @param initialValue 初始值（Promise pending 时的值）
  * @returns AsyncComputedRef
  */
-export function asyncComputed<T>(
-  getter: () => Promise<T>,
-  initialValue?: T,
-): AsyncComputedRef<T> {
+export function asyncComputed<T>(getter: () => Promise<T>, initialValue?: T): AsyncComputedRef<T> {
   return unsafeCast<AsyncComputedRef<T>>(new AsyncComputedRefImpl<T>(getter, initialValue, false));
 }
 
@@ -168,10 +165,7 @@ export function asyncComputed<T>(
  * @param initialValue 初始值
  * @returns AsyncComputedRef
  */
-export function useAsyncState<T>(
-  factory: () => Promise<T>,
-  initialValue?: T,
-): AsyncComputedRef<T> {
+export function useAsyncState<T>(factory: () => Promise<T>, initialValue?: T): AsyncComputedRef<T> {
   const impl = new AsyncComputedRefImpl<T>(factory, initialValue, true);
 
   // 立即执行一次

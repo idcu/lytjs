@@ -113,13 +113,13 @@ for (const pkgPath of publishOrder) {
   }
 
   const pkgJson = JSON.parse(fs.readFileSync(pkgJsonPath, 'utf-8'));
-  
+
   let npmVersion = null;
   try {
     // 使用 --no-color 并抑制 npm 警告
     const result = execSync(
       `npm view ${pkgJson.name} version --registry=https://registry.npmjs.org/ --no-color 2>&1 || echo "not_found"`,
-      { encoding: 'utf8', shell: true, stdio: ['pipe', 'pipe', 'pipe'] }
+      { encoding: 'utf8', shell: true, stdio: ['pipe', 'pipe', 'pipe'] },
     );
     const lines = result.trim().split('\n');
     // 找到不包含警告的最后一行
@@ -135,12 +135,12 @@ for (const pkgPath of publishOrder) {
   }
 
   const isPublished = npmVersion === pkgJson.version;
-  const status = isPublished ? '✅' : (npmVersion ? '⚠️' : '❌');
+  const status = isPublished ? '✅' : npmVersion ? '⚠️' : '❌';
 
   console.log(
     `[${index}/${publishOrder.length}] ${status} ${pkgJson.name} - ` +
-    `本地: ${pkgJson.version}` +
-    (npmVersion ? `, npm: ${npmVersion}` : ', npm: 未发布')
+      `本地: ${pkgJson.version}` +
+      (npmVersion ? `, npm: ${npmVersion}` : ', npm: 未发布'),
   );
 
   packagesInfo.push({
@@ -148,7 +148,7 @@ for (const pkgPath of publishOrder) {
     name: pkgJson.name,
     localVersion: pkgJson.version,
     npmVersion: npmVersion,
-    status: isPublished ? 'published' : (npmVersion ? 'mismatch' : 'not_published'),
+    status: isPublished ? 'published' : npmVersion ? 'mismatch' : 'not_published',
     description: pkgJson.description || '',
     keywords: pkgJson.keywords || [],
     dependencies: Object.keys(pkgJson.dependencies || {}),
@@ -185,9 +185,9 @@ let markdown = `# LytJS v6.5.0 完整包清单
 | 统计项 | 数量 |
 |-------|------|
 | 总包数 | ${packagesInfo.length} |
-| ✅ 已发布 | ${packagesInfo.filter(p => p.status === 'published').length} |
-| ⚠️ 版本不匹配 | ${packagesInfo.filter(p => p.status === 'mismatch').length} |
-| ❌ 未发布 | ${packagesInfo.filter(p => p.status === 'not_published' || p.status === 'missing').length} |
+| ✅ 已发布 | ${packagesInfo.filter((p) => p.status === 'published').length} |
+| ⚠️ 版本不匹配 | ${packagesInfo.filter((p) => p.status === 'mismatch').length} |
+| ❌ 未发布 | ${packagesInfo.filter((p) => p.status === 'not_published' || p.status === 'missing').length} |
 
 ---
 
@@ -209,13 +209,14 @@ const layers = {
 
 for (const [layerName, layerPaths] of Object.entries(layers)) {
   markdown += `### ${layerName}\n\n`;
-  
+
   for (const pkgPath of layerPaths) {
-    const pkg = packagesInfo.find(p => p.path === pkgPath);
+    const pkg = packagesInfo.find((p) => p.path === pkgPath);
     if (!pkg) continue;
 
-    const statusIcon = pkg.status === 'published' ? '✅' : (pkg.status === 'mismatch' ? '⚠️' : '❌');
-    const statusText = pkg.status === 'published' ? '已发布' : (pkg.status === 'mismatch' ? '版本不匹配' : '未发布');
+    const statusIcon = pkg.status === 'published' ? '✅' : pkg.status === 'mismatch' ? '⚠️' : '❌';
+    const statusText =
+      pkg.status === 'published' ? '已发布' : pkg.status === 'mismatch' ? '版本不匹配' : '未发布';
 
     markdown += `#### ${statusIcon} ${pkg.name}\n\n`;
     markdown += `- **状态**: ${statusText}\n`;
@@ -224,17 +225,17 @@ for (const [layerName, layerPaths] of Object.entries(layers)) {
       markdown += `- **npm 版本**: ${pkg.npmVersion}\n`;
     }
     markdown += `- **路径**: \`${pkgPath}\`\n`;
-    
+
     if (pkg.description) {
       markdown += `- **描述**: ${pkg.description}\n`;
     }
-    
+
     if (pkg.keywords && pkg.keywords.length > 0) {
       markdown += `- **关键词**: ${pkg.keywords.join(', ')}\n`;
     }
 
     if (pkg.dependencies && pkg.dependencies.length > 0) {
-      markdown += `- **依赖**: ${pkg.dependencies.map(d => `\`${d}\``).join(', ')}\n`;
+      markdown += `- **依赖**: ${pkg.dependencies.map((d) => `\`${d}\``).join(', ')}\n`;
     }
 
     markdown += '\n';
@@ -249,9 +250,10 @@ console.log(`✅ 文档已生成: ${docPath}\n`);
 
 const summary = {
   total: packagesInfo.length,
-  published: packagesInfo.filter(p => p.status === 'published').length,
-  mismatch: packagesInfo.filter(p => p.status === 'mismatch').length,
-  notPublished: packagesInfo.filter(p => p.status === 'not_published' || p.status === 'missing').length,
+  published: packagesInfo.filter((p) => p.status === 'published').length,
+  mismatch: packagesInfo.filter((p) => p.status === 'mismatch').length,
+  notPublished: packagesInfo.filter((p) => p.status === 'not_published' || p.status === 'missing')
+    .length,
 };
 
 if (summary.notPublished === 0 && summary.mismatch === 0) {

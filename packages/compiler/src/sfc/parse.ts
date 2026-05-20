@@ -105,10 +105,7 @@ export interface SFCParseOptions {
  * @param options - Parse options (filename, etc.)
  * @returns SFCDescriptor containing all parsed blocks
  */
-export function parseSFC(
-  source: string,
-  options: SFCParseOptions = {},
-): SFCDescriptor {
+export function parseSFC(source: string, options: SFCParseOptions = {}): SFCDescriptor {
   const { filename = 'anonymous.lyt' } = options;
 
   const descriptor: SFCDescriptor = {

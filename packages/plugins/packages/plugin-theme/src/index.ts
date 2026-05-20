@@ -94,8 +94,7 @@ function createThemeManager(options: ThemeOptions = {}): ThemeInstance {
     if (typeof localStorage === 'undefined') return;
     try {
       localStorage.setItem(storageKey, name);
-    } catch {
-    }
+    } catch {}
   }
 
   function setTheme(name: string) {
@@ -178,7 +177,8 @@ function createThemeManager(options: ThemeOptions = {}): ThemeInstance {
 const pluginTheme = definePlugin({
   name: 'theme',
   version: '6.0.0',
-  description: 'LytJS official theme plugin for CSS variable management, dark/light mode, and custom theme support',
+  description:
+    'LytJS official theme plugin for CSS variable management, dark/light mode, and custom theme support',
   author: 'LytJS Team',
   keywords: ['lytjs', 'theme', 'dark-mode', 'css-variables'],
   schema: {

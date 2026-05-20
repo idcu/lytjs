@@ -139,16 +139,16 @@ function computeContentHash(content: string): string {
   // 使用 djb2 哈希算法计算内容哈希（简化版 SHA-256 风格）
   let hash1 = 5381;
   let hash2 = 52711;
-  
+
   for (let i = 0; i < content.length; i++) {
     const char = content.charCodeAt(i);
     hash1 = ((hash1 << 5) + hash1 + char) & 0xffffffff;
     hash2 = ((hash2 << 7) + hash2 + char) & 0xffffffff;
   }
-  
+
   // 组合两个哈希值，提高碰撞抵抗
   const combinedHash = `${hash1 >>> 0}-${hash2 >>> 0}`;
-  
+
   // FIX: P2-39 LRU 淘汰：超出最大缓存大小时删除最旧条目
   if (contentHashCache.size >= MAX_CONTENT_HASH_CACHE_SIZE) {
     const oldestKey = contentHashCache.keys().next().value;
@@ -156,10 +156,10 @@ function computeContentHash(content: string): string {
       contentHashCache.delete(oldestKey);
     }
   }
-  
+
   // 缓存哈希结果（使用快速哈希作为 key）
   contentHashCache.set(quickHash, combinedHash);
-  
+
   return combinedHash;
 }
 
@@ -172,16 +172,23 @@ function computeContentHash(content: string): string {
 function buildCompileCacheKey(source: string, options: CompilerOptions): string {
   // FIX: P2-2 使用内容哈希替代原始 source 字符串，减少缓存键大小
   const contentHash = computeContentHash(source);
-  
+
   return hashString(
-    contentHash + '|' +
-    String(options.ssrMode ?? false) + '|' +
-    String(options.rendererMode ?? '') + '|' +
-    String(options.scopeId ?? '') + '|' +
-    String(options.inline ?? false) + '|' +
-    String(options.mode ?? '') + '|' +
-    String(options.prefixIdentifiers ?? false) + '|' +
-    String(options.whitespace ?? ''),
+    contentHash +
+      '|' +
+      String(options.ssrMode ?? false) +
+      '|' +
+      String(options.rendererMode ?? '') +
+      '|' +
+      String(options.scopeId ?? '') +
+      '|' +
+      String(options.inline ?? false) +
+      '|' +
+      String(options.mode ?? '') +
+      '|' +
+      String(options.prefixIdentifiers ?? false) +
+      '|' +
+      String(options.whitespace ?? ''),
   );
 }
 
@@ -245,8 +252,12 @@ export function compile(source: string, options: CompilerOptions = {}): CodegenR
   // In SSR mode, filter out client-only directive transforms (v-on, v-model, v-show)
   let directiveTransforms: Record<string, DirectiveTransform>;
   if (ssrMode) {
-    const { on: _on, model: _model, show: _show, ...ssrDirectiveTransforms } =
-      builtInDirectiveTransforms;
+    const {
+      on: _on,
+      model: _model,
+      show: _show,
+      ...ssrDirectiveTransforms
+    } = builtInDirectiveTransforms;
     directiveTransforms = {
       ...ssrDirectiveTransforms,
       ...(userDirectiveTransforms ?? {}),
@@ -293,7 +304,11 @@ export function compile(source: string, options: CompilerOptions = {}): CodegenR
         compileCache.delete(oldestKey);
       }
     }
-    compileCache.set(cacheKey, { code: codegenResult.code, preamble: codegenResult.preamble ?? '', ast });
+    compileCache.set(cacheKey, {
+      code: codegenResult.code,
+      preamble: codegenResult.preamble ?? '',
+      ast,
+    });
   }
 
   return codegenResult;

@@ -41,10 +41,7 @@ export interface BaseAppContext<Config = BaseAppConfig> {
 /**
  * 应用插件接口
  */
-export interface Plugin<
-  T = Record<string, unknown>,
-  App = unknown,
-> {
+export interface Plugin<T = Record<string, unknown>, App = unknown> {
   /** 插件安装函数 */
   install: (app: App, options?: T) => void;
   /** 插件名称 */

@@ -100,7 +100,7 @@ export const InputNumber = defineComponent({
         _props.onChange?.(undefined);
         return;
       }
-      
+
       const newValue = clampValue(value);
       state.inputValue = newValue;
       emit('update:modelValue', newValue);
@@ -123,7 +123,7 @@ export const InputNumber = defineComponent({
     const handleInput = (e: Event) => {
       const target = e.target as HTMLInputElement;
       const value = target.value;
-      
+
       if (value === '') {
         state.inputValue = undefined;
         emit('update:modelValue', undefined);
@@ -131,7 +131,7 @@ export const InputNumber = defineComponent({
         _props.onInput?.(undefined);
         return;
       }
-      
+
       const numValue = parseFloat(value);
       if (!isNaN(numValue)) {
         state.inputValue = numValue;
@@ -144,7 +144,7 @@ export const InputNumber = defineComponent({
       state.focus = false;
       const target = e.target as HTMLInputElement;
       const value = target.value;
-      
+
       if (value === '') {
         setValue(undefined);
       } else {
@@ -185,11 +185,14 @@ export const InputNumber = defineComponent({
       _props.onKeydown?.(e);
     };
 
-    watch(() => _props.modelValue, (newValue) => {
-      if (newValue !== state.inputValue) {
-        state.inputValue = newValue;
-      }
-    });
+    watch(
+      () => _props.modelValue,
+      (newValue) => {
+        if (newValue !== state.inputValue) {
+          state.inputValue = newValue;
+        }
+      },
+    );
 
     const getInputNumberClass = () => {
       const classes = ['lyt-input-number'];
@@ -215,17 +218,23 @@ export const InputNumber = defineComponent({
 
     return () => {
       const children: VNode[] = [];
-      
+
       // 减号按钮
       if (_props.controls) {
         const decreaseBtnProps = getButtonA11yProps({
           ariaLabel: '减少',
           disabled: _props.disabled || isAtMin.value,
         });
-        children.push(createVNode('span', mergeA11yProps(decreaseBtnProps, {
-          class: `lyt-input-number__decrease ${isAtMin.value ? 'is-disabled' : ''}`,
-          onClick: handleDecrement,
-        }), [createTextVNode('−')]));
+        children.push(
+          createVNode(
+            'span',
+            mergeA11yProps(decreaseBtnProps, {
+              class: `lyt-input-number__decrease ${isAtMin.value ? 'is-disabled' : ''}`,
+              onClick: handleDecrement,
+            }),
+            [createTextVNode('−')],
+          ),
+        );
       }
 
       // 加号按钮
@@ -234,10 +243,16 @@ export const InputNumber = defineComponent({
           ariaLabel: '增加',
           disabled: _props.disabled || isAtMax.value,
         });
-        children.push(createVNode('span', mergeA11yProps(increaseBtnProps, {
-          class: `lyt-input-number__increase ${isAtMax.value ? 'is-disabled' : ''}`,
-          onClick: handleIncrement,
-        }), [createTextVNode('+')]));
+        children.push(
+          createVNode(
+            'span',
+            mergeA11yProps(increaseBtnProps, {
+              class: `lyt-input-number__increase ${isAtMax.value ? 'is-disabled' : ''}`,
+              onClick: handleIncrement,
+            }),
+            [createTextVNode('+')],
+          ),
+        );
       }
 
       // 输入框
@@ -253,23 +268,33 @@ export const InputNumber = defineComponent({
         min: _props.min === -Infinity ? undefined : _props.min,
         max: _props.max === Infinity ? undefined : _props.max,
       });
-      children.push(createVNode('input', mergeA11yProps(spinbuttonProps, {
-        type: 'text',
-        class: 'lyt-input-number__input',
-        value: displayValue.value,
-        disabled: _props.disabled,
-        placeholder: _props.placeholder,
-        name: _props.name,
-        onInput: handleInput,
-        onBlur: handleBlur,
-        onFocus: handleFocus,
-        onKeydown: handleKeydown,
-      }), []));
+      children.push(
+        createVNode(
+          'input',
+          mergeA11yProps(spinbuttonProps, {
+            type: 'text',
+            class: 'lyt-input-number__input',
+            value: displayValue.value,
+            disabled: _props.disabled,
+            placeholder: _props.placeholder,
+            name: _props.name,
+            onInput: handleInput,
+            onBlur: handleBlur,
+            onFocus: handleFocus,
+            onKeydown: handleKeydown,
+          }),
+          [],
+        ),
+      );
 
-      return createVNode('div', {
-        class: getInputNumberClass(),
-        style: getInputNumberStyle(),
-      }, children);
+      return createVNode(
+        'div',
+        {
+          class: getInputNumberClass(),
+          style: getInputNumberStyle(),
+        },
+        children,
+      );
     };
   },
 });

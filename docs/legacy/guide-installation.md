@@ -68,7 +68,7 @@ const App = {
       <p>计数: {{ count }}</p>
       <button @click="count(count() + 1)">+1</button>
     </div>
-  `
+  `,
 };
 
 createApp(App).mount('#app');
@@ -145,9 +145,7 @@ import { defineConfig } from 'vite';
 import lytjs from '@lytjs/plugin-vite';
 
 export default defineConfig({
-  plugins: [
-    lytjs()
-  ]
+  plugins: [lytjs()],
 });
 ```
 

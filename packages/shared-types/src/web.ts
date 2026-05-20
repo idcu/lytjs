@@ -1,4 +1,3 @@
-
 /**
  * Web 相关通用类型定义
  */
@@ -117,4 +116,3 @@ export interface HttpRoute {
   /** 处理器函数 */
   handler: (ctx: HttpContext) => Promise<void> | void;
 }
-
