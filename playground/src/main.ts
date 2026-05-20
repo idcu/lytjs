@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createApp, h, ref, computed } from '@lytjs/core';
 
 // 场景管理

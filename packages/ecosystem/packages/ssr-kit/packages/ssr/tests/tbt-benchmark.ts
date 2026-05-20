@@ -1,3 +1,4 @@
+/* eslint-disable no-console, @typescript-eslint/no-explicit-any */
 /**
  * TBT (Total Blocking Time) 性能基准测试
  *
