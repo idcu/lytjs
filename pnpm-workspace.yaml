@@ -42,3 +42,4 @@ allowBuilds:
   vue-demi: true
 onlyBuiltDependencies:
   - esbuild
+minimumReleaseAge: 0

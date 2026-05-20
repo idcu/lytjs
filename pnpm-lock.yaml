@@ -93,32 +93,32 @@ importers:
   packages/adapter-web:
     dependencies:
       '@lytjs/common-dom':
-        specifier: ^6.4.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../common/packages/dom
       '@lytjs/common-error':
-        specifier: ^6.4.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../common/packages/error
       '@lytjs/common-events':
-        specifier: ^6.4.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../common/packages/events
       '@lytjs/common-is':
-        specifier: ^6.4.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../common/packages/is
       '@lytjs/common-string':
-        specifier: ^6.4.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../common/packages/string
       '@lytjs/host-contract':
-        specifier: ^6.4.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../host-contract
       '@lytjs/reactivity':
-        specifier: ^6.4.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../reactivity
       '@lytjs/shared-types':
-        specifier: ^6.4.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../shared-types
       '@lytjs/vdom':
-        specifier: ^6.4.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../vdom
     devDependencies:
       tsup:
         specifier: ^8.3.0
@@ -157,8 +157,8 @@ importers:
   packages/common/packages/assertions:
     dependencies:
       '@lytjs/common-is':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../is
     devDependencies:
       tsup:
         specifier: ^8.4.0
@@ -173,8 +173,8 @@ importers:
   packages/common/packages/async-scheduler:
     dependencies:
       '@lytjs/host-contract':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../../../host-contract
     devDependencies:
       tsup:
         specifier: ^8.4.0
@@ -201,89 +201,89 @@ importers:
   packages/common/packages/common:
     dependencies:
       '@lytjs/common-a11y':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../a11y
       '@lytjs/common-algorithm':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../algorithm
       '@lytjs/common-async-scheduler':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../async-scheduler
       '@lytjs/common-cache':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../cache
       '@lytjs/common-dom':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../dom
       '@lytjs/common-dom-helpers':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../dom-helpers
       '@lytjs/common-env':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../env
       '@lytjs/common-error':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../error
       '@lytjs/common-event-normalizer':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../event-normalizer
       '@lytjs/common-events':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../events
       '@lytjs/common-http':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../http
       '@lytjs/common-is':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../is
       '@lytjs/common-keyboard':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../keyboard
       '@lytjs/common-node-cache':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../node-cache
       '@lytjs/common-object':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../object
       '@lytjs/common-path':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../path
       '@lytjs/common-performance':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../performance
       '@lytjs/common-query':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../query
       '@lytjs/common-raf':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../raf
       '@lytjs/common-render-queue':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../render-queue
       '@lytjs/common-scheduler':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../scheduler
       '@lytjs/common-storage':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../storage
       '@lytjs/common-string':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../string
       '@lytjs/common-timing':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../timing
       '@lytjs/common-transition-engine':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../transition-engine
       '@lytjs/common-validate':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../validate
       '@lytjs/common-vnode':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../vnode
       '@lytjs/common-warn':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../warn
     devDependencies:
       tsup:
         specifier: ^8.4.0
@@ -310,17 +310,17 @@ importers:
   packages/common/packages/dom:
     dependencies:
       '@lytjs/common-error':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../error
       '@lytjs/common-events':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../events
       '@lytjs/common-is':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../is
       '@lytjs/common-string':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../string
     devDependencies:
       jsdom:
         specifier: ^24.0.0
@@ -365,8 +365,8 @@ importers:
   packages/common/packages/error:
     dependencies:
       '@lytjs/common-constants':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../constants
     devDependencies:
       tsup:
         specifier: ^8.4.0
@@ -381,11 +381,11 @@ importers:
   packages/common/packages/event-normalizer:
     dependencies:
       '@lytjs/common-events':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../events
       '@lytjs/host-contract':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../../../host-contract
     devDependencies:
       tsup:
         specifier: ^8.4.0
@@ -400,8 +400,8 @@ importers:
   packages/common/packages/events:
     dependencies:
       '@lytjs/common-is':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../is
     devDependencies:
       tsup:
         specifier: ^8.4.0
@@ -414,6 +414,10 @@ importers:
         version: 3.0.7(@types/node@22.19.19)(@vitest/ui@3.0.0)(jiti@2.7.0)(jsdom@29.1.1)(tsx@4.22.0)(yaml@2.6.1)
 
   packages/common/packages/http:
+    dependencies:
+      '@lytjs/common-query':
+        specifier: workspace:*
+        version: link:../query
     devDependencies:
       tsup:
         specifier: ^8.4.0
@@ -467,8 +471,8 @@ importers:
   packages/common/packages/node-cache:
     dependencies:
       '@lytjs/host-contract':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../../../host-contract
     devDependencies:
       tsup:
         specifier: ^8.4.0
@@ -483,11 +487,11 @@ importers:
   packages/common/packages/object:
     dependencies:
       '@lytjs/common-constants':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../constants
       '@lytjs/common-is':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../is
     devDependencies:
       tsup:
         specifier: ^8.4.0
@@ -514,8 +518,8 @@ importers:
   packages/common/packages/performance:
     dependencies:
       '@lytjs/common-error':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../error
     devDependencies:
       tsup:
         specifier: ^8.4.0
@@ -548,11 +552,23 @@ importers:
         specifier: ^3.0.7
         version: 3.0.7(@types/node@22.19.19)(@vitest/ui@3.0.0)(jiti@2.7.0)(jsdom@29.1.1)(tsx@4.22.0)(yaml@2.6.1)
 
+  packages/common/packages/rate-limit:
+    devDependencies:
+      tsup:
+        specifier: ^8.4.0
+        version: 8.5.1(jiti@2.7.0)(postcss@8.5.14)(tsx@4.22.0)(typescript@5.9.3)(yaml@2.6.1)
+      typescript:
+        specifier: ^5.8.2
+        version: 5.9.3
+      vitest:
+        specifier: ^3.0.7
+        version: 3.0.7(@types/node@22.19.19)(@vitest/ui@3.0.0)(jiti@2.7.0)(jsdom@29.1.1)(tsx@4.22.0)(yaml@2.6.1)
+
   packages/common/packages/render-queue:
     dependencies:
       '@lytjs/host-contract':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../../../host-contract
     devDependencies:
       tsup:
         specifier: ^8.4.0
@@ -567,8 +583,8 @@ importers:
   packages/common/packages/scheduler:
     dependencies:
       '@lytjs/common-env':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../env
     devDependencies:
       tsup:
         specifier: ^8.4.0
@@ -583,8 +599,8 @@ importers:
   packages/common/packages/security:
     dependencies:
       '@lytjs/common-is':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../is
     devDependencies:
       tsup:
         specifier: ^8.4.0
@@ -614,11 +630,11 @@ importers:
   packages/common/packages/string:
     dependencies:
       '@lytjs/common-constants':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../constants
       '@lytjs/common-security':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../security
     devDependencies:
       tsup:
         specifier: ^8.4.0
@@ -645,8 +661,8 @@ importers:
   packages/common/packages/transition-engine:
     dependencies:
       '@lytjs/host-contract':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../../../host-contract
     devDependencies:
       tsup:
         specifier: ^8.4.0
@@ -700,20 +716,20 @@ importers:
   packages/compiler:
     dependencies:
       '@lytjs/common-constants':
-        specifier: ^6.4.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../common/packages/constants
       '@lytjs/common-error':
-        specifier: ^6.4.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../common/packages/error
       '@lytjs/common-is':
-        specifier: ^6.4.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../common/packages/is
       '@lytjs/common-string':
-        specifier: ^6.4.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../common/packages/string
       '@lytjs/common-vnode':
-        specifier: ^6.4.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../common/packages/vnode
     devDependencies:
       tsup:
         specifier: ^8.0.0
@@ -728,29 +744,29 @@ importers:
   packages/component:
     dependencies:
       '@lytjs/common-error':
-        specifier: ^6.4.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../common/packages/error
       '@lytjs/common-is':
-        specifier: ^6.4.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../common/packages/is
       '@lytjs/common-scheduler':
-        specifier: ^6.4.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../common/packages/scheduler
       '@lytjs/common-string':
-        specifier: ^6.4.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../common/packages/string
       '@lytjs/common-vnode':
-        specifier: ^6.4.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../common/packages/vnode
       '@lytjs/reactivity':
-        specifier: ^6.4.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../reactivity
       '@lytjs/shared-types':
-        specifier: ^6.4.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../shared-types
       '@lytjs/vdom':
-        specifier: ^6.4.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../vdom
     devDependencies:
       tsup:
         specifier: ^8.0.0
@@ -765,38 +781,38 @@ importers:
   packages/core:
     dependencies:
       '@lytjs/common-error':
-        specifier: ^6.5.0
-        version: 6.5.0
+        specifier: workspace:*
+        version: link:../common/packages/error
       '@lytjs/common-is':
-        specifier: ^6.5.0
-        version: 6.5.0
+        specifier: workspace:*
+        version: link:../common/packages/is
       '@lytjs/common-object':
-        specifier: ^6.5.0
-        version: 6.5.0
+        specifier: workspace:*
+        version: link:../common/packages/object
       '@lytjs/common-scheduler':
-        specifier: ^6.5.0
-        version: 6.5.0
+        specifier: workspace:*
+        version: link:../common/packages/scheduler
       '@lytjs/common-string':
-        specifier: ^6.5.0
-        version: 6.5.0
+        specifier: workspace:*
+        version: link:../common/packages/string
       '@lytjs/compiler':
-        specifier: ^6.5.0
-        version: 6.5.0
+        specifier: workspace:*
+        version: link:../compiler
       '@lytjs/component':
-        specifier: ^6.5.0
-        version: 6.5.0
+        specifier: workspace:*
+        version: link:../component
       '@lytjs/reactivity':
-        specifier: ^6.5.0
-        version: 6.5.0
+        specifier: workspace:*
+        version: link:../reactivity
       '@lytjs/renderer':
-        specifier: ^6.5.0
-        version: 6.5.0
+        specifier: workspace:*
+        version: link:../renderer
       '@lytjs/shared-types':
-        specifier: ^6.5.0
-        version: 6.5.0
+        specifier: workspace:*
+        version: link:../shared-types
       '@lytjs/vdom':
-        specifier: ^6.5.0
-        version: 6.5.0
+        specifier: workspace:*
+        version: link:../vdom
     devDependencies:
       jsdom:
         specifier: ^24.0.0
@@ -814,29 +830,29 @@ importers:
   packages/core-signal:
     dependencies:
       '@lytjs/common-error':
-        specifier: ^6.4.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../common/packages/error
       '@lytjs/common-scheduler':
-        specifier: ^6.4.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../common/packages/scheduler
       '@lytjs/compiler':
-        specifier: ^6.4.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../compiler
       '@lytjs/component':
-        specifier: ^6.4.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../component
       '@lytjs/dom-runtime':
-        specifier: ^6.4.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../dom-runtime
       '@lytjs/reactivity':
-        specifier: ^6.4.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../reactivity
       '@lytjs/renderer':
-        specifier: ^6.4.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../renderer
       '@lytjs/shared-types':
-        specifier: ^6.4.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../shared-types
     devDependencies:
       tsup:
         specifier: ^8.0.0
@@ -848,29 +864,29 @@ importers:
   packages/core-vnode:
     dependencies:
       '@lytjs/common-error':
-        specifier: ^6.4.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../common/packages/error
       '@lytjs/common-scheduler':
-        specifier: ^6.4.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../common/packages/scheduler
       '@lytjs/compiler':
-        specifier: ^6.4.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../compiler
       '@lytjs/component':
-        specifier: ^6.4.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../component
       '@lytjs/reactivity':
-        specifier: ^6.4.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../reactivity
       '@lytjs/renderer':
-        specifier: ^6.4.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../renderer
       '@lytjs/shared-types':
-        specifier: ^6.4.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../shared-types
       '@lytjs/vdom':
-        specifier: ^6.4.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../vdom
     devDependencies:
       tsup:
         specifier: ^8.0.0
@@ -882,11 +898,11 @@ importers:
   packages/dom:
     dependencies:
       '@lytjs/common-is':
-        specifier: ^6.4.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../common/packages/is
       '@lytjs/common-string':
-        specifier: ^6.4.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../common/packages/string
     devDependencies:
       tsup:
         specifier: ^8.3.6
@@ -901,8 +917,8 @@ importers:
   packages/dom-runtime:
     dependencies:
       '@lytjs/reactivity':
-        specifier: ^6.4.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../reactivity
     devDependencies:
       jsdom:
         specifier: ^26.0.0
@@ -916,22 +932,6 @@ importers:
       vitest:
         specifier: ^3.0.7
         version: 3.0.7(@types/node@22.19.19)(@vitest/ui@3.0.0(vitest@3.0.7))(jiti@2.7.0)(jsdom@26.0.0)(tsx@4.22.0)(yaml@2.6.1)
-
-  packages/ecosystem/packages/api:
-    dependencies:
-      '@lytjs/common-http':
-        specifier: ^6.5.0
-        version: 6.5.0
-    devDependencies:
-      tsup:
-        specifier: ^8.3.6
-        version: 8.5.1(jiti@2.7.0)(postcss@8.5.14)(tsx@4.22.0)(typescript@5.8.2)(yaml@2.6.1)
-      typescript:
-        specifier: ^5.7.3
-        version: 5.8.2
-      vitest:
-        specifier: ^3.0.0
-        version: 3.0.7(@types/node@22.19.19)(@vitest/ui@3.0.0)(jiti@2.7.0)(jsdom@29.1.1)(tsx@4.22.0)(yaml@2.6.1)
 
   packages/ecosystem/packages/bundler:
     devDependencies:
@@ -948,14 +948,14 @@ importers:
   packages/ecosystem/packages/compat:
     dependencies:
       '@lytjs/component':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../../../component
       '@lytjs/core':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../../../core
       '@lytjs/reactivity':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../../../reactivity
     devDependencies:
       tsup:
         specifier: ^8.0.0
@@ -970,44 +970,32 @@ importers:
   packages/ecosystem/packages/devtools:
     dependencies:
       '@lytjs/common-dom':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../../../common/packages/dom
       '@lytjs/common-env':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../../../common/packages/env
       '@lytjs/common-is':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../../../common/packages/is
       '@lytjs/common-object':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../../../common/packages/object
       '@lytjs/component':
-        specifier: ^6.1.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../../../component
       '@lytjs/reactivity':
-        specifier: ^6.1.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../../../reactivity
       '@lytjs/router':
-        specifier: ^6.1.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../web-framework/packages/router
       '@lytjs/store':
-        specifier: ^6.1.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../store
       '@lytjs/vdom':
-        specifier: ^6.1.0
-        version: 6.4.0
-    devDependencies:
-      tsup:
-        specifier: ^8.0.0
-        version: 8.5.1(jiti@2.7.0)(postcss@8.5.14)(tsx@4.22.0)(typescript@5.8.2)(yaml@2.6.1)
-      typescript:
-        specifier: ^5.4.0
-        version: 5.8.2
-      vitest:
-        specifier: ^3.0.0
-        version: 3.0.7(@types/node@22.19.19)(@vitest/ui@3.0.0)(jiti@2.7.0)(jsdom@29.1.1)(tsx@4.22.0)(yaml@2.6.1)
-
-  packages/ecosystem/packages/hmr:
+        specifier: workspace:*
+        version: link:../../../vdom
     devDependencies:
       tsup:
         specifier: ^8.0.0
@@ -1022,63 +1010,23 @@ importers:
   packages/ecosystem/packages/platform-adapter:
     dependencies:
       '@lytjs/common-constants':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../../../common/packages/constants
       '@lytjs/common-is':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../../../common/packages/is
       '@lytjs/common-vnode':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../../../common/packages/vnode
       '@lytjs/vdom':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../../../vdom
     devDependencies:
       tsup:
         specifier: ^8.0.0
         version: 8.5.1(jiti@2.7.0)(postcss@8.5.14)(tsx@4.22.0)(typescript@5.8.2)(yaml@2.6.1)
       typescript:
         specifier: ^5.4.0
-        version: 5.8.2
-      vitest:
-        specifier: ^3.0.0
-        version: 3.0.7(@types/node@22.19.19)(@vitest/ui@3.0.0)(jiti@2.7.0)(jsdom@29.1.1)(tsx@4.22.0)(yaml@2.6.1)
-
-  packages/ecosystem/packages/router:
-    dependencies:
-      '@lytjs/common-env':
-        specifier: ^6.0.0
-        version: 6.0.0
-      '@lytjs/common-is':
-        specifier: ^6.0.0
-        version: 6.0.0
-      '@lytjs/component':
-        specifier: ^6.1.0
-        version: 6.4.0
-      '@lytjs/reactivity':
-        specifier: ^6.1.0
-        version: 6.4.0
-      '@lytjs/vdom':
-        specifier: ^6.1.0
-        version: 6.4.0
-    devDependencies:
-      tsup:
-        specifier: ^8.0.0
-        version: 8.5.1(jiti@2.7.0)(postcss@8.5.14)(tsx@4.22.0)(typescript@5.8.2)(yaml@2.6.1)
-      typescript:
-        specifier: ^5.4.0
-        version: 5.8.2
-      vitest:
-        specifier: ^3.0.0
-        version: 3.0.7(@types/node@22.19.19)(@vitest/ui@3.0.0)(jiti@2.7.0)(jsdom@29.1.1)(tsx@4.22.0)(yaml@2.6.1)
-
-  packages/ecosystem/packages/router-fs:
-    devDependencies:
-      tsup:
-        specifier: ^8.3.6
-        version: 8.5.1(jiti@2.7.0)(postcss@8.5.14)(tsx@4.22.0)(typescript@5.8.2)(yaml@2.6.1)
-      typescript:
-        specifier: ^5.7.3
         version: 5.8.2
       vitest:
         specifier: ^3.0.0
@@ -1096,33 +1044,105 @@ importers:
         specifier: ^3.0.0
         version: 3.0.7(@types/node@22.19.19)(@vitest/ui@3.0.0)(jiti@2.7.0)(jsdom@29.1.1)(tsx@4.22.0)(yaml@2.6.1)
 
-  packages/ecosystem/packages/ssr:
+  packages/ecosystem/packages/ssr-kit/packages/cache-isr:
     dependencies:
-      '@lytjs/common-dom':
-        specifier: ^6.0.0
-        version: 6.0.0
-      '@lytjs/common-env':
-        specifier: ^6.0.0
-        version: 6.0.0
+      '@lytjs/common-cache':
+        specifier: workspace:*
+        version: link:../../../../../common/packages/cache
       '@lytjs/common-is':
-        specifier: ^6.0.0
-        version: 6.0.0
-      '@lytjs/component':
-        specifier: ^6.1.0
-        version: 6.4.0
-      '@lytjs/reactivity':
-        specifier: ^6.1.0
-        version: 6.4.0
-      '@lytjs/vdom':
-        specifier: ^6.1.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../../../../../common/packages/is
     devDependencies:
       tsup:
         specifier: ^8.0.0
-        version: 8.5.1(jiti@2.7.0)(postcss@8.5.14)(tsx@4.22.0)(typescript@5.8.2)(yaml@2.6.1)
+        version: 8.5.1(jiti@2.7.0)(postcss@8.5.14)(tsx@4.22.0)(typescript@5.9.3)(yaml@2.6.1)
       typescript:
         specifier: ^5.4.0
-        version: 5.8.2
+        version: 5.9.3
+      vitest:
+        specifier: ^3.0.0
+        version: 3.0.7(@types/node@22.19.19)(@vitest/ui@3.0.0)(jiti@2.7.0)(jsdom@29.1.1)(tsx@4.22.0)(yaml@2.6.1)
+
+  packages/ecosystem/packages/ssr-kit/packages/hmr:
+    devDependencies:
+      tsup:
+        specifier: ^8.0.0
+        version: 8.5.1(jiti@2.7.0)(postcss@8.5.14)(tsx@4.22.0)(typescript@5.9.3)(yaml@2.6.1)
+      typescript:
+        specifier: ^5.4.0
+        version: 5.9.3
+      vitest:
+        specifier: ^3.0.0
+        version: 3.0.7(@types/node@22.19.19)(@vitest/ui@3.0.0)(jiti@2.7.0)(jsdom@29.1.1)(tsx@4.22.0)(yaml@2.6.1)
+
+  packages/ecosystem/packages/ssr-kit/packages/html-renderer:
+    dependencies:
+      '@lytjs/common-is':
+        specifier: workspace:*
+        version: link:../../../../../common/packages/is
+      '@lytjs/ssr':
+        specifier: workspace:*
+        version: link:../ssr
+    devDependencies:
+      tsup:
+        specifier: ^8.0.0
+        version: 8.5.1(jiti@2.7.0)(postcss@8.5.14)(tsx@4.22.0)(typescript@5.9.3)(yaml@2.6.1)
+      typescript:
+        specifier: ^5.4.0
+        version: 5.9.3
+      vitest:
+        specifier: ^3.0.0
+        version: 3.0.7(@types/node@22.19.19)(@vitest/ui@3.0.0)(jiti@2.7.0)(jsdom@29.1.1)(tsx@4.22.0)(yaml@2.6.1)
+
+  packages/ecosystem/packages/ssr-kit/packages/ssg:
+    dependencies:
+      '@lytjs/common-is':
+        specifier: workspace:*
+        version: link:../../../../../common/packages/is
+      '@lytjs/common-path':
+        specifier: workspace:*
+        version: link:../../../../../common/packages/path
+      '@lytjs/ssr':
+        specifier: workspace:*
+        version: link:../ssr
+    devDependencies:
+      tsup:
+        specifier: ^8.0.0
+        version: 8.5.1(jiti@2.7.0)(postcss@8.5.14)(tsx@4.22.0)(typescript@5.9.3)(yaml@2.6.1)
+      typescript:
+        specifier: ^5.4.0
+        version: 5.9.3
+      vitest:
+        specifier: ^3.0.0
+        version: 3.0.7(@types/node@22.19.19)(@vitest/ui@3.0.0)(jiti@2.7.0)(jsdom@29.1.1)(tsx@4.22.0)(yaml@2.6.1)
+
+  packages/ecosystem/packages/ssr-kit/packages/ssr:
+    dependencies:
+      '@lytjs/common-dom':
+        specifier: workspace:*
+        version: link:../../../../../common/packages/dom
+      '@lytjs/common-env':
+        specifier: workspace:*
+        version: link:../../../../../common/packages/env
+      '@lytjs/common-is':
+        specifier: workspace:*
+        version: link:../../../../../common/packages/is
+      '@lytjs/component':
+        specifier: workspace:*
+        version: link:../../../../../component
+      '@lytjs/reactivity':
+        specifier: workspace:*
+        version: link:../../../../../reactivity
+      '@lytjs/vdom':
+        specifier: workspace:*
+        version: link:../../../../../vdom
+    devDependencies:
+      tsup:
+        specifier: ^8.0.0
+        version: 8.5.1(jiti@2.7.0)(postcss@8.5.14)(tsx@4.22.0)(typescript@5.9.3)(yaml@2.6.1)
+      typescript:
+        specifier: ^5.4.0
+        version: 5.9.3
       vitest:
         specifier: ^3.0.0
         version: 3.0.7(@types/node@22.19.19)(@vitest/ui@3.0.0)(jiti@2.7.0)(jsdom@29.1.1)(tsx@4.22.0)(yaml@2.6.1)
@@ -1130,17 +1150,17 @@ importers:
   packages/ecosystem/packages/store:
     dependencies:
       '@lytjs/common-is':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../../../common/packages/is
       '@lytjs/common-object':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../../../common/packages/object
       '@lytjs/component':
-        specifier: ^6.1.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../../../component
       '@lytjs/reactivity':
-        specifier: ^6.1.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../../../reactivity
     devDependencies:
       tsup:
         specifier: ^8.0.0
@@ -1155,26 +1175,26 @@ importers:
   packages/ecosystem/packages/ui:
     dependencies:
       '@lytjs/common-a11y':
-        specifier: ^6.4.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../../../common/packages/a11y
       '@lytjs/common-dom':
-        specifier: ^6.4.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../../../common/packages/dom
       '@lytjs/common-env':
-        specifier: ^6.4.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../../../common/packages/env
       '@lytjs/common-is':
-        specifier: ^6.4.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../../../common/packages/is
       '@lytjs/component':
-        specifier: ^6.4.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../../../component
       '@lytjs/reactivity':
-        specifier: ^6.4.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../../../reactivity
       '@lytjs/vdom':
-        specifier: ^6.4.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../../../vdom
     devDependencies:
       tsup:
         specifier: ^8.0.0
@@ -1182,6 +1202,203 @@ importers:
       typescript:
         specifier: ^5.4.0
         version: 5.8.2
+      vitest:
+        specifier: ^3.0.0
+        version: 3.0.7(@types/node@22.19.19)(@vitest/ui@3.0.0)(jiti@2.7.0)(jsdom@29.1.1)(tsx@4.22.0)(yaml@2.6.1)
+
+  packages/ecosystem/packages/web-framework/packages/api:
+    dependencies:
+      '@lytjs/common-http':
+        specifier: workspace:*
+        version: link:../../../../../common/packages/http
+      '@lytjs/shared-types':
+        specifier: workspace:*
+        version: link:../../../../../shared-types
+    devDependencies:
+      tsup:
+        specifier: ^8.3.6
+        version: 8.5.1(jiti@2.7.0)(postcss@8.5.14)(tsx@4.22.0)(typescript@5.9.3)(yaml@2.6.1)
+      typescript:
+        specifier: ^5.7.3
+        version: 5.9.3
+      vitest:
+        specifier: ^3.0.0
+        version: 3.0.7(@types/node@22.19.19)(@vitest/ui@3.0.0)(jiti@2.7.0)(jsdom@29.1.1)(tsx@4.22.0)(yaml@2.6.1)
+
+  packages/ecosystem/packages/web-framework/packages/http-server:
+    dependencies:
+      '@lytjs/common-is':
+        specifier: workspace:*
+        version: link:../../../../../common/packages/is
+      '@lytjs/common-query':
+        specifier: workspace:*
+        version: link:../../../../../common/packages/query
+      '@lytjs/middleware':
+        specifier: workspace:*
+        version: link:../middleware
+      '@lytjs/shared-types':
+        specifier: workspace:*
+        version: link:../../../../../shared-types
+    devDependencies:
+      tsup:
+        specifier: ^8.3.6
+        version: 8.5.1(jiti@2.7.0)(postcss@8.5.14)(tsx@4.22.0)(typescript@5.9.3)(yaml@2.6.1)
+      typescript:
+        specifier: ^5.7.3
+        version: 5.9.3
+      vitest:
+        specifier: ^3.0.0
+        version: 3.0.7(@types/node@22.19.19)(@vitest/ui@3.0.0)(jiti@2.7.0)(jsdom@29.1.1)(tsx@4.22.0)(yaml@2.6.1)
+
+  packages/ecosystem/packages/web-framework/packages/metadata:
+    dependencies:
+      '@lytjs/common-is':
+        specifier: workspace:*
+        version: link:../../../../../common/packages/is
+      '@lytjs/common-string':
+        specifier: workspace:*
+        version: link:../../../../../common/packages/string
+      '@lytjs/shared-types':
+        specifier: workspace:*
+        version: link:../../../../../shared-types
+    devDependencies:
+      tsup:
+        specifier: ^8.3.6
+        version: 8.5.1(jiti@2.7.0)(postcss@8.5.14)(tsx@4.22.0)(typescript@5.9.3)(yaml@2.6.1)
+      typescript:
+        specifier: ^5.7.3
+        version: 5.9.3
+      vitest:
+        specifier: ^3.0.0
+        version: 3.0.7(@types/node@22.19.19)(@vitest/ui@3.0.0)(jiti@2.7.0)(jsdom@29.1.1)(tsx@4.22.0)(yaml@2.6.1)
+
+  packages/ecosystem/packages/web-framework/packages/middleware:
+    dependencies:
+      '@lytjs/common-error':
+        specifier: workspace:*
+        version: link:../../../../../common/packages/error
+      '@lytjs/common-events':
+        specifier: workspace:*
+        version: link:../../../../../common/packages/events
+      '@lytjs/shared-types':
+        specifier: workspace:*
+        version: link:../../../../../shared-types
+    devDependencies:
+      '@types/node':
+        specifier: ^22.13.10
+        version: 22.19.19
+      '@vitest/coverage-v8':
+        specifier: ^3.0.7
+        version: 3.2.4(vitest@3.0.7(@types/node@22.19.19)(@vitest/ui@3.0.0(vitest@3.0.7))(jiti@2.7.0)(jsdom@29.1.1)(tsx@4.22.0)(yaml@2.6.1))
+      tsup:
+        specifier: ^8.4.0
+        version: 8.5.1(jiti@2.7.0)(postcss@8.5.14)(tsx@4.22.0)(typescript@5.9.3)(yaml@2.6.1)
+      typescript:
+        specifier: ^5.8.2
+        version: 5.9.3
+      vitest:
+        specifier: ^3.0.7
+        version: 3.0.7(@types/node@22.19.19)(@vitest/ui@3.0.0)(jiti@2.7.0)(jsdom@29.1.1)(tsx@4.22.0)(yaml@2.6.1)
+
+  packages/ecosystem/packages/web-framework/packages/middleware-auth:
+    dependencies:
+      '@lytjs/common-is':
+        specifier: workspace:*
+        version: link:../../../../../common/packages/is
+      '@lytjs/middleware':
+        specifier: workspace:*
+        version: link:../middleware
+    devDependencies:
+      tsup:
+        specifier: ^8.3.6
+        version: 8.5.1(jiti@2.7.0)(postcss@8.5.14)(tsx@4.22.0)(typescript@5.9.3)(yaml@2.6.1)
+      typescript:
+        specifier: ^5.7.3
+        version: 5.9.3
+      vitest:
+        specifier: ^3.0.0
+        version: 3.0.7(@types/node@22.19.19)(@vitest/ui@3.0.0)(jiti@2.7.0)(jsdom@29.1.1)(tsx@4.22.0)(yaml@2.6.1)
+
+  packages/ecosystem/packages/web-framework/packages/middleware-cors:
+    dependencies:
+      '@lytjs/common-constants':
+        specifier: workspace:*
+        version: link:../../../../../common/packages/constants
+      '@lytjs/middleware':
+        specifier: workspace:*
+        version: link:../middleware
+    devDependencies:
+      '@types/node':
+        specifier: ^22.13.10
+        version: 22.19.19
+      '@vitest/coverage-v8':
+        specifier: ^3.0.7
+        version: 3.2.4(vitest@3.0.7(@types/node@22.19.19)(@vitest/ui@3.0.0(vitest@3.0.7))(jiti@2.7.0)(jsdom@29.1.1)(tsx@4.22.0)(yaml@2.6.1))
+      tsup:
+        specifier: ^8.4.0
+        version: 8.5.1(jiti@2.7.0)(postcss@8.5.14)(tsx@4.22.0)(typescript@5.9.3)(yaml@2.6.1)
+      typescript:
+        specifier: ^5.8.2
+        version: 5.9.3
+      vitest:
+        specifier: ^3.0.7
+        version: 3.0.7(@types/node@22.19.19)(@vitest/ui@3.0.0)(jiti@2.7.0)(jsdom@29.1.1)(tsx@4.22.0)(yaml@2.6.1)
+
+  packages/ecosystem/packages/web-framework/packages/middleware-rate-limit:
+    dependencies:
+      '@lytjs/common-is':
+        specifier: workspace:*
+        version: link:../../../../../common/packages/is
+      '@lytjs/common-rate-limit':
+        specifier: workspace:*
+        version: link:../../../../../common/packages/rate-limit
+    devDependencies:
+      tsup:
+        specifier: ^8.3.6
+        version: 8.5.1(jiti@2.7.0)(postcss@8.5.14)(tsx@4.22.0)(typescript@5.9.3)(yaml@2.6.1)
+      typescript:
+        specifier: ^5.7.3
+        version: 5.9.3
+      vitest:
+        specifier: ^3.0.0
+        version: 3.0.7(@types/node@22.19.19)(@vitest/ui@3.0.0)(jiti@2.7.0)(jsdom@29.1.1)(tsx@4.22.0)(yaml@2.6.1)
+
+  packages/ecosystem/packages/web-framework/packages/router:
+    dependencies:
+      '@lytjs/common-env':
+        specifier: workspace:*
+        version: link:../../../../../common/packages/env
+      '@lytjs/common-is':
+        specifier: workspace:*
+        version: link:../../../../../common/packages/is
+      '@lytjs/component':
+        specifier: workspace:*
+        version: link:../../../../../component
+      '@lytjs/reactivity':
+        specifier: workspace:*
+        version: link:../../../../../reactivity
+      '@lytjs/vdom':
+        specifier: workspace:*
+        version: link:../../../../../vdom
+    devDependencies:
+      tsup:
+        specifier: ^8.0.0
+        version: 8.5.1(jiti@2.7.0)(postcss@8.5.14)(tsx@4.22.0)(typescript@5.9.3)(yaml@2.6.1)
+      typescript:
+        specifier: ^5.4.0
+        version: 5.9.3
+      vitest:
+        specifier: ^3.0.0
+        version: 3.0.7(@types/node@22.19.19)(@vitest/ui@3.0.0)(jiti@2.7.0)(jsdom@29.1.1)(tsx@4.22.0)(yaml@2.6.1)
+
+  packages/ecosystem/packages/web-framework/packages/router-fs:
+    devDependencies:
+      tsup:
+        specifier: ^8.3.6
+        version: 8.5.1(jiti@2.7.0)(postcss@8.5.14)(tsx@4.22.0)(typescript@5.9.3)(yaml@2.6.1)
+      typescript:
+        specifier: ^5.7.3
+        version: 5.9.3
       vitest:
         specifier: ^3.0.0
         version: 3.0.7(@types/node@22.19.19)(@vitest/ui@3.0.0)(jiti@2.7.0)(jsdom@29.1.1)(tsx@4.22.0)(yaml@2.6.1)
@@ -1198,11 +1415,11 @@ importers:
   packages/plugins/packages/plugin-animation:
     dependencies:
       '@lytjs/core':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../../../core
       '@lytjs/reactivity':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../../../reactivity
     devDependencies:
       tsup:
         specifier: ^8.0.0
@@ -1217,14 +1434,14 @@ importers:
   packages/plugins/packages/plugin-auth:
     dependencies:
       '@lytjs/common-is':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../../../common/packages/is
       '@lytjs/core':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../../../core
       '@lytjs/reactivity':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../../../reactivity
     devDependencies:
       tsup:
         specifier: ^8.0.0
@@ -1239,8 +1456,8 @@ importers:
   packages/plugins/packages/plugin-chart:
     dependencies:
       '@lytjs/core':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../../../core
     devDependencies:
       tsup:
         specifier: ^8.0.0
@@ -1255,14 +1472,14 @@ importers:
   packages/plugins/packages/plugin-data:
     dependencies:
       '@lytjs/core':
-        specifier: ^6.5.0
-        version: 6.5.0
+        specifier: workspace:*
+        version: link:../../../core
       '@lytjs/plugin-data-fetch':
-        specifier: ^6.5.0
-        version: 6.5.0
+        specifier: workspace:*
+        version: link:../plugin-data-fetch
       '@lytjs/reactivity':
-        specifier: ^6.5.0
-        version: 6.5.0
+        specifier: workspace:*
+        version: link:../../../reactivity
     devDependencies:
       tsup:
         specifier: ^8.3.6
@@ -1277,11 +1494,11 @@ importers:
   packages/plugins/packages/plugin-data-fetch:
     dependencies:
       '@lytjs/core':
-        specifier: ^6.5.0
-        version: 6.5.0
+        specifier: workspace:*
+        version: link:../../../core
       '@lytjs/reactivity':
-        specifier: ^6.5.0
-        version: 6.5.0
+        specifier: workspace:*
+        version: link:../../../reactivity
     devDependencies:
       tsup:
         specifier: ^8.0.0
@@ -1296,11 +1513,11 @@ importers:
   packages/plugins/packages/plugin-form:
     dependencies:
       '@lytjs/core':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../../../core
       '@lytjs/reactivity':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../../../reactivity
     devDependencies:
       tsup:
         specifier: ^8.0.0
@@ -1315,14 +1532,14 @@ importers:
   packages/plugins/packages/plugin-i18n:
     dependencies:
       '@lytjs/common-is':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../../../common/packages/is
       '@lytjs/core':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../../../core
       '@lytjs/reactivity':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../../../reactivity
     devDependencies:
       tsup:
         specifier: ^8.0.0
@@ -1337,14 +1554,14 @@ importers:
   packages/plugins/packages/plugin-logger:
     dependencies:
       '@lytjs/common-is':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../../../common/packages/is
       '@lytjs/core':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../../../core
       '@lytjs/reactivity':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../../../reactivity
     devDependencies:
       tsup:
         specifier: ^8.0.0
@@ -1359,14 +1576,14 @@ importers:
   packages/plugins/packages/plugin-storage:
     dependencies:
       '@lytjs/common-is':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../../../common/packages/is
       '@lytjs/core':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../../../core
       '@lytjs/reactivity':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../../../reactivity
     devDependencies:
       tsup:
         specifier: ^8.0.0
@@ -1381,11 +1598,11 @@ importers:
   packages/plugins/packages/plugin-testing:
     dependencies:
       '@lytjs/core':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../../../core
       '@lytjs/reactivity':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../../../reactivity
     devDependencies:
       tsup:
         specifier: ^8.0.0
@@ -1400,14 +1617,14 @@ importers:
   packages/plugins/packages/plugin-theme:
     dependencies:
       '@lytjs/common-is':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../../../common/packages/is
       '@lytjs/core':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../../../core
       '@lytjs/reactivity':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../../../reactivity
     devDependencies:
       tsup:
         specifier: ^8.0.0
@@ -1422,14 +1639,14 @@ importers:
   packages/plugins/packages/plugin-validation:
     dependencies:
       '@lytjs/core':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../../../core
       '@lytjs/plugin-form':
-        specifier: ^6.0.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../plugin-form
       '@lytjs/reactivity':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../../../reactivity
     devDependencies:
       tsup:
         specifier: ^8.0.0
@@ -1444,11 +1661,11 @@ importers:
   packages/plugins/packages/plugin-vite:
     dependencies:
       '@lytjs/common-is':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../../../common/packages/is
       '@lytjs/compiler':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../../../compiler
     devDependencies:
       tsup:
         specifier: ^8.0.0
@@ -1466,23 +1683,23 @@ importers:
   packages/reactivity:
     dependencies:
       '@lytjs/common-assertions':
-        specifier: ^6.5.0
-        version: 6.5.0
+        specifier: workspace:*
+        version: link:../common/packages/assertions
       '@lytjs/common-constants':
-        specifier: ^6.5.0
-        version: 6.5.0
+        specifier: workspace:*
+        version: link:../common/packages/constants
       '@lytjs/common-error':
-        specifier: ^6.5.0
-        version: 6.5.0
+        specifier: workspace:*
+        version: link:../common/packages/error
       '@lytjs/common-is':
-        specifier: ^6.5.0
-        version: 6.5.0
+        specifier: workspace:*
+        version: link:../common/packages/is
       '@lytjs/common-scheduler':
-        specifier: ^6.5.0
-        version: 6.5.0
+        specifier: workspace:*
+        version: link:../common/packages/scheduler
       '@lytjs/shared-types':
-        specifier: ^6.5.0
-        version: 6.5.0
+        specifier: workspace:*
+        version: link:../shared-types
     devDependencies:
       tsup:
         specifier: ^8.0.0
@@ -1497,38 +1714,38 @@ importers:
   packages/renderer:
     dependencies:
       '@lytjs/adapter-web':
-        specifier: ^6.4.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../adapter-web
       '@lytjs/common-dom':
-        specifier: ^6.4.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../common/packages/dom
       '@lytjs/common-error':
-        specifier: ^6.4.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../common/packages/error
       '@lytjs/common-events':
-        specifier: ^6.4.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../common/packages/events
       '@lytjs/common-is':
-        specifier: ^6.4.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../common/packages/is
       '@lytjs/common-string':
-        specifier: ^6.4.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../common/packages/string
       '@lytjs/compiler':
-        specifier: ^6.4.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../compiler
       '@lytjs/dom-runtime':
-        specifier: ^6.4.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../dom-runtime
       '@lytjs/host-contract':
-        specifier: ^6.4.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../host-contract
       '@lytjs/reactivity':
-        specifier: ^6.4.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../reactivity
       '@lytjs/vdom':
-        specifier: ^6.4.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../vdom
     devDependencies:
       jsdom:
         specifier: ^24.0.0
@@ -1555,11 +1772,11 @@ importers:
   packages/tools/packages/cli:
     dependencies:
       '@lytjs/common-env':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../../../common/packages/env
       '@lytjs/common-is':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../../../common/packages/is
     devDependencies:
       tsup:
         specifier: ^8.0.0
@@ -1574,14 +1791,14 @@ importers:
   packages/tools/packages/devtools:
     dependencies:
       '@lytjs/common-string':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../../../common/packages/string
       '@lytjs/component':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../../../component
       '@lytjs/reactivity':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../../../reactivity
     devDependencies:
       tsup:
         specifier: ^8.0.0
@@ -1596,14 +1813,14 @@ importers:
   packages/tools/packages/test-utils:
     dependencies:
       '@lytjs/component':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../../../component
       '@lytjs/core':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../../../core
       '@lytjs/reactivity':
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: workspace:*
+        version: link:../../../reactivity
     devDependencies:
       tsup:
         specifier: ^8.0.0
@@ -1618,44 +1835,44 @@ importers:
   packages/vdom:
     dependencies:
       '@lytjs/common-algorithm':
-        specifier: ^6.4.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../common/packages/algorithm
       '@lytjs/common-assertions':
-        specifier: ^6.4.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../common/packages/assertions
       '@lytjs/common-constants':
-        specifier: ^6.4.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../common/packages/constants
       '@lytjs/common-dom':
-        specifier: ^6.4.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../common/packages/dom
       '@lytjs/common-error':
-        specifier: ^6.4.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../common/packages/error
       '@lytjs/common-events':
-        specifier: ^6.4.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../common/packages/events
       '@lytjs/common-is':
-        specifier: ^6.4.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../common/packages/is
       '@lytjs/common-object':
-        specifier: ^6.4.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../common/packages/object
       '@lytjs/common-string':
-        specifier: ^6.4.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../common/packages/string
       '@lytjs/common-transition-engine':
-        specifier: ^6.4.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../common/packages/transition-engine
       '@lytjs/common-vnode':
-        specifier: ^6.4.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../common/packages/vnode
       '@lytjs/host-contract':
-        specifier: ^6.4.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../host-contract
       '@lytjs/shared-types':
-        specifier: ^6.4.0
-        version: 6.4.0
+        specifier: workspace:*
+        version: link:../shared-types
     devDependencies:
       jsdom:
         specifier: ^24.0.0
@@ -2896,257 +3113,6 @@ packages:
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
 
-  '@lytjs/adapter-web@6.0.0':
-    resolution: {integrity: sha512-bYD3HC9rNyOw0S9H4b+cW3QMwpm82T22loNSB+HnXXFmRLw1yRCUbFwliEgmVOixI402WkdFYBPHYbgQDRb9Mw==}
-
-  '@lytjs/adapter-web@6.4.0':
-    resolution: {integrity: sha512-V17yAmqns4armCmy1xxPFlekWpMSWz7vsZ/A4JWd2bGGpSsZsGeoi0CxXGKGOg+vEk+HSb5V68pDw9Q01zfHVw==}
-
-  '@lytjs/common-a11y@6.0.0':
-    resolution: {integrity: sha512-AZml3d4MFdyjCZLS2xBGcPBmcs5EB1HsHaMjrcUS+co9EOVY5xf2M5/Ih3pM6ME3PGnWY6hVCdwEu4xPZVnhkw==}
-
-  '@lytjs/common-a11y@6.4.0':
-    resolution: {integrity: sha512-k094Wew8mGJWeHJ1qu/ZUcjAozneb0gigSXVeGF/hDn2xWx3ExmbNH/65vFgzZyO/AjMnvaqousJ45C/pxlOfw==}
-
-  '@lytjs/common-algorithm@6.0.0':
-    resolution: {integrity: sha512-3NYxnuM7Wj05zJ5x0bNtXhor+o+StQuT95mvnmkQjNImwdJz47aFF/mx4LhS1aqsVpgkh7jjhoOBmKYAHZXqlw==}
-
-  '@lytjs/common-algorithm@6.4.0':
-    resolution: {integrity: sha512-xlIn+cEBwCq0xBlpGmi/3cToqi7Zo4vTB4EyBzSPIZAPLtcqVpWxUbxhebYIE8MMPyE7ytBZCVWSKz4T+EWOnw==}
-
-  '@lytjs/common-assertions@6.0.0':
-    resolution: {integrity: sha512-cyf28O2rDxfFqmS/t8iGIAUBBV2UPpsa6pRfM2du4N+ECK1ueOYJGZoqCzeap7n6t/AIK8qHuUghMM2zLo4Oqg==}
-
-  '@lytjs/common-assertions@6.4.0':
-    resolution: {integrity: sha512-p40l1IzwBwyK64RjD7txjxE+6QT1f1joF3nyCcUgotGiDh7p6SR1QskoGyx6BzXTjfN8DjxjcmV0Swl1HgJb8Q==}
-
-  '@lytjs/common-assertions@6.5.0':
-    resolution: {integrity: sha512-Jo4+Nil2pPcGmPwQqXVl5SObf9mNh8nS7zxluOMJo20Knf8T7gKQmFF+Cjly5yWGioCDs3+Tweki60onXyEZ3g==}
-
-  '@lytjs/common-async-scheduler@6.0.0':
-    resolution: {integrity: sha512-Q38zeXiRxru8YNZWlq4b4euZY5oP5FvPEpPyTMEQAuXTHZFPOKa9W5mYWSA6ntyzhQfUMz0yCr4MctQSVqu7RQ==}
-
-  '@lytjs/common-cache@6.0.0':
-    resolution: {integrity: sha512-USjn9Ighqpna3QivDTnFEqkb9HK+SKtcH+EfHwClFfiJmZnTeRE44KeaLMi+EsYU6g+ksLwtUE7LIuFgZs+R7w==}
-
-  '@lytjs/common-constants@6.0.0':
-    resolution: {integrity: sha512-CPuk3MZr0A/fA2PjOtXKyvMeIFU3awtn/9bRtRy2uMlqHBx0rTtIYYHGitYnjyBTDJvoUKbCnKOH6vNdWM77Gg==}
-
-  '@lytjs/common-constants@6.4.0':
-    resolution: {integrity: sha512-2ojjQBIUmDx+gRLqMXNEfePXqonREGCo4UiwdagpoUyjf8EKN/p+g7iKAORnQ9KUbwFZ7pL1jIkMUQGU+x7R2A==}
-
-  '@lytjs/common-constants@6.5.0':
-    resolution: {integrity: sha512-+KmIbiAWanGBzLdj8UMUIr+9setHQdMbCLIzCPO/iqJIbfXOX46mQ82SOBubdALAjSbwg0mOwGIn8mQ7Ebu3DQ==}
-
-  '@lytjs/common-dom-helpers@6.0.0':
-    resolution: {integrity: sha512-Rep8U8UvCG8fLxjn6SfYS5quPQklYdsChhtk7zYb3yUnM5/wOJMlQQw8DC7PNxTppffeJnPFj5fOGPHTsf5IbA==}
-
-  '@lytjs/common-dom@6.0.0':
-    resolution: {integrity: sha512-bA3mjsvG+sfgV3RDHU7Q2nJjaN+zWHIeHiWeArAEUFLElV5pmE43t3G+YEuMoceaJSWZ/Yjjhez1DDH9ZGss1Q==}
-    engines: {node: '>=18.0.0'}
-
-  '@lytjs/common-dom@6.4.0':
-    resolution: {integrity: sha512-N+cZIb4xkq1PL2POWYQJroD/6Eu641DfrFhsPxlhhXCrXE9XJEBrCk17+rDD3wxOuq+ySvh2R9aPbysX9hNbsw==}
-    engines: {node: '>=18.0.0'}
-
-  '@lytjs/common-env@6.0.0':
-    resolution: {integrity: sha512-m3Uh6lnVCPn/LBoudkE2tVh3kg2iZdoo3G88qGFUmopJNY05O93vHh4pnyRS3TgNW0rOcMHzy2OcZsgrxVRs9w==}
-
-  '@lytjs/common-env@6.4.0':
-    resolution: {integrity: sha512-QbWdhj+8+0XVjglIovAySZ3jwbhTeM3sAutFuZXUeLrHrf/7VIc+NeUkFl+3hLh3XiFeV8MA94ryt36hkiZxLw==}
-
-  '@lytjs/common-error@6.0.0':
-    resolution: {integrity: sha512-gYUZEOF0hL5jphjHLKa+Psp8sT6CklAG0MYda/0vRybwvMJOxS8roltQd4/kvSFxsEV/eO9k5QQ8IJKYmyVz3A==}
-
-  '@lytjs/common-error@6.4.0':
-    resolution: {integrity: sha512-/PHfSbGmld1dGEAWyUvI4RMFIKiMguNoaEhD6Md6UN6CKR/0yIFJQ8/xp1TPfmRhO+JBz3wttKPGdCt8j8pc8w==}
-
-  '@lytjs/common-error@6.5.0':
-    resolution: {integrity: sha512-Ssln8iTjf3/pLx1xW810uSgsvKE8AZIKm7Cq5ox/Em396a4SvfCNL0+hcPDs1xa8NSrKxfggLZOjosxtX/f8vg==}
-
-  '@lytjs/common-event-normalizer@6.0.0':
-    resolution: {integrity: sha512-/gAFMLkafKAFqhHCziFUJEgD2IN9Ee+uKlReCtUuCQsIFX/KLDK7RsbRJ/8emCmmTg/5zFOlC1qg2cjP7YhfoA==}
-
-  '@lytjs/common-events@6.0.0':
-    resolution: {integrity: sha512-no36sNcIi7RWppBtD3ht/5rUt/uFO1kWf6awtDIFhDdKi2XVLczb3xSJZrhwPcWEUuSktYj1ZWJLmw5mdF8mlQ==}
-
-  '@lytjs/common-events@6.4.0':
-    resolution: {integrity: sha512-1RgcnezCAxLdWcliuuEPpvqKIBgXzjVOgTf4hU/sjnqENsoyBlO52qD6HUfVKpRzlHQdUBkSSPVCOYrzmZaDgQ==}
-
-  '@lytjs/common-http@6.0.0':
-    resolution: {integrity: sha512-SYWhCeTDgoIRrzrrs5sJG6lrfLWSQPnOYnv3aqHSjmcA6ubzbl9cwD3GOij4PlJOUIAavt4hUnOrojYQ0+UP6A==}
-
-  '@lytjs/common-http@6.5.0':
-    resolution: {integrity: sha512-vXXFqTHZmimFIEDfH5x04RPchGjME9QyTp4ZCTm1vAmZ0DiNaFcJjUXM1bJB/C+VWL3nuXprSmy1Vt0pmBD/Ww==}
-
-  '@lytjs/common-is@6.0.0':
-    resolution: {integrity: sha512-KEbw9EnepU4xNu+KGpuZEm3EZ5cAqxxemVkLaZUo8oPzp8Kv8AAiio5es7EVg+Bwf6pTbFDgyPY6WbjNI0DyLQ==}
-
-  '@lytjs/common-is@6.4.0':
-    resolution: {integrity: sha512-yhlhzCimAu04gL+lpvHLM1dLFPPGICc7eHbXSQIJSeMwgFG8aim5cfraFmdbl9MRdDPPPRpUnjVHQ12qxANjvg==}
-
-  '@lytjs/common-is@6.5.0':
-    resolution: {integrity: sha512-fw9f2IN1aTDG0fMx/OZxoW84PSQIkkT302teFNSZJCZjMWD8S8bff6KPJboIVH4m285QIRFbaCurZoeNDcOl2Q==}
-
-  '@lytjs/common-keyboard@6.0.0':
-    resolution: {integrity: sha512-XQVbk80+4G0r9M+xFaBLpp0/z26wA7wCdcxsdiaFAthJEPNNziw3OqQfPFnNWbMWEqRGv1hBhLMu4tSzv6BYWA==}
-
-  '@lytjs/common-node-cache@6.0.0':
-    resolution: {integrity: sha512-FOuwSg+gvLoRgci06k/qsWh0ZeI8SC69dRf2Zc2l/wWQPt06OvnMW9hnSyIHECtq/A+Ie0R9OJMgXDNaIExpmw==}
-
-  '@lytjs/common-object@6.0.0':
-    resolution: {integrity: sha512-tFK4aGpWXg2cVUNRoYuNvltvBJ+Zi1Gaka+p0GU4yb8r8PHPpgZfcw6hDqzd0V7sNtxmTWHGI/y/Skk83cGJtQ==}
-
-  '@lytjs/common-object@6.4.0':
-    resolution: {integrity: sha512-JMK8KodKFTLgeIoDO+WPmkXeRUwxyMBMzIiCNWLGs5q7PEV51v3DseBnMUTo7WXy/VgBZ+L8sAgAmCzTvNrExA==}
-
-  '@lytjs/common-object@6.5.0':
-    resolution: {integrity: sha512-ytrBxpR3nA6FPeOTiD1JLOvR8OlsPchjLejiKXJoKJYN6FFHGyUi42ScBSO9ZFFILTIud1IPsTHbAZWcVFo/Fg==}
-
-  '@lytjs/common-path@6.0.0':
-    resolution: {integrity: sha512-NDNun5VfaK1iOgoUJXAoRFHeScfwA2QTafuOF+IYnrkDSpv4W5MPJ3Ws96GbAJEs2k049QZgjjL7omc3/a4+zQ==}
-
-  '@lytjs/common-performance@6.0.0':
-    resolution: {integrity: sha512-WhtDgo13cXkjL24ixaR3Eisn5PAhGGiyiOvOJSenH4uebzr2k5cK0hvZFuUE/H2IpblQOjeLWdhX6c3yfYrKag==}
-
-  '@lytjs/common-query@6.0.0':
-    resolution: {integrity: sha512-72fHHxuSnNQr+q9BX0Whqua0SEy1Yevl9nkUZLfuz+3gPlsiy+tao8n0ESxiZqoLFR+OQdeGsqNyXPvBMV7Tlw==}
-
-  '@lytjs/common-raf@6.0.0':
-    resolution: {integrity: sha512-X7aEAwixw575nklfNz1kU/K0Qsm1iFRTVt5YnEmv5pV6p44gcNyoca0IgZ5zxXVL5JrRmXsi21NIyxXZD1XKmQ==}
-
-  '@lytjs/common-render-queue@6.0.0':
-    resolution: {integrity: sha512-YaHLJGvzBH0X238sTFvlDPDO8AfqRAT8+MduUIMIWCJqEbpfVKDeugDnVKAcsL622GU7Y8WJG/Djv7YRkWzjAw==}
-
-  '@lytjs/common-scheduler@6.0.0':
-    resolution: {integrity: sha512-mIQKXV0J2adC6hPHZSJHeB0VkBknDc9NjnAn+DeoeJRrXLH1ify1lFXb7bExcchRMuyYnfXI0ZbgI8Tus2IPuw==}
-
-  '@lytjs/common-scheduler@6.4.0':
-    resolution: {integrity: sha512-FTBiyWhvmNQ4Oa94M3KZSyG2eUaX/GkI1vT2IuN3XQnyhXkABTE6TLwS970bp1rZeK1utAgBduqL4fRJM1drcw==}
-
-  '@lytjs/common-scheduler@6.5.0':
-    resolution: {integrity: sha512-eUuZv3etTN85K6OIJgV8iErnl8c0QUQc0MsAbFITtT2EOYLRT3MfrxAn0FRJqDHmQ5FzNSpdZI74+tbsNg9QfA==}
-
-  '@lytjs/common-security@6.0.0':
-    resolution: {integrity: sha512-u1CKgINcyd0f50i4AeUDFHv+55XIyZNyuRA5OQ0rGXVUR+q+jH555jrHVV/is7vCyDG9Sa+K7MQ/YfQPtQiRMw==}
-
-  '@lytjs/common-storage@6.0.0':
-    resolution: {integrity: sha512-tbzkm9JpfveOxcg9q+mmS3Bvhlz6bG5EbrEWZhrpCzQIfuKvL/RS3SCQrH3r3OwfQuGm36VRTVTAhMZ+EJw8gg==}
-
-  '@lytjs/common-string@6.0.0':
-    resolution: {integrity: sha512-0coCLkCs5jdvpcgisuMIDPyACA7HIJd0xhaFE9OuP4pODYy1fEfyVF+zJhzR1rYcN/jQX+BFXglkDD3jP0EMRg==}
-
-  '@lytjs/common-string@6.4.0':
-    resolution: {integrity: sha512-TbsYrkpDtUeiDHjxfWlTfYFOcG0jNpzmBUhK40Nx5mrYOevsjuh4z/xDScRCz5YMFjkd0wLx3fNoCV0+N9GlhA==}
-
-  '@lytjs/common-string@6.5.0':
-    resolution: {integrity: sha512-iYofWc2vLFbz8x4P/dGoUjo3jbnfUp6jX7KeBvMdKnnciErr0lt53zgSARh4OlyoUdNQ5WWtxdAQkWSnEQG33w==}
-
-  '@lytjs/common-timing@6.0.0':
-    resolution: {integrity: sha512-LT0p+u2Bry8ehZs7Rrh0i5jeHGvQCafjh0v1uHx0eXy6VKXfH71t6Zg2szjZja6M31VnxDHOIfbIxYGaexYd3g==}
-
-  '@lytjs/common-transition-engine@6.0.0':
-    resolution: {integrity: sha512-TcPdXSdgMHkeNqlfe5kY/HmOhaemGvX3PzjdD3Sc113/ZCuxYhNHQT5zav3bw5O6dTvAt6mL1m3+jJs+Qovyjg==}
-
-  '@lytjs/common-transition-engine@6.4.0':
-    resolution: {integrity: sha512-xdMnt4m8jq4KL0EZKWViUg2YOO4f3lI9P3HdBq5sP3eOpPMJ2WqLzN6ALKwXMjmB7Sqz5y2YXfiEWCRPCiBYzw==}
-
-  '@lytjs/common-validate@6.0.0':
-    resolution: {integrity: sha512-GEwaYj6jikBOQZo/P4NdRC9qtQ6CB7g8jLECvK7GknbVaXsVtI+x5a7UTWi/hIKzXTA4mNHxHASyV88yoRO+qw==}
-
-  '@lytjs/common-vnode@6.0.0':
-    resolution: {integrity: sha512-QYhWCUMcM5PLOIuU4qgpeYZ9waA1m1IFZaS4og87Gaof6klPpB0lan/ZVUNgGL9+w4N5dbpZK8aI+WXsVkhFbQ==}
-
-  '@lytjs/common-vnode@6.4.0':
-    resolution: {integrity: sha512-CioyoZ51xA47tTSVOkrTcbRYCDb5HQ6cWHewPBq93/x1WSVprJq2epmaO8wrDEloKIX9O1VoKbwrYMCHY29m+g==}
-
-  '@lytjs/common-warn@6.0.0':
-    resolution: {integrity: sha512-h6tg7Li1fk2aSTes23mjqthIX/J6zTgp/cLP0kBe66MUh4kEp/k7yXTjKc6n0Uy4wCyfzIKzSXmMgpvySj47Fw==}
-
-  '@lytjs/compiler@6.0.0':
-    resolution: {integrity: sha512-rlllUZarCPZq/vE39p3+T8rjSK+2/YiIyA5orkXT0hGJvyZ6YyvlUpgp5DpVqeScNAmNSH3N7S9s9mCqGleVqg==}
-
-  '@lytjs/compiler@6.4.0':
-    resolution: {integrity: sha512-ciNonSq/3HIMuZEJF5+O3Y5vvdxl28UoErGlOhVsq9VrYkB8bGCg3yho2y/s/hsle7pFDjKM2bDj+6XccjiJbg==}
-
-  '@lytjs/compiler@6.5.0':
-    resolution: {integrity: sha512-w+otEaiCP8Jl1aiGxraq8yyY9dfO3Qn1282jSgoRdgYXg70WdQ9JcCDFiqI5xKg9HnSHwBX7k1Rieb1X1SH2GQ==}
-
-  '@lytjs/component@6.0.0':
-    resolution: {integrity: sha512-kicZUQ8MtcTxkgewT9gu4f3I9ZAeSInELdYK/80jYpkOVwZvrsWq2D/BCA69DV2ib637MA17lv3MR8exU3HDkA==}
-
-  '@lytjs/component@6.4.0':
-    resolution: {integrity: sha512-Oohe7p60zq8zPkPrzK89Uufx6M1Lb0cm1W4zD4P7S7vtujOSgv87Z1QkyFHrpVcIFXhxxESkd9CsRsFXBI4Mzw==}
-
-  '@lytjs/component@6.5.0':
-    resolution: {integrity: sha512-Mixw+1GdW09OuC91fi2ToZnnMX/yofsMv8Gb6wFOG5sQmoppflUfVaj0aRg2n56H1imAi5Uz9JnOK788QirfBA==}
-
-  '@lytjs/core@6.0.0':
-    resolution: {integrity: sha512-/ga7uPx30mQO2rttPOc7CneH0Fjasr5JhEUlgu6sJ9B8HmCWhidyPQLuGXs7AVLbfQ4vVnzj5Ttkf4YWoCspfA==}
-
-  '@lytjs/core@6.4.0':
-    resolution: {integrity: sha512-CkA2/U3r6gT35+2Elgg/NipiLr9wcyK7i4drZVLsv+UPGp/iu4KSyudWZWtA5mpJ1xaXxP2+eAfXZQougDcW0A==}
-
-  '@lytjs/core@6.5.0':
-    resolution: {integrity: sha512-A9X4ORjdgQ41CBYNAcxXoV9TAdrv4ru1faq5c9RMe6y7fidASx50yu+yXje1gZ+vieD86LthpZtB3jRWGJi98Q==}
-
-  '@lytjs/dom-runtime@6.0.0':
-    resolution: {integrity: sha512-2ycnOIghp7HyzoLXl50jo5XdQQfjUiA/ps7BwML+zVXpSCiVFGsUbFuJCnH9jnBzVITdlczYGsuS63YEOc9Zug==}
-
-  '@lytjs/dom-runtime@6.4.0':
-    resolution: {integrity: sha512-EhTfKhxSSXDgiK81LieKG2nJcUSyQXG5sQItGAeOo3oeT2sICeaBNWiJjfvvVAV+Gx2Si+DZCxi2rUPStpXKaw==}
-
-  '@lytjs/host-contract@6.0.0':
-    resolution: {integrity: sha512-LRM1Gfd0frEbjibrFIar/vvZweqgCpFmKJsJlz03R8HNkf1xtHKjy9dljs9OursVNlzxbh9O//bvuPA2tv67Rw==}
-
-  '@lytjs/host-contract@6.4.0':
-    resolution: {integrity: sha512-T7ujqe5UpzzzaeU3R9J7WwVhFBS/1UP/LNAYWo6Bk5Lr/PpNPLQRZrS77iguxwYj3387nCV7+vLjHXVj5C222w==}
-
-  '@lytjs/plugin-data-fetch@6.5.0':
-    resolution: {integrity: sha512-vmcbA1n+fB8Dx3/zMHUaZuCBxH8c82mlbgPJ+bi0Q0aVcq0TVmK3DESxL7jGEFfCCVl16cXJEtu75Aci7+v6Ow==}
-
-  '@lytjs/plugin-form@6.4.0':
-    resolution: {integrity: sha512-ROtJPgxMu842AgnChNShDeCBdcRYG47VdcXpwTX/onDQNEdxlllbiBXohHJWE+UuS9Lb4kLQs/2BxwJNfYdvvA==, tarball: https://registry.npmjs.org/@lytjs/plugin-form/-/plugin-form-6.4.0.tgz}
-
-  '@lytjs/reactivity@6.0.0':
-    resolution: {integrity: sha512-rshkfEg7z3DlzTdG30h9Tci8rQKNSpPJuq2nk36rS5qc8sPSfQUqiBscEn80id3ZW2BObpxk3ur/0hTnJCJApw==}
-
-  '@lytjs/reactivity@6.4.0':
-    resolution: {integrity: sha512-TJkEhhghNBzoxCDN+x7yGx+jUfJIHM5A15tLx82n//JJgJmjDHHxnuoAaBhJjI02TR+fhU38XRTl3I0fDpILMw==}
-
-  '@lytjs/reactivity@6.5.0':
-    resolution: {integrity: sha512-QQ9oS9FCySH3SqjTQWZ+PgbtmNUDYXSR6vDZI/4kjl8QTw5sI0H7SOp2zaQJsaiLgYj7Wfdyq/NxkHtIdd/bkw==}
-
-  '@lytjs/renderer@6.4.0':
-    resolution: {integrity: sha512-oLi6HDbCqDH7yqu3zFDsHq2UAoZouj+rYgYB+QN0cg2l35rx1dP24gewtHhpsRStHa2K61+hXD14BxhJFgaBqg==}
-
-  '@lytjs/renderer@6.5.0':
-    resolution: {integrity: sha512-Jiaxjhx8k8lYTPwKEfz6n8zKlqAGI4kmFMrqKyXlmmadBatEk+CSoH4jwYaJGZMyIV+MLxo7js8PHp5+iBNXeA==}
-
-  '@lytjs/router@6.4.0':
-    resolution: {integrity: sha512-V8EF51C6DFVKKo9A8S5dIUXYMthHYYU3bISxKuVrGjqFlsKgEOXsZXUiDFS0RUAxEJENOPmm18sDlKb7U+LI9g==}
-
-  '@lytjs/shared-types@6.0.0':
-    resolution: {integrity: sha512-84Y3V4bCkloO4N6kU0XjM7yCdzbF4VWu9dv+DlXUFv7XJsNSrEQ0gEdj6/CEpY+XZ82+EZVdk1YoTShXenZPYQ==}
-
-  '@lytjs/shared-types@6.4.0':
-    resolution: {integrity: sha512-BRwBoIzda20sPBWkzLAHoABgjZtX6GheHLu6GyeosrtZOhz78EWHh2rrNnkOB15zML20WAKdgIgc3DMFytwAtQ==}
-
-  '@lytjs/shared-types@6.5.0':
-    resolution: {integrity: sha512-ATvF8xruZZAkd6JXxuqFovopUMNfKQWdwV5DGy2BVOIUeNh+bc8iaFxlttcqctrbHjQ6UzUbVmmeBia1fi5mfQ==}
-
-  '@lytjs/store@6.4.0':
-    resolution: {integrity: sha512-USyfUwSwzLfP9lJmNAmzlqGYJZmrxTuYFZfWcNwNBwXf7iLImMhK9dCq/TzLbIDiAq87UNarOr3DjA0Yayy1AQ==}
-
-  '@lytjs/vdom@6.0.0':
-    resolution: {integrity: sha512-qeYEcFTabloHzYd0Mg5Si31ScrzBFQj14XYJslHjjDGPWSKjLByziscLJK74tYvZZNzHuj2AYQmjFjh3WtYOFw==}
-
-  '@lytjs/vdom@6.4.0':
-    resolution: {integrity: sha512-0nNAdfy4/p5ujQREFVTog8NrVgV090rv+qspzxmRybuut3NdNyroOjZZPy7LD/ROMG2+pMknlcAg2AYh7up8JQ==}
-
-  '@lytjs/vdom@6.5.0':
-    resolution: {integrity: sha512-LRcvcPQay8pagazYQWZ+o67FDIMFkSm8+T+A+Sv7w0cB97sx9OXMfZa4oXX02rN/IBE25wwONdmRxuAVzWrEmg==}
-
   '@manypkg/find-root@1.1.0':
     resolution: {integrity: sha512-mki5uBvhHzO8kYYix/WRy2WX8S3B5wdVSc9D6KcU5lQNglP2yt58/VfLuAK49glRXChosY8ap2oJ1qgma3GUVA==}
 
@@ -3468,6 +3434,15 @@ packages:
       '@vitest/browser':
         optional: true
 
+  '@vitest/coverage-v8@3.2.4':
+    resolution: {integrity: sha512-EyF9SXU6kS5Ku/U82E259WSnvg6c8KTjppUncuNdm5QHpe17mwREHnjDzozC8x9MZ0xfBUFSaLkRv4TMA75ALQ==}
+    peerDependencies:
+      '@vitest/browser': 3.2.4
+      vitest: 3.2.4
+    peerDependenciesMeta:
+      '@vitest/browser':
+        optional: true
+
   '@vitest/expect@1.6.0':
     resolution: {integrity: sha512-ixEvFVQjycy/oNgHjqsL6AZCDduC+tflRluaHIzKIsdbzkLn2U/iBnVeJwB6HsIjQBdfMR8Z0tRxKUsvFJEeWQ==}
 
@@ -3713,6 +3688,9 @@ packages:
   ast-module-types@6.0.2:
     resolution: {integrity: sha512-6KuK/7nZ/2Qh7sGuVEiwxjCxzTY2Pdb5mTo5z1e6/J8BA0tvjR7G8vQJKrQMTqwmnA3UPEyKIFX4YUS1DO1Hvw==}
     engines: {node: '>=18'}
+
+  ast-v8-to-istanbul@0.3.12:
+    resolution: {integrity: sha512-BRRC8VRZY2R4Z4lFIL35MwNXmwVqBityvOIwETtsCSwvjl0IdgFsy9NhdaA6j74nUdtJJlIypeRhpDam19Wq3g==}
 
   asynckit@0.4.0:
     resolution: {integrity: sha512-Oei9OH4tRh0YqU3GxhX79dM/mwVgvbZJaSNaRk+bshkj0S5cfHcgYakreBjrHwatXKbz+IoIdYLxrKim2MjW0Q==}
@@ -4650,6 +4628,9 @@ packages:
     resolution: {integrity: sha512-34wB/Y7MW7bzjKRjUKTa46I2Z7eV62Rkhva+KkopW7Qvv/OSWBqvkSY7vusOPrNuZcUG3tApvdVgNB8POj3SPw==}
     engines: {node: '>=10'}
 
+  js-tokens@10.0.0:
+    resolution: {integrity: sha512-lM/UBzQmfJRo9ABXbPWemivdCW8V2G8FHaHdypQaIy523snUjog0W71ayWXTjiR+ixeMyVHN2XcpnTd/liPg/Q==}
+
   js-tokens@4.0.0:
     resolution: {integrity: sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==}
 
@@ -5451,6 +5432,9 @@ packages:
 
   stackback@0.0.2:
     resolution: {integrity: sha512-1XMJE5fQo1jGH6Y/7ebnwPOBEkIEnT4QF32d5R1+VXdXveM0IBMJt8zfaxX1P3QhVwrYe+576+jkANtSS2mBbw==}
+
+  std-env@3.10.0:
+    resolution: {integrity: sha512-5GS12FdOZNliM5mAOxFRg7Ir0pWz8MdpYm6AY6VPkGpbA7ZzmbzNcBJQ0GPvvyWgcY7QAhCgf9Uy89I03faLkg==}
 
   std-env@3.5.0:
     resolution: {integrity: sha512-JGUEaALvL0Mf6JCfYnJOTcobY+Nc7sG/TemDRBqCA0wEr4DER7zDchaaixTlmOxAjG1uRJmX82EQcxwTQTkqVA==}
@@ -7026,448 +7010,6 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
 
-  '@lytjs/adapter-web@6.0.0':
-    dependencies:
-      '@lytjs/common-dom': 6.0.0
-      '@lytjs/common-error': 6.4.0
-      '@lytjs/common-events': 6.0.0
-      '@lytjs/common-is': 6.4.0
-      '@lytjs/common-string': 6.4.0
-      '@lytjs/host-contract': 6.0.0
-      '@lytjs/reactivity': 6.4.0
-      '@lytjs/shared-types': 6.4.0
-      '@lytjs/vdom': 6.4.0
-
-  '@lytjs/adapter-web@6.4.0':
-    dependencies:
-      '@lytjs/common-dom': 6.0.0
-      '@lytjs/common-error': 6.4.0
-      '@lytjs/common-events': 6.0.0
-      '@lytjs/common-is': 6.4.0
-      '@lytjs/common-string': 6.4.0
-      '@lytjs/host-contract': 6.0.0
-      '@lytjs/reactivity': 6.4.0
-      '@lytjs/shared-types': 6.4.0
-      '@lytjs/vdom': 6.4.0
-
-  '@lytjs/common-a11y@6.0.0': {}
-
-  '@lytjs/common-a11y@6.4.0': {}
-
-  '@lytjs/common-algorithm@6.0.0': {}
-
-  '@lytjs/common-algorithm@6.4.0': {}
-
-  '@lytjs/common-assertions@6.0.0':
-    dependencies:
-      '@lytjs/common-is': 6.4.0
-
-  '@lytjs/common-assertions@6.4.0':
-    dependencies:
-      '@lytjs/common-is': 6.4.0
-
-  '@lytjs/common-assertions@6.5.0':
-    dependencies:
-      '@lytjs/common-is': 6.4.0
-
-  '@lytjs/common-async-scheduler@6.0.0':
-    dependencies:
-      '@lytjs/host-contract': 6.0.0
-
-  '@lytjs/common-cache@6.0.0': {}
-
-  '@lytjs/common-constants@6.0.0': {}
-
-  '@lytjs/common-constants@6.4.0': {}
-
-  '@lytjs/common-constants@6.5.0': {}
-
-  '@lytjs/common-dom-helpers@6.0.0': {}
-
-  '@lytjs/common-dom@6.0.0':
-    dependencies:
-      '@lytjs/common-error': 6.0.0
-      '@lytjs/common-events': 6.0.0
-      '@lytjs/common-is': 6.0.0
-      '@lytjs/common-string': 6.0.0
-
-  '@lytjs/common-dom@6.4.0':
-    dependencies:
-      '@lytjs/common-error': 6.0.0
-      '@lytjs/common-events': 6.0.0
-      '@lytjs/common-is': 6.0.0
-      '@lytjs/common-string': 6.0.0
-
-  '@lytjs/common-env@6.0.0': {}
-
-  '@lytjs/common-env@6.4.0': {}
-
-  '@lytjs/common-error@6.0.0':
-    dependencies:
-      '@lytjs/common-constants': 6.0.0
-
-  '@lytjs/common-error@6.4.0':
-    dependencies:
-      '@lytjs/common-constants': 6.0.0
-
-  '@lytjs/common-error@6.5.0':
-    dependencies:
-      '@lytjs/common-constants': 6.4.0
-
-  '@lytjs/common-event-normalizer@6.0.0':
-    dependencies:
-      '@lytjs/common-events': 6.0.0
-      '@lytjs/host-contract': 6.0.0
-
-  '@lytjs/common-events@6.0.0':
-    dependencies:
-      '@lytjs/common-is': 6.0.0
-
-  '@lytjs/common-events@6.4.0':
-    dependencies:
-      '@lytjs/common-is': 6.0.0
-
-  '@lytjs/common-http@6.0.0': {}
-
-  '@lytjs/common-http@6.5.0': {}
-
-  '@lytjs/common-is@6.0.0': {}
-
-  '@lytjs/common-is@6.4.0': {}
-
-  '@lytjs/common-is@6.5.0': {}
-
-  '@lytjs/common-keyboard@6.0.0': {}
-
-  '@lytjs/common-node-cache@6.0.0':
-    dependencies:
-      '@lytjs/host-contract': 6.0.0
-
-  '@lytjs/common-object@6.0.0':
-    dependencies:
-      '@lytjs/common-constants': 6.0.0
-      '@lytjs/common-is': 6.0.0
-
-  '@lytjs/common-object@6.4.0':
-    dependencies:
-      '@lytjs/common-constants': 6.4.0
-      '@lytjs/common-is': 6.4.0
-
-  '@lytjs/common-object@6.5.0':
-    dependencies:
-      '@lytjs/common-constants': 6.4.0
-      '@lytjs/common-is': 6.4.0
-
-  '@lytjs/common-path@6.0.0': {}
-
-  '@lytjs/common-performance@6.0.0':
-    dependencies:
-      '@lytjs/common-error': 6.0.0
-
-  '@lytjs/common-query@6.0.0': {}
-
-  '@lytjs/common-raf@6.0.0': {}
-
-  '@lytjs/common-render-queue@6.0.0':
-    dependencies:
-      '@lytjs/host-contract': 6.0.0
-
-  '@lytjs/common-scheduler@6.0.0':
-    dependencies:
-      '@lytjs/common-env': 6.0.0
-
-  '@lytjs/common-scheduler@6.4.0':
-    dependencies:
-      '@lytjs/common-env': 6.0.0
-
-  '@lytjs/common-scheduler@6.5.0':
-    dependencies:
-      '@lytjs/common-env': 6.4.0
-
-  '@lytjs/common-security@6.0.0':
-    dependencies:
-      '@lytjs/common-is': 6.0.0
-
-  '@lytjs/common-storage@6.0.0': {}
-
-  '@lytjs/common-string@6.0.0':
-    dependencies:
-      '@lytjs/common-constants': 6.0.0
-      '@lytjs/common-security': 6.0.0
-
-  '@lytjs/common-string@6.4.0':
-    dependencies:
-      '@lytjs/common-constants': 6.0.0
-      '@lytjs/common-security': 6.0.0
-
-  '@lytjs/common-string@6.5.0':
-    dependencies:
-      '@lytjs/common-constants': 6.4.0
-      '@lytjs/common-security': 6.0.0
-
-  '@lytjs/common-timing@6.0.0': {}
-
-  '@lytjs/common-transition-engine@6.0.0':
-    dependencies:
-      '@lytjs/host-contract': 6.0.0
-
-  '@lytjs/common-transition-engine@6.4.0':
-    dependencies:
-      '@lytjs/host-contract': 6.0.0
-
-  '@lytjs/common-validate@6.0.0': {}
-
-  '@lytjs/common-vnode@6.0.0': {}
-
-  '@lytjs/common-vnode@6.4.0': {}
-
-  '@lytjs/common-warn@6.0.0': {}
-
-  '@lytjs/compiler@6.0.0':
-    dependencies:
-      '@lytjs/common-constants': 6.0.0
-      '@lytjs/common-error': 6.4.0
-      '@lytjs/common-is': 6.4.0
-      '@lytjs/common-string': 6.4.0
-      '@lytjs/common-vnode': 6.0.0
-
-  '@lytjs/compiler@6.4.0':
-    dependencies:
-      '@lytjs/common-constants': 6.0.0
-      '@lytjs/common-error': 6.4.0
-      '@lytjs/common-is': 6.4.0
-      '@lytjs/common-string': 6.4.0
-      '@lytjs/common-vnode': 6.0.0
-
-  '@lytjs/compiler@6.5.0':
-    dependencies:
-      '@lytjs/common-constants': 6.4.0
-      '@lytjs/common-error': 6.4.0
-      '@lytjs/common-is': 6.4.0
-      '@lytjs/common-string': 6.4.0
-      '@lytjs/common-vnode': 6.4.0
-
-  '@lytjs/component@6.0.0':
-    dependencies:
-      '@lytjs/common-error': 6.4.0
-      '@lytjs/common-is': 6.4.0
-      '@lytjs/common-scheduler': 6.4.0
-      '@lytjs/common-string': 6.4.0
-      '@lytjs/common-vnode': 6.0.0
-      '@lytjs/reactivity': 6.4.0
-      '@lytjs/shared-types': 6.4.0
-      '@lytjs/vdom': 6.4.0
-
-  '@lytjs/component@6.4.0':
-    dependencies:
-      '@lytjs/common-error': 6.4.0
-      '@lytjs/common-is': 6.4.0
-      '@lytjs/common-scheduler': 6.4.0
-      '@lytjs/common-string': 6.4.0
-      '@lytjs/common-vnode': 6.0.0
-      '@lytjs/reactivity': 6.4.0
-      '@lytjs/shared-types': 6.4.0
-      '@lytjs/vdom': 6.4.0
-
-  '@lytjs/component@6.5.0':
-    dependencies:
-      '@lytjs/common-error': 6.4.0
-      '@lytjs/common-is': 6.4.0
-      '@lytjs/common-scheduler': 6.4.0
-      '@lytjs/common-string': 6.4.0
-      '@lytjs/common-vnode': 6.4.0
-      '@lytjs/reactivity': 6.4.0
-      '@lytjs/shared-types': 6.4.0
-      '@lytjs/vdom': 6.4.0
-
-  '@lytjs/core@6.0.0':
-    dependencies:
-      '@lytjs/common-error': 6.4.0
-      '@lytjs/common-is': 6.4.0
-      '@lytjs/common-object': 6.4.0
-      '@lytjs/common-scheduler': 6.4.0
-      '@lytjs/common-string': 6.4.0
-      '@lytjs/compiler': 6.4.0
-      '@lytjs/component': 6.4.0
-      '@lytjs/reactivity': 6.4.0
-      '@lytjs/renderer': 6.4.0
-      '@lytjs/shared-types': 6.4.0
-      '@lytjs/vdom': 6.4.0
-
-  '@lytjs/core@6.4.0':
-    dependencies:
-      '@lytjs/common-error': 6.4.0
-      '@lytjs/common-is': 6.4.0
-      '@lytjs/common-object': 6.4.0
-      '@lytjs/common-scheduler': 6.4.0
-      '@lytjs/common-string': 6.4.0
-      '@lytjs/compiler': 6.4.0
-      '@lytjs/component': 6.4.0
-      '@lytjs/reactivity': 6.4.0
-      '@lytjs/renderer': 6.4.0
-      '@lytjs/shared-types': 6.4.0
-      '@lytjs/vdom': 6.4.0
-
-  '@lytjs/core@6.5.0':
-    dependencies:
-      '@lytjs/common-error': 6.5.0
-      '@lytjs/common-is': 6.5.0
-      '@lytjs/common-object': 6.5.0
-      '@lytjs/common-scheduler': 6.5.0
-      '@lytjs/common-string': 6.5.0
-      '@lytjs/compiler': 6.5.0
-      '@lytjs/component': 6.5.0
-      '@lytjs/reactivity': 6.5.0
-      '@lytjs/renderer': 6.5.0
-      '@lytjs/shared-types': 6.5.0
-      '@lytjs/vdom': 6.5.0
-
-  '@lytjs/dom-runtime@6.0.0':
-    dependencies:
-      '@lytjs/reactivity': 6.4.0
-
-  '@lytjs/dom-runtime@6.4.0':
-    dependencies:
-      '@lytjs/reactivity': 6.4.0
-
-  '@lytjs/host-contract@6.0.0': {}
-
-  '@lytjs/host-contract@6.4.0': {}
-
-  '@lytjs/plugin-data-fetch@6.5.0':
-    dependencies:
-      '@lytjs/core': 6.5.0
-      '@lytjs/reactivity': 6.5.0
-
-  '@lytjs/plugin-form@6.4.0':
-    dependencies:
-      '@lytjs/core': 6.4.0
-      '@lytjs/reactivity': 6.4.0
-
-  '@lytjs/reactivity@6.0.0':
-    dependencies:
-      '@lytjs/common-assertions': 6.0.0
-      '@lytjs/common-constants': 6.0.0
-      '@lytjs/common-error': 6.4.0
-      '@lytjs/common-is': 6.4.0
-      '@lytjs/common-scheduler': 6.4.0
-      '@lytjs/shared-types': 6.4.0
-
-  '@lytjs/reactivity@6.4.0':
-    dependencies:
-      '@lytjs/common-assertions': 6.0.0
-      '@lytjs/common-constants': 6.0.0
-      '@lytjs/common-error': 6.0.0
-      '@lytjs/common-is': 6.0.0
-      '@lytjs/common-scheduler': 6.0.0
-      '@lytjs/shared-types': 6.0.0
-
-  '@lytjs/reactivity@6.5.0':
-    dependencies:
-      '@lytjs/common-assertions': 6.5.0
-      '@lytjs/common-constants': 6.5.0
-      '@lytjs/common-error': 6.5.0
-      '@lytjs/common-is': 6.5.0
-      '@lytjs/common-scheduler': 6.5.0
-      '@lytjs/shared-types': 6.5.0
-
-  '@lytjs/renderer@6.4.0':
-    dependencies:
-      '@lytjs/adapter-web': 6.0.0
-      '@lytjs/common-dom': 6.0.0
-      '@lytjs/common-error': 6.4.0
-      '@lytjs/common-events': 6.0.0
-      '@lytjs/common-is': 6.4.0
-      '@lytjs/common-string': 6.4.0
-      '@lytjs/compiler': 6.4.0
-      '@lytjs/dom-runtime': 6.0.0
-      '@lytjs/host-contract': 6.0.0
-      '@lytjs/reactivity': 6.4.0
-      '@lytjs/vdom': 6.4.0
-
-  '@lytjs/renderer@6.5.0':
-    dependencies:
-      '@lytjs/adapter-web': 6.4.0
-      '@lytjs/common-dom': 6.4.0
-      '@lytjs/common-error': 6.4.0
-      '@lytjs/common-events': 6.4.0
-      '@lytjs/common-is': 6.4.0
-      '@lytjs/common-string': 6.4.0
-      '@lytjs/compiler': 6.4.0
-      '@lytjs/dom-runtime': 6.4.0
-      '@lytjs/host-contract': 6.4.0
-      '@lytjs/reactivity': 6.4.0
-      '@lytjs/vdom': 6.4.0
-
-  '@lytjs/router@6.4.0':
-    dependencies:
-      '@lytjs/common-env': 6.0.0
-      '@lytjs/common-is': 6.4.0
-      '@lytjs/component': 6.4.0
-      '@lytjs/reactivity': 6.4.0
-      '@lytjs/vdom': 6.4.0
-
-  '@lytjs/shared-types@6.0.0': {}
-
-  '@lytjs/shared-types@6.4.0': {}
-
-  '@lytjs/shared-types@6.5.0': {}
-
-  '@lytjs/store@6.4.0':
-    dependencies:
-      '@lytjs/common-is': 6.4.0
-      '@lytjs/common-object': 6.4.0
-      '@lytjs/component': 6.4.0
-      '@lytjs/reactivity': 6.4.0
-
-  '@lytjs/vdom@6.0.0':
-    dependencies:
-      '@lytjs/common-algorithm': 6.0.0
-      '@lytjs/common-assertions': 6.0.0
-      '@lytjs/common-constants': 6.0.0
-      '@lytjs/common-dom': 6.0.0
-      '@lytjs/common-error': 6.4.0
-      '@lytjs/common-events': 6.0.0
-      '@lytjs/common-is': 6.4.0
-      '@lytjs/common-object': 6.4.0
-      '@lytjs/common-string': 6.4.0
-      '@lytjs/common-transition-engine': 6.0.0
-      '@lytjs/common-vnode': 6.0.0
-      '@lytjs/host-contract': 6.0.0
-      '@lytjs/shared-types': 6.4.0
-
-  '@lytjs/vdom@6.4.0':
-    dependencies:
-      '@lytjs/common-algorithm': 6.0.0
-      '@lytjs/common-assertions': 6.0.0
-      '@lytjs/common-constants': 6.0.0
-      '@lytjs/common-dom': 6.0.0
-      '@lytjs/common-error': 6.0.0
-      '@lytjs/common-events': 6.0.0
-      '@lytjs/common-is': 6.0.0
-      '@lytjs/common-object': 6.0.0
-      '@lytjs/common-string': 6.0.0
-      '@lytjs/common-transition-engine': 6.0.0
-      '@lytjs/common-vnode': 6.0.0
-      '@lytjs/host-contract': 6.0.0
-      '@lytjs/shared-types': 6.0.0
-
-  '@lytjs/vdom@6.5.0':
-    dependencies:
-      '@lytjs/common-algorithm': 6.4.0
-      '@lytjs/common-assertions': 6.4.0
-      '@lytjs/common-constants': 6.4.0
-      '@lytjs/common-dom': 6.4.0
-      '@lytjs/common-error': 6.4.0
-      '@lytjs/common-events': 6.4.0
-      '@lytjs/common-is': 6.4.0
-      '@lytjs/common-object': 6.4.0
-      '@lytjs/common-string': 6.4.0
-      '@lytjs/common-transition-engine': 6.4.0
-      '@lytjs/common-vnode': 6.4.0
-      '@lytjs/host-contract': 6.4.0
-      '@lytjs/shared-types': 6.4.0
-
   '@manypkg/find-root@1.1.0':
     dependencies:
       '@babel/runtime': 7.29.2
@@ -7792,6 +7334,25 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  '@vitest/coverage-v8@3.2.4(vitest@3.0.7(@types/node@22.19.19)(@vitest/ui@3.0.0(vitest@3.0.7))(jiti@2.7.0)(jsdom@29.1.1)(tsx@4.22.0)(yaml@2.6.1))':
+    dependencies:
+      '@ampproject/remapping': 2.3.0
+      '@bcoe/v8-coverage': 1.0.2
+      ast-v8-to-istanbul: 0.3.12
+      debug: 4.4.3
+      istanbul-lib-coverage: 3.2.2
+      istanbul-lib-report: 3.0.1
+      istanbul-lib-source-maps: 5.0.6
+      istanbul-reports: 3.2.0
+      magic-string: 0.30.21
+      magicast: 0.3.5
+      std-env: 3.10.0
+      test-exclude: 7.0.2
+      tinyrainbow: 2.0.0
+      vitest: 3.0.7(@types/node@22.19.19)(@vitest/ui@3.0.0(vitest@3.0.7))(jiti@2.7.0)(jsdom@29.1.1)(tsx@4.22.0)(yaml@2.6.1)
+    transitivePeerDependencies:
+      - supports-color
+
   '@vitest/expect@1.6.0':
     dependencies:
       '@vitest/spy': 1.6.0
@@ -8089,6 +7650,12 @@ snapshots:
   assertion-error@2.0.1: {}
 
   ast-module-types@6.0.2: {}
+
+  ast-v8-to-istanbul@0.3.12:
+    dependencies:
+      '@jridgewell/trace-mapping': 0.3.31
+      estree-walker: 3.0.3
+      js-tokens: 10.0.0
 
   asynckit@0.4.0: {}
 
@@ -9130,6 +8697,8 @@ snapshots:
 
   joycon@3.1.1: {}
 
+  js-tokens@10.0.0: {}
+
   js-tokens@4.0.0: {}
 
   js-tokens@9.0.1: {}
@@ -9976,6 +9545,8 @@ snapshots:
 
   stackback@0.0.2: {}
 
+  std-env@3.10.0: {}
+
   std-env@3.5.0: {}
 
   std-env@3.8.0: {}
@@ -10203,6 +9774,34 @@ snapshots:
     optionalDependencies:
       postcss: 8.5.14
       typescript: 5.8.2
+    transitivePeerDependencies:
+      - jiti
+      - supports-color
+      - tsx
+      - yaml
+
+  tsup@8.5.1(jiti@2.7.0)(postcss@8.5.14)(tsx@4.22.0)(typescript@5.9.3)(yaml@2.6.1):
+    dependencies:
+      bundle-require: 5.1.0(esbuild@0.27.7)
+      cac: 6.7.14
+      chokidar: 4.0.3
+      consola: 3.4.2
+      debug: 4.4.3
+      esbuild: 0.27.7
+      fix-dts-default-cjs-exports: 1.0.1
+      joycon: 3.1.1
+      picocolors: 1.1.1
+      postcss-load-config: 6.0.1(jiti@2.7.0)(postcss@8.5.14)(tsx@4.22.0)(yaml@2.6.1)
+      resolve-from: 5.0.0
+      rollup: 4.60.4
+      source-map: 0.7.6
+      sucrase: 3.35.1
+      tinyexec: 0.3.2
+      tinyglobby: 0.2.16
+      tree-kill: 1.2.2
+    optionalDependencies:
+      postcss: 8.5.14
+      typescript: 5.9.3
     transitivePeerDependencies:
       - jiti
       - supports-color
@@ -10528,6 +10127,46 @@ snapshots:
       '@types/node': 22.19.19
       '@vitest/ui': 3.0.0(vitest@3.0.7)
       jsdom: 26.0.0
+    transitivePeerDependencies:
+      - jiti
+      - less
+      - lightningcss
+      - msw
+      - sass
+      - sass-embedded
+      - stylus
+      - sugarss
+      - supports-color
+      - terser
+      - tsx
+      - yaml
+
+  vitest@3.0.7(@types/node@22.19.19)(@vitest/ui@3.0.0(vitest@3.0.7))(jiti@2.7.0)(jsdom@29.1.1)(tsx@4.22.0)(yaml@2.6.1):
+    dependencies:
+      '@vitest/expect': 3.0.7
+      '@vitest/mocker': 3.0.7(vite@6.4.2(@types/node@22.19.19)(jiti@2.7.0)(tsx@4.22.0)(yaml@2.6.1))
+      '@vitest/pretty-format': 3.0.7
+      '@vitest/runner': 3.0.7
+      '@vitest/snapshot': 3.0.7
+      '@vitest/spy': 3.0.7
+      '@vitest/utils': 3.0.7
+      chai: 5.2.0
+      debug: 4.4.3
+      expect-type: 1.3.0
+      magic-string: 0.30.21
+      pathe: 2.0.3
+      std-env: 3.8.0
+      tinybench: 2.9.0
+      tinyexec: 0.3.2
+      tinypool: 1.0.2
+      tinyrainbow: 2.0.0
+      vite: 6.4.2(@types/node@22.19.19)(jiti@2.7.0)(tsx@4.22.0)(yaml@2.6.1)
+      vite-node: 3.0.7(@types/node@22.19.19)(jiti@2.7.0)(tsx@4.22.0)(yaml@2.6.1)
+      why-is-node-running: 2.3.0
+    optionalDependencies:
+      '@types/node': 22.19.19
+      '@vitest/ui': 3.0.0(vitest@3.0.7)
+      jsdom: 29.1.1
     transitivePeerDependencies:
       - jiti
       - less
