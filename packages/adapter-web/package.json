@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/adapter-web",
-  "version": "6.4.0",
+  "version": "6.6.0",
   "description": "LytJS Web 平台适配器 - 浏览器 DOM 的 RendererHost 实现",
   "type": "module",
   "main": "./dist/index.cjs",

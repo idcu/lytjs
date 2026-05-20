@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/http-server",
-  "version": "6.5.0",
+  "version": "6.6.0",
   "description": "LytJS HTTP 服务器",
   "type": "module",
   "main": "./dist/index.cjs",

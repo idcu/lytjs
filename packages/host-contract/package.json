@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/host-contract",
-  "version": "6.4.0",
+  "version": "6.6.0",
   "description": "LytJS 统一渲染宿主契约 - 跨平台渲染接口定义",
   "type": "module",
   "main": "./dist/index.cjs",

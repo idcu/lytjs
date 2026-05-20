@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/common-assertions",
-  "version": "6.4.0",
+  "version": "6.6.0",
   "description": "Type assertion utilities for LytJS",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
