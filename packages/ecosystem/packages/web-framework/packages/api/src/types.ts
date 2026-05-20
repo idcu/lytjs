@@ -1,9 +1,10 @@
 /**
  * @lytjs/api - 类型定义
+ * @deprecated HttpMethod 请使用 @lytjs/shared-types 中的类型
  */
 
-/** HTTP 请求方法 */
-export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'OPTIONS' | 'HEAD';
+// 从共享类型导入并重新导出
+export type { HttpMethod } from '@lytjs/shared-types';
 
 /** API 路由配置 */
 export interface ApiRouteConfig {

@@ -1,15 +1,6 @@
 /**
- * @lytjs/middleware-cors
- * 
- * LytJS CORS 中间件
- * 
- * @packageDocumentation
+ * @lytjs/middleware-cors - CORS 中间件
  */
 
-export {
-  createCorsMiddleware,
-} from './cors';
-
-export type {
-  CORSOptions,
-} from './types';
+export * from './cors';
+export * from './types';

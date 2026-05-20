@@ -1,15 +1,24 @@
+/**
+ * 限流中间件实现
+ */
 import type { RateLimitOptions, RateLimitInfo } from './types';
-import type { MiddlewareFunction, MiddlewareContext } from '@lytjs/middleware';
+import type { Middleware, MiddlewareContext } from '@lytjs/middleware';
 import { createRateLimiter, SlidingWindowLimiter } from '@lytjs/common-rate-limit';
 
-export function createRateLimitMiddleware(options: RateLimitOptions): MiddlewareFunction {
+/**
+ * 创建限流中间件
+ * 
+ * @param options - 限流配置选项
+ * @returns 限流中间件函数
+ */
+export function createRateLimitMiddleware(options: RateLimitOptions): Middleware {
   const limiter = createRateLimiter({ 
     max: options.max, 
     windowMs: options.windowMs 
   });
   const keyGenerator = options.keyGenerator || ((request: Request, ctx: MiddlewareContext) => request.headers.get('x-forwarded-for') || 'unknown');
 
-  return async (request: Request, ctx: MiddlewareContext, next: () => Promise<Response | null | undefined>) => {
+  return async (request: Request, ctx: MiddlewareContext, next: () => Promise<void>) => {
     const key = keyGenerator(request, ctx);
     const now = Date.now();
     const result = limiter.check(key);
@@ -31,27 +40,21 @@ export function createRateLimitMiddleware(options: RateLimitOptions): Middleware
         'Content-Type': 'application/json',
       });
       
-      return new Response(JSON.stringify({ error: 'Too Many Requests' }), {
+      return new Response(JSON.stringify({ error: '请求过多' }), {
         status: 429,
         headers,
       });
     }
 
-    const response = await next();
+    await next();
     
-    if (response instanceof Response) {
-      const newHeaders = new Headers(response.headers);
-      newHeaders.set('X-RateLimit-Limit', String(info.limit));
-      newHeaders.set('X-RateLimit-Remaining', String(info.remaining));
-      newHeaders.set('X-RateLimit-Reset', String(info.reset));
+    if (ctx.response) {
+      const newResponse = new Response(ctx.response.body, ctx.response);
+      newResponse.headers.set('X-RateLimit-Limit', String(info.limit));
+      newResponse.headers.set('X-RateLimit-Remaining', String(info.remaining));
+      newResponse.headers.set('X-RateLimit-Reset', String(info.reset));
       
-      return new Response(response.body, {
-        status: response.status,
-        statusText: response.statusText,
-        headers: newHeaders,
-      });
+      return newResponse;
     }
-    
-    return response;
   };
 }

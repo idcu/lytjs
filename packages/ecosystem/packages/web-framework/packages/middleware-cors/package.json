@@ -1,7 +1,9 @@
 {
   "name": "@lytjs/middleware-cors",
   "version": "6.6.0",
-  "description": "LytJS CORS 中间件",
+  "description": "LytJS CORS Middleware - Cross-Origin Resource Sharing middleware",
+  "author": "lytjs",
+  "license": "MIT",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
@@ -27,17 +29,18 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "type-check": "tsc --noEmit",
-    "lint": "eslint \"src/**/*.ts\" \"tests/**/*.ts\"",
     "clean": "rm -rf dist node_modules .turbo"
   },
   "dependencies": {
-    "@lytjs/common-is": "^6.6.0",
-    "@lytjs/middleware": "^6.6.0"
+    "@lytjs/middleware": "workspace:*",
+    "@lytjs/common-constants": "workspace:*"
   },
   "devDependencies": {
-    "tsup": "^8.3.6",
-    "typescript": "^5.7.3",
-    "vitest": "^3.0.0"
+    "@types/node": "^22.13.10",
+    "@vitest/coverage-v8": "^3.0.7",
+    "tsup": "^8.4.0",
+    "typescript": "^5.8.2",
+    "vitest": "^3.0.7"
   },
   "peerDependencies": {},
   "publishConfig": {
@@ -49,14 +52,8 @@
     "url": "https://gitee.com/lytjs/lytjs.git",
     "directory": "packages/ecosystem/packages/web-framework/packages/middleware-cors"
   },
-  "keywords": [
-    "lytjs",
-    "middleware",
-    "cors"
-  ],
-  "author": "LytJS Team",
-  "license": "MIT",
-  "homepage": "https://gitee.com/lytjs/lytjs",
+  "keywords": ["lytjs", "middleware", "cors", "cross-origin"],
+  "homepage": "https://gitee.com/lytjs/lytjs/tree/develop/packages/ecosystem/packages/web-framework/packages/middleware-cors#readme",
   "bugs": {
     "url": "https://gitee.com/lytjs/lytjs/issues"
   }

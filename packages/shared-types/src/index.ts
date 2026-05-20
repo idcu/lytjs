@@ -17,6 +17,17 @@ export type {
   ComponentInternalInstance,
   ComponentOptionsBase,
 } from './component';
+// Web 相关类型
+export type {
+  HttpMethod,
+  Metadata,
+  OpenGraphMetadata,
+  TwitterMetadata,
+  HttpContext,
+  HttpRequest,
+  HttpResponse,
+  HttpRoute,
+} from './web';
 // 类型工具
 export type {
   Prettify,

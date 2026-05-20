@@ -1,43 +1,20 @@
 /**
- * CORS 中间件选项类型
+ * CORS 中间件类型
  */
 
-/**
- * CORS 中间件选项
- */
-export interface CORSOptions {
-  /**
-   * 允许的来源
-   * - 字符串：单个 origin
-   * - 数组：多个 origin
-   * - 正则：匹配 origin
-   * - 布尔值：true 允许所有，false 不允许
-   * - 函数：自定义判断
-   */
-  origin?: string | string[] | RegExp | boolean | ((origin: string | null) => boolean | string);
-  
-  /**
-   * 允许的 HTTP 方法
-   */
-  methods?: string | string[];
-  
-  /**
-   * 允许的请求头
-   */
-  allowedHeaders?: string | string[];
-  
-  /**
-   * 暴露的响应头
-   */
-  exposedHeaders?: string | string[];
-  
-  /**
-   * 是否允许携带凭证
-   */
+export interface CorsConfig {
+  /** 允许的源 - 字符串或数组，或 true 表示镜像请求源 */
+  origin?: string | string[] | boolean;
+  /** 允许的方法 */
+  methods?: string[];
+  /** 允许的请求头 */
+  allowedHeaders?: string[];
+  /** 暴露的响应头 */
+  exposedHeaders?: string[];
+  /** 允许凭证 */
   credentials?: boolean;
-  
-  /**
-   * 预检请求缓存时间（秒）
-   */
+  /** 预检请求的最大缓存时间 */
   maxAge?: number;
+  /** 预检响应的状态码 */
+  preflightStatus?: number;
 }

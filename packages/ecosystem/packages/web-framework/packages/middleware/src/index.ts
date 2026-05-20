@@ -1,19 +1,11 @@
 /**
- * @lytjs/middleware
+ * @lytjs/middleware - 中间件核心系统
  * 
- * LytJS 中间件核心系统 - 洋葱圈模型
- * 
- * @packageDocumentation
+ * 提供洋葱模型中间件架构，用于 HTTP 请求处理
  */
 
-export {
-  MiddlewareChain,
-  createMiddlewareChain,
-} from './chain';
-
-export type {
-  Middleware,
-  MiddlewareFunction,
-  MiddlewareContext,
-  FinalHandler,
-} from './types';
+export * from './types';
+export * from './middleware';
+export * from './composer';
+export * from './context';
+export * from './chain';

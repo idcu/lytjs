@@ -123,6 +123,17 @@ const PUBLISH_ORDER = [
   'packages/ecosystem/packages/bundler',
   'packages/ecosystem/packages/hmr',
   'packages/ecosystem/packages/runtime-edge',
+  
+  // L4.5: web-framework 生态系统
+  'packages/ecosystem/packages/web-framework/packages/middleware',
+  'packages/ecosystem/packages/web-framework/packages/middleware-cors',
+  'packages/ecosystem/packages/web-framework/packages/middleware-auth',
+  'packages/ecosystem/packages/web-framework/packages/middleware-rate-limit',
+  'packages/ecosystem/packages/web-framework/packages/metadata',
+  'packages/ecosystem/packages/web-framework/packages/http-server',
+  'packages/ecosystem/packages/web-framework/packages/router',
+  'packages/ecosystem/packages/web-framework/packages/router-fs',
+  'packages/ecosystem/packages/web-framework/packages/api',
 
   // L5: UI 组件
   'packages/ecosystem/packages/ui',

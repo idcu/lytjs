@@ -1,6 +1,15 @@
-import type { Metadata } from './types';
+/**
+ * 元数据渲染器
+ */
+import type { Metadata } from '@lytjs/shared-types';
 import { escapeHTML } from '@lytjs/common-string';
 
+/**
+ * 渲染元数据为 HTML 标签
+ * 
+ * @param metadata - 元数据对象
+ * @returns HTML 标签字符串
+ */
 export function renderMetadata(metadata: Metadata): string {
   const tags: string[] = [];
 

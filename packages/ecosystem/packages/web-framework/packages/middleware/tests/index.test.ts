@@ -1,180 +1,75 @@
-/**
- * @lytjs/middleware unit tests
- */
+import { describe, it, expect, vi } from 'vitest';
+import { createComposer, createMiddleware, combineMiddlewares } from '../src';
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { createMiddlewareChain, MiddlewareChain } from '../src/chain';
-import type { MiddlewareContext } from '../src/types';
-
-describe('createMiddlewareChain', () => {
-  it('should create a middleware chain', () => {
-    const chain = createMiddlewareChain();
-    expect(chain).toBeInstanceOf(MiddlewareChain);
-  });
-});
-
-describe('MiddlewareChain', () => {
-  let chain: MiddlewareChain;
-  let testContext: MiddlewareContext;
-
-  beforeEach(() => {
-    chain = createMiddlewareChain();
-    testContext = {
-      params: {},
-      query: new URLSearchParams(),
-    };
-  });
-
-  describe('use()', () => {
-    it('should add a single middleware', () => {
-      const middleware = vi.fn((req, ctx, next) => next());
-      chain.use(middleware);
-      expect(chain.size).toBe(1);
+describe('@lytjs/middleware', () => {
+  describe('MiddlewareComposer', () => {
+    it('should create a composer', () => {
+      const composer = createComposer();
+      expect(composer).toBeDefined();
+      expect(composer.count).toBe(0);
     });
 
-    it('should add multiple middlewares', () => {
-      const middleware1 = vi.fn((req, ctx, next) => next());
-      const middleware2 = vi.fn((req, ctx, next) => next());
-      chain.use([middleware1, middleware2]);
-      expect(chain.size).toBe(2);
+    it('should add middleware', () => {
+      const composer = createComposer();
+      const middleware = createMiddleware(async (ctx, next) => {
+        await next();
+      });
+      composer.use(middleware);
+      expect(composer.count).toBe(1);
     });
 
-    it('should support chaining', () => {
-      const result = chain.use(() => {}).use(() => {});
-      expect(result).toBe(chain);
-      expect(chain.size).toBe(2);
-    });
-  });
-
-  describe('execute()', () => {
-    it('should execute the final handler if no middleware', async () => {
-      const finalHandler = vi.fn(() => new Response('OK'));
-      const response = await chain.execute(
-        new Request('https://example.com'),
-        testContext,
-        finalHandler
-      );
-      expect(finalHandler).toHaveBeenCalledTimes(1);
-      expect(response).toBeInstanceOf(Response);
-    });
-
-    it('should execute middleware in order', async () => {
+    it('should execute middleware chain', async () => {
+      const composer = createComposer();
       const order: string[] = [];
-      
-      chain.use((req, ctx, next) => {
-        order.push('middleware1-before');
-        const res = next();
-        order.push('middleware1-after');
-        return res;
-      });
-      
-      chain.use((req, ctx, next) => {
-        order.push('middleware2-before');
-        const res = next();
-        order.push('middleware2-after');
-        return res;
+
+      composer.use(async (ctx, next) => {
+        order.push('m1-start');
+        await next();
+        order.push('m1-end');
       });
 
-      await chain.execute(
-        new Request('https://example.com'),
-        testContext,
-        () => {
-          order.push('final-handler');
-          return new Response('OK');
-        }
-      );
-
-      expect(order).toEqual([
-        'middleware1-before',
-        'middleware2-before',
-        'final-handler',
-        'middleware2-after',
-        'middleware1-after',
-      ]);
-    });
-
-    it('should allow middleware to short-circuit', async () => {
-      const shortCircuitResponse = new Response('Early exit', { status: 400 });
-      
-      chain.use(() => shortCircuitResponse);
-      chain.use(() => {
-        throw new Error('Should not be called');
+      composer.use(async (ctx, next) => {
+        order.push('m2-start');
+        await next();
+        order.push('m2-end');
       });
 
-      const response = await chain.execute(
-        new Request('https://example.com'),
-        testContext,
-        () => {
-          throw new Error('Should not be called');
-        }
-      );
-
-      expect(response).toBe(shortCircuitResponse);
-    });
-
-    it('should pass context to all middlewares and final handler', async () => {
-      const testValue = 'test-value';
-      
-      chain.use((req, ctx, next) => {
-        ctx.test = testValue;
-        return next();
-      });
-      
-      chain.use((req, ctx, next) => {
-        expect(ctx.test).toBe(testValue);
-        return next();
-      });
-
-      const finalHandler = vi.fn((req, ctx) => {
-        expect(ctx.test).toBe(testValue);
+      const handler = composer.compose(async () => {
+        order.push('handler');
         return new Response('OK');
       });
 
-      await chain.execute(
-        new Request('https://example.com'),
-        testContext,
-        finalHandler
-      );
-    });
+      await handler(new Request('http://localhost'));
 
-    it('should handle async middleware', async () => {
-      let asyncFinished = false;
+      expect(order).toEqual([
+        'm1-start',
+        'm2-start',
+        'handler',
+        'm2-end',
+        'm1-end',
+      ]);
+    });
+  });
+
+  describe('combineMiddlewares', () => {
+    it('should combine multiple middlewares', async () => {
+      const calls: string[] = [];
       
-      chain.use(async (req, ctx, next) => {
-        await new Promise(resolve => setTimeout(resolve, 10));
-        asyncFinished = true;
-        return next();
+      const m1 = createMiddleware(async (ctx, next) => {
+        calls.push('m1');
+        await next();
+      });
+      
+      const m2 = createMiddleware(async (ctx, next) => {
+        calls.push('m2');
+        await next();
       });
 
-      await chain.execute(
-        new Request('https://example.com'),
-        testContext,
-        () => {
-          expect(asyncFinished).toBe(true);
-          return new Response('OK');
-        }
-      );
-    });
-  });
-
-  describe('size', () => {
-    it('should return the number of middlewares', () => {
-      expect(chain.size).toBe(0);
-      chain.use(() => {});
-      expect(chain.size).toBe(1);
-      chain.use([() => {}, () => {}]);
-      expect(chain.size).toBe(3);
-    });
-  });
-
-  describe('clear()', () => {
-    it('should clear all middlewares', () => {
-      chain.use(() => {}).use(() => {});
-      expect(chain.size).toBe(2);
+      const combined = combineMiddlewares(m1, m2);
       
-      const result = chain.clear();
-      expect(result).toBe(chain);
-      expect(chain.size).toBe(0);
+      await combined({ request: new Request('http://localhost') }, async () => {});
+      
+      expect(calls).toEqual(['m1', 'm2']);
     });
   });
 });

@@ -4,7 +4,8 @@
 
 import { existsSync, readdirSync, statSync } from 'fs';
 import { join, normalize, relative } from 'path';
-import type { ApiRouteConfig, HttpMethod } from './types';
+import type { ApiRouteConfig } from './types';
+import type { HttpMethod } from '@lytjs/shared-types';
 
 /** 检查是否为目录 */
 export function isDirectory(path: string): boolean {

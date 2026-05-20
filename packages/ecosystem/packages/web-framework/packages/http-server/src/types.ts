@@ -1,32 +1,19 @@
-export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'OPTIONS' | 'HEAD';
+/**
+ * HTTP 服务器类型定义
+ * @deprecated 请使用 @lytjs/shared-types 中的类型
+ */
 
-export interface Request {
-  method: HttpMethod;
-  url: string;
-  path: string;
-  headers: Record<string, string | string[] | undefined>;
-  body?: unknown;
-  query: Record<string, string | string[]>;
-  params: Record<string, string>;
-  ip?: string;
-}
+// 从共享类型导入并重新导出
+export type {
+  HttpMethod,
+  HttpContext as Context,
+  HttpRequest as Request,
+  HttpResponse as Response,
+  HttpRoute as Route,
+} from '@lytjs/shared-types';
 
-export interface Response {
-  status: number;
-  headers: Record<string, string | string[]>;
-  body?: unknown;
-}
-
-export interface Context {
-  request: Request;
-  response: Response;
-  [key: string]: unknown;
-}
-
+/**
+ * 请求处理器函数
+ */
 export type Handler = (ctx: Context) => Promise<void> | void;
 
-export interface Route {
-  method: HttpMethod;
-  path: string;
-  handler: Handler;
-}

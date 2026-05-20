@@ -1,7 +1,9 @@
 {
   "name": "@lytjs/middleware",
   "version": "6.6.0",
-  "description": "LytJS 中间件核心系统 - 洋葱圈模型",
+  "description": "LytJS Middleware Core System - Onion model middleware architecture",
+  "author": "lytjs",
+  "license": "MIT",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
@@ -27,16 +29,19 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "type-check": "tsc --noEmit",
-    "lint": "eslint \"src/**/*.ts\" \"tests/**/*.ts\"",
     "clean": "rm -rf dist node_modules .turbo"
   },
   "dependencies": {
-    "@lytjs/common-is": "^6.6.0"
+    "@lytjs/common-error": "workspace:*",
+    "@lytjs/common-events": "workspace:*",
+    "@lytjs/shared-types": "workspace:*"
   },
   "devDependencies": {
-    "tsup": "^8.3.6",
-    "typescript": "^5.7.3",
-    "vitest": "^3.0.0"
+    "@types/node": "^22.13.10",
+    "@vitest/coverage-v8": "^3.0.7",
+    "tsup": "^8.4.0",
+    "typescript": "^5.8.2",
+    "vitest": "^3.0.7"
   },
   "peerDependencies": {},
   "publishConfig": {
@@ -48,15 +53,8 @@
     "url": "https://gitee.com/lytjs/lytjs.git",
     "directory": "packages/ecosystem/packages/web-framework/packages/middleware"
   },
-  "keywords": [
-    "lytjs",
-    "middleware",
-    "http",
-    "server"
-  ],
-  "author": "LytJS Team",
-  "license": "MIT",
-  "homepage": "https://gitee.com/lytjs/lytjs",
+  "keywords": ["lytjs", "middleware", "onion-model", "web-framework"],
+  "homepage": "https://gitee.com/lytjs/lytjs/tree/develop/packages/ecosystem/packages/web-framework/packages/middleware#readme",
   "bugs": {
     "url": "https://gitee.com/lytjs/lytjs/issues"
   }

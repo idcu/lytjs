@@ -2,30 +2,27 @@
   "name": "@lytjs/web-framework-monorepo",
   "version": "6.6.0",
   "private": true,
-  "description": "LytJS Web Framework 工具包集合",
-  "type": "module",
+  "description": "LytJS Web Framework - Full web development solution",
+  "packageManager": "pnpm@9.15.4",
   "scripts": {
-    "dev": "pnpm -r --parallel run dev",
-    "build": "pnpm -r run build",
     "test": "pnpm -r run test",
-    "test:watch": "pnpm -r --parallel run test:watch",
-    "test:coverage": "pnpm -r run test:coverage",
-    "type-check": "pnpm -r run type-check",
+    "test:coverage": "pnpm -r run test -- --coverage",
     "lint": "pnpm -r run lint",
+    "build": "pnpm -r run build",
+    "type-check": "pnpm -r run type-check",
     "clean": "pnpm -r run clean"
   },
-  "keywords": [
-    "lytjs",
-    "web",
-    "framework",
-    "router",
-    "middleware"
-  ],
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "https://gitee.com/lytjs/lytjs.git",
-    "directory": "packages/ecosystem/packages/web-framework"
+  "devDependencies": {
+    "@types/node": "^22.13.10",
+    "@vitest/coverage-v8": "^3.0.7",
+    "eslint": "^9.22.0",
+    "prettier": "^3.5.3",
+    "tsup": "^8.4.0",
+    "typescript": "^5.8.2",
+    "vitest": "^3.0.7"
   },
-  "author": "LytJS Team"
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "license": "MIT"
 }
