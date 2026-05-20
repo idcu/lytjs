@@ -129,7 +129,7 @@ class TBTPerformanceBenchmark {
 }
 
 // 测试函数示例
-function createTestComponent(): any {
+function createTestComponent(): Record<string, unknown> {
   return {
     type: 'div',
     props: { className: 'test-component' },

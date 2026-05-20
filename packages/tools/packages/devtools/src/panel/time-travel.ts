@@ -5,7 +5,7 @@
  */
 
 import type { StateSnapshot } from '../types';
-import { subscribeEvents, clearEvents, recordEvent } from '../events';
+import { subscribeEvents, clearEvents, recordEvent as _recordEvent } from '../events';
 import { setSignalValue } from '../signals';
 import { sendToPanel, onPanelMessage } from '../bridge';
 import { takeSnapshot, restoreSnapshot, getSnapshots } from '../snapshots';

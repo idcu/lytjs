@@ -10,7 +10,7 @@ import {
   createDehydratedState,
   resetComponentIdCounter,
 } from '../src/hydration';
-import type { HydrationStrategy } from '../src/hydration';
+// import type { HydrationStrategy } from '../src/hydration';
 
 /** 创建测试用 VNode */
 function createTestVNode(

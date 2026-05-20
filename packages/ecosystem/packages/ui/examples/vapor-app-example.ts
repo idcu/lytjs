@@ -6,7 +6,7 @@
 
 import { defineVaporComponent, createVaporApp } from '@lytjs/renderer';
 import { signal, computed } from '@lytjs/reactivity';
-import { Button } from '@lytjs/ui';
+// import { Button } from '@lytjs/ui';
 
 // 示例组件 1: 简单计数器
 const _Counter = defineVaporComponent({

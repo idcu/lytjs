@@ -72,9 +72,11 @@ function createLogger(options: LoggerOptions = {}): LoggerInstance {
 
     switch (entry.level) {
       case 'debug':
+        // eslint-disable-next-line no-console
         console.debug(formattedMessage, entry.data || '');
         break;
       case 'info':
+        // eslint-disable-next-line no-console
         console.info(formattedMessage, entry.data || '');
         break;
       case 'warn':

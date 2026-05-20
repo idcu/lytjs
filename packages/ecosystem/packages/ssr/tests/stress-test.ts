@@ -24,14 +24,14 @@ interface TestOptions {
 
 interface VNode {
   type: string;
-  props: Record<string, any>;
-  children?: any[];
+  props: Record<string, unknown>;
+  children?: unknown[];
 }
 
 /**
  * 创建测试 VNode
  */
-function createTestVNode(depth: number, width: number): VNode {
+function _createTestVNode(depth: number, width: number): VNode {
   if (depth === 0) {
     return {
       type: 'div',
