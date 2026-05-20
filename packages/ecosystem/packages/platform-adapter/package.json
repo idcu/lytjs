@@ -28,10 +28,10 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@lytjs/common-is": "^6.0.0",
-    "@lytjs/common-constants": "^6.0.0",
-    "@lytjs/vdom": "^6.0.0",
-    "@lytjs/common-vnode": "^6.0.0"
+    "@lytjs/common-is": "workspace:*",
+    "@lytjs/common-constants": "workspace:*",
+    "@lytjs/vdom": "workspace:*",
+    "@lytjs/common-vnode": "workspace:*"
   },
   "devDependencies": {
     "tsup": "^8.0.0",

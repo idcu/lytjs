@@ -32,8 +32,8 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@lytjs/common-is": "^6.0.0",
-    "@lytjs/common-env": "^6.0.0"
+    "@lytjs/common-is": "workspace:*",
+    "@lytjs/common-env": "workspace:*"
   },
   "devDependencies": {
     "tsup": "^8.0.0",

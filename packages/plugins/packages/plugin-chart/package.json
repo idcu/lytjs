@@ -29,7 +29,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@lytjs/core": "^6.0.0"
+    "@lytjs/core": "workspace:*"
   },
   "devDependencies": {
     "tsup": "^8.0.0",

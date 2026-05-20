@@ -24,9 +24,9 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@lytjs/ssr": "^6.6.0",
-    "@lytjs/common-is": "^6.0.0",
-    "@lytjs/common-path": "^6.0.0"
+    "@lytjs/ssr": "workspace:*",
+    "@lytjs/common-is": "workspace:*",
+    "@lytjs/common-path": "workspace:*"
   },
   "devDependencies": {
     "tsup": "^8.0.0",

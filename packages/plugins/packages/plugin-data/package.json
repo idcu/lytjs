@@ -33,9 +33,9 @@
     "clean": "rm -rf dist node_modules .turbo"
   },
   "dependencies": {
-    "@lytjs/core": "^6.5.0",
-    "@lytjs/reactivity": "^6.5.0",
-    "@lytjs/plugin-data-fetch": "^6.5.0"
+    "@lytjs/core": "workspace:*",
+    "@lytjs/reactivity": "workspace:*",
+    "@lytjs/plugin-data-fetch": "workspace:*"
   },
   "devDependencies": {
     "tsup": "^8.3.6",

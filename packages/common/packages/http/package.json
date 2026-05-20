@@ -28,7 +28,7 @@
   "sideEffects": false,
   "license": "MIT",
   "dependencies": {
-    "@lytjs/common-query": "^6.6.0"
+    "@lytjs/common-query": "workspace:*"
   },
   "devDependencies": {
     "tsup": "^8.4.0",

@@ -27,7 +27,7 @@
   "sideEffects": false,
   "license": "MIT",
   "dependencies": {
-    "@lytjs/host-contract": "^6.0.0"
+    "@lytjs/host-contract": "workspace:*"
   },
   "devDependencies": {
     "tsup": "^8.4.0",

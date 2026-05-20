@@ -28,7 +28,7 @@
   "sideEffects": false,
   "license": "MIT",
   "dependencies": {
-    "@lytjs/common-constants": "^6.0.0"
+    "@lytjs/common-constants": "workspace:*"
   },
   "devDependencies": {
     "tsup": "^8.4.0",

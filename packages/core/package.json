@@ -28,17 +28,17 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@lytjs/shared-types": "^6.6.0",
-    "@lytjs/reactivity": "^6.6.0",
-    "@lytjs/vdom": "^6.6.0",
-    "@lytjs/compiler": "^6.6.0",
-    "@lytjs/renderer": "^6.6.0",
-    "@lytjs/component": "^6.6.0",
-    "@lytjs/common-is": "^6.6.0",
-    "@lytjs/common-string": "^6.6.0",
-    "@lytjs/common-scheduler": "^6.6.0",
-    "@lytjs/common-error": "^6.6.0",
-    "@lytjs/common-object": "^6.6.0"
+    "@lytjs/shared-types": "workspace:*",
+    "@lytjs/reactivity": "workspace:*",
+    "@lytjs/vdom": "workspace:*",
+    "@lytjs/compiler": "workspace:*",
+    "@lytjs/renderer": "workspace:*",
+    "@lytjs/component": "workspace:*",
+    "@lytjs/common-is": "workspace:*",
+    "@lytjs/common-string": "workspace:*",
+    "@lytjs/common-scheduler": "workspace:*",
+    "@lytjs/common-error": "workspace:*",
+    "@lytjs/common-object": "workspace:*"
   },
   "devDependencies": {
     "tsup": "^8.0.0",

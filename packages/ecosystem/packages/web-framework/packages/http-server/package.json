@@ -31,10 +31,10 @@
     "clean": "rm -rf dist node_modules .turbo"
   },
   "dependencies": {
-    "@lytjs/common-is": "^6.5.0",
-    "@lytjs/common-query": "^6.5.0",
-    "@lytjs/middleware": "^6.5.0",
-    "@lytjs/shared-types": "^6.6.0"
+    "@lytjs/common-is": "workspace:*",
+    "@lytjs/common-query": "workspace:*",
+    "@lytjs/middleware": "workspace:*",
+    "@lytjs/shared-types": "workspace:*"
   },
   "devDependencies": {
     "tsup": "^8.3.6",
