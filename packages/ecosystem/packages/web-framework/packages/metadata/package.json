@@ -1,0 +1,59 @@
+{
+  "name": "@lytjs/metadata",
+  "version": "6.6.0",
+  "description": "LytJS 元数据系统",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "dev": "tsup --watch",
+    "build": "tsup",
+    "test": "vitest run",
+    "test:watch": "test:watch",
+    "test:coverage": "vitest run --coverage",
+    "type-check": "tsc --noEmit",
+    "lint": "eslint \"src/**/*.ts\" \"tests/**/*.ts\"",
+    "clean": "rm -rf dist node_modules .turbo"
+  },
+  "dependencies": {
+    "@lytjs/common-is": "^6.6.0"
+  },
+  "devDependencies": {
+    "tsup": "^8.3.6",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.0"
+  },
+  "peerDependencies": {},
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://gitee.com/lytjs/lytjs.git",
+    "directory": "packages/ecosystem/packages/web-framework/packages/metadata"
+  },
+  "keywords": [
+    "lytjs",
+    "metadata",
+    "meta",
+    "seo"
+  ],
+  "author": "LytJS Team",
+  "license": "MIT"
+}

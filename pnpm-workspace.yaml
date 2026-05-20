@@ -1,9 +1,19 @@
 packages:
   # 子仓库（孙仓库级）
   - 'packages/common/packages/*'
-  - 'packages/ecosystem/packages/*'
+  - 'packages/ecosystem/packages/web-framework/packages/*'
+  - 'packages/ecosystem/packages/ssr-kit/packages/*'
   - 'packages/plugins/packages/*'
   - 'packages/tools/packages/*'
+  
+  # 生态系统单包（已整合到功能域的除外）
+  - 'packages/ecosystem/packages/ui'
+  - 'packages/ecosystem/packages/store'
+  - 'packages/ecosystem/packages/devtools'
+  - 'packages/ecosystem/packages/bundler'
+  - 'packages/ecosystem/packages/runtime-edge'
+  - 'packages/ecosystem/packages/compat'
+  - 'packages/ecosystem/packages/platform-adapter'
 
   # 子仓库（单包级）
   - 'packages/shared-types'

@@ -24,7 +24,8 @@
 
 | 版本 | 目标 | 状态 |
 |------|------|------|
-| v6.5 | 核心聚焦与架构优化 | ⏸️ 待开发 |
+| v6.5 | 核心聚焦与架构优化 | ✅ 已完成 |
+| v6.6 | 生态系统模块化重构 | ⏸️ 待开发 |
 | v7.0+ | 未来探索 | ⏸️ 探索中 |
 
 ### 🟡 调整项目
@@ -174,17 +175,17 @@ LytJS 生态系统
 @lytjs/
 ├── 核心层
 │   ├── core (已有)
-│   ├── router (已有)
-│   ├── router-fs 🆕 (从 LytX 提取)
-│   ├── store (已有)
-│   ├── ssr (已有)
-│   ├── ssg 🆕 (从 LytX 提取)
-│   ├── isr 🆕 (从 LytX 提取)
-│   ├── ssr-enhanced 🆕
+│   ├── reactivity (已有)
+│   ├── vdom (已有)
+│   ├── component (已有)
+│   ├── renderer (已有)
+│   ├── adapter-web (已有)
+│   ├── dom (已有)
+│   ├── web (已有)
+│   ├── compiler (已有)
 │   └── [UI 组件库计划迁出]
 │
 ├── 工具层 (@lytjs/common-monorepo)
-│   ├── common (聚合包，已有) - 统一导出所有子包
 │   ├── common-is (已有)
 │   ├── common-object (已有)
 │   ├── common-constants (已有)
@@ -217,30 +218,54 @@ LytJS 生态系统
 │   ├── common-warn (已有)
 │   └── common-performance (已有)
 │
-├── API 层
-│   └── api 🆕 (从 LytX 提取)
-│
-├── 构建层
-│   ├── bundler 🆕 (从 LytX 提取)
-│   └── hmr 🆕 (从 LytX 提取)
+├── 生态系统层（v6.6 模块化重构）
+│   ├── web-framework 🆕
+│   │   ├── packages/
+│   │   │   ├── router (已有)
+│   │   │   ├── router-fs (已有)
+│   │   │   ├── api (已有)
+│   │   │   ├── middleware 🆕
+│   │   │   ├── middleware-cors 🆕
+│   │   │   ├── middleware-auth 🆕
+│   │   │   ├── middleware-rate-limit 🆕
+│   │   │   ├── http-server 🆕
+│   │   │   └── metadata 🆕
+│   │   └── package.json (管理用)
+│   │
+│   ├── ssr-kit 🆕
+│   │   ├── packages/
+│   │   │   ├── ssr (已有)
+│   │   │   ├── ssg 🆕 (独立包)
+│   │   │   ├── cache-isr 🆕 (独立包)
+│   │   │   ├── html-renderer 🆕 (独立包)
+│   │   │   └── hmr (已有)
+│   │   └── package.json (管理用)
+│   │
+│   ├── store (已有)
+│   ├── devtools (已有)
+│   ├── bundler (已有)
+│   ├── runtime-edge (已有)
+│   ├── compat (已有)
+│   └── platform-adapter (已有)
 │
 ├── 插件层
 │   ├── plugin-form (已有)
 │   ├── plugin-chart (已有)
 │   ├── plugin-data-fetch (已有)
-│   ├── plugin-data 🆕 (增强版)
-│   ├── plugin-validation 🆕
+│   ├── plugin-data (已有)
+│   ├── plugin-validation (已有)
 │   ├── plugin-animation (已有)
-│   ├── plugin-auth (完善)
-│   ├── plugin-i18n (完善)
-│   ├── plugin-storage (完善)
-│   ├── plugin-logger (完善)
-│   ├── plugin-theme (完善)
-│   └── plugin-perf 🆕
+│   ├── plugin-auth (已有)
+│   ├── plugin-i18n (已有)
+│   ├── plugin-storage (已有)
+│   ├── plugin-logger (已有)
+│   ├── plugin-theme (已有)
+│   └── plugin-perf (已有)
 │
-└── 适配层
-    ├── runtime-edge 🆕
-    └── testing 🆕
+└── 工具层
+    ├── cli (已有)
+    ├── test-utils (已有)
+    └── devtools-extension (已有)
 ```
 
 ### 4.2 包统计
@@ -793,7 +818,7 @@ registerIntegrations({
   └─ 总计：11-15 周完成核心层
 ```
 
-### 7.3 已完成（阶段一核心增强 + 阶段二静态与构建 + 阶段三生态完善 + 阶段四性能优化）
+### 7.3 v6.5 已完成（阶段一核心增强 + 阶段二静态与构建 + 阶段三生态完善 + 阶段四性能优化）
 
 ✅ **@lytjs/plugin-validation** - 验证插件已完成  
 ✅ **@lytjs/plugin-data** - 增强版数据获取插件已完成  
@@ -813,11 +838,178 @@ registerIntegrations({
 
 ### LytJS v6.5 开发已完成！
 
-### 下一步行动
+### 下一步行动（v6.6）
 
-1. 进行最终测试和集成验证  
-2. 准备发布版本  
-3. 撰写发布文档
+1. 开始 v6.6 生态系统模块化重构  
+2. 创建 web-framework 和 ssr-kit 功能域  
+3. 添加中间件生态、HTTP 服务器、元数据管理等新包
+
+---
+
+### 5.4 v6.6：生态系统模块化重构（⏸️ 待开发）
+
+**目标**：对 L6 生态系统层进行模块化重构，参考 `@lytjs/common` 的 monorepo 架构，提升可维护性和扩展性。
+
+**核心原则**：
+- ✅ **不破坏 8 层架构**：所有改动都在 L6 生态系统层内部
+- ✅ **完全向后兼容**：现有包的导入路径和 API 保持不变
+- ✅ **统一模块化架构**：web-framework 和 ssr-kit 采用相同的组织模式
+- ✅ **零依赖原则保持**：L0-L6 运行时继续保持零第三方依赖
+
+---
+
+#### 阶段一：web-framework 模块化（优先级：🔴 高，预计 2-3 周）
+
+**目标**：创建 web-framework 功能域，整合路由、API、中间件等包
+
+| 任务 | 包名 | 类型 | 预计时间 | 依赖 | 说明 |
+|------|------|------|----------|------|------|
+| 1.1 | web-framework 结构 | 重构 | 3 天 | - | 创建 web-framework monorepo 目录结构 |
+| 1.2 | @lytjs/middleware | 新增 | 5 天 | @lytjs/core | 中间件核心系统（洋葱圈模型） |
+| 1.3 | @lytjs/middleware-cors | 新增 | 3 天 | @lytjs/middleware | CORS 中间件 |
+| 1.4 | @lytjs/middleware-auth | 新增 | 4 天 | @lytjs/middleware | 认证中间件 |
+| 1.5 | @lytjs/middleware-rate-limit | 新增 | 4 天 | @lytjs/middleware | 限流中间件 |
+| 1.6 | @lytjs/http-server | 新增 | 6 天 | @lytjs/middleware | HTTP 服务器（基于 Fetch API） |
+| 1.7 | @lytjs/metadata | 新增 | 4 天 | - | 元数据管理（SEO、OpenGraph 等） |
+| 1.8 | 迁移现有包 | 迁移 | 2 天 | - | 将 router、router-fs、api 迁移到 web-framework |
+
+**阶段一交付物**：
+- web-framework 功能域完整结构
+- 7 个新包（middleware 系列 + http-server + metadata）
+- 3 个现有包迁移
+- 完整的类型定义和测试
+- 向后兼容的导入路径
+
+---
+
+#### 阶段二：ssr-kit 模块化（优先级：🔴 高，预计 2-3 周）
+
+**目标**：创建 ssr-kit 功能域，将 SSR 相关包进行模块化组织
+
+| 任务 | 包名 | 类型 | 预计时间 | 依赖 | 说明 |
+|------|------|------|----------|------|------|
+| 2.1 | ssr-kit 结构 | 重构 | 3 天 | - | 创建 ssr-kit monorepo 目录结构 |
+| 2.2 | @lytjs/ssg | 拆分 | 4 天 | @lytjs/ssr | 从现有 ssr 包中拆分为独立包 |
+| 2.3 | @lytjs/cache-isr | 新增 | 5 天 | @lytjs/common-cache | ISR 缓存系统（从 LytX 提取） |
+| 2.4 | @lytjs/html-renderer | 新增 | 5 天 | @lytjs/metadata | HTML 渲染器（从 LytX 提取） |
+| 2.5 | 迁移现有包 | 迁移 | 2 天 | - | 将 ssr、hmr 迁移到 ssr-kit |
+| 2.6 | 增强 @lytjs/ssr | 增强 | 3 天 | - | 保持现有 API，内部结构优化 |
+
+**阶段二交付物**：
+- ssr-kit 功能域完整结构
+- 3 个新包（ssg、cache-isr、html-renderer）
+- 2 个现有包迁移
+- 完整的类型定义和测试
+- 向后兼容的导入路径
+
+---
+
+#### 阶段三：工具链与文档更新（优先级：🟡 中，预计 1-2 周）
+
+**目标**：更新构建工具、文档和 workspace 配置
+
+| 任务 | 范围 | 类型 | 预计时间 | 说明 |
+|------|------|------|----------|------|
+| 3.1 | pnpm-workspace.yaml | 更新 | 2 天 | 更新 workspace 配置 |
+| 3.2 | package.json scripts | 更新 | 2 天 | 更新构建脚本 |
+| 3.3 | 文档更新 | 更新 | 5 天 | 更新架构文档、API 文档 |
+| 3.4 | 迁移指南 | 新增 | 3 天 | 为用户提供迁移指南（如需要） |
+
+**阶段三交付物**：
+- 更新的构建工具配置
+- 完整的架构文档
+- 迁移指南（如有必要）
+
+---
+
+### 5.5 v6.6 架构设计详情
+
+#### 统一模块化架构模式
+
+参考 `@lytjs/common` 的成功经验，所有功能域采用相同的 monorepo 模式：
+
+```
+packages/ecosystem/packages/{domain}/
+├── package.json                    # 管理用主包（不发布）
+├── tsconfig.json
+├── packages/
+│   ├── {package-1}/
+│   │   ├── src/
+│   │   │   ├── index.ts
+│   │   │   └── ...
+│   │   ├── tests/
+│   │   ├── package.json            # 独立发布的包
+│   │   ├── tsconfig.json
+│   │   ├── tsup.config.ts
+│   │   └── README.md
+│   ├── {package-2}/
+│   └── ...
+└── src/
+    └── index.ts                    # 可选：统一导出入口
+```
+
+#### web-framework 功能域详解
+
+**包含包**：
+- `@lytjs/router` - 核心路由（已有）
+- `@lytjs/router-fs` - 文件系统路由（已有）
+- `@lytjs/api` - API 路由（已有）
+- `@lytjs/middleware` - 中间件核心系统
+- `@lytjs/middleware-cors` - CORS 中间件
+- `@lytjs/middleware-auth` - 认证中间件
+- `@lytjs/middleware-rate-limit` - 限流中间件
+- `@lytjs/http-server` - HTTP 服务器
+- `@lytjs/metadata` - 元数据管理
+
+**职责划分**：
+- 路由系统（router、router-fs、api）
+- 中间件生态（middleware、middleware-*）
+- 服务器层（http-server）
+- 元数据层（metadata）
+
+#### ssr-kit 功能域详解
+
+**包含包**：
+- `@lytjs/ssr` - SSR 核心（已有）
+- `@lytjs/ssg` - 静态站点生成
+- `@lytjs/cache-isr` - ISR 缓存
+- `@lytjs/html-renderer` - HTML 渲染器
+- `@lytjs/hmr` - 热模块替换（已有）
+
+**职责划分**：
+- 渲染核心（ssr）
+- 静态生成（ssg、html-renderer）
+- 缓存层（cache-isr）
+- 开发工具（hmr）
+
+#### 向后兼容性策略
+
+**关键原则**：用户代码无需修改！
+
+**技术方案**：
+1. **保持包名不变**：`@lytjs/router` 等包名继续使用
+2. **保持导出 API 不变**：现有导入语句继续工作
+3. **双轨运行**：同时保留旧位置和新位置（过渡期）
+4. **软弃用**：v6.6 标记旧位置为 deprecated，v7.0 移除
+5. **重定向**：通过 package.json 的 exports 字段保持兼容性
+
+**示例**：
+```typescript
+// 现有代码无需修改
+import { createRouter } from '@lytjs/router';
+
+// 内部实现已经迁移到 web-framework 下
+```
+
+---
+
+### 5.6 v7.0+：未来探索 ⏸️ 探索中
+
+**革命性升级**：
+- 更智能的编译器
+- AI 辅助开发
+- 多语言支持（Rust/WebAssembly）
+- 全新的开发体验
 
 ---
 
@@ -862,14 +1054,27 @@ registerIntegrations({
 | **向后兼容** | 95% 兼容性 | 测试验证 |
 | **CI/CD 通过率** | 99%+ | CI 统计 |
 
-### 8.5 关键成功因素
+### 8.5 v6.6 专项成功指标
+
+| 指标 | 目标 | 测量方式 |
+|------|------|----------|
+| **架构一致性** | web-framework 和 ssr-kit 采用相同模式 | 代码审查 |
+| **向后兼容性** | 100% API 兼容 | 自动化测试验证 |
+| **新增包数** | 10+ 个新生态包 | 包统计 |
+| **模块化覆盖率** | 所有生态包按功能域组织 | 目录结构检查 |
+| **文档完整性** | 100% 新包有完整文档 | 文档检查 |
+| **测试覆盖率** | 新包测试覆盖率 > 80% | vitest coverage |
+
+### 8.6 关键成功因素
 
 ✅ 保持零依赖原则不动摇  
+✅ 保持 8 层架构完整，不破坏现有分层  
 ✅ 持续优化性能（Vapor 模式优先）  
-✅ 完成 16 个新包/完善包  
+✅ 完成 v6.6 生态系统模块化重构  
 ✅ 充分利用现有的 @lytjs/common 工具库  
 ✅ 建立健康的生态系统  
 ✅ 提供优秀的开发体验  
+✅ 保持 100% 向后兼容性  
 ✅ 建立企业用户案例  
 ✅ 成功完成 UI 组件库迁出（如有）  
 
@@ -1037,7 +1242,7 @@ pnpm build
 
 ---
 
-**文档版本**：v11.0.0  
-**最后更新**：2026-05-19  
+**文档版本**：v12.0.0  
+**最后更新**：2026-05-20  
 **维护者**：LytJS Team  
-**重要更新**：LytX 已独立，UI 准备迁出，核心聚焦
+**重要更新**：LytX 已独立，UI 准备迁出，核心聚焦，v6.6 生态系统模块化重构

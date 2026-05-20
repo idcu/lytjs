@@ -1,0 +1,50 @@
+{
+  "name": "@lytjs/ssr",
+  "version": "6.4.0",
+  "description": "LytJS Server-Side Rendering support",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "type-check": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@lytjs/common-is": "^6.0.0",
+    "@lytjs/common-env": "^6.0.0",
+    "@lytjs/common-dom": "^6.0.0",
+    "@lytjs/reactivity": "^6.1.0",
+    "@lytjs/component": "^6.1.0",
+    "@lytjs/vdom": "^6.1.0"
+  },
+  "devDependencies": {
+    "tsup": "^8.0.0",
+    "typescript": "^5.4.0",
+    "vitest": "^3.0.0"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://gitee.com/lytjs/lytjs.git",
+    "directory": "packages/ecosystem/packages/ssr"
+  },
+  "keywords": [
+    "lytjs",
+    "ssr",
+    "server-side-rendering"
+  ]
+}

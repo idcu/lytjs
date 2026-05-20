@@ -1,0 +1,31 @@
+{
+  "name": "@lytjs/web-framework-monorepo",
+  "version": "6.6.0",
+  "private": true,
+  "description": "LytJS Web Framework 工具包集合",
+  "type": "module",
+  "scripts": {
+    "dev": "pnpm -r --parallel run dev",
+    "build": "pnpm -r run build",
+    "test": "pnpm -r run test",
+    "test:watch": "pnpm -r --parallel run test:watch",
+    "test:coverage": "pnpm -r run test:coverage",
+    "type-check": "pnpm -r run type-check",
+    "lint": "pnpm -r run lint",
+    "clean": "pnpm -r run clean"
+  },
+  "keywords": [
+    "lytjs",
+    "web",
+    "framework",
+    "router",
+    "middleware"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://gitee.com/lytjs/lytjs.git",
+    "directory": "packages/ecosystem/packages/web-framework"
+  },
+  "author": "LytJS Team"
+}

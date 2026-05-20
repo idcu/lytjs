@@ -1,0 +1,61 @@
+{
+  "name": "@lytjs/http-server",
+  "version": "6.5.0",
+  "description": "LytJS HTTP 服务器",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "dev": "tsup --watch",
+    "build": "tsup",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "type-check": "tsc --noEmit",
+    "lint": "eslint \"src/**/*.ts\" \"tests/**/*.ts\"",
+    "clean": "rm -rf dist node_modules .turbo"
+  },
+  "dependencies": {
+    "@lytjs/common-is": "^6.5.0",
+    "@lytjs/common-query": "^6.5.0",
+    "@lytjs/middleware": "^6.5.0"
+  },
+  "devDependencies": {
+    "tsup": "^8.3.6",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.0"
+  },
+  "peerDependencies": {},
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://gitee.com/lytjs/lytjs.git",
+    "directory": "packages/ecosystem/packages/web-framework/packages/http-server"
+  },
+  "keywords": [
+    "lytjs",
+    "http",
+    "server",
+    "router"
+  ],
+  "author": "LytJS Team",
+  "license": "MIT"
+}

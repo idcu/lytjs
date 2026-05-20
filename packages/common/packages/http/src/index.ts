@@ -3,6 +3,9 @@
  * Lightweight HTTP client based on native fetch API
  */
 
+// --- Imports ---
+import { stringifyQueryString } from '@lytjs/common-query';
+
 // --- Types ---
 
 export interface HttpClientOptions {
@@ -14,7 +17,7 @@ export interface HttpClientOptions {
 
 export interface RequestOptions {
   headers?: Record<string, string>;
-  params?: Record<string, string>;
+  params?: Record<string, string | number | boolean | Array<string | number | boolean>>;
   timeout?: number;
   signal?: AbortSignal;
   responseType?: 'json' | 'text' | 'blob' | 'arraybuffer';
@@ -215,11 +218,14 @@ export class HttpClient {
     };
   }
 
-  private _resolveURL(base: string, url: string, params?: Record<string, string>): string {
+  private _resolveURL(
+    base: string, 
+    url: string, 
+    params?: Record<string, string | number | boolean | Array<string | number | boolean>>,
+  ): string {
     let resolved = base ? base.replace(/\/+$/, '') + '/' + url.replace(/^\/+/, '') : url;
     if (params) {
-      const searchParams = new URLSearchParams(params);
-      const qs = searchParams.toString();
+      const qs = stringifyQueryString(params);
       if (qs) {
         resolved += (resolved.includes('?') ? '&' : '?') + qs;
       }
@@ -332,3 +338,95 @@ export function createHttpClient(options?: HttpClientOptions): HttpClient {
 }
 
 export const http: HttpClient = new HttpClient();
+
+// --- Convenience methods for the default http client ---
+
+/**
+ * 便捷 GET 请求
+ */
+export function get<T = unknown>(url: string, options?: RequestOptions): Promise<HttpResponse<T>> {
+  return http.get<T>(url, options);
+}
+
+/**
+ * 便捷 POST 请求
+ */
+export function post<T = unknown>(url: string, data?: unknown, options?: RequestOptions): Promise<HttpResponse<T>> {
+  return http.post<T>(url, data, options);
+}
+
+/**
+ * 便捷 PUT 请求
+ */
+export function put<T = unknown>(url: string, data?: unknown, options?: RequestOptions): Promise<HttpResponse<T>> {
+  return http.put<T>(url, data, options);
+}
+
+/**
+ * 便捷 DELETE 请求
+ */
+export function del<T = unknown>(url: string, options?: RequestOptions): Promise<HttpResponse<T>> {
+  return http.delete<T>(url, options);
+}
+
+/**
+ * 便捷 PATCH 请求
+ */
+export function patch<T = unknown>(url: string, data?: unknown, options?: RequestOptions): Promise<HttpResponse<T>> {
+  return http.patch<T>(url, data, options);
+}
+
+/**
+ * 发送 JSON 请求并直接获取数据
+ * 自动处理响应解析和错误
+ */
+export async function requestJson<T = unknown>(
+  method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE',
+  url: string,
+  options?: RequestOptions & { data?: unknown },
+): Promise<T> {
+  const { data, ...config } = options || {};
+  
+  if (method === 'GET' || method === 'DELETE') {
+    const response = await http.request<T>(method, url, config);
+    return response.data;
+  }
+  
+  const response = await http.request<T>(method, url, { ...config, body: data });
+  return response.data;
+}
+
+/**
+ * 发送 GET JSON 请求
+ */
+export async function getJson<T = unknown>(url: string, options?: RequestOptions): Promise<T> {
+  return requestJson<T>('GET', url, options);
+}
+
+/**
+ * 发送 POST JSON 请求
+ */
+export async function postJson<T = unknown>(url: string, data?: unknown, options?: RequestOptions): Promise<T> {
+  return requestJson<T>('POST', url, { ...options, data });
+}
+
+/**
+ * 发送 PUT JSON 请求
+ */
+export async function putJson<T = unknown>(url: string, data?: unknown, options?: RequestOptions): Promise<T> {
+  return requestJson<T>('PUT', url, { ...options, data });
+}
+
+/**
+ * 发送 PATCH JSON 请求
+ */
+export async function patchJson<T = unknown>(url: string, data?: unknown, options?: RequestOptions): Promise<T> {
+  return requestJson<T>('PATCH', url, { ...options, data });
+}
+
+/**
+ * 发送 DELETE JSON 请求
+ */
+export async function deleteJson<T = unknown>(url: string, options?: RequestOptions): Promise<T> {
+  return requestJson<T>('DELETE', url, options);
+}

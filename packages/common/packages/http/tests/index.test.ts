@@ -5,6 +5,17 @@ import {
   CancellationToken,
   createHttpClient,
   http,
+  get,
+  post,
+  put,
+  patch,
+  del,
+  getJson,
+  postJson,
+  putJson,
+  patchJson,
+  deleteJson,
+  requestJson,
   type HttpClientOptions,
   type RequestOptions,
   type HttpResponse,
@@ -459,6 +470,136 @@ describe('@lytjs/common-http', () => {
   describe('http', () => {
     it('should be an HttpClient instance', () => {
       expect(http).toBeInstanceOf(HttpClient);
+    });
+  });
+
+  // Convenience methods
+  describe('Convenience methods', () => {
+    describe('get', () => {
+      it('should make GET request', async () => {
+        mockFetch.mockResolvedValue(createMockResponse({ id: 1 }));
+        const result = await get('/api/users/1');
+        expect(result.data).toEqual({ id: 1 });
+        expect(mockFetch).toHaveBeenCalledTimes(1);
+      });
+    });
+
+    describe('post', () => {
+      it('should make POST request', async () => {
+        mockFetch.mockResolvedValue(createMockResponse({ success: true }));
+        const result = await post('/api/users', { name: 'test' });
+        expect(result.data).toEqual({ success: true });
+      });
+    });
+
+    describe('put', () => {
+      it('should make PUT request', async () => {
+        mockFetch.mockResolvedValue(createMockResponse({ updated: true }));
+        const result = await put('/api/users/1', { name: 'updated' });
+        expect(result.data).toEqual({ updated: true });
+      });
+    });
+
+    describe('patch', () => {
+      it('should make PATCH request', async () => {
+        mockFetch.mockResolvedValue(createMockResponse({ patched: true }));
+        const result = await patch('/api/users/1', { name: 'patched' });
+        expect(result.data).toEqual({ patched: true });
+      });
+    });
+
+    describe('del', () => {
+      it('should make DELETE request', async () => {
+        mockFetch.mockResolvedValue(createMockResponse({ deleted: true }));
+        const result = await del('/api/users/1');
+        expect(result.data).toEqual({ deleted: true });
+      });
+    });
+
+    describe('JSON methods', () => {
+      it('getJson should return data directly', async () => {
+        mockFetch.mockResolvedValue(createMockResponse({ id: 1, name: 'test' }));
+        const result = await getJson<{ id: number; name: string }>('/api/users/1');
+        expect(result).toEqual({ id: 1, name: 'test' });
+      });
+
+      it('postJson should send data and return response', async () => {
+        mockFetch.mockResolvedValue(createMockResponse({ id: 2 }));
+        const result = await postJson<{ id: number }>('/api/users', { name: 'new' });
+        expect(result).toEqual({ id: 2 });
+      });
+
+      it('putJson should send data and return response', async () => {
+        mockFetch.mockResolvedValue(createMockResponse({ id: 1, name: 'updated' }));
+        const result = await putJson<{ id: number; name: string }>('/api/users/1', { name: 'updated' });
+        expect(result).toEqual({ id: 1, name: 'updated' });
+      });
+
+      it('patchJson should send data and return response', async () => {
+        mockFetch.mockResolvedValue(createMockResponse({ id: 1, name: 'patched' }));
+        const result = await patchJson<{ id: number; name: string }>('/api/users/1', { name: 'patched' });
+        expect(result).toEqual({ id: 1, name: 'patched' });
+      });
+
+      it('deleteJson should return response', async () => {
+        mockFetch.mockResolvedValue(createMockResponse({ success: true }));
+        const result = await deleteJson<{ success: boolean }>('/api/users/1');
+        expect(result).toEqual({ success: true });
+      });
+
+      it('requestJson should handle all methods', async () => {
+        mockFetch.mockResolvedValue(createMockResponse({ ok: true }));
+        const result = await requestJson<{ ok: boolean }>('GET', '/api/test');
+        expect(result).toEqual({ ok: true });
+      });
+    });
+  });
+
+  // Array query params support
+  describe('Array query params', () => {
+    it('should handle array query parameters', async () => {
+      mockFetch.mockResolvedValue(createMockResponse([]));
+      const client = new HttpClient();
+      await client.get('/api/users', { params: { ids: [1, 2, 3], tags: ['admin', 'user'] } });
+      const [url] = mockFetch.mock.calls[0]!;
+      expect(url).toContain('ids=1&ids=2&ids=3');
+      expect(url).toContain('tags=admin&tags=user');
+    });
+
+    it('should mix single and array query parameters', async () => {
+      mockFetch.mockResolvedValue(createMockResponse([]));
+      const client = new HttpClient();
+      await client.get('/api/search', { params: { q: 'test', page: 1, filters: ['active', 'verified'] } });
+      const [url] = mockFetch.mock.calls[0]!;
+      expect(url).toContain('q=test');
+      expect(url).toContain('page=1');
+      expect(url).toContain('filters=active');
+      expect(url).toContain('filters=verified');
+    });
+
+    it('should handle boolean values in query params', async () => {
+      mockFetch.mockResolvedValue(createMockResponse([]));
+      const client = new HttpClient();
+      await client.get('/api/config', { params: { debug: true, verbose: false } });
+      const [url] = mockFetch.mock.calls[0]!;
+      expect(url).toContain('debug=true');
+      expect(url).toContain('verbose=false');
+    });
+
+    it('should handle number values in array', async () => {
+      mockFetch.mockResolvedValue(createMockResponse([]));
+      const client = new HttpClient();
+      await client.get('/api/items', { params: { ids: [100, 200, 300] } });
+      const [url] = mockFetch.mock.calls[0]!;
+      expect(url).toContain('ids=100&ids=200&ids=300');
+    });
+
+    it('should handle mixed types in array', async () => {
+      mockFetch.mockResolvedValue(createMockResponse([]));
+      const client = new HttpClient();
+      await client.get('/api/test', { params: { values: [1, 'two', false] } });
+      const [url] = mockFetch.mock.calls[0]!;
+      expect(url).toContain('values=1&values=two&values=false');
     });
   });
 });

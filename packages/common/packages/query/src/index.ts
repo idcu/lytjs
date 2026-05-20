@@ -23,16 +23,61 @@ export interface ParsedURL {
  * 解析 URL 查询字符串为对象
  *
  * @param search - 查询字符串，支持 `?key=value` 和 `key=value` 格式
+ * @param options - 解析选项
  * @returns 解析后的键值对对象
  */
-export function parseQueryString(search: string): Record<string, string> {
+export function parseQueryString(
+  search: string,
+  options?: { supportArrays?: boolean },
+): Record<string, string> | Record<string, string | string[]> {
   if (!search) return {};
 
   const str = search.startsWith('?') ? search.slice(1) : search;
   if (!str) return {};
 
-  const result: Record<string, string> = {};
+  const supportArrays = options?.supportArrays ?? false;
 
+  if (supportArrays) {
+    const result: Record<string, string | string[]> = {};
+    const pairs = str.split('&');
+    for (const pair of pairs) {
+      if (!pair) continue;
+      const eqIndex = pair.indexOf('=');
+      let key: string;
+      let value: string;
+      if (eqIndex === -1) {
+        key = pair;
+        value = '';
+      } else {
+        key = pair.slice(0, eqIndex);
+        value = pair.slice(eqIndex + 1);
+      }
+      try {
+        key = decodeURIComponent(key);
+      } catch {
+        // keep key as-is if decode fails
+      }
+      try {
+        value = decodeURIComponent(value);
+      } catch {
+        // keep value as-is if decode fails
+      }
+
+      if (result[key]) {
+        if (Array.isArray(result[key])) {
+          (result[key] as string[]).push(value);
+        } else {
+          result[key] = [result[key] as string, value];
+        }
+      } else {
+        result[key] = value;
+      }
+    }
+    return result;
+  }
+
+  // 保持原有的行为（向后兼容）
+  const result: Record<string, string> = {};
   const pairs = str.split('&');
   for (const pair of pairs) {
     if (!pair) continue;
@@ -58,18 +103,28 @@ export function parseQueryString(search: string): Record<string, string> {
     }
     result[key] = value;
   }
-
   return result;
+}
+
+/**
+ * 解析 URL 查询字符串为对象，支持数组值（重复键）
+ * 这是 parseQueryString 支持数组的便捷版本
+ *
+ * @param search - 查询字符串，支持 `?key=value` 和 `key=value` 格式
+ * @returns 解析后的键值对对象
+ */
+export function parseQueryStringWithArrays(search: string): Record<string, string | string[]> {
+  return parseQueryString(search, { supportArrays: true }) as Record<string, string | string[]>;
 }
 
 /**
  * 将对象序列化为查询字符串
  *
- * @param params - 键值对对象
+ * @param params - 键值对对象，支持数组值
  * @returns 序列化后的查询字符串（不含前导 ?）
  */
 export function stringifyQueryString(
-  params: Record<string, string | number | boolean>,
+  params: Record<string, string | number | boolean | Array<string | number | boolean>>,
 ): string {
   const keys = Object.keys(params);
   if (keys.length === 0) return '';
@@ -77,9 +132,17 @@ export function stringifyQueryString(
   const parts: string[] = [];
   for (const key of keys) {
     const value = params[key];
-    parts.push(
-      encodeURIComponent(key) + '=' + encodeURIComponent(String(value)),
-    );
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        parts.push(
+          encodeURIComponent(key) + '=' + encodeURIComponent(String(item)),
+        );
+      }
+    } else {
+      parts.push(
+        encodeURIComponent(key) + '=' + encodeURIComponent(String(value)),
+      );
+    }
   }
 
   return parts.join('&');
@@ -91,7 +154,10 @@ export function stringifyQueryString(
  * @param url - URL 字符串，支持绝对 URL 和相对 URL
  * @returns 解析后的 ParsedURL 对象
  */
-export function parseURL(url: string): ParsedURL {
+export function parseURL(
+  url: string,
+  options?: { supportArrays?: boolean },
+): ParsedURL {
   let rest = url;
 
   // Extract hash
@@ -162,7 +228,7 @@ export function parseURL(url: string): ParsedURL {
     pathname = rest;
   }
 
-  const searchParams = parseQueryString(search);
+  const searchParams = parseQueryString(search, options);
   const origin = protocol ? protocol + host : '';
 
   return {
@@ -189,7 +255,7 @@ export function parseURL(url: string): ParsedURL {
  */
 export function buildURL(
   base: string,
-  params?: Record<string, string | number | boolean>,
+  params?: Record<string, string | number | boolean | Array<string | number | boolean>>,
   hash?: string,
 ): string {
   if (!params && !hash) return base;
@@ -213,10 +279,10 @@ export function buildURL(
   }
 
   // Merge existing and new params
-  const mergedParams = parseQueryString(existingSearch);
+  const mergedParams = parseQueryStringWithArrays(existingSearch);
   if (params) {
     for (const key of Object.keys(params)) {
-      mergedParams[key] = String(params[key]);
+      mergedParams[key] = params[key];
     }
   }
 

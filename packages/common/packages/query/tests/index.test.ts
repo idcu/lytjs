@@ -24,7 +24,7 @@ describe('@lytjs/common-query', () => {
       expect(result).toEqual({ name: 'hello world', city: '北京' });
     });
 
-    it('should take the last value for duplicate keys', () => {
+    it('should take the last value for duplicate keys (by default)', () => {
       const result = parseQueryString('?a=1&a=2&a=3');
       expect(result).toEqual({ a: '3' });
     });
@@ -71,6 +71,29 @@ describe('@lytjs/common-query', () => {
     });
   });
 
+  // parseQueryString with array support
+  describe('parseQueryString with arrays', () => {
+    it('should parse duplicate keys as array with supportArrays option', () => {
+      const result = parseQueryString('?a=1&a=2&a=3', { supportArrays: true });
+      expect(result).toEqual({ a: ['1', '2', '3'] });
+    });
+
+    it('should parse duplicate keys as array using parseQueryStringWithArrays', () => {
+      const result = parseQueryStringWithArrays('?tag=javascript&tag=typescript&tag=react');
+      expect(result).toEqual({ tag: ['javascript', 'typescript', 'react'] });
+    });
+
+    it('should mix single values and arrays', () => {
+      const result = parseQueryStringWithArrays('?page=1&limit=10&tag=a&tag=b');
+      expect(result).toEqual({ page: '1', limit: '10', tag: ['a', 'b'] });
+    });
+
+    it('should handle single value correctly with arrays support', () => {
+      const result = parseQueryStringWithArrays('?a=1');
+      expect(result).toEqual({ a: '1' });
+    });
+  });
+
   // stringifyQueryString
   describe('stringifyQueryString', () => {
     it('should stringify simple object', () => {
@@ -110,6 +133,16 @@ describe('@lytjs/common-query', () => {
     it('should handle special characters in keys', () => {
       const result = stringifyQueryString({ 'a b': 'c' });
       expect(result).toBe('a%20b=c');
+    });
+
+    it('should stringify array values', () => {
+      const result = stringifyQueryString({ tags: ['javascript', 'typescript', 'react'] });
+      expect(result).toBe('tags=javascript&tags=typescript&tags=react');
+    });
+
+    it('should mix single and array values', () => {
+      const result = stringifyQueryString({ page: 1, limit: 10, tags: ['a', 'b'] });
+      expect(result).toBe('page=1&limit=10&tags=a&tags=b');
     });
   });
 
