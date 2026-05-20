@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, no-console, @typescript-eslint/no-require-imports */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // tests/props.test.ts
 // Props acceptance, required validation, defaults, type validation, reactivity, immutability, Boolean casting, custom validator, Array prop, Object prop with default factory
 

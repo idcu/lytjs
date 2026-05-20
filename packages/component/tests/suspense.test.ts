@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, no-console, @typescript-eslint/no-require-imports */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // tests/suspense.test.ts
 // Show fallback during async setup, show content after resolve, handle error, nested suspense, onResolve callback, onPending callback, timeout, multiple async children, slots, abort on unmount
 

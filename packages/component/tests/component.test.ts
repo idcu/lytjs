@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, no-console, @typescript-eslint/no-require-imports */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // tests/component.test.ts
 // Component instance creation, setup, render, mixins, extends, async setup, provide/inject, error handling, unmount
 

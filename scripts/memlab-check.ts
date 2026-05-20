@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, no-console, @typescript-eslint/no-require-imports */
+ 
 import { ref, computed, watch, reactive } from '../packages/reactivity/dist/index.mjs';
 import { effectScope } from '../packages/reactivity/dist/scope.mjs';
 import { delay } from '../packages/common/packages/timing/dist/index.mjs';

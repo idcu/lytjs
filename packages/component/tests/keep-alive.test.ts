@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, no-console, @typescript-eslint/no-require-imports */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // tests/keep-alive.test.ts
 // Cache instance, restore cached, activated/deactivated, include/exclude, max limit, multiple cached, preserve state, key changes, not cache onUnmount, work with transition
 

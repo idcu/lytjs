@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, no-console, @typescript-eslint/no-require-imports */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // tests/emit.test.ts
 // Emit event, pass arguments, validate emitted events, warn on invalid, camelCase to kebab-case, update:modelValue, not emit after unmount, multiple listeners, emits as Record, validation function
 

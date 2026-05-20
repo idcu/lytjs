@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, no-console, @typescript-eslint/no-require-imports */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // tests/slots.test.ts
 // Default slot, named slots, slot props, scoped slots, fallback content, dynamic slots, slot not provided, slot with v-for, nested slots, conditional slots
 

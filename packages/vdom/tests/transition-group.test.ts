@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, no-console, @typescript-eslint/no-require-imports */
+ 
 /**
  * Tests for transition-group.ts
  * 测试 FLIP 动画、TransitionGroup enter/leave 和状态管理

@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, no-console, @typescript-eslint/no-require-imports */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * 智能 Lint 检查脚本
  *
@@ -26,7 +26,7 @@ interface LintState {
 interface PackageInfo {
   name: string;
   path: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   packageJson: any;
   dependencies: string[];
 }

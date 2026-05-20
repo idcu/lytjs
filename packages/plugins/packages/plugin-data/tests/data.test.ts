@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, no-console, @typescript-eslint/no-require-imports */
+ 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { createData, createDataManager, TTLCache, LRUCache, generateCacheKey } from '../src';
 

@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, no-console, @typescript-eslint/no-require-imports */
+ 
 // tests/sfc/typescript.test.ts
 // Tests for TypeScript type declaration generation
 

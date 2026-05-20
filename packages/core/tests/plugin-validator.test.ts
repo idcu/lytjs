@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, no-console, @typescript-eslint/no-require-imports */
+ 
 import { describe, it, expect, vi } from 'vitest';
 import { PluginValidator } from '../src/plugin-validator';
 import type { EnhancedPlugin, Plugin } from '../src/types';

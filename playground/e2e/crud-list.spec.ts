@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, no-console, @typescript-eslint/no-require-imports */
+ 
 import { test, expect } from '@playwright/test';
 
 test.describe('CRUD 列表场景 E2E 测试', () => {

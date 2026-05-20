@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, no-console, @typescript-eslint/no-require-imports */
+ 
 /**
  * 边界条件测试用例 - Edge Cases
  * 覆盖 VNode 创建、ShapeFlags、PatchFlags、Fragment、Block Tree、

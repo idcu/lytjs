@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, no-console, @typescript-eslint/no-require-imports */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // tests/lifecycle.test.ts
 // beforeCreate, created, beforeMount, mounted, beforeUpdate, updated, beforeUnmount, unmounted, errorCaptured, onMounted in setup
 
