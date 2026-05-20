@@ -13,8 +13,8 @@ import type {
   ApiRequestContext,
   ApiResponse,
   ApiRouter,
+  HttpMethod,
 } from './types';
-import type { HttpMethod } from '@lytjs/shared-types';
 import { scanApiDirectory } from './utils';
 
 /** 默认配置选项 */

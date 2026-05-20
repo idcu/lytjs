@@ -1,6 +1,7 @@
 /**
  * 中间件类型定义
  */
+import type { HttpRequest as Request, HttpResponse as Response } from '@lytjs/shared-types';
 
 /**
  * 中间件链中传递的请求上下文

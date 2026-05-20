@@ -1,16 +1,20 @@
 /**
  * HTTP 服务器类型定义
- * @deprecated 请使用 @lytjs/shared-types 中的类型
  */
 
-// 从共享类型导入并重新导出
-export type {
+import type {
   HttpMethod,
-  HttpContext as Context,
-  HttpRequest as Request,
-  HttpResponse as Response,
-  HttpRoute as Route,
+  HttpContext,
+  HttpRequest,
+  HttpResponse,
+  HttpRoute,
 } from '@lytjs/shared-types';
+
+export type { HttpMethod };
+export type { HttpContext as Context };
+export type { HttpRequest as Request };
+export type { HttpResponse as Response };
+export type { HttpRoute as Route };
 
 /**
  * 请求处理器函数

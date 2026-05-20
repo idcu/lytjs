@@ -14,7 +14,7 @@ export interface ParsedURL {
   pathname: string;
   search: string;
   hash: string;
-  searchParams: Record<string, string>;
+  searchParams: Record<string, string | string[]>;
   origin: string;
   href: string;
 }
@@ -150,7 +150,7 @@ export function stringifyQueryString(
  * @param url - URL 字符串，支持绝对 URL 和相对 URL
  * @returns 解析后的 ParsedURL 对象
  */
-export function parseURL(url: string, options?: { supportArrays?: boolean }): ParsedURL {
+export function parseURL(url: string, _options?: { supportArrays?: boolean }): ParsedURL {
   let rest = url;
 
   // Extract hash
@@ -221,7 +221,7 @@ export function parseURL(url: string, options?: { supportArrays?: boolean }): Pa
     pathname = rest;
   }
 
-  const searchParams = parseQueryString(search, options);
+  const searchParams = parseQueryString(search, { supportArrays: true }) as Record<string, string | string[]>;
   const origin = protocol ? protocol + host : '';
 
   return {
@@ -275,7 +275,14 @@ export function buildURL(
   const mergedParams = parseQueryStringWithArrays(existingSearch);
   if (params) {
     for (const key of Object.keys(params)) {
-      mergedParams[key] = params[key];
+      const value = params[key];
+      if (value !== undefined && value !== null) {
+        if (Array.isArray(value)) {
+          mergedParams[key] = value.map((v) => String(v));
+        } else {
+          mergedParams[key] = String(value);
+        }
+      }
     }
   }
 
