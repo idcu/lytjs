@@ -293,6 +293,7 @@ export function useFetch<T extends string | number | boolean | object | null = o
 
       // 检查服务端预取数据
       if (typeof window !== 'undefined') {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const serverData = (window as any).__LYTJS_PREFETCH_DATA__;
         if (serverData && serverData[resolvedCacheKey]) {
           data.value = serverData[resolvedCacheKey] as T;
@@ -411,6 +412,7 @@ export function useAsyncData<T extends string | number | boolean | object | null
 
     // 检查服务端预取数据
     if (typeof window !== 'undefined') {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const serverData = (window as any).__LYTJS_PREFETCH_DATA__;
       if (serverData && serverData[key]) {
         data.value = serverData[key] as T;
@@ -495,6 +497,7 @@ export function getPrefetchData<T = unknown>(key: string): T | undefined {
 
   // 检查服务端注入的数据
   if (typeof window !== 'undefined') {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const serverData = (window as any).__LYTJS_PREFETCH_DATA__;
     if (serverData && serverData[key]) {
       const data = serverData[key] as T;

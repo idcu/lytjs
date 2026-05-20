@@ -93,3 +93,7 @@ test-results/
 package-lock.json
 **/package-lock.json
 
+# Lint cache
+.eslintcache
+.lint-cache.json
+

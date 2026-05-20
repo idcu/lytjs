@@ -115,7 +115,7 @@ export async function hydrateApp(
   // 检查是否已经 Hydration
   if (containerEl.hasAttribute('data-hydrated')) {
     warn('[LytJS] Container already hydrated');
-    // @ts-ignore
+    // @ts-expect-error - 动态导入核心模块，需要跳过类型检查
     const { createApp } = await import('@lytjs/core');
     return {
       app: createApp(component),
@@ -124,7 +124,7 @@ export async function hydrateApp(
   }
 
   // 创建应用实例
-  // @ts-ignore
+  // @ts-expect-error - 动态导入核心模块，需要跳过类型检查
   const { createApp } = await import('@lytjs/core');
   const app = createApp(component);
 
@@ -326,7 +326,7 @@ export async function hydrateVisible(
   };
 
   const startTime = performance.now();
-  // @ts-ignore
+  // @ts-expect-error - 动态导入核心模块，需要跳过类型检查
   const { createApp } = await import('@lytjs/core');
   const app = createApp(component);
 
@@ -607,7 +607,7 @@ export async function safeHydrate(
     if (containerEl) {
       // 清空容器并重新渲染
       containerEl.innerHTML = '';
-      // @ts-ignore
+      // @ts-expect-error - 动态导入核心模块，需要跳过类型检查
       const { createApp } = await import('@lytjs/core');
       const app = createApp(component);
       app.mount(containerEl);

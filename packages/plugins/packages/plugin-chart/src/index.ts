@@ -274,7 +274,7 @@ function createChart(
 
     let legendX = currentConfig.padding;
     const legendY = currentConfig.height - 20;
-    let itemIndex = 0;
+    let _itemIndex = 0;
 
     currentConfig.datasets.forEach((dataset, datasetIndex) => {
       dataset.data.forEach((point, dataIndex) => {

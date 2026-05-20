@@ -59,7 +59,7 @@ for (const version of versions) {
       },
     );
     console.log(`✓ Unpublished @lytjs/cli@${version}`);
-  } catch (e) {
+  } catch (_e) {
     console.log(`✗ Failed to unpublish @lytjs/cli@${version}`);
   }
 }

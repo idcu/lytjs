@@ -356,7 +356,7 @@ export function spyOn<T extends object, K extends keyof T>(
   implementation?: T[K],
 ): MockFunction {
   const original = obj[method];
-  const mock = mockFn(implementation as (...args: any[]) => any);
+  const mock = mockFn(implementation as (...args: unknown[]) => unknown);
 
   Object.defineProperty(obj, method, {
     value: mock,
@@ -364,7 +364,7 @@ export function spyOn<T extends object, K extends keyof T>(
     configurable: true,
   });
 
-  (mock as any).mockRestore = () => {
+  (mock as unknown as { mockRestore: () => void }).mockRestore = () => {
     Object.defineProperty(obj, method, {
       value: original,
       writable: true,

@@ -303,7 +303,7 @@ function createFuzzTestHelpers(): FuzzTestHelpers {
     return result;
   };
 
-  const randomDate = (options: FuzzGeneratorOptions = {}): Date => {
+  const randomDate = (_options: FuzzGeneratorOptions = {}): Date => {
     const now = Date.now();
     const offset = Math.floor(Math.random() * 10000000000) - 5000000000;
     return new Date(now + offset);
@@ -396,11 +396,11 @@ function createPerformanceTestHelpers(): PerformanceTestHelpers {
     benchmarks.set(name, result);
 
     if (options.verbose) {
-      console.log(`Benchmark "${name}":`);
-      console.log(`  Average: ${averageTime.toFixed(4)}ms`);
-      console.log(`  Min: ${minTime.toFixed(4)}ms`);
-      console.log(`  Max: ${maxTime.toFixed(4)}ms`);
-      console.log(`  Ops/s: ${opsPerSecond.toFixed(2)}`);
+      console.warn(`Benchmark "${name}":`);
+      console.warn(`  Average: ${averageTime.toFixed(4)}ms`);
+      console.warn(`  Min: ${minTime.toFixed(4)}ms`);
+      console.warn(`  Max: ${maxTime.toFixed(4)}ms`);
+      console.warn(`  Ops/s: ${opsPerSecond.toFixed(2)}`);
     }
 
     return result;
@@ -453,7 +453,9 @@ function createPerformanceTestHelpers(): PerformanceTestHelpers {
     try {
       if (typeof window === 'undefined') {
         // Node.js 环境
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
         const fs = require('fs');
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
         const fspath = require('path');
         if (!fs.existsSync(path)) {
           fs.mkdirSync(path, { recursive: true });
@@ -470,7 +472,9 @@ function createPerformanceTestHelpers(): PerformanceTestHelpers {
     try {
       if (typeof window === 'undefined') {
         // Node.js 环境
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
         const fs = require('fs');
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
         const fspath = require('path');
         const filePath = fspath.join(path, `${name}.json`);
         if (fs.existsSync(filePath)) {
@@ -532,7 +536,7 @@ function createTestingContext(options: TestingPluginOptions = {}): TestingContex
             document.body.removeChild(container);
           }
         },
-        rerender: (newProps?: Record<string, unknown>) => {},
+        rerender: (_newProps?: Record<string, unknown>) => {},
         find: (selector: string) => element.querySelector(selector),
         findAll: (selector: string) => Array.from(element.querySelectorAll(selector)),
         trigger: (eventName: string, payload?: unknown) => {

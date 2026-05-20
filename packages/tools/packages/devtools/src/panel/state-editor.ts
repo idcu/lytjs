@@ -6,8 +6,7 @@
  */
 
 import type { SignalInfo } from '../types';
-import { getSignalById, setSignalValue, getSignals } from '../signals';
-import { getComponentById } from '../component-tree';
+import { setSignalValue, getSignals } from '../signals';
 import { sendToPanel, onPanelMessage } from '../bridge';
 import { recordEvent } from '../events';
 
@@ -269,7 +268,7 @@ export function setNestedValue(
   value: unknown,
 ): boolean {
   const parts = path.split('.');
-  let current: any = obj;
+  let current: Record<string, unknown> = obj;
 
   for (let i = 0; i < parts.length - 1; i++) {
     const part = parts[i]!;
