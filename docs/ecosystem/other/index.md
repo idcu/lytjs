@@ -17,6 +17,9 @@
 - **middleware-auth** - 认证中间件
 - **middleware-rate-limit** - 限流中间件
 - **metadata** - 元数据管理
+- **ssg** - 静态站点生成
+- **cache-isr** - ISR 缓存系统
+- **html-renderer** - HTML 渲染器
 
 ---
 
@@ -33,3 +36,6 @@
 - [middleware-auth](./middleware-auth.md)
 - [middleware-rate-limit](./middleware-rate-limit.md)
 - [metadata](./metadata.md)
+- [ssg](./ssg.md)
+- [cache-isr](./cache-isr.md)
+- [html-renderer](./html-renderer.md)
