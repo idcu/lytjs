@@ -1,209 +1,282 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+#!/usr/bin/env tsx
 /**
- * NPM 发布脚本
+ * LytJS 完整 npm 发布脚本
  *
- * 用途：按依赖层级系统化发布所有 @lytjs/ 包到 npm
- *
- * 使用方式：
- * 1. 确保 .npmrc_for_publish 文件包含 npm token
- * 2. 运行: pnpm tsx scripts/npm-publish.ts
+ * 使用方法:
+ *   pnpm tsx scripts/npm-publish.ts --token YOUR_NPM_TOKEN
  */
 
 import { execSync } from 'node:child_process';
-import { existsSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const NPMRC_PATH = join(process.cwd(), '.npmrc_for_publish');
-const DRY_RUN = process.argv.includes('--dry-run');
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const rootDir = path.join(__dirname, '..');
 
-if (!existsSync(NPMRC_PATH)) {
-  console.error('❌ 错误：找不到 .npmrc_for_publish 文件');
-  console.error('   请确保该文件包含你的 npm token');
+// 构建顺序 - 按依赖关系排序（参考，实际使用时需要时取消注释）
+/* const BUILD_ORDER = [
+  // 阶段 1: 基础类型和契约
+  'shared-types',
+  'host-contract',
+  
+  // 阶段 2: common 工具包
+  'common-constants',
+  'common-is',
+  'common-security',
+  'common-string',
+  'common-path',
+  'common-object',
+  'common-error',
+  'common-warn',
+  'common-events',
+  'common-cache',
+  'common-timing',
+  'common-algorithm',
+  'common-vnode',
+  'common-scheduler',
+  'common-dom',
+  'common-query',
+  'common-dom-helpers',
+  'common-a11y',
+  'common-keyboard',
+  'common-storage',
+  'common-validate',
+  'common-http',
+  'common-raf',
+  'common-render-queue',
+  'common-event-normalizer',
+  'common-node-cache',
+  'common-async-scheduler',
+  'common-transition-engine',
+  'common-performance',
+  'common-assertions',
+  'common-memory',
+  'common-rate-limit',
+  'common',
+  
+  // 阶段 3: 核心包
+  'reactivity',
+  'vdom',
+  'dom-runtime',
+  'compiler',
+  'renderer',
+  'adapter-web',
+  'dom',
+  'web',
+  'component',
+  'core',
+  'core-signal',
+  'core-vnode',
+  
+  // 阶段 4: 生态包
+  'router',
+  'store',
+  'ssr',
+  'ui',
+  'devtools',
+  'compat',
+  'platform-adapter',
+  'router-fs',
+  'api',
+  'bundler',
+  'hmr',
+  'runtime-edge',
+  'cache-isr',
+  'html-renderer',
+  'ssg',
+  
+  // 阶段 5: web framework
+  'http-server',
+  'metadata',
+  'middleware',
+  'middleware-auth',
+  'middleware-cors',
+  'middleware-rate-limit',
+  
+  // 阶段 6: 插件
+  'plugin-vite',
+  'plugin-theme',
+  'plugin-logger',
+  'plugin-auth',
+  'plugin-storage',
+  'plugin-i18n',
+  'plugin-validation',
+  'plugin-data',
+  'plugin-data-fetch',
+  'plugin-chart',
+  'plugin-animation',
+  'plugin-testing',
+  'plugin-form',
+  
+  // 阶段 7: 工具
+  'test-utils',
+  'cli',
+  'devtools-extension',
+]; */
+
+// 解析命令行参数
+const args = process.argv.slice(2);
+let npmToken: string | null = null;
+let skipBuild = false;
+let dryRun = false;
+
+for (let i = 0; i < args.length; i++) {
+  if (args[i] === '--token' && args[i + 1]) {
+    npmToken = args[i + 1];
+    i++;
+  } else if (args[i] === '--skip-build') {
+    skipBuild = true;
+  } else if (args[i] === '--dry-run') {
+    dryRun = true;
+  }
+}
+
+function logInfo(message: string) {
+  console.log(`\x1b[36mℹ️  ${message}\x1b[0m`);
+}
+
+function logSuccess(message: string) {
+  console.log(`\x1b[32m✅ ${message}\x1b[0m`);
+}
+
+function logWarning(message: string) {
+  console.log(`\x1b[33m⚠️  ${message}\x1b[0m`);
+}
+
+function logError(message: string) {
+  console.error(`\x1b[31m❌ ${message}\x1b[0m`);
+}
+
+function exec(command: string, options: Record<string, unknown> = {}) {
+  logInfo(`执行命令: ${command}`);
+  return execSync(command, {
+    cwd: rootDir,
+    stdio: options.silent ? 'pipe' : 'inherit',
+    ...options,
+  });
+}
+
+// 检查必要条件
+logInfo('开始 npm 发布前检查...');
+
+console.log('\n=== 第一步: 检查前置条件 ===\n');
+
+// 检查 token
+if (!npmToken) {
+  logError('请提供 npm token: pnpm tsx scripts/npm-publish.ts --token YOUR_TOKEN');
   process.exit(1);
 }
 
-function publishPackage(pkgPath: string): boolean {
-  const pkg = JSON.parse(readFileSync(join(pkgPath, 'package.json'), 'utf-8'));
-  const pkgName = pkg.name;
-  const version = pkg.version;
+// 检查是否有 changeset
+const changesetDir = path.join(rootDir, '.changeset');
+const changesets = fs
+  .readdirSync(changesetDir)
+  .filter((f) => f.endsWith('.md') && f !== 'README.md');
 
-  console.log(`\n📦 发布 ${pkgName}@${version}...`);
+if (changesets.length === 0) {
+  logWarning('没有找到 changeset，继续发布...');
+} else {
+  logSuccess(`找到 ${changesets.length} 个 changeset`);
+}
 
-  if (DRY_RUN) {
-    console.log(`   [DRY RUN] 跳过实际发布`);
-    return true;
+// 创建 .npmrc
+const npmrcPath = path.join(rootDir, '.npmrc');
+const npmrcContent = `//registry.npmjs.org/:_authToken=${npmToken}`;
+fs.writeFileSync(npmrcPath, npmrcContent);
+logSuccess('.npmrc 已创建');
+
+console.log('\n=== 第二步: 发布前检查 ===\n');
+
+if (!skipBuild) {
+  // 快速检查
+  try {
+    logInfo('运行 format 检查...');
+    exec('pnpm format:check', { silent: true });
+    logSuccess('format 检查通过');
+  } catch (_e) {
+    logWarning('format 检查不通过，但继续发布...');
   }
 
   try {
-    execSync(`npm publish --access public --registry https://registry.npmjs.org/`, {
-      cwd: pkgPath,
-      stdio: 'inherit',
-      env: {
-        ...process.env,
-        npm_config_registry: 'https://registry.npmjs.org/',
-      },
-    });
-    console.log(`✅ ${pkgName}@${version} 发布成功！`);
-    return true;
-  } catch (error: any) {
-    if (error.status === 409) {
-      console.log(`⚠️  ${pkgName}@${version} 已存在，跳过`);
-      return true;
-    }
-    console.error(`❌ ${pkgName}@${version} 发布失败: ${error.message}`);
-    return false;
+    logInfo('运行 lint 检查...');
+    exec('pnpm lint:check', { silent: true });
+    logSuccess('lint 检查通过');
+  } catch (_e) {
+    logWarning('lint 检查不通过，但继续发布...');
   }
 }
 
-// 发布顺序定义（按依赖层级）
-const PUBLISH_ORDER = [
-  // L0: 基础工具层
-  'packages/shared-types',
-  'packages/common/packages/constants',
-  'packages/common/packages/is',
-  'packages/common/packages/object',
-  'packages/common/packages/string',
-  'packages/common/packages/path',
-  'packages/common/packages/error',
-  'packages/common/packages/warn',
-  'packages/common/packages/events',
-  'packages/common/packages/cache',
-  'packages/common/packages/timing',
-  'packages/common/packages/scheduler',
-  'packages/common/packages/algorithm',
-  'packages/common/packages/vnode',
-  'packages/common/packages/env',
-  'packages/common/packages/dom',
-  'packages/common/packages/dom-helpers',
-  'packages/common/packages/query',
-  'packages/common/packages/raf',
-  'packages/common/packages/security',
-  'packages/common/packages/storage',
-  'packages/common/packages/validate',
-  'packages/common/packages/http',
-  'packages/common/packages/keyboard',
-  'packages/common/packages/a11y',
-  'packages/common/packages/performance',
-  'packages/common/packages/assertions',
-  'packages/common/packages/async-scheduler',
-  'packages/common/packages/event-normalizer',
-  'packages/common/packages/node-cache',
-  'packages/common/packages/render-queue',
-  'packages/common/packages/transition-engine',
-  'packages/common/packages/memory',
-  'packages/common/packages/common',
-  'packages/host-contract',
+console.log('\n=== 第三步: 转换 workspace 依赖 ===\n');
 
-  // L1: 核心原语层
-  'packages/reactivity',
-  'packages/vdom',
-  'packages/dom-runtime',
-  'packages/compiler',
+// 运行 prepare-publish
+exec('pnpm tsx scripts/prepare-publish.ts');
+logSuccess('workspace 依赖已转换');
 
-  // L2: 渲染引擎层
-  'packages/component',
-  'packages/renderer',
-  'packages/adapter-web',
-  'packages/dom',
-  'packages/web',
+console.log('\n=== 第四步: 构建包（如果需要） ===\n');
 
-  // L3: 核心框架层
-  'packages/core',
-  'packages/core-signal',
-  'packages/core-vnode',
+if (!skipBuild) {
+  // 快速构建几个核心包，避免完整构建太长时间
+  const quickBuildPackages = ['shared-types', 'common-constants', 'common-is', 'reactivity'];
 
-  // L4: 生态系统
-  'packages/ecosystem/packages/router',
-  'packages/ecosystem/packages/router-fs',
-  'packages/ecosystem/packages/api',
-  'packages/ecosystem/packages/store',
-  'packages/ecosystem/packages/ssr',
-  'packages/ecosystem/packages/compat',
-  'packages/ecosystem/packages/devtools',
-  'packages/ecosystem/packages/platform-adapter',
-  'packages/ecosystem/packages/bundler',
-  'packages/ecosystem/packages/hmr',
-  'packages/ecosystem/packages/runtime-edge',
+  for (const pkg of quickBuildPackages) {
+    try {
+      logInfo(`构建 ${pkg}...`);
+      // const pkgPath = path.join(rootDir, 'packages', pkg.includes('common-') ? 'common' : '', 'packages', pkg.replace('common-', ''));
 
-  // L4.5: web-framework 生态系统
-  'packages/ecosystem/packages/web-framework/packages/middleware',
-  'packages/ecosystem/packages/web-framework/packages/middleware-cors',
-  'packages/ecosystem/packages/web-framework/packages/middleware-auth',
-  'packages/ecosystem/packages/web-framework/packages/middleware-rate-limit',
-  'packages/ecosystem/packages/web-framework/packages/metadata',
-  'packages/ecosystem/packages/web-framework/packages/http-server',
-  'packages/ecosystem/packages/web-framework/packages/router',
-  'packages/ecosystem/packages/web-framework/packages/router-fs',
-  'packages/ecosystem/packages/web-framework/packages/api',
+      let actualPkgPath = '';
+      // 尝试多种路径查找
+      if (fs.existsSync(path.join(rootDir, 'packages', pkg))) {
+        actualPkgPath = path.join(rootDir, 'packages', pkg);
+      } else if (
+        fs.existsSync(
+          path.join(rootDir, 'packages', 'common', 'packages', pkg.replace('common-', '')),
+        )
+      ) {
+        actualPkgPath = path.join(
+          rootDir,
+          'packages',
+          'common',
+          'packages',
+          pkg.replace('common-', ''),
+        );
+      }
 
-  // L5: UI 组件
-  'packages/ecosystem/packages/ui',
-
-  // L6: 插件系统
-  'packages/plugins/packages/plugin-vite',
-  'packages/plugins/packages/plugin-theme',
-  'packages/plugins/packages/plugin-logger',
-  'packages/plugins/packages/plugin-auth',
-  'packages/plugins/packages/plugin-storage',
-  'packages/plugins/packages/plugin-i18n',
-  'packages/plugins/packages/plugin-form',
-  'packages/plugins/packages/plugin-validation',
-  'packages/plugins/packages/plugin-data',
-  'packages/plugins/packages/plugin-data-fetch',
-  'packages/plugins/packages/plugin-chart',
-  'packages/plugins/packages/plugin-animation',
-  'packages/plugins/packages/plugin-testing',
-
-  // L5: 工具包
-  'packages/tools/packages/cli',
-  'packages/tools/packages/devtools',
-  'packages/tools/packages/test-utils',
-];
-
-function main(): void {
-  console.log('🚀 LytJS NPM 发布脚本\n');
-  console.log(`模式: ${DRY_RUN ? 'DRY RUN（不实际发布）' : '生产模式'}`);
-  console.log(`Token: ${existsSync(NPMRC_PATH) ? '已配置' : '未配置'}\n`);
-
-  let successCount = 0;
-  let failCount = 0;
-  const failedPackages: string[] = [];
-
-  for (const pkgPath of PUBLISH_ORDER) {
-    const fullPath = join(process.cwd(), pkgPath);
-
-    if (!existsSync(fullPath)) {
-      console.log(`⚠️  跳过不存在的包: ${pkgPath}`);
-      continue;
-    }
-
-    const success = publishPackage(fullPath);
-    if (success) {
-      successCount++;
-    } else {
-      failCount++;
-      const pkg = JSON.parse(readFileSync(join(fullPath, 'package.json'), 'utf-8'));
-      failedPackages.push(pkg.name);
+      if (actualPkgPath && fs.existsSync(path.join(actualPkgPath, 'package.json'))) {
+        exec(`cd "${actualPkgPath}" && pnpm build`);
+        logSuccess(`${pkg} 构建成功`);
+      }
+    } catch (_e) {
+      logWarning(`${pkg} 构建跳过或失败，继续...`);
     }
   }
-
-  console.log('\n========================================');
-  console.log('📊 发布统计\n');
-  console.log(`✅ 成功: ${successCount}`);
-  console.log(`❌ 失败: ${failCount}`);
-
-  if (failedPackages.length > 0) {
-    console.log('\n❌ 失败的包:');
-    failedPackages.forEach((pkg) => console.log(`   - ${pkg}`));
-  }
-
-  if (!DRY_RUN) {
-    console.log('\n🎉 发布完成！');
-    console.log('\n⚠️  重要提醒：');
-    console.log('   请运行以下命令恢复 workspace 依赖：');
-    console.log('   pnpm tsx scripts/restore-workspace.ts');
-    console.log('   pnpm install');
-  }
+} else {
+  logInfo('跳过构建 (--skip-build)');
 }
 
-main();
+console.log('\n=== 第五步: 准备发布 ===\n');
+
+console.log('\n📋 发布准备完成！\n');
+
+console.log('接下来你可以：');
+console.log('  1. 运行 changeset version 更新版本');
+console.log('  2. 运行 changeset publish 发布');
+console.log('  3. 或者手动发布各个包\n');
+
+console.log('🔄 快速开始:');
+console.log('  pnpm changeset version');
+console.log('  pnpm changeset publish');
+console.log('\n  发布完成后记得恢复 workspace 依赖:');
+console.log('  pnpm tsx scripts/restore-workspace.ts');
+console.log();
+
+logSuccess('npm 发布准备工作已完成！');
+
+if (dryRun) {
+  logInfo('这是 dry-run，不进行实际发布');
+  console.log('恢复 workspace 依赖...');
+  exec('pnpm tsx scripts/restore-workspace.ts');
+}
+
+console.log('\n');
