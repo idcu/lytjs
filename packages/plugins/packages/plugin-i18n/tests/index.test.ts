@@ -1,4 +1,3 @@
- 
 /**
  * @lytjs/plugin-i18n 单元测试
  */

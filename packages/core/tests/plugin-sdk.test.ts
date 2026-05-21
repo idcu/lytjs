@@ -1,4 +1,3 @@
- 
 import { describe, it, expect } from 'vitest';
 import { definePlugin, validatePluginConfig, transformPluginConfig } from '../src/plugin-sdk';
 import type { EnhancedPlugin } from '../src/types';

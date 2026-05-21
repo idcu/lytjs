@@ -1,5 +1,4 @@
 #!/usr/bin/env node
- 
 
 /**
  * NPM 发布脚本

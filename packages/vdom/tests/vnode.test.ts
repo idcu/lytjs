@@ -1,4 +1,3 @@
- 
 /**
  * Tests for vnode creation and manipulation
  */

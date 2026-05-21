@@ -1,4 +1,3 @@
- 
 import { describe, it, expect } from 'vitest';
 import { ConfigValidator, validateConfig } from '../src/config-validator';
 import type { ConfigSchema } from '../src/config-schema';

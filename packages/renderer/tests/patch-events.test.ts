@@ -1,4 +1,3 @@
- 
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
@@ -9,7 +8,6 @@ import {
   patchEvent,
   removeAllEventListeners,
 } from '@lytjs/adapter-web';
-
 
 describe('patch-events', () => {
   let el: HTMLElement;

@@ -1,4 +1,3 @@
- 
 /**
  * scripts/shared.ts
  * 脚本间共享的工具函数

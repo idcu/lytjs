@@ -1,4 +1,3 @@
- 
 /**
  * @lytjs/compat unit tests
  */

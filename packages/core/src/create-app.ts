@@ -160,7 +160,10 @@ export function createApp(
           if (typeof plugin === 'function') {
             (plugin as (app: App, ...options: unknown[]) => void)(app, ...options);
           } else if (plugin && typeof (plugin as Record<string, unknown>).install === 'function') {
-            (plugin as Record<string, (app: App, ...options: unknown[]) => void>).install(app, ...options);
+            (plugin as Record<string, (app: App, ...options: unknown[]) => void>).install(
+              app,
+              ...options,
+            );
           }
         }
         installedPlugins.add(plugin);

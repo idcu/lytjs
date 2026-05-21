@@ -1,4 +1,3 @@
- 
 /**
  * @lytjs/router unit tests
  */

@@ -1,4 +1,3 @@
- 
 import { test, expect } from '@playwright/test';
 
 test.describe('计数器场景 E2E 测试', () => {

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
- 
+
 import { ref, computed, watch, reactive } from '../packages/reactivity/dist/index.mjs';
 import { effectScope } from '../packages/reactivity/dist/scope.mjs';
 import { delay } from '../packages/common/packages/timing/dist/index.mjs';

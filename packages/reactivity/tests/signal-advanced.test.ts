@@ -1,4 +1,3 @@
- 
 import { describe, it, expect, vi } from 'vitest';
 import { signal, computed, signalBatch, signalUntrack } from '../src/signal';
 import { effect } from '../src/index';

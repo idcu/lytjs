@@ -1,4 +1,3 @@
- 
 // tests/transforms/bind.test.ts
 // transformBind 独立单元测试
 

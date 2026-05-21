@@ -320,7 +320,9 @@ export function mockFn<T extends (...args: unknown[]) => unknown = (...args: unk
   return fn;
 }
 
-export interface MockFunction<T extends (...args: unknown[]) => unknown = (...args: unknown[]) => unknown> {
+export interface MockFunction<
+  T extends (...args: unknown[]) => unknown = (...args: unknown[]) => unknown,
+> {
   (...args: Parameters<T>): ReturnType<T>;
   calls: unknown[][];
   instances: unknown[];
@@ -342,7 +344,13 @@ export function mockComponent(
     name,
     setup(_props, { slots }) {
       return () =>
-        (h as unknown as (tag: string, attrs: Record<string, unknown>, children?: unknown) => unknown)(
+        (
+          h as unknown as (
+            tag: string,
+            attrs: Record<string, unknown>,
+            children?: unknown,
+          ) => unknown
+        )(
           'div',
           { 'data-testid': `mock-${name.toLowerCase()}` },
           slots.default ? slots.default() : `Mock: ${name}`,
@@ -458,7 +466,8 @@ export async function assertEmits(
 ): Promise<unknown[]> {
   const emitted: unknown[] = [];
 
-  const originalEmit = (wrapper.vm as { $emit?: (event: string, ...args: unknown[]) => void })?.$emit;
+  const originalEmit = (wrapper.vm as { $emit?: (event: string, ...args: unknown[]) => void })
+    ?.$emit;
   if (originalEmit) {
     (wrapper.vm as { $emit: (event: string, ...args: unknown[]) => void }).$emit = (
       event: string,

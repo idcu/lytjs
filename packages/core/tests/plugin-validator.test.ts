@@ -1,4 +1,3 @@
- 
 import { describe, it, expect, vi } from 'vitest';
 import { PluginValidator } from '../src/plugin-validator';
 import type { EnhancedPlugin, Plugin } from '../src/types';

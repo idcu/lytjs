@@ -1,4 +1,3 @@
- 
 import { describe, it, expect } from 'vitest';
 import { ref, computed, watch, effect } from '../src/index';
 import { nextTick } from '@lytjs/common-scheduler';

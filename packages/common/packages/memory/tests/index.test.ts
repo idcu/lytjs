@@ -1,4 +1,3 @@
- 
 /**
  * @lytjs/common-memory - Tests
  *

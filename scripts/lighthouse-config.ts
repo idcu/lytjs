@@ -1,4 +1,3 @@
- 
 /**
  * LytJS Lighthouse 性能测试配置
  *

@@ -1,4 +1,3 @@
- 
 // tests/transforms/for.test.ts
 // transformFor 独立单元测试
 

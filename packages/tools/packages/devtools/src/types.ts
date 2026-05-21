@@ -2,8 +2,6 @@
  * @lytjs/devtools - Type definitions
  */
 
-
-
 // ===== DevTools State =====
 
 export interface DevToolsState {

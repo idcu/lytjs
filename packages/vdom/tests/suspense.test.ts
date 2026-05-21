@@ -1,4 +1,3 @@
- 
 // @vitest-environment jsdom
 // tests/suspense.test.ts
 // Suspense pendingBranch/activeBranch switching, fallback slot, state transitions

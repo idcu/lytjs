@@ -53,7 +53,9 @@ export type ValueOf<T> = T[keyof T];
 
 export type PromiseOrValue<T> = T | Promise<T>;
 
-export type AsyncFunction<T = unknown, Args extends unknown[] = unknown[]> = (...args: Args) => Promise<T>;
+export type AsyncFunction<T = unknown, Args extends unknown[] = unknown[]> = (
+  ...args: Args
+) => Promise<T>;
 
 export type AnyFunction<T = unknown> = (...args: unknown[]) => T;
 

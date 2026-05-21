@@ -1,4 +1,3 @@
- 
 /**
  * Animation GPU 加速验证测试
  *

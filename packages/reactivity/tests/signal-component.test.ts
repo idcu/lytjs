@@ -1,4 +1,3 @@
- 
 import { describe, it, expect, vi } from 'vitest';
 import { signal, computedSignal } from '../src/signal';
 import { extractSignals, createSignalBinding, signalToProps } from '../src/signal-component';

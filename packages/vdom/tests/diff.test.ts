@@ -1,16 +1,9 @@
- 
 // @vitest-environment jsdom
 /**
  * Tests for diff algorithm and renderer patch
  */
 import { describe, it, expect, beforeEach } from 'vitest';
-import {
-  createVNode,
-  createTextVNode,
-  createRenderer,
-  PatchFlags,
-  Fragment,
-} from '../src/index';
+import { createVNode, createTextVNode, createRenderer, PatchFlags, Fragment } from '../src/index';
 import { WebRendererHost } from '@lytjs/adapter-web';
 
 describe('Renderer - mount', () => {

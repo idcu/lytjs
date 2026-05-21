@@ -51,14 +51,15 @@ pnpm test          # 运行测试
 
 ## 常用修复命令
 
-| 命令 | 用途 | 场景 |
-|------|------|------|
-| `pnpm lint` | 自动修复可修复的 lint 问题 | 优先使用 |
-| `pnpm lint:check` | 检查 lint 错误 | 查看当前状态 |
-| `pnpm lint:batch` | 批量检查（内存优化） | 大规模检查 |
-| `pnpm lint:batch:fix` | 批量自动修复 | 大规模修复 |
+| 命令                  | 用途                       | 场景         |
+| --------------------- | -------------------------- | ------------ |
+| `pnpm lint`           | 自动修复可修复的 lint 问题 | 优先使用     |
+| `pnpm lint:check`     | 检查 lint 错误             | 查看当前状态 |
+| `pnpm lint:batch`     | 批量检查（内存优化）       | 大规模检查   |
+| `pnpm lint:batch:fix` | 批量自动修复               | 大规模修复   |
 
 **推荐修复流程**：
+
 1. 运行 `pnpm lint` 自动修复
 2. 运行 `pnpm lint:check` 查看剩余问题
 3. 使用 lint-fix skill 按优先级手动修复

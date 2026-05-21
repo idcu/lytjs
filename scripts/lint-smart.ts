@@ -26,7 +26,7 @@ interface LintState {
 interface PackageInfo {
   name: string;
   path: string;
-   
+
   packageJson: any;
   dependencies: string[];
 }

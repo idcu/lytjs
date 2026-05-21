@@ -1,4 +1,3 @@
- 
 import { describe, it, expect } from 'vitest';
 import { wasmCompile, serializeAST } from '../../src/wasm/wasm-compiler';
 import type { WASMCompileError, ASTNode } from '../../src/wasm/wasm-compiler';

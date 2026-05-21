@@ -1,4 +1,3 @@
- 
 // tests/transforms/show.test.ts
 // transformShow 独立单元测试
 

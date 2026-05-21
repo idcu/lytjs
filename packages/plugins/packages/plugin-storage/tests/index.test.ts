@@ -1,4 +1,3 @@
- 
 /**
  * @lytjs/plugin-storage 单元测试
  */

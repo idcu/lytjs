@@ -1,4 +1,3 @@
- 
 // tests/sfc/parse.test.ts
 // Tests for SFC parser
 

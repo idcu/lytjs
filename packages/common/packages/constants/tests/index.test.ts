@@ -1,4 +1,3 @@
- 
 import { describe, it, expect } from 'vitest';
 import {
   COMPILER_MAX_INPUT_LENGTH,

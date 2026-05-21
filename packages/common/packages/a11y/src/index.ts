@@ -49,7 +49,9 @@ export function getTabIndex(disabled: boolean, customTabIndex?: number): number 
 /**
  * 为按钮组件生成 a11y 属性
  */
-export function getButtonA11yProps(props: A11yProps & { disabled?: boolean }): Record<string, unknown> {
+export function getButtonA11yProps(
+  props: A11yProps & { disabled?: boolean },
+): Record<string, unknown> {
   return {
     role: 'button',
     'aria-label': props.ariaLabel,
@@ -184,7 +186,9 @@ export function getSpinbuttonA11yProps(
 /**
  * 为标签页列表生成 a11y 属性
  */
-export function getTablistA11yProps(props: A11yProps & { label?: string }): Record<string, unknown> {
+export function getTablistA11yProps(
+  props: A11yProps & { label?: string },
+): Record<string, unknown> {
   return {
     role: 'tablist',
     'aria-label': props.ariaLabel ?? props.label,
@@ -261,7 +265,9 @@ export function getGroupA11yProps(
 /**
  * 合并多个 a11y 属性对象
  */
-export function mergeA11yProps(...propsList: Array<Record<string, unknown>>): Record<string, unknown> {
+export function mergeA11yProps(
+  ...propsList: Array<Record<string, unknown>>
+): Record<string, unknown> {
   const result: Record<string, unknown> = {};
   for (const props of propsList) {
     for (const [key, value] of Object.entries(props)) {

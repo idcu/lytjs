@@ -1,4 +1,3 @@
- 
 import { describe, it, expect } from 'vitest';
 import { createVNode, Fragment } from '@lytjs/vdom';
 import { renderToStream } from '../src/ssr/ssr-stream';

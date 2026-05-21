@@ -1,4 +1,3 @@
- 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { raf, caf, nextFrame, rafThrottle, rafDebounce } from '../src/index';
 

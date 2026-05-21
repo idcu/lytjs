@@ -289,7 +289,11 @@ export function createDataManager(globalOptions: DataPluginOptions = {}): DataMa
     addRequestInterceptor(
       interceptor: (config: RequestOptions) => RequestOptions | Promise<RequestOptions>,
     ): void {
-      manager.addRequestInterceptor(interceptor as (config: Record<string, unknown>) => Record<string, unknown> | Promise<Record<string, unknown>>);
+      manager.addRequestInterceptor(
+        interceptor as (
+          config: Record<string, unknown>,
+        ) => Record<string, unknown> | Promise<Record<string, unknown>>,
+      );
     },
 
     addResponseInterceptor(interceptor: <T = unknown>(response: T) => T | Promise<T>): void {

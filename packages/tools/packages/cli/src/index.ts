@@ -43,7 +43,6 @@ export type {
   PackageJson,
 } from './types';
 
- 
 if (require.main === module) {
   runCli().catch(console.error);
 }

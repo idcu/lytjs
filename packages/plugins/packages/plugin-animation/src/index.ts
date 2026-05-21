@@ -573,7 +573,11 @@ export const PRESETS = {
  * 动画管理器
  */
 function createAnimationManager(options: AnimationPluginOptions = {}) {
-  const { defaultDuration = 300, defaultEasing = 'ease', autoCleanup: _autoCleanup = true } = options;
+  const {
+    defaultDuration = 300,
+    defaultEasing = 'ease',
+    autoCleanup: _autoCleanup = true,
+  } = options;
 
   const animations = new Map<string, AnimationInstance>();
 

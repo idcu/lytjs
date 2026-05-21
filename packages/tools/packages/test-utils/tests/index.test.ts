@@ -1,4 +1,3 @@
- 
 /**
  * @lytjs/test-utils tests
  */

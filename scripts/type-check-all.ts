@@ -47,7 +47,7 @@ const packagesToCheck: string[] = [
   'packages/core',
   'packages/core-signal',
   'packages/core-vnode',
-  
+
   // common packages
   'packages/common/packages/constants',
   'packages/common/packages/is',
@@ -80,7 +80,7 @@ const packagesToCheck: string[] = [
   'packages/common/packages/performance',
   'packages/common/packages/assertions',
   'packages/common/packages/memory',
-  
+
   // ecosystem packages
   'packages/ecosystem/packages/api',
   'packages/ecosystem/packages/router',
@@ -94,7 +94,7 @@ const packagesToCheck: string[] = [
   'packages/ecosystem/packages/bundler',
   'packages/ecosystem/packages/hmr',
   'packages/ecosystem/packages/runtime-edge',
-  
+
   // web-framework packages
   'packages/ecosystem/packages/web-framework/packages/api',
   'packages/ecosystem/packages/web-framework/packages/middleware',
@@ -105,7 +105,7 @@ const packagesToCheck: string[] = [
   'packages/ecosystem/packages/web-framework/packages/http-server',
   'packages/ecosystem/packages/web-framework/packages/router',
   'packages/ecosystem/packages/web-framework/packages/router-fs',
-  
+
   // plugins
   'packages/plugins/packages/plugin-vite',
   'packages/plugins/packages/plugin-theme',
@@ -120,7 +120,7 @@ const packagesToCheck: string[] = [
   'packages/plugins/packages/plugin-animation',
   'packages/plugins/packages/plugin-testing',
   'packages/plugins/packages/plugin-form',
-  
+
   // tools
   'packages/tools/packages/cli',
   'packages/tools/packages/devtools',
@@ -135,12 +135,12 @@ console.log('🔍 Starting type check for all packages...\n');
 for (const pkgPath of packagesToCheck) {
   const fullPath = resolve(ROOT, pkgPath);
   const label = pkgPath.replace('packages/', '');
-  
+
   if (!hasTsConfig(fullPath)) {
     console.log(`⚠️  Skipping: ${label} (no tsconfig.json)`);
     continue;
   }
-  
+
   const passed = runTypeCheck(fullPath, label);
   if (passed) {
     successCount++;

@@ -1,4 +1,3 @@
- 
 /**
  * @lytjs/plugin-animation - GPU 加速测试
  */

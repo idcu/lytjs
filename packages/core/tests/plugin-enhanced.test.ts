@@ -1,4 +1,3 @@
- 
 import { describe, it, expect, vi } from 'vitest';
 import { PluginRegistry } from '../src/plugin-registry';
 import { PluginValidator } from '../src/plugin-validator';

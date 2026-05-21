@@ -1,4 +1,3 @@
- 
 import { describe, it, expect } from 'vitest';
 import { tokenize, buildAST, parseInterpolation } from '../../src/wasm/wasm-parser';
 import type { ASTNode } from '../../src/wasm/wasm-compiler';

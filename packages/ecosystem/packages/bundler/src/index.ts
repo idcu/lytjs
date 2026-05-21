@@ -41,7 +41,10 @@ export function createWebpackPlugin(_options: LytPluginOptions = {}): Record<str
   return {
     name: 'lytjs',
     apply(compiler: Record<string, unknown>) {
-      const hooks = compiler.hooks as Record<string, { tap: (name: string, callback: () => void) => void }>;
+      const hooks = compiler.hooks as Record<
+        string,
+        { tap: (name: string, callback: () => void) => void }
+      >;
       hooks.beforeCompile.tap('LytPlugin', () => {
         console.log('[lytjs] Webpack plugin applied');
       });

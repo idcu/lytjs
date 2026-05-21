@@ -1,4 +1,3 @@
- 
 // tests/codegen-signal.test.ts
 // Signal 模式代码生成测试
 

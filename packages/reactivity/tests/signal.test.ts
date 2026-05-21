@@ -1,4 +1,3 @@
- 
 import { describe, it, expect, vi } from 'vitest';
 import { signal, computedSignal, valueOf, set, update, readonlySignal } from '../src/signal';
 import { effect } from '../src/index';

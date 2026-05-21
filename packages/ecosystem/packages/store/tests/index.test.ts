@@ -1,4 +1,3 @@
- 
 /**
  * @lytjs/store unit tests
  */

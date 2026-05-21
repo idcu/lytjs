@@ -1,4 +1,3 @@
- 
 // tests/sfc/compile.test.ts
 // Tests for SFC compiler
 

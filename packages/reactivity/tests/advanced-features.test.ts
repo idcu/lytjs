@@ -1,4 +1,3 @@
- 
 /**
  * @lytjs/reactivity - 高级功能测试
  *
@@ -7,16 +6,7 @@
 
 /* eslint-disable @typescript-eslint/no-unused-expressions */
 import { describe, it, expect, vi } from 'vitest';
-import {
-  reactive,
-  ref,
-  computed,
-  effect,
-  batch,
-  signal,
-  computedSignal,
-  set,
-} from '../src/index';
+import { reactive, ref, computed, effect, batch, signal, computedSignal, set } from '../src/index';
 import { watch, watchEffect } from '../src/watch';
 import { effectScope } from '../src/scope';
 

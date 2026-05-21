@@ -1,4 +1,3 @@
- 
 // @vitest-environment jsdom
 // tests/index.test.ts
 // @lytjs/dom-runtime 完整测试

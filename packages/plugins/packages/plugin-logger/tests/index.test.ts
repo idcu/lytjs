@@ -1,4 +1,3 @@
- 
 /**
  * @lytjs/plugin-logger 单元测试
  */

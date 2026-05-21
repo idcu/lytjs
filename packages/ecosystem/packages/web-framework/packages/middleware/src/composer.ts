@@ -2,11 +2,7 @@
  * 中间件组合器 - 洋葱模型实现
  */
 
-import {
-  MiddlewareFn,
-  MiddlewareComposerConfig,
-  HandlerFn,
-} from './types';
+import { MiddlewareFn, MiddlewareComposerConfig, HandlerFn } from './types';
 import { createContext } from './context';
 import { combineMiddlewares } from './middleware';
 

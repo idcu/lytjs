@@ -1,4 +1,3 @@
- 
 // tests/sfc/typescript.test.ts
 // Tests for TypeScript type declaration generation
 

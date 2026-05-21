@@ -221,7 +221,10 @@ export function parseURL(url: string, _options?: { supportArrays?: boolean }): P
     pathname = rest;
   }
 
-  const searchParams = parseQueryString(search, { supportArrays: true }) as Record<string, string | string[]>;
+  const searchParams = parseQueryString(search, { supportArrays: true }) as Record<
+    string,
+    string | string[]
+  >;
   const origin = protocol ? protocol + host : '';
 
   return {

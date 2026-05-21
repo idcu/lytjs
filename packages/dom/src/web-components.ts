@@ -486,9 +486,7 @@ export function defineLytJSWebComponent(
  * @param element - Web Component 元素实例
  * @returns 桥接元数据，如果不存在则返回 null
  */
-export function getBridgeMeta(
-  element: Element,
-): {
+export function getBridgeMeta(element: Element): {
   component: unknown;
   propMapping: Record<string, string>;
   eventMapping: Record<string, string>;

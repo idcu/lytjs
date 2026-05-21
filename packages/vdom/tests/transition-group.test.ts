@@ -1,4 +1,3 @@
- 
 /**
  * Tests for transition-group.ts
  * 测试 FLIP 动画、TransitionGroup enter/leave 和状态管理

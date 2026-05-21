@@ -1,5 +1,4 @@
 #!/usr/bin/env node
- 
 
 /**
  * 恢复 workspace 依赖脚本

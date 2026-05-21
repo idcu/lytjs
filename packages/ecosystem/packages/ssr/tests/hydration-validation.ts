@@ -51,7 +51,7 @@ class HydrationOptimizationValidator {
     const html = this.createTestHTML();
     for (let i = 0; i < html.length * 10; i++) {
       // 模拟DOM操作
-      void(i + 1);
+      void (i + 1);
     }
 
     const hydrationTime = performance.now() - start;

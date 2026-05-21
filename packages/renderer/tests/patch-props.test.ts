@@ -1,4 +1,3 @@
- 
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { patchProp, patchClass, patchStyle, patchEvent, patchAttr } from '@lytjs/adapter-web';

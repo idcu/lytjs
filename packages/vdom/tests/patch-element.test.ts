@@ -1,4 +1,3 @@
- 
 /**
  * Tests for patch-element.ts
  * 测试 createElementPatch 工厂函数及其返回的所有 API
