@@ -2,6 +2,38 @@
 
 本项目的所有重要变更将记录在此文件中。
 
+## [6.6.0] - 2026-05-21
+
+### 核心功能增强
+
+- ✅ **@lytjs/common-query 增强** - 支持数组查询参数解析
+  - 新增 `parseQueryStringWithArrays` 函数，直接支持数组值
+  - 增强 `stringifyQueryString`，支持数组、布尔值、数字等多种类型
+  - 完整的 TypeScript 类型支持
+- ✅ **@lytjs/common-http 增强** - 完善的 HTTP 客户端工具
+  - 新增便捷方法：`get`, `post`, `put`, `patch`, `del`
+  - 新增直接返回数据的 JSON 方法：`getJson`, `postJson`, `putJson`, `patchJson`, `deleteJson`, `requestJson`
+  - 集成 `@lytjs/common-query`，支持数组查询参数
+  - 新增完整的测试用例
+
+### 包复用优化
+
+- ✅ **@lytjs/http-server 重构** - 移除重复代码，直接使用 common-query
+  - 移除了重复的 `parseQuery` 实现
+  - 直接使用 `@lytjs/common-query` 中的 `parseQueryStringWithArrays`
+  - 添加 `@lytjs/common-query` 依赖
+  - 保持完全的功能完整性
+
+### 文档完善
+
+- ✅ **@lytjs/common-http** - 添加完整的 README 文档
+- ✅ **@lytjs/api** - 添加完整的 README 文档
+
+### 版本升级
+
+- 所有相关包统一升级至 v6.6.0
+- 保持完全向后兼容
+
 ## [6.5.0] - 2026-05-19
 
 ### 核心增强

@@ -1,0 +1,537 @@
+{
+  "total": 88,
+  "hasChangelog": 88,
+  "missingChangelog": 0,
+  "hasV660": 88,
+  "missingV660": 0,
+  "packages": [
+    {
+      "path": "packages/shared-types",
+      "name": "@lytjs/shared-types",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/host-contract",
+      "name": "@lytjs/host-contract",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/common/packages/a11y",
+      "name": "@lytjs/common-a11y",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/common/packages/algorithm",
+      "name": "@lytjs/common-algorithm",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/common/packages/assertions",
+      "name": "@lytjs/common-assertions",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/common/packages/async-scheduler",
+      "name": "@lytjs/common-async-scheduler",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/common/packages/cache",
+      "name": "@lytjs/common-cache",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/common/packages/common",
+      "name": "@lytjs/common",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/common/packages/constants",
+      "name": "@lytjs/common-constants",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/common/packages/dom",
+      "name": "@lytjs/common-dom",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/common/packages/dom-helpers",
+      "name": "@lytjs/common-dom-helpers",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/common/packages/env",
+      "name": "@lytjs/common-env",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/common/packages/error",
+      "name": "@lytjs/common-error",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/common/packages/event-normalizer",
+      "name": "@lytjs/common-event-normalizer",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/common/packages/events",
+      "name": "@lytjs/common-events",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/common/packages/http",
+      "name": "@lytjs/common-http",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/common/packages/is",
+      "name": "@lytjs/common-is",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/common/packages/keyboard",
+      "name": "@lytjs/common-keyboard",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/common/packages/memory",
+      "name": "@lytjs/common-memory",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/common/packages/node-cache",
+      "name": "@lytjs/common-node-cache",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/common/packages/object",
+      "name": "@lytjs/common-object",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/common/packages/path",
+      "name": "@lytjs/common-path",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/common/packages/performance",
+      "name": "@lytjs/common-performance",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/common/packages/query",
+      "name": "@lytjs/common-query",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/common/packages/raf",
+      "name": "@lytjs/common-raf",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/common/packages/rate-limit",
+      "name": "@lytjs/common-rate-limit",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/common/packages/render-queue",
+      "name": "@lytjs/common-render-queue",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/common/packages/scheduler",
+      "name": "@lytjs/common-scheduler",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/common/packages/security",
+      "name": "@lytjs/common-security",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/common/packages/storage",
+      "name": "@lytjs/common-storage",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/common/packages/string",
+      "name": "@lytjs/common-string",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/common/packages/timing",
+      "name": "@lytjs/common-timing",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/common/packages/transition-engine",
+      "name": "@lytjs/common-transition-engine",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/common/packages/validate",
+      "name": "@lytjs/common-validate",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/common/packages/vnode",
+      "name": "@lytjs/common-vnode",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/common/packages/warn",
+      "name": "@lytjs/common-warn",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/reactivity",
+      "name": "@lytjs/reactivity",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/vdom",
+      "name": "@lytjs/vdom",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/dom-runtime",
+      "name": "@lytjs/dom-runtime",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/compiler",
+      "name": "@lytjs/compiler",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/renderer",
+      "name": "@lytjs/renderer",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/adapter-web",
+      "name": "@lytjs/adapter-web",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/dom",
+      "name": "@lytjs/dom",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/web",
+      "name": "@lytjs/web",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/component",
+      "name": "@lytjs/component",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/core",
+      "name": "@lytjs/core",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/core-signal",
+      "name": "@lytjs/core-signal",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/core-vnode",
+      "name": "@lytjs/core-vnode",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/ecosystem/packages/platform-adapter",
+      "name": "@lytjs/platform-adapter",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/ecosystem/packages/router",
+      "name": "@lytjs/router",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/ecosystem/packages/router-fs",
+      "name": "@lytjs/router-fs",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/ecosystem/packages/store",
+      "name": "@lytjs/store",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/ecosystem/packages/ssr",
+      "name": "@lytjs/ssr",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/ecosystem/packages/ssr-kit/packages/ssg",
+      "name": "@lytjs/ssg",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/ecosystem/packages/ssr-kit/packages/cache-isr",
+      "name": "@lytjs/cache-isr",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/ecosystem/packages/ssr-kit/packages/html-renderer",
+      "name": "@lytjs/html-renderer",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/ecosystem/packages/hmr",
+      "name": "@lytjs/hmr",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/ecosystem/packages/api",
+      "name": "@lytjs/api",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/ecosystem/packages/bundler",
+      "name": "@lytjs/bundler",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/ecosystem/packages/compat",
+      "name": "@lytjs/compat",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/ecosystem/packages/devtools",
+      "name": "@lytjs/devtools",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/ecosystem/packages/runtime-edge",
+      "name": "@lytjs/runtime-edge",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/ecosystem/packages/ui",
+      "name": "@lytjs/ui",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/ecosystem/packages/web-framework/packages/middleware",
+      "name": "@lytjs/middleware",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/ecosystem/packages/web-framework/packages/middleware-auth",
+      "name": "@lytjs/middleware-auth",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/ecosystem/packages/web-framework/packages/middleware-cors",
+      "name": "@lytjs/middleware-cors",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/ecosystem/packages/web-framework/packages/middleware-rate-limit",
+      "name": "@lytjs/middleware-rate-limit",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/ecosystem/packages/web-framework/packages/http-server",
+      "name": "@lytjs/http-server",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/ecosystem/packages/web-framework/packages/metadata",
+      "name": "@lytjs/metadata",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/ecosystem/packages/web-framework/packages/api",
+      "name": "@lytjs/api",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/ecosystem/packages/web-framework/packages/router",
+      "name": "@lytjs/router",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/ecosystem/packages/web-framework/packages/router-fs",
+      "name": "@lytjs/router-fs",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/plugins/packages/plugin-vite",
+      "name": "@lytjs/plugin-vite",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/plugins/packages/plugin-animation",
+      "name": "@lytjs/plugin-animation",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/plugins/packages/plugin-auth",
+      "name": "@lytjs/plugin-auth",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/plugins/packages/plugin-chart",
+      "name": "@lytjs/plugin-chart",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/plugins/packages/plugin-data",
+      "name": "@lytjs/plugin-data",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/plugins/packages/plugin-data-fetch",
+      "name": "@lytjs/plugin-data-fetch",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/plugins/packages/plugin-form",
+      "name": "@lytjs/plugin-form",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/plugins/packages/plugin-i18n",
+      "name": "@lytjs/plugin-i18n",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/plugins/packages/plugin-logger",
+      "name": "@lytjs/plugin-logger",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/plugins/packages/plugin-storage",
+      "name": "@lytjs/plugin-storage",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/plugins/packages/plugin-theme",
+      "name": "@lytjs/plugin-theme",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/plugins/packages/plugin-testing",
+      "name": "@lytjs/plugin-testing",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/plugins/packages/plugin-validation",
+      "name": "@lytjs/plugin-validation",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/tools/packages/test-utils",
+      "name": "@lytjs/test-utils",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/tools/packages/cli",
+      "name": "@lytjs/cli",
+      "hasChangelog": true,
+      "hasV660": true
+    },
+    {
+      "path": "packages/tools/packages/devtools",
+      "name": "@lytjs/devtools-extension",
+      "hasChangelog": true,
+      "hasV660": true
+    }
+  ]
+}

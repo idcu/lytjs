@@ -345,17 +345,30 @@ lytjs/
 
 ## 版本历史
 
-### v6.5.0（最新版本）
+### v6.6.0（最新版本）
+
+- 📦 **核心工具包增强**
+  - @lytjs/common-query - 增强版查询参数处理，支持数组
+  - @lytjs/common-http - 增强版 HTTP 客户端，新增便捷方法
+- 🛠️ **包复用优化**
+  - @lytjs/http-server - 重构，移除重复代码，复用 common-query
+- 📝 **文档完善**
+  - common-http 和 api 包的完整 README
+  - 所有包版本统一升级至 v6.6.0
+- ✅ **向后兼容**
+  - 保持完全向后兼容
+
+### v6.5.0
 
 - 📦 **新增核心增强包**
   - @lytjs/plugin-data - 增强版数据获取插件
   - @lytjs/plugin-validation - 验证插件
   - @lytjs/router-fs - 文件系统路由引擎
   - @lytjs/api - API 路由引擎
-- 🛠️ **新增构建与静态化包**
+- 🛠️ **新增构建与静态包**
   - @lytjs/bundler - 构建工具集成
   - @lytjs/hmr - 热模块替换
-  - 完整的 SSG/ISR 支持（已包含在 @lytjs/ssr）
+  - 完整的 SSG/ISR 支持（已包含在 @lytjs/ssr 中）
 - 🌍 **生态系统完善**
   - @lytjs/runtime-edge - 边缘运行时支持
   - 所有现有插件版本升级至 v6.5.0

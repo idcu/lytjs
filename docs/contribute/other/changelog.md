@@ -5,6 +5,115 @@
 
 ---
 
+## v6.6.0 (2026-05-21) - 优化与完善
+
+### 核心增强
+
+- ✅ **增强查询参数处理** - @lytjs/common-query 新增数组查询参数支持
+  - `parseQueryStringWithArrays` - 支持解析数组查询参数
+  - `stringifyQueryString` - 增强版，支持数组、布尔值、数字等多种类型
+  - 保持完全向后兼容
+
+- ✅ **增强 HTTP 客户端** - @lytjs/common-http 功能完善
+  - 新增便捷方法（`get`, `post`, `put`, `patch`, `del`）
+  - 新增直接返回数据的 JSON 方法（`getJson`, `postJson`, `putJson`, `patchJson`, `deleteJson`, `requestJson`）
+  - 集成 @lytjs/common-query，支持数组查询参数
+  - 完善文档和示例代码
+
+- ✅ **包复用优化** - @lytjs/http-server 重构
+  - 移除重复的 `parseQuery` 实现
+  - 直接使用 @lytjs/common-query 中的 `parseQueryStringWithArrays`
+  - 添加 @lytjs/common-query 依赖
+  - 保持功能完全完整性
+
+### 生态系统完善
+
+- ✅ **新增 web-framework 功能域** - 整合路由、API、中间件等包
+- ✅ **新增 ssr-kit 功能域** - SSR 相关包模块化组织
+- ✅ **新增中间件生态** - `@lytjs/middleware`, `@lytjs/middleware-cors`, `@lytjs/middleware-auth`, `@lytjs/middleware-rate-limit`
+- ✅ **新增 HTTP 服务器** - `@lytjs/http-server` 基于 Fetch API 的服务器
+- ✅ **新增元数据管理** - `@lytjs/metadata` - SEO、OpenGraph 等元数据管理
+
+### 文档完善
+
+- ✅ **@lytjs/common-http** - 新增完整 README 文档
+- ✅ **@lytjs/api** - 新增完整 README 文档
+- ✅ **@lytjs/common-cache** - 已有完善文档
+- ✅ **@lytjs/common-string** - 已有完善文档
+- ✅ **PUBLISH-MANIFEST.md** - 更新到 v6.6.0，包含 85 个包的完整清单
+
+### 技术优化
+
+- ✅ **Tree-shaking 优化** - 所有包已添加 sideEffects: false
+- ✅ **统一构建配置** - 完善所有包的 tsup 配置
+- ✅ **零依赖原则保持** - 所有核心包继续保持零运行时第三方依赖
+- ✅ **版本统一** - 所有相关包统一升级到 v6.6.0
+
+---
+
+## v6.5.0 (2026-05-19) - 生态繁荣
+
+### 核心增强
+
+- ✅ **@lytjs/plugin-data** - 增强版数据获取插件
+  - 乐观更新支持
+  - 请求去重
+  - 多种缓存策略（TTL、LRU）
+  - 自动重试
+  - 与 @lytjs/plugin-data-fetch 深度集成
+
+- ✅ **@lytjs/router-fs** - 文件系统路由引擎
+  - 基于文件系统的自动路由生成
+  - 支持动态路由参数
+  - 支持嵌套路由
+  - 零外部依赖
+
+- ✅ **@lytjs/api** - API 路由引擎
+  - 文件系统 API 路由
+  - RESTful API 规范
+  - 支持中间件
+  - 零外部依赖
+
+### 静态与构建
+
+- ✅ **@lytjs/bundler** - 构建工具集成
+  - Vite 插件集成
+  - Webpack 插件集成
+  - SSG 支持
+  - SSR 配置优化
+
+- ✅ **@lytjs/hmr** - 热模块替换
+  - WebSocket 连接管理
+  - 模块更新处理
+  - 自动重连
+  - 状态保持
+
+- ✅ **@lytjs/ssg 和 @lytjs/isr**
+  - 静态站点生成
+  - 增量静态再生成
+  - 预渲染支持
+
+### 生态完善
+
+- ✅ **@lytjs/runtime-edge** - 边缘运行时支持
+  - 边缘函数支持
+  - 边缘路由器
+  - 内存缓存
+  - 响应辅助工具
+
+- ✅ **现有插件版本升级**
+  - @lytjs/plugin-i18n - 国际化插件 v6.5.0
+  - @lytjs/plugin-auth - 认证插件 v6.5.0
+  - @lytjs/plugin-storage - 存储插件 v6.5.0
+  - @lytjs/plugin-testing - 测试插件 v6.5.0
+
+### 性能优化
+
+- ✅ **Tree-shaking 优化** - 所有包已添加 `sideEffects: false`
+- ✅ **版本统一** - 所有核心包升级至 v6.5.0
+
+---
+
 ## v6.4.0 (2026-05-18) - 性能极致
 
 ### 编译时优化

@@ -82,6 +82,12 @@
   - [Compat](./ecosystem/other/compat.md)
   - [HMR](./ecosystem/other/hmr.md)
   - [Runtime Edge](./ecosystem/other/runtime-edge.md)
+  - [HTTP Server](./ecosystem/other/http-server.md)
+  - [Middleware](./ecosystem/other/middleware.md)
+  - [Middleware CORS](./ecosystem/other/middleware-cors.md)
+  - [Middleware Auth](./ecosystem/other/middleware-auth.md)
+  - [Middleware Rate Limit](./ecosystem/other/middleware-rate-limit.md)
+  - [Metadata](./ecosystem/other/metadata.md)
 - [Plugins](./ecosystem/plugins/index.md)
   - [Animation](./ecosystem/plugins/animation.md)
   - [Form](./ecosystem/plugins/form.md)
@@ -160,5 +166,6 @@
 ## 👥 社区
 
 - [社区首页](./community/index.md)
+- [v6.6.0 发布](./community/RELEASE_v6.6.0.md)
 - [v6.5.0 发布](./community/RELEASE_v6.5.0.md)
 - [v6.4.0 发布](./community/RELEASE_v6.4.0.md)

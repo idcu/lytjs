@@ -11,6 +11,12 @@
 - **hmr** - 热模块替换
 - **runtime-edge** - 边缘运行时
 - **compat** - 兼容性包
+- **http-server** - HTTP 服务器
+- **middleware** - 中间件核心
+- **middleware-cors** - CORS 中间件
+- **middleware-auth** - 认证中间件
+- **middleware-rate-limit** - 限流中间件
+- **metadata** - 元数据管理
 
 ---
 
@@ -21,3 +27,9 @@
 - [hmr](./hmr.md)
 - [runtime-edge](./runtime-edge.md)
 - [compat](./compat.md)
+- [http-server](./http-server.md)
+- [middleware](./middleware.md)
+- [middleware-cors](./middleware-cors.md)
+- [middleware-auth](./middleware-auth.md)
+- [middleware-rate-limit](./middleware-rate-limit.md)
+- [metadata](./metadata.md)

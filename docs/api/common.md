@@ -402,7 +402,30 @@ import {
 HTTP 客户端封装。
 
 ```ts
-import { createHttpClient, createFetchAdapter } from '@lytjs/common-http';
+import {
+  createHttpClient,
+  createFetchAdapter,
+  http,
+  get,
+  post,
+  put,
+  patch,
+  del,
+  getJson,
+  postJson,
+  putJson,
+  patchJson,
+  deleteJson,
+  requestJson,
+} from '@lytjs/common-http';
+```
+
+**基础便捷方法：**
+
+```ts
+// 直接使用便捷方法
+const data = await getJson('/api/users');
+const newUser = await postJson('/api/users', { name: 'test' });
 ```
 
 **createHttpClient：**
@@ -420,7 +443,27 @@ interface HttpClient {
   put<T>(url: string, data?: unknown, config?: RequestConfig): Promise<T>;
   delete<T>(url: string, config?: RequestConfig): Promise<T>;
   patch<T>(url: string, data?: unknown, config?: RequestConfig): Promise<T>;
+  getJson<T>(url: string, config?: RequestConfig): Promise<T>;
+  postJson<T>(url: string, data?: unknown, config?: RequestConfig): Promise<T>;
+  putJson<T>(url: string, data?: unknown, config?: RequestConfig): Promise<T>;
+  patchJson<T>(url: string, data?: unknown, config?: RequestConfig): Promise<T>;
+  deleteJson<T>(url: string, config?: RequestConfig): Promise<T>;
+  requestJson<T>(method: string, url: string, data?: unknown, config?: RequestConfig): Promise<T>;
 }
+```
+
+**全局 http 实例：**
+
+```ts
+// 使用全局 http 实例
+const response = await http.get('/api/users', {
+  params: {
+    ids: [1, 2, 3],
+    tags: ['admin', 'user'],
+    active: true,
+    page: 1,
+  },
+});
 ```
 
 ---
@@ -528,15 +571,40 @@ import {
 URL 查询字符串解析。
 
 ```ts
-import { parseQuery, stringifyQuery, parseUrl, buildUrl } from '@lytjs/common-query';
+import {
+  parseQuery,
+  stringifyQuery,
+  parseUrl,
+  buildUrl,
+  parseQueryStringWithArrays,
+  stringifyQueryString,
+} from '@lytjs/common-query';
 ```
 
-| 函数                    | 说明                   |
-| ----------------------- | ---------------------- |
-| `parseQuery(query)`     | 解析查询字符串为对象   |
-| `stringifyQuery(query)` | 对象序列化为查询字符串 |
-| `parseUrl(url)`         | 解析 URL               |
-| `buildUrl(url, params)` | 构建 URL               |
+| 函数                                   | 说明                                             |
+| -------------------------------------- | ------------------------------------------------ |
+| `parseQuery(query)`                    | 解析查询字符串为对象                             |
+| `stringifyQuery(query)`                | 对象序列化为查询字符串                           |
+| `parseUrl(url)`                        | 解析 URL                                         |
+| `buildUrl(url, params)`                | 构建 URL                                         |
+| `parseQueryStringWithArrays(query)`    | 解析查询字符串，支持数组参数                     |
+| `stringifyQueryString(query, options)` | 对象序列化为查询字符串，支持数组、布尔值、数字等 |
+
+**数组参数支持：**
+
+```ts
+// 解析数组查询参数
+const query = parseQueryStringWithArrays('?ids=1&ids=2&ids=3&tags=admin&tags=user');
+// { ids: ['1', '2', '3'], tags: ['admin', 'user'] }
+
+// 生成查询字符串
+const url = stringifyQueryString({
+  page: 1,
+  limit: 10,
+  filters: ['active', 'verified'],
+  ids: [1, 2, 3],
+});
+```
 
 ---
 
