@@ -61,8 +61,8 @@ const BUILD_ORDER = [
   { name: 'common-performance', path: 'packages/common/packages/performance' },
   { name: 'common-assertions', path: 'packages/common/packages/assertions' },
   { name: 'common-memory', path: 'packages/common/packages/memory' },
-  { name: 'common', path: 'packages/common/packages/common' },
   { name: 'common-rate-limit', path: 'packages/common/packages/rate-limit' },
+  { name: 'common', path: 'packages/common/packages/common' },
 
   // 第 3 阶段：核心包
   { name: 'reactivity', path: 'packages/reactivity' },
