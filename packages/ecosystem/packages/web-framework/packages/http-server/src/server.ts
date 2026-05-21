@@ -181,7 +181,16 @@ export class Server {
     const match = this.router.match(method, path);
 
     if (match) {
-      ctx.request.params = match.params;
+      // 转换类型，确保兼容性
+      ctx.request.params = {};
+      for (const [key, value] of Object.entries(match.params)) {
+        if (Array.isArray(value)) {
+          // 如果是数组，只取第一个元素
+          ctx.request.params[key] = value[0] || '';
+        } else {
+          ctx.request.params[key] = value;
+        }
+      }
 
       const handler = async () => {
         await match.handler(ctx);
@@ -190,7 +199,7 @@ export class Server {
       let index = this.middlewares.length;
       const next = async () => {
         index--;
-        if (index >= 0) {
+        if (index >= 0 && this.middlewares[index]) {
           await this.middlewares[index](ctx, next);
         } else {
           await handler();
@@ -199,11 +208,15 @@ export class Server {
 
       await next();
     } else {
-      ctx.response.status = 404;
-      ctx.response.body = { error: '未找到' };
+      if (ctx.response) {
+        ctx.response.status = 404;
+        ctx.response.body = { error: '未找到' };
+      }
     }
 
-    this.sendResponse(res, ctx.response);
+    if (ctx.response) {
+      this.sendResponse(res, ctx.response);
+    }
   }
 
   /**

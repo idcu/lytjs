@@ -4,6 +4,8 @@
  *
  * 使用方法:
  *   pnpm tsx scripts/npm-publish.ts --token YOUR_NPM_TOKEN
+ *   或者使用 .npmrc_for_publish 文件:
+ *   pnpm tsx scripts/npm-publish.ts
  */
 
 import { execSync } from 'node:child_process';
@@ -130,6 +132,23 @@ for (let i = 0; i < args.length; i++) {
     skipBuild = true;
   } else if (args[i] === '--dry-run') {
     dryRun = true;
+  }
+}
+
+// 如果没有提供 token，尝试从 .npmrc_for_publish 文件读取
+if (!npmToken) {
+  const npmrcForPublishPath = path.join(rootDir, '.npmrc_for_publish');
+  if (fs.existsSync(npmrcForPublishPath)) {
+    try {
+      const npmrcContent = fs.readFileSync(npmrcForPublishPath, 'utf-8');
+      const tokenMatch = npmrcContent.match(/\/\/registry\.npmjs\.org\/:_authToken=(.+)/);
+      if (tokenMatch) {
+        npmToken = tokenMatch[1].trim();
+        logInfo('从 .npmrc_for_publish 文件读取到 npm token');
+      }
+    } catch (_e) {
+      logWarning('读取 .npmrc_for_publish 文件失败');
+    }
   }
 }
 

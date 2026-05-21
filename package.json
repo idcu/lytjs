@@ -66,6 +66,8 @@
     "memlab": "tsx scripts/memlab-check.ts",
     "memlab:gc": "node --expose-gc --loader tsx scripts/memlab-check.ts",
     "sync-versions": "tsx scripts/sync-versions.ts",
+    "versions:list": "tsx scripts/update-versions.ts --list",
+    "versions:update": "tsx scripts/update-versions.ts",
     "changeset": "changeset",
     "version": "changeset version",
     "release": "pnpm run build && changeset publish",

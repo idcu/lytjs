@@ -3,7 +3,167 @@
  */
 import type { Handler } from './types';
 import type { HttpMethod } from '@lytjs/shared-types';
-import { tokenizePath, matchPath } from '@lytjs/router';
+
+// ===== Token Types =====
+
+interface TokenStatic {
+  type: 'static';
+  value: string;
+}
+
+interface TokenParam {
+  type: 'param';
+  name: string;
+  repeatable: boolean;
+  optional: boolean;
+}
+
+interface TokenWildcard {
+  type: 'wildcard';
+  value: string;
+}
+
+type PathToken = TokenStatic | TokenParam | TokenWildcard;
+
+// ===== Path Tokenizer =====
+
+const PARAM_RE = /^:(\w+)(\??)?(\.\.\.)?$/;
+const WILDCARD_RE = /^\*$/;
+
+/**
+ * Tokenize a path segment string into tokens
+ */
+function tokenizePath(path: string): PathToken[] {
+  const segments = path.split('/');
+  const tokens: PathToken[] = [];
+
+  for (const segment of segments) {
+    if (!segment) continue;
+
+    const paramMatch = segment.match(PARAM_RE);
+    if (paramMatch) {
+      const [, name, optional, repeatable] = paramMatch;
+      if (name) {
+        tokens.push({
+          type: 'param',
+          name,
+          repeatable: repeatable === '...',
+          optional: optional === '?',
+        });
+      }
+      continue;
+    }
+
+    if (WILDCARD_RE.test(segment)) {
+      tokens.push({ type: 'wildcard', value: '*' });
+      continue;
+    }
+
+    tokens.push({ type: 'static', value: segment });
+  }
+
+  return tokens;
+}
+
+// ===== Path Scoring =====
+
+/**
+ * Score a route record for ranking (higher = more specific)
+ */
+function scoreRoute(tokens: PathToken[]): number {
+  let score = 0;
+  for (const token of tokens) {
+    switch (token.type) {
+      case 'static':
+        score += 3;
+        break;
+      case 'param':
+        score += token.optional ? 1 : 2;
+        break;
+      case 'wildcard':
+        score += 0;
+        break;
+    }
+  }
+  return score;
+}
+
+// ===== Path Matching =====
+
+interface PathMatchResult {
+  matched: boolean;
+  params: Record<string, string | string[]>;
+  path: string;
+  score: number;
+}
+
+/**
+ * Match a pathname against a tokenized route
+ */
+function matchPath(
+  pathname: string,
+  tokens: PathToken[],
+  strict: boolean = false,
+): PathMatchResult {
+  const pathSegments = pathname.split('/').filter(Boolean);
+  const params: Record<string, string | string[]> = {};
+  let matched = true;
+  let i = 0;
+
+  for (const token of tokens) {
+    if (i >= pathSegments.length) {
+      if (token.type === 'param' && token.optional) continue;
+      if (token.type === 'wildcard') continue;
+      matched = false;
+      break;
+    }
+
+    const segment = pathSegments[i];
+
+    switch (token.type) {
+      case 'static':
+        if (segment !== token.value) {
+          matched = false;
+        }
+        i++;
+        break;
+
+      case 'param':
+        if (token.repeatable) {
+          params[token.name] = pathSegments.slice(i);
+          i = pathSegments.length;
+        } else if (segment !== undefined) {
+          params[token.name] = segment;
+          i++;
+        }
+        break;
+
+      case 'wildcard':
+        params[token.value] = pathSegments.slice(i).join('/');
+        i = pathSegments.length;
+        break;
+    }
+
+    if (!matched) break;
+  }
+
+  // Check if all path segments were consumed
+  if (matched && i < pathSegments.length) {
+    matched = false;
+  }
+
+  // In non-strict mode, trailing slash is ok
+  if (!strict && matched && pathSegments.length === 0 && tokens.length === 0) {
+    matched = true;
+  }
+
+  return {
+    matched,
+    params,
+    path: '/' + pathSegments.slice(0, i).join('/'),
+    score: scoreRoute(tokens),
+  };
+}
 
 /**
  * 路由类

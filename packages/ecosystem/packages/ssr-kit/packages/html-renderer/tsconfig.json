@@ -1,11 +1,11 @@
 {
-  "extends": "../../../../../tsconfig.base.json",
+  "extends": "../../../../../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "./dist",
     "baseUrl": ".",
     "paths": {
-      "@lytjs/ssr": ["../../../../ssr/dist/index.d.ts"],
-      "@lytjs/common-is": ["../../../../../common/packages/is/dist/index.d.ts"]
+      "@lytjs/ssr": ["../../../ssr/src"],
+      "@lytjs/common-is": ["../../../../../../packages/common/packages/is/src"]
     }
   },
   "include": ["src/**/*.ts"],

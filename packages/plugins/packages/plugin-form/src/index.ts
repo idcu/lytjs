@@ -463,12 +463,20 @@ const pluginForm = definePlugin({
       },
     },
   },
-  install(app, options) {
+  install(app: unknown, options: unknown) {
     const formManager = createFormManager(options as FormOptions);
 
-    app.config.globalProperties.$form = formManager;
+    // @ts-expect-error - 动态访问属性
+    if (app.config?.globalProperties) {
+      // @ts-expect-error - 动态访问属性
+      app.config.globalProperties.$form = formManager;
+    }
 
-    app.provide('lyt-form', formManager);
+    // @ts-expect-error - 动态访问属性
+    if (app.provide) {
+      // @ts-expect-error - 动态访问属性
+      app.provide('lyt-form', formManager);
+    }
   },
 });
 
