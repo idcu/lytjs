@@ -26,6 +26,7 @@ Thumbs.db
 .env.local
 .env.*.local
 .npmrc_for_publish
+.npmrc
 
 # Test
 coverage/
@@ -58,6 +59,7 @@ lerna-debug.log*
 !CHANGELOG.md
 !CONTRIBUTING.md
 !AGENTS.md
+!PUBLISH-MANIFEST.md
 
 # AI IDE development files (local only)
 .traesolo.json
