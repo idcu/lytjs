@@ -7,8 +7,6 @@
 ## 初级教程
 
 - [Todo 应用](./todo-app.md) - 入门案例
-- [计数器](./counter.md) - 响应式基础
-- [用户列表](./user-list.md) - 数据渲染
 
 ## 中级教程
 
@@ -16,9 +14,3 @@
 - [购物车](./shopping-cart.md) - 状态管理
 - [表单验证](./form-validation.md) - 表单处理
 - [博客系统](./blog-system.md) - 综合案例
-
-## 高级教程
-
-- [企业级最佳实践](./enterprise-practices.md)
-- [性能优化](./performance-tuning.md)
-- [自定义插件](./custom-plugins.md)
