@@ -94,14 +94,38 @@ const BUILD_ORDER = [
 
   // 第 5 阶段：Web Framework 包
   { name: 'web-framework/api', path: 'packages/ecosystem/packages/web-framework/packages/api' },
-  { name: 'web-framework/http-server', path: 'packages/ecosystem/packages/web-framework/packages/http-server' },
-  { name: 'web-framework/metadata', path: 'packages/ecosystem/packages/web-framework/packages/metadata' },
-  { name: 'web-framework/middleware', path: 'packages/ecosystem/packages/web-framework/packages/middleware' },
-  { name: 'web-framework/middleware-cors', path: 'packages/ecosystem/packages/web-framework/packages/middleware-cors' },
-  { name: 'web-framework/middleware-auth', path: 'packages/ecosystem/packages/web-framework/packages/middleware-auth' },
-  { name: 'web-framework/middleware-rate-limit', path: 'packages/ecosystem/packages/web-framework/packages/middleware-rate-limit' },
-  { name: 'web-framework/router', path: 'packages/ecosystem/packages/web-framework/packages/router' },
-  { name: 'web-framework/router-fs', path: 'packages/ecosystem/packages/web-framework/packages/router-fs' },
+  {
+    name: 'web-framework/http-server',
+    path: 'packages/ecosystem/packages/web-framework/packages/http-server',
+  },
+  {
+    name: 'web-framework/metadata',
+    path: 'packages/ecosystem/packages/web-framework/packages/metadata',
+  },
+  {
+    name: 'web-framework/middleware',
+    path: 'packages/ecosystem/packages/web-framework/packages/middleware',
+  },
+  {
+    name: 'web-framework/middleware-cors',
+    path: 'packages/ecosystem/packages/web-framework/packages/middleware-cors',
+  },
+  {
+    name: 'web-framework/middleware-auth',
+    path: 'packages/ecosystem/packages/web-framework/packages/middleware-auth',
+  },
+  {
+    name: 'web-framework/middleware-rate-limit',
+    path: 'packages/ecosystem/packages/web-framework/packages/middleware-rate-limit',
+  },
+  {
+    name: 'web-framework/router',
+    path: 'packages/ecosystem/packages/web-framework/packages/router',
+  },
+  {
+    name: 'web-framework/router-fs',
+    path: 'packages/ecosystem/packages/web-framework/packages/router-fs',
+  },
 
   // 第 6 阶段：插件包
   { name: 'plugin-vite', path: 'packages/plugins/packages/plugin-vite' },
@@ -125,27 +149,27 @@ const BUILD_ORDER = [
 
 function buildPackage(pkg: { name: string; path: string }): boolean {
   const pkgPath = join(ROOT, pkg.path);
-  
+
   if (!existsSync(pkgPath)) {
     console.log(`⚠️  包不存在，跳过: ${pkg.name}`);
     return true;
   }
-  
+
   const pkgJsonPath = join(pkgPath, 'package.json');
   if (!existsSync(pkgJsonPath)) {
     console.log(`⚠️  package.json 不存在，跳过: ${pkg.name}`);
     return true;
   }
-  
+
   const pkgJson = JSON.parse(readFileSync(pkgJsonPath, 'utf-8'));
-  
+
   if (!pkgJson.scripts?.build) {
     console.log(`ℹ️  没有 build 脚本，跳过: ${pkg.name}`);
     return true;
   }
-  
+
   console.log(`🔨 正在构建: ${pkg.name}`);
-  
+
   try {
     execSync('pnpm build', {
       cwd: pkgPath,
@@ -153,7 +177,7 @@ function buildPackage(pkg: { name: string; path: string }): boolean {
     });
     console.log(`✅ 构建成功: ${pkg.name}`);
     return true;
-  } catch (error) {
+  } catch (_error) {
     console.log(`❌ 构建失败: ${pkg.name}`);
     return false;
   }
@@ -162,17 +186,17 @@ function buildPackage(pkg: { name: string; path: string }): boolean {
 function main(): void {
   console.log('🚀 开始智能构建...\n');
   console.log(`📦 共 ${BUILD_ORDER.length} 个包需要构建\n`);
-  
+
   const success: string[] = [];
   const failed: string[] = [];
   const skipped: string[] = [];
-  
+
   for (let i = 0; i < BUILD_ORDER.length; i++) {
     const pkg = BUILD_ORDER[i];
     console.log(`\n[${i + 1}/${BUILD_ORDER.length}]`);
-    
+
     const result = buildPackage(pkg);
-    
+
     if (result === true) {
       if (existsSync(join(ROOT, pkg.path))) {
         success.push(pkg.name);
@@ -183,7 +207,7 @@ function main(): void {
       failed.push(pkg.name);
     }
   }
-  
+
   // 总结
   console.log('\n' + '='.repeat(50));
   console.log('📊 构建总结:');
@@ -191,19 +215,19 @@ function main(): void {
   console.log(`✅ 成功: ${success.length} 个包`);
   console.log(`❌ 失败: ${failed.length} 个包`);
   console.log(`ℹ️  跳过: ${skipped.length} 个包`);
-  
+
   if (failed.length > 0) {
     console.log('\n❌ 失败的包:');
-    failed.forEach(pkg => console.log(`  - ${pkg}`));
+    failed.forEach((pkg) => console.log(`  - ${pkg}`));
   }
-  
+
   if (success.length > 0) {
     console.log('\n✅ 成功构建的包:');
-    success.forEach(pkg => console.log(`  - ${pkg}`));
+    success.forEach((pkg) => console.log(`  - ${pkg}`));
   }
-  
+
   console.log('\n' + '='.repeat(50));
-  
+
   if (failed.length === 0) {
     console.log('🎉 所有包构建成功！');
     process.exit(0);
