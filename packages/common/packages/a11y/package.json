@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/common-a11y",
-  "version": "6.6.0",
+  "version": "6.7.0",
   "description": "Lightweight accessibility utilities for LytJS",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",

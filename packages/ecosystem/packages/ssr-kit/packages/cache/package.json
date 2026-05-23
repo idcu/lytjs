@@ -1,0 +1,49 @@
+{
+  "name": "@lytjs/cache",
+  "version": "6.7.0",
+  "description": "LytJS unified caching system with memory, Redis, and HTTP cache support",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "type-check": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@lytjs/common-cache": "workspace:*",
+    "@lytjs/common-is": "workspace:*"
+  },
+  "devDependencies": {
+    "tsup": "^8.0.0",
+    "typescript": "^5.4.0",
+    "vitest": "^3.0.0"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://gitee.com/lytjs/lytjs.git",
+    "directory": "packages/ecosystem/packages/ssr-kit/packages/cache"
+  },
+  "keywords": [
+    "lytjs",
+    "cache",
+    "caching",
+    "memory-cache",
+    "redis-cache",
+    "http-cache"
+  ]
+}

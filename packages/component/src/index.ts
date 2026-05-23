@@ -81,6 +81,10 @@ export {
   resolveSuspense,
   abortSuspense,
   linkSuspenseBoundary,
+  useSuspense,
+  startTransition,
+  SuspenseResource,
+  createSuspenseResource,
 } from './suspense';
 export type { SuspenseProps, SuspenseAsyncState } from './suspense';
 

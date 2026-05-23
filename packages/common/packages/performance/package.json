@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/common-performance",
-  "version": "6.6.0",
+  "version": "6.7.0",
   "description": "Performance monitoring API for component render timing in LytJS",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",

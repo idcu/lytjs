@@ -2,6 +2,41 @@
 
 本项目的所有重要变更将记录在此文件中。
 
+## [6.7.0] - 2026-05-23
+
+### 核心功能增强
+
+- ✅ **中间件系统** - 完整的洋葱圈模型中间件实现
+  - @lytjs/middleware - 中间件核心系统
+  - @lytjs/middleware-auth - 认证中间件
+  - @lytjs/middleware-cors - CORS 中间件
+  - @lytjs/middleware-rate-limit - 速率限制中间件
+
+- ✅ **流式 SSR 增强** - 支持流式服务端渲染
+  - 流式渲染器 renderToStream
+  - Web Streams API 支持
+  - Suspense 边界支持
+  - 分块传输编码
+
+- ✅ **Suspense 完善** - 完整的 Suspense 组件和异步状态管理
+  - 服务端 Suspense 支持
+  - useSuspense Hook
+  - startTransition API
+  - Suspense 错误边界
+  - 超时处理
+
+- ✅ **数据获取与缓存系统** - 统一的缓存接口
+  - 多层缓存（Memory → Redis → HTTP）
+  - 缓存标签失效
+  - TTL 过期控制
+  - 缓存统计信息
+
+### 版本升级
+
+- 所有包版本统一升级至 v6.7.0
+- 将 .changeset 目录添加到 .gitignore
+- 保持完全向后兼容
+
 ## [6.6.0] - 2026-05-21
 
 ### 核心功能增强

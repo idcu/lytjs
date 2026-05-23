@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/compiler",
-  "version": "6.6.0",
+  "version": "6.7.0",
   "description": "LytJS template compiler - parse, transform, optimize and codegen",
   "type": "module",
   "main": "./dist/index.cjs",

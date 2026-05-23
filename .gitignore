@@ -99,3 +99,6 @@ package-lock.json
 .eslintcache
 .lint-cache.json
 
+# Changeset
+.changeset/
+

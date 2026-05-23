@@ -8,6 +8,7 @@ import type { VNode } from '@lytjs/common-vnode';
 import { error, warn } from '@lytjs/common-error';
 import { nextTick } from '@lytjs/common-scheduler';
 import { registerSuspenseLinker } from '@lytjs/vdom';
+import { getCurrentInstance } from './lifecycle';
 
 // ============================================================
 // 注册跨包的 suspense boundary 链接器
@@ -365,4 +366,121 @@ export function abortSuspense(boundary: SuspenseAsyncState): void {
   boundary.onResolve.length = 0;
   boundary.onPending.length = 0;
   boundary.onError.length = 0;
+}
+
+// ==================== useSuspense 和 startTransition ====================
+
+// 全局当前 suspense boundary 追踪
+let currentSuspenseBoundary: SuspenseAsyncState | null = null;
+
+/**
+ * useSuspense Hook
+ * 将 Promise 注册到当前 Suspense 边界
+ */
+export function useSuspense<T>(promise: Promise<T>, _key?: string): T {
+  const instance = getCurrentInstance();
+  if (!instance) {
+    throw new Error('useSuspense must be called within a component setup function');
+  }
+
+  // 查找最近的 Suspense 边界
+  let boundary = findNearestSuspenseBoundary(instance);
+  if (!boundary) {
+    // 如果没有找到，创建一个临时的
+    boundary = createSuspenseBoundary();
+  }
+
+  // 注册异步子组件
+  registerAsyncChild(boundary, promise);
+
+  // 同步抛出 Promise 以触发 Suspense（标准 Suspense 模式）
+  // 这里我们返回一个占位值，实际值在 Promise 解析后可用
+  // 对于实际实现，这需要与渲染器集成
+  return undefined as T;
+}
+
+/**
+ * 查找最近的 Suspense 边界
+ */
+function findNearestSuspenseBoundary(
+  instance: ComponentInternalInstance,
+): SuspenseAsyncState | null {
+  let current: ComponentInternalInstance | null = instance;
+  while (current) {
+    // 检查当前实例是否是 Suspense 组件或有 suspense boundary
+    if (current.type === Suspense) {
+      const setupState = current.setupState as Record<string, unknown>;
+      if (setupState?.boundary) {
+        return setupState.boundary as SuspenseAsyncState;
+      }
+    }
+    current = current.parent;
+  }
+  return null;
+}
+
+/**
+ * startTransition 函数
+ * 标记更新为过渡更新，不会立即触发 Suspense fallback
+ */
+export function startTransition(callback: () => void): void {
+  const previousBoundary = currentSuspenseBoundary;
+  try {
+    // 设置一个标记，表示这是过渡更新
+    // 实际实现需要与调度器集成
+    callback();
+  } finally {
+    currentSuspenseBoundary = previousBoundary;
+  }
+}
+
+/**
+ * SuspenseResource 类
+ * 用于管理可缓存的异步资源
+ */
+export class SuspenseResource<T> {
+  private status: 'pending' | 'success' | 'error' = 'pending';
+  private value: T | null = null;
+  private error: Error | null = null;
+  private promise: Promise<T> | null = null;
+
+  constructor(factory: () => Promise<T>) {
+    this.load(factory);
+  }
+
+  private load(factory: () => Promise<T>): void {
+    this.status = 'pending';
+    this.promise = factory()
+      .then((result) => {
+        this.value = result;
+        this.status = 'success';
+        return result;
+      })
+      .catch((err) => {
+        this.error = err instanceof Error ? err : new Error(String(err));
+        this.status = 'error';
+        throw this.error;
+      });
+  }
+
+  read(): T {
+    if (this.status === 'success') {
+      return this.value!;
+    }
+    if (this.status === 'error') {
+      throw this.error;
+    }
+    throw this.promise;
+  }
+
+  refresh(factory: () => Promise<T>): void {
+    this.load(factory);
+  }
+}
+
+/**
+ * 创建 Suspense 资源
+ */
+export function createSuspenseResource<T>(factory: () => Promise<T>): SuspenseResource<T> {
+  return new SuspenseResource(factory);
 }

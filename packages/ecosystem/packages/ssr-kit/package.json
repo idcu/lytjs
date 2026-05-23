@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/ssr-kit-monorepo",
-  "version": "6.6.0",
+  "version": "6.7.0",
   "private": true,
   "description": "LytJS SSR Kit - Full SSR/SSG/ISR solution",
   "packageManager": "pnpm@9.15.4",

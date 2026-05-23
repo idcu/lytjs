@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/common-validate",
-  "version": "6.6.0",
+  "version": "6.7.0",
   "description": "Lightweight validation utilities for LytJS",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",

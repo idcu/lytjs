@@ -8,7 +8,7 @@ import { logger } from '../utils/logger';
 import { ensureDir } from '../utils/fs';
 import { resolve, join } from 'path';
 import { execSync } from 'child_process';
-import { existsSync, mkdirSync, writeFileSync, readFileSync } from 'fs';
+import { existsSync, mkdirSync, writeFileSync, readFileSync, readdirSync } from 'fs';
 
 // ==================== Types ====================
 

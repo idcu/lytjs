@@ -82,7 +82,7 @@ export async function runCli(rawArgs: string[] = process.argv.slice(2)): Promise
         logger.info('Example: lyt add component Button');
         process.exit(1);
       }
-      await add(args[0] as unknown as string, args[1] || 'Unnamed', {
+      await add(args[0] as string, args[1] || 'Unnamed', {
         force: options.force as boolean | undefined,
       });
       break;
@@ -98,7 +98,7 @@ export async function runCli(rawArgs: string[] = process.argv.slice(2)): Promise
         process.exit(1);
       }
       await generate({
-        type: args[0] as unknown as string,
+        type: args[0] as string,
         name: args[1] || 'Unnamed',
         path: options.path as string | undefined,
         withStyles: options.styles as boolean | undefined,

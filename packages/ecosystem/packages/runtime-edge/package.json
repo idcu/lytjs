@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/runtime-edge",
-  "version": "6.6.0",
+  "version": "6.7.0",
   "description": "LytJS edge runtime support for serverless and edge computing environments",
   "type": "module",
   "main": "./dist/index.cjs",

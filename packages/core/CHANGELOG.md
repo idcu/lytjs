@@ -1,5 +1,24 @@
 # @lytjs/core
 
+## 6.7.0 (2026-05-23)
+
+### 更新内容
+
+- 版本升级至 v6.7.0
+- 保持完全向后兼容
+- 依赖更新：所有相关依赖包已更新至 6.7.0
+- 核心功能完善：中间件系统、流式 SSR、Suspense、缓存系统等
+
+### 依赖更新
+
+- @lytjs/compiler@6.7.0
+- @lytjs/reactivity@6.7.0
+- @lytjs/vdom@6.7.0
+- @lytjs/renderer@6.7.0
+- @lytjs/component@6.7.0
+- @lytjs/shared-types@6.7.0
+- 所有 @lytjs/common-* 系列包
+
 ## 6.6.0 (2026-05-21)
 
 ### 更新内容

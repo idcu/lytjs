@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/common-object",
-  "version": "6.6.0",
+  "version": "6.7.0",
   "description": "Object manipulation utilities for LytJS",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
