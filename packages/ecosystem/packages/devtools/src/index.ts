@@ -68,6 +68,37 @@ export {
   startTimer,
 } from './devtools';
 
+// v6.8.0 调试增强
+export {
+  // 调试日志
+  initDebugEnhancer,
+  log,
+  debug,
+  info,
+  warn,
+  error,
+  trace,
+  getLogs,
+  clearLogs,
+  onLog,
+  onClear,
+
+  // 调试工具
+  createDebugger,
+  measurePerformance,
+  measureAsyncPerformance,
+
+  // 状态检查点
+  createCheckpoint,
+  getCheckpoints,
+  compareCheckpoints,
+  clearCheckpoints,
+
+  // 全局工具
+  installGlobalDebugTools,
+  serializeDebugInfo,
+} from './debugEnhancer';
+
 // 信号检查器
 export {
   getSignalNodes,
@@ -164,6 +195,9 @@ export type {
   TimelineEvent,
   FlameGraphNode,
 } from './performance';
+
+// v6.8.0 调试增强类型
+export type { LogLevel, LogEntry, DebugOptions } from './debugEnhancer';
 
 export type {
   BenchmarkResult,
