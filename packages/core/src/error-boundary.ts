@@ -149,7 +149,11 @@ export function generateErrorId(): string {
 
 /** 创建 VNode 的辅助函数 */
 function createElement(type: unknown, props: unknown, ...children: unknown[]): VNode {
-  return createVNode(type, props, children);
+  return createVNode(
+    type as unknown as Parameters<typeof createVNode>[0],
+    props as Record<string, unknown> | null | undefined,
+    children as unknown as Parameters<typeof createVNode>[2],
+  );
 }
 
 /** 默认错误降级组件 */

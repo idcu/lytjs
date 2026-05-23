@@ -6,6 +6,7 @@ import { hasOwn } from '@lytjs/common-is';
 import { getCurrentInstance } from '../lifecycle';
 import { effectScope } from '@lytjs/reactivity';
 import type { EffectScope } from '@lytjs/reactivity';
+import type { ComponentInternalInstance } from '@lytjs/shared-types';
 
 // ============================================================
 // Phase 1.10: InjectionToken - 类型安全的注入令牌
@@ -325,7 +326,11 @@ export function inject<T>(
 
   // 1. 检查组件实例级别
   if (instance) {
-    const result = injectFromInstance(instance, lookupKey, options);
+    const result = injectFromInstance(
+      instance as unknown as ComponentInternalInstance,
+      lookupKey,
+      options,
+    );
     if (result !== undefined) {
       return result as T;
     }
@@ -368,7 +373,7 @@ export function inject<T>(
  * 从组件实例注入
  */
 function injectFromInstance(
-  instance: Record<string, unknown>,
+  instance: ComponentInternalInstance,
   key: string | symbol,
   options?: EnhancedInjectOptions,
 ): unknown {
