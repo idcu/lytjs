@@ -15,8 +15,9 @@ import { getCurrentInstance } from './lifecycle';
 // 1. 使用泛型约束确保类型推断准确性
 // 2. 支持默认值类型推断
 // 3. 支持工厂函数类型推断
-export interface InjectionKey<T> extends symbol {
-  __injectKey?: T;
+export interface InjectionKey<T> {
+  /** 类型标志，用于类型推断，不运行时使用 */
+  __injectKey__?: T;
 }
 
 /**
