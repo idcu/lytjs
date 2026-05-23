@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/devtools",
-  "version": "6.7.0",
+  "version": "6.8.0",
   "description": "LytJS Developer Tools for debugging and inspecting applications",
   "type": "module",
   "main": "./dist/index.cjs",

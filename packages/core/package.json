@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/core",
-  "version": "6.7.0",
+  "version": "6.8.0",
   "description": "LytJS core - createApp, h, defineComponent, and plugin system",
   "type": "module",
   "main": "./dist/index.cjs",

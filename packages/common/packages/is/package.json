@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/common-is",
-  "version": "6.7.0",
+  "version": "6.8.0",
   "description": "Type checking utilities for LytJS",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",

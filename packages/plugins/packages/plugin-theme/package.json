@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/plugin-theme",
-  "version": "6.7.0",
+  "version": "6.8.0",
   "description": "LytJS official theme plugin for CSS variable management, dark/light mode, and custom theme support",
   "type": "module",
   "main": "./dist/index.cjs",

@@ -2,6 +2,37 @@
 
 本项目的所有重要变更将记录在此文件中。
 
+## [6.8.0] - 2026-05-23
+
+### 类型系统增强
+
+- ✅ **通用类型工具库** - `@lytjs/shared-types` 大幅增强
+  - 新增 80+ 实用类型工具（Parameters、ReturnType、ConstructorParameters 等）
+  - 新增类型守卫类型定义和运行时工具
+  - 新增字符串模板类型支持（Join、Split、CamelToSnake 等）
+  - 增强类型安全和类型推断能力
+
+### 类型安全的事件系统
+
+- ✅ **新增类型安全的事件发射器** - `@lytjs/shared-types/src/event-emitter.ts`
+  - 完整的泛型事件系统
+  - 类型安全的事件监听和触发
+  - 支持 on、off、emit、once、removeAllListeners 方法
+
+### 开发体验优化
+
+- ✅ **DevTools 调试增强** - `@lytjs/devtools/src/debugEnhancer.ts`
+  - 新增结构化日志系统（debug、info、warn、error、trace）
+  - 新增调试断点工具
+  - 新增性能测量装饰器（measurePerformance、measureAsyncPerformance）
+  - 新增状态检查点系统（createCheckpoint、compareCheckpoints）
+  - 全局调试工具支持
+
+### 版本升级
+
+- 所有包版本统一升级至 v6.8.0
+- 保持完全向后兼容
+
 ## [6.7.0] - 2026-05-23
 
 ### 核心功能增强

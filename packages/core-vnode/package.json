@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/core-vnode",
-  "version": "6.7.0",
+  "version": "6.8.0",
   "description": "Lyt.js Core - VNode rendering mode only",
   "type": "module",
   "main": "./dist/index.cjs",

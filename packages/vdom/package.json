@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/vdom",
-  "version": "6.7.0",
+  "version": "6.8.0",
   "description": "LytJS virtual DOM - vnode creation, diffing algorithm, and patch flags",
   "type": "module",
   "main": "./dist/index.cjs",

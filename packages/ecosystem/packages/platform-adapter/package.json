@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/platform-adapter",
-  "version": "6.7.0",
+  "version": "6.8.0",
   "description": "LytJS 跨平台渲染适配器",
   "type": "module",
   "main": "./dist/index.cjs",
