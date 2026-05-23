@@ -92,4 +92,58 @@ export type {
   PickOptional,
   OmitRequired,
   OmitOptional,
+  // v6.8.0 新增：更好的泛型推断类型工具
+  Parameters,
+  ReturnType,
+  ConstructorParameters,
+  InstanceType,
+  UnwrapPromise,
+  DeepFlatten,
+  NonOptionalProperties,
+  Combine,
+  StrictCombine,
+  // v6.8.0 新增：类型守卫增强
+  TypeGuard,
+  UnionTypeGuard,
+  TypeGuardFactory,
+  NullableTypeGuard,
+  ArrayTypeGuard,
+  // v6.8.0 新增：模板字符串类型支持
+  Join,
+  Split,
+  CamelToSnake,
+  SnakeToCamel,
+  CamelToKebab,
+  KebabToCamel,
+  // v6.8.0 新增：类型安全的事件系统类型
+  EventHandler,
+  EventListeners,
+  IEventEmitter,
+  DefineEvents,
+  ExtendEvents,
+  // v6.8.0 新增：更强大的类型推断工具
+  KeyOf,
+  ElementOf,
+  PromiseResult,
+  ThisParameterType,
+  OmitThisParameter,
+} from './type-utils';
+
+// v6.8.0 新增：类型安全的事件发射器实现
+export { EventEmitter, createEventEmitter } from './event-emitter';
+
+// v6.8.0 新增：类型守卫运行时工具
+export {
+  isString,
+  isNumber,
+  isBoolean,
+  isObject,
+  isArray,
+  isFunction,
+  isNull,
+  isUndefined,
+  isNullish,
+  hasProperty,
+  createArrayTypeGuard,
+  createObjectTypeGuard,
 } from './type-utils';
