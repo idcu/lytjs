@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-05-21T09:10:31.613Z",
-  "success": ["@lytjs/common-env", "@lytjs/router-fs", "@lytjs/runtime-edge"],
+  "timestamp": "2026-05-23T03:15:13.860Z",
+  "success": [],
   "skipped": [],
   "failed": [
     "@lytjs/shared-types",
@@ -37,6 +37,7 @@
     "@lytjs/common-assertions",
     "@lytjs/common-memory",
     "@lytjs/common-rate-limit",
+    "@lytjs/common-env",
     "@lytjs/common",
     "@lytjs/reactivity",
     "@lytjs/vdom",
@@ -53,6 +54,7 @@
     "@lytjs/platform-adapter",
     "@lytjs/ui",
     "@lytjs/router",
+    "@lytjs/router-fs",
     "@lytjs/store",
     "@lytjs/ssr",
     "@lytjs/ssg",
@@ -84,6 +86,7 @@
     "@lytjs/plugin-theme",
     "@lytjs/plugin-testing",
     "@lytjs/plugin-validation",
+    "@lytjs/runtime-edge",
     "@lytjs/cli"
   ]
 }
