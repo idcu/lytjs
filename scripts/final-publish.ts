@@ -127,6 +127,7 @@ const PACKAGES = [
   { name: '@lytjs/plugin-form', path: 'packages/plugins/packages/plugin-form' },
   { name: '@lytjs/test-utils', path: 'packages/tools/packages/test-utils' },
   { name: '@lytjs/cli', path: 'packages/tools/packages/cli' },
+  { name: '@lytjs/devtools-extension', path: 'packages/tools/packages/devtools' },
 ];
 
 console.log('🚀 LytJS 智能发布脚本\n');

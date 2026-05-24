@@ -179,15 +179,15 @@ function main(): void {
 
   logSection('步骤 4: 构建 Web-Framework 子包 (9个)');
   const webFrameworkPackages = [
-    'packages/ecosystem/packages/web-framework/packages/web-core',
-    'packages/ecosystem/packages/web-framework/packages/web-router',
-    'packages/ecosystem/packages/web-framework/packages/web-state',
-    'packages/ecosystem/packages/web-framework/packages/web-components',
-    'packages/ecosystem/packages/web-framework/packages/web-utils',
-    'packages/ecosystem/packages/web-framework/packages/web-build',
-    'packages/ecosystem/packages/web-framework/packages/web-plugins',
-    'packages/ecosystem/packages/web-framework/packages/web-devtools',
-    'packages/ecosystem/packages/web-framework/packages/web',
+    'packages/ecosystem/packages/web-framework/packages/api',
+    'packages/ecosystem/packages/web-framework/packages/http-server',
+    'packages/ecosystem/packages/web-framework/packages/metadata',
+    'packages/ecosystem/packages/web-framework/packages/middleware',
+    'packages/ecosystem/packages/web-framework/packages/middleware-cors',
+    'packages/ecosystem/packages/web-framework/packages/middleware-auth',
+    'packages/ecosystem/packages/web-framework/packages/middleware-rate-limit',
+    'packages/ecosystem/packages/web-framework/packages/router',
+    'packages/ecosystem/packages/web-framework/packages/router-fs',
   ];
 
   for (const pkg of webFrameworkPackages) {
@@ -196,11 +196,11 @@ function main(): void {
 
   logSection('步骤 5: 构建 SSR-Kit 子包 (6个)');
   const ssrKitPackages = [
-    'packages/ecosystem/packages/ssr-kit/packages/ssr-core',
-    'packages/ecosystem/packages/ssr-kit/packages/ssr-streaming',
-    'packages/ecosystem/packages/ssr-kit/packages/ssr-server',
-    'packages/ecosystem/packages/ssr-kit/packages/ssr-client',
-    'packages/ecosystem/packages/ssr-kit/packages/ssr-utils',
+    'packages/ecosystem/packages/ssr-kit/packages/cache',
+    'packages/ecosystem/packages/ssr-kit/packages/cache-isr',
+    'packages/ecosystem/packages/ssr-kit/packages/hmr',
+    'packages/ecosystem/packages/ssr-kit/packages/html-renderer',
+    'packages/ecosystem/packages/ssr-kit/packages/ssg',
     'packages/ecosystem/packages/ssr-kit/packages/ssr',
   ];
 
@@ -211,7 +211,7 @@ function main(): void {
   logSection('步骤 6: 构建 Tools 包 (3个)');
   const toolsPackages = [
     'packages/tools/packages/cli',
-    'packages/tools/packages/devtools-extension',
+    'packages/tools/packages/devtools',
     'packages/tools/packages/test-utils',
   ];
 
