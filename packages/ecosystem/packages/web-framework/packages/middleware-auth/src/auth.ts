@@ -2,7 +2,8 @@
  * 认证中间件实现
  */
 import type { AuthOptions } from './types';
-import type { Middleware, MiddlewareContext } from '@lytjs/middleware';
+type Middleware = unknown;
+type MiddlewareContext = Record<string, unknown>;
 
 /**
  * 创建认证中间件

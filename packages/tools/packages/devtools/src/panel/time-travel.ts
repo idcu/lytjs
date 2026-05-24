@@ -4,7 +4,7 @@
  * Records all state changes and supports forward/backward/jump to any point in time.
  */
 
-import type { StateSnapshot } from '../types';
+import type { StateSnapshot, DevToolsEvent } from '../types';
 import { subscribeEvents, clearEvents, recordEvent as _recordEvent } from '../events';
 import { setSignalValue } from '../signals';
 import { sendToPanel, onPanelMessage } from '../bridge';

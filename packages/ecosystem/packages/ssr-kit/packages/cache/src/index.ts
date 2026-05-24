@@ -436,11 +436,14 @@ export class MultiLayerCache implements Cache {
 /**
  * 创建默认缓存实例
  */
-export function createCache(options?: { type?: 'memory' | 'multi'; config?: unknown }) {
+export function createCache(options?: {
+  type?: 'memory' | 'multi';
+  config?: CacheOptions | MultiLayerCacheConfig;
+}) {
   if (options?.type === 'multi') {
-    return new MultiLayerCache(options.config);
+    return new MultiLayerCache(options.config as MultiLayerCacheConfig);
   }
-  return new MemoryCache(options?.config);
+  return new MemoryCache(options?.config as CacheOptions);
 }
 
 // 默认实例

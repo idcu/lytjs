@@ -1,7 +1,7 @@
 import type { RendererConfig, RenderResult } from './types';
 
 export class HTMLRenderer {
-  constructor(private _config: RendererConfig = {}) {}
+  constructor(_config: RendererConfig = {}) {}
 
   render(appHtml: string): RenderResult {
     const head = this.generateHead();

@@ -2,7 +2,7 @@
  * 中间件上下文实现
  */
 
-import { MiddlewareContext } from './types';
+import type { MiddlewareContext } from './types';
 
 /**
  * 创建新的中间件上下文

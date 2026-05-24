@@ -6,6 +6,7 @@
  */
 
 import type { SignalInfo } from '../types';
+import { getComponentById } from '../component-tree';
 import { setSignalValue, getSignals } from '../signals';
 import { sendToPanel, onPanelMessage } from '../bridge';
 import { recordEvent } from '../events';
@@ -275,7 +276,7 @@ export function setNestedValue(
     if (!(part in current) || typeof current[part] !== 'object') {
       current[part] = {};
     }
-    current = current[part];
+    current = current[part] as Record<string, unknown>;
   }
 
   const lastPart = parts[parts.length - 1]!;

@@ -21,6 +21,9 @@ import type {
   DataManager,
   DataInstance,
   DedupeEntry,
+  RequestInterceptor,
+  ResponseInterceptor,
+  ErrorInterceptor,
 } from './types';
 import { TTLCache, LRUCache } from './cache';
 
@@ -286,23 +289,15 @@ export function createDataManager(globalOptions: DataPluginOptions = {}): DataMa
       return instance.fetch();
     },
 
-    addRequestInterceptor(
-      interceptor: (config: RequestOptions) => RequestOptions | Promise<RequestOptions>,
-    ): void {
-      manager.addRequestInterceptor(
-        interceptor as (
-          config: Record<string, unknown>,
-        ) => Record<string, unknown> | Promise<Record<string, unknown>>,
-      );
+    addRequestInterceptor(interceptor: RequestInterceptor): void {
+      manager.addRequestInterceptor(interceptor);
     },
 
-    addResponseInterceptor(interceptor: <T = unknown>(response: T) => T | Promise<T>): void {
+    addResponseInterceptor(interceptor: ResponseInterceptor): void {
       manager.addResponseInterceptor(interceptor);
     },
 
-    addErrorInterceptor(
-      interceptor: (error: FetchError) => FetchError | Promise<FetchError>,
-    ): void {
+    addErrorInterceptor(interceptor: ErrorInterceptor): void {
       manager.addErrorInterceptor(interceptor);
     },
 

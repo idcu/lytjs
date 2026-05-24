@@ -2,7 +2,7 @@
  * 中间件工具函数
  */
 
-import { MiddlewareFn, MiddlewareContext } from './types';
+import type { MiddlewareFn, MiddlewareContext } from './types';
 
 /**
  * 创建中间件函数
@@ -24,7 +24,11 @@ export function combineMiddlewares(...middlewares: MiddlewareFn[]): MiddlewareFn
       }
 
       const middleware = middlewares[i];
-      await middleware(ctx, () => dispatch(i + 1));
+      if (middleware) {
+        await middleware(ctx, () => dispatch(i + 1));
+      } else {
+        await dispatch(i + 1);
+      }
     };
 
     await dispatch(index);

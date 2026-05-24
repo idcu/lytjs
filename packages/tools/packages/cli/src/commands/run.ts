@@ -66,23 +66,16 @@ export async function runCli(rawArgs: string[] = process.argv.slice(2)): Promise
       break;
 
     case 'add': {
-      const addTypes = [
-        'component',
-        'page',
-        'store',
-        'directive',
-        'composable',
-        'util',
-        'middleware',
-        'hook',
-      ];
-      if (!args[0] || !addTypes.includes(args[0])) {
+      const addTypes: Array<
+        'component' | 'page' | 'store' | 'directive' | 'composable' | 'util' | 'middleware' | 'hook'
+      > = ['component', 'page', 'store', 'directive', 'composable', 'util', 'middleware', 'hook'];
+      if (!args[0] || !addTypes.includes(args[0] as unknown as (typeof addTypes)[number])) {
         logger.error('Usage: lyt add <type> <name>');
         logger.info('Types: component, page, store, directive, composable, util, middleware, hook');
         logger.info('Example: lyt add component Button');
         process.exit(1);
       }
-      await add(args[0] as string, args[1] || 'Unnamed', {
+      await add(args[0] as unknown as (typeof addTypes)[number], args[1] || 'Unnamed', {
         force: options.force as boolean | undefined,
       });
       break;
@@ -90,15 +83,17 @@ export async function runCli(rawArgs: string[] = process.argv.slice(2)): Promise
 
     case 'generate':
     case 'g': {
-      const genTypes = ['component', 'page', 'service', 'hook', 'store'];
-      if (!args[0] || !genTypes.includes(args[0])) {
+      const genTypes: Array<
+        'component' | 'page' | 'service' | 'hook' | 'store' | 'layout' | 'middleware'
+      > = ['component', 'page', 'service', 'hook', 'store', 'layout', 'middleware'];
+      if (!args[0] || !genTypes.includes(args[0] as unknown as (typeof genTypes)[number])) {
         logger.error('Usage: lyt generate <type> <name>');
-        logger.info('Types: component, page, service, hook, store');
+        logger.info('Types: component, page, service, hook, store, layout, middleware');
         logger.info('Example: lyt generate component Button');
         process.exit(1);
       }
       await generate({
-        type: args[0] as string,
+        type: args[0] as unknown as (typeof genTypes)[number],
         name: args[1] || 'Unnamed',
         path: options.path as string | undefined,
         withStyles: options.styles as boolean | undefined,

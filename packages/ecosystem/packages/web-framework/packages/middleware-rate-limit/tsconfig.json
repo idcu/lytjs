@@ -1,23 +1,12 @@
 {
+  "extends": "../../../../../../tsconfig.base.json",
   "compilerOptions": {
-    "target": "ES2020",
-    "module": "ESNext",
-    "moduleResolution": "node",
-    "lib": ["ES2020", "DOM", "DOM.Iterable"],
-    "strict": true,
-    "declaration": true,
-    "declarationMap": true,
-    "sourceMap": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "resolveJsonModule": true,
-    "isolatedModules": true,
     "outDir": "./dist",
-    "rootDir": "./src",
     "baseUrl": ".",
     "paths": {
-      "@lytjs/middleware": ["../../../../packages/web-framework/packages/middleware/src"]
+      "@lytjs/middleware": ["../middleware/dist/index.d.ts"],
+      "@lytjs/common-rate-limit": ["../../../../../../common/packages/rate-limit/dist/index.d.ts"],
+      "@lytjs/shared-types": ["../../../../../../shared-types/dist/index.d.ts"]
     }
   },
   "include": ["src/**/*"],

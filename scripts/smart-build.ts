@@ -261,12 +261,14 @@ function shouldBuild(pkg: PackageInfo): boolean {
 // 构建单个包
 function buildPackage(pkg: PackageInfo): boolean {
   const pkgPath = join(ROOT, pkg.path);
+  const tsupPath = join(ROOT, 'node_modules', 'tsup', 'dist', 'cli-default.js');
 
   logInfo(`正在构建: ${colorText(colors.bold, pkg.name)}`);
   logInfo(`路径: ${pkg.path}`);
 
   try {
-    execSync('pnpm build', {
+    // 使用根目录的 node_modules 运行 tsup，确保找到所有依赖
+    execSync(`node ${tsupPath}`, {
       cwd: pkgPath,
       stdio: 'inherit',
       env: {

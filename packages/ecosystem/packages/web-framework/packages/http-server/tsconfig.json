@@ -2,10 +2,14 @@
   "extends": "../../../../../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "./dist",
+    "baseUrl": ".",
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
-    "rootDir": null
+    "rootDir": null,
+    "paths": {
+      "@lytjs/shared-types": ["../../../../../../shared-types/dist/index.d.ts"]
+    }
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "**/*.test.ts"]

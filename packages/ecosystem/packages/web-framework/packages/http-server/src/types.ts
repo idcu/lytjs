@@ -2,19 +2,11 @@
  * HTTP 服务器类型定义
  */
 
-import type {
-  HttpMethod,
-  HttpContext,
-  HttpRequest,
-  HttpResponse,
-  HttpRoute,
-} from '@lytjs/shared-types';
-
-export type { HttpMethod };
-export type { HttpContext as Context };
-export type { HttpRequest as Request };
-export type { HttpResponse as Response };
-export type { HttpRoute as Route };
+export type HttpMethod = string;
+export type Context = Record<string, unknown>;
+export type Request = unknown;
+export type Response = unknown;
+export type Route = unknown;
 
 /**
  * 请求处理器函数

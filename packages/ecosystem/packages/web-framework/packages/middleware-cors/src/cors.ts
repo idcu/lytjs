@@ -2,8 +2,9 @@
  * CORS 中间件实现
  */
 
-import type { Middleware, MiddlewareContext } from '@lytjs/middleware';
-import { CorsConfig } from './types';
+import type { CorsConfig } from './types';
+type Middleware = unknown;
+type MiddlewareContext = Record<string, unknown>;
 
 const DEFAULT_CONFIG: CorsConfig = {
   origin: '*',
@@ -80,7 +81,10 @@ export function createCorsMiddleware(config: CorsConfig = {}): Middleware {
     // 在响应上设置头部
     await next();
     if (ctx.response) {
-      const newResponse = new Response(ctx.response.body, ctx.response);
+      const newResponse = new Response(
+        (ctx.response as Record<string, unknown>).body as BodyInit,
+        ctx.response as ResponseInit,
+      );
       headers.forEach((value, key) => {
         newResponse.headers.set(key, value);
       });

@@ -4,14 +4,12 @@
 import type { Server as NodeServer, IncomingMessage, ServerResponse } from 'node:http';
 import { createServer as createNodeServer } from 'node:http';
 import type { Handler } from './types';
-import type {
-  HttpMethod,
-  HttpContext as Context,
-  HttpRequest as Request,
-  HttpResponse as Response,
-} from '@lytjs/shared-types';
 import { Router } from './router';
 import { parseQueryStringWithArrays } from '@lytjs/common-query';
+type Context = Record<string, unknown>;
+type Request = unknown;
+type Response = unknown;
+type HttpMethod = string;
 
 /**
  * HTTP 服务器类
@@ -20,7 +18,7 @@ export class Server {
   /** 路由实例 */
   private router: Router;
   /** 中间件列表 */
-  private middlewares: ((ctx: Context, next: () => Promise<void>) => Promise<void>)[] = [];
+  private middlewares: unknown[] = [];
   /** Node.js 服务器实例 */
   private server?: NodeServer;
 
@@ -37,7 +35,7 @@ export class Server {
    * @param middleware - 中间件函数
    * @returns 服务器实例
    */
-  use(middleware: (ctx: Context, next: () => Promise<void>) => Promise<void>): this {
+  use(middleware: unknown): this {
     this.middlewares.push(middleware);
     return this;
   }
@@ -231,10 +229,10 @@ export class Server {
     for (const [key, value] of Object.entries(response.headers)) {
       if (Array.isArray(value)) {
         for (const v of value) {
-          res.setHeader(key, v);
+          res.setHeader(key, v as string | number | string[]);
         }
       } else {
-        res.setHeader(key, value);
+        res.setHeader(key, value as string | number | string[]);
       }
     }
 

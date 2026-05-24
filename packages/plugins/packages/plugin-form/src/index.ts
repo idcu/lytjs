@@ -87,7 +87,7 @@ function validatePattern(value: unknown, pattern: RegExp | string): boolean {
 }
 
 async function validateFieldValue(
-  name: string,
+  _name: string,
   value: unknown,
   rules: FieldValidationRule[],
   allValues: Record<string, unknown>,
@@ -133,7 +133,7 @@ async function validateFieldValue(
     }
 
     if (!isValid) {
-      let message = rule.message || defaultMessages[rule.type];
+      let message = rule.message || defaultMessages[rule.type] || '校验失败';
       if (rule.type === 'min' && rule.value != null) {
         message = message.replace('{min}', String(rule.value));
       }

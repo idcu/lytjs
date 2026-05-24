@@ -10,6 +10,9 @@ import type {
   FetchPluginOptions,
   CacheStorage,
   CacheEntry,
+  RequestInterceptor,
+  ResponseInterceptor,
+  ErrorInterceptor,
 } from '@lytjs/plugin-data-fetch';
 
 export interface RequestOptions extends BaseRequestOptions {
@@ -21,7 +24,16 @@ export interface RequestOptions extends BaseRequestOptions {
   prefetch?: boolean;
 }
 
-export type { FetchError, FetchState, FetchInstance, CacheStorage, CacheEntry };
+export type {
+  FetchError,
+  FetchState,
+  FetchInstance,
+  CacheStorage,
+  CacheEntry,
+  RequestInterceptor,
+  ResponseInterceptor,
+  ErrorInterceptor,
+};
 
 export interface DataPluginOptions extends FetchPluginOptions {
   /** 默认去重设置 */
@@ -54,15 +66,13 @@ export interface DataManager {
   delete<T = unknown>(url: string, options?: RequestOptions): Promise<T>;
 
   /** 添加请求拦截器 */
-  addRequestInterceptor(
-    interceptor: (config: RequestOptions) => RequestOptions | Promise<RequestOptions>,
-  ): void;
+  addRequestInterceptor(interceptor: RequestInterceptor): void;
 
   /** 添加响应拦截器 */
-  addResponseInterceptor(interceptor: <T = unknown>(response: T) => T | Promise<T>): void;
+  addResponseInterceptor(interceptor: ResponseInterceptor): void;
 
   /** 添加错误拦截器 */
-  addErrorInterceptor(interceptor: (error: FetchError) => FetchError | Promise<FetchError>): void;
+  addErrorInterceptor(interceptor: ErrorInterceptor): void;
 
   /** 获取缓存存储 */
   getCacheStorage(): CacheStorage;

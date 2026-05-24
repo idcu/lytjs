@@ -18,10 +18,13 @@ export function createRateLimitMiddleware(options: RateLimitOptions): Middleware
   });
   const keyGenerator =
     options.keyGenerator ||
-    ((request: Request, _ctx: MiddlewareContext) =>
-      request.headers.get('x-forwarded-for') || 'unknown');
+    ((request: unknown, _ctx: MiddlewareContext) =>
+      (request as Record<string, unknown>).headers
+        ? ((request as Record<string, unknown>).headers as Record<string, string | string[]>)
+        : {})['x-forwarded-for']?.[0] ||
+    'unknown';
 
-  return async (request: Request, ctx: MiddlewareContext, next: () => Promise<void>) => {
+  return async (request: unknown, ctx: MiddlewareContext, next: () => Promise<void>) => {
     const key = keyGenerator(request, ctx);
     const now = Date.now();
     const result = limiter.check(key);
@@ -35,27 +38,31 @@ export function createRateLimitMiddleware(options: RateLimitOptions): Middleware
     ctx.rateLimit = info;
 
     if (!result.allowed) {
-      const headers = new Headers({
+      const headers: Record<string, string | string[]> = {
         'X-RateLimit-Limit': String(info.limit),
         'X-RateLimit-Remaining': String(info.remaining),
         'X-RateLimit-Reset': String(info.reset),
         'Retry-After': String(Math.ceil((result.reset - now) / 1000)),
         'Content-Type': 'application/json',
-      });
+      };
 
-      return new Response(JSON.stringify({ error: '请求过多' }), {
+      return {
         status: 429,
         headers,
-      });
+        body: JSON.stringify({ error: '请求过多' }),
+      };
     }
 
     await next();
 
     if (ctx.response) {
-      const newResponse = new Response(ctx.response.body, ctx.response);
-      newResponse.headers.set('X-RateLimit-Limit', String(info.limit));
-      newResponse.headers.set('X-RateLimit-Remaining', String(info.remaining));
-      newResponse.headers.set('X-RateLimit-Reset', String(info.reset));
+      const newResponse = { ...ctx.response } as Record<string, unknown>;
+      newResponse.headers = {
+        ...(newResponse.headers as Record<string, string | string[]>),
+        'X-RateLimit-Limit': String(info.limit),
+        'X-RateLimit-Remaining': String(info.remaining),
+        'X-RateLimit-Reset': String(info.reset),
+      };
 
       return newResponse;
     }

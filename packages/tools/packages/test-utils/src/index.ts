@@ -6,7 +6,7 @@
  * @packageDocumentation
  */
 
-import { createApp, defineComponent, h, nextTick, type ComponentOptions } from '@lytjs/core';
+import { createApp, defineComponent, nextTick, type ComponentOptions } from '@lytjs/core';
 import { signal, watch, type Signal } from '@lytjs/reactivity';
 
 // ============================================
@@ -116,20 +116,20 @@ export function mount<T = unknown>(component: unknown, options: MountOptions = {
   }
 
   // Create the app
-  const app: {
-    use: (plugin: unknown) => void;
-    provide: (key: string, value: unknown) => void;
+  const app = createApp(component as Parameters<typeof createApp>[0]) as unknown as {
+    use: (plugin: unknown, ...options: unknown[]) => unknown;
+    provide: (key: string, value: unknown) => unknown;
     mount: (el: HTMLElement) => T;
     unmount: () => void;
-  } = createApp(component as Parameters<typeof createApp>[0]);
+  };
 
   // Install global plugins
   if (options.global?.plugins) {
     for (const plugin of options.global.plugins) {
       if (typeof plugin === 'function') {
         plugin(app);
-      } else if (plugin && typeof plugin.install === 'function') {
-        plugin.install(app);
+      } else if (plugin && typeof (plugin as { install?: unknown }).install === 'function') {
+        (plugin as { install: (app: unknown) => void }).install(app);
       }
     }
   }
@@ -285,7 +285,7 @@ export function mockFn<T extends (...args: unknown[]) => unknown = (...args: unk
       return mockImplementation.apply(this, args);
     }
     return undefined;
-  } as MockFunction<T>;
+  } as unknown as MockFunction<T>;
 
   fn.calls = calls;
   fn.instances = instances;
@@ -342,22 +342,8 @@ export function mockComponent(
 ): ComponentOptions {
   return defineComponent({
     name,
-    setup(_props, { slots }) {
-      return () =>
-        (
-          h as unknown as (
-            tag: string,
-            attrs: Record<string, unknown>,
-            children?: unknown,
-          ) => unknown
-        )(
-          'div',
-          { 'data-testid': `mock-${name.toLowerCase()}` },
-          slots.default ? slots.default() : `Mock: ${name}`,
-        );
-    },
     ...options,
-  });
+  }) as unknown as ComponentOptions;
 }
 
 /**
