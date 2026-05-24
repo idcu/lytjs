@@ -81,6 +81,14 @@ copy-lytx.cjs
 copy-lytx.js
 init-lytx-git.cjs
 
+# Build and verification temporary files
+build-results.json
+changelog-check-result.json
+count-packages.ts
+publish-summary.json
+*-check-result.json
+*-results.json
+
 # Memory analysis reports
 memlab-report.json
 

@@ -124,7 +124,7 @@ importers:
         version: link:../vdom
     devDependencies:
       tsup:
-        specifier: ^8.3.0
+        specifier: ^8.5.1
         version: 8.5.1(jiti@2.7.0)(postcss@8.5.15)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0)
       typescript:
         specifier: ^5.8.2
@@ -735,14 +735,14 @@ importers:
         version: link:../common/packages/vnode
     devDependencies:
       tsup:
-        specifier: ^8.0.0
+        specifier: ^8.5.1
         version: 8.5.1(jiti@2.7.0)(postcss@8.5.15)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0)
       typescript:
-        specifier: ^5.4.0
+        specifier: ^5.8.2
         version: 5.9.3
       vitest:
-        specifier: ^1.6.0
-        version: 1.6.1(@types/node@22.19.19)(@vitest/ui@3.2.4(vitest@3.2.4))(jsdom@29.1.1)
+        specifier: ^3.0.0
+        version: 3.2.4(@types/node@22.19.19)(@vitest/ui@3.2.4)(jsdom@29.1.1)
 
   packages/component:
     dependencies:
@@ -772,14 +772,14 @@ importers:
         version: link:../vdom
     devDependencies:
       tsup:
-        specifier: ^8.0.0
+        specifier: ^8.5.1
         version: 8.5.1(jiti@2.7.0)(postcss@8.5.15)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0)
       typescript:
-        specifier: ^5.4.0
+        specifier: ^5.8.2
         version: 5.9.3
       vitest:
-        specifier: ^1.6.0
-        version: 1.6.1(@types/node@22.19.19)(@vitest/ui@3.2.4(vitest@3.2.4))(jsdom@29.1.1)
+        specifier: ^3.0.0
+        version: 3.2.4(@types/node@22.19.19)(@vitest/ui@3.2.4)(jsdom@29.1.1)
 
   packages/core:
     dependencies:
@@ -818,17 +818,17 @@ importers:
         version: link:../vdom
     devDependencies:
       jsdom:
-        specifier: ^24.0.0
-        version: 24.1.3
+        specifier: ^29.1.1
+        version: 29.1.1
       tsup:
-        specifier: ^8.0.0
+        specifier: ^8.5.1
         version: 8.5.1(jiti@2.7.0)(postcss@8.5.15)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0)
       typescript:
-        specifier: ^5.4.0
+        specifier: ^5.8.2
         version: 5.9.3
       vitest:
-        specifier: ^1.6.0
-        version: 1.6.1(@types/node@22.19.19)(@vitest/ui@3.2.4(vitest@3.2.4))(jsdom@24.1.3)
+        specifier: ^3.0.0
+        version: 3.2.4(@types/node@22.19.19)(@vitest/ui@3.2.4)(jsdom@29.1.1)
 
   packages/core-signal:
     dependencies:
@@ -858,10 +858,10 @@ importers:
         version: link:../shared-types
     devDependencies:
       tsup:
-        specifier: ^8.0.0
+        specifier: ^8.5.1
         version: 8.5.1(jiti@2.7.0)(postcss@8.5.15)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0)
       typescript:
-        specifier: ^5.4.0
+        specifier: ^5.8.2
         version: 5.9.3
 
   packages/core-vnode:
@@ -892,10 +892,10 @@ importers:
         version: link:../vdom
     devDependencies:
       tsup:
-        specifier: ^8.0.0
+        specifier: ^8.5.1
         version: 8.5.1(jiti@2.7.0)(postcss@8.5.15)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0)
       typescript:
-        specifier: ^5.4.0
+        specifier: ^5.8.2
         version: 5.9.3
 
   packages/dom:
@@ -908,10 +908,10 @@ importers:
         version: link:../common/packages/string
     devDependencies:
       tsup:
-        specifier: ^8.3.6
+        specifier: ^8.5.1
         version: 8.5.1(jiti@2.7.0)(postcss@8.5.15)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0)
       typescript:
-        specifier: ^5.7.3
+        specifier: ^5.8.2
         version: 5.9.3
       vitest:
         specifier: ^3.0.0
@@ -924,17 +924,17 @@ importers:
         version: link:../reactivity
     devDependencies:
       jsdom:
-        specifier: ^26.0.0
-        version: 26.1.0
+        specifier: ^29.1.1
+        version: 29.1.1
       tsup:
-        specifier: ^8.4.0
+        specifier: ^8.5.1
         version: 8.5.1(jiti@2.7.0)(postcss@8.5.15)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0)
       typescript:
         specifier: ^5.8.2
         version: 5.9.3
       vitest:
-        specifier: ^3.0.7
-        version: 3.2.4(@types/node@22.19.19)(@vitest/ui@3.2.4)(jsdom@26.1.0)
+        specifier: ^3.0.0
+        version: 3.2.4(@types/node@22.19.19)(@vitest/ui@3.2.4)(jsdom@29.1.1)
 
   packages/ecosystem/packages/bundler:
     devDependencies:
@@ -1428,7 +1428,7 @@ importers:
   packages/host-contract:
     devDependencies:
       tsup:
-        specifier: ^8.3.0
+        specifier: ^8.5.1
         version: 8.5.1(jiti@2.7.0)(postcss@8.5.15)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0)
       typescript:
         specifier: ^5.8.2
@@ -1724,14 +1724,14 @@ importers:
         version: link:../shared-types
     devDependencies:
       tsup:
-        specifier: ^8.0.0
+        specifier: ^8.5.1
         version: 8.5.1(jiti@2.7.0)(postcss@8.5.15)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0)
       typescript:
-        specifier: ^5.4.0
+        specifier: ^5.8.2
         version: 5.9.3
       vitest:
-        specifier: ^1.6.0
-        version: 1.6.1(@types/node@22.19.19)(@vitest/ui@3.2.4(vitest@3.2.4))(jsdom@29.1.1)
+        specifier: ^3.0.0
+        version: 3.2.4(@types/node@22.19.19)(@vitest/ui@3.2.4)(jsdom@29.1.1)
 
   packages/renderer:
     dependencies:
@@ -1770,22 +1770,22 @@ importers:
         version: link:../vdom
     devDependencies:
       jsdom:
-        specifier: ^24.0.0
-        version: 24.1.3
+        specifier: ^29.1.1
+        version: 29.1.1
       tsup:
-        specifier: ^8.0.0
+        specifier: ^8.5.1
         version: 8.5.1(jiti@2.7.0)(postcss@8.5.15)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0)
       typescript:
-        specifier: ^5.4.0
+        specifier: ^5.8.2
         version: 5.9.3
       vitest:
-        specifier: ^1.6.0
-        version: 1.6.1(@types/node@22.19.19)(@vitest/ui@3.2.4(vitest@3.2.4))(jsdom@24.1.3)
+        specifier: ^3.0.0
+        version: 3.2.4(@types/node@22.19.19)(@vitest/ui@3.2.4)(jsdom@29.1.1)
 
   packages/shared-types:
     devDependencies:
       tsup:
-        specifier: ^8.3.0
+        specifier: ^8.5.1
         version: 8.5.1(jiti@2.7.0)(postcss@8.5.15)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0)
       typescript:
         specifier: ^5.8.2
@@ -1897,25 +1897,25 @@ importers:
         version: link:../shared-types
     devDependencies:
       jsdom:
-        specifier: ^24.0.0
-        version: 24.1.3
+        specifier: ^29.1.1
+        version: 29.1.1
       tsup:
-        specifier: ^8.0.0
+        specifier: ^8.5.1
         version: 8.5.1(jiti@2.7.0)(postcss@8.5.15)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0)
       typescript:
-        specifier: ^5.4.0
+        specifier: ^5.8.2
         version: 5.9.3
       vitest:
-        specifier: ^1.6.0
-        version: 1.6.1(@types/node@22.19.19)(@vitest/ui@3.2.4(vitest@3.2.4))(jsdom@24.1.3)
+        specifier: ^3.0.0
+        version: 3.2.4(@types/node@22.19.19)(@vitest/ui@3.2.4)(jsdom@29.1.1)
 
   packages/web:
     devDependencies:
       tsup:
-        specifier: ^8.3.6
+        specifier: ^8.5.1
         version: 8.5.1(jiti@2.7.0)(postcss@8.5.15)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0)
       typescript:
-        specifier: ^5.7.3
+        specifier: ^5.8.2
         version: 5.9.3
       vitest:
         specifier: ^3.0.0
@@ -9584,42 +9584,6 @@ snapshots:
       - terser
       - typescript
       - universal-cookie
-
-  vitest@1.6.1(@types/node@22.19.19)(@vitest/ui@3.2.4(vitest@3.2.4))(jsdom@24.1.3):
-    dependencies:
-      '@vitest/expect': 1.6.1
-      '@vitest/runner': 1.6.1
-      '@vitest/snapshot': 1.6.1
-      '@vitest/spy': 1.6.1
-      '@vitest/utils': 1.6.1
-      acorn-walk: 8.3.5
-      chai: 4.5.0
-      debug: 4.4.3
-      execa: 8.0.1
-      local-pkg: 0.5.1
-      magic-string: 0.30.21
-      pathe: 1.1.2
-      picocolors: 1.1.1
-      std-env: 3.10.0
-      strip-literal: 2.1.1
-      tinybench: 2.9.0
-      tinypool: 0.8.4
-      vite: 5.4.21(@types/node@22.19.19)
-      vite-node: 1.6.1(@types/node@22.19.19)
-      why-is-node-running: 2.3.0
-    optionalDependencies:
-      '@types/node': 22.19.19
-      '@vitest/ui': 3.2.4(vitest@3.2.4)
-      jsdom: 24.1.3
-    transitivePeerDependencies:
-      - less
-      - lightningcss
-      - sass
-      - sass-embedded
-      - stylus
-      - sugarss
-      - supports-color
-      - terser
 
   vitest@1.6.1(@types/node@22.19.19)(@vitest/ui@3.2.4(vitest@3.2.4))(jsdom@29.1.1):
     dependencies:

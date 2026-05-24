@@ -31,9 +31,9 @@
     "@lytjs/reactivity": "workspace:*"
   },
   "devDependencies": {
-    "tsup": "^8.4.0",
+    "tsup": "^8.5.1",
     "typescript": "^5.8.2",
-    "vitest": "^3.0.7",
-    "jsdom": "^26.0.0"
+    "vitest": "^3.0.0",
+    "jsdom": "^29.1.1"
   }
 }
