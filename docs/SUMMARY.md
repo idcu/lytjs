@@ -135,6 +135,7 @@
   - [8 层架构](./contribute/architecture/8-layer-architecture.md)
 - [开发指南](./contribute/development/index.md)
   - [工作流程](./contribute/development/workflow.md)
+  - [版本开发流程](./contribute/development/version-workflow.md)
   - [开发规范](./contribute/development/guidelines.md)
   - [测试指南](./contribute/development/testing.md)
   - [TypeScript](./contribute/development/typescript.md)

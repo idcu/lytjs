@@ -22,21 +22,34 @@
 
 ### 常用技能链速查
 
-| 场景       | 技能链                                                                                                                                                                                          | 复杂度    |
-| ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
-| 类型错误   | [fix-type-error](.trae/skills/skill-chains/SKILL.md#fix-type-error---修复类型错误)                                                                                                              | 简单      |
-| 测试失败   | [fix-test-failure](.trae/skills/skill-chains/SKILL.md#fix-test-failure---修复测试失败)                                                                                                          | 简单      |
-| 构建失败   | [fix-build-error](.trae/skills/skill-chains/SKILL.md#fix-build-error---修复构建错误)                                                                                                            | 简单      |
-| 新功能开发 | [new-feature](.trae/skills/skill-chains/SKILL.md#new-feature---新功能开发)                                                                                                                      | 中等      |
-| 代码重构   | [refactor-code](.trae/skills/skill-chains/SKILL.md#refactor-code---代码重构)                                                                                                                    | 中等      |
-| 性能优化   | [perf-optimize-local](.trae/skills/skill-chains/SKILL.md#perf-optimize-local---局部性能优化) / [perf-optimize-system](.trae/skills/skill-chains/SKILL.md#perf-optimize-system---系统级性能优化) | 中等/复杂 |
-| 创建包     | [create-package](.trae/skills/skill-chains/SKILL.md#create-package---创建生态包)                                                                                                                | 复杂      |
-| 创建插件   | [create-plugin](.trae/skills/skill-chains/SKILL.md#create-plugin---创建插件)                                                                                                                    | 复杂      |
-| 安全审查   | [security-audit](.trae/skills/skill-chains/SKILL.md#security-audit---安全审查)                                                                                                                  | 中等      |
-| 发布版本   | [publish-release](.trae/skills/skill-chains/SKILL.md#publish-release---发布版本)                                                                                                                | 中等      |
-| 版本升级   | [version-upgrade](.trae/skills/skill-chains/SKILL.md#version-upgrade---版本升级推荐) - **原子化版本升级**                                                                                       | 复杂      |
+| 场景         | 技能链                                                                                                                                                                                                                                                           | 复杂度             |
+| ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
+| 类型错误     | [fix-type-error](.trae/skills/skill-chains/SKILL.md#fix-type-error---修复类型错误)                                                                                                                                                                               | 简单               |
+| 测试失败     | [fix-test-failure](.trae/skills/skill-chains/SKILL.md#fix-test-failure---修复测试失败)                                                                                                                                                                           | 简单               |
+| 构建失败     | [fix-build-error](.trae/skills/skill-chains/SKILL.md#fix-build-error---修复构建错误)                                                                                                                                                                             | 简单               |
+| 新功能开发   | [new-feature](.trae/skills/skill-chains/SKILL.md#new-feature---新功能开发)                                                                                                                                                                                       | 中等               |
+| 代码重构     | [refactor-code](.trae/skills/skill-chains/SKILL.md#refactor-code---代码重构)                                                                                                                                                                                     | 中等               |
+| 性能优化     | [perf-optimize-local](.trae/skills/skill-chains/SKILL.md#perf-optimize-local---局部性能优化) / [perf-optimize-system](.trae/skills/skill-chains/SKILL.md#perf-optimize-system---系统级性能优化)                                                                  | 中等/复杂          |
+| 创建包       | [create-package](.trae/skills/skill-chains/SKILL.md#create-package---创建生态包)                                                                                                                                                                                 | 复杂               |
+| 创建插件     | [create-plugin](.trae/skills/skill-chains/SKILL.md#create-plugin---创建插件)                                                                                                                                                                                     | 复杂               |
+| 安全审查     | [security-audit](.trae/skills/skill-chains/SKILL.md#security-audit---安全审查)                                                                                                                                                                                   | 中等               |
+| 发布版本     | [publish-release](.trae/skills/skill-chains/SKILL.md#publish-release---发布版本)                                                                                                                                                                                 | 中等               |
+| **版本开发** | **[patch-version](.trae/skills/skill-chains/SKILL.md#patch-version---patch-版本开发) / [minor-version](.trae/skills/skill-chains/SKILL.md#minor-version---minor-版本开发) / [major-version](.trae/skills/skill-chains/SKILL.md#major-version---major-版本开发)** | **简单/中等/复杂** |
+| 版本升级     | [version-upgrade](.trae/skills/skill-chains/SKILL.md#version-upgrade---版本升级推荐) - **原子化版本升级**                                                                                                                                                        | 复杂               |
 
 > 完整技能链列表见 [skill-chains](.trae/skills/skill-chains/SKILL.md)
+
+---
+
+## 语义化版本开发原则
+
+基于语义化版本号（MAJOR.MINOR.PATCH）的版本开发：
+
+- **PATCH 版本（vX.X.1）**：Bug 修复，最小化变更，保持向后兼容
+- **MINOR 版本（vX.1.0）**：新增功能，向后兼容，模块化开发
+- **MAJOR 版本（v1.0.0）**：不兼容的 API 变更，分阶段发布（Alpha/Beta/RC）
+
+详细流程参见：[版本开发流程](docs/contribute/development/version-workflow.md)
 
 ---
 
