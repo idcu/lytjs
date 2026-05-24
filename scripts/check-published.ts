@@ -1,28 +1,16 @@
 #!/usr/bin/env tsx
 /**
- * LytJS 智能发布脚本
- *
- * 为什么需要临时 .npmrc：
- * 1. npm 配置优先级：子包目录的 .npmrc 优先级更高
- * 2. pnpm workspace 的影响：根目录的配置有时会被 workspace 配置覆盖
- * 3. 发布上下文：在子包目录执行 npm publish 时，npm 首先在子包目录查找配置
- *
- * 本脚本会：
- * 1. 使用根目录的 .npmrc_for_publish（如果存在）
- * 2. 否则使用环境变量或用户提供的 token
- * 3. 在每个包目录临时创建 .npmrc 确保发布顺利
- * 4. 发布完成后清理临时文件
+ * 检查所有包的 npm 发布状态
  */
 
 import { execSync } from 'child_process';
 import { join } from 'path';
 import { fileURLToPath } from 'url';
-import { writeFileSync, unlinkSync, existsSync, readFileSync } from 'fs';
+import { readFileSync } from 'fs';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const ROOT = join(__dirname, '..');
 
-// 正确的发布顺序 - 严格按依赖关系排序
 const PACKAGES = [
   { name: '@lytjs/shared-types', path: 'packages/shared-types' },
   { name: '@lytjs/host-contract', path: 'packages/host-contract' },
@@ -129,113 +117,115 @@ const PACKAGES = [
   { name: '@lytjs/cli', path: 'packages/tools/packages/cli' },
 ];
 
-console.log('🚀 LytJS 智能发布脚本\n');
-
-// 获取 token
-function getToken(): string {
-  // 1. 优先从 .npmrc_for_publish 读取
-  const npmrcPublishPath = join(ROOT, '.npmrc_for_publish');
-  if (existsSync(npmrcPublishPath)) {
-    const content = readFileSync(npmrcPublishPath, 'utf-8');
-    const tokenMatch = content.match(/\/\/registry\.npmjs\.org\/:_authToken=([^\s]+)/);
-    if (tokenMatch) {
-      console.log('✅ 从 .npmrc_for_publish 读取 token');
-      return tokenMatch[1];
-    }
-  }
-
-  // 2. 其次从环境变量读取
-  if (process.env.NPM_TOKEN) {
-    console.log('✅ 从环境变量 NPM_TOKEN 读取 token');
-    return process.env.NPM_TOKEN;
-  }
-
-  throw new Error('未找到 npm token！请设置 .npmrc_for_publish 或 NPM_TOKEN 环境变量');
+function getPackageVersion(packagePath: string): string {
+  const pkgPath = join(ROOT, packagePath, 'package.json');
+  const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'));
+  return pkg.version;
 }
 
-const success: string[] = [];
-const failed: string[] = [];
-const skipped: string[] = [];
-const token = getToken();
+async function checkPackagePublished(
+  packageName: string,
+  _expectedVersion: string,
+): Promise<{
+  published: boolean;
+  version?: string;
+  latestVersion?: string;
+  error?: string;
+}> {
+  try {
+    const result = execSync(
+      `npm view ${packageName} version --registry=https://registry.npmjs.org/`,
+      {
+        encoding: 'utf-8',
+        stdio: 'pipe',
+      },
+    );
+    const latestVersion = result.trim();
+    return {
+      published: true,
+      version: latestVersion,
+      latestVersion,
+    };
+  } catch (e) {
+    const errorMsg = (e as { stderr?: string }).stderr || String(e);
+    if (errorMsg.includes('404') || errorMsg.includes('not found')) {
+      return {
+        published: false,
+        error: 'Package not found on npm',
+      };
+    }
+    return {
+      published: false,
+      error: errorMsg,
+    };
+  }
+}
 
-// 临时 .npmrc 文件路径数组，用于后续清理
-const tempNpmrcPaths: string[] = [];
+async function main() {
+  console.log('📦 LytJS npm 发布状态检查\n');
+  console.log('='.repeat(80));
 
-try {
-  for (let i = 0; i < PACKAGES.length; i++) {
-    const pkg = PACKAGES[i];
-    const pkgPath = join(ROOT, pkg.path);
-    const npmrcPath = join(pkgPath, '.npmrc');
+  const published: string[] = [];
+  const notPublished: string[] = [];
+  const needsUpdate: string[] = [];
+  const errors: string[] = [];
 
-    console.log(`\n📦 [${i + 1}/${PACKAGES.length}] 正在发布: ${pkg.name}`);
-    console.log(`📍 路径: ${pkg.path}`);
+  for (const pkg of PACKAGES) {
+    const expectedVersion = getPackageVersion(pkg.path);
+    console.log(`\n🔍 检查: ${pkg.name}@${expectedVersion}`);
 
     try {
-      // 在包目录中临时创建 .npmrc
-      writeFileSync(
-        npmrcPath,
-        `registry=https://registry.npmjs.org/\n//registry.npmjs.org/:_authToken=${token}\n`,
-      );
-      tempNpmrcPaths.push(npmrcPath);
+      const result = await checkPackagePublished(pkg.name, expectedVersion);
 
-      // 发布 - 通过环境变量和命令行参数双重确保使用正确的 registry
-      execSync('npm publish --access=public --registry=https://registry.npmjs.org/', {
-        cwd: pkgPath,
-        stdio: 'inherit',
-        env: {
-          ...process.env,
-          npm_config_registry: 'https://registry.npmjs.org/',
-        },
-      });
-
-      console.log(`✅ 发布成功: ${pkg.name}`);
-      success.push(pkg.name);
-    } catch (e: unknown) {
-      const errorMsg = (e as { message?: string }).message || String(e);
-      if (errorMsg.includes('cannot publish over the previously published')) {
-        console.log(`ℹ️  版本已存在，跳过: ${pkg.name}`);
-        skipped.push(pkg.name);
+      if (result.published && result.version) {
+        if (result.version === expectedVersion) {
+          console.log(`✅ 已发布: ${pkg.name}@${result.version}`);
+          published.push(`${pkg.name}@${result.version}`);
+        } else {
+          console.log(`⚠️  版本不匹配: 本地=${expectedVersion}, npm=${result.version}`);
+          needsUpdate.push(`${pkg.name}@${expectedVersion} (npm=${result.version})`);
+        }
       } else {
-        console.log(`❌ 发布失败: ${pkg.name}`);
-        failed.push(pkg.name);
+        console.log(`❌ 未发布: ${pkg.name}`);
+        notPublished.push(`${pkg.name}@${expectedVersion}`);
       }
+    } catch (e) {
+      console.log(`❌ 检查失败: ${pkg.name}`);
+      errors.push(`${pkg.name} - ${String(e)}`);
     }
 
-    // 延迟避免请求过快
-    await new Promise((resolve) => setTimeout(resolve, 800));
+    // 避免请求过快
+    await new Promise((resolve) => setTimeout(resolve, 200));
   }
-} finally {
-  // 清理所有临时 .npmrc
-  console.log('\n🧹 清理临时文件...');
-  for (const npmrcPath of tempNpmrcPaths) {
-    if (existsSync(npmrcPath)) {
-      try {
-        unlinkSync(npmrcPath);
-      } catch (_e) {
-        // 忽略删除错误
-      }
-    }
+
+  console.log('\n' + '='.repeat(80));
+  console.log('📊 检查结果汇总:');
+  console.log(`✅ 已发布 (最新版本): ${published.length} 个包`);
+  console.log(`⚠️  版本不匹配: ${needsUpdate.length} 个包`);
+  console.log(`❌ 未发布: ${notPublished.length} 个包`);
+  console.log(`⚠️  检查错误: ${errors.length} 个包`);
+
+  if (published.length > 0) {
+    console.log('\n✅ 已发布的包:');
+    published.forEach((name) => console.log(`  - ${name}`));
   }
-  console.log('✅ 临时文件已清理');
+
+  if (needsUpdate.length > 0) {
+    console.log('\n⚠️  版本不匹配的包:');
+    needsUpdate.forEach((name) => console.log(`  - ${name}`));
+  }
+
+  if (notPublished.length > 0) {
+    console.log('\n❌ 未发布的包:');
+    notPublished.forEach((name) => console.log(`  - ${name}`));
+  }
+
+  if (errors.length > 0) {
+    console.log('\n⚠️  检查错误的包:');
+    errors.forEach((name) => console.log(`  - ${name}`));
+  }
+
+  console.log('='.repeat(80));
 }
 
-// 输出结果
-console.log('\n' + '='.repeat(80));
-console.log('📊 发布结果汇总:');
-console.log(`✅ 成功: ${success.length} 个包`);
-console.log(`ℹ️  跳过: ${skipped.length} 个包`);
-console.log(`❌ 失败: ${failed.length} 个包`);
-
-if (success.length > 0) {
-  console.log('\n✅ 成功的包:');
-  console.log(success.map((name) => `  - ${name}`).join('\n'));
-}
-if (skipped.length > 0) {
-  console.log('\nℹ️  跳过的包:');
-  console.log(skipped.map((name) => `  - ${name}`).join('\n'));
-}
-if (failed.length > 0) {
-  console.log('\n❌ 失败的包:');
-  console.log(failed.map((name) => `  - ${name}`).join('\n'));
-}
-console.log('='.repeat(80) + '\n');
+main().catch(console.error);

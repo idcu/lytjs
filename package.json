@@ -74,6 +74,8 @@
     "publish:prepare": "tsx scripts/prepare-publish.ts",
     "publish:all": "tsx scripts/final-publish.ts",
     "publish:restore": "tsx scripts/restore-workspace.ts",
+    "publish:check": "tsx scripts/check-published.ts",
+    "publish:single": "tsx scripts/publish-single.ts",
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
     "docs:preview": "vitepress preview docs",

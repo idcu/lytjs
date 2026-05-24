@@ -1,28 +1,21 @@
 #!/usr/bin/env tsx
 /**
- * LytJS 智能发布脚本
+ * 单个包发布脚本 - 支持直接指定包名或路径发布
  *
- * 为什么需要临时 .npmrc：
- * 1. npm 配置优先级：子包目录的 .npmrc 优先级更高
- * 2. pnpm workspace 的影响：根目录的配置有时会被 workspace 配置覆盖
- * 3. 发布上下文：在子包目录执行 npm publish 时，npm 首先在子包目录查找配置
- *
- * 本脚本会：
- * 1. 使用根目录的 .npmrc_for_publish（如果存在）
- * 2. 否则使用环境变量或用户提供的 token
- * 3. 在每个包目录临时创建 .npmrc 确保发布顺利
- * 4. 发布完成后清理临时文件
+ * 使用方法:
+ *   tsx scripts/publish-single.ts @lytjs/reactivity
+ *   tsx scripts/publish-single.ts packages/reactivity
+ *   tsx scripts/publish-single.ts --all
  */
 
 import { execSync } from 'child_process';
-import { join } from 'path';
+import { join, basename } from 'path';
 import { fileURLToPath } from 'url';
 import { writeFileSync, unlinkSync, existsSync, readFileSync } from 'fs';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const ROOT = join(__dirname, '..');
 
-// 正确的发布顺序 - 严格按依赖关系排序
 const PACKAGES = [
   { name: '@lytjs/shared-types', path: 'packages/shared-types' },
   { name: '@lytjs/host-contract', path: 'packages/host-contract' },
@@ -84,7 +77,6 @@ const PACKAGES = [
   { name: '@lytjs/bundler', path: 'packages/ecosystem/packages/bundler' },
   { name: '@lytjs/hmr', path: 'packages/ecosystem/packages/hmr' },
   { name: '@lytjs/runtime-edge', path: 'packages/ecosystem/packages/runtime-edge' },
-  { name: '@lytjs/cache', path: 'packages/ecosystem/packages/ssr-kit/packages/cache' },
   { name: '@lytjs/cache-isr', path: 'packages/ecosystem/packages/ssr-kit/packages/cache-isr' },
   {
     name: '@lytjs/html-renderer',
@@ -92,25 +84,40 @@ const PACKAGES = [
   },
   { name: '@lytjs/ssg', path: 'packages/ecosystem/packages/ssr-kit/packages/ssg' },
   {
-    name: '@lytjs/http-server',
+    name: '@lytjs/web-framework-api',
+    path: 'packages/ecosystem/packages/web-framework/packages/api',
+  },
+  {
+    name: '@lytjs/web-framework-http-server',
     path: 'packages/ecosystem/packages/web-framework/packages/http-server',
   },
-  { name: '@lytjs/metadata', path: 'packages/ecosystem/packages/web-framework/packages/metadata' },
   {
-    name: '@lytjs/middleware',
+    name: '@lytjs/web-framework-metadata',
+    path: 'packages/ecosystem/packages/web-framework/packages/metadata',
+  },
+  {
+    name: '@lytjs/web-framework-middleware',
     path: 'packages/ecosystem/packages/web-framework/packages/middleware',
   },
   {
-    name: '@lytjs/middleware-cors',
+    name: '@lytjs/web-framework-middleware-cors',
     path: 'packages/ecosystem/packages/web-framework/packages/middleware-cors',
   },
   {
-    name: '@lytjs/middleware-auth',
+    name: '@lytjs/web-framework-middleware-auth',
     path: 'packages/ecosystem/packages/web-framework/packages/middleware-auth',
   },
   {
-    name: '@lytjs/middleware-rate-limit',
+    name: '@lytjs/web-framework-middleware-rate-limit',
     path: 'packages/ecosystem/packages/web-framework/packages/middleware-rate-limit',
+  },
+  {
+    name: '@lytjs/web-framework-router',
+    path: 'packages/ecosystem/packages/web-framework/packages/router',
+  },
+  {
+    name: '@lytjs/web-framework-router-fs',
+    path: 'packages/ecosystem/packages/web-framework/packages/router-fs',
   },
   { name: '@lytjs/plugin-vite', path: 'packages/plugins/packages/plugin-vite' },
   { name: '@lytjs/plugin-theme', path: 'packages/plugins/packages/plugin-theme' },
@@ -129,9 +136,6 @@ const PACKAGES = [
   { name: '@lytjs/cli', path: 'packages/tools/packages/cli' },
 ];
 
-console.log('🚀 LytJS 智能发布脚本\n');
-
-// 获取 token
 function getToken(): string {
   // 1. 优先从 .npmrc_for_publish 读取
   const npmrcPublishPath = join(ROOT, '.npmrc_for_publish');
@@ -150,65 +154,85 @@ function getToken(): string {
     return process.env.NPM_TOKEN;
   }
 
-  throw new Error('未找到 npm token！请设置 .npmrc_for_publish 或 NPM_TOKEN 环境变量');
+  throw new Error(
+    '未找到 npm token！请设置 .npmrc_for_publish 或 NPM_TOKEN 环境变量\n\n  可以从 .npmrc_for_publish.example 复制并修改:',
+  );
 }
 
-const success: string[] = [];
-const failed: string[] = [];
-const skipped: string[] = [];
-const token = getToken();
+function findPackage(arg: string) {
+  // 通过包名查找
+  const byName = PACKAGES.find((p) => p.name === arg);
+  if (byName) {
+    return byName;
+  }
 
-// 临时 .npmrc 文件路径数组，用于后续清理
-const tempNpmrcPaths: string[] = [];
+  // 通过路径查找
+  const byPath = PACKAGES.find((p) => p.path.includes(arg) || arg.includes(basename(p.path)));
+  if (byPath) {
+    return byPath;
+  }
 
-try {
-  for (let i = 0; i < PACKAGES.length; i++) {
-    const pkg = PACKAGES[i];
-    const pkgPath = join(ROOT, pkg.path);
-    const npmrcPath = join(pkgPath, '.npmrc');
+  // 直接使用路径
+  if (existsSync(join(ROOT, arg, 'package.json'))) {
+    const pkgJsonPath = join(ROOT, arg, 'package.json');
+    const pkgJson = JSON.parse(readFileSync(pkgJsonPath, 'utf-8'));
+    return { name: pkgJson.name, path: arg };
+  }
 
-    console.log(`\n📦 [${i + 1}/${PACKAGES.length}] 正在发布: ${pkg.name}`);
+  return null;
+}
+
+async function publishSinglePackage(
+  pkg: { name: string; path: string },
+  token: string,
+): Promise<boolean> {
+  const pkgPath = join(ROOT, pkg.path);
+  const npmrcPath = join(pkgPath, '.npmrc');
+  let tempNpmrcCreated = false;
+
+  try {
+    console.log(`\n📦 发布: ${pkg.name}`);
     console.log(`📍 路径: ${pkg.path}`);
 
-    try {
-      // 在包目录中临时创建 .npmrc
-      writeFileSync(
-        npmrcPath,
-        `registry=https://registry.npmjs.org/\n//registry.npmjs.org/:_authToken=${token}\n`,
-      );
-      tempNpmrcPaths.push(npmrcPath);
-
-      // 发布 - 通过环境变量和命令行参数双重确保使用正确的 registry
-      execSync('npm publish --access=public --registry=https://registry.npmjs.org/', {
-        cwd: pkgPath,
-        stdio: 'inherit',
-        env: {
-          ...process.env,
-          npm_config_registry: 'https://registry.npmjs.org/',
-        },
-      });
-
-      console.log(`✅ 发布成功: ${pkg.name}`);
-      success.push(pkg.name);
-    } catch (e: unknown) {
-      const errorMsg = (e as { message?: string }).message || String(e);
-      if (errorMsg.includes('cannot publish over the previously published')) {
-        console.log(`ℹ️  版本已存在，跳过: ${pkg.name}`);
-        skipped.push(pkg.name);
-      } else {
-        console.log(`❌ 发布失败: ${pkg.name}`);
-        failed.push(pkg.name);
-      }
+    // 检查 dist 是否存在
+    const distPath = join(pkgPath, 'dist');
+    if (!existsSync(distPath)) {
+      console.log(`⚠️  dist 目录不存在，先构建...`);
+      execSync('npm run build', { cwd: pkgPath, stdio: 'inherit' });
     }
 
-    // 延迟避免请求过快
-    await new Promise((resolve) => setTimeout(resolve, 800));
-  }
-} finally {
-  // 清理所有临时 .npmrc
-  console.log('\n🧹 清理临时文件...');
-  for (const npmrcPath of tempNpmrcPaths) {
-    if (existsSync(npmrcPath)) {
+    // 创建临时 .npmrc
+    writeFileSync(
+      npmrcPath,
+      `registry=https://registry.npmjs.org/\n//registry.npmjs.org/:_authToken=${token}\n`,
+    );
+    tempNpmrcCreated = true;
+
+    // 发布
+    execSync('npm publish --access=public', {
+      cwd: pkgPath,
+      stdio: 'inherit',
+    });
+
+    console.log(`✅ 发布成功: ${pkg.name}`);
+    return true;
+  } catch (e: unknown) {
+    const errorMsg =
+      (e as { message?: string; stderr?: string }).message ||
+      (e as { stderr?: string }).stderr ||
+      String(e);
+
+    if (errorMsg.includes('cannot publish over the previously published')) {
+      console.log(`ℹ️  版本已存在，跳过: ${pkg.name}`);
+      return true;
+    }
+
+    console.log(`❌ 发布失败: ${pkg.name}`);
+    console.log(`   ${errorMsg}`);
+    return false;
+  } finally {
+    // 清理临时 .npmrc
+    if (tempNpmrcCreated && existsSync(npmrcPath)) {
       try {
         unlinkSync(npmrcPath);
       } catch (_e) {
@@ -216,26 +240,61 @@ try {
       }
     }
   }
-  console.log('✅ 临时文件已清理');
 }
 
-// 输出结果
-console.log('\n' + '='.repeat(80));
-console.log('📊 发布结果汇总:');
-console.log(`✅ 成功: ${success.length} 个包`);
-console.log(`ℹ️  跳过: ${skipped.length} 个包`);
-console.log(`❌ 失败: ${failed.length} 个包`);
+async function main() {
+  const args = process.argv.slice(2);
 
-if (success.length > 0) {
-  console.log('\n✅ 成功的包:');
-  console.log(success.map((name) => `  - ${name}`).join('\n'));
+  console.log('🚀 LytJS 单个包发布脚本\n');
+
+  if (args.length === 0) {
+    console.log('使用方法:');
+    console.log('  tsx scripts/publish-single.ts @lytjs/reactivity');
+    console.log('  tsx scripts/publish-single.ts packages/reactivity');
+    console.log('  tsx scripts/publish-single.ts --all');
+    console.log('\n可用的包:');
+    PACKAGES.forEach((p) => console.log(`  - ${p.name}`));
+    process.exit(1);
+  }
+
+  const token = getToken();
+
+  if (args.includes('--all')) {
+    console.log('📦 发布所有包...\n');
+    const success: string[] = [];
+    const failed: string[] = [];
+
+    for (const pkg of PACKAGES) {
+      const ok = await publishSinglePackage(pkg, token);
+      if (ok) {
+        success.push(pkg.name);
+      } else {
+        failed.push(pkg.name);
+      }
+      await new Promise((resolve) => setTimeout(resolve, 500));
+    }
+
+    console.log('\n' + '='.repeat(80));
+    console.log(`✅ 成功: ${success.length} 个包`);
+    console.log(`❌ 失败: ${failed.length} 个包`);
+    if (failed.length > 0) {
+      console.log('   失败的包:', failed.join(', '));
+    }
+    console.log('='.repeat(80));
+  } else {
+    const arg = args[0];
+    const pkg = findPackage(arg);
+
+    if (!pkg) {
+      console.log(`❌ 找不到包: ${arg}`);
+      console.log('\n可用的包:');
+      PACKAGES.forEach((p) => console.log(`  - ${p.name}`));
+      process.exit(1);
+    }
+
+    const ok = await publishSinglePackage(pkg, token);
+    process.exit(ok ? 0 : 1);
+  }
 }
-if (skipped.length > 0) {
-  console.log('\nℹ️  跳过的包:');
-  console.log(skipped.map((name) => `  - ${name}`).join('\n'));
-}
-if (failed.length > 0) {
-  console.log('\n❌ 失败的包:');
-  console.log(failed.map((name) => `  - ${name}`).join('\n'));
-}
-console.log('='.repeat(80) + '\n');
+
+main().catch(console.error);
