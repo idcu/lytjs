@@ -18,11 +18,11 @@ export function createRateLimitMiddleware(options: RateLimitOptions): Middleware
   });
   const keyGenerator =
     options.keyGenerator ||
-    ((request: unknown, _ctx: MiddlewareContext) =>
-      (request as Record<string, unknown>).headers
-        ? ((request as Record<string, unknown>).headers as Record<string, string | string[]>)
-        : {})['x-forwarded-for']?.[0] ||
-    'unknown';
+    ((request: unknown, _ctx: MiddlewareContext) => {
+      const req = request as Record<string, unknown>;
+      const headers = req.headers as Record<string, string | string[]> | undefined;
+      return headers?.['x-forwarded-for']?.[0] || 'unknown';
+    }) as (request: unknown, ctx: MiddlewareContext) => string;
 
   return async (request: unknown, ctx: MiddlewareContext, next: () => Promise<void>) => {
     const key = keyGenerator(request, ctx);

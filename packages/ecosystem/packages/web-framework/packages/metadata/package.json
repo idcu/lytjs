@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/metadata",
-  "version": "6.8.0",
+  "version": "6.9.0",
   "description": "LytJS 元数据系统",
   "type": "module",
   "main": "./dist/index.cjs",

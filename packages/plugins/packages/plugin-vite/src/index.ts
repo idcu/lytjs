@@ -156,7 +156,7 @@ if (import.meta.hot) {
 
         return {
           code: compiledCode,
-          map: result.sourceMap as unknown,
+          map: result.sourceMap as Record<string, unknown> | undefined,
         };
       } catch (error) {
         // Log compilation errors

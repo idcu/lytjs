@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/plugin-auth",
-  "version": "6.8.0",
+  "version": "6.9.0",
   "description": "LytJS official auth plugin for route authorization, permission checking, and role management",
   "type": "module",
   "main": "./dist/index.cjs",

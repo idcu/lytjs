@@ -3,13 +3,9 @@
  */
 import type { Server as NodeServer, IncomingMessage, ServerResponse } from 'node:http';
 import { createServer as createNodeServer } from 'node:http';
-import type { Handler } from './types';
+import type { Handler, Context, Request, Response, HttpMethod } from './types';
 import { Router } from './router';
 import { parseQueryStringWithArrays } from '@lytjs/common-query';
-type Context = Record<string, unknown>;
-type Request = unknown;
-type Response = unknown;
-type HttpMethod = string;
 
 /**
  * HTTP 服务器类
@@ -18,7 +14,7 @@ export class Server {
   /** 路由实例 */
   private router: Router;
   /** 中间件列表 */
-  private middlewares: unknown[] = [];
+  private middlewares: Array<(ctx: Context, next: () => Promise<void>) => Promise<void>> = [];
   /** Node.js 服务器实例 */
   private server?: NodeServer;
 
@@ -35,7 +31,7 @@ export class Server {
    * @param middleware - 中间件函数
    * @returns 服务器实例
    */
-  use(middleware: unknown): this {
+  use(middleware: (ctx: Context, next: () => Promise<void>) => Promise<void>): this {
     this.middlewares.push(middleware);
     return this;
   }
@@ -197,8 +193,9 @@ export class Server {
       let index = this.middlewares.length;
       const next = async () => {
         index--;
-        if (index >= 0 && this.middlewares[index]) {
-          await this.middlewares[index](ctx, next);
+        const middleware = this.middlewares[index];
+        if (index >= 0 && middleware) {
+          await middleware(ctx, next);
         } else {
           await handler();
         }

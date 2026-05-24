@@ -69,7 +69,9 @@ function buildPackage(pkgPath: string): boolean {
   logInfo(`路径: ${pkgPath}`);
 
   try {
-    execSync('pnpm run build', {
+    // 直接使用根目录 node_modules 中的 tsup
+    const tsupEntry = join(ROOT, 'node_modules', 'tsup', 'dist', 'cli-default.js');
+    execSync(`node "${tsupEntry}"`, {
       cwd: fullPath,
       stdio: 'inherit',
       env: {
@@ -91,41 +93,41 @@ function buildPackage(pkgPath: string): boolean {
 function main(): void {
   console.log(colorText(colors.bold, '\n🚀 LytJS 按步骤构建系统\n'));
 
-  logSection('步骤 1: 构建 Common 包');
+  logSection('步骤 1: 构建 Common 包 (34个)');
   const commonPackages = [
-    'packages/common/packages/a11y',
-    'packages/common/packages/algorithm',
-    'packages/common/packages/assertions',
-    'packages/common/packages/async-scheduler',
-    'packages/common/packages/cache',
-    'packages/common/packages/common',
     'packages/common/packages/constants',
+    'packages/common/packages/is',
+    'packages/common/packages/object',
+    'packages/common/packages/string',
+    'packages/common/packages/security',
+    'packages/common/packages/path',
+    'packages/common/packages/events',
+    'packages/common/packages/cache',
+    'packages/common/packages/timing',
+    'packages/common/packages/scheduler',
+    'packages/common/packages/error',
+    'packages/common/packages/algorithm',
+    'packages/common/packages/vnode',
+    'packages/common/packages/env',
+    'packages/common/packages/common',
     'packages/common/packages/dom',
     'packages/common/packages/dom-helpers',
-    'packages/common/packages/env',
-    'packages/common/packages/error',
-    'packages/common/packages/event-normalizer',
-    'packages/common/packages/events',
-    'packages/common/packages/http',
-    'packages/common/packages/is',
+    'packages/common/packages/a11y',
     'packages/common/packages/keyboard',
-    'packages/common/packages/memory',
-    'packages/common/packages/node-cache',
-    'packages/common/packages/object',
-    'packages/common/packages/path',
-    'packages/common/packages/performance',
-    'packages/common/packages/query',
+    'packages/common/packages/storage',
+    'packages/common/packages/validate',
+    'packages/common/packages/http',
     'packages/common/packages/raf',
     'packages/common/packages/render-queue',
-    'packages/common/packages/rate-limit',
-    'packages/common/packages/scheduler',
-    'packages/common/packages/security',
-    'packages/common/packages/storage',
-    'packages/common/packages/string',
-    'packages/common/packages/timing',
+    'packages/common/packages/event-normalizer',
+    'packages/common/packages/node-cache',
+    'packages/common/packages/async-scheduler',
     'packages/common/packages/transition-engine',
-    'packages/common/packages/validate',
-    'packages/common/packages/vnode',
+    'packages/common/packages/performance',
+    'packages/common/packages/assertions',
+    'packages/common/packages/memory',
+    'packages/common/packages/query',
+    'packages/common/packages/rate-limit',
     'packages/common/packages/warn',
   ];
 
@@ -133,7 +135,7 @@ function main(): void {
     buildPackage(pkg);
   }
 
-  logSection('步骤 2: 构建核心包');
+  logSection('步骤 2: 构建 Core 包 (14个)');
   const corePackages = [
     'packages/shared-types',
     'packages/host-contract',
@@ -147,15 +149,15 @@ function main(): void {
     'packages/web',
     'packages/component',
     'packages/core',
-    'packages/core-signal',
     'packages/core-vnode',
+    'packages/core-signal',
   ];
 
   for (const pkg of corePackages) {
     buildPackage(pkg);
   }
 
-  logSection('步骤 3: 构建 Ecosystem 包');
+  logSection('步骤 3: 构建 Ecosystem 基础包 (14个)');
   const ecosystemPackages = [
     'packages/ecosystem/packages/router',
     'packages/ecosystem/packages/store',
@@ -163,21 +165,53 @@ function main(): void {
     'packages/ecosystem/packages/ui',
     'packages/ecosystem/packages/devtools',
     'packages/ecosystem/packages/compat',
-    'packages/ecosystem/packages/api',
+    'packages/ecosystem/packages/platform-adapter',
     'packages/ecosystem/packages/bundler',
-    'packages/ecosystem/packages/hmr',
     'packages/ecosystem/packages/runtime-edge',
     'packages/ecosystem/packages/router-fs',
+    'packages/ecosystem/packages/api',
+    'packages/ecosystem/packages/hmr',
   ];
 
   for (const pkg of ecosystemPackages) {
     buildPackage(pkg);
   }
 
-  logSection('步骤 4: 构建 Tools 包');
+  logSection('步骤 4: 构建 Web-Framework 子包 (9个)');
+  const webFrameworkPackages = [
+    'packages/ecosystem/packages/web-framework/packages/web-core',
+    'packages/ecosystem/packages/web-framework/packages/web-router',
+    'packages/ecosystem/packages/web-framework/packages/web-state',
+    'packages/ecosystem/packages/web-framework/packages/web-components',
+    'packages/ecosystem/packages/web-framework/packages/web-utils',
+    'packages/ecosystem/packages/web-framework/packages/web-build',
+    'packages/ecosystem/packages/web-framework/packages/web-plugins',
+    'packages/ecosystem/packages/web-framework/packages/web-devtools',
+    'packages/ecosystem/packages/web-framework/packages/web',
+  ];
+
+  for (const pkg of webFrameworkPackages) {
+    buildPackage(pkg);
+  }
+
+  logSection('步骤 5: 构建 SSR-Kit 子包 (6个)');
+  const ssrKitPackages = [
+    'packages/ecosystem/packages/ssr-kit/packages/ssr-core',
+    'packages/ecosystem/packages/ssr-kit/packages/ssr-streaming',
+    'packages/ecosystem/packages/ssr-kit/packages/ssr-server',
+    'packages/ecosystem/packages/ssr-kit/packages/ssr-client',
+    'packages/ecosystem/packages/ssr-kit/packages/ssr-utils',
+    'packages/ecosystem/packages/ssr-kit/packages/ssr',
+  ];
+
+  for (const pkg of ssrKitPackages) {
+    buildPackage(pkg);
+  }
+
+  logSection('步骤 6: 构建 Tools 包 (3个)');
   const toolsPackages = [
     'packages/tools/packages/cli',
-    'packages/tools/packages/devtools',
+    'packages/tools/packages/devtools-extension',
     'packages/tools/packages/test-utils',
   ];
 
@@ -185,13 +219,21 @@ function main(): void {
     buildPackage(pkg);
   }
 
-  logSection('步骤 5: 构建 Plugins 包');
+  logSection('步骤 7: 构建 Plugins 包 (13个)');
   const pluginsPackages = [
     'packages/plugins/packages/plugin-vite',
     'packages/plugins/packages/plugin-auth',
-    'packages/plugins/packages/plugin-data',
-    'packages/plugins/packages/plugin-form',
+    'packages/plugins/packages/plugin-storage',
     'packages/plugins/packages/plugin-i18n',
+    'packages/plugins/packages/plugin-form',
+    'packages/plugins/packages/plugin-data',
+    'packages/plugins/packages/plugin-data-fetch',
+    'packages/plugins/packages/plugin-chart',
+    'packages/plugins/packages/plugin-animation',
+    'packages/plugins/packages/plugin-testing',
+    'packages/plugins/packages/plugin-theme',
+    'packages/plugins/packages/plugin-logger',
+    'packages/plugins/packages/plugin-validation',
   ];
 
   for (const pkg of pluginsPackages) {

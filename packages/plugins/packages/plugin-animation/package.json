@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/plugin-animation",
-  "version": "6.8.0",
+  "version": "6.9.0",
   "description": "LytJS official animation plugin with CSS transitions and animations",
   "type": "module",
   "main": "./dist/index.cjs",

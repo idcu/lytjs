@@ -50,21 +50,23 @@ export class MiddlewareComposer {
 
       try {
         await combined(ctx, async () => {
-          ctx.response = await handler(request, ctx);
+          const result = await handler(request, ctx);
+          ctx.response = result as Response;
         });
 
-        return ctx.response || new Response('未找到', { status: 404 });
+        return (ctx.response as Response) || (new Response('未找到', { status: 404 }) as unknown as Response);
       } catch (error) {
         if (this.config.throwOnError) {
           throw error;
         }
 
-        ctx.response = await this.config.errorHandler(
+        const errorResult = await this.config.errorHandler(
           error instanceof Error ? error : new Error(String(error)),
           ctx,
         );
+        ctx.response = errorResult as Response;
 
-        return ctx.response;
+        return ctx.response as Response;
       }
     };
   }

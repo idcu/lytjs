@@ -1,8 +1,7 @@
 /**
  * HTTP 路由实现
  */
-import type { Handler } from './types';
-import type { HttpMethod } from '@lytjs/shared-types';
+import type { Handler, HttpMethod } from './types';
 
 // ===== Token Types =====
 

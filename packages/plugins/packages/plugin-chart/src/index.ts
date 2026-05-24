@@ -290,7 +290,6 @@ function createChart(
         ctx.fillText(point.label, legendX + 18, legendY + 10);
 
         legendX += 100;
-        itemIndex++;
       });
     });
   }

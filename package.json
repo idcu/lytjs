@@ -1,6 +1,6 @@
 {
   "name": "lytjs",
-  "version": "6.8.0",
+  "version": "6.9.0",
   "private": true,
   "type": "module",
   "description": "Lyt.js - 下一代轻量级前端框架",
@@ -20,6 +20,8 @@
     "pnpm": ">=9.0.0"
   },
   "scripts": {
+    "env:setup": "node scripts/setup-env.cjs",
+    "env:check": "node scripts/check-env.cjs",
     "prepare": "husky",
     "dev": "pnpm -r --parallel run dev",
     "build": "pnpm run build:common && pnpm run build:core && pnpm run build:ecosystem && pnpm run build:web-framework && pnpm run build:tools && pnpm run build:plugins",
@@ -105,6 +107,7 @@
     "playwright": "^1.59.1",
     "prettier": "^3.4.2",
     "size-limit": "^11.1.6",
+    "tsup": "^8.5.1",
     "tsx": "^4.19.2",
     "typescript": "^5.8.2",
     "typescript-eslint": "^8.20.0",
@@ -120,10 +123,8 @@
       "prettier --write"
     ]
   },
-  "pnpm": {
-    "overrides": {
-      "vitest": "^3.0.0",
-      "typescript": "^5.8.2"
-    }
+  "overrides": {
+    "vitest": "^3.0.0",
+    "typescript": "^5.8.2"
   }
 }

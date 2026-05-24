@@ -1,0 +1,382 @@
+[
+  {
+    "name": "@lytjs/common-constants",
+    "path": "packages/common/packages/constants",
+    "success": true
+  },
+  {
+    "name": "@lytjs/common-is",
+    "path": "packages/common/packages/is",
+    "success": true
+  },
+  {
+    "name": "@lytjs/common-object",
+    "path": "packages/common/packages/object",
+    "success": true
+  },
+  {
+    "name": "@lytjs/common-string",
+    "path": "packages/common/packages/string",
+    "success": true
+  },
+  {
+    "name": "@lytjs/common-security",
+    "path": "packages/common/packages/security",
+    "success": true
+  },
+  {
+    "name": "@lytjs/common-path",
+    "path": "packages/common/packages/path",
+    "success": true
+  },
+  {
+    "name": "@lytjs/common-events",
+    "path": "packages/common/packages/events",
+    "success": true
+  },
+  {
+    "name": "@lytjs/common-cache",
+    "path": "packages/common/packages/cache",
+    "success": true
+  },
+  {
+    "name": "@lytjs/common-timing",
+    "path": "packages/common/packages/timing",
+    "success": true
+  },
+  {
+    "name": "@lytjs/common-scheduler",
+    "path": "packages/common/packages/scheduler",
+    "success": true
+  },
+  {
+    "name": "@lytjs/common-error",
+    "path": "packages/common/packages/error",
+    "success": true
+  },
+  {
+    "name": "@lytjs/common-algorithm",
+    "path": "packages/common/packages/algorithm",
+    "success": true
+  },
+  {
+    "name": "@lytjs/common-vnode",
+    "path": "packages/common/packages/vnode",
+    "success": true
+  },
+  {
+    "name": "@lytjs/common-env",
+    "path": "packages/common/packages/env",
+    "success": true
+  },
+  {
+    "name": "@lytjs/common",
+    "path": "packages/common/packages/common",
+    "success": true
+  },
+  {
+    "name": "@lytjs/common-dom",
+    "path": "packages/common/packages/dom",
+    "success": true
+  },
+  {
+    "name": "@lytjs/common-dom-helpers",
+    "path": "packages/common/packages/dom-helpers",
+    "success": true
+  },
+  {
+    "name": "@lytjs/common-a11y",
+    "path": "packages/common/packages/a11y",
+    "success": true
+  },
+  {
+    "name": "@lytjs/common-keyboard",
+    "path": "packages/common/packages/keyboard",
+    "success": true
+  },
+  {
+    "name": "@lytjs/common-storage",
+    "path": "packages/common/packages/storage",
+    "success": true
+  },
+  {
+    "name": "@lytjs/common-validate",
+    "path": "packages/common/packages/validate",
+    "success": true
+  },
+  {
+    "name": "@lytjs/common-http",
+    "path": "packages/common/packages/http",
+    "success": true
+  },
+  {
+    "name": "@lytjs/common-raf",
+    "path": "packages/common/packages/raf",
+    "success": true
+  },
+  {
+    "name": "@lytjs/common-render-queue",
+    "path": "packages/common/packages/render-queue",
+    "success": true
+  },
+  {
+    "name": "@lytjs/common-event-normalizer",
+    "path": "packages/common/packages/event-normalizer",
+    "success": true
+  },
+  {
+    "name": "@lytjs/common-node-cache",
+    "path": "packages/common/packages/node-cache",
+    "success": true
+  },
+  {
+    "name": "@lytjs/common-async-scheduler",
+    "path": "packages/common/packages/async-scheduler",
+    "success": true
+  },
+  {
+    "name": "@lytjs/common-transition-engine",
+    "path": "packages/common/packages/transition-engine",
+    "success": true
+  },
+  {
+    "name": "@lytjs/common-performance",
+    "path": "packages/common/packages/performance",
+    "success": true
+  },
+  {
+    "name": "@lytjs/common-assertions",
+    "path": "packages/common/packages/assertions",
+    "success": true
+  },
+  {
+    "name": "@lytjs/common-memory",
+    "path": "packages/common/packages/memory",
+    "success": true
+  },
+  {
+    "name": "@lytjs/common-query",
+    "path": "packages/common/packages/query",
+    "success": true
+  },
+  {
+    "name": "@lytjs/common-rate-limit",
+    "path": "packages/common/packages/rate-limit",
+    "success": true
+  },
+  {
+    "name": "@lytjs/common-warn",
+    "path": "packages/common/packages/warn",
+    "success": true
+  },
+  {
+    "name": "@lytjs/shared-types",
+    "path": "packages/shared-types",
+    "success": true
+  },
+  {
+    "name": "@lytjs/host-contract",
+    "path": "packages/host-contract",
+    "success": true
+  },
+  {
+    "name": "@lytjs/reactivity",
+    "path": "packages/reactivity",
+    "success": true
+  },
+  {
+    "name": "@lytjs/vdom",
+    "path": "packages/vdom",
+    "success": true
+  },
+  {
+    "name": "@lytjs/dom-runtime",
+    "path": "packages/dom-runtime",
+    "success": true
+  },
+  {
+    "name": "@lytjs/compiler",
+    "path": "packages/compiler",
+    "success": true
+  },
+  {
+    "name": "@lytjs/renderer",
+    "path": "packages/renderer",
+    "success": true
+  },
+  {
+    "name": "@lytjs/adapter-web",
+    "path": "packages/adapter-web",
+    "success": true
+  },
+  {
+    "name": "@lytjs/dom",
+    "path": "packages/dom",
+    "success": true
+  },
+  {
+    "name": "@lytjs/web",
+    "path": "packages/web",
+    "success": true
+  },
+  {
+    "name": "@lytjs/component",
+    "path": "packages/component",
+    "success": true
+  },
+  {
+    "name": "@lytjs/core",
+    "path": "packages/core",
+    "success": true
+  },
+  {
+    "name": "@lytjs/core-vnode",
+    "path": "packages/core-vnode",
+    "success": true
+  },
+  {
+    "name": "@lytjs/core-signal",
+    "path": "packages/core-signal",
+    "success": true
+  },
+  {
+    "name": "@lytjs/router",
+    "path": "packages/ecosystem/packages/router",
+    "success": false
+  },
+  {
+    "name": "@lytjs/store",
+    "path": "packages/ecosystem/packages/store",
+    "success": true
+  },
+  {
+    "name": "@lytjs/ssr",
+    "path": "packages/ecosystem/packages/ssr",
+    "success": false
+  },
+  {
+    "name": "@lytjs/ui",
+    "path": "packages/ecosystem/packages/ui",
+    "success": true
+  },
+  {
+    "name": "@lytjs/devtools",
+    "path": "packages/ecosystem/packages/devtools",
+    "success": true
+  },
+  {
+    "name": "@lytjs/compat",
+    "path": "packages/ecosystem/packages/compat",
+    "success": true
+  },
+  {
+    "name": "@lytjs/platform-adapter",
+    "path": "packages/ecosystem/packages/platform-adapter",
+    "success": true
+  },
+  {
+    "name": "@lytjs/bundler",
+    "path": "packages/ecosystem/packages/bundler",
+    "success": true
+  },
+  {
+    "name": "@lytjs/runtime-edge",
+    "path": "packages/ecosystem/packages/runtime-edge",
+    "success": true
+  },
+  {
+    "name": "@lytjs/router-fs",
+    "path": "packages/ecosystem/packages/router-fs",
+    "success": false
+  },
+  {
+    "name": "@lytjs/api",
+    "path": "packages/ecosystem/packages/api",
+    "success": false
+  },
+  {
+    "name": "@lytjs/hmr",
+    "path": "packages/ecosystem/packages/hmr",
+    "success": false
+  },
+  {
+    "name": "@lytjs/ssr",
+    "path": "packages/ecosystem/packages/ssr-kit/packages/ssr",
+    "success": true
+  },
+  {
+    "name": "@lytjs/cli",
+    "path": "packages/tools/packages/cli",
+    "success": true
+  },
+  {
+    "name": "@lytjs/test-utils",
+    "path": "packages/tools/packages/test-utils",
+    "success": true
+  },
+  {
+    "name": "@lytjs/plugin-vite",
+    "path": "packages/plugins/packages/plugin-vite",
+    "success": true
+  },
+  {
+    "name": "@lytjs/plugin-auth",
+    "path": "packages/plugins/packages/plugin-auth",
+    "success": true
+  },
+  {
+    "name": "@lytjs/plugin-storage",
+    "path": "packages/plugins/packages/plugin-storage",
+    "success": true
+  },
+  {
+    "name": "@lytjs/plugin-i18n",
+    "path": "packages/plugins/packages/plugin-i18n",
+    "success": true
+  },
+  {
+    "name": "@lytjs/plugin-form",
+    "path": "packages/plugins/packages/plugin-form",
+    "success": true
+  },
+  {
+    "name": "@lytjs/plugin-data",
+    "path": "packages/plugins/packages/plugin-data",
+    "success": true
+  },
+  {
+    "name": "@lytjs/plugin-data-fetch",
+    "path": "packages/plugins/packages/plugin-data-fetch",
+    "success": true
+  },
+  {
+    "name": "@lytjs/plugin-chart",
+    "path": "packages/plugins/packages/plugin-chart",
+    "success": false
+  },
+  {
+    "name": "@lytjs/plugin-animation",
+    "path": "packages/plugins/packages/plugin-animation",
+    "success": true
+  },
+  {
+    "name": "@lytjs/plugin-testing",
+    "path": "packages/plugins/packages/plugin-testing",
+    "success": true
+  },
+  {
+    "name": "@lytjs/plugin-theme",
+    "path": "packages/plugins/packages/plugin-theme",
+    "success": true
+  },
+  {
+    "name": "@lytjs/plugin-logger",
+    "path": "packages/plugins/packages/plugin-logger",
+    "success": true
+  },
+  {
+    "name": "@lytjs/plugin-validation",
+    "path": "packages/plugins/packages/plugin-validation",
+    "success": true
+  }
+]

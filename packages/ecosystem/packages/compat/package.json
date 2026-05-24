@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/compat",
-  "version": "6.8.0",
+  "version": "6.9.0",
   "description": "LytJS Vue 2/3 compatibility layer for migration support",
   "type": "module",
   "main": "./dist/index.cjs",

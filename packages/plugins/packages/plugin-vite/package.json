@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/plugin-vite",
-  "version": "6.8.0",
+  "version": "6.9.0",
   "description": "LytJS official Vite plugin for SFC compilation, HMR, and build optimizations",
   "type": "module",
   "main": "./dist/index.cjs",

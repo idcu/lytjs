@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/common-transition-engine",
-  "version": "6.8.0",
+  "version": "6.9.0",
   "description": "Platform-agnostic transition engine with FLIP animation support for LytJS",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",

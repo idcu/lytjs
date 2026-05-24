@@ -35,16 +35,17 @@ export class MiddlewareChain {
     const index = 0;
     const middlewares = this.middlewares;
 
-    const dispatch = async (i: number): Promise<unknown> => {
+    const dispatch = async (i: number): Promise<Response> => {
       if (i >= middlewares.length) {
-        return finalHandler(request, context);
+        const result = await finalHandler(request, context);
+        return result as unknown as Response;
       }
 
       const middleware = middlewares[i];
       if (middleware) {
-        const result = await middleware(request, context, () => dispatch(i + 1));
-        if (result) {
-          return result;
+        const result = await middleware(request, context, () => dispatch(i + 1) as unknown as Promise<void>);
+        if (result !== undefined && result !== null) {
+          return result as Response;
         }
       }
       return dispatch(i + 1);

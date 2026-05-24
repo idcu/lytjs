@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/middleware-rate-limit",
-  "version": "6.8.0",
+  "version": "6.9.0",
   "description": "LytJS 速率限制中间件",
   "type": "module",
   "main": "./dist/index.cjs",

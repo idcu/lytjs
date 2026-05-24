@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/common-dom-helpers",
-  "version": "6.8.0",
+  "version": "6.9.0",
   "description": "Lightweight DOM manipulation helpers for LytJS",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",

@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/ecosystem-monorepo",
-  "version": "6.8.0",
+  "version": "6.9.0",
   "private": true,
   "description": "LytJS ecosystem packages monorepo",
   "packageManager": "pnpm@9.15.4",

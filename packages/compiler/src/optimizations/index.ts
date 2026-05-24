@@ -1,9 +1,19 @@
 // packages/compiler/src/optimizations/index.ts
 // 编译器优化模块
 // Phase 1.12-1.14: 自动 memo 检测、死代码消除、AOT 预编译
+// v6.9.0: Tree Shaking 优化
 
 import type { RootNode, TemplateChildNode } from '../types';
 import { NodeTypes } from '../constants';
+
+// 导出 Tree Shaking 优化
+export * from './treeShaking';
+
+// 导出静态分析优化
+export * from './staticAnalysis';
+
+// 导出增量编译优化
+export * from './incremental-compile';
 
 // ============================================================
 // Phase 1.12: 自动 memo 检测

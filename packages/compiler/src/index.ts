@@ -104,8 +104,23 @@ const compileCache = new Map<string, CompileCacheEntry>();
 /** 内容哈希缓存 Map - 存储文件内容到哈希的映射 */
 const contentHashCache = new Map<string, string>();
 
-// FIX: P2-39 contentHashCache 添加 LRU 淘汰策略，避免无限增长导致内存泄漏
+/** FIX: P2-39 contentHashCache 添加 LRU 淘汰策略，避免无限增长导致内存泄漏 */
 const MAX_CONTENT_HASH_CACHE_SIZE = 200;
+
+/** 缓存统计信息 */
+interface CacheStats {
+  hits: number;
+  misses: number;
+  totalCompiles: number;
+  totalTime: number;
+}
+
+let cacheStats: CacheStats = {
+  hits: 0,
+  misses: 0,
+  totalCompiles: 0,
+  totalTime: 0,
+};
 
 /**
  * 简单的字符串哈希函数（djb2），用于生成缓存键。
@@ -215,7 +230,30 @@ export function getContentHashCacheSize(): number {
   return contentHashCache.size;
 }
 
+/**
+ * 获取缓存统计信息
+ */
+export function getCacheStats(): CacheStats {
+  return { ...cacheStats };
+}
+
+/**
+ * 重置缓存统计信息
+ */
+export function resetCacheStats(): void {
+  cacheStats = {
+    hits: 0,
+    misses: 0,
+    totalCompiles: 0,
+    totalTime: 0,
+  };
+}
+
 export function compile(source: string, options: CompilerOptions = {}): CodegenResult {
+  const startTime = performance.now();
+  cacheStats.totalCompiles++;
+
+
   // 0. 检查编译缓存（仅在无自定义 nodeTransforms/directiveTransforms 时使用缓存）
   const hasCustomTransforms =
     (options.nodeTransforms && options.nodeTransforms.length > 0) ||
@@ -230,8 +268,12 @@ export function compile(source: string, options: CompilerOptions = {}): CodegenR
       // 但这会导致 Map 内部存储重组（V8 中 Map 的 delete 操作
       // 在大量条目时可能触发哈希表重建），影响性能。
       // 对于编译缓存场景，非严格 LRU（仅淘汰最旧条目）已足够。
+      cacheStats.hits++;
+      const endTime = performance.now();
+      cacheStats.totalTime += (endTime - startTime);
       return { code: cached.code, preamble: cached.preamble, ast: cached.ast };
     }
+    cacheStats.misses++;
   }
 
   // 1. Parse template to AST
@@ -311,6 +353,9 @@ export function compile(source: string, options: CompilerOptions = {}): CodegenR
     });
   }
 
+  const endTime = performance.now();
+  cacheStats.totalTime += (endTime - startTime);
+
   return codegenResult;
 }
 
@@ -362,6 +407,7 @@ export type { ParentNode } from './types';
 export type { BaseNode } from './types';
 export type { Property } from './types';
 export type { RawSourceMap } from './types';
+export type { CacheStats };
 
 // AST helpers
 export { createRoot } from './ast';
