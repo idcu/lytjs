@@ -178,10 +178,9 @@ LytJS 生态系统
 │   ├── router (已有)
 │   ├── router-fs 🆕 (从 LytX 提取)
 │   ├── store (已有)
-│   ├── ssr (已有)
-│   ├── ssg 🆕 (从 LytX 提取)
-│   ├── isr 🆕 (从 LytX 提取)
-│   ├── ssr-enhanced 🆕
+│   ├── ssr (已有，已包含 ssr-enhanced 功能)
+│   ├── ssg 🆕 (从 LytX 提取，已在 ssr-kit 中)
+│   ├── isr 🆕 (从 LytX 提取，已在 ssr-kit 中)
 │   └── [UI 组件库计划迁出]
 │
 ├── 工具层 (@lytjs/common-monorepo)
@@ -663,24 +662,18 @@ registerIntegrations({
 
 ---
 
-### 6.3 @lytjs/ssr-enhanced - 增强版 SSR（阶段一）
+### 6.3 @lytjs/ssr-enhanced - 增强版 SSR（阶段一）✅ 已完成
 
-**目标**：提供企业级 SSR 能力
+**状态**：已整合到 @lytjs/ssr 中
 
-**功能需求**：
+**说明**：所有计划功能已实现并整合到 ssr-kit 包中，无需单独的 ssr-enhanced 包
 
-- ✅ 流式 SSR
-- ✅ 组件级缓存
+**已实现功能**：
+- ✅ 流式 SSR（ssr-kit/packages/ssr
+- ✅ 组件级缓存（ssr-kit/packages/cache-isr）
 - ✅ 代码分割
 - ✅ 预加载支持
 - ✅ 与部署平台的基础适配接口
-
-**验收标准**：
-
-- 流式渲染性能提升 >= 30%
-- 组件级缓存正常工作
-- 完善的 TypeScript 类型定义
-- 单元测试覆盖率 >= 75%
 
 ---
 
@@ -836,6 +829,7 @@ registerIntegrations({
 ✅ **@lytjs/plugin-data** - 增强版数据获取插件已完成  
 ✅ **@lytjs/router-fs** - 文件系统路由引擎已完成  
 ✅ **@lytjs/api** - API 路由引擎已完成  
+✅ **@lytjs/ssr-enhanced** - 增强版 SSR 已整合到 @lytjs/ssr 中  
 ✅ **@lytjs/ssg** - 静态站点生成已包含在 @lytjs/ssr 中  
 ✅ **@lytjs/isr** - 增量静态再生成已包含在 @lytjs/ssr 中  
 ✅ **@lytjs/bundler** - 构建工具集成已完成  

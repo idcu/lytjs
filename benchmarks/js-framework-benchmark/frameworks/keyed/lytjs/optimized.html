@@ -1,13 +1,10 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>LytJS v6.9.0 - js-framework-benchmark</title>
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/css/bootstrap.min.css"
-    />
+    <title>LytJS v6.9.0 - 优化模式</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/css/bootstrap.min.css" />
   </head>
   <body>
     <div class="container">
@@ -15,7 +12,22 @@
         <div class="row">
           <div class="col-md-12">
             <h1>LytJS v6.9.0</h1>
-            <p>js-framework-benchmark Implementation</p>
+            <p>优化模式 (Manual DOM) - 手动 DOM 优化实现</p>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-12">
+            <div style="padding: 15px; background: #d9edf7; border-radius: 5px;">
+              <strong>实现说明：</strong>
+              <ul>
+                <li>创建和追加：使用 DocumentFragment 一次性插入所有行</li>
+                <li>更新：只更新需要更新的行，不做全量协调</li>
+                <li>选择：直接修改 class，不触发全量重新渲染</li>
+                <li>删除：直接从 DOM 中删除对应节点</li>
+                <li>交换：直接操作 DOM 节点位置</li>
+                <li>这个实现用于展示手动优化的理论极限性能</li>
+              </ul>
+            </div>
           </div>
         </div>
         <div class="row">
@@ -63,7 +75,6 @@
       let tbody;
       let data = [];
       let selectedId = undefined;
-      let domCache = new Map();
 
       function createRow(item) {
         const tr = document.createElement('tr');
@@ -110,40 +121,13 @@
         return tr;
       }
 
-      function renderFull() {
-        if (!tbody) return;
-        const oldRows = Array.from(tbody.children);
-        const keyMap = new Map();
-        oldRows.forEach(row => {
-          const key = row.getAttribute('data-key');
-          if (key) keyMap.set(key, row);
-        });
-        const fragment = document.createDocumentFragment();
-        data.forEach(item => {
-          let row = keyMap.get(String(item.id));
-          if (row) {
-            row = updateRow(row, item, selectedId);
-            keyMap.delete(String(item.id));
-          } else {
-            row = createRow(item);
-            if (selectedId === item.id) row.className = 'danger';
-          }
-          fragment.appendChild(row);
-        });
-        while (tbody.firstChild) tbody.removeChild(tbody.firstChild);
-        tbody.appendChild(fragment);
-      }
-
       function run() {
         data = [];
-        domCache.clear();
         const fragment = document.createDocumentFragment();
         for (let i = 0; i < 1000; i++) {
           const item = { id: generateId(), label: generateRandomString() };
           data.push(item);
-          const row = createRow(item);
-          domCache.set(String(item.id), row);
-          fragment.appendChild(row);
+          fragment.appendChild(createRow(item));
         }
         selectedId = undefined;
         while (tbody.firstChild) tbody.removeChild(tbody.firstChild);
@@ -152,14 +136,11 @@
 
       function runLots() {
         data = [];
-        domCache.clear();
         const fragment = document.createDocumentFragment();
         for (let i = 0; i < 10000; i++) {
           const item = { id: generateId(), label: generateRandomString() };
           data.push(item);
-          const row = createRow(item);
-          domCache.set(String(item.id), row);
-          fragment.appendChild(row);
+          fragment.appendChild(createRow(item));
         }
         selectedId = undefined;
         while (tbody.firstChild) tbody.removeChild(tbody.firstChild);
@@ -171,9 +152,7 @@
         for (let i = 0; i < 1000; i++) {
           const item = { id: generateId(), label: generateRandomString() };
           data.push(item);
-          const row = createRow(item);
-          domCache.set(String(item.id), row);
-          fragment.appendChild(row);
+          fragment.appendChild(createRow(item));
         }
         tbody.appendChild(fragment);
       }
@@ -182,16 +161,13 @@
         const rows = Array.from(tbody.children);
         for (let i = 0; i < data.length; i += 10) {
           data[i].label += ' !!!';
-          if (rows[i]) {
-            updateRow(rows[i], data[i], selectedId);
-          }
+          if (rows[i]) updateRow(rows[i], data[i], selectedId);
         }
       }
 
       function clear() {
         data = [];
         selectedId = undefined;
-        domCache.clear();
         while (tbody.firstChild) tbody.removeChild(tbody.firstChild);
       }
 
@@ -215,11 +191,10 @@
       }
 
       function remove(id) {
-        const index = data.findIndex(item => item.id !== id);
+        const index = data.findIndex(item => item.id === id);
         if (index >= 0) {
           const rows = Array.from(tbody.children);
           if (rows[index]) tbody.removeChild(rows[index]);
-          domCache.delete(String(id));
           data.splice(index, 1);
         }
       }

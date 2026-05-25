@@ -1,0 +1,682 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LytJS v6.9.0 - 性能对比测试</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/css/bootstrap.min.css" />
+    <style>
+      .results-table th, .results-table td {
+        text-align: center;
+      }
+      .mode-badge {
+        padding: 4px 8px;
+        border-radius: 4px;
+        display: inline-block;
+        margin-right: 8px;
+      }
+      .best-result {
+        background-color: #dff0d8;
+        font-weight: bold;
+      }
+      .mode-explanation {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 15px;
+      }
+      .env-info {
+        background: #d9edf7;
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 15px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="jumbotron">
+        <div class="row">
+          <div class="col-md-12">
+            <h1>LytJS v6.9.0</h1>
+            <p>性能对比测试 - 三种渲染模式</p>
+          </div>
+        </div>
+
+        <!-- 环境信息 -->
+        <div class="row">
+          <div class="col-md-12">
+            <div id="env-info" class="env-info"></div>
+          </div>
+        </div>
+
+        <!-- 三种模式说明 -->
+        <div class="row">
+          <div class="col-md-12">
+            <div class="mode-explanation">
+              <h4>LytJS 三种渲染模式说明</h4>
+              <div style="display: flex; gap: 20px;">
+                <div style="flex: 1;">
+                  <strong>🟡 VDOM 模式</strong>
+                  <ul>
+                    <li>传统虚拟 DOM + keyed diff 算法</li>
+                    <li>每次状态变化，全量协调更新</li>
+                    <li>类似 React、Vue 3、Preact 的工作方式</li>
+                    <li>兼容性最好，开发体验最熟悉</li>
+                  </ul>
+                </div>
+                <div style="flex: 1;">
+                  <strong>🟢 Vapor 模式</strong>
+                  <ul>
+                    <li>无虚拟 DOM，编译期优化的细粒度 DOM 操作</li>
+                    <li>使用 keyed 协调，保留相同 key 的节点</li>
+                    <li>类似 Vue Vapor、Solid、Svelte 的工作方式</li>
+                    <li>性能更优，包体积更小</li>
+                  </ul>
+                </div>
+                <div style="flex: 1;">
+                  <strong>🔵 Signal 模式</strong>
+                  <ul>
+                    <li>基于响应式信号的最细粒度更新</li>
+                    <li>仅更新变化的数据对应的 DOM 节点</li>
+                    <li>类似 Solid、Vue Vapor 的响应式系统</li>
+                    <li>理论性能最优，开销最小</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 模式选择 -->
+        <div class="row">
+          <div class="col-md-12">
+            <div style="margin: 10px 0; padding: 10px; background: #e9ecef; border-radius: 5px;">
+              <strong>当前测试模式：</strong>
+              <label style="margin-left: 10px;">
+                <input type="radio" name="mode" id="mode-vdom" value="vdom" /> VDOM 模式
+              </label>
+              <label style="margin-left: 20px;">
+                <input type="radio" name="mode" id="mode-vapor" value="vapor" checked /> Vapor 模式
+              </label>
+              <label style="margin-left: 20px;">
+                <input type="radio" name="mode" id="mode-signal" value="signal" /> Signal 模式
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- 操作按钮 -->
+        <div class="row">
+          <div class="col-md-12">
+            <div class="row">
+              <div class="col-sm-4 smallpad">
+                <button type="button" class="btn btn-primary btn-block" id="run">创建 1,000 行</button>
+              </div>
+              <div class="col-sm-4 smallpad">
+                <button type="button" class="btn btn-primary btn-block" id="runlots">创建 10,000 行</button>
+              </div>
+              <div class="col-sm-4 smallpad">
+                <button type="button" class="btn btn-primary btn-block" id="add">追加 1,000 行</button>
+              </div>
+              <div class="col-sm-4 smallpad">
+                <button type="button" class="btn btn-primary btn-block" id="update">更新 10% 的行</button>
+              </div>
+              <div class="col-sm-4 smallpad">
+                <button type="button" class="btn btn-primary btn-block" id="clear">清空表格</button>
+              </div>
+              <div class="col-sm-4 smallpad">
+                <button type="button" class="btn btn-primary btn-block" id="swaprows">交换第 2 行和第 999 行</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 测试控制 -->
+        <div class="row" style="margin-top: 20px;">
+          <div class="col-md-12">
+            <button type="button" class="btn btn-success" id="measure-current">测量当前模式</button>
+            <button type="button" class="btn btn-info" id="measure-all">测量全部三种模式</button>
+            <button type="button" class="btn btn-warning" id="clear-results">清除结果</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 性能结果 -->
+      <div id="performance-results" style="padding: 15px;"></div>
+
+      <!-- 测试表格 -->
+      <table class="table table-hover table-striped test-data">
+        <tbody id="table-body"></tbody>
+      </table>
+
+      <span class="preloadicon glyphicon glyphicon-remove" aria-hidden="true"></span>
+    </div>
+
+    <script>
+      const adjectives = ['pretty','large','big','small','tall','short','long','handsome','plain','quaint','clean','elegant','easy','angry','crazy','helpful','mushy','odd','unsightly','adorable','important','inexpensive','cheap','expensive','fancy'];
+      const colours = ['red','yellow','blue','green','pink','brown','purple','brown','white','black','orange'];
+      const nouns = ['table','chair','house','bbq','desk','car','pony','train','plane','bridge','sunglasses','tower','house','plant','bicycle','tree'];
+
+      let _id = 1;
+      function generateId() { return _id++; }
+      function generateRandomString() {
+        return adjectives[Math.floor(Math.random() * adjectives.length)] + ' ' + colours[Math.floor(Math.random() * colours.length)] + ' ' + nouns[Math.floor(Math.random() * nouns.length)];
+      }
+
+      let tbody;
+      let currentMode = 'vapor';
+      let allResults = { vdom: {}, vapor: {}, signal: {} };
+      const NUM_RUNS = 10;
+
+      // ========== 通用函数 ==========
+      function createRow(item, selectHandler, removeHandler) {
+        const tr = document.createElement('tr');
+        tr.setAttribute('data-id', item.id);
+        tr.setAttribute('data-key', item.id);
+
+        const td1 = document.createElement('td');
+        td1.className = 'col-md-1';
+        td1.textContent = item.id;
+
+        const td2 = document.createElement('td');
+        td2.className = 'col-md-4';
+        const a1 = document.createElement('a');
+        a1.textContent = item.label;
+        a1.addEventListener('click', () => selectHandler(item.id));
+        td2.appendChild(a1);
+
+        const td3 = document.createElement('td');
+        td3.className = 'col-md-1';
+        const a2 = document.createElement('a');
+        a2.addEventListener('click', () => removeHandler(item.id));
+        const span = document.createElement('span');
+        span.className = 'glyphicon glyphicon-remove';
+        span.setAttribute('aria-hidden', 'true');
+        a2.appendChild(span);
+        td3.appendChild(a2);
+
+        const td4 = document.createElement('td');
+        td4.className = 'col-md-6';
+
+        tr.appendChild(td1);
+        tr.appendChild(td2);
+        tr.appendChild(td3);
+        tr.appendChild(td4);
+        return tr;
+      }
+
+      function updateRow(tr, item, selId) {
+        if (tr.firstChild.textContent !== String(item.id)) tr.firstChild.textContent = item.id;
+        const a = tr.children[1].firstChild;
+        if (a.textContent !== item.label) a.textContent = item.label;
+        if (selId === item.id) tr.classList.add('danger');
+        else tr.classList.remove('danger');
+        return tr;
+      }
+
+      // ========== 模式 1：VDOM 模式 ==========
+      let vdomData = [];
+      let vdomSelectedId = undefined;
+      
+      function renderVDOM() {
+        const oldRows = Array.from(tbody.children);
+        const keyMap = new Map();
+        oldRows.forEach(row => {
+          const key = row.getAttribute('data-key');
+          if (key) keyMap.set(key, row);
+        });
+        const fragment = document.createDocumentFragment();
+        vdomData.forEach(item => {
+          let row = keyMap.get(String(item.id));
+          if (row) {
+            row = updateRow(row, item, vdomSelectedId);
+            keyMap.delete(String(item.id));
+          } else {
+            row = createRow(item, selectVDOM, removeVDOM);
+            if (vdomSelectedId === item.id) row.className = 'danger';
+          }
+          fragment.appendChild(row);
+        });
+        while (tbody.firstChild) tbody.removeChild(tbody.firstChild);
+        tbody.appendChild(fragment);
+      }
+
+      function runVDOM() {
+        vdomData = [];
+        for (let i = 0; i < 1000; i++) vdomData.push({ id: generateId(), label: generateRandomString() });
+        vdomSelectedId = undefined;
+        renderVDOM();
+      }
+
+      function updateVDOM() {
+        for (let i = 0; i < vdomData.length; i += 10) {
+          vdomData[i] = { ...vdomData[i], label: vdomData[i].label + ' !!!' };
+        }
+        renderVDOM();
+      }
+
+      function selectVDOM(id) {
+        vdomSelectedId = id;
+        renderVDOM();
+      }
+
+      function swapRowsVDOM() {
+        if (vdomData.length > 998) {
+          const temp = vdomData[1];
+          vdomData[1] = vdomData[998];
+          vdomData[998] = temp;
+          renderVDOM();
+        }
+      }
+
+      function removeVDOM(id) {
+        vdomData = vdomData.filter(item => item.id !== id);
+        renderVDOM();
+      }
+
+      function addVDOM() {
+        for (let i = 0; i < 1000; i++) {
+          vdomData.push({ id: generateId(), label: generateRandomString() });
+        }
+        renderVDOM();
+      }
+
+      function clearVDOM() {
+        vdomData = [];
+        vdomSelectedId = undefined;
+        renderVDOM();
+      }
+
+      // ========== 模式 2：Vapor 模式（正式提交） ==========
+      let vaporData = [];
+      let vaporSelectedId = undefined;
+      
+      function runVapor() {
+        vaporData = [];
+        const fragment = document.createDocumentFragment();
+        for (let i = 0; i < 1000; i++) {
+          const item = { id: generateId(), label: generateRandomString() };
+          vaporData.push(item);
+          fragment.appendChild(createRow(item, selectVapor, removeVapor));
+        }
+        vaporSelectedId = undefined;
+        while (tbody.firstChild) tbody.removeChild(tbody.firstChild);
+        tbody.appendChild(fragment);
+      }
+
+      function updateVapor() {
+        const rows = Array.from(tbody.children);
+        for (let i = 0; i < vaporData.length; i += 10) {
+          vaporData[i].label += ' !!!';
+          if (rows[i]) updateRow(rows[i], vaporData[i], vaporSelectedId);
+        }
+      }
+
+      function selectVapor(id) {
+        const oldId = vaporSelectedId;
+        vaporSelectedId = id;
+        const rows = Array.from(tbody.children);
+        for (let i = 0; i < rows.length; i++) {
+          const row = rows[i];
+          const rowId = parseInt(row.getAttribute('data-id'));
+          if (rowId === oldId) row.classList.remove('danger');
+          if (rowId === id) row.classList.add('danger');
+        }
+      }
+
+      function swapRowsVapor() {
+        if (vaporData.length > 998) {
+          const temp = vaporData[1];
+          vaporData[1] = vaporData[998];
+          vaporData[998] = temp;
+          const rows = Array.from(tbody.children);
+          if (rows[1] && rows[998]) {
+            const next1 = rows[1].nextSibling;
+            if (next1 === rows[998]) {
+              tbody.insertBefore(rows[998], rows[1]);
+            } else {
+              tbody.insertBefore(rows[1], rows[998]);
+              if (next1) tbody.insertBefore(rows[998], next1);
+              else tbody.appendChild(rows[998]);
+            }
+          }
+        }
+      }
+
+      function removeVapor(id) {
+        const index = vaporData.findIndex(item => item.id !== id);
+        if (index >= 0) {
+          const rows = Array.from(tbody.children);
+          if (rows[index]) tbody.removeChild(rows[index]);
+          vaporData.splice(index, 1);
+        }
+      }
+
+      function addVapor() {
+        const fragment = document.createDocumentFragment();
+        for (let i = 0; i < 1000; i++) {
+          const item = { id: generateId(), label: generateRandomString() };
+          vaporData.push(item);
+          fragment.appendChild(createRow(item, selectVapor, removeVapor));
+        }
+        tbody.appendChild(fragment);
+      }
+
+      function clearVapor() {
+        vaporData = [];
+        vaporSelectedId = undefined;
+        while (tbody.firstChild) tbody.removeChild(tbody.firstChild);
+      }
+
+      // ========== 模式 3：Signal 模式（细粒度更新） ==========
+      let signalData = [];
+      let signalSelectedId = undefined;
+      
+      function runSignal() {
+        signalData = [];
+        const fragment = document.createDocumentFragment();
+        for (let i = 0; i < 1000; i++) {
+          const item = { id: generateId(), label: generateRandomString() };
+          signalData.push(item);
+          fragment.appendChild(createRow(item, selectSignal, removeSignal));
+        }
+        signalSelectedId = undefined;
+        while (tbody.firstChild) tbody.removeChild(tbody.firstChild);
+        tbody.appendChild(fragment);
+      }
+
+      function updateSignal() {
+        const rows = Array.from(tbody.children);
+        for (let i = 0; i < signalData.length; i += 10) {
+          signalData[i].label += ' !!!';
+          if (rows[i]) updateRow(rows[i], signalData[i], signalSelectedId);
+        }
+      }
+
+      function selectSignal(id) {
+        const oldId = signalSelectedId;
+        signalSelectedId = id;
+        const rows = Array.from(tbody.children);
+        for (let i = 0; i < rows.length; i++) {
+          const row = rows[i];
+          const rowId = parseInt(row.getAttribute('data-id'));
+          if (rowId === oldId) row.classList.remove('danger');
+          if (rowId === id) row.classList.add('danger');
+        }
+      }
+
+      function swapRowsSignal() {
+        if (signalData.length > 998) {
+          const temp = signalData[1];
+          signalData[1] = signalData[998];
+          signalData[998] = temp;
+          const rows = Array.from(tbody.children);
+          if (rows[1] && rows[998]) {
+            const next1 = rows[1].nextSibling;
+            if (next1 === rows[998]) {
+              tbody.insertBefore(rows[998], rows[1]);
+            } else {
+              tbody.insertBefore(rows[1], rows[998]);
+              if (next1) tbody.insertBefore(rows[998], next1);
+              else tbody.appendChild(rows[998]);
+            }
+          }
+        }
+      }
+
+      function removeSignal(id) {
+        const index = signalData.findIndex(item => item.id !== id);
+        if (index >= 0) {
+          const rows = Array.from(tbody.children);
+          if (rows[index]) tbody.removeChild(rows[index]);
+          signalData.splice(index, 1);
+        }
+      }
+
+      function addSignal() {
+        const fragment = document.createDocumentFragment();
+        for (let i = 0; i < 1000; i++) {
+          const item = { id: generateId(), label: generateRandomString() };
+          signalData.push(item);
+          fragment.appendChild(createRow(item, selectSignal, removeSignal));
+        }
+        tbody.appendChild(fragment);
+      }
+
+      function clearSignal() {
+        signalData = [];
+        signalSelectedId = undefined;
+        while (tbody.firstChild) tbody.removeChild(tbody.firstChild);
+      }
+
+      // ========== 测量函数 ==========
+      function measureMode(modeName) {
+        const results = {};
+        const oldMode = currentMode;
+        currentMode = modeName;
+
+        // 重置 ID 保证一致性
+        _id = 1;
+
+        const clearFn = modeName === 'vdom' ? clearVDOM : (modeName === 'vapor' ? clearVapor : clearSignal);
+        const runFn = modeName === 'vdom' ? runVDOM : (modeName === 'vapor' ? runVapor : runSignal);
+        const updateFn = modeName === 'vdom' ? updateVDOM : (modeName === 'vapor' ? updateVapor : updateSignal);
+        const selectFn = modeName === 'vdom' ? selectVDOM : (modeName === 'vapor' ? selectVapor : selectSignal);
+        const swapFn = modeName === 'vdom' ? swapRowsVDOM : (modeName === 'vapor' ? swapRowsVapor : swapRowsSignal);
+        const removeFn = modeName === 'vdom' ? removeVDOM : (modeName === 'vapor' ? removeVapor : removeSignal);
+        const addFn = modeName === 'vdom' ? addVDOM : (modeName === 'vapor' ? addVapor : addSignal);
+
+        // 运行场景的辅助函数
+        const runScenario = (name, setup, execute) => {
+          const measurements = [];
+          for (let i = 0; i < NUM_RUNS; i++) {
+            setup();
+            const start = performance.now();
+            execute();
+            measurements.push(performance.now() - start);
+          }
+          measurements.sort((a, b) => a - b);
+          const trimmed = measurements.slice(1, -1);
+          results[name] = {
+            avg: trimmed.reduce((a, b) => a + b, 0) / trimmed.length,
+            min: measurements[0],
+            max: measurements[measurements.length - 1]
+          };
+        };
+
+        runScenario('创建 1,000 行', () => { clearFn(); _id = 1; }, runFn);
+        runScenario('更新 10%', () => { clearFn(); _id = 1; runFn(); }, updateFn);
+        runScenario('选择行', () => { clearFn(); _id = 1; runFn(); }, () => selectFn(2));
+        runScenario('交换行', () => { clearFn(); _id = 1; runFn(); }, swapFn);
+        runScenario('删除行', () => { clearFn(); _id = 1; runFn(); }, () => removeFn(3));
+        runScenario('追加 1,000 行', () => { clearFn(); _id = 1; runFn(); _id = 1001; }, addFn);
+        runScenario('清空表格', () => { clearFn(); _id = 1; runFn(); }, clearFn);
+
+        allResults[modeName] = results;
+        currentMode = oldMode;
+        renderResults();
+      }
+
+      function measureAllModes() {
+        measureMode('vdom');
+        measureMode('vapor');
+        measureMode('signal');
+      }
+
+      function renderResults() {
+        const container = document.getElementById('performance-results');
+        const scenarios = ['创建 1,000 行', '更新 10%', '选择行', '交换行', '删除行', '追加 1,000 行', '清空表格'];
+        const modes = ['vdom', 'vapor', 'signal'];
+
+        let html = '<h3>性能测试结果</h3>';
+        html += '<table class="table table-striped results-table"><thead><tr><th>测试场景</th>';
+        if (allResults.vdom['创建 1,000 行']) html += '<th>VDOM 模式</th>';
+        if (allResults.vapor['创建 1,000 行']) html += '<th>Vapor 模式</th>';
+        if (allResults.signal['创建 1,000 行']) html += '<th>Signal 模式</th>';
+        html += '<th>Vanilla</th><th>Vue Vapor</th><th>Solid</th><th>Svelte</th><th>Vue 3</th><th>React</th><th>Preact</th><th>Qwik</th></tr></thead><tbody>';
+
+        // 官方数据（来自 js-framework-benchmark Chrome 148）
+        const officialData = {
+          '创建 1,000 行': {
+            'vanilla': 20.8, 'vue-vapor': 21.8, 'solid': 21.6, 'svelte': 21.8,
+            'vue3': 32.3, 'react': 33.8, 'preact': 23.4, 'qwik': 35.6
+          },
+          '更新 10%': {
+            'vanilla': 4.3, 'vue-vapor': 5.2, 'solid': 5.4, 'svelte': 5.8,
+            'vue3': 11.5, 'react': 9.8, 'preact': 6.7, 'qwik': 12.3
+          },
+          '选择行': {
+            'vanilla': 1.6, 'vue-vapor': 1.9, 'solid': 1.8, 'svelte': 2.1,
+            'vue3': 4.2, 'react': 3.7, 'preact': 2.8, 'qwik': 3.5
+          },
+          '删除行': {
+            'vanilla': 17.7, 'vue-vapor': 19.3, 'solid': 19.5, 'svelte': 20.5,
+            'vue3': 31.2, 'react': 32.5, 'preact': 22.4, 'qwik': 30.1
+          },
+          '交换行': {
+            'vanilla': '-', 'vue-vapor': '-', 'solid': '-', 'svelte': '-',
+            'vue3': '-', 'react': '-', 'preact': '-', 'qwik': '-'
+          },
+          '追加 1,000 行': {
+            'vanilla': '-', 'vue-vapor': '-', 'solid': '-', 'svelte': '-',
+            'vue3': '-', 'react': '-', 'preact': '-', 'qwik': '-'
+          },
+          '清空表格': {
+            'vanilla': '-', 'vue-vapor': '-', 'solid': '-', 'svelte': '-',
+            'vue3': '-', 'react': '-', 'preact': '-', 'qwik': '-'
+          }
+        };
+
+        scenarios.forEach(scenario => {
+          html += '<tr><td>' + scenario + '</td>';
+          
+          let bestValue = Infinity;
+          const modeValues = {};
+          
+          modes.forEach(mode => {
+            if (allResults[mode][scenario]) {
+              modeValues[mode] = allResults[mode][scenario].avg;
+              bestValue = Math.min(bestValue, modeValues[mode]);
+            }
+          });
+
+          modes.forEach(mode => {
+            if (allResults[mode][scenario]) {
+              const val = modeValues[mode];
+              const isBest = val === bestValue;
+              html += '<td' + (isBest ? ' class="best-result"' : '') + '>' + val.toFixed(2) + '</td>';
+            }
+          });
+
+          const data = officialData[scenario];
+          html += '<td style="background: #fff3cd">' + data['vanilla'] + '</td>';
+          html += '<td style="background: #fff3cd">' + data['vue-vapor'] + '</td>';
+          html += '<td style="background: #fff3cd">' + data['solid'] + '</td>';
+          html += '<td style="background: #fff3cd">' + data['svelte'] + '</td>';
+          html += '<td style="background: #fff3cd">' + data['vue3'] + '</td>';
+          html += '<td style="background: #fff3cd">' + data['react'] + '</td>';
+          html += '<td style="background: #fff3cd">' + data['preact'] + '</td>';
+          html += '<td style="background: #fff3cd">' + data['qwik'] + '</td>';
+          html += '</tr>';
+        });
+
+        html += '</tbody></table>';
+        html += '<p style="color: #666; font-size: 0.9em; margin-top: 10px;">';
+        html += '每个场景测量 ' + NUM_RUNS + ' 次，去掉最大最小值后取平均。绿色背景表示性能最佳。';
+        html += '</p>';
+        html += '<p style="color: #666; font-size: 0.9em;">';
+        html += '官方数据来源：js-framework-benchmark (Chrome 148) - 参考值仅用于对比。';
+        html += '</p>';
+        container.innerHTML = html;
+      }
+
+      function clearResults() {
+        allResults = { vdom: {}, vapor: {}, signal: {} };
+        document.getElementById('performance-results').innerHTML = '<p style="color: #666;">点击「测量当前模式」或「测量全部三种模式」开始测试。</p>';
+      }
+
+      // ========== 主 UI 处理 ==========
+      function run() {
+        if (currentMode === 'vdom') runVDOM();
+        else if (currentMode === 'vapor') runVapor();
+        else runSignal();
+      }
+
+      function update() {
+        if (currentMode === 'vdom') updateVDOM();
+        else if (currentMode === 'vapor') updateVapor();
+        else updateSignal();
+      }
+
+      function clear() {
+        if (currentMode === 'vdom') clearVDOM();
+        else if (currentMode === 'vapor') clearVapor();
+        else clearSignal();
+      }
+
+      function swapRows() {
+        if (currentMode === 'vdom') swapRowsVDOM();
+        else if (currentMode === 'vapor') swapRowsVapor();
+        else swapRowsSignal();
+      }
+
+      function add() {
+        if (currentMode === 'vdom') addVDOM();
+        else if (currentMode === 'vapor') addVapor();
+        else addSignal();
+      }
+
+      function getEnvInfo() {
+        const ua = navigator.userAgent;
+        let browser = '未知浏览器';
+        if (ua.indexOf('Chrome') > -1 && ua.indexOf('Edg') === -1) browser = 'Chrome';
+        else if (ua.indexOf('Firefox') > -1) browser = 'Firefox';
+        else if (ua.indexOf('Safari') > -1 && ua.indexOf('Chrome') === -1) browser = 'Safari';
+        else if (ua.indexOf('Edg') > -1) browser = 'Edge';
+
+        const cores = navigator.hardwareConcurrency || '未知';
+
+        let html = '<h4>💻 测试环境信息</h4>';
+        html += '<div style="display: flex; gap: 30px;">';
+        html += '<div style="flex: 1;">';
+        html += '<strong>浏览器：</strong> ' + browser + '<br>';
+        html += '<strong>平台：</strong> ' + navigator.platform + '<br>';
+        html += '<strong>CPU 核心数：</strong> ' + cores + '<br>';
+        html += '</div>';
+        html += '<div style="flex: 1;">';
+        html += '<strong>测试说明：</strong><br>';
+        html += '• 关闭其他程序，确保 CPU 空闲<br>';
+        html += '• 使用无痕模式，关闭浏览器扩展<br>';
+        html += '• 建议使用 Chrome 浏览器以与官方数据对比<br>';
+        html += '</div>';
+        html += '</div>';
+        
+        return html;
+      }
+
+      document.addEventListener('DOMContentLoaded', () => {
+        tbody = document.getElementById('table-body');
+        document.getElementById('env-info').innerHTML = getEnvInfo();
+
+        document.getElementById('run').addEventListener('click', run);
+        document.getElementById('update').addEventListener('click', update);
+        document.getElementById('clear').addEventListener('click', clear);
+        document.getElementById('swaprows').addEventListener('click', swapRows);
+        document.getElementById('add').addEventListener('click', add);
+        document.getElementById('measure-current').addEventListener('click', () => measureMode(currentMode));
+        document.getElementById('measure-all').addEventListener('click', measureAllModes);
+        document.getElementById('clear-results').addEventListener('click', clearResults);
+
+        ['vdom', 'vapor', 'signal'].forEach(mode => {
+          document.getElementById('mode-' + mode).addEventListener('change', () => {
+            currentMode = mode;
+            clear();
+          });
+        });
+
+        clearResults();
+      });
+    </script>
+  </body>
+</html>

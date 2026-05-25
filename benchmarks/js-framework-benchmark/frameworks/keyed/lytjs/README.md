@@ -1,138 +1,92 @@
-# LytJS v6.4.0 - js-framework-benchmark Implementation
+# LytJS - js-framework-benchmark 实现
 
-这是一个 LytJS 的 js-framework-benchmark 实现，展示了 LytJS Signal + 直接 DOM 操作的极致性能。
+这是 LytJS 框架在 js-framework-benchmark 中的实现。
 
-## 🚀 快速开始
+## 📁 文件说明
 
-### 无需构建 - 直接在浏览器中运行
+| 文件 | 用途 |
+|------|------|
+| [index.html](./index.html) | **官方提交版本** - Vapor 模式（正式提交使用） |
+| [vdom.html](./vdom.html) | VDOM 模式 - 传统虚拟 DOM 实现 |
+| [signal.html](./signal.html) | Signal 模式 - 细粒度响应式更新 |
+| [compare.html](./compare.html) | **性能对比页面** - 三种模式 + 8个官方框架对比 |
+| [package.json](./package.json) | 框架配置信息 |
 
-1. 在浏览器中打开 `index.html` 文件
-2. 或者使用本地服务器：`python -m http.server 8080`（在文件目录中）
-3. 然后访问 http://localhost:8080
+## 🚀 使用说明
 
-### 使用 Vite 开发服务器
+### 方法 1：本地服务器
 
 ```bash
-# 安装依赖
-pnpm install
-
-# 启动开发服务器
-pnpm dev
+# 启动本地服务器
+python -m http.server 8080
+# 或
+node server.js
 ```
 
-## 📊 实现说明
+然后在浏览器中打开：
+- http://localhost:8080 - Vapor 模式（官方提交）
+- http://localhost:8080/compare.html - 性能对比页面
 
-### 核心特性
+### 方法 2：直接打开文件
 
-- **Signal 响应式系统**：简化版 Signal 实现，展示核心响应式原理
-- **直接 DOM 操作**：无虚拟 DOM 开销，极致性能
-- **批量更新优化**：使用 batch 减少渲染次数
-- **DocumentFragment**：批量 DOM 操作优化
-- **requestAnimationFrame**：防抖渲染优化
+直接用浏览器打开对应 HTML 文件。
 
-### 实现的测试场景
+## 📊 LytJS 三种渲染模式
 
-| 场景           | 按钮                    | 说明                     |
-| -------------- | ----------------------- | ------------------------ |
-| 创建 1,000 行  | `Create 1,000 rows`     | 生成 1,000 个随机数据行  |
-| 创建 10,000 行 | `Create 10,000 rows`    | 生成 10,000 个随机数据行 |
-| 追加 1,000 行  | `Append 1,000 rows`     | 向现有数据追加 1,000 行  |
-| 更新每 10 行   | `Update every 10th row` | 更新每第 10 行的文本     |
-| 清空表格       | `Clear`                 | 清空所有数据             |
-| 交换行         | `Swap Rows`             | 交换第 1 行和第 998 行   |
+### 1️⃣ VDOM 模式
 
-## 🔧 技术细节
+传统虚拟 DOM + keyed diff 算法实现
 
-### Signal 实现
+**特点：**
+- 每次状态变化，全量协调更新
+- 类似 React、Vue 3、Preact 的工作方式
+- 兼容性最好，开发体验最熟悉
 
-```javascript
-function signal(initialValue) {
-  let value = initialValue;
-  const subscribers = new Set();
+### 2️⃣ Vapor 模式（正式提交）
 
-  const signalFn = function () {
-    // 读取值并追踪订阅者
-    return value;
-  };
+无虚拟 DOM，编译期优化的细粒度 DOM 操作
 
-  signalFn.set = function (newValue) {
-    if (Object.is(newValue, value)) return;
-    value = newValue;
-    // 通知所有订阅者
-    subscribers.forEach((sub) => sub());
-  };
+**特点：**
+- 使用 keyed 协调，保留相同 key 的节点
+- 类似 Vue Vapor、Solid、Svelte 的工作方式
+- 性能更优，包体积更小
+- **这是用于官方提交的模式**
 
-  signalFn._subscribe = function (subscriber) {
-    subscribers.add(subscriber);
-    return () => subscribers.delete(subscriber);
-  };
+### 3️⃣ Signal 模式
 
-  return signalFn;
-}
-```
+基于响应式信号的最细粒度更新
 
-### 性能优化策略
+**特点：**
+- 仅更新变化的数据对应的 DOM 节点
+- 类似 Solid、Vue Vapor 的响应式系统
+- 理论性能最优，开销最小
 
-1. **批量更新**：使用 `batch()` 包裹多次状态更新
-2. **DocumentFragment**：一次性插入多个 DOM 节点
-3. **防抖渲染**：使用 `requestAnimationFrame` 避免频繁渲染
-4. **事件委托**：减少事件监听器数量
+## 📋 官方数据对比（Chrome 148）
 
-## 📈 性能基准
+| 场景 | Vanilla | Vue Vapor | Solid | Svelte | Vue 3 | React | Preact | Qwik | LytJS (预期) |
+|------|---------|-----------|-------|--------|-------|-------|--------|------|--------------|
+| 创建 1000 行 | 20.8 | 21.8 | 21.6 | 21.8 | 32.3 | 33.8 | 23.4 | 35.6 | 20-25 |
+| 更新 10% | 4.3 | 5.2 | 5.4 | 5.8 | 11.5 | 9.8 | 6.7 | 12.3 | 4-6 |
+| 选择行 | 1.6 | 1.9 | 1.8 | 2.1 | 4.2 | 3.7 | 2.8 | 3.5 | 1.5-2 |
+| 删除行 | 17.7 | 19.3 | 19.5 | 20.5 | 31.2 | 32.5 | 22.4 | 30.1 | 17-22 |
 
-根据最新基准测试数据（2026-05-18）：
+## 🧪 性能测试
 
-| 指标               | 数值          | 评级            |
-| ------------------ | ------------- | --------------- |
-| **单节点更新**     | 158,873 ops/s | ⭐⭐⭐⭐⭐ 卓越 |
-| **交换两行**       | 25,010 ops/s  | ⭐⭐⭐⭐ 优秀   |
-| **删除中间行**     | 24,699 ops/s  | ⭐⭐⭐⭐ 优秀   |
-| **反转列表**       | 24,175 ops/s  | ⭐⭐⭐⭐ 优秀   |
-| **筛选列表(一半)** | 21,480 ops/s  | ⭐⭐⭐⭐ 优秀   |
-| **排序**           | 4,732 ops/s   | ⭐⭐⭐ 良好     |
-| **选择行(高亮)**   | 4,997 ops/s   | ⭐⭐⭐ 良好     |
-| **追加1000行**     | 9,987 ops/s   | ⭐⭐⭐⭐ 良好   |
-| **前置1000行**     | 10,161 ops/s  | ⭐⭐⭐⭐ 良好   |
-| **更新1000节点**   | 1,251 ops/s   | ⭐⭐⭐ 一般     |
-| **综合评分**       | -             | ⭐⭐⭐⭐ 优秀   |
+打开 [compare.html](./compare.html) 页面可以：
+1. 切换三种模式进行实时测试
+2. 自动测量所有场景的性能
+3. 与 8 个官方框架数据对比
+4. 查看最佳性能模式
 
-详细性能数据请参考：[PERFORMANCE_BASELINE_AND_PLANS.md](../../docs/development/PERFORMANCE_BASELINE_AND_PLANS.md)
+## 🏁 提交 PR
 
-## 📁 项目结构
+向 js-framework-benchmark 提交 PR 时，只需要：
+1. 使用 [index.html](./index.html)（Vapor 模式）作为框架实现
+2. 使用 [package.json](./package.json) 作为配置文件
+3. 确保通过 isKeyed 测试
 
-```
-lytjs/
-└── benchmarks/
-    └── js-framework-benchmark/
-        └── frameworks/
-            └── keyed/
-                └── lytjs/
-                    ├── index.html          # 完整实现（包含 Signal）
-                    └── README.md           # 本文档
-```
+## 📝 相关文档
 
-## 🤝 与官方集成
-
-要将此实现提交到官方 js-framework-benchmark 仓库：
-
-1. 克隆官方仓库
-2. 复制 `lytjs/` 目录到 `frameworks/keyed/`
-3. 添加构建配置（使用 Vite 或其他构建工具）
-4. 按照官方文档运行基准测试
-
-## 📚 相关文档
-
-- [ROADMAP_NEXT_STEPS.md](../../docs/development/ROADMAP_NEXT_STEPS.md)
-- [PERFORMANCE_BASELINE_AND_PLANS.md](../../docs/development/PERFORMANCE_BASELINE_AND_PLANS.md)
-- [js-framework-benchmark 官方仓库](https://github.com/krausest/js-framework-benchmark)
-- [LytJS 官方文档](https://lytjs.dev)
-
-## 📄 License
-
-MIT License - 与 LytJS 项目保持一致
-
----
-
-**版本**：v6.4.0
-**最后更新**：2026-05-18
-**维护者**：LytJS Team
+- [TEST_MANUAL.md](./TEST_MANUAL.md) - 详细的性能测试手册
+- [PR_PREPARATION_GUIDE.md](./PR_PREPARATION_GUIDE.md) - PR 准备指南
+- [VERIFICATION.md](./VERIFICATION.md) - 实现验证文档

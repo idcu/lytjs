@@ -1,12 +1,17 @@
 {
   "name": "lytjs",
   "description": "Lightweight Zero-Dependency JavaScript Framework",
-  "version": "6.4.0",
-  "keywords": [
-    "lytjs",
-    "benchmark"
-  ],
+  "version": "6.9.0",
+  "keywords": ["lytjs", "benchmark"],
   "main": "index.html",
+  "js-framework-benchmark": {
+    "framework": "LytJS",
+    "frameworkVersion": "6.9.0",
+    "useShadowRoot": false,
+    "useRowSpan": false,
+    "useInnerHTML": false,
+    "useDocFragment": true
+  },
   "scripts": {
     "build-prod": "echo 'No build required - production ready'",
     "dev": "python -m http.server 8080"

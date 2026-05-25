@@ -1,13 +1,10 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>LytJS v6.9.0 - js-framework-benchmark</title>
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/css/bootstrap.min.css"
-    />
+    <title>LytJS v6.9.0 - VDOM 模式</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/css/bootstrap.min.css" />
   </head>
   <body>
     <div class="container">
@@ -15,7 +12,20 @@
         <div class="row">
           <div class="col-md-12">
             <h1>LytJS v6.9.0</h1>
-            <p>js-framework-benchmark Implementation</p>
+            <p>VDOM 模式 - 传统虚拟 DOM 实现</p>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-12">
+            <div style="padding: 15px; background: #fcf8e3; border-radius: 5px;">
+              <strong>实现说明：</strong>
+              <ul>
+                <li>使用完整的 keyed 协调算法（类似真实 VDOM 框架）</li>
+                <li>每次状态变化都会重新计算并更新整个列表</li>
+                <li>保留相同 key 的 DOM 节点，只更新内容变化的部分</li>
+                <li>与 React、Vue 3、Preact 等 VDOM 框架的工作方式一致</li>
+              </ul>
+            </div>
           </div>
         </div>
         <div class="row">
@@ -63,24 +73,20 @@
       let tbody;
       let data = [];
       let selectedId = undefined;
-      let domCache = new Map();
 
       function createRow(item) {
         const tr = document.createElement('tr');
         tr.setAttribute('data-id', item.id);
         tr.setAttribute('data-key', item.id);
-
         const td1 = document.createElement('td');
         td1.className = 'col-md-1';
         td1.textContent = item.id;
-
         const td2 = document.createElement('td');
         td2.className = 'col-md-4';
         const a1 = document.createElement('a');
         a1.textContent = item.label;
         a1.addEventListener('click', () => select(item.id));
         td2.appendChild(a1);
-
         const td3 = document.createElement('td');
         td3.className = 'col-md-1';
         const a2 = document.createElement('a');
@@ -90,10 +96,8 @@
         span.setAttribute('aria-hidden', 'true');
         a2.appendChild(span);
         td3.appendChild(a2);
-
         const td4 = document.createElement('td');
         td4.className = 'col-md-6';
-
         tr.appendChild(td1);
         tr.appendChild(td2);
         tr.appendChild(td3);
@@ -102,16 +106,22 @@
       }
 
       function updateRow(tr, item, selId) {
-        if (tr.firstChild.textContent !== String(item.id)) tr.firstChild.textContent = item.id;
+        if (tr.firstChild.textContent !== String(item.id)) {
+          tr.firstChild.textContent = item.id;
+        }
         const a = tr.children[1].firstChild;
-        if (a.textContent !== item.label) a.textContent = item.label;
-        if (selId === item.id) tr.classList.add('danger');
-        else tr.classList.remove('danger');
+        if (a.textContent !== item.label) {
+          a.textContent = item.label;
+        }
+        if (selId === item.id) {
+          tr.classList.add('danger');
+        } else {
+          tr.classList.remove('danger');
+        }
         return tr;
       }
 
-      function renderFull() {
-        if (!tbody) return;
+      function render() {
         const oldRows = Array.from(tbody.children);
         const keyMap = new Map();
         oldRows.forEach(row => {
@@ -126,73 +136,54 @@
             keyMap.delete(String(item.id));
           } else {
             row = createRow(item);
-            if (selectedId === item.id) row.className = 'danger';
+            if (selectedId === item.id) {
+              row.className = 'danger';
+            }
           }
           fragment.appendChild(row);
         });
-        while (tbody.firstChild) tbody.removeChild(tbody.firstChild);
+        while (tbody.firstChild) {
+          tbody.removeChild(tbody.firstChild);
+        }
         tbody.appendChild(fragment);
       }
 
       function run() {
         data = [];
-        domCache.clear();
-        const fragment = document.createDocumentFragment();
         for (let i = 0; i < 1000; i++) {
-          const item = { id: generateId(), label: generateRandomString() };
-          data.push(item);
-          const row = createRow(item);
-          domCache.set(String(item.id), row);
-          fragment.appendChild(row);
+          data.push({ id: generateId(), label: generateRandomString() });
         }
         selectedId = undefined;
-        while (tbody.firstChild) tbody.removeChild(tbody.firstChild);
-        tbody.appendChild(fragment);
+        render();
       }
 
       function runLots() {
         data = [];
-        domCache.clear();
-        const fragment = document.createDocumentFragment();
         for (let i = 0; i < 10000; i++) {
-          const item = { id: generateId(), label: generateRandomString() };
-          data.push(item);
-          const row = createRow(item);
-          domCache.set(String(item.id), row);
-          fragment.appendChild(row);
+          data.push({ id: generateId(), label: generateRandomString() });
         }
         selectedId = undefined;
-        while (tbody.firstChild) tbody.removeChild(tbody.firstChild);
-        tbody.appendChild(fragment);
+        render();
       }
 
       function add() {
-        const fragment = document.createDocumentFragment();
         for (let i = 0; i < 1000; i++) {
-          const item = { id: generateId(), label: generateRandomString() };
-          data.push(item);
-          const row = createRow(item);
-          domCache.set(String(item.id), row);
-          fragment.appendChild(row);
+          data.push({ id: generateId(), label: generateRandomString() });
         }
-        tbody.appendChild(fragment);
+        render();
       }
 
       function update() {
-        const rows = Array.from(tbody.children);
         for (let i = 0; i < data.length; i += 10) {
-          data[i].label += ' !!!';
-          if (rows[i]) {
-            updateRow(rows[i], data[i], selectedId);
-          }
+          data[i] = { ...data[i], label: data[i].label + ' !!!' };
         }
+        render();
       }
 
       function clear() {
         data = [];
         selectedId = undefined;
-        domCache.clear();
-        while (tbody.firstChild) tbody.removeChild(tbody.firstChild);
+        render();
       }
 
       function swapRows() {
@@ -200,40 +191,18 @@
           const temp = data[1];
           data[1] = data[998];
           data[998] = temp;
-          const rows = Array.from(tbody.children);
-          if (rows[1] && rows[998]) {
-            const next1 = rows[1].nextSibling;
-            if (next1 === rows[998]) {
-              tbody.insertBefore(rows[998], rows[1]);
-            } else {
-              tbody.insertBefore(rows[1], rows[998]);
-              if (next1) tbody.insertBefore(rows[998], next1);
-              else tbody.appendChild(rows[998]);
-            }
-          }
+          render();
         }
       }
 
       function remove(id) {
-        const index = data.findIndex(item => item.id !== id);
-        if (index >= 0) {
-          const rows = Array.from(tbody.children);
-          if (rows[index]) tbody.removeChild(rows[index]);
-          domCache.delete(String(id));
-          data.splice(index, 1);
-        }
+        data = data.filter(item => item.id !== id);
+        render();
       }
 
       function select(id) {
-        const oldId = selectedId;
         selectedId = id;
-        const rows = Array.from(tbody.children);
-        for (let i = 0; i < rows.length; i++) {
-          const row = rows[i];
-          const rowId = parseInt(row.getAttribute('data-id'));
-          if (rowId === oldId) row.classList.remove('danger');
-          if (rowId === id) row.classList.add('danger');
-        }
+        render();
       }
 
       document.addEventListener('DOMContentLoaded', () => {

@@ -1,0 +1,30 @@
+{
+  "name": "lytjs-npm",
+  "description": "Lightweight Zero-Dependency JavaScript Framework - NPM version",
+  "version": "6.9.0",
+  "keywords": ["lytjs", "benchmark"],
+  "type": "module",
+  "main": "index.html",
+  "js-framework-benchmark": {
+    "framework": "LytJS (npm)",
+    "frameworkVersion": "6.9.0",
+    "useShadowRoot": false,
+    "useRowSpan": false,
+    "useInnerHTML": false,
+    "useDocFragment": true
+  },
+  "scripts": {
+    "dev": "vite",
+    "build-prod": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@lytjs/core-signal": "workspace:*",
+    "@lytjs/core-vnode": "workspace:*"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0"
+  },
+  "license": "MIT",
+  "author": "LytJS Team"
+}
