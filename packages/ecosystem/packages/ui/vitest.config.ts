@@ -33,6 +33,7 @@ export default defineConfig({
       { find: '@lytjs/reactivity', replacement: `${pkgRoot}/reactivity/dist/index.mjs` },
       { find: '@lytjs/component', replacement: `${pkgRoot}/component/dist/index.mjs` },
       { find: '@lytjs/vdom', replacement: `${pkgRoot}/vdom/dist/index.mjs` },
+      { find: '@lytjs/test-utils', replacement: `${pkgRoot}/tools/packages/test-utils/dist/index.mjs` },
     ],
   },
   test: {
