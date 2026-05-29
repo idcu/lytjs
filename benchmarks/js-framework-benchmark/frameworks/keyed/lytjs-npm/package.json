@@ -19,8 +19,25 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@lytjs/adapter-web": "workspace:*",
+    "@lytjs/common": "workspace:*",
+    "@lytjs/common-dom": "workspace:*",
+    "@lytjs/common-error": "workspace:*",
+    "@lytjs/common-events": "workspace:*",
+    "@lytjs/common-is": "workspace:*",
+    "@lytjs/common-scheduler": "workspace:*",
+    "@lytjs/common-string": "workspace:*",
+    "@lytjs/component": "workspace:*",
+    "@lytjs/compiler": "workspace:*",
+    "@lytjs/core": "workspace:*",
     "@lytjs/core-signal": "workspace:*",
-    "@lytjs/core-vnode": "workspace:*"
+    "@lytjs/core-vnode": "workspace:*",
+    "@lytjs/dom-runtime": "workspace:*",
+    "@lytjs/host-contract": "workspace:*",
+    "@lytjs/reactivity": "workspace:*",
+    "@lytjs/renderer": "workspace:*",
+    "@lytjs/shared-types": "workspace:*",
+    "@lytjs/vdom": "workspace:*"
   },
   "devDependencies": {
     "vite": "^5.0.0"

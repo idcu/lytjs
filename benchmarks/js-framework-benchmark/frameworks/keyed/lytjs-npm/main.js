@@ -10,76 +10,70 @@ function generateRandomString() {
   return adjectives[Math.floor(Math.random() * adjectives.length)] + ' ' + colours[Math.floor(Math.random() * colours.length)] + ' ' + nouns[Math.floor(Math.random() * nouns.length)];
 }
 
+// 全局共享的状态
+const data = ref([]);
+const selectedId = ref(undefined);
+
+const run = () => {
+  const newData = [];
+  for (let i = 0; i < 1000; i++) {
+    newData.push({ id: generateId(), label: generateRandomString() });
+  }
+  data.value = newData;
+  selectedId.value = undefined;
+};
+
+const runLots = () => {
+  const newData = [];
+  for (let i = 0; i < 10000; i++) {
+    newData.push({ id: generateId(), label: generateRandomString() });
+  }
+  data.value = newData;
+  selectedId.value = undefined;
+};
+
+const add = () => {
+  const newItems = [];
+  for (let i = 0; i < 1000; i++) {
+    newItems.push({ id: generateId(), label: generateRandomString() });
+  }
+  data.value = [...data.value, ...newItems];
+};
+
+const update = () => {
+  data.value = data.value.map((item, index) => {
+    if (index % 10 === 0) {
+      return { ...item, label: item.label + ' !!!' };
+    }
+    return item;
+  });
+};
+
+const clear = () => {
+  data.value = [];
+  selectedId.value = undefined;
+};
+
+const swapRows = () => {
+  if (data.value.length > 998) {
+    const newData = [...data.value];
+    const temp = newData[1];
+    newData[1] = newData[998];
+    newData[998] = temp;
+    data.value = newData;
+  }
+};
+
+const remove = (id) => {
+  data.value = data.value.filter(item => item.id !== id);
+};
+
+const select = (id) => {
+  selectedId.value = id;
+};
+
 const App = defineComponent({
   setup() {
-    const data = ref([]);
-    const selectedId = ref(undefined);
-
-    const run = () => {
-      const newData = [];
-      for (let i = 0; i < 1000; i++) {
-        newData.push({ id: generateId(), label: generateRandomString() });
-      }
-      data.value = newData;
-      selectedId.value = undefined;
-    };
-
-    const runLots = () => {
-      const newData = [];
-      for (let i = 0; i < 10000; i++) {
-        newData.push({ id: generateId(), label: generateRandomString() });
-      }
-      data.value = newData;
-      selectedId.value = undefined;
-    };
-
-    const add = () => {
-      const newItems = [];
-      for (let i = 0; i < 1000; i++) {
-        newItems.push({ id: generateId(), label: generateRandomString() });
-      }
-      data.value = [...data.value, ...newItems];
-    };
-
-    const update = () => {
-      data.value = data.value.map((item, index) => {
-        if (index % 10 === 0) {
-          return { ...item, label: item.label + ' !!!' };
-        }
-        return item;
-      });
-    };
-
-    const clear = () => {
-      data.value = [];
-      selectedId.value = undefined;
-    };
-
-    const swapRows = () => {
-      if (data.value.length > 998) {
-        const newData = [...data.value];
-        const temp = newData[1];
-        newData[1] = newData[998];
-        newData[998] = temp;
-        data.value = newData;
-      }
-    };
-
-    const remove = (id) => {
-      data.value = data.value.filter(item => item.id !== id);
-    };
-
-    const select = (id) => {
-      selectedId.value = id;
-    };
-
-    document.getElementById('run').addEventListener('click', run);
-    document.getElementById('runlots').addEventListener('click', runLots);
-    document.getElementById('add').addEventListener('click', add);
-    document.getElementById('update').addEventListener('click', update);
-    document.getElementById('clear').addEventListener('click', clear);
-    document.getElementById('swaprows').addEventListener('click', swapRows);
-
     return () => h('table', { class: 'table table-hover table-striped test-data' }, [
       h('tbody', {}, data.value.map(item => 
         h('tr', { 
@@ -109,4 +103,14 @@ const App = defineComponent({
   }
 });
 
-createApp(App).mount('#app');
+(async () => {
+  await createApp(App).mount('#app');
+  
+  // 绑定按钮事件
+  document.getElementById('run').addEventListener('click', run);
+  document.getElementById('runlots').addEventListener('click', runLots);
+  document.getElementById('add').addEventListener('click', add);
+  document.getElementById('update').addEventListener('click', update);
+  document.getElementById('clear').addEventListener('click', clear);
+  document.getElementById('swaprows').addEventListener('click', swapRows);
+})();

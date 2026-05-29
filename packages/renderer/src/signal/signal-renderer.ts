@@ -60,29 +60,33 @@ export function createSignalRenderer(
   let cleanup: (() => void) | null = null;
 
   // 编译模板为 Signal 模式（缓存编译结果，避免每次 render 重新编译）
-  let code: string;
-  let renderBody: string | null;
-  try {
-    // 清除缓存，确保使用最新的 codegen
-    clearCompileCache();
-    const compileResult = compile(template, { rendererMode: 'signal', optimizeSignal: false });
-    code = compileResult.code;
+    let code: string;
+    let renderBody: string | null;
+    try {
+      // 清除缓存，确保使用最新的 codegen
+      clearCompileCache();
+      const compileResult = compile(template, { rendererMode: 'signal', optimizeSignal: false });
+      code = compileResult.code;
+      console.log('=== Compiled code ===');
+      console.log(code);
 
-    // 从编译结果中提取 render 函数体
-    // codegen-signal 生成的代码结构：
-    //   import { effect, reconcileArray } from '@lytjs/reactivity';
-    //   import { createTemplate, ... } from '@lytjs/dom-runtime';
-    //   export function render(_ctx, _container) { ... }
-    //   return () => { runCleanups(); };
-    //
-    // 我们需要提取 render 函数体，并通过 new Function 执行
-    renderBody = extractRenderBody(code);
-    if (!renderBody) {
-      throw new Error(
-        `[LytJS] SignalRenderer: failed to extract render function from compiled code.`,
-      );
-    }
-  } catch (e) {
+      // 从编译结果中提取 render 函数体
+      // codegen-signal 生成的代码结构：
+      //   import { effect, reconcileArray } from '@lytjs/reactivity';
+      //   import { createTemplate, ... } from '@lytjs/dom-runtime';
+      //   export function render(_ctx, _container) { ... }
+      //   return () => { runCleanups(); };
+      //
+      // 我们需要提取 render 函数体，并通过 new Function 执行
+      renderBody = extractRenderBody(code);
+      console.log('=== Extracted renderBody ===');
+      console.log(renderBody);
+      if (!renderBody) {
+        throw new Error(
+          `[LytJS] SignalRenderer: failed to extract render function from compiled code.`,
+        );
+      }
+    } catch (e) {
     throw e instanceof Error
       ? new Error(`[LytJS] SignalRenderer: template compilation failed. ${e.message}`)
       : new Error(`[LytJS] SignalRenderer: template compilation failed. ${String(e)}`);

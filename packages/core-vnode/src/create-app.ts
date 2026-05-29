@@ -4,6 +4,7 @@
 declare const __DEV__: boolean;
 
 import { createVNode } from '@lytjs/vdom';
+import type { VNode } from '@lytjs/vdom';
 import { createDOMRenderer } from '@lytjs/renderer';
 import { error, warn } from '@lytjs/common-error';
 import type {
@@ -21,6 +22,7 @@ import {
   setupComponent,
   createComponentPublicInstance,
   callUnmountedHook,
+  initProps,
 } from '@lytjs/component';
 import type { AppContext as ComponentAppContext } from '@lytjs/component';
 
@@ -102,7 +104,7 @@ export function createApp(
         // Copy app-level provides into the root instance
         if (context.provides) {
           const rootProvides = instance.provides;
-          for (const key in context.provides) {
+          for (const key of Object.keys(context.provides)) {
             if (!(key in rootProvides)) {
               rootProvides[key] = context.provides[key];
             }
@@ -119,8 +121,23 @@ export function createApp(
         // 保存根实例引用，用于卸载生命周期钩子
         context._instance = instance;
 
-        // 使用 DOM 渲染器进行渲染
-        const renderer = createDOMRenderer();
+        // 使用 DOM 渲染器进行渲染 - 添加 setupChildComponent 和 normalizeProps 选项
+        const renderer = createDOMRenderer({
+          setupChildComponent(childVNode: VNode, parentComponent: any) {
+            const childInstance = createComponentInstance(childVNode as any, parentComponent);
+            // 从父组件或根组件继承 appContext
+            if (parentComponent) {
+              childInstance.appContext = parentComponent.appContext;
+            } else {
+              childInstance.appContext = context as ComponentAppContext;
+            }
+            setupComponent(childInstance);
+            (childVNode as any).component = childInstance;
+          },
+          normalizeProps(inst: any, rawProps: Record<string, unknown> | null) {
+            initProps(inst, rawProps);
+          },
+        });
         context.renderer = renderer as unknown as DOMRenderer;
         context._vnode = rootVNode;
 

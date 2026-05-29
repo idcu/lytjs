@@ -57,12 +57,37 @@ const arrayInstrumentations: Record<string | symbol, (...args: unknown[]) => unk
   };
 });
 
+// 为所有会遍历数组内容的方法添加对 ITERATE_KEY 或 'length' 的追踪
+const arrayTraverseMethods = [
+  'join', 'map', 'filter', 'reduce', 'reduceRight',
+  'forEach', 'some', 'every', 'flat', 'flatMap',
+  'keys', 'values', 'entries', 'toReversed', 'toSorted',
+  'toSpliced', 'with'
+];
+
+arrayTraverseMethods.forEach((method) => {
+  if (Array.prototype[method]) {
+    const originMethod = Array.prototype[method] as (...args: unknown[]) => unknown;
+    arrayInstrumentations[method] = function (this: unknown[], ...args: unknown[]) {
+      const arr = toRaw(this);
+      // 追踪 iterate 键
+      track(arr, TrackOpTypes.ITERATE, ITERATE_KEY);
+      track(arr, TrackOpTypes.GET, 'length');
+      const result = originMethod.apply(this, args);
+      return result;
+    };
+  }
+});
+
 (['push', 'pop', 'shift', 'unshift', 'splice'] as const).forEach((method) => {
   const originMethod = Array.prototype[method] as (...args: unknown[]) => unknown;
   arrayInstrumentations[method] = function (this: unknown[], ...args: unknown[]) {
+    const arr = toRaw(this);
     pauseTracking();
     try {
-      const result = originMethod.apply(this, args);
+      const result = originMethod.apply(arr, args);
+      // 只触发一次 ADD 类型的 ITERATE_KEY，这样会同时收集 length 和 ITERATE_KEY 的依赖！
+      trigger(arr, TriggerOpTypes.ADD, ITERATE_KEY);
       return result;
     } finally {
       resetTracking();
@@ -78,13 +103,26 @@ const arrayInstrumentations: Record<string | symbol, (...args: unknown[]) => unk
     pauseTracking();
     try {
       const result = originMethod.apply(arr, args);
-      // 这些方法会修改数组，需要触发更新
-      trigger(arr, TriggerOpTypes.SET, 'length');
+      // 只触发一次 ADD 类型的 ITERATE_KEY，这样会同时收集 length 和 ITERATE_KEY 的依赖！
+      trigger(arr, TriggerOpTypes.ADD, ITERATE_KEY);
       return result;
     } finally {
       resetTracking();
     }
   };
+});
+
+// 处理所有其他数组方法，绑定到原始数组以避免原型访问问题
+const skipMethods = new Set(['constructor', 'toString', 'toLocaleString', 'valueOf', 'Symbol(Symbol.iterator)']);
+const arrayMethods = Object.getOwnPropertyNames(Array.prototype) as (string & keyof Array<unknown>)[];
+arrayMethods.forEach((method) => {
+  if (!arrayInstrumentations[method] && !skipMethods.has(method) && typeof Array.prototype[method as keyof Array<unknown>] === 'function') {
+    const originMethod = Array.prototype[method as keyof Array<unknown>] as (...args: unknown[]) => unknown;
+    (arrayInstrumentations as any)[method] = function (this: unknown[], ...args: unknown[]) {
+      const arr = toRaw(this);
+      return originMethod.apply(arr, args);
+    };
+  }
 });
 
 // ==================== 辅助常量 ====================
@@ -167,6 +205,7 @@ function createMutableHandler(isReadonly: boolean, isShallow: boolean): ProxyHan
       if (key === ReactiveFlags.IS_READONLY) return isReadonly;
       if (key === ReactiveFlags.IS_SHALLOW) return isShallow;
       if (key === ReactiveFlags.RAW) return target;
+      if (key === 'prototype') return Reflect.get(target, key, target);
 
       const targetIsArray = Array.isArray(target);
       if (!isReadonly && targetIsArray && hasOwn(arrayInstrumentations, key)) {
@@ -289,6 +328,14 @@ function createMutableHandler(isReadonly: boolean, isShallow: boolean): ProxyHan
         track(target, TrackOpTypes.ITERATE, Array.isArray(target) ? 'length' : ITERATE_KEY);
       }
       return Reflect.ownKeys(target);
+    },
+
+    getPrototypeOf(target) {
+      return Reflect.getPrototypeOf(target);
+    },
+
+    setPrototypeOf(target, proto) {
+      return Reflect.setPrototypeOf(target, proto);
     },
   };
 }

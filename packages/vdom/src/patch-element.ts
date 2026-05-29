@@ -184,6 +184,7 @@ export function createElementPatch<HN, HE extends HN>(
     parentComponent: ComponentInternalInstance | null = null,
     parentSuspense: SuspenseBoundary | null = null,
   ): void {
+    console.log('[patch-element] mountElement called, vnode:', vnode, 'container:', container);
     if (typeof vnode.type !== 'string') {
       warn(
         `mountElement received a vnode with non-string type (${String(vnode.type)}). ` +
@@ -204,12 +205,17 @@ export function createElementPatch<HN, HE extends HN>(
 
     // 挂载 children
     if (vnode.shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
+      console.log('[patch-element] mountChildren with array children:', vnode.children);
       mountChildren(vnode, el, anchor, isSVG, parentComponent, parentSuspense);
     } else if (vnode.shapeFlag & ShapeFlags.TEXT_CHILDREN) {
+      console.log('[patch-element] mountElement with text children:', vnode.children);
       setElementText(el, String(vnode.children ?? ''));
+    } else {
+      console.log('[patch-element] mountElement has no children (shapeFlag not set):', vnode.shapeFlag);
     }
 
     // 插入到容器中
+    console.log('[patch-element] inserting element:', el, 'into container:', container);
     insert(el, container, anchor);
 
     // 处理 ref：在父组件实例上存储元素引用

@@ -7,6 +7,7 @@
 
 import type { VNode, ComponentInternalInstance } from '@lytjs/common-vnode';
 import { warn, error } from '@lytjs/common-error';
+import { watchEffect } from '@lytjs/reactivity';
 import type { SuspenseBoundary } from './types';
 import type { RendererContext } from './patch-element';
 
@@ -91,8 +92,11 @@ export function createComponentPatch<HN, HE extends HN>(
     }
     componentRecursionDepthMap.set(component, currentDepth + 1);
 
-    // 调用 render 函数获取 subTree
-    const renderFn = (component.type as ComponentInternalRuntimeProps).render;
+    console.log('mountComponent called! component:', component);
+    // 调用 render 函数获取 subTree：优先使用 instance.render（来自 setup 函数的返回值）
+    const renderFn = (component as unknown as { render?: (ctx: Record<string, unknown>) => VNode }).render 
+      ?? (component.type as ComponentInternalRuntimeProps).render;
+    console.log('renderFn:', renderFn);
     if (!renderFn) {
       warn(
         `Component "${(component.type as ComponentInternalRuntimeProps).name || 'anonymous'}" has no render function.`,
@@ -100,41 +104,26 @@ export function createComponentPatch<HN, HE extends HN>(
       return;
     }
 
-    let subTree: VNode;
-    try {
-      // FIX: P2-10 render 函数调用时使用更精确的类型。
-      // component.ctx 的实际类型由组件实例的 setup 过程决定，
-      // 使用 ComponentInternalInstance['ctx'] 类型（Record<string, unknown>）
-      // 与 render 函数签名保持一致，避免类型断言不安全。
-      subTree = renderFn(component.ctx);
-    } catch (err) {
-      // 通过父链的 errorCaptured 传播错误
-      const renderError = err instanceof Error ? err : new Error(String(err));
-      let handled = false;
-      let current: ComponentInternalInstance | null = component.parent;
-      while (current) {
-        const type = current.type as ComponentInternalRuntimeProps;
-        const errorHandler = type.errorCaptured;
-        if (errorHandler) {
-          try {
-            const result = errorHandler.call(current.ctx, renderError, current, 'render function');
-            if (result === false) {
-              handled = true;
-              break;
-            }
-          } catch (e) {
-            error(`Error in errorCaptured hook: ${e}`);
-          }
-        }
-        // 同时检查 errorCapturedHooks（来自 onErrorCaptured API）
-        const hooks = (current as unknown as Record<string, unknown>).errorCapturedHooks as
-          | Array<(err: Error, instance: unknown, info: string) => boolean | void>
-          | undefined;
-        // FIX: P0-2 修复 errorCapturedHooks 使用未定义变量 hook，添加遍历 hooks 数组的循环
-        if (hooks && hooks.length > 0) {
-          for (const hook of hooks) {
+    let isMounted = false;
+    let initialSubTree: VNode | null = null;
+
+    const update = () => {
+      console.log('update called!');
+      let subTree: VNode;
+      try {
+        subTree = renderFn.call(component!.ctx, component!.ctx);
+        console.log('subTree:', subTree);
+      } catch (err) {
+        // 通过父链的 errorCaptured 传播错误
+        const renderError = err instanceof Error ? err : new Error(String(err));
+        let handled = false;
+        let current: ComponentInternalInstance | null = component!.parent;
+        while (current) {
+          const type = current.type as ComponentInternalRuntimeProps;
+          const errorHandler = type.errorCaptured;
+          if (errorHandler) {
             try {
-              const result = hook(renderError, current, 'render function');
+              const result = errorHandler.call(current.ctx, renderError, current, 'render function');
               if (result === false) {
                 handled = true;
                 break;
@@ -143,26 +132,101 @@ export function createComponentPatch<HN, HE extends HN>(
               error(`Error in errorCaptured hook: ${e}`);
             }
           }
-          if (handled) break;
+          // 同时检查 errorCapturedHooks（来自 onErrorCaptured API）
+          const hooks = (current as unknown as Record<string, unknown>).errorCapturedHooks as
+            | Array<(err: Error, instance: unknown, info: string) => boolean | void>
+            | undefined;
+          if (hooks && hooks.length > 0) {
+            for (const hook of hooks) {
+              try {
+                const result = hook(renderError, current, 'render function');
+                if (result === false) {
+                  handled = true;
+                  break;
+                }
+              } catch (e) {
+                error(`Error in errorCaptured hook: ${e}`);
+              }
+            }
+            if (handled) break;
+          }
+          current = current.parent;
         }
-        current = current.parent;
+
+        // 如果没有被任何组件处理，尝试应用级 errorHandler
+        if (!handled && component!.root) {
+          const rootAny = component!.root as unknown as Record<string, unknown>;
+          const appContext = rootAny.appContext as Record<string, unknown> | undefined;
+          const appErrorHandler = appContext?.config as Record<string, unknown> | undefined;
+          if (appErrorHandler && typeof appErrorHandler.errorHandler === 'function') {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
+            (appErrorHandler.errorHandler as Function)(renderError, component!.ctx, 'render function');
+          }
+        }
+
+        throw renderError;
       }
 
-      // 如果没有被任何组件处理，尝试应用级 errorHandler
-      if (!handled && component.root) {
-        const rootAny = component.root as unknown as Record<string, unknown>;
-        const appContext = rootAny.appContext as Record<string, unknown> | undefined;
-        const appErrorHandler = appContext?.config as Record<string, unknown> | undefined;
-        if (appErrorHandler && typeof appErrorHandler.errorHandler === 'function') {
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-          (appErrorHandler.errorHandler as Function)(renderError, component.ctx, 'render function');
+      // 应用 inheritAttrs：将实例的 attrs 合并到根 VNode props
+      const componentType = component!.type as ComponentInternalRuntimeProps;
+      if (component!.attrs && subTree) {
+        const attrs = component!.attrs;
+        const attrsKeys = Object.keys(attrs);
+        if (attrsKeys.length > 0) {
+          // 获取现有的 props，如果没有则使用空对象
+          const existingProps = subTree.props ?? {};
+
+          if (componentType.inheritAttrs !== false) {
+            // inheritAttrs !== false: 合并所有 attrs
+            // 只有当 existingProps 不为空或需要合并时才创建新对象
+            if (Object.keys(existingProps).length > 0 || attrsKeys.length > 0) {
+              subTree.props = Object.assign({}, existingProps, attrs);
+            } else {
+              subTree.props = attrs;
+            }
+          } else {
+            // inheritAttrs === false: 仅合并 class 和 style（Vue 3 行为）
+            // class 和 style 是视觉相关属性，即使 inheritAttrs 为 false 也应继承到根元素
+            const hasClass = 'class' in attrs;
+            const hasStyle = 'style' in attrs;
+
+            if (hasClass || hasStyle) {
+              // 只有当需要合并时才创建新对象
+              if (Object.keys(existingProps).length > 0) {
+                const rootProps = Object.assign({}, existingProps);
+                if (hasClass) rootProps.class = attrs.class;
+                if (hasStyle) rootProps.style = attrs.style;
+                subTree.props = rootProps;
+              } else {
+                // existingProps 为空，直接创建包含 class/style 的对象
+                subTree.props = {
+                  ...(hasClass && { class: attrs.class }),
+                  ...(hasStyle && { style: attrs.style }),
+                };
+              }
+            }
+          }
         }
       }
 
-      throw renderError;
-    }
+      component!.subTree = subTree;
 
-    component.subTree = subTree;
+      if (!isMounted) {
+        // 首次挂载
+        patch(null, subTree, container, anchor, component, parentSuspense, isSVG);
+        vnode.el = subTree.el;
+        isMounted = true;
+        initialSubTree = subTree;
+      } else {
+        // 更新
+        patch(initialSubTree, subTree, container, anchor, component, parentSuspense, isSVG);
+        vnode.el = subTree.el;
+        initialSubTree = subTree;
+      }
+    };
+
+    // Set up the update function on the component instance
+    (component as unknown as { update: () => void }).update = update;
 
     // FIX: P2-11 组件挂载 __DEV__ 日志：在组件首次挂载时输出调试信息
     if (__DEV__) {
@@ -170,54 +234,8 @@ export function createComponentPatch<HN, HE extends HN>(
       console.warn(`[lytjs/patch-component] Mounting component: ${compName}`);
     }
 
-    // 应用 inheritAttrs：将实例的 attrs 合并到根 VNode props
-    // FIX: P2-10 减少不必要的对象创建：避免创建中间对象，直接修改 subTree.props
-    const componentType = component.type as ComponentInternalRuntimeProps;
-    if (component.attrs && subTree) {
-      const attrs = component.attrs;
-      const attrsKeys = Object.keys(attrs);
-      if (attrsKeys.length > 0) {
-        // 获取现有的 props，如果没有则使用空对象
-        const existingProps = subTree.props ?? {};
-
-        if (componentType.inheritAttrs !== false) {
-          // inheritAttrs !== false: 合并所有 attrs
-          // 只有当 existingProps 不为空或需要合并时才创建新对象
-          if (Object.keys(existingProps).length > 0 || attrsKeys.length > 0) {
-            subTree.props = Object.assign({}, existingProps, attrs);
-          } else {
-            subTree.props = attrs;
-          }
-        } else {
-          // inheritAttrs === false: 仅合并 class 和 style（Vue 3 行为）
-          // class 和 style 是视觉相关属性，即使 inheritAttrs 为 false 也应继承到根元素
-          const hasClass = 'class' in attrs;
-          const hasStyle = 'style' in attrs;
-
-          if (hasClass || hasStyle) {
-            // 只有当需要合并时才创建新对象
-            if (Object.keys(existingProps).length > 0) {
-              const rootProps = Object.assign({}, existingProps);
-              if (hasClass) rootProps.class = attrs.class;
-              if (hasStyle) rootProps.style = attrs.style;
-              subTree.props = rootProps;
-            } else {
-              // existingProps 为空，直接创建包含 class/style 的对象
-              subTree.props = {
-                ...(hasClass && { class: attrs.class }),
-                ...(hasStyle && { style: attrs.style }),
-              };
-            }
-          }
-        }
-      }
-    }
-
-    // Patch subTree 到容器中
-    patch(null, subTree, container, anchor, component, parentSuspense, isSVG);
-
-    // 组件的 el 指向 subTree 的根元素
-    vnode.el = subTree.el;
+    // Run the initial update (mount)
+    watchEffect(update);
   }
 
   return {

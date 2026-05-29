@@ -8,7 +8,7 @@ export default defineConfig({
     'vapor/vapor-app': 'src/vapor/vapor-app.ts',
   },
   format: ['esm', 'cjs'],
-  dts: true,
+  dts: false,
   sourcemap: true,
   clean: true,
   splitting: false,

@@ -35,6 +35,7 @@ packages:
   - 'docs'
   - 'examples/*'
   - 'benchmarks/*'
+  - 'benchmarks/js-framework-benchmark/frameworks/keyed/lytjs-npm'
   - 'e2e/*'
   - 'playground'
 allowBuilds:

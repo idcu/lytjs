@@ -287,8 +287,8 @@ describe('reactive', () => {
     });
     expect(fn).toHaveBeenCalledTimes(1);
     arr.pop();
-    // pop may trigger multiple tracking calls (length + element access)
-    expect(fn.mock.calls.length).toBeGreaterThanOrEqual(2);
+    // pop should trigger a single update
+    expect(fn.mock.calls.length).toBe(2);
     expect(arr.length).toBe(2);
   });
 

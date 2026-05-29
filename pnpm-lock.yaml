@@ -87,6 +87,70 @@ importers:
         specifier: ^3.0.0
         version: 3.2.4(@types/node@22.19.19)(@vitest/ui@3.2.4)(jsdom@29.1.1)
 
+  benchmarks/js-framework-benchmark/frameworks/keyed/lytjs-npm:
+    dependencies:
+      '@lytjs/adapter-web':
+        specifier: workspace:*
+        version: link:../../../../../packages/adapter-web
+      '@lytjs/common':
+        specifier: workspace:*
+        version: link:../../../../../packages/common/packages/common
+      '@lytjs/common-dom':
+        specifier: workspace:*
+        version: link:../../../../../packages/common/packages/dom
+      '@lytjs/common-error':
+        specifier: workspace:*
+        version: link:../../../../../packages/common/packages/error
+      '@lytjs/common-events':
+        specifier: workspace:*
+        version: link:../../../../../packages/common/packages/events
+      '@lytjs/common-is':
+        specifier: workspace:*
+        version: link:../../../../../packages/common/packages/is
+      '@lytjs/common-scheduler':
+        specifier: workspace:*
+        version: link:../../../../../packages/common/packages/scheduler
+      '@lytjs/common-string':
+        specifier: workspace:*
+        version: link:../../../../../packages/common/packages/string
+      '@lytjs/compiler':
+        specifier: workspace:*
+        version: link:../../../../../packages/compiler
+      '@lytjs/component':
+        specifier: workspace:*
+        version: link:../../../../../packages/component
+      '@lytjs/core':
+        specifier: workspace:*
+        version: link:../../../../../packages/core
+      '@lytjs/core-signal':
+        specifier: workspace:*
+        version: link:../../../../../packages/core-signal
+      '@lytjs/core-vnode':
+        specifier: workspace:*
+        version: link:../../../../../packages/core-vnode
+      '@lytjs/dom-runtime':
+        specifier: workspace:*
+        version: link:../../../../../packages/dom-runtime
+      '@lytjs/host-contract':
+        specifier: workspace:*
+        version: link:../../../../../packages/host-contract
+      '@lytjs/reactivity':
+        specifier: workspace:*
+        version: link:../../../../../packages/reactivity
+      '@lytjs/renderer':
+        specifier: workspace:*
+        version: link:../../../../../packages/renderer
+      '@lytjs/shared-types':
+        specifier: workspace:*
+        version: link:../../../../../packages/shared-types
+      '@lytjs/vdom':
+        specifier: workspace:*
+        version: link:../../../../../packages/vdom
+    devDependencies:
+      vite:
+        specifier: ^5.0.0
+        version: 5.4.21(@types/node@22.19.19)
+
   docs:
     devDependencies:
       vitepress:
@@ -1892,6 +1956,9 @@ importers:
       '@lytjs/host-contract':
         specifier: workspace:*
         version: link:../host-contract
+      '@lytjs/reactivity':
+        specifier: workspace:*
+        version: link:../reactivity
       '@lytjs/shared-types':
         specifier: workspace:*
         version: link:../shared-types
