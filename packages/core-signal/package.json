@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/core-signal",
-  "version": "6.9.1",
+  "version": "6.9.2",
   "description": "Lyt.js Core - Signal rendering mode only",
   "type": "module",
   "main": "./dist/index.cjs",

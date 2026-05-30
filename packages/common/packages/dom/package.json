@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/common-dom",
-  "version": "6.9.1",
+  "version": "6.9.2",
   "description": "Shared DOM utilities for Lyt.js - SVG tags, patchClass, patchStyle, patchAttr, patchProp",
   "keywords": [
     "lytjs",

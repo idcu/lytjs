@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/common-storage",
-  "version": "6.9.1",
+  "version": "6.9.2",
   "description": "Lightweight type-safe storage utilities for LytJS",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",

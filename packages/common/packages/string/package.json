@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/common-string",
-  "version": "6.9.1",
+  "version": "6.9.2",
   "description": "String manipulation utilities for LytJS",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",

@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/component",
-  "version": "6.9.1",
+  "version": "6.9.2",
   "description": "LytJS component system - component instances, props, emits, slots, and lifecycle",
   "type": "module",
   "main": "./dist/index.cjs",

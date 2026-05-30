@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/reactivity",
-  "version": "6.9.1",
+  "version": "6.9.2",
   "description": "LytJS reactive system - signals, refs, computed, watch, and effects",
   "type": "module",
   "main": "./dist/index.cjs",

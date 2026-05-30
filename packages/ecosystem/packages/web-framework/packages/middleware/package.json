@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/middleware",
-  "version": "6.9.1",
+  "version": "6.9.2",
   "description": "LytJS Middleware Core System - Onion model middleware architecture",
   "author": "lytjs",
   "license": "MIT",

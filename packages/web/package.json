@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
   "name": "@lytjs/web",
-  "version": "6.9.1",
+  "version": "6.9.2",
   "description": "LytJS web platform utilities - CSS variables and web-specific features",
   "author": "lytjs",
   "license": "MIT",

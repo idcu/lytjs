@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/common-event-normalizer",
-  "version": "6.9.1",
+  "version": "6.9.2",
   "description": "Event normalization utilities for parsing event names and managing invoker cache in LytJS",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",

@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/common",
-  "version": "6.9.1",
+  "version": "6.9.2",
   "description": "LytJS common utilities aggregate package",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
