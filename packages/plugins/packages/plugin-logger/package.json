@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/plugin-logger",
-  "version": "6.9.0",
+  "version": "6.9.1",
   "description": "LytJS official logger plugin with log levels, persistence, and performance tracing support",
   "type": "module",
   "main": "./dist/index.cjs",

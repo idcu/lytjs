@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/common-security",
-  "version": "6.9.0",
+  "version": "6.9.1",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",

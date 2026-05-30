@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/common-events",
-  "version": "6.9.0",
+  "version": "6.9.1",
   "description": "Event emitter and subscription utilities for LytJS",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",

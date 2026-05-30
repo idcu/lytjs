@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/middleware-cors",
-  "version": "6.9.0",
+  "version": "6.9.1",
   "description": "LytJS CORS Middleware - Cross-Origin Resource Sharing middleware",
   "author": "lytjs",
   "license": "MIT",

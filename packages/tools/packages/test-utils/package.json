@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/test-utils",
-  "version": "6.9.0",
+  "version": "6.9.1",
   "description": "LytJS testing utilities for unit and integration testing",
   "type": "module",
   "main": "./dist/index.cjs",

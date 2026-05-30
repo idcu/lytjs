@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/common-constants",
-  "version": "6.9.0",
+  "version": "6.9.1",
   "description": "LytJS common constants - Global shared constants for the framework",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",

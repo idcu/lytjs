@@ -66,8 +66,8 @@ const arrayTraverseMethods = [
 ];
 
 arrayTraverseMethods.forEach((method) => {
-  if (Array.prototype[method]) {
-    const originMethod = Array.prototype[method] as (...args: unknown[]) => unknown;
+  if (Array.prototype[method as keyof Array<unknown>]) {
+    const originMethod = Array.prototype[method as keyof Array<unknown>] as (...args: unknown[]) => unknown;
     arrayInstrumentations[method] = function (this: unknown[], ...args: unknown[]) {
       const arr = toRaw(this);
       // 追踪 iterate 键

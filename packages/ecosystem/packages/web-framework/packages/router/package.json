@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/router",
-  "version": "6.9.0",
+  "version": "6.9.1",
   "description": "LytJS declarative routing system with support for nested routes, navigation guards, and history modes",
   "type": "module",
   "main": "./dist/index.cjs",

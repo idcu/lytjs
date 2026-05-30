@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/common-path",
-  "version": "6.9.0",
+  "version": "6.9.1",
   "description": "Path manipulation utilities for LytJS",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",

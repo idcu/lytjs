@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/plugin-testing",
-  "version": "6.9.0",
+  "version": "6.9.1",
   "description": "LytJS official testing plugin with testing utilities and helpers",
   "type": "module",
   "main": "./dist/index.cjs",
