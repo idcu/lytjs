@@ -287,8 +287,8 @@ import {
 
 ## 依赖版本
 
-- [@lytjs/common-is](https://www.npmjs.com/package/@lytjs/common-is): ^6.4.0
-- [@lytjs/common-error](https://www.npmjs.com/package/@lytjs/common-error): ^6.4.0
-- [@lytjs/common-vnode](https://www.npmjs.com/package/@lytjs/common-vnode): ^6.4.0
-- [@lytjs/common-string](https://www.npmjs.com/package/@lytjs/common-string): ^6.4.0
-- [@lytjs/common-constants](https://www.npmjs.com/package/@lytjs/common-constants): ^6.4.0
+- [@lytjs/common-is](https://www.npmjs.com/package/@lytjs/common-is): ^6.9.6
+- [@lytjs/common-error](https://www.npmjs.com/package/@lytjs/common-error): ^6.9.6
+- [@lytjs/common-vnode](https://www.npmjs.com/package/@lytjs/common-vnode): ^6.9.6
+- [@lytjs/common-string](https://www.npmjs.com/package/@lytjs/common-string): ^6.9.6
+- [@lytjs/common-constants](https://www.npmjs.com/package/@lytjs/common-constants): ^6.9.6

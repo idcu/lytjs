@@ -345,7 +345,30 @@ lytjs/
 
 ## 版本历史
 
-### v6.9.0（最新版本）
+### v6.9.6（最新版本）
+
+- ✅ **文档梳理与更新** - 全面梳理项目文档，确保所有文档与当前版本同步
+  - 更新 CHANGELOG.md 至最新版本
+  - 更新 README.md 版本历史
+  - 更新 roadmap 文档
+  - 创建缺失的发布说明文档
+- ✅ **版本号统一** - 所有包版本统一升级至 v6.9.6
+
+### v6.9.5
+
+- ✅ **@lytjs/store 集成修复** - 修复与 @lytjs/core 的兼容性问题
+  - 重构 pinia.ts，使用 `definePlugin` API 创建标准插件
+  - 添加 @lytjs/core 作为依赖项
+  - 确保与 `app.use()` 完全兼容
+  - 修复 defineStore 集成问题导致页面空白的问题
+- ✅ **@lytjs/ui 包修复** - 修复 CSS 文件路径和包集成问题
+  - 更新 package.json 导出配置，新增多个 CSS 路径别名
+  - 修改 tsup.config.ts，添加 onSuccess 钩子自动复制 CSS 到 dist
+  - 重构 index.ts，使用 `definePlugin` API 创建标准 LytJS 插件
+  - 添加 @lytjs/core 作为依赖项
+- ✅ **所有包版本统一升级** - 86 个包版本统一升级至 v6.9.5
+
+### v6.9.0
 
 - ✅ **编译时优化**
   - @lytjs/compiler - 新增缓存命中率和性能统计功能

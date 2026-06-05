@@ -238,5 +238,5 @@ interface LytJSBridgeOptions {
 
 ## 依赖版本
 
-- [@lytjs/common-is](https://www.npmjs.com/package/@lytjs/common-is): ^6.4.0
-- [@lytjs/common-string](https://www.npmjs.com/package/@lytjs/common-string): ^6.4.0
+- [@lytjs/common-is](https://www.npmjs.com/package/@lytjs/common-is): ^6.9.6
+- [@lytjs/common-string](https://www.npmjs.com/package/@lytjs/common-string): ^6.9.6
