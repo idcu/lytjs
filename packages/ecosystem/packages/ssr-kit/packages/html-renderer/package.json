@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/html-renderer",
-  "version": "6.9.5",
+  "version": "6.9.6",
   "description": "LytJS HTML Renderer for SSR",
   "type": "module",
   "main": "./dist/index.cjs",

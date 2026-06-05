@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/plugin-i18n",
-  "version": "6.9.5",
+  "version": "6.9.6",
   "description": "LytJS Internationalization plugin",
   "type": "module",
   "main": "./dist/index.cjs",

@@ -1,6 +1,6 @@
 {
   "name": "lytjs",
-  "version": "6.9.5",
+  "version": "6.9.6",
   "private": true,
   "type": "module",
   "description": "Lyt.js - 下一代轻量级前端框架",

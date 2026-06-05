@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/common-memory",
-  "version": "6.9.5",
+  "version": "6.9.6",
   "description": "Memory optimization utilities for LytJS",
   "main": "dist/index.js",
   "module": "dist/index.esm.js",

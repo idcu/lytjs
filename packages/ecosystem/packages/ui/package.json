@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/ui",
-  "version": "6.9.5",
+  "version": "6.9.6",
   "description": "LytJS 官方 UI 组件库，包含 Button、Input、Dialog 等组件",
   "type": "module",
   "main": "./dist/index.cjs",

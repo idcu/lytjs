@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/common-node-cache",
-  "version": "6.9.5",
+  "version": "6.9.6",
   "description": "Node cache for managing container-VNode mappings and component resource registries in LytJS",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",

@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/common-rate-limit",
-  "version": "6.9.5",
+  "version": "6.9.6",
   "description": "Rate limiting strategies for LytJS",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",

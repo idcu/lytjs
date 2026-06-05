@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/plugin-chart",
-  "version": "6.9.5",
+  "version": "6.9.6",
   "description": "LytJS official chart plugin for rendering charts using Canvas API with zero dependencies",
   "type": "module",
   "main": "./dist/index.cjs",

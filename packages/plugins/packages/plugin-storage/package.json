@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/plugin-storage",
-  "version": "6.9.5",
+  "version": "6.9.6",
   "description": "LytJS official storage plugin with localStorage and sessionStorage support, plus JSON serialization",
   "type": "module",
   "main": "./dist/index.cjs",

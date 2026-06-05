@@ -1,17 +1,16 @@
 #!/usr/bin/env tsx
 /**
- * 检查所有包的 npm 发布状态
+ * 对比构建的包和发布的包
  */
 
-import { execSync } from 'child_process';
 import { join } from 'path';
 import { fileURLToPath } from 'url';
-import { readFileSync } from 'fs';
+import { readFileSync, existsSync, readdirSync, statSync } from 'fs';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const ROOT = join(__dirname, '..');
 
-const PACKAGES = [
+const PUBLISHED_PACKAGES = [
   { name: '@lytjs/shared-types', path: 'packages/shared-types' },
   { name: '@lytjs/host-contract', path: 'packages/host-contract' },
   { name: '@lytjs/common-constants', path: 'packages/common/packages/constants' },
@@ -74,32 +73,14 @@ const PACKAGES = [
   { name: '@lytjs/runtime-edge', path: 'packages/ecosystem/packages/runtime-edge' },
   { name: '@lytjs/cache', path: 'packages/ecosystem/packages/ssr-kit/packages/cache' },
   { name: '@lytjs/cache-isr', path: 'packages/ecosystem/packages/ssr-kit/packages/cache-isr' },
-  {
-    name: '@lytjs/html-renderer',
-    path: 'packages/ecosystem/packages/ssr-kit/packages/html-renderer',
-  },
+  { name: '@lytjs/html-renderer', path: 'packages/ecosystem/packages/ssr-kit/packages/html-renderer' },
   { name: '@lytjs/ssg', path: 'packages/ecosystem/packages/ssr-kit/packages/ssg' },
-  {
-    name: '@lytjs/http-server',
-    path: 'packages/ecosystem/packages/web-framework/packages/http-server',
-  },
+  { name: '@lytjs/http-server', path: 'packages/ecosystem/packages/web-framework/packages/http-server' },
   { name: '@lytjs/metadata', path: 'packages/ecosystem/packages/web-framework/packages/metadata' },
-  {
-    name: '@lytjs/middleware',
-    path: 'packages/ecosystem/packages/web-framework/packages/middleware',
-  },
-  {
-    name: '@lytjs/middleware-cors',
-    path: 'packages/ecosystem/packages/web-framework/packages/middleware-cors',
-  },
-  {
-    name: '@lytjs/middleware-auth',
-    path: 'packages/ecosystem/packages/web-framework/packages/middleware-auth',
-  },
-  {
-    name: '@lytjs/middleware-rate-limit',
-    path: 'packages/ecosystem/packages/web-framework/packages/middleware-rate-limit',
-  },
+  { name: '@lytjs/middleware', path: 'packages/ecosystem/packages/web-framework/packages/middleware' },
+  { name: '@lytjs/middleware-cors', path: 'packages/ecosystem/packages/web-framework/packages/middleware-cors' },
+  { name: '@lytjs/middleware-auth', path: 'packages/ecosystem/packages/web-framework/packages/middleware-auth' },
+  { name: '@lytjs/middleware-rate-limit', path: 'packages/ecosystem/packages/web-framework/packages/middleware-rate-limit' },
   { name: '@lytjs/plugin-vite', path: 'packages/plugins/packages/plugin-vite' },
   { name: '@lytjs/plugin-theme', path: 'packages/plugins/packages/plugin-theme' },
   { name: '@lytjs/plugin-logger', path: 'packages/plugins/packages/plugin-logger' },
@@ -118,115 +99,68 @@ const PACKAGES = [
   { name: '@lytjs/devtools-extension', path: 'packages/tools/packages/devtools' },
 ];
 
-function getPackageVersion(packagePath: string): string {
-  const pkgPath = join(ROOT, packagePath, 'package.json');
-  const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'));
-  return pkg.version;
-}
-
-async function checkPackagePublished(
-  packageName: string,
-  _expectedVersion: string,
-): Promise<{
-  published: boolean;
-  version?: string;
-  latestVersion?: string;
-  error?: string;
-}> {
-  try {
-    const result = execSync(
-      `npm view ${packageName} version --registry=https://registry.npmjs.org/`,
-      {
-        encoding: 'utf-8',
-        stdio: 'pipe',
-      },
-    );
-    const latestVersion = result.trim();
-    return {
-      published: true,
-      version: latestVersion,
-      latestVersion,
-    };
-  } catch (e) {
-    const errorMsg = (e as { stderr?: string }).stderr || String(e);
-    if (errorMsg.includes('404') || errorMsg.includes('not found')) {
-      return {
-        published: false,
-        error: 'Package not found on npm',
-      };
+function findPackageJson(dir: string, results: string[] = []) {
+  const items = readdirSync(dir);
+  for (const item of items) {
+    if (item.startsWith('.') || item === '_templates') continue;
+    const fullPath = join(dir, item);
+    const stat = statSync(fullPath);
+    if (stat.isDirectory()) {
+      findPackageJson(fullPath, results);
+    } else if (item === 'package.json') {
+      results.push(fullPath);
     }
-    return {
-      published: false,
-      error: errorMsg,
-    };
   }
+  return results;
 }
 
 async function main() {
-  console.log('📦 LytJS npm 发布状态检查\n');
+  console.log('📦 对比构建的包和发布的包\n');
   console.log('='.repeat(80));
 
-  const published: string[] = [];
-  const notPublished: string[] = [];
-  const needsUpdate: string[] = [];
-  const errors: string[] = [];
+  // 1. 获取所有存在的 package.json
+  const packageFiles = findPackageJson(join(ROOT, 'packages'));
+  console.log(`\n📁 找到 ${packageFiles.length} 个 package.json 文件`);
 
-  for (const pkg of PACKAGES) {
-    const expectedVersion = getPackageVersion(pkg.path);
-    console.log(`\n🔍 检查: ${pkg.name}@${expectedVersion}`);
-
+  // 2. 提取包名
+  const allPackageNames: string[] = [];
+  for (const pkgFile of packageFiles) {
     try {
-      const result = await checkPackagePublished(pkg.name, expectedVersion);
-
-      if (result.published && result.version) {
-        if (result.version === expectedVersion) {
-          console.log(`✅ 已发布: ${pkg.name}@${result.version}`);
-          published.push(`${pkg.name}@${result.version}`);
-        } else {
-          console.log(`⚠️  版本不匹配: 本地=${expectedVersion}, npm=${result.version}`);
-          needsUpdate.push(`${pkg.name}@${expectedVersion} (npm=${result.version})`);
-        }
-      } else {
-        console.log(`❌ 未发布: ${pkg.name}`);
-        notPublished.push(`${pkg.name}@${expectedVersion}`);
+      const pkg = JSON.parse(readFileSync(pkgFile, 'utf-8'));
+      if (pkg.name && !pkg.private) {
+        allPackageNames.push(pkg.name);
       }
     } catch (e) {
-      console.log(`❌ 检查失败: ${pkg.name}`);
-      errors.push(`${pkg.name} - ${String(e)}`);
+      console.log(`⚠️  无法读取 ${pkgFile}: ${e}`);
     }
-
-    // 避免请求过快
-    await new Promise((resolve) => setTimeout(resolve, 200));
   }
 
+  console.log(`\n✅ 找到 ${allPackageNames.length} 个可发布的包`);
+
+  // 3. 对比
+  const publishedNames = PUBLISHED_PACKAGES.map(p => p.name);
+  const notInPublished = allPackageNames.filter(name => !publishedNames.includes(name));
+  const extraInPublished = publishedNames.filter(name => !allPackageNames.includes(name));
+
+  console.log(`\n📊 对比结果:`);
+  console.log(`  - 发布脚本中有 ${publishedNames.length} 个包`);
+  console.log(`  - 实际存在 ${allPackageNames.length} 个包`);
+  
+  if (notInPublished.length > 0) {
+    console.log(`\n❌ 实际存在但不在发布列表中的包 (${notInPublished.length}个):`);
+    notInPublished.forEach(name => console.log(`  - ${name}`));
+  }
+  
+  if (extraInPublished.length > 0) {
+    console.log(`\n❌ 在发布列表中但不存在的包 (${extraInPublished.length}个):`);
+    extraInPublished.forEach(name => console.log(`  - ${name}`));
+  }
+
+  if (notInPublished.length === 0 && extraInPublished.length === 0) {
+    console.log(`\n✅ 所有包匹配！`);
+  }
+  
   console.log('\n' + '='.repeat(80));
-  console.log('📊 检查结果汇总:');
-  console.log(`✅ 已发布 (最新版本): ${published.length} 个包`);
-  console.log(`⚠️  版本不匹配: ${needsUpdate.length} 个包`);
-  console.log(`❌ 未发布: ${notPublished.length} 个包`);
-  console.log(`⚠️  检查错误: ${errors.length} 个包`);
-
-  if (published.length > 0) {
-    console.log('\n✅ 已发布的包:');
-    published.forEach((name) => console.log(`  - ${name}`));
-  }
-
-  if (needsUpdate.length > 0) {
-    console.log('\n⚠️  版本不匹配的包:');
-    needsUpdate.forEach((name) => console.log(`  - ${name}`));
-  }
-
-  if (notPublished.length > 0) {
-    console.log('\n❌ 未发布的包:');
-    notPublished.forEach((name) => console.log(`  - ${name}`));
-  }
-
-  if (errors.length > 0) {
-    console.log('\n⚠️  检查错误的包:');
-    errors.forEach((name) => console.log(`  - ${name}`));
-  }
-
-  console.log('='.repeat(80));
 }
 
 main().catch(console.error);

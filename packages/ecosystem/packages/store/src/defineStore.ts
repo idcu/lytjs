@@ -47,6 +47,10 @@ export function defineStore<Id extends string, S extends StateTree, G, A, SS>(
     return function useStore(
       pinia?: Pinia,
     ): SS & Store<Id, Record<string, unknown>, Record<string, unknown>, Record<string, unknown>> {
+      // Get active pinia if not provided
+      if (!pinia) {
+        pinia = getActivePinia();
+      }
       if (storeCache.has(cacheKey)) {
         return storeCache.get(cacheKey) as unknown as SS &
           Store<Id, Record<string, unknown>, Record<string, unknown>, Record<string, unknown>>;
@@ -64,7 +68,10 @@ export function defineStore<Id extends string, S extends StateTree, G, A, SS>(
 
       const storeObj = setup();
 
-      const wrappedStore: Record<string, unknown> = { ...(storeObj as Record<string, unknown>) };
+      const wrappedStore: Record<string, unknown> = {};
+      
+      // 直接引用 setup 返回的对象，保持响应式
+      Object.assign(wrappedStore, storeObj as Record<string, unknown>);
 
       const thisContext = new Proxy(wrappedStore, {
         get(target, prop: string | symbol) {
@@ -76,6 +83,13 @@ export function defineStore<Id extends string, S extends StateTree, G, A, SS>(
             return value;
           }
           return undefined;
+        },
+        set(target, prop: string | symbol, value: unknown) {
+          if (typeof prop === 'string') {
+            target[prop] = value;
+            return true;
+          }
+          return false;
         },
         has(_target, prop) {
           return typeof prop === 'string' && prop in wrappedStore;
@@ -138,12 +152,8 @@ export function defineStore<Id extends string, S extends StateTree, G, A, SS>(
 
       (store as any).$id = id;
 
-      (store as any).$state = {};
-      for (const [key, value] of Object.entries(storeObj as Record<string, unknown>)) {
-        if (typeof value !== 'function' && !key.startsWith('$')) {
-          (store as any).$state[key] = value;
-        }
-      }
+      // 直接把 storeObj 作为 $state，保持响应式
+      (store as any).$state = storeObj;
 
       (store as any).$patch = (
         partialOrMutator:

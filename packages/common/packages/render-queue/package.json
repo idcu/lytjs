@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/common-render-queue",
-  "version": "6.9.5",
+  "version": "6.9.6",
   "description": "Render queue for batching and merging render operations in LytJS",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",

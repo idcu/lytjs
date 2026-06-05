@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/common-scheduler",
-  "version": "6.9.5",
+  "version": "6.9.6",
   "description": "Task scheduler for LytJS",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",

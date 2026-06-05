@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/middleware-auth",
-  "version": "6.9.5",
+  "version": "6.9.6",
   "description": "LytJS 认证中间件",
   "type": "module",
   "main": "./dist/index.cjs",

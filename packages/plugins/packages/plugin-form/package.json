@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/plugin-form",
-  "version": "6.9.5",
+  "version": "6.9.6",
   "description": "LytJS official form plugin for form state management, validation, and submission",
   "type": "module",
   "main": "./dist/index.cjs",
