@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/plugin-data-fetch",
-  "version": "6.9.2",
+  "version": "6.9.5",
   "description": "LytJS official data fetch plugin with caching, retries, and interceptors",
   "type": "module",
   "main": "./dist/index.cjs",

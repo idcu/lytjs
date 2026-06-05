@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/common-query",
-  "version": "6.9.2",
+  "version": "6.9.5",
   "description": "URL query string parsing and building utilities for LytJS",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",

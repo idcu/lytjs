@@ -234,8 +234,10 @@ export type {
   RichTextEditorSetupProps,
 } from './components/types';
 
-// 组件安装
-import type { AppContext } from '@lytjs/component';
+// 导入 definePlugin
+import { definePlugin } from '@lytjs/core';
+
+// 组件导入
 import { Button } from './components/Button';
 import { Input } from './components/Input';
 import { Dialog } from './components/Dialog';
@@ -282,60 +284,64 @@ import { Avatar } from './components/Avatar';
 import { Card } from './components/Card';
 
 /**
- * 安装所有组件
+ * 创建 LytJS UI 插件
  */
-export function install(app: AppContext): void {
-  app.components['LytButton'] = Button;
-  app.components['LytInput'] = Input;
-  app.components['LytDialog'] = Dialog;
-  app.components['LytSelect'] = Select;
-  app.components['LytTabs'] = Tabs;
-  app.components['LytTabPane'] = TabPane;
-  app.components['LytTable'] = Table;
-  app.components['LytForm'] = Form;
-  app.components['LytFormItem'] = FormItem;
-  app.components['LytTransition'] = Transition;
-  app.components['LytTransitionGroup'] = TransitionGroup;
-  app.components['LytDatePicker'] = DatePicker;
-  app.components['LytTree'] = Tree;
-  app.components['LytMenu'] = Menu;
-  app.components['LytCascader'] = Cascader;
-  app.components['LytTreeSelect'] = TreeSelect;
-  app.components['LytTransfer'] = Transfer;
-  app.components['LytDescriptions'] = Descriptions;
-  app.components['LytDescriptionsItem'] = DescriptionsItem;
-  app.components['LytModal'] = Modal;
-  app.components['LytDrawer'] = Drawer;
-  app.components['LytUpload'] = Upload;
-  app.components['LytNotification'] = Notification;
-  app.components['LytCalendar'] = Calendar;
-  app.components['LytImage'] = Image;
-  app.components['LytRate'] = Rate;
-  app.components['LytColorPicker'] = ColorPicker;
-  // 新组件
-  app.components['LytIcon'] = Icon;
-  app.components['LytBadge'] = Badge;
-  app.components['LytTag'] = Tag;
-  app.components['LytSpin'] = Spin;
-  app.components['LytEmpty'] = Empty;
-  app.components['LytLink'] = Link;
-  app.components['LytContainer'] = Container;
-  app.components['LytDivider'] = Divider;
-  app.components['LytToast'] = Toast;
-  app.components['LytAlert'] = Alert;
-  app.components['LytTooltip'] = Tooltip;
-  app.components['LytCheckbox'] = Checkbox;
-  app.components['LytCheckboxGroup'] = CheckboxGroup;
-  app.components['LytRadio'] = Radio;
-  app.components['LytRadioGroup'] = RadioGroup;
-  app.components['LytSwitch'] = Switch;
-  app.components['LytInputNumber'] = InputNumber;
-  app.components['LytProgress'] = Progress;
-  app.components['LytSlider'] = Slider;
-  app.components['LytAvatar'] = Avatar;
-  app.components['LytCard'] = Card;
-}
+const LytUI = definePlugin({
+  name: 'lytjs-ui',
+  version: '6.9.5',
+  description: 'LytJS 官方 UI 组件库',
+  install: (app) => {
+    app.component('LytButton', Button);
+    app.component('LytInput', Input);
+    app.component('LytDialog', Dialog);
+    app.component('LytSelect', Select);
+    app.component('LytTabs', Tabs);
+    app.component('LytTabPane', TabPane);
+    app.component('LytTable', Table);
+    app.component('LytForm', Form);
+    app.component('LytFormItem', FormItem);
+    app.component('LytTransition', Transition);
+    app.component('LytTransitionGroup', TransitionGroup);
+    app.component('LytDatePicker', DatePicker);
+    app.component('LytTree', Tree);
+    app.component('LytMenu', Menu);
+    app.component('LytCascader', Cascader);
+    app.component('LytTreeSelect', TreeSelect);
+    app.component('LytTransfer', Transfer);
+    app.component('LytDescriptions', Descriptions);
+    app.component('LytDescriptionsItem', DescriptionsItem);
+    app.component('LytModal', Modal);
+    app.component('LytDrawer', Drawer);
+    app.component('LytUpload', Upload);
+    app.component('LytNotification', Notification);
+    app.component('LytCalendar', Calendar);
+    app.component('LytImage', Image);
+    app.component('LytRate', Rate);
+    app.component('LytColorPicker', ColorPicker);
+    // 新组件
+    app.component('LytIcon', Icon);
+    app.component('LytBadge', Badge);
+    app.component('LytTag', Tag);
+    app.component('LytSpin', Spin);
+    app.component('LytEmpty', Empty);
+    app.component('LytLink', Link);
+    app.component('LytContainer', Container);
+    app.component('LytDivider', Divider);
+    app.component('LytToast', Toast);
+    app.component('LytAlert', Alert);
+    app.component('LytTooltip', Tooltip);
+    app.component('LytCheckbox', Checkbox);
+    app.component('LytCheckboxGroup', CheckboxGroup);
+    app.component('LytRadio', Radio);
+    app.component('LytRadioGroup', RadioGroup);
+    app.component('LytSwitch', Switch);
+    app.component('LytInputNumber', InputNumber);
+    app.component('LytProgress', Progress);
+    app.component('LytSlider', Slider);
+    app.component('LytAvatar', Avatar);
+    app.component('LytCard', Card);
+  },
+});
 
-export default {
-  install,
-};
+export default LytUI;
+export { LytUI };

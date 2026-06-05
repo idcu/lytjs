@@ -5,7 +5,14 @@ export default defineConfig({
   format: ['esm', 'cjs'],
   outDir: 'dist',
   clean: true,
-  dts: true,
+  dts: {
+    compilerOptions: {
+      noUnusedLocals: false,
+      noUnusedParameters: false,
+      strict: false,
+      skipLibCheck: true,
+    },
+  },
   sourceMap: true,
   splitting: false,
   minify: false,

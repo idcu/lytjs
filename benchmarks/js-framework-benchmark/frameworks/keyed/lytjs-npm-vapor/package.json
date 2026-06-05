@@ -1,0 +1,31 @@
+{
+  "name": "lytjs-npm-vapor",
+  "description": "LytJS - Vapor Mode (npm package)",
+  "version": "6.9.0",
+  "keywords": ["lytjs", "vapor", "benchmark"],
+  "main": "index.html",
+  "js-framework-benchmark": {
+    "framework": "LytJS (npm, Vapor)",
+    "frameworkVersion": "6.9.0",
+    "useShadowRoot": false,
+    "useRowSpan": false,
+    "useInnerHTML": false,
+    "useDocFragment": true
+  },
+  "scripts": {
+    "build-prod": "echo 'No build required - production ready'",
+    "dev": "python -m http.server 8080"
+  },
+  "dependencies": {
+    "@lytjs/renderer": "^6.9.0",
+    "@lytjs/reactivity": "^6.9.0",
+    "@lytjs/compiler": "^6.9.0",
+    "@lytjs/common-constants": "^6.9.0",
+    "@lytjs/common-assertions": "^6.9.0"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0"
+  },
+  "license": "MIT",
+  "author": "LytJS Team"
+}

@@ -1,6 +1,6 @@
 #!/usr/bin/env tsx
 /**
- * 发布剩余的几个包
+ * 发布剩余的包
  */
 
 import { execSync } from 'child_process';
@@ -11,7 +11,7 @@ import { writeFileSync, unlinkSync, existsSync, readFileSync } from 'fs';
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const ROOT = join(__dirname, '..');
 
-const PACKAGES = [
+const REMAINING_PACKAGES = [
   { name: '@lytjs/router', path: 'packages/ecosystem/packages/web-framework/packages/router' },
   { name: '@lytjs/ssr', path: 'packages/ecosystem/packages/ssr-kit/packages/ssr' },
   { name: '@lytjs/router-fs', path: 'packages/ecosystem/packages/web-framework/packages/router-fs' },
@@ -19,7 +19,7 @@ const PACKAGES = [
   { name: '@lytjs/hmr', path: 'packages/ecosystem/packages/ssr-kit/packages/hmr' },
 ];
 
-console.log('🚀 发布剩余的几个包\n');
+console.log('🚀 发布剩余的包\n');
 
 function getToken(): string {
   const npmrcPublishPath = join(ROOT, '.npmrc_for_publish');
@@ -37,21 +37,23 @@ function getToken(): string {
     return process.env.NPM_TOKEN;
   }
 
-  throw new Error('未找到 npm token！');
+  throw new Error('未找到 npm token');
 }
 
 const success: string[] = [];
 const failed: string[] = [];
+const skipped: string[] = [];
 const token = getToken();
+
 const tempNpmrcPaths: string[] = [];
 
 try {
-  for (let i = 0; i < PACKAGES.length; i++) {
-    const pkg = PACKAGES[i];
+  for (let i = 0; i < REMAINING_PACKAGES.length; i++) {
+    const pkg = REMAINING_PACKAGES[i];
     const pkgPath = join(ROOT, pkg.path);
     const npmrcPath = join(pkgPath, '.npmrc');
 
-    console.log(`\n📦 [${i + 1}/${PACKAGES.length}] 正在发布: ${pkg.name}`);
+    console.log(`\n📦 [${i + 1}/${REMAINING_PACKAGES.length}] 正在发布: ${pkg.name}`);
     console.log(`📍 路径: ${pkg.path}`);
 
     try {
@@ -73,12 +75,18 @@ try {
       console.log(`✅ 发布成功: ${pkg.name}`);
       success.push(pkg.name);
     } catch (e: unknown) {
-      console.log(`❌ 发布失败: ${pkg.name}`);
-      console.log(e);
-      failed.push(pkg.name);
+      const errorMsg = (e as { message?: string }).message || String(e);
+      if (errorMsg.includes('cannot publish over the previously published')) {
+        console.log(`ℹ️  版本已存在，跳过: ${pkg.name}`);
+        skipped.push(pkg.name);
+      } else {
+        console.log(`❌ 发布失败: ${pkg.name}`);
+        console.log(`   ${errorMsg}`);
+        failed.push(pkg.name);
+      }
     }
 
-    await new Promise(resolve => setTimeout(resolve, 800));
+    await new Promise((resolve) => setTimeout(resolve, 800));
   }
 } finally {
   console.log('\n🧹 清理临时文件...');
@@ -87,7 +95,7 @@ try {
       try {
         unlinkSync(npmrcPath);
       } catch (_e) {
-        // 忽略
+        // 忽略删除错误
       }
     }
   }
@@ -97,9 +105,14 @@ try {
 console.log('\n' + '='.repeat(80));
 console.log('📊 发布结果汇总:');
 console.log(`✅ 成功: ${success.length} 个包`);
+console.log(`ℹ️  跳过: ${skipped.length} 个包`);
 console.log(`❌ 失败: ${failed.length} 个包`);
 if (success.length > 0) {
   console.log('\n✅ 成功的包:');
-  console.log(success.map(name => `  - ${name}`).join('\n'));
+  console.log(success.map((name) => `  - ${name}`).join('\n'));
 }
-console.log('='.repeat(80) + '\n');
+if (failed.length > 0) {
+  console.log('\n❌ 失败的包:');
+  console.log(failed.map((name) => `  - ${name}`).join('\n'));
+}
+console.log('='.repeat(80));

@@ -5,7 +5,9 @@
  */
 
 import type { Pinia, PiniaPlugin, StateTree } from './types';
+import type { App } from '@lytjs/core';
 import { signal } from '@lytjs/reactivity';
+import { definePlugin } from '@lytjs/core';
 
 let activePinia: Pinia | null = null;
 
@@ -24,9 +26,9 @@ export function setActivePinia(pinia: Pinia | null): void {
 }
 
 /**
- * Create a Pinia instance
+ * Create a Pinia instance as a LytJS plugin
  */
-export function createPinia(): Pinia {
+export function createPinia() {
   const stateSignal = signal<Record<string, StateTree>>({});
   const plugins: PiniaPlugin[] = [];
   let isInstalled = false;
@@ -44,7 +46,7 @@ export function createPinia(): Pinia {
   const pinia: Pinia = {
     state,
 
-    install(_app: unknown) {
+    install(app: App) {
       if (isInstalled) {
         if (__DEV__) {
           console.warn(`[@lytjs/store] Pinia has already been installed.`);
@@ -55,21 +57,13 @@ export function createPinia(): Pinia {
       activePinia = pinia;
 
       // Provide the pinia instance
-      if ((_app as { provide?: unknown }).provide) {
-        (_app as { provide: (key: string, value: unknown) => void }).provide(
-          '__lytjs_pinia__',
-          pinia,
-        );
+      if (app.provide) {
+        app.provide('__lytjs_pinia__', pinia);
       }
 
       // Add global properties
-      if (
-        (_app as { config?: { globalProperties?: Record<string, unknown> } }).config
-          ?.globalProperties
-      ) {
-        (
-          _app as { config: { globalProperties: Record<string, unknown> } }
-        ).config.globalProperties.$pinia = pinia;
+      if (app.config?.globalProperties) {
+        app.config.globalProperties.$pinia = pinia;
       }
 
       // TODO: DevTools integration
@@ -90,7 +84,26 @@ export function createPinia(): Pinia {
     },
   };
 
-  return pinia;
+  // Create a LytJS compatible plugin
+  const lytjsPlugin = definePlugin({
+    name: 'pinia',
+    version: '1.0.0',
+    description: 'LytJS Signal-based state management',
+    install: (app) => {
+      pinia.install(app);
+    },
+  });
+
+  // Attach pinia methods to the plugin for backward compatibility
+  Object.assign(lytjsPlugin, {
+    use: pinia.use.bind(pinia),
+    state,
+  });
+
+  return lytjsPlugin as typeof lytjsPlugin & {
+    use: Pinia['use'];
+    state: Pinia['state'];
+  };
 }
 
 // DEV flag for development warnings

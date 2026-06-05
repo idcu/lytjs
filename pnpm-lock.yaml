@@ -1244,6 +1244,9 @@ importers:
       '@lytjs/component':
         specifier: workspace:*
         version: link:../../../component
+      '@lytjs/core':
+        specifier: workspace:*
+        version: link:../../../core
       '@lytjs/reactivity':
         specifier: workspace:*
         version: link:../../../reactivity
@@ -1275,6 +1278,9 @@ importers:
       '@lytjs/component':
         specifier: workspace:*
         version: link:../../../component
+      '@lytjs/core':
+        specifier: workspace:*
+        version: link:../../../core
       '@lytjs/reactivity':
         specifier: workspace:*
         version: link:../../../reactivity

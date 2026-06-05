@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/devtools-extension",
-  "version": "6.9.2",
+  "version": "6.9.5",
   "description": "LytJS browser DevTools extension for debugging LytJS applications",
   "type": "module",
   "main": "./dist/index.cjs",

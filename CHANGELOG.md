@@ -2,6 +2,33 @@
 
 本项目的所有重要变更将记录在此文件中。
 
+## [6.9.5] - 2026-06-05
+
+### 本次更新内容
+
+- ✅ **@lytjs/store 集成修复** - 修复与 @lytjs/core 的兼容性问题
+  - 重构 pinia.ts，使用 `definePlugin` API 创建标准插件
+  - 添加 @lytjs/core 作为依赖项
+  - 确保与 `app.use()` 完全兼容
+  - 修复 defineStore 集成问题导致页面空白的问题
+
+- ✅ **@lytjs/ui 包修复** - 修复 CSS 文件路径和包集成问题
+  - 更新 package.json 导出配置，新增多个 CSS 路径别名
+    - 支持 `@lytjs/ui/index.css`
+    - 支持 `@lytjs/ui/style.css`（向后兼容）
+    - 支持 `@lytjs/ui/styles`（向后兼容）
+  - 修改 tsup.config.ts，添加 onSuccess 钩子自动复制 CSS 到 dist
+  - 重构 index.ts，使用 `definePlugin` API 创建标准 LytJS 插件
+  - 添加 @lytjs/core 作为依赖项
+
+- ✅ **所有包版本统一升级** - 86 个包版本统一升级至 v6.9.5
+
+### 修复的问题
+
+- 修复 @lytjs/store 和 @lytjs/ui 集成时导致页面空白的问题
+- 修复 @lytjs/ui CSS 文件路径不匹配问题
+- 修复 @lytjs/store 与现有代码的兼容性问题
+
 ## [6.9.0] - 2026-05-24
 
 ### 本次更新内容

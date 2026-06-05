@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/ui",
-  "version": "6.9.2",
+  "version": "6.9.5",
   "description": "LytJS 官方 UI 组件库，包含 Button、Input、Dialog 等组件",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -12,7 +12,9 @@
       "import": "./dist/index.mjs",
       "require": "./dist/index.cjs"
     },
-    "./style.css": "./dist/style.css",
+    "./index.css": "./dist/index.css",
+    "./style.css": "./dist/index.css",
+    "./styles": "./dist/index.css",
     "./package.json": "./package.json"
   },
   "files": [
@@ -38,7 +40,8 @@
     "@lytjs/common-a11y": "workspace:*",
     "@lytjs/reactivity": "workspace:*",
     "@lytjs/component": "workspace:*",
-    "@lytjs/vdom": "workspace:*"
+    "@lytjs/vdom": "workspace:*",
+    "@lytjs/core": "workspace:*"
   },
   "devDependencies": {
     "tsup": "^8.0.0",

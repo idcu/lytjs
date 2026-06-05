@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/bundler",
-  "version": "6.9.2",
+  "version": "6.9.5",
   "description": "LytJS bundler integration for Vite",
   "type": "module",
   "main": "./dist/index.cjs",

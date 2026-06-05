@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/common-warn",
-  "version": "6.9.2",
+  "version": "6.9.5",
   "description": "Framework-level warning system for Lyt.js",
   "type": "module",
   "main": "./dist/index.cjs",

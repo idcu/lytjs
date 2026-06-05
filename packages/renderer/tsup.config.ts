@@ -8,7 +8,15 @@ export default defineConfig({
     'vapor/vapor-app': 'src/vapor/vapor-app.ts',
   },
   format: ['esm', 'cjs'],
-  dts: false,
+  dts: {
+    compilerOptions: {
+      noUnusedLocals: false,
+      noUnusedParameters: false,
+      skipLibCheck: true,
+      strict: false,
+      noUnusedLabels: false,
+    },
+  },
   sourcemap: true,
   clean: true,
   splitting: false,

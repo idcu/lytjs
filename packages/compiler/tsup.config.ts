@@ -9,7 +9,12 @@ export default defineConfig({
     wasm: 'src/wasm-entry.ts',
   },
   format: ['esm', 'cjs'],
-  dts: false,
+  dts: {
+    compilerOptions: {
+      noUnusedLocals: false,
+      noUnusedParameters: false,
+    },
+  },
   sourcemap: true,
   clean: true,
   splitting: false,

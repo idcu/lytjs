@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/common-async-scheduler",
-  "version": "6.9.2",
+  "version": "6.9.5",
   "description": "Async scheduler for unified timing operations with priority support in LytJS",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",

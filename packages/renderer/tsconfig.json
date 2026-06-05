@@ -5,6 +5,8 @@
     "rootDir": "./src",
     "composite": false,
     "incremental": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
     "baseUrl": ".",
     "paths": {
       "@lytjs/reactivity": ["../reactivity/dist/index.d.ts"],

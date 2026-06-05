@@ -12,12 +12,27 @@ export default defineConfig({
     environment: 'jsdom',
     includeSource: ['src/**/*.{js,ts}'],
     pool: 'forks',
+    env: {
+      NODE_ENV: 'development',
+      __DEV__: 'true',
+    },
+  },
+  define: {
+    __DEV__: true,
   },
   resolve: {
     alias: [
       {
         find: /^@lytjs\/core$/,
         replacement: path.resolve(__dirname, '../packages/core/dist/index.mjs'),
+      },
+      {
+        find: /^@lytjs\/core-signal$/,
+        replacement: path.resolve(__dirname, '../packages/core-signal/dist/index.mjs'),
+      },
+      {
+        find: /^@lytjs\/core-vnode$/,
+        replacement: path.resolve(__dirname, '../packages/core-vnode/dist/index.mjs'),
       },
       {
         find: /^@lytjs\/component$/,

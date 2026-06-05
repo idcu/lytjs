@@ -23,5 +23,6 @@ export default defineConfig({
     '@lytjs/shared-types',
     '@lytjs/reactivity',
     '@lytjs/component',
+    '@lytjs/core',
   ],
 });

@@ -15,9 +15,11 @@
  */
 
 import { execSync } from 'child_process';
-import { join } from 'path';
+import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { writeFileSync, unlinkSync, existsSync, readFileSync } from 'fs';
+
+import { findPackageJsonFiles } from './shared.js';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const ROOT = join(__dirname, '..');
@@ -72,17 +74,17 @@ const PACKAGES = [
   { name: '@lytjs/core', path: 'packages/core' },
   { name: '@lytjs/core-signal', path: 'packages/core-signal' },
   { name: '@lytjs/core-vnode', path: 'packages/core-vnode' },
-  { name: '@lytjs/router', path: 'packages/ecosystem/packages/router' },
   { name: '@lytjs/store', path: 'packages/ecosystem/packages/store' },
-  { name: '@lytjs/ssr', path: 'packages/ecosystem/packages/ssr' },
   { name: '@lytjs/ui', path: 'packages/ecosystem/packages/ui' },
   { name: '@lytjs/devtools', path: 'packages/ecosystem/packages/devtools' },
   { name: '@lytjs/compat', path: 'packages/ecosystem/packages/compat' },
   { name: '@lytjs/platform-adapter', path: 'packages/ecosystem/packages/platform-adapter' },
-  { name: '@lytjs/router-fs', path: 'packages/ecosystem/packages/router-fs' },
-  { name: '@lytjs/api', path: 'packages/ecosystem/packages/api' },
   { name: '@lytjs/bundler', path: 'packages/ecosystem/packages/bundler' },
-  { name: '@lytjs/hmr', path: 'packages/ecosystem/packages/hmr' },
+  { name: '@lytjs/hmr', path: 'packages/ecosystem/packages/ssr-kit/packages/hmr' },
+  { name: '@lytjs/ssr', path: 'packages/ecosystem/packages/ssr-kit/packages/ssr' },
+  { name: '@lytjs/router', path: 'packages/ecosystem/packages/web-framework/packages/router' },
+  { name: '@lytjs/router-fs', path: 'packages/ecosystem/packages/web-framework/packages/router-fs' },
+  { name: '@lytjs/api', path: 'packages/ecosystem/packages/web-framework/packages/api' },
   { name: '@lytjs/runtime-edge', path: 'packages/ecosystem/packages/runtime-edge' },
   { name: '@lytjs/cache', path: 'packages/ecosystem/packages/ssr-kit/packages/cache' },
   { name: '@lytjs/cache-isr', path: 'packages/ecosystem/packages/ssr-kit/packages/cache-isr' },
@@ -154,6 +156,80 @@ function getToken(): string {
   throw new Error('未找到 npm token！请设置 .npmrc_for_publish 或 NPM_TOKEN 环境变量');
 }
 
+// 将 workspace 依赖转换为实际版本号
+function prepareWorkspaceDeps() {
+  console.log('🔧 准备 workspace 依赖...\n');
+  
+  const rootPkg = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf-8'));
+  const targetVersion = rootPkg.version;
+  console.log(`目标版本: ${targetVersion}\n`);
+
+  const pkgFiles = findPackageJsonFiles(join(ROOT, 'packages'));
+  let updatedCount = 0;
+
+  for (const pkgFile of pkgFiles) {
+    const pkg = JSON.parse(readFileSync(pkgFile, 'utf-8'));
+    let modified = false;
+
+    const depFields = ['dependencies', 'devDependencies', 'peerDependencies'] as const;
+    for (const field of depFields) {
+      if (pkg[field]) {
+        for (const [dep, version] of Object.entries(pkg[field])) {
+          if (typeof version === 'string' && version.startsWith('workspace:')) {
+            pkg[field][dep] = `^${targetVersion}`;
+            modified = true;
+            console.log(`  更新 ${pkg.name} 的 ${dep}: ${version} → ^${targetVersion}`);
+          }
+        }
+      }
+    }
+
+    if (modified) {
+      writeFileSync(pkgFile, JSON.stringify(pkg, null, 2) + '\n', 'utf-8');
+      updatedCount++;
+    }
+  }
+
+  console.log(`\n✅ 完成！共更新了 ${updatedCount} 个包的依赖版本。\n`);
+}
+
+// 恢复 workspace 依赖
+function restoreWorkspaceDeps() {
+  console.log('\n🔄 恢复 workspace 依赖...\n');
+
+  const pkgFiles = findPackageJsonFiles(join(ROOT, 'packages'));
+  let updatedCount = 0;
+
+  for (const pkgFile of pkgFiles) {
+    const pkg = JSON.parse(readFileSync(pkgFile, 'utf-8'));
+    let modified = false;
+
+    const depFields = ['dependencies', 'devDependencies', 'peerDependencies'] as const;
+    for (const field of depFields) {
+      if (pkg[field]) {
+        for (const [dep, version] of Object.entries(pkg[field])) {
+          if (
+            typeof version === 'string' &&
+            dep.startsWith('@lytjs/') &&
+            !version.startsWith('workspace:')
+          ) {
+            pkg[field][dep] = 'workspace:*';
+            modified = true;
+            console.log(`  恢复 ${pkg.name} 的 ${dep}: ${version} → workspace:*`);
+          }
+        }
+      }
+    }
+
+    if (modified) {
+      writeFileSync(pkgFile, JSON.stringify(pkg, null, 2) + '\n', 'utf-8');
+      updatedCount++;
+    }
+  }
+
+  console.log(`\n✅ 完成！共恢复了 ${updatedCount} 个包的 workspace 依赖。`);
+}
+
 const success: string[] = [];
 const failed: string[] = [];
 const skipped: string[] = [];
@@ -163,6 +239,9 @@ const token = getToken();
 const tempNpmrcPaths: string[] = [];
 
 try {
+  // 第一步：准备 workspace 依赖
+  prepareWorkspaceDeps();
+
   for (let i = 0; i < PACKAGES.length; i++) {
     const pkg = PACKAGES[i];
     const pkgPath = join(ROOT, pkg.path);
@@ -206,6 +285,13 @@ try {
     await new Promise((resolve) => setTimeout(resolve, 800));
   }
 } finally {
+  try {
+    // 第二步：恢复 workspace 依赖
+    restoreWorkspaceDeps();
+  } catch (e) {
+    console.error('⚠️  恢复 workspace 依赖时出错:', e);
+  }
+
   // 清理所有临时 .npmrc
   console.log('\n🧹 清理临时文件...');
   for (const npmrcPath of tempNpmrcPaths) {

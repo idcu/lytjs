@@ -364,7 +364,7 @@ function extractRenderBody(code: string): string | null {
  * 定义所有传递给 render 函数的依赖项
  */
 // FIX: DTS build error - 未使用的声明
-// @ts-expect-error -- reserved for future use
+// @ts-ignore -- reserved for future use
 interface _RenderParams {
   effect: unknown;
   reconcileArray: unknown;
@@ -403,7 +403,7 @@ interface _RenderParams {
  * @returns 一个接受所有依赖参数的函数
  */
 // FIX: DTS build error - 未使用的函数
-// @ts-expect-error -- reserved for future use
+// @ts-ignore -- reserved for future use
 function _createRenderWrapper(
   renderBody: string,
 ): (

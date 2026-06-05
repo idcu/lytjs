@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/cli",
-  "version": "6.9.2",
+  "version": "6.9.5",
   "description": "LytJS project scaffolding and development CLI tool",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
