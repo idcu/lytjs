@@ -7,6 +7,8 @@
 ## 🏠 新手入门
 
 - [新手入门](./getting-started/index.md)
+- [AI 助手开发指南](./ai-assistant-guide.md) - 🌟 专门为 AI 助手准备
+- [快速参考](./getting-started/quick-reference.md)
 - [快速开始](./getting-started/quick-start.md)
 - [安装指南](./getting-started/installation.md)
 - [实战教程](./getting-started/tutorials/index.md)

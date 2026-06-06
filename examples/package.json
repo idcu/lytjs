@@ -1,6 +1,6 @@
 {
   "name": "@lytjs/examples",
-  "version": "6.0.0",
+  "version": "6.9.6",
   "description": "LytJS 示例项目集合",
   "type": "module",
   "scripts": {

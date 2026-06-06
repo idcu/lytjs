@@ -1,0 +1,22 @@
+{
+  "name": "using-lytjs-as-dependency",
+  "version": "1.0.0",
+  "description": "将 LytJS 作为依赖使用的示例项目",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@lytjs/core": "^6.9.6",
+    "@lytjs/reactivity": "^6.9.6",
+    "@lytjs/ui": "^6.9.6",
+    "@lytjs/store": "^6.9.6",
+    "@lytjs/router": "^6.9.6"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0",
+    "typescript": "^5.0.0"
+  }
+}

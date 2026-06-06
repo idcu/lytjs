@@ -288,8 +288,8 @@ import { Card } from './components/Card';
  */
 const LytUI = definePlugin({
   name: 'lytjs-ui',
-  version: '6.9.5',
-  description: 'LytJS 官方 UI 组件库',
+  version: '6.9.6',
+  description: 'LytJS 官方 UI 组件库 - 60+ 组件，支持 Vapor 和 VDOM 双模式',
   install: (app) => {
     app.component('LytButton', Button);
     app.component('LytInput', Input);
@@ -318,7 +318,6 @@ const LytUI = definePlugin({
     app.component('LytImage', Image);
     app.component('LytRate', Rate);
     app.component('LytColorPicker', ColorPicker);
-    // 新组件
     app.component('LytIcon', Icon);
     app.component('LytBadge', Badge);
     app.component('LytTag', Tag);
@@ -340,6 +339,14 @@ const LytUI = definePlugin({
     app.component('LytSlider', Slider);
     app.component('LytAvatar', Avatar);
     app.component('LytCard', Card);
+    app.component('LytTimeline', Timeline);
+    app.component('LytTimelineItem', TimelineItem);
+    app.component('LytSteps', Steps);
+    app.component('LytStep', Step);
+    app.component('LytCarousel', Carousel);
+    app.component('LytCarouselItem', CarouselItem);
+    app.component('LytPopconfirm', Popconfirm);
+    app.component('LytRichTextEditor', RichTextEditor);
   },
 });
 
