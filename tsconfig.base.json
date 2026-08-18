@@ -38,6 +38,7 @@
       "@lytjs/common": ["packages/common/packages/common/src"],
       "@lytjs/config": ["packages/ecosystem/packages/config/src"],
       "@lytjs/di": ["packages/ecosystem/packages/di/src"],
+      "@lytjs/plugin": ["packages/ecosystem/packages/plugin/src"],
       "@lytjs/shared-types": ["packages/shared-types/src"],
       "@lytjs/reactivity": ["packages/reactivity/src"],
       "@lytjs/reactivity/*": ["packages/reactivity/src/*"],

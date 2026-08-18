@@ -9,6 +9,7 @@ packages:
   # 生态系统单包（已整合到功能域的除外）
   - 'packages/ecosystem/packages/config'
   - 'packages/ecosystem/packages/di'
+  - 'packages/ecosystem/packages/plugin'
   - 'packages/ecosystem/packages/ui'
   - 'packages/ecosystem/packages/store'
   - 'packages/ecosystem/packages/devtools'
