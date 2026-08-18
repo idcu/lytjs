@@ -4,7 +4,18 @@ export default defineConfig({
   title: 'LytJS',
   description: '轻量级、高性能的渐进式 JavaScript 框架',
   lang: 'zh-CN',
-  ignoreDeadLinks: false,
+  ignoreDeadLinks: [
+    // 仓库内部工具链 / 文档引用（非 VitePress 站点页面）
+    /\.trae\//,
+    /\.ai\//,
+    /AGENTS/,
+    /CHANGELOG/,
+    /README$/,
+    // 本地开发服务器地址
+    (url) => url.startsWith('http://localhost'),
+  ],
+  // 归档内容不参与站点构建与死链校验
+  srcExclude: ['**/legacy-archive/**'],
   base: '/lytjs/',
 
   head: [

@@ -62,9 +62,9 @@ createAuthMiddleware: Middleware;
 
 ### 成员
 
-| 名称 | 类型    | 描述    | 可选    |
-| ---- | ------- | ------- | ------- | --- |
-| id   | `string | number` | 用户 ID | 否  |
+| 名称 | 类型               | 描述    | 可选 |
+| ---- | ------------------ | ------- | ---- |
+| id   | `string \| number` | 用户 ID | 否   |
 
 ## AuthOptions
 
@@ -74,7 +74,7 @@ createAuthMiddleware: Middleware;
 
 ### 成员
 
-| 名称         | 类型                                 | 描述                             | 可选                                     |
-| ------------ | ------------------------------------ | -------------------------------- | ---------------------------------------- | --- |
-| authenticate | `(token: string) => Promise<AuthUser | null>`                           | 认证函数，接收 token 返回用户信息或 null | 否  |
-| headerName   | `string`                             | 认证头名称，默认为 Authorization | 是                                       |
+| 名称         | 类型                                           | 描述                                     | 可选 |
+| ------------ | ---------------------------------------------- | ---------------------------------------- | ---- |
+| authenticate | `(token: string) => Promise<AuthUser \| null>` | 认证函数，接收 token 返回用户信息或 null | 否   |
+| headerName   | `string`                                       | 认证头名称，默认为 Authorization         | 是   |

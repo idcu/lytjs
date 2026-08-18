@@ -199,10 +199,10 @@ validatePattern: boolean;
 
 ### 参数
 
-| 参数    | 类型      | 描述    | 可选 | 默认值 |
-| ------- | --------- | ------- | ---- | ------ | --- |
-| value   | `unknown` |         | 否   | -      |
-| pattern | `RegExp   | string` |      | 否     | -   |
+| 参数    | 类型               | 描述 | 可选 | 默认值 |
+| ------- | ------------------ | ---- | ---- | ------ |
+| value   | `unknown`          |      | 否   | -      |
+| pattern | `RegExp \| string` |      | 否   | -      |
 
 ### 返回值
 
@@ -245,7 +245,7 @@ createFormManager: FormInstance;
 
 | 参数    | 类型          | 描述 | 可选 | 默认值 |
 | ------- | ------------- | ---- | ---- | ------ |
-| options | `FormOptions` |      | 是   | {}     |
+| options | `FormOptions` |      | 是   | `{}`   |
 
 ### 返回值
 
@@ -257,12 +257,12 @@ createFormManager: FormInstance;
 
 ### 成员
 
-| 名称      | 类型                                                             | 描述                      | 可选           |
-| --------- | ---------------------------------------------------------------- | ------------------------- | -------------- | ------- | -------- | ----- | ----- | ----------- | ----------- | --------- | --------- | -------- | --- |
-| type      | `                                                                | 'required'                | 'email'        | 'phone' | 'number' | 'min' | 'max' | 'minLength' | 'maxLength' | 'pattern' | 'custom'` | 校验类型 | 否  |
-| message   | `string`                                                         | 错误消息                  | 是             |
-| value     | `unknown`                                                        | 校验值（如 min/max 值等） | 是             |
-| validator | `(value: unknown, allValues: Record<string, unknown>) => boolean | Promise<boolean>`         | 自定义校验函数 | 是      |
+| 名称      | 类型                                                                                                                       | 描述                      | 可选 |
+| --------- | -------------------------------------------------------------------------------------------------------------------------- | ------------------------- | ---- |
+| type      | `\| 'required' \| 'email' \| 'phone' \| 'number' \| 'min' \| 'max' \| 'minLength' \| 'maxLength' \| 'pattern' \| 'custom'` | 校验类型                  | 否   |
+| message   | `string`                                                                                                                   | 错误消息                  | 是   |
+| value     | `unknown`                                                                                                                  | 校验值（如 min/max 值等） | 是   |
+| validator | `(value: unknown, allValues: Record<string, unknown>) => boolean \| Promise<boolean>`                                      | 自定义校验函数            | 是   |
 
 ## FieldConfig
 
@@ -329,27 +329,27 @@ createFormManager: FormInstance;
 
 ### 成员
 
-| 名称             | 类型                                                    | 描述                                  | 可选         |
-| ---------------- | ------------------------------------------------------- | ------------------------------------- | ------------ | --- |
-| state            | `FormState`                                             | 表单当前状态                          | 否           |
-| getValue         | `(name: string) => unknown`                             | 获取字段值                            | 否           |
-| setValue         | `(name: string, value: unknown) => void`                | 设置字段值                            | 否           |
-| getValues        | `() => Record<string, unknown>`                         | 获取所有值                            | 否           |
-| setValues        | `(values: Record<string, unknown>) => void`             | 设置多个字段值                        | 否           |
-| getErrors        | `(name: string) => string[]`                            | 获取字段错误                          | 否           |
-| setErrors        | `(name: string, errors: string[]) => void`              | 设置字段错误                          | 否           |
-| touchField       | `(name: string) => void`                                | 标记字段为已触碰                      | 否           |
-| touchAllFields   | `() => void`                                            | 触碰所有字段                          | 否           |
-| reset            | `() => void`                                            | 重置表单                              | 否           |
-| resetToInitial   | `() => void`                                            | 重置为初始值                          | 否           |
-| validateField    | `(name: string) => Promise<boolean>`                    | 校验单个字段                          | 否           |
-| validate         | `() => Promise<boolean>`                                | 校验整个表单                          | 否           |
-| submit           | `( callback?: (values: Record<string, unknown>) => void | Promise<void>, ) => Promise<boolean>` | 提交表单     | 否  |
-| setFieldDisabled | `(name: string, disabled: boolean) => void`             | 设置字段禁用状态                      | 否           |
-| setFieldReadOnly | `(name: string, readOnly: boolean) => void`             | 设置字段只读状态                      | 否           |
-| getFieldConfig   | `(name: string) => FieldConfig                          | undefined`                            | 获取字段配置 | 否  |
-| registerField    | `(name: string, config?: FieldConfig) => void`          | 注册新字段                            | 否           |
-| unregisterField  | `(name: string) => void`                                | 注销字段                              | 否           |
+| 名称             | 类型                                                                                             | 描述             | 可选 |
+| ---------------- | ------------------------------------------------------------------------------------------------ | ---------------- | ---- |
+| state            | `FormState`                                                                                      | 表单当前状态     | 否   |
+| getValue         | `(name: string) => unknown`                                                                      | 获取字段值       | 否   |
+| setValue         | `(name: string, value: unknown) => void`                                                         | 设置字段值       | 否   |
+| getValues        | `() => Record<string, unknown>`                                                                  | 获取所有值       | 否   |
+| setValues        | `(values: Record<string, unknown>) => void`                                                      | 设置多个字段值   | 否   |
+| getErrors        | `(name: string) => string[]`                                                                     | 获取字段错误     | 否   |
+| setErrors        | `(name: string, errors: string[]) => void`                                                       | 设置字段错误     | 否   |
+| touchField       | `(name: string) => void`                                                                         | 标记字段为已触碰 | 否   |
+| touchAllFields   | `() => void`                                                                                     | 触碰所有字段     | 否   |
+| reset            | `() => void`                                                                                     | 重置表单         | 否   |
+| resetToInitial   | `() => void`                                                                                     | 重置为初始值     | 否   |
+| validateField    | `(name: string) => Promise<boolean>`                                                             | 校验单个字段     | 否   |
+| validate         | `() => Promise<boolean>`                                                                         | 校验整个表单     | 否   |
+| submit           | `( callback?: (values: Record<string, unknown>) => void \| Promise<void>, ) => Promise<boolean>` | 提交表单         | 否   |
+| setFieldDisabled | `(name: string, disabled: boolean) => void`                                                      | 设置字段禁用状态 | 否   |
+| setFieldReadOnly | `(name: string, readOnly: boolean) => void`                                                      | 设置字段只读状态 | 否   |
+| getFieldConfig   | `(name: string) => FieldConfig \| undefined`                                                     | 获取字段配置     | 否   |
+| registerField    | `(name: string, config?: FieldConfig) => void`                                                   | 注册新字段       | 否   |
+| unregisterField  | `(name: string) => void`                                                                         | 注销字段         | 否   |
 
 ## FormOptions
 

@@ -293,14 +293,10 @@ createHydrationMarkers: VNode;
 
 ### 示例
 
-````typescript
 ```typescript
 const marked = createHydrationMarkers(vnode);
 // marked 的每个元素节点都带有 data-hydrate="lyt-hydrate-1" 等属性
-````
-
-````
-
+```
 
 ## isValidStrategy
 
@@ -312,7 +308,7 @@ const marked = createHydrationMarkers(vnode);
 
 ```typescript
 isValidStrategy: strategy is HydrationStrategy
-````
+```
 
 ### 参数
 
@@ -350,14 +346,10 @@ getHydrationStrategy: HydrationStrategy;
 
 ### 示例
 
-````typescript
 ```typescript
 const strategy = getHydrationStrategy(vnode);
 // 'eager' | 'lazy' | 'idle'
-````
-
-````
-
+```
 
 ## collectHydrationHints
 
@@ -369,14 +361,14 @@ const strategy = getHydrationStrategy(vnode);
 
 ```typescript
 collectHydrationHints: HydrationHints[]
-````
+```
 
 ### 参数
 
 | 参数  | 类型               | 描述 | 可选 | 默认值 |
 | ----- | ------------------ | ---- | ---- | ------ |
 | vnode | `VNode`            |      | 否   | -      |
-| hints | `HydrationHints[]` |      | 是   | []     |
+| hints | `HydrationHints[]` |      | 是   | `[]`   |
 
 ### 返回值
 
@@ -408,17 +400,13 @@ JSON 字符串
 
 ### 示例
 
-````typescript
 ```typescript
 const serialized = serializeHydrationState({
   user: { name: 'Alice', age: 30 },
   items: [1, 2, 3],
 });
 // '{"user":{"name":"Alice","age":30},"items":[1,2,3]}'
-````
-
-````
-
+```
 
 ## createDehydratedState
 
@@ -429,8 +417,8 @@ const serialized = serializeHydrationState({
 ### 签名
 
 ```typescript
-createDehydratedState: string
-````
+createDehydratedState: string;
+```
 
 ### 参数
 
@@ -447,16 +435,12 @@ createDehydratedState: string
 
 ### 示例
 
-````typescript
 ```typescript
 const script = createDehydratedState(vnode, {
   user: { name: 'Alice' },
 });
 // <script id="__LYT_DEHYDRATED_STATE__" type="application/json">...</script>
-````
-
-````
-
+```
 
 ## escapeHtml
 
@@ -467,8 +451,8 @@ const script = createDehydratedState(vnode, {
 ### 签名
 
 ```typescript
-escapeHtml: string
-````
+escapeHtml: string;
+```
 
 ### 参数
 
@@ -494,9 +478,9 @@ renderToString: string;
 
 ### 参数
 
-| 参数  | 类型   | 描述    | 可选   | 默认值 |
-| ----- | ------ | ------- | ------ | ------ | ---- | ---------- | --- | --- | --- |
-| vnode | `VNode | VNode[] | string | number | null | undefined` |     | 否  | -   |
+| 参数  | 类型                                                        | 描述 | 可选 | 默认值 |
+| ----- | ----------------------------------------------------------- | ---- | ---- | ------ |
+| vnode | `VNode \| VNode[] \| string \| number \| null \| undefined` |      | 否   | -      |
 
 ### 返回值
 
@@ -538,10 +522,10 @@ renderToHtml: string;
 
 ### 参数
 
-| 参数    | 类型                                                                                    | 描述     | 可选 | 默认值 |
-| ------- | --------------------------------------------------------------------------------------- | -------- | ---- | ------ | --- |
-| vnode   | `VNode                                                                                  | VNode[]` |      | 否     | -   |
-| options | `{ title?: string; lang?: string; head?: string; bodyAttrs?: Record<string, string>; }` |          | 是   | {}     |
+| 参数    | 类型                                                                                    | 描述 | 可选 | 默认值 |
+| ------- | --------------------------------------------------------------------------------------- | ---- | ---- | ------ |
+| vnode   | `VNode \| VNode[]`                                                                      |      | 否   | -      |
+| options | `{ title?: string; lang?: string; head?: string; bodyAttrs?: Record<string, string>; }` |      | 是   | `{}`   |
 
 ### 返回值
 
@@ -567,11 +551,11 @@ ServerLifecycleHook: (context: ServerComponentContext) => Promise<void> | void
 
 ### 成员
 
-| 名称        | 类型                                                                               | 描述                                            | 可选       |
-| ----------- | ---------------------------------------------------------------------------------- | ----------------------------------------------- | ---------- | --- |
-| componentId | `string`                                                                           | 组件唯一 ID                                     | 否         |
-| route       | `{ path: string; params: Record<string, string>; query: Record<string, string>; }` | 路由信息                                        | 是         |
-| request     | `{ headers: Record<string, string                                                  | undefined>; cookies: Record<string, string>; }` | 请求上下文 | 是  |
+| 名称        | 类型                                                                                 | 描述        | 可选 |
+| ----------- | ------------------------------------------------------------------------------------ | ----------- | ---- |
+| componentId | `string`                                                                             | 组件唯一 ID | 否   |
+| route       | `{ path: string; params: Record<string, string>; query: Record<string, string>; }`   | 路由信息    | 是   |
+| request     | `{ headers: Record<string, string \| undefined>; cookies: Record<string, string>; }` | 请求上下文  | 是   |
 
 ## ServerComponentRegistration
 
@@ -675,9 +659,9 @@ collectPrefetchComponents: string[]
 
 ### 参数
 
-| 参数  | 类型   | 描述    | 可选   | 默认值 |
-| ----- | ------ | ------- | ------ | ------ | ---- | ---------- | --- | --- | --- |
-| vnode | `VNode | VNode[] | string | number | null | undefined` |     | 否  | -   |
+| 参数  | 类型                                                        | 描述 | 可选 | 默认值 |
+| ----- | ----------------------------------------------------------- | ---- | ---- | ------ |
+| vnode | `VNode \| VNode[] \| string \| number \| null \| undefined` |      | 否   | -      |
 
 ### 返回值
 
@@ -695,10 +679,10 @@ collectComponentsRecursive: void
 
 ### 参数
 
-| 参数   | 类型       | 描述    | 可选   | 默认值 |
-| ------ | ---------- | ------- | ------ | ------ | ---- | ---------- | --- | --- | --- |
-| vnode  | `VNode     | VNode[] | string | number | null | undefined` |     | 否  | -   |
-| result | `string[]` |         | 否     | -      |
+| 参数   | 类型                                                        | 描述 | 可选 | 默认值 |
+| ------ | ----------------------------------------------------------- | ---- | ---- | ------ |
+| vnode  | `VNode \| VNode[] \| string \| number \| null \| undefined` |      | 否   | -      |
+| result | `string[]`                                                  |      | 否   | -      |
 
 ### 返回值
 
@@ -841,18 +825,18 @@ SSG 生成选项
 
 ### 成员
 
-| 名称            | 类型                                                                                                                                                                        | 描述                     | 可选                       |
-| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ | -------------------------- | --- |
-| baseUrl         | `string`                                                                                                                                                                    | 站点基础 URL，默认 '/'   | 是                         |
-| outDir          | `string`                                                                                                                                                                    | 输出目录，默认 'dist'    | 是                         |
-| defaultTitle    | `string`                                                                                                                                                                    | 默认页面标题             | 是                         |
-| lang            | `string`                                                                                                                                                                    | 默认语言                 | 是                         |
-| generateSitemap | `boolean`                                                                                                                                                                   | 是否生成 sitemap         | 是                         |
-| siteName        | `string`                                                                                                                                                                    | 站点名称（用于 sitemap） | 是                         |
-| hashMode        | `boolean`                                                                                                                                                                   | 是否使用哈希路由         | 是                         |
-| globalScripts   | `string[]`                                                                                                                                                                  | 全局额外脚本             | 是                         |
-| globalStyles    | `string[]`                                                                                                                                                                  | 全局额外样式             | 是                         |
-| isr             | `{ /** 重新验证间隔（秒），0 表示按需重新验证 \*/ revalidate?: number; /** 是否启用增量静态再生成 _/ enabled?: boolean; /\*\* 预渲染 fallback 页面 _/ fallback?: 'blocking' | boolean; }`              | ISR 配置（增量静态再生成） | 是  |
+| 名称            | 类型                                                                                                                                                                                    | 描述                       | 可选 |
+| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------- | ---- |
+| baseUrl         | `string`                                                                                                                                                                                | 站点基础 URL，默认 '/'     | 是   |
+| outDir          | `string`                                                                                                                                                                                | 输出目录，默认 'dist'      | 是   |
+| defaultTitle    | `string`                                                                                                                                                                                | 默认页面标题               | 是   |
+| lang            | `string`                                                                                                                                                                                | 默认语言                   | 是   |
+| generateSitemap | `boolean`                                                                                                                                                                               | 是否生成 sitemap           | 是   |
+| siteName        | `string`                                                                                                                                                                                | 站点名称（用于 sitemap）   | 是   |
+| hashMode        | `boolean`                                                                                                                                                                               | 是否使用哈希路由           | 是   |
+| globalScripts   | `string[]`                                                                                                                                                                              | 全局额外脚本               | 是   |
+| globalStyles    | `string[]`                                                                                                                                                                              | 全局额外样式               | 是   |
+| isr             | `{ /** 重新验证间隔（秒），0 表示按需重新验证 */ revalidate?: number; /** 是否启用增量静态再生成 */ enabled?: boolean; /** 预渲染 fallback 页面 */ fallback?: 'blocking' \| boolean; }` | ISR 配置（增量静态再生成） | 是   |
 
 ## DEFAULT_SSG_OPTIONS
 
@@ -1005,17 +989,13 @@ writeStaticFiles: Promise<void>;
 
 **类型:** `Promise<void>`
 
-Promise<void>
+Promise&lt;void&gt;
 
 ### 示例
 
-````typescript
 ```typescript
 await writeStaticFiles(pages, { outDir: 'build' });
-````
-
-````
-
+```
 
 ## generateStaticPages
 
@@ -1026,8 +1006,8 @@ await writeStaticFiles(pages, { outDir: 'build' });
 ### 签名
 
 ```typescript
-generateStaticPages: Map<string, string>
-````
+generateStaticPages: Map<string, string>;
+```
 
 ### 参数
 
@@ -1040,11 +1020,10 @@ generateStaticPages: Map<string, string>
 
 **类型:** `Map<string, string>`
 
-Map<string, string> 文件路径 -> HTML 内容
+Map&lt;string, string&gt; 文件路径 -&gt; HTML 内容
 
 ### 示例
 
-````typescript
 ```typescript
 const pages: SSGPage[] = [
   {
@@ -1066,10 +1045,7 @@ const results = generateStaticPages(pages, {
 for (const [filePath, html] of results) {
   console.log(filePath, html);
 }
-````
-
-````
-
+```
 
 ## generateRouteManifest
 
@@ -1080,15 +1056,15 @@ for (const [filePath, html] of results) {
 ### 签名
 
 ```typescript
-generateRouteManifest: Array<{ path: string; filePath: string; title?: string }>
-````
+generateRouteManifest: Array<{ path: string; filePath: string; title?: string }>;
+```
 
 ### 参数
 
 | 参数    | 类型        | 描述 | 可选 | 默认值 |
 | ------- | ----------- | ---- | ---- | ------ |
 | pages   | `SSGPage[]` |      | 否   | -      |
-| baseUrl | `string`    |      | 是   | '/'    |
+| baseUrl | `string`    |      | 是   | `'/'`  |
 
 ### 返回值
 
@@ -1164,7 +1140,6 @@ ISR 缓存管理器
 
 ### 示例
 
-````typescript
 ```typescript
 import express from 'express';
 import { createISRMiddleware, generateStaticPages } from '@lytjs/ssr';
@@ -1172,27 +1147,24 @@ import { createISRMiddleware, generateStaticPages } from '@lytjs/ssr';
 const app = express();
 
 // 预生成的页面
-const pages = [
-  { path: '/', component: homeComponent },
-];
+const pages = [{ path: '/', component: homeComponent }];
 
 const staticPages = generateStaticPages(pages);
 
-app.use(createISRMiddleware({
-  staticPages,
-  revalidate: 60, // 60秒后重新验证
-  async regenerate(path) {
-    const page = pages.find(p => p.path === path);
-    if (page) {
-      return generateStaticPages([page]).get('/index.html')!;
-    }
-    throw new Error('Page not found');
-  }
-}));
-````
-
-````
-
+app.use(
+  createISRMiddleware({
+    staticPages,
+    revalidate: 60, // 60秒后重新验证
+    async regenerate(path) {
+      const page = pages.find((p) => p.path === path);
+      if (page) {
+        return generateStaticPages([page]).get('/index.html')!;
+      }
+      throw new Error('Page not found');
+    },
+  }),
+);
+```
 
 ## revalidateOnDemand
 
@@ -1203,8 +1175,8 @@ app.use(createISRMiddleware({
 ### 签名
 
 ```typescript
-revalidateOnDemand: Promise<string>
-````
+revalidateOnDemand: Promise<string>;
+```
 
 ### 参数
 
@@ -1217,28 +1189,20 @@ revalidateOnDemand: Promise<string>
 
 **类型:** `Promise<string>`
 
-Promise<string> 新生成的 HTML
+Promise&lt;string&gt; 新生成的 HTML
 
 ### 示例
 
-````typescript
 ```typescript
 // 当博客文章更新时
-await revalidateOnDemand(
-  '/blog/my-post',
-  async () => generatePostHTML('my-post')
-);
-````
-
-````
-
+await revalidateOnDemand('/blog/my-post', async () => generatePostHTML('my-post'));
+```
 
 ## getISRCacheStats
 
 **Function**
 
 获取 ISR 缓存统计信息
-
 
 ## clearISRCache
 
@@ -1250,7 +1214,7 @@ await revalidateOnDemand(
 
 ```typescript
 clearISRCache: void
-````
+```
 
 ### 参数
 
@@ -1419,7 +1383,7 @@ collectChunks: string[]
 | 参数                  | 类型       | 描述 | 可选 | 默认值 |
 | --------------------- | ---------- | ---- | ---- | ------ |
 | vnode                 | `VNode`    |      | 否   | -      |
-| suspenseBoundaryIndex | `number[]` |      | 是   | []     |
+| suspenseBoundaryIndex | `number[]` |      | 是   | `[]`   |
 
 ### 返回值
 
@@ -1473,11 +1437,10 @@ renderToStream: ReadableStream<Uint8Array>;
 
 **类型:** `ReadableStream<Uint8Array>`
 
-ReadableStream<Uint8Array>
+ReadableStream&lt;Uint8Array&gt;
 
 ### 示例
 
-````typescript
 ```typescript
 const stream = renderToStream(vnode, {
   chunkSize: 2048,
@@ -1489,17 +1452,13 @@ const stream = renderToStream(vnode, {
 for await (const chunk of stream) {
   response.write(chunk);
 }
-````
-
-````
-
+```
 
 ## sendChunk
 
 **Function**
 
 发送单个分块，应用流速率控制
-
 
 ## renderToStreamAsync
 
@@ -1510,8 +1469,8 @@ for await (const chunk of stream) {
 ### 签名
 
 ```typescript
-renderToStreamAsync: ReadableStream<Uint8Array>
-````
+renderToStreamAsync: ReadableStream<Uint8Array>;
+```
 
 ### 参数
 
@@ -1524,7 +1483,7 @@ renderToStreamAsync: ReadableStream<Uint8Array>
 
 **类型:** `ReadableStream<Uint8Array>`
 
-ReadableStream<Uint8Array>
+ReadableStream&lt;Uint8Array&gt;
 
 ## collectAndPrefetchData
 
@@ -1540,10 +1499,10 @@ collectAndPrefetchData: Promise<Record<string, unknown>>;
 
 ### 参数
 
-| 参数    | 类型                  | 描述    | 可选   | 默认值 |
-| ------- | --------------------- | ------- | ------ | ------ | ---- | ---------- | --- | --- | --- |
-| vnode   | `VNode                | VNode[] | string | number | null | undefined` |     | 否  | -   |
-| context | `DataPrefetchContext` |         | 是     | -      |
+| 参数    | 类型                                                        | 描述 | 可选 | 默认值 |
+| ------- | ----------------------------------------------------------- | ---- | ---- | ------ |
+| vnode   | `VNode \| VNode[] \| string \| number \| null \| undefined` |      | 否   | -      |
+| context | `DataPrefetchContext`                                       |      | 是   | -      |
 
 ### 返回值
 
@@ -1565,10 +1524,10 @@ renderToStringAsync: Promise<string>;
 
 ### 参数
 
-| 参数         | 类型                      | 描述    | 可选   | 默认值 |
-| ------------ | ------------------------- | ------- | ------ | ------ | ---- | ---------- | --- | --- | --- |
-| vnode        | `VNode                    | VNode[] | string | number | null | undefined` |     | 否  | -   |
-| prefetchData | `Record<string, unknown>` |         | 是     | -      |
+| 参数         | 类型                                                        | 描述 | 可选 | 默认值 |
+| ------------ | ----------------------------------------------------------- | ---- | ---- | ------ |
+| vnode        | `VNode \| VNode[] \| string \| number \| null \| undefined` |      | 否   | -      |
+| prefetchData | `Record<string, unknown>`                                   |      | 是   | -      |
 
 ### 返回值
 
@@ -1602,7 +1561,7 @@ renderToStreamEnhanced: Promise<{
 
 **类型:** `Promise<{ stream: ReadableStream<Uint8Array>; dehydratedState: Record<string, unknown>; }>`
 
-Promise<{ stream: ReadableStream<Uint8Array>; dehydratedState: Record<string, any> }>
+Promise&lt;{ stream: ReadableStream&lt;Uint8Array&gt;; dehydratedState: Record&lt;string, any&gt; }&gt;
 
 ## VirtualList
 

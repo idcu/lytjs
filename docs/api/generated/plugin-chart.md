@@ -30,7 +30,7 @@ createChart: ChartInstance;
 | ------- | -------------------- | ---- | ---- | ------ |
 | canvas  | `HTMLCanvasElement`  |      | 否   | -      |
 | config  | `ChartConfig`        |      | 否   | -      |
-| options | `ChartPluginOptions` |      | 是   | {}     |
+| options | `ChartPluginOptions` |      | 是   | `{}`   |
 
 ### 返回值
 

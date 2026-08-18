@@ -56,7 +56,7 @@ generateCacheKey: string;
 | 参数    | 类型             | 描述 | 可选 | 默认值 |
 | ------- | ---------------- | ---- | ---- | ------ |
 | url     | `string`         |      | 否   | -      |
-| options | `RequestOptions` |      | 是   | {}     |
+| options | `RequestOptions` |      | 是   | `{}`   |
 
 ### 返回值
 
@@ -126,8 +126,8 @@ createFetch: FetchInstance<T>;
 | 参数          | 类型                 | 描述 | 可选 | 默认值 |
 | ------------- | -------------------- | ---- | ---- | ------ |
 | url           | `string`             |      | 否   | -      |
-| options       | `RequestOptions`     |      | 是   | {}     |
-| globalOptions | `FetchPluginOptions` |      | 是   | {}     |
+| options       | `RequestOptions`     |      | 是   | `{}`   |
+| globalOptions | `FetchPluginOptions` |      | 是   | `{}`   |
 
 ### 返回值
 
@@ -145,17 +145,17 @@ createFetch: FetchInstance<T>;
 
 ### 成员
 
-| 名称            | 类型                         | 描述                     | 可选            |
-| --------------- | ---------------------------- | ------------------------ | --------------- | ------------- | -------- | --- |
-| baseUrl         | `string`                     | 基础 URL                 | 是              |
-| timeout         | `number`                     | 超时时间（毫秒）         | 是              |
-| retries         | `number`                     | 重试次数                 | 是              |
-| retryDelay      | `number`                     | 重试延迟（毫秒）         | 是              |
-| cacheStrategy   | `'no-cache'                  | 'cache-first'            | 'network-first' | 'cache-only'` | 缓存策略 | 是  |
-| cacheTime       | `number`                     | 缓存时间（毫秒）         | 是              |
-| requestKey      | `string`                     | 请求标识，用于缓存键生成 | 是              |
-| cancelDuplicate | `boolean`                    | 是否取消重复请求         | 是              |
-| onError         | `(error: FetchError) => void | Promise<void>`           | 自定义错误处理  | 是            |
+| 名称            | 类型                                                             | 描述                     | 可选 |
+| --------------- | ---------------------------------------------------------------- | ------------------------ | ---- |
+| baseUrl         | `string`                                                         | 基础 URL                 | 是   |
+| timeout         | `number`                                                         | 超时时间（毫秒）         | 是   |
+| retries         | `number`                                                         | 重试次数                 | 是   |
+| retryDelay      | `number`                                                         | 重试延迟（毫秒）         | 是   |
+| cacheStrategy   | `'no-cache' \| 'cache-first' \| 'network-first' \| 'cache-only'` | 缓存策略                 | 是   |
+| cacheTime       | `number`                                                         | 缓存时间（毫秒）         | 是   |
+| requestKey      | `string`                                                         | 请求标识，用于缓存键生成 | 是   |
+| cancelDuplicate | `boolean`                                                        | 是否取消重复请求         | 是   |
+| onError         | `(error: FetchError) => void \| Promise<void>`                   | 自定义错误处理           | 是   |
 
 ## FetchError
 
@@ -202,11 +202,11 @@ createFetch: FetchInstance<T>;
 
 ### 成员
 
-| 名称     | 类型                                        | 描述                     | 可选       |
-| -------- | ------------------------------------------- | ------------------------ | ---------- | --- |
-| request  | `(config: RequestOptions) => RequestOptions | Promise<RequestOptions>` | 请求拦截器 | 是  |
-| response | `(response: T) => T                         | Promise<T>`              | 响应拦截器 | 是  |
-| error    | `(error: FetchError) => FetchError          | Promise<FetchError>`     | 错误拦截器 | 是  |
+| 名称     | 类型                                                                    | 描述       | 可选 |
+| -------- | ----------------------------------------------------------------------- | ---------- | ---- |
+| request  | `(config: RequestOptions) => RequestOptions \| Promise<RequestOptions>` | 请求拦截器 | 是   |
+| response | `(response: T) => T \| Promise<T>`                                      | 响应拦截器 | 是   |
+| error    | `(error: FetchError) => FetchError \| Promise<FetchError>`              | 错误拦截器 | 是   |
 
 ## FetchState
 
@@ -214,14 +214,14 @@ createFetch: FetchInstance<T>;
 
 ### 成员
 
-| 名称         | 类型        | 描述       | 可选     |
-| ------------ | ----------- | ---------- | -------- | --- |
-| data         | `T          | null`      | 请求数据 | 否  |
-| isLoading    | `boolean`   | 加载状态   | 否       |
-| error        | `FetchError | null`      | 错误状态 | 否  |
-| isSuccess    | `boolean`   | 是否已完成 | 否       |
-| isError      | `boolean`   | 是否失败   | 否       |
-| refetchCount | `number`    | 请求次数   | 否       |
+| 名称         | 类型                 | 描述       | 可选 |
+| ------------ | -------------------- | ---------- | ---- |
+| data         | `T \| null`          | 请求数据   | 否   |
+| isLoading    | `boolean`            | 加载状态   | 否   |
+| error        | `FetchError \| null` | 错误状态   | 否   |
+| isSuccess    | `boolean`            | 是否已完成 | 否   |
+| isError      | `boolean`            | 是否失败   | 否   |
+| refetchCount | `number`             | 请求次数   | 否   |
 
 ## FetchInstance
 

@@ -315,12 +315,12 @@ import type {
 
 | 包名                                   | 说明             |
 | -------------------------------------- | ---------------- |
-| [@lytjs/reactivity](../reactivity)     | 响应式系统       |
-| [@lytjs/vdom](../vdom)                 | 虚拟 DOM 实现    |
+| [@lytjs/reactivity](../reactivity/)    | 响应式系统       |
+| [@lytjs/vdom](../vdom/)                | 虚拟 DOM 实现    |
 | [@lytjs/compiler](../vdom/compiler.md) | 模板编译器       |
 | [@lytjs/renderer](../vdom/renderer.md) | DOM/SSR 渲染后端 |
-| [@lytjs/component](../component)       | 组件系统         |
-| [@lytjs/common](../common)             | 公共工具库       |
+| [@lytjs/component](../component/)      | 组件系统         |
+| [@lytjs/common](../common/)            | 公共工具库       |
 
 ## 相关包
 

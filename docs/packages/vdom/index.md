@@ -280,6 +280,6 @@ import type {
 ## 相关包
 
 - [@lytjs/renderer](./renderer.md) - DOM/SSR 渲染后端，基于 vdom 包
-- [@lytjs/core](../core) - 框架核心入口，整合所有子包
+- [@lytjs/core](../core/) - 框架核心入口，整合所有子包
 - [@lytjs/common-vnode](../common/overview.md) - 共享 VNode 类型和常量
 - [@lytjs/host-contract](../other/host-contract.md) - 渲染器宿主抽象

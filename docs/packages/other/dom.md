@@ -232,7 +232,7 @@ interface LytJSBridgeOptions {
 
 ## 相关包
 
-- [@lytjs/core](../core) - 框架核心入口
+- [@lytjs/core](../core/) - 框架核心入口
 - [@lytjs/host-contract](./host-contract.md) - 渲染器宿主抽象
 - [@lytjs/dom-runtime](./dom-runtime.md) - DOM 运行时工具
 

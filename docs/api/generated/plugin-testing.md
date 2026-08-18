@@ -43,7 +43,7 @@ createMockFn: MockFn;
 
 | 参数    | 类型          | 描述 | 可选 | 默认值 |
 | ------- | ------------- | ---- | ---- | ------ |
-| options | `MockOptions` |      | 是   | {}     |
+| options | `MockOptions` |      | 是   | `{}`   |
 
 ### 返回值
 
@@ -129,7 +129,7 @@ createTestingContext: TestingContext;
 
 | 参数      | 类型                   | 描述 | 可选 | 默认值 |
 | --------- | ---------------------- | ---- | ---- | ------ |
-| \_options | `TestingPluginOptions` |      | 是   | {}     |
+| \_options | `TestingPluginOptions` |      | 是   | `{}`   |
 
 ### 返回值
 
@@ -141,11 +141,11 @@ createTestingContext: TestingContext;
 
 ### 成员
 
-| 名称           | 类型      | 描述                 | 可选       |
-| -------------- | --------- | -------------------- | ---------- | ------------ | --- |
-| defaultTimeout | `number`  | 默认超时时间（毫秒） | 是         |
-| autoCleanup    | `boolean` | 是否启用自动清理     | 是         |
-| environment    | `'node'   | 'jsdom'              | 'browser'` | 测试环境配置 | 是  |
+| 名称           | 类型                             | 描述                 | 可选 |
+| -------------- | -------------------------------- | -------------------- | ---- |
+| defaultTimeout | `number`                         | 默认超时时间（毫秒） | 是   |
+| autoCleanup    | `boolean`                        | 是否启用自动清理     | 是   |
+| environment    | `'node' \| 'jsdom' \| 'browser'` | 测试环境配置         | 是   |
 
 ## WrapperOptions
 
@@ -153,12 +153,12 @@ createTestingContext: TestingContext;
 
 ### 成员
 
-| 名称      | 类型                      | 描述           | 可选     |
-| --------- | ------------------------- | -------------- | -------- | --- |
-| container | `Element                  | string`        | 挂载目标 | 是  |
-| props     | `Record<string, unknown>` | 组件 props     | 是       |
-| slots     | `Record<string, unknown>` | 插槽内容       | 是       |
-| attach    | `boolean`                 | 是否挂载到 DOM | 是       |
+| 名称      | 类型                      | 描述           | 可选 |
+| --------- | ------------------------- | -------------- | ---- |
+| container | `Element \| string`       | 挂载目标       | 是   |
+| props     | `Record<string, unknown>` | 组件 props     | 是   |
+| slots     | `Record<string, unknown>` | 插槽内容       | 是   |
+| attach    | `boolean`                 | 是否挂载到 DOM | 是   |
 
 ## ComponentWrapper
 
@@ -166,15 +166,15 @@ createTestingContext: TestingContext;
 
 ### 成员
 
-| 名称     | 类型                                             | 描述         | 可选     |
-| -------- | ------------------------------------------------ | ------------ | -------- | --- |
-| instance | `T`                                              | 实例         | 否       |
-| element  | `Element`                                        | 根元素       | 否       |
-| unmount  | `() => void`                                     | 组件卸载     | 否       |
-| rerender | `(props?: Record<string, unknown>) => void`      | 重新渲染     | 否       |
-| find     | `(selector: string) => Element                   | null`        | 查找元素 | 否  |
-| findAll  | `(selector: string) => Element[]`                | 查找所有元素 | 否       |
-| trigger  | `(eventName: string, payload?: unknown) => void` | 触发事件     | 否       |
+| 名称     | 类型                                             | 描述         | 可选 |
+| -------- | ------------------------------------------------ | ------------ | ---- |
+| instance | `T`                                              | 实例         | 否   |
+| element  | `Element`                                        | 根元素       | 否   |
+| unmount  | `() => void`                                     | 组件卸载     | 否   |
+| rerender | `(props?: Record<string, unknown>) => void`      | 重新渲染     | 否   |
+| find     | `(selector: string) => Element \| null`          | 查找元素     | 否   |
+| findAll  | `(selector: string) => Element[]`                | 查找所有元素 | 否   |
+| trigger  | `(eventName: string, payload?: unknown) => void` | 触发事件     | 否   |
 
 ## MockOptions
 
@@ -193,16 +193,16 @@ createTestingContext: TestingContext;
 
 ### 成员
 
-| 名称               | 类型                                            | 描述             | 可选               |
-| ------------------ | ----------------------------------------------- | ---------------- | ------------------ | --- |
-| callCount          | `number`                                        | 调用次数         | 否                 |
-| calls              | `unknown[][]`                                   | 所有调用参数     | 否                 |
-| lastCall           | `unknown[]                                      | undefined`       | 最后一次调用参数   | 否  |
-| mockReturnValue    | `(value: unknown) => void`                      | 模拟返回值       | 否                 |
-| mockImplementation | `(fn: (...args: unknown[]) => unknown) => void` | 模拟实现         | 否                 |
-| mockReset          | `() => void`                                    | 重置 mock        | 否                 |
-| mockClear          | `() => void`                                    | 清除所有调用记录 | 否                 |
-| originalFn         | `((...args: unknown[]) => unknown)              | undefined`       | 原始函数（如果有） | 否  |
+| 名称               | 类型                                             | 描述               | 可选 |
+| ------------------ | ------------------------------------------------ | ------------------ | ---- |
+| callCount          | `number`                                         | 调用次数           | 否   |
+| calls              | `unknown[][]`                                    | 所有调用参数       | 否   |
+| lastCall           | `unknown[] \| undefined`                         | 最后一次调用参数   | 否   |
+| mockReturnValue    | `(value: unknown) => void`                       | 模拟返回值         | 否   |
+| mockImplementation | `(fn: (...args: unknown[]) => unknown) => void`  | 模拟实现           | 否   |
+| mockReset          | `() => void`                                     | 重置 mock          | 否   |
+| mockClear          | `() => void`                                     | 清除所有调用记录   | 否   |
+| originalFn         | `((...args: unknown[]) => unknown) \| undefined` | 原始函数（如果有） | 否   |
 
 ## SignalTestHelpers
 
@@ -221,20 +221,20 @@ createTestingContext: TestingContext;
 
 ### 成员
 
-| 名称                      | 类型                                                       | 描述                                    | 可选                 |
-| ------------------------- | ---------------------------------------------------------- | --------------------------------------- | -------------------- | ------------ | --- |
-| waitForElement            | `(selector: string, timeout?: number) => Promise<Element>` | 等待元素出现                            | 否                   |
-| waitForElementToDisappear | `(selector: string, timeout?: number) => Promise<void>`    | 等待元素消失                            | 否                   |
-| waitForText               | `(text: string, timeout?: number) => Promise<Element>`     | 等待文本出现                            | 否                   |
-| fillForm                  | `(data: Record<string, string                              | boolean>) => void`                      | 模拟用户输入         | 否           |
-| click                     | `(selector: string                                         | Element) => void`                       | 模拟点击             | 否           |
-| exists                    | `(selector: string) => boolean`                            | 检查元素是否存在                        | 否                   |
-| isVisible                 | `(selector: string                                         | Element) => boolean`                    | 检查元素是否可见     | 否           |
-| isDisabled                | `(selector: string                                         | Element) => boolean`                    | 检查元素是否禁用     | 否           |
-| text                      | `(selector: string                                         | Element) => string`                     | 获取元素文本         | 否           |
-| attribute                 | `(selector: string                                         | Element, name: string) => string        | null`                | 获取元素属性 | 否  |
-| classes                   | `(selector: string                                         | Element) => string[]`                   | 获取元素类名         | 否           |
-| hasClass                  | `(selector: string                                         | Element, className: string) => boolean` | 检查元素是否包含类名 | 否           |
+| 名称                      | 类型                                                            | 描述                 | 可选 |
+| ------------------------- | --------------------------------------------------------------- | -------------------- | ---- |
+| waitForElement            | `(selector: string, timeout?: number) => Promise<Element>`      | 等待元素出现         | 否   |
+| waitForElementToDisappear | `(selector: string, timeout?: number) => Promise<void>`         | 等待元素消失         | 否   |
+| waitForText               | `(text: string, timeout?: number) => Promise<Element>`          | 等待文本出现         | 否   |
+| fillForm                  | `(data: Record<string, string \| boolean>) => void`             | 模拟用户输入         | 否   |
+| click                     | `(selector: string \| Element) => void`                         | 模拟点击             | 否   |
+| exists                    | `(selector: string) => boolean`                                 | 检查元素是否存在     | 否   |
+| isVisible                 | `(selector: string \| Element) => boolean`                      | 检查元素是否可见     | 否   |
+| isDisabled                | `(selector: string \| Element) => boolean`                      | 检查元素是否禁用     | 否   |
+| text                      | `(selector: string \| Element) => string`                       | 获取元素文本         | 否   |
+| attribute                 | `(selector: string \| Element, name: string) => string \| null` | 获取元素属性         | 否   |
+| classes                   | `(selector: string \| Element) => string[]`                     | 获取元素类名         | 否   |
+| hasClass                  | `(selector: string \| Element, className: string) => boolean`   | 检查元素是否包含类名 | 否   |
 
 ## FuzzGeneratorOptions
 
@@ -334,15 +334,15 @@ createTestingContext: TestingContext;
 
 ### 成员
 
-| 名称          | 类型                                                             | 描述                                                              | 可选         |
-| ------------- | ---------------------------------------------------------------- | ----------------------------------------------------------------- | ------------ | --- |
-| randomString  | `(options?: FuzzGeneratorOptions) => string`                     | 生成随机字符串                                                    | 否           |
-| randomNumber  | `(options?: FuzzGeneratorOptions) => number`                     | 生成随机数字                                                      | 否           |
-| randomBoolean | `() => boolean`                                                  | 生成随机布尔值                                                    | 否           |
-| randomArray   | `<T>(generator: () => T, options?: FuzzGeneratorOptions) => T[]` | 生成随机数组                                                      | 否           |
-| randomObject  | `(options?: FuzzGeneratorOptions) => Record<string, unknown>`    | 生成随机对象                                                      | 否           |
-| randomDate    | `(options?: FuzzGeneratorOptions) => Date`                       | 生成随机日期                                                      | 否           |
-| fuzz          | `<T>( generator: () => T, testFn: (input: T) => void             | Promise<void>, iterations?: number, ) => Promise<FuzzTestResult>` | 运行模糊测试 | 否  |
+| 名称          | 类型                                                                                                                      | 描述           | 可选 |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------- | -------------- | ---- |
+| randomString  | `(options?: FuzzGeneratorOptions) => string`                                                                              | 生成随机字符串 | 否   |
+| randomNumber  | `(options?: FuzzGeneratorOptions) => number`                                                                              | 生成随机数字   | 否   |
+| randomBoolean | `() => boolean`                                                                                                           | 生成随机布尔值 | 否   |
+| randomArray   | `<T>(generator: () => T, options?: FuzzGeneratorOptions) => T[]`                                                          | 生成随机数组   | 否   |
+| randomObject  | `(options?: FuzzGeneratorOptions) => Record<string, unknown>`                                                             | 生成随机对象   | 否   |
+| randomDate    | `(options?: FuzzGeneratorOptions) => Date`                                                                                | 生成随机日期   | 否   |
+| fuzz          | `<T>( generator: () => T, testFn: (input: T) => void \| Promise<void>, iterations?: number, ) => Promise<FuzzTestResult>` | 运行模糊测试   | 否   |
 
 ## PerformanceTestHelpers
 
@@ -350,13 +350,13 @@ createTestingContext: TestingContext;
 
 ### 成员
 
-| 名称           | 类型                                                                                                                          | 描述                                                                                                           | 可选         |
-| -------------- | ----------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- | ------------ | --- |
-| benchmark      | `( name: string, fn: () => void                                                                                               | Promise<void>, options?: BenchmarkOptions, ) => Promise<BenchmarkResult>`                                      | 运行基准测试 | 否  |
-| compare        | `( baseline: BenchmarkResult, current: BenchmarkResult, ) => { percentChange: number; isFaster: boolean; isSlower: boolean }` | 比较两次基准测试结果                                                                                           | 否           |
-| regressionTest | `( name: string, fn: () => void                                                                                               | Promise<void>, baseline: BenchmarkResult, options?: RegressionTestOptions, ) => Promise<RegressionTestResult>` | 性能回归测试 | 否  |
-| saveBaseline   | `(result: BenchmarkResult, path?: string) => void`                                                                            | 保存基准数据                                                                                                   | 否           |
-| loadBaseline   | `(name: string, path?: string) => BenchmarkResult                                                                             | null`                                                                                                          | 加载基准数据 | 否  |
+| 名称           | 类型                                                                                                                                              | 描述                 | 可选 |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- | ---- |
+| benchmark      | `( name: string, fn: () => void \| Promise<void>, options?: BenchmarkOptions, ) => Promise<BenchmarkResult>`                                      | 运行基准测试         | 否   |
+| compare        | `( baseline: BenchmarkResult, current: BenchmarkResult, ) => { percentChange: number; isFaster: boolean; isSlower: boolean }`                     | 比较两次基准测试结果 | 否   |
+| regressionTest | `( name: string, fn: () => void \| Promise<void>, baseline: BenchmarkResult, options?: RegressionTestOptions, ) => Promise<RegressionTestResult>` | 性能回归测试         | 否   |
+| saveBaseline   | `(result: BenchmarkResult, path?: string) => void`                                                                                                | 保存基准数据         | 否   |
+| loadBaseline   | `(name: string, path?: string) => BenchmarkResult \| null`                                                                                        | 加载基准数据         | 否   |
 
 ## TestingContext
 
@@ -364,16 +364,16 @@ createTestingContext: TestingContext;
 
 ### 成员
 
-| 名称          | 类型                                                                                 | 描述                                                  | 可选         |
-| ------------- | ------------------------------------------------------------------------------------ | ----------------------------------------------------- | ------------ | --- |
-| mount         | `<T = unknown>(component: unknown, options?: WrapperOptions) => ComponentWrapper<T>` | 组件包装器                                            | 否           |
-| mockFn        | `(options?: MockOptions) => MockFn`                                                  | 创建 mock 函数                                        | 否           |
-| mockModule    | `(moduleName: string, factory: () => unknown) => void`                               | 模拟模块                                              | 否           |
-| clearAllMocks | `() => void`                                                                         | 清除所有 mock                                         | 否           |
-| signal        | `SignalTestHelpers`                                                                  | 信号测试助手                                          | 否           |
-| dom           | `DOMTestHelpers`                                                                     | DOM 测试助手                                          | 否           |
-| wait          | `(ms: number) => Promise<void>`                                                      | 等待指定时间                                          | 否           |
-| waitFor       | `(condition: () => boolean                                                           | Promise<boolean>, timeout?: number) => Promise<void>` | 等待条件满足 | 否  |
-| nextTick      | `() => Promise<void>`                                                                | 下一帧                                                | 否           |
-| fuzz          | `FuzzTestHelpers`                                                                    | 模糊测试助手                                          | 否           |
-| performance   | `PerformanceTestHelpers`                                                             | 性能测试助手                                          | 否           |
+| 名称          | 类型                                                                                 | 描述           | 可选 |
+| ------------- | ------------------------------------------------------------------------------------ | -------------- | ---- |
+| mount         | `<T = unknown>(component: unknown, options?: WrapperOptions) => ComponentWrapper<T>` | 组件包装器     | 否   |
+| mockFn        | `(options?: MockOptions) => MockFn`                                                  | 创建 mock 函数 | 否   |
+| mockModule    | `(moduleName: string, factory: () => unknown) => void`                               | 模拟模块       | 否   |
+| clearAllMocks | `() => void`                                                                         | 清除所有 mock  | 否   |
+| signal        | `SignalTestHelpers`                                                                  | 信号测试助手   | 否   |
+| dom           | `DOMTestHelpers`                                                                     | DOM 测试助手   | 否   |
+| wait          | `(ms: number) => Promise<void>`                                                      | 等待指定时间   | 否   |
+| waitFor       | `(condition: () => boolean \| Promise<boolean>, timeout?: number) => Promise<void>`  | 等待条件满足   | 否   |
+| nextTick      | `() => Promise<void>`                                                                | 下一帧         | 否   |
+| fuzz          | `FuzzTestHelpers`                                                                    | 模糊测试助手   | 否   |
+| performance   | `PerformanceTestHelpers`                                                             | 性能测试助手   | 否   |

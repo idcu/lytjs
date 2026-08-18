@@ -90,11 +90,11 @@
 
 ### 成员
 
-| 名称   | 类型                                                                               | 描述           | 可选         |
-| ------ | ---------------------------------------------------------------------------------- | -------------- | ------------ | --- |
-| memory | `CacheOptions                                                                      | boolean`       | 内存缓存配置 | 是  |
-| redis  | `CacheOptions & { host?: string; port?: number; password?: string; db?: number; }` | Redis 缓存配置 | 是           |
-| http   | `CacheOptions & { baseUrl?: string; headers?: Record<string, string>; }`           | HTTP 缓存配置  | 是           |
+| 名称   | 类型                                                                               | 描述           | 可选 |
+| ------ | ---------------------------------------------------------------------------------- | -------------- | ---- |
+| memory | `CacheOptions \| boolean`                                                          | 内存缓存配置   | 是   |
+| redis  | `CacheOptions & { host?: string; port?: number; password?: string; db?: number; }` | Redis 缓存配置 | 是   |
+| http   | `CacheOptions & { baseUrl?: string; headers?: Record<string, string>; }`           | HTTP 缓存配置  | 是   |
 
 ## PrefetchContext
 

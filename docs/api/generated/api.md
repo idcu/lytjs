@@ -91,14 +91,14 @@ API 请求上下文
 
 ### 成员
 
-| 名称    | 类型                     | 描述       | 可选     |
-| ------- | ------------------------ | ---------- | -------- | --- |
-| method  | `HttpMethod`             | 请求方法   | 否       |
-| path    | `string`                 | 请求路径   | 否       |
-| headers | `Record<string, string>` | 请求头     | 否       |
-| params  | `Record<string, string>` | 请求参数   | 否       |
-| query   | `Record<string, string   | string[]>` | 查询参数 | 否  |
-| body    | `unknown`                | 请求体     | 是       |
+| 名称    | 类型                                 | 描述     | 可选 |
+| ------- | ------------------------------------ | -------- | ---- |
+| method  | `HttpMethod`                         | 请求方法 | 否   |
+| path    | `string`                             | 请求路径 | 否   |
+| headers | `Record<string, string>`             | 请求头   | 否   |
+| params  | `Record<string, string>`             | 请求参数 | 否   |
+| query   | `Record<string, string \| string[]>` | 查询参数 | 否   |
+| body    | `unknown`                            | 请求体   | 是   |
 
 ## ApiResponse
 

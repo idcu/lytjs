@@ -280,7 +280,7 @@ import type {
 
 ## 相关包
 
-- [@lytjs/core](../core) - 框架核心入口
-- [@lytjs/reactivity](../reactivity) - 响应式系统
-- [@lytjs/component](../component) - 组件系统
+- [@lytjs/core](../core/) - 框架核心入口
+- [@lytjs/reactivity](../reactivity/) - 响应式系统
+- [@lytjs/component](../component/) - 组件系统
 - [@lytjs/renderer](../vdom/renderer.md) - 渲染器实现

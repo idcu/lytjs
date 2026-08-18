@@ -474,10 +474,10 @@ formatDate: string;
 
 ### 参数
 
-| 参数   | 类型     | 描述 | 可选 | 默认值       |
-| ------ | -------- | ---- | ---- | ------------ |
-| date   | `Date`   |      | 否   | -            |
-| format | `string` |      | 是   | 'YYYY-MM-DD' |
+| 参数   | 类型     | 描述 | 可选 | 默认值         |
+| ------ | -------- | ---- | ---- | -------------- |
+| date   | `Date`   |      | 否   | -              |
+| format | `string` |      | 是   | `'YYYY-MM-DD'` |
 
 ### 返回值
 
@@ -594,10 +594,10 @@ formatMessage: string;
 
 ### 参数
 
-| 参数     | 类型                   | 描述     | 可选 | 默认值 |
-| -------- | ---------------------- | -------- | ---- | ------ | --- |
-| template | `string`               |          | 否   | -      |
-| params   | `Record<string, string | number>` |      | 否     | -   |
+| 参数     | 类型                               | 描述 | 可选 | 默认值 |
+| -------- | ---------------------------------- | ---- | ---- | ------ |
+| template | `string`                           |      | 否   | -      |
+| params   | `Record<string, string \| number>` |      | 否   | -      |
 
 ### 返回值
 
@@ -662,19 +662,19 @@ Link 组件
 
 ### 成员
 
-| 名称            | 类型                       | 描述       | 可选 |
-| --------------- | -------------------------- | ---------- | ---- | --- |
-| mode            | `string`                   |            | 否   |
-| defaultActive   | `string`                   |            | 否   |
-| defaultOpeneds  | `string[]`                 |            | 否   |
-| uniqueOpened    | `boolean`                  |            | 否   |
-| class           | `string`                   |            | 否   |
-| id              | `string`                   |            | 否   |
-| ariaLabel       | `string`                   |            | 否   |
-| ariaDescribedBy | `string`                   |            | 否   |
-| onSelect        | `((index: string) => void) | undefined` |      | 否  |
-| onOpen          | `((index: string) => void) | undefined` |      | 否  |
-| onClose         | `((index: string) => void) | undefined` |      | 否  |
+| 名称            | 类型                                     | 描述 | 可选 |
+| --------------- | ---------------------------------------- | ---- | ---- |
+| mode            | `string`                                 |      | 否   |
+| defaultActive   | `string`                                 |      | 否   |
+| defaultOpeneds  | `string[]`                               |      | 否   |
+| uniqueOpened    | `boolean`                                |      | 否   |
+| class           | `string`                                 |      | 否   |
+| id              | `string`                                 |      | 否   |
+| ariaLabel       | `string`                                 |      | 否   |
+| ariaDescribedBy | `string`                                 |      | 否   |
+| onSelect        | `((index: string) => void) \| undefined` |      | 否   |
+| onOpen          | `((index: string) => void) \| undefined` |      | 否   |
+| onClose         | `((index: string) => void) \| undefined` |      | 否   |
 
 ## MenuSlots
 
@@ -692,13 +692,13 @@ Link 组件
 
 ### 成员
 
-| 名称        | 类型         | 描述  | 可选 |
-| ----------- | ------------ | ----- | ---- | --- |
-| index       | `string`     |       | 否   |
-| label       | `string`     |       | 否   |
-| disabled    | `boolean`    |       | 否   |
-| hasChildren | `boolean`    |       | 否   |
-| element     | `HTMLElement | null` |      | 否  |
+| 名称        | 类型                  | 描述 | 可选 |
+| ----------- | --------------------- | ---- | ---- |
+| index       | `string`              |      | 否   |
+| label       | `string`              |      | 否   |
+| disabled    | `boolean`             |      | 否   |
+| hasChildren | `boolean`             |      | 否   |
+| element     | `HTMLElement \| null` |      | 否   |
 
 ## Menu
 
@@ -813,21 +813,21 @@ createMessage: MessageInstance;
 
 ### 成员
 
-| 名称            | 类型                                           | 描述       | 可选 |
-| --------------- | ---------------------------------------------- | ---------- | ---- | --- |
-| current         | `number`                                       |            | 否   |
-| pageSize        | `number`                                       |            | 否   |
-| total           | `number`                                       |            | 否   |
-| pageSizes       | `number[]`                                     |            | 否   |
-| layout          | `string`                                       |            | 否   |
-| background      | `boolean`                                      |            | 否   |
-| simple          | `boolean`                                      |            | 否   |
-| class           | `string`                                       |            | 否   |
-| id              | `string`                                       |            | 否   |
-| ariaLabel       | `string`                                       |            | 否   |
-| ariaDescribedBy | `string`                                       |            | 否   |
-| onChange        | `((current: number, pageSize: number) => void) | undefined` |      | 否  |
-| onSizeChange    | `((size: number) => void)                      | undefined` |      | 否  |
+| 名称            | 类型                                                         | 描述 | 可选 |
+| --------------- | ------------------------------------------------------------ | ---- | ---- |
+| current         | `number`                                                     |      | 否   |
+| pageSize        | `number`                                                     |      | 否   |
+| total           | `number`                                                     |      | 否   |
+| pageSizes       | `number[]`                                                   |      | 否   |
+| layout          | `string`                                                     |      | 否   |
+| background      | `boolean`                                                    |      | 否   |
+| simple          | `boolean`                                                    |      | 否   |
+| class           | `string`                                                     |      | 否   |
+| id              | `string`                                                     |      | 否   |
+| ariaLabel       | `string`                                                     |      | 否   |
+| ariaDescribedBy | `string`                                                     |      | 否   |
+| onChange        | `((current: number, pageSize: number) => void) \| undefined` |      | 否   |
+| onSizeChange    | `((size: number) => void) \| undefined`                      |      | 否   |
 
 ## Pagination
 
@@ -977,21 +977,21 @@ TimelineItem 时间轴项组件
 
 ### 成员
 
-| 名称        | 类型             | 描述             | 可选           |
-| ----------- | ---------------- | ---------------- | -------------- | ---------- | --- | --- |
-| modelValue  | `string          | [string, string] | null`          |            | 否  |
-| placeholder | `string`         |                  | 否             |
-| disabled    | `boolean`        |                  | 否             |
-| clearable   | `boolean`        |                  | 否             |
-| format      | `string`         |                  | 否             |
-| isRange     | `boolean`        |                  | 否             |
-| step        | `string`         |                  | 否             |
-| minTime     | `string`         |                  | 否             |
-| maxTime     | `string`         |                  | 否             |
-| class       | `string`         |                  | 否             |
-| onChange    | `((value: string | [string, string] | null) => void) | undefined` |     | 否  |
-| onOpen      | `(() => void)    | undefined`       |                | 否         |
-| onClose     | `(() => void)    | undefined`       |                | 否         |
+| 名称        | 类型                                                                 | 描述 | 可选 |
+| ----------- | -------------------------------------------------------------------- | ---- | ---- |
+| modelValue  | `string \| [string, string] \| null`                                 |      | 否   |
+| placeholder | `string`                                                             |      | 否   |
+| disabled    | `boolean`                                                            |      | 否   |
+| clearable   | `boolean`                                                            |      | 否   |
+| format      | `string`                                                             |      | 否   |
+| isRange     | `boolean`                                                            |      | 否   |
+| step        | `string`                                                             |      | 否   |
+| minTime     | `string`                                                             |      | 否   |
+| maxTime     | `string`                                                             |      | 否   |
+| class       | `string`                                                             |      | 否   |
+| onChange    | `((value: string \| [string, string] \| null) => void) \| undefined` |      | 否   |
+| onOpen      | `(() => void) \| undefined`                                          |      | 否   |
+| onClose     | `(() => void) \| undefined`                                          |      | 否   |
 
 ## TimePicker
 
@@ -1072,15 +1072,15 @@ Toast 组件
 
 ### 成员
 
-| 名称            | 类型         | 描述  | 可选 |
-| --------------- | ------------ | ----- | ---- | --- |
-| parent          | `FlattenNode | null` |      | 否  |
-| level           | `number`     |       | 否   |
-| isLeaf          | `boolean`    |       | 否   |
-| isExpanded      | `boolean`    |       | 否   |
-| isChecked       | `boolean`    |       | 否   |
-| isIndeterminate | `boolean`    |       | 否   |
-| isSelected      | `boolean`    |       | 否   |
+| 名称            | 类型                  | 描述 | 可选 |
+| --------------- | --------------------- | ---- | ---- |
+| parent          | `FlattenNode \| null` |      | 否   |
+| level           | `number`              |      | 否   |
+| isLeaf          | `boolean`             |      | 否   |
+| isExpanded      | `boolean`             |      | 否   |
+| isChecked       | `boolean`             |      | 否   |
+| isIndeterminate | `boolean`             |      | 否   |
+| isSelected      | `boolean`             |      | 否   |
 
 ## Tree
 
@@ -1092,12 +1092,12 @@ Toast 组件
 
 ### 成员
 
-| 名称     | 类型               | 描述    | 可选 |
-| -------- | ------------------ | ------- | ---- | --- |
-| value    | `string            | number` |      | 否  |
-| label    | `string`           |         | 否   |
-| children | `TreeSelectNode[]` |         | 是   |
-| disabled | `boolean`          |         | 是   |
+| 名称     | 类型               | 描述 | 可选 |
+| -------- | ------------------ | ---- | ---- |
+| value    | `string \| number` |      | 否   |
+| label    | `string`           |      | 否   |
+| children | `TreeSelectNode[]` |      | 是   |
+| disabled | `boolean`          |      | 是   |
 
 ## TreeSelectSetupProps
 
@@ -1105,24 +1105,24 @@ Toast 组件
 
 ### 成员
 
-| 名称                | 类型               | 描述                                   | 可选       |
-| ------------------- | ------------------ | -------------------------------------- | ---------- | --- | --- |
-| data                | `TreeSelectNode[]` |                                        | 否         |
-| value               | `string            | number`                                |            | 否  |
-| placeholder         | `string`           |                                        | 否         |
-| multiple            | `boolean`          |                                        | 否         |
-| clearable           | `boolean`          |                                        | 否         |
-| filterable          | `boolean`          |                                        | 否         |
-| filterPlaceholder   | `string`           |                                        | 否         |
-| nodeKey             | `string`           |                                        | 否         |
-| defaultExpandAll    | `boolean`          |                                        | 否         |
-| defaultExpandedKeys | `(string           | number)[]`                             |            | 否  |
-| class               | `string`           |                                        | 否         |
-| style               | `string            | Record<string, string>`                |            | 否  |
-| id                  | `string`           |                                        | 否         |
-| ariaLabel           | `string`           |                                        | 否         |
-| ariaDescribedBy     | `string`           |                                        | 否         |
-| onChange            | `((value: string   | number, node: TreeSelectNode) => void) | undefined` |     | 否  |
+| 名称                | 类型                                                                     | 描述 | 可选 |
+| ------------------- | ------------------------------------------------------------------------ | ---- | ---- |
+| data                | `TreeSelectNode[]`                                                       |      | 否   |
+| value               | `string \| number`                                                       |      | 否   |
+| placeholder         | `string`                                                                 |      | 否   |
+| multiple            | `boolean`                                                                |      | 否   |
+| clearable           | `boolean`                                                                |      | 否   |
+| filterable          | `boolean`                                                                |      | 否   |
+| filterPlaceholder   | `string`                                                                 |      | 否   |
+| nodeKey             | `string`                                                                 |      | 否   |
+| defaultExpandAll    | `boolean`                                                                |      | 否   |
+| defaultExpandedKeys | `(string \| number)[]`                                                   |      | 否   |
+| class               | `string`                                                                 |      | 否   |
+| style               | `string \| Record<string, string>`                                       |      | 否   |
+| id                  | `string`                                                                 |      | 否   |
+| ariaLabel           | `string`                                                                 |      | 否   |
+| ariaDescribedBy     | `string`                                                                 |      | 否   |
+| onChange            | `((value: string \| number, node: TreeSelectNode) => void) \| undefined` |      | 否   |
 
 ## NodeDict
 
@@ -1298,23 +1298,23 @@ ButtonNativeType: 'button' | 'submit' | 'reset';
 
 ### 成员
 
-| 名称            | 类型                             | 描述                    | 可选 |
-| --------------- | -------------------------------- | ----------------------- | ---- | --- |
-| type            | `ComponentStatus`                |                         | 是   |
-| size            | `ComponentSize`                  |                         | 是   |
-| disabled        | `boolean`                        |                         | 是   |
-| loading         | `boolean`                        |                         | 是   |
-| plain           | `boolean`                        |                         | 是   |
-| round           | `boolean`                        |                         | 是   |
-| circle          | `boolean`                        |                         | 是   |
-| nativeType      | `ButtonNativeType`               |                         | 是   |
-| class           | `string`                         |                         | 是   |
-| style           | `string                          | Record<string, string>` |      | 是  |
-| ariaLabel       | `string`                         |                         | 是   |
-| ariaDescribedBy | `string`                         |                         | 是   |
-| tabIndex        | `number`                         |                         | 是   |
-| onClick         | `(event: MouseEvent) => void`    |                         | 是   |
-| onKeydown       | `(event: KeyboardEvent) => void` |                         | 是   |
+| 名称            | 类型                               | 描述 | 可选 |
+| --------------- | ---------------------------------- | ---- | ---- |
+| type            | `ComponentStatus`                  |      | 是   |
+| size            | `ComponentSize`                    |      | 是   |
+| disabled        | `boolean`                          |      | 是   |
+| loading         | `boolean`                          |      | 是   |
+| plain           | `boolean`                          |      | 是   |
+| round           | `boolean`                          |      | 是   |
+| circle          | `boolean`                          |      | 是   |
+| nativeType      | `ButtonNativeType`                 |      | 是   |
+| class           | `string`                           |      | 是   |
+| style           | `string \| Record<string, string>` |      | 是   |
+| ariaLabel       | `string`                           |      | 是   |
+| ariaDescribedBy | `string`                           |      | 是   |
+| tabIndex        | `number`                           |      | 是   |
+| onClick         | `(event: MouseEvent) => void`      |      | 是   |
+| onKeydown       | `(event: KeyboardEvent) => void`   |      | 是   |
 
 ## ButtonSlots
 
@@ -1334,35 +1334,35 @@ ButtonNativeType: 'button' | 'submit' | 'reset';
 
 ### 成员
 
-| 名称            | 类型                          | 描述    | 可选 |
-| --------------- | ----------------------------- | ------- | ---- | --- |
-| modelValue      | `string                       | number` |      | 否  |
-| type            | `string`                      |         | 否   |
-| placeholder     | `string`                      |         | 否   |
-| disabled        | `boolean`                     |         | 否   |
-| readonly        | `boolean`                     |         | 否   |
-| clearable       | `boolean`                     |         | 否   |
-| showPassword    | `boolean`                     |         | 否   |
-| maxlength       | `number`                      |         | 是   |
-| minlength       | `number`                      |         | 是   |
-| size            | `ComponentSize`               |         | 否   |
-| prefixIcon      | `string`                      |         | 否   |
-| suffixIcon      | `string`                      |         | 否   |
-| class           | `string`                      |         | 否   |
-| style           | `string`                      |         | 否   |
-| ariaLabel       | `string`                      |         | 否   |
-| ariaDescribedBy | `string`                      |         | 否   |
-| ariaInvalid     | `boolean`                     |         | 否   |
-| ariaRequired    | `boolean`                     |         | 否   |
-| autocomplete    | `string`                      |         | 否   |
-| name            | `string`                      |         | 否   |
-| id              | `string`                      |         | 否   |
-| tabIndex        | `number`                      |         | 是   |
-| onInput         | `(value: string) => void`     |         | 是   |
-| onChange        | `(value: string) => void`     |         | 是   |
-| onFocus         | `(event: FocusEvent) => void` |         | 是   |
-| onBlur          | `(event: FocusEvent) => void` |         | 是   |
-| onClear         | `() => void`                  |         | 是   |
+| 名称            | 类型                          | 描述 | 可选 |
+| --------------- | ----------------------------- | ---- | ---- |
+| modelValue      | `string \| number`            |      | 否   |
+| type            | `string`                      |      | 否   |
+| placeholder     | `string`                      |      | 否   |
+| disabled        | `boolean`                     |      | 否   |
+| readonly        | `boolean`                     |      | 否   |
+| clearable       | `boolean`                     |      | 否   |
+| showPassword    | `boolean`                     |      | 否   |
+| maxlength       | `number`                      |      | 是   |
+| minlength       | `number`                      |      | 是   |
+| size            | `ComponentSize`               |      | 否   |
+| prefixIcon      | `string`                      |      | 否   |
+| suffixIcon      | `string`                      |      | 否   |
+| class           | `string`                      |      | 否   |
+| style           | `string`                      |      | 否   |
+| ariaLabel       | `string`                      |      | 否   |
+| ariaDescribedBy | `string`                      |      | 否   |
+| ariaInvalid     | `boolean`                     |      | 否   |
+| ariaRequired    | `boolean`                     |      | 否   |
+| autocomplete    | `string`                      |      | 否   |
+| name            | `string`                      |      | 否   |
+| id              | `string`                      |      | 否   |
+| tabIndex        | `number`                      |      | 是   |
+| onInput         | `(value: string) => void`     |      | 是   |
+| onChange        | `(value: string) => void`     |      | 是   |
+| onFocus         | `(event: FocusEvent) => void` |      | 是   |
+| onBlur          | `(event: FocusEvent) => void` |      | 是   |
+| onClear         | `() => void`                  |      | 是   |
 
 ## InputProps
 
@@ -1370,35 +1370,35 @@ ButtonNativeType: 'button' | 'submit' | 'reset';
 
 ### 成员
 
-| 名称            | 类型                          | 描述                    | 可选 |
-| --------------- | ----------------------------- | ----------------------- | ---- | --- |
-| modelValue      | `string                       | number`                 |      | 是  |
-| type            | `string`                      |                         | 是   |
-| placeholder     | `string`                      |                         | 是   |
-| disabled        | `boolean`                     |                         | 是   |
-| readonly        | `boolean`                     |                         | 是   |
-| clearable       | `boolean`                     |                         | 是   |
-| showPassword    | `boolean`                     |                         | 是   |
-| maxlength       | `number`                      |                         | 是   |
-| minlength       | `number`                      |                         | 是   |
-| size            | `ComponentSize`               |                         | 是   |
-| prefixIcon      | `string`                      |                         | 是   |
-| suffixIcon      | `string`                      |                         | 是   |
-| class           | `string`                      |                         | 是   |
-| style           | `string                       | Record<string, string>` |      | 是  |
-| ariaLabel       | `string`                      |                         | 是   |
-| ariaDescribedBy | `string`                      |                         | 是   |
-| ariaInvalid     | `boolean`                     |                         | 是   |
-| ariaRequired    | `boolean`                     |                         | 是   |
-| autocomplete    | `string`                      |                         | 是   |
-| name            | `string`                      |                         | 是   |
-| id              | `string`                      |                         | 是   |
-| tabIndex        | `number`                      |                         | 是   |
-| onInput         | `(value: string) => void`     |                         | 是   |
-| onChange        | `(value: string) => void`     |                         | 是   |
-| onFocus         | `(event: FocusEvent) => void` |                         | 是   |
-| onBlur          | `(event: FocusEvent) => void` |                         | 是   |
-| onClear         | `() => void`                  |                         | 是   |
+| 名称            | 类型                               | 描述 | 可选 |
+| --------------- | ---------------------------------- | ---- | ---- |
+| modelValue      | `string \| number`                 |      | 是   |
+| type            | `string`                           |      | 是   |
+| placeholder     | `string`                           |      | 是   |
+| disabled        | `boolean`                          |      | 是   |
+| readonly        | `boolean`                          |      | 是   |
+| clearable       | `boolean`                          |      | 是   |
+| showPassword    | `boolean`                          |      | 是   |
+| maxlength       | `number`                           |      | 是   |
+| minlength       | `number`                           |      | 是   |
+| size            | `ComponentSize`                    |      | 是   |
+| prefixIcon      | `string`                           |      | 是   |
+| suffixIcon      | `string`                           |      | 是   |
+| class           | `string`                           |      | 是   |
+| style           | `string \| Record<string, string>` |      | 是   |
+| ariaLabel       | `string`                           |      | 是   |
+| ariaDescribedBy | `string`                           |      | 是   |
+| ariaInvalid     | `boolean`                          |      | 是   |
+| ariaRequired    | `boolean`                          |      | 是   |
+| autocomplete    | `string`                           |      | 是   |
+| name            | `string`                           |      | 是   |
+| id              | `string`                           |      | 是   |
+| tabIndex        | `number`                           |      | 是   |
+| onInput         | `(value: string) => void`          |      | 是   |
+| onChange        | `(value: string) => void`          |      | 是   |
+| onFocus         | `(event: FocusEvent) => void`      |      | 是   |
+| onBlur          | `(event: FocusEvent) => void`      |      | 是   |
+| onClear         | `() => void`                       |      | 是   |
 
 ## InputSlots
 
@@ -1419,22 +1419,22 @@ ButtonNativeType: 'button' | 'submit' | 'reset';
 
 ### 成员
 
-| 名称               | 类型           | 描述    | 可选            |
-| ------------------ | -------------- | ------- | --------------- | ------ | --- | --- |
-| modelValue         | `boolean`      |         | 否              |
-| title              | `string`       |         | 否              |
-| width              | `string        | number` |                 | 否     |
-| showClose          | `boolean`      |         | 否              |
-| closeOnClickModal  | `boolean`      |         | 否              |
-| closeOnPressEscape | `boolean`      |         | 否              |
-| lockScroll         | `boolean`      |         | 否              |
-| class              | `string`       |         | 否              |
-| onBeforeOpen       | `() => boolean | void    | Promise<boolean | void>` |     | 是  |
-| onBeforeClose      | `() => boolean | void    | Promise<boolean | void>` |     | 是  |
-| onOpen             | `() => void`   |         | 是              |
-| onClose            | `() => void`   |         | 是              |
-| onConfirm          | `() => void`   |         | 是              |
-| onCancel           | `() => void`   |         | 是              |
+| 名称               | 类型                                                | 描述 | 可选 |
+| ------------------ | --------------------------------------------------- | ---- | ---- |
+| modelValue         | `boolean`                                           |      | 否   |
+| title              | `string`                                            |      | 否   |
+| width              | `string \| number`                                  |      | 否   |
+| showClose          | `boolean`                                           |      | 否   |
+| closeOnClickModal  | `boolean`                                           |      | 否   |
+| closeOnPressEscape | `boolean`                                           |      | 否   |
+| lockScroll         | `boolean`                                           |      | 否   |
+| class              | `string`                                            |      | 否   |
+| onBeforeOpen       | `() => boolean \| void \| Promise<boolean \| void>` |      | 是   |
+| onBeforeClose      | `() => boolean \| void \| Promise<boolean \| void>` |      | 是   |
+| onOpen             | `() => void`                                        |      | 是   |
+| onClose            | `() => void`                                        |      | 是   |
+| onConfirm          | `() => void`                                        |      | 是   |
+| onCancel           | `() => void`                                        |      | 是   |
 
 ## DialogProps
 
@@ -1442,28 +1442,28 @@ ButtonNativeType: 'button' | 'submit' | 'reset';
 
 ### 成员
 
-| 名称               | 类型                             | 描述                    | 可选            |
-| ------------------ | -------------------------------- | ----------------------- | --------------- | ------ | --- | --- |
-| modelValue         | `boolean`                        |                         | 是              |
-| title              | `string`                         |                         | 是              |
-| width              | `string                          | number`                 |                 | 是     |
-| showClose          | `boolean`                        |                         | 是              |
-| closeOnClickModal  | `boolean`                        |                         | 是              |
-| closeOnPressEscape | `boolean`                        |                         | 是              |
-| lockScroll         | `boolean`                        |                         | 是              |
-| class              | `string`                         |                         | 是              |
-| style              | `string                          | Record<string, string>` |                 | 是     |
-| id                 | `string`                         |                         | 是              |
-| ariaLabel          | `string`                         |                         | 是              |
-| ariaDescribedBy    | `string`                         |                         | 是              |
-| ariaModal          | `boolean`                        |                         | 是              |
-| onBeforeOpen       | `() => boolean                   | void                    | Promise<boolean | void>` |     | 是  |
-| onBeforeClose      | `() => boolean                   | void                    | Promise<boolean | void>` |     | 是  |
-| onOpen             | `() => void`                     |                         | 是              |
-| onClose            | `() => void`                     |                         | 是              |
-| onConfirm          | `() => void`                     |                         | 是              |
-| onCancel           | `() => void`                     |                         | 是              |
-| onKeydown          | `(event: KeyboardEvent) => void` |                         | 是              |
+| 名称               | 类型                                                | 描述 | 可选 |
+| ------------------ | --------------------------------------------------- | ---- | ---- |
+| modelValue         | `boolean`                                           |      | 是   |
+| title              | `string`                                            |      | 是   |
+| width              | `string \| number`                                  |      | 是   |
+| showClose          | `boolean`                                           |      | 是   |
+| closeOnClickModal  | `boolean`                                           |      | 是   |
+| closeOnPressEscape | `boolean`                                           |      | 是   |
+| lockScroll         | `boolean`                                           |      | 是   |
+| class              | `string`                                            |      | 是   |
+| style              | `string \| Record<string, string>`                  |      | 是   |
+| id                 | `string`                                            |      | 是   |
+| ariaLabel          | `string`                                            |      | 是   |
+| ariaDescribedBy    | `string`                                            |      | 是   |
+| ariaModal          | `boolean`                                           |      | 是   |
+| onBeforeOpen       | `() => boolean \| void \| Promise<boolean \| void>` |      | 是   |
+| onBeforeClose      | `() => boolean \| void \| Promise<boolean \| void>` |      | 是   |
+| onOpen             | `() => void`                                        |      | 是   |
+| onClose            | `() => void`                                        |      | 是   |
+| onConfirm          | `() => void`                                        |      | 是   |
+| onCancel           | `() => void`                                        |      | 是   |
+| onKeydown          | `(event: KeyboardEvent) => void`                    |      | 是   |
 
 ## DialogSlots
 
@@ -1483,27 +1483,27 @@ ButtonNativeType: 'button' | 'submit' | 'reset';
 
 ### 成员
 
-| 名称               | 类型                             | 描述    | 可选            |
-| ------------------ | -------------------------------- | ------- | --------------- | ------ | --- | --- |
-| modelValue         | `boolean`                        |         | 否              |
-| title              | `string`                         |         | 否              |
-| width              | `string                          | number` |                 | 否     |
-| showClose          | `boolean`                        |         | 否              |
-| closeOnClickModal  | `boolean`                        |         | 否              |
-| closeOnPressEscape | `boolean`                        |         | 否              |
-| lockScroll         | `boolean`                        |         | 否              |
-| class              | `string`                         |         | 否              |
-| id                 | `string`                         |         | 否              |
-| ariaLabel          | `string`                         |         | 否              |
-| ariaDescribedBy    | `string`                         |         | 否              |
-| ariaModal          | `boolean`                        |         | 否              |
-| onBeforeOpen       | `() => boolean                   | void    | Promise<boolean | void>` |     | 是  |
-| onBeforeClose      | `() => boolean                   | void    | Promise<boolean | void>` |     | 是  |
-| onOpen             | `() => void`                     |         | 是              |
-| onClose            | `() => void`                     |         | 是              |
-| onConfirm          | `() => void`                     |         | 是              |
-| onCancel           | `() => void`                     |         | 是              |
-| onKeydown          | `(event: KeyboardEvent) => void` |         | 是              |
+| 名称               | 类型                                                | 描述 | 可选 |
+| ------------------ | --------------------------------------------------- | ---- | ---- |
+| modelValue         | `boolean`                                           |      | 否   |
+| title              | `string`                                            |      | 否   |
+| width              | `string \| number`                                  |      | 否   |
+| showClose          | `boolean`                                           |      | 否   |
+| closeOnClickModal  | `boolean`                                           |      | 否   |
+| closeOnPressEscape | `boolean`                                           |      | 否   |
+| lockScroll         | `boolean`                                           |      | 否   |
+| class              | `string`                                            |      | 否   |
+| id                 | `string`                                            |      | 否   |
+| ariaLabel          | `string`                                            |      | 否   |
+| ariaDescribedBy    | `string`                                            |      | 否   |
+| ariaModal          | `boolean`                                           |      | 否   |
+| onBeforeOpen       | `() => boolean \| void \| Promise<boolean \| void>` |      | 是   |
+| onBeforeClose      | `() => boolean \| void \| Promise<boolean \| void>` |      | 是   |
+| onOpen             | `() => void`                                        |      | 是   |
+| onClose            | `() => void`                                        |      | 是   |
+| onConfirm          | `() => void`                                        |      | 是   |
+| onCancel           | `() => void`                                        |      | 是   |
+| onKeydown          | `(event: KeyboardEvent) => void`                    |      | 是   |
 
 ## ModalProps
 
@@ -1511,32 +1511,32 @@ ButtonNativeType: 'button' | 'submit' | 'reset';
 
 ### 成员
 
-| 名称               | 类型                             | 描述    | 可选            |
-| ------------------ | -------------------------------- | ------- | --------------- | ------ | --- | --- |
-| modelValue         | `boolean`                        |         | 是              |
-| title              | `string`                         |         | 是              |
-| width              | `string                          | number` |                 | 是     |
-| top                | `string`                         |         | 是              |
-| showClose          | `boolean`                        |         | 是              |
-| closeOnClickModal  | `boolean`                        |         | 是              |
-| closeOnPressEscape | `boolean`                        |         | 是              |
-| lockScroll         | `boolean`                        |         | 是              |
-| draggable          | `boolean`                        |         | 是              |
-| fullscreen         | `boolean`                        |         | 是              |
-| appendToBody       | `boolean`                        |         | 是              |
-| customClass        | `string`                         |         | 是              |
-| class              | `string`                         |         | 是              |
-| id                 | `string`                         |         | 是              |
-| ariaLabel          | `string`                         |         | 是              |
-| ariaDescribedBy    | `string`                         |         | 是              |
-| ariaModal          | `boolean`                        |         | 是              |
-| onBeforeOpen       | `() => boolean                   | void    | Promise<boolean | void>` |     | 是  |
-| onBeforeClose      | `() => boolean                   | void    | Promise<boolean | void>` |     | 是  |
-| onOpen             | `() => void`                     |         | 是              |
-| onClose            | `() => void`                     |         | 是              |
-| onConfirm          | `() => void`                     |         | 是              |
-| onCancel           | `() => void`                     |         | 是              |
-| onKeydown          | `(event: KeyboardEvent) => void` |         | 是              |
+| 名称               | 类型                                                | 描述 | 可选 |
+| ------------------ | --------------------------------------------------- | ---- | ---- |
+| modelValue         | `boolean`                                           |      | 是   |
+| title              | `string`                                            |      | 是   |
+| width              | `string \| number`                                  |      | 是   |
+| top                | `string`                                            |      | 是   |
+| showClose          | `boolean`                                           |      | 是   |
+| closeOnClickModal  | `boolean`                                           |      | 是   |
+| closeOnPressEscape | `boolean`                                           |      | 是   |
+| lockScroll         | `boolean`                                           |      | 是   |
+| draggable          | `boolean`                                           |      | 是   |
+| fullscreen         | `boolean`                                           |      | 是   |
+| appendToBody       | `boolean`                                           |      | 是   |
+| customClass        | `string`                                            |      | 是   |
+| class              | `string`                                            |      | 是   |
+| id                 | `string`                                            |      | 是   |
+| ariaLabel          | `string`                                            |      | 是   |
+| ariaDescribedBy    | `string`                                            |      | 是   |
+| ariaModal          | `boolean`                                           |      | 是   |
+| onBeforeOpen       | `() => boolean \| void \| Promise<boolean \| void>` |      | 是   |
+| onBeforeClose      | `() => boolean \| void \| Promise<boolean \| void>` |      | 是   |
+| onOpen             | `() => void`                                        |      | 是   |
+| onClose            | `() => void`                                        |      | 是   |
+| onConfirm          | `() => void`                                        |      | 是   |
+| onCancel           | `() => void`                                        |      | 是   |
+| onKeydown          | `(event: KeyboardEvent) => void`                    |      | 是   |
 
 ## ModalSlots
 
@@ -1556,32 +1556,32 @@ ButtonNativeType: 'button' | 'submit' | 'reset';
 
 ### 成员
 
-| 名称               | 类型                             | 描述    | 可选            |
-| ------------------ | -------------------------------- | ------- | --------------- | ------ | --- | --- |
-| modelValue         | `boolean`                        |         | 否              |
-| title              | `string`                         |         | 否              |
-| width              | `string                          | number` |                 | 否     |
-| top                | `string`                         |         | 否              |
-| showClose          | `boolean`                        |         | 否              |
-| closeOnClickModal  | `boolean`                        |         | 否              |
-| closeOnPressEscape | `boolean`                        |         | 否              |
-| lockScroll         | `boolean`                        |         | 否              |
-| draggable          | `boolean`                        |         | 否              |
-| fullscreen         | `boolean`                        |         | 否              |
-| appendToBody       | `boolean`                        |         | 否              |
-| customClass        | `string`                         |         | 否              |
-| class              | `string`                         |         | 否              |
-| id                 | `string`                         |         | 否              |
-| ariaLabel          | `string`                         |         | 否              |
-| ariaDescribedBy    | `string`                         |         | 否              |
-| ariaModal          | `boolean`                        |         | 否              |
-| onBeforeOpen       | `() => boolean                   | void    | Promise<boolean | void>` |     | 是  |
-| onBeforeClose      | `() => boolean                   | void    | Promise<boolean | void>` |     | 是  |
-| onOpen             | `() => void`                     |         | 是              |
-| onClose            | `() => void`                     |         | 是              |
-| onConfirm          | `() => void`                     |         | 是              |
-| onCancel           | `() => void`                     |         | 是              |
-| onKeydown          | `(event: KeyboardEvent) => void` |         | 是              |
+| 名称               | 类型                                                | 描述 | 可选 |
+| ------------------ | --------------------------------------------------- | ---- | ---- |
+| modelValue         | `boolean`                                           |      | 否   |
+| title              | `string`                                            |      | 否   |
+| width              | `string \| number`                                  |      | 否   |
+| top                | `string`                                            |      | 否   |
+| showClose          | `boolean`                                           |      | 否   |
+| closeOnClickModal  | `boolean`                                           |      | 否   |
+| closeOnPressEscape | `boolean`                                           |      | 否   |
+| lockScroll         | `boolean`                                           |      | 否   |
+| draggable          | `boolean`                                           |      | 否   |
+| fullscreen         | `boolean`                                           |      | 否   |
+| appendToBody       | `boolean`                                           |      | 否   |
+| customClass        | `string`                                            |      | 否   |
+| class              | `string`                                            |      | 否   |
+| id                 | `string`                                            |      | 否   |
+| ariaLabel          | `string`                                            |      | 否   |
+| ariaDescribedBy    | `string`                                            |      | 否   |
+| ariaModal          | `boolean`                                           |      | 否   |
+| onBeforeOpen       | `() => boolean \| void \| Promise<boolean \| void>` |      | 是   |
+| onBeforeClose      | `() => boolean \| void \| Promise<boolean \| void>` |      | 是   |
+| onOpen             | `() => void`                                        |      | 是   |
+| onClose            | `() => void`                                        |      | 是   |
+| onConfirm          | `() => void`                                        |      | 是   |
+| onCancel           | `() => void`                                        |      | 是   |
+| onKeydown          | `(event: KeyboardEvent) => void`                    |      | 是   |
 
 ## SelectOption
 
@@ -1589,11 +1589,11 @@ ButtonNativeType: 'button' | 'submit' | 'reset';
 
 ### 成员
 
-| 名称     | 类型      | 描述    | 可选 |
-| -------- | --------- | ------- | ---- | --- |
-| label    | `string`  |         | 否   |
-| value    | `string   | number` |      | 否  |
-| disabled | `boolean` |         | 是   |
+| 名称     | 类型               | 描述 | 可选 |
+| -------- | ------------------ | ---- | ---- |
+| label    | `string`           |      | 否   |
+| value    | `string \| number` |      | 否   |
+| disabled | `boolean`          |      | 是   |
 
 ## SelectSetupProps
 
@@ -1601,26 +1601,26 @@ ButtonNativeType: 'button' | 'submit' | 'reset';
 
 ### 成员
 
-| 名称            | 类型                             | 描述   | 可选    |
-| --------------- | -------------------------------- | ------ | ------- | ------------------- | --- | --- |
-| modelValue      | `string                          | number | (string | number)[]`          |     | 否  |
-| options         | `SelectOption[]`                 |        | 否      |
-| placeholder     | `string`                         |        | 否      |
-| disabled        | `boolean`                        |        | 否      |
-| clearable       | `boolean`                        |        | 否      |
-| multiple        | `boolean`                        |        | 否      |
-| size            | `ComponentSize`                  |        | 否      |
-| class           | `string`                         |        | 否      |
-| id              | `string`                         |        | 否      |
-| ariaLabel       | `string`                         |        | 否      |
-| ariaDescribedBy | `string`                         |        | 否      |
-| ariaInvalid     | `boolean`                        |        | 否      |
-| ariaRequired    | `boolean`                        |        | 否      |
-| tabIndex        | `number`                         |        | 是      |
-| onChange        | `(value: string                  | number | (string | number)[]) => void` |     | 是  |
-| onClear         | `() => void`                     |        | 是      |
-| onKeydown       | `(event: KeyboardEvent) => void` |        | 是      |
-| onVisibleChange | `(visible: boolean) => void`     |        | 是      |
+| 名称            | 类型                                                        | 描述 | 可选 |
+| --------------- | ----------------------------------------------------------- | ---- | ---- |
+| modelValue      | `string \| number \| (string \| number)[]`                  |      | 否   |
+| options         | `SelectOption[]`                                            |      | 否   |
+| placeholder     | `string`                                                    |      | 否   |
+| disabled        | `boolean`                                                   |      | 否   |
+| clearable       | `boolean`                                                   |      | 否   |
+| multiple        | `boolean`                                                   |      | 否   |
+| size            | `ComponentSize`                                             |      | 否   |
+| class           | `string`                                                    |      | 否   |
+| id              | `string`                                                    |      | 否   |
+| ariaLabel       | `string`                                                    |      | 否   |
+| ariaDescribedBy | `string`                                                    |      | 否   |
+| ariaInvalid     | `boolean`                                                   |      | 否   |
+| ariaRequired    | `boolean`                                                   |      | 否   |
+| tabIndex        | `number`                                                    |      | 是   |
+| onChange        | `(value: string \| number \| (string \| number)[]) => void` |      | 是   |
+| onClear         | `() => void`                                                |      | 是   |
+| onKeydown       | `(event: KeyboardEvent) => void`                            |      | 是   |
+| onVisibleChange | `(visible: boolean) => void`                                |      | 是   |
 
 ## SelectProps
 
@@ -1628,27 +1628,27 @@ ButtonNativeType: 'button' | 'submit' | 'reset';
 
 ### 成员
 
-| 名称            | 类型                             | 描述                    | 可选    |
-| --------------- | -------------------------------- | ----------------------- | ------- | ------------------- | --- | --- |
-| modelValue      | `string                          | number                  | (string | number)[]`          |     | 是  |
-| options         | `SelectOption[]`                 |                         | 是      |
-| placeholder     | `string`                         |                         | 是      |
-| disabled        | `boolean`                        |                         | 是      |
-| clearable       | `boolean`                        |                         | 是      |
-| multiple        | `boolean`                        |                         | 是      |
-| size            | `ComponentSize`                  |                         | 是      |
-| class           | `string`                         |                         | 是      |
-| style           | `string                          | Record<string, string>` |         | 是                  |
-| id              | `string`                         |                         | 是      |
-| ariaLabel       | `string`                         |                         | 是      |
-| ariaDescribedBy | `string`                         |                         | 是      |
-| ariaInvalid     | `boolean`                        |                         | 是      |
-| ariaRequired    | `boolean`                        |                         | 是      |
-| tabIndex        | `number`                         |                         | 是      |
-| onChange        | `(value: string                  | number                  | (string | number)[]) => void` |     | 是  |
-| onClear         | `() => void`                     |                         | 是      |
-| onKeydown       | `(event: KeyboardEvent) => void` |                         | 是      |
-| onVisibleChange | `(visible: boolean) => void`     |                         | 是      |
+| 名称            | 类型                                                        | 描述 | 可选 |
+| --------------- | ----------------------------------------------------------- | ---- | ---- |
+| modelValue      | `string \| number \| (string \| number)[]`                  |      | 是   |
+| options         | `SelectOption[]`                                            |      | 是   |
+| placeholder     | `string`                                                    |      | 是   |
+| disabled        | `boolean`                                                   |      | 是   |
+| clearable       | `boolean`                                                   |      | 是   |
+| multiple        | `boolean`                                                   |      | 是   |
+| size            | `ComponentSize`                                             |      | 是   |
+| class           | `string`                                                    |      | 是   |
+| style           | `string \| Record<string, string>`                          |      | 是   |
+| id              | `string`                                                    |      | 是   |
+| ariaLabel       | `string`                                                    |      | 是   |
+| ariaDescribedBy | `string`                                                    |      | 是   |
+| ariaInvalid     | `boolean`                                                   |      | 是   |
+| ariaRequired    | `boolean`                                                   |      | 是   |
+| tabIndex        | `number`                                                    |      | 是   |
+| onChange        | `(value: string \| number \| (string \| number)[]) => void` |      | 是   |
+| onClear         | `() => void`                                                |      | 是   |
+| onKeydown       | `(event: KeyboardEvent) => void`                            |      | 是   |
+| onVisibleChange | `(visible: boolean) => void`                                |      | 是   |
 
 ## SelectSlots
 
@@ -1704,26 +1704,26 @@ ButtonNativeType: 'button' | 'submit' | 'reset';
 
 ### 成员
 
-| 名称            | 类型                                                                             | 描述                    | 可选           |
-| --------------- | -------------------------------------------------------------------------------- | ----------------------- | -------------- | --- | --- |
-| modelValue      | `string`                                                                         |                         | 否             |
-| type            | `''                                                                              | 'card'                  | 'border-card'` |     | 否  |
-| closable        | `boolean`                                                                        |                         | 否             |
-| addable         | `boolean`                                                                        |                         | 否             |
-| editable        | `boolean`                                                                        |                         | 否             |
-| draggable       | `boolean`                                                                        |                         | 否             |
-| class           | `string`                                                                         |                         | 否             |
-| style           | `string                                                                          | Record<string, string>` |                | 是  |
-| id              | `string`                                                                         |                         | 否             |
-| ariaLabel       | `string`                                                                         |                         | 否             |
-| ariaDescribedBy | `string`                                                                         |                         | 否             |
-| onChange        | `(name: string) => void`                                                         |                         | 是             |
-| onTabClick      | `(pane: { props: TabPaneSetupProps; children: VNode[] }, index: number) => void` |                         | 是             |
-| onTabRemove     | `(name: string) => void`                                                         |                         | 是             |
-| onTabAdd        | `() => void`                                                                     |                         | 是             |
-| onTabDragStart  | `(index: number) => void`                                                        |                         | 是             |
-| onTabDragEnd    | `(fromIndex: number, toIndex: number) => void`                                   |                         | 是             |
-| onKeydown       | `(event: KeyboardEvent) => void`                                                 |                         | 是             |
+| 名称            | 类型                                                                             | 描述 | 可选 |
+| --------------- | -------------------------------------------------------------------------------- | ---- | ---- |
+| modelValue      | `string`                                                                         |      | 否   |
+| type            | `'' \| 'card' \| 'border-card'`                                                  |      | 否   |
+| closable        | `boolean`                                                                        |      | 否   |
+| addable         | `boolean`                                                                        |      | 否   |
+| editable        | `boolean`                                                                        |      | 否   |
+| draggable       | `boolean`                                                                        |      | 否   |
+| class           | `string`                                                                         |      | 否   |
+| style           | `string \| Record<string, string>`                                               |      | 是   |
+| id              | `string`                                                                         |      | 否   |
+| ariaLabel       | `string`                                                                         |      | 否   |
+| ariaDescribedBy | `string`                                                                         |      | 否   |
+| onChange        | `(name: string) => void`                                                         |      | 是   |
+| onTabClick      | `(pane: { props: TabPaneSetupProps; children: VNode[] }, index: number) => void` |      | 是   |
+| onTabRemove     | `(name: string) => void`                                                         |      | 是   |
+| onTabAdd        | `() => void`                                                                     |      | 是   |
+| onTabDragStart  | `(index: number) => void`                                                        |      | 是   |
+| onTabDragEnd    | `(fromIndex: number, toIndex: number) => void`                                   |      | 是   |
+| onKeydown       | `(event: KeyboardEvent) => void`                                                 |      | 是   |
 
 ## TabsProps
 
@@ -1731,26 +1731,26 @@ ButtonNativeType: 'button' | 'submit' | 'reset';
 
 ### 成员
 
-| 名称            | 类型                                                                        | 描述                    | 可选 |
-| --------------- | --------------------------------------------------------------------------- | ----------------------- | ---- | --- |
-| modelValue      | `string`                                                                    |                         | 是   |
-| type            | `'card'                                                                     | 'border-card'`          |      | 是  |
-| class           | `string`                                                                    |                         | 是   |
-| style           | `string                                                                     | Record<string, string>` |      | 是  |
-| closable        | `boolean`                                                                   |                         | 是   |
-| addable         | `boolean`                                                                   |                         | 是   |
-| editable        | `boolean`                                                                   |                         | 是   |
-| draggable       | `boolean`                                                                   |                         | 是   |
-| id              | `string`                                                                    |                         | 是   |
-| ariaLabel       | `string`                                                                    |                         | 是   |
-| ariaDescribedBy | `string`                                                                    |                         | 是   |
-| onChange        | `(name: string) => void`                                                    |                         | 是   |
-| onTabClick      | `(pane: { props: TabPaneProps; children: VNode[] }, index: number) => void` |                         | 是   |
-| onTabRemove     | `(name: string) => void`                                                    |                         | 是   |
-| onTabAdd        | `() => void`                                                                |                         | 是   |
-| onTabDragStart  | `(index: number) => void`                                                   |                         | 是   |
-| onTabDragEnd    | `(fromIndex: number, toIndex: number) => void`                              |                         | 是   |
-| onKeydown       | `(event: KeyboardEvent) => void`                                            |                         | 是   |
+| 名称            | 类型                                                                        | 描述 | 可选 |
+| --------------- | --------------------------------------------------------------------------- | ---- | ---- |
+| modelValue      | `string`                                                                    |      | 是   |
+| type            | `'card' \| 'border-card'`                                                   |      | 是   |
+| class           | `string`                                                                    |      | 是   |
+| style           | `string \| Record<string, string>`                                          |      | 是   |
+| closable        | `boolean`                                                                   |      | 是   |
+| addable         | `boolean`                                                                   |      | 是   |
+| editable        | `boolean`                                                                   |      | 是   |
+| draggable       | `boolean`                                                                   |      | 是   |
+| id              | `string`                                                                    |      | 是   |
+| ariaLabel       | `string`                                                                    |      | 是   |
+| ariaDescribedBy | `string`                                                                    |      | 是   |
+| onChange        | `(name: string) => void`                                                    |      | 是   |
+| onTabClick      | `(pane: { props: TabPaneProps; children: VNode[] }, index: number) => void` |      | 是   |
+| onTabRemove     | `(name: string) => void`                                                    |      | 是   |
+| onTabAdd        | `() => void`                                                                |      | 是   |
+| onTabDragStart  | `(index: number) => void`                                                   |      | 是   |
+| onTabDragEnd    | `(fromIndex: number, toIndex: number) => void`                              |      | 是   |
+| onKeydown       | `(event: KeyboardEvent) => void`                                            |      | 是   |
 
 ## TabsSlots
 
@@ -1768,14 +1768,14 @@ ButtonNativeType: 'button' | 'submit' | 'reset';
 
 ### 成员
 
-| 名称     | 类型               | 描述    | 可选 |
-| -------- | ------------------ | ------- | ---- | --- |
-| value    | `string            | number` |      | 否  |
-| label    | `string`           |         | 否   |
-| children | `CascaderOption[]` |         | 是   |
-| disabled | `boolean`          |         | 是   |
-| isLeaf   | `boolean`          |         | 是   |
-| loading  | `boolean`          |         | 是   |
+| 名称     | 类型               | 描述 | 可选 |
+| -------- | ------------------ | ---- | ---- |
+| value    | `string \| number` |      | 否   |
+| label    | `string`           |      | 否   |
+| children | `CascaderOption[]` |      | 是   |
+| disabled | `boolean`          |      | 是   |
+| isLeaf   | `boolean`          |      | 是   |
+| loading  | `boolean`          |      | 是   |
 
 ## CascaderSetupProps
 
@@ -1783,29 +1783,29 @@ ButtonNativeType: 'button' | 'submit' | 'reset';
 
 ### 成员
 
-| 名称            | 类型                                                                            | 描述                 | 可选          |
-| --------------- | ------------------------------------------------------------------------------- | -------------------- | ------------- | -------------------- | --- | --- |
-| options         | `CascaderOption[]`                                                              |                      | 否            |
-| modelValue      | `(string                                                                        | number)[]            | Array<(string | number)[]>`          |     | 否  |
-| placeholder     | `string`                                                                        |                      | 否            |
-| disabled        | `boolean`                                                                       |                      | 否            |
-| clearable       | `boolean`                                                                       |                      | 否            |
-| multiple        | `boolean`                                                                       |                      | 否            |
-| filterable      | `boolean`                                                                       |                      | 否            |
-| checkStrictly   | `boolean`                                                                       |                      | 否            |
-| showAllLevels   | `boolean`                                                                       |                      | 否            |
-| collapseTags    | `boolean`                                                                       |                      | 否            |
-| separator       | `string`                                                                        |                      | 否            |
-| class           | `string`                                                                        |                      | 否            |
-| id              | `string`                                                                        |                      | 否            |
-| ariaLabel       | `string`                                                                        |                      | 否            |
-| ariaDescribedBy | `string`                                                                        |                      | 否            |
-| load            | `(node: CascaderOption, resolve: (children: CascaderOption[]) => void) => void` |                      | 是            |
-| onChange        | `(value: (string                                                                | number)[]            | Array<(string | number)[]>) => void` |     | 是  |
-| onExpandChange  | `(value: (string                                                                | number)[]) => void`  |               | 是                   |
-| onVisibleChange | `(visible: boolean) => void`                                                    |                      | 是            |
-| onRemoveTag     | `(value: Array<(string                                                          | number)[]>) => void` |               | 是                   |
-| onClear         | `() => void`                                                                    |                      | 是            |
+| 名称            | 类型                                                                            | 描述 | 可选 |
+| --------------- | ------------------------------------------------------------------------------- | ---- | ---- |
+| options         | `CascaderOption[]`                                                              |      | 否   |
+| modelValue      | `(string \| number)[] \| Array<(string \| number)[]>`                           |      | 否   |
+| placeholder     | `string`                                                                        |      | 否   |
+| disabled        | `boolean`                                                                       |      | 否   |
+| clearable       | `boolean`                                                                       |      | 否   |
+| multiple        | `boolean`                                                                       |      | 否   |
+| filterable      | `boolean`                                                                       |      | 否   |
+| checkStrictly   | `boolean`                                                                       |      | 否   |
+| showAllLevels   | `boolean`                                                                       |      | 否   |
+| collapseTags    | `boolean`                                                                       |      | 否   |
+| separator       | `string`                                                                        |      | 否   |
+| class           | `string`                                                                        |      | 否   |
+| id              | `string`                                                                        |      | 否   |
+| ariaLabel       | `string`                                                                        |      | 否   |
+| ariaDescribedBy | `string`                                                                        |      | 否   |
+| load            | `(node: CascaderOption, resolve: (children: CascaderOption[]) => void) => void` |      | 是   |
+| onChange        | `(value: (string \| number)[] \| Array<(string \| number)[]>) => void`          |      | 是   |
+| onExpandChange  | `(value: (string \| number)[]) => void`                                         |      | 是   |
+| onVisibleChange | `(visible: boolean) => void`                                                    |      | 是   |
+| onRemoveTag     | `(value: Array<(string \| number)[]>) => void`                                  |      | 是   |
+| onClear         | `() => void`                                                                    |      | 是   |
 
 ## CascaderProps
 
@@ -1813,30 +1813,30 @@ ButtonNativeType: 'button' | 'submit' | 'reset';
 
 ### 成员
 
-| 名称            | 类型                                                                            | 描述                    | 可选          |
-| --------------- | ------------------------------------------------------------------------------- | ----------------------- | ------------- | -------------------- | --- | --- |
-| options         | `CascaderOption[]`                                                              |                         | 是            |
-| modelValue      | `(string                                                                        | number)[]               | Array<(string | number)[]>`          |     | 是  |
-| placeholder     | `string`                                                                        |                         | 是            |
-| disabled        | `boolean`                                                                       |                         | 是            |
-| clearable       | `boolean`                                                                       |                         | 是            |
-| multiple        | `boolean`                                                                       |                         | 是            |
-| filterable      | `boolean`                                                                       |                         | 是            |
-| checkStrictly   | `boolean`                                                                       |                         | 是            |
-| showAllLevels   | `boolean`                                                                       |                         | 是            |
-| collapseTags    | `boolean`                                                                       |                         | 是            |
-| separator       | `string`                                                                        |                         | 是            |
-| class           | `string`                                                                        |                         | 是            |
-| style           | `string                                                                         | Record<string, string>` |               | 是                   |
-| id              | `string`                                                                        |                         | 是            |
-| ariaLabel       | `string`                                                                        |                         | 是            |
-| ariaDescribedBy | `string`                                                                        |                         | 是            |
-| load            | `(node: CascaderOption, resolve: (children: CascaderOption[]) => void) => void` |                         | 是            |
-| onChange        | `(value: (string                                                                | number)[]               | Array<(string | number)[]>) => void` |     | 是  |
-| onExpandChange  | `(value: (string                                                                | number)[]) => void`     |               | 是                   |
-| onVisibleChange | `(visible: boolean) => void`                                                    |                         | 是            |
-| onRemoveTag     | `(value: (string                                                                | number)[]) => void`     |               | 是                   |
-| onClear         | `() => void`                                                                    |                         | 是            |
+| 名称            | 类型                                                                            | 描述 | 可选 |
+| --------------- | ------------------------------------------------------------------------------- | ---- | ---- |
+| options         | `CascaderOption[]`                                                              |      | 是   |
+| modelValue      | `(string \| number)[] \| Array<(string \| number)[]>`                           |      | 是   |
+| placeholder     | `string`                                                                        |      | 是   |
+| disabled        | `boolean`                                                                       |      | 是   |
+| clearable       | `boolean`                                                                       |      | 是   |
+| multiple        | `boolean`                                                                       |      | 是   |
+| filterable      | `boolean`                                                                       |      | 是   |
+| checkStrictly   | `boolean`                                                                       |      | 是   |
+| showAllLevels   | `boolean`                                                                       |      | 是   |
+| collapseTags    | `boolean`                                                                       |      | 是   |
+| separator       | `string`                                                                        |      | 是   |
+| class           | `string`                                                                        |      | 是   |
+| style           | `string \| Record<string, string>`                                              |      | 是   |
+| id              | `string`                                                                        |      | 是   |
+| ariaLabel       | `string`                                                                        |      | 是   |
+| ariaDescribedBy | `string`                                                                        |      | 是   |
+| load            | `(node: CascaderOption, resolve: (children: CascaderOption[]) => void) => void` |      | 是   |
+| onChange        | `(value: (string \| number)[] \| Array<(string \| number)[]>) => void`          |      | 是   |
+| onExpandChange  | `(value: (string \| number)[]) => void`                                         |      | 是   |
+| onVisibleChange | `(visible: boolean) => void`                                                    |      | 是   |
+| onRemoveTag     | `(value: (string \| number)[]) => void`                                         |      | 是   |
+| onClear         | `() => void`                                                                    |      | 是   |
 
 ## CascaderSlots
 
@@ -1865,11 +1865,11 @@ DatePickerType: 'date' | 'datetime' | 'daterange' | 'datetimerange';
 
 ### 成员
 
-| 名称    | 类型         | 描述    | 可选 |
-| ------- | ------------ | ------- | ---- | --- |
-| text    | `string`     |         | 否   |
-| value   | `Date        | Date[]` |      | 否  |
-| onClick | `() => void` |         | 是   |
+| 名称    | 类型             | 描述 | 可选 |
+| ------- | ---------------- | ---- | ---- |
+| text    | `string`         |      | 否   |
+| value   | `Date \| Date[]` |      | 否   |
+| onClick | `() => void`     |      | 是   |
 
 ## DatePickerSetupProps
 
@@ -1877,20 +1877,20 @@ DatePickerType: 'date' | 'datetime' | 'daterange' | 'datetimerange';
 
 ### 成员
 
-| 名称         | 类型                      | 描述 | 可选    |
-| ------------ | ------------------------- | ---- | ------- | ------- | -------------- | --- | --- |
-| modelValue   | `string                   | Date | (string | Date)[] | null`          |     | 否  |
-| placeholder  | `string`                  |      | 否      |
-| disabled     | `boolean`                 |      | 否      |
-| clearable    | `boolean`                 |      | 否      |
-| format       | `string`                  |      | 否      |
-| type         | `DatePickerType`          |      | 否      |
-| disabledDate | `(date: Date) => boolean` |      | 是      |
-| shortcuts    | `DatePickerShortcut[]`    |      | 否      |
-| class        | `string`                  |      | 否      |
-| onChange     | `(value: string           | Date | (string | Date)[] | null) => void` |     | 是  |
-| onOpen       | `() => void`              |      | 是      |
-| onClose      | `() => void`              |      | 是      |
+| 名称         | 类型                                                            | 描述 | 可选 |
+| ------------ | --------------------------------------------------------------- | ---- | ---- |
+| modelValue   | `string \| Date \| (string \| Date)[] \| null`                  |      | 否   |
+| placeholder  | `string`                                                        |      | 否   |
+| disabled     | `boolean`                                                       |      | 否   |
+| clearable    | `boolean`                                                       |      | 否   |
+| format       | `string`                                                        |      | 否   |
+| type         | `DatePickerType`                                                |      | 否   |
+| disabledDate | `(date: Date) => boolean`                                       |      | 是   |
+| shortcuts    | `DatePickerShortcut[]`                                          |      | 否   |
+| class        | `string`                                                        |      | 否   |
+| onChange     | `(value: string \| Date \| (string \| Date)[] \| null) => void` |      | 是   |
+| onOpen       | `() => void`                                                    |      | 是   |
+| onClose      | `() => void`                                                    |      | 是   |
 
 ## DatePickerProps
 
@@ -1898,21 +1898,21 @@ DatePickerType: 'date' | 'datetime' | 'daterange' | 'datetimerange';
 
 ### 成员
 
-| 名称         | 类型                      | 描述                    | 可选    |
-| ------------ | ------------------------- | ----------------------- | ------- | ------- | -------------- | --- | --- |
-| modelValue   | `string                   | Date                    | (string | Date)[] | null`          |     | 是  |
-| placeholder  | `string`                  |                         | 是      |
-| disabled     | `boolean`                 |                         | 是      |
-| clearable    | `boolean`                 |                         | 是      |
-| format       | `string`                  |                         | 是      |
-| type         | `DatePickerType`          |                         | 是      |
-| disabledDate | `(date: Date) => boolean` |                         | 是      |
-| shortcuts    | `DatePickerShortcut[]`    |                         | 是      |
-| class        | `string`                  |                         | 是      |
-| style        | `string                   | Record<string, string>` |         | 是      |
-| onChange     | `(value: string           | Date                    | (string | Date)[] | null) => void` |     | 是  |
-| onOpen       | `() => void`              |                         | 是      |
-| onClose      | `() => void`              |                         | 是      |
+| 名称         | 类型                                                            | 描述 | 可选 |
+| ------------ | --------------------------------------------------------------- | ---- | ---- |
+| modelValue   | `string \| Date \| (string \| Date)[] \| null`                  |      | 是   |
+| placeholder  | `string`                                                        |      | 是   |
+| disabled     | `boolean`                                                       |      | 是   |
+| clearable    | `boolean`                                                       |      | 是   |
+| format       | `string`                                                        |      | 是   |
+| type         | `DatePickerType`                                                |      | 是   |
+| disabledDate | `(date: Date) => boolean`                                       |      | 是   |
+| shortcuts    | `DatePickerShortcut[]`                                          |      | 是   |
+| class        | `string`                                                        |      | 是   |
+| style        | `string \| Record<string, string>`                              |      | 是   |
+| onChange     | `(value: string \| Date \| (string \| Date)[] \| null) => void` |      | 是   |
+| onOpen       | `() => void`                                                    |      | 是   |
+| onClose      | `() => void`                                                    |      | 是   |
 
 ## DatePickerSlots
 
@@ -1931,14 +1931,14 @@ DatePickerType: 'date' | 'datetime' | 'daterange' | 'datetimerange';
 
 ### 成员
 
-| 名称      | 类型                                                                     | 描述    | 可选 |
-| --------- | ------------------------------------------------------------------------ | ------- | ---- | --- |
-| prop      | `string`                                                                 |         | 是   |
-| label     | `string`                                                                 |         | 否   |
-| width     | `string                                                                  | number` |      | 是  |
-| align     | `TableAlign`                                                             |         | 是   |
-| sortable  | `boolean`                                                                |         | 是   |
-| formatter | `(row: TableRowData, column: TableColumn, cellValue: unknown) => string` |         | 是   |
+| 名称      | 类型                                                                     | 描述 | 可选 |
+| --------- | ------------------------------------------------------------------------ | ---- | ---- |
+| prop      | `string`                                                                 |      | 是   |
+| label     | `string`                                                                 |      | 否   |
+| width     | `string \| number`                                                       |      | 是   |
+| align     | `TableAlign`                                                             |      | 是   |
+| sortable  | `boolean`                                                                |      | 是   |
+| formatter | `(row: TableRowData, column: TableColumn, cellValue: unknown) => string` |      | 是   |
 
 ## TableRowData
 
@@ -2009,25 +2009,25 @@ TableRowClickCallback: (row: TableRowData, index: number) => void
 
 ### 成员
 
-| 名称                | 类型                        | 描述                    | 可选 |
-| ------------------- | --------------------------- | ----------------------- | ---- | --- |
-| data                | `TableData`                 |                         | 是   |
-| columns             | `TableColumn[]`             |                         | 是   |
-| stripe              | `boolean`                   |                         | 是   |
-| border              | `boolean`                   |                         | 是   |
-| height              | `string                     | number`                 |      | 是  |
-| maxHeight           | `string                     | number`                 |      | 是  |
-| rowKey              | `string`                    |                         | 是   |
-| showSelection       | `boolean`                   |                         | 是   |
-| highlightCurrentRow | `boolean`                   |                         | 是   |
-| class               | `string`                    |                         | 是   |
-| style               | `string                     | Record<string, string>` |      | 是  |
-| id                  | `string`                    |                         | 是   |
-| ariaLabel           | `string`                    |                         | 是   |
-| ariaDescribedBy     | `string`                    |                         | 是   |
-| onRowClick          | `TableRowClickCallback`     |                         | 是   |
-| onSortChange        | `TableSortCallback`         |                         | 是   |
-| onSelectionChange   | `(rows: TableData) => void` |                         | 是   |
+| 名称                | 类型                               | 描述 | 可选 |
+| ------------------- | ---------------------------------- | ---- | ---- |
+| data                | `TableData`                        |      | 是   |
+| columns             | `TableColumn[]`                    |      | 是   |
+| stripe              | `boolean`                          |      | 是   |
+| border              | `boolean`                          |      | 是   |
+| height              | `string \| number`                 |      | 是   |
+| maxHeight           | `string \| number`                 |      | 是   |
+| rowKey              | `string`                           |      | 是   |
+| showSelection       | `boolean`                          |      | 是   |
+| highlightCurrentRow | `boolean`                          |      | 是   |
+| class               | `string`                           |      | 是   |
+| style               | `string \| Record<string, string>` |      | 是   |
+| id                  | `string`                           |      | 是   |
+| ariaLabel           | `string`                           |      | 是   |
+| ariaDescribedBy     | `string`                           |      | 是   |
+| onRowClick          | `TableRowClickCallback`            |      | 是   |
+| onSortChange        | `TableSortCallback`                |      | 是   |
+| onSelectionChange   | `(rows: TableData) => void`        |      | 是   |
 
 ## TableSlots
 
@@ -2046,17 +2046,17 @@ TableRowClickCallback: (row: TableRowData, index: number) => void
 
 ### 成员
 
-| 名称            | 类型      | 描述                    | 可选 |
-| --------------- | --------- | ----------------------- | ---- | --- |
-| name            | `string`  |                         | 是   |
-| size            | `string`  |                         | 是   |
-| color           | `string`  |                         | 是   |
-| spin            | `boolean` |                         | 是   |
-| class           | `string`  |                         | 是   |
-| style           | `string   | Record<string, string>` |      | 是  |
-| id              | `string`  |                         | 是   |
-| ariaLabel       | `string`  |                         | 是   |
-| ariaDescribedBy | `string`  |                         | 是   |
+| 名称            | 类型                               | 描述 | 可选 |
+| --------------- | ---------------------------------- | ---- | ---- |
+| name            | `string`                           |      | 是   |
+| size            | `string`                           |      | 是   |
+| color           | `string`                           |      | 是   |
+| spin            | `boolean`                          |      | 是   |
+| class           | `string`                           |      | 是   |
+| style           | `string \| Record<string, string>` |      | 是   |
+| id              | `string`                           |      | 是   |
+| ariaLabel       | `string`                           |      | 是   |
+| ariaDescribedBy | `string`                           |      | 是   |
 
 ## IconSetupProps
 
@@ -2064,17 +2064,17 @@ TableRowClickCallback: (row: TableRowData, index: number) => void
 
 ### 成员
 
-| 名称            | 类型      | 描述                    | 可选 |
-| --------------- | --------- | ----------------------- | ---- | --- |
-| name            | `string`  |                         | 是   |
-| size            | `string`  |                         | 是   |
-| color           | `string`  |                         | 是   |
-| spin            | `boolean` |                         | 是   |
-| class           | `string`  |                         | 是   |
-| style           | `string   | Record<string, string>` |      | 是  |
-| id              | `string`  |                         | 是   |
-| ariaLabel       | `string`  |                         | 是   |
-| ariaDescribedBy | `string`  |                         | 是   |
+| 名称            | 类型                               | 描述 | 可选 |
+| --------------- | ---------------------------------- | ---- | ---- |
+| name            | `string`                           |      | 是   |
+| size            | `string`                           |      | 是   |
+| color           | `string`                           |      | 是   |
+| spin            | `boolean`                          |      | 是   |
+| class           | `string`                           |      | 是   |
+| style           | `string \| Record<string, string>` |      | 是   |
+| id              | `string`                           |      | 是   |
+| ariaLabel       | `string`                           |      | 是   |
+| ariaDescribedBy | `string`                           |      | 是   |
 
 ## IconSlots
 
@@ -2092,16 +2092,16 @@ TableRowClickCallback: (row: TableRowData, index: number) => void
 
 ### 成员
 
-| 名称     | 类型               | 描述                    | 可选 |
-| -------- | ------------------ | ----------------------- | ---- | --- |
-| count    | `number`           |                         | 是   |
-| maxCount | `number`           |                         | 是   |
-| dot      | `boolean`          |                         | 是   |
-| showZero | `boolean`          |                         | 是   |
-| type     | `ComponentStatus`  |                         | 是   |
-| offset   | `[number, number]` |                         | 是   |
-| class    | `string`           |                         | 是   |
-| style    | `string            | Record<string, string>` |      | 是  |
+| 名称     | 类型                               | 描述 | 可选 |
+| -------- | ---------------------------------- | ---- | ---- |
+| count    | `number`                           |      | 是   |
+| maxCount | `number`                           |      | 是   |
+| dot      | `boolean`                          |      | 是   |
+| showZero | `boolean`                          |      | 是   |
+| type     | `ComponentStatus`                  |      | 是   |
+| offset   | `[number, number]`                 |      | 是   |
+| class    | `string`                           |      | 是   |
+| style    | `string \| Record<string, string>` |      | 是   |
 
 ## BadgeSlots
 
@@ -2119,19 +2119,19 @@ TableRowClickCallback: (row: TableRowData, index: number) => void
 
 ### 成员
 
-| 名称            | 类型       | 描述                    | 可选 |
-| --------------- | ---------- | ----------------------- | ---- | --- |
-| count           | `number`   |                         | 否   |
-| maxCount        | `number`   |                         | 否   |
-| dot             | `boolean`  |                         | 否   |
-| showZero        | `boolean`  |                         | 否   |
-| type            | `string`   |                         | 否   |
-| offset          | `number[]` |                         | 是   |
-| class           | `string`   |                         | 否   |
-| id              | `string`   |                         | 否   |
-| ariaLabel       | `string`   |                         | 否   |
-| ariaDescribedBy | `string`   |                         | 否   |
-| style           | `string    | Record<string, string>` |      | 是  |
+| 名称            | 类型                               | 描述 | 可选 |
+| --------------- | ---------------------------------- | ---- | ---- |
+| count           | `number`                           |      | 否   |
+| maxCount        | `number`                           |      | 否   |
+| dot             | `boolean`                          |      | 否   |
+| showZero        | `boolean`                          |      | 否   |
+| type            | `string`                           |      | 否   |
+| offset          | `number[]`                         |      | 是   |
+| class           | `string`                           |      | 否   |
+| id              | `string`                           |      | 否   |
+| ariaLabel       | `string`                           |      | 否   |
+| ariaDescribedBy | `string`                           |      | 否   |
+| style           | `string \| Record<string, string>` |      | 是   |
 
 ## TagProps
 
@@ -2139,18 +2139,18 @@ TableRowClickCallback: (row: TableRowData, index: number) => void
 
 ### 成员
 
-| 名称            | 类型              | 描述                    | 可选 |
-| --------------- | ----------------- | ----------------------- | ---- | --- |
-| type            | `ComponentStatus` |                         | 是   |
-| closable        | `boolean`         |                         | 是   |
-| color           | `string`          |                         | 是   |
-| size            | `ComponentSize`   |                         | 是   |
-| class           | `string`          |                         | 是   |
-| style           | `string           | Record<string, string>` |      | 是  |
-| id              | `string`          |                         | 是   |
-| ariaLabel       | `string`          |                         | 是   |
-| ariaDescribedBy | `string`          |                         | 是   |
-| onClose         | `() => void`      |                         | 是   |
+| 名称            | 类型                               | 描述 | 可选 |
+| --------------- | ---------------------------------- | ---- | ---- |
+| type            | `ComponentStatus`                  |      | 是   |
+| closable        | `boolean`                          |      | 是   |
+| color           | `string`                           |      | 是   |
+| size            | `ComponentSize`                    |      | 是   |
+| class           | `string`                           |      | 是   |
+| style           | `string \| Record<string, string>` |      | 是   |
+| id              | `string`                           |      | 是   |
+| ariaLabel       | `string`                           |      | 是   |
+| ariaDescribedBy | `string`                           |      | 是   |
+| onClose         | `() => void`                       |      | 是   |
 
 ## TagSlots
 
@@ -2168,18 +2168,18 @@ TableRowClickCallback: (row: TableRowData, index: number) => void
 
 ### 成员
 
-| 名称            | 类型              | 描述                    | 可选 |
-| --------------- | ----------------- | ----------------------- | ---- | --- |
-| type            | `ComponentStatus` |                         | 否   |
-| closable        | `boolean`         |                         | 否   |
-| color           | `string`          |                         | 否   |
-| size            | `ComponentSize`   |                         | 否   |
-| class           | `string`          |                         | 否   |
-| id              | `string`          |                         | 否   |
-| ariaLabel       | `string`          |                         | 否   |
-| ariaDescribedBy | `string`          |                         | 否   |
-| style           | `string           | Record<string, string>` |      | 是  |
-| onClose         | `() => void`      |                         | 是   |
+| 名称            | 类型                               | 描述 | 可选 |
+| --------------- | ---------------------------------- | ---- | ---- |
+| type            | `ComponentStatus`                  |      | 否   |
+| closable        | `boolean`                          |      | 否   |
+| color           | `string`                           |      | 否   |
+| size            | `ComponentSize`                    |      | 否   |
+| class           | `string`                           |      | 否   |
+| id              | `string`                           |      | 否   |
+| ariaLabel       | `string`                           |      | 否   |
+| ariaDescribedBy | `string`                           |      | 否   |
+| style           | `string \| Record<string, string>` |      | 是   |
+| onClose         | `() => void`                       |      | 是   |
 
 ## SpinProps
 
@@ -2187,17 +2187,17 @@ TableRowClickCallback: (row: TableRowData, index: number) => void
 
 ### 成员
 
-| 名称            | 类型      | 描述                    | 可选     |
-| --------------- | --------- | ----------------------- | -------- | --- | --- |
-| spinning        | `boolean` |                         | 是       |
-| size            | `'small'  | 'default'               | 'large'` |     | 是  |
-| tip             | `string`  |                         | 是       |
-| delay           | `number`  |                         | 是       |
-| class           | `string`  |                         | 是       |
-| style           | `string   | Record<string, string>` |          | 是  |
-| id              | `string`  |                         | 是       |
-| ariaLabel       | `string`  |                         | 是       |
-| ariaDescribedBy | `string`  |                         | 是       |
+| 名称            | 类型                               | 描述 | 可选 |
+| --------------- | ---------------------------------- | ---- | ---- |
+| spinning        | `boolean`                          |      | 是   |
+| size            | `'small' \| 'default' \| 'large'`  |      | 是   |
+| tip             | `string`                           |      | 是   |
+| delay           | `number`                           |      | 是   |
+| class           | `string`                           |      | 是   |
+| style           | `string \| Record<string, string>` |      | 是   |
+| id              | `string`                           |      | 是   |
+| ariaLabel       | `string`                           |      | 是   |
+| ariaDescribedBy | `string`                           |      | 是   |
 
 ## SpinSetupProps
 
@@ -2205,17 +2205,17 @@ TableRowClickCallback: (row: TableRowData, index: number) => void
 
 ### 成员
 
-| 名称            | 类型      | 描述                    | 可选     |
-| --------------- | --------- | ----------------------- | -------- | --- | --- |
-| spinning        | `boolean` |                         | 是       |
-| size            | `'small'  | 'default'               | 'large'` |     | 是  |
-| tip             | `string`  |                         | 是       |
-| delay           | `number`  |                         | 是       |
-| class           | `string`  |                         | 是       |
-| style           | `string   | Record<string, string>` |          | 是  |
-| id              | `string`  |                         | 是       |
-| ariaLabel       | `string`  |                         | 是       |
-| ariaDescribedBy | `string`  |                         | 是       |
+| 名称            | 类型                               | 描述 | 可选 |
+| --------------- | ---------------------------------- | ---- | ---- |
+| spinning        | `boolean`                          |      | 是   |
+| size            | `'small' \| 'default' \| 'large'`  |      | 是   |
+| tip             | `string`                           |      | 是   |
+| delay           | `number`                           |      | 是   |
+| class           | `string`                           |      | 是   |
+| style           | `string \| Record<string, string>` |      | 是   |
+| id              | `string`                           |      | 是   |
+| ariaLabel       | `string`                           |      | 是   |
+| ariaDescribedBy | `string`                           |      | 是   |
 
 ## SpinSlots
 
@@ -2234,16 +2234,16 @@ TableRowClickCallback: (row: TableRowData, index: number) => void
 
 ### 成员
 
-| 名称            | 类型     | 描述                    | 可选 |
-| --------------- | -------- | ----------------------- | ---- | --- |
-| description     | `string` |                         | 是   |
-| image           | `string` |                         | 是   |
-| imageSize       | `number` |                         | 是   |
-| class           | `string` |                         | 是   |
-| style           | `string  | Record<string, string>` |      | 是  |
-| id              | `string` |                         | 是   |
-| ariaLabel       | `string` |                         | 是   |
-| ariaDescribedBy | `string` |                         | 是   |
+| 名称            | 类型                               | 描述 | 可选 |
+| --------------- | ---------------------------------- | ---- | ---- |
+| description     | `string`                           |      | 是   |
+| image           | `string`                           |      | 是   |
+| imageSize       | `number`                           |      | 是   |
+| class           | `string`                           |      | 是   |
+| style           | `string \| Record<string, string>` |      | 是   |
+| id              | `string`                           |      | 是   |
+| ariaLabel       | `string`                           |      | 是   |
+| ariaDescribedBy | `string`                           |      | 是   |
 
 ## EmptySetupProps
 
@@ -2251,16 +2251,16 @@ TableRowClickCallback: (row: TableRowData, index: number) => void
 
 ### 成员
 
-| 名称            | 类型     | 描述                    | 可选 |
-| --------------- | -------- | ----------------------- | ---- | --- |
-| description     | `string` |                         | 是   |
-| image           | `string` |                         | 是   |
-| imageSize       | `number` |                         | 是   |
-| class           | `string` |                         | 是   |
-| style           | `string  | Record<string, string>` |      | 是  |
-| id              | `string` |                         | 是   |
-| ariaLabel       | `string` |                         | 是   |
-| ariaDescribedBy | `string` |                         | 是   |
+| 名称            | 类型                               | 描述 | 可选 |
+| --------------- | ---------------------------------- | ---- | ---- |
+| description     | `string`                           |      | 是   |
+| image           | `string`                           |      | 是   |
+| imageSize       | `number`                           |      | 是   |
+| class           | `string`                           |      | 是   |
+| style           | `string \| Record<string, string>` |      | 是   |
+| id              | `string`                           |      | 是   |
+| ariaLabel       | `string`                           |      | 是   |
+| ariaDescribedBy | `string`                           |      | 是   |
 
 ## EmptySlots
 
@@ -2280,19 +2280,19 @@ TableRowClickCallback: (row: TableRowData, index: number) => void
 
 ### 成员
 
-| 名称            | 类型                          | 描述                    | 可选       |
-| --------------- | ----------------------------- | ----------------------- | ---------- | -------- | --- | --- |
-| type            | `ComponentStatus`             |                         | 是         |
-| disabled        | `boolean`                     |                         | 是         |
-| underline       | `boolean`                     |                         | 是         |
-| href            | `string`                      |                         | 是         |
-| target          | `'\_blank'                    | '\_self'                | '\_parent' | '\_top'` |     | 是  |
-| class           | `string`                      |                         | 是         |
-| style           | `string                       | Record<string, string>` |            | 是       |
-| id              | `string`                      |                         | 是         |
-| ariaLabel       | `string`                      |                         | 是         |
-| ariaDescribedBy | `string`                      |                         | 是         |
-| onClick         | `(event: MouseEvent) => void` |                         | 是         |
+| 名称            | 类型                                         | 描述 | 可选 |
+| --------------- | -------------------------------------------- | ---- | ---- |
+| type            | `ComponentStatus`                            |      | 是   |
+| disabled        | `boolean`                                    |      | 是   |
+| underline       | `boolean`                                    |      | 是   |
+| href            | `string`                                     |      | 是   |
+| target          | `'_blank' \| '_self' \| '_parent' \| '_top'` |      | 是   |
+| class           | `string`                                     |      | 是   |
+| style           | `string \| Record<string, string>`           |      | 是   |
+| id              | `string`                                     |      | 是   |
+| ariaLabel       | `string`                                     |      | 是   |
+| ariaDescribedBy | `string`                                     |      | 是   |
+| onClick         | `(event: MouseEvent) => void`                |      | 是   |
 
 ## LinkSetupProps
 
@@ -2300,19 +2300,19 @@ TableRowClickCallback: (row: TableRowData, index: number) => void
 
 ### 成员
 
-| 名称            | 类型                          | 描述                    | 可选       |
-| --------------- | ----------------------------- | ----------------------- | ---------- | -------- | --- | --- |
-| type            | `ComponentStatus`             |                         | 是         |
-| disabled        | `boolean`                     |                         | 是         |
-| underline       | `boolean`                     |                         | 是         |
-| href            | `string`                      |                         | 是         |
-| target          | `'\_blank'                    | '\_self'                | '\_parent' | '\_top'` |     | 是  |
-| class           | `string`                      |                         | 是         |
-| style           | `string                       | Record<string, string>` |            | 是       |
-| id              | `string`                      |                         | 是         |
-| ariaLabel       | `string`                      |                         | 是         |
-| ariaDescribedBy | `string`                      |                         | 是         |
-| onClick         | `(event: MouseEvent) => void` |                         | 是         |
+| 名称            | 类型                                         | 描述 | 可选 |
+| --------------- | -------------------------------------------- | ---- | ---- |
+| type            | `ComponentStatus`                            |      | 是   |
+| disabled        | `boolean`                                    |      | 是   |
+| underline       | `boolean`                                    |      | 是   |
+| href            | `string`                                     |      | 是   |
+| target          | `'_blank' \| '_self' \| '_parent' \| '_top'` |      | 是   |
+| class           | `string`                                     |      | 是   |
+| style           | `string \| Record<string, string>`           |      | 是   |
+| id              | `string`                                     |      | 是   |
+| ariaLabel       | `string`                                     |      | 是   |
+| ariaDescribedBy | `string`                                     |      | 是   |
+| onClick         | `(event: MouseEvent) => void`                |      | 是   |
 
 ## LinkSlots
 
@@ -2330,14 +2330,14 @@ TableRowClickCallback: (row: TableRowData, index: number) => void
 
 ### 成员
 
-| 名称            | 类型      | 描述                    | 可选 |
-| --------------- | --------- | ----------------------- | ---- | --- |
-| fluid           | `boolean` |                         | 是   |
-| class           | `string`  |                         | 是   |
-| style           | `string   | Record<string, string>` |      | 是  |
-| id              | `string`  |                         | 是   |
-| ariaLabel       | `string`  |                         | 是   |
-| ariaDescribedBy | `string`  |                         | 是   |
+| 名称            | 类型                               | 描述 | 可选 |
+| --------------- | ---------------------------------- | ---- | ---- |
+| fluid           | `boolean`                          |      | 是   |
+| class           | `string`                           |      | 是   |
+| style           | `string \| Record<string, string>` |      | 是   |
+| id              | `string`                           |      | 是   |
+| ariaLabel       | `string`                           |      | 是   |
+| ariaDescribedBy | `string`                           |      | 是   |
 
 ## ContainerSlots
 
@@ -2355,15 +2355,15 @@ TableRowClickCallback: (row: TableRowData, index: number) => void
 
 ### 成员
 
-| 名称            | 类型          | 描述                    | 可选     |
-| --------------- | ------------- | ----------------------- | -------- | --- | --- |
-| type            | `'horizontal' | 'vertical'`             |          | 是  |
-| contentPosition | `'left'       | 'center'                | 'right'` |     | 是  |
-| class           | `string`      |                         | 是       |
-| style           | `string       | Record<string, string>` |          | 是  |
-| id              | `string`      |                         | 是       |
-| ariaLabel       | `string`      |                         | 是       |
-| ariaDescribedBy | `string`      |                         | 是       |
+| 名称            | 类型                               | 描述 | 可选 |
+| --------------- | ---------------------------------- | ---- | ---- |
+| type            | `'horizontal' \| 'vertical'`       |      | 是   |
+| contentPosition | `'left' \| 'center' \| 'right'`    |      | 是   |
+| class           | `string`                           |      | 是   |
+| style           | `string \| Record<string, string>` |      | 是   |
+| id              | `string`                           |      | 是   |
+| ariaLabel       | `string`                           |      | 是   |
+| ariaDescribedBy | `string`                           |      | 是   |
 
 ## DividerSetupProps
 
@@ -2371,15 +2371,15 @@ TableRowClickCallback: (row: TableRowData, index: number) => void
 
 ### 成员
 
-| 名称            | 类型          | 描述                    | 可选     |
-| --------------- | ------------- | ----------------------- | -------- | --- | --- |
-| type            | `'horizontal' | 'vertical'`             |          | 是  |
-| contentPosition | `'left'       | 'center'                | 'right'` |     | 是  |
-| class           | `string`      |                         | 是       |
-| style           | `string       | Record<string, string>` |          | 是  |
-| id              | `string`      |                         | 是       |
-| ariaLabel       | `string`      |                         | 是       |
-| ariaDescribedBy | `string`      |                         | 是       |
+| 名称            | 类型                               | 描述 | 可选 |
+| --------------- | ---------------------------------- | ---- | ---- |
+| type            | `'horizontal' \| 'vertical'`       |      | 是   |
+| contentPosition | `'left' \| 'center' \| 'right'`    |      | 是   |
+| class           | `string`                           |      | 是   |
+| style           | `string \| Record<string, string>` |      | 是   |
+| id              | `string`                           |      | 是   |
+| ariaLabel       | `string`                           |      | 是   |
+| ariaDescribedBy | `string`                           |      | 是   |
 
 ## DividerSlots
 
@@ -2397,18 +2397,18 @@ TableRowClickCallback: (row: TableRowData, index: number) => void
 
 ### 成员
 
-| 名称            | 类型         | 描述                    | 可选   |
-| --------------- | ------------ | ----------------------- | ------ | -------- | --- | --- |
-| type            | `'success'   | 'warning'               | 'info' | 'error'` |     | 是  |
-| message         | `string`     |                         | 是     |
-| duration        | `number`     |                         | 是     |
-| showClose       | `boolean`    |                         | 是     |
-| class           | `string`     |                         | 是     |
-| style           | `string      | Record<string, string>` |        | 是       |
-| id              | `string`     |                         | 是     |
-| ariaLabel       | `string`     |                         | 是     |
-| ariaDescribedBy | `string`     |                         | 是     |
-| onClose         | `() => void` |                         | 是     |
+| 名称            | 类型                                          | 描述 | 可选 |
+| --------------- | --------------------------------------------- | ---- | ---- |
+| type            | `'success' \| 'warning' \| 'info' \| 'error'` |      | 是   |
+| message         | `string`                                      |      | 是   |
+| duration        | `number`                                      |      | 是   |
+| showClose       | `boolean`                                     |      | 是   |
+| class           | `string`                                      |      | 是   |
+| style           | `string \| Record<string, string>`            |      | 是   |
+| id              | `string`                                      |      | 是   |
+| ariaLabel       | `string`                                      |      | 是   |
+| ariaDescribedBy | `string`                                      |      | 是   |
+| onClose         | `() => void`                                  |      | 是   |
 
 ## ToastSlots
 
@@ -2426,20 +2426,20 @@ TableRowClickCallback: (row: TableRowData, index: number) => void
 
 ### 成员
 
-| 名称            | 类型         | 描述                    | 可选   |
-| --------------- | ------------ | ----------------------- | ------ | -------- | --- | --- |
-| message         | `string`     |                         | 否     |
-| type            | `'success'   | 'warning'               | 'info' | 'error'` |     | 否  |
-| duration        | `number`     |                         | 否     |
-| position        | `string`     |                         | 否     |
-| icon            | `string`     |                         | 否     |
-| closable        | `boolean`    |                         | 否     |
-| class           | `string`     |                         | 否     |
-| id              | `string`     |                         | 否     |
-| ariaLabel       | `string`     |                         | 否     |
-| ariaDescribedBy | `string`     |                         | 否     |
-| style           | `string      | Record<string, string>` |        | 是       |
-| onClose         | `() => void` |                         | 是     |
+| 名称            | 类型                                          | 描述 | 可选 |
+| --------------- | --------------------------------------------- | ---- | ---- |
+| message         | `string`                                      |      | 否   |
+| type            | `'success' \| 'warning' \| 'info' \| 'error'` |      | 否   |
+| duration        | `number`                                      |      | 否   |
+| position        | `string`                                      |      | 否   |
+| icon            | `string`                                      |      | 否   |
+| closable        | `boolean`                                     |      | 否   |
+| class           | `string`                                      |      | 否   |
+| id              | `string`                                      |      | 否   |
+| ariaLabel       | `string`                                      |      | 否   |
+| ariaDescribedBy | `string`                                      |      | 否   |
+| style           | `string \| Record<string, string>`            |      | 是   |
+| onClose         | `() => void`                                  |      | 是   |
 
 ## FormValidateStatus
 
@@ -2457,17 +2457,17 @@ FormValidateStatus: 'success' | 'error' | 'validating' | '';
 
 ### 成员
 
-| 名称           | 类型                                                                 | 描述     | 可选            |
-| -------------- | -------------------------------------------------------------------- | -------- | --------------- | -------- | ------ | ------- | ------ | --- | --- |
-| required       | `boolean`                                                            |          | 是              |
-| message        | `string`                                                             |          | 是              |
-| pattern        | `RegExp`                                                             |          | 是              |
-| validator      | `( value: unknown, model: Record<string, unknown>, ) => boolean      | string   | Promise<boolean | string>` |        | 是      |
-| asyncValidator | `(value: unknown, model: Record<string, unknown>) => Promise<boolean | string>` |                 | 是       |
-| min            | `number`                                                             |          | 是              |
-| max            | `number`                                                             |          | 是              |
-| type           | `'string'                                                            | 'number' | 'boolean'       | 'array'  | 'date' | 'email' | 'url'` |     | 是  |
-| trigger        | `'blur'                                                              | 'change' | ''`             |          | 是     |
+| 名称           | 类型                                                                                                     | 描述 | 可选 |
+| -------------- | -------------------------------------------------------------------------------------------------------- | ---- | ---- |
+| required       | `boolean`                                                                                                |      | 是   |
+| message        | `string`                                                                                                 |      | 是   |
+| pattern        | `RegExp`                                                                                                 |      | 是   |
+| validator      | `( value: unknown, model: Record<string, unknown>, ) => boolean \| string \| Promise<boolean \| string>` |      | 是   |
+| asyncValidator | `(value: unknown, model: Record<string, unknown>) => Promise<boolean \| string>`                         |      | 是   |
+| min            | `number`                                                                                                 |      | 是   |
+| max            | `number`                                                                                                 |      | 是   |
+| type           | `'string' \| 'number' \| 'boolean' \| 'array' \| 'date' \| 'email' \| 'url'`                             |      | 是   |
+| trigger        | `'blur' \| 'change' \| ''`                                                                               |      | 是   |
 
 ## FormRules
 
@@ -2479,17 +2479,17 @@ FormValidateStatus: 'success' | 'error' | 'validating' | '';
 
 ### 成员
 
-| 名称            | 类型                                      | 描述    | 可选   |
-| --------------- | ----------------------------------------- | ------- | ------ | --- | --- |
-| model           | `Record<string, unknown>`                 |         | 否     |
-| rules           | `FormRules`                               |         | 否     |
-| labelWidth      | `string`                                  |         | 否     |
-| labelPosition   | `'left'                                   | 'right' | 'top'` |     | 否  |
-| class           | `string`                                  |         | 否     |
-| id              | `string`                                  |         | 否     |
-| ariaLabel       | `string`                                  |         | 否     |
-| ariaDescribedBy | `string`                                  |         | 否     |
-| onSubmit        | `(data: Record<string, unknown>) => void` |         | 是     |
+| 名称            | 类型                                      | 描述 | 可选 |
+| --------------- | ----------------------------------------- | ---- | ---- |
+| model           | `Record<string, unknown>`                 |      | 否   |
+| rules           | `FormRules`                               |      | 否   |
+| labelWidth      | `string`                                  |      | 否   |
+| labelPosition   | `'left' \| 'right' \| 'top'`              |      | 否   |
+| class           | `string`                                  |      | 否   |
+| id              | `string`                                  |      | 否   |
+| ariaLabel       | `string`                                  |      | 否   |
+| ariaDescribedBy | `string`                                  |      | 否   |
+| onSubmit        | `(data: Record<string, unknown>) => void` |      | 是   |
 
 ## FormProps
 
@@ -2497,18 +2497,18 @@ FormValidateStatus: 'success' | 'error' | 'validating' | '';
 
 ### 成员
 
-| 名称            | 类型                                      | 描述                    | 可选   |
-| --------------- | ----------------------------------------- | ----------------------- | ------ | --- | --- |
-| model           | `Record<string, unknown>`                 |                         | 是     |
-| rules           | `FormRules`                               |                         | 是     |
-| labelWidth      | `string`                                  |                         | 是     |
-| labelPosition   | `'left'                                   | 'right'                 | 'top'` |     | 是  |
-| class           | `string`                                  |                         | 是     |
-| style           | `string                                   | Record<string, string>` |        | 是  |
-| id              | `string`                                  |                         | 是     |
-| ariaLabel       | `string`                                  |                         | 是     |
-| ariaDescribedBy | `string`                                  |                         | 是     |
-| onSubmit        | `(data: Record<string, unknown>) => void` |                         | 是     |
+| 名称            | 类型                                      | 描述 | 可选 |
+| --------------- | ----------------------------------------- | ---- | ---- |
+| model           | `Record<string, unknown>`                 |      | 是   |
+| rules           | `FormRules`                               |      | 是   |
+| labelWidth      | `string`                                  |      | 是   |
+| labelPosition   | `'left' \| 'right' \| 'top'`              |      | 是   |
+| class           | `string`                                  |      | 是   |
+| style           | `string \| Record<string, string>`        |      | 是   |
+| id              | `string`                                  |      | 是   |
+| ariaLabel       | `string`                                  |      | 是   |
+| ariaDescribedBy | `string`                                  |      | 是   |
+| onSubmit        | `(data: Record<string, unknown>) => void` |      | 是   |
 
 ## FormSlots
 
@@ -2588,19 +2588,19 @@ FormValidateStatus: 'success' | 'error' | 'validating' | '';
 
 ### 成员
 
-| 名称            | 类型                      | 描述        | 可选 |
-| --------------- | ------------------------- | ----------- | ---- | --- |
-| mode            | `'horizontal'             | 'vertical'` |      | 否  |
-| defaultActive   | `string`                  |             | 否   |
-| defaultOpeneds  | `string[]`                |             | 否   |
-| uniqueOpened    | `boolean`                 |             | 否   |
-| class           | `string`                  |             | 否   |
-| id              | `string`                  |             | 否   |
-| ariaLabel       | `string`                  |             | 否   |
-| ariaDescribedBy | `string`                  |             | 否   |
-| onSelect        | `(index: string) => void` |             | 是   |
-| onOpen          | `(index: string) => void` |             | 是   |
-| onClose         | `(index: string) => void` |             | 是   |
+| 名称            | 类型                         | 描述 | 可选 |
+| --------------- | ---------------------------- | ---- | ---- |
+| mode            | `'horizontal' \| 'vertical'` |      | 否   |
+| defaultActive   | `string`                     |      | 否   |
+| defaultOpeneds  | `string[]`                   |      | 否   |
+| uniqueOpened    | `boolean`                    |      | 否   |
+| class           | `string`                     |      | 否   |
+| id              | `string`                     |      | 否   |
+| ariaLabel       | `string`                     |      | 否   |
+| ariaDescribedBy | `string`                     |      | 否   |
+| onSelect        | `(index: string) => void`    |      | 是   |
+| onOpen          | `(index: string) => void`    |      | 是   |
+| onClose         | `(index: string) => void`    |      | 是   |
 
 ## MenuProps
 
@@ -2608,20 +2608,20 @@ FormValidateStatus: 'success' | 'error' | 'validating' | '';
 
 ### 成员
 
-| 名称            | 类型                      | 描述                    | 可选 |
-| --------------- | ------------------------- | ----------------------- | ---- | --- |
-| mode            | `'horizontal'             | 'vertical'`             |      | 是  |
-| defaultActive   | `string`                  |                         | 是   |
-| defaultOpeneds  | `string[]`                |                         | 是   |
-| uniqueOpened    | `boolean`                 |                         | 是   |
-| class           | `string`                  |                         | 是   |
-| style           | `string                   | Record<string, string>` |      | 是  |
-| id              | `string`                  |                         | 是   |
-| ariaLabel       | `string`                  |                         | 是   |
-| ariaDescribedBy | `string`                  |                         | 是   |
-| onSelect        | `(index: string) => void` |                         | 是   |
-| onOpen          | `(index: string) => void` |                         | 是   |
-| onClose         | `(index: string) => void` |                         | 是   |
+| 名称            | 类型                               | 描述 | 可选 |
+| --------------- | ---------------------------------- | ---- | ---- |
+| mode            | `'horizontal' \| 'vertical'`       |      | 是   |
+| defaultActive   | `string`                           |      | 是   |
+| defaultOpeneds  | `string[]`                         |      | 是   |
+| uniqueOpened    | `boolean`                          |      | 是   |
+| class           | `string`                           |      | 是   |
+| style           | `string \| Record<string, string>` |      | 是   |
+| id              | `string`                           |      | 是   |
+| ariaLabel       | `string`                           |      | 是   |
+| ariaDescribedBy | `string`                           |      | 是   |
+| onSelect        | `(index: string) => void`          |      | 是   |
+| onOpen          | `(index: string) => void`          |      | 是   |
+| onClose         | `(index: string) => void`          |      | 是   |
 
 ## MenuSlots
 
@@ -2669,20 +2669,20 @@ AlertEffect: 'light' | 'dark';
 
 ### 成员
 
-| 名称            | 类型          | 描述                    | 可选 |
-| --------------- | ------------- | ----------------------- | ---- | --- |
-| type            | `AlertType`   |                         | 是   |
-| title           | `string`      |                         | 是   |
-| description     | `string`      |                         | 是   |
-| closable        | `boolean`     |                         | 是   |
-| showIcon        | `boolean`     |                         | 是   |
-| effect          | `AlertEffect` |                         | 是   |
-| class           | `string`      |                         | 是   |
-| style           | `string       | Record<string, string>` |      | 是  |
-| id              | `string`      |                         | 是   |
-| ariaLabel       | `string`      |                         | 是   |
-| ariaDescribedBy | `string`      |                         | 是   |
-| onClose         | `() => void`  |                         | 是   |
+| 名称            | 类型                               | 描述 | 可选 |
+| --------------- | ---------------------------------- | ---- | ---- |
+| type            | `AlertType`                        |      | 是   |
+| title           | `string`                           |      | 是   |
+| description     | `string`                           |      | 是   |
+| closable        | `boolean`                          |      | 是   |
+| showIcon        | `boolean`                          |      | 是   |
+| effect          | `AlertEffect`                      |      | 是   |
+| class           | `string`                           |      | 是   |
+| style           | `string \| Record<string, string>` |      | 是   |
+| id              | `string`                           |      | 是   |
+| ariaLabel       | `string`                           |      | 是   |
+| ariaDescribedBy | `string`                           |      | 是   |
+| onClose         | `() => void`                       |      | 是   |
 
 ## AlertSlots
 
@@ -2702,16 +2702,16 @@ AlertEffect: 'light' | 'dark';
 
 ### 成员
 
-| 名称            | 类型      | 描述                    | 可选   |
-| --------------- | --------- | ----------------------- | ------ | -------- | --- | --- |
-| content         | `string`  |                         | 是     |
-| placement       | `'top'    | 'bottom'                | 'left' | 'right'` |     | 是  |
-| disabled        | `boolean` |                         | 是     |
-| class           | `string`  |                         | 是     |
-| style           | `string   | Record<string, string>` |        | 是       |
-| id              | `string`  |                         | 是     |
-| ariaLabel       | `string`  |                         | 是     |
-| ariaDescribedBy | `string`  |                         | 是     |
+| 名称            | 类型                                     | 描述 | 可选 |
+| --------------- | ---------------------------------------- | ---- | ---- |
+| content         | `string`                                 |      | 是   |
+| placement       | `'top' \| 'bottom' \| 'left' \| 'right'` |      | 是   |
+| disabled        | `boolean`                                |      | 是   |
+| class           | `string`                                 |      | 是   |
+| style           | `string \| Record<string, string>`       |      | 是   |
+| id              | `string`                                 |      | 是   |
+| ariaLabel       | `string`                                 |      | 是   |
+| ariaDescribedBy | `string`                                 |      | 是   |
 
 ## TooltipSetupProps
 
@@ -2719,20 +2719,20 @@ AlertEffect: 'light' | 'dark';
 
 ### 成员
 
-| 名称            | 类型      | 描述                    | 可选   |
-| --------------- | --------- | ----------------------- | ------ | -------- | --- | --- |
-| content         | `string`  |                         | 是     |
-| placement       | `'top'    | 'bottom'                | 'left' | 'right'` |     | 是  |
-| trigger         | `string`  |                         | 是     |
-| disabled        | `boolean` |                         | 是     |
-| openDelay       | `number`  |                         | 是     |
-| closeDelay      | `number`  |                         | 是     |
-| showArrow       | `boolean` |                         | 是     |
-| class           | `string`  |                         | 是     |
-| style           | `string   | Record<string, string>` |        | 是       |
-| id              | `string`  |                         | 是     |
-| ariaLabel       | `string`  |                         | 是     |
-| ariaDescribedBy | `string`  |                         | 是     |
+| 名称            | 类型                                     | 描述 | 可选 |
+| --------------- | ---------------------------------------- | ---- | ---- |
+| content         | `string`                                 |      | 是   |
+| placement       | `'top' \| 'bottom' \| 'left' \| 'right'` |      | 是   |
+| trigger         | `string`                                 |      | 是   |
+| disabled        | `boolean`                                |      | 是   |
+| openDelay       | `number`                                 |      | 是   |
+| closeDelay      | `number`                                 |      | 是   |
+| showArrow       | `boolean`                                |      | 是   |
+| class           | `string`                                 |      | 是   |
+| style           | `string \| Record<string, string>`       |      | 是   |
+| id              | `string`                                 |      | 是   |
+| ariaLabel       | `string`                                 |      | 是   |
+| ariaDescribedBy | `string`                                 |      | 是   |
 
 ## TooltipSlots
 
@@ -2751,24 +2751,24 @@ AlertEffect: 'light' | 'dark';
 
 ### 成员
 
-| 名称            | 类型                             | 描述                    | 可选    |
-| --------------- | -------------------------------- | ----------------------- | ------- | --- | --- |
-| modelValue      | `boolean                         | string                  | number` |     | 是  |
-| label           | `string`                         |                         | 是      |
-| disabled        | `boolean`                        |                         | 是      |
-| indeterminate   | `boolean`                        |                         | 是      |
-| name            | `string`                         |                         | 是      |
-| id              | `string`                         |                         | 是      |
-| checked         | `boolean`                        |                         | 是      |
-| class           | `string`                         |                         | 是      |
-| style           | `string                          | Record<string, string>` |         | 是  |
-| ariaLabel       | `string`                         |                         | 是      |
-| ariaDescribedBy | `string`                         |                         | 是      |
-| ariaInvalid     | `boolean`                        |                         | 是      |
-| ariaRequired    | `boolean`                        |                         | 是      |
-| tabIndex        | `number`                         |                         | 是      |
-| onChange        | `(value: boolean) => void`       |                         | 是      |
-| onKeydown       | `(event: KeyboardEvent) => void` |                         | 是      |
+| 名称            | 类型                               | 描述 | 可选 |
+| --------------- | ---------------------------------- | ---- | ---- |
+| modelValue      | `boolean \| string \| number`      |      | 是   |
+| label           | `string`                           |      | 是   |
+| disabled        | `boolean`                          |      | 是   |
+| indeterminate   | `boolean`                          |      | 是   |
+| name            | `string`                           |      | 是   |
+| id              | `string`                           |      | 是   |
+| checked         | `boolean`                          |      | 是   |
+| class           | `string`                           |      | 是   |
+| style           | `string \| Record<string, string>` |      | 是   |
+| ariaLabel       | `string`                           |      | 是   |
+| ariaDescribedBy | `string`                           |      | 是   |
+| ariaInvalid     | `boolean`                          |      | 是   |
+| ariaRequired    | `boolean`                          |      | 是   |
+| tabIndex        | `number`                           |      | 是   |
+| onChange        | `(value: boolean) => void`         |      | 是   |
+| onKeydown       | `(event: KeyboardEvent) => void`   |      | 是   |
 
 ## CheckboxSlots
 
@@ -2786,26 +2786,26 @@ AlertEffect: 'light' | 'dark';
 
 ### 成员
 
-| 名称            | 类型                             | 描述                    | 可选    |
-| --------------- | -------------------------------- | ----------------------- | ------- | --- | --- |
-| modelValue      | `boolean                         | string                  | number` |     | 否  |
-| label           | `string`                         |                         | 否      |
-| trueLabel       | `string                          | number`                 |         | 是  |
-| falseLabel      | `string                          | number`                 |         | 是  |
-| disabled        | `boolean`                        |                         | 否      |
-| checked         | `boolean`                        |                         | 否      |
-| indeterminate   | `boolean`                        |                         | 否      |
-| name            | `string`                         |                         | 否      |
-| id              | `string`                         |                         | 否      |
-| class           | `string`                         |                         | 否      |
-| style           | `string                          | Record<string, string>` |         | 是  |
-| ariaLabel       | `string`                         |                         | 否      |
-| ariaDescribedBy | `string`                         |                         | 否      |
-| ariaInvalid     | `boolean`                        |                         | 否      |
-| ariaRequired    | `boolean`                        |                         | 否      |
-| tabIndex        | `number`                         |                         | 是      |
-| onChange        | `(value: boolean) => void`       |                         | 是      |
-| onKeydown       | `(event: KeyboardEvent) => void` |                         | 是      |
+| 名称            | 类型                               | 描述 | 可选 |
+| --------------- | ---------------------------------- | ---- | ---- |
+| modelValue      | `boolean \| string \| number`      |      | 否   |
+| label           | `string`                           |      | 否   |
+| trueLabel       | `string \| number`                 |      | 是   |
+| falseLabel      | `string \| number`                 |      | 是   |
+| disabled        | `boolean`                          |      | 否   |
+| checked         | `boolean`                          |      | 否   |
+| indeterminate   | `boolean`                          |      | 否   |
+| name            | `string`                           |      | 否   |
+| id              | `string`                           |      | 否   |
+| class           | `string`                           |      | 否   |
+| style           | `string \| Record<string, string>` |      | 是   |
+| ariaLabel       | `string`                           |      | 否   |
+| ariaDescribedBy | `string`                           |      | 否   |
+| ariaInvalid     | `boolean`                          |      | 否   |
+| ariaRequired    | `boolean`                          |      | 否   |
+| tabIndex        | `number`                           |      | 是   |
+| onChange        | `(value: boolean) => void`         |      | 是   |
+| onKeydown       | `(event: KeyboardEvent) => void`   |      | 是   |
 
 ## RadioProps
 
@@ -2813,22 +2813,22 @@ AlertEffect: 'light' | 'dark';
 
 ### 成员
 
-| 名称            | 类型                             | 描述                    | 可选              |
-| --------------- | -------------------------------- | ----------------------- | ----------------- | --- | --- |
-| modelValue      | `string                          | number                  | boolean`          |     | 是  |
-| label           | `string`                         |                         | 是                |
-| disabled        | `boolean`                        |                         | 是                |
-| name            | `string`                         |                         | 是                |
-| id              | `string`                         |                         | 是                |
-| class           | `string`                         |                         | 是                |
-| style           | `string                          | Record<string, string>` |                   | 是  |
-| ariaLabel       | `string`                         |                         | 是                |
-| ariaDescribedBy | `string`                         |                         | 是                |
-| ariaInvalid     | `boolean`                        |                         | 是                |
-| ariaRequired    | `boolean`                        |                         | 是                |
-| tabIndex        | `number`                         |                         | 是                |
-| onChange        | `(value: string                  | number                  | boolean) => void` |     | 是  |
-| onKeydown       | `(event: KeyboardEvent) => void` |                         | 是                |
+| 名称            | 类型                                           | 描述 | 可选 |
+| --------------- | ---------------------------------------------- | ---- | ---- |
+| modelValue      | `string \| number \| boolean`                  |      | 是   |
+| label           | `string`                                       |      | 是   |
+| disabled        | `boolean`                                      |      | 是   |
+| name            | `string`                                       |      | 是   |
+| id              | `string`                                       |      | 是   |
+| class           | `string`                                       |      | 是   |
+| style           | `string \| Record<string, string>`             |      | 是   |
+| ariaLabel       | `string`                                       |      | 是   |
+| ariaDescribedBy | `string`                                       |      | 是   |
+| ariaInvalid     | `boolean`                                      |      | 是   |
+| ariaRequired    | `boolean`                                      |      | 是   |
+| tabIndex        | `number`                                       |      | 是   |
+| onChange        | `(value: string \| number \| boolean) => void` |      | 是   |
+| onKeydown       | `(event: KeyboardEvent) => void`               |      | 是   |
 
 ## RadioSlots
 
@@ -2846,22 +2846,22 @@ AlertEffect: 'light' | 'dark';
 
 ### 成员
 
-| 名称            | 类型                             | 描述                    | 可选              |
-| --------------- | -------------------------------- | ----------------------- | ----------------- | --- | --- |
-| modelValue      | `string                          | number                  | boolean`          |     | 否  |
-| label           | `string                          | number                  | boolean`          |     | 是  |
-| disabled        | `boolean`                        |                         | 否                |
-| name            | `string`                         |                         | 否                |
-| id              | `string`                         |                         | 否                |
-| class           | `string`                         |                         | 否                |
-| style           | `string                          | Record<string, string>` |                   | 是  |
-| ariaLabel       | `string`                         |                         | 否                |
-| ariaDescribedBy | `string`                         |                         | 否                |
-| ariaInvalid     | `boolean`                        |                         | 否                |
-| ariaRequired    | `boolean`                        |                         | 否                |
-| tabIndex        | `number`                         |                         | 是                |
-| onChange        | `(value: string                  | number                  | boolean) => void` |     | 是  |
-| onKeydown       | `(event: KeyboardEvent) => void` |                         | 是                |
+| 名称            | 类型                                           | 描述 | 可选 |
+| --------------- | ---------------------------------------------- | ---- | ---- |
+| modelValue      | `string \| number \| boolean`                  |      | 否   |
+| label           | `string \| number \| boolean`                  |      | 是   |
+| disabled        | `boolean`                                      |      | 否   |
+| name            | `string`                                       |      | 否   |
+| id              | `string`                                       |      | 否   |
+| class           | `string`                                       |      | 否   |
+| style           | `string \| Record<string, string>`             |      | 是   |
+| ariaLabel       | `string`                                       |      | 否   |
+| ariaDescribedBy | `string`                                       |      | 否   |
+| ariaInvalid     | `boolean`                                      |      | 否   |
+| ariaRequired    | `boolean`                                      |      | 否   |
+| tabIndex        | `number`                                       |      | 是   |
+| onChange        | `(value: string \| number \| boolean) => void` |      | 是   |
+| onKeydown       | `(event: KeyboardEvent) => void`               |      | 是   |
 
 ## SwitchProps
 
@@ -2869,24 +2869,24 @@ AlertEffect: 'light' | 'dark';
 
 ### 成员
 
-| 名称            | 类型                             | 描述                    | 可选 |
-| --------------- | -------------------------------- | ----------------------- | ---- | --- |
-| modelValue      | `boolean`                        |                         | 是   |
-| disabled        | `boolean`                        |                         | 是   |
-| activeText      | `string`                         |                         | 是   |
-| inactiveText    | `string`                         |                         | 是   |
-| activeColor     | `string`                         |                         | 是   |
-| inactiveColor   | `string`                         |                         | 是   |
-| class           | `string`                         |                         | 是   |
-| style           | `string                          | Record<string, string>` |      | 是  |
-| id              | `string`                         |                         | 是   |
-| ariaLabel       | `string`                         |                         | 是   |
-| ariaDescribedBy | `string`                         |                         | 是   |
-| ariaInvalid     | `boolean`                        |                         | 是   |
-| ariaRequired    | `boolean`                        |                         | 是   |
-| tabIndex        | `number`                         |                         | 是   |
-| onChange        | `(value: boolean) => void`       |                         | 是   |
-| onKeydown       | `(event: KeyboardEvent) => void` |                         | 是   |
+| 名称            | 类型                               | 描述 | 可选 |
+| --------------- | ---------------------------------- | ---- | ---- |
+| modelValue      | `boolean`                          |      | 是   |
+| disabled        | `boolean`                          |      | 是   |
+| activeText      | `string`                           |      | 是   |
+| inactiveText    | `string`                           |      | 是   |
+| activeColor     | `string`                           |      | 是   |
+| inactiveColor   | `string`                           |      | 是   |
+| class           | `string`                           |      | 是   |
+| style           | `string \| Record<string, string>` |      | 是   |
+| id              | `string`                           |      | 是   |
+| ariaLabel       | `string`                           |      | 是   |
+| ariaDescribedBy | `string`                           |      | 是   |
+| ariaInvalid     | `boolean`                          |      | 是   |
+| ariaRequired    | `boolean`                          |      | 是   |
+| tabIndex        | `number`                           |      | 是   |
+| onChange        | `(value: boolean) => void`         |      | 是   |
+| onKeydown       | `(event: KeyboardEvent) => void`   |      | 是   |
 
 ## SwitchSlots
 
@@ -2906,29 +2906,29 @@ AlertEffect: 'light' | 'dark';
 
 ### 成员
 
-| 名称            | 类型                             | 描述                    | 可选    |
-| --------------- | -------------------------------- | ----------------------- | ------- | --- | --- |
-| modelValue      | `boolean`                        |                         | 否      |
-| disabled        | `boolean`                        |                         | 否      |
-| loading         | `boolean`                        |                         | 否      |
-| size            | `string`                         |                         | 否      |
-| activeText      | `string`                         |                         | 否      |
-| inactiveText    | `string`                         |                         | 否      |
-| activeColor     | `string`                         |                         | 否      |
-| inactiveColor   | `string`                         |                         | 否      |
-| activeValue     | `boolean                         | string                  | number` |     | 否  |
-| inactiveValue   | `boolean                         | string                  | number` |     | 否  |
-| name            | `string`                         |                         | 否      |
-| id              | `string`                         |                         | 否      |
-| class           | `string`                         |                         | 否      |
-| style           | `string                          | Record<string, string>` |         | 是  |
-| ariaLabel       | `string`                         |                         | 否      |
-| ariaDescribedBy | `string`                         |                         | 否      |
-| ariaInvalid     | `boolean`                        |                         | 否      |
-| ariaRequired    | `boolean`                        |                         | 否      |
-| tabIndex        | `number`                         |                         | 是      |
-| onChange        | `(value: boolean) => void`       |                         | 是      |
-| onKeydown       | `(event: KeyboardEvent) => void` |                         | 是      |
+| 名称            | 类型                               | 描述 | 可选 |
+| --------------- | ---------------------------------- | ---- | ---- |
+| modelValue      | `boolean`                          |      | 否   |
+| disabled        | `boolean`                          |      | 否   |
+| loading         | `boolean`                          |      | 否   |
+| size            | `string`                           |      | 否   |
+| activeText      | `string`                           |      | 否   |
+| inactiveText    | `string`                           |      | 否   |
+| activeColor     | `string`                           |      | 否   |
+| inactiveColor   | `string`                           |      | 否   |
+| activeValue     | `boolean \| string \| number`      |      | 否   |
+| inactiveValue   | `boolean \| string \| number`      |      | 否   |
+| name            | `string`                           |      | 否   |
+| id              | `string`                           |      | 否   |
+| class           | `string`                           |      | 否   |
+| style           | `string \| Record<string, string>` |      | 是   |
+| ariaLabel       | `string`                           |      | 否   |
+| ariaDescribedBy | `string`                           |      | 否   |
+| ariaInvalid     | `boolean`                          |      | 否   |
+| ariaRequired    | `boolean`                          |      | 否   |
+| tabIndex        | `number`                           |      | 是   |
+| onChange        | `(value: boolean) => void`         |      | 是   |
+| onKeydown       | `(event: KeyboardEvent) => void`   |      | 是   |
 
 ## InputNumberProps
 
@@ -2936,32 +2936,32 @@ AlertEffect: 'light' | 'dark';
 
 ### 成员
 
-| 名称             | 类型                             | 描述                    | 可选 |
-| ---------------- | -------------------------------- | ----------------------- | ---- | --- |
-| modelValue       | `number`                         |                         | 是   |
-| min              | `number`                         |                         | 是   |
-| max              | `number`                         |                         | 是   |
-| step             | `number`                         |                         | 是   |
-| stepStrictly     | `boolean`                        |                         | 是   |
-| disabled         | `boolean`                        |                         | 是   |
-| size             | `ComponentSize`                  |                         | 是   |
-| controls         | `boolean`                        |                         | 是   |
-| controlsPosition | `string`                         |                         | 是   |
-| precision        | `number`                         |                         | 是   |
-| name             | `string`                         |                         | 是   |
-| label            | `string`                         |                         | 是   |
-| placeholder      | `string`                         |                         | 是   |
-| class            | `string`                         |                         | 是   |
-| style            | `string                          | Record<string, string>` |      | 是  |
-| id               | `string`                         |                         | 是   |
-| ariaLabel        | `string`                         |                         | 是   |
-| ariaDescribedBy  | `string`                         |                         | 是   |
-| ariaRequired     | `boolean`                        |                         | 是   |
-| ariaInvalid      | `boolean`                        |                         | 是   |
-| tabIndex         | `number`                         |                         | 是   |
-| onChange         | `(value: number                  | undefined) => void`     |      | 是  |
-| onInput          | `(value: number                  | undefined) => void`     |      | 是  |
-| onKeydown        | `(event: KeyboardEvent) => void` |                         | 是   |
+| 名称             | 类型                                   | 描述 | 可选 |
+| ---------------- | -------------------------------------- | ---- | ---- |
+| modelValue       | `number`                               |      | 是   |
+| min              | `number`                               |      | 是   |
+| max              | `number`                               |      | 是   |
+| step             | `number`                               |      | 是   |
+| stepStrictly     | `boolean`                              |      | 是   |
+| disabled         | `boolean`                              |      | 是   |
+| size             | `ComponentSize`                        |      | 是   |
+| controls         | `boolean`                              |      | 是   |
+| controlsPosition | `string`                               |      | 是   |
+| precision        | `number`                               |      | 是   |
+| name             | `string`                               |      | 是   |
+| label            | `string`                               |      | 是   |
+| placeholder      | `string`                               |      | 是   |
+| class            | `string`                               |      | 是   |
+| style            | `string \| Record<string, string>`     |      | 是   |
+| id               | `string`                               |      | 是   |
+| ariaLabel        | `string`                               |      | 是   |
+| ariaDescribedBy  | `string`                               |      | 是   |
+| ariaRequired     | `boolean`                              |      | 是   |
+| ariaInvalid      | `boolean`                              |      | 是   |
+| tabIndex         | `number`                               |      | 是   |
+| onChange         | `(value: number \| undefined) => void` |      | 是   |
+| onInput          | `(value: number \| undefined) => void` |      | 是   |
+| onKeydown        | `(event: KeyboardEvent) => void`       |      | 是   |
 
 ## InputNumberSlots
 
@@ -2979,32 +2979,32 @@ AlertEffect: 'light' | 'dark';
 
 ### 成员
 
-| 名称             | 类型                             | 描述                    | 可选 |
-| ---------------- | -------------------------------- | ----------------------- | ---- | --- |
-| modelValue       | `number                          | undefined`              |      | 否  |
-| min              | `number`                         |                         | 否   |
-| max              | `number`                         |                         | 否   |
-| step             | `number`                         |                         | 否   |
-| stepStrictly     | `boolean`                        |                         | 否   |
-| precision        | `number                          | undefined`              |      | 否  |
-| size             | `string`                         |                         | 否   |
-| disabled         | `boolean`                        |                         | 否   |
-| controls         | `boolean`                        |                         | 否   |
-| controlsPosition | `string`                         |                         | 否   |
-| name             | `string`                         |                         | 否   |
-| label            | `string`                         |                         | 否   |
-| placeholder      | `string`                         |                         | 否   |
-| class            | `string`                         |                         | 否   |
-| style            | `string                          | Record<string, string>` |      | 是  |
-| id               | `string`                         |                         | 否   |
-| ariaLabel        | `string`                         |                         | 否   |
-| ariaDescribedBy  | `string`                         |                         | 否   |
-| ariaRequired     | `boolean`                        |                         | 否   |
-| ariaInvalid      | `boolean`                        |                         | 否   |
-| tabIndex         | `number`                         |                         | 是   |
-| onChange         | `(value: number                  | undefined) => void`     |      | 是  |
-| onInput          | `(value: number                  | undefined) => void`     |      | 是  |
-| onKeydown        | `(event: KeyboardEvent) => void` |                         | 是   |
+| 名称             | 类型                                   | 描述 | 可选 |
+| ---------------- | -------------------------------------- | ---- | ---- |
+| modelValue       | `number \| undefined`                  |      | 否   |
+| min              | `number`                               |      | 否   |
+| max              | `number`                               |      | 否   |
+| step             | `number`                               |      | 否   |
+| stepStrictly     | `boolean`                              |      | 否   |
+| precision        | `number \| undefined`                  |      | 否   |
+| size             | `string`                               |      | 否   |
+| disabled         | `boolean`                              |      | 否   |
+| controls         | `boolean`                              |      | 否   |
+| controlsPosition | `string`                               |      | 否   |
+| name             | `string`                               |      | 否   |
+| label            | `string`                               |      | 否   |
+| placeholder      | `string`                               |      | 否   |
+| class            | `string`                               |      | 否   |
+| style            | `string \| Record<string, string>`     |      | 是   |
+| id               | `string`                               |      | 否   |
+| ariaLabel        | `string`                               |      | 否   |
+| ariaDescribedBy  | `string`                               |      | 否   |
+| ariaRequired     | `boolean`                              |      | 否   |
+| ariaInvalid      | `boolean`                              |      | 否   |
+| tabIndex         | `number`                               |      | 是   |
+| onChange         | `(value: number \| undefined) => void` |      | 是   |
+| onInput          | `(value: number \| undefined) => void` |      | 是   |
+| onKeydown        | `(event: KeyboardEvent) => void`       |      | 是   |
 
 ## TransferOption
 
@@ -3012,11 +3012,11 @@ AlertEffect: 'light' | 'dark';
 
 ### 成员
 
-| 名称     | 类型      | 描述    | 可选 |
-| -------- | --------- | ------- | ---- | --- |
-| key      | `string   | number` |      | 否  |
-| label    | `string`  |         | 否   |
-| disabled | `boolean` |         | 是   |
+| 名称     | 类型               | 描述 | 可选 |
+| -------- | ------------------ | ---- | ---- |
+| key      | `string \| number` |      | 否   |
+| label    | `string`           |      | 否   |
+| disabled | `boolean`          |      | 是   |
 
 ## TransferProps
 
@@ -3024,24 +3024,24 @@ AlertEffect: 'light' | 'dark';
 
 ### 成员
 
-| 名称                | 类型               | 描述                         | 可选                        |
-| ------------------- | ------------------ | ---------------------------- | --------------------------- | --------------------- | --- | --- |
-| data                | `TransferOption[]` |                              | 是                          |
-| modelValue          | `(string           | number)[]`                   |                             | 是                    |
-| filterable          | `boolean`          |                              | 是                          |
-| filterPlaceholder   | `string`           |                              | 是                          |
-| titles              | `string[]`         |                              | 是                          |
-| buttonTexts         | `string[]`         |                              | 是                          |
-| leftDefaultChecked  | `(string           | number)[]`                   |                             | 是                    |
-| rightDefaultChecked | `(string           | number)[]`                   |                             | 是                    |
-| class               | `string`           |                              | 是                          |
-| style               | `string            | Record<string, string>`      |                             | 是                    |
-| id                  | `string`           |                              | 是                          |
-| ariaLabel           | `string`           |                              | 是                          |
-| ariaDescribedBy     | `string`           |                              | 是                          |
-| onChange            | `( value: (string  | number)[], direction: 'left' | 'right', movedKeys: (string | number)[], ) => void` |     | 是  |
-| onLeftCheckChange   | `(checked: (string | number)[]) => void`          |                             | 是                    |
-| onRightCheckChange  | `(checked: (string | number)[]) => void`          |                             | 是                    |
+| 名称                | 类型                                                                                                      | 描述 | 可选 |
+| ------------------- | --------------------------------------------------------------------------------------------------------- | ---- | ---- |
+| data                | `TransferOption[]`                                                                                        |      | 是   |
+| modelValue          | `(string \| number)[]`                                                                                    |      | 是   |
+| filterable          | `boolean`                                                                                                 |      | 是   |
+| filterPlaceholder   | `string`                                                                                                  |      | 是   |
+| titles              | `string[]`                                                                                                |      | 是   |
+| buttonTexts         | `string[]`                                                                                                |      | 是   |
+| leftDefaultChecked  | `(string \| number)[]`                                                                                    |      | 是   |
+| rightDefaultChecked | `(string \| number)[]`                                                                                    |      | 是   |
+| class               | `string`                                                                                                  |      | 是   |
+| style               | `string \| Record<string, string>`                                                                        |      | 是   |
+| id                  | `string`                                                                                                  |      | 是   |
+| ariaLabel           | `string`                                                                                                  |      | 是   |
+| ariaDescribedBy     | `string`                                                                                                  |      | 是   |
+| onChange            | `( value: (string \| number)[], direction: 'left' \| 'right', movedKeys: (string \| number)[], ) => void` |      | 是   |
+| onLeftCheckChange   | `(checked: (string \| number)[]) => void`                                                                 |      | 是   |
+| onRightCheckChange  | `(checked: (string \| number)[]) => void`                                                                 |      | 是   |
 
 ## TransferSetupProps
 
@@ -3049,24 +3049,24 @@ AlertEffect: 'light' | 'dark';
 
 ### 成员
 
-| 名称                | 类型               | 描述                         | 可选                        |
-| ------------------- | ------------------ | ---------------------------- | --------------------------- | --------------------- | --- | --- |
-| data                | `TransferOption[]` |                              | 否                          |
-| modelValue          | `(string           | number)[]`                   |                             | 否                    |
-| filterable          | `boolean`          |                              | 否                          |
-| filterPlaceholder   | `string`           |                              | 否                          |
-| titles              | `string[]`         |                              | 否                          |
-| buttonTexts         | `string[]`         |                              | 否                          |
-| leftDefaultChecked  | `(string           | number)[]`                   |                             | 否                    |
-| rightDefaultChecked | `(string           | number)[]`                   |                             | 否                    |
-| class               | `string`           |                              | 否                          |
-| id                  | `string`           |                              | 否                          |
-| ariaLabel           | `string`           |                              | 否                          |
-| ariaDescribedBy     | `string`           |                              | 否                          |
-| style               | `string            | Record<string, string>`      |                             | 是                    |
-| onChange            | `( value: (string  | number)[], direction: 'left' | 'right', movedKeys: (string | number)[], ) => void` |     | 是  |
-| onLeftCheckChange   | `(checked: (string | number)[]) => void`          |                             | 是                    |
-| onRightCheckChange  | `(checked: (string | number)[]) => void`          |                             | 是                    |
+| 名称                | 类型                                                                                                      | 描述 | 可选 |
+| ------------------- | --------------------------------------------------------------------------------------------------------- | ---- | ---- |
+| data                | `TransferOption[]`                                                                                        |      | 否   |
+| modelValue          | `(string \| number)[]`                                                                                    |      | 否   |
+| filterable          | `boolean`                                                                                                 |      | 否   |
+| filterPlaceholder   | `string`                                                                                                  |      | 否   |
+| titles              | `string[]`                                                                                                |      | 否   |
+| buttonTexts         | `string[]`                                                                                                |      | 否   |
+| leftDefaultChecked  | `(string \| number)[]`                                                                                    |      | 否   |
+| rightDefaultChecked | `(string \| number)[]`                                                                                    |      | 否   |
+| class               | `string`                                                                                                  |      | 否   |
+| id                  | `string`                                                                                                  |      | 否   |
+| ariaLabel           | `string`                                                                                                  |      | 否   |
+| ariaDescribedBy     | `string`                                                                                                  |      | 否   |
+| style               | `string \| Record<string, string>`                                                                        |      | 是   |
+| onChange            | `( value: (string \| number)[], direction: 'left' \| 'right', movedKeys: (string \| number)[], ) => void` |      | 是   |
+| onLeftCheckChange   | `(checked: (string \| number)[]) => void`                                                                 |      | 是   |
+| onRightCheckChange  | `(checked: (string \| number)[]) => void`                                                                 |      | 是   |
 
 ## TransferSlots
 
@@ -3085,17 +3085,17 @@ AlertEffect: 'light' | 'dark';
 
 ### 成员
 
-| 名称          | 类型         | 描述    | 可选 |
-| ------------- | ------------ | ------- | ---- | --- |
-| id            | `string      | number` |      | 否  |
-| label         | `string`     |         | 否   |
-| children      | `TreeNode[]` |         | 是   |
-| disabled      | `boolean`    |         | 是   |
-| isLeaf        | `boolean`    |         | 是   |
-| loading       | `boolean`    |         | 是   |
-| expanded      | `boolean`    |         | 是   |
-| checked       | `boolean`    |         | 是   |
-| indeterminate | `boolean`    |         | 是   |
+| 名称          | 类型               | 描述 | 可选 |
+| ------------- | ------------------ | ---- | ---- |
+| id            | `string \| number` |      | 否   |
+| label         | `string`           |      | 否   |
+| children      | `TreeNode[]`       |      | 是   |
+| disabled      | `boolean`          |      | 是   |
+| isLeaf        | `boolean`          |      | 是   |
+| loading       | `boolean`          |      | 是   |
+| expanded      | `boolean`          |      | 是   |
+| checked       | `boolean`          |      | 是   |
+| indeterminate | `boolean`          |      | 是   |
 
 ## TreeProps
 
@@ -3103,29 +3103,29 @@ AlertEffect: 'light' | 'dark';
 
 ### 成员
 
-| 名称                | 类型                                                    | 描述                    | 可选                                  |
-| ------------------- | ------------------------------------------------------- | ----------------------- | ------------------------------------- | --- | --- |
-| data                | `TreeNode[]`                                            |                         | 是                                    |
-| showLine            | `boolean`                                               |                         | 是                                    |
-| showCheckbox        | `boolean`                                               |                         | 是                                    |
-| checkable           | `boolean`                                               |                         | 是                                    |
-| draggable           | `boolean`                                               |                         | 是                                    |
-| defaultExpandAll    | `boolean`                                               |                         | 是                                    |
-| defaultExpandedKeys | `(string                                                | number)[]`              |                                       | 是  |
-| defaultCheckedKeys  | `(string                                                | number)[]`              |                                       | 是  |
-| nodeKey             | `string`                                                |                         | 是                                    |
-| class               | `string`                                                |                         | 是                                    |
-| style               | `string                                                 | Record<string, string>` |                                       | 是  |
-| id                  | `string`                                                |                         | 是                                    |
-| ariaLabel           | `string`                                                |                         | 是                                    |
-| ariaDescribedBy     | `string`                                                |                         | 是                                    |
-| onCheck             | `(data: TreeNode[], checked: boolean) => void`          |                         | 是                                    |
-| onSelect            | `(data: TreeNode) => void`                              |                         | 是                                    |
-| onExpand            | `(data: TreeNode, expanded: boolean) => void`           |                         | 是                                    |
-| onNodeClick         | `(data: TreeNode) => void`                              |                         | 是                                    |
-| onDragStart         | `(data: TreeNode, event: DragEvent) => void`            |                         | 是                                    |
-| onDragEnd           | `(data: TreeNode, event: DragEvent) => void`            |                         | 是                                    |
-| onDrop              | `( data: TreeNode, target: TreeNode, position: 'before' | 'after'                 | 'inner', event: DragEvent, ) => void` |     | 是  |
+| 名称                | 类型                                                                                                        | 描述 | 可选 |
+| ------------------- | ----------------------------------------------------------------------------------------------------------- | ---- | ---- |
+| data                | `TreeNode[]`                                                                                                |      | 是   |
+| showLine            | `boolean`                                                                                                   |      | 是   |
+| showCheckbox        | `boolean`                                                                                                   |      | 是   |
+| checkable           | `boolean`                                                                                                   |      | 是   |
+| draggable           | `boolean`                                                                                                   |      | 是   |
+| defaultExpandAll    | `boolean`                                                                                                   |      | 是   |
+| defaultExpandedKeys | `(string \| number)[]`                                                                                      |      | 是   |
+| defaultCheckedKeys  | `(string \| number)[]`                                                                                      |      | 是   |
+| nodeKey             | `string`                                                                                                    |      | 是   |
+| class               | `string`                                                                                                    |      | 是   |
+| style               | `string \| Record<string, string>`                                                                          |      | 是   |
+| id                  | `string`                                                                                                    |      | 是   |
+| ariaLabel           | `string`                                                                                                    |      | 是   |
+| ariaDescribedBy     | `string`                                                                                                    |      | 是   |
+| onCheck             | `(data: TreeNode[], checked: boolean) => void`                                                              |      | 是   |
+| onSelect            | `(data: TreeNode) => void`                                                                                  |      | 是   |
+| onExpand            | `(data: TreeNode, expanded: boolean) => void`                                                               |      | 是   |
+| onNodeClick         | `(data: TreeNode) => void`                                                                                  |      | 是   |
+| onDragStart         | `(data: TreeNode, event: DragEvent) => void`                                                                |      | 是   |
+| onDragEnd           | `(data: TreeNode, event: DragEvent) => void`                                                                |      | 是   |
+| onDrop              | `( data: TreeNode, target: TreeNode, position: 'before' \| 'after' \| 'inner', event: DragEvent, ) => void` |      | 是   |
 
 ## TreeSetupProps
 
@@ -3133,29 +3133,29 @@ AlertEffect: 'light' | 'dark';
 
 ### 成员
 
-| 名称                | 类型                                                    | 描述                    | 可选                                  |
-| ------------------- | ------------------------------------------------------- | ----------------------- | ------------------------------------- | --- | --- |
-| data                | `TreeNode[]`                                            |                         | 否                                    |
-| showLine            | `boolean`                                               |                         | 否                                    |
-| showCheckbox        | `boolean`                                               |                         | 否                                    |
-| checkable           | `boolean`                                               |                         | 否                                    |
-| draggable           | `boolean`                                               |                         | 否                                    |
-| defaultExpandAll    | `boolean`                                               |                         | 否                                    |
-| defaultExpandedKeys | `(string                                                | number)[]`              |                                       | 否  |
-| defaultCheckedKeys  | `(string                                                | number)[]`              |                                       | 否  |
-| nodeKey             | `string`                                                |                         | 否                                    |
-| class               | `string`                                                |                         | 否                                    |
-| style               | `string                                                 | Record<string, string>` |                                       | 是  |
-| id                  | `string`                                                |                         | 否                                    |
-| ariaLabel           | `string`                                                |                         | 否                                    |
-| ariaDescribedBy     | `string`                                                |                         | 否                                    |
-| onCheck             | `(data: TreeNode[], checked: boolean) => void`          |                         | 是                                    |
-| onSelect            | `(data: TreeNode) => void`                              |                         | 是                                    |
-| onExpand            | `(data: TreeNode, expanded: boolean) => void`           |                         | 是                                    |
-| onNodeClick         | `(data: TreeNode) => void`                              |                         | 是                                    |
-| onDragStart         | `(data: TreeNode, event: DragEvent) => void`            |                         | 是                                    |
-| onDragEnd           | `(data: TreeNode, event: DragEvent) => void`            |                         | 是                                    |
-| onDrop              | `( data: TreeNode, target: TreeNode, position: 'before' | 'after'                 | 'inner', event: DragEvent, ) => void` |     | 是  |
+| 名称                | 类型                                                                                                        | 描述 | 可选 |
+| ------------------- | ----------------------------------------------------------------------------------------------------------- | ---- | ---- |
+| data                | `TreeNode[]`                                                                                                |      | 否   |
+| showLine            | `boolean`                                                                                                   |      | 否   |
+| showCheckbox        | `boolean`                                                                                                   |      | 否   |
+| checkable           | `boolean`                                                                                                   |      | 否   |
+| draggable           | `boolean`                                                                                                   |      | 否   |
+| defaultExpandAll    | `boolean`                                                                                                   |      | 否   |
+| defaultExpandedKeys | `(string \| number)[]`                                                                                      |      | 否   |
+| defaultCheckedKeys  | `(string \| number)[]`                                                                                      |      | 否   |
+| nodeKey             | `string`                                                                                                    |      | 否   |
+| class               | `string`                                                                                                    |      | 否   |
+| style               | `string \| Record<string, string>`                                                                          |      | 是   |
+| id                  | `string`                                                                                                    |      | 否   |
+| ariaLabel           | `string`                                                                                                    |      | 否   |
+| ariaDescribedBy     | `string`                                                                                                    |      | 否   |
+| onCheck             | `(data: TreeNode[], checked: boolean) => void`                                                              |      | 是   |
+| onSelect            | `(data: TreeNode) => void`                                                                                  |      | 是   |
+| onExpand            | `(data: TreeNode, expanded: boolean) => void`                                                               |      | 是   |
+| onNodeClick         | `(data: TreeNode) => void`                                                                                  |      | 是   |
+| onDragStart         | `(data: TreeNode, event: DragEvent) => void`                                                                |      | 是   |
+| onDragEnd           | `(data: TreeNode, event: DragEvent) => void`                                                                |      | 是   |
+| onDrop              | `( data: TreeNode, target: TreeNode, position: 'before' \| 'after' \| 'inner', event: DragEvent, ) => void` |      | 是   |
 
 ## TreeSlots
 
@@ -3174,13 +3174,13 @@ AlertEffect: 'light' | 'dark';
 
 ### 成员
 
-| 名称     | 类型               | 描述    | 可选 |
-| -------- | ------------------ | ------- | ---- | --- |
-| value    | `string            | number` |      | 否  |
-| label    | `string`           |         | 否   |
-| children | `TreeSelectNode[]` |         | 是   |
-| disabled | `boolean`          |         | 是   |
-| isLeaf   | `boolean`          |         | 是   |
+| 名称     | 类型               | 描述 | 可选 |
+| -------- | ------------------ | ---- | ---- |
+| value    | `string \| number` |      | 否   |
+| label    | `string`           |      | 否   |
+| children | `TreeSelectNode[]` |      | 是   |
+| disabled | `boolean`          |      | 是   |
+| isLeaf   | `boolean`          |      | 是   |
 
 ## TreeSelectProps
 
@@ -3188,23 +3188,23 @@ AlertEffect: 'light' | 'dark';
 
 ### 成员
 
-| 名称            | 类型               | 描述   | 可选    |
-| --------------- | ------------------ | ------ | ------- | ------------------- | --- | --- |
-| modelValue      | `string            | number | (string | number)[]`          |     | 是  |
-| options         | `TreeSelectNode[]` |        | 是      |
-| placeholder     | `string`           |        | 是      |
-| disabled        | `boolean`          |        | 是      |
-| clearable       | `boolean`          |        | 是      |
-| multiple        | `boolean`          |        | 是      |
-| checkStrictly   | `boolean`          |        | 是      |
-| filterable      | `boolean`          |        | 是      |
-| showCheckbox    | `boolean`          |        | 是      |
-| class           | `string`           |        | 是      |
-| id              | `string`           |        | 是      |
-| ariaLabel       | `string`           |        | 是      |
-| ariaDescribedBy | `string`           |        | 是      |
-| onChange        | `(value: string    | number | (string | number)[]) => void` |     | 是  |
-| onClear         | `() => void`       |        | 是      |
+| 名称            | 类型                                                        | 描述 | 可选 |
+| --------------- | ----------------------------------------------------------- | ---- | ---- |
+| modelValue      | `string \| number \| (string \| number)[]`                  |      | 是   |
+| options         | `TreeSelectNode[]`                                          |      | 是   |
+| placeholder     | `string`                                                    |      | 是   |
+| disabled        | `boolean`                                                   |      | 是   |
+| clearable       | `boolean`                                                   |      | 是   |
+| multiple        | `boolean`                                                   |      | 是   |
+| checkStrictly   | `boolean`                                                   |      | 是   |
+| filterable      | `boolean`                                                   |      | 是   |
+| showCheckbox    | `boolean`                                                   |      | 是   |
+| class           | `string`                                                    |      | 是   |
+| id              | `string`                                                    |      | 是   |
+| ariaLabel       | `string`                                                    |      | 是   |
+| ariaDescribedBy | `string`                                                    |      | 是   |
+| onChange        | `(value: string \| number \| (string \| number)[]) => void` |      | 是   |
+| onClear         | `() => void`                                                |      | 是   |
 
 ## TreeSelectSetupProps
 
@@ -3212,23 +3212,23 @@ AlertEffect: 'light' | 'dark';
 
 ### 成员
 
-| 名称            | 类型               | 描述   | 可选    |
-| --------------- | ------------------ | ------ | ------- | ------------------- | --- | --- |
-| modelValue      | `string            | number | (string | number)[]`          |     | 否  |
-| options         | `TreeSelectNode[]` |        | 否      |
-| placeholder     | `string`           |        | 否      |
-| disabled        | `boolean`          |        | 否      |
-| clearable       | `boolean`          |        | 否      |
-| multiple        | `boolean`          |        | 否      |
-| checkStrictly   | `boolean`          |        | 否      |
-| filterable      | `boolean`          |        | 否      |
-| showCheckbox    | `boolean`          |        | 否      |
-| class           | `string`           |        | 否      |
-| id              | `string`           |        | 否      |
-| ariaLabel       | `string`           |        | 否      |
-| ariaDescribedBy | `string`           |        | 否      |
-| onChange        | `(value: string    | number | (string | number)[]) => void` |     | 是  |
-| onClear         | `() => void`       |        | 是      |
+| 名称            | 类型                                                        | 描述 | 可选 |
+| --------------- | ----------------------------------------------------------- | ---- | ---- |
+| modelValue      | `string \| number \| (string \| number)[]`                  |      | 否   |
+| options         | `TreeSelectNode[]`                                          |      | 否   |
+| placeholder     | `string`                                                    |      | 否   |
+| disabled        | `boolean`                                                   |      | 否   |
+| clearable       | `boolean`                                                   |      | 否   |
+| multiple        | `boolean`                                                   |      | 否   |
+| checkStrictly   | `boolean`                                                   |      | 否   |
+| filterable      | `boolean`                                                   |      | 否   |
+| showCheckbox    | `boolean`                                                   |      | 否   |
+| class           | `string`                                                    |      | 否   |
+| id              | `string`                                                    |      | 否   |
+| ariaLabel       | `string`                                                    |      | 否   |
+| ariaDescribedBy | `string`                                                    |      | 否   |
+| onChange        | `(value: string \| number \| (string \| number)[]) => void` |      | 是   |
+| onClear         | `() => void`                                                |      | 是   |
 
 ## TreeSelectSlots
 
@@ -3272,27 +3272,27 @@ UploadFileStatus: 'pending' | 'uploading' | 'success' | 'error';
 
 ### 成员
 
-| 名称            | 类型                                             | 描述                    | 可选 |
-| --------------- | ------------------------------------------------ | ----------------------- | ---- | --- |
-| action          | `string`                                         |                         | 是   |
-| headers         | `Record<string, string>`                         |                         | 是   |
-| data            | `Record<string, unknown>`                        |                         | 是   |
-| multiple        | `boolean`                                        |                         | 是   |
-| accept          | `string`                                         |                         | 是   |
-| autoUpload      | `boolean`                                        |                         | 是   |
-| disabled        | `boolean`                                        |                         | 是   |
-| limit           | `number`                                         |                         | 是   |
-| class           | `string`                                         |                         | 是   |
-| style           | `string                                          | Record<string, string>` |      | 是  |
-| id              | `string`                                         |                         | 是   |
-| ariaLabel       | `string`                                         |                         | 是   |
-| ariaDescribedBy | `string`                                         |                         | 是   |
-| onChange        | `(files: UploadFile[]) => void`                  |                         | 是   |
-| onSuccess       | `(response: unknown, file: UploadFile) => void`  |                         | 是   |
-| onError         | `(error: Error, file: UploadFile) => void`       |                         | 是   |
-| onProgress      | `(percentage: number, file: UploadFile) => void` |                         | 是   |
-| onRemove        | `(file: UploadFile) => void`                     |                         | 是   |
-| beforeUpload    | `(file: File) => boolean                         | Promise<boolean>`       |      | 是  |
+| 名称            | 类型                                             | 描述 | 可选 |
+| --------------- | ------------------------------------------------ | ---- | ---- |
+| action          | `string`                                         |      | 是   |
+| headers         | `Record<string, string>`                         |      | 是   |
+| data            | `Record<string, unknown>`                        |      | 是   |
+| multiple        | `boolean`                                        |      | 是   |
+| accept          | `string`                                         |      | 是   |
+| autoUpload      | `boolean`                                        |      | 是   |
+| disabled        | `boolean`                                        |      | 是   |
+| limit           | `number`                                         |      | 是   |
+| class           | `string`                                         |      | 是   |
+| style           | `string \| Record<string, string>`               |      | 是   |
+| id              | `string`                                         |      | 是   |
+| ariaLabel       | `string`                                         |      | 是   |
+| ariaDescribedBy | `string`                                         |      | 是   |
+| onChange        | `(files: UploadFile[]) => void`                  |      | 是   |
+| onSuccess       | `(response: unknown, file: UploadFile) => void`  |      | 是   |
+| onError         | `(error: Error, file: UploadFile) => void`       |      | 是   |
+| onProgress      | `(percentage: number, file: UploadFile) => void` |      | 是   |
+| onRemove        | `(file: UploadFile) => void`                     |      | 是   |
+| beforeUpload    | `(file: File) => boolean \| Promise<boolean>`    |      | 是   |
 
 ## UploadSetupProps
 
@@ -3300,27 +3300,27 @@ UploadFileStatus: 'pending' | 'uploading' | 'success' | 'error';
 
 ### 成员
 
-| 名称            | 类型                                             | 描述                    | 可选            |
-| --------------- | ------------------------------------------------ | ----------------------- | --------------- | ------ | --- | --- |
-| action          | `string`                                         |                         | 否              |
-| headers         | `Record<string, string>`                         |                         | 否              |
-| data            | `Record<string, unknown>`                        |                         | 否              |
-| multiple        | `boolean`                                        |                         | 否              |
-| accept          | `string`                                         |                         | 否              |
-| autoUpload      | `boolean`                                        |                         | 否              |
-| disabled        | `boolean`                                        |                         | 否              |
-| limit           | `number`                                         |                         | 否              |
-| class           | `string`                                         |                         | 否              |
-| id              | `string`                                         |                         | 否              |
-| ariaLabel       | `string`                                         |                         | 否              |
-| ariaDescribedBy | `string`                                         |                         | 否              |
-| style           | `string                                          | Record<string, string>` |                 | 是     |
-| onChange        | `(files: UploadFile[]) => void`                  |                         | 是              |
-| onSuccess       | `(response: unknown, file: UploadFile) => void`  |                         | 是              |
-| onError         | `(error: Error, file: UploadFile) => void`       |                         | 是              |
-| onProgress      | `(percentage: number, file: UploadFile) => void` |                         | 是              |
-| onRemove        | `(file: UploadFile) => void`                     |                         | 是              |
-| beforeUpload    | `(file: File) => boolean                         | void                    | Promise<boolean | void>` |     | 是  |
+| 名称            | 类型                                                          | 描述 | 可选 |
+| --------------- | ------------------------------------------------------------- | ---- | ---- |
+| action          | `string`                                                      |      | 否   |
+| headers         | `Record<string, string>`                                      |      | 否   |
+| data            | `Record<string, unknown>`                                     |      | 否   |
+| multiple        | `boolean`                                                     |      | 否   |
+| accept          | `string`                                                      |      | 否   |
+| autoUpload      | `boolean`                                                     |      | 否   |
+| disabled        | `boolean`                                                     |      | 否   |
+| limit           | `number`                                                      |      | 否   |
+| class           | `string`                                                      |      | 否   |
+| id              | `string`                                                      |      | 否   |
+| ariaLabel       | `string`                                                      |      | 否   |
+| ariaDescribedBy | `string`                                                      |      | 否   |
+| style           | `string \| Record<string, string>`                            |      | 是   |
+| onChange        | `(files: UploadFile[]) => void`                               |      | 是   |
+| onSuccess       | `(response: unknown, file: UploadFile) => void`               |      | 是   |
+| onError         | `(error: Error, file: UploadFile) => void`                    |      | 是   |
+| onProgress      | `(percentage: number, file: UploadFile) => void`              |      | 是   |
+| onRemove        | `(file: UploadFile) => void`                                  |      | 是   |
+| beforeUpload    | `(file: File) => boolean \| void \| Promise<boolean \| void>` |      | 是   |
 
 ## UploadSlots
 
@@ -3351,26 +3351,26 @@ ImageFit: 'fill' | 'contain' | 'cover' | 'none' | 'scale-down';
 
 ### 成员
 
-| 名称            | 类型         | 描述                    | 可选 |
-| --------------- | ------------ | ----------------------- | ---- | --- |
-| src             | `string`     |                         | 是   |
-| alt             | `string`     |                         | 是   |
-| fit             | `ImageFit`   |                         | 是   |
-| width           | `string      | number`                 |      | 是  |
-| height          | `string      | number`                 |      | 是  |
-| lazy            | `boolean`    |                         | 是   |
-| preview         | `boolean`    |                         | 是   |
-| errorSrc        | `string`     |                         | 是   |
-| placeholderSrc  | `string`     |                         | 是   |
-| round           | `boolean`    |                         | 是   |
-| radius          | `string      | number`                 |      | 是  |
-| class           | `string`     |                         | 是   |
-| style           | `string      | Record<string, string>` |      | 是  |
-| id              | `string`     |                         | 是   |
-| ariaLabel       | `string`     |                         | 是   |
-| ariaDescribedBy | `string`     |                         | 是   |
-| onLoad          | `() => void` |                         | 是   |
-| onError         | `() => void` |                         | 是   |
+| 名称            | 类型                               | 描述 | 可选 |
+| --------------- | ---------------------------------- | ---- | ---- |
+| src             | `string`                           |      | 是   |
+| alt             | `string`                           |      | 是   |
+| fit             | `ImageFit`                         |      | 是   |
+| width           | `string \| number`                 |      | 是   |
+| height          | `string \| number`                 |      | 是   |
+| lazy            | `boolean`                          |      | 是   |
+| preview         | `boolean`                          |      | 是   |
+| errorSrc        | `string`                           |      | 是   |
+| placeholderSrc  | `string`                           |      | 是   |
+| round           | `boolean`                          |      | 是   |
+| radius          | `string \| number`                 |      | 是   |
+| class           | `string`                           |      | 是   |
+| style           | `string \| Record<string, string>` |      | 是   |
+| id              | `string`                           |      | 是   |
+| ariaLabel       | `string`                           |      | 是   |
+| ariaDescribedBy | `string`                           |      | 是   |
+| onLoad          | `() => void`                       |      | 是   |
+| onError         | `() => void`                       |      | 是   |
 
 ## ImageSlots
 
@@ -3388,26 +3388,26 @@ ImageFit: 'fill' | 'contain' | 'cover' | 'none' | 'scale-down';
 
 ### 成员
 
-| 名称            | 类型         | 描述                    | 可选 |
-| --------------- | ------------ | ----------------------- | ---- | --- |
-| src             | `string`     |                         | 否   |
-| alt             | `string`     |                         | 否   |
-| fit             | `string`     |                         | 否   |
-| width           | `string      | number`                 |      | 否  |
-| height          | `string      | number`                 |      | 否  |
-| lazy            | `boolean`    |                         | 否   |
-| preview         | `boolean`    |                         | 否   |
-| errorSrc        | `string`     |                         | 否   |
-| placeholderSrc  | `string`     |                         | 否   |
-| round           | `boolean`    |                         | 否   |
-| radius          | `string      | number`                 |      | 否  |
-| class           | `string`     |                         | 否   |
-| id              | `string`     |                         | 否   |
-| ariaLabel       | `string`     |                         | 否   |
-| ariaDescribedBy | `string`     |                         | 否   |
-| style           | `string      | Record<string, string>` |      | 是  |
-| onLoad          | `() => void` |                         | 是   |
-| onError         | `() => void` |                         | 是   |
+| 名称            | 类型                               | 描述 | 可选 |
+| --------------- | ---------------------------------- | ---- | ---- |
+| src             | `string`                           |      | 否   |
+| alt             | `string`                           |      | 否   |
+| fit             | `string`                           |      | 否   |
+| width           | `string \| number`                 |      | 否   |
+| height          | `string \| number`                 |      | 否   |
+| lazy            | `boolean`                          |      | 否   |
+| preview         | `boolean`                          |      | 否   |
+| errorSrc        | `string`                           |      | 否   |
+| placeholderSrc  | `string`                           |      | 否   |
+| round           | `boolean`                          |      | 否   |
+| radius          | `string \| number`                 |      | 否   |
+| class           | `string`                           |      | 否   |
+| id              | `string`                           |      | 否   |
+| ariaLabel       | `string`                           |      | 否   |
+| ariaDescribedBy | `string`                           |      | 否   |
+| style           | `string \| Record<string, string>` |      | 是   |
+| onLoad          | `() => void`                       |      | 是   |
+| onError         | `() => void`                       |      | 是   |
 
 ## NotificationType
 
@@ -3517,23 +3517,23 @@ CalendarView: 'month' | 'week' | 'day';
 
 ### 成员
 
-| 名称            | 类型                             | 描述                    | 可选 |
-| --------------- | -------------------------------- | ----------------------- | ---- | --- |
-| modelValue      | `string                          | Date`                   |      | 是  |
-| view            | `CalendarView`                   |                         | 是   |
-| events          | `CalendarEvent[]`                |                         | 是   |
-| disabledDates   | `(date: Date) => boolean`        |                         | 是   |
-| firstDayOfWeek  | `number`                         |                         | 是   |
-| weekNames       | `string[]`                       |                         | 是   |
-| monthNames      | `string[]`                       |                         | 是   |
-| class           | `string`                         |                         | 是   |
-| style           | `string                          | Record<string, string>` |      | 是  |
-| id              | `string`                         |                         | 是   |
-| ariaLabel       | `string`                         |                         | 是   |
-| ariaDescribedBy | `string`                         |                         | 是   |
-| onChange        | `(date: Date) => void`           |                         | 是   |
-| onEventClick    | `(event: CalendarEvent) => void` |                         | 是   |
-| onDateClick     | `(date: Date) => void`           |                         | 是   |
+| 名称            | 类型                               | 描述 | 可选 |
+| --------------- | ---------------------------------- | ---- | ---- |
+| modelValue      | `string \| Date`                   |      | 是   |
+| view            | `CalendarView`                     |      | 是   |
+| events          | `CalendarEvent[]`                  |      | 是   |
+| disabledDates   | `(date: Date) => boolean`          |      | 是   |
+| firstDayOfWeek  | `number`                           |      | 是   |
+| weekNames       | `string[]`                         |      | 是   |
+| monthNames      | `string[]`                         |      | 是   |
+| class           | `string`                           |      | 是   |
+| style           | `string \| Record<string, string>` |      | 是   |
+| id              | `string`                           |      | 是   |
+| ariaLabel       | `string`                           |      | 是   |
+| ariaDescribedBy | `string`                           |      | 是   |
+| onChange        | `(date: Date) => void`             |      | 是   |
+| onEventClick    | `(event: CalendarEvent) => void`   |      | 是   |
+| onDateClick     | `(date: Date) => void`             |      | 是   |
 
 ## CalendarSlots
 
@@ -3551,23 +3551,23 @@ CalendarView: 'month' | 'week' | 'day';
 
 ### 成员
 
-| 名称            | 类型                             | 描述                    | 可选 |
-| --------------- | -------------------------------- | ----------------------- | ---- | --- |
-| modelValue      | `Date                            | string`                 |      | 否  |
-| view            | `string`                         |                         | 否   |
-| events          | `CalendarEvent[]`                |                         | 否   |
-| disabledDates   | `(date: Date) => boolean`        |                         | 是   |
-| firstDayOfWeek  | `number`                         |                         | 否   |
-| weekNames       | `string[]`                       |                         | 否   |
-| monthNames      | `string[]`                       |                         | 否   |
-| class           | `string`                         |                         | 否   |
-| id              | `string`                         |                         | 否   |
-| ariaLabel       | `string`                         |                         | 否   |
-| ariaDescribedBy | `string`                         |                         | 否   |
-| style           | `string                          | Record<string, string>` |      | 是  |
-| onChange        | `(date: Date) => void`           |                         | 是   |
-| onEventClick    | `(event: CalendarEvent) => void` |                         | 是   |
-| onDateClick     | `(date: Date) => void`           |                         | 是   |
+| 名称            | 类型                               | 描述 | 可选 |
+| --------------- | ---------------------------------- | ---- | ---- |
+| modelValue      | `Date \| string`                   |      | 否   |
+| view            | `string`                           |      | 否   |
+| events          | `CalendarEvent[]`                  |      | 否   |
+| disabledDates   | `(date: Date) => boolean`          |      | 是   |
+| firstDayOfWeek  | `number`                           |      | 否   |
+| weekNames       | `string[]`                         |      | 否   |
+| monthNames      | `string[]`                         |      | 否   |
+| class           | `string`                           |      | 否   |
+| id              | `string`                           |      | 否   |
+| ariaLabel       | `string`                           |      | 否   |
+| ariaDescribedBy | `string`                           |      | 否   |
+| style           | `string \| Record<string, string>` |      | 是   |
+| onChange        | `(date: Date) => void`             |      | 是   |
+| onEventClick    | `(event: CalendarEvent) => void`   |      | 是   |
+| onDateClick     | `(date: Date) => void`             |      | 是   |
 
 ## ColorPickerProps
 
@@ -3575,22 +3575,22 @@ CalendarView: 'month' | 'week' | 'day';
 
 ### 成员
 
-| 名称            | 类型                      | 描述                    | 可选 |
-| --------------- | ------------------------- | ----------------------- | ---- | --- |
-| modelValue      | `string`                  |                         | 是   |
-| showAlpha       | `boolean`                 |                         | 是   |
-| showClear       | `boolean`                 |                         | 是   |
-| showPreset      | `boolean`                 |                         | 是   |
-| showHistory     | `boolean`                 |                         | 是   |
-| presets         | `string[]`                |                         | 是   |
-| history         | `string[]`                |                         | 是   |
-| class           | `string`                  |                         | 是   |
-| style           | `string                   | Record<string, string>` |      | 是  |
-| id              | `string`                  |                         | 是   |
-| ariaLabel       | `string`                  |                         | 是   |
-| ariaDescribedBy | `string`                  |                         | 是   |
-| onChange        | `(color: string) => void` |                         | 是   |
-| onClear         | `() => void`              |                         | 是   |
+| 名称            | 类型                               | 描述 | 可选 |
+| --------------- | ---------------------------------- | ---- | ---- |
+| modelValue      | `string`                           |      | 是   |
+| showAlpha       | `boolean`                          |      | 是   |
+| showClear       | `boolean`                          |      | 是   |
+| showPreset      | `boolean`                          |      | 是   |
+| showHistory     | `boolean`                          |      | 是   |
+| presets         | `string[]`                         |      | 是   |
+| history         | `string[]`                         |      | 是   |
+| class           | `string`                           |      | 是   |
+| style           | `string \| Record<string, string>` |      | 是   |
+| id              | `string`                           |      | 是   |
+| ariaLabel       | `string`                           |      | 是   |
+| ariaDescribedBy | `string`                           |      | 是   |
+| onChange        | `(color: string) => void`          |      | 是   |
+| onClear         | `() => void`                       |      | 是   |
 
 ## ColorPickerSlots
 
@@ -3608,22 +3608,22 @@ CalendarView: 'month' | 'week' | 'day';
 
 ### 成员
 
-| 名称            | 类型                      | 描述                    | 可选 |
-| --------------- | ------------------------- | ----------------------- | ---- | --- |
-| modelValue      | `string`                  |                         | 否   |
-| showAlpha       | `boolean`                 |                         | 否   |
-| showClear       | `boolean`                 |                         | 否   |
-| showPreset      | `boolean`                 |                         | 否   |
-| showHistory     | `boolean`                 |                         | 否   |
-| presets         | `string[]`                |                         | 否   |
-| history         | `string[]`                |                         | 否   |
-| class           | `string`                  |                         | 否   |
-| id              | `string`                  |                         | 否   |
-| ariaLabel       | `string`                  |                         | 否   |
-| ariaDescribedBy | `string`                  |                         | 否   |
-| style           | `string                   | Record<string, string>` |      | 是  |
-| onChange        | `(color: string) => void` |                         | 是   |
-| onClear         | `() => void`              |                         | 是   |
+| 名称            | 类型                               | 描述 | 可选 |
+| --------------- | ---------------------------------- | ---- | ---- |
+| modelValue      | `string`                           |      | 否   |
+| showAlpha       | `boolean`                          |      | 否   |
+| showClear       | `boolean`                          |      | 否   |
+| showPreset      | `boolean`                          |      | 否   |
+| showHistory     | `boolean`                          |      | 否   |
+| presets         | `string[]`                         |      | 否   |
+| history         | `string[]`                         |      | 否   |
+| class           | `string`                           |      | 否   |
+| id              | `string`                           |      | 否   |
+| ariaLabel       | `string`                           |      | 否   |
+| ariaDescribedBy | `string`                           |      | 否   |
+| style           | `string \| Record<string, string>` |      | 是   |
+| onChange        | `(color: string) => void`          |      | 是   |
+| onClear         | `() => void`                       |      | 是   |
 
 ## DescriptionsItemData
 
@@ -3645,18 +3645,18 @@ CalendarView: 'month' | 'week' | 'day';
 
 ### 成员
 
-| 名称            | 类型            | 描述                    | 可选 |
-| --------------- | --------------- | ----------------------- | ---- | --- |
-| title           | `string`        |                         | 是   |
-| column          | `number`        |                         | 是   |
-| border          | `boolean`       |                         | 是   |
-| size            | `ComponentSize` |                         | 是   |
-| layout          | `'horizontal'   | 'vertical'`             |      | 是  |
-| class           | `string`        |                         | 是   |
-| style           | `string         | Record<string, string>` |      | 是  |
-| id              | `string`        |                         | 是   |
-| ariaLabel       | `string`        |                         | 是   |
-| ariaDescribedBy | `string`        |                         | 是   |
+| 名称            | 类型                               | 描述 | 可选 |
+| --------------- | ---------------------------------- | ---- | ---- |
+| title           | `string`                           |      | 是   |
+| column          | `number`                           |      | 是   |
+| border          | `boolean`                          |      | 是   |
+| size            | `ComponentSize`                    |      | 是   |
+| layout          | `'horizontal' \| 'vertical'`       |      | 是   |
+| class           | `string`                           |      | 是   |
+| style           | `string \| Record<string, string>` |      | 是   |
+| id              | `string`                           |      | 是   |
+| ariaLabel       | `string`                           |      | 是   |
+| ariaDescribedBy | `string`                           |      | 是   |
 
 ## DescriptionsSetupProps
 
@@ -3664,18 +3664,18 @@ CalendarView: 'month' | 'week' | 'day';
 
 ### 成员
 
-| 名称            | 类型            | 描述                    | 可选 |
-| --------------- | --------------- | ----------------------- | ---- | --- |
-| title           | `string`        |                         | 否   |
-| column          | `number`        |                         | 否   |
-| border          | `boolean`       |                         | 否   |
-| size            | `ComponentSize` |                         | 否   |
-| layout          | `'horizontal'   | 'vertical'`             |      | 否  |
-| class           | `string`        |                         | 否   |
-| id              | `string`        |                         | 否   |
-| ariaLabel       | `string`        |                         | 否   |
-| ariaDescribedBy | `string`        |                         | 否   |
-| style           | `string         | Record<string, string>` |      | 是  |
+| 名称            | 类型                               | 描述 | 可选 |
+| --------------- | ---------------------------------- | ---- | ---- |
+| title           | `string`                           |      | 否   |
+| column          | `number`                           |      | 否   |
+| border          | `boolean`                          |      | 否   |
+| size            | `ComponentSize`                    |      | 否   |
+| layout          | `'horizontal' \| 'vertical'`       |      | 否   |
+| class           | `string`                           |      | 否   |
+| id              | `string`                           |      | 否   |
+| ariaLabel       | `string`                           |      | 否   |
+| ariaDescribedBy | `string`                           |      | 否   |
+| style           | `string \| Record<string, string>` |      | 是   |
 
 ## DescriptionsSlots
 
@@ -3747,28 +3747,28 @@ DrawerDirection: 'ltr' | 'rtl' | 'ttb' | 'btt';
 
 ### 成员
 
-| 名称               | 类型              | 描述    | 可选            |
-| ------------------ | ----------------- | ------- | --------------- | ------ | --- | --- |
-| modelValue         | `boolean`         |         | 是              |
-| title              | `string`          |         | 是              |
-| size               | `string           | number` |                 | 是     |
-| direction          | `DrawerDirection` |         | 是              |
-| showClose          | `boolean`         |         | 是              |
-| closeOnClickModal  | `boolean`         |         | 是              |
-| closeOnPressEscape | `boolean`         |         | 是              |
-| lockScroll         | `boolean`         |         | 是              |
-| appendToBody       | `boolean`         |         | 是              |
-| withHeader         | `boolean`         |         | 是              |
-| customClass        | `string`          |         | 是              |
-| class              | `string`          |         | 是              |
-| id                 | `string`          |         | 是              |
-| ariaLabel          | `string`          |         | 是              |
-| ariaDescribedBy    | `string`          |         | 是              |
-| ariaModal          | `boolean`         |         | 是              |
-| onBeforeOpen       | `() => boolean    | void    | Promise<boolean | void>` |     | 是  |
-| onBeforeClose      | `() => boolean    | void    | Promise<boolean | void>` |     | 是  |
-| onOpen             | `() => void`      |         | 是              |
-| onClose            | `() => void`      |         | 是              |
+| 名称               | 类型                                                | 描述 | 可选 |
+| ------------------ | --------------------------------------------------- | ---- | ---- |
+| modelValue         | `boolean`                                           |      | 是   |
+| title              | `string`                                            |      | 是   |
+| size               | `string \| number`                                  |      | 是   |
+| direction          | `DrawerDirection`                                   |      | 是   |
+| showClose          | `boolean`                                           |      | 是   |
+| closeOnClickModal  | `boolean`                                           |      | 是   |
+| closeOnPressEscape | `boolean`                                           |      | 是   |
+| lockScroll         | `boolean`                                           |      | 是   |
+| appendToBody       | `boolean`                                           |      | 是   |
+| withHeader         | `boolean`                                           |      | 是   |
+| customClass        | `string`                                            |      | 是   |
+| class              | `string`                                            |      | 是   |
+| id                 | `string`                                            |      | 是   |
+| ariaLabel          | `string`                                            |      | 是   |
+| ariaDescribedBy    | `string`                                            |      | 是   |
+| ariaModal          | `boolean`                                           |      | 是   |
+| onBeforeOpen       | `() => boolean \| void \| Promise<boolean \| void>` |      | 是   |
+| onBeforeClose      | `() => boolean \| void \| Promise<boolean \| void>` |      | 是   |
+| onOpen             | `() => void`                                        |      | 是   |
+| onClose            | `() => void`                                        |      | 是   |
 
 ## DrawerSlots
 
@@ -3788,28 +3788,28 @@ DrawerDirection: 'ltr' | 'rtl' | 'ttb' | 'btt';
 
 ### 成员
 
-| 名称               | 类型              | 描述    | 可选            |
-| ------------------ | ----------------- | ------- | --------------- | ------ | --- | --- |
-| modelValue         | `boolean`         |         | 否              |
-| title              | `string`          |         | 否              |
-| size               | `string           | number` |                 | 否     |
-| direction          | `DrawerDirection` |         | 否              |
-| showClose          | `boolean`         |         | 否              |
-| closeOnClickModal  | `boolean`         |         | 否              |
-| closeOnPressEscape | `boolean`         |         | 否              |
-| lockScroll         | `boolean`         |         | 否              |
-| appendToBody       | `boolean`         |         | 否              |
-| withHeader         | `boolean`         |         | 否              |
-| customClass        | `string`          |         | 否              |
-| class              | `string`          |         | 否              |
-| id                 | `string`          |         | 否              |
-| ariaLabel          | `string`          |         | 否              |
-| ariaDescribedBy    | `string`          |         | 否              |
-| ariaModal          | `boolean`         |         | 否              |
-| onBeforeOpen       | `() => boolean    | void    | Promise<boolean | void>` |     | 是  |
-| onBeforeClose      | `() => boolean    | void    | Promise<boolean | void>` |     | 是  |
-| onOpen             | `() => void`      |         | 是              |
-| onClose            | `() => void`      |         | 是              |
+| 名称               | 类型                                                | 描述 | 可选 |
+| ------------------ | --------------------------------------------------- | ---- | ---- |
+| modelValue         | `boolean`                                           |      | 否   |
+| title              | `string`                                            |      | 否   |
+| size               | `string \| number`                                  |      | 否   |
+| direction          | `DrawerDirection`                                   |      | 否   |
+| showClose          | `boolean`                                           |      | 否   |
+| closeOnClickModal  | `boolean`                                           |      | 否   |
+| closeOnPressEscape | `boolean`                                           |      | 否   |
+| lockScroll         | `boolean`                                           |      | 否   |
+| appendToBody       | `boolean`                                           |      | 否   |
+| withHeader         | `boolean`                                           |      | 否   |
+| customClass        | `string`                                            |      | 否   |
+| class              | `string`                                            |      | 否   |
+| id                 | `string`                                            |      | 否   |
+| ariaLabel          | `string`                                            |      | 否   |
+| ariaDescribedBy    | `string`                                            |      | 否   |
+| ariaModal          | `boolean`                                           |      | 否   |
+| onBeforeOpen       | `() => boolean \| void \| Promise<boolean \| void>` |      | 是   |
+| onBeforeClose      | `() => boolean \| void \| Promise<boolean \| void>` |      | 是   |
+| onOpen             | `() => void`                                        |      | 是   |
+| onClose            | `() => void`                                        |      | 是   |
 
 ## RateProps
 
@@ -3817,25 +3817,25 @@ DrawerDirection: 'ltr' | 'rtl' | 'ttb' | 'btt';
 
 ### 成员
 
-| 名称              | 类型                      | 描述                    | 可选 |
-| ----------------- | ------------------------- | ----------------------- | ---- | --- |
-| modelValue        | `number`                  |                         | 是   |
-| max               | `number`                  |                         | 是   |
-| allowHalf         | `boolean`                 |                         | 是   |
-| readonly          | `boolean`                 |                         | 是   |
-| disabled          | `boolean`                 |                         | 是   |
-| showText          | `boolean`                 |                         | 是   |
-| showScore         | `boolean`                 |                         | 是   |
-| texts             | `string[]`                |                         | 是   |
-| voidIcon          | `string`                  |                         | 是   |
-| voidColor         | `string`                  |                         | 是   |
-| disabledVoidColor | `string`                  |                         | 是   |
-| class             | `string`                  |                         | 是   |
-| style             | `string                   | Record<string, string>` |      | 是  |
-| id                | `string`                  |                         | 是   |
-| ariaLabel         | `string`                  |                         | 是   |
-| ariaDescribedBy   | `string`                  |                         | 是   |
-| onChange          | `(value: number) => void` |                         | 是   |
+| 名称              | 类型                               | 描述 | 可选 |
+| ----------------- | ---------------------------------- | ---- | ---- |
+| modelValue        | `number`                           |      | 是   |
+| max               | `number`                           |      | 是   |
+| allowHalf         | `boolean`                          |      | 是   |
+| readonly          | `boolean`                          |      | 是   |
+| disabled          | `boolean`                          |      | 是   |
+| showText          | `boolean`                          |      | 是   |
+| showScore         | `boolean`                          |      | 是   |
+| texts             | `string[]`                         |      | 是   |
+| voidIcon          | `string`                           |      | 是   |
+| voidColor         | `string`                           |      | 是   |
+| disabledVoidColor | `string`                           |      | 是   |
+| class             | `string`                           |      | 是   |
+| style             | `string \| Record<string, string>` |      | 是   |
+| id                | `string`                           |      | 是   |
+| ariaLabel         | `string`                           |      | 是   |
+| ariaDescribedBy   | `string`                           |      | 是   |
+| onChange          | `(value: number) => void`          |      | 是   |
 
 ## RateSlots
 
@@ -3853,25 +3853,25 @@ DrawerDirection: 'ltr' | 'rtl' | 'ttb' | 'btt';
 
 ### 成员
 
-| 名称              | 类型                      | 描述                    | 可选 |
-| ----------------- | ------------------------- | ----------------------- | ---- | --- |
-| modelValue        | `number`                  |                         | 否   |
-| max               | `number`                  |                         | 否   |
-| allowHalf         | `boolean`                 |                         | 否   |
-| readonly          | `boolean`                 |                         | 否   |
-| disabled          | `boolean`                 |                         | 否   |
-| showText          | `boolean`                 |                         | 否   |
-| showScore         | `boolean`                 |                         | 否   |
-| texts             | `string[]`                |                         | 否   |
-| voidIcon          | `string`                  |                         | 否   |
-| voidColor         | `string`                  |                         | 否   |
-| disabledVoidColor | `string`                  |                         | 否   |
-| class             | `string`                  |                         | 否   |
-| id                | `string`                  |                         | 否   |
-| ariaLabel         | `string`                  |                         | 否   |
-| ariaDescribedBy   | `string`                  |                         | 否   |
-| style             | `string                   | Record<string, string>` |      | 是  |
-| onChange          | `(value: number) => void` |                         | 是   |
+| 名称              | 类型                               | 描述 | 可选 |
+| ----------------- | ---------------------------------- | ---- | ---- |
+| modelValue        | `number`                           |      | 否   |
+| max               | `number`                           |      | 否   |
+| allowHalf         | `boolean`                          |      | 否   |
+| readonly          | `boolean`                          |      | 否   |
+| disabled          | `boolean`                          |      | 否   |
+| showText          | `boolean`                          |      | 否   |
+| showScore         | `boolean`                          |      | 否   |
+| texts             | `string[]`                         |      | 否   |
+| voidIcon          | `string`                           |      | 否   |
+| voidColor         | `string`                           |      | 否   |
+| disabledVoidColor | `string`                           |      | 否   |
+| class             | `string`                           |      | 否   |
+| id                | `string`                           |      | 否   |
+| ariaLabel         | `string`                           |      | 否   |
+| ariaDescribedBy   | `string`                           |      | 否   |
+| style             | `string \| Record<string, string>` |      | 是   |
+| onChange          | `(value: number) => void`          |      | 是   |
 
 ## CheckboxGroupProps
 
@@ -3879,20 +3879,20 @@ DrawerDirection: 'ltr' | 'rtl' | 'ttb' | 'btt';
 
 ### 成员
 
-| 名称            | 类型             | 描述                    | 可选                 |
-| --------------- | ---------------- | ----------------------- | -------------------- | --- | --- |
-| modelValue      | `(string         | number                  | boolean)[]`          |     | 是  |
-| disabled        | `boolean`        |                         | 是                   |
-| min             | `number`         |                         | 是                   |
-| max             | `number`         |                         | 是                   |
-| size            | `ComponentSize`  |                         | 是                   |
-| class           | `string`         |                         | 是                   |
-| style           | `string          | Record<string, string>` |                      | 是  |
-| id              | `string`         |                         | 是                   |
-| ariaLabel       | `string`         |                         | 是                   |
-| ariaDescribedBy | `string`         |                         | 是                   |
-| ariaRequired    | `boolean`        |                         | 是                   |
-| onChange        | `(value: (string | number                  | boolean)[]) => void` |     | 是  |
+| 名称            | 类型                                               | 描述 | 可选 |
+| --------------- | -------------------------------------------------- | ---- | ---- |
+| modelValue      | `(string \| number \| boolean)[]`                  |      | 是   |
+| disabled        | `boolean`                                          |      | 是   |
+| min             | `number`                                           |      | 是   |
+| max             | `number`                                           |      | 是   |
+| size            | `ComponentSize`                                    |      | 是   |
+| class           | `string`                                           |      | 是   |
+| style           | `string \| Record<string, string>`                 |      | 是   |
+| id              | `string`                                           |      | 是   |
+| ariaLabel       | `string`                                           |      | 是   |
+| ariaDescribedBy | `string`                                           |      | 是   |
+| ariaRequired    | `boolean`                                          |      | 是   |
+| onChange        | `(value: (string \| number \| boolean)[]) => void` |      | 是   |
 
 ## CheckboxGroupSlots
 
@@ -3910,20 +3910,20 @@ DrawerDirection: 'ltr' | 'rtl' | 'ttb' | 'btt';
 
 ### 成员
 
-| 名称            | 类型             | 描述                    | 可选                 |
-| --------------- | ---------------- | ----------------------- | -------------------- | --- | --- |
-| modelValue      | `(string         | number                  | boolean)[]`          |     | 否  |
-| disabled        | `boolean`        |                         | 否                   |
-| min             | `number`         |                         | 否                   |
-| max             | `number`         |                         | 否                   |
-| size            | `ComponentSize`  |                         | 否                   |
-| class           | `string`         |                         | 否                   |
-| style           | `string          | Record<string, string>` |                      | 是  |
-| id              | `string`         |                         | 否                   |
-| ariaLabel       | `string`         |                         | 否                   |
-| ariaDescribedBy | `string`         |                         | 否                   |
-| ariaRequired    | `boolean`        |                         | 否                   |
-| onChange        | `(value: (string | number                  | boolean)[]) => void` |     | 是  |
+| 名称            | 类型                                               | 描述 | 可选 |
+| --------------- | -------------------------------------------------- | ---- | ---- |
+| modelValue      | `(string \| number \| boolean)[]`                  |      | 否   |
+| disabled        | `boolean`                                          |      | 否   |
+| min             | `number`                                           |      | 否   |
+| max             | `number`                                           |      | 否   |
+| size            | `ComponentSize`                                    |      | 否   |
+| class           | `string`                                           |      | 否   |
+| style           | `string \| Record<string, string>`                 |      | 是   |
+| id              | `string`                                           |      | 否   |
+| ariaLabel       | `string`                                           |      | 否   |
+| ariaDescribedBy | `string`                                           |      | 否   |
+| ariaRequired    | `boolean`                                          |      | 否   |
+| onChange        | `(value: (string \| number \| boolean)[]) => void` |      | 是   |
 
 ## RadioGroupProps
 
@@ -3931,18 +3931,18 @@ DrawerDirection: 'ltr' | 'rtl' | 'ttb' | 'btt';
 
 ### 成员
 
-| 名称            | 类型            | 描述                    | 可选              |
-| --------------- | --------------- | ----------------------- | ----------------- | --- | --- |
-| modelValue      | `string         | number                  | boolean`          |     | 是  |
-| disabled        | `boolean`       |                         | 是                |
-| size            | `ComponentSize` |                         | 是                |
-| class           | `string`        |                         | 是                |
-| style           | `string         | Record<string, string>` |                   | 是  |
-| id              | `string`        |                         | 是                |
-| ariaLabel       | `string`        |                         | 是                |
-| ariaDescribedBy | `string`        |                         | 是                |
-| ariaRequired    | `boolean`       |                         | 是                |
-| onChange        | `(value: string | number                  | boolean) => void` |     | 是  |
+| 名称            | 类型                                           | 描述 | 可选 |
+| --------------- | ---------------------------------------------- | ---- | ---- |
+| modelValue      | `string \| number \| boolean`                  |      | 是   |
+| disabled        | `boolean`                                      |      | 是   |
+| size            | `ComponentSize`                                |      | 是   |
+| class           | `string`                                       |      | 是   |
+| style           | `string \| Record<string, string>`             |      | 是   |
+| id              | `string`                                       |      | 是   |
+| ariaLabel       | `string`                                       |      | 是   |
+| ariaDescribedBy | `string`                                       |      | 是   |
+| ariaRequired    | `boolean`                                      |      | 是   |
+| onChange        | `(value: string \| number \| boolean) => void` |      | 是   |
 
 ## RadioGroupSlots
 
@@ -3960,18 +3960,18 @@ DrawerDirection: 'ltr' | 'rtl' | 'ttb' | 'btt';
 
 ### 成员
 
-| 名称            | 类型            | 描述                    | 可选              |
-| --------------- | --------------- | ----------------------- | ----------------- | --- | --- |
-| modelValue      | `string         | number                  | boolean`          |     | 否  |
-| disabled        | `boolean`       |                         | 否                |
-| size            | `ComponentSize` |                         | 否                |
-| class           | `string`        |                         | 否                |
-| style           | `string         | Record<string, string>` |                   | 是  |
-| id              | `string`        |                         | 否                |
-| ariaLabel       | `string`        |                         | 否                |
-| ariaDescribedBy | `string`        |                         | 否                |
-| ariaRequired    | `boolean`       |                         | 否                |
-| onChange        | `(value: string | number                  | boolean) => void` |     | 是  |
+| 名称            | 类型                                           | 描述 | 可选 |
+| --------------- | ---------------------------------------------- | ---- | ---- |
+| modelValue      | `string \| number \| boolean`                  |      | 否   |
+| disabled        | `boolean`                                      |      | 否   |
+| size            | `ComponentSize`                                |      | 否   |
+| class           | `string`                                       |      | 否   |
+| style           | `string \| Record<string, string>`             |      | 是   |
+| id              | `string`                                       |      | 否   |
+| ariaLabel       | `string`                                       |      | 否   |
+| ariaDescribedBy | `string`                                       |      | 否   |
+| ariaRequired    | `boolean`                                      |      | 否   |
+| onChange        | `(value: string \| number \| boolean) => void` |      | 是   |
 
 ## ProgressProps
 
@@ -3979,23 +3979,23 @@ DrawerDirection: 'ltr' | 'rtl' | 'ttb' | 'btt';
 
 ### 成员
 
-| 名称            | 类型                             | 描述                    | 可选                    |
-| --------------- | -------------------------------- | ----------------------- | ----------------------- | --- | --- |
-| percentage      | `number`                         |                         | 是                      |
-| type            | `'line'                          | 'circle'                | 'dashboard'`            |     | 是  |
-| status          | `'success'                       | 'exception'             | 'warning'`              |     | 是  |
-| strokeWidth     | `number`                         |                         | 是                      |
-| textInside      | `boolean`                        |                         | 是                      |
-| showText        | `boolean`                        |                         | 是                      |
-| color           | `string                          | string[]                | Record<string, string>` |     | 是  |
-| width           | `number`                         |                         | 是                      |
-| strokeLinecap   | `'butt'                          | 'round'                 | 'square'`               |     | 是  |
-| format          | `(percentage: number) => string` |                         | 是                      |
-| class           | `string`                         |                         | 是                      |
-| style           | `string                          | Record<string, string>` |                         | 是  |
-| id              | `string`                         |                         | 是                      |
-| ariaLabel       | `string`                         |                         | 是                      |
-| ariaDescribedBy | `string`                         |                         | 是                      |
+| 名称            | 类型                                           | 描述 | 可选 |
+| --------------- | ---------------------------------------------- | ---- | ---- |
+| percentage      | `number`                                       |      | 是   |
+| type            | `'line' \| 'circle' \| 'dashboard'`            |      | 是   |
+| status          | `'success' \| 'exception' \| 'warning'`        |      | 是   |
+| strokeWidth     | `number`                                       |      | 是   |
+| textInside      | `boolean`                                      |      | 是   |
+| showText        | `boolean`                                      |      | 是   |
+| color           | `string \| string[] \| Record<string, string>` |      | 是   |
+| width           | `number`                                       |      | 是   |
+| strokeLinecap   | `'butt' \| 'round' \| 'square'`                |      | 是   |
+| format          | `(percentage: number) => string`               |      | 是   |
+| class           | `string`                                       |      | 是   |
+| style           | `string \| Record<string, string>`             |      | 是   |
+| id              | `string`                                       |      | 是   |
+| ariaLabel       | `string`                                       |      | 是   |
+| ariaDescribedBy | `string`                                       |      | 是   |
 
 ## ProgressSlots
 
@@ -4013,23 +4013,23 @@ DrawerDirection: 'ltr' | 'rtl' | 'ttb' | 'btt';
 
 ### 成员
 
-| 名称            | 类型                             | 描述                    | 可选                    |
-| --------------- | -------------------------------- | ----------------------- | ----------------------- | --- | --- | --- |
-| percentage      | `number`                         |                         | 否                      |
-| type            | `'line'                          | 'circle'                | 'dashboard'`            |     | 否  |
-| status          | `'success'                       | 'exception'             | 'warning'               | ''` |     | 否  |
-| strokeWidth     | `number`                         |                         | 否                      |
-| textInside      | `boolean`                        |                         | 否                      |
-| showText        | `boolean`                        |                         | 否                      |
-| color           | `string                          | string[]                | Record<string, string>` |     | 否  |
-| width           | `number`                         |                         | 否                      |
-| strokeLinecap   | `'butt'                          | 'round'                 | 'square'`               |     | 否  |
-| format          | `(percentage: number) => string` |                         | 是                      |
-| class           | `string`                         |                         | 否                      |
-| id              | `string`                         |                         | 否                      |
-| ariaLabel       | `string`                         |                         | 否                      |
-| ariaDescribedBy | `string`                         |                         | 否                      |
-| style           | `string                          | Record<string, string>` |                         | 是  |
+| 名称            | 类型                                           | 描述 | 可选 |
+| --------------- | ---------------------------------------------- | ---- | ---- |
+| percentage      | `number`                                       |      | 否   |
+| type            | `'line' \| 'circle' \| 'dashboard'`            |      | 否   |
+| status          | `'success' \| 'exception' \| 'warning' \| ''`  |      | 否   |
+| strokeWidth     | `number`                                       |      | 否   |
+| textInside      | `boolean`                                      |      | 否   |
+| showText        | `boolean`                                      |      | 否   |
+| color           | `string \| string[] \| Record<string, string>` |      | 否   |
+| width           | `number`                                       |      | 否   |
+| strokeLinecap   | `'butt' \| 'round' \| 'square'`                |      | 否   |
+| format          | `(percentage: number) => string`               |      | 是   |
+| class           | `string`                                       |      | 否   |
+| id              | `string`                                       |      | 否   |
+| ariaLabel       | `string`                                       |      | 否   |
+| ariaDescribedBy | `string`                                       |      | 否   |
+| style           | `string \| Record<string, string>`             |      | 是   |
 
 ## SliderProps
 
@@ -4037,34 +4037,34 @@ DrawerDirection: 'ltr' | 'rtl' | 'ttb' | 'btt';
 
 ### 成员
 
-| 名称              | 类型                             | 描述                    | 可选 |
-| ----------------- | -------------------------------- | ----------------------- | ---- | --- |
-| modelValue        | `number                          | number[]`               |      | 是  |
-| min               | `number`                         |                         | 是   |
-| max               | `number`                         |                         | 是   |
-| step              | `number`                         |                         | 是   |
-| showInput         | `boolean`                        |                         | 是   |
-| showInputControls | `boolean`                        |                         | 是   |
-| inputSize         | `ComponentSize`                  |                         | 是   |
-| showStops         | `boolean`                        |                         | 是   |
-| showTooltip       | `boolean`                        |                         | 是   |
-| formatTooltip     | `(value: number) => string`      |                         | 是   |
-| disabled          | `boolean`                        |                         | 是   |
-| range             | `boolean`                        |                         | 是   |
-| vertical          | `boolean`                        |                         | 是   |
-| height            | `string`                         |                         | 是   |
-| label             | `string`                         |                         | 是   |
-| class             | `string`                         |                         | 是   |
-| style             | `string                          | Record<string, string>` |      | 是  |
-| id                | `string`                         |                         | 是   |
-| ariaLabel         | `string`                         |                         | 是   |
-| ariaDescribedBy   | `string`                         |                         | 是   |
-| ariaRequired      | `boolean`                        |                         | 是   |
-| ariaInvalid       | `boolean`                        |                         | 是   |
-| tabIndex          | `number`                         |                         | 是   |
-| onChange          | `(value: number                  | number[]) => void`      |      | 是  |
-| onInput           | `(value: number                  | number[]) => void`      |      | 是  |
-| onKeydown         | `(event: KeyboardEvent) => void` |                         | 是   |
+| 名称              | 类型                                  | 描述 | 可选 |
+| ----------------- | ------------------------------------- | ---- | ---- |
+| modelValue        | `number \| number[]`                  |      | 是   |
+| min               | `number`                              |      | 是   |
+| max               | `number`                              |      | 是   |
+| step              | `number`                              |      | 是   |
+| showInput         | `boolean`                             |      | 是   |
+| showInputControls | `boolean`                             |      | 是   |
+| inputSize         | `ComponentSize`                       |      | 是   |
+| showStops         | `boolean`                             |      | 是   |
+| showTooltip       | `boolean`                             |      | 是   |
+| formatTooltip     | `(value: number) => string`           |      | 是   |
+| disabled          | `boolean`                             |      | 是   |
+| range             | `boolean`                             |      | 是   |
+| vertical          | `boolean`                             |      | 是   |
+| height            | `string`                              |      | 是   |
+| label             | `string`                              |      | 是   |
+| class             | `string`                              |      | 是   |
+| style             | `string \| Record<string, string>`    |      | 是   |
+| id                | `string`                              |      | 是   |
+| ariaLabel         | `string`                              |      | 是   |
+| ariaDescribedBy   | `string`                              |      | 是   |
+| ariaRequired      | `boolean`                             |      | 是   |
+| ariaInvalid       | `boolean`                             |      | 是   |
+| tabIndex          | `number`                              |      | 是   |
+| onChange          | `(value: number \| number[]) => void` |      | 是   |
+| onInput           | `(value: number \| number[]) => void` |      | 是   |
+| onKeydown         | `(event: KeyboardEvent) => void`      |      | 是   |
 
 ## SliderSlots
 
@@ -4082,34 +4082,34 @@ DrawerDirection: 'ltr' | 'rtl' | 'ttb' | 'btt';
 
 ### 成员
 
-| 名称              | 类型                             | 描述                    | 可选 |
-| ----------------- | -------------------------------- | ----------------------- | ---- | --- |
-| modelValue        | `number                          | number[]`               |      | 否  |
-| min               | `number`                         |                         | 否   |
-| max               | `number`                         |                         | 否   |
-| step              | `number`                         |                         | 否   |
-| showInput         | `boolean`                        |                         | 否   |
-| showInputControls | `boolean`                        |                         | 否   |
-| inputSize         | `ComponentSize`                  |                         | 否   |
-| showStops         | `boolean`                        |                         | 否   |
-| showTooltip       | `boolean`                        |                         | 否   |
-| formatTooltip     | `(value: number) => string`      |                         | 是   |
-| disabled          | `boolean`                        |                         | 否   |
-| range             | `boolean`                        |                         | 否   |
-| vertical          | `boolean`                        |                         | 否   |
-| height            | `string`                         |                         | 否   |
-| label             | `string`                         |                         | 否   |
-| class             | `string`                         |                         | 否   |
-| style             | `string                          | Record<string, string>` |      | 是  |
-| id                | `string`                         |                         | 否   |
-| ariaLabel         | `string`                         |                         | 否   |
-| ariaDescribedBy   | `string`                         |                         | 否   |
-| ariaRequired      | `boolean`                        |                         | 否   |
-| ariaInvalid       | `boolean`                        |                         | 否   |
-| tabIndex          | `number`                         |                         | 是   |
-| onChange          | `(value: number                  | number[]) => void`      |      | 是  |
-| onInput           | `(value: number                  | number[]) => void`      |      | 是  |
-| onKeydown         | `(event: KeyboardEvent) => void` |                         | 是   |
+| 名称              | 类型                                  | 描述 | 可选 |
+| ----------------- | ------------------------------------- | ---- | ---- |
+| modelValue        | `number \| number[]`                  |      | 否   |
+| min               | `number`                              |      | 否   |
+| max               | `number`                              |      | 否   |
+| step              | `number`                              |      | 否   |
+| showInput         | `boolean`                             |      | 否   |
+| showInputControls | `boolean`                             |      | 否   |
+| inputSize         | `ComponentSize`                       |      | 否   |
+| showStops         | `boolean`                             |      | 否   |
+| showTooltip       | `boolean`                             |      | 否   |
+| formatTooltip     | `(value: number) => string`           |      | 是   |
+| disabled          | `boolean`                             |      | 否   |
+| range             | `boolean`                             |      | 否   |
+| vertical          | `boolean`                             |      | 否   |
+| height            | `string`                              |      | 否   |
+| label             | `string`                              |      | 否   |
+| class             | `string`                              |      | 否   |
+| style             | `string \| Record<string, string>`    |      | 是   |
+| id                | `string`                              |      | 否   |
+| ariaLabel         | `string`                              |      | 否   |
+| ariaDescribedBy   | `string`                              |      | 否   |
+| ariaRequired      | `boolean`                             |      | 否   |
+| ariaInvalid       | `boolean`                             |      | 否   |
+| tabIndex          | `number`                              |      | 是   |
+| onChange          | `(value: number \| number[]) => void` |      | 是   |
+| onInput           | `(value: number \| number[]) => void` |      | 是   |
+| onKeydown         | `(event: KeyboardEvent) => void`      |      | 是   |
 
 ## AvatarProps
 
@@ -4117,21 +4117,21 @@ DrawerDirection: 'ltr' | 'rtl' | 'ttb' | 'btt';
 
 ### 成员
 
-| 名称            | 类型            | 描述                    | 可选    |
-| --------------- | --------------- | ----------------------- | ------- | ------ | ------------- | --- | --- |
-| size            | `number         | ComponentSize`          |         | 是     |
-| shape           | `'circle'       | 'square'`               |         | 是     |
-| icon            | `string`        |                         | 是      |
-| src             | `string`        |                         | 是      |
-| srcSet          | `string`        |                         | 是      |
-| alt             | `string`        |                         | 是      |
-| fit             | `'fill'         | 'contain'               | 'cover' | 'none' | 'scale-down'` |     | 是  |
-| class           | `string`        |                         | 是      |
-| style           | `string         | Record<string, string>` |         | 是     |
-| id              | `string`        |                         | 是      |
-| ariaLabel       | `string`        |                         | 是      |
-| ariaDescribedBy | `string`        |                         | 是      |
-| onError         | `() => boolean` |                         | 是      |
+| 名称            | 类型                                                       | 描述 | 可选 |
+| --------------- | ---------------------------------------------------------- | ---- | ---- |
+| size            | `number \| ComponentSize`                                  |      | 是   |
+| shape           | `'circle' \| 'square'`                                     |      | 是   |
+| icon            | `string`                                                   |      | 是   |
+| src             | `string`                                                   |      | 是   |
+| srcSet          | `string`                                                   |      | 是   |
+| alt             | `string`                                                   |      | 是   |
+| fit             | `'fill' \| 'contain' \| 'cover' \| 'none' \| 'scale-down'` |      | 是   |
+| class           | `string`                                                   |      | 是   |
+| style           | `string \| Record<string, string>`                         |      | 是   |
+| id              | `string`                                                   |      | 是   |
+| ariaLabel       | `string`                                                   |      | 是   |
+| ariaDescribedBy | `string`                                                   |      | 是   |
+| onError         | `() => boolean`                                            |      | 是   |
 
 ## AvatarSlots
 
@@ -4149,21 +4149,21 @@ DrawerDirection: 'ltr' | 'rtl' | 'ttb' | 'btt';
 
 ### 成员
 
-| 名称            | 类型            | 描述                    | 可选    |
-| --------------- | --------------- | ----------------------- | ------- | ------ | ------------- | --- | --- |
-| size            | `number         | ComponentSize`          |         | 否     |
-| shape           | `'circle'       | 'square'`               |         | 否     |
-| icon            | `string`        |                         | 否      |
-| src             | `string`        |                         | 否      |
-| srcSet          | `string`        |                         | 否      |
-| alt             | `string`        |                         | 否      |
-| fit             | `'fill'         | 'contain'               | 'cover' | 'none' | 'scale-down'` |     | 否  |
-| class           | `string`        |                         | 否      |
-| id              | `string`        |                         | 否      |
-| ariaLabel       | `string`        |                         | 否      |
-| ariaDescribedBy | `string`        |                         | 否      |
-| style           | `string         | Record<string, string>` |         | 是     |
-| onError         | `() => boolean` |                         | 是      |
+| 名称            | 类型                                                       | 描述 | 可选 |
+| --------------- | ---------------------------------------------------------- | ---- | ---- |
+| size            | `number \| ComponentSize`                                  |      | 否   |
+| shape           | `'circle' \| 'square'`                                     |      | 否   |
+| icon            | `string`                                                   |      | 否   |
+| src             | `string`                                                   |      | 否   |
+| srcSet          | `string`                                                   |      | 否   |
+| alt             | `string`                                                   |      | 否   |
+| fit             | `'fill' \| 'contain' \| 'cover' \| 'none' \| 'scale-down'` |      | 否   |
+| class           | `string`                                                   |      | 否   |
+| id              | `string`                                                   |      | 否   |
+| ariaLabel       | `string`                                                   |      | 否   |
+| ariaDescribedBy | `string`                                                   |      | 否   |
+| style           | `string \| Record<string, string>`                         |      | 是   |
+| onError         | `() => boolean`                                            |      | 是   |
 
 ## CardProps
 
@@ -4171,16 +4171,16 @@ DrawerDirection: 'ltr' | 'rtl' | 'ttb' | 'btt';
 
 ### 成员
 
-| 名称            | 类型                     | 描述                    | 可选     |
-| --------------- | ------------------------ | ----------------------- | -------- | --- | --- |
-| header          | `string`                 |                         | 是       |
-| bodyStyle       | `Record<string, string>` |                         | 是       |
-| shadow          | `'always'                | 'hover'                 | 'never'` |     | 是  |
-| class           | `string`                 |                         | 是       |
-| style           | `string                  | Record<string, string>` |          | 是  |
-| id              | `string`                 |                         | 是       |
-| ariaLabel       | `string`                 |                         | 是       |
-| ariaDescribedBy | `string`                 |                         | 是       |
+| 名称            | 类型                               | 描述 | 可选 |
+| --------------- | ---------------------------------- | ---- | ---- |
+| header          | `string`                           |      | 是   |
+| bodyStyle       | `Record<string, string>`           |      | 是   |
+| shadow          | `'always' \| 'hover' \| 'never'`   |      | 是   |
+| class           | `string`                           |      | 是   |
+| style           | `string \| Record<string, string>` |      | 是   |
+| id              | `string`                           |      | 是   |
+| ariaLabel       | `string`                           |      | 是   |
+| ariaDescribedBy | `string`                           |      | 是   |
 
 ## CardSlots
 
@@ -4199,16 +4199,16 @@ DrawerDirection: 'ltr' | 'rtl' | 'ttb' | 'btt';
 
 ### 成员
 
-| 名称            | 类型                     | 描述                    | 可选     |
-| --------------- | ------------------------ | ----------------------- | -------- | --- | --- |
-| header          | `string`                 |                         | 否       |
-| bodyStyle       | `Record<string, string>` |                         | 否       |
-| shadow          | `'always'                | 'hover'                 | 'never'` |     | 否  |
-| class           | `string`                 |                         | 否       |
-| id              | `string`                 |                         | 否       |
-| ariaLabel       | `string`                 |                         | 否       |
-| ariaDescribedBy | `string`                 |                         | 否       |
-| style           | `string                  | Record<string, string>` |          | 是  |
+| 名称            | 类型                               | 描述 | 可选 |
+| --------------- | ---------------------------------- | ---- | ---- |
+| header          | `string`                           |      | 否   |
+| bodyStyle       | `Record<string, string>`           |      | 否   |
+| shadow          | `'always' \| 'hover' \| 'never'`   |      | 否   |
+| class           | `string`                           |      | 否   |
+| id              | `string`                           |      | 否   |
+| ariaLabel       | `string`                           |      | 否   |
+| ariaDescribedBy | `string`                           |      | 否   |
+| style           | `string \| Record<string, string>` |      | 是   |
 
 ## TimelineItem
 
@@ -4216,16 +4216,16 @@ DrawerDirection: 'ltr' | 'rtl' | 'ttb' | 'btt';
 
 ### 成员
 
-| 名称          | 类型       | 描述      | 可选      |
-| ------------- | ---------- | --------- | --------- | -------- | ------- | --- | --- |
-| color         | `string`   |           | 是        |
-| type          | `'primary' | 'success' | 'warning' | 'danger' | 'info'` |     | 是  |
-| size          | `'large'   | 'default' | 'small'`  |          | 是      |
-| dot           | `VNode     | string`   |           | 是       |
-| timestamp     | `string`   |           | 是        |
-| placement     | `'top'     | 'bottom'` |           | 是       |
-| hideTimestamp | `boolean`  |           | 是        |
-| content       | `string    | VNode`    |           | 是       |
+| 名称          | 类型                                                        | 描述 | 可选 |
+| ------------- | ----------------------------------------------------------- | ---- | ---- |
+| color         | `string`                                                    |      | 是   |
+| type          | `'primary' \| 'success' \| 'warning' \| 'danger' \| 'info'` |      | 是   |
+| size          | `'large' \| 'default' \| 'small'`                           |      | 是   |
+| dot           | `VNode \| string`                                           |      | 是   |
+| timestamp     | `string`                                                    |      | 是   |
+| placement     | `'top' \| 'bottom'`                                         |      | 是   |
+| hideTimestamp | `boolean`                                                   |      | 是   |
+| content       | `string \| VNode`                                           |      | 是   |
 
 ## TimelineProps
 
@@ -4233,15 +4233,15 @@ DrawerDirection: 'ltr' | 'rtl' | 'ttb' | 'btt';
 
 ### 成员
 
-| 名称            | 类型      | 描述                    | 可选         |
-| --------------- | --------- | ----------------------- | ------------ | --- | --- |
-| reverse         | `boolean` |                         | 是           |
-| mode            | `'left'   | 'right'                 | 'alternate'` |     | 是  |
-| class           | `string`  |                         | 是           |
-| style           | `string   | Record<string, string>` |              | 是  |
-| id              | `string`  |                         | 是           |
-| ariaLabel       | `string`  |                         | 是           |
-| ariaDescribedBy | `string`  |                         | 是           |
+| 名称            | 类型                               | 描述 | 可选 |
+| --------------- | ---------------------------------- | ---- | ---- |
+| reverse         | `boolean`                          |      | 是   |
+| mode            | `'left' \| 'right' \| 'alternate'` |      | 是   |
+| class           | `string`                           |      | 是   |
+| style           | `string \| Record<string, string>` |      | 是   |
+| id              | `string`                           |      | 是   |
+| ariaLabel       | `string`                           |      | 是   |
+| ariaDescribedBy | `string`                           |      | 是   |
 
 ## TimelineSlots
 
@@ -4259,15 +4259,15 @@ DrawerDirection: 'ltr' | 'rtl' | 'ttb' | 'btt';
 
 ### 成员
 
-| 名称            | 类型      | 描述                    | 可选         |
-| --------------- | --------- | ----------------------- | ------------ | --- | --- |
-| reverse         | `boolean` |                         | 否           |
-| mode            | `'left'   | 'right'                 | 'alternate'` |     | 否  |
-| class           | `string`  |                         | 否           |
-| id              | `string`  |                         | 否           |
-| ariaLabel       | `string`  |                         | 否           |
-| ariaDescribedBy | `string`  |                         | 否           |
-| style           | `string   | Record<string, string>` |              | 是  |
+| 名称            | 类型                               | 描述 | 可选 |
+| --------------- | ---------------------------------- | ---- | ---- |
+| reverse         | `boolean`                          |      | 否   |
+| mode            | `'left' \| 'right' \| 'alternate'` |      | 否   |
+| class           | `string`                           |      | 否   |
+| id              | `string`                           |      | 否   |
+| ariaLabel       | `string`                           |      | 否   |
+| ariaDescribedBy | `string`                           |      | 否   |
+| style           | `string \| Record<string, string>` |      | 是   |
 
 ## TimelineItemProps
 
@@ -4275,20 +4275,20 @@ DrawerDirection: 'ltr' | 'rtl' | 'ttb' | 'btt';
 
 ### 成员
 
-| 名称            | 类型       | 描述                    | 可选      |
-| --------------- | ---------- | ----------------------- | --------- | -------- | ------- | --- | --- |
-| color           | `string`   |                         | 是        |
-| type            | `'primary' | 'success'               | 'warning' | 'danger' | 'info'` |     | 是  |
-| size            | `'large'   | 'default'               | 'small'`  |          | 是      |
-| dot             | `VNode     | string`                 |           | 是       |
-| timestamp       | `string`   |                         | 是        |
-| placement       | `'top'     | 'bottom'`               |           | 是       |
-| hideTimestamp   | `boolean`  |                         | 是        |
-| class           | `string`   |                         | 是        |
-| style           | `string    | Record<string, string>` |           | 是       |
-| id              | `string`   |                         | 是        |
-| ariaLabel       | `string`   |                         | 是        |
-| ariaDescribedBy | `string`   |                         | 是        |
+| 名称            | 类型                                                        | 描述 | 可选 |
+| --------------- | ----------------------------------------------------------- | ---- | ---- |
+| color           | `string`                                                    |      | 是   |
+| type            | `'primary' \| 'success' \| 'warning' \| 'danger' \| 'info'` |      | 是   |
+| size            | `'large' \| 'default' \| 'small'`                           |      | 是   |
+| dot             | `VNode \| string`                                           |      | 是   |
+| timestamp       | `string`                                                    |      | 是   |
+| placement       | `'top' \| 'bottom'`                                         |      | 是   |
+| hideTimestamp   | `boolean`                                                   |      | 是   |
+| class           | `string`                                                    |      | 是   |
+| style           | `string \| Record<string, string>`                          |      | 是   |
+| id              | `string`                                                    |      | 是   |
+| ariaLabel       | `string`                                                    |      | 是   |
+| ariaDescribedBy | `string`                                                    |      | 是   |
 
 ## TimelineItemSlots
 
@@ -4307,20 +4307,20 @@ DrawerDirection: 'ltr' | 'rtl' | 'ttb' | 'btt';
 
 ### 成员
 
-| 名称            | 类型       | 描述                    | 可选      |
-| --------------- | ---------- | ----------------------- | --------- | -------- | ------- | --- | --- |
-| color           | `string`   |                         | 否        |
-| type            | `'primary' | 'success'               | 'warning' | 'danger' | 'info'` |     | 否  |
-| size            | `'large'   | 'default'               | 'small'`  |          | 否      |
-| dot             | `VNode     | string`                 |           | 否       |
-| timestamp       | `string`   |                         | 否        |
-| placement       | `'top'     | 'bottom'`               |           | 否       |
-| hideTimestamp   | `boolean`  |                         | 否        |
-| class           | `string`   |                         | 否        |
-| id              | `string`   |                         | 否        |
-| ariaLabel       | `string`   |                         | 否        |
-| ariaDescribedBy | `string`   |                         | 否        |
-| style           | `string    | Record<string, string>` |           | 是       |
+| 名称            | 类型                                                        | 描述 | 可选 |
+| --------------- | ----------------------------------------------------------- | ---- | ---- |
+| color           | `string`                                                    |      | 否   |
+| type            | `'primary' \| 'success' \| 'warning' \| 'danger' \| 'info'` |      | 否   |
+| size            | `'large' \| 'default' \| 'small'`                           |      | 否   |
+| dot             | `VNode \| string`                                           |      | 否   |
+| timestamp       | `string`                                                    |      | 否   |
+| placement       | `'top' \| 'bottom'`                                         |      | 否   |
+| hideTimestamp   | `boolean`                                                   |      | 否   |
+| class           | `string`                                                    |      | 否   |
+| id              | `string`                                                    |      | 否   |
+| ariaLabel       | `string`                                                    |      | 否   |
+| ariaDescribedBy | `string`                                                    |      | 否   |
+| style           | `string \| Record<string, string>`                          |      | 是   |
 
 ## Step
 
@@ -4328,12 +4328,12 @@ DrawerDirection: 'ltr' | 'rtl' | 'ttb' | 'btt';
 
 ### 成员
 
-| 名称        | 类型     | 描述      | 可选     |
-| ----------- | -------- | --------- | -------- | ------- | ---------- | --- | --- |
-| title       | `string` |           | 是       |
-| description | `string` |           | 是       |
-| icon        | `string  | VNode`    |          | 是      |
-| status      | `'wait'  | 'process' | 'finish' | 'error' | 'success'` |     | 是  |
+| 名称        | 类型                                                      | 描述 | 可选 |
+| ----------- | --------------------------------------------------------- | ---- | ---- |
+| title       | `string`                                                  |      | 是   |
+| description | `string`                                                  |      | 是   |
+| icon        | `string \| VNode`                                         |      | 是   |
+| status      | `'wait' \| 'process' \| 'finish' \| 'error' \| 'success'` |      | 是   |
 
 ## StepsProps
 
@@ -4341,20 +4341,20 @@ DrawerDirection: 'ltr' | 'rtl' | 'ttb' | 'btt';
 
 ### 成员
 
-| 名称            | 类型                       | 描述                    | 可选     |
-| --------------- | -------------------------- | ----------------------- | -------- | ---------- | ---------- | --- | --- |
-| active          | `number`                   |                         | 是       |
-| processStatus   | `'process'                 | 'finish'                | 'error'  | 'success'` |            | 是  |
-| finishStatus    | `'wait'                    | 'process'               | 'finish' | 'error'    | 'success'` |     | 是  |
-| direction       | `'horizontal'              | 'vertical'`             |          | 是         |
-| alignCenter     | `boolean`                  |                         | 是       |
-| simple          | `boolean`                  |                         | 是       |
-| class           | `string`                   |                         | 是       |
-| style           | `string                    | Record<string, string>` |          | 是         |
-| id              | `string`                   |                         | 是       |
-| ariaLabel       | `string`                   |                         | 是       |
-| ariaDescribedBy | `string`                   |                         | 是       |
-| onChange        | `(active: number) => void` |                         | 是       |
+| 名称            | 类型                                                      | 描述 | 可选 |
+| --------------- | --------------------------------------------------------- | ---- | ---- |
+| active          | `number`                                                  |      | 是   |
+| processStatus   | `'process' \| 'finish' \| 'error' \| 'success'`           |      | 是   |
+| finishStatus    | `'wait' \| 'process' \| 'finish' \| 'error' \| 'success'` |      | 是   |
+| direction       | `'horizontal' \| 'vertical'`                              |      | 是   |
+| alignCenter     | `boolean`                                                 |      | 是   |
+| simple          | `boolean`                                                 |      | 是   |
+| class           | `string`                                                  |      | 是   |
+| style           | `string \| Record<string, string>`                        |      | 是   |
+| id              | `string`                                                  |      | 是   |
+| ariaLabel       | `string`                                                  |      | 是   |
+| ariaDescribedBy | `string`                                                  |      | 是   |
+| onChange        | `(active: number) => void`                                |      | 是   |
 
 ## StepsSlots
 
@@ -4372,20 +4372,20 @@ DrawerDirection: 'ltr' | 'rtl' | 'ttb' | 'btt';
 
 ### 成员
 
-| 名称            | 类型                       | 描述                    | 可选     |
-| --------------- | -------------------------- | ----------------------- | -------- | ---------- | ---------- | --- | --- |
-| active          | `number`                   |                         | 否       |
-| processStatus   | `'process'                 | 'finish'                | 'error'  | 'success'` |            | 否  |
-| finishStatus    | `'wait'                    | 'process'               | 'finish' | 'error'    | 'success'` |     | 否  |
-| direction       | `'horizontal'              | 'vertical'`             |          | 否         |
-| alignCenter     | `boolean`                  |                         | 否       |
-| simple          | `boolean`                  |                         | 否       |
-| class           | `string`                   |                         | 否       |
-| id              | `string`                   |                         | 否       |
-| ariaLabel       | `string`                   |                         | 否       |
-| ariaDescribedBy | `string`                   |                         | 否       |
-| style           | `string                    | Record<string, string>` |          | 是         |
-| onChange        | `(active: number) => void` |                         | 是       |
+| 名称            | 类型                                                      | 描述 | 可选 |
+| --------------- | --------------------------------------------------------- | ---- | ---- |
+| active          | `number`                                                  |      | 否   |
+| processStatus   | `'process' \| 'finish' \| 'error' \| 'success'`           |      | 否   |
+| finishStatus    | `'wait' \| 'process' \| 'finish' \| 'error' \| 'success'` |      | 否   |
+| direction       | `'horizontal' \| 'vertical'`                              |      | 否   |
+| alignCenter     | `boolean`                                                 |      | 否   |
+| simple          | `boolean`                                                 |      | 否   |
+| class           | `string`                                                  |      | 否   |
+| id              | `string`                                                  |      | 否   |
+| ariaLabel       | `string`                                                  |      | 否   |
+| ariaDescribedBy | `string`                                                  |      | 否   |
+| style           | `string \| Record<string, string>`                        |      | 是   |
+| onChange        | `(active: number) => void`                                |      | 是   |
 
 ## StepProps
 
@@ -4393,17 +4393,17 @@ DrawerDirection: 'ltr' | 'rtl' | 'ttb' | 'btt';
 
 ### 成员
 
-| 名称            | 类型     | 描述                    | 可选     |
-| --------------- | -------- | ----------------------- | -------- | ------- | ---------- | --- | --- |
-| title           | `string` |                         | 是       |
-| description     | `string` |                         | 是       |
-| icon            | `string  | VNode`                  |          | 是      |
-| status          | `'wait'  | 'process'               | 'finish' | 'error' | 'success'` |     | 是  |
-| class           | `string` |                         | 是       |
-| style           | `string  | Record<string, string>` |          | 是      |
-| id              | `string` |                         | 是       |
-| ariaLabel       | `string` |                         | 是       |
-| ariaDescribedBy | `string` |                         | 是       |
+| 名称            | 类型                                                      | 描述 | 可选 |
+| --------------- | --------------------------------------------------------- | ---- | ---- |
+| title           | `string`                                                  |      | 是   |
+| description     | `string`                                                  |      | 是   |
+| icon            | `string \| VNode`                                         |      | 是   |
+| status          | `'wait' \| 'process' \| 'finish' \| 'error' \| 'success'` |      | 是   |
+| class           | `string`                                                  |      | 是   |
+| style           | `string \| Record<string, string>`                        |      | 是   |
+| id              | `string`                                                  |      | 是   |
+| ariaLabel       | `string`                                                  |      | 是   |
+| ariaDescribedBy | `string`                                                  |      | 是   |
 
 ## StepSlots
 
@@ -4424,17 +4424,17 @@ DrawerDirection: 'ltr' | 'rtl' | 'ttb' | 'btt';
 
 ### 成员
 
-| 名称            | 类型     | 描述                    | 可选     |
-| --------------- | -------- | ----------------------- | -------- | ------- | ---------- | --- | --- |
-| title           | `string` |                         | 否       |
-| description     | `string` |                         | 否       |
-| icon            | `string  | VNode`                  |          | 否      |
-| status          | `'wait'  | 'process'               | 'finish' | 'error' | 'success'` |     | 否  |
-| class           | `string` |                         | 否       |
-| id              | `string` |                         | 否       |
-| ariaLabel       | `string` |                         | 否       |
-| ariaDescribedBy | `string` |                         | 否       |
-| style           | `string  | Record<string, string>` |          | 是      |
+| 名称            | 类型                                                      | 描述 | 可选 |
+| --------------- | --------------------------------------------------------- | ---- | ---- |
+| title           | `string`                                                  |      | 否   |
+| description     | `string`                                                  |      | 否   |
+| icon            | `string \| VNode`                                         |      | 否   |
+| status          | `'wait' \| 'process' \| 'finish' \| 'error' \| 'success'` |      | 否   |
+| class           | `string`                                                  |      | 否   |
+| id              | `string`                                                  |      | 否   |
+| ariaLabel       | `string`                                                  |      | 否   |
+| ariaDescribedBy | `string`                                                  |      | 否   |
+| style           | `string \| Record<string, string>`                        |      | 是   |
 
 ## CarouselProps
 
@@ -4442,24 +4442,24 @@ DrawerDirection: 'ltr' | 'rtl' | 'ttb' | 'btt';
 
 ### 成员
 
-| 名称              | 类型                                         | 描述                    | 可选     |
-| ----------------- | -------------------------------------------- | ----------------------- | -------- | --- | --- |
-| initialIndex      | `number`                                     |                         | 是       |
-| height            | `string`                                     |                         | 是       |
-| trigger           | `'click'                                     | 'hover'`                |          | 是  |
-| autoplay          | `boolean`                                    |                         | 是       |
-| interval          | `number`                                     |                         | 是       |
-| indicatorPosition | `'outside'                                   | 'none'`                 |          | 是  |
-| arrow             | `'always'                                    | 'hover'                 | 'never'` |     | 是  |
-| type              | `''                                          | 'card'`                 |          | 是  |
-| loop              | `boolean`                                    |                         | 是       |
-| direction         | `'horizontal'                                | 'vertical'`             |          | 是  |
-| class             | `string`                                     |                         | 是       |
-| style             | `string                                      | Record<string, string>` |          | 是  |
-| id                | `string`                                     |                         | 是       |
-| ariaLabel         | `string`                                     |                         | 是       |
-| ariaDescribedBy   | `string`                                     |                         | 是       |
-| onChange          | `(index: number, prevIndex: number) => void` |                         | 是       |
+| 名称              | 类型                                         | 描述 | 可选 |
+| ----------------- | -------------------------------------------- | ---- | ---- |
+| initialIndex      | `number`                                     |      | 是   |
+| height            | `string`                                     |      | 是   |
+| trigger           | `'click' \| 'hover'`                         |      | 是   |
+| autoplay          | `boolean`                                    |      | 是   |
+| interval          | `number`                                     |      | 是   |
+| indicatorPosition | `'outside' \| 'none'`                        |      | 是   |
+| arrow             | `'always' \| 'hover' \| 'never'`             |      | 是   |
+| type              | `'' \| 'card'`                               |      | 是   |
+| loop              | `boolean`                                    |      | 是   |
+| direction         | `'horizontal' \| 'vertical'`                 |      | 是   |
+| class             | `string`                                     |      | 是   |
+| style             | `string \| Record<string, string>`           |      | 是   |
+| id                | `string`                                     |      | 是   |
+| ariaLabel         | `string`                                     |      | 是   |
+| ariaDescribedBy   | `string`                                     |      | 是   |
+| onChange          | `(index: number, prevIndex: number) => void` |      | 是   |
 
 ## CarouselSlots
 
@@ -4477,24 +4477,24 @@ DrawerDirection: 'ltr' | 'rtl' | 'ttb' | 'btt';
 
 ### 成员
 
-| 名称              | 类型                                         | 描述                    | 可选     |
-| ----------------- | -------------------------------------------- | ----------------------- | -------- | --- | --- |
-| initialIndex      | `number`                                     |                         | 否       |
-| height            | `string`                                     |                         | 否       |
-| trigger           | `'click'                                     | 'hover'`                |          | 否  |
-| autoplay          | `boolean`                                    |                         | 否       |
-| interval          | `number`                                     |                         | 否       |
-| indicatorPosition | `'outside'                                   | 'none'`                 |          | 否  |
-| arrow             | `'always'                                    | 'hover'                 | 'never'` |     | 否  |
-| type              | `''                                          | 'card'`                 |          | 否  |
-| loop              | `boolean`                                    |                         | 否       |
-| direction         | `'horizontal'                                | 'vertical'`             |          | 否  |
-| class             | `string`                                     |                         | 否       |
-| id                | `string`                                     |                         | 否       |
-| ariaLabel         | `string`                                     |                         | 否       |
-| ariaDescribedBy   | `string`                                     |                         | 否       |
-| style             | `string                                      | Record<string, string>` |          | 是  |
-| onChange          | `(index: number, prevIndex: number) => void` |                         | 是       |
+| 名称              | 类型                                         | 描述 | 可选 |
+| ----------------- | -------------------------------------------- | ---- | ---- |
+| initialIndex      | `number`                                     |      | 否   |
+| height            | `string`                                     |      | 否   |
+| trigger           | `'click' \| 'hover'`                         |      | 否   |
+| autoplay          | `boolean`                                    |      | 否   |
+| interval          | `number`                                     |      | 否   |
+| indicatorPosition | `'outside' \| 'none'`                        |      | 否   |
+| arrow             | `'always' \| 'hover' \| 'never'`             |      | 否   |
+| type              | `'' \| 'card'`                               |      | 否   |
+| loop              | `boolean`                                    |      | 否   |
+| direction         | `'horizontal' \| 'vertical'`                 |      | 否   |
+| class             | `string`                                     |      | 否   |
+| id                | `string`                                     |      | 否   |
+| ariaLabel         | `string`                                     |      | 否   |
+| ariaDescribedBy   | `string`                                     |      | 否   |
+| style             | `string \| Record<string, string>`           |      | 是   |
+| onChange          | `(index: number, prevIndex: number) => void` |      | 是   |
 
 ## CarouselItemProps
 
@@ -4502,15 +4502,15 @@ DrawerDirection: 'ltr' | 'rtl' | 'ttb' | 'btt';
 
 ### 成员
 
-| 名称            | 类型     | 描述                    | 可选 |
-| --------------- | -------- | ----------------------- | ---- | --- |
-| name            | `string  | number`                 |      | 是  |
-| label           | `string` |                         | 是   |
-| class           | `string` |                         | 是   |
-| style           | `string  | Record<string, string>` |      | 是  |
-| id              | `string` |                         | 是   |
-| ariaLabel       | `string` |                         | 是   |
-| ariaDescribedBy | `string` |                         | 是   |
+| 名称            | 类型                               | 描述 | 可选 |
+| --------------- | ---------------------------------- | ---- | ---- |
+| name            | `string \| number`                 |      | 是   |
+| label           | `string`                           |      | 是   |
+| class           | `string`                           |      | 是   |
+| style           | `string \| Record<string, string>` |      | 是   |
+| id              | `string`                           |      | 是   |
+| ariaLabel       | `string`                           |      | 是   |
+| ariaDescribedBy | `string`                           |      | 是   |
 
 ## CarouselItemSlots
 
@@ -4528,15 +4528,15 @@ DrawerDirection: 'ltr' | 'rtl' | 'ttb' | 'btt';
 
 ### 成员
 
-| 名称            | 类型     | 描述                    | 可选 |
-| --------------- | -------- | ----------------------- | ---- | --- |
-| name            | `string  | number`                 |      | 否  |
-| label           | `string` |                         | 否   |
-| class           | `string` |                         | 否   |
-| id              | `string` |                         | 否   |
-| ariaLabel       | `string` |                         | 否   |
-| ariaDescribedBy | `string` |                         | 否   |
-| style           | `string  | Record<string, string>` |      | 是  |
+| 名称            | 类型                               | 描述 | 可选 |
+| --------------- | ---------------------------------- | ---- | ---- |
+| name            | `string \| number`                 |      | 否   |
+| label           | `string`                           |      | 否   |
+| class           | `string`                           |      | 否   |
+| id              | `string`                           |      | 否   |
+| ariaLabel       | `string`                           |      | 否   |
+| ariaDescribedBy | `string`                           |      | 否   |
+| style           | `string \| Record<string, string>` |      | 是   |
 
 ## PopconfirmProps
 
@@ -4544,25 +4544,25 @@ DrawerDirection: 'ltr' | 'rtl' | 'ttb' | 'btt';
 
 ### 成员
 
-| 名称              | 类型         | 描述                    | 可选 |
-| ----------------- | ------------ | ----------------------- | ---- | --- |
-| title             | `string`     |                         | 是   |
-| confirmButtonText | `string`     |                         | 是   |
-| cancelButtonText  | `string`     |                         | 是   |
-| confirmButtonType | `string`     |                         | 是   |
-| cancelButtonType  | `string`     |                         | 是   |
-| icon              | `string`     |                         | 是   |
-| iconColor         | `string`     |                         | 是   |
-| hideIcon          | `boolean`    |                         | 是   |
-| disabled          | `boolean`    |                         | 是   |
-| width             | `number`     |                         | 是   |
-| class             | `string`     |                         | 是   |
-| style             | `string      | Record<string, string>` |      | 是  |
-| id                | `string`     |                         | 是   |
-| ariaLabel         | `string`     |                         | 是   |
-| ariaDescribedBy   | `string`     |                         | 是   |
-| onConfirm         | `() => void` |                         | 是   |
-| onCancel          | `() => void` |                         | 是   |
+| 名称              | 类型                               | 描述 | 可选 |
+| ----------------- | ---------------------------------- | ---- | ---- |
+| title             | `string`                           |      | 是   |
+| confirmButtonText | `string`                           |      | 是   |
+| cancelButtonText  | `string`                           |      | 是   |
+| confirmButtonType | `string`                           |      | 是   |
+| cancelButtonType  | `string`                           |      | 是   |
+| icon              | `string`                           |      | 是   |
+| iconColor         | `string`                           |      | 是   |
+| hideIcon          | `boolean`                          |      | 是   |
+| disabled          | `boolean`                          |      | 是   |
+| width             | `number`                           |      | 是   |
+| class             | `string`                           |      | 是   |
+| style             | `string \| Record<string, string>` |      | 是   |
+| id                | `string`                           |      | 是   |
+| ariaLabel         | `string`                           |      | 是   |
+| ariaDescribedBy   | `string`                           |      | 是   |
+| onConfirm         | `() => void`                       |      | 是   |
+| onCancel          | `() => void`                       |      | 是   |
 
 ## PopconfirmSlots
 
@@ -4582,25 +4582,25 @@ DrawerDirection: 'ltr' | 'rtl' | 'ttb' | 'btt';
 
 ### 成员
 
-| 名称              | 类型         | 描述                    | 可选 |
-| ----------------- | ------------ | ----------------------- | ---- | --- |
-| title             | `string`     |                         | 否   |
-| confirmButtonText | `string`     |                         | 否   |
-| cancelButtonText  | `string`     |                         | 否   |
-| confirmButtonType | `string`     |                         | 否   |
-| cancelButtonType  | `string`     |                         | 否   |
-| icon              | `string`     |                         | 否   |
-| iconColor         | `string`     |                         | 否   |
-| hideIcon          | `boolean`    |                         | 否   |
-| disabled          | `boolean`    |                         | 否   |
-| width             | `number`     |                         | 否   |
-| class             | `string`     |                         | 否   |
-| style             | `string      | Record<string, string>` |      | 是  |
-| id                | `string`     |                         | 否   |
-| ariaLabel         | `string`     |                         | 否   |
-| ariaDescribedBy   | `string`     |                         | 否   |
-| onConfirm         | `() => void` |                         | 是   |
-| onCancel          | `() => void` |                         | 是   |
+| 名称              | 类型                               | 描述 | 可选 |
+| ----------------- | ---------------------------------- | ---- | ---- |
+| title             | `string`                           |      | 否   |
+| confirmButtonText | `string`                           |      | 否   |
+| cancelButtonText  | `string`                           |      | 否   |
+| confirmButtonType | `string`                           |      | 否   |
+| cancelButtonType  | `string`                           |      | 否   |
+| icon              | `string`                           |      | 否   |
+| iconColor         | `string`                           |      | 否   |
+| hideIcon          | `boolean`                          |      | 否   |
+| disabled          | `boolean`                          |      | 否   |
+| width             | `number`                           |      | 否   |
+| class             | `string`                           |      | 否   |
+| style             | `string \| Record<string, string>` |      | 是   |
+| id                | `string`                           |      | 否   |
+| ariaLabel         | `string`                           |      | 否   |
+| ariaDescribedBy   | `string`                           |      | 否   |
+| onConfirm         | `() => void`                       |      | 是   |
+| onCancel          | `() => void`                       |      | 是   |
 
 ## RichTextEditorProps
 
@@ -4608,21 +4608,21 @@ DrawerDirection: 'ltr' | 'rtl' | 'ttb' | 'btt';
 
 ### 成员
 
-| 名称            | 类型                          | 描述                    | 可选 |
-| --------------- | ----------------------------- | ----------------------- | ---- | --- |
-| modelValue      | `string`                      |                         | 是   |
-| placeholder     | `string`                      |                         | 是   |
-| disabled        | `boolean`                     |                         | 是   |
-| readonly        | `boolean`                     |                         | 是   |
-| height          | `string`                      |                         | 是   |
-| class           | `string`                      |                         | 是   |
-| style           | `string                       | Record<string, string>` |      | 是  |
-| id              | `string`                      |                         | 是   |
-| ariaLabel       | `string`                      |                         | 是   |
-| ariaDescribedBy | `string`                      |                         | 是   |
-| onInput         | `(value: string) => void`     |                         | 是   |
-| onFocus         | `(event: FocusEvent) => void` |                         | 是   |
-| onBlur          | `(event: FocusEvent) => void` |                         | 是   |
+| 名称            | 类型                               | 描述 | 可选 |
+| --------------- | ---------------------------------- | ---- | ---- |
+| modelValue      | `string`                           |      | 是   |
+| placeholder     | `string`                           |      | 是   |
+| disabled        | `boolean`                          |      | 是   |
+| readonly        | `boolean`                          |      | 是   |
+| height          | `string`                           |      | 是   |
+| class           | `string`                           |      | 是   |
+| style           | `string \| Record<string, string>` |      | 是   |
+| id              | `string`                           |      | 是   |
+| ariaLabel       | `string`                           |      | 是   |
+| ariaDescribedBy | `string`                           |      | 是   |
+| onInput         | `(value: string) => void`          |      | 是   |
+| onFocus         | `(event: FocusEvent) => void`      |      | 是   |
+| onBlur          | `(event: FocusEvent) => void`      |      | 是   |
 
 ## RichTextEditorSlots
 
@@ -4641,21 +4641,21 @@ DrawerDirection: 'ltr' | 'rtl' | 'ttb' | 'btt';
 
 ### 成员
 
-| 名称            | 类型                          | 描述                    | 可选 |
-| --------------- | ----------------------------- | ----------------------- | ---- | --- |
-| modelValue      | `string`                      |                         | 否   |
-| placeholder     | `string`                      |                         | 否   |
-| disabled        | `boolean`                     |                         | 否   |
-| readonly        | `boolean`                     |                         | 否   |
-| height          | `string`                      |                         | 否   |
-| class           | `string`                      |                         | 否   |
-| style           | `string                       | Record<string, string>` |      | 是  |
-| id              | `string`                      |                         | 否   |
-| ariaLabel       | `string`                      |                         | 否   |
-| ariaDescribedBy | `string`                      |                         | 否   |
-| onInput         | `(value: string) => void`     |                         | 是   |
-| onFocus         | `(event: FocusEvent) => void` |                         | 是   |
-| onBlur          | `(event: FocusEvent) => void` |                         | 是   |
+| 名称            | 类型                               | 描述 | 可选 |
+| --------------- | ---------------------------------- | ---- | ---- |
+| modelValue      | `string`                           |      | 否   |
+| placeholder     | `string`                           |      | 否   |
+| disabled        | `boolean`                          |      | 否   |
+| readonly        | `boolean`                          |      | 否   |
+| height          | `string`                           |      | 否   |
+| class           | `string`                           |      | 否   |
+| style           | `string \| Record<string, string>` |      | 是   |
+| id              | `string`                           |      | 否   |
+| ariaLabel       | `string`                           |      | 否   |
+| ariaDescribedBy | `string`                           |      | 否   |
+| onInput         | `(value: string) => void`          |      | 是   |
+| onFocus         | `(event: FocusEvent) => void`      |      | 是   |
+| onBlur          | `(event: FocusEvent) => void`      |      | 是   |
 
 ## Upload
 
@@ -4667,14 +4667,14 @@ DrawerDirection: 'ltr' | 'rtl' | 'ttb' | 'btt';
 
 ### 成员
 
-| 名称   | 类型       | 描述      | 可选      |
-| ------ | ---------- | --------- | --------- | -------- | ------- | --- | --- |
-| value  | `string    | number`   |           | 是       |
-| max    | `number`   |           | 是        |
-| isDot  | `boolean`  |           | 是        |
-| hidden | `boolean`  |           | 是        |
-| type   | `'primary' | 'success' | 'warning' | 'danger' | 'info'` |     | 是  |
-| class  | `string`   |           | 是        |
+| 名称   | 类型                                                        | 描述 | 可选 |
+| ------ | ----------------------------------------------------------- | ---- | ---- |
+| value  | `string \| number`                                          |      | 是   |
+| max    | `number`                                                    |      | 是   |
+| isDot  | `boolean`                                                   |      | 是   |
+| hidden | `boolean`                                                   |      | 是   |
+| type   | `'primary' \| 'success' \| 'warning' \| 'danger' \| 'info'` |      | 是   |
+| class  | `string`                                                    |      | 是   |
 
 ## VaporBadge
 
@@ -4686,19 +4686,19 @@ DrawerDirection: 'ltr' | 'rtl' | 'ttb' | 'btt';
 
 ### 成员
 
-| 名称       | 类型                          | 描述      | 可选      |
-| ---------- | ----------------------------- | --------- | --------- | -------- | ------ | ---------- | --- | --- |
-| type       | `'primary'                    | 'success' | 'warning' | 'danger' | 'info' | 'default'` |     | 是  |
-| size       | `'large'                      | 'medium'  | 'small'`  |          | 是     |
-| disabled   | `boolean`                     |           | 是        |
-| loading    | `boolean`                     |           | 是        |
-| plain      | `boolean`                     |           | 是        |
-| round      | `boolean`                     |           | 是        |
-| circle     | `boolean`                     |           | 是        |
-| nativeType | `'button'                     | 'submit'  | 'reset'`  |          | 是     |
-| class      | `string`                      |           | 是        |
-| style      | `string`                      |           | 是        |
-| onClick    | `(event: MouseEvent) => void` |           | 是        |
+| 名称       | 类型                                                                     | 描述 | 可选 |
+| ---------- | ------------------------------------------------------------------------ | ---- | ---- |
+| type       | `'primary' \| 'success' \| 'warning' \| 'danger' \| 'info' \| 'default'` |      | 是   |
+| size       | `'large' \| 'medium' \| 'small'`                                         |      | 是   |
+| disabled   | `boolean`                                                                |      | 是   |
+| loading    | `boolean`                                                                |      | 是   |
+| plain      | `boolean`                                                                |      | 是   |
+| round      | `boolean`                                                                |      | 是   |
+| circle     | `boolean`                                                                |      | 是   |
+| nativeType | `'button' \| 'submit' \| 'reset'`                                        |      | 是   |
+| class      | `string`                                                                 |      | 是   |
+| style      | `string`                                                                 |      | 是   |
+| onClick    | `(event: MouseEvent) => void`                                            |      | 是   |
 
 ## VaporButton
 
@@ -4710,23 +4710,23 @@ DrawerDirection: 'ltr' | 'rtl' | 'ttb' | 'btt';
 
 ### 成员
 
-| 名称         | 类型                          | 描述       | 可选     |
-| ------------ | ----------------------------- | ---------- | -------- | -------- | ----- | ----- | ----------- | --- | --- |
-| type         | `'text'                       | 'password' | 'email'  | 'number' | 'tel' | 'url' | 'textarea'` |     | 是  |
-| modelValue   | `string                       | number`    |          | 是       |
-| placeholder  | `string`                      |            | 是       |
-| disabled     | `boolean`                     |            | 是       |
-| readonly     | `boolean`                     |            | 是       |
-| clearable    | `boolean`                     |            | 是       |
-| showPassword | `boolean`                     |            | 是       |
-| size         | `'large'                      | 'medium'   | 'small'` |          | 是    |
-| class        | `string`                      |            | 是       |
-| style        | `string`                      |            | 是       |
-| onInput      | `(value: string) => void`     |            | 是       |
-| onChange     | `(value: string) => void`     |            | 是       |
-| onFocus      | `(event: FocusEvent) => void` |            | 是       |
-| onBlur       | `(event: FocusEvent) => void` |            | 是       |
-| onClear      | `() => void`                  |            | 是       |
+| 名称         | 类型                                                                          | 描述 | 可选 |
+| ------------ | ----------------------------------------------------------------------------- | ---- | ---- |
+| type         | `'text' \| 'password' \| 'email' \| 'number' \| 'tel' \| 'url' \| 'textarea'` |      | 是   |
+| modelValue   | `string \| number`                                                            |      | 是   |
+| placeholder  | `string`                                                                      |      | 是   |
+| disabled     | `boolean`                                                                     |      | 是   |
+| readonly     | `boolean`                                                                     |      | 是   |
+| clearable    | `boolean`                                                                     |      | 是   |
+| showPassword | `boolean`                                                                     |      | 是   |
+| size         | `'large' \| 'medium' \| 'small'`                                              |      | 是   |
+| class        | `string`                                                                      |      | 是   |
+| style        | `string`                                                                      |      | 是   |
+| onInput      | `(value: string) => void`                                                     |      | 是   |
+| onChange     | `(value: string) => void`                                                     |      | 是   |
+| onFocus      | `(event: FocusEvent) => void`                                                 |      | 是   |
+| onBlur       | `(event: FocusEvent) => void`                                                 |      | 是   |
+| onClear      | `() => void`                                                                  |      | 是   |
 
 ## VaporInput
 
@@ -4738,16 +4738,16 @@ DrawerDirection: 'ltr' | 'rtl' | 'ttb' | 'btt';
 
 ### 成员
 
-| 名称        | 类型                                                     | 描述         | 可选 |
-| ----------- | -------------------------------------------------------- | ------------ | ---- | --- |
-| data        | `T[]                                                     | Signal<T[]>` |      | 否  |
-| keyFn       | `(item: T, index: number) => string                      | number`      |      | 否  |
-| renderItem  | `(item: T, index: number) => VNode                       | VNode[]`     |      | 否  |
-| emptyRender | `() => VNode                                             | VNode[]`     |      | 是  |
-| class       | `string`                                                 |              | 是   |
-| style       | `string`                                                 |              | 是   |
-| onMount     | `(item: T, index: number, element: HTMLElement) => void` |              | 是   |
-| onUnmount   | `(item: T, index: number, element: HTMLElement) => void` |              | 是   |
+| 名称        | 类型                                                     | 描述 | 可选 |
+| ----------- | -------------------------------------------------------- | ---- | ---- |
+| data        | `T[] \| Signal<T[]>`                                     |      | 否   |
+| keyFn       | `(item: T, index: number) => string \| number`           |      | 否   |
+| renderItem  | `(item: T, index: number) => VNode \| VNode[]`           |      | 否   |
+| emptyRender | `() => VNode \| VNode[]`                                 |      | 是   |
+| class       | `string`                                                 |      | 是   |
+| style       | `string`                                                 |      | 是   |
+| onMount     | `(item: T, index: number, element: HTMLElement) => void` |      | 是   |
+| onUnmount   | `(item: T, index: number, element: HTMLElement) => void` |      | 是   |
 
 ## VaporList
 
@@ -4798,18 +4798,18 @@ DrawerDirection: 'ltr' | 'rtl' | 'ttb' | 'btt';
 
 ### 成员
 
-| 名称           | 类型                      | 描述        | 可选 |
-| -------------- | ------------------------- | ----------- | ---- | --- |
-| mode           | `'horizontal'             | 'vertical'` |      | 是  |
-| defaultActive  | `string`                  |             | 是   |
-| defaultOpeneds | `string[]`                |             | 是   |
-| uniqueOpened   | `boolean`                 |             | 是   |
-| class          | `string`                  |             | 是   |
-| style          | `string`                  |             | 是   |
-| items          | `MenuItem[]`              |             | 是   |
-| onSelect       | `(index: string) => void` |             | 是   |
-| onOpen         | `(index: string) => void` |             | 是   |
-| onClose        | `(index: string) => void` |             | 是   |
+| 名称           | 类型                         | 描述 | 可选 |
+| -------------- | ---------------------------- | ---- | ---- |
+| mode           | `'horizontal' \| 'vertical'` |      | 是   |
+| defaultActive  | `string`                     |      | 是   |
+| defaultOpeneds | `string[]`                   |      | 是   |
+| uniqueOpened   | `boolean`                    |      | 是   |
+| class          | `string`                     |      | 是   |
+| style          | `string`                     |      | 是   |
+| items          | `MenuItem[]`                 |      | 是   |
+| onSelect       | `(index: string) => void`    |      | 是   |
+| onOpen         | `(index: string) => void`    |      | 是   |
+| onClose        | `(index: string) => void`    |      | 是   |
 
 ## VaporMenuItem
 
@@ -4829,11 +4829,11 @@ DrawerDirection: 'ltr' | 'rtl' | 'ttb' | 'btt';
 
 ### 成员
 
-| 名称     | 类型      | 描述    | 可选 |
-| -------- | --------- | ------- | ---- | --- |
-| value    | `string   | number` |      | 否  |
-| label    | `string`  |         | 否   |
-| disabled | `boolean` |         | 是   |
+| 名称     | 类型               | 描述 | 可选 |
+| -------- | ------------------ | ---- | ---- |
+| value    | `string \| number` |      | 否   |
+| label    | `string`           |      | 否   |
+| disabled | `boolean`          |      | 是   |
 
 ## VaporSelectProps
 
@@ -4841,18 +4841,18 @@ DrawerDirection: 'ltr' | 'rtl' | 'ttb' | 'btt';
 
 ### 成员
 
-| 名称        | 类型             | 描述     | 可选     |
-| ----------- | ---------------- | -------- | -------- | ------------------- | --- | --- |
-| modelValue  | `string          | number   | (string  | number)[]`          |     | 是  |
-| options     | `SelectOption[]` |          | 否       |
-| placeholder | `string`         |          | 是       |
-| disabled    | `boolean`        |          | 是       |
-| clearable   | `boolean`        |          | 是       |
-| multiple    | `boolean`        |          | 是       |
-| size        | `'large'         | 'medium' | 'small'` |                     | 是  |
-| class       | `string`         |          | 是       |
-| style       | `string`         |          | 是       |
-| onChange    | `(value: string  | number   | (string  | number)[]) => void` |     | 是  |
+| 名称        | 类型                                                        | 描述 | 可选 |
+| ----------- | ----------------------------------------------------------- | ---- | ---- |
+| modelValue  | `string \| number \| (string \| number)[]`                  |      | 是   |
+| options     | `SelectOption[]`                                            |      | 否   |
+| placeholder | `string`                                                    |      | 是   |
+| disabled    | `boolean`                                                   |      | 是   |
+| clearable   | `boolean`                                                   |      | 是   |
+| multiple    | `boolean`                                                   |      | 是   |
+| size        | `'large' \| 'medium' \| 'small'`                            |      | 是   |
+| class       | `string`                                                    |      | 是   |
+| style       | `string`                                                    |      | 是   |
+| onChange    | `(value: string \| number \| (string \| number)[]) => void` |      | 是   |
 
 ## VaporSelect
 
@@ -4890,17 +4890,17 @@ DrawerDirection: 'ltr' | 'rtl' | 'ttb' | 'btt';
 
 ### 成员
 
-| 名称        | 类型                                     | 描述   | 可选           |
-| ----------- | ---------------------------------------- | ------ | -------------- | --- | --- |
-| modelValue  | `string`                                 |        | 是             |
-| panes       | `TabPane[]`                              |        | 是             |
-| type        | `''                                      | 'card' | 'border-card'` |     | 是  |
-| closable    | `boolean`                                |        | 是             |
-| class       | `string`                                 |        | 是             |
-| style       | `string`                                 |        | 是             |
-| onChange    | `(name: string) => void`                 |        | 是             |
-| onTabClick  | `(pane: TabPane, index: number) => void` |        | 是             |
-| onTabRemove | `(name: string) => void`                 |        | 是             |
+| 名称        | 类型                                     | 描述 | 可选 |
+| ----------- | ---------------------------------------- | ---- | ---- |
+| modelValue  | `string`                                 |      | 是   |
+| panes       | `TabPane[]`                              |      | 是   |
+| type        | `'' \| 'card' \| 'border-card'`          |      | 是   |
+| closable    | `boolean`                                |      | 是   |
+| class       | `string`                                 |      | 是   |
+| style       | `string`                                 |      | 是   |
+| onChange    | `(name: string) => void`                 |      | 是   |
+| onTabClick  | `(pane: TabPane, index: number) => void` |      | 是   |
+| onTabRemove | `(name: string) => void`                 |      | 是   |
 
 ## VaporTabPane
 
@@ -4916,17 +4916,17 @@ DrawerDirection: 'ltr' | 'rtl' | 'ttb' | 'btt';
 
 ### 成员
 
-| 名称               | 类型                          | 描述      | 可选      |
-| ------------------ | ----------------------------- | --------- | --------- | -------- | ------- | --- | --- |
-| type               | `'primary'                    | 'success' | 'warning' | 'danger' | 'info'` |     | 是  |
-| closable           | `boolean`                     |           | 是        |
-| disableTransitions | `boolean`                     |           | 是        |
-| hit                | `boolean`                     |           | 是        |
-| color              | `string`                      |           | 是        |
-| size               | `'large'                      | 'default' | 'small'`  |          | 是      |
-| round              | `boolean`                     |           | 是        |
-| class              | `string`                      |           | 是        |
-| onClose            | `(event: MouseEvent) => void` |           | 是        |
+| 名称               | 类型                                                        | 描述 | 可选 |
+| ------------------ | ----------------------------------------------------------- | ---- | ---- |
+| type               | `'primary' \| 'success' \| 'warning' \| 'danger' \| 'info'` |      | 是   |
+| closable           | `boolean`                                                   |      | 是   |
+| disableTransitions | `boolean`                                                   |      | 是   |
+| hit                | `boolean`                                                   |      | 是   |
+| color              | `string`                                                    |      | 是   |
+| size               | `'large' \| 'default' \| 'small'`                           |      | 是   |
+| round              | `boolean`                                                   |      | 是   |
+| class              | `string`                                                    |      | 是   |
+| onClose            | `(event: MouseEvent) => void`                               |      | 是   |
 
 ## VaporTag
 

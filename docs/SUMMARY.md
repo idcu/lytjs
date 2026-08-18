@@ -119,7 +119,7 @@
 - [CLI](./api/cli.md)
 - [Test Utils](./api/test-utils.md)
 
-### 生成态扩展（自动生成，见 [generated 目录](./api/generated)）
+### 生成态扩展（自动生成，见下方 `./api/generated/` 下的文件列表）
 
 - **官方插件**：[plugin-animation](./api/generated/plugin-animation.md) / [plugin-auth](./api/generated/plugin-auth.md) / [plugin-chart](./api/generated/plugin-chart.md) / [plugin-data](./api/generated/plugin-data.md) / [plugin-data-fetch](./api/generated/plugin-data-fetch.md) / [plugin-form](./api/generated/plugin-form.md) / [plugin-i18n](./api/generated/plugin-i18n.md) / [plugin-logger](./api/generated/plugin-logger.md) / [plugin-storage](./api/generated/plugin-storage.md) / [plugin-testing](./api/generated/plugin-testing.md) / [plugin-theme](./api/generated/plugin-theme.md) / [plugin-validation](./api/generated/plugin-validation.md)
 - **SSR 渲染栈**：[ssr](./api/generated/ssr.md) / [ssg](./api/generated/ssg.md) / [hmr](./api/generated/hmr.md) / [cache](./api/generated/cache.md) / [cache-isr](./api/generated/cache-isr.md) / [html-renderer](./api/generated/html-renderer.md)

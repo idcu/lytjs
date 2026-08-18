@@ -504,9 +504,9 @@ import type {
 
 ## 相关包
 
-- [@lytjs/core](../core) - 框架核心入口，整合所有子包
-- [@lytjs/reactivity](../reactivity) - 响应式系统，组件状态管理的基础
-- [@lytjs/vdom](../vdom) - 虚拟 DOM，组件渲染的基础
+- [@lytjs/core](../core/) - 框架核心入口，整合所有子包
+- [@lytjs/reactivity](../reactivity/) - 响应式系统，组件状态管理的基础
+- [@lytjs/vdom](../vdom/) - 虚拟 DOM，组件渲染的基础
 
 ## 依赖版本
 

@@ -93,14 +93,14 @@ validateFieldInternal: Promise<ValidationResult>;
 
 ### 参数
 
-| 参数             | 类型                                    | 描述 | 可选 | 默认值 |
-| ---------------- | --------------------------------------- | ---- | ---- | ------ |
-| value            | `unknown`                               |      | 否   | -      |
-| config           | `FieldValidationConfig`                 |      | 否   | -      |
-| allValues        | `Record<string, unknown>`               |      | 否   | -      |
-| validators       | `Record<ValidationRuleType, Validator>` |      | 否   | -      |
-| messages         | `ValidationMessages`                    |      | 否   | -      |
-| stopOnFirstError | `boolean`                               |      | 是   | false  |
+| 参数             | 类型                                    | 描述 | 可选 | 默认值  |
+| ---------------- | --------------------------------------- | ---- | ---- | ------- |
+| value            | `unknown`                               |      | 否   | -       |
+| config           | `FieldValidationConfig`                 |      | 否   | -       |
+| allValues        | `Record<string, unknown>`               |      | 否   | -       |
+| validators       | `Record<ValidationRuleType, Validator>` |      | 否   | -       |
+| messages         | `ValidationMessages`                    |      | 否   | -       |
+| stopOnFirstError | `boolean`                               |      | 是   | `false` |
 
 ### 返回值
 
@@ -211,12 +211,12 @@ ValidationRuleType: | 'required'
 
 ### 成员
 
-| 名称      | 类型                                                              | 描述              | 可选 |
-| --------- | ----------------------------------------------------------------- | ----------------- | ---- | --- |
-| type      | `ValidationRuleType`                                              |                   | 否   |
-| message   | `string`                                                          |                   | 是   |
-| value     | `unknown`                                                         |                   | 是   |
-| validator | `(value: unknown, allValues?: Record<string, unknown>) => boolean | Promise<boolean>` |      | 是  |
+| 名称      | 类型                                                                                   | 描述 | 可选 |
+| --------- | -------------------------------------------------------------------------------------- | ---- | ---- |
+| type      | `ValidationRuleType`                                                                   |      | 否   |
+| message   | `string`                                                                               |      | 是   |
+| value     | `unknown`                                                                              |      | 是   |
+| validator | `(value: unknown, allValues?: Record<string, unknown>) => boolean \| Promise<boolean>` |      | 是   |
 
 ## Validator
 

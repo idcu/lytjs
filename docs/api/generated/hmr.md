@@ -24,9 +24,9 @@ HMR 客户端类
 ### 成员
 
 | 名称             | 类型                         | 描述              | 可选 |
-| ---------------- | ---------------------------- | ----------------- | ---- | --- |
+| ---------------- | ---------------------------- | ----------------- | ---- |
 | options          | `Required<HMRClientOptions>` |                   | 否   |
-| ws               | `WebSocket                   | null`             |      | 否  |
+| ws               | `WebSocket \| null`          |                   | 否   |
 | handlers         | `Map<string, HMRHandler>`    |                   | 否   |
 | isConnected      | `boolean`                    |                   | 否   |
 | connect          | -                            | 连接到 HMR 服务器 | 否   |
@@ -55,7 +55,7 @@ createHMRClient: HMRClient;
 
 | 参数    | 类型               | 描述 | 可选 | 默认值 |
 | ------- | ------------------ | ---- | ---- | ------ |
-| options | `HMRClientOptions` |      | 是   | {}     |
+| options | `HMRClientOptions` |      | 是   | `{}`   |
 
 ### 返回值
 
@@ -85,7 +85,7 @@ getHMRClient: HMRClient;
 
 | 参数    | 类型               | 描述 | 可选 | 默认值 |
 | ------- | ------------------ | ---- | ---- | ------ |
-| options | `HMRClientOptions` |      | 是   | {}     |
+| options | `HMRClientOptions` |      | 是   | `{}`   |
 
 ### 返回值
 
@@ -156,10 +156,10 @@ dispose: void
 
 ### 成员
 
-| 名称 | 类型         | 描述     | 可选          |
-| ---- | ------------ | -------- | ------------- | --------- | -------- | --- |
-| type | `'connected' | 'update' | 'full-reload' | 'custom'` | 消息类型 | 否  |
-| data | `unknown`    | 数据     | 是            |
+| 名称 | 类型                                                   | 描述     | 可选 |
+| ---- | ------------------------------------------------------ | -------- | ---- |
+| type | `'connected' \| 'update' \| 'full-reload' \| 'custom'` | 消息类型 | 否   |
+| data | `unknown`                                              | 数据     | 是   |
 
 ## HMRUpdate
 

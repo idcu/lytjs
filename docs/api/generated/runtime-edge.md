@@ -53,7 +53,7 @@ createEdgeRouter: EdgeRouter;
 
 | 参数    | 类型                | 描述 | 可选 | 默认值 |
 | ------- | ------------------- | ---- | ---- | ------ |
-| options | `EdgeRouterOptions` |      | 是   | {}     |
+| options | `EdgeRouterOptions` |      | 是   | `{}`   |
 
 ### 返回值
 
@@ -76,7 +76,7 @@ jsonResponse: EdgeResponse;
 | 参数   | 类型      | 描述 | 可选 | 默认值 |
 | ------ | --------- | ---- | ---- | ------ |
 | data   | `unknown` |      | 否   | -      |
-| status | `any`     |      | 是   | 200    |
+| status | `any`     |      | 是   | `200`  |
 
 ### 返回值
 
@@ -99,7 +99,7 @@ textResponse: EdgeResponse;
 | 参数   | 类型     | 描述 | 可选 | 默认值 |
 | ------ | -------- | ---- | ---- | ------ |
 | text   | `string` |      | 否   | -      |
-| status | `any`    |      | 是   | 200    |
+| status | `any`    |      | 是   | `200`  |
 
 ### 返回值
 
@@ -122,7 +122,7 @@ htmlResponse: EdgeResponse;
 | 参数   | 类型     | 描述 | 可选 | 默认值 |
 | ------ | -------- | ---- | ---- | ------ |
 | html   | `string` |      | 否   | -      |
-| status | `any`    |      | 是   | 200    |
+| status | `any`    |      | 是   | `200`  |
 
 ### 返回值
 
@@ -145,7 +145,7 @@ redirectResponse: EdgeResponse;
 | 参数     | 类型     | 描述 | 可选 | 默认值 |
 | -------- | -------- | ---- | ---- | ------ |
 | location | `string` |      | 否   | -      |
-| status   | `any`    |      | 是   | 302    |
+| status   | `any`    |      | 是   | `302`  |
 
 ### 返回值
 

@@ -254,13 +254,13 @@
 
 ### 成员
 
-| 名称       | 类型                  | 描述           | 可选         |
-| ---------- | --------------------- | -------------- | ------------ | --- |
-| name       | `string`              | 测试名称       | 否           |
-| iterations | `number`              | 迭代次数       | 否           |
-| warmup     | `number`              | 预热次数       | 是           |
-| fn         | `() => void           | Promise<void>` | 异步测试回调 | 否  |
-| asyncFn    | `() => Promise<void>` | 异步回调       | 是           |
+| 名称       | 类型                          | 描述         | 可选 |
+| ---------- | ----------------------------- | ------------ | ---- |
+| name       | `string`                      | 测试名称     | 否   |
+| iterations | `number`                      | 迭代次数     | 否   |
+| warmup     | `number`                      | 预热次数     | 是   |
+| fn         | `() => void \| Promise<void>` | 异步测试回调 | 否   |
+| asyncFn    | `() => Promise<void>`         | 异步回调     | 是   |
 
 ## LargeScaleScenario
 
@@ -496,10 +496,10 @@ createLargeScaleBenchmark: BenchmarkConfig;
 
 ### 参数
 
-| 参数     | 类型                         | 描述           | 可选 | 默认值 |
-| -------- | ---------------------------- | -------------- | ---- | ------ | --- |
-| scenario | `LargeScaleScenario`         |                | 否   | -      |
-| testFn   | `(nodeCount: number) => void | Promise<void>` |      | 否     | -   |
+| 参数     | 类型                                           | 描述 | 可选 | 默认值 |
+| -------- | ---------------------------------------------- | ---- | ---- | ------ |
+| scenario | `LargeScaleScenario`                           |      | 否   | -      |
+| testFn   | `(nodeCount: number) => void \| Promise<void>` |      | 否   | -      |
 
 ### 返回值
 
@@ -663,7 +663,7 @@ serializeComponentTree: string;
 | 参数   | 类型                  | 描述 | 可选 | 默认值 |
 | ------ | --------------------- | ---- | ---- | ------ |
 | nodes  | `ComponentTreeNode[]` |      | 否   | -      |
-| indent | `any`                 |      | 是   | 0      |
+| indent | `any`                 |      | 是   | `0`    |
 
 ### 返回值
 
@@ -995,10 +995,10 @@ measurePerformance: <T extends (...args: unknown[]) => unknown>(fn: T) => T;
 
 ### 参数
 
-| 参数     | 类型     | 描述 | 可选 | 默认值        |
-| -------- | -------- | ---- | ---- | ------------- |
-| name     | `string` |      | 否   | -             |
-| category | `string` |      | 是   | 'performance' |
+| 参数     | 类型     | 描述 | 可选 | 默认值          |
+| -------- | -------- | ---- | ---- | --------------- |
+| name     | `string` |      | 否   | -               |
+| category | `string` |      | 是   | `'performance'` |
 
 ### 返回值
 
@@ -1018,11 +1018,11 @@ measureAsyncPerformance: Promise<T>;
 
 ### 参数
 
-| 参数     | 类型               | 描述 | 可选 | 默认值        |
-| -------- | ------------------ | ---- | ---- | ------------- |
-| name     | `string`           |      | 否   | -             |
-| fn       | `() => Promise<T>` |      | 否   | -             |
-| category | `string`           |      | 是   | 'performance' |
+| 参数     | 类型               | 描述 | 可选 | 默认值          |
+| -------- | ------------------ | ---- | ---- | --------------- |
+| name     | `string`           |      | 否   | -               |
+| fn       | `() => Promise<T>` |      | 否   | -               |
+| category | `string`           |      | 是   | `'performance'` |
 
 ### 返回值
 
@@ -1453,9 +1453,9 @@ recordMetric: PerformanceMetric;
 
 ### 参数
 
-| 参数   | 类型                          | 描述          | 可选 | 默认值 |
-| ------ | ----------------------------- | ------------- | ---- | ------ | --- |
-| metric | `Omit<PerformanceMetric, 'id' | 'timestamp'>` |      | 否     | -   |
+| 参数   | 类型                                           | 描述 | 可选 | 默认值 |
+| ------ | ---------------------------------------------- | ---- | ---- | ------ |
+| metric | `Omit<PerformanceMetric, 'id' \| 'timestamp'>` |      | 否   | -      |
 
 ### 返回值
 
@@ -1627,7 +1627,7 @@ getAlerts: Alert[]
 
 | 参数                | 类型      | 描述 | 可选 | 默认值 |
 | ------------------- | --------- | ---- | ---- | ------ |
-| includeAcknowledged | `boolean` |      | 是   | true   |
+| includeAcknowledged | `boolean` |      | 是   | `true` |
 
 ### 返回值
 
@@ -1886,10 +1886,10 @@ startTimer: () => void
 
 ### 参数
 
-| 参数 | 类型         | 描述 | 可选 | 默认值   |
-| ---- | ------------ | ---- | ---- | -------- |
-| name | `string`     |      | 否   | -        |
-| type | `MetricType` |      | 是   | 'custom' |
+| 参数 | 类型         | 描述 | 可选 | 默认值     |
+| ---- | ------------ | ---- | ---- | ---------- |
+| name | `string`     |      | 否   | -          |
+| type | `MetricType` |      | 是   | `'custom'` |
 
 ### 返回值
 
@@ -1903,15 +1903,15 @@ startTimer: () => void
 
 ### 成员
 
-| 名称      | 类型                      | 描述     | 可选      |
-| --------- | ------------------------- | -------- | --------- | --- | --- |
-| id        | `string`                  |          | 否        |
-| name      | `string`                  |          | 否        |
-| category  | `'render'                 | 'effect' | 'custom'` |     | 否  |
-| startTime | `number`                  |          | 否        |
-| duration  | `number`                  |          | 否        |
-| depth     | `number`                  |          | 否        |
-| metadata  | `Record<string, unknown>` |          | 是        |
+| 名称      | 类型                               | 描述 | 可选 |
+| --------- | ---------------------------------- | ---- | ---- |
+| id        | `string`                           |      | 否   |
+| name      | `string`                           |      | 否   |
+| category  | `'render' \| 'effect' \| 'custom'` |      | 否   |
+| startTime | `number`                           |      | 否   |
+| duration  | `number`                           |      | 否   |
+| depth     | `number`                           |      | 否   |
+| metadata  | `Record<string, unknown>`          |      | 是   |
 
 ## FlameGraphNode
 
@@ -1921,12 +1921,12 @@ startTimer: () => void
 
 ### 成员
 
-| 名称     | 类型               | 描述     | 可选      |
-| -------- | ------------------ | -------- | --------- | --- | --- |
-| name     | `string`           |          | 否        |
-| value    | `number`           |          | 否        |
-| children | `FlameGraphNode[]` |          | 是        |
-| category | `'render'          | 'effect' | 'custom'` |     | 是  |
+| 名称     | 类型                               | 描述 | 可选 |
+| -------- | ---------------------------------- | ---- | ---- |
+| name     | `string`                           |      | 否   |
+| value    | `number`                           |      | 否   |
+| children | `FlameGraphNode[]`                 |      | 是   |
+| category | `'render' \| 'effect' \| 'custom'` |      | 是   |
 
 ## timelineEventStack
 
@@ -1954,11 +1954,11 @@ beginTimelineEvent: string;
 
 ### 参数
 
-| 参数     | 类型                        | 描述 | 可选 | 默认值   |
-| -------- | --------------------------- | ---- | ---- | -------- |
-| name     | `string`                    |      | 否   | -        |
-| category | `TimelineEvent['category']` |      | 是   | 'custom' |
-| metadata | `Record<string, unknown>`   |      | 是   | -        |
+| 参数     | 类型                        | 描述 | 可选 | 默认值     |
+| -------- | --------------------------- | ---- | ---- | ---------- |
+| name     | `string`                    |      | 否   | -          |
+| category | `TimelineEvent['category']` |      | 是   | `'custom'` |
+| metadata | `Record<string, unknown>`   |      | 是   | -          |
 
 ### 返回值
 
@@ -2041,7 +2041,7 @@ getSlowOperations: TimelineEvent[]
 
 | 参数      | 类型     | 描述 | 可选 | 默认值 |
 | --------- | -------- | ---- | ---- | ------ |
-| limit     | `number` |      | 是   | 10     |
+| limit     | `number` |      | 是   | `10`   |
 | threshold | `number` |      | 是   | -      |
 
 ### 返回值
@@ -2159,10 +2159,10 @@ serializeTimelineEvents: string;
 
 ### 成员
 
-| 名称 | 类型     | 描述  | 可选 |
-| ---- | -------- | ----- | ---- | --- |
-| path | `string` |       | 是   |
-| name | `string  | null` |      | 是  |
+| 名称 | 类型             | 描述 | 可选 |
+| ---- | ---------------- | ---- | ---- |
+| path | `string`         |      | 是   |
+| name | `string \| null` |      | 是   |
 
 ## RouterLocation
 
@@ -2170,13 +2170,13 @@ serializeTimelineEvents: string;
 
 ### 成员
 
-| 名称    | 类型                     | 描述  | 可选 |
-| ------- | ------------------------ | ----- | ---- | --- |
-| path    | `string`                 |       | 是   |
-| name    | `string                  | null` |      | 是  |
-| params  | `Record<string, string>` |       | 是   |
-| query   | `Record<string, string>` |       | 是   |
-| matched | `RouterMatched[]`        |       | 是   |
+| 名称    | 类型                     | 描述 | 可选 |
+| ------- | ------------------------ | ---- | ---- |
+| path    | `string`                 |      | 是   |
+| name    | `string \| null`         |      | 是   |
+| params  | `Record<string, string>` |      | 是   |
+| query   | `Record<string, string>` |      | 是   |
+| matched | `RouterMatched[]`        |      | 是   |
 
 ## RouterInstance
 
@@ -2373,9 +2373,9 @@ serializeRouteInfo: string;
 
 ### 参数
 
-| 参数  | 类型       | 描述  | 可选 | 默认值 |
-| ----- | ---------- | ----- | ---- | ------ | --- |
-| route | `RouteInfo | null` |      | 否     | -   |
+| 参数  | 类型                | 描述 | 可选 | 默认值 |
+| ----- | ------------------- | ---- | ---- | ------ |
+| route | `RouteInfo \| null` |      | 否   | -      |
 
 ### 返回值
 
@@ -2435,18 +2435,18 @@ clearRouteHistory: void
 
 ### 成员
 
-| 名称              | 类型       | 描述       | 可选      |
-| ----------------- | ---------- | ---------- | --------- | --- | --- |
-| id                | `string`   |            | 否        |
-| name              | `string`   |            | 否        |
-| type              | `'signal'  | 'computed' | 'effect'` |     | 否  |
-| value             | `unknown`  |            | 是        |
-| previousValue     | `unknown`  |            | 是        |
-| dependencies      | `string[]` |            | 否        |
-| dependents        | `string[]` |            | 否        |
-| updateCount       | `number`   |            | 否        |
-| lastUpdateTime    | `number`   |            | 否        |
-| averageUpdateTime | `number`   |            | 否        |
+| 名称              | 类型                                 | 描述 | 可选 |
+| ----------------- | ------------------------------------ | ---- | ---- |
+| id                | `string`                             |      | 否   |
+| name              | `string`                             |      | 否   |
+| type              | `'signal' \| 'computed' \| 'effect'` |      | 否   |
+| value             | `unknown`                            |      | 是   |
+| previousValue     | `unknown`                            |      | 是   |
+| dependencies      | `string[]`                           |      | 否   |
+| dependents        | `string[]`                           |      | 否   |
+| updateCount       | `number`                             |      | 否   |
+| lastUpdateTime    | `number`                             |      | 否   |
+| averageUpdateTime | `number`                             |      | 否   |
 
 ## Snapshot
 
@@ -2499,14 +2499,14 @@ clearRouteHistory: void
 
 ### 成员
 
-| 名称      | 类型                      | 描述       | 可选      |
-| --------- | ------------------------- | ---------- | --------- | --- | --- |
-| id        | `string`                  |            | 否        |
-| name      | `string`                  |            | 否        |
-| type      | `'signal'                 | 'computed' | 'effect'` |     | 否  |
-| duration  | `number`                  |            | 否        |
-| timestamp | `number`                  |            | 否        |
-| metadata  | `Record<string, unknown>` |            | 是        |
+| 名称      | 类型                                 | 描述 | 可选 |
+| --------- | ------------------------------------ | ---- | ---- |
+| id        | `string`                             |      | 否   |
+| name      | `string`                             |      | 否   |
+| type      | `'signal' \| 'computed' \| 'effect'` |      | 否   |
+| duration  | `number`                             |      | 否   |
+| timestamp | `number`                             |      | 否   |
+| metadata  | `Record<string, unknown>`            |      | 是   |
 
 ## DependencyGraphNode
 
@@ -2516,13 +2516,13 @@ clearRouteHistory: void
 
 ### 成员
 
-| 名称 | 类型      | 描述       | 可选      |
-| ---- | --------- | ---------- | --------- | --- | --- |
-| id   | `string`  |            | 否        |
-| name | `string`  |            | 否        |
-| type | `'signal' | 'computed' | 'effect'` |     | 否  |
-| x    | `number`  |            | 是        |
-| y    | `number`  |            | 是        |
+| 名称 | 类型                                 | 描述 | 可选 |
+| ---- | ------------------------------------ | ---- | ---- |
+| id   | `string`                             |      | 否   |
+| name | `string`                             |      | 否   |
+| type | `'signal' \| 'computed' \| 'effect'` |      | 否   |
+| x    | `number`                             |      | 是   |
+| y    | `number`                             |      | 是   |
 
 ## DependencyGraphEdge
 
@@ -2532,11 +2532,11 @@ clearRouteHistory: void
 
 ### 成员
 
-| 名称   | 类型          | 描述         | 可选 |
-| ------ | ------------- | ------------ | ---- | --- |
-| source | `string`      |              | 否   |
-| target | `string`      |              | 否   |
-| type   | `'dependency' | 'dependent'` |      | 否  |
+| 名称   | 类型                          | 描述 | 可选 |
+| ------ | ----------------------------- | ---- | ---- |
+| source | `string`                      |      | 否   |
+| target | `string`                      |      | 否   |
+| type   | `'dependency' \| 'dependent'` |      | 否   |
 
 ## DependencyGraph
 
@@ -2559,18 +2559,18 @@ clearRouteHistory: void
 
 ### 成员
 
-| 名称      | 类型      | 描述       | 可选      |
-| --------- | --------- | ---------- | --------- | --- | --- |
-| id        | `string`  |            | 否        |
-| name      | `string`  |            | 否        |
-| type      | `'signal' | 'computed' | 'effect'` |     | 否  |
-| x         | `number`  |            | 否        |
-| y         | `number`  |            | 否        |
-| level     | `number`  |            | 否        |
-| width     | `number`  |            | 否        |
-| height    | `number`  |            | 否        |
-| inDegree  | `number`  |            | 否        |
-| outDegree | `number`  |            | 否        |
+| 名称      | 类型                                 | 描述 | 可选 |
+| --------- | ------------------------------------ | ---- | ---- |
+| id        | `string`                             |      | 否   |
+| name      | `string`                             |      | 否   |
+| type      | `'signal' \| 'computed' \| 'effect'` |      | 否   |
+| x         | `number`                             |      | 否   |
+| y         | `number`                             |      | 否   |
+| level     | `number`                             |      | 否   |
+| width     | `number`                             |      | 否   |
+| height    | `number`                             |      | 否   |
+| inDegree  | `number`                             |      | 否   |
+| outDegree | `number`                             |      | 否   |
 
 ## VisualLayoutEdge
 
@@ -2642,12 +2642,12 @@ registerSignal: void
 
 ### 参数
 
-| 参数         | 类型      | 描述       | 可选      | 默认值 |
-| ------------ | --------- | ---------- | --------- | ------ | --- | --- |
-| id           | `string`  |            | 否        | -      |
-| name         | `string`  |            | 否        | -      |
-| type         | `'signal' | 'computed' | 'effect'` |        | 否  | -   |
-| initialValue | `unknown` |            | 是        | -      |
+| 参数         | 类型                                 | 描述 | 可选 | 默认值 |
+| ------------ | ------------------------------------ | ---- | ---- | ------ |
+| id           | `string`                             |      | 否   | -      |
+| name         | `string`                             |      | 否   | -      |
+| type         | `'signal' \| 'computed' \| 'effect'` |      | 否   | -      |
+| initialValue | `unknown`                            |      | 是   | -      |
 
 ### 返回值
 
@@ -3113,7 +3113,7 @@ getSubgraph: VisualLayoutGraph;
 | 参数     | 类型     | 描述 | 可选 | 默认值 |
 | -------- | -------- | ---- | ---- | ------ |
 | centerId | `string` |      | 否   | -      |
-| depth    | `number` |      | 是   | 2      |
+| depth    | `number` |      | 是   | `2`    |
 
 ### 返回值
 
@@ -3155,9 +3155,9 @@ filterSignals: SignalNode[]
 
 ### 参数
 
-| 参数    | 类型                      | 描述       | 可选                                                                                       | 默认值 |
-| ------- | ------------------------- | ---------- | ------------------------------------------------------------------------------------------ | ------ | --- | --- |
-| options | `{ types?: Array<'signal' | 'computed' | 'effect'>; minUpdateCount?: number; hasDependencies?: boolean; hasDependents?: boolean; }` |        | 否  | -   |
+| 参数    | 类型                                                                                                                                  | 描述 | 可选 | 默认值 |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------- | ---- | ---- | ------ |
+| options | `{ types?: Array<'signal' \| 'computed' \| 'effect'>; minUpdateCount?: number; hasDependencies?: boolean; hasDependents?: boolean; }` |      | 否   | -      |
 
 ### 返回值
 
@@ -3253,16 +3253,16 @@ getDiffBetweenSnapshots: SnapshotDiff | null;
 
 ### 成员
 
-| 名称             | 类型          | 描述  | 可选 |
-| ---------------- | ------------- | ----- | ---- | --- |
-| currentIndex     | `number`      |       | 否   |
-| total            | `number`      |       | 否   |
-| canGoBack        | `boolean`     |       | 否   |
-| canGoForward     | `boolean`     |       | 否   |
-| currentSnapshot  | `Snapshot     | null` |      | 否  |
-| previousSnapshot | `Snapshot     | null` |      | 否  |
-| nextSnapshot     | `Snapshot     | null` |      | 否  |
-| diff             | `SnapshotDiff | null` |      | 否  |
+| 名称             | 类型                   | 描述 | 可选 |
+| ---------------- | ---------------------- | ---- | ---- |
+| currentIndex     | `number`               |      | 否   |
+| total            | `number`               |      | 否   |
+| canGoBack        | `boolean`              |      | 否   |
+| canGoForward     | `boolean`              |      | 否   |
+| currentSnapshot  | `Snapshot \| null`     |      | 否   |
+| previousSnapshot | `Snapshot \| null`     |      | 否   |
+| nextSnapshot     | `Snapshot \| null`     |      | 否   |
+| diff             | `SnapshotDiff \| null` |      | 否   |
 
 ## getTimeTravelNavigator
 
@@ -3627,11 +3627,11 @@ DevTools 配置选项
 
 ### 成员
 
-| 名称     | 类型      | 描述          | 可选    |
-| -------- | --------- | ------------- | ------- | -------- | --- |
-| enabled  | `boolean` | 是否启用      | 是      |
-| position | `'right'  | 'bottom'      | 'left'` | 面板位置 | 是  |
-| size     | `number`  | 面板宽度/高度 | 是      |
+| 名称     | 类型                            | 描述          | 可选 |
+| -------- | ------------------------------- | ------------- | ---- |
+| enabled  | `boolean`                       | 是否启用      | 是   |
+| position | `'right' \| 'bottom' \| 'left'` | 面板位置      | 是   |
+| size     | `number`                        | 面板宽度/高度 | 是   |
 
 ## ComponentTreeNode
 
@@ -3671,13 +3671,13 @@ Store 状态信息
 
 ### 成员
 
-| 名称    | 类型                                 | 描述      | 可选 |
-| ------- | ------------------------------------ | --------- | ---- | --- |
-| path    | `string`                             |           | 否   |
-| name    | `string                              | null`     |      | 是  |
-| params  | `Record<string, string>`             |           | 是   |
-| query   | `Record<string, string>`             |           | 是   |
-| matched | `Array<{ path: string; name?: string | null; }>` |      | 否  |
+| 名称    | 类型                                              | 描述 | 可选 |
+| ------- | ------------------------------------------------- | ---- | ---- |
+| path    | `string`                                          |      | 否   |
+| name    | `string \| null`                                  |      | 是   |
+| params  | `Record<string, string>`                          |      | 是   |
+| query   | `Record<string, string>`                          |      | 是   |
+| matched | `Array<{ path: string; name?: string \| null; }>` |      | 否   |
 
 ## SignalNode
 
@@ -3687,18 +3687,18 @@ Store 状态信息
 
 ### 成员
 
-| 名称              | 类型       | 描述       | 可选      |
-| ----------------- | ---------- | ---------- | --------- | --- | --- |
-| id                | `string`   |            | 否        |
-| name              | `string`   |            | 否        |
-| type              | `'signal'  | 'computed' | 'effect'` |     | 否  |
-| value             | `unknown`  |            | 是        |
-| previousValue     | `unknown`  |            | 是        |
-| dependencies      | `string[]` |            | 否        |
-| dependents        | `string[]` |            | 否        |
-| updateCount       | `number`   |            | 否        |
-| lastUpdateTime    | `number`   |            | 否        |
-| averageUpdateTime | `number`   |            | 否        |
+| 名称              | 类型                                 | 描述 | 可选 |
+| ----------------- | ------------------------------------ | ---- | ---- |
+| id                | `string`                             |      | 否   |
+| name              | `string`                             |      | 否   |
+| type              | `'signal' \| 'computed' \| 'effect'` |      | 否   |
+| value             | `unknown`                            |      | 是   |
+| previousValue     | `unknown`                            |      | 是   |
+| dependencies      | `string[]`                           |      | 否   |
+| dependents        | `string[]`                           |      | 否   |
+| updateCount       | `number`                             |      | 否   |
+| lastUpdateTime    | `number`                             |      | 否   |
+| averageUpdateTime | `number`                             |      | 否   |
 
 ## Snapshot
 
@@ -3751,14 +3751,14 @@ Store 状态信息
 
 ### 成员
 
-| 名称      | 类型                      | 描述       | 可选      |
-| --------- | ------------------------- | ---------- | --------- | --- | --- |
-| id        | `string`                  |            | 否        |
-| name      | `string`                  |            | 否        |
-| type      | `'signal'                 | 'computed' | 'effect'` |     | 否  |
-| duration  | `number`                  |            | 否        |
-| timestamp | `number`                  |            | 否        |
-| metadata  | `Record<string, unknown>` |            | 是        |
+| 名称      | 类型                                 | 描述 | 可选 |
+| --------- | ------------------------------------ | ---- | ---- |
+| id        | `string`                             |      | 否   |
+| name      | `string`                             |      | 否   |
+| type      | `'signal' \| 'computed' \| 'effect'` |      | 否   |
+| duration  | `number`                             |      | 否   |
+| timestamp | `number`                             |      | 否   |
+| metadata  | `Record<string, unknown>`            |      | 是   |
 
 ## DependencyGraphNode
 
@@ -3768,13 +3768,13 @@ Store 状态信息
 
 ### 成员
 
-| 名称 | 类型      | 描述       | 可选      |
-| ---- | --------- | ---------- | --------- | --- | --- |
-| id   | `string`  |            | 否        |
-| name | `string`  |            | 否        |
-| type | `'signal' | 'computed' | 'effect'` |     | 否  |
-| x    | `number`  |            | 是        |
-| y    | `number`  |            | 是        |
+| 名称 | 类型                                 | 描述 | 可选 |
+| ---- | ------------------------------------ | ---- | ---- |
+| id   | `string`                             |      | 否   |
+| name | `string`                             |      | 否   |
+| type | `'signal' \| 'computed' \| 'effect'` |      | 否   |
+| x    | `number`                             |      | 是   |
+| y    | `number`                             |      | 是   |
 
 ## DependencyGraphEdge
 
@@ -3784,11 +3784,11 @@ Store 状态信息
 
 ### 成员
 
-| 名称   | 类型          | 描述         | 可选 |
-| ------ | ------------- | ------------ | ---- | --- |
-| source | `string`      |              | 否   |
-| target | `string`      |              | 否   |
-| type   | `'dependency' | 'dependent'` |      | 否  |
+| 名称   | 类型                          | 描述 | 可选 |
+| ------ | ----------------------------- | ---- | ---- |
+| source | `string`                      |      | 否   |
+| target | `string`                      |      | 否   |
+| type   | `'dependency' \| 'dependent'` |      | 否   |
 
 ## DependencyGraph
 
@@ -3840,21 +3840,21 @@ DevTools API
 
 ### 成员
 
-| 名称        | 类型                      | 描述    | 可选 |
-| ----------- | ------------------------- | ------- | ---- | --- |
-| id          | `string`                  |         | 否   |
-| type        | `string`                  |         | 否   |
-| tagName     | `string`                  |         | 是   |
-| text        | `string`                  |         | 是   |
-| props       | `Record<string, unknown>` |         | 是   |
-| children    | `VDOMNodeInfo[]`          |         | 否   |
-| parentId    | `string`                  |         | 是   |
-| depth       | `number`                  |         | 否   |
-| componentId | `string`                  |         | 是   |
-| isComponent | `boolean`                 |         | 否   |
-| key         | `string                   | number` |      | 是  |
-| ref         | `string`                  |         | 是   |
-| domElement  | `HTMLElement              | null`   |      | 是  |
+| 名称        | 类型                      | 描述 | 可选 |
+| ----------- | ------------------------- | ---- | ---- |
+| id          | `string`                  |      | 否   |
+| type        | `string`                  |      | 否   |
+| tagName     | `string`                  |      | 是   |
+| text        | `string`                  |      | 是   |
+| props       | `Record<string, unknown>` |      | 是   |
+| children    | `VDOMNodeInfo[]`          |      | 否   |
+| parentId    | `string`                  |      | 是   |
+| depth       | `number`                  |      | 否   |
+| componentId | `string`                  |      | 是   |
+| isComponent | `boolean`                 |      | 否   |
+| key         | `string \| number`        |      | 是   |
+| ref         | `string`                  |      | 是   |
+| domElement  | `HTMLElement \| null`     |      | 是   |
 
 ## VDOMRegistry
 
@@ -3975,13 +3975,13 @@ processVNode: VDOMNodeInfo | null;
 
 ### 参数
 
-| 参数        | 类型         | 描述       | 可选   | 默认值 |
-| ----------- | ------------ | ---------- | ------ | ------ | ---------- | --- | --- | --- |
-| vnode       | `VNode       | string     | number | null   | undefined` |     | 否  | -   |
-| parentId    | `string      | undefined` |        | 否     | -          |
-| \_parentDom | `HTMLElement | null`      |        | 否     | -          |
-| depth       | `number`     |            | 否     | -      |
-| componentId | `string`     |            | 是     | -      |
+| 参数        | 类型                                             | 描述 | 可选 | 默认值 |
+| ----------- | ------------------------------------------------ | ---- | ---- | ------ |
+| vnode       | `VNode \| string \| number \| null \| undefined` |      | 否   | -      |
+| parentId    | `string \| undefined`                            |      | 否   | -      |
+| \_parentDom | `HTMLElement \| null`                            |      | 否   | -      |
+| depth       | `number`                                         |      | 否   | -      |
+| componentId | `string`                                         |      | 是   | -      |
 
 ### 返回值
 
@@ -4166,7 +4166,7 @@ serializeVDOMNode: string;
 | 参数   | 类型           | 描述 | 可选 | 默认值 |
 | ------ | -------------- | ---- | ---- | ------ |
 | node   | `VDOMNodeInfo` |      | 否   | -      |
-| indent | `any`          |      | 是   | 0      |
+| indent | `any`          |      | 是   | `0`    |
 
 ### 返回值
 

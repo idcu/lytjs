@@ -405,6 +405,44 @@ function escapeAngleOutsideTicks(text: string): string {
 }
 
 /**
+ * 转义 Markdown 表格单元格（类型 / 默认值列）。
+ *
+ * 类型串常含联合符 `|`、对象字面量 `{ ... }`、泛型 `<>` 等：
+ * - 字面 `|` 若原样写入表格会被当作列分隔符，破坏表格结构；
+ * - 字面 `{ ... }` 会被 Vue 编译器当作 HTML 属性解析，导致
+ *   「Duplicate attribute」/「Element is missing end tag」构建报错。
+ *
+ * 统一策略：将整段类型包进行内代码跨段（Code Span）：
+ * - 行内代码内的 `<>`/`&` 由 markdown-it 自动转义，浏览器显示原字符；
+ * - 联合符 `|` 转义为 `\|`（反斜杠管道），既避开表格按列切分，
+ *   显示时又还原为 `|`；
+ * - 若类型本身含反引号（模板字符串类型），自动选用长度 +1 的反引号串
+ *   作为代码跨段定界符，避免与内部反引号冲突。
+ */
+function mdCell(type: string): string {
+  const t = String(type)
+    .replace(/\s*\r?\n\s*/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  const content = t.replace(/\|/g, '\\|');
+  const maxBacktickRun = (content.match(/`+/g) || []).reduce((m, r) => Math.max(m, r.length), 0);
+  const delim = '`'.repeat(maxBacktickRun + 1);
+  return `${delim}${content}${delim}`;
+}
+
+/**
+ * 转义表格「描述」列：角度号用 escapeAngleOutsideTicks（保留行内代码），
+ * 管道符统一转义为实体，避免被当作列分隔符。
+ */
+function mdCellText(text: string): string {
+  return escapeAngleOutsideTicks(
+    String(text)
+      .replace(/\s*\r?\n\s*/g, ' ')
+      .replace(/&/g, '&amp;'),
+  ).replace(/\|/g, '&#124;');
+}
+
+/**
  * 剥离示例文本首尾的代码围栏（```typescript / ```），避免生成时双重嵌套围栏。
  */
 function unwrapFences(example: string): string {
@@ -673,9 +711,9 @@ function generateDocMarkdown(doc: APIDoc): string[] {
     lines.push('|------|------|------|------|--------|');
     for (const param of doc.parameters) {
       const optional = param.optional ? '是' : '否';
-      const defaultVal = param.defaultValue || '-';
+      const defaultVal = param.defaultValue ? mdCell(param.defaultValue) : '-';
       lines.push(
-        `| ${param.name} | \`${inlineType(param.type)}\` | ${escapeAngleOutsideTicks(param.description)} | ${optional} | ${defaultVal} |`,
+        `| ${param.name} | ${mdCell(param.type)} | ${mdCellText(param.description)} | ${optional} | ${defaultVal} |`,
       );
     }
     lines.push('');
@@ -700,11 +738,9 @@ function generateDocMarkdown(doc: APIDoc): string[] {
     lines.push('| 名称 | 类型 | 描述 | 可选 |');
     lines.push('|------|------|------|------|');
     for (const member of doc.members) {
-      const type = member.type ? `\`${inlineType(member.type)}\`` : '-';
+      const type = member.type ? mdCell(member.type) : '-';
       const optional = member.optional ? '是' : '否';
-      lines.push(
-        `| ${member.name} | ${type} | ${escapeAngleOutsideTicks(member.description)} | ${optional} |`,
-      );
+      lines.push(`| ${member.name} | ${type} | ${mdCellText(member.description)} | ${optional} |`);
     }
     lines.push('');
   }

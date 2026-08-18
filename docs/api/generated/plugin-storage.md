@@ -24,7 +24,7 @@ createStorage: StorageInstance;
 
 | 参数    | 类型             | 描述 | 可选 | 默认值 |
 | ------- | ---------------- | ---- | ---- | ------ |
-| options | `StorageOptions` |      | 是   | {}     |
+| options | `StorageOptions` |      | 是   | `{}`   |
 
 ### 返回值
 
@@ -68,12 +68,12 @@ StorageType: 'local' | 'session';
 
 ### 成员
 
-| 名称         | 类型                                                   | 描述          | 可选   |
-| ------------ | ------------------------------------------------------ | ------------- | ------ | --- |
-| set          | `<T>(key: string, value: T, expires?: number) => void` | 设置值        | 否     |
-| get          | `<T>(key: string, defaultValue?: T) => T               | null`         | 获取值 | 否  |
-| remove       | `(key: string) => void`                                | 删除值        | 否     |
-| clear        | `() => void`                                           | 清空所有值    | 否     |
-| has          | `(key: string) => boolean`                             | 检查是否存在  | 否     |
-| keys         | `() => string[]`                                       | 获取所有 keys | 否     |
-| clearExpired | `() => void`                                           | 移除过期项    | 否     |
+| 名称         | 类型                                                   | 描述          | 可选 |
+| ------------ | ------------------------------------------------------ | ------------- | ---- |
+| set          | `<T>(key: string, value: T, expires?: number) => void` | 设置值        | 否   |
+| get          | `<T>(key: string, defaultValue?: T) => T \| null`      | 获取值        | 否   |
+| remove       | `(key: string) => void`                                | 删除值        | 否   |
+| clear        | `() => void`                                           | 清空所有值    | 否   |
+| has          | `(key: string) => boolean`                             | 检查是否存在  | 否   |
+| keys         | `() => string[]`                                       | 获取所有 keys | 否   |
+| clearExpired | `() => void`                                           | 移除过期项    | 否   |

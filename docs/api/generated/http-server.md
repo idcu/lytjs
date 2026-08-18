@@ -118,12 +118,12 @@ scoreRoute: number;
 
 ### 成员
 
-| 名称    | 类型                   | 描述       | 可选 |
-| ------- | ---------------------- | ---------- | ---- | --- |
-| matched | `boolean`              |            | 否   |
-| params  | `Record<string, string | string[]>` |      | 否  |
-| path    | `string`               |            | 否   |
-| score   | `number`               |            | 否   |
+| 名称    | 类型                                 | 描述 | 可选 |
+| ------- | ------------------------------------ | ---- | ---- |
+| matched | `boolean`                            |      | 否   |
+| params  | `Record<string, string \| string[]>` |      | 否   |
+| path    | `string`                             |      | 否   |
+| score   | `number`                             |      | 否   |
 
 ## matchPath
 
@@ -139,11 +139,11 @@ matchPath: PathMatchResult;
 
 ### 参数
 
-| 参数     | 类型          | 描述 | 可选 | 默认值 |
-| -------- | ------------- | ---- | ---- | ------ |
-| pathname | `string`      |      | 否   | -      |
-| tokens   | `PathToken[]` |      | 否   | -      |
-| strict   | `boolean`     |      | 是   | false  |
+| 参数     | 类型          | 描述 | 可选 | 默认值  |
+| -------- | ------------- | ---- | ---- | ------- |
+| pathname | `string`      |      | 否   | -       |
+| tokens   | `PathToken[]` |      | 否   | -       |
+| strict   | `boolean`     |      | 是   | `false` |
 
 ### 返回值
 
@@ -256,15 +256,15 @@ HttpMethod: SharedHttpMethod;
 
 ### 成员
 
-| 名称    | 类型                     | 描述       | 可选        |
-| ------- | ------------------------ | ---------- | ----------- | --- | --- |
-| method  | `HttpMethod`             |            | 否          |
-| url     | `string`                 |            | 否          |
-| path    | `string`                 |            | 否          |
-| headers | `Record<string, string   | string[]   | undefined>` |     | 否  |
-| query   | `Record<string, string   | string[]>` |             | 否  |
-| params  | `Record<string, string>` |            | 否          |
-| ip      | `string`                 |            | 是          |
+| 名称    | 类型                                              | 描述 | 可选 |
+| ------- | ------------------------------------------------- | ---- | ---- |
+| method  | `HttpMethod`                                      |      | 否   |
+| url     | `string`                                          |      | 否   |
+| path    | `string`                                          |      | 否   |
+| headers | `Record<string, string \| string[] \| undefined>` |      | 否   |
+| query   | `Record<string, string \| string[]>`              |      | 否   |
+| params  | `Record<string, string>`                          |      | 否   |
+| ip      | `string`                                          |      | 是   |
 
 ## Response
 
@@ -272,11 +272,11 @@ HttpMethod: SharedHttpMethod;
 
 ### 成员
 
-| 名称    | 类型                   | 描述     | 可选        |
-| ------- | ---------------------- | -------- | ----------- | --- | --- |
-| status  | `number`               |          | 否          |
-| headers | `Record<string, string | string[] | undefined>` |     | 否  |
-| body    | `unknown`              |          | 是          |
+| 名称    | 类型                                              | 描述 | 可选 |
+| ------- | ------------------------------------------------- | ---- | ---- |
+| status  | `number`                                          |      | 否   |
+| headers | `Record<string, string \| string[] \| undefined>` |      | 否   |
+| body    | `unknown`                                         |      | 是   |
 
 ## Route
 

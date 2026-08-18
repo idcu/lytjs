@@ -169,6 +169,6 @@ import type {
 
 ## 相关包
 
-- [@lytjs/core](../core) - 完整核心（支持双模式）
+- [@lytjs/core](../core/) - 完整核心（支持双模式）
 - [@lytjs/core-signal](./core-signal.md) - 仅 Signal 模式
-- [@lytjs/vdom](../vdom) - 虚拟 DOM 实现
+- [@lytjs/vdom](../vdom/) - 虚拟 DOM 实现

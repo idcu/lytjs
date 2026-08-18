@@ -131,11 +131,11 @@ queueInsert: void
 
 ### 参数
 
-| 参数   | 类型   | 描述  | 可选 | 默认值 |
-| ------ | ------ | ----- | ---- | ------ | --- |
-| child  | `Node` |       | 否   | -      |
-| parent | `Node` |       | 否   | -      |
-| anchor | `Node  | null` |      | 是     | -   |
+| 参数   | 类型           | 描述 | 可选 | 默认值 |
+| ------ | -------------- | ---- | ---- | ------ |
+| child  | `Node`         |      | 否   | -      |
+| parent | `Node`         |      | 否   | -      |
+| anchor | `Node \| null` |      | 是   | -      |
 
 ### 返回值
 
@@ -363,9 +363,9 @@ createDOMRenderer: DOMRenderer;
 
 ### 参数
 
-| 参数         | 类型                                                                 | 描述                 | 可选 | 默认值 |
-| ------------ | -------------------------------------------------------------------- | -------------------- | ---- | ------ | --- |
-| extraOptions | `Partial< Pick<RendererOptions<Node, Element>, 'setupChildComponent' | 'normalizeProps'> >` |      | 是     | -   |
+| 参数         | 类型                                                                                         | 描述 | 可选 | 默认值 |
+| ------------ | -------------------------------------------------------------------------------------------- | ---- | ---- | ------ |
+| extraOptions | `Partial< Pick<RendererOptions<Node, Element>, 'setupChildComponent' \| 'normalizeProps'> >` |      | 是   | -      |
 
 ### 返回值
 
@@ -413,31 +413,30 @@ HostEvent 实例
 
 ### 成员
 
-| 名称                                     | 类型 | 描述                                 | 可选 |
-| ---------------------------------------- | ---- | ------------------------------------ | ---- |
-| insertBefore                             | -    | 在父节点的指定子节点之前插入新子节点 |
-| 如果 referenceNode 为 null，则在末尾追加 | 否   |
-| replaceChild                             | -    | 替换父节点中的子节点                 | 否   |
-| firstChild                               | -    | 获取元素的第一个子节点               | 是   |
-| lastChild                                | -    | 获取元素的最后一个子节点             | 是   |
-| contains                                 | -    | 检查一个节点是否包含另一个节点       | 是   |
-| getAttributeNames                        | -    | 获取元素的所有属性名                 | 是   |
-| setAttributes                            | -    | 批量设置属性                         | 是   |
-| removeAttributes                         | -    | 批量移除属性                         | 是   |
-| setStyles                                | -    | 批量设置样式                         | 是   |
-| getClassList                             | -    | 获取元素的所有 CSS 类名              | 是   |
-| toggleClass                              | -    | 切换 CSS 类名                        | 是   |
-| dispatchEvent                            | -    | 触发/分派事件                        | 是   |
-| onceEventListener                        | -    | 一次性事件监听                       | 是   |
-| querySelectorAll                         | -    | 查询所有匹配选择器的元素             | 是   |
-| getElementById                           | -    | 通过 ID 获取元素                     | 是   |
-| getElementsByClassName                   | -    | 通过类名获取元素                     | 是   |
-| getElementsByTagName                     | -    | 通过标签名获取元素                   | 是   |
-| scrollIntoView                           | -    | 滚动元素到视图                       | 是   |
-| getScrollPosition                        | -    | 获取元素的滚动位置                   | 是   |
-| setScrollPosition                        | -    | 设置元素的滚动位置                   | 是   |
-| getElementSize                           | -    | 获取元素的尺寸信息                   | 是   |
-| getElementOffset                         | -    | 获取元素相对于视口的位置             | 是   |
+| 名称                   | 类型 | 描述                                                                          | 可选 |
+| ---------------------- | ---- | ----------------------------------------------------------------------------- | ---- |
+| insertBefore           | -    | 在父节点的指定子节点之前插入新子节点 如果 referenceNode 为 null，则在末尾追加 | 否   |
+| replaceChild           | -    | 替换父节点中的子节点                                                          | 否   |
+| firstChild             | -    | 获取元素的第一个子节点                                                        | 是   |
+| lastChild              | -    | 获取元素的最后一个子节点                                                      | 是   |
+| contains               | -    | 检查一个节点是否包含另一个节点                                                | 是   |
+| getAttributeNames      | -    | 获取元素的所有属性名                                                          | 是   |
+| setAttributes          | -    | 批量设置属性                                                                  | 是   |
+| removeAttributes       | -    | 批量移除属性                                                                  | 是   |
+| setStyles              | -    | 批量设置样式                                                                  | 是   |
+| getClassList           | -    | 获取元素的所有 CSS 类名                                                       | 是   |
+| toggleClass            | -    | 切换 CSS 类名                                                                 | 是   |
+| dispatchEvent          | -    | 触发/分派事件                                                                 | 是   |
+| onceEventListener      | -    | 一次性事件监听                                                                | 是   |
+| querySelectorAll       | -    | 查询所有匹配选择器的元素                                                      | 是   |
+| getElementById         | -    | 通过 ID 获取元素                                                              | 是   |
+| getElementsByClassName | -    | 通过类名获取元素                                                              | 是   |
+| getElementsByTagName   | -    | 通过标签名获取元素                                                            | 是   |
+| scrollIntoView         | -    | 滚动元素到视图                                                                | 是   |
+| getScrollPosition      | -    | 获取元素的滚动位置                                                            | 是   |
+| setScrollPosition      | -    | 设置元素的滚动位置                                                            | 是   |
+| getElementSize         | -    | 获取元素的尺寸信息                                                            | 是   |
+| getElementOffset       | -    | 获取元素相对于视口的位置                                                      | 是   |
 
 ## HostCapabilities
 
@@ -481,16 +480,12 @@ detectHostCapabilities: HostCapabilities;
 
 ### 示例
 
-````typescript
-```ts
-const caps = detectHostCapabilities()
+```typescript
+const caps = detectHostCapabilities();
 if (caps.shadowDOM) {
   // 使用 Shadow DOM
 }
-````
-
-````
-
+```
 
 ## CreateExtendedHostOptions
 
@@ -500,13 +495,12 @@ if (caps.shadowDOM) {
 
 ### 成员
 
-| 名称 | 类型 | 描述 | 可选 |
-|------|------|------|------|
-| baseHost | `RendererHost` | 基础宿主实现 | 否 |
-| enableExtendedNodeOps | `boolean` | 是否启用扩展的节点操作 | 是 |
-| enableExtendedQuery | `boolean` | 是否启用扩展的查询操作 | 是 |
-| enableExtendedScroll | `boolean` | 是否启用扩展的滚动操作 | 是 |
-
+| 名称                  | 类型           | 描述                   | 可选 |
+| --------------------- | -------------- | ---------------------- | ---- |
+| baseHost              | `RendererHost` | 基础宿主实现           | 否   |
+| enableExtendedNodeOps | `boolean`      | 是否启用扩展的节点操作 | 是   |
+| enableExtendedQuery   | `boolean`      | 是否启用扩展的查询操作 | 是   |
+| enableExtendedScroll  | `boolean`      | 是否启用扩展的滚动操作 | 是   |
 
 ## createExtendedWebHost
 
@@ -517,8 +511,8 @@ if (caps.shadowDOM) {
 ### 签名
 
 ```typescript
-createExtendedWebHost: ExtendedRendererHost<Node, Element>
-````
+createExtendedWebHost: ExtendedRendererHost<Node, Element>;
+```
 
 ### 参数
 
@@ -646,64 +640,48 @@ scheduleForcedReflow: void
 
 Web 平台渲染宿主实现。
 
-实现 RendererHost<Node, Element> 接口，将所有操作直接翻译为浏览器 DOM API。
+实现 RendererHost&lt;Node, Element&gt; 接口，将所有操作直接翻译为浏览器 DOM API。
 
 ### 成员
 
-| 名称                                                         | 类型 | 描述                               | 可选 |
-| ------------------------------------------------------------ | ---- | ---------------------------------- | ---- |
-| \_\_isRendererHost                                           | -    |                                    | 否   |
-| wrappedHandlerMap                                            | -    |                                    | 否   |
-| getWrappedHandler                                            | -    |                                    | 否   |
-| setWrappedHandler                                            | -    |                                    | 否   |
-| createElement                                                | -    | 创建元素节点。                     |
-| SVG 标签使用 createElementNS，普通标签使用 createElement。   | 否   |
-| createText                                                   | -    | 创建文本节点                       | 否   |
-| createComment                                                | -    | 创建注释节点                       | 否   |
-| setElementText                                               | -    | 设置元素文本内容（覆盖所有子节点） | 否   |
-| setText                                                      | -    | 设置文本/注释节点的内容            | 否   |
-| insert                                                       | -    | 在父节点的 anchor 前插入子节点。   |
-| anchor 为 null 时追加到末尾。                                | 否   |
-| remove                                                       | -    | 从父节点移除子节点                 | 否   |
-| nextSibling                                                  | -    | 获取下一个兄弟节点                 | 否   |
-| parentNode                                                   | -    | 获取父节点                         | 否   |
-| querySelector                                                | -    | 查询选择器。                       | 否   |
-| patchProp                                                    | -    | 统一属性 patch 入口。              |
-| 委托给 web-patch-props.ts 处理 class/style/event/attr 分发。 | 否   |
-| addClass                                                     | -    | 添加 CSS 类名                      | 否   |
-| removeClass                                                  | -    | 移除 CSS 类名                      | 否   |
-| hasClass                                                     | -    | 检查是否包含 CSS 类名              | 否   |
-| setStyle                                                     | -    | 设置内联样式属性。                 |
-
-value 为 null/undefined 时移除该样式属性。
-FIX: P2-v11-35 添加 SVG 元素兼容检查，
-SVG 元素的 style 属性是 CSSStyleDeclaration 但部分属性名不同，
-使用 setProperty/removeProperty 统一处理 | 否 |
-| removeStyle | - | 移除内联样式属性
-FIX: P2-16 统一实现风格，与 setStyle 保持一致 | 否 |
-| getComputedStyle | - | 获取计算样式。 | 否 |
-| forceReflow | - | 强制回流/重排。
-读取 offsetHeight 触发浏览器同步布局。
-FIX: P2-33 强制同步布局优化 - 添加缓存避免重复读取 | 否 |
-| getElementSize | - | 获取元素尺寸（带缓存）
-FIX: P2-33 强制同步布局优化 | 否 |
-| addEventListener | - | 添加事件监听器。
-将原生 DOM Event 包装为 HostEvent 后传递给 handler。
-返回一个取消监听的函数。 | 否 |
-| removeEventListener | - | 移除事件监听器。 | 否 |
-| getBoundingClientRect | - | 获取元素的几何边界信息。 | 否 |
-| getAttribute | - | 获取元素的指定属性值 | 否 |
-| getTransitionInfo | - | 获取过渡/动画时长信息。
-通过读取计算样式中的 transition-duration / animation-duration 获取。 | 否 |
-| nextFrame | - | 请求下一帧回调（双 rAF 确保浏览器已绘制）。 | 否 |
-| setTimeout | - | 延迟执行。 | 否 |
-| clearTimeout | - | 取消延迟执行 | 否 |
-| getNamespaceURI | - | 获取元素的 namespaceURI（用于 SVG 检测）。 | 否 |
-| replaceChild | - | 替换子节点（用于 hydration mismatch 处理）。 | 否 |
-| getChildNodes | - | 获取子节点列表（用于 hydration）。 | 否 |
-| getNodeType | - | 获取节点类型（用于 hydration 判断）。 | 否 |
-| getTagName | - | 获取元素标签名（用于 hydration 匹配）。
-返回小写标签名。 | 否 |
+| 名称                  | 类型 | 描述                                                                                                                                                                                                         | 可选 |
+| --------------------- | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---- |
+| \_\_isRendererHost    | -    |                                                                                                                                                                                                              | 否   |
+| wrappedHandlerMap     | -    |                                                                                                                                                                                                              | 否   |
+| getWrappedHandler     | -    |                                                                                                                                                                                                              | 否   |
+| setWrappedHandler     | -    |                                                                                                                                                                                                              | 否   |
+| createElement         | -    | 创建元素节点。 SVG 标签使用 createElementNS，普通标签使用 createElement。                                                                                                                                    | 否   |
+| createText            | -    | 创建文本节点                                                                                                                                                                                                 | 否   |
+| createComment         | -    | 创建注释节点                                                                                                                                                                                                 | 否   |
+| setElementText        | -    | 设置元素文本内容（覆盖所有子节点）                                                                                                                                                                           | 否   |
+| setText               | -    | 设置文本/注释节点的内容                                                                                                                                                                                      | 否   |
+| insert                | -    | 在父节点的 anchor 前插入子节点。 anchor 为 null 时追加到末尾。                                                                                                                                               | 否   |
+| remove                | -    | 从父节点移除子节点                                                                                                                                                                                           | 否   |
+| nextSibling           | -    | 获取下一个兄弟节点                                                                                                                                                                                           | 否   |
+| parentNode            | -    | 获取父节点                                                                                                                                                                                                   | 否   |
+| querySelector         | -    | 查询选择器。                                                                                                                                                                                                 | 否   |
+| patchProp             | -    | 统一属性 patch 入口。 委托给 web-patch-props.ts 处理 class/style/event/attr 分发。                                                                                                                           | 否   |
+| addClass              | -    | 添加 CSS 类名                                                                                                                                                                                                | 否   |
+| removeClass           | -    | 移除 CSS 类名                                                                                                                                                                                                | 否   |
+| hasClass              | -    | 检查是否包含 CSS 类名                                                                                                                                                                                        | 否   |
+| setStyle              | -    | 设置内联样式属性。 value 为 null/undefined 时移除该样式属性。 FIX: P2-v11-35 添加 SVG 元素兼容检查， SVG 元素的 style 属性是 CSSStyleDeclaration 但部分属性名不同， 使用 setProperty/removeProperty 统一处理 | 否   |
+| removeStyle           | -    | 移除内联样式属性 FIX: P2-16 统一实现风格，与 setStyle 保持一致                                                                                                                                               | 否   |
+| getComputedStyle      | -    | 获取计算样式。                                                                                                                                                                                               | 否   |
+| forceReflow           | -    | 强制回流/重排。 读取 offsetHeight 触发浏览器同步布局。 FIX: P2-33 强制同步布局优化 - 添加缓存避免重复读取                                                                                                    | 否   |
+| getElementSize        | -    | 获取元素尺寸（带缓存） FIX: P2-33 强制同步布局优化                                                                                                                                                           | 否   |
+| addEventListener      | -    | 添加事件监听器。 将原生 DOM Event 包装为 HostEvent 后传递给 handler。 返回一个取消监听的函数。                                                                                                               | 否   |
+| removeEventListener   | -    | 移除事件监听器。                                                                                                                                                                                             | 否   |
+| getBoundingClientRect | -    | 获取元素的几何边界信息。                                                                                                                                                                                     | 否   |
+| getAttribute          | -    | 获取元素的指定属性值                                                                                                                                                                                         | 否   |
+| getTransitionInfo     | -    | 获取过渡/动画时长信息。 通过读取计算样式中的 transition-duration / animation-duration 获取。                                                                                                                 | 否   |
+| nextFrame             | -    | 请求下一帧回调（双 rAF 确保浏览器已绘制）。                                                                                                                                                                  | 否   |
+| setTimeout            | -    | 延迟执行。                                                                                                                                                                                                   | 否   |
+| clearTimeout          | -    | 取消延迟执行                                                                                                                                                                                                 | 否   |
+| getNamespaceURI       | -    | 获取元素的 namespaceURI（用于 SVG 检测）。                                                                                                                                                                   | 否   |
+| replaceChild          | -    | 替换子节点（用于 hydration mismatch 处理）。                                                                                                                                                                 | 否   |
+| getChildNodes         | -    | 获取子节点列表（用于 hydration）。                                                                                                                                                                           | 否   |
+| getNodeType           | -    | 获取节点类型（用于 hydration 判断）。                                                                                                                                                                        | 否   |
+| getTagName            | -    | 获取元素标签名（用于 hydration 匹配）。 返回小写标签名。                                                                                                                                                     | 否   |
 
 ## warnHydrationMismatch
 
@@ -840,12 +818,12 @@ hydrateMismatchedElement: void
 
 ### 参数
 
-| 参数         | 类型              | 描述       | 可选 | 默认值 |
-| ------------ | ----------------- | ---------- | ---- | ------ | --- |
-| vnode        | `VNode`           |            | 否   | -      |
-| parent       | `HTMLElement`     |            | 否   | -      |
-| existingNode | `Node             | undefined` |      | 否     | -   |
-| host         | `WebRendererHost` |            | 否   | -      |
+| 参数         | 类型                | 描述 | 可选 | 默认值 |
+| ------------ | ------------------- | ---- | ---- | ------ |
+| vnode        | `VNode`             |      | 否   | -      |
+| parent       | `HTMLElement`       |      | 否   | -      |
+| existingNode | `Node \| undefined` |      | 否   | -      |
+| host         | `WebRendererHost`   |      | 否   | -      |
 
 ### 返回值
 
@@ -911,10 +889,10 @@ createHydrationFunctions: HydrationRenderer;
 
 ### 参数
 
-| 参数              | 类型                      | 描述   | 可选 | 默认值 |
-| ----------------- | ------------------------- | ------ | ---- | ------ | --- |
-| \_rendererOptions | `Record<string, unknown>` |        | 否   | -      |
-| sharedVnodeMap    | `WeakMap<Element, VNode   | null>` |      | 是     | -   |
+| 参数              | 类型                              | 描述 | 可选 | 默认值 |
+| ----------------- | --------------------------------- | ---- | ---- | ------ |
+| \_rendererOptions | `Record<string, unknown>`         |      | 否   | -      |
+| sharedVnodeMap    | `WeakMap<Element, VNode \| null>` |      | 是   | -      |
 
 ### 返回值
 
@@ -946,10 +924,10 @@ createHydrationFunctions: HydrationRenderer;
 
 ### 成员
 
-| 名称     | 类型                            | 描述  | 可选                                         |
-| -------- | ------------------------------- | ----- | -------------------------------------------- | --- |
-| value    | `((...args: unknown[]) => void) | null` | 当前绑定的事件处理函数，更新时直接替换此属性 | 否  |
-| \_parsed | `ParsedEvent`                   |       | 是                                           |
+| 名称     | 类型                                     | 描述                                         | 可选 |
+| -------- | ---------------------------------------- | -------------------------------------------- | ---- |
+| value    | `((...args: unknown[]) => void) \| null` | 当前绑定的事件处理函数，更新时直接替换此属性 | 否   |
+| \_parsed | `ParsedEvent`                            |                                              | 是   |
 
 ## InvokerCache
 
@@ -1111,12 +1089,12 @@ patchEvent: void
 
 ### 参数
 
-| 参数        | 类型                            | 描述  | 可选 | 默认值 |
-| ----------- | ------------------------------- | ----- | ---- | ------ | --- |
-| el          | `Element`                       |       | 否   | -      |
-| rawName     | `string`                        |       | 否   | -      |
-| nextValue   | `((...args: unknown[]) => void) | null` |      | 否     | -   |
-| \_prevValue | `((...args: unknown[]) => void) | null` |      | 是     | -   |
+| 参数        | 类型                                     | 描述 | 可选 | 默认值 |
+| ----------- | ---------------------------------------- | ---- | ---- | ------ |
+| el          | `Element`                                |      | 否   | -      |
+| rawName     | `string`                                 |      | 否   | -      |
+| nextValue   | `((...args: unknown[]) => void) \| null` |      | 否   | -      |
+| \_prevValue | `((...args: unknown[]) => void) \| null` |      | 是   | -      |
 
 ### 返回值
 
@@ -1161,9 +1139,9 @@ extractHandler: ((...args: unknown[]) => void) | null
 
 ### 参数
 
-| 参数  | 类型                            | 描述  | 可选 | 默认值 |
-| ----- | ------------------------------- | ----- | ---- | ------ | --- |
-| value | `((...args: unknown[]) => void) | null` |      | 否     | -   |
+| 参数  | 类型                                     | 描述 | 可选 | 默认值 |
+| ----- | ---------------------------------------- | ---- | ---- | ------ |
+| value | `((...args: unknown[]) => void) \| null` |      | 否   | -      |
 
 ### 返回值
 
@@ -1206,13 +1184,13 @@ patchProp: void
 
 ### 参数
 
-| 参数      | 类型      | 描述 | 可选 | 默认值 |
-| --------- | --------- | ---- | ---- | ------ |
-| el        | `Element` |      | 否   | -      |
-| key       | `string`  |      | 否   | -      |
-| prevValue | `unknown` |      | 否   | -      |
-| nextValue | `unknown` |      | 否   | -      |
-| isSVG     | `boolean` |      | 是   | false  |
+| 参数      | 类型      | 描述 | 可选 | 默认值  |
+| --------- | --------- | ---- | ---- | ------- |
+| el        | `Element` |      | 否   | -       |
+| key       | `string`  |      | 否   | -       |
+| prevValue | `unknown` |      | 否   | -       |
+| nextValue | `unknown` |      | 否   | -       |
+| isSVG     | `boolean` |      | 是   | `false` |
 
 ### 返回值
 

@@ -25,7 +25,7 @@ createLogger: LoggerInstance;
 
 | 参数    | 类型            | 描述 | 可选 | 默认值 |
 | ------- | --------------- | ---- | ---- | ------ |
-| options | `LoggerOptions` |      | 是   | {}     |
+| options | `LoggerOptions` |      | 是   | `{}`   |
 
 ### 返回值
 
@@ -91,16 +91,16 @@ LogLevel: 'debug' | 'info' | 'warn' | 'error' | 'silent';
 
 ### 成员
 
-| 名称         | 类型                                                         | 描述         | 可选         |
-| ------------ | ------------------------------------------------------------ | ------------ | ------------ | --- |
-| level        | `LogLevel`                                                   | 当前日志级别 | 否           |
-| logs         | `LogEntry[]`                                                 | 日志记录     | 否           |
-| debug        | `(message: string, data?: unknown, module?: string) => void` | 调试日志     | 否           |
-| info         | `(message: string, data?: unknown, module?: string) => void` | 信息日志     | 否           |
-| warn         | `(message: string, data?: unknown, module?: string) => void` | 警告日志     | 否           |
-| error        | `(message: string, data?: unknown, module?: string) => void` | 错误日志     | 否           |
-| setLevel     | `(level: LogLevel) => void`                                  | 设置日志级别 | 否           |
-| startMeasure | `(name: string, data?: unknown) => void`                     | 开始性能追踪 | 否           |
-| endMeasure   | `(name: string) => PerformanceMetric                         | null`        | 结束性能追踪 | 否  |
-| clear        | `() => void`                                                 | 清空日志     | 否           |
-| getMetrics   | `() => PerformanceMetric[]`                                  | 获取性能指标 | 否           |
+| 名称         | 类型                                                         | 描述         | 可选 |
+| ------------ | ------------------------------------------------------------ | ------------ | ---- |
+| level        | `LogLevel`                                                   | 当前日志级别 | 否   |
+| logs         | `LogEntry[]`                                                 | 日志记录     | 否   |
+| debug        | `(message: string, data?: unknown, module?: string) => void` | 调试日志     | 否   |
+| info         | `(message: string, data?: unknown, module?: string) => void` | 信息日志     | 否   |
+| warn         | `(message: string, data?: unknown, module?: string) => void` | 警告日志     | 否   |
+| error        | `(message: string, data?: unknown, module?: string) => void` | 错误日志     | 否   |
+| setLevel     | `(level: LogLevel) => void`                                  | 设置日志级别 | 否   |
+| startMeasure | `(name: string, data?: unknown) => void`                     | 开始性能追踪 | 否   |
+| endMeasure   | `(name: string) => PerformanceMetric \| null`                | 结束性能追踪 | 否   |
+| clear        | `() => void`                                                 | 清空日志     | 否   |
+| getMetrics   | `() => PerformanceMetric[]`                                  | 获取性能指标 | 否   |

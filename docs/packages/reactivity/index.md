@@ -322,6 +322,6 @@ import { asyncComputed, useAsyncState } from '@lytjs/reactivity/async';
 
 ## 相关包
 
-- [@lytjs/core](../core) - 框架核心入口，整合所有子包
-- [@lytjs/component](../component) - 组件系统，依赖响应式系统
-- [@lytjs/common](../common) - 公共工具库
+- [@lytjs/core](../core/) - 框架核心入口，整合所有子包
+- [@lytjs/component](../component/) - 组件系统，依赖响应式系统
+- [@lytjs/common](../common/) - 公共工具库

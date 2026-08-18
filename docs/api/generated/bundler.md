@@ -28,7 +28,7 @@ createVitePlugin: Record<string, unknown>;
 
 | 参数      | 类型               | 描述 | 可选 | 默认值 |
 | --------- | ------------------ | ---- | ---- | ------ |
-| \_options | `LytPluginOptions` |      | 是   | {}     |
+| \_options | `LytPluginOptions` |      | 是   | `{}`   |
 
 ### 返回值
 
@@ -52,7 +52,7 @@ createWebpackPlugin: Record<string, unknown>;
 
 | 参数      | 类型               | 描述 | 可选 | 默认值 |
 | --------- | ------------------ | ---- | ---- | ------ |
-| \_options | `LytPluginOptions` |      | 是   | {}     |
+| \_options | `LytPluginOptions` |      | 是   | `{}`   |
 
 ### 返回值
 
@@ -74,9 +74,9 @@ getPreset: BundlerPreset;
 
 ### 参数
 
-| 参数 | 类型     | 描述 | 可选 | 默认值    |
-| ---- | -------- | ---- | ---- | --------- |
-| name | `string` |      | 是   | 'default' |
+| 参数 | 类型     | 描述 | 可选 | 默认值      |
+| ---- | -------- | ---- | ---- | ----------- |
+| name | `string` |      | 是   | `'default'` |
 
 ### 返回值
 
@@ -100,7 +100,7 @@ createViteConfig: Record<string, unknown>;
 
 | 参数    | 类型               | 描述 | 可选 | 默认值 |
 | ------- | ------------------ | ---- | ---- | ------ |
-| options | `LytPluginOptions` |      | 是   | {}     |
+| options | `LytPluginOptions` |      | 是   | `{}`   |
 
 ### 返回值
 

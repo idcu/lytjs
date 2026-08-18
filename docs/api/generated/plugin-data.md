@@ -93,8 +93,8 @@ createData: DataInstance<T>;
 | 参数          | 类型                | 描述 | 可选 | 默认值 |
 | ------------- | ------------------- | ---- | ---- | ------ |
 | url           | `string`            |      | 否   | -      |
-| options       | `RequestOptions`    |      | 是   | {}     |
-| globalOptions | `DataPluginOptions` |      | 是   | {}     |
+| options       | `RequestOptions`    |      | 是   | `{}`   |
+| globalOptions | `DataPluginOptions` |      | 是   | `{}`   |
 
 ### 返回值
 
@@ -116,7 +116,7 @@ createDataManager: DataManager;
 
 | 参数          | 类型                | 描述 | 可选 | 默认值 |
 | ------------- | ------------------- | ---- | ---- | ------ |
-| globalOptions | `DataPluginOptions` |      | 是   | {}     |
+| globalOptions | `DataPluginOptions` |      | 是   | `{}`   |
 
 ### 返回值
 

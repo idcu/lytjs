@@ -365,8 +365,8 @@ import type {
 
 ## 相关包
 
-- [@lytjs/vdom](../vdom) - 虚拟 DOM 实现，渲染器的基础
-- [@lytjs/core](../core) - 框架核心入口，整合所有子包
+- [@lytjs/vdom](../vdom/) - 虚拟 DOM 实现，渲染器的基础
+- [@lytjs/core](../core/) - 框架核心入口，整合所有子包
 - [@lytjs/adapter-web](../other/adapter-web.md) - Web 平台适配器
 - [@lytjs/host-contract](../other/host-contract.md) - 渲染器宿主抽象
 

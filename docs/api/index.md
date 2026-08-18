@@ -44,7 +44,7 @@ LytJS 框架的 API 参考文档，按包分类组织。
 ## 生成态扩展（自动生成）
 
 官方插件、SSR 渲染栈、Web 框架中间件与平台生态等包的 API 参考由
-`scripts/gen-api-docs.ts` 从源码自动生成，落盘于 [generated/ 目录](./generated)（不改写上方人工精修稿）。
+`scripts/gen-api-docs.ts` 从源码自动生成，落盘于 `generated/` 目录（见下方列表，不改写上方人工精修稿）。
 
 - **官方插件**：[plugin-animation](./generated/plugin-animation.md) / [plugin-auth](./generated/plugin-auth.md) / [plugin-chart](./generated/plugin-chart.md) / [plugin-data](./generated/plugin-data.md) / [plugin-data-fetch](./generated/plugin-data-fetch.md) / [plugin-form](./generated/plugin-form.md) / [plugin-i18n](./generated/plugin-i18n.md) / [plugin-logger](./generated/plugin-logger.md) / [plugin-storage](./generated/plugin-storage.md) / [plugin-testing](./generated/plugin-testing.md) / [plugin-theme](./generated/plugin-theme.md) / [plugin-validation](./generated/plugin-validation.md)
 - **SSR 渲染栈**：[ssr](./generated/ssr.md) / [ssg](./generated/ssg.md) / [hmr](./generated/hmr.md) / [cache](./generated/cache.md) / [cache-isr](./generated/cache-isr.md) / [html-renderer](./generated/html-renderer.md)

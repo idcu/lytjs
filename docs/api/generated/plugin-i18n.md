@@ -58,7 +58,7 @@ createI18n: I18nInstance;
 
 | 参数    | 类型          | 描述 | 可选 | 默认值 |
 | ------- | ------------- | ---- | ---- | ------ |
-| options | `I18nOptions` |      | 是   | {}     |
+| options | `I18nOptions` |      | 是   | `{}`   |
 
 ### 返回值
 

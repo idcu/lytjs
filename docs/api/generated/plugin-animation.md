@@ -45,12 +45,12 @@ GPU 加速配置
 
 ### 成员
 
-| 名称                | 类型      | 描述        | 可选      |
-| ------------------- | --------- | ----------- | --------- | ------------------ | --- | --- |
-| enable3D            | `boolean` |             | 是        |
-| willChange          | `'auto'   | 'transform' | 'opacity' | 'scroll-position'` |     | 是  |
-| force3D             | `boolean` |             | 是        |
-| compositorThreshold | `number`  |             | 是        |
+| 名称                | 类型                                                      | 描述 | 可选 |
+| ------------------- | --------------------------------------------------------- | ---- | ---- |
+| enable3D            | `boolean`                                                 |      | 是   |
+| willChange          | `'auto' \| 'transform' \| 'opacity' \| 'scroll-position'` |      | 是   |
+| force3D             | `boolean`                                                 |      | 是   |
+| compositorThreshold | `number`                                                  |      | 是   |
 
 ## to3DTransform
 
@@ -110,10 +110,10 @@ enableGPUAcceleration: void
 
 ### 参数
 
-| 参数    | 类型                     | 描述 | 可选 | 默认值              |
-| ------- | ------------------------ | ---- | ---- | ------------------- |
-| element | `HTMLElement`            |      | 否   | -                   |
-| options | `GPUAccelerationOptions` |      | 是   | DEFAULT_GPU_OPTIONS |
+| 参数    | 类型                     | 描述 | 可选 | 默认值                |
+| ------- | ------------------------ | ---- | ---- | --------------------- |
+| element | `HTMLElement`            |      | 否   | -                     |
+| options | `GPUAccelerationOptions` |      | 是   | `DEFAULT_GPU_OPTIONS` |
 
 ### 返回值
 
@@ -155,23 +155,23 @@ GPU 加速的预设动画
 
 ### 成员
 
-| 名称                    | 类型                      | 描述  | 可选 |
-| ----------------------- | ------------------------- | ----- | ---- | --- |
-| gpuEnabled              | `boolean`                 |       | 否   |
-| options                 | `GPUAccelerationOptions`  |       | 否   |
-| activeAnimations        | `Set<string>`             |       | 否   |
-| rafId                   | `number                   | null` |      | 否  |
-| batchedUpdates          | `Map<string, () => void>` |       | 否   |
-| checkGPUAvailability    | -                         |       | 否   |
-| isGPUAvailable          | -                         |       | 否   |
-| shouldUseGPU            | -                         |       | 否   |
-| optimizeElement         | -                         |       | 否   |
-| batchAnimation          | -                         |       | 否   |
-| flushBatchedUpdates     | -                         |       | 否   |
-| trackAnimation          | -                         |       | 否   |
-| untrackAnimation        | -                         |       | 否   |
-| getActiveAnimationCount | -                         |       | 否   |
-| cleanup                 | -                         |       | 否   |
+| 名称                    | 类型                      | 描述 | 可选 |
+| ----------------------- | ------------------------- | ---- | ---- |
+| gpuEnabled              | `boolean`                 |      | 否   |
+| options                 | `GPUAccelerationOptions`  |      | 否   |
+| activeAnimations        | `Set<string>`             |      | 否   |
+| rafId                   | `number \| null`          |      | 否   |
+| batchedUpdates          | `Map<string, () => void>` |      | 否   |
+| checkGPUAvailability    | -                         |      | 否   |
+| isGPUAvailable          | -                         |      | 否   |
+| shouldUseGPU            | -                         |      | 否   |
+| optimizeElement         | -                         |      | 否   |
+| batchAnimation          | -                         |      | 否   |
+| flushBatchedUpdates     | -                         |      | 否   |
+| trackAnimation          | -                         |      | 否   |
+| untrackAnimation        | -                         |      | 否   |
+| getActiveAnimationCount | -                         |      | 否   |
+| cleanup                 | -                         |      | 否   |
 
 ## globalOptimizer
 
@@ -278,7 +278,7 @@ createAnimation: AnimationInstance;
 | 参数      | 类型                         | 描述 | 可选 | 默认值 |
 | --------- | ---------------------------- | ---- | ---- | ------ |
 | animateFn | `(progress: number) => void` |      | 否   | -      |
-| options   | `AnimationOptions`           |      | 是   | {}     |
+| options   | `AnimationOptions`           |      | 是   | `{}`   |
 
 ### 返回值
 
@@ -304,11 +304,11 @@ createKeyframeAnimation: AnimationInstance;
 
 ### 参数
 
-| 参数      | 类型               | 描述                      | 可选 | 默认值 |
-| --------- | ------------------ | ------------------------- | ---- | ------ | --- |
-| element   | `Element`          |                           | 否   | -      |
-| keyframes | `Keyframe[]        | PropertyIndexedKeyframes` |      | 否     | -   |
-| options   | `AnimationOptions` |                           | 是   | {}     |
+| 参数      | 类型                                     | 描述 | 可选 | 默认值 |
+| --------- | ---------------------------------------- | ---- | ---- | ------ |
+| element   | `Element`                                |      | 否   | -      |
+| keyframes | `Keyframe[] \| PropertyIndexedKeyframes` |      | 否   | -      |
+| options   | `AnimationOptions`                       |      | 是   | `{}`   |
 
 ### 返回值
 
@@ -431,19 +431,19 @@ EasingFunction: | 'linear'
 
 ### 成员
 
-| 名称       | 类型                         | 描述                      | 可选        |
-| ---------- | ---------------------------- | ------------------------- | ----------- | -------------------- | -------- | ------------ | --- |
-| duration   | `number`                     | 动画时长（毫秒）          | 是          |
-| easing     | `EasingFunction`             | 缓动函数                  | 是          |
-| delay      | `number`                     | 动画延迟（毫秒）          | 是          |
-| iterations | `number`                     | 动画次数，-1 表示无限循环 | 是          |
-| direction  | `'normal'                    | 'reverse'                 | 'alternate' | 'alternate-reverse'` | 动画方向 | 是           |
-| fill       | `'none'                      | 'forwards'                | 'backwards' | 'both'               | 'auto'`  | 动画填充模式 | 是  |
-| onStart    | `() => void`                 | 动画开始前的回调          | 是          |
-| onUpdate   | `(progress: number) => void` | 动画更新时的回调          | 是          |
-| onComplete | `() => void`                 | 动画完成时的回调          | 是          |
-| onPause    | `() => void`                 | 动画暂停时的回调          | 是          |
-| onCancel   | `() => void`                 | 动画取消时的回调          | 是          |
+| 名称       | 类型                                                          | 描述                      | 可选 |
+| ---------- | ------------------------------------------------------------- | ------------------------- | ---- |
+| duration   | `number`                                                      | 动画时长（毫秒）          | 是   |
+| easing     | `EasingFunction`                                              | 缓动函数                  | 是   |
+| delay      | `number`                                                      | 动画延迟（毫秒）          | 是   |
+| iterations | `number`                                                      | 动画次数，-1 表示无限循环 | 是   |
+| direction  | `'normal' \| 'reverse' \| 'alternate' \| 'alternate-reverse'` | 动画方向                  | 是   |
+| fill       | `'none' \| 'forwards' \| 'backwards' \| 'both' \| 'auto'`     | 动画填充模式              | 是   |
+| onStart    | `() => void`                                                  | 动画开始前的回调          | 是   |
+| onUpdate   | `(progress: number) => void`                                  | 动画更新时的回调          | 是   |
+| onComplete | `() => void`                                                  | 动画完成时的回调          | 是   |
+| onPause    | `() => void`                                                  | 动画暂停时的回调          | 是   |
+| onCancel   | `() => void`                                                  | 动画取消时的回调          | 是   |
 
 ## TransitionOptions
 
@@ -451,18 +451,18 @@ EasingFunction: | 'linear'
 
 ### 成员
 
-| 名称          | 类型             | 描述             | 可选               |
-| ------------- | ---------------- | ---------------- | ------------------ | --- |
-| property      | `string          | string[]`        | 过渡属性，默认 all | 是  |
-| duration      | `number`         | 过渡时长（毫秒） | 是                 |
-| easing        | `EasingFunction` | 缓动函数         | 是                 |
-| delay         | `number`         | 过渡延迟（毫秒） | 是                 |
-| onBeforeEnter | `() => void`     | 过渡开始前的回调 | 是                 |
-| onEnter       | `() => void`     | 过渡进入中回调   | 是                 |
-| onAfterEnter  | `() => void`     | 过渡进入完成回调 | 是                 |
-| onBeforeLeave | `() => void`     | 过渡离开前回调   | 是                 |
-| onLeave       | `() => void`     | 过渡离开中回调   | 是                 |
-| onAfterLeave  | `() => void`     | 过渡离开完成回调 | 是                 |
+| 名称          | 类型                 | 描述               | 可选 |
+| ------------- | -------------------- | ------------------ | ---- |
+| property      | `string \| string[]` | 过渡属性，默认 all | 是   |
+| duration      | `number`             | 过渡时长（毫秒）   | 是   |
+| easing        | `EasingFunction`     | 缓动函数           | 是   |
+| delay         | `number`             | 过渡延迟（毫秒）   | 是   |
+| onBeforeEnter | `() => void`         | 过渡开始前的回调   | 是   |
+| onEnter       | `() => void`         | 过渡进入中回调     | 是   |
+| onAfterEnter  | `() => void`         | 过渡进入完成回调   | 是   |
+| onBeforeLeave | `() => void`         | 过渡离开前回调     | 是   |
+| onLeave       | `() => void`         | 过渡离开中回调     | 是   |
+| onAfterLeave  | `() => void`         | 过渡离开完成回调   | 是   |
 
 ## Keyframe
 
@@ -480,17 +480,17 @@ EasingFunction: | 'linear'
 
 ### 成员
 
-| 名称     | 类型                         | 描述           | 可选     |
-| -------- | ---------------------------- | -------------- | -------- | ----------- | ------------ | -------- | --- |
-| id       | `string`                     | 动画 ID        | 否       |
-| state    | `'idle'                      | 'playing'      | 'paused' | 'completed' | 'cancelled'` | 动画状态 | 否  |
-| progress | `number`                     | 当前进度 0-1   | 否       |
-| play     | `() => void`                 | 播放动画       | 否       |
-| pause    | `() => void`                 | 暂停动画       | 否       |
-| cancel   | `() => void`                 | 取消动画       | 否       |
-| reset    | `() => void`                 | 重置动画       | 否       |
-| seek     | `(progress: number) => void` | 跳转到指定进度 | 否       |
-| reverse  | `() => void`                 | 反转动画方向   | 否       |
+| 名称     | 类型                                                            | 描述           | 可选 |
+| -------- | --------------------------------------------------------------- | -------------- | ---- |
+| id       | `string`                                                        | 动画 ID        | 否   |
+| state    | `'idle' \| 'playing' \| 'paused' \| 'completed' \| 'cancelled'` | 动画状态       | 否   |
+| progress | `number`                                                        | 当前进度 0-1   | 否   |
+| play     | `() => void`                                                    | 播放动画       | 否   |
+| pause    | `() => void`                                                    | 暂停动画       | 否   |
+| cancel   | `() => void`                                                    | 取消动画       | 否   |
+| reset    | `() => void`                                                    | 重置动画       | 否   |
+| seek     | `(progress: number) => void`                                    | 跳转到指定进度 | 否   |
+| reverse  | `() => void`                                                    | 反转动画方向   | 否   |
 
 ## AnimationPluginOptions
 
@@ -522,17 +522,17 @@ EasingFunction: | 'linear'
 
 ### 成员
 
-| 名称     | 类型                         | 描述           | 可选     |
-| -------- | ---------------------------- | -------------- | -------- | ----------- | ------------ | -------- | --- |
-| id       | `string`                     | 动画 ID        | 否       |
-| state    | `'idle'                      | 'playing'      | 'paused' | 'completed' | 'cancelled'` | 动画状态 | 否  |
-| progress | `number`                     | 当前进度 0-1   | 否       |
-| play     | `() => void`                 | 播放动画       | 否       |
-| pause    | `() => void`                 | 暂停动画       | 否       |
-| cancel   | `() => void`                 | 取消动画       | 否       |
-| reset    | `() => void`                 | 重置动画       | 否       |
-| seek     | `(progress: number) => void` | 跳转到指定进度 | 否       |
-| reverse  | `() => void`                 | 反转动画方向   | 否       |
+| 名称     | 类型                                                            | 描述           | 可选 |
+| -------- | --------------------------------------------------------------- | -------------- | ---- |
+| id       | `string`                                                        | 动画 ID        | 否   |
+| state    | `'idle' \| 'playing' \| 'paused' \| 'completed' \| 'cancelled'` | 动画状态       | 否   |
+| progress | `number`                                                        | 当前进度 0-1   | 否   |
+| play     | `() => void`                                                    | 播放动画       | 否   |
+| pause    | `() => void`                                                    | 暂停动画       | 否   |
+| cancel   | `() => void`                                                    | 取消动画       | 否   |
+| reset    | `() => void`                                                    | 重置动画       | 否   |
+| seek     | `(progress: number) => void`                                    | 跳转到指定进度 | 否   |
+| reverse  | `() => void`                                                    | 反转动画方向   | 否   |
 
 ## AnimationInstance
 
@@ -540,14 +540,14 @@ EasingFunction: | 'linear'
 
 ### 成员
 
-| 名称     | 类型                         | 描述           | 可选     |
-| -------- | ---------------------------- | -------------- | -------- | ----------- | ------------ | -------- | --- |
-| id       | `string`                     | 动画 ID        | 否       |
-| state    | `'idle'                      | 'playing'      | 'paused' | 'completed' | 'cancelled'` | 动画状态 | 否  |
-| progress | `number`                     | 当前进度 0-1   | 否       |
-| play     | `() => void`                 | 播放动画       | 否       |
-| pause    | `() => void`                 | 暂停动画       | 否       |
-| cancel   | `() => void`                 | 取消动画       | 否       |
-| reset    | `() => void`                 | 重置动画       | 否       |
-| seek     | `(progress: number) => void` | 跳转到指定进度 | 否       |
-| reverse  | `() => void`                 | 反转动画方向   | 否       |
+| 名称     | 类型                                                            | 描述           | 可选 |
+| -------- | --------------------------------------------------------------- | -------------- | ---- |
+| id       | `string`                                                        | 动画 ID        | 否   |
+| state    | `'idle' \| 'playing' \| 'paused' \| 'completed' \| 'cancelled'` | 动画状态       | 否   |
+| progress | `number`                                                        | 当前进度 0-1   | 否   |
+| play     | `() => void`                                                    | 播放动画       | 否   |
+| pause    | `() => void`                                                    | 暂停动画       | 否   |
+| cancel   | `() => void`                                                    | 取消动画       | 否   |
+| reset    | `() => void`                                                    | 重置动画       | 否   |
+| seek     | `(progress: number) => void`                                    | 跳转到指定进度 | 否   |
+| reverse  | `() => void`                                                    | 反转动画方向   | 否   |
