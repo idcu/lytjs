@@ -448,7 +448,12 @@ const possiblePackages = [
 ];
 
 // 获取单个包的信息
-function getPackageInfo(packageName: string): Promise<any> {
+type NpmPackageInfo = {
+  'dist-tags'?: { latest?: string };
+  versions?: Record<string, unknown>;
+};
+
+function getPackageInfo(packageName: string): Promise<NpmPackageInfo | null> {
   return new Promise((resolve, reject) => {
     const options = {
       hostname: 'registry.npmjs.org',
@@ -456,8 +461,8 @@ function getPackageInfo(packageName: string): Promise<any> {
       path: `/${encodeURIComponent(packageName)}`,
       method: 'GET',
       headers: {
-        'Accept': 'application/json'
-      }
+        Accept: 'application/json',
+      },
     };
 
     const req = https.request(options, (res) => {
@@ -467,7 +472,9 @@ function getPackageInfo(packageName: string): Promise<any> {
       }
 
       let data = '';
-      res.on('data', (chunk) => { data += chunk; });
+      res.on('data', (chunk) => {
+        data += chunk;
+      });
       res.on('end', () => {
         try {
           resolve(JSON.parse(data));
@@ -491,7 +498,9 @@ function getPackageInfo(packageName: string): Promise<any> {
 }
 
 // 搜索 npm
-function searchNpm(query: string): Promise<any[]> {
+type NpmSearchResult = { name: string };
+
+function searchNpm(query: string): Promise<NpmSearchResult[]> {
   return new Promise((resolve, reject) => {
     const options = {
       hostname: 'registry.npmjs.org',
@@ -499,17 +508,19 @@ function searchNpm(query: string): Promise<any[]> {
       path: `/-/v1/search?text=${encodeURIComponent(query)}&size=250`,
       method: 'GET',
       headers: {
-        'Accept': 'application/json'
-      }
+        Accept: 'application/json',
+      },
     };
 
     const req = https.request(options, (res) => {
       let data = '';
-      res.on('data', (chunk) => { data += chunk; });
+      res.on('data', (chunk) => {
+        data += chunk;
+      });
       res.on('end', () => {
         try {
           const result = JSON.parse(data);
-          resolve(result.objects?.map((o: any) => o.package) || []);
+          resolve(result.objects?.map((o: { package: NpmSearchResult }) => o.package) || []);
         } catch (e) {
           reject(e);
         }
@@ -542,14 +553,14 @@ async function main() {
       if (pkg.name) {
         localPackages.add(pkg.name);
       }
-    } catch (e) {
+    } catch (_e) {
       // skip
     }
   }
 
   // 先进行更全面的搜索
   const foundFromSearch = new Set<string>();
-  
+
   const searchQueries = [
     '@lytjs',
     'lytjs',
@@ -593,7 +604,7 @@ async function main() {
   ];
 
   console.log('📝 执行全面搜索...\n');
-  
+
   for (const query of searchQueries) {
     try {
       console.log(`   搜索: ${query}`);
@@ -611,28 +622,30 @@ async function main() {
   console.log(`\n🔍 从搜索结果中找到 ${foundFromSearch.size} 个包\n`);
 
   // 加上已知的旧包
-  knownOldPackages.forEach(pkg => foundFromSearch.add(pkg));
+  knownOldPackages.forEach((pkg) => foundFromSearch.add(pkg));
 
   // 现在检查可能的包
   console.log('🔍 检查可能的包名...\n');
   const batchSize = 20;
-  
+
   for (let i = 0; i < possiblePackages.length; i += batchSize) {
     const batch = possiblePackages.slice(i, i + batchSize);
-    console.log(`   检查第 ${i+1}-${Math.min(i+batchSize, possiblePackages.length)} 个可能的包...`);
-    
+    console.log(
+      `   检查第 ${i + 1}-${Math.min(i + batchSize, possiblePackages.length)} 个可能的包...`,
+    );
+
     const batchResults = await Promise.allSettled(
       batch.map(async (name) => {
         try {
           const info = await getPackageInfo(name);
           return info ? name : null;
-        } catch (e) {
+        } catch (_e) {
           return null;
         }
-      })
+      }),
     );
-    
-    batchResults.forEach(result => {
+
+    batchResults.forEach((result) => {
       if (result.status === 'fulfilled' && result.value) {
         foundFromSearch.add(result.value);
       }
@@ -640,7 +653,7 @@ async function main() {
   }
 
   const allPackages = Array.from(foundFromSearch).sort();
-  
+
   console.log('\n' + '='.repeat(100));
   console.log(`📊 找到总共 ${allPackages.length} 个包`);
   console.log('='.repeat(100));
@@ -648,11 +661,11 @@ async function main() {
   // 获取所有包的详细信息
   console.log('\n⏳ 获取所有包的详细信息...\n');
   const packagesWithInfo = [];
-  
+
   for (let i = 0; i < allPackages.length; i += batchSize) {
     const batch = allPackages.slice(i, i + batchSize);
-    console.log(`   处理第 ${i+1}-${Math.min(i+batchSize, allPackages.length)} 个包...`);
-    
+    console.log(`   处理第 ${i + 1}-${Math.min(i + batchSize, allPackages.length)} 个包...`);
+
     const batchResults = await Promise.allSettled(
       batch.map(async (name) => {
         try {
@@ -662,17 +675,17 @@ async function main() {
               name,
               latestVersion: info['dist-tags']?.latest || null,
               versionsCount: Object.keys(info.versions || {}).length,
-              existsLocally: localPackages.has(name)
+              existsLocally: localPackages.has(name),
             };
           }
           return null;
-        } catch (e) {
+        } catch (_e) {
           return null;
         }
-      })
+      }),
     );
-    
-    batchResults.forEach(result => {
+
+    batchResults.forEach((result) => {
       if (result.status === 'fulfilled' && result.value) {
         packagesWithInfo.push(result.value);
       }
@@ -681,33 +694,37 @@ async function main() {
 
   // 统计
   const versionStats: Record<string, number> = {};
-  const npmOnly = packagesWithInfo.filter(p => !p.existsLocally);
-  
-  packagesWithInfo.filter(p => p.latestVersion).forEach(p => {
-    versionStats[p.latestVersion!] = (versionStats[p.latestVersion!] || 0) + 1;
-  });
+  const npmOnly = packagesWithInfo.filter((p) => !p.existsLocally);
+
+  packagesWithInfo
+    .filter((p) => p.latestVersion)
+    .forEach((p) => {
+      versionStats[p.latestVersion!] = (versionStats[p.latestVersion!] || 0) + 1;
+    });
 
   console.log('\n' + '='.repeat(100));
   console.log('📋 各最新版本的包数量：');
   console.log('='.repeat(100));
-  
-  Object.keys(versionStats).sort((a, b) => b.localeCompare(a)).forEach(version => {
-    console.log(`   v${version.padEnd(10)} ${versionStats[version]} 个包`);
-  });
+
+  Object.keys(versionStats)
+    .sort((a, b) => b.localeCompare(a))
+    .forEach((version) => {
+      console.log(`   v${version.padEnd(10)} ${versionStats[version]} 个包`);
+    });
 
   console.log('\n' + '='.repeat(100));
   console.log('📦 所有包列表：');
   console.log('='.repeat(100));
-  
+
   packagesWithInfo
     .sort((a, b) => a.name.localeCompare(b.name))
     .forEach((pkg, i) => {
       const localMark = pkg.existsLocally ? '✅ 本地存在' : '❌ 本地没有';
       console.log(
         `${String(i + 1).padStart(3)}. ${pkg.name.padEnd(50)} ` +
-        `${localMark.padEnd(15)} ` +
-        `v${(pkg.latestVersion || 'N/A').padEnd(10)} ` +
-        `(${pkg.versionsCount || 0} 个版本)`
+          `${localMark.padEnd(15)} ` +
+          `v${(pkg.latestVersion || 'N/A').padEnd(10)} ` +
+          `(${pkg.versionsCount || 0} 个版本)`,
       );
     });
 
@@ -718,8 +735,8 @@ async function main() {
     npmOnly.forEach((pkg, i) => {
       console.log(
         `${String(i + 1).padStart(3)}. ${pkg.name.padEnd(50)} ` +
-        `v${(pkg.latestVersion || 'N/A').padEnd(10)} ` +
-        `(${pkg.versionsCount || 0} 个版本)`
+          `v${(pkg.latestVersion || 'N/A').padEnd(10)} ` +
+          `(${pkg.versionsCount || 0} 个版本)`,
       );
     });
   }

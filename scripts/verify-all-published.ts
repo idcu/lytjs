@@ -10,7 +10,10 @@ const ROOT = join(__dirname, '..');
 import { findPackageJsonFiles } from './shared.js';
 
 // 检查 npm 上是否存在某个包的某个版本
-function checkPackageOnNpm(packageName: string, version: string): Promise<{ exists: boolean; error?: string }> {
+function checkPackageOnNpm(
+  packageName: string,
+  version: string,
+): Promise<{ exists: boolean; error?: string }> {
   return new Promise((resolve) => {
     const options = {
       hostname: 'registry.npmjs.org',
@@ -18,8 +21,8 @@ function checkPackageOnNpm(packageName: string, version: string): Promise<{ exis
       path: `/${packageName}`,
       method: 'GET',
       headers: {
-        'Accept': 'application/json'
-      }
+        Accept: 'application/json',
+      },
     };
 
     const req = https.request(options, (res) => {
@@ -29,14 +32,16 @@ function checkPackageOnNpm(packageName: string, version: string): Promise<{ exis
       }
 
       let data = '';
-      res.on('data', (chunk) => { data += chunk; });
+      res.on('data', (chunk) => {
+        data += chunk;
+      });
       res.on('end', () => {
         try {
           const pkgData = JSON.parse(data);
           const versions = Object.keys(pkgData.versions || {});
           const exists = versions.includes(version);
           resolve({ exists });
-        } catch (e) {
+        } catch (_e) {
           resolve({ exists: false, error: 'Parse failed' });
         }
       });
@@ -68,7 +73,7 @@ async function main() {
       if (pkg.name) {
         packages.push({ name: pkg.name, version: pkg.version });
       }
-    } catch (e) {
+    } catch (_e) {
       // skip
     }
   }
@@ -82,20 +87,20 @@ async function main() {
 
   for (let i = 0; i < packages.length; i += batchSize) {
     const batch = packages.slice(i, i + batchSize);
-    console.log(`🔍 检查第 ${i+1}-${Math.min(i+batchSize, packages.length)} 个包...`);
+    console.log(`🔍 检查第 ${i + 1}-${Math.min(i + batchSize, packages.length)} 个包...`);
 
     const batchResults = await Promise.all(
       batch.map(async (pkg) => {
         const result = await checkPackageOnNpm(pkg.name, pkg.version);
         return { ...pkg, ...result };
-      })
+      }),
     );
 
     results.push(...batchResults);
   }
 
-  const published = results.filter(r => r.exists);
-  const notPublished = results.filter(r => !r.exists);
+  const published = results.filter((r) => r.exists);
+  const notPublished = results.filter((r) => !r.exists);
 
   console.log('\n' + '='.repeat(70));
   console.log('📊 发布结果汇总：');
@@ -105,7 +110,7 @@ async function main() {
 
   if (notPublished.length > 0) {
     console.log('\n❌ 未发布的包：');
-    notPublished.forEach(pkg => {
+    notPublished.forEach((pkg) => {
       console.log(`   ${pkg.name} @ ${pkg.version}`);
     });
   }

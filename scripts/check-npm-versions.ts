@@ -67,21 +67,42 @@ const PACKAGES = [
   { name: '@lytjs/devtools', path: 'packages/ecosystem/packages/devtools' },
   { name: '@lytjs/compat', path: 'packages/ecosystem/packages/compat' },
   { name: '@lytjs/platform-adapter', path: 'packages/ecosystem/packages/platform-adapter' },
-  { name: '@lytjs/router-fs', path: 'packages/ecosystem/packages/web-framework/packages/router-fs' },
+  {
+    name: '@lytjs/router-fs',
+    path: 'packages/ecosystem/packages/web-framework/packages/router-fs',
+  },
   { name: '@lytjs/api', path: 'packages/ecosystem/packages/web-framework/packages/api' },
   { name: '@lytjs/bundler', path: 'packages/ecosystem/packages/bundler' },
   { name: '@lytjs/hmr', path: 'packages/ecosystem/packages/ssr-kit/packages/hmr' },
   { name: '@lytjs/runtime-edge', path: 'packages/ecosystem/packages/runtime-edge' },
   { name: '@lytjs/cache', path: 'packages/ecosystem/packages/ssr-kit/packages/cache' },
   { name: '@lytjs/cache-isr', path: 'packages/ecosystem/packages/ssr-kit/packages/cache-isr' },
-  { name: '@lytjs/html-renderer', path: 'packages/ecosystem/packages/ssr-kit/packages/html-renderer' },
+  {
+    name: '@lytjs/html-renderer',
+    path: 'packages/ecosystem/packages/ssr-kit/packages/html-renderer',
+  },
   { name: '@lytjs/ssg', path: 'packages/ecosystem/packages/ssr-kit/packages/ssg' },
-  { name: '@lytjs/http-server', path: 'packages/ecosystem/packages/web-framework/packages/http-server' },
+  {
+    name: '@lytjs/http-server',
+    path: 'packages/ecosystem/packages/web-framework/packages/http-server',
+  },
   { name: '@lytjs/metadata', path: 'packages/ecosystem/packages/web-framework/packages/metadata' },
-  { name: '@lytjs/middleware', path: 'packages/ecosystem/packages/web-framework/packages/middleware' },
-  { name: '@lytjs/middleware-cors', path: 'packages/ecosystem/packages/web-framework/packages/middleware-cors' },
-  { name: '@lytjs/middleware-auth', path: 'packages/ecosystem/packages/web-framework/packages/middleware-auth' },
-  { name: '@lytjs/middleware-rate-limit', path: 'packages/ecosystem/packages/web-framework/packages/middleware-rate-limit' },
+  {
+    name: '@lytjs/middleware',
+    path: 'packages/ecosystem/packages/web-framework/packages/middleware',
+  },
+  {
+    name: '@lytjs/middleware-cors',
+    path: 'packages/ecosystem/packages/web-framework/packages/middleware-cors',
+  },
+  {
+    name: '@lytjs/middleware-auth',
+    path: 'packages/ecosystem/packages/web-framework/packages/middleware-auth',
+  },
+  {
+    name: '@lytjs/middleware-rate-limit',
+    path: 'packages/ecosystem/packages/web-framework/packages/middleware-rate-limit',
+  },
   { name: '@lytjs/plugin-vite', path: 'packages/plugins/packages/plugin-vite' },
   { name: '@lytjs/plugin-theme', path: 'packages/plugins/packages/plugin-theme' },
   { name: '@lytjs/plugin-logger', path: 'packages/plugins/packages/plugin-logger' },
@@ -133,7 +154,7 @@ for (const pkg of PACKAGES) {
     } else {
       upToDate.push(pkg.name);
     }
-  } catch (e) {
+  } catch (_e) {
     console.log(`❌ ${pkg.name}  - 无法获取版本`);
     notFound.push(pkg.name);
   }

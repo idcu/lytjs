@@ -46,9 +46,9 @@ console.log(colorText(colors.bold, '\n🚀 构建失败的包\n'));
 
 for (const pkg of failedPackages) {
   const fullPath = join(ROOT, pkg.path);
-  
+
   logInfo(`正在构建: ${colorText(colors.bold, pkg.name)}`);
-  
+
   try {
     const tsupEntry = join(ROOT, 'node_modules', 'tsup', 'dist', 'cli-default.js');
     execSync(`node "${tsupEntry}"`, {
@@ -59,18 +59,18 @@ for (const pkg of failedPackages) {
         NODE_ENV: 'production',
       },
     });
-    
+
     logSuccess(`构建成功: ${pkg.name}`);
     results.push({ name: pkg.name, success: true });
-  } catch (error) {
+  } catch (_error) {
     logError(`构建失败: ${pkg.name}`);
     results.push({ name: pkg.name, success: false });
   }
 }
 
 console.log('\n' + '='.repeat(60));
-const successCount = results.filter(r => r.success).length;
-const failCount = results.filter(r => !r.success).length;
+const successCount = results.filter((r) => r.success).length;
+const failCount = results.filter((r) => !r.success).length;
 console.log(`📊 统计: ${successCount} 成功, ${failCount} 失败`);
 console.log('='.repeat(60) + '\n');
 

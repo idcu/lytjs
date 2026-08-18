@@ -91,6 +91,68 @@ export default tseslint.config(
     },
   },
 
+  // devtools 扩展浏览器脚本（运行于浏览器环境，非 Node）
+  {
+    files: ['packages/tools/packages/devtools/extension/*.js'],
+    languageOptions: {
+      globals: {
+        ...globals.browser,
+        chrome: 'readonly',
+        window: 'readonly',
+        document: 'readonly',
+      },
+    },
+  },
+
+  // benchmarks 浏览器基准脚本与 server.js
+  {
+    files: [
+      'benchmarks/js-framework-benchmark/frameworks/**/main*.js',
+      'benchmarks/js-framework-benchmark/frameworks/**/server.js',
+    ],
+    languageOptions: {
+      globals: {
+        ...globals.browser,
+        ...globals.node,
+      },
+    },
+    rules: {
+      '@typescript-eslint/no-require-imports': 'off',
+    },
+  },
+
+  // reactivity 临时调试脚本（不参与发布）
+  {
+    files: ['packages/reactivity/debug-*.js'],
+    languageOptions: {
+      globals: {
+        ...globals.browser,
+        ...globals.node,
+      },
+    },
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-unused-vars': 'off',
+      'no-undef': 'off',
+      'no-console': 'off',
+    },
+  },
+
+  // CommonJS 脚本（.cjs 允许 require）
+  {
+    files: ['**/*.cjs'],
+    languageOptions: {
+      ecmaVersion: 2022,
+      sourceType: 'commonjs',
+      globals: {
+        ...globals.node,
+      },
+    },
+    rules: {
+      '@typescript-eslint/no-require-imports': 'off',
+    },
+  },
+
   // Prettier 兼容（必须放最后）
   eslintConfigPrettier,
 );

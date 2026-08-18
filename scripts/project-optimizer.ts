@@ -73,17 +73,14 @@ export class ProjectOptimizer {
   constructor(rootDir: string, options: { exclude?: string[] } = {}) {
     this.rootDir = rootDir;
     this.excludePatterns = (options.exclude || []).map(
-      (pattern) => new RegExp(pattern.replace(/\*/g, '.*'))
+      (pattern) => new RegExp(pattern.replace(/\*/g, '.*')),
     );
   }
 
   /**
    * 查找重复代码
    */
-  findDuplicateCode(
-    minLength: number = 5,
-    _minSimilarity: number = 0.8
-  ): DuplicateCodeResult[] {
+  findDuplicateCode(minLength: number = 5, _minSimilarity: number = 0.8): DuplicateCodeResult[] {
     const results: DuplicateCodeResult[] = [];
     const fileCodes: Array<{
       path: string;
@@ -109,7 +106,7 @@ export class ProjectOptimizer {
       for (let i = 0; i < file.lines.length - minLength + 1; i++) {
         const snippet = file.lines.slice(i, i + minLength).join('\n');
         const normalized = this.normalizeCode(snippet);
-        
+
         if (seenSnippets.has(normalized)) {
           const existing = seenSnippets.get(normalized)!;
           results.push({
@@ -139,7 +136,6 @@ export class ProjectOptimizer {
     this.walkDir(this.rootDir, (filePath) => {
       if (filePath.endsWith('.ts') || filePath.endsWith('.tsx')) {
         const content = fs.readFileSync(filePath, 'utf-8');
-        const lines = content.split('\n');
 
         let match;
         while ((match = pattern.exec(content)) !== null) {
@@ -181,7 +177,7 @@ export class ProjectOptimizer {
       if (filePath.endsWith('.ts') || filePath.endsWith('.tsx')) {
         const content = fs.readFileSync(filePath, 'utf-8');
         const importPattern = /from\s+['"]([@\w./-]+)['"]/g;
-        
+
         const dependencies: string[] = [];
         let match;
         while ((match = importPattern.exec(content)) !== null) {
@@ -226,7 +222,7 @@ export class ProjectOptimizer {
         if (entry.isFile()) {
           const size = fs.statSync(fullPath).size;
           totalSize += size;
-          
+
           if (size > threshold) {
             largeFiles.push({
               filePath: fullPath,
@@ -263,7 +259,7 @@ export class ProjectOptimizer {
     duplicates: DuplicateCodeResult[],
     commonCode: CommonCodeResult[],
     dependencies: DependencyResult[],
-    bundle: BundleAnalysisResult
+    bundle: BundleAnalysisResult,
   ): OptimizationSuggestion[] {
     const suggestions: OptimizationSuggestion[] = [];
 
@@ -284,7 +280,9 @@ export class ProjectOptimizer {
         type: 'common-code',
         severity: 'medium',
         message: `发现 ${highFreqCode.length} 个高频使用的类型/函数，建议统一管理`,
-        files: Array.from(new Set(highFreqCode.flatMap((c) => c.occurrences.map((o) => o.filePath)))).slice(0, 5),
+        files: Array.from(
+          new Set(highFreqCode.flatMap((c) => c.occurrences.map((o) => o.filePath))),
+        ).slice(0, 5),
       });
     }
 
@@ -309,7 +307,7 @@ export class ProjectOptimizer {
     commonCode: CommonCodeResult[],
     dependencies: DependencyResult[],
     bundle: BundleAnalysisResult,
-    suggestions: OptimizationSuggestion[]
+    suggestions: OptimizationSuggestion[],
   ): string {
     let report = '\n📊 项目优化检查报告\n';
     report += '='.repeat(80) + '\n';
@@ -372,7 +370,7 @@ export class ProjectOptimizer {
     const entries = fs.readdirSync(dir, { withFileTypes: true });
     for (const entry of entries) {
       const fullPath = path.join(dir, entry.name);
-      
+
       if (this.excludePatterns.some((p) => p.test(fullPath))) {
         continue;
       }
@@ -414,7 +412,7 @@ export function runQuickOptimizationCheck(rootDir: string = process.cwd()): void
   const duplicates = optimizer.findDuplicateCode(5, 0.8);
   const commonCode = optimizer.findCommonCode();
   const dependencies = optimizer.analyzeDependencies();
-  
+
   // 构建产物分析（如果有 dist 目录）
   let bundle: BundleAnalysisResult = {
     filePath: '',
@@ -427,21 +425,10 @@ export function runQuickOptimizationCheck(rootDir: string = process.cwd()): void
   }
 
   // 生成建议
-  const suggestions = optimizer.generateSuggestions(
-    duplicates,
-    commonCode,
-    dependencies,
-    bundle
-  );
+  const suggestions = optimizer.generateSuggestions(duplicates, commonCode, dependencies, bundle);
 
   // 输出报告
-  console.log(optimizer.formatReport(
-    duplicates,
-    commonCode,
-    dependencies,
-    bundle,
-    suggestions
-  ));
+  console.log(optimizer.formatReport(duplicates, commonCode, dependencies, bundle, suggestions));
 }
 
 export default ProjectOptimizer;

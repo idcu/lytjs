@@ -1,4 +1,4 @@
-import { createApp, ref, computed } from '@lytjs/core';
+import { createApp, ref } from '@lytjs/core';
 import { defineStore, createPinia } from '@lytjs/store';
 import { Button, Input, Card, Tag } from '@lytjs/ui';
 import '@lytjs/ui/index.css';
@@ -9,19 +9,18 @@ console.log('✅ LytJS 依赖加载成功！');
 const useTodoStore = defineStore('todo', {
   state: () => ({
     todos: [],
-    filter: 'all'
+    filter: 'all',
   }),
   getters: {
     filteredTodos: (state) => {
       if (state.filter === 'active') {
-        return state.todos.filter(t => !t.completed);
+        return state.todos.filter((t) => !t.completed);
       } else if (state.filter === 'completed') {
-        return state.todos.filter(t => t.completed);
+        return state.todos.filter((t) => t.completed);
       }
       return state.todos;
     },
-    remainingCount: (state) => 
-      state.todos.filter(t => !t.completed).length,
+    remainingCount: (state) => state.todos.filter((t) => !t.completed).length,
   },
   actions: {
     addTodo(text) {
@@ -29,21 +28,21 @@ const useTodoStore = defineStore('todo', {
         this.todos.push({
           id: Date.now(),
           text: text,
-          completed: false
+          completed: false,
         });
       }
     },
     toggleTodo(id) {
-      const todo = this.todos.find(t => t.id === id);
+      const todo = this.todos.find((t) => t.id === id);
       if (todo) todo.completed = !todo.completed;
     },
     deleteTodo(id) {
-      this.todos = this.todos.filter(t => t.id !== id);
+      this.todos = this.todos.filter((t) => t.id !== id);
     },
     setFilter(filter) {
       this.filter = filter;
-    }
-  }
+    },
+  },
 });
 
 const pinia = createPinia();
@@ -52,14 +51,14 @@ const TodoApp = {
   components: { Button, Input, Card, Tag },
   setup() {
     const todoStore = useTodoStore(pinia);
-    
+
     const newTodo = ref('');
-    
+
     const handleAdd = () => {
       todoStore.addTodo(newTodo.value);
       newTodo.value = '';
     };
-    
+
     return { todoStore, newTodo, handleAdd };
   },
   template: `
@@ -115,7 +114,7 @@ const TodoApp = {
         </Button>
       </li>
     </ul>
-  </template>
+  `,
 };
 
 const app = createApp(TodoApp);

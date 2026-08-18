@@ -6,53 +6,53 @@ import { join } from 'path';
 
 // 从测试输出中提取的真实数据
 const performanceData = {
-  "initial-render": {
-    "vdom-1000": null,
-    "signal-1000": null,
-    "vapor-1000": 38.9647,  // 从实际测试中获取
-    "vdom-10000": null,
-    "signal-10000": null,
-    "vapor-10000": 312.37   // 从实际测试中获取
+  'initial-render': {
+    'vdom-1000': null,
+    'signal-1000': null,
+    'vapor-1000': 38.9647, // 从实际测试中获取
+    'vdom-10000': null,
+    'signal-10000': null,
+    'vapor-10000': 312.37, // 从实际测试中获取
   },
-  "update": {
-    "vdom-1000": null,
-    "signal-1000": null,
-    "vapor-1000": null
+  update: {
+    'vdom-1000': null,
+    'signal-1000': null,
+    'vapor-1000': null,
   },
-  "list-operations": {
-    "vapor-render-1000": 38.9647,
-    "vapor-update-10pct": 59.8039,
-    "vapor-sort": 68.6268,
-    "vapor-high-frequency": 114.73,
-    "traditional-full-replace": 18.4219
-  }
+  'list-operations': {
+    'vapor-render-1000': 38.9647,
+    'vapor-update-10pct': 59.8039,
+    'vapor-sort': 68.6268,
+    'vapor-high-frequency': 114.73,
+    'traditional-full-replace': 18.4219,
+  },
 };
 
 // 从现有基准测试中提取的其他有用数据
-const additionalBenchmarkData = {
-  "signal-operations": {
-    "signal-read": "12.5M ops/sec",
-    "signal-write": "8.5M ops/sec",
-    "computed-calc": "5.2M ops/sec",
-    "effect-trigger": "3.1M ops/sec"
+const _additionalBenchmarkData = {
+  'signal-operations': {
+    'signal-read': '12.5M ops/sec',
+    'signal-write': '8.5M ops/sec',
+    'computed-calc': '5.2M ops/sec',
+    'effect-trigger': '3.1M ops/sec',
   },
-  "dom-operations": {
-    "update-single-node": 0.0212,
-    "update-1000-nodes": 2.6792,
-    "swap-rows": 0.1047,
-    "select-row": 0.4402,
-    "remove-row": 0.1101,
-    "append-1000-rows": 0.2525,
-    "prepend-1000-rows": 0.2538,
-    "reverse-list": 0.1105,
-    "filter-list": 0.1249,
-    "sort-list": 0.4438
+  'dom-operations': {
+    'update-single-node': 0.0212,
+    'update-1000-nodes': 2.6792,
+    'swap-rows': 0.1047,
+    'select-row': 0.4402,
+    'remove-row': 0.1101,
+    'append-1000-rows': 0.2525,
+    'prepend-1000-rows': 0.2538,
+    'reverse-list': 0.1105,
+    'filter-list': 0.1249,
+    'sort-list': 0.4438,
   },
-  "list-diff": {
-    "1000-10pct": 0.3519,
-    "1000-50pct": 0.3780,
-    "100-full": 0.0516
-  }
+  'list-diff': {
+    '1000-10pct': 0.3519,
+    '1000-50pct': 0.378,
+    '100-full': 0.0516,
+  },
 };
 
 // 问题1的答案：为什么 Signal 和 Vapor 都依赖 @lytjs/core-signal
@@ -229,7 +229,15 @@ writeFileSync(reportPath, reportContent, 'utf-8');
 
 console.log('✅ 真实性能报告已生成:', reportPath);
 console.log('\n📊 关键数据摘要:');
-console.log('  · Vapor 初始渲染 1,000 项:', performanceData["initial-render"]["vapor-1000"], 'ms');
-console.log('  · Vapor 初始渲染 5,000 项:', performanceData["initial-render"]["vapor-10000"], 'ms');
-console.log('  · Vapor 增量更新 (10%):', performanceData["list-operations"]["vapor-update-10pct"], 'ms');
-console.log('  · 传统 DOM 完全替换 1,000 项:', performanceData["list-operations"]["traditional-full-replace"], 'ms');
+console.log('  · Vapor 初始渲染 1,000 项:', performanceData['initial-render']['vapor-1000'], 'ms');
+console.log('  · Vapor 初始渲染 5,000 项:', performanceData['initial-render']['vapor-10000'], 'ms');
+console.log(
+  '  · Vapor 增量更新 (10%):',
+  performanceData['list-operations']['vapor-update-10pct'],
+  'ms',
+);
+console.log(
+  '  · 传统 DOM 完全替换 1,000 项:',
+  performanceData['list-operations']['traditional-full-replace'],
+  'ms',
+);

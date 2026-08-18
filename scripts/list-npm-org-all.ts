@@ -17,7 +17,7 @@ async function getAllOrgPackages(orgName: string): Promise<string[]> {
 
   // 尝试搜索所有 @lytjs 开头的包
   const searchQueries = ['@lytjs', 'lytjs'];
-  
+
   for (const query of searchQueries) {
     console.log(`   搜索关键词: ${query}`);
     try {
@@ -37,7 +37,9 @@ async function getAllOrgPackages(orgName: string): Promise<string[]> {
 }
 
 // 搜索 npm
-function searchNpm(query: string): Promise<any[]> {
+type NpmSearchResult = { name: string };
+
+function searchNpm(query: string): Promise<NpmSearchResult[]> {
   return new Promise((resolve, reject) => {
     const options = {
       hostname: 'registry.npmjs.org',
@@ -45,17 +47,19 @@ function searchNpm(query: string): Promise<any[]> {
       path: `/-/v1/search?text=${encodeURIComponent(query)}&size=250`,
       method: 'GET',
       headers: {
-        'Accept': 'application/json'
-      }
+        Accept: 'application/json',
+      },
     };
 
     const req = https.request(options, (res) => {
       let data = '';
-      res.on('data', (chunk) => { data += chunk; });
+      res.on('data', (chunk) => {
+        data += chunk;
+      });
       res.on('end', () => {
         try {
           const result = JSON.parse(data);
-          resolve(result.objects?.map((o: any) => o.package) || []);
+          resolve(result.objects?.map((o: { package: NpmSearchResult }) => o.package) || []);
         } catch (e) {
           reject(e);
         }
@@ -76,7 +80,13 @@ function searchNpm(query: string): Promise<any[]> {
 }
 
 // 获取单个包的信息
-function getPackageInfo(packageName: string): Promise<any> {
+type NpmPackageInfo = {
+  'dist-tags'?: { latest?: string };
+  versions?: Record<string, unknown>;
+  time?: { modified?: string };
+};
+
+function getPackageInfo(packageName: string): Promise<NpmPackageInfo | null> {
   return new Promise((resolve, reject) => {
     const options = {
       hostname: 'registry.npmjs.org',
@@ -84,8 +94,8 @@ function getPackageInfo(packageName: string): Promise<any> {
       path: `/${encodeURIComponent(packageName)}`,
       method: 'GET',
       headers: {
-        'Accept': 'application/json'
-      }
+        Accept: 'application/json',
+      },
     };
 
     const req = https.request(options, (res) => {
@@ -95,7 +105,9 @@ function getPackageInfo(packageName: string): Promise<any> {
       }
 
       let data = '';
-      res.on('data', (chunk) => { data += chunk; });
+      res.on('data', (chunk) => {
+        data += chunk;
+      });
       res.on('end', () => {
         try {
           resolve(JSON.parse(data));
@@ -129,7 +141,7 @@ async function main() {
       if (pkg.name) {
         localPackages.add(pkg.name);
       }
-    } catch (e) {
+    } catch (_e) {
       // skip
     }
   }
@@ -147,7 +159,7 @@ async function main() {
 
   for (let i = 0; i < npmPackages.length; i += batchSize) {
     const batch = npmPackages.slice(i, i + batchSize);
-    console.log(`   处理第 ${i+1}-${Math.min(i+batchSize, npmPackages.length)} 个包...`);
+    console.log(`   处理第 ${i + 1}-${Math.min(i + batchSize, npmPackages.length)} 个包...`);
 
     const batchResults = await Promise.allSettled(
       batch.map(async (name) => {
@@ -159,17 +171,17 @@ async function main() {
               latestVersion: info['dist-tags']?.latest || null,
               versionsCount: Object.keys(info.versions || {}).length,
               lastModified: info.time?.modified || null,
-              existsLocally: localPackages.has(name)
+              existsLocally: localPackages.has(name),
             };
           }
           return { name, exists: false, existsLocally: localPackages.has(name) };
         } catch (e) {
           return { name, error: String(e), existsLocally: localPackages.has(name) };
         }
-      })
+      }),
     );
 
-    batchResults.forEach(result => {
+    batchResults.forEach((result) => {
       if (result.status === 'fulfilled') {
         packagesWithInfo.push(result.value);
       }
@@ -178,12 +190,14 @@ async function main() {
 
   // 统计
   const versionStats: Record<string, number> = {};
-  const localOnly = Array.from(localPackages).filter(p => !npmPackages.includes(p));
-  const npmOnly = packagesWithInfo.filter(p => !p.existsLocally);
+  const localOnly = Array.from(localPackages).filter((p) => !npmPackages.includes(p));
+  const npmOnly = packagesWithInfo.filter((p) => !p.existsLocally);
 
-  packagesWithInfo.filter(p => p.latestVersion).forEach(p => {
-    versionStats[p.latestVersion!] = (versionStats[p.latestVersion!] || 0) + 1;
-  });
+  packagesWithInfo
+    .filter((p) => p.latestVersion)
+    .forEach((p) => {
+      versionStats[p.latestVersion!] = (versionStats[p.latestVersion!] || 0) + 1;
+    });
 
   // 输出结果
   console.log('\n' + '='.repeat(100));
@@ -191,9 +205,11 @@ async function main() {
   console.log('='.repeat(100));
 
   console.log('\n📋 各最新版本的包数量：');
-  Object.keys(versionStats).sort((a, b) => b.localeCompare(a)).forEach(version => {
-    console.log(`   v${version.padEnd(10)} ${versionStats[version]} 个包`);
-  });
+  Object.keys(versionStats)
+    .sort((a, b) => b.localeCompare(a))
+    .forEach((version) => {
+      console.log(`   v${version.padEnd(10)} ${versionStats[version]} 个包`);
+    });
 
   console.log('\n' + '='.repeat(100));
   console.log('📦 npm 上所有 @lytjs 包列表：');
@@ -205,9 +221,9 @@ async function main() {
       const localMark = pkg.existsLocally ? '✅ 本地存在' : '❌ 本地没有';
       console.log(
         `${String(i + 1).padStart(3)}. ${pkg.name.padEnd(45)} ` +
-        `${localMark.padEnd(15)} ` +
-        `v${(pkg.latestVersion || 'N/A').padEnd(10)} ` +
-        `(${pkg.versionsCount || 0} 个版本)`
+          `${localMark.padEnd(15)} ` +
+          `v${(pkg.latestVersion || 'N/A').padEnd(10)} ` +
+          `(${pkg.versionsCount || 0} 个版本)`,
       );
     });
 
@@ -218,8 +234,8 @@ async function main() {
     npmOnly.forEach((pkg, i) => {
       console.log(
         `${String(i + 1).padStart(3)}. ${pkg.name.padEnd(45)} ` +
-        `v${(pkg.latestVersion || 'N/A').padEnd(10)} ` +
-        `(${pkg.versionsCount || 0} 个版本)`
+          `v${(pkg.latestVersion || 'N/A').padEnd(10)} ` +
+          `(${pkg.versionsCount || 0} 个版本)`,
       );
     });
   }

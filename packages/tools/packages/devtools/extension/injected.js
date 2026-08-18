@@ -1,6 +1,3 @@
-/* eslint-env browser */
-/* global window, document */
-
 // Script injected into the page to access LytJS internals
 
 (function () {

@@ -10,7 +10,12 @@ const ROOT = join(__dirname, '..');
 import { findPackageJsonFiles } from './shared.js';
 
 // 获取 npm 上某个包的信息
-function getPackageInfo(packageName: string): Promise<any> {
+type NpmPackageInfo = {
+  'dist-tags'?: { latest?: string };
+  versions?: Record<string, unknown>;
+};
+
+function getPackageInfo(packageName: string): Promise<NpmPackageInfo | null> {
   return new Promise((resolve, reject) => {
     const options = {
       hostname: 'registry.npmjs.org',
@@ -18,8 +23,8 @@ function getPackageInfo(packageName: string): Promise<any> {
       path: `/${packageName}`,
       method: 'GET',
       headers: {
-        'Accept': 'application/json'
-      }
+        Accept: 'application/json',
+      },
     };
 
     const req = https.request(options, (res) => {
@@ -29,7 +34,9 @@ function getPackageInfo(packageName: string): Promise<any> {
       }
 
       let data = '';
-      res.on('data', (chunk) => { data += chunk; });
+      res.on('data', (chunk) => {
+        data += chunk;
+      });
       res.on('end', () => {
         try {
           resolve(JSON.parse(data));
@@ -66,7 +73,7 @@ async function main() {
       if (pkg.name) {
         localPackages.push({ name: pkg.name, version: pkg.version });
       }
-    } catch (e) {
+    } catch (_e) {
       // skip
     }
   }
@@ -82,7 +89,7 @@ async function main() {
 
   for (let i = 0; i < localPackages.length; i += batchSize) {
     const batch = localPackages.slice(i, i + batchSize);
-    console.log(`🔍 检查第 ${i+1}-${Math.min(i+batchSize, localPackages.length)} 个包...`);
+    console.log(`🔍 检查第 ${i + 1}-${Math.min(i + batchSize, localPackages.length)} 个包...`);
 
     const batchResults = await Promise.allSettled(
       batch.map(async (pkg) => {
@@ -106,10 +113,10 @@ async function main() {
         } catch (e) {
           return { name: pkg.name, exists: false, error: String(e), localVersion: pkg.version };
         }
-      })
+      }),
     );
 
-    batchResults.forEach(result => {
+    batchResults.forEach((result) => {
       if (result.status === 'fulfilled') {
         results.push(result.value);
       }
@@ -118,9 +125,9 @@ async function main() {
 
   // 统计不同版本的包数量
   const versionStats: Record<string, number> = {};
-  const successResults = results.filter(r => r.exists && r.latestVersion);
+  const successResults = results.filter((r) => r.exists && r.latestVersion);
 
-  successResults.forEach(r => {
+  successResults.forEach((r) => {
     versionStats[r.latestVersion!] = (versionStats[r.latestVersion!] || 0) + 1;
   });
 
@@ -129,9 +136,11 @@ async function main() {
   console.log('='.repeat(80));
 
   console.log('\n📋 各最新版本的包数量：');
-  Object.keys(versionStats).sort((a, b) => b.localeCompare(a)).forEach(version => {
-    console.log(`   v${version.padEnd(10)} ${versionStats[version]} 个包`);
-  });
+  Object.keys(versionStats)
+    .sort((a, b) => b.localeCompare(a))
+    .forEach((version) => {
+      console.log(`   v${version.padEnd(10)} ${versionStats[version]} 个包`);
+    });
 
   console.log('\n' + '='.repeat(80));
   console.log('📦 详细包列表 (按最新版本排序)：');
@@ -143,17 +152,17 @@ async function main() {
       const status = pkg.localVersion === pkg.latestVersion ? '✅' : '⚠️ ';
       console.log(
         `${String(i + 1).padStart(3)}. ${status} ${pkg.name.padEnd(40)} ` +
-        `本地 v${pkg.localVersion.padEnd(10)} npm v${pkg.latestVersion?.padEnd(10) || 'N/A'} ` +
-        `(${pkg.versionsCount} 个历史版本)`
+          `本地 v${pkg.localVersion.padEnd(10)} npm v${pkg.latestVersion?.padEnd(10) || 'N/A'} ` +
+          `(${pkg.versionsCount} 个历史版本)`,
       );
     });
 
-  const notOnNpm = results.filter(r => !r.exists);
+  const notOnNpm = results.filter((r) => !r.exists);
   if (notOnNpm.length > 0) {
     console.log('\n' + '='.repeat(80));
     console.log('❌ 未在 npm 上找到的包：');
     console.log('='.repeat(80));
-    notOnNpm.forEach(pkg => {
+    notOnNpm.forEach((pkg) => {
       console.log(`   ${pkg.name}`);
     });
   }

@@ -15,7 +15,7 @@
  */
 
 import { execSync } from 'child_process';
-import { join, dirname } from 'path';
+import { join } from 'path';
 import { fileURLToPath } from 'url';
 import { writeFileSync, unlinkSync, existsSync, readFileSync } from 'fs';
 
@@ -83,7 +83,10 @@ const PACKAGES = [
   { name: '@lytjs/hmr', path: 'packages/ecosystem/packages/ssr-kit/packages/hmr' },
   { name: '@lytjs/ssr', path: 'packages/ecosystem/packages/ssr-kit/packages/ssr' },
   { name: '@lytjs/router', path: 'packages/ecosystem/packages/web-framework/packages/router' },
-  { name: '@lytjs/router-fs', path: 'packages/ecosystem/packages/web-framework/packages/router-fs' },
+  {
+    name: '@lytjs/router-fs',
+    path: 'packages/ecosystem/packages/web-framework/packages/router-fs',
+  },
   { name: '@lytjs/api', path: 'packages/ecosystem/packages/web-framework/packages/api' },
   { name: '@lytjs/runtime-edge', path: 'packages/ecosystem/packages/runtime-edge' },
   { name: '@lytjs/cache', path: 'packages/ecosystem/packages/ssr-kit/packages/cache' },
@@ -159,7 +162,7 @@ function getToken(): string {
 // 将 workspace 依赖转换为实际版本号
 function prepareWorkspaceDeps() {
   console.log('🔧 准备 workspace 依赖...\n');
-  
+
   const rootPkg = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf-8'));
   const targetVersion = rootPkg.version;
   console.log(`目标版本: ${targetVersion}\n`);

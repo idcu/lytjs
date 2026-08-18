@@ -11,7 +11,7 @@ function checkCommand(cmd, name, options = {}) {
     return { success: true, output: result.trim() };
   } catch (e) {
     console.log(`❌ ${name}: 未找到或配置错误`);
-    return { success: false, error: e.message };
+    return { success: false, error: e?.message };
   }
 }
 
@@ -35,8 +35,11 @@ if (nodeCheck.success) {
   try {
     console.log('   npm prefix:', execSync('npm config get prefix', { encoding: 'utf-8' }).trim());
     console.log('   npm cache:', execSync('npm config get cache', { encoding: 'utf-8' }).trim());
-    console.log('   npm registry:', execSync('npm config get registry', { encoding: 'utf-8' }).trim());
-  } catch (e) {
+    console.log(
+      '   npm registry:',
+      execSync('npm config get registry', { encoding: 'utf-8' }).trim(),
+    );
+  } catch {
     console.log('   npm config: 无法获取配置');
   }
 }
@@ -46,10 +49,19 @@ console.log('\n📦 pnpm 相关检查\n' + '─'.repeat(50));
 const pnpmCheck = checkCommand('pnpm --version', 'pnpm');
 if (pnpmCheck.success) {
   try {
-    console.log('   pnpm global-dir:', execSync('pnpm config get global-dir', { encoding: 'utf-8' }).trim());
-    console.log('   pnpm store-dir:', execSync('pnpm config get store-dir', { encoding: 'utf-8' }).trim());
-    console.log('   pnpm registry:', execSync('pnpm config get registry', { encoding: 'utf-8' }).trim());
-  } catch (e) {
+    console.log(
+      '   pnpm global-dir:',
+      execSync('pnpm config get global-dir', { encoding: 'utf-8' }).trim(),
+    );
+    console.log(
+      '   pnpm store-dir:',
+      execSync('pnpm config get store-dir', { encoding: 'utf-8' }).trim(),
+    );
+    console.log(
+      '   pnpm registry:',
+      execSync('pnpm config get registry', { encoding: 'utf-8' }).trim(),
+    );
+  } catch {
     console.log('   pnpm config: 无法获取配置');
   }
 }
@@ -59,9 +71,15 @@ console.log('\n🔧 其他工具检查\n' + '─'.repeat(50));
 const gitCheck = checkCommand('git --version', 'Git');
 if (gitCheck.success) {
   try {
-    console.log('   git user.name:', execSync('git config --global user.name', { encoding: 'utf-8' }).trim());
-    console.log('   git user.email:', execSync('git config --global user.email', { encoding: 'utf-8' }).trim());
-  } catch (e) {
+    console.log(
+      '   git user.name:',
+      execSync('git config --global user.name', { encoding: 'utf-8' }).trim(),
+    );
+    console.log(
+      '   git user.email:',
+      execSync('git config --global user.email', { encoding: 'utf-8' }).trim(),
+    );
+  } catch {
     console.log('   git config: 无法获取用户配置');
   }
 }

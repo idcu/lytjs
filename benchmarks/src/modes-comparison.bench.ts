@@ -35,10 +35,10 @@ describe('渲染模式性能对比', () => {
   bench('VDOM 模式 - 初始渲染 1000 项', () => {
     const container = document.createElement('div');
     const data = generateData(1000);
-    
+
     // 原生 DOM 渲染（模拟 VDOM）
     const table = document.createElement('table');
-    data.forEach(item => {
+    data.forEach((item) => {
       const tr = document.createElement('tr');
       const td = document.createElement('td');
       td.textContent = item.label;
@@ -46,29 +46,29 @@ describe('渲染模式性能对比', () => {
       table.appendChild(tr);
     });
     container.appendChild(table);
-    
+
     return container.children.length;
   });
 
   bench('Vapor 模式 - 直接 DOM 操作 1000 项', () => {
     const container = document.createElement('div');
     const data = generateData(1000);
-    
+
     // 使用 DocumentFragment
     const frag = document.createDocumentFragment();
     const table = document.createElement('table');
-    
-    data.forEach(item => {
+
+    data.forEach((item) => {
       const tr = document.createElement('tr');
       const td = document.createElement('td');
       td.textContent = item.label;
       tr.appendChild(td);
       table.appendChild(tr);
     });
-    
+
     frag.appendChild(table);
     container.appendChild(frag);
-    
+
     return container.children.length;
   });
 
@@ -80,9 +80,9 @@ describe('渲染模式性能对比', () => {
   bench('VDOM 模式 - 初始渲染 10000 项', () => {
     const container = document.createElement('div');
     const data = generateData(10000);
-    
+
     const table = document.createElement('table');
-    data.forEach(item => {
+    data.forEach((item) => {
       const tr = document.createElement('tr');
       const td = document.createElement('td');
       td.textContent = item.label;
@@ -90,28 +90,28 @@ describe('渲染模式性能对比', () => {
       table.appendChild(tr);
     });
     container.appendChild(table);
-    
+
     return container.children.length;
   });
 
   bench('Vapor 模式 - 直接 DOM 操作 10000 项', () => {
     const container = document.createElement('div');
     const data = generateData(10000);
-    
+
     const frag = document.createDocumentFragment();
     const table = document.createElement('table');
-    
-    data.forEach(item => {
+
+    data.forEach((item) => {
       const tr = document.createElement('tr');
       const td = document.createElement('td');
       td.textContent = item.label;
       tr.appendChild(td);
       table.appendChild(tr);
     });
-    
+
     frag.appendChild(table);
     container.appendChild(frag);
-    
+
     return container.children.length;
   });
 
@@ -125,7 +125,7 @@ describe('更新性能对比', () => {
   bench('VDOM 模式 - 更新 10% 数据（1000 项中更新 100 项）', () => {
     const container = document.createElement('div');
     let data = generateData(1000);
-    
+
     // 初始渲染
     const table = document.createElement('table');
     data.forEach((item, index) => {
@@ -137,7 +137,7 @@ describe('更新性能对比', () => {
       table.appendChild(tr);
     });
     container.appendChild(table);
-    
+
     // 更新数据
     data = data.map((item, i) => {
       if (i % 10 === 0) {
@@ -145,7 +145,7 @@ describe('更新性能对比', () => {
       }
       return item;
     });
-    
+
     // 更新 DOM
     data.forEach((item, index) => {
       if (index % 10 === 0) {
@@ -156,19 +156,19 @@ describe('更新性能对比', () => {
         }
       }
     });
-    
+
     return container.children.length;
   });
 
   bench('Vapor 模式 - 直接更新 10% 数据', () => {
     const container = document.createElement('div');
     let data = generateData(1000);
-    
+
     // 初始渲染
     const table = document.createElement('table');
     const rows: HTMLTableRowElement[] = [];
-    
-    data.forEach((item, index) => {
+
+    data.forEach((item) => {
       const tr = document.createElement('tr');
       const td = document.createElement('td');
       td.textContent = item.label;
@@ -177,7 +177,7 @@ describe('更新性能对比', () => {
       rows.push(tr);
     });
     container.appendChild(table);
-    
+
     // 更新数据
     data = data.map((item, i) => {
       if (i % 10 === 0) {
@@ -185,7 +185,7 @@ describe('更新性能对比', () => {
       }
       return item;
     });
-    
+
     // 直接更新 DOM
     data.forEach((item, index) => {
       if (index % 10 === 0 && rows[index]) {
@@ -193,13 +193,13 @@ describe('更新性能对比', () => {
         if (td) td.textContent = item.label;
       }
     });
-    
+
     return container.children.length;
   });
 
   bench('Signal 模式 - 响应式数据更新', () => {
     const data = ref(generateData(1000));
-    
+
     // 更新数据
     data.value = data.value.map((item, i) => {
       if (i % 10 === 0) {
@@ -207,7 +207,7 @@ describe('更新性能对比', () => {
       }
       return item;
     });
-    
+
     return data.value.length;
   });
 });
@@ -216,10 +216,10 @@ describe('完整生命周期测试', () => {
   bench('VDOM 模式 - 完整生命周期（渲染-更新-清理）', () => {
     const container = document.createElement('div');
     let data = generateData(1000);
-    
+
     // 渲染
     const table = document.createElement('table');
-    data.forEach(item => {
+    data.forEach((item) => {
       const tr = document.createElement('tr');
       const td = document.createElement('td');
       td.textContent = item.label;
@@ -227,7 +227,7 @@ describe('完整生命周期测试', () => {
       table.appendChild(tr);
     });
     container.appendChild(table);
-    
+
     // 更新
     data = data.map((item, i) => {
       if (i % 5 === 0) {
@@ -235,41 +235,41 @@ describe('完整生命周期测试', () => {
       }
       return item;
     });
-    
+
     table.innerHTML = '';
-    data.forEach(item => {
+    data.forEach((item) => {
       const tr = document.createElement('tr');
       const td = document.createElement('td');
       td.textContent = item.label;
       tr.appendChild(td);
       table.appendChild(tr);
     });
-    
+
     // 清理
     container.innerHTML = '';
-    
+
     return container.children.length;
   });
 
   bench('Vapor 模式 - 完整生命周期（渲染-更新-清理）', () => {
     const container = document.createElement('div');
     let data = generateData(1000);
-    
+
     // 渲染
     const frag = document.createDocumentFragment();
     const table = document.createElement('table');
-    
-    data.forEach(item => {
+
+    data.forEach((item) => {
       const tr = document.createElement('tr');
       const td = document.createElement('td');
       td.textContent = item.label;
       tr.appendChild(td);
       table.appendChild(tr);
     });
-    
+
     frag.appendChild(table);
     container.appendChild(frag);
-    
+
     // 更新
     data = data.map((item, i) => {
       if (i % 5 === 0) {
@@ -277,25 +277,25 @@ describe('完整生命周期测试', () => {
       }
       return item;
     });
-    
+
     table.innerHTML = '';
-    data.forEach(item => {
+    data.forEach((item) => {
       const tr = document.createElement('tr');
       const td = document.createElement('td');
       td.textContent = item.label;
       tr.appendChild(td);
       table.appendChild(tr);
     });
-    
+
     // 清理
     container.innerHTML = '';
-    
+
     return container.children.length;
   });
 
   bench('Signal 模式 - 完整响应式生命周期', () => {
     const data = ref(generateData(1000));
-    
+
     // 更新
     data.value = data.value.map((item, i) => {
       if (i % 5 === 0) {
@@ -303,7 +303,7 @@ describe('完整生命周期测试', () => {
       }
       return item;
     });
-    
+
     return data.value.length;
   });
 });

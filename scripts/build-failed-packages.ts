@@ -52,7 +52,7 @@ console.log(colorText(colors.bold, '\n🚀 构建之前失败的 5 个包\n'));
 for (const pkgPath of failedPackages) {
   const fullPath = join(ROOT, pkgPath);
   const pkgName = pkgPath.split('/').pop() || pkgPath;
-  
+
   logInfo(`正在构建: ${colorText(colors.bold, '@lytjs/' + pkgName)}`);
   logInfo(`路径: ${pkgPath}`);
 
@@ -67,18 +67,18 @@ for (const pkgPath of failedPackages) {
         NODE_ENV: 'production',
       },
     });
-    
+
     logSuccess(`构建成功: @lytjs/${pkgName}`);
     results.push({ name: '@lytjs/' + pkgName, path: pkgPath, success: true });
-  } catch (error) {
+  } catch (_error) {
     logError(`构建失败: @lytjs/${pkgName}`);
     results.push({ name: '@lytjs/' + pkgName, path: pkgPath, success: false });
   }
 }
 
 console.log('\n' + '='.repeat(60));
-const successCount = results.filter(r => r.success).length;
-const failCount = results.filter(r => !r.success).length;
+const successCount = results.filter((r) => r.success).length;
+const failCount = results.filter((r) => !r.success).length;
 console.log(`📊 统计: ${successCount} 成功, ${failCount} 失败`);
 console.log('='.repeat(60) + '\n');
 

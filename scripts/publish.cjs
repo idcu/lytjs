@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unused-vars, @typescript-eslint/no-require-imports */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 const { execSync, spawnSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');

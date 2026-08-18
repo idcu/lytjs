@@ -354,7 +354,6 @@ function hydrateChildVNode(
     const tag = type.toLowerCase();
 
     // FIX: P2-34 缓存 vnodeToSimpleHTML 结果到局部变量，避免重复调用
-    // @ts-ignore -- reserved for future use
     const _vnodeHtml = vnodeToSimpleHTML(vnode);
 
     if (domIndex < existingChildren.length) {

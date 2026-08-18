@@ -5,7 +5,7 @@
 
 import { join } from 'path';
 import { fileURLToPath } from 'url';
-import { readFileSync, existsSync, readdirSync, statSync } from 'fs';
+import { readFileSync, readdirSync, statSync } from 'fs';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const ROOT = join(__dirname, '..');
@@ -68,19 +68,40 @@ const PUBLISHED_PACKAGES = [
   { name: '@lytjs/hmr', path: 'packages/ecosystem/packages/ssr-kit/packages/hmr' },
   { name: '@lytjs/ssr', path: 'packages/ecosystem/packages/ssr-kit/packages/ssr' },
   { name: '@lytjs/router', path: 'packages/ecosystem/packages/web-framework/packages/router' },
-  { name: '@lytjs/router-fs', path: 'packages/ecosystem/packages/web-framework/packages/router-fs' },
+  {
+    name: '@lytjs/router-fs',
+    path: 'packages/ecosystem/packages/web-framework/packages/router-fs',
+  },
   { name: '@lytjs/api', path: 'packages/ecosystem/packages/web-framework/packages/api' },
   { name: '@lytjs/runtime-edge', path: 'packages/ecosystem/packages/runtime-edge' },
   { name: '@lytjs/cache', path: 'packages/ecosystem/packages/ssr-kit/packages/cache' },
   { name: '@lytjs/cache-isr', path: 'packages/ecosystem/packages/ssr-kit/packages/cache-isr' },
-  { name: '@lytjs/html-renderer', path: 'packages/ecosystem/packages/ssr-kit/packages/html-renderer' },
+  {
+    name: '@lytjs/html-renderer',
+    path: 'packages/ecosystem/packages/ssr-kit/packages/html-renderer',
+  },
   { name: '@lytjs/ssg', path: 'packages/ecosystem/packages/ssr-kit/packages/ssg' },
-  { name: '@lytjs/http-server', path: 'packages/ecosystem/packages/web-framework/packages/http-server' },
+  {
+    name: '@lytjs/http-server',
+    path: 'packages/ecosystem/packages/web-framework/packages/http-server',
+  },
   { name: '@lytjs/metadata', path: 'packages/ecosystem/packages/web-framework/packages/metadata' },
-  { name: '@lytjs/middleware', path: 'packages/ecosystem/packages/web-framework/packages/middleware' },
-  { name: '@lytjs/middleware-cors', path: 'packages/ecosystem/packages/web-framework/packages/middleware-cors' },
-  { name: '@lytjs/middleware-auth', path: 'packages/ecosystem/packages/web-framework/packages/middleware-auth' },
-  { name: '@lytjs/middleware-rate-limit', path: 'packages/ecosystem/packages/web-framework/packages/middleware-rate-limit' },
+  {
+    name: '@lytjs/middleware',
+    path: 'packages/ecosystem/packages/web-framework/packages/middleware',
+  },
+  {
+    name: '@lytjs/middleware-cors',
+    path: 'packages/ecosystem/packages/web-framework/packages/middleware-cors',
+  },
+  {
+    name: '@lytjs/middleware-auth',
+    path: 'packages/ecosystem/packages/web-framework/packages/middleware-auth',
+  },
+  {
+    name: '@lytjs/middleware-rate-limit',
+    path: 'packages/ecosystem/packages/web-framework/packages/middleware-rate-limit',
+  },
   { name: '@lytjs/plugin-vite', path: 'packages/plugins/packages/plugin-vite' },
   { name: '@lytjs/plugin-theme', path: 'packages/plugins/packages/plugin-theme' },
   { name: '@lytjs/plugin-logger', path: 'packages/plugins/packages/plugin-logger' },
@@ -138,28 +159,28 @@ async function main() {
   console.log(`\n✅ 找到 ${allPackageNames.length} 个可发布的包`);
 
   // 3. 对比
-  const publishedNames = PUBLISHED_PACKAGES.map(p => p.name);
-  const notInPublished = allPackageNames.filter(name => !publishedNames.includes(name));
-  const extraInPublished = publishedNames.filter(name => !allPackageNames.includes(name));
+  const publishedNames = PUBLISHED_PACKAGES.map((p) => p.name);
+  const notInPublished = allPackageNames.filter((name) => !publishedNames.includes(name));
+  const extraInPublished = publishedNames.filter((name) => !allPackageNames.includes(name));
 
   console.log(`\n📊 对比结果:`);
   console.log(`  - 发布脚本中有 ${publishedNames.length} 个包`);
   console.log(`  - 实际存在 ${allPackageNames.length} 个包`);
-  
+
   if (notInPublished.length > 0) {
     console.log(`\n❌ 实际存在但不在发布列表中的包 (${notInPublished.length}个):`);
-    notInPublished.forEach(name => console.log(`  - ${name}`));
+    notInPublished.forEach((name) => console.log(`  - ${name}`));
   }
-  
+
   if (extraInPublished.length > 0) {
     console.log(`\n❌ 在发布列表中但不存在的包 (${extraInPublished.length}个):`);
-    extraInPublished.forEach(name => console.log(`  - ${name}`));
+    extraInPublished.forEach((name) => console.log(`  - ${name}`));
   }
 
   if (notInPublished.length === 0 && extraInPublished.length === 0) {
     console.log(`\n✅ 所有包匹配！`);
   }
-  
+
   console.log('\n' + '='.repeat(80));
 }
 

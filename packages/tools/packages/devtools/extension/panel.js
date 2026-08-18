@@ -1,6 +1,3 @@
-/* eslint-env browser, webextensions */
-/* global chrome, document */
-
 // LytJS DevTools Panel - Main Logic
 
 (function () {

@@ -24,7 +24,10 @@ import {
   callUnmountedHook,
   initProps,
 } from '@lytjs/component';
-import type { AppContext as ComponentAppContext } from '@lytjs/component';
+import type {
+  AppContext as ComponentAppContext,
+  ComponentInternalInstance,
+} from '@lytjs/component';
 
 export function createApp(
   rootComponent: Component,
@@ -123,8 +126,8 @@ export function createApp(
 
         // 使用 DOM 渲染器进行渲染 - 添加 setupChildComponent 和 normalizeProps 选项
         const renderer = createDOMRenderer({
-          setupChildComponent(childVNode: VNode, parentComponent: any) {
-            const childInstance = createComponentInstance(childVNode as any, parentComponent);
+          setupChildComponent(childVNode: VNode, parentComponent: ComponentInternalInstance) {
+            const childInstance = createComponentInstance(childVNode, parentComponent);
             // 从父组件或根组件继承 appContext
             if (parentComponent) {
               childInstance.appContext = parentComponent.appContext;
@@ -132,9 +135,12 @@ export function createApp(
               childInstance.appContext = context as ComponentAppContext;
             }
             setupComponent(childInstance);
-            (childVNode as any).component = childInstance;
+            (childVNode as { component: unknown }).component = childInstance;
           },
-          normalizeProps(inst: any, rawProps: Record<string, unknown> | null) {
+          normalizeProps(
+            inst: ComponentInternalInstance,
+            rawProps: Record<string, unknown> | null,
+          ) {
             initProps(inst, rawProps);
           },
         });

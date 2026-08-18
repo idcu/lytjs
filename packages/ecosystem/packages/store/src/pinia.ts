@@ -4,31 +4,34 @@
  * Global state management and plugin system.
  */
 
-import type { PiniaPlugin, StateTree } from './types';
+import type { Pinia, PiniaPlugin, StateTree } from './types';
 import type { App } from '@lytjs/core';
 import { signal } from '@lytjs/reactivity';
 import { definePlugin } from '@lytjs/core';
 
-let activePinia: any = null;
+/** createPinia 返回的 Pinia 插件实例类型（插件定义 + state/use） */
+type PiniaInstance = Pinia;
+
+let activePinia: PiniaInstance | null = null;
 
 /**
  * Get the active pinia instance
  */
-export function getActivePinia(): any {
+export function getActivePinia(): PiniaInstance | undefined {
   return activePinia || undefined;
 }
 
 /**
  * Set the active pinia instance (for SSR/testing)
  */
-export function setActivePinia(pinia: any): void {
+export function setActivePinia(pinia: PiniaInstance): void {
   activePinia = pinia;
 }
 
 /**
  * Create a Pinia instance as a LytJS plugin
  */
-export function createPinia() {
+export function createPinia(): Pinia {
   const stateSignal = signal<Record<string, StateTree>>({});
   const plugins: PiniaPlugin[] = [];
   let isInstalled = false;
@@ -43,8 +46,8 @@ export function createPinia() {
     },
   };
 
-  // Create a LytJS compatible plugin
-  const lytjsPlugin = definePlugin({
+  // Create a LytJS compatible plugin (插件实例同时具备 Pinia 的 state/use 接口)
+  const pinia = definePlugin({
     name: 'pinia',
     version: '1.0.0',
     description: 'LytJS Signal-based state management',
@@ -58,16 +61,16 @@ export function createPinia() {
         return;
       }
       isInstalled = true;
-      activePinia = lytjsPlugin;
+      activePinia = pinia;
 
       // Provide the pinia instance
       if (app.provide) {
-        app.provide('__lytjs_pinia__', lytjsPlugin);
+        app.provide('__lytjs_pinia__', pinia);
       }
 
       // Add global properties
       if (app.config?.globalProperties) {
-        app.config.globalProperties.$pinia = lytjsPlugin;
+        app.config.globalProperties.$pinia = pinia;
       }
 
       // TODO: DevTools integration
@@ -75,10 +78,10 @@ export function createPinia() {
         // Setup DevTools hooks
       }
     },
-  });
+  }) as unknown as Pinia;
 
   // Attach pinia properties and methods to the plugin
-  Object.assign(lytjsPlugin, {
+  Object.assign(pinia, {
     state,
     use(plugin: PiniaPlugin) {
       if (isInstalled) {
@@ -87,12 +90,12 @@ export function createPinia() {
         }
       }
       plugins.push(plugin);
-      plugin.install?.(lytjsPlugin as any);
-      return lytjsPlugin;
+      plugin.install?.(pinia);
+      return pinia;
     },
   });
 
-  return lytjsPlugin;
+  return pinia;
 }
 
 // DEV flag for development warnings

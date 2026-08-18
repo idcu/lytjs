@@ -2,7 +2,12 @@
 import https from 'node:https';
 
 // 获取单个包的信息
-function getPackageInfo(packageName: string): Promise<any> {
+type NpmPackageInfo = {
+  'dist-tags'?: { latest?: string };
+  versions?: Record<string, unknown>;
+};
+
+function getPackageInfo(packageName: string): Promise<NpmPackageInfo | null> {
   return new Promise((resolve, reject) => {
     const options = {
       hostname: 'registry.npmjs.org',
@@ -10,8 +15,8 @@ function getPackageInfo(packageName: string): Promise<any> {
       path: `/${encodeURIComponent(packageName)}`,
       method: 'GET',
       headers: {
-        'Accept': 'application/json'
-      }
+        Accept: 'application/json',
+      },
     };
 
     const req = https.request(options, (res) => {
@@ -21,7 +26,9 @@ function getPackageInfo(packageName: string): Promise<any> {
       }
 
       let data = '';
-      res.on('data', (chunk) => { data += chunk; });
+      res.on('data', (chunk) => {
+        data += chunk;
+      });
       res.on('end', () => {
         try {
           resolve(JSON.parse(data));
@@ -123,9 +130,9 @@ const possibleV5 = [
 
 async function main() {
   console.log('🔍 查找第 12 个 v5.0.1 包...\n');
-  
+
   const foundV5 = [];
-  
+
   // 先验证已知的 11 个
   console.log('📋 验证已知的 11 个 v5.0.1 包...\n');
   for (const pkgName of knownV5) {
@@ -140,18 +147,18 @@ async function main() {
           console.log(`   ⚠️  ${pkgName} (v${version}, 不是 v5.0.1)`);
         }
       }
-    } catch (e) {
+    } catch (_e) {
       console.log(`   ❌ ${pkgName} 检查失败`);
     }
   }
-  
+
   console.log(`\n📊 确认了 ${foundV5.length} 个 v5.0.1 包\n`);
-  
+
   // 查找更多
   console.log('🔍 查找更多可能的 v5.0.1 包...\n');
   for (const pkgName of possibleV5) {
     if (knownV5.includes(pkgName)) continue;
-    
+
     try {
       const info = await getPackageInfo(pkgName);
       if (info) {
@@ -161,11 +168,11 @@ async function main() {
           foundV5.push(pkgName);
         }
       }
-    } catch (e) {
+    } catch (_e) {
       // 忽略
     }
   }
-  
+
   console.log('\n' + '='.repeat(80));
   console.log(`📦 总共找到 ${foundV5.length} 个 v5.0.1 包:`);
   console.log('='.repeat(80));

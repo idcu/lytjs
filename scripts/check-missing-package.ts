@@ -2,7 +2,12 @@
 import https from 'node:https';
 
 // 获取单个包的信息
-function getPackageInfo(packageName: string): Promise<any> {
+type NpmPackageInfo = {
+  'dist-tags'?: { latest?: string };
+  versions?: Record<string, unknown>;
+};
+
+function getPackageInfo(packageName: string): Promise<NpmPackageInfo | null> {
   return new Promise((resolve, reject) => {
     const options = {
       hostname: 'registry.npmjs.org',
@@ -10,8 +15,8 @@ function getPackageInfo(packageName: string): Promise<any> {
       path: `/${encodeURIComponent(packageName)}`,
       method: 'GET',
       headers: {
-        'Accept': 'application/json'
-      }
+        Accept: 'application/json',
+      },
     };
 
     const req = https.request(options, (res) => {
@@ -21,7 +26,9 @@ function getPackageInfo(packageName: string): Promise<any> {
       }
 
       let data = '';
-      res.on('data', (chunk) => { data += chunk; });
+      res.on('data', (chunk) => {
+        data += chunk;
+      });
       res.on('end', () => {
         try {
           resolve(JSON.parse(data));
@@ -296,15 +303,15 @@ const possibleMissingPackages = [
 
 async function main() {
   console.log('🔍 正在查找第98个包...\n');
-  
+
   const foundPackages = [];
-  
+
   for (const pkgName of possibleMissingPackages) {
     // 跳过已经知道的包
     if (knownPackages.includes(pkgName)) {
       continue;
     }
-    
+
     try {
       console.log(`   检查: ${pkgName}`);
       const info = await getPackageInfo(pkgName);
@@ -316,11 +323,11 @@ async function main() {
           versionsCount: Object.keys(info.versions || {}).length,
         });
       }
-    } catch (e) {
+    } catch (_e) {
       // 忽略错误
     }
   }
-  
+
   console.log('\n' + '='.repeat(80));
   if (foundPackages.length > 0) {
     console.log('🎉 找到的新包:');

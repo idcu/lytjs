@@ -2,7 +2,12 @@
 import https from 'node:https';
 
 // 获取单个包的信息
-function getPackageInfo(packageName: string): Promise<any> {
+type NpmPackageInfo = {
+  'dist-tags'?: { latest?: string };
+  versions?: Record<string, unknown>;
+};
+
+function getPackageInfo(packageName: string): Promise<NpmPackageInfo | null> {
   return new Promise((resolve, reject) => {
     const options = {
       hostname: 'registry.npmjs.org',
@@ -10,8 +15,8 @@ function getPackageInfo(packageName: string): Promise<any> {
       path: `/${encodeURIComponent(packageName)}`,
       method: 'GET',
       headers: {
-        'Accept': 'application/json'
-      }
+        Accept: 'application/json',
+      },
     };
 
     const req = https.request(options, (res) => {
@@ -21,7 +26,9 @@ function getPackageInfo(packageName: string): Promise<any> {
       }
 
       let data = '';
-      res.on('data', (chunk) => { data += chunk; });
+      res.on('data', (chunk) => {
+        data += chunk;
+      });
       res.on('end', () => {
         try {
           resolve(JSON.parse(data));
@@ -240,15 +247,15 @@ const otherPossibilities = [
 
 async function main() {
   console.log('🔍 更仔细地查找第98个包...\n');
-  
+
   const foundPackages = [];
-  
+
   for (const pkgName of otherPossibilities) {
     // 跳过已经知道的包
     if (known97.includes(pkgName)) {
       continue;
     }
-    
+
     try {
       const info = await getPackageInfo(pkgName);
       if (info) {
@@ -259,11 +266,11 @@ async function main() {
           versionsCount: Object.keys(info.versions || {}).length,
         });
       }
-    } catch (e) {
+    } catch (_e) {
       // 忽略错误
     }
   }
-  
+
   // 也检查一下已知的97个包是否都存在
   console.log('\n📋 验证已知的97个包...\n');
   let verifiedCount = 0;
@@ -275,14 +282,14 @@ async function main() {
       } else {
         console.log(`❌ 包不存在: ${pkgName}`);
       }
-    } catch (e) {
+    } catch (_e) {
       console.log(`❌ 检查包失败: ${pkgName}`);
     }
   }
-  
+
   console.log('\n' + '='.repeat(80));
   console.log(`✅ 验证了 ${verifiedCount}/97 个已知包`);
-  
+
   if (foundPackages.length > 0) {
     console.log('\n🎉 找到的新包:');
     console.log('='.repeat(80));
