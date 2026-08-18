@@ -930,104 +930,108 @@ function processCallExpression(
     const source = getTestExpr(sourceExpr as JSChildNode | string | undefined);
     if (!source) return;
 
-    // 从渲染函数中提取 item 变量名和 key
+    // 从箭头函数（COMPOUND_EXPRESSION）中提取 item 变量名与渲染项 VNodeCall
     let itemVar = 'item';
-    let createBody = '';
-    let templateHTML = '';
-    let dynamicChildrenBindings: string[] = [];
-
+    let renderItem: VNodeCall | null = null;
     if (renderFn && typeof renderFn !== 'string' && !Array.isArray(renderFn)) {
       if (renderFn.type === NodeTypes.COMPOUND_EXPRESSION) {
         const compound = renderFn as CompoundExpressionNode;
-        // 第一个子节点通常是参数列表 "(item) => " 或 "(item, index) => "
         for (const child of compound.children) {
           if (typeof child === 'string') {
             const match = child.match(/\((\w+)/);
             if (match) {
               itemVar = match[1]!;
             }
-          }
-        }
-        // 后续子节点是 VNodeCall，提取 tag 和 children 并生成 HTML 模板
-        for (const child of compound.children) {
-          if (typeof child !== 'string' && child.type === NodeTypes.VNODE_CALL) {
-            // 硬编码正确的 HTML 模板
-            templateHTML = `<tr>
-              <td class="col-md-1"></td>
-              <td class="col-md-4">
-                <a></a>
-              </td>
-              <td class="col-md-1">
-                <a>
-                  <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
-                </a>
-              </td>
-              <td class="col-md-6"></td>
-            </tr>`;
-
-            dynamicChildrenBindings = [
-              `const _td1 = _el.children[0];`,
-              `setText(_td1, item.id);`,
-              `const _td2 = _el.children[1];`,
-              `const _a = _td2.children[0];`,
-              `setText(_a, item.label);`,
-              `const _td3 = _el.children[2];`,
-              `const _a2 = _td3.children[0];`,
-              `onCleanup(createEventHandler(_a2, 'click', () => { _ctx.remove(item.id); }));`,
-              `setAttribute(_el, 'data-key', item.id);`,
-              `onCleanup(createEventHandler(_a, 'click', () => { _ctx.select(item.id); }));`,
-            ];
-            // 使用 createTemplate 来创建完整的元素结构
-            createBody = `const _template = createTemplate(${JSON.stringify(templateHTML)});`;
-            createBody += `\n      const _el = _template.firstElementChild;`;
-
-            // 添加动态绑定代码
-            if (dynamicChildrenBindings.length > 0) {
-              createBody += `\n      ${dynamicChildrenBindings.join('\n      ')}`;
-            }
-            createBody += `\n      effect(() => {\n        if (_ctx.selectedId === item.id) {\n          setClass(_el, 'danger');\n        } else {\n          _el.classList.remove('danger');\n        }\n      });`;
-            createBody += `\n      return _el;`;
-            break;
+          } else if (child.type === NodeTypes.VNODE_CALL) {
+            renderItem = child as VNodeCall;
           }
         }
       }
     }
 
-    // 提取 :key 绑定
-    let userKeyExpr: string | null = null;
-    if (renderFn && typeof renderFn !== 'string' && !Array.isArray(renderFn)) {
-      if (renderFn.type === NodeTypes.COMPOUND_EXPRESSION) {
-        const compound = renderFn as CompoundExpressionNode;
-        for (const child of compound.children) {
-          if (typeof child !== 'string' && child.type === NodeTypes.VNODE_CALL) {
-            const vnode = child as VNodeCall;
-            if (vnode.props && vnode.props.type === NodeTypes.JS_OBJECT_EXPRESSION) {
-              const objExpr = vnode.props as JSObjectExpression;
-              for (const prop of objExpr.properties) {
-                if (prop.type === NodeTypes.JS_PROPERTY) {
-                  const jsProp = prop as JSProperty;
-                  if (
-                    jsProp.key &&
-                    typeof jsProp.key !== 'string' &&
-                    !Array.isArray(jsProp.key) &&
-                    jsProp.key.type === NodeTypes.SIMPLE_EXPRESSION &&
-                    jsProp.key.content === 'key'
-                  ) {
-                    if (
-                      jsProp.value &&
-                      typeof jsProp.value !== 'string' &&
-                      !Array.isArray(jsProp.value) &&
-                      jsProp.value.type === NodeTypes.SIMPLE_EXPRESSION
-                    ) {
-                      userKeyExpr = jsProp.value.content;
-                    }
-                    break;
-                  }
-                }
-              }
-            }
-            if (userKeyExpr) break;
+    // 由渲染项 VNodeCall 生成通用 create / update 逻辑：
+    // 使用 document.createElement + textContent/属性绑定，替代此前硬编码的 benchmark 表格模板
+    let createBody = '';
+    let updateBody = '';
+    if (renderItem && typeof renderItem.tag === 'string') {
+      const tag = renderItem.tag.replace(/^"|"$/g, '');
+      const elVar = genVarName(tag, _varCounter);
+
+      createBody = `const ${elVar} = document.createElement('${tag}');`;
+      const children = renderItem.children;
+
+      // 插值 {{ item.xxx }} 在 transform 后为 TO_DISPLAY_STRING 调用，
+      // 通过 extractChildrenText 提取表达式；静态文本则原样写入
+      const dynamicText = extractChildrenText(renderItem);
+      if (dynamicText) {
+        createBody += `${elVar}.textContent = ${dynamicText};`;
+        // update 回调的参数是已存在元素 _el（由 reconcileArray 传入），
+        // 不能引用 create 内的局部变量名
+        updateBody = `_el.textContent = ${dynamicText};`;
+      } else if (typeof children === 'string') {
+        const escaped = children.replace(/'/g, "\\'").replace(/\\/g, '\\\\');
+        createBody += `${elVar}.textContent = '${escaped}';`;
+      }
+
+      // 处理静态 props（如 class="foo"）与非静态绑定
+      if (renderItem.props && renderItem.props.type === NodeTypes.JS_OBJECT_EXPRESSION) {
+        const objExpr = renderItem.props as JSObjectExpression;
+        for (const prop of objExpr.properties) {
+          if (prop.type !== NodeTypes.JS_PROPERTY) continue;
+          const jsProp = prop as JSProperty;
+          if (
+            !jsProp.key ||
+            typeof jsProp.key === 'string' ||
+            Array.isArray(jsProp.key) ||
+            jsProp.key.type !== NodeTypes.SIMPLE_EXPRESSION ||
+            !jsProp.value ||
+            typeof jsProp.value === 'string' ||
+            Array.isArray(jsProp.value) ||
+            jsProp.value.type !== NodeTypes.SIMPLE_EXPRESSION
+          ) {
+            continue;
           }
+          const key = (jsProp.key as SimpleExpressionNode).content.replace(/^"|"$/g, '');
+          const value = (jsProp.value as SimpleExpressionNode).content;
+          if (key === 'key') continue; // :key 不写为 DOM 属性
+          if (value.includes('_ctx') || value.includes(`(${itemVar})`) || value.includes('(')) {
+            // 动态绑定：create 用新元素，update 用 reconcileArray 传入的已存在元素
+            createBody += `${elVar}.setAttribute('${key}', ${value});`;
+            updateBody += `_el.setAttribute('${key}', ${value});`;
+          } else {
+            // 静态属性
+            createBody += `${elVar}.setAttribute('${key}', '${value.replace(/^"|"$/g, '')}');`;
+          }
+        }
+      }
+
+      createBody += `return ${elVar};`;
+    }
+
+    // 提取 :key 绑定，缺省回退到 item.id（与优化版行为一致）
+    let userKeyExpr: string | null = null;
+    if (
+      renderItem &&
+      renderItem.props &&
+      renderItem.props.type === NodeTypes.JS_OBJECT_EXPRESSION
+    ) {
+      const objExpr = renderItem.props as JSObjectExpression;
+      for (const prop of objExpr.properties) {
+        if (prop.type !== NodeTypes.JS_PROPERTY) continue;
+        const jsProp = prop as JSProperty;
+        if (
+          jsProp.key &&
+          typeof jsProp.key !== 'string' &&
+          !Array.isArray(jsProp.key) &&
+          jsProp.key.type === NodeTypes.SIMPLE_EXPRESSION &&
+          jsProp.key.content === 'key' &&
+          jsProp.value &&
+          typeof jsProp.value !== 'string' &&
+          !Array.isArray(jsProp.value) &&
+          jsProp.value.type === NodeTypes.SIMPLE_EXPRESSION
+        ) {
+          userKeyExpr = jsProp.value.content;
+          break;
         }
       }
     }
@@ -1048,7 +1052,7 @@ function processCallExpression(
 
     dynamicBindings.push({
       varName: containerVar,
-      code: `effect(() => {\n    reconcileArray(${containerVar}, _ctx.${source}, {\n      key: (${itemVar}) => ${keyExpr},\n      create: (${itemVar}) => {\n        ${createBody}\n      },\n      update: (_el, ${itemVar}) => {\n        const _td1 = _el.children[0];\n        setText(_td1, ${itemVar}.id);\n        const _td2 = _el.children[1];\n        const _a = _td2.children[0];\n        setText(_a, ${itemVar}.label);\n        const _td3 = _el.children[2];\n        const _a2 = _td3.children[0];\n        setAttribute(_el, 'data-key', ${itemVar}.id);\n      }\n    });\n  });`,
+      code: `effect(() => {\n    reconcileArray(${containerVar}, _ctx.${source}, {\n      key: (${itemVar}) => ${keyExpr},\n      create: (${itemVar}) => {\n        ${createBody}\n      }${updateBody ? `,\n      update: (_el, ${itemVar}) => {\n        ${updateBody}\n      }` : ''}\n    });\n  });`,
     });
   }
 }

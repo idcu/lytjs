@@ -32,6 +32,7 @@ export default defineConfig({
       '@lytjs/vdom': resolve(packagesRoot, 'vdom/dist/index.mjs'),
       '@lytjs/reactivity': resolve(packagesRoot, 'reactivity/dist/index.mjs'),
       '@lytjs/renderer': resolve(packagesRoot, 'renderer/dist/index.mjs'),
+      '@lytjs/core': resolve(packagesRoot, 'core/dist/index.mjs'),
       '@lytjs/component': resolve(packagesRoot, 'component/dist/index.mjs'),
       '@lytjs/compiler': resolve(packagesRoot, 'compiler/dist/index.mjs'),
     },

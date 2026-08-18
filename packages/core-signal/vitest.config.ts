@@ -31,6 +31,7 @@ export default defineConfig({
       '@lytjs/shared-types': resolve(packagesRoot, 'shared-types/src'),
       '@lytjs/reactivity': resolve(packagesRoot, 'reactivity/dist/index.mjs'),
       '@lytjs/renderer': resolve(packagesRoot, 'renderer/dist/index.mjs'),
+      '@lytjs/core': resolve(packagesRoot, 'core/dist/index.mjs'),
       '@lytjs/component': resolve(packagesRoot, 'component/dist/index.mjs'),
       '@lytjs/compiler': resolve(packagesRoot, 'compiler/dist/index.mjs'),
       '@lytjs/dom-runtime': resolve(packagesRoot, 'dom-runtime/dist/index.mjs'),
