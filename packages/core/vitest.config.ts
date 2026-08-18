@@ -87,6 +87,7 @@ export default defineConfig({
       { find: '@lytjs/component', replacement: resolve(packagesRoot, 'component/dist/index.mjs') },
       { find: '@lytjs/compiler', replacement: resolve(packagesRoot, 'compiler/dist/index.mjs') },
       { find: '@lytjs/host-contract', replacement: resolve(packagesRoot, 'host-contract/src') },
+      { find: '@lytjs/config', replacement: resolve(packagesRoot, 'ecosystem/packages/config/dist/index.mjs') },
       { find: '@lytjs/core', replacement: resolve(packagesRoot, 'core/dist/index.mjs') },
     ],
   },

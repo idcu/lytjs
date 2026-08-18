@@ -1,7 +1,7 @@
 {
-  "name": "@lytjs/core",
+  "name": "@lytjs/config",
   "version": "6.9.6",
-  "description": "LytJS core - createApp, h, defineComponent, and plugin system",
+  "description": "LytJS 独立通用配置系统 - ConfigManager / ConfigSchema / ConfigValidator / ConfigTransformer，零框架依赖",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
@@ -11,7 +11,8 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs",
       "require": "./dist/index.cjs"
-    }
+    },
+    "./package.json": "./package.json"
   },
   "files": [
     "dist"
@@ -28,37 +29,25 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@lytjs/config": "workspace:*",
-    "@lytjs/shared-types": "workspace:*",
-    "@lytjs/reactivity": "workspace:*",
-    "@lytjs/vdom": "workspace:*",
-    "@lytjs/compiler": "workspace:*",
-    "@lytjs/renderer": "workspace:*",
-    "@lytjs/component": "workspace:*",
     "@lytjs/common-is": "workspace:*",
-    "@lytjs/common-string": "workspace:*",
-    "@lytjs/common-scheduler": "workspace:*",
-    "@lytjs/common-error": "workspace:*",
     "@lytjs/common-object": "workspace:*"
   },
   "devDependencies": {
-    "tsup": "^8.5.1",
-    "typescript": "^5.8.2",
-    "vitest": "^3.0.0",
-    "jsdom": "^29.1.1"
+    "tsup": "^8.0.0",
+    "typescript": "^5.4.0",
+    "vitest": "^3.0.0"
   },
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://gitee.com/lytjs/lytjs.git",
-    "directory": "packages/core"
+    "directory": "packages/ecosystem/packages/config"
   },
   "keywords": [
     "lytjs",
-    "core",
-    "createApp",
-    "h",
-    "defineComponent",
-    "plugin"
+    "config",
+    "configuration",
+    "schema",
+    "validator"
   ]
 }
