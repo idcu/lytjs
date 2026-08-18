@@ -27,6 +27,7 @@
   },
   "dependencies": {
     "@lytjs/shared-types": "workspace:*",
+    "@lytjs/di": "workspace:*",
     "@lytjs/reactivity": "workspace:*",
     "@lytjs/vdom": "workspace:*",
     "@lytjs/common-vnode": "workspace:*",

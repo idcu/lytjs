@@ -13,6 +13,7 @@
     "baseUrl": ".",
     "paths": {
       "@lytjs/shared-types": ["../shared-types/dist/index.d.ts"],
+      "@lytjs/di": ["../ecosystem/packages/di/dist/index.d.ts"],
       "@lytjs/reactivity": ["../reactivity/dist/index.d.ts"],
       "@lytjs/reactivity/scope": ["../reactivity/dist/scope.d.ts"],
       "@lytjs/reactivity/async": ["../reactivity/dist/async.d.ts"],

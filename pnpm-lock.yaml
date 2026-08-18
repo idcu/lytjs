@@ -850,6 +850,9 @@ importers:
       '@lytjs/common-vnode':
         specifier: workspace:*
         version: link:../common/packages/vnode
+      '@lytjs/di':
+        specifier: workspace:*
+        version: link:../ecosystem/packages/di
       '@lytjs/reactivity':
         specifier: workspace:*
         version: link:../reactivity
@@ -1110,6 +1113,22 @@ importers:
       '@lytjs/vdom':
         specifier: workspace:*
         version: link:../../../vdom
+    devDependencies:
+      tsup:
+        specifier: ^8.0.0
+        version: 8.5.1(jiti@2.7.0)(postcss@8.5.15)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0)
+      typescript:
+        specifier: ^5.4.0
+        version: 5.9.3
+      vitest:
+        specifier: ^3.0.0
+        version: 3.2.4(@types/node@22.19.19)(@vitest/ui@3.2.4)(jsdom@29.1.1)
+
+  packages/ecosystem/packages/di:
+    dependencies:
+      '@lytjs/common-is':
+        specifier: workspace:*
+        version: link:../../../common/packages/is
     devDependencies:
       tsup:
         specifier: ^8.0.0
