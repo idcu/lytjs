@@ -7,6 +7,7 @@
  */
 
 import type { Plugin, HmrContext } from 'vite';
+import type { SourceMapInput } from 'rollup';
 import type { LytjsPluginOptions } from './options';
 import type { SFCStyleBlock, SFCCustomBlock } from '@lytjs/compiler/sfc';
 import { resolveOptions, defaultOptions } from './options';
@@ -156,7 +157,7 @@ if (import.meta.hot) {
 
         return {
           code: compiledCode,
-          map: result.sourceMap as Record<string, unknown> | undefined,
+          map: result.sourceMap as SourceMapInput | undefined,
         };
       } catch (error) {
         // Log compilation errors

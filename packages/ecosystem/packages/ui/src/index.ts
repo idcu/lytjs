@@ -282,6 +282,14 @@ import { Progress } from './components/Progress';
 import { Slider } from './components/Slider';
 import { Avatar } from './components/Avatar';
 import { Card } from './components/Card';
+import { Timeline } from './components/Timeline';
+import { TimelineItem } from './components/TimelineItem';
+import { Steps } from './components/Steps';
+import { Step } from './components/Step';
+import { Carousel } from './components/Carousel';
+import { CarouselItem } from './components/CarouselItem';
+import { Popconfirm } from './components/Popconfirm';
+import { RichTextEditor } from './components/RichTextEditor';
 
 /**
  * 创建 LytJS UI 插件

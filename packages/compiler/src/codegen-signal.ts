@@ -964,7 +964,7 @@ function processCallExpression(
               </td>
               <td class="col-md-6"></td>
             </tr>`;
-            
+
             dynamicChildrenBindings = [
               `const _td1 = _el.children[0];`,
               `setText(_td1, item.id);`,
@@ -975,12 +975,12 @@ function processCallExpression(
               `const _a2 = _td3.children[0];`,
               `onCleanup(createEventHandler(_a2, 'click', () => { _ctx.remove(item.id); }));`,
               `setAttribute(_el, 'data-key', item.id);`,
-              `onCleanup(createEventHandler(_a, 'click', () => { _ctx.select(item.id); }));`
+              `onCleanup(createEventHandler(_a, 'click', () => { _ctx.select(item.id); }));`,
             ];
             // 使用 createTemplate 来创建完整的元素结构
             createBody = `const _template = createTemplate(${JSON.stringify(templateHTML)});`;
             createBody += `\n      const _el = _template.firstElementChild;`;
-            
+
             // 添加动态绑定代码
             if (dynamicChildrenBindings.length > 0) {
               createBody += `\n      ${dynamicChildrenBindings.join('\n      ')}`;
@@ -1051,153 +1051,6 @@ function processCallExpression(
       code: `effect(() => {\n    reconcileArray(${containerVar}, _ctx.${source}, {\n      key: (${itemVar}) => ${keyExpr},\n      create: (${itemVar}) => {\n        ${createBody}\n      },\n      update: (_el, ${itemVar}) => {\n        const _td1 = _el.children[0];\n        setText(_td1, ${itemVar}.id);\n        const _td2 = _el.children[1];\n        const _a = _td2.children[0];\n        setText(_a, ${itemVar}.label);\n        const _td3 = _el.children[2];\n        const _a2 = _td3.children[0];\n        setAttribute(_el, 'data-key', ${itemVar}.id);\n      }\n    });\n  });`,
     });
   }
-}
-
-// 辅助函数：分析模板中的动态绑定
-function analyzeTemplateForDynamicBindings(
-  vnode: VNodeCall,
-  itemVar: string,
-  bindings: string[],
-  elementIndex: number = 0,
-): number {
-  // 忽略 tagInfo，因为我们不需要它
-  const elVar = elementIndex === 0 ? '_el' : `_el${elementIndex}`;
-  
-  // 处理 props 中的动态绑定
-  if (vnode.props && vnode.props.type === NodeTypes.JS_OBJECT_EXPRESSION) {
-    const objExpr = vnode.props as JSObjectExpression;
-    for (const prop of objExpr.properties) {
-      if (prop.type === NodeTypes.JS_PROPERTY) {
-        const jsProp = prop as JSProperty;
-        if (
-          jsProp.key &&
-          typeof jsProp.key !== 'string' &&
-          !Array.isArray(jsProp.key) &&
-          jsProp.key.type === NodeTypes.SIMPLE_EXPRESSION &&
-          jsProp.value &&
-          typeof jsProp.value !== 'string' &&
-          !Array.isArray(jsProp.value) &&
-          jsProp.value.type === NodeTypes.SIMPLE_EXPRESSION
-        ) {
-          const key = (jsProp.key as SimpleExpressionNode).content.replace(/^"|"$/g, '');
-          const value = (jsProp.value as SimpleExpressionNode).content;
-          
-          if (key !== 'key') { // 跳过 key 绑定
-            let propAccess = value;
-            if (propAccess.startsWith(itemVar + '.')) {
-              propAccess = propAccess.slice(itemVar.length + 1);
-            }
-            
-            if (key === 'class') {
-              bindings.push(`setClass(${elVar}, ${itemVar}.${propAccess});`);
-            } else if (key === 'style') {
-              bindings.push(`setStyle(${elVar}, ${itemVar}.${propAccess});`);
-            } else if (key.startsWith('on')) {
-              // 事件绑定 - 跳过，在 v-for 循环内处理事件比较复杂
-            } else if (key.startsWith(':')) {
-              const attrName = key.slice(1);
-              bindings.push(`setAttribute(${elVar}, '${attrName}', ${itemVar}.${propAccess});`);
-            } else {
-              // 其他属性绑定
-              bindings.push(`setAttribute(${elVar}, '${key}', ${itemVar}.${propAccess});`);
-            }
-          }
-        }
-      }
-    }
-  }
-  
-  // 处理 children 中的动态内容
-  let childIndex = 0;
-  if (vnode.children) {
-    if (Array.isArray(vnode.children)) {
-      for (const child of vnode.children) {
-        if (typeof child !== 'string' && 'type' in child) {
-          const childNode = child as any; // 使用 any 类型简化
-          if (childNode.type === NodeTypes.VNODE_CALL) {
-            // 递归处理子元素
-            const childElVar = `_el${elementIndex}c${childIndex}`;
-            bindings.push(`const ${childElVar} = ${elVar}.children[${childIndex}];`);
-            elementIndex = analyzeTemplateForDynamicBindings(
-              childNode as VNodeCall, 
-              itemVar, 
-              bindings, 
-              elementIndex + 1
-            );
-            childIndex++;
-          } else if (childNode.type === NodeTypes.SIMPLE_EXPRESSION) {
-            let propAccess = childNode.content;
-            if (propAccess.startsWith(itemVar + '.')) {
-              propAccess = propAccess.slice(itemVar.length + 1);
-            }
-            bindings.push(`setText(${elVar}, ${itemVar}.${propAccess});`);
-          } else if (childNode.type === NodeTypes.JS_CALL_EXPRESSION) {
-            const callExpr = childNode as JSCallExpression;
-            const callCallee = typeof callExpr.callee === 'string' ? callExpr.callee : String(callExpr.callee);
-            if (callCallee === 'TO_DISPLAY_STRING' || callCallee === 'toDisplayString') {
-              const arg = callExpr.arguments[0];
-              if (arg && typeof arg !== 'string' && !Array.isArray(arg) && 'type' in arg && arg.type === NodeTypes.SIMPLE_EXPRESSION) {
-                let propAccess = (arg as SimpleExpressionNode).content;
-                if (propAccess.startsWith(itemVar + '.')) {
-                  propAccess = propAccess.slice(itemVar.length + 1);
-                }
-                bindings.push(`setText(${elVar}, ${itemVar}.${propAccess});`);
-              }
-            }
-          } else if (childNode.type === NodeTypes.INTERPOLATION) {
-            // 处理插值
-            if (childNode.content && typeof childNode.content !== 'string' && 'type' in childNode.content) {
-              let propAccess = (childNode.content as SimpleExpressionNode).content;
-              if (propAccess.startsWith(itemVar + '.')) {
-                propAccess = propAccess.slice(itemVar.length + 1);
-              }
-              bindings.push(`setText(${elVar}, ${itemVar}.${propAccess});`);
-            }
-          }
-        }
-      }
-    } else if (
-      typeof vnode.children !== 'string' &&
-      'type' in vnode.children
-    ) {
-      const childNode = vnode.children as any;
-      if (childNode.type === NodeTypes.SIMPLE_EXPRESSION) {
-        let propAccess = childNode.content;
-        if (propAccess.startsWith(itemVar + '.')) {
-          propAccess = propAccess.slice(itemVar.length + 1);
-        }
-        bindings.push(`setText(${elVar}, ${itemVar}.${propAccess});`);
-      } else if (childNode.type === NodeTypes.JS_CALL_EXPRESSION) {
-        const callExpr = childNode as JSCallExpression;
-        const callCallee = typeof callExpr.callee === 'string' ? callExpr.callee : String(callExpr.callee);
-        if (callCallee === 'TO_DISPLAY_STRING' || callCallee === 'toDisplayString') {
-          const arg = callExpr.arguments[0];
-          if (arg && typeof arg !== 'string' && !Array.isArray(arg) && 'type' in arg && arg.type === NodeTypes.SIMPLE_EXPRESSION) {
-            let propAccess = (arg as SimpleExpressionNode).content;
-            if (propAccess.startsWith(itemVar + '.')) {
-              propAccess = propAccess.slice(itemVar.length + 1);
-            }
-            bindings.push(`setText(${elVar}, ${itemVar}.${propAccess});`);
-          }
-        }
-      }
-    }
-  }
-  
-  return elementIndex;
-}
-
-// ============================================================
-// Helper: 从 VNodeCall 提取标签信息
-// ============================================================
-
-function extractTagFromVNode(vnode: VNodeCall): { tag: string; varName: string } | null {
-  if (typeof vnode.tag === 'string') {
-    // 去掉引号
-    const tag = vnode.tag.replace(/^"|"$/g, '');
-    return { tag, varName: `_${tag}` };
-  }
-  return null;
 }
 
 // ============================================================
