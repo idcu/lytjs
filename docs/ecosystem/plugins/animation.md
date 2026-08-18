@@ -739,6 +739,6 @@ function createAnimation(
 
 ## 下一步
 
-- 查看 [官方插件使用指南](./官方插件使用指南.md)
+- 查看 [官方插件列表](../../plugins/official/index.md)
 - 查看 [plugin-form 表单插件](./form.md)
-- 查看 [实战案例：天气仪表盘](../examples/weather-dashboard.md)
+- 查看 [实战案例](../../getting-started/tutorials/index.md)

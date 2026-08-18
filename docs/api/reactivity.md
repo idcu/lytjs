@@ -10,7 +10,7 @@
 
 Signal 是 LytJS 推荐的响应式原语，它更简单、更高效，也更容易学习。Ref 和 Reactive 是为了兼容而保留的高级选项。
 
-先了解教程请查看：[响应式基础教程](../tutorial/reactivity.md)
+先了解教程请查看：[响应式基础教程](../guide/reactivity.md)
 
 ---
 

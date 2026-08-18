@@ -22,4 +22,4 @@
 - [packages/](../packages/) - 核心代码
 - [docs/](../docs/) - 文档
 - [examples/](../examples/) - 示例
-- [.trae/](../.trae/) - AI技能
+- [开发工作流](../docs/contribute/development/workflow.md) - 开发流程与命令（技能链索引的权威依据）

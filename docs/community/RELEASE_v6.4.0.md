@@ -131,11 +131,11 @@ pnpm add @lytjs/reactivity@6.4.0
 
 ## 📚 文档资源
 
-- 📖 **快速开始**: [快速入门指南](../tutorial/quick-start.md)
+- 📖 **快速开始**: [快速入门指南](../getting-started/quick-start.md)
 - 📚 **完整文档**: [SUMMARY.md](../SUMMARY.md)
 - 🔧 **API 参考**: [API 文档](../api/index.md)
-- 🎨 **组件文档**: [UI 组件库](../ecosystem/ui.md)
-- 🛠️ **插件开发**: [插件开发指南](../development/PLUGIN_DEVELOPMENT.md)
+- 🎨 **组件文档**: [UI 组件库](../ecosystem/ui/index.md)
+- 🛠️ **插件开发**: [插件开发指南](../contribute/plugins/plugin-development.md)
 
 ---
 
@@ -160,7 +160,7 @@ v6.4.0 发布后，我们将继续推进：
 
 ## 📄 完整变更日志
 
-详细变更请查看 [CHANGELOG.md](../development/CHANGELOG.md)。
+详细变更请查看 [CHANGELOG.md](../../CHANGELOG.md)。
 
 ---
 

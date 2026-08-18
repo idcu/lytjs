@@ -185,20 +185,30 @@ Lyt.js 采用精心设计的 8 层架构，从底层到上层：
 
 ### L6: 生态系统层
 
-| 包                        | 描述                       |
-| ------------------------- | -------------------------- |
-| `@lytjs/ui`               | UI 组件库（60+ 组件）      |
-| `@lytjs/router`           | 路由系统                   |
-| `@lytjs/router-fs`        | 文件系统路由引擎           |
-| `@lytjs/api`              | API 路由引擎               |
-| `@lytjs/store`            | 状态管理（灵感来自 Pinia） |
-| `@lytjs/devtools`         | 开发者工具                 |
-| `@lytjs/ssr`              | 服务端渲染                 |
-| `@lytjs/bundler`          | 构建工具集成               |
-| `@lytjs/hmr`              | 热模块替换                 |
-| `@lytjs/runtime-edge`     | 边缘运行时支持             |
-| `@lytjs/platform-adapter` | 平台适配器                 |
-| `@lytjs/compat`           | 兼容性层                   |
+| 包                             | 描述                       |
+| ------------------------------ | -------------------------- |
+| `@lytjs/ui`                    | UI 组件库（60+ 组件）      |
+| `@lytjs/router`                | 路由系统                   |
+| `@lytjs/router-fs`             | 文件系统路由引擎           |
+| `@lytjs/api`                   | API 路由引擎               |
+| `@lytjs/store`                 | 状态管理（灵感来自 Pinia） |
+| `@lytjs/devtools`              | 开发者工具                 |
+| `@lytjs/ssr`                   | 服务端渲染                 |
+| `@lytjs/ssg`                   | SSG 静态生成               |
+| `@lytjs/html-renderer`         | HTML 渲染器                |
+| `@lytjs/cache`                 | 统一缓存抽象               |
+| `@lytjs/cache-isr`             | ISR 缓存策略               |
+| `@lytjs/http-server`           | HTTP 服务器                |
+| `@lytjs/metadata`              | 元数据管理                 |
+| `@lytjs/middleware`            | 中间件核心                 |
+| `@lytjs/middleware-auth`       | 认证中间件                 |
+| `@lytjs/middleware-cors`       | CORS 中间件                |
+| `@lytjs/middleware-rate-limit` | 限流中间件                 |
+| `@lytjs/bundler`               | 构建工具集成               |
+| `@lytjs/hmr`                   | 热模块替换                 |
+| `@lytjs/runtime-edge`          | 边缘运行时支持             |
+| `@lytjs/platform-adapter`      | 平台适配器                 |
+| `@lytjs/compat`                | 兼容性层                   |
 
 ### L7: 工程化工具层
 
@@ -310,17 +320,17 @@ lytjs/
 │   ├── ecosystem/           # L6 生态系统层
 │   │   └── packages/
 │   │       ├── ui/          # UI 组件库（60+ 组件）
-│   │       ├── router/      # 路由
-│   │       ├── router-fs/   # 文件系统路由
-│   │       ├── api/         # API 路由引擎
 │   │       ├── store/       # 状态管理
 │   │       ├── devtools/    # 开发者工具
-│   │       ├── ssr/         # 服务端渲染
 │   │       ├── bundler/     # 构建工具
-│   │       ├── hmr/         # 热模块替换
-│   │       ├── runtime-edge/ # 边缘运行时
-│   │       ├── platform-adapter/  # 平台适配器
-│   │       └── compat/       # 兼容性层
+│   │       ├── compat/      # 兼容性层
+│   │       ├── runtime-edge/# 边缘运行时
+│   │       ├── platform-adapter/ # 平台适配器
+│   │       ├── ssr-kit/packages/ # SSR/SSG/缓存/热更新（独立 workspace）
+│   │       │   ├── ssr/  ssg/  html-renderer/  cache/  cache-isr/  hmr/
+│   │       └── web-framework/packages/ # Web 框架：路由/中间件/HTTP（独立 workspace）
+│   │           ├── router/  router-fs/  api/  http-server/  metadata/
+│   │           └── middleware/  middleware-auth/  middleware-cors/  middleware-rate-limit/
 │   └── tools/               # L7 工程化工具层
 │       └── packages/
 │           ├── cli/         # CLI 工具
@@ -336,12 +346,12 @@ lytjs/
 ### 开发文档
 
 - [AGENTS.md](./AGENTS.md) - AI 开发助手规则与最佳实践
-- [AI IDE 开发规则](./docs/development/AI_IDE_RULES.md) - AI IDE 开发规则
-- [中文文档指南](./docs/development/CHINESE_DOCS_GUIDE.md) - 中文文档指南
-- [开发路线图](./docs/development/ROADMAP_NEXT_STEPS.md) - 开发路线图
-- [项目结构说明](./docs/development/PROJECT_STRUCTURE.md) - 项目结构说明
-- [插件开发指南](./docs/development/PLUGIN_DEVELOPMENT.md) - 插件开发指南
-- [架构设计文档](./docs/development/ARCHITECTURE.md) - 架构设计文档
+- [AI IDE 开发规则](./docs/contribute/ai/ide-rules.md) - AI IDE 开发规则
+- [中文文档规范](./docs/contribute/principles/chinese-docs.md) - 中文文档规范
+- [开发路线图](./docs/contribute/roadmap/current.md) - 开发路线图
+- [快速参考](./docs/getting-started/quick-reference.md) - 项目结构与 API 速查
+- [插件开发指南](./docs/contribute/plugins/plugin-development.md) - 插件开发指南
+- [架构设计文档](./docs/contribute/architecture/8-layer-architecture.md) - 8 层架构设计
 
 ## 版本历史
 

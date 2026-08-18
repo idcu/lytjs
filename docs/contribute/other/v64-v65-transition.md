@@ -10,7 +10,7 @@
 
 #### 问题描述
 
-在 v6.4 开发过程中，我们注意到一个问题：[AGENTS.md](file:///e:/trae/lytjs/AGENTS.md) 作为项目规则文件，在实际开发中：
+在 v6.4 开发过程中，我们注意到一个问题：[AGENTS.md](file:///e:/lytjs/AGENTS.md) 作为项目规则文件，在实际开发中：
 
 1. \*\*没有被系统作为配置文件自动加载
 2. \*\*Skill 调用机制主要依赖于 Agent 手动读取
@@ -241,16 +241,16 @@ Skill 文档存在于 `.trae/skills/` 目录
 
 ### 相关文档索引
 
-- [AGENTS.md](file:///e:/trae/lytjs/AGENTS.md) - 项目规则
-- [ROADMAP_NEXT_STEPS.md](file:///e:/trae/lytjs/docs/development/ROADMAP_NEXT_STEPS.md) - 路线图
-- [CHANGELOG.md](file:///e:/trae/lytjs/docs/development/CHANGELOG.md) - 变更日志
-- [PERFORMANCE_OPTIMIZATION_REPORT_v6.4.md](file:///e:/trae/lytjs/docs/development/PERFORMANCE_OPTIMIZATION_REPORT_v6.4.md) - v6.4 性能报告
+- [AGENTS.md](file:///e:/lytjs/AGENTS.md) - 项目规则
+- [ROADMAP_NEXT_STEPS.md](file:///e:/lytjs/docs/development/ROADMAP_NEXT_STEPS.md) - 路线图
+- [CHANGELOG.md](file:///e:/lytjs/docs/development/CHANGELOG.md) - 变更日志
+- [PERFORMANCE_OPTIMIZATION_REPORT_v6.4.md](file:///e:/lytjs/docs/development/PERFORMANCE_OPTIMIZATION_REPORT_v6.4.md) - v6.4 性能报告
 
 ### Skill 索引
 
-- [master-skill-dispatcher](file:///e:/trae/lytjs/.trae/skills/7-organ/master-skill-dispatcher/SKILL.md) - 任务调度
-- [dev-guide](file:///e:/trae/lytjs/.trae/skills/4-organic/dev-guide/SKILL.md) - 开发指南
-- [task-retrospective](file:///e:/trae/lytjs/.trae/skills/7-organ/task-retrospective/SKILL.md) - 任务复盘
+- [master-skill-dispatcher](file:///e:/lytjs/.trae/skills/7-organ/master-skill-dispatcher/SKILL.md) - 任务调度
+- [dev-guide](file:///e:/lytjs/.trae/skills/4-organic/dev-guide/SKILL.md) - 开发指南
+- [task-retrospective](file:///e:/lytjs/.trae/skills/7-organ/task-retrospective/SKILL.md) - 任务复盘
 
 ---
 

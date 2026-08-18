@@ -13,9 +13,9 @@
 
 ### 第二步：核心概念
 
-- [响应式系统](./reactivity.md) - 了解 LytJS 的响应式系统
-- [组件基础](./components.md) - 学习组件开发
-- [渲染模式](./rendering-modes.md) - 了解 VDOM 和 Vapor 模式
+- [响应式系统](../guide/reactivity.md) - 了解 LytJS 的响应式系统
+- [组件基础](../guide/component.md) - 学习组件开发
+- [渲染模式](../guide/rendering-modes.md) - 了解 VDOM 和 Vapor 模式
 
 ### 第三步：实战教程
 
@@ -26,6 +26,5 @@
 
 ## 🤔 需要帮助？
 
-- [常见问题](../reference/faq.md)
-- [故障排除](../reference/troubleshooting.md)
+- [GitHub Issues](https://github.com/lytjs/lytjs/issues)
 - [社区求助](../community/)

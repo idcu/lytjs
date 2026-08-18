@@ -386,11 +386,11 @@ li {
 恭喜你完成了第一个 LytJS 应用！接下来你可以：
 
 1. 📖 阅读 [完整核心概念](./index.md) 深入了解
-2. 📚 查看 [实战案例教程](./tutorials.md) 学习更多例子
-3. 🔌 探索 [官方插件](./official-plugins.md) 增强你的应用
-4. 🛠️ 学习如何使用 [CLI 工具](./cli-guide.md)
-5. 💻 了解 [TypeScript 类型系统](./typescript-guide.md)
-6. 🌐 试试 [SSR/SSG](./ssr-guide.md) 进行服务端渲染
+2. 📚 查看 [实战案例教程](./tutorials/index.md) 学习更多例子
+3. 🔌 探索 [官方插件](../plugins/official/index.md) 增强你的应用
+4. 🛠️ 学习如何使用 [CLI 工具](../ecosystem/cli/index.md)
+5. 💻 了解 [TypeScript 类型系统](../guide/typescript.md)
+6. 🌐 试试 [SSR/SSG](../guide/ssr.md) 进行服务端渲染
 
 ---
 
@@ -403,14 +403,10 @@ li {
 
 ### Q: LytJS 和 Vue/React 的主要区别？
 
-查看我们的迁移指南：
-
-- [Vue → LytJS](./migration-from-vue.md)
-- [React → LytJS](./migration-from-react.md)
+LytJS 采用 Signal 响应式 + 双渲染模式（Vapor/VDOM），语法接近 Vue，但性能与包体积更优。详见 [渲染模式](../guide/rendering-modes.md)。
 
 ### Q: 如何获取帮助？
 
-- 查看 [FAQ](./faq.md)
 - 访问 [GitHub Issues](https://github.com/lytjs/lytjs/issues)
 - 加入 [Discord 社区](https://discord.gg/lytjs)
 

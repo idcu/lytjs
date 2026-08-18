@@ -422,11 +422,11 @@ create nested structure (10 levels deep)
 
 ## 相关文档
 
-- [ROADMAP_NEXT_STEPS.md](./ROADMAP_NEXT_STEPS.md) - 查看开发路线图
-- [PENDING_TASKS.md](./PENDING_TASKS.md) - 查看当前待办任务
-- [CHANGELOG.md](./CHANGELOG.md) - 查看版本历史
-- [BENCHMARK_PR_GUIDE.md](./BENCHMARK_PR_GUIDE.md) - 基准测试 PR 指南
-- [ARCHITECTURE.md](./ARCHITECTURE.md) - 8 层架构设计
+- [ROADMAP_NEXT_STEPS.md](../roadmap/index.md) - 查看开发路线图
+- [PENDING_TASKS.md](../other/pending-tasks.md) - 查看当前待办任务
+- [CHANGELOG.md](../../../CHANGELOG.md) - 查看版本历史
+- [BENCHMARK_PR_GUIDE.md](../development/benchmark-pr.md) - 基准测试 PR 指南
+- [ARCHITECTURE.md](../architecture/8-layer-architecture.md) - 8 层架构设计
 
 ---
 

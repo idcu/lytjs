@@ -7,6 +7,5 @@
 ## 📚 参考文档
 
 - [API 参考](../api/index.md) - 完整 API 文档
-- [常见问题](./faq.md) - FAQ
-- [故障排除](./troubleshooting.md) - 问题解决指南
-- [术语表](./glossary.md) - 术语解释
+- [故障排除](../contribute/other/troubleshooting.md) - 问题解决指南
+- [核心指南](../guide/index.md) - 使用指南汇总

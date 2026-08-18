@@ -3,7 +3,7 @@
 组件是 LytJS 应用的基本构建单元。组件将 UI 拆分为独立、可复用的部分。
 
 ::: tip 提示
-如果你是新手，建议先阅读 [组件基础](../tutorial/components) 教程。
+如果你是新手，建议先阅读 [新手入门](../getting-started/index.md) 教程。
 :::
 
 ## 简单组件

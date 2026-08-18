@@ -283,7 +283,7 @@ import {
 
 - [@lytjs/core](../core) - 框架核心入口，整合所有子包
 - [@lytjs/reactivity](../reactivity) - 响应式系统，编译产物依赖其 API
-- [@lytjs/renderer](../renderer) - 渲染后端，执行编译产物
+- [@lytjs/renderer](./renderer.md) - 渲染后端，执行编译产物
 
 ## 依赖版本
 

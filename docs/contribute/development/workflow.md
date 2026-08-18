@@ -2,6 +2,8 @@
 
 > 本文档详细说明了 LytJS 项目的完整开发工作流程，包括 Skill Chain 和 Skill 的使用方法
 
+> ⚠️ **关于 `.trae/skills`**：下列步骤中引用的 `.trae/skills/**/SKILL.md` 属于本地可选工具链，已被 `.gitignore` 排除、不作为仓库内提交内容。若当前环境不存在这些文件，本文档**内联的流程、命令与规范即为权威依据**，直接按其执行即可。
+
 ---
 
 ## 目录
@@ -370,14 +372,14 @@ scope 可选值: reactivity, vdom, compiler, core, renderer, common-*, web, tool
 
 | 文档        | 作用                | 链接                                                            |
 | ----------- | ------------------- | --------------------------------------------------------------- |
-| 入口规则    | 项目入口，必看      | [AGENTS.md](../../AGENTS.md)                                    |
+| 入口规则    | 项目入口，必看      | [AGENTS.md](../../../AGENTS.md)                                 |
 | 技能链      | 预定义 Skill 组合   | [skill-chains](../.trae/skills/skill-chains/SKILL.md)           |
 | 任务类型    | 任务与 Skill 映射   | [task-types](../.trae/skills/task-types/SKILL.md)               |
 | 完整索引    | 所有 Skill 列表     | [SKILL_INDEX.md](../.trae/skills/SKILL_INDEX.md)                |
 | 命令参考    | 常用命令速查        | [command-reference](../.trae/skills/command-reference/SKILL.md) |
-| 开发规范    | 详细开发规范        | [DEVELOPMENT_GUIDELINES.md](./DEVELOPMENT_GUIDELINES.md)        |
-| 架构设计    | 8 层架构详解        | [ARCHITECTURE.md](./ARCHITECTURE.md)                            |
-| AI IDE 规则 | AI IDE 开发核心规则 | [AI_IDE_RULES.md](./AI_IDE_RULES.md)                            |
+| 开发规范    | 详细开发规范        | [DEVELOPMENT_GUIDELINES.md](./guidelines.md)                    |
+| 架构设计    | 8 层架构详解        | [ARCHITECTURE.md](../architecture/8-layer-architecture.md)      |
+| AI IDE 规则 | AI IDE 开发核心规则 | [AI_IDE_RULES.md](../ai/ide-rules.md)                           |
 
 ---
 

@@ -175,8 +175,8 @@ import type {
 ## 相关包
 
 - [@lytjs/core](../core) - 框架核心
-- [@lytjs/adapter-web](../adapter-web) - Web 平台适配器
-- [@lytjs/common-dom](../common/packages/dom) - DOM 工具
+- [@lytjs/adapter-web](./adapter-web.md) - Web 平台适配器
+- [@lytjs/common-dom](../common/overview.md) - DOM 工具
 
 ## 依赖版本
 

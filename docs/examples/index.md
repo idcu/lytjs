@@ -179,6 +179,6 @@ examples/
 
 - [官方文档](../guide/)
 - [API 参考](../api/)
-- [教程](../tutorial/)
-- [最佳实践](../tutorial/best-practices.md)
-- [性能优化](../tutorial/performance.md)
+- [实战教程](../getting-started/tutorials/)
+- [教程总览](../getting-started/tutorials/index.md)
+- [构建与性能优化](../guide/build-optimization.md)

@@ -30,9 +30,9 @@ size: { type: [Number, String] as unknown as PropType<number | string>, default:
 
 **适用文件**:
 
-- [Avatar.ts](file:///e:/trae/lytjs/packages/ecosystem/packages/ui/src/components/Avatar.ts)
-- [Card.ts](file:///e:/trae/lytjs/packages/ecosystem/packages/ui/src/components/Card.ts)
-- [Carousel.ts](file:///e:/trae/lytjs/packages/ecosystem/packages/ui/src/components/Carousel.ts)
+- [Avatar.ts](file:///e:/lytjs/packages/ecosystem/packages/ui/src/components/Avatar.ts)
+- [Card.ts](file:///e:/lytjs/packages/ecosystem/packages/ui/src/components/Card.ts)
+- [Carousel.ts](file:///e:/lytjs/packages/ecosystem/packages/ui/src/components/Carousel.ts)
 
 ### 1.2 类型导出与导入问题
 
@@ -111,7 +111,7 @@ test: {
 
 **测试框架**: LytJS 内置 SSR 压力测试框架
 
-**测试文件**: [stress-test.ts](file:///e:/trae/lytjs/packages/ecosystem/packages/ssr/tests/stress-test.ts)
+**测试文件**: [stress-test.ts](file:///e:/lytjs/packages/ecosystem/packages/ssr/tests/stress-test.ts)
 
 **测试场景**:
 
@@ -134,7 +134,7 @@ cd packages/ecosystem/packages/ssr
 npx tsx tests/stress-test.ts
 ```
 
-**结果报告**: [ssr-stress-test-2026-05-16.md](file:///e:/trae/lytjs/benchmarks/results/ssr-stress-test-2026-05-16.md)
+**结果报告**: [ssr-stress-test-2026-05-16.md](file:///e:/lytjs/benchmarks/results/ssr-stress-test-2026-05-16.md)
 
 ### 2.3 测试覆盖率目标
 
@@ -152,7 +152,7 @@ npx tsx tests/stress-test.ts
 
 **问题描述**: parseQuery 对空查询参数未正确处理为 null
 
-**修复位置**: [matcher.ts](file:///e:/trae/lytjs/packages/ecosystem/packages/router/src/matcher.ts#L261-L295)
+**修复位置**: [matcher.ts](file:///e:/lytjs/packages/ecosystem/packages/router/src/matcher.ts#L261-L295)
 
 **修复代码**:
 
@@ -462,7 +462,7 @@ ls packages/[package]/dist/
 
 **适用场景**: SSR 性能验证、版本发布前测试
 
-**测试文件**: [packages/ecosystem/packages/ssr/tests/stress-test.ts](file:///e:/trae/lytjs/packages/ecosystem/packages/ssr/tests/stress-test.ts)
+**测试文件**: [packages/ecosystem/packages/ssr/tests/stress-test.ts](file:///e:/lytjs/packages/ecosystem/packages/ssr/tests/stress-test.ts)
 
 **操作步骤**:
 
@@ -495,7 +495,7 @@ ls packages/[package]/dist/
 
 **适用场景**: 解决测试运行时内存溢出问题
 
-**问题测试文件示例**: [packages/reactivity/tests/edge-cases.test.ts](file:///e:/trae/lytjs/packages/reactivity/tests/edge-cases.test.ts)
+**问题测试文件示例**: [packages/reactivity/tests/edge-cases.test.ts](file:///e:/lytjs/packages/reactivity/tests/edge-cases.test.ts)
 
 **解决方案**:
 
@@ -570,7 +570,7 @@ export default defineConfig({
 
 **适用场景**: 开发项目级别的脚本工具
 
-> 详细技能模板参考: [DEVELOPMENT_SKILLS.md](./DEVELOPMENT_SKILLS.md)
+> 详细技能模板参考: [DEVELOPMENT_SKILLS.md](./development-skills.md)
 
 ---
 

@@ -6,6 +6,6 @@
 
 ## 文档
 
-- [插件开发指南](./getting-started.md) - 插件开发入门
-- [插件 API](./api.md) - 插件开发 API 文档
-- [插件示例](./examples.md) - 插件开发示例
+- [插件开发指南](../../contribute/plugins/plugin-development.md) - 插件开发入门
+- [API 参考](../../api/index.md) - 插件开发 API 文档
+- [示例项目](../../examples/index.md) - 插件开发示例

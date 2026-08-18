@@ -29,4 +29,4 @@
 
 ---
 
-**详细的贡献指南请参考**：[项目根目录的 CONTRIBUTING.md](../../CONTRIBUTING.md)
+**详细的贡献指南请参考**：[贡献指南](./index.md)

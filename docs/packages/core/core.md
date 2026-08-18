@@ -313,16 +313,16 @@ import type {
 
 @lytjs/core 整合以下子包：
 
-| 包名                               | 说明             |
-| ---------------------------------- | ---------------- |
-| [@lytjs/reactivity](../reactivity) | 响应式系统       |
-| [@lytjs/vdom](../vdom)             | 虚拟 DOM 实现    |
-| [@lytjs/compiler](../compiler)     | 模板编译器       |
-| [@lytjs/renderer](../renderer)     | DOM/SSR 渲染后端 |
-| [@lytjs/component](../component)   | 组件系统         |
-| [@lytjs/common](../common)         | 公共工具库       |
+| 包名                                   | 说明             |
+| -------------------------------------- | ---------------- |
+| [@lytjs/reactivity](../reactivity)     | 响应式系统       |
+| [@lytjs/vdom](../vdom)                 | 虚拟 DOM 实现    |
+| [@lytjs/compiler](../vdom/compiler.md) | 模板编译器       |
+| [@lytjs/renderer](../vdom/renderer.md) | DOM/SSR 渲染后端 |
+| [@lytjs/component](../component)       | 组件系统         |
+| [@lytjs/common](../common)             | 公共工具库       |
 
 ## 相关包
 
-- [@lytjs/adapter-web](../adapter-web) - Web 平台适配器
-- [@lytjs/host-contract](../host-contract) - 渲染器宿主抽象
+- [@lytjs/adapter-web](../other/adapter-web.md) - Web 平台适配器
+- [@lytjs/host-contract](../other/host-contract.md) - 渲染器宿主抽象

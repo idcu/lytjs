@@ -129,7 +129,7 @@ LytJS v6.5.0 是一个功能完善的重要版本，包含了大量的生态系�
 
 ### 文档和路线图
 
-- 更新 [ROADMAP_NEXT_STEPS.md](../development/ROADMAP_NEXT_STEPS.md)
+- 更新 [路线图](../contribute/roadmap/index.md)
 - 完整记录所有阶段的完成情况
 - 明确后续发布计划
 

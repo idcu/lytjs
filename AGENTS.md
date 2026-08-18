@@ -1,10 +1,12 @@
 # LytJS 项目智能体规则
 
 > **AI 必读**：本文件为项目入口规则。
-> 
-> ⚡ **AI 快速上手**：请**第一步先读 [.ai/QUICKSTART.md](.ai/QUICKSTART.md) - 为您准备的AI助手快速上手指南，帮您快速了解项目，节省Token！
-> 
+>
+> ⚡ **AI 快速上手**：请\*\*第一步先读 [.ai/QUICKSTART.md](.ai/QUICKSTART.md) - 为您准备的AI助手快速上手指南，帮您快速了解项目，节省Token！
+>
 > AI 应首先阅读此文件，然后根据任务类型匹配技能链执行。
+
+> ⚠️ **关于 `.trae/skills`**：本仓库将 `.trae/`（技能链/skill 工具链）列为本地可选环境、已加入 `.gitignore`，**不作为仓库内提交内容**。若当前环境缺少 `.trae/skills/*`，请直接以 [docs/contribute/development/workflow.md](docs/contribute/development/workflow.md) 内联的开发流程与命令为准，勿因找不到 skill 文件而中断。所有技能链链接均为对上述流程文档的引用映射。
 
 ## 项目速览
 
@@ -18,31 +20,31 @@
 
 **第一步**：识别用户意图，匹配 [skill-chains](.trae/skills/skill-chains/SKILL.md) 中的预定义技能链。
 
-| 任务复杂度 | 入口             | 说明                   |
-| ---------- | ---------------- | ---------------------- |
-| 简单任务   | 技能链直接执行   | 无需规划，按链顺序执行 |
+| 任务复杂度 | 入口           | 说明                   |
+| ---------- | -------------- | ---------------------- |
+| 简单任务   | 技能链直接执行 | 无需规划，按链顺序执行 |
 | 中等任务   | 技能链 + /plan | 生成 Plan 后按链执行   |
 | 复杂任务   | 技能链 + /spec | 生成 Spec 后按链执行   |
 
 ### 常用技能链速查
 
-| 场景         | 技能链                                                                                                                                                                                                                                                           | 复杂度             |
-| ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
-| 类型错误     | [类型错误](.trae/skills/skill-chains/SKILL.md#fix-type-error---修复类型错误) | 简单               |
-| 测试失败     | [测试失败](.trae/skills/skill-chains/SKILL.md#fix-test-failure---修复测试失败) | 简单               |
-| 构建失败     | [构建失败](.trae/skills/skill-chains/SKILL.md#fix-build-error---修复构建错误) | 简单               |
-| **PATCH 版本开发**     | **[PATCH 版本开发](.trae/skills/skill-chains/SKILL.md#patch-version---patch-版本开发)** | **简单**               |
-| 新功能开发     | [新功能开发](.trae/skills/skill-chains/SKILL.md#new-feature---新功能开发) | 中等               |
-| 代码重构     | [代码重构](.trae/skills/skill-chains/SKILL.md#refactor-code---代码重构) | 中等               |
-| 局部性能优化     | [局部性能优化](.trae/skills/skill-chains/SKILL.md#perf-optimize-local---局部性能优化) | 中等               |
-| 安全审查     | [安全审查](.trae/skills/skill-chains/SKILL.md#security-audit---安全审查) | 中等               |
-| 发布版本     | [发布版本](.trae/skills/skill-chains/SKILL.md#publish-release---发布版本) | 中等               |
-| **MINOR 版本开发**     | **[MINOR 版本开发](.trae/skills/skill-chains/SKILL.md#minor-version---minor-版本开发)** | **中等**               |
-| 系统级性能优化     | [系统级性能优化](.trae/skills/skill-chains/SKILL.md#perf-optimize-system---系统级性能优化) | 复杂               |
-| 创建生态包     | [创建生态包](.trae/skills/skill-chains/SKILL.md#create-package---创建生态包) | 复杂               |
-| 创建插件     | [创建插件](.trae/skills/skill-chains/SKILL.md#create-plugin---创建插件) | 复杂               |
-| **MAJOR 版本开发**     | **[MAJOR 版本开发](.trae/skills/skill-chains/SKILL.md#major-version---major-版本开发)** | **复杂**               |
-| **版本升级**     | **[版本升级](.trae/skills/skill-chains/SKILL.md#version-upgrade---版本升级推荐)** | **复杂**               |
+| 场景               | 技能链                                                                                     | 复杂度   |
+| ------------------ | ------------------------------------------------------------------------------------------ | -------- |
+| 类型错误           | [类型错误](.trae/skills/skill-chains/SKILL.md#fix-type-error---修复类型错误)               | 简单     |
+| 测试失败           | [测试失败](.trae/skills/skill-chains/SKILL.md#fix-test-failure---修复测试失败)             | 简单     |
+| 构建失败           | [构建失败](.trae/skills/skill-chains/SKILL.md#fix-build-error---修复构建错误)              | 简单     |
+| **PATCH 版本开发** | **[PATCH 版本开发](.trae/skills/skill-chains/SKILL.md#patch-version---patch-版本开发)**    | **简单** |
+| 新功能开发         | [新功能开发](.trae/skills/skill-chains/SKILL.md#new-feature---新功能开发)                  | 中等     |
+| 代码重构           | [代码重构](.trae/skills/skill-chains/SKILL.md#refactor-code---代码重构)                    | 中等     |
+| 局部性能优化       | [局部性能优化](.trae/skills/skill-chains/SKILL.md#perf-optimize-local---局部性能优化)      | 中等     |
+| 安全审查           | [安全审查](.trae/skills/skill-chains/SKILL.md#security-audit---安全审查)                   | 中等     |
+| 发布版本           | [发布版本](.trae/skills/skill-chains/SKILL.md#publish-release---发布版本)                  | 中等     |
+| **MINOR 版本开发** | **[MINOR 版本开发](.trae/skills/skill-chains/SKILL.md#minor-version---minor-版本开发)**    | **中等** |
+| 系统级性能优化     | [系统级性能优化](.trae/skills/skill-chains/SKILL.md#perf-optimize-system---系统级性能优化) | 复杂     |
+| 创建生态包         | [创建生态包](.trae/skills/skill-chains/SKILL.md#create-package---创建生态包)               | 复杂     |
+| 创建插件           | [创建插件](.trae/skills/skill-chains/SKILL.md#create-plugin---创建插件)                    | 复杂     |
+| **MAJOR 版本开发** | **[MAJOR 版本开发](.trae/skills/skill-chains/SKILL.md#major-version---major-版本开发)**    | **复杂** |
+| **版本升级**       | **[版本升级](.trae/skills/skill-chains/SKILL.md#version-upgrade---版本升级推荐)**          | **复杂** |
 
 > 完整技能链列表见 [skill-chains](.trae/skills/skill-chains/SKILL.md)
 
@@ -75,9 +77,9 @@ pnpm test    # 运行测试
 | 命令                  | 用途                       | 场景         |
 | --------------------- | -------------------------- | ------------ |
 | `pnpm lint`           | 自动修复可修复的 lint 问题 | 优先使用     |
-| `pnpm lint:check`           | 检查 lint 错误 | 查看当前状态     |
-| `pnpm lint:batch`           | 批量检查（内存优化） | 大规模检查     |
-| `pnpm lint:batch:fix`           | 批量自动修复 | 大规模修复     |
+| `pnpm lint:check`     | 检查 lint 错误             | 查看当前状态 |
+| `pnpm lint:batch`     | 批量检查（内存优化）       | 大规模检查   |
+| `pnpm lint:batch:fix` | 批量自动修复               | 大规模修复   |
 
 **推荐修复流程**：
 
@@ -100,32 +102,32 @@ pnpm test    # 运行测试
 
 ## Skill 技能
 
-| 场景           | Skill                                                        |
-| -------------- | ------------------------------------------------------------ |
-| 技能链速查 | [技能链速查](.trae/skills/skill-chains/SKILL.md) |
-| 如何使用 Skill | [如何使用 Skill](.trae/skills/skill-usage/SKILL.md) |
-| 如何设计 Skill | [如何设计 Skill](.trae/skills/skill-design/SKILL.md) |
+| 场景           | Skill                                                     |
+| -------------- | --------------------------------------------------------- |
+| 技能链速查     | [技能链速查](.trae/skills/skill-chains/SKILL.md)          |
+| 如何使用 Skill | [如何使用 Skill](.trae/skills/skill-usage/SKILL.md)       |
+| 如何设计 Skill | [如何设计 Skill](.trae/skills/skill-design/SKILL.md)      |
 | 如何维护 Skill | [如何维护 Skill](.trae/skills/skill-maintenance/SKILL.md) |
-| 新建 Skill | [新建 Skill](.trae/skills/create-skill/SKILL.md) |
-| 新建 Spec | [新建 Spec](.trae/skills/create-spec/SKILL.md) |
-| 新建 Plan | [新建 Plan](.trae/skills/create-plan/SKILL.md) |
+| 新建 Skill     | [新建 Skill](.trae/skills/create-skill/SKILL.md)          |
+| 新建 Spec      | [新建 Spec](.trae/skills/create-spec/SKILL.md)            |
+| 新建 Plan      | [新建 Plan](.trae/skills/create-plan/SKILL.md)            |
 
 ---
 
 ## 发布与运维
 
-| 场景           | Skill                                                        |
-| -------------- | ------------------------------------------------------------ |
-| **环境配置管理** | **[环境配置管理](.trae/skills/env-setup/SKILL.md)** |
-| **Roadmap 管理** | **[Roadmap 管理](.trae/skills/roadmap-management/SKILL.md)** |
+| 场景             | Skill                                                                                 |
+| ---------------- | ------------------------------------------------------------------------------------- |
+| **环境配置管理** | **[环境配置管理](.trae/skills/env-setup/SKILL.md)**                                   |
+| **Roadmap 管理** | **[Roadmap 管理](.trae/skills/roadmap-management/SKILL.md)**                          |
 | **一键版本升级** | **[一键版本升级](.trae/skills/skill-chains/SKILL.md#version-upgrade---版本升级推荐)** |
-| 发布 npm 包 | [发布 npm 包](.trae/skills/npm-publish/SKILL.md) |
-| 发布包 | [发布包](.trae/skills/publish-package/SKILL.md) |
-| 版本管理 | [版本管理](.trae/skills/manage-version/SKILL.md) |
-| 生成 CHANGELOG | [生成 CHANGELOG](.trae/skills/generate-changelog/SKILL.md) |
-| CI/CD 配置 | [CI/CD 配置](.trae/skills/setup-cicd/SKILL.md) |
-| 依赖管理 | [依赖管理](.trae/skills/manage-dependencies/SKILL.md) |
-| 代码调试 | [代码调试](.trae/skills/debug-code/SKILL.md) |
+| 发布 npm 包      | [发布 npm 包](.trae/skills/npm-publish/SKILL.md)                                      |
+| 发布包           | [发布包](.trae/skills/publish-package/SKILL.md)                                       |
+| 版本管理         | [版本管理](.trae/skills/manage-version/SKILL.md)                                      |
+| 生成 CHANGELOG   | [生成 CHANGELOG](.trae/skills/generate-changelog/SKILL.md)                            |
+| CI/CD 配置       | [CI/CD 配置](.trae/skills/setup-cicd/SKILL.md)                                        |
+| 依赖管理         | [依赖管理](.trae/skills/manage-dependencies/SKILL.md)                                 |
+| 代码调试         | [代码调试](.trae/skills/debug-code/SKILL.md)                                          |
 
 ---
 
@@ -157,7 +159,6 @@ pnpm test    # 运行测试
 
 - PowerShell 不支持 && 语法：在 Windows 环境中运行多命令时，请使用分号 ; 代替 &&，或者分别执行每个命令
 - 使用 cd <path>; <command> 代替 cd <path> && <command>
-
 
 <!---
 ⚠️ 此文件由 .trae/tools/generate-agents.ts 自动生成

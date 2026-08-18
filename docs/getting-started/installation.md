@@ -159,6 +159,6 @@ export default defineConfig({
 
 ## 下一步
 
-- [快速开始](../tutorial/quick-start) - 创建你的第一个 LytJS 应用
-- [响应式基础](../tutorial/reactivity) - 学习 Signal API
-- [组件基础](../tutorial/components) - 学习组件开发
+- [快速开始](./quick-start.md) - 创建你的第一个 LytJS 应用
+- [响应式基础](../guide/reactivity.md) - 学习 Signal API
+- [组件基础](../guide/component.md) - 学习组件开发

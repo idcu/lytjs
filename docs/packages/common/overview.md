@@ -302,6 +302,6 @@ import {
 - [@lytjs/core](../core) - 框架核心入口
 - [@lytjs/reactivity](../reactivity) - 响应式系统
 - [@lytjs/vdom](../vdom) - 虚拟 DOM 实现
-- [@lytjs/compiler](../compiler) - 模板编译器
-- [@lytjs/renderer](../renderer) - 渲染后端
+- [@lytjs/compiler](../vdom/compiler.md) - 模板编译器
+- [@lytjs/renderer](../vdom/renderer.md) - 渲染后端
 - [@lytjs/component](../component) - 组件系统

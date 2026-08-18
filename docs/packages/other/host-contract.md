@@ -185,5 +185,5 @@ import type {
 ## 相关包
 
 - [@lytjs/core](../core) - 框架核心入口，使用此接口创建渲染器
-- [@lytjs/dom](../dom) - DOM 平台封装
-- [@lytjs/dom-runtime](../dom-runtime) - DOM 运行时工具
+- [@lytjs/dom](./dom.md) - DOM 平台封装
+- [@lytjs/dom-runtime](./dom-runtime.md) - DOM 运行时工具

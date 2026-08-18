@@ -303,9 +303,9 @@ pnpm build           # 构建
 
 ## 相关文档
 
-- [开发规范指南](./DEVELOPMENT_GUIDELINES.md) - 完整的开发规范
-- [架构设计](./ARCHITECTURE.md) - 8 层架构设计
-- [知识库](./KNOWLEDGE_BASE.md) - 开发经验汇总
+- [开发规范指南](./guidelines.md) - 完整的开发规范
+- [架构设计](../architecture/8-layer-architecture.md) - 8 层架构设计
+- [知识库](../knowledge-base/knowledge-base.md) - 开发经验汇总
 
 ---
 

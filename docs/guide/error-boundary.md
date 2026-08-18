@@ -680,4 +680,4 @@ function SmartErrorFallback(props: FallbackProps) {
 ## 相关文档
 
 - [@lytjs/core 核心 API](../api/core.md)
-- [最佳实践指南](../tutorial/best-practices.md)
+- [构建与性能优化](../guide/build-optimization.md)

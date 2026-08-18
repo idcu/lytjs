@@ -521,6 +521,6 @@ function createFormManager(options?: FormOptions): FormInstance;
 
 ## 下一步
 
-- 查看 [官方插件使用指南](./官方插件使用指南.md)
-- 查看 [plugin-animation 动画插件](../ecosystem/plugins/animation.md)
-- 查看 [实战案例：表单验证](../tutorial/表单验证实战案例.md)
+- 查看 [官方插件列表](../../plugins/official/index.md)
+- 查看 [plugin-animation 动画插件](./animation.md)
+- 查看 [实战案例：表单验证](../../getting-started/tutorials/form-validation.md)

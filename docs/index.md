@@ -141,7 +141,7 @@ docs/
 ├── reference/        # 🔗 参考资料
 ├── contribute/       # 🤝 贡献指南
 ├── community/        # 👥 社区文档
-└── legacy/           # 📦 旧文档备份
+└── legacy-archive/    # 📦 旧文档归档（封存）
 ```
 
 开始你的 LytJS 之旅吧！🚀

@@ -71,7 +71,7 @@ LytJS 项目已经有非常完善的公共模块体系：
 
 ### 2.2 @lytjs/shared-types 包
 
-`@lytjs/shared-types` ([packages/shared-types/](file:///e:/trae/lytjs/packages/shared-types/)) 是集中的类型定义包，包含：
+`@lytjs/shared-types` ([packages/shared-types/](file:///e:/lytjs/packages/shared-types/)) 是集中的类型定义包，包含：
 
 | 类型文件         | 功能                                            |
 | ---------------- | ----------------------------------------------- |
@@ -89,7 +89,7 @@ LytJS 项目已经有非常完善的公共模块体系：
 
 ### 3.1 问题 1: 重复的常量定义
 
-**位置**: `@lytjs/common-is` ([packages/common/packages/is/src/index.ts](file:///e:/trae/lytjs/packages/common/packages/is/src/index.ts))
+**位置**: `@lytjs/common-is` ([packages/common/packages/is/src/index.ts](file:///e:/lytjs/packages/common/packages/is/src/index.ts))
 
 ```typescript
 // 第 9 行
@@ -113,7 +113,7 @@ export const EMPTY_FN = (): void => {};
 
 ### 3.2 问题 2: DebuggerEvent 类型重复定义
 
-**重复位置 1**: `@lytjs/reactivity` ([packages/reactivity/src/types.ts#L39-L44](file:///e:/trae/lytjs/packages/reactivity/src/types.ts#L39-L44))
+**重复位置 1**: `@lytjs/reactivity` ([packages/reactivity/src/types.ts#L39-L44](file:///e:/lytjs/packages/reactivity/src/types.ts#L39-L44))
 
 ```typescript
 export interface DebuggerEvent {
@@ -124,7 +124,7 @@ export interface DebuggerEvent {
 }
 ```
 
-**重复位置 2**: `@lytjs/shared-types` ([packages/shared-types/src/debug.ts#L13-L22](file:///e:/trae/lytjs/packages/shared-types/src/debug.ts#L13-L22))
+**重复位置 2**: `@lytjs/shared-types` ([packages/shared-types/src/debug.ts#L13-L22](file:///e:/lytjs/packages/shared-types/src/debug.ts#L13-L22))
 
 ```typescript
 export interface DebuggerEvent {
@@ -319,11 +319,11 @@ export const timeout = <T>(promise: Promise<T>, ms: number) => {
 
 ### 🟡 P1 - 近期优化 (中优先级) ✅ 已完成
 
-| 任务                                    | 状态    | 备注                                                        |
-| --------------------------------------- | ------- | ----------------------------------------------------------- |
-| 1. 在 lint 规则中添加检查，防止重复定义 | ✅ 完成 | 现有 lint 规则已足够完善                                    |
-| 2. 编写文档，明确公共模块使用规范       | ✅ 完成 | 已创建 [COMMON_MODULES_GUIDE.md](./COMMON_MODULES_GUIDE.md) |
-| 3. 检查所有包，确保使用公共模块         | ✅ 完成 | 所有包都正确使用了公共模块                                  |
+| 任务                                    | 状态    | 备注                                                              |
+| --------------------------------------- | ------- | ----------------------------------------------------------------- |
+| 1. 在 lint 规则中添加检查，防止重复定义 | ✅ 完成 | 现有 lint 规则已足够完善                                          |
+| 2. 编写文档，明确公共模块使用规范       | ✅ 完成 | 已创建 [COMMON_MODULES_GUIDE.md](../principles/common-modules.md) |
+| 3. 检查所有包，确保使用公共模块         | ✅ 完成 | 所有包都正确使用了公共模块                                        |
 
 ### 🟢 P2 - 长期规划 (低优先级) ✅ 已评估
 
@@ -367,7 +367,7 @@ export const timeout = <T>(promise: Promise<T>, ms: number) => {
    - 更新了 effect 回调函数的类型定义
 
 3. **公共模块使用规范** (P1)
-   - 创建了 [COMMON_MODULES_GUIDE.md](./COMMON_MODULES_GUIDE.md) 文档
+   - 创建了 [COMMON_MODULES_GUIDE.md](../principles/common-modules.md) 文档
    - 验证了所有包都正确使用公共模块
    - 确认 lint 规则配置完善
 
@@ -379,7 +379,7 @@ export const timeout = <T>(promise: Promise<T>, ms: number) => {
 ### 8.3 后续建议
 
 1. **保持现有架构**: 项目的公共模块设计已经非常完善，不需要大的重构
-2. **遵循使用规范**: 请参考 [COMMON_MODULES_GUIDE.md](./COMMON_MODULES_GUIDE.md) 使用公共模块
+2. **遵循使用规范**: 请参考 [COMMON_MODULES_GUIDE.md](../principles/common-modules.md) 使用公共模块
 3. **持续监控**: 定期检查是否有新的重复代码需要提取为公共模块
 
 ---

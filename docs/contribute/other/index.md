@@ -6,7 +6,7 @@
 
 ## 文档列表
 
-- [变更日志](./changelog.md) - 完整的版本更新记录
+- [变更日志](../../../CHANGELOG.md) - 完整的版本更新记录
 - [待办任务汇总](./pending-tasks.md) - 当前未完成任务
 - [常见问题排查](./troubleshooting.md) - 常见问题解决指南
 - [代码分析报告](./code-analysis-report.md) - 代码分析报告

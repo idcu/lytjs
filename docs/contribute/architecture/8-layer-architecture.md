@@ -429,8 +429,8 @@ pnpm build:plugins
 
 ## 相关文档
 
-- [插件开发指南](./PLUGIN_DEVELOPMENT.md) - 官方插件开发规范
-- [零依赖开发规范](./ZERO_DEPENDENCY_GUIDE.md) - 零依赖开发指南
+- [插件开发指南](../plugins/plugin-development.md) - 官方插件开发规范
+- [零依赖开发规范](../principles/zero-dependency.md) - 零依赖开发指南
 
 ---
 

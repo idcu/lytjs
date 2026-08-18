@@ -157,6 +157,31 @@ importers:
         specifier: ^1.0.0
         version: 1.6.4(@algolia/client-search@5.52.1)(@types/node@22.19.19)(postcss@8.5.15)(search-insights@2.17.3)(typescript@5.9.3)
 
+  examples/using-lytjs-as-dep:
+    dependencies:
+      '@lytjs/core':
+        specifier: ^6.9.6
+        version: 6.9.6
+      '@lytjs/reactivity':
+        specifier: ^6.9.6
+        version: 6.9.6
+      '@lytjs/router':
+        specifier: ^6.9.6
+        version: 6.9.6
+      '@lytjs/store':
+        specifier: ^6.9.6
+        version: 6.9.6
+      '@lytjs/ui':
+        specifier: ^6.9.6
+        version: 6.9.6
+    devDependencies:
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
+      vite:
+        specifier: ^5.0.0
+        version: 5.4.21(@types/node@22.19.19)
+
   packages/adapter-web:
     dependencies:
       '@lytjs/common-dom':
@@ -3086,6 +3111,91 @@ packages:
 
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
+
+  '@lytjs/adapter-web@6.9.6':
+    resolution: {integrity: sha512-2xqHdwgEy9IEZ1MjRe/OzIHSU0LFcVHeCqU+M9vXMWue8YCcp5AVcT6Yh/f0ttayIhYfwrIu1BKGTE/XEFLkHw==}
+
+  '@lytjs/common-a11y@6.9.6':
+    resolution: {integrity: sha512-FDJQgFUF15/NXpZlOPuI+Wa7zjgUUvYxK2ZWA6x/fgRIxjHq5B5qYrCXTLBNASp8UuXbdWft4IdjnTBOUTVbRg==}
+
+  '@lytjs/common-algorithm@6.9.6':
+    resolution: {integrity: sha512-CuSoyyNPx84qkyPavmQ1fOXiusHhSgKT0mLLK+yCjfFs6cMVsbpteGQHtQnSBiFFBJ0+cqtoVt/eBQtPDaZlXQ==}
+
+  '@lytjs/common-assertions@6.9.6':
+    resolution: {integrity: sha512-BUKLlTkroO/Aw3zBdUx3j/Xq9tIT7DjczUVJ9ZIqbYMNW7QgXiUhuopX7ZxfL/XlE2Ma52+AnjuEshJwu7hfXw==}
+
+  '@lytjs/common-constants@6.9.6':
+    resolution: {integrity: sha512-LQpWpv5Bho9f9y88L0I5tKgTW059RxdOtvvw0GWuhUxCZriMKYQki4hFodNjbyfRgHTdGW0LZQ53K0R32/XypA==}
+
+  '@lytjs/common-dom@6.9.6':
+    resolution: {integrity: sha512-XnENW+wn2AcT6wNnqRSBLPljFAe8zamgrS6kWSUXl9sMLZpT04oDAppidEht/Q1kJZcEiNDmKMNZtKz3TPZQjg==}
+    engines: {node: '>=18.0.0'}
+
+  '@lytjs/common-env@6.9.6':
+    resolution: {integrity: sha512-ZJpoqg/vqciSfR/3BcNxR6r+GoMHmtYpkOZ/xkKghYQMrBOYyeIeT1++RSCumG4gqF+hXKPVil0Qy9xwegtcZQ==}
+
+  '@lytjs/common-error@6.9.6':
+    resolution: {integrity: sha512-GAynz6DxNZBYL7ucrdm7fmjIJB0eFMq3gKY2ofwYm1wBWkK5d8TfsgtmLuI/Bv1y/ol+YILyrlMfe/o4AMi/8g==}
+
+  '@lytjs/common-events@6.9.6':
+    resolution: {integrity: sha512-A+i00EBJ6VEW0XCxFtkPHTBaQb+E8ddPRSA9JQ7Dfi2YV/l0vN325NYY8BCbZYk00mcSKsf/MgkkLTybGMWC2w==}
+
+  '@lytjs/common-is@6.9.6':
+    resolution: {integrity: sha512-nQpchk/8a8NglJ3brYu7itBTxhYoP0nuj98BbdveAuL0BhyME4bg7jeBswJCcKU7MUoacCZE56HThLX6ABzhJA==}
+
+  '@lytjs/common-object@6.9.6':
+    resolution: {integrity: sha512-+3pvF9pfYBEmOMT5UqmsOlklph1Mp/iK/lWXbfZf0qXP4mWT/yv9fAU+IO4wotoIU90egIZ5AavqzE6O/1BvBw==}
+
+  '@lytjs/common-scheduler@6.9.6':
+    resolution: {integrity: sha512-wRMylw9TUnQXiKLz9SM+hzqnyzhuE4n1PgT1yMyxGH2LO4ctFpseMGPHLkI4TFUf7HC3kJMj0Nl3ZWA4Kr8UIw==}
+
+  '@lytjs/common-security@6.9.6':
+    resolution: {integrity: sha512-/NRzEZc1/VpSfeJCKtTdL1DcBprDhpsSLmMp7N4YB5ncLgjjAbh9SKNbASaW2QbG3gFWLdi23lvuNwjKAt+wmQ==}
+
+  '@lytjs/common-string@6.9.6':
+    resolution: {integrity: sha512-HnpJVclPhwCLyQ3StxhSoWYpRbOIAsN0yei/qCT/WFTbuyIXiFasE5jxnshKsUr1YS7NWBRMcWH7SNvN4OiiDA==}
+
+  '@lytjs/common-transition-engine@6.9.6':
+    resolution: {integrity: sha512-LqqU4Sz3VsRjWaAWi5l6kJGPjWpJwQLybznclRpsHf9QZ+TzPud4cZRlL5iD0BRW+1s0A72HrnoSuyutjPecsw==}
+
+  '@lytjs/common-vnode@6.9.6':
+    resolution: {integrity: sha512-g3SHfJD+vXHN6z14C9HjoDlPFzmd65ANBZPyOEk4BfAnaWlXnT6obeV7l0m1nLel1gE/RuR6rHkaX50DcTS9gA==}
+
+  '@lytjs/compiler@6.9.6':
+    resolution: {integrity: sha512-PuL8y5RHBbnYwMfPFiTy0ffpJTXtPZ9vGBu7q6qvdJ4fSc4k1AUZKfHFLKwQEL5XrDQeaVMHcsVmaS9iHbLmZQ==}
+
+  '@lytjs/component@6.9.6':
+    resolution: {integrity: sha512-i0L3Z8NzD0WhgUNkY/VPT28GgdggFvmjq0nif/p6TI6o+orU5Lpg5Uv5p9w8rpVxW7z2j0OcADSV8wM2nLKcrA==}
+
+  '@lytjs/core@6.9.6':
+    resolution: {integrity: sha512-dr+VU/AZgxbhjCmu5NWbCtAZkqKCwThedtY+BiUGJqm7sQYPy7wgw7wEpmWLegyYdutlJSPnf26WyisXzhbc7w==}
+
+  '@lytjs/dom-runtime@6.9.6':
+    resolution: {integrity: sha512-UOleI6aniAk1uwvQ+HYCNdltNUY//9EkE6abBbgbWys2Ku7IUTlEaRfMxKzJkM7Lg0pQFNL2vq7k+0fMWQ4U/A==}
+
+  '@lytjs/host-contract@6.9.6':
+    resolution: {integrity: sha512-LVNjjPobBhIHdyX6DdtWdxPzTYU/WZEWI/RESfFcr6GwlqLpTiAvA+rwMhmz6JRPN0VI1acynycLjW+KRf/T6w==}
+
+  '@lytjs/reactivity@6.9.6':
+    resolution: {integrity: sha512-NsMVoGEnWSeEJkNubkYnQvMOpImreL1wR69TY1sJeFai97IoLTSTO8ZHeAUZxDcxrkCfZ8iEyO8QSXuNrm47sA==}
+
+  '@lytjs/renderer@6.9.6':
+    resolution: {integrity: sha512-4L26/Rd7WVD/l9A5jboDzm6lLBEq9p3c1MP3ahSUCt4F8FlWwGUMRwL8Dygoh4B8oG/q1/MLatgIDfjBqVQXMA==}
+
+  '@lytjs/router@6.9.6':
+    resolution: {integrity: sha512-MWo1SBo9HWMxk9GOvqUq/xSHWpJIgKd+OyYJoLe2zSMbKNvYa4ZYJnhzH0XnbEFjjBEtaswsWQxXybkWBj/7lQ==}
+
+  '@lytjs/shared-types@6.9.6':
+    resolution: {integrity: sha512-j0RRrG8FjtZf6P7ntFNegfo+2O8/MKhqCyEE/UUX1LN70Ulpar/sWeKR9dD0KVGEt6x6XTvulpCNoiP2fLl3zQ==}
+
+  '@lytjs/store@6.9.6':
+    resolution: {integrity: sha512-AzpebSQ4NczF/KFXSaWeMF8PUBPpR29jECO+SARnBoYngUv5keThvEbDXAK97YNptmq+8TdvUpY7l8RymipyIw==}
+
+  '@lytjs/ui@6.9.6':
+    resolution: {integrity: sha512-zB+pbdY4VeqEq7ttH3EZ5OsUky6in1DYP/ZG00jYsBfyv7KqJCkULEgL6yBfE1sYVY37i5YYJ9oOzDgzRHX18w==}
+
+  '@lytjs/vdom@6.9.6':
+    resolution: {integrity: sha512-t95xYYvPXr1ecak9mEQKIpyh91rP/sPErZVjPM+VfuWx4s8WoiWM+qJTKMZimldx0rvJRZNl/mOZhz8+/gQnHw==}
 
   '@manypkg/find-root@1.1.0':
     resolution: {integrity: sha512-mki5uBvhHzO8kYYix/WRy2WX8S3B5wdVSc9D6KcU5lQNglP2yt58/VfLuAK49glRXChosY8ap2oJ1qgma3GUVA==}
@@ -6814,6 +6924,179 @@ snapshots:
     dependencies:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
+
+  '@lytjs/adapter-web@6.9.6':
+    dependencies:
+      '@lytjs/common-dom': 6.9.6
+      '@lytjs/common-error': 6.9.6
+      '@lytjs/common-events': 6.9.6
+      '@lytjs/common-is': 6.9.6
+      '@lytjs/common-string': 6.9.6
+      '@lytjs/host-contract': 6.9.6
+      '@lytjs/reactivity': 6.9.6
+      '@lytjs/shared-types': 6.9.6
+      '@lytjs/vdom': 6.9.6
+
+  '@lytjs/common-a11y@6.9.6': {}
+
+  '@lytjs/common-algorithm@6.9.6': {}
+
+  '@lytjs/common-assertions@6.9.6':
+    dependencies:
+      '@lytjs/common-is': 6.9.6
+
+  '@lytjs/common-constants@6.9.6': {}
+
+  '@lytjs/common-dom@6.9.6':
+    dependencies:
+      '@lytjs/common-error': 6.9.6
+      '@lytjs/common-events': 6.9.6
+      '@lytjs/common-is': 6.9.6
+      '@lytjs/common-string': 6.9.6
+
+  '@lytjs/common-env@6.9.6': {}
+
+  '@lytjs/common-error@6.9.6':
+    dependencies:
+      '@lytjs/common-constants': 6.9.6
+
+  '@lytjs/common-events@6.9.6':
+    dependencies:
+      '@lytjs/common-is': 6.9.6
+
+  '@lytjs/common-is@6.9.6': {}
+
+  '@lytjs/common-object@6.9.6':
+    dependencies:
+      '@lytjs/common-constants': 6.9.6
+      '@lytjs/common-is': 6.9.6
+
+  '@lytjs/common-scheduler@6.9.6':
+    dependencies:
+      '@lytjs/common-env': 6.9.6
+
+  '@lytjs/common-security@6.9.6':
+    dependencies:
+      '@lytjs/common-is': 6.9.6
+
+  '@lytjs/common-string@6.9.6':
+    dependencies:
+      '@lytjs/common-constants': 6.9.6
+      '@lytjs/common-security': 6.9.6
+
+  '@lytjs/common-transition-engine@6.9.6':
+    dependencies:
+      '@lytjs/host-contract': 6.9.6
+
+  '@lytjs/common-vnode@6.9.6': {}
+
+  '@lytjs/compiler@6.9.6':
+    dependencies:
+      '@lytjs/common-constants': 6.9.6
+      '@lytjs/common-error': 6.9.6
+      '@lytjs/common-is': 6.9.6
+      '@lytjs/common-string': 6.9.6
+      '@lytjs/common-vnode': 6.9.6
+
+  '@lytjs/component@6.9.6':
+    dependencies:
+      '@lytjs/common-error': 6.9.6
+      '@lytjs/common-is': 6.9.6
+      '@lytjs/common-scheduler': 6.9.6
+      '@lytjs/common-string': 6.9.6
+      '@lytjs/common-vnode': 6.9.6
+      '@lytjs/reactivity': 6.9.6
+      '@lytjs/shared-types': 6.9.6
+      '@lytjs/vdom': 6.9.6
+
+  '@lytjs/core@6.9.6':
+    dependencies:
+      '@lytjs/common-error': 6.9.6
+      '@lytjs/common-is': 6.9.6
+      '@lytjs/common-object': 6.9.6
+      '@lytjs/common-scheduler': 6.9.6
+      '@lytjs/common-string': 6.9.6
+      '@lytjs/compiler': 6.9.6
+      '@lytjs/component': 6.9.6
+      '@lytjs/reactivity': 6.9.6
+      '@lytjs/renderer': 6.9.6
+      '@lytjs/shared-types': 6.9.6
+      '@lytjs/vdom': 6.9.6
+
+  '@lytjs/dom-runtime@6.9.6':
+    dependencies:
+      '@lytjs/reactivity': 6.9.6
+
+  '@lytjs/host-contract@6.9.6': {}
+
+  '@lytjs/reactivity@6.9.6':
+    dependencies:
+      '@lytjs/common-assertions': 6.9.6
+      '@lytjs/common-constants': 6.9.6
+      '@lytjs/common-error': 6.9.6
+      '@lytjs/common-is': 6.9.6
+      '@lytjs/common-scheduler': 6.9.6
+      '@lytjs/shared-types': 6.9.6
+
+  '@lytjs/renderer@6.9.6':
+    dependencies:
+      '@lytjs/adapter-web': 6.9.6
+      '@lytjs/common-dom': 6.9.6
+      '@lytjs/common-error': 6.9.6
+      '@lytjs/common-events': 6.9.6
+      '@lytjs/common-is': 6.9.6
+      '@lytjs/common-string': 6.9.6
+      '@lytjs/compiler': 6.9.6
+      '@lytjs/dom-runtime': 6.9.6
+      '@lytjs/host-contract': 6.9.6
+      '@lytjs/reactivity': 6.9.6
+      '@lytjs/vdom': 6.9.6
+
+  '@lytjs/router@6.9.6':
+    dependencies:
+      '@lytjs/common-env': 6.9.6
+      '@lytjs/common-is': 6.9.6
+      '@lytjs/component': 6.9.6
+      '@lytjs/reactivity': 6.9.6
+      '@lytjs/vdom': 6.9.6
+
+  '@lytjs/shared-types@6.9.6': {}
+
+  '@lytjs/store@6.9.6':
+    dependencies:
+      '@lytjs/common-is': 6.9.6
+      '@lytjs/common-object': 6.9.6
+      '@lytjs/component': 6.9.6
+      '@lytjs/core': 6.9.6
+      '@lytjs/reactivity': 6.9.6
+
+  '@lytjs/ui@6.9.6':
+    dependencies:
+      '@lytjs/common-a11y': 6.9.6
+      '@lytjs/common-dom': 6.9.6
+      '@lytjs/common-env': 6.9.6
+      '@lytjs/common-is': 6.9.6
+      '@lytjs/component': 6.9.6
+      '@lytjs/core': 6.9.6
+      '@lytjs/reactivity': 6.9.6
+      '@lytjs/vdom': 6.9.6
+
+  '@lytjs/vdom@6.9.6':
+    dependencies:
+      '@lytjs/common-algorithm': 6.9.6
+      '@lytjs/common-assertions': 6.9.6
+      '@lytjs/common-constants': 6.9.6
+      '@lytjs/common-dom': 6.9.6
+      '@lytjs/common-error': 6.9.6
+      '@lytjs/common-events': 6.9.6
+      '@lytjs/common-is': 6.9.6
+      '@lytjs/common-object': 6.9.6
+      '@lytjs/common-string': 6.9.6
+      '@lytjs/common-transition-engine': 6.9.6
+      '@lytjs/common-vnode': 6.9.6
+      '@lytjs/host-contract': 6.9.6
+      '@lytjs/reactivity': 6.9.6
+      '@lytjs/shared-types': 6.9.6
 
   '@manypkg/find-root@1.1.0':
     dependencies:

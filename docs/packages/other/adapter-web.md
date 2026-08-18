@@ -118,6 +118,6 @@ import type { WebRendererHost, DOMRenderer, RendererOptions } from '@lytjs/adapt
 
 ## 相关包
 
-- [@lytjs/renderer](../renderer) - 渲染器实现
+- [@lytjs/renderer](../vdom/renderer.md) - 渲染器实现
 - [@lytjs/vdom](../vdom) - 虚拟 DOM
-- [@lytjs/dom](../dom) - DOM 平台封装
+- [@lytjs/dom](./dom.md) - DOM 平台封装

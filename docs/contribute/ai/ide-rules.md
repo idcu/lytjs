@@ -92,12 +92,12 @@ pnpm run check-zero-deps
 
 ## 相关文档
 
-- [开发规范指南](./DEVELOPMENT_GUIDELINES.md) - 详细开发规范
-- [架构设计文档](./ARCHITECTURE.md) - 8 层架构详解
-- [插件开发指南](./PLUGIN_DEVELOPMENT.md) - 插件开发规范
-- [零依赖开发规范](./ZERO_DEPENDENCY_GUIDE.md) - 零依赖开发指南
-- [常见问题排查](./TROUBLESHOOTING.md) - 问题排查指南
-- [开发技能](./DEVELOPMENT_SKILLS.md) - 开发技能模板
+- [开发规范指南](../development/guidelines.md) - 详细开发规范
+- [架构设计文档](../architecture/8-layer-architecture.md) - 8 层架构详解
+- [插件开发指南](../plugins/plugin-development.md) - 插件开发规范
+- [零依赖开发规范](../principles/zero-dependency.md) - 零依赖开发指南
+- [常见问题排查](../other/troubleshooting.md) - 问题排查指南
+- [开发技能](../knowledge-base/development-skills.md) - 开发技能模板
 
 ---
 

@@ -7,7 +7,7 @@
 ## 🏠 新手入门
 
 - [新手入门](./getting-started/index.md)
-- [AI 助手开发指南](./ai-assistant-guide.md) - 🌟 专门为 AI 助手准备
+- [AI 助手开发指南](./contribute/ai/assistant-guide.md) - 🌟 专门为 AI 助手准备
 - [快速参考](./getting-started/quick-reference.md)
 - [快速开始](./getting-started/quick-start.md)
 - [安装指南](./getting-started/installation.md)
@@ -21,6 +21,12 @@
 ## 📚 核心指南
 
 - [核心指南](./guide/index.md)
+- [架构概览](./guide/architecture.md)
+- [快速开始](./guide/getting-started.md)
+- [组合式 API](./guide/composition-api.md)
+- [生命周期](./guide/lifecycle.md)
+- [项目配置](./guide/project-config.md)
+- [渲染函数](./guide/render-function.md)
 - [响应式系统](./guide/reactivity.md)
 - [组件系统](./guide/component.md)
 - [模板语法](./guide/template-syntax.md)
@@ -55,12 +61,16 @@
 - [其他包](./packages/other/index.md)
   - [Adapter Web](./packages/other/adapter-web.md)
   - [Dom](./packages/other/dom.md)
+  - [Dom Runtime](./packages/other/dom-runtime.md)
   - [Host Contract](./packages/other/host-contract.md)
+  - [Shared Types](./packages/other/shared-types.md)
+  - [Web](./packages/other/web.md)
 
 ## 🔌 插件生态
 
 - [插件生态](./plugins/index.md)
 - [官方插件](./plugins/official/index.md)
+  - [Data 插件](./plugins/official/data.md)
 - [插件开发](./plugins/development/index.md)
 
 ## 🌐 生态系统
@@ -93,7 +103,7 @@
   - [SSG](./ecosystem/other/ssg.md)
   - [Cache ISR](./ecosystem/other/cache-isr.md)
   - [HTML Renderer](./ecosystem/other/html-renderer.md)
-- [Plugins](./ecosystem/plugins/index.md)
+- [Plugins](./ecosystem/plugins/animation.md)
   - [Animation](./ecosystem/plugins/animation.md)
   - [Form](./ecosystem/plugins/form.md)
 
@@ -116,6 +126,13 @@
 - [Shared Types](./api/shared-types.md)
 - [CLI](./api/cli.md)
 - [Test Utils](./api/test-utils.md)
+
+### 生成态扩展（自动生成，见 [generated 目录](./api/generated)）
+
+- **官方插件**：[plugin-animation](./api/generated/plugin-animation.md) / [plugin-auth](./api/generated/plugin-auth.md) / [plugin-chart](./api/generated/plugin-chart.md) / [plugin-data](./api/generated/plugin-data.md) / [plugin-data-fetch](./api/generated/plugin-data-fetch.md) / [plugin-form](./api/generated/plugin-form.md) / [plugin-i18n](./api/generated/plugin-i18n.md) / [plugin-logger](./api/generated/plugin-logger.md) / [plugin-storage](./api/generated/plugin-storage.md) / [plugin-testing](./api/generated/plugin-testing.md) / [plugin-theme](./api/generated/plugin-theme.md) / [plugin-validation](./api/generated/plugin-validation.md)
+- **SSR 渲染栈**：[ssr](./api/generated/ssr.md) / [ssg](./api/generated/ssg.md) / [hmr](./api/generated/hmr.md) / [cache](./api/generated/cache.md) / [cache-isr](./api/generated/cache-isr.md) / [html-renderer](./api/generated/html-renderer.md)
+- **Web 框架**：[api](./api/generated/api.md) / [http-server](./api/generated/http-server.md) / [metadata](./api/generated/metadata.md) / [middleware](./api/generated/middleware.md) / [middleware-auth](./api/generated/middleware-auth.md) / [middleware-cors](./api/generated/middleware-cors.md) / [middleware-rate-limit](./api/generated/middleware-rate-limit.md) / [router-fs](./api/generated/router-fs.md)
+- **平台与生态**：[ui](./api/generated/ui.md) / [adapter-web](./api/generated/adapter-web.md) / [devtools](./api/generated/devtools.md) / [runtime-edge](./api/generated/runtime-edge.md) / [bundler](./api/generated/bundler.md)
 
 ## 💻 示例代码
 
@@ -160,7 +177,6 @@
   - [IDE 规则](./contribute/ai/ide-rules.md)
   - [Agents 优化](./contribute/ai/agents-optimization.md)
 - [其他](./contribute/other/index.md)
-  - [变更日志](./contribute/other/changelog.md)
   - [代码分析报告](./contribute/other/code-analysis-report.md)
   - [社区行为准则](./contribute/other/code-of-conduct.md)
   - [社区激励计划](./contribute/other/incentive-program.md)
@@ -172,6 +188,10 @@
 ## 👥 社区
 
 - [社区首页](./community/index.md)
+- [v6.9.5 发布](./community/RELEASE_v6.9.5.md)
+- [v6.9.0 发布](./community/RELEASE_v6.9.0.md)
+- [v6.8.0 发布](./community/RELEASE_v6.8.0.md)
+- [v6.7.0 发布](./community/RELEASE_v6.7.0.md)
 - [v6.6.0 发布](./community/RELEASE_v6.6.0.md)
 - [v6.5.0 发布](./community/RELEASE_v6.5.0.md)
 - [v6.4.0 发布](./community/RELEASE_v6.4.0.md)

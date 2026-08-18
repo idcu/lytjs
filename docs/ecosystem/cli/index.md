@@ -6,4 +6,4 @@
 
 ## 文档
 
-- [cli](./cli.md)
+- [CLI 命令参考](../../api/cli.md)

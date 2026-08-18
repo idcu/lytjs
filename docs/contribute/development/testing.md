@@ -167,4 +167,4 @@ test.describe('Admin Dashboard E2E Tests', () => {
 
 - [Vitest 文档](https://vitest.dev/)
 - [Playwright 文档](https://playwright.dev/)
-- [开发指南](./DEVELOPMENT_GUIDELINES.md)
+- [开发指南](./guidelines.md)

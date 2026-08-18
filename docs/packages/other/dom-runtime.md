@@ -255,5 +255,5 @@ type CleanupFn = () => void;
 
 - [@lytjs/core](../core) - 框架核心入口
 - [@lytjs/reactivity](../reactivity) - 响应式系统（bindEffect 依赖）
-- [@lytjs/host-contract](../host-contract) - 渲染器宿主抽象
-- [@lytjs/dom](../dom) - DOM 平台封装
+- [@lytjs/host-contract](./host-contract.md) - 渲染器宿主抽象
+- [@lytjs/dom](./dom.md) - DOM 平台封装

@@ -217,5 +217,5 @@ npm run dev
 
 完成本案例后，继续学习：
 
-- [用户管理系统](./用户管理案例.md) - 学习状态管理和路由
-- [API 集成](./api-integration.md) - 学习与后端交互
+- [用户管理系统](./user-management.md) - 学习状态管理和路由
+- [表单验证](./form-validation.md) - 学习表单处理

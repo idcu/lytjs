@@ -178,5 +178,5 @@ import type {
 ## 相关包
 
 - [@lytjs/core](../core) - 完整核心（支持双模式）
-- [@lytjs/core-vnode](../core-vnode) - 仅 VNode 模式
+- [@lytjs/core-vnode](./core-vnode.md) - 仅 VNode 模式
 - [@lytjs/reactivity](../reactivity) - 响应式系统实现

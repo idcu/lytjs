@@ -438,7 +438,7 @@ import { querySelector, addEventListener, removeEventListener } from '@lytjs/com
 
 ## 项目结构
 
-详细内容请参考 [ARCHITECTURE.md](./ARCHITECTURE.md)
+详细内容请参考 [ARCHITECTURE.md](../architecture/8-layer-architecture.md)
 
 ---
 
@@ -479,6 +479,7 @@ import { querySelector, addEventListener, removeEventListener } from '@lytjs/com
 - ✅ 性能影响：是否存在性能问题
 - ✅ 安全性：是否有潜在的安全漏洞
 - ✅ 一致性：是否符合项目代码规范
+- ✅ 文档同步：代码变更后，对应包的 `README.md` / `CHANGELOG.md` / `docs/api/*` 等文档是否已同步更新（遵循「代码变 → 文档变」，防止回归，可运行 `node scripts/check-docs.mjs --report=scripts/docs-health-report.md` 校验）
 
 ### 重构建议
 
@@ -552,15 +553,15 @@ function process(data: Data): Result {
 
 ## 8 层架构开发规范
 
-详细内容请参考 [ARCHITECTURE.md](./ARCHITECTURE.md)
+详细内容请参考 [ARCHITECTURE.md](../architecture/8-layer-architecture.md)
 
 ---
 
 ## 相关文档链接：
 
-- [插件开发指南](./PLUGIN_DEVELOPMENT.md) - 官方插件开发的详细指南
-- [第三方插件生态](./third-party-ecosystem.md) - 生态建设与插件审核
-- [知识库](./KNOWLEDGE_BASE.md) - 开发经验和最佳实践
+- [插件开发指南](../plugins/plugin-development.md) - 官方插件开发的详细指南
+- [第三方插件生态](../other/third-party-ecosystem.md) - 生态建设与插件审核
+- [知识库](../knowledge-base/knowledge-base.md) - 开发经验和最佳实践
 
 ---
 

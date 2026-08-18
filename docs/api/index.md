@@ -36,6 +36,18 @@ LytJS 框架的 API 参考文档，按包分类组织。
 | `@lytjs/vdom`        | 虚拟 DOM 和 diff 算法（VNode、PatchFlags、Block Tree）     |
 | `@lytjs/web`         | Web 平台工具（CSS 变量、ResizeObserver、Web Components）   |
 
+## 生成态扩展（自动生成）
+
+官方插件、SSR 渲染栈、Web 框架中间件与平台生态等包的 API 参考由
+`scripts/gen-api-docs.ts` 从源码自动生成，落盘于 [generated/ 目录](./generated)（不改写上方人工精修稿）。
+
+- **官方插件**：[plugin-animation](./generated/plugin-animation.md) / [plugin-auth](./generated/plugin-auth.md) / [plugin-chart](./generated/plugin-chart.md) / [plugin-data](./generated/plugin-data.md) / [plugin-data-fetch](./generated/plugin-data-fetch.md) / [plugin-form](./generated/plugin-form.md) / [plugin-i18n](./generated/plugin-i18n.md) / [plugin-logger](./generated/plugin-logger.md) / [plugin-storage](./generated/plugin-storage.md) / [plugin-testing](./generated/plugin-testing.md) / [plugin-theme](./generated/plugin-theme.md) / [plugin-validation](./generated/plugin-validation.md)
+- **SSR 渲染栈**：[ssr](./generated/ssr.md) / [ssg](./generated/ssg.md) / [hmr](./generated/hmr.md) / [cache](./generated/cache.md) / [cache-isr](./generated/cache-isr.md) / [html-renderer](./generated/html-renderer.md)
+- **Web 框架**：[api](./generated/api.md) / [http-server](./generated/http-server.md) / [metadata](./generated/metadata.md) / [middleware](./generated/middleware.md) / [middleware-auth](./generated/middleware-auth.md) / [middleware-cors](./generated/middleware-cors.md) / [middleware-rate-limit](./generated/middleware-rate-limit.md) / [router-fs](./generated/router-fs.md)
+- **平台与生态**：[ui](./generated/ui.md) / [adapter-web](./generated/adapter-web.md) / [devtools](./generated/devtools.md) / [runtime-edge](./generated/runtime-edge.md) / [bundler](./generated/bundler.md)
+
+> 重新生成：`npx tsx scripts/gen-api-docs.ts`
+
 ## 快速导航
 
 ### 响应式 API（新手推荐 Signal 优先）

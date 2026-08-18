@@ -9,7 +9,7 @@
 深入了解 LytJS 的核心架构设计：
 
 - [8 层架构详解](./architecture/8-layer-architecture.md) - 完整的架构设计文档
-- [模块关系](./architecture/module-relationships.md) - 各模块之间的依赖关系
+- [架构文档索引](./architecture/index.md) - 架构相关文档汇总
 
 ---
 
@@ -38,7 +38,6 @@
 项目规划和进度追踪：
 
 - [路线图与后续计划](./roadmap/current.md) - 长期发展规划（v6.1-v7.0）
-- [变更日志](./other/changelog.md) - 完整的版本更新记录
 - [待办任务汇总](./other/pending-tasks.md) - 当前未完成任务
 - [常见问题排查](./other/troubleshooting.md) - 常见问题解决指南
 

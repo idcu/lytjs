@@ -14,4 +14,4 @@
 ## 文档
 
 - [router](./router.md)
-- [router-fs](./router-fs.md)
+- [router-fs](../../api/generated/router-fs.md)

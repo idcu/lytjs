@@ -150,7 +150,7 @@ export default defineConfig({
             { text: 'DevTools', link: '/ecosystem/devtools/devtools' },
             { text: 'CLI', link: '/ecosystem/cli/' },
             { text: '其他包', link: '/ecosystem/other/' },
-            { text: 'Plugins', link: '/ecosystem/plugins/' },
+            { text: 'Plugins', link: '/ecosystem/plugins/animation' },
           ],
         },
       ],
@@ -254,7 +254,6 @@ export default defineConfig({
           text: '其他',
           items: [
             { text: '其他', link: '/contribute/other/' },
-            { text: '变更日志', link: '/contribute/other/changelog' },
             { text: '代码分析', link: '/contribute/other/code-analysis-report' },
             { text: '社区行为准则', link: '/contribute/other/code-of-conduct' },
             { text: '社区激励计划', link: '/contribute/other/incentive-program' },

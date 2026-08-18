@@ -66,6 +66,3 @@
 ## 文档
 
 - [Common 包总览](./overview.md)
-- [工具函数](./utils.md)
-- [集合操作](./collections.md)
-- [内存管理](./memory.md)

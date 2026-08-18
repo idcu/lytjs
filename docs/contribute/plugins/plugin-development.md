@@ -499,9 +499,9 @@ npm publish --access public
 
 ## 示例插件参考
 
-- [plugin-theme](file:///e:/trae/lytjs/packages/plugins/packages/plugin-theme/src/index.ts) - 主题插件
-- [plugin-logger](file:///e:/trae/lytjs/packages/plugins/packages/plugin-logger/src/index.ts) - 日志插件
-- [plugin-i18n](file:///e:/trae/lytjs/packages/plugins/packages/plugin-i18n/src/index.ts) - 国际化插件
+- [plugin-theme](file:///e:/lytjs/packages/plugins/packages/plugin-theme/src/index.ts) - 主题插件
+- [plugin-logger](file:///e:/lytjs/packages/plugins/packages/plugin-logger/src/index.ts) - 日志插件
+- [plugin-i18n](file:///e:/lytjs/packages/plugins/packages/plugin-i18n/src/index.ts) - 国际化插件
 
 ---
 

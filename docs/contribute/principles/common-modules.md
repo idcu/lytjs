@@ -193,6 +193,6 @@ import type { SomeType } from '@lytjs/shared-types';
 
 ## 参考
 
-- [项目架构文档](./ARCHITECTURE.md)
-- [开发规范](./DEVELOPMENT_GUIDELINES.md)
-- [代码分析报告](./CODE_ANALYSIS_REPORT.md)
+- [项目架构文档](../architecture/8-layer-architecture.md)
+- [开发规范](../development/guidelines.md)
+- [代码分析报告](../other/code-analysis-report.md)

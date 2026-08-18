@@ -19,61 +19,169 @@ interface PackageConfig {
   description: string;
 }
 
+/**
+ * 生成文档输出目录。
+ *
+ * 说明：
+ * - `docs/api/*.md`（如 core.md / reactivity.md / router.md / devtools.md 等）为人工精修的高质量参考，
+ *   由 `docs/api/` 下的手工文档权威维护，**不在此处生成或覆盖**。
+ * - 本生成器只对「尚缺 API 文档的高价值包」产出，落盘到独立的 `docs/api/generated/<slug>.md`，
+ *   避免与人工稿撞名、撞路径。
+ */
+const GENERATED_DIR = 'docs/api/generated';
+
+/**
+ * 便捷构造：以包名推导生成文件名（`@lytjs/` 前缀后的部分），保证 slug 全局唯一。
+ */
+function pkg(name: string, packagePath: string, description: string): PackageConfig {
+  const slug = name.replace('@lytjs/', '');
+  return { name, packagePath, outputFile: `${GENERATED_DIR}/${slug}.md`, description };
+}
+
+/**
+ * 高价值但暂缺 API 文档的包（官方插件 / SSR 渲染栈 / Web 框架中间件 / 平台适配与运行时）。
+ * 按批次扩展可在此追加 `pkg(...)`。
+ */
 const PACKAGES: PackageConfig[] = [
-  {
-    name: '@lytjs/core',
-    packagePath: 'packages/core/src',
-    outputFile: 'docs/api/core.md',
-    description: 'Lyt.js 核心包，提供应用创建、组件定义和组合式 API',
-  },
-  {
-    name: '@lytjs/reactivity',
-    packagePath: 'packages/reactivity/src',
-    outputFile: 'docs/api/reactivity.md',
-    description: '响应式系统，提供 ref、reactive、computed、watch 等 API',
-  },
-  {
-    name: '@lytjs/compiler',
-    packagePath: 'packages/compiler/src',
-    outputFile: 'docs/api/compiler.md',
-    description: '模板编译器，将模板编译为渲染函数',
-  },
-  {
-    name: '@lytjs/renderer',
-    packagePath: 'packages/renderer/src',
-    outputFile: 'docs/api/renderer.md',
-    description: '渲染器，负责虚拟 DOM 的 diff 和 patch',
-  },
-  {
-    name: '@lytjs/component',
-    packagePath: 'packages/component/src',
-    outputFile: 'docs/api/component.md',
-    description: '组件系统，提供组件生命周期、props、emit 等功能',
-  },
-  {
-    name: '@lytjs/vdom',
-    packagePath: 'packages/vdom/src',
-    outputFile: 'docs/api/vdom.md',
-    description: '虚拟 DOM 实现，提供 VNode 创建和 diff 算法',
-  },
-  {
-    name: '@lytjs/router',
-    packagePath: 'packages/ecosystem/packages/router/src',
-    outputFile: 'docs/api/router.md',
-    description: '官方路由管理器，支持 hash 和 history 模式',
-  },
-  {
-    name: '@lytjs/store',
-    packagePath: 'packages/ecosystem/packages/store/src',
-    outputFile: 'docs/api/store.md',
-    description: '状态管理库，提供 Pinia 兼容的 API',
-  },
-  {
-    name: '@lytjs/devtools-extension',
-    packagePath: 'packages/tools/packages/devtools/src',
-    outputFile: 'docs/api/devtools.md',
-    description: '浏览器 DevTools 扩展，用于调试 Lyt.js 应用',
-  },
+  // ---- 官方插件（plugin-vite 已有人工稿，不在此列）----
+  pkg(
+    '@lytjs/plugin-animation',
+    'packages/plugins/packages/plugin-animation/src',
+    '官方动画插件，基于 CSS 动画与过渡',
+  ),
+  pkg(
+    '@lytjs/plugin-auth',
+    'packages/plugins/packages/plugin-auth/src',
+    '官方认证插件，用于路由鉴权',
+  ),
+  pkg(
+    '@lytjs/plugin-chart',
+    'packages/plugins/packages/plugin-chart/src',
+    '官方图表插件，用于数据可视化渲染',
+  ),
+  pkg('@lytjs/plugin-data', 'packages/plugins/packages/plugin-data/src', '官方增强数据插件'),
+  pkg(
+    '@lytjs/plugin-data-fetch',
+    'packages/plugins/packages/plugin-data-fetch/src',
+    '官方数据请求插件，支持缓存与响应式数据',
+  ),
+  pkg(
+    '@lytjs/plugin-form',
+    'packages/plugins/packages/plugin-form/src',
+    '官方表单插件，提供表单状态管理',
+  ),
+  pkg('@lytjs/plugin-i18n', 'packages/plugins/packages/plugin-i18n/src', '官方国际化（i18n）插件'),
+  pkg(
+    '@lytjs/plugin-logger',
+    'packages/plugins/packages/plugin-logger/src',
+    '官方日志插件，支持日志分级',
+  ),
+  pkg(
+    '@lytjs/plugin-storage',
+    'packages/plugins/packages/plugin-storage/src',
+    '官方存储插件，封装 localStorage/sessionStorage',
+  ),
+  pkg('@lytjs/plugin-testing', 'packages/plugins/packages/plugin-testing/src', '官方测试插件'),
+  pkg(
+    '@lytjs/plugin-theme',
+    'packages/plugins/packages/plugin-theme/src',
+    '官方主题插件，管理 CSS 变量主题',
+  ),
+  pkg(
+    '@lytjs/plugin-validation',
+    'packages/plugins/packages/plugin-validation/src',
+    '官方校验插件，提供类型校验',
+  ),
+
+  // ---- SSR 渲染栈 ----
+  pkg(
+    '@lytjs/ssr',
+    'packages/ecosystem/packages/ssr-kit/packages/ssr/src',
+    '服务端渲染（SSR）支持',
+  ),
+  pkg(
+    '@lytjs/ssg',
+    'packages/ecosystem/packages/ssr-kit/packages/ssg/src',
+    '静态站点生成（SSG）支持',
+  ),
+  pkg(
+    '@lytjs/hmr',
+    'packages/ecosystem/packages/ssr-kit/packages/hmr/src',
+    '热模块替换（HMR）支持',
+  ),
+  pkg(
+    '@lytjs/cache',
+    'packages/ecosystem/packages/ssr-kit/packages/cache/src',
+    '统一缓存系统（内存缓存）',
+  ),
+  pkg(
+    '@lytjs/cache-isr',
+    'packages/ecosystem/packages/ssr-kit/packages/cache-isr/src',
+    '增量静态再生成（ISR）缓存',
+  ),
+  pkg(
+    '@lytjs/html-renderer',
+    'packages/ecosystem/packages/ssr-kit/packages/html-renderer/src',
+    'SSR HTML 渲染器',
+  ),
+
+  // ---- Web 框架（中间件与引擎）----
+  pkg('@lytjs/api', 'packages/ecosystem/packages/web-framework/packages/api/src', 'API 路由引擎'),
+  pkg(
+    '@lytjs/http-server',
+    'packages/ecosystem/packages/web-framework/packages/http-server/src',
+    'HTTP 服务器',
+  ),
+  pkg(
+    '@lytjs/metadata',
+    'packages/ecosystem/packages/web-framework/packages/metadata/src',
+    '元数据系统',
+  ),
+  pkg(
+    '@lytjs/middleware',
+    'packages/ecosystem/packages/web-framework/packages/middleware/src',
+    '中间件核心系统（洋葱模型）',
+  ),
+  pkg(
+    '@lytjs/middleware-auth',
+    'packages/ecosystem/packages/web-framework/packages/middleware-auth/src',
+    '认证中间件',
+  ),
+  pkg(
+    '@lytjs/middleware-cors',
+    'packages/ecosystem/packages/web-framework/packages/middleware-cors/src',
+    'CORS 跨域中间件',
+  ),
+  pkg(
+    '@lytjs/middleware-rate-limit',
+    'packages/ecosystem/packages/web-framework/packages/middleware-rate-limit/src',
+    '速率限制中间件',
+  ),
+  pkg(
+    '@lytjs/router-fs',
+    'packages/ecosystem/packages/web-framework/packages/router-fs/src',
+    '基于文件系统的路由引擎',
+  ),
+
+  // ---- 平台适配 / 运行时 / 生态 ----
+  pkg(
+    '@lytjs/ui',
+    'packages/ecosystem/packages/ui/src',
+    '官方 UI 组件库（Button、Input、Dialog 等）',
+  ),
+  pkg('@lytjs/adapter-web', 'packages/adapter-web/src', 'Web 平台适配器（DOM RendererHost）'),
+  pkg(
+    '@lytjs/devtools',
+    'packages/ecosystem/packages/devtools/src',
+    '开发调试工具（服务端包，区别于 devtools-extension）',
+  ),
+  pkg(
+    '@lytjs/runtime-edge',
+    'packages/ecosystem/packages/runtime-edge/src',
+    '边缘运行时支持（Serverless 适配）',
+  ),
+  pkg('@lytjs/bundler', 'packages/ecosystem/packages/bundler/src', '与 Vite 集成的打包器'),
+  // 注意：@lytjs/compat 为 0 导出兼容层（src/index.ts 仅 `export {}`），不生成 API 文档，避免空文件
 ];
 
 // ===== TypeScript Parser =====
@@ -259,6 +367,51 @@ function extractDescription(jsDoc: ts.JSDoc[]): string {
     return doc.comment.map((c) => c.text).join('');
   }
   return '';
+}
+
+/**
+ * 将类型签名折叠为单行，避免反引号代码跨度跨行。
+ * 跨行的 `Foo<T>` 会被 markdown 解析器当作未闭合内联 HTML，导致 VitePress 构建失败。
+ * 同时转义类型中可能出现的反引号。
+ */
+function inlineType(type: string): string {
+  return type
+    .replace(/\s*\n\s*/g, ' ')
+    .replace(/`/g, '\\`')
+    .trim();
+}
+
+/**
+ * 转义正文描述中反引号代码跨度之外的 `<` / `>`。
+ * 描述里若出现 `Promise<void>` 这类裸文本，`<void>` 会被 Vue 编译器当作未闭合 HTML 标签导致构建失败。
+ * 行内代码（反引号内）不做转义，避免显示异常。
+ */
+function escapeAngleOutsideTicks(text: string): string {
+  let out = '';
+  let inTick = false;
+  for (const ch of text) {
+    if (ch === '`') {
+      inTick = !inTick;
+      out += ch;
+      continue;
+    }
+    if (!inTick && (ch === '<' || ch === '>')) {
+      out += ch === '<' ? '&lt;' : '&gt;';
+      continue;
+    }
+    out += ch;
+  }
+  return out;
+}
+
+/**
+ * 剥离示例文本首尾的代码围栏（```typescript / ```），避免生成时双重嵌套围栏。
+ */
+function unwrapFences(example: string): string {
+  const lines = example.split('\n');
+  if (lines.length && lines[0].trim().startsWith('```')) lines.shift();
+  if (lines.length && lines[lines.length - 1].trim() === '```') lines.pop();
+  return lines.join('\n');
 }
 
 /**
@@ -485,7 +638,7 @@ function generateDocMarkdown(doc: APIDoc): string[] {
   // Deprecated warning
   if (doc.deprecated) {
     lines.push('::: warning 已弃用');
-    lines.push(doc.deprecated);
+    lines.push(escapeAngleOutsideTicks(doc.deprecated));
     lines.push(':::');
     lines.push('');
   }
@@ -498,7 +651,7 @@ function generateDocMarkdown(doc: APIDoc): string[] {
 
   // Description
   if (doc.description) {
-    lines.push(doc.description);
+    lines.push(escapeAngleOutsideTicks(doc.description));
     lines.push('');
   }
 
@@ -522,7 +675,7 @@ function generateDocMarkdown(doc: APIDoc): string[] {
       const optional = param.optional ? '是' : '否';
       const defaultVal = param.defaultValue || '-';
       lines.push(
-        `| ${param.name} | \`${param.type}\` | ${param.description} | ${optional} | ${defaultVal} |`,
+        `| ${param.name} | \`${inlineType(param.type)}\` | ${escapeAngleOutsideTicks(param.description)} | ${optional} | ${defaultVal} |`,
       );
     }
     lines.push('');
@@ -532,10 +685,10 @@ function generateDocMarkdown(doc: APIDoc): string[] {
   if (doc.returns) {
     lines.push('### 返回值');
     lines.push('');
-    lines.push(`**类型:** \`${doc.returns.type}\``);
+    lines.push(`**类型:** \`${inlineType(doc.returns.type)}\``);
     if (doc.returns.description) {
       lines.push('');
-      lines.push(doc.returns.description);
+      lines.push(escapeAngleOutsideTicks(doc.returns.description));
     }
     lines.push('');
   }
@@ -547,9 +700,11 @@ function generateDocMarkdown(doc: APIDoc): string[] {
     lines.push('| 名称 | 类型 | 描述 | 可选 |');
     lines.push('|------|------|------|------|');
     for (const member of doc.members) {
-      const type = member.type ? `\`${member.type}\`` : '-';
+      const type = member.type ? `\`${inlineType(member.type)}\`` : '-';
       const optional = member.optional ? '是' : '否';
-      lines.push(`| ${member.name} | ${type} | ${member.description} | ${optional} |`);
+      lines.push(
+        `| ${member.name} | ${type} | ${escapeAngleOutsideTicks(member.description)} | ${optional} |`,
+      );
     }
     lines.push('');
   }
@@ -560,7 +715,7 @@ function generateDocMarkdown(doc: APIDoc): string[] {
     lines.push('');
     for (const example of doc.examples) {
       lines.push('```typescript');
-      lines.push(example);
+      lines.push(unwrapFences(example));
       lines.push('```');
       lines.push('');
     }

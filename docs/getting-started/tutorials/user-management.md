@@ -266,6 +266,6 @@ open index.html
 
 完成本案例后，继续学习：
 
-- [购物车案例](./购物车案例.md) - 复杂状态管理
-- [状态管理](./state-management.md) - 学习使用 Store
-- [路由](./routing.md) - 学习使用 Router
+- [购物车案例](./shopping-cart.md) - 复杂状态管理
+- [Store 状态管理](../../ecosystem/store/index.md) - 学习使用 Store
+- [路由系统](../../ecosystem/router/index.md) - 学习使用 Router

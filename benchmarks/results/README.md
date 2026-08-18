@@ -91,4 +91,4 @@ pnpm compare
 ## 参考资源
 
 - [js-framework-benchmark](https://github.com/krausest/js-framework-benchmark)
-- [性能优化最佳实践](../docs/development/performance.md)
+- [性能优化记录](../../docs/contribute/performance/baseline-and-plans.md)
