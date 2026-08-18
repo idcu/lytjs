@@ -3,7 +3,7 @@
  * 包含所有组件的功能测试，覆盖多种模式
  */
 
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { Button } from '../src/components/Button';
 import { Input } from '../src/components/Input';
 import { Dialog } from '../src/components/Dialog';
@@ -14,7 +14,6 @@ import { Tree } from '../src/components/Tree';
 import { Cascader } from '../src/components/Cascader';
 import { TreeSelect } from '../src/components/TreeSelect';
 import { Transfer } from '../src/components/Transfer';
-import { Descriptions, DescriptionsItem } from '../src/components/Descriptions';
 import { Modal } from '../src/components/Modal';
 import { Drawer } from '../src/components/Drawer';
 import { Upload } from '../src/components/Upload';
@@ -44,12 +43,7 @@ import { Progress } from '../src/components/Progress';
 import { Slider } from '../src/components/Slider';
 import { Avatar } from '../src/components/Avatar';
 import { Card } from '../src/components/Card';
-import { Timeline } from '../src/components/Timeline';
-import { TimelineItem } from '../src/components/TimelineItem';
-import { Steps } from '../src/components/Steps';
-import { Step } from '../src/components/Step';
 import { Carousel } from '../src/components/Carousel';
-import { CarouselItem } from '../src/components/CarouselItem';
 import { Popconfirm } from '../src/components/Popconfirm';
 import { DatePicker } from '../src/components/DatePicker';
 import { RichTextEditor } from '../src/components/RichTextEditor';
@@ -71,7 +65,7 @@ import {
   VaporTabPane,
   VaporMenu,
   VaporMenuItem,
-  VaporSubMenu
+  VaporSubMenu,
 } from '../src/components/vapor';
 
 describe('Button 组件功能测试', () => {
@@ -106,7 +100,7 @@ describe('Button 组件功能测试', () => {
 
   it('应该支持多种按钮类型', () => {
     const types = ['primary', 'success', 'warning', 'danger', 'info', 'default'];
-    types.forEach(type => {
+    types.forEach((type) => {
       const testProps = { ...Button.props, type: { type: String, default: type } };
       expect(testProps).toBeDefined();
     });
@@ -114,7 +108,7 @@ describe('Button 组件功能测试', () => {
 
   it('应该支持多种尺寸', () => {
     const sizes = ['large', 'medium', 'small'];
-    sizes.forEach(size => {
+    sizes.forEach((size) => {
       const testProps = { ...Button.props, size: { type: String, default: size } };
       expect(testProps).toBeDefined();
     });
@@ -123,7 +117,7 @@ describe('Button 组件功能测试', () => {
   it('setup 函数应该返回一个渲染函数', () => {
     const setupContext = {
       props: {},
-      slots: {}
+      slots: {},
     };
     const result = Button.setup({}, setupContext);
     expect(typeof result).toBe('function');
@@ -161,7 +155,7 @@ describe('Input 组件功能测试', () => {
 
   it('应该支持多种输入类型', () => {
     const types = ['text', 'password', 'email', 'number', 'tel', 'url', 'textarea'];
-    types.forEach(type => {
+    types.forEach((type) => {
       const testProps = { ...Input.props, type: { type: String, default: type } };
       expect(testProps).toBeDefined();
     });
