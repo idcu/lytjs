@@ -110,36 +110,9 @@ examples/
     └── package.json
 ```
 
-## 学习路径建议
+## 学习路径
 
-### 第一步：计数器
-
-适合刚接触 LytJS 的开发者：
-
-1. 了解 `createApp` 的基本用法
-2. 学习 `ref` 创建响应式数据
-3. 掌握事件处理（`onClick`）
-4. 理解条件渲染和样式绑定
-
-### 第二步：待办事项
-
-适合已掌握基础的开发者：
-
-1. 学习列表渲染（`map` 方法）
-2. 掌握 `computed` 计算属性
-3. 理解 `watch` 监听数据变化
-4. 学习 `localStorage` 数据持久化
-5. 掌握动态类绑定语法
-
-### 第三步：用户列表
-
-适合想要深入学习的开发者：
-
-1. 掌握 Composable 模式
-2. 学习路由系统（`@lytjs/router`）
-3. 理解异步数据处理
-4. 掌握错误处理和加载状态
-5. 学习代码组织和模块化
+本页提供可直接运行的完整示例代码。若需要**分步教学**（从零开始、逐步讲解每行代码），请参阅 [实战教程](../getting-started/tutorials/)。建议的进阶顺序：计数器 → 待办事项 → 用户列表。
 
 ## 贡献示例
 
@@ -180,5 +153,4 @@ examples/
 - [官方文档](../guide/)
 - [API 参考](../api/)
 - [实战教程](../getting-started/tutorials/)
-- [教程总览](../getting-started/tutorials/index.md)
 - [构建与性能优化](../guide/build-optimization.md)

@@ -1,3 +1,8 @@
+---
+title: 社区
+description: LytJS 社区发布公告和更新
+---
+
 # LytJS 社区
 
 欢迎来到 LytJS 社区！这里是发布公告和更新的地方。

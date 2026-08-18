@@ -561,7 +561,7 @@ function process(data: Data): Result {
 
 - [插件开发指南](../plugins/plugin-development.md) - 官方插件开发的详细指南
 - [第三方插件生态](../other/third-party-ecosystem.md) - 生态建设与插件审核
-- [知识库](../knowledge-base/knowledge-base.md) - 开发经验和最佳实践
+- [知识库](../knowledge-base/) - 开发经验和最佳实践
 
 ---
 

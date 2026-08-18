@@ -4,7 +4,7 @@ export default defineConfig({
   title: 'LytJS',
   description: '轻量级、高性能的渐进式 JavaScript 框架',
   lang: 'zh-CN',
-  ignoreDeadLinks: true,
+  ignoreDeadLinks: false,
   base: '/lytjs/',
 
   head: [
@@ -38,6 +38,7 @@ export default defineConfig({
           text: '新手入门',
           items: [
             { text: '新手入门', link: '/getting-started/' },
+            { text: '快速参考', link: '/getting-started/quick-reference' },
             { text: '快速开始', link: '/getting-started/quick-start' },
             { text: '安装', link: '/getting-started/installation' },
           ],
@@ -59,6 +60,8 @@ export default defineConfig({
           text: '开始',
           items: [
             { text: '简介', link: '/guide/' },
+            { text: '架构概览', link: '/guide/architecture' },
+            { text: '快速开始', link: '/guide/getting-started' },
             { text: '响应式系统', link: '/guide/reactivity' },
             { text: '组件系统', link: '/guide/component' },
           ],
@@ -66,6 +69,7 @@ export default defineConfig({
         {
           text: '核心功能',
           items: [
+            { text: '渲染函数', link: '/guide/render-function' },
             { text: '模板语法', link: '/guide/template-syntax' },
             { text: '事件处理', link: '/guide/events' },
             { text: '生命周期', link: '/guide/lifecycle' },
@@ -102,11 +106,8 @@ export default defineConfig({
             { text: 'Common', link: '/packages/common/' },
             { text: 'Common 概览', link: '/packages/common/overview' },
             { text: 'Reactivity', link: '/packages/reactivity/' },
-            { text: 'Reactivity', link: '/packages/reactivity/reactivity' },
             { text: 'Component', link: '/packages/component/' },
-            { text: 'Component', link: '/packages/component/component' },
             { text: 'VDOM', link: '/packages/vdom/' },
-            { text: 'VDOM', link: '/packages/vdom/vdom' },
             { text: 'Renderer', link: '/packages/vdom/renderer' },
             { text: 'Compiler', link: '/packages/vdom/compiler' },
           ],
@@ -140,17 +141,19 @@ export default defineConfig({
           items: [
             { text: '生态系统', link: '/ecosystem/' },
             { text: 'Router', link: '/ecosystem/router/' },
-            { text: 'Router', link: '/ecosystem/router/router' },
             { text: 'Store', link: '/ecosystem/store/' },
-            { text: 'Store', link: '/ecosystem/store/store' },
             { text: 'UI 组件', link: '/ecosystem/ui/' },
             { text: 'SSR', link: '/ecosystem/ssr/' },
-            { text: 'SSR', link: '/ecosystem/ssr/ssr' },
             { text: 'DevTools', link: '/ecosystem/devtools/' },
-            { text: 'DevTools', link: '/ecosystem/devtools/devtools' },
             { text: 'CLI', link: '/ecosystem/cli/' },
             { text: '其他包', link: '/ecosystem/other/' },
-            { text: 'Plugins', link: '/ecosystem/plugins/animation' },
+          ],
+        },
+        {
+          text: '插件',
+          items: [
+            { text: 'Animation', link: '/ecosystem/plugins/animation' },
+            { text: 'Form', link: '/ecosystem/plugins/form' },
           ],
         },
       ],
@@ -198,6 +201,7 @@ export default defineConfig({
           items: [
             { text: '开发指南', link: '/contribute/development/' },
             { text: '工作流程', link: '/contribute/development/workflow' },
+            { text: '版本开发流程', link: '/contribute/development/version-workflow' },
             { text: '开发规范', link: '/contribute/development/guidelines' },
             { text: '测试指南', link: '/contribute/development/testing' },
             { text: 'TypeScript', link: '/contribute/development/typescript' },
@@ -208,7 +212,6 @@ export default defineConfig({
           text: '知识库',
           items: [
             { text: '知识库', link: '/contribute/knowledge-base/' },
-            { text: '知识库', link: '/contribute/knowledge-base/knowledge-base' },
             { text: '开发技巧', link: '/contribute/knowledge-base/development-skills' },
           ],
         },
@@ -226,6 +229,7 @@ export default defineConfig({
           items: [
             { text: '性能', link: '/contribute/performance/' },
             { text: '基准与计划', link: '/contribute/performance/baseline-and-plans' },
+            { text: '优化报告 v6.4', link: '/contribute/performance/optimization-report-v64' },
           ],
         },
         {
@@ -246,6 +250,7 @@ export default defineConfig({
           text: 'AI 助手',
           items: [
             { text: 'AI 助手', link: '/contribute/ai/' },
+            { text: '助手开发指南', link: '/contribute/ai/assistant-guide' },
             { text: 'IDE 规则', link: '/contribute/ai/ide-rules' },
             { text: 'Agents 优化', link: '/contribute/ai/agents-optimization' },
           ],
@@ -262,6 +267,39 @@ export default defineConfig({
             { text: '故障排除', link: '/contribute/other/troubleshooting' },
             { text: 'v6.4 到 v6.5', link: '/contribute/other/v64-v65-transition' },
           ],
+        },
+      ],
+      '/examples/': [
+        {
+          text: '示例项目',
+          items: [
+            { text: '示例概览', link: '/examples/' },
+            { text: '交互式计数器', link: '/examples/interactive-counter' },
+            { text: '计数器', link: '/examples/counter' },
+            { text: 'TodoMVC', link: '/examples/todomvc' },
+            { text: '用户列表', link: '/examples/user-list' },
+          ],
+        },
+      ],
+      '/community/': [
+        {
+          text: '社区',
+          items: [
+            { text: '社区首页', link: '/community/' },
+            { text: 'v6.9.5 发布', link: '/community/RELEASE_v6.9.5' },
+            { text: 'v6.9.0 发布', link: '/community/RELEASE_v6.9.0' },
+            { text: 'v6.8.0 发布', link: '/community/RELEASE_v6.8.0' },
+            { text: 'v6.7.0 发布', link: '/community/RELEASE_v6.7.0' },
+            { text: 'v6.6.0 发布', link: '/community/RELEASE_v6.6.0' },
+            { text: 'v6.5.0 发布', link: '/community/RELEASE_v6.5.0' },
+            { text: 'v6.4.0 发布', link: '/community/RELEASE_v6.4.0' },
+          ],
+        },
+      ],
+      '/reference/': [
+        {
+          text: '参考资料',
+          items: [{ text: '参考资料', link: '/reference/' }],
         },
       ],
     },

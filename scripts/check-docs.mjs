@@ -351,6 +351,124 @@ async function checkNavLinks() {
   return navBroken;
 }
 
+/**
+ * legacy-archive 隔离与内部快照校验：
+ * 1. 隔离性：活跃文档（非 archive）不允许链接指向 archive 内文件；
+ * 2. 内部快照：archive 内部相对链接必须能解析到存在的文件（保证归档自成一体）。
+ * archive 目录本身在 docs 站点/孤立检测中已被豁免，不影响站点指标。
+ */
+async function checkLegacyArchive() {
+  const DOCS = join(ROOT, 'docs');
+  const ARCHIVE = join(DOCS, 'legacy-archive');
+
+  // 收集 archive 下全部 .md
+  const archiveMd = [];
+  async function collectArchive(dir) {
+    let entries;
+    try {
+      entries = await readdir(dir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const entry of entries) {
+      if (entry.name.startsWith('.')) continue;
+      const p = join(dir, entry.name);
+      if (entry.isDirectory()) await collectArchive(p);
+      else if (entry.name.endsWith('.md')) archiveMd.push(p);
+    }
+  }
+  await collectArchive(ARCHIVE);
+
+  const linkRe = /!?\[[^\]]*\]\(([^)]+)\)/g;
+
+  // 内部断链（archive 内部相对链接须能解析）
+  const broken = [];
+  for (const file of archiveMd) {
+    const raw = await readFile(file, 'utf-8');
+    const content = raw.replace(/```[\s\S]*?```/g, ' ').replace(/`[^`]*`/g, ' ');
+    const rel = file.slice(DOCS.length + 1).replace(/\\/g, '/');
+    const base = dirname(file);
+    let m;
+    while ((m = linkRe.exec(content)) !== null) {
+      const href = m[1].trim();
+      if (
+        !href ||
+        href.startsWith('http://') ||
+        href.startsWith('https://') ||
+        href.startsWith('#') ||
+        href.startsWith('mailto:') ||
+        href.startsWith('tel:') ||
+        href.includes('://') ||
+        href.startsWith('data:') ||
+        href.includes('.trae/')
+      ) {
+        continue;
+      }
+      const clean = decodeURIComponent(href.split('#')[0]).replace(/[\\/]$/, '');
+      if (!clean) continue;
+      const { exists, joined } = resolveTarget(base, clean);
+      if (!exists) {
+        broken.push({ file: rel, href, target: joined.slice(DOCS.length + 1).replace(/\\/g, '/') });
+      }
+    }
+  }
+
+  // 隔离性：活跃文档链接指向 archive
+  const leaked = [];
+  const leakedRe = /!?\[[^\]]*\]\(([^)]+)\)/g;
+  async function checkLeaks(dir) {
+    let entries;
+    try {
+      entries = await readdir(dir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const entry of entries) {
+      if (entry.name.startsWith('.') || entry.name === 'node_modules') continue;
+      if (entry.name === 'legacy-archive' || entry.name === '.vitepress' || entry.name === 'public')
+        continue;
+      const p = join(dir, entry.name);
+      if (entry.isDirectory()) await checkLeaks(p);
+      else if (entry.name.endsWith('.md')) {
+        const raw = await readFile(p, 'utf-8');
+        const content = raw.replace(/```[\s\S]*?```/g, ' ').replace(/`[^`]*`/g, ' ');
+        const rel = p.slice(DOCS.length + 1).replace(/\\/g, '/');
+        const base = dirname(p);
+        let m;
+        while ((m = leakedRe.exec(content)) !== null) {
+          const href = m[1].trim();
+          if (
+            !href ||
+            href.startsWith('http://') ||
+            href.startsWith('https://') ||
+            href.startsWith('#') ||
+            href.startsWith('mailto:') ||
+            href.startsWith('tel:') ||
+            href.includes('://') ||
+            href.startsWith('data:') ||
+            href.includes('.trae/')
+          ) {
+            continue;
+          }
+          const clean = decodeURIComponent(href.split('#')[0]).replace(/[\\/]$/, '');
+          if (!clean) continue;
+          const { joined } = resolveTarget(base, clean);
+          if (joined.includes(`\\legacy-archive\\`) || joined.includes('/legacy-archive/')) {
+            leaked.push({
+              file: rel,
+              href,
+              target: joined.slice(DOCS.length + 1).replace(/\\/g, '/'),
+            });
+          }
+        }
+      }
+    }
+  }
+  await checkLeaks(DOCS);
+
+  return { fileCount: archiveMd.length, broken, leaked };
+}
+
 async function main() {
   console.log('📋 LytJS 文档检查报告\n');
   console.log('='.repeat(80));
@@ -365,6 +483,8 @@ async function main() {
   const orphans = await checkOrphans();
   // VitePress 导航死链检测
   const navBroken = await checkNavLinks();
+  // legacy-archive 隔离与内部快照校验
+  const archive = await checkLegacyArchive();
 
   for (const pkgDir of PACKAGE_DIRS) {
     const result = await checkPackage(pkgDir);
@@ -477,6 +597,17 @@ async function main() {
   console.log(`\n🧭 VitePress 导航死链: ${navBroken.length} 条`);
   navBroken.forEach((n) => console.log(`   - ${n}`));
 
+  // legacy-archive 隔离与内部快照统计
+  // 归档为冻结快照：其相对链接在归档时对"当时"的活跃树有效，后因推荐位/文档重组而指向已迁移文件属预期状态，
+  // 故仅输出计数+说明，不作为缺陷门禁；真正需守卫的是"活跃文档不得链入归档"（隔离违规）。
+  console.log(`\n🗄️  legacy-archive 归档文件: ${archive.fileCount} 个`);
+  console.log(`🔒 冻结快照内部悬空引用(预期状态): ${archive.broken.length} 条`);
+  archive.broken.slice(0, 10).forEach((b) => console.log(`   - ${b.file} | ${b.href}`));
+  if (archive.broken.length > 10)
+    console.log(`   ... 及其他 ${archive.broken.length - 10} 条（冻结快照正常现象）`);
+  console.log(`🚪 活跃文档链入归档(隔离违规): ${archive.leaked.length} 条`);
+  archive.leaked.forEach((b) => console.log(`   - ${b.file} | ${b.href} → ${b.target}`));
+
   console.log('\n✅ 检查完成！\n');
 
   // 支持 --report=<path> 生成 Markdown 汇总报告
@@ -497,6 +628,9 @@ async function main() {
     lines.push(`- docs 站点断链：${docsSite.broken.length}`);
     lines.push(`- 孤立文档：${orphans.orphans.length}`);
     lines.push(`- VitePress 导航死链：${navBroken.length}`);
+    lines.push(`- legacy-archive 归档文件：${archive.fileCount}`);
+    lines.push(`- 归档内部断链：${archive.broken.length}`);
+    lines.push(`- 活跃文档链入归档(隔离违规)：${archive.leaked.length}`);
     lines.push('');
     if (noReadme.length) {
       lines.push('## 缺失 README.md');

@@ -1,3 +1,8 @@
+---
+title: API 参考
+description: LytJS 框架的 API 参考文档，按包分类组织
+---
+
 # API 参考
 
 LytJS 框架的 API 参考文档，按包分类组织。

@@ -1,3 +1,8 @@
+---
+title: 新手入门
+description: 快速开始使用 LytJS 的完整上手指南
+---
+
 # 新手入门
 
 > 快速开始使用 LytJS

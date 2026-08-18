@@ -1,3 +1,8 @@
+---
+title: 核心指南
+description: LytJS 完整参考文档
+---
+
 # 核心指南
 
 > LytJS 完整参考文档

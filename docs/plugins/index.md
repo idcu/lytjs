@@ -1,3 +1,8 @@
+---
+title: 插件生态
+description: LytJS 官方插件集合
+---
+
 # 插件生态
 
 > LytJS 官方插件集合
