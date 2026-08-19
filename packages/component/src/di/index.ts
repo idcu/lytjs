@@ -26,7 +26,6 @@ import {
 import type {
   ProviderLifecycle,
   ProviderConfig,
-  ProviderRecord,
   EnhancedInjectOptions,
   ProviderNode,
 } from '@lytjs/di';
@@ -46,12 +45,7 @@ export {
   enterProviderScope,
   exitProviderScope,
 };
-export type {
-  ProviderLifecycle,
-  ProviderConfig,
-  ProviderNode,
-  EnhancedInjectOptions,
-};
+export type { ProviderLifecycle, ProviderConfig, ProviderNode, EnhancedInjectOptions };
 
 // ============================================================
 // 核心 provide / inject（组件实例感知）
@@ -71,8 +65,10 @@ export function provide<T>(
   const actualKey = isInjectionToken(key) ? key.__token : key;
 
   // 解析配置（useExisting 延迟解析到本适配器的 inject）
-  const record = createProviderRecord(actualKey, valueOrConfig, (token) => () =>
-    inject(token as never) as unknown,
+  const record = createProviderRecord(
+    actualKey,
+    valueOrConfig,
+    (token) => () => inject(token as never) as unknown,
   );
 
   // 存储到适当的位置

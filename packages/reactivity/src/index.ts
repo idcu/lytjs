@@ -66,6 +66,8 @@ export {
   shouldSkipTracking,
   getSkippedTrackingCount,
   resetSkippedTrackingCount,
+  // internal: effect 系统全局追踪/批处理状态重置（供测试 isolation 调用）
+  _resetTrackingState,
 } from './effect';
 
 // FIX: P2-4 批量操作 API
@@ -94,6 +96,8 @@ export {
   // signal batch/untrack
   signalBatch,
   signalUntrack,
+  // internal: 测试间全局状态重置（供根测试 setup 调用）
+  _resetSignalGlobalState,
 } from './signal';
 
 export type {
