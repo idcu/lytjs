@@ -5,7 +5,7 @@
  */
 
 import { SignalSymbol, ComputedSignalSymbol, TrackOpTypes, TriggerOpTypes } from './constants';
-import { track, trigger } from './effect';
+import { track, trigger, beginTriggerBatch, endTriggerBatch } from './effect';
 import { REACTIVITY_MAX_TRIGGER_DEPTH } from '@lytjs/common-constants';
 import type { Subscriber } from './shared/types';
 
@@ -76,6 +76,11 @@ let trackDependency: ((signal: WritableSignal<unknown>, unsubscribe: () => void)
 /** 当前 batch 嵌套深度 */
 let batchDepth = 0;
 
+/** 是否处于 computed getter 求值期间。
+ * 期间抑制源 signal 的 effect 系统桥接追踪，
+ * 避免 effect 同时依赖 computed 与其源 signal，导致一次更新双触发。 */
+let isSignalComputedGetter = false;
+
 /** FIX: P2-05 batch 嵌套深度限制，防止无限递归 */
 const MAX_BATCH_DEPTH = 100;
 
@@ -130,7 +135,10 @@ export function signal<T>(initialValue: T): WritableSignal<T> {
       }
     }
     // effect 系统桥接追踪
-    if (!disposed) {
+    // FIX: P0-08 computed getter 求值期间不直接追踪源 signal，
+    // 避免 effect 同时依赖 computed 与其源 signal 造成一次更新双触发。
+    // 源 signal 的变更通过 signal 内部订阅（invalidate）向 computed 传播。
+    if (!disposed && !isSignalComputedGetter) {
       track(store, TrackOpTypes.GET, SIGNAL_KEY);
     }
     return value;
@@ -242,16 +250,19 @@ function createComputedSignalInternal<T>(
         // 在活跃订阅者上下文中执行 getter，自动追踪新依赖
         const prevSubscriber = activeSubscriber;
         const prevTrackDependency = trackDependency;
+        const prevSignalComputedGetter = isSignalComputedGetter;
         activeSubscriber = invalidate; // 注册 invalidate 作为依赖的订阅者
         trackDependency = (dep: WritableSignal<unknown>, unsubscribe: () => void) => {
           dependencies.set(dep, unsubscribe);
         };
+        isSignalComputedGetter = true;
         try {
           value = getter();
           dirty = false;
         } finally {
           activeSubscriber = prevSubscriber;
           trackDependency = prevTrackDependency;
+          isSignalComputedGetter = prevSignalComputedGetter;
         }
       } finally {
         isComputing = false;
@@ -393,11 +404,11 @@ function notifySubscribers(
     }
     return;
   }
-  const it = subscribers.values();
-  let next = it.next();
-  while (!next.done) {
-    next.value();
-    next = it.next();
+  // FIX: P0-07 遍历前先快照，避免通知回调（如 computed 重算）在遍历期间
+  // 修改 subscribers 集合（先删后加），导致 Set 迭代器无限循环触发无限递归。
+  const snapshot = Array.from(subscribers);
+  for (const subscriber of snapshot) {
+    subscriber();
   }
   // effect 系统桥接触发
   if (store && signalKey !== undefined) {
@@ -408,6 +419,9 @@ function notifySubscribers(
 function flushPendingNotifications(): void {
   if (isNotifying) return;
   isNotifying = true;
+  // FIX: P0-09 批处理期间开启 effect 系统 trigger 合并，
+  // 一次 batch 更新多个 signal 时，同一 effect 仅执行一次。
+  beginTriggerBatch();
   try {
     let iterations = 0;
     while (
@@ -438,6 +452,7 @@ function flushPendingNotifications(): void {
       iterations++;
     }
   } finally {
+    endTriggerBatch();
     isNotifying = false;
   }
 }

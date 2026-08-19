@@ -110,6 +110,38 @@ export const createDep = (): Dep => {
  */
 let triggerDepth = 0;
 
+// ==================== Trigger 批处理（signalBatch 桥接） ====================
+
+/** 是否处于 trigger 批处理模式：trigger 只收集不执行，统一在 endTriggerBatch 执行 */
+let isTriggerBatching = false;
+
+/** 批处理期间收集的去重 effect 集合 */
+const pendingBatchEffects: ReactiveEffect[] = [];
+
+/**
+ * 开始 trigger 批处理。
+ * 期间所有 trigger 的 effects 被收集（去重），不立即执行。
+ * 用于 signalBatch 场景，合并多次 signal 更新对同一 effect 的重复触发。
+ * @internal 供 signal 模块桥接调用
+ */
+export function beginTriggerBatch(): void {
+  isTriggerBatching = true;
+}
+
+/**
+ * 结束 trigger 批处理并统一执行收集的 effects。
+ * @internal 供 signal 模块桥接调用
+ */
+export function endTriggerBatch(): void {
+  isTriggerBatching = false;
+  if (pendingBatchEffects.length > 0) {
+    const effects = [...new Set(pendingBatchEffects)];
+    pendingBatchEffects.length = 0;
+    // 空 target/type：批处理不关心具体来源，仅用于执行合并后的 effects
+    triggerEffects(effects, {} as object, 'batch');
+  }
+}
+
 /**
  * 追踪响应式属性的依赖关系。
  * 当响应式属性被读取时调用，将当前活跃的 effect 记录为该属性的依赖。
@@ -252,6 +284,17 @@ export function triggerEffects(
   newValue?: unknown,
   oldValue?: unknown,
 ) {
+  // FIX: P0-09 trigger 批处理模式（signalBatch 桥接）：
+  // 收集 effects 暂不执行，由 endTriggerBatch 统一去重执行，
+  // 避免一次 batch 更新多个 signal 时同一 effect 被重复触发。
+  if (isTriggerBatching) {
+    for (const effect of effects) {
+      if (!pendingBatchEffects.includes(effect)) {
+        pendingBatchEffects.push(effect);
+      }
+    }
+    return;
+  }
   if (triggerDepth > REACTIVITY_MAX_TRIGGER_DEPTH) {
     // FIX: P2-1 triggerDepth 超限时改为 warn + 静默丢弃，与 Vue 3 行为一致。
     // 之前直接 throw Error 过于激进，会导致整个响应式链断裂。
@@ -577,6 +620,24 @@ export function enableTracking(): void {
 export function resetTracking(): void {
   const last = trackStack.pop();
   shouldTrack = last === undefined ? true : last;
+}
+
+/**
+ * 重置 effect 系统的全局追踪/批处理状态（仅供测试隔离使用）。
+ * 确保测试间 shouldTrack、trackStack、批处理状态等不被泄漏，
+ * 避免因单个测试异常中断导致后续测试不稳定。
+ * @internal 仅供测试 setup 调用
+ */
+export function _resetTrackingState(): void {
+  activeEffect = undefined;
+  _trackDepth = 0;
+  shouldTrack = true;
+  trackStack.length = 0;
+  triggerDepth = 0;
+  isTriggerBatching = false;
+  pendingBatchEffects.length = 0;
+  isFirstRenderPass = false;
+  skippedTrackingCount = 0;
 }
 
 /**
