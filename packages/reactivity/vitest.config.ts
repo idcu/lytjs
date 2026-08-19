@@ -25,13 +25,12 @@ export default defineConfig({
     environment: 'node',
     globals: true,
     setupFiles: [resolve(__dirname, './tests/setup.ts')],
-    exclude: ['**/node_modules/**', '**/dist/**', '**/tests/edge-cases.test.ts'],
+    exclude: ['**/node_modules/**', '**/dist/**'],
     testTimeout: 30000,
     hookTimeout: 30000,
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
-      exclude: ['**/tests/edge-cases.test.ts'],
       thresholds: {
         global: {
           branches: 80,

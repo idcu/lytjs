@@ -47,7 +47,8 @@ describe('reactive edge cases', () => {
     expect(reactive(1 as any)).toBe(1);
     expect(reactive('hello' as any)).toBe('hello');
     expect(reactive(true as any)).toBe(true);
-    expect(reactive(Symbol('test') as any)).toBe(Symbol('test'));
+    const sym = Symbol('test');
+    expect(reactive(sym as any)).toBe(sym);
   });
 
   it('should handle circular references in reactive objects', () => {
@@ -283,7 +284,8 @@ describe('readonly edge cases', () => {
     const reactiveObj = reactive({ count: 0 });
     const readonlyObj = readonly(reactiveObj);
     expect(isReadonly(readonlyObj)).toBe(true);
-    expect(isReactive(readonlyObj)).toBe(false);
+    // readonly 视图本质仍是 reactive（与 Vue 3 语义一致）
+    expect(isReactive(readonlyObj)).toBe(true);
     // 修改原始 reactive 对象应反映在 readonly 视图
     reactiveObj.count = 1;
     expect(readonlyObj.count).toBe(1);
@@ -688,7 +690,10 @@ describe('effect edge cases', () => {
     expect(innerFn).toHaveBeenCalledTimes(1);
     obj.count = 1;
     expect(outerFn).toHaveBeenCalledTimes(2);
-    expect(innerFn).toHaveBeenCalledTimes(2);
+    // 内层 effect 不随外层重跑自动清理：旧内层仍活跃且依赖 count，
+    // 外层重跑又创建一个新内层，故共触发 3 次（初始 1 + 新内层 1 + 旧内层 1）。
+    // 需通过 effectScope 显式管理内层生命周期。
+    expect(innerFn).toHaveBeenCalledTimes(3);
   });
 
   it('should not trigger after effect is stopped', () => {
@@ -718,9 +723,11 @@ describe('effect edge cases', () => {
       fn();
     });
     expect(fn).toHaveBeenCalledTimes(1);
-    // effect 中的错误不应阻止后续触发
-    obj.shouldThrow = true;
-    // effect 执行会抛出错误，但 trigger 机制仍然正常
+    // effect 中的错误会向上传播（与 Vue 3 一致，除非配置 onError 捕获）
+    expect(() => {
+      obj.shouldThrow = true;
+    }).toThrow('effect error');
+    // 错误不破坏 trigger 机制，后续更新仍可正常触发 effect
     obj.shouldThrow = false;
     expect(fn).toHaveBeenCalledTimes(2);
   });
@@ -767,7 +774,8 @@ describe('effect edge cases', () => {
     expect(fn).toHaveBeenCalledTimes(1);
 
     pauseTracking();
-    // 在 pauseTracking 期间创建新 effect，不应收集依赖
+    // 注意：effect.run() 内部会强制恢复 shouldTrack（与 Vue 3 一致），
+    // 因此 pauseTracking 期间创建并立即运行的新 effect 仍会收集依赖。
     let _dummy2: number;
     const fn2 = vi.fn();
     effect(() => {
@@ -780,8 +788,8 @@ describe('effect edge cases', () => {
     obj.count = 1;
     // 第一个 effect 仍然追踪了 obj.count
     expect(fn).toHaveBeenCalledTimes(2);
-    // 第二个 effect 在 pauseTracking 期间创建，不应追踪
-    expect(fn2).toHaveBeenCalledTimes(1);
+    // 第二个 effect 因 run() 强制恢复追踪，也已依赖 obj.count
+    expect(fn2).toHaveBeenCalledTimes(2);
   });
 
   it('enableTracking should re-enable dependency collection', () => {
@@ -798,8 +806,8 @@ describe('effect edge cases', () => {
 
     enableTracking();
     obj.count = 1;
-    // effect 在 pauseTracking 期间创建，不应追踪
-    expect(fn).toHaveBeenCalledTimes(1);
+    // effect.run() 强制恢复追踪，pause 期间创建的 effect 已依赖 obj.count
+    expect(fn).toHaveBeenCalledTimes(2);
 
     resetTracking();
   });
@@ -880,8 +888,8 @@ describe('effect edge cases', () => {
     // obj.a 在 untrack 外访问，应被追踪
     obj.a = 1;
     expect(fn).toHaveBeenCalledTimes(2);
-    // untrack 中读取的 obj.b 仍为 0（上次 effect 执行时的快照）
-    expect(dummy).toBe(1);
+    // untrack 只是不建立依赖，仍读取当前值：obj.a(1) + obj.b(10) = 11
+    expect(dummy).toBe(11);
   });
 
   it('untrack should restore tracking state after execution', () => {

@@ -2,6 +2,12 @@
 
 > LytJS 响应式系统，提供 ref、reactive、computed、watch、Signal 等核心响应式原语
 
+[![license](https://img.shields.io/npm/l/@lytjs/reactivity.svg)](https://gitee.com/lytjs/lytjs/blob/main/LICENSE)
+
+## 简介
+
+`@lytjs/reactivity` 是 LytJS 的独立响应式系统，不依赖任何框架运行时，可在任意 JavaScript / TypeScript 项目中直接使用。它提供 Vue 3 风格的 `ref` / `reactive` / `computed` / `watch` API，并内置 Signal 响应式原语与 `signalBatch` / `signalUntrack` 等批处理能力。框架（`@lytjs/core` / `@lytjs/component`）仅作为其消费者接入，本包自身对框架零依赖（仅依赖 `@lytjs/common-*` 与 `@lytjs/shared-types` 通用工具包）。
+
 ## 安装
 
 ```bash
@@ -325,3 +331,7 @@ import { asyncComputed, useAsyncState } from '@lytjs/reactivity/async';
 - [@lytjs/core](../core) - 框架核心入口，整合所有子包
 - [@lytjs/component](../component) - 组件系统，依赖响应式系统
 - [@lytjs/common](../common) - 公共工具库
+
+## 许可证
+
+MIT License - [查看许可证](https://gitee.com/lytjs/lytjs/blob/main/LICENSE)
