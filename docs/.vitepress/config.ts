@@ -205,6 +205,7 @@ export default defineConfig({
           items: [
             { text: '架构设计', link: '/contribute/architecture/' },
             { text: '8 层架构', link: '/contribute/architecture/8-layer-architecture' },
+            { text: '生态迁出与融合', link: '/contribute/architecture/ecosystem-migration' },
           ],
         },
         {

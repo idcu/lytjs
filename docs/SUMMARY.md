@@ -144,6 +144,7 @@
 - [开始贡献](./contribute/getting-started.md)
 - [架构设计](./contribute/architecture/index.md)
   - [8 层架构](./contribute/architecture/8-layer-architecture.md)
+  - [生态迁出与融合](./contribute/architecture/ecosystem-migration.md)
 - [开发指南](./contribute/development/index.md)
   - [工作流程](./contribute/development/workflow.md)
   - [版本开发流程](./contribute/development/version-workflow.md)
