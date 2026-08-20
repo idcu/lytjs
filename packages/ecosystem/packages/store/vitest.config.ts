@@ -23,7 +23,6 @@ export default defineConfig({
       '@lytjs/common-assertions': `${commonRoot}/assertions/dist/index.mjs`,
       '@lytjs/shared-types': `${pkgRoot}/shared-types/dist/index.mjs`,
       '@lytjs/reactivity': `${pkgRoot}/reactivity/dist/index.mjs`,
-      '@lytjs/component': `${pkgRoot}/component/dist/index.mjs`,
     },
   },
   test: {

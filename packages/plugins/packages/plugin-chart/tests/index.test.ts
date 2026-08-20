@@ -1,4 +1,6 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
+// DOM helpers 依赖 document/window（Canvas 模拟），需要 jsdom 环境（根 vitest 默认 node）
+// @vitest-environment jsdom
 import { describe, it, expect, vi } from 'vitest';
 
 const pluginChart = require('../dist/index.cjs');

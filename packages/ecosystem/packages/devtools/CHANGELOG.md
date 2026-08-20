@@ -1,5 +1,19 @@
 # @lytjs/devtools
 
+## [Unreleased]
+
+### 🔧 独立化核查
+
+- 独立化核查：确认 devtools 核心逻辑为零运行时框架依赖，仅使用 `@lytjs/common-is`（运行时）与 `@lytjs/vdom`（仅类型），Store / Router / Signal 检查器均基于传入的普通对象工作
+- 移除 7 个未使用的运行时依赖（`@lytjs/common-env` / `@lytjs/common-dom` / `@lytjs/common-object` / `@lytjs/reactivity` / `@lytjs/component` / `@lytjs/router` / `@lytjs/store`）
+- 同步清理 `tsup.config.ts` / `vitest.config.ts` / `tsconfig.json` 中对应的外部依赖与路径映射
+- README 新增「简介·独立声明」，声明框架无关性并记录 v6.12 迁出至独立仓库 `lytjs-devtools` 的规划
+
+### ✅ 测试修复
+
+- 修复信号检查器测试隔离问题（`clearSignalRegistry` 改用 `signal.id` 注销）
+- 修正快照功能测试断言以匹配实际 API 契约（`createSnapshot` 返回 `Snapshot` 对象；`canUndo` 在存在多条快照时为 `true`）
+
 ## [6.9.6] - 2026-06-06
 
 ### 🚀 版本升级

@@ -5,9 +5,11 @@
 [![npm version](https://img.shields.io/npm/v/@lytjs/plugin.svg)](https://www.npmjs.com/package/@lytjs/plugin)
 [![license](https://img.shields.io/npm/l/@lytjs/plugin.svg)](https://gitee.com/lytjs/lytjs/blob/main/LICENSE)
 
-## 简介
+## 简介·独立声明
 
 `@lytjs/plugin` 是从 `@lytjs/core` 中抽离出的独立通用插件系统，不依赖任何框架运行时，可在任意 JavaScript / TypeScript 项目中使用。它通过宿主上下文泛型化设计，既能在 LytJS 框架内绑定具体的 `App` 实例，也能作为独立插件注册表在任何宿主中使用。
+
+> **框架无关性说明**：本插件为零框架依赖的独立通用插件系统核心（PluginRegistry / 依赖管理 / 生命周期事件 / 版本管理），仅依赖 `@lytjs/common-error` 与 `@lytjs/config`（均实际使用）。按 v7.0-alpha 路线图规划，插件系统将抽离为独立通用库。
 
 ### 核心特性
 

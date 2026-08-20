@@ -542,10 +542,11 @@ describe('信号检查器', () => {
     it('应该创建快照', () => {
       registerSignal({ value: 42 } as any, 'count', 'signal');
 
-      const snapshotId = createSnapshot('test-snapshot');
+      const snapshot = createSnapshot('test-snapshot');
 
-      expect(snapshotId).toBeDefined();
-      expect(typeof snapshotId).toBe('string');
+      expect(snapshot).toBeDefined();
+      expect(typeof snapshot.id).toBe('string');
+      expect(snapshot.label).toBe('test-snapshot');
     });
 
     it('应该获取所有快照', () => {
@@ -576,7 +577,7 @@ describe('信号检查器', () => {
 
       const state = getTimeTravelState();
       expect(state.snapshots).toHaveLength(2);
-      expect(state.canUndo).toBe(false);
+      expect(state.canUndo).toBe(true);
       expect(state.canRedo).toBe(false);
     });
   });
@@ -780,6 +781,6 @@ describe('基准测试', () => {
 function clearSignalRegistry() {
   const signals = getSignalNodes();
   signals.forEach((signal) => {
-    unregisterSignal(signal.name);
+    unregisterSignal(signal.id);
   });
 }

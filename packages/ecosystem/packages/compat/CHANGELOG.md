@@ -1,5 +1,14 @@
 # @lytjs/compat 更新日志
 
+## [Unreleased]
+
+### 🔧 独立化核查
+
+- 独立化核查：确认 compat 为纯占位包（源码仅 `export {}`），无任何运行时框架依赖
+- 移除 3 个未使用的运行时依赖（`@lytjs/reactivity` / `@lytjs/component` / `@lytjs/core`），`dependencies` 置空
+- 同步清理 `tsup.config.ts` / `vitest.config.ts` / `tsconfig.json` 中对应的外部依赖与路径映射
+- README 重写：移除虚构的未实现 API 文档，如实标注「规划中（尚未实现）」占位状态，并新增「简介·独立声明」与「相关包」章节，记录 v6.12 迁出至独立仓库 `lytjs-compat` 的规划
+
 ## [6.9.6] - 2026-06-06
 
 ### 🚀 版本升级

@@ -10,6 +10,21 @@ LytJS 官方 UI 组件库，零第三方依赖，支持主题切换，30+ 组件
 - 🔧 **TypeScript 支持** - 完整的类型定义
 - 📦 **Tree Shaking 友好** - 按需引入，减小体积
 
+## 简介·独立声明
+
+`@lytjs/ui` 是 LytJS 官方 UI 组件库（60+ 组件），**零第三方依赖**，仅构建于 LytJS 核心框架之上（`@lytjs/reactivity` / `@lytjs/component` / `@lytjs/vdom` / `@lytjs/core` 及通用工具 `@lytjs/common-is` / `@lytjs/common-a11y`），并随框架版本同步演进。按 v6.10 路线图规划，本库将迁出为独立仓库 `lytjs-ui`，保持 API 兼容并提供迁移指南。
+
+## 依赖关系
+
+`@lytjs/ui` 依赖以下包：
+
+- `@lytjs/reactivity` - 响应式系统（signal / computed / reactive / watch）
+- `@lytjs/component` - 组件系统（defineComponent / Props / 生命周期）
+- `@lytjs/vdom` - 虚拟 DOM（createVNode / 渲染）
+- `@lytjs/core` - 框架核心（definePlugin 应用插件适配层）
+- `@lytjs/common-is` - 通用类型判断
+- `@lytjs/common-a11y` - 无障碍辅助（ARIA 属性合并）
+
 ## 安装
 
 ```bash

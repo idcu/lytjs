@@ -15,8 +15,8 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@lytjs/core': `${pkgRoot}/../../core/dist/index.mjs`,
-      '@lytjs/reactivity': `${pkgRoot}/../../reactivity/dist/index.mjs`,
+      '@lytjs/core': `${pkgRoot}/../core/dist/index.mjs`,
+      '@lytjs/reactivity': `${pkgRoot}/../reactivity/dist/index.mjs`,
       '@lytjs/common-is': `${commonRoot}/is/dist/index.mjs`,
     },
   },

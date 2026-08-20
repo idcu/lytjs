@@ -1,5 +1,11 @@
 # @lytjs/plugin-vite 更新日志
 
+## [Unreleased]
+
+### 🔧 独立化核查
+
+- 独立化核查：确认仅依赖 @lytjs/compiler，移除未使用的 @lytjs/common-is，同步清理配置；README 新增「简介·独立声明」，记录 v6.12 迁出至独立仓库 lytjs-plugins 的规划。
+
 ## [6.9.6] - 2026-06-06
 
 ### 🚀 版本升级

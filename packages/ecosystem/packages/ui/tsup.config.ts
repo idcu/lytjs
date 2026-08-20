@@ -21,8 +21,7 @@ export default defineConfig({
   },
   external: [
     '@lytjs/common-is',
-    '@lytjs/common-env',
-    '@lytjs/common-dom',
+    '@lytjs/common-a11y',
     '@lytjs/reactivity',
     '@lytjs/component',
     '@lytjs/vdom',
@@ -30,10 +29,7 @@ export default defineConfig({
   ],
   onSuccess: () => {
     // 复制 CSS 文件到 dist 目录
-    copyFileSync(
-      resolve(__dirname, 'src/styles/index.css'),
-      resolve(__dirname, 'dist/index.css')
-    );
+    copyFileSync(resolve(__dirname, 'src/styles/index.css'), resolve(__dirname, 'dist/index.css'));
     console.log('✓ CSS file copied to dist/index.css');
   },
 });

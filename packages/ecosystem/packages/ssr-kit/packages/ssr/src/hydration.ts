@@ -139,7 +139,8 @@ export function createHydrationMarkers(vnode: VNode): VNode {
       if (isArray(children)) {
         processedChildren = children.map((child) => createHydrationMarkers(child as VNode));
       } else if (isObject(children)) {
-        processedChildren = [createHydrationMarkers(children as VNode)];
+        // 单子节点保持为单个 VNode（与数组子节点区分，符合 VNode 语义）
+        processedChildren = createHydrationMarkers(children as VNode);
       }
     }
 
@@ -156,9 +157,10 @@ export function createHydrationMarkers(vnode: VNode): VNode {
           children: children.map((child) => createHydrationMarkers(child as VNode)),
         } as VNode;
       } else if (isObject(children)) {
+        // 单子节点保持为单个 VNode（与数组子节点区分，符合 VNode 语义）
         return {
           ...node,
-          children: [createHydrationMarkers(children as VNode)],
+          children: createHydrationMarkers(children as VNode),
         } as VNode;
       }
     }

@@ -22,7 +22,6 @@ export default defineConfig({
       '@lytjs/compiler/ssr': resolve(root, 'packages/compiler/dist/ssr.mjs'),
       '@lytjs/compiler/wasm': resolve(root, 'packages/compiler/dist/wasm.mjs'),
       // common 子包
-      '@lytjs/common-is': resolve(commonRoot, 'is/dist/index.mjs'),
       '@lytjs/common-error': resolve(commonRoot, 'error/dist/index.mjs'),
       '@lytjs/common-vnode': resolve(commonRoot, 'vnode/dist/index.mjs'),
       '@lytjs/common-string': resolve(commonRoot, 'string/dist/index.mjs'),

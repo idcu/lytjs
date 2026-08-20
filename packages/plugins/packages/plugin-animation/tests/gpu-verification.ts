@@ -12,7 +12,7 @@ import {
   PerformanceOptimizer,
   getGlobalOptimizer,
   resetGlobalOptimizer,
-} from '../../src/gpu-acceleration';
+} from '../src/gpu-acceleration';
 
 interface BenchmarkResult {
   name: string;
@@ -195,7 +195,7 @@ function validateGPUPresets(): void {
   let allValid = true;
 
   expectedPresets.forEach((name) => {
-    const preset = (GPU_PRESETS as any)[name];
+    const preset = (GPU_PRESETS as unknown as Record<string, { from: object; to: object }>)[name];
     const hasFrom = preset && 'from' in preset;
     const hasTo = preset && 'to' in preset;
     const uses3D = preset && JSON.stringify(preset).includes('translate3d');

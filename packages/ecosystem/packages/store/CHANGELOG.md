@@ -1,5 +1,13 @@
 # @lytjs/store
 
+## [Unreleased]
+
+### 🔧 独立化核查
+
+- 独立化核查：核心 store 逻辑（`defineStore` / `storeToRefs` / Option、Setup 模式）确认仅依赖 `@lytjs/reactivity` 与 `@lytjs/common-*`，框架耦合仅保留在 `createPinia()`（LytJS 应用插件集成适配层）
+- 移除未使用的 `@lytjs/component` 运行时依赖
+- README 补充「简介·独立声明」章节
+
 ## [6.9.6] - 2026-06-06
 
 ### 🚀 版本升级

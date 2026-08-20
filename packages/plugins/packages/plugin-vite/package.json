@@ -29,8 +29,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@lytjs/compiler": "workspace:*",
-    "@lytjs/common-is": "workspace:*"
+    "@lytjs/compiler": "workspace:*"
   },
   "peerDependencies": {
     "vite": "^5.0.0 || ^6.0.0"

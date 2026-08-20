@@ -19,6 +19,10 @@
 - **路由懒加载**：支持组件和路由的按需加载
 - **滚动行为控制**：细粒度的页面滚动位置管理
 
+### 独立声明
+
+`@lytjs/router` 的核心路由逻辑（路由匹配器 / 历史管理 / 导航守卫 / `RouterLink` / `RouterView`）**独立于 LytJS 框架**，仅依赖通用响应式包 `@lytjs/reactivity`，可在任意使用 Signal 响应式的环境或项目中使用。
+
 ## 安装
 
 ```bash
@@ -33,13 +37,9 @@ pnpm add @lytjs/router
 
 ## 依赖关系
 
-`@lytjs/router` 依赖以下 LytJS 核心包：
+`@lytjs/router` 依赖以下包：
 
 - `@lytjs/reactivity` - 响应式系统
-- `@lytjs/component` - 组件系统
-- `@lytjs/vdom` - 虚拟 DOM
-- `@lytjs/common-is` - 工具函数
-- `@lytjs/common-env` - 环境检测
 
 ## 快速开始
 

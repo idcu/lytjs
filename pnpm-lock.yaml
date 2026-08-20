@@ -1047,16 +1047,6 @@ importers:
         version: 3.2.4(@types/node@22.19.19)(@vitest/ui@3.2.4)(jsdom@29.1.1)
 
   packages/ecosystem/packages/compat:
-    dependencies:
-      '@lytjs/component':
-        specifier: workspace:*
-        version: link:../../../component
-      '@lytjs/core':
-        specifier: workspace:*
-        version: link:../../../core
-      '@lytjs/reactivity':
-        specifier: workspace:*
-        version: link:../../../reactivity
     devDependencies:
       tsup:
         specifier: ^8.0.0
@@ -1089,30 +1079,9 @@ importers:
 
   packages/ecosystem/packages/devtools:
     dependencies:
-      '@lytjs/common-dom':
-        specifier: workspace:*
-        version: link:../../../common/packages/dom
-      '@lytjs/common-env':
-        specifier: workspace:*
-        version: link:../../../common/packages/env
       '@lytjs/common-is':
         specifier: workspace:*
         version: link:../../../common/packages/is
-      '@lytjs/common-object':
-        specifier: workspace:*
-        version: link:../../../common/packages/object
-      '@lytjs/component':
-        specifier: workspace:*
-        version: link:../../../component
-      '@lytjs/reactivity':
-        specifier: workspace:*
-        version: link:../../../reactivity
-      '@lytjs/router':
-        specifier: workspace:*
-        version: link:../web-framework/packages/router
-      '@lytjs/store':
-        specifier: workspace:*
-        version: link:../store
       '@lytjs/vdom':
         specifier: workspace:*
         version: link:../../../vdom
@@ -1329,9 +1298,6 @@ importers:
       '@lytjs/common-object':
         specifier: workspace:*
         version: link:../../../common/packages/object
-      '@lytjs/component':
-        specifier: workspace:*
-        version: link:../../../component
       '@lytjs/core':
         specifier: workspace:*
         version: link:../../../core
@@ -1354,12 +1320,6 @@ importers:
       '@lytjs/common-a11y':
         specifier: workspace:*
         version: link:../../../common/packages/a11y
-      '@lytjs/common-dom':
-        specifier: workspace:*
-        version: link:../../../common/packages/dom
-      '@lytjs/common-env':
-        specifier: workspace:*
-        version: link:../../../common/packages/env
       '@lytjs/common-is':
         specifier: workspace:*
         version: link:../../../common/packages/is
@@ -1532,6 +1492,9 @@ importers:
       '@lytjs/common-rate-limit':
         specifier: workspace:*
         version: link:../../../../../common/packages/rate-limit
+      '@lytjs/middleware':
+        specifier: workspace:*
+        version: link:../middleware
     devDependencies:
       tsup:
         specifier: ^8.3.6
@@ -1545,21 +1508,9 @@ importers:
 
   packages/ecosystem/packages/web-framework/packages/router:
     dependencies:
-      '@lytjs/common-env':
-        specifier: workspace:*
-        version: link:../../../../../common/packages/env
-      '@lytjs/common-is':
-        specifier: workspace:*
-        version: link:../../../../../common/packages/is
-      '@lytjs/component':
-        specifier: workspace:*
-        version: link:../../../../../component
       '@lytjs/reactivity':
         specifier: workspace:*
         version: link:../../../../../reactivity
-      '@lytjs/vdom':
-        specifier: workspace:*
-        version: link:../../../../../vdom
     devDependencies:
       tsup:
         specifier: ^8.0.0
@@ -1613,9 +1564,6 @@ importers:
 
   packages/plugins/packages/plugin-auth:
     dependencies:
-      '@lytjs/common-is':
-        specifier: workspace:*
-        version: link:../../../common/packages/is
       '@lytjs/core':
         specifier: workspace:*
         version: link:../../../core
@@ -1733,9 +1681,6 @@ importers:
 
   packages/plugins/packages/plugin-logger:
     dependencies:
-      '@lytjs/common-is':
-        specifier: workspace:*
-        version: link:../../../common/packages/is
       '@lytjs/core':
         specifier: workspace:*
         version: link:../../../core
@@ -1755,15 +1700,9 @@ importers:
 
   packages/plugins/packages/plugin-storage:
     dependencies:
-      '@lytjs/common-is':
-        specifier: workspace:*
-        version: link:../../../common/packages/is
       '@lytjs/core':
         specifier: workspace:*
         version: link:../../../core
-      '@lytjs/reactivity':
-        specifier: workspace:*
-        version: link:../../../reactivity
     devDependencies:
       tsup:
         specifier: ^8.0.0
@@ -1780,9 +1719,6 @@ importers:
       '@lytjs/core':
         specifier: workspace:*
         version: link:../../../core
-      '@lytjs/reactivity':
-        specifier: workspace:*
-        version: link:../../../reactivity
     devDependencies:
       tsup:
         specifier: ^8.0.0
@@ -1796,9 +1732,6 @@ importers:
 
   packages/plugins/packages/plugin-theme:
     dependencies:
-      '@lytjs/common-is':
-        specifier: workspace:*
-        version: link:../../../common/packages/is
       '@lytjs/core':
         specifier: workspace:*
         version: link:../../../core
@@ -1821,12 +1754,6 @@ importers:
       '@lytjs/core':
         specifier: workspace:*
         version: link:../../../core
-      '@lytjs/plugin-form':
-        specifier: workspace:*
-        version: link:../plugin-form
-      '@lytjs/reactivity':
-        specifier: workspace:*
-        version: link:../../../reactivity
     devDependencies:
       tsup:
         specifier: ^8.0.0
@@ -1840,9 +1767,6 @@ importers:
 
   packages/plugins/packages/plugin-vite:
     dependencies:
-      '@lytjs/common-is':
-        specifier: workspace:*
-        version: link:../../../common/packages/is
       '@lytjs/compiler':
         specifier: workspace:*
         version: link:../../../compiler

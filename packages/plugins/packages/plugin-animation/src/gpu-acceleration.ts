@@ -29,8 +29,8 @@ export function to3DTransform(transform: string): string {
     .replace(/translateX\(([^)]+)\)/g, 'translate3d($1, 0, 0)')
     .replace(/translateY\(([^)]+)\)/g, 'translate3d(0, $1, 0)')
     .replace(/translate\(([^,]+),\s*([^)]+)\)/g, 'translate3d($1, $2, 0)')
-    .replace(/scale\(([^)]+)\)/g, 'scale3d($1, $1, 1)')
-    .replace(/scale\(([^,]+),\s*([^)]+)\)/g, 'scale3d($1, $2, 1)');
+    .replace(/scale\(([^,]+),\s*([^)]+)\)/g, 'scale3d($1, $2, 1)')
+    .replace(/scale\(([^)]+)\)/g, 'scale3d($1, $1, 1)');
 }
 
 /**

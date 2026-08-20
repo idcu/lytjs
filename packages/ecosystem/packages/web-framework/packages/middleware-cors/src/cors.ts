@@ -79,17 +79,21 @@ export function createCorsMiddleware(config: CorsConfig = {}): Middleware {
     }
 
     // 在响应上设置头部
-    await next();
-    if (ctx.response) {
+    // MiddlewareChain 直接返回下游响应，MiddlewareComposer 将响应写入 ctx.response，
+    // 因此两者兼容：优先取 next() 返回值，缺失时回退到 ctx.response
+
+    const downstream = ((await next()) ?? ctx.response) as Response | undefined;
+    if (downstream) {
       const newResponse = new Response(
-        (ctx.response as Record<string, unknown>).body as BodyInit,
-        ctx.response as ResponseInit,
+        (downstream as Record<string, unknown>).body as BodyInit,
+        downstream as ResponseInit,
       );
       headers.forEach((value, key) => {
         newResponse.headers.set(key, value);
       });
       return newResponse;
     }
+    return undefined;
   };
 }
 

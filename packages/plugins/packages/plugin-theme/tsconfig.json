@@ -5,8 +5,7 @@
     "baseUrl": ".",
     "paths": {
       "@lytjs/core": ["../../../core/dist/index.d.ts"],
-      "@lytjs/reactivity": ["../../../reactivity/dist/index.d.ts"],
-      "@lytjs/common-is": ["../../../common/packages/is/dist/index.d.ts"]
+      "@lytjs/reactivity": ["../../../reactivity/dist/index.d.ts"]
     }
   },
   "include": ["src/**/*.ts"],

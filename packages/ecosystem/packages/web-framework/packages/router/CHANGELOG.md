@@ -1,5 +1,14 @@
 # @lytjs/router
 
+## [Unreleased]
+
+### 🔧 独立化核查
+
+- 独立化核查：核心路由逻辑（matcher / history / 导航守卫 / RouterLink / RouterView）确认仅依赖 `@lytjs/reactivity`，框架零耦合
+- 移除未使用的 `@lytjs/common-is` / `@lytjs/common-env` / `@lytjs/component` / `@lytjs/vdom` 运行时依赖
+- 修正 `repository.directory` 路径与实际位置一致
+- README 补充「简介·独立声明」章节
+
 ## [6.9.6] - 2026-06-06
 
 ### 🚀 版本升级

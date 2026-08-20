@@ -451,6 +451,14 @@ class ISRCacheManager {
   }
 
   /**
+   * 清除全部缓存
+   */
+  clear(): void {
+    this.cache.clear();
+    this.revalidateTasks.clear();
+  }
+
+  /**
    * 清除过期的缓存
    */
   clearExpired(maxAgeSeconds: number): number {
@@ -670,13 +678,16 @@ export function getISRCacheStats() {
  * @param maxAge - 可选，清除超过指定秒数的缓存
  */
 export function clearISRCache(path?: string, maxAge?: number): void {
-  if (path) {
+  if (typeof path === 'string' && path) {
     // 清除特定路径
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const cache = (isrCache as any).cache;
     cache.delete(path);
-  } else if (maxAge) {
+  } else if (typeof maxAge === 'number' && maxAge > 0) {
     // 清除过期缓存
     isrCache.clearExpired(maxAge);
+  } else {
+    // 无参数：清空全部缓存
+    isrCache.clear();
   }
 }

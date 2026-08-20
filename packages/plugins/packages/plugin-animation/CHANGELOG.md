@@ -1,5 +1,11 @@
 # @lytjs/plugin-animation 更新日志
 
+## [Unreleased]
+
+### 🔧 独立化核查
+
+- 独立化核查：确认依赖均实际使用（@lytjs/core/@lytjs/reactivity），无需清理；README 新增「简介·独立声明」，记录 v6.12 迁出至独立仓库 lytjs-plugins 的规划。
+
 ## [6.9.6] - 2026-06-06
 
 ### 🚀 版本升级

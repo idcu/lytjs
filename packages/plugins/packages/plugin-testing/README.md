@@ -2,6 +2,12 @@
 
 LytJS 官方测试插件，提供组件挂载、mock、DOM/Signal 断言、模糊测试与性能回归测试等测试工具。
 
+## 简介·独立声明
+
+LytJS 官方测试插件，提供组件挂载、mock、DOM/Signal 断言、模糊测试与性能回归测试等测试工具。
+
+> **框架无关性说明**：本插件为框架生态包，零第三方依赖，仅构建于 LytJS 核心之上（仅依赖 `@lytjs/core`，已移除未使用的 `@lytjs/reactivity`）。按 v6.12 路线图规划，所有 @lytjs/plugin-\* 插件将统一迁出为独立仓库 lytjs-plugins，保持 API 兼容并提供迁移指南。
+
 ## 安装
 
 ```bash
@@ -105,7 +111,6 @@ console.log(result.success, result.passedCases, result.failedCases);
 ## 相关包
 
 - [@lytjs/core](../../../core) 插件定义与运行时核心
-- [@lytjs/reactivity](../../../reactivity) Signal 测试所需的响应式能力
 
 ## 许可证
 

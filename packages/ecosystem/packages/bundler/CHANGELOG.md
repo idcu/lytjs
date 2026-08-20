@@ -1,5 +1,12 @@
 # @lytjs/bundler 更新日志
 
+## [Unreleased]
+
+### 🔧 独立化核查
+
+- 独立化核查：确认 bundler 为纯构建工具集成（`createVitePlugin` / `createWebpackPlugin` / `getPreset` / `createViteConfig`），零运行时依赖、零 `@lytjs/*` 引用，已完全独立
+- README 新增「简介·独立声明」「依赖关系」「相关包」章节，记录 v6.12 迁出至独立仓库 `lytjs-bundler` 的规划
+
 ## [6.9.6] - 2026-06-06
 
 ### 🚀 版本升级

@@ -2,6 +2,12 @@
 
 LytJS 官方 Vite 插件，用于 `.lyt` 单文件组件（SFC）编译、HMR 热更新与构建优化。
 
+## 简介·独立声明
+
+LytJS 官方 Vite 插件，用于 `.lyt` 单文件组件（SFC）编译、HMR 热更新与构建优化。
+
+> **框架无关性说明**：本插件为框架生态包，零第三方依赖，仅构建于 LytJS 核心之上（仅依赖 `@lytjs/compiler`，已移除未使用的 `@lytjs/common-is`，以 vite 作为 peerDependencies）。按 v6.12 路线图规划，所有 @lytjs/plugin-\* 插件将统一迁出为独立仓库 lytjs-plugins，保持 API 兼容并提供迁移指南。
+
 ## 安装
 
 ```bash

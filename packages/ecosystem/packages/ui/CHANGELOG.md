@@ -1,5 +1,13 @@
 # @lytjs/ui
 
+## [Unreleased]
+
+### 🔧 迁出核查
+
+- 依赖清理：移除 `src` / `tests` / `examples` 中完全未引用的 `@lytjs/common-env` / `@lytjs/common-dom` 运行时依赖（同步清理 tsup external / vitest alias / tsconfig paths）
+- README 补充「简介·独立声明」「依赖关系」章节，明确 v6.10 迁出为独立仓库 `lytjs-ui` 的规划
+- 确认零第三方依赖：仅依赖 LytJS 核心框架（reactivity / component / vdom / core）与通用工具（common-is / common-a11y）
+
 ## [6.9.6] - 2026-06-06
 
 ### 🚀 版本升级

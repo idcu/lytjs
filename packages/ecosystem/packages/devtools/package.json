@@ -31,14 +31,7 @@
   },
   "dependencies": {
     "@lytjs/common-is": "workspace:*",
-    "@lytjs/common-env": "workspace:*",
-    "@lytjs/common-dom": "workspace:*",
-    "@lytjs/common-object": "workspace:*",
-    "@lytjs/reactivity": "workspace:*",
-    "@lytjs/component": "workspace:*",
-    "@lytjs/vdom": "workspace:*",
-    "@lytjs/router": "workspace:*",
-    "@lytjs/store": "workspace:*"
+    "@lytjs/vdom": "workspace:*"
   },
   "devDependencies": {
     "tsup": "^8.0.0",

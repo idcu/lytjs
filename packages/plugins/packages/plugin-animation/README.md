@@ -2,6 +2,12 @@
 
 LytJS 官方动画插件，基于 CSS 过渡与关键帧动画，提供高性能的动画控制能力与 GPU 加速优化。
 
+## 简介·独立声明
+
+LytJS 官方动画插件，基于 CSS 过渡与关键帧动画，提供高性能的动画控制能力与 GPU 加速优化。
+
+> **框架无关性说明**：本插件为框架生态包，零第三方依赖，仅构建于 LytJS 核心之上（仅依赖 `@lytjs/core` 与 `@lytjs/reactivity`，均实际使用）。按 v6.12 路线图规划，所有 @lytjs/plugin-\* 插件将统一迁出为独立仓库 lytjs-plugins，保持 API 兼容并提供迁移指南。
+
 ## 安装
 
 ```bash
@@ -90,6 +96,7 @@ createKeyframeAnimation(el, [{ opacity: 0 }, { opacity: 1 }], {
 | `createAnimation(animateFn, options)`                  | 创建基于 progress 回调的动画实例                                                       |
 | `transitionElement(element, toggle, options)`          | 触发元素进入/离开过渡动画                                                              |
 | `createKeyframeAnimation(element, keyframes, options)` | 基于关键帧创建动画，优先使用 Web Animations API                                        |
+| `createAnimationManager(options)`                      | 创建动画管理器，提供 `animate()` / `applyPreset()` / `transitionElement()` 等能力      |
 | `PRESETS`                                              | 内置预设动画集合（`fadeIn`、`fadeOut`、`slideInUp`、`zoomIn`、`bounceIn`、`shake` 等） |
 
 ### 动画实例（`AnimationInstance`）

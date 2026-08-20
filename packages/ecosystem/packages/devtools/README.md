@@ -5,9 +5,11 @@
 [![npm version](https://img.shields.io/npm/v/@lytjs/devtools.svg)](https://www.npmjs.com/package/@lytjs/devtools)
 [![license](https://img.shields.io/npm/l/@lytjs/devtools.svg)](https://gitee.com/lytjs/lytjs/blob/main/LICENSE)
 
-## 简介
+## 简介·独立声明
 
 `@lytjs/devtools` 是 LytJS 框架的官方开发者工具包，提供了一套完整的调试和检查功能，帮助开发者更好地理解和调试 LytJS 应用。它支持组件树检查、Store 状态查看、路由调试、Signal 可视化、性能监控等功能。
+
+> **框架无关性说明**：本库为纯工具库，**零运行时框架依赖**，仅使用 LytJS 核心包的类型定义与通用工具（`@lytjs/common-is` / `@lytjs/vdom` 类型），不依赖 `@lytjs/reactivity` / `@lytjs/component` / `@lytjs/router` / `@lytjs/store` 等运行时实现，可独立于应用框架使用。按 v6.12 路线图规划，本库将迁出为独立仓库 `lytjs-devtools`，保持 API 兼容并提供迁移指南。
 
 ### 核心特性
 
@@ -36,15 +38,8 @@ pnpm add @lytjs/devtools
 
 `@lytjs/devtools` 依赖以下 LytJS 核心包：
 
-- `@lytjs/reactivity` - 响应式系统
-- `@lytjs/component` - 组件系统
-- `@lytjs/vdom` - 虚拟 DOM
-- `@lytjs/router` - 路由系统
-- `@lytjs/store` - 状态管理
-- `@lytjs/common-is` - 工具函数
-- `@lytjs/common-env` - 环境检测
-- `@lytjs/common-dom` - DOM 工具函数
-- `@lytjs/common-object` - 对象工具函数
+- `@lytjs/common-is` - 通用类型判断工具函数（运行时）
+- `@lytjs/vdom` - 虚拟 DOM 类型定义（仅类型）
 
 ## 快速开始
 

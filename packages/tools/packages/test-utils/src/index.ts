@@ -7,7 +7,7 @@
  */
 
 import { createApp, defineComponent, nextTick, type ComponentOptions } from '@lytjs/core';
-import { signal, watch, type Signal } from '@lytjs/reactivity';
+import { signal, watch } from '@lytjs/reactivity';
 
 // ============================================
 // Types
@@ -413,10 +413,10 @@ export interface TestSignal<T> {
 /**
  * Track signal changes
  */
-export function trackSignal<T>(sig: Signal<T>): SignalTracker<T> {
+export function trackSignal<T>(sig: TestSignal<T>): SignalTracker<T> {
   const values: { value: T; timestamp: number }[] = [];
   const stop = watch(
-    () => sig(),
+    () => sig.value,
     (value) => {
       values.push({ value, timestamp: Date.now() });
     },

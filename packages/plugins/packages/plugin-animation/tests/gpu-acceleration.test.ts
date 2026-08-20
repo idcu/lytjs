@@ -167,11 +167,16 @@ describe('GPU Acceleration', () => {
     let optimizer: PerformanceOptimizer;
 
     beforeEach(() => {
+      // jsdom 无 WebGL 支持，模拟 WebGL 上下文使 GPU 检测通过
+      vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(
+        {} as WebGLRenderingContext,
+      );
       optimizer = new PerformanceOptimizer();
     });
 
     afterEach(() => {
       optimizer.cleanup();
+      vi.restoreAllMocks();
     });
 
     it('should be GPU available by default in browser', () => {

@@ -30,8 +30,7 @@
   },
   "dependencies": {
     "@lytjs/core": "workspace:*",
-    "@lytjs/reactivity": "workspace:*",
-    "@lytjs/common-is": "workspace:*"
+    "@lytjs/reactivity": "workspace:*"
   },
   "devDependencies": {
     "tsup": "^8.0.0",

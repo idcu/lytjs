@@ -572,7 +572,7 @@ export const PRESETS = {
 /**
  * 动画管理器
  */
-function createAnimationManager(options: AnimationPluginOptions = {}) {
+export function createAnimationManager(options: AnimationPluginOptions = {}) {
   const {
     defaultDuration = 300,
     defaultEasing = 'ease',

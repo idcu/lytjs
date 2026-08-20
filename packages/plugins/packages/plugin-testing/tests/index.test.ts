@@ -98,6 +98,8 @@ describe('@lytjs/plugin-testing', () => {
     });
   });
 
+  // DOM helpers 依赖 document/window，需要 jsdom 环境（根 vitest 默认 node）
+  // @vitest-environment jsdom
   describe('DOM helpers', () => {
     beforeEach(() => {
       document.body.innerHTML = '';

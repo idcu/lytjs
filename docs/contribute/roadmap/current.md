@@ -154,6 +154,23 @@
 - 迁出 @lytjs/compat
 - 迁出 @lytjs/bundler
 - 迁出所有 @lytjs/plugin-\* 插件
+  - ✅ 独立仓库建立：`e:\lytjs-ecosystem\lytjs-plugins`（多包 monorepo，根已配置 Gitee 远程 `lytjs-plugins`）
+  - ✅ 迁出 @lytjs/plugin-animation（`packages/plugin-animation`）
+  - ✅ 迁出 @lytjs/plugin-auth（`packages/plugin-auth`）
+  - ✅ 迁出 @lytjs/plugin-chart（`packages/plugin-chart`）
+  - ✅ 迁出 @lytjs/plugin-data-fetch（`packages/plugin-data-fetch`）
+  - ✅ 迁出 @lytjs/plugin-data（`packages/plugin-data`，依赖 data-fetch 以 `workspace:*` 关联）
+  - ✅ 迁出 @lytjs/plugin-form（`packages/plugin-form`）
+  - ✅ 迁出 @lytjs/plugin-i18n（`packages/plugin-i18n`，依赖 common-is 以 npm `^6.9.6` 引入）
+  - ✅ 迁出 @lytjs/plugin-logger（`packages/plugin-logger`）
+  - ✅ 迁出 @lytjs/plugin-storage（`packages/plugin-storage`）
+  - ✅ 迁出 @lytjs/plugin-testing（`packages/plugin-testing`，新增 `@types/node` devDep 以支持 `require('fs'/'path')`）
+  - ✅ 迁出 @lytjs/plugin-theme（`packages/plugin-theme`）
+  - ✅ 迁出 @lytjs/plugin-validation（`packages/plugin-validation`）
+  - ✅ 迁出 @lytjs/plugin-vite（`packages/plugin-vite`，依赖 compiler 的 `./sfc` 子模块以 npm `^6.9.6` 引入，vite 为 peerDependency）
+  - ✅ 工作区验证通过：build / type-check / lint / test 全绿（13 包全过，累计 203 测试）
+  - ✅ 全部 14 个 @lytjs/plugin-\* 插件已迁出至独立仓库 lytjs-plugins
+  - ✅ 推送 Gitee：远程 `gitee.com/lytjs/plugins.git` 已 push 成功（`main` 分支）
 
 **2. 基础包优化策略** ⚡ 中优先级
 

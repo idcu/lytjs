@@ -17,5 +17,5 @@ export default defineConfig({
       js: format === 'cjs' ? '.cjs' : '.mjs',
     };
   },
-  external: ['@lytjs/reactivity', '@lytjs/component', '@lytjs/core', '@lytjs/shared-types'],
+  external: [],
 });

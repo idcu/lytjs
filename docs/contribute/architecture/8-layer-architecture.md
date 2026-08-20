@@ -80,7 +80,7 @@ LytJS 采用 8 层架构设计，从底层到上层分别为：
 **对应包**：
 
 ```
-packages/common/packages/*    # 29+ 个工具包
+packages/common/packages/*    # 34 个工具子包（含 @lytjs/common 聚合包）
 packages/shared-types         # 全局类型定义
 packages/host-contract        # Host Contract 接口
 ```
@@ -116,6 +116,9 @@ packages/host-contract        # Host Contract 接口
 - `@lytjs/common-query` - 查询解析
 - `@lytjs/common-timing` - 计时工具
 - `@lytjs/common-cache` - 缓存工具
+- `@lytjs/common-vnode` - VNode 工具
+- `@lytjs/common-memory` - 内存工具
+- `@lytjs/common-rate-limit` - 限流工具
 
 **开发规范**：
 
@@ -208,7 +211,7 @@ packages/core-vnode     # VDOM 模式核心
 **对应包**：
 
 ```
-packages/plugins/packages/*    # 6 个官方插件
+packages/plugins/packages/*    # 13 个官方插件
 packages/adapter-web           # Web 平台适配器
 packages/dom                   # DOM 相关
 packages/web                   # Web 工具
@@ -222,6 +225,13 @@ packages/web                   # Web 工具
 - `plugin-storage` - 本地存储
 - `plugin-i18n` - 国际化
 - `plugin-vite` - Vite 集成
+- `plugin-animation` - 动画
+- `plugin-chart` - 图表
+- `plugin-data` - 数据
+- `plugin-data-fetch` - 数据获取
+- `plugin-form` - 表单
+- `plugin-testing` - 测试
+- `plugin-validation` - 验证
 
 ---
 
@@ -256,13 +266,18 @@ packages/web                   # Web 工具
 
 ```
 packages/ecosystem/packages/*
-├── ui                 # UI 组件库（60+ 组件）
-├── router             # 路由系统
-├── store              # 状态管理
-├── ssr                # 服务端渲染
-├── devtools           # 开发者工具
-├── compat             # 兼容层
-└── platform-adapter   # 平台适配器
+├── config            # 通用配置系统
+├── di                # 依赖注入系统
+├── plugin            # 通用插件系统核心
+├── ui                # UI 组件库（60+ 组件）
+├── store             # 状态管理
+├── devtools          # 开发者工具
+├── compat            # 兼容层
+├── bundler           # 构建器
+├── platform-adapter  # 平台适配器
+├── runtime-edge      # 边缘运行时
+├── ssr-kit/packages/ # SSR 套件（ssr/ssg/html-renderer/hmr/cache/cache-isr）
+└── web-framework/packages/ # Web 框架体系（router/http-server/api/metadata/middleware-*）
 ```
 
 **特点**：

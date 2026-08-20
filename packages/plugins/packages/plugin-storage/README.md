@@ -2,6 +2,12 @@
 
 LytJS 官方存储插件，提供 `localStorage` 与 `sessionStorage` 支持及 JSON 序列化能力的键值存储。
 
+## 简介·独立声明
+
+LytJS 官方存储插件，提供 `localStorage` 与 `sessionStorage` 支持及 JSON 序列化能力的键值存储。
+
+> **框架无关性说明**：本插件为框架生态包，零第三方依赖，仅构建于 LytJS 核心之上（仅依赖 `@lytjs/core`，已移除未使用的 `@lytjs/reactivity` 与 `@lytjs/common-is`）。按 v6.12 路线图规划，所有 @lytjs/plugin-\* 插件将统一迁出为独立仓库 lytjs-plugins，保持 API 兼容并提供迁移指南。
+
 ## 安装
 
 ```bash
@@ -90,7 +96,6 @@ storage.clear();
 ## 相关包
 
 - [@lytjs/core](../../../core) 插件定义与运行时核心
-- [@lytjs/reactivity](../../../reactivity) 响应式能力
 
 ## 许可证
 

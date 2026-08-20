@@ -17,15 +17,5 @@ export default defineConfig({
       js: format === 'cjs' ? '.cjs' : '.mjs',
     };
   },
-  external: [
-    '@lytjs/common-is',
-    '@lytjs/common-env',
-    '@lytjs/common-dom',
-    '@lytjs/common-object',
-    '@lytjs/reactivity',
-    '@lytjs/component',
-    '@lytjs/vdom',
-    '@lytjs/router',
-    '@lytjs/store',
-  ],
+  external: ['@lytjs/common-is', '@lytjs/vdom'],
 });

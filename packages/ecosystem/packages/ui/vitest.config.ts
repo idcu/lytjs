@@ -17,8 +17,7 @@ export default defineConfig({
     alias: [
       { find: /^@lytjs\/reactivity\/(.*)$/, replacement: `${pkgRoot}/reactivity/dist/$1.mjs` },
       { find: '@lytjs/common-is', replacement: `${commonRoot}/is/dist/index.mjs` },
-      { find: '@lytjs/common-env', replacement: `${commonRoot}/env/dist/index.mjs` },
-      { find: '@lytjs/common-dom', replacement: `${commonRoot}/dom/dist/index.mjs` },
+      { find: '@lytjs/common-a11y', replacement: `${commonRoot}/a11y/dist/index.mjs` },
       { find: '@lytjs/common-error', replacement: `${commonRoot}/error/dist/index.mjs` },
       { find: '@lytjs/common-constants', replacement: `${commonRoot}/constants/dist/index.mjs` },
       { find: '@lytjs/common-scheduler', replacement: `${commonRoot}/scheduler/dist/index.mjs` },
@@ -33,7 +32,10 @@ export default defineConfig({
       { find: '@lytjs/reactivity', replacement: `${pkgRoot}/reactivity/dist/index.mjs` },
       { find: '@lytjs/component', replacement: `${pkgRoot}/component/dist/index.mjs` },
       { find: '@lytjs/vdom', replacement: `${pkgRoot}/vdom/dist/index.mjs` },
-      { find: '@lytjs/test-utils', replacement: `${pkgRoot}/tools/packages/test-utils/dist/index.mjs` },
+      {
+        find: '@lytjs/test-utils',
+        replacement: `${pkgRoot}/tools/packages/test-utils/dist/index.mjs`,
+      },
     ],
   },
   test: {

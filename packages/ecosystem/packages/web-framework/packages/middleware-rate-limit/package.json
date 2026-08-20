@@ -32,7 +32,8 @@
   },
   "dependencies": {
     "@lytjs/common-is": "workspace:*",
-    "@lytjs/common-rate-limit": "workspace:*"
+    "@lytjs/common-rate-limit": "workspace:*",
+    "@lytjs/middleware": "workspace:*"
   },
   "devDependencies": {
     "tsup": "^8.3.6",

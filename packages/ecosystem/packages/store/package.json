@@ -32,7 +32,6 @@
     "@lytjs/common-is": "workspace:*",
     "@lytjs/common-object": "workspace:*",
     "@lytjs/reactivity": "workspace:*",
-    "@lytjs/component": "workspace:*",
     "@lytjs/core": "workspace:*"
   },
   "devDependencies": {

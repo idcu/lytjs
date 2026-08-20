@@ -7,8 +7,7 @@
       "@lytjs/common-is": ["../../../common/packages/is/dist/index.d.ts"],
       "@lytjs/common-object": ["../../../common/packages/object/dist/index.d.ts"],
       "@lytjs/shared-types": ["../../../shared-types/dist/index.d.ts"],
-      "@lytjs/reactivity": ["../../../reactivity/dist/index.d.ts"],
-      "@lytjs/component": ["../../../component/dist/index.d.ts"]
+      "@lytjs/reactivity": ["../../../reactivity/dist/index.d.ts"]
     }
   },
   "include": ["src/**/*.ts"],

@@ -27,11 +27,7 @@
     "lint": "eslint \"src/**/*.ts\" \"tests/**/*.ts\"",
     "clean": "rm -rf dist"
   },
-  "dependencies": {
-    "@lytjs/reactivity": "workspace:*",
-    "@lytjs/component": "workspace:*",
-    "@lytjs/core": "workspace:*"
-  },
+  "dependencies": {},
   "devDependencies": {
     "tsup": "^8.0.0",
     "typescript": "^5.4.0",

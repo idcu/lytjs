@@ -33,12 +33,12 @@ pnpm add @lytjs/store
 
 ## 依赖关系
 
-`@lytjs/store` 依赖以下 LytJS 核心包：
+`@lytjs/store` 依赖以下包：
 
-- `@lytjs/reactivity` - 响应式系统
-- `@lytjs/component` - 组件系统
+- `@lytjs/reactivity` - 响应式系统（核心 store 逻辑）
 - `@lytjs/common-is` - 工具函数
 - `@lytjs/common-object` - 对象工具函数
+- `@lytjs/core` - 仅 `createPinia()` 应用插件集成适配器
 
 ## 快速开始
 

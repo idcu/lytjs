@@ -120,14 +120,15 @@ describe('signal testing utilities', () => {
 
   it('trackSignal should track signal changes', async () => {
     const sig = createTestSignal(0);
-    const tracker = trackSignal({ value: sig.value } as any);
+    const tracker = trackSignal(sig);
 
     sig.value = 1;
     await flushPromises();
     sig.value = 2;
     await flushPromises();
 
-    expect(tracker.count()).toBeGreaterThanOrEqual(0);
+    expect(tracker.values()).toEqual([1, 2]);
+    expect(tracker.count()).toBe(2);
     tracker.stop();
   });
 });

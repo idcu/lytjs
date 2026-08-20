@@ -1,5 +1,11 @@
 # @lytjs/plugin
 
+## [Unreleased]
+
+### 🔧 独立化核查
+
+- 独立化核查：确认插件系统核心零框架依赖，仅使用 @lytjs/common-error（运行时）与 @lytjs/config（类型），无需清理；README 新增「简介·独立声明」，记录 v7.0-alpha 抽离独立通用库的规划。
+
 ## [6.9.6] - 2026-06-06
 
 ### 🚀 版本升级

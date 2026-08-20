@@ -14,7 +14,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@lytjs/core': `${pkgRoot}/../../core/dist/index.mjs`,
+      '@lytjs/core': `${pkgRoot}/../core/dist/index.mjs`,
     },
   },
   test: {
