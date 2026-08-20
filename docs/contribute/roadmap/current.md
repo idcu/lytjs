@@ -137,7 +137,7 @@
 
 #### 阶段一：UI 组件库先行 (v6.10)
 
-- ✅ 迁出 @lytjs/ui 到独立仓库
+- 🟡 迁出 @lytjs/ui 到独立仓库（已规划，尚未实际迁出，monorepo 内保留副本）
 - 建立独立的 CI/CD 流水线
 - 保持与核心版本的兼容性
 - 提供迁移指南
@@ -169,7 +169,7 @@
   - ✅ 迁出 @lytjs/plugin-validation（`packages/plugin-validation`）
   - ✅ 迁出 @lytjs/plugin-vite（`packages/plugin-vite`，依赖 compiler 的 `./sfc` 子模块以 npm `^6.9.6` 引入，vite 为 peerDependency）
   - ✅ 工作区验证通过：build / type-check / lint / test 全绿（13 包全过，累计 203 测试）
-  - ✅ 全部 14 个 @lytjs/plugin-\* 插件已迁出至独立仓库 lytjs-plugins
+  - ✅ 全部 13 个 @lytjs/plugin-\* 插件已迁出至独立仓库 lytjs-plugins（@lytjs/plugin 核心仍需留在 monorepo）
   - ✅ 推送 Gitee：远程 `gitee.com/lytjs/plugins.git` 已 push 成功（`main` 分支）
 
 **2. 基础包优化策略** ⚡ 中优先级
