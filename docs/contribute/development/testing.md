@@ -161,6 +161,21 @@ test.describe('Admin Dashboard E2E Tests', () => {
 | compiler   | ≥ 80%      |
 | core       | ≥ 80%      |
 
+### 当前实测（2026-09-21）
+
+全仓（含 ecosystem / plugins / tools）：
+
+| 维度               | 实测   | 阈值 | 目标 |
+| ------------------ | ------ | ---- | ---- |
+| statements / lines | 48.77% | 48   | 85%  |
+| functions          | 63.46% | 63   | 85%  |
+| branches           | 80.09% | 80   | 80%  |
+
+> 说明：阈值是"略低于当前实测"的防回退下限，**只允许上调**。
+> 覆盖率提升后请同步上调 `vitest.config.ts` 中的 `coverage.thresholds`。
+> 注意 `coverage.include` 必须覆盖全部源码区，否则阈值形同虚设
+> （历史教训：曾漏掉 ecosystem/plugins/tools，导致 49.5% 源码不参与统计）。
+
 ---
 
 ## 更多资源

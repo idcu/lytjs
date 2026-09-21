@@ -276,7 +276,13 @@ function genVNodeCall(node: VNodeCall, context: CodegenContext): void {
   }
 
   // 标签
-  genNodeExpr(tag, context);
+  // 组件标签也要前缀化：产物是 `function render(_ctx, _cache)`，
+  // `createBlock(Child, ...)` 里的裸标识符在运行时不存在（应为 `_ctx.Child`）。
+  if (node.isComponent && typeof tag === 'string') {
+    context.push(prefixIdentifiers(tag, context.locals), node);
+  } else {
+    genNodeExpr(tag, context);
+  }
   context.push(', ', node);
 
   // Props

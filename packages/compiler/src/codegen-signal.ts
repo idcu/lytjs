@@ -1,7 +1,7 @@
 // src/codegen-signal.ts
 // Signal 模式代码生成器 - 生成 effect() + DOM 操作代码
 
-import { NodeTypes } from './constants';
+import { NodeTypes, ElementTypes } from './constants';
 import type {
   RootNode,
   ElementNode,
@@ -123,6 +123,7 @@ function serializeStaticHTML(
 // ============================================================
 
 export function generateSignal(ast: RootNode, _options?: CompilerOptions): CodegenResult {
+  warnUnsupportedVaporComponents(ast);
   const lines: string[] = [];
   const varCounter = new Map<string, number>();
   const elementVars: Array<{ varName: string; tag: string }> = [];
@@ -1196,4 +1197,52 @@ function processBranchDynamics(
       }
     }
   }
+}
+
+// ============================================================
+// Signal/Vapor 模式的已知限制检查
+// ============================================================
+
+let warnedVaporComponents = new Set<string>();
+
+/**
+ * Signal/Vapor 模式目前**不支持子组件**：codegen 全文没有 `isComponent` 处理，
+ * 组件标签会被当作普通 HTML 元素序列化进 createTemplate（产物里出现字面量
+ * `<Child />`，DOM 里也就真的插了一个无意义的自定义标签）。
+ *
+ * 这里显式告警（每组件一次），避免"编译通过、组件静默不生效"。
+ */
+export function warnUnsupportedVaporComponents(ast: RootNode): void {
+  if (!__DEV__) return;
+  const components = new Set<string>();
+
+  const walk = (node: RootNode | TemplateChildNode): void => {
+    if (!node || typeof node !== 'object') return;
+    if (node.type === NodeTypes.ELEMENT) {
+      const element = node as ElementNode;
+      if (element.tagType === ElementTypes.COMPONENT) components.add(element.tag);
+      for (const child of element.children) walk(child);
+      return;
+    }
+    if (node.type === NodeTypes.ROOT) {
+      for (const child of (node as RootNode).children) walk(child);
+    }
+  };
+
+  walk(ast);
+
+  for (const name of components) {
+    const key = `vapor:${name}`;
+    if (warnedVaporComponents.has(key)) continue;
+    warnedVaporComponents.add(key);
+    console.warn(
+      `[lytjs/compiler] Signal/Vapor 模式暂不支持子组件：<${name}> 会被当作普通标签处理，` +
+        '组件逻辑不会执行。请改用 VNode 模式（默认 rendererMode）渲染该组件。',
+    );
+  }
+}
+
+/** 仅供测试重置告警状态 */
+export function resetVaporComponentWarnings(): void {
+  warnedVaporComponents = new Set<string>();
 }

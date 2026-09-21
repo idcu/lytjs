@@ -137,11 +137,20 @@ export default defineConfig({
         'packages/shared-types/**',
         'packages/_templates/**',
       ],
+      // ⚠️ 阈值口径（2026-09-21 实测校正）
+      //
+      // 此前 include 只覆盖 packages/*/src 与 common/packages/*/src，
+      // 有约 49.5% 的源码（ecosystem / plugins / tools）不计入分母，
+      // 于是"85% 达标"只是在半壁江山上成立。分母补全后的真实数字为：
+      //   statements 48.77% / lines 48.77% / functions 63.46% / branches 80.09%
+      // 这里把阈值设为**略低于当前真实值**，让门禁立刻变诚实且能防回退；
+      // 之后每次覆盖提升都同步上调阈值（棘轮式收紧），目标 85%。
+      // 规则：只允许上调，不允许为了让 CI 变绿而下调。
       thresholds: {
-        lines: 85,
-        functions: 85,
+        lines: 48,
+        functions: 63,
         branches: 80,
-        statements: 85,
+        statements: 48,
       },
     },
   },

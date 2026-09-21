@@ -3,6 +3,8 @@
 // 目标：生成代码体积减少 30%+
 
 import { NodeTypes } from './constants';
+import { prefixIdentifiers } from './prefix-identifiers';
+import { warnUnsupportedVaporComponents } from './codegen-signal';
 import type {
   RootNode,
   ElementNode,
@@ -85,6 +87,7 @@ function getShortName(funcName: string, useShortNames: boolean): string {
 // ============================================================
 
 export function generateSignalOptimized(ast: RootNode, _options?: CompilerOptions): CodegenResult {
+  warnUnsupportedVaporComponents(ast);
   const options: SignalCodegenOptions = {
     mode: 'signal',
     useShortNames: true, // 启用短别名优化以减少代码体积
@@ -883,6 +886,8 @@ function processCallExpressionOptimized(
     let itemVar = 'item';
     let keyExpr = '';
     let createBody = '';
+    let updateBody = '';
+    let renderItem: VNodeCall | null = null;
 
     if (renderFn && typeof renderFn !== 'string' && !Array.isArray(renderFn)) {
       if (renderFn.type === NodeTypes.COMPOUND_EXPRESSION) {
@@ -898,22 +903,30 @@ function processCallExpressionOptimized(
         for (const child of compound.children) {
           if (typeof child !== 'string' && child.type === NodeTypes.VNODE_CALL) {
             const vnode = child as VNodeCall;
+            renderItem = vnode;
             const tagInfo = extractTagFromVNode(vnode);
             if (tagInfo) {
               createBody = `const ${tagInfo.varName}=document.createElement('${tagInfo.tag}');`;
-              if (vnode.children) {
-                if (typeof vnode.children === 'string') {
-                  const escaped = vnode.children.replace(/'/g, "\\'").replace(/\\/g, '\\\\');
-                  createBody += `${tagInfo.varName}.textContent='${escaped}';`;
-                } else if (
-                  vnode.children &&
-                  typeof vnode.children === 'object' &&
-                  'type' in vnode.children &&
-                  (vnode.children as SimpleExpressionNode).type === NodeTypes.SIMPLE_EXPRESSION
-                ) {
-                  createBody += `${tagInfo.varName}.textContent=${itemVar}.${(vnode.children as SimpleExpressionNode).content};`;
-                }
+
+              // 子节点内容：此前只认「字符串」和「裸 SIMPLE_EXPRESSION」两种形态，
+              // 而模板插值 `{{ item.name }}` 在 transform 后是
+              // JS_CALL_EXPRESSION(TO_DISPLAY_STRING)，于是列表项里的文本被整体丢弃
+              // （产物只剩 createElement + return）。同时旧代码把表达式写成
+              // `${itemVar}.${content}`，会产出 `item.item.name` 这种错误路径。
+              const itemText = extractItemTextExpr(vnode.children, itemVar);
+              if (itemText.static !== undefined) {
+                createBody += `${tagInfo.varName}.textContent=${itemText.static};`;
+              } else if (itemText.dynamic !== undefined) {
+                createBody += `${tagInfo.varName}.textContent=${itemText.dynamic};`;
+                // updates 由 reconcileArray 的 update 回调驱动，元素参数名固定为 _el
+                updateBody += `_el.textContent=${itemText.dynamic};`;
               }
+
+              // 属性：静态值写死，动态值在 update 里同步（:key 除外）
+              const propResult = buildItemProps(vnode, itemVar, tagInfo.varName);
+              createBody += propResult.create;
+              updateBody += propResult.update;
+
               createBody += `return ${tagInfo.varName};`;
             }
           }
@@ -921,7 +934,18 @@ function processCallExpressionOptimized(
       }
     }
 
-    keyExpr = `${itemVar}.id`;
+    // :key 优先取用户表达式；缺失时回退 item.id 并提示（与 codegen-signal 非优化版一致）
+    keyExpr = extractItemKeyExpr(renderItem, itemVar);
+    if (!keyExpr) {
+      if (__DEV__) {
+        console.warn(
+          `[lytjs/compiler] v-for is missing a "key" attribute. ` +
+            `This may cause performance issues and incorrect DOM updates. ` +
+            `Add a unique :key binding to the v-for element, e.g., :key="item.id" or :key="index".`,
+        );
+      }
+      keyExpr = `${itemVar}.id`;
+    }
     const containerVar = parentVar ?? '_n';
 
     usedRuntime.add('effect');
@@ -929,9 +953,10 @@ function processCallExpressionOptimized(
     const e = getShortName('effect', options.useShortNames ?? true);
     const ra = getShortName('reconcileArray', options.useShortNames ?? true);
 
+    const updatePart = updateBody ? `,update:(_el,${itemVar})=>{${updateBody}}` : '';
     dynamicBindings.push({
       varName: containerVar,
-      code: `${e}(()=>${ra}(${containerVar},_c.${source},{key:(${itemVar})=>${keyExpr},create:(${itemVar})=>{${createBody}}}));`,
+      code: `${e}(()=>${ra}(${containerVar},_c.${source},{key:(${itemVar})=>${keyExpr},create:(${itemVar})=>{${createBody}}${updatePart}}));`,
     });
   }
 }
@@ -1058,3 +1083,163 @@ function serializeBranchHTML(
 // ============================================================
 
 export { RUNTIME_SHORT_NAMES };
+
+// ============================================================
+// v-for 项内容 / 属性 / key 提取（优化版）
+// ============================================================
+
+/**
+ * 让表达式在 v-for 项回调里可用。
+ *
+ * 回调参数（如 `item`）是局部变量不能加前缀；其余标识符在本模式下前缀为 `_c.`
+ * （render 的上下文形参名是 `_c`，不是 `_ctx`）。
+ */
+function toItemExpr(content: string, itemVar: string): string {
+  return prefixIdentifiers(content, new Set([itemVar])).replace(/\b_ctx\./g, '_c.');
+}
+
+/**
+ * 提取列表项元素的文本内容。
+ *
+ * 支持：静态字符串 / 插值（TO_DISPLAY_STRING）/ 裸表达式 / 静态文本数组。
+ * 返回 `{ static }` 或 `{ dynamic }`；无法静态确定时返回空对象（不生成内容）。
+ */
+function extractItemTextExpr(
+  children: VNodeCall['children'],
+  itemVar: string,
+): { static?: string; dynamic?: string } {
+  if (children === undefined || children === null) return {};
+
+  if (typeof children === 'string') {
+    return { static: JSON.stringify(children) };
+  }
+
+  if (Array.isArray(children)) {
+    const parts: string[] = [];
+    let allStatic = true;
+    for (const child of children) {
+      const result = extractItemTextExpr(child as VNodeCall['children'], itemVar);
+      if (result.static !== undefined) {
+        parts.push(result.static);
+      } else if (result.dynamic !== undefined) {
+        parts.push(result.dynamic);
+        allStatic = false;
+      } else {
+        return {};
+      }
+    }
+    if (parts.length === 0) return {};
+    const joined = parts.join(' + ');
+    return allStatic ? { static: joined } : { dynamic: joined };
+  }
+
+  if (typeof children !== 'object') return {};
+
+  const node = children as {
+    type?: number;
+    callee?: unknown;
+    arguments?: unknown[];
+    content?: string;
+  };
+
+  if (node.type === NodeTypes.JS_CALL_EXPRESSION) {
+    const callee = typeof node.callee === 'string' ? node.callee : String(node.callee);
+    if (callee === 'TO_DISPLAY_STRING' || callee === 'toDisplayString') {
+      const arg = (node.arguments ?? [])[0] as { content?: string } | string | undefined;
+      const content = typeof arg === 'string' ? arg : arg?.content;
+      if (content) return { dynamic: toItemExpr(content, itemVar) };
+    }
+    return {};
+  }
+
+  if (node.type === NodeTypes.SIMPLE_EXPRESSION && typeof node.content === 'string') {
+    return { dynamic: toItemExpr(node.content, itemVar) };
+  }
+
+  return {};
+}
+
+/**
+ * 提取列表项的 :key 表达式（用户未写则返回空串）
+ */
+function extractItemKeyExpr(vnode: VNodeCall | null, itemVar: string): string {
+  if (!vnode || !vnode.props || vnode.props.type !== NodeTypes.JS_OBJECT_EXPRESSION) return '';
+  const objExpr = vnode.props as JSObjectExpression;
+  for (const prop of objExpr.properties) {
+    if (prop.type !== NodeTypes.JS_PROPERTY) continue;
+    const jsProp = prop as JSProperty;
+    const key = jsProp.key;
+    const value = jsProp.value;
+    if (
+      key &&
+      typeof key !== 'string' &&
+      !Array.isArray(key) &&
+      key.type === NodeTypes.SIMPLE_EXPRESSION &&
+      key.content.replace(/^"|"$/g, '') === 'key' &&
+      value &&
+      typeof value !== 'string' &&
+      !Array.isArray(value) &&
+      value.type === NodeTypes.SIMPLE_EXPRESSION
+    ) {
+      return toItemExpr(value.content, itemVar);
+    }
+  }
+  return '';
+}
+
+/**
+ * 生成列表项属性（跳过事件与 :key）
+ */
+function buildItemProps(
+  vnode: VNodeCall,
+  itemVar: string,
+  elVar: string,
+): { create: string; update: string } {
+  let create = '';
+  let update = '';
+  if (!vnode.props || vnode.props.type !== NodeTypes.JS_OBJECT_EXPRESSION)
+    return { create, update };
+
+  const objExpr = vnode.props as JSObjectExpression;
+  for (const prop of objExpr.properties) {
+    if (prop.type !== NodeTypes.JS_PROPERTY) continue;
+    const jsProp = prop as JSProperty;
+    const key = jsProp.key;
+    const value = jsProp.value;
+    if (
+      !key ||
+      typeof key === 'string' ||
+      Array.isArray(key) ||
+      key.type !== NodeTypes.SIMPLE_EXPRESSION ||
+      !value ||
+      typeof value === 'string' ||
+      Array.isArray(value) ||
+      value.type !== NodeTypes.SIMPLE_EXPRESSION
+    ) {
+      continue;
+    }
+    const propName = key.content.replace(/^"|"$/g, '');
+    if (propName === 'key') continue;
+    if (
+      propName.startsWith('on') &&
+      propName.length > 2 &&
+      propName[2] === propName[2]!.toUpperCase()
+    ) {
+      continue;
+    }
+
+    const rawValue = value.content;
+    const isStaticLiteral = /^["']/.test(rawValue);
+    if (isStaticLiteral) {
+      // 静态字面量：只在 create 里写一次
+      const literal = rawValue.replace(/^"|"$/g, '');
+      create += `${elVar}.setAttribute(${JSON.stringify(propName)}, ${JSON.stringify(literal)});`;
+    } else {
+      // 动态绑定：create 用新建元素，update 用 reconcileArray 传入的 _el
+      const expr = toItemExpr(rawValue, itemVar);
+      create += `${elVar}.setAttribute(${JSON.stringify(propName)}, ${expr});`;
+      update += `_el.setAttribute(${JSON.stringify(propName)}, ${expr});`;
+    }
+  }
+  return { create, update };
+}
