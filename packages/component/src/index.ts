@@ -28,7 +28,7 @@ export { emit, normalizeEmitsOptions, isEmitValid } from './emit';
 
 // Slots
 /** 插槽初始化与规范化 */
-export { initSlots, normalizeSlotValue } from './slots';
+export { initSlots, normalizeSlotValue, renderSlot } from './slots';
 
 // 生命周期
 /** 生命周期钩子注册与调用 */

@@ -4,7 +4,6 @@
 
 import type { VaporComponentDefinition } from './vapor-app';
 import { compile } from '@lytjs/compiler';
-import { escapeHtml } from '../utils';
 
 // ============================================================
 // 类型定义
@@ -210,33 +209,44 @@ function compileTemplateForSSR(template: string): string {
 }
 
 /**
- * 将模板渲染为 HTML
+ * 将编译产物渲染为 HTML
+ *
+ * 实现要点：
+ * 1. SSR 编译产物是一段自包含的模块级代码（`function render(_ctx) {...}` 加上
+ *    自带的 escapeHtml / renderToString 辅助函数），因此用 `new Function` 执行；
+ * 2. 产物里的绑定表达式（如 `{{ message }}`）目前不带 `_ctx.` 前缀 —— 编译器的
+ *    标识符前缀化需要作用域信息（v-for 别名等），尚未实现。这里用
+ *    `with (_ctx)` 包一层，让裸标识符在运行期正确解析到上下文
+ *    （`new Function` 默认非严格模式，`with` 可用）。
+ *
+ * 之前这里是"返回一个占位 div"，即**任何 Vapor 组件的 SSR 输出都是空壳**。
  */
-function renderTemplateToHTML(_compiledCode: string, ctx: Record<string, unknown>): string {
-  // 简化实现：直接从上下文渲染模板
-  // 实际实现需要执行编译后的代码
-  return renderContextToHTML(ctx);
-}
+function renderTemplateToHTML(compiledCode: string, ctx: Record<string, unknown>): string {
+  if (!compiledCode) return '';
 
-/**
- * 将上下文渲染为 HTML（简化版）
- */
-function renderContextToHTML(ctx: Record<string, unknown>): string {
-  // 基础实现：返回一个占位 div
-  // 实际实现需要完整的模板解析和渲染
-  const dataAttr = Object.entries(ctx)
-    .filter(([key]) => !key.startsWith('__'))
-    .map(([key, value]) => `data-${key}="${escapeHtml(String(value))}"`)
-    .join(' ');
+  try {
+    const executor = new Function(
+      '_ctx',
+      `with (_ctx) {${'\n'}${compiledCode}${'\n'}; return render(_ctx); }`,
+    ) as (context: Record<string, unknown>) => unknown;
 
-  return `<div ${dataAttr} data-vapor-ssr="true"><!-- Vapor SSR Placeholder --></div>`;
+    const result = executor(ctx);
+    if (typeof result === 'string') return result;
+    if (result === null || result === undefined) return '';
+    return String(result);
+  } catch (err) {
+    // 渲染失败不吞错：抛出带上下文的错误，便于定位是模板问题还是状态问题
+    throw new Error(
+      `[lytjs/renderer] Vapor SSR 渲染失败: ${err instanceof Error ? err.message : String(err)}`,
+    );
+  }
 }
 
 /**
  * 将模板渲染为 HTML 块（流式渲染）
  */
-function renderTemplateToChunks(_compiledCode: string, ctx: Record<string, unknown>): string[] {
-  const html = renderContextToHTML(ctx);
+function renderTemplateToChunks(compiledCode: string, ctx: Record<string, unknown>): string[] {
+  const html = renderTemplateToHTML(compiledCode, ctx);
 
   // 将 HTML 分块返回
   const chunks: string[] = [];

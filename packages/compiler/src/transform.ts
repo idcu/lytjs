@@ -3,7 +3,7 @@
 // 包含 transform、markConstants、hoistStatic、collectDynamicChildren
 // optimize 阶段的逻辑已合并到此模块中
 
-import { NodeTypes, ElementTypes } from './constants';
+import { NodeTypes } from './constants';
 import type {
   RootNode,
   ElementNode,
@@ -221,9 +221,6 @@ function createTransformContext(root: RootNode, options: TransformOptions): Tran
   return context;
 }
 
-// 只提示一次的 <slot> 未支持告警
-let warnedSlotUnsupported = false;
-
 // ============================================================
 // 遍历节点
 // ============================================================
@@ -235,27 +232,10 @@ function traverseNode(
 ): void {
   context.currentNode = node;
 
-  // <slot> 目前尚未接通编译链路：parser 会把它标记为 ElementTypes.SLOT，
-  // 但 transformSlot 未注册进 builtInTransforms，运行时也没有 renderSlot 实现
-  // （helpers 里只有 'renderSlot' 这个名字）。这里显式告警，避免出现
-  // "编译通过、插槽内容静默丢失"的隐性缺陷。
-  if (
-    node.type === NodeTypes.ELEMENT &&
-    (node as ElementNode).tagType === ElementTypes.SLOT &&
-    !warnedSlotUnsupported
-  ) {
-    warnedSlotUnsupported = true;
-    if (__DEV__) {
-      console.warn(
-        '[LytJS/compiler] <slot> 编译尚未实现（transformSlot 未接入、运行时缺少 renderSlot）。' +
-          '插槽内容不会出现在产物中，请暂用 props/children 传递内容。',
-      );
-    }
-  }
-
   const nodeTransforms = options.nodeTransforms;
+  const exitFns: Array<(() => void) | undefined> = [];
+
   if (nodeTransforms) {
-    const exitFns: Array<(() => void) | undefined> = [];
     for (let i = 0; i < nodeTransforms.length; i++) {
       const transform = nodeTransforms[i];
       if (!transform) continue;
@@ -269,12 +249,13 @@ function traverseNode(
       }
       if (!context.currentNode) return;
     }
-    for (let i = exitFns.length - 1; i >= 0; i--) {
-      exitFns[i]?.();
-      if (!context.currentNode) return;
-    }
   }
 
+  // ⚠️ 顺序很关键：必须**先遍历子节点、再执行 exit 回调**。
+  // 此前是「先执行 exit、再遍历子节点」，导致父元素的 codegen 构建发生在子元素
+  // 转换之前 —— 子元素的 codegenNode 尚不存在，于是
+  // `<div><span/></div>` / `<div>{{msg}}</div>` 这类模板的 children 会被整片丢掉，
+  // 编译产物只剩 `createElementVNode("div", null)`。
   switch (node.type) {
     case NodeTypes.ROOT:
     case NodeTypes.ELEMENT: {
@@ -290,6 +271,12 @@ function traverseNode(
       break;
     }
   }
+
+  // 子节点遍历完成后再执行 exit 回调（此时子节点 codegenNode 已就绪）
+  for (let i = exitFns.length - 1; i >= 0; i--) {
+    exitFns[i]?.();
+    if (!context.currentNode) return;
+  }
 }
 
 // ============================================================
@@ -304,6 +291,9 @@ type TransformFn = (
 ) => ReturnType<NodeTransform>;
 
 export const builtInTransforms: NodeTransform[] = [
+  // <slot> 必须排在 transformElement 之前：其 exit 回调要在子节点转换完成后
+  // 才设置 codegenNode，且 transformElement 会对 slot 出口提前返回。
+  transformSlot as TransformFn,
   transformIf as TransformFn,
   transformFor as TransformFn,
   transformOnce as TransformFn,
@@ -354,6 +344,35 @@ function markConstants(root: RootNode): void {
 // Hoist Static (原 optimize.ts)
 // ============================================================
 
+/**
+ * 判断 codegen 节点子树中是否引用了 `_ctx.`（即含有运行期绑定）。
+ *
+ * 用途：静态提升必须排除这类节点 —— 提升后的语句运行在**模块作用域**，
+ * 那里根本没有 `_ctx`。此前仅凭 `element.isStatic` 判断，导致
+ * `<div><slot/></div>` 被提升成
+ * `const _hoisted_1 = createElementVNode("div", null, renderSlot(_ctx.$slots, ...))`，
+ * 模块加载阶段即抛 `_ctx is not defined`。
+ */
+function containsCtxReference(node: unknown, seen = new Set<unknown>()): boolean {
+  if (node === null || typeof node !== 'object') return false;
+  if (seen.has(node)) return false;
+  seen.add(node);
+
+  if (Array.isArray(node)) {
+    return node.some((item) => containsCtxReference(item, seen));
+  }
+
+  const record = node as Record<string, unknown>;
+  if (typeof record['content'] === 'string' && record['content'].includes('_ctx.')) return true;
+  if (typeof record['tag'] === 'string' && record['tag'].includes('_ctx.')) return true;
+
+  for (const key of Object.keys(record)) {
+    if (key === 'loc') continue;
+    if (containsCtxReference(record[key], seen)) return true;
+  }
+  return false;
+}
+
 function hoistStatic(root: RootNode): void {
   const hoists: JSChildNode[] = [];
   const existingHoistsLen = root.hoists.length;
@@ -362,7 +381,9 @@ function hoistStatic(root: RootNode): void {
     if (node.type === NodeTypes.ELEMENT) {
       const element = node as ElementNode;
 
-      if (element.isStatic && element.codegenNode) {
+      // 静态提升的两个必要条件：
+      // 1) 元素本身被标记为静态；2) 其 codegen 子树不含 `_ctx.` 运行期引用
+      if (element.isStatic && element.codegenNode && !containsCtxReference(element.codegenNode)) {
         // 提升静态元素
         hoists.push(element.codegenNode);
         // 全局索引 = 已有提升 + 当前新提升数量 - 1

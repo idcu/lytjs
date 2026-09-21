@@ -107,7 +107,7 @@ export function transformIf(node: RootNode | TemplateChildNode, context: Transfo
     const savedParent = context.parent;
     context.parent = parent;
     try {
-      transformElement(sibElement, context);
+      transformElement(sibElement, context, { sync: true });
     } finally {
       context.parent = savedParent;
     }

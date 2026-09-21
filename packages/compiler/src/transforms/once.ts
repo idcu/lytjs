@@ -26,7 +26,7 @@ export function transformOnce(node: RootNode | TemplateChildNode, context: Trans
   );
 
   // Transform the element normally
-  transformElement(element, context);
+  transformElement(element, context, { sync: true });
 
   // Mark as hoistable
   if (element.codegenNode) {

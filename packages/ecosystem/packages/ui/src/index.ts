@@ -360,3 +360,12 @@ const LytUI = definePlugin({
 
 export default LytUI;
 export { LytUI };
+
+// ============================================================
+// 补充导出（2026-09 审计发现：以下 4 个组件已实现但未从 index 导出）
+// ============================================================
+export { Breadcrumb, BreadcrumbItem } from './components/Breadcrumb';
+export { default as Message } from './components/Message';
+export type { MessageType, MessageOptions, MessageInstance } from './components/Message';
+export { Pagination } from './components/Pagination';
+export { TimePicker } from './components/TimePicker';

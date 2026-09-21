@@ -128,5 +128,5 @@ export function transformVMemo(
   context.helper('WITH_MEMO');
 
   // 正常转换元素
-  transformElement(element, context);
+  transformElement(element, context, { sync: true });
 }

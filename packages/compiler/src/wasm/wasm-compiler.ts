@@ -1,8 +1,15 @@
 /**
  * @lytjs/compiler - WASM Compiler Interface
- * WASM-ready 浏览器端编译器接口。
- * 当前使用 JavaScript 模拟实现，接口设计兼容真实 WASM 模块，
- * 便于后续无缝替换。
+ *
+ * ⚠️ 现状说明（2026-09 审计）：
+ * 本模块**不是 WebAssembly 实现**，只是 parse→transform→generate 的 JavaScript
+ * 包装层（目录内 0 处 WebAssembly API 调用）。此前 package.json 对外暴露了
+ * `@lytjs/compiler/wasm` 子路径，容易让人误以为存在 WASM 编译器。
+ *
+ * 现状处理：
+ * - 保留接口（`wasmCompile` 等）以兼容既有导入；
+ * - 运行时给出一次性告警，说明它是 JS 模拟实现；
+ * - 若后续真要做 WASM，可保持本接口签名不变、替换内部实现。
  */
 
 import { parse } from '../parser';
@@ -140,6 +147,7 @@ export interface Token {
  * 返回结构化的编译结果。
  */
 export function wasmCompile(source: string, options: WASMCompileOptions = {}): WASMCompileResult {
+  warnWasmIsSimulated();
   const startTime = performance.now();
   const errors: WASMCompileError[] = [];
   const warnings: WASMCompileWarning[] = [];
@@ -345,4 +353,19 @@ function countNodes(root: RootNode): { staticCount: number; dynamicCount: number
   }
 
   return { staticCount, dynamicCount };
+}
+
+/**
+ * 一次性告警：本模块并非真实 WASM 实现
+ */
+let warnedWasmSimulated = false;
+function warnWasmIsSimulated(): void {
+  if (warnedWasmSimulated) return;
+  warnedWasmSimulated = true;
+  if (__DEV__ && typeof console !== 'undefined') {
+    console.warn(
+      '[lytjs/compiler] @lytjs/compiler/wasm 当前是 JavaScript 模拟实现，' +
+        '并非 WebAssembly 编译产物；若需要真实 WASM 请关注后续版本。',
+    );
+  }
 }

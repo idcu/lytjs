@@ -292,3 +292,24 @@ import {
 - [@lytjs/common-vnode](https://www.npmjs.com/package/@lytjs/common-vnode): ^6.9.6
 - [@lytjs/common-string](https://www.npmjs.com/package/@lytjs/common-string): ^6.9.6
 - [@lytjs/common-constants](https://www.npmjs.com/package/@lytjs/common-constants): ^6.9.6
+
+## 生成产物的求值方式（重要）
+
+`compile()` 产出的是一段**模块级代码字符串**：`function render(_ctx, _cache) { ... }`
+（SSR 模式为 `function render(_ctx) { ... }`）。当前版本的两点约束：
+
+1. **helper 从 `@lytjs/core` 导入**（可用 `runtimeModuleName` 覆盖），例如
+   `<slot>` 会生成 `import { renderSlot } from '@lytjs/core'`；
+2. **绑定表达式尚未做标识符前缀化**：产物里是 `toDisplayString(message)` 而不是
+   `toDisplayString(_ctx.message)`。原因是前缀化需要作用域信息（例如 v-for 别名
+   属于局部变量，不能加前缀），这块尚未实现。
+
+因此求值产物时，需要让渲染上下文出现在作用域链上，例如：
+
+```ts
+const executor = new Function('_ctx', `with (_ctx) { ${code}; return render(_ctx); }`);
+const vnode = executor(setupState);
+```
+
+`@lytjs/renderer` 的 Vapor SSR 内部就是按这种方式求值的（见
+`src/vapor/vapor-ssr.ts`）。待标识符前缀化实现后，这段 `with` 即可去掉。

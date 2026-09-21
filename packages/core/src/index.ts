@@ -107,6 +107,10 @@ export { ref, reactive, computed, watch, watchEffect, effect } from '@lytjs/reac
 export { createVNode, Fragment, Text, Comment, cloneVNode, mergeProps } from '@lytjs/vdom';
 export { compile } from '@lytjs/compiler';
 
+// 模板运行时辅助函数（模板编译产物默认从 '@lytjs/core' 导入这些 helper）
+// <slot> 编译为 renderSlot(_ctx.$slots, name, props, fallback)
+export { renderSlot } from '@lytjs/component';
+
 export type {
   App,
   AppConfig,

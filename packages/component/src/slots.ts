@@ -62,3 +62,33 @@ export function normalizeSlotValue(value: unknown): VNode[] {
   }
   return [value as VNode];
 }
+
+/**
+ * 渲染插槽
+ *
+ * 这是模板编译产物 `<slot>` 所依赖的运行时入口（编译器会生成
+ * `renderSlot(_ctx.$slots, "name", props, fallback)`）。
+ *
+ * 契约：
+ * - `slots` 为组件实例的 `$slots`（由 initSlots 规范化），可能为 undefined
+ * - 插槽函数返回 VNode / VNode[]，统一规范化为 VNode[]
+ * - 无对应插槽时返回 `fallback`（缺省 `[]`，即渲染为空）
+ *
+ * @param slots  插槽表
+ * @param name   插槽名
+ * @param props  传给作用域插槽的参数
+ * @param fallback 无插槽时的回退内容
+ */
+export function renderSlot(
+  slots: Record<string, SlotFunction> | undefined | null,
+  name: string,
+  props: Record<string, unknown> = {},
+  fallback?: VNode | VNode[],
+): VNode[] {
+  const slot = slots?.[name];
+  if (isFunction(slot)) {
+    return normalizeSlotValue((slot as SlotFunction)(props));
+  }
+  if (fallback === undefined) return [];
+  return normalizeSlotValue(fallback);
+}

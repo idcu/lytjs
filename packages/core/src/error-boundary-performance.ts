@@ -6,6 +6,7 @@
 /* eslint-disable no-console */
 
 import type { ErrorReporter, ErrorContext } from './error-boundary';
+import { setGlobalErrorReporter } from './error-boundary';
 
 /** 性能监控集成配置 */
 export interface PerformanceIntegrationOptions {
@@ -125,8 +126,8 @@ export function initErrorBoundaryPerformanceIntegration(
   const reporter = new PerformanceErrorReporter(options);
   globalPerformanceReporter = reporter;
 
-  /* eslint-disable @typescript-eslint/no-require-imports */
-  const { setGlobalErrorReporter } = require('./error-boundary');
+  // 说明：此前这里用 `require('./error-boundary')` —— 本包是 ESM 产物，
+  // require 在浏览器/ESM 下不存在，调用即抛错。改为顶层 ESM 导入。
   setGlobalErrorReporter(reporter);
 
   return reporter;

@@ -49,33 +49,54 @@ function hasCodegenNode(
   return node.type === NodeTypes.ELEMENT && (node as ElementNode).codegenNode != null;
 }
 
-export function transformElement(node: ElementNode, context: TransformContext): void {
+/**
+ * 元素转换
+ *
+ * ⚠️ 关键：真正的 codegen 构建必须放到 **exit 回调** 中执行。
+ *
+ * 此前本函数是同步构建的：父元素在构建自己的 children 时，子元素的
+ * `codegenNode` 还没生成（子元素要等自己被遍历时才转换），于是
+ * `hasCodegenNode(child)` 全部为 false —— 结果 `<div><slot/></div>`、
+ * `<div><span/></div>` 这类模板的 children 会被**整片丢掉**，产物只剩
+ * `createElementVNode("div", null)`。改成 exit 回调后，父元素的构建发生在
+ * 所有子节点遍历完成之后，children 才完整。
+ *
+ * 需要同步拿到结果的调用方（v-if 链 / v-for / v-once / v-memo 会在自己的
+ * 转换里立刻读取 `element.codegenNode`）请传 `{ sync: true }`。
+ */
+export function transformElement(
+  node: ElementNode,
+  context: TransformContext,
+  options: { sync?: boolean } = {},
+): void | (() => void) {
   if (node.type !== NodeTypes.ELEMENT) return;
 
-  // 首先处理 v-if 链
-  const ifDirective = findDirective(node, 'if');
-  if (ifDirective) {
+  // <slot> 出口由 transformSlot 处理（编译为 renderSlot(...) 调用）。
+  // 若继续走普通元素路径，会产出 createVNode('slot')，插槽内容将无法被渲染。
+  if (node.tagType === ElementTypes.SLOT) return;
+
+  // v-if / v-for / v-once / v-memo 各自由专门的转换负责
+  if (
+    findDirective(node, 'if') ||
+    findDirective(node, 'for') ||
+    findDirective(node, 'once') ||
+    findDirective(node, 'memo')
+  ) {
     return;
   }
 
-  // 处理 v-for
-  const forDirective = findDirective(node, 'for');
-  if (forDirective) {
+  if (options.sync) {
+    buildElementCodegen(node, context);
     return;
   }
 
-  // 处理 v-once
-  const onceDirective = findDirective(node, 'once');
-  if (onceDirective) {
-    return;
-  }
+  return () => buildElementCodegen(node, context);
+}
 
-  // 处理 v-memo（由 transformVMemo 处理）
-  const memoDirective = findDirective(node, 'memo');
-  if (memoDirective) {
-    return;
-  }
-
+/**
+ * 真正的元素 codegen 构建（不做守卫判断，由 transformElement 调用）
+ */
+function buildElementCodegen(node: ElementNode, context: TransformContext): void {
   // 常规元素 - 转换为 VNodeCall
   const { tag, props, children } = node;
 

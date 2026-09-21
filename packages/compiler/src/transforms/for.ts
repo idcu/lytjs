@@ -134,7 +134,7 @@ export function transformFor(node: RootNode | TemplateChildNode, context: Transf
   }
 
   // 转换元素
-  transformElement(element, context);
+  transformElement(element, context, { sync: true });
 
   const codegenNode = element.codegenNode;
   if (!codegenNode) return;
