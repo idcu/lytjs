@@ -1,7 +1,10 @@
 # LytJS v6.9.6 发布包清单
 
 > 版本日期：2026-06-06
-> 总计：**89** 个可发布包（按下述分组统计）
+> 总计：**76** 个可发布包（按下述分组统计）
+>
+> 口径变更（2026-09-21）：13 个 `@lytjs/plugin-*` 已迁出至独立仓库 `lytjs-plugins`，
+> 不再属于本仓，故 89 → 76。插件清单见本文件末尾「已迁出」一节。
 >
 > 口径校正（2026-09-21）：此前写 86 个，漏计了 v6.10 起从 core 抽出的
 > `@lytjs/config`、`@lytjs/di`、`@lytjs/plugin` 三个独立包；实际 `packages/` 下共 89 个 package.json。
@@ -14,7 +17,7 @@
 | ------------------ | ------ | ---------------------------------------- |
 | 核心与运行时       | 14     | 响应式、虚拟 DOM、编译器、渲染、核心 API |
 | 工具层 (tools)     | 3      | CLI、DevTools、测试工具                  |
-| 插件层 (plugins)   | 13     | 官方插件                                 |
+| 插件层 (plugins)   | 0      | 已迁出至独立仓库 lytjs-plugins           |
 | 生态层 (ecosystem) | 22     | Router、SSR、Store、Web 框架、缓存等     |
 | Common 工具包      | 34     | 零依赖通用工具函数                       |
 | **总计**           | **86** |                                          |
@@ -32,13 +35,11 @@
 
 @lytjs/cli · @lytjs/devtools-extension · @lytjs/test-utils
 
-## 3. 插件层 plugins（13 个）
+## 3. 插件层 plugins（0 个）
 
-@lytjs/plugin-validation · @lytjs/plugin-data · @lytjs/plugin-vite
-· @lytjs/plugin-theme · @lytjs/plugin-testing · @lytjs/plugin-storage
-· @lytjs/plugin-logger · @lytjs/plugin-i18n · @lytjs/plugin-form
-· @lytjs/plugin-data-fetch · @lytjs/plugin-chart · @lytjs/plugin-auth
-· @lytjs/plugin-animation
+> **已迁出**：插件源码位于独立仓库 `lytjs-plugins`，本仓不再承载。
+> 使用方式不变（`pnpm add @lytjs/plugin-xxx`），但发布流程与版本节奏归该仓管理。
+> 详见文末「已迁出的包」一节。
 
 ## 4. 生态层 ecosystem（22 个）
 
@@ -91,11 +92,11 @@
 
 ## 发布状态
 
-- **总包数**：89 个
+- **总包数**：76 个
 - **版本**：6.9.6
 - **npm 组织**：@lytjs
 
-> ✅ 上述 89 个 `@lytjs/*` 包的 `package.json` 版本均已统一为 6.9.6。
+> ✅ 上述 76 个 `@lytjs/*` 包的 `package.json` 版本均已统一为 6.9.6。
 > ⚠️ 本清单为**发布包索引**，单次发布的实际明细以 `scripts/final-publish.ts` 运行结果为准。
 
 ---
@@ -120,3 +121,14 @@ npm view @lytjs/hmr version
 - **切勿在仓库文档中留存明文 npm token。** 发布凭据请使用本地环境变量或未提交的本地文件。
 - 参考模板文件为 `.npmrc_for_publish.example`（仅含占位，不含真实 token）。
 - `.npmrc` 不得包含 token。
+
+---
+
+## 已迁出的包（不计入本仓 76 个）
+
+13 个插件于 2026-09-21 完成真迁出（主仓副本已删除，`pnpm-workspace.yaml` 与
+`scripts/build-order.ts` 已同步移除）：
+
+@lytjs/plugin-vite · @lytjs/plugin-theme · @lytjs/plugin-logger · @lytjs/plugin-auth · @lytjs/plugin-storage · @lytjs/plugin-i18n · @lytjs/plugin-validation · @lytjs/plugin-data-fetch · @lytjs/plugin-data · @lytjs/plugin-chart · @lytjs/plugin-animation · @lytjs/plugin-testing · @lytjs/plugin-form
+
+源码位置：`/Volumes/Data/lytjs/plugins`（独立仓库 `lytjs-plugins`）。

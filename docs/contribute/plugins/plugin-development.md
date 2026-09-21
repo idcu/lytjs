@@ -43,7 +43,7 @@ LytJS 插件是基于 `definePlugin` API 创建的可插拔功能模块，提供
 ### 1. 创建目录结构
 
 ```
-packages/plugins/packages/plugin-xxx/
+lytjs-plugins/packages/plugin-xxx/   # 独立仓库（已迁出，不再位于主仓 packages/plugins/）
 ├── src/
 │   ├── index.ts      # 插件入口
 │   └── types.ts      # 类型定义
@@ -100,7 +100,7 @@ packages/plugins/packages/plugin-xxx/
   "repository": {
     "type": "git",
     "url": "https://gitee.com/lytjs/lytjs.git",
-    "directory": "packages/plugins/packages/plugin-xxx"
+    "directory": "packages/plugin-xxx" // 独立仓库内的相对路径
   },
   "keywords": ["lytjs", "plugin", "xxx"]
 }

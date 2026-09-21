@@ -3,7 +3,6 @@ packages:
   - 'packages/common/packages/*'
   - 'packages/ecosystem/packages/web-framework/packages/*'
   - 'packages/ecosystem/packages/ssr-kit/packages/*'
-  - 'packages/plugins/packages/*'
   - 'packages/tools/packages/*'
 
   # 生态系统单包（已整合到功能域的除外）

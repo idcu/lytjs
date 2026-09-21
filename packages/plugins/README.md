@@ -1,5 +1,13 @@
 # LytJS 官方插件
 
+> ⚠️ **已迁出（2026-09-21）**：13 个 `@lytjs/plugin-*` 的源码现已移至独立仓库
+> **`lytjs-plugins`**（`/Volumes/Data/lytjs/plugins`），主仓 `packages/plugins/packages/`
+> 下的副本已删除（此前两者逐文件 md5 一致，属"只复制未迁移"的双份状态）。
+>
+> - 本文件保留为**历史说明**；新插件请到独立仓库开发。
+> - 使用方式不变：`pnpm add @lytjs/plugin-xxx`（从 npm 安装）。
+> - 主仓 `pnpm-workspace.yaml` 与 `scripts/build-order.ts` 已同步移除该区。
+
 LytJS 官方插件集合，提供主题、日志、认证、存储、国际化等常用功能。
 
 ## 📦 插件列表

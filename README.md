@@ -299,7 +299,7 @@ lytjs/
 │   ├── core/                # L3 核心运行时层 - 完整版
 │   ├── core-signal/         # L3 核心运行时层 - 仅 Vapor 模式
 │   ├── core-vnode/          # L3 核心运行时层 - 仅 VNode 模式
-│   ├── plugins/             # L4 插件与适配层
+│   ├── plugins/             # L4 插件与适配层（13 个官方插件已迁出至独立仓库 lytjs-plugins）
 │   │   └── packages/
 │   │       ├── plugin-theme/
 │   │       ├── plugin-logger/

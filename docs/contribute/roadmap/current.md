@@ -169,9 +169,10 @@
   - ✅ 迁出 @lytjs/plugin-validation（`packages/plugin-validation`）
   - ✅ 迁出 @lytjs/plugin-vite（`packages/plugin-vite`，依赖 compiler 的 `./sfc` 子模块以 npm `^6.9.6` 引入，vite 为 peerDependency）
   - ✅ 工作区验证通过：build / type-check / lint / test 全绿（13 包全过，累计 203 测试）
-  - ⚠️ 13 个 @lytjs/plugin-\* 插件**已复制**到独立仓库 lytjs-plugins，但主仓
-    `packages/plugins/packages/` 下的副本尚未删除（逐文件 md5 一致），且仍在
-    `pnpm-workspace.yaml` 中被引用 ⇒ 属"双份并存"，迁出尚未真正完成。
+  - ✅ **真迁出已完成（2026-09-21）**：主仓 `packages/plugins/packages/` 副本已删除，
+    `pnpm-workspace.yaml` 与 `scripts/build-order.ts` 同步移除该区（workspace 包数 89 → 76）。
+    依赖面实测：主仓内对这些插件的 import 仅 4 处，且都是文档串/模板文本，零运行时依赖。
+    迁移目标仓自洽性已验证：`plugins` 仓可独立 `pnpm install`，抽查包 build + test 通过。
   - ✅ 推送 Gitee：远程 `gitee.com/lytjs/plugins.git` 已 push 成功（`main` 分支）
 
 **2. 基础包优化策略** ⚡ 中优先级

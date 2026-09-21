@@ -216,20 +216,20 @@ import {
 ### 构建所有插件
 
 ```bash
-cd packages/plugins
+cd ../../plugins   # 独立仓库 lytjs-plugins（主仓内的插件副本已于 2026-09 删除）
 pnpm build
 ```
 
 ### 运行插件测试
 
 ```bash
-cd packages/plugins
+cd ../../plugins   # 独立仓库 lytjs-plugins（主仓内的插件副本已于 2026-09 删除）
 pnpm test
 ```
 
 ### 添加新插件
 
-1. 在 `packages/plugins/packages/` 下创建新插件目录
+1. 在独立仓库 `lytjs-plugins` 的 `packages/` 下创建新插件目录（主仓已不再承载插件源码）
 2. 参考现有插件的结构
-3. 更新 `packages/plugins/packages/index.ts` 统一导出
+3. 更新独立仓库中的 `packages/index.ts` 统一导出
 4. 更新根目录 `package.json` 的构建脚本
