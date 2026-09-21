@@ -764,3 +764,40 @@ function executeHooks<HN, HE>(
 - [SSR 服务端渲染](../guide/ssr) - 服务端渲染完整指南
 - [渲染模式](../guide/rendering-modes) - DOM / Signal / SSR 渲染对比
 - [Island Architecture](../guide/ssr#island-architecture) - 部分水合策略
+
+---
+
+## Vapor / Signal 模式的组件支持
+
+Signal（Vapor）模式此前**完全没有组件概念**：组件标签会被当成普通 HTML 元素写进
+`createTemplate` 的模板串，DOM 里留下字面量 `<Child />`，组件的 setup/render 不会执行。
+
+现在通过运行时 `mountComponent()` + 编译产物中的占位元素解决：
+
+```ts
+// 模板 <div><Child :title="t"/></div> 的编译产物（节选）
+const _0 = createTemplate('<div><lyt-comp data-lyt-comp="Child"></lyt-comp></div>');
+const [_1] = _0.children;
+insert(_0, _n);
+mountComponent(_c.Child, { title: _c.t }, _1);
+```
+
+要点：
+
+| 项目     | 说明                                                                                                                                              |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 占位元素 | 组件在模板串里被序列化为 `<lyt-comp data-lyt-comp="Child">`（**必须是元素**：注释节点不在 `element.children` 里，会让后续按下标取元素的变量错位） |
+| props    | 静态属性与 `v-bind` 表达式都会进入传给组件的 props 对象（表达式前缀为 `_c.`）                                                                     |
+| 更新策略 | 首版采用 **effect 包裹的整体重渲染**（依赖变化时重建该组件子树），正确性优先；细粒度更新留待后续版本                                              |
+| 非优化版 | `optimizeSignal: false` 走 `generateSignal`，**尚未实现组件挂载**，编译时会给出一次性告警                                                         |
+| 已知限制 | 组件插槽内容（`<Child>...`）暂不参与 Vapor 编译；组件事件（v-on）暂不传入                                                                         |
+
+```ts
+import { mountComponent } from '@lytjs/renderer';
+
+export function mountComponent(
+  comp: unknown,
+  props: Record<string, unknown> | null | undefined,
+  container: unknown,
+): void;
+```

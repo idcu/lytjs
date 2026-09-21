@@ -59,32 +59,59 @@ describe('Signal 模式 - v-for 项内容', () => {
   });
 });
 
-describe('Signal 模式 - 子组件（已知限制需显式告警）', () => {
+describe('Signal 模式 - 子组件（优化版已支持挂载）', () => {
   beforeEach(() => resetVaporComponentWarnings());
 
-  it('遇到组件标签应给出一次性告警', () => {
+  it('应生成 mountComponent 调用（而不是把标签当 HTML 输出）', () => {
+    const code = compile('<div><Child :title="t"/></div>', { rendererMode: 'signal' }).code;
+
+    expect(code).toContain('mountComponent');
+    expect(code).toContain('_c.Child');
+    expect(code).toContain('"title":_c.t');
+    // 不再出现字面量组件标签
+    expect(code).not.toContain('<Child');
+  });
+
+  it('组件应被序列化为占位元素以保持结构位置', () => {
+    const code = compile('<div><Child/></div>', { rendererMode: 'signal' }).code;
+    // 占位必须是元素（不是注释）：注释不在 element.children 里会打乱下标
+    expect(code).toContain('lyt-comp');
+    expect(code).toContain('data-lyt-comp');
+    expect(code).not.toContain('<Child');
+  });
+
+  it('静态属性应进入 props 对象', () => {
+    const code = compile('<div><Child a="1"/></div>', { rendererMode: 'signal' }).code;
+    expect(code).toContain('{"a":"1"}');
+  });
+
+  it('无值静态属性应写为 true', () => {
+    const code = compile('<div><Child flag/></div>', { rendererMode: 'signal' }).code;
+    expect(code).toContain('{"flag":true}');
+  });
+
+  it('v-bind 对象语法（无 arg）应被忽略而不是产出非法 props', () => {
+    const code = compile('<div><Child v-bind="obj"/></div>', { rendererMode: 'signal' }).code;
+    expect(code).toContain('mountComponent');
+    expect(code).not.toContain('{undefined:');
+  });
+
+  it('事件指令不应进入 props 对象', () => {
+    const code = compile('<div><Child @click="onClick"/></div>', { rendererMode: 'signal' }).code;
+    expect(code).toContain('mountComponent');
+    expect(code).not.toContain('onClick');
+  });
+
+  it('非优化版（optimizeSignal:false）仍应给出不支持告警', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    compile('<div><Child :title="t"/></div>', { rendererMode: 'signal' });
+    compile('<div><Child/></div>', { rendererMode: 'signal', optimizeSignal: false });
 
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('暂不支持子组件'));
-    expect(warn).toHaveBeenCalledWith(expect.stringContaining('Child'));
     warn.mockRestore();
   });
 
-  it('普通元素不应触发该告警', () => {
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    compile('<div><span>hi</span></div>', { rendererMode: 'signal' });
-
-    expect(warn).not.toHaveBeenCalledWith(expect.stringContaining('暂不支持子组件'));
-    warn.mockRestore();
-  });
-
-  it('VNode 模式不受该限制影响', () => {
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+  it('VNode 模式组件标签应前缀化', () => {
     const code = compile('<div><Child/></div>').code;
-
-    expect(warn).not.toHaveBeenCalledWith(expect.stringContaining('暂不支持子组件'));
     expect(code).toContain('_ctx.Child');
-    warn.mockRestore();
   });
 });

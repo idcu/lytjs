@@ -188,23 +188,24 @@ function buildCompileCacheKey(source: string, options: CompilerOptions): string 
   // FIX: P2-2 使用内容哈希替代原始 source 字符串，减少缓存键大小
   const contentHash = computeContentHash(source);
 
-  return hashString(
-    contentHash +
-      '|' +
-      String(options.ssrMode ?? false) +
-      '|' +
-      String(options.rendererMode ?? '') +
-      '|' +
-      String(options.scopeId ?? '') +
-      '|' +
-      String(options.inline ?? false) +
-      '|' +
-      String(options.mode ?? '') +
-      '|' +
-      String(options.prefixIdentifiers ?? false) +
-      '|' +
-      String(options.whitespace ?? ''),
-  );
+  // 缓存键必须覆盖**所有**影响产物的选项。
+  // 此前这里只列了 7 个字段，漏掉了 `optimizeSignal` 等影响 codegen 分支的选项 ——
+  // 结果是：同一模板先按默认（优化版）编译一次后，再用 `optimizeSignal:false`
+  // 请求非优化版，会命中缓存直接返回优化版产物（错误结果）。
+  // 这里改为"把所有标量选项按 key 排序后序列化"，避免今后再次遗漏。
+  const record = options as unknown as Record<string, unknown>;
+  const optionsKey = Object.keys(record)
+    .sort()
+    .map((key) => {
+      const value = record[key];
+      // 非标量（函数 / 数组 / 对象）不参与：带自定义 transform 的结果本就不入缓存
+      if (value === null || value === undefined) return `${key}=`;
+      if (typeof value === 'object' || typeof value === 'function') return `${key}=<obj>`;
+      return `${key}=${String(value)}`;
+    })
+    .join('|');
+
+  return hashString(contentHash + '|' + optionsKey);
 }
 
 /**

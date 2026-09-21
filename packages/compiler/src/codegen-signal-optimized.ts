@@ -2,9 +2,8 @@
 // Signal 模式代码生成器 - 优化版本
 // 目标：生成代码体积减少 30%+
 
-import { NodeTypes } from './constants';
+import { NodeTypes, ElementTypes } from './constants';
 import { prefixIdentifiers } from './prefix-identifiers';
-import { warnUnsupportedVaporComponents } from './codegen-signal';
 import type {
   RootNode,
   ElementNode,
@@ -57,6 +56,8 @@ const RUNTIME_SHORT_NAMES = {
   onCleanup: 'o',
   runCleanups: 'g',
   reconcileArray: 'n',
+  // 组件挂载（来自 @lytjs/renderer）
+  mountComponent: 'm',
 } as const;
 
 // ============================================================
@@ -87,7 +88,8 @@ function getShortName(funcName: string, useShortNames: boolean): string {
 // ============================================================
 
 export function generateSignalOptimized(ast: RootNode, _options?: CompilerOptions): CodegenResult {
-  warnUnsupportedVaporComponents(ast);
+  // 优化版已支持子组件（占位元素 + mountComponent 运行时），无需再告警。
+  // 告警只保留在非优化版 generateSignal 中（它尚未实现组件挂载）。
   const options: SignalCodegenOptions = {
     mode: 'signal',
     useShortNames: true, // 启用短别名优化以减少代码体积
@@ -214,6 +216,10 @@ function generateOptimizedImports(usedRuntime: Set<string>, useShortNames: boole
     if (domImports.length > 0) {
       result += `\nimport{${domImports.join(',')}}from'@lytjs/dom-runtime';`;
     }
+    if (usedRuntime.has('mountComponent')) {
+      const mc = getShortName('mountComponent', true);
+      result += `\nimport{${mc} as mountComponent}from'@lytjs/renderer';`;
+    }
     return result;
   } else {
     // 标准名称模式
@@ -237,6 +243,9 @@ function generateOptimizedImports(usedRuntime: Set<string>, useShortNames: boole
     let result = `import{${reactivityImports.join(',')}}from'@lytjs/reactivity';`;
     if (domImports.length > 0) {
       result += `\nimport{${domImports.join(',')}}from'@lytjs/dom-runtime';`;
+    }
+    if (usedRuntime.has('mountComponent')) {
+      result += `\nimport{mountComponent}from'@lytjs/renderer';`;
     }
     return result;
   }
@@ -322,6 +331,18 @@ function serializeStaticHTMLOptimized(
   varCounter: Map<string, number>,
   elementVars: Array<{ varName: string; tag: string }>,
 ): string {
+  // 组件：不再把标签写进模板串（那会在 DOM 里留下字面量 <Child />），
+  // 改为输出一个占位元素 `<lyt-comp data-lyt-comp="Child">` 保住结构位置，
+  // 随后由运行时 mountComponent 把组件挂载进去。
+  // 注意：占位必须是**元素**而不是注释 —— 注释不在 element.children 里，
+  // 会让后续按下标取元素的 `_N` 变量全部错位。
+  if (node.tagType === ElementTypes.COMPONENT) {
+    const idx = elementVars.length;
+    const varName = `_${idx}`;
+    elementVars.push({ varName, tag: 'lyt-comp' });
+    return `<lyt-comp data-lyt-comp="${node.tag}"></lyt-comp>`;
+  }
+
   // 使用更短的变量名：_0, _1, _2...
   const idx = elementVars.length;
   const varName = `_${idx}`;
@@ -412,6 +433,22 @@ function processElementOptimized(
   usedRuntime: Set<string>,
   options: SignalCodegenOptions,
 ): void {
+  // 组件：生成 mountComponent(_c.Tag, props, 占位元素) 调用
+  if (node.tagType === ElementTypes.COMPONENT) {
+    const hostIdx = findElementIndex(elementVars, 'lyt-comp', consumedCount);
+    const hostVar = hostIdx !== null ? elementVars[hostIdx]!.varName : `_${elementVars.length}`;
+
+    usedRuntime.add('mountComponent');
+    const mc = getShortName('mountComponent', options.useShortNames ?? true);
+    const propsObj = buildComponentPropsObject(node);
+
+    dynamicBindings.push({
+      varName: hostVar,
+      code: `${mc}(_c.${node.tag},${propsObj},${hostVar});`,
+    });
+    return;
+  }
+
   // 使用索引变量名
   const idx = findElementIndex(elementVars, node.tag, consumedCount);
   const varName = idx !== null ? elementVars[idx]!.varName : `_${elementVars.length}`;
@@ -1242,4 +1279,35 @@ function buildItemProps(
     }
   }
   return { create, update };
+}
+
+/**
+ * 构造传给组件的 props 对象字面量。
+ *
+ * 静态属性原样写入；v-bind 的表达式按 `_c.` 前缀化（本模式上下文形参是 `_c`）。
+ * 事件（v-on）暂不参与（Vapor 组件事件绑定留待后续版本）。
+ */
+function buildComponentPropsObject(node: ElementNode): string {
+  const parts: string[] = [];
+
+  for (const prop of node.props) {
+    if (!prop) continue;
+    if (prop.type === NodeTypes.ATTRIBUTE) {
+      const value = prop.value ? JSON.stringify(prop.value.content) : 'true';
+      parts.push(`${JSON.stringify(prop.name)}:${value}`);
+      continue;
+    }
+    if (prop.type === NodeTypes.DIRECTIVE) {
+      const dir = prop as DirectiveNode;
+      if (dir.name !== 'bind') continue;
+      if (!dir.arg || !dir.exp) continue;
+      const key = getExpContent(dir.arg as SimpleExpressionNode);
+      const raw = getExpContent(dir.exp as SimpleExpressionNode);
+      if (!key || !raw) continue;
+      const expr = prefixIdentifiers(raw, new Set()).replace(/\b_ctx\./g, '_c.');
+      parts.push(`${JSON.stringify(key)}:${expr}`);
+    }
+  }
+
+  return `{${parts.join(',')}}`;
 }

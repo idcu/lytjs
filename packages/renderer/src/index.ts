@@ -521,3 +521,7 @@ export type {
   PrefetchDataEntry,
   PrefetchManager,
 } from './data/data-fetching';
+
+// Vapor/Signal 模式组件挂载
+export { mountComponent } from './vapor/mount-component';
+export type { VaporComponentLike } from './vapor/mount-component';
