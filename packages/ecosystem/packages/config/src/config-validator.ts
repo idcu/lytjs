@@ -226,7 +226,9 @@ export class ConfigValidator {
 
     // integer
     if (numberSchema.integer && !Number.isInteger(value)) {
-      errors.push(this.createError(path, 'type_error', 'Value must be an integer', 'integer', value));
+      errors.push(
+        this.createError(path, 'type_error', 'Value must be an integer', 'integer', value),
+      );
     }
 
     // minimum
@@ -435,7 +437,9 @@ export class ConfigValidator {
     const errors: ConfigValidationError[] = [];
 
     if (!Array.isArray(value)) {
-      errors.push(this.createError(path, 'type_error', `Expected array, got ${typeof value}`, 'array', value));
+      errors.push(
+        this.createError(path, 'type_error', `Expected array, got ${typeof value}`, 'array', value),
+      );
       return errors;
     }
 

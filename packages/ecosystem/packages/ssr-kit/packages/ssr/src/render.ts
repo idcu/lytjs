@@ -5,6 +5,7 @@
  */
 
 import type { VNode } from '@lytjs/vdom';
+import { createComponentInstance, setupComponent } from '@lytjs/component';
 import { isString, isNumber, isArray, isObject, isFunction } from '@lytjs/common-is';
 
 /**
@@ -57,10 +58,18 @@ export function renderToString(
     return escapeHtml(String(node.children || ''));
   }
 
-  // 处理组件
+  // 处理函数式组件
   if (isFunction(node.type)) {
-    // 简化处理：组件返回空字符串
-    return '';
+    const component = node.type as unknown as (props: unknown, ctx: unknown) => unknown;
+    const result = component((node.props as Record<string, unknown>) ?? {}, {
+      slots: (node.children as Record<string, unknown>) ?? {},
+    });
+    return renderToString(result as VNode | VNode[] | string | number | null | undefined);
+  }
+
+  // 处理选项式组件（defineComponent 返回的是选项对象，因此 type 为 object）
+  if (isObject(node.type)) {
+    return renderComponentNode(node);
   }
 
   // 处理元素
@@ -98,6 +107,43 @@ export function renderToString(
   }
 
   return '';
+}
+
+/**
+ * 渲染选项式组件节点
+ *
+ * 修复说明：旧实现对组件一律 `return ''`，而 defineComponent 返回的是选项对象，
+ * 于是**任何由组件构成的页面 SSR 输出都是空壳**（只有 <div id="app"></div>）。
+ * 现在走组件实例：createComponentInstance → setupComponent（执行 setup、初始化
+ * props/slots）→ 取渲染函数产出 subTree → 递归渲染。
+ *
+ * 渲染函数契约遵循本框架约定：优先 instance.render（setup 返回的函数），
+ * 其次 options.render。
+ */
+function renderComponentNode(node: VNode): string {
+  const type = node.type as { name?: string; render?: unknown };
+
+  const instance = createComponentInstance(node, null);
+  setupComponent(instance);
+
+  const renderFn = instance.render ?? (type.render as typeof instance.render);
+  if (typeof renderFn !== 'function') {
+    // 不静默输出空串：明确告警并退化为渲染默认插槽内容
+    if (typeof console !== 'undefined') {
+      console.warn(
+        `[lytjs/ssr] 组件 "${type.name ?? 'anonymous'}" 没有可用的渲染函数，` +
+          'SSR 需要 setup 返回渲染函数或提供 options.render；已退化为渲染其默认插槽。',
+      );
+    }
+    const slots = instance.slots as Record<string, unknown> | undefined;
+    const defaultSlot = slots?.default as (() => unknown) | undefined;
+    const children = typeof defaultSlot === 'function' ? defaultSlot() : node.children;
+    return renderToString(children as VNode | VNode[] | null | undefined);
+  }
+
+  const subTree = renderFn.call(instance.ctx, instance.ctx);
+  instance.subTree = subTree as typeof instance.subTree;
+  return renderToString(subTree as VNode | VNode[] | string | number | null | undefined);
 }
 
 /**

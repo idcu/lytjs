@@ -16,10 +16,7 @@ export { InjectionToken, isInjectionToken } from './token';
 export { InjectionError, isProviderConfig } from './errors';
 
 // 生命周期作用域
-export {
-  setProviderScopeFactory,
-  getProviderScopeFactory,
-} from './scope';
+export { setProviderScopeFactory, getProviderScopeFactory } from './scope';
 export type { ProviderScope, ProviderScopeFactory } from './scope';
 
 // Provider 树

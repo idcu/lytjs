@@ -16,7 +16,7 @@ function main(): void {
   for (const pkgFile of pkgFiles) {
     const pkg = JSON.parse(readFileSync(pkgFile, 'utf-8'));
     const depFields = ['dependencies', 'devDependencies', 'peerDependencies'] as const;
-    
+
     for (const field of depFields) {
       if (pkg[field]) {
         for (const [dep, version] of Object.entries(pkg[field])) {

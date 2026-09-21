@@ -25,6 +25,7 @@ pnpm run dev
 ```
 
 Or start a simple HTTP server:
+
 ```bash
 python -m http.server 8080
 ```

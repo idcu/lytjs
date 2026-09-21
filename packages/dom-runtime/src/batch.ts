@@ -409,22 +409,22 @@ export function createVaporListRenderer<T>(
     // 优化 1: 首次渲染直接批量插入，不做 diff
     if (currentItems.length === 0) {
       const fragment = document.createDocumentFragment();
-      
+
       for (let index = 0; index < items.length; index++) {
         const item = items[index]!;
         const key = keyFn(item);
         const rendered = renderItem(item, index);
         const nodes = Array.isArray(rendered) ? rendered : [rendered];
-        
+
         if (onMount) onMount(item, index, nodes);
-        
+
         for (const node of nodes) {
           fragment.appendChild(node);
         }
-        
+
         itemCache.set(key, { item, nodes, index });
       }
-      
+
       container.appendChild(fragment);
       currentItems = [...items];
       return;
@@ -434,26 +434,27 @@ export function createVaporListRenderer<T>(
     currentItems = [...items];
 
     // 优化 2: 简单情况（完全替换）直接用 DocumentFragment
-    const isCompleteReplace = diff.removed.length === itemCache.size || 
-                             (diff.removed.length === 0 && diff.added.length === items.length);
+    const isCompleteReplace =
+      diff.removed.length === itemCache.size ||
+      (diff.removed.length === 0 && diff.added.length === items.length);
     if (isCompleteReplace) {
       const fragment = document.createDocumentFragment();
-      
+
       for (let index = 0; index < items.length; index++) {
         const item = items[index]!;
         const key = keyFn(item);
         const rendered = renderItem(item, index);
         const nodes = Array.isArray(rendered) ? rendered : [rendered];
-        
+
         if (onMount) onMount(item, index, nodes);
-        
+
         for (const node of nodes) {
           fragment.appendChild(node);
         }
-        
+
         itemCache.set(key, { item, nodes, index });
       }
-      
+
       container.textContent = '';
       container.appendChild(fragment);
       return;

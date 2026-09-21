@@ -6,6 +6,10 @@
 
 import type { VNode } from '@lytjs/vdom';
 import { createVNode } from '@lytjs/vdom';
+import { Fragment, Text } from '@lytjs/vdom';
+import { onErrorCaptured } from '@lytjs/component';
+import type { ComponentOptions, RenderFunction } from '@lytjs/component';
+import { ref } from '@lytjs/reactivity';
 
 /** 错误信息 */
 export interface ErrorInfo {
@@ -38,6 +42,8 @@ export interface ErrorBoundaryProps {
 /** 错误报告上下文 */
 export interface ErrorContext {
   componentName?: string;
+  /** 组件调用栈（由 onErrorCaptured 的 info 提供） */
+  componentStack?: string;
   props?: Record<string, unknown>;
   state?: Record<string, unknown>;
   url?: string;
@@ -207,104 +213,192 @@ interface ErrorBoundaryState {
   isRetrying: boolean;
 }
 
-/** 错误边界组件实现 */
-export function ErrorBoundary(props: ErrorBoundaryProps): VNode {
-  const maxRetries = props.maxRetries ?? 3;
-  const retryDelay = props.retryDelay ?? 1000;
+function toError(value: unknown): Error {
+  return value instanceof Error ? value : new Error(String(value));
+}
 
-  const state: ErrorBoundaryState = {
-    error: null,
-    errorInfo: null,
-    retryCount: 0,
-    resetKey: 0,
-    isRetrying: false,
-  };
+/**
+ * 错误边界组件
+ *
+ * 修复说明：旧实现是一个普通函数组件，内部**没有任何捕获通道**（无 try/catch、
+ * 未接入 onErrorCaptured），`state.error` 恒为 null，因此永远不会渲染 fallback，
+ * 只会输出一个空的 `<error-boundary-wrapper>`。现在改为真正的组件实现：
+ *   - 通过 onErrorCaptured 捕获子树错误（返回 false 阻止继续冒泡）
+ *   - 用响应式 ref 驱动 fallback 渲染
+ *   - 支持 fallback / fallbackRender / 具名 fallback 插槽 / 重试与重置
+ *   - 错误同时进入全局 reporter 与 errorLogManager，便于上报与排查
+ */
+export const ErrorBoundary: ComponentOptions = {
+  name: 'ErrorBoundary',
+  props: {
+    fallback: { type: Object },
+    fallbackRender: { type: Function },
+    onError: { type: Function },
+    maxRetries: { type: Number, default: 3 },
+    retryDelay: { type: Number, default: 0 },
+    onRetry: { type: Function },
+    onMaxRetriesReached: { type: Function },
+  },
+  setup(props: Record<string, unknown>) {
+    const errorRef = ref<Error | null>(null);
+    const errorInfoRef = ref<ErrorInfo | null>(null);
+    const retryCountRef = ref(0);
+    const resetKeyRef = ref(0);
 
-  const reset = () => {
-    state.error = null;
-    state.errorInfo = null;
-    state.retryCount = 0;
-    state.isRetrying = false;
-    state.resetKey++;
-  };
+    const maxRetries = (props.maxRetries as number | undefined) ?? 3;
+    const retryDelay = (props.retryDelay as number | undefined) ?? 0;
 
-  const retry = () => {
-    if (state.retryCount < maxRetries) {
-      state.isRetrying = true;
+    /** 仅清除错误状态（保留重试计数，用于"重试"语义） */
+    const clearError = (): void => {
+      errorRef.value = null;
+      errorInfoRef.value = null;
+      resetKeyRef.value += 1;
+    };
 
-      if (props.onRetry) {
-        props.onRetry(state.retryCount + 1);
+    /** 完全重置（错误 + 重试计数，用于"重置"语义） */
+    const reset = (): void => {
+      clearError();
+      retryCountRef.value = 0;
+    };
+
+    const retry = (): void => {
+      if (retryCountRef.value < maxRetries) {
+        retryCountRef.value += 1;
+        (props.onRetry as ((n: number) => void) | undefined)?.(retryCountRef.value);
+        if (retryDelay > 0) {
+          setTimeout(clearError, retryDelay);
+        } else {
+          clearError();
+        }
+      } else if (errorRef.value) {
+        (props.onMaxRetriesReached as ((e: Error) => void) | undefined)?.(errorRef.value);
+      }
+    };
+
+    onErrorCaptured((err: unknown, _instance: unknown, info: string) => {
+      const error = toError(err);
+      const errorInfo: ErrorInfo = { componentStack: info, timestamp: new Date() };
+      errorRef.value = error;
+      errorInfoRef.value = errorInfo;
+      // 注意：这里**不能**把 retryCount 归零，否则每次捕获都重置预算，
+      // maxRetries 将永远无法触顶（重试次数变成无上限）。
+      const state: ErrorBoundaryState = {
+        error,
+        errorInfo,
+        retryCount: retryCountRef.value,
+        resetKey: resetKeyRef.value,
+        isRetrying: false,
+      };
+
+      // 上报：全局 reporter + 本地日志（供 DevTools / 排查使用）
+      try {
+        globalReporter.report(error, {
+          componentStack: info,
+          timestamp: errorInfo.timestamp,
+          url: typeof location !== 'undefined' ? location.href : undefined,
+        });
+      } catch {
+        // 上报失败不影响渲染降级
+      }
+      errorLogManager.addLog({
+        id: generateErrorId(),
+        timestamp: errorInfo.timestamp,
+        error,
+        errorInfo,
+        context: { componentStack: info, timestamp: errorInfo.timestamp },
+        retryCount: state.retryCount,
+      });
+
+      (props.onError as ((e: Error, info: ErrorInfo) => void) | undefined)?.(error, errorInfo);
+      return false; // 阻止错误继续向上传播
+    });
+
+    const render: RenderFunction = (ctx): VNode => {
+      const error = errorRef.value;
+      const errorInfo = errorInfoRef.value;
+
+      if (!error) {
+        // 正常状态：渲染默认插槽（子树）
+        const defaultSlot = ctx.$slots?.default;
+        if (defaultSlot) {
+          const result = defaultSlot();
+          if (Array.isArray(result)) {
+            if (result.length === 0) return createElement(Text, null);
+            if (result.length === 1) return result[0] as VNode;
+            return createElement(Fragment, null, result);
+          }
+          if (result) return result as VNode;
+        }
+        return createElement(Text, null);
       }
 
-      setTimeout(() => {
-        reset();
-      }, retryDelay);
-    } else {
-      if (props.onMaxRetriesReached && state.error) {
-        props.onMaxRetriesReached(state.error);
-      }
-    }
-  };
-
-  const getFallback = (): VNode => {
-    const hasRetries = state.retryCount < maxRetries;
-
-    if (props.fallback) {
-      return createElement(props.fallback, {
-        error: state.error!,
-        errorInfo: state.errorInfo!,
+      const hasRetries = retryCountRef.value < maxRetries;
+      const fallbackProps: FallbackProps = {
+        error,
+        errorInfo: errorInfo ?? { timestamp: new Date() },
         reset,
         retry,
-        retryCount: state.retryCount,
+        retryCount: retryCountRef.value,
         maxRetries,
         hasRetries,
-      } as FallbackProps);
-    }
+      };
 
-    if (props.fallbackRender) {
-      return props.fallbackRender(state.error!, state.errorInfo!, reset);
-    }
+      // 1) 渲染函数式 fallback
+      if (typeof props.fallbackRender === 'function') {
+        return (props.fallbackRender as (e: Error, i: ErrorInfo, r: () => void) => VNode)(
+          fallbackProps.error,
+          fallbackProps.errorInfo,
+          reset,
+        );
+      }
 
-    return DefaultErrorFallback({
-      error: state.error!,
-      errorInfo: state.errorInfo!,
-      reset,
-      retry,
-      retryCount: state.retryCount,
-      maxRetries,
-      hasRetries,
-    });
+      // 2) 组件式 fallback（对象 / 函数组件）
+      if (props.fallback) {
+        return createElement(props.fallback, fallbackProps as unknown as Record<string, unknown>);
+      }
+
+      // 3) 具名 fallback 插槽
+      const fallbackSlot = ctx.$slots?.fallback;
+      if (fallbackSlot) {
+        const result = fallbackSlot({ error }) as VNode | VNode[];
+        if (Array.isArray(result)) {
+          if (result.length === 1) return result[0] as VNode;
+          return createElement(Fragment, null, result);
+        }
+        return result as VNode;
+      }
+
+      // 4) 默认错误 UI
+      return DefaultErrorFallback(fallbackProps);
+    };
+
+    // 注意渲染函数契约：本框架只把 **setup 的返回值（函数）** 或 options.render
+    // 接到 instance.render 上（见 component-setup.ts:221 与 vdom patch-component.ts:97）。
+    // 若把 render 塞进返回的对象里，组件会被判定为"没有渲染函数"而渲染不出任何内容
+    // —— @lytjs/component 自带的 ErrorBoundary 正是踩了这个坑（已同步修正）。
+    return render;
+  },
+};
+
+/** 错误边界钩子 - 在任意位置手动抛出错误，交给最近的 ErrorBoundary 处理 */
+export function useErrorHandler(): (error: unknown) => never {
+  return (error: unknown) => {
+    throw toError(error);
   };
-
-  if (state.error) {
-    return createElement(
-      'error-boundary-wrapper',
-      { 'data-error': 'true', key: `reset-${state.resetKey}` },
-      [getFallback()],
-    );
-  }
-
-  return createElement(
-    'error-boundary-wrapper',
-    {
-      'data-error': 'false',
-      key: `reset-${state.resetKey}`,
-    },
-    null,
-  );
 }
 
-/** 错误边界钩子 - 用于手动触发错误 */
-export function useErrorHandler(): (error: Error) => void {
-  return (error: Error) => {
-    throw error;
-  };
-}
-
-/** 错误边界重置钩子 */
+/**
+ * 错误边界重置钩子
+ *
+ * 说明：重置能力绑定在具体边界实例上，请在 fallback 渲染函数里使用传入的 `reset`
+ * （`fallbackRender(error, info, reset)`）。此钩子仅为兼容旧 API 保留，调用时给出明确提示。
+ */
 export function useErrorBoundaryReset(): () => void {
   return () => {
-    console.warn('useErrorBoundaryReset should be used within ErrorBoundary');
+    console.warn(
+      '[LytJS] useErrorBoundaryReset() 需要在 ErrorBoundary 内部使用；' +
+        '请改用 fallbackRender(error, info, reset) 提供的 reset 参数。',
+    );
   };
 }
 

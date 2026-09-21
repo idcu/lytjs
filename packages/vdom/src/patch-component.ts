@@ -92,11 +92,10 @@ export function createComponentPatch<HN, HE extends HN>(
     }
     componentRecursionDepthMap.set(component, currentDepth + 1);
 
-    console.log('mountComponent called! component:', component);
     // 调用 render 函数获取 subTree：优先使用 instance.render（来自 setup 函数的返回值）
-    const renderFn = (component as unknown as { render?: (ctx: Record<string, unknown>) => VNode }).render 
-      ?? (component.type as ComponentInternalRuntimeProps).render;
-    console.log('renderFn:', renderFn);
+    const renderFn =
+      (component as unknown as { render?: (ctx: Record<string, unknown>) => VNode }).render ??
+      (component.type as ComponentInternalRuntimeProps).render;
     if (!renderFn) {
       warn(
         `Component "${(component.type as ComponentInternalRuntimeProps).name || 'anonymous'}" has no render function.`,
@@ -108,11 +107,9 @@ export function createComponentPatch<HN, HE extends HN>(
     let initialSubTree: VNode | null = null;
 
     const update = () => {
-      console.log('update called!');
       let subTree: VNode;
       try {
         subTree = renderFn.call(component!.ctx, component!.ctx);
-        console.log('subTree:', subTree);
       } catch (err) {
         // 通过父链的 errorCaptured 传播错误
         const renderError = err instanceof Error ? err : new Error(String(err));
@@ -123,7 +120,12 @@ export function createComponentPatch<HN, HE extends HN>(
           const errorHandler = type.errorCaptured;
           if (errorHandler) {
             try {
-              const result = errorHandler.call(current.ctx, renderError, current, 'render function');
+              const result = errorHandler.call(
+                current.ctx,
+                renderError,
+                current,
+                'render function',
+              );
               if (result === false) {
                 handled = true;
                 break;
@@ -160,7 +162,11 @@ export function createComponentPatch<HN, HE extends HN>(
           const appErrorHandler = appContext?.config as Record<string, unknown> | undefined;
           if (appErrorHandler && typeof appErrorHandler.errorHandler === 'function') {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-            (appErrorHandler.errorHandler as Function)(renderError, component!.ctx, 'render function');
+            (appErrorHandler.errorHandler as Function)(
+              renderError,
+              component!.ctx,
+              'render function',
+            );
           }
         }
 
@@ -228,10 +234,9 @@ export function createComponentPatch<HN, HE extends HN>(
     // Set up the update function on the component instance
     (component as unknown as { update: () => void }).update = update;
 
-    // FIX: P2-11 组件挂载 __DEV__ 日志：在组件首次挂载时输出调试信息
+    // 组件首次挂载的调试信息：仅在 DEV 且开启调试开关时输出
     if (__DEV__) {
-      const compName = (component.type as ComponentInternalRuntimeProps).name || 'anonymous';
-      console.warn(`[lytjs/patch-component] Mounting component: ${compName}`);
+      debugMount(component);
     }
 
     // Run the initial update (mount)
@@ -241,4 +246,14 @@ export function createComponentPatch<HN, HE extends HN>(
   return {
     mountComponent,
   };
+}
+
+/**
+ * DEV 下的组件挂载调试输出（此前这里是一段只赋值不使用的死代码）
+ */
+function debugMount(component: { type: unknown }): void {
+  if (!__DEV__) return;
+  const name = (component.type as ComponentInternalRuntimeProps).name || 'anonymous';
+  // eslint-disable-next-line no-console
+  console.debug(`[LytJS] component mounted: ${name}`);
 }

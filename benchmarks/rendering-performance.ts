@@ -173,7 +173,8 @@ export class RenderingPerformanceBenchmark {
       };
 
       // 检查性能回归
-      if (percentChange > 5) { // 性能下降超过 5%
+      if (percentChange > 5) {
+        // 性能下降超过 5%
         hasRegression = true;
         if (percentChange > 50) {
           regressionSeverity = 'severe';
@@ -243,7 +244,7 @@ export class RenderingPerformanceBenchmark {
     if (comparison.baseline) {
       const sign = comparison.diff.percentChange >= 0 ? '+' : '';
       output += `  平均耗时变化: ${sign}${comparison.diff.percentChange.toFixed(2)}%\n`;
-      
+
       if (comparison.hasRegression) {
         const severityText = {
           minor: '轻微',
@@ -273,7 +274,7 @@ export function runQuickPerformanceSuite(): RenderPerformanceResult[] {
     '简单列表渲染 (100 items)',
     () => {
       const items = Array.from({ length: 100 }, (_, i) => `Item ${i}`);
-      items.map(item => `<div>${item}</div>`).join('');
+      items.map((item) => `<div>${item}</div>`).join('');
     },
     { iterations: 1000 },
   );
@@ -290,7 +291,7 @@ export function runQuickPerformanceSuite(): RenderPerformanceResult[] {
       void `<div class="container">
         <h1>${data.title}</h1>
         <ul>
-          ${data.visible ? data.items.map(item => `<li>${item.text}</li>`).join('') : ''}
+          ${data.visible ? data.items.map((item) => `<li>${item.text}</li>`).join('') : ''}
         </ul>
       </div>`;
     },

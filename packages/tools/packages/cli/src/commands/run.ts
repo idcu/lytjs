@@ -4,6 +4,7 @@
  * Main entry point for the CLI. Parses arguments and routes to commands.
  */
 
+import { readFileSync } from 'node:fs';
 import type { CliOptions } from '../types';
 import { logger } from '../utils/logger';
 import { create, listTemplates } from './create';
@@ -14,7 +15,31 @@ import { add } from './add';
 import { generate } from './generate';
 import { createPlugin, buildPlugin, validatePlugin, listPluginTemplates } from './plugin';
 
-const VERSION = '6.0.0';
+/**
+ * CLI 版本号。
+ *
+ * 此前是硬编码常量 '6.0.0'，与 package.json 的版本（6.9.6）长期脱节，
+ * 导致 `lyt --version` 报错版本。现优先从最近的 package.json 读取，
+ * 读不到时回退到下值（发布时由构建脚本注入/同步）。
+ */
+const FALLBACK_VERSION = '6.9.6';
+
+function resolveVersion(): string {
+  // 覆盖两种运行形态：dist/index.js（../package.json）与 src/commands/run.ts（../../package.json）
+  const candidates = ['../package.json', '../../package.json', '../../../package.json'];
+  for (const rel of candidates) {
+    try {
+      const url = new URL(rel, import.meta.url);
+      const pkg = JSON.parse(readFileSync(url, 'utf-8')) as { version?: string; name?: string };
+      if (pkg.name === '@lytjs/cli' && pkg.version) return pkg.version;
+    } catch {
+      // 尝试下一个候选路径
+    }
+  }
+  return FALLBACK_VERSION;
+}
+
+const VERSION = resolveVersion();
 
 export async function runCli(rawArgs: string[] = process.argv.slice(2)): Promise<void> {
   const { command, args, options } = parseArgs(rawArgs);
@@ -25,7 +50,8 @@ export async function runCli(rawArgs: string[] = process.argv.slice(2)): Promise
   }
 
   if (options.version || command === 'version' || command === '-v' || command === '--version') {
-    console.warn(`LytJS CLI v${VERSION}`);
+    // 版本号属正常输出，写 stdout；此前误用 console.warn 输出到 stderr
+    console.log(`LytJS CLI v${VERSION}`);
     return;
   }
 
@@ -196,7 +222,8 @@ function parseArgs(args: string[]): CliOptions {
 }
 
 function showHelp(): void {
-  console.warn(`
+  // 帮助信息属正常输出，写 stdout；此前误用 console.warn 输出到 stderr
+  console.log(`
 ${logger.bold('LytJS CLI')} v${VERSION}
 
 ${logger.bold('Usage:')}

@@ -14,7 +14,10 @@ const ROOT = join(__dirname, '..');
 const REMAINING_PACKAGES = [
   { name: '@lytjs/router', path: 'packages/ecosystem/packages/web-framework/packages/router' },
   { name: '@lytjs/ssr', path: 'packages/ecosystem/packages/ssr-kit/packages/ssr' },
-  { name: '@lytjs/router-fs', path: 'packages/ecosystem/packages/web-framework/packages/router-fs' },
+  {
+    name: '@lytjs/router-fs',
+    path: 'packages/ecosystem/packages/web-framework/packages/router-fs',
+  },
   { name: '@lytjs/api', path: 'packages/ecosystem/packages/web-framework/packages/api' },
   { name: '@lytjs/hmr', path: 'packages/ecosystem/packages/ssr-kit/packages/hmr' },
 ];

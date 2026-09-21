@@ -108,5 +108,8 @@ package-lock.json
 .lint-cache.json
 
 # Changeset
-.changeset/
+# 注意：不要把 .changeset/ 整目录忽略 —— release.yml 与 ci.yml 的
+# changeset-check 都依赖 changeset 文件入库，忽略后发布流程实质失效。
+# 仅忽略 changeset 的本地临时产物：
+.changeset/*.tmp
 

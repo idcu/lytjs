@@ -1,17 +1,23 @@
-#!/usr/bin/env tsx
 /**
- * 检查所有包的 npm 发布状态
+ * scripts/build-order.ts
+ * 构建/发布统一顺序表（单一真相源）
+ *
+ * 为什么单独成文件：此前 smart-build.ts 与 final-publish.ts 各自硬编码了一份
+ * 相同的 86 条顺序表，新增包时极易只改一处或两处都忘（2026-08 抽出
+ * @lytjs/config|di|plugin 时即因此导致 component/core 等 21 个包构建失败，
+ * 测试 38 个文件无法加载）。现由本文件唯一持有，并由
+ * `pnpm check-build-order` 校验「集合一致性 + 依赖拓扑顺序」。
+ *
+ * 维护规则：新增/删除包后运行 `pnpm check-build-order`，它会直接告诉你
+ * 缺哪个包、哪个包的依赖排在自己后面。
  */
 
-import { execSync } from 'child_process';
-import { join } from 'path';
-import { fileURLToPath } from 'url';
-import { readFileSync } from 'fs';
+export interface BuildOrderEntry {
+  name: string;
+  path: string;
+}
 
-const __dirname = fileURLToPath(new URL('.', import.meta.url));
-const ROOT = join(__dirname, '..');
-
-const PACKAGES = [
+export const BUILD_ORDER: BuildOrderEntry[] = [
   { name: '@lytjs/shared-types', path: 'packages/shared-types' },
   { name: '@lytjs/host-contract', path: 'packages/host-contract' },
   { name: '@lytjs/common-constants', path: 'packages/common/packages/constants' },
@@ -27,6 +33,7 @@ const PACKAGES = [
   { name: '@lytjs/common-timing', path: 'packages/common/packages/timing' },
   { name: '@lytjs/common-algorithm', path: 'packages/common/packages/algorithm' },
   { name: '@lytjs/common-vnode', path: 'packages/common/packages/vnode' },
+  { name: '@lytjs/common-env', path: 'packages/common/packages/env' },
   { name: '@lytjs/common-scheduler', path: 'packages/common/packages/scheduler' },
   { name: '@lytjs/common-dom', path: 'packages/common/packages/dom' },
   { name: '@lytjs/common-query', path: 'packages/common/packages/query' },
@@ -46,16 +53,18 @@ const PACKAGES = [
   { name: '@lytjs/common-assertions', path: 'packages/common/packages/assertions' },
   { name: '@lytjs/common-memory', path: 'packages/common/packages/memory' },
   { name: '@lytjs/common-rate-limit', path: 'packages/common/packages/rate-limit' },
-  { name: '@lytjs/common-env', path: 'packages/common/packages/env' },
   { name: '@lytjs/common', path: 'packages/common/packages/common' },
   { name: '@lytjs/reactivity', path: 'packages/reactivity' },
   { name: '@lytjs/vdom', path: 'packages/vdom' },
   { name: '@lytjs/dom-runtime', path: 'packages/dom-runtime' },
   { name: '@lytjs/compiler', path: 'packages/compiler' },
-  { name: '@lytjs/renderer', path: 'packages/renderer' },
   { name: '@lytjs/adapter-web', path: 'packages/adapter-web' },
+  { name: '@lytjs/renderer', path: 'packages/renderer' },
   { name: '@lytjs/dom', path: 'packages/dom' },
   { name: '@lytjs/web', path: 'packages/web' },
+  { name: '@lytjs/di', path: 'packages/ecosystem/packages/di' },
+  { name: '@lytjs/config', path: 'packages/ecosystem/packages/config' },
+  { name: '@lytjs/plugin', path: 'packages/ecosystem/packages/plugin' },
   { name: '@lytjs/component', path: 'packages/component' },
   { name: '@lytjs/core', path: 'packages/core' },
   { name: '@lytjs/core-signal', path: 'packages/core-signal' },
@@ -83,14 +92,14 @@ const PACKAGES = [
   },
   { name: '@lytjs/ssg', path: 'packages/ecosystem/packages/ssr-kit/packages/ssg' },
   {
+    name: '@lytjs/middleware',
+    path: 'packages/ecosystem/packages/web-framework/packages/middleware',
+  },
+  {
     name: '@lytjs/http-server',
     path: 'packages/ecosystem/packages/web-framework/packages/http-server',
   },
   { name: '@lytjs/metadata', path: 'packages/ecosystem/packages/web-framework/packages/metadata' },
-  {
-    name: '@lytjs/middleware',
-    path: 'packages/ecosystem/packages/web-framework/packages/middleware',
-  },
   {
     name: '@lytjs/middleware-cors',
     path: 'packages/ecosystem/packages/web-framework/packages/middleware-cors',
@@ -110,8 +119,8 @@ const PACKAGES = [
   { name: '@lytjs/plugin-storage', path: 'packages/plugins/packages/plugin-storage' },
   { name: '@lytjs/plugin-i18n', path: 'packages/plugins/packages/plugin-i18n' },
   { name: '@lytjs/plugin-validation', path: 'packages/plugins/packages/plugin-validation' },
-  { name: '@lytjs/plugin-data', path: 'packages/plugins/packages/plugin-data' },
   { name: '@lytjs/plugin-data-fetch', path: 'packages/plugins/packages/plugin-data-fetch' },
+  { name: '@lytjs/plugin-data', path: 'packages/plugins/packages/plugin-data' },
   { name: '@lytjs/plugin-chart', path: 'packages/plugins/packages/plugin-chart' },
   { name: '@lytjs/plugin-animation', path: 'packages/plugins/packages/plugin-animation' },
   { name: '@lytjs/plugin-testing', path: 'packages/plugins/packages/plugin-testing' },
@@ -120,116 +129,3 @@ const PACKAGES = [
   { name: '@lytjs/cli', path: 'packages/tools/packages/cli' },
   { name: '@lytjs/devtools-extension', path: 'packages/tools/packages/devtools' },
 ];
-
-function getPackageVersion(packagePath: string): string {
-  const pkgPath = join(ROOT, packagePath, 'package.json');
-  const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'));
-  return pkg.version;
-}
-
-async function checkPackagePublished(
-  packageName: string,
-  _expectedVersion: string,
-): Promise<{
-  published: boolean;
-  version?: string;
-  latestVersion?: string;
-  error?: string;
-}> {
-  try {
-    const result = execSync(
-      `npm view ${packageName} version --registry=https://registry.npmjs.org/`,
-      {
-        encoding: 'utf-8',
-        stdio: 'pipe',
-      },
-    );
-    const latestVersion = result.trim();
-    return {
-      published: true,
-      version: latestVersion,
-      latestVersion,
-    };
-  } catch (e) {
-    const errorMsg = (e as { stderr?: string }).stderr || String(e);
-    if (errorMsg.includes('404') || errorMsg.includes('not found')) {
-      return {
-        published: false,
-        error: 'Package not found on npm',
-      };
-    }
-    return {
-      published: false,
-      error: errorMsg,
-    };
-  }
-}
-
-async function main() {
-  console.log('📦 LytJS npm 发布状态检查\n');
-  console.log('='.repeat(80));
-
-  const published: string[] = [];
-  const notPublished: string[] = [];
-  const needsUpdate: string[] = [];
-  const errors: string[] = [];
-
-  for (const pkg of PACKAGES) {
-    const expectedVersion = getPackageVersion(pkg.path);
-    console.log(`\n🔍 检查: ${pkg.name}@${expectedVersion}`);
-
-    try {
-      const result = await checkPackagePublished(pkg.name, expectedVersion);
-
-      if (result.published && result.version) {
-        if (result.version === expectedVersion) {
-          console.log(`✅ 已发布: ${pkg.name}@${result.version}`);
-          published.push(`${pkg.name}@${result.version}`);
-        } else {
-          console.log(`⚠️  版本不匹配: 本地=${expectedVersion}, npm=${result.version}`);
-          needsUpdate.push(`${pkg.name}@${expectedVersion} (npm=${result.version})`);
-        }
-      } else {
-        console.log(`❌ 未发布: ${pkg.name}`);
-        notPublished.push(`${pkg.name}@${expectedVersion}`);
-      }
-    } catch (e) {
-      console.log(`❌ 检查失败: ${pkg.name}`);
-      errors.push(`${pkg.name} - ${String(e)}`);
-    }
-
-    // 避免请求过快
-    await new Promise((resolve) => setTimeout(resolve, 200));
-  }
-
-  console.log('\n' + '='.repeat(80));
-  console.log('📊 检查结果汇总:');
-  console.log(`✅ 已发布 (最新版本): ${published.length} 个包`);
-  console.log(`⚠️  版本不匹配: ${needsUpdate.length} 个包`);
-  console.log(`❌ 未发布: ${notPublished.length} 个包`);
-  console.log(`⚠️  检查错误: ${errors.length} 个包`);
-
-  if (published.length > 0) {
-    console.log('\n✅ 已发布的包:');
-    published.forEach((name) => console.log(`  - ${name}`));
-  }
-
-  if (needsUpdate.length > 0) {
-    console.log('\n⚠️  版本不匹配的包:');
-    needsUpdate.forEach((name) => console.log(`  - ${name}`));
-  }
-
-  if (notPublished.length > 0) {
-    console.log('\n❌ 未发布的包:');
-    notPublished.forEach((name) => console.log(`  - ${name}`));
-  }
-
-  if (errors.length > 0) {
-    console.log('\n⚠️  检查错误的包:');
-    errors.forEach((name) => console.log(`  - ${name}`));
-  }
-
-  console.log('='.repeat(80));
-}
-
-main().catch(console.error);

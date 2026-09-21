@@ -22,13 +22,7 @@ import type {
 // ============================================================
 
 export { ConfigManager };
-export type {
-  ConfigChangeCallback,
-  ConfigOptions,
-  ConfigValue,
-  ConfigObject,
-  ConfigArray,
-};
+export type { ConfigChangeCallback, ConfigOptions, ConfigValue, ConfigObject, ConfigArray };
 
 // ============================================================
 // 全局配置实例

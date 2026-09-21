@@ -131,13 +131,10 @@ describe('provideValue / injectValue', () => {
     // 直接提供一个 transient 函数值
     provideValue(KEY, {} as never);
     const node = getCurrentProviderNode() || getProviderRoot();
-    node.providers.set(
-      KEY,
-      {
-        value: () => Math.random(),
-        lifecycle: 'transient',
-      },
-    );
+    node.providers.set(KEY, {
+      value: () => Math.random(),
+      lifecycle: 'transient',
+    });
     const a = injectValue<number>(KEY as never);
     const b = injectValue<number>(KEY as never);
     expect(typeof a).toBe('number');
@@ -170,9 +167,7 @@ describe('provideValue / injectValue', () => {
   });
 
   it('应支持 ProviderConfig 缺失时的抛错', () => {
-    expect(() => provideValue('bad', { lifecycle: 'singleton' } as never)).toThrow(
-      InjectionError,
-    );
+    expect(() => provideValue('bad', { lifecycle: 'singleton' } as never)).toThrow(InjectionError);
   });
 
   it('应支持 from 覆盖查找 key', () => {

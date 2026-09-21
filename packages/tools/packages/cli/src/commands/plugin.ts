@@ -318,7 +318,7 @@ export async function createPlugin(name: string, options: PluginCreateOptions = 
 
   logger.success(`Plugin "${name}" created successfully!`);
   logger.info('');
-  logger.bold('Next steps:');
+  logger.heading('Next steps:');
   logger.info(`  cd ${name}`);
   logger.info('  pnpm dev      # Start development');
   logger.info('  pnpm build    # Build for production');
@@ -490,7 +490,7 @@ function isEmptyDir(dir: string): boolean {
 // ==================== List Templates ====================
 
 export function listPluginTemplates(): void {
-  logger.bold('Available plugin templates:');
+  logger.heading('Available plugin templates:');
   for (const [name, description] of Object.entries(PLUGIN_TEMPLATES)) {
     logger.info(`  ${name.padEnd(12)} - ${description}`);
   }

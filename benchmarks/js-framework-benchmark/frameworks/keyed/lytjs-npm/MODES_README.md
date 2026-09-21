@@ -59,6 +59,7 @@ Every mode directory has:
 Each mode has its own `PR_PREPARATION_GUIDE.md` with detailed instructions.
 
 Quick steps:
+
 1. Fork js-framework-benchmark
 2. Copy one mode directory to `frameworks/keyed/`
 3. Commit and push
@@ -71,6 +72,7 @@ All implementations use LytJS npm packages at version `^6.9.0` to ensure compati
 ## Common Dependencies
 
 All modes share these core dependencies:
+
 - `@lytjs/core-signal` or `@lytjs/core-vnode`
 - `@lytjs/reactivity`
 - `@lytjs/component`

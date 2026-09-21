@@ -62,8 +62,10 @@ export interface PluginDependency {
  * @template TContext 宿主上下文类型（默认 unknown）
  * @template TOptions 插件选项类型
  */
-export interface EnhancedPlugin<TContext = unknown, TOptions = unknown>
-  extends Plugin<TContext, TOptions> {
+export interface EnhancedPlugin<TContext = unknown, TOptions = unknown> extends Plugin<
+  TContext,
+  TOptions
+> {
   /** 插件唯一标识名称（必填） */
   name: string;
   /** 插件版本号（semver 格式） */

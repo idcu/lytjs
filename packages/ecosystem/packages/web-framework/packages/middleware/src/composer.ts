@@ -54,7 +54,10 @@ export class MiddlewareComposer {
           ctx.response = result as Response;
         });
 
-        return (ctx.response as Response) || (new Response('未找到', { status: 404 }) as unknown as Response);
+        return (
+          (ctx.response as Response) ||
+          (new Response('未找到', { status: 404 }) as unknown as Response)
+        );
       } catch (error) {
         if (this.config.throwOnError) {
           throw error;

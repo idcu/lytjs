@@ -1,14 +1,77 @@
 console.log('main-vapor.js loaded!');
 import { createApp, defineComponent, ref } from '@lytjs/core-signal';
 
-const adjectives = ['pretty','large','big','small','tall','short','long','handsome','plain','quaint','clean','elegant','easy','angry','crazy','helpful','mushy','odd','unsightly','adorable','important','inexpensive','cheap','expensive','fancy'];
-const colours = ['red','yellow','blue','green','pink','brown','purple','brown','white','black','orange'];
-const nouns = ['table','chair','house','bbq','desk','car','pony','train','plane','bridge','sunglasses','tower','house','plant','bicycle','tree'];
+const adjectives = [
+  'pretty',
+  'large',
+  'big',
+  'small',
+  'tall',
+  'short',
+  'long',
+  'handsome',
+  'plain',
+  'quaint',
+  'clean',
+  'elegant',
+  'easy',
+  'angry',
+  'crazy',
+  'helpful',
+  'mushy',
+  'odd',
+  'unsightly',
+  'adorable',
+  'important',
+  'inexpensive',
+  'cheap',
+  'expensive',
+  'fancy',
+];
+const colours = [
+  'red',
+  'yellow',
+  'blue',
+  'green',
+  'pink',
+  'brown',
+  'purple',
+  'brown',
+  'white',
+  'black',
+  'orange',
+];
+const nouns = [
+  'table',
+  'chair',
+  'house',
+  'bbq',
+  'desk',
+  'car',
+  'pony',
+  'train',
+  'plane',
+  'bridge',
+  'sunglasses',
+  'tower',
+  'house',
+  'plant',
+  'bicycle',
+  'tree',
+];
 
 let _id = 1;
-function generateId() { return _id++; }
+function generateId() {
+  return _id++;
+}
 function generateRandomString() {
-  return adjectives[Math.floor(Math.random() * adjectives.length)] + ' ' + colours[Math.floor(Math.random() * colours.length)] + ' ' + nouns[Math.floor(Math.random() * nouns.length)];
+  return (
+    adjectives[Math.floor(Math.random() * adjectives.length)] +
+    ' ' +
+    colours[Math.floor(Math.random() * colours.length)] +
+    ' ' +
+    nouns[Math.floor(Math.random() * nouns.length)]
+  );
 }
 
 // 全局共享的状态
@@ -66,7 +129,7 @@ const swapRows = () => {
 };
 
 const remove = (id) => {
-  data.value = data.value.filter(item => item.id !== id);
+  data.value = data.value.filter((item) => item.id !== id);
 };
 
 const select = (id) => {
@@ -79,7 +142,7 @@ const App = defineComponent({
       data,
       selectedId,
       remove,
-      select
+      select,
     };
   },
   template: `
@@ -99,12 +162,12 @@ const App = defineComponent({
         </tr>
       </tbody>
     </table>
-  `
+  `,
 });
 
 (async () => {
   await createApp(App).mount('#app');
-  
+
   // 绑定按钮事件
   document.getElementById('run').addEventListener('click', run);
   document.getElementById('runlots').addEventListener('click', runLots);

@@ -84,14 +84,19 @@ export function createCorsMiddleware(config: CorsConfig = {}): Middleware {
 
     const downstream = ((await next()) ?? ctx.response) as Response | undefined;
     if (downstream) {
-      const newResponse = new Response(
-        (downstream as Record<string, unknown>).body as BodyInit,
-        downstream as ResponseInit,
-      );
+      // 复制下游响应并叠加 CORS 头。
+      // 注意：不能把 Response 直接当 ResponseInit 强转（两者结构不重叠），
+      // 必须显式取 status / statusText / headers。
+      const mergedHeaders = new Headers(downstream.headers);
       headers.forEach((value, key) => {
-        newResponse.headers.set(key, value);
+        mergedHeaders.set(key, value);
       });
-      return newResponse;
+
+      return new Response(downstream.body, {
+        status: downstream.status,
+        statusText: downstream.statusText,
+        headers: mergedHeaders,
+      });
     }
     return undefined;
   };

@@ -442,7 +442,7 @@ cd e:/trae/lytjs
 pnpm install
 
 # 运行核心性能测试
-pnpm test:benchmark
+pnpm bench
 
 # 或者运行特定包的测试
 cd packages/reactivity

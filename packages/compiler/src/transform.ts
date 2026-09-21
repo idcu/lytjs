@@ -3,7 +3,7 @@
 // 包含 transform、markConstants、hoistStatic、collectDynamicChildren
 // optimize 阶段的逻辑已合并到此模块中
 
-import { NodeTypes } from './constants';
+import { NodeTypes, ElementTypes } from './constants';
 import type {
   RootNode,
   ElementNode,
@@ -221,6 +221,9 @@ function createTransformContext(root: RootNode, options: TransformOptions): Tran
   return context;
 }
 
+// 只提示一次的 <slot> 未支持告警
+let warnedSlotUnsupported = false;
+
 // ============================================================
 // 遍历节点
 // ============================================================
@@ -231,6 +234,24 @@ function traverseNode(
   options: TransformOptions,
 ): void {
   context.currentNode = node;
+
+  // <slot> 目前尚未接通编译链路：parser 会把它标记为 ElementTypes.SLOT，
+  // 但 transformSlot 未注册进 builtInTransforms，运行时也没有 renderSlot 实现
+  // （helpers 里只有 'renderSlot' 这个名字）。这里显式告警，避免出现
+  // "编译通过、插槽内容静默丢失"的隐性缺陷。
+  if (
+    node.type === NodeTypes.ELEMENT &&
+    (node as ElementNode).tagType === ElementTypes.SLOT &&
+    !warnedSlotUnsupported
+  ) {
+    warnedSlotUnsupported = true;
+    if (__DEV__) {
+      console.warn(
+        '[LytJS/compiler] <slot> 编译尚未实现（transformSlot 未接入、运行时缺少 renderSlot）。' +
+          '插槽内容不会出现在产物中，请暂用 props/children 传递内容。',
+      );
+    }
+  }
 
   const nodeTransforms = options.nodeTransforms;
   if (nodeTransforms) {

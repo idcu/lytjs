@@ -46,6 +46,18 @@ export const logger = {
   bold(message: string): string {
     return colorize(message, 'bright');
   },
+
+  /**
+   * 打印加粗标题。
+   *
+   * 注意：`bold()` 只**返回**字符串、不打印。此前 create.ts / plugin.ts 有 4 处
+   * 直接写 `logger.bold('Next steps:')`，等于什么都没输出（小标题长期静默丢失）。
+   * 需要打印标题请用本方法。
+   */
+  heading(message: string): void {
+    // eslint-disable-next-line no-console
+    console.log(colorize(message, 'bright'));
+  },
 };
 
 /**

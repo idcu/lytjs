@@ -62,8 +62,16 @@ export function recordEvent(
   return record;
 }
 
-export function getEvents(): EventRecord[] {
-  return [...events];
+/**
+ * 获取已记录的事件。
+ *
+ * @param types 可选的类型白名单；传入时只返回这些类型的事件（此前只支持全量返回，
+ *              调用方只能自己再 filter 一遍）
+ */
+export function getEvents(types?: readonly string[]): EventRecord[] {
+  if (!types || types.length === 0) return [...events];
+  const allowed = new Set(types);
+  return events.filter((e) => allowed.has(e.type));
 }
 
 export function getEventsByComponent(componentId: string): EventRecord[] {

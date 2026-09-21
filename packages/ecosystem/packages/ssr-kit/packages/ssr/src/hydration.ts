@@ -133,15 +133,18 @@ export function createHydrationMarkers(vnode: VNode): VNode {
     }
 
     // 递归处理子节点
+    // 说明：运行时确实存在"单个 VNode 作为 children"的形态（见 vdom 的
+    // normalizeChildren：对对象 children 直接原样保留），但 VNodeChildren 类型里
+    // 不含裸 VNode —— 因此这里必须显式断言桥接，而不能省掉该分支
+    // （省掉会让单子节点层级的标记整层丢失，测试"递归处理嵌套子节点"即覆盖此点）。
     const children = getVNodeChildren(node);
     let processedChildren: VNodeChildren = children;
-    if (children !== null && !isString(children) && !isNumber(children)) {
-      if (isArray(children)) {
-        processedChildren = children.map((child) => createHydrationMarkers(child as VNode));
-      } else if (isObject(children)) {
-        // 单子节点保持为单个 VNode（与数组子节点区分，符合 VNode 语义）
-        processedChildren = createHydrationMarkers(children as VNode);
-      }
+    if (isArray(children)) {
+      processedChildren = children.map((child) => createHydrationMarkers(child as VNode));
+    } else if (isObject(children) && !isString(children) && !isNumber(children)) {
+      processedChildren = createHydrationMarkers(
+        children as unknown as VNode,
+      ) as unknown as VNodeChildren;
     }
 
     return { ...node, props, children: processedChildren } as VNode;
@@ -150,19 +153,17 @@ export function createHydrationMarkers(vnode: VNode): VNode {
   // 处理组件节点 - 递归但不添加标记
   if (isComponentVNode(node)) {
     const children = getVNodeChildren(node);
-    if (children !== null && !isString(children) && !isNumber(children)) {
-      if (isArray(children)) {
-        return {
-          ...node,
-          children: children.map((child) => createHydrationMarkers(child as VNode)),
-        } as VNode;
-      } else if (isObject(children)) {
-        // 单子节点保持为单个 VNode（与数组子节点区分，符合 VNode 语义）
-        return {
-          ...node,
-          children: createHydrationMarkers(children as VNode),
-        } as VNode;
-      }
+    if (isArray(children)) {
+      return {
+        ...node,
+        children: children.map((child) => createHydrationMarkers(child as VNode)),
+      } as VNode;
+    }
+    if (isObject(children) && !isString(children) && !isNumber(children)) {
+      return {
+        ...node,
+        children: createHydrationMarkers(children as unknown as VNode) as unknown as VNodeChildren,
+      } as VNode;
     }
     return node;
   }

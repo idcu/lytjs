@@ -13,10 +13,7 @@ import type {
 } from '@lytjs/shared-types';
 import type { PluginRegistry } from './plugin-registry';
 import type { PluginValidator } from './plugin-validator';
-import type {
-  Plugin as PluginBase,
-  EnhancedPlugin as EnhancedPluginBase,
-} from '@lytjs/plugin';
+import type { Plugin as PluginBase, EnhancedPlugin as EnhancedPluginBase } from '@lytjs/plugin';
 
 // Re-export shared types
 export type { Renderer, Directive, DirectiveBinding, DirectiveArguments, DebuggerEvent };

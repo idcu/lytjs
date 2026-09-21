@@ -1,3 +1,6 @@
+// @vitest-environment jsdom
+// 说明：本文件依赖真实 DOM/BOM（document / window / requestAnimationFrame 等），
+// 根 vitest 默认 environment=node，靠本行单文件覆盖。
 import { describe, it, expect, vi } from 'vitest';
 import { createAnimation, PRESETS, createAnimationManager } from '../src';
 

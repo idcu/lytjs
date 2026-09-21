@@ -85,14 +85,22 @@ export function analyzeTreeShakingOpportunities(ast: RootNode): TreeShakingAnaly
   const staticizableNodes: StaticizableNode[] = [];
   const simplifiableConditions: SimplifiableCondition[] = [];
   const unusedReferences: UnusedReference[] = [];
-  
+
   const usedReferences = new Set<string>();
   const declaredReferences = new Set<string>();
 
   // 遍历 AST 分析
   traverseAST(ast, (_node, path) => {
     if (_node.type === NodeTypes.ELEMENT) {
-      analyzeElement(_node, path, removable, staticizableNodes, simplifiableConditions, usedReferences, declaredReferences);
+      analyzeElement(
+        _node,
+        path,
+        removable,
+        staticizableNodes,
+        simplifiableConditions,
+        usedReferences,
+        declaredReferences,
+      );
     }
   });
 
@@ -170,9 +178,34 @@ function analyzeElement(
 function isComponent(node: ElementNode): boolean {
   // 自定义标签（不是标准 HTML 标签）被视为组件
   const htmlTags = new Set([
-    'div', 'span', 'p', 'a', 'button', 'input', 'form', 'ul', 'li', 'ol',
-    'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'img', 'table', 'tr', 'td', 'th',
-    'header', 'footer', 'nav', 'main', 'section', 'article', 'aside',
+    'div',
+    'span',
+    'p',
+    'a',
+    'button',
+    'input',
+    'form',
+    'ul',
+    'li',
+    'ol',
+    'h1',
+    'h2',
+    'h3',
+    'h4',
+    'h5',
+    'h6',
+    'img',
+    'table',
+    'tr',
+    'td',
+    'th',
+    'header',
+    'footer',
+    'nav',
+    'main',
+    'section',
+    'article',
+    'aside',
     // ... 更多标准标签
   ]);
   return !htmlTags.has(node.tag.toLowerCase());
@@ -225,7 +258,7 @@ function isStaticChild(node: TemplateChildNode): boolean {
  */
 function extractStaticDependencies(node: ElementNode): string[] {
   const dependencies: string[] = [];
-  
+
   // 提取静态属性值
   for (const prop of node.props) {
     if (prop.type === NodeTypes.ATTRIBUTE && prop.value) {
@@ -247,7 +280,7 @@ function analyzeConditions(
   for (const prop of node.props) {
     if (prop.type === NodeTypes.DIRECTIVE && prop.name === 'if') {
       const condition = prop.exp?.toString() || '';
-      
+
       // 检测常量条件
       if (condition === 'true' || condition === 'false') {
         simplifiableConditions.push({
@@ -257,7 +290,7 @@ function analyzeConditions(
           constantValue: condition === 'true',
         });
       }
-      
+
       // 检测简单常量表达式
       else if (/^['"].*['"]$/.test(condition)) {
         simplifiableConditions.push({
@@ -266,8 +299,7 @@ function analyzeConditions(
           simplifyTo: 'constant',
           constantValue: condition.slice(1, -1),
         });
-      }
-      else if (/^\d+$/.test(condition)) {
+      } else if (/^\d+$/.test(condition)) {
         simplifiableConditions.push({
           path,
           condition,
@@ -327,7 +359,8 @@ function getReferenceType(name: string): 'component' | 'helper' | 'import' {
   if (name.startsWith('v-')) {
     return 'helper';
   }
-  if (name.toLowerCase() !== name) { // PascalCase
+  if (name.toLowerCase() !== name) {
+    // PascalCase
     return 'component';
   }
   return 'import';
@@ -363,17 +396,20 @@ export function applyTreeShakingOptimizations(
 ): RootNode {
   // 这里我们返回原始 AST，实际优化会在代码生成阶段应用
   // 在代码生成时会根据分析结果进行优化
-  
+
   // 但我们可以标记哪些节点可以优化
   markOptimizableNodes(ast, analysis);
-  
+
   return ast;
 }
 
 /**
  * 标记可优化的节点
  */
-function markOptimizableNodes(ast: RootNode & { __treeShakingAnalysis?: TreeShakingAnalysis }, analysis: TreeShakingAnalysis): void {
+function markOptimizableNodes(
+  ast: RootNode & { __treeShakingAnalysis?: TreeShakingAnalysis },
+  analysis: TreeShakingAnalysis,
+): void {
   // 在节点上添加元数据标记
   ast.__treeShakingAnalysis = analysis;
 }

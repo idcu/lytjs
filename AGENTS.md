@@ -133,7 +133,7 @@ pnpm test    # 运行测试
 
 ## 完整指南
 
-- [开发流程指南](docs/development/WORKFLOW.md) - 完整开发工作流程梳理（必读）
+- [开发流程指南](docs/contribute/development/workflow.md) - 完整开发工作流程梳理（必读）
 - [技能链](.trae/skills/skill-chains/SKILL.md) - 预定义技能组合（首选）
 - [工作流程](.trae/skills/workflow/SKILL.md) - 完整开发流程
 - [任务类型映射](.trae/skills/task-types/SKILL.md) - 任务与 Skill 对照

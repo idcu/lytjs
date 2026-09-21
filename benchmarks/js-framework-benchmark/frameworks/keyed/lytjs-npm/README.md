@@ -10,12 +10,12 @@
 
 ## 包映射关系
 
-| 模式 | npm 包 | 说明 |
-|------|--------|------|
-| VDOM | `@lytjs/core-vnode` | 虚拟 DOM 渲染模式 |
-| Signal | `@lytjs/core-signal` | Signal 细粒度更新模式 |
-| Vapor | `@lytjs/core-signal` | 同 Signal 包，无虚拟 DOM |
-| 完整 | `@lytjs/core` | 包含所有功能的完整包 |
+| 模式   | npm 包               | 说明                     |
+| ------ | -------------------- | ------------------------ |
+| VDOM   | `@lytjs/core-vnode`  | 虚拟 DOM 渲染模式        |
+| Signal | `@lytjs/core-signal` | Signal 细粒度更新模式    |
+| Vapor  | `@lytjs/core-signal` | 同 Signal 包，无虚拟 DOM |
+| 完整   | `@lytjs/core`        | 包含所有功能的完整包     |
 
 ---
 
@@ -47,12 +47,12 @@ pnpm run dev
 
 ## 入口文件
 
-| 文件 | 说明 |
-|------|------|
-| [index.html](index.html) | 主页面，带模式选择 |
-| [main-signal.js](main-signal.js) | Signal 模式实现 |
-| [main-vdom.js](main-vdom.js) | VDOM 模式实现 |
-| [main-vapor.js](main-vapor.js) | Vapor 模式实现（同 Signal 包） |
+| 文件                             | 说明                           |
+| -------------------------------- | ------------------------------ |
+| [index.html](index.html)         | 主页面，带模式选择             |
+| [main-signal.js](main-signal.js) | Signal 模式实现                |
+| [main-vdom.js](main-vdom.js)     | VDOM 模式实现                  |
+| [main-vapor.js](main-vapor.js)   | Vapor 模式实现（同 Signal 包） |
 
 ---
 
@@ -66,7 +66,7 @@ pnpm run build-prod
 
 ## 对比说明
 
-| 版本 | 说明 | 目录 |
-|------|------|------|
-| 原生实现 | 纯 JavaScript，无依赖，正式用于提交 PR | `../lytjs/` |
-| npm 包版本 | 使用 LytJS 包（本地 workspace） | `./` |
+| 版本       | 说明                                   | 目录        |
+| ---------- | -------------------------------------- | ----------- |
+| 原生实现   | 纯 JavaScript，无依赖，正式用于提交 PR | `../lytjs/` |
+| npm 包版本 | 使用 LytJS 包（本地 workspace）        | `./`        |

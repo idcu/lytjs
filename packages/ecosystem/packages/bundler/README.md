@@ -2,6 +2,10 @@
 
 > LytJS 构建工具集成，提供 Vite 和 Webpack 插件支持。
 
+> ⚠️ **实现状态（2026-09 审计）**：本包当前仅为插件骨架，`transform()` 不做真实编译
+> （对 `.lyt`/`.vue` 返回 null，并输出一次性告警）。需要可用的 Vite 集成请使用
+> [`@lytjs/plugin-vite`](../../../plugins/packages/plugin-vite)。
+
 [![npm version](https://img.shields.io/npm/v/@lytjs/bundler.svg)](https://www.npmjs.com/package/@lytjs/bundler)
 [![license](https://img.shields.io/npm/l/@lytjs/bundler.svg)](https://gitee.com/lytjs/lytjs/blob/main/LICENSE)
 

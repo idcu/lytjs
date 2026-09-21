@@ -67,8 +67,11 @@ export function createSignalRenderer(
     clearCompileCache();
     const compileResult = compile(template, { rendererMode: 'signal', optimizeSignal: false });
     code = compileResult.code;
-    console.log('=== Compiled code ===');
-    console.log(code);
+    // 注意：这里曾无条件 console.log 出全部编译产物（每个 renderer 实例都打印一次）。
+    // 需要排查编译结果时用下面的 DEV 开关，避免污染生产环境控制台。
+    if (__DEV__) {
+      console.debug('[LytJS] Signal renderer compiled code:\n' + code);
+    }
 
     // 从编译结果中提取 render 函数体
     // codegen-signal 生成的代码结构：
@@ -79,8 +82,9 @@ export function createSignalRenderer(
     //
     // 我们需要提取 render 函数体，并通过 new Function 执行
     renderBody = extractRenderBody(code);
-    console.log('=== Extracted renderBody ===');
-    console.log(renderBody);
+    if (__DEV__) {
+      console.debug('[LytJS] Signal renderer render body:\n' + renderBody);
+    }
     if (!renderBody) {
       throw new Error(
         `[LytJS] SignalRenderer: failed to extract render function from compiled code.`,

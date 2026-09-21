@@ -99,6 +99,7 @@ LytJS v6.8.0 是一个类型系统大幅增强和开发体验大幅提升的重�
 ## 📦 完整更新包列表
 
 ### 核心包升级
+
 1. `@lytjs/shared-types` - v6.7.0 → v6.8.0 (重要更新)
 2. `@lytjs/reactivity` - v6.7.0 → v6.8.0
 3. `@lytjs/vdom` - v6.7.0 → v6.8.0
@@ -110,6 +111,7 @@ LytJS v6.8.0 是一个类型系统大幅增强和开发体验大幅提升的重�
 9. `@lytjs/core-vnode` - v6.7.0 → v6.8.0
 
 ### 生态系统包升级
+
 1. `@lytjs/devtools` - v6.7.0 → v6.8.0 (重要更新)
 2. `@lytjs/router` - v6.7.0 → v6.8.0
 3. `@lytjs/router-fs` - v6.7.0 → v6.8.0
@@ -123,23 +125,27 @@ LytJS v6.8.0 是一个类型系统大幅增强和开发体验大幅提升的重�
 11. `@lytjs/compat` - v6.7.0 → v6.8.0
 
 ### 官方插件升级
+
 所有 11 个官方插件版本统一升级至 v6.8.0
 
 ## 🔧 改进和修复
 
 ### 类型安全增强
+
 - 完善了所有包的类型定义
 - 更严格的类型检查
 - 更好的类型推断
 - 修复了多个类型错误
 
 ### 开发体验优化
+
 - 更好的错误提示
 - 更友好的开发工具
 - 更快的编译速度
 - 更完善的测试覆盖
 
 ### 文档完善
+
 - 新增类型系统指南
 - 新增 DevTools 使用文档
 - 新增事件系统文档
@@ -150,18 +156,18 @@ LytJS v6.8.0 是一个类型系统大幅增强和开发体验大幅提升的重�
 ### 使用新的类型工具
 
 ```typescript
-import { 
-  Parameters, 
-  ReturnType, 
-  Partial, 
-  Required, 
-  Pick, 
+import {
+  Parameters,
+  ReturnType,
+  Partial,
+  Required,
+  Pick,
   Omit,
   IsString,
   IsNumber,
   Join,
   Split,
-  CamelToSnake
+  CamelToSnake,
 } from '@lytjs/shared-types';
 
 // 使用 Parameters
@@ -215,21 +221,16 @@ emitter.on('user:login', (event) => {
 });
 
 // 类型安全的事件触发
-emitter.emit('user:login', { 
-  userId: '123', 
-  timestamp: Date.now() 
+emitter.emit('user:login', {
+  userId: '123',
+  timestamp: Date.now(),
 });
 ```
 
 ### 使用 DevTools 增强
 
 ```typescript
-import { 
-  debug, 
-  createCheckpoint, 
-  compareCheckpoints,
-  measurePerformance 
-} from '@lytjs/devtools';
+import { debug, createCheckpoint, compareCheckpoints, measurePerformance } from '@lytjs/devtools';
 
 // 使用结构化日志
 debug.info('Application started');

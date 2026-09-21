@@ -100,10 +100,7 @@ console.log(report.config); // 50
 ```typescript
 import { ConfigManager } from '@lytjs/config';
 
-const config = new ConfigManager(
-  { api: { baseURL: '/api' } },
-  { mutable: true, deepMerge: true },
-);
+const config = new ConfigManager({ api: { baseURL: '/api' } }, { mutable: true, deepMerge: true });
 ```
 
 常用方法：`get(path, defaultValue)`、`set(path, value)`、`has(path)`、`delete(path)`、`merge(config)`、`getAll()`、`reset(newConfig)`、`clear()`、`watch(path, callback)`、`setMultiple(config)`、`setMutable(mutable)`、`isMutable()`。
@@ -140,15 +137,23 @@ const merged = mergeConfig(defaults, overrides, schema);
 ```typescript
 // 配置管理器类型
 type ConfigValue = string | number | boolean | null | undefined | ConfigObject | ConfigArray;
-interface ConfigObject { [key: string]: ConfigValue; }
+interface ConfigObject {
+  [key: string]: ConfigValue;
+}
 
 // Schema 定义
 type SchemaType = 'string' | 'number' | 'boolean' | 'object' | 'array' | 'enum' | 'union';
-interface ConfigSchema<T = unknown> { type: SchemaType; /* ... */ }
+interface ConfigSchema<T = unknown> {
+  type: SchemaType; /* ... */
+}
 
 // 校验 / 转换报告
-interface ConfigValidationReport { valid: boolean; /* ... */ }
-interface ConfigTransformReport<T> { config: T; /* ... */ }
+interface ConfigValidationReport {
+  valid: boolean; /* ... */
+}
+interface ConfigTransformReport<T> {
+  config: T; /* ... */
+}
 ```
 
 ## 浏览器兼容性

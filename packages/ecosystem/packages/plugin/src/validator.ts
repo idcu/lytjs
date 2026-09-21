@@ -363,11 +363,7 @@ export class PluginValidator {
         });
       } else {
         issues.push(
-          ...this.validateDependencyArray(
-            optionalDependencies,
-            'optionalDependencies',
-            true,
-          ),
+          ...this.validateDependencyArray(optionalDependencies, 'optionalDependencies', true),
         );
       }
     }

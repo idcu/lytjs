@@ -127,10 +127,91 @@ export function clearHandlers(): void {
 }
 
 /**
+ * 挂到 window 上供浏览器扩展 / 面板发现的钩子键
+ */
+export const DEVTOOLS_HOOK_KEY = '__LYTJS_DEVTOOLS_HOOK__';
+
+const HOOK_VERSION = '1.0.0';
+const MESSAGE_SOURCE = 'lytjs-devtools';
+const PANEL_SOURCE = 'lytjs-devtools-panel';
+
+/**
+ * 浏览器扩展侧可访问的钩子接口
+ */
+export interface DevToolsWindowHook {
+  /** 钩子协议版本 */
+  version: string;
+  /** 桥接是否处于激活状态 */
+  isActive: () => boolean;
+  /** 向面板发送消息（本进程处理器 + postMessage 跨上下文） */
+  send: (message: BridgeMessage) => void;
+  /** 订阅面板消息，返回取消订阅函数 */
+  subscribe: (handler: GenericMessageHandler) => () => void;
+}
+
+type HookHost = Record<string, unknown> & {
+  postMessage?: (message: unknown, targetOrigin: string) => void;
+  addEventListener?: (type: string, listener: (event: unknown) => void) => void;
+  removeEventListener?: (type: string, listener: (event: unknown) => void) => void;
+};
+
+function getHookHost(): HookHost | undefined {
+  const g = globalThis as unknown as HookHost & { window?: unknown };
+  return g.window === undefined ? undefined : g;
+}
+
+/**
+ * 处理来自面板（扩展 / iframe）的 window 消息
+ */
+function handlePanelWindowMessage(event: unknown): void {
+  const data = (event as { data?: unknown } | undefined)?.data as
+    | { source?: string; payload?: unknown; type?: string }
+    | undefined;
+  if (!data || data.source !== PANEL_SOURCE) return;
+
+  // 优先取 payload（面板消息约定），否则把消息体本身当作 BridgeMessage
+  const message = (data.payload ?? data) as BridgeMessage;
+  if (!message || typeof message.type !== 'string') return;
+  broadcastToPanel(message);
+}
+
+function installWindowHook(): void {
+  const host = getHookHost();
+  if (!host || host[DEVTOOLS_HOOK_KEY]) return;
+
+  host[DEVTOOLS_HOOK_KEY] = {
+    version: HOOK_VERSION,
+    isActive: () => isActive,
+    send: (message: BridgeMessage) => {
+      sendToPanel(message);
+      // 真实传输层：让扩展面板 / iframe 也能收到
+      host.postMessage?.({ source: MESSAGE_SOURCE, ...message }, '*');
+    },
+    subscribe: (handler: GenericMessageHandler) => onPanelMessage(handler),
+  } satisfies DevToolsWindowHook;
+
+  // 接收面板下发的消息（此前完全没人监听 window 消息，
+  // 面板 -> 页面方向的消息通路是断的）
+  host.addEventListener?.('message', handlePanelWindowMessage);
+}
+
+function uninstallWindowHook(): void {
+  const host = getHookHost();
+  if (!host) return;
+  host.removeEventListener?.('message', handlePanelWindowMessage);
+  delete host[DEVTOOLS_HOOK_KEY];
+}
+
+/**
  * 激活桥接
+ *
+ * 除了置位标志，还会在浏览器环境下挂载 `window.__LYTJS_DEVTOOLS_HOOK__`
+ * （此前只改了一个内部布尔值，扩展/面板没有任何发现入口，导致整套 DevTools
+ * 在实际浏览器里无法被连接上）。
  */
 export function activateBridge(): void {
   isActive = true;
+  installWindowHook();
 }
 
 /**
@@ -138,6 +219,7 @@ export function activateBridge(): void {
  */
 export function deactivateBridge(): void {
   isActive = false;
+  uninstallWindowHook();
 }
 
 /**

@@ -282,7 +282,7 @@ export class IncrementalCompiler {
         }
 
         if (prop1.type === NodeTypes.ATTRIBUTE && prop2.type === NodeTypes.ATTRIBUTE) {
-          if (prop1.name !== prop2.name || (prop1.value?.content !== prop2.value?.content)) {
+          if (prop1.name !== prop2.name || prop1.value?.content !== prop2.value?.content) {
             return false;
           }
         }
@@ -384,12 +384,14 @@ export class IncrementalCompiler {
       return {
         usedIncremental: false,
         result,
-        modified: [{
-          type: 'modified',
-          path: [],
-          nodeType: 'full',
-          details: templateDiff.description,
-        }],
+        modified: [
+          {
+            type: 'modified',
+            path: [],
+            nodeType: 'full',
+            details: templateDiff.description,
+          },
+        ],
         performance: {
           totalTime,
           fullCompileTime,
@@ -399,7 +401,7 @@ export class IncrementalCompiler {
 
     // 尝试增量编译
     const incrementalStartTime = performance.now();
-    
+
     // 重新编译整个文件（简化版的增量编译）
     const result = compile(source, options);
     const incrementalTime = performance.now() - incrementalStartTime;
@@ -421,12 +423,14 @@ export class IncrementalCompiler {
     return {
       usedIncremental: true,
       result,
-      modified: [{
-        type: 'modified',
-        path: [],
-        nodeType: 'content',
-        details: templateDiff.description,
-      }],
+      modified: [
+        {
+          type: 'modified',
+          path: [],
+          nodeType: 'content',
+          details: templateDiff.description,
+        },
+      ],
       performance: {
         totalTime,
         incrementalTime,
@@ -442,7 +446,7 @@ export class IncrementalCompiler {
     let hash = 0;
     for (let i = 0; i < source.length; i++) {
       const char = source.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
+      hash = (hash << 5) - hash + char;
       hash = hash & hash;
     }
     return `anon-${hash}`;
@@ -513,5 +517,3 @@ export function clearIncrementalCache(): void {
 export function getIncrementalCompiler(): IncrementalCompiler {
   return incrementalCompiler;
 }
-
-

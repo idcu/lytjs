@@ -1048,7 +1048,10 @@ function processCallExpression(
     }
 
     const keyExpr = userKeyExpr ?? `${itemVar}.id`;
-    const containerVar = parentVar ?? '_ul';
+    // 容器变量：render 的第二个形参叫 _container（见本文件 :164 生成的
+    // `export function render(_ctx, _container)`）。此处曾写死 '_ul'，
+    // 是为 ul/li 列表 demo 特判，换任何根容器都会产出 ReferenceError。
+    const containerVar = parentVar ?? '_container';
 
     dynamicBindings.push({
       varName: containerVar,

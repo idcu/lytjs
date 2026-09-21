@@ -2,8 +2,14 @@
 // 公平的三种模式性能对比！
 
 import { bench, describe } from 'vitest';
-import { createApp as createVDOMApp, defineComponent as defineVDOMComponent } from '@lytjs/core-vnode';
-import { createApp as createSignalApp, defineComponent as defineSignalComponent } from '@lytjs/core-signal';
+import {
+  createApp as createVDOMApp,
+  defineComponent as defineVDOMComponent,
+} from '@lytjs/core-vnode';
+import {
+  createApp as createSignalApp,
+  defineComponent as defineSignalComponent,
+} from '@lytjs/core-signal';
 import { createVaporApp, defineVaporComponent } from '@lytjs/renderer';
 import { ref } from '@lytjs/reactivity';
 
@@ -23,12 +29,12 @@ describe('三种模式 - 公平对比', () => {
   bench('VDOM 模式 - 渲染 1000 条', () => {
     const container = document.createElement('div');
     const data = generateData(1000);
-    
+
     const App = defineVDOMComponent({
       setup() {
         return () => {
           const table = document.createElement('table');
-          data.forEach(item => {
+          data.forEach((item) => {
             const tr = document.createElement('tr');
             const td = document.createElement('td');
             td.textContent = item.label;
@@ -37,9 +43,9 @@ describe('三种模式 - 公平对比', () => {
           });
           return table;
         };
-      }
+      },
     });
-    
+
     const app = createVDOMApp(App);
     app.mount(container);
     app.unmount();
@@ -48,7 +54,7 @@ describe('三种模式 - 公平对比', () => {
   bench('Signal 模式 - 渲染 1000 条', () => {
     const container = document.createElement('div');
     const data = ref(generateData(1000));
-    
+
     const App = defineSignalComponent({
       setup() {
         return { data };
@@ -59,9 +65,9 @@ describe('三种模式 - 公平对比', () => {
             <td>{{ item.label }}</td>
           </tr>
         </table>
-      `
+      `,
     });
-    
+
     const app = createSignalApp(App);
     app.mount(container);
     app.unmount();
@@ -70,7 +76,7 @@ describe('三种模式 - 公平对比', () => {
   bench('Vapor 模式 - 渲染 1000 条', () => {
     const container = document.createElement('div');
     const data = ref(generateData(1000));
-    
+
     const App = defineVaporComponent({
       setup() {
         return { data };
@@ -81,9 +87,9 @@ describe('三种模式 - 公平对比', () => {
             <td>{{ item.label }}</td>
           </tr>
         </table>
-      `
+      `,
     });
-    
+
     const app = createVaporApp(App);
     app.mount(container);
     app.unmount();
@@ -95,12 +101,12 @@ describe('三种模式 - 公平对比', () => {
   bench('VDOM 模式 - 渲染 10000 条', () => {
     const container = document.createElement('div');
     const data = generateData(10000);
-    
+
     const App = defineVDOMComponent({
       setup() {
         return () => {
           const table = document.createElement('table');
-          data.forEach(item => {
+          data.forEach((item) => {
             const tr = document.createElement('tr');
             const td = document.createElement('td');
             td.textContent = item.label;
@@ -109,9 +115,9 @@ describe('三种模式 - 公平对比', () => {
           });
           return table;
         };
-      }
+      },
     });
-    
+
     const app = createVDOMApp(App);
     app.mount(container);
     app.unmount();
@@ -120,7 +126,7 @@ describe('三种模式 - 公平对比', () => {
   bench('Signal 模式 - 渲染 10000 条', () => {
     const container = document.createElement('div');
     const data = ref(generateData(10000));
-    
+
     const App = defineSignalComponent({
       setup() {
         return { data };
@@ -131,9 +137,9 @@ describe('三种模式 - 公平对比', () => {
             <td>{{ item.label }}</td>
           </tr>
         </table>
-      `
+      `,
     });
-    
+
     const app = createSignalApp(App);
     app.mount(container);
     app.unmount();
@@ -142,7 +148,7 @@ describe('三种模式 - 公平对比', () => {
   bench('Vapor 模式 - 渲染 10000 条', () => {
     const container = document.createElement('div');
     const data = ref(generateData(10000));
-    
+
     const App = defineVaporComponent({
       setup() {
         return { data };
@@ -153,9 +159,9 @@ describe('三种模式 - 公平对比', () => {
             <td>{{ item.label }}</td>
           </tr>
         </table>
-      `
+      `,
     });
-    
+
     const app = createVaporApp(App);
     app.mount(container);
     app.unmount();

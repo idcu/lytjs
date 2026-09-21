@@ -1,11 +1,29 @@
-/* eslint-disable no-console */
 /**
  * @lytjs/bundler - LytJS 构建工具集成
  *
- * 提供 Vite 和 Webpack 的基础集成
+ * ⚠️ 实现状态（2026-09 审计）：本包目前是**插件骨架**，没有真实的编译行为 ——
+ * `transform()` 对 .lyt/.vue 文件不做任何转换，只返回 null（不产出也不报错）。
+ * 由于静默返回 null 会让使用者误以为"插件已生效但没效果"，这里改为在 DEV 下
+ * 输出一次性告警说明未实现。真实实现可复用 `@lytjs/compiler` 的 SFC 编译能力
+ * （参见 packages/plugins/packages/plugin-vite 的做法）。
  */
 
 import type { LytPluginOptions, LytPluginConfig, BundlerPreset } from './types';
+
+/**
+ * 一次性告警：编译器集成尚未实现
+ */
+let warnedUnimplemented = false;
+function warnTransformUnimplemented(target: string): void {
+  if (warnedUnimplemented) return;
+  warnedUnimplemented = true;
+  if (typeof console !== 'undefined') {
+    console.warn(
+      `[lytjs/bundler] 编译集成尚未实现：${target} 的 .lyt/.vue 文件不会被转换。` +
+        '如需可用的 Vite 集成，请使用 @lytjs/plugin-vite。',
+    );
+  }
+}
 
 /**
  * 创建 Vite 插件
@@ -21,12 +39,12 @@ export function createVitePlugin(_options: LytPluginOptions = {}): Record<string
     },
     transform(code: string, id: string) {
       if (id.endsWith('.lyt') || id.endsWith('.vue')) {
-        console.log('[lytjs] Transforming', id);
+        warnTransformUnimplemented(id);
       }
       return null;
     },
     configureServer(_server: Record<string, unknown>) {
-      console.log('[lytjs] Dev server configured');
+      // 无真实配置动作（保留钩子以便后续扩展）
     },
   };
 }
@@ -46,7 +64,7 @@ export function createWebpackPlugin(_options: LytPluginOptions = {}): Record<str
         { tap: (name: string, callback: () => void) => void }
       >;
       hooks.beforeCompile.tap('LytPlugin', () => {
-        console.log('[lytjs] Webpack plugin applied');
+        warnTransformUnimplemented('webpack');
       });
     },
   };

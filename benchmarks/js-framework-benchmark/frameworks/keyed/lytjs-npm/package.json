@@ -2,7 +2,10 @@
   "name": "lytjs-npm",
   "description": "Lightweight Zero-Dependency JavaScript Framework - NPM version",
   "version": "6.9.0",
-  "keywords": ["lytjs", "benchmark"],
+  "keywords": [
+    "lytjs",
+    "benchmark"
+  ],
   "type": "module",
   "main": "index.html",
   "js-framework-benchmark": {

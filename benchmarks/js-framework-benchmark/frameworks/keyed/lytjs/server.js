@@ -9,7 +9,7 @@ const MIME_TYPES = {
   '.html': 'text/html',
   '.js': 'text/javascript',
   '.css': 'text/css',
-  '.json': 'application/json'
+  '.json': 'application/json',
 };
 
 const server = http.createServer((req, res) => {

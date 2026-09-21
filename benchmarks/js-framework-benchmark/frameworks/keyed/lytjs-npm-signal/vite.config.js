@@ -1,15 +1,15 @@
-import { defineConfig } from 'vite'
+import { defineConfig } from 'vite';
 
 export default defineConfig({
   build: {
     outDir: 'dist',
     minify: 'terser',
-    target: 'esnext'
+    target: 'esnext',
   },
   server: {
-    port: 8080
+    port: 8080,
   },
   define: {
-    __DEV__: true
-  }
-})
+    __DEV__: true,
+  },
+});

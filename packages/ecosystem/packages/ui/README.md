@@ -12,7 +12,7 @@ LytJS 官方 UI 组件库，零第三方依赖，支持主题切换，30+ 组件
 
 ## 简介·独立声明
 
-`@lytjs/ui` 是 LytJS 官方 UI 组件库（60+ 组件），**零第三方依赖**，仅构建于 LytJS 核心框架之上（`@lytjs/reactivity` / `@lytjs/component` / `@lytjs/vdom` / `@lytjs/core` 及通用工具 `@lytjs/common-is` / `@lytjs/common-a11y`），并随框架版本同步演进。按 v6.10 路线图规划，本库将迁出为独立仓库 `lytjs-ui`，保持 API 兼容并提供迁移指南。
+`@lytjs/ui` 是 LytJS 官方 UI 组件库（56 个组件），**零第三方依赖**，仅构建于 LytJS 核心框架之上（`@lytjs/reactivity` / `@lytjs/component` / `@lytjs/vdom` / `@lytjs/core` 及通用工具 `@lytjs/common-is` / `@lytjs/common-a11y`），并随框架版本同步演进。按 v6.10 路线图规划，本库将迁出为独立仓库 `lytjs-ui`，保持 API 兼容并提供迁移指南。
 
 ## 依赖关系
 

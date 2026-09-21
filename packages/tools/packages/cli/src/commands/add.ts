@@ -61,7 +61,7 @@ defineEmits<{
       {
         filePath,
         content: `<template>
-  <div class="page-${name}">
+  <div class="page-${toKebabCase(name)}">
     <h1>${pascalName}</h1>
   </div>
 </template>
@@ -71,7 +71,7 @@ defineEmits<{
 </script>
 
 <style scoped>
-.page-${name} {
+.page-${toKebabCase(name)} {
   padding: 1rem;
 }
 </style>
@@ -296,6 +296,16 @@ function toPascalCase(str: string): string {
     .split(/[-_]/)
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join('');
+}
+
+/**
+ * Convert string to kebab-case（用于 CSS 类名 / 文件名等场景）
+ */
+function toKebabCase(str: string): string {
+  return str
+    .replace(/([a-z0-9])([A-Z])/g, '$1-$2')
+    .replace(/[\s_]+/g, '-')
+    .toLowerCase();
 }
 
 /**

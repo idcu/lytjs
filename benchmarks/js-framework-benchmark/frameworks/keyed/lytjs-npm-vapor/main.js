@@ -1,21 +1,84 @@
 import { createVaporApp, defineVaporComponent } from '@lytjs/renderer/vapor/vapor-app';
 import { ref } from '@lytjs/reactivity';
 
-const adjectives = ['pretty', 'large', 'big', 'small', 'tall', 'short', 'long', 'handsome', 'plain', 'quaint', 'clean', 'elegant', 'easy', 'angry', 'crazy', 'helpful', 'mushy', 'odd', 'unsightly', 'adorable', 'important', 'inexpensive', 'cheap', 'expensive', 'fancy'];
-const colours = ['red', 'yellow', 'blue', 'green', 'pink', 'brown', 'purple', 'brown', 'white', 'black', 'orange'];
-const nouns = ['table', 'chair', 'house', 'bbq', 'desk', 'car', 'pony', 'train', 'plane', 'bridge', 'sunglasses', 'tower', 'house', 'plant', 'bicycle', 'tree'];
+const adjectives = [
+  'pretty',
+  'large',
+  'big',
+  'small',
+  'tall',
+  'short',
+  'long',
+  'handsome',
+  'plain',
+  'quaint',
+  'clean',
+  'elegant',
+  'easy',
+  'angry',
+  'crazy',
+  'helpful',
+  'mushy',
+  'odd',
+  'unsightly',
+  'adorable',
+  'important',
+  'inexpensive',
+  'cheap',
+  'expensive',
+  'fancy',
+];
+const colours = [
+  'red',
+  'yellow',
+  'blue',
+  'green',
+  'pink',
+  'brown',
+  'purple',
+  'brown',
+  'white',
+  'black',
+  'orange',
+];
+const nouns = [
+  'table',
+  'chair',
+  'house',
+  'bbq',
+  'desk',
+  'car',
+  'pony',
+  'train',
+  'plane',
+  'bridge',
+  'sunglasses',
+  'tower',
+  'house',
+  'plant',
+  'bicycle',
+  'tree',
+];
 
 let _id = 1;
-function generateId() { return _id++; }
+function generateId() {
+  return _id++;
+}
 function generateRandomString() {
-  return adjectives[Math.floor(Math.random() * adjectives.length)] + ' ' + colours[Math.floor(Math.random() * colours.length)] + ' ' + nouns[Math.floor(Math.random() * nouns.length)];
+  return (
+    adjectives[Math.floor(Math.random() * adjectives.length)] +
+    ' ' +
+    colours[Math.floor(Math.random() * colours.length)] +
+    ' ' +
+    nouns[Math.floor(Math.random() * nouns.length)]
+  );
 }
 
 const data = ref([]);
 const selectedId = ref(undefined);
 
 function remove(id) {
-  data.value = data.value.filter(item => item.id !== id);
+  data.value = data.value.filter((item) => item.id !== id);
 }
 
 function select(id) {
@@ -28,7 +91,7 @@ const App = defineVaporComponent({
       data,
       selectedId,
       remove,
-      select
+      select,
     };
   },
   template: `
@@ -48,7 +111,7 @@ const App = defineVaporComponent({
         </tr>
       </tbody>
     </table>
-  `
+  `,
 });
 
 function run() {
@@ -104,7 +167,7 @@ function swapRows() {
 (async () => {
   const app = createVaporApp(App);
   app.mount('#app');
-  
+
   document.getElementById('run').addEventListener('click', run);
   document.getElementById('runlots').addEventListener('click', runlots);
   document.getElementById('add').addEventListener('click', add);

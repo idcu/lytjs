@@ -67,7 +67,7 @@ Lyt.js 提供两种渲染模式，可根据场景选择：
 
 ## UI 组件库
 
-Lyt.js 提供完整的零依赖 UI 组件库（60+ 组件），所有组件均支持 Vapor 和 VNode 双模式：
+Lyt.js 提供零依赖 UI 组件库（56 个组件，其中 4 个尚未从 index 导出），所有组件均支持 Vapor 和 VNode 双模式：
 
 | 类别     | 组件                                                                                           |
 | -------- | ---------------------------------------------------------------------------------------------- |
@@ -124,13 +124,13 @@ Lyt.js 采用精心设计的 8 层架构，从底层到上层：
 
 基于 8 层架构的包组织：
 
-### L0: 基础工具层（30+ 个工具包）
+### L0: 基础工具层（34 个工具包）
 
 | 包                     | 描述               |
 | ---------------------- | ------------------ |
 | `@lytjs/shared-types`  | 共享类型定义       |
 | `@lytjs/host-contract` | 跨平台渲染接口定义 |
-| `@lytjs/common-*`      | 30+ 个工具子包     |
+| `@lytjs/common-*`      | 34 个工具子包      |
 
 **工具包列表**：common-is, common-constants, common-string, common-object, common-error, common-warn, common-events, common-scheduler, common-algorithm, common-dom, common-dom-helpers, common-performance, common-a11y, common-keyboard, common-storage, common-validate, common-http, common-raf, common-render-queue, common-event-normalizer, common-node-cache, common-async-scheduler, common-transition-engine, common-assertions, common-security, common-path, common-query, common-timing, common-cache, common-memory
 
@@ -187,7 +187,7 @@ Lyt.js 采用精心设计的 8 层架构，从底层到上层：
 
 | 包                             | 描述                       |
 | ------------------------------ | -------------------------- |
-| `@lytjs/ui`                    | UI 组件库（60+ 组件）      |
+| `@lytjs/ui`                    | UI 组件库（56 个组件）     |
 | `@lytjs/router`                | 路由系统                   |
 | `@lytjs/router-fs`             | 文件系统路由引擎           |
 | `@lytjs/api`                   | API 路由引擎               |
@@ -287,7 +287,7 @@ lytjs/
 ├── packages/
 │   ├── _templates/          # 新包模板
 │   ├── common/              # L0 基础工具层
-│   │   └── packages/        # 30+ 个工具子包
+│   │   └── packages/        # 34 个工具子包
 │   ├── shared-types/        # L0 基础工具层 - 共享类型定义
 │   ├── host-contract/       # L0 基础工具层 - 跨平台渲染接口
 │   ├── reactivity/          # L1 核心原语层 - 响应式系统
@@ -319,7 +319,7 @@ lytjs/
 │   ├── web/                 # L4 插件与适配层 - Web 平台工具
 │   ├── ecosystem/           # L6 生态系统层
 │   │   └── packages/
-│   │       ├── ui/          # UI 组件库（60+ 组件）
+│   │       ├── ui/          # UI 组件库（56 个组件）
 │   │       ├── store/       # 状态管理
 │   │       ├── devtools/    # 开发者工具
 │   │       ├── bundler/     # 构建工具
@@ -376,7 +376,7 @@ lytjs/
   - 修改 tsup.config.ts，添加 onSuccess 钩子自动复制 CSS 到 dist
   - 重构 index.ts，使用 `definePlugin` API 创建标准 LytJS 插件
   - 添加 @lytjs/core 作为依赖项
-- ✅ **所有包版本统一升级** - 86 个包版本统一升级至 v6.9.5
+- ✅ **所有包版本统一升级** - 89 个包版本统一升级至 v6.9.5
 
 ### v6.9.0
 
@@ -482,7 +482,7 @@ lytjs/
 
 - 全新 8 层模块化架构
 - 双渲染模式（Vapor + VDOM）
-- 60+ UI 组件
+- 56 个 UI 组件
 - 29+ 基础工具包
 - 7 个官方插件
 - 完整的 TypeScript 类型支持

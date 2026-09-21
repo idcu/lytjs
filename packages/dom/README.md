@@ -2,6 +2,11 @@
 
 > DOM 工具包，提供 Web Components 集成、属性反射与自定义元素增强能力
 
+> ⚠️ **接入状态（2026-09 审计）**：本包目前**未被仓库内任何包引用**（全仓 0 处
+> `@lytjs/dom` 的源码 import），属于"已实现但未接线"的孤岛包。在明确其归属
+> （并入 `@lytjs/adapter-web` 或 `@lytjs/common-dom-helpers`）之前，请勿在
+> 生产项目中依赖。
+
 ## 安装
 
 ```bash

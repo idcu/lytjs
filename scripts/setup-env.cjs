@@ -7,27 +7,33 @@ const config = {
   npm: {
     prefix: path.join(os.homedir(), '.npm-global'),
     cache: path.join(os.homedir(), '.npm-cache'),
-    registry: 'https://registry.npmmirror.com/'
+    registry: 'https://registry.npmmirror.com/',
   },
   pnpm: {
     globalDir: path.join(os.homedir(), '.pnpm-global'),
     globalBinDir: path.join(os.homedir(), '.pnpm-bin'),
     storeDir: path.join(os.homedir(), '.pnpm-store'),
-    registry: 'https://registry.npmmirror.com/'
+    registry: 'https://registry.npmmirror.com/',
   },
   git: {
     user: {
       name: 'idcu',
-      email: 'idcu@qq.com'
-    }
-  }
+      email: 'idcu@qq.com',
+    },
+  },
 };
 
 console.log('⚙️  设置开发环境配置...\n');
 
 // 创建必要的目录
 console.log('📁 检查并创建配置目录...');
-[config.npm.prefix, config.npm.cache, config.pnpm.globalDir, config.pnpm.globalBinDir, config.pnpm.storeDir].forEach(dir => {
+[
+  config.npm.prefix,
+  config.npm.cache,
+  config.pnpm.globalDir,
+  config.pnpm.globalBinDir,
+  config.pnpm.storeDir,
+].forEach((dir) => {
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
     console.log(`✅ 创建目录: ${dir}`);

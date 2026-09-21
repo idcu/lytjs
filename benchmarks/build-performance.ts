@@ -78,7 +78,7 @@ export class BuildPerformanceBenchmark {
     options: {
       iterations: number;
       warmup?: boolean;
-    } = { iterations: 3, warmup: true }
+    } = { iterations: 3, warmup: true },
   ): BuildPerformanceResult {
     const { iterations, warmup } = options;
     const times: number[] = [];
@@ -141,7 +141,7 @@ export class BuildPerformanceBenchmark {
    */
   comparePerformance(
     current: BuildPerformanceResult,
-    baselineName?: string
+    baselineName?: string,
   ): BuildPerformanceComparison {
     const baseline = baselineName ? this.baselines.get(baselineName) : undefined;
 
@@ -161,9 +161,7 @@ export class BuildPerformanceBenchmark {
 
     // 计算大小差异
     const sizeAbsolute = current.outputSize - baseline.outputSize;
-    const sizePercentage = baseline.outputSize > 0 
-      ? (sizeAbsolute / baseline.outputSize) * 100 
-      : 0;
+    const sizePercentage = baseline.outputSize > 0 ? (sizeAbsolute / baseline.outputSize) * 100 : 0;
 
     // 判断是否有性能回归
     let hasRegression = false;

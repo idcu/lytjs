@@ -5,6 +5,7 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import fs from 'fs';
+import cliPkg from '../package.json';
 import { runCli } from '../src/commands/run';
 import { create, listTemplates } from '../src/commands/create';
 import { add } from '../src/commands/add';
@@ -17,23 +18,20 @@ import {
   getAddCommand,
 } from '../src/utils/package';
 
-// Mock fs module - use inline factory to avoid hoisting issues
-vi.mock('fs', () => ({
-  default: {
+// Mock fs module - 命名导出与 default 必须共享同一批 mock 实例，
+// 否则 `vi.mocked(fs.existsSync)` 配置的是 default 上的函数，
+// 而被测源码 `import { existsSync } from 'fs'` 调用的是另一个实例（断言恒失败）。
+vi.mock('fs', () => {
+  const fsMock = {
     existsSync: vi.fn(),
     mkdirSync: vi.fn(),
     writeFileSync: vi.fn(),
     readFileSync: vi.fn(),
     readdirSync: vi.fn(),
     statSync: vi.fn(),
-  },
-  existsSync: vi.fn(),
-  mkdirSync: vi.fn(),
-  writeFileSync: vi.fn(),
-  readFileSync: vi.fn(),
-  readdirSync: vi.fn(),
-  statSync: vi.fn(),
-}));
+  };
+  return { ...fsMock, default: fsMock };
+});
 
 // Get mocked functions
 const mockExistsSync = vi.mocked(fs.existsSync);
@@ -54,6 +52,19 @@ vi.mock('child_process', () => ({
 describe('@lytjs/cli', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // 关键：clearAllMocks 只清调用记录，不清 mockReturnValue 留下的返回值，
+    // 会让上一个用例的 mockReturnValue(true) 泄漏到下一个用例（曾导致
+    // "writeFile 应创建父目录" 等用例因 existsSync 仍返回 true 而恒失败）。
+    for (const m of [
+      mockExistsSync,
+      mockMkdirSync,
+      mockWriteFileSync,
+      mockReadFileSync,
+      mockReaddirSync,
+      mockStatSync,
+    ]) {
+      m.mockReset();
+    }
   });
 
   describe('logger', () => {
@@ -203,7 +214,9 @@ describe('@lytjs/cli', () => {
     it('should show version for --version', async () => {
       const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
       await runCli(['--version']);
-      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('6.0.0'));
+      // 版本号应来自 package.json（此前测试锁死 6.0.0，而实现也是硬编码 6.0.0，
+      // 两者一起把"CLI 报错版本"这个缺陷掩盖了 6 个 minor 版本）
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining(cliPkg.version));
       consoleSpy.mockRestore();
     });
 
@@ -375,7 +388,10 @@ describe('@lytjs/cli', () => {
     });
 
     it('should generate a component file', async () => {
-      mockExistsSync.mockReturnValue(true);
+      // 真实项目状态：package.json 存在，但目标文件尚不存在。
+      // 此前一律 mockReturnValue(true)，导致 add 走"文件已存在"分支直接跳过写入，
+      // 断言只能恒失败（测试与实现一起把缺陷藏住了）。
+      mockExistsSync.mockImplementation((p: string) => String(p).endsWith('package.json'));
 
       await add('component', 'Button');
 
@@ -388,7 +404,7 @@ describe('@lytjs/cli', () => {
     });
 
     it('should generate a page file', async () => {
-      mockExistsSync.mockReturnValue(true);
+      mockExistsSync.mockImplementation((p: string) => String(p).endsWith('package.json'));
 
       await add('page', 'About');
 
@@ -400,7 +416,7 @@ describe('@lytjs/cli', () => {
     });
 
     it('should generate a store file', async () => {
-      mockExistsSync.mockReturnValue(true);
+      mockExistsSync.mockImplementation((p: string) => String(p).endsWith('package.json'));
 
       await add('store', 'user');
 

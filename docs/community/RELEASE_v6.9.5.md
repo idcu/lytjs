@@ -48,7 +48,9 @@ pnpm update @lytjs/*
 import { createApp } from '@lytjs/core';
 import { createPinia, defineStore } from '@lytjs/store';
 
-const app = createApp({ /* ... */ });
+const app = createApp({
+  /* ... */
+});
 const pinia = createPinia();
 
 app.use(pinia);
@@ -59,8 +61,8 @@ const useCounterStore = defineStore('counter', {
   actions: {
     increment() {
       this.count++;
-    }
-  }
+    },
+  },
 });
 
 app.mount('#app');
@@ -73,7 +75,9 @@ import { createApp } from '@lytjs/core';
 import LytUI from '@lytjs/ui';
 import '@lytjs/ui/index.css';
 
-const app = createApp({ /* ... */ });
+const app = createApp({
+  /* ... */
+});
 app.use(LytUI);
 app.mount('#app');
 ```

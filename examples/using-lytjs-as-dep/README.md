@@ -44,21 +44,23 @@ pnpm add @lytjs/core @lytjs/ui @lytjs/store @lytjs/router
 ### 3. 创建基础文件
 
 创建 `index.html`:
+
 ```html
 <!DOCTYPE html>
 <html lang="zh-CN">
-<head>
-  <meta charset="UTF-8">
-  <title>My LytJS App</title>
-</head>
-<body>
-  <div id="app"></div>
-  <script type="module" src="/main.js"></script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <title>My LytJS App</title>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/main.js"></script>
+  </body>
 </html>
 ```
 
 创建 `main.js` (或 `main.ts`):
+
 ```javascript
 import { createApp, ref, computed } from '@lytjs/core';
 
@@ -66,10 +68,10 @@ const App = {
   setup() {
     const count = ref(0);
     const double = computed(() => count.value * 2);
-    
+
     const increment = () => count.value++;
     const decrement = () => count.value--;
-    
+
     return { count, double, increment, decrement };
   },
   template: `
@@ -80,7 +82,7 @@ const App = {
       <button @click="increment">+1</button>
       <button @click="decrement">-1</button>
     </div>
-  `
+  `,
 };
 
 createApp(App).mount('#app');
@@ -114,6 +116,7 @@ my-lytjs-app/
 **用户问题**："帮我创建一个使用 LytJS 的任务管理应用"
 
 **AI 工作流**：
+
 1. 读取 [LytJS 快速参考](docs/getting-started/quick-reference.md)
 2. 查看 [examples/](../) 目录寻找相关示例
 3. 生成项目结构和基础代码
@@ -140,13 +143,13 @@ const LoginForm = {
   setup() {
     const formData = ref({
       username: '',
-      password: ''
+      password: '',
     });
-    
+
     const handleSubmit = () => {
       console.log('Submit:', formData.value);
     };
-    
+
     return { formData, handleSubmit };
   },
   template: `
@@ -159,7 +162,7 @@ const LoginForm = {
       </FormItem>
       <Button type="primary" @click="handleSubmit">登录</Button>
     </Form>
-  `
+  `,
 };
 ```
 
@@ -210,11 +213,11 @@ import { createApp, signal } from '@lytjs/core-signal';
 
 const App = {
   setup() {
-    const count = signal(0);  // 使用 signal 获得细粒度更新
-    
+    const count = signal(0); // 使用 signal 获得细粒度更新
+
     return { count };
   },
-  template: `<div>{{ count }}</div>`
+  template: `<div>{{ count }}</div>`,
 };
 
 createApp(App).mount('#app');
@@ -227,6 +230,7 @@ createApp(App).mount('#app');
 ### 1. 响应式系统
 
 #### Ref
+
 ```javascript
 import { ref, computed } from '@lytjs/reactivity';
 
@@ -234,11 +238,12 @@ const count = ref(0);
 const double = computed(() => count.value * 2);
 
 count.value++;
-console.log(count.value);  // 1
+console.log(count.value); // 1
 console.log(double.value); // 2
 ```
 
 #### Signal (推荐，性能更好)
+
 ```javascript
 import { signal, computed, effect } from '@lytjs/reactivity';
 
@@ -263,14 +268,14 @@ const MyComponent = defineComponent({
     title: String,
     initialCount: {
       type: Number,
-      default: 0
-    }
+      default: 0,
+    },
   },
   setup(props) {
     const count = ref(props.initialCount);
-    
+
     const increment = () => count.value++;
-    
+
     return { count, increment };
   },
   template: `
@@ -279,7 +284,7 @@ const MyComponent = defineComponent({
       <p>Count: {{ count }}</p>
       <button @click="increment">+1</button>
     </div>
-  `
+  `,
 });
 ```
 
@@ -295,18 +300,18 @@ const pinia = createPinia();
 const useCounterStore = defineStore('counter', {
   state: () => ({
     count: 0,
-    history: []
+    history: [],
   }),
   getters: {
     double: (state) => state.count * 2,
-    historyLength: (state) => state.history.length
+    historyLength: (state) => state.history.length,
   },
   actions: {
     increment() {
       this.count++;
       this.history.push(this.count);
-    }
-  }
+    },
+  },
 });
 
 // 使用 store
@@ -328,9 +333,9 @@ const App = {
     const visible = ref(false);
     const data = ref([
       { id: 1, name: '张三', age: 28 },
-      { id: 2, name: '李四', age: 32 }
+      { id: 2, name: '李四', age: 32 },
     ]);
-    
+
     return { visible, data };
   },
   template: `
@@ -349,7 +354,7 @@ const App = {
         />
       </Modal>
     </div>
-  `
+  `,
 };
 ```
 
@@ -364,18 +369,20 @@ npm install vite -D
 ```
 
 创建 `vite.config.js`:
+
 ```javascript
 import { defineConfig } from 'vite';
 
 export default defineConfig({
   server: {
     port: 3000,
-    open: true
-  }
+    open: true,
+  },
 });
 ```
 
 更新 `package.json`:
+
 ```json
 {
   "scripts": {
@@ -394,6 +401,7 @@ npx tsc --init
 ```
 
 创建 `main.ts`:
+
 ```typescript
 import { createApp, ref, Ref } from '@lytjs/core';
 
@@ -405,10 +413,10 @@ interface User {
 const App = {
   setup() {
     const user: Ref<User | null> = ref(null);
-    
+
     return { user };
   },
-  template: `...`
+  template: `...`,
 };
 
 createApp(App).mount('#app');

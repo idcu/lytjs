@@ -2,7 +2,11 @@
   "name": "lytjs-npm-vdom",
   "description": "LytJS - VDOM Mode (npm package)",
   "version": "6.9.0",
-  "keywords": ["lytjs", "vdom", "benchmark"],
+  "keywords": [
+    "lytjs",
+    "vdom",
+    "benchmark"
+  ],
   "main": "index.html",
   "js-framework-benchmark": {
     "framework": "LytJS (npm, VDOM)",

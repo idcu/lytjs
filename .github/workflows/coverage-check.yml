@@ -120,11 +120,19 @@ jobs:
             console.log('─'.repeat(50));
             
             const threshold = 95;
-            if (ebCoverage.lines.pct >= threshold && 
-                ebCoverage.statements.pct >= threshold) {
+            const passed =
+              ebCoverage.lines.pct >= threshold &&
+              ebCoverage.statements.pct >= threshold;
+            if (passed) {
               console.log('✅ ErrorBoundary coverage above 95%!');
             } else {
-              console.log('⚠️  ErrorBoundary coverage below 95%');
+              // 之前这里只打印警告、从不失败，名为 Check 的 job 永远不会红
+              console.error(
+                `❌ ErrorBoundary coverage below ${threshold}% ` +
+                `(lines ${ebCoverage.lines.pct.toFixed(2)}%, ` +
+                `statements ${ebCoverage.statements.pct.toFixed(2)}%)`
+              );
+              process.exit(1);
             }
           "
 
@@ -256,7 +264,8 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Check for unused dependencies
-        run: pnpm dedupe --check || true
+        # 不吞错误：依赖重复检查失败应让该 job 变红
+        run: pnpm dedupe --check
 
       - name: List external dependencies
         run: |

@@ -125,25 +125,33 @@ export function createApp(
         context._instance = instance;
 
         // 使用 DOM 渲染器进行渲染 - 添加 setupChildComponent 和 normalizeProps 选项
-        const renderer = createDOMRenderer({
-          setupChildComponent(childVNode: VNode, parentComponent: ComponentInternalInstance) {
-            const childInstance = createComponentInstance(childVNode, parentComponent);
+        // 说明：@lytjs/component 与 @lytjs/vdom（经 @lytjs/common-vnode）各自声明了一份
+        // 同名的 ComponentInternalInstance，二者结构不等价。渲染器选项走的是 vdom 那份，
+        // 因此这里先把选项对象按 vdom 契约断言传入，回调内部再转回 component 的类型使用
+        // （core 包也是同样的跨包桥接思路）。
+        type RendererOptionsArg = NonNullable<Parameters<typeof createDOMRenderer>[0]>;
+        const rendererOptions = {
+          setupChildComponent(childVNode: VNode, parentComponent: unknown) {
+            const parent = parentComponent as ComponentInternalInstance | null;
+            const childInstance = createComponentInstance(childVNode, parent);
             // 从父组件或根组件继承 appContext
-            if (parentComponent) {
-              childInstance.appContext = parentComponent.appContext;
+            if (parent) {
+              childInstance.appContext = parent.appContext;
             } else {
               childInstance.appContext = context as ComponentAppContext;
             }
             setupComponent(childInstance);
-            (childVNode as { component: unknown }).component = childInstance;
+            (childVNode as unknown as { component: ComponentInternalInstance }).component =
+              childInstance;
           },
-          normalizeProps(
-            inst: ComponentInternalInstance,
-            rawProps: Record<string, unknown> | null,
-          ) {
-            initProps(inst, rawProps);
+          normalizeProps(instance: unknown, rawProps: Record<string, unknown> | null) {
+            initProps(instance as ComponentInternalInstance, rawProps);
           },
-        });
+        } as unknown as RendererOptionsArg;
+
+        const renderer = createDOMRenderer(rendererOptions) as unknown as {
+          mount: (vnode: VNode, container: Node) => void;
+        };
         context.renderer = renderer as unknown as DOMRenderer;
         context._vnode = rootVNode;
 

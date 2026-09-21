@@ -43,7 +43,11 @@ export class MiddlewareChain {
 
       const middleware = middlewares[i];
       if (middleware) {
-        const result = await middleware(request, context, () => dispatch(i + 1) as unknown as Promise<void>);
+        const result = await middleware(
+          request,
+          context,
+          () => dispatch(i + 1) as unknown as Promise<void>,
+        );
         if (result !== undefined && result !== null) {
           return result as Response;
         }

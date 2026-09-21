@@ -63,7 +63,7 @@ export async function create(
   // Print next steps
   logger.success(`Project "${projectName}" created successfully!`);
   logger.info('');
-  logger.bold('Next steps:');
+  logger.heading('Next steps:');
   logger.info(`  cd ${projectName}`);
   logger.info(`  ${pm === 'npm' ? 'npm run' : pm} dev`);
 }
@@ -632,7 +632,7 @@ dist-ssr
  * List available templates
  */
 export function listTemplates(): void {
-  logger.bold('Available templates:');
+  logger.heading('Available templates:');
   for (const [name, description] of Object.entries(TEMPLATES)) {
     logger.info(`  ${name.padEnd(10)} - ${description}`);
   }

@@ -114,25 +114,23 @@ export default defineConfig({
         url: 'http://localhost',
       },
     },
-    // 排除需要 DOM 环境的包，这些包使用自己的 vitest 配置
-    // 也排除 E2E 测试（使用 Playwright，不是 Vitest）
-    exclude: [
-      '**/node_modules/**',
-      '**/packages/web/tests/**',
-      '**/packages/plugins/packages/plugin-animation/tests/**',
-      '**/packages/tools/packages/cli/tests/**',
-      '**/packages/vdom/tests/transition-group.test.ts',
-      '**/packages/vdom/tests/patch-element.test.ts',
-      '**/packages/ecosystem/packages/devtools/tests/**',
-      '**/packages/ecosystem/packages/ssr/tests/**',
-      '**/packages/tools/packages/devtools/tests/**',
-      '**/packages/common/packages/env/tests/**',
-      '**/e2e/**',
-      '**/playground/e2e/**',
-    ],
+    // 排除 E2E 测试（使用 Playwright，不是 Vitest）
+    // 说明：此前还整体排除了 web / plugin-animation / devtools 等包级测试，
+    // 但 CI 只跑根 test:coverage，这些"自己的 vitest 配置"从未被执行 —— 等于没测。
+    // 现全部纳入根运行；需要浏览器环境的文件用文件头 `// @vitest-environment jsdom` 声明。
+    exclude: ['**/node_modules/**', '**/e2e/**', '**/playground/e2e/**'],
     coverage: {
       provider: 'v8',
-      include: ['packages/*/src/**/*.ts', 'packages/common/packages/*/src/**/*.ts'],
+      // 覆盖率分母覆盖全部源码区（此前漏掉 ecosystem / plugins / tools，
+      // 导致约 49.5% 源码不参与 85% 阈值校验）
+      include: [
+        'packages/*/src/**/*.ts',
+        'packages/common/packages/*/src/**/*.ts',
+        'packages/ecosystem/packages/**/src/**/*.ts',
+        'packages/ecosystem/packages/**/packages/*/src/**/*.ts',
+        'packages/plugins/packages/*/src/**/*.ts',
+        'packages/tools/packages/*/src/**/*.ts',
+      ],
       exclude: [
         'packages/*/src/**/*.test.ts',
         'packages/*/src/**/*.spec.ts',

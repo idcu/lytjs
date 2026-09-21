@@ -269,7 +269,7 @@ packages/ecosystem/packages/*
 ├── config            # 通用配置系统
 ├── di                # 依赖注入系统
 ├── plugin            # 通用插件系统核心
-├── ui                # UI 组件库（60+ 组件）
+├── ui                # UI 组件库（56 个组件）
 ├── store             # 状态管理
 ├── devtools          # 开发者工具
 ├── compat            # 兼容层

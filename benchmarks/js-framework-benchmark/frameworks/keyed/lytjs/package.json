@@ -2,7 +2,10 @@
   "name": "lytjs",
   "description": "Lightweight Zero-Dependency JavaScript Framework",
   "version": "6.9.0",
-  "keywords": ["lytjs", "benchmark"],
+  "keywords": [
+    "lytjs",
+    "benchmark"
+  ],
   "main": "index.html",
   "js-framework-benchmark": {
     "framework": "LytJS",

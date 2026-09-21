@@ -190,7 +190,7 @@ core-signal → reactivity, compiler, component, renderer, common-*
 | `@lytjs/config` | 通用配置系统（ConfigManager/Schema/Validator/Transformer，零框架依赖） |
 | `@lytjs/di`     | 依赖注入系统                                                           |
 | `@lytjs/plugin` | 通用插件系统核心（PluginRegistry/生命周期事件/版本管理，零框架依赖）   |
-| `@lytjs/ui`     | UI 组件库（60+ 组件）                                                  |
+| `@lytjs/ui`     | UI 组件库（56 个组件）                                                 |
 
 ### 业务状态与工具（6 包）
 

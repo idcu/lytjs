@@ -22,22 +22,32 @@
           <div class="col-md-12">
             <div class="row">
               <div class="col-sm-4 smallpad">
-                <button type="button" class="btn btn-primary btn-block" id="run">Create 1,000 rows</button>
+                <button type="button" class="btn btn-primary btn-block" id="run">
+                  Create 1,000 rows
+                </button>
               </div>
               <div class="col-sm-4 smallpad">
-                <button type="button" class="btn btn-primary btn-block" id="runlots">Create 10,000 rows</button>
+                <button type="button" class="btn btn-primary btn-block" id="runlots">
+                  Create 10,000 rows
+                </button>
               </div>
               <div class="col-sm-4 smallpad">
-                <button type="button" class="btn btn-primary btn-block" id="add">Append 1,000 rows</button>
+                <button type="button" class="btn btn-primary btn-block" id="add">
+                  Append 1,000 rows
+                </button>
               </div>
               <div class="col-sm-4 smallpad">
-                <button type="button" class="btn btn-primary btn-block" id="update">Update every 10th row</button>
+                <button type="button" class="btn btn-primary btn-block" id="update">
+                  Update every 10th row
+                </button>
               </div>
               <div class="col-sm-4 smallpad">
                 <button type="button" class="btn btn-primary btn-block" id="clear">Clear</button>
               </div>
               <div class="col-sm-4 smallpad">
-                <button type="button" class="btn btn-primary btn-block" id="swaprows">Swap Rows</button>
+                <button type="button" class="btn btn-primary btn-block" id="swaprows">
+                  Swap Rows
+                </button>
               </div>
             </div>
           </div>
@@ -50,14 +60,77 @@
     <script type="module">
       import { createApp, defineComponent, ref } from '@lytjs/core-signal';
 
-      const adjectives = ['pretty', 'large', 'big', 'small', 'tall', 'short', 'long', 'handsome', 'plain', 'quaint', 'clean', 'elegant', 'easy', 'angry', 'crazy', 'helpful', 'mushy', 'odd', 'unsightly', 'adorable', 'important', 'inexpensive', 'cheap', 'expensive', 'fancy'];
-      const colours = ['red', 'yellow', 'blue', 'green', 'pink', 'brown', 'purple', 'brown', 'white', 'black', 'orange'];
-      const nouns = ['table', 'chair', 'house', 'bbq', 'desk', 'car', 'pony', 'train', 'plane', 'bridge', 'sunglasses', 'tower', 'house', 'plant', 'bicycle', 'tree'];
+      const adjectives = [
+        'pretty',
+        'large',
+        'big',
+        'small',
+        'tall',
+        'short',
+        'long',
+        'handsome',
+        'plain',
+        'quaint',
+        'clean',
+        'elegant',
+        'easy',
+        'angry',
+        'crazy',
+        'helpful',
+        'mushy',
+        'odd',
+        'unsightly',
+        'adorable',
+        'important',
+        'inexpensive',
+        'cheap',
+        'expensive',
+        'fancy',
+      ];
+      const colours = [
+        'red',
+        'yellow',
+        'blue',
+        'green',
+        'pink',
+        'brown',
+        'purple',
+        'brown',
+        'white',
+        'black',
+        'orange',
+      ];
+      const nouns = [
+        'table',
+        'chair',
+        'house',
+        'bbq',
+        'desk',
+        'car',
+        'pony',
+        'train',
+        'plane',
+        'bridge',
+        'sunglasses',
+        'tower',
+        'house',
+        'plant',
+        'bicycle',
+        'tree',
+      ];
 
       let _id = 1;
-      function generateId() { return _id++; }
+      function generateId() {
+        return _id++;
+      }
       function generateRandomString() {
-        return adjectives[Math.floor(Math.random() * adjectives.length)] + ' ' + colours[Math.floor(Math.random() * colours.length)] + ' ' + nouns[Math.floor(Math.random() * nouns.length)];
+        return (
+          adjectives[Math.floor(Math.random() * adjectives.length)] +
+          ' ' +
+          colours[Math.floor(Math.random() * colours.length)] +
+          ' ' +
+          nouns[Math.floor(Math.random() * nouns.length)]
+        );
       }
 
       const data = ref([]);
@@ -69,7 +142,7 @@
             data,
             selectedId,
             remove,
-            select
+            select,
           };
         },
         template: `
@@ -89,7 +162,7 @@
               </tr>
             </tbody>
           </table>
-        `
+        `,
       });
 
       function run() {
@@ -143,7 +216,7 @@
       }
 
       function remove(id) {
-        data.value = data.value.filter(item => item.id !== id);
+        data.value = data.value.filter((item) => item.id !== id);
       }
 
       function select(id) {
@@ -152,7 +225,7 @@
 
       (async () => {
         await createApp(App).mount('#app');
-        
+
         document.getElementById('run').addEventListener('click', run);
         document.getElementById('runlots').addEventListener('click', runLots);
         document.getElementById('add').addEventListener('click', add);

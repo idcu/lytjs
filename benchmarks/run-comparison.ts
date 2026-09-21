@@ -28,26 +28,26 @@ try {
 
   // 解析并生成报告
   console.log('\n📊 生成性能对比报告...');
-  
+
   const results: BenchmarkResult[] = [];
   const lines = result.split('\n');
-  
+
   for (const line of lines) {
     if (line.includes('bench') && line.includes('ms')) {
       const match = line.match(/bench\s+(.+?)\s+(\d+(\.\d+)?)\s+ms/);
       if (match) {
         const name = match[1].trim();
         const time = parseFloat(match[2]);
-        
+
         let mode: 'vdom' | 'signal' | 'vapor' = 'vdom';
         if (name.includes('Signal')) mode = 'signal';
         if (name.includes('Vapor')) mode = 'vapor';
-        
+
         let operation = 'unknown';
         if (name.includes('初始渲染')) operation = 'initial-render';
         if (name.includes('更新')) operation = 'update';
         if (name.includes('生命周期')) operation = 'full-lifecycle';
-        
+
         results.push({ name, mode, operation, time, unit: 'ms' });
       }
     }
@@ -55,9 +55,8 @@ try {
 
   // 生成报告
   generateReport(results);
-  
+
   console.log('\n✅ 测试完成！查看 benchmarks/results/MODES_COMPARISON.md 获取详细报告。');
-  
 } catch (error) {
   console.error('❌ 测试运行失败:', error);
   process.exit(1);
@@ -66,7 +65,7 @@ try {
 function generateReport(results: BenchmarkResult[]) {
   const reportPath = path.join(__dirname, 'results', 'MODES_COMPARISON.md');
   const date = new Date().toISOString().split('T')[0];
-  
+
   let report = `# LytJS 三种渲染模式性能对比报告
 
 **版本**: v6.9.0  
@@ -87,9 +86,9 @@ function generateReport(results: BenchmarkResult[]) {
 `;
 
   // 按操作类型分组
-  const initialRenderResults = results.filter(r => r.operation === 'initial-render');
-  const updateResults = results.filter(r => r.operation === 'update');
-  const lifecycleResults = results.filter(r => r.operation === 'full-lifecycle');
+  const initialRenderResults = results.filter((r) => r.operation === 'initial-render');
+  const updateResults = results.filter((r) => r.operation === 'update');
+  const lifecycleResults = results.filter((r) => r.operation === 'full-lifecycle');
 
   // 初始渲染对比
   if (initialRenderResults.length > 0) {
@@ -102,14 +101,20 @@ function generateReport(results: BenchmarkResult[]) {
 
     const scenarios = ['1000 项', '10000 项'];
     for (const scenario of scenarios) {
-      const vdom = initialRenderResults.find(r => r.mode === 'vdom' && r.name.includes(scenario));
-      const signal = initialRenderResults.find(r => r.mode === 'signal' && r.name.includes(scenario));
-      const vapor = initialRenderResults.find(r => r.mode === 'vapor' && r.name.includes(scenario));
-      
+      const vdom = initialRenderResults.find((r) => r.mode === 'vdom' && r.name.includes(scenario));
+      const signal = initialRenderResults.find(
+        (r) => r.mode === 'signal' && r.name.includes(scenario),
+      );
+      const vapor = initialRenderResults.find(
+        (r) => r.mode === 'vapor' && r.name.includes(scenario),
+      );
+
       if (vdom && signal && vapor) {
-        const signalImprovement = vdom.time > 0 ? ((vdom.time - signal.time) / vdom.time * 100).toFixed(1) : '0.0';
-        const vaporImprovement = vdom.time > 0 ? ((vdom.time - vapor.time) / vdom.time * 100).toFixed(1) : '0.0';
-        
+        const signalImprovement =
+          vdom.time > 0 ? (((vdom.time - signal.time) / vdom.time) * 100).toFixed(1) : '0.0';
+        const vaporImprovement =
+          vdom.time > 0 ? (((vdom.time - vapor.time) / vdom.time) * 100).toFixed(1) : '0.0';
+
         report += `| ${scenario} | ${vdom.time.toFixed(2)}ms | ${signal.time.toFixed(2)}ms | ${vapor.time.toFixed(2)}ms | ${signalImprovement > 0 ? '+' : ''}${signalImprovement}% | ${vaporImprovement > 0 ? '+' : ''}${vaporImprovement}% |
 `;
       }
@@ -125,14 +130,16 @@ function generateReport(results: BenchmarkResult[]) {
 |------|-----------|-------------|------------|-----------------|----------------|
 `;
 
-    const vdom = updateResults.find(r => r.mode === 'vdom');
-    const signal = updateResults.find(r => r.mode === 'signal');
-    const vapor = updateResults.find(r => r.mode === 'vapor');
-    
+    const vdom = updateResults.find((r) => r.mode === 'vdom');
+    const signal = updateResults.find((r) => r.mode === 'signal');
+    const vapor = updateResults.find((r) => r.mode === 'vapor');
+
     if (vdom && signal && vapor) {
-      const signalImprovement = vdom.time > 0 ? ((vdom.time - signal.time) / vdom.time * 100).toFixed(1) : '0.0';
-      const vaporImprovement = vdom.time > 0 ? ((vdom.time - vapor.time) / vdom.time * 100).toFixed(1) : '0.0';
-      
+      const signalImprovement =
+        vdom.time > 0 ? (((vdom.time - signal.time) / vdom.time) * 100).toFixed(1) : '0.0';
+      const vaporImprovement =
+        vdom.time > 0 ? (((vdom.time - vapor.time) / vdom.time) * 100).toFixed(1) : '0.0';
+
       report += `| 1000 项中更新 10% | ${vdom.time.toFixed(2)}ms | ${signal.time.toFixed(2)}ms | ${vapor.time.toFixed(2)}ms | ${signalImprovement > 0 ? '+' : ''}${signalImprovement}% | ${vaporImprovement > 0 ? '+' : ''}${vaporImprovement}% |
 `;
     }
@@ -147,22 +154,24 @@ function generateReport(results: BenchmarkResult[]) {
 |------|------|-----------|
 `;
 
-    const vdom = lifecycleResults.find(r => r.mode === 'vdom');
-    const signal = lifecycleResults.find(r => r.mode === 'signal');
-    const vapor = lifecycleResults.find(r => r.mode === 'vapor');
-    
+    const vdom = lifecycleResults.find((r) => r.mode === 'vdom');
+    const signal = lifecycleResults.find((r) => r.mode === 'signal');
+    const vapor = lifecycleResults.find((r) => r.mode === 'vapor');
+
     if (vdom) {
       report += `| VDOM | ${vdom.time.toFixed(2)}ms | 基准 |
 `;
-      
+
       if (signal) {
-        const improvement = vdom.time > 0 ? ((vdom.time - signal.time) / vdom.time * 100).toFixed(1) : '0.0';
+        const improvement =
+          vdom.time > 0 ? (((vdom.time - signal.time) / vdom.time) * 100).toFixed(1) : '0.0';
         report += `| Signal | ${signal.time.toFixed(2)}ms | ${improvement > 0 ? '+' : ''}${improvement}% |
 `;
       }
-      
+
       if (vapor) {
-        const improvement = vdom.time > 0 ? ((vdom.time - vapor.time) / vdom.time * 100).toFixed(1) : '0.0';
+        const improvement =
+          vdom.time > 0 ? (((vdom.time - vapor.time) / vdom.time) * 100).toFixed(1) : '0.0';
         report += `| Vapor | ${vapor.time.toFixed(2)}ms | ${improvement > 0 ? '+' : ''}${improvement}% |
 `;
       }

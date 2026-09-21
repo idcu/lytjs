@@ -279,7 +279,7 @@ pnpm dev
 pnpm build
 
 # 预览生产构建
-pnpm preview
+pnpm docs:preview
 ```
 
 构建的文件在 `dist/` 目录中，可以部署到任何静态托管服务。

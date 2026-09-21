@@ -1,3 +1,6 @@
+// @vitest-environment jsdom
+// 说明：bridge 相关用例需要 window（__LYTJS_DEVTOOLS_HOOK__），
+// 根 vitest 默认 environment=node，靠本行单文件覆盖。
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * @lytjs/devtools unit tests
@@ -369,6 +372,13 @@ describe('@lytjs/devtools', () => {
   });
 
   describe('events', () => {
+    // 事件表是模块级单例，用例之间必须显式清理（此前未清理，
+    // 导致 getEventCount 断言被上一个用例的残留事件污染）
+    beforeEach(() => {
+      clearEvents();
+      stopEventRecording();
+    });
+
     it('should start and stop recording', () => {
       expect(isEventRecording()).toBe(false);
 
@@ -385,16 +395,19 @@ describe('@lytjs/devtools', () => {
 
       expect(event).toBeDefined();
       expect(event?.type).toBe('component:created');
-      expect(event?.payload).toEqual({ name: 'Test' });
+      expect(event?.data).toEqual({ name: 'Test' });
       expect(getEventCount()).toBe(1);
     });
 
-    it('should not record events when recording is inactive', () => {
+    it('should leave the gating to callers when recording is inactive', () => {
+      // 契约：recordEvent 是低层记录器，不做开关门禁；
+      // 是否记录由调用方先判断 isEventRecording()（见 src/router-integration.ts:16）。
       stopEventRecording();
-      const event = recordEvent('component:created', { name: 'Test' });
+      expect(isEventRecording()).toBe(false);
 
-      expect(event).toBeUndefined();
-      expect(getEventCount()).toBe(0);
+      const event = recordEvent('component:created', { name: 'Test' });
+      expect(event).toBeDefined();
+      expect(getEventCount()).toBe(1);
     });
 
     it('should get events with filter', () => {
@@ -405,6 +418,7 @@ describe('@lytjs/devtools', () => {
 
       const componentEvents = getEvents(['component:created', 'component:mounted']);
       expect(componentEvents.length).toBe(2);
+      expect(componentEvents.every((e) => e.type !== 'signal:changed')).toBe(true);
     });
 
     it('should subscribe to events', () => {
@@ -587,7 +601,7 @@ describe('@lytjs/devtools', () => {
       expect((window as any).__LYTJS_DEVTOOLS_HOOK__).toBeUndefined();
     });
 
-    it('should subscribe to panel messages', () => {
+    it('should subscribe to panel messages', async () => {
       activateBridge();
       const handler = vi.fn();
 
@@ -602,12 +616,15 @@ describe('@lytjs/devtools', () => {
         '*',
       );
 
-      // Handler should be called asynchronously
-      setTimeout(() => {
+      // window 消息是异步派发的，必须等待后再断言
+      // （此前把断言塞进 setTimeout 且不 await，断言在用例结束后才执行，
+      //  变成 unhandled error：既测不到东西，又会让整个测试运行以非零码退出）
+      await vi.waitFor(() => {
         expect(handler).toHaveBeenCalledWith({ type: 'test' });
-      }, 0);
+      });
 
       unsubscribe();
+      deactivateBridge();
     });
   });
 });

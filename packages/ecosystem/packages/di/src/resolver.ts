@@ -159,9 +159,7 @@ export function injectValue<T>(
 
   // 4. 返回默认值或抛出错误
   if (options?.default !== undefined) {
-    return typeof options.default === 'function'
-      ? (options.default as () => T)()
-      : options.default;
+    return typeof options.default === 'function' ? (options.default as () => T)() : options.default;
   }
 
   if (!options?.optional) {

@@ -2,7 +2,11 @@
   "name": "lytjs-npm-signal",
   "description": "LytJS - Signal Mode (npm package)",
   "version": "6.9.0",
-  "keywords": ["lytjs", "signal", "benchmark"],
+  "keywords": [
+    "lytjs",
+    "signal",
+    "benchmark"
+  ],
   "main": "index.html",
   "js-framework-benchmark": {
     "framework": "LytJS (npm, Signal)",

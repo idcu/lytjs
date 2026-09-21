@@ -427,7 +427,9 @@ export class PluginRegistry {
   private isEnhancedPlugin<TOptions = unknown, TContext = unknown>(
     plugin: EnhancedPlugin<TContext, TOptions> | Plugin<TContext, TOptions>,
   ): plugin is EnhancedPlugin<TContext, TOptions> {
-    return 'name' in plugin && typeof (plugin as EnhancedPlugin<TContext, TOptions>).name === 'string';
+    return (
+      'name' in plugin && typeof (plugin as EnhancedPlugin<TContext, TOptions>).name === 'string'
+    );
   }
 
   /**

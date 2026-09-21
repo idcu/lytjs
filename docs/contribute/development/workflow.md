@@ -145,9 +145,15 @@
 
 ## 阶段 4: 验证与提交
 
-### 必做验证三步曲
+### 必做验证四步曲
 
 ```bash
+# 0. 构建顺序守卫（新增/删除包后必跑）
+#    校验「workspace 包集合 == BUILD_ORDER 集合」且依赖排序正确。
+#    2026-08 曾因新抽出的 @lytjs/config|di|plugin 未登记顺序表，
+#    导致 component/core 等 21 个包构建失败、38 个测试文件无法加载。
+pnpm check-build-order
+
 # 1. 类型检查（必须通过）
 pnpm type-check
 
@@ -159,6 +165,13 @@ pnpm eslint packages/ecosystem/packages/router/src --max-warnings 0
 # 3. 运行测试（必须通过）
 pnpm test
 ```
+
+> 注意：`pnpm build` 已内置 `check-build-order`，并且**不再**默认吞掉构建错误
+> （`--continue-on-error` 仅保留在 `pnpm build:force` 中用于本地排查）。
+
+> 单包验证请在仓库根目录执行，例如 `pnpm --filter @lytjs/ssr run build`。
+> 不要在 `packages/common` 或 `packages/ecosystem/packages/ssr-kit` 目录下直接跑 pnpm ——
+> 那两处原有的嵌套 `pnpm-workspace.yaml` 会让 pnpm 误认工作区（已于 2026-09 移除）。
 
 ### Git 提交规范
 

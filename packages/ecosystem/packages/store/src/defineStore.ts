@@ -69,7 +69,7 @@ export function defineStore<Id extends string, S extends StateTree, G, A, SS>(
       const storeObj = setup();
 
       const wrappedStore: Record<string, unknown> = {};
-      
+
       // 直接引用 setup 返回的对象，保持响应式
       Object.assign(wrappedStore, storeObj as Record<string, unknown>);
 

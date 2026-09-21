@@ -51,7 +51,7 @@
 
 - ✅ **@lytjs/store 集成修复** - 修复与 @lytjs/core 的兼容性问题
 - ✅ **@lytjs/ui 包修复** - 修复 CSS 文件路径和包集成问题
-- ✅ **所有包版本统一升级** - 86 个包版本统一升级至 v6.9.5
+- ✅ **所有包版本统一升级** - 89 个包版本统一升级至 v6.9.5
 
 ### v6.9.0 核心改进方向
 
@@ -169,7 +169,9 @@
   - ✅ 迁出 @lytjs/plugin-validation（`packages/plugin-validation`）
   - ✅ 迁出 @lytjs/plugin-vite（`packages/plugin-vite`，依赖 compiler 的 `./sfc` 子模块以 npm `^6.9.6` 引入，vite 为 peerDependency）
   - ✅ 工作区验证通过：build / type-check / lint / test 全绿（13 包全过，累计 203 测试）
-  - ✅ 全部 13 个 @lytjs/plugin-\* 插件已迁出至独立仓库 lytjs-plugins（@lytjs/plugin 核心仍需留在 monorepo）
+  - ⚠️ 13 个 @lytjs/plugin-\* 插件**已复制**到独立仓库 lytjs-plugins，但主仓
+    `packages/plugins/packages/` 下的副本尚未删除（逐文件 md5 一致），且仍在
+    `pnpm-workspace.yaml` 中被引用 ⇒ 属"双份并存"，迁出尚未真正完成。
   - ✅ 推送 Gitee：远程 `gitee.com/lytjs/plugins.git` 已 push 成功（`main` 分支）
 
 **2. 基础包优化策略** ⚡ 中优先级
@@ -518,7 +520,7 @@ LytJS 生态（独立仓库）
 
 | 指标           | 目标 | 测量方式 |
 | -------------- | ---- | -------- |
-| **官方插件**   | 11+  | 插件列表 |
+| **官方插件**   | 13   | 插件列表 |
 | **第三方插件** | 20+  | 社区统计 |
 | **实战案例**   | 20+  | 案例展示 |
 | **企业用户**   | 5+   | 案例展示 |

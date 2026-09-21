@@ -2,7 +2,11 @@
   "name": "lytjs-npm-vapor",
   "description": "LytJS - Vapor Mode (npm package)",
   "version": "6.9.0",
-  "keywords": ["lytjs", "vapor", "benchmark"],
+  "keywords": [
+    "lytjs",
+    "vapor",
+    "benchmark"
+  ],
   "main": "index.html",
   "js-framework-benchmark": {
     "framework": "LytJS (npm, Vapor)",

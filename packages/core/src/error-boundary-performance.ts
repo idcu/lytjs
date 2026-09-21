@@ -54,7 +54,8 @@ export class PerformanceErrorReporter implements ErrorReporter {
       this.snapshots.set(error.message, snapshot);
     }
 
-    if (typeof console !== 'undefined') {
+    // 生产环境不应输出调试分组（此前无门禁，属于上线后仍会打印的调试代码）
+    if (__DEV__ && typeof console !== 'undefined') {
       console.group(`[LytJS] Error Tracked: ${error.message}`);
       console.log('Component:', context.componentName);
       console.log('URL:', context.url);

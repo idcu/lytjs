@@ -1,3 +1,7 @@
+// @vitest-environment jsdom
+// 说明：本文件做真实 DOM 操作（document / getComputedStyle），必须在 jsdom 下运行。
+// 根 vitest 默认 environment=node，靠本行单文件覆盖；此前该文件被根配置整体 exclude，
+// 导致 vdom 最核心的 patch / transition-group 逻辑长期无 CI 覆盖。
 /**
  * Tests for transition-group.ts
  * 测试 FLIP 动画、TransitionGroup enter/leave 和状态管理

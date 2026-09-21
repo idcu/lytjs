@@ -155,6 +155,8 @@ export const ErrorBoundary: ComponentOptions = {
       return createVNode(Text, null, '');
     };
 
-    return { error, hasError, render };
+    // 契约修正：渲染函数必须作为 setup 的返回值（函数）暴露，
+    // 放进对象里不会被接到 instance.render 上，组件会因"没有渲染函数"而渲染失败。
+    return render;
   },
 };

@@ -63,6 +63,7 @@ LytJS v6.7.0 是一个核心能力大幅提升的重要版本，引入了完整�
 ## 📦 完整更新包列表
 
 ### 核心包升级
+
 1. `@lytjs/reactivity` - v6.6.0 → v6.7.0
 2. `@lytjs/vdom` - v6.6.0 → v6.7.0
 3. `@lytjs/compiler` - v6.6.0 → v6.7.0
@@ -73,6 +74,7 @@ LytJS v6.7.0 是一个核心能力大幅提升的重要版本，引入了完整�
 8. `@lytjs/core-vnode` - v6.6.0 → v6.7.0
 
 ### 生态系统包升级
+
 1. `@lytjs/router` - v6.6.0 → v6.7.0
 2. `@lytjs/router-fs` - v6.6.0 → v6.7.0
 3. `@lytjs/api` - v6.6.0 → v6.7.0
@@ -83,6 +85,7 @@ LytJS v6.7.0 是一个核心能力大幅提升的重要版本，引入了完整�
 8. `@lytjs/html-renderer` - v6.6.0 → v6.7.0
 
 ### 新增包
+
 1. `@lytjs/middleware` - 中间件核心系统
 2. `@lytjs/middleware-auth` - 认证中间件
 3. `@lytjs/middleware-cors` - CORS 中间件
@@ -91,18 +94,21 @@ LytJS v6.7.0 是一个核心能力大幅提升的重要版本，引入了完整�
 ## 🔧 改进和修复
 
 ### 性能优化
+
 - 流式 SSR 性能优化
 - 缓存命中率提升
 - 编译缓存优化
 - 首次渲染优化
 
 ### 代码质量优化
+
 - 完善的类型定义
 - 更严格的类型安全
 - 更好的错误处理
 - 完善的测试覆盖
 
 ### 文档完善
+
 - 新增中间件使用文档
 - 新增流式 SSR 文档
 - 新增 Suspense 使用文档
@@ -119,11 +125,7 @@ import { corsMiddleware } from '@lytjs/middleware-cors';
 import { rateLimitMiddleware } from '@lytjs/middleware-rate-limit';
 
 // 组合中间件
-const chain = compose([
-  corsMiddleware(),
-  authMiddleware(),
-  rateLimitMiddleware(),
-]);
+const chain = compose([corsMiddleware(), authMiddleware(), rateLimitMiddleware()]);
 
 // 使用中间件链
 const result = await chain.execute(context, async (ctx) => {
@@ -151,7 +153,7 @@ import { Suspense, useSuspense } from '@lytjs/core';
 
 function DataLoader() {
   const data = useSuspense(fetchData());
-  
+
   return <div>{data}</div>;
 }
 

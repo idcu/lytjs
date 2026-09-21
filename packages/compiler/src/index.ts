@@ -253,7 +253,6 @@ export function compile(source: string, options: CompilerOptions = {}): CodegenR
   const startTime = performance.now();
   cacheStats.totalCompiles++;
 
-
   // 0. 检查编译缓存（仅在无自定义 nodeTransforms/directiveTransforms 时使用缓存）
   const hasCustomTransforms =
     (options.nodeTransforms && options.nodeTransforms.length > 0) ||
@@ -270,7 +269,7 @@ export function compile(source: string, options: CompilerOptions = {}): CodegenR
       // 对于编译缓存场景，非严格 LRU（仅淘汰最旧条目）已足够。
       cacheStats.hits++;
       const endTime = performance.now();
-      cacheStats.totalTime += (endTime - startTime);
+      cacheStats.totalTime += endTime - startTime;
       return { code: cached.code, preamble: cached.preamble, ast: cached.ast };
     }
     cacheStats.misses++;
@@ -354,7 +353,7 @@ export function compile(source: string, options: CompilerOptions = {}): CodegenR
   }
 
   const endTime = performance.now();
-  cacheStats.totalTime += (endTime - startTime);
+  cacheStats.totalTime += endTime - startTime;
 
   return codegenResult;
 }
