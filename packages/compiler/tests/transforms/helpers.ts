@@ -145,3 +145,26 @@ export function createTextChild(content: string): TextNode {
 export function createAttr(name: string, value: string) {
   return createAttribute(name, createText(value));
 }
+
+/**
+ * 执行 transform 并立即运行它返回的 exit 回调。
+ *
+ * 背景：元素类 transform（element / for / if / once / memo / slot）为了保证
+ * 「父元素构建 children 时子节点的 codegenNode 已生成」，把真正的 codegen
+ * 构建放进了 exit 回调。单测若只调用 transform 而不执行 exit，就看不到结果。
+ */
+export function runTransform(
+  transform: (
+    node: never,
+    context: TransformContext,
+    options?: { sync?: boolean },
+  ) => void | (() => void),
+  node: unknown,
+  context: TransformContext,
+): void {
+  const onExit = (transform as unknown as (n: unknown, c: TransformContext) => void | (() => void))(
+    node,
+    context,
+  );
+  if (typeof onExit === 'function') onExit();
+}

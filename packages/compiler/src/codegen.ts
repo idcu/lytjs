@@ -25,6 +25,7 @@ import type {
 } from './types';
 import { helperNameMap } from './constants';
 import { SourceMapGenerator } from './source-map';
+import { prefixIdentifiers } from './prefix-identifiers';
 
 // ============================================================
 // 主生成函数
@@ -127,6 +128,8 @@ function createCodegenContext(
   let currentColumn = 0;
 
   const context: CodegenContext = {
+    // 局部标识符（v-for 别名等）：它们不加 `_ctx.` 前缀
+    locals: new Set<string>(ast.localIdentifiers ?? []),
     source: ast.loc.source,
     line: 1,
     column: 1,
@@ -465,7 +468,10 @@ function genInterpolation(node: InterpolationNode, context: CodegenContext): voi
 // ============================================================
 
 function genExpression(node: SimpleExpressionNode, context: CodegenContext): void {
-  context.push(node.content, node);
+  // 静态内容原样输出；动态绑定表达式需要前缀化为 `_ctx.xxx`，
+  // 否则产物在 `function render(_ctx, _cache)` 里取不到绑定（值是 undefined / 报错）。
+  const content = node.isStatic ? node.content : prefixIdentifiers(node.content, context.locals);
+  context.push(content, node);
 }
 
 // ============================================================

@@ -4,7 +4,7 @@
 import { describe, it, expect } from 'vitest';
 import { NodeTypes } from '../../src/constants';
 import { transformFor } from '../../src/transforms/for';
-import { createMockContext } from './helpers';
+import { createMockContext, runTransform } from './helpers';
 import {
   createElement,
   createSimpleExpression,
@@ -24,7 +24,13 @@ function createContextWithReplace() {
       replacedNode = node;
     },
   });
-  return { context, getReplacedNode: () => replacedNode };
+  // transformFor 会把 renderList 调用**直接替换进父节点 children**（使用 transform
+  // 阶段捕获的父节点与下标），此时不会走 context.replaceNode。两条路径都要能取到结果。
+  return {
+    context,
+    getReplacedNode: () =>
+      replacedNode ?? (context.currentNode as unknown as TemplateChildNode | null),
+  };
 }
 
 describe('transformFor', () => {
@@ -40,7 +46,7 @@ describe('transformFor', () => {
       const { context, getReplacedNode } = createContextWithReplace();
       context.parent = root;
 
-      transformFor(element, context);
+      runTransform(transformFor, element, context);
 
       const replaced = getReplacedNode();
       expect(replaced?.type).toBe(NodeTypes.JS_CALL_EXPRESSION);
@@ -59,7 +65,7 @@ describe('transformFor', () => {
       const { context } = createContextWithReplace();
       context.parent = root;
 
-      transformFor(element, context);
+      runTransform(transformFor, element, context);
 
       // v-for 指令已从 props 中移除
       const hasForDirective = element.props.some(
@@ -79,7 +85,7 @@ describe('transformFor', () => {
       const { context, getReplacedNode } = createContextWithReplace();
       context.parent = root;
 
-      transformFor(element, context);
+      runTransform(transformFor, element, context);
 
       const replaced = getReplacedNode();
       expect(replaced?.type).toBe(NodeTypes.JS_CALL_EXPRESSION);
@@ -106,7 +112,7 @@ describe('transformFor', () => {
       const { context, getReplacedNode } = createContextWithReplace();
       context.parent = root;
 
-      transformFor(element, context);
+      runTransform(transformFor, element, context);
 
       const replaced = getReplacedNode();
       expect(replaced?.type).toBe(NodeTypes.JS_CALL_EXPRESSION);
@@ -130,7 +136,7 @@ describe('transformFor', () => {
       const { context } = createContextWithReplace();
       context.parent = root;
 
-      transformFor(element, context);
+      runTransform(transformFor, element, context);
 
       expect(context.helpers.get('RENDER_LIST')).toBe(1);
     });
@@ -142,7 +148,7 @@ describe('transformFor', () => {
       const root = createRoot([textNode]);
       const context = createMockContext({ parent: root });
 
-      transformFor(textNode, context);
+      runTransform(transformFor, textNode, context);
 
       expect(root.children).toHaveLength(1);
       expect(root.children[0]?.type).toBe(NodeTypes.TEXT);
@@ -153,7 +159,7 @@ describe('transformFor', () => {
       const root = createRoot([element]);
       const context = createMockContext({ parent: root });
 
-      transformFor(element, context);
+      runTransform(transformFor, element, context);
 
       expect(root.children).toHaveLength(1);
       expect(root.children[0]?.type).toBe(NodeTypes.ELEMENT);
@@ -165,7 +171,7 @@ describe('transformFor', () => {
       const root = createRoot([element]);
       const context = createMockContext({ parent: root });
 
-      transformFor(element, context);
+      runTransform(transformFor, element, context);
 
       expect(root.children).toHaveLength(1);
       expect(root.children[0]?.type).toBe(NodeTypes.ELEMENT);
@@ -181,7 +187,7 @@ describe('transformFor', () => {
       const root = createRoot([element]);
       const context = createMockContext({ parent: root });
 
-      transformFor(element, context);
+      runTransform(transformFor, element, context);
 
       // 表达式不匹配 "xxx in yyy" 格式，应被忽略
       expect(root.children).toHaveLength(1);
@@ -201,7 +207,7 @@ describe('transformFor', () => {
       const { context, getReplacedNode } = createContextWithReplace();
       context.parent = root;
 
-      transformFor(element, context);
+      runTransform(transformFor, element, context);
 
       const replaced = getReplacedNode();
       // 解构表达式应该被正确处理
@@ -219,7 +225,7 @@ describe('transformFor', () => {
       const { context, getReplacedNode } = createContextWithReplace();
       context.parent = root;
 
-      transformFor(element, context);
+      runTransform(transformFor, element, context);
 
       const replaced = getReplacedNode();
       // 数组解构应该被正确处理
@@ -237,7 +243,7 @@ describe('transformFor', () => {
       const { context, getReplacedNode } = createContextWithReplace();
       context.parent = root;
 
-      transformFor(element, context);
+      runTransform(transformFor, element, context);
 
       const replaced = getReplacedNode();
       // 解构表达式加索引应该被正确处理
@@ -255,7 +261,7 @@ describe('transformFor', () => {
       const { context, getReplacedNode } = createContextWithReplace();
       context.parent = root;
 
-      transformFor(element, context);
+      runTransform(transformFor, element, context);
 
       const replaced = getReplacedNode();
       // 数组解构加索引应该被正确处理
@@ -273,7 +279,7 @@ describe('transformFor', () => {
       const { context, getReplacedNode } = createContextWithReplace();
       context.parent = root;
 
-      transformFor(element, context);
+      runTransform(transformFor, element, context);
 
       const replaced = getReplacedNode();
       // 解构表达式应该被正确处理
@@ -291,7 +297,7 @@ describe('transformFor', () => {
       const { context, getReplacedNode } = createContextWithReplace();
       context.parent = root;
 
-      transformFor(element, context);
+      runTransform(transformFor, element, context);
 
       const replaced = getReplacedNode();
       // 非解构表达式应该被正确处理

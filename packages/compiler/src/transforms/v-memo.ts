@@ -89,7 +89,7 @@ export function resetMemoCounter(context: TransformContext): void {
 export function transformVMemo(
   node: RootNode | TemplateChildNode,
   context: TransformContext,
-): void {
+): void | (() => void) {
   if (node.type !== NodeTypes.ELEMENT) return;
 
   const element = node as ElementNode;
@@ -127,6 +127,8 @@ export function transformVMemo(
   // 注册 helper
   context.helper('WITH_MEMO');
 
-  // 正常转换元素
-  transformElement(element, context, { sync: true });
+  // 正常转换元素（推迟到 exit：子节点遍历完成后才能拿到它们的 codegenNode）
+  return () => {
+    transformElement(element, context, { sync: true });
+  };
 }

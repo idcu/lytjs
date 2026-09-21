@@ -56,7 +56,10 @@ function isTemplateChildCompatible(node: unknown): node is TemplateChildNode {
   );
 }
 
-export function transformFor(node: RootNode | TemplateChildNode, context: TransformContext): void {
+export function transformFor(
+  node: RootNode | TemplateChildNode,
+  context: TransformContext,
+): void | (() => void) {
   if (node.type !== NodeTypes.ELEMENT) return;
 
   const element = node as ElementNode;
@@ -68,8 +71,10 @@ export function transformFor(node: RootNode | TemplateChildNode, context: Transf
     (p) => !(p.type === NodeTypes.DIRECTIVE && p.name === 'for'),
   );
 
-  // 解析 v-for 表达式
-  const expContent = getExpContent(forDir.exp);
+  // 解析 v-for 表达式（先取到局部常量，闭包里 TS 才能保持类型收窄）
+  const forExp = forDir.exp;
+  if (!forExp) return;
+  const expContent = getExpContent(forExp);
   if (!expContent) return;
 
   // 支持：
@@ -133,64 +138,116 @@ export function transformFor(node: RootNode | TemplateChildNode, context: Transf
     itemVar = left;
   }
 
-  // 转换元素
-  transformElement(element, context, { sync: true });
+  // 捕获「自己所在的位置」：exit 回调执行时 context.parent/currentNode 已被
+  // 子节点遍历改写过，必须用 transform 阶段记下的父节点与下标来替换，否则
+  // renderList 调用会被写错位置（甚至写丢），v-for 直接失去列表渲染语义。
+  const parentRef = context.parent;
+  const selfRef = node as TemplateChildNode;
+  const indexRef =
+    parentRef && (parentRef.type === NodeTypes.ROOT || parentRef.type === NodeTypes.ELEMENT)
+      ? parentRef.children.indexOf(selfRef)
+      : -1;
 
-  const codegenNode = element.codegenNode;
-  if (!codegenNode) return;
+  // 注册 v-for 别名为局部标识符：它 children 里的表达式不能加 `_ctx.` 前缀
+  const localNames = collectForAliasNames(itemVar, indexVar, destructureExpr);
+  for (const name of localNames) context.addIdentifiers(name);
 
-  // 使用类型守卫而非双重类型断言
-  // FIX: P2-9 添加运行时类型检查，避免不安全的类型断言回退
-  const renderItem = isVNodeCall(codegenNode)
-    ? codegenNode
-    : isJSCallExpression(codegenNode)
+  // 关键：把「构建渲染项 + 替换节点」推迟到 exit 回调。
+  // 此前在 transform 阶段就调用 transformElement(sync) 并 replaceNode，
+  // 元素被移出树后其 children 永远不会被遍历 —— 结果 v-for 内部
+  // `<li>{{ item.name }}</li>` 的 children 全部丢失。
+  return () => {
+    for (const name of localNames) context.removeIdentifiers(name);
+
+    // 转换元素
+    transformElement(element, context, { sync: true });
+
+    const codegenNode = element.codegenNode;
+    if (!codegenNode) return;
+
+    // 使用类型守卫而非双重类型断言
+    // FIX: P2-9 添加运行时类型检查，避免不安全的类型断言回退
+    const renderItem = isVNodeCall(codegenNode)
       ? codegenNode
-      : (() => {
-          if (__DEV__) {
-            warn(
-              `[lytjs/compiler] v-for: unexpected codegenNode type: ${(codegenNode as { type?: number }).type}. Expected VNodeCall or JSCallExpression.`,
-            );
-          }
-          return codegenNode as VNodeCall;
-        })();
+      : isJSCallExpression(codegenNode)
+        ? codegenNode
+        : (() => {
+            if (__DEV__) {
+              warn(
+                `[lytjs/compiler] v-for: unexpected codegenNode type: ${(codegenNode as { type?: number }).type}. Expected VNodeCall or JSCallExpression.`,
+              );
+            }
+            return codegenNode as VNodeCall;
+          })();
 
-  context.helper('RENDER_LIST');
+    context.helper('RENDER_LIST');
 
-  // 构建箭头函数体
-  let arrowBody: TemplateChildNode[];
-  // FIX: P2-10 使用类型守卫函数安全转换，替代 as unknown as 双重断言
-  // renderItem 在此上下文中已被验证为 VNodeCall 或 JSCallExpression，
-  // 两者都可作为 TemplateChildNode 使用（通过 replaceNode 插入父节点 children）
-  const renderItemAsChild = isTemplateChildCompatible(renderItem)
-    ? renderItem
-    : (renderItem as TemplateChildNode);
+    // 构建箭头函数体
+    let arrowBody: TemplateChildNode[];
+    // FIX: P2-10 使用类型守卫函数安全转换，替代 as unknown as 双重断言
+    // renderItem 在此上下文中已被验证为 VNodeCall 或 JSCallExpression，
+    // 两者都可作为 TemplateChildNode 使用（通过 replaceNode 插入父节点 children）
+    const renderItemAsChild = isTemplateChildCompatible(renderItem)
+      ? renderItem
+      : (renderItem as TemplateChildNode);
+    if (destructureExpr) {
+      // 对于解构，在渲染项之前添加解构语句
+      arrowBody = [
+        createSimpleExpression(`const ${destructureExpr} = ${itemVar}`, false, forExp.loc, false),
+        renderItemAsChild,
+      ];
+    } else {
+      arrowBody = [renderItemAsChild];
+    }
+
+    const renderListCall = createCallExpression('RENDER_LIST', [
+      createSimpleExpression(right, false, forExp.loc, false),
+      createCompoundExpression(
+        [`(${itemVar}${indexVar ? `, ${indexVar}` : ''}) => { `, ...arrowBody, ` }`],
+        forExp.loc,
+      ),
+    ]);
+
+    // FIX: P2-10 renderListCall 是 JSCallExpression，需要转换为 TemplateChildNode
+    // 此处断言是安全的，因为 v-for 转换结果会被 replaceNode 替换到父节点的 children 中
+    // 使用类型守卫验证后再断言
+    if (!isTemplateChildCompatible(renderListCall)) {
+      if (__DEV__) {
+        warn(`[lytjs/compiler] v-for: renderListCall is not a compatible TemplateChildNode.`);
+      }
+    }
+    if (
+      parentRef &&
+      indexRef !== -1 &&
+      (parentRef.type === NodeTypes.ROOT || parentRef.type === NodeTypes.ELEMENT)
+    ) {
+      parentRef.children[indexRef] = renderListCall as unknown as TemplateChildNode;
+      context.currentNode = renderListCall as unknown as TemplateChildNode;
+    } else {
+      context.replaceNode(renderListCall as TemplateChildNode);
+    }
+  };
+}
+
+/**
+ * 收集 v-for 引入的局部名（别名 / 索引 / 解构出的字段名）
+ */
+function collectForAliasNames(
+  itemVar: string,
+  indexVar: string | undefined,
+  destructureExpr: string | undefined,
+): string[] {
+  const names = new Set<string>();
+  if (itemVar) names.add(itemVar);
+  if (indexVar) names.add(indexVar);
   if (destructureExpr) {
-    // 对于解构，在渲染项之前添加解构语句
-    arrowBody = [
-      createSimpleExpression(`const ${destructureExpr} = ${itemVar}`, false, forDir.exp.loc, false),
-      renderItemAsChild,
-    ];
-  } else {
-    arrowBody = [renderItemAsChild];
-  }
-
-  const renderListCall = createCallExpression('RENDER_LIST', [
-    createSimpleExpression(right, false, forDir.exp.loc, false),
-    createCompoundExpression(
-      [`(${itemVar}${indexVar ? `, ${indexVar}` : ''}) => { `, ...arrowBody, ` }`],
-      forDir.exp.loc,
-    ),
-  ]);
-
-  // FIX: P2-10 renderListCall 是 JSCallExpression，需要转换为 TemplateChildNode
-  // 此处断言是安全的，因为 v-for 转换结果会被 replaceNode 替换到父节点的 children 中
-  // 使用类型守卫验证后再断言
-  if (!isTemplateChildCompatible(renderListCall)) {
-    if (__DEV__) {
-      warn(`[lytjs/compiler] v-for: renderListCall is not a compatible TemplateChildNode.`);
+    // 从 `{ key, value }` / `[ a, b ]` 形态里抽取真正的变量名
+    for (const part of destructureExpr.replace(/[{}[\]]/g, ' ').split(',')) {
+      const name = part.trim().split(/[=:]/).pop()?.trim();
+      if (name && /^[A-Za-z_$][\w$]*$/.test(name)) names.add(name);
     }
   }
-  context.replaceNode(renderListCall as TemplateChildNode);
+  return Array.from(names);
 }
 
 /**

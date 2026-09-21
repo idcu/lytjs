@@ -51,11 +51,24 @@ describe('Vapor SSR', () => {
     expect(result.scripts).toBeUndefined();
   });
 
-  it('模板引用不存在的绑定时应抛出带上下文的错误（不静默返回空）', async () => {
-    const Broken = {
-      template: '<div>{{ notDefinedAnywhere }}</div>',
+  it('绑定取值为 undefined 时应渲染为空串（而不是 "undefined"）', async () => {
+    const App = {
+      template: '<div>[{{ missing }}]</div>',
       setup() {
         return {};
+      },
+    };
+
+    const html = (await renderVaporToString(App as never)).html;
+    expect(html).toContain('<div>[]</div>');
+    expect(html).not.toContain('undefined');
+  });
+
+  it('渲染期真实报错应抛出带上下文的错误（不静默返回空）', async () => {
+    const Broken = {
+      template: '<div>{{ user.name }}</div>',
+      setup() {
+        return { user: null };
       },
     };
 

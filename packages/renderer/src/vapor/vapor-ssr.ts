@@ -214,10 +214,8 @@ function compileTemplateForSSR(template: string): string {
  * 实现要点：
  * 1. SSR 编译产物是一段自包含的模块级代码（`function render(_ctx) {...}` 加上
  *    自带的 escapeHtml / renderToString 辅助函数），因此用 `new Function` 执行；
- * 2. 产物里的绑定表达式（如 `{{ message }}`）目前不带 `_ctx.` 前缀 —— 编译器的
- *    标识符前缀化需要作用域信息（v-for 别名等），尚未实现。这里用
- *    `with (_ctx)` 包一层，让裸标识符在运行期正确解析到上下文
- *    （`new Function` 默认非严格模式，`with` 可用）。
+ * 2. 产物里的绑定表达式已由编译器的标识符前缀化阶段写成 `_ctx.xxx`
+ *    （见 packages/compiler/src/prefix-identifiers.ts），因此可直接求值。
  *
  * 之前这里是"返回一个占位 div"，即**任何 Vapor 组件的 SSR 输出都是空壳**。
  */
@@ -225,10 +223,11 @@ function renderTemplateToHTML(compiledCode: string, ctx: Record<string, unknown>
   if (!compiledCode) return '';
 
   try {
-    const executor = new Function(
-      '_ctx',
-      `with (_ctx) {${'\n'}${compiledCode}${'\n'}; return render(_ctx); }`,
-    ) as (context: Record<string, unknown>) => unknown;
+    // 编译产物是 `function render(_ctx) {...}`，绑定已在前缀化阶段写成 `_ctx.xxx`，
+    // 因此可以直接求值（此前需要 `with (_ctx)` 兜底未前缀化的裸标识符）。
+    const executor = new Function('_ctx', `${compiledCode}\n; return render(_ctx);`) as (
+      context: Record<string, unknown>,
+    ) => unknown;
 
     const result = executor(ctx);
     if (typeof result === 'string') return result;

@@ -4,7 +4,7 @@
 import { describe, it, expect } from 'vitest';
 import { transformIf } from '../../src/transforms/if';
 import { NodeTypes } from '../../src/constants';
-import { createMockContext } from './helpers';
+import { createMockContext, runTransform } from './helpers';
 import {
   createElement,
   createSimpleExpression,
@@ -21,7 +21,7 @@ describe('transformIf', () => {
       const root = createRoot([element]);
       const context = createMockContext({ parent: root });
 
-      transformIf(element, context);
+      runTransform(transformIf, element, context);
 
       expect(root.children).toHaveLength(1);
       expect(root.children[0]?.type).toBe(NodeTypes.JS_CONDITIONAL_EXPRESSION);
@@ -33,7 +33,7 @@ describe('transformIf', () => {
       const root = createRoot([element]);
       const context = createMockContext({ parent: root });
 
-      transformIf(element, context);
+      runTransform(transformIf, element, context);
 
       // 原始元素被替换，但条件表达式节点存在
       expect(root.children).toHaveLength(1);
@@ -48,7 +48,7 @@ describe('transformIf', () => {
       const root = createRoot([ifElement, elseElement]);
       const context = createMockContext({ parent: root });
 
-      transformIf(ifElement, context);
+      runTransform(transformIf, ifElement, context);
 
       // 两个元素被合并为一个条件表达式
       expect(root.children).toHaveLength(1);
@@ -65,7 +65,7 @@ describe('transformIf', () => {
       const root = createRoot([el1, el2, el3]);
       const context = createMockContext({ parent: root });
 
-      transformIf(el1, context);
+      runTransform(transformIf, el1, context);
 
       expect(root.children).toHaveLength(1);
       expect(root.children[0]?.type).toBe(NodeTypes.JS_CONDITIONAL_EXPRESSION);
@@ -78,7 +78,7 @@ describe('transformIf', () => {
       const root = createRoot([textNode]);
       const context = createMockContext({ parent: root });
 
-      transformIf(textNode, context);
+      runTransform(transformIf, textNode, context);
 
       expect(root.children).toHaveLength(1);
       expect(root.children[0]?.type).toBe(NodeTypes.TEXT);
@@ -89,7 +89,7 @@ describe('transformIf', () => {
       const root = createRoot([element]);
       const context = createMockContext({ parent: root });
 
-      transformIf(element, context);
+      runTransform(transformIf, element, context);
 
       expect(root.children).toHaveLength(1);
       expect(root.children[0]?.type).toBe(NodeTypes.ELEMENT);
@@ -100,7 +100,7 @@ describe('transformIf', () => {
       const element = createElement('div', [ifDir]);
       const context = createMockContext({ parent: null });
 
-      transformIf(element, context);
+      runTransform(transformIf, element, context);
 
       // 元素未被转换
       expect(element.type).toBe(NodeTypes.ELEMENT);

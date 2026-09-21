@@ -5,7 +5,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { transformVMemo, getMemoMeta, resetMemoCounter } from '../../src/transforms/v-memo';
 import { NodeTypes, ElementTypes } from '../../src/constants';
 import type { TextNode } from '../../src/types';
-import { createMockContext, createTextChild, createAttr } from './helpers';
+import { createMockContext, createTextChild, createAttr, runTransform } from './helpers';
 import { createElement, createDirective, createSimpleExpression } from '../../src/ast';
 
 describe('transformVMemo', () => {
@@ -30,14 +30,14 @@ describe('transformVMemo', () => {
           source: 'hello',
         },
       };
-      transformVMemo(textNode, context);
+      runTransform(transformVMemo, textNode, context);
       expect(context.helpers.size).toBe(0);
     });
 
     it('应该跳过没有 v-memo 指令的普通元素', () => {
       const context = createMockContext();
       const element = createElement('div');
-      transformVMemo(element, context);
+      runTransform(transformVMemo, element, context);
       expect(getMemoMeta(element)).toBeUndefined();
     });
   });
@@ -52,7 +52,7 @@ describe('transformVMemo', () => {
       );
       const element = createElement('div', [memoDir], [createTextChild('content')]);
 
-      transformVMemo(element, context);
+      runTransform(transformVMemo, element, context);
 
       const meta = getMemoMeta(element);
       expect(meta).toBeDefined();
@@ -68,7 +68,7 @@ describe('transformVMemo', () => {
       expect(element.props.some((p) => p.type === NodeTypes.DIRECTIVE && p.name === 'memo')).toBe(
         true,
       );
-      transformVMemo(element, context);
+      runTransform(transformVMemo, element, context);
       expect(element.props.some((p) => p.type === NodeTypes.DIRECTIVE && p.name === 'memo')).toBe(
         false,
       );
@@ -79,7 +79,7 @@ describe('transformVMemo', () => {
       const memoDir = createDirective('memo', undefined, createSimpleExpression('[a]', false));
       const element = createElement('div', [memoDir, createAttr('class', 'container')]);
 
-      transformVMemo(element, context);
+      runTransform(transformVMemo, element, context);
       expect(element.props.some((p) => p.type === NodeTypes.ATTRIBUTE && p.name === 'class')).toBe(
         true,
       );
@@ -90,7 +90,7 @@ describe('transformVMemo', () => {
       const memoDir = createDirective('memo', undefined, createSimpleExpression('[count]', false));
       const element = createElement('div', [memoDir], [createTextChild('content')]);
 
-      transformVMemo(element, context);
+      runTransform(transformVMemo, element, context);
       expect(element.codegenNode).toBeDefined();
     });
 
@@ -99,7 +99,7 @@ describe('transformVMemo', () => {
       const memoDir = createDirective('memo', undefined, createSimpleExpression('[count]', false));
       const element = createElement('div', [memoDir]);
 
-      transformVMemo(element, context);
+      runTransform(transformVMemo, element, context);
       expect(context.helpers.has('WITH_MEMO')).toBe(true);
     });
   });
@@ -110,11 +110,11 @@ describe('transformVMemo', () => {
 
       const memoDir1 = createDirective('memo', undefined, createSimpleExpression('[a]', false));
       const element1 = createElement('div', [memoDir1]);
-      transformVMemo(element1, context);
+      runTransform(transformVMemo, element1, context);
 
       const memoDir2 = createDirective('memo', undefined, createSimpleExpression('[b]', false));
       const element2 = createElement('span', [memoDir2]);
-      transformVMemo(element2, context);
+      runTransform(transformVMemo, element2, context);
 
       expect(getMemoMeta(element1)!.cacheKey).toBe('_memo_0');
       expect(getMemoMeta(element2)!.cacheKey).toBe('_memo_1');
@@ -126,14 +126,14 @@ describe('transformVMemo', () => {
 
       const memoDir = createDirective('memo', undefined, createSimpleExpression('[a]', false));
       const element = createElement('div', [memoDir]);
-      transformVMemo(element, context);
+      runTransform(transformVMemo, element, context);
       expect(getMemoMeta(element)!.cacheKey).toBe('_memo_0');
 
       resetMemoCounter(context);
 
       const memoDir2 = createDirective('memo', undefined, createSimpleExpression('[b]', false));
       const element2 = createElement('div', [memoDir2]);
-      transformVMemo(element2, context);
+      runTransform(transformVMemo, element2, context);
       expect(getMemoMeta(element2)!.cacheKey).toBe('_memo_0');
     });
   });
@@ -144,7 +144,9 @@ describe('transformVMemo', () => {
       const memoDir = createDirective('memo');
       const element = createElement('div', [memoDir]);
 
-      expect(() => transformVMemo(element, context)).toThrow('v-memo requires an array expression');
+      expect(() => runTransform(transformVMemo, element, context)).toThrow(
+        'v-memo requires an array expression',
+      );
     });
 
     it('应该处理带有多个子节点的 v-memo 元素', () => {
@@ -156,7 +158,7 @@ describe('transformVMemo', () => {
         [createTextChild('Hello '), createTextChild('World')],
       );
 
-      transformVMemo(element, context);
+      runTransform(transformVMemo, element, context);
       expect(element.codegenNode).toBeDefined();
       const meta = getMemoMeta(element);
       expect(meta).toBeDefined();
@@ -169,7 +171,7 @@ describe('transformVMemo', () => {
       const element = createElement('MyComponent', [memoDir]);
       element.tagType = ElementTypes.COMPONENT;
 
-      transformVMemo(element, context);
+      runTransform(transformVMemo, element, context);
       expect(element.codegenNode).toBeDefined();
     });
 
@@ -182,7 +184,7 @@ describe('transformVMemo', () => {
         createAttr('class', 'container'),
       ]);
 
-      transformVMemo(element, context);
+      runTransform(transformVMemo, element, context);
       expect(element.codegenNode).toBeDefined();
       expect(element.props.length).toBe(2); // class and id, memo removed
     });
@@ -194,7 +196,7 @@ describe('transformVMemo', () => {
       const memoDir = createDirective('memo', undefined, createSimpleExpression('[x]', false));
       const element = createElement('div', [memoDir]);
 
-      transformVMemo(element, context);
+      runTransform(transformVMemo, element, context);
       expect(getMemoMeta(element)!.deps).toBe('[x]');
     });
 
@@ -207,7 +209,7 @@ describe('transformVMemo', () => {
       );
       const element = createElement('div', [memoDir]);
 
-      transformVMemo(element, context);
+      runTransform(transformVMemo, element, context);
       expect(getMemoMeta(element)!.deps).toBe('[a, b, c, d]');
     });
 
@@ -220,7 +222,7 @@ describe('transformVMemo', () => {
       );
       const element = createElement('div', [memoDir]);
 
-      transformVMemo(element, context);
+      runTransform(transformVMemo, element, context);
       expect(getMemoMeta(element)!.deps).toBe('[item.id, item.name]');
     });
   });

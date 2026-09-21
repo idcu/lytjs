@@ -8,8 +8,9 @@
 // - 保留 v-if/v-for/v-text/v-html/v-bind
 // - 生成 renderToString 格式的代码
 
-import { NodeTypes } from './constants';
+import { NodeTypes, ElementTypes } from './constants';
 import { escapeHTML } from '@lytjs/common-string';
+import { prefixIdentifiers } from './prefix-identifiers';
 import type {
   RootNode,
   ElementNode,
@@ -57,12 +58,28 @@ const VOID_ELEMENTS = new Set([
 // 注意：生成的代码字符串中仍内联 escapeHtml 函数，确保运行时独立可用
 export const escapeHtml = escapeHTML;
 
+/**
+ * 当前编译的局部标识符（v-for 别名 / 插槽参数等），据此决定哪些标识符不加 `_ctx.` 前缀。
+ * SSR 产物同样是 `function render(_ctx) {...}`，绑定必须写成 `_ctx.xxx` 才能取到值。
+ */
+let ssrLocals: ReadonlySet<string> = new Set<string>();
+
+const ElementTypes_SLOT = ElementTypes.SLOT;
+
+/** 绑定表达式前缀化（仅用于动态绑定；静态字面量不要走这里） */
+function px(content: string): string {
+  return prefixIdentifiers(content, ssrLocals);
+}
+
 // ============================================================
 // 主 SSR 生成函数
 // ============================================================
 
 export function generateSSR(ast: RootNode, _options: CodegenOptions = {}): CodegenResult {
   const parts: string[] = [];
+
+  // 每次编译重置局部标识符（v-for 别名等）
+  ssrLocals = new Set<string>(ast.localIdentifiers ?? []);
 
   // 生成 render 函数
   parts.push(`function render(_ctx) {\n`);
@@ -157,7 +174,7 @@ function genSSRChildren(children: TemplateChildNode[]): string {
           }
           parts.push(`'[invalid expression]'`);
         } else {
-          parts.push(`escapeHtml(String(${content}))`);
+          parts.push(`escapeHtml(${px(content)} == null ? '' : String(${px(content)}))`);
         }
         break;
       }
@@ -184,6 +201,14 @@ function genSSRChildren(children: TemplateChildNode[]): string {
         break;
       }
 
+      case NodeTypes.VNODE_CALL: {
+        // v-for / v-once 等元素的 codegenNode 是 VNODE_CALL；此前该分支缺失，
+        // 导致 SSR 下 `renderList(..., (x) => '')` —— 列表项被整体渲染成空串。
+        const vnode = child as VNodeCall;
+        parts.push(genSSRVNodeCall(vnode));
+        break;
+      }
+
       case NodeTypes.COMPOUND_EXPRESSION: {
         const compound = child as CompoundExpressionNode;
         const childParts: string[] = [];
@@ -192,7 +217,9 @@ function genSSRChildren(children: TemplateChildNode[]): string {
             childParts.push(c);
           } else if (c.type === NodeTypes.SIMPLE_EXPRESSION) {
             // FIX: P0-1 CompoundExpression 中的表达式需要转义输出，防止 XSS
-            childParts.push(`escapeHtml(String(${(c as SimpleExpressionNode).content}))`);
+            childParts.push(
+              `escapeHtml(${px((c as SimpleExpressionNode).content)} == null ? '' : String(${px((c as SimpleExpressionNode).content)}))`,
+            );
           } else if (c.type === NodeTypes.INTERPOLATION) {
             const content = ((c as InterpolationNode).content as SimpleExpressionNode).content;
             // FIX: P1-4 SSR CompoundExpression 插值白名单验证，防止代码注入
@@ -208,7 +235,7 @@ function genSSRChildren(children: TemplateChildNode[]): string {
               }
               childParts.push(`'[invalid expression]'`);
             } else {
-              childParts.push(`escapeHtml(String(${content}))`);
+              childParts.push(`escapeHtml(${px(content)} == null ? '' : String(${px(content)}))`);
             }
           }
         }
@@ -231,6 +258,12 @@ function genSSRChildren(children: TemplateChildNode[]): string {
 // ============================================================
 
 function genSSRElement(element: ElementNode): string {
+  // <slot> 出口：SSR 下优先渲染父组件提供的插槽内容，否则渲染回退内容。
+  // 此前会把 <slot> 当成普通标签输出成 `<slot ...></slot>` —— 这不是合法 HTML。
+  if ((element as { tagType?: number }).tagType === ElementTypes_SLOT) {
+    return genSSRSlotOutlet(element);
+  }
+
   const tag = element.tag;
   const parts: string[] = [];
 
@@ -255,7 +288,7 @@ function genSSRElement(element: ElementNode): string {
         const expContent = prop.exp ? (prop.exp as SimpleExpressionNode).content : undefined;
         // FIX: P2-17 对 v-bind 属性值进行 HTML 转义，防止 XSS 攻击
         if (argContent && expContent) {
-          propParts.push(`' ${argContent}="' + escapeHtml(String(${expContent})) + '"'`);
+          propParts.push(`' ${argContent}="' + escapeHtml(String(${px(expContent)})) + '"'`);
         }
       }
       // v-html: output raw HTML content as children (not as attribute)
@@ -265,7 +298,7 @@ function genSSRElement(element: ElementNode): string {
           // FIX: P0-1 v-html SSR 模式下需要转义输出，防止 XSS
           directiveChildren =
             (directiveChildren ? directiveChildren + ' + ' : '') +
-            `escapeHtml(String(${expContent}))`;
+            `escapeHtml(String(${px(expContent)}))`;
         }
       }
       // v-text: output escaped text content as children (not as attribute)
@@ -274,7 +307,7 @@ function genSSRElement(element: ElementNode): string {
         if (expContent) {
           directiveChildren =
             (directiveChildren ? directiveChildren + ' + ' : '') +
-            `escapeHtml(String(${expContent}))`;
+            `escapeHtml(String(${px(expContent)}))`;
         }
       }
     }
@@ -342,7 +375,7 @@ function genSSRBranch(
 
   if (branch.type === NodeTypes.SIMPLE_EXPRESSION) {
     // FIX: P0-1 SSR 表达式需要转义输出，防止 XSS
-    return `escapeHtml(String(${(branch as SimpleExpressionNode).content}))`;
+    return `escapeHtml(String(${px((branch as SimpleExpressionNode).content)}))`;
   }
 
   if (branch.type === NodeTypes.TEXT) {
@@ -359,7 +392,7 @@ function genSSRBranch(
 function genSSRExpr(expr: JSChildNode | string): string {
   if (typeof expr === 'string') return expr;
   if (expr.type === NodeTypes.SIMPLE_EXPRESSION) {
-    return (expr as SimpleExpressionNode).content;
+    return px((expr as SimpleExpressionNode).content);
   }
   return "'[expr]'";
 }
@@ -367,6 +400,33 @@ function genSSRExpr(expr: JSChildNode | string): string {
 // ============================================================
 // 生成 SSR VNodeCall
 // ============================================================
+
+/**
+ * SSR 下的 `<slot>` 处理
+ *
+ * 生成 `(typeof _ctx.$slots?.[name] === 'function' ? renderToString(_ctx.$slots[name]({})) : 回退HTML)`
+ */
+function genSSRSlotOutlet(element: ElementNode): string {
+  let nameExpr = JSON.stringify('default');
+  for (const prop of element.props) {
+    if (prop === undefined) continue;
+    if (prop.type === NodeTypes.ATTRIBUTE && prop.name === 'name') {
+      nameExpr = JSON.stringify(prop.value ? prop.value.content : 'default');
+    } else if (prop.type === NodeTypes.DIRECTIVE && prop.name === 'bind' && prop.arg) {
+      const argName = (prop.arg as SimpleExpressionNode).content;
+      if (argName === 'name' && prop.exp) {
+        nameExpr = px((prop.exp as SimpleExpressionNode).content);
+      }
+    }
+  }
+
+  const fallback = genSSRChildren(element.children);
+  return (
+    `(typeof _ctx.$slots?.[${nameExpr}] === 'function'` +
+    ` ? renderToString(_ctx.$slots[${nameExpr}]({}))` +
+    ` : ${fallback})`
+  );
+}
 
 function genSSRVNodeCall(vnode: VNodeCall): string {
   const tag = typeof vnode.tag === 'string' ? vnode.tag.replace(/"/g, '') : String(vnode.tag);
@@ -391,7 +451,7 @@ function genSSRVNodeCall(vnode: VNodeCall): string {
         }
         const value =
           prop.value.type === NodeTypes.SIMPLE_EXPRESSION
-            ? (prop.value as SimpleExpressionNode).content
+            ? px((prop.value as SimpleExpressionNode).content)
             : "'[value]'";
         // FIX: P0-1 属性值 SSR 模式下需要转义输出，防止 XSS
         parts.push(` + ' ${key}="' + escapeHtml(String(${value})) + '"'`);
@@ -430,6 +490,19 @@ function genSSRVNodeCall(vnode: VNodeCall): string {
 function genSSRCallExpression(call: JSCallExpression): string {
   const callee = typeof call.callee === 'string' ? call.callee : String(call.callee);
 
+  // 处理插值（客户端 codegen 里是 TO_DISPLAY_STRING）
+  // 此前未处理，SSR 下 `<li>{{ x }}</li>` 会输出字面量 '[call]'。
+  if (callee === 'toDisplayString' || callee === 'TO_DISPLAY_STRING') {
+    const first = call.arguments[0];
+    const expr =
+      typeof first === 'string'
+        ? first
+        : first && !Array.isArray(first) && first.type === NodeTypes.SIMPLE_EXPRESSION
+          ? px((first as SimpleExpressionNode).content)
+          : "'[expr]'";
+    return `escapeHtml(${expr} == null ? '' : String(${expr}))`;
+  }
+
   // 处理 renderList
   if (callee === 'renderList' || callee === 'RENDER_LIST') {
     const args = call.arguments;
@@ -439,7 +512,7 @@ function genSSRCallExpression(call: JSCallExpression): string {
         typeof firstArg === 'string'
           ? firstArg
           : firstArg && !Array.isArray(firstArg) && firstArg.type === NodeTypes.SIMPLE_EXPRESSION
-            ? (firstArg as SimpleExpressionNode).content
+            ? px((firstArg as SimpleExpressionNode).content)
             : '[]';
       const secondArg = args[1];
       // 第二个参数是表示箭头函数的 CompoundExpressionNode：

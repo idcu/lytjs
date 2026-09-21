@@ -53,6 +53,10 @@ export function transform(root: RootNode, options: TransformOptions = {}): void 
   root.hoists = context.hoists;
   root.temps = context.temps;
   root.cached = context.cached;
+  // 把编译期收集到的局部标识符带给 codegen（用于标识符前缀化时排除）
+  if (context.__locals && context.__locals.size > 0) {
+    root.localIdentifiers = Array.from(context.__locals);
+  }
 
   // 创建根代码生成节点
   if (root.children.length === 1) {
@@ -184,9 +188,18 @@ function createTransformContext(root: RootNode, options: TransformOptions): Tran
     },
     onNodeRemoved(): void {},
     addIdentifiers(exp: ExpressionNode | string): void {
-      if (typeof exp === 'string') context.identifiers.add(exp);
-      else if (exp.type === NodeTypes.SIMPLE_EXPRESSION && !exp.isStatic)
-        context.identifiers.add(exp.content);
+      const name =
+        typeof exp === 'string'
+          ? exp
+          : exp.type === NodeTypes.SIMPLE_EXPRESSION && !exp.isStatic
+            ? exp.content
+            : undefined;
+      if (!name) return;
+      context.identifiers.add(name);
+      // 同时计入"全量局部名"累加器：作用域退出后 identifiers 会被清空，
+      // 而 codegen 阶段仍需要知道哪些名字属于局部变量（不能加 _ctx. 前缀）。
+      context.__locals ??= new Set<string>();
+      context.__locals.add(name);
     },
     removeIdentifiers(exp: ExpressionNode | string): void {
       if (typeof exp === 'string') context.identifiers.delete(exp);
@@ -365,6 +378,9 @@ function containsCtxReference(node: unknown, seen = new Set<unknown>()): boolean
   const record = node as Record<string, unknown>;
   if (typeof record['content'] === 'string' && record['content'].includes('_ctx.')) return true;
   if (typeof record['tag'] === 'string' && record['tag'].includes('_ctx.')) return true;
+  // 任何运行期调用（renderList / renderSlot / withMemo / 条件表达式…）都不能提升到模块作用域
+  if (record['type'] === NodeTypes.JS_CALL_EXPRESSION) return true;
+  if (record['type'] === NodeTypes.JS_CONDITIONAL_EXPRESSION) return true;
 
   for (const key of Object.keys(record)) {
     if (key === 'loc') continue;

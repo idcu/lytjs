@@ -5,7 +5,13 @@ import { describe, it, expect } from 'vitest';
 import { transformOnce } from '../../src/transforms/once';
 import { NodeTypes, ElementTypes } from '../../src/constants';
 import type { TextNode } from '../../src/types';
-import { createMockContext, createOnceElement, createTextChild, createAttr } from './helpers';
+import {
+  createMockContext,
+  createOnceElement,
+  createTextChild,
+  createAttr,
+  runTransform,
+} from './helpers';
 import { createElement, createDirective } from '../../src/ast';
 
 describe('transformOnce', () => {
@@ -22,7 +28,7 @@ describe('transformOnce', () => {
           source: 'hello',
         },
       };
-      transformOnce(textNode, context);
+      runTransform(transformOnce, textNode, context);
       expect(context.helpers.size).toBe(0);
       expect(context.hoists.length).toBe(0);
     });
@@ -30,7 +36,7 @@ describe('transformOnce', () => {
     it('应该跳过没有 v-once 指令的普通元素', () => {
       const context = createMockContext();
       const element = createElement('div');
-      transformOnce(element, context);
+      runTransform(transformOnce, element, context);
       expect(context.helpers.size).toBe(0);
       expect(context.hoists.length).toBe(0);
     });
@@ -40,7 +46,7 @@ describe('transformOnce', () => {
     it('应该为带有 v-once 的元素生成 codegenNode', () => {
       const context = createMockContext();
       const element = createOnceElement();
-      transformOnce(element, context);
+      runTransform(transformOnce, element, context);
       // After transformOnce, codegenNode is replaced with a hoisted reference
       expect(element.codegenNode).toBeDefined();
       // The original codegenNode (VNODE_CALL) is in hoists
@@ -50,7 +56,7 @@ describe('transformOnce', () => {
     it('应该将 codegenNode 添加到 hoists 中', () => {
       const context = createMockContext();
       const element = createOnceElement();
-      transformOnce(element, context);
+      runTransform(transformOnce, element, context);
       expect(context.hoists.length).toBe(1);
       // The hoisted node is the original VNODE_CALL codegenNode
       expect(context.hoists[0]?.type).toBe(NodeTypes.VNODE_CALL);
@@ -62,7 +68,7 @@ describe('transformOnce', () => {
       expect(element.props.some((p) => p.type === NodeTypes.DIRECTIVE && p.name === 'once')).toBe(
         true,
       );
-      transformOnce(element, context);
+      runTransform(transformOnce, element, context);
       expect(element.props.some((p) => p.type === NodeTypes.DIRECTIVE && p.name === 'once')).toBe(
         false,
       );
@@ -73,7 +79,7 @@ describe('transformOnce', () => {
       const element = createOnceElement({
         extraProps: [createAttr('class', 'static')],
       });
-      transformOnce(element, context);
+      runTransform(transformOnce, element, context);
       expect(element.props.some((p) => p.type === NodeTypes.ATTRIBUTE && p.name === 'class')).toBe(
         true,
       );
@@ -82,7 +88,7 @@ describe('transformOnce', () => {
     it('应该为 v-once 元素注册 CREATE_VNODE helper', () => {
       const context = createMockContext();
       const element = createOnceElement();
-      transformOnce(element, context);
+      runTransform(transformOnce, element, context);
       expect(context.helpers.has('CREATE_VNODE')).toBe(true);
     });
   });
@@ -93,7 +99,7 @@ describe('transformOnce', () => {
       const element = createOnceElement({
         children: [createTextChild('static content')],
       });
-      transformOnce(element, context);
+      runTransform(transformOnce, element, context);
       expect(element.codegenNode).toBeDefined();
       expect(context.hoists.length).toBe(1);
     });
@@ -103,7 +109,7 @@ describe('transformOnce', () => {
       const element = createOnceElement({
         children: [createTextChild('Hello '), createTextChild('World')],
       });
-      transformOnce(element, context);
+      runTransform(transformOnce, element, context);
       expect(element.codegenNode).toBeDefined();
       expect(context.hoists.length).toBe(1);
     });
@@ -114,7 +120,7 @@ describe('transformOnce', () => {
         extraProps: [createAttr('id', 'once-block'), createAttr('class', 'container')],
         children: [createTextChild('content')],
       });
-      transformOnce(element, context);
+      runTransform(transformOnce, element, context);
       expect(element.codegenNode).toBeDefined();
       expect(context.hoists.length).toBe(1);
     });
@@ -124,7 +130,7 @@ describe('transformOnce', () => {
     it('应该正确处理不同标签的 v-once 元素', () => {
       const context = createMockContext();
       const spanElement = createOnceElement({ tag: 'span' });
-      transformOnce(spanElement, context);
+      runTransform(transformOnce, spanElement, context);
       expect(spanElement.codegenNode).toBeDefined();
       // After hoisting, codegenNode is a reference; check the hoisted node's tag
       expect(context.hoists[0]?.tag).toBe('"span"');
@@ -135,8 +141,8 @@ describe('transformOnce', () => {
       const context = createMockContext();
       const element1 = createOnceElement({ tag: 'div' });
       const element2 = createOnceElement({ tag: 'span' });
-      transformOnce(element1, context);
-      transformOnce(element2, context);
+      runTransform(transformOnce, element1, context);
+      runTransform(transformOnce, element2, context);
       expect(context.hoists.length).toBe(2);
     });
   });
@@ -146,7 +152,7 @@ describe('transformOnce', () => {
       const context = createMockContext();
       const onceDir = createDirective('once');
       const element = createElement('div', [onceDir]);
-      transformOnce(element, context);
+      runTransform(transformOnce, element, context);
       expect(element.codegenNode).toBeDefined();
       expect(element.props.length).toBe(0);
     });
@@ -155,7 +161,7 @@ describe('transformOnce', () => {
       const context = createMockContext();
       const element = createOnceElement({ tag: 'MyComponent' });
       element.tagType = ElementTypes.COMPONENT;
-      transformOnce(element, context);
+      runTransform(transformOnce, element, context);
       expect(element.codegenNode).toBeDefined();
       expect(context.hoists.length).toBe(1);
     });
@@ -163,7 +169,7 @@ describe('transformOnce', () => {
     it('v-once 移除后不应影响后续 transformElement 调用', () => {
       const context = createMockContext();
       const element = createOnceElement();
-      transformOnce(element, context);
+      runTransform(transformOnce, element, context);
       // 验证 v-once 已被移除，后续 transformElement 不会因 v-once 而提前返回
       expect(element.props.some((p) => p.type === NodeTypes.DIRECTIVE && p.name === 'once')).toBe(
         false,

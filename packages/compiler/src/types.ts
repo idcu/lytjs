@@ -45,6 +45,11 @@ export interface RootNode extends BaseNode {
   cached: number;
   temps: number;
   ssrHelpers?: string[];
+  /**
+   * 编译期收集到的局部标识符（v-for 别名、插槽参数等）。
+   * codegen 阶段据此决定哪些标识符**不**加 `_ctx.` 前缀。
+   */
+  localIdentifiers?: string[];
 }
 
 export interface ElementNode extends BaseNode {
@@ -357,6 +362,8 @@ export interface TransformContext {
   childIndex: number;
   // FIX: P2-27 添加 __counters 字段，用于存储转换器内部计数器（如解构计数器）
   __counters?: Record<string, number>;
+  /** 编译期收集到的全部局部标识符（供 codegen 决定是否加 _ctx. 前缀） */
+  __locals?: Set<string>;
   helper<T extends string>(name: T): T;
   helperString(name: string): string;
   replaceNode(node: TemplateChildNode): void;
@@ -382,6 +389,8 @@ export interface CodegenContext {
   offset: number;
   indentLevel: number;
   pure: boolean;
+  /** 编译期收集到的局部标识符（v-for 别名等），前缀化时排除 */
+  locals?: ReadonlySet<string>;
   helper(key: string): string;
   push(code: string, node?: BaseNode): void;
   indent(): void;

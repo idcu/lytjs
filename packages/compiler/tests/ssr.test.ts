@@ -17,9 +17,10 @@ describe('SSR Compilation Mode', () => {
       expect(result.code).toContain('Hello World');
     });
 
-    it('应该在 SSR 模式下保留插值表达式', () => {
+    it('应该在 SSR 模式下保留插值表达式（并前缀化为 _ctx.message）', () => {
       const result = compile('<div>{{ message }}</div>', { ssrMode: true });
-      expect(result.code).toContain('String(message)');
+      // 产物是 `function render(_ctx)`，绑定必须写成 _ctx.message 才能在运行时取到值
+      expect(result.code).toContain('String(_ctx.message)');
     });
 
     it('应该在 SSR 模式下保留 v-bind 指令', () => {
