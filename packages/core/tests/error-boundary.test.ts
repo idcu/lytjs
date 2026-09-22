@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * @lytjs/core - ErrorBoundary 测试
  *
