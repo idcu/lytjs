@@ -13,6 +13,32 @@ import type {
   AttributeNode,
 } from '../src/types';
 
+describe('无 arg 指令 + 修饰符（v-model.lazy 等）', () => {
+  it('应把 v-model.lazy 解析为 DIRECTIVE（而不是普通属性）', () => {
+    const ast = parse('<input v-model.lazy="v">');
+    const el = ast.children.find((c) => c.type === 1) as { props: Array<Record<string, unknown>> };
+    const dir = el.props[0]!;
+    expect(dir['type']).toBe(6); // NodeTypes.DIRECTIVE
+    expect(dir['name']).toBe('model');
+    expect(dir['modifiers']).toEqual(['lazy']);
+    expect((dir['exp'] as { content?: string })?.content).toBe('v');
+  });
+
+  it('应支持多个修饰符', () => {
+    const ast = parse('<input v-model.number.trim="v">');
+    const el = ast.children.find((c) => c.type === 1) as { props: Array<Record<string, unknown>> };
+    expect(el.props[0]!['modifiers']).toEqual(['number', 'trim']);
+  });
+
+  it('带 arg 的指令修饰符行为不应改变（v-on:click.stop）', () => {
+    const ast = parse('<button v-on:click.stop="fn">x</button>');
+    const el = ast.children.find((c) => c.type === 1) as { props: Array<Record<string, unknown>> };
+    const dir = el.props[0]!;
+    expect(dir['name']).toBe('on');
+    expect(dir['modifiers']).toEqual(['stop']);
+  });
+});
+
 describe('parser', () => {
   describe('basic parsing', () => {
     it('should parse empty template', () => {

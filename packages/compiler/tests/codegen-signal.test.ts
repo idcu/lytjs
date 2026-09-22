@@ -240,22 +240,31 @@ describe('codegen-signal', () => {
 
     it('should generate v-model with .lazy modifier', () => {
       const result = compile('<input v-model.lazy="text" />', { rendererMode: 'signal' });
-      expect(result.code).toContain('export function render(_c,_n)');
+      // .lazy ⇒ 监听 change 而非 input。
+      // 此前这里只断言"包含函数头"，而该场景其实**完全没编译**：
+      // `v-model.lazy` 被 parser 当成普通属性，原样写进了静态 HTML。
+      expect(result.code).toContain("'change'");
+      expect(result.code).not.toContain("'input'");
+      expect(result.code).not.toContain('v-model');
     });
 
     it('should generate v-model with .number modifier', () => {
       const result = compile('<input v-model.number="count" />', { rendererMode: 'signal' });
-      expect(result.code).toContain('export function render(_c,_n)');
+      expect(result.code).toContain('Number($e.target.value)');
+      expect(result.code).not.toContain('v-model');
     });
 
     it('should generate v-model with .trim modifier', () => {
       const result = compile('<input v-model.trim="text" />', { rendererMode: 'signal' });
-      expect(result.code).toContain('export function render(_c,_n)');
+      expect(result.code).toContain('.trim()');
+      expect(result.code).not.toContain('v-model');
     });
 
     it('should generate v-model with combined modifiers', () => {
       const result = compile('<input v-model.lazy.number="count" />', { rendererMode: 'signal' });
-      expect(result.code).toContain('export function render(_c,_n)');
+      expect(result.code).toContain("'change'"); // .lazy
+      expect(result.code).toContain('Number($e.target.value)'); // .number
+      expect(result.code).not.toContain('v-model');
     });
   });
 

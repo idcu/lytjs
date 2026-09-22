@@ -24,6 +24,7 @@ import {
   getSelection,
   RE_ATTR_NAME,
   RE_V_DIRECTIVE,
+  RE_V_DIRECTIVE_MODIFIERS_ONLY,
   RE_QUOTED_ATTR_VALUE,
   RE_UNQUOTED_ATTR_VALUE,
 } from './parser-base';
@@ -131,6 +132,14 @@ export function parseAttribute(
   }
 
   if (rawName.startsWith('v-')) {
+    // 「无 arg + 修饰符」形式（如 `v-model.lazy`）：RE_V_DIRECTIVE 要求 `$` 收尾，
+    // 对它匹配失败 ⇒ 落到普通属性分支，把 `v-model.lazy="x"` 原样写进 HTML
+    //（既丢失双向绑定语义，又污染产物）。这里先兜底识别。
+    const modOnlyMatch = rawName.match(RE_V_DIRECTIVE_MODIFIERS_ONLY);
+    if (modOnlyMatch) {
+      return parseDirective(context, modOnlyMatch[1]!, `.${modOnlyMatch[2]}`, start);
+    }
+
     const dirMatch = rawName.match(RE_V_DIRECTIVE);
     if (dirMatch) {
       return parseDirective(context, dirMatch[1]!, dirMatch[2], start);
@@ -234,15 +243,20 @@ function parseDirective(
   let modifiers: string[] = [];
 
   if (rawArg !== undefined) {
-    const parts = rawArg.split('.');
-    const argContent = parts[0];
-    modifiers = parts.slice(1);
+    // 约定：rawArg 以 `.` 开头表示「无 arg、只有修饰符」（如 `v-model.lazy`）
+    if (rawArg.startsWith('.')) {
+      modifiers = rawArg.slice(1).split('.').filter(Boolean);
+    } else {
+      const parts = rawArg.split('.');
+      const argContent = parts[0];
+      modifiers = parts.slice(1);
 
-    if (argContent !== undefined && argContent.startsWith('[') && argContent.endsWith(']')) {
-      const content = argContent.slice(1, -1);
-      arg = createSimpleExpression(content, false, getSelection(context, start), false);
-    } else if (argContent !== undefined) {
-      arg = createSimpleExpression(argContent, true, getSelection(context, start), true);
+      if (argContent !== undefined && argContent.startsWith('[') && argContent.endsWith(']')) {
+        const content = argContent.slice(1, -1);
+        arg = createSimpleExpression(content, false, getSelection(context, start), false);
+      } else if (argContent !== undefined) {
+        arg = createSimpleExpression(argContent, true, getSelection(context, start), true);
+      }
     }
   }
 

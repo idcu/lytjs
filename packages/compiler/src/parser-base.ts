@@ -26,6 +26,9 @@ const RE_DOCTYPE = /^<!\[\s\S\]*?>/;
 const RE_TAG_NAME = /^([a-zA-Z][a-zA-Z0-9-]*)/;
 const RE_ATTR_NAME = /^[^\t\r\n\f />][^\t\r\n\f />=]*/;
 const RE_V_DIRECTIVE = /^v-([a-zA-Z][a-zA-Z0-9-]*)(?::(.+))?$/;
+// 「无 arg + 修饰符」形式（`v-model.lazy` / `v-model.number.trim`）：
+// 仅识别那些后面**只**跟 `.mod` 的裸指令，避免把普通属性误判成指令
+const RE_V_DIRECTIVE_MODIFIERS_ONLY = /^v-([a-zA-Z][a-zA-Z0-9-]*)(?:\.([^:.]+(?:\.(?:[^:.]+))*))$/;
 const RE_UNQUOTED_ATTR_VALUE = /^[^\t\r\n\f >]+/;
 const RE_COMPONENT_TAG = /^[A-Z]/;
 
@@ -235,6 +238,7 @@ export {
   // 重新导出子模块需要的正则表达式
   RE_ATTR_NAME,
   RE_V_DIRECTIVE,
+  RE_V_DIRECTIVE_MODIFIERS_ONLY,
   RE_QUOTED_ATTR_VALUE,
   RE_UNQUOTED_ATTR_VALUE,
   RE_TAG_NAME,
