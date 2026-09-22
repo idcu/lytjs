@@ -10,6 +10,7 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { createVNode } from '@lytjs/vdom';
+import { ref } from '@lytjs/reactivity';
 import { createSignalRenderer } from '../src/signal/signal-renderer';
 import { resetVaporComponentRenderer } from '../src/vapor/mount-component';
 
@@ -102,6 +103,30 @@ describe('SignalRenderer + 组件挂载', () => {
     // 插槽链路：codegen 产出 {default:()=>[vnode]} → initSlots 归一化 → renderSlot 取用
     expect(container.querySelector('section.child')).not.toBeNull();
     expect(container.innerHTML).toContain('hello-slot');
+    renderer.unmount();
+  });
+
+  it('插槽内的插值应随响应式数据更新', () => {
+    const msg = ref('hello');
+    const Child = {
+      name: 'Child',
+      setup(_props: unknown, ctx: { slots: { default?: () => unknown } }) {
+        return () =>
+          createVNode(
+            'section',
+            { class: 'child' },
+            ctx.slots.default ? ctx.slots.default() : null,
+          );
+      },
+    };
+
+    const renderer = createSignalRenderer('<div><Child>{{ msg }}</Child></div>', { msg, Child });
+    renderer.render(container);
+    expect(container.innerHTML).toContain('hello');
+
+    msg.value = 'world';
+    expect(container.innerHTML).toContain('world');
+
     renderer.unmount();
   });
 });

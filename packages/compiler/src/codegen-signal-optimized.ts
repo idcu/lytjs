@@ -1427,11 +1427,35 @@ function collectSlotVNodesOptimized(
       }
       continue;
     }
+    // 插值 → 动态文本 vnode
+    if (child.type === NodeTypes.INTERPOLATION) {
+      const exp = getExpContent((child as InterpolationNode).content as SimpleExpressionNode);
+      if (exp) {
+        usedRuntime.add('createVNode');
+        usedRuntime.add('Text');
+        const expr = prefixIdentifiers(exp, new Set()).replace(/\b_ctx\./g, '_c.');
+        out.push(`${cv}(${tx},null,${expr})`);
+      }
+      continue;
+    }
     if (child.type === NodeTypes.ELEMENT) {
-      out.push(serializeVNodeElementOptimized(child as ElementNode, usedRuntime, options));
+      const el = child as ElementNode;
+      // 含结构性指令（v-if / v-for / v-show …）的元素暂不参与插槽编译 —— 宁缺勿错渲
+      if (hasUnsupportedSlotDirectiveOptimized(el)) continue;
+      out.push(serializeVNodeElementOptimized(el, usedRuntime, options));
     }
   }
   return out;
+}
+
+/** 元素是否带有插槽编译尚不支持的结构性指令（只认 v-bind / v-on） */
+function hasUnsupportedSlotDirectiveOptimized(node: ElementNode): boolean {
+  for (const prop of node.props) {
+    if (!prop || prop.type !== NodeTypes.DIRECTIVE) continue;
+    const name = (prop as DirectiveNode).name;
+    if (name !== 'bind' && name !== 'on') return true;
+  }
+  return false;
 }
 
 /** 单个元素 → `createVNode(tag, attrs, children)`（优化版用短别名） */
@@ -1449,14 +1473,8 @@ function serializeVNodeElementOptimized(
     return `${cv}(_c.${node.tag},${buildComponentPropsObject(node)}${nestedArg})`;
   }
 
-  const attrParts: string[] = [];
-  for (const prop of node.props) {
-    if (prop.type === NodeTypes.ATTRIBUTE) {
-      const value = prop.value ? JSON.stringify(prop.value.content) : 'true';
-      attrParts.push(`${JSON.stringify(prop.name)}:${value}`);
-    }
-  }
-  const attrs = attrParts.length ? `{${attrParts.join(',')}}` : 'null';
+  // 元素属性复用一个 props 构造：静态属性 + `:bind` + `@事件`（内部已用 `_c.` 前缀）
+  const attrs = node.props.length ? buildComponentPropsObject(node) : 'null';
   const kids = collectSlotVNodesOptimized(node.children, usedRuntime, options);
   const childrenArg = kids.length ? `[${kids.join(',')}]` : 'null';
   return `${cv}(${JSON.stringify(node.tag)},${attrs},${childrenArg})`;

@@ -1273,11 +1273,36 @@ function collectSlotVNodes(children: TemplateChildNode[], prefix: string): strin
       if (text.trim()) out.push(`createVNode(Text,null,${JSON.stringify(text)})`);
       continue;
     }
+    // 插值 → 动态文本 vnode：依赖由 mountComponent 的 effect 追踪，变化即整体重渲染
+    if (child.type === NodeTypes.INTERPOLATION) {
+      const exp = getExpContent((child as InterpolationNode).content as SimpleExpressionNode);
+      if (exp) out.push(`createVNode(Text,null,${prefixIdentifiers(exp, new Set())})`);
+      continue;
+    }
     if (child.type === NodeTypes.ELEMENT) {
-      out.push(serializeVNodeElement(child as ElementNode, prefix));
+      const el = child as ElementNode;
+      // 含结构性指令（v-if / v-for / v-show …）的元素暂不参与插槽编译 ——
+      // 宁可缺失，也不做「忽略指令后照常渲染」的静默错误
+      if (hasUnsupportedSlotDirective(el)) continue;
+      out.push(serializeVNodeElement(el, prefix));
     }
   }
   return out;
+}
+
+/**
+ * 元素是否带有插槽编译尚不支持的结构性指令
+ *
+ * 目前插槽只支持 `v-bind` 与 `v-on`；`v-if`/`v-for`/`v-show` 等若被静默忽略，
+ * 会导致「本不该渲染的内容被渲染」，因此这里主动判定并让调用方跳过整个元素。
+ */
+function hasUnsupportedSlotDirective(node: ElementNode): boolean {
+  for (const prop of node.props) {
+    if (!prop || prop.type !== NodeTypes.DIRECTIVE) continue;
+    const name = (prop as DirectiveNode).name;
+    if (name !== 'bind' && name !== 'on') return true;
+  }
+  return false;
 }
 
 /** 单个元素 → `createVNode(tag, attrs, children)` */
@@ -1289,14 +1314,8 @@ function serializeVNodeElement(node: ElementNode, prefix: string): string {
     return `createVNode(${prefix}${node.tag},${buildComponentPropsObject(node)}${nestedArg})`;
   }
 
-  const attrParts: string[] = [];
-  for (const prop of node.props) {
-    if (prop.type === NodeTypes.ATTRIBUTE) {
-      const value = prop.value ? JSON.stringify(prop.value.content) : 'true';
-      attrParts.push(`${JSON.stringify(prop.name)}:${value}`);
-    }
-  }
-  const attrs = attrParts.length ? `{${attrParts.join(',')}}` : 'null';
+  // 元素属性复用一个 props 构造：静态属性 + `:bind` + `@事件`（vnode 不需要 HTML 转义）
+  const attrs = node.props.length ? buildComponentPropsObject(node) : 'null';
   const kids = collectSlotVNodes(node.children, prefix);
   const childrenArg = kids.length ? `[${kids.join(',')}]` : 'null';
   return `createVNode(${JSON.stringify(node.tag)},${attrs},${childrenArg})`;

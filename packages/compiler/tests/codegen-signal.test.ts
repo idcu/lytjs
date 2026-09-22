@@ -483,5 +483,24 @@ describe('codegen-signal', () => {
         'createVNode(_ctx.Inner,{},{default:()=>[createVNode(Text,null,"x")]})',
       );
     });
+
+    it('should compile slot interpolation into a dynamic text vnode', () => {
+      const result = compile('<div><Child>{{ msg }}</Child></div>', opts);
+      expect(result.code).toContain('{default:()=>[createVNode(Text,null,_ctx.msg)]}');
+    });
+
+    it('should compile slot element bindings and events', () => {
+      const bind = compile('<div><Child><span :title="t">x</span></Child></div>', opts);
+      expect(bind.code).toContain('createVNode("span",{"title":_ctx.t}');
+
+      const on = compile('<div><Child><span @click="fn">x</span></Child></div>', opts);
+      expect(on.code).toContain('createVNode("span",{"onClick":_ctx.fn}');
+    });
+
+    it('should SKIP slot elements carrying unsupported directives instead of mis-rendering', () => {
+      // v-if 若被静默忽略，会渲染出"本不该出现"的内容；此时宁可缺失
+      const result = compile('<div><Child><span v-if="ok">x</span></Child></div>', opts);
+      expect(result.code).toContain('mountComponent(_ctx.Child,{},_lytComp);');
+    });
   });
 });

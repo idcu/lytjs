@@ -51,6 +51,33 @@ function getRenderer(): ReturnType<typeof createDOMRenderer> {
 }
 
 /**
+ * 在当前响应式上下文中预求值一次插槽，用于建立依赖
+ *
+ * 插槽可能是「单个函数（默认插槽）」或「函数对象（具名插槽集合）」。
+ */
+function warmupSlots(slots: unknown): void {
+  if (typeof slots === 'function') {
+    try {
+      (slots as () => unknown)();
+    } catch {
+      // 预热失败不应影响挂载（真正的求值发生在组件渲染里，那里会正常报错）
+    }
+    return;
+  }
+  if (slots && typeof slots === 'object') {
+    for (const key of Object.keys(slots as Record<string, unknown>)) {
+      const fn = (slots as Record<string, unknown>)[key];
+      if (typeof fn !== 'function') continue;
+      try {
+        (fn as () => unknown)();
+      } catch {
+        // 同上
+      }
+    }
+  }
+}
+
+/**
  * 在 Signal/Vapor 模式下挂载组件
  *
  * @param comp      组件定义（函数组件 / 选项对象 / 异步组件包装）
@@ -71,6 +98,12 @@ export function mountComponent(
 
   // 首次渲染 + 依赖变化后的整体重渲染
   effect(() => {
+    // 插槽「预热」：插槽函数的**真正执行**发生在组件渲染内部（另一层响应式边界），
+    // 若只在那里求值，插槽内引用的父级响应式数据不会被本 effect 收集为依赖 ⇒
+    // 父级数据变化时不会整体重渲染。故先在本 effect 上下文里求值一次（结果为 vnode，
+    // 仅用于建立依赖，随即可丢弃）。
+    warmupSlots(slots);
+
     // 第三个参数是 children（即「插槽」）：setupComponent 内部会把它交给 initSlots
     // 归一化 —— 支持「函数 = 默认插槽」与「对象 = 具名插槽集合」两种形态。
     const vnode = createVNode(comp as never, (props ?? null) as never, (slots ?? null) as never);

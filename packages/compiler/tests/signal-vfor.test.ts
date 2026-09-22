@@ -131,6 +131,30 @@ describe('Signal 模式 - 子组件（两版 codegen 均已支持挂载）', () 
     expect(code).not.toContain('default:');
   });
 
+  it('插槽内插值应编译为动态文本 vnode', () => {
+    const code = compile('<div><Child>{{ msg }}</Child></div>', { rendererMode: 'signal' }).code;
+    expect(code).toContain('{default:()=>[V(T,null,_c.msg)]}');
+  });
+
+  it('插槽内元素的绑定与事件应进入 vnode props', () => {
+    const bind = compile('<div><Child><span :title="t">x</span></Child></div>', {
+      rendererMode: 'signal',
+    }).code;
+    expect(bind).toContain('V("span",{"title":_c.t}');
+
+    const on = compile('<div><Child><span @click="fn">x</span></Child></div>', {
+      rendererMode: 'signal',
+    }).code;
+    expect(on).toContain('V("span",{"onClick":_c.fn}');
+  });
+
+  it('插槽内含 v-if 的元素应整体跳过（不静默错渲）', () => {
+    const code = compile('<div><Child><span v-if="ok">x</span></Child></div>', {
+      rendererMode: 'signal',
+    }).code;
+    expect(code).not.toContain('default:');
+  });
+
   it('VNode 模式组件标签应前缀化', () => {
     const code = compile('<div><Child/></div>').code;
     expect(code).toContain('_ctx.Child');
