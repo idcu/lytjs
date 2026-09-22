@@ -72,8 +72,11 @@ describe('codegen', () => {
 
     it('should generate v-if/v-else chain', () => {
       const result = compile('<div v-if="a">A</div><div v-else>B</div>');
-      expect(result.code).toContain('?');
-      expect(result.code).toContain(':');
+      // 断言两个分支的**内容**都出现 —— 只断言 `?` / `:` 等于没断言
+      //（任何三元都有这两个字符，"整条链丢分支"的 bug 曾因此潜伏）
+      expect(result.code).toContain('A');
+      expect(result.code).toContain('B');
+      expect(result.code).toContain('_ctx.a');
     });
   });
 
@@ -132,8 +135,10 @@ describe('codegen', () => {
 
     it('should handle multiple v-if/v-else-if/v-else branches', () => {
       const result = compile('<div v-if="a">A</div><div v-else-if="b">B</div><div v-else>C</div>');
-      expect(result.code).toContain('?');
-      expect(result.code).toContain(':');
+      // 三个分支的内容都必须出现（回归：丢分支的 bug 只影响 v-else-if 链）
+      expect(result.code).toContain('A');
+      expect(result.code).toContain('B');
+      expect(result.code).toContain('C');
     });
 
     it('should handle v-for with index', () => {

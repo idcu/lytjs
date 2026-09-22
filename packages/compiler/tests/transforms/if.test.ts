@@ -53,6 +53,16 @@ describe('transformIf', () => {
       // 两个元素被合并为一个条件表达式
       expect(root.children).toHaveLength(1);
       expect(root.children[0]?.type).toBe(NodeTypes.JS_CONDITIONAL_EXPRESSION);
+
+      // 链完整性：test 必须是 v-if 的条件，alternate 必须是 v-else 分支
+      //（只断言"节点数 + 类型"曾让"整条链丢分支"的 bug 潜伏很久）
+      const cond = root.children[0] as unknown as {
+        test?: { content?: string };
+        alternate?: { type?: number } | undefined;
+      };
+      expect(cond.test?.content).toBe('show');
+      expect(cond.alternate).toBeDefined();
+      expect(cond.alternate?.type).toBe(NodeTypes.VNODE_CALL);
     });
 
     it('应该正确处理 v-if/v-else-if/v-else 链', () => {
@@ -69,6 +79,25 @@ describe('transformIf', () => {
 
       expect(root.children).toHaveLength(1);
       expect(root.children[0]?.type).toBe(NodeTypes.JS_CONDITIONAL_EXPRESSION);
+
+      // 链完整性（回归守卫）：链首必须是 v-if 的条件 `a`，
+      // alternate 必须是**嵌套的条件表达式**（v-else-if，test=`b`），其 alternate 是 v-else 分支。
+      // 历史 bug：构建链时指针被下钻到链尾，插入 children 的是"最内层"，
+      // 首分支被静默丢弃（产物退化成 `(b?y:null)`）。
+      const cond = root.children[0] as unknown as {
+        test?: { content?: string };
+        consequent?: { type?: number };
+        alternate?: {
+          type?: number;
+          test?: { content?: string };
+          alternate?: { type?: number };
+        };
+      };
+      expect(cond.test?.content).toBe('a');
+      expect(cond.consequent?.type).toBe(NodeTypes.VNODE_CALL);
+      expect(cond.alternate?.type).toBe(NodeTypes.JS_CONDITIONAL_EXPRESSION);
+      expect(cond.alternate?.test?.content).toBe('b');
+      expect(cond.alternate?.alternate?.type).toBe(NodeTypes.VNODE_CALL);
     });
   });
 

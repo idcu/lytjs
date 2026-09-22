@@ -300,7 +300,12 @@ describe('指令解析边界条件', () => {
   describe('v-if / v-else-if / v-else 链式条件', () => {
     it('完整的 if / else-if / else 链', () => {
       const ast = parse('<div v-if="a">A</div><div v-else-if="b">B</div><div v-else>C</div>');
-      expect(ast.children.length).toBeGreaterThan(0);
+      // parse 阶段：三个元素都在，且各自带对应指令
+      //（`toBeGreaterThan(0)` 等于没断言 —— 任何模板都满足）
+      expect(ast.children.length).toBe(3);
+      expect(
+        (ast.children as Array<{ props?: Array<{ name: string }> }>).map((c) => c.props?.[0]?.name),
+      ).toEqual(['if', 'else-if', 'else']);
     });
 
     it('多个 else-if 分支', () => {
@@ -311,7 +316,11 @@ describe('指令解析边界条件', () => {
           '<div v-else-if="d">D</div>' +
           '<div v-else>E</div>',
       );
-      expect(ast.children.length).toBeGreaterThan(0);
+      // 五段都要被解析出来，且指令名依次正确
+      expect(ast.children.length).toBe(5);
+      expect(
+        (ast.children as Array<{ props?: Array<{ name: string }> }>).map((c) => c.props?.[0]?.name),
+      ).toEqual(['if', 'else-if', 'else-if', 'else-if', 'else']);
     });
 
     it('v-else 不带表达式', () => {
