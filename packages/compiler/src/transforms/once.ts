@@ -11,7 +11,7 @@ import type {
 } from '../types';
 import { findDirective } from './helpers';
 import { transformElement } from './transform-element';
-import { createSimpleExpression } from '../ast';
+import { createCompoundExpression } from '../ast';
 
 export function transformOnce(
   node: RootNode | TemplateChildNode,
@@ -29,24 +29,37 @@ export function transformOnce(
   );
 
   // 推迟到 exit 回调：v-once 的子节点必须先被遍历（否则其 codegenNode 不存在，
-  // 元素 children 会被整片丢掉），随后再做「转换 + 提升」。
+  // 元素 children 会被整片丢掉），随后再做「转换 + 惰性缓存」。
   return () => {
     transformElement(element, context, { sync: true });
 
-    // Mark as hoistable
-    if (element.codegenNode) {
-      context.addHoist(element.codegenNode);
-      // FIX: P2-11 createSimpleExpression 返回 SimpleExpressionNode，而 codegenNode
-      // 可能是 VNodeCall 等类型。此处使用双重类型断言是安全的，因为 hoisted 引用
-      // 会在后续 codegen 阶段被解析为实际的 hoisted 值。
-      // 使用 as unknown as VNodeCall 是有意为之：codegenNode 的联合类型中不包含 SimpleExpressionNode，
-      // 但 hoisted 节点在 codegen 阶段会被特殊处理，此处需要覆盖原始类型。
-      element.codegenNode = createSimpleExpression(
-        `_hoisted_${context.hoists.length}`,
-        false,
-        element.loc,
-        true,
-      ) as unknown as VNodeCall; // as unknown as VNodeCall: hoisted 节点在 codegen 阶段被替换为 _hoisted_N 引用
-    }
+    const codegenNode = element.codegenNode;
+    if (!codegenNode) return;
+
+    // 用「模块级**惰性**变量」实现 v-once：首次求值后缓存复用。
+    //
+    // 为什么不用 hoisting（`const _hoisted_N = …`）？
+    //   hoisted 常量在**模块级作用域**立即求值，而 v-once 的子树通常引用 `_ctx.x`
+    //   ⇒ 产物运行时会抛 `_ctx is not defined`（本仓库此前的实现在此确实抛错）。
+    // 为什么不用 `_cache` 数组？
+    //   编译产物可能在没有 `_cache` 实参的环境下被执行（本仓库的 vapor-ssr 就只传 `_ctx`），
+    //   而 `_cache[N]` 在 `_cache === undefined` 时会崩。
+    //
+    // 生成形态：`(_once_0 || (_once_0 = <原始 vnode 表达式>))`，模块级声明 `let _once_0;`
+    // 语义标记：供各 codegen 识别（不再依赖 codegenNode 的形态）
+    element.__isOnce = true;
+
+    const index = context.cached++;
+    const name = `_once_${index}`;
+    const root = context.rootNode;
+    if (!root.onceVars) root.onceVars = [];
+    root.onceVars.push(name);
+
+    element.codegenNode = createCompoundExpression([
+      `(${name} || (${name} = `,
+      codegenNode,
+      `))`,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ] as any) as unknown as VNodeCall;
   };
 }

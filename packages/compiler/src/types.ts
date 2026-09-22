@@ -46,6 +46,13 @@ export interface RootNode extends BaseNode {
   temps: number;
   ssrHelpers?: string[];
   /**
+   * v-once 使用的模块级**惰性**变量名（如 `_once_0`）。
+   *
+   * 与 `hoists` 的区别：hoisted 常量在模块级**立即**求值，而 v-once 的子树通常引用
+   * `_ctx.x`（模块作用域取不到）⇒ 必须惰性：首次渲染时求值、之后复用。
+   */
+  onceVars?: string[];
+  /**
    * 编译期收集到的局部标识符（v-for 别名、插槽参数等）。
    * codegen 阶段据此决定哪些标识符**不**加 `_ctx.` 前缀。
    */
@@ -59,6 +66,14 @@ export interface ElementNode extends BaseNode {
   tagType: (typeof ElementTypes)[keyof typeof ElementTypes];
   isSelfClosing: boolean;
   props: (AttributeNode | DirectiveNode)[];
+  /**
+   * `v-once` 的语义标记（由 `transformOnce` 打上）。
+   *
+   * 各 codegen 不应再靠 `codegenNode` 的**形态**去猜（那会把两个模块耦合在一起）：
+   * - VNode codegen：生成 `(_once_N || (_once_N = …))` 惰性缓存
+   * - Signal codegen：该元素不建立响应式 effect（只渲染一次）
+   */
+  __isOnce?: boolean;
   children: TemplateChildNode[];
   codegenNode: VNodeCall | undefined;
   patchFlag: number;

@@ -47,19 +47,20 @@ describe('transformOnce', () => {
       const context = createMockContext();
       const element = createOnceElement();
       runTransform(transformOnce, element, context);
-      // After transformOnce, codegenNode is replaced with a hoisted reference
+      // 新实现：元素被标记 __isOnce，codegenNode 被包成**惰性缓存表达式**
       expect(element.codegenNode).toBeDefined();
-      // The original codegenNode (VNODE_CALL) is in hoists
-      expect(context.hoists[0]?.type).toBe(NodeTypes.VNODE_CALL);
+      expect(element.__isOnce).toBe(true);
+      expect(element.codegenNode?.type).toBe(NodeTypes.COMPOUND_EXPRESSION);
     });
 
-    it('应该将 codegenNode 添加到 hoists 中', () => {
+    it('应该把 v-once 记入模块级惰性变量（onceVars），而不是 hoists', () => {
       const context = createMockContext();
       const element = createOnceElement();
       runTransform(transformOnce, element, context);
-      expect(context.hoists.length).toBe(1);
-      // The hoisted node is the original VNODE_CALL codegenNode
-      expect(context.hoists[0]?.type).toBe(NodeTypes.VNODE_CALL);
+      // 改用惰性变量：hoisted 常量在模块级立即求值，无法访问 `_ctx`
+      expect(context.rootNode.onceVars?.length).toBe(1);
+      expect(context.rootNode.onceVars?.[0]).toMatch(/^_once_\d+$/);
+      expect(context.hoists.length).toBe(0);
     });
 
     it('应该从元素的 props 中移除 v-once 指令', () => {
@@ -101,7 +102,7 @@ describe('transformOnce', () => {
       });
       runTransform(transformOnce, element, context);
       expect(element.codegenNode).toBeDefined();
-      expect(context.hoists.length).toBe(1);
+      expect(context.rootNode.onceVars?.length).toBe(1);
     });
 
     it('应该处理带有多个子节点的 v-once 元素', () => {
@@ -111,7 +112,7 @@ describe('transformOnce', () => {
       });
       runTransform(transformOnce, element, context);
       expect(element.codegenNode).toBeDefined();
-      expect(context.hoists.length).toBe(1);
+      expect(context.rootNode.onceVars?.length).toBe(1);
     });
 
     it('应该处理带有属性和子节点的 v-once 元素', () => {
@@ -122,7 +123,7 @@ describe('transformOnce', () => {
       });
       runTransform(transformOnce, element, context);
       expect(element.codegenNode).toBeDefined();
-      expect(context.hoists.length).toBe(1);
+      expect(context.rootNode.onceVars?.length).toBe(1);
     });
   });
 
@@ -132,18 +133,17 @@ describe('transformOnce', () => {
       const spanElement = createOnceElement({ tag: 'span' });
       runTransform(transformOnce, spanElement, context);
       expect(spanElement.codegenNode).toBeDefined();
-      // After hoisting, codegenNode is a reference; check the hoisted node's tag
-      expect(context.hoists[0]?.tag).toBe('"span"');
-      expect(context.hoists.length).toBe(1);
+      expect(spanElement.__isOnce).toBe(true);
+      expect(context.rootNode.onceVars?.length).toBe(1);
     });
 
-    it('应该为多个 v-once 元素分别添加到 hoists', () => {
+    it('应该为多个 v-once 元素分别分配惰性变量', () => {
       const context = createMockContext();
       const element1 = createOnceElement({ tag: 'div' });
       const element2 = createOnceElement({ tag: 'span' });
       runTransform(transformOnce, element1, context);
       runTransform(transformOnce, element2, context);
-      expect(context.hoists.length).toBe(2);
+      expect(context.rootNode.onceVars?.length).toBe(2);
     });
   });
 
@@ -163,7 +163,7 @@ describe('transformOnce', () => {
       element.tagType = ElementTypes.COMPONENT;
       runTransform(transformOnce, element, context);
       expect(element.codegenNode).toBeDefined();
-      expect(context.hoists.length).toBe(1);
+      expect(context.rootNode.onceVars?.length).toBe(1);
     });
 
     it('v-once 移除后不应影响后续 transformElement 调用', () => {

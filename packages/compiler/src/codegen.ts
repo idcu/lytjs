@@ -70,6 +70,11 @@ export function generate(ast: RootNode, options: CodegenOptions = {}): CodegenRe
     context.push(`\n`);
   }
 
+  // v-once 的模块级惰性变量声明（见 transforms/once.ts）
+  if (ast.onceVars && ast.onceVars.length > 0) {
+    context.push(`let ${ast.onceVars.join(', ')};\n\n`);
+  }
+
   // 生成 render 函数
   // FIX: P2-23 生成代码可读性优化：添加函数注释
   context.push(`// Render function\n`);

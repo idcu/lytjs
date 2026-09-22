@@ -258,10 +258,18 @@ function processChildren(
   elementVars: Array<{ varName: string; tag: string }>,
   dynamicBindings: Array<{ varName: string; code: string }>,
   consumedCount: Map<string, number>,
+  inheritedOnce = false,
 ): void {
   for (const child of children) {
     if (child.type === NodeTypes.ELEMENT) {
-      processElement(child as ElementNode, varCounter, elementVars, dynamicBindings, consumedCount);
+      processElement(
+        child as ElementNode,
+        varCounter,
+        elementVars,
+        dynamicBindings,
+        consumedCount,
+        inheritedOnce,
+      );
     } else if (child.type === NodeTypes.JS_CONDITIONAL_EXPRESSION) {
       processConditional(
         child as JSConditionalExpression,
@@ -289,7 +297,13 @@ function processElement(
   elementVars: Array<{ varName: string; tag: string }>,
   dynamicBindings: Array<{ varName: string; code: string }>,
   consumedCount: Map<string, number>,
+  inheritedOnce = false,
 ): void {
+  // v-once：沿元素树向下传递（整个子树都只渲染一次）
+  const onceMode = inheritedOnce || node.__isOnce === true;
+  // 记录本次调用前的长度，末尾统一把"新增绑定"去掉 effect 包裹
+  const bindingStart = dynamicBindings.length;
+
   // 组件：生成 mountComponent(_ctx.Tag, props, 占位元素)
   if (node.tagType === ElementTypes.COMPONENT) {
     const hostEntry = findExistingVar(elementVars, 'lyt-comp', consumedCount);
@@ -369,7 +383,14 @@ function processElement(
         code: `effect(() => setText(${varName}, _ctx.${exp}));`,
       });
     } else if (child.type === NodeTypes.ELEMENT) {
-      processElement(child as ElementNode, varCounter, elementVars, dynamicBindings, consumedCount);
+      processElement(
+        child as ElementNode,
+        varCounter,
+        elementVars,
+        dynamicBindings,
+        consumedCount,
+        onceMode,
+      );
     } else if (child.type === NodeTypes.JS_CONDITIONAL_EXPRESSION) {
       processConditional(
         child as JSConditionalExpression,
@@ -389,6 +410,25 @@ function processElement(
       );
     }
   }
+
+  // v-once：把本次产生的绑定去掉 `effect()` 包裹 —— 只渲染一次，不建响应式边界。
+  // 幂等：内层递归已处理过的绑定再处理一次也无副作用。
+  if (onceMode) {
+    for (let i = bindingStart; i < dynamicBindings.length; i++) {
+      const binding = dynamicBindings[i];
+      if (binding) binding.code = stripEffectWrapper(binding.code);
+    }
+  }
+}
+
+/**
+ * 去掉 `effect(() => X);` 的外层包裹 → `X;`（供 v-once 使用）
+ *
+ * 只处理本 codegen 自己生成的固定形态；不匹配时原样返回。
+ */
+function stripEffectWrapper(code: string): string {
+  const match = /^effect\(\(\)\s*=>\s*([\s\S]*?)\);$/.exec(code.trim());
+  return match && match[1] ? `${match[1]};` : code;
 }
 
 // ============================================================

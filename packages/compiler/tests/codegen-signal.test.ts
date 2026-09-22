@@ -629,6 +629,25 @@ describe('codegen-signal', () => {
       expect(result.code).toContain('default:()=>[createVNode(Text,null,"body")]');
     });
 
+    it('should drop the effect wrapper for v-once (non-optimized, runtime path)', () => {
+      // 运行时 SignalRenderer 走的正是非优化版；此前的实现里 v-once **完全无效**
+      //（插值仍被 effect 包裹），而优化版是对的 —— 典型的「双 codegen 不同步」。
+      const result = compile('<div v-once>{{ msg }}</div>', opts);
+      expect(result.code).toContain('setText(_div, _ctx.msg);');
+      expect(result.code).not.toContain('effect(() => setText(_div');
+    });
+
+    it('should propagate v-once down the subtree (non-optimized)', () => {
+      const result = compile('<div v-once><span>{{ msg }}</span></div>', opts);
+      expect(result.code).toContain('setText(_span, _ctx.msg);');
+      expect(result.code).not.toContain('effect(() => setText(_span');
+    });
+
+    it('should still wrap ordinary interpolations with effect (non-optimized)', () => {
+      const result = compile('<div>{{ msg }}</div>', opts);
+      expect(result.code).toContain('effect(() => setText(_div, _ctx.msg));');
+    });
+
     it('should treat blank-only slot content inside v-if as null children', () => {
       const result = compile('<div><Child><span v-if="ok"> </span></Child></div>', opts);
       expect(result.code).toContain('(_ctx.ok?createVNode("span",null,null):null)');

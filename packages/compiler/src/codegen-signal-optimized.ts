@@ -478,13 +478,19 @@ function processElementOptimized(
   // 所以这里不能再去 props 里找指令，而要读转换留下的痕迹：
   //   - v-once：transformOnce 把元素的 codegenNode 换成了 `_hoisted_N` 引用
   //   - v-memo：transformVMemo 把依赖信息写进了元素元数据（getMemoMeta）
-  const maybeCodegen = node.codegenNode as unknown as
-    | { type?: number; content?: unknown }
-    | undefined;
-  if (maybeCodegen && maybeCodegen.type === NodeTypes.SIMPLE_EXPRESSION) {
-    const content = maybeCodegen.content;
-    if (typeof content === 'string' && content.startsWith('_hoisted_')) {
-      ownMods.once = true;
+  // 优先读 transformOnce 留下的**语义标记**；
+  // 兼容旧形态（codegenNode 被换成 `_hoisted_N` 引用）。
+  if (node.__isOnce) {
+    ownMods.once = true;
+  } else {
+    const maybeCodegen = node.codegenNode as unknown as
+      | { type?: number; content?: unknown }
+      | undefined;
+    if (maybeCodegen && maybeCodegen.type === NodeTypes.SIMPLE_EXPRESSION) {
+      const content = maybeCodegen.content;
+      if (typeof content === 'string' && content.startsWith('_hoisted_')) {
+        ownMods.once = true;
+      }
     }
   }
 
