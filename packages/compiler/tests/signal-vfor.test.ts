@@ -182,16 +182,30 @@ describe('Signal 模式 - 子组件（两版 codegen 均已支持挂载）', () 
     expect(code).toContain('(_c.ok?V("span",null,null):null)');
   });
 
-  it('插槽内 v-for / v-show 元素应整体跳过', () => {
-    const forCode = compile('<div><Child><i v-for="x in xs">y</i></Child></div>', {
-      rendererMode: 'signal',
-    }).code;
-    expect(forCode).not.toContain('default:');
-
+  it('插槽内 v-show 元素应整体跳过（v-for 已支持）', () => {
     const showCode = compile('<div><Child><i v-show="s">y</i></Child></div>', {
       rendererMode: 'signal',
     }).code;
     expect(showCode).not.toContain('default:');
+  });
+
+  it('插槽内 v-for 应编译为 map 展开（短别名）', () => {
+    const code = compile(
+      '<div><Child><li v-for="item in items">{{ item.name }}</li></Child></div>',
+      {
+        rendererMode: 'signal',
+      },
+    ).code;
+    expect(code).toContain('...(_c.items.map((item)=>V("li",null,[V(T,null,item.name)])))');
+  });
+
+  it('插槽内 v-for 的循环变量不应被加前缀', () => {
+    const code = compile(
+      '<div><Child><li v-for="(item, i) in items" :key="item.id">{{ item.name }}</li></Child></div>',
+      { rendererMode: 'signal' },
+    ).code;
+    expect(code).toContain('{"key":item.id}');
+    expect(code).not.toContain('_c.item.');
   });
 
   it('VNode 模式组件标签应前缀化', () => {

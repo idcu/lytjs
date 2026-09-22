@@ -56,6 +56,10 @@ function genVarName(tag: string, counter: Map<string, number>): string {
 function getExpContent(node: SimpleExpressionNode | CompoundExpressionNode | undefined): string {
   if (!node) return '';
   if (node.type === NodeTypes.SIMPLE_EXPRESSION) return node.content;
+  // 形态异常（非 CompoundExpression 且没有 children）时返回空串 ——
+  // 此前会直接走 `node.children.map` 并对**无 type 的对象**抛 TypeError，
+  // 把一次局部失败放大成整个编译中断。
+  if (node.type !== NodeTypes.COMPOUND_EXPRESSION || !Array.isArray(node.children)) return '';
   // CompoundExpression: 拼接所有子节点
   return node.children
     .map((c) => {
@@ -1239,12 +1243,73 @@ function processBranchDynamics(
 }
 
 /**
+ * `JS_CALL_EXPRESSION` 的 RENDER_LIST 调用（v-for 在 Signal 模式的 transform 产物）
+ * → `...((source).map((item,i)=>vnode))`
+ *
+ * 结构（实测）：
+ *   callee = 'RENDER_LIST'
+ *   arguments = [ SIMPLE_EXPRESSION(source),
+ *                 COMPOUND_EXPRESSION([ "(item, i) => { ", VNODE_CALL, " }" ]) ]
+ *
+ * **关键**：循环变量必须作为 `locals` 传给 `prefixIdentifiers`，否则 `item.id`
+ * 会被误加前缀变成 `_ctx.item.id`。同样采用严格模式（失败即整体返回 null）。
+ */
+export function serializeListVNode(
+  node: unknown,
+  prefix: string,
+  locals: ReadonlySet<string> = new Set(),
+): string | null {
+  const call = node as { type?: number; callee?: unknown; arguments?: unknown[] };
+  if (!call || call.type !== NodeTypes.JS_CALL_EXPRESSION) return null;
+  if (call.callee !== 'RENDER_LIST') return null;
+
+  const args = call.arguments;
+  if (!Array.isArray(args) || args.length < 2) return null;
+
+  const srcNode = args[0] as SimpleExpressionNode | undefined;
+  const src = srcNode && typeof srcNode.content === 'string' ? srcNode.content : null;
+  if (!src) return null;
+
+  const fn = args[1] as { type?: number; children?: unknown[] };
+  if (!fn || fn.type !== NodeTypes.COMPOUND_EXPRESSION || !Array.isArray(fn.children)) return null;
+
+  // 箭头函数头（含参数名），例如 "(item, i) => { "
+  const head = fn.children.find((c): c is string => typeof c === 'string' && c.includes('=>'));
+  if (!head) return null;
+  const paramMatch = /^\s*\(?\s*([^)]*?)\s*\)?\s*=>/.exec(head);
+  if (!paramMatch) return null;
+  const params = (paramMatch[1] ?? '')
+    .split(',')
+    .map((x) => x.trim())
+    .filter(Boolean);
+  if (params.length === 0) return null;
+
+  const vnodeNode = fn.children.find(
+    (c) => !!c && typeof c === 'object' && (c as { type?: number }).type === NodeTypes.VNODE_CALL,
+  );
+  if (!vnodeNode) return null;
+
+  const innerLocals = new Set(locals);
+  for (const param of params) innerLocals.add(param);
+
+  const inner = serializeVNodeCall(vnodeNode, prefix, innerLocals);
+  if (!inner) return null;
+
+  const srcExpr = prefixIdentifiers(src, locals);
+  return `...(${srcExpr}.map((${params.join(',')})=>${inner}))`;
+}
+
+/**
  * `JS_CONDITIONAL_EXPRESSION`（v-if 在 Signal 模式的 transform 产物）→ `(cond ? vnode : null)`
  *
  * 返回 null 表示无法完整还原（此时调用方跳过，不下发半成品）。
  * v-else / v-else-if 分支暂不支持 —— 有 alternate 时同样返回 null。
  */
-export function serializeConditionalVNode(node: unknown, prefix: string): string | null {
+export function serializeConditionalVNode(
+  node: unknown,
+  prefix: string,
+  locals: ReadonlySet<string> = new Set(),
+): string | null {
   const cond = node as { test?: unknown; consequent?: unknown; alternate?: unknown };
   if (!cond || !cond.test) return null;
   // v-else / v-else-if：alternate 非空时整体放弃（宁缺勿错渲）
@@ -1253,10 +1318,10 @@ export function serializeConditionalVNode(node: unknown, prefix: string): string
   const testExp = getExpContent(cond.test as SimpleExpressionNode);
   if (!testExp) return null;
 
-  const inner = serializeVNodeCall(cond.consequent, prefix);
+  const inner = serializeVNodeCall(cond.consequent, prefix, locals);
   if (!inner) return null;
 
-  return `(${prefixIdentifiers(testExp, new Set())}?${inner}:null)`;
+  return `(${prefixIdentifiers(testExp, locals)}?${inner}:null)`;
 }
 
 /**
@@ -1265,7 +1330,11 @@ export function serializeConditionalVNode(node: unknown, prefix: string): string
  * **严格模式**：任何一段无法识别都让整体返回 null（调用方跳过），
  * 避免"只渲染一半"这种比不渲染更危险的结果。
  */
-export function serializeVNodeCall(vnode: unknown, prefix: string): string | null {
+export function serializeVNodeCall(
+  vnode: unknown,
+  prefix: string,
+  locals: ReadonlySet<string> = new Set(),
+): string | null {
   const vn = vnode as {
     type?: number;
     tag?: unknown;
@@ -1292,19 +1361,26 @@ export function serializeVNodeCall(vnode: unknown, prefix: string): string | nul
       const valCode =
         prop.value && typeof prop.value.content === 'string' ? prop.value.content : null;
       if (keyCode === null || valCode === null) return null;
-      parts.push(`${keyCode}:${prefixIdentifiers(valCode, new Set())}`);
+      parts.push(`${keyCode}:${prefixIdentifiers(valCode, locals)}`);
     }
     propsCode = `{${parts.join(',')}}`;
   }
 
-  const childrenCode = serializeVNodeCallChildren(vn.children, prefix);
+  const childrenCode = serializeVNodeCallChildren(vn.children, prefix, locals);
   if (childrenCode === null) return null;
 
-  return `createVNode(${vn.tag},${propsCode},${childrenCode})`;
+  // 组件 tag 是**裸名**（如 `Inner`）必须前缀化；HTML 标签已是 JSON 字符串（如 `"div"`）
+  const tagCode = (vn as { isComponent?: boolean }).isComponent ? `${prefix}${vn.tag}` : vn.tag;
+
+  return `createVNode(${tagCode},${propsCode},${childrenCode})`;
 }
 
 /** `VNODE_CALL.children` → 数组代码；无法完整识别返回 null */
-export function serializeVNodeCallChildren(children: unknown, prefix: string): string | null {
+export function serializeVNodeCallChildren(
+  children: unknown,
+  prefix: string,
+  locals: ReadonlySet<string> = new Set(),
+): string | null {
   if (children === undefined || children === null) return 'null';
 
   if (typeof children === 'string') {
@@ -1315,19 +1391,23 @@ export function serializeVNodeCallChildren(children: unknown, prefix: string): s
   if (Array.isArray(children)) {
     const parts: string[] = [];
     for (const ch of children) {
-      const code = serializeVNodeCallChild(ch, prefix);
+      const code = serializeVNodeCallChild(ch, prefix, locals);
       if (code === null) return null;
       parts.push(code);
     }
     return parts.length ? `[${parts.join(',')}]` : 'null';
   }
 
-  const one = serializeVNodeCallChild(children, prefix);
+  const one = serializeVNodeCallChild(children, prefix, locals);
   return one === null ? null : `[${one}]`;
 }
 
 /** 单个 child → vnode 代码；无法识别返回 null */
-export function serializeVNodeCallChild(child: unknown, prefix: string): string | null {
+export function serializeVNodeCallChild(
+  child: unknown,
+  prefix: string,
+  locals: ReadonlySet<string> = new Set(),
+): string | null {
   if (!child || typeof child !== 'object') return null;
   const node = child as { type?: number };
 
@@ -1338,12 +1418,17 @@ export function serializeVNodeCallChild(child: unknown, prefix: string): string 
     const arg = (call.arguments && call.arguments[0]) as SimpleExpressionNode | undefined;
     const exp = arg && typeof arg.content === 'string' ? arg.content : null;
     if (!exp) return null;
-    return `createVNode(Text,null,${prefixIdentifiers(exp, new Set())})`;
+    return `createVNode(Text,null,${prefixIdentifiers(exp, locals)})`;
   }
 
   // 嵌套元素
   if (node.type === NodeTypes.ELEMENT) {
-    return serializeVNodeElement(child as ElementNode, prefix);
+    return serializeVNodeElement(child as ElementNode, prefix, locals);
+  }
+
+  // 嵌套 vnode（transform 已把子元素转成 VNODE_CALL，与 v-if 的 consequent 同类）
+  if (node.type === NodeTypes.VNODE_CALL) {
+    return serializeVNodeCall(child, prefix, locals);
   }
 
   return null;
@@ -1368,14 +1453,22 @@ function hasComponentWithChildren(children: TemplateChildNode[]): boolean {
  * 返回 null 表示没有可编译的子内容（此时不传第 4 个参数）。
  * 首版只覆盖**静态内容**（文本 / 元素 / 嵌套组件）；插值与指令仍不参与插槽编译。
  */
-function buildComponentSlotsObject(node: ElementNode, prefix: string): string | null {
-  const parts = collectSlotVNodes(node.children, prefix);
+function buildComponentSlotsObject(
+  node: ElementNode,
+  prefix: string,
+  locals: ReadonlySet<string> = new Set(),
+): string | null {
+  const parts = collectSlotVNodes(node.children, prefix, locals);
   if (parts.length === 0) return null;
   return `{default:()=>[${parts.join(',')}]}`;
 }
 
 /** 递归收集子节点对应的 vnode 构造代码（跳过注释与动态内容） */
-function collectSlotVNodes(children: TemplateChildNode[], prefix: string): string[] {
+function collectSlotVNodes(
+  children: TemplateChildNode[],
+  prefix: string,
+  locals: ReadonlySet<string> = new Set(),
+): string[] {
   const out: string[] = [];
   for (const child of children) {
     if (!child) continue;
@@ -1387,21 +1480,26 @@ function collectSlotVNodes(children: TemplateChildNode[], prefix: string): strin
     // 插值 → 动态文本 vnode：依赖由 mountComponent 的 effect 追踪，变化即整体重渲染
     if (child.type === NodeTypes.INTERPOLATION) {
       const exp = getExpContent((child as InterpolationNode).content as SimpleExpressionNode);
-      if (exp) out.push(`createVNode(Text,null,${prefixIdentifiers(exp, new Set())})`);
+      if (exp) out.push(`createVNode(Text,null,${prefixIdentifiers(exp, locals)})`);
       continue;
     }
     // v-if 的产物是条件表达式（元素已被 transform 替换掉，不再是 ELEMENT）
     if (child.type === NodeTypes.JS_CONDITIONAL_EXPRESSION) {
-      const cond = serializeConditionalVNode(child, prefix);
+      const cond = serializeConditionalVNode(child, prefix, locals);
       if (cond) out.push(cond);
+      continue;
+    }
+    // v-for 的产物是 RENDER_LIST 调用
+    if (child.type === NodeTypes.JS_CALL_EXPRESSION) {
+      const list = serializeListVNode(child, prefix, locals);
+      if (list) out.push(list);
       continue;
     }
     if (child.type === NodeTypes.ELEMENT) {
       const el = child as ElementNode;
-      // 含其它结构性指令（v-for / v-show …）的元素暂不参与插槽编译 ——
-      // 宁可缺失，也不做「忽略指令后照常渲染」的静默错误
+      // 含 v-show 等暂不支持指令的元素不参与插槽编译 —— 宁可缺失，也不静默错渲
       if (hasUnsupportedSlotDirective(el)) continue;
-      out.push(serializeVNodeElement(el, prefix));
+      out.push(serializeVNodeElement(el, prefix, locals));
     }
   }
   return out;
@@ -1423,17 +1521,21 @@ function hasUnsupportedSlotDirective(node: ElementNode): boolean {
 }
 
 /** 单个元素 → `createVNode(tag, attrs, children)` */
-function serializeVNodeElement(node: ElementNode, prefix: string): string {
+function serializeVNodeElement(
+  node: ElementNode,
+  prefix: string,
+  locals: ReadonlySet<string> = new Set(),
+): string {
   if (node.tagType === ElementTypes.COMPONENT) {
     // 嵌套组件同样要带自己的插槽
-    const nestedSlots = buildComponentSlotsObject(node, prefix);
+    const nestedSlots = buildComponentSlotsObject(node, prefix, locals);
     const nestedArg = nestedSlots ? `,${nestedSlots}` : '';
     return `createVNode(${prefix}${node.tag},${buildComponentPropsObject(node)}${nestedArg})`;
   }
 
   // 元素属性复用一个 props 构造：静态属性 + `:bind` + `@事件`（vnode 不需要 HTML 转义）
   const attrs = node.props.length ? buildComponentPropsObject(node) : 'null';
-  const kids = collectSlotVNodes(node.children, prefix);
+  const kids = collectSlotVNodes(node.children, prefix, locals);
   const childrenArg = kids.length ? `[${kids.join(',')}]` : 'null';
   return `createVNode(${JSON.stringify(node.tag)},${attrs},${childrenArg})`;
 }

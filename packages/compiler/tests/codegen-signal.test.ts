@@ -535,9 +535,9 @@ describe('codegen-signal', () => {
       expect(result.code).toContain('mountComponent(_ctx.Child,{},_lytComp);');
     });
 
-    it('should SKIP a slot v-if whose content node cannot be reconstructed', () => {
+    it('should reconstruct nested component markup inside a slot v-if (with tag prefix)', () => {
       const result = compile('<div><Child><div v-if="ok"><Inner/></div></Child></div>', opts);
-      expect(result.code).toContain('mountComponent(_ctx.Child,{},_lytComp);');
+      expect(result.code).toContain('createVNode(_ctx.Inner,null,null)');
     });
 
     it('should SKIP a slot element combining v-if with another structural directive (v-show)', () => {
@@ -555,14 +555,51 @@ describe('codegen-signal', () => {
       expect(result.code).toContain('mountComponent(_ctx.Child,{},_lytComp);');
     });
 
-    it('should SKIP a top-level v-for slot element (unsupported)', () => {
+    it('should compile a top-level v-for slot element into a mapped list', () => {
       const result = compile('<div><Child><i v-for="x in xs">y</i></Child></div>', opts);
-      expect(result.code).toContain('mountComponent(_ctx.Child,{},_lytComp);');
+      expect(result.code).toContain('...(_ctx.xs.map((x)=>createVNode("i"');
     });
 
     it('should treat blank-only slot content inside v-if as null children', () => {
       const result = compile('<div><Child><span v-if="ok"> </span></Child></div>', opts);
       expect(result.code).toContain('(_ctx.ok?createVNode("span",null,null):null)');
+    });
+
+    it('should compile v-for inside a slot into a spread-mapped list', () => {
+      const result = compile(
+        '<div><Child><li v-for="item in items">{{ item.name }}</li></Child></div>',
+        opts,
+      );
+      expect(result.code).toContain(
+        '...(_ctx.items.map((item)=>createVNode("li",null,[createVNode(Text,null,item.name)])))',
+      );
+    });
+
+    it('should support (item, index) and :key inside a slot v-for', () => {
+      const result = compile(
+        '<div><Child><li v-for="(item, i) in items" :key="item.id">{{ item.name }}</li></Child></div>',
+        opts,
+      );
+      expect(result.code).toContain('(_ctx.items.map((item,i)=>createVNode("li",{"key":item.id}');
+    });
+
+    it('should keep the loop variable UNPREFIXED and recurse nested elements in slot v-for', () => {
+      const result = compile(
+        '<div><Child><li v-for="item in items"><b>{{ item.n }}</b></li></Child></div>',
+        opts,
+      );
+      // 循环变量 item 不能被加 `_ctx.` 前缀
+      expect(result.code).toContain('createVNode("b",null,[createVNode(Text,null,item.n)])');
+      expect(result.code).not.toContain('_ctx.item.');
+    });
+
+    it('should mix static siblings with a slot v-for', () => {
+      const result = compile(
+        '<div><Child><span>head</span><li v-for="x in xs">{{ x }}</li></Child></div>',
+        opts,
+      );
+      expect(result.code).toContain('createVNode("span",null,[createVNode(Text,null,"head")])');
+      expect(result.code).toContain('...(_ctx.xs.map((x)=>createVNode("li"');
     });
   });
 });

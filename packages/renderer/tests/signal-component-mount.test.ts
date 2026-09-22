@@ -156,4 +156,35 @@ describe('SignalRenderer + 组件挂载', () => {
 
     renderer.unmount();
   });
+
+  it('插槽内的 v-for 应渲染出列表，并随数据更新', () => {
+    const items = ref([{ name: 'a' }, { name: 'b' }]);
+    const Child = {
+      name: 'Child',
+      setup(_props: unknown, ctx: { slots: { default?: () => unknown } }) {
+        return () =>
+          createVNode(
+            'section',
+            { class: 'child' },
+            ctx.slots.default ? ctx.slots.default() : null,
+          );
+      },
+    };
+
+    const renderer = createSignalRenderer(
+      '<div><Child><li v-for="item in items">{{ item.name }}</li></Child></div>',
+      { items, Child },
+    );
+    renderer.render(container);
+
+    expect(container.querySelectorAll('li').length).toBe(2);
+    expect(container.innerHTML).toContain('a');
+    expect(container.innerHTML).toContain('b');
+
+    items.value = [{ name: 'c' }];
+    expect(container.querySelectorAll('li').length).toBe(1);
+    expect(container.innerHTML).toContain('c');
+
+    renderer.unmount();
+  });
 });

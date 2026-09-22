@@ -9,12 +9,14 @@
 import { describe, it, expect } from 'vitest';
 import {
   serializeConditionalVNode,
+  serializeListVNode,
   serializeVNodeCall,
   serializeVNodeCallChildren,
   serializeVNodeCallChild,
 } from '../src/codegen-signal';
 import {
   serializeConditionalVNodeOptimized,
+  serializeListVNodeOptimized,
   serializeVNodeCallOptimized,
   serializeVNodeCallChildrenOptimized,
   serializeVNodeCallChildOptimized,
@@ -100,6 +102,68 @@ describe('插槽 vnode 序列化 - 严格模式边界（非优化版）', () => 
     expect(serializeVNodeCallChild({ type: 999 }, '_ctx.')).toBeNull();
   });
 
+  it('serializeListVNode：非 RENDER_LIST / 结构异常 → null', () => {
+    const CE = NodeTypes.JS_CALL_EXPRESSION;
+    expect(serializeListVNode(null, '_ctx.')).toBeNull();
+    expect(serializeListVNode({ type: CE, callee: 'other' }, '_ctx.')).toBeNull();
+    expect(
+      serializeListVNode({ type: CE, callee: 'RENDER_LIST', arguments: [] }, '_ctx.'),
+    ).toBeNull();
+    // 数据源缺失
+    expect(
+      serializeListVNode({ type: CE, callee: 'RENDER_LIST', arguments: [{ type: 7 }] }, '_ctx.'),
+    ).toBeNull();
+    // 第二参数非 COMPOUND_EXPRESSION
+    expect(
+      serializeListVNode(
+        { type: CE, callee: 'RENDER_LIST', arguments: [{ type: 7, content: 'xs' }, { type: 7 }] },
+        '_ctx.',
+      ),
+    ).toBeNull();
+    // 找不到箭头函数头
+    expect(
+      serializeListVNode(
+        {
+          type: CE,
+          callee: 'RENDER_LIST',
+          arguments: [
+            { type: 7, content: 'xs' },
+            { type: 8, children: ['no arrow'] },
+          ],
+        },
+        '_ctx.',
+      ),
+    ).toBeNull();
+    // 箭头函数无参数
+    expect(
+      serializeListVNode(
+        {
+          type: CE,
+          callee: 'RENDER_LIST',
+          arguments: [
+            { type: 7, content: 'xs' },
+            { type: 8, children: ['() => { '] },
+          ],
+        },
+        '_ctx.',
+      ),
+    ).toBeNull();
+    // 找不到 VNODE_CALL
+    expect(
+      serializeListVNode(
+        {
+          type: CE,
+          callee: 'RENDER_LIST',
+          arguments: [
+            { type: 7, content: 'xs' },
+            { type: 8, children: ['(x) => { ', { type: 1 }] },
+          ],
+        },
+        '_ctx.',
+      ),
+    ).toBeNull();
+  });
+
   it('serializeConditionalVNode：test 缺失 / consequent 非法 → null', () => {
     expect(serializeConditionalVNode({ consequent: {} }, '_ctx.')).toBeNull();
     expect(
@@ -168,6 +232,79 @@ describe('插槽 vnode 序列化 - 严格模式边界（优化版）', () => {
       ),
     ).toBeNull();
     expect(serializeVNodeCallChildOptimized({ type: 999 }, used, OPTS)).toBeNull();
+
+    // v-for（RENDER_LIST）边界
+    expect(serializeListVNodeOptimized(null, used, OPTS)).toBeNull();
+    expect(
+      serializeListVNodeOptimized({ type: NodeTypes.JS_CALL_EXPRESSION, callee: 'x' }, used, OPTS),
+    ).toBeNull();
+    expect(
+      serializeListVNodeOptimized(
+        { type: NodeTypes.JS_CALL_EXPRESSION, callee: 'RENDER_LIST', arguments: [] },
+        used,
+        OPTS,
+      ),
+    ).toBeNull();
+    expect(
+      serializeListVNodeOptimized(
+        { type: NodeTypes.JS_CALL_EXPRESSION, callee: 'RENDER_LIST', arguments: [{ type: 7 }] },
+        used,
+        OPTS,
+      ),
+    ).toBeNull();
+    expect(
+      serializeListVNodeOptimized(
+        {
+          type: NodeTypes.JS_CALL_EXPRESSION,
+          callee: 'RENDER_LIST',
+          arguments: [{ type: 7, content: 'xs' }, { type: 7 }],
+        },
+        used,
+        OPTS,
+      ),
+    ).toBeNull();
+    expect(
+      serializeListVNodeOptimized(
+        {
+          type: NodeTypes.JS_CALL_EXPRESSION,
+          callee: 'RENDER_LIST',
+          arguments: [
+            { type: 7, content: 'xs' },
+            { type: 8, children: ['no arrow'] },
+          ],
+        },
+        used,
+        OPTS,
+      ),
+    ).toBeNull();
+    expect(
+      serializeListVNodeOptimized(
+        {
+          type: NodeTypes.JS_CALL_EXPRESSION,
+          callee: 'RENDER_LIST',
+          arguments: [
+            { type: 7, content: 'xs' },
+            { type: 8, children: ['() => { '] },
+          ],
+        },
+        used,
+        OPTS,
+      ),
+    ).toBeNull();
+    expect(
+      serializeListVNodeOptimized(
+        {
+          type: NodeTypes.JS_CALL_EXPRESSION,
+          callee: 'RENDER_LIST',
+          arguments: [
+            { type: 7, content: 'xs' },
+            { type: 8, children: ['(x) => { ', { type: 1 }] },
+          ],
+        },
+        used,
+        OPTS,
+      ),
+    ).toBeNull();
 
     expect(serializeConditionalVNodeOptimized({ consequent: {} }, used, OPTS)).toBeNull();
     expect(

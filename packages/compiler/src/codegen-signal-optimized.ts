@@ -1396,6 +1396,57 @@ function buildComponentPropsObject(node: ElementNode): string {
 }
 
 /**
+ * `RENDER_LIST` 调用（v-for 产物）→ `...((source).map((item,i)=>vnode))`（优化版）
+ *
+ * 循环变量作为 `locals` 传入 `prefixIdentifiers`，避免 `item.id` 被误加 `_ctx.`/`_c.` 前缀。
+ * 严格模式：任一段无法完整还原即整体返回 null。
+ */
+export function serializeListVNodeOptimized(
+  node: unknown,
+  usedRuntime: Set<string>,
+  options: SignalCodegenOptions,
+  locals: ReadonlySet<string> = new Set(),
+): string | null {
+  const call = node as { type?: number; callee?: unknown; arguments?: unknown[] };
+  if (!call || call.type !== NodeTypes.JS_CALL_EXPRESSION) return null;
+  if (call.callee !== 'RENDER_LIST') return null;
+
+  const args = call.arguments;
+  if (!Array.isArray(args) || args.length < 2) return null;
+
+  const srcNode = args[0] as SimpleExpressionNode | undefined;
+  const src = srcNode && typeof srcNode.content === 'string' ? srcNode.content : null;
+  if (!src) return null;
+
+  const fn = args[1] as { type?: number; children?: unknown[] };
+  if (!fn || fn.type !== NodeTypes.COMPOUND_EXPRESSION || !Array.isArray(fn.children)) return null;
+
+  const head = fn.children.find((c): c is string => typeof c === 'string' && c.includes('=>'));
+  if (!head) return null;
+  const paramMatch = /^\s*\(?\s*([^)]*?)\s*\)?\s*=>/.exec(head);
+  if (!paramMatch) return null;
+  const params = (paramMatch[1] ?? '')
+    .split(',')
+    .map((x) => x.trim())
+    .filter(Boolean);
+  if (params.length === 0) return null;
+
+  const vnodeNode = fn.children.find(
+    (c) => !!c && typeof c === 'object' && (c as { type?: number }).type === NodeTypes.VNODE_CALL,
+  );
+  if (!vnodeNode) return null;
+
+  const innerLocals = new Set(locals);
+  for (const param of params) innerLocals.add(param);
+
+  const inner = serializeVNodeCallOptimized(vnodeNode, usedRuntime, options, innerLocals);
+  if (!inner) return null;
+
+  const srcExpr = prefixIdentifiers(src, locals).replace(/\b_ctx\./g, '_c.');
+  return `...(${srcExpr}.map((${params.join(',')})=>${inner}))`;
+}
+
+/**
  * `JS_CONDITIONAL_EXPRESSION`（v-if 产物）→ `(cond ? vnode : null)`（优化版）
  *
  * v-else / v-else-if（alternate 非空）与无法完整还原的情况一律返回 null。
@@ -1404,6 +1455,7 @@ export function serializeConditionalVNodeOptimized(
   node: unknown,
   usedRuntime: Set<string>,
   options: SignalCodegenOptions,
+  locals: ReadonlySet<string> = new Set(),
 ): string | null {
   const cond = node as { test?: unknown; consequent?: unknown; alternate?: unknown };
   if (!cond || !cond.test) return null;
@@ -1412,10 +1464,10 @@ export function serializeConditionalVNodeOptimized(
   const testExp = getExpContent(cond.test as SimpleExpressionNode);
   if (!testExp) return null;
 
-  const inner = serializeVNodeCallOptimized(cond.consequent, usedRuntime, options);
+  const inner = serializeVNodeCallOptimized(cond.consequent, usedRuntime, options, locals);
   if (!inner) return null;
 
-  const expr = prefixIdentifiers(testExp, new Set()).replace(/\b_ctx\./g, '_c.');
+  const expr = prefixIdentifiers(testExp, locals).replace(/\b_ctx\./g, '_c.');
   return `(${expr}?${inner}:null)`;
 }
 
@@ -1424,6 +1476,7 @@ export function serializeVNodeCallOptimized(
   vnode: unknown,
   usedRuntime: Set<string>,
   options: SignalCodegenOptions,
+  locals: ReadonlySet<string> = new Set(),
 ): string | null {
   const vn = vnode as { type?: number; tag?: unknown; props?: unknown; children?: unknown };
   if (!vn || vn.type !== NodeTypes.VNODE_CALL) return null;
@@ -1448,16 +1501,24 @@ export function serializeVNodeCallOptimized(
       const valCode =
         prop.value && typeof prop.value.content === 'string' ? prop.value.content : null;
       if (keyCode === null || valCode === null) return null;
-      const expr = prefixIdentifiers(valCode, new Set()).replace(/\b_ctx\./g, '_c.');
+      const expr = prefixIdentifiers(valCode, locals).replace(/\b_ctx\./g, '_c.');
       parts.push(`${keyCode}:${expr}`);
     }
     propsCode = `{${parts.join(',')}}`;
   }
 
-  const childrenCode = serializeVNodeCallChildrenOptimized(vn.children, usedRuntime, options);
+  const childrenCode = serializeVNodeCallChildrenOptimized(
+    vn.children,
+    usedRuntime,
+    options,
+    locals,
+  );
   if (childrenCode === null) return null;
 
-  return `${cv}(${vn.tag},${propsCode},${childrenCode})`;
+  // 组件 tag 是**裸名**必须前缀化；HTML 标签已是 JSON 字符串
+  const tagCode = (vn as { isComponent?: boolean }).isComponent ? `_c.${vn.tag}` : vn.tag;
+
+  return `${cv}(${tagCode},${propsCode},${childrenCode})`;
 }
 
 /** `VNODE_CALL.children` → 数组代码（优化版）；无法完整识别返回 null */
@@ -1465,6 +1526,7 @@ export function serializeVNodeCallChildrenOptimized(
   children: unknown,
   usedRuntime: Set<string>,
   options: SignalCodegenOptions,
+  locals: ReadonlySet<string> = new Set(),
 ): string | null {
   if (children === undefined || children === null) return 'null';
 
@@ -1480,14 +1542,14 @@ export function serializeVNodeCallChildrenOptimized(
   if (Array.isArray(children)) {
     const parts: string[] = [];
     for (const ch of children) {
-      const code = serializeVNodeCallChildOptimized(ch, usedRuntime, options);
+      const code = serializeVNodeCallChildOptimized(ch, usedRuntime, options, locals);
       if (code === null) return null;
       parts.push(code);
     }
     return parts.length ? `[${parts.join(',')}]` : 'null';
   }
 
-  const one = serializeVNodeCallChildOptimized(children, usedRuntime, options);
+  const one = serializeVNodeCallChildOptimized(children, usedRuntime, options, locals);
   return one === null ? null : `[${one}]`;
 }
 
@@ -1496,6 +1558,7 @@ export function serializeVNodeCallChildOptimized(
   child: unknown,
   usedRuntime: Set<string>,
   options: SignalCodegenOptions,
+  locals: ReadonlySet<string> = new Set(),
 ): string | null {
   if (!child || typeof child !== 'object') return null;
   const node = child as { type?: number };
@@ -1510,12 +1573,17 @@ export function serializeVNodeCallChildOptimized(
     usedRuntime.add('Text');
     const cv = getShortName('createVNode', options.useShortNames ?? true);
     const tx = getShortName('Text', options.useShortNames ?? true);
-    const expr = prefixIdentifiers(exp, new Set()).replace(/\b_ctx\./g, '_c.');
+    const expr = prefixIdentifiers(exp, locals).replace(/\b_ctx\./g, '_c.');
     return `${cv}(${tx},null,${expr})`;
   }
 
   if (node.type === NodeTypes.ELEMENT) {
-    return serializeVNodeElementOptimized(child as ElementNode, usedRuntime, options);
+    return serializeVNodeElementOptimized(child as ElementNode, usedRuntime, options, locals);
+  }
+
+  // 嵌套 vnode（transform 已把子元素转成 VNODE_CALL）
+  if (node.type === NodeTypes.VNODE_CALL) {
+    return serializeVNodeCallOptimized(child, usedRuntime, options, locals);
   }
 
   return null;
@@ -1530,8 +1598,9 @@ function buildComponentSlotsObjectOptimized(
   node: ElementNode,
   usedRuntime: Set<string>,
   options: SignalCodegenOptions,
+  locals: ReadonlySet<string> = new Set(),
 ): string | null {
-  const parts = collectSlotVNodesOptimized(node.children, usedRuntime, options);
+  const parts = collectSlotVNodesOptimized(node.children, usedRuntime, options, locals);
   if (parts.length === 0) return null;
   return `{default:()=>[${parts.join(',')}]}`;
 }
@@ -1541,6 +1610,7 @@ function collectSlotVNodesOptimized(
   children: TemplateChildNode[],
   usedRuntime: Set<string>,
   options: SignalCodegenOptions,
+  locals: ReadonlySet<string> = new Set(),
 ): string[] {
   const cv = getShortName('createVNode', options.useShortNames ?? true);
   const tx = getShortName('Text', options.useShortNames ?? true);
@@ -1563,22 +1633,28 @@ function collectSlotVNodesOptimized(
       if (exp) {
         usedRuntime.add('createVNode');
         usedRuntime.add('Text');
-        const expr = prefixIdentifiers(exp, new Set()).replace(/\b_ctx\./g, '_c.');
+        const expr = prefixIdentifiers(exp, locals).replace(/\b_ctx\./g, '_c.');
         out.push(`${cv}(${tx},null,${expr})`);
       }
       continue;
     }
     // v-if 的产物是条件表达式（元素已被 transform 替换掉）
     if (child.type === NodeTypes.JS_CONDITIONAL_EXPRESSION) {
-      const cond = serializeConditionalVNodeOptimized(child, usedRuntime, options);
+      const cond = serializeConditionalVNodeOptimized(child, usedRuntime, options, locals);
       if (cond) out.push(cond);
+      continue;
+    }
+    // v-for 的产物是 RENDER_LIST 调用
+    if (child.type === NodeTypes.JS_CALL_EXPRESSION) {
+      const list = serializeListVNodeOptimized(child, usedRuntime, options, locals);
+      if (list) out.push(list);
       continue;
     }
     if (child.type === NodeTypes.ELEMENT) {
       const el = child as ElementNode;
       // 含其它结构性指令（v-for / v-show …）的元素暂不参与插槽编译 —— 宁缺勿错渲
       if (hasUnsupportedSlotDirectiveOptimized(el)) continue;
-      out.push(serializeVNodeElementOptimized(el, usedRuntime, options));
+      out.push(serializeVNodeElementOptimized(el, usedRuntime, options, locals));
     }
   }
   return out;
@@ -1599,19 +1675,20 @@ function serializeVNodeElementOptimized(
   node: ElementNode,
   usedRuntime: Set<string>,
   options: SignalCodegenOptions,
+  locals: ReadonlySet<string> = new Set(),
 ): string {
   const cv = getShortName('createVNode', options.useShortNames ?? true);
   usedRuntime.add('createVNode');
 
   if (node.tagType === ElementTypes.COMPONENT) {
-    const nestedSlots = buildComponentSlotsObjectOptimized(node, usedRuntime, options);
+    const nestedSlots = buildComponentSlotsObjectOptimized(node, usedRuntime, options, locals);
     const nestedArg = nestedSlots ? `,${nestedSlots}` : '';
     return `${cv}(_c.${node.tag},${buildComponentPropsObject(node)}${nestedArg})`;
   }
 
   // 元素属性复用一个 props 构造：静态属性 + `:bind` + `@事件`（内部已用 `_c.` 前缀）
   const attrs = node.props.length ? buildComponentPropsObject(node) : 'null';
-  const kids = collectSlotVNodesOptimized(node.children, usedRuntime, options);
+  const kids = collectSlotVNodesOptimized(node.children, usedRuntime, options, locals);
   const childrenArg = kids.length ? `[${kids.join(',')}]` : 'null';
   return `${cv}(${JSON.stringify(node.tag)},${attrs},${childrenArg})`;
 }
