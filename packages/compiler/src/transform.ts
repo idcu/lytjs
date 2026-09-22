@@ -23,6 +23,7 @@ import type {
   ExpressionNode,
 } from './types';
 import { createSimpleExpression, createCallExpression, createArrayExpression } from './ast';
+import { transformPre } from './transforms/pre';
 import {
   transformElement,
   transformIf,
@@ -304,6 +305,8 @@ type TransformFn = (
 ) => ReturnType<NodeTransform>;
 
 export const builtInTransforms: NodeTransform[] = [
+  // v-pre 必须排在**所有** transform 之前：它在 enter 阶段就把子树插值还原为字面量文本
+  transformPre as TransformFn,
   // <slot> 必须排在 transformElement 之前：其 exit 回调要在子节点转换完成后
   // 才设置 codegenNode，且 transformElement 会对 slot 出口提前返回。
   transformSlot as TransformFn,

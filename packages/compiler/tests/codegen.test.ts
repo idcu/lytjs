@@ -120,7 +120,9 @@ describe('codegen', () => {
   describe('edge cases', () => {
     it('should handle template with only whitespace', () => {
       const result = compile('   \n\t  ');
-      expect(result.code).toBeDefined();
+      // 空白模板 → 渲染函数体为空，且不应产生任何元素
+      expect(result.code).toContain('function render');
+      expect(result.code).not.toContain('createElementVNode');
     });
 
     it('should handle deeply nested elements', () => {
@@ -174,7 +176,9 @@ describe('codegen', () => {
 
     it('should handle comments in template', () => {
       const result = compile('<div><!-- comment --></div>');
-      expect(result.code).toBeDefined();
+      // 注释必须**不进入**产物，但宿主元素仍在
+      expect(result.code).not.toContain('comment');
+      expect(result.code).toContain('createElementVNode("div"');
     });
 
     it('should handle mixed v-bind and v-on', () => {
@@ -183,22 +187,41 @@ describe('codegen', () => {
       expect(result.code).toContain('onInput');
     });
 
-    it('should handle v-pre directive', () => {
-      // v-pre 指令用于跳过编译，保持原始内容
-      // 编译器应该能处理它而不报错
+    it('should keep v-pre subtree as literals (skip compilation)', () => {
       const result = compile('<div v-pre>{{ raw }}</div>');
-      expect(result.code).toBeDefined();
-      // v-pre 元素内的内容会被保留
+      // v-pre 的语义是**跳过编译**：插值必须原样保留为文本字面量。
+      // 此前该测试只断言 `toBeDefined()`，掩盖了 v-pre **完全未实现**
+      //（插值被照常编译成 toDisplayString(_ctx.raw)）。
+      expect(result.code).toContain('"{{ raw }}"');
+      expect(result.code).not.toContain('toDisplayString(_ctx.raw)');
     });
 
-    it('should handle v-once directive', () => {
+    it('should keep v-pre applied to nested subtrees', () => {
+      const result = compile('<div v-pre><span>{{ raw }}</span></div>');
+      expect(result.code).toContain('"{{ raw }}"');
+      expect(result.code).not.toContain('toDisplayString(_ctx.raw)');
+    });
+
+    it('should hoist v-once subtree (KNOWN ISSUE: constant references _ctx)', () => {
       const result = compile('<div v-once>{{ message }}</div>');
-      expect(result.code).toBeDefined();
+      // v-once 的目标语义：只渲染一次（当前实现走"提升为模块级常量"）
+      expect(result.code).toContain('_hoisted_1');
+      expect(result.code).toContain('return _ctx._hoisted_1');
+      // ⚠️ 已知缺陷（本轮审计发现，**未修**）：
+      //   1) 提升出的常量体仍引用 `_ctx.message`，而常量在**模块级作用域**求值
+      //      ⇒ 运行时会抛 `_ctx is not defined`；
+      //   2) render 用 `_ctx._hoisted_1` 访问模块级常量，访问路径同样不对。
+      //   正确做法应在 render 内用闭包变量做一次性缓存。
+      //   这里如实锁定现状（而非"断言它没问题"），把它变成**可见的**待办。
+      expect(result.code).toMatch(/const _hoisted_1 = [\s\S]*?_ctx\.message/);
     });
 
-    it('should handle v-cloak directive', () => {
+    it('should strip v-cloak but keep compiling the subtree', () => {
       const result = compile('<div v-cloak>{{ message }}</div>');
-      expect(result.code).toBeDefined();
+      // v-cloak 只用于初始渲染前的 CSS 隐藏，编译后**必须从产物中消失**，
+      // 但子树照常编译
+      expect(result.code).not.toContain('v-cloak');
+      expect(result.code).toContain('toDisplayString(_ctx.message)');
     });
 
     it('should handle svg element', () => {
