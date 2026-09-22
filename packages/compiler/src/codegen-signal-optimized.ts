@@ -1459,7 +1459,6 @@ export function serializeConditionalVNodeOptimized(
 ): string | null {
   const cond = node as { test?: unknown; consequent?: unknown; alternate?: unknown };
   if (!cond || !cond.test) return null;
-  if (cond.alternate) return null;
 
   const testExp = getExpContent(cond.test as SimpleExpressionNode);
   if (!testExp) return null;
@@ -1467,8 +1466,25 @@ export function serializeConditionalVNodeOptimized(
   const inner = serializeVNodeCallOptimized(cond.consequent, usedRuntime, options, locals);
   if (!inner) return null;
 
+  // alternate：`v-else` 是 VNODE_CALL；`v-else-if` 是嵌套的条件表达式（递归）
+  let alternate = 'null';
+  if (cond.alternate) {
+    const altType = (cond.alternate as { type?: number }).type;
+    if (altType === NodeTypes.VNODE_CALL) {
+      const alt = serializeVNodeCallOptimized(cond.alternate, usedRuntime, options, locals);
+      if (!alt) return null;
+      alternate = alt;
+    } else if (altType === NodeTypes.JS_CONDITIONAL_EXPRESSION) {
+      const alt = serializeConditionalVNodeOptimized(cond.alternate, usedRuntime, options, locals);
+      if (!alt) return null;
+      alternate = alt;
+    } else {
+      return null;
+    }
+  }
+
   const expr = prefixIdentifiers(testExp, locals).replace(/\b_ctx\./g, '_c.');
-  return `(${expr}?${inner}:null)`;
+  return `(${expr}?${inner}:${alternate})`;
 }
 
 /** `VNODE_CALL` → `${cv}(tag, props, children)`（优化版；严格模式，失败即 null） */
@@ -1654,7 +1670,8 @@ function collectSlotVNodesOptimized(
       const el = child as ElementNode;
       // 含其它结构性指令（v-for / v-show …）的元素暂不参与插槽编译 —— 宁缺勿错渲
       if (hasUnsupportedSlotDirectiveOptimized(el)) continue;
-      out.push(serializeVNodeElementOptimized(el, usedRuntime, options, locals));
+      const elCode = serializeVNodeElementOptimized(el, usedRuntime, options, locals);
+      if (elCode) out.push(elCode);
     }
   }
   return out;
@@ -1665,7 +1682,7 @@ function hasUnsupportedSlotDirectiveOptimized(node: ElementNode): boolean {
   for (const prop of node.props) {
     if (!prop || prop.type !== NodeTypes.DIRECTIVE) continue;
     const name = (prop as DirectiveNode).name;
-    if (name !== 'bind' && name !== 'on') return true;
+    if (name !== 'bind' && name !== 'on' && name !== 'show') return true;
   }
   return false;
 }
@@ -1686,8 +1703,23 @@ function serializeVNodeElementOptimized(
     return `${cv}(_c.${node.tag},${buildComponentPropsObject(node)}${nestedArg})`;
   }
 
+  // v-show → `style.display` 绑定；元素另有多个 v-show 或表达式缺失时放弃该元素
+  const showDirs = node.props.filter(
+    (pr) => pr.type === NodeTypes.DIRECTIVE && (pr as DirectiveNode).name === 'show',
+  );
+  if (showDirs.length > 1) return '';
+  const showExp = showDirs.length
+    ? getExpContent((showDirs[0] as DirectiveNode).exp as SimpleExpressionNode)
+    : '';
+  if (showDirs.length && !showExp) return '';
+
   // 元素属性复用一个 props 构造：静态属性 + `:bind` + `@事件`（内部已用 `_c.` 前缀）
-  const attrs = node.props.length ? buildComponentPropsObject(node) : 'null';
+  let attrs = node.props.length ? buildComponentPropsObject(node) : 'null';
+  if (showExp) {
+    const expr = prefixIdentifiers(showExp, locals).replace(/\b_ctx\./g, '_c.');
+    const styleProp = `style:{"display":(${expr}?'':'none')}`;
+    attrs = attrs === 'null' || attrs === '{}' ? `{${styleProp}}` : `{...${attrs},${styleProp}}`;
+  }
   const kids = collectSlotVNodesOptimized(node.children, usedRuntime, options, locals);
   const childrenArg = kids.length ? `[${kids.join(',')}]` : 'null';
   return `${cv}(${JSON.stringify(node.tag)},${attrs},${childrenArg})`;

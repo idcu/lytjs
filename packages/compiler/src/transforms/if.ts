@@ -84,6 +84,11 @@ export function transformIf(
 
     // 构建条件链
     let conditional: JSConditionalExpression | undefined;
+    // 链尾游标：下钻时**只移动 cursor**，而让 `conditional` 始终指向**链首**。
+    // 此前循环里直接 `conditional = conditional.alternate` 下钻，导致最后
+    // `siblings.splice(chainStart, 0, conditional)` 插入的是链的**最内层**节点，
+    // 整条链其余分支（含 v-if 分支）都被静默丢弃。
+    let cursor: JSConditionalExpression | undefined;
 
     const toRemove: number[] = [];
 
@@ -138,14 +143,15 @@ export function transformIf(
             undefined,
             true,
           );
+          cursor = conditional;
         } else {
-          conditional.alternate = createConditionalExpression(
+          cursor!.alternate = createConditionalExpression(
             test,
             branchNode as JSChildNode,
             undefined,
             true,
           );
-          conditional = conditional.alternate as JSConditionalExpression;
+          cursor = cursor!.alternate as JSConditionalExpression;
         }
       } else {
         // v-else
@@ -156,8 +162,9 @@ export function transformIf(
             undefined,
             true,
           );
+          cursor = conditional;
         } else {
-          conditional.alternate = branchNode as JSChildNode;
+          cursor!.alternate = branchNode as JSChildNode;
         }
       }
 

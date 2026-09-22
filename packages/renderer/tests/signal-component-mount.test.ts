@@ -187,4 +187,63 @@ describe('SignalRenderer + 组件挂载', () => {
 
     renderer.unmount();
   });
+
+  it('插槽内的 v-else 应在条件翻转时切换分支', () => {
+    const ok = ref(true);
+    const Child = {
+      name: 'Child',
+      setup(_props: unknown, ctx: { slots: { default?: () => unknown } }) {
+        return () =>
+          createVNode(
+            'section',
+            { class: 'child' },
+            ctx.slots.default ? ctx.slots.default() : null,
+          );
+      },
+    };
+
+    const renderer = createSignalRenderer(
+      '<div><Child><b v-if="ok">yes</b><i v-else>no</i></Child></div>',
+      { ok, Child },
+    );
+    renderer.render(container);
+    expect(container.innerHTML).toContain('yes');
+    expect(container.innerHTML).not.toContain('no');
+
+    ok.value = false;
+    expect(container.innerHTML).toContain('no');
+    expect(container.innerHTML).not.toContain('yes');
+
+    renderer.unmount();
+  });
+
+  it('插槽内的 v-show 应通过 display 切换可见性', () => {
+    const visible = ref(true);
+    const Child = {
+      name: 'Child',
+      setup(_props: unknown, ctx: { slots: { default?: () => unknown } }) {
+        return () =>
+          createVNode(
+            'section',
+            { class: 'child' },
+            ctx.slots.default ? ctx.slots.default() : null,
+          );
+      },
+    };
+
+    const renderer = createSignalRenderer('<div><Child><b v-show="visible">hi</b></Child></div>', {
+      visible,
+      Child,
+    });
+    renderer.render(container);
+    const el = container.querySelector('b') as HTMLElement;
+    expect(el).not.toBeNull();
+    // v-show：元素始终在 DOM 中，仅 display 变化
+    expect(el.style.display).not.toBe('none');
+
+    visible.value = false;
+    expect((container.querySelector('b') as HTMLElement).style.display).toBe('none');
+
+    renderer.unmount();
+  });
 });

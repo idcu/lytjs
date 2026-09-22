@@ -57,6 +57,22 @@ describe('codegen-signal', () => {
   // ============================================================
 
   describe('v-if', () => {
+    // 回归：v-else-if 链构建曾在下钻时把 `conditional` 指针移到链尾，
+    // 导致最后插入 children 的是**最内层**节点，首分支被静默丢弃
+    //（实测曾产出 `(_c.b?...y...:null)`，`x` 永远不渲染）。
+    it('should keep EVERY branch of a v-else-if chain (regression)', () => {
+      const code = compile(
+        '<div><span v-if="a">A</span><span v-else-if="b">B</span><span v-else>C</span></div>',
+        { rendererMode: 'signal' },
+      ).code;
+      // 三个条件/分支的内容都要在产物里出现
+      expect(code).toContain('_c.a');
+      expect(code).toContain('_c.b');
+      expect(code).toContain('A');
+      expect(code).toContain('B');
+      expect(code).toContain('C');
+    });
+
     it('should generate if statement with effect for v-if', () => {
       const result = compile('<p v-if="show">hello</p>', { rendererMode: 'signal' });
       expect(result.code).toContain('e(()=>{');
@@ -518,13 +534,23 @@ describe('codegen-signal', () => {
       expect(withInterp.code).toContain('createVNode(Text,null,_ctx.msg)');
     });
 
-    it('should SKIP a slot element whose structural directive is unsupported (v-else)', () => {
-      // v-else / v-else-if（alternate 非空）暂不支持；严格模式下**整体跳过**，绝不下发半成品
+    it('should compile v-else inside a slot into the ternary alternate', () => {
       const result = compile(
         '<div><Child><span v-if="ok">a</span><span v-else>b</span></Child></div>',
         opts,
       );
-      expect(result.code).toContain('mountComponent(_ctx.Child,{},_lytComp);');
+      expect(result.code).toContain(':createVNode("span",null,[createVNode(Text,null,"b")])');
+    });
+
+    it('should compile a v-else-if chain inside a slot into nested ternaries', () => {
+      const result = compile(
+        '<div><Child><span v-if="a">x</span><span v-else-if="b">y</span><span v-else>z</span></Child></div>',
+        opts,
+      );
+      expect(result.code).toContain(
+        '(_ctx.b?createVNode("span",null,[createVNode(Text,null,"y")])',
+      );
+      expect(result.code).toContain(':createVNode("span",null,[createVNode(Text,null,"z")])');
     });
 
     it('should SKIP a slot v-if whose content uses an unsupported construct (v-for)', () => {
@@ -550,9 +576,9 @@ describe('codegen-signal', () => {
       expect(result.code).toContain('(_ctx.ok?createVNode("span",null,null):null)');
     });
 
-    it('should SKIP a slot element with v-show (unsupported structural directive)', () => {
+    it('should compile v-show inside a slot into a style.display binding', () => {
       const result = compile('<div><Child><i v-show="s">y</i></Child></div>', opts);
-      expect(result.code).toContain('mountComponent(_ctx.Child,{},_lytComp);');
+      expect(result.code).toContain("style:{\"display\":(_ctx.s?'':'none')}");
     });
 
     it('should compile a top-level v-for slot element into a mapped list', () => {

@@ -1312,8 +1312,6 @@ export function serializeConditionalVNode(
 ): string | null {
   const cond = node as { test?: unknown; consequent?: unknown; alternate?: unknown };
   if (!cond || !cond.test) return null;
-  // v-else / v-else-if：alternate 非空时整体放弃（宁缺勿错渲）
-  if (cond.alternate) return null;
 
   const testExp = getExpContent(cond.test as SimpleExpressionNode);
   if (!testExp) return null;
@@ -1321,7 +1319,25 @@ export function serializeConditionalVNode(
   const inner = serializeVNodeCall(cond.consequent, prefix, locals);
   if (!inner) return null;
 
-  return `(${prefixIdentifiers(testExp, locals)}?${inner}:null)`;
+  // alternate 有两种形态：`v-else` 是 VNODE_CALL、`v-else-if` 是嵌套的
+  // JS_CONDITIONAL_EXPRESSION（递归处理）。
+  let alternate = 'null';
+  if (cond.alternate) {
+    const altType = (cond.alternate as { type?: number }).type;
+    if (altType === NodeTypes.VNODE_CALL) {
+      const alt = serializeVNodeCall(cond.alternate, prefix, locals);
+      if (!alt) return null;
+      alternate = alt;
+    } else if (altType === NodeTypes.JS_CONDITIONAL_EXPRESSION) {
+      const alt = serializeConditionalVNode(cond.alternate, prefix, locals);
+      if (!alt) return null;
+      alternate = alt;
+    } else {
+      return null;
+    }
+  }
+
+  return `(${prefixIdentifiers(testExp, locals)}?${inner}:${alternate})`;
 }
 
 /**
@@ -1499,7 +1515,8 @@ function collectSlotVNodes(
       const el = child as ElementNode;
       // 含 v-show 等暂不支持指令的元素不参与插槽编译 —— 宁可缺失，也不静默错渲
       if (hasUnsupportedSlotDirective(el)) continue;
-      out.push(serializeVNodeElement(el, prefix, locals));
+      const elCode = serializeVNodeElement(el, prefix, locals);
+      if (elCode) out.push(elCode);
     }
   }
   return out;
@@ -1515,7 +1532,7 @@ function hasUnsupportedSlotDirective(node: ElementNode): boolean {
   for (const prop of node.props) {
     if (!prop || prop.type !== NodeTypes.DIRECTIVE) continue;
     const name = (prop as DirectiveNode).name;
-    if (name !== 'bind' && name !== 'on') return true;
+    if (name !== 'bind' && name !== 'on' && name !== 'show') return true;
   }
   return false;
 }
@@ -1533,8 +1550,23 @@ function serializeVNodeElement(
     return `createVNode(${prefix}${node.tag},${buildComponentPropsObject(node)}${nestedArg})`;
   }
 
+  // v-show → `style.display` 绑定。若元素另有 style/:style，则放弃该元素
+  //（两个 style 键会互相覆盖，宁可缺失也不静默错渲）
+  const showDirs = node.props.filter(
+    (pr) => pr.type === NodeTypes.DIRECTIVE && (pr as DirectiveNode).name === 'show',
+  );
+  if (showDirs.length > 1) return '';
+  const showExp = showDirs.length
+    ? getExpContent((showDirs[0] as DirectiveNode).exp as SimpleExpressionNode)
+    : '';
+  if (showDirs.length && !showExp) return '';
+
   // 元素属性复用一个 props 构造：静态属性 + `:bind` + `@事件`（vnode 不需要 HTML 转义）
-  const attrs = node.props.length ? buildComponentPropsObject(node) : 'null';
+  let attrs = node.props.length ? buildComponentPropsObject(node) : 'null';
+  if (showExp) {
+    const styleProp = `style:{"display":(${prefixIdentifiers(showExp, locals)}?'':'none')}`;
+    attrs = attrs === 'null' || attrs === '{}' ? `{${styleProp}}` : `{...${attrs},${styleProp}}`;
+  }
   const kids = collectSlotVNodes(node.children, prefix, locals);
   const childrenArg = kids.length ? `[${kids.join(',')}]` : 'null';
   return `createVNode(${JSON.stringify(node.tag)},${attrs},${childrenArg})`;

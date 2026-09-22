@@ -155,14 +155,23 @@ describe('Signal 模式 - 子组件（两版 codegen 均已支持挂载）', () 
     expect(code).toContain('(_c.ok?V("span",null,[V(T,null,"x")]):null)');
   });
 
-  it('插槽内 v-else 应整体跳过（严格模式，不静默错渲）', () => {
+  it('插槽内 v-else 应编译为三元另支', () => {
     const code = compile(
       '<div><Child><span v-if="ok">a</span><span v-else>b</span></Child></div>',
       {
         rendererMode: 'signal',
       },
     ).code;
-    expect(code).not.toContain('default:');
+    expect(code).toContain(':V("span",null,[V(T,null,"b")])');
+  });
+
+  it('插槽内 v-else-if 链应编译为嵌套三元', () => {
+    const code = compile(
+      '<div><Child><span v-if="a">x</span><span v-else-if="b">y</span><span v-else>z</span></Child></div>',
+      { rendererMode: 'signal' },
+    ).code;
+    expect(code).toContain('(_c.b?V("span",null,[V(T,null,"y")])');
+    expect(code).toContain(':V("span",null,[V(T,null,"z")])');
   });
 
   it('插槽内 v-if 内容含 v-for 时整体跳过', () => {
@@ -182,11 +191,11 @@ describe('Signal 模式 - 子组件（两版 codegen 均已支持挂载）', () 
     expect(code).toContain('(_c.ok?V("span",null,null):null)');
   });
 
-  it('插槽内 v-show 元素应整体跳过（v-for 已支持）', () => {
-    const showCode = compile('<div><Child><i v-show="s">y</i></Child></div>', {
+  it('插槽内 v-show 应编译为 style.display 绑定', () => {
+    const code = compile('<div><Child><i v-show="s">y</i></Child></div>', {
       rendererMode: 'signal',
     }).code;
-    expect(showCode).not.toContain('default:');
+    expect(code).toContain("style:{\"display\":(_c.s?'':'none')}");
   });
 
   it('插槽内 v-for 应编译为 map 展开（短别名）', () => {
