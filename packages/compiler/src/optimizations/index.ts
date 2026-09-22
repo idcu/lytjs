@@ -3,6 +3,7 @@
 // Phase 1.12-1.14: 自动 memo 检测、死代码消除、AOT 预编译
 // v6.9.0: Tree Shaking 优化
 
+import { compile } from '../index';
 import type { RootNode, TemplateChildNode } from '../types';
 import { NodeTypes } from '../constants';
 
@@ -436,10 +437,15 @@ export function precompileTemplate(template: string, options: AOTOptions = {}): 
   } = options;
 
   const staticAssets = new Map<string, string>();
-  let code = template;
   let types: string | undefined;
 
-  const originalSize = template.length;
+  // ⚠️ 修复：此处此前以**原始模板串**为起点、只做文本级替换 —— 于是 `AOTResult.code`
+  // 实际是模板本身（`reduction` 恒为 0），与类型注释「编译后的代码」不符、也与函数名
+  // 「precompile」不符。现在先真正调用 `compile()` 得到渲染函数代码，再做文本级优化；
+  // `originalSize` 取**未优化产物**长度，使 `reduction` 能被解释为「文本级优化的收益」。
+  const compiled = compile(template);
+  let code = compiled.code;
+  const originalSize = code.length;
 
   // 1. 静态内容提取和内联
   if (inlineStatic) {
