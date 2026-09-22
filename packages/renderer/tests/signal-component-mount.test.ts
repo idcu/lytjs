@@ -246,4 +246,28 @@ describe('SignalRenderer + 组件挂载', () => {
 
     renderer.unmount();
   });
+
+  it('具名插槽应能被组件分别消费', () => {
+    const Child = {
+      name: 'Child',
+      setup(_props: unknown, ctx: { slots: Record<string, (() => unknown) | undefined> }) {
+        return () =>
+          createVNode('section', { class: 'child' }, [
+            createVNode('header', null, ctx.slots.header ? ctx.slots.header() : null),
+            createVNode('main', null, ctx.slots.default ? ctx.slots.default() : null),
+          ]);
+      },
+    };
+
+    const renderer = createSignalRenderer(
+      '<div><Child><template #header>HEAD</template>BODY</Child></div>',
+      { Child },
+    );
+    renderer.render(container);
+
+    expect(container.querySelector('header')?.innerHTML).toContain('HEAD');
+    expect(container.querySelector('main')?.innerHTML).toContain('BODY');
+
+    renderer.unmount();
+  });
 });

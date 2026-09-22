@@ -1474,9 +1474,50 @@ function buildComponentSlotsObject(
   prefix: string,
   locals: ReadonlySet<string> = new Set(),
 ): string | null {
-  const parts = collectSlotVNodes(node.children, prefix, locals);
-  if (parts.length === 0) return null;
-  return `{default:()=>[${parts.join(',')}]}`;
+  const namedSlots: string[] = [];
+  const defaultParts: string[] = [];
+
+  for (const child of node.children) {
+    if (!child) continue;
+
+    // 具名插槽：`<template #name>…</template>` → `name:()=>[…template 的内容…]`
+    const slotName = getNamedSlotName(child);
+    if (slotName !== null) {
+      const parts = collectSlotVNodes((child as ElementNode).children, prefix, locals);
+      if (parts.length) namedSlots.push(`${JSON.stringify(slotName)}:()=>[${parts.join(',')}]`);
+      continue;
+    }
+
+    // 其余节点归入默认插槽
+    defaultParts.push(...collectSlotVNodes([child], prefix, locals));
+  }
+
+  const all = [...namedSlots];
+  if (defaultParts.length) all.push(`default:()=>[${defaultParts.join(',')}]`);
+  if (all.length === 0) return null;
+  return `{${all.join(',')}}`;
+}
+
+/**
+ * 若该节点是 `<template #name>`（`v-slot:name` 的简写），返回插槽名；否则返回 null。
+ *
+ * 动态插槽名（`#[expr]`）与无名字段均返回 null（交由默认插槽逻辑处理）。
+ */
+function getNamedSlotName(child: TemplateChildNode): string | null {
+  if (!child || child.type !== NodeTypes.ELEMENT) return null;
+  const el = child as ElementNode;
+  if (el.tagType !== ElementTypes.TEMPLATE) return null;
+
+  for (const prop of el.props) {
+    if (!prop || prop.type !== NodeTypes.DIRECTIVE) continue;
+    const dir = prop as DirectiveNode;
+    if (dir.name !== 'slot' || !dir.arg) continue;
+    const name = getExpContent(dir.arg as SimpleExpressionNode);
+    // 只接受静态名字（形如 `header`），动态 `#[x]` 会带上 `[` 等字符，此处直接放行由调用方过滤
+    if (name && /^[A-Za-z_$][\w$-]*$/.test(name)) return name;
+    return null;
+  }
+  return null;
 }
 
 /** 递归收集子节点对应的 vnode 构造代码（跳过注释与动态内容） */

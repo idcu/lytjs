@@ -586,6 +586,21 @@ describe('codegen-signal', () => {
       expect(result.code).toContain('...(_ctx.xs.map((x)=>createVNode("i"');
     });
 
+    it('should compile named slots into separate slot functions', () => {
+      const result = compile(
+        '<div><Child><template #header>H</template><template #footer>F</template></Child></div>',
+        opts,
+      );
+      expect(result.code).toContain('"header":()=>[createVNode(Text,null,"H")]');
+      expect(result.code).toContain('"footer":()=>[createVNode(Text,null,"F")]');
+    });
+
+    it('should keep named slots and the default slot side by side', () => {
+      const result = compile('<div><Child><template #header>H</template>body</Child></div>', opts);
+      expect(result.code).toContain('"header":()=>[');
+      expect(result.code).toContain('default:()=>[createVNode(Text,null,"body")]');
+    });
+
     it('should treat blank-only slot content inside v-if as null children', () => {
       const result = compile('<div><Child><span v-if="ok"> </span></Child></div>', opts);
       expect(result.code).toContain('(_ctx.ok?createVNode("span",null,null):null)');

@@ -217,6 +217,14 @@ describe('Signal 模式 - 子组件（两版 codegen 均已支持挂载）', () 
     expect(code).not.toContain('_c.item.');
   });
 
+  it('具名插槽应编译为独立插槽函数（短别名）', () => {
+    const code = compile('<div><Child><template #header>H</template>body</Child></div>', {
+      rendererMode: 'signal',
+    }).code;
+    expect(code).toContain('"header":()=>[V(T,null,"H")]');
+    expect(code).toContain('default:()=>[V(T,null,"body")]');
+  });
+
   it('VNode 模式组件标签应前缀化', () => {
     const code = compile('<div><Child/></div>').code;
     expect(code).toContain('_ctx.Child');

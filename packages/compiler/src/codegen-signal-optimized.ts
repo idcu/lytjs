@@ -1616,9 +1616,49 @@ function buildComponentSlotsObjectOptimized(
   options: SignalCodegenOptions,
   locals: ReadonlySet<string> = new Set(),
 ): string | null {
-  const parts = collectSlotVNodesOptimized(node.children, usedRuntime, options, locals);
-  if (parts.length === 0) return null;
-  return `{default:()=>[${parts.join(',')}]}`;
+  const namedSlots: string[] = [];
+  const defaultParts: string[] = [];
+
+  for (const child of node.children) {
+    if (!child) continue;
+
+    // 具名插槽：`<template #name>…</template>` → `name:()=>[…]`
+    const slotName = getNamedSlotNameOptimized(child);
+    if (slotName !== null) {
+      const parts = collectSlotVNodesOptimized(
+        (child as ElementNode).children,
+        usedRuntime,
+        options,
+        locals,
+      );
+      if (parts.length) namedSlots.push(`${JSON.stringify(slotName)}:()=>[${parts.join(',')}]`);
+      continue;
+    }
+
+    defaultParts.push(...collectSlotVNodesOptimized([child], usedRuntime, options, locals));
+  }
+
+  const all = [...namedSlots];
+  if (defaultParts.length) all.push(`default:()=>[${defaultParts.join(',')}]`);
+  if (all.length === 0) return null;
+  return `{${all.join(',')}}`;
+}
+
+/** 若该节点是 `<template #name>`，返回插槽名；动态名（`#[expr]`）返回 null */
+function getNamedSlotNameOptimized(child: TemplateChildNode): string | null {
+  if (!child || child.type !== NodeTypes.ELEMENT) return null;
+  const el = child as ElementNode;
+  if (el.tagType !== ElementTypes.TEMPLATE) return null;
+
+  for (const prop of el.props) {
+    if (!prop || prop.type !== NodeTypes.DIRECTIVE) continue;
+    const dir = prop as DirectiveNode;
+    if (dir.name !== 'slot' || !dir.arg) continue;
+    const name = getExpContent(dir.arg as SimpleExpressionNode);
+    if (name && /^[A-Za-z_$][\w$-]*$/.test(name)) return name;
+    return null;
+  }
+  return null;
 }
 
 /** 递归收集子节点对应的 vnode 构造代码（跳过注释与动态内容） */
