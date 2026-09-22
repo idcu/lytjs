@@ -225,6 +225,13 @@ describe('Signal 模式 - 子组件（两版 codegen 均已支持挂载）', () 
     expect(code).toContain('default:()=>[V(T,null,"body")]');
   });
 
+  it('插槽作用域应作为插槽函数参数传入且不加前缀', () => {
+    const code = compile('<div><Child v-slot="p">{{ p.x }}</Child></div>', {
+      rendererMode: 'signal',
+    }).code;
+    expect(code).toContain('{default:(p)=>[V(T,null,p.x)]}');
+  });
+
   it('VNode 模式组件标签应前缀化', () => {
     const code = compile('<div><Child/></div>').code;
     expect(code).toContain('_ctx.Child');

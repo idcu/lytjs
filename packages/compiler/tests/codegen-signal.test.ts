@@ -595,6 +595,25 @@ describe('codegen-signal', () => {
       expect(result.code).toContain('"footer":()=>[createVNode(Text,null,"F")]');
     });
 
+    it('should pass slot scope params as the slot function argument', () => {
+      const viaTemplate = compile(
+        '<div><Child><template #default="p">{{ p.x }}</template></Child></div>',
+        opts,
+      );
+      expect(viaTemplate.code).toContain('{"default":(p)=>[createVNode(Text,null,p.x)]}');
+
+      const viaComponent = compile('<div><Child v-slot="p">{{ p.x }}</Child></div>', opts);
+      expect(viaComponent.code).toContain('{default:(p)=>[createVNode(Text,null,p.x)]}');
+    });
+
+    it('should support destructured slot scope without prefixing the locals', () => {
+      const result = compile(
+        '<div><Child><template #item="{ x, y }">{{ x }}</template></Child></div>',
+        opts,
+      );
+      expect(result.code).toContain('{"item":({ x, y })=>[createVNode(Text,null,x)]}');
+    });
+
     it('should keep named slots and the default slot side by side', () => {
       const result = compile('<div><Child><template #header>H</template>body</Child></div>', opts);
       expect(result.code).toContain('"header":()=>[');

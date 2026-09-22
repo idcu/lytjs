@@ -1616,49 +1616,78 @@ function buildComponentSlotsObjectOptimized(
   options: SignalCodegenOptions,
   locals: ReadonlySet<string> = new Set(),
 ): string | null {
+  // 组件自身若带 `v-slot="p"`（无 arg），表示**默认插槽**的作用域参数
+  const ownSlot = findSlotDirective(node);
+  const ownParam = ownSlot && ownSlot.name === null ? ownSlot.param : null;
+
   const namedSlots: string[] = [];
   const defaultParts: string[] = [];
 
   for (const child of node.children) {
     if (!child) continue;
 
-    // 具名插槽：`<template #name>…</template>` → `name:()=>[…]`
-    const slotName = getNamedSlotNameOptimized(child);
-    if (slotName !== null) {
+    // 具名插槽：`<template #name="scope">…</template>` → `"name":(scope)=>[…]`
+    const info = child.type === NodeTypes.ELEMENT ? findSlotDirective(child as ElementNode) : null;
+    if (info && info.name) {
+      const scope = info.param;
       const parts = collectSlotVNodesOptimized(
         (child as ElementNode).children,
         usedRuntime,
         options,
-        locals,
+        withScope(locals, scope),
       );
-      if (parts.length) namedSlots.push(`${JSON.stringify(slotName)}:()=>[${parts.join(',')}]`);
+      if (parts.length) {
+        namedSlots.push(`${JSON.stringify(info.name)}:(${scope ?? ''})=>[${parts.join(',')}]`);
+      }
       continue;
     }
 
-    defaultParts.push(...collectSlotVNodesOptimized([child], usedRuntime, options, locals));
+    defaultParts.push(
+      ...collectSlotVNodesOptimized([child], usedRuntime, options, withScope(locals, ownParam)),
+    );
   }
 
   const all = [...namedSlots];
-  if (defaultParts.length) all.push(`default:()=>[${defaultParts.join(',')}]`);
+  if (defaultParts.length) {
+    all.push(`default:(${ownParam ?? ''})=>[${defaultParts.join(',')}]`);
+  }
   if (all.length === 0) return null;
   return `{${all.join(',')}}`;
 }
 
-/** 若该节点是 `<template #name>`，返回插槽名；动态名（`#[expr]`）返回 null */
-function getNamedSlotNameOptimized(child: TemplateChildNode): string | null {
-  if (!child || child.type !== NodeTypes.ELEMENT) return null;
-  const el = child as ElementNode;
-  if (el.tagType !== ElementTypes.TEMPLATE) return null;
+/** 插槽指令信息（优化版） */
+interface SlotDirectiveInfo {
+  name: string | null;
+  param: string | null;
+}
 
+/** 从元素 props 里取出 `v-slot` 指令信息 */
+function findSlotDirective(el: ElementNode): SlotDirectiveInfo | null {
   for (const prop of el.props) {
     if (!prop || prop.type !== NodeTypes.DIRECTIVE) continue;
     const dir = prop as DirectiveNode;
-    if (dir.name !== 'slot' || !dir.arg) continue;
-    const name = getExpContent(dir.arg as SimpleExpressionNode);
-    if (name && /^[A-Za-z_$][\w$-]*$/.test(name)) return name;
-    return null;
+    if (dir.name !== 'slot') continue;
+    const rawName = dir.arg ? getExpContent(dir.arg as SimpleExpressionNode) : null;
+    const rawParam = dir.exp ? getExpContent(dir.exp as SimpleExpressionNode) : null;
+    return {
+      name: rawName && /^[A-Za-z_$][\w$-]*$/.test(rawName) ? rawName : null,
+      param: rawParam && rawParam.trim() ? rawParam.trim() : null,
+    };
   }
   return null;
+}
+
+/** 从作用域参数表达式里提取标识符（`p` → [p]；`{ x, y }` → [x, y]） */
+function extractScopeNames(param: string | null): string[] {
+  if (!param) return [];
+  return param.split(/[^A-Za-z0-9_$]+/).filter((x) => x && /^[A-Za-z_$][\w$]*$/.test(x));
+}
+
+/** 把作用域变量并入 locals */
+function withScope(locals: ReadonlySet<string>, param: string | null): Set<string> {
+  const out = new Set(locals);
+  for (const name of extractScopeNames(param)) out.add(name);
+  return out;
 }
 
 /** 递归收集子节点对应的 vnode 构造代码（跳过注释与动态内容） */

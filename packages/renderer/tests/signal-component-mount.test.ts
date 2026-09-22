@@ -270,4 +270,33 @@ describe('SignalRenderer + 组件挂载', () => {
 
     renderer.unmount();
   });
+
+  it('插槽作用域：组件传给插槽的参数应能被父级接收', () => {
+    const Child = {
+      name: 'Child',
+      setup(
+        _props: unknown,
+        ctx: { slots: Record<string, ((scope?: unknown) => unknown) | undefined> },
+      ) {
+        return () =>
+          createVNode(
+            'section',
+            { class: 'child' },
+            // 组件侧把作用域数据作为参数传给插槽函数
+            ctx.slots.default ? ctx.slots.default({ item: 'from-child' }) : null,
+          );
+      },
+    };
+
+    const renderer = createSignalRenderer(
+      '<div><Child v-slot="p"><b>{{ p.item }}</b></Child></div>',
+      { Child },
+    );
+    renderer.render(container);
+
+    // 父级插槽函数收到 { item: 'from-child' } 并渲染出 p.item
+    expect(container.innerHTML).toContain('from-child');
+
+    renderer.unmount();
+  });
 });
