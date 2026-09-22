@@ -59,6 +59,9 @@ const RUNTIME_SHORT_NAMES = {
   reconcileArray: 'n',
   // 组件挂载（来自 @lytjs/renderer）
   mountComponent: 'm',
+  // 组件插槽的 vnode 构造（来自 @lytjs/vdom）—— 用大写避开已占用的小写字母
+  createVNode: 'V',
+  Text: 'T',
 } as const;
 
 // ============================================================
@@ -221,6 +224,16 @@ function generateOptimizedImports(usedRuntime: Set<string>, useShortNames: boole
       const mc = getShortName('mountComponent', true);
       result += `\nimport{${mc} as mountComponent}from'@lytjs/renderer';`;
     }
+    if (usedRuntime.has('createVNode') || usedRuntime.has('Text')) {
+      const vdomImports: string[] = [];
+      if (usedRuntime.has('createVNode')) {
+        vdomImports.push(`${getShortName('createVNode', true)} as createVNode`);
+      }
+      if (usedRuntime.has('Text')) {
+        vdomImports.push(`${getShortName('Text', true)} as Text`);
+      }
+      result += `\nimport{${vdomImports.join(',')}}from'@lytjs/vdom';`;
+    }
     return result;
   } else {
     // 标准名称模式
@@ -247,6 +260,12 @@ function generateOptimizedImports(usedRuntime: Set<string>, useShortNames: boole
     }
     if (usedRuntime.has('mountComponent')) {
       result += `\nimport{mountComponent}from'@lytjs/renderer';`;
+    }
+    if (usedRuntime.has('createVNode') || usedRuntime.has('Text')) {
+      const vdomImports: string[] = [];
+      if (usedRuntime.has('createVNode')) vdomImports.push('createVNode');
+      if (usedRuntime.has('Text')) vdomImports.push('Text');
+      result += `\nimport{${vdomImports.join(',')}}from'@lytjs/vdom';`;
     }
     return result;
   }
@@ -482,10 +501,13 @@ function processElementOptimized(
     usedRuntime.add('mountComponent');
     const mc = getShortName('mountComponent', options.useShortNames ?? true);
     const propsObj = buildComponentPropsObject(node);
+    // 子内容 → 默认插槽（vnode 形态，slot 契约要求返回 vnode）
+    const slotsObj = buildComponentSlotsObjectOptimized(node, usedRuntime, options);
+    const slotsArg = slotsObj ? `,${slotsObj}` : '';
 
     sink.push({
       varName: hostVar,
-      code: `${mc}(_c.${node.tag},${propsObj},${hostVar});`,
+      code: `${mc}(_c.${node.tag},${propsObj},${hostVar}${slotsArg});`,
     });
     return;
   }
@@ -1367,6 +1389,77 @@ function buildComponentPropsObject(node: ElementNode): string {
   }
 
   return `{${parts.join(',')}}`;
+}
+
+/**
+ * 把组件的子内容编译为「插槽对象」字面量：`{default:()=>[vnode,...]}`
+ *
+ * 优化版：vnode 构造使用短别名（createVNode/Text），并登记到 usedRuntime 以便生成 import。
+ */
+function buildComponentSlotsObjectOptimized(
+  node: ElementNode,
+  usedRuntime: Set<string>,
+  options: SignalCodegenOptions,
+): string | null {
+  const parts = collectSlotVNodesOptimized(node.children, usedRuntime, options);
+  if (parts.length === 0) return null;
+  return `{default:()=>[${parts.join(',')}]}`;
+}
+
+/** 递归收集子节点对应的 vnode 构造代码（跳过注释与动态内容） */
+function collectSlotVNodesOptimized(
+  children: TemplateChildNode[],
+  usedRuntime: Set<string>,
+  options: SignalCodegenOptions,
+): string[] {
+  const cv = getShortName('createVNode', options.useShortNames ?? true);
+  const tx = getShortName('Text', options.useShortNames ?? true);
+  const out: string[] = [];
+
+  for (const child of children) {
+    if (!child) continue;
+    if (child.type === NodeTypes.TEXT) {
+      const text = (child as TextNode).content;
+      if (text.trim()) {
+        usedRuntime.add('createVNode');
+        usedRuntime.add('Text');
+        out.push(`${cv}(${tx},null,${JSON.stringify(text)})`);
+      }
+      continue;
+    }
+    if (child.type === NodeTypes.ELEMENT) {
+      out.push(serializeVNodeElementOptimized(child as ElementNode, usedRuntime, options));
+    }
+  }
+  return out;
+}
+
+/** 单个元素 → `createVNode(tag, attrs, children)`（优化版用短别名） */
+function serializeVNodeElementOptimized(
+  node: ElementNode,
+  usedRuntime: Set<string>,
+  options: SignalCodegenOptions,
+): string {
+  const cv = getShortName('createVNode', options.useShortNames ?? true);
+  usedRuntime.add('createVNode');
+
+  if (node.tagType === ElementTypes.COMPONENT) {
+    const nestedSlots = buildComponentSlotsObjectOptimized(node, usedRuntime, options);
+    const nestedArg = nestedSlots ? `,${nestedSlots}` : '';
+    return `${cv}(_c.${node.tag},${buildComponentPropsObject(node)}${nestedArg})`;
+  }
+
+  const attrParts: string[] = [];
+  for (const prop of node.props) {
+    if (prop.type === NodeTypes.ATTRIBUTE) {
+      const value = prop.value ? JSON.stringify(prop.value.content) : 'true';
+      attrParts.push(`${JSON.stringify(prop.name)}:${value}`);
+    }
+  }
+  const attrs = attrParts.length ? `{${attrParts.join(',')}}` : 'null';
+  const kids = collectSlotVNodesOptimized(node.children, usedRuntime, options);
+  const childrenArg = kids.length ? `[${kids.join(',')}]` : 'null';
+  return `${cv}(${JSON.stringify(node.tag)},${attrs},${childrenArg})`;
 }
 
 /**

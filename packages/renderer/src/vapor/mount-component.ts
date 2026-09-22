@@ -56,11 +56,13 @@ function getRenderer(): ReturnType<typeof createDOMRenderer> {
  * @param comp      组件定义（函数组件 / 选项对象 / 异步组件包装）
  * @param props     传给组件的 props（可为空）
  * @param container 挂载容器（codegen 会传组件占位元素的变量）
+ * @param slots     插槽（codegen 生成 `{default:()=>[vnode,...]}`），可为空
  */
 export function mountComponent(
   comp: VaporComponentLike,
   props: Record<string, unknown> | null | undefined,
   container: unknown,
+  slots?: unknown,
 ): void {
   if (container === null || container === undefined) return;
   if (comp === null || comp === undefined) return;
@@ -69,7 +71,9 @@ export function mountComponent(
 
   // 首次渲染 + 依赖变化后的整体重渲染
   effect(() => {
-    const vnode = createVNode(comp as never, (props ?? null) as never, null);
+    // 第三个参数是 children（即「插槽」）：setupComponent 内部会把它交给 initSlots
+    // 归一化 —— 支持「函数 = 默认插槽」与「对象 = 具名插槽集合」两种形态。
+    const vnode = createVNode(comp as never, (props ?? null) as never, (slots ?? null) as never);
 
     // 清空占位容器（整体重渲染策略）
     const maybeElement = host as unknown as { textContent?: unknown };

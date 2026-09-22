@@ -119,6 +119,18 @@ describe('Signal 模式 - 子组件（两版 codegen 均已支持挂载）', () 
     warn.mockRestore();
   });
 
+  it('组件子内容应编译为默认插槽（vnode 形态，短别名）', () => {
+    const code = compile('<div><Child>hello</Child></div>', { rendererMode: 'signal' }).code;
+    expect(code).toContain('{default:()=>[V(T,null,"hello")]}');
+    expect(code).toContain("from'@lytjs/vdom'");
+  });
+
+  it('无子内容的组件不应带插槽参数', () => {
+    const code = compile('<div><Child/></div>', { rendererMode: 'signal' }).code;
+    expect(code).not.toContain('@lytjs/vdom');
+    expect(code).not.toContain('default:');
+  });
+
   it('VNode 模式组件标签应前缀化', () => {
     const code = compile('<div><Child/></div>').code;
     expect(code).toContain('_ctx.Child');

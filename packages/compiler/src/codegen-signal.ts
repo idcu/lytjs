@@ -156,6 +156,8 @@ export function generateSignal(ast: RootNode, _options?: CompilerOptions): Codeg
 
   // 是否含组件（决定要不要引入 mountComponent）
   const usedComponents = containsComponent(ast.children);
+  // 是否存在「带子内容的组件」（决定要不要引入 createVNode/Text 做插槽）
+  const usedSlots = hasComponentWithChildren(ast.children);
 
   // ---- Phase 1: Generate imports ----
   // FIX: P1-13 添加 runCleanups 到 import 列表
@@ -166,6 +168,10 @@ export function generateSignal(ast: RootNode, _options?: CompilerOptions): Codeg
   // 用到组件挂载时才引入（@lytjs/renderer 提供运行时实现）
   if (usedComponents) {
     lines.push(`import { mountComponent } from '@lytjs/renderer';`);
+  }
+  // 组件带子内容（插槽）时才需要 vnode 构造能力
+  if (usedSlots) {
+    lines.push(`import { createVNode, Text } from '@lytjs/vdom';`);
   }
   lines.push('');
 
@@ -286,9 +292,14 @@ function processElement(
     const hostVar = hostEntry ?? genVarName('lytComp', varCounter);
     if (!hostEntry) elementVars.push({ varName: hostVar, tag: 'lyt-comp' });
 
+    // 子内容 → 默认插槽。signal 产物本身是 DOM 操作，但 slot 契约要求返回 vnode
+    // （normalizeSlotValue 会校验 `__v_isVNode`），故这里生成 vnode 构造代码。
+    const slotsObj = buildComponentSlotsObject(node, '_ctx.');
+    const slotsArg = slotsObj ? `,${slotsObj}` : '';
+
     dynamicBindings.push({
       varName: hostVar,
-      code: `mountComponent(_ctx.${node.tag},${buildComponentPropsObject(node)},${hostVar});`,
+      code: `mountComponent(_ctx.${node.tag},${buildComponentPropsObject(node)},${hostVar}${slotsArg});`,
     });
     return;
   }
@@ -1225,6 +1236,70 @@ function processBranchDynamics(
       }
     }
   }
+}
+
+/**
+ * 判断子树中是否存在「带子内容的组件」（这类组件需要把子内容编译为插槽 vnode）
+ */
+function hasComponentWithChildren(children: TemplateChildNode[]): boolean {
+  for (const child of children) {
+    if (!child || child.type !== NodeTypes.ELEMENT) continue;
+    const element = child as ElementNode;
+    if (element.tagType === ElementTypes.COMPONENT && element.children.length > 0) return true;
+    if (hasComponentWithChildren(element.children)) return true;
+  }
+  return false;
+}
+
+/**
+ * 把组件的子内容编译为「插槽对象」字面量：`{default:()=>[vnode,...]}`
+ *
+ * 返回 null 表示没有可编译的子内容（此时不传第 4 个参数）。
+ * 首版只覆盖**静态内容**（文本 / 元素 / 嵌套组件）；插值与指令仍不参与插槽编译。
+ */
+function buildComponentSlotsObject(node: ElementNode, prefix: string): string | null {
+  const parts = collectSlotVNodes(node.children, prefix);
+  if (parts.length === 0) return null;
+  return `{default:()=>[${parts.join(',')}]}`;
+}
+
+/** 递归收集子节点对应的 vnode 构造代码（跳过注释与动态内容） */
+function collectSlotVNodes(children: TemplateChildNode[], prefix: string): string[] {
+  const out: string[] = [];
+  for (const child of children) {
+    if (!child) continue;
+    if (child.type === NodeTypes.TEXT) {
+      const text = (child as TextNode).content;
+      if (text.trim()) out.push(`createVNode(Text,null,${JSON.stringify(text)})`);
+      continue;
+    }
+    if (child.type === NodeTypes.ELEMENT) {
+      out.push(serializeVNodeElement(child as ElementNode, prefix));
+    }
+  }
+  return out;
+}
+
+/** 单个元素 → `createVNode(tag, attrs, children)` */
+function serializeVNodeElement(node: ElementNode, prefix: string): string {
+  if (node.tagType === ElementTypes.COMPONENT) {
+    // 嵌套组件同样要带自己的插槽
+    const nestedSlots = buildComponentSlotsObject(node, prefix);
+    const nestedArg = nestedSlots ? `,${nestedSlots}` : '';
+    return `createVNode(${prefix}${node.tag},${buildComponentPropsObject(node)}${nestedArg})`;
+  }
+
+  const attrParts: string[] = [];
+  for (const prop of node.props) {
+    if (prop.type === NodeTypes.ATTRIBUTE) {
+      const value = prop.value ? JSON.stringify(prop.value.content) : 'true';
+      attrParts.push(`${JSON.stringify(prop.name)}:${value}`);
+    }
+  }
+  const attrs = attrParts.length ? `{${attrParts.join(',')}}` : 'null';
+  const kids = collectSlotVNodes(node.children, prefix);
+  const childrenArg = kids.length ? `[${kids.join(',')}]` : 'null';
+  return `createVNode(${JSON.stringify(node.tag)},${attrs},${childrenArg})`;
 }
 
 /**

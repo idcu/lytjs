@@ -784,14 +784,15 @@ mountComponent(_c.Child, { title: _c.t }, _1);
 
 要点：
 
-| 项目     | 说明                                                                                                                                                                                      |
-| -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 占位元素 | 组件在模板串里被序列化为 `<lyt-comp data-lyt-comp="Child">`（**必须是元素**：注释节点不在 `element.children` 里，会让后续按下标取元素的变量错位）                                         |
-| props    | 静态属性与 `v-bind` 表达式都会进入传给组件的 props 对象（表达式前缀为 `_c.`）                                                                                                             |
-| 事件     | `@click="fn"` 编译为 `onClick: _c.fn`（kebab 事件名先 camelize 成 `onMyEvent`），与 `@lytjs/component` 的 `emit()` / `toHandlerKey()` 约定对齐；组件内 `emit('click')` 即可触达父级处理器 |
-| 更新策略 | 首版采用 **effect 包裹的整体重渲染**（依赖变化时重建该组件子树），正确性优先；细粒度更新留待后续版本                                                                                      |
-| 非优化版 | `optimizeSignal: false` 走 `generateSignal`，**同样支持组件挂载**（输出 `<lyt-comp>` 占位 + `mountComponent`），与优化版行为一致                                                          |
-| 已知限制 | 组件插槽内容（`<Child>...</Child>`）暂不参与 Vapor 编译；嵌套组件的内部子内容不保留（slots 特性待实现）                                                                                   |
+| 项目     | 说明                                                                                                                                                                                                                          |
+| -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 占位元素 | 组件在模板串里被序列化为 `<lyt-comp data-lyt-comp="Child">`（**必须是元素**：注释节点不在 `element.children` 里，会让后续按下标取元素的变量错位）                                                                             |
+| props    | 静态属性与 `v-bind` 表达式都会进入传给组件的 props 对象（表达式前缀为 `_c.`）                                                                                                                                                 |
+| 事件     | `@click="fn"` 编译为 `onClick: _c.fn`（kebab 事件名先 camelize 成 `onMyEvent`），与 `@lytjs/component` 的 `emit()` / `toHandlerKey()` 约定对齐；组件内 `emit('click')` 即可触达父级处理器                                     |
+| 更新策略 | 首版采用 **effect 包裹的整体重渲染**（依赖变化时重建该组件子树），正确性优先；细粒度更新留待后续版本                                                                                                                          |
+| 非优化版 | `optimizeSignal: false` 走 `generateSignal`，**同样支持组件挂载**（输出 `<lyt-comp>` 占位 + `mountComponent`），与优化版行为一致                                                                                              |
+| 插槽     | 组件子内容编译为默认插槽 `{default:()=>[vnode,...]}`（**必须是 vnode**：`normalizeSlotValue` 校验 `__v_isVNode`，而 signal 产物本身是 DOM 操作，故此处生成 vnode 构造代码）；首版只覆盖**静态内容**（文本 / 元素 / 嵌套组件） |
+| 已知限制 | 插槽内的动态内容（插值、指令绑定）暂不参与编译；具名插槽（`<template #name>`）暂不支持                                                                                                                                        |
 
 ```ts
 import { mountComponent } from '@lytjs/renderer';

@@ -7,6 +7,8 @@ import { compile, clearCompileCache } from '@lytjs/compiler';
 import { effect } from '@lytjs/reactivity';
 // Vapor 组件挂载（模板中出现组件时，编译产物会调用 mountComponent）
 import { mountComponent } from '../vapor/mount-component';
+// 组件插槽需要 vnode（signal 产物是 DOM 操作，但 slot 契约要求返回 vnode）
+import { createVNode, Text } from '@lytjs/vdom';
 import {
   insert,
   remove,
@@ -143,6 +145,8 @@ export function createSignalRenderer(
           onCleanup,
           runCleanups,
           mountComponent,
+          createVNode,
+          Text,
         );
 
         // 执行渲染函数
@@ -211,8 +215,10 @@ interface _RenderParams {
   createEventHandler: unknown;
   bindEffect: unknown;
   onCleanup: unknown;
-  mountComponent: unknown;
   runCleanups: unknown;
+  mountComponent: unknown;
+  createVNode: unknown;
+  Text: unknown;
   _ctx: Record<string, unknown>;
   _container: Element;
 }
@@ -267,6 +273,8 @@ function makeCreateRenderFactory(): (
     'onCleanup',
     'runCleanups',
     'mountComponent',
+    'createVNode',
+    'Text',
   ];
 
   // 使用 new Function 创建执行器

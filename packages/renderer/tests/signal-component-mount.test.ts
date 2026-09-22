@@ -82,4 +82,26 @@ describe('SignalRenderer + 组件挂载', () => {
     expect(container.innerHTML).toContain('child');
     renderer.unmount();
   });
+
+  it('组件子内容应作为默认插槽渲染出来', () => {
+    const Child = {
+      name: 'Child',
+      setup(_props: unknown, ctx: { slots: { default?: () => unknown } }) {
+        return () =>
+          createVNode(
+            'section',
+            { class: 'child' },
+            ctx.slots.default ? ctx.slots.default() : null,
+          );
+      },
+    };
+
+    const renderer = createSignalRenderer('<div><Child>hello-slot</Child></div>', { Child });
+    renderer.render(container);
+
+    // 插槽链路：codegen 产出 {default:()=>[vnode]} → initSlots 归一化 → renderSlot 取用
+    expect(container.querySelector('section.child')).not.toBeNull();
+    expect(container.innerHTML).toContain('hello-slot');
+    renderer.unmount();
+  });
 });

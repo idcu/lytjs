@@ -456,5 +456,32 @@ describe('codegen-signal', () => {
       const result = compile('<div><Child @click="() => count++"/></div>', opts);
       expect(result.code).toContain('"onClick":() => _ctx.count++');
     });
+
+    it('should compile component children into a default slot (vnode form)', () => {
+      const result = compile('<div><Child>hello</Child></div>', opts);
+      expect(result.code).toContain('{default:()=>[createVNode(Text,null,"hello")]}');
+    });
+
+    it('should compile nested elements inside slot content as vnodes', () => {
+      const result = compile('<div><Child><span>hi</span></Child></div>', opts);
+      expect(result.code).toContain('createVNode("span",null,[createVNode(Text,null,"hi")])');
+    });
+
+    it('should NOT pass a slot argument when the component has no children', () => {
+      const result = compile('<div><Child/></div>', opts);
+      expect(result.code).toContain('mountComponent(_ctx.Child,{},_lytComp);');
+    });
+
+    it('should import createVNode/Text from @lytjs/vdom only when slots are used', () => {
+      expect(compile('<div><Child>hi</Child></div>', opts).code).toContain("from '@lytjs/vdom'");
+      expect(compile('<div><Child/></div>', opts).code).not.toContain('@lytjs/vdom');
+    });
+
+    it('should keep nested component slots recursive', () => {
+      const result = compile('<div><Outer><Inner>x</Inner></Outer></div>', opts);
+      expect(result.code).toContain(
+        'createVNode(_ctx.Inner,{},{default:()=>[createVNode(Text,null,"x")]})',
+      );
+    });
   });
 });
